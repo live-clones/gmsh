@@ -243,6 +243,26 @@ void OptHOM::calcScale(alglib::real_1d_array &scale)
     for (int iPC = 0; iPC < mesh.nPCFV(iFV); iPC++)
       scale[mesh.indPCFV(iFV,iPC)] = scaleFV[iPC];
   }
+
+//  std::vector<double> inSize(mesh.nEl());
+//  mesh.elInSize(inSize);
+//  for (int iEl = 0; iEl < mesh.nEl(); iEl++) {
+////    std::cout << "DBGTT: inSize[" << iEl << "] = " << inSize[iEl] << std::endl;
+//    for (int iPCEl = 0; iPCEl < mesh.nPCEl(iEl); iPCEl++)
+//      scale[mesh.indPCEl(iEl,iPCEl)] *= inSize[iEl];
+//  }
+
+//  for (int iEl = 0; iEl < mesh.nEl(); iEl++) {
+//    std::vector<double> sJ(mesh.nBezEl(iEl)), gSJ(mesh.nBezEl(iEl)*mesh.nPCEl(iEl));
+//    mesh.scaledJacAndGradients(iEl,sJ,gSJ);
+//    for (int iPC = 0; iPC < mesh.nPCEl(iEl); iPC++) {
+//      double grad = 0.;
+//      for (int l = 0; l < mesh.nBezEl(iEl); l++) grad = std::max(grad,fabs(gSJ[mesh.indGSJ(iEl,l,iPC)]));
+//      scale[mesh.indPCEl(iEl,iPC)] *= mesh.nBezEl(iEl)/grad;
+////      std::cout << "DBGTT: scale[" << mesh.indPCEl(iEl,iPC) << "] = " << scale[mesh.indPCEl(iEl,iPC)] << std::endl;
+//    }
+//  }
+
 }
 
 void OptHOM::OptimPass(alglib::real_1d_array &x,

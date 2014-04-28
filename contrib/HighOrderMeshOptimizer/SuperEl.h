@@ -33,13 +33,15 @@
 #include <string>
 #include "MElement.h"
 
+
+
 class SuperEl
 {
 public:
 
-  SuperEl(int order, double dist, int type, const std::vector<MVertex*> &baseVert,
-          const std::vector<SVector3> &normals);
-  ~SuperEl() { _superVert.clear(); delete _superEl; delete _superEl0; }
+  SuperEl(int type, int order, const std::vector<MVertex*> &baseVert,
+          const std::vector<MVertex*> &topPrimVert);
+  ~SuperEl();
 
   bool isOK() const { return _superEl; }
   bool isPointIn(const SPoint3 p) const;
@@ -58,17 +60,17 @@ public:
 
 private:
 
+  struct superInfoType {
+    int nV;
+    fullMatrix<double> points;
+    std::vector<int> baseInd, topInd, otherInd;
+    superInfoType(int type, int order);
+  };
+
+  static std::map<int,superInfoType> _superInfo;
+
   std::vector<MVertex*> _superVert;
   MElement *_superEl, *_superEl0;
-
-  void createSuperElQuad(int order, double dist, const std::vector<MVertex*> &baseVert,
-                         const SVector3 &n0, const SVector3 &n1);
-  void createSuperElPrism(int order, double dist, const std::vector<MVertex*> &baseVert,
-                          const SVector3 &n0, const SVector3 &n1, const SVector3 &n2);
-  void createSuperElHex(int order, double dist, const std::vector<MVertex*> &baseVert,
-                        const SVector3 &n0, const SVector3 &n1, const SVector3 &n2, const SVector3 &n3);
-
-
 };
 
 

@@ -809,7 +809,7 @@ void GenerateMesh(GModel *m, int ask)
   if(CTX::instance()->mesh.hoOptimize){
 #if defined(HAVE_OPTHOM)
     if(CTX::instance()->mesh.hoOptimize < 0){
-      ElasticAnalogy(GModel::current(), CTX::instance()->mesh.hoThresholdMin, false);
+      ElasticAnalogy(GModel::current(), false);
     }
     else{
       OptHomParameters p;

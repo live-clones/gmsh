@@ -69,6 +69,7 @@ public:
   void updateMesh(const double *it);
   void distSqToStraight(std::vector<double> &dSq);
   void elSizeSq(std::vector<double> &sSq);
+  void elInSize(std::vector<double> &s);
 
   void updateGEntityPositions();
   void writeMSH(const char *filename);

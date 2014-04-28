@@ -34,7 +34,7 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 
-void ElasticAnalogy(GModel *m, double threshold, bool onlyVisible);
+void ElasticAnalogy(GModel *m, bool onlyVisible);
 
 #if defined(HAVE_SOLVER)
 

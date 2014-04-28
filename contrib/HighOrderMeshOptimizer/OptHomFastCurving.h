@@ -33,17 +33,12 @@
 class GModel;
 
 struct FastCurvingParameters {
-  // INPUT ------>
-  double BARRIER_MIN ; // minimum scaled jcaobian
-  double BARRIER_MAX ; // maximum scaled jcaobian
-  int dim ; // which dimension to optimize
-  bool onlyVisible ; // apply optimization to visible entities ONLY
-  double distanceFactor; // filter elements such that no elements further away
-                         // than DistanceFactor times the max distance to
-                         // straight sided version of an element are optimized
+  int dim ;           // Which dimension to curve
+  bool onlyVisible ;  // Apply curving to visible entities ONLY
+  int maxNumLayers;   // Maximum number of element layers to consider when trying to detect BL
 
   FastCurvingParameters ()
-    : BARRIER_MIN(0.1), BARRIER_MAX(2.0), dim(3) , onlyVisible(true), distanceFactor(12)
+    : dim(3) , onlyVisible(true), maxNumLayers(6)
   {
   }
 };

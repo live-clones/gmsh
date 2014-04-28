@@ -146,14 +146,17 @@ void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3])
   metric[2] = res[1][1];
 }
 
-const BoundaryLayerData & BoundaryLayerColumns::getColumn(MVertex *v, MFace f)
+const BoundaryLayerData & BoundaryLayerColumns::getColumn(MVertex *v, MFace f) const
 {
   int N = getNbColumns(v) ;
   if (N == 1) return getColumn(v, 0);
-  GFace *gf = _inverse_classification[f];
-  for (int i=0;i<N;i++){
-    const BoundaryLayerData & c = getColumn(v, i);
-    if (std::find(c._joint.begin(),c._joint.end(),gf) != c._joint.end())return c;
+  std::map<MFace, GFace*, Less_Face>::const_iterator it = _inverse_classification.find(f);
+  if (it != _inverse_classification.end()) {
+    GFace *gf = it->second;
+    for (int i=0;i<N;i++){
+      const BoundaryLayerData & c = getColumn(v, i);
+      if (std::find(c._joint.begin(),c._joint.end(),gf) != c._joint.end())return c;
+    }
   }
   static BoundaryLayerData error;
   return error;

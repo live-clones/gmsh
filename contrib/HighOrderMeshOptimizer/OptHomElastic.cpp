@@ -55,7 +55,7 @@
 
 #define SQU(a)      ((a)*(a))
 
-void ElasticAnalogy(GModel *m, double threshold, bool onlyVisible)
+void ElasticAnalogy(GModel *m, bool onlyVisible)
 {
   bool CAD, complete;
   int meshOrder;

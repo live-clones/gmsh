@@ -84,28 +84,28 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
 
   switch(algo) {
   case 0: {                                           // Optimization
-    o->push[0]->activate();
     o->choice[0]->activate();
     o->choice[3]->activate();
-    for (int i=2;i<=11;i++) o->value[i]->activate();
-    //    o->push[1]->activate();
+    for (int i=1;i<=8;i++) o->value[i]->activate();
+    if (o->choice[3]->value() == 0)
+      for (int i=9;i<=11;i++) o->value[i]->deactivate();
+    else
+      for (int i=9;i<=11;i++) o->value[i]->activate();
     break;
   }
   case 1: {                                           // Elastic analogy
     o->choice[0]->deactivate();
     o->choice[3]->deactivate();
-    for (int i=2;i<=11;i++) o->value[i]->deactivate();
-    //   o->push[1]->deactivate();
+    for (int i=1;i<=11;i++) o->value[i]->deactivate();
     break;
   }
   case 2: {                                           // Fast curving
     o->choice[0]->deactivate();
     o->choice[3]->deactivate();
-    for (int i=2;i<=6;i++)
+    o->value[1]->deactivate();
+    o->value[2]->activate();
+    for (int i=3;i<=11;i++)
       o->value[i]->deactivate();
-    for (int i=9;i<=11;i++) o->value[i]->deactivate();
-    for (int i=7;i<=8;i++) o->value[i]->activate();
-    //   o->push[1]->deactivate();
     break;
   }
   }
@@ -115,8 +115,10 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
 static void chooseopti_strategy(Fl_Widget *w, void *data)
 {
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
-  if (o->choice[3]->value() == 0) for (int i=9;i<=11;i++) o->value[i]->deactivate();
-  else for (int i=9;i<=11;i++) o->value[i]->activate();
+  if (o->choice[3]->value() == 0)
+    for (int i=9;i<=11;i++) o->value[i]->deactivate();
+  else
+    for (int i=9;i<=11;i++) o->value[i]->activate();
 }
 
 static void highordertools_runopti_cb(Fl_Widget *w, void *data)
@@ -127,27 +129,26 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     FlGui::instance()->graph[0]->showMessages();
 
   const int algo = o->choice[2]->value();
-  double threshold_min = o->value[1]->value();
   bool onlyVisible = (bool)o->butt[1]->value();
-  int nbLayers = (int) o->value[2]->value();
-  double threshold_max = o->value[8]->value();
 
   int NE = 0;
-  for (GModel::riter it = GModel::current()->firstRegion(); it != GModel::current()->lastRegion(); ++it){
+  for (GModel::riter it = GModel::current()->firstRegion();
+       it != GModel::current()->lastRegion(); ++it) {
     NE += (*it)->getNumMeshElements();
   }
+  int dim = GModel::current()->getDim() == 3 ? ( NE ? 3 : 2 ) :  GModel::current()->getDim();
 
 
 #if defined(HAVE_OPTHOM)
   switch(algo) {
   case 0: {                                                               // Optimization
     OptHomParameters p;
-    p.nbLayers = nbLayers;
-    p.BARRIER_MIN = threshold_min;
-    p.BARRIER_MAX = threshold_max;
+    p.nbLayers = (int) o->value[2]->value();
+    p.BARRIER_MIN = o->value[1]->value();
+    p.BARRIER_MAX = o->value[8]->value();
     p.onlyVisible = onlyVisible;
     // change dim if no 3D elements are there
-    p.dim = GModel::current()->getDim() == 3 ? ( NE ? 3 : 2 ) :  GModel::current()->getDim();
+    p.dim = dim;
     p.itMax = (int) o->value[3]->value();
     p.optPassMax = (int) o->value[4]->value();
     p.weightFixed =  o->value[5]->value();
@@ -163,16 +164,14 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     break;
   }
   case 1: {                                                               // Elastic analogy
-    ElasticAnalogy(GModel::current(), threshold_min, onlyVisible);
+    ElasticAnalogy(GModel::current(), onlyVisible);
     break;
   }
   case 2: {                                                               // Fast curving
     FastCurvingParameters p;
-    p.BARRIER_MIN = threshold_min;
-    p.BARRIER_MAX = threshold_max;
     p.onlyVisible = onlyVisible;
-    p.dim = GModel::current()->getDim() == 3 ? ( NE ? 3 : 2 ) :  GModel::current()->getDim();
-    p.distanceFactor =  o->value[7]->value();
+    p.dim = dim;
+    p.maxNumLayers = (int) o->value[2]->value();
     HighOrderMeshFastCurving(GModel::current(), p);
     break;
   }
@@ -252,7 +251,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   y += BH;
 
   butt[2] = new Fl_Check_Button
-    (x, y, width - 4 * WB, BH, "Generate curvilinear elements");
+    (x, y, width - 4 * WB, BH, "Use CAD model to curve mesh");
   butt[2]->type(FL_TOGGLE_BUTTON);
   butt[2]->value(1);
 
@@ -272,12 +271,24 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   {
     y += BH;
     Fl_Box *b = new Fl_Box
-      (x - WB, y, width, BH, "2. Optimization of high order elements");
+      (x - WB, y, width, BH, "2. Regularization of high order elements");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   }
 
   y += BH;
+  static Fl_Menu_Item menu_method[] = {
+    {"Optimization", 0, 0, 0},
+    {"Elastic Analogy", 0, 0, 0},
+    {"Fast Curving", 0, 0, 0},
+    {0}
+  };
+  choice[2] = new Fl_Choice
+    (x, y, IW, BH, "Algorithm");
+  choice[2]->align(FL_ALIGN_RIGHT);
+  choice[2]->menu(menu_method);
+  choice[2]->callback(chooseopti_cb);
 
+  y += BH;
   value[1] = new Fl_Value_Input
     (x, y, IW/2.0, BH);
   value[1]->minimum(0);
@@ -312,27 +323,12 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[7]->align(FL_ALIGN_RIGHT);
   value[7]->value(12);
 
-  static Fl_Menu_Item menu_method[] = {
-    {"Optimization", 0, 0, 0},
-    {"Elastic Analogy", 0, 0, 0},
-    {"Fast Curving", 0, 0, 0},
-    {0}
-  };
-
   y += BH;
-  choice[2] = new Fl_Choice
-    (x, y, IW, BH, "Algorithm");
-  choice[2]->align(FL_ALIGN_RIGHT);
-  choice[2]->menu(menu_method);
-  choice[2]->callback(chooseopti_cb);
-
   static Fl_Menu_Item menu_objf[] = {
     {"Fixed", 0, 0, 0},
     {"Free", 0, 0, 0},
     {0}
   };
-
-  y += BH;
   choice[0] = new Fl_Choice
     (x, y, IW, BH, "Boundary vertices");
   choice[0]->menu(menu_objf);
@@ -410,7 +406,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += 1.5*BH;
   push[1] = new Fl_Button
-    (width - BB - 2 * WB, y, BB, BH, "Optimize");
+    (width - BB - 2 * WB, y, BB, BH, "Regularize");
   push[1]->callback(highordertools_runopti_cb);
 
   // win->resizable(o);

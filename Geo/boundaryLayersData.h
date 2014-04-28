@@ -113,9 +113,9 @@ public:
      return 0;
   }
 
-  const BoundaryLayerData &getColumn(MVertex *v, MFace f);
+  const BoundaryLayerData &getColumn(MVertex *v, MFace f) const;
 
-  inline const BoundaryLayerData &getColumn(MVertex *v, MEdge e)
+  inline const BoundaryLayerData &getColumn(MVertex *v, MEdge e) const
   {
     std::map<MVertex*,BoundaryLayerFan>::const_iterator it = _fans.find(v);
     int N = getNbColumns(v) ;
@@ -133,11 +133,11 @@ public:
   }
   edgeColumn getColumns(MVertex *v1, MVertex *v2 , int side);
   faceColumn getColumns(GFace *gf, MVertex *v1, MVertex *v2 , MVertex* v3, int side);
-  inline int getNbColumns(MVertex *v) { return _data.count(v); }
-  inline const BoundaryLayerData &getColumn(MVertex *v, int iColumn)
+  inline int getNbColumns(MVertex *v) const { return _data.count(v); }
+  inline const BoundaryLayerData &getColumn(MVertex *v, int iColumn) const
   {
     int count = 0;
-    for(std::multimap<MVertex*,BoundaryLayerData>::iterator itm  = _data.lower_bound(v);
+    for(std::multimap<MVertex*,BoundaryLayerData>::const_iterator itm  = _data.lower_bound(v);
         itm != _data.upper_bound(v); ++itm){
       if (count++ == iColumn) return itm->second;
     }

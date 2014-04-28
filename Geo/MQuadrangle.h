@@ -400,6 +400,10 @@ class MQuadrangleN : public MQuadrangle {
     MQuadrangle::_getFaceVertices(v);
     for(unsigned int i = 0; i != _vs.size(); ++i) v[i + 4] = _vs[i];
   }
+  virtual const char *getStringForPOS() const
+  {
+    return (getTypeForMSH() == MSH_QUA_9) ? "SQ2" : "SQ";
+  }
   virtual int getTypeForMSH() const
   {
     if(_order== 1 && _vs.size() + 4 == 4)   return MSH_QUA_4;

@@ -160,6 +160,15 @@ static std::set<MElement*> getSurroundingBlob
           }
         }
       }
+//      for (int i = 0; i < (*it)->getNumPrimaryVertices(); ++i) {
+//        if ((d < forceDepth) || (p.distance((*it)->getVertex(i)->point()) < limDist)) {
+//          const std::vector<MElement*> &neighbours = vertex2elements.find((*it)->getVertex(i))->second;
+//          for (std::vector<MElement*>::const_iterator itN = neighbours.begin(); itN != neighbours.end(); ++itN) {
+//              // Assume that if an el is too far, its neighbours are too far as well
+//              if (blob.insert(*itN).second) currentLayer.push_back(*itN);
+//          }
+//        }
+//      }
     }
     lastLayer = currentLayer;
   }
@@ -287,13 +296,14 @@ static void optimizeConnectedBlobs
 
   //#pragma omp parallel for schedule(dynamic, 1)
   for (int i = 0; i < toOptimize.size(); ++i) {
+//    if (toOptimize[i].first.size() > 10000) continue;
     Msg::Info("Optimizing a blob %i/%i composed of %4d elements", i+1,
               toOptimize.size(), toOptimize[i].first.size());
     fflush(stdout);
     OptHOM temp(element2entity, toOptimize[i].first, toOptimize[i].second, p.fixBndNodes);
-    //std::ostringstream ossI1;
-    //ossI1 << "initial_ITER_" << i << ".msh";
-    //temp.mesh.writeMSH(ossI1.str().c_str());
+    std::ostringstream ossI1;
+    ossI1 << "initial_blob-" << i << ".msh";
+    temp.mesh.writeMSH(ossI1.str().c_str());
     int success = -1;
     if (temp.mesh.nPC() == 0)
       Msg::Info("Blob %i has no degree of freedom, skipping", i+1);
@@ -537,9 +547,9 @@ static void optimizeOneByOne
                 toOptimize.size());
       fflush(stdout);
       OptHOM *opt = new OptHOM(element2entity, toOptimize, toFix, p.fixBndNodes);
-      //std::ostringstream ossI1;
-      //ossI1 << "initial_corrective_" << iter << ".msh";
-      //opt->mesh.writeMSH(ossI1.str().c_str());
+      std::ostringstream ossI1;
+      ossI1 << "initial_blob-" << iBadEl << ".msh";
+      opt->mesh.writeMSH(ossI1.str().c_str());
       success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN,
                               p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax);
       if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
@@ -568,7 +578,7 @@ static void optimizeOneByOne
                   iBadEl, iterBlob);
 //        if (iterBlob == p.maxAdaptBlob-1) {
           std::ostringstream ossI2;
-          ossI2 << "final_" << iBadEl << ".msh";
+          ossI2 << "final_blob-" << iBadEl << ".msh";
           opt->mesh.writeMSH(ossI2.str().c_str());
 //        }
       }
