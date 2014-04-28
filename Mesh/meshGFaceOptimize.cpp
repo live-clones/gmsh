@@ -2875,6 +2875,8 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
     break;
   default :
     Msg::Error("Unknown swapping criterion");
+    delete t1b;
+    delete t2b;
     return false;
   }
 

@@ -197,6 +197,14 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 
   PView *view = new PView();
   _data = getDataList(view);
+
+  std::vector<GEntity*> _entities;
+  GModel::current()->getEntities(_entities);
+  if (!_entities.size() || !_entities[_entities.size()-1]->getMeshElement(0)) {
+    Msg::Error("This plugin needs a mesh !");
+    return view;
+  }
+
 #if defined(HAVE_SOLVER)
 #if defined(HAVE_TAUCS)
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
@@ -208,13 +216,6 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 #endif
   dofManager<double> * dofView = new dofManager<double>(lsys);
 #endif
-
-  std::vector<GEntity*> _entities;
-  GModel::current()->getEntities(_entities);
-  if (!_entities.size() || !_entities[_entities.size()-1]->getMeshElement(0)) {
-    Msg::Error("This plugin needs a mesh !");
-    return view;
-  }
 
   GEntity* ge = _entities[_entities.size()-1];
   int integrationPointTetra[2] = {0,0};
@@ -326,10 +327,10 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       if (id_pt != 0)   Msg::Error("The Physical Point does not exist !");
       if (id_line != 0) Msg::Error("The Physical Line does not exist !");
       if (id_face != 0) Msg::Error("The Physical Surface does not exist !");
-      return view;
     }
-
-    printView(_entities, _distance_map);
+    else{
+      printView(_entities, _distance_map);
+    }
 
     /* TO DO (by AM)
     printView(_entities, _closePts_map);
@@ -374,54 +375,45 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       if (id_pt != 0)   Msg::Error("The Physical Point does not exist !");
       if (id_line != 0) Msg::Error("The Physical Line does not exist !");
       if (id_face != 0) Msg::Error("The Physical Surface does not exist !");
-      return view;
     }
-
-    std::vector<MElement *> allElems;
-    for(unsigned int ii = 0; ii < _entities.size(); ii++){
-      if(_entities[ii]->dim() == _maxDim) {
-        GEntity *ge = _entities[ii];
-        for(unsigned int i = 0; i < ge->getNumMeshElements(); ++i) {
-          MElement *t = ge->getMeshElement(i);
-          allElems.push_back(t);
-          for (int k = 0; k < t->getNumVertices(); k++)
-            dofView->numberVertex(t->getVertex(k), 0, 1);
+    else{
+      std::vector<MElement *> allElems;
+      for(unsigned int ii = 0; ii < _entities.size(); ii++){
+        if(_entities[ii]->dim() == _maxDim) {
+          GEntity *ge = _entities[ii];
+          for(unsigned int i = 0; i < ge->getNumMeshElements(); ++i) {
+            MElement *t = ge->getMeshElement(i);
+            allElems.push_back(t);
+            for (int k = 0; k < t->getNumVertices(); k++)
+              dofView->numberVertex(t->getVertex(k), 0, 1);
+          }
         }
       }
+      double L = norm(SVector3(bbox.max(), bbox.min()));
+      double mu = type*L;
+      simpleFunction<double> DIFF(mu*mu), ONE(1.0);
+      distanceTerm distance(GModel::current(), 1, &DIFF, &ONE);
+      for (std::vector<MElement* >::iterator it = allElems.begin();
+           it != allElems.end(); it++){
+        SElement se((*it));
+        distance.addToMatrix(*dofView, &se);
+      }
+      groupOfElements gr(allElems);
+      distance.addToRightHandSide(*dofView, gr);
+      Msg::Info("Distance Computation: Assembly done");
+      lsys->systemSolve();
+      Msg::Info("Distance Computation: System solved");
+      for (std::map<MVertex*,double >::iterator itv = _distance_map.begin();
+           itv != _distance_map.end() ; ++itv) {
+        MVertex *v = itv->first;
+        double value;
+        dofView->getDofValue(v, 0, 1, value);
+        value = std::min(0.9999, value);
+        double dist = -mu * log(1. - value);
+        itv->second = dist;
+      }
+      printView(_entities, _distance_map);
     }
-
-    double L = norm(SVector3(bbox.max(), bbox.min()));
-    double mu = type*L;
-
-    simpleFunction<double> DIFF(mu*mu), ONE(1.0);
-    distanceTerm distance(GModel::current(), 1, &DIFF, &ONE);
-
-    for (std::vector<MElement* >::iterator it = allElems.begin();
-         it != allElems.end(); it++){
-      SElement se((*it));
-      distance.addToMatrix(*dofView, &se);
-    }
-    groupOfElements gr(allElems);
-    distance.addToRightHandSide(*dofView, gr);
-
-    Msg::Info("Distance Computation: Assembly done");
-    lsys->systemSolve();
-    Msg::Info("Distance Computation: System solved");
-
-    for (std::map<MVertex*,double >::iterator itv = _distance_map.begin();
-         itv != _distance_map.end() ; ++itv) {
-      MVertex *v = itv->first;
-      double value;
-      dofView->getDofValue(v, 0, 1, value);
-      value = std::min(0.9999, value);
-      double dist = -mu * log(1. - value);
-      itv->second = dist;
-    }
-
-    delete dofView;
-
-    printView(_entities, _distance_map);
-
 #endif
   }
 
@@ -578,6 +570,12 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 
 #endif
   }
+
+
+#if defined(HAVE_SOLVER)
+  delete lsys;
+  delete dofView;
+#endif
 
   return view;
 }
