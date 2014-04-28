@@ -66,9 +66,10 @@ void ExtrudeParams::Extrude(int iLayer, int iElemLayer,
   // Trevor Strickler (this definitely relies on fixing lateral boundary
   // extruded surfaces if mesh.ScaleLast is changed by ReplaceDuplicates.  This
   // is done in BoundaryLayers.cpp right now.
-  if(geo.Type == BOUNDARY_LAYER && calcLayerScaleFactor[mesh.BoundaryLayerIndex] &&
-     iLayer == mesh.NbLayer-1 && mesh.BoundaryLayerIndex >= 0 &&
-     mesh.BoundaryLayerIndex <= 1 && normals[mesh.BoundaryLayerIndex]){
+  if(geo.Type == BOUNDARY_LAYER && iLayer == mesh.NbLayer-1 &&
+     mesh.BoundaryLayerIndex >= 0 && mesh.BoundaryLayerIndex <= 1 &&
+     calcLayerScaleFactor[mesh.BoundaryLayerIndex] &&
+     normals[mesh.BoundaryLayerIndex]){
     double scale = 1.0;
     normals[mesh.BoundaryLayerIndex]->get_scale(x, y, z, &scale);
     if(fabs(scale-1.0) <= xyzv::eps)
