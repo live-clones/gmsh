@@ -420,6 +420,7 @@ int GModel::_readMSH2(const std::string &name)
           }
           else{
             if(!getVertices(numVertices, indices, vertexMap, vertices)){
+              delete [] indices;
               fclose(fp);
               return 0;
             }

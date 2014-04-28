@@ -1006,8 +1006,10 @@ bool Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad)
       double rdist = -V1/(V2-V1);
       if (inters && rdist > EPS && rdist < 1.-EPS){
 	SVector3 PZ = P1+rdist*(P2-P1);
-	MVertex *newv = new MVertex (PZ.x(), PZ.y(), PZ.z());
-	if (inDisk) cutEdges.insert(std::make_pair(me,newv));
+	if (inDisk){
+          MVertex *newv = new MVertex (PZ.x(), PZ.y(), PZ.z());
+          cutEdges.insert(std::make_pair(me,newv));
+        }
       }
       else if (inters && rdist <= EPS && inDisk )
 	cutVertices.push_back(me.getVertex(0));
