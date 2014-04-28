@@ -193,7 +193,7 @@ int MeshTransfiniteSurface(GFace *gf)
     MVertex *v = m_vertices[i];
     if(v == corners[0] || v == corners[1] || v == corners[2] ||
        (corners.size() == 4 && v == corners[3])){
-      if(iCorner > 4){
+      if(iCorner > 3){
         Msg::Error("Surface %d transfinite parameters are incoherent", gf->tag());
         return 0;
       }
