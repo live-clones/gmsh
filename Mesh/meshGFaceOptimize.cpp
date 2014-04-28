@@ -1373,12 +1373,12 @@ struct  quadBlob {
 
     // look if it is possible to build a mesh with one defect only
     if (!orderBNodes () )return false;
-    int side = -1;
+    int side = 0;
     int count[5] = {0,0,0,0,0};
     for (unsigned int i = 0; i < bnodes.size(); i++){
       if (topologicalAngle(bnodes[i]) > 0){
-        side++;
         corners[side] = (bnodes[i]);
+        side++;
       }
       else count[side]++;
     }
