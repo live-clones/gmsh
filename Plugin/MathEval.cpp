@@ -126,14 +126,6 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
     return view;
   }
 
-  OctreePost *octree = 0;
-  if(forceInterpolation ||
-     (data1->getNumEntities() != otherData->getNumEntities()) ||
-     (data1->getNumElements() != otherData->getNumElements())){
-    Msg::Info("Other view based on different grid: interpolating...");
-    octree = new OctreePost(otherView);
-  }
-
   if(otherTimeStep < 0 && otherData->getNumTimeSteps() != data1->getNumTimeSteps()){
     Msg::Error("Number of time steps don't match: using step 0");
     otherTimeStep = 0;
@@ -170,6 +162,14 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   mathEvaluator f(expr, variables);
   if(expr.empty()) return view;
   std::vector<double> values(numVariables), res(numComp2);
+
+  OctreePost *octree = 0;
+  if(forceInterpolation ||
+     (data1->getNumEntities() != otherData->getNumEntities()) ||
+     (data1->getNumElements() != otherData->getNumElements())){
+    Msg::Info("Other view based on different grid: interpolating...");
+    octree = new OctreePost(otherView);
+  }
 
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
@@ -236,14 +236,19 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
           values[0] = x[nod]; values[1] = y[nod]; values[2] = z[nod];
           for(int i = 0; i < 9; i++) values[3 + i] = v[i];
           for(int i = 0; i < 9; i++) values[12 + i] = w[i];
-          if(f.eval(values, res))
+          if(f.eval(values, res)){
             for(int i = 0; i < numComp2; i++)
               out->push_back(res[i]);
+          }
+          else{
+            goto end;
+          }
         }
       }
     }
   }
 
+ end:
   if(octree) delete octree;
 
   if(timeStep < 0){
