@@ -711,5 +711,9 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
   copy_vertices(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f);
   copy_elements(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f);
 
+  delete coresp_v;
+  delete coresp_e;
+  delete coresp_f;
+
   return 1;
 }

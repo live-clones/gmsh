@@ -2208,20 +2208,24 @@ static List_T *GetCompoundUniqueEdges(Surface *ps)
 // loop.
 // Only one problem: Sometimes holes can be selected as the first loop, though
 // this should not create many real problems on a copied top surface.
-static List_T* GetOrderedUniqueEdges( Surface *s )
+static List_T* GetOrderedUniqueEdges(Surface *s)
 {
   List_T* unique = GetCompoundUniqueEdges(s);
+  if(!unique) return 0;
 
   // need to sort out the list into ordered, oriented loops before passing
   // these into the gmsh geometry system.
   // Have to get list of surface numbers
   int numgen = List_Nbr(unique);
 
-  if(!numgen) return 0;
+  if(!numgen){
+    List_Delete(unique);
+    return 0;
+  }
 
   List_T *gen_nums = List_Create(numgen, 1, sizeof(int));
 
-  for( int i = 0; i < numgen; i++ ){
+  for(int i = 0; i < numgen; i++){
     Curve *ctemp = 0;
     List_Read(unique, i, &ctemp);
     if( !ctemp ){
@@ -2232,11 +2236,11 @@ static List_T* GetOrderedUniqueEdges( Surface *s )
     List_Add(gen_nums, &(ctemp->Num));
   }
 
-  sortEdgesInLoop(0,gen_nums,1);
+  sortEdgesInLoop(0, gen_nums, 1);
 
   // put sorted list of curve pointers back into compnd_gen and generatrices
   List_Reset(unique);
-  for( int i = 0; i < List_Nbr(gen_nums); i++ ){
+  for(int i = 0; i < List_Nbr(gen_nums); i++){
     Curve *ctemp = 0;
     int j;
     List_Read(gen_nums, i, &j);
@@ -2256,7 +2260,6 @@ static List_T* GetOrderedUniqueEdges( Surface *s )
 
 static int compareTwoPoints(const void *a, const void *b)
 {
-
   Vertex *q = *(Vertex **)a;
   Vertex *w = *(Vertex **)b;
 
@@ -2359,7 +2362,7 @@ static void MaxNumSurface(void *a, void *b)
 static void ReplaceDuplicatePointsNew(double tol = -1.)
 {
   Msg::Info("New Coherence...");
-  if (tol < 0) 
+  if (tol < 0)
     tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
 
   // create kdtree
@@ -2929,7 +2932,7 @@ void ReplaceAllDuplicates()
 
 void ReplaceAllDuplicatesNew(double tol)
 {
-  if (tol < 0) 
+  if (tol < 0)
     tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
   ReplaceDuplicatePointsNew(tol);
   ReplaceDuplicateCurves(NULL);
