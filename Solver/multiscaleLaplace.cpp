@@ -762,6 +762,7 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
   ordering_dirichlet(elements,boundaryNodes);
 
   //Assign Dirichlet BCs
+  // FIXME: this is never deleted
   root = new multiscaleLaplaceLevel;
   root->elements = elements;
   for(unsigned int i = 0; i < boundaryNodes.size(); i++){
@@ -789,14 +790,14 @@ multiscaleLaplace::multiscaleLaplace (std::vector<MElement *> &elements,
 
   //Split the mesh in left and right
   //or Cut the mesh in left and right (of bamg)
-  if ( CTX::instance()->mesh.algo2d ==  ALGO_2D_BAMG){ 
+  if ( CTX::instance()->mesh.algo2d ==  ALGO_2D_BAMG){
     printf("-------------> EXACT CUTTING \n");
     cutElems(elements);
-  } 
+  }
   else {
     splitElems(elements);
   }
- 
+
 }
 
 void multiscaleLaplace::fillCoordinates (multiscaleLaplaceLevel & level,
@@ -949,6 +950,7 @@ void multiscaleLaplace::parametrize(multiscaleLaplaceLevel & level)
       }
     }
 
+    // FIXME: this is never deleted
     multiscaleLaplaceLevel *nextLevel = new multiscaleLaplaceLevel;
     nextLevel->elements = regions[i];
     nextLevel->recur = level.recur+1;
@@ -979,7 +981,7 @@ void multiscaleLaplace::parametrize(multiscaleLaplaceLevel & level)
       Msg::Info("Level (%d-%d) Multiscale Laplace (reg[%d] =  %d too small)",
                 level.recur,level.region, i, tooSmallv.size());
       level.children.push_back(nextLevel);
-      parametrize (*nextLevel);
+      parametrize(*nextLevel);
     }
   }
 }
@@ -1027,6 +1029,8 @@ void multiscaleLaplace::parametrize_method (multiscaleLaplaceLevel & level,
       SElement se(e);
       mapping->addToMatrix(myAssembler, &se);
     }
+
+    delete mapping;
 
     // solve
     if (myAssembler.sizeOfR() != 0) _lsys->systemSolve();
