@@ -608,7 +608,7 @@ static void elementSplitMesh(MElement *e, std::vector<gLevelset *> &RPN,
   MElement *copy = e->copy(vertexMap, newParents, newDomains);
   double eps = 1.e-6;
   bool splitElem = false;
- 
+
   //split acording to center of gravity
   // double lsMean = 0.0;
   // int lsTag = 1;
@@ -638,7 +638,7 @@ static void elementSplitMesh(MElement *e, std::vector<gLevelset *> &RPN,
       break;
     }
   }
-  
+
   //invert tag
   //lsTag = 1; //negative ls
   //for(int k = 0; k < e->getNumVertices(); k++){
@@ -1412,7 +1412,7 @@ static void elementCutMesh(MElement *e, std::vector<gLevelset *> &RPN,
     break;
   default :
     Msg::Error("This type of element cannot be cut %d.",eType);
-    return;
+    break;
   }
 
   for(unsigned int i = 0; i < ipS.size(); i++)
