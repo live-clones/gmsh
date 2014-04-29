@@ -807,7 +807,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     }
 
     std::string fileName = "onelab.db";
-    // add user defined tag, if any 
+    // add user defined tag, if any
     std::vector<onelab::string> ps;
     onelab::server::instance()->get(ps,"0Metamodel/9Tag");
     if(ps.size()){
@@ -1311,6 +1311,15 @@ static void setGmshOption(T &n)
   if(opt.empty()) return;
   if(opt == "ResetDatabase"){ // special option to reset the onelab db
     resetDb(false);
+    FlGui::instance()->rebuildTree(false);
+    return;
+  }
+  if(opt == "Reset"){ // reset db + models except current one
+    resetDb(false);
+    for(int i = PView::list.size() - 1; i >= 0; i--)
+      delete PView::list[i];
+    for(int i = GModel::list.size() - 1; i >= 0; i--)
+      if(GModel::list[i] != GModel::current()) delete GModel::list[i];
     FlGui::instance()->rebuildTree(false);
     return;
   }
