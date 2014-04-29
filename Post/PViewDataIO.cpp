@@ -215,8 +215,13 @@ bool PViewData::toVector(std::vector<std::vector<double> > &vec)
 
 bool PViewData::fromVector(const std::vector<std::vector<double> > &vec)
 {
+  if(empty() || !getNumTimeSteps()){
+    Msg::Warning("Cannot import vector in an empty view; skipping");
+    return false;
+  }
+
   if((int)vec.size() != getNumTimeSteps()){
-    Msg::Error("Incompatible number of steps in vector (%d) and view (%d)",
+    Msg::Error("Incompatible number of steps in vector for view import (%d!=%d)",
                (int)vec.size(), getNumTimeSteps());
     return false;
   }
@@ -234,7 +239,8 @@ bool PViewData::fromVector(const std::vector<std::vector<double> > &vec)
               setValue(step, ent, ele, nod, comp, vec[step][i++]);
             }
             else{
-              Msg::Error("Bad index (%d) in vector (%d)", i, (int)vec[step].size());
+              Msg::Error("Bad index (%d) in vector (%d) for view import",
+                         i, (int)vec[step].size());
               return false;
             }
           }
