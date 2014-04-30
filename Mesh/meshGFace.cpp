@@ -708,7 +708,7 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   fprintf(ff2,"};\n");
   fclose(ff2);
 
-  filterOverlappingElements (blTris,blQuads,_columns->_elemColumns,_columns->_toFirst);
+  //  filterOverlappingElements (blTris,blQuads,_columns->_elemColumns,_columns->_toFirst);
 
   for (unsigned int i = 0; i < blQuads.size();i++){
     addOrRemove(blQuads[i]->getVertex(0),blQuads[i]->getVertex(1),bedges);

@@ -1567,3 +1567,19 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &dat
 
   return element;
 }
+
+double MElement::skewness() {
+  double minsk = 1.0;
+  for (int i=0;i<getNumFaces();i++){
+    MFace f = getFace(i);
+    if (f.getNumVertices() == 3){
+      //      MTriangle t (f.getVertex(0),f.getVertex(1),f.getVertex(2));
+      //      minsk = std::min(minsk, t.etaShapeMeasure ());
+    }
+    else if (f.getNumVertices() == 4){
+      MQuadrangle q (f.getVertex(0),f.getVertex(1),f.getVertex(2),f.getVertex(3));
+      minsk = std::min(minsk, q.etaShapeMeasure ());
+    }
+  }
+  return minsk;
+}

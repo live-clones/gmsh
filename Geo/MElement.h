@@ -179,6 +179,7 @@ class MElement
   double maxDistToStraight();
 
   // get the quality measures
+  double skewness();
   virtual double rhoShapeMeasure();
   virtual double gammaShapeMeasure(){ return 0.; }
   virtual double etaShapeMeasure(){ return 0.; }

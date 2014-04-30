@@ -20,6 +20,7 @@
 #include "CutBox.h"
 #include "Skin.h"
 #include "AnalyseCurvedMesh.h"
+#include "CurvedBndDist.h"
 #include "MathEval.h"
 #include "ExtractElements.h"
 #include "SimplePartition.h"
@@ -185,6 +186,8 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));
 #endif
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("CurvedBndDist", GMSH_RegisterCurvedBndDistPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("ModifyComponent", GMSH_RegisterModifyComponentPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>

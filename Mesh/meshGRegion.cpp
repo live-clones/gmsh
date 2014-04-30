@@ -45,6 +45,8 @@ class splitQuadRecovery {
   std::multimap<GEntity*, std::pair<MVertex*,MFace> >_data;
   bool _empty;
  public :
+  std::map<MFace, MVertex*, Less_Face>_invmap;
+  std::set<MFace, Less_Face>_toDelete;
   splitQuadRecovery() : _empty(true) {}
   bool empty(){ return _empty; }
   void setEmpty(bool val){ _empty = val; }
@@ -65,43 +67,49 @@ class splitQuadRecovery {
       (*it)->triangles.clear();
       for (std::multimap<GEntity*, std::pair<MVertex*,MFace> >::iterator it2 =
              _data.lower_bound(*it); it2 != _data.upper_bound(*it) ; ++it2){
-        MVertex *v = it2->second.first;
-        v->onWhat()->mesh_vertices.erase(std::find(v->onWhat()->mesh_vertices.begin(),
-                                                   v->onWhat()->mesh_vertices.end(), v));
         const MFace &f = it2->second.second;
-        std::set<MFace, Less_Face>::iterator itf0 = allFaces.find(MFace(f.getVertex(0),
-                                                                        f.getVertex(1),v));
-        std::set<MFace, Less_Face>::iterator itf1 = allFaces.find(MFace(f.getVertex(1),
-                                                                        f.getVertex(2),v));
-        std::set<MFace, Less_Face>::iterator itf2 = allFaces.find(MFace(f.getVertex(2),
-                                                                        f.getVertex(3),v));
-        std::set<MFace, Less_Face>::iterator itf3 = allFaces.find(MFace(f.getVertex(3),
-                                                                        f.getVertex(0),v));
-        if (itf0 != allFaces.end() && itf1 != allFaces.end() &&
-            itf2 != allFaces.end() && itf3 != allFaces.end()){
-          (*it)->quadrangles.push_back(new MQuadrangle(f.getVertex(0), f.getVertex(1),
-                                                       f.getVertex(2), f.getVertex(3)));
-	allFaces.erase(*itf0);
-	allFaces.erase(*itf1);
-	allFaces.erase(*itf2);
-	allFaces.erase(*itf3);
-	// printf("some pyramids should be created %d regions\n", (*it)->numRegions());
-	for (int iReg = 0; iReg < (*it)->numRegions(); iReg++){
-	  if (iReg == 1) {
-            Msg::Error("Cannot build pyramids on non manifold faces");
-            v = new MVertex(v->x(), v->y(), v->z(), (*it)->getRegion(iReg));
-          }
-	  else
-            v->setEntity ((*it)->getRegion(iReg));
-	  (*it)->getRegion(iReg)->pyramids.push_back
-            (new MPyramid(f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3), v));
-	  (*it)->getRegion(iReg)->mesh_vertices.push_back(v);
-	  NBPY++;
+	MVertex *v = it2->second.first;
+	v->onWhat()->mesh_vertices.erase(std::find(v->onWhat()->mesh_vertices.begin(),
+						   v->onWhat()->mesh_vertices.end(), v));
+	std::set<MFace, Less_Face>::iterator itf0 = allFaces.find(MFace(f.getVertex(0),
+									f.getVertex(1),v));
+	std::set<MFace, Less_Face>::iterator itf1 = allFaces.find(MFace(f.getVertex(1),
+									f.getVertex(2),v));
+	std::set<MFace, Less_Face>::iterator itf2 = allFaces.find(MFace(f.getVertex(2),
+									f.getVertex(3),v));
+	std::set<MFace, Less_Face>::iterator itf3 = allFaces.find(MFace(f.getVertex(3),
+									f.getVertex(0),v));
+	if (itf0 != allFaces.end() && itf1 != allFaces.end() &&
+	    itf2 != allFaces.end() && itf3 != allFaces.end()){
+	  (*it)->quadrangles.push_back(new MQuadrangle(f.getVertex(0), f.getVertex(1),
+						       f.getVertex(2), f.getVertex(3)));
+	  allFaces.erase(*itf0);
+	  allFaces.erase(*itf1);
+	  allFaces.erase(*itf2);
+	  allFaces.erase(*itf3);
+	  // printf("some pyramids should be created %d regions\n", (*it)->numRegions());
+	  for (int iReg = 0; iReg < (*it)->numRegions(); iReg++){
+	    if (iReg == 1) {
+	      Msg::Error("Cannot build pyramids on non manifold faces");
+	      v = new MVertex(v->x(), v->y(), v->z(), (*it)->getRegion(iReg));
+	    }
+	    else
+	      v->setEntity ((*it)->getRegion(iReg));
+	    // A quad face connected to an hex or a primsm --> leave the quad face as is
+	    if (_toDelete.find(f) == _toDelete.end()){
+	      (*it)->getRegion(iReg)->pyramids.push_back
+		(new MPyramid(f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3), v));
+	      (*it)->getRegion(iReg)->mesh_vertices.push_back(v);
+	      NBPY++;
+	    }
+	    else {
+	      delete v;
+	    }
+	  }
 	}
-        }
       }
       for (std::set<MFace, Less_Face>::iterator itf = allFaces.begin();
-           itf != allFaces.end(); ++itf){
+	   itf != allFaces.end(); ++itf){
         (*it)->triangles.push_back
           (new MTriangle(itf->getVertex(0), itf->getVertex(1), itf->getVertex(2)));
       }
@@ -258,6 +266,7 @@ void getBoundingInfoAndSplitQuads(GRegion *gr,
 				   (v0->y() + v1->y() + v2->y() + v3->y())*0.25,
 				   (v0->z() + v1->z() + v2->z() + v3->z())*0.25,itx->second);
       sqr.add(f,newv,itx->second);
+      sqr._invmap[f] = newv;
       allBoundingFaces[MFace(v0,v1,newv)] = itx->second;
       allBoundingFaces[MFace(v1,v2,newv)] = itx->second;
       allBoundingFaces[MFace(v2,v3,newv)] = itx->second;
@@ -288,6 +297,15 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
   std::set<MVertex*> allBoundingVertices;
   std::map<MFace,GEntity*,Less_Face> allBoundingFaces;
   getBoundingInfoAndSplitQuads(gr, allBoundingFaces, allBoundingVertices, sqr);
+
+  //// TEST
+  {
+    std::vector<MVertex*>ALL;
+    std::vector<MTetrahedron*> MESH;
+    ALL.insert(ALL.begin(),allBoundingVertices.begin(),allBoundingVertices.end());
+    //    delaunayMeshIn3D (ALL,MESH);
+    //    exit(1);
+  }
 
   in.mesh_dim = 3;
   in.firstnumber = 1;
@@ -504,8 +522,20 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 
 static void addOrRemove(const MFace &f,
 			MElement *e,
-			std::map<MFace,MElement*,Less_Face> & bfaces)
+			std::map<MFace,MElement*,Less_Face> & bfaces,
+			splitQuadRecovery &sqr)
 {
+  {
+    std::map<MFace, MVertex*, Less_Face>::const_iterator it = sqr._invmap.find(f);
+    if (it != sqr._invmap.end()){
+      addOrRemove (MFace(it->second, f.getVertex(0),f.getVertex(1)),e,bfaces,sqr);
+      addOrRemove (MFace(it->second, f.getVertex(1),f.getVertex(2)),e,bfaces,sqr);
+      addOrRemove (MFace(it->second, f.getVertex(2),f.getVertex(3)),e,bfaces,sqr);
+      addOrRemove (MFace(it->second, f.getVertex(3),f.getVertex(0)),e,bfaces,sqr);
+      return;
+    }
+  }
+
   std::map<MFace,MElement*,Less_Face>::iterator it = bfaces.find(f);
   if (it == bfaces.end())bfaces.insert(std::make_pair(f,e));
   else bfaces.erase(it);
@@ -523,11 +553,12 @@ static void addOrRemove(const MFace &f,
 
 */
 
-bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
-						       std::vector<MTetrahedron*> &tets,
-						       std::vector<MHexahedron*> &hexes,
-						       std::vector<MPrism*> &prisms,
-						       std::vector<MPyramid*> &pyramids)
+static bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
+							      std::vector<MTetrahedron*> &tets,
+							      std::vector<MHexahedron*> &hexes,
+							      std::vector<MPrism*> &prisms,
+							      std::vector<MPyramid*> &pyramids,
+							      splitQuadRecovery & sqr)
 {
   std::set<MElement*> all;
   all.insert(hexes.begin(),hexes.end());
@@ -555,7 +586,7 @@ bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
       else {
 	// what to do ??????
 	// two tets and one prism --> the prism should be
-	// geometrically on the other side of the
+	// geometrically on the other side of the tet
 	if (itf->second.second) {
 	  MElement *prism=0, *t1=0, *t2=0;
 	  if (itf->second.second->getType () == TYPE_PRI || itf->second.second->getType () == TYPE_PYR) {
@@ -621,15 +652,21 @@ bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
     connected.insert(FIRST);
     for (int i=0;i<FIRST->getNumFaces();i++){
       MFace f = FIRST->getFace(i);
-      GFace* gfound = findInFaceSearchStructure (f.getVertex(0),
-						 f.getVertex(1),
-						 f.getVertex(2),
-						 search);
+      std::map<MFace, MVertex*, Less_Face>::iterator it = sqr._invmap.find(f);
+      GFace* gfound = 0;
+      if (it != sqr._invmap.end()){
+	gfound = (GFace*)it->second->onWhat();
+	// one pyramid is useless because one element with a quad face impacts the
+	// boundary of the domain.
+	sqr._toDelete.insert(f);
+      }
+      else gfound = findInFaceSearchStructure (f,search);
       if (!gfound){
 	std::map<MFace,std::pair<MElement*,MElement*>,Less_Face>::iterator
 	  itf = myGraph.find(f);
 	MElement *t_neigh = itf->second.first == FIRST ?
 	  itf->second.second :  itf->second.first;
+	if (!t_neigh)printf("oulalalalalalalala %d vertices\n",f.getNumVertices());
 	if (connected.find(t_neigh) == connected.end())myStack.push(t_neigh);
       }
       else {
@@ -638,6 +675,7 @@ bool AssociateElementsToModelRegionWithBoundaryLayers (GRegion *gr,
       }
     }
   }
+
   //  printf ("found a set of %d elements that are connected with %d bounding faces\n",connected.size(),faces_bound.size());
   GRegion *myGRegion = getRegionFromBoundingFaces(gr->model(), faces_bound);
   //  printf("REGION %d %d\n",myGRegion->tag(),gr->tag());
@@ -770,7 +808,8 @@ static int getWedge(BoundaryLayerColumns* _columns, MVertex *v1, MVertex *v2,
   return fanSize  + 2;
 }
 
-static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
+
+static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr, splitQuadRecovery & sqr)
 {
   if (getBLField(gr->model())) insertVerticesInRegion(gr,-1);
   if (!buildAdditionalPoints3D (gr)) return false;
@@ -786,20 +825,34 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
   faces.insert(faces.begin(), embedded_faces.begin(),embedded_faces.end());
   std::set<MVertex*> verts;
 
+  {
+    std::list<GFace*>::iterator itf = faces.begin();
+    while(itf != faces.end()){
+      for(unsigned int i = 0; i< (*itf)->getNumMeshElements(); i++){
+	MElement *e = (*itf)->getMeshElement(i);
+	addOrRemove (e->getFace(0),0,bfaces,sqr);
+      }
+      ++itf;
+    }
+  }
+
   std::list<GFace*>::iterator itf = faces.begin();
   while(itf != faces.end()){
     for(unsigned int i = 0; i< (*itf)->triangles.size(); i++){
       MVertex *v1 = (*itf)->triangles[i]->getVertex(0);
       MVertex *v2 = (*itf)->triangles[i]->getVertex(1);
       MVertex *v3 = (*itf)->triangles[i]->getVertex(2);
-      MFace dv(v1,v2,v3);
-      addOrRemove (dv,0,bfaces);
+      MFace dv (v1,v2,v3);
       for (unsigned int SIDE = 0 ; SIDE < _columns->_normals3D.count(dv); SIDE ++){
 	faceColumn fc =  _columns->getColumns(*itf,v1, v2, v3, SIDE);
 	const BoundaryLayerData & c1 = fc._c1;
 	const BoundaryLayerData & c2 = fc._c2;
 	const BoundaryLayerData & c3 = fc._c3;
 	int N = std::min(c1._column.size(),std::min(c2._column.size(),c3._column.size()));
+
+	//	double distMax = getDistMax (v1, v2, v3, c1._n, c2._n, c3._n);
+	MFace f_low (v1,v2,v3);
+	SVector3 n_low = f_low.normal();
 	//	printf("%d Layers\n",N);
 	std::vector<MElement*> myCol;
 	for (int l=0;l < N ;++l){
@@ -817,12 +870,19 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 	    v12 = c2._column[l-1];
 	    v13 = c3._column[l-1];
 	  }
-	  //	  printf("coucoucouc %p %p %p %p %p %p\n",v11,v12,v13,v21,v22,v23);
+	  MFace f_up (v21,v22,v23);
+	  SVector3 n_up = f_up.normal();
+	  double dotProd = dot(n_up,n_low);
 	  MPrism *prism = new MPrism(v11,v12,v13,v21,v22,v23);
-	  // store the layer the element belongs
-	  prism->setPartition(l+1);
-	  blPrisms.push_back(prism);
-	  myCol.push_back(prism);
+	  if (dotProd > 0.2 && prism->skewness() > 0.1){
+	    prism->setPartition(l+1);
+	    blPrisms.push_back(prism);
+	    myCol.push_back(prism);
+	  }
+	  else {
+	    delete prism;
+	    l = N+1;
+	  }
 	}
 	if (!myCol.empty()){
 	  for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
@@ -909,8 +969,10 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
     }
     ++ite;
   }
-
-  //  filterOverlappingElements (blPrisms,blHexes,_columns->_elemColumns,_columns->_toFirst);
+  // ------------------------------------------------------------------------------------
+  // FIXME : NOT 100 % CORRECT
+  //    filterOverlappingElements (blPrisms,blHexes,_columns->_elemColumns,_columns->_toFirst);
+  // ------------------------------------------------------------------------------------
   {
     FILE *ff2 = fopen ("tato3D.pos","w");
     fprintf(ff2,"View \" \"{\n");
@@ -926,13 +988,13 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 
   for (unsigned int i = 0; i < blPrisms.size();i++){
     for (unsigned int j=0;j<5;j++)
-      addOrRemove(blPrisms[i]->getFace(j),blPrisms[i],bfaces);
+      addOrRemove(blPrisms[i]->getFace(j),blPrisms[i],bfaces,sqr);
     for (int j = 0; j < 6; j++)
       if(blPrisms[i]->getVertex(j)->onWhat() == gr)verts.insert(blPrisms[i]->getVertex(j));
   }
   for (unsigned int i = 0; i < blHexes.size();i++){
     for (unsigned int j=0;j<6;j++)
-      addOrRemove(blHexes[i]->getFace(j),blHexes[i],bfaces);
+      addOrRemove(blHexes[i]->getFace(j),blHexes[i],bfaces, sqr);
     for (int j = 0; j < 8; j++)
       if(blHexes[i]->getVertex(j)->onWhat() == gr)verts.insert(blHexes[i]->getVertex(j));
   }
@@ -1037,7 +1099,11 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
   printf("%d tets\n", (int)gr->tetrahedra.size());
   deMeshGFace _kill;
   _kill (nf);
+  //<<<<<<< .mine
   gr->model()->remove(nf);
+  //  delete nf;
+  //=======
+  //>>>>>>> .r18259
   delete nf;
 
   gr->set(faces);
@@ -1045,8 +1111,7 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr)
 
   gr->model()->writeMSH("BL_start.msh");
 
-  AssociateElementsToModelRegionWithBoundaryLayers(gr, gr->tetrahedra, blHexes,
-                                                   blPrisms, blPyrs);
+  AssociateElementsToModelRegionWithBoundaryLayers (gr, gr->tetrahedra , blHexes, blPrisms, blPyrs, sqr);
 
   gr->model()->writeMSH("BL_start2.msh");
 
@@ -1224,7 +1289,7 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
   // restore the initial set of faces
   gr->set(faces);
 
-  bool _BL = modifyInitialMeshForTakingIntoAccountBoundaryLayers(gr);
+  bool _BL = modifyInitialMeshForTakingIntoAccountBoundaryLayers(gr,sqr);
 
   // now do insertion of points
   if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)
@@ -1274,7 +1339,7 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
 }
 
 // uncomment this to test the new code
-#define NEW_CODE
+//##define NEW_CODE
 
 void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 {
@@ -1284,6 +1349,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   MeshDelaunayVolumeTetgen(regions);
   return;
 #endif
+  splitQuadRecovery sqr;
 
   for(unsigned int i = 0; i < regions.size(); i++)
     Msg::Info("Meshing volume %d (Delaunay)", regions[i]->tag());
@@ -1326,7 +1392,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   // restore the initial set of faces
   gr->set(faces);
 
-  bool _BL = modifyInitialMeshForTakingIntoAccountBoundaryLayers(gr);
+  bool _BL = modifyInitialMeshForTakingIntoAccountBoundaryLayers(gr,sqr);
 
   // now do insertion of points
   if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)
@@ -1471,8 +1537,12 @@ void deMeshGRegion::operator() (GRegion *gr)
   gr->deleteMesh();
 }
 
+/// X_1 (1-u-v) + X_2 u + X_3 v = P_x + t N_x
+/// Y_1 (1-u-v) + Y_2 u + Y_3 v = P_y + t N_y
+/// Z_1 (1-u-v) + Z_2 u + Z_3 v = P_z + t N_z
+
 int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
-                            double P[3], double N[3], double eps_prec)
+                            double P[3], double N[3], const double eps_prec)
 {
   double mat[3][3], det;
   double b[3], res[3];
@@ -1494,8 +1564,10 @@ int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
   b[2] = P[2] - Z[0];
 
   if(!sys3x3_with_tol(mat, b, res, &det))
-    return 0;
-
+    {
+      return 0;
+    }
+  //  printf("coucou %g %g %g\n",res[0],res[1],res[2]);
   if(res[0] >= eps_prec && res[0] <= 1.0 - eps_prec &&
      res[1] >= eps_prec && res[1] <= 1.0 - eps_prec &&
      1 - res[0] - res[1] >= eps_prec && 1 - res[0] - res[1] <= 1.0 - eps_prec){
@@ -1509,6 +1581,7 @@ int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
     return 0;
   }
   else{
+    printf("non robust stuff\n");
     // the intersection is not robust, try another triangle
     return -10000;
   }
@@ -1709,6 +1782,7 @@ void optimizeMeshGRegionGmsh::operator() (GRegion *gr)
   optimizeMesh(gr, QMTET_2);
 }
 
+
 bool buildFaceSearchStructure(GModel *model, fs_cont &search)
 {
   search.clear();
@@ -1723,13 +1797,9 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search)
 
   std::set<GFace*>::iterator fit = faces_to_consider.begin();
   while(fit != faces_to_consider.end()){
-    for(unsigned int i = 0; i < (*fit)->triangles.size(); i++){
-      MVertex *p1 = (*fit)->triangles[i]->getVertex(0);
-      MVertex *p2 = (*fit)->triangles[i]->getVertex(1);
-      MVertex *p3 = (*fit)->triangles[i]->getVertex(2);
-      MVertex *p = std::min(p1, std::min(p2, p3));
-      search.insert(std::pair<MVertex*, std::pair<MTriangle*, GFace*> >
-                    (p, std::pair<MTriangle*, GFace*>((*fit)->triangles[i], *fit)));
+    for(unsigned int i = 0; i < (*fit)->getNumMeshElements(); i++){
+      MFace ff = (*fit)->getMeshElement(i)->getFace(0);
+      search[ff] = *fit;
     }
     ++fit;
   }
@@ -1757,20 +1827,20 @@ bool buildEdgeSearchStructure(GModel *model, es_cont &search)
 GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3,
                                  const fs_cont &search)
 {
-  MVertex *p = std::min(p1, std::min(p2, p3));
-
-  for(fs_cont::const_iterator it = search.lower_bound(p);
-      it != search.upper_bound(p);
-      ++it){
-    MTriangle *t = it->second.first;
-    GFace *gf= it->second.second;
-    if((t->getVertex(0) == p1 || t->getVertex(0) == p2 || t->getVertex(0) == p3) &&
-       (t->getVertex(1) == p1 || t->getVertex(1) == p2 || t->getVertex(1) == p3) &&
-       (t->getVertex(2) == p1 || t->getVertex(2) == p2 || t->getVertex(2) == p3))
-      return gf;
-  }
-  return 0;
+  MFace ff(p1,p2,p3);
+  fs_cont::const_iterator it = search.find(ff);
+  if (it == search.end())return 0;
+  return it->second;
 }
+
+GFace *findInFaceSearchStructure(const MFace &ff, 
+                                 const fs_cont &search)
+{
+  fs_cont::const_iterator it = search.find(ff);
+  if (it == search.end())return 0;
+  return it->second;
+}
+
 
 GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2, const es_cont &search)
 {

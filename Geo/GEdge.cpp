@@ -14,9 +14,10 @@
 #include "MLine.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
+#include "closestPoint.h"
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
-  : GEntity(model, tag), _tooSmall(false), v0(_v0), v1(_v1), compound(0)
+  : GEntity(model, tag), _tooSmall(false), v0(_v0), v1(_v1), compound(0),_cp(0)
 {
   if(v0) v0->addEdge(this);
   if(v1 && v1 != v0) v1->addEdge(this);
@@ -28,7 +29,7 @@ GEdge::~GEdge()
 {
   if(v0) v0->delEdge(this);
   if(v1 && v1 != v0) v1->delEdge(this);
-
+  if (_cp)delete _cp;
   deleteMesh();
 }
 
@@ -376,49 +377,6 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
   return point(t);
 }
 
-bool GEdge::computeDistanceFromMeshToGeometry (double &d2, double &dmax)
-{
-  d2 = 0.0; dmax = 0.0;
-  if (geomType() == Line) return true;
-  if (!lines.size())return false;
-  IntPt *pts;
-  int npts;
-  lines[0]->getIntegrationPoints(2*lines[0]->getPolynomialOrder(), &npts, &pts);
-
-  for (unsigned int i = 0; i < lines.size(); i++){
-    MLine *l = lines[i];
-    double t[256];
-
-    for (int j=0; j< l->getNumVertices();j++){
-      MVertex *v = l->getVertex(j);
-      if (v->onWhat() == getBeginVertex()){
-	t[j] = getLowerBound();
-      }
-      else if (v->onWhat() == getEndVertex()){
-	t[j] = getUpperBound();
-      }
-      else {
-	v->getParameter(0,t[j]);
-      }
-    }
-    for (int j=0;j<npts;j++){
-      SPoint3 p;
-      l->pnt(pts[j].pt[0],0,0,p);
-      double tinit = l->interpolate(t,pts[j].pt[0],0,0);
-      GPoint pc = closestPoint(p, tinit);
-      if (!pc.succeeded())continue;
-      double dsq =
-	(pc.x()-p.x())*(pc.x()-p.x()) +
-	(pc.y()-p.y())*(pc.y()-p.y()) +
-	(pc.z()-p.z())*(pc.z()-p.z());
-      d2 += pts[i].weight * fabs(l->getJacobianDeterminant(pts[j].pt[0],0,0)) * dsq;
-      dmax = std::max(dmax,sqrt(dsq));
-    }
-  }
-  d2 = sqrt(d2);
-  return true;
-}
-
 double GEdge::parFromPoint(const SPoint3 &P) const
 {
   double t;
@@ -526,6 +484,18 @@ void GEdge::relocateMeshVertices()
     }
   }
 }
+
+SPoint3 GEdge :: closestPoint (SPoint3 &p, double tolerance)
+{
+  if (!_cp || _cp->tol() != tolerance)    {
+    if(_cp)printf("coucou %12.15E %22.15E \n",tolerance,_cp->tol());
+    else printf("coucou %12.5E \n",tolerance);
+    if (_cp) delete _cp;
+    _cp = new closestPointFinder (this, tolerance);
+  }
+  return (*_cp)(p);
+}
+
 
 typedef struct {
   SPoint3 p;

@@ -106,6 +106,29 @@ bool OptHOM::addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj)
   return true;
 }
 
+bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gradObj)
+{
+  maxDistCAD = 0.0;
+
+  std::vector<double> gradF;
+  double DISTANCE = 0.0;
+  for (int iEl = 0; iEl < mesh.nEl(); iEl++) {
+    double f;
+    if (mesh.bndDistAndGradients(iEl, f, gradF, geomTol)) {
+      maxDistCAD = std::max(maxDistCAD,f);
+      DISTANCE += f;
+      Obj += f * factor;
+      for (size_t i = 0; i < mesh.nPCEl(iEl); ++i){
+        gradObj[mesh.indPCEl(iEl, i)] += gradF[i] * factor;
+	//	printf("gradf[%d] = %12.5E\n",i,gradF[i]*factor);
+      }
+    }
+  }
+  //  printf("DIST = %12.5E\n",DISTANCE);
+  return true;
+
+}
+
 bool OptHOM::addMetricMinObjGrad(double &Obj, alglib::real_1d_array &gradObj)
 {
 
@@ -132,7 +155,7 @@ bool OptHOM::addMetricMinObjGrad(double &Obj, alglib::real_1d_array &gradObj)
 }
 
 // Contribution of the vertex distance to the objective function value and
-// gradients (2D version)
+// gradients
 bool OptHOM::addDistObjGrad(double Fact, double Fact2, double &Obj,
                             alglib::real_1d_array &gradObj)
 {
@@ -169,7 +192,10 @@ void OptHOM::evalObjGrad(const alglib::real_1d_array &x, double &Obj,
   addDistObjGrad(lambda, lambda2, Obj, gradObj);
   if(_optimizeMetricMin)
     addMetricMinObjGrad(Obj, gradObj);
-  if ((minJac > barrier_min) && (maxJac < barrier_max || !_optimizeBarrierMax)) {
+  if(_optimizeCAD)
+    addBndObjGrad(lambda3, Obj, gradObj);
+  //  printf("maxDistCAD = %12.5E distMax = %12.5E Obj %12.5E\n",maxDistCAD,distance_max,Obj);
+  if ((minJac > barrier_min) && (maxJac < barrier_max || !_optimizeBarrierMax) && (maxDistCAD < distance_max|| !_optimizeCAD) ) {
     Msg::Info("Reached %s (%g %g) requirements, setting null gradient",
               _optimizeMetricMin ? "svd" : "jacobian", minJac, maxJac);
     Obj = 0.;
@@ -268,11 +294,12 @@ void OptHOM::calcScale(alglib::real_1d_array &scale)
 void OptHOM::OptimPass(alglib::real_1d_array &x,
                        const alglib::real_1d_array &initGradObj, int itMax)
 {
+
   static const double EPSG = 0.;
   static const double EPSF = 0.;
   static const double EPSX = 0.;
   static int OPTMETHOD = 1;
-
+  
   Msg::Info("--- Optimization pass with initial jac. range (%g, %g), jacBar = %g",
             minJac, maxJac, jacBar);
 
@@ -332,20 +359,24 @@ void OptHOM::OptimPass(alglib::real_1d_array &x,
   }
 }
 
-int OptHOM::optimize(double weightFixed, double weightFree, double b_min,
+int OptHOM::optimize(double weightFixed, double weightFree, double weightCAD, double b_min,
                      double b_max, bool optimizeMetricMin, int pInt,
-                     int itMax, int optPassMax)
+                     int itMax, int optPassMax, int optCAD, double distanceMax, double tolerance)
 {
   barrier_min = b_min;
   barrier_max = b_max;
+  distance_max = distanceMax;
   progressInterv = pInt;
 //  powM = 4;
 //  powP = 3;
 
   _optimizeMetricMin = optimizeMetricMin;
+  _optimizeCAD = optCAD;
   // Set weights & length scale for non-dimensionalization
   lambda = weightFixed;
   lambda2 = weightFree;
+  lambda3 = weightCAD;
+  geomTol = tolerance;
   std::vector<double> dSq(mesh.nEl());
   mesh.distSqToStraight(dSq);
   const double maxDSq = *max_element(dSq.begin(),dSq.end());
@@ -384,13 +415,14 @@ int OptHOM::optimize(double weightFixed, double weightFree, double b_min,
 
   int ITER = 0;
   bool minJacOK = true;
-  while (minJac < barrier_min) {
+  while (minJac < barrier_min || (maxDistCAD > distance_max && _optimizeCAD)) {
     const double startMinJac = minJac;
     OptimPass(x, gradObj, itMax);
     recalcJacDist();
     jacBar = (minJac > 0.) ? 0.9*minJac : 1.1*minJac;
+    if (_optimizeCAD)   jacBar = std::min(jacBar,barrier_min); 
     if (ITER ++ > optPassMax) {
-      minJacOK = (minJac > barrier_min);
+      minJacOK = (minJac > barrier_min && (maxDistCAD < distance_max || !_optimizeCAD));
       break;
     }
     if (fabs((minJac-startMinJac)/startMinJac) < 0.01) {

@@ -25,7 +25,7 @@ struct HilbertSort
 	   double BoundingBoxXmin, double BoundingBoxXmax,
             double BoundingBoxYmin, double BoundingBoxYmax,
 	   double BoundingBoxZmin, double BoundingBoxZmax, int depth);
-  HilbertSort (int m = 0, int l=1) : maxDepth(m),Limit(l)
+  HilbertSort (int m = 0, int l=2) : maxDepth(m),Limit(l)
   {
     ComputeGrayCode(3);
   }
@@ -54,7 +54,7 @@ struct HilbertSort
     bbox *= 1.01;
     MVertex**pv = &v[0];
     int depth;
-    MultiscaleSortHilbert(pv, v.size(), 128, 0.125,&depth);
+    MultiscaleSortHilbert(pv, v.size(), 64, 0.125,&depth);
   }
 };
 

@@ -155,6 +155,10 @@ class Curve{
     Color.type = 1;
     Color.geom = Color.mesh = value;
   }
+  bool degenerate() const{
+    if (beg == end && Typ ==  MSH_SEGM_LINE)return true;
+    return false;
+  }
 };
 
 class EdgeLoop{
@@ -214,6 +218,7 @@ class Surface{
       }
     }
   }
+  bool degenerate() const;
 };
 
 class SurfaceLoop{

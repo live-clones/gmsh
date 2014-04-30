@@ -63,6 +63,7 @@ class MVertexPositionSet{
         return _vertices[_index[i]];
     }
     if(_index[0] >= 0 && sqrt(_dist[0]) < tolerance){
+      //      printf("tol %g dist %g x %g %g %g\n",tolerance,_dist[0],x,y,z);
       _vertices[_index[0]]->setIndex(-1);
       return _vertices[_index[0]];
     }

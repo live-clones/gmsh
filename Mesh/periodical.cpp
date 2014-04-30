@@ -185,7 +185,12 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
   delta = 0;
 
   container contA(min_x-delta,max_x+delta,min_y-delta,max_y+delta,min_z-delta,max_z+delta,6,6,6,true,true,true,vertices.size());
+  //container contA(min_x-delta,max_x+delta,min_y-delta,max_y+delta,min_z-delta,max_z+delta,6,6,6,false,false,false,vertices.size());
   container_poly contB(min_x-delta,max_x+delta,min_y-delta,max_y+delta,min_z-delta,max_z+delta,6,6,6,true,true,true,vertices.size());
+
+  //  wall_cylinder cyl(.5,.5,-3,0,0,6,.4);
+  //  contA.add_wall(cyl);
+  
 
   for(i=0;i<vertices.size();i++){
     if(radical==0){

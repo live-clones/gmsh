@@ -321,41 +321,39 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
       }
       else if (fan){
 
-	if (USEFANS__){
-	  int fanSize = FANSIZE__;
-	  // if the angle is greater than PI, than reverse the sense
-	  double alpha1 = atan2(N1[SIDE].y(),N1[SIDE].x());
-	  double alpha2 = atan2(N2[SIDE].y(),N2[SIDE].x());
-	  double AMAX = std::max(alpha1,alpha2);
-	  double AMIN = std::min(alpha1,alpha2);
-	  MEdge ee[2];
-	  if (alpha1 > alpha2){
-	    ee[0] = e2;ee[1] = e1;
-	  }
-	  else {
-	    ee[0] = e1;ee[1] = e2;
-	  }
-	  if ( AMAX - AMIN >= M_PI){
-	    double temp = AMAX;
-	    AMAX = AMIN + 2*M_PI;
-	    AMIN = temp;
-	    MEdge eee0 = ee[0];
-	    ee[0] = ee[1];ee[1] = eee0;
-	  }
-	  _columns->addFan (_myVert,ee[0],ee[1],true);
-	  for (int i=-1; i<=fanSize; i++){
-	    double t = (double)(i+1)/ (fanSize+1);
-	    double alpha = t * AMAX + (1.-t)* AMIN;
-	    SVector3 x (cos(alpha),sin(alpha),0);
-	    x.normalize();
-	    _dirs.push_back(x);
-	  }
+	int fanSize = FANSIZE__;
+	// if the angle is greater than PI, than reverse the sense
+	double alpha1 = atan2(N1[SIDE].y(),N1[SIDE].x());
+	double alpha2 = atan2(N2[SIDE].y(),N2[SIDE].x());
+	double AMAX = std::max(alpha1,alpha2);
+	double AMIN = std::min(alpha1,alpha2);
+	MEdge ee[2];
+	if (alpha1 > alpha2){
+	  ee[0] = e2;ee[1] = e1;
 	}
 	else {
-	  _dirs.push_back(N1[SIDE]);
-	  _dirs.push_back(N2[SIDE]);
+	  ee[0] = e1;ee[1] = e2;
+	}
+	if ( AMAX - AMIN >= M_PI){
+	  double temp = AMAX;
+	  AMAX = AMIN + 2*M_PI;
+	  AMIN = temp;
+	  MEdge eee0 = ee[0];
+	  ee[0] = ee[1];ee[1] = eee0;
+	}
+	_columns->addFan (_myVert,ee[0],ee[1],true);
+	for (int i=-1; i<=fanSize; i++){
+	  double t = (double)(i+1)/ (fanSize+1);
+	  double alpha = t * AMAX + (1.-t)* AMIN;
+	  SVector3 x (cos(alpha),sin(alpha),0);
+	  x.normalize();
+	  _dirs.push_back(x);
 	}
       }
+      else {
+	_dirs.push_back(N1[SIDE]);
+	_dirs.push_back(N2[SIDE]);
+	}
     }
   }
 }
@@ -969,6 +967,41 @@ fanTopology :: fanTopology (GRegion * gr, const std::set<GEdge*> &detectedFans, 
   }
 }
 
+// This is the tricky part
+// We have to find a vector N that has the following properties
+// V = (x,y,z) / (x^2+y^2+z^2)^{1/2} is a point on the unit sphere
+// the n[i]'s are points on the unit sphere
+// V maximizes  min_i (V * n[i])
+// This means I'd like to find point V that is 
+
+static void filterVectors(std::vector<SVector3> &n){
+  std::vector<SVector3> temp;
+  temp.push_back(n[0]);  
+  for (unsigned int i = 1 ; i<n.size() ; i++){
+    bool found = false;
+    for (unsigned int j = 0 ; j<temp.size() ; j++){
+      double d = dot(n[i],temp[j]);
+      if (d < 0.98)found = true;
+    }
+    if (found) temp.push_back(n[i]);
+  }
+  n = temp;
+}
+
+static SVector3 computeBestNormal(std::vector<SVector3> &n){
+  //  filterVectors (n);
+  SVector3 V;
+  if (n.size() == 1)V = n[0];
+  else if (n.size() == 2)V = n[0]+n[1];
+  else if (n.size() == 3)circumCenterXYZ(n[0],n[1],n[2],V);
+  else {
+    Msg::Warning("suboptimal choice for exterior normal: %d vectors to average",n.size());
+    for (unsigned int i = 0 ; i<n.size() ; i++)V+=n[i];
+  }
+  V.normalize();
+  return V;
+}
+
 
 static int createColumnsBetweenFaces(GRegion *gr,
 				     MVertex *myV,
@@ -980,7 +1013,6 @@ static int createColumnsBetweenFaces(GRegion *gr,
 				     fanTopology &ft)
 {
   SVector3 n[256];
-  SPoint3 c[256];
   int count = 0;
   GFace *gfs[256];
 
@@ -991,8 +1023,8 @@ static int createColumnsBetweenFaces(GRegion *gr,
 	   _faces.lower_bound(*it);
 	 itm != _faces.upper_bound(*it); ++itm){
 
-      n[count] += _normals[itm->second->getFace(0)];
-      c[count] = itm->second->getFace(0).barycenter();
+      SVector3 N = _normals[itm->second->getFace(0)];
+      n[count] += N;
     }
     gfs[count] = *it;
     n[count].normalize();
@@ -1022,10 +1054,16 @@ static int createColumnsBetweenFaces(GRegion *gr,
     for (std::multimap<int, GFace*>::iterator itm =  range.first ; itm !=  range.second ; itm++)
       joint.push_back(itm->second);
     joints.push_back(joint);
-    SVector3 avg (0,0,0);
+    //    SVector3 avg (0,0,0);
+    std::vector<SVector3> ns;
+    
     for (unsigned int i=0;i<joint.size(); i++){
-      avg += n[inv[joint[i]]];
+      ns.push_back( n[inv[joint[i]]] );
+      //      avg += n[inv[joint[i]]];
     }
+    SVector3 avg = computeBestNormal(ns);
+    
+
     std::vector<MVertex*> _column;
     std::vector<SMetric3> _metrics;
     avg.normalize();

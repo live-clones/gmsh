@@ -153,10 +153,10 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
     wire.push_front(degenerated[0]);
   }
   else if (degenerated.size() > 2){
-    Msg::Error("More than two degenerated edges in one model face");
+    Msg::Error("More than two degenerated edges in one model face of an OCC model");
   }
   
-  while (!wire.empty()){
+  while (!wire.empty() ){
     //    printf("wire.size = %d\n",wire.size());
     loopTheLoop(wire,loop,&degeneratedToInsert);
     //    break;

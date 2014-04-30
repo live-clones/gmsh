@@ -7,7 +7,6 @@
 #include "MQuadrangle.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
-#include "qualityMeasures.h"
 #include "Numeric.h"
 #include "BasisFactory.h"
 

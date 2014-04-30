@@ -27,6 +27,7 @@ class OCC_Internals {
   TopoDS_Shape getShape () { return shape; }
   void buildLists();
   void buildShapeFromLists(TopoDS_Shape _shape);
+  void buildShapeFromGModel(GModel*);
   void addShapeToLists(TopoDS_Shape shape);
   void healGeometry(double tolerance, bool fixdegenerated,
                     bool fixsmalledges, bool fixspotstripfaces,

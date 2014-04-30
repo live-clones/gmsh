@@ -22,13 +22,14 @@ class MElement;
 class MLine;
 class ExtrudeParams;
 class GEdgeCompound;
+class closestPointFinder;
 
 // A model edge.
 class GEdge : public GEntity {
  private:
   double _length;
   bool _tooSmall;
-
+  closestPointFinder *_cp;
  protected:
   GVertex *v0, *v1;
   // FIXME: normals need to be mutable at the moment, because thay can
@@ -208,8 +209,8 @@ class GEdge : public GEntity {
 
   void addLine(MLine *line){ lines.push_back(line); }
 
-  bool computeDistanceFromMeshToGeometry (double &d2, double &dmax);
   virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
+  SPoint3 closestPoint (SPoint3 &p, double tolerance);
 };
 
 #endif

@@ -34,6 +34,8 @@
 #include "MTetrahedron.h"
 #include "ParamCoord.h"
 #include "OptHomMesh.h"
+#include "BasisFactory.h"
+#include "OptHomIntegralBoundaryDist.h"
 
 Mesh::Mesh(const std::map<MElement*,GEntity*> &element2entity,
            const std::set<MElement*> &els, std::set<MVertex*> &toFix,
@@ -290,6 +292,66 @@ void Mesh::metricMinAndGradients(int iEl, std::vector<double> &lambda,
       iPC += _nPCFV[iFVi];
     }
   }
+}
+
+bool Mesh::bndDistAndGradients(int iEl, double &f , std::vector<double> &gradF, double eps)
+{
+  MElement *element = _el[iEl];
+  f = 0.;
+  // dommage ;-)
+  if (element->getDim() != 2)
+    return false;
+
+  int currentId = 0;
+  std::vector<int> vertex2param(element->getNumVertices());
+  for (size_t i = 0; i < element->getNumVertices(); ++i) {
+    if (_el2FV[iEl][i] >= 0) {
+      vertex2param[i] = currentId;
+      currentId += _nPCFV[_el2FV[iEl][i]];
+    }
+    else
+      vertex2param[i] = -1;
+  }
+  gradF.clear();
+  gradF.resize(currentId, 0.);
+
+  const nodalBasis &elbasis = *element->getFunctionSpace();
+  bool edgeFound = false;
+  for (int iEdge = 0; iEdge < element->getNumEdges(); ++iEdge) {
+    int clId = elbasis.getClosureId(iEdge, 1);
+    const std::vector<int> &closure = elbasis.closures[clId];
+    std::vector<MVertex *> vertices;
+    GEdge *edge = NULL;
+    for (size_t i = 0; i < closure.size(); ++i) {
+      MVertex *v = element->getVertex(closure[i]);
+      vertices.push_back(v);
+      // only valid in 2D
+      if ((int)i >= 2 && v->onWhat() && v->onWhat()->dim() == 1) {
+        edge = v->onWhat()->cast2Edge();
+      }
+    }
+    if (edge) {
+      edgeFound = true;
+      std::vector<double> localgrad;
+      std::vector<SPoint3> nodes(closure.size());
+      std::vector<double> params(closure.size());
+      std::vector<bool> onedge(closure.size());
+      for (size_t i = 0; i < closure.size(); ++i) {
+        nodes[i] = _xyz[_el2V[iEl][closure[i]]];
+        onedge[i] = element->getVertex(closure[i])->onWhat() == edge && _el2FV[iEl][closure[i]] >= 0;
+        if (onedge[i]) {
+          params[i] = _uvw[_el2FV[iEl][closure[i]]].x();
+        }else
+          reparamMeshVertexOnEdge(element->getVertex(closure[i]), edge, params[i]);
+      }
+      f += computeBndDistAndGradient(edge, params, vertices, *BasisFactory::getNodalBasis(elbasis.getClosureType(clId)), nodes, onedge, localgrad, eps);
+      for (size_t i = 0; i < closure.size(); ++i) {
+        if (onedge[i])
+	  gradF[vertex2param[closure[i]]] += localgrad[i];
+      }
+    }
+  }
+  return edgeFound;
 }
 
 void Mesh::scaledJacAndGradients(int iEl, std::vector<double> &sJ,

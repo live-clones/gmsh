@@ -5,6 +5,7 @@
 
 set(SRC
   boundaryLayersData.cpp
+  closestPoint.cpp
   intersectCurveSurface.cpp
   GEntity.cpp STensor3.cpp
     GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp
@@ -12,7 +13,7 @@ set(SRC
   GRegionCompound.cpp GRbf.cpp
     gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp
    gmshSurface.cpp
-    OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp
+   OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp
     discreteEdge.cpp discreteFace.cpp discreteRegion.cpp
     fourierEdge.cpp fourierFace.cpp fourierProjectionFace.cpp
   ACISVertex.cpp

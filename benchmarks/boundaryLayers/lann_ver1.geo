@@ -31,3 +31,4 @@ Characteristic Length {5, 6, 7, 3, 4} = 10;
 Surface Loop(129) = {1,2,3,4,5,6};
 Volume(1000) = {129};
 
+Field[1].Quads = 1;

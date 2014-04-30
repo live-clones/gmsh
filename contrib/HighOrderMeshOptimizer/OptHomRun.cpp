@@ -47,6 +47,35 @@
 
 #if defined(HAVE_BFGS)
 
+double distMaxStraight(MElement *el)
+{
+  const polynomialBasis *lagrange = (polynomialBasis*)el->getFunctionSpace();
+  const polynomialBasis *lagrange1 = (polynomialBasis*)el->getFunctionSpace(1);
+  int nV = lagrange->points.size1();
+  int nV1 = lagrange1->points.size1();
+  int dim = lagrange1->dimension;
+  SPoint3 sxyz[256];
+  for (int i = 0; i < nV1; ++i) {
+    sxyz[i] = el->getVertex(i)->point();
+  }
+  for (int i = nV1; i < nV; ++i) {
+    double f[256];
+    lagrange1->f(lagrange->points(i, 0), lagrange->points(i, 1),
+                 dim < 3 ? 0 : lagrange->points(i, 2), f);
+    for (int j = 0; j < nV1; ++j)
+      sxyz[i] += sxyz[j] * f[j];
+  }
+
+  double maxdx = 0.0;
+  for (int iV = nV1; iV < nV; iV++) {
+    SVector3 d = el->getVertex(iV)->point()-sxyz[iV];
+    double dx = d.norm();
+    if (dx > maxdx) maxdx = dx;
+  }
+
+  return maxdx;
+}
+
 void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
 {
   FILE *f = fopen(fn.c_str(),"w");
@@ -221,7 +250,8 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
   std::vector<std::set<MElement*> > primBlobs;
   primBlobs.reserve(badElements.size());
   for (std::set<MElement*>::const_iterator it = badElements.begin(); it != badElements.end(); ++it) {
-    const int minLayers = ((*it)->getDim() == 3) ? 1 : 0;
+    //const int minLayers = ((*it)->getDim() == 3) ? 1 : 0;
+    const int minLayers = 3;
     primBlobs.push_back(getSurroundingBlob(*it, depth, vertex2elements,
                                 distFactor, minLayers, optPrimSurfMesh));
   }
@@ -308,12 +338,12 @@ static void optimizeConnectedBlobs
     if (temp.mesh.nPC() == 0)
       Msg::Info("Blob %i has no degree of freedom, skipping", i+1);
     else
-      success = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN,
-                              p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax);
+      success = temp.optimize(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN,
+                              p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax, p.discrTolerance);
     if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
       Msg::Info("Jacobian optimization succeed, starting svd optimization");
-      success = temp.optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN_METRIC, p.BARRIER_MAX,
-                              true, samples, p.itMax, p.optPassMax);
+      success = temp.optimize(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN_METRIC, p.BARRIER_MAX,
+                              true, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,p.discrTolerance);
     }
     double minJac, maxJac, distMaxBND, distAvgBND;
     temp.recalcJacDist();
@@ -321,11 +351,11 @@ static void optimizeConnectedBlobs
     p.minJac = std::min(p.minJac,minJac);
     p.maxJac = std::max(p.maxJac,maxJac);
     temp.mesh.updateGEntityPositions();
-    if (success <= 0) {
+    //if (success <= 0) {
       std::ostringstream ossI2;
       ossI2 << "final_ITER_" << i << ".msh";
       temp.mesh.writeMSH(ossI2.str().c_str());
-    }
+    //}
     //#pragma omp critical
     p.SUCCESS = std::min(p.SUCCESS, success);
   }
@@ -550,12 +580,12 @@ static void optimizeOneByOne
       std::ostringstream ossI1;
       ossI1 << "initial_blob-" << iBadEl << ".msh";
       opt->mesh.writeMSH(ossI1.str().c_str());
-      success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN,
-                              p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax);
+      success = opt->optimize(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN,
+                              p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,p.discrTolerance);
       if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
         Msg::Info("Jacobian optimization succeed, starting svd optimization");
-        success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN_METRIC,
-                                p.BARRIER_MAX, true, samples, p.itMax, p.optPassMax);
+        success = opt->optimize(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN_METRIC,
+                                p.BARRIER_MAX, true, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,p.discrTolerance);
       }
 
       // Measure min and max Jac., update mesh
@@ -594,6 +624,27 @@ static void optimizeOneByOne
 
 #endif
 
+#include "OptHomIntegralBoundaryDist.h"
+double ComputeDistanceToGeometry (GEntity *ge , int distanceDefinition, double tolerance){
+  double maxd = 0.0;
+  double sum = 0.0;
+  int NUM;
+  for (int iEl = 0; iEl < ge->getNumMeshElements();iEl++) {
+    MElement *el = ge->getMeshElement(iEl);
+    if (ge->dim() == el->getDim()){
+      const double DISTE =computeBndDist(el,distanceDefinition, tolerance); 
+      if (DISTE != 0.0){
+	NUM++;
+	//	if(distanceDefinition == 1)printf("%d %12.5E\n",iEl,DISTE);
+	maxd = std::max(maxd,DISTE);
+	sum += DISTE;
+      }
+    }
+  }
+  if (distanceDefinition == 2)return sum/NUM;
+  return maxd;
+}
+
 void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
 {
 #if defined(HAVE_BFGS)
@@ -610,6 +661,7 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
   std::map<MVertex*, std::vector<MElement *> > vertex2elements;
   std::map<MElement*,GEntity*> element2entity;
   std::set<MElement*> badasses;
+  double maxdist = 0;
   for (int iEnt = 0; iEnt < entities.size(); ++iEnt) {
     GEntity* &entity = entities[iEnt];
     if (entity->dim() != p.dim || (p.onlyVisible && !entity->getVisibility())) continue;
@@ -620,13 +672,22 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
     for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) { // Detect bad elements
       double jmin, jmax;
       MElement *el = entity->getMeshElement(iEl);
+      const double DISTE =computeBndDist(el,2,fabs(p.discrTolerance)); 
+      //      printf("Element %d Distance %12.5E\n",iEl,DISTE);
+      maxdist = std::max(DISTE, maxdist);
       if (el->getDim() == p.dim) {
-        el->scaledJacRange(jmin, jmax, p.optPrimSurfMesh ? entity : 0);
-        if (p.BARRIER_MIN_METRIC > 0) jmax = jmin;
-        if (jmin < p.BARRIER_MIN || jmax > p.BARRIER_MAX) badasses.insert(el);
+	if (p.optCAD && DISTE > p.optCADDistMax)
+	  badasses.insert(el); 
+
+	el->scaledJacRange(jmin, jmax, p.optPrimSurfMesh ? entity : 0);
+	if (p.BARRIER_MIN_METRIC > 0) jmax = jmin;
+	if (jmin < p.BARRIER_MIN || jmax > p.BARRIER_MAX){
+	  badasses.insert(el); 
+        }
       }
     }
   }
+  printf("maxdist = %g badasses size = %lu\n", maxdist, badasses.size());
 
   if (p.strategy == 0)
     optimizeConnectedBlobs(vertex2elements, element2entity, badasses, p, samples, false);

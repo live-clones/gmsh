@@ -50,8 +50,8 @@ public:
   // are in the range; returns 0 if the mesh is valid (all jacobians positive,
   // JMIN > 0) but JMIN < barrier_min || JMAX > barrier_max; returns -1 if the
   // mesh is invalid : some jacobians cannot be made positive
-  int optimize(double lambda, double lambda2, double barrier_min, double barrier_max,
-               bool optimizeMetricMin, int pInt, int itMax, int optPassMax);
+  int optimize(double lambda, double lambda2, double lambda3, double barrier_min, double barrier_max,
+               bool optimizeMetricMin, int pInt, int itMax, int optPassMax, int optimizeCAD, double optCADDistMax, double tolerance);
   void recalcJacDist();
   inline void getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD);
   void updateMesh(const alglib::real_1d_array &x);
@@ -59,17 +59,20 @@ public:
                    alglib::real_1d_array &gradObj);
   void printProgress(const alglib::real_1d_array &x, double Obj);
 
-  double barrier_min, barrier_max;
+  double barrier_min, barrier_max, distance_max, geomTol;
 
  private:
-  double lambda, lambda2, jacBar, invLengthScaleSq;
+  double lambda, lambda2, lambda3, jacBar, invLengthScaleSq;
   int iter, progressInterv; // Current iteration, interval of iterations for reporting
   bool _optimizeMetricMin;
   double initObj, initMaxDist, initAvgDist; // Values for reporting
-  double minJac, maxJac, maxDist, avgDist; // Values for reporting
+  double minJac, maxJac, maxDist, maxDistCAD, avgDist; // Values for reporting
   bool _optimizeBarrierMax; // false : only moving barrier min;
                             // true : fixed barrier min + moving barrier max
+  bool _optimizeCAD; // false : do not minimize the distance between mesh and CAD
+                     // true : minimize the distance between mesh and CAD
   bool addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj);
+  bool addBndObjGrad(double Fact, double &Obj, alglib::real_1d_array &gradObj);
   bool addMetricMinObjGrad(double &Obj, alglib::real_1d_array &gradObj);
   bool addDistObjGrad(double Fact, double Fact2, double &Obj,
                       alglib::real_1d_array &gradObj);

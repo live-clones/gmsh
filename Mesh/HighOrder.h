@@ -31,11 +31,6 @@ void checkHighOrderTriangles(const char* cc, GModel *m,
 void checkHighOrderTetrahedron(const char* cc, GModel *m,
                                std::vector<MElement*> &bad, double &minJGlob);
 
-struct distanceFromMeshToGeometry_t {
-  std::map<GEntity*, double> d_max, d2;
-};
-
-void computeDistanceFromMeshToGeometry (GModel *m, distanceFromMeshToGeometry_t &dist);
 void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete, bool &CAD);
 
 #endif

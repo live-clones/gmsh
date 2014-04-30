@@ -35,6 +35,37 @@ void OCC_Internals::buildLists()
   addShapeToLists(shape);
 }
 
+void  OCC_Internals::buildShapeFromGModel(GModel* gm){
+  somap.Clear();
+  shmap.Clear();
+  fmap.Clear();
+  wmap.Clear();
+  emap.Clear();
+  vmap.Clear();
+  for (GModel::riter it = gm->firstRegion(); it != gm->lastRegion() ; ++it){
+    if ((*it)->getNativeType() == GEntity::OpenCascadeModel){
+      OCCRegion *occ = static_cast<OCCRegion*> (*it);
+      if (occ)addShapeToLists (occ->getTopoDS_Shape());
+    }
+  }
+  for (GModel::fiter it = gm->firstFace(); it != gm->lastFace() ; ++it){
+    if ((*it)->getNativeType() == GEntity::OpenCascadeModel){
+      OCCFace *occ = static_cast<OCCFace*> (*it);
+      if(occ)addShapeToLists (occ->getTopoDS_Face ());
+    }
+  }
+  BRep_Builder B;
+  TopoDS_Compound C;
+  B.MakeCompound(C);
+  for(int i = 1; i <= vmap.Extent(); i++) B.Add(C, vmap(i));
+  for(int i = 1; i <= emap.Extent(); i++) B.Add(C, emap(i));
+  for(int i = 1; i <= wmap.Extent(); i++) B.Add(C, wmap(i));
+  for(int i = 1; i <= fmap.Extent(); i++) B.Add(C, fmap(i));
+  for(int i = 1; i <= shmap.Extent(); i++) B.Add(C, shmap(i));
+  for(int i = 1; i <= somap.Extent(); i++) B.Add(C, somap(i));
+  shape = C;
+}
+
 void OCC_Internals::buildShapeFromLists(TopoDS_Shape _shape)
 {
   BRep_Builder B;
@@ -211,6 +242,7 @@ void OCC_Internals::healGeometry(double tolerance, bool fixdegenerated,
                                  bool fixsmalledges, bool fixspotstripfaces,
                                  bool sewfaces, bool makesolids, bool connect)
 {
+  
   if(!fixdegenerated && !fixsmalledges && !fixspotstripfaces &&
      !sewfaces && !makesolids && !connect) return;
 
@@ -1047,6 +1079,8 @@ int GModel::readOCCIGES(const std::string &fn)
 
 int GModel::writeOCCBREP(const std::string &fn)
 {
+  _occ_internals->buildShapeFromGModel(this);
+  
   if(!_occ_internals){
     Msg::Error("No OpenCASCADE model found");
     return 0;
@@ -1058,6 +1092,7 @@ int GModel::writeOCCBREP(const std::string &fn)
 
 int GModel::writeOCCSTEP(const std::string &fn)
 {
+  _occ_internals->buildShapeFromGModel(this);
   if(!_occ_internals){
     Msg::Error("No OpenCASCADE model found");
     return 0;

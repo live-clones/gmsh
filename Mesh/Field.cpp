@@ -1916,7 +1916,7 @@ void BoundaryLayerField::setupFor2d(int iF)
 	nodes_id.push_back ((*it)->getEndVertex()->tag());
       }
     }
-    printf("face %d %d BL Edges\n", iF, (int)edges_id.size());
+    //    printf("face %d %d BL Edges\n", iF, (int)edges_id.size());
 
     removeAttractors();
   }

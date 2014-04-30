@@ -844,6 +844,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
                        int elementStartNum, int saveSinglePartition, bool multipleView)
 {
+  
   FILE *fp;
   if(multipleView)
     fp = Fopen(name.c_str(), binary ? "ab" : "a");

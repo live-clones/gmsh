@@ -129,6 +129,7 @@ class MPrism : public MElement {
     tmp = _v[3]; _v[3] = _v[4]; _v[4] = tmp;
   }
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
+  virtual double gammaShapeMeasure();
   virtual int getVolumeSign();
   virtual void getNode(int num, double &u, double &v, double &w) const
   {

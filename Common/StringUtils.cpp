@@ -96,13 +96,17 @@ std::vector<std::string> SplitFileName(const std::string &fileName)
   int islash = (int)fileName.find_last_of("/\\");
   if(idot == (int)std::string::npos) idot = -1;
   if(islash == (int)std::string::npos) islash = -1;
-  std::vector<std::string> s(3);
+  std::string s[3];
   if(idot > 0)
     s[2] = fileName.substr(idot);
   if(islash > 0)
     s[0] = fileName.substr(0, islash + 1);
   s[1] = fileName.substr(s[0].size(), fileName.size() - s[0].size() - s[2].size());
-  return s;
+  std::vector<std::string> ss;
+  ss.push_back(s[0]);
+  ss.push_back(s[1]);
+  ss.push_back(s[2]);
+  return ss;
 }
 
 std::string GetFileNameWithoutPath(const std::string &fileName)
