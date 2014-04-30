@@ -548,6 +548,9 @@ static Vertex TransfiniteTri(Vertex c1, Vertex c2, Vertex c3,
 // u = 1 ; v = 0 --> f(1,1) = s2 + s2 - s2 = s2
 // v = 0 --> (1-u)c1(u) + u c1(u) = c1(u) --> COOL
 
+// FIXME: but what happens when v > u ? You interpolate the curves outside
+// ubeg/uend... Argh.
+
 #define TRAN_TRIB(c1,c1b,c2,c2b,c3,c3b,s1,s2,s3,u,v)\
       (1.-u)*(c1+c3b-s1)+(u-v)*(c2+c1b-s2)+v*(c3+c2b-s3);
 
