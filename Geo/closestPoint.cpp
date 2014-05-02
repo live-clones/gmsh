@@ -21,7 +21,7 @@ static void oversample (std::vector<SPoint3> &s, double tol){
   s = t;
 }
 
-closestPointFinder :: closestPointFinder (GEntity *ge, double e) : _ge (ge) , _tolerance (e) 
+closestPointFinder :: closestPointFinder (GEntity *ge, double e) : _ge (ge) , _tolerance (e)
 {
 #if defined(HAVE_ANN)
   std::vector<SPoint3> pts;
@@ -54,16 +54,20 @@ closestPointFinder :: ~closestPointFinder ()
   if(kdtree) delete kdtree;
   if(zeronodes) annDeallocPts(zeronodes);
   delete[]index;
-  delete[]dist;  
+  delete[]dist;
 #endif
 }
 
 SPoint3 closestPointFinder ::operator() (const SPoint3 &p)
 {
+#if defined(HAVE_ANN)
   double xyz[3] = {p.x(),p.y(),p.z()};
   kdtree->annkSearch(xyz, 1, index, dist);
   return SPoint3(zeronodes[index[0]][0],
 		 zeronodes[index[0]][1],
-		 zeronodes[index[0]][2]);  
+		 zeronodes[index[0]][2]);
+#else
+  return p;
+#endif
 }
 

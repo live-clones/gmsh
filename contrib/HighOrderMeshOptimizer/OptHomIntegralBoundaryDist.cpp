@@ -90,8 +90,8 @@ static void oversample (std::vector<SPoint3> &s, double tol){
 }
 
 // FAST IMPLEMENTATION OF DISCRETE UNIDIRECTIONAL HAUSDORFF DISTANCE
-double computeBndDistH(GEdge *edge, std::vector<double> & params, // the model edge 
-		       const std::vector<MVertex*> &vs, 
+double computeBndDistH(GEdge *edge, std::vector<double> & params, // the model edge
+		       const std::vector<MVertex*> &vs,
 		       const nodalBasis &basis, const std::vector<SPoint3> &xyz,
 		       const double tolerance) // the mesh edge
 {
@@ -103,7 +103,7 @@ double computeBndDistH(GEdge *edge, std::vector<double> & params, // the model e
   MLineN l (vs[0],vs[1],hov);
   l.discretize (tolerance,dpts,ts);
   oversample(dpts,tolerance);
-  double maxDist = 0.0; 
+  double maxDist = 0.0;
   for (unsigned int i = 0; i<dpts.size(); i++){
     maxDist = std::max (maxDist,dpts[i].distance(edge->closestPoint(dpts[i],tolerance)));
   }
@@ -120,8 +120,8 @@ SVector3 parametricLine::curvature(double xi) const
   return c;
 }
 
-double parametricLine::frechetDistance(const parametricLine &l, 
-				       SPoint3 &p1, SPoint3 &p2, 
+double parametricLine::frechetDistance(const parametricLine &l,
+				       SPoint3 &p1, SPoint3 &p2,
 				       double tol) const
 {
   std::vector<SPoint3> dpts1,dpts2;
@@ -134,7 +134,7 @@ double parametricLine::frechetDistance(const parametricLine &l,
   //  printf("after oversaplinf an discretizing gives %d %d points\n",dpts1.size(),dpts2.size());
   return discreteFrechetDistance(dpts1,dpts2);
 }
-double parametricLine::hausdorffDistance(const parametricLine &l, SPoint3 &p1, SPoint3 &p2, 
+double parametricLine::hausdorffDistance(const parametricLine &l, SPoint3 &p1, SPoint3 &p2,
 					 double tolerance) const
 {
   std::vector<SPoint3> dpts1,dpts2;
@@ -195,9 +195,9 @@ double parametricLine::hausdorffDistance(const parametricLine &l, SPoint3 &p1, S
 
 
 // DISCRETE FRECHET DISTANCE
-double computeBndDistF(GEdge *edge, 
-		       std::vector<double> & params, // the model edge 
-		       const nodalBasis &basis, 
+double computeBndDistF(GEdge *edge,
+		       std::vector<double> & params, // the model edge
+		       const nodalBasis &basis,
 		       const std::vector<SPoint3> &xyz,
 		       const double tolerance) // the mesh edge
 {
@@ -212,7 +212,7 @@ double computeBndDistF(GEdge *edge,
 // GMSH's DISTANCE
 /*
  */
-double computeBndDistGb(GEdge *edge, std::vector<double> & params, // the model edge 
+double computeBndDistGb(GEdge *edge, std::vector<double> & params, // the model edge
 		       const nodalBasis &basis, const std::vector<SPoint3> &xyz, double tolerance) // the mesh edge
 {
   parametricLineGEdge l1 = parametricLineGEdge(edge, params[0], params[1]);
@@ -237,25 +237,25 @@ double computeBndDistGb(GEdge *edge, std::vector<double> & params, // the model 
     SVector3 v12 (p22,p11);
     SVector3 vl (p22,p21);
     SVector3 x1 = crossprod(v12,v1);
-    SVector3 x2 = crossprod(v12,v2);    
+    SVector3 x2 = crossprod(v12,v2);
     D += 0.5*(x1.norm()+x2.norm());
     L += vl.norm();
   }
   return D;
 }
 
-double computeBndDistG_(GEdge *edge, std::vector<double> & p, // the model edge 
-		       const nodalBasis &basis, const std::vector<SPoint3> &xyz, 
+double computeBndDistG_(GEdge *edge, std::vector<double> & p, // the model edge
+		       const nodalBasis &basis, const std::vector<SPoint3> &xyz,
 		       const unsigned int N) // the mesh edge
 {
   std::vector<int> o;
   o.push_back(0);
   for (unsigned int i=2; i < p.size();i++)o.push_back(i);
   o.push_back(1);
-  
+
   //  printf("computing diustance with tolerance %g\n",tolerac);
 
-  
+
 
   double D = 0.0;
   const double U0 = basis.points(0,0);
@@ -270,8 +270,7 @@ double computeBndDistG_(GEdge *edge, std::vector<double> & p, // the model edge
     const double t1 = p[o[i+1]];
     parametricLineGEdge l1 = parametricLineGEdge(edge, t0, t1);
     parametricLineNodalBasis l2 = parametricLineNodalBasis(basis, xyz);
-    SPoint3 P1[N];
-    SPoint3 P2[N];
+    std::vector<SPoint3> P1(N), P2(N);
     for (unsigned int i=0;i<N;i++){
       const double _x2 = (double)i / (N-1);
       const double u = u0 + _x2 * (u1-u0);
@@ -291,7 +290,7 @@ double computeBndDistG_(GEdge *edge, std::vector<double> & p, // the model edge
       SVector3 v12 (p22,p11);
       //      SVector3 vl (p22,p21);
       SVector3 x1 = crossprod(v12,v1);
-      SVector3 x2 = crossprod(v12,v2);    
+      SVector3 x2 = crossprod(v12,v2);
       D += 0.5*(x1.norm()+x2.norm());
       //      L += vl.norm();
     }
@@ -299,17 +298,17 @@ double computeBndDistG_(GEdge *edge, std::vector<double> & p, // the model edge
   return D;
 }
 
-double computeBndDistG(GEdge *edge, std::vector<double> & p, // the model edge 
-		       const nodalBasis &basis, const std::vector<SPoint3> &xyz, 
+double computeBndDistG(GEdge *edge, std::vector<double> & p, // the model edge
+		       const nodalBasis &basis, const std::vector<SPoint3> &xyz,
 		       double tolerance) // the mesh edge
 {
   int N = 4;
-  double d = computeBndDistG_(edge, p, basis, xyz, N); 
-		      
+  double d = computeBndDistG_(edge, p, basis, xyz, N);
+
   //    printf("GO !!\n");
   while (1){
     N *= 2;
-    double dp = computeBndDistG_(edge, p, basis, xyz, N); 
+    double dp = computeBndDistG_(edge, p, basis, xyz, N);
     //        printf("%12.5E %12.5E %12.5E %12.5E\n",d,dp,fabs(d - dp),tolerance);
     if (fabs(d - dp) < tolerance) // Richardson with assumed linear convergence ...
       return dp;
@@ -318,7 +317,7 @@ double computeBndDistG(GEdge *edge, std::vector<double> & p, // the model edge
 }
 
 void parametricLine::recur_discretize(const double &t1, const double &t2,
-				      const SPoint3 &p1, const SPoint3 &p2, 
+				      const SPoint3 &p1, const SPoint3 &p2,
 				      std::vector<SPoint3> &dpts,
 				      std::vector<double> &ts,
 				      double Prec, int depth) const
@@ -359,9 +358,9 @@ double trapeze (SPoint3 &p1, SPoint3 &p2){
   return (p2.x() - p1.x())*(p1.y()+p2.y())*0.5;
 }
 
-double computeDeviationOfTangents(GEdge *edge, 
+double computeDeviationOfTangents(GEdge *edge,
 				  std::vector<double> &p, // parameters of mesh vertices on the model edge
-				  const nodalBasis &basis, 
+				  const nodalBasis &basis,
 				  const std::vector<SPoint3> &xyz) // the mesh edge
 {
   //  parametricLineGEdge l1 = parametricLineGEdge(edge,p[0],p[p.size()-1]);
@@ -399,16 +398,16 @@ double computeDeviationOfTangents(GEdge *edge,
     //    ddeviation = std::max(diff2.norm(),ddeviation);
      deviation += diff1.norm();
     ddeviation += diff2.norm();
-  }  
+  }
   const double h =  dx.norm();
   //  printf ("%g %g\n",deviation * h,ddeviation * h * h * 0.5);
   return deviation * h;// + ddeviation * h * h * 0.5;
 }
 
-double computeBndDistAccurateArea(GEdge *edge, 
+double computeBndDistAccurateArea(GEdge *edge,
 				  std::vector<double> &p, // parameters of mesh vertices on the model edge
-				  const nodalBasis &basis, 
-				  const std::vector<SPoint3> &xyz, 
+				  const nodalBasis &basis,
+				  const std::vector<SPoint3> &xyz,
 				  double tolerance) // the mesh edge
 {
   // assume mesh and CAD non intersecting except at mesh vertices
@@ -419,7 +418,7 @@ double computeBndDistAccurateArea(GEdge *edge,
   o.push_back(0);
   for (unsigned int i=2; i < p.size();i++)o.push_back(i);
   o.push_back(1);
-  
+
   //  printf("computing diustance with tolerance %g\n",tolerac);
 
   for (int i = 0 ; i < basis.order ; i++) {
@@ -450,13 +449,13 @@ double computeBndDistAccurateArea(GEdge *edge,
 
 
 // INPUT FCT FOR OPTIMIZATION
-double computeBndDistAndGradient(GEdge *edge, 
+double computeBndDistAndGradient(GEdge *edge,
 				 std::vector<double> &param, // parameters of mesh vertices on the model edge
 				 const std::vector<MVertex*> &vs, // vertices
 				 const nodalBasis &basis,  // what is the FE basis of the edge
-				 std::vector<SPoint3> &xyz,  // real coordinates of mesh vertices on the model edge 
+				 std::vector<SPoint3> &xyz,  // real coordinates of mesh vertices on the model edge
 				 std::vector<bool> &onEdge, // tell if a given vertex sits on the model edge and therefore can be movd
-				 std::vector<double> &grad, 
+				 std::vector<double> &grad,
 				 double tolerance)// model tolerance
 {
   grad.resize(xyz.size());
