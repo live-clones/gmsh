@@ -28,6 +28,10 @@
 #endif
 #endif
 
+#if defined(HAVE_PETSC)
+#include "petsc.h"
+#endif
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #endif
@@ -912,25 +916,25 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "info") || !strcmp(argv[i] + 1, "-info")) {
         fprintf(stderr, "Version          : %s\n", GMSH_VERSION);
+        fprintf(stderr, "License          : %s\n", GMSH_SHORT_LICENSE);
+        fprintf(stderr, "Build OS         : %s\n", GMSH_OS);
+        fprintf(stderr, "Build date       : %s\n", GMSH_DATE);
+        fprintf(stderr, "Build host       : %s\n", GMSH_HOST);
+        fprintf(stderr, "Build options    :%s\n", GMSH_CONFIG_OPTIONS);
 #if defined(HAVE_FLTK)
-        fprintf(stderr, "GUI toolkit      : FLTK %d.%d.%d\n", FL_MAJOR_VERSION,
+        fprintf(stderr, "FLTK version     : %d.%d.%d\n", FL_MAJOR_VERSION,
                 FL_MINOR_VERSION, FL_PATCH_VERSION);
-#else
-        fprintf(stderr, "GUI toolkit      : none\n");
 #endif
 #if defined(HAVE_PETSC)
+        fprintf(stderr, "PETSc version    : %d.%d.%d\n", PETSC_VERSION_MAJOR,
+                PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR);
 #if defined(PETSC_USE_COMPLEX)
         fprintf(stderr, "PETSc arithmetic : Complex\n");
 #else
         fprintf(stderr, "PETSc arithmetic : Real\n");
 #endif
 #endif
-        fprintf(stderr, "License          : %s\n", GMSH_SHORT_LICENSE);
-        fprintf(stderr, "Build OS         : %s\n", GMSH_OS);
-        fprintf(stderr, "Build options    :%s\n", GMSH_CONFIG_OPTIONS);
-        fprintf(stderr, "Build date       : %s\n", GMSH_DATE);
-        fprintf(stderr, "Build host       : %s\n", GMSH_HOST);
-        fprintf(stderr, "Packager         : %s\n", GMSH_PACKAGER);
+        fprintf(stderr, "Packaged by      : %s\n", GMSH_PACKAGER);
         fprintf(stderr, "Web site         : http://www.geuz.org/gmsh/\n");
         fprintf(stderr, "Mailing list     : gmsh@geuz.org\n");
         Msg::Exit(0);

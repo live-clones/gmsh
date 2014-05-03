@@ -1669,8 +1669,6 @@ message(STATUS " * C compiler: " ${CMAKE_C_COMPILER})
 message(STATUS " * C++ compiler: " ${CMAKE_CXX_COMPILER})
 message(STATUS " * Install prefix: " ${CMAKE_INSTALL_PREFIX})
 message(STATUS "")
-message(STATUS "Run 'ccmake ${CMAKE_CURRENT_SOURCE_DIR}' to fine-tune the configuration.")
-message(STATUS "")
 
 mark_as_advanced(GMSH_EXTRA_VERSION 
                  ACIS_LIB ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC 

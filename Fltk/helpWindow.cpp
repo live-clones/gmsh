@@ -10,6 +10,7 @@
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Color_Chooser.H>
+#include "GmshConfig.h"
 #include "FlGui.h"
 #include "helpWindow.h"
 #include "paletteWindow.h"
@@ -20,6 +21,10 @@
 #include "Parser.h"
 #include "Context.h"
 #include "drawContext.h"
+
+#if defined(HAVE_PETSC)
+#include "petsc.h"
+#endif
 
 static const char *help_link(Fl_Widget *w, const char *uri)
 {
@@ -294,12 +299,21 @@ helpWindow::helpWindow()
             << "<p>Please send all questions and bug reports to "
             << "<a href=\"mailto:gmsh@geuz.org\">gmsh@geuz.org</a></center>"
             << "<ul>"
-            << "<li><i>GUI toolkit:</i> FLTK "
-            << FL_MAJOR_VERSION << "." << FL_MINOR_VERSION << "." << FL_PATCH_VERSION
             << "<li><i>Build OS:</i> " << GetGmshBuildOS()
             << "<li><i>Build date:</i> " << GetGmshBuildDate()
             << "<li><i>Build host:</i> " << GetGmshBuildHost()
             << "<li><i>Build options:</i>" << GetGmshBuildOptions()
+            << "<li><i>FLTK version:</i> "
+            << FL_MAJOR_VERSION << "." << FL_MINOR_VERSION << "." << FL_PATCH_VERSION
+#if defined(HAVE_PETSC)
+            << "<li>PETSc version: " << PETSC_VERSION_MAJOR << "."
+            << PETSC_VERSION_MINOR << "." << PETSC_VERSION_SUBMINOR
+#if defined(PETSC_USE_COMPLEX)
+            << "<li>PETSc arithmetic: Complex"
+#else
+            << "<li>PETSc arithmetic: Real"
+#endif
+#endif
             << "<li><i>Packaged by:</i> " << GetGmshPackager()
             << "</ul>"
             << "<center>Visit <a href=\"http://geuz.org/gmsh/\">http://geuz.org/gmsh/</a> "
