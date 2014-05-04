@@ -414,6 +414,7 @@ int GModel::_readMSH2(const std::string &name)
           std::vector<MVertex*> vertices;
           if(vertexVector.size()){
             if(!getVertices(numVertices, indices, vertexVector, vertices, minVertex)){
+              delete [] indices;
               fclose(fp);
               return 0;
             }
@@ -536,6 +537,7 @@ int GModel::_readMSH2(const std::string &name)
             std::vector<MVertex*> vertices;
             if(vertexVector.size()){
               if(!getVertices(numVertices, indices, vertexVector, vertices, minVertex)){
+                delete [] data;
                 fclose(fp);
                 return 0;
               }
@@ -844,7 +846,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
                        int elementStartNum, int saveSinglePartition, bool multipleView)
 {
-  
+
   FILE *fp;
   if(multipleView)
     fp = Fopen(name.c_str(), binary ? "ab" : "a");

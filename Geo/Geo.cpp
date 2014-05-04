@@ -2228,9 +2228,10 @@ static List_T* GetOrderedUniqueEdges(Surface *s)
   for(int i = 0; i < numgen; i++){
     Curve *ctemp = 0;
     List_Read(unique, i, &ctemp);
-    if( !ctemp ){
+    if(!ctemp){
       Msg::Error("No such curve");
       List_Delete(gen_nums);
+      List_Delete(unique);
       return 0;
     }
     List_Add(gen_nums, &(ctemp->Num));
@@ -2244,9 +2245,10 @@ static List_T* GetOrderedUniqueEdges(Surface *s)
     Curve *ctemp = 0;
     int j;
     List_Read(gen_nums, i, &j);
-    if( !(ctemp = FindCurve(j)) ){
+    if(!(ctemp = FindCurve(j))){
       Msg::Error("No such curve %d", j);
       List_Delete(gen_nums);
+      List_Delete(unique);
       return 0;
     }
     List_Add(unique, &ctemp);
@@ -2384,8 +2386,7 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
   for(int i = 0; i < List_Nbr(tmp); i++) {
     Vertex *V;
     List_Read(tmp, i, &V);
-    Vertex *found = v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol)];
-    //    printf("v(%d) = %d\n",V->Num,found->Num);
+    pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol);
   }
   List_Delete(tmp);
 
@@ -2806,12 +2807,12 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
 */
 
 static void RemoveDegenerateCurves(){
- 
+
   { // remove degenerate curves from surface generatrices
     List_T *All = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
     for(int i = 0; i < List_Nbr(All); i++) {
       Surface *s;
-      List_Read(All, i, &s);          
+      List_Read(All, i, &s);
       List_T *ll = s->Generatrices;
       s->Generatrices = List_Create(4, 1, sizeof(Curve *));
       //      List_Delete(s->GeneratricesByTag);
@@ -2838,7 +2839,7 @@ static void RemoveDegenerateCurves(){
 	DeleteCurve(c->Num);
 	//	DeleteCurve(-c->Num);
       }
-    }  
+    }
   }
 }
 
@@ -2857,14 +2858,14 @@ static void RemoveDegenerateVolumes(){
       else unique.erase(it);
     }
     if (N-unique.size()) Msg::Info("Coherence : Removing %d seams on Volume %d",N-unique.size(),v->Num);
-	
+
     List_T *ll= v->Surfaces;
     List_T *ll2=  v->SurfacesOrientations;
     v->Surfaces = List_Create(1, 2, sizeof(Surface *));
     v->SurfacesOrientations = List_Create(1, 2, sizeof(int));
     for(int j = 0; j < List_Nbr(ll); j++) {
       Surface *s;
-      List_Read(ll, j, &s);      
+      List_Read(ll, j, &s);
       if (unique.find(s->Num) != unique.end()){
 	List_Add(v->Surfaces,&s);
 	List_Add(v->SurfacesOrientations, List_Pointer(ll2, j));
@@ -2902,7 +2903,7 @@ static void RemoveDegenerateSurfaces(){
     //    s->GeneratricesByTag = List_Create(4, 1, sizeof(int));
     for(int j = 0; j < List_Nbr(ll); j++) {
       Curve *c;
-      List_Read(ll, j, &c);      
+      List_Read(ll, j, &c);
       if (unique.find(c->Num) != unique.end()){
 	List_Add(s->Generatrices,&c);
 	//	List_Add(s->GeneratricesByTag, &c->Num);
@@ -2931,7 +2932,7 @@ static void RemoveDegenerateSurfaces(){
       }
       DeleteSurface(s->Num);
     }
-  }  
+  }
 }
 
 bool Surface::degenerate() const {

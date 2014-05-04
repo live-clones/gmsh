@@ -232,6 +232,8 @@ void GRbf::buildOctree(double radius)
   }
 
   Octree_Delete(oct);
+  delete [] _sph;
+
   buildXYZkdtree();
 }
 

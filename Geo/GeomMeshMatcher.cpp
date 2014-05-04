@@ -705,7 +705,8 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
 
   // This will match SURFACES
   std::vector<Pair<GFace*, GFace*> > *coresp_f = matchFaces(geom, mesh, coresp_e,ok);
-  matchRegions(geom, mesh, coresp_f,ok);
+
+  std::vector<Pair<GRegion*, GRegion*> > *coresp_r = matchRegions(geom, mesh, coresp_f,ok);
 
   std::map<MVertex*,MVertex*> _mesh_to_geom;
   copy_vertices(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f);
@@ -714,6 +715,7 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
   delete coresp_v;
   delete coresp_e;
   delete coresp_f;
+  delete coresp_r;
 
   return 1;
 }
