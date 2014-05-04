@@ -368,7 +368,6 @@ void callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array&
 }
 
 void verification(alglib::real_1d_array& x,void* ptr){
-  int num;
   int index;
   int dimension;
   double e;
@@ -376,36 +375,34 @@ void verification(alglib::real_1d_array& x,void* ptr){
   double R,L,U,D;
   wrapper* w;
   DocRecord* pointer;
-	
+
   w = static_cast<wrapper*>(ptr);
   dimension = w->get_dimension();
-  pointer = w->get_triangulator();
-  num = pointer->numPoints;
   srand(time(NULL));
   index = rand()%(dimension/2);
   e = 0.0000001;
-	
+
   alglib::real_1d_array grad;
   grad.setlength(dimension);
-	
+
   x[index] = x[index] + e;
   callback(x,R,grad,ptr);
   x[index] = x[index] - e;
-	
+
   x[index] = x[index] - e;
   callback(x,L,grad,ptr);
   x[index] = x[index] + e;
-	
+
   x[index + dimension/2] = x[index + dimension/2] + e;
   callback(x,U,grad,ptr);
   x[index + dimension/2] = x[index + dimension/2] - e;
-	
+
   x[index + dimension/2] = x[index + dimension/2] - e;
   callback(x,D,grad,ptr);
   x[index + dimension/2] = x[index + dimension/2] + e;
-	
+
   callback(x,func,grad,ptr);
-	
+
   printf("%f %f\n",(R-L)/(2.0*e),(U-D)/(2.0*e));
   printf("%f %f\n",grad[index],grad[index + dimension/2]);
 }
@@ -419,7 +416,7 @@ smoothing::smoothing(int param1,int param2){
 
 void smoothing::optimize_face(GFace* gf){
   if(gf->getNumMeshElements()==0 || gf->getCompound()) return;
-	
+
   std::set<MVertex*> all;
 
   // get all the points of the face ...
@@ -531,7 +528,7 @@ void smoothing::optimize_face(GFace* gf){
 
   /*if(num_interior>1){
     verification(x,&w);
-  }*/	
+  }*/
 
   if(num_interior>1){
     minlbfgscreate(2*num_interior,4,x,state);
@@ -580,19 +577,19 @@ void smoothing::optimize_face(GFace* gf){
   int option;
   option = gf->getMeshingAlgo();
   gf->setMeshingAlgo(ALGO_2D_MESHADAPT);
-	
+
   gf->additionalVertices = mesh_vertices;
   meshGFace mesher;
   mesher(gf);
-  
+
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),gf->additionalVertices.begin(),gf->additionalVertices.end()); //?
   gf->additionalVertices.clear();
 
-  gf->setMeshingAlgo(option);	
-	
+  gf->setMeshingAlgo(option);
+
   free(initial_conditions);
   free(variables_scales);
-	
+
   backgroundMesh::unset();
 }
 

@@ -91,9 +91,9 @@ namespace gmm {
   void transposed_mult(const diagonal_precond<Matrix>& P,const V1 &v1,V2 &v2) {
     mult(P, v1, v2);
   }
-  
+
   // # define DIAG_LEFT_MULT_SQRT
-  
+
   template <typename Matrix, typename V1, typename V2> inline
   void left_mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
     GMM_ASSERT2(P.diag.size() == vect_size(v2), "dimensions mismatch");
@@ -112,10 +112,10 @@ namespace gmm {
 
   template <typename Matrix, typename V1, typename V2> inline
   void right_mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    typedef typename linalg_traits<Matrix>::value_type T;
+    //typedef typename linalg_traits<Matrix>::value_type T;
     GMM_ASSERT2(P.diag.size() == vect_size(v2), "dimensions mismatch");
     copy(v1, v2);
-#   ifdef DIAG_LEFT_MULT_SQRT    
+#   ifdef DIAG_LEFT_MULT_SQRT
     for (size_type i= 0; i < P.diag.size(); ++i) v2[i] *= gmm::sqrt(P.diag[i]);
 #   endif
   }
@@ -127,5 +127,5 @@ namespace gmm {
 
 }
 
-#endif 
+#endif
 

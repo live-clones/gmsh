@@ -29,10 +29,6 @@ namespace {
   {
     if (n < k || k < 0) {
       Msg::Error("Wrong argument for combination. n %d k %d", n, k);
-      int a[2];
-      int e = 0;
-      for (int i = 0; i < 10000000; ++i) e+=a[i];
-      Msg::Info("%d",e);
       return 1;
     }
 
@@ -347,7 +343,7 @@ void MetricCoefficient::interpolate(const double *uvw, double *minmaxQ)
 
   int order = _bezier->getOrder();
 
-  int dimSimplex;
+  int dimSimplex = 0;
   fullMatrix<double> exponents;
   double bezuvw[3];
   switch (_element->getType()) {
@@ -513,7 +509,7 @@ double MetricCoefficient::getBoundRmin(double tol, int which)
     Msg::Info("> numSubdivision %d", __numSubdivision);
     int last = __numSub.size();
     while (--last > 0 && __numSub[last] == 0);
-    for (unsigned int i = 0; i < last+1; ++i) {
+    for (int i = 0; i < last+1; ++i) {
       Msg::Info("> depth %d: %d", i, __numSub[i]);
     }
     Msg::Info("RETURNING %g after subdivision", tt);
@@ -756,13 +752,13 @@ void MetricCoefficient::_computeRmin2(
       return;
     }
 
-    double a1, a0;
+    double a1; //, a0;
     {
       double p = -1./2;
       double q = -minJ-1/factor2;
       a1 = cubicCardanoRoot(p, q); //plus grand => -1
       q = -minJ+1/factor2;
-      a0 = cubicCardanoRoot(p, q); //plus petit => 1
+      //a0 = cubicCardanoRoot(p, q); //plus petit => 1
     }
 
     double mina;
@@ -1042,12 +1038,12 @@ void MetricCoefficient::_minJ2P3(const fullMatrix<double> &coeff,
   //Msg::Warning("sizes %d %d", _ineqJ2.size(), _ineqP3.size());
   int count = 0;
   while (itJ != _ineqJ2.end() && itP != _ineqP3.end()) {
-    if (count >= _ineqJ2.size()) Msg::Fatal("aaargh");
+    if (count >= (int)_ineqJ2.size()) Msg::Fatal("aaargh");
     if (itJ->first != itP->first) Msg::Fatal("not same hash %d %d", itJ->first, itP->first);
 
     double num = 0;
     //Msg::Info("sizej %d", itJ->second.size());
-    for (int l = 0; l < itJ->second.size(); ++l) {
+    for (unsigned int l = 0; l < itJ->second.size(); ++l) {
       const int i = itJ->second[l].i;
       const int j = itJ->second[l].j;
       num += itJ->second[l].val * jac(i) * jac(j);
@@ -1055,7 +1051,7 @@ void MetricCoefficient::_minJ2P3(const fullMatrix<double> &coeff,
 
     double den = 0;
     //Msg::Info("sizep %d", itP->second.size());
-    for (int l = 0; l < itP->second.size(); ++l) {
+    for (unsigned int l = 0; l < itP->second.size(); ++l) {
       const int i = itP->second[l].i;
       const int j = itP->second[l].j;
       const int k = itP->second[l].k;
