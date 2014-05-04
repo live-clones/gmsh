@@ -2806,8 +2806,8 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
 
 */
 
-static void RemoveDegenerateCurves(){
-
+static void RemoveDegenerateCurves()
+{
   { // remove degenerate curves from surface generatrices
     List_T *All = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
     for(int i = 0; i < List_Nbr(All); i++) {
@@ -2815,17 +2815,19 @@ static void RemoveDegenerateCurves(){
       List_Read(All, i, &s);
       List_T *ll = s->Generatrices;
       s->Generatrices = List_Create(4, 1, sizeof(Curve *));
-      //      List_Delete(s->GeneratricesByTag);
-      //      s->GeneratricesByTag = List_Create(4, 1, sizeof(int));
+      // List_Delete(s->GeneratricesByTag);
+      // s->GeneratricesByTag = List_Create(4, 1, sizeof(int));
       for(int j = 0; j < List_Nbr(ll); j++) {
 	Curve *c;
 	List_Read(ll, j, &c);
 	if (!c->degenerate()){
 	  List_Add(s->Generatrices, &c);
-	  //	  List_Add(s->GeneratricesByTag, &c->Num);
+	  // List_Add(s->GeneratricesByTag, &c->Num);
 	}
       }
-      if (List_Nbr(ll) != List_Nbr(s->Generatrices)) Msg::Info("Coherence : Surface %d goes from %d to %d boundary curves",s->Num,List_Nbr(ll),List_Nbr(s->Generatrices));
+      if (List_Nbr(ll) != List_Nbr(s->Generatrices))
+        Msg::Info("Coherence : Surface %d goes from %d to %d boundary curves",
+                  s->Num, List_Nbr(ll), List_Nbr(s->Generatrices));
       List_Delete(ll);
     }
   }
@@ -2837,13 +2839,14 @@ static void RemoveDegenerateCurves(){
       List_Read(All, i, &c);
       if(c->degenerate()) {
 	DeleteCurve(c->Num);
-	//	DeleteCurve(-c->Num);
+	// DeleteCurve(-c->Num);
       }
     }
   }
 }
 
-static void RemoveDegenerateVolumes(){
+static void RemoveDegenerateVolumes()
+{
   List_T *Vols = Tree2List(GModel::current()->getGEOInternals()->Volumes);
   for(int k = 0; k < List_Nbr(Vols); k++) {
     Volume *v;
@@ -2854,13 +2857,14 @@ static void RemoveDegenerateVolumes(){
       Surface *s;
       List_Read(v->Surfaces, j, &s);
       std::set<int>::iterator it = unique.find(-s->Num);
-      if (it == unique.end())unique.insert(s->Num);
+      if (it == unique.end()) unique.insert(s->Num);
       else unique.erase(it);
     }
-    if (N-unique.size()) Msg::Info("Coherence : Removing %d seams on Volume %d",N-unique.size(),v->Num);
+    if(N - unique.size())
+      Msg::Info("Coherence : Removing %d seams on Volume %d", N-unique.size(), v->Num);
 
-    List_T *ll= v->Surfaces;
-    List_T *ll2=  v->SurfacesOrientations;
+    List_T *ll = v->Surfaces;
+    List_T *ll2 = v->SurfacesOrientations;
     v->Surfaces = List_Create(1, 2, sizeof(Surface *));
     v->SurfacesOrientations = List_Create(1, 2, sizeof(int));
     for(int j = 0; j < List_Nbr(ll); j++) {
@@ -2879,7 +2883,9 @@ static void RemoveDegenerateVolumes(){
     }
   }
 }
-static void RemoveDegenerateSurfaces(){
+
+static void RemoveDegenerateSurfaces()
+{
   List_T *All = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
 
   for(int i = 0; i < List_Nbr(All); i++) {
@@ -2899,20 +2905,20 @@ static void RemoveDegenerateSurfaces(){
 
     List_T *ll = s->Generatrices;
     s->Generatrices = List_Create(4, 1, sizeof(Curve *));
-    //    List_Delete(s->GeneratricesByTag);
-    //    s->GeneratricesByTag = List_Create(4, 1, sizeof(int));
+    // List_Delete(s->GeneratricesByTag);
+    // s->GeneratricesByTag = List_Create(4, 1, sizeof(int));
     for(int j = 0; j < List_Nbr(ll); j++) {
       Curve *c;
       List_Read(ll, j, &c);
       if (unique.find(c->Num) != unique.end()){
 	List_Add(s->Generatrices,&c);
-	//	List_Add(s->GeneratricesByTag, &c->Num);
+	// List_Add(s->GeneratricesByTag, &c->Num);
       }
     }
     List_Delete(ll);
 
     if(s->degenerate()) {
-      Msg::Info("Coherence Surface %d is removed (degenerated)",s->Num);
+      Msg::Info("Coherence Surface %d is removed (degenerated)", s->Num);
       List_T *Vols = Tree2List(GModel::current()->getGEOInternals()->Volumes);
       for(int k = 0; k < List_Nbr(Vols); k++) {
 	Volume *v;
@@ -2935,7 +2941,8 @@ static void RemoveDegenerateSurfaces(){
   }
 }
 
-bool Surface::degenerate() const {
+bool Surface::degenerate() const
+{
   int N = List_Nbr(Generatrices);
   int Nd = 0;
   for(int i = 0; i < N; i++) {
@@ -2945,7 +2952,6 @@ bool Surface::degenerate() const {
   }
   return Nd == 0;
 }
-
 
 static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
 {
@@ -3074,7 +3080,7 @@ static void ReplaceAllDuplicates(std::vector<std::map<int, int> > &report)
   if(report.size() >= 3 && report[2].size())
     surface_report = &(report[2]);
 
-  ReplaceDuplicatePoints();
+  ReplaceDuplicatePoints(vertex_report);
   ReplaceDuplicateCurves(curve_report);
   ReplaceDuplicateSurfaces(surface_report);
 
