@@ -164,7 +164,10 @@ void elasticitySolver::readInputFile(const std::string &fn)
     else if (!strcmp(what, "ElasticDomain")){
       elasticField field;
       int physical;
-      if(fscanf(f, "%d %lf %lf", &physical, &field._E, &field._nu) != 3) return;
+      if(fscanf(f, "%d %lf %lf", &physical, &field._E, &field._nu) != 3){
+        fclose(f);
+        return;
+      }
       field._tag = _tag;
       field.g = new groupOfElements (_dim, physical);
       elasticFields.push_back(field);
@@ -174,7 +177,10 @@ void elasticitySolver::readInputFile(const std::string &fn)
       int physical;
       double d1, d2, d3, val;
       if(fscanf(f, "%d %lf %lf %lf %lf %lf %d", &physical, &field._tau,
-        &d1, &d2, &d3, &val, &field._tag) != 7) return;
+                &d1, &d2, &d3, &val, &field._tag) != 7){
+        fclose(f);
+        return;
+      }
       field._tag = _tag;
       field._d = SVector3(d1, d2, d3);
       field._f = simpleFunction<double>(val);
@@ -184,7 +190,10 @@ void elasticitySolver::readInputFile(const std::string &fn)
     else if (!strcmp(what, "Void")){
       elasticField field;
       int physical;
-      if(fscanf(f, "%d", &physical) != 1) return;
+      if(fscanf(f, "%d", &physical) != 1){
+        fclose(f);
+        return;
+      }
       field._E = field._nu = 0;
       field.g = new groupOfElements (_dim, physical);
       field._tag = 0;
@@ -193,7 +202,10 @@ void elasticitySolver::readInputFile(const std::string &fn)
     else if (!strcmp(what, "NodeDisplacement")){
       double val;
       int node, comp;
-      if(fscanf(f, "%d %d %lf", &node, &comp, &val) != 3) return;
+      if(fscanf(f, "%d %d %lf", &node, &comp, &val) != 3){
+        fclose(f);
+        return;
+      }
       dirichletBC diri;
       diri.g = new groupOfElements (0, node);
       diri._f= new simpleFunction<double>(val);
@@ -205,7 +217,10 @@ void elasticitySolver::readInputFile(const std::string &fn)
     else if (!strcmp(what, "EdgeDisplacement")){
       double val;
       int edge, comp;
-      if(fscanf(f, "%d %d %lf", &edge, &comp, &val) != 3) return;
+      if(fscanf(f, "%d %d %lf", &edge, &comp, &val) != 3){
+        fclose(f);
+        return;
+      }
       dirichletBC diri;
       diri.g = new groupOfElements (1, edge);
       diri._f= new simpleFunction<double>(val);
@@ -217,7 +232,10 @@ void elasticitySolver::readInputFile(const std::string &fn)
     else if (!strcmp(what, "FaceDisplacement")){
       double val;
       int face, comp;
-      if(fscanf(f, "%d %d %lf", &face, &comp, &val) != 3) return;
+      if(fscanf(f, "%d %d %lf", &face, &comp, &val) != 3){
+        fclose(f);
+        return;
+      }
       dirichletBC diri;
       diri.g = new groupOfElements (2, face);
       diri._f= new simpleFunction<double>(val);
@@ -229,7 +247,10 @@ void elasticitySolver::readInputFile(const std::string &fn)
     else if (!strcmp(what, "NodeForce")){
       double val1, val2, val3;
       int node;
-      if(fscanf(f, "%d %lf %lf %lf", &node, &val1, &val2, &val3) != 4) return;
+      if(fscanf(f, "%d %lf %lf %lf", &node, &val1, &val2, &val3) != 4){
+        fclose(f);
+        return;
+      }
       neumannBC neu;
       neu.g = new groupOfElements (0, node);
       neu._f= new simpleFunction<SVector3>(SVector3(val1, val2, val3));
@@ -240,7 +261,10 @@ void elasticitySolver::readInputFile(const std::string &fn)
     else if (!strcmp(what, "EdgeForce")){
       double val1, val2, val3;
       int edge;
-      if(fscanf(f, "%d %lf %lf %lf", &edge, &val1, &val2, &val3) != 4) return;
+      if(fscanf(f, "%d %lf %lf %lf", &edge, &val1, &val2, &val3) != 4){
+        fclose(f);
+        return;
+      }
       neumannBC neu;
       neu.g = new groupOfElements (1, edge);
       neu._f= new simpleFunction<SVector3>(SVector3(val1, val2, val3));
@@ -251,7 +275,10 @@ void elasticitySolver::readInputFile(const std::string &fn)
     else if (!strcmp(what, "FaceForce")){
       double val1, val2, val3;
       int face;
-      if(fscanf(f, "%d %lf %lf %lf", &face, &val1, &val2, &val3) != 4) return;
+      if(fscanf(f, "%d %lf %lf %lf", &face, &val1, &val2, &val3) != 4){
+        fclose(f);
+        return;
+      }
       neumannBC neu;
       neu.g = new groupOfElements (2, face);
       neu._f= new simpleFunction<SVector3>(SVector3(val1, val2, val3));
@@ -262,7 +289,10 @@ void elasticitySolver::readInputFile(const std::string &fn)
     else if (!strcmp(what, "VolumeForce")){
       double val1, val2, val3;
       int volume;
-      if(fscanf(f, "%d %lf %lf %lf", &volume, &val1, &val2, &val3) != 4) return;
+      if(fscanf(f, "%d %lf %lf %lf", &volume, &val1, &val2, &val3) != 4){
+        fclose(f);
+        return;
+      }
       neumannBC neu;
       neu.g = new groupOfElements (3, volume);
       neu._f= new simpleFunction<SVector3>(SVector3(val1, val2, val3));
@@ -272,26 +302,34 @@ void elasticitySolver::readInputFile(const std::string &fn)
     }
     else if (!strcmp(what, "MeshFile")){
       char name[245];
-      if(fscanf(f, "%s", name) != 1) return;
+      if(fscanf(f, "%s", name) != 1){
+        fclose(f);
+        return;
+      }
       setMesh(name);
     }
     else if (!strcmp(what, "CutMeshPlane")){
       double a, b, c, d;
-      if(fscanf(f, "%lf %lf %lf %lf", &a, &b, &c, &d) != 4) return;
+      if(fscanf(f, "%lf %lf %lf %lf", &a, &b, &c, &d) != 4){
+        fclose(f);
+        return;
+      }
       int tag=1;
       gLevelsetPlane ls(a,b,c,d,tag);
       pModel = pModel->buildCutGModel(&ls);
     }
     else if (!strcmp(what, "CutMeshSphere")){
       double x, y, z, r;
-      if(fscanf(f, "%lf %lf %lf %lf", &x, &y, &z, &r) != 4) return;
+      if(fscanf(f, "%lf %lf %lf %lf", &x, &y, &z, &r) != 4){
+        fclose(f);
+        return;
+      }
       int tag=1;
       gLevelsetSphere ls(x,y,z,r,tag);
       pModel = pModel->buildCutGModel(&ls);
     }
     else {
       Msg::Error("Invalid input : '%s'", what);
-//      return;
     }
   }
   fclose(f);

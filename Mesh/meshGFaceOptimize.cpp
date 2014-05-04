@@ -1361,10 +1361,10 @@ struct  quadBlob {
   bool meshable (int iter)
   {
     int ncorners = 0;
-    MVertex *corners[5];
+    MVertex *corners[5] = {0, 0, 0, 0, 0};
     for (unsigned int i = 0; i < bnodes.size(); i++){
       if (topologicalAngle(bnodes[i]) > 0) ncorners ++;
-      if (ncorners > 5)return false;
+      if (ncorners > 5) return false;
     }
     if (ncorners != 3 && ncorners != 4 && ncorners != 5){
       return false;
@@ -1402,7 +1402,7 @@ struct  quadBlob {
       MVertex *v01 = bnodes[a1]; SPoint2 p01; reparamMeshVertexOnFace(v01, gf, p01);
       MVertex *v12 = bnodes[a1+a3+a2]; SPoint2 p12; reparamMeshVertexOnFace(v12, gf, p12);
       MVertex *v20 = bnodes[a1+a3+a2+a1+a3]; SPoint2 p20; reparamMeshVertexOnFace(v20, gf, p20);
-      SPoint2 p012 = (p01+p12+p20)*(1./3.0); MVertex *v012 = createNewVertex (gf, p012);
+      SPoint2 p012 = (p01+p12+p20)*(1./3.0);
 
       std::vector<MVertex*> e012_01 = saturateEdge (gf,p012,p01,a2);
       std::vector<MVertex*> e012_12 = saturateEdge (gf,p012,p12,a3);
@@ -1410,6 +1410,8 @@ struct  quadBlob {
       if (e012_01.size() == 0) return false;
       if (e012_12.size() == 0) return false;
       if (e012_20.size() == 0) return false;
+
+      MVertex *v012 = createNewVertex (gf, p012);
 
       std::vector<MVertex*> e0_01,e01_1,e1_12,e12_2,e2_20,e20_0;
       for (int i=0;i<a1-1;i++)e0_01.push_back(bnodes[i+1]);
@@ -1550,7 +1552,7 @@ struct  quadBlob {
       MVertex *v23 = bnodes[a1+a3+a2+a4+a3]; SPoint2 p23; reparamMeshVertexOnFace(v23, gf, p23);
       MVertex *v34 = bnodes[a1+a3+a2+a4+a3+a5+a4]; SPoint2 p34; reparamMeshVertexOnFace(v34, gf, p34);
       MVertex *v40 = bnodes[a1+a3+a2+a4+a3+a5+a4+a1+a5]; SPoint2 p40; reparamMeshVertexOnFace(v40, gf, p40);
-      SPoint2 p01234 = (p01+p12+p23+p34+p40)*(1./5.0); MVertex *v01234 = createNewVertex (gf, p01234);
+      SPoint2 p01234 = (p01+p12+p23+p34+p40)*(1./5.0);
 
       std::vector<MVertex*> e01234_01 = saturateEdge (gf,p01234,p01,a2);
       std::vector<MVertex*> e01234_12 = saturateEdge (gf,p01234,p12,a3);
@@ -1562,6 +1564,8 @@ struct  quadBlob {
       if (e01234_23.size() == 0) return false;
       if (e01234_34.size() == 0) return false;
       if (e01234_40.size() == 0) return false;
+
+      MVertex *v01234 = createNewVertex (gf, p01234);
 
       std::vector<MVertex*> e0_01,e01_1,e1_12,e12_2,e2_23,e23_3,e3_34,e34_4,e4_40,e40_0;
       for (int i=0;i<a1-1;i++)e0_01.push_back(bnodes[i+1]);
