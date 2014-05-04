@@ -677,7 +677,8 @@ static void addScalarPolygon(PView *p, double **xyz,
         ite != edges.end(); ite++){
       int i = (int) (*ite).second / 100;
       int j = (*ite).second % 100;
-      addScalarLine(p, xyz, val, pre, 3*i+il[j][0], 3*i+il[j][0], true);
+      if(j < 3)
+        addScalarLine(p, xyz, val, pre, 3*i+il[j][0], 3*i+il[j][0], true);
     }
     opt->boundary++;
 
@@ -858,6 +859,7 @@ static void addScalarPyramid(PView *p, double **xyz,
 static void addOutlinePolyhedron(PView *p, double **xyz,
                                  unsigned int color, bool pre, int numNodes)
 {
+  // FIXME: this code is horribly slow
   const int it[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
   std::map<MFace, int, Less_Face> triFaces;
   std::vector<MVertex *> verts;
@@ -878,7 +880,8 @@ static void addOutlinePolyhedron(PView *p, double **xyz,
       ite != triFaces.end(); ite++){
     int i = (int) (*ite).second / 100;
     int j = (*ite).second % 100;
-    addOutlineTriangle(p, xyz, color, pre, 4*i+it[j][0], 4*i+it[j][1], 4*i+it[j][2]);
+    if(j < 4)
+      addOutlineTriangle(p, xyz, color, pre, 4*i+it[j][0], 4*i+it[j][1], 4*i+it[j][2]);
   }
   for(int i = 0; i < numNodes; i++)
     delete verts[i];

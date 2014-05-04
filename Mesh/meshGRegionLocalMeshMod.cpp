@@ -107,7 +107,7 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
       return false;
     }
     // FIXME when hybrid mesh, this loops for ever
-    if (cavity.size() > 1000)return false;
+    if (cavity.size() > 1000) return false;
     //    printf("%d %d\n",ITER++, cavity.size());
   }
   computeNeighboringTetsOfACavity (cavity,outside);
@@ -453,8 +453,9 @@ void buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4*> &cavity)
     }
   }
   if (iV == -1){
-    Msg::Fatal("trying to build a cavity of tets for a vertex that does not "
-        "belong to this tet");
+    Msg::Error("Trying to build a cavity of tets for a vertex that does not "
+               "belong to this tet");
+    return;
   }
   for (int i = 0; i < 3; i++){
     MTet4 *neigh = t->getNeigh(vFac[iV][i]);
