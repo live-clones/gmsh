@@ -197,7 +197,7 @@ MElement *getFirstEl(const std::map<MVertex*, std::vector<MElement*> > &vertex2e
 
   const std::vector<MElement*> &nb0 = vertex2elements.find(vb0)->second;
   const std::vector<MElement*> &nb1 = vertex2elements.find(vb1)->second;
-  MElement *firstEl;
+  MElement *firstEl = 0;
   for (int iEl=0; iEl<nb0.size(); iEl++) {
     if (find(nb1.begin(), nb1.end(), nb0[iEl]) != nb1.end()) {
       firstEl = nb0[iEl];
@@ -316,7 +316,7 @@ bool getTopPrimVertices(std::map<MVertex*, std::vector<MElement *> > &vertex2ele
       std::map<MVertex*, SVector3>::const_iterator itNorm = normVert.find(baseVert[i]);
       if (itNorm == normVert.end()) {
         Msg::Error("Normal to vertex not found in getTopPrimVertices");
-        itNorm == normVert.begin();
+        itNorm = normVert.begin();
       }
       std::vector<MVertex*> col;
       bool colFound = findColumn(vertex2elements, baseVert[i], itNorm->second,

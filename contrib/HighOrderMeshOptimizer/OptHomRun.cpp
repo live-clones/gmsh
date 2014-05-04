@@ -625,14 +625,15 @@ static void optimizeOneByOne
 #endif
 
 #include "OptHomIntegralBoundaryDist.h"
-double ComputeDistanceToGeometry (GEntity *ge , int distanceDefinition, double tolerance){
+double ComputeDistanceToGeometry (GEntity *ge , int distanceDefinition, double tolerance)
+{
   double maxd = 0.0;
   double sum = 0.0;
-  int NUM;
+  int NUM = 0;
   for (int iEl = 0; iEl < ge->getNumMeshElements();iEl++) {
     MElement *el = ge->getMeshElement(iEl);
     if (ge->dim() == el->getDim()){
-      const double DISTE =computeBndDist(el,distanceDefinition, tolerance); 
+      const double DISTE =computeBndDist(el,distanceDefinition, tolerance);
       if (DISTE != 0.0){
 	NUM++;
 	//	if(distanceDefinition == 1)printf("%d %12.5E\n",iEl,DISTE);
@@ -641,7 +642,7 @@ double ComputeDistanceToGeometry (GEntity *ge , int distanceDefinition, double t
       }
     }
   }
-  if (distanceDefinition == 2)return sum/NUM;
+  if (distanceDefinition == 2 && NUM) return sum / (double)NUM;
   return maxd;
 }
 
@@ -672,17 +673,17 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
     for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) { // Detect bad elements
       double jmin, jmax;
       MElement *el = entity->getMeshElement(iEl);
-      const double DISTE =computeBndDist(el,2,fabs(p.discrTolerance)); 
+      const double DISTE =computeBndDist(el,2,fabs(p.discrTolerance));
       //      printf("Element %d Distance %12.5E\n",iEl,DISTE);
       maxdist = std::max(DISTE, maxdist);
       if (el->getDim() == p.dim) {
 	if (p.optCAD && DISTE > p.optCADDistMax)
-	  badasses.insert(el); 
+	  badasses.insert(el);
 
 	el->scaledJacRange(jmin, jmax, p.optPrimSurfMesh ? entity : 0);
 	if (p.BARRIER_MIN_METRIC > 0) jmax = jmin;
 	if (jmin < p.BARRIER_MIN || jmax > p.BARRIER_MAX){
-	  badasses.insert(el); 
+	  badasses.insert(el);
         }
       }
     }

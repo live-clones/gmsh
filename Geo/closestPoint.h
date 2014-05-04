@@ -14,7 +14,6 @@ class closestPointFinder
   ANNidxArray index;
   ANNdistArray dist;
 #endif
-  GEntity* _ge;
   double _tolerance;
  public :
   closestPointFinder (GEntity*, double);

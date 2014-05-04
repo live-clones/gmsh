@@ -7,9 +7,9 @@
 #include "discreteFrechetDistance.h"
 #include "MLine.h"
 
-
-parametricLineNodalBasis::parametricLineNodalBasis(const nodalBasis &basis, const std::vector<SPoint3> &xyz):
-  _basis(basis), _xyz(xyz)  {};
+parametricLineNodalBasis::parametricLineNodalBasis(const nodalBasis &basis,
+                                                   const std::vector<SPoint3> &xyz):
+  _basis(basis), _xyz(xyz) {};
 
 SPoint3 parametricLineNodalBasis::operator()(double xi) const
 {
@@ -50,8 +50,6 @@ SVector3 parametricLineNodalBasis::secondDerivative(double xi) const
   return p;
 }
 
-
-
 parametricLineGEdge::parametricLineGEdge(const GEdge *edge, double t0, double t1):
   _edge(edge), _t0(t0), _t1(t1) {}
 
@@ -60,6 +58,7 @@ SPoint3 parametricLineGEdge::operator()(double xi) const
   GPoint gp = _edge->point(_t0 + (_t1 - _t0) * xi);
   return SPoint3 (gp.x(), gp.y(), gp.z());
 }
+
 SVector3 parametricLineGEdge::derivative(double xi) const
 {
   return _edge->firstDer(_t0 + (_t1 - _t0) * xi);
@@ -70,9 +69,9 @@ SVector3 parametricLineGEdge::secondDerivative(double xi) const
   return _edge->secondDer(_t0 + (_t1 - _t0) * xi);
 }
 
-static void oversample (std::vector<SPoint3> &s, double tol){
+static void oversample (std::vector<SPoint3> &s, double tol)
+{
   std::vector<SPoint3> t;
-
   for (unsigned int i=1;i<s.size();i++){
     SPoint3 p0 = s[i-1];
     SPoint3 p1 = s[i];
@@ -193,7 +192,6 @@ double parametricLine::hausdorffDistance(const parametricLine &l, SPoint3 &p1, S
   }
 }
 
-
 // DISCRETE FRECHET DISTANCE
 double computeBndDistF(GEdge *edge,
 		       std::vector<double> & params, // the model edge
@@ -207,7 +205,6 @@ double computeBndDistF(GEdge *edge,
   SPoint3 p1,p2;
   return l1.frechetDistance(l2,p1,p2,tolerance);
 }
-
 
 // GMSH's DISTANCE
 /*
@@ -254,8 +251,6 @@ double computeBndDistG_(GEdge *edge, std::vector<double> & p, // the model edge
   o.push_back(1);
 
   //  printf("computing diustance with tolerance %g\n",tolerac);
-
-
 
   double D = 0.0;
   const double U0 = basis.points(0,0);

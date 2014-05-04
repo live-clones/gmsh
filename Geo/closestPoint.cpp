@@ -21,18 +21,22 @@ static void oversample (std::vector<SPoint3> &s, double tol){
   s = t;
 }
 
-closestPointFinder :: closestPointFinder (GEntity *ge, double e) : _ge (ge) , _tolerance (e)
+closestPointFinder :: closestPointFinder (GEntity *ge, double e) : _tolerance (e)
 {
 #if defined(HAVE_ANN)
   std::vector<SPoint3> pts;
   if (ge->dim() == 1){
     GEdge *edge = ge->cast2Edge();
-    if (!edge)Msg::Fatal("in the constructor of closestPoint");
-    std::vector<double> ts;
-    edge->discretize(_tolerance, pts,ts);
-    //    printf("%d points\n",pts.size());
-    oversample (pts, _tolerance);
-    //    printf("%d points after oversampling\n",pts.size());
+    if (edge){
+      std::vector<double> ts;
+      edge->discretize(_tolerance, pts,ts);
+      //    printf("%d points\n",pts.size());
+      oversample (pts, _tolerance);
+      //    printf("%d points after oversampling\n",pts.size());
+    }
+    else{
+      Msg::Error("Can get edge in closestPointFinder");
+    }
   }
   index = new ANNidx[1];
   dist = new ANNdist[1];

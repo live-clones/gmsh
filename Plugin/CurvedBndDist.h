@@ -15,17 +15,17 @@ extern "C"
 
 class GMSH_CurvedBndDistPlugin : public GMSH_PostPlugin
 {
-    GModel *_m;
-  public :
-    GMSH_CurvedBndDistPlugin(){}
-    std::string getName() const { return "CurvedBndDist"; }
-    std::string getShortHelp() const {
-      return "Check validity of elements and/or compute min&max of the jacobian";
-    }
-    std::string getHelp() const;
-    std::string getAuthor() const { return "Jonathan Lambrechts"; }
-    int getNbOptions() const;
-    StringXNumber *getOption(int);  
-    PView *execute(PView *);
+ public :
+  GMSH_CurvedBndDistPlugin(){}
+  std::string getName() const { return "CurvedBndDist"; }
+  std::string getShortHelp() const
+  {
+    return "Compute distance to curved boundary";
+  }
+  std::string getHelp() const;
+  std::string getAuthor() const { return "Jonathan Lambrechts"; }
+  int getNbOptions() const;
+  StringXNumber *getOption(int);
+  PView *execute(PView *);
 };
 #endif

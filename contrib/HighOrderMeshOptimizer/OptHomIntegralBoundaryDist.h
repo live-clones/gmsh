@@ -7,10 +7,10 @@ class SPoint3;
 class MElement;
 class MVertex;
 double computeBndDist(MElement *element, int distanceDefinition, double tolerance);
-double computeBndDistAndGradient(GEdge *edge, 
-				 std::vector<double> &param, 
-				 const std::vector<MVertex*> &vs, 
-				 const nodalBasis &basis, std::vector<SPoint3> &xyz, 
+double computeBndDistAndGradient(GEdge *edge,
+				 std::vector<double> &param,
+				 const std::vector<MVertex*> &vs,
+				 const nodalBasis &basis, std::vector<SPoint3> &xyz,
 				 std::vector<bool> &onEdge, std::vector<double> &grad, double tolerance);
 
 class parametricLine {
@@ -22,10 +22,10 @@ class parametricLine {
   void discretize(std::vector<SPoint3> &dpts,std::vector<double> &ts,double Prec,
 		  double t0 = 0.0, double t1 = 1.0) const;
   void recur_discretize(const double &t1, const double &t2,
-			const SPoint3 &p1, const SPoint3 &p2, 
+			const SPoint3 &p1, const SPoint3 &p2,
 			std::vector<SPoint3> &dpts,
 			std::vector<double> &ts,
-			double Prec, int depth) const;  
+			double Prec, int depth) const;
   double frechetDistance(const parametricLine &l, SPoint3 &p1, SPoint3 &p2, double tol = 1.e-6) const;
   double hausdorffDistance(const parametricLine &l, SPoint3 &p1, SPoint3 &p2, double tol = 1.e-6) const;
 };
@@ -34,7 +34,6 @@ class parametricLineNodalBasis : public parametricLine
 {
   const nodalBasis &_basis;
   const std::vector<SPoint3> &_xyz;
-  double _u0, _u1;
  public :
   parametricLineNodalBasis(const nodalBasis &basis, const std::vector<SPoint3> &xyz);
   virtual SPoint3 operator()(double xi) const;

@@ -33,45 +33,35 @@
 #include <string>
 #include "MElement.h"
 
-
-
 class SuperEl
 {
-public:
-
+ public:
   SuperEl(int type, int order, const std::vector<MVertex*> &baseVert,
           const std::vector<MVertex*> &topPrimVert);
   ~SuperEl();
-
   bool isOK() const { return _superEl; }
   bool isPointIn(const SPoint3 p) const;
   bool straightToCurved(double *xyzS, double *xyzC) const;
-
   std::string printPOS();
-
-  void printCoord() {
+  void printCoord()
+  {
     std::cout << "DBGTT: superEl -> ";
     for(int i = 0; i < _superVert.size(); i++){
-      std::cout << "v" << i << " = (" << _superVert[i]->x() << "," <<  _superVert[i]->y() << "," <<  _superVert[i]->z() << ")";
+      std::cout << "v" << i << " = (" << _superVert[i]->x() << ","
+                <<  _superVert[i]->y() << "," <<  _superVert[i]->z() << ")";
       if (i == _superVert.size()-1) std::cout << "\n"; else std::cout << ", ";
     }
-
   }
-
-private:
-
+ private:
   struct superInfoType {
     int nV;
     fullMatrix<double> points;
     std::vector<int> baseInd, topInd, otherInd;
     superInfoType(int type, int order);
   };
-
   static std::map<int,superInfoType> _superInfo;
-
   std::vector<MVertex*> _superVert;
   MElement *_superEl, *_superEl0;
 };
-
 
 #endif

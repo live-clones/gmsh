@@ -1040,7 +1040,8 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr, spl
 	}
       }
       //      printf("counter = %d\n",counter);
-      opposite /= (double)counter;
+      if(counter)
+        opposite /= (double)counter;
 
       SVector3 dir = center - opposite;
       MTriangle temp (it->first.getVertex(0),it->first.getVertex(1),it->first.getVertex(2));
@@ -1833,7 +1834,7 @@ GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3,
   return it->second;
 }
 
-GFace *findInFaceSearchStructure(const MFace &ff, 
+GFace *findInFaceSearchStructure(const MFace &ff,
                                  const fs_cont &search)
 {
   fs_cont::const_iterator it = search.find(ff);

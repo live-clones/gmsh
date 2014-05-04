@@ -350,10 +350,12 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
 	  _dirs.push_back(x);
 	}
       }
+      /*
       else {
 	_dirs.push_back(N1[SIDE]);
 	_dirs.push_back(N2[SIDE]);
 	}
+      */
     }
   }
 }
@@ -972,11 +974,13 @@ fanTopology :: fanTopology (GRegion * gr, const std::set<GEdge*> &detectedFans, 
 // V = (x,y,z) / (x^2+y^2+z^2)^{1/2} is a point on the unit sphere
 // the n[i]'s are points on the unit sphere
 // V maximizes  min_i (V * n[i])
-// This means I'd like to find point V that is 
+// This means I'd like to find point V that is
 
-static void filterVectors(std::vector<SVector3> &n){
+/*
+static void filterVectors(std::vector<SVector3> &n)
+{
   std::vector<SVector3> temp;
-  temp.push_back(n[0]);  
+  temp.push_back(n[0]);
   for (unsigned int i = 1 ; i<n.size() ; i++){
     bool found = false;
     for (unsigned int j = 0 ; j<temp.size() ; j++){
@@ -987,8 +991,10 @@ static void filterVectors(std::vector<SVector3> &n){
   }
   n = temp;
 }
+*/
 
-static SVector3 computeBestNormal(std::vector<SVector3> &n){
+static SVector3 computeBestNormal(std::vector<SVector3> &n)
+{
   //  filterVectors (n);
   SVector3 V;
   if (n.size() == 1)V = n[0];
@@ -1056,13 +1062,13 @@ static int createColumnsBetweenFaces(GRegion *gr,
     joints.push_back(joint);
     //    SVector3 avg (0,0,0);
     std::vector<SVector3> ns;
-    
+
     for (unsigned int i=0;i<joint.size(); i++){
       ns.push_back( n[inv[joint[i]]] );
       //      avg += n[inv[joint[i]]];
     }
     SVector3 avg = computeBestNormal(ns);
-    
+
 
     std::vector<MVertex*> _column;
     std::vector<SMetric3> _metrics;

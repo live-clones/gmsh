@@ -4,12 +4,16 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "Gmsh.h"
+#include "GmshConfig.h"
 #include "GModel.h"
-#include "CurvedBndDist.h"
 #include "MElement.h"
 #include "PViewDataList.h"
-#include "OptHomIntegralBoundaryDist.h"
 #include "BasisFactory.h"
+
+#if defined(HAVE_OPTHOM)
+#include "CurvedBndDist.h"
+#include "OptHomIntegralBoundaryDist.h"
+#endif
 
 StringXNumber CurvedBndDistOptions_Number[] = {
  /* {GMSH_FULLRC, "Dim", NULL, -1},*/
@@ -56,6 +60,7 @@ static void addLine(PViewDataList *data, const SVector3 &p0, const SVector3 &p1,
   data->SQ.push_back(v); data->SQ.push_back(v); data->SQ.push_back(v); data->SQ.push_back(v);
 }
 */
+
 static void addPoint(PViewDataList *data, const SVector3 &p0, double v0)
 {
   data->NbSP ++;
@@ -76,8 +81,11 @@ static void addVP(PViewDataList *data, const SVector3 p0, SVector3 v)
   data->VP.push_back(v.z());
 }
 
+#if defined(HAVE_OPTHOM)
+
 #include <limits>
-static void drawElementDist(PViewDataList *data, GEdge *edge, const std::vector<MVertex *>&vertices, const nodalBasis &basis)
+static void drawElementDist(PViewDataList *data, GEdge *edge,
+                            const std::vector<MVertex *>&vertices, const nodalBasis &basis)
 {
   std::vector<double> gradient;
   std::vector<double> param(vertices.size());
@@ -98,7 +106,8 @@ static void drawElementDist(PViewDataList *data, GEdge *edge, const std::vector<
   }
 }
 
-static void drawElement(PViewDataList *data, GEdge *edge, const std::vector<MVertex *>&vertices, const nodalBasis &basis)
+static void drawElement(PViewDataList *data, GEdge *edge,
+                        const std::vector<MVertex *>&vertices, const nodalBasis &basis)
 {
   std::vector<double> gradient;
   std::vector<double> param(vertices.size());
@@ -124,13 +133,16 @@ static void drawElement(PViewDataList *data, GEdge *edge, const std::vector<MVer
   }
 }
 
+#endif
+
 PView *GMSH_CurvedBndDistPlugin::execute(PView *v)
 {
+#if defined(HAVE_OPTHOM)
   PView *pv = new PView();
   PViewDataList *data = getDataList(pv);
   data->Time.push_back(0.);
-  _m = GModel::current();
-  for (GModel::fiter iface = _m->firstFace(); iface != _m->lastFace(); ++iface) {
+  GModel *m = GModel::current();
+  for (GModel::fiter iface = m->firstFace(); iface != m->lastFace(); ++iface) {
     GFace *face = *iface;
     for (size_t iElement = 0; iElement < face->getNumMeshElements(); ++iElement) {
       MElement *element = face->getMeshElement(iElement);
@@ -148,12 +160,17 @@ PView *GMSH_CurvedBndDistPlugin::execute(PView *v)
           }
         }
         if (edge){
-	  drawElementDist(data, edge, vertices, *BasisFactory::getNodalBasis(elbasis.getClosureType(clId)));
+	  drawElementDist(data, edge, vertices,
+                          *BasisFactory::getNodalBasis(elbasis.getClosureType(clId)));
 	}
       }
     }
   }
   data->finalize();
   return pv;
+#else
+  Msg::Error("Plugin requires OPTHOM module");
+  return v;
+#endif
 }
 

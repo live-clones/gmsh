@@ -29,6 +29,7 @@
 
 #include <iostream>
 #include <sstream>
+#include "GmshMessage.h"
 #include "GEdge.h"
 #include "MLine.h"
 #include "MQuadrangle.h"
@@ -37,13 +38,10 @@
 #include "BasisFactory.h"
 #include "SuperEl.h"
 
-
-
 std::map<int,SuperEl::superInfoType> SuperEl::_superInfo;
 
-
-SuperEl::superInfoType::superInfoType(int type, int order) {
-
+SuperEl::superInfoType::superInfoType(int type, int order)
+{
   int iBaseFace = 0, iTopFace = 0;
   switch (type) {
     case TYPE_QUA:
@@ -56,7 +54,7 @@ SuperEl::superInfoType::superInfoType(int type, int order) {
       iBaseFace = 0; iTopFace = 5;
       break;
     default:
-      std::cout << "ERROR: SuperEl not implemented for element of type " << type << std::endl;
+      Msg::Error("SuperEl not implemented for element of type %d", type);
       nV = 0;
       return;
   }
@@ -64,27 +62,28 @@ SuperEl::superInfoType::superInfoType(int type, int order) {
   // Get HO nodal basis
   const int tag = ElementType::getTag(type, order, true);                 // Get tag for incomplete element type
 //  const int tag = ElementType::getTag(type, order);                     // Get tag for complete element type
-  const nodalBasis *basis = tag ? BasisFactory::getNodalBasis(tag) : 0;
+  if(tag){
+    const nodalBasis *basis = BasisFactory::getNodalBasis(tag);
 
-  nV = basis->getNumShapeFunctions();
-//  _superInfo[type].nV1 = basis->getNumShapeFunctions();
-  points = basis->points;
+    nV = basis->getNumShapeFunctions();
+    //  _superInfo[type].nV1 = basis->getNumShapeFunctions();
+    points = basis->points;
 
-  baseInd = basis->getClosure(basis->getClosureId(iBaseFace,1,0));
-  topInd = basis->getClosure(basis->getClosureId(iTopFace,0,0));
-  otherInd.reserve(nV-baseInd.size()-topInd.size());
-  for(int i=0; i<nV; ++i) {
-    const std::vector<int>::iterator inBaseFace = find(baseInd.begin(),baseInd.end(),i);
-    const std::vector<int>::iterator inTopFace = find(topInd.begin(),topInd.end(),i);
-    if (inBaseFace == baseInd.end() && inTopFace == topInd.end()) otherInd.push_back(i);
+    baseInd = basis->getClosure(basis->getClosureId(iBaseFace,1,0));
+    topInd = basis->getClosure(basis->getClosureId(iTopFace,0,0));
+    otherInd.reserve(nV-baseInd.size()-topInd.size());
+    for(int i=0; i<nV; ++i) {
+      const std::vector<int>::iterator inBaseFace = find(baseInd.begin(),baseInd.end(),i);
+      const std::vector<int>::iterator inTopFace = find(topInd.begin(),topInd.end(),i);
+      if (inBaseFace == baseInd.end() && inTopFace == topInd.end()) otherInd.push_back(i);
+    }
   }
-
 }
 
 
 
 SuperEl::SuperEl(int type, int order, const std::vector<MVertex*> &baseVert,
-                 const std::vector<MVertex*> &topPrimVert)
+                 const std::vector<MVertex*> &topPrimVert) : _superEl(0), _superEl0(0)
 {
 
   // Get useful info on meta-element type if not already there
@@ -120,10 +119,8 @@ SuperEl::SuperEl(int type, int order, const std::vector<MVertex*> &baseVert,
       _superEl0 = new MHexahedron(_superVert);
       break;
     default:
-      std::cout << "ERROR: SuperEl not implemented for element of type " << type << std::endl;
-      _superEl0 = 0;
+      Msg::Error("SuperEl not implemented for element of type %d", type);
       return;
-      break;
   }
 
   // Add HO vertices in top face
@@ -183,30 +180,23 @@ SuperEl::SuperEl(int type, int order, const std::vector<MVertex*> &baseVert,
 
 }
 
-
-
 SuperEl::~SuperEl()
 {
   for (int i = 0; i < _superVert.size(); i++) delete _superVert[i];
   _superVert.clear();
   delete _superEl;
-  delete _superEl0;
+  if(_superEl0) delete _superEl0;
 }
 
-
-
-bool SuperEl::isPointIn(const SPoint3 p) const {
-
+bool SuperEl::isPointIn(const SPoint3 p) const
+{
   double xyz[3] = {p.x(), p.y(), p.z()}, uvw[3];
   _superEl0->xyz2uvw(xyz,uvw);
   return _superEl0->isInside(uvw[0],uvw[1],uvw[2]);
-
 }
 
-
-
-bool SuperEl::straightToCurved(double *xyzS, double *xyzC) const {
-
+bool SuperEl::straightToCurved(double *xyzS, double *xyzC) const
+{
   double uvw[3];
   _superEl0->xyz2uvw(xyzS,uvw);
   if (!_superEl0->isInside(uvw[0],uvw[1],uvw[2])) return false;
@@ -218,13 +208,10 @@ bool SuperEl::straightToCurved(double *xyzS, double *xyzC) const {
   xyzC[2] = pC[2];
 
   return true;
-
 }
 
-
-
-std::string SuperEl::printPOS() {
-
+std::string SuperEl::printPOS()
+{
   std::vector<MVertex*> verts;
   _superEl->getVertices(verts);
 //  std::string posStr = _superEl->getStringForPOS();
@@ -243,5 +230,4 @@ std::string SuperEl::printPOS() {
   oss << "};\n";
 
   return oss.str();
-
 }
