@@ -306,12 +306,12 @@ helpWindow::helpWindow()
             << "<li><i>FLTK version:</i> "
             << FL_MAJOR_VERSION << "." << FL_MINOR_VERSION << "." << FL_PATCH_VERSION
 #if defined(HAVE_PETSC)
-            << "<li>PETSc version: " << PETSC_VERSION_MAJOR << "."
+            << "<li><i>PETSc version:</i> " << PETSC_VERSION_MAJOR << "."
             << PETSC_VERSION_MINOR << "." << PETSC_VERSION_SUBMINOR
 #if defined(PETSC_USE_COMPLEX)
-            << "<li>PETSc arithmetic: Complex"
+            << "<li><i>PETSc arithmetic:</i> Complex"
 #else
-            << "<li>PETSc arithmetic: Real"
+            << "<li><i>PETSc arithmetic:</i> Real"
 #endif
 #endif
             << "<li><i>Packaged by:</i> " << GetGmshPackager()
