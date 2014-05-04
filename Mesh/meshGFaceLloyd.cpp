@@ -374,7 +374,6 @@ void verification(alglib::real_1d_array& x,void* ptr){
   double func;
   double R,L,U,D;
   wrapper* w;
-  DocRecord* pointer;
 
   w = static_cast<wrapper*>(ptr);
   dimension = w->get_dimension();
