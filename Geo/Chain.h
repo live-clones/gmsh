@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 //
-// Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
+// Contributed by Matti Pellikka <matti.pellikka@microsoft.com>.
 
 #ifndef _CHAIN_H_
 #define _CHAIN_H_

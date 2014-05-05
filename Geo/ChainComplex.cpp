@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 //
-// Contributed by Matti Pellikka <matti.pellikka@tut.fi>.
+// Contributed by Matti Pellikka <matti.pellikka@microsoft.com>.
 
 #include "GmshConfig.h"
 #if defined(HAVE_KBIPACK)
