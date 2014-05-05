@@ -815,51 +815,6 @@ MVertex *GModel::getMeshVertexByTag(int n)
     return _vertexMapCache[n];
 }
 
-MVertex* GModel::getMeshVertexByCoordinates(double x, double y, double z, double tol)
-{
-  if(_vertexVectorCache.empty() && _vertexMapCache.empty()){
-    Msg::Debug("Rebuilding mesh vertex cache");
-    _vertexVectorCache.clear();
-    _vertexMapCache.clear();
-    bool dense = (getNumMeshVertices() == _maxVertexNum);
-    std::vector<GEntity*> entities;
-    getEntities(entities);
-    if(dense){
-      Msg::Debug("Good: we have a dense vertex numbering in the cache");
-      // numbering starts at 1
-      _vertexVectorCache.resize(_maxVertexNum + 1);
-      for(unsigned int i = 0; i < entities.size(); i++)
-        for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-          _vertexVectorCache[entities[i]->mesh_vertices[j]->getNum()] =
-            entities[i]->mesh_vertices[j];
-    }
-    else{
-      for(unsigned int i = 0; i < entities.size(); i++)
-        for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-          _vertexMapCache[entities[i]->mesh_vertices[j]->getNum()] =
-            entities[i]->mesh_vertices[j];
-    }
-  }
-
-  for (unsigned int i = 1; i< _vertexVectorCache.size(); i++){
-    MVertex* v = _vertexVectorCache[i];
-    double l = sqrt((v->x() -x)*(v->x()-x)+ (v->y()-y)*(v->y()-y)+ (v->z()-z)*(v->z()-z));
-    if (l < tol) return v;
-  }
-
-  for (std::map<int,MVertex*>::iterator it = _vertexMapCache.begin(); it!= _vertexMapCache.end(); it++){
-    MVertex* v = it->second;
-    double l = sqrt((v->x() -x)*(v->x()-x)+ (v->y()-y)*(v->y()-y)+ (v->z()-z)*(v->z()-z));
-    if (l < tol) return v;
-  }
-
-  MVertex* v = new MVertex(x,y,z);
-  _vertexVectorCache.push_back(v);
-  _vertexMapCache[v->getNum()] = v;
-
-  return v;
-};
-
 void GModel::getMeshVerticesForPhysicalGroup(int dim, int num, std::vector<MVertex*> &v)
 {
   v.clear();
