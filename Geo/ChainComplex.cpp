@@ -193,11 +193,19 @@ void ChainComplex::Inclusion(int lowDim, int highDim)
 
   int rows = gmp_matrix_rows(Bbasis);
   int cols = gmp_matrix_cols(Bbasis);
-  if(rows < cols) return;
+  if(rows < cols) {
+    destroy_gmp_matrix(Zbasis);
+    destroy_gmp_matrix(Bbasis);
+    return;
+  }
 
   rows = gmp_matrix_rows(Zbasis);
   cols = gmp_matrix_cols(Zbasis);
-  if(rows < cols) return;
+  if(rows < cols) {
+    destroy_gmp_matrix(Zbasis);
+    destroy_gmp_matrix(Bbasis);
+    return;
+  }
 
   // inv(U)*A*inv(V) = S
   gmp_normal_form* normalForm
@@ -240,7 +248,11 @@ void ChainComplex::Inclusion(int lowDim, int highDim)
       if(mpz_cmp_si(remainder, 0) == 0){
         gmp_matrix_set_elem(result, i, j, LB);
       }
-      else return;
+      else {
+        destroy_gmp_matrix(Zbasis);
+        destroy_gmp_matrix(LB);
+        return;
+      }
     }
   }
 
@@ -436,9 +448,8 @@ std::vector<int> ChainComplex::getCoeffVector(int dim, int chainNumber)
 
 gmp_matrix* ChainComplex::getBasis(int dim, int basis)
 {
-  if(dim > -2 && dim < 5 && basis == 2) return _codH[dim+1];
+  if(dim > -2 && dim < 4 && basis == 2) return _codH[dim+1];
   if(dim < 0 || dim > 4) return NULL;
-  if(basis == 0) return create_gmp_matrix_identity(getBasisSize(dim, 0));
   else if(basis == 1) return _kerH[dim];
   else if(basis == 3) return _Hbasis[dim];
   else return NULL;
@@ -451,7 +462,7 @@ void ChainComplex::getBasisChain(std::map<Cell*, int, Less_Cell>& chain,
   gmp_matrix* basisMatrix = getBasis(dim, basis);
 
   chain.clear();
-  if(dim < 0 || dim > 4) return;
+  if(dim < 0 || dim > 3) return;
   if(basisMatrix == NULL || (int)gmp_matrix_cols(basisMatrix) < num){
     return;
   }
@@ -464,7 +475,7 @@ void ChainComplex::getBasisChain(std::map<Cell*, int, Less_Cell>& chain,
   int torsion = 1;
   if(basis == 3) torsion = getTorsion(dim, num);
 
-  for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
+  for(citer cit = this->firstCell(dim); cit != this->lastCell(dim); cit++){
     Cell* cell = cit->first;
     int index = cit->second;
     gmp_matrix_get_elem(elem, index, num, basisMatrix);
@@ -680,360 +691,6 @@ void ChainComplex::deImmuneCells(std::map<Cell*, int, Less_Cell>& cells)
     Cell* cell = (*cit).first;
     cell->setImmune(false);
   }
-}
-
-HomologySequence::HomologySequence(ChainComplex* subcomplex,
-				   ChainComplex* complex,
-				   ChainComplex* relcomplex)
-{
-  _subcomplex = subcomplex;
-  _complex = complex;
-  _relcomplex = relcomplex;
-
-  mpz_t elem;
-  mpz_init_set_si(elem, -1);
-  for(int i = 0; i < 4; i++){
-    _Ic_sub[i] = NULL;
-    _Ic_rel[i] = NULL;
-
-    _Dh[i] = NULL;
-    _invDh[i] = NULL;
-
-    _Jh[i] = NULL;
-    _Ih[i] = NULL;
-    _invJh[i] = NULL;
-    _invIh[i] = NULL;
-
-  }
-
-  findIcMaps();
-
-  /*findDhMap(1);
-  findInvIhMap(0);
-  blockHBasis(_Dh[1], _invIh[0], _subcomplex, 0);*/
-
-  /*findJhMap(1);
-  findInvDhMap(1);
-  blockHBasis(_Jh[1], _invDh[1], _relcomplex, 1);*/
-
-}
-
-HomologySequence::~HomologySequence()
-{
-  for(int i = 0; i < 4; i++){
-    destroy_gmp_matrix(_Ic_sub[i]);
-    destroy_gmp_matrix(_Ic_rel[i]);
-    destroy_gmp_matrix(_Ih[i]);
-    destroy_gmp_matrix(_Jh[i]);
-    destroy_gmp_matrix(_invIh[i]);
-    destroy_gmp_matrix(_invJh[i]);
-    destroy_gmp_matrix(_Dh[i]);
-    destroy_gmp_matrix(_invDh[i]);
-  }
-}
-
-void HomologySequence::findIcMaps()
-{
-  for(int i = 0; i < 4; i++){
-    mpz_t one;
-    mpz_init_set_si(one, 1);
-    if(_complex->getBasisSize(i, 0) > 0
-       && _subcomplex->getBasisSize(i, 0) > 0){
-      _Ic_sub[i] = create_gmp_matrix_zero(_complex->getBasisSize(i, 0),
-					  _subcomplex->getBasisSize(i, 0));
-      //printf("rows %d, cols %d. \n", _complex->getBasisSize(i, 0),
-      //	     _subcomplex->getBasisSize(i, 0));
-      for(ChainComplex::citer cit = _complex->firstCell(i);
-	  cit != _complex->lastCell(i); cit++){
-	Cell* cell = cit->first;
-	int row = cit->second;
-	int col = _subcomplex->getCellIndex(cell);
-	//printf("row %d, col %d. \n", row, col);
-	if(col != 0) gmp_matrix_set_elem(one, row, col, _Ic_sub[i]);
-      }
-    }
-
-    if(_complex->getBasisSize(i, 0) > 0
-       && _relcomplex->getBasisSize(i, 0) > 0){
-      _Ic_rel[i] = create_gmp_matrix_zero(_complex->getBasisSize(i, 0),
-					  _relcomplex->getBasisSize(i, 0));
-      //printf("rows %d, cols %d. \n", _complex->getBasisSize(i, 0),
-      for(ChainComplex::citer cit = _complex->firstCell(i);
-	  cit != _complex->lastCell(i); cit++){
-	Cell* cell = cit->first;
-	int row = cit->second;
-	int col = _relcomplex->getCellIndex(cell);
-	//printf("row %d, col %d. \n", row, col);
-	if(col != 0) gmp_matrix_set_elem(one, row, col, _Ic_rel[i]);
-      }
-    }
-    mpz_clear(one);
-  }
-}
-
-void HomologySequence::findIhMap(int i)
-{
-  if(_Ic_sub[i] != NULL
-     && _complex->getBasisSize(i, 3) > 0
-     && _subcomplex->getBasisSize(i, 3) > 0){
-    gmp_matrix* IH = copy_gmp_matrix(_Ic_sub[i], 1, 1,
-				     gmp_matrix_rows(_Ic_sub[i]),
-				     gmp_matrix_cols(_Ic_sub[i]));
-    gmp_matrix_right_mult(IH, _subcomplex->getBasis(i, 3));
-    _Ih[i] = createIncMap(IH, _complex->getBasis(i, 3));
-  }
-}
-
-void HomologySequence::findInvIhMap(int i)
-{
-  if(_Ic_sub[i] != NULL
-     && _complex->getBasisSize(i, 3) > 0
-     && _subcomplex->getBasisSize(i, 3) > 0){
-    gmp_matrix* IH = copy_gmp_matrix(_Ic_sub[i], 1, 1,
-				     gmp_matrix_rows(_Ic_sub[i]),
-				     gmp_matrix_cols(_Ic_sub[i]));
-    gmp_matrix_transp(IH);
-    gmp_matrix_right_mult(IH, _complex->getBasis(i, 3));
-    _invIh[i] = createIncMap(IH, _subcomplex->getBasis(i, 3));
-  }
-}
-
-void HomologySequence::findJhMap(int i)
-{
-  if(_Ic_rel[i] != NULL
-     && _complex->getBasisSize(i, 3) > 0
-     && _relcomplex->getBasisSize(i, 3) > 0){
-    gmp_matrix* JH = copy_gmp_matrix(_Ic_rel[i], 1, 1,
-				     gmp_matrix_rows(_Ic_rel[i]),
-				     gmp_matrix_cols(_Ic_rel[i]));
-    gmp_matrix_transp(JH);
-    gmp_matrix_right_mult(JH, _complex->getBasis(i, 3));
-    _Jh[i] = createIncMap(JH, _relcomplex->getBasis(i, 3));
-  }
-}
-
-void HomologySequence::findInvJhMap(int i)
-{
-  if(_Ic_rel[i] != NULL
-   && _complex->getBasisSize(i, 3) > 0
-     && _relcomplex->getBasisSize(i, 3) > 0){
-    gmp_matrix* JH = copy_gmp_matrix(_Ic_rel[i], 1, 1,
-				     gmp_matrix_rows(_Ic_rel[i]),
-				     gmp_matrix_cols(_Ic_rel[i]));
-    gmp_matrix_right_mult(JH, _relcomplex->getBasis(i, 3));
-    _invJh[i] = createIncMap(JH, _complex->getBasis(i, 3));
-  }
-}
-
-void HomologySequence::findDhMap(int i)
-{
-  if(i > 0 && _relcomplex->getBasisSize(i, 3) > 0
-     && _subcomplex->getBasisSize(i-1, 3) > 0
-     && _complex->getBoundaryOp(i) != NULL){
-    gmp_matrix* JDIH = copy_gmp_matrix(_Ic_sub[i-1], 1, 1,
-				       gmp_matrix_rows(_Ic_sub[i-1]),
-				       gmp_matrix_cols(_Ic_sub[i-1]));
-    gmp_matrix_transp(JDIH);
-    gmp_matrix_right_mult(JDIH, _complex->getBoundaryOp(i));
-    gmp_matrix_right_mult(JDIH, _Ic_rel[i]);
-    gmp_matrix_right_mult(JDIH, _relcomplex->getBasis(i, 3));
-    _Dh[i] = createIncMap(JDIH, _subcomplex->getBasis(i-1, 3));
-  }
-}
-
-void HomologySequence::findInvDhMap(int i)
-{
-  if(i > 0 && _relcomplex->getBasisSize(i, 3) > 0
-     && _subcomplex->getBasisSize(i-1, 3) > 0
-     && _complex->getBoundaryOp(i) != NULL){
-    gmp_matrix* JDIH = copy_gmp_matrix(_Ic_rel[i], 1, 1,
-				       gmp_matrix_rows(_Ic_rel[i]),
-				       gmp_matrix_cols(_Ic_rel[i]));
-    gmp_matrix_transp(JDIH);
-    gmp_matrix* bd = _complex->getBoundaryOp(i);
-    gmp_matrix_transp(bd);
-    gmp_matrix_right_mult(JDIH, bd);
-    gmp_matrix_transp(bd);
-    gmp_matrix_right_mult(JDIH, _Ic_sub[i-1]);
-    gmp_matrix_right_mult(JDIH, _subcomplex->getBasis(i-1, 3));
-    _invDh[i] = createIncMap(JDIH, _relcomplex->getBasis(i, 3));
-  }
-}
-
-//i: a->b  : aBasis = bBasis*incMap
-gmp_matrix* HomologySequence::createIncMap(gmp_matrix* domBasis,
-					   gmp_matrix* codBasis)
-{
-  if(domBasis == NULL || codBasis == NULL){
-    printf("ERROR: null matrix given. \n");
-    return NULL;
-  }
-
-  int rows = gmp_matrix_rows(domBasis);
-  int cols = gmp_matrix_cols(domBasis);
-  if(rows < cols || rows == 0 || cols == 0) return NULL;
-
-  rows = gmp_matrix_rows(codBasis);
-  cols = gmp_matrix_cols(codBasis);
-  if(rows < cols || rows == 0 || cols == 0) return NULL;
-
-  gmp_matrix* temp = codBasis;
-  codBasis = copy_gmp_matrix(temp, 1, 1,
-			     gmp_matrix_rows(temp),
-			     gmp_matrix_cols(temp));
-  // inv(U)*A*inv(V) = S
-  gmp_normal_form* normalForm
-    = create_gmp_Smith_normal_form(codBasis, INVERTED, INVERTED);
-
-  mpz_t elem;
-  mpz_init(elem);
-
-  for(int i = 1; i <= cols; i++){
-    gmp_matrix_get_elem(elem, i, i, normalForm->canonical);
-    if(mpz_cmp_si(elem,0) == 0){
-      destroy_gmp_normal_form(normalForm);
-      return NULL;
-    }
-  }
-
-  gmp_matrix_left_mult(normalForm->left, domBasis);
-  gmp_matrix* LB = copy_gmp_matrix(domBasis, 1, 1,
-				   gmp_matrix_cols(codBasis),
-				   gmp_matrix_cols(domBasis));
-  destroy_gmp_matrix(domBasis);
-
-  rows = gmp_matrix_rows(LB);
-  cols = gmp_matrix_cols(LB);
-
-  mpz_t divisor;
-  mpz_init(divisor);
-  mpz_t remainder;
-  mpz_init(remainder);
-  mpz_t result;
-  mpz_init(result);
-
-  for(int i = 1; i <= rows; i++){
-    gmp_matrix_get_elem(divisor, i, i, normalForm->canonical);
-    for(int j = 1; j <= cols; j++){
-      gmp_matrix_get_elem(elem, i, j, LB);
-      mpz_cdiv_qr(result, remainder, elem, divisor);
-      if(mpz_cmp_si(remainder, 0) == 0){
-        gmp_matrix_set_elem(result, i, j, LB);
-      }
-      else{
-        destroy_gmp_normal_form(normalForm);
-        destroy_gmp_matrix(LB);
-        return NULL;
-      }
-    }
-  }
-
-  gmp_matrix_left_mult(normalForm->right, LB);
-
-  mpz_clear(elem);
-  mpz_clear(divisor);
-  mpz_clear(result);
-  destroy_gmp_normal_form(normalForm);
-  return LB;
-}
-
-gmp_matrix* HomologySequence::removeZeroCols(gmp_matrix* matrix)
-{
-  mpz_t elem;
-  mpz_init(elem);
-
-  int rows = gmp_matrix_rows(matrix);
-  int cols = gmp_matrix_cols(matrix);
-  //printMatrix(matrix);
-  std::vector<int> zcols;
-
-  for(int j = 1; j <= cols; j++){
-    bool zcol = true;
-    for(int i = 1; i <= rows; i++){
-      gmp_matrix_get_elem(elem, i, j, matrix);
-      if(mpz_cmp_si(elem, 0) != 0){
-	zcol = false;
-	break;
-      }
-    }
-    if(zcol) zcols.push_back(j);
-  }
-  if(zcols.empty()) return matrix;
-
-  gmp_matrix* newMatrix = create_gmp_matrix_zero(rows, cols-zcols.size());
-  if(cols-zcols.size() == 0) return newMatrix;
-
-  int k = 0;
-  for(int j = 1; j <= cols; j++){
-    if((int)zcols.size()-1 < k) break;
-    if(zcols.at(k) == j) { k++; continue; }
-    for(int i = 1; i <= rows; i++){
-      gmp_matrix_get_elem(elem, i, j, matrix);
-      gmp_matrix_set_elem(elem, i, j-k, newMatrix);
-    }
-  }
-  //printMatrix(newMatrix);
-  destroy_gmp_matrix(matrix);
-  mpz_clear(elem);
-  return newMatrix;
-}
-
-void HomologySequence::blockHBasis(gmp_matrix* block1T,
-				   gmp_matrix* block2T,
-				   ChainComplex* complex, int dim)
-{
-  printMatrix(block1T);
-  printMatrix(block2T);
-
-  if(block1T == NULL && block2T == NULL) return;
-
-  gmp_matrix* Hbasis = complex->getBasis(dim, 3);
-
-  if(block1T == NULL && block2T != NULL){
-    gmp_matrix_right_mult(Hbasis, block2T);
-    printMatrix(Hbasis);
-    return;
-  }
-  if(block1T != NULL && block2T == NULL){
-    gmp_matrix_right_mult(Hbasis, block1T);
-    printMatrix(Hbasis);
-    return;
-  }
-
-  int rows = gmp_matrix_rows(Hbasis);
-  int cols = gmp_matrix_cols(Hbasis);
-  gmp_matrix* temp1 = copy_gmp_matrix(Hbasis, 1, 1, rows, cols);
-  gmp_matrix* temp2 = copy_gmp_matrix(Hbasis, 1, 1, rows, cols);
-
-  printMatrix(temp1);
-  printMatrix(temp2);
-
-  gmp_matrix_right_mult(temp1, block1T);
-  gmp_matrix_right_mult(temp2, block2T);
-
-  printMatrix(temp1);
-  printMatrix(temp2);
-  temp1 = removeZeroCols(temp1);
-  temp2 = removeZeroCols(temp2);
-  printMatrix(temp1);
-  printMatrix(temp2);
-
-  int bcol = gmp_matrix_cols(temp1);
-
-  mpz_t elem;
-  mpz_init(elem);
-  for(int i = 1; i <= rows; i++){
-    for(int j = 1; j <= cols; j++){
-      if(j <= bcol) gmp_matrix_get_elem(elem, i, j, temp1);
-      else gmp_matrix_get_elem(elem, i, j-bcol, temp2);
-      gmp_matrix_set_elem(elem, i, j, Hbasis);
-    }
-  }
-
-  printMatrix(Hbasis);
-  mpz_clear(elem);
-  destroy_gmp_matrix(temp1);
-  destroy_gmp_matrix(temp2);
 }
 
 #endif

@@ -230,6 +230,7 @@ int Cell::findBdCellOrientation(Cell* cell, int i) const
       if(_v[MTriangle::edges_tri(i, 1)]->getNum() == v[0]->getNum() &&
          _v[MTriangle::edges_tri(i, 0)]->getNum() == v[1]->getNum())
         return -1;
+      break;
     case 4:
       if(_v[MQuadrangle::edges_quad(i, 0)]->getNum() == v[0]->getNum() &&
          _v[MQuadrangle::edges_quad(i, 1)]->getNum() == v[1]->getNum())
@@ -237,6 +238,7 @@ int Cell::findBdCellOrientation(Cell* cell, int i) const
       if(_v[MQuadrangle::edges_quad(i, 0)]->getNum() == v[1]->getNum() &&
          _v[MQuadrangle::edges_quad(i, 1)]->getNum() == v[0]->getNum())
         return -1;
+      break;
     default: return 0;
     }
   case 3:
@@ -266,6 +268,7 @@ int Cell::findBdCellOrientation(Cell* cell, int i) const
          _v[MTetrahedron::faces_tetra(i, 1)]->getNum() == v[1]->getNum() &&
          _v[MTetrahedron::faces_tetra(i, 2)]->getNum() == v[0]->getNum())
         return -1;
+      break;
     case 5:
       if(i < 4) {
         if(_v[MPyramid::faces_pyramid(i, 0)]->getNum() == v[0]->getNum() &&
@@ -336,6 +339,7 @@ int Cell::findBdCellOrientation(Cell* cell, int i) const
           return -1;
       }
       return 0;
+      break;
     case 6:
       if(i < 2) {
         if(_v[MPrism::faces_prism(i, 0)]->getNum() == v[0]->getNum() &&
@@ -405,6 +409,7 @@ int Cell::findBdCellOrientation(Cell* cell, int i) const
            _v[MPrism::faces_prism(i, 3)]->getNum() == v[2]->getNum())
           return -1;
       }
+      break;
     case 8:
       if(_v[MHexahedron::faces_hexa(i, 0)]->getNum() == v[0]->getNum() &&
          _v[MHexahedron::faces_hexa(i, 1)]->getNum() == v[1]->getNum() &&
@@ -446,6 +451,7 @@ int Cell::findBdCellOrientation(Cell* cell, int i) const
          _v[MHexahedron::faces_hexa(i, 2)]->getNum() == v[3]->getNum() &&
          _v[MHexahedron::faces_hexa(i, 3)]->getNum() == v[2]->getNum())
         return -1;
+      break;
     default: return 0;
     }
   default: return 0;
@@ -574,8 +580,8 @@ void Cell::removeBoundaryCell(Cell* cell, bool other)
   biter it = _bd.find(cell);
   if(it != _bd.end()){
     it->second.set(0);
-    if(it->second.geto() == 0) _bd.erase(it);
     if(other) it->first->removeCoboundaryCell(this, false);
+    if(it->second.geto() == 0) _bd.erase(it);
   }
 }
 
@@ -584,8 +590,8 @@ void Cell::removeCoboundaryCell(Cell* cell, bool other)
   biter it = _cbd.find(cell);
   if(it != _cbd.end()){
     it->second.set(0);
-    if(it->second.geto() == 0) _cbd.erase(it);
     if(other) it->first->removeBoundaryCell(this, false);
+    if(it->second.geto() == 0) _cbd.erase(it);
   }
 }
 

@@ -317,6 +317,7 @@ int CellComplex::coreduction(Cell* startCell, int omit,
     Qset.erase(s);
     if(s->getBoundarySize() == 1 &&
        inSameDomain(s, s->firstBoundary()->first) &&
+       !s->getImmune() && !s->firstBoundary()->first->getImmune() &&
        abs(s->firstBoundary()->second.get()) < 2){
       s->getBoundary(bd_s);
       removeCell(s);
@@ -356,7 +357,7 @@ int CellComplex::reduction(int dim, int omit,
       Cell* cell = *cit;
       if(cell->getCoboundarySize() == 1 &&
          inSameDomain(cell, cell->firstCoboundary()->first) &&
-         !cell->getImmune() &&
+         !cell->getImmune() && !cell->firstCoboundary()->first->getImmune() &&
          !cell->firstCoboundary()->first->getImmune() &&
          abs(cell->firstCoboundary()->second.get()) < 2){
 	cit++;
@@ -399,6 +400,7 @@ int CellComplex::coreduction(int dim, int omit,
       Cell* cell = *cit;
       if(cell->getBoundarySize() == 1 &&
          inSameDomain(cell, cell->firstBoundary()->first) &&
+         !cell->getImmune() && !cell->firstBoundary()->first->getImmune() &&
          abs(cell->firstBoundary()->second.get()) < 2) {
         ++cit;
 	if(dim-1 == omit){
@@ -775,7 +777,8 @@ int CellComplex::cocombine(int dim)
         Cell* c2 = it->first;
 
         if(!(*c1 == *c2) && abs(or1) == abs(or2)
-           && inSameDomain(s, c1) && inSameDomain(s, c2)){
+           && inSameDomain(s, c1) && inSameDomain(s, c2)
+           && c1->getImmune() == c2->getImmune()){
 
           removeCell(s, true, false);
 

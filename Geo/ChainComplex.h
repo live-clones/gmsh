@@ -110,7 +110,6 @@ class ChainComplex
 
   int getDim() const { return _dim; }
 
-  // 0 : C basis (chains)
   // 1 : Z basis (cycles)
   // 2 : B basis (boundaries)
   // 3 : H basis (homology)
@@ -177,61 +176,6 @@ class ChainComplex
 	   (int)gmp_matrix_rows(matrix), (int)gmp_matrix_cols(matrix));
     return gmp_matrix_printf(matrix); }
   void matrixTest();
-};
-
-
-// An experimental class to modify computed bases for homology spaces
-// so that the basis chains are decomposed according to the long
-// exact homology sequence.
-class HomologySequence
-{
- private:
-  ChainComplex* _subcomplex;
-  ChainComplex* _complex;
-  ChainComplex* _relcomplex;
-
-  gmp_matrix* _Ic_sub[4];
-  gmp_matrix* _Ic_rel[4];
-
-  gmp_matrix* _Ih[4];
-  gmp_matrix* _Jh[4];
-  gmp_matrix* _invIh[4];
-  gmp_matrix* _invJh[4];
-
-
-  gmp_matrix* _Dh[4];
-  gmp_matrix* _invDh[4];
-
-  void findIcMaps();
-  void findIhMap(int i);
-  void findInvIhMap(int i);
-  void findJhMap(int i);
-  void findInvJhMap(int i);
-  void findDhMap(int i);
-  void findInvDhMap(int i);
-
- public:
-
-  HomologySequence(ChainComplex* subcomplex, ChainComplex* complex,
-		   ChainComplex* relcomplex);
-  ~HomologySequence();
-
-  // create an inclusion map from domBasis to codBasis
-  // (deletes domBasis, leaves codBasis unaffected)
-  gmp_matrix* createIncMap(gmp_matrix* domBasis,
-			   gmp_matrix* codBasis);
-
-
-  gmp_matrix* removeZeroCols(gmp_matrix* matrix);
-  void blockHBasis(gmp_matrix* block1T, gmp_matrix* block2T,
-		   ChainComplex* complex, int dim);
-
-  int printMatrix(gmp_matrix* matrix){
-    if(matrix == NULL){ printf("NULL matrix. \n"); return 0; }
-    printf("%d rows and %d columns\n",
-           (int)gmp_matrix_rows(matrix), (int)gmp_matrix_cols(matrix));
-    return gmp_matrix_printf(matrix); }
-
 };
 
 #endif
