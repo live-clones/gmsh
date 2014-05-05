@@ -67,7 +67,7 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
       input[24] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Label");
       input[24]->value("");
       input[25] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Path");
-      input[25]->value("Gmsh/Parameters");
+      input[25]->value("Parameters");
       for(int i = 0; i < 2; i++)   input[i]->align(FL_ALIGN_RIGHT);
       for(int i = 24; i < 26; i++) input[i]->align(FL_ALIGN_RIGHT);
       {

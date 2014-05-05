@@ -241,9 +241,16 @@ void add_param(std::string par, std::string value, std::string label,
 {
   std::ostringstream sstream;
   sstream << "DefineConstant[ " << par << " = { " << value;
-  if(label.size()) sstream << ", Label \"" << label << "\"";
-  if(path.size()) sstream << ", Path \"" << path << "\"";
-  sstream << "}];";
+  sstream << ", Name \"";
+  if(path.size() && label.size())
+    sstream << path << "/" << label;
+  else if(path.size())
+    sstream << path << "/" << par;
+  else if(label.size())
+    sstream << label;
+  else
+    sstream << par;
+  sstream << "\"}];";
   add_infile(sstream.str(), fileName);
 }
 
