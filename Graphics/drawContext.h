@@ -177,6 +177,7 @@ class drawContext {
   bool isVisible(PView *v){ return (_hiddenViews.find(v) == _hiddenViews.end()); }
   void createQuadricsAndDisplayLists();
   void invalidateQuadricsAndDisplayLists();
+  void invalidateBgImageTexture();
   void buildRotationMatrix();
   void setQuaternion(double p1x, double p1y, double p2x, double p2y);
   void addQuaternion(double p1x, double p1y, double p2x, double p2y);

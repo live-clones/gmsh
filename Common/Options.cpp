@@ -1088,8 +1088,17 @@ std::string opt_general_display(OPT_ARGS_STR)
 
 std::string opt_general_background_image_filename(OPT_ARGS_STR)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
+#if defined(HAVE_FLTK)
+    if(CTX::instance()->bgImageFileName != val && FlGui::available()){
+      for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+        for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+          FlGui::instance()->graph[i]->gl[j]->getDrawContext()->
+            invalidateBgImageTexture();
+    }
+#endif
     CTX::instance()->bgImageFileName = val;
+  }
   return CTX::instance()->bgImageFileName;
 }
 

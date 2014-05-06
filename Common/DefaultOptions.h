@@ -39,7 +39,7 @@ StringXString GeneralOptions_String[] = {
     "Z-axis label" },
 
   { F|O, "BackgroundImageFileName" , opt_general_background_image_filename , "" ,
-    "Background image file in JPEG or PNG format" },
+    "Background image file in JPEG, PNG or PDF format" },
 
   { F|O, "DefaultFileName" , opt_general_default_filename , "untitled.geo" ,
     "Default project file name" },
