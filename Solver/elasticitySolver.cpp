@@ -725,8 +725,6 @@ PView *elasticitySolver::buildElasticEnergyView(const std::string postFileName)
 
 PView *elasticitySolver::buildVonMisesView(const std::string postFileName)
 {
-  linearSystemGmm<std::complex<double> > test;
-
   std::cout <<  "build elastic view"<< std::endl;
   std::map<int, std::vector<double> > data;
   GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
