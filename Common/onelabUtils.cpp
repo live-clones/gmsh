@@ -331,7 +331,8 @@ namespace onelabUtils {
         redraw = true;
         OpenProject(GModel::current()->getFileName(), false);
         if(getFirstComputationFlag() && !StatFile(mshFileName) && meshAuto != 2){
-          Msg::Info("Skipping mesh generation: assuming '%s' is up-to-date",
+          Msg::Info("Skipping mesh generation: assuming '%s' is up-to-date "
+                    "(use Solver.AutoMesh=2 to force mesh generation)",
                     mshFileName.c_str());
         }
         else if(!GModel::current()->empty() && meshAuto){
