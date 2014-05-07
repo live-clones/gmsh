@@ -240,7 +240,7 @@ void add_param(std::string par, std::string value, std::string label,
                std::string path, std::string fileName)
 {
   std::ostringstream sstream;
-  sstream << "DefineConstant[ " << par << " = { " << value;
+  sstream << par << " = DefineNumber[ " << value;
   sstream << ", Name \"";
   if(path.size() && label.size())
     sstream << path << "/" << label;
@@ -250,7 +250,7 @@ void add_param(std::string par, std::string value, std::string label,
     sstream << label;
   else
     sstream << par;
-  sstream << "\"}];";
+  sstream << "\" ];";
   add_infile(sstream.str(), fileName);
 }
 
