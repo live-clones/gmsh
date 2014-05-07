@@ -19,7 +19,7 @@ namespace onelabUtils {
   bool incrementLoop(const std::string &level);
   std::vector<double> getRange(onelab::number &p);
   bool updateGraph(const std::string &graphNum);
-  bool runGmshClient(const std::string &action, bool meshAuto);
+  bool runGmshClient(const std::string &action, int meshAuto);
   bool getFirstComputationFlag();
   void setFirstComputationFlag(bool val);
 

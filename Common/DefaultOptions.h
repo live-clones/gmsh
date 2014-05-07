@@ -1210,7 +1210,8 @@ StringXNumber SolverOptions_Number[] = {
   { F|O, "AutoSaveDatabase" , opt_solver_auto_save_database , 0. ,
     "Automatically save database after each computation" },
   { F|O, "AutoMesh" , opt_solver_auto_mesh , 1. ,
-    "Automatically mesh if necesssary" },
+    "Automatically mesh if necesssary (0: never remesh; 1: on startup, use existing "
+    "mesh on disk if available; 2: always remesh)" },
   { F|O, "AutoMergeFile" , opt_solver_auto_merge_file , 1. ,
     "Automatically merge result files" },
   { F|O, "AutoShowViews" , opt_solver_auto_show_views , 2. ,

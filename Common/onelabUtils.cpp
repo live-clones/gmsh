@@ -291,7 +291,7 @@ namespace onelabUtils {
   void setFirstComputationFlag(bool val){ _firstComputation = val; }
   bool getFirstComputationFlag(){ return _firstComputation; }
 
-  bool runGmshClient(const std::string &action, bool meshAuto)
+  bool runGmshClient(const std::string &action, int meshAuto)
   {
     bool redraw = false;
 
@@ -330,7 +330,7 @@ namespace onelabUtils {
         modelName = GModel::current()->getName();
         redraw = true;
         OpenProject(GModel::current()->getFileName(), false);
-        if(getFirstComputationFlag() && !StatFile(mshFileName)){
+        if(getFirstComputationFlag() && !StatFile(mshFileName) && meshAuto != 2){
           Msg::Info("Skipping mesh generation: assuming '%s' is up-to-date",
                     mshFileName.c_str());
         }
