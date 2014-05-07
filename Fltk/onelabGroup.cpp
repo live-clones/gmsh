@@ -342,8 +342,8 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
   case GmshSocket::GMSH_MERGE_FILE:
     if(CTX::instance()->solver.autoMergeFile){
       unsigned int n = PView::list.size();
-      MergePostProcessingFile(message, CTX::instance()->solver.autoShowLastStep,
-                              CTX::instance()->solver.autoHideNewViews, true);
+      MergePostProcessingFile(message, CTX::instance()->solver.autoShowViews,
+                              CTX::instance()->solver.autoShowLastStep, true);
       drawContext::global()->draw();
       if(FlGui::available() && n != PView::list.size()){
         FlGui::instance()->rebuildTree(true);
@@ -939,8 +939,8 @@ void onelab_option_cb(Fl_Widget *w, void *data)
     CTX::instance()->solver.autoMesh = val;
   else if(what == "merge")
     CTX::instance()->solver.autoMergeFile = val;
-  else if(what == "hide")
-    CTX::instance()->solver.autoHideNewViews = val;
+  else if(what == "show")
+    CTX::instance()->solver.autoShowViews = val ? 2 : 0;
   else if(what == "step")
     CTX::instance()->solver.autoShowLastStep = val;
   else if(what == "invisible"){
@@ -1158,7 +1158,7 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
              FL_MENU_TOGGLE);
   _gear->add("Merge results automatically", 0, onelab_option_cb, (void*)"merge",
              FL_MENU_TOGGLE);
-  _gear->add("Hide new views", 0, onelab_option_cb, (void*)"hide",
+  _gear->add("Show new views", 0, onelab_option_cb, (void*)"show",
              FL_MENU_TOGGLE);
   _gear->add("Always show last step", 0, onelab_option_cb, (void*)"step",
              FL_MENU_TOGGLE);
@@ -1933,7 +1933,7 @@ void onelabGroup::updateGearMenu()
                    CTX::instance()->solver.autoCheck,
                    CTX::instance()->solver.autoMesh,
                    CTX::instance()->solver.autoMergeFile,
-                   CTX::instance()->solver.autoHideNewViews,
+                   CTX::instance()->solver.autoShowViews,
                    CTX::instance()->solver.autoShowLastStep,
                    CTX::instance()->solver.showInvisibleParameters};
   for(int i = 0; i < 8; i++){

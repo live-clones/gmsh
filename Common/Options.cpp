@@ -6211,11 +6211,11 @@ double opt_solver_auto_merge_file(OPT_ARGS_NUM)
   return CTX::instance()->solver.autoMergeFile;
 }
 
-double opt_solver_auto_hide_new_views(OPT_ARGS_NUM)
+double opt_solver_auto_show_views(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->solver.autoHideNewViews = (int)val;
-  return CTX::instance()->solver.autoHideNewViews;
+    CTX::instance()->solver.autoShowViews = (int)val;
+  return CTX::instance()->solver.autoShowViews;
 }
 
 double opt_solver_auto_show_last_step(OPT_ARGS_NUM)

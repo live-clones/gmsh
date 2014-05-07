@@ -511,8 +511,8 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
   return status;
 }
 
-int MergePostProcessingFile(const std::string &fileName, bool showLastStep,
-                            bool hideNewViews, bool warnIfMissing)
+int MergePostProcessingFile(const std::string &fileName, int showViews,
+                            bool showLastStep, bool warnIfMissing)
 {
 #if defined(HAVE_POST)
   // check if there is a mesh in the file
@@ -560,13 +560,13 @@ int MergePostProcessingFile(const std::string &fileName, bool showLastStep,
   old->setVisibility(1);
 
   // hide everything except the onelab X-Y graphs
-  if(hideNewViews){
+  if(showViews == 0){
     for(unsigned int i = 0; i < PView::list.size(); i++){
       if(PView::list[i]->getData()->getFileName().substr(0, 6) != "ONELAB")
         PView::list[i]->getOptions()->visible = 0;
     }
   }
-  else if(n < PView::list.size()){
+  else if(showViews == 2 && n < PView::list.size()){
     // if we created new views, assume we only want to see those (and the
     // onelab X-Y graphs)
     for(unsigned int i = 0; i < n; i++){

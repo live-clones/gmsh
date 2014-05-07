@@ -751,8 +751,8 @@ public:
   void sendMergeFileRequest(const std::string &name)
   {
     if(name.find(".geo") != std::string::npos){
-      MergePostProcessingFile(name, CTX::instance()->solver.autoShowLastStep,
-			      CTX::instance()->solver.autoHideNewViews, true);
+      MergePostProcessingFile(name, CTX::instance()->solver.autoShowViews,
+                              CTX::instance()->solver.autoShowLastStep, true);
       GModel::current()->setFileName(name);
     }
     else if((name.find(".opt") != std::string::npos)){
@@ -762,8 +762,8 @@ public:
       MergeFile(name);
     }
     else
-      MergePostProcessingFile(name, CTX::instance()->solver.autoShowLastStep,
-			      CTX::instance()->solver.autoHideNewViews, true);
+      MergePostProcessingFile(name, CTX::instance()->solver.autoShowViews,
+                              CTX::instance()->solver.autoShowLastStep, true);
   }
   void sendInfo(const std::string &msg){ Msg::Info("%s", msg.c_str()); }
   void sendWarning(const std::string &msg){ Msg::Warning("%s", msg.c_str()); }

@@ -1213,8 +1213,8 @@ StringXNumber SolverOptions_Number[] = {
     "Automatically mesh if necesssary" },
   { F|O, "AutoMergeFile" , opt_solver_auto_merge_file , 1. ,
     "Automatically merge result files" },
-  { F|O, "AutoHideNewViews" , opt_solver_auto_hide_new_views , 0. ,
-    "Automcatically hide newly merged results" },
+  { F|O, "AutoShowViews" , opt_solver_auto_show_views , 2. ,
+    "Automcatically show newly merged results (0: none; 1: all; 2: last one)" },
   { F|O, "AutoShowLastStep" , opt_solver_auto_show_last_step , 1. ,
     "Automatically show the last time step in newly merged results" },
 

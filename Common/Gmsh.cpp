@@ -168,8 +168,8 @@ int GmshMergeFile(const std::string &fileName)
 
 int GmshMergePostProcessingFile(const std::string &fileName)
 {
-  return MergePostProcessingFile(fileName, CTX::instance()->solver.autoShowLastStep,
-                                 CTX::instance()->solver.autoHideNewViews, true);
+  return MergePostProcessingFile(fileName, CTX::instance()->solver.autoShowViews,
+                                 CTX::instance()->solver.autoShowLastStep, true);
 }
 
 int GmshWriteFile(const std::string &fileName)
