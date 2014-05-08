@@ -41,7 +41,7 @@ class inputRange : public Fl_Group {
       if(_choices.size() > 1){
         _input->minimum(_choices[0]);
         _input->maximum(_choices[_choices.size() - 1]);
-        _input->step(_choices[1] - _choices[0]);
+        _input->step(_choices[1] - _choices[0], 1);
       }
       _step = 0.;
     }
@@ -58,7 +58,7 @@ class inputRange : public Fl_Group {
       }
       if(_step == 0.) _step = 1.;
       if(_step != 1.) tmp << " : " << _step;
-      _input->step(_step);
+      _input->step(_step, 1);
       _choices.clear();
     }
     _range = tmp.str();
@@ -88,7 +88,7 @@ class inputRange : public Fl_Group {
       if(_choices.size() > 1){
         _input->minimum(_choices[0]);
         _input->maximum(_choices[_choices.size() - 1]);
-        _input->step(_choices[1] - _choices[0]);
+        _input->step(_choices[1] - _choices[0], 1);
       }
       _step = 0.;
     }
@@ -121,7 +121,7 @@ class inputRange : public Fl_Group {
         _step = atof(step.c_str());
       else
         _step = 1.;
-      _input->step(_step);
+      _input->step(_step, 1);
       _choices.clear();
     }
   }

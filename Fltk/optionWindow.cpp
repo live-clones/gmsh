@@ -3636,7 +3636,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_axes_zmin(index, GMSH_GUI, 0);
   opt_view_axes_zmax(index, GMSH_GUI, 0);
   for(int i = 13; i <= 18; i++){
-    view.value[i]->step(CTX::instance()->lc / 200.);
+    view.value[i]->step(CTX::instance()->lc / 200., 1);
     view.value[i]->minimum(-CTX::instance()->lc);
     view.value[i]->maximum(CTX::instance()->lc);
   }
@@ -3685,7 +3685,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_offset1(index, GMSH_GUI, 0);
   opt_view_offset2(index, GMSH_GUI, 0);
   for(int i = 40; i <= 42; i++) {
-    view.value[i]->step(val1 / 200.);
+    view.value[i]->step(val1 / 200., 1);
     view.value[i]->minimum(-val1);
     view.value[i]->maximum(val1);
   }
@@ -3703,7 +3703,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_raise2(index, GMSH_GUI, 0);
   opt_view_normal_raise(index, GMSH_GUI, 0);
   for(int i = 43; i <= 46; i++) {
-    view.value[i]->step(val2 / 200.);
+    view.value[i]->step(val2 / 200., 1);
     view.value[i]->minimum(-val2);
     view.value[i]->maximum(val2);
   }
@@ -3713,7 +3713,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_gen_raise0(index, GMSH_GUI, "");
   opt_view_gen_raise1(index, GMSH_GUI, "");
   opt_view_gen_raise2(index, GMSH_GUI, "");
-  view.value[2]->step(val2 / 200.);
+  view.value[2]->step(val2 / 200., 1);
   view.value[2]->minimum(-val2);
   view.value[2]->maximum(val2);
 
@@ -3753,7 +3753,7 @@ void optionWindow::updateViewGroup(int index)
 
   opt_view_displacement_factor(index, GMSH_GUI, 0);
   double val3 = 2. * CTX::instance()->lc / maxval;
-  view.value[63]->step(val3 / 100.);
+  view.value[63]->step(val3 / 100., 1);
   view.value[63]->maximum(val3);
 
   opt_view_external_view(index, GMSH_GUI, 0);

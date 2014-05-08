@@ -855,7 +855,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db", db.c_str()))
       loadDb(fileChooserGetName(1));
 
-    // switch to "restore" mode" 
+    // switch to "restore" mode"
     // (the metamodel will use archived solution files)
     std::vector<onelab::number> pn;
     onelab::server::instance()->get(pn,"0Metamodel/9Use restored solution");

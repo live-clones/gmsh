@@ -321,14 +321,14 @@ void clippingWindow::resetBrowser()
                                    fabs(CTX::instance()->max[i])));
   val1 *= 1.5;
 
-  plane[3]->step(val1 / 200.);
+  plane[3]->step(val1 / 200., 1);
   plane[3]->minimum(-val1);
   plane[3]->maximum(val1);
 
   fillBoxValuesFromPlaneValues();
 
   for(int i = 0; i < 6; i++){
-    box[i]->step(val1 / 200.);
+    box[i]->step(val1 / 200., 1);
     box[i]->minimum(-val1);
     box[i]->maximum(val1);
   }

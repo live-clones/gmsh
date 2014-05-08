@@ -91,7 +91,7 @@ static void plugin_browser_cb(Fl_Widget *w, void *data)
     if(sxn->function){
       p->dialogBox->value[i]->callback(plugin_input_value_cb, (void*)sxn->function);
       if(iView >= 0){
-        p->dialogBox->value[i]->step(sxn->function(iView, 1, 0.));
+        p->dialogBox->value[i]->step(sxn->function(iView, 1, 0.), 1);
         p->dialogBox->value[i]->minimum(sxn->function(iView, 2, 0.));
         p->dialogBox->value[i]->maximum(sxn->function(iView, 3, 0.));
       }

@@ -808,7 +808,7 @@ projection::projection(fourierProjectionFace *f, int x, int y, int w, int h,
       parameters.push_back(v);
       v->maximum(bounds.max()[i] + 10. * CTX::instance()->lc);
       v->minimum(bounds.min()[i] - 10. * CTX::instance()->lc);
-      v->step(CTX::instance()->lc / 100.);
+      v->step(CTX::instance()->lc / 100., 1);
       v->value(pc[i]);
       v->label((i == 0) ? "X" : (i == 1) ? "Y" : "Z");
     }
@@ -858,7 +858,7 @@ projection::projection(fourierProjectionFace *f, int x, int y, int w, int h,
       parameters.push_back(v);
       v->maximum(CTX::instance()->lc * 10.);
       v->minimum(CTX::instance()->lc / 100.);
-      v->step(CTX::instance()->lc / 100.);
+      v->step(CTX::instance()->lc / 100., 1);
       v->value(CTX::instance()->lc / 10.);
       v->label((i == 0) ? "Scale0" : (i == 1) ? "Scale1" : "Scale2");
     }
@@ -869,7 +869,7 @@ projection::projection(fourierProjectionFace *f, int x, int y, int w, int h,
     Fl_Value_Input *v = new Fl_Value_Input(x, y + (9 + i) * bh, bb, bh);
     v->maximum(10. * CTX::instance()->lc);
     v->minimum(-10. * CTX::instance()->lc);
-    v->step(CTX::instance()->lc / 100.);
+    v->step(CTX::instance()->lc / 100., 1);
     v->label(strdup(ps->GetLabel(i).c_str()));
     v->value(ps->GetParameter(i));
     parameters.push_back(v);
