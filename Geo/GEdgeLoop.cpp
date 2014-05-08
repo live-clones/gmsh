@@ -20,7 +20,7 @@ int countInList(std::list<GEdge*> &wire, GEdge *ge)
   std::list<GEdge*>::iterator ite = wire.end();
   int count = 0;
   while(it != ite){
-    if(*it == ge) count++; 
+    if(*it == ge) count++;
     ++it;
   }
   return count;
@@ -31,7 +31,7 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge*> &wire)
   if(!thisOne){
     GEdge *ge = *(wire.begin());
     wire.erase(wire.begin());
-    return GEdgeSigned(1, ge);   
+    return GEdgeSigned(1, ge);
   }
 
   GVertex *gv = thisOne->getEndVertex();
@@ -52,14 +52,14 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge*> &wire)
   while(it != ite){
     GEdge *ge = *it;
     if(countInList(possibleChoices, ge) == 2){
-      wire.erase(std::remove_if(wire.begin(), wire.end(), 
-                                std::bind2nd(std::equal_to<GEdge*>(), ge)), 
+      wire.erase(std::remove_if(wire.begin(), wire.end(),
+                                std::bind2nd(std::equal_to<GEdge*>(), ge)),
                  wire.end());
       wire.push_back(ge);
       GVertex *v1 = ge->getBeginVertex();
       GVertex *v2 = ge->getEndVertex();
-      if(v1 == gv) return GEdgeSigned(1, ge);   
-      if(v2 == gv) return GEdgeSigned(-1, ge);   
+      if(v1 == gv) return GEdgeSigned(1, ge);
+      if(v2 == gv) return GEdgeSigned(-1, ge);
       Msg::Error("Something wrong in edge loop 1");
       thisOne->print();
     }
@@ -70,19 +70,19 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge*> &wire)
   while(it != ite){
     GEdge *ge = *it;
     if(ge != thisOne->ge){
-      wire.erase(std::remove_if(wire.begin(),wire.end(), 
-                                std::bind2nd(std::equal_to<GEdge*>(), ge)), 
+      wire.erase(std::remove_if(wire.begin(),wire.end(),
+                                std::bind2nd(std::equal_to<GEdge*>(), ge)),
                  wire.end());
       GVertex *v1 = ge->getBeginVertex();
       GVertex *v2 = ge->getEndVertex();
-      if(v1 == gv) return GEdgeSigned(1, ge);   
+      if(v1 == gv) return GEdgeSigned(1, ge);
       if(v2 == gv) return GEdgeSigned(-1, ge);
       Msg::Error("Something wrong in edge loop 2");
       thisOne->print();
-    }   
+    }
     ++it;
   }
-  
+
   // should never end up here
   return GEdgeSigned(0, 0);
 }
@@ -93,21 +93,21 @@ int GEdgeLoop::count(GEdge* ge) const
   GEdgeLoop::citer ite = end();
   int count = 0;
   while(it != ite){
-    if(it->ge == ge) count++; 
+    if(it->ge == ge) count++;
     ++it;
   }
   return count;
 }
 
 static void loopTheLoop(std::list<GEdge*> &wire,
-			std::list<GEdgeSigned> &loop,  
+			std::list<GEdgeSigned> &loop,
 			GEdge **degeneratedToInsert)
 {
   GEdgeSigned *prevOne = 0;
   GEdgeSigned ges(0,0);
 
   while(wire.size()){
-    if (prevOne && (*degeneratedToInsert) && 
+    if (prevOne && (*degeneratedToInsert) &&
 	(*degeneratedToInsert)->getBeginVertex () == prevOne->getEndVertex()){
       ges = GEdgeSigned(1,*degeneratedToInsert);
       *degeneratedToInsert = 0;
@@ -118,7 +118,7 @@ static void loopTheLoop(std::list<GEdge*> &wire,
       if (0){
 	Msg::Error("Something wrong in edge loop of size=%d, no sign !", wire.size());
 	for (std::list<GEdge* >::iterator it = wire.begin(); it != wire.end(); it++){
-	  Msg::Error("GEdge=%d begin=%d end =%d", (*it)->tag(), 
+	  Msg::Error("GEdge=%d begin=%d end =%d", (*it)->tag(),
 		     (*it)->getBeginVertex()->tag(), (*it)->getEndVertex()->tag());
 	}
       }
@@ -127,7 +127,7 @@ static void loopTheLoop(std::list<GEdge*> &wire,
     prevOne = &ges;
     // ges.print();
     loop.push_back(ges);
-  }  
+  }
 }
 
 
@@ -144,7 +144,7 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
     if (ed->degenerate(0))degenerated.push_back(ed);
     else wire.push_back(ed);
   }
-  
+
   if (degenerated.size() == 1){
     wire.push_front(degenerated[0]);
   }
@@ -155,8 +155,8 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
   else if (degenerated.size() > 2){
     Msg::Error("More than two degenerated edges in one model face of an OCC model");
   }
-  
-  while (!wire.empty() ){
+
+  while (!wire.empty()){
     //    printf("wire.size = %d\n",wire.size());
     loopTheLoop(wire,loop,&degeneratedToInsert);
     //    break;

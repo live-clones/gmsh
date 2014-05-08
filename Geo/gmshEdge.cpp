@@ -20,14 +20,14 @@ gmshEdge::gmshEdge(GModel *m, Curve *edge, GVertex *v1, GVertex *v2)
   resetMeshAttributes();
 }
 
-bool gmshEdge::degenerate(int dim) const { 
+bool gmshEdge::degenerate(int dim) const
+{
   if (c->beg == c->end && c->Typ ==  MSH_SEGM_LINE){
-    Msg::Info("Model Edge %d is degenerate",tag());
-    return true;     
+    Msg::Info("Model Edge %d is degenerate", tag());
+    return true;
   }
-  return false; 
+  return false;
 }
-
 
 void gmshEdge::resetMeshAttributes()
 {
