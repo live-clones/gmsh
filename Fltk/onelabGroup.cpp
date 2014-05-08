@@ -410,7 +410,8 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
         Msg::Error("The file <%s> cannot be opened",ofileName.c_str());
       outfile.close();
 
-      std::string reply = onelab::server::instance()->getChanged(c->getName()) ? "changed" : "unchanged";
+      std::string reply = onelab::server::instance()->getChanged(c->getName()) ?
+        "changed" : "unchanged";
       getGmshServer()->SendMessage
         (GmshSocket::GMSH_OLPARSE, reply.size(), &reply[0]);
 
@@ -731,23 +732,37 @@ static void loadDb(const std::string &name)
 
 static void resetDb(bool runGmshClient)
 {
-  // clear everything except command line and model name setup (maybe we
-  // should just re-run initialize?)
   Msg::Info("Resetting database");
-  std::vector<onelab::number> useCommandLines, guessModelNames;
-  std::vector<onelab::string> fileExtensions;
+
+  // clear everything except persistent parameters
+  std::vector<onelab::number> allNumbers, persistentNumbers;
+  std::vector<onelab::string> allStrings, persistentStrings;
+  onelab::server::instance()->get(allNumbers);
+  onelab::server::instance()->get(allStrings);
+  for(unsigned int i = 0; i < allNumbers.size(); i++){
+    if(allNumbers[i].getAttribute("Persistent") == "1")
+      persistentNumbers.push_back(allNumbers[i]);
+  }
+  for(unsigned int i = 0; i < allStrings.size(); i++){
+    if(allStrings[i].getAttribute("Persistent") == "1")
+      persistentStrings.push_back(allStrings[i]);
+  }
+
+  // TODO FIXME: this will be removed once the new stable version of getdp is
+  // released
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
     onelab::client *c = it->second;
     std::vector<onelab::number> ps;
     c->get(ps, c->getName() + "/UseCommandLine");
-    if(ps.size()) useCommandLines.push_back(ps[0]);
+    if(ps.size()) persistentNumbers.push_back(ps[0]);
     c->get(ps, c->getName() + "/GuessModelName");
-    if(ps.size()) guessModelNames.push_back(ps[0]);
+    if(ps.size()) persistentNumbers.push_back(ps[0]);
     std::vector<onelab::string> ps2;
     c->get(ps2, c->getName() + "/FileExtension");
-    if(ps2.size()) fileExtensions.push_back(ps2[0]);
+    if(ps2.size()) persistentStrings.push_back(ps2[0]);
   }
+  // END TODO
 
   // clear the db
   onelab::server::instance()->clear();
@@ -756,12 +771,16 @@ static void resetDb(bool runGmshClient)
      onelab::server::instance()->lastClient())
     onelabUtils::runGmshClient("reset", CTX::instance()->solver.autoMesh);
 
-  for(unsigned int i = 0; i < useCommandLines.size(); i++)
-    onelab::server::instance()->set(useCommandLines[i]);
-  for(unsigned int i = 0; i < guessModelNames.size(); i++)
-    onelab::server::instance()->set(guessModelNames[i]);
-  for(unsigned int i = 0; i < fileExtensions.size(); i++)
-    onelab::server::instance()->set(fileExtensions[i]);
+  for(unsigned int i = 0; i < persistentNumbers.size(); i++){
+    Msg::Info("Restoring persistent parameter %s",
+              persistentNumbers[i].getName().c_str());
+    onelab::server::instance()->set(persistentNumbers[i]);
+  }
+  for(unsigned int i = 0; i < persistentStrings.size(); i++){
+    Msg::Info("Restoring persistent parameter %s",
+              persistentStrings[i].getName().c_str());
+    onelab::server::instance()->set(persistentStrings[i]);
+  }
 }
 
 void onelab_cb(Fl_Widget *w, void *data)
