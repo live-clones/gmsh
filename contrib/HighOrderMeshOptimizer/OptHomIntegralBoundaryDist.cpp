@@ -243,8 +243,9 @@ double computeBndDistGb(GEdge *edge, std::vector<double> & params, // the model 
 
 double computeBndDistG_(GEdge *edge, std::vector<double> & p, // the model edge
 		       const nodalBasis &basis, const std::vector<SPoint3> &xyz,
-		       const unsigned int N) // the mesh edge
+		       const unsigned int NN) // the mesh edge
 {
+  const unsigned int N = 256;
   std::vector<int> o;
   o.push_back(0);
   for (unsigned int i=2; i < p.size();i++)o.push_back(i);

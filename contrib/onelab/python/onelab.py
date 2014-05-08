@@ -446,7 +446,8 @@ class client :
     if result == 0 :
       self._send(self._GMSH_INFO, 'call \"' + ' '.join(argv) + '\"')
     else :
-      self._send(self._GMSH_ERROR, 'call failed !!\n' + call.stderr.read().encode('utf-8'))
+      for line in iter(call.stderr.readline, b''):
+        self._send(self._GMSH_ERROR, line.rstrip().encode('utf-8'))
       
   def upload(self, here, there, remote='') :
     if not here or not there :

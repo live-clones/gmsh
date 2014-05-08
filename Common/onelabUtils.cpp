@@ -315,8 +315,8 @@ namespace onelabUtils {
     else if(action == "check"){
       if(onelab::server::instance()->getChanged("Gmsh") ||
          modelName != GModel::current()->getName()){
-        // reload geometry if Gmsh parameters have been modified or if the model
-        // name has changed
+        // reload geometry if Gmsh parameters have been modified or
+        // if the model name has changed
         modelName = GModel::current()->getName();
         redraw = true;
         OpenProject(GModel::current()->getFileName(), false);

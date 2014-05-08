@@ -855,7 +855,8 @@ void onelab_cb(Fl_Widget *w, void *data)
     if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db", db.c_str()))
       loadDb(fileChooserGetName(1));
 
-    // switch to "restore" mode" (use archived solution files)
+    // switch to "restore" mode" 
+    // (the metamodel will use archived solution files)
     std::vector<onelab::number> pn;
     onelab::server::instance()->get(pn,"0Metamodel/9Use restored solution");
     if(pn.size()){
@@ -881,10 +882,9 @@ void onelab_cb(Fl_Widget *w, void *data)
   onelab::server::instance()->get(pn, "IsPyMetamodel");
   bool isPyMetamodel = (pn.size() && pn[0].getValue());
 
-
   do{ // enter loop
 
-    // if the client is a not a metamodel, run Gmsh
+    // if the client is not a python metamodel, run Gmsh
     if(!isPyMetamodel){
       if(onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh))
         drawContext::global()->draw();
@@ -913,6 +913,7 @@ void onelab_cb(Fl_Widget *w, void *data)
       }
       if(FlGui::instance()->onelab->stop()) break;
     }
+
     // after computing, all parameters are set unchanged
     if(action == "compute"){
       onelab::server::instance()->setChanged(false);
