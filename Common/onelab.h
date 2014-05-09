@@ -780,7 +780,8 @@ namespace onelab{
       _getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
           it != ps.end(); it++)
-        if(client.empty() || ((*it)->hasClient(client) && (changed || (*it)->getNumClients() == 1)))
+        if(client.empty() || ((*it)->hasClient(client) &&
+                              (changed || (*it)->getNumClients() == 1)))
           (*it)->setChanged(changed);
       return true;
     }
