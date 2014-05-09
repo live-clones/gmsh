@@ -20,7 +20,7 @@
 
 class inputRange : public Fl_Group {
  private:
-  inputValue *_input;
+  inputValueFloat *_input;
   Fl_Toggle_Button *_loop_butt;
   Fl_Button *_range_butt, *_graph_butt;
   Fl_Menu_Button *_graph_menu;
@@ -248,7 +248,7 @@ class inputRange : public Fl_Group {
     int dot_w = FL_NORMAL_SIZE - 2, loop_w = FL_NORMAL_SIZE + 6, graph_w = loop_w;
     int input_w = w - dot_w - loop_w - graph_w;
 
-    _input = new inputValue(x, y, input_w, h);
+    _input = new inputValueFloat(x, y, input_w, h);
     _input->callback(_input_cb, this);
     _input->when(FL_WHEN_ENTER_KEY|FL_WHEN_RELEASE);
 

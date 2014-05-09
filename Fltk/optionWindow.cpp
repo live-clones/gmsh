@@ -18,6 +18,7 @@ typedef unsigned long intptr_t;
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "FlGui.h"
+#include "inputValue.h"
 #include "optionWindow.h"
 #include "gamepadWindow.h"
 #include "graphicWindow.h"
@@ -46,14 +47,6 @@ extern StringXColor SolverOptions_Color[] ;
 extern StringXColor PostProcessingOptions_Color[] ;
 extern StringXColor ViewOptions_Color[] ;
 extern StringXColor PrintOptions_Color[] ;
-
-class engineeringValueInput : public Fl_Value_Input
-{
- public:
-  engineeringValueInput(int x, int y, int w, int h, const char *l=0) :
-    Fl_Value_Input(x, y, w, h, l) {}
-  virtual int format(char *buffer){ return sprintf(buffer, "%g", value()); }
-};
 
 static Fl_Menu_Item menu_point_display[] = {
   {"Color dot",   0, 0, 0},
@@ -3214,7 +3207,7 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB + ss  , 2 * WB + 2 * BH, ss, BH);
       view.value[53] = new Fl_Value_Input
         (L + 2 * WB + 2*ss, 2 * WB + 2 * BH, ss, BH, " X");
-      view.value[40] = new engineeringValueInput
+      view.value[40] = new inputValueFloat
         (L + 2 * WB + IW  , 2 * WB + 2 * BH, 7*IW/10, BH);
 
       view.value[54] = new Fl_Value_Input
@@ -3223,7 +3216,7 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB + ss  , 2 * WB + 3 * BH, ss, BH);
       view.value[56] = new Fl_Value_Input
         (L + 2 * WB + 2*ss, 2 * WB + 3 * BH, ss, BH, " Y +");
-      view.value[41] = new engineeringValueInput
+      view.value[41] = new inputValueFloat
         (L + 2 * WB + IW  , 2 * WB + 3 * BH, 7*IW/10, BH);
 
       view.value[57] = new Fl_Value_Input
@@ -3232,21 +3225,21 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB + ss  , 2 * WB + 4 * BH, ss, BH);
       view.value[59] = new Fl_Value_Input
         (L + 2 * WB + 2*ss, 2 * WB + 4 * BH, ss, BH, " Z");
-      view.value[42] = new engineeringValueInput
+      view.value[42] = new inputValueFloat
         (L + 2 * WB + IW  , 2 * WB + 4 * BH, 7*IW/10, BH);
 
       Fl_Box *b2 = new Fl_Box
         (FL_NO_BOX, L + 2 * WB + 2 * IW-3*WB, 2 * WB + 1 * BH, 7*IW/10, BH, "Raise:");
       b2->align(FL_ALIGN_INSIDE|FL_ALIGN_LEFT);
 
-      view.value[43] = new engineeringValueInput
+      view.value[43] = new inputValueFloat
         (L + 2 * WB + 2 * IW-3*WB, 2 * WB + 2 * BH, 7*IW/10, BH);
-      view.value[44] = new engineeringValueInput
+      view.value[44] = new inputValueFloat
         (L + 2 * WB + 2 * IW-3*WB, 2 * WB + 3 * BH, 7*IW/10, BH);
-      view.value[45] = new engineeringValueInput
+      view.value[45] = new inputValueFloat
         (L + 2 * WB + 2 * IW-3*WB, 2 * WB + 4 * BH, 7*IW/10, BH);
 
-      view.value[46] = new engineeringValueInput
+      view.value[46] = new inputValueFloat
         (L + 2 * WB, 2 * WB + 5 * BH, 3*ss, BH, "Normal raise");
 
       for(int i = 40; i <= 46; i++){
@@ -3274,7 +3267,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[11]->add("Self");
       view.choice[11]->callback(view_options_ok_cb);
 
-      view.value[2] = new engineeringValueInput
+      view.value[2] = new inputValueFloat
         (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Factor");
       view.value[2]->align(FL_ALIGN_RIGHT);
       view.value[2]->when(FL_WHEN_RELEASE);
@@ -3376,7 +3369,7 @@ optionWindow::optionWindow(int deltaFontSize)
         view.value[60]->align(FL_ALIGN_RIGHT);
         view.value[60]->callback(view_options_ok_cb);
 
-        view.value[63] = new engineeringValueInput
+        view.value[63] = new inputValueFloat
           (L + 2 * WB, 2 * WB + 8 * BH, IW, BH, "Displacement factor");
         view.value[63]->minimum(0.);
         view.value[63]->maximum(1.);

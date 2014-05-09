@@ -8,10 +8,10 @@
 #include <FL/Fl_Help_View.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Input.H>
-#include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Color_Chooser.H>
 #include "GmshConfig.h"
 #include "FlGui.h"
+#include "inputValue.h"
 #include "helpWindow.h"
 #include "paletteWindow.h"
 #include "CommandLine.h"
@@ -41,7 +41,7 @@ struct opt_data{
 static void interactive_cb(Fl_Widget* w, void* data)
 {
   if(!data) return;
-  Fl_Value_Input *v = (Fl_Value_Input*)w;
+  inputValueFloat *v = (inputValueFloat*)w;
   opt_data *d = (opt_data*)data;
   double val = v->value();
   NumberOption(GMSH_SET|GMSH_GUI, d->category.c_str(), d->index,
@@ -69,10 +69,10 @@ double numberOrStringOptionChooser(const std::string &category, int index,
   Fl_Window *win = new paletteWindow(width, height, false, t.c_str());
   win->set_modal();
   win->hotspot(win);
-  Fl_Value_Input *number = 0;
+  inputValueFloat *number = 0;
   Fl_Input *string = 0;
   if(isNumber){
-    number = new Fl_Value_Input(WB, WB, width - 2 * WB, BH);
+    number = new inputValueFloat(WB, WB, width - 2 * WB, BH);
     number->value(valn);
     if(isInteractive){
       static opt_data d;

@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #include <FL/math.h>
 
-void inputValue::new_input_cb(Fl_Widget*, void* v)
+void inputValueFloat::new_input_cb(Fl_Widget*, void* v)
 {
-  inputValue& t = *(inputValue*)v;
+  inputValueFloat& t = *(inputValueFloat*)v;
   double nv = strtod(t.input.value(), 0);
   if (nv != t.value() || t.when() & FL_WHEN_NOT_CHANGED) {
     t.set_value(nv);
@@ -19,14 +19,14 @@ void inputValue::new_input_cb(Fl_Widget*, void* v)
   }
 }
 
-inputValue::inputValue(int x, int y, int w, int h, const char *l) :
-  Fl_Value_Input(x, y, w, h, l)
+inputValueFloat::inputValueFloat(int x, int y, int w, int h, const char *l) :
+  inputValue(x, y, w, h, l)
 {
   input.type(FL_FLOAT_INPUT);
   input.callback(new_input_cb, this);
 }
 
-int inputValue::handle(int event)
+int inputValueFloat::handle(int event)
 {
   double v;
   int delta;
