@@ -261,18 +261,17 @@ surface_params GFace::getSurfaceParams() const
 
 std::list<GVertex*> GFace::vertices() const
 {
-  std::list<GEdge*>::const_iterator it = l_edges.begin();
-  std::list<GVertex*>ret;
-  while (it != l_edges.end()){
+  std::set<GVertex*> v;
+  for(std::list<GEdge*>::const_iterator it = l_edges.begin();
+      it != l_edges.end(); ++it){
     GVertex *v1 = (*it)->getBeginVertex();
+    if(v1) v.insert(v1);
     GVertex *v2 = (*it)->getEndVertex();
-    if(v1 && std::find(ret.begin(), ret.end(), v1) == ret.end())
-      ret.push_back(v1);
-    if(v2 && std::find(ret.begin(), ret.end(), v2) == ret.end())
-      ret.push_back(v2);
-    ++it;
+    if(v2) v.insert(v2);
   }
-  return ret;
+  std::list<GVertex*> res;
+  res.insert(res.begin(), v.begin(), v.end());
+  return res;
 }
 
 void GFace::setVisibility(char val, bool recursive)
