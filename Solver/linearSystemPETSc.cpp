@@ -1,6 +1,6 @@
 // Gmsh - Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
 //
-// ee the LICENSE.txt file for license information. Please report all
+// See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "GmshConfig.h"
