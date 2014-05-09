@@ -100,6 +100,7 @@ namespace onelab{
     {
       return (_clients.find(client) != _clients.end());
     }
+    int getNumClients() { return (int)_clients.size(); };
     virtual std::string getType() const = 0;
     const std::string &getName() const { return _name; }
     const std::string &getLabel() const { return _label; }
@@ -769,15 +770,17 @@ namespace onelab{
       }
       return false;
     }
-    // set the changed flag for all parameters (optionnally only affect those
-    // parameters that depend on a given client)
+    // if no client name is given, set the changed flag for all the parameters;
+    // if a client name is given and "changed" is false, affect only the
+    // parameters that are owned exclusively by the client; if "changed" is
+    // true, affect all parameters that depend on this client
     bool setChanged(bool changed, const std::string &client="")
     {
       std::set<parameter*, parameterLessThan> ps;
       _getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
           it != ps.end(); it++)
-        if(client.empty() || (*it)->hasClient(client))
+        if(client.empty() || ((*it)->hasClient(client) && (changed || (*it)->getNumClients() == 1)))
           (*it)->setChanged(changed);
       return true;
     }
