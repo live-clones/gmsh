@@ -158,13 +158,50 @@ static std::set<MVertex *> getAllBndVertices
   return bnd;
 }
 
+// Approximate test of intersection element with circle/sphere by sampling
+static bool testElInDist(const SPoint3 p, double limDist, MElement *el)
+{
+  const double sampleLen = 0.5*limDist;                                   // Distance between sample points
+
+  if (el->getDim() == 2) {                                                // 2D?
+    for (int iEd = 0; iEd < el->getNumEdges(); iEd++) {                   // Loop over edges of element
+      MEdge ed = el->getEdge(iEd);
+      const int nPts = int(ed.length()/sampleLen)+2;                      // Nb of sample points based on edge length
+      for (int iPt = 0; iPt < nPts; iPt++) {                              // Loop over sample points
+        const SPoint3 pt = ed.interpolate(iPt/float(nPts-1));
+        if (p.distance(pt) < limDist) return true;
+      }
+    }
+  }
+  else {                                                                  // 3D
+    for (int iFace = 0; iFace < el->getNumFaces(); iFace++) {             // Loop over faces of element
+      MFace face = el->getFace(iFace);
+      double lMax = 0.;                                                   // Max. edge length in face
+      const int nVert = face.getNumVertices();
+      for (int iEd = 0; iEd < nVert; iEd++)
+        lMax = std::max(lMax, face.getEdge(iEd).length());
+      const int nPts = int(lMax/sampleLen)+2;                             // Nb of sample points based on max. edge length in face
+      for (int iPt0 = 0; iPt0 < nPts; iPt0++) {
+        const double u = iPt0/float(nPts-1);
+        for (int iPt1 = 0; iPt1 < nPts; iPt1++) {                         // Loop over sample points
+          const double vMax = (nVert == 3) ? 1.-u : 1.;
+          const SPoint3 pt = face.interpolate(u, vMax*iPt1/float(nPts-1));
+          if (p.distance(pt) < limDist) return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 static std::set<MElement*> getSurroundingBlob
    (MElement *el, int depth,
     const std::map<MVertex*, std::vector<MElement*> > &vertex2elements,
     const double distFactor, int forceDepth, bool optPrimSurfMesh)
 {
 
-  const SPoint3 p = el->barycenter();
+  const SPoint3 p = el->barycenter(true);
   const double dist = el->maxDistToStraight();
   const double limDist = ((optPrimSurfMesh && (dist < 1.e-10)) ?
                           el->getOuterRadius() : dist) * distFactor;
@@ -183,21 +220,12 @@ static std::set<MElement*> getSurroundingBlob
           ((*it)->getVertex(i))->second;
         for (std::vector<MElement*>::const_iterator itN = neighbours.begin();
              itN != neighbours.end(); ++itN){
-          if ((d < forceDepth) || (p.distance((*itN)->barycenter()) < limDist)){
+          if ((d < forceDepth) || testElInDist(p, limDist, *itN)){
             // Assume that if an el is too far, its neighbours are too far as well
             if (blob.insert(*itN).second) currentLayer.push_back(*itN);
           }
         }
       }
-//      for (int i = 0; i < (*it)->getNumPrimaryVertices(); ++i) {
-//        if ((d < forceDepth) || (p.distance((*it)->getVertex(i)->point()) < limDist)) {
-//          const std::vector<MElement*> &neighbours = vertex2elements.find((*it)->getVertex(i))->second;
-//          for (std::vector<MElement*>::const_iterator itN = neighbours.begin(); itN != neighbours.end(); ++itN) {
-//              // Assume that if an el is too far, its neighbours are too far as well
-//              if (blob.insert(*itN).second) currentLayer.push_back(*itN);
-//          }
-//        }
-//      }
     }
     lastLayer = currentLayer;
   }
