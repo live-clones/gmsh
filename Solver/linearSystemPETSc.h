@@ -86,7 +86,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   void insertInSparsityPattern (int i, int j);
   bool isAllocated() const { return _isAllocated; }
   void preAllocateEntries();
-  void allocate(int nbRows);
+  virtual void allocate(int nbRows);
   void print();
   void clear();
   void getFromMatrix(int row, int col, scalar &val) const;
@@ -100,7 +100,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   void zeroRightHandSide();
   void zeroSolution();
   void printMatlab(const char *filename) const;
-  int systemSolve();
+  virtual int systemSolve();
   Mat &getMatrix(){ return _a; }
   //std::vector<scalar> getData();
   //std::vector<int> getRowPointers();
@@ -133,7 +133,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   void zeroRightHandSide() {}
   void zeroSolution() {}
   void printMatlab(const char *filename) const{};
-  int systemSolve() { return 0; }
+  virtual int systemSolve() { return 0; }
   double normInfRightHandSide() const{return 0;}
 };
 #endif

@@ -156,6 +156,7 @@ void linearSystemPETSc<scalar>::allocate(int nbRows)
     else {
       MatSetType(_a, MATSEQBAIJ);
     }
+    MatSetOption(_a, MAT_ROW_ORIENTED, PETSC_FALSE);
   }
   // override the default options with the ones from the option
   // database (if any)

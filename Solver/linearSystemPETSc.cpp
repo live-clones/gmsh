@@ -1,6 +1,6 @@
 // Gmsh - Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
+// ee the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "GmshConfig.h"
@@ -35,35 +35,19 @@ void linearSystemPETSc<fullMatrix<double> >::addToMatrix(int row, int col,
 {
   if (!_entriesPreAllocated)
     preAllocateEntries();
+  PetscInt i = row, j = col;
   #ifdef PETSC_USE_COMPLEX
   fullMatrix<std::complex<double> > modval(val.size1(), val.size2());
   for (int ii = 0; ii < val.size1(); ii++) {
     for (int jj = 0; jj < val.size1(); jj++) {
-      modval(ii, jj) = val (jj, ii);
-      modval(jj, ii) = val (ii, jj);
+      modval(ii, jj) = val (ii, jj);
     }
   }
+  MatSetValuesBlocked(_a, 1, &i, 1, &j, modval.getDataPtr(), ADD_VALUES);
   #else
-  fullMatrix<double> &modval = *const_cast<fullMatrix<double> *>(&val);
-  for (int ii = 0; ii < val.size1(); ii++) {
-    for (int jj = 0; jj < ii; jj++) {
-      PetscScalar buff = modval(ii, jj);
-      modval(ii, jj) = modval (jj, ii);
-      modval(jj, ii) = buff;
-    }
-  }
+  MatSetValuesBlocked(_a, 1, &i, 1, &j, val.getDataPtr(), ADD_VALUES);
   #endif
-  PetscInt i = row, j = col;
-  MatSetValuesBlocked(_a, 1, &i, 1, &j, &modval(0,0), ADD_VALUES);
-  //transpose back so that the original matrix is not modified
-  #ifndef PETSC_USE_COMPLEX
-  for (int ii = 0; ii < val.size1(); ii++)
-    for (int jj = 0; jj < ii; jj++) {
-      PetscScalar buff = modval(ii,jj);
-      modval(ii, jj) = modval (jj,ii);
-      modval(jj, ii) = buff;
-    }
-  #endif
+
   _valuesNotAssembled = true;
 }
 
