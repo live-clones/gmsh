@@ -374,9 +374,9 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_camera_aperture(0, GMSH_SET, o->general.value[31]->value());
   if(opt_general_stereo_mode(0, GMSH_GET, 0) != o->general.butt[17]->value()) {
     opt_general_stereo_mode(0, GMSH_SET, o->general.butt[17]->value());
-    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++) FlGui::instance()->graph[i]->setStereo((bool)CTX::instance()->stereo);
+    for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+      FlGui::instance()->graph[i]->setStereo((bool)CTX::instance()->stereo);
   }
-
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
@@ -528,7 +528,8 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_angle_smooth_normals(0, GMSH_SET, o->mesh.value[18]->value());
 
   opt_mesh_recombine3d_all(0, GMSH_SET, o->mesh.butt[22]->value());
-  opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());  opt_mesh_algo2d(0, GMSH_SET,
+  opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
+  opt_mesh_algo2d(0, GMSH_SET,
                   (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT :
                   (o->mesh.choice[2]->value() == 2) ? ALGO_2D_DELAUNAY :
                   (o->mesh.choice[2]->value() == 3) ? ALGO_2D_FRONTAL :
@@ -3862,7 +3863,8 @@ void optionWindow::activate(const char *what)
   }
   else if(!strcmp(what, "general_camera")){
     if(general.butt[19]->value()){
-      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active ) general.gamepadconfig->activate();
+      if(CTX::instance()->gamepad && CTX::instance()->gamepad->active)
+        general.gamepadconfig->activate();
     }
     else{
       general.gamepadconfig->deactivate();
