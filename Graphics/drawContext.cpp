@@ -385,7 +385,7 @@ void drawContext::drawBackgroundImage(bool threeD)
         CTX::instance()->bgImageFileName.clear();
         return;
       }
-      _bgImageTexture = gmshPopplerWrapper::getTextureForPage(1024, 1024);
+      _bgImageTexture = gmshPopplerWrapper::getTextureForPage(2048, 2048);
       _bgImageW = gmshPopplerWrapper::width();
       _bgImageH = gmshPopplerWrapper::height();
     }
@@ -408,7 +408,7 @@ void drawContext::drawBackgroundImage(bool threeD)
         CTX::instance()->bgImageFileName.clear();
         return;
       }
-      Fl_RGB_Image *img2 = (Fl_RGB_Image*)img->copy(1024, 1024);
+      Fl_RGB_Image *img2 = (Fl_RGB_Image*)img->copy(2048, 2048);
       glGenTextures(1, &_bgImageTexture);
       glBindTexture(GL_TEXTURE_2D, _bgImageTexture);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
