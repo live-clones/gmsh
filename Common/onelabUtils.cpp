@@ -349,6 +349,11 @@ namespace onelabUtils {
         }
       }
       setFirstComputationFlag(false);
+      // don't set the "exclusive" flag here: otherwise Gmsh will re-run in a
+      // loop as soon as a shared parameter exists; this is OK because
+      // metamodels don't call runGmshClient, and the solver (e.g. GetDP) will
+      // always run anyway. The correct fix will of course to keep track of
+      // the "changed" status for each client
       onelab::server::instance()->setChanged(false, "Gmsh");
     }
 

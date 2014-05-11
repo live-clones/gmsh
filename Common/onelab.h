@@ -771,17 +771,16 @@ namespace onelab{
       return false;
     }
     // if no client name is given, set the changed flag for all the parameters;
-    // if a client name is given and "changed" is false, affect only the
-    // parameters that are owned exclusively by the client; if "changed" is
-    // true, affect all parameters that depend on this client
-    bool setChanged(bool changed, const std::string &client="")
+    // if a client name is given, affect parameters that are (exclusively if
+    // "exclusive" is set) owned by the client
+    bool setChanged(bool changed, const std::string &client="", bool exclusive=false)
     {
       std::set<parameter*, parameterLessThan> ps;
       _getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
           it != ps.end(); it++)
         if(client.empty() || ((*it)->hasClient(client) &&
-                              (changed || (*it)->getNumClients() == 1)))
+                              (!exclusive || (*it)->getNumClients() == 1)))
           (*it)->setChanged(changed);
       return true;
     }
@@ -958,9 +957,9 @@ namespace onelab{
       c->setId(_clients.size());
     }
     void unregisterClient(client *c){ _clients.erase(c->getName()); }
-    void setChanged(bool changed, const std::string &client="")
+    void setChanged(bool changed, const std::string &client="", bool exclusive=false)
     {
-      _parameterSpace.setChanged(changed, client);
+      _parameterSpace.setChanged(changed, client, exclusive);
     }
     bool getChanged(const std::string &client="")
     {

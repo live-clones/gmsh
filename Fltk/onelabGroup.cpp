@@ -911,7 +911,7 @@ void onelab_cb(Fl_Widget *w, void *data)
       if(action == "compute"){
         // after computing with this solver, mark the parameters exclusively
         // owned by this solver as unchanged
-        onelab::server::instance()->setChanged(false, c->getName());
+        onelab::server::instance()->setChanged(false, c->getName(), true);
 	FlGui::instance()->onelab->checkForErrors(c->getName());
       }
       if(FlGui::instance()->onelab->stop()) break;
@@ -2134,6 +2134,7 @@ void solver_batch_cb(Fl_Widget *w, void *data)
     o.setValue("compute");
     onelab::server::instance()->set(o);
     c->run();
+    onelab::server::instance()->setChanged(false, c->getName(), true);
   } while(incrementLoops());
 
   if(CTX::instance()->solver.autoSaveDatabase ||
