@@ -416,8 +416,8 @@ void drawContext::drawBackgroundImage(bool threeD)
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img2->w(), img2->h(), 0,
                    (img2->d() == 4) ? GL_RGBA : GL_RGB,
                    GL_UNSIGNED_BYTE, img2->array);
-      _bgImageW = img2->w();
-      _bgImageH = img2->h();
+      _bgImageW = img->w();
+      _bgImageH = img->h();
       delete img;
       delete img2;
     }
@@ -461,8 +461,8 @@ void drawContext::drawBackgroundImage(bool threeD)
   }
   else{
     int c = fix2dCoordinates(&x, &y); // y=0 now means top
-    if(c & 1) x -= _bgImageW / 2.;
-    if(c & 2) y += _bgImageH / 2.;
+    if(c & 1) x -= w / 2.;
+    if(c & 2) y += h / 2.;
     if(x < viewport[0]) x = viewport[0];
     if(y < viewport[1]) y = viewport[1];
     glTexCoord2f(1.0f, 1.0f); glVertex2d(x+w, y-h);

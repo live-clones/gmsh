@@ -339,9 +339,9 @@ StringXNumber GeneralOptions_Number[] = {
     "Y position of background image (for 2D background: < 0: measure from bottom edge; "
     ">= 1e5: centered)" },
   { F|O, "BackgroundImageWidth" , opt_general_background_image_size0 , -1. ,
-    "Width of background image (0: actual width; -1: fullscreen)" },
+    "Width of background image (0: actual width; -1: graphic window width)" },
   { F|O, "BackgroundImageHeight" , opt_general_background_image_size1 , -1 ,
-    "Height of background image (0: actual width; -1: fullscreen)" },
+    "Height of background image (0: actual height; -1: graphic window height)" },
 
   { F|O, "Camera" , opt_general_camera_mode, 0. ,
     "Enable camera view mode" },
