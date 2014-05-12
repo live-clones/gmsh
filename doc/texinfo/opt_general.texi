@@ -260,12 +260,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundImagePositionX
-X position of background image (for 2D background: < 0: measure from right edge; >= 1e5: centered)@*
+X position of background image (for 2D background: < 0: measure from right window edge; >= 1e5: centered)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundImagePositionY
-Y position of background image (for 2D background: < 0: measure from bottom edge; >= 1e5: centered)@*
+Y position of background image (for 2D background: < 0: measure from bottom window edge; >= 1e5: centered)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -980,12 +980,12 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.SmallAxesPositionX
-X position (in pixels) of small axes (< 0: measure from right edge; >= 1e5: centered)@*
+X position (in pixels) of small axes (< 0: measure from right window edge; >= 1e5: centered)@*
 Default value: @code{-60}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.SmallAxesPositionY
-Y position (in pixels) of small axes (< 0: measure from bottom edge; >= 1e5: centered)@*
+Y position (in pixels) of small axes (< 0: measure from bottom window edge; >= 1e5: centered)@*
 Default value: @code{-40}@*
 Saved in: @code{General.OptionsFileName}
 
