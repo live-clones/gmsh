@@ -447,6 +447,8 @@ void drawContext::drawBackgroundImage(bool threeD)
     h = _bgImageH;
   }
 
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, _bgImageTexture);
   glBegin(GL_QUADS);
@@ -472,6 +474,7 @@ void drawContext::drawBackgroundImage(bool threeD)
   }
   glEnd();
   glDisable(GL_TEXTURE_2D);
+  glDisable(GL_BLEND);
 }
 
 void drawContext::initProjection(int xpick, int ypick, int wpick, int hpick)
