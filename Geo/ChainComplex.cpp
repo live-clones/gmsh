@@ -218,6 +218,7 @@ void ChainComplex::Inclusion(int lowDim, int highDim)
 
     gmp_matrix_get_elem(elem, i, i, normalForm->canonical);
     if(mpz_cmp_si(elem,0) == 0){
+      destroy_gmp_matrix(Bbasis);
       destroy_gmp_normal_form(normalForm);
       return;
     }
@@ -251,6 +252,7 @@ void ChainComplex::Inclusion(int lowDim, int highDim)
       else {
         destroy_gmp_matrix(Zbasis);
         destroy_gmp_matrix(LB);
+        destroy_gmp_normal_form(normalForm);
         return;
       }
     }

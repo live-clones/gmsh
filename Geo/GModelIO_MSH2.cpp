@@ -409,8 +409,13 @@ int GModel::_readMSH2(const std::string &name)
             }
           }
           int *indices = new int[numVertices];
-          for(int j = 0; j < numVertices; j++)
-            if(fscanf(fp, "%d", &indices[j]) != 1){ fclose(fp); return 0; }
+          for(int j = 0; j < numVertices; j++){
+            if(fscanf(fp, "%d", &indices[j]) != 1){
+              delete [] indices;
+              fclose(fp);
+              return 0;
+            }
+          }
           std::vector<MVertex*> vertices;
           if(vertexVector.size()){
             if(!getVertices(numVertices, indices, vertexVector, vertices, minVertex)){
@@ -521,7 +526,11 @@ int GModel::_readMSH2(const std::string &name)
           unsigned int n = 1 + numTags + numVertices;
           int *data = new int[n];
           for(int i = 0; i < numElms; i++) {
-            if(fread(data, sizeof(int), n, fp) != n){ fclose(fp); return 0; }
+            if(fread(data, sizeof(int), n, fp) != n){
+              delete [] data;
+              fclose(fp);
+              return 0;
+            }
             if(swap) SwapBytes((char*)data, sizeof(int), n);
             int num = data[0];
             int physical = (numTags > 0) ? data[1] : 0;
