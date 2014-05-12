@@ -333,10 +333,10 @@ StringXNumber GeneralOptions_Number[] = {
     "Create background image in the 3D model (units = model units) or as "
     "2D background (units = pixels)" },
   { F|O, "BackgroundImagePositionX" , opt_general_background_image_position0 , 0 ,
-    "X position of background image (for 2D background: < 0: measure from right edge; "
+    "X position of background image (for 2D background: < 0: measure from right window edge; "
     ">= 1e5: centered)" },
   { F|O, "BackgroundImagePositionY" , opt_general_background_image_position1 , 0 ,
-    "Y position of background image (for 2D background: < 0: measure from bottom edge; "
+    "Y position of background image (for 2D background: < 0: measure from bottom window edge; "
     ">= 1e5: centered)" },
   { F|O, "BackgroundImageWidth" , opt_general_background_image_size0 , -1. ,
     "Width of background image (0: actual width; -1: graphic window width)" },
@@ -673,10 +673,10 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "SmallAxes" , opt_general_small_axes , 1. ,
     "Display the small axes" },
   { F|O, "SmallAxesPositionX" , opt_general_small_axes_position0 , -60. ,
-    "X position (in pixels) of small axes (< 0: measure from right edge; >= 1e5:"
+    "X position (in pixels) of small axes (< 0: measure from right window edge; >= 1e5:"
     " centered)" },
   { F|O, "SmallAxesPositionY" , opt_general_small_axes_position1 , -40. ,
-    "Y position (in pixels) of small axes (< 0: measure from bottom edge; >= 1e5:"
+    "Y position (in pixels) of small axes (< 0: measure from bottom window edge; >= 1e5:"
     " centered)" },
   { F|O, "SmallAxesSize" , opt_general_small_axes_size , 30. ,
     "Size (in pixels) of small axes" },
