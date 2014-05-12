@@ -180,7 +180,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.AutoMesh
-Automatically mesh if necesssary@*
+Automatically mesh if necesssary (0: never remesh; 1: on startup, use existing mesh on disk if available; 2: always remesh)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -189,9 +189,9 @@ Automatically merge result files@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Solver.AutoHideNewViews
-Automcatically hide newly merged results@*
-Default value: @code{0}@*
+@item Solver.AutoShowViews
+Automcatically show newly merged results (0: none; 1: all; 2: last one)@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.AutoShowLastStep

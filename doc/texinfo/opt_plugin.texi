@@ -116,6 +116,9 @@ Numeric options:
 Default value: @code{-1}
 @end table
 
+@item Plugin(CurvedBndDist)
+Plugin(CurvedBndDist) ...
+
 @item Plugin(CutBox)
 Plugin(CutBox) cuts the view `View' with a rectangular box defined by the 4 points (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U), (`X2',`Y2',`Z2') (axis of V) and (`X3',`Y3',`Z3') (axis of W).
 

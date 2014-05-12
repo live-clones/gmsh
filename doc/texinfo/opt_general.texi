@@ -35,7 +35,7 @@ Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundImageFileName
-Background image file in JPEG or PNG format@*
+Background image file in JPEG, PNG or PDF format@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -270,12 +270,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundImageWidth
-Width of background image (0: actual width; -1: fullscreen)@*
+Width of background image (0: actual width; -1: graphic window width)@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundImageHeight
-Height of background image (0: actual width; -1: fullscreen)@*
+Height of background image (0: actual height; -1: graphic window height)@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 

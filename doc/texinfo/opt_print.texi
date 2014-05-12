@@ -30,7 +30,7 @@ Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.Background
-Print background?@*
+Print background (gradient and image)?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
