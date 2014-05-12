@@ -2901,7 +2901,8 @@ static void RemoveDegenerateSurfaces()
       else unique.erase(it);
     }
 
-    if (N-unique.size()) Msg::Info("Coherence : Removing %d seams on Surface %d",N-unique.size(),s->Num);
+    if (N-unique.size())
+      Msg::Info("Coherence : Removing %d seams on Surface %d", N-unique.size(),s->Num);
 
     List_T *ll = s->Generatrices;
     s->Generatrices = List_Create(4, 1, sizeof(Curve *));

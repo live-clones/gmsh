@@ -1554,7 +1554,7 @@ StringXNumber PrintOptions_Number[] = {
     "Number of steps in loop over print parameter" },
 
   { F|O, "Background" , opt_print_background , 0. ,
-    "Print background?" },
+    "Print background (gradient and image)?" },
 
   { F|O, "CompositeWindows" , opt_print_composite_windows , 0. ,
     "Composite all window tiles in the same output image (for bitmap output only)" },
