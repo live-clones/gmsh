@@ -352,7 +352,6 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_axes(0, GMSH_SET, o->general.choice[4]->value());
   opt_general_background_gradient(0, GMSH_SET, o->general.choice[5]->value());
 
-
   if( (opt_general_gamepad(0, GMSH_GET, 0) !=  o->general.butt[19]->value() )
       || ( opt_general_camera_mode(0, GMSH_GET, 0) !=  o->general.butt[18]->value() )){
     if((opt_general_gamepad(0, GMSH_GET, 0) == 1 )
@@ -1794,7 +1793,6 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Vertical", 0, 0, 0},
         {"Horizontal", 0, 0, 0},
         {"Radial", 0, 0, 0},
-        {"Image", 0, 0, 0},
         {0}
       };
 

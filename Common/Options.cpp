@@ -3208,7 +3208,7 @@ double opt_general_background_gradient(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     CTX::instance()->bgGradient = (int)val;
-    if(CTX::instance()->bgGradient < 0 || CTX::instance()->bgGradient > 4)
+    if(CTX::instance()->bgGradient < 0 || CTX::instance()->bgGradient > 3)
       CTX::instance()->bgGradient = 0;
   }
 #if defined(HAVE_FLTK)
