@@ -3254,6 +3254,13 @@ double opt_general_background_image_3d(OPT_ARGS_NUM)
   return CTX::instance()->bgImage3d;
 }
 
+double opt_general_background_image_page(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->bgImagePage = (int)val;
+  return CTX::instance()->bgImagePage;
+}
+
 double opt_general_trackball(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

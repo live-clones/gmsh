@@ -190,6 +190,7 @@ double opt_general_background_image_position1(OPT_ARGS_NUM);
 double opt_general_background_image_size0(OPT_ARGS_NUM);
 double opt_general_background_image_size1(OPT_ARGS_NUM);
 double opt_general_background_image_3d(OPT_ARGS_NUM);
+double opt_general_background_image_page(OPT_ARGS_NUM);
 double opt_general_verbosity(OPT_ARGS_NUM);
 double opt_general_progress_meter_step(OPT_ARGS_NUM);
 double opt_general_nopopup(OPT_ARGS_NUM);

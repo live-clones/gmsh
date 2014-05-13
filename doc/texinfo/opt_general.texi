@@ -259,6 +259,11 @@ Create background image in the 3D model (units = model units) or as 2D backgroun
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.BackgroundImagePage
+Page to render in the background image (for multi-page PDFs)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.BackgroundImagePositionX
 X position of background image (for 2D background: < 0: measure from right window edge; >= 1e5: centered)@*
 Default value: @code{0}@*
@@ -270,12 +275,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundImageWidth
-Width of background image (0: actual width; -1: graphic window width)@*
+Width of background image (0: actual width if height = 0, natural scaling if not; -1: graphic window width)@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.BackgroundImageHeight
-Height of background image (0: actual height; -1: graphic window height)@*
+Height of background image (0: actual height if width = 0, natural scaling if not; -1: graphic window height)@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 

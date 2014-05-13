@@ -385,10 +385,11 @@ void drawContext::drawBackgroundImage(bool threeD)
         CTX::instance()->bgImageFileName.clear();
         return;
       }
-      _bgImageTexture = gmshPopplerWrapper::getTextureForPage(2048, 2048);
-      _bgImageW = gmshPopplerWrapper::width();
-      _bgImageH = gmshPopplerWrapper::height();
     }
+    gmshPopplerWrapper::instance()->setCurrentPage(CTX::instance()->bgImagePage);
+    _bgImageTexture = gmshPopplerWrapper::instance()->getTextureForPage(300, 300);
+    _bgImageW = gmshPopplerWrapper::instance()->width();
+    _bgImageH = gmshPopplerWrapper::instance()->height();
 #else
     Msg::Error("Gmsh must be compiled with Poppler support to load PDFs");
     CTX::instance()->bgImageFileName.clear();
@@ -430,22 +431,36 @@ void drawContext::drawBackgroundImage(bool threeD)
 
   if(!_bgImageTexture) return;
 
-  if(w < 0 && h == 0){
+  if(w < 0 && h < 0){
+    w = viewport[2] - viewport[0];
+    h = viewport[3] - viewport[1];
+  }
+  else if(w < 0 && h == 0){
     w = viewport[2] - viewport[0];
     h = w * _bgImageH / _bgImageW;
   }
-  else if(h < 0 && w == 0){
+  else if(w < 0){
+    w = viewport[2] - viewport[0];
+  }
+  else if(w == 0 && h < 0){
     h = viewport[3] - viewport[1];
     w = h * _bgImageW / _bgImageH;
   }
-  else if(h < 0 && w < 0){
-    w = viewport[2] - viewport[0];
+  else if(h < 0){
     h = viewport[3] - viewport[1];
   }
-  else if(h == 0 && w == 0){
+  else if(w == 0 && h == 0){
     w = _bgImageW;
     h = _bgImageH;
   }
+  else if(h == 0){
+    h = w * _bgImageH / _bgImageW;
+  }
+  else if(w == 0){
+    w = h * _bgImageW / _bgImageH;
+  }
+
+  Msg::Debug("Background image: x=%g y=%g w=%g h=%g", x, y, w, h);
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -454,8 +469,6 @@ void drawContext::drawBackgroundImage(bool threeD)
   glBegin(GL_QUADS);
   glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
   if(threeD){
-    if(w <= 0) w = _bgImageW;
-    if(h <= 0) h = _bgImageH;
     glTexCoord2f(1.0f, 1.0f); glVertex2d(x+w, y);
     glTexCoord2f(1.0f, 0.0f); glVertex2d(x+w, y+h);
     glTexCoord2f(0.0f, 0.0f); glVertex2d(x, y+h);

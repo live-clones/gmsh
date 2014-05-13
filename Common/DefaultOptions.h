@@ -332,6 +332,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "BackgroundImage3D" , opt_general_background_image_3d , 0 ,
     "Create background image in the 3D model (units = model units) or as "
     "2D background (units = pixels)" },
+  { F|O, "BackgroundImagePage" , opt_general_background_image_page , 0 ,
+    "Page to render in the background image (for multi-page PDFs)" },
   { F|O, "BackgroundImagePositionX" , opt_general_background_image_position0 , 0 ,
     "X position of background image (for 2D background: < 0: measure from right window edge; "
     ">= 1e5: centered)" },
@@ -339,9 +341,11 @@ StringXNumber GeneralOptions_Number[] = {
     "Y position of background image (for 2D background: < 0: measure from bottom window edge; "
     ">= 1e5: centered)" },
   { F|O, "BackgroundImageWidth" , opt_general_background_image_size0 , -1. ,
-    "Width of background image (0: actual width; -1: graphic window width)" },
+    "Width of background image (0: actual width if height = 0, natural scaling if not; "
+    "-1: graphic window width)" },
   { F|O, "BackgroundImageHeight" , opt_general_background_image_size1 , -1 ,
-    "Height of background image (0: actual height; -1: graphic window height)" },
+    "Height of background image (0: actual height if width = 0, natural scaling if not; "
+    "-1: graphic window height)" },
 
   { F|O, "Camera" , opt_general_camera_mode, 0. ,
     "Enable camera view mode" },
