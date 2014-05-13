@@ -15,10 +15,6 @@
 #include "OptHomIntegralBoundaryDist.h"
 #endif
 
-StringXNumber CurvedBndDistOptions_Number[] = {
-   {GMSH_FULLRC, "Dummy", NULL, -1}
-};
-
 extern "C"
 {
   GMSH_Plugin *GMSH_RegisterCurvedBndDistPlugin()
@@ -26,16 +22,6 @@ extern "C"
     return new GMSH_CurvedBndDistPlugin();
   }
 }
-int GMSH_CurvedBndDistPlugin::getNbOptions() const
-{
-  return sizeof(CurvedBndDistOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_CurvedBndDistPlugin::getOption(int iopt)
-{
-  return &CurvedBndDistOptions_Number[iopt];
-}
-
 
 std::string GMSH_CurvedBndDistPlugin::getHelp() const
 {
@@ -51,7 +37,9 @@ static void addLine(PViewDataList *data, const SVector3 &p0, const SVector3 &p1,
   data->SL.push_back(v0); data->SL.push_back(v1);
 }
 
-/*static void addQua(PViewDataList *data, const SVector3 &p0, const SVector3 &p1, const SVector3 &p2, const SVector3 &p3, double v)
+/*
+static void addQua(PViewDataList *data, const SVector3 &p0, const SVector3 &p1,
+                   const SVector3 &p2, const SVector3 &p3, double v)
 {
   data->NbSQ ++;
   data->SQ.push_back(p0.x()); data->SQ.push_back(p1.x()); data->SQ.push_back(p2.x()); data->SQ.push_back(p3.x());
@@ -59,7 +47,6 @@ static void addLine(PViewDataList *data, const SVector3 &p0, const SVector3 &p1,
   data->SQ.push_back(p0.z()); data->SQ.push_back(p1.z()); data->SQ.push_back(p2.z()); data->SQ.push_back(p3.z());
   data->SQ.push_back(v); data->SQ.push_back(v); data->SQ.push_back(v); data->SQ.push_back(v);
 }
-*/
 
 static void addPoint(PViewDataList *data, const SVector3 &p0, double v0)
 {
@@ -80,6 +67,7 @@ static void addVP(PViewDataList *data, const SVector3 p0, SVector3 v)
   data->VP.push_back(v.y());
   data->VP.push_back(v.z());
 }
+*/
 
 #if defined(HAVE_OPTHOM)
 
@@ -106,6 +94,7 @@ static void drawElementDist(PViewDataList *data, GEdge *edge,
   }
 }
 
+/*
 static void drawElement(PViewDataList *data, GEdge *edge,
                         const std::vector<MVertex *>&vertices, const nodalBasis &basis)
 {
@@ -132,6 +121,7 @@ static void drawElement(PViewDataList *data, GEdge *edge,
     addVP(data, p, t * (-gradient[i]));
   }
 }
+*/
 
 #endif
 

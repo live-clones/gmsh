@@ -24,8 +24,6 @@ class GMSH_CurvedBndDistPlugin : public GMSH_PostPlugin
   }
   std::string getHelp() const;
   std::string getAuthor() const { return "Jonathan Lambrechts"; }
-  int getNbOptions() const;
-  StringXNumber *getOption(int);
   PView *execute(PView *);
 };
 #endif
