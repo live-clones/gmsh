@@ -462,7 +462,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
           metisOptions[3] = options.refine_algorithm;
           metisOptions[4] = 0;
           for(int u=0;u<options.ncon;u++){
-           ubvec[u]=1.03;
+            ubvec[u] = (float)1.03;
           }
           graph.fillWithMultipleWeights(options.ncon,options.getWeightMapV(), options.getWeightMapE());
           if (options.num_partitions > 1) {

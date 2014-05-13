@@ -1055,9 +1055,11 @@ static int createColumnsBetweenFaces(GRegion *gr,
 
 
   for (std::set<int>::iterator it = gs.begin(); it != gs.end() ; ++it){
-    std::pair<std::multimap<int, GFace*>::iterator, std::multimap<int, GFace*>::iterator> range = lGroup.equal_range(*it);
+    std::pair<std::multimap<int, GFace*>::iterator,
+              std::multimap<int, GFace*>::iterator> range = lGroup.equal_range(*it);
     std::vector<GFace*> joint;
-    for (std::multimap<int, GFace*>::iterator itm =  range.first ; itm !=  range.second ; itm++)
+    for (std::multimap<int, GFace*>::iterator itm =  range.first ;
+         itm !=  range.second ; itm++)
       joint.push_back(itm->second);
     joints.push_back(joint);
     //    SVector3 avg (0,0,0);
@@ -1068,7 +1070,6 @@ static int createColumnsBetweenFaces(GRegion *gr,
       //      avg += n[inv[joint[i]]];
     }
     SVector3 avg = computeBestNormal(ns);
-
 
     std::vector<MVertex*> _column;
     std::vector<SMetric3> _metrics;
@@ -1081,7 +1082,6 @@ static int createColumnsBetweenFaces(GRegion *gr,
   //  if (myV->onWhat()->dim() == 0 && myV->onWhat()->tag() == 6){
   //    printf("%d %d\n",gs.size(),joints.size());
   //  }
-
 
   // create wedges
   if (joints.size() > 1){
@@ -1131,7 +1131,7 @@ static void createColumnsOnSymmetryPlane(MVertex *myV,
       //	  printf("%d columns\n",N);
       std::set<GFace*>::iterator itff = _allGFaces.begin();
       GFace *g1 = *itff ; ++itff; GFace *g2 = *itff;
-      int sense = 1;
+      bool sense = true;
       std::vector<GFace*> _joint;
 
       const BoundaryLayerFan *fan = _face_columns->getFan(myV);
@@ -1144,19 +1144,18 @@ static void createColumnsOnSymmetryPlane(MVertex *myV,
 	if (v11 == myV){
 	  if (v12->onWhat()->dim() == 1){
 	    GEdge *ge1 = (GEdge*)v12->onWhat();
-	    //		printf("COUCOU %d %d %d\n",fan->sense,std::find(l1.begin(),l1.end(),ge1) != l1.end(),std::find(l2.begin(),l2.end(),ge1) != l2.end());
 	    if (std::find(l1.begin(),l1.end(),ge1) != l1.end())sense = fan->sense;
-	    else if (std::find(l2.begin(),l2.end(),ge1) != l2.end())sense = -fan->sense;
-	    //else printf("strange1 %d %d \n");
+	    else if (std::find(l2.begin(),l2.end(),ge1) != l2.end())sense = !fan->sense;
 	  }
-	  else Msg::Error("Cannot choose between directions in a BL (dim = %d)",v12->onWhat()->dim());
+	  else
+            Msg::Error("Cannot choose between directions in a BL (dim = %d)",
+                       v12->onWhat()->dim());
 	}
 	else {
 	  if (v11->onWhat()->dim() == 1){
 	    GEdge *ge1 = (GEdge*)v11->onWhat();
 	    if (std::find(l1.begin(),l1.end(),ge1) != l1.end())sense = fan->sense;
-	    else if (std::find(l2.begin(),l2.end(),ge1) != l2.end())sense = -fan->sense;
-	    //else printf("strange2 %d %d \n");
+	    else if (std::find(l2.begin(),l2.end(),ge1) != l2.end())sense = !fan->sense;
 	  }
 	  else Msg::Error("Cannot choose between directions in a BL");
 	}
@@ -1165,13 +1164,13 @@ static void createColumnsOnSymmetryPlane(MVertex *myV,
 	Msg::Error("No fan on the outgoing BL");
       }
       _joint.push_back(g1);
-      const BoundaryLayerData & c0 = _face_columns->getColumn(myV,sense==1 ? 0 : N-1);
+      const BoundaryLayerData & c0 = _face_columns->getColumn(myV,sense ? 0 : N-1);
       _columns->addColumn(c0._n,myV, c0._column, c0._metrics,_joint);
       _joint.clear();
       _joint.push_back(g2);
-      const BoundaryLayerData & cN = _face_columns->getColumn(myV,sense==1 ? N-1 : 0);
+      const BoundaryLayerData & cN = _face_columns->getColumn(myV,sense ? N-1 : 0);
       _columns->addColumn(cN._n,myV, cN._column, cN._metrics,_joint);
-      if (sense==1){
+      if (sense){
 	for (int k=1;k<N-1;k++){
 	  const BoundaryLayerData & c = _face_columns->getColumn(myV,k);
 	  _columns->addColumn(c._n,myV, c._column, c._metrics);

@@ -16,7 +16,7 @@
 #endif
 
 StringXNumber CurvedBndDistOptions_Number[] = {
- /* {GMSH_FULLRC, "Dim", NULL, -1},*/
+   {GMSH_FULLRC, "Dummy", NULL, -1}
 };
 
 extern "C"

@@ -20,7 +20,7 @@ static int sortedPointInsert(const SPoint3 &p, const double t,
 {
   sortedPoint pnt = {p, t, pts[pos].next};
   pts.push_back(pnt);
-  int newp = pts.size() - 1;
+  int newp = (int)pts.size() - 1;
   pts[pos].next = newp;
   return newp;
 }
@@ -109,7 +109,7 @@ void decasteljau(double tol, const SPoint3 &p0, const SPoint3 &p1, const SPoint3
 static void decasteljau(double tol, std::vector<sortedPoint> &discrete, int pos,
                         const std::vector<SPoint3> &pts, double t0, double te)
 {
-  int order = pts.size() - 1;
+  int order = (int)pts.size() - 1;
   double dmax2 = 0;
   for (int i = 1; i < order ; ++i)
     dmax2 = std::max(dmax2, sqDistPointSegment(pts[i], pts[0], pts[order]));

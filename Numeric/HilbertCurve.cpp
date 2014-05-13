@@ -37,7 +37,7 @@ struct HilbertSort
     middle = 0;
     if (arraysize >= threshold) {
       (*depth)++;
-      middle = arraysize * ratio;
+      middle = (int)(arraysize * ratio);
       MultiscaleSortHilbert(vertices, middle, threshold, ratio, depth);
     }
     Sort (&(vertices[middle]),arraysize - middle,0,0,
@@ -54,7 +54,7 @@ struct HilbertSort
     bbox *= 1.01;
     MVertex**pv = &v[0];
     int depth;
-    MultiscaleSortHilbert(pv, v.size(), 64, 0.125,&depth);
+    MultiscaleSortHilbert(pv, (int)v.size(), 64, 0.125,&depth);
   }
 };
 
