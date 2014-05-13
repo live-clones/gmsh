@@ -9,9 +9,9 @@
 #include "MElement.h"
 #include "PViewDataList.h"
 #include "BasisFactory.h"
+#include "CurvedBndDist.h"
 
 #if defined(HAVE_OPTHOM)
-#include "CurvedBndDist.h"
 #include "OptHomIntegralBoundaryDist.h"
 #endif
 
