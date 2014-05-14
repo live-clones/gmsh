@@ -137,6 +137,8 @@ void linearSystemPETSc<scalar>::preAllocateEntries()
     else
       _try(MatMPIBAIJSetPreallocation(_a, blockSize, 0, &nByRowDiag[0], 0, &nByRowOffDiag[0]));
   }
+  if (blockSize > 1)
+    _try(MatSetOption(_a, MAT_ROW_ORIENTED, PETSC_FALSE));
   _entriesPreAllocated = true;
 }
 
@@ -151,12 +153,11 @@ void linearSystemPETSc<scalar>::allocate(int nbRows)
   _try(MatSetSizes(_a, blockSize * nbRows, blockSize * nbRows, PETSC_DETERMINE, PETSC_DETERMINE));
   if (blockSize > 1) {
     if (commSize > 1) {
-      MatSetType(_a, MATMPIBAIJ);
+      _try(MatSetType(_a, MATMPIBAIJ));
     }
     else {
-      MatSetType(_a, MATSEQBAIJ);
+      _try(MatSetType(_a, MATSEQBAIJ));
     }
-    MatSetOption(_a, MAT_ROW_ORIENTED, PETSC_FALSE);
   }
   // override the default options with the ones from the option
   // database (if any)
