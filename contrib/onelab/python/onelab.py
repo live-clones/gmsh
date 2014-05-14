@@ -242,22 +242,28 @@ class client :
     if not self.socket :
       return
     self._send(self._GMSH_PARAMETER_CLEAR, str(name))
-    
-  def addNumberChoice(self, name, value):
+
+  def _setNumberChoices(self, name, val):
     if not self.socket :
       return
     p = _parameter('number', name=name)
     self._send(self._GMSH_PARAMETER_QUERY, p.tochar())
     (t, msg) = self._receive() 
     if t == self._GMSH_PARAMETER :
-      p.fromchar(msg).value = value
-      if self.loop :
-        p.choices.append(value)
-      else :
+      if len(val) : # add new choices
+        p.fromchar(msg).value = val[0]
+        p.choices.extend(val)
+      else : # reset choices list
         p.choices = ()
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
       print ('Unknown parameter %s' %(param.name))
     self._send(self._GMSH_PARAMETER, p.tochar())
+    
+  def resetNumberChoices(self, name):
+    self._setNumberChoices(name,[])
+
+  def addNumberChoice(self, name, value):
+    self._setNumberChoices(name,[value])
 
   def getNumber(self, name, warn_if_not_found=True):
     param = _parameter('number', name=name)
