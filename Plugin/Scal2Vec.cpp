@@ -62,21 +62,15 @@ PView *GMSH_Scal2VecPlugin::execute(PView *v)
   int iViewZ = (int)Scal2VecOptions_Number[2].def;
   std::string nameNewView = Scal2VecOptions_String[0].def;
   
-  PView *vRef = 0, *vX = 0, *vY = 0, *vZ = 0;
-  PViewData *dataRef = 0, *dataX = 0, *dataY = 0, *dataZ = 0;
-  
   // Load data
+  PView *vRef = 0, *vX = 0, *vY = 0, *vZ = 0;
   if(iViewX >= 0){
     vX = getView(iViewX, v);
     if(!vX){
       Msg::Error("Scal2Vec plugin could not find View X: %i", iViewX);
       return v;
     }
-    dataX = vX->getData();
-    if(!vRef){
-      vRef = vX;
-      dataRef = dataX;
-    }
+    if(!vRef) vRef = vX;
   }
   if(iViewY >= 0){
     vY = getView(iViewY, v);
@@ -84,11 +78,7 @@ PView *GMSH_Scal2VecPlugin::execute(PView *v)
       Msg::Error("Scal2Vec plugin could not find View Y: %i", iViewY);
       return v;
     }
-    dataY = vY->getData();
-    if(!vRef){
-      vRef = vY;
-      dataRef = dataY;
-    }
+    if(!vRef) vRef = vY;
   }
   if(iViewZ >= 0){
     vZ = getView(iViewZ, v);
@@ -96,44 +86,42 @@ PView *GMSH_Scal2VecPlugin::execute(PView *v)
       Msg::Error("Scal2Vec plugin could not find View Z: %i", iViewZ);
       return v;
     }
-    dataZ = vZ->getData();
-    if(!vRef){
-      vRef = vZ;
-      dataRef = dataZ;
-    }
+    if(!vRef) vRef = vZ;
   }
   if(!vRef){
     Msg::Error("Scal2Vec plugin could not find any view.", iViewZ);
     return v;
   }
+  PViewData *dataRef = vRef->getData();
   
   // Initialize the new view
   PView *vNew = new PView();
   PViewDataList *dataNew = getDataList(vNew);
   
-  for(int ent = 0; ent < dataRef->getNumEntities(0); ent++){
-    for(int ele = 0; ele < dataRef->getNumElements(0, ent); ele++){
-      if(dataRef->skipElement(0, ent, ele)) continue;
+  int step0 = dataRef->getFirstNonEmptyTimeStep();
+  for(int ent = 0; ent < dataRef->getNumEntities(step0); ent++){
+    for(int ele = 0; ele < dataRef->getNumElements(step0, ent); ele++){
+      if(dataRef->skipElement(step0, ent, ele)) continue;
       int numComp = 3; // The 3 components of the new view: x,y,z
-      int type = dataRef->getType(0, ent, ele);
-      int numNodes = dataRef->getNumNodes(0, ent, ele);
+      int type = dataRef->getType(step0, ent, ele);
+      int numNodes = dataRef->getNumNodes(step0, ent, ele);
       std::vector<double> *out = dataNew->incrementList(numComp, type, numNodes); // Pointer in data of the new view
       if(!out) continue;
       double x[8], y[8], z[8], valX, valY, valZ;
       for(int nod = 0; nod < numNodes; nod++)
-        dataRef->getNode(0, ent, ele, nod, x[nod], y[nod], z[nod]);
-      int dim = dataRef->getDimension(0, ent, ele);
+        dataRef->getNode(step0, ent, ele, nod, x[nod], y[nod], z[nod]);
+      int dim = dataRef->getDimension(step0, ent, ele);
       elementFactory factory;
       element *element = factory.create(numNodes, dim, x, y, z);
       if(!element) continue;
       for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]); // Save coordinates (x,y,z)
       for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
       for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
-      for(int step = 0; step < dataRef->getNumTimeSteps(); step++){
+      for(int step = step0; step < dataRef->getNumTimeSteps(); step++){
         for(int nod = 0; nod < numNodes; nod++){
-          if(vX) dataX->getValue(step, ent, ele, nod, 0, valX); else valX = 0;
-          if(vY) dataY->getValue(step, ent, ele, nod, 0, valY); else valY = 0;
-          if(vZ) dataZ->getValue(step, ent, ele, nod, 0, valZ); else valZ = 0;
+          if(vX) vX->getData()->getValue(step, ent, ele, nod, 0, valX); else valX = 0;
+          if(vY) vY->getData()->getValue(step, ent, ele, nod, 0, valY); else valY = 0;
+          if(vZ) vZ->getData()->getValue(step, ent, ele, nod, 0, valZ); else valZ = 0;
           out->push_back(valX); // Save values (fx,fy,fz)
           out->push_back(valY);
           out->push_back(valZ);
@@ -143,7 +131,7 @@ PView *GMSH_Scal2VecPlugin::execute(PView *v)
     }
   }
   
-  for(int step = 0; step < dataRef->getNumTimeSteps(); step++){
+  for(int step = step0; step < dataRef->getNumTimeSteps(); step++){
     if(dataRef->hasTimeStep(step)){
       double time = dataRef->getTime(step);
       dataNew->Time.push_back(time);
