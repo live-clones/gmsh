@@ -59,8 +59,11 @@ GLuint gmshPopplerWrapper::getTextureForPage(double xres,
   std::map<int,GLuint>::iterator it = _pages2textures.find(iPage);
   if (it != _pages2textures.end()) return it->second;
   if (!_currentDoc) return 0;
+
   poppler::page *page = _currentDoc->create_page(iPage);
   poppler::page_renderer pr;
+  pr.set_render_hint(poppler::page_renderer::text_antialiasing, true);
+  pr.set_render_hint(poppler::page_renderer::antialiasing, true);
   poppler::image im = pr.render_page(page, xres, yres, -1, -1, -1);
   _w = im.width();
   _h = im.height();
