@@ -178,8 +178,8 @@ class GModel
   // *not* have a link to the fileName
   static GModel *findByName(const std::string &name, const std::string &fileName="");
 
-  // delete everything in a GModel
-  void destroy();
+  // delete everything in a GModel (optionally keep name and fileName)
+  void destroy(bool keepName=false);
 
   // get/set global vertex/element num
   int getMaxVertexNumber(){ return _maxVertexNum; }

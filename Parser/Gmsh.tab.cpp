@@ -7028,7 +7028,7 @@ yyreduce:
         ClearProject();
       }
       else if(!strcmp((yyvsp[(2) - (3)].c), "Model")){
-	GModel::current()->destroy();
+	GModel::current()->destroy(true); // destroy, but keep name/filename
 	GModel::current()->getGEOInternals()->destroy();
       }
       else if(!strcmp((yyvsp[(2) - (3)].c), "Physicals")){

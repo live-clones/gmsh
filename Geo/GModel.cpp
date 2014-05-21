@@ -171,10 +171,12 @@ GModel *GModel::findByName(const std::string &name, const std::string &fileName)
   return 0;
 }
 
-void GModel::destroy()
+void GModel::destroy(bool keepName)
 {
-  _name.clear();
-  _fileNames.clear();
+  if(!keepName){
+    _name.clear();
+    _fileNames.clear();
+  }
 
   _maxVertexNum = _maxElementNum = 0;
   _checkPointedMaxVertexNum = _checkPointedMaxElementNum = 0;

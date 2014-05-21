@@ -2477,7 +2477,7 @@ Delete :
         ClearProject();
       }
       else if(!strcmp($2, "Model")){
-	GModel::current()->destroy();
+	GModel::current()->destroy(true); // destroy, but keep name/filename
 	GModel::current()->getGEOInternals()->destroy();
       }
       else if(!strcmp($2, "Physicals")){
