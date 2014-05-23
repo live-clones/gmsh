@@ -254,7 +254,7 @@ class client :
         p.fromchar(msg).value = val[0]
         p.choices.extend(val)
       else : # reset choices list
-        p.choices = ()
+        p.fromchar(msg).choices = ()
     elif t == self._GMSH_PARAMETER_NOT_FOUND :
       print ('Unknown parameter %s' %(param.name))
     self._send(self._GMSH_PARAMETER, p.tochar())
