@@ -1641,7 +1641,7 @@ else(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
   set(CPACK_GENERATOR TGZ)
 endif(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
 
-if (HAVE_PYTHON)
+if(HAVE_PYTHON)
   add_subdirectory(wrappers/gmshpy)
 endif(HAVE_PYTHON)
 
@@ -1659,6 +1659,15 @@ file(GLOB_RECURSE TESTFILES tutorial/*.geo)
 foreach(TESTFILE ${TESTFILES})
   add_test(${TESTFILE} ./gmsh ${TESTFILE} -3 -o ./tmp.msh)
 endforeach()
+# if(HAVE_PYTHON)
+#   file(GLOB_RECURSE TESTFILES tutorial/*.py)
+#   foreach(TESTFILE ${TESTFILES})
+#     add_test(NAME ${TESTFILE} 
+#              COMMAND ${PYTHON_EXECUTABLE}
+#                      ${TESTFILE} $<CONFIGURATION>)
+#     # sys.path.insert(0, "path/to/your/package")
+#   endforeach()
+# endif(HAVE_PYTHON)
 
 message(STATUS "")
 message(STATUS "Gmsh ${GMSH_VERSION} has been configured for ${GMSH_OS}")
