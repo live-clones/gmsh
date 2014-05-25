@@ -26,7 +26,7 @@ SPoint3 parametricLineNodalBasis::operator()(double xi) const
 
 SVector3 parametricLineNodalBasis::derivative(double xi) const
 {
-  double dpsi[_xyz.size()][3];
+  double dpsi[1256][3];
   SVector3 p(0, 0, 0);
   _basis.df(-1 + 2 * xi, 0, 0, dpsi);
   for (size_t j = 0; j < _xyz.size(); ++j) {
@@ -39,7 +39,7 @@ SVector3 parametricLineNodalBasis::derivative(double xi) const
 
 SVector3 parametricLineNodalBasis::secondDerivative(double xi) const
 {
-  double ddpsi[_xyz.size()][3][3];
+  double ddpsi[1256][3][3];
   SVector3 p(0, 0, 0);
   _basis.ddf(-1 + 2 * xi, 0, 0, ddpsi);
   for (size_t j = 0; j < _xyz.size(); ++j) {
