@@ -53,13 +53,11 @@ namespace onelab{
     std::string _label;
     // a help string
     std::string _help;
-    // clients that use this parameter
-    std::set<std::string> _clients;
-    // flag to check if the value of the parameter has been changed since the
-    // last computation (normally this is reset after all the clients have been
-    // run)
-    bool _changed;
-    // flag indicating that the _changed flag of this parameter will always be
+    // map of clients that use this parameter, associated with a "changed" flag
+    // (set to false if the client has already been run with the current value of
+    // the parameter)
+    std::map<std::string, bool> _clients;
+    // flag indicating that the "changed" flags of this parameter will always be
     // reset to false when the parameter is updated
     bool _neverChanged;
     // should the parameter be visible in the interface?
@@ -72,13 +70,24 @@ namespace onelab{
   public:
     parameter(const std::string &name="", const std::string &label="",
               const std::string &help="")
-      : _name(name), _label(label), _help(help), _changed(true),
-        _neverChanged(false), _visible(true), _readOnly(false) {}
+      : _name(name), _label(label), _help(help), _neverChanged(false),
+        _visible(true), _readOnly(false) {}
     virtual ~parameter(){}
     void setName(const std::string &name){ _name = name; }
     void setLabel(const std::string &label){ _label = label; }
     void setHelp(const std::string &help){ _help = help; }
-    void setChanged(bool changed){ _changed = changed; }
+    void setChanged(bool changed, const std::string &client="")
+    {
+      if(client.size()){
+        std::map<std::string, bool>::iterator it = _clients.find(client);
+        if(it != _clients.end()) it->second = changed;
+      }
+      else{
+        for(std::map<std::string, bool>::iterator it = _clients.begin();
+            it != _clients.end(); it++)
+          it->second = changed;
+      }
+    }
     void setNeverChanged(bool never){ _neverChanged = never; }
     void setVisible(bool visible){ _visible = visible; }
     void setReadOnly(bool readOnly){ _readOnly = readOnly; }
@@ -90,9 +99,13 @@ namespace onelab{
     {
       _attributes = attributes;
     }
-    void setClients(const std::set<std::string> &clients){ _clients = clients; }
-    void addClient(const std::string &client){ _clients.insert(client); }
-    void addClients(const std::set<std::string> &clients)
+    void setClients(const std::map<std::string, bool> &clients){ _clients = clients; }
+    void addClient(const std::string &client, bool changed)
+    {
+      if(_clients.find(client) == _clients.end())
+        _clients[client] = changed;
+    }
+    void addClients(const std::map<std::string, bool> &clients)
     {
       _clients.insert(clients.begin(), clients.end());
     }
@@ -123,7 +136,21 @@ namespace onelab{
         s = s.substr(1);
       return s;
     }
-    bool getChanged() const { return _changed; }
+    bool getChanged(const std::string &client="") const
+    {
+      if(client.size()){
+        std::map<std::string, bool>::const_iterator it = _clients.find(client);
+        if(it != _clients.end()) return it->second;
+        else return false;
+      }
+      else{
+        for(std::map<std::string, bool>::const_iterator it = _clients.begin();
+            it != _clients.end(); it++){
+          if(it->second) return true;
+        }
+        return false;
+      }
+    }
     bool getNeverChanged() const { return _neverChanged; }
     bool getVisible() const { return _visible; }
     bool getReadOnly() const { return _readOnly; }
@@ -137,10 +164,10 @@ namespace onelab{
     {
       return _attributes;
     }
-    const std::set<std::string> &getClients() const { return _clients; }
+    const std::map<std::string, bool> &getClients() const { return _clients; }
     static char charSep() { return '\0'; }
     static double maxNumber() { return 1e200; }
-    static std::string version() { return "1.05"; }
+    static std::string version() { return "1.1"; }
     static std::string getNextToken(const std::string &msg,
                                     std::string::size_type &first,
                                     char separator=charSep())
@@ -186,7 +213,6 @@ namespace onelab{
               << sanitize(getLabel()) << charSep()
               << sanitize(getHelp()) << charSep()
               << (getNeverChanged() ? 1 : 0) << charSep()
-              << (getChanged() ? 1 : 0) << charSep()
               << (getVisible() ? 1 : 0) << charSep()
               << (getReadOnly() ? 1 : 0) << charSep()
               << _attributes.size() << charSep();
@@ -195,9 +221,10 @@ namespace onelab{
         sstream << sanitize(it->first) << charSep()
                 << sanitize(it->second) << charSep();
       sstream << getClients().size() << charSep();
-      for(std::set<std::string>::const_iterator it = getClients().begin();
+      for(std::map<std::string, bool>::const_iterator it = getClients().begin();
           it != getClients().end(); it++)
-        sstream << sanitize(*it) << charSep();
+        sstream << sanitize(it->first) << charSep()
+                << (it->second ? 1 : 0) << charSep();
       return sstream.str();
     }
     virtual std::string::size_type fromChar(const std::string &msg)
@@ -209,7 +236,6 @@ namespace onelab{
       setLabel(getNextToken(msg, pos));
       setHelp(getNextToken(msg, pos));
       setNeverChanged(atoi(getNextToken(msg, pos).c_str()));
-      setChanged(atoi(getNextToken(msg, pos).c_str()));
       setVisible(atoi(getNextToken(msg, pos).c_str()));
       setReadOnly(atoi(getNextToken(msg, pos).c_str()));
       int numAttributes = atoi(getNextToken(msg, pos).c_str());
@@ -220,7 +246,8 @@ namespace onelab{
       int numClients = atoi(getNextToken(msg, pos).c_str());
       for(int i = 0; i < numClients; i++){
         std::string client(getNextToken(msg, pos));
-        addClient(client);
+        int changed = atoi(getNextToken(msg, pos).c_str());
+        addClient(client, changed ? true : false);
       }
       return pos;
     }
@@ -330,7 +357,7 @@ namespace onelab{
     }
     void update(const number &p)
     {
-      addClients(p.getClients()); // complete the list of clients
+      addClients(p.getClients());
       setLabel(p.getLabel());
       setHelp(p.getHelp());
       setVisible(p.getVisible());
@@ -655,19 +682,20 @@ namespace onelab{
       return false;
     }
     // set a parameter in the parameter space; if it already exists, update it
-    // (adding new clients if necessary). This needs to be locked to avoid race
-    // conditions when several clients try to set a parameter at the same time.
+    // (adding new clients if necessary). This would need to be locked to avoid
+    // race conditions when several clients try to set a parameter at the same
+    // time.
     template <class T> bool _set(const T &p, const std::string &client,
                                  std::set<T*, parameterLessThan> &ps)
     {
       typename std::set<T*, parameterLessThan>::iterator it = ps.find((T*)&p);
       if(it != ps.end()){
         (*it)->update(p);
-        if(client.size()) (*it)->addClient(client);
+        if(client.size()) (*it)->addClient(client, true);
       }
       else{
         T* newp = new T(p);
-        if(client.size()) newp->addClient(client);
+        if(client.size()) newp->addClient(client, true);
         ps.insert(newp);
       }
       return true;
@@ -675,7 +703,7 @@ namespace onelab{
     // get the parameter matching the given name, or all the parameters in the
     // category if no name is given. If we find a given parameter by name, we
     // add the client requesting the parameter to the list of clients for this
-    // parameter. This also needs to be locked.
+    // parameter. This would also need to be locked.
     template <class T> bool _get(std::vector<T> &p, const std::string &name,
                                  const std::string &client,
                                  std::set<T*, parameterLessThan> &ps)
@@ -690,7 +718,7 @@ namespace onelab{
         T tmp(name);
         typename std::set<T*, parameterLessThan>::iterator it = ps.find(&tmp);
         if(it != ps.end()){
-          if(client.size()) (*it)->addClient(client);
+          if(client.size()) (*it)->addClient(client, true);
           p.push_back(**it);
         }
       }
@@ -764,25 +792,21 @@ namespace onelab{
       _getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
           it != ps.end(); it++){
-        if((client.empty() || (*it)->hasClient(client)) && (*it)->getChanged()){
+        if((*it)->getChanged(client)){
           return true;
         }
       }
       return false;
     }
-    // if no client name is given, set the changed flag for all the parameters;
-    // if a client name is given, affect parameters that are (exclusively if
-    // "exclusive" is set) owned by the client
-    bool setChanged(bool changed, const std::string &client="", bool exclusive=false)
+    // set the changed flag for all the parameters that depend on the give
+    // client (or for all parameters if no client name is provided)
+    void setChanged(bool changed, const std::string &client="")
     {
       std::set<parameter*, parameterLessThan> ps;
       _getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
           it != ps.end(); it++)
-        if(client.empty() || ((*it)->hasClient(client) &&
-                              (!exclusive || (*it)->getNumClients() == 1)))
-          (*it)->setChanged(changed);
-      return true;
+        (*it)->setChanged(changed, client);
     }
     // serialize the parameter space (optionally only serialize those parameters
     // that depend on the given client)
@@ -957,9 +981,9 @@ namespace onelab{
       c->setId(_clients.size());
     }
     void unregisterClient(client *c){ _clients.erase(c->getName()); }
-    void setChanged(bool changed, const std::string &client="", bool exclusive=false)
+    void setChanged(bool changed, const std::string &client="")
     {
-      _parameterSpace.setChanged(changed, client, exclusive);
+      _parameterSpace.setChanged(changed, client);
     }
     bool getChanged(const std::string &client="")
     {

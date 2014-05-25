@@ -421,7 +421,8 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     break;
   case GmshSocket::GMSH_CLIENT_CHANGED:
     {
-      std::string reply = onelab::server::instance()->getChanged(message) ? "changed" : "unchanged";
+      std::string reply = onelab::server::instance()->getChanged(message) ?
+        "changed" : "unchanged";
       getGmshServer()->SendMessage
         (GmshSocket::GMSH_CLIENT_CHANGED, reply.size(), &reply[0]);
     }
@@ -909,9 +910,9 @@ void onelab_cb(Fl_Widget *w, void *data)
       onelab::server::instance()->set(o);
       c->run();
       if(action == "compute"){
-        // after computing with this solver, mark the parameters exclusively
-        // owned by this solver as unchanged
-        onelab::server::instance()->setChanged(false, c->getName(), true);
+        // after computing with this solver, mark the parameters as unchanged
+        // for this solver
+        onelab::server::instance()->setChanged(false, c->getName());
 	FlGui::instance()->onelab->checkForErrors(c->getName());
       }
       if(FlGui::instance()->onelab->stop()) break;
@@ -924,11 +925,6 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
           incrementLoops());
-
-  if(action == "compute"){
-    // the computation is done; mark all parameters as unchanged
-    onelab::server::instance()->setChanged(false);
-  }
 
   if(action == "compute" && (CTX::instance()->solver.autoSaveDatabase ||
                              CTX::instance()->solver.autoArchiveOutputFiles)){
@@ -2134,7 +2130,7 @@ void solver_batch_cb(Fl_Widget *w, void *data)
     o.setValue("compute");
     onelab::server::instance()->set(o);
     c->run();
-    onelab::server::instance()->setChanged(false, c->getName(), true);
+    onelab::server::instance()->setChanged(false, c->getName());
   } while(incrementLoops());
 
   if(CTX::instance()->solver.autoSaveDatabase ||

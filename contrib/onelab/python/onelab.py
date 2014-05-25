@@ -1,5 +1,5 @@
 """
-OneLab - Copyright (C) 2011-2013 ULg-UCL
+OneLab - Copyright (C) 2011-2014 ULg-UCL
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
@@ -28,7 +28,7 @@ Please report all bugs and problems to the public mailing list
 """
 
 import socket, struct, os, sys, subprocess
-_VERSION = '1.05'
+_VERSION = '1.1'
 
 def file_exist(filename):
   try:
@@ -56,9 +56,9 @@ def path(ref,inp=''):
 class _parameter() :
   _membersbase = [
     ('name', 'string'), ('label', 'string', ''), ('help', 'string', ''),
-    ('neverChanged', 'int', 0), ('changed', 'int', 1), ('visible', 'int', 1),
-    ('readOnly', 'int', 0), ('attributes', ('dict', 'string', 'string'), {}),
-    ('clients', ('list', 'string'), [])
+    ('neverChanged', 'int', 0), ('visible', 'int', 1), ('readOnly', 'int', 0), 
+    ('attributes', ('dict', 'string', 'string'), {}),
+    ('clients', ('dict', 'string', 'int'), {})
   ]
   _members = {
     'string' : _membersbase + [
@@ -368,7 +368,6 @@ class client :
           return True
     return False
 
-    
   def waitOnSubClients(self):
     if not self.socket :
       return
