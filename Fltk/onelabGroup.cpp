@@ -908,7 +908,11 @@ void onelab_cb(Fl_Widget *w, void *data)
       o.setVisible(false);
       o.setNeverChanged(true);
       onelab::server::instance()->set(o);
-      c->run();
+      // we should skip the computation here if no parameter has changed for the
+      // solver:
+      //
+      //if(action != "compute" || onelab::server::instance()->getChanged(c->getName()))
+        c->run();
       if(action == "compute"){
         // after computing with this solver, mark the parameters as unchanged
         // for this solver
