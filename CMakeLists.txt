@@ -1531,6 +1531,8 @@ if(MAKEINFO)
                      ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(html DEPENDS ${TEX_DIR}/gmsh.html)
   install(FILES ${TEX_DIR}/gmsh.html DESTINATION ${GMSH_DOC} OPTIONAL)
+else(MAKEINFO)
+  add_custom_target(html COMMAND ${CMAKE_COMMAND} -E touch ${TEX_DIR}/gmsh.html)
 endif(MAKEINFO)
 
 find_program(TEXI2PDF texi2pdf)
