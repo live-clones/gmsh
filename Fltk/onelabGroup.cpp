@@ -398,13 +398,16 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
   case GmshSocket::GMSH_OLPARSE:
     {
 #if defined(HAVE_ONELAB_METAMODEL)
-      std::vector<std::string> split = SplitOLFileName(message);
+      std::string::size_type first = 0;
+      std::string name = onelab::parameter::getNextToken(message, first);
+      std::string fileName = onelab::parameter::getNextToken(message, first);
+      std::vector<std::string> split = SplitOLFileName(fileName);
       std::string ofileName = split[0] + split[1] ;
       std::ofstream outfile(ofileName.c_str());
-      localSolverClient *c = new InterfacedClient(split[1],"","");
+      localSolverClient *c = new InterfacedClient(name,"","");
       if (outfile.is_open()) {
         Msg::Info("Preprocess file <%s>",ofileName.c_str());
-        c->convert_onefile(message, outfile);
+        c->convert_onefile(fileName, outfile);
       }
       else
         Msg::Error("The file <%s> cannot be opened",ofileName.c_str());
@@ -421,10 +424,19 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     break;
   case GmshSocket::GMSH_CLIENT_CHANGED:
     {
-      std::string reply = onelab::server::instance()->getChanged(message) ?
-        "changed" : "unchanged";
+      std::string::size_type first = 0;
+      std::string command = onelab::parameter::getNextToken(message, first);
+       std::string name = onelab::parameter::getNextToken(message, first);
+     if(command == "get"){
+       std::string reply = onelab::server::instance()->getChanged(name) ?
+        "true" : "false";
       getGmshServer()->SendMessage
         (GmshSocket::GMSH_CLIENT_CHANGED, reply.size(), &reply[0]);
+      }
+      else if(command == "set"){
+	std::string changed = onelab::parameter::getNextToken(message, first);
+	onelab::server::instance()->setChanged(changed=="true"?true:false,name);
+      }
     }
     break;
   default:
@@ -917,6 +929,7 @@ void onelab_cb(Fl_Widget *w, void *data)
         // after computing with this solver, mark the parameters as unchanged
         // for this solver
         onelab::server::instance()->setChanged(false, c->getName());
+
 	FlGui::instance()->onelab->checkForErrors(c->getName());
       }
       if(FlGui::instance()->onelab->stop()) break;

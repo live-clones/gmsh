@@ -798,7 +798,7 @@ namespace onelab{
       }
       return false;
     }
-    // set the changed flag for all the parameters that depend on the give
+    // set the changed flag for all the parameters that depend on the given
     // client (or for all parameters if no client name is provided)
     void setChanged(bool changed, const std::string &client="")
     {

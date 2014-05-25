@@ -316,19 +316,6 @@ class client :
     if not self.socket or not filename :
       return
     self._send(self._GMSH_OPEN_PROJECT, filename)
-
-  def reloadGeometry(self, filename) :
-    if not self.socket or not filename :
-      return
-    if os.path.splitext(filename)[1] == '.geo' :
-      self._send(self._GMSH_PARSE_STRING, "Delete All;")
-      self._send(self._GMSH_MERGE_FILE, filename)
-
-  def mesh(self, filename) :
-    if not self.socket or not filename :
-      return
-    self._send(self._GMSH_PARSE_STRING, 'Mesh 3; Save "' + filename + ' ;')
-    self._send(self._GMSH_MERGE_FILE, filename)
     
   def sendInfo(self, msg) :
     if not self.socket :
@@ -348,25 +335,33 @@ class client :
       return
     self._send(self._GMSH_ERROR, str(msg))
 
-  def preProcess(self, filename) :
+  def preProcess(self, name, filename) :
     if not self.socket :
       return
-    self._send(self._GMSH_OLPARSE, filename)
+    msg = [name, filename]
+    self._send(self._GMSH_OLPARSE, '\0'.join(msg))
     (t, msg) = self._receive() 
     if t == self._GMSH_OLPARSE :
-      if msg == "changed" :
+      if msg == "true" :
           return True
     return False
 
-  def isChanged(self, clientname) :
+  def isChanged(self, name) :
     if not self.socket :
       return
-    self._send(self._GMSH_CLIENT_CHANGED, clientname)
+    msg = ["get", name]
+    self._send(self._GMSH_CLIENT_CHANGED, '\0'.join(msg))
     (t, msg) = self._receive() 
     if t == self._GMSH_CLIENT_CHANGED :
-      if msg == "changed" :
+      if msg == "true" :
           return True
     return False
+
+  def setChanged(self, name, changed) :
+    if not self.socket :
+      return
+    msg = ["set", name, 'true' if changed else 'false']
+    self._send(self._GMSH_CLIENT_CHANGED, '\0'.join(msg))
 
   def waitOnSubClients(self):
     if not self.socket :
@@ -377,7 +372,7 @@ class client :
         self._numSubClients -= 1
 
   def runNonBlockingSubClient(self, name, command, arguments=''):
-    if self.action == "check":
+    if self.action == 'check':
       cmd = command
     else:
       cmd = command + ' ' + arguments
@@ -390,6 +385,8 @@ class client :
   def runSubClient(self, name, command, arguments=''):
     self.runNonBlockingSubClient(name, command, arguments)
     self.waitOnSubClients() # makes the subclient blocking
+    if self.action == 'compute': 
+      self.setChanged(name, False)
 
   def run(self, name, command, arguments=''):
     self.runSubClient(name, command, arguments)
@@ -428,7 +425,7 @@ class client :
   def __del__(self):
     self.finalize()
 
-  def call(self, cmdline, remote='', rundir='', logfile=''):
+  def call(self, name, cmdline, remote='', rundir='', logfile=''):
     cwd = None
     if not remote :
       argv = cmdline.rsplit(' ')
@@ -450,9 +447,12 @@ class client :
     result = call.wait()
     if result == 0 :
       self._send(self._GMSH_INFO, 'call \"' + ' '.join(argv) + '\"')
+      if self.action == 'compute':
+        self.setChanged(name, False)
     else :
       for line in iter(call.stderr.readline, b''):
         self._send(self._GMSH_ERROR, line.rstrip().encode('utf-8'))
+      sys.exit(1)
       
   def upload(self, here, there, remote='') :
     if not here or not there :
