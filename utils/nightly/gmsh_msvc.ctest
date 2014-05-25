@@ -3,7 +3,7 @@
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-set(CTEST_CMAKE_COMMAND "/cygdrive/c/Program\ Files\ \(x86\)/CMake\ 2.8/bin/cmake.exe")
+set(CTEST_CMAKE_COMMAND "'C:\Program Files (x86)\CMake 2.8\bin\cmake.exe'")
 set(CTEST_BINARY_DIRECTORY "$ENV{HOME}/src/gmsh/bin_msvc")
 set(CTEST_CMAKE_GENERATOR "Visual Studio 11")
 
@@ -16,6 +16,7 @@ set(WITH_MEMCHECK FALSE) # check memory with valgrind?
 #################################################################################
 set(CTEST_BUILD_NAME "Win64-msvc")
 set(OPT "-DGMSH_EXTRA_VERSION=${EXTRA_VERSION}")
+set(OPT "${OPT} -DENABLE_BLAS_LAPACK=0 -DENABLE_FLTK=0")
 set(CTEST_BUILD_OPTIONS ${OPT})
 include(gmsh.ctest)
-upload_package(${WEB_BIN} Windows 64-msvc .zip .zip)
+### upload_package(${WEB_BIN} Windows 64-msvc .zip .zip)
