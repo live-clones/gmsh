@@ -24,6 +24,7 @@ set(OPT "${OPT} -DCMAKE_PREFIX_PATH:path=/usr/local/opencascade;/usr/local;/usr/
 set(OPT "${OPT} -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe")
 set(OPT "${OPT} -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe")
 set(OPT "${OPT} -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe")
+set(OPT "${OPT} -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe")
 set(OPT "${OPT} -DPETSC_ARCH=win64_complex_mumps_seq")
 set(OPT "${OPT} -DPETSC_DIR=$ENV{HOME}/src/petsc-3.1-p8")
 set(OPT "${OPT} -DSLEPC_DIR=$ENV{HOME}/src/slepc-3.1-p6")
