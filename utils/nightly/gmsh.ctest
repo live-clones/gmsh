@@ -9,8 +9,6 @@
 set(CTEST_SITE "ace36.montefiore")
 
 set(CTEST_SOURCE_DIRECTORY "$ENV{HOME}/src/gmsh")
-set(CTEST_BINARY_DIRECTORY "$ENV{HOME}/src/gmsh/bin")
-set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_CONFIGURATION "RelWithDebInfo")
 
 set(CTEST_SVN_REPOS https://geuz.org/svn/gmsh/trunk)

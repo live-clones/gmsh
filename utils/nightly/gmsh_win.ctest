@@ -4,6 +4,8 @@
 # bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 set(CTEST_CMAKE_COMMAND "cmake")
+set(CTEST_BINARY_DIRECTORY "$ENV{HOME}/src/gmsh/bin")
+set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 
 set(WEB_BIN "geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/Windows")
 
