@@ -1359,7 +1359,8 @@ if(WIN32 AND NOT MSVC OR CYGWIN)
     set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
   endif(ENABLE_BUILD_DYNAMIC)
 elseif(MSVC)
-  set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216")
+  set_target_properties(gmsh PROPERTIES LINK_FLAGS
+    "/STACK:16777216 /SAFESEH:NO")
 endif(WIN32 AND NOT MSVC OR CYGWIN)
 
 # parser target
