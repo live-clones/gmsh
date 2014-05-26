@@ -113,7 +113,7 @@ class JacobianBasis {
   //
   void interpolate(const fullVector<double> &jacobian,
                    const fullMatrix<double> &uvw,
-                   fullMatrix<double> &result) const;
+                   fullMatrix<double> &result, bool areBezier = false) const;
 
   //
   static int jacobianOrder(int parentType, int order);

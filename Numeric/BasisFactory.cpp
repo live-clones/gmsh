@@ -14,6 +14,7 @@
 
 std::map<int, nodalBasis*> BasisFactory::fs;
 std::map<int, JacobianBasis*> BasisFactory::js;
+std::map<int, MetricBasis*> BasisFactory::ms;
 BasisFactory::Cont_bezierBasis BasisFactory::bs;
 BasisFactory::Cont_gradBasis BasisFactory::gs;
 
@@ -75,6 +76,17 @@ const JacobianBasis* BasisFactory::getJacobianBasis(int tag)
   JacobianBasis* J = new JacobianBasis(tag);
   js.insert(std::make_pair(tag, J));
   return J;
+}
+
+const MetricBasis* BasisFactory::getMetricBasis(int tag)
+{
+  std::map<int, MetricBasis*>::const_iterator it = ms.find(tag);
+  if (it != ms.end())
+    return it->second;
+
+  MetricBasis* M = new MetricBasis(tag);
+  ms.insert(std::make_pair(tag, M));
+  return M;
 }
 
 const GradientBasis* BasisFactory::getGradientBasis(int tag, int order)

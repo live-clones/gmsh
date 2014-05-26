@@ -10,6 +10,7 @@
 #include "MPyramid.h"
 #include "nodalBasis.h"
 #include "JacobianBasis.h"
+#include "MetricBasis.h"
 
 class BasisFactory
 {
@@ -19,6 +20,7 @@ class BasisFactory
  private:
   static std::map<int, nodalBasis*> fs;
   static std::map<int, JacobianBasis*> js;
+  static std::map<int, MetricBasis*> ms;
   static Cont_gradBasis gs;
   static Cont_bezierBasis bs;
   // store bezier bases by parentType and order (no serendipity..)
@@ -27,6 +29,8 @@ class BasisFactory
   // Caution: the returned pointer can be NULL
   static const nodalBasis* getNodalBasis(int tag);
   static const JacobianBasis* getJacobianBasis(int tag);
+  static const MetricBasis* getMetricBasis(int tag);
+
   static const GradientBasis* getGradientBasis(int tag, int order);
   static const bezierBasis* getBezierBasis(int parentTag, int order);
   static inline const bezierBasis* getBezierBasis(int tag) {
