@@ -61,9 +61,9 @@ public:
   static double getTol() {return _tol;}
   static void setWhich(int which) {_which = which;}
 
-  double getBoundRmin(const MElement*, MetricData*&, fullMatrix<double>&) const;
-  double getMinR(const MElement*, MetricData*&, int) const;
-  static double boundRmin(const MElement *el);
+  double getBoundRmin(MElement*, MetricData*&, fullMatrix<double>&);
+  double getMinR(MElement*, MetricData*&, int) const;
+  static double boundRmin(MElement *el);
   //double getBoundRmin(int, MElement**, double*);
   //static double boundRmin(int, MElement**, double*, bool sameType = false);
 

@@ -49,7 +49,8 @@ namespace {
   }
 }
 
-MetricBasis::MetricBasis(int tag) {
+MetricBasis::MetricBasis(int tag)
+{
   const int type = ElementType::ParentTypeFromTag(tag);
   const int metOrder = metricOrder(tag);
   if (type == TYPE_HEX || type == TYPE_PRI) {
@@ -66,15 +67,15 @@ MetricBasis::MetricBasis(int tag) {
   _fillInequalities(metOrder);
 }
 
-double MetricBasis::boundRmin(const MElement *el)
+double MetricBasis::boundRmin(MElement *el)
 {
-  const MetricBasis *metric = BasisFactory::getMetricBasis(el->getTypeForMSH());
+  MetricBasis *metric = (MetricBasis*)BasisFactory::getMetricBasis(el->getTypeForMSH());
   MetricData *md = NULL;
   fullMatrix<double> dummy;
   return metric->getBoundRmin(el, md, dummy);
 }
 
-double MetricBasis::getMinR(const MElement *el, MetricData *&md, int deg) const
+double MetricBasis::getMinR(MElement *el, MetricData *&md, int deg) const
 {
   fullMatrix<double> samplingPoints;
 
@@ -218,9 +219,9 @@ double MetricBasis::getMinR(const MElement *el, MetricData *&md, int deg) const
   return min;
 }
 
-double MetricBasis::getBoundRmin(const MElement *el, MetricData *&md, fullMatrix<double> &lagCoeff) const
+double MetricBasis::getBoundRmin(MElement *el, MetricData *&md, fullMatrix<double> &lagCoeff)
 {
-  ((MetricBasis*)this)->__curElem = (MElement*)el;
+  __curElem = el;
   //if (el->getNum() != 2701) return 0;
   int nSampPnts = _gradients->getNumSamplingPoints();
   int nMapping = _gradients->getNumMapNodes();
@@ -316,7 +317,7 @@ double MetricBasis::getBoundRmin(const MElement *el, MetricData *&md, fullMatrix
     ((MetricBasis*)this)->__numSub.resize(20);
     for (unsigned int i = 0; i < __numSub.size(); ++i) ((MetricBasis*)this)->__numSub[i] = 0;
     ((MetricBasis*)this)->__maxdepth = 0;
-    double time = Cpu();
+    //double time = Cpu();
     static int maxsub = 0, elmax;
     double tt = _subdivideForRmin(md2, RminLag, MetricBasis::_tol, MetricBasis::_which);
     if (maxsub < __numSubdivision && tt > 10-10) {
@@ -846,7 +847,7 @@ double MetricBasis::_subdivideForRmin(
   subdomains.push(md);
 
   static unsigned int aa = 0*1000;
-  bool write = false;
+  //bool write = false;
   if (++aa < 200) {
     getMinR(__curElem, md, 16);
   }
@@ -915,7 +916,7 @@ double MetricBasis::_subdivideForRmin(
 
   md = subdomains.top();
   double ans = md->_RminBez;
-  if (isnan(ans)) Msg::Info("ISNAN %d", subdomains.size());
+  //if (isnan(ans)) Msg::Info("ISNAN %d", subdomains.size());
 
   while (subdomains.size()) {
     md = subdomains.top();
