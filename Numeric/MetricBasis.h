@@ -75,11 +75,7 @@ private:
   void _fillInequalities(int order);
   void _lightenInequalities(int&, int&, int&); //TODO change
 
-  void _computeRmin1(const fullMatrix<double>&, const fullVector<double>&,
-                    double &RminLag, double &RminBez, int) const;
-  void _computeRmin2(const fullMatrix<double>&, const fullVector<double>&,
-                    double &RminLag, double &RminBez, int depth, int which) const;
-  void _computeRmin3(const fullMatrix<double>&, const fullVector<double>&,
+  void _computeRmin(const fullMatrix<double>&, const fullVector<double>&,
                     double &RminLag, double &RminBez, int depth, bool debug = false) const;
 
   double _subdivideForRmin(MetricData*, double RminLag, double tol, int which) const;
@@ -119,51 +115,6 @@ private:
       return md1->_RminBez > md2->_RminBez;
     }
   };
-};
-
-class MetricCoefficient {
-private:
-  class MetricData {
-   public:
-    fullMatrix<double> *_metcoeffs;
-    fullVector<double> *_jaccoeffs;
-    double _RminBez;
-    int _depth;
-
-   public:
-    MetricData(fullMatrix<double> *m, fullVector<double> *j, double r, int d) :
-      _metcoeffs(m), _jaccoeffs(j), _RminBez(r), _depth(d) {}
-    ~MetricData() {
-      delete _metcoeffs;
-      delete _jaccoeffs;
-    }
-  };
-  struct lessMinB {
-    bool operator()(const MetricData *md1, const MetricData *md2) const {
-      return md1->_RminBez > md2->_RminBez;
-    }
-  };
-
- private:
-  MElement *_element;
-  const JacobianBasis *_jacobian;
-  const GradientBasis *_gradients;
-  const bezierBasis *_bezier;
-  fullMatrix<double> _coefficientsLag, _coefficientsBez;
-  int __maxdepth, __numSubdivision;
-  std::vector<int> __numSub;
-  MetricBasis *_basis;
-
- public:
-  MetricCoefficient(MElement*);
-
-  void getCoefficients(fullMatrix<double>&, bool bezier = true);
-  void interpolate(const double *uvw, double *minmaxQ);
-  double getBoundRmin(double tol, int which);
-
- private:
-  void _computeBezCoeff();
-  void _interpolateBezierPyramid(const double *uvw, double *minmaxQ);
 };
 
 #endif
