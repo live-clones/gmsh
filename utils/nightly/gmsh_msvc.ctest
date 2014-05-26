@@ -16,7 +16,8 @@ set(WITH_MEMCHECK FALSE) # check memory with valgrind?
 #################################################################################
 set(CTEST_BUILD_NAME "Win64-msvc")
 set(OPT "-DGMSH_EXTRA_VERSION=${EXTRA_VERSION}")
-set(OPT "${OPT} -DENABLE_BLAS_LAPACK=0 -DENABLE_FLTK=0")
+### set(OPT "${OPT} -DCMAKE_PREFIX_PATH='c:/Program Files/Intel/MKL/10.0.4.023'")
+set(OPT "${OPT} -DENABLE_FLTK=0 -DENABLE_BLAS_LAPACK=0")
 set(CTEST_BUILD_OPTIONS ${OPT})
 include(gmsh.ctest)
 ### upload_package(${WEB_BIN} Windows 64-msvc .zip .zip)
