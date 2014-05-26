@@ -14,7 +14,7 @@ set(WITH_COVERAGE FALSE) # check code coverage?
 set(WITH_MEMCHECK FALSE) # check memory with valgrind?
 
 #################################################################################
-set(CTEST_BUILD_NAME "Win64-msvc")
+set(CTEST_BUILD_NAME "Win64-msvc-mkl")
 set(OPT "-DGMSH_EXTRA_VERSION=${EXTRA_VERSION}")
 set(OPT "${OPT} -DENABLE_FLTK=0")
 set(CTEST_BUILD_OPTIONS "${OPT}")
