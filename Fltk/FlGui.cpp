@@ -761,7 +761,7 @@ void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
   for(unsigned int i = 0; i < graph.size(); i++)
     graph[i]->checkAnimButtons();
   if(numberOfViewsHasChanged){
-    onelab->rebuildTree(deleteWidgets);
+    if(onelab) onelab->rebuildTree(deleteWidgets);
     options->resetBrowser();
     options->resetExternalViewList();
     fields->loadFieldViewList();
@@ -1105,11 +1105,12 @@ void FlGui::saveMessages(const char *fileName)
 
 void FlGui::rebuildTree(bool deleteWidgets)
 {
-  onelab->rebuildTree(deleteWidgets);
+  if(onelab) onelab->rebuildTree(deleteWidgets);
 }
 
 void FlGui::openModule(const std::string &name)
 {
+  if(!onelab) return;
   if(!onelab->isManuallyClosed("0Modules/" + name))
     onelab->openTreeItem("0Modules/" + name);
 }

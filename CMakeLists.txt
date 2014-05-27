@@ -65,6 +65,7 @@ opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
 opt(NUMPY "Enable conversion between fullMatrix and numpy array (requires SWIG)" OFF)
 opt(OCC "Enable Open CASCADE geometrical models" ${DEFAULT})
 opt(ONELAB "Enable ONELAB solver interface" ${DEFAULT})
+opt(ONELAB2 "Enable experimental ONELAB-Cloud solver interface" OFF)
 opt(ONELAB_METAMODEL "Enable ONELAB metamodels (experimental)" ${DEFAULT})
 opt(OPENMP "Enable OpenMP (experimental)" OFF)
 opt(OPTHOM "Enable high-order mesh optimization tools" ${DEFAULT})
@@ -499,6 +500,10 @@ if(ENABLE_ONELAB)
   file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab/python/onelab.py
             DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif(ENABLE_ONELAB)
+
+if(ENABLE_ONELAB2)
+  set_config_option(HAVE_ONELAB2 "ONELAB2")
+endif(ENABLE_ONELAB2)
 
 if(ENABLE_BUILD_IOS)
   find_file(CMAKE_TOOLCHAIN_FILE "ios.cmake")

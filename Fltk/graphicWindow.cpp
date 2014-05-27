@@ -3004,8 +3004,12 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
 
   if(main && !detachedMenu){
+#if defined(HAVE_ONELAB2)
+    // Hey Maxime, this is for you!
+#else
     _onelab = new onelabGroup(0, mh, twidth, height - mh - sh);
     _onelab->enableTreeWidgetResize(false);
+#endif
   }
   else{
     _onelab = 0;
@@ -3289,12 +3293,13 @@ void graphicWindow::checkAnimButtons()
 
 void graphicWindow::setMenuWidth(int w)
 {
+  if(!_onelab) return;
   if(_menuwin){
     _menuwin->size(std::max(w, _onelab->getMinWindowWidth()), _menuwin->h());
     _menuwin->redraw();
     return;
   }
-  if(!_onelab || !_browser) return;
+  if(!_browser) return;
   double dw = w - _onelab->w();
   if(!dw) return;
   for(unsigned int i = 0; i < gl.size(); i++){

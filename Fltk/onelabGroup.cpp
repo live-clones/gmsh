@@ -2063,6 +2063,8 @@ void onelabGroup::addSolver(const std::string &name, const std::string &executab
 
 void solver_cb(Fl_Widget *w, void *data)
 {
+  if(!FlGui::instance()->onelab) return;
+
   int num = (intptr_t)data;
   if(num >= 0){
     std::string name = opt_solver_name(num, GMSH_GET, "");
