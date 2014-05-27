@@ -1658,6 +1658,7 @@ static int _defectsRemovalBunin(GFace *gf, int maxCavitySize)
 {
 
   if (maxCavitySize == 0)return 0;
+  printf("ARGH\n");
   v2t_cont adj;
   std::vector<MElement*> c;
   buildVertexToElement(gf->quadrangles, adj);
@@ -3294,6 +3295,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
 {
   // never recombine a face that is part of a compound!
   if(gf->getCompound()) return 0;
+  if(gf->triangles.size() == 0) return 1;
 
   int success = 1;
 
@@ -3586,15 +3588,16 @@ static double printStats(GFace *gf,const char *message)
     Qav += Q;
     Qmin = std::min(Q,Qmin);
   }
-  Msg::Info("%s : %5d quads %4d invalid quads %4d quads with Q < 0.1 "
-            "Avg Q = %12.5E Min %12.5E", message, gf->quadrangles.size(),
+  Msg::Info("%s : %5d quads %5d triangles %4d invalid quads %4d quads with Q < 0.1 "
+            "Avg Q = %12.5E Min %12.5E", message, gf->quadrangles.size(), gf->triangles.size(),
             nbInv, nbBad, Qav/gf->quadrangles.size(), Qmin);
   return Qmin;
 }
 
 void recombineIntoQuads(GFace *gf,
                         bool topologicalOpti,
-                        bool nodeRepositioning)
+                        bool nodeRepositioning, 
+			double minqual)
 {
   double t1 = Cpu();
 
@@ -3608,7 +3611,7 @@ void recombineIntoQuads(GFace *gf,
   //    removeFourTrianglesNodes(gf, false);
 
   if (saveAll) gf->model()->writeMSH("before.msh");
-  int success = _recombineIntoQuads(gf, 0);
+  int success = _recombineIntoQuads(gf, minqual);
 
   if (saveAll) gf->model()->writeMSH("raw.msh");
   printStats (gf, "BEFORE OPTIMIZATION");
@@ -3621,30 +3624,27 @@ void recombineIntoQuads(GFace *gf,
       if(haveParam){
         if (saveAll) gf->model()->writeMSH("smoothed.msh");
         int ITER=0;
-	int ITERB = 0;
-        int optistatus[6] = {0,0,0,0,0,0};
+	//        int optistatus[6] = {0,0,0,0,0,0};
 	std::set<MEdge,Less_Edge> prioritory;
+	double exbad = -100;
         while(1){
-          int maxCavitySize = CTX::instance()->mesh.bunin;
-	  optistatus[0] = (ITERB == 1) ?splitFlatQuads(gf, .01, prioritory) : 0;
-          optistatus[1] = removeTwoQuadsNodes(gf);
-          optistatus[4] = _defectsRemovalBunin(gf,maxCavitySize);
-          optistatus[2] = removeDiamonds(gf) ;
-	  laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
-	  optistatus[3] = edgeSwapQuadsForBetterQuality(gf,.01, prioritory);
-	  optistatus[5] = optiSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
-	  optistatus[5] = (ITERB == 1) ?
-            untangleInvalidQuads(gf, CTX::instance()->mesh.nbSmoothing) : 0;
+	  //          int maxCavitySize = CTX::instance()->mesh.bunin;
+	  //	  optistatus[0] = (ITERB == 1) ?splitFlatQuads(gf, .01, prioritory) : 0;
+          //optistatus[1] = 
+	  removeTwoQuadsNodes(gf);
+	  //optistatus[4] = _defectsRemovalBunin(gf,36);
+	  //optistatus[2] = 
+	  removeDiamonds(gf) ;
+	  if(haveParam)laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
+	  //optistatus[3] = 
+	  edgeSwapQuadsForBetterQuality(gf,minqual, prioritory);
+	  //optistatus[5] = 
+	  optiSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
+	  //	  optistatus[5] = untangleInvalidQuads(gf, CTX::instance()->mesh.nbSmoothing);
 	  double bad = printStats(gf, "IN OPTIMIZATION");
-	  if (bad > .1) break;
-          if (ITER == 10){
-	    ITERB = 1;
-	  }
+	  if (bad > minqual || exbad == bad) break;
+	  exbad = bad;
 	  if (ITER > 20) break;
-	  int nb = 0;
-	  for (int i=0;i<6;i++) nb += optistatus[i];
-	  if (!nb && ITERB == 0) ITERB = 1;
-	  else if (!nb) break;
 	  ITER ++;
         }
       }
@@ -3656,10 +3656,9 @@ void recombineIntoQuads(GFace *gf,
     }
     double t2 = Cpu();
     Msg::Info("Blossom recombination algorithm completed (%g s)", t2 - t1);
-    quadsToTriangles(gf, .01);
+    quadsToTriangles(gf, minqual);
     if(haveParam) {
       laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing);
-      // optiSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
     }
     // removeDiamonds(gf);
     // removeTwoQuadsNodes(gf);

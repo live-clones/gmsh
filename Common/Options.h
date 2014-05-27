@@ -452,7 +452,6 @@ double opt_mesh_mesh_only_visible(OPT_ARGS_NUM);
 double opt_mesh_min_circ_points(OPT_ARGS_NUM);
 double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM);
 double opt_mesh_min_curv_points(OPT_ARGS_NUM);
-double opt_mesh_multiple_passes(OPT_ARGS_NUM);
 double opt_mesh_order(OPT_ARGS_NUM);
 double opt_mesh_ho_optimize(OPT_ARGS_NUM);
 double opt_mesh_ho_nlayers(OPT_ARGS_NUM);

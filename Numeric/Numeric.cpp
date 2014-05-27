@@ -1282,8 +1282,8 @@ void signedDistancesPointsEllipseLine(std::vector<double>&distances,
   }
 }
 
-int intersection_segments(SPoint3 &p1, SPoint3 &p2,
-                          SPoint3 &q1, SPoint3 &q2,
+int intersection_segments(const SPoint3 &p1, const SPoint3 &p2,
+                          const SPoint3 &q1, const SPoint3 &q2,
                           double x[2])
 {
   double xp_max = std::max(p1.x(), p2.x());

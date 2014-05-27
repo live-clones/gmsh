@@ -1,6 +1,6 @@
 fact = 100;
 lc = .1 * fact;       
-Point(1) = {0.0,0.0,0,lc*1};       
+Point(1) = {0.0,0.0,0,lc*2.5e-10};       
 Point(2) = {1* fact,0.0,0,lc*1};       
 Point(3) = {1* fact,1* fact,0,lc};       
 Point(4) = {0,1* fact,0,lc*1};       

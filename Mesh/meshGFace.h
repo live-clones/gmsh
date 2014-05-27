@@ -21,11 +21,10 @@ class GFaceCompound;
 // Create the mesh of the face
 class meshGFace {
   const bool repairSelfIntersecting1dMesh;
-  int twoPassesMesh;
   bool onlyInitialMesh;
  public :
-  meshGFace(bool r = true, int t = 0)
-    : repairSelfIntersecting1dMesh(r), twoPassesMesh(t), onlyInitialMesh(false)
+  meshGFace(bool r = true)
+    : repairSelfIntersecting1dMesh(r), onlyInitialMesh(false)
   {
   }
   void operator()(GFace *, bool print=true);

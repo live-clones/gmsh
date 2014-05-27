@@ -81,7 +81,8 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
 void computeEquivalences(GFace *gf,bidimMeshData &DATA);
 void recombineIntoQuads(GFace *gf,
                         bool topologicalOpti   = true,
-                        bool nodeRepositioning = true);
+                        bool nodeRepositioning = true,
+			double minqual = 0.1);
 
 //used for meshGFaceRecombine development
 int recombineWithBlossom(GFace *gf, double dx, double dy,

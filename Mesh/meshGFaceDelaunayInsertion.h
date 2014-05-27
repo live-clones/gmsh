@@ -90,8 +90,17 @@ class MTri3
   bool isDeleted() const { return deleted; }
   void forceRadius(double r) { circum_radius = r; }
   inline double getRadius() const { return circum_radius; }
-
+  inline MVertex *otherSide (int i){
+    MTri3 *n = neigh[i];
+    if (!n)return 0;
+    MVertex *v1 = base->getVertex((i+2)%3);
+    MVertex *v2 = base->getVertex(i);
+    for (int j=0;j<3;j++)
+      if (n->tri()->getVertex(j) != v1 && n->tri()->getVertex(j) != v2)return n->tri()->getVertex(j);
+    return 0;
+  }
   MTri3(MTriangle *t, double lc, SMetric3 *m = 0, bidimMeshData * data = 0, GFace *gf = 0);
+  inline void setTri(MTriangle *t) { base = t; }
   inline MTriangle *tri() const { return base; }
   inline void  setNeigh(int iN , MTri3 *n) { neigh[iN] = n; }
   inline MTri3 *getNeigh(int iN ) const { return neigh[iN]; }
@@ -151,6 +160,10 @@ void bowyerWatsonParallelograms(GFace *gf,
 void buildBackGroundMesh (GFace *gf,
 		  std::map<MVertex* , MVertex*>* equivalence= 0,
 		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);
+
+void delaunayMeshIn2D(std::vector<MVertex*> &,
+		      std::vector<MTriangle*> &, bool removeBox = true,
+		      std::vector<MEdge> *edgesToRecover = 0);
 
 struct edgeXface
 {

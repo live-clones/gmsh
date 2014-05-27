@@ -41,6 +41,7 @@ struct crossField2d
 
 class backgroundMesh : public simpleFunction<double>
 {
+  static double sizeFactor;
   MElementOctree *_octree;
   std::vector<MVertex*> _vertices;
   std::vector<MElement*> _triangles;
@@ -66,6 +67,7 @@ class backgroundMesh : public simpleFunction<double>
   static void setCrossFieldsByDistance(GFace *);
   static void unset();
   static backgroundMesh *current () { return _current; }
+  static void setSizeFactor (double s) {sizeFactor = s;}
   void propagate1dMesh(GFace *);
   void propagateCrossField(GFace *);
   void propagateCrossFieldByDistance(GFace *);

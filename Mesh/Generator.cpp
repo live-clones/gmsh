@@ -106,71 +106,6 @@ static void buildASetOfEquivalentMeshVertices(GFace *gf,
   }
 }
 
-struct geomThresholdVertexEquivalence
-{
-  // Initial MVertex associated to one given MVertex
-  std::map<GVertex*, MVertex*> backward_map;
-  // initiate the forward and backward maps
-  geomThresholdVertexEquivalence(GModel *g);
-  // restores the initial state
-  ~geomThresholdVertexEquivalence ();
-};
-
-geomThresholdVertexEquivalence::geomThresholdVertexEquivalence(GModel *g)
-{
-  std::multimap<MVertex*, MVertex*> equivalenceMap;
-  for (GModel::fiter it = g->firstFace(); it != g->lastFace(); ++it)
-    buildASetOfEquivalentMeshVertices(*it, equivalenceMap, backward_map);
-  // build the structure that identifiate geometrically equivalent
-  // mesh vertices.
-  for (std::map<GVertex*, MVertex*>::iterator it = backward_map.begin();
-       it != backward_map.end(); ++it){
-    GVertex *g = it->first;
-    MVertex *v = it->second;
-    MVertex *other = isEquivalentTo(equivalenceMap, v);
-    if (v != other){
-      printf("Finally : %d equivalent to %d\n", v->getNum(), other->getNum());
-      g->mesh_vertices.clear();
-      g->mesh_vertices.push_back(other);
-      std::list<GEdge*> ed = g->edges();
-      for (std::list<GEdge*>::iterator ite = ed.begin() ; ite != ed.end() ; ++ite){
-        std::vector<MLine*> newl;
-        for (unsigned int i = 0; i < (*ite)->lines.size(); ++i){
-          MLine *l = (*ite)->lines[i];
-          MVertex *v1 = l->getVertex(0);
-          MVertex *v2 = l->getVertex(1);
-          if (v1 == v && v2 != other){
-            delete l;
-            l = new MLine(other,v2);
-            newl.push_back(l);
-          }
-          else if (v1 != other && v2 == v){
-            delete l;
-            l = new MLine(v1,other);
-            newl.push_back(l);
-          }
-          else if (v1 != v && v2 != v)
-            newl.push_back(l);
-          else
-            delete l;
-        }
-        (*ite)->lines = newl;
-      }
-    }
-  }
-}
-
-geomThresholdVertexEquivalence::~geomThresholdVertexEquivalence()
-{
-  // restore the initial data
-  for (std::map<GVertex*, MVertex*>::iterator it = backward_map.begin();
-       it != backward_map.end() ; ++it){
-    GVertex *g = it->first;
-    MVertex *v = it->second;
-    g->mesh_vertices.clear();
-    g->mesh_vertices.push_back(v);
-  }
-}
 
 template<class T>
 static void GetQualityMeasure(std::vector<T*> &ele,
@@ -466,9 +401,6 @@ static void Mesh2D(GModel *m)
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     (*it)->meshStatistics.status = GFace::PENDING;
 
-  // skip short mesh edges
-  //geomThresholdVertexEquivalence inst(m);
-
   // boundary layers are special: their generation (including vertices
   // and curve meshes) is global as it depends on a smooth normal
   // field generated from the surface mesh of the source surfaces
@@ -493,7 +425,7 @@ static void Mesh2D(GModel *m)
       for(size_t K = 0 ; K < temp.size() ; K++){
 	if (temp[K]->meshStatistics.status == GFace::PENDING){
           backgroundMesh::current()->unset();
-	  meshGFace mesher(true, CTX::instance()->mesh.multiplePasses);
+	  meshGFace mesher(true);
 	  mesher(temp[K]);
 
 #if defined(HAVE_BFGS)
@@ -532,7 +464,7 @@ static void Mesh2D(GModel *m)
           it != cf.end(); ++it){
         if ((*it)->meshStatistics.status == GFace::PENDING){
           backgroundMesh::current()->unset();
-          meshGFace mesher(true, CTX::instance()->mesh.multiplePasses);
+          meshGFace mesher(true);
           mesher(*it);
 
 #if defined(HAVE_BFGS)

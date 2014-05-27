@@ -78,7 +78,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-saveall",           "Save all elements (discard physical group definitions)"));
   s.push_back(mp("-parametric",        "Save vertices with their parametric coordinates"));
   s.push_back(mp("-algo string",       "Select mesh algorithm (meshadapt, del2d, front2d, "
-                                        "delquad, del3d, front3d, mmg3d)"));
+                                        "delquad, del3d, front3d, mmg3d, pack)"));
   s.push_back(mp("-smooth int",        "Set number of mesh smoothing steps"));
   s.push_back(mp("-order int",         "Set mesh order (1, ..., 5)"));
   s.push_back(mp("-optimize[_netgen]", "Optimize quality of tetrahedral elements"));
@@ -705,16 +705,6 @@ void GetOptions(int argc, char *argv[])
           CTX::instance()->mesh.lcMax = atof(argv[i++]);
           if(CTX::instance()->mesh.lcMax <= 0.0)
             Msg::Fatal("Maximum length size must be > 0");
-        }
-        else
-          Msg::Fatal("Missing number");
-      }
-      else if(!strcmp(argv[i] + 1, "mpass")) {
-        i++;
-        if(argv[i]) {
-          CTX::instance()->mesh.multiplePasses = atoi(argv[i++]);
-          if(CTX::instance()->mesh.multiplePasses <= 0)
-            Msg::Fatal("Number of Mesh Passes must be > 0");
         }
         else
           Msg::Fatal("Missing number");

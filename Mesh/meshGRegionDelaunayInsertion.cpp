@@ -1820,7 +1820,7 @@ void sanityCheck1(MTet4 *t)
   SortHilbert(v);
   double t1 = Cpu();
 
-  //  double ta=0,tb=0,tc=0,td=0,T;
+  /// double ta=0,tb=0,tc=0,td=0,T;
   
   for (size_t i=0;i<v.size();i++){
     MVertex *pv = v[i];

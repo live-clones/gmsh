@@ -317,6 +317,12 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
 }
 */
 
+// new algo for recombining + splitting
+static int increaseN (int N){
+  if (((N+1)/2 - 1) % 2 != 0) return N+2;
+  return N;
+}
+
 void meshGEdge::operator() (GEdge *ge)
 {
 #if defined(HAVE_ANN)
@@ -417,15 +423,17 @@ void meshGEdge::operator() (GEdge *ge)
   // force odd number of points if blossom is used for recombination
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
-     CTX::instance()->mesh.algoRecombine == 1 && N % 2 == 0){
+     CTX::instance()->mesh.algoRecombine == 1){
     if(CTX::instance()->mesh.recombineAll){
-      N++;
+      if (N % 2 == 0) N++;
+      N = increaseN(N);
     }
     else{
       std::list<GFace*> faces = ge->faces();
       for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
         if((*it)->meshAttributes.recombine){
-          N++;
+	  if (N % 2 == 0) N ++;
+	  N = increaseN(N);
           break;
         }
       }

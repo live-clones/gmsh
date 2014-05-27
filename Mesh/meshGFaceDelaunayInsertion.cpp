@@ -24,6 +24,7 @@
 #include "GFaceCompound.h"
 #include "intersectCurveSurface.h"
 #include "surfaceFiller.h"
+#include "HilbertCurve.h"
 
 double LIMIT_ = 0.5 * sqrt(2.0) * 1;
 int  N_GLOBAL_SEARCH;
@@ -44,29 +45,29 @@ static bool isBoundary(MTri3 *t, double limit_, int &active)
 */
 
 template <class ITERATOR>
-void _printTris(char *name, ITERATOR it,  ITERATOR end, bidimMeshData & data, bool param=true)
+void _printTris(char *name, ITERATOR it,  ITERATOR end, bidimMeshData * data)
 {
   FILE *ff = Fopen (name,"w");
   fprintf(ff,"View\"test\"{\n");
   while ( it != end ){
     MTri3 *worst = *it;
     if (!worst->isDeleted()){
-      if (param)
+      if (data)
         fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
-                data.Us[data.getIndex((worst)->tri()->getVertex(0))],
-                data.Vs[data.getIndex((worst)->tri()->getVertex(0))],
+                data->Us[data->getIndex((worst)->tri()->getVertex(0))],
+                data->Vs[data->getIndex((worst)->tri()->getVertex(0))],
                 0.0,
-                data.Us[data.getIndex((worst)->tri()->getVertex(1))],
-                data.Vs[data.getIndex((worst)->tri()->getVertex(1))],
+                data->Us[data->getIndex((worst)->tri()->getVertex(1))],
+                data->Vs[data->getIndex((worst)->tri()->getVertex(1))],
                 0.0,
-                data.Us[data.getIndex((worst)->tri()->getVertex(2))],
-                data.Vs[data.getIndex((worst)->tri()->getVertex(2))],
+                data->Us[data->getIndex((worst)->tri()->getVertex(2))],
+                data->Vs[data->getIndex((worst)->tri()->getVertex(2))],
                 0.0,
                 (worst)->getRadius(),
                 (worst)->getRadius(),
                 (worst)->getRadius());
       else
-        fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
+        fprintf(ff,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
                 (worst)->tri()->getVertex(0)->x(),
                 (worst)->tri()->getVertex(0)->y(),
                 (worst)->tri()->getVertex(0)->z(),
@@ -76,9 +77,9 @@ void _printTris(char *name, ITERATOR it,  ITERATOR end, bidimMeshData & data, bo
                 (worst)->tri()->getVertex(2)->x(),
                 (worst)->tri()->getVertex(2)->y(),
                 (worst)->tri()->getVertex(2)->z(),
-                (worst)->getRadius(),
-                (worst)->getRadius(),
-                (worst)->getRadius()
+                (worst)->tri()->getVertex(0)->getNum(),
+                (worst)->tri()->getVertex(1)->getNum(),
+                (worst)->tri()->getVertex(2)->getNum()
                 );
     }
     ++it;
@@ -411,65 +412,47 @@ int inCircumCircle(MTriangle *base,
 }
 
 template <class ITER>
-void connectTris(ITER beg, ITER end)
+void connectTris(ITER beg, ITER end, std::vector<edgeXface> &conn)
 {
-  std::set<edgeXface> conn;
+  conn.clear();
   while (beg != end){
     if (!(*beg)->isDeleted()){
-      for (int i = 0; i < 3; i++){
-        edgeXface fxt(*beg, i);
-	std::set<edgeXface>::iterator found = conn.find(fxt);
-        if (found == conn.end())
-	  conn.insert(fxt);
-        else if (found->t1 != *beg){
-          found->t1->setNeigh(found->i1, *beg);
-          (*beg)->setNeigh(i, found->t1);
-        }
+      for (int j = 0; j < 3; j++){
+	conn.push_back(edgeXface(*beg, j));
       }
     }
     ++beg;
   }
-}
-
-template <class ITER>
-void connectTris_vector(ITER beg, ITER end)
-{
-  std::vector<edgeXface> conn;
-  //  std::set<edgeXface> conn;
-  while (beg != end){
-    if (!(*beg)->isDeleted()){
-      for (int i = 0; i < 3; i++){
-        edgeXface fxt(*beg, i);
-	//        std::set<edgeXface>::iterator found = conn.find(fxt);
-	std::vector<edgeXface>::iterator found  = std::find(conn.begin(), conn.end(), fxt);
-        if (found == conn.end())
-	  conn.push_back(fxt);
-	  //          conn.insert(fxt);
-        else if (found->t1 != *beg){
-          found->t1->setNeigh(found->i1, *beg);
-          (*beg)->setNeigh(i, found->t1);
-        }
-      }
+  if (!conn.size())return;
+  std::sort(conn.begin(), conn.end());
+  
+  for (unsigned int i=0;i<conn.size()-1;i++){
+    edgeXface &f1  = conn[i];
+    edgeXface &f2  = conn[i+1];
+    if (f1 == f2 && f1.t1 != f2.t1){
+      f1.t1->setNeigh(f1.i1, f2.t1);
+      f2.t1->setNeigh(f2.i1, f1.t1);
+      ++i;
     }
-    ++beg;
   }
 }
-
-
 
 void connectTriangles(std::list<MTri3*> &l)
 {
-  connectTris(l.begin(), l.end());
+  std::vector<edgeXface> conn;
+  connectTris(l.begin(), l.end(),conn);
 }
 
 void connectTriangles(std::vector<MTri3*> &l)
 {
-  connectTris(l.begin(), l.end());
+  std::vector<edgeXface> conn;
+  connectTris(l.begin(), l.end(),conn);
 }
 
 void connectTriangles(std::set<MTri3*, compareTri3Ptr> &l)
 {
-  connectTris(l.begin(), l.end());
+  std::vector<edgeXface> conn;
+  connectTris(l.begin(), l.end(),conn);
 }
 
 int inCircumCircleTangentPlane(MTriangle *t,
@@ -485,6 +468,20 @@ int inCircumCircleTangentPlane(MTriangle *t,
   p2[0] = dot(pmx2,t1);p2[1] = dot(pmx2,t2);
   SVector3 pmx3 (v3->x()-p.x(),v3->y()-p.y(),v3->z()-p.z());
   p3[0] = dot(pmx3,t1);p3[1] = dot(pmx3,t2);
+  double result = robustPredicates::incircle(p1, p2, p3, pp) *
+    robustPredicates::orient2d(p1, p2, p3);
+  return (result > 0) ? 1 : 0;
+}
+
+int inCircumCircleXY(MTriangle *t, MVertex *v)
+{
+  MVertex *v1 = t->getVertex(0);
+  MVertex *v2 = t->getVertex(1);
+  MVertex *v3 = t->getVertex(2);
+  double p1[2] = {v1->x(),v1->y()};
+  double p2[2] = {v2->x(),v2->y()};
+  double p3[2] = {v3->x(),v3->y()};
+  double pp[2] = {v->x(),v->y()};
   double result = robustPredicates::incircle(p1, p2, p3, pp) *
     robustPredicates::orient2d(p1, p2, p3);
   return (result > 0) ? 1 : 0;
@@ -567,6 +564,27 @@ bool findCavityTangentPlane(GFace *gf, double *center,
 }
 
 
+void recurFindCavity(std::vector<edgeXface> &shell, std::vector<MTri3*> &cavity,
+                     MVertex *v, MTri3 *t)
+{
+  t->setDeleted(true);
+  // the cavity that has to be removed because it violates delaunay
+  // criterion
+  cavity.push_back(t);
+
+  for (int i = 0; i < 3; i++){
+    MTri3 *neigh =  t->getNeigh(i) ;
+    if (!neigh)
+      shell.push_back(edgeXface(t, i));
+    else if (!neigh->isDeleted()){
+      int circ =  inCircumCircleXY(neigh->tri(), v);
+      if (circ)
+        recurFindCavity(shell, cavity, v, neigh);
+      else
+        shell.push_back(edgeXface(t, i));
+    }
+  }
+}
 
 void recurFindCavity(std::list<edgeXface> &shell, std::list<MTri3*> &cavity,
                      double *v, double *param, MTri3 *t,  bidimMeshData & data)
@@ -696,6 +714,7 @@ bool insertVertexB (std::list<edgeXface> &shell,
   if (shell.size() != cavity.size() + 2) return false;
 
   std::list<MTri3*> new_cavity;
+  std::vector<edgeXface> conn;
 
   // check that volume is conserved
   double newVolume = 0;
@@ -756,7 +775,7 @@ bool insertVertexB (std::list<edgeXface> &shell,
 
 
   if (fabs(oldVolume - newVolume) < 1.e-12 * oldVolume && !onePointIsTooClose){
-    connectTris_vector(new_cavity.begin(), new_cavity.end());
+    connectTris(new_cavity.begin(), new_cavity.end(),conn);
     //    printf("%d %d\n",shell.size(),cavity.size());
     //    clock_t t1 = clock();
     // 30 % of the time is spent here !!!
@@ -827,6 +846,59 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
 		       oneNewTriangle);
 }
 
+
+bool invMapXY (MTriangle *t, MVertex *v){
+  MVertex *v0 = t->getVertex(0);
+  MVertex *v1 = t->getVertex(1);
+  MVertex *v2 = t->getVertex(2);
+  double mat[2][2],b[2],uv[2],tol=1.e-6;
+  mat[0][0] = v1->x() - v0->x();
+  mat[0][1] = v2->x() - v0->x();
+  mat[1][0] = v1->y() - v0->y();
+  mat[1][1] = v2->y() - v0->y();
+
+  b[0] = v->x() - v0->x();
+  b[1] = v->y() - v0->y();
+  sys2x2(mat, b, uv);
+
+  if(uv[0] >= -tol &&
+     uv[1] >= -tol &&
+     uv[0] <= 1. + tol &&
+     uv[1] <= 1. + tol &&
+     1. - uv[0] - uv[1] > -tol) {
+    return true;
+  }
+  return false;
+
+}
+
+static MTri3* search4Triangle (MTri3 *t, MVertex *v, int maxx, int &ITER) {
+  bool inside =  invMapXY(t->tri(), v);
+  SPoint3 q1 (v->x(),v->y(),0);
+  if (inside) return t;
+  while (1){
+    SPoint3 q2 = t->tri()->barycenter();
+    int i;
+    for (i = 0; i < 3; i++){
+      int i1 = i == 0 ? 2 : i-1;
+      int i2 = i;
+      MVertex *v1 = t->tri()->getVertex(i1);
+      MVertex *v2 = t->tri()->getVertex(i2);
+      SPoint3 p1 (v1->x(),v1->y(),0);
+      SPoint3 p2 (v2->x(),v2->y(),0);
+      double xcc[2];
+      if (intersection_segments(p1, p2, q1, q2, xcc)) break;
+    }
+    if (i >= 3) break;
+    t = t->getNeigh(i);
+    if (!t) break;
+    bool inside =  invMapXY(t->tri(), v);
+    //    printf("ITER %d %d\n",ITER,inside);
+    if (inside) return t;
+    if (ITER++ > .5*maxx) break;
+  }
+  return 0;   
+}
 
 static MTri3* search4Triangle (MTri3 *t, double pt[2], bidimMeshData & data,
 			       std::set<MTri3*,compareTri3Ptr> &AllTris, double uv[2], bool force = false) {
@@ -1306,9 +1378,9 @@ void bowyerWatsonFrontal(GFace *gf,
     if(ITERATION % 10== 0 && CTX::instance()->mesh.saveAll){
       char name[245];
       sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
-      _printTris (name, AllTris.begin(), AllTris.end(), DATA,true);
+      _printTris (name, AllTris.begin(), AllTris.end(), &DATA);
       sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
-      _printTris (name, ActiveTris.begin(), ActiveTris.end(), DATA,true);
+      _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
     }
     /* if(ITER % 100== 0){
           char name[245];
@@ -1728,4 +1800,274 @@ void bowyerWatsonParallelograms(GFace *gf,
     }
   }
 #endif
+}
+
+
+static void initialSquare(std::vector<MVertex*> &v,
+			  MVertex *box[4],
+			  std::vector<MTri3*> &t){
+  SBoundingBox3d bbox ;
+  for (size_t i=0;i<v.size();i++){
+    MVertex *pv = v[i];
+    bbox += SPoint3(pv->x(),pv->y(),pv->z());
+  }
+  bbox *= 1.3;
+  box[0] = new MVertex (bbox.min().x(),bbox.min().y(),0);
+  box[1] = new MVertex (bbox.max().x(),bbox.min().y(),0);
+  box[2] = new MVertex (bbox.max().x(),bbox.max().y(),0);
+  box[3] = new MVertex (bbox.min().x(),bbox.max().y(),0);
+  std::vector<MTriangle*> t_box;
+  MTriangle *t0 = new MTriangle (box[0],box[1],box[2]);
+  MTriangle *t1 = new MTriangle (box[2],box[3],box[0]);
+  t.push_back(new MTri3(t0,0.0));
+  t.push_back(new MTri3(t1,0.0));
+  connectTriangles(t);
+}
+
+
+MTri3 * getTriToBreak (MVertex *v, std::vector<MTri3*> &t, int &NB_GLOBAL_SEARCH, int &ITER){
+  // last inserted is used as starting point
+  // we know it is not deleted
+  unsigned int k = t.size() - 1;
+  while(t[k]->isDeleted()){
+    k--;
+  }
+  MTri3 *start = t[k];
+  start = search4Triangle (start,v,(int)t.size(),ITER);
+  if (start)return start;
+  //  printf("Global Search has to be done\n");
+  NB_GLOBAL_SEARCH++;
+  for (size_t i = 0;i<t.size();i++){
+    if (!t[i]->isDeleted() && inCircumCircleXY(t[i]->tri(),v))return t[i];
+  }
+  return 0;
+}
+
+bool triOnBox (MTriangle *t, MVertex *box[4]){
+  for (size_t i = 0;i<3;i++)
+    for (size_t j = 0;j<4;j++)
+      if (t->getVertex(i) == box[j])return true;
+  return false;
+}
+
+// vertices are supposed to be sitting in the XY plane !
+
+void recoverEdges (std::vector<MTri3*> &t, std::vector<MEdge> &edges);
+
+void delaunayMeshIn2D(std::vector<MVertex*> &v, 
+		      std::vector<MTriangle*> &result, 
+		      bool removeBox, 
+		      std::vector<MEdge> *edgesToRecover)
+{
+  std::vector<MTri3*> t;
+  t.reserve (v.size()*2);
+  std::vector<edgeXface> conn;
+  std::vector<edgeXface> shell;
+  std::vector<MTri3*> cavity;
+  MVertex *box[4];
+  initialSquare (v,box,t);
+
+  int NB_GLOBAL_SEARCH = 0;
+  int AVG_ITER = 0;
+  SortHilbert(v);
+  double t1 = Cpu();
+
+  double ta=0,tb=0,tc=0,td=0,T;
+  for (size_t i=0;i<v.size();i++){
+    MVertex *pv = v[i];
+
+    int NITER = 0;
+    T = Cpu();
+    MTri3 * found = getTriToBreak (pv,t,NB_GLOBAL_SEARCH,NITER);
+    ta += Cpu()-T;
+    AVG_ITER += NITER;
+    if(!found) {
+      Msg::Error("cannot insert a point in 3D Delaunay");
+      continue;
+    }
+    shell.clear();
+    cavity.clear();
+    
+    T = Cpu();
+    recurFindCavity(shell, cavity, pv, found);
+    tb += Cpu()-T;
+    double V = 0.0;
+    for (unsigned int k=0;k<cavity.size();k++)V+=fabs(cavity[k]->tri()->getVolume());
+
+    std::vector<MTri3*> extended_cavity;
+    double Vb = 0.0;    
+
+    T = Cpu();
+    for (unsigned int count = 0; count < shell.size(); count++){
+      const edgeXface &fxt = shell[count];
+      MTriangle *tr;
+      MTri3 *t3;
+      MVertex *v0 = fxt.v[0];
+      MVertex *v1 = fxt.v[1];
+      MTri3 *otherSide = fxt.t1->getNeigh(fxt.i1);
+      if (count < cavity.size()){
+	t3 = cavity[count];
+	tr = t3->tri() ;
+	tr->setVertex(0,v0);
+	tr->setVertex(1,v1);
+	tr->setVertex(2,pv);	
+      }
+      else{
+	tr = new MTriangle(v0,v1,pv);
+	t3 = new MTri3(tr, 0.0);
+	t.push_back(t3);
+      }
+      Vb+= fabs(tr->getVolume());
+      extended_cavity.push_back(t3);
+      if (otherSide)
+	extended_cavity.push_back(otherSide);
+    }
+    tc += Cpu()-T;
+    if (fabs(Vb-V) > 1.e-8 * (Vb+V))printf("%12.5E %12.5E\n",Vb,V);
+    
+    for (unsigned int k=0;k<std::min(cavity.size(),shell.size());k++){
+      cavity[k]->setDeleted(false);
+      for (unsigned int l=0;l<3;l++){
+    	cavity[k]->setNeigh(l,0);
+      }
+    }
+    T = Cpu();
+    connectTris(extended_cavity.begin(),extended_cavity.end(),conn);
+    td += Cpu()-T;
+  }
+
+  double t2 = Cpu();
+  Msg::Debug("Delaunay 2D done for %d points : CPU = %g, %d global searches, AVG walk size %g",v.size(), t2-t1,NB_GLOBAL_SEARCH,1.+(double)AVG_ITER/v.size());
+  //  printf("%g %g %g %g --> %g(%g)\n",ta,tb,tc,td,t2-t1,ta+tb+tc+td);
+
+  if (edgesToRecover)recoverEdges (t,*edgesToRecover);
+  
+  //  FILE *f = fopen ("tri.pos","w");
+  //  fprintf(f,"View \"\"{\n");
+  for (size_t i = 0;i<t.size();i++){
+    if (t[i]->isDeleted() || (removeBox && triOnBox (t[i]->tri(),box))) delete t[i]->tri();
+    else {
+      result.push_back(t[i]->tri());
+      //      t[i]->tri()->writePOS (f, false,false,true,false,false,false);
+    }
+    delete t[i];
+  }
+  
+  if (removeBox)for (int i=0;i<4;i++)delete box[i];
+  else for (int i=0;i<4;i++)v.push_back(box[i]);
+
+  //  fprintf(f,"};\n");
+  //  fclose(f);
+}
+
+bool swapedge (MVertex *v1 ,MVertex *v2, MVertex *v3, MVertex *v4, MTri3* t1, int iLocalEdge){
+  MTri3 *t2 = t1->getNeigh(iLocalEdge);
+  if(!t2) return false;
+
+  MTriangle *t1b = new MTriangle(v2, v3, v4);
+  MTriangle *t2b = new MTriangle(v4, v3, v1);
+  double BEFORE = t1->tri()->getVolume()+t2->tri()->getVolume();
+  double AFTER  = t1b->getVolume()+t2b->getVolume();
+  //  printf("swapping %d %d %d %d %g %g\n",v1->getNum(),v2->getNum(),v3->getNum(),v4->getNum(),BEFORE,AFTER);
+  if (fabs(BEFORE-AFTER)/BEFORE > 1.e-8){
+    delete t1b;
+    delete t2b;
+    return false;
+  }
+  //  printf("volumes ok\n");
+  
+  delete t1->tri();
+  delete t2->tri();
+  t1->setTri(t1b);
+  t2->setTri(t2b);
+
+  std::set<MTri3*> cavity;
+  cavity.insert(t1);
+  cavity.insert(t2);
+  for(int i = 0; i < 3; i++){
+    if(t1->getNeigh(i))
+      cavity.insert(t1->getNeigh(i));
+    if(t2->getNeigh(i))
+      cavity.insert(t2->getNeigh(i));
+  }
+  std::vector<edgeXface> conn;
+  connectTris(cavity.begin(), cavity.end(), conn);
+  return true;
+}
+
+bool diffend (MVertex *v1, MVertex *v2, MVertex *p1, MVertex *p2){
+  if (v1 == p1 || v2 == p1 || v1 == p2 || v2 == p2)return false;
+  return true;
+}
+
+/*
+  
+*/
+
+static bool recoverEdgeBySwaps (std::vector<MTri3*> &t, MVertex *mv1, MVertex *mv2, std::vector<MEdge> &edges){
+
+  SPoint3 pv1 (mv1->x(),mv1->y(),0);
+  SPoint3 pv2 (mv2->x(),mv2->y(),0);
+  double xcc[2];
+  for (unsigned int i=0;i<t.size();i++){
+    for (unsigned int j=0;j<3;j++){
+      MVertex *v1 = t[i]->tri()->getVertex((j+2)%3);
+      MVertex *v2 = t[i]->tri()->getVertex(j);
+      MVertex *v3 = t[i]->tri()->getVertex((j+1)%3);
+      MVertex *o  = t[i]->otherSide(j);
+      if (o){
+	SPoint3 p1 (v1->x(),v1->y(),0);
+	SPoint3 p2 (v2->x(),v2->y(),0);
+	SPoint3 p3 (v3->x(),v3->y(),0);
+	SPoint3 po (o->x(),o->y(),0);
+	if (diffend(v1,v2,mv1,mv2)){
+	  if (intersection_segments (p1, p2, pv1, pv2,xcc)){
+	    //	    if (std::binary_search(edges.begin(),edges.end(),MEdge(v1,v2),Less_Edge)){
+	    //	      Msg::Error("1D mesh self intersects");
+	    //	    }
+	    if (!intersection_segments(po, p3, pv1, pv2,xcc) || (v3 == mv1 || o == mv1 || v3 == mv2 || o == mv2)){
+	      if(swapedge (v1,v2,v3,o,t[i],j))return true;
+	    }
+	  }
+	}
+      }
+    }
+  }
+  return false;
+}
+
+// recover the edges by edge swapping in the triangulation.
+// edges are not supposed to 
+
+void recoverEdges (std::vector<MTri3*> &t, std::vector<MEdge> &edges)
+{
+  Less_Edge le;
+  std::sort(edges.begin(),edges.end(),le);
+  std::set<MEdge,Less_Edge> setOfMeshEdges;
+  for (size_t i = 0;i<t.size();i++){
+    for (int j=0;j<3;j++){
+      setOfMeshEdges.insert(t[i]->tri()->getEdge(j));
+    }
+  }
+
+  std::vector<MEdge> edgesToRecover;
+  for (unsigned int i=0;i<edges.size();i++){
+    if (setOfMeshEdges.find(edges[i])==setOfMeshEdges.end())
+      edgesToRecover.push_back(edges[i]);
+  }
+
+  Msg::Info("%d edges to recover among %d edges",edgesToRecover.size(),edges.size());
+  //  int iter = 0;
+  //  char name[256];
+  //  sprintf(name,"iter%d.pos",iter++);
+  //  _printTris (name, t.begin(),t.end(),0);
+  for (unsigned int i=0;i<edgesToRecover.size();i++){
+    MVertex *mstart = edgesToRecover[i].getVertex(0);
+    MVertex *mend = edgesToRecover[i].getVertex(1);
+    Msg::Info("recovering edge %d %d",mstart->getNum(),mend->getNum());
+    int iter;
+    while(recoverEdgeBySwaps (t, mstart, mend,edges)) {
+      iter ++;     
+    }
+  }
 }

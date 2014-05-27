@@ -472,6 +472,7 @@ void backgroundMesh::unset()
   _current = 0;
 }
 
+double backgroundMesh::sizeFactor = 1.0;
 backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
 #if defined(HAVE_ANN)
   : _octree(0), uv_kdtree(0), nodes(0), angle_nodes(0), angle_kdtree(0)
@@ -836,21 +837,21 @@ void backgroundMesh::updateSizes(GFace *_gf)
     MVertex *v = _2Dto3D[itv->first];
     double lc;
     if (v->onWhat()->dim() == 0){
-      lc = BGM_MeshSize(v->onWhat(), 0,0,v->x(),v->y(),v->z());
+      lc = sizeFactor * BGM_MeshSize(v->onWhat(), 0,0,v->x(),v->y(),v->z());
     }
     else if (v->onWhat()->dim() == 1){
       double u;
       v->getParameter(0, u);
-      lc = BGM_MeshSize(v->onWhat(), u, 0, v->x(), v->y(), v->z());
+      lc = sizeFactor * BGM_MeshSize(v->onWhat(), u, 0, v->x(), v->y(), v->z());
     }
     else{
       reparamMeshVertexOnFace(v, _gf, p);
-      lc = BGM_MeshSize(_gf, p.x(), p.y(), v->x(), v->y(), v->z());
+      lc = sizeFactor * BGM_MeshSize(_gf, p.x(), p.y(), v->x(), v->y(), v->z());
     }
     // printf("2D -- %g %g 3D -- %g %g\n",p.x(),p.y(),v->x(),v->y());
     itv->second = std::min(lc,itv->second);
-    itv->second = std::max(itv->second, CTX::instance()->mesh.lcMin);
-    itv->second = std::min(itv->second, CTX::instance()->mesh.lcMax);
+    itv->second = std::max(itv->second,  sizeFactor * CTX::instance()->mesh.lcMin);
+    itv->second = std::min(itv->second,  sizeFactor * CTX::instance()->mesh.lcMax);
   }
   // do not allow large variations in the size field
   // (Int. J. Numer. Meth. Engng. 43, 1143-1165 (1998) MESH GRADATION
