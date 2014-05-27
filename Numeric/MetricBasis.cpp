@@ -121,7 +121,7 @@ double MetricBasis::getMinR(MElement *el, MetricData *&md, int deg) const
     name << (md->_num % 10000)/1000;
     name << (md->_num % 100000)/10000;
     name << ".txt";
-    ((MetricBasis*)this)->file.open(name.str(), std::fstream::out);
+    ((MetricBasis*)this)->file.open(name.str().c_str(), std::fstream::out);
 
     {
       fullMatrix<double> *coeff = md->_metcoeffs;
