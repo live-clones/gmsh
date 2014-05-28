@@ -373,7 +373,7 @@ void Recombinator::init_markings(GRegion* gr){
 
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
-    markings.insert(std::pair<MElement*,bool>(element,0));
+    markings.insert(std::pair<MElement*,bool>(element,false));
   }
 }
 
@@ -3882,7 +3882,7 @@ void PostOp::pyramids1(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
   for(it=bin2.begin();it!=bin2.end();it++){
     bin.insert(*it);
   }
-	
+
   if(bin.size()==2){
     it = bin.begin();
     it1 = markings.find(*it);

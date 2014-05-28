@@ -23,7 +23,7 @@ void   skipline(void);
 #define YY_INPUT(buf,result,max_size)                                   \
      {                                                                  \
        int c = '*', n;                                                  \
-       for ( n = 0; n < max_size &&                                     \
+       for ( n = 0; n < (int) max_size &&                               \
                (c = gzgetc( yyin )) != EOF && c != '\n'; ++n )          \
          buf[n] = (char) c;                                             \
        if ( c == '\n' ){                                                \
@@ -42,7 +42,7 @@ void   skipline(void);
 #define YY_INPUT(buf,result,max_size)					\
      {									\
        int c = '*', n;							\
-       for ( n = 0; n < max_size &&					\
+       for ( n = 0; n < (int) max_size &&                               \
 	       (c = fgetc( yyin )) != EOF && c != '\n'; ++n )		\
 	 buf[n] = (char) c;						\
        if ( c == '\n' ){						\
