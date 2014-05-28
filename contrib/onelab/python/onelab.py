@@ -469,7 +469,7 @@ class client :
     else :
       print(call.stderr.read())
 
-  def download(self, here, there, remote='') :
+  def download(self, there, here, remote='') :
     if not here or not there :
       return
     if remote :

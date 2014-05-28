@@ -414,7 +414,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       outfile.close();
 
       std::string reply = onelab::server::instance()->getChanged(c->getName()) ?
-        "changed" : "unchanged";
+        "true" : "false";
       getGmshServer()->SendMessage
         (GmshSocket::GMSH_OLPARSE, reply.size(), &reply[0]);
 
