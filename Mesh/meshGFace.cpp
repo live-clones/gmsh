@@ -47,7 +47,7 @@
 #include "filterElements.h"
 
 // define this to use the old initial delaunay
-#define OLD_TRI_CODE
+//#define OLD_TRI_CODE
 
 // define this to use th old quad code
 #define OLD_QUAD_CODE

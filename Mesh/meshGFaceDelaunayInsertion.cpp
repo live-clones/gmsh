@@ -425,7 +425,7 @@ void connectTris(ITER beg, ITER end, std::vector<edgeXface> &conn)
   }
   if (!conn.size())return;
   std::sort(conn.begin(), conn.end());
-  
+
   for (unsigned int i=0;i<conn.size()-1;i++){
     edgeXface &f1  = conn[i];
     edgeXface &f2  = conn[i+1];
@@ -897,7 +897,7 @@ static MTri3* search4Triangle (MTri3 *t, MVertex *v, int maxx, int &ITER) {
     if (inside) return t;
     if (ITER++ > .5*maxx) break;
   }
-  return 0;   
+  return 0;
 }
 
 static MTri3* search4Triangle (MTri3 *t, double pt[2], bidimMeshData & data,
@@ -1854,10 +1854,11 @@ bool triOnBox (MTriangle *t, MVertex *box[4]){
 
 void recoverEdges (std::vector<MTri3*> &t, std::vector<MEdge> &edges);
 
-void delaunayMeshIn2D(std::vector<MVertex*> &v, 
-		      std::vector<MTriangle*> &result, 
-		      bool removeBox, 
-		      std::vector<MEdge> *edgesToRecover)
+void delaunayMeshIn2D(std::vector<MVertex*> &v,
+		      std::vector<MTriangle*> &result,
+		      bool removeBox,
+		      std::vector<MEdge> *edgesToRecover,
+                      bool hilbertSort)
 {
   std::vector<MTri3*> t;
   t.reserve (v.size()*2);
@@ -1869,8 +1870,10 @@ void delaunayMeshIn2D(std::vector<MVertex*> &v,
 
   int NB_GLOBAL_SEARCH = 0;
   int AVG_ITER = 0;
-  SortHilbert(v);
+
   double t1 = Cpu();
+
+  if(hilbertSort) SortHilbert(v);
 
   double ta=0,tb=0,tc=0,td=0,T;
   for (size_t i=0;i<v.size();i++){
@@ -1882,20 +1885,20 @@ void delaunayMeshIn2D(std::vector<MVertex*> &v,
     ta += Cpu()-T;
     AVG_ITER += NITER;
     if(!found) {
-      Msg::Error("cannot insert a point in 3D Delaunay");
+      Msg::Error("Cannot insert a point in 2D Delaunay");
       continue;
     }
     shell.clear();
     cavity.clear();
-    
+
     T = Cpu();
     recurFindCavity(shell, cavity, pv, found);
     tb += Cpu()-T;
-    double V = 0.0;
-    for (unsigned int k=0;k<cavity.size();k++)V+=fabs(cavity[k]->tri()->getVolume());
+    //double V = 0.0;
+    //for (unsigned int k=0;k<cavity.size();k++)V+=fabs(cavity[k]->tri()->getVolume());
 
     std::vector<MTri3*> extended_cavity;
-    double Vb = 0.0;    
+    //double Vb = 0.0;
 
     T = Cpu();
     for (unsigned int count = 0; count < shell.size(); count++){
@@ -1910,21 +1913,21 @@ void delaunayMeshIn2D(std::vector<MVertex*> &v,
 	tr = t3->tri() ;
 	tr->setVertex(0,v0);
 	tr->setVertex(1,v1);
-	tr->setVertex(2,pv);	
+	tr->setVertex(2,pv);
       }
       else{
 	tr = new MTriangle(v0,v1,pv);
 	t3 = new MTri3(tr, 0.0);
 	t.push_back(t3);
       }
-      Vb+= fabs(tr->getVolume());
+      //Vb+= fabs(tr->getVolume());
       extended_cavity.push_back(t3);
       if (otherSide)
 	extended_cavity.push_back(otherSide);
     }
     tc += Cpu()-T;
-    if (fabs(Vb-V) > 1.e-8 * (Vb+V))printf("%12.5E %12.5E\n",Vb,V);
-    
+    //if (fabs(Vb-V) > 1.e-8 * (Vb+V))printf("%12.5E %12.5E\n",Vb,V);
+
     for (unsigned int k=0;k<std::min(cavity.size(),shell.size());k++){
       cavity[k]->setDeleted(false);
       for (unsigned int l=0;l<3;l++){
@@ -1941,7 +1944,7 @@ void delaunayMeshIn2D(std::vector<MVertex*> &v,
   //  printf("%g %g %g %g --> %g(%g)\n",ta,tb,tc,td,t2-t1,ta+tb+tc+td);
 
   if (edgesToRecover)recoverEdges (t,*edgesToRecover);
-  
+
   //  FILE *f = fopen ("tri.pos","w");
   //  fprintf(f,"View \"\"{\n");
   for (size_t i = 0;i<t.size();i++){
@@ -1952,7 +1955,7 @@ void delaunayMeshIn2D(std::vector<MVertex*> &v,
     }
     delete t[i];
   }
-  
+
   if (removeBox)for (int i=0;i<4;i++)delete box[i];
   else for (int i=0;i<4;i++)v.push_back(box[i]);
 
@@ -1975,7 +1978,7 @@ bool swapedge (MVertex *v1 ,MVertex *v2, MVertex *v3, MVertex *v4, MTri3* t1, in
     return false;
   }
   //  printf("volumes ok\n");
-  
+
   delete t1->tri();
   delete t2->tri();
   t1->setTri(t1b);
@@ -2001,7 +2004,7 @@ bool diffend (MVertex *v1, MVertex *v2, MVertex *p1, MVertex *p2){
 }
 
 /*
-  
+
 */
 
 static bool recoverEdgeBySwaps (std::vector<MTri3*> &t, MVertex *mv1, MVertex *mv2, std::vector<MEdge> &edges){
@@ -2037,7 +2040,7 @@ static bool recoverEdgeBySwaps (std::vector<MTri3*> &t, MVertex *mv1, MVertex *m
 }
 
 // recover the edges by edge swapping in the triangulation.
-// edges are not supposed to 
+// edges are not supposed to
 
 void recoverEdges (std::vector<MTri3*> &t, std::vector<MEdge> &edges)
 {
@@ -2065,9 +2068,9 @@ void recoverEdges (std::vector<MTri3*> &t, std::vector<MEdge> &edges)
     MVertex *mstart = edgesToRecover[i].getVertex(0);
     MVertex *mend = edgesToRecover[i].getVertex(1);
     Msg::Info("recovering edge %d %d",mstart->getNum(),mend->getNum());
-    int iter;
+    //int iter;
     while(recoverEdgeBySwaps (t, mstart, mend,edges)) {
-      iter ++;     
+      //iter ++;
     }
   }
 }

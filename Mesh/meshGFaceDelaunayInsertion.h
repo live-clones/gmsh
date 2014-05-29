@@ -162,8 +162,10 @@ void buildBackGroundMesh (GFace *gf,
 		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);
 
 void delaunayMeshIn2D(std::vector<MVertex*> &,
-		      std::vector<MTriangle*> &, bool removeBox = true,
-		      std::vector<MEdge> *edgesToRecover = 0);
+		      std::vector<MTriangle*> &,
+                      bool removeBox = true,
+		      std::vector<MEdge> *edgesToRecover = 0,
+                      bool hilbertSort = true);
 
 struct edgeXface
 {

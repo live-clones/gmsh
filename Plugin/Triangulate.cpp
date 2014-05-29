@@ -191,7 +191,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
 #else // new code
   Msg::Info("Triangulating data points (new code)...");
   std::vector<MTriangle*> tris;
-  delaunayMeshIn2D(points, tris);
+  delaunayMeshIn2D(points, tris, true, 0, false);
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
   for(unsigned int i = 0; i < tris.size(); i++){
