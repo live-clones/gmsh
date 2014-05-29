@@ -15,6 +15,7 @@
 
 #if defined(HAVE_MESH)
 #include "DivideAndConquer.h"
+#include "meshGFaceDelaunayInsertion.h"
 #endif
 
 StringXNumber TriangulateOptions_Number[] = {
@@ -121,6 +122,8 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   for(unsigned int i = 0; i < points.size(); i++) project(points[i], plan);
   delete s;
 
+#if 0 // old code
+
   // get lc
   SBoundingBox3d bbox;
   for(unsigned int i = 0; i < points.size(); i++) bbox += points[i]->point();
@@ -184,6 +187,43 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
         for(int comp = 0; comp < numComp; comp++)
           vec->push_back(p[nod]->v[3 + numComp * step + comp]);
   }
+
+#else // new code
+  Msg::Info("Triangulating data points (new code)...");
+  std::vector<MTriangle*> tris;
+  delaunayMeshIn2D(points, tris);
+  PView *v2 = new PView();
+  PViewDataList *data2 = getDataList(v2);
+  for(unsigned int i = 0; i < tris.size(); i++){
+    PointData *p[3];
+    p[0] = (PointData*)tris[i]->getVertex(0);
+    p[1] = (PointData*)tris[i]->getVertex(1);
+    p[2] = (PointData*)tris[i]->getVertex(2);
+    int numComp = 0;
+    std::vector<double> *vec = 0;
+    if((int)p[0]->v.size() == 3 + 9 * numSteps &&
+       (int)p[1]->v.size() == 3 + 9 * numSteps &&
+       (int)p[2]->v.size() == 3 + 9 * numSteps){
+      numComp = 9; data2->NbTT++; vec = &data2->TT;
+    }
+    else if((int)p[0]->v.size() == 3 + 3 * numSteps &&
+            (int)p[1]->v.size() == 3 + 3 * numSteps &&
+            (int)p[2]->v.size() == 3 + 3 * numSteps){
+      numComp = 3; data2->NbVT++; vec = &data2->VT;
+    }
+    else{
+      numComp = 1; data2->NbST++; vec = &data2->ST;
+    }
+    for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[0]);
+    for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[1]);
+    for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[2]);
+    for(int step = 0; step < numSteps; step++)
+      for(int nod = 0; nod < 3; nod++)
+        for(int comp = 0; comp < numComp; comp++)
+          vec->push_back(p[nod]->v[3 + numComp * step + comp]);
+    delete tris[i];
+  }
+#endif
 
   for(unsigned int i = 0; i < points.size(); i++)
     delete points[i];

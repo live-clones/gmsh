@@ -269,6 +269,7 @@ void HilbertSort::Sort(MVertex** vertices, int arraysize, int e, int d,
 
 void SortHilbert (std::vector<MVertex*>& v)
 {
+  //HilbertSort h(1000);
   HilbertSort h;
   h.Apply(v);
 }
