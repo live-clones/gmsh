@@ -46,9 +46,11 @@
 #include "boundaryLayersData.h"
 #include "filterElements.h"
 
-// new quad code
-// new initial delaunay
-#define OLD_CODE 1
+// define this to use the old initial delaunay
+//#define OLD_TRI_CODE
+
+// define this to use th old quad code
+#define OLD_QUAD_CODE
 
 static void computeElementShapes(GFace *gf, double &worst, double &avg,
                                  double &best, int &nT, int &greaterThan)
@@ -128,7 +130,7 @@ public:
 	m[j] = p1;
 	if (it == _middle.end() && it2 == eds.end()){
 	  GPoint gp = _gf->point((p1+p2)*0.5);
-	  v[j] = new MFaceVertex (gp.x(),gp.y(),gp.z(),_gf,gp.u(),gp.v());	  
+	  v[j] = new MFaceVertex (gp.x(),gp.y(),gp.z(),_gf,gp.u(),gp.v());
 	  _gf->mesh_vertices.push_back(v[j]);
 	  eds[E] = v[j];
 	}
@@ -141,7 +143,7 @@ public:
 	}
       }
       GPoint gp    = _gf->point((m[0]+m[1]+m[2])*(1./3.));
-      MFaceVertex *vmid = new MFaceVertex (gp.x(),gp.y(),gp.z(),_gf,gp.u(),gp.v());            
+      MFaceVertex *vmid = new MFaceVertex (gp.x(),gp.y(),gp.z(),_gf,gp.u(),gp.v());
       _gf->mesh_vertices.push_back(vmid);
       qnew.push_back(new MQuadrangle(_gf->triangles[i]->getVertex(0),v[0],vmid,v[2]));
       qnew.push_back(new MQuadrangle(_gf->triangles[i]->getVertex(1),v[1],vmid,v[0]));
@@ -161,7 +163,7 @@ public:
 	m[j] = p1;
 	if (it == _middle.end() && it2 == eds.end()){
 	  GPoint gp = _gf->point((p1+p2)*0.5);
-	  v[j] = new MFaceVertex (gp.x(),gp.y(),gp.z(),_gf,gp.u(),gp.v());	  
+	  v[j] = new MFaceVertex (gp.x(),gp.y(),gp.z(),_gf,gp.u(),gp.v());
 	  _gf->mesh_vertices.push_back(v[j]);
 	  eds[E] = v[j];
 	}
@@ -174,7 +176,7 @@ public:
 	}
       }
       GPoint gp    = _gf->point((m[0]+m[1]+m[2]+m[3])*0.25);
-      MVertex *vmid = new MFaceVertex (gp.x(),gp.y(),gp.z(),_gf,gp.u(),gp.v());            
+      MVertex *vmid = new MFaceVertex (gp.x(),gp.y(),gp.z(),_gf,gp.u(),gp.v());
       _gf->mesh_vertices.push_back(vmid);
       qnew.push_back(new MQuadrangle(_gf->quadrangles[i]->getVertex(0),v[0],vmid,v[3]));
       qnew.push_back(new MQuadrangle(_gf->quadrangles[i]->getVertex(1),v[1],vmid,v[0]));
@@ -196,13 +198,13 @@ public:
       //      _gf->model()->writeMSH("hop2.msh");
       restore();
       recombineIntoQuads(_gf,true,true,0.1);
-      computeElementShapes(_gf, 
+      computeElementShapes(_gf,
 			   _gf->meshStatistics.worst_element_shape,
 			   _gf->meshStatistics.average_element_shape,
 			   _gf->meshStatistics.best_element_shape,
 			   _gf->meshStatistics.nbTriangle,
 			   _gf->meshStatistics.nbGoodQuality);
-    } 
+    }
   }
   void restore (){
     std::list<GEdge*> edges = _gf->edges();
@@ -1194,15 +1196,14 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   bbox.makeCube();
 
-  // compute the bounding box in parametric space
-  SVector3 dd(bbox.max(), bbox.min());
-  double LC2D = norm(dd);
-
   // use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
   // domain.
-#ifdef OLD_CODE
+#if defined(OLD_TRI_CODE)
   {
+    // compute the bounding box in parametric space
+    SVector3 dd(bbox.max(), bbox.min());
+    double LC2D = norm(dd);
     DocRecord doc(points.size() + 4);
     for(unsigned int i = 0; i < points.size(); i++){
       double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
@@ -1214,12 +1215,12 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       doc.points[i].where.v = points[i]->v + YY;
       doc.points[i].data = points[i];
       doc.points[i].adjacent = NULL;
-      
+
     }
-    
+
     // increase the size of the bounding box
     bbox *= 2.5;
-    
+
     // add 4 points than encloses the domain (use negative number to
     // distinguish those fake vertices)
     double bb[4][2] = {{bbox.min().x(), bbox.min().y()},
@@ -1236,7 +1237,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       doc.points[points.size() + ip].adjacent = 0;
       doc.points[points.size() + ip].data = pp;
     }
-    
+
     // Use "fast" inhouse recursive algo to generate the triangulation.
     // At this stage the triangulation is not what we need
     //   -) It does not necessary recover the boundaries
@@ -1250,7 +1251,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       Msg::Error("%s", err);
     }
     Msg::Debug("Meshing of the convex hull (%d points) done", points.size());
-    
+
     for(int i = 0; i < doc.numTriangles; i++) {
       int a = doc.triangles[i].a;
       int b = doc.triangles[i].b;
@@ -1281,7 +1282,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     }
     delaunayMeshIn2D(v, result, 0);
     //    delaunayMeshIn2D(v, result, 0, & medgesToRecover);
-    
+
     for(unsigned int i = 0; i < v.size()-4; i++) {
       MVertex *v0 = v[i];
       SPoint3 pp = pos[v0];
@@ -1317,7 +1318,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     sprintf(name, "surface%d-initial-param.pos", gf->tag());
     outputScalarField(m->triangles, name, 1);
   }
-  
+
   // Recover the boundary edges and compute characteristic lenghts
   // using mesh edge spacing. If two of these edges intersect, then
   // the 1D mesh have to be densified
@@ -1336,8 +1337,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 1);
     ++ite;
   }
-  
-  
+
+
     // effectively recover the medge
   ite = edges.begin();
   while(ite != edges.end()){
@@ -1350,10 +1351,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     }
     ++ite;
   }
-  
+
   Msg::Debug("Recovering %d mesh Edges (%d not recovered)", edgesToRecover.size(),
 	     edgesNotRecovered.size());
-  
+
   if(edgesNotRecovered.size()){
     std::ostringstream sstream;
     for(std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
@@ -1363,14 +1364,14 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 		 edgesNotRecovered.size(), sstream.str().c_str());
     if (repairSelfIntersecting1dMesh)
       Msg::Warning("8-| Gmsh splits those edges and tries again");
-    
+
     if(debug){
       char name[245];
       sprintf(name, "surface%d-not_yet_recovered-real-%d.msh", gf->tag(),
 	      RECUR_ITER);
       gf->model()->writeMSH(name);
     }
-    
+
     std::list<GFace *> facesToRemesh;
     if(repairSelfIntersecting1dMesh)
       remeshUnrecoveredEdges(recoverMapInv, edgesNotRecovered, facesToRemesh);
@@ -1390,7 +1391,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       }
       //throw _error;
     }
-    
+
     // delete the mesh
     delete m;
     if(RECUR_ITER < 10 && facesToRemesh.size() == 0)
@@ -1399,13 +1400,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 	 debug, replacement_edges);
     return false;
   }
-  
+
   if(RECUR_ITER > 0)
     Msg::Warning(":-) Gmsh was able to recover all edges after %d iterations",
 		 RECUR_ITER);
-  
+
   Msg::Debug("Boundary Edges recovered for surface %d", gf->tag());
-  
+
   // look for a triangle that has a negative node and recursively
   // tag all exterior triangles
   {
@@ -1427,7 +1428,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       ++itt;
     }
   }
-  
+
   // now find an edge that has belongs to one of the exterior
   // triangles
   {
@@ -1452,7 +1453,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       ++itt;
     }
   }
-  
+
   {
     std::list<BDS_Edge*>::iterator ite = m->edges.begin();
     while (ite != m->edges.end()){
@@ -1472,14 +1473,14 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       ++ite;
     }
   }
-  
+
   ite = emb_edges.begin();
   while(ite != emb_edges.end()){
     if(!(*ite)->isMeshDegenerated())
       recoverEdge(m, *ite, recoverMapInv, &edgesToRecover, &edgesNotRecovered, 2);
     ++ite;
   }
-  
+
   // compute characteristic lengths at vertices
   if (!onlyInitialMesh){
       Msg::Debug("Computing mesh size field at mesh vertices %d",
@@ -1507,7 +1508,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 	}
       }
   }
-  
+
   // delete useless stuff
   std::list<BDS_Face*>::iterator itt = m->triangles.begin();
   while (itt != m->triangles.end()){
@@ -1516,7 +1517,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     ++itt;
   }
   m->cleanup();
-  
+
   {
     std::list<BDS_Edge*>::iterator ite = m->edges.begin();
     while (ite != m->edges.end()){
@@ -2050,7 +2051,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // Use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
   // domain.
-#if 1 //OLD_CODE
+#if 1 //OLD_TRI_CODE
   {
     DocRecord doc(nbPointsTotal + 4);
     int count = 0;
@@ -2139,7 +2140,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 	recoverMapInv[recoverMap[pp]] = pp;
       }
     }
-   
+
     printf("coucou2 %d verices\n",v.size());
     std::map<MVertex*,SPoint3> pos;
     for(unsigned int i = 0; i < v.size(); i++) {
@@ -2153,7 +2154,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     delaunayMeshIn2D(v, result, 0);
     printf("coucou4\n");
     //    delaunayMeshIn2D(v, result, 0, & medgesToRecover);
-    
+
     for(unsigned int i = 0; i < v.size()-4; i++) {
       MVertex *v0 = v[i];
       SPoint3 pp = pos[v0];
@@ -2180,11 +2181,11 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       BDS_Point *p1  = recoverMapInv[v1];
       BDS_Point *p2  = recoverMapInv[v2];
       m->add_triangle(p0->iD, p1->iD, p2->iD);
-    }    
+    }
     printf("coucou7\n");
   }
 #endif
-  
+
   // Recover the boundary edges and compute characteristic lenghts
   // using mesh edge spacing
   BDS_GeomEntity CLASS_F(1, 2);
@@ -2463,7 +2464,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // delete the mesh
   delete m;
 
-  if (1){ 
+  if (1){
     if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
        !CTX::instance()->mesh.optimizeLloyd)
       recombineIntoQuads(gf);
@@ -2561,7 +2562,7 @@ void meshGFace::operator() (GFace *gf, bool print)
     return;
   }
 
-#ifdef OLD_CODE
+#if !defined(OLD_QUAD_CODE)
   quadMeshRemoveHalfOfOneDMesh halfmesh (gf);
 #endif
 
@@ -2581,7 +2582,7 @@ void meshGFace::operator() (GFace *gf, bool print)
   Msg::Debug("Type %d %d triangles generated, %d internal vertices",
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 
-#ifdef OLD_CODE
+#if !defined(OLD_QUAD_CODE)
   halfmesh.finish();
 #endif
 }
