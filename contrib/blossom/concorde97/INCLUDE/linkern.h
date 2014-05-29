@@ -40,8 +40,8 @@ int
 /*                                                                         */
 /***************************************************************************/
 
-
-#define CC_TWO_LEVEL_FLIPPER
+#define CC_LINKED_LIST_FLIPPER
+//#define CC_TWO_LEVEL_FLIPPER
 /* #define BTREE_FLIPPER */
 
 #ifdef CC_LINKED_LIST_FLIPPER
