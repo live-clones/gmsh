@@ -98,8 +98,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
 
   if(points.size() < 3){
     Msg::Error("Need at least 3 points to triangulate");
-    for(unsigned int i = 0; i < points.size(); i++)
-      delete points[i];
+    for(unsigned int i = 0; i < points.size(); i++) delete points[i];
     return v1;
   }
 

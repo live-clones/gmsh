@@ -43,18 +43,15 @@ StringXNumber *GMSH_TetrahedralizePlugin::getOption(int iopt)
   return &TetrahedralizeOptions_Number[iopt];
 }
 
-class PointData {
+#if defined(HAVE_MESH)
+
+class PointData : public MVertex {
  public:
-  MVertex *v;
   std::vector<double> val;
   PointData(double x, double y, double z, int numVal)
+    : MVertex(x, y, z)
   {
-    v = new MVertex(x, y, z);
     val.resize(numVal);
-  }
-  ~PointData()
-  {
-    delete v;
   }
 };
 
@@ -72,7 +69,7 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
   }
 
   // create list of points with associated data
-  std::vector<PointData> points;
+  std::vector<MVertex*> points;
   int numSteps = data1->getNumTimeSteps();
   for(int ent = 0; ent < data1->getNumEntities(0); ent++){
     for(int ele = 0; ele < data1->getNumElements(0, ent); ele++){
@@ -81,50 +78,32 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
       int numComp = data1->getNumComponents(0, ent, ele);
       double x, y, z;
       data1->getNode(0, ent, ele, 0, x, y, z);
-      PointData p(x, y, z, numComp * numSteps);
+      PointData *p = new PointData(x, y, z, numComp * numSteps);
       for(int step = 0; step < numSteps; step++)
         for(int comp = 0; comp < numComp; comp++)
-          data1->getValue(step, ent, ele, 0, comp, p.val[numComp * step + comp]);
+          data1->getValue(step, ent, ele, 0, comp, p->val[numComp * step + comp]);
       points.push_back(p);
     }
   }
 
   if(points.size() < 4){
     Msg::Error("Need at least 4 points to tetrahedralize");
+    for(unsigned int i = 0; i < points.size(); i++) delete points[i];
     return v1;
   }
 
-#if !defined(HAVE_MESH)
-  Msg::Error("Gmsh has to be compiled with Mesh support to run "
-             "Plugin(Tetrahedralize)");
-  return v1;
-#else
-  std::vector<MVertex*> vertices(points.size());
-  for(unsigned int i = 0; i < points.size(); i++){
-    MVertex *v = points[i].v;
-    v->setIndex(i);
-    vertices[i] = v;
-  }
   std::vector<MTetrahedron*> tets;
-  delaunayMeshIn3D(vertices, tets);
+  delaunayMeshIn3D(points, tets);
 
   // create output
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
   for(unsigned int i = 0; i < tets.size(); i++){
-    MTetrahedron *t = tets[i];
-    int i0 = t->getVertex(0)->getIndex();
-    int i1 = t->getVertex(1)->getIndex();
-    int i2 = t->getVertex(2)->getIndex();
-    int i3 = t->getVertex(3)->getIndex();
-    int n = points.size();
-    if(i0 < 0 || i0 >= n || i1 < 0 || i1 >= n ||
-       i2 < 0 || i2 >= n || i3 < 0 || i3 >= n){
-      Msg::Warning("Bad vertex in tetrahedralization");
-      continue;
-    }
-    PointData *p[4] = {&points[i0], &points[i1],
-                       &points[i2], &points[i3]};
+    PointData *p[4];
+    p[0] = (PointData*)tets[i]->getVertex(0);
+    p[1] = (PointData*)tets[i]->getVertex(1);
+    p[2] = (PointData*)tets[i]->getVertex(2);
+    p[3] = (PointData*)tets[i]->getVertex(3);
     int numComp = 0;
     std::vector<double> *vec = 0;
     if((int)p[0]->val.size() == 9 * numSteps &&
@@ -149,17 +128,17 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
       Msg::Warning("Bad data in tetrahedralization");
       continue;
     }
-    for(int nod = 0; nod < 4; nod++) vec->push_back(p[nod]->v->x());
-    for(int nod = 0; nod < 4; nod++) vec->push_back(p[nod]->v->y());
-    for(int nod = 0; nod < 4; nod++) vec->push_back(p[nod]->v->z());
+    for(int nod = 0; nod < 4; nod++) vec->push_back(p[nod]->x());
+    for(int nod = 0; nod < 4; nod++) vec->push_back(p[nod]->y());
+    for(int nod = 0; nod < 4; nod++) vec->push_back(p[nod]->z());
     for(int step = 0; step < numSteps; step++)
       for(int nod = 0; nod < 4; nod++)
         for(int comp = 0; comp < numComp; comp++)
           vec->push_back(p[nod]->val[numComp * step + comp]);
   }
 
-  for(unsigned int i = 0; i < tets.size(); i++)
-    delete tets[i];
+  for(unsigned int i = 0; i < tets.size(); i++) delete tets[i];
+  for(unsigned int i = 0; i < points.size(); i++) delete points[i];
 
   for(int i = 0; i < data1->getNumTimeSteps(); i++)
     data2->Time.push_back(data1->getTime(i));
@@ -167,5 +146,14 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
   data2->setFileName(data1->getName() + "_Tetrahedralize.pos");
   data2->finalize();
   return v2;
-#endif
 }
+
+#else
+
+PView *GMSH_TetrahedralizePlugin::execute(PView *v)
+{
+  Msg::Error("Plugin(Tetrahedralize requires mesh module");
+  return v;
+}
+
+#endif
