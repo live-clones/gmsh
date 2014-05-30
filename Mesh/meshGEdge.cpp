@@ -423,17 +423,19 @@ void meshGEdge::operator() (GEdge *ge)
   // force odd number of points if blossom is used for recombination
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
-     CTX::instance()->mesh.algoRecombine == 1){
+     CTX::instance()->mesh.algoRecombine != 0){
     if(CTX::instance()->mesh.recombineAll){
       if (N % 2 == 0) N++;
-      N = increaseN(N);
+      if (CTX::instance()->mesh.algoRecombine == 2)
+	N = increaseN(N);
     }
     else{
       std::list<GFace*> faces = ge->faces();
       for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
         if((*it)->meshAttributes.recombine){
 	  if (N % 2 == 0) N ++;
-	  N = increaseN(N);
+	  if (CTX::instance()->mesh.algoRecombine == 2)
+	    N = increaseN(N);
           break;
         }
       }

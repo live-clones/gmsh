@@ -1816,7 +1816,6 @@ static void initialSquare(std::vector<MVertex*> &v,
   box[1] = new MVertex (bbox.max().x(),bbox.min().y(),0);
   box[2] = new MVertex (bbox.max().x(),bbox.max().y(),0);
   box[3] = new MVertex (bbox.min().x(),bbox.max().y(),0);
-  std::vector<MTriangle*> t_box;
   MTriangle *t0 = new MTriangle (box[0],box[1],box[2]);
   MTriangle *t1 = new MTriangle (box[2],box[3],box[0]);
   t.push_back(new MTri3(t0,0.0));
@@ -1844,9 +1843,12 @@ MTri3 * getTriToBreak (MVertex *v, std::vector<MTri3*> &t, int &NB_GLOBAL_SEARCH
 }
 
 bool triOnBox (MTriangle *t, MVertex *box[4]){
-  for (size_t i = 0;i<3;i++)
-    for (size_t j = 0;j<4;j++)
-      if (t->getVertex(i) == box[j])return true;
+  for (size_t i = 0;i<3;i++){
+    for (size_t j = 0;j<4;j++){
+      if (t->getVertex(i) == box[j])
+	return true;
+    }
+  }
   return false;
 }
 
@@ -1869,13 +1871,16 @@ void delaunayMeshIn2D(std::vector<MVertex*> &v,
   initialSquare (v,box,t);
 
   int NB_GLOBAL_SEARCH = 0;
-  int AVG_ITER = 0;
+  double AVG_ITER = 0;
+  double AVG_CAVSIZE = 0;
 
   double t1 = Cpu();
 
+  Msg::Info("Delaunay 2D SORTING");
   if(hilbertSort) SortHilbert(v);
 
   double ta=0,tb=0,tc=0,td=0,T;
+  Msg::Info("Delaunay 2D INSERTING");
   for (size_t i=0;i<v.size();i++){
     MVertex *pv = v[i];
 
@@ -1883,7 +1888,7 @@ void delaunayMeshIn2D(std::vector<MVertex*> &v,
     T = Cpu();
     MTri3 * found = getTriToBreak (pv,t,NB_GLOBAL_SEARCH,NITER);
     ta += Cpu()-T;
-    AVG_ITER += NITER;
+    AVG_ITER += (double)NITER;
     if(!found) {
       Msg::Error("Cannot insert a point in 2D Delaunay");
       continue;
@@ -1893,6 +1898,7 @@ void delaunayMeshIn2D(std::vector<MVertex*> &v,
 
     T = Cpu();
     recurFindCavity(shell, cavity, pv, found);
+    AVG_CAVSIZE += (double)cavity.size();
     tb += Cpu()-T;
     //double V = 0.0;
     //for (unsigned int k=0;k<cavity.size();k++)V+=fabs(cavity[k]->tri()->getVolume());
@@ -1940,7 +1946,8 @@ void delaunayMeshIn2D(std::vector<MVertex*> &v,
   }
 
   double t2 = Cpu();
-  Msg::Debug("Delaunay 2D done for %d points : CPU = %g, %d global searches, AVG walk size %g",v.size(), t2-t1,NB_GLOBAL_SEARCH,1.+(double)AVG_ITER/v.size());
+  Msg::Info("Delaunay 2D done for %d points : CPU = %g, %d global searches, AVG walk size %g , AVG cavity size %g",
+	    v.size(), t2-t1,NB_GLOBAL_SEARCH,1.+AVG_ITER/v.size(),AVG_CAVSIZE/v.size());
   //  printf("%g %g %g %g --> %g(%g)\n",ta,tb,tc,td,t2-t1,ta+tb+tc+td);
 
   if (edgesToRecover)recoverEdges (t,*edgesToRecover);
@@ -1955,9 +1962,9 @@ void delaunayMeshIn2D(std::vector<MVertex*> &v,
     }
     delete t[i];
   }
-
-  if (removeBox)for (int i=0;i<4;i++)delete box[i];
-  else for (int i=0;i<4;i++)v.push_back(box[i]);
+  
+  if (removeBox){for (int i=0;i<4;i++)delete box[i];}
+  else {for (int i=0;i<4;i++)v.push_back(box[i]);}
 
   //  fprintf(f,"};\n");
   //  fclose(f);

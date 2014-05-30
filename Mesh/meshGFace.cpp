@@ -47,10 +47,7 @@
 #include "filterElements.h"
 
 // define this to use the old initial delaunay
-#define OLD_TRI_CODE
-
-// define this to use th old quad code
-#define OLD_QUAD_CODE
+//#define OLD_CODE_DELAUNAY 1
 
 static void computeElementShapes(GFace *gf, double &worst, double &avg,
                                  double &best, int &nT, int &greaterThan)
@@ -88,7 +85,7 @@ public:
   // remove one point every two and remember middle points
   quadMeshRemoveHalfOfOneDMesh (GFace* gf) : _gf(gf){
     // only do it if a recombination has to be done
-    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine){
+    if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) && CTX::instance()->mesh.algoRecombine == 2){
       //      printf("GFace %d removing half of the points in the 1D mesh\n",gf->tag());
       std::list<GEdge*> edges = gf->edges();
       std::list<GEdge*>::iterator ite = edges.begin();
@@ -97,6 +94,7 @@ public:
 	  std::vector<MLine*> temp;
 	  (*ite)->mesh_vertices.clear();
 	  for(unsigned int i = 0; i< (*ite)->lines.size(); i+=2){
+	    if (i+1 >= (*ite)->lines.size())Msg::Fatal("1D mesh cannot be divided by 2");
 	    MVertex *v1 = (*ite)->lines[i]->getVertex(0);
 	    MVertex *v2 = (*ite)->lines[i]->getVertex(1);
 	    MVertex *v3 = (*ite)->lines[i+1]->getVertex(1);
@@ -189,7 +187,7 @@ public:
   }
   void finish (){
     backgroundMesh::setSizeFactor(1.0);
-    if(CTX::instance()->mesh.recombineAll || _gf->meshAttributes.recombine){
+    if((CTX::instance()->mesh.recombineAll || _gf->meshAttributes.recombine) && CTX::instance()->mesh.algoRecombine == 2){
       // recombine the elements on the half mesh
       recombineIntoQuads(_gf,true,true,.1);
       Msg::Info("subdividing");
@@ -1199,7 +1197,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
   // domain.
-#if defined(OLD_TRI_CODE)
+#ifdef OLD_CODE_DELAUNAY
   {
     // compute the bounding box in parametric space
     SVector3 dd(bbox.max(), bbox.min());
@@ -1675,11 +1673,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // delete the mesh
   delete m;
 
-  if (1){
-    if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-       !CTX::instance()->mesh.optimizeLloyd && !onlyInitialMesh)
-      recombineIntoQuads(gf);
-  }
+  if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
+     !CTX::instance()->mesh.optimizeLloyd && !onlyInitialMesh && CTX::instance()->mesh.algoRecombine != 2)
+    recombineIntoQuads(gf);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
@@ -2051,7 +2047,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // Use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
   // domain.
-#if 1 //OLD_TRI_CODE
+#if 1 //OLD_CODE_DELAUNAY
   {
     DocRecord doc(nbPointsTotal + 4);
     int count = 0;
@@ -2464,11 +2460,9 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // delete the mesh
   delete m;
 
-  if (1){
-    if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-       !CTX::instance()->mesh.optimizeLloyd)
-      recombineIntoQuads(gf);
-  }
+  if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
+     !CTX::instance()->mesh.optimizeLloyd && CTX::instance()->mesh.algoRecombine != 2)
+    recombineIntoQuads(gf);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
@@ -2562,9 +2556,7 @@ void meshGFace::operator() (GFace *gf, bool print)
     return;
   }
 
-#if !defined(OLD_QUAD_CODE)
   quadMeshRemoveHalfOfOneDMesh halfmesh (gf);
-#endif
 
   if ((gf->getNativeType() != GEntity::AcisModel ||
        (!gf->periodic(0) && !gf->periodic(1))) &&
@@ -2582,9 +2574,7 @@ void meshGFace::operator() (GFace *gf, bool print)
   Msg::Debug("Type %d %d triangles generated, %d internal vertices",
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 
-#if !defined(OLD_QUAD_CODE)
   halfmesh.finish();
-#endif
 }
 
 bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)

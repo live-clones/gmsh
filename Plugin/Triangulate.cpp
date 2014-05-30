@@ -117,17 +117,32 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   discreteFace *s = new discreteFace
     (GModel::current(), GModel::current()->getNumFaces() + 1);
   s->computeMeanPlane(points);
-  double plan[3][3];
-  s->getMeanPlaneData(plan);
-  for(unsigned int i = 0; i < points.size(); i++) project(points[i], plan);
+  double x, y, z, VX[3], VY[3];
+  s->getMeanPlaneData(VX, VY, x, y, z);
+  //  printf("mean plane %g %g %g (%g %g %g), (%g %g %g)\n",x,y,z,VX[0],VX[1],VX[2],VY[0],VY[1],VY[2]);
+  SBoundingBox3d bbox;
+  for(unsigned int i = 0; i < points.size(); i++) bbox += points[i]->point();
+  double lc = 10 * norm(SVector3(bbox.max(), bbox.min()));
+
+  std::map<MVertex*,SPoint3> temp;
+  for(unsigned int i = 0; i < points.size(); i++) {    
+    SPoint3 pp (points[i]->x(),points[i]->y(),points[i]->z());
+    temp[points[i]] = pp;
+    double u, v, vec[3] = {points[i]->x() - x, 
+			   points[i]->y() - y, 
+			   points[i]->z() - z};
+    prosca(vec, VX, &u);
+    prosca(vec, VY, &v);
+    points[i]->x() = u;
+    points[i]->y() = v;
+    points[i]->z() = 0;
+    //    printf("points[%d] = %g %g %g\n",i,points[i]->x() ,points[i]->y() ,points[i]->z()); 
+  }
   delete s;
 
 #if 0 // old code
 
   // get lc
-  SBoundingBox3d bbox;
-  for(unsigned int i = 0; i < points.size(); i++) bbox += points[i]->point();
-  double lc = 10 * norm(SVector3(bbox.max(), bbox.min()));
 
   // build a point record structure for the divide and conquer algorithm
   DocRecord doc(points.size());
@@ -191,7 +206,22 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
 #else // new code
   Msg::Info("Triangulating data points (new code)...");
   std::vector<MTriangle*> tris;
-  delaunayMeshIn2D(points, tris, true, 0, false);
+  for(unsigned int i = 0; i < points.size(); i++) {    
+    double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
+    double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
+    double ZZ = 1.e-17 * lc * (double)rand() / (double)RAND_MAX;
+    points[i]->x() += XX;
+    points[i]->y() += YY;
+    points[i]->z() += ZZ;
+  }
+  delaunayMeshIn2D(points, tris, true, 0, true);
+  for(unsigned int i = 0; i < points.size(); i++){
+    SPoint3 pp = temp[points[i]];
+    points[i]->x() = pp.x();
+    points[i]->y() = pp.y();
+    points[i]->z() = pp.z();
+  }
+
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
   for(unsigned int i = 0; i < tris.size(); i++){

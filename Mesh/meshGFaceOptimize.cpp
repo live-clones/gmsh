@@ -3165,7 +3165,7 @@ int recombineWithBlossom(GFace *gf, double dx, double dy,
   std::set<MElement*> touched;
   std::vector<std::pair<MElement*,MElement*> > toProcess;
 
-  if(CTX::instance()->mesh.algoRecombine == 1){
+  if(CTX::instance()->mesh.algoRecombine != 0){
 #if defined(HAVE_BLOSSOM)
     int ncount = gf->triangles.size();
     if (ncount % 2 == 0) {
@@ -3373,7 +3373,7 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
   std::set<MElement*> touched;
   std::vector<std::pair<MElement*,MElement*> > toProcess;
 
-  if(CTX::instance()->mesh.algoRecombine == 1){
+  if(CTX::instance()->mesh.algoRecombine != 0){
 #if defined(HAVE_BLOSSOM)
     int ncount = gf->triangles.size();
     if (ncount % 2 != 0) {
@@ -3619,7 +3619,7 @@ void recombineIntoQuads(GFace *gf,
     laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing);
   }
   // blossom-quad algo
-  if(success && CTX::instance()->mesh.algoRecombine == 1){
+  if(success && CTX::instance()->mesh.algoRecombine != 0){
     if(topologicalOpti){
       if(haveParam){
         if (saveAll) gf->model()->writeMSH("smoothed.msh");
