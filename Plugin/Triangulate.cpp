@@ -65,16 +65,6 @@ class PointData : public MVertex {
   }
 };
 
-static void project(MVertex *v, double mat[3][3])
-{
-  double X = v->x() * mat[0][0] + v->y() * mat[0][1] + v->z() * mat[0][2];
-  double Y = v->x() * mat[1][0] + v->y() * mat[1][1] + v->z() * mat[1][2];
-  double Z = v->x() * mat[2][0] + v->y() * mat[2][1] + v->z() * mat[2][2];
-  v->x() = X;
-  v->y() = Y;
-  v->z() = Z;
-}
-
 PView *GMSH_TriangulatePlugin::execute(PView *v)
 {
   int iView = (int)TriangulateOptions_Number[0].def;
@@ -113,36 +103,28 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
     return v1;
   }
 
+  // get bounding box
+  SBoundingBox3d bbox;
+  for(unsigned int i = 0; i < points.size(); i++) bbox += points[i]->point();
+  double lc = 10 * norm(SVector3(bbox.max(), bbox.min()));
+
   // project points onto plane
   discreteFace *s = new discreteFace
     (GModel::current(), GModel::current()->getNumFaces() + 1);
   s->computeMeanPlane(points);
   double x, y, z, VX[3], VY[3];
   s->getMeanPlaneData(VX, VY, x, y, z);
-  //  printf("mean plane %g %g %g (%g %g %g), (%g %g %g)\n",x,y,z,VX[0],VX[1],VX[2],VY[0],VY[1],VY[2]);
-  SBoundingBox3d bbox;
-  for(unsigned int i = 0; i < points.size(); i++) bbox += points[i]->point();
-  double lc = 10 * norm(SVector3(bbox.max(), bbox.min()));
-
-  std::map<MVertex*,SPoint3> temp;
-  for(unsigned int i = 0; i < points.size(); i++) {    
-    SPoint3 pp (points[i]->x(),points[i]->y(),points[i]->z());
-    temp[points[i]] = pp;
-    double u, v, vec[3] = {points[i]->x() - x, 
-			   points[i]->y() - y, 
-			   points[i]->z() - z};
+  for(unsigned int i = 0; i < points.size(); i++) {
+    double vec[3] = {points[i]->x() - x, points[i]->y() - y, points[i]->z() - z}, u, v;
     prosca(vec, VX, &u);
     prosca(vec, VY, &v);
     points[i]->x() = u;
     points[i]->y() = v;
-    points[i]->z() = 0;
-    //    printf("points[%d] = %g %g %g\n",i,points[i]->x() ,points[i]->y() ,points[i]->z()); 
+    points[i]->z() = 0.;
   }
   delete s;
 
 #if 0 // old code
-
-  // get lc
 
   // build a point record structure for the divide and conquer algorithm
   DocRecord doc(points.size());
@@ -206,21 +188,13 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
 #else // new code
   Msg::Info("Triangulating data points (new code)...");
   std::vector<MTriangle*> tris;
-  for(unsigned int i = 0; i < points.size(); i++) {    
+  for(unsigned int i = 0; i < points.size(); i++) {
     double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
     double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-    double ZZ = 1.e-17 * lc * (double)rand() / (double)RAND_MAX;
     points[i]->x() += XX;
     points[i]->y() += YY;
-    points[i]->z() += ZZ;
   }
-  delaunayMeshIn2D(points, tris, true, 0, true);
-  for(unsigned int i = 0; i < points.size(); i++){
-    SPoint3 pp = temp[points[i]];
-    points[i]->x() = pp.x();
-    points[i]->y() = pp.y();
-    points[i]->z() = pp.z();
-  }
+  delaunayMeshIn2D(points, tris);
 
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
