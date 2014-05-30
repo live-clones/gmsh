@@ -47,7 +47,7 @@
 #include "filterElements.h"
 
 // define this to use the old initial delaunay
-//#define OLD_CODE_DELAUNAY 1
+#define OLD_CODE_DELAUNAY 1
 
 static void computeElementShapes(GFace *gf, double &worst, double &avg,
                                  double &best, int &nT, int &greaterThan)

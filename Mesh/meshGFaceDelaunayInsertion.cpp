@@ -1876,11 +1876,11 @@ void delaunayMeshIn2D(std::vector<MVertex*> &v,
 
   double t1 = Cpu();
 
-  Msg::Info("Delaunay 2D SORTING");
+  //  Msg::Info("Delaunay 2D SORTING");
   if(hilbertSort) SortHilbert(v);
 
   double ta=0,tb=0,tc=0,td=0,T;
-  Msg::Info("Delaunay 2D INSERTING");
+  //  Msg::Info("Delaunay 2D INSERTING");
   for (size_t i=0;i<v.size();i++){
     MVertex *pv = v[i];
 
@@ -1946,7 +1946,7 @@ void delaunayMeshIn2D(std::vector<MVertex*> &v,
   }
 
   double t2 = Cpu();
-  Msg::Info("Delaunay 2D done for %d points : CPU = %g, %d global searches, AVG walk size %g , AVG cavity size %g",
+  Msg::Debug("Delaunay 2D done for %d points : CPU = %g, %d global searches, AVG walk size %g , AVG cavity size %g",
 	    v.size(), t2-t1,NB_GLOBAL_SEARCH,1.+AVG_ITER/v.size(),AVG_CAVSIZE/v.size());
   //  printf("%g %g %g %g --> %g(%g)\n",ta,tb,tc,td,t2-t1,ta+tb+tc+td);
 
