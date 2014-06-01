@@ -780,6 +780,7 @@ static void resetDb(bool runGmshClient)
   // clear the db
   onelab::server::instance()->clear();
 
+  // run Gmsh client for non-python metamodels
   if(runGmshClient && onelab::server::instance()->findClient("Gmsh") !=
      onelab::server::instance()->lastClient())
     onelabUtils::runGmshClient("reset", CTX::instance()->solver.autoMesh);
@@ -890,18 +891,11 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "compute") initializeLoops();
 
-  // check whether we are running a metamodel (.py)
-  std::vector<onelab::number> pn;
-  onelab::server::instance()->get(pn, "IsPyMetamodel");
-  bool isPyMetamodel = (pn.size() && pn[0].getValue());
-
   do{ // enter loop
 
-    // if the client is not a python metamodel, run Gmsh
-    if(!isPyMetamodel){
-      if(onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh))
-        drawContext::global()->draw();
-    }
+    //run Gmsh client for non-python metamodels
+    if(onelabUtils::runGmshClient(action, CTX::instance()->solver.autoMesh))
+      drawContext::global()->draw();
 
     if(action == "compute")
       FlGui::instance()->onelab->checkForErrors("Gmsh");
@@ -2165,40 +2159,3 @@ void flgui_wait_cb(double time)
   FlGui::instance()->wait(time);
 }
 
-/*
-int metamodel_cb(const std::string &name, const std::string &action)
-{
-#if defined(HAVE_ONELAB_METAMODEL)
-  if(FlGui::instance()->onelab->isBusy())
-    FlGui::instance()->onelab->show();
-  else{
-    initializeMetamodel(Msg::GetExecutableName(),Msg::GetOnelabClient(),
-			&flgui_wait_cb,Msg::GetVerbosity());
-
-    onelab::number n("IsMetamodel", 1.);
-    n.setVisible(false);
-    onelab::server::instance()->set(n);
-    std::vector<std::string> split = SplitFileName(name);
-    onelab::string s1("Arguments/WorkingDir",
-		      split[0].size() ? split[0] : GetCurrentWorkdir());
-    s1.setVisible(false);
-    s1.setAttribute("NotInDb","True");
-    onelab::server::instance()->set(s1);
-    onelab::string s2("Arguments/FileName", split[1]);
-    s2.setVisible(false);
-    onelab::server::instance()->set(s2);
-
-    FlGui::instance()->onelab->rebuildSolverList();
-
-    if(FlGui::instance()->available()){
-      onelab_cb(0, (void*)"check");
-    }
-    else
-      metamodel(action);
-  }
-  return 1;
-#else
-  return 0;
-#endif
-}
-*/

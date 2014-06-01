@@ -295,6 +295,11 @@ namespace onelabUtils {
   {
     bool redraw = false;
 
+    // do nothing in case of a python metamodel
+    std::vector<onelab::number> pn;
+    onelab::server::instance()->get(pn, "IsPyMetamodel");
+    if(pn.size() && pn[0].getValue()) return redraw;
+
     onelab::server::citer it = onelab::server::instance()->findClient("Gmsh");
     if(it == onelab::server::instance()->lastClient()) return redraw;
 
