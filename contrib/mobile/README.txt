@@ -1,7 +1,7 @@
 This directory contains the source code for Onelab/Mobile, the mobile version of
 Onelab for iOS and Android devices.
 
-Version: 1.0.2
+Version: 1.0.3
 
 Copyright (C) 2014 Christophe Geuzaine and Maxime Graulich, University of Liege
 

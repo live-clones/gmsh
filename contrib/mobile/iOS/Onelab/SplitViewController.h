@@ -4,8 +4,8 @@
 #import "ModelViewController.h"
 
 @interface SplitViewController : UISplitViewController{
-    ModelViewController *modelViewController;
-    ParametersViewController *parametersViewController;
+  ModelViewController *modelViewController;
+  ParametersViewController *parametersViewController;
 }
 
 @property (nonatomic, retain) NSString *initialModel;
