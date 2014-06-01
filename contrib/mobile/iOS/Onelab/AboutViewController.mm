@@ -19,10 +19,21 @@
   return self;
 }
 
+// this allows to open links in Safari, instead of opening them in the AboutViewController
+-(BOOL) webView:(UIWebView *)inWeb shouldStartLoadWithRequest:(NSURLRequest *)inRequest navigationType:(UIWebViewNavigationType)inType {
+  if ( inType == UIWebViewNavigationTypeLinkClicked ) {
+    [[UIApplication sharedApplication] openURL:[inRequest URL]];
+    return NO;
+  }
+  
+  return YES;
+}
+
 - (void)viewDidLoad
 {
   [super viewDidLoad];
   // Do any additional setup after loading the view.
+  self.aboutView.delegate = self;
   [self.aboutView loadHTMLString:[NSString stringWithFormat:@"<center><h3>Onelab/Mobile</h3>Version %@<p>Copyright (C) 2014 Christophe Geuzaine and Maxime Graulich, University of Li&egrave;ge</p><p>Visit <a href=\"http://onelab.info/\">http://onelab.info/</a> for more information</p><p>This version of Onelab/Mobile contains:</p><h3>Gmsh</h3>Version %s (<i>Build date:</i> %s)<p>Copyright (C) 1997-2014 Christophe Geuzaine and Jean-Fran&ccedil;ois Remacle</p><p><a href=\"http://geuz.org/gmsh/doc/CREDITS.txt\">Credits</a> and <a href=\"http://geuz.org/gmsh/doc/LICENSE.txt\">licensing information</a></p><p><i>Build options:</i> %s</p><p>Visit <a href=\"http://gmsh.info/\">http://gmsh.info</a> for more information</p><h3>GetDP</h3>Version %s (<i>Build date:</i> %s)<p>Copyright (C) 1997-2014 Patrick Dular and Christophe Geuzaine, University of Li&egrave;ge</p><p><a href=\"http://geuz.org/getdp/doc/CREDITS.txt\">Credits</a> and <a href=\"http://geuz.org/getdp/doc/LICENSE.txt\">licensing information</a></p><p><i>Build options:</i> %s</p><p>Visit <a href=\"http://getdp.info\">http://getdp.info</a> for more information</p></center>",
                                            [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"],
                                            GMSH_VERSION,
