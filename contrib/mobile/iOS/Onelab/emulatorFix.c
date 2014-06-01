@@ -27,6 +27,11 @@ FILE *fopen$UNIX2003(const char * filename, const char *mode)
     return fopen(filename, mode);
 }
 
+int fputs$UNIX2003(const char * filename, FILE *file)
+{
+  return fputs(filename, file);
+}
+
 int stat$INODE64(const char * filename, struct stat *buff)
 {
     return stat(filename,buff);
