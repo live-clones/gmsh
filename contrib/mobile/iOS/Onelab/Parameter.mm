@@ -294,6 +294,7 @@
   [slider setMaximumValue:number[0].getMax()];
   [slider setMinimumValue:number[0].getMin()];
   [slider setValue:number[0].getValue()];
+	[label setText:[NSString stringWithFormat:@"%@ %g" ,[NSString stringWithCString:number[0].getShortName().c_str() encoding:[NSString defaultCStringEncoding]], number[0].getValue()]];
 }
 -(void)sliderValueChanged:(UISlider *)sender
 {
