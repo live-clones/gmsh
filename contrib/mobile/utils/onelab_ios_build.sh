@@ -54,7 +54,7 @@ function build_getdp {
   cd -
 }
 
-# build gmsh's framework
+# build gmsh framework
 cd $gmsh_svn && svn up
 build_gmsh armv7
 build_gmsh armv7s
@@ -65,7 +65,7 @@ cd $frameworks_dir/Gmsh.framework/Headers
 cp $gmsh_svn/build_ios_armv7/Headers/gmsh/* .
 ln -s . gmsh
 
-# build getdp's framework
+# build getdp framework
 cd $getdp_svn && svn up
 build_getdp armv7
 build_getdp armv7s
@@ -75,7 +75,7 @@ lipo -create $getdp_svn/build_ios_armv7/Release-iphoneos/libGetdp.a $getdp_svn/b
 cd $frameworks_dir/GetDP.framework/Headers
 cp $getdp_svn/build_ios_armv7/Headers/getdp/* .
 
-#build xcode project
+# create xcode project
 mkdir $gmsh_svn/contrib/mobile/xcode_project
 cd $gmsh_svn/contrib/mobile/xcode_project
 cmake -DCMAKE_INCLUDE_PATH="$frameworks_dir;$getdp_svn" ..
