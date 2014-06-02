@@ -875,7 +875,6 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr, spl
 	  double dotProd = dot(n_up,n_low);
 	  MPrism *prism = new MPrism(v11,v12,v13,v21,v22,v23);
 	  if (dotProd > 0.2 && prism->skewness() > 0.1){
-	    prism->setPartition(l+1);
 	    blPrisms.push_back(prism);
 	    myCol.push_back(prism);
 	  }
@@ -948,7 +947,6 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr, spl
 	  if (l == 0){
 	    MPrism *prism = new MPrism(v12,v21,v22,v13,v24,v23);
 	    // store the layer the element belongs
-	    prism->setPartition(l+1);
 	    myCol.push_back(prism);
 
 	    blPrisms.push_back(prism);
@@ -957,7 +955,6 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr, spl
 	    MHexahedron *hex = new MHexahedron(v11,v12,v13,v14,v21,v22,v23,v24);
 	    // store the layer the element belongs
 	    myCol.push_back(hex);
-	    hex->setPartition(l+1);
 	    blHexes.push_back(hex);
 	  }
 	}

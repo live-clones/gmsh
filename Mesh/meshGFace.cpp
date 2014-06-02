@@ -786,7 +786,6 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 	  if (dv2.length() < 0.03 * dv.length())break;
 	  MQuadrangle *qq = new MQuadrangle(v11,v21,v22,v12);
 	  myCol.push_back(qq);
-	  qq->setPartition(l);
 	  blQuads.push_back(qq);
 	  fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
 		  v11->x(),v11->y(),v11->z(),
@@ -827,7 +826,6 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 	if (v11 != v12){
 	  MQuadrangle *qq = new MQuadrangle(v11,v12,v22,v21);
 	  myCol.push_back(qq);
-	  qq->setPartition(l);
 	  blQuads.push_back(qq);
 	  fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
 		  v11->x(),v11->y(),v11->z(),
@@ -838,7 +836,6 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 	else {
 	  MTriangle *qq = new MTriangle(v,v22,v21);
 	  myCol.push_back(qq);
-	  qq->setPartition(l);
 	  blTris.push_back(qq);
 	  fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
 		  v->x(),v->y(),v->z(),
