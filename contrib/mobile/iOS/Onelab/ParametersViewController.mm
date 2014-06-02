@@ -220,7 +220,7 @@
 {
   if(!_lastRefresh) _lastRefresh = [NSDate date];
   else {
-    if([_lastRefresh timeIntervalSinceNow] >= -1) return;
+    if([_lastRefresh timeIntervalSinceNow] >= -0.1) return;
     _lastRefresh = [NSDate date];
   }
   [self refreshTableView]; // Get the param
@@ -229,7 +229,7 @@
 {
   if(((AppDelegate *)[UIApplication sharedApplication].delegate)->compute) {
     UIAlertView *alert;
-    alert = [[UIAlertView alloc] initWithTitle:@"Can't reset model's parameters" message:@"The compute have to be finished before you can reset model's parameters." delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+    alert = [[UIAlertView alloc] initWithTitle:@"Can't reset model parameters" message:@"The computation has to complete before you can reset the parameters." delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
     [alert show];
     return;
   }
