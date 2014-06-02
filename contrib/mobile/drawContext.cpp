@@ -62,10 +62,7 @@ drawContext::drawContext(float fontFactor, bool retina)
     _translate[i] = 0.;
     _scale[i] = 1.;
   }
-	setQuaternion(0., 0., 0., 1.);
-
-  _fillMesh = false;
-  _gradiant = true;
+  setQuaternion(0., 0., 0., 1.);
   _fontFactor = fontFactor;
   _retina = retina;
 }
@@ -598,7 +595,7 @@ void drawContext::drawView()
   glMatrixMode(GL_MODELVIEW);
   // fill the background
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  if(_gradiant){
+  if(CTX::instance()->bgGradient){
     glPushMatrix();
     glLoadIdentity();
     const GLfloat squareVertices[] = {
@@ -628,7 +625,7 @@ void drawContext::drawView()
   glScalef(_scale[0], _scale[1], _scale[2]);
   glTranslatef(_translate[0], _translate[1], _translate[2]);
 
-	if(CTX::instance()->rotationCenterCg)
+  if(CTX::instance()->rotationCenterCg)
     glTranslatef(CTX::instance()->cg[0],
                  CTX::instance()->cg[1],
                  CTX::instance()->cg[2]);
@@ -637,7 +634,7 @@ void drawContext::drawView()
                  CTX::instance()->rotationCenter[1],
                  CTX::instance()->rotationCenter[2]);
 
-	buildRotationMatrix();
+  buildRotationMatrix();
   glMultMatrixf(_rotatef);
 
   if(CTX::instance()->rotationCenterCg)
@@ -649,7 +646,7 @@ void drawContext::drawView()
                  -CTX::instance()->rotationCenter[1],
                  -CTX::instance()->rotationCenter[2]);
 
-	checkGlError("Initialize position");
+  checkGlError("Initialize position");
 
   glEnable(GL_DEPTH_TEST);
   drawMesh();
@@ -760,7 +757,6 @@ int onelab_cb(std::string action)
   } while(action == "compute" && !onelabStop && (onelabUtils::incrementLoop("3") ||
                                                  onelabUtils::incrementLoop("2") ||
                                                  onelabUtils::incrementLoop("1")));
-
   locked = false;
   return redraw;
 }

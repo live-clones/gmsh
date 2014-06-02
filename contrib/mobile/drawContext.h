@@ -37,10 +37,8 @@ private:
   int _width, _height; // size of OpenGL context in pixel
   float _left, _right, _top, _bottom, _far; // value of "border"
   float _fontFactor;
-  bool _gradiant; // show the background gradiant
-  bool _fillMesh; // fill the Mesh
   bool _retina; // retina display
-	
+
   void OrthofFromGModel(void);
   void drawPView(PView *p);
   void drawVectorArray(PViewOptions *opt, VertexArray *va);
@@ -63,7 +61,6 @@ public:
   void drawMesh();
   void drawPost();
   void drawScale();
-  void useGradiant(bool gradiant=true) {_gradiant = gradiant;}
 };
 
 #endif
