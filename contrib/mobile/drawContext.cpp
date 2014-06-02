@@ -126,8 +126,7 @@ void drawContext::eventHandler(int event, float x, float y)
     break;
   case 1: // finger move (translate)
     // in this case x and y represent the current point
-		printf("currx=%g  prevx=%g\n", _current.wnr[0],_previous.wnr[0]);
-		_translate[0] += (_current.wnr[0] - _previous.wnr[0]);
+    _translate[0] += (_current.wnr[0] - _previous.wnr[0]);
     _translate[1] += (_current.wnr[1] - _previous.wnr[1]);
     _translate[2] = 0.;
     break;
