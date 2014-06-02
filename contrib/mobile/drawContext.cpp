@@ -708,7 +708,8 @@ int onelab_cb(std::string action)
     if(onelabUtils::runGmshClient(action, true))
       redraw = 1;
 
-    if(redraw == 0 && !onelab::server::instance()->getChanged("GetDP"))continue;
+    if(redraw == 0 && !onelab::server::instance()->getChanged("GetDP"))
+      continue;
 
     std::vector<onelab::string> ps;
     onelab::server::instance()->get(ps, "GetDP/1ModelName");

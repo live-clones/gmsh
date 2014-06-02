@@ -19,14 +19,6 @@
 
 #include "movePosition.h"
 
-void drawArray(VertexArray *va, int type, bool useColorArray=false,
-               bool useNormalArray=false);
-int onelab_cb(std::string);
-int animation_next();
-int animation_prev();
-int number_of_animation();
-void set_animation(int step);
-
 class drawContext{
 private:
   float _translate[3], _scale[3]; // current translation and scale
@@ -62,5 +54,13 @@ public:
   void drawPost();
   void drawScale();
 };
+
+void drawArray(VertexArray *va, int type, bool useColorArray=false,
+               bool useNormalArray=false);
+int onelab_cb(std::string);
+int animation_next();
+int animation_prev();
+int number_of_animation();
+void set_animation(int step);
 
 #endif
