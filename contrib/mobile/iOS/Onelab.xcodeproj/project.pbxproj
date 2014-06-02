@@ -9,14 +9,11 @@
 /* Begin PBXBuildFile section */
 		2988FF1E18E59558001435B6 /* libf2cblas.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1C18E59558001435B6 /* libf2cblas.a */; };
 		2988FF1F18E59558001435B6 /* libf2clapack.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1D18E59558001435B6 /* libf2clapack.a */; };
+		29A4AC80193CE6DA0007B5A5 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 29A4AC7F193CE6DA0007B5A5 /* Images.xcassets */; };
 		9C1C10FA17BA5E7D00BFD483 /* OptionsViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C1C10F917BA5E7D00BFD483 /* OptionsViewController.mm */; };
-		9C273C1F18E33A2F0071EC3F /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C273C1E18E33A2F0071EC3F /* Default-568h@2x.png */; };
 		9C2C3A1E187FDF9200E87F78 /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C2C3A1D187FDF9200E87F78 /* libc++.dylib */; };
 		9C2C3A20187FDF9900E87F78 /* libstdc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C2C3A1F187FDF9900E87F78 /* libstdc++.dylib */; };
 		9C6A645817A7C3DB00DEDAFC /* drawString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9C6A645617A7C3DB00DEDAFC /* drawString.cpp */; };
-		9C92862B180D217B00AAABD4 /* icon_app_ipad_retina.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928624180D217A00AAABD4 /* icon_app_ipad_retina.png */; };
-		9C92862C180D217B00AAABD4 /* icon_app_ipad.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928625180D217A00AAABD4 /* icon_app_ipad.png */; };
-		9C92862F180D217B00AAABD4 /* icon_app_iphone_retina.png in Resources */ = {isa = PBXBuildFile; fileRef = 9C928628180D217B00AAABD4 /* icon_app_iphone_retina.png */; };
 		9C95B7F61726C88E00C0CCE2 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C95B7F51726C88E00C0CCE2 /* main.mm */; };
 		9C96083B1712C16300E1D4A0 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96083A1712C16300E1D4A0 /* UIKit.framework */; };
 		9C96083D1712C16300E1D4A0 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C96083C1712C16300E1D4A0 /* Foundation.framework */; };
@@ -54,16 +51,13 @@
 /* Begin PBXFileReference section */
 		2988FF1C18E59558001435B6 /* libf2cblas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2cblas.a; path = ../../frameworks/libf2cblas.a; sourceTree = "<group>"; };
 		2988FF1D18E59558001435B6 /* libf2clapack.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2clapack.a; path = ../../frameworks/libf2clapack.a; sourceTree = "<group>"; };
+		29A4AC7F193CE6DA0007B5A5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		9C1C10F817BA5E7D00BFD483 /* OptionsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OptionsViewController.h; sourceTree = "<group>"; };
 		9C1C10F917BA5E7D00BFD483 /* OptionsViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = OptionsViewController.mm; sourceTree = "<group>"; };
-		9C273C1E18E33A2F0071EC3F /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		9C2C3A1D187FDF9200E87F78 /* libc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libc++.dylib"; path = "usr/lib/libc++.dylib"; sourceTree = SDKROOT; };
 		9C2C3A1F187FDF9900E87F78 /* libstdc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libstdc++.dylib"; path = "usr/lib/libstdc++.dylib"; sourceTree = SDKROOT; };
 		9C6A645617A7C3DB00DEDAFC /* drawString.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawString.cpp; sourceTree = "<group>"; usesTabs = 1; };
 		9C6A645717A7C3DB00DEDAFC /* drawString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drawString.h; sourceTree = "<group>"; usesTabs = 1; };
-		9C928624180D217A00AAABD4 /* icon_app_ipad_retina.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_app_ipad_retina.png; sourceTree = "<group>"; };
-		9C928625180D217A00AAABD4 /* icon_app_ipad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_app_ipad.png; sourceTree = "<group>"; };
-		9C928628180D217B00AAABD4 /* icon_app_iphone_retina.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_app_iphone_retina.png; sourceTree = "<group>"; };
 		9C95B7F51726C88E00C0CCE2 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		9C9608361712C16300E1D4A0 /* Onelab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Onelab.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9C96083A1712C16300E1D4A0 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
@@ -146,9 +140,6 @@
 			children = (
 				9CB1CD9C18DC57DE00110882 /* icon_translate.png */,
 				9CB1CD9618DB2D8700110882 /* icon_rotate.png */,
-				9C928624180D217A00AAABD4 /* icon_app_ipad_retina.png */,
-				9C928625180D217A00AAABD4 /* icon_app_ipad.png */,
-				9C928628180D217B00AAABD4 /* icon_app_iphone_retina.png */,
 			);
 			name = icons;
 			sourceTree = "<group>";
@@ -234,6 +225,7 @@
 				9C9608721712C47200E1D4A0 /* EAGLView.h */,
 				9C9608731712C47200E1D4A0 /* EAGLView.mm */,
 				9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */,
+				29A4AC7F193CE6DA0007B5A5 /* Images.xcassets */,
 				9CF1C1F017AA8A46002CD2E3 /* Supporting Files */,
 			);
 			path = Onelab;
@@ -242,7 +234,6 @@
 		9CF1C1F017AA8A46002CD2E3 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				9C273C1E18E33A2F0071EC3F /* Default-568h@2x.png */,
 				9CF1C1F117AA8A7D002CD2E3 /* Onelab-Prefix.pch */,
 				9C95B7F51726C88E00C0CCE2 /* main.mm */,
 				9CF1C1EE17AA8997002CD2E3 /* Onelab-Info.plist */,
@@ -308,13 +299,10 @@
 			files = (
 				9C9608AC1712EF0900E1D4A0 /* iPadStoryboard.storyboard in Resources */,
 				9CB1CD9818DB2D8700110882 /* icon_rotate.png in Resources */,
-				9C273C1F18E33A2F0071EC3F /* Default-568h@2x.png in Resources */,
 				9CC85C021790286C00F241C4 /* files in Resources */,
+				29A4AC80193CE6DA0007B5A5 /* Images.xcassets in Resources */,
 				9CB1CD9D18DC57DE00110882 /* icon_translate.png in Resources */,
-				9C92862F180D217B00AAABD4 /* icon_app_iphone_retina.png in Resources */,
-				9C92862C180D217B00AAABD4 /* icon_app_ipad.png in Resources */,
 				9CE1A65A17B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard in Resources */,
-				9C92862B180D217B00AAABD4 /* icon_app_ipad_retina.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -449,6 +437,8 @@
 		9C96086D1712C16400E1D4A0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
@@ -476,6 +466,8 @@
 		9C96086E1712C16400E1D4A0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
