@@ -39,12 +39,13 @@ private:
   float _fontFactor;
   bool _gradiant; // show the background gradiant
   bool _fillMesh; // fill the Mesh
-
+  bool _retina; // retina display
+	
   void OrthofFromGModel(void);
   void drawPView(PView *p);
   void drawVectorArray(PViewOptions *opt, VertexArray *va);
 public:
-  drawContext(float fontFactor=1.);
+  drawContext(float fontFactor=1., bool retina=false);
   ~drawContext(){}
   void load(std::string filename);
   void eventHandler(int event, float x=0, float y=0);

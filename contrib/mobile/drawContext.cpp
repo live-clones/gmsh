@@ -53,7 +53,7 @@
 static bool locked = false;
 static bool onelabStop = false;
 
-drawContext::drawContext(float fontFactor)
+drawContext::drawContext(float fontFactor, bool retina)
 {
   GmshInitialize();
   GmshSetOption("General", "Terminal", 1.0);
@@ -67,6 +67,7 @@ drawContext::drawContext(float fontFactor)
   _fillMesh = false;
   _gradiant = true;
   _fontFactor = fontFactor;
+  _retina = retina;
 }
 
 static void checkGlError(const char* op)
@@ -104,8 +105,14 @@ void drawContext::load(std::string filename)
 
 void drawContext::eventHandler(int event, float x, float y)
 {
+  int width = _width, height = _height;
+  if(_retina){ // x,y for retina are still the same as for non-retina
+    width /= 2;
+    height /= 2;
+  }
+
   _current.set(_scale, _translate, _right, _left,
-               _bottom, _top, _width, _height, x, y);
+               _bottom, _top, width, height, x, y);
   double xx[3] = {1.,0.,0.};
   double yy[3] = {0.,1.,0.};
   double q[4];
@@ -113,12 +120,13 @@ void drawContext::eventHandler(int event, float x, float y)
   case 0: // finger(s) press the screen
     // in this case x and y represent the start point
     _start.set(_scale, _translate, _right, _left,
-               _bottom, _top, _width, _height, x, y);
+               _bottom, _top, width, height, x, y);
     _previous.set(_scale, _translate, _right, _left,
-                  _bottom, _top, _width, _height, x, y);
+                  _bottom, _top, width, height, x, y);
     break;
   case 1: // finger move (translate)
     // in this case x and y represent the current point
+		printf("currx=%g  prevx=%g\n", _current.wnr[0],_previous.wnr[0]);
 		_translate[0] += (_current.wnr[0] - _previous.wnr[0]);
     _translate[1] += (_current.wnr[1] - _previous.wnr[1]);
     _translate[2] = 0.;
@@ -130,10 +138,10 @@ void drawContext::eventHandler(int event, float x, float y)
     _start.recenter(_scale, _translate);
     break;
   case 3: // fingers move (rotate)
-    addQuaternion((2. * _previous.win[0] - _width) / _width,
-                  (_height - 2. * _previous.win[1]) / _height,
-                  (2. * _current.win[0] - _width) / _width,
-                  (_height - 2. * _current.win[1]) / _height);
+    addQuaternion((2. * _previous.win[0] - width) / width,
+                  (height - 2. * _previous.win[1]) / height,
+                  (2. * _current.win[0] - width) / width,
+                  (height - 2. * _current.win[1]) / height);
     break;
   case 4: // release the finger(s)
     // Do nothing ?
@@ -158,7 +166,7 @@ void drawContext::eventHandler(int event, float x, float y)
     break;
   }
   _previous.set(_scale, _translate, _right, _left,
-                _bottom, _top, _width, _height, x, y);
+                _bottom, _top, width, height, x, y);
 }
 
 void drawContext::setQuaternion(double q0, double q1, double q2, double q3)
@@ -185,7 +193,6 @@ void drawContext::buildRotationMatrix()
 
 void drawContext::OrthofFromGModel()
 {
-#if 1 // new version
   double Va = (double)_height / (double)_width;
   double Wa = (CTX::instance()->max[1] - CTX::instance()->min[1]) /
     (CTX::instance()->max[0] - CTX::instance()->min[0]);
@@ -234,48 +241,6 @@ void drawContext::OrthofFromGModel()
   _top = vymax;
   _bottom = vymin;
   _far = clip_far;
-
-#else
-  SBoundingBox3d bb = GModel::current()->bounds();
-  double ratio = (double)(_width ? _width : 1.) /
-    (double)(_height ? _height : 1.);
-  double bbRation = (bb.max().x() - bb.min().x()) / (bb.max().y() - bb.min().y());
-  double xmin = -ratio, xmax = ratio, ymin = -1., ymax = 1.;
-  if(bbRation < 1) {
-    xmin = bb.min().y() * ratio + bb.max().x() + bb.min().x();
-    xmax = bb.max().y() * ratio + bb.max().x() + bb.min().x();
-    ymin = bb.min().y() + bb.max().y() + bb.min().y();
-    ymax = bb.max().y() + bb.max().y() + bb.min().y();
-  }
-  else {
-    xmin = bb.min().x() + bb.max().x() + bb.min().x();
-    xmax = bb.max().x() + bb.max().x() + bb.min().x();
-    ymin = bb.min().x() / ratio + bb.max().y() + bb.min().y();
-    ymax = bb.max().x() / ratio + bb.max().y() + bb.min().y();
-  }
-  xmax += (xmax - xmin) / 5.;
-  xmin -= (xmax - xmin) / 5.;
-  ymax += (ymax - ymin) / 5.;
-  ymin -= (ymax - ymin) / 5.;
-
-  // clipping
-  double zmax = std::max(std::max(std::max(fabs(bb.min().z()), fabs(bb.max().z())),
-                                  std::max(fabs(bb.min().x()), fabs(bb.max().x()))),
-                         std::max(fabs(bb.min().y()), fabs(bb.max().y())));
-  double clip = zmax * 1.5;
-
-  GLint matrixMode;
-  glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  _left = (xmin != 0 || xmax != 0)? xmin : -ratio;
-  _right = (xmin != 0 || xmax != 0)? xmax : ratio;
-  _top = (xmin != 0 || xmax != 0)? ymax : 1.0;
-  _bottom = (xmin != 0 || xmax != 0)? ymin : -1.0;
-  _far = -clip;
-  glOrthof(_left, _right, _bottom, _top, -clip, clip);
-  glMatrixMode(matrixMode);
-#endif
 }
 
 void drawContext::initView(int w, int h)
