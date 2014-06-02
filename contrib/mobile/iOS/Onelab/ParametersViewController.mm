@@ -194,7 +194,9 @@
       onelab::server::instance()->get(number,[[p getName] UTF8String]);
       std::vector<onelab::string> string;
       onelab::server::instance()->get(string,[[p getName] UTF8String]);
-      if((number.size() < 1 && string.size() < 1) || (number.size() > 0 && !number[0].getVisible()) || (string.size() > 0 && !string[0].getVisible())){
+      if((number.size() < 1 && string.size() < 1) ||
+         (number.size() > 0 && !number[0].getVisible()) ||
+         (string.size() > 0 && !string[0].getVisible())){
         [section removeObjectAtIndex:iparameter];
         [self removeParemeterNumberAtIndex:[NSIndexPath indexPathForRow:iparameter inSection:iSection]];
       }

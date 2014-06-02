@@ -48,15 +48,14 @@
 -(id) initWithString:(onelab::string)string
 {
   self = [super init];
-  if(self)
-    {
-      label.alpha = (string.getReadOnly())? 0.439216f : 1.0f;
-      [label setText:[NSString stringWithCString:string.getShortName().c_str() encoding:[NSString defaultCStringEncoding]]];
-      name = [NSString stringWithCString:string.getName().c_str() encoding:[NSString defaultCStringEncoding]];
-      button = [UIButton buttonWithType:UIButtonTypeSystem];
-      [button addTarget:self action:@selector(selectValue) forControlEvents:UIControlEventTouchDown];
-      [button setTitle:[NSString stringWithFormat:@"%s", string.getValue().c_str()] forState:UIControlStateNormal];
-    }
+  if(self){
+    label.alpha = (string.getReadOnly())? 0.439216f : 1.0f;
+    [label setText:[NSString stringWithCString:string.getShortName().c_str() encoding:[NSString defaultCStringEncoding]]];
+    name = [NSString stringWithCString:string.getName().c_str() encoding:[NSString defaultCStringEncoding]];
+    button = [UIButton buttonWithType:UIButtonTypeSystem];
+    [button addTarget:self action:@selector(selectValue) forControlEvents:UIControlEventTouchDown];
+    [button setTitle:[NSString stringWithFormat:@"%s", string.getValue().c_str()] forState:UIControlStateNormal];
+  }
   return self;
 }
 -(void)selectValue
