@@ -1,21 +1,10 @@
 #ifndef _DRAW_GMODEL_H_
 #define _DRAW_GMODEL_H_
 
-#ifndef __cplusplus
-#error You need a Cpp compiler!
-#endif
-
-#if !defined(BUILD_ANDROID)
-#define BUILD_IOS 1
-#endif
-
 #include <string>
 
-#if defined(BUILD_IOS)
-#include <Gmsh/PView.h>
-#include <Gmsh/PViewOptions.h>
-#include <Gmsh/Context.h>
-#endif
+#include <gmsh/PView.h>
+#include <gmsh/PViewOptions.h>
 
 #include "movePosition.h"
 

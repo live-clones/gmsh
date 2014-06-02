@@ -1,32 +1,4 @@
-#if !defined(BUILD_ANDROID)
-#define BUILD_IOS 1
-#endif
-
 #include <map>
-
-#if defined(BUILD_IOS)
-#include <OpenGLES/ES1/gl.h>
-#include <OpenGLES/ES1/glext.h>
-
-#include <Gmsh/Gmsh.h>
-#include <Gmsh/OpenFile.h>
-#include <Gmsh/GModel.h>
-#include <Gmsh/MElement.h>
-#include <Gmsh/VertexArray.h>
-#include <Gmsh/onelab.h>
-#include <Gmsh/onelabUtils.h>
-#include <Gmsh/PView.h>
-#include <Gmsh/PViewOptions.h>
-#include <Gmsh/PViewData.h>
-#include <Gmsh/Context.h>
-#include <Gmsh/StringUtils.h>
-
-#include <GetDP/GetDP.h>
-#endif
-
-#if defined(BUILD_ANDROID)
-#include <GLES/gl.h>
-#include <GLES/glext.h>
 
 #include <gmsh/Gmsh.h>
 #include <gmsh/OpenFile.h>
@@ -40,10 +12,15 @@
 #include <gmsh/PViewData.h>
 #include <gmsh/Context.h>
 #include <gmsh/StringUtils.h>
-
 #include <getdp/GetDP.h>
 
+#if defined(BUILD_ANDROID)
+#include <GLES/gl.h>
+#include <GLES/glext.h>
 #include "androidGModel.h"
+#else // iOS
+#include <OpenGLES/ES1/gl.h>
+#include <OpenGLES/ES1/glext.h>
 #endif
 
 #include "drawContext.h"

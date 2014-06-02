@@ -1,15 +1,9 @@
-#if !defined(BUILD_ANDROID)
-#define BUILD_IOS 1
-#endif
-
-#if defined(BUILD_IOS)
-#include <OpenGLES/ES1/gl.h>
-#include <OpenGLES/ES1/glext.h>
-#endif
-
 #if defined(BUILD_ANDROID)
 #include <GLES/gl.h>
 #include <GLES/glext.h>
+#else
+#include <OpenGLES/ES1/gl.h>
+#include <OpenGLES/ES1/glext.h>
 #endif
 
 #include "drawString.h"

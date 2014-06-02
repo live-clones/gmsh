@@ -1,22 +1,10 @@
-#if !defined(BUILD_ANDROID)
-#define BUILD_IOS 1
-#endif
-
-#if defined(BUILD_IOS)
-#include <OpenGLES/ES1/gl.h>
-#include <OpenGLES/ES1/glext.h>
-
-#include <Gmsh/Gmsh.h>
-#include <Gmsh/GModel.h>
-#include <Gmsh/GEdgeCompound.h>
-#include <Gmsh/GFaceCompound.h>
-#include <Gmsh/PView.h>
-#include <Gmsh/PViewData.h>
-#endif
-
 #if defined(BUILD_ANDROID)
 #include <GLES/gl.h>
 #include <GLES/glext.h>
+#else
+#include <OpenGLES/ES1/gl.h>
+#include <OpenGLES/ES1/glext.h>
+#endif
 
 #include <gmsh/Gmsh.h>
 #include <gmsh/GModel.h>
@@ -25,7 +13,6 @@
 #include <gmsh/PView.h>
 #include <gmsh/PViewData.h>
 #include <gmsh/Context.h>
-#endif
 
 #include "drawContext.h"
 
