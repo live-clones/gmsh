@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2907CCEC193DE6560011341A /* icon_onelab.png in Resources */ = {isa = PBXBuildFile; fileRef = 2907CCEB193DE6560011341A /* icon_onelab.png */; };
 		2988FF1E18E59558001435B6 /* libf2cblas.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1C18E59558001435B6 /* libf2cblas.a */; };
 		2988FF1F18E59558001435B6 /* libf2clapack.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1D18E59558001435B6 /* libf2clapack.a */; };
 		29A4AC80193CE6DA0007B5A5 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 29A4AC7F193CE6DA0007B5A5 /* Images.xcassets */; };
@@ -49,6 +50,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2907CCEB193DE6560011341A /* icon_onelab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_onelab.png; sourceTree = "<group>"; };
 		2988FF1C18E59558001435B6 /* libf2cblas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2cblas.a; path = ../../frameworks/libf2cblas.a; sourceTree = "<group>"; };
 		2988FF1D18E59558001435B6 /* libf2clapack.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2clapack.a; path = ../../frameworks/libf2clapack.a; sourceTree = "<group>"; };
 		29A4AC7F193CE6DA0007B5A5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
@@ -138,6 +140,7 @@
 		9C928621180D216500AAABD4 /* icons */ = {
 			isa = PBXGroup;
 			children = (
+				2907CCEB193DE6560011341A /* icon_onelab.png */,
 				9CB1CD9C18DC57DE00110882 /* icon_translate.png */,
 				9CB1CD9618DB2D8700110882 /* icon_rotate.png */,
 			);
@@ -301,6 +304,7 @@
 				9CB1CD9818DB2D8700110882 /* icon_rotate.png in Resources */,
 				9CC85C021790286C00F241C4 /* files in Resources */,
 				29A4AC80193CE6DA0007B5A5 /* Images.xcassets in Resources */,
+				2907CCEC193DE6560011341A /* icon_onelab.png in Resources */,
 				9CB1CD9D18DC57DE00110882 /* icon_translate.png in Resources */,
 				9CE1A65A17B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard in Resources */,
 			);

@@ -31,6 +31,10 @@
   _sections = [[NSMutableArray alloc] init];
   _sectionstitle = [[NSMutableArray alloc] init];
 
+  UILongPressGestureRecognizer *lpgr = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
+  lpgr.minimumPressDuration = 1.0;
+  [self.tableView addGestureRecognizer:lpgr];
+
   [self.navigationController setToolbarHidden:NO];
   control = [[UISegmentedControl alloc] initWithItems:[[NSArray alloc] initWithObjects:@"Model", @"Display", nil]];
   UIBarButtonItem *controlBtn = [[UIBarButtonItem alloc] initWithCustomView:control];
@@ -52,6 +56,36 @@
 -(void)backButtonPressed:(id)sender
 {
   [self.navigationController popViewControllerAnimated:YES];
+}
+
+-(void)handleLongPress:(UILongPressGestureRecognizer *)sender
+{
+  CGPoint p = [sender locationInView:self.tableView];
+  if(sender.state == UIGestureRecognizerStateCancelled) return;
+  NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:p];
+  if(!indexPath) return;
+  NSMutableArray* section = [_sections objectAtIndex:indexPath.section];
+	if(!section) return;
+	Parameter * parameter = [section objectAtIndex:indexPath.row];
+	if(!parameter) return;
+	NSString *name = [parameter getName];
+	NSLog(@"Long press on %@", name);
+
+	std::vector<onelab::number> number;
+  onelab::server::instance()->get(number,[name UTF8String]);
+  if(number.size()){
+		NSLog(@" -- number param with value %g", number[0].getValue());
+		/*
+		UIActionSheet *actionSheet =
+		[[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open this model", @"More information", nil];
+		actionSheet.tag = indexPath.row;
+		[actionSheet showInView:self.view];
+*/
+		//double selected = number[0].getChoices()[buttonIndex];
+		//number[0].setValue(selected);
+		//onelab::server::instance()->set(number[0]);
+		[parameter refresh];
+	}
 }
 
 - (void)indexDidChangeForSegmentedControl:(id)sender
@@ -148,7 +182,7 @@
       }
     }
     if(found) continue; // the parameter is in the tableView
-    // The section have to be create
+    // The section has to be created
     NSMutableArray *newSection = [[NSMutableArray alloc] init];
     [self addSection:newSection withTitle:sectiontitle withParameterNumber:number[i]];
   }
