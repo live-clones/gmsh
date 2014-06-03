@@ -189,6 +189,7 @@ class PViewData {
   virtual bool hasPartition(int step, int part){ return false; }
   virtual bool hasMultipleMeshes(){ return false; }
   virtual bool hasModel(GModel *model, int step=-1){ return false; }
+  virtual bool isNodeData(){ return false; }
 
   // true if data is given at Gauss points (instead of vertices)
   virtual bool useGaussPoints(){ return false; }

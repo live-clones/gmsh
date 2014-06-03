@@ -61,13 +61,15 @@ PView *GMSH_ModulusPhasePlugin::execute(PView *v)
     return v1;
   }
 
-  // tag all the nodes with "0" (the default tag)
-  for(int step = 0; step < data1->getNumTimeSteps(); step++){
-    for(int ent = 0; ent < data1->getNumEntities(step); ent++){
-      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
-        if(data1->skipElement(step, ent, ele)) continue;
-        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
-          data1->tagNode(step, ent, ele, nod, 0);
+  if(data1->isNodeData()){
+    // tag all the nodes with "0" (the default tag)
+    for(int step = 0; step < data1->getNumTimeSteps(); step++){
+      for(int ent = 0; ent < data1->getNumEntities(step); ent++){
+        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+          if(data1->skipElement(step, ent, ele)) continue;
+          for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
+            data1->tagNode(step, ent, ele, nod, 0);
+        }
       }
     }
   }
@@ -79,7 +81,7 @@ PView *GMSH_ModulusPhasePlugin::execute(PView *v)
       for(int nod = 0; nod < data1->getNumNodes(rIndex, ent, ele); nod++){
         double x, y, z;
         int tag = data1->getNode(rIndex, ent, ele, nod, x, y, z);
-        if(tag) continue;
+        if(data1->isNodeData() && tag) continue;
         for(int comp = 0; comp < data1->getNumComponents(rIndex, ent, ele); comp++){
           double vr, vi;
           data1->getValue(rIndex, ent, ele, nod, comp, vr);
@@ -88,8 +90,10 @@ PView *GMSH_ModulusPhasePlugin::execute(PView *v)
           double phase = atan2(vi, vr);
           data1->setValue(rIndex, ent, ele, nod, comp, modulus);
           data1->setValue(iIndex, ent, ele, nod, comp, phase);
-          data1->tagNode(rIndex, ent, ele, nod, 1);
-          data1->tagNode(iIndex, ent, ele, nod, 1);
+          if(data1->isNodeData()){
+            data1->tagNode(rIndex, ent, ele, nod, 1);
+            data1->tagNode(iIndex, ent, ele, nod, 1);
+          }
         }
       }
     }

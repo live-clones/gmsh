@@ -68,14 +68,14 @@ PView *GMSH_FieldFromAmplitudePhasePlugin::execute(PView *v)
   int phiView = (int)FieldFromAmplitudePhaseOptions_Number[2].def;
   std::string fileName = FieldFromAmplitudePhaseOptions_String[0].def;
 
-  std::string name_model("") ; 
+  std::string name_model("") ;
 
   if(fileName==""){
-    Msg::Info("Could not find mesh file for interpolating U=A*exp(j*k*phi)." 
+    Msg::Info("Could not find mesh file for interpolating U=A*exp(j*k*phi)."
                " Trying to use current model mesh, instead.") ;
-    name_model = GModel::current()->getName() ; 
+    name_model = GModel::current()->getName() ;
     fileName = name_model + ".msh" ;
-  } 
+  }
 
   PView *va = getView(aView, v);
   if(!va) return v;
@@ -91,33 +91,33 @@ PView *GMSH_FieldFromAmplitudePhasePlugin::execute(PView *v)
     return v;
   }
   PViewData *phiData = vphi->getData();
-  
+
   if(aData->hasMultipleMeshes() || phiData->hasMultipleMeshes()){
     Msg::Error("FieldFromAmplitudePhase plugin cannot be run on multi-mesh views");
     return v;
   }
 
   OctreePost *oA = 0, *oPhi = 0 ;
-  oA = new OctreePost(va); 
-  oPhi = new OctreePost(vphi); 
+  oA = new OctreePost(va);
+  oPhi = new OctreePost(vphi);
 
   GModel::current()->setVisibility(0);
-  GModel *umodel = new GModel ;  
-  umodel->readMSH(fileName) ; 
+  GModel *umodel = new GModel ;
+  umodel->readMSH(fileName) ;
   std::vector<GEntity*> _entities ;
-  umodel->getEntities(_entities) ;    
-     
+  umodel->getEntities(_entities) ;
+
   std::set<MVertex*> ve;
   std::map<int, std::vector<double> > dataR ;
   std::map<int, std::vector<double> > dataI ;
 
   for(unsigned int ent = 0; ent < _entities.size(); ent++)
-    for(unsigned int ele = 0; ele < _entities[ent]->getNumMeshElements(); ele++){ 
-      MElement *e = _entities[ent]->getMeshElement(ele);	
+    for(unsigned int ele = 0; ele < _entities[ent]->getNumMeshElements(); ele++){
+      MElement *e = _entities[ent]->getMeshElement(ele);
       for(int nod = 0; nod < e->getNumVertices() ; nod++)
         ve.insert(e->getVertex(nod));
     }
-  
+
   for (std::set<MVertex*>::iterator it = ve.begin(); it != ve.end(); ++it){
     double phi, ar, ai ;
     std::vector<double> uR(1) ;
@@ -125,18 +125,18 @@ PView *GMSH_FieldFromAmplitudePhasePlugin::execute(PView *v)
     oPhi->searchScalar((*it)->x(), (*it)->y(), (*it)->z(), &phi, 0);
     oA->searchScalar((*it)->x(), (*it)->y(), (*it)->z(), &ar, 0);
     oA->searchScalar((*it)->x(), (*it)->y(), (*it)->z(), &ai, 1);
-    
+
     uR[0] = ar * cos(k*phi) - ai * sin(k*phi) ;
     uI[0] = ar * sin(k*phi) + ai* cos(k*phi) ;
-    
-    dataR[(*it)->getNum()] = uR ;   
-    dataI[(*it)->getNum()] = uI ;   
+
+    dataR[(*it)->getNum()] = uR ;
+    dataI[(*it)->getNum()] = uI ;
   }
-  
+
   delete oA ;
   delete oPhi;
-    
-  PView *vu = new PView("FieldFromAPhi","NodeData", umodel, dataR, 0.0, 1) ;
+
+  PView *vu = new PView("FieldFromAPhi", "NodeData", umodel, dataR, 0.0, 1) ;
   vu->addStep(umodel, dataI, 1);
 
   if(name_model.empty())

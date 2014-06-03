@@ -157,12 +157,14 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
     double time = data1->getTime(step);
     int step2 = (otherTimeStep < 0) ? step : otherTimeStep;
 
-    // tag all the nodes with "0" (the default tag)
-    for(int ent = 0; ent < data1->getNumEntities(step); ent++){
-      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
-        if(data1->skipElement(step, ent, ele)) continue;
-        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
-          data1->tagNode(step, ent, ele, nod, 0);
+    if(data1->isNodeData()){
+      // tag all the nodes with "0" (the default tag)
+      for(int ent = 0; ent < data1->getNumEntities(step); ent++){
+        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+          if(data1->skipElement(step, ent, ele)) continue;
+          for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
+            data1->tagNode(step, ent, ele, nod, 0);
+        }
       }
     }
 
@@ -172,12 +174,14 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
         int numComp = data1->getNumComponents(step, ent, ele);
         int numComp2 = octree ? 9 : data2->getNumComponents(step2, ent, ele);
         int numNodes = data1->getNumNodes(step, ent, ele);
-        std::vector<int> tag(numNodes);
         std::vector<double> x(numNodes), y(numNodes), z(numNodes);
-        for(int nod = 0; nod < numNodes; nod++)
-          tag[nod] = data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
+        std::vector<int> tag(numNodes, 0.);
+        if(data1->isNodeData()){
+          for(int nod = 0; nod < numNodes; nod++)
+            tag[nod] = data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
+        }
         for(int nod = 0; nod < numNodes; nod++){
-          if(tag[nod]) continue; // node has already been modified
+          if(data1->isNodeData() && tag[nod]) continue; // node has already been modified
           std::vector<double> v(std::max(9, numComp), 0.);
           for(int comp = 0; comp < numComp; comp++)
             data1->getValue(step, ent, ele, nod, comp, v[comp]);
@@ -204,7 +208,7 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
             for(int i = 0; i < 9; i++) values[16 + i] = w[i];
             if(f.eval(values, res))
               data1->setValue(step, ent, ele, nod, comp, res[0]);
-            data1->tagNode(step, ent, ele, nod, 1);
+            if(data1->isNodeData()) data1->tagNode(step, ent, ele, nod, 1);
           }
         }
       }

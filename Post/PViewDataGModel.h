@@ -227,6 +227,7 @@ class PViewDataGModel : public PViewData {
   bool hasPartition(int step, int part);
   bool hasMultipleMeshes();
   bool hasModel(GModel *model, int step=-1);
+  bool isNodeData(){ return _type == NodeData; }
   bool useGaussPoints(){ return _type == GaussPointData; }
   GModel* getModel(int step){ return _steps[step]->getModel(); }
   GEntity *getEntity(int step, int ent);

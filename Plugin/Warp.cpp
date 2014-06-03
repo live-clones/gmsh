@@ -96,13 +96,15 @@ PView *GMSH_WarpPlugin::execute(PView *v)
     }
   }
 
-  // tag all the nodes with "0" (the default tag)
-  for(int step = 0; step < data1->getNumTimeSteps(); step++){
-    for(int ent = 0; ent < data1->getNumEntities(step); ent++){
-      for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
-        if(data1->skipElement(step, ent, ele)) continue;
-        for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
-          data1->tagNode(step, ent, ele, nod, 0);
+  if(data1->isNodeData()){
+    // tag all the nodes with "0" (the default tag)
+    for(int step = 0; step < data1->getNumTimeSteps(); step++){
+      for(int ent = 0; ent < data1->getNumEntities(step); ent++){
+        for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+          if(data1->skipElement(step, ent, ele)) continue;
+          for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++)
+            data1->tagNode(step, ent, ele, nod, 0);
+        }
       }
     }
   }
@@ -115,14 +117,16 @@ PView *GMSH_WarpPlugin::execute(PView *v)
         int numNodes = data1->getNumNodes(step, ent, ele);
         if(numNodes < 2) continue;
         double x[8], y[8], z[8], n[3] = {0., 0., 0.};
-        int tag[8];
-        for(int nod = 0; nod < numNodes; nod++)
-          tag[nod] = data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
+        std::vector<int> tag(8, 0);
+        if(data1->isNodeData()){
+          for(int nod = 0; nod < numNodes; nod++)
+            tag[nod] = data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
+        }
         int dim = data1->getDimension(step, ent, ele);
         if(normals && dim == 2)
           normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], n);
         for(int nod = 0; nod < numNodes; nod++){
-          if(tag[nod]) continue; // already transformed
+          if(data1->isNodeData() && tag[nod]) continue; // already transformed
           double mult = 1., val[3] = {n[0], n[1], n[2]};
           if(normals){
             if(dim == 2){
@@ -139,7 +143,7 @@ PView *GMSH_WarpPlugin::execute(PView *v)
           y[nod] += factor * mult * val[1];
           z[nod] += factor * mult * val[2];
           data1->setNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
-          data1->tagNode(step, ent, ele, nod, 1);
+          if(data1->isNodeData()) data1->tagNode(step, ent, ele, nod, 1);
         }
       }
     }
