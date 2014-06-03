@@ -362,7 +362,7 @@ namespace gmm {
 				const double exact[], const char* Title,
 				const char* Key, const char* Type, 
 				const char* Ptrfmt, const char* Indfmt,
-				const char* Valfmt, const char* Rhsfmt,
+				char* Valfmt, char* Rhsfmt,
 				const char* Rhstype, int shift) {
     /************************************************************************/
     /*  The writeHB function opens the named file and writes the specified  */
