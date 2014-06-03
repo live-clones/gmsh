@@ -72,22 +72,28 @@
 	NSLog(@"Long press on %@", name);
 
 	std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
-  if(number.size()){
+	onelab::server::instance()->get(number,[name UTF8String]);
+	if(number.size() && !number[0].getReadOnly()){
 		NSLog(@" -- number param with value %g", number[0].getValue());
-		/*
-		UIActionSheet *actionSheet =
-		[[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open this model", @"More information", nil];
-		actionSheet.tag = indexPath.row;
-		[actionSheet showInView:self.view];
-*/
-		//double selected = number[0].getChoices()[buttonIndex];
-		//number[0].setValue(selected);
-		//onelab::server::instance()->set(number[0]);
+		UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:@"Manually edit %s", number[0].getShortName().c_str()] message:name delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Ok", nil];
+		alertView.alertViewStyle = UIAlertViewStylePlainTextInput;
+		[alertView textFieldAtIndex:0].text = [NSString stringWithFormat:@"%g", number[0].getValue()];
+		[alertView show];
 		[parameter refresh];
 	}
 }
-
+-(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    NSLog(@"%@ -> %@", [alertView message], [alertView textFieldAtIndex:0].text);
+	std::vector<onelab::number> number;
+	onelab::server::instance()->get(number,[[alertView message] UTF8String]);
+	if(number.size()){
+		double value = [[alertView textFieldAtIndex:0].text doubleValue];
+		number[0].setValue(value);
+		onelab::server::instance()->set(number[0]);
+		[self refreshTableView];
+	}
+}
 - (void)indexDidChangeForSegmentedControl:(id)sender
 {
   OptionsViewController *optionsViewController = [[OptionsViewController alloc] init];
