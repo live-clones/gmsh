@@ -117,11 +117,9 @@ PView *GMSH_WarpPlugin::execute(PView *v)
         int numNodes = data1->getNumNodes(step, ent, ele);
         if(numNodes < 2) continue;
         double x[8], y[8], z[8], n[3] = {0., 0., 0.};
-        std::vector<int> tag(8, 0);
-        if(data1->isNodeData()){
-          for(int nod = 0; nod < numNodes; nod++)
-            tag[nod] = data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
-        }
+        int tag[8];
+        for(int nod = 0; nod < numNodes; nod++)
+          tag[nod] = data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
         int dim = data1->getDimension(step, ent, ele);
         if(normals && dim == 2)
           normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], n);

@@ -175,11 +175,9 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
         int numComp2 = octree ? 9 : data2->getNumComponents(step2, ent, ele);
         int numNodes = data1->getNumNodes(step, ent, ele);
         std::vector<double> x(numNodes), y(numNodes), z(numNodes);
-        std::vector<int> tag(numNodes, 0.);
-        if(data1->isNodeData()){
-          for(int nod = 0; nod < numNodes; nod++)
-            tag[nod] = data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
-        }
+        std::vector<int> tag(numNodes);
+        for(int nod = 0; nod < numNodes; nod++)
+          tag[nod] = data1->getNode(step, ent, ele, nod, x[nod], y[nod], z[nod]);
         for(int nod = 0; nod < numNodes; nod++){
           if(data1->isNodeData() && tag[nod]) continue; // node has already been modified
           std::vector<double> v(std::max(9, numComp), 0.);
