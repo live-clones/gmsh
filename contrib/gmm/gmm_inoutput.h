@@ -50,10 +50,10 @@ namespace gmm {
   /*************************************************************************/
 
   // Fri Aug 15 16:29:47 EDT 1997
-  // 
+  //
   //                      Harwell-Boeing File I/O in C
   //                               V. 1.0
-  // 
+  //
   //          National Institute of Standards and Technology, MD.
   //                            K.A. Remington
   // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -66,8 +66,8 @@ namespace gmm {
   // supporting documentation.
   //
   // Neither the Author nor the Institution (National Institute of Standards
-  // and Technology) make any representations about the suitability of this 
-  // software for any purpose. This software is provided "as is" without 
+  // and Technology) make any representations about the suitability of this
+  // software for any purpose. This software is provided "as is" without
   // expressed or implied warranty.
   // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -84,7 +84,7 @@ namespace gmm {
     }
     return *width;
   }
-  
+
   inline int ParseRfmt(const char *fmt, int* perline, int* width,
 		       int* prec, int* flag) {
     char p;
@@ -108,7 +108,7 @@ namespace gmm {
     *flag = p;
     return *width;
   }
-      
+
   /** matrix input/output for Harwell-Boeing format */
   struct HarwellBoeing_IO {
     int nrows() const { return Nrow; }
@@ -130,10 +130,10 @@ namespace gmm {
     template <typename T, int shift>
     static void write(const char *filename, const csc_matrix<T, shift>& A,
 		      const std::vector<T> &rhs);
-    template <typename T, typename INDI, typename INDJ, int shift> 
+    template <typename T, typename INDI, typename INDJ, int shift>
     static void write(const char *filename,
 		      const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A);
-    template <typename T, typename INDI, typename INDJ, int shift> 
+    template <typename T, typename INDI, typename INDJ, int shift>
     static void write(const char *filename,
 		      const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A,
 		      const std::vector<T> &rhs);
@@ -146,18 +146,18 @@ namespace gmm {
     char Title[73], Key[9], Rhstype[4], Type[4];
     int Nrow, Ncol, Nnzero, Nrhs;
     char Ptrfmt[17], Indfmt[17], Valfmt[21], Rhsfmt[21];
-    int Ptrcrd, Indcrd, Valcrd, Rhscrd; 
+    int Ptrcrd, Indcrd, Valcrd, Rhscrd;
     int lcount;
 
 
     void close() { if (f) fclose(f); clear(); }
-    void clear() { 
+    void clear() {
       Nrow = Ncol = Nnzero = Nrhs = 0; f = 0; lcount = 0;
-      memset(Type, 0, sizeof Type); 
-      memset(Key, 0, sizeof Key); 
-      memset(Title, 0, sizeof Title); 
+      memset(Type, 0, sizeof Type);
+      memset(Key, 0, sizeof Key);
+      memset(Title, 0, sizeof Title);
     }
-    char *getline(char *buf) { 
+    char *getline(char *buf) {
       if(fgets(buf, BUFSIZ, f) == NULL) return buf; ++lcount;
       int s = SECURE_NONCHAR_SSCANF(buf,"%*s");
       GMM_ASSERT1(s >= 0, "blank line in HB file at line " << lcount);
@@ -177,15 +177,15 @@ namespace gmm {
 	for (int j=last+1;j>=0;j--) {
 	  s[j] = s[j-1];
 	  if ( s[j] == '+' || s[j] == '-' ) {
-	    s[j-1] = Valflag;                    
+	    s[j-1] = Valflag;
 	    break;
 	  }
 	}
       }
       return atof(s);
     }
-    template <typename IND_TYPE>   
-    int readHB_data(IND_TYPE colptr[], IND_TYPE rowind[], 
+    template <typename IND_TYPE>
+    int readHB_data(IND_TYPE colptr[], IND_TYPE rowind[],
 		    double val[]) {
       /***********************************************************************/
       /*  This function opens and reads the specified file, interpreting its */
@@ -219,11 +219,11 @@ namespace gmm {
       }
 
       cout << "Valwidth = " << Valwidth << endl; getchar();
-    
+
       /*  Read column pointer array:   */
       offset = 0;         /* if base 0 storage is declared (via macro def),  */
       /* then storage entries are offset by 1            */
-    
+
       for (count = 0, i=0;i<Ptrcrd;i++) {
 	getline(line);
 	for (col = 0, ind = 0;ind<Ptrperline;ind++) {
@@ -232,8 +232,8 @@ namespace gmm {
 	  count++; col += Ptrwidth;
 	}
       }
-    
-      /*  Read row index array:  */    
+
+      /*  Read row index array:  */
       for (count = 0, i=0;i<Indcrd;i++) {
 	getline(line);
 	for (col = 0, ind = 0;ind<Indperline;ind++) {
@@ -242,12 +242,12 @@ namespace gmm {
 	  count++; col += Indwidth;
 	}
       }
-    
+
       /*  Read array of values:  */
       if ( Type[0] != 'P' ) {          /* Skip if pattern only  */
 	if ( Type[0] == 'C' ) Nentries = 2*Nnzero;
 	else Nentries = Nnzero;
-      
+
 	count = 0;
 	for (i=0;i<Valcrd;i++) {
 	  getline(line);
@@ -266,7 +266,7 @@ namespace gmm {
       return 1;
     }
   };
-  
+
   inline void HarwellBoeing_IO::open(const char *filename) {
     int Totcrd,Neltvl,Nrhsix;
     char line[BUFSIZ];
@@ -284,7 +284,7 @@ namespace gmm {
     Totcrd = Ptrcrd = Indcrd = Valcrd = Rhscrd = 0;
     SECURE_NONCHAR_SSCANF(getline(line), "%d%d%d%d%d", &Totcrd, &Ptrcrd,
 			  &Indcrd, &Valcrd, &Rhscrd);
-    
+
     /* Third line: */
     Nrow = Ncol = Nnzero = Neltvl = 0;
 #ifdef GMM_SECURE_CRT
@@ -296,7 +296,7 @@ namespace gmm {
 #endif
       IOHBTerminate("Invalid Type info, line 3 of Harwell-Boeing file.\n");
     for (size_type i = 0; i < 3; ++i) Type[i] = toupper(Type[i]);
-    
+
       /*  Fourth line:  */
 #ifdef GMM_SECURE_CRT
     if ( sscanf_s(getline(line), "%c%c%c%c",Ptrfmt, 16,Indfmt, 16,Valfmt,
@@ -305,11 +305,11 @@ namespace gmm {
     if ( sscanf(getline(line), "%16c%16c%20c%20c",Ptrfmt,Indfmt,Valfmt,
 		Rhsfmt) < 3)
 #endif
-      IOHBTerminate("Invalid format info, line 4 of Harwell-Boeing file.\n"); 
+      IOHBTerminate("Invalid format info, line 4 of Harwell-Boeing file.\n");
     Ptrfmt[16] = Indfmt[16] = Valfmt[20] = Rhsfmt[20] = 0;
-    
+
     /*  (Optional) Fifth line: */
-    if (Rhscrd != 0 ) { 
+    if (Rhscrd != 0 ) {
       Nrhs = Nrhsix = 0;
 #ifdef GMM_SECURE_CRT
       if ( sscanf_s(getline(line), "%c%d%d", Rhstype, 3, &Nrhs, &Nrhsix) != 1)
@@ -345,24 +345,24 @@ namespace gmm {
     for (int i = 0; i < nnz(); ++i)    { A.ir[i] += shift; A.ir[i] -= 1; }
   }
 
-  template <typename MAT> void 
+  template <typename MAT> void
   HarwellBoeing_IO::read(MAT &M) {
     csc_matrix<typename gmm::linalg_traits<MAT>::value_type> csc;
-    read(csc); 
+    read(csc);
     resize(M, mat_nrows(csc), mat_ncols(csc));
     copy(csc, M);
   }
-  
-  template <typename IND_TYPE> 
+
+  template <typename IND_TYPE>
   inline int writeHB_mat_double(const char* filename, int M, int N, int nz,
 				const IND_TYPE colptr[],
-				const IND_TYPE rowind[], 
+				const IND_TYPE rowind[],
 				const double val[], int Nrhs,
 				const double rhs[], const double guess[],
 				const double exact[], const char* Title,
-				const char* Key, const char* Type, 
+				const char* Key, const char* Type,
 				const char* Ptrfmt, const char* Indfmt,
-				char* Valfmt, char* Rhsfmt,
+				const char* Valfmt, const char* Rhsfmt,
 				const char* Rhstype, int shift) {
     /************************************************************************/
     /*  The writeHB function opens the named file and writes the specified  */
@@ -382,33 +382,34 @@ namespace gmm {
     int Valperline, Valwidth, Valprec;
     int Valflag;           /* Indicates 'E','D', or 'F' float format */
     char pformat[16],iformat[16],vformat[19],rformat[19];
-    
+
     if ( Type[0] == 'C' )
       { nvalentries = 2*nz; nrhsentries = 2*M; }
     else
       { nvalentries = nz; nrhsentries = M; }
-    
+
     if ( filename != NULL ) {
       SECURE_FOPEN(&out_file, filename, "w");
       GMM_ASSERT1(out_file != NULL, "Error: Cannot open file: " << filename);
     } else out_file = stdout;
-    
+
     if ( Ptrfmt == NULL ) Ptrfmt = "(8I10)";
     ParseIfmt(Ptrfmt, &Ptrperline, &Ptrwidth);
     SECURE_SPRINTF1(pformat,sizeof(pformat),"%%%dd",Ptrwidth);
     ptrcrd = (N+1)/Ptrperline;
     if ( (N+1)%Ptrperline != 0) ptrcrd++;
-    
+
     if ( Indfmt == NULL ) Indfmt =  Ptrfmt;
     ParseIfmt(Indfmt, &Indperline, &Indwidth);
     SECURE_SPRINTF1(iformat,sizeof(iformat), "%%%dd",Indwidth);
     indcrd = nz/Indperline;
     if ( nz%Indperline != 0) indcrd++;
-    
+
     if ( Type[0] != 'P' ) {          /* Skip if pattern only  */
       if ( Valfmt == NULL ) Valfmt = "(4E21.13)";
       ParseRfmt(Valfmt, &Valperline, &Valwidth, &Valprec, &Valflag);
-      if (Valflag == 'D') *strchr(Valfmt,'D') = 'E';
+      //Gmsh fix: this is invalid, as Valfmt is a const char*
+      //if (Valflag == 'D') *strchr(Valfmt,'D') = 'E';
       if (Valflag == 'F')
 	SECURE_SPRINTF2(vformat, sizeof(vformat), "%% %d.%df", Valwidth,
 			Valprec);
@@ -418,7 +419,7 @@ namespace gmm {
       valcrd = nvalentries/Valperline;
       if ( nvalentries%Valperline != 0) valcrd++;
     } else valcrd = 0;
-    
+
     if ( Nrhs > 0 ) {
       if ( Rhsfmt == NULL ) Rhsfmt = Valfmt;
       ParseRfmt(Rhsfmt,&Rhsperline,&Rhswidth,&Rhsprec, &Rhsflag);
@@ -426,19 +427,20 @@ namespace gmm {
 	SECURE_SPRINTF2(rformat,sizeof(rformat), "%% %d.%df",Rhswidth,Rhsprec);
       else
 	SECURE_SPRINTF2(rformat,sizeof(rformat), "%% %d.%dE",Rhswidth,Rhsprec);
-      if (Rhsflag == 'D') *strchr(Rhsfmt,'D') = 'E';
-      rhscrd = nrhsentries/Rhsperline; 
+      //Gmsh fix: this is invalid, as Rhsfmt is a const char*
+      //if (Rhsflag == 'D') *strchr(Rhsfmt,'D') = 'E';
+      rhscrd = nrhsentries/Rhsperline;
       if ( nrhsentries%Rhsperline != 0) rhscrd++;
       if ( Rhstype[1] == 'G' ) rhscrd+=rhscrd;
       if ( Rhstype[2] == 'X' ) rhscrd+=rhscrd;
       rhscrd*=Nrhs;
     } else rhscrd = 0;
-    
+
     totcrd = 4+ptrcrd+indcrd+valcrd+rhscrd;
-    
-    
+
+
     /*  Print header information:  */
-    
+
     fprintf(out_file,"%-72s%-8s\n%14d%14d%14d%14d%14d\n",Title, Key, totcrd,
 	    ptrcrd, indcrd, valcrd, rhscrd);
     fprintf(out_file,"%3s%11s%14d%14d%14d%14d\n",Type,"          ", M, N, nz, 0);
@@ -450,38 +452,38 @@ namespace gmm {
     }
     else
       fprintf(out_file,"\n");
-    
+
     offset = 1 - shift;  /* if base 0 storage is declared (via macro def), */
     /* then storage entries are offset by 1           */
-    
+
     /*  Print column pointers:   */
     for (i = 0; i < N+1; i++) {
       entry = colptr[i]+offset;
       fprintf(out_file,pformat,entry);
       if ( (i+1)%Ptrperline == 0 ) fprintf(out_file,"\n");
     }
-    
+
     if ( (N+1) % Ptrperline != 0 ) fprintf(out_file,"\n");
-    
+
     /*  Print row indices:       */
     for (i=0;i<nz;i++) {
       entry = rowind[i]+offset;
       fprintf(out_file,iformat,entry);
       if ( (i+1)%Indperline == 0 ) fprintf(out_file,"\n");
     }
-    
+
     if ( nz % Indperline != 0 ) fprintf(out_file,"\n");
-    
+
     /*  Print values:            */
-    
+
     if ( Type[0] != 'P' ) {          /* Skip if pattern only  */
       for (i=0;i<nvalentries;i++) {
 	fprintf(out_file,vformat,val[i]);
 	if ( (i+1)%Valperline == 0 ) fprintf(out_file,"\n");
       }
-      
+
       if ( nvalentries % Valperline != 0 ) fprintf(out_file,"\n");
-      
+
       /*  Print right hand sides:  */
       acount = 1;
       linemod=0;
@@ -522,7 +524,7 @@ namespace gmm {
     GMM_ASSERT1(s == 0, "Error closing file in writeHB_mat_double().");
     return 1;
   }
-  
+
   template <typename T, int shift> void
   HarwellBoeing_IO::write(const char *filename,
 			  const csc_matrix<T, shift>& A) {
@@ -541,7 +543,7 @@ namespace gmm {
   template <typename T, typename INDI, typename INDJ, int shift> void
   HarwellBoeing_IO::write(const char *filename,
 			  const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A) {
-    const char *t = 0;    
+    const char *t = 0;
     if (is_complex_double__(T()))
       if (mat_nrows(A) == mat_ncols(A)) t = "CUA"; else t = "CRA";
     else
@@ -571,12 +573,12 @@ namespace gmm {
 		       t, 0, 0, 0, 0, "F  ", shift);
   }
 
-  
+
   template <typename MAT> void
   HarwellBoeing_IO::write(const char *filename, const MAT& A) {
-    gmm::csc_matrix<typename gmm::linalg_traits<MAT>::value_type> 
+    gmm::csc_matrix<typename gmm::linalg_traits<MAT>::value_type>
       tmp(gmm::mat_nrows(A), gmm::mat_ncols(A));
-    gmm::copy(A,tmp); 
+    gmm::copy(A,tmp);
     HarwellBoeing_IO::write(filename, tmp);
   }
 
@@ -601,9 +603,9 @@ namespace gmm {
   */
   template <typename MAT> inline void
   Harwell_Boeing_save(const std::string &filename, const MAT& A) {
-    gmm::csc_matrix<typename gmm::linalg_traits<MAT>::value_type> 
+    gmm::csc_matrix<typename gmm::linalg_traits<MAT>::value_type>
       tmp(gmm::mat_nrows(A), gmm::mat_ncols(A));
-    gmm::copy(A, tmp); 
+    gmm::copy(A, tmp);
     HarwellBoeing_IO::write(filename.c_str(), tmp);
   }
 
@@ -643,7 +645,7 @@ namespace gmm {
   /*                                                                       */
   /*************************************************************************/
 
-  /* 
+  /*
    *   Matrix Market I/O library for ANSI C
    *
    *   See http://math.nist.gov/MatrixMarket for details.
@@ -660,22 +662,22 @@ namespace gmm {
   /******************* MM_typecode query functions *************************/
 
 #define mm_is_matrix(typecode)	        ((typecode)[0]=='M')
-  
+
 #define mm_is_sparse(typecode)	        ((typecode)[1]=='C')
 #define mm_is_coordinate(typecode)      ((typecode)[1]=='C')
 #define mm_is_dense(typecode)	        ((typecode)[1]=='A')
 #define mm_is_array(typecode)	        ((typecode)[1]=='A')
-  
+
 #define mm_is_complex(typecode)	        ((typecode)[2]=='C')
 #define mm_is_real(typecode)	        ((typecode)[2]=='R')
 #define mm_is_pattern(typecode)	        ((typecode)[2]=='P')
 #define mm_is_integer(typecode)         ((typecode)[2]=='I')
-  
+
 #define mm_is_symmetric(typecode)       ((typecode)[3]=='S')
 #define mm_is_general(typecode)	        ((typecode)[3]=='G')
 #define mm_is_skew(typecode)	        ((typecode)[3]=='K')
 #define mm_is_hermitian(typecode)       ((typecode)[3]=='H')
-  
+
   /******************* MM_typecode modify fucntions ************************/
 
 #define mm_set_matrix(typecode)	        ((*typecode)[0]='M')
@@ -717,7 +719,7 @@ namespace gmm {
 
    MM_matrix_typecode: 4-character sequence
 
-	                object 	    sparse/   	data        storage 
+	                object 	    sparse/   	data        storage
 	                            dense     	type        scheme
 
    string position:	 [0]        [1]		[2]         [3]
@@ -732,7 +734,7 @@ namespace gmm {
 #define MM_MTX_STR	   "matrix"
 #define MM_ARRAY_STR	   "array"
 #define MM_DENSE_STR	   "array"
-#define MM_COORDINATE_STR  "coordinate" 
+#define MM_COORDINATE_STR  "coordinate"
 #define MM_SPARSE_STR	   "coordinate"
 #define MM_COMPLEX_STR	   "complex"
 #define MM_REAL_STR	   "real"
@@ -748,9 +750,9 @@ namespace gmm {
     const char *types[4] = {0,0,0,0};
     /*    int error =0; */
     /*   int i; */
-    
+
     /* check for MTX type */
-    if (mm_is_matrix(matcode)) 
+    if (mm_is_matrix(matcode))
       types[0] = MM_MTX_STR;
     /*
       else
@@ -764,7 +766,7 @@ namespace gmm {
         types[1] = MM_DENSE_STR;
       else
         return NULL;
-    
+
     /* check for element data type */
     if (mm_is_real(matcode))
       types[2] = MM_REAL_STR;
@@ -779,8 +781,8 @@ namespace gmm {
 	    types[2] = MM_INT_STR;
 	  else
 	    return NULL;
-    
-    
+
+
     /* check for symmetry type */
     if (mm_is_general(matcode))
       types[3] = MM_GENERAL_STR;
@@ -792,26 +794,26 @@ namespace gmm {
       types[3] = MM_SKEW_STR;
     else
       return NULL;
-    
+
     SECURE_SPRINTF4(buffer, sizeof(buffer), "%s %s %s %s", types[0], types[1],
 		    types[2], types[3]);
     return SECURE_STRDUP(buffer);
-    
+
   }
-  
+
   inline int mm_read_banner(FILE *f, MM_typecode *matcode) {
     char line[MM_MAX_LINE_LENGTH];
     char banner[MM_MAX_TOKEN_LENGTH];
-    char mtx[MM_MAX_TOKEN_LENGTH]; 
+    char mtx[MM_MAX_TOKEN_LENGTH];
     char crd[MM_MAX_TOKEN_LENGTH];
     char data_type[MM_MAX_TOKEN_LENGTH];
     char storage_scheme[MM_MAX_TOKEN_LENGTH];
     char *p;
     /*    int ret_code; */
-    
-    mm_clear_typecode(matcode);  
-    
-    if (fgets(line, MM_MAX_LINE_LENGTH, f) == NULL) 
+
+    mm_clear_typecode(matcode);
+
+    if (fgets(line, MM_MAX_LINE_LENGTH, f) == NULL)
       return MM_PREMATURE_EOF;
 
 #ifdef GMM_SECURE_CRT
@@ -826,7 +828,7 @@ namespace gmm {
       return MM_PREMATURE_EOF;
 
     for (p=mtx; *p!='\0'; *p=tolower(*p),p++);  /* convert to lower case */
-    for (p=crd; *p!='\0'; *p=tolower(*p),p++);  
+    for (p=crd; *p!='\0'; *p=tolower(*p),p++);
     for (p=data_type; *p!='\0'; *p=tolower(*p),p++);
     for (p=storage_scheme; *p!='\0'; *p=tolower(*p),p++);
 
@@ -851,7 +853,7 @@ namespace gmm {
 	mm_set_dense(matcode);
       else
         return MM_UNSUPPORTED_TYPE;
-    
+
 
     /* third field */
 
@@ -868,7 +870,7 @@ namespace gmm {
 	    mm_set_integer(matcode);
 	  else
 	    return MM_UNSUPPORTED_TYPE;
-    
+
 
     /* fourth field */
 
@@ -885,7 +887,7 @@ namespace gmm {
 	    mm_set_skew(matcode);
 	  else
 	    return MM_UNSUPPORTED_TYPE;
-        
+
     return 0;
   }
 
@@ -893,25 +895,25 @@ namespace gmm {
     char line[MM_MAX_LINE_LENGTH];
     /* int ret_code;*/
     int num_items_read;
-    
+
     /* set return null parameter values, in case we exit with errors */
     *M = *N = *nz = 0;
-    
+
     /* now continue scanning until you reach the end-of-comments */
     do {
-      if (fgets(line,MM_MAX_LINE_LENGTH,f) == NULL) 
+      if (fgets(line,MM_MAX_LINE_LENGTH,f) == NULL)
 	return MM_PREMATURE_EOF;
     } while (line[0] == '%');
-    
+
     /* line[] is either blank or has M,N, nz */
     if (SECURE_NONCHAR_SSCANF(line, "%d %d %d", M, N, nz) == 3) return 0;
     else
-      do { 
-	num_items_read = SECURE_NONCHAR_FSCANF(f, "%d %d %d", M, N, nz); 
+      do {
+	num_items_read = SECURE_NONCHAR_FSCANF(f, "%d %d %d", M, N, nz);
 	if (num_items_read == EOF) return MM_PREMATURE_EOF;
       }
       while (num_items_read != 3);
-    
+
     return 0;
   }
 
@@ -929,7 +931,7 @@ namespace gmm {
       for (i=0; i<nz; i++) {
 	if (SECURE_NONCHAR_FSCANF(f, "%d %d %lg\n", &I[i], &J[i], &val[i])
 	    != 3) return MM_PREMATURE_EOF;
-	
+
       }
     }
     else if (mm_is_pattern(matcode)) {
@@ -947,24 +949,24 @@ namespace gmm {
 			      MM_typecode matcode) {
     FILE *f;
     int i;
-    
-    if (strcmp(fname, "stdout") == 0) 
+
+    if (strcmp(fname, "stdout") == 0)
       f = stdout;
     else {
       SECURE_FOPEN(&f, fname, "w");
       if (f == NULL)
         return MM_COULD_NOT_WRITE_FILE;
     }
-    
+
     /* print banner followed by typecode */
     fprintf(f, "%s ", MatrixMarketBanner);
     char *str = mm_typecode_to_str(matcode);
     fprintf(f, "%s\n", str);
     free(str);
-    
+
     /* print matrix sizes and nonzeros */
     fprintf(f, "%d %d %d\n", M, N, nz);
-    
+
     /* print values */
     if (mm_is_pattern(matcode))
       for (i=0; i<nz; i++)
@@ -976,17 +978,17 @@ namespace gmm {
       else
 	if (mm_is_complex(matcode))
 	  for (i=0; i<nz; i++)
-            fprintf(f, "%d %d %20.16g %20.16g\n", I[i], J[i], val[2*i], 
+            fprintf(f, "%d %d %20.16g %20.16g\n", I[i], J[i], val[2*i],
 		    val[2*i+1]);
 	else {
 	  if (f != stdout) fclose(f);
 	  return MM_UNSUPPORTED_TYPE;
 	}
-    
-    if (f !=stdout) fclose(f); 
+
+    if (f !=stdout) fclose(f);
     return 0;
   }
-  
+
 
   /** matrix input/output for MatrixMarket storage */
   class MatrixMarket_IO {
@@ -1011,13 +1013,13 @@ namespace gmm {
     /* read opened file */
     template <typename Matrix> void read(Matrix &A);
     /* write a matrix */
-    template <typename T, int shift> static void 
-    write(const char *filename, const csc_matrix<T, shift>& A);  
-    template <typename T, typename INDI, typename INDJ, int shift> static void 
+    template <typename T, int shift> static void
+    write(const char *filename, const csc_matrix<T, shift>& A);
+    template <typename T, typename INDI, typename INDJ, int shift> static void
     write(const char *filename,
-	  const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A);  
-    template <typename MAT> static void 
-    write(const char *filename, const MAT& A);  
+	  const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A);
+    template <typename MAT> static void
+    write(const char *filename, const MAT& A);
   };
 
   /** load a matrix-market file */
@@ -1054,8 +1056,8 @@ namespace gmm {
 	       "the file does only contain the pattern of a sparse matrix");
     int s5 = mm_is_skew(matcode);
     GMM_ASSERT1(s5 == 0, "not currently supporting skew symmetric");
-    isSymmetric = mm_is_symmetric(matcode) || mm_is_hermitian(matcode); 
-    isHermitian = mm_is_hermitian(matcode); 
+    isSymmetric = mm_is_symmetric(matcode) || mm_is_hermitian(matcode);
+    isHermitian = mm_is_hermitian(matcode);
     isComplex =   mm_is_complex(matcode);
     mm_read_mtx_crd_size(f, &row, &col, &nz);
   }
@@ -1069,33 +1071,33 @@ namespace gmm {
 		"Bad MM matrix format (real matrix expected)");
     A = Matrix(row, col);
     gmm::clear(A);
-    
+
     std::vector<int> I(nz), J(nz);
     std::vector<typename Matrix::value_type> PR(nz);
     mm_read_mtx_crd_data(f, row, col, nz, &I[0], &J[0],
 			 (double*)&PR[0], matcode);
-    
+
     for (size_type i = 0; i < size_type(nz); ++i) A(I[i]-1, J[i]-1) = PR[i];
   }
 
-  template <typename T, int shift> void 
+  template <typename T, int shift> void
   MatrixMarket_IO::write(const char *filename, const csc_matrix<T, shift>& A) {
     write(filename, csc_matrix_ref<T*,unsigned*,unsigned*,shift>
 	  (A.pr, A.ir, A.jc, A.nr, A.nc));
   }
 
-  template <typename T, typename INDI, typename INDJ, int shift> void 
-  MatrixMarket_IO::write(const char *filename, 
+  template <typename T, typename INDI, typename INDJ, int shift> void
+  MatrixMarket_IO::write(const char *filename,
 			 const csc_matrix_ref<T*, INDI*, INDJ*, shift>& A) {
     static MM_typecode t1 = {'M', 'C', 'R', 'G'};
     static MM_typecode t2 = {'M', 'C', 'C', 'G'};
     MM_typecode t;
-    
+
     if (is_complex_double__(T())) std::copy(&(t2[0]), &(t2[0])+4, &(t[0]));
     else std::copy(&(t1[0]), &(t1[0])+4, &(t[0]));
     size_type nz = A.jc[mat_ncols(A)];
     std::vector<int> I(nz), J(nz);
-    for (size_type j=0; j < mat_ncols(A); ++j) {      
+    for (size_type j=0; j < mat_ncols(A); ++j) {
       for (size_type i = A.jc[j]; i < A.jc[j+1]; ++i) {
 	I[i] = A.ir[i] + 1 - shift;
 	J[i] = j + 1;
@@ -1108,22 +1110,22 @@ namespace gmm {
 
   template <typename MAT> void
   MatrixMarket_IO::write(const char *filename, const MAT& A) {
-    gmm::csc_matrix<typename gmm::linalg_traits<MAT>::value_type> 
+    gmm::csc_matrix<typename gmm::linalg_traits<MAT>::value_type>
       tmp(gmm::mat_nrows(A), gmm::mat_ncols(A));
-    gmm::copy(A,tmp); 
+    gmm::copy(A,tmp);
     MatrixMarket_IO::write(filename, tmp);
   }
 
   template<typename VEC> static void vecsave(std::string fname, const VEC& V) {
     std::ofstream f(fname.c_str()); f.precision(16);
-    for (size_type i=0; i < gmm::vect_size(V); ++i) f << V[i] << "\n"; 
-  } 
+    for (size_type i=0; i < gmm::vect_size(V); ++i) f << V[i] << "\n";
+  }
 
   template<typename VEC> static void vecload(std::string fname,
 					     const VEC& V_) {
     VEC &V(const_cast<VEC&>(V_));
     std::ifstream f(fname.c_str());
-    for (size_type i=0; i < gmm::vect_size(V); ++i) f >> V[i]; 
+    for (size_type i=0; i < gmm::vect_size(V); ++i) f >> V[i];
   }
 }
 
