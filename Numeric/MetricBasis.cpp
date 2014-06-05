@@ -523,7 +523,7 @@ void MetricBasis::interpolate(const MElement *el, const MetricData *md, const do
 
   int order = _bezier->getOrder();
 
-  int dimSimplex;
+  int dimSimplex = 0;
   fullMatrix<double> exponents;
   double bezuvw[3];
   switch (el->getType()) {
@@ -1151,13 +1151,13 @@ void MetricBasis::_maxAstK(const fullMatrix<double> &coeff,
 
   while (itJ != _ineqJ2.end() && itP != _ineqP3.end()) {
     double num = 0, den = 0;
-    for (int l = 0; l < itJ->second.size(); ++l) {
+    for (unsigned int l = 0; l < itJ->second.size(); ++l) {
       const int i = itJ->second[l].i;
       const int j = itJ->second[l].j;
       num += itJ->second[l].val * jac(i) * jac(j);
     }
     num *= beta;
-    for (int l = 0; l < itP->second.size(); ++l) {
+    for (unsigned int l = 0; l < itP->second.size(); ++l) {
       const int i = itP->second[l].i;
       const int j = itP->second[l].j;
       const int k = itP->second[l].k;
@@ -1192,13 +1192,13 @@ void MetricBasis::_maxAstK2(const fullMatrix<double> &coeff,
 
   while (itJ != _ineqJ2.end() && itP != _ineqP3.end()) {
     double num = 0, den = 0;
-    for (int l = 0; l < itJ->second.size(); ++l) {
+    for (unsigned int l = 0; l < itJ->second.size(); ++l) {
       const int i = itJ->second[l].i;
       const int j = itJ->second[l].j;
       num += itJ->second[l].val * jac(i) * jac(j);
     }
     num *= beta;
-    for (int l = 0; l < itP->second.size(); ++l) {
+    for (unsigned int l = 0; l < itP->second.size(); ++l) {
       const int i = itP->second[l].i;
       const int j = itP->second[l].j;
       const int k = itP->second[l].k;
@@ -1225,13 +1225,13 @@ void MetricBasis::_maxAstK3(const fullMatrix<double> &coeff,
 
   while (itJ != _ineqJ2.end() && itP != _ineqP3.end()) {
     double num = 0;
-    for (int l = 0; l < itJ->second.size(); ++l) {
+    for (unsigned int l = 0; l < itJ->second.size(); ++l) {
       const int i = itJ->second[l].i;
       const int j = itJ->second[l].j;
       num -= itJ->second[l].val * jac(i) * jac(j);
     }
     num *= beta;
-    for (int l = 0; l < itP->second.size(); ++l) {
+    for (unsigned int l = 0; l < itP->second.size(); ++l) {
       const int i = itP->second[l].i;
       const int j = itP->second[l].j;
       const int k = itP->second[l].k;
@@ -1280,7 +1280,7 @@ void MetricBasis::_maxAstK4(const fullMatrix<double> &coeff,
       num += itJ->second[l].val * jac(i) * jac(j);
     }
     num *= beta;
-    for (int l = 0; l < itP->second.size(); ++l) {
+    for (unsigned int l = 0; l < itP->second.size(); ++l) {
       const int i = itP->second[l].i;
       const int j = itP->second[l].j;
       const int k = itP->second[l].k;
@@ -1320,12 +1320,12 @@ void MetricBasis::_maxKstA(const fullMatrix<double> &coeff,
 
   while (itJ != _ineqJ2.end() && itP != _ineqP3.end()) {
     double num = 0, den = 0;
-    for (int l = 0; l < itJ->second.size(); ++l) {
+    for (unsigned int l = 0; l < itJ->second.size(); ++l) {
       const int i = itJ->second[l].i;
       const int j = itJ->second[l].j;
       num -= itJ->second[l].val * jac(i) * jac(j);
     }
-    for (int l = 0; l < itP->second.size(); ++l) {
+    for (unsigned int l = 0; l < itP->second.size(); ++l) {
       const int i = itP->second[l].i;
       const int j = itP->second[l].j;
       const int k = itP->second[l].k;
@@ -1360,13 +1360,13 @@ void MetricBasis::_maxKstA2(const fullMatrix<double> &coeff,
 
   while (itJ != _ineqJ2.end() && itP != _ineqP3.end()) {
     double num = 0, den = 0;
-    for (int l = 0; l < itJ->second.size(); ++l) {
+    for (unsigned int l = 0; l < itJ->second.size(); ++l) {
       const int i = itJ->second[l].i;
       const int j = itJ->second[l].j;
       num -= itJ->second[l].val * jac(i) * jac(j);
     }
     num *= beta;
-    for (int l = 0; l < itP->second.size(); ++l) {
+    for (unsigned int l = 0; l < itP->second.size(); ++l) {
       const int i = itP->second[l].i;
       const int j = itP->second[l].j;
       const int k = itP->second[l].k;
@@ -1408,7 +1408,7 @@ void MetricBasis::_maxKstA3(const fullMatrix<double> &coeff,
 
   while (itJ != _ineqJ2.end() && itP != _ineqP3.end()) {
     double num = 0, den = 0;
-    for (int l = 0; l < itJ->second.size(); ++l) {
+    for (unsigned int l = 0; l < itJ->second.size(); ++l) {
       const int i = itJ->second[l].i;
       const int j = itJ->second[l].j;
       num -= itJ->second[l].val * jac(i) * jac(j);

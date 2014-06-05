@@ -911,6 +911,7 @@ static int _quadWithOneVertexOnBoundary (GFace *gf,
 // see paper from Bunin Guy Bunin (2006) Non-Local Topological Cleanup ,15th
 // International Meshing Roundtable. This is our interpretation of the
 // algorithm.
+/*
 static std::vector<MVertex*> closestPathBetweenTwoDefects (v2t_cont &adj,
                                                            v2t_cont :: iterator it)
 {
@@ -963,6 +964,7 @@ static std::vector<MVertex*> closestPathBetweenTwoDefects (v2t_cont &adj,
     }
   }
 }
+*/
 
 static MVertex * createNewVertex (GFace *gf, SPoint2 p){
   GPoint gp = gf->point(p);
@@ -1654,6 +1656,7 @@ bool quadBlob::matricesDone = false;
 fullMatrix<double> quadBlob::M3;
 fullMatrix<double> quadBlob::M5;
 
+/*
 static int _defectsRemovalBunin(GFace *gf, int maxCavitySize)
 {
 
@@ -1703,6 +1706,7 @@ static int _defectsRemovalBunin(GFace *gf, int maxCavitySize)
 
   return iter;
 }
+*/
 
 // if a vertex (on boundary) is adjacent to one only quad
 // and if that quad is badly shaped, we split this
@@ -3596,7 +3600,7 @@ static double printStats(GFace *gf,const char *message)
 
 void recombineIntoQuads(GFace *gf,
                         bool topologicalOpti,
-                        bool nodeRepositioning, 
+                        bool nodeRepositioning,
 			double minqual)
 {
   double t1 = Cpu();
@@ -3630,15 +3634,15 @@ void recombineIntoQuads(GFace *gf,
         while(1){
 	  //          int maxCavitySize = CTX::instance()->mesh.bunin;
 	  //	  optistatus[0] = (ITERB == 1) ?splitFlatQuads(gf, .01, prioritory) : 0;
-          //optistatus[1] = 
+          //optistatus[1] =
 	  removeTwoQuadsNodes(gf);
 	  //optistatus[4] = _defectsRemovalBunin(gf,36);
-	  //optistatus[2] = 
+	  //optistatus[2] =
 	  removeDiamonds(gf) ;
 	  if(haveParam)laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
-	  //optistatus[3] = 
+	  //optistatus[3] =
 	  edgeSwapQuadsForBetterQuality(gf,minqual, prioritory);
-	  //optistatus[5] = 
+	  //optistatus[5] =
 	  optiSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
 	  //	  optistatus[5] = untangleInvalidQuads(gf, CTX::instance()->mesh.nbSmoothing);
 	  double bad = printStats(gf, "IN OPTIMIZATION");
