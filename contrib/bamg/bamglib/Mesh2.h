@@ -54,7 +54,7 @@ namespace bamg {
 
 
 const  double Pi =  3.14159265358979323846264338328;
-const  float fPi =  3.14159265358979323846264338328;
+const  float fPi =  (float)3.14159265358979323846264338328;
 
 
 class MeshIstream;

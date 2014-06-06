@@ -1274,7 +1274,7 @@ void MetricBasis::_maxAstK4(const fullMatrix<double> &coeff,
 
   while (itJ != _ineqJ2.end() && itP != _ineqP3.end()) {
     double num = 0, den = 0;
-    for (int l = 0; l < itJ->second.size(); ++l) {
+    for (unsigned int l = 0; l < itJ->second.size(); ++l) {
       const int i = itJ->second[l].i;
       const int j = itJ->second[l].j;
       num += itJ->second[l].val * jac(i) * jac(j);
@@ -1414,7 +1414,7 @@ void MetricBasis::_maxKstA3(const fullMatrix<double> &coeff,
       num -= itJ->second[l].val * jac(i) * jac(j);
     }
     num *= beta;
-    for (int l = 0; l < itP->second.size(); ++l) {
+    for (unsigned int l = 0; l < itP->second.size(); ++l) {
       const int i = itP->second[l].i;
       const int j = itP->second[l].j;
       const int k = itP->second[l].k;
