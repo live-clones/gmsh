@@ -65,34 +65,32 @@
   NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:p];
   if(!indexPath) return;
   NSMutableArray* section = [_sections objectAtIndex:indexPath.section];
-	if(!section) return;
-	Parameter * parameter = [section objectAtIndex:indexPath.row];
-	if(!parameter) return;
-	NSString *name = [parameter getName];
-	NSLog(@"Long press on %@", name);
-
-	std::vector<onelab::number> number;
-	onelab::server::instance()->get(number,[name UTF8String]);
-	if(number.size() && !number[0].getReadOnly()){
-		NSLog(@" -- number param with value %g", number[0].getValue());
-		UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:@"Manually edit %s", number[0].getShortName().c_str()] message:name delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Ok", nil];
-		alertView.alertViewStyle = UIAlertViewStylePlainTextInput;
-		[alertView textFieldAtIndex:0].text = [NSString stringWithFormat:@"%g", number[0].getValue()];
-		[alertView show];
-		[parameter refresh];
-	}
+  if(!section) return;
+  Parameter * parameter = [section objectAtIndex:indexPath.row];
+  if(!parameter) return;
+  NSString *name = [parameter getName];
+  std::vector<onelab::number> number;
+  onelab::server::instance()->get(number,[name UTF8String]);
+  if(number.size() && !number[0].getReadOnly()){
+    NSLog(@"Manual edit of parameter '%s' with value '%g'", number[0].getName().c_str(), number[0].getValue());
+    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:@"%s", number[0].getShortName().c_str()] message:name delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Ok", nil];
+    alertView.alertViewStyle = UIAlertViewStylePlainTextInput;
+    [alertView textFieldAtIndex:0].text = [NSString stringWithFormat:@"%g", number[0].getValue()];
+    [alertView show];
+    [parameter refresh];
+  }
 }
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-    NSLog(@"%@ -> %@", [alertView message], [alertView textFieldAtIndex:0].text);
-	std::vector<onelab::number> number;
-	onelab::server::instance()->get(number,[[alertView message] UTF8String]);
-	if(number.size()){
-		double value = [[alertView textFieldAtIndex:0].text doubleValue];
-		number[0].setValue(value);
-		onelab::server::instance()->set(number[0]);
-		[self refreshTableView];
-	}
+  NSLog(@"%@ -> %@", [alertView message], [alertView textFieldAtIndex:0].text);
+  std::vector<onelab::number> number;
+  onelab::server::instance()->get(number,[[alertView message] UTF8String]);
+  if(number.size()){
+    double value = [[alertView textFieldAtIndex:0].text doubleValue];
+    number[0].setValue(value);
+    onelab::server::instance()->set(number[0]);
+    [self refreshTableView];
+  }
 }
 - (void)indexDidChangeForSegmentedControl:(id)sender
 {
