@@ -3,3 +3,4 @@
 #
 1 1 * * * cd ${HOME}/src/gmsh/utils/nightly && /usr/bin/ctest -S gmsh_linux64_nightly.ctest -VV > ${HOME}/src/gmsh/nightly.log 2>&1
 1 2 * * * cd ${HOME}/src/gmsh/utils/nightly && /usr/bin/ctest -S gmsh_linux64_dynamic_nightly.ctest -VV > ${HOME}/src/gmsh/nightly_dynamic.log 2>&1
+1 3 * * * cd ${HOME}/src/gmsh/utils/nightly && /usr/bin/ctest -S gmsh_linux64_coverage.ctest -VV > ${HOME}/src/gmsh/nightly_coverage.log 2>&1
