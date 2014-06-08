@@ -252,6 +252,7 @@
   onelab::server::instance()->get(number,[name UTF8String]);
   if(number.size() < 1) return;
   [stepper setValue:number[0].getValue()];
+  [label setText:[NSString stringWithFormat:@"%s %d" ,number[0].getShortName().c_str(), (int)number[0].getValue()]];
 }
 -(void)setFrame:(CGRect)frame
 {
@@ -281,7 +282,7 @@
     //TODO add step ?
     [slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventTouchUpOutside];
     [slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventTouchUpInside];
-    [label setText:[NSString stringWithFormat:@"%@ %g" ,[NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]], number.getValue()]];
+    [label setText:[NSString stringWithFormat:@"%@ %g", [NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]], number.getValue()]];
   }
   return self;
 }
@@ -293,7 +294,7 @@
   [slider setMaximumValue:number[0].getMax()];
   [slider setMinimumValue:number[0].getMin()];
   [slider setValue:number[0].getValue()];
-	[label setText:[NSString stringWithFormat:@"%@ %g" ,[NSString stringWithCString:number[0].getShortName().c_str() encoding:[NSString defaultCStringEncoding]], number[0].getValue()]];
+  [label setText:[NSString stringWithFormat:@"%@ %g", [NSString stringWithCString:number[0].getShortName().c_str() encoding:[NSString defaultCStringEncoding]], number[0].getValue()]];
 }
 -(void)sliderValueChanged:(UISlider *)sender
 {
