@@ -185,7 +185,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   }
 
 #else // new code
-  Msg::Info("Triangulating data points (new code)...");
+  Msg::Info("Using new triangulation code");
   std::vector<MTriangle*> tris;
   for(unsigned int i = 0; i < points.size(); i++) {
     double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
