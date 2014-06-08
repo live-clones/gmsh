@@ -1,10 +1,10 @@
 
-Include "Rotor.geo" ;
-Include "Stator.geo" ;
+Include "Rotor.inc" ;
+Include "Stator.inc" ;
 
 MB = 9999;
 If (MB)
-  dH=newreg; 
+  dH=newreg;
   Line Loop(dH) = {OuterMB_[]};
   Line Loop(dH+1) = {InnerMB_[]};
   Plane Surface(dH) = {dH,dH+1};
@@ -25,8 +25,8 @@ Coherence;
 
 dP=newp-1;
 Point(dP+1)  = {0.0258, 0.0045, 0, p*2};  //stator
-//Point(dP+2)  = {0.0248, 0.0043, 0, p*2};  
-Point(dP+2)  = {0.0242, 0.007, 0, p*2};  
+//Point(dP+2)  = {0.0248, 0.0043, 0, p*2};
+Point(dP+2)  = {0.0242, 0.007, 0, p*2};
 
 
 

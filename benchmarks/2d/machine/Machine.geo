@@ -1,8 +1,8 @@
-Include "Functions.geo";
+Include "Functions.inc";
 
 /* physical numbers */
 
-Include "PhysNum.geo";
+Include "PhysNum.inc";
 
 
 Geometry.LineWidth = 2;
@@ -13,9 +13,9 @@ Geometry.AutoCoherence = 0;
 
 Printf("****************************************** Stator *********************************************");
 
-//Include "StatorSector.geo";
-Include "Stator3kW.geo";
-Include "Stator.geo";
+//Include "StatorSector.inc";
+Include "Stator3kW.inc";
+Include "Stator.inc";
 
 
 
@@ -24,9 +24,9 @@ Include "Stator.geo";
 
 Printf("******************************************* Rotor *********************************************");
 
-//Include "RotorSector.geo";
-Include "Rotor3kW.geo";
-Include "Rotor.geo";
+//Include "RotorSector.inc";
+Include "Rotor3kW.inc";
+Include "Rotor.inc";
 
 
 

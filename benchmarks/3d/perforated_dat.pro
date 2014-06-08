@@ -11,7 +11,7 @@ rh = dhole/2;
 h_ps = 2*nbrHoles*dhole+dhole ;
 
 // Workpiece: Al disk at (0,0)
-r = 191 * u ; 
+r = 191 * u ;
 h = 10 * u ;
 
 mu0 = 4.e-7 * Pi ;
@@ -24,14 +24,14 @@ h_ec = 16 * u ; //cross section height
 x_ec = 201.2 * u ; //inner radius
 
 //Passive shield at (300.3, 0)
-w_ps = 0.65 * u;//*40 ;
+w_ps = 1.65 * u;//*40 ;
 //h_ps = 190 * u ;
 
 x_ps = 300  * u;//inner radius
 
 //Target area (500,0) (1500,800)
 
-rta = 0.50 ; 
+rta = 0.50 ;
 wta = 1. ;
 hta = .8 ;
 
@@ -67,15 +67,15 @@ SKINPASSIVESHIELDINT = 2223 ;
 SKINPASSIVESHIELDEXT = 2224 ;
 
 //Coils
-EC  = 3000 ; 
-SKINEC = 3333 ; 
-SKINEC2 = 3334 ; 
+EC  = 3000 ;
+SKINEC = 3333 ;
+SKINEC2 = 3334 ;
 CUTEC = 3335 ;
 Z0EC = 3336;
 PHI0EC = 3337;
 PHI1EC = 3338;
 
-AIR    = 5000 ; 
+AIR    = 5000 ;
 SURAIR = 5010 ;
 Z0AIR0 = 5001 ;
 Z0AIR1 = 5002 ;
@@ -85,7 +85,7 @@ PHI1AIR = 5005;
 
 AIRINF     = 6000 ;
 SURAIRINF  = 6010 ;
-Z0AIRINF   = 6001 ; 
+Z0AIRINF   = 6001 ;
 PHI0AIRINF = 6002 ;
 PHI1AIRINF = 6003 ;
 

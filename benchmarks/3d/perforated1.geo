@@ -18,14 +18,14 @@ Phi = (dhole+bhole)/x_ps;
 
 
 // Characteristic lengths
-s = 1.; 
+s = 1.;
 
 // Workpiece
 lcwp = r/30*s ;
 
 // transfinite
-p_circ = Ceil[2*Pi*r/lcwp/20] ; //12 ; 
-p_cut  = Ceil[r/lcwp/2] ; //20 ; 
+p_circ = Ceil[2*Pi*r/lcwp/20] ; //12 ;
+p_cut  = Ceil[r/lcwp/2] ; //20 ;
 nl     = Ceil[(h/2)/lcwp] + 1  ; //2 width divisions
 
 // Passive shield
@@ -65,26 +65,26 @@ If(TRANS)
 Transfinite Line {l1} = p_cut Using Progression 0.85 ;
 EndIf
 
-sur[] = Extrude {{0,0,1} , {0,0,0} , Phi } { 
-  Line{l1}; Layers {p_circ,1} ; 
+sur[] = Extrude {{0,0,1} , {0,0,0} , Phi } {
+  Line{l1}; Layers {p_circ,1} ;
 };
-z0wp = sur[1]; 
+z0wp = sur[1];
 
-vol[] = Extrude {0,0,h/2} { 
-  Surface{z0wp}; Layers {nl,1} ; 
+vol[] = Extrude {0,0,h/2} {
+  Surface{z0wp}; Layers {nl,1} ;
 };
 
 vWP[0] =vol[1];
 
 topwp = vol[0];
-phi0wp = vol[2]; 
-sidewp = vol[3]; 
-phi1wp = vol[4]; 
+phi0wp = vol[2];
+sidewp = vol[3];
+phi1wp = vol[4];
 
 l2 = 11 ; l2_ = 15 ;
 l3 = 6 ;  l3_ = 8  ;
 
-//For n In {0:(#vol[]-1)} 
+//For n In {0:(#vol[]-1)}
 //Printf("n %g out of  %g", vol[n],#vol[]); EndFor
 
 
@@ -119,16 +119,16 @@ For n In {0:0}
   vol[]=Extrude Surface { news-1, {0,0,1} , {0,0,0} , Phi } { Layers { nl_ec, 1 } ; };;
   vEC[n]=vol[1];
 EndFor
-  
-phi1ec    = vol[0]; 
+
+phi1ec    = vol[0];
 z0ec      = vol[2];
-sideextec = vol[3]; 
+sideextec = vol[3];
 topec     = vol[4];
-sideinec  = vol[5]; 
+sideinec  = vol[5];
 
 le_[] = {29,30,31,32};
 
-//For n In {0:(#vol[]-1)} 
+//For n In {0:(#vol[]-1)}
 //Printf("n %g out of  %g", vol[n],#vol[]); EndFor
 
 
@@ -142,7 +142,7 @@ lps  = newl; Line(lps)  = {ps1,ps2};
 
 sur[] = Extrude Line { lps, {0,0,1} , {0,0,0}, Phi };;
 sPSin[0] = sur[1];
-lps_ = sur[0]; 
+lps_ = sur[0];
 loopin = newl ; Line Loop(loopin) = {lps,sur[2],-sur[0],sur[3]};
 
 lpsin = sur[3];
@@ -154,7 +154,7 @@ x1 = x_ps + 2 * w_ps ;
 loopshin[] = {};
 
 For ih In {1:nbrHoles/2}
-  auxlin[]={}; 
+  auxlin[]={};
   auxpnt[]={};
 
   For i In {1:N}
@@ -191,7 +191,7 @@ vPS[0] = vol[1];
 
 extPS  = vol[0];//top
 phi0PS = vol[2];//side phi0
-topPS  = vol[3];//side h=h_ps/2 
+topPS  = vol[3];//side h=h_ps/2
 phi1PS = vol[4];//side phi1
 z0PS   = vol[5];//side h=0
 
@@ -202,7 +202,7 @@ EndFor
 
 bndextPS[]= Boundary{Surface{extPS};};
 
-//For n In {0:(#bndextPS[]-1)} 
+//For n In {0:(#bndextPS[]-1)}
 //Printf("n %g out of  %g", bndextPS[n],#bndextPS[]); EndFor
 
 
@@ -284,7 +284,7 @@ Line Loop(newl) = {la4,-lacir3,-la3_,-lblayer1_,-lblayer2_,-lps_,-la2_,le_[{1:3}
 surairphi1=news ; Plane Surface(surairphi1) = {news-1};
 
 
-Surface Loop(news) = 
+Surface Loop(news) =
 {z0air2,surairphi0,surairphi1,z0air1,z0air0,extPS,topPS,sPSin[0],
 holes[],surair,sideextec,topec,sideinec,topwp,sidewp};
 volair = newv ; Volume(volair) = {news-1};
@@ -334,6 +334,3 @@ Physical Surface(SURAIRINF) = {surairinf};
 Physical Surface(Z0AIRINF) = {z0airinf};
 Physical Surface(PHI0AIRINF) = {surairphi0inf};
 Physical Surface(PHI1AIRINF) = {surairphi1inf};
-
-
-

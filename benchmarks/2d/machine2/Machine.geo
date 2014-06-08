@@ -1,10 +1,10 @@
 
-Include "Rotor1.geo" ;
-Include "Stator1.geo" ;
+Include "Rotor1.inc" ;
+Include "Stator1.inc" ;
 
 MB = 9999;
 If (MB)
-  dH=newreg; 
+  dH=newreg;
   Line Loop(dH) = {OuterMB_[]};
   Line Loop(dH+1) = {InnerMB_[]};
   Plane Surface(dH) = {dH,dH+1};

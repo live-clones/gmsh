@@ -94,12 +94,12 @@ lp[5] = newl ; Line(lp[5])={p[4],p[5]};
 lp[6] = newl ; Line(lp[6])={p[5],p[6]};
 lp[7] = newl ; Line(lp[7])={p[7],p[0]};
 
-surf0 = news ; 
+surf0 = news ;
 Line Loop(surf0) = {lp[1],lp[2],lp[3],lp[4],lp[5],lp[6],lp[0],lp[7]};
 Plane Surface(surf0) = {surf0};
 
 surf[]= Rotate {{0.0,1.0,0.0},{0.0,0.0,0.0},aa/2} {Surface{surf0};};
-sRight =surf[0]; 
+sRight =surf[0];
 surf[]= Rotate {{0.0,1.0,0.0},{0.0,0.0,0.0},-aa} { Duplicata{Surface{sRight};} };
 sLeft = surf[0];
 
@@ -127,7 +127,7 @@ Line Loop(sDefect) = {cd[2],-cd[1],-cd[0]};
 Plane Surface(sDefect) = {sDefect};
 
 If (LAYERS)
-vol[]=Extrude Surface{sDefect, {0,length,0}} 
+vol[]=Extrude Surface{sDefect, {0,length,0}}
 //;;
 {Layers {{nDefect},{1}};};;
 vDefect = vol[1];
@@ -186,7 +186,7 @@ Volume(145) = {144};
 vPieceC=145;
 
 //Include "Probe.geo";
-Include "KDS70-2z1.geo";
+Include "KDS70-2z1.inc";
 
 For k In {0:1}
 Point(newp)={ xBox2, yBox2,  zB[k], pBox};
@@ -219,8 +219,8 @@ sbox4 = news ; Line Loop(news) = {lbox[3],lbv1,-lbox[7],-lbv4};
 Plane Surface(sbox4) = {sbox4};
 
 Surface Loop(news) =  {sbox2,-sbox[0],sbox1,sbox[1],sbox3,sbox4};
-Surface Loop(news) = 
-{52,-131,141,80,81,56,-139,-133,60,64,-135,30,-110,-114,143,137,76,72,68,-118,-122,-94,-98,-102,-106,-123,39}; 
+Surface Loop(news) =
+{52,-131,141,80,81,56,-139,-133,60,64,-135,30,-110,-114,143,137,76,72,68,-118,-122,-94,-98,-102,-106,-123,39};
 vAir= newv;
 Volume(vAir) = {news-2,news-1,surftotprobe};//Rest Air
 
@@ -238,7 +238,7 @@ Physical Volume(PIECE)={vPieceR,vPieceL,vPieceC};
 Physical Surface(SKINPIECE) =
 {72,143,-114,-118,137,141,-131,52,56,-139,-133,60,64,-135,22,-34,-38,68,81,76,80,-110,-123,-94,-98,-102,-106,-122};
 Physical Surface(SKINPIECEWCRACK) =
-{52,-131,141,80,81,56,-139,-133,60,64,-135,30,-110,-114,143,137,76,72,68,-118,-122,-94,-98,-102,-106,-123,39}; 
+{52,-131,141,80,81,56,-139,-133,60,64,-135,30,-110,-114,143,137,76,72,68,-118,-122,-94,-98,-102,-106,-123,39};
 
 Physical Volume(AIR) = {vAir};
 Physical Surface(SURFACEGH0) = {sbox[0],-sbox1,-sbox2,-sbox3,-sbox4,-sbox[1]};
