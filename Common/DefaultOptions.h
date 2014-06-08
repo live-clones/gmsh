@@ -737,7 +737,7 @@ StringXNumber GeneralOptions_Number[] = {
 
 StringXNumber GeometryOptions_Number[] = {
   { F|O, "AutoCoherence" , opt_geometry_auto_coherence , 1. ,
-    "Should all duplicate entities be automatically removed?" },
+    "Should all duplicate entities be automatically removed? (if ==2, also remove degenerate entities)" },
 
   { F,   "Clip" , opt_geometry_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },

@@ -3085,9 +3085,11 @@ static void ReplaceAllDuplicates(std::vector<std::map<int, int> > &report)
   ReplaceDuplicateCurves(curve_report);
   ReplaceDuplicateSurfaces(surface_report);
 
-  RemoveDegenerateCurves();
-  RemoveDegenerateSurfaces();
-  RemoveDegenerateVolumes();
+  if(CTX::instance()->geom.autoCoherence == 2){
+    RemoveDegenerateCurves();
+    RemoveDegenerateSurfaces();
+    RemoveDegenerateVolumes();
+  }
 }
 
 void ReplaceAllDuplicates()
