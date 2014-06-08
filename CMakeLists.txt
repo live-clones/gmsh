@@ -1669,9 +1669,10 @@ endif(ENABLE_WRAP_JAVA)
 include(CPack)
 
 include(CTest)
-file(GLOB_RECURSE TESTFILES tutorial/*.geo)
+file(GLOB_RECURSE TESTFILES tutorial/*.geo demos/*.geo 
+                            benchmarks/?d/*.geo benchmarks/extrude/*.geo)
 foreach(TESTFILE ${TESTFILES})
-  add_test(${TESTFILE} ./gmsh ${TESTFILE} -3 -o ./tmp.msh)
+  add_test(${TESTFILE} ./gmsh ${TESTFILE} -3 -nopopup -o ./tmp.msh)
 endforeach()
 # if(HAVE_PYTHON)
 #   file(GLOB_RECURSE TESTFILES tutorial/*.py)
