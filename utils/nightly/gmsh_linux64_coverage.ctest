@@ -16,13 +16,11 @@ set(WITH_MEMCHECK FALSE) # check memory with valgrind?
 #################################################################################
 set(CTEST_BUILD_NAME "Linux64-Coverage")
 set(OPT "-DGMSH_EXTRA_VERSION=${EXTRA_VERSION}")
-
-# minimal build for current test cases
-set(OPT "${OPT} -DENABLE_FLTK=0 -DENABLE_NETGEN=0 -DENABLE_DINTEGRATION=0")
-set(OPT "${OPT} -DENABLE_GMM=0 -DENABLE_METIS=0 -DENABLE_CHACO=0")
-set(OPT "${OPT} -DENABLE_ONELAB=0 -DENABLE_OPTHOM=0 -DENABLE_SALOME=0")
-set(OPT "${OPT} -DENABLE_VORO3D=0")
-
+set(OPT "${OPT} -DENABLE_FLTK=0")
+#set(OPT "${OPT} -DENABLE_NETGEN=0 -DENABLE_DINTEGRATION=0")
+#set(OPT "${OPT} -DENABLE_GMM=0 -DENABLE_METIS=0 -DENABLE_CHACO=0")
+#set(OPT "${OPT} -DENABLE_ONELAB=0 -DENABLE_OPTHOM=0 -DENABLE_SALOME=0")
+#set(OPT "${OPT} -DENABLE_VORO3D=0")
 set(OPT "${OPT} -DCMAKE_PREFIX_PATH:path=/usr/local/opencascade;/usr/local")
 set(OPT "${OPT} -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE")
 set(OPT "${OPT} -DPETSC_ARCH=linux_complex_mumps_seq")
