@@ -4,10 +4,8 @@
 # bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 set(CTEST_CMAKE_COMMAND "/usr/bin/cmake")
-set(CTEST_BINARY_DIRECTORY "$ENV{HOME}/src/gmsh/bin")
+set(CTEST_BINARY_DIRECTORY "$ENV{HOME}/src/gmsh/bin_coverage")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-
-set(WEB_BIN "geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/Linux")
 
 set(WITH_TEST TRUE)      # run the tests?
 set(WITH_COVERAGE TRUE) # check code coverage?
