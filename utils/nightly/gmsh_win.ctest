@@ -4,7 +4,6 @@
 # bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 set(CTEST_CMAKE_COMMAND "cmake")
-set(CTEST_BINARY_DIRECTORY "$ENV{HOME}/src/gmsh/bin")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 
 set(WEB_BIN "geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/Windows")
@@ -24,6 +23,7 @@ set(WITH_MEMCHECK FALSE) # check memory with valgrind?
 
 #################################################################################
 set(CTEST_BUILD_NAME "Win32")
+set(CTEST_BINARY_DIRECTORY "$ENV{HOME}/src/gmsh/bin")
 set(OPT "-DGMSH_EXTRA_VERSION=${EXTRA_VERSION}")
 set(OPT "${OPT} -DCMAKE_PREFIX_PATH:path=/usr/local/opencascade;/usr/local;/usr/i686-w64-mingw32/sys-root/mingw")
 set(OPT "${OPT} -DCMAKE_C_COMPILER=/usr/bin/i686-w64-mingw32-gcc.exe")
