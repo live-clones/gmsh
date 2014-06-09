@@ -1669,13 +1669,13 @@ endif(ENABLE_WRAP_JAVA)
 include(CPack)
 
 include(CTest)
-file(GLOB_RECURSE GEOFILES 
+file(GLOB_RECURSE TESTFILES 
      tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo)
-foreach(GEOFILE ${GEOFILES})
+foreach(TESTFILE ${TESTFILES})
   # use relative path for cygwin/mingw (the pure win exe built with the mingw 
   # compilers does not understand a full cygwin-style path)
-  FILE(RELATIVE_PATH GEO ${CMAKE_CURRENT_BINARY_DIR} ${GEOFILE})
-  add_test(${GEO} ./gmsh ${GEO} -3 -nopopup -o ./tmp.msh)
+  FILE(RELATIVE_PATH TEST ${CMAKE_CURRENT_BINARY_DIR} ${TESTFILE})
+  add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
 endforeach()
 # if(HAVE_PYTHON)
 #   file(GLOB_RECURSE TESTFILES tutorial/*.py)
