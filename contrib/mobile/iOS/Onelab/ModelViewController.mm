@@ -381,10 +381,11 @@ void getBitmap(void *self, const char *text, int textsize, unsigned char **map, 
   i=2;
   while(i<*height) i*=2;
   *height = i;
+
   UIGraphicsBeginImageContextWithOptions(CGSizeMake(*width, *height), NO, 0.0);
   [lbl.layer renderInContext:UIGraphicsGetCurrentContext()];
   UIImage *img = UIGraphicsGetImageFromCurrentImageContext();
-
+  UIGraphicsEndImageContext();
   CGImageRef bitmap = [img CGImage];
   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
   unsigned char *rawData = (unsigned char*) calloc(*height * *width * 4, sizeof(unsigned char));

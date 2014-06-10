@@ -10,6 +10,7 @@
 
 drawString::drawString(std::string text, int size, float color[4])
 {
+  _map = 0;
   _size = size;
   if(color == NULL)
     setColor(0.0f, 0.0f, 0.0f, 1.0f);

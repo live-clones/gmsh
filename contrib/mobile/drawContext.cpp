@@ -62,6 +62,7 @@ void drawContext::load(std::string filename)
 
   // restore default options
   GmshRestoreDefaultOptions();
+  GmshSetOption("General", "Terminal", 1.0);
 
   // open the file with Gmsh
   GmshOpenProject(filename);
@@ -626,6 +627,7 @@ void drawContext::drawView()
   checkGlError("Initialize position");
 
   glEnable(GL_DEPTH_TEST);
+
   drawMesh();
   checkGlError("Draw mesh");
   drawGeom();
