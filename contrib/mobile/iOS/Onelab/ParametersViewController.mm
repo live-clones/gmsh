@@ -108,12 +108,12 @@
     ParameterNumberCheckbox *param = [[ParameterNumberCheckbox alloc] initWithNumber:p];
     [section addObject:param];
   }
-  else if(p.getStep() == 0) { // text box
-    ParameterNumberTextbox *param = [[ParameterNumberTextbox alloc] initWithNumber:p];
-    [section addObject:param];
-  }
   else if(p.getStep() == 1) { // stepper
     ParameterNumberStepper *param = [[ParameterNumberStepper alloc] initWithNumber:p];
+    [section addObject:param];
+  }
+	else if(p.getMin() == p.getMax()) { // text box, since no range
+    ParameterNumberTextbox *param = [[ParameterNumberTextbox alloc] initWithNumber:p];
     [section addObject:param];
   }
   else {

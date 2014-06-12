@@ -67,6 +67,8 @@
   std::vector<std::string> choices = string[0].getChoices();
   for(int i=0;i<choices.size();i++)
     [popupSelectValue addButtonWithTitle:[NSString stringWithFormat:@"%s", choices[i].c_str()]];
+  [popupSelectValue addButtonWithTitle:@"Cancel"];
+  [popupSelectValue setCancelButtonIndex:popupSelectValue.numberOfButtons - 1];
   [popupSelectValue showInView:button];
 }
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
@@ -74,6 +76,7 @@
   std::vector<onelab::string> string;
   onelab::server::instance()->get(string,[name UTF8String]);
   if(string.size() < 1) return;
+  if(buttonIndex > string[0].getChoices().size() - 1) return; // cancel
   std::string selected = string[0].getChoices()[buttonIndex];
   string[0].setValue(selected);
   onelab::server::instance()->set(string[0]);
@@ -129,6 +132,8 @@
   std::vector<double> choices = number[0].getChoices();
   for(int i=0;i<choices.size();i++)
     [popupSelectValue addButtonWithTitle:[NSString stringWithFormat:@"%s", number[0].getValueLabel(choices[i]).c_str()]];
+  [popupSelectValue addButtonWithTitle:@"Cancel"];
+  [popupSelectValue setCancelButtonIndex:popupSelectValue.numberOfButtons - 1];
   [popupSelectValue showInView:button];
 }
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
@@ -136,6 +141,7 @@
   std::vector<onelab::number> number;
   onelab::server::instance()->get(number,[name UTF8String]);
   if(number.size() < 1) return;
+  if(buttonIndex > number[0].getChoices().size() - 1) return; // cancel
   double selected = number[0].getChoices()[buttonIndex];
   number[0].setValue(selected);
   onelab::server::instance()->set(number[0]);
