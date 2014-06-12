@@ -343,11 +343,9 @@
     name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
     textbox = [[UITextField alloc] init];
     [textbox setBorderStyle:UITextBorderStyleRoundedRect];
-    [textbox setKeyboardType:UIKeyboardTypeNumberPad];
     [textbox setText:[NSString stringWithFormat:@"%g", number.getValue()]];
     [textbox setDelegate:self];
     UIToolbar* numberToolbar = [[UIToolbar alloc]initWithFrame:CGRectMake(0, 0, 320, 50)];
-    numberToolbar.barStyle = UIBarStyleBlackTranslucent;
     numberToolbar.items = [NSArray arrayWithObjects:
                                      [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil],
                                    [[UIBarButtonItem alloc]initWithTitle:@"Apply" style:UIBarButtonItemStyleDone target:self action:@selector(doneWithNumberPad)],

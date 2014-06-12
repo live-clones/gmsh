@@ -74,8 +74,7 @@ void drawContext::load(std::string filename)
   onelab_cb("check");
 
   // mark all parameters as changed to force complete first run
-  onelab::server::instance()->setChanged(true, "Gmsh");
-  onelab::server::instance()->setChanged(true, "GetDP");
+  onelab::server::instance()->setChanged(true);
 }
 
 void drawContext::eventHandler(int event, float x, float y)
@@ -744,7 +743,7 @@ int onelab_cb(std::string action)
                                                  onelabUtils::incrementLoop("2") ||
                                                  onelabUtils::incrementLoop("1")));
   locked = false;
-  return redraw;
+  return redraw || onelab::server::instance()->getChanged();
 }
 
 int number_of_animation()
