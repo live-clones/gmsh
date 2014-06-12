@@ -523,11 +523,15 @@ void drawContext::drawPost()
   }
 }
 
-void drawContext::drawAxes(float x0, float y0, float z0, float h)
+void drawContext::drawAxes()
 {
   glLineWidth(1.);
   glPushMatrix();
   glLoadIdentity();
+
+  GLfloat h = std::max(_top - _bottom, _right - _left) / 25. ;
+  GLfloat x0 = _right - 1.8 * h;
+  GLfloat y0 = _bottom + 1.5 * h;
 
   GLfloat xx = h * _rotatef[0];
   GLfloat xy = h * _rotatef[1];
@@ -641,9 +645,7 @@ void drawContext::drawView()
   glDisable(GL_DEPTH_TEST);
   drawScale();
   checkGlError("Draw scales");
-  drawAxes(_right - (_top - _bottom)/15.0,
-           _bottom + (_top - _bottom)/15.0,
-           0, (_top - _bottom)/25.);
+  drawAxes();
   checkGlError("Draw axes");
 }
 
