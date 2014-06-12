@@ -630,12 +630,16 @@ bool PViewDataList::combineSpace(nameData &nd)
       return false;
     }
 
-    // copy interpolation marices
+    // copy interpolation matrices
     for(std::map<int, std::vector<fullMatrix<double>*> >::iterator it =
           l->_interpolation.begin(); it != l->_interpolation.end(); it++)
       if(_interpolation[it->first].empty())
         for(unsigned int i = 0; i < it->second.size(); i++)
           _interpolation[it->first].push_back(new fullMatrix<double>(*it->second[i]));
+
+    // copy time values
+
+    if(!i) Time = l->Time;
 
     // merge elememts
     dVecMerge(l->SP, SP); NbSP += l->NbSP; dVecMerge(l->VP, VP); NbVP += l->NbVP;
@@ -696,9 +700,9 @@ bool PViewDataList::combineSpace(nameData &nd)
     tmp = nd.name;
   char name[256];
   sprintf(name, "%s_Combine", tmp.c_str());
-
   setName(name);
   setFileName(std::string(name) + ".pos");
+
   return finalize();
 }
 
