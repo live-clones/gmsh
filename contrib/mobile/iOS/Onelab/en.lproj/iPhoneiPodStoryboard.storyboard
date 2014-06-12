@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="5053" systemVersion="13C64" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="vAG-uz-hfU">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="5056" systemVersion="13D65" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" initialViewController="vAG-uz-hfU">
     <dependencies>
         <deployment defaultVersion="1792" identifier="iOS"/>
         <development version="5100" identifier="xcode"/>
@@ -59,9 +59,13 @@
                                     <constraint firstAttribute="width" constant="20" id="f9c-ZY-6q4"/>
                                 </constraints>
                             </activityIndicatorView>
-                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Ct3-iA-CZQ">
-                                <rect key="frame" x="278" y="71" width="35" height="35"/>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="right" contentVerticalAlignment="top" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Ct3-iA-CZQ">
+                                <rect key="frame" x="273" y="76" width="35" height="35"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="35" id="59F-eB-IWj"/>
+                                    <constraint firstAttribute="width" constant="35" id="Cor-0l-wdz"/>
+                                </constraints>
                                 <state key="normal" image="icon_rotate.png">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
@@ -75,10 +79,12 @@
                         <constraints>
                             <constraint firstItem="yT7-IR-qUJ" firstAttribute="bottom" secondItem="Fuh-zG-zVR" secondAttribute="bottom" id="AP1-zU-goA"/>
                             <constraint firstAttribute="bottom" secondItem="Fuh-zG-zVR" secondAttribute="bottom" constant="20" symbolic="YES" id="J47-7T-QdC"/>
+                            <constraint firstAttribute="trailing" secondItem="Ct3-iA-CZQ" secondAttribute="trailing" constant="12" id="Nep-AD-3aJ"/>
                             <constraint firstAttribute="trailing" secondItem="yT7-IR-qUJ" secondAttribute="trailing" constant="20" symbolic="YES" id="P96-El-NrK"/>
                             <constraint firstItem="yT7-IR-qUJ" firstAttribute="leading" secondItem="Fuh-zG-zVR" secondAttribute="trailing" constant="8" symbolic="YES" id="oc4-6x-CF7"/>
                             <constraint firstItem="Fuh-zG-zVR" firstAttribute="top" secondItem="yT7-IR-qUJ" secondAttribute="top" id="qEd-Tx-ibj"/>
                             <constraint firstItem="Fuh-zG-zVR" firstAttribute="leading" secondItem="zrj-Dd-WPc" secondAttribute="leading" constant="20" symbolic="YES" id="qfh-y2-BuW"/>
+                            <constraint firstItem="Ct3-iA-CZQ" firstAttribute="top" secondItem="B2T-ui-MHS" secondAttribute="bottom" constant="12" id="uxn-cS-R2c"/>
                         </constraints>
                         <connections>
                             <outletCollection property="gestureRecognizers" destination="7R3-zZ-cpa" appends="YES" id="K8X-lL-YUb"/>
