@@ -161,7 +161,7 @@ void drawContext::addQuaternion(double p1x, double p1y, double p2x, double p2y)
 void drawContext::buildRotationMatrix()
 {
   build_rotmatrix(_rotate, _quaternion);
-  for(int i=0; i<16;i++)
+  for(int i = 0; i < 16; i++)
     _rotatef[i] = (float)_rotate[i];
 }
 
@@ -528,17 +528,22 @@ void drawContext::drawAxes(float x0, float y0, float z0, float h)
   glLineWidth(1.);
   glPushMatrix();
   glLoadIdentity();
-  glTranslatef(x0, y0, z0);
-  glMultMatrixf(_rotatef);
-  glTranslatef(-x0, -y0, -z0);
+
+  GLfloat xx = h * _rotatef[0];
+  GLfloat xy = h * _rotatef[1];
+  GLfloat yx = h * _rotatef[4];
+  GLfloat yy = h * _rotatef[5];
+  GLfloat zx = h * _rotatef[8];
+  GLfloat zy = h * _rotatef[9];
+  GLfloat o = h / 10;
 
   const GLfloat axes[] = {
-    (GLfloat)x0, (GLfloat)y0, (GLfloat)z0,
-    (GLfloat)(x0+h), (GLfloat)y0, (GLfloat)z0,
-    (GLfloat)x0, (GLfloat)y0, (GLfloat)z0,
-    (GLfloat)x0, (GLfloat)(y0+h), (GLfloat)z0,
-    (GLfloat)x0, (GLfloat)y0, (GLfloat)z0,
-    (GLfloat)x0, (GLfloat)y0, (GLfloat)(z0+h),
+    x0, y0,
+    x0 + xx, y0 + xy,
+    x0, y0,
+    x0 + yx, y0 + yy,
+    x0, y0,
+    x0 + zx, y0 + zy
   };
   GLfloat colors[] = {
     0., 0, 0, 1.,
@@ -548,22 +553,21 @@ void drawContext::drawAxes(float x0, float y0, float z0, float h)
     0, 0., 0, 1.,
     0, 0., 0, 1.,
   };
-  glVertexPointer(3, GL_FLOAT, 0, axes);
+  glVertexPointer(2, GL_FLOAT, 0, axes);
   glEnableClientState(GL_VERTEX_ARRAY);
   glColorPointer(4, GL_FLOAT, 0, colors);
   glEnableClientState(GL_COLOR_ARRAY);
   glDrawArrays(GL_LINES, 0, 6);
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
-  double dx = h / 10;
+
   drawString x("X", 15 * _fontFactor, colors);
-  x.draw(x0+h+dx, y0+dx, z0+dx, _width/(_right-_left), _height/(_top-_bottom), false);
+  x.draw(x0 + xx + o, y0 + xy + o, 0, _width/(_right-_left), _height/(_top-_bottom), false);
   drawString y("Y", 15 * _fontFactor, colors+8);
-  y.draw(x0+dx, y0+h+dx, z0+dx, _width/(_right-_left), _height/(_top-_bottom), false);
+  y.draw(x0 + yx + o, y0 + yy + o, 0, _width/(_right-_left), _height/(_top-_bottom), false);
   drawString z("Z", 15 * _fontFactor, colors+16);
-  z.draw(x0+dx, y0+dx, z0+h+dx, _width/(_right-_left), _height/(_top-_bottom), false);
+  z.draw(x0 + zx + o, y0 + zy + o, 0, _width/(_right-_left), _height/(_top-_bottom), false);
   glPopMatrix();
-  glLineWidth(1);
 }
 
 void drawContext::drawView()
