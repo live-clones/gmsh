@@ -112,7 +112,7 @@
     ParameterNumberStepper *param = [[ParameterNumberStepper alloc] initWithNumber:p];
     [section addObject:param];
   }
-	else if(p.getMin() == p.getMax()) { // text box, since no range
+  else if(p.getMin() == p.getMax() || p.getReadOnly()) { // text box, since no range
     ParameterNumberTextbox *param = [[ParameterNumberTextbox alloc] initWithNumber:p];
     [section addObject:param];
   }
