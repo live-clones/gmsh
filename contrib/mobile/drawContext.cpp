@@ -374,7 +374,13 @@ void drawContext::drawScale()
 {
   glPushMatrix();
   glLoadIdentity();
-  // Draw the scale bar
+
+  double size = std::max(_right -_left, _top - _bottom);
+  double width = size / 3.5;
+  double height = size / 10.;
+  double dh = height / 5;
+
+	// Draw the scale bar
   int nPview = 0;
   for(int i=0; i<PView::list.size();i++){
     PView *p = PView::list[i];
@@ -382,12 +388,9 @@ void drawContext::drawScale()
     if(!opt->visible) continue;
     PViewData *data = p->getData();
 
-    double width = (_right -_left) / 2.;
-    double height = (_top - _bottom) / 10.;
-    double dh = height / 5;
     double box = width / (opt->nbIso ? opt->nbIso : 1);
     double xmin = _left + (_right - _left -width)/2.;
-    double ymin = _bottom + 0.8 * height + height * nPview;
+    double ymin = _bottom + 0.6 * height + height * nPview;
 
     std::vector<GLfloat> vertex(opt->nbIso*3*4);
     std::vector<GLubyte> color(opt->nbIso*4*4);
