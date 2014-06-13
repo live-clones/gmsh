@@ -112,7 +112,10 @@
     ParameterNumberStepper *param = [[ParameterNumberStepper alloc] initWithNumber:p];
     [section addObject:param];
   }
-  else if(p.getMin() == p.getMax() || p.getReadOnly()) { // text box
+  else if(p.getMin() >= p.getMax() ||
+          p.getMin() == -onelab::number::maxNumber() ||
+          p.getMax() == onelab::number::maxNumber() ||
+          p.getReadOnly()) { // text box
     ParameterNumberTextbox *param = [[ParameterNumberTextbox alloc] initWithNumber:p];
     [section addObject:param];
   }
