@@ -38,6 +38,9 @@ string QuadReferenceSpace::toLatex(void) const{
   const size_t nRefSpace = refSpaceNodeId.size();
   stringstream stream;
 
+  // stream << pTree->toLatex() << endl;
+  // return stream.str();
+
   stream << "\\documentclass{article}" << endl << endl
 
          << "\\usepackage{longtable}"  << endl

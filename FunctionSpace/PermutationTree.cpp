@@ -379,9 +379,17 @@ string PermutationTree::toLatex(void) const{
          << "\\usepackage{tikz}" << endl
          << endl
          << "\\usetikzlibrary{arrows}" << endl
-         << "\\tikzstyle{vertex} = [circle, fill = black!25, inner sep = 2pt]"
+         << "\\tikzstyle{vertex} = [circle, fill = black!25, inner sep = 2pt,"
+         << endl
+         << "                                              minimum size = 15pt]"
+         << endl
+         << "\\tikzstyle{circ}   = [draw, circle, minimum size = 15pt]"
          << endl
          << "\\tikzstyle{line}   = [thick, black]" << endl
+         << "\\tikzstyle{box}    = [draw, rectangle, minimum width=20pt,"
+         << endl
+         << "                                      minimum height=10pt]"
+         << endl
          << "\\tikzstyle{arrow}  = [-stealth']" << endl << endl
          << "\\begin{document}" << endl
          << "\\begin{tikzpicture}";
@@ -398,7 +406,7 @@ string PermutationTree::toLatex(void) const{
 
   // Tree //
   // Root
-  stream << "\\node[vertex]{\\phantom{$0$}}" << endl;
+  stream << "\\node[vertex] (root) {\\phantom{$0$}}" << endl;
 
   // Travel from root in deepFirst and add childs to stream
   deepFirstStream(root, stream);
@@ -406,12 +414,31 @@ string PermutationTree::toLatex(void) const{
   // Final ;
   stream << ";" << endl << endl;
 
-  // Leaf Ids //
+  // Reference Element
   for(size_t i = 0; i < leaf.size(); i++)
-    stream << "\\node[xshift=8, yshift=10] "
-           << "at(l" << leaf[i]->leafId << ") "
-           << "{\\scriptsize $" << leaf[i]->leafId << "$};"
-           << endl;
+    if(leaf[i]->tag == leaf[i]->leafId)
+      stream << "\\node[right, xshift = 0.6em] at(l" << leaf[i]->tag
+             << ") {(\\textit{Reference})};"       << endl;
+
+  stream << endl;
+
+  // Legend
+  stream << "\\node[box,    xshift = -10em, yshift =  1.5em] at(root) (box)  "
+         << "{};"                << endl
+         << "\\node[right,  xshift =   0.7em]                at(box)         "
+         << "{Leaf Tag};"        << endl
+         << "\\node[vertex, yshift =   3em]                  at(box)  (vert) "
+         << "{};"                << endl
+         << "\\node[right,  xshift =   0.7em]                at(vert)        "
+         << "{Vertex number};"   << endl
+         << "\\node[        xshift = -10em, yshift = -1.5em] at(root) (ori)  "
+         << "{$[\\dots]$};"      << endl
+         << "\\node[right,  xshift =   0.7em]                at(ori)         "
+         << "{Permutation};"     << endl
+         << "\\node[circ,   yshift =  -3em]                  at(ori)  (circ) "
+         << "{};"                << endl
+         << "\\node[right,  xshift =   0.7em]                at(circ)        "
+         << "{Orientation tag};" << endl;
 
   // Footer //
   stream << "\\end{tikzpicture}" << endl
@@ -434,8 +461,8 @@ void PermutationTree::deepFirstStream(node_t* node, stringstream& stream) const{
     stream << "child{node[vertex]";
 
     // If node, name it
-    if(node->son.size() == 0)
-      stream << "(l" << node->leafId << ")";
+    // if(node->son.size() == 0)
+    //   stream << "(l" << node->leafId << ")";
 
     stream << "{" << node->myChoice << "}" << endl;
 
@@ -444,10 +471,14 @@ void PermutationTree::deepFirstStream(node_t* node, stringstream& stream) const{
 
     // If leaf, child is tag and permutation //
     if(node->son.size() == 0){
+      // Leaf Id
+      stream << "child{node[box, anchor=west]{$" << node->leafId << "$} "
+             << "edge from parent[arrow]" << endl;
+
       // Permutation
       fillWithPermutation(node->leafId, permutation);
 
-      stream << "child{node{$[";
+      stream << "child[anchor=west]{node{$[";
 
       for(size_t j = 0; j < permutation.size() - 1; j++)
         stream << permutation[j] << ", ";
@@ -456,16 +487,16 @@ void PermutationTree::deepFirstStream(node_t* node, stringstream& stream) const{
              << " edge from parent[arrow]" << endl;
 
       // Tag
-      stream << "child{node[anchor=west]{" << node->tag;
+      stream << "child{node[circ, anchor=west]";
 
       // Is true orientation ?
       if(node->tag == node->leafId)
-        stream << " (\\emph{True Orientation})";
+        stream << " (l" << node->tag << ") ";
 
-      stream << "} edge from parent[arrow]" << endl;
+      stream << "{" << node->tag << "} edge from parent[arrow]" << endl;
 
       // Done
-      stream << "}}";
+      stream << "}}}";
     }
 
     stream << "}" << endl;
