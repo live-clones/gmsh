@@ -48,13 +48,13 @@
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" text="" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yT7-IR-qUJ">
-                                <rect key="frame" x="48" y="528" width="252" height="20"/>
+                                <rect key="frame" x="40" y="538" width="260" height="20"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <activityIndicatorView opaque="NO" contentMode="scaleToFill" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="Fuh-zG-zVR">
-                                <rect key="frame" x="20" y="528" width="20" height="20"/>
+                                <rect key="frame" x="10" y="538" width="20" height="20"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="20" id="f9c-ZY-6q4"/>
                                 </constraints>
@@ -78,12 +78,12 @@
                         <gestureRecognizers/>
                         <constraints>
                             <constraint firstItem="yT7-IR-qUJ" firstAttribute="bottom" secondItem="Fuh-zG-zVR" secondAttribute="bottom" id="AP1-zU-goA"/>
-                            <constraint firstAttribute="bottom" secondItem="Fuh-zG-zVR" secondAttribute="bottom" constant="20" symbolic="YES" id="J47-7T-QdC"/>
+                            <constraint firstAttribute="bottom" secondItem="Fuh-zG-zVR" secondAttribute="bottom" constant="10" id="J47-7T-QdC"/>
                             <constraint firstAttribute="trailing" secondItem="Ct3-iA-CZQ" secondAttribute="trailing" constant="10" id="Nep-AD-3aJ"/>
                             <constraint firstAttribute="trailing" secondItem="yT7-IR-qUJ" secondAttribute="trailing" constant="20" symbolic="YES" id="P96-El-NrK"/>
-                            <constraint firstItem="yT7-IR-qUJ" firstAttribute="leading" secondItem="Fuh-zG-zVR" secondAttribute="trailing" constant="8" symbolic="YES" id="oc4-6x-CF7"/>
+                            <constraint firstItem="yT7-IR-qUJ" firstAttribute="leading" secondItem="Fuh-zG-zVR" secondAttribute="trailing" constant="10" id="oc4-6x-CF7"/>
                             <constraint firstItem="Fuh-zG-zVR" firstAttribute="top" secondItem="yT7-IR-qUJ" secondAttribute="top" id="qEd-Tx-ibj"/>
-                            <constraint firstItem="Fuh-zG-zVR" firstAttribute="leading" secondItem="zrj-Dd-WPc" secondAttribute="leading" constant="20" symbolic="YES" id="qfh-y2-BuW"/>
+                            <constraint firstItem="Fuh-zG-zVR" firstAttribute="leading" secondItem="zrj-Dd-WPc" secondAttribute="leading" constant="10" id="qfh-y2-BuW"/>
                             <constraint firstItem="Ct3-iA-CZQ" firstAttribute="top" secondItem="B2T-ui-MHS" secondAttribute="bottom" constant="10" id="uxn-cS-R2c"/>
                         </constraints>
                         <connections>

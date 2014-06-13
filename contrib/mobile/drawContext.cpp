@@ -390,7 +390,7 @@ void drawContext::drawScale()
 
     double box = width / (opt->nbIso ? opt->nbIso : 1);
     double xmin = _left + (_right - _left - width)/2.;
-    double ymin = _bottom + 0.6 * height + height * nPview;
+    double ymin = _bottom + 0.7 * height + height * nPview;
 
     std::vector<GLfloat> vertex(opt->nbIso*3*4);
     std::vector<GLubyte> color(opt->nbIso*4*4);
