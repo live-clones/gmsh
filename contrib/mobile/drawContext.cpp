@@ -389,7 +389,7 @@ void drawContext::drawScale()
     PViewData *data = p->getData();
 
     double box = width / (opt->nbIso ? opt->nbIso : 1);
-    double xmin = _left + (_right - _left -width)/2.;
+    double xmin = _left + (_right - _left - width)/2.;
     double ymin = _bottom + 0.6 * height + height * nPview;
 
     std::vector<GLfloat> vertex(opt->nbIso*3*4);
@@ -499,7 +499,7 @@ void drawContext::drawScale()
       sprintf(label, "%s", data->getName().c_str());
     }
     drawString lbl(label, 20 * _fontFactor);
-    lbl.draw(xmin + width / 2, ymin + 2.75 * dh, 0.,
+    lbl.draw(xmin + width / 2, ymin + 2.8 * dh, 0.,
              _width/(_right-_left), _height/(_top-_bottom));
 
     drawString val(data->getName().c_str(), 15 * _fontFactor);
