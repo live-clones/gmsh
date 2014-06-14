@@ -43,7 +43,7 @@ public class MainActivity extends Activity{
 
 	public MainActivity() {
 	}
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -61,7 +61,7 @@ public class MainActivity extends Activity{
     	else if(intent.getAction() != null && intent.getAction().equals(Intent.ACTION_VIEW)) {
     		String tmp = intent.getData().getPath();
     		_gmsh.load(tmp);
-    	}  		
+    	}
     	else if(extras != null) {
     		String name = extras.getString("name");
     		this.getActionBar().setTitle(name);
@@ -77,20 +77,20 @@ public class MainActivity extends Activity{
     		_optionsFragment = OptionsFragment.newInstance(_gmsh);
     		getFragmentManager().beginTransaction().replace(R.id.parameter_fragment, _optionsFragment).commit();
     		_optionsFragment.setOnOptionsChangedListener(new OptionsFragment.OnOptionsChangedListener() {
-    			
+
     			public void OnOptionsChanged() {
     				_modelFragment.requestRender();
     			}
     		});
     	}
 	}
-	
+
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		outState.putBoolean("Compute", _compute);
 		super.onSaveInstanceState(outState);
 	}
-	
+
 	@Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	super.onCreateOptionsMenu(menu);
@@ -129,10 +129,10 @@ public class MainActivity extends Activity{
     	else if(item.getTitle().equals(getString(R.string.menu_share))) {
     		if(this._compute) {
 				AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-    			_errorDialog = dialogBuilder.setTitle("Can't show the models list")
-    			.setMessage("The computing have to be finished before you can take a screenshot.")
+    			_errorDialog = dialogBuilder.setTitle("Can't show the model list")
+    			.setMessage("The computation has to complete before you can take a screenshot")
     			.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-					
+
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
 					}
@@ -154,10 +154,10 @@ public class MainActivity extends Activity{
 		else if(item.getItemId() == android.R.id.home) {
 			if(this._compute) {
 				AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-    			_errorDialog = dialogBuilder.setTitle("Can't show the models list")
-    			.setMessage("The computing have to be finished before you can select an other model.")
+    			_errorDialog = dialogBuilder.setTitle("Can't show the model list")
+    			.setMessage("The computation has to complete before you can select another model")
     			.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-					
+
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.dismiss();
 					}
@@ -169,7 +169,7 @@ public class MainActivity extends Activity{
 		}
     	return super.onMenuItemSelected(featureId, item);
     }
-	
+
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
@@ -180,7 +180,7 @@ public class MainActivity extends Activity{
 			break;
 		}
 	}
-	
+
 	public String getRealPathFromURI(Uri contentUri) {
         String[] proj = { MediaStore.Images.Media.DATA };
         Cursor cursor = managedQuery(contentUri, proj, null, null, null);
@@ -188,7 +188,7 @@ public class MainActivity extends Activity{
         cursor.moveToFirst();
         return cursor.getString(column_index);
     }
-	
+
 	private class Run extends AsyncTask<Void, Void, Integer[]> {
 
     	@Override
@@ -197,7 +197,7 @@ public class MainActivity extends Activity{
     		_runStopMenuItem.setTitle(R.string.menu_stop);
     		super.onPreExecute();
     	}
-    	
+
 		@Override
 		protected Integer[] doInBackground(Void... params) {
 			_gmsh.onelabCB("compute");
@@ -214,7 +214,7 @@ public class MainActivity extends Activity{
 			if(_notify) notifyEndComputing();
 			super.onPostExecute(result);
 		}
-    	
+
     }
 	private void showError(){
     	if(_errors.size()>0){
@@ -244,7 +244,7 @@ public class MainActivity extends Activity{
 		super.onPause();
 		_notify = true;
 	}
-	
+
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -253,36 +253,36 @@ public class MainActivity extends Activity{
 		mNotificationManager.cancel(1337);
 		_notify = false;
 	}
-	
+
 	@Override
 	protected void onStop() {
 		super.onStop();
 		if(_compute) notifyComputing();
 		_notify = true;
 	}
-	
+
 	@Override
 	public void onLowMemory() {
 		if(!_compute) return;
 		_gmsh.onelabCB("stop");
-		Toast.makeText(this, "Low memory !!! computing is going to stop", Toast.LENGTH_LONG).show();
+		Toast.makeText(this, "Low memory! Computation is going to stop", Toast.LENGTH_LONG).show();
 		super.onLowMemory();
 	}
-	
+
 	@Override
 	public void onTrimMemory(int level) {
 		if(!_compute) return;
 		if(level == Activity.TRIM_MEMORY_COMPLETE){
 			_gmsh.onelabCB("stop");
-			notifyEndComputing("The computing had to stop because your device ran out of memory");
+			notifyEndComputing("The computation had to stop because your device ran out of memory");
 			_notify = false;
 		}
 		else if(level == Activity.TRIM_MEMORY_MODERATE) {
-			notifyComputing("Computing in progress - low memory", true);
+			notifyComputing("Computation in progress - low memory", true);
 		}
 		super.onTrimMemory(level);
 	}
-	
+
 	private void notifyComputing(String msg, boolean alert) {
 		Intent intent = new Intent(this, MainActivity.class);
 	    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -297,15 +297,15 @@ public class MainActivity extends Activity{
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mNotificationManager.notify(1337, notifyBuilder.getNotification());
 	}
-	
+
 	private void notifyComputing() {
-		notifyComputing("Computing in progress", false);
+		notifyComputing("Computation in progress", false);
 	}
-	
+
 	private void notifyEndComputing() {
-		notifyEndComputing("The computing is finished");
+		notifyEndComputing("Computation done!");
 	}
-	
+
 	private void notifyEndComputing(String msg) {
 		Intent intent = new Intent(this, MainActivity.class);
 	    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -345,6 +345,6 @@ public class MainActivity extends Activity{
 			}
     	};
     };
-    
+
     public boolean isComputing() {return _compute;}
 }
