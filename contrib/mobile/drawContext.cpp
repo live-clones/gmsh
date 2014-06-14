@@ -62,6 +62,8 @@ void drawContext::load(std::string filename)
 
   // restore default options
   GmshRestoreDefaultOptions();
+
+  // output messages on console
   GmshSetOption("General", "Terminal", 1.0);
 
   // open the file with Gmsh
@@ -654,18 +656,17 @@ void drawContext::drawView()
 std::vector<std::string> commandToVector(const std::string cmd)
 {
   std::vector<std::string> ret;
-  int pos=0, last=0;
+  int pos = 0, last = 0;
   while((pos = cmd.find("-", last+1)) != std::string::npos){
     ret.push_back(cmd.substr(last,pos-1-last));
     last = pos;
   }
-  ret.push_back(cmd.substr(last,cmd.size()-1));
+  ret.push_back(cmd.substr(last));
   return ret;
 }
 
 int onelab_cb(std::string action)
 {
-  Msg::Debug("Ask onlab to %s", action.c_str());
   if(action == "stop"){
     onelab::string o("GetDP/Action", "stop");
     o.setVisible(false);
@@ -674,9 +675,10 @@ int onelab_cb(std::string action)
     onelabStop = true;
     return 0;
   }
+
   if(locked) return -1;
   locked = true;
-  int redraw = 0;
+
   if(action == "reset"){
     onelab::server::instance()->clear();
     onelabUtils::runGmshClient(action, true);
@@ -692,12 +694,17 @@ int onelab_cb(std::string action)
   }
 
   do{
-    if(onelabUtils::runGmshClient(action, true))
-      redraw = 1;
+    // run Gmsh (only if necessary)
+    onelabUtils::runGmshClient(action, true);
 
-    if(redraw == 0 && !onelab::server::instance()->getChanged("GetDP"))
-      continue;
+    // run GetDP (always -- to not confuse the user)
+    onelab::string o("GetDP/Action", action);
+    o.setVisible(false);
+    o.setNeverChanged(true);
+    onelab::server::instance()->set(o);
 
+    std::vector<std::string> args;
+    args.push_back("getdp");
     std::vector<onelab::string> ps;
     onelab::server::instance()->get(ps, "GetDP/1ModelName");
     if(ps.empty()){
@@ -706,47 +713,25 @@ int onelab_cb(std::string action)
       onelab::string o("GetDP/1ModelName", name, "Model name");
       o.setKind("file");
       onelab::server::instance()->set(o);
+      ps.push_back(o);
     }
-    onelab::string o("GetDP/Action", action);
-    o.setVisible(false);
-    o.setNeverChanged(true);
-    onelab::server::instance()->set(o);
-
-    if(action == "compute" && (onelab::server::instance()->getChanged("Gmsh") ||
-                               onelab::server::instance()->getChanged("GetDP"))){
-      std::string filename = GModel::current()->getFileName();
-      std::vector<std::string> args;
-      args.push_back("getdp");
-      std::vector<onelab::string> onelabArgs;
-      onelab::server::instance()->get(onelabArgs, "GetDP/1ModelName");
-      args.push_back((onelabArgs.empty())? SplitFileName(filename)[0] +
-                     SplitFileName(filename)[1] : onelabArgs[0].getValue());
-      onelab::server::instance()->get(onelabArgs, "GetDP/9ComputeCommand");
-      std::vector<std::string> compute = commandToVector((onelabArgs.empty())? "" :
-                                                         onelabArgs[0].getValue().c_str());
-      args.insert( args.end(), compute.begin(), compute.end() );
-      args.push_back("-onelab");
-      args.push_back("GetDP");
-      GetDP(args, onelab::server::instance());
-    }
-    if(action == "check" && (onelab::server::instance()->getChanged("Gmsh") ||
-                             onelab::server::instance()->getChanged("GetDP"))){
-      std::string filename = GModel::current()->getFileName();
-      std::vector<std::string> args;
-      args.push_back("getdp");
-      std::vector<onelab::string> onelabArgs;
-      args.push_back(SplitFileName(filename)[0] + SplitFileName(filename)[1]);
-      onelab::server::instance()->get(onelabArgs, "GetDP/9CheckCommand");
-      args.push_back((onelabArgs.empty())? "" : onelabArgs[0].getValue());
-      args.push_back("-onelab");
-      args.push_back("GetDP");
-      GetDP(args, onelab::server::instance());
-    }
+    args.push_back(ps[0].getValue());
+    if(action == "check")
+      onelab::server::instance()->get(ps, "GetDP/9CheckCommand");
+    else if(action == "compute")
+      onelab::server::instance()->get(ps, "GetDP/9ComputeCommand");
+    else
+      ps.clear();
+    std::vector<std::string> c = commandToVector(ps.empty() ? "" : ps[0].getValue().c_str());
+    args.insert(args.end(), c.begin(), c.end());
+    args.push_back("-onelab");
+    args.push_back("GetDP");
+    GetDP(args, onelab::server::instance());
   } while(action == "compute" && !onelabStop && (onelabUtils::incrementLoop("3") ||
                                                  onelabUtils::incrementLoop("2") ||
                                                  onelabUtils::incrementLoop("1")));
   locked = false;
-  return redraw || onelab::server::instance()->getChanged();
+  return onelab::server::instance()->getChanged();
 }
 
 int number_of_animation()
