@@ -9,7 +9,7 @@
 // and Andre Battaiola.
 
 #include <FL/fl_draw.H>
-#include "colorbarWindow.h"   
+#include "colorbarWindow.h"
 #include "ColorTable.h"
 #include "Context.h"
 
@@ -77,8 +77,6 @@ void colorbarWindow::redraw_range(int a, int b)
   int x1, y1, x2, y2;
   int intensity = 0;
   double H, S, V;
-
-  make_current();
 
   if(a < 0)
     a = 0;
@@ -250,8 +248,6 @@ void colorbarWindow::redraw_marker()
   char str[50];
   double val;
 
-  make_current();
-
   y0 = marker_y;
   y1 = h() - 1;
 
@@ -280,11 +276,11 @@ void colorbarWindow::draw()
   label_y = h() - 5;
   marker_y = label_y - marker_height - font_height;
   wedge_y = marker_y - wedge_height;
-  color_bg = fl_color_cube(CTX::instance()->unpackRed(CTX::instance()->color.bg) * 
+  color_bg = fl_color_cube(CTX::instance()->unpackRed(CTX::instance()->color.bg) *
                            FL_NUM_RED / 256,
-                           CTX::instance()->unpackGreen(CTX::instance()->color.bg) * 
+                           CTX::instance()->unpackGreen(CTX::instance()->color.bg) *
                            FL_NUM_GREEN / 256,
-                           CTX::instance()->unpackBlue(CTX::instance()->color.bg) * 
+                           CTX::instance()->unpackBlue(CTX::instance()->color.bg) *
                            FL_NUM_BLUE / 256);
   redraw_range(0, ct->size - 1);
   redraw_marker();
@@ -571,7 +567,6 @@ int colorbarWindow::handle(int event)
     if(move_marker) {
       // changing marker position
       marker_pos = entry;
-      redraw_marker();
     }
     else {
       // changing color graph
@@ -613,14 +608,10 @@ int colorbarWindow::handle(int event)
         }
         ct->table[i] = CTX::instance()->packColor(red, green, blue, alpha);
       }
-      // redraw the color curves
-      if(pentry < entry)
-        redraw_range(pentry - 1, entry + 1);
-      else
-        redraw_range(entry - 1, pentry + 1);
       pentry = entry;
       *viewchanged = true;
     }
+    redraw();
     return 1;
   }
 
