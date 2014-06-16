@@ -5,6 +5,7 @@ getdp_svn="/Users/geuzaine/src/getdp/"
 frameworks_dir="/Users/geuzaine/src/gmsh/contrib/mobile/frameworks/"
 
 petsc_framework="$frameworks_dir/petsc.framework"
+slepc_framework="$frameworks_dir/slepc.framework"
 
 cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=$gmsh_svn/contrib/mobile/utils/iOS.cmake -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=Release -GXcode"
 
@@ -46,7 +47,7 @@ function build_getdp {
   cd $getdp_svn/build_ios_$1
   export PETSC_DIR=
   export PETSC_ARCH=
-  cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DGMSH_INC="$frameworks_dir/Gmsh.framework/Headers/" -DGMSH_LIB="$frameworks_dir/Gmsh.framework/Gmsh" -DCMAKE_OSX_ARCHITECTURES="$1" ..
+  cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_framework/Headers/" -DSLEPC_LIB="$slepc_framework/slepc" -DGMSH_INC="$frameworks_dir/Gmsh.framework/Headers/" -DGMSH_LIB="$frameworks_dir/Gmsh.framework/Gmsh" -DCMAKE_OSX_ARCHITECTURES="$1" ..
   check
   $build_cmd
   check

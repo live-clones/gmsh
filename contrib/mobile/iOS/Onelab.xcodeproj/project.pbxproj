@@ -11,6 +11,7 @@
 		2988FF1E18E59558001435B6 /* libf2cblas.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1C18E59558001435B6 /* libf2cblas.a */; };
 		2988FF1F18E59558001435B6 /* libf2clapack.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1D18E59558001435B6 /* libf2clapack.a */; };
 		29A4AC80193CE6DA0007B5A5 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 29A4AC7F193CE6DA0007B5A5 /* Images.xcassets */; };
+		9C1B9912194F4E0400507EFD /* slepc.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C1B9911194F4E0400507EFD /* slepc.framework */; };
 		9C1C10FA17BA5E7D00BFD483 /* OptionsViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C1C10F917BA5E7D00BFD483 /* OptionsViewController.mm */; };
 		9C2C3A1E187FDF9200E87F78 /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C2C3A1D187FDF9200E87F78 /* libc++.dylib */; };
 		9C2C3A20187FDF9900E87F78 /* libstdc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C2C3A1F187FDF9900E87F78 /* libstdc++.dylib */; };
@@ -54,6 +55,7 @@
 		2988FF1C18E59558001435B6 /* libf2cblas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2cblas.a; path = ../../frameworks/libf2cblas.a; sourceTree = "<group>"; };
 		2988FF1D18E59558001435B6 /* libf2clapack.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2clapack.a; path = ../../frameworks/libf2clapack.a; sourceTree = "<group>"; };
 		29A4AC7F193CE6DA0007B5A5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		9C1B9911194F4E0400507EFD /* slepc.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = slepc.framework; path = Onelab/frameworks/slepc.framework; sourceTree = "<group>"; };
 		9C1C10F817BA5E7D00BFD483 /* OptionsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OptionsViewController.h; sourceTree = "<group>"; };
 		9C1C10F917BA5E7D00BFD483 /* OptionsViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = OptionsViewController.mm; sourceTree = "<group>"; };
 		9C2C3A1D187FDF9200E87F78 /* libc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libc++.dylib"; path = "usr/lib/libc++.dylib"; sourceTree = SDKROOT; };
@@ -131,6 +133,7 @@
 				9CE08E10178AEB1600A83B4B /* GetDP.framework in Frameworks */,
 				9CE08E11178AEB1600A83B4B /* Gmsh.framework in Frameworks */,
 				9CE08E12178AEB1600A83B4B /* petsc.framework in Frameworks */,
+				9C1B9912194F4E0400507EFD /* slepc.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -167,6 +170,7 @@
 		9C9608391712C16300E1D4A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				9C1B9911194F4E0400507EFD /* slepc.framework */,
 				2988FF1C18E59558001435B6 /* libf2cblas.a */,
 				2988FF1D18E59558001435B6 /* libf2clapack.a */,
 				9C2C3A1F187FDF9900E87F78 /* libstdc++.dylib */,
@@ -449,6 +453,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/Onelab/frameworks\"",
+					"$(PROJECT_DIR)/Onelab/frameworks",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Onelab/Onelab-Prefix.pch";
@@ -481,6 +486,7 @@
 					"\"$(SRCROOT)/../../gmsh-iOS\"",
 					"\"$(SRCROOT)/../..\"",
 					"\"$(SRCROOT)/Onelab/frameworks\"",
+					"$(PROJECT_DIR)/Onelab/frameworks",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Onelab/Onelab-Prefix.pch";

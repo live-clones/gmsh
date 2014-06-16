@@ -68,6 +68,14 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
   else(PETSC_FRAMEWORK)
     message(SEND_ERROR "Could not find petsc.framework")
   endif(PETSC_FRAMEWORK)
+  # and we also need SLEPc
+  find_path(SLEPC_FRAMEWORK slepc.framework)
+  if(SLEPC_FRAMEWORK)
+    set(SLEPC_FRAMEWORK ${SLEPC_FRAMEWORK}/slepc.framework)
+    message(STATUS "Found framework " ${SLEPC_FRAMEWORK})
+  else(SLEPC_FRAMEWORK)
+    message(SEND_ERROR "Could not find slepc.framework")
+  endif(SLEPC_FRAMEWORK)
   # add target
   add_custom_target(xcodeProject
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/
@@ -88,9 +96,11 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/GetDP.framework/Headers/
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/Gmsh.framework/Headers/
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/Headers/
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/slepc.framework/Headers/
     COMMAND ${CMAKE_COMMAND} -E copy ${GETDP_FRAMEWORK}/GetDP ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/GetDP.framework/
     COMMAND ${CMAKE_COMMAND} -E copy ${GMSH_FRAMEWORK}/Gmsh ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/Gmsh.framework/
     COMMAND ${CMAKE_COMMAND} -E copy ${PETSC_FRAMEWORK}/petsc ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/
+    COMMAND ${CMAKE_COMMAND} -E copy ${SLEPC_FRAMEWORK}/slepc ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/slepc.framework/
   )
   foreach(DIR ${BENCHMARKS})
     get_filename_component(DIRNAME ${DIR} NAME)
@@ -101,6 +111,7 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
   copy_headers(${GETDP_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/GetDP.framework/Headers/)
   copy_headers(${GMSH_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/Gmsh.framework/Headers/)
   copy_headers(${PETSC_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/Headers/)
+  copy_headers(${SLEPC_FRAMEWORK}/Headers/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/slepc.framework/Headers/)
 
   message(STATUS "")
   message(STATUS "ONELAB for iOS successfully configured:")
