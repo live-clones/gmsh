@@ -248,6 +248,8 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Scal2Tens", GMSH_RegisterScal2TensPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("Scal2Vec", GMSH_RegisterScal2VecPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("NewView", GMSH_RegisterNewViewPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("SimplePartition", GMSH_RegisterSimplePartitionPlugin()));

@@ -20,7 +20,7 @@ class GMSH_Scal2VecPlugin : public GMSH_PostPlugin
   std::string getName() const { return "Scal2Vec"; }
   std::string getShortHelp() const
   {
-    return "Convert some scalar fields into a vector field  [DEPRECATE]";
+    return "Convert some scalar fields into a vector field";
   }
   std::string getHelp() const;
   int getNbOptions() const;

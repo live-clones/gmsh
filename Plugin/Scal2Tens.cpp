@@ -8,16 +8,16 @@
 #include "shapeFunctions.h"
 
 StringXNumber Scal2TensOptions_Number[] = {
-  {GMSH_FULLRC, "NumberOfComponents", NULL, 3.},
-  {GMSH_FULLRC, "Comp0", NULL, -1.},
-  {GMSH_FULLRC, "Comp1", NULL, -1.},
-  {GMSH_FULLRC, "Comp2", NULL, -1.},
-  {GMSH_FULLRC, "Comp3", NULL, -1.},
-  {GMSH_FULLRC, "Comp4", NULL, -1.},
-  {GMSH_FULLRC, "Comp5", NULL, -1.},
-  {GMSH_FULLRC, "Comp6", NULL, -1.},
-  {GMSH_FULLRC, "Comp7", NULL, -1.},
-  {GMSH_FULLRC, "Comp8", NULL, -1.}
+  {GMSH_FULLRC, "NumberOfComponents", NULL, 9},
+  {GMSH_FULLRC, "View0", NULL, -1},
+  {GMSH_FULLRC, "View1", NULL, -1},
+  {GMSH_FULLRC, "View2", NULL, -1},
+  {GMSH_FULLRC, "View3", NULL, -1},
+  {GMSH_FULLRC, "View4", NULL, -1},
+  {GMSH_FULLRC, "View5", NULL, -1},
+  {GMSH_FULLRC, "View6", NULL, -1},
+  {GMSH_FULLRC, "View7", NULL, -1},
+  {GMSH_FULLRC, "View8", NULL, -1}
 };
 
 StringXString Scal2TensOptions_String[] = {
