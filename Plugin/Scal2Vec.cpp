@@ -27,11 +27,12 @@ extern "C"
 
 std::string GMSH_Scal2VecPlugin::getHelp() const
 {
-  return "Plugin(Scal2Vec) converts the scalar fields of 'ViewX', "
-         "'ViewY' and/or 'ViewZ' into a vectorial field. "
-         "The new view 'NameNewView' contains it.\n\n"
-         "If the value of 'ViewX', 'ViewY' or 'ViewZ' is -1, "
-         "the value of the vectorial field in the corresponding direction is 0.";
+  return "Plugin(Scal2Vec) converts the scalar fields into a vectorial field. "
+         "The new view 'NameNewView' contains it. "
+         "If the number of a view is -1, the value of the corresponding "
+         "component of the vector field is 0."
+         "\n\n"
+         "DEPRECATE: Use plugin 'Scal2Tens' instead.'";
 }
 
 int GMSH_Scal2VecPlugin::getNbOptions() const

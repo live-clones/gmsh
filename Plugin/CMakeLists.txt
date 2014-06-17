@@ -6,13 +6,13 @@
 set(SRC
   Plugin.cpp PluginManager.cpp
   Levelset.cpp
-    CutPlane.cpp CutSphere.cpp Isosurface.cpp
+  CutPlane.cpp CutSphere.cpp Isosurface.cpp
   Smooth.cpp CutParametric.cpp
   Lambda2.cpp
   Eigenvectors.cpp Eigenvalues.cpp
   StreamLines.cpp Particles.cpp CutGrid.cpp CutBox.cpp
   Transform.cpp
-    LongitudeLatitude.cpp
+  LongitudeLatitude.cpp
   Triangulate.cpp Tetrahedralize.cpp
   Warp.cpp SphericalRaise.cpp
   Skin.cpp
@@ -29,7 +29,7 @@ set(SRC
   FieldFromAmplitudePhase.cpp
   Bubbles.cpp NearToFarField.cpp
   DiscretizationError.cpp
-  Scal2Vec.cpp
+  Scal2Tens.cpp Scal2Vec.cpp
   CutMesh.cpp
   NewView.cpp
   SimplePartition.cpp Crack.cpp

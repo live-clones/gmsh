@@ -56,6 +56,7 @@
 #include "Bubbles.h"
 #include "NearToFarField.h"
 #include "DiscretizationError.h"
+#include "Scal2Tens.h"
 #include "Scal2Vec.h"
 #include "CutMesh.h"
 #include "NewView.h"
@@ -245,7 +246,7 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("DiscretizationError", GMSH_RegisterDiscretizationErrorPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
-                      ("Scal2Vec", GMSH_RegisterScal2VecPlugin()));
+                      ("Scal2Tens", GMSH_RegisterScal2TensPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("NewView", GMSH_RegisterNewViewPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
