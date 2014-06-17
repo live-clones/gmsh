@@ -56,38 +56,26 @@ StringXString *GMSH_Scal2VecPlugin::getOptionStr(int iopt)
 
 PView *GMSH_Scal2VecPlugin::execute(PView *v)
 {
-  int iViewX = (int)Scal2VecOptions_Number[0].def;
-  int iViewY = (int)Scal2VecOptions_Number[1].def;
-  int iViewZ = (int)Scal2VecOptions_Number[2].def;
+  // Load options
+  int iView[3];
+  for (int comp=0; comp<3; comp++)
+    iView[comp] = (int)Scal2VecOptions_Number[comp+1].def;
   
   // Load data
-  PView *vRef = 0, *vX = 0, *vY = 0, *vZ = 0;
-  if(iViewX >= 0){
-    vX = getView(iViewX, v);
-    if(!vX){
-      Msg::Error("Scal2Vec plugin could not find View X: %i", iViewX);
-      return v;
+  PView *vRef=0, *vComp[3];
+  for (int comp=0; comp<3; comp++) {
+    if (iView[comp]<0) vComp[comp] = 0;
+    else {
+      vComp[comp] = getView(iView[comp], v);
+      if (!vComp[comp]) {
+        Msg::Error("Scal2Vec plugin could not find View '%i'", iView[comp]);
+        return v;
+      }
+      if (!vRef) vRef = vComp[comp];
     }
-    if(!vRef) vRef = vX;
   }
-  if(iViewY >= 0){
-    vY = getView(iViewY, v);
-    if(!vY){
-      Msg::Error("Scal2Vec plugin could not find View Y: %i", iViewY);
-      return v;
-    }
-    if(!vRef) vRef = vY;
-  }
-  if(iViewZ >= 0){
-    vZ = getView(iViewZ, v);
-    if(!vZ){
-      Msg::Error("Scal2Vec plugin could not find View Z: %i", iViewZ);
-      return v;
-    }
-    if(!vRef) vRef = vZ;
-  }
-  if(!vRef){
-    Msg::Error("Scal2Vec plugin could not find any view.", iViewZ);
+  if (!vRef) {
+    Msg::Error("Scal2Vec plugin could not find any view.");
     return v;
   }
   PViewData *dataRef = vRef->getData();
@@ -97,16 +85,15 @@ PView *GMSH_Scal2VecPlugin::execute(PView *v)
   PViewDataList *dataNew = getDataList(vNew);
   
   int step0 = dataRef->getFirstNonEmptyTimeStep();
-  for (int ent = 0; ent < dataRef->getNumEntities(step0); ent++){
-    for (int ele = 0; ele < dataRef->getNumElements(step0, ent); ele++){
+  for (int ent=0; ent < dataRef->getNumEntities(step0); ent++) {
+    for (int ele=0; ele < dataRef->getNumElements(step0, ent); ele++) {
       if (dataRef->skipElement(step0, ent, ele)) continue;
-      int numComp = 3; // The 3 components of the new view: x,y,z
       int type = dataRef->getType(step0, ent, ele);
       int numNodes = dataRef->getNumNodes(step0, ent, ele);
-      std::vector<double> *out = dataNew->incrementList(numComp, type, numNodes); // Pointer in data of the new view
+      std::vector<double> *out = dataNew->incrementList(3, type, numNodes); // Pointer in data of the new view
       if (!out) continue;
-      double x[8], y[8], z[8], valX, valY, valZ;
-      for (int nod = 0; nod < numNodes; nod++)
+      double x[8], y[8], z[8];
+      for (int nod=0; nod<numNodes; nod++)
         dataRef->getNode(step0, ent, ele, nod, x[nod], y[nod], z[nod]);
       int dim = dataRef->getDimension(step0, ent, ele);
       elementFactory factory;
@@ -118,12 +105,11 @@ PView *GMSH_Scal2VecPlugin::execute(PView *v)
       for (int step=step0; step < dataRef->getNumTimeSteps(); step++) {
         if (!dataRef->hasTimeStep(step)) continue;
         for (int nod=0; nod<numNodes; nod++) {
-          if (vX) vX->getData()->getValue(step, ent, ele, nod, 0, valX); else valX = 0;
-          if (vY) vY->getData()->getValue(step, ent, ele, nod, 0, valY); else valY = 0;
-          if (vZ) vZ->getData()->getValue(step, ent, ele, nod, 0, valZ); else valZ = 0;
-          out->push_back(valX); // Save values (fx,fy,fz)
-          out->push_back(valY);
-          out->push_back(valZ);
+          for (int comp=0; comp<3; comp++) {
+            double val=0.;
+            if(vComp[comp]) vComp[comp]->getData()->getValue(step, ent, ele, nod, 0, val);
+            out->push_back(val); // Save value
+          }
         }
       }
       delete element;

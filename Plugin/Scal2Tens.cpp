@@ -34,9 +34,9 @@ extern "C"
 
 std::string GMSH_Scal2TensPlugin::getHelp() const
 {
-  return "Plugin(Scal2Tens) converts some scalar fields into a field "
-         "with several components. The number of components must be given (max. 9). "
-         "The new view 'NameNewView' contains the new field. If the number "
+  return "Plugin(Scal2Tens) converts some scalar fields into a tensor field. "
+         "The number of components must be given (max. 9). "
+         "The new view 'NameNewView' contains the new tensor field. If the number "
          "of a view is -1, the value of the corresponding component is 0.";
 }
 
