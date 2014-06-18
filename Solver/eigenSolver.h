@@ -28,7 +28,8 @@ class eigenSolver{
               std::string B="", bool hermitian=true);
   eigenSolver(linearSystemPETSc<double> *A, linearSystemPETSc<double>* B = NULL,
               bool hermitian=true);
-  bool solve(int numEigenValues=0, std::string which="");
+  bool solve(int numEigenValues=0, std::string which="", std::string method="krylovschur",
+             double tolVal=1.e-7, int iterMax=20);
   int getNumEigenValues(){ return _eigenValues.size(); }
   std::complex<double> getEigenValue(int num){ return _eigenValues[num]; }
   std::vector<std::complex<double> > &getEigenVector(int num){ return _eigenVectors[num]; }

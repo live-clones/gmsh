@@ -34,24 +34,24 @@ eigenSolver::eigenSolver(dofManager<double> *manager, std::string A,
 
 eigenSolver::eigenSolver(linearSystemPETSc<double> *A,linearSystemPETSc<double> *B, bool hermitian) : _A(A), _B(B), _hermitian(hermitian){}
 
-bool eigenSolver::solve(int numEigenValues, std::string which)
+bool eigenSolver::solve(int numEigenValues, std::string which, std::string method, double tolVal, int iterMax)
 {
   if(!_A) return false;
   Mat A = _A->getMatrix();
   Mat B = _B ? _B->getMatrix() : PETSC_NULL;
-
+  
   PetscInt N, M;
   _try(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
   _try(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
   _try(MatGetSize(A, &N, &M));
-
+  
   PetscInt N2, M2;
   if (_B) {
     _try(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
     _try(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
     _try(MatGetSize(B, &N2, &M2));
   }
-
+  
   // generalized eigenvalue problem A x - \lambda B x = 0
   EPS eps;
   _try(EPSCreate(PETSC_COMM_WORLD, &eps));
@@ -60,18 +60,24 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
     _try(EPSSetProblemType(eps, _B ? EPS_GHEP : EPS_HEP));
   else
     _try(EPSSetProblemType(eps, _B ? EPS_GNHEP : EPS_NHEP));
-
+  
   // set some default options
   _try(EPSSetDimensions(eps, numEigenValues, PETSC_DECIDE, PETSC_DECIDE));
-  _try(EPSSetTolerances(eps, 1.e-7, 20));//1.e-7 20
-  _try(EPSSetType(eps, EPSKRYLOVSCHUR)); //default
-  //_try(EPSSetType(eps, EPSARNOLDI));
-  //_try(EPSSetType(eps, EPSARPACK));
-  //_try(EPSSetType(eps, EPSPOWER));
-
+  _try(EPSSetTolerances(eps, tolVal, iterMax));
+  if (method=="krylovschur")
+    _try(EPSSetType(eps, EPSKRYLOVSCHUR));
+  else if (method=="arnoldi")
+    _try(EPSSetType(eps, EPSARNOLDI));
+  else if (method=="arpack")
+    _try(EPSSetType(eps, EPSARPACK));
+  else if (method=="power")
+    _try(EPSSetType(eps, EPSPOWER));
+  else
+    Msg::Fatal("eigenSolver: method '%s' not available", method.c_str());
+  
   // override these options at runtime, petsc-style
   _try(EPSSetFromOptions(eps));
-
+  
   // force options specified directly as arguments
   if(numEigenValues)
     _try(EPSSetDimensions(eps, numEigenValues, PETSC_DECIDE, PETSC_DECIDE));
@@ -81,7 +87,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
     _try(EPSSetWhichEigenpairs(eps, EPS_SMALLEST_REAL));
   else if(which == "largest")
     _try(EPSSetWhichEigenpairs(eps, EPS_LARGEST_MAGNITUDE));
-
+  
   // print info
   #if (SLEPC_VERSION_RELEASE == 0 || (SLEPC_VERSION_MAJOR > 3 || (SLEPC_VERSION_MAJOR == 3 && SLEPC_VERSION_MINOR >= 4)))
   EPSType type;
@@ -135,7 +141,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
     _try(MatGetVecs(A, PETSC_NULL, &xr));
     _try(MatGetVecs(A, PETSC_NULL, &xi));
     Msg::Debug("         Re[EigenValue]          Im[EigenValue]"
-	       "          Relative error");
+         "          Relative error");
     for (int i = 0; i < nconv; i++){
       PetscScalar kr, ki;
       _try(EPSGetEigenpair(eps, i, &kr, &ki, xr, xi));
@@ -149,7 +155,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
       PetscReal im = ki;
 #endif
       Msg::Debug("EIG %03d %s%.16e %s%.16e  %3.6e",
-		 i, (re < 0) ? "" : " ", re, (im < 0) ? "" : " ", im, error);
+     i, (re < 0) ? "" : " ", re, (im < 0) ? "" : " ", im, error);
 
       // store eigenvalues and eigenvectors
       _eigenValues.push_back(std::complex<double>(re, im));
@@ -185,24 +191,24 @@ bool eigenSolver::solve(int numEigenValues, std::string which)
 
 
 void eigenSolver::normalize_mode(double scale){
-	Msg::Info("Normalize all eigenvectors");
+  Msg::Info("Normalize all eigenvectors");
   for (unsigned int i=0; i<_eigenVectors.size(); i++){
-		double norm = 0.;
+    double norm = 0.;
     for (unsigned int j=0; j<_eigenVectors[i].size(); j++){
-			std::complex<double> val = _eigenVectors[i][j];
+      std::complex<double> val = _eigenVectors[i][j];
       double normval = std::abs(val);
       if (normval >norm)
-				norm = normval;
+        norm = normval;
     };
 
 
     if (norm == 0) {
-			Msg::Error("zero eigenvector");
+      Msg::Error("zero eigenvector");
       return;
-		};
+    };
 
- 		for (unsigned int j=0; j<_eigenVectors[i].size(); j++){
-    	_eigenVectors[i][j] *= (scale/norm);
+     for (unsigned int j=0; j<_eigenVectors[i].size(); j++){
+      _eigenVectors[i][j] *= (scale/norm);
     };
 
   };
