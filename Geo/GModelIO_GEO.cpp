@@ -164,7 +164,6 @@ int GModel::importGEOInternals()
           add(e);
         }
 
-
         if(!c->Visible) e->setVisibility(0);
         if(c->Color.type) e->setColor(c->Color.mesh);
         if(c->degenerated) {
@@ -195,7 +194,6 @@ int GModel::importGEOInternals()
 	  }
 	}
         int param = CTX::instance()->mesh.remeshParam;
-
 	GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_CIRCLE;
 	if (param == 1) typ =  GFaceCompound::CONFORMAL_SPECTRAL;
 	if (param == 2) typ =  GFaceCompound::RADIAL_BASIS;
@@ -204,18 +202,16 @@ int GModel::importGEOInternals()
 	if (param == 5) typ =  GFaceCompound::CONVEX_PLANE;
 	if (param == 6) typ =  GFaceCompound::HARMONIC_SQUARE;
 	if (param == 7) typ =  GFaceCompound::CONFORMAL_FE;
-
         int algo = CTX::instance()->mesh.remeshAlgo;
 	f = new GFaceCompound(this, s->Num, comp, b[0], b[1], b[2], b[3], typ, algo);
-
         f->meshAttributes.recombine = s->Recombine;
         f->meshAttributes.recombineAngle = s->RecombineAngle;
         f->meshAttributes.method = s->Method;
         f->meshAttributes.extrude = s->Extrude;
-        // transfinite import Added by Trevor Strickler.  This helps when experimenting
-        // to create compounds from transfinite surfs. Not having it does not break
-        // anything Gmsh *officially* does right now, but maybe it was left out by mistake??? and could
-        // cause problems later?
+        // transfinite import Added by Trevor Strickler.  This helps when
+        // experimenting to create compounds from transfinite surfs. Not having
+        // it does not break anything Gmsh *officially* does right now, but
+        // maybe it was left out by mistake??? and could cause problems later?
         f->meshAttributes.transfiniteArrangement = s->Recombine_Dir;
         f->meshAttributes.corners.clear();
         for(int i = 0; i < List_Nbr(s->TrsfPoints); i++){
@@ -227,7 +223,6 @@ int GModel::importGEOInternals()
           else
             Msg::Error("Unknown vertex %d in transfinite attributes", corn->Num);
         }
-        
         add(f);
         if(s->EmbeddedCurves){
           for(int i = 0; i < List_Nbr(s->EmbeddedCurves); i++){
@@ -256,8 +251,10 @@ int GModel::importGEOInternals()
         f = new gmshFace(this, s);
         add(f);
       }
-      else
+      else{
+        if(s->Typ == MSH_SURF_PLAN) f->computeMeanPlane(); // recompute in case geom has changed
         f->resetMeshAttributes();
+      }
       if(!s->Visible) f->setVisibility(0);
       if(s->Color.type) f->setColor(s->Color.mesh);
     }

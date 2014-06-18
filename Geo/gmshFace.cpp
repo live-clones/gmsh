@@ -437,5 +437,4 @@ bool gmshFace::buildSTLTriangulation(bool force)
   }
   va_geom_triangles->finalize();
   return true;
-
 }
