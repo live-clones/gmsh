@@ -1,8 +1,8 @@
 #/usr/bin/env bash
 
-gmsh_svn="/Users/geuzaine/src/gmsh/"
-getdp_svn="/Users/geuzaine/src/getdp/"
-frameworks_dir="/Users/geuzaine/src/gmsh/contrib/mobile/frameworks/"
+gmsh_svn="${HOME}/src/gmsh/"
+getdp_svn="${HOME}/src/getdp/"
+frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks/"
 
 petsc_framework="$frameworks_dir/petsc.framework"
 slepc_framework="$frameworks_dir/slepc.framework"

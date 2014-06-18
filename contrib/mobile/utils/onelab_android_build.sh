@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-android_ndk="/home/geuzaine/android-ndk-r8b/"
-android_sdk="/home/geuzaine/android-sdk/"
+android_ndk="${HOME}/android-ndk-r8b/"
+android_sdk="${HOME}/android-sdk/"
 
-gmsh_svn="/home/geuzaine/src/gmsh"
-getdp_svn="/home/geuzaine/src/getdp"
-petsc_lib="/home/geuzaine/petsc"
+gmsh_svn="${HOME}/src/gmsh"
+getdp_svn="${HOME}/src/getdp"
+petsc_lib="${HOME}/petsc"
 
 cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=$gmsh_svn/contrib/mobile/utils/Android.cmake -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release"
 cmake_thread=6
