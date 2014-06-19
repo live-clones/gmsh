@@ -59,7 +59,7 @@ PView *GMSH_Scal2VecPlugin::execute(PView *v)
   // Load options
   int iView[3];
   for (int comp=0; comp<3; comp++)
-    iView[comp] = (int)Scal2VecOptions_Number[comp+1].def;
+    iView[comp] = (int)Scal2VecOptions_Number[comp].def;
   
   // Load data
   PView *vRef=0, *vComp[3];
