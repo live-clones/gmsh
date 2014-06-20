@@ -485,6 +485,55 @@ class CylinderField : public Field
   }
 };
 
+class SphereField : public Field
+{
+  double v_in, v_out;
+  double xc,yc,zc;
+  double R;
+
+ public:
+  std::string getDescription()
+  {
+    return "The value of this field is VIn inside a sphere, VOut outside. "
+      "The sphere is given by\n\n"
+      "  ||dX||^2 < R^2 &&\n"
+      "  dX = (X - XC)^2 + (Y-YC)^2 + (Z-ZC)^2";
+  }
+  SphereField()
+  {
+    v_in = v_out = xc = yc = zc = R = 0;
+
+    options["VIn"] = new FieldOptionDouble
+      (v_in, "Value inside the sphere");
+    options["VOut"] = new FieldOptionDouble
+      (v_out, "Value outside the sphere");
+
+    options["XCenter"] = new FieldOptionDouble
+      (xc, "X coordinate of the sphere center");
+    options["YCenter"] = new FieldOptionDouble
+      (yc, "Y coordinate of the sphere center");
+    options["ZCenter"] = new FieldOptionDouble
+      (zc, "Z coordinate of the sphere center");
+
+
+    options["Radius"] = new FieldOptionDouble
+      (R,"Radius");
+
+  }
+  const char *getName()
+  {
+    return "Sphere";
+  }
+  double operator() (double x, double y, double z, GEntity *ge=0)
+  {
+    double dx = x-xc;
+    double dy = y-yc;
+    double dz = z-zc;
+
+    return ( (dx*dx + dy*dy + dz*dz < R*R) ) ? v_in : v_out;
+  }
+};
+
 class FrustumField : public Field
 {
   double x1,y1,z1;
@@ -1026,15 +1075,17 @@ class MathEvalField : public Field
   std::string f;
 
  public:
-  void myAction(){
-    printf("doing sthg \n");
+  void myAction()
+  {
+    printf("doing sthg\n");
   }
   MathEvalField()
   {
     options["F"] = new FieldOptionString
       (f, "Mathematical function to evaluate.", &update_needed);
     f = "F2 + Sin(z)";
-    callbacks["test"] = new FieldCallbackGeneric<MathEvalField>(this, &MathEvalField::myAction, "description blabla");
+    callbacks["test"] = new FieldCallbackGeneric<MathEvalField>
+      (this, &MathEvalField::myAction, "description blabla");
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
@@ -1337,6 +1388,76 @@ class MinAnisoField : public Field
   }
 };
 
+class IntersectAnisoField : public Field
+{
+  std::list<int> idlist;
+ public:
+  IntersectAnisoField()
+  {
+    options["FieldsList"] = new FieldOptionList
+      (idlist, "Field indices", &update_needed);
+  }
+  virtual bool isotropic () const {return false;}
+  std::string getDescription()
+  {
+    return "Take the intersection of 2 anisotropic fields according to Alauzet.";
+  }
+  virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0)
+  {
+    // check if idlist contains 2 elements other error message
+    SMetric3 v;
+    for(std::list<int>::iterator it = idlist.begin(); it != idlist.end(); it++) {
+      Field *f = (GModel::current()->getFields()->get(*it));
+      SMetric3 ff;
+      if(f && *it != id) {
+	if (f->isotropic()){
+	  double l = (*f) (x, y, z, ge);
+	  ff = SMetric3(1./(l*l));
+	}
+	else{
+	  (*f) (x, y, z, ff, ge);
+	}
+	if (it == idlist.begin())
+          v = ff;
+	else
+          v = intersection_alauzet(v,ff);
+      }
+    }
+    metr = v;
+  }
+  double operator() (double x, double y, double z, GEntity *ge=0)
+  {
+    // check if idlist contains 2 elements other error message
+    SMetric3 metr;
+    for(std::list<int>::iterator it = idlist.begin(); it != idlist.end(); it++) {
+      Field *f = (GModel::current()->getFields()->get(*it));
+      SMetric3 m;
+      if(f && *it != id){
+        if (!f->isotropic()){
+          (*f)(x, y, z, m, ge);
+        }
+	else {
+          double L = (*f)(x, y, z, ge);
+          for (int i = 0; i < 3; i++)
+            m(i,i) = 1. / (L*L);
+	}
+      }
+      if (it == idlist.begin())
+        metr = m;
+      else
+        metr = intersection_alauzet(metr,m);
+    }
+    fullMatrix<double> V(3,3);
+    fullVector<double> S(3);
+    metr.eig(V, S, 1);
+    return sqrt(1./S(2)); //S(2) is largest eigenvalue
+  }
+  const char *getName()
+  {
+    return "IntersectAniso";
+  }
+};
+
 class MinField : public Field
 {
   std::list<int> idlist;
@@ -1355,7 +1476,18 @@ class MinField : public Field
     double v = MAX_LC;
     for(std::list<int>::iterator it = idlist.begin(); it != idlist.end(); it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
-      if(f && *it != id) v = std::min(v, (*f) (x, y, z, ge));
+      if(f && *it != id) {
+        if (f->isotropic())
+	   v = std::min(v, (*f) (x, y, z, ge));
+	else{
+	   SMetric3 ff;
+	   (*f) (x, y, z, ff, ge);
+	   fullMatrix<double> V(3,3);
+	   fullVector<double> S(3);
+	   ff.eig(V, S, 1);
+	   v = std::min(v, sqrt(1./S(2))); //S(2) is largest eigenvalue
+	}
+      }
     }
     return v;
   }
@@ -1383,7 +1515,18 @@ class MaxField : public Field
     double v = -MAX_LC;
     for(std::list<int>::iterator it = idlist.begin(); it != idlist.end(); it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
-      if(f && *it != id) v = std::max(v, (*f) (x, y, z, ge));
+      if(f && *it != id) {
+        if (f->isotropic())
+	   v = std::max(v, (*f) (x, y, z, ge));
+	else{
+	   SMetric3 ff;
+	   (*f) (x, y, z, ff, ge);
+	   fullMatrix<double> V(3,3);
+	   fullVector<double> S(3);
+	   ff.eig(V, S, 1);
+	   v = std::max(v, sqrt(1./S(0))); //S(0) is smallest eigenvalue
+	}
+      }
     }
     return v;
   }
@@ -2157,6 +2300,7 @@ FieldManager::FieldManager()
 #endif
   map_type_name["Box"] = new FieldFactoryT<BoxField>();
   map_type_name["Cylinder"] = new FieldFactoryT<CylinderField>();
+  map_type_name["Sphere"] = new FieldFactoryT<SphereField>();
   map_type_name["Frustum"] = new FieldFactoryT<FrustumField>();
   map_type_name["LonLat"] = new FieldFactoryT<LonLatField>();
 #if defined(HAVE_POST)
@@ -2166,6 +2310,7 @@ FieldManager::FieldManager()
   map_type_name["Restrict"] = new FieldFactoryT<RestrictField>();
   map_type_name["Min"] = new FieldFactoryT<MinField>();
   map_type_name["MinAniso"] = new FieldFactoryT<MinAnisoField>();
+  map_type_name["IntersectAniso"] = new FieldFactoryT<IntersectAnisoField>();
   map_type_name["Max"] = new FieldFactoryT<MaxField>();
   map_type_name["Laplacian"] = new FieldFactoryT<LaplacianField>();
   map_type_name["Mean"] = new FieldFactoryT<MeanField>();

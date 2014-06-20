@@ -173,6 +173,8 @@ SMetric3 intersection_conserve_mostaniso_2d (const SMetric3 &m1, const SMetric3 
 // compute the largest inscribed ellipsoid...
 SMetric3 intersection (const SMetric3 &m1,
                        const SMetric3 &m2);
+SMetric3 intersection_alauzet (const SMetric3 &m1,
+                       const SMetric3 &m2);
 SMetric3 interpolation (const SMetric3 &m1,
                         const SMetric3 &m2,
                         const double t);
