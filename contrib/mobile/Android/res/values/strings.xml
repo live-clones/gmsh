@@ -1,21 +1,20 @@
 <resources>
-
-    <string name="app_name">Onelab</string>
-    <string name="button_open_file">Open file</string>
-    <string name="button_ok">OK</string>
-    <string name="button_recalculate_param">Recalulate with new parameters</string>
-    <string name="dialog_title_choosefile">Choose a file</string>
-    <string name="error_nosdcard">No SDcard found on your device</string>
-    <string name="title_activity_main">Onelab</string>
-    <string name="title_activity_about">About</string>
-    <string name="title_activity_options">Parameters</string>
-    <string name="error_nomshfile">No compatible files or directories in this folder</string>
-    <string name="title_share">Share screenshot with &#8230;</string>
-    <string name="menu_share">Share screenshot</string>
-    <string name="menu_parameters">Parameters</string>
-    <string name="menu_run">Run</string>
-    <string name="menu_stop">Stop</string>
-    <string name="postpro_intervalstype">Intervals type</string>
-    <string name="postpro_intervals">Intervals</string>
-	<string name="postpro_raisez">Raise (Z)</string>
+  <string name="app_name">Onelab</string>
+  <string name="button_open_file">Open file</string>
+  <string name="button_ok">OK</string>
+  <string name="button_recalculate_param">Recompute with new parameters</string>
+  <string name="dialog_title_choosefile">Choose a file</string>
+  <string name="error_nosdcard">No SDcard found on your device</string>
+  <string name="title_activity_main">Onelab</string>
+  <string name="title_activity_about">About</string>
+  <string name="title_activity_options">Parameters</string>
+  <string name="error_nomshfile">No compatible files or directories in this folder</string>
+  <string name="title_share">Share screenshot with &#8230;</string>
+  <string name="menu_share">Share screenshot</string>
+  <string name="menu_parameters">Parameters</string>
+  <string name="menu_run">Run</string>
+  <string name="menu_stop">Stop</string>
+  <string name="postpro_intervalstype">Intervals type</string>
+  <string name="postpro_intervals">Intervals</string>
+  <string name="postpro_raisez">Raise (Z)</string>
 </resources>
