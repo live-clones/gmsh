@@ -13,46 +13,46 @@ build_cmd="xcodebuild -verbose -target lib -configuration Release"
 header_cmd="xcodebuild -verbose -target getHeaders -configuration Release"
 
 function check {
-	return_code=$?
-	if [ $return_code != 0 ]; then
-		echo "last command failed (return $return_code)"
-		exit $return_code
-	fi
+    return_code=$?
+    if [ $return_code != 0 ]; then
+	echo "last command failed (return $return_code)"
+	exit $return_code
+    fi
 }
 
 function build_gmsh {
-  if [ $# -ne 1 ]; then
-    echo "You must specify an architecture (e.g. armv7, armv7s, arm64, ...)"
-    return
-  fi
-  if [ ! -d "$gmsh_svn/build_ios_$1" ]; then
-    mkdir $gmsh_svn/build_ios_$1
-  fi
-  cd $gmsh_svn/build_ios_$1
-  cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_TETGEN=1 -DCMAKE_OSX_ARCHITECTURES="$1" ..
-  check
-  $build_cmd
-  check
-  $header_cmd
-  cd -
+    if [ $# -ne 1 ]; then
+        echo "You must specify an architecture (e.g. armv7, armv7s, arm64, ...)"
+        return
+    fi
+    if [ ! -d "$gmsh_svn/build_ios_$1" ]; then
+        mkdir $gmsh_svn/build_ios_$1
+    fi
+    cd $gmsh_svn/build_ios_$1
+    cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_TETGEN=1 -DCMAKE_OSX_ARCHITECTURES="$1" ..
+    check
+    $build_cmd
+    check
+    $header_cmd
+    cd -
 }
 function build_getdp {
-  if [ $# -ne 1 ]; then
-    echo "You must specify an architecture (e.g. armv7, armv7s, arm64, ...)"
-    return
-  fi
-  if [ ! -d "$getdp_svn/build_ios_$1" ]; then
-    mkdir $getdp_svn/build_ios_$1
-  fi
-  cd $getdp_svn/build_ios_$1
-  export PETSC_DIR=
-  export PETSC_ARCH=
-  cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_framework/Headers/" -DSLEPC_LIB="$slepc_framework/slepc" -DGMSH_INC="$frameworks_dir/Gmsh.framework/Headers/" -DGMSH_LIB="$frameworks_dir/Gmsh.framework/Gmsh" -DCMAKE_OSX_ARCHITECTURES="$1" ..
-  check
-  $build_cmd
-  check
-  $header_cmd
-  cd -
+    if [ $# -ne 1 ]; then
+        echo "You must specify an architecture (e.g. armv7, armv7s, arm64, ...)"
+        return
+    fi
+    if [ ! -d "$getdp_svn/build_ios_$1" ]; then
+        mkdir $getdp_svn/build_ios_$1
+    fi
+    cd $getdp_svn/build_ios_$1
+    export PETSC_DIR=
+    export PETSC_ARCH=
+    cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_framework/Headers/" -DSLEPC_LIB="$slepc_framework/slepc" -DGMSH_INC="$frameworks_dir/Gmsh.framework/Headers/" -DGMSH_LIB="$frameworks_dir/Gmsh.framework/Gmsh" -DCMAKE_OSX_ARCHITECTURES="$1" ..
+    check
+    $build_cmd
+    check
+    $header_cmd
+    cd -
 }
 
 # build gmsh framework

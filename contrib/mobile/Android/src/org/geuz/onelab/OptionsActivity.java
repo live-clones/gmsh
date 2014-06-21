@@ -9,7 +9,7 @@ import android.view.WindowManager;
 
 public class OptionsActivity extends Activity {
 
-	boolean _compute;
+    boolean _compute;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -24,28 +24,28 @@ public class OptionsActivity extends Activity {
 		OptionsFragment optionsFragment = OptionsFragment.newInstance(gmsh);
 		getFragmentManager().beginTransaction().replace(R.id.model_fragment, optionsFragment).commit();
 	}
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		if(_compute) return super.onCreateOptionsMenu(menu);
 		MenuItem runStopMenuItem = menu.add(R.string.menu_run);
-    	runStopMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                runStopMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 		return super.onCreateOptionsMenu(menu);
 	}
 
 	@Override
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
-		if(item.getTitle().equals(getString(R.string.menu_run))) {
-			Intent returnIntent = new Intent();
-			returnIntent.putExtra("Compute", true);
-			this.setResult(RESULT_OK, returnIntent);     
-			this.finish();
-		}
-		else if(item.getItemId() == android.R.id.home) {
-			Intent returnIntent = new Intent();
-			this.setResult(RESULT_CANCELED, returnIntent);
-			this.finish();
-		}
-		return super.onMenuItemSelected(featureId, item);
+            if(item.getTitle().equals(getString(R.string.menu_run))) {
+                Intent returnIntent = new Intent();
+                returnIntent.putExtra("Compute", true);
+                this.setResult(RESULT_OK, returnIntent);
+                this.finish();
+            }
+            else if(item.getItemId() == android.R.id.home) {
+                Intent returnIntent = new Intent();
+                this.setResult(RESULT_CANCELED, returnIntent);
+                this.finish();
+            }
+            return super.onMenuItemSelected(featureId, item);
 	}
 }

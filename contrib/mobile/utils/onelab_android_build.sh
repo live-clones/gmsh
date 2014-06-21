@@ -11,17 +11,17 @@ cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=$gmsh_svn/contrib/mobile/utils
 cmake_thread=6
 
 function check {
-	return_code=$?
-	if [ $return_code != 0 ]; then
-		echo "last command failed (return $return_code)"
-		exit $return_cod
-	fi
+  return_code=$?
+  if [ $return_code != 0 ]; then
+    echo "last command failed (return $return_code)"
+    exit $return_cod
+  fi
 }
 
 # PETSc and BLAS/LAPACK
 if [ ! -f "$petsc_lib/libpetsc.so" ] || [ ! -f "$petsc_lib/libf2clapack.so" ] || [ ! -f "$petsc_lib/libf2cblas.so" ] || [ ! -d "$petsc_lib/Headers/" ]; then 
-	echo "ERROR: Need BLAS (f2c), LAPACK (f2c) and PETSc\n check android_petsc_reconfigure-armv7-android-linux.py for compile options\n"
-	exit 1
+  echo "ERROR: Need BLAS (f2c), LAPACK (f2c) and PETSc\n check android_petsc_reconfigure-armv7-android-linux.py for compile options\n"
+  exit 1
 fi
 
 export ANDROID_NDK=$android_ndk 
@@ -81,21 +81,27 @@ cd Onelab
 if [ ! -d "libs/armeabi-v7a/" ]; then mkdir -p libs/armeabi-v7a/; fi
 target=1
 while read line; do
-        read line # Name
-        target_name=$(echo $line | awk '{print $2}')
-        target_version=$(echo $line | awk '{print $3}')
-        read line # Type
-        read line # API level
-        target_api=$(echo $line | awk '{print $3}')
-        read line # Revision
-        read line # Skins
-        if [ $target_api -ge 14 ]; then
-                $android_sdk/tools/android update project --name Onelab --path . --target $target
-		check
-                ant release
-		check
-		break
-        fi
-        read line # HACK
-        target=$(($target+1))
+  read line # Name
+  target_name=$(echo $line | awk '{print $2}')
+  target_version=$(echo $line | awk '{print $3}')
+  read line # Type
+  read line # API level
+  target_api=$(echo $line | awk '{print $3}')
+  read line # Revision
+  read line # Skins
+  if [ $target_api -ge 14 ]; then
+    $android_sdk/tools/android update project --name Onelab --path . --target $target
+    check
+    ant release
+    check
+    break
+  fi
+  read line # HACK
+  target=$(($target+1))
 done < <($android_sdk/tools/android list target | grep -A 5 "id:")
+
+# to re-install on the device:
+# $android_sdk/platform-tools/adb install -r $gmsh_svn/contrib/mobile/build_android/Onelab/bin/Onelab-release.apk
+
+# to debug and check the log:
+# $android_sdk/tools/ddms
