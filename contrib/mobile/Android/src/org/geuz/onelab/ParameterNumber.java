@@ -1,6 +1,5 @@
 package org.geuz.onelab;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import android.content.Context;
@@ -46,42 +45,40 @@ public class ParameterNumber extends Parameter{
         _readOnly = readOnly;
     }
 
+    public static String formatDouble(double x)
+    {
+        return String.format("%.6g", x).replaceFirst("\\.?0+(e|$)", "$1");
+    }
+
     protected void update()
     {
         super.update();
-        int nDecimal = String.valueOf(_min).length() - String.valueOf(_min).lastIndexOf('.') - 1; // hack for double round
         if(_bar != null) {
-            DecimalFormat df = new DecimalFormat ( ) ;
-            df.setMaximumFractionDigits(nDecimal) ;
-            _title.setText(getShortName() + " (" + df.format(_value)+ ")");
+            _title.setText(getShortName() + " (" + formatDouble(_value)+ ")");
             _bar.setMax(100);
             _bar.setProgress((int)(100*(_value-_min)/(_max-_min)));
             _bar.setEnabled(!this.isReadOnly());
         }
-        else if(_spinner != null)
-            {
-                for(int i=0;i<_choices.size();i++)
-                    if(_values.get(i) == _value)
-                        _spinner.setSelection(i, true);
-            }
-        else if(_checkbox != null)
-            {
-                _checkbox.setText(getShortName());
-                _checkbox.setChecked((_value == 0)? false : true);
-            }
-        else if(_edittext != null)
-            {
-                _edittext.setText(""+Math.round(_value*Math.pow(10, nDecimal))/Math.pow(10, nDecimal));
-            }
-        else if(_stepper != null)
-            {
-                _stepper.setMaximum((int)Math.round(_max));
-                _stepper.setMinimum((int)Math.round(_min));
-                _stepper.setValue((int)Math.round(_value));
-            }
+        else if(_spinner != null) {
+            for(int i=0;i<_choices.size();i++)
+                if(_values.get(i) == _value)
+                    _spinner.setSelection(i, true);
+        }
+        else if(_checkbox != null) {
+            _checkbox.setText(getShortName());
+            _checkbox.setChecked((_value == 0)? false : true);
+        }
+        else if(_edittext != null) {
+            _edittext.setText(""+formatDouble(_value));
+        }
+        else if(_stepper != null) {
+            _stepper.setMaximum((int)Math.round(_max));
+            _stepper.setMinimum((int)Math.round(_min));
+            _stepper.setValue((int)Math.round(_value));
+        }
     }
-
-    public void setValue(double value) {
+    public void setValue(double value)
+    {
         if(value < _min || value > _max) {
             //Log.w("ParameterNumber", "Incorect value "+value+" (max="+_max+" min="+_min+")");
             return;
