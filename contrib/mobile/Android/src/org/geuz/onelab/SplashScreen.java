@@ -14,7 +14,7 @@ import android.os.Handler;
 import android.os.Message;
 
 public class SplashScreen extends Activity{
-    private static final int SPLASHTIME = 500; // duration for the splash screen in milliseconds
+    private static final int SPLASHTIME = 1000; // duration for the splash screen in milliseconds
 
     private static final int STOPSPLASH = 0;
     private static final int EXITAPP = 1;

@@ -15,7 +15,7 @@ public class AboutActivity extends Activity{
         WebView webview = new WebView(this);
         String aboutGmsh = Gmsh.getAboutGmsh();
         String aboutGetDP = Gmsh.getAboutGetDP();
-        String aboutOnelab = "<p>&npsp;</p><center><h3>Onelab/Mobile</h3>";
+        String aboutOnelab = "<p>&nbsp;</p><center><h3>Onelab/Mobile</h3>";
         try {
             aboutOnelab += "Version "+this.getPackageManager().getPackageInfo(this.getPackageName(), 0).versionName;
         }
