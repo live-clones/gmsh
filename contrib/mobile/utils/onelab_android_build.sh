@@ -47,6 +47,8 @@ svn up
 if [ ! -d "$getdp_svn/build_android" ] || [ ! -f "$getdp_svn/build_android/CMakeCache.txt" ]; then
   mkdir $getdp_svn/build_android
   cd $getdp_svn/build_android
+  export PETSC_DIR=
+  export PETSC_ARCH=
   cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_lib/Headers;$petsc_lib/Headers/mpiuni" -DPETSC_LIBS="$petsc_lib/libpetsc.so" -DGMSH_INC="$gmsh_svn/build_android/Headers/" -DGMSH_LIB="$gmsh_svn/build_android/libs/libGmsh.so" -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" ..
   check
 fi
