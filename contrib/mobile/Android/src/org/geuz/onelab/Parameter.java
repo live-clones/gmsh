@@ -30,7 +30,7 @@ public class Parameter {
 		_readOnly = readOnly;
 		_changed = false;
 	}
-	
+
 	protected void update(){
 		if(_label != null && !_label.equals(""))
 			_title.setText(_label);
@@ -38,7 +38,7 @@ public class Parameter {
 			_title.setText(getShortName());
 		if(isReadOnly()) _title.setAlpha(0.423f);
 	}
-	
+
 	public void setName(String name) {_name = name;this.update();}
 	public void setReadOnly(boolean readOnly) {_readOnly = readOnly;this.update();}
 	public void setLabel(String label) {
@@ -65,19 +65,18 @@ public class Parameter {
 		setLabel(infos[pos++]);// label
 		pos++;// help
 		pos++;// never change
-		pos++;// changed
 		if(Integer.parseInt(infos[pos++]) != 1)return -1;// visible
 		this.setReadOnly((infos[pos++].equals("1")));// read only
 		int nAttributes = Integer.parseInt(infos[pos++]);// number of attributes
 		pos+=(nAttributes*2);// key+value
 		int nClients = Integer.parseInt(infos[pos++]);// number of client
-		pos+=nClients;// clients
+		pos+=(nClients*2);// client+changed
 		this.update();
 		return pos;
 	}
 	public boolean changed() { if(_changed){_changed=false; return true;}return _changed;}
 	public String getType(){return "Parameter";}
-	
+
 	public LinearLayout getView() {
 		LinearLayout paramLayout = new LinearLayout(_context);
 		paramLayout.setOrientation(LinearLayout.VERTICAL);
