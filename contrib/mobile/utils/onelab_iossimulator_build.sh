@@ -2,7 +2,7 @@
 
 gmsh_svn="${HOME}/src/gmsh/"
 getdp_svn="${HOME}/src/getdp/"
-frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_simulator/"
+frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_iossimulator/"
 
 petsc_framework="$frameworks_dir/petsc.framework"
 slepc_framework="$frameworks_dir/slepc.framework"
