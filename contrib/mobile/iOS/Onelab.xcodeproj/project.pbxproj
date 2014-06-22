@@ -52,8 +52,8 @@
 
 /* Begin PBXFileReference section */
 		2907CCEB193DE6560011341A /* icon_onelab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_onelab.png; sourceTree = "<group>"; };
-		2988FF1C18E59558001435B6 /* libf2cblas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2cblas.a; path = ../../frameworks/libf2cblas.a; sourceTree = "<group>"; };
-		2988FF1D18E59558001435B6 /* libf2clapack.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2clapack.a; path = ../../frameworks/libf2clapack.a; sourceTree = "<group>"; };
+		2988FF1C18E59558001435B6 /* libf2cblas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2cblas.a; path = ../../frameworks_ios/libf2cblas.a; sourceTree = "<group>"; };
+		2988FF1D18E59558001435B6 /* libf2clapack.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2clapack.a; path = ../../frameworks_ios/libf2clapack.a; sourceTree = "<group>"; };
 		29A4AC7F193CE6DA0007B5A5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		9C1B9911194F4E0400507EFD /* slepc.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = slepc.framework; path = Onelab/frameworks/slepc.framework; sourceTree = "<group>"; };
 		9C1C10F817BA5E7D00BFD483 /* OptionsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OptionsViewController.h; sourceTree = "<group>"; };
@@ -460,8 +460,7 @@
 				INFOPLIST_FILE = "Onelab/Onelab-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/Users/geuzaine/src/gmsh/contrib/mobile/frameworks_ios,
+					"$(inherited)"
 				);
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -493,8 +492,7 @@
 				INFOPLIST_FILE = "Onelab/Onelab-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/Users/geuzaine/src/gmsh/contrib/mobile/frameworks_ios,
+					"$(inherited)"
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
