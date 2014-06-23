@@ -10,6 +10,7 @@
 #include "JacobianBasis.h"
 #include "fullMatrix.h"
 #include <fstream>
+#include <cmath>
 
 class MetricBasis {
   friend class MetricCoefficient;
@@ -21,7 +22,7 @@ private:
   static double _tol;
   static int _which;
 
-  int __maxdepth, __numSubdivision;
+  int __maxdepth, __numSubdivision, __TotSubdivision;
   std::vector<int> __numSub;
   MElement *__curElem;
 
@@ -63,13 +64,18 @@ public:
 
   double getBoundRmin(MElement*, MetricData*&, fullMatrix<double>&);
   double getMinR(MElement*, MetricData*&, int) const;
-  static double boundRmin(MElement *el);
+  bool notStraight(MElement*, double &metric, int order) const;
+  static double boundMinR(MElement *el);
+  static double sampleR(MElement *el, int order);
   //double getBoundRmin(int, MElement**, double*);
   //static double boundRmin(int, MElement**, double*, bool sameType = false);
 
   void interpolate(const MElement*, const MetricData*, const double *uvw, double *minmaxQ, bool write = false) const;
 
   static int metricOrder(int tag);
+  void printTotSubdiv(double n) const {
+    Msg::Info("SUBDIV %d, %g", __TotSubdivision, __TotSubdivision/2776.);
+  }
 
 private:
   void _fillInequalities(int order);
@@ -77,6 +83,11 @@ private:
 
   void _computeRmin(const fullMatrix<double>&, const fullVector<double>&,
                     double &RminLag, double &RminBez, int depth, bool debug = false) const;
+  void _computeRmax(const fullMatrix<double>&, const fullVector<double>&,
+                    double &RmaxLag) const;
+  void _computeTermBeta(double &a, double &K, double &dRda,
+                        double &term1, double &phip) const;
+  void _getMetricData(MElement*, MetricData*&) const;
 
   double _subdivideForRmin(MetricData*, double RminLag, double tol, int which) const;
 
@@ -85,23 +96,44 @@ private:
   double _minq(const fullMatrix<double>&) const;
   double _maxp(const fullMatrix<double>&) const;
   double _maxq(const fullMatrix<double>&) const;
-  void _minMaxA2(const fullMatrix<double>&, double &min, double &max) const;
+  void _minMaxA(const fullMatrix<double>&, double &min, double &max) const;
   void _minJ2P3(const fullMatrix<double>&, const fullVector<double>&, double &min) const;
-  void _maxAstK(const fullMatrix<double>&, const fullVector<double>&,
-                double minK, double a1, double &maxa) const;                    //wrong
-  void _maxAstK2(const fullMatrix<double>&, const fullVector<double>&,
-                 double minK, double beta, double &maxa) const;                 //wrong
-  void _maxAstK3(const fullMatrix<double>&, const fullVector<double>&,
-                 double minK, double beta, double &maxa) const;                 //poor bound
-  void _maxAstK4(const fullMatrix<double>&, const fullVector<double>&,
-                 double minK, double beta, double &maxa) const;                 //better bound, WI positive ?
-  void _maxKstA(const fullMatrix<double>&, const fullVector<double>&,
-                 double mina, double &maxK) const;                              //wrong
-  void _maxKstA2(const fullMatrix<double>&, const fullVector<double>&,
-                 double mina, double beta, double &maxK) const;                 //faster
-  void _maxKstA3(const fullMatrix<double>&, const fullVector<double>&,
-                 double mina, double beta, double &maxK) const;                 //better bound
+  void _maxAstKpos(const fullMatrix<double>&, const fullVector<double>&,
+                 double minK, double beta, double &maxa) const;
+  void _maxAstKneg(const fullMatrix<double>&, const fullVector<double>&,
+                 double minK, double beta, double &maxa) const;
+  void _maxKstAfast(const fullMatrix<double>&, const fullVector<double>&,
+                 double mina, double beta, double &maxK) const;
+  void _maxKstAsharp(const fullMatrix<double>&, const fullVector<double>&,
+                 double mina, double beta, double &maxK) const;
   void _minMaxJacobianSqr(const fullVector<double>&, double &min, double &max) const;
+
+  double _Rsafe(double a, double K) const {
+    const double x = .5 * (K - a*a*a + 3*a);
+    const double phi = std::acos(x) / 3;
+    return (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
+  }
+  bool _chknumber(double val) const {return isnan(val) || isinf(val);}
+  bool _chka(double a) const {return _chknumber(a) || a < 1;}
+  bool _chkK(double K) const {return _chknumber(K) || K < 0;}
+  int _chkaK(double a, double K) const {
+    if (_chka(a)) return 1;
+    if (_chkK(K)) return 2;
+    if (std::abs(K - a*a*a + 3*a) > 2) {
+      Msg::Warning("x = %g", .5 * (K - a*a*a + 3*a));
+      return 3;
+    }
+    return 0;
+  }
+  bool _chkR(double R) const {return _chknumber(R) || R < 0 || R > 1;}
+  int _chkaKR(double a, double K, double R) const {
+    const int aK = _chkaK(a, K);
+    if (aK) return aK;
+    if (_chkR(R)) return 4;
+    const double myR = _Rsafe(a, K);
+    if (std::abs(myR-R) > 1e-10) return 5;
+    return 0;
+  }
 
 private:
   class gterIneq {
