@@ -272,7 +272,7 @@ class MElement
     double jac[3][3]; return getJacobian(u, v, w, jac);
   }
   void getSignedJacobian(fullVector<double> &jacobian, int o = -1);
-  void getNodesCoord(fullMatrix<double> &nodesXYZ);
+  void getNodesCoord(fullMatrix<double> &nodesXYZ) const;
   virtual int getNumShapeFunctions() const{ return getNumVertices(); }
   virtual int getNumPrimaryShapeFunctions() { return getNumPrimaryVertices(); }
   virtual const MVertex *getShapeFunctionNode(int i) const{ return getVertex(i); }

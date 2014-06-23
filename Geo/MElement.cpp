@@ -468,11 +468,11 @@ void MElement::getSignedJacobian(fullVector<double> &jacobian, int o)
   getJacobianFuncSpace(o)->getSignedJacobian(nodesXYZ,jacobian);
 }
 
-void MElement::getNodesCoord(fullMatrix<double> &nodesXYZ)
+void MElement::getNodesCoord(fullMatrix<double> &nodesXYZ) const
 {
   const int numNodes = getNumShapeFunctions();
   for (int i = 0; i < numNodes; i++) {
-    MVertex *v = getShapeFunctionNode(i);
+    const MVertex *v = getShapeFunctionNode(i);
     nodesXYZ(i,0) = v->x();
     nodesXYZ(i,1) = v->y();
     nodesXYZ(i,2) = v->z();
