@@ -39,7 +39,7 @@ fi
 cd $gmsh_svn/build_android
 make androidGmsh -j$cmake_thread
 check
-make getHeaders
+make get_headers
 check
 
 # GetDP
@@ -56,7 +56,7 @@ fi
 cd $getdp_svn/build_android
 make androidGetdp -j$cmake_thread
 check
-make getHeaders
+make get_headers
 check
 
 # Onelab/Mobile interface

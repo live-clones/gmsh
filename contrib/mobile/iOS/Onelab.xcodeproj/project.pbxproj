@@ -452,7 +452,6 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/Onelab/frameworks\"",
 					"$(PROJECT_DIR)/Onelab/frameworks",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -461,7 +460,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-                                        /Users/geuzaine/src/gmsh/contrib/mobile/frameworks_ios,
+					"$(PROJECT_DIR)/Onelab/frameworks/petsc.framework",
 				);
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -482,10 +481,6 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/../../getdp-iOS\"",
-					"\"$(SRCROOT)/../../gmsh-iOS\"",
-					"\"$(SRCROOT)/../..\"",
-					"\"$(SRCROOT)/Onelab/frameworks\"",
 					"$(PROJECT_DIR)/Onelab/frameworks",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -494,7 +489,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-                                        /Users/geuzaine/src/gmsh/contrib/mobile/frameworks_ios,
+					"$(PROJECT_DIR)/Onelab/frameworks/petsc.framework",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";

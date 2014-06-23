@@ -1518,12 +1518,12 @@ if(UNIX AND NOT CYGWIN)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/doc/gmsh.1 DESTINATION ${GMSH_MAN})
 endif(UNIX AND NOT CYGWIN)
 
-add_custom_target(getHeaders
+add_custom_target(get_headers
   COMMAND ${CMAKE_COMMAND} -E remove_directory Headers
   COMMAND ${CMAKE_COMMAND} -E make_directory Headers/gmsh
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 foreach(FILE ${GMSH_API})
-  add_custom_command(TARGET getHeaders POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+  add_custom_command(TARGET get_headers POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
                     ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endforeach(FILE)
@@ -1582,22 +1582,16 @@ if(APPLE AND ENABLE_BUILD_LIB)
   get_target_property(LIBNAME lib LOCATION)
   add_custom_target(framework DEPENDS lib
     COMMAND ${CMAKE_COMMAND} -E remove_directory Gmsh.framework
-    COMMAND ${CMAKE_COMMAND} -E make_directory Gmsh.framework/Versions/A/Headers
-    COMMAND ${CMAKE_COMMAND} -E make_directory Gmsh.framework/Versions/A/Resources
-    COMMAND ${CMAKE_COMMAND} -E copy ${LIBNAME} Gmsh.framework/Versions/A/Gmsh
+    COMMAND ${CMAKE_COMMAND} -E make_directory Gmsh.framework/Headers
+    COMMAND ${CMAKE_COMMAND} -E make_directory Gmsh.framework/Resources
+    COMMAND ${CMAKE_COMMAND} -E copy ${LIBNAME} Gmsh.framework/Gmsh
     COMMAND ${CMAKE_COMMAND} -E copy Info_framework.plist 
-                                     Gmsh.framework/Versions/A/Resources/Info.plist
-    COMMAND ${CMAKE_COMMAND} -E create_symlink A Gmsh.framework/Versions/Current
-    COMMAND ${CMAKE_COMMAND} -E create_symlink Versions/Current/Gmsh 
-                                               Gmsh.framework/Gmsh
-    COMMAND ${CMAKE_COMMAND} -E create_symlink Versions/Current/Headers
-                                               Gmsh.framework/Headers
-    COMMAND ${CMAKE_COMMAND} -E create_symlink Versions/Current/Resources
-                                               Gmsh.framework/Resources 
+                                     Gmsh.framework/Resources/Info.plist
+    COMMAND ${CMAKE_COMMAND} -E create_symlink . Gmsh.framework/Headers/gmsh
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   foreach(FILE ${GMSH_API})
     add_custom_command(TARGET framework POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
-        ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Gmsh.framework/Versions/A/Headers/
+        ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Gmsh.framework/Headers/
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endforeach(FILE)
 endif(APPLE AND ENABLE_BUILD_LIB)
