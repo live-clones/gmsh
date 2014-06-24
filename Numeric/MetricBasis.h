@@ -113,7 +113,13 @@ private:
     const double phi = std::acos(x) / 3;
     return (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
   }
-  bool _chknumber(double val) const {return std::isnan(val) || std::isinf(val);}
+  bool _chknumber(double val) const {
+#if defined(_MSC_VER)
+    return _isnan(val) || _isinf(val);
+#else
+    return std::isnan(val) || std::isinf(val);
+#endif
+  }
   bool _chka(double a) const {return _chknumber(a) || a < 1;}
   bool _chkK(double K) const {return _chknumber(K) || K < 0;}
   int _chkaK(double a, double K) const {
