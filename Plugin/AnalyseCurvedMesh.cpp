@@ -412,7 +412,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinR()
   MetricBasis::setTol(_tol);
 
   double initial, time = initial = Cpu();
-  int percentage = 0, nextCheck = 0;
+  unsigned int percentage = 0, nextCheck = 0;
 
   for (unsigned int i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
