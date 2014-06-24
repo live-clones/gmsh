@@ -26,6 +26,7 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.util.TypedValue;
 
 public class ModelFragment extends Fragment{
 
@@ -101,7 +102,7 @@ public class ModelFragment extends Fragment{
         RelativeLayout topRightLayout = new RelativeLayout(container.getContext());
         ImageButton rotationButton = new ImageButton(container.getContext());
         rotationButton.setBackgroundResource(R.drawable.icon_rotate);
-        rotationButton.setLayoutParams(new LinearLayout.LayoutParams(65, 65));
+        rotationButton.setLayoutParams(new LinearLayout.LayoutParams(60, 60));
         rotationButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     boolean rotate = !_glView.getRotate();
@@ -112,7 +113,15 @@ public class ModelFragment extends Fragment{
         topRightLayout.addView(rotationButton);
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams
             (RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-        layoutParams.setMargins(20, 140, 20, 0);
+
+        TypedValue tv = new TypedValue();
+        int actionBarHeight = 80;
+        if(container.getContext().getTheme().resolveAttribute
+           (android.R.attr.actionBarSize, tv, true)){
+            actionBarHeight = TypedValue.complexToDimensionPixelSize
+                (tv.data, getResources().getDisplayMetrics());
+        }
+        layoutParams.setMargins(0, actionBarHeight + 20, 20, 0);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         glViewLayout.addView(topRightLayout, layoutParams);
