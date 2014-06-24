@@ -3698,7 +3698,7 @@ void PostOp::init_markings(GRegion* gr){
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
     if(four(element) || five(element)){
-      markings.insert(std::pair<MElement*,bool>(element,0));
+      markings.insert(std::pair<MElement*,bool>(element,false));
     }
   }
 }
