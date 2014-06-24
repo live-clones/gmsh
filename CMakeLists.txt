@@ -1099,7 +1099,10 @@ endif(ENABLE_WRAP_PYTHON)
 
 if(HAVE_PYTHON)
   if(ENABLE_NUMPY)
-    find_path(NUMPY_INC "numpyconfig.h" HINTS ${PYTHON_INCLUDE_PATH} PATH_SUFFIXES /numpy)
+    EXEC_PROGRAM (${PYTHON_EXECUTABLE}
+      ARGS "-c \"import numpy; print(numpy.get_include())\""
+      OUTPUT_VARIABLE NUMPY_INC
+      RETURN_VALUE NUMPY_NOT_FOUND)
     if(NUMPY_INC)
       list(APPEND EXTERNAL_INCLUDES ${NUMPY_INC})
       set_config_option(HAVE_NUMPY "Numpy")
