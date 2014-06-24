@@ -338,6 +338,8 @@ if(ENABLE_BLAS_LAPACK)
         list(APPEND EXTERNAL_LIBRARIES ${LAPACK_LIB})
         set_config_option(HAVE_LAPACK "Lapack")
       endif(LAPACK_LIB)
+      # for isnan/isinf
+      add_definitions(-D_GLIBCXX_USE_C99_MATH=1)
     endif(ENABLE_BUILD_ANDROID)
 
     if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
