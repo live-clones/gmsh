@@ -89,7 +89,10 @@
     double value = [[alertView textFieldAtIndex:0].text doubleValue];
     number[0].setValue(value);
     onelab::server::instance()->set(number[0]);
-    [self refreshTableView];
+    if(onelab_cb("check") == 1){
+      [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
+      [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
+    }
   }
 }
 - (void)indexDidChangeForSegmentedControl:(id)sender
