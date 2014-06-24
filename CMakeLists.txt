@@ -1521,13 +1521,12 @@ if(UNIX AND NOT CYGWIN)
 endif(UNIX AND NOT CYGWIN)
 
 add_custom_target(get_headers
-  COMMAND ${CMAKE_COMMAND} -E remove_directory Headers
   COMMAND ${CMAKE_COMMAND} -E make_directory Headers/gmsh
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 foreach(FILE ${GMSH_API})
-  add_custom_command(TARGET get_headers POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
-                    ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  add_custom_command(TARGET get_headers POST_BUILD COMMAND ${CMAKE_COMMAND} 
+    -E copy_if_different ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endforeach(FILE)
 
 find_program(MAKEINFO makeinfo)

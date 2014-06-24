@@ -47,13 +47,12 @@ cd $getdp_svn
 svn up
 if [ ! -d "$getdp_svn/build_android" ] || [ ! -f "$getdp_svn/build_android/CMakeCache.txt" ]; then
   mkdir $getdp_svn/build_android
-  cd $getdp_svn/build_android
-  export PETSC_DIR=
-  export PETSC_ARCH=
-  cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_lib/Headers;$petsc_lib/Headers/mpiuni" -DPETSC_LIBS="$petsc_lib/libpetsc.so" -DGMSH_INC="$gmsh_svn/build_android/Headers/" -DGMSH_LIB="$gmsh_svn/build_android/libs/libGmsh.so" -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" ..
-  check
 fi
 cd $getdp_svn/build_android
+export PETSC_DIR=
+export PETSC_ARCH=
+cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_lib/Headers;$petsc_lib/Headers/mpiuni" -DPETSC_LIBS="$petsc_lib/libpetsc.so" -DGMSH_INC="$gmsh_svn/build_android/Headers/" -DGMSH_LIB="$gmsh_svn/build_android/libs/libGmsh.so" -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" ..
+check
 make androidGetdp -j$cmake_thread
 check
 make get_headers
@@ -62,16 +61,16 @@ check
 # Onelab/Mobile interface
 if [ ! -d "$gmsh_svn/contrib/mobile/build_android" ] || [ ! -f "$gmsh_svn/contrib/mobile/build_android/CMakeCache.txt" ]; then
   mkdir $gmsh_svn/contrib/mobile/build_android
-  cd $gmsh_svn/contrib/mobile/build_android
-  cmake $cmake_default \
-	-DCMAKE_INCLUDE_PATH="$getdp_svn/" \
-	-DBLAS_LIB="$petsc_lib/libf2cblas.so" -DLAPACK_LIB="$petsc_lib/libf2clapack.so" \
-	-DPETSC_LIB="$petsc_lib/libpetsc.so" \
-	-DGMSH_INC="$gmsh_svn/build_android/Headers" -DGMSH_LIB="$gmsh_svn/build_android/libs/libGmsh.so" \
-	-DBENCHMARKSDIR="$getdp_svn/" \
-	-DGETDP_INC="$getdp_svn/build_android/Headers" -DGETDP_LIB="$getdp_svn/build_android/libs/libGetDP.so" ..
 fi
 cd $gmsh_svn/contrib/mobile/build_android
+cmake $cmake_default \
+      -DCMAKE_INCLUDE_PATH="$getdp_svn/" \
+      -DBLAS_LIB="$petsc_lib/libf2cblas.so" -DLAPACK_LIB="$petsc_lib/libf2clapack.so" \
+      -DPETSC_LIB="$petsc_lib/libpetsc.so" \
+      -DGMSH_INC="$gmsh_svn/build_android/Headers" -DGMSH_LIB="$gmsh_svn/build_android/libs/libGmsh.so" \
+      -DBENCHMARKSDIR="$getdp_svn/" \
+      -DGETDP_INC="$getdp_svn/build_android/Headers" -DGETDP_LIB="$getdp_svn/build_android/libs/libGetDP.so" ..
+check
 make androidOnelab -j$cmake_thread
 check
 make androidProject
