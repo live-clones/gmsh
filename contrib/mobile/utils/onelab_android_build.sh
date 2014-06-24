@@ -32,11 +32,10 @@ cd $gmsh_svn
 svn up
 if [ ! -d "$gmsh_svn/build_android" ] || [ ! -f "$gmsh_svn/build_android/CMakeCache.txt" ]; then
   mkdir $gmsh_svn/build_android
-  cd $gmsh_svn/build_android
-  cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_TETGEN=1 -DBLAS_LIB="$petsc_lib/libf2cblas.so" -DLAPACK_LIB="$petsc_lib/libf2clapack.so" ..
-  check
 fi
 cd $gmsh_svn/build_android
+cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_TETGEN=1 -DBLAS_LIB="$petsc_lib/libf2cblas.so" -DLAPACK_LIB="$petsc_lib/libf2clapack.so" ..
+check
 make androidGmsh -j$cmake_thread
 check
 make get_headers
