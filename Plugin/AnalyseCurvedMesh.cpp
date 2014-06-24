@@ -369,7 +369,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
     /*if (el[k]->getNum() == 26776) {
       Msg::Info("%g %g %g %g", minB, minL, maxL, maxB);
 
-      /*const nodalBasis* nb = BasisFactory::getNodalBasis(el[k]->getTypeForMSH());
+      / *const nodalBasis* nb = BasisFactory::getNodalBasis(el[k]->getTypeForMSH());
       int tag1 = ElementType::getTag(el[k]->getType(), 1);
       const nodalBasis* nb1 = BasisFactory::getNodalBasis(tag1);
 

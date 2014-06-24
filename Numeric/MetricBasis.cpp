@@ -881,7 +881,7 @@ void MetricBasis::_computeRmin(
       //
       double am0 = std::pow(amApprox*amApprox*amApprox+da, 1/3.);
       double am1 = std::pow(amApprox*amApprox*amApprox+da+.05, 1/3.);
-      double am0S = am0, am1S = am1;
+      //double am0S = am0, am1S = am1;
       double am = (am0 + am1)/2;
       double R0 = _Rsafe(am0, minK);
       double R1 = _Rsafe(am1, minK);
