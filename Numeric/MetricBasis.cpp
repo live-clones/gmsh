@@ -1133,7 +1133,7 @@ double MetricBasis::_subdivideForRmin(
 
   md = subdomains.top();
   double ans = md->_RminBez;
-  if (isnan(ans)) Msg::Error("ISNAN %d", subdomains.size());
+  if (std::isnan(ans)) Msg::Error("ISNAN %d", subdomains.size());
 
   while (subdomains.size()) {
     md = subdomains.top();
