@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Spinner;
+import android.util.Log;
 
 public class ParameterNumber extends Parameter{
     private double _value, _min, _max, _step;
@@ -172,6 +173,13 @@ public class ParameterNumber extends Parameter{
         LinearLayout paramLayout = new LinearLayout(_context);
         paramLayout.setOrientation(LinearLayout.VERTICAL);
         paramLayout.addView(_title);
+        paramLayout.setOnLongClickListener(new View.OnLongClickListener(){
+                @Override
+                public boolean onLongClick(View v){
+                    Log.w("Yeppee", "long click yes...");
+                    return true;
+                }
+            });
         if(_spinner != null) {
             paramLayout.addView(_spinner);
             _spinner.setEnabled(!_readOnly);
