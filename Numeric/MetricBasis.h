@@ -115,7 +115,7 @@ private:
   }
   bool _chknumber(double val) const {
 #if defined(_MSC_VER)
-    return _isnan(val) || _isinf(val);
+    return _isnan(val) || !_finite(val);
 #else
     return std::isnan(val) || std::isinf(val);
 #endif
