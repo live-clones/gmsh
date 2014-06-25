@@ -45,9 +45,7 @@ function build_getdp {
     mkdir $getdp_svn/build_ios_$1
   fi
   cd $getdp_svn/build_ios_$1
-  export PETSC_DIR=
-  export PETSC_ARCH=
-  cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_framework/Headers/" -DSLEPC_LIB="$slepc_framework/slepc" -DGMSH_INC="$gmsh_svn/build_ios_$1/Headers/" -DGMSH_LIB="$gmsh_svn/build_ios_$1/Release-iphoneos/libGmsh.a" -DCMAKE_OSX_ARCHITECTURES="$1" ..
+  PETSC_DIR= PETSC_ARCH= SLEPC_DIR= cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_framework/Headers/" -DSLEPC_LIB="$slepc_framework/slepc" -DGMSH_INC="$gmsh_svn/build_ios_$1/Headers/" -DGMSH_LIB="$gmsh_svn/build_ios_$1/Release-iphoneos/libGmsh.a" -DCMAKE_OSX_ARCHITECTURES="$1" ..
   check
   $build_cmd
   check
