@@ -93,10 +93,12 @@
   cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
   return cell;
 }
+
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
 {
   return @"Select a model";
 }
+
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
   AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
@@ -114,6 +116,7 @@
       [self performSegueWithIdentifier:@"showModelSegue" sender:self];
     }
 }
+
 -(void)handleLongPress:(UILongPressGestureRecognizer *)sender
 {
   CGPoint p = [sender locationInView:self.tableView];
@@ -128,6 +131,7 @@
   actionSheet.tag = indexPath.row;
   [actionSheet showInView:self.view];
 }
+
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
   switch (buttonIndex) {
@@ -153,12 +157,14 @@
 
   return [parser parse];
 }
+
 -(void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName attributes:(NSDictionary *)attributeDict
 {
   currentElement = elementName;
   //[currentElementValue release];
   currentElementValue = nil;
 }
+
 -(void)parser:(NSXMLParser *)parser foundCharacters:(NSString *)string
 {
   if (!currentElementValue)
@@ -166,6 +172,7 @@
   else
     [currentElementValue appendString:string];
 }
+
 -(void)parser:(NSXMLParser *)parser didEndElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName
 {
   if([elementName isEqual:@"title"]) {

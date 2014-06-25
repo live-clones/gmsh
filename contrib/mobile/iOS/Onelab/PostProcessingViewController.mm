@@ -46,10 +46,12 @@
     [_IntervalsStepper setMinimumValue:1];
   }
 }
+
 -(void)viewDidAppear:(BOOL)animated
 {
   [_IntervalsType selectRow:_pview->getOptions()->intervalsType-1 inComponent:0 animated:YES];
 }
+
 - (IBAction)stepperValueChanged:(UIStepper *)sender
 {
   [_Intervals setText:[NSString stringWithFormat:@"%.0f", [sender value]]];
@@ -57,31 +59,37 @@
   _pview->setChanged(true);
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
+
 -(NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView
 {
   return 1;
 }
+
 -(NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component
 {
   return 3;
 }
+
 -(NSString *)pickerView:(UIPickerView *)pickerView titleForRow:(NSInteger)row forComponent:(NSInteger)component
 {
   NSArray *name = [[NSArray alloc] initWithObjects:@"Iso-values", @"Continuous map", @"Filled iso-values", nil];
   return [name objectAtIndex:row];
 }
+
 -(void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row inComponent:(NSInteger)component
 {
   _pview->getOptions()->intervalsType = 1+row;
   _pview->setChanged(true);
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
+
 - (void)slideRaiseZ:(UISlider*)sender
 {
   _pview->getOptions()->raise[2] = sender.value;
   _pview->setChanged(true);
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
+
 - (void)didReceiveMemoryWarning
 {
   [super didReceiveMemoryWarning];
@@ -96,16 +104,18 @@
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
   return YES;
 }
+
 -(BOOL)textFieldShouldReturn:(UITextField *)textField
 {
   return [_Intervals endEditing:YES];
 }
+
 -(void)doneWithNumberPad
 {
   [_Intervals endEditing:YES];
 }
 
-- (void)viewDidUnload
+-(void)viewDidUnload
 {
   [self setName:nil];
   [self setRaiseZ:nil];

@@ -10,26 +10,32 @@
   }
   return self;
 }
+
 -(void)refresh
 {
   return;
 }
+
 -(NSString *)getName
 {
   return name;
 }
+
 -(UILabel *)getLabel
 {
   return label;
 }
+
 -(void)setFrame:(CGRect)frame
 {
   return;
 }
+
 -(void)setLabelFrame:(CGRect)frame
 {
   [label setFrame:frame];
 }
+
 -(void)editValue
 {
   if(onelab_cb("check") == 1){
@@ -37,7 +43,9 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
   }
 }
+
 -(bool) isReadOnly {return NO;}
+
 +(double)getHeight
 {
   return 60.0f;
@@ -58,6 +66,7 @@
   }
   return self;
 }
+
 -(void)selectValue
 {
   std::vector<onelab::string> string;
@@ -71,6 +80,7 @@
   [popupSelectValue setCancelButtonIndex:popupSelectValue.numberOfButtons - 1];
   [popupSelectValue showInView:button];
 }
+
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
   std::vector<onelab::string> string;
@@ -82,20 +92,24 @@
   onelab::server::instance()->set(string[0]);
   [super editValue];
 }
+
 -(void)refresh
 {
   std::vector<onelab::string> string;
   onelab::server::instance()->get(string,[name UTF8String]);
   [button setTitle:[NSString stringWithFormat:@"%s", string[0].getValue().c_str()] forState:UIControlStateNormal];
 }
+
 -(void)setFrame:(CGRect)frame
 {
   [button setFrame:frame];
 }
+
 -(UIButton *)getUIView
 {
   return button;
 }
+
 -(bool)isReadOnly
 {
   std::vector<onelab::string> string;
@@ -103,6 +117,7 @@
   if(string.size() < 1) return YES;
   return string[0].getReadOnly();
 }
+
 +(double)getHeight
 {
   return 60.f;
@@ -123,6 +138,7 @@
   }
   return self;
 }
+
 -(void)selectValue
 {
   std::vector<onelab::number> number;
@@ -136,6 +152,7 @@
   [popupSelectValue setCancelButtonIndex:popupSelectValue.numberOfButtons - 1];
   [popupSelectValue showInView:button];
 }
+
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
   std::vector<onelab::number> number;
@@ -148,20 +165,24 @@
   [button setTitle:[NSString stringWithFormat:@"%s", number[0].getValueLabel(number[0].getValue()).c_str()] forState:UIControlStateNormal];
   [super editValue];
 }
+
 -(void)refresh
 {
   std::vector<onelab::number> number;
   onelab::server::instance()->get(number,[name UTF8String]);
   [button setTitle:[NSString stringWithFormat:@"%s", number[0].getValueLabel(number[0].getValue()).c_str()] forState:UIControlStateNormal];
 }
+
 -(void)setFrame:(CGRect)frame
 {
   [button setFrame:frame];
 }
+
 -(UIButton *)getUIView
 {
   return button;
 }
+
 -(bool)isReadOnly
 {
   std::vector<onelab::number> number;
@@ -169,6 +190,7 @@
   if(number.size() < 1) return YES;
   return number[0].getReadOnly();
 }
+
 +(double)getHeight
 {
   return 60.f;
@@ -189,12 +211,14 @@
   }
   return self;
 }
+
 -(void)refresh
 {
   std::vector<onelab::number> number;
   onelab::server::instance()->get(number,[name UTF8String]);
   [checkbox setSelected:(number[0].getValue() == 1)];
 }
+
 -(void) valueChange:(UISwitch *)sender
 {
   std::vector<onelab::number> number;
@@ -204,14 +228,17 @@
   onelab::server::instance()->set(number[0]);
   [super editValue];
 }
+
 -(void)setFrame:(CGRect)frame
 {
   [checkbox setFrame:frame];
 }
+
 -(UISwitch *)getCheckbox
 {
   return checkbox;
 }
+
 -(bool)isReadOnly
 {
   std::vector<onelab::number> number;
@@ -219,6 +246,7 @@
   if(number.size() < 1) return YES;
   return number[0].getReadOnly();
 }
+
 +(double)getHeight
 {
   return 40.0f;
@@ -242,6 +270,7 @@
   }
   return self;
 }
+
 -(void)stepperValueChanged:(UIStepper *)sender
 {
   std::vector<onelab::number> number;
@@ -252,6 +281,7 @@
   [label setText:[NSString stringWithFormat:@"%s %d" ,number[0].getShortName().c_str(), (int)number[0].getValue()]];
   [super editValue];
 }
+
 -(void)refresh
 {
   std::vector<onelab::number> number;
@@ -260,14 +290,17 @@
   [stepper setValue:number[0].getValue()];
   [label setText:[NSString stringWithFormat:@"%s %d" ,number[0].getShortName().c_str(), (int)number[0].getValue()]];
 }
+
 -(void)setFrame:(CGRect)frame
 {
   [stepper setFrame:frame];
 }
+
 -(UIStepper *)getStepper
 {
   return stepper;
 }
+
 +(double)getHeight
 {
   return 60.0f;
@@ -292,6 +325,7 @@
   }
   return self;
 }
+
 -(void)refresh
 {
   std::vector<onelab::number> number;
@@ -302,6 +336,7 @@
   [slider setValue:number[0].getValue()];
   [label setText:[NSString stringWithFormat:@"%@ %g", [NSString stringWithCString:number[0].getShortName().c_str() encoding:[NSString defaultCStringEncoding]], number[0].getValue()]];
 }
+
 -(void)sliderValueChanged:(UISlider *)sender
 {
   std::vector<onelab::number> number;
@@ -312,14 +347,17 @@
   [label setText:[NSString stringWithFormat:@"%s %g" ,number[0].getShortName().c_str(), number[0].getValue()]];
   [super editValue];
 }
+
 -(void)setFrame:(CGRect)frame
 {
   [slider setFrame:frame];
 }
+
 -(UISlider *)getSlider
 {
   return slider;
 }
+
 -(bool)isReadOnly
 {
   std::vector<onelab::number> number;
@@ -327,6 +365,7 @@
   if(number.size() < 1) return YES;
   return number[0].getReadOnly();
 }
+
 +(double)getHeight
 {
   return 60.0f;
@@ -355,6 +394,7 @@
   }
   return self;
 }
+
 -(void)refresh
 {
   std::vector<onelab::number> number;
@@ -363,6 +403,7 @@
   [textbox setText:[NSString stringWithFormat:@"%g", number[0].getValue()]];
   [textbox reloadInputViews];
 }
+
 -(BOOL)textFieldShouldEndEditing:(UITextField *)textField
 {
   std::vector<onelab::number> number;
@@ -374,22 +415,27 @@
   [super editValue];
   return YES;
 }
+
 -(BOOL)textFieldShouldReturn:(UITextField *)textField
 {
   return [textField endEditing:YES];
 }
+
 -(void)doneWithNumberPad
 {
   [textbox endEditing:YES];
 }
+
 -(void)setFrame:(CGRect)frame
 {
   [textbox setFrame:frame];
 }
+
 -(UITextField *)getTextbox
 {
   return textbox;
 }
+
 -(bool)isReadOnly
 {
   std::vector<onelab::number> number;
@@ -397,6 +443,7 @@
   if(number.size() < 1) return YES;
   return number[0].getReadOnly();
 }
+
 +(double)getHeight
 {
   return 60.f;

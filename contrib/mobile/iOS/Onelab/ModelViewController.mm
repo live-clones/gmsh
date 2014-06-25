@@ -178,6 +178,7 @@
       [self performSelectorOnMainThread:@selector(stopGUI) withObject:nil waitUntilDone:YES];
     });
 }
+
 -(void)stopGUI
 {
   [_runStopButton setAction:@selector(compute)];
@@ -190,16 +191,19 @@
     [_errorAlert show];
   }
 }
+
 - (void)stop
 {
   onelab_cb("stop");
 }
+
 -(void)playAnimation:(UIBarButtonItem *)sender
 {
   [_playButton setEnabled:NO];
   [_stopButton setEnabled:YES];
   _animation = [NSTimer scheduledTimerWithTimeInterval:0.5 target:self selector:@selector(nextAnimation) userInfo:nil repeats:YES];
 }
+
 -(void)stopAnimation:(UIBarButtonItem *)sender
 {
   [_animation invalidate];
@@ -207,8 +211,11 @@
   [_playButton setEnabled:YES];
   [_stopButton setEnabled:NO];
 }
+
 -(void)nextAnimation { animation_next(); [self requestRender]; }
+
 -(void)prevAnimation { animation_prev(); [self requestRender]; }
+
 -(IBAction)pinch:(UIPinchGestureRecognizer *)sender
 {
   if([sender numberOfTouches] <= 2) {
@@ -354,18 +361,22 @@ void messageFromCpp (void *self, std::string level, std::string msg)
   else if(level == "Error")
     [(__bridge id)self addError:msg];
 }
+
 -(void)setProgress:(NSString *)progress
 {
   [_progressLabel setText:progress];
 }
+
 -(void)handleProgressIndicatorTap:(id)sender
 {
   [_progressLabel setHidden:!_progressLabel.hidden];
 }
+
 void getBitmap(void *self, const char *text, int textsize, unsigned char **map, int *height, int *width, int *realWidth)
 {
   [(__bridge id)self getBitmapFromStringObjC:text withTextSize:textsize inMap:map inHeight:height inWidth:width inRealWidth:realWidth];
 }
+
 -(void) getBitmapFromStringObjC:(const char *)text withTextSize:(int)textsize inMap:(unsigned char **)map inHeight:(int *)height inWidth:(int *)width inRealWidth:(int *) realWidth
 {
   UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 1024, textsize)];
@@ -406,6 +417,7 @@ void getBitmap(void *self, const char *text, int textsize, unsigned char **map, 
     *(*map+byteIndex/4) = rawData[byteIndex + 3];
   free(rawData);
 }
+
 - (IBAction)startRotation:(UIButton *)sender {
   glView->rotate = !glView->rotate;
   if(glView->rotate)
@@ -413,4 +425,5 @@ void getBitmap(void *self, const char *text, int textsize, unsigned char **map, 
   else
     [sender setImage:[UIImage imageNamed:@"icon_rotate.png"] forState:UIControlStateNormal];
 }
+
 @end

@@ -32,34 +32,42 @@
 {
   return _name;
 }
+
 -(NSString *) getSummary
 {
   return _summary;
 }
+
 -(NSString *) getFile
 {
   return _file;
 }
+
 -(NSURL *) getUrl
 {
   return _url;
 }
+
 -(UIImage *) getPreview
 {
   return _preview;
 }
+
 -(void) setSummary:(NSString *)summary
 {
   _summary = summary;
 }
+
 -(void) setFile:(NSString *)file
 {
   _file = file;
 }
+
 -(void) setPreview:(NSString *)path
 {
   _preview = [UIImage imageWithContentsOfFile:path];
 }
+
 -(void) setUrl:(NSString *)url
 {
   _url = [NSURL URLWithString:url];

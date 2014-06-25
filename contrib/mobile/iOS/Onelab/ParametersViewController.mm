@@ -46,6 +46,7 @@
   }
   self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStyleBordered target:self action:@selector(resetParameters:)];
 }
+
 - (void)viewWillAppear:(BOOL)animated
 {
   [self refreshParameters:nil];
@@ -77,9 +78,9 @@
     alertView.alertViewStyle = UIAlertViewStylePlainTextInput;
     [alertView textFieldAtIndex:0].text = [NSString stringWithFormat:@"%g", number[0].getValue()];
     [alertView show];
-    [parameter refresh];
   }
 }
+
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
   NSLog(@"%@ -> %@", [alertView message], [alertView textFieldAtIndex:0].text);
@@ -95,11 +96,13 @@
     }
   }
 }
+
 - (void)indexDidChangeForSegmentedControl:(id)sender
 {
   OptionsViewController *optionsViewController = [[OptionsViewController alloc] init];
   [self.navigationController pushViewController:optionsViewController animated:YES];
 }
+
 - (void)addParameterNumber:(onelab::number)p atIndexPath:(NSIndexPath*)indexPath
 {
   NSMutableArray* section = [_sections objectAtIndex:indexPath.section];
@@ -130,6 +133,7 @@
   [self.tableView insertRowsAtIndexPaths:[[NSArray alloc] initWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationAutomatic];
   [self.tableView endUpdates];
 }
+
 - (void)addParameterString:(onelab::string)p atIndexPath:(NSIndexPath*)indexPath
 {
   NSMutableArray* section = [_sections objectAtIndex:indexPath.section];
@@ -139,12 +143,14 @@
   [self.tableView insertRowsAtIndexPaths:[[NSArray alloc] initWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationAutomatic];
   [self.tableView endUpdates];
 }
+
 - (void)removeParemeterNumberAtIndex:(NSIndexPath*)index
 {
   [self.tableView beginUpdates];
   [self.tableView deleteRowsAtIndexPaths: [NSArray arrayWithObject:index] withRowAnimation:UITableViewRowAnimationAutomatic];
   [self.tableView endUpdates];
 }
+
 - (void)addSection:(NSMutableArray*)s withTitle:(NSString*)t withParameterNumber:(onelab::number)p
 {
   [_sections addObject:s];
@@ -154,6 +160,7 @@
   [self.tableView endUpdates];
   [self addParameterNumber:p atIndexPath:[NSIndexPath indexPathForRow:0 inSection:[_sections count]-1]];
 }
+
 - (void)addSection:(NSMutableArray*)s withTitle:(NSString*)t withParameterString:(onelab::string)p
 {
   [_sections addObject:s];
@@ -163,6 +170,7 @@
   [self.tableView endUpdates];
   [self addParameterString:p atIndexPath:[NSIndexPath indexPathForRow:0 inSection:[_sections count]-1]];
 }
+
 - (void)refreshTableView
 {
   std::vector<onelab::number> number;
@@ -258,10 +266,12 @@
 {
   return YES;
 }
+
 - (void)refreshParameters:(id)sender
 {
   [self performSelectorOnMainThread:@selector(refreshParameters) withObject:nil waitUntilDone:NO];
 }
+
 - (void)refreshParameters
 {
   if(!_lastRefresh) _lastRefresh = [NSDate date];
@@ -271,6 +281,7 @@
   }
   [self refreshTableView]; // Get the param
 }
+
 - (void)resetParameters:(id)sender
 {
   if(((AppDelegate *)[UIApplication sharedApplication].delegate)->compute) {
@@ -300,6 +311,7 @@
   // Return NO if you do not want the specified item to be editable.
   return YES;
 }
+
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
   if([_sections count] < section)
@@ -373,4 +385,5 @@
 {
   return [_sectionstitle objectAtIndex:section];
 }
+
 @end

@@ -78,12 +78,14 @@
   [context presentRenderbuffer:GL_RENDERBUFFER_OES];
   rendering = NO;
 }
+
 - (void)load:(NSString*) file
 {
   mContext->load(*new std::string([file fileSystemRepresentation]));
   [[NSNotificationCenter defaultCenter] postNotificationName:@"resetParameters" object:nil];
   [self drawView];
 }
+
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
   NSUInteger ntouch = [[event allTouches] count];
