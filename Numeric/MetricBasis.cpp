@@ -169,7 +169,7 @@ double MetricBasis::getMinR(MElement *el, MetricData *&md, int deg) const
       else*/
       _computeRmin(*coeff, *jac, RminLag, RminBez, 0, false);
 
-      double betaOpt = beta, minaOpt, maxaOpt = maxaOpt, RminBezOpt;
+      double betaOpt = beta, minaOpt, maxaOpt = 0., RminBezOpt;
       {
         /*const */double phi = std::acos(.5*(minK-maxa3*maxa3*maxa3+3*maxa3))/3;
         RminBezOpt = (maxa3+2*std::cos(phi+2*M_PI/3))/(maxa3+2*std::cos(phi));
@@ -278,7 +278,7 @@ bool MetricBasis::notStraight(MElement *el, double &metric, int deg) const
       break;
     default :
       Msg::Error("Unknown Jacobian function space for element type %d", el->getType());
-      return -1;
+      return false;
   }
 
   MetricData *md;

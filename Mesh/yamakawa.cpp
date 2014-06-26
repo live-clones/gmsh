@@ -3987,7 +3987,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 
     temp2 = new MPyramid(a,b,c,d,mid);
     gr->addPyramid(temp2);
-    markings.insert(std::pair<MElement*,bool>(temp2,0));
+    markings.insert(std::pair<MElement*,bool>(temp2,false));
     build_vertex_to_pyramids(temp2);
 
     for(it=tetrahedra.begin();it!=tetrahedra.end();it++){
@@ -4000,13 +4000,13 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 
         temp = new MTetrahedron(N1,N2,diagA,mid);
         gr->addTetrahedron(temp);
-        markings.insert(std::pair<MElement*,bool>(temp,0));
+        markings.insert(std::pair<MElement*,bool>(temp,false));
         build_vertex_to_tetrahedra(temp);
         movables.push_back(temp);
 
         temp = new MTetrahedron(N1,N2,diagB,mid);
         gr->addTetrahedron(temp);
-        markings.insert(std::pair<MElement*,bool>(temp,0));
+        markings.insert(std::pair<MElement*,bool>(temp,false));
         build_vertex_to_tetrahedra(temp);
         movables.push_back(temp);
 
@@ -4041,13 +4041,13 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 
       temp2 = new MPyramid(v1,v2,v3,v4,mid);
       gr->addPyramid(temp2);
-      markings.insert(std::pair<MElement*,bool>(temp2,0));
+      markings.insert(std::pair<MElement*,bool>(temp2,false);
       build_vertex_to_pyramids(temp2);
 
       if(different(v1,v2,diagA,diagB)){
         temp = new MTetrahedron(v1,v2,mid,v5);
         gr->addTetrahedron(temp);
-        markings.insert(std::pair<MElement*,bool>(temp,0));
+        markings.insert(std::pair<MElement*,bool>(temp,false));
         build_vertex_to_tetrahedra(temp);
         movables.push_back(temp);
       }
@@ -4055,7 +4055,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
       if(different(v2,v3,diagA,diagB)){
         temp = new MTetrahedron(v2,v3,mid,v5);
         gr->addTetrahedron(temp);
-        markings.insert(std::pair<MElement*,bool>(temp,0));
+        markings.insert(std::pair<MElement*,bool>(temp,false));
         build_vertex_to_tetrahedra(temp);
         movables.push_back(temp);
       }
@@ -4063,7 +4063,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
       if(different(v3,v4,diagA,diagB)){
         temp = new MTetrahedron(v3,v4,mid,v5);
         gr->addTetrahedron(temp);
-        markings.insert(std::pair<MElement*,bool>(temp,0));
+        markings.insert(std::pair<MElement*,bool>(temp,false));
         build_vertex_to_tetrahedra(temp);
         movables.push_back(temp);
       }
@@ -4071,7 +4071,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
       if(different(v4,v1,diagA,diagB)){
         temp = new MTetrahedron(v4,v1,mid,v5);
         gr->addTetrahedron(temp);
-        markings.insert(std::pair<MElement*,bool>(temp,0));
+        markings.insert(std::pair<MElement*,bool>(temp,false));
         build_vertex_to_tetrahedra(temp);
         movables.push_back(temp);
       }
