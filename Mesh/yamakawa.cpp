@@ -4041,7 +4041,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 
       temp2 = new MPyramid(v1,v2,v3,v4,mid);
       gr->addPyramid(temp2);
-      markings.insert(std::pair<MElement*,bool>(temp2,false);
+      markings.insert(std::pair<MElement*,bool>(temp2,false));
       build_vertex_to_pyramids(temp2);
 
       if(different(v1,v2,diagA,diagB)){
