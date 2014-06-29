@@ -85,6 +85,16 @@ class backgroundMesh : public simpleFunction<double>
     }
   }
   MElementOctree* get_octree();
+  MElement *getMeshElementByCoord(double u, double v, double w, bool strict=true);
+  int getNumMeshElements()const{return _triangles.size();}
+  std::vector<MVertex*>::iterator begin_vertices(){return _vertices.begin();}
+  std::vector<MVertex*>::iterator end_vertices(){return _vertices.end();}
+  std::vector<MVertex*>::const_iterator begin_vertices()const{return _vertices.begin();}
+  std::vector<MVertex*>::const_iterator end_vertices()const{return _vertices.end();}
+  std::vector<MElement*>::iterator begin_triangles(){return _triangles.begin();}
+  std::vector<MElement*>::iterator end_triangles(){return _triangles.end();}
+  std::vector<MElement*>::const_iterator begin_triangles()const{return _triangles.begin();}
+  std::vector<MElement*>::const_iterator end_triangles()const{return _triangles.end();}
 };
 
 SMetric3 buildMetricTangentToCurve (SVector3 &t, double l_t, double l_n);
