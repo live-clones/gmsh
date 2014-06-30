@@ -147,7 +147,7 @@ class compareSurfacePointWithExclusionRegionPtr_Smoothness
       return (a.rank < b.rank);
     }
 };
-    
+
 
 class compareSurfacePointWithExclusionRegionPtr
 {
@@ -629,7 +629,7 @@ bool get_local_sizes_and_directions(const MVertex *v_center, const SPoint2 &midp
 //    angles.insert(std::make_pair(abs(a),a));
 //    //    std::cout << "angles: " << std::endl;
 //    //    for (int i=0;i<4;i++)  std::cout << angles[i] << "  " << std::endl;
-//    double min_angle = -(angles.begin()->second); 
+//    double min_angle = -(angles.begin()->second);
 //    //    std::cout << "min angle = " << min_angle << std::endl;
 //    t1 =  cos(min_angle)*previous_t1 + sin(min_angle)*previous_t2;
 //    t2 = -sin(min_angle)*previous_t1 + cos(min_angle)*previous_t2;
@@ -736,8 +736,8 @@ void packingOfParallelogramsSmoothness(GFace* gf,  std::vector<MVertex*> &packed
       SPoint2 param_point_nb(v_nb->x(),v_nb->y());GPoint gpt_nb = gf->point(param_point_nb); MVertex v_real_nb(gpt_nb.x(),gpt_nb.y(),gpt_nb.z());
       get_local_sizes_and_directions(&v_real_nb, param_point_nb, 0, gf, covar1_nb, covar2_nb, size_param_1_nb, size_param_2_nb, L_nb, t1_nb, t2_nb, n_nb);
       // angle comparison...
-      maxprod = fmax(maxprod, fabs(t1[0]*t1_nb[0] + t1[1]*t1_nb[1]));
-      maxprod = fmax(maxprod, fabs(t1[0]*t2_nb[0] + t1[1]*t2_nb[1]));
+      maxprod = std::max(maxprod, fabs(t1[0]*t1_nb[0] + t1[1]*t1_nb[1]));
+      maxprod = std::max(maxprod, fabs(t1[0]*t2_nb[0] + t1[1]*t2_nb[1]));
       angle += fabs(acos(max(min(maxprod,1.),-1.)));
     }
     angle /= N;
