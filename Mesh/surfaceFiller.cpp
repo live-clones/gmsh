@@ -48,6 +48,7 @@ static const double DIRS [NUMDIR] = {0.0, M_PI/20.,-M_PI/20.};
 /// right spacing in the tangent plane
 
 #if defined(HAVE_RTREE)
+
 struct surfacePointWithExclusionRegion {
   MVertex *_v;
   SPoint2 _center;
@@ -418,8 +419,6 @@ bool compute4neighbors (GFace *gf,   // the surface
   }
   return true;
 }
-#endif
-
 
 // ---------------------------------------------------------------------------------------------
 
@@ -689,6 +688,8 @@ bool get_local_sizes_and_directions(const MVertex *v_center, const SPoint2 &midp
 
   return true;
 }
+
+#endif
 
 // ---------------------------------------------------------------------------------------------
 
@@ -1036,7 +1037,4 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
     //  printf("packed.size = %d\n",packed.size());
     //  delete rtree;
 #endif
-  }
-
-
-
+}

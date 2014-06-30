@@ -600,8 +600,8 @@ static void updateFaceQuads(GFace *gf, std::vector<MQuadrangle*> &quads, std::ve
 static bool computeRingVertices(GFace *gf, Centerline *center,
 				std::vector<MVertex*> &vert1, std::vector<MVertex*> &vert2,
 				int &N, int &M, int &close_ind, int &sign2,
-				double &arc, double &length){
-
+				double &arc, double &length)
+{
 #if defined(HAVE_ANN)
   std::list<GEdge*> bedges = gf->edges();
   std::list<GEdge*>::iterator itb = bedges.begin();
@@ -690,8 +690,9 @@ static bool computeRingVertices(GFace *gf, Centerline *center,
   annDeallocPts(nodes);
 
   return true;
+#else
+  return false;
 #endif
-
 }
 
 //vert1 is the outer circle
@@ -705,7 +706,6 @@ static bool computeRingVertices(GFace *gf, Centerline *center,
 //         - - - -
 bool createRegularTwoCircleGridPeriodic (Centerline *center, GFace *gf)
 {
-
 #if defined(HAVE_ANN)
   std::vector<MVertex*> vert1, vert2;
   int N, M, close_ind, sign2;
@@ -756,11 +756,9 @@ bool createRegularTwoCircleGridPeriodic (Centerline *center, GFace *gf)
   //printParamGrid(gf, vert1, vert2, e00,e22,e02,e02,e02,e02, quads);
 
   return true;
-
 #else
   return false;
 #endif
-
 }
 
 //vert1 is the outer circle
@@ -860,11 +858,7 @@ bool createRegularTwoCircleGrid (Centerline *center, GFace *gf)
   printParamGrid(gf, vert1, vert2, e01,e10,e23,e32,e02,e13, quads);
 
   return true;
-
 #else
   return false;
 #endif
-
 }
-
-
