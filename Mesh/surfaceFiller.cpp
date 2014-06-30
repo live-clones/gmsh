@@ -30,8 +30,6 @@
 using namespace std;
 
 static const double FACTOR = .71;
-
-
 static const int NUMDIR = 3;
 static const double DIRS [NUMDIR] = {0.0, M_PI/20.,-M_PI/20.};
 //PE MODIF
