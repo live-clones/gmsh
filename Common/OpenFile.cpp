@@ -86,6 +86,12 @@ static void FinishUpBoundingBox()
     double l = sqrt(SQU(range[0]) + SQU(range[2]));
     CTX::instance()->min[1] -= l; CTX::instance()->max[1] += l;
   }
+
+  CTX::instance()->lc = sqrt(SQU(CTX::instance()->max[0] - CTX::instance()->min[0]) +
+                             SQU(CTX::instance()->max[1] - CTX::instance()->min[1]) +
+                             SQU(CTX::instance()->max[2] - CTX::instance()->min[2]));
+  for(int i = 0; i < 3; i++)
+    CTX::instance()->cg[i] = 0.5 * (CTX::instance()->min[i] + CTX::instance()->max[i]);
 }
 
 void SetBoundingBox(double xmin, double xmax,
@@ -96,12 +102,6 @@ void SetBoundingBox(double xmin, double xmax,
   CTX::instance()->min[1] = ymin; CTX::instance()->max[1] = ymax;
   CTX::instance()->min[2] = zmin; CTX::instance()->max[2] = zmax;
   FinishUpBoundingBox();
-  CTX::instance()->lc = sqrt(SQU(CTX::instance()->max[0] - CTX::instance()->min[0]) +
-                             SQU(CTX::instance()->max[1] - CTX::instance()->min[1]) +
-                             SQU(CTX::instance()->max[2] - CTX::instance()->min[2]));
-  for(int i = 0; i < 3; i++)
-    CTX::instance()->cg[i] = 0.5 * (CTX::instance()->min[i] + CTX::instance()->max[i]);
-
 }
 
 void SetBoundingBox(bool aroundVisible)
@@ -127,12 +127,6 @@ void SetBoundingBox(bool aroundVisible)
   CTX::instance()->min[1] = bb.min().y(); CTX::instance()->max[1] = bb.max().y();
   CTX::instance()->min[2] = bb.min().z(); CTX::instance()->max[2] = bb.max().z();
   FinishUpBoundingBox();
-  CTX::instance()->lc = sqrt(SQU(CTX::instance()->max[0] - CTX::instance()->min[0]) +
-                             SQU(CTX::instance()->max[1] - CTX::instance()->min[1]) +
-                             SQU(CTX::instance()->max[2] - CTX::instance()->min[2]));
-  for(int i = 0; i < 3; i++)
-    CTX::instance()->cg[i] = 0.5 * (CTX::instance()->min[i] + CTX::instance()->max[i]);
-
 }
 
 // FIXME: this is necessary for now to have an approximate CTX::instance()->lc
