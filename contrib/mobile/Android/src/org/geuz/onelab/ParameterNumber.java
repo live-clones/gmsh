@@ -2,6 +2,7 @@ package org.geuz.onelab;
 
 import java.util.ArrayList;
 
+import android.app.Activity;
 import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -18,8 +19,19 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.util.Log;
 
-public class ParameterNumber extends Parameter{
-    private double _value, _min, _max, _step;
+
+import android.app.Dialog;
+import android.app.AlertDialog;
+import android.app.DialogFragment;
+import android.content.DialogInterface;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.EditText;
+import android.text.TextWatcher;
+import android.text.Editable;
+
+public class ParameterNumber extends Parameter {
+    private double _value, _tmpValue, _min, _max, _step;
     private SeekBar _bar;
     private ArrayList<Double> _values;
     private ArrayList<String> _choices;
@@ -176,8 +188,42 @@ public class ParameterNumber extends Parameter{
         paramLayout.setOnLongClickListener(new View.OnLongClickListener(){
                 @Override
                 public boolean onLongClick(View v){
-                    Log.w("Yeppee", "long click yes...");
-                    return true;
+			AlertDialog.Builder builder = new AlertDialog.Builder(_context);
+			LinearLayout layout = new LinearLayout(_context);
+			layout.setOrientation(LinearLayout.VERTICAL);
+			TextView label = new TextView(_context);
+			label.setText("Edit value of \n" + _name);
+			EditText edit = new EditText(_context);
+			edit.setText(String.valueOf(_value));
+			edit.addTextChangedListener(new TextWatcher() {
+				public void onTextChanged(CharSequence s, int start, int before, int count) {
+					try {
+						if(s.length() < 1)  _tmpValue = 1;
+						_tmpValue = Double.parseDouble(s.toString());
+					} catch(NumberFormatException e) {
+	                                	_tmpValue = 1;
+					}
+				}
+		                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {} // UNUSED Auto-generated method stub
+		                    public void afterTextChanged(Editable s) {} // UNUSED Auto-generated method stub
+		        	});
+			edit.requestFocus();
+			//_context.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+			layout.addView(label);
+			layout.addView(edit);
+			builder.setView(layout)
+				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						setValue(_tmpValue);
+					}
+				})
+				.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						// User cancelled the dialog
+					}
+				});
+			builder.create().show();
+                	return true;
                 }
             });
         if(_spinner != null) {
