@@ -17,18 +17,12 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Spinner;
-import android.util.Log;
-
-
 import android.app.Dialog;
 import android.app.AlertDialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.EditText;
-import android.text.TextWatcher;
-import android.text.Editable;
 
 public class ParameterNumber extends Parameter {
     private double _value, _tmpValue, _min, _max, _step;

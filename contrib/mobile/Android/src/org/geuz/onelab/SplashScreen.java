@@ -10,8 +10,10 @@ import java.util.zip.ZipInputStream;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 public class SplashScreen extends Activity{
     private static final int SPLASHTIME = 1000; // duration for the splash screen in milliseconds
@@ -49,7 +51,20 @@ public class SplashScreen extends Activity{
         }
         else
             newIntent = new Intent(SplashScreen.this, ModelList.class);
-        loadNative();
+	SharedPreferences sharedPref = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
+	int codev = 0;
+	try {
+		codev = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+	} catch (android.content.pm.PackageManager.NameNotFoundException e) {}
+	int modelsv = sharedPref.getInt("OnelabModelsVersion", 0);
+	if(modelsv == 0 || modelsv != codev) {
+		Log.d("Models", "Updating models to version "+codev);
+		SharedPreferences.Editor editor = sharedPref.edit();
+		editor.putInt("OnelabModelsVersion", codev);
+		editor.commit();
+		loadNative();
+	}
+	else Log.d("Models", "Leaving models as-is (version "+modelsv+")");
         final Message msg = new Message();
         msg.what = STOPSPLASH;
         handler.sendMessageDelayed(msg, SPLASHTIME);
