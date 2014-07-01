@@ -185,7 +185,7 @@ public class ParameterNumber extends Parameter {
         LinearLayout paramLayout = new LinearLayout(_context);
         paramLayout.setOrientation(LinearLayout.VERTICAL);
         paramLayout.addView(_title);
-        paramLayout.setOnLongClickListener(new View.OnLongClickListener(){
+        if(!_readOnly) paramLayout.setOnLongClickListener(new View.OnLongClickListener(){
                 @Override
                 public boolean onLongClick(View v){
 			AlertDialog.Builder builder = new AlertDialog.Builder(_context);
