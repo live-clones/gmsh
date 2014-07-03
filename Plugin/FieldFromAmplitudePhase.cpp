@@ -122,9 +122,9 @@ PView *GMSH_FieldFromAmplitudePhasePlugin::execute(PView *v)
     double phi, ar, ai ;
     std::vector<double> uR(1) ;
     std::vector<double> uI(1) ;
-    oPhi->searchScalar((*it)->x(), (*it)->y(), (*it)->z(), &phi, 0);
-    oA->searchScalar((*it)->x(), (*it)->y(), (*it)->z(), &ar, 0);
-    oA->searchScalar((*it)->x(), (*it)->y(), (*it)->z(), &ai, 1);
+    oPhi->searchScalarWithTol((*it)->x(), (*it)->y(), (*it)->z(), &phi, 0);
+    oA->searchScalarWithTol((*it)->x(), (*it)->y(), (*it)->z(), &ar, 0);
+    oA->searchScalarWithTol((*it)->x(), (*it)->y(), (*it)->z(), &ai, 1);
 
     uR[0] = ar * cos(k*phi) - ai * sin(k*phi) ;
     uI[0] = ar * sin(k*phi) + ai* cos(k*phi) ;
