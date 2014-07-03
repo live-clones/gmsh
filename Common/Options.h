@@ -210,6 +210,7 @@ double opt_general_ymin(OPT_ARGS_NUM);
 double opt_general_ymax(OPT_ARGS_NUM);
 double opt_general_zmin(OPT_ARGS_NUM);
 double opt_general_zmax(OPT_ARGS_NUM);
+double opt_general_lc(OPT_ARGS_NUM);
 double opt_general_axes(OPT_ARGS_NUM);
 double opt_general_axes_mikado(OPT_ARGS_NUM);
 double opt_general_axes_auto_position(OPT_ARGS_NUM);

@@ -2803,6 +2803,11 @@ double opt_general_zmax(OPT_ARGS_NUM)
   return bb.empty() ? 0. : bb.max().z();
 }
 
+double opt_general_lc(OPT_ARGS_NUM)
+{
+  return CTX::instance()->lc;
+}
+
 double opt_general_axes(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
