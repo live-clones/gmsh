@@ -169,7 +169,7 @@ double MetricBasis::getMinR(MElement *el, MetricData *&md, int deg) const
       else*/
       _computeRmin(*coeff, *jac, RminLag, RminBez, 0, false);
 
-      double betaOpt = beta, minaOpt, maxaOpt = 0., RminBezOpt;
+      double betaOpt = beta, minaOpt = mina, maxaOpt = maxa3, RminBezOpt;
       {
         /*const */double phi = std::acos(.5*(minK-maxa3*maxa3*maxa3+3*maxa3))/3;
         RminBezOpt = (maxa3+2*std::cos(phi+2*M_PI/3))/(maxa3+2*std::cos(phi));

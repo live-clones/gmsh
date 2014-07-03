@@ -676,7 +676,7 @@ void JacobianBasis::interpolate(const fullVector<double> &jacobian,
 
 fullMatrix<double> JacobianBasis::generateJacMonomialsPyramid(int order)
 {
-  int nbMonomials = (order+3)*((order+3)+1)*(2*(order+3)+1)/6 - 5;
+  const int nbMonomials = (order+3)*(order+3)*(order+1);
   fullMatrix<double> monomials(nbMonomials, 3);
 
   if (order == 0) {
@@ -706,28 +706,28 @@ fullMatrix<double> JacobianBasis::generateJacMonomialsPyramid(int order)
   monomials(4, 1) = 0;
   monomials(4, 2) = order;
 
-  monomials(5, 0) = 2;
+  monomials(5, 0) = order+2;
   monomials(5, 1) = 0;
   monomials(5, 2) = order;
 
-  monomials(6, 0) = 2;
-  monomials(6, 1) = 2;
+  monomials(6, 0) = order+2;
+  monomials(6, 1) = order+2;
   monomials(6, 2) = order;
 
   monomials(7, 0) = 0;
-  monomials(7, 1) = 2;
+  monomials(7, 1) = order+2;
   monomials(7, 2) = order;
 
   int index = 8;
 
-  static const int bottom_edges[8][2] = {
+  static const int bottom_edges[4][2] = {
     {0, 1},
     {1, 2},
     {2, 3},
     {3, 0}
   };
 
-  // bottom "edges"
+  // bottom & top "edges"
   for (int iedge = 0; iedge < 4; ++iedge) {
     int i0 = bottom_edges[iedge][0];
     int i1 = bottom_edges[iedge][1];
@@ -740,22 +740,14 @@ fullMatrix<double> JacobianBasis::generateJacMonomialsPyramid(int order)
       monomials(index, 1) = monomials(i0, 1) + i * u_2;
       monomials(index, 2) = 0;
     }
+    for (int i = 1; i < order + 2; ++i, ++index) {
+      monomials(index, 0) = monomials(i0, 0) + i * u_1;
+      monomials(index, 1) = monomials(i0, 1) + i * u_2;
+      monomials(index, 2) = order;
+    }
   }
 
-  // top "edges"
-  for (int iedge = 0; iedge < 4; ++iedge, ++index) {
-    int i0 = bottom_edges[iedge][0] + 4;
-    int i1 = bottom_edges[iedge][1] + 4;
-
-    int u_1 = (monomials(i1,0)-monomials(i0,0)) / 2;
-    int u_2 = (monomials(i1,1)-monomials(i0,1)) / 2;
-
-    monomials(index, 0) = monomials(i0, 0) + u_1;
-    monomials(index, 1) = monomials(i0, 1) + u_2;
-    monomials(index, 2) = monomials(i0, 2);
-  }
-
-  // bottom "face"
+  // bottom & top "face"
   fullMatrix<double> uv = gmshGenerateMonomialsQuadrangle(order);
   uv.add(1);
   for (int i = 0; i < uv.size1(); ++i, ++index) {
@@ -763,16 +755,15 @@ fullMatrix<double> JacobianBasis::generateJacMonomialsPyramid(int order)
     monomials(index, 1) = uv(i, 1);
     monomials(index, 2) = 0;
   }
-
-  // top "face"
-  monomials(index, 0) = 1;
-  monomials(index, 1) = 1;
-  monomials(index, 2) = order;
-  ++index;
+  for (int i = 0; i < uv.size1(); ++i, ++index) {
+    monomials(index, 0) = uv(i, 0);
+    monomials(index, 1) = uv(i, 1);
+    monomials(index, 2) = order;
+  }
 
   // other monomials
+  uv = gmshGenerateMonomialsQuadrangle(order + 2);
   for (int k = 1; k < order; ++k) {
-    fullMatrix<double> uv = gmshGenerateMonomialsQuadrangle(order + 2 - k);
     for (int i = 0; i < uv.size1(); ++i, ++index) {
       monomials(index, 0) = uv(i, 0);
       monomials(index, 1) = uv(i, 1);
@@ -788,10 +779,10 @@ fullMatrix<double> JacobianBasis::generateJacPointsPyramid(int order)
 
   const double p = order + 2;
   for (int i = 0; i < points.size1(); ++i) {
-    points(i, 2) = points(i, 2) * 1. / p;
-    const double duv = -1. + points(i, 2);
-    points(i, 0) = duv + points(i, 0) * 2. / p;
-    points(i, 1) = duv + points(i, 1) * 2. / p;
+    points(i, 2) = points(i, 2) / p;
+    const double scale = 1. - points(i, 2);
+    points(i, 0) = (-1. + 2. * points(i, 0) / p) * scale;
+    points(i, 1) = (-1. + 2. * points(i, 1) / p) * scale;
   }
 
   return points;

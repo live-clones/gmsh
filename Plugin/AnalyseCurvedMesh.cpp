@@ -110,7 +110,9 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
     "\n"
     "- Recompute = {0,1}: If the mesh has changed, set to 1 to recompute the bounds.\n"
     "\n"
-    "- Tolerance = ]0, 1[: Tolerance on the computation of min(R) or min(J)";
+    "- Tolerance = ]0, 1[: Tolerance on the computation of min(R) or min(J). "
+    "It should be at most 0.01 but it can be set to 1 to just check the validity of "
+    "the mesh.";
 }
 
 // Execution
