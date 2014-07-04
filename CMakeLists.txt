@@ -1094,6 +1094,7 @@ endif(HAVE_ZLIB AND ENABLE_COMPRESSED_IO)
 
 if(ENABLE_WRAP_PYTHON)
   find_package(SWIG)
+  find_package(PythonInterp)
   find_package(PythonLibs)
   if(SWIG_FOUND AND PYTHONLIBS_FOUND)
     message(STATUS "Found SWIG version " ${SWIG_VERSION})
