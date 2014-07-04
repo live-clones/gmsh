@@ -93,6 +93,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   void addToRightHandSide(int row, const scalar &val);
   void getFromRightHandSide(int row, scalar &val) const;
   double normInfRightHandSide() const;
+  int getNumKspIteration() const;
   void addToMatrix(int row, int col, const scalar &val);
   void addToSolution(int row, const scalar &val);
   void getFromSolution(int row, scalar &val) const;
@@ -129,6 +130,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   void addToSolution(int row, const scalar &val) {}
   void getFromRightHandSide(int row, scalar &val) const {}
   void getFromSolution(int row, scalar &val) const {}
+  int getNumKspIteration() const {return 0;};
   void zeroMatrix() {}
   void zeroRightHandSide() {}
   void zeroSolution() {}

@@ -36,6 +36,14 @@ void linearSystemPETSc<scalar>::_kspCreate()
 }
 
 template <class scalar>
+int linearSystemPETSc<scalar>::getNumKspIteration() const
+{
+  int n;
+  _try(KSPGetIterationNumber(_ksp, &n));
+  return n;
+}
+
+template <class scalar>
 linearSystemPETSc<scalar>::linearSystemPETSc(MPI_Comm com)
 {
   _comm = com;
