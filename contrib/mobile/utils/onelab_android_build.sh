@@ -5,6 +5,7 @@ getdp_svn="${HOME}/src/getdp"
 frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_android"
 
 petsc_lib="$frameworks_dir/petsc"
+slepc_lib="$frameworks_dir/slepc"
 android_ndk="${HOME}/android-ndk-r8b/"
 android_sdk="${HOME}/android-sdk/"
 
@@ -48,7 +49,7 @@ if [ ! -d "$getdp_svn/build_android" ] || [ ! -f "$getdp_svn/build_android/CMake
   mkdir $getdp_svn/build_android
 fi
 cd $getdp_svn/build_android
-PETSC_DIR= PETSC_ARCH= SLEPC_DIR= cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_lib/Headers;$petsc_lib/Headers/mpiuni" -DPETSC_LIBS="$petsc_lib/libpetsc.so" -DGMSH_INC="$gmsh_svn/build_android/Headers/" -DGMSH_LIB="$gmsh_svn/build_android/libs/libGmsh.so" -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" ..
+PETSC_DIR= PETSC_ARCH= SLEPC_DIR= cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_lib/Headers;$petsc_lib/Headers/mpiuni" -DPETSC_LIBS="$petsc_lib/libpetsc.so" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_lib/Headers/" -DSLEPC_LIB="$slepc_lib/libslepc.a" -DGMSH_INC="$gmsh_svn/build_android/Headers/" -DGMSH_LIB="$gmsh_svn/build_android/libs/libGmsh.so" -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" ..
 check
 make androidGetdp -j$cmake_thread
 check
@@ -99,6 +100,9 @@ done < <($android_sdk/tools/android list target | grep -A 5 "id:")
 
 # to re-install on the device:
 # $android_sdk/platform-tools/adb install -r $gmsh_svn/contrib/mobile/build_android/Onelab/bin/Onelab-release.apk
+
+# to launch the app on the device:
+# $android_sdk/platform-tools/adb shell am start -n org.geuz.onelab/org.geuz.onelab.SplashScreen
 
 # to debug and check the log:
 # $android_sdk/tools/ddms
