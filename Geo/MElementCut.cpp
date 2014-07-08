@@ -606,7 +606,7 @@ static void elementSplitMesh(MElement *e, std::vector<gLevelset *> &RPN,
   int gLsTag = RPN[RPN.size() - 1]->getTag();
 
   MElement *copy = e->copy(vertexMap, newParents, newDomains);
-  double eps = 1.e-6;
+  double eps = 1.e-10;
   bool splitElem = false;
 
   //split acording to center of gravity
@@ -622,14 +622,14 @@ static void elementSplitMesh(MElement *e, std::vector<gLevelset *> &RPN,
   int ils = 0;
   for(int k = 1; k < e->getNumVertices(); k++){
     int lsTag2 = (verticesLs(iLs, e->getVertex(k)->getIndex()) > eps) ? -1 : 1;
-    if (lsTag * lsTag2 < 0.0) {
+    if (lsTag * lsTag2 < 0) {
       lsTag = -1;
       splitElem = true;
       if(RPN.size() > 1){
         for(; ils < verticesLs.size1() - 1; ils++){
           int lsT1 = (verticesLs(ils, e->getVertex(0)->getIndex()) > eps) ? -1 : 1;
           int lsT2 = (verticesLs(ils, e->getVertex(k)->getIndex()) > eps) ? -1 : 1;
-          if(lsT1 * lsT2 < 0.0) break;
+          if(lsT1 * lsT2 < 0) break;
         }
        for(int i = 0; i <= ils; i++)
           if(!RPN[i]->isPrimitive()) ils++;

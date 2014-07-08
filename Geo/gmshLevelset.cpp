@@ -1250,7 +1250,7 @@ void gLevelsetNACA00::getClosestBndPoint(double x, double y, double z,
 {
 
   static const int maxIter = 100;
-  static const double tol = 1.e-8;
+  static const double tol = 1.e-10;
 
   const double tolr = tol/_c; // Tolerance (scaled bu chord)
   in = false;                 // Whether the point is inside the airfoil
@@ -1283,6 +1283,7 @@ void gLevelsetNACA00::getClosestBndPoint(double x, double y, double z,
       if (fabs(mIncr) < tolr) break;
       else xtb -= mIncr;
       if (xtb < tolr) xtb = tolr;
+      if (xtb > _c-tolr) xtb = _c-tolr;
     }
     xb = _x0+xtb;
     yb = (y >= _y0) ? _y0+ytb : _y0-ytb;
