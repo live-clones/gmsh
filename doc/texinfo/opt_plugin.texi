@@ -5,20 +5,20 @@
 
 @ftable @code
 @item Plugin(AnalyseCurvedMesh)
-Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. It computes, min(J) where J is the scaled Jacobian determinant. Eventually, it computes min(R) where R is the ratio between the smaller and the greater of the eigenvalues of the metric. It creates one or more PView and hides elements for which min({J, R}) < 'Hidding threshold'.
-
-Parameters:
-
-- Show [...] = {0, 1}: If 0, computes Jacobian and shows min(J). If 1, computes Jacobian and metric and shows min(R).
-
-- Number of PView = {0, 1, 2}: If 1, create one PView with all elements. If 2, create two PView, one with straight-sided elements and one with curved elements.
-
-- Hidding threshold = [0,1]: Hides all element for which min(R) or min(J) is strictly greater than the threshold. If = 1, no effect, if = 0 hide all elements except invalid.
-
-- Dimension = {-1, 1, 2, 3}: If = -1, analyse element of the greater dimension.
-
-- Recompute = {0,1}: If the mesh has changed, set to 1 to recompute the bounds.
-
+Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. It computes, min(J) where J is the scaled Jacobian determinant. Eventually, it computes min(R) where R is the ratio between the smaller and the greater of the eigenvalues of the metric. It creates one or more PView and hides elements for which min(@{J, R@}) < 'Hidding threshold'.@*
+@*
+Parameters:@*
+@*
+- Show [...] = @{0, 1@}: If 0, computes Jacobian and shows min(J). If 1, computes Jacobian and metric and shows min(R).@*
+@*
+- Number of PView = @{0, 1, 2@}: If 1, create one PView with all elements. If 2, create two PView, one with straight-sided elements and one with curved elements.@*
+@*
+- Hidding threshold = [0,1]: Hides all element for which min(R) or min(J) is strictly greater than the threshold. If = 1, no effect, if = 0 hide all elements except invalid.@*
+@*
+- Dimension = @{-1, 1, 2, 3@}: If = -1, analyse element of the greater dimension.@*
+@*
+- Recompute = @{0,1@}: If the mesh has changed, set to 1 to recompute the bounds.@*
+@*
 - Tolerance = ]0, 1[: Tolerance on the computation of min(R) or min(J). It should be at most 0.01 but it can be set to 1 to just check the validity of the mesh.
 Numeric options:
 @table @code
@@ -37,12 +37,12 @@ Default value: @code{0.001}
 @end table
 
 @item Plugin(Annotate)
-Plugin(Annotate) adds the text string `Text', in font `Font' and size `FontSize', in the view `View'. The string is aligned according to `Align'.
-
-If `ThreeD' is equal to 1, the plugin inserts the string in model coordinates at the position (`X',`Y',`Z'). If `ThreeD' is equal to 0, the plugin inserts the string in screen coordinates at the position (`X',`Y').
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Annotate) adds the text string `Text', in font `Font' and size `FontSize', in the view `View'. The string is aligned according to `Align'.@*
+@*
+If `ThreeD' is equal to 1, the plugin inserts the string in model coordinates at the position (`X',`Y',`Z'). If `ThreeD' is equal to 0, the plugin inserts the string in screen coordinates at the position (`X',`Y').@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Annotate) is executed in-place for list-based datasets or creates a new view for other datasets.
 String options:
 @table @code
@@ -70,8 +70,8 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Bubbles)
-Plugin(Bubbles) constructs a geometry consisting of `bubbles' inscribed in the Voronoi of an input triangulation. `ShrinkFactor' allows to change the size of the bubbles. The plugin expects a triangulation in the `z = 0' plane to exist in the current model.
-
+Plugin(Bubbles) constructs a geometry consisting of `bubbles' inscribed in the Voronoi of an input triangulation. `ShrinkFactor' allows to change the size of the bubbles. The plugin expects a triangulation in the `z = 0' plane to exist in the current model.@*
+@*
 Plugin(Bubbles) creates one `.geo' file.
 String options:
 @table @code
@@ -97,10 +97,10 @@ Default value: @code{0}
 @end table
 
 @item Plugin(Curl)
-Plugin(Curl) computes the curl of the field in the view `View'.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Curl) computes the curl of the field in the view `View'.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Curl) creates one new view.
 Numeric options:
 @table @code
@@ -112,16 +112,16 @@ Default value: @code{-1}
 Plugin(CurvedBndDist) ...
 
 @item Plugin(CutBox)
-Plugin(CutBox) cuts the view `View' with a rectangular box defined by the 4 points (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U), (`X2',`Y2',`Z2') (axis of V) and (`X3',`Y3',`Z3') (axis of W).
-
-The number of points along U, V, W is set with the options `NumPointsU', `NumPointsV' and `NumPointsW'.
-
-If `ConnectPoints' is zero, the plugin creates points; otherwise, the plugin generates hexahedra, quadrangles, lines or points depending on the values of `NumPointsU', `NumPointsV' and `NumPointsW'.
-
-If `Boundary' is zero, the plugin interpolates the view inside the box; otherwise the plugin interpolates the view at its boundary.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(CutBox) cuts the view `View' with a rectangular box defined by the 4 points (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U), (`X2',`Y2',`Z2') (axis of V) and (`X3',`Y3',`Z3') (axis of W).@*
+@*
+The number of points along U, V, W is set with the options `NumPointsU', `NumPointsV' and `NumPointsW'.@*
+@*
+If `ConnectPoints' is zero, the plugin creates points; otherwise, the plugin generates hexahedra, quadrangles, lines or points depending on the values of `NumPointsU', `NumPointsV' and `NumPointsW'.@*
+@*
+If `Boundary' is zero, the plugin interpolates the view inside the box; otherwise the plugin interpolates the view at its boundary.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(CutBox) creates one new view.
 Numeric options:
 @table @code
@@ -164,14 +164,14 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(CutGrid)
-Plugin(CutGrid) cuts the view `View' with a rectangular grid defined by the 3 points (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2') (axis of V).
-
-The number of points along U and V is set with the options `NumPointsU' and `NumPointsV'.
-
-If `ConnectPoints' is zero, the plugin creates points; otherwise, the plugin generates quadrangles, lines or points depending on the values of `NumPointsU' and `NumPointsV'.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(CutGrid) cuts the view `View' with a rectangular grid defined by the 3 points (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2') (axis of V).@*
+@*
+The number of points along U and V is set with the options `NumPointsU' and `NumPointsV'.@*
+@*
+If `ConnectPoints' is zero, the plugin creates points; otherwise, the plugin generates quadrangles, lines or points depending on the values of `NumPointsU' and `NumPointsV'.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(CutGrid) creates one new view.
 Numeric options:
 @table @code
@@ -205,12 +205,12 @@ Default value: @code{-1}
 
 
 @item Plugin(CutParametric)
-Plugin(CutParametric) cuts the view `View' with the parametric function (`X'(u,v), `Y'(u,v), `Z'(u,v)), using `NumPointsU' values of the parameter u in [`MinU', `MaxU'] and `NumPointsV' values of the parameter v in [`MinV', `MaxV'].
-
-If `ConnectPoints' is set, the plugin creates surface or line elements; otherwise, the plugin generates points.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(CutParametric) cuts the view `View' with the parametric function (`X'(u,v), `Y'(u,v), `Z'(u,v)), using `NumPointsU' values of the parameter u in [`MinU', `MaxU'] and `NumPointsV' values of the parameter v in [`MinV', `MaxV'].@*
+@*
+If `ConnectPoints' is set, the plugin creates surface or line elements; otherwise, the plugin generates points.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(CutParametric) creates one new view.
 String options:
 @table @code
@@ -242,12 +242,12 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(CutPlane)
-Plugin(CutPlane) cuts the view `View' with the plane `A'*X + `B'*Y + `C'*Z + `D' = 0.
-
-If `ExtractVolume' is nonzero, the plugin extracts the elements on one side of the plane (depending on the sign of `ExtractVolume').
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(CutPlane) cuts the view `View' with the plane `A'*X + `B'*Y + `C'*Z + `D' = 0.@*
+@*
+If `ExtractVolume' is nonzero, the plugin extracts the elements on one side of the plane (depending on the sign of `ExtractVolume').@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(CutPlane) creates one new view.
 Numeric options:
 @table @code
@@ -270,12 +270,12 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(CutSphere)
-Plugin(CutSphere) cuts the view `View' with the sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.
-
-If `ExtractVolume' is nonzero, the plugin extracts the elements inside (if `ExtractVolume' < 0) or outside (if `ExtractVolume' > 0) the sphere.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(CutSphere) cuts the view `View' with the sphere (X-`Xc')^2 + (Y-`Yc')^2 + (Z-`Zc')^2 = `R'^2.@*
+@*
+If `ExtractVolume' is nonzero, the plugin extracts the elements inside (if `ExtractVolume' < 0) or outside (if `ExtractVolume' > 0) the sphere.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(CutSphere) creates one new view.
 Numeric options:
 @table @code
@@ -306,14 +306,14 @@ Default value: @code{10}
 @end table
 
 @item Plugin(Distance)
-Plugin(Distance) computes distances to physical entities in a mesh.
-
-Define the physical entities to which the distance is computed. If Point=0, Line=0, and Surface=0, then the distance is computed to all the boundaries of the mesh (edges in 2D and faces in 3D).
-
-Computation<0. computes the geometrical euclidian distance (warning: different than the geodesic distance), and  Computation=a>0.0 solves a PDE on the mesh with the diffusion constant mu = a*bbox, with bbox being the max size of the bounding box of the mesh (see paper Legrand 2006).
-
-Min Scale and max Scale, scale the distance function. If min Scale<0 and max Scale<0, then no scaling is applied to the distance function.
-
+Plugin(Distance) computes distances to physical entities in a mesh.@*
+@*
+Define the physical entities to which the distance is computed. If Point=0, Line=0, and Surface=0, then the distance is computed to all the boundaries of the mesh (edges in 2D and faces in 3D).@*
+@*
+Computation<0. computes the geometrical euclidian distance (warning: different than the geodesic distance), and  Computation=a>0.0 solves a PDE on the mesh with the diffusion constant mu = a*bbox, with bbox being the max size of the bounding box of the mesh (see paper Legrand 2006).@*
+@*
+Min Scale and max Scale, scale the distance function. If min Scale<0 and max Scale<0, then no scaling is applied to the distance function.@*
+@*
 Plugin(Distance) creates a new distance view and also saves the view in the fileName.pos file.
 String options:
 @table @code
@@ -339,10 +339,10 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Divergence)
-Plugin(Divergence) computes the divergence of the field in the view `View'.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Divergence) computes the divergence of the field in the view `View'.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Divergence) creates one new view.
 Numeric options:
 @table @code
@@ -351,10 +351,10 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Eigenvalues)
-Plugin(Eigenvalues) computes the three real eigenvalues of each tensor in the view `View'.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Eigenvalues) computes the three real eigenvalues of each tensor in the view `View'.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Eigenvalues) creates three new scalar views.
 Numeric options:
 @table @code
@@ -363,12 +363,12 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Eigenvectors)
-Plugin(Eigenvectors) computes the three (right) eigenvectors of each tensor in the view `View' and sorts them according to the value of the associated eigenvalues.
-
-If `ScaleByEigenvalues' is set, each eigenvector is scaled by its associated eigenvalue. The plugin gives an error if the eigenvectors are complex.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Eigenvectors) computes the three (right) eigenvectors of each tensor in the view `View' and sorts them according to the value of the associated eigenvalues.@*
+@*
+If `ScaleByEigenvalues' is set, each eigenvector is scaled by its associated eigenvalue. The plugin gives an error if the eigenvectors are complex.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Eigenvectors) creates three new vector view.
 Numeric options:
 @table @code
@@ -379,8 +379,8 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(ExtractEdges)
-Plugin(ExtractEdges) extracts sharp edges from a triangular mesh.
-
+Plugin(ExtractEdges) extracts sharp edges from a triangular mesh.@*
+@*
 Plugin(ExtractEdges) creates one new view.
 Numeric options:
 @table @code
@@ -391,10 +391,10 @@ Default value: @code{1}
 @end table
 
 @item Plugin(ExtractElements)
-Plugin(ExtractElements) extracts some elements from the view `View'. If `MinVal' != `MaxVal', it extracts the elements whose `TimeStep'-th values (averaged by element) are comprised between `MinVal' and `MaxVal'. If `Visible' != 0, it extracts visible elements. 
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(ExtractElements) extracts some elements from the view `View'. If `MinVal' != `MaxVal', it extracts the elements whose `TimeStep'-th values (averaged by element) are comprised between `MinVal' and `MaxVal'. If `Visible' != 0, it extracts visible elements. @*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(ExtractElements) creates one new view.
 Numeric options:
 @table @code
@@ -413,12 +413,12 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(FaultZone)
-Plugin(FaultZone) convert all the embedded lines of an existing surfacic mesh to flat quadrangles. Flat quadrangles represent joint elements suitable to model a fault zone with Code_Aster.
-
-`SurfaceTag' must be an existing plane surface containing embedded lines. Embedded lines must have been added to the surface via the command Line In Surface. The surface must be meshed with quadratic incomplete elements.
-
-`Thickness' is the thichness of the flat quadrangles. Set a value different to zero can be helpfull to check the connectivity. 
-
+Plugin(FaultZone) convert all the embedded lines of an existing surfacic mesh to flat quadrangles. Flat quadrangles represent joint elements suitable to model a fault zone with Code_Aster.@*
+@*
+`SurfaceTag' must be an existing plane surface containing embedded lines. Embedded lines must have been added to the surface via the command Line In Surface. The surface must be meshed with quadratic incomplete elements.@*
+@*
+`Thickness' is the thichness of the flat quadrangles. Set a value different to zero can be helpfull to check the connectivity. @*
+@*
 `Prefix' is the prefix of the name of physicals containing the new embedded. All physicals containing embedded lines are replaced by physicals containing the coresponding joint elements.
 String options:
 @table @code
@@ -434,10 +434,10 @@ Default value: @code{0}
 @end table
 
 @item Plugin(FieldFromAmplitudePhase)
-Plugin(FieldFromAmplitudePhase) builds a complex field 'u' from amplitude 'a' (complex) and phase 'phi' given in two different 'Views' u = a * exp(k*phi), with k the wavenumber. 
-
-The result is to be interpolated in a sufficiently fine mesh: 'MeshFile'. 
-
+Plugin(FieldFromAmplitudePhase) builds a complex field 'u' from amplitude 'a' (complex) and phase 'phi' given in two different 'Views' u = a * exp(k*phi), with k the wavenumber. @*
+@*
+The result is to be interpolated in a sufficiently fine mesh: 'MeshFile'. @*
+@*
 Plugin(FieldFromAmplitudePhase) generates one new view.
 String options:
 @table @code
@@ -455,10 +455,10 @@ Default value: @code{1}
 @end table
 
 @item Plugin(Gradient)
-Plugin(Gradient) computes the gradient of the field in the view `View'.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Gradient) computes the gradient of the field in the view `View'.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Gradient) creates one new view.
 Numeric options:
 @table @code
@@ -467,14 +467,14 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(HarmonicToTime)
-Plugin(HarmonicToTime) takes the values in the time steps `RealPart' and `ImaginaryPart' of the view `View', and creates a new view containing
-
-`View'[`RealPart'] * cos(p) - `View'[`ImaginaryPart'] * sin(p)
-
-with p = 2*Pi*k/`NumSteps', k = 0, ..., `NumSteps'-1.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(HarmonicToTime) takes the values in the time steps `RealPart' and `ImaginaryPart' of the view `View', and creates a new view containing@*
+@*
+`View'[`RealPart'] * cos(p) - `View'[`ImaginaryPart'] * sin(p)@*
+@*
+with p = 2*Pi*k/`NumSteps', k = 0, ..., `NumSteps'-1.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(HarmonicToTime) creates one new view.
 Numeric options:
 @table @code
@@ -489,10 +489,10 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(HomologyComputation)
-Plugin(HomologyComputation) computes representative chains of basis elements of (relative) homology and cohomology spaces.
-
-Define physical groups in order to specify the computation domain and the relative subdomain. Otherwise the whole mesh is the domain and the relative subdomain is empty. 
-
+Plugin(HomologyComputation) computes representative chains of basis elements of (relative) homology and cohomology spaces.@*
+@*
+Define physical groups in order to specify the computation domain and the relative subdomain. Otherwise the whole mesh is the domain and the relative subdomain is empty. @*
+@*
 Plugin(HomologyComputation) creates new views, one for each basis element. The resulting basis chains of desired dimension together with the mesh are saved to the given file.
 String options:
 @table @code
@@ -530,23 +530,23 @@ Default value: @code{1}
 @end table
 
 @item Plugin(HomologyPostProcessing)
-Plugin(HomologyPostProcessing) operates on representative basis chains of homology and cohomology spaces. Functionality:
-
-1. (co)homology basis transformation:
- 'TransformationMatrix': Integer matrix of the transformation.
- 'PhysicalGroupsOfOperatedChains': (Co)chains of a (co)homology space basis to be transformed.
- Results a new (co)chain basis that is an integer cobination of the given basis. 
-
-2. Make basis representations of a homology space and a cohomology space compatible: 
-'PhysicalGroupsOfOperatedChains': Chains of a homology space basis.
-'PhysicalGroupsOfOperatedChains2': Cochains of a cohomology space basis.
-Results a new basis for the homology space such that the incidence matrix of the new basis and the basis of the cohomology space is the identity matrix.
-
-Options:
-'PhysicalGroupsToTraceResults': Trace the resulting (co)chains to the given physical groups.
-'PhysicalGroupsToProjectResults': Project the resulting (co)chains to the complement of the given physical groups.
-'NameForResultChains': Post-processing view name prefix for the results.
-'ApplyBoundaryOperatorToResults': Apply boundary operator to the resulting chains.
+Plugin(HomologyPostProcessing) operates on representative basis chains of homology and cohomology spaces. Functionality:@*
+@*
+1. (co)homology basis transformation:@*
+ 'TransformationMatrix': Integer matrix of the transformation.@*
+ 'PhysicalGroupsOfOperatedChains': (Co)chains of a (co)homology space basis to be transformed.@*
+ Results a new (co)chain basis that is an integer cobination of the given basis. @*
+@*
+2. Make basis representations of a homology space and a cohomology space compatible: @*
+'PhysicalGroupsOfOperatedChains': Chains of a homology space basis.@*
+'PhysicalGroupsOfOperatedChains2': Cochains of a cohomology space basis.@*
+Results a new basis for the homology space such that the incidence matrix of the new basis and the basis of the cohomology space is the identity matrix.@*
+@*
+Options:@*
+'PhysicalGroupsToTraceResults': Trace the resulting (co)chains to the given physical groups.@*
+'PhysicalGroupsToProjectResults': Project the resulting (co)chains to the complement of the given physical groups.@*
+'NameForResultChains': Post-processing view name prefix for the results.@*
+'ApplyBoundaryOperatorToResults': Apply boundary operator to the resulting chains.@*
 
 String options:
 @table @code
@@ -570,12 +570,12 @@ Default value: @code{0}
 @end table
 
 @item Plugin(Integrate)
-Plugin(Integrate) integrates a scalar field over all the elements of the view `View' (if `Dimension' < 0), or over all elements of the prescribed dimension (if `Dimension' > 0). If the field is a vector field,the circulation/flux of the field over line/surface elements is calculated.
-
-If `View' < 0, the plugin is run on the current view.
-
-If `OverTime' = 1 , the plugin integrates the scalar view over time instead of over space.
-
+Plugin(Integrate) integrates a scalar field over all the elements of the view `View' (if `Dimension' < 0), or over all elements of the prescribed dimension (if `Dimension' > 0). If the field is a vector field,the circulation/flux of the field over line/surface elements is calculated.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
+If `OverTime' = 1 , the plugin integrates the scalar view over time instead of over space.@*
+@*
 Plugin(Integrate) creates one new view.
 Numeric options:
 @table @code
@@ -588,14 +588,14 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Isosurface)
-Plugin(Isosurface) extracts the isosurface of value `Value' from the view `View', and draws the `OtherTimeStep'-th step of the view `OtherView' on this isosurface.
-
-If `ExtractVolume' is nonzero, the plugin extracts the isovolume with values greater (if `ExtractVolume' > 0) or smaller (if `ExtractVolume' < 0) than the isosurface `Value'.
-
-If `OtherTimeStep' < 0, the plugin uses, for each time step in `View', the corresponding time step in `OtherView'. If `OtherView' < 0, the plugin uses `View' as the value source.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Isosurface) extracts the isosurface of value `Value' from the view `View', and draws the `OtherTimeStep'-th step of the view `OtherView' on this isosurface.@*
+@*
+If `ExtractVolume' is nonzero, the plugin extracts the isovolume with values greater (if `ExtractVolume' > 0) or smaller (if `ExtractVolume' < 0) than the isosurface `Value'.@*
+@*
+If `OtherTimeStep' < 0, the plugin uses, for each time step in `View', the corresponding time step in `OtherView'. If `OtherView' < 0, the plugin uses `View' as the value source.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Isosurface) creates as many views as there are time steps in `View'.
 Numeric options:
 @table @code
@@ -616,14 +616,14 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Lambda2)
-Plugin(Lambda2) computes the eigenvalues Lambda(1,2,3) of the tensor (S_ik S_kj + Om_ik Om_kj), where S_ij = 0.5 (ui,j + uj,i) and Om_ij = 0.5 (ui,j - uj,i) are respectively the symmetric and antisymmetric parts of the velocity gradient tensor.
-
-Vortices are well represented by regions where Lambda(2) is negative.
-
-If `View' contains tensor elements, the plugin directly uses the tensors as the values of the velocity gradient tensor; if `View' contains vector elements, the plugin uses them as the velocities from which to derive the velocity gradient tensor.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Lambda2) computes the eigenvalues Lambda(1,2,3) of the tensor (S_ik S_kj + Om_ik Om_kj), where S_ij = 0.5 (ui,j + uj,i) and Om_ij = 0.5 (ui,j - uj,i) are respectively the symmetric and antisymmetric parts of the velocity gradient tensor.@*
+@*
+Vortices are well represented by regions where Lambda(2) is negative.@*
+@*
+If `View' contains tensor elements, the plugin directly uses the tensors as the values of the velocity gradient tensor; if `View' contains vector elements, the plugin uses them as the velocities from which to derive the velocity gradient tensor.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Lambda2) creates one new view.
 Numeric options:
 @table @code
@@ -634,10 +634,10 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(LongitudeLatitude)
-Plugin(LongituteLatitude) projects the view `View' in longitude-latitude.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(LongituteLatitude) projects the view `View' in longitude-latitude.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(LongituteLatitude) is executed in place.
 Numeric options:
 @table @code
@@ -646,10 +646,10 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(MakeSimplex)
-Plugin(MakeSimplex) decomposes all non-simplectic elements (quadrangles, prisms, hexahedra, pyramids) in the view `View' into simplices (triangles, tetrahedra).
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(MakeSimplex) decomposes all non-simplectic elements (quadrangles, prisms, hexahedra, pyramids) in the view `View' into simplices (triangles, tetrahedra).@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(MakeSimplex) is executed in-place.
 Numeric options:
 @table @code
@@ -658,24 +658,24 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(MathEval)
-Plugin(MathEval) creates a new view using data from the time step `TimeStep' in the view `View'.
-
-If only `Expression0' is given (and `Expression1', ..., `Expression8' are all empty), the plugin creates a scalar view. If `Expression0', `Expression1' and/or `Expression2' are given (and `Expression3', ..., `Expression8' are all empty) the plugin creates a vector view. Otherwise the plugin creates a tensor view.
-
-In addition to the usual mathematical functions (Exp, Log, Sqrt, Sin, Cos, Fabs, etc.) and operators (+, -, *, /, ^), all expressions can contain:
-
-- the symbols v0, v1, v2, ..., vn, which represent the n components in `View';
-
-- the symbols w0, w1, w2, ..., wn, which represent the n components of `OtherView', at time step `OtherTimeStep';
-
-- the symbols x, y and z, which represent the three spatial coordinates.
-
-If `TimeStep' < 0, the plugin extracts data from all the time steps in the view.
-
-If `View' < 0, the plugin is run on the current view.
-
-Plugin(MathEval) creates one new view.If `PhysicalRegion' < 0, the plugin is run on all physical regions.
-
+Plugin(MathEval) creates a new view using data from the time step `TimeStep' in the view `View'.@*
+@*
+If only `Expression0' is given (and `Expression1', ..., `Expression8' are all empty), the plugin creates a scalar view. If `Expression0', `Expression1' and/or `Expression2' are given (and `Expression3', ..., `Expression8' are all empty) the plugin creates a vector view. Otherwise the plugin creates a tensor view.@*
+@*
+In addition to the usual mathematical functions (Exp, Log, Sqrt, Sin, Cos, Fabs, etc.) and operators (+, -, *, /, ^), all expressions can contain:@*
+@*
+- the symbols v0, v1, v2, ..., vn, which represent the n components in `View';@*
+@*
+- the symbols w0, w1, w2, ..., wn, which represent the n components of `OtherView', at time step `OtherTimeStep';@*
+@*
+- the symbols x, y and z, which represent the three spatial coordinates.@*
+@*
+If `TimeStep' < 0, the plugin extracts data from all the time steps in the view.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
+Plugin(MathEval) creates one new view.If `PhysicalRegion' < 0, the plugin is run on all physical regions.@*
+@*
 Plugin(MathEval) creates one new view.
 String options:
 @table @code
@@ -715,14 +715,14 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(MinMax)
-Plugin(MinMax) computes the min/max of a view.
-
-If `View' < 0, the plugin is run on the current view.
-
-If `OverTime' = 1, calculates the min/max over space AND time
-
-If `Argument' = 1, calculates the min/max AND the argmin/argmax
-
+Plugin(MinMax) computes the min/max of a view.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
+If `OverTime' = 1, calculates the min/max over space AND time@*
+@*
+If `Argument' = 1, calculates the min/max AND the argmin/argmax@*
+@*
 Plugin(MinMax) creates two new views.
 Numeric options:
 @table @code
@@ -735,35 +735,35 @@ Default value: @code{0}
 @end table
 
 @item Plugin(ModifyComponent)
-Plugin(ModifyComponent) sets the `Component'-th component of the `TimeStep'-th time step in the view `View' to the expression `Expression'.
-
-`Expression' can contain:
-
-- the usual mathematical functions (Log, Sqrt, Sin, Cos, Fabs, ...) and operators (+, -, *, /, ^);
-
-- the symbols x, y and z, to retrieve the coordinates of the current node;
-
-- the symbols Time and TimeStep, to retrieve the current time and time step values;
-
-- the symbol v, to retrieve the `Component'-th component of the field in `View' at the `TimeStep'-th time step;
-
-- the symbols v0, v1, v2, ..., v8, to retrieve each component of the field in `View' at the `TimeStep'-th time step;
-
-- the symbol w, to retrieve the `Component'-th component of the field in `OtherView' at the `OtherTimeStep'-th time step. If `OtherView' and `View' are based on different spatial grids, or if their data types are different, `OtherView' is interpolated onto `View';
-
-- the symbols w0, w1, w2, ..., w8, to retrieve each component of the field in `OtherView' at the `OtherTimeStep'-th time step.
-
-If `TimeStep' < 0, the plugin automatically loops over all the time steps in `View' and evaluates `Expression' for each one.
-
-If `OtherTimeStep' < 0, the plugin uses `TimeStep' instead.
-
-If `Component' < 0, the plugin automatically  ops
-over all the components in the view and evaluates `Expression' for each one.
-
-If `View' < 0, the plugin is run on the current view.
-
-If `OtherView' < 0, the plugin uses `View' instead.
-
+Plugin(ModifyComponent) sets the `Component'-th component of the `TimeStep'-th time step in the view `View' to the expression `Expression'.@*
+@*
+`Expression' can contain:@*
+@*
+- the usual mathematical functions (Log, Sqrt, Sin, Cos, Fabs, ...) and operators (+, -, *, /, ^);@*
+@*
+- the symbols x, y and z, to retrieve the coordinates of the current node;@*
+@*
+- the symbols Time and TimeStep, to retrieve the current time and time step values;@*
+@*
+- the symbol v, to retrieve the `Component'-th component of the field in `View' at the `TimeStep'-th time step;@*
+@*
+- the symbols v0, v1, v2, ..., v8, to retrieve each component of the field in `View' at the `TimeStep'-th time step;@*
+@*
+- the symbol w, to retrieve the `Component'-th component of the field in `OtherView' at the `OtherTimeStep'-th time step. If `OtherView' and `View' are based on different spatial grids, or if their data types are different, `OtherView' is interpolated onto `View';@*
+@*
+- the symbols w0, w1, w2, ..., w8, to retrieve each component of the field in `OtherView' at the `OtherTimeStep'-th time step.@*
+@*
+If `TimeStep' < 0, the plugin automatically loops over all the time steps in `View' and evaluates `Expression' for each one.@*
+@*
+If `OtherTimeStep' < 0, the plugin uses `TimeStep' instead.@*
+@*
+If `Component' < 0, the plugin automatically  ops@*
+over all the components in the view and evaluates `Expression' for each one.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
+If `OtherView' < 0, the plugin uses `View' instead.@*
+@*
 Plugin(ModifyComponent) is executed in-place.
 String options:
 @table @code
@@ -787,10 +787,10 @@ Default value: @code{0}
 @end table
 
 @item Plugin(ModulusPhase)
-Plugin(ModulusPhase) interprets the time steps `realPart' and `imaginaryPart' in the view `View' as the real and imaginary parts of a complex field and replaces them with their corresponding modulus and phase.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(ModulusPhase) interprets the time steps `realPart' and `imaginaryPart' in the view `View' as the real and imaginary parts of a complex field and replaces them with their corresponding modulus and phase.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(ModulusPhase) is executed in-place.
 Numeric options:
 @table @code
@@ -803,10 +803,10 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(NearToFarField)
-Plugin(NearToFarField) computes the far field pattern from the near electric E and magnetic H fields on a surface enclosing the radiating device (antenna).
-
-Parameters: the wavenumber, the angular discretisation (phi in [0, 2*Pi] and theta in [0, Pi]) of the far field sphere and the indices of the views containing the complex-valued E and H fields. If `Normalize' is set, the far field is normalized to 1. If `dB' is set, the far field is computed in dB. If `NegativeTime' is set, E and H are assumed to have exp(-iwt) time dependency; otherwise they are assume to have exp(+iwt) time dependency. If `MatlabOutputFile' is given the raw far field data is also exported in Matlab format.
-
+Plugin(NearToFarField) computes the far field pattern from the near electric E and magnetic H fields on a surface enclosing the radiating device (antenna).@*
+@*
+Parameters: the wavenumber, the angular discretisation (phi in [0, 2*Pi] and theta in [0, Pi]) of the far field sphere and the indices of the views containing the complex-valued E and H fields. If `Normalize' is set, the far field is normalized to 1. If `dB' is set, the far field is computed in dB. If `NegativeTime' is set, E and H are assumed to have exp(-iwt) time dependency; otherwise they are assume to have exp(+iwt) time dependency. If `MatlabOutputFile' is given the raw far field data is also exported in Matlab format.@*
+@*
 Plugin(NearToFarField) creates one new view.
 String options:
 @table @code
@@ -844,10 +844,10 @@ Default value: @code{0}
 @end table
 
 @item Plugin(NearestNeighbor)
-Plugin(NearestNeighbor) computes the distance from each point in `View' to its nearest neighbor.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(NearestNeighbor) computes the distance from each point in `View' to its nearest neighbor.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(NearestNeighbor) is executed in-place.
 Numeric options:
 @table @code
@@ -864,20 +864,20 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Particles)
-Plugin(Particles) computes the trajectory of particules in the force field given by the `TimeStep'-th time step of a vector view `View'.
-
-The plugin takes as input a grid defined by the 3 points (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2') (axis of V).
-
-The number of particles along U and V that are to be transported is set with the options `NumPointsU' and `NumPointsV'. The equation
-
-A2 * d^2X(t)/dt^2 + A1 * dX(t)/dt + A0 * X(t) = F
-
-is then solved with the initial conditions X(t=0) chosen as the grid, dX/dt(t=0)=0, and with F interpolated from the vector view.
-
-Time stepping is done using a Newmark scheme with step size `DT' and `MaxIter' maximum number of iterations.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Particles) computes the trajectory of particules in the force field given by the `TimeStep'-th time step of a vector view `View'.@*
+@*
+The plugin takes as input a grid defined by the 3 points (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2') (axis of V).@*
+@*
+The number of particles along U and V that are to be transported is set with the options `NumPointsU' and `NumPointsV'. The equation@*
+@*
+A2 * d^2X(t)/dt^2 + A1 * dX(t)/dt + A0 * X(t) = F@*
+@*
+is then solved with the initial conditions X(t=0) chosen as the grid, dX/dt(t=0)=0, and with F interpolated from the vector view.@*
+@*
+Time stepping is done using a Newmark scheme with step size `DT' and `MaxIter' maximum number of iterations.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Particles) creates one new view containing multi-step vector points.
 Numeric options:
 @table @code
@@ -920,10 +920,10 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Probe)
-Plugin(Probe) gets the value of the view `View' at the point (`X',`Y',`Z').
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Probe) gets the value of the view `View' at the point (`X',`Y',`Z').@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Probe) creates one new view.
 Numeric options:
 @table @code
@@ -938,10 +938,10 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Remove)
-Plugin(Remove) removes the marked items from the view `View'.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Remove) removes the marked items from the view `View'.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Remove) is executed in-place.
 Numeric options:
 @table @code
@@ -1041,7 +1041,7 @@ Default value: @code{1}
 @end table
 
 @item Plugin(Skin)
-Plugin(Skin) extracts the boundary (skin) of the current mesh (if `FromMesh' = 1), or from the the view `View' (in which case it creates a new view). If `View' < 0 and `FromMesh' = 0, the plugin is run on the current view.
+Plugin(Skin) extracts the boundary (skin) of the current mesh (if `FromMesh' = 1), or from the the view `View' (in which case it creates a new view). If `View' < 0 and `FromMesh' = 0, the plugin is run on the current view.@*
 If `Visible' is set, the plugin only extracts the skin of visible entities.
 Numeric options:
 @table @code
@@ -1054,10 +1054,10 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Smooth)
-Plugin(Smooth) averages the values at the nodes of the view `View'.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Smooth) averages the values at the nodes of the view `View'.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Smooth) is executed in-place.
 Numeric options:
 @table @code
@@ -1066,14 +1066,14 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(SphericalRaise)
-Plugin(SphericalRaise) transforms the coordinates of the elements in the view `View' using the values associated with the `TimeStep'-th time step.
-
-Instead of elevating the nodes along the X, Y and Z axes as with the View[`View'].RaiseX, View[`View'].RaiseY and View[`View'].RaiseZ options, the raise is applied along the radius of a sphere centered at (`Xc', `Yc', `Zc').
-
-To produce a standard radiation pattern, set `Offset' to minus the radius of the sphere the original data lives on.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(SphericalRaise) transforms the coordinates of the elements in the view `View' using the values associated with the `TimeStep'-th time step.@*
+@*
+Instead of elevating the nodes along the X, Y and Z axes as with the View[`View'].RaiseX, View[`View'].RaiseY and View[`View'].RaiseZ options, the raise is applied along the radius of a sphere centered at (`Xc', `Yc', `Zc').@*
+@*
+To produce a standard radiation pattern, set `Offset' to minus the radius of the sphere the original data lives on.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(SphericalRaise) is executed in-place.
 Numeric options:
 @table @code
@@ -1094,22 +1094,22 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(StreamLines)
-Plugin(StreamLines) computes stream lines from the `TimeStep'-th time step of a vector view `View' and optionally interpolates the scalar view `OtherView' on the resulting stream lines.
-
-The plugin takes as input a grid defined by the 3 points (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2') (axis of V).
-
-The number of points along U and V that are to be transported is set with the options `NumPointsU' and `NumPointsV'. The equation
-
-dX(t)/dt = V(x,y,z)
-
-is then solved with the initial condition X(t=0) chosen as the grid and with V(x,y,z) interpolated on the vector view.
-
-The time stepping scheme is a RK44 with step size `DT' and `MaxIter' maximum number of iterations.
-
-If `TimeStep' < 0, the plugin tries to compute streamlines of the unsteady flow.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(StreamLines) computes stream lines from the `TimeStep'-th time step of a vector view `View' and optionally interpolates the scalar view `OtherView' on the resulting stream lines.@*
+@*
+The plugin takes as input a grid defined by the 3 points (`X0',`Y0',`Z0') (origin), (`X1',`Y1',`Z1') (axis of U) and (`X2',`Y2',`Z2') (axis of V).@*
+@*
+The number of points along U and V that are to be transported is set with the options `NumPointsU' and `NumPointsV'. The equation@*
+@*
+dX(t)/dt = V(x,y,z)@*
+@*
+is then solved with the initial condition X(t=0) chosen as the grid and with V(x,y,z) interpolated on the vector view.@*
+@*
+The time stepping scheme is a RK44 with step size `DT' and `MaxIter' maximum number of iterations.@*
+@*
+If `TimeStep' < 0, the plugin tries to compute streamlines of the unsteady flow.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(StreamLines) creates one new view. This view contains multi-step vector points if `OtherView' < 0, or single-step scalar lines if `OtherView' >= 0.
 Numeric options:
 @table @code
@@ -1148,10 +1148,10 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Tetrahedralize)
-Plugin(Tetrahedralize) tetrahedralizes the points in the view `View'.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Tetrahedralize) tetrahedralizes the points in the view `View'.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Tetrahedralize) creates one new view.
 Numeric options:
 @table @code
@@ -1160,16 +1160,16 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Transform)
-Plugin(Transform) transforms the homogeneous node coordinates (x,y,z,1) of the elements in the view `View' by the matrix
-
-[`A11' `A12' `A13' `Tx']
-[`A21' `A22' `A23' `Ty']
-[`A31' `A32' `A33' `Tz'].
-
-If `SwapOrientation' is set, the orientation of the elements is reversed.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Transform) transforms the homogeneous node coordinates (x,y,z,1) of the elements in the view `View' by the matrix@*
+@*
+[`A11' `A12' `A13' `Tx']@*
+[`A21' `A22' `A23' `Ty']@*
+[`A31' `A32' `A33' `Tz'].@*
+@*
+If `SwapOrientation' is set, the orientation of the elements is reversed.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Transform) is executed in-place.
 Numeric options:
 @table @code
@@ -1204,10 +1204,10 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Triangulate)
-Plugin(Triangulate) triangulates the points in the view `View', assuming that all the points belong to a surface that can be projected one-to-one onto a plane.
-
-If `View' < 0, the plugin is run on the current view.
-
+Plugin(Triangulate) triangulates the points in the view `View', assuming that all the points belong to a surface that can be projected one-to-one onto a plane.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
 Plugin(Triangulate) creates one new view.
 Numeric options:
 @table @code
@@ -1216,12 +1216,12 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Warp)
-Plugin(Warp) transforms the elements in the view `View' by adding to their node coordinates the vector field stored in the `TimeStep'-th time step of the view `OtherView', scaled by `Factor'.
-
-If `View' < 0, the plugin is run on the current view.
-
-If `OtherView' < 0, the vector field is taken as the field of surface normals multiplied by the `TimeStep' value in `View'. (The smoothing of the surface normals is controlled by the `SmoothingAngle' parameter.)
-
+Plugin(Warp) transforms the elements in the view `View' by adding to their node coordinates the vector field stored in the `TimeStep'-th time step of the view `OtherView', scaled by `Factor'.@*
+@*
+If `View' < 0, the plugin is run on the current view.@*
+@*
+If `OtherView' < 0, the vector field is taken as the field of surface normals multiplied by the `TimeStep' value in `View'. (The smoothing of the surface normals is controlled by the `SmoothingAngle' parameter.)@*
+@*
 Plugin(Warp) is executed in-place.
 Numeric options:
 @table @code

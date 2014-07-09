@@ -842,7 +842,9 @@ void PrintOptionsDoc()
       GMSH_Plugin *p = it->second;
       if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
         fprintf(file, "@item Plugin(%s)\n", p->getName().c_str());
-        fprintf(file, "%s\n", p->getHelp().c_str());
+        std::string help = p->getHelp();
+        Sanitize_String_Texi(help);
+        fprintf(file, "%s\n", help.c_str());
         int m = p->getNbOptionsStr();
         if(m){
           fprintf(file, "String options:\n");
