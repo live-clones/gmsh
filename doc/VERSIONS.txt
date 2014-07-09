@@ -1,8 +1,8 @@
-2.8.5: improved stability and error handling, better Coherence function, updated
-onelab API version and inline parameter definitions, new background image modes,
-more robust Triangulate/Tetrahedralize plugins, new PGF output, improved support
-for string~index variable names in parser, small improvements and bug fixes all
-over the place.
+2.8.5 (Jul 9, 2014): improved stability and error handling, better Coherence
+function, updated onelab API version and inline parameter definitions, new
+background image modes, more robust Triangulate/Tetrahedralize plugins, new PGF
+output, improved support for string~index variable names in parser, small
+improvements and bug fixes all over the place.
 
 2.8.4 (Feb 7, 2014): better reproductibility of 2D meshes; new mandatory 'Name'
 attribute to define onelab variables in DefineConstant[] & co; new
