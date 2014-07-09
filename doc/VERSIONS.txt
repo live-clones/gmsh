@@ -1,4 +1,4 @@
-2.8.5: improved stability and error handling, better Coherence function, new
+2.8.5: improved stability and error handling, better Coherence function, updated
 onelab API version and inline parameter definitions, new background image modes,
 more robust Triangulate/Tetrahedralize plugins, new PGF output, improved support
 for string~index variable names in parser, small improvements and bug fixes all
