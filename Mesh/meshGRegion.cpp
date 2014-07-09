@@ -11,7 +11,7 @@
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "boundaryLayersData.h"
-#include "meshGRegionBoundaryRecovery.h"
+//#include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
 #include "GRegion.h"
@@ -1347,6 +1347,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   MeshDelaunayVolumeTetgen(regions);
   return;
 #endif
+  /*
   splitQuadRecovery sqr;
 
   for(unsigned int i = 0; i < regions.size(); i++)
@@ -1403,7 +1404,7 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
   else if(!Filler::get_nbr_new_vertices() && !LpSmoother::get_nbr_interior_vertices()){
     insertVerticesInRegion(gr,2000000000,!_BL);
   }
-
+  */
 }
 
 #if defined(HAVE_NETGEN)
