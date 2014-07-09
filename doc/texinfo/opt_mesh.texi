@@ -339,11 +339,6 @@ Split MSH file by mesh partition (0: no, 1: yes, 2: create physicals by partitio
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MultiplePassesMeshes
-Do a first simple mesh and use it for complex background meshes (curvatures...)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.PartitionHexWeight
 Weight of hexahedral element for METIS load balancing@*
 Default value: @code{1}@*

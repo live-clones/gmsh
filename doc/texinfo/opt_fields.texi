@@ -374,6 +374,16 @@ type: integer@*
 default value: @code{0}
 @end table
 
+@item IntersectAniso
+Take the intersection of 2 anisotropic fields according to Alauzet.@*
+Options:@*
+@table @code
+@item FieldsList
+Field indices@*
+type: list@*
+default value: @code{@{@}}
+@end table
+
 @item Laplacian
 Compute finite difference the Laplacian of Field[IField]:@*
 @*
@@ -587,6 +597,39 @@ default value: @code{1}
 Volume indices@*
 type: list@*
 default value: @code{@{@}}
+@end table
+
+@item Sphere
+The value of this field is VIn inside a sphere, VOut outside. The sphere is given by@*
+@*
+  ||dX||^2 < R^2 &&@*
+  dX = (X - XC)^2 + (Y-YC)^2 + (Z-ZC)^2@*
+Options:@*
+@table @code
+@item Radius
+Radius@*
+type: float@*
+default value: @code{0}
+@item VIn
+Value inside the sphere@*
+type: float@*
+default value: @code{0}
+@item VOut
+Value outside the sphere@*
+type: float@*
+default value: @code{0}
+@item XCenter
+X coordinate of the sphere center@*
+type: float@*
+default value: @code{0}
+@item YCenter
+Y coordinate of the sphere center@*
+type: float@*
+default value: @code{0}
+@item ZCenter
+Z coordinate of the sphere center@*
+type: float@*
+default value: @code{0}
 @end table
 
 @item Structured

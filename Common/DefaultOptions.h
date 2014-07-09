@@ -346,7 +346,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "BackgroundImageHeight" , opt_general_background_image_size1 , -1 ,
     "Height of background image (0: actual height if width = 0, natural scaling if not; "
     "-1: graphic window height)" },
-  { F|O, "BoundingBoxeSize" , opt_general_lc, 1. ,
+  { F|O, "BoundingBoxSize" , opt_general_lc, 1. ,
     "Overall bounding box size (read-only)" },
 
   { F|O, "Camera" , opt_general_camera_mode, 0. ,

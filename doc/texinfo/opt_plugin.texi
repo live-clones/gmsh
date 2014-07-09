@@ -5,42 +5,34 @@
 
 @ftable @code
 @item Plugin(AnalyseCurvedMesh)
-Plugin(AnalyseCurvedMesh) check the jacobian of all elements of dimension 'Dim' or the greater model dimension if 'Dim' is either <0 or >3.
+Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. It computes, min(J) where J is the scaled Jacobian determinant. Eventually, it computes min(R) where R is the ratio between the smaller and the greater of the eigenvalues of the metric. It creates one or more PView and hides elements for which min({J, R}) < 'Hidding threshold'.
 
- Analysis : 0 do nothing
-          +1 find invalid elements (*)
-          +2 compute J_min and J_max of all elements and print some statistics
+Parameters:
 
-Effect (for *) : 0 do nothing
-                +1 print a list of invalid elements
-                +2 print some statistics
-                +4 hide valid elements (for GUI)
+- Show [...] = {0, 1}: If 0, computes Jacobian and shows min(J). If 1, computes Jacobian and metric and shows min(R).
 
-MaxDepth = 0,1,...
-         0 : only sample the jacobian
-         1 : compute Bezier coefficients
-        2+ : execute a maximum of 1+ subdivision(s)
+- Number of PView = {0, 1, 2}: If 1, create one PView with all elements. If 2, create two PView, one with straight-sided elements and one with curved elements.
 
-JacBreak = [0,1[ : if a value of the jacobian <= 'JacBreak' is found, the element is said to be invalid
+- Hidding threshold = [0,1]: Hides all element for which min(R) or min(J) is strictly greater than the threshold. If = 1, no effect, if = 0 hide all elements except invalid.
 
-BezBreak = [0,JacBreak[ : if all Bezier coefficients are > 'BezBreak', the element is said to be valid
+- Dimension = {-1, 1, 2, 3}: If = -1, analyse element of the greater dimension.
 
-Tolerance = R+ , << 1 : tolerance (relatively to J_min and J_max) used during the computation of J_min and J_max
+- Recompute = {0,1}: If the mesh has changed, set to 1 to recompute the bounds.
+
+- Tolerance = ]0, 1[: Tolerance on the computation of min(R) or min(J). It should be at most 0.01 but it can be set to 1 to just check the validity of the mesh.
 Numeric options:
 @table @code
-@item Dim
-Default value: @code{-1}
-@item Analysis
+@item Show: (0) Jacobian, (1) Metric
+Default value: @code{1}
+@item Number of PView
 Default value: @code{2}
-@item Effect (1)
-Default value: @code{6}
-@item JacBreak (1)
+@item Hidding threshold
+Default value: @code{0.1}
+@item Dimension of elements
+Default value: @code{-1}
+@item Recompute bounds
 Default value: @code{0}
-@item BezBreak (1)
-Default value: @code{0}
-@item MaxDepth (1,2)
-Default value: @code{20}
-@item Tolerance (2)
+@item Tolerance
 Default value: @code{0.001}
 @end table
 
@@ -983,10 +975,39 @@ Default value: @code{1}
 Default value: @code{-1}
 @end table
 
-@item Plugin(Scal2Vec)
-Plugin(Scal2Vec) converts the scalar fields of 'ViewX', 'ViewY' and/or 'ViewZ' into a vectorial field. The new view 'NameNewView' contains it.
+@item Plugin(Scal2Tens)
+Plugin(Scal2Tens) converts some scalar fields into a tensor field. The number of components must be given (max. 9). The new view 'NameNewView' contains the new tensor field. If the number of a view is -1, the value of the corresponding component is 0.
+String options:
+@table @code
+@item NameNewView
+Default value: @code{"NewView"}
+@end table
+Numeric options:
+@table @code
+@item NumberOfComponents
+Default value: @code{9}
+@item View0
+Default value: @code{-1}
+@item View1
+Default value: @code{-1}
+@item View2
+Default value: @code{-1}
+@item View3
+Default value: @code{-1}
+@item View4
+Default value: @code{-1}
+@item View5
+Default value: @code{-1}
+@item View6
+Default value: @code{-1}
+@item View7
+Default value: @code{-1}
+@item View8
+Default value: @code{-1}
+@end table
 
-If the value of 'ViewX', 'ViewY' or 'ViewZ' is -1, the value of the vectorial field in the corresponding direction is 0.
+@item Plugin(Scal2Vec)
+Plugin(Scal2Vec) converts the scalar fields into a vectorial field. The new view 'NameNewView' contains it. If the number of a view is -1, the value of the corresponding component of the vector field is 0.
 String options:
 @table @code
 @item NameNewView

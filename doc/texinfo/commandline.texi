@@ -35,7 +35,7 @@ Save all elements (discard physical group definitions)
 @item -parametric
 Save vertices with their parametric coordinates
 @item -algo string
-Select mesh algorithm (meshadapt, del2d, front2d, delquad, del3d, front3d, mmg3d)
+Select mesh algorithm (meshadapt, del2d, front2d, delquad, del3d, front3d, mmg3d, pack)
 @item -smooth int
 Set number of mesh smoothing steps
 @item -order int

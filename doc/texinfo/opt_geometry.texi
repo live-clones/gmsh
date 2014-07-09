@@ -5,7 +5,7 @@
 
 @ftable @code
 @item Geometry.AutoCoherence
-Should all duplicate entities be automatically removed?@*
+Should all duplicate entities be automatically removed? (if ==2, also remove degenerate entities)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

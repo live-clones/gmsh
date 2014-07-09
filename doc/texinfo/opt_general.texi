@@ -284,6 +284,11 @@ Height of background image (0: actual height if width = 0, natural scaling if no
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.BoundingBoxSize
+Overall bounding box size (read-only)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.Camera
 Enable camera view mode@*
 Default value: @code{0}@*
