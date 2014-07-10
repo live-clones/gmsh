@@ -6,7 +6,7 @@
 #include "GaussIntegration.h"
 #include "GaussLegendre1D.h"
 
-IntPt GQT1[1] = { 
+IntPt GQT1[1] = {
   {{0.333333333333333, 0.333333333333333, 0.}, 0.500000000000000}
 };
 IntPt GQT2[3] = {
@@ -83,7 +83,7 @@ IntPt GQT8[16] = {
   {{0.170569307751760, 0.170569307751760, 0.}, 0.051608685267359},
   {{0.898905543365938, 0.050547228317031, 0.}, 0.016229248811599},
   {{0.050547228317031, 0.898905543365938, 0.}, 0.016229248811599},
-  {{0.050547228317031, 0.050547228317031, 0.}, 0.016229248811599},  
+  {{0.050547228317031, 0.050547228317031, 0.}, 0.016229248811599},
   {{0.008394777409958, 0.728492392955404, 0.}, 0.013615157087217},
   {{0.728492392955404, 0.008394777409958, 0.}, 0.013615157087217},
   {{0.263112829634638, 0.008394777409958, 0.}, 0.013615157087217},
@@ -97,9 +97,6 @@ IntPt GQT8[16] = {
 IntPt * GQT[9] = {GQT1,GQT1,GQT2,GQT3,GQT4,GQT5,GQT6,GQT7,GQT8};
 IntPt * GQTdegen[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int GQTnPt[9] = {1,1,3,4,6,7,12,13,16};
-
-
-
 
 // -----------------------------------------------------------------------------
 /*! Quadrature rule for an interpolation of order 1 on the triangle */
@@ -912,7 +909,7 @@ IntPt * GQTSolin[21] = {
   triP19Solin,
   triP20Solin
 };
-  
+
 int GQTnPtSolin[21] = {
   1,
   1,
@@ -940,22 +937,24 @@ IntPt *getGQTPts(int order);
 int getNGQTPts(int order);
 
 IntPt *getGQTPts(int order)
-{ 
+{
   if (order < 21) return GQTSolin[order];
   int n = (order+3)/2;
   int index = n-4;
+  if(index >= (int)(sizeof(GQTdegen) / sizeof(IntPt*))){
+    Msg::Error("Increase size of GQTdegen in gauss quadrature tri");
+    index = 0;
+  }
   if(!GQTdegen[index]){
     int npts = n*n;
     GQTdegen[index] = new IntPt[npts];
     GaussLegendreTri(n,n,GQTdegen[index]);
   }
-  return GQTdegen[index]; 
-
+  return GQTdegen[index];
 }
 
 int getNGQTPts(int order)
-{ 
-  if (order < 21) return GQTnPtSolin[order];  
+{
+  if (order < 21) return GQTnPtSolin[order];
   return ((order+3)/2)*((order+3)/2);
 }
-

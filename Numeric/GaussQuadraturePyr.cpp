@@ -12,12 +12,16 @@ IntPt *getGQPyrPts(int order);
 int getNGQPyrPts(int order);
 
 IntPt * GQPyr[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+                   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 IntPt *getGQPyrPts(int order)
 {
-
   int index = order;
+
+  if(index >= (int)(sizeof(GQPyr) / sizeof(IntPt*))){
+    Msg::Error("Increase size of GQPyr in gauss quadrature pyr");
+    index = 0;
+  }
 
   if(!GQPyr[index]) {
 
@@ -32,8 +36,6 @@ IntPt *getGQPyrPts(int order)
     getGaussJacobiQuadrature(2, 0, nbPtW, &GJ20Pt, &GJ20Wt);
 
     GQPyr[index] = new IntPt[getNGQPyrPts(order)];
-    if (order >= (int)(sizeof(GQPyr) / sizeof(IntPt*)))
-      Msg::Fatal("Increase size of GQPyr in gauss quadrature prism");
 
     int l = 0;
     for (int i = 0; i < getNGQPyrPts(order); i++) {
@@ -51,7 +53,7 @@ IntPt *getGQPyrPts(int order)
       double up = linPt[iU];
       double vp = linPt[iV];
       double wp = GJ20Pt[iW];
-      
+
       // now incorporate the Duffy transformation from pyramid to hexahedron
 
       GQPyr[index][l].pt[0] = 0.5*(1-wp)*up;
@@ -71,7 +73,7 @@ IntPt *getGQPyrPts(int order)
 int getNGQPyrPts(int order)
 {
   int nbPtUV = order/2 + 1;
-  int nbPtW  = order/2 + 1; 
+  int nbPtW  = order/2 + 1;
 
   return nbPtUV*nbPtUV*nbPtW;
 }

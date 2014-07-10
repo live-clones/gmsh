@@ -50,7 +50,7 @@ const double a9 = 0.774596669241483;
 const double z = 0.0;
 const double xq9[9] = {-a9, z, a9, -a9, z, a9, -a9, z, a9};
 const double yq9[9] = {-a9, -a9, -a9, z, z, z, a9, a9, a9};
-const double pb2 = 0.888888888888889*0.888888888888889; 
+const double pb2 = 0.888888888888889*0.888888888888889;
 const double pc2 = 0.555555555555556*0.555555555555556;
 const double pbc = 0.555555555555556*0.888888888888889;
 const double pq9[9] = {pc2, pbc, pc2, pbc, pb2, pbc, pc2, pbc , pc2};
@@ -69,7 +69,7 @@ IntPt GQQ9[9] = {
 
 const double a16 = 0.861136311594053;
 const double b16 = 0.339981043584856;
-const double xq16[16] = {-a16, -b16, b16, a16, -a16, -b16, b16, a16,  
+const double xq16[16] = {-a16, -b16, b16, a16, -a16, -b16, b16, a16,
                    -a16, -b16, b16, a16, -a16, -b16, b16, a16};
 const double yq16[16] = {-a16, -a16, -a16, -a16, -b16, -b16, -b16, -b16,
                          b16, b16, b16, b16, a16, a16, a16, a16};
@@ -77,7 +77,7 @@ const double pe2 = 0.347854845137454 * 0.347854845137454;
 const double pf2 = 0.652145154862546 * 0.652145154862546;
 const double pef = 0.347854845137454 * 0.652145154862546;
 
-double pq16[16] = { pe2, pef,  pef, pe2, pef, pf2, pf2, pef, 
+double pq16[16] = { pe2, pef,  pef, pe2, pef, pf2, pf2, pef,
                     pef, pf2, pf2, pef, pe2, pef, pef, pe2};
 
 IntPt GQQ16[16] = {
@@ -106,45 +106,38 @@ IntPt * GQQ[27] = {GQQ1,GQQ1,GQQ3,GQQ4,GQQ7,GQQ9,GQQ16,0,0,0,0,0,0,0,0,0,0,0,0,0
 int GQQnPt[7] = {1,1,3,4,7,9,16};
 
 IntPt *getGQQPts(int order)
-{ 
-  
-  if(order<2)return GQQ[order];
-  if(order==2)return GQQ[3];
-  if(order==3)return GQQ[3];
-
+{
+  if(order < 2) return GQQ[order];
+  if(order == 2) return GQQ[3];
+  if(order == 3) return GQQ[3];
   int n = (order+3)/2;
   int index = n-2 + 7;
-  if(!GQQ[index])
-    {
-      double *pt,*wt;
-      gmshGaussLegendre1D(n,&pt,&wt);
-      GQQ[index] = new IntPt[n*n];
-      int k = 0;
-      for(int i=0; i < n; i++) {
-        for(int j=0; j < n; j++) {
-          GQQ[index][k].pt[0] = pt[i];
-          GQQ[index][k].pt[1] = pt[j];
-          GQQ[index][k].pt[2] = 0.0;
-          GQQ[index][k++].weight = wt[i]*wt[j];
-          //      printf ("%f %f %f\n",pt[i],pt[j],wt[i]*wt[j]);
-        }
+  if(index >= (int)(sizeof(GQQ) / sizeof(IntPt*))){
+    Msg::Error("Increase size of GQQ in gauss quadrature quad");
+    index = 0;
+  }
+  if(!GQQ[index]){
+    double *pt,*wt;
+    gmshGaussLegendre1D(n,&pt,&wt);
+    GQQ[index] = new IntPt[n*n];
+    int k = 0;
+    for(int i=0; i < n; i++) {
+      for(int j=0; j < n; j++) {
+        GQQ[index][k].pt[0] = pt[i];
+        GQQ[index][k].pt[1] = pt[j];
+        GQQ[index][k].pt[2] = 0.0;
+        GQQ[index][k++].weight = wt[i]*wt[j];
       }
     }
+  }
   return GQQ[index];
 }
 
 int getNGQQPts(int order)
-{ 
-  if(order == 3)return 4;
-  if(order == 2)return 4;
-
+{
+  if(order == 3) return 4;
+  if(order == 2) return 4;
   if(order < 2)
-    return GQQnPt[order]; 
+    return GQQnPt[order];
   return ((order+3)/2)*((order+3)/2);
 }
-
-
-
-
-
-

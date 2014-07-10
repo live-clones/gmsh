@@ -19,8 +19,10 @@ IntPt *getGQPriPts(int order)
   int nTri = getNGQTPts(order);
   int n = nLin*nTri;
   int index = order;
-  if (order >= (int)(sizeof(GQP) / sizeof(IntPt*)))
-    Msg::Fatal("Increase size of GQP in gauss quadrature prism");
+  if (index >= (int)(sizeof(GQP) / sizeof(IntPt*))){
+    Msg::Error("Increase size of GQP in gauss quadrature prism");
+    index = 0;
+  }
   if(!GQP[index]){
     double *linPt,*linWt;
     IntPt *triPts = getGQTPts(order);
@@ -51,8 +53,3 @@ int getNGQPriPts(int order)
 //     return GQPnPt[order];
 //   return ((order+3)/2)*((order+3)/2)*((order+3)/2);
 }
-
-
-
-
-

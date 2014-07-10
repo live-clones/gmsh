@@ -20,12 +20,12 @@ const double yh6[6] = { b1, mb1,  b1, mb1,  0.,  0.};
 const double zh6[6] = {mc1, mc1,  c1,  c1, mc1,  c1};
 const double ph6[6] = { w1,  w1,  w1,  w1,  w1,  w1};
 
-IntPt GQH1[1] = 
+IntPt GQH1[1] =
 {
   { {0.0,0.0,0.0},8.0 }
 };
 
-IntPt GQH6[6] = 
+IntPt GQH6[6] =
 {
   { {xh6[0],yh6[0],zh6[0]},ph6[0] },
   { {xh6[1],yh6[1],zh6[1]},ph6[1] },
@@ -35,16 +35,18 @@ IntPt GQH6[6] =
   { {xh6[5],yh6[5],zh6[5]},ph6[5] }
 };
 
-const double xh8[8] = {0.577350269189626,-0.577350269189626,0.577350269189626,-0.577350269189626,
-                   0.577350269189626,-0.577350269189626,0.577350269189626,-0.577350269189626};
-const double yh8[8] = {0.577350269189626,0.577350269189626,-0.577350269189626,-0.577350269189626,
-                   0.577350269189626,0.577350269189626,-0.577350269189626,-0.577350269189626};
-
-const double zh8[8] = {-0.577350269189626,-0.577350269189626,-0.577350269189626,-0.577350269189626,
-                   0.577350269189626,0.577350269189626,0.577350269189626,0.577350269189626};
+const double xh8[8] =
+  {0.577350269189626,-0.577350269189626,0.577350269189626,-0.577350269189626,
+   0.577350269189626,-0.577350269189626,0.577350269189626,-0.577350269189626};
+const double yh8[8] =
+  {0.577350269189626,0.577350269189626,-0.577350269189626,-0.577350269189626,
+   0.577350269189626,0.577350269189626,-0.577350269189626,-0.577350269189626};
+const double zh8[8] =
+  {-0.577350269189626,-0.577350269189626,-0.577350269189626,-0.577350269189626,
+   0.577350269189626,0.577350269189626,0.577350269189626,0.577350269189626};
 const double ph8[8] = {1.,1.,1.,1.,1.,1.,1.,1.};
 
-IntPt GQH8[8] = 
+IntPt GQH8[8] =
 {
   { {xh8[0],yh8[0],zh8[0]},ph8[0] },
   { {xh8[1],yh8[1],zh8[1]},ph8[1] },
@@ -56,7 +58,6 @@ IntPt GQH8[8] =
   { {xh8[7],yh8[7],zh8[7]},ph8[7] }
 };
 
-
 IntPt *getGQHPts(int order);
 int getNGQHPts(int order);
 
@@ -64,46 +65,40 @@ IntPt * GQH[17] = {GQH1,GQH1,GQH6,GQH8,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int GQHnPt[4] = {1,1,6,8};
 
 IntPt *getGQHPts(int order)
-{ 
-
-  if(order<2)return GQH[order];
-  if(order == 2)return GQH[3]; 
-  if(order == 3)return GQH[3]; 
-  
+{
+  if(order < 2) return GQH[order];
+  if(order == 2) return GQH[3];
+  if(order == 3) return GQH[3];
   int n = (order+3)/2;
   int index = n-2 + 4;
-  if(!GQH[index])
-    {
-      double *pt,*wt;
-      //      printf("o = %d n = %d i = %d\n",order,n*n*n,index);
-      gmshGaussLegendre1D(n,&pt,&wt);
-      GQH[index] = new IntPt[n*n*n];
-      int l = 0;
-      for(int i=0; i < n; i++) {
-        for(int j=0; j < n; j++) {
-          for(int k=0; k < n; k++) {
-            GQH[index][l].pt[0] = pt[i];
-            GQH[index][l].pt[1] = pt[j];
-            GQH[index][l].pt[2] = pt[k];
-            GQH[index][l++].weight = wt[i]*wt[j]*wt[k];
-            //      printf ("%f %f %f %f\n",pt[i],pt[j],pt[k],wt[i]*wt[j]*wt[k]);
-          }
+  if(index >= (int)(sizeof(GQH) / sizeof(IntPt*))){
+    Msg::Error("Increase size of GQH in gauss quadrature hex");
+    index = 0;
+  }
+  if(!GQH[index]){
+    double *pt,*wt;
+    gmshGaussLegendre1D(n,&pt,&wt);
+    GQH[index] = new IntPt[n*n*n];
+    int l = 0;
+    for(int i=0; i < n; i++) {
+      for(int j=0; j < n; j++) {
+        for(int k=0; k < n; k++) {
+          GQH[index][l].pt[0] = pt[i];
+          GQH[index][l].pt[1] = pt[j];
+          GQH[index][l].pt[2] = pt[k];
+          GQH[index][l++].weight = wt[i]*wt[j]*wt[k];
         }
       }
     }
+  }
   return GQH[index];
 }
 
 int getNGQHPts(int order)
-{ 
+{
   if(order == 3)return 8;
   if(order == 2)return 8;
   if(order < 2)
-    return GQHnPt[order]; 
+    return GQHnPt[order];
   return ((order+3)/2)*((order+3)/2)*((order+3)/2);
 }
-
-
-
-
-
