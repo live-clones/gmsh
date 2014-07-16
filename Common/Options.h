@@ -86,6 +86,8 @@ std::string opt_solver_remote_login6(OPT_ARGS_STR);
 std::string opt_solver_remote_login7(OPT_ARGS_STR);
 std::string opt_solver_remote_login8(OPT_ARGS_STR);
 std::string opt_solver_remote_login9(OPT_ARGS_STR);
+std::string opt_solver_octave_interpreter(OPT_ARGS_STR);
+std::string opt_solver_python_interpreter(OPT_ARGS_STR);
 std::string opt_view_name(OPT_ARGS_STR);
 std::string opt_view_format(OPT_ARGS_STR);
 std::string opt_view_filename(OPT_ARGS_STR);

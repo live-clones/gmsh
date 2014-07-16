@@ -584,6 +584,8 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
 
   opt_solver_socket_name(0, GMSH_SET, o->solver.input[0]->value());
   opt_solver_timeout(0, GMSH_SET, o->solver.value[0]->value());
+  opt_solver_python_interpreter(0, GMSH_SET, o->solver.input[1]->value());
+  opt_solver_octave_interpreter(0, GMSH_SET, o->solver.input[2]->value());
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
@@ -2698,6 +2700,16 @@ optionWindow::optionWindow(int deltaFontSize)
            "Always listen to incoming connection requests");
         solver.butt[0]->type(FL_TOGGLE_BUTTON);
         solver.butt[0]->callback(solver_options_ok_cb);
+
+        solver.input[1] = new Fl_Input
+          (L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Python interpreter");
+        solver.input[1]->align(FL_ALIGN_RIGHT);
+        solver.input[1]->callback(solver_options_ok_cb);
+
+        solver.input[2] = new Fl_Input
+          (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Octave interpreter");
+        solver.input[2]->align(FL_ALIGN_RIGHT);
+        solver.input[2]->callback(solver_options_ok_cb);
 
         o->end();
       }

@@ -429,6 +429,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
     return 1;
   }
   else if(ext == ".py" || ext == ".PY" ||
+          ext == ".m" || ext == ".M" ||
           ext == ".exe" || ext == ".EXE"){
     int num = defineSolver(split[1]);
     opt_solver_executable(num, GMSH_SET, fileName);

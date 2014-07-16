@@ -1466,6 +1466,30 @@ std::string opt_solver_remote_login9(OPT_ARGS_STR)
   return opt_solver_remote_login(9, action, val);
 }
 
+std::string opt_solver_python_interpreter(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->solver.pythonInterpreter = val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->solver.input[1]->value
+      (CTX::instance()->solver.pythonInterpreter.c_str());
+#endif
+  return CTX::instance()->solver.pythonInterpreter;
+}
+
+std::string opt_solver_octave_interpreter(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->solver.octaveInterpreter = val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->solver.input[2]->value
+      (CTX::instance()->solver.octaveInterpreter.c_str());
+#endif
+  return CTX::instance()->solver.octaveInterpreter;
+}
+
 #if defined(HAVE_FLTK)
 int _gui_action_valid(int action, int num)
 {

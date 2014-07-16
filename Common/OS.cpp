@@ -16,6 +16,7 @@
 #include <math.h>
 #include "GmshConfig.h"
 #include "StringUtils.h"
+#include "Context.h"
 
 #if defined(__APPLE__)
 #include <sys/sysctl.h>
@@ -394,11 +395,12 @@ int SystemCall(const std::string &command, bool blocking)
   // get executable extension
   std::vector<std::string> split = SplitFileName(exe);
 
-  // do we try to run a .py script or a .exe?
+  // do we try to run a .py script, .m script or an .exe?
   bool isPython = (split[2] == ".py" || split[2] == ".PY");
+  bool isOctave = (split[2] == ".m" || split[2] == ".M");
   bool isExe = (split[2] == ".exe" || split[2] == ".EXE");
 
-  if(isPython || isExe){
+  if(isPython || isOctave || isExe){
     if(StatFile(exe)){
       Msg::Error("Unable to open file '%s'", exe.c_str());
       return 1;
@@ -406,7 +408,7 @@ int SystemCall(const std::string &command, bool blocking)
   }
 
 #if defined(WIN32) && !defined(__CYGWIN__)
-  if(isPython){
+  if(isPython || isOctave){
     Msg::Info("Shell opening '%s' with arguments '%s'", exe.c_str(),
               args.c_str());
     setwbuf(0, "open");
@@ -441,12 +443,17 @@ int SystemCall(const std::string &command, bool blocking)
   }
 #else
   std::string cmd(command);
-  if(isPython || isExe){
+  if(isPython || isOctave || isExe){
     if(access(exe.c_str(), X_OK)){
       if(isPython){
-        Msg::Info("Script '%s' is not executable: running with python",
-		  exe.c_str());
-        cmd = "python " + cmd;
+        Msg::Info("Script '%s' is not executable: running with `%s'",
+		  exe.c_str(), CTX::instance()->solver.pythonInterpreter.c_str());
+        cmd = CTX::instance()->solver.pythonInterpreter + " " + cmd;
+      }
+      else if(isOctave){
+        Msg::Info("Script '%s' is not executable: running with `%s'",
+		  exe.c_str(), CTX::instance()->solver.octaveInterpreter.c_str());
+        cmd = CTX::instance()->solver.octaveInterpreter + " " + cmd;
       }
       else
         Msg::Warning("File '%s' is not executable", exe.c_str());

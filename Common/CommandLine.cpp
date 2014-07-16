@@ -105,6 +105,10 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-link int",          "Select link mode between views (0, 1, 2, 3, 4)"));
   s.push_back(mp("-combine",           "Combine views having identical names into "
                                        "multi-time-step views"));
+  s.push_back(mp("Solver options:", ""));
+  s.push_back(mp("-listen",            "Always listen to incoming connection requests"));
+  s.push_back(mp("-minterpreter string", "Name of Octave interpreter"));
+  s.push_back(mp("-pyinterpreter string", "Name of Python interpreter"));
   s.push_back(mp("Display options:", ""));
   s.push_back(mp("-n",                 "Hide all meshes and post-processing views on startup"));
   s.push_back(mp("-nodb",              "Disable double buffering"));
@@ -127,7 +131,6 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                                        "post-processing mode"));
 #endif
   s.push_back(mp("-pid",               "Print process id on stdout"));
-  s.push_back(mp("-listen",            "Always listen to incoming connection requests"));
   s.push_back(mp("-watch pattern",     "Pattern of files to merge as they become available"));
   s.push_back(mp("-bg file",           "Load background (image or PDF) file"));
   s.push_back(mp("-v int",             "Set verbosity level"));
@@ -892,6 +895,20 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "listen")) {
         CTX::instance()->solver.listen = 1;
         i++;
+      }
+      else if(!strcmp(argv[i] + 1, "minterpreter")) {
+        i++;
+        if(argv[i])
+          CTX::instance()->solver.octaveInterpreter = argv[i++];
+        else
+          Msg::Fatal("Missing interpreter name");
+      }
+      else if(!strcmp(argv[i] + 1, "pyinterpreter")) {
+        i++;
+        if(argv[i])
+          CTX::instance()->solver.pythonInterpreter = argv[i++];
+        else
+          Msg::Fatal("Missing interpreter name");
       }
       else if(!strcmp(argv[i] + 1, "bg")){
         i++;

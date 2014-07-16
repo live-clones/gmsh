@@ -168,6 +168,11 @@ StringXString SolverOptions_String[] = {
   { F|S, "Name9" , opt_solver_name9 , "" ,
     "Name of solver 9" },
 
+  { F|S, "OctaveInterpreter" , opt_solver_octave_interpreter , "octave" ,
+    "Name of the Octave interpreter (used to run .m files)" },
+  { F|S, "PythonInterpreter" , opt_solver_python_interpreter , "python" ,
+    "Name of the Python interpreter (used to run .py files if they are not executable)" },
+
   { F|S, "RemoteLogin0" , opt_solver_remote_login0 , "",
     "Command to login to a remote host to launch solver 0" },
   { F|S, "RemoteLogin1" , opt_solver_remote_login1 , "" ,

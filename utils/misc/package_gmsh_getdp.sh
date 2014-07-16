@@ -14,8 +14,8 @@ up-to-date versions, documentation and examples." > /tmp/README.txt
 GMSH=svn
 GETDP=svn
 
-#GMSH=2.8.4
-#GETDP=2.4.3
+GMSH=2.8.5
+GETDP=2.4.4
 
 rm -rf gmsh-getdp-Windows64
 mkdir gmsh-getdp-Windows64
