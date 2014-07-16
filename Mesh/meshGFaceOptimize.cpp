@@ -3396,9 +3396,9 @@ static int _recombineIntoQuads(GFace *gf, int recur_level, bool cubicGraph = 1)
         t2n[gf->triangles[i]] = i;
         n2t[i] = gf->triangles[i];
       }
-
-      int *elist = new int [2*ecount];
-      int *elen  = new int [ecount];
+      //do not use new[] here, blossom will free it with free() and not with delete
+      int *elist = (int*)malloc(sizeof(int) * 2 * ecount);
+      int *elen  = (int*)malloc(sizeof(int) * ecount);
       for (unsigned int i = 0; i < pairs.size(); ++i){
         elist[2*i] = t2n[pairs[i].t1];
         elist[2*i+1] = t2n[pairs[i].t2];
