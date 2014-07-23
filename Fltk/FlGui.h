@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include "SPoint2.h"
 
 #define GMSH_WINDOW_BOX FL_FLAT_BOX
 #define GMSH_SIMPLE_RIGHT_BOX (Fl_Boxtype)(FL_FREE_BOXTYPE+1)
@@ -51,6 +52,7 @@ class FlGui{
   std::vector<GFace*> selectedFaces;
   std::vector<GRegion*> selectedRegions;
   std::vector<MElement*> selectedElements;
+  std::vector<SPoint2> selectedPoints;
  public:
   std::vector<graphicWindow*> graph;
   optionWindow *options;

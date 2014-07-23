@@ -32,6 +32,8 @@
 
 drawContextGlobal *drawContext::_global = 0;
 
+extern SPoint2 getGraph2dDataPointForTag(unsigned int);
+
 drawContext::drawContext(drawTransform *transform)
   : _transform(transform)
 {
@@ -827,7 +829,8 @@ bool drawContext::select(int type, bool multiple, bool mesh,
                          std::vector<GEdge*> &edges,
                          std::vector<GFace*> &faces,
                          std::vector<GRegion*> &regions,
-                         std::vector<MElement*> &elements)
+                         std::vector<MElement*> &elements,
+                         std::vector<SPoint2> &points)
 {
   vertices.clear();
   edges.clear();
@@ -1003,7 +1006,10 @@ bool drawContext::select(int type, bool multiple, bool mesh,
         break;
       case 4:
         {
-          printf("got hit with %d\n", hits[i].ient);
+          int tag = hits[i].ient;
+          SPoint2 p = getGraph2dDataPointForTag(tag);
+          points.push_back(p);
+          if(!multiple) return true;
         }
         break;
       }
@@ -1011,7 +1017,7 @@ bool drawContext::select(int type, bool multiple, bool mesh,
   }
 
   if(vertices.size() || edges.size() || faces.size() ||
-     regions.size() || elements.size())
+     regions.size() || elements.size() || points.size())
     return true;
   return false;
 }

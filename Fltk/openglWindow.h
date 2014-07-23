@@ -35,7 +35,7 @@ class openglWindow : public Fl_Gl_Window {
   bool _select(int type, bool multiple, bool mesh, int x, int y, int w, int h,
                std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
                std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
-               std::vector<MElement*> &elements);
+               std::vector<MElement*> &elements, std::vector<SPoint2> &points);
  protected:
   void draw();
   int handle(int);
@@ -51,7 +51,7 @@ class openglWindow : public Fl_Gl_Window {
   char selectEntity(int type,
                     std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
                     std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
-                    std::vector<MElement*> &elements);
+                    std::vector<MElement*> &elements, std::vector<SPoint2> &points);
   static openglWindow *getLastHandled(){ return _lastHandled; }
   static void setLastHandled(openglWindow *w){ _lastHandled = w; }
   void drawTooltip(const std::string &text);

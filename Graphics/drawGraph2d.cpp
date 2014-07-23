@@ -392,10 +392,28 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
 
 }
 
+static std::map<SPoint2, unsigned int> tags;
+static std::map<unsigned int, SPoint2> tags_rev;
+
+static unsigned int getTagForGraph2dDataPoint(SPoint2 p)
+{
+  std::map<SPoint2, unsigned int>::iterator it = tags.find(p);
+  if(it != tags.end()) return it->second;
+  int t = tags.size();
+  tags[p] = t;
+  tags_rev[t] = p;
+  return t;
+}
+
+SPoint2 getGraph2dDataPointForTag(unsigned int tag)
+{
+  return tags_rev[tag];
+}
+
 static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
                           double width, double height, double x, double y,
                           double xmin, double xmax, double ymin, double ymax,
-                          bool numeric, bool sphere, bool inModelCoordinates)
+                          bool numeric, bool singlePoint, bool inModelCoordinates)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -416,29 +434,37 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
   if(y >= ymin && y <= ymax){
     unsigned int col = opt->getColor(y, ymin, ymax, true);
     glColor4ubv((GLubyte *) &col);
+
+    if(singlePoint && ctx->render_mode == drawContext::GMSH_SELECT){
+      glPushName(4);
+      glPushName(getTagForGraph2dDataPoint(SPoint2(x, y)));
+    }
+
     if(numeric){
-      glRasterPos2d(px + 3, py + 3);
+      double offset = 3;
+      if(inModelCoordinates) offset *= ctx->pixel_equiv_x / ctx->s[0];
+      glRasterPos2d(px + offset, py + offset);
       char label[256];
       sprintf(label, opt->format.c_str(), y);
       ctx->drawString(label);
     }
-    else if(sphere){
-      if(ctx->render_mode == drawContext::GMSH_SELECT){
-        glPushName(4);
-        static int ii = 0;
-        glPushName(ii++);
-      }
+    else if(singlePoint && (opt->pointType == 1 || opt->pointType == 3)){
       if(inModelCoordinates)
         ctx->drawSphere(opt->pointSize, px, py, 0, opt->light);
       else
         ctx->drawSphere(opt->pointSize, px, py, 0, 10, 10, opt->light);
-      if(ctx->render_mode == drawContext::GMSH_SELECT){
-        glPopName();
-        glPopName();
-      }
     }
-    else
+    else{
+      if(singlePoint) glBegin(GL_POINTS);
       glVertex2d(px, py);
+      if(singlePoint) glEnd();
+    }
+
+    if(singlePoint && ctx->render_mode == drawContext::GMSH_SELECT){
+      glPopName();
+      glPopName();
+    }
+
   }
 }
 
@@ -482,22 +508,18 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double yto
   if(opt->intervalsType == PViewOptions::Iso ||
      opt->intervalsType == PViewOptions::Discrete ||
      opt->intervalsType == PViewOptions::Numeric){
-    bool sphere =  (opt->pointType == 1 || opt->pointType == 3);
-
-    if(!sphere) glBegin(GL_POINTS);
     for(unsigned int i = 0; i < y.size(); i++)
       for(unsigned int j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j],
-                      xmin, xmax, opt->tmpMin, opt->tmpMax, false, sphere,
+                      xmin, xmax, opt->tmpMin, opt->tmpMax, false, true,
                       inModelCoordinates);
-    if(!sphere) glEnd();
   }
 
   if(opt->intervalsType == PViewOptions::Numeric){
     for(unsigned int i = 0; i < y.size(); i++)
       for(unsigned int j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j],
-                      xmin, xmax, opt->tmpMin, opt->tmpMax, true, false,
+                      xmin, xmax, opt->tmpMin, opt->tmpMax, true, true,
                       inModelCoordinates);
   }
 }

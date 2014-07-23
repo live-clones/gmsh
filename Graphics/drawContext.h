@@ -10,6 +10,7 @@
 #include <vector>
 #include <set>
 #include "SBoundingBox3d.h"
+#include "SPoint2.h"
 #include "Camera.h"
 
 #if defined(WIN32)
@@ -193,7 +194,7 @@ class drawContext {
   bool select(int type, bool multiple, bool mesh, int x, int y, int w, int h,
               std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
               std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
-              std::vector<MElement*> &elements);
+              std::vector<MElement*> &elements, std::vector<SPoint2> &points);
   int fix2dCoordinates(double *x, double *y);
   void draw3d();
   void draw2d();

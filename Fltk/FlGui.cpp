@@ -891,7 +891,7 @@ char FlGui::selectEntity(int type)
 {
   return getCurrentOpenglWindow()->selectEntity
     (type, selectedVertices, selectedEdges, selectedFaces, selectedRegions,
-     selectedElements);
+     selectedElements, selectedPoints);
 }
 
 void FlGui::setStatus(const std::string &msg, bool opengl)

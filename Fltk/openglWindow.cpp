@@ -609,9 +609,10 @@ int openglWindow::handle(int event)
         std::vector<GFace*> faces;
         std::vector<GRegion*> regions;
         std::vector<MElement*> elements;
+        std::vector<SPoint2> points;
         bool res = _select(_selection, false, CTX::instance()->mouseHoverMeshes,
                            (int)_curr.win[0], (int)_curr.win[1], 5, 5,
-                           vertices, edges, faces, regions, elements);
+                           vertices, edges, faces, regions, elements, points);
         if((_selection == ENT_ALL && res) ||
            (_selection == ENT_POINT && vertices.size()) ||
            (_selection == ENT_LINE && edges.size()) ||
@@ -629,6 +630,11 @@ int openglWindow::handle(int event)
         std::string text;
         if(ge) text += ge->getInfoString();
         if(me) text += me->getInfoString();
+        if(points.size()){
+          char tmp[256];
+          sprintf(tmp, "(%g,%g)", points[0].x(), points[0].y());
+          text += tmp;
+        }
         if(CTX::instance()->tooltips)
           drawTooltip(text);
         else
@@ -649,7 +655,8 @@ bool openglWindow::_select(int type, bool multiple, bool mesh,
                            std::vector<GEdge*> &edges,
                            std::vector<GFace*> &faces,
                            std::vector<GRegion*> &regions,
-                           std::vector<MElement*> &elements)
+                           std::vector<MElement*> &elements,
+                           std::vector<SPoint2> &points)
 {
   // same lock as in draw() to prevent firing up a GL_SELECT rendering pass
   // while a GL_RENDER pass is happening (due to the asynchronus nature of
@@ -658,7 +665,8 @@ bool openglWindow::_select(int type, bool multiple, bool mesh,
   _lock = true;
   make_current();
   bool ret = _ctx->select(type, multiple, mesh, x, y, w, h,
-                          vertices, edges, faces, regions, elements);
+                          vertices, edges, faces, regions, elements,
+                          points);
   _lock = false;
   return ret;
 }
@@ -668,7 +676,8 @@ char openglWindow::selectEntity(int type,
                                 std::vector<GEdge*> &edges,
                                 std::vector<GFace*> &faces,
                                 std::vector<GRegion*> &regions,
-                                std::vector<MElement*> &elements)
+                                std::vector<MElement*> &elements,
+                                std::vector<SPoint2> &points)
 {
   // force keyboard focus in GL window
   take_focus();
@@ -719,7 +728,7 @@ char openglWindow::selectEntity(int type,
       else if(_select(_selection, multi, true, _trySelectionXYWH[0],
                       _trySelectionXYWH[1], _trySelectionXYWH[2],
                       _trySelectionXYWH[3], vertices, edges, faces,
-                      regions, elements)){
+                      regions, elements, points)){
         _selection = ENT_NONE;
         selectionMode = false;
         if(add)
