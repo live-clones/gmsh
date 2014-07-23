@@ -203,7 +203,7 @@ class drawContext {
   void drawBackgroundGradient();
   void drawBackgroundImage(bool moving);
   void drawText2d();
-  void drawGraph2d();
+  void drawGraph2d(bool inModelCoordinates);
   void drawAxis(double xmin, double ymin, double zmin,
                 double xmax, double ymax, double zmax,
                 int nticks, int mikado);

@@ -286,6 +286,7 @@ void drawContext::draw3d()
   drawBackgroundImage(true);
   drawMesh();
   drawPost();
+  drawGraph2d(true);
 }
 
 void drawContext::draw2d()
@@ -306,11 +307,10 @@ void drawContext::draw2d()
   glMatrixMode(GL_MODELVIEW);
 
   glLoadIdentity();
-  drawGraph2d();
+  drawGraph2d(false);
   drawText2d();
   if(CTX::instance()->post.draw && !CTX::instance()->stereo)
     drawScales();
-
   if(CTX::instance()->smallAxes)
     drawSmallAxes();
 }
@@ -839,9 +839,9 @@ bool drawContext::select(int type, bool multiple, bool mesh,
   // maximum number of possible hits
   GModel *m = GModel::current();
   int eles = (mesh && CTX::instance()->pickElements) ? 4 * m->getNumMeshElements() : 0;
+  int views = PView::list.size() * 100;
   int size = 7 * (m->getNumVertices() + m->getNumEdges() + m->getNumFaces() +
-                  m->getNumRegions() + eles);
-
+                  m->getNumRegions() + eles) + views;
   if(!size) return false; // the model is empty, don't bother!
 
   // allocate selection buffer
@@ -854,11 +854,28 @@ bool drawContext::select(int type, bool multiple, bool mesh,
   glRenderMode(GL_SELECT);
   glInitNames();
   glPushMatrix();
+
+  // 3d stuff
   initProjection(x, y, w, h);
   initPosition();
   drawGeom();
   if(mesh) drawMesh();
+  drawGraph2d(true);
+
+  // 2d stuff
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPickMatrix((GLdouble)x, (GLdouble)(viewport[3] - y),
+                (GLdouble)w, (GLdouble)h, (GLint *)viewport);
+  glOrtho((double)viewport[0], (double)viewport[2],
+          (double)viewport[1], (double)viewport[3],
+          -100., 100.); // in pixels, so we can draw some 3D glyphs
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  drawGraph2d(false);
+
   glPopMatrix();
+
   GLint numhits = glRenderMode(GL_RENDER);
   render_mode = drawContext::GMSH_RENDER;
 
@@ -982,6 +999,11 @@ bool drawContext::select(int type, bool multiple, bool mesh,
           }
           regions.push_back(r);
           if(!multiple) return true;
+        }
+        break;
+      case 4:
+        {
+          printf("got hit with %d\n", hits[i].ient);
         }
         break;
       }

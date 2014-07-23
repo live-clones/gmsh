@@ -7166,7 +7166,7 @@ double opt_view_auto_position(OPT_ARGS_NUM)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
     opt->autoPosition = (int)val;
-    if(opt->autoPosition < 0 || opt->autoPosition > 11)
+    if(opt->autoPosition < 0 || opt->autoPosition > 12)
       opt->autoPosition = 0;
   }
 #if defined(HAVE_FLTK)
@@ -7186,7 +7186,7 @@ double opt_view_position0(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
-    opt->position[0] = (int)val;
+    opt->position[0] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -7203,7 +7203,7 @@ double opt_view_position1(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
-    opt->position[1] = (int)val;
+    opt->position[1] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -7238,7 +7238,7 @@ double opt_view_size0(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
-    opt->size[0] = (int)val;
+    opt->size[0] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))
@@ -7255,7 +7255,7 @@ double opt_view_size1(OPT_ARGS_NUM)
 #if defined(HAVE_POST)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
-    opt->size[1] = (int)val;
+    opt->size[1] = val;
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num))

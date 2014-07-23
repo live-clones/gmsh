@@ -23,7 +23,7 @@ void drawContext::drawString(const std::string &s, const std::string &font_name,
   if(valid == GL_FALSE) return; // the primitive is culled
 
   // change the raster position only if not creating TeX files
-  if(align > 0 && (!CTX::instance()->printing || 
+  if(align > 0 && (!CTX::instance()->printing ||
                    CTX::instance()->print.fileFormat != FORMAT_TEX)){
     GLdouble pos[4];
     glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
@@ -45,7 +45,7 @@ void drawContext::drawString(const std::string &s, const std::string &font_name,
     viewport2World(w, x);
     glRasterPos3d(x[0], x[1], x[2]);
   }
-  
+
   if(!CTX::instance()->printing){
     drawContext::global()->setFont(font_enum, font_size);
     drawContext::global()->drawString(s.c_str());
@@ -68,7 +68,7 @@ void drawContext::drawString(const std::string &s, const std::string &font_name,
       }
       gl2psTextOpt(tmp.c_str(), font_name.c_str(), font_size, opt, 0.);
     }
-    else if(CTX::instance()->print.epsQuality && 
+    else if(CTX::instance()->print.epsQuality &&
             (CTX::instance()->print.fileFormat == FORMAT_PS ||
              CTX::instance()->print.fileFormat == FORMAT_EPS ||
              CTX::instance()->print.fileFormat == FORMAT_PDF ||
@@ -84,7 +84,7 @@ void drawContext::drawString(const std::string &s, const std::string &font_name,
 
 void drawContext::drawString(const std::string &s)
 {
-  drawString(s, CTX::instance()->glFont, CTX::instance()->glFontEnum, 
+  drawString(s, CTX::instance()->glFont, CTX::instance()->glFontEnum,
              CTX::instance()->glFontSize, 0);
 }
 
@@ -166,7 +166,6 @@ void drawContext::drawEllipsoid(double x, double y, double z, float v0[3], float
 void drawContext::drawSphere(double size, double x, double y, double z, int light)
 {
   double ss = size * pixel_equiv_x / s[0]; // size is in pixels
-
   if(light) glEnable(GL_LIGHTING);
   glPushMatrix();
   glTranslated(x, y, z);
@@ -176,8 +175,8 @@ void drawContext::drawSphere(double size, double x, double y, double z, int ligh
   glDisable(GL_LIGHTING);
 }
 
-void drawContext::drawTaperedCylinder(double width, double val1, double val2, 
-                                      double ValMin, double ValMax, 
+void drawContext::drawTaperedCylinder(double width, double val1, double val2,
+                                      double ValMin, double ValMax,
                                       double *x, double *y, double *z, int light)
 {
   if(light) glEnable(GL_LIGHTING);
@@ -242,7 +241,7 @@ void drawContext::drawCylinder(double width, double *x, double *y, double *z, in
 
 static void drawSimpleVector(int arrow, int fill,
                              double x, double y, double z,
-                             double dx, double dy, double dz, 
+                             double dx, double dy, double dz,
                              double d, int light)
 {
   double n[3], t[3], u[3];
@@ -288,7 +287,7 @@ static void drawSimpleVector(int arrow, int fill,
       glVertex3d(x, y, z);
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       glEnd();
-      
+
       if(light && fill) glEnable(GL_LIGHTING);
       glBegin(GL_TRIANGLES);
       if(light) glNormal3dv(u);
@@ -296,19 +295,19 @@ static void drawSimpleVector(int arrow, int fill,
       glVertex3d(x + f2 * dx + b * (t[0]), y + f2 * dy + b * (t[1]),
                  z + f2 * dz + b * (t[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
-      
+
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       glVertex3d(x + f2 * dx + b * (-t[0]), y + f2 * dy + b * (-t[1]),
                  z + f2 * dz + b * (-t[2]));
       glVertex3d(x + dx, y + dy, z + dz);
-      
+
       if(light) glNormal3dv(t);
       glVertex3d(x + dx, y + dy, z + dz);
       glVertex3d(x + f2 * dx + b * (-u[0]), y + f2 * dy + b * (-u[1]),
                  z + f2 * dz + b * (-u[2]));
       glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
 
-      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);      
+      glVertex3d(x + f1 * dx, y + f1 * dy, z + f1 * dz);
       glVertex3d(x + f2 * dx + b * (u[0]), y + f2 * dy + b * (u[1]),
                  z + f2 * dz + b * (u[2]));
       glVertex3d(x + dx, y + dy, z + dz);
@@ -390,17 +389,17 @@ static void drawSimpleVector(int arrow, int fill,
       glVertex3d(x+b*(-t[0]), y+b*(-t[1]), z+b*(-t[2]));
       glVertex3d(x+b*(u[0]),  y+b*(u[1]),  z+b*(u[2]));
       glEnd();
-      
+
       glBegin(GL_LINES);
       glVertex3d(x+b*(t[0]),  y+b*(t[1]),  z+b*(t[2]));
       glVertex3d(x+dx,        y+dy,        z+dz);
-      
+
       glVertex3d(x+b*(-u[0]), y+b*(-u[1]), z+b*(-u[2]));
       glVertex3d(x+dx,        y+dy,        z+dz);
-      
+
       glVertex3d(x+b*(-t[0]), y+b*(-t[1]), z+b*(-t[2]));
       glVertex3d(x+dx,        y+dy,        z+dz);
-      
+
       glVertex3d (x+b*(u[0]), y+b*(u[1]),  z+b*(u[2]));
       glVertex3d(x+dx,        y+dy,        z+dz);
       glEnd();
@@ -409,8 +408,8 @@ static void drawSimpleVector(int arrow, int fill,
 
 }
 
-void drawContext::drawArrow3d(double x, double y, double z, 
-                              double dx, double dy, double dz, 
+void drawContext::drawArrow3d(double x, double y, double z,
+                              double dx, double dy, double dz,
                               double length, int light)
 {
   double zdir[3] = {0., 0., 1.};
@@ -423,7 +422,7 @@ void drawContext::drawArrow3d(double x, double y, double z,
     axis[1] = 1.;
     axis[2] = 0.;
   }
-  double phi = 180. * myacos(cosphi) / M_PI; 
+  double phi = 180. * myacos(cosphi) / M_PI;
 
   if(light) glEnable(GL_LIGHTING);
   glPushMatrix();
@@ -544,13 +543,13 @@ void drawContext::drawBox(double xmin, double ymin, double zmin,
   if(labels){
     char label[256];
     double offset = 0.3 * CTX::instance()->glFontSize * pixel_equiv_x;
-    glRasterPos3d(xmin + offset / s[0], 
-                  ymin + offset / s[1], 
+    glRasterPos3d(xmin + offset / s[0],
+                  ymin + offset / s[1],
                   zmin + offset / s[2]);
     sprintf(label, "(%g,%g,%g)", xmin, ymin, zmin);
     drawString(label);
-    glRasterPos3d(xmax + offset / s[0], 
-                  ymax + offset / s[1], 
+    glRasterPos3d(xmax + offset / s[0],
+                  ymax + offset / s[1],
                   zmax + offset / s[2]);
     sprintf(label, "(%g,%g,%g)", xmax, ymax, zmax);
     drawString(label);
@@ -590,7 +589,7 @@ void drawContext::drawPlaneInBoundingBox(double xmin, double ymin, double zmin,
     {5, 6, 7, 11},
     {8, 9, 10, 11}
   };
-  
+
   double n[3] = {a,b,c}, ll = 50;
   norme(n);
   if(CTX::instance()->arrowRelStemRadius)
@@ -639,7 +638,7 @@ void drawContext::drawPlaneInBoundingBox(double xmin, double ymin, double zmin,
     glNormal3d(n[0], n[1], n[2]);
     for(int j = 0; j < n_shade; j++){
       glVertex3d(p_shade[j].x, p_shade[j].y, p_shade[j].z);
-    }   
+    }
     glEnd();
     glDisable(GL_LIGHTING);
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, twoside);

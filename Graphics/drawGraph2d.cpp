@@ -201,7 +201,7 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
 
 static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
                           double width, double height, double xmin, double xmax,
-                          int tic, int overlay)
+                          double tic, int overlay, bool inModelCoordinates)
 {
   PViewData *data = p->getData();
   PViewOptions *opt = p->getOptions();
@@ -212,7 +212,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
 
   if(width <= 0 || height <= 0) return;
 
-  if(!overlay){
+  if(!overlay && !inModelCoordinates){
     int alpha = CTX::instance()->unpackAlpha(opt->color.background2d);
     if(alpha != 0){
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -233,6 +233,12 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     drawContext::global()->getStringHeight() : 1;
   // height above ref. point
   double font_a = font_h - drawContext::global()->getStringDescent();
+
+  if(inModelCoordinates){
+    double ss = ctx->pixel_equiv_x / ctx->s[0];
+    font_h *= ss;
+    font_a *= ss;
+  }
 
   glPointSize((float)CTX::instance()->pointSize);
   gl2psPointSize((float)(CTX::instance()->pointSize *
@@ -339,8 +345,9 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     int nb = opt->axesTics[0];
     char tmp[256];
     sprintf(tmp, opt->axesFormat[0].c_str(), -M_PI * 1.e4);
-    if((nb - 1) * drawContext::global()->getStringWidth(tmp) > width)
-      nb = (int)(width / drawContext::global()->getStringWidth(tmp)) + 1;
+    double ww = drawContext::global()->getStringWidth(tmp);
+    if(inModelCoordinates) ww *= ctx->pixel_equiv_x / ctx->s[0];
+    if((nb - 1) * ww > width) nb = (int)(width / ww) + 1;
     if(nb == 1) nb++;
 
     double dx = width / (double)(nb - 1);
@@ -388,7 +395,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
 static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
                           double width, double height, double x, double y,
                           double xmin, double xmax, double ymin, double ymax,
-                          bool numeric, bool sphere)
+                          bool numeric, bool sphere, bool inModelCoordinates)
 {
   PViewOptions *opt = p->getOptions();
 
@@ -415,8 +422,21 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
       sprintf(label, opt->format.c_str(), y);
       ctx->drawString(label);
     }
-    else if(sphere)
-      ctx->drawSphere(opt->pointSize, px, py, 0, 10, 10, opt->light);
+    else if(sphere){
+      if(ctx->render_mode == drawContext::GMSH_SELECT){
+        glPushName(4);
+        static int ii = 0;
+        glPushName(ii++);
+      }
+      if(inModelCoordinates)
+        ctx->drawSphere(opt->pointSize, px, py, 0, opt->light);
+      else
+        ctx->drawSphere(opt->pointSize, px, py, 0, 10, 10, opt->light);
+      if(ctx->render_mode == drawContext::GMSH_SELECT){
+        glPopName();
+        glPopName();
+      }
+    }
     else
       glVertex2d(px, py);
   }
@@ -425,7 +445,8 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
 static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double ytop,
                             double width, double height, std::vector<double> &x,
                             double xmin, double xmax,
-                            std::vector<std::vector<double> > &y)
+                            std::vector<std::vector<double> > &y,
+                            bool inModelCoordinates)
 {
   if(width <= 0 || height <= 0) return;
 
@@ -448,7 +469,8 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double yto
       glBegin(GL_LINE_STRIP);
       for(unsigned int j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j],
-                      xmin, xmax, opt->tmpMin, opt->tmpMax, false, false);
+                      xmin, xmax, opt->tmpMin, opt->tmpMax, false, false,
+                      inModelCoordinates);
       glEnd();
       if(opt->useStipple){
         glDisable(GL_LINE_STIPPLE);
@@ -461,11 +483,13 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double yto
      opt->intervalsType == PViewOptions::Discrete ||
      opt->intervalsType == PViewOptions::Numeric){
     bool sphere =  (opt->pointType == 1 || opt->pointType == 3);
+
     if(!sphere) glBegin(GL_POINTS);
     for(unsigned int i = 0; i < y.size(); i++)
       for(unsigned int j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j],
-                      xmin, xmax, opt->tmpMin, opt->tmpMax, false, sphere);
+                      xmin, xmax, opt->tmpMin, opt->tmpMax, false, sphere,
+                      inModelCoordinates);
     if(!sphere) glEnd();
   }
 
@@ -473,12 +497,14 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double yto
     for(unsigned int i = 0; i < y.size(); i++)
       for(unsigned int j = 0; j < x.size(); j++)
         addGraphPoint(ctx, p, xleft, ytop, width, height, x[j], y[i][j],
-                      xmin, xmax, opt->tmpMin, opt->tmpMax, true, false);
+                      xmin, xmax, opt->tmpMin, opt->tmpMax, true, false,
+                      inModelCoordinates);
   }
 }
 
 static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
-                      double width, double height, int tic, int overlay=0)
+                      double width, double height, double tic, int overlay=0,
+                      bool inModelCoordinates=false)
 {
   std::vector<double> x;
   std::vector<std::vector<double> > y;
@@ -511,11 +537,13 @@ static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
     opt->tmpMax = log10(opt->tmpMax);
   }
 
-  drawGraphAxes(ctx, p, xleft, ytop, width, height, xmin, xmax, tic, overlay);
-  drawGraphCurves(ctx, p, xleft, ytop, width, height, x, xmin, xmax, y);
+  drawGraphAxes(ctx, p, xleft, ytop, width, height, xmin, xmax, tic, overlay,
+                inModelCoordinates);
+  drawGraphCurves(ctx, p, xleft, ytop, width, height, x, xmin, xmax, y,
+                  inModelCoordinates);
 }
 
-void drawContext::drawGraph2d()
+void drawContext::drawGraph2d(bool inModelCoordinates)
 {
   std::vector<PView*> graphs;
   for(unsigned int i = 0; i < PView::list.size(); i++){
@@ -529,8 +557,8 @@ void drawContext::drawGraph2d()
 
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
-  const int tic = 5; // size of tic marks and interline
-  const int mx = 25, my = 5; // x- and y-margin
+  double tic = 5; // size of tic marks and interline
+  double mx = 25, my = 5; // x- and y-margin
   double xsep = 0., ysep = drawContext::global()->getStringHeight() + tic;
   char label[1024];
   for(unsigned int i = 0; i < graphs.size(); i++){
@@ -539,6 +567,15 @@ void drawContext::drawGraph2d()
     xsep = std::max(xsep, drawContext::global()->getStringWidth(label));
   }
   xsep += tic;
+
+  if(inModelCoordinates){
+    double ss = pixel_equiv_x / s[0];
+    tic *= ss;
+    mx *= ss;
+    my *= ss;
+    xsep *= ss;
+    ysep *= ss;
+  }
 
   //  +------------------winw-------------------+
   //  |       my+3*ysep                         |
@@ -564,7 +601,15 @@ void drawContext::drawGraph2d()
     double y = viewport[1] + my + 3 * ysep;
     PView *p = graphs[i];
     PViewOptions *opt = graphs[i]->getOptions();
-    if(opt->autoPosition == 1){ // automatic
+    if(opt->autoPosition == 0 && !inModelCoordinates){ // manual
+      double x = opt->position[0], y = opt->position[1];
+      int center = fix2dCoordinates(&x, &y);
+      drawGraph(this, p,
+                x - (center & 1 ? opt->size[0] / 2. : 0),
+                y + (center & 2 ? opt->size[1] / 2. : 0),
+                opt->size[0], opt->size[1], tic);
+    }
+    else if(opt->autoPosition == 1 && !inModelCoordinates){ // automatic
       if(graphs.size() == 1){
         double w = winw - 2 * mx - 2 * xsep;
         double h = winh - 2 * my - 7 * ysep;
@@ -584,7 +629,7 @@ void drawContext::drawGraph2d()
         drawGraph(this, p, x, viewport[3] - y, w, h, tic);
       }
     }
-    else if(opt->autoPosition >= 2 && opt->autoPosition <= 11){
+    else if(opt->autoPosition >= 2 && opt->autoPosition <= 11 && !inModelCoordinates){
       // top left (2), top right (3), bottom left (4), bottom right (5), top
       // half (6), bottom half (7), left half (8), right half (9), full (10),
       // top third (11)
@@ -607,13 +652,9 @@ void drawContext::drawGraph2d()
       if(opt->axes)
         overlay[opt->autoPosition] += (opt->axesLabel[0].size() ? 2 : 1);
     }
-    else{ // manual
-      double x = opt->position[0], y = opt->position[1];
-      int center = fix2dCoordinates(&x, &y);
-      drawGraph(this, p,
-                x - (center & 1 ? opt->size[0] / 2. : 0),
-                y + (center & 2 ? opt->size[1] / 2. : 0),
-                opt->size[0], opt->size[1], tic);
+    else if(opt->autoPosition == 12 && inModelCoordinates){ // in model coordinates
+      drawGraph(this, p, opt->position[0], opt->position[1] + opt->size[1],
+                opt->size[0], opt->size[1], tic, 0, true);
     }
   }
 }

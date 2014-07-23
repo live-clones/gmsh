@@ -105,6 +105,7 @@ static Fl_Menu_Item menu_position[] = {
   {"Right",        0, 0, 0},
   {"Full",         0, 0, 0},
   {"Top third",    0, 0, 0},
+  {"In model coordinates", 0, 0, 0},
   {0}
 };
 
@@ -3039,28 +3040,28 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + 2 * WB, 2 * WB + 9 * BH, IW / 2, BH);
       view.value[20]->minimum(-2000);
       view.value[20]->maximum(2000);
-      view.value[20]->step(1);
+      view.value[20]->step(0.5);
       view.value[20]->callback(view_options_ok_cb);
       view.value[21] = new Fl_Value_Input
         (L + 2 * WB + IW / 2, 2 * WB + 9 * BH, IW / 2, BH, "2D axes/value scale position");
       view.value[21]->align(FL_ALIGN_RIGHT);
       view.value[21]->minimum(-2000);
       view.value[21]->maximum(2000);
-      view.value[21]->step(1);
+      view.value[21]->step(0.5);
       view.value[21]->callback(view_options_ok_cb);
 
       view.value[22] = new Fl_Value_Input
         (L + 2 * WB, 2 * WB + 10 * BH, IW / 2, BH);
       view.value[22]->minimum(0);
       view.value[22]->maximum(2000);
-      view.value[22]->step(1);
+      view.value[22]->step(0.5);
       view.value[22]->callback(view_options_ok_cb);
       view.value[23] = new Fl_Value_Input
         (L + 2 * WB + IW / 2, 2 * WB + 10 * BH, IW / 2, BH, "2D axes/value scale size");
       view.value[23]->align(FL_ALIGN_RIGHT);
       view.value[23]->minimum(0);
       view.value[23]->maximum(2000);
-      view.value[23]->step(1);
+      view.value[23]->step(0.5);
       view.value[23]->callback(view_options_ok_cb);
 
       o->end();
@@ -4029,17 +4030,17 @@ void optionWindow::activate(const char *what)
     }
   }
   else if(!strcmp(what, "view_axes_auto_2d")){
-    if(view.choice[16]->value()){
-      view.value[20]->deactivate();
-      view.value[21]->deactivate();
-      view.value[22]->deactivate();
-      view.value[23]->deactivate();
-    }
-    else{
+    if(view.choice[16]->value() == 0 || view.choice[16]->value() == 12){
       view.value[20]->activate();
       view.value[21]->activate();
       view.value[22]->activate();
       view.value[23]->activate();
+    }
+    else{
+      view.value[20]->deactivate();
+      view.value[21]->deactivate();
+      view.value[22]->deactivate();
+      view.value[23]->deactivate();
     }
   }
 }

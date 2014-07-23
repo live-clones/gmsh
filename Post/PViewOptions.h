@@ -57,8 +57,8 @@ class PViewOptions {
     DoubleLogarithmic = 3
   };
 
-  int type;
-  int position[2], size[2], autoPosition;
+  int type, autoPosition;
+  double position[2], size[2];
   std::string format;
   int axes, axesAutoPosition, axesMikado;
   double axesTics[3];

@@ -1291,7 +1291,7 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "AutoPosition" , opt_view_auto_position , 1. ,
     "Position the scale or 2D plot automatically (0: manual, 1: automatic, 2: top left, "
     "3: top right, 4: bottom left, 5: bottom right, 6: top, 7: bottom, 8: left, 9: right, "
-    "10: full, 11: top third)" },
+    "10: full, 11: top third, 12: in model coordinates)" },
   { F|O, "Axes" , opt_view_axes , 0 ,
     "Axes (0=none, 1=simple axes, 2=box, 3=full grid, 4=open grid, 5=ruler)" },
   { F|O, "AxesMikado" , opt_view_axes_mikado , 0. ,
