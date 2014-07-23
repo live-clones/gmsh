@@ -102,6 +102,15 @@
     delete [](double*)PyCapsule_GetPointer(capsule, NULL);
   }
   %#endif
+  PyObject *constFullMatrix2PyArray(const fullMatrix<double> &fm)
+  {
+    npy_intp dims[2] = {fm.size1(), fm.size2()};
+    double *data = (double*) fm.getDataPtr();
+    // do not copy data
+    PyObject *array = PyArray_New(&PyArray_Type, dims[1] == 1 ? 1 : 2, dims, NPY_DOUBLE, NULL, (void*)data, 0, NPY_ARRAY_F_CONTIGUOUS, NULL);
+    PyArray_UpdateFlags((PyArrayObject*)array, NPY_ARRAY_ALIGNED);
+    return array;
+  }
   PyObject *fullMatrix2PyArray(fullMatrix<double> &fm)
   {
     npy_intp dims[2] = {fm.size1(), fm.size2()};
@@ -175,6 +184,10 @@
 #ifdef HAVE_NUMPY
 %typemap(out, fragment="fullMatrixConversion") fullMatrix<double> {
   $result = fullMatrix2PyArray($1);
+}
+
+%typemap(out, fragment="fullMatrixConversion") const fullMatrix<double>& {
+  $result = constFullMatrix2PyArray(*($1));
 }
 #endif
 
