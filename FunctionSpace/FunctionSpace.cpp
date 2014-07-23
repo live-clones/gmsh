@@ -79,7 +79,7 @@ void FunctionSpace::build(const GroupOfElement& goe, string family){
   }
 
   // Build Dof //
-  buildDof();
+   buildDof();
 
   // Find next offset //
   nxtOffset = findMaxType() + 1;
@@ -90,11 +90,14 @@ void FunctionSpace::buildDof(void){
   const size_t nElement = goe->getNumber();
   const vector<const MElement*>& element = goe->getAll();
 
+  vector<Dof> myDof;
+  size_t nDof;
+
   // Create Dofs //
   for(size_t i = 0; i < nElement; i++){
     // Get Dof for this Element
-    vector<Dof> myDof = getKeys(*(element[i]));
-    size_t nDof       = myDof.size();
+    getKeys(*(element[i]), myDof);
+    nDof = myDof.size();
 
     // Add Dofs
     for(size_t j = 0; j < nDof; j++)
@@ -118,7 +121,8 @@ size_t FunctionSpace::findMaxType(void){
   return maxType;
 }
 
-vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
+void FunctionSpace::getUnorderedKeys(const MElement& elem,
+                                     std::vector<Dof>& dof) const{
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
 
@@ -147,20 +151,19 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
   const size_t fPerFace   = this->fPerFace[type];
   const size_t fPerCell   = this->fPerCell[type];
 
+  size_t   it = 0;
   size_t nDof =
     fPerVertex * nVertex +
     fPerEdge   * nEdge   +
     fPerFace   * nFace   +
     fPerCell;
 
-  vector<Dof> myDof(nDof);
-
-  size_t it = 0;
+  dof.resize(nDof);
 
   // Add Vertex Based Dof //
   for(size_t i = 0; i < nVertex; i++){
     for(size_t j = 0; j < fPerVertex; j++){
-      myDof[it].setDof(mesh->getGlobalId(*vertex[i]), j + offset);
+      dof[it].setDof(mesh->getGlobalId(*vertex[i]), j + offset);
       it++;
     }
   }
@@ -168,7 +171,7 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
   // Add Edge Based Dof //
   for(size_t i = 0; i < nEdge; i++){
     for(size_t j = 0; j < fPerEdge; j++){
-      myDof[it].setDof(mesh->getGlobalId(edge[i]), j + offset);
+      dof[it].setDof(mesh->getGlobalId(edge[i]), j + offset);
       it++;
     }
   }
@@ -176,21 +179,19 @@ vector<Dof> FunctionSpace::getUnorderedKeys(const MElement& elem) const{
   // Add Face Based Dof //
   for(size_t i = 0; i < nFace; i++){
     for(size_t j = 0; j < fPerFace; j++){
-      myDof[it].setDof(mesh->getGlobalId(face[i]), j + offset);
+      dof[it].setDof(mesh->getGlobalId(face[i]), j + offset);
       it++;
     }
   }
 
   // Add Cell Based Dof //
   for(size_t j = 0; j < fPerCell; j++){
-    myDof[it].setDof(mesh->getGlobalId(element), j + offset);
+    dof[it].setDof(mesh->getGlobalId(element), j + offset);
     it++;
   }
-
-  return myDof;
 }
 
-vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
+void FunctionSpace::getKeys(const MElement& elem, std::vector<Dof>& dof) const{
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
 
@@ -214,11 +215,10 @@ vector<Dof> FunctionSpace::getKeys(const MElement& elem) const{
   MElement* permElement = factory.create(lowOrderTag, vertex, element.getNum());
 
   // Get Dofs from permuted Element //
-  vector<Dof> myDofs = getUnorderedKeys(*permElement);
+  getUnorderedKeys(*permElement, dof);
 
   // Free and Return //
   delete permElement;
-  return myDofs;
 }
 
 void FunctionSpace::getKeys(const GroupOfElement& goe,
@@ -227,13 +227,17 @@ void FunctionSpace::getKeys(const GroupOfElement& goe,
   const vector<const MElement*>& element = goe.getAll();
   const size_t nElement = element.size();
 
+  // Dof Vector //
+  vector<Dof> myDof;
+
   // Loop on Elements //
   for(size_t e = 0; e < nElement; e++){
     // Get my Dofs
-    vector<Dof>  myDof = getUnorderedKeys(*element[e]);
-    const size_t nDof  = myDof.size();
+    getUnorderedKeys(*element[e], myDof);
 
     // Add my Dofs
+    const size_t nDof = myDof.size();
+
     for(size_t d = 0; d < nDof; d++)
       dof.insert(myDof[d]);
   }
@@ -250,5 +254,5 @@ void FunctionSpace::getKeys(const GroupOfElement& goe,
 
   // Create Dofs //
   for(size_t i = 0; i < nElement; i++)
-    dof[i] = getKeys(*(element[i]));
+    getKeys(*(element[i]), dof[i]);
 }

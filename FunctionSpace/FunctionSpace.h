@@ -56,8 +56,7 @@ class FunctionSpace{
   size_t order;
 
   // Dofs //
-  std::set<Dof>                  dof;
-  std::vector<std::vector<Dof> > group;
+  std::set<Dof> dof;
 
  public:
   virtual ~FunctionSpace(void);
@@ -69,12 +68,11 @@ class FunctionSpace{
   const Basis&          getBasis(const MElement& element) const;
   const Basis&          getBasis(size_t eType)            const;
   const GroupOfElement& getSupport(void)                  const;
-  const std::set<Dof>&  getAllDofs(void)                  const;
 
-  std::vector<Dof> getKeys(const MElement& element) const;
-  void             getKeys(const GroupOfElement& goe, std::set<Dof>& dof) const;
-  void             getKeys(const GroupOfElement& goe,
-                           std::vector<std::vector<Dof> >& dof) const;
+  void getKeys(const MElement& element, std::vector<Dof>& dof) const;
+  void getKeys(const GroupOfElement& goe, std::set<Dof>& dof)  const;
+  void getKeys(const GroupOfElement& goe,
+               std::vector<std::vector<Dof> >& dof)            const;
 
  protected:
   FunctionSpace(void);
@@ -83,7 +81,7 @@ class FunctionSpace{
   void   buildDof(void);
   size_t findMaxType(void);
 
-  std::vector<Dof> getUnorderedKeys(const MElement& element) const;
+  void getUnorderedKeys(const MElement& element, std::vector<Dof>& dof) const;
 };
 
 
@@ -126,13 +124,11 @@ class FunctionSpace{
    @return Returns the support of this FunctionSpace
    **
 
-   @fn FunctionSpace::getAllDofs
-   @return Returns the set of all the Dof%s associated to this FunctionSpace
-   **
-
-   @fn std::vector<Dof> FunctionSpace::getKeys(const MElement&) const
+   @fn void FunctionSpace::getKeys(const MElement&,std::vector<Dof>&) const
    @param element A MElement
-   @return Returns all the Dof%s associated to the given MElement
+   @param dof A vector of Dof%s
+
+   Populates the given vector with the Dof%s associated to the given MElement
    **
 
    @fn void FunctionSpace::getKeys(const GroupOfElement&, std::set<Dof>&) const
@@ -178,10 +174,6 @@ inline const Basis& FunctionSpace::getBasis(size_t eType) const{
 
 inline const GroupOfElement& FunctionSpace::getSupport(void) const{
   return *goe;
-}
-
-inline const std::set<Dof>& FunctionSpace::getAllDofs(void) const{
-  return dof;
 }
 
 #endif
