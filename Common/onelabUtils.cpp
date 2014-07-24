@@ -243,7 +243,7 @@ namespace onelabUtils {
     int num = atoi(graphNum.c_str());
     std::vector<double> x, y;
     std::string xName, yName;
-    int graphType = 0;
+    int graphType = 3;
     std::vector<onelab::number> numbers;
     onelab::server::instance()->get(numbers);
     for(unsigned int i = 0; i < numbers.size(); i++){
