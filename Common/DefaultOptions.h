@@ -209,6 +209,10 @@ StringXString SolverOptions_String[] = {
 } ;
 
 StringXString PostProcessingOptions_String[] = {
+  { F|O, "GraphPointCommand" , opt_post_graph_point_command, "" ,
+    "Command parsed when double-clicking on a graph data point "
+    "(e.g. Merge Sprintf('file_%g.pos', PostProcessing.GraphPointX);)" },
+
   { 0, 0 , 0 , "" , 0 }
 } ;
 
@@ -1252,11 +1256,15 @@ StringXNumber PostProcessingOptions_Number[] = {
 
   { F|O, "ForceNodeData" , opt_post_force_node_data , 0. ,
     "Try to force saving datasets as NodeData" },
-
   { F|O, "Format" , opt_post_file_format , 10. ,
     "Default file format for post-processing views (0=ASCII view, 1=binary "
     "view, 2=parsed view, 3=STL triangulation, 4=raw text, 5=Gmsh mesh, 6=MED file, "
     "10=automatic)" },
+
+  { F|O, "GraphPointX" , opt_post_graph_point_x , 0. ,
+    "Abscissa of last selected graph point" },
+  { F|O, "GraphPointY" , opt_post_graph_point_y , 0. ,
+    "Ordinate of last selected graph point" },
 
   { F|O, "HorizontalScales" , opt_post_horizontal_scales , 1. ,
     "Display value scales horizontally" },

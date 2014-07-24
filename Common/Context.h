@@ -234,6 +234,8 @@ class CTX {
     int smooth, animCycle, animStep, combineTime, combineRemoveOrig;
     int fileFormat, plugins, forceNodeData;
     double animDelay;
+    std::string graphPointCommand;
+    double graphPointX, graphPointY;
   }post;
   // solver options
   struct{

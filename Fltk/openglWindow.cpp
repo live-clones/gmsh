@@ -17,6 +17,7 @@
 #include "MElement.h"
 #include "Numeric.h"
 #include "FlGui.h"
+#include "OpenFile.h"
 #include "drawContext.h"
 #include "Context.h"
 #include "Trackball.h"
@@ -344,7 +345,23 @@ int openglWindow::handle(int event)
   case FL_PUSH:
     if(Fl::event_clicks() == 1 && !selectionMode){
       // double-click and not in selection mode
-      status_options_cb(0, (void*)"quick_access");
+      std::vector<GVertex*> vertices;
+      std::vector<GEdge*> edges;
+      std::vector<GFace*> faces;
+      std::vector<GRegion*> regions;
+      std::vector<MElement*> elements;
+      std::vector<SPoint2> points;
+      _select(ENT_ALL, false, false, Fl::event_x(), Fl::event_y(), 5, 5,
+              vertices, edges, faces, regions, elements, points);
+      if(points.size()){ // double-click on graph point
+        CTX::instance()->post.graphPointX = points[0].x();
+        CTX::instance()->post.graphPointY = points[0].y();
+        if(CTX::instance()->post.graphPointCommand.size())
+          ParseString(CTX::instance()->post.graphPointCommand);
+      }
+      else{ // popup quick access menu
+        status_options_cb(0, (void*)"quick_access");
+      }
       Fl::event_clicks(-1);
       return 1;
     }

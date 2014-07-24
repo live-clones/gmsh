@@ -1490,6 +1490,13 @@ std::string opt_solver_octave_interpreter(OPT_ARGS_STR)
   return CTX::instance()->solver.octaveInterpreter;
 }
 
+std::string opt_post_graph_point_command(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->post.graphPointCommand = val;
+  return CTX::instance()->post.graphPointCommand;
+}
+
 #if defined(HAVE_FLTK)
 int _gui_action_valid(int action, int num)
 {
@@ -6381,6 +6388,20 @@ double opt_post_force_node_data(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->post.forceNodeData = (int)val;
   return CTX::instance()->post.forceNodeData;
+}
+
+double opt_post_graph_point_x(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->post.graphPointX = val;
+  return CTX::instance()->post.graphPointX;
+}
+
+double opt_post_graph_point_y(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->post.graphPointY = val;
+  return CTX::instance()->post.graphPointY;
 }
 
 double opt_view_nb_timestep(OPT_ARGS_NUM)
