@@ -32,14 +32,14 @@ class outputRange : public Fl_Group {
                        37, 38, 39, 40,  43, 44, 45, 46,
                        49, 50, 51, 52};
       for(int i = 0; i < 36; i++){
-        if(_graph_val[i] == '1')
+        if(_graph_val[i] != '0')
           ((Fl_Menu_Item*)_graph_menu->menu())[index[i]].set();
         else
           ((Fl_Menu_Item*)_graph_menu->menu())[index[i]].clear();
       }
     }
     bool yellow = false;
-    for(int i = 0; i < 36; i++) if(_graph_val[i] == '1') yellow = true;
+    for(int i = 0; i < 36; i++) if(_graph_val[i] != '0') yellow = true;
     if(yellow){
       _graph_butt->value(1);
       _graph_butt->selection_color(FL_YELLOW);
@@ -60,8 +60,10 @@ class outputRange : public Fl_Group {
                      25, 26, 27, 28,  31, 32, 33, 34,
                      37, 38, 39, 40,  43, 44, 45, 46,
                      49, 50, 51, 52};
-    for(int i = 0; i < 36; i++)
-      v[i] = b->_graph_menu->menu()[index[i]].value() ? '1' : '0';
+    for(int i = 0; i < 36; i++){
+      // 1=iso, 2=continuous, 3=discrete, 4=numeric
+      v[i] = b->_graph_menu->menu()[index[i]].value() ? '3' : '0';
+    }
     b->_set_graph_value(v, false);
     b->do_callback();
   }

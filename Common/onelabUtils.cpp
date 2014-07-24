@@ -243,18 +243,22 @@ namespace onelabUtils {
     int num = atoi(graphNum.c_str());
     std::vector<double> x, y;
     std::string xName, yName;
+    int graphType = 0;
     std::vector<onelab::number> numbers;
     onelab::server::instance()->get(numbers);
     for(unsigned int i = 0; i < numbers.size(); i++){
       std::string v = numbers[i].getAttribute("Graph");
       v.resize(36, '0');
-      if(v[2 * num] == '1'){
+      if(v[2 * num] != '0'){
         x = getRange(numbers[i]);
         xName = numbers[i].getShortName();
       }
-      if(v[2 * num + 1] == '1'){
+      if(v[2 * num + 1] != '0'){
         y = getRange(numbers[i]);
         yName = numbers[i].getShortName();
+        char t = v[2 * num + 1];
+        graphType = (t == '1') ? 1 : (t == '2') ? 2 : (t == '3') ? 3 :
+          (t == '4') ? 4 : 3;
       }
     }
     if(x.empty()){
@@ -274,7 +278,7 @@ namespace onelabUtils {
       else{
         view = new PView(xName, yName, x, y);
         view->getData()->setFileName("ONELAB" + graphNum);
-        view->getOptions()->intervalsType = PViewOptions::Discrete;
+        view->getOptions()->intervalsType = graphType;
         view->getOptions()->autoPosition = num / 2 + 2;
       }
       changed = true;
