@@ -770,6 +770,7 @@ fullMatrix<double> JacobianBasis::generateJacMonomialsPyramid(int order)
       monomials(index, 2) = k;
     }
   }
+
   return monomials;
 }
 

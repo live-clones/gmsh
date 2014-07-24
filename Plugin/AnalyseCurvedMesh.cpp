@@ -12,11 +12,8 @@
 #include <queue>
 #include <sstream>
 
-//#include "Gmsh.h"
-//#include "GmshMessage.h"
-//#include "polynomialBasis.h"
-//#include <fstream>
-//#include "PView.h"
+#include "GmshMessage.h"
+#include "PView.h"
 
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
@@ -211,7 +208,7 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
       MElement *const el = _data[i].element();
       if (el->getDim() == _dim) {
         double val = _computeMetric ? _data[i].minR() : _data[i].minJ();
-        if (_data[i].maxJ() - _data[i].minJ() < _tol * 1e-2)
+        if (_data[i].maxJ() - _data[i].minJ() < _tol * 1e-1)
           (*dataPV1)[el->getNum()].push_back(val);
         else
           (*dataPV2)[el->getNum()].push_back(val);
@@ -298,6 +295,8 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
     return;
   }
 
+  _data.reserve(_data.size() + numEl);
+
   const int numSamplingPt = jfs->getNumJacNodes();
   const int numMapNodes = jfs->getNumMapNodes();
   fullVector<double> jacobian(numSamplingPt);
@@ -324,17 +323,23 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
 
       bj->subDivisions(subJacBez);
       currentDepth = bj->depth() + 1;
-      if (currentDepth > 20) Msg::Error("depth is too damn high !");
+      if (currentDepth > 20) {
+        static int a = 0;
+        if (++a == 1)
+          Msg::Error("depth is too damn high ! elem type %d",
+                     el[k]->getTypeForMSH());
+      }
 
       for (int i = 0; i < jfs->getNumDivisions(); i++) {
         jacBez.setAsProxy(subJacBez, i * numSamplingPt, numSamplingPt);
-        bj = new BezierJacobian(jacBez, jfs, currentDepth);
-        minL = std::min(minL, bj->minL());
-        maxL = std::max(maxL, bj->maxL());
+        BezierJacobian *newbj = new BezierJacobian(jacBez, jfs, currentDepth);
+        minL = std::min(minL, newbj->minL());
+        maxL = std::max(maxL, newbj->maxL());
 
-        heap.push_back(bj);
+        heap.push_back(newbj);
         push_heap(heap.begin(), heap.end(), lessMinVal());
       }
+      delete bj;
     }
 
     make_heap(heap.begin(), heap.end(), lessMax());
@@ -346,17 +351,23 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
 
       bj->subDivisions(subJacBez);
       currentDepth = bj->depth() + 1;
-      if (currentDepth > 20) Msg::Error("depth is too damn high !");
+      if (currentDepth > 20) {
+        static int a = 0;
+        if (++a == 1)
+          Msg::Error("depth is too damn high ! elem type %d",
+                     el[k]->getTypeForMSH());
+      }
 
       for (int i = 0; i < jfs->getNumDivisions(); i++) {
         jacBez.setAsProxy(subJacBez, i * numSamplingPt, numSamplingPt);
-        bj = new BezierJacobian(jacBez, jfs, currentDepth);
-        minL = std::min(minL, bj->minL());
-        maxL = std::max(maxL, bj->maxL());
+        BezierJacobian *newbj = new BezierJacobian(jacBez, jfs, currentDepth);
+        minL = std::min(minL, newbj->minL());
+        maxL = std::max(maxL, newbj->maxL());
 
-        heap.push_back(bj);
+        heap.push_back(newbj);
         push_heap(heap.begin(), heap.end(), lessMax());
       }
+      delete bj;
     }
 
     double minB = minL;
@@ -364,41 +375,8 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
     for (unsigned int i = 0; i < heap.size(); ++i) {
       minB = std::min(minB, heap[i]->minB());
       maxB = std::max(maxB, heap[i]->maxB());
+      delete heap[i];
     }
-
-    // TODO REMOVE #include "BasisFactory.h"
-
-    /*if (el[k]->getNum() == 26776) {
-      Msg::Info("%g %g %g %g", minB, minL, maxL, maxB);
-
-      / *const nodalBasis* nb = BasisFactory::getNodalBasis(el[k]->getTypeForMSH());
-      int tag1 = ElementType::getTag(el[k]->getType(), 1);
-      const nodalBasis* nb1 = BasisFactory::getNodalBasis(tag1);
-
-      //double *f;
-      //f = new double[nb1->points.size1()];
-      fullMatrix<double> f;
-      nb1->f(nb->points, f);
-      Msg::Info("SIZES [%d %d] (%d, %d)", f.size1(), f.size2(), nb->points.size1(), nb1->points.size1());
-
-      for (int i = 0; i < nb->points.size1(); ++i) {
-        double X[3] = {0, 0, 0};
-        for (int j = 0; j < f.size2(); ++j) {
-          X[0] += el[k]->getVertex(j)->x() * f(i, j);
-          X[1] += el[k]->getVertex(j)->y() * f(i, j);
-          X[2] += el[k]->getVertex(j)->z() * f(i, j);
-        }
-        if (std::abs(X[0] - el[k]->getVertex(i)->x()) < 1e-12 &&
-            std::abs(X[1] - el[k]->getVertex(i)->y()) < 1e-12 &&
-            std::abs(X[2] - el[k]->getVertex(i)->z()) < 1e-12);
-        else {
-          Msg::Info("aaarg %d/%d : [%g %g %g] ([%g %g %g])", i+1, nb->points.size1(),
-              el[k]->getVertex(i)->x(), el[k]->getVertex(i)->y(), el[k]->getVertex(i)->z(),
-              X[0], X[1], X[2]);
-        }
-      }* /
-    }*/
-
     _data.push_back(CurvedMeshPluginData(el[k], minB, maxB));
   }
 }

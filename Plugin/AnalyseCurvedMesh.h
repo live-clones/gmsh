@@ -10,6 +10,7 @@
 #include "JacobianBasis.h"
 #include "MetricBasis.h"
 #include "MElement.h"
+#include "OS.h"
 
 #include <vector>
 
@@ -46,6 +47,7 @@ private :
   double _threshold, _tol;
   int _numPView, _computeMetric;
   bool _recompute;
+
   bool _computedR3D, _computedR2D;
   bool _computedJ3D, _computedJ2D, _computedJ1D;
   bool _1PViewJ, _2PViewJ, _1PViewR, _2PViewR;
@@ -75,6 +77,25 @@ public :
   int getNbOptions() const;
   StringXNumber *getOption(int);
   PView *execute(PView *);
+  void setTol(double tol) {_tol = tol;}
+  void computeMinJ(MElement *const *el, int numEl, double *minJ, bool *straight) {
+    std::vector<CurvedMeshPluginData> save(_data);
+    _data.clear();
+    double time = Cpu();
+    //Rmv add OS.H
+    _computeMinMaxJandValidity(el, numEl);
+    if (minJ) {
+      for (unsigned int i = 0; i < _data.size(); ++i) {
+        minJ[i] = _data[i].minJ();
+      }
+    }
+    if (straight) {
+      for (unsigned int i = 0; i < _data.size(); ++i) {
+        straight[i] = _data[i].maxJ() - _data[i].minJ() < _tol * 1e-1;
+      }
+    }
+    _data = save;
+  }
 
 private :
   void _computeMinMaxJandValidity();
