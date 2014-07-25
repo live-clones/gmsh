@@ -649,7 +649,7 @@ int openglWindow::handle(int event)
         if(me) text += me->getInfoString();
         if(points.size()){
           char tmp[256];
-          sprintf(tmp, "Point (%.16g, %.16g)", points[0].x(), points[0].y());
+          sprintf(tmp, "Point (%g, %g)", points[0].x(), points[0].y());
           text += tmp;
           if(CTX::instance()->post.graphPointCommand.size()){
             text += std::string(" - Double-click to execute\n\n");
