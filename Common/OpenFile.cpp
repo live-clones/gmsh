@@ -250,15 +250,21 @@ static bool doSystemUncompress(std::string fileName, std::string noExt)
   return false;
 }
 
-void ParseString(const std::string &str)
+void ParseString(const std::string &str, bool inCurrentModelDir)
 {
   if(str.empty()) return;
-  std::string fileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
+  std::string fileName;
+  if(inCurrentModelDir)
+    fileName = FixRelativePath(GModel::current()->getFileName(),
+                               CTX::instance()->tmpFileName);
+  else
+    fileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
   FILE *fp = Fopen(fileName.c_str(), "w");
   if(fp){
     fprintf(fp, "%s\n", str.c_str());
     fclose(fp);
     GModel::readGEO(fileName);
+    UnlinkFile(fileName);
   }
 }
 

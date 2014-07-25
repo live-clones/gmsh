@@ -356,7 +356,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     drawContext::global()->draw();
     break;
   case GmshSocket::GMSH_PARSE_STRING:
-    ParseString(message);
+    ParseString(message, true);
     drawContext::global()->draw();
     break;
   case GmshSocket::GMSH_SPEED_TEST:

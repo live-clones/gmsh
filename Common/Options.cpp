@@ -6464,6 +6464,31 @@ double opt_view_timestep(OPT_ARGS_NUM)
 #endif
 }
 
+double opt_view_time(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEW(0.);
+  if(action & GMSH_SET) {
+    if(val >= 0.){
+      // if negative (the default), don't do anything so that we do not compete
+      // with timestep
+      int step = 0;
+      for(int i = 0; i < data->getNumTimeSteps(); i++){
+        double time = data->getTime(i);
+        if(fabs(time - val) < 1.e-15){
+          step = i;
+          break;
+        }
+      }
+      opt_view_timestep(num, action, step);
+    }
+  }
+  return opt->currentTime;
+#else
+  return 0.;
+#endif
+}
+
 double opt_view_min(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)

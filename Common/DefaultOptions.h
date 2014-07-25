@@ -1523,6 +1523,9 @@ StringXNumber ViewOptions_Number[] = {
     "Tensor Visualization Type" },
   { F,   "TimeStep" , opt_view_timestep , 0. ,
     "Current time step displayed" },
+  { F,   "Time" , opt_view_time , -1. ,
+    "Current time displayed (if positive, sets the time step corresponding "
+    "the given time value)" },
   { F,   "TransformXX" , opt_view_transform00 , 1. ,
     "Element (1,1) of the 3x3 coordinate transformation matrix" },
   { F,   "TransformXY" , opt_view_transform01 , 0. ,

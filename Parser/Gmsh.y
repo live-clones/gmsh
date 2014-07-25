@@ -133,7 +133,7 @@ struct doubleXstring{
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
 %token tQuadTriAddVerts tQuadTriNoNewVerts tQuadTriSngl tQuadTriDbl
 %token tRecombLaterals tTransfQuadTri
-%token tText2D tText3D tInterpolationScheme  tTime tCombine
+%token tText2D tText3D tInterpolationScheme tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit tAbort
 %token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString

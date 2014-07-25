@@ -9,7 +9,7 @@
 #include <string>
 
 int ParseFile(const std::string &fileName, bool close, bool warnIfMissing=false);
-void ParseString(const std::string &str);
+void ParseString(const std::string &str, bool inCurrentModelDir=false);
 void OpenProject(const std::string &filename, bool setWindowTitle=true);
 void OpenProjectMacFinder(const char *fileName);
 int MergeFile(const std::string &fileName, bool warnIfMissing=false,

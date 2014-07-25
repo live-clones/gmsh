@@ -222,7 +222,7 @@ void change_print_parameter(int frame)
   double v = first + frame * step * CTX::instance()->post.animStep;
   Msg::Info("Setting Print.Parameter = %g", v);
   opt_print_parameter(0, GMSH_SET | GMSH_GUI, v);
-  ParseString(CTX::instance()->print.parameterCommand);
+  ParseString(CTX::instance()->print.parameterCommand, true);
 }
 
 void CreateOutputFile(const std::string &fileName, int format,

@@ -357,7 +357,7 @@ int openglWindow::handle(int event)
         CTX::instance()->post.graphPointX = points[0].x();
         CTX::instance()->post.graphPointY = points[0].y();
         if(CTX::instance()->post.graphPointCommand.size())
-          ParseString(CTX::instance()->post.graphPointCommand);
+          ParseString(CTX::instance()->post.graphPointCommand, true);
       }
       else{ // popup quick access menu
         status_options_cb(0, (void*)"quick_access");
@@ -651,6 +651,11 @@ int openglWindow::handle(int event)
           char tmp[256];
           sprintf(tmp, "(%g,%g)", points[0].x(), points[0].y());
           text += tmp;
+          if(CTX::instance()->post.graphPointCommand.size()){
+            text += std::string("\nDouble-click to parse `");
+            text += CTX::instance()->post.graphPointCommand;
+            text += std::string("'");
+          }
         }
         if(CTX::instance()->tooltips)
           drawTooltip(text);

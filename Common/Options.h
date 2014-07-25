@@ -535,6 +535,7 @@ double opt_post_graph_point_y(OPT_ARGS_NUM);
 double opt_view_nb_timestep(OPT_ARGS_NUM);
 double opt_view_nb_non_empty_timestep(OPT_ARGS_NUM);
 double opt_view_timestep(OPT_ARGS_NUM);
+double opt_view_time(OPT_ARGS_NUM);
 double opt_view_min(OPT_ARGS_NUM);
 double opt_view_max(OPT_ARGS_NUM);
 double opt_view_custom_min(OPT_ARGS_NUM);

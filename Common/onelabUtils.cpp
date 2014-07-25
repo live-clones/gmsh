@@ -267,8 +267,8 @@ namespace onelabUtils {
     }
     if(x.size() && y.size()){
       if(x.size() != y.size())
-        Msg::Warning("X-Y data series have different length (%d != %d)",
-                     (int)x.size(), (int)y.size());
+        Msg::Info("X-Y data series have different length (%d != %d)",
+                  (int)x.size(), (int)y.size());
       if(view){
         view->getData()->setXY(x, y);
         view->getData()->setName(yName);
