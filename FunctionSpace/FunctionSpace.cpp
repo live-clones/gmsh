@@ -234,23 +234,18 @@ void FunctionSpace::getKeys(const MElement& elem, std::vector<Dof>& dof) const{
 
 void FunctionSpace::getKeys(const GroupOfElement& goe,
                             std::set<Dof>& dof) const{
-  // Get Elements //
-  const vector<const MElement*>& element = goe.getAll();
-  const size_t nElement = element.size();
+  // Get Dofs //
+  const vector<vector<Dof> >& allDofs = getKeys(goe);
 
-  // Dof Vector //
-  vector<Dof> myDof;
+  // Add them into map //
+  const size_t size = allDofs.size();
+        size_t nDof;
 
-  // Loop on Elements //
-  for(size_t e = 0; e < nElement; e++){
-    // Get my Dofs
-    getUnorderedKeys(*element[e], myDof);
+  for(size_t i = 0; i < size; i++){
+    nDof = allDofs[i].size();
 
-    // Add my Dofs
-    const size_t nDof = myDof.size();
-
-    for(size_t d = 0; d < nDof; d++)
-      dof.insert(myDof[d]);
+    for(size_t j = 0; j < nDof; j++)
+      dof.insert(allDofs[i][j]);
   }
 }
 
