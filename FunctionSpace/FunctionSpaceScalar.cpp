@@ -2,35 +2,64 @@
 #include "Exception.h"
 #include "FunctionSpaceScalar.h"
 
-FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement& goe,
-                                         size_t order){
-  if(order == 0)
-    throw Exception("%s: %s",
-                    "FunctionSpaceScalar",
-                    "Cannot have a order 0 scalar function space");
+FunctionSpaceScalar::
+FunctionSpaceScalar(const GroupOfElement& goe, size_t order){
+  // Temp vector
+  std::vector<const GroupOfElement*> tmp(1);
+  tmp[0] = &goe;
 
-  this->scalar = true;
-  this->form   = 0;
-  this->order  = order;
-
-  build(goe, "hierarchical");
+  // Init
+  init(tmp, order, "hierarchical");
 }
 
-FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement& goe,
-                                         size_t order, std::string family){
-  if(order == 0)
-    throw Exception("%s: %s",
-                    "FunctionSpaceScalar",
-                    "Cannot have a order 0 scalar function space");
-  this->scalar = true;
-  this->form   = 0;
-  this->order  = order;
+FunctionSpaceScalar::
+FunctionSpaceScalar(const std::vector<const GroupOfElement*>& goe,
+                    size_t order){
+  // Init
+  init(goe, order, "hierarchical");
+}
 
-  build(goe, family);
+FunctionSpaceScalar::
+FunctionSpaceScalar(const GroupOfElement& goe,
+                    size_t order, std::string family){
+  // Temp vector
+  std::vector<const GroupOfElement*> tmp(1);
+  tmp[0] = &goe;
+
+  // Init
+  init(tmp, order, family);
+}
+
+FunctionSpaceScalar::
+FunctionSpaceScalar(const std::vector<const GroupOfElement*>& goe,
+                    size_t order, std::string family){
+  // Init
+  init(goe, order, family);
 }
 
 FunctionSpaceScalar::~FunctionSpaceScalar(void){
   // Done by FunctionSpace
+}
+
+void FunctionSpaceScalar::init(const std::vector<const GroupOfElement*>& goe,
+                               size_t order, std::string family){
+  // Check
+  if(order == 0)
+    throw Exception("%s: %s",
+                    "FunctionSpaceScalar",
+                    "Cannot have a order 0 scalar function space");
+  // Init
+  this->scalar = true;
+  this->form   = 0;
+  this->order  = order;
+
+  // Build FunctionSpace
+  const size_t nGoe = goe.size();
+  for(size_t i = 0; i < nGoe; i++)
+    build(*goe[i], family);
+
+  // Next Offset for next FunctionSpace
+  nxtOffset = findMaxType() + 1;
 }
 
 double FunctionSpaceScalar::interpolateInABC(const MElement& element,

@@ -18,8 +18,13 @@
 class FunctionSpaceVector : public FunctionSpace{
  public:
   FunctionSpaceVector(const GroupOfElement& goe, size_t order);
+  FunctionSpaceVector(const std::vector<const GroupOfElement*>& goe,
+                      size_t order);
+
   FunctionSpaceVector(const GroupOfElement& goe, size_t order,
                       std::string family);
+  FunctionSpaceVector(const std::vector<const GroupOfElement*>& goe,
+                      size_t order, std::string family);
 
   virtual ~FunctionSpaceVector(void);
 
@@ -43,6 +48,9 @@ class FunctionSpaceVector : public FunctionSpace{
                                     const std::vector<double>& coef,
                                     const fullVector<double>& uvw) const;
  private:
+  void init(const std::vector<const GroupOfElement*>& goe,
+            size_t order, std::string family);
+
   fullVector<double>
     interpolateInABC(const MElement& element,
                      const std::vector<double>& coef,
@@ -65,12 +73,35 @@ class FunctionSpaceVector : public FunctionSpace{
    The instanciated FunctionSpace will use a hierarchical Basis
    **
 
+   @fn FunctionSpaceVector::FunctionSpaceVector(const std::vector<const GroupOfElement*>&,size_t)
+   @param goe A vector of GroupOfElement
+   @param order A natural number
+   Instanciates a new FunctionSpaceVector
+   on the given GroupOfElement%s and with the given order
+
+   The instanciated FunctionSpace will use a hierarchical Basis
+   **
+
    @fn FunctionSpaceVector::FunctionSpaceVector(const GroupOfElement&,size_t,std::string)
    @param goe A GroupOfElement
    @param order A natural number
    @param family A stringr
    Instanciates a new FunctionSpaceVector
    on the given GroupOfElement and with the given order
+
+   The instanciated FunctionSpace will use the requested Basis family:
+   @li If family is equal to 'lagrange' a Lagrange Basis will be used
+   @li If family is equal to 'hierarchical' a hierarchical Basis will be used
+
+   @see See BasisGenerator::generate()
+   **
+
+   @fn FunctionSpaceVector::FunctionSpaceVector(const std::vector<const GroupOfElement*>&,size_t,std::string)
+   @param goe A vector of GroupOfElement
+   @param order A natural number
+   @param family A stringr
+   Instanciates a new FunctionSpaceVector
+   on the given GroupOfElement%s and with the given order
 
    The instanciated FunctionSpace will use the requested Basis family:
    @li If family is equal to 'lagrange' a Lagrange Basis will be used

@@ -9,10 +9,18 @@
 
 using namespace std;
 
-const size_t FunctionSpace::nGeoType = 9;
-size_t FunctionSpace::nxtOffset = 0;
+const size_t FunctionSpace::nGeoType  = 9;
+      size_t FunctionSpace::nxtOffset = 0;
 
 FunctionSpace::FunctionSpace(void){
+  // Alloc Basis Vector for all possible geomtrical types //
+  basis.resize(nGeoType, NULL);
+
+  // Alloc Function per Entity //
+  fPerVertex.resize(nGeoType, 0);
+  fPerEdge.resize(nGeoType  , 0);
+  fPerFace.resize(nGeoType  , 0);
+  fPerCell.resize(nGeoType  , 0);
 }
 
 FunctionSpace::~FunctionSpace(void){
@@ -25,32 +33,20 @@ void FunctionSpace::build(const GroupOfElement& goe, string family){
   // Save Dof type offset //
   offset = nxtOffset;
 
-  // Save GroupOfElement & Mesh //
-  this->goe  = &goe;
+  // Save Mesh //
   this->mesh = &(goe.getMesh());
 
-  // Alloc Basis Vector for all possible geomtrical types //
-  basis.resize(nGeoType, NULL);
-
   // Generate Bases //
-
-  // Get geomtrical type statistics
   const vector<size_t>& geoTypeStat = goe.getTypeStats();
-  const size_t nGeoType = geoTypeStat.size();
+  const size_t             nGeoType = geoTypeStat.size();
 
-  // Buils basis for existing geomtrical type
   for(size_t i = 0; i < nGeoType; i++)
-    if(geoTypeStat[i])
+    if(geoTypeStat[i] != 0 && basis[i] == NULL)
       basis[i] = BasisGenerator::generate(i, form, order, family);
 
   // Get Number of Function per Entity //
-  fPerVertex.resize(nGeoType);
-  fPerEdge.resize(nGeoType);
-  fPerFace.resize(nGeoType);
-  fPerCell.resize(nGeoType);
-
   for(size_t i = 0; i < nGeoType; i++){
-    if(geoTypeStat[i]){
+    if(geoTypeStat[i] != 0 && fPerVertex[i] == 0){
       int nVertex = ReferenceSpaceManager::getNVertex(i);
       int nEdge   = ReferenceSpaceManager::getNEdge(i);
       int nFace   = ReferenceSpaceManager::getNFace(i);
@@ -69,55 +65,70 @@ void FunctionSpace::build(const GroupOfElement& goe, string family){
 
       fPerCell[i] = this->basis[i]->getNCellBased();
     }
-
-    else{
-      fPerVertex[i] = 0;
-      fPerEdge[i]   = 0;
-      fPerFace[i]   = 0;
-      fPerCell[i]   = 0;
-    }
   }
 
   // Build Dof //
-   buildDof();
-
-  // Find next offset //
-  nxtOffset = findMaxType() + 1;
+  buildDof(goe);
 }
 
-void FunctionSpace::buildDof(void){
+void FunctionSpace::buildDof(const GroupOfElement& goe){
   // Get Elements //
-  const size_t nElement = goe->getNumber();
-  const vector<const MElement*>& element = goe->getAll();
+  const size_t                   nElement = goe.getNumber();
+  const vector<const MElement*>&  element = goe.getAll();
 
-  vector<Dof> myDof;
-  size_t nDof;
+  // Push GroupOfElement into map //
+  pair<size_t, vector<vector<Dof> > >                      toInsert;
+  pair<map<size_t, vector<vector<Dof> > >::iterator, bool> isInserted;
+
+  toInsert.first  = goe.getId();
+  toInsert.second = vector<vector<Dof> >(0);
+  isInserted      = dof.insert(toInsert);
+
+  if(!isInserted.second)
+    throw Exception("FunctionSpace: cannot computed Dofs for GroupOfElement %d",
+                    goe.getId());
+
+  // Reference & Allocate //
+  vector<vector<Dof> >& myDof = isInserted.first->second;
+  myDof.resize(nElement);
 
   // Create Dofs //
-  for(size_t i = 0; i < nElement; i++){
-    // Get Dof for this Element
-    getKeys(*(element[i]), myDof);
-    nDof = myDof.size();
-
-    // Add Dofs
-    for(size_t j = 0; j < nDof; j++)
-      dof.insert(myDof[j]);
-  }
+  for(size_t i = 0; i < nElement; i++)
+    getKeys(*(element[i]), myDof[i]);
 }
 
 size_t FunctionSpace::findMaxType(void){
   // Maximum type //
   size_t maxType = 0;
 
-  // Iterate for dof //
-  const set<Dof>::iterator end = dof.end();
-        set<Dof>::iterator it  = dof.begin();
+  // Iterate on GroupOfElement Id //
+  map<size_t, vector<vector<Dof> > >::iterator it  = dof.begin();
+  map<size_t, vector<vector<Dof> > >::iterator end = dof.end();
 
-  for(; it != end; it++)
-    // If this type is bigger, it becomes the new 'maxType'
-    if(it->getType() > maxType)
-      maxType = it->getType();
+  size_t nElement;
+  size_t nDof;
+  size_t type;
 
+  for(; it != end; it++){
+    // Iterate on Elements of this GroupOfElement //
+    nElement = it->second.size();
+
+    for(size_t e = 0; e < nElement; e++){
+      // Iterate on Dofs of this Element //
+      nDof = it->second[e].size();
+
+      for(size_t d = 0; d < nDof; d++){
+        // This Dof Type
+        type = it->second[e][d].getType();
+
+        // If this Dof type is bigger, it becomes the new 'maxType'
+        if(type > maxType)
+          maxType = type;
+      }
+    }
+  }
+
+  // Return maxType //
   return maxType;
 }
 
@@ -243,16 +254,15 @@ void FunctionSpace::getKeys(const GroupOfElement& goe,
   }
 }
 
-void FunctionSpace::getKeys(const GroupOfElement& goe,
-                            std::vector<std::vector<Dof> >& dof) const{
-  // Get Elements //
-  const size_t nElement = goe.getNumber();
-  const vector<const MElement*>& element = goe.getAll();
+const std::vector<std::vector<Dof> >&
+FunctionSpace::getKeys(const GroupOfElement& goe) const{
+  // Find vector of Dof from map //
+  map<size_t, vector<vector<Dof> > >::const_iterator it = dof.find(goe.getId());
 
-  // Init Struct //
-  dof.resize(nElement);
+  if(it == dof.end())
+    throw Exception("FunctionSpace: cannot find Dofs of GroupOfElement %d",
+                    goe.getId());
 
-  // Create Dofs //
-  for(size_t i = 0; i < nElement; i++)
-    getKeys(*(element[i]), dof[i]);
+  // Return vector //
+  return it->second;
 }

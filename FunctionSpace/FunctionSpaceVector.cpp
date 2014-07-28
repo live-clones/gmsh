@@ -1,26 +1,59 @@
 #include "Mapper.h"
 #include "FunctionSpaceVector.h"
 
-FunctionSpaceVector::FunctionSpaceVector(const GroupOfElement& goe,
-                                         size_t order){
-  this->scalar = false;
-  this->form   = 1;
-  this->order  = order;
+FunctionSpaceVector::
+FunctionSpaceVector(const GroupOfElement& goe, size_t order){
+  // Temp vector
+  std::vector<const GroupOfElement*> tmp(1);
+  tmp[0] = &goe;
 
-  build(goe, "hierarchical");
+  // Init
+  init(tmp, order, "hierarchical");
 }
 
-FunctionSpaceVector::FunctionSpaceVector(const GroupOfElement& goe,
-                                         size_t order, std::string family){
-  this->scalar = false;
-  this->form   = 1;
-  this->order  = order;
+FunctionSpaceVector::
+FunctionSpaceVector(const std::vector<const GroupOfElement*>& goe,
+                    size_t order){
+  // Init
+  init(goe, order, "hierarchical");
+}
 
-  build(goe, family);
+FunctionSpaceVector::
+FunctionSpaceVector(const GroupOfElement& goe,
+                    size_t order, std::string family){
+  // Temp vector
+  std::vector<const GroupOfElement*> tmp(1);
+  tmp[0] = &goe;
+
+  // Init
+  init(tmp, order, family);
+}
+
+FunctionSpaceVector::
+FunctionSpaceVector(const std::vector<const GroupOfElement*>& goe,
+                    size_t order, std::string family){
+  // Init
+  init(goe, order, family);
 }
 
 FunctionSpaceVector::~FunctionSpaceVector(void){
   // Done by FunctionSpace
+}
+
+void FunctionSpaceVector::init(const std::vector<const GroupOfElement*>& goe,
+                               size_t order, std::string family){
+  // Init
+  this->scalar = false;
+  this->form   = 1;
+  this->order  = order;
+
+  // Build FunctionSpace
+  const size_t nGoe = goe.size();
+  for(size_t i = 0; i < nGoe; i++)
+    build(*goe[i], family);
+
+  // Next Offset for next FunctionSpace
+  nxtOffset = findMaxType() + 1;
 }
 
 fullVector<double> FunctionSpaceVector::

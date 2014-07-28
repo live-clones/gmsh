@@ -32,15 +32,14 @@ class FunctionSpace{
  protected:
   // Number of possible geomtrical topologies & Dof Type offset //
   static const size_t nGeoType;
-  static size_t nxtOffset;
+  static       size_t nxtOffset;
 
  protected:
   // Offset //
   size_t offset;
 
-  // Geometry //
-  const Mesh*     mesh;
-  const GroupOfElement* goe;
+  // Mesh //
+  const Mesh* mesh;
 
   // Basis //
   std::vector<const Basis*> basis;
@@ -56,7 +55,7 @@ class FunctionSpace{
   size_t order;
 
   // Dofs //
-  std::set<Dof> dof;
+  std::map<size_t, std::vector<std::vector<Dof> > > dof;
 
  public:
   virtual ~FunctionSpace(void);
@@ -65,20 +64,17 @@ class FunctionSpace{
   size_t getForm(void)  const;
   size_t getOrder(void) const;
 
-  const Basis&          getBasis(const MElement& element) const;
-  const Basis&          getBasis(size_t eType)            const;
-  const GroupOfElement& getSupport(void)                  const;
+  const Basis& getBasis(const MElement& element) const;
+  const Basis& getBasis(size_t eType)            const;
 
   void getKeys(const MElement& element, std::vector<Dof>& dof) const;
   void getKeys(const GroupOfElement& goe, std::set<Dof>& dof)  const;
-  void getKeys(const GroupOfElement& goe,
-               std::vector<std::vector<Dof> >& dof)            const;
+  const std::vector<std::vector<Dof> >& getKeys(const GroupOfElement& goe)const;
 
  protected:
   FunctionSpace(void);
-
   void   build(const GroupOfElement& goe, std::string family);
-  void   buildDof(void);
+  void   buildDof(const GroupOfElement& goe);
   size_t findMaxType(void);
 
   void getUnorderedKeys(const MElement& element, std::vector<Dof>& dof) const;
@@ -120,10 +116,6 @@ class FunctionSpace{
    @return Returns the Basis associated to the given geomtrical element type tag
    **
 
-   @fn FunctionSpace::getSupport
-   @return Returns the support of this FunctionSpace
-   **
-
    @fn void FunctionSpace::getKeys(const MElement&,std::vector<Dof>&) const
    @param element A MElement
    @param dof A vector of Dof%s
@@ -139,11 +131,9 @@ class FunctionSpace{
    of the given GroupOfElement
    **
 
-   @fn void FunctionSpace::getKeys(const GroupOfElement&, std::vector<std::vector<Dof> >&) const
+   @fn const std::vector<std::vector<Dof> >& FunctionSpace::getKeys(const GroupOfElement&) const
    @param goe A GroupOfElement
-   @param dof A vector of vector of Dof%s
-
-   Populates the given vector such that:
+   @return Returns a vector of vector of Dof such that:
    dof[i][j] is the jth Dof of the ith element of the given GroupOfElement
 */
 
@@ -170,10 +160,6 @@ inline const Basis& FunctionSpace::getBasis(const MElement& element) const{
 
 inline const Basis& FunctionSpace::getBasis(size_t eType) const{
   return *basis[eType];
-}
-
-inline const GroupOfElement& FunctionSpace::getSupport(void) const{
-  return *goe;
 }
 
 #endif

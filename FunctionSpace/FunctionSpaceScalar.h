@@ -17,8 +17,13 @@
 class FunctionSpaceScalar : public FunctionSpace{
  public:
   FunctionSpaceScalar(const GroupOfElement& goe, size_t order);
+  FunctionSpaceScalar(const std::vector<const GroupOfElement*>& goe,
+                      size_t order);
+
   FunctionSpaceScalar(const GroupOfElement& goe, size_t order,
                       std::string family);
+  FunctionSpaceScalar(const std::vector<const GroupOfElement*>& goe,
+                      size_t order, std::string family);
 
   virtual ~FunctionSpaceScalar(void);
 
@@ -38,6 +43,9 @@ class FunctionSpaceScalar : public FunctionSpace{
                           const fullVector<double>& xyz) const;
 
  private:
+  void init(const std::vector<const GroupOfElement*>& goe,
+            size_t order, std::string family);
+
   double interpolateInABC(const MElement& element,
                           const std::vector<double>& coef,
                           double abc[3]) const;
@@ -58,12 +66,35 @@ class FunctionSpaceScalar : public FunctionSpace{
    The instanciated FunctionSpace will use a hierarchical Basis
    **
 
+   @fn FunctionSpaceScalar::FunctionSpaceScalar(const std::vector<const GroupOfElement*>&,size_t)
+   @param goe A vector of GroupOfElement
+   @param order A natural number
+   Instanciates a new FunctionSpaceScalar
+   on the given GroupOfElement%s and with the given order
+
+   The instanciated FunctionSpace will use a hierarchical Basis
+   **
+
    @fn FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement&,size_t,std::string)
    @param goe A GroupOfElement
    @param order A natural number
    @param family A stringr
    Instanciates a new FunctionSpaceScalar
    on the given GroupOfElement and with the given order
+
+   The instanciated FunctionSpace will use the requested Basis family:
+   @li If family is equal to 'lagrange' a Lagrange Basis will be used
+   @li If family is equal to 'hierarchical' a hierarchical Basis will be used
+
+   @see See BasisGenerator::generate()
+   **
+
+   @fn FunctionSpaceScalar::FunctionSpaceScalar(const std::vector<const GroupOfElement*>&,size_t,std::string)
+   @param goe A vector of GroupOfElement
+   @param order A natural number
+   @param family A stringr
+   Instanciates a new FunctionSpaceScalar
+   on the given GroupOfElement%s and with the given order
 
    The instanciated FunctionSpace will use the requested Basis family:
    @li If family is equal to 'lagrange' a Lagrange Basis will be used
