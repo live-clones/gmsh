@@ -369,7 +369,7 @@ void GetOptions(int argc, char *argv[])
         opt_mesh_partition_metis_algorithm(0, GMSH_SET, 3); // partGraphKWay w/ weights
         while (check) {
           if (argv[i]) {
-            if (!strcmp(argv[i],"triangle")) {
+            if (!strcmp(argv[i],"tri") || !strcmp(argv[i],"triangle")) {
               i++;
               opt_mesh_partition_tri_weight(0,GMSH_SET,atoi(argv[i]));
             }
@@ -393,7 +393,10 @@ void GetOptions(int argc, char *argv[])
               i++;
               opt_mesh_partition_hex_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else check = false;
+            else {
+              Msg::Error("Bad argument for 'partWeight' (%s)", argv[i]);
+              check = false;
+            }
             i++;
           }
           else check = false;
