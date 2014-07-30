@@ -186,9 +186,9 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
     return 0;
   }
 
-#if defined(HAVE_FLTK) && defined(HAVE_POST)
-  int numViewsBefore = PView::list.size();
-#endif
+  //#if defined(HAVE_FLTK) && defined(HAVE_POST)
+  // int numViewsBefore = PView::list.size();
+  //#endif
 
   std::string old_yyname = gmsh_yyname;
   gmshFILE old_yyin = gmsh_yyin;
@@ -227,8 +227,11 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
   gmsh_yyviewindex = old_yyviewindex;
 
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
-  if(FlGui::available())
-    FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size(), false);
+  if(FlGui::available()){
+    // this is not enough if the script creates and deletes views
+    //FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size(), false);
+    FlGui::instance()->updateViews(true, false);
+  }
 #endif
 
   return 1;
