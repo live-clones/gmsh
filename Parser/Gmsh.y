@@ -2640,6 +2640,9 @@ Command :
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
 	CreateSingleDir(tmp);
       }
+      else if(!strcmp($1, "OnelabRun")){
+        Msg::RunOnelabClient($2);
+      }
       else{
 	yymsg(0, "Unknown command '%s'", $1);
       }

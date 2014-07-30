@@ -1083,6 +1083,20 @@ void Msg::ImportPhysicalsAsOnelabRegions()
 #endif
 }
 
+void Msg::RunOnelabClient(const std::string &name)
+{
+#if defined(HAVE_ONELAB)
+  onelab::server::citer it = onelab::server::instance()->findClient(name);
+  if(it == onelab::server::instance()->lastClient()){
+    Msg::Error("Unknown ONELAB client `%s'", name.c_str());
+    return;
+  }
+  onelab::string o(name + "/Action", "compute");
+  onelab::server::instance()->set(o);
+  it->second->run();
+#endif
+}
+
 void Msg::FinalizeOnelab()
 {
 #if defined(HAVE_ONELAB)
