@@ -32,7 +32,7 @@ set(SRC
   Scal2Tens.cpp Scal2Vec.cpp
   CutMesh.cpp
   NewView.cpp
-  SimplePartition.cpp Crack.cpp
+  SimplePartition.cpp Crack.cpp DuplicateBoundaries.cpp
   FaultZone.cpp
 )
 

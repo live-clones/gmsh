@@ -96,6 +96,10 @@ class GFace : public GEntity
   // edge in the face, not part of any edge loops--use with caution!)
   void delFreeEdge(GEdge *e);
 
+  //find the edge 1 from the list of edges and replace it by edge 2
+  //dont change the edge loops, and is susceptible to break some functionalities
+  void replaceEdge(GEdge *e1, GEdge *e2);
+
   // edge orientations
   virtual std::list<int> orientations() const { return l_dirs; }
 

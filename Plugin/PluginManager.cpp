@@ -25,6 +25,7 @@
 #include "ExtractElements.h"
 #include "SimplePartition.h"
 #include "Crack.h"
+#include "DuplicateBoundaries.h"
 #include "HarmonicToTime.h"
 #include "ModulusPhase.h"
 #include "Integrate.h"
@@ -257,6 +258,8 @@ void PluginManager::registerDefaultPlugins()
                       ("Crack", GMSH_RegisterCrackPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("FaultZone", GMSH_RegisterFaultZonePlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("DuplicateBoundaries", GMSH_RegisterDuplicateBoundariesPlugin()));
 #if defined(HAVE_TETGEN)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));

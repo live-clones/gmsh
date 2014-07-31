@@ -107,6 +107,22 @@ void GFace::delFreeEdge(GEdge *e)
   }
 }
 
+void GFace::replaceEdge(GEdge *e1, GEdge *e2){
+	std::list<GEdge*>::iterator ite = l_edges.begin();
+	std::list<GEdge*> newlist;
+	newlist.clear();
+	while(ite != l_edges.end()){
+		if(e1 == *ite){
+			newlist.push_back(e2);
+		}
+		else{
+			newlist.push_back((*ite));
+		}
+		ite++;
+	}
+	l_edges = newlist;
+}
+
 void GFace::deleteMesh()
 {
   for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];

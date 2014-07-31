@@ -28,6 +28,7 @@ class Frame_field{
   static std::vector<std::pair<SPoint3,STensor3> > field;
   static std::vector<int> labels;
   static std::map<MVertex*, STensor3> crossField;
+  static std::map<MVertex*, double> crossFieldSmoothness;
   static std::map<MEdge, double, Less_Edge> crossDist;
   static std::vector<MVertex*> listVertices;
 #if defined(HAVE_ANN)
@@ -54,6 +55,7 @@ class Frame_field{
   static STensor3 findCross(double x, double y, double z);
   static void initFace(GFace* gf);
   static void initRegion(GRegion* gr, int n);
+  static void buildSmoothness();
   static double smoothFace(GFace *gf, int n);
   static double smoothRegion(GRegion *gr, int n);
   static double smooth();

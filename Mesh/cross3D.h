@@ -39,6 +39,7 @@ public:
   double re() const{ return v[3]; }
   SVector3 im() const{ return SVector3(v[0], v[1], v[2]); }
   Qtn conj() { v[0] *= -1.; v[1] *= -1.; v[2] *= -1.; return *this; }
+  Qtn opp() { v[0] *= -1.; v[1] *= -1.; v[2] *= -1.; v[3] *= -1.; return *this; }
   double operator [](const unsigned int i) const { return v[i]; }
   void storeProduct(const Qtn &x, const Qtn &y);
   Qtn operator *(const Qtn &x) const;
@@ -137,6 +138,8 @@ public:
     scnd = im(R*scnd*conj(R));
     return *this;
   }
+  Qtn correspQuat();
+  Qtn rotationDirectTo(const cross3D &y) const;
   Qtn rotationTo(const cross3D &y) const;
   Qtn rotationToOnSurf(const cross3D &y) const;
 };
@@ -180,6 +183,71 @@ cross3D cross3D::get(int k) const{
     exit(1);
   }
   return cross3D(a,b);
+}
+
+Qtn cross3D::correspQuat(){
+	/*
+	   returns the quaternion representing the rotation from the canonical basis to this
+	 */
+	SVector3 frst = SVector3(1,0,0);
+	SVector3 scnd = SVector3(0,1,0);
+	cross3D xx = cross3D(frst,scnd);
+	cross3D yy = *this;
+	Qtn R = xx.rotationDirectTo(yy);
+	return R;
+
+}
+
+Qtn cross3D::rotationDirectTo(const cross3D &y) const{
+	  double d, dmin, jmin, kmin, th1, th2;
+	  SVector3 axis;
+	  Qtn Rxy1, Rxy2;
+
+	  cross3D xx = *this;
+	  cross3D yy = y;
+
+	  //ind1 = 0; jmin=0; dmin = angle(xx.get(kmin).frst, vect[jmin]);
+	  dmin = angle(xx.frst, yy.frst);
+
+	  th1 = dmin;
+
+	  if(th1 > 1e-8)
+	    axis = crossprod(xx.frst, yy.frst).unit();
+	  else {
+	    axis = SVector3(1,0,0);
+	    th1 = 0.;
+	  }
+
+	  Rxy1 = Qtn(axis, th1);
+	  xx.rotate(Rxy1);
+
+	  dmin = angle(xx.scnd, yy.scnd);
+	  // xx.scnd and yy.scnd now form the smallest angle among the 4^2 possible.
+
+	  th2 = dmin;
+
+	  if(th2 > 1e-8)
+	    axis = crossprod(xx.scnd, yy.scnd).unit();
+	  else {
+	    axis = SVector3(1,0,0);
+	    th2 = 0.;
+	  }
+
+	  Rxy2 = Qtn(axis, th2);
+	  Qtn R = Rxy2*Rxy1;
+
+	  // test
+	  double theta = eulerAngleFromQtn(R);
+	  if(theta > 1.07 /*0.988*/){ //
+	    std::cout << "Ouch! th1 = " << th1 << " th2 = " << th2 << std::endl;
+	    std::cout << "x = " << *this << std::endl;
+	    std::cout << "y = " << y << std::endl;
+	    std::cout << "R = " << R << std::endl;
+	    std::cout << "u = " << eulerAngleFromQtn(R) << std::endl;
+	    std::cout << "axis = " << eulerAxisFromQtn(R) << std::endl;
+	  }
+
+	  return R;
 }
 
 Qtn cross3D::rotationTo(const cross3D &y) const{
@@ -324,6 +392,93 @@ STensor3 convert(const cross3D x){
   v = x.getScnd() ; m.set_m12(v[0]); m.set_m22(v[1]); m.set_m32(v[2]);
   v = x.getThrd() ; m.set_m13(v[0]); m.set_m23(v[1]); m.set_m33(v[2]);
   return m;
+}
+
+double computeSetSmoothness(std::vector<cross3D > S){
+	  /* this->frst and y.frst are assumed to be the normal to the face
+	     R1 is the rotation such that R1(this->frst) = y.frst.
+	     R2 is then the rotation such that R2 o R1(this->scnd) = y.scnd
+	  */
+	double result = 1.0;
+	double qmean[4];
+	qmean[0] = 0.0;
+	qmean[1] = 0.0;
+	qmean[2] = 0.0;
+	qmean[3] = 0.0;
+	std::vector<cross3D>::iterator it1 = S.begin();
+	cross3D cInit = (*it1);
+	Qtn qInit = cInit.correspQuat();
+	for (it1 = S.begin();it1 != S.end();it1++){
+		//pour chaque element du set
+		cross3D cTmp = (*it1);
+		Qtn qTmp = cTmp.correspQuat();
+		double prodVecMin = 0.0;
+		for (unsigned int i = 1;i < 24;i++){
+			//on trouve la cross appropriee
+			Qtn qTmpi = cTmp.get(i).correspQuat();
+			double prodVeci = 0.0;
+			for (unsigned int j = 0;j < 4;j++){
+				prodVeci += qInit.v[j] * qTmpi.v[j];
+			}
+			if (prodVeci >= 0.0){
+				if (prodVeci > prodVecMin){
+					prodVecMin = prodVeci;
+					qTmp = qTmpi;
+				}
+			}
+			else{
+				prodVeci = - prodVeci;
+				qTmpi = qTmpi.opp();
+				if (prodVeci > prodVecMin){
+					prodVecMin = prodVeci;
+					qTmp = qTmpi;
+				}
+			}
+		}
+		//on a trouve le quat approprie
+		for (unsigned int j = 0;j < 4;j++){
+			qmean[j] += qTmp[j];
+		}
+	}
+	double normQt = sqrt(qmean[0] * qmean[0] + qmean[1] * qmean[1] + qmean[2] * qmean[2] + qmean[3] * qmean[3]);
+	if (normQt != 0.0){
+		for (unsigned int j = 0;j < 4;j++){
+			qmean[j] = qmean[j] / normQt;
+		}
+	}
+	for (it1 = S.begin();it1 != S.end();it1++){
+		//pour chaque element du set
+		cross3D cTmp = (*it1);
+		Qtn qTmp = cTmp.correspQuat();
+		double prodVecMin = 0.0;
+		for (unsigned int i = 0;i < 24;i++){
+			//on trouve la cross appropriee
+			Qtn qTmpi = cTmp.get(i).correspQuat();
+			double prodVeci = 0.0;
+			for (unsigned int j = 0;j < 4;j++){
+				prodVeci += qmean[j] * qTmpi.v[j];
+			}
+			if (prodVeci >= 0.0){
+				if (prodVeci > prodVecMin){
+					prodVecMin = prodVeci;
+					qTmp = qTmpi;
+				}
+			}
+			else{
+				prodVeci = - prodVeci;
+				qTmpi = qTmpi.opp();
+				if (prodVeci > prodVecMin){
+					prodVecMin = prodVeci;
+					qTmp = qTmpi;
+				}
+			}
+		}
+		//on a trouve le quat approprie
+		if (prodVecMin < result){
+			result = prodVecMin;
+		}
+	}
+	return result;
 }
 
 

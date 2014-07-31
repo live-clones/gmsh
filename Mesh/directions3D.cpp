@@ -674,6 +674,89 @@ double Frame_field::findBarycenter(std::map<MVertex*, std::set<MVertex*> >::cons
   return energy;
 }
 
+void Frame_field::buildSmoothness(){
+	GModel *m = GModel::current();
+	std::vector<GEntity*> entities;
+	m->getEntities(entities);
+	//pour commencer on va creer une map de connectique des Mvertex
+	std::map<MVertex*, std::vector<MVertex* > > Neighbours;
+	for(unsigned int i = 0; i < entities.size(); i++){
+		GEntity* eTmp = entities[i];
+		for (int j = 0; j < eTmp->getNumMeshElements();j++){
+			MElement* elem = eTmp->getMeshElement(j);
+			for (unsigned int k = 0;k < elem->getNumVertices();k++){
+				for (unsigned int l = k;l < elem->getNumVertices();l++){
+					if (k != l){
+						MVertex* v1 = elem->getVertex(k);
+						MVertex* v2 = elem->getVertex(l);
+						Neighbours[v1].push_back(v2);
+						Neighbours[v2].push_back(v1);
+					}
+				}
+			}
+		}
+	}
+	for(unsigned int i = 0; i < entities.size(); i++){
+		for (unsigned int j = 0;j < entities[i]->mesh_vertices.size();j++){
+			//on va traiter chaque noeud
+			std::set<MVertex*> V1;
+			std::set<MVertex*> V2;
+			std::set<MVertex*> V3;
+			MVertex* v0 = entities[i]->mesh_vertices[j];
+			V1.insert(v0);
+			std::vector<MVertex* > v0vec = Neighbours[v0];
+			for (unsigned int k = 0;k < v0vec.size();k++){
+				V1.insert(v0vec[k]);
+			}
+			for (std::set<MVertex*>::iterator itSet = V1.begin();itSet != V1.end();itSet++){
+				MVertex* vTmp = (*itSet);
+				V2.insert(vTmp);
+				v0vec = Neighbours[vTmp];
+				for (unsigned int k = 0;k < v0vec.size();k++){
+					V2.insert(v0vec[k]);
+				}
+			}
+			for (std::set<MVertex*>::iterator itSet = V2.begin();itSet != V2.end();itSet++){
+				MVertex* vTmp = (*itSet);
+				V3.insert(vTmp);
+				v0vec = Neighbours[vTmp];
+				for (unsigned int k = 0;k < v0vec.size();k++){
+					V3.insert(v0vec[k]);
+				}
+			}
+			//we have all three set here, time to compute the smoothnesses for each one
+			std::vector<cross3D> C1;
+			std::vector<cross3D> C2;
+			std::vector<cross3D> C3;
+			double S1 = 0.0;
+			double S2 = 0.0;
+			double S3 = 0.0;
+			for (std::set<MVertex*>::iterator itSet = V1.begin();itSet != V1.end();itSet++){
+				MVertex* vTmp = (*itSet);
+				STensor3 tTmp = crossField[vTmp];
+				cross3D cTmp = cross3D(tTmp);
+				C1.push_back(cTmp);
+			}
+			for (std::set<MVertex*>::iterator itSet = V2.begin();itSet != V2.end();itSet++){
+				MVertex* vTmp = (*itSet);
+				STensor3 tTmp = crossField[vTmp];
+				cross3D cTmp = cross3D(tTmp);
+				C2.push_back(cTmp);
+			}
+			for (std::set<MVertex*>::iterator itSet = V3.begin();itSet != V3.end();itSet++){
+				MVertex* vTmp = (*itSet);
+				STensor3 tTmp = crossField[vTmp];
+				cross3D cTmp = cross3D(tTmp);
+				C3.push_back(cTmp);
+			}
+			S1 = computeSetSmoothness(C1);
+			S2 = computeSetSmoothness(C2);
+			S3 = computeSetSmoothness(C3);
+			double finalSmoothness = (9.0 * S1 + 3.0 * S2 + S3) / 13.0 ;
+			crossFieldSmoothness[v0] = finalSmoothness;
+		}
+	}
+}
 
 double Frame_field::smoothFace(GFace *gf, int n){
   double energy=0;
@@ -1642,6 +1725,7 @@ void Nearest_point::clear(){
 std::vector<std::pair<SPoint3,STensor3> > Frame_field::field;
 std::vector<int> Frame_field::labels;
 std::map<MVertex*, STensor3> Frame_field::crossField;
+std::map<MVertex*, double> Frame_field::crossFieldSmoothness;
 std::map<MEdge, double, Less_Edge> Frame_field::crossDist;
 std::map<MVertex*,std::set<MVertex*> > Frame_field::vertex_to_vertices;
 std::map<MVertex*,std::set<MElement*> > Frame_field::vertex_to_elements;
