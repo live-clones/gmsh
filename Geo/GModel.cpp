@@ -2318,8 +2318,14 @@ void makeSimplyConnected(std::map<int, std::vector<MElement*> > elements[10])
       allElements.push_back(elements[4][ri][j]);
     std::vector<std::vector<MElement*> > conRegions;
     int nbConRegions = connectedVolumes(allElements, conRegions);
+    Msg::Info("%d connected regions (reg=%d)\n", nbConRegions, ri);
+    unsigned int maxNumEl = 1;
+    for(int j = 0; j < nbConRegions; j++)
+      if(conRegions[j].size() > maxNumEl)
+        maxNumEl = conRegions[j].size();
     for(int j = 0; j < nbConRegions; j++){
-      if(conRegions[j].size() < 3){ //remove conRegions containing 1 or 2 elements
+      //remove conRegions containing few elements
+      if(conRegions[j].size() < maxNumEl * 1.e-4){
         //find adjacent region
         int r2 = ri;
         if(regs.size() == 2)
@@ -2329,7 +2335,8 @@ void makeSimplyConnected(std::map<int, std::vector<MElement*> > elements[10])
             MElement *el = conRegions[j][k];
             for(int l = 0; l < el->getNumFaces(); l++){
               MFace mf = el->getFace(l);
-              std::multimap<MFace, MElement*, Less_Face>::iterator itl = f2e.lower_bound(mf);
+              std::multimap<MFace, MElement*, Less_Face>::iterator itl =
+                f2e.lower_bound(mf);
               for(; itl != f2e.upper_bound(mf); itl++){
                 if(itl->second != el) break;
               }
@@ -2389,9 +2396,15 @@ void makeSimplyConnected(std::map<int, std::vector<MElement*> > elements[10])
     for(unsigned int j = 0; j < elements[2][fi].size(); j++)
       allElements.push_back(elements[2][fi][j]);
     std::vector<std::vector<MElement*> > conSurfaces;
-    int nbSurfaces = connectedSurfaces(allElements, conSurfaces);
-    for(int j = 0; j < nbSurfaces; j++){
-      if(conSurfaces[j].size() < 3){ //remove conSurfaces containing 1 or 2 elements
+    int nbConSurfaces = connectedSurfaces(allElements, conSurfaces);
+    Msg::Info("%d connected surfaces (reg=%d)\n", nbConSurfaces, fi);
+    unsigned int maxNumEl = 1;
+    for(int j = 0; j < nbConSurfaces; j++)
+      if(conSurfaces[j].size() > maxNumEl)
+        maxNumEl = conSurfaces[j].size();
+    for(int j = 0; j < nbConSurfaces; j++){
+      //remove conSurfaces containing few elements
+      if(conSurfaces[j].size() < maxNumEl * 1.e-4){
         //find adjacent surface
         int f2 = fi;
         if(faces.size() == 2)
