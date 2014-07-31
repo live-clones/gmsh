@@ -906,7 +906,7 @@ fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(
     }
 
     // Between bottom & top
-    for (int k = nk-1; k > 0; ++k) {
+    for (int k = nk-1; k > 0; --k) {
       int currentnij = pyr ? k+nij : nij;
       for (int i = 0; i <= currentnij; ++i) {
         for (int j = 0; j <= currentnij; ++j, ++index) {

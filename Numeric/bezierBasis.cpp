@@ -362,7 +362,7 @@ fullMatrix<double> generateBez2LagMatrixPyramid
 {
   if(exponent.size1() != point.size1() || exponent.size2() != point.size2() ||
       exponent.size2() != 3){
-    Msg::Fatal("Wrong sizes for bez2lag matrix generation %d %d -- %d %d",
+    Msg::Fatal("Wrong sizes for pyramid's bez2lag matrix generation %d %d -- %d %d",
       exponent.size1(),point.size1(),
       exponent.size2(),point.size2());
     return fullMatrix<double>(1, 1);
@@ -518,7 +518,7 @@ void bezierBasis::_construct(int parentType, int p)
 
   if (parentType == TYPE_PYR) {
     _numLagCoeff = p == 0 ? 4 : 8;
-    _exponents = gmshGenerateMonomialsPyramidGeneral(false, 2, _order);
+    _exponents = gmshGenerateMonomialsPyramidGeneral(false, _order+2, _order);
 
     subPoints = generateSubPointsPyr(_order);
     _numDivisions = static_cast<int>(subPoints.size());
