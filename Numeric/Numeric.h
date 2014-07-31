@@ -135,12 +135,23 @@ int computeDistanceRatio(const double &y, const double &yp, const double &x,
                          const double &xp, double *distance, const double &r1,
                          const double &r2);
 
+void signedDistancesPointsEllipsePoint (std::vector<double>&distances,
+                                       std::vector<double>&distancesE,
+                                       std::vector<int>&isInYarn,
+                                       std::vector<SPoint3>&closePts,
+                                       const std::vector<SPoint3> &pts,
+                                       const SPoint3 &p1, const SPoint3 &p2,
+                                       const double radius);
+
 void signedDistancesPointsEllipseLine (std::vector<double>&distances,
                                        std::vector<double>&distancesE,
                                        std::vector<int>&isInYarn,
                                        std::vector<SPoint3>&closePts,
                                        const std::vector<SPoint3> &pts,
-                                       const SPoint3 &p1, const SPoint3 &p2);
+                                       const SPoint3 &p1, const SPoint3 &p2,
+                                       const double maxA, const double minA,
+                                       const double maxB, const double minB,
+                                       const int typeLevelSet);
 
 int intersection_segments (const SPoint3 &p1, const SPoint3 &p2,
 			   const SPoint3 &q1, const SPoint3 &q2,

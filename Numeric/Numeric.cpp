@@ -507,7 +507,6 @@ double ComputeScalarRep(int numComp, double *val)
 
 void eigenvalue2x2(double mat[2][2], double v[2])
 {
-
   double a=1;
   double b=-(mat[0][0]+mat[1][1]);
   double c= (mat[0][0]*mat[1][1])-(mat[0][1]*mat[1][0]);
@@ -516,7 +515,6 @@ void eigenvalue2x2(double mat[2][2], double v[2])
 
   v[0] = (-b+sqrt(det))/(2*a);
   v[1] = (-b-sqrt(det))/(2*a);
-
 }
 
 void eigenvalue(double mat[3][3], double v[3])
@@ -694,7 +692,7 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
       dx(0) = f(0) / J(0, 0);
     else
       if (!J.luSolve(f, dx))
-	return false;
+        return false;
 
     for (int i = 0; i < N; i++)
       x(i) -= relax * dx(i);
@@ -706,9 +704,7 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
 
 /*
   min_a f(x+a*d);
-
   f(x+a*d) = f(x) + f'(x) (
-
 */
 
 void gmshLineSearch(double (*func)(fullVector<double> &, void *), void* data,
@@ -818,7 +814,6 @@ double minimize_grad_fd(double (*func)(fullVector<double> &, void *),
     // printf("Line search done x = (%g %g) f = %g\n",x(0),x(1),f);
     if (check == 1) break;
   }
-
   return f;
 }
 
@@ -851,7 +846,6 @@ void signedDistancePointTriangle(const SPoint3 &p1,const SPoint3 &p2, const SPoi
 				 const SPoint3 &p, double &d, SPoint3 &closePt)
 
 {
-
   SVector3 t1 = p2 - p1;
   SVector3 t2 = p3 - p1;
   SVector3 t3 = p3 - p2;
@@ -908,9 +902,9 @@ void signedDistancePointTriangle(const SPoint3 &p1,const SPoint3 &p2, const SPoi
       closePt = p3;
       d = sign * std::min(fabs(d), p.distance(p3));
     }
-   }
-
+  }
 }
+
 void signedDistancesPointsTriangle(std::vector<double> &distances,
                                    std::vector<SPoint3> &closePts,
                                    const std::vector<SPoint3> &pts,
@@ -996,8 +990,6 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
     closePts[i] = closePt;
   }
 }
-
-
 
 void signedDistancePointLine(const SPoint3 &p1, const SPoint3 &p2, const SPoint3 &p,
                              double &d, SPoint3 &closePt)
@@ -1154,9 +1146,9 @@ int computeDistanceRatio(const double &y, const double &yp, const double &x,
     }
     else{
       if (x == xp){
-	y1 = x1;
+        y1 = x1;
         y2 = x2;
-	x1 = -b;
+        x1 = -b;
         x2 = -b;
       }
       else{
@@ -1169,36 +1161,71 @@ int computeDistanceRatio(const double &y, const double &yp, const double &x,
         else{
           y1 = -(b + x1) / a;
           y2 = -(b + x2) / a;
-	}
+        }
       }
     }
     if (x1 == x2){
       propdist = (y1 - y) / (yp - y);
       if(propdist < 0.0){
-	propdist = (y2 - y) / (yp - y);
+        propdist = (y2 - y) / (yp - y);
       }
     }
     else{
       if (xp != x){
         propdist = (x1 - x) / (xp - x);
-	if (propdist < 0.0){
-	  propdist = (x2 - x) / (xp - x);
-	}
+        if (propdist < 0.0){
+          propdist = (x2 - x) / (xp - x);
+        }
       }
       else{
-	if (yp != y){
-	  propdist = (y1 - y) / (yp - y);
-	  if(propdist < 0.0){
-	    propdist = (y2 - y) / (yp - y);
-	  }
-	}
+        if (yp != y){
+          propdist = (y1 - y) / (yp - y);
+          if(propdist < 0.0){
+            propdist = (y2 - y) / (yp - y);
+          }
+        }
         else{
-	  propdist = 0.01;
-	}
+          propdist = 0.01;
+        }
       }
     }
     *distance = propdist;
     return 0;
+  }
+}
+
+void signedDistancesPointsEllipsePoint(std::vector<double> &distances,
+                                      std::vector<double> &distancesE,
+                                      std::vector<int> &isInYarn,
+                                      std::vector<SPoint3> &closePts,
+                                      const std::vector<SPoint3> &pts,
+                                      const SPoint3 &p1,
+                                      const SPoint3 &p2,
+                                      const double radius)
+{
+  distances.clear();
+  distances.resize(pts.size());
+  distancesE.clear();
+  distancesE.resize(pts.size());
+  isInYarn.clear();
+  isInYarn.resize(pts.size());
+  closePts.clear();
+  closePts.resize(pts.size());
+  double d;
+  for (unsigned int i = 0; i < pts.size();i++){
+    SPoint3 closePt;
+    const SPoint3 &p = pts[i];
+    signedDistancePointLine(p1, p2, p, d, closePt);
+    closePts[i] = closePt;
+    distances[i] = d;
+    if (d <= radius){
+      isInYarn[i] = 1;
+      distancesE[i] = radius - d;
+    }
+    else{
+      isInYarn[i] = 0;
+      distancesE[i] = d - radius;
+    }
   }
 }
 
@@ -1208,7 +1235,12 @@ void signedDistancesPointsEllipseLine(std::vector<double>&distances,
                                       std::vector<SPoint3>&closePts,
                                       const std::vector<SPoint3> &pts,
                                       const SPoint3 &p1,
-                                      const SPoint3 &p2)
+                                      const SPoint3 &p2,
+                                      const double maxA,
+                                      const double minA,
+                                      const double maxB,
+                                      const double minB,
+                                      const int typeLevelSet)
 {
   distances.clear();
   distances.resize(pts.size());
@@ -1229,37 +1261,127 @@ void signedDistancesPointsEllipseLine(std::vector<double>&distances,
     int direction=0;
     if (!(p.x()==closePt.x() && p.y()==closePt.y() && p.z()==closePt.z())){
       double xp,yp,x,y,otherp,other,propdist;
-      if (p1.x()==p2.x()){
-        direction=1;
-        if (fabs(closePt.x() - 0.0) < 0.00000001) isInYarn[i] = 1;
-        if (fabs(closePt.x() - 2.2) < 0.00000001) isInYarn[i] = 4;
-        if (fabs(closePt.x() - 4.4) < 0.00000001) isInYarn[i] = 2;
-        if (fabs(closePt.x() - 6.6) < 0.00000001) isInYarn[i] = 5;
-        if (fabs(closePt.x() - 8.8) < 0.00000001) isInYarn[i] = 3;
-	if (fabs(closePt.x() - 11.0) < 0.00000001) isInYarn[i] = 1;
-      }
-      else{
-        if (p1.y() == p2.y()){
-          direction = 2;
-	  if (fabs(closePt.y() - 0.0) < 0.00000001) isInYarn[i] = 6;
-	  if (fabs(closePt.y() - 2.2) < 0.00000001) isInYarn[i] = 7;
-	  if (fabs(closePt.y() - 4.4) < 0.00000001) isInYarn[i] = 8;
-	  if (fabs(closePt.y() - 6.6) < 0.00000001) isInYarn[i] = 9;
-	  if (fabs(closePt.y() - 8.8) < 0.00000001) isInYarn[i] = 10;
-	  if (fabs(closePt.y() - 11.0) < 0.00000001) isInYarn[i] = 6;
+      if (typeLevelSet==2){
+        if (p1.x()==p2.x()){
+          direction=1;
+          if (fabs(closePt.x()-0.0)<0.00000001) isInYarn[i]=1;
+          if (fabs(closePt.x()-2.2)<0.00000001) isInYarn[i]=1;
         }
         else{
-	  printf("WTF %lf %lf\n", closePt.x(), closePt.y());
+          if (p1.y()==p2.y()){
+            direction=2;
+            if (fabs(closePt.y()-0.0)<0.00000001) isInYarn[i]=6;
+            if (fabs(closePt.y()-2.2)<0.00000001) isInYarn[i]=6;
+          }
+          else{
+            printf("Error %lf %lf\n",closePt.x(),closePt.y());
+          }
+        }
+      }
+      if (typeLevelSet==1){
+        if (p1.x()==p2.x()){
+          direction=1;
+          //if (fabs(closePt.x() - 0.0) < 0.00000001) isInYarn[i] = 1;
+          if (fabs(closePt.x() - 2.2) < 0.00000001) isInYarn[i] = 4;
+          //if (fabs(closePt.x() - 4.4) < 0.00000001) isInYarn[i] = 2;
+          //if (fabs(closePt.x() - 6.6) < 0.00000001) isInYarn[i] = 5;
+          //if (fabs(closePt.x() - 8.8) < 0.00000001) isInYarn[i] = 3;
+          //if (fabs(closePt.x() - 11.0) < 0.00000001) isInYarn[i] = 1;
+        }
+        else{
+          if (p1.y() == p2.y()){
+            direction = 2;
+            //if (fabs(closePt.y() - 0.0) < 0.00000001) isInYarn[i] = 6;
+            if (fabs(closePt.y() - 2.2) < 0.00000001) isInYarn[i] = 7;
+            //if (fabs(closePt.y() - 4.4) < 0.00000001) isInYarn[i] = 8;
+            //if (fabs(closePt.y() - 6.6) < 0.00000001) isInYarn[i] = 9;
+            //if (fabs(closePt.y() - 8.8) < 0.00000001) isInYarn[i] = 10;
+            //if (fabs(closePt.y() - 11.0) < 0.00000001) isInYarn[i] = 6;
+          }
+          else{
+            printf("Error %lf %lf\n", closePt.x(), closePt.y());
+          }
+        }
+      }
+      if (typeLevelSet==4){
+        if (p1.x()==p2.x()){
+          direction=1;
+          if (fabs(closePt.x()-0.0)<0.00000001 && closePt.z()<=0.35) isInYarn[i]=1;
+          if (fabs(closePt.x()-2.2)<0.00000001 && closePt.z()<=0.35) isInYarn[i]=4;
+          if (fabs(closePt.x()-4.4)<0.00000001 && closePt.z()<=0.35) isInYarn[i]=2;
+          if (fabs(closePt.x()-6.6)<0.00000001 && closePt.z()<=0.35) isInYarn[i]=5;
+          if (fabs(closePt.x()-8.8)<0.00000001 && closePt.z()<=0.35) isInYarn[i]=3;
+          if (fabs(closePt.x()-11.0)<0.00000001 && closePt.z()<=0.35) isInYarn[i]=1;
+          if (fabs(closePt.x()-0.0)<0.00000001 && closePt.z()>0.35) isInYarn[i]=11;
+          if (fabs(closePt.x()-2.2)<0.00000001 && closePt.z()>0.35) isInYarn[i]=14;
+          if (fabs(closePt.x()-4.4)<0.00000001 && closePt.z()>0.35) isInYarn[i]=12;
+          if (fabs(closePt.x()-6.6)<0.00000001 && closePt.z()>0.35) isInYarn[i]=15;
+          if (fabs(closePt.x()-8.8)<0.00000001 && closePt.z()>0.35) isInYarn[i]=13;
+          if (fabs(closePt.x()-11.0)<0.00000001 && closePt.z()>0.35) isInYarn[i]=11;
+        }
+        else{
+          if (p1.y()==p2.y()){
+            direction=2;
+            if (fabs(closePt.y()-0.0)<0.00000001 && closePt.z()<=0.35) isInYarn[i]=6;
+            if (fabs(closePt.y()-2.2)<0.00000001 && closePt.z()<=0.35) isInYarn[i]=7;
+            if (fabs(closePt.y()-4.4)<0.00000001 && closePt.z()<=0.35) isInYarn[i]=8;
+            if (fabs(closePt.y()-6.6)<0.00000001 && closePt.z()<=0.35) isInYarn[i]=9;
+            if (fabs(closePt.y()-8.8)<0.00000001 && closePt.z()<=0.35) isInYarn[i]=10;
+            if (fabs(closePt.y()-11.0)<0.00000001 && closePt.z()<=0.35) isInYarn[i]=6;
+            if (fabs(closePt.y()-0.0)<0.00000001 && closePt.z()>0.35) isInYarn[i]=16;
+            if (fabs(closePt.y()-2.2)<0.00000001 && closePt.z()>0.35) isInYarn[i]=17;
+            if (fabs(closePt.y()-4.4)<0.00000001 && closePt.z()>0.35) isInYarn[i]=18;
+            if (fabs(closePt.y()-6.6)<0.00000001 && closePt.z()>0.35) isInYarn[i]=19;
+            if (fabs(closePt.y()-8.8)<0.00000001 && closePt.z()>0.35) isInYarn[i]=20;
+            if (fabs(closePt.y()-11.0)<0.00000001 && closePt.z()>0.35) isInYarn[i]=16;
+          }
+          else{
+            printf("Error %lf %lf\n",closePt.x(),closePt.y());
+          }
+        }
+      }
+      if (typeLevelSet==3){
+        direction=3;
+        isInYarn[i]=1;
+      }
+      if (typeLevelSet==5){
+        if(p1.x()==p2.x()){
+          direction=1;
+          if (fabs(closePt.x() - 0.0) < 0.00000001) isInYarn[i] = 1;
+          if (fabs(closePt.x() - 3.225) < 0.00000001) isInYarn[i] = 2;
+          if (fabs(closePt.x() - 6.45) < 0.00000001) isInYarn[i] = 3;
+          if (fabs(closePt.x() - 9.675) < 0.00000001) isInYarn[i] = 4;
+          if (fabs(closePt.x() - 12.9) < 0.00000001) isInYarn[i] = 1;
+        }
+        else{
+          if (p1.y()==p2.y()){
+            direction=2;
+            if (fabs(closePt.y() - 0.0) < 0.00000001) isInYarn[i] = 5;
+            if (fabs(closePt.y() - 1.665) < 0.00000001) isInYarn[i] = 6;
+            if (fabs(closePt.y() - 3.33) < 0.00000001) isInYarn[i] = 7;
+            if (fabs(closePt.y() - 4.995) < 0.00000001) isInYarn[i] = 8;
+            if (fabs(closePt.y() - 6.66) < 0.00000001) isInYarn[i] = 5;
+          }
+          else{
+            printf("Error %lf %lf\n",closePt.x(),closePt.y());
+          }
         }
       }
       changeReferential(direction, p, closePt, p1, p2, &xp, &yp,
                         &otherp, &x, &y, &other);
-      int result;
+      int result = 1;
       if (fabs(other-otherp) > 0.01){
-	result = 1;
+        result = 1;
       }
       else{
-        result = computeDistanceRatio(y, yp, x, xp, &propdist, 1.1, 0.0875);
+        if (direction==1){
+          result = computeDistanceRatio(y, yp, x, xp, &propdist, maxA, minA);
+        }
+        else{
+          if (direction==2){
+            result = computeDistanceRatio(y, yp, x, xp, &propdist, maxB, minB);
+          }
+        }
       }
       if (result == 1){
         distancesE[i] = 1.e10;
@@ -1271,7 +1393,7 @@ void signedDistancesPointsEllipseLine(std::vector<double>&distances,
           distancesE[i] = (1.0 / propdist) - 1.0;
         }
         else{
-	  distancesE[i] = (1.0 - (1.0 / propdist)) / 3.0;
+          distancesE[i] = (1.0 - (1.0 / propdist));
         }
       }
     }
@@ -1308,7 +1430,7 @@ int intersection_segments(const SPoint3 &p1, const SPoint3 &p2,
     double b[2] = {q1.x() - p1.x(), q1.y() - p1.y()};
     sys2x2(A, b, x);
     return (x[0] >= 0.0 && x[0] <= 1. &&
-	    x[1] >= 0.0 && x[1] <= 1.);
+            x[1] >= 0.0 && x[1] <= 1.);
   }
 }
 
@@ -1420,7 +1542,7 @@ void projectPointsToPlane(const std::vector<SPoint3> &pts, std::vector<SPoint3> 
 
 void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,
                                    std::vector<SPoint3> &pointsUV,
-				   const SPoint3 &ptCG, const mean_plane &meanPlane)
+                                   const SPoint3 &ptCG, const mean_plane &meanPlane)
 {
   pointsUV.resize(ptsProj.size());
   SVector3 normal(meanPlane.a, meanPlane.b, meanPlane.c);

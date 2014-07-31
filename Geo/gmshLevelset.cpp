@@ -27,13 +27,13 @@ void insertActiveCells(double x, double y, double z, double rmax,
 {
   int id1 = box.getCellContainingPoint(x - rmax, y - rmax, z - rmax);
   int id2 = box.getCellContainingPoint(x + rmax, y + rmax, z + rmax);
-  int i1, j1 ,k1;
+  int i1, j1, k1;
   box.getCellIJK(id1, i1, j1, k1);
   int i2, j2, k2;
   box.getCellIJK(id2, i2, j2, k2);
-  for (int i = i1; i <= i2; i++)
-    for (int j = j1; j <= j2; j++)
-      for (int k = k1; k <= k2; k++)
+  for(int i = i1; i <= i2; i++)
+    for(int j = j1; j <= j2; j++)
+      for(int k = k1; k <= k2; k++)
         box.insertActiveCell(box.getCellIndex(i, j, k));
 }
 
@@ -116,15 +116,15 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
 {
   std::vector<SPoint3> nodes;
   std::vector<int> indices;
-  for (cartesianBox<double>::valIter it = box.nodalValuesBegin();
-       it != box.nodalValuesEnd(); ++it){
+  for(cartesianBox<double>::valIter it = box.nodalValuesBegin();
+      it != box.nodalValuesEnd(); ++it){
     nodes.push_back(box.getNodeCoordinates(it->first));
     indices.push_back(it->first);
   }
   //Msg::Info("  %d nodes in the grid at level %d", (int)nodes.size(), box.getLevel());
   std::vector<double> dist, localdist;
   std::vector<SPoint3> dummy;
-  for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++){
+  for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++){
     if((*fit)->geomType() == GEntity::DiscreteSurface){
       for(unsigned int k = 0; k < (*fit)->getNumMeshElements(); k++){
         std::vector<double> iDistances;
@@ -144,7 +144,7 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
         if(dist.empty())
           dist = localdist;
         else{
-          for (unsigned int j = 0; j < localdist.size(); j++){
+          for(unsigned int j = 0; j < localdist.size(); j++){
             dist[j] = (fabs(dist[j]) < fabs(localdist[j])) ? dist[j] : localdist[j];
           }
         }
@@ -158,7 +158,7 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
     }
   }
 
-  for (unsigned int j = 0; j < dist.size(); j++)
+  for(unsigned int j = 0; j < dist.size(); j++)
     box.setNodalValue(indices[j], dist[j]);
 
   if(box.getChildBox()) computeLevelset(gm, *box.getChildBox());
@@ -203,16 +203,16 @@ inline double evalRadialFnDer(int p, int index, double dx, double dy, double dz,
                               double ep)
 {
   double r2 = dx*dx+dy*dy+dz*dz; //r^2
-  switch (index) {
+  switch(index) {
   case 0 : // GA
-    switch (p) {
+    switch(p) {
     case 0: return exp(-ep*ep*r2);
     case 1: return -2*ep*ep*dx*exp(-ep*ep*r2); // _x
     case 2: return -2*ep*ep*dy*exp(-ep*ep*r2); // _y
     case 3: return -2*ep*ep*dz*exp(-ep*ep*r2); // _z
     }
   case 1 : //MQ
-    switch (p) {
+    switch(p) {
     case 0: return sqrt(1+ep*ep*r2);
     case 1: return ep*ep*dx/sqrt(1+ep*ep*r2);
     case 2: return ep*ep*dy/sqrt(1+ep*ep*r2);
@@ -396,16 +396,16 @@ gLevelsetPlane::gLevelsetPlane(const gLevelsetPlane &lv)
 
 // level set defined by points (RBF interpolation)
 fullMatrix<double> gLevelsetPoints::generateRbfMat(int p, int index,
-						   const fullMatrix<double> &nodes1,
-						   const fullMatrix<double> &nodes2) const
+                                                   const fullMatrix<double> &nodes1,
+                                                   const fullMatrix<double> &nodes2) const
 {
   int m = nodes2.size1();
   int n = nodes1.size1();
   fullMatrix<double> rbfMat(m,n);
 
   double eps =0.5/delta;
-  for (int i = 0; i < m; i++) {
-    for (int j = 0; j < n; j++) {
+  for(int i = 0; i < m; i++) {
+    for(int j = 0; j < n; j++) {
       double dx = nodes2(i,0)-nodes1(j,0);
       double dy = nodes2(i,1)-nodes1(j,1);
       double dz = nodes2(i,2)-nodes1(j,2);
@@ -417,15 +417,15 @@ fullMatrix<double> gLevelsetPoints::generateRbfMat(int p, int index,
 }
 
 void gLevelsetPoints::RbfOp(int p, int index,
-			    const fullMatrix<double> &cntrs,
-			    const fullMatrix<double> &nodes,
-			    fullMatrix<double> &D,
-			    bool isLocal) const
+                            const fullMatrix<double> &cntrs,
+                            const fullMatrix<double> &nodes,
+                            fullMatrix<double> &D,
+                            bool isLocal) const
 {
   fullMatrix<double> rbfMatB = generateRbfMat(p,index, cntrs,nodes);
 
   fullMatrix<double> rbfInvA;
-  if (isLocal){
+  if(isLocal){
     rbfInvA = generateRbfMat(0,index, cntrs,cntrs);
     rbfInvA.invertInPlace();
   }
@@ -450,8 +450,8 @@ void gLevelsetPoints::evalRbfDer(int p, int index,
 }
 
 void gLevelsetPoints::setup_level_set(const fullMatrix<double> &cntrs,
-				      fullMatrix<double> &level_set_nodes,
-				      fullMatrix<double> &level_set_funvals)
+                                      fullMatrix<double> &level_set_nodes,
+                                      fullMatrix<double> &level_set_funvals)
 {
   int numNodes = cntrs.size1();
   int nTot = 3*numNodes;
@@ -464,17 +464,17 @@ void gLevelsetPoints::setup_level_set(const fullMatrix<double> &cntrs,
   // Computes the normal vectors to the surface at each node
   double dist_min = 1.e6;
   double dist_max = 1.e-6;
-  for (int i = 0; i < numNodes; ++i){
+  for(int i = 0; i < numNodes; ++i){
     ONES(i,0)=1.0;
     cntrsPlus(i,0) = cntrs(i,0);
     cntrsPlus(i,1) = cntrs(i,1);
     cntrsPlus(i,2) = cntrs(i,2);
     for(int j = i+1; j < numNodes; j++){
       double dist = sqrt((cntrs(i,0)-cntrs(j,0))*(cntrs(i,0)-cntrs(j,0))+
-    			 (cntrs(i,1)-cntrs(j,1))*(cntrs(i,1)-cntrs(j,1))+
-			 (cntrs(i,2)-cntrs(j,2))*(cntrs(i,2)-cntrs(j,2)));
-      if (dist<dist_min) dist_min = dist;
-      if (dist>dist_max) dist_max = dist;
+                         (cntrs(i,1)-cntrs(j,1))*(cntrs(i,1)-cntrs(j,1))+
+                         (cntrs(i,2)-cntrs(j,2))*(cntrs(i,2)-cntrs(j,2)));
+      if(dist<dist_min) dist_min = dist;
+      if(dist>dist_max) dist_max = dist;
     }
   }
   ONES(numNodes,0) = -1.0;
@@ -486,7 +486,7 @@ void gLevelsetPoints::setup_level_set(const fullMatrix<double> &cntrs,
   evalRbfDer(1, 1, cntrsPlus,cntrs,ONES,sx, true);
   evalRbfDer(2, 1, cntrsPlus,cntrs,ONES,sy, true);
   evalRbfDer(3, 1, cntrsPlus,cntrs,ONES,sz, true);
-  for (int i = 0; i < numNodes; ++i){
+  for(int i = 0; i < numNodes; ++i){
     normFactor = sqrt(sx(i,0)*sx(i,0)+sy(i,0)*sy(i,0)+sz(i,0)*sz(i,0));
     sx(i,0) = sx(i,0)/normFactor;
     sy(i,0) = sy(i,0)/normFactor;
@@ -494,8 +494,8 @@ void gLevelsetPoints::setup_level_set(const fullMatrix<double> &cntrs,
     norms(i,0) = sx(i,0);norms(i,1) = sy(i,0);norms(i,2) = sz(i,0);
   }
 
-  for (int i = 0; i < numNodes; ++i){
-    for (int j = 0; j < 3; ++j){
+  for(int i = 0; i < numNodes; ++i){
+    for(int j = 0; j < 3; ++j){
       level_set_nodes(i,j) = cntrs(i,j);
       level_set_nodes(i+numNodes,j) = cntrs(i,j)-delta*norms(i,j);
       level_set_nodes(i+2*numNodes,j) = cntrs(i,j)+delta*norms(i,j);
@@ -530,7 +530,7 @@ gLevelsetPoints::gLevelsetPoints(const gLevelsetPoints &lv)
 double gLevelsetPoints::operator()(double x, double y, double z) const
 {
   if(mapP.empty())
-    Msg::Info("Levelset Points: call computeLS() before calling operator()");
+    Msg::Info("Levelset Points : call computeLS() before calling operator()\n");
 
   SPoint3 sp(x,y,z);
   std::map<SPoint3,double>::const_iterator it = mapP.find(sp);
@@ -549,13 +549,13 @@ double gLevelsetPoints::operator()(double x, double y, double z) const
 void gLevelsetPoints::computeLS(std::vector<MVertex*> &vert)
 {
   fullMatrix<double> xyz_eval(vert.size(), 3), surf_eval(vert.size(), 1);
-  for (unsigned int i = 0; i < vert.size(); i++){
+  for(unsigned int i = 0; i < vert.size(); i++){
     xyz_eval(i,0) = vert[i]->x();
     xyz_eval(i,1) = vert[i]->y();
     xyz_eval(i,2) = vert[i]->z();
   }
   evalRbfDer(0, 1, points, xyz_eval, surf, surf_eval);
-  for (unsigned int i = 0; i < vert.size(); i++){
+  for(unsigned int i = 0; i < vert.size(); i++){
     mapP[SPoint3(vert[i]->x(), vert[i]->y(),vert[i]->z())] = surf_eval(i,0);
   }
 }
@@ -718,7 +718,7 @@ gLevelsetShamrock::gLevelsetShamrock(double _xmid, double _ymid, double _zmid,
   // creating the iso-zero
   double angle = 0.;
   double r;
-  while (angle<=2.*M_PI){
+  while(angle<=2.*M_PI){
     r = a+b*sin(c*angle);
     iso_x.push_back(r*sin(angle)+xmid);
     iso_y.push_back(r*cos(angle)+xmid);
@@ -739,13 +739,13 @@ double gLevelsetShamrock::operator()(double x, double y, double z) const
   std::vector<double>::const_iterator itminx = iso_x.begin();
   std::vector<double>::const_iterator itminy = iso_y.begin();
   itx++;ity++;
-  for (;itx!=itxen;itx++,ity++){
+  for(;itx!=itxen;itx++,ity++){
     xi = *itx;
     yi = *ity;
     dx = x-xi;
     dy = y-yi;
     d = sqrt(dx*dx+dy*dy);
-    if (distance>d){
+    if(distance>d){
       distance = d;
       itminx = itx;
       itminy = ity;
@@ -756,7 +756,7 @@ double gLevelsetShamrock::operator()(double x, double y, double z) const
   SVector3 t,p;
   p(0) = (*itminx) - x;
   p(1) = (*itminy) - y;
-  if (itminx==(itxen-1)){
+  if(itminx==(itxen-1)){
     t(0) = iso_x[0] - (*itminx);
     t(1) = iso_y[0] - (*itminy);
   }
@@ -767,7 +767,7 @@ double gLevelsetShamrock::operator()(double x, double y, double z) const
   double vectprod = (p(0)*t(1) - p(1)*t(0));
   double sign = (vectprod < 0.) ? -1. : 1.;
 
-  return (sign*distance);
+  return sign * distance;
 }
 
 gLevelsetPopcorn::gLevelsetPopcorn(double _xc, double _yc, double _zc, double _r0,
@@ -782,19 +782,19 @@ gLevelsetPopcorn::gLevelsetPopcorn(double _xc, double _yc, double _zc, double _r
   zc = _zc;
 }
 
-double gLevelsetPopcorn::operator() (double x, double y, double z) const
+double gLevelsetPopcorn::operator()(double x, double y, double z) const
 {
-  double s2 = (sigma)*(sigma);
+  double s2 = sigma * sigma;
   double r = sqrt((x-xc)*(x-xc)+(y-yc)*(y-yc)+(z-zc)*(z-zc));
   //printf("z=%g zc=%g r=%g \n", z, zc, r);
   double  val = r - r0;
-  for (int k = 0; k< 5; k++){
+  for(int k = 0; k< 5; k++){
     double xk = r0/sqrt(5.0)*(2.*cos(2*k*M_PI/5.0));
     double yk = r0/sqrt(5.0)*(2.*sin(2*k*M_PI/5.0));
     double zk = r0/sqrt(5.0);
     val -=  A*exp(-((x-xc-xk)*(x-xc-xk)+(y-yc-yk)*(y-yc-yk)+(z-zc-zk)*(z-zc-zk))/s2);
   }
-  for (int k = 5; k< 10; k++){
+  for(int k = 5; k< 10; k++){
     double xk = r0/sqrt(5.0)*(2.*cos((2.*(k-5.)-1.)*M_PI/5.0));
     double yk = r0/sqrt(5.0)*(2.*sin((2.*(k-5.)-1.)*M_PI/5.0));
     double zk = -r0/sqrt(5.0);
@@ -816,7 +816,7 @@ gLevelsetMathEval::gLevelsetMathEval(std::string f, int tag)
   _expr = new mathEvaluator(expressions, variables);
 }
 
-double gLevelsetMathEval::operator() (double x, double y, double z) const
+double gLevelsetMathEval::operator()(double x, double y, double z) const
 {
   std::vector<double> values(3), res(1);
   values[0] = x;
@@ -838,7 +838,7 @@ gLevelsetMathEvalAll::gLevelsetMathEvalAll(std::vector<std::string> expressions,
   _expr = new mathEvaluator(expressions, variables);
 }
 
-double gLevelsetMathEvalAll::operator() (double x, double y, double z) const
+double gLevelsetMathEvalAll::operator()(double x, double y, double z) const
 {
   std::vector<double> values(3), res(13);
   values[0] = x;
@@ -891,26 +891,26 @@ gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, std::string physical, int nbClo
 {
   std::map<int, std::vector<GEntity*> > groups [4];
   gm->getPhysicalGroups(groups);
-  for (GModel::piter it = gm->firstPhysicalName() ;
+  for(GModel::piter it = gm->firstPhysicalName();
        it != gm->lastPhysicalName() ; ++it){
-    if (it->second == physical){
+    if(it->second == physical){
       _entities = groups[it->first.first][it->first.second];
     }
   }
-  if (_entities.size() == 0){
+  if(_entities.size() == 0){
     Msg::Error("distanceToMesh: the physical name '%s' does not exist in the GModel",
                physical.c_str());
   }
 
   //setup
   std::set<MVertex *> _all;
-  for (unsigned int i=0;i<_entities.size();i++){
-    for (unsigned int k = 0; k < _entities[i]->getNumMeshElements(); k++) {
+  for(unsigned int i = 0; i < _entities.size(); i++){
+    for(unsigned int k = 0; k < _entities[i]->getNumMeshElements(); k++) {
       MElement *e = _entities[i]->getMeshElement(k);
-      for (int j = 0; j<  e->getNumVertices();j++){
-	MVertex *v = _entities[i]->getMeshElement(k)->getVertex(j);
-	_all.insert(v);
-	_v2e.insert (std::make_pair(v,e));
+      for(int j = 0; j<  e->getNumVertices();j++){
+        MVertex *v = _entities[i]->getMeshElement(k)->getVertex(j);
+        _all.insert(v);
+        _v2e.insert(std::make_pair(v, e));
       }
     }
   }
@@ -918,7 +918,7 @@ gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, std::string physical, int nbClo
   nodes = annAllocPts(_all.size(), 3);
   std::set<MVertex*>::iterator itp = _all.begin();
   int ind = 0;
-  while (itp != _all.end()){
+  while(itp != _all.end()){
     MVertex* pt = *itp;
     nodes[ind][0] = pt->x();
     nodes[ind][1] = pt->y();
@@ -931,55 +931,54 @@ gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, std::string physical, int nbClo
 
 gLevelsetDistMesh::~gLevelsetDistMesh()
 {
-  if (_kdtree) {
+  if(_kdtree) {
     ANNpointArray nodes = _kdtree->thePoints();
     annDeallocPts(nodes);
-   delete _kdtree;
+    delete _kdtree;
   }
-
 }
 
-double gLevelsetDistMesh::operator () (double x, double y, double z) const
+double gLevelsetDistMesh::operator()(double x, double y, double z) const
 {
-  std::vector<ANNidx> _index(_nbClose);
-  std::vector<ANNdist> _dist(_nbClose);
-  double point[3] = {x,y,z};
-  _kdtree->annkSearch(point, _nbClose, &_index[0], &_dist[0]);
+  std::vector<ANNidx> index(_nbClose);
+  std::vector<ANNdist> dist(_nbClose);
+  double point[3] = {x, y, z};
+  _kdtree->annkSearch(point, _nbClose, &index[0], &dist[0]);
   std::set<MElement*> elements;
-  for (int i=0;i<_nbClose;i++){
-    int iVertex = _index[i];
+  for(int i = 0; i < _nbClose; i++){
+    int iVertex = index[i];
     MVertex *v = _vertices[iVertex];
-    for (std::multimap<MVertex*,MElement*>::const_iterator itm =
-           _v2e.lower_bound(v); itm != _v2e.upper_bound(v); ++itm)
-      elements.insert (itm->second);
+    for(std::multimap<MVertex*,MElement*>::const_iterator itm =
+         _v2e.lower_bound(v); itm != _v2e.upper_bound(v); ++itm)
+      elements.insert(itm->second);
   }
   double minDistance = 1.e22;
   SPoint3 closest;
-  for (std::set<MElement*>::iterator it = elements.begin();
-       it != elements.end();++it){
+  for(std::set<MElement*>::iterator it = elements.begin();
+       it != elements.end(); ++it){
     double distance = 0.;
     MVertex *v1 = (*it)->getVertex(0);
     MVertex *v2 = (*it)->getVertex(1);
     SPoint3 p1(v1->x(), v1->y(), v1->z());
     SPoint3 p2(v2->x(), v2->y(), v2->z());
     SPoint3 pt;
-    if ((*it)->getDim() == 1){
-      signedDistancePointLine(p1, p2,SPoint3(x,y,z),distance,pt);
+    if((*it)->getDim() == 1){
+      signedDistancePointLine(p1, p2, SPoint3(x, y, z), distance, pt);
     }
-    else if ((*it)->getDim() == 2){
+    else if((*it)->getDim() == 2){
       MVertex *v3 = (*it)->getVertex(2);
       SPoint3 p3(v3->x(), v3->y(), v3->z());
-      signedDistancePointTriangle(p1, p2, p3,SPoint3(x,y,z),distance,pt);
+      signedDistancePointTriangle(p1, p2, p3, SPoint3(x, y, z), distance, pt);
     }
     else{
-      Msg::Error("Cannot compute a dsitance to an entity of dimension %d",
+      Msg::Error("Cannot compute a distance to an entity of dimension %d\n",
                  (*it)->getDim());
     }
-    if (fabs(distance) < fabs(minDistance)){
-      minDistance=distance;
+    if(fabs(distance) < fabs(minDistance)){
+      minDistance = distance;
     }
   }
-  return -1.0*minDistance;
+  return -1.0 * minDistance;
 }
 #endif
 
@@ -997,7 +996,7 @@ gLevelsetPostView::gLevelsetPostView(int index, int tag)
   }
 }
 
-double gLevelsetPostView::operator () (double x, double y, double z) const
+double gLevelsetPostView::operator()(double x, double y, double z) const
 {
   if(!_octree) return 1.;
   double val = 1.;
@@ -1019,7 +1018,7 @@ gLevelsetGenCylinder::gLevelsetGenCylinder(const double *pt, const double *dir,
   translate(pt);
 }
 
-gLevelsetGenCylinder::gLevelsetGenCylinder (const gLevelsetGenCylinder& lv)
+gLevelsetGenCylinder::gLevelsetGenCylinder(const gLevelsetGenCylinder& lv)
   : gLevelsetQuadric(lv){}
 
 gLevelsetEllipsoid::gLevelsetEllipsoid(const double *pt, const double *dir,
@@ -1083,6 +1082,42 @@ gLevelsetTools::gLevelsetTools(const gLevelsetTools &lv) : gLevelset(lv)
   children.resize(siz);
   for(unsigned i = 0; i < siz; ++i)
     children[i] = _children[i]->clone();
+}
+
+gLevelsetYarn::gLevelsetYarn(int dim, int phys, double minA, double majA, int type, int tag)
+  : gLevelsetPrimitive(tag), minorAxis(minA), majorAxis(majA), typeLs(type)
+{
+  std::map<int, std::vector<GEntity*> > groups[4];
+  GModel::current()->getPhysicalGroups(groups);
+  entities = groups[dim][phys];
+  if(!entities.size())
+    printf("No physical %d found for levelset yarn!\n", phys);
+}
+
+double gLevelsetYarn::operator()(double x, double y, double z) const
+{
+  double dist = 0.0;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *g = entities[i];
+    for(unsigned int j = 0; j < g->getNumMeshElements(); j++){
+      MElement *e = g->getMeshElement(j);
+      MVertex *v1 = e->getVertex(0);
+      MVertex *v2 = e->getVertex(1);
+      SPoint3 p1(v1->x(), v1->y(), v1->z());
+      SPoint3 p2(v2->x(), v2->y(), v2->z());
+      if(e->getType() == TYPE_LIN){
+        signedDistancesPointsEllipseLine(iDistances, iDistancesE, iIsInYarn, iClosePts,
+                                         pts, p1, p2, majorAxis, minorAxis,
+                                         majorAxis, minorAxis, typeLs);
+      }
+      else if(e->getType() == TYPE_TRI){
+        MVertex *v3 = e->getVertex(2);
+        SPoint3 p3(v3->x(),v3->y(),v3->z());
+        signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1, p2, p3);
+      }
+    }
+  }
+  return dist;
 }
 
 gLevelsetImproved::gLevelsetImproved(const gLevelsetImproved &lv)
@@ -1248,7 +1283,6 @@ void gLevelsetNACA00::getClosestBndPoint(double x, double y, double z,
                                          double &xb, double &yb, double &curvRad,
                                          bool &in) const
 {
-
   static const int maxIter = 100;
   static const double tol = 1.e-10;
 
@@ -1258,7 +1292,7 @@ void gLevelsetNACA00::getClosestBndPoint(double x, double y, double z,
   // Point translated according to airfoil origin and symmetry
   const double xt = x-_x0, yt = fabs(y-_y0);
 
-  if (xt-_c > 1.21125*_t*yt) {
+  if(xt-_c > 1.21125*_t*yt) {
     // Behind line normal to airfoil at trailing edge, closest boundary point is
     // trailing edge...
     xb = _x0+_c;
@@ -1269,7 +1303,7 @@ void gLevelsetNACA00::getClosestBndPoint(double x, double y, double z,
     const double fact = 5.*_t*_c;
     double xtb = std::max(xt,tolr), ytb;
     double dyb, ddyb;
-    for (int it=0; it<maxIter; it++) {
+    for(int it=0; it<maxIter; it++) {
       const double xbr = xtb/_c, sxbr = sqrt(xbr), xbr32 = xbr*sxbr,
         xbr2 = xbr*xbr, xbr3 = xbr2*xbr, xbr4 = xbr2*xbr2;
       ytb = fact*(0.2969*sxbr-0.1260*xbr-0.3516*xbr2+0.2843*xbr3-0.1036*xbr4);
@@ -1280,9 +1314,9 @@ void gLevelsetNACA00::getClosestBndPoint(double x, double y, double z,
       const double dDistSq = -2.*(xx+dyb*yy);
       const double ddDistSq = 2.*(1.-ddyb*yy+dyb*dyb);
       const double mIncr = dDistSq/ddDistSq;
-      if (fabs(mIncr) < tolr) break;
+      if(fabs(mIncr) < tolr) break;
       else xtb -= mIncr;
-      if (xtb < tolr) xtb = tolr;
+      if(xtb < tolr) xtb = tolr;
       if (xtb > _c-tolr) xtb = _c-tolr;
     }
     xb = _x0+xtb;
@@ -1292,7 +1326,7 @@ void gLevelsetNACA00::getClosestBndPoint(double x, double y, double z,
   }
 }
 
-double gLevelsetNACA00::operator() (double x, double y, double z) const
+double gLevelsetNACA00::operator()(double x, double y, double z) const
 {
   double xb, yb, curvRadb;
   bool in;
@@ -1303,8 +1337,8 @@ double gLevelsetNACA00::operator() (double x, double y, double z) const
   return in ? -sqrt(distSq) : sqrt(distSq);
 }
 
-void gLevelsetNACA00::gradient (double x, double y, double z,
-                                double & dfdx, double & dfdy, double & dfdz) const
+void gLevelsetNACA00::gradient(double x, double y, double z,
+                               double & dfdx, double & dfdy, double & dfdz) const
 {
   double xb, yb, curvRadb;
   bool in;
