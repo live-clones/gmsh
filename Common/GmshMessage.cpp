@@ -1092,6 +1092,8 @@ void Msg::RunOnelabClient(const std::string &name)
     return;
   }
   onelab::string o(name + "/Action", "compute");
+  o.setVisible(false);
+  o.setNeverChanged(true);
   onelab::server::instance()->set(o);
   it->second->run();
 #endif
