@@ -1448,19 +1448,24 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   fullMatrix<double> verticesLs(nbLs, numVert + 1);
 
  //compute all at once for ls POINTS (type = 11)
-  std::vector<MVertex *> vert;
-  for(unsigned int i = 0; i < gmEntities.size(); i++) {
-    for(unsigned int j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
-      vert.push_back(gmEntities[i]->getMeshVertex(j));
+  bool lsPoints = false;
+  for(int i = 0; i < primS; i++)
+    if(primitives[i]->type() == LSPOINTS) {lsPoints = true; break;}
+  if(lsPoints){
+    std::vector<MVertex *> vert;
+    for(unsigned int i = 0; i < gmEntities.size(); i++) {
+      for(unsigned int j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
+        vert.push_back(gmEntities[i]->getMeshVertex(j));
+      }
     }
-  }
-  for(int k = 0; k < primS; k++){
-    if (primitives[k]->type() == LSPOINTS){
-      ((gLevelsetPoints*)primitives[k])->computeLS(vert);
+    for(int k = 0; k < primS; k++){
+      if (primitives[k]->type() == LSPOINTS){
+        ((gLevelsetPoints*)primitives[k])->computeLS(vert);
+      }
     }
   }
 
-  //compute and store levelset values
+  //compute and store levelset values + create new nodes
   for(unsigned int i = 0; i < gmEntities.size(); i++) {
     for(unsigned int j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
       MVertex *vi = gmEntities[i]->getMeshVertex(j);
@@ -1470,6 +1475,9 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
         verticesLs(k, vi->getIndex()) = (*primitives[k])(vi->x(), vi->y(), vi->z());
       if(primS > 1)
         verticesLs(k, vi->getIndex()) = (*ls)(vi->x(), vi->y(), vi->z());
+
+      MVertex *vn = new MVertex(vi->x(), vi->y(), vi->z(), 0, vi->getNum());
+      vertexMap[vi->getNum()] = vn;
     }
   }
 
@@ -1604,6 +1612,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   }
 
 #if 0
+  int numElements = 0;
   for(int i = 0; i < 10; i++) {
     printf(" - element type : %d\n", i);
     for(std::map<int, std::vector<MElement*> >::iterator it = elements[i].begin();
@@ -1615,7 +1624,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
         if(e->getParent()) printf(" par=%d (%d)",e->getParent()->getNum(),e->ownsParent());
         if(e->getDomain(0)) printf(" d0=%d",e->getDomain(0)->getNum());
         if(e->getDomain(1)) printf(" d1=%d",e->getDomain(1)->getNum());
-        printf("\n");
+        printf("\n"); numElements++;
       }
     }
   }
@@ -1624,13 +1633,11 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
     for(std::map<int, std::map<int, std::string> >::iterator it=physicals[i].begin();it!=physicals[i].end();it++)
       for(std::map<int, std::string>::iterator it2 = it->second.begin(); it2!=it->second.end(); it2++)
         printf(" dim=%d reg=%d phys=%d \"%s\"\n",i,it->first,it2->first,it2->second.c_str());
-  printf("\n");
+  printf("new Model : %d elements %d nodes\n\n",numElements,vertexMap.size());
 #endif
 
   for(newVerticesContainer::iterator it = newVertices.begin();
       it != newVertices.end(); ++it){
-    if((*it)->getNum() <= gm->getMaxVertexNumber())
-      (*it)->forceNum(cutGM->getMaxVertexNumber() + 1);
     vertexMap[(*it)->getNum()] = *it;
   }
 
