@@ -54,7 +54,7 @@ class femTerm {
                    groupOfElements &C) const
   {
     groupOfElements::elementContainer::const_iterator it = L.begin();
-    for ( ; it != L.end() ; ++it){
+    for ( ; it != L.end(); ++it){
       MElement *eL = *it;
       if (&C == &L || C.find(eL)){
         SElement se(eL);
@@ -78,7 +78,7 @@ class femTerm {
   {
     const int nbR = localMatrix.size1();
     const int nbC = localMatrix.size2();
-    std::vector<Dof> R,C; // better use default consdtructors and reserve the right amount of space to avoid reallocation
+    std::vector<Dof> R, C; // better use default consdtructors and reserve the right amount of space to avoid reallocation
     R.reserve(nbR);
     C.reserve(nbC);
     bool sym=true; 
@@ -90,12 +90,12 @@ class femTerm {
         Dof c(getLocalDofC(se, j));
         R.push_back(r);
         C.push_back(c);
-        if (!(r==c)) sym=false;
+        if (!(r == c)) sym = false;
       }
     }
     else
     {
-      sym=false;
+      sym = false;
       for (int j = 0; j < nbR; j++)
         R.push_back(getLocalDofR(se, j));
       for (int k = 0; k < nbC; k++)
@@ -118,6 +118,31 @@ class femTerm {
       dm.fixVertex(v[i], comp, field, e(v[i]->x(), v[i]->y(), v[i]->z()));
   }
 
+  void neumannNodalBC(MElement *e, int comp, int field,
+                      const simpleFunction<dataVec> &fct,
+                      dofManager<dataVec> &dm)
+  {
+    double jac[3][3];
+    double sf[256];
+    int integrationOrder = 2 * e->getPolynomialOrder();
+    int npts;
+    IntPt *GP;
+    e->getIntegrationPoints(integrationOrder, &npts, &GP);
+    for (int ip = 0; ip < npts; ip++){
+      const double u = GP[ip].pt[0];
+      const double v = GP[ip].pt[1];
+      const double w = GP[ip].pt[2];
+      const double weight = GP[ip].weight;
+      const double detJ = e->getJacobian(u, v, w, jac);
+      SPoint3 p; e->pnt(u, v, w, p);
+      e->getShapeFunctions(u, v, w, sf);
+      const dataVec FCT = fct(p.x(), p.y(), p.z());
+      for (int k = 0; k < e->getNumShapeFunctions(); k++){
+        dm.assemble(e->getShapeFunctionNode(k), comp, field, detJ * weight * sf[k] * FCT);
+      }
+    }
+  }
+
   void neumannNodalBC(int physical, int dim, int comp, int field,
                       const simpleFunction<dataVec> &fct,
                       dofManager<dataVec> &dm)
@@ -127,30 +152,31 @@ class femTerm {
     m->getPhysicalGroups(groups);
     std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].find(physical);
     if (it == groups[dim].end()) return;
-    double jac[3][3];
-    double sf[256];
     for (unsigned int i = 0; i < it->second.size(); ++i){
       GEntity *ge = it->second[i];
       for (unsigned int j = 0; j < ge->getNumMeshElements(); j++){
         MElement *e = ge->getMeshElement(j);
-        int integrationOrder = 2 * e->getPolynomialOrder();
-        int nbNodes = e->getNumVertices();
-        int npts;
-        IntPt *GP;
-        e->getIntegrationPoints(integrationOrder, &npts, &GP);
-        for (int ip = 0; ip < npts; ip++){
-          const double u = GP[ip].pt[0];
-          const double v = GP[ip].pt[1];
-          const double w = GP[ip].pt[2];
-          const double weight = GP[ip].weight;
-          const double detJ = e->getJacobian(u, v, w, jac);
-          SPoint3 p; e->pnt(u, v, w, p);
-          e->getShapeFunctions(u, v, w, sf);
-          const dataVec FCT = fct(p.x(), p.y(), p.z());
-          for (int k = 0; k < nbNodes; k++){
-            dm.assemble(e->getVertex(k), comp, field, detJ * weight * sf[k] * FCT);
-          }
-        }
+        neumannNodalBC(e, comp, field, fct, dm);
+      }
+    }
+  }
+  void neumannNormalNodalBC(int physical, int dim, int field,
+                            const simpleFunction<dataVec> &fct,
+                            dofManager<dataVec> &dm)
+  {
+    std::map<int, std::vector<GEntity*> > groups[4];
+    GModel *m = _gm;
+    m->getPhysicalGroups(groups);
+    std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].find(physical);
+    if (it == groups[dim].end()) return;
+    for (unsigned int i = 0; i < it->second.size(); ++i){
+      GEntity *ge = it->second[i];
+      for (unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+        MElement *e = ge->getMeshElement(j);
+        
+        neumannNodalBC(e, 0, field, fct, dm);
+        neumannNodalBC(e, 1, field, fct, dm);
+        neumannNodalBC(e, 2, field, fct, dm);
       }
     }
   }
@@ -182,8 +208,8 @@ class DummyfemTerm : public femTerm<double>
  private : // i dont want to mess with this anymore
   virtual int sizeOfC(SElement *se) const {return 0;}
   virtual int sizeOfR(SElement *se) const {return 0;}
-  virtual Dof getLocalDofR(SElement *se, int iRow) const {return Dof(0,0);}
-  virtual Dof getLocalDofC(SElement *se, int iCol) const {return Dof(0,0);}
+  virtual Dof getLocalDofR(SElement *se, int iRow) const {return Dof(0, 0);}
+  virtual Dof getLocalDofC(SElement *se, int iCol) const {return Dof(0, 0);}
   virtual void elementMatrix(SElement *se, fullMatrix<dataMat> &m) const {m.scale(0.);}
   virtual void elementVector(SElement *se, fullVector<dataVec> &m) const {m.scale(0.);}
 };

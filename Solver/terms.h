@@ -34,8 +34,14 @@ inline double dot(const double &a, const double &b)
 
 inline int delta(int i,int j) {if (i==j) return 1; else return 0;}
 
-
-
+inline void setDirection(double &a, const double &b)
+{
+  a = b;
+}
+inline void setDirection(SVector3 &a, const SVector3 &b)
+{
+  for(int i = 0; i < 3; i++) a(i) = b(i);
+}
 
 template<class T2=double> class  ScalarTermBase
 {
@@ -234,9 +240,9 @@ public :
 template<class T1> class LoadTerm : public LinearTerm<T1>
 {
 protected:
-  simpleFunction<typename TensorialTraits<T1>::ValType> &Load;
+  simpleFunction<typename TensorialTraits<T1>::ValType> *Load;
 public :
-  LoadTerm(FunctionSpace<T1>& space1_, simpleFunction<typename TensorialTraits<T1>::ValType> &Load_) :
+  LoadTerm(FunctionSpace<T1>& space1_, simpleFunction<typename TensorialTraits<T1>::ValType> *Load_) :
       LinearTerm<T1>(space1_), Load(Load_) {}
   virtual ~LoadTerm() {}
   virtual LinearTermBase<double>* clone () const { return new LoadTerm<T1>(LinearTerm<T1>::space1,Load);}
@@ -244,19 +250,19 @@ public :
   virtual void get(MElement *ele, int npts, IntPt *GP, std::vector<fullVector<double> > &vv) const {};
 };
 
-class LagrangeMultiplierTerm : public BilinearTerm<SVector3, double>
+template<class T1> class LagrangeMultiplierTerm : public BilinearTerm<T1, double>
 {
-  SVector3 _d;
+  T1 _d;
 public :
-  LagrangeMultiplierTerm(FunctionSpace<SVector3>& space1_, FunctionSpace<double>& space2_, const SVector3 &d) :
-      BilinearTerm<SVector3, double>(space1_, space2_)
+  LagrangeMultiplierTerm(FunctionSpace<T1>& space1_, FunctionSpace<double>& space2_, const T1 &d) :
+      BilinearTerm<T1, double>(space1_, space2_)
   {
-    for (int i = 0; i < 3; i++) _d(i) = d(i);
+    setDirection(_d, d);
   }
   virtual ~LagrangeMultiplierTerm() {}
   virtual void get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m) const;
   virtual void get(MElement *ele, int npts, IntPt *GP, std::vector< fullMatrix<double> > &vm) const{};
-  virtual BilinearTermBase* clone () const {return new LagrangeMultiplierTerm(BilinearTerm<SVector3, double>::space1,BilinearTerm<SVector3, double>::space2,_d);}
+  virtual BilinearTermBase* clone () const {return new LagrangeMultiplierTerm(BilinearTerm<T1, double>::space1, BilinearTerm<T1, double>::space2, _d);}
 };
 
 class LagMultTerm : public BilinearTerm<SVector3, SVector3>
@@ -276,9 +282,9 @@ template<class T1> class LoadTermOnBorder : public LinearTerm<T1>
 {
 private :
   double _eqfac;
-  simpleFunction<typename TensorialTraits<T1>::ValType> &Load;
+  simpleFunction<typename TensorialTraits<T1>::ValType> *Load;
 public :
-  LoadTermOnBorder(FunctionSpace<T1>& space1_, simpleFunction<typename TensorialTraits<T1>::ValType> &Load_, double eqfac = 1.0) :
+  LoadTermOnBorder(FunctionSpace<T1>& space1_, simpleFunction<typename TensorialTraits<T1>::ValType> *Load_, double eqfac = 1.0) :
       LinearTerm<T1>(space1_), _eqfac(eqfac), Load(Load_) {}
   virtual ~LoadTermOnBorder() {}
   virtual LinearTermBase<double>* clone () const { return new LoadTermOnBorder<T1>(LinearTerm<T1>::space1,Load,_eqfac);}

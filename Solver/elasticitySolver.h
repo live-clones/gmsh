@@ -22,7 +22,7 @@ struct LagrangeMultiplierField {
   groupOfElements *g;
   double _tau;
   SVector3 _d;
-  simpleFunction<double> _f;
+  simpleFunction<double> *_f;
   LagrangeMultiplierField() : _tag(0), g(0){}
 };
 
@@ -78,9 +78,12 @@ class elasticitySolver
 
   elasticitySolver(GModel *model, int tag);
 
-  void addDirichletBC (int dim, int entityId, int component, double value);
-  void addNeumannBC (int dim, int entityId, const std::vector<double> value);
-  void addElasticDomain (int tag, double e, double nu);
+  void addDirichletBC(int dim, int entityId, int component, double value);
+  void addDirichletBC(int dim, std::string phys, int component, double value);
+  void addNeumannBC(int dim, int entityId, const std::vector<double> value);
+  void addNeumannBC(int dim, std::string phys, const std::vector<double> value);
+  void addElasticDomain(int tag, double e, double nu);
+  void addElasticDomain(std::string phys, double e, double nu);
 
   virtual ~elasticitySolver()
   {
@@ -95,12 +98,15 @@ class elasticitySolver
   void solve();
   void postSolve();
   void exportKb();
-  void getSolutionOnElement(MElement *el, fullMatrix<double> &sol);
+  void computeEffectiveStiffness(std::vector<double> stiff);
+  void computeEffectiveStrain(std::vector<double> strain);
   virtual PView *buildDisplacementView(const std::string postFileName);
+  virtual PView *buildStrainView(const std::string postFileName);
   virtual PView *buildStressesView(const std::string postFileName);
   virtual PView *buildLagrangeMultiplierView(const std::string posFileName);
   virtual PView *buildElasticEnergyView(const std::string postFileName);
   virtual PView *buildVonMisesView(const std::string postFileName);
+  virtual PView *buildVolumeView(const std::string postFileName);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, double, int);
   // std::pair<PView *, PView*> buildErrorEstimateView

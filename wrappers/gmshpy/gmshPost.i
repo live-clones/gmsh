@@ -16,6 +16,7 @@
   #include "PViewFactory.h"
   #include "PViewData.h"
   #include "PViewAsSimpleFunction.h"
+  #include "PViewDataGModel.h"
 #endif
 %}
 
@@ -34,6 +35,7 @@ namespace std {
 %include "simpleFunction.h"
 %template(simpleFunctionDouble) simpleFunction<double>;
 %include "PViewAsSimpleFunction.h"
+%include "PViewDataGModel.h"
 %include "Plugin.h"
 %include "PluginManager.h"
 #endif

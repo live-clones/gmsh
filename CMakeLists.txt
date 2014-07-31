@@ -109,6 +109,7 @@ set(GMSH_API
   Numeric/Numeric.h Numeric/GaussIntegration.h Numeric/polynomialBasis.h
     Numeric/JacobianBasis.h Numeric/MetricBasis.h Numeric/bezierBasis.h Numeric/fullMatrix.h
     Numeric/simpleFunction.h Numeric/cartesian.h Numeric/ElementType.h
+    Numeric/BasisFactory.h
   Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h 
     Geo/GFace.h Geo/GRegion.h Geo/GEdgeLoop.h Geo/GEdgeCompound.h 
     Geo/GFaceCompound.h Geo/GRegionCompound.h Geo/GRbf.h Geo/MVertex.h
@@ -131,6 +132,7 @@ set(GMSH_API
     Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h 
     Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h 
     Solver/groupOfElements.h Solver/linearSystemPETSc.h Solver/linearSystemMUMPS.h
+    Solver/thermicSolver.h
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h 
   Post/PViewDataList.h Post/PViewDataGModel.h Post/PViewOptions.h Post/ColorTable.h
    Numeric/nodalBasis.h

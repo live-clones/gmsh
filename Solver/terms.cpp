@@ -142,31 +142,6 @@ void IsotropicElasticTerm::get(MElement *ele, int npts, IntPt *GP, fullMatrix<do
   }
 }
 
-void LagrangeMultiplierTerm::get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m) const
-{
-  int nbFF1 = BilinearTerm<SVector3, double>::space1.getNumKeys(ele); //nbVertices*nbcomp of parent
-  int nbFF2 = BilinearTerm<SVector3, double>::space2.getNumKeys(ele); //nbVertices of boundary
-  double jac[3][3];
-  m.resize(nbFF1, nbFF2);
-  m.setAll(0.);
-  for(int i = 0; i < npts; i++)
-  {
-    double u = GP[i].pt[0]; double v = GP[i].pt[1]; double w = GP[i].pt[2];
-    const double weight = GP[i].weight; const double detJ = ele->getJacobian(u, v, w, jac);
-    std::vector<TensorialTraits<SVector3>::ValType> Vals;
-    std::vector<TensorialTraits<double>::ValType> ValsT;
-    BilinearTerm<SVector3,double>::space1.f(ele, u, v, w, Vals);
-    BilinearTerm<SVector3,double>::space2.f(ele, u, v, w, ValsT);
-    for(int j = 0; j < nbFF1; j++)
-    {
-      for(int k = 0; k < nbFF2; k++)
-      {
-        m(j, k) += dot(Vals[j], _d) * ValsT[k] * weight * detJ;
-      }
-    }
-  }
-}
-
 void LagMultTerm::get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m) const
 {
   int nbFF1 = BilinearTerm<SVector3, SVector3>::space1.getNumKeys(ele); //nbVertices*nbcomp of parent

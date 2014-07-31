@@ -7,7 +7,7 @@
 //   Eric Bechet
 //
 
-#include "terms.h"
+//#include "terms.h"
 
 template<class T2> void LinearTermBase<T2>::get(MElement *ele, int npts, IntPt *GP, fullVector<T2> &vec) const
 {
@@ -101,7 +101,7 @@ template<class T1> void LoadTerm<T1>::get(MElement *ele, int npts, IntPt *GP, fu
     LinearTerm<T1>::space1.f(ele, u, v, w, Vals);
     SPoint3 p;
     ele->pnt(u, v, w, p);
-    typename TensorialTraits<T1>::ValType load = Load(p.x(), p.y(), p.z());
+    typename TensorialTraits<T1>::ValType load = (*Load)(p.x(), p.y(), p.z());
     for(int j = 0; j < nbFF ; ++j)
     {
       m(j) += dot(Vals[j], load) * weight * detJ;
@@ -191,25 +191,49 @@ template<class T1> void GradTerm<T1>::get(MElement *ele, int npts, IntPt *GP, st
   }
 }
 
-
+template<class T1> void LagrangeMultiplierTerm<T1>::get(MElement *ele, int npts, IntPt *GP, fullMatrix<double> &m) const
+{
+  int nbFF1 = BilinearTerm<T1, double>::space1.getNumKeys(ele); //nbVertices*nbcomp of parent
+  int nbFF2 = BilinearTerm<T1, double>::space2.getNumKeys(ele); //nbVertices of boundary
+  double jac[3][3];
+  m.resize(nbFF1, nbFF2);
+  m.setAll(0.);
+  for(int i = 0; i < npts; i++)
+  {
+    double u = GP[i].pt[0]; double v = GP[i].pt[1]; double w = GP[i].pt[2];
+    const double weight = GP[i].weight; const double detJ = ele->getJacobian(u, v, w, jac);
+    std::vector<typename TensorialTraits<T1>::ValType> Vals;
+    std::vector<TensorialTraits<double>::ValType> ValsT;
+    BilinearTerm<T1,double>::space1.f(ele, u, v, w, Vals);
+    BilinearTerm<T1,double>::space2.f(ele, u, v, w, ValsT);
+    for(int j = 0; j < nbFF1; j++)
+    {
+      for(int k = 0; k < nbFF2; k++)
+      {
+        m(j, k) += dot(Vals[j], _d) * ValsT[k] * weight * detJ;
+      }
+    }
+  }
+}
 
 template<class T1> void LoadTermOnBorder<T1>::get(MElement *ele, int npts, IntPt *GP, fullVector<double> &m) const
 {
-  MElement *elep;
-  if (ele->getParent()) elep = ele->getParent();
   int nbFF = LinearTerm<T1>::space1.getNumKeys(ele);
   double jac[3][3];
   m.resize(nbFF);
   m.scale(0.);
   for(int i = 0; i < npts; i++)
   {
-    const double u = GP[i].pt[0]; const double v = GP[i].pt[1]; const double w = GP[i].pt[2];
+    double u = GP[i].pt[0]; double v = GP[i].pt[1]; double w = GP[i].pt[2];
     const double weight = GP[i].weight; const double detJ = ele->getJacobian(u, v, w, jac);
     std::vector<typename TensorialTraits<T1>::ValType> Vals;
     LinearTerm<T1>::space1.f(ele, u, v, w, Vals);
+    if(ele->getTypeForMSH() == MSH_LIN_B || ele->getTypeForMSH() == MSH_TRI_B ||
+       ele->getTypeForMSH() == MSH_POLYG_B)
+      ele->movePointFromParentSpaceToElementSpace(u, v, w);
     SPoint3 p;
     ele->pnt(u, v, w, p);
-    typename TensorialTraits<T1>::ValType load = Load(p.x(), p.y(), p.z());
+    typename TensorialTraits<T1>::ValType load = (*Load)(p.x(), p.y(), p.z());
     for(int j = 0; j < nbFF ; ++j){
       m(j) += _eqfac * dot(Vals[j], load) * weight * detJ;
     }

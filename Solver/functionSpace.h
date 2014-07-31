@@ -115,7 +115,8 @@ class ScalarLagrangeFunctionSpaceOfElement : public FunctionSpace<double>
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
   {
     if(ele->getParent()) {
-      if(ele->getTypeForMSH() == MSH_LIN_B || ele->getTypeForMSH() == MSH_TRI_B) { //FIXME MPolygonBorders...
+      if(ele->getTypeForMSH() == MSH_LIN_B || ele->getTypeForMSH() == MSH_TRI_B ||
+         ele->getTypeForMSH() == MSH_POLYG_B) { //FIXME MPolygonBorders...
         ele->movePointFromParentSpaceToElementSpace(u, v, w);
       }
     }
@@ -128,7 +129,8 @@ class ScalarLagrangeFunctionSpaceOfElement : public FunctionSpace<double>
   virtual void gradf(MElement *ele, double u, double v, double w, std::vector<GradType> &grads)
   {
     if(ele->getParent()) {
-      if(ele->getTypeForMSH() == MSH_LIN_B || ele->getTypeForMSH() == MSH_TRI_B) { //FIXME MPolygonBorders...
+      if(ele->getTypeForMSH() == MSH_LIN_B || ele->getTypeForMSH() == MSH_TRI_B ||
+         ele->getTypeForMSH() == MSH_POLYG_B) { //FIXME MPolygonBorders...
         ele->movePointFromParentSpaceToElementSpace(u, v, w);
       }
     }
@@ -150,7 +152,8 @@ class ScalarLagrangeFunctionSpaceOfElement : public FunctionSpace<double>
   virtual void hessfuvw(MElement *ele, double u, double v, double w, std::vector<HessType> &hess)
   {
     if(ele->getParent()) {
-      if(ele->getTypeForMSH() == MSH_LIN_B || ele->getTypeForMSH() == MSH_TRI_B) { //FIXME MPolygonBorders...
+      if(ele->getTypeForMSH() == MSH_LIN_B || ele->getTypeForMSH() == MSH_TRI_B ||
+         ele->getTypeForMSH() == MSH_POLYG_B) { //FIXME MPolygonBorders...
         ele->movePointFromParentSpaceToElementSpace(u, v, w);
       }
     }
@@ -169,7 +172,8 @@ class ScalarLagrangeFunctionSpaceOfElement : public FunctionSpace<double>
   virtual void gradfuvw(MElement *ele, double u, double v, double w, std::vector<GradType> &grads)
   {
     if(ele->getParent()) {
-      if(ele->getTypeForMSH() == MSH_LIN_B || ele->getTypeForMSH() == MSH_TRI_B) { //FIXME MPolygonBorders...
+      if(ele->getTypeForMSH() == MSH_LIN_B || ele->getTypeForMSH() == MSH_TRI_B ||
+         ele->getTypeForMSH() == MSH_POLYG_B) { //FIXME MPolygonBorders...
         ele->movePointFromParentSpaceToElementSpace(u, v, w);
       }
     }

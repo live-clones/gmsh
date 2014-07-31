@@ -12,6 +12,7 @@ set(SRC
   groupOfElements.cpp
   elasticityTerm.cpp
 elasticitySolver.cpp
+  thermicSolver.cpp
   SElement.cpp
   eigenSolver.cpp
   multiscaleLaplace.cpp
