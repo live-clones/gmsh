@@ -10,7 +10,6 @@
 #include "JacobianBasis.h"
 #include "MetricBasis.h"
 #include "MElement.h"
-#include "OS.h"
 
 #include <vector>
 
@@ -81,8 +80,6 @@ public :
   void computeMinJ(MElement *const *el, int numEl, double *minJ, bool *straight) {
     std::vector<CurvedMeshPluginData> save(_data);
     _data.clear();
-    double time = Cpu();
-    //Rmv add OS.H
     _computeMinMaxJandValidity(el, numEl);
     if (minJ) {
       for (unsigned int i = 0; i < _data.size(); ++i) {

@@ -33,6 +33,10 @@ class GradientBasis {
 class JacobianBasis {
  private:
   const GradientBasis *_gradBasis;
+  const bezierBasis *_bezier;
+
+  const int _tag, _dim, _jacOrder;
+
   fullMatrix<double> gradShapeMatXFast, gradShapeMatYFast, gradShapeMatZFast;
   fullVector<double> primGradShapeBarycenterX, primGradShapeBarycenterY, primGradShapeBarycenterZ;
   fullMatrix<double> matrixPrimJac2Jac;                                   // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
@@ -42,19 +46,16 @@ class JacobianBasis {
   int numJacNodesFast;
 
  public :
-  const bezierBasis *bezier;
-
   JacobianBasis(int tag, int jacOrder = -1);
 
   // Get methods
+  inline int getJacOrder() const { return _jacOrder; }
   inline int getNumJacNodes() const { return numJacNodes; }
   inline int getNumJacNodesFast() const { return numJacNodesFast; }
   inline int getNumMapNodes() const { return numMapNodes; }
   inline int getNumPrimJacNodes() const { return numPrimJacNodes; }
   inline int getNumPrimMapNodes() const { return numPrimMapNodes; }
-  inline int getNumDivisions() const { return bezier->getNumDivision(); }
-  inline int getNumSubNodes() const { return bezier->subDivisor.size1(); }
-  inline int getNumLagCoeff() const { return bezier->getNumLagCoeff(); }
+  const bezierBasis* getBezier() const;
 
   // Jacobian evaluation methods
   double getPrimNormals1D(const fullMatrix<double> &nodesXYZ, fullMatrix<double> &result) const;
@@ -99,16 +100,13 @@ class JacobianBasis {
   }
   //
   inline void lag2Bez(const fullVector<double> &jac, fullVector<double> &bez) const {
-    bezier->matrixLag2Bez.mult(jac,bez);
+    getBezier()->matrixLag2Bez.mult(jac,bez);
   }
   inline void lag2Bez(const fullMatrix<double> &jac, fullMatrix<double> &bez) const {
-    bezier->matrixLag2Bez.mult(jac,bez);
+    getBezier()->matrixLag2Bez.mult(jac,bez);
   }
   inline void primJac2Jac(const fullVector<double> &primJac, fullVector<double> &jac) const {
     matrixPrimJac2Jac.mult(primJac,jac);
-  }
-  inline void subdivideBezierCoeff(const fullVector<double> &bez, fullVector<double> &result) const {
-    bezier->subDivisor.mult(bez,result);
   }
   //
   void interpolate(const fullVector<double> &jacobian,
@@ -116,6 +114,7 @@ class JacobianBasis {
                    fullMatrix<double> &result, bool areBezier = false) const;
 
   //
+  static int jacobianOrder(int tag);
   static int jacobianOrder(int parentType, int order);
   static fullMatrix<double> generateJacMonomialsPyramid(int order);
   static fullMatrix<double> generateJacPointsPyramid(int order);

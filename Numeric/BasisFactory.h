@@ -9,6 +9,7 @@
 #include "MElement.h"
 #include "MPyramid.h"
 #include "nodalBasis.h"
+#include "bezierBasis.h"
 #include "JacobianBasis.h"
 #include "MetricBasis.h"
 
@@ -33,10 +34,10 @@ class BasisFactory
 
   static const GradientBasis* getGradientBasis(int tag, int order);
   static const bezierBasis* getBezierBasis(int parentTag, int order);
-  static inline const bezierBasis* getBezierBasis(int tag) {
-      return getBezierBasis(ElementType::ParentTypeFromTag(tag),
-                            ElementType::OrderFromTag(tag) );
-    }
+  static const bezierBasis* getBezierBasis(int tag) {
+    return getBezierBasis(ElementType::ParentTypeFromTag(tag),
+                          ElementType::OrderFromTag(tag) );
+  }
 
   static void clearAll();
 };

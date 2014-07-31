@@ -89,10 +89,27 @@ fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
   if (order == 0) return points;
 
   for (int i = 0; i < points.size1(); ++i) {
-    points(i, 2) = points(i, 2) / order;
+    points(i, 2) = 1 - points(i, 2) / order;
     const double duv = -1. + points(i, 2);
     points(i, 0) = duv + points(i, 0) * 2. / order;
     points(i, 1) = duv + points(i, 1) * 2. / order;
+  }
+  return points;
+}
+
+fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk, bool forSerendipPoints)
+{
+  fullMatrix<double> points =
+      gmshGenerateMonomialsPyramidGeneral(pyr, nij, nk, forSerendipPoints);
+
+  if (points.size1() == 1) return points;
+
+  for (int i = 0; i < points.size1(); ++i) {
+    int div = pyr ? nk+nij : std::max(nij, nk);
+    points(i, 2) = (nk - points(i, 2)) / div;
+    const double duv = -1. + points(i, 2);
+    points(i, 0) = duv + points(i, 0) * 2. / div;
+    points(i, 1) = duv + points(i, 1) * 2. / div;
   }
   return points;
 }
@@ -668,28 +685,29 @@ fullMatrix<double> gmshGenerateMonomialsPyramid(int order, bool forSerendipPoint
   int nbMonomials = forSerendipPoints ? 5 + (order-1)*8 :
                                         (order+1)*((order+1)+1)*(2*(order+1)+1)/6;
   if (forSerendipPoints && !order) nbMonomials = 1;
+
   fullMatrix<double> monomials(nbMonomials, 3);
 
   monomials(0, 0) = 0;
   monomials(0, 1) = 0;
-  monomials(0, 2) = 0;
+  monomials(0, 2) = order;
 
   if (order > 0) {
     monomials(1, 0) = order;
     monomials(1, 1) = 0;
-    monomials(1, 2) = 0;
+    monomials(1, 2) = order;
 
     monomials(2, 0) = order;
     monomials(2, 1) = order;
-    monomials(2, 2) = 0;
+    monomials(2, 2) = order;
 
     monomials(3, 0) = 0;
     monomials(3, 1) = order;
-    monomials(3, 2) = 0;
+    monomials(3, 2) = order;
 
     monomials(4, 0) = 0;
     monomials(4, 1) = 0;
-    monomials(4, 2) = order;
+    monomials(4, 2) = 0;
 
     if (order > 1) {
       int index = 5;
@@ -751,12 +769,155 @@ fullMatrix<double> gmshGenerateMonomialsPyramid(int order, bool forSerendipPoint
 
         if (order > 2) {
           fullMatrix<double> inner = gmshGenerateMonomialsPyramid(order - 3);
-          inner.add(1);
+          fullMatrix<double> prox;
+          prox.setAsProxy(inner, 0, 2);
+          prox.add(1);
+          prox.setAsProxy(inner, 2, 1);
+          prox.add(2);
           monomials.copy(inner, 0, nbMonomials - index, 0, 3, index, 0);
         }
       }
     }
   }
+  return monomials;
+}
+
+fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(
+    bool pyr, int nij, int nk, bool forSerendipPoints)
+{
+  if (nij < 0 || nk < 0) {
+    Msg::Fatal("Wrong arguments for pyramid's monomials generation !");
+  }
+  if (!pyr && nk > 0 && nij == 0) {
+    Msg::Error("Wrong argument association for pyramid's monomials generation ! Setting nij to 1");
+    nij = 1;
+  }
+
+  // If monomials for pyramidal space, generate them in gmsh convention.
+  if (forSerendipPoints || (pyr && nij == 0))
+    return gmshGenerateMonomialsPyramid(nk, forSerendipPoints);
+
+  // Otherwise, just put corners at first places,
+  // order of others having no importance.
+
+  int nbMonomials;
+  if (pyr) {
+    nbMonomials = 0;
+    for (int k = 0; k <= nk; ++k) {
+      nbMonomials += (k+nij+1) * (k+nij+1);
+    }
+  }
+  else nbMonomials = (nij+1) * (nij+1) * (nk+1);
+
+  fullMatrix<double> monomials(nbMonomials, 3);
+
+  monomials(0, 0) = 0;
+  monomials(0, 1) = 0;
+  monomials(0, 2) = nk;
+
+  if (nk == 0 && nij == 0) return monomials;
+
+  // Here, nij > 0
+  int nijBase = pyr ? nk+nij : nij;
+
+  // Corners
+  monomials(1, 0) = nijBase;
+  monomials(1, 1) = 0;
+  monomials(1, 2) = nk;
+
+  monomials(2, 0) = nijBase;
+  monomials(2, 1) = nijBase;
+  monomials(2, 2) = nk;
+
+  monomials(3, 0) = 0;
+  monomials(3, 1) = nijBase;
+  monomials(3, 2) = nk;
+
+  if (nk > 0) {
+    monomials(4, 0) = 0;
+    monomials(4, 1) = 0;
+    monomials(4, 2) = 0;
+
+    monomials(5, 0) = nij;
+    monomials(5, 1) = 0;
+    monomials(5, 2) = 0;
+
+    monomials(6, 0) = nij;
+    monomials(6, 1) = nij;
+    monomials(6, 2) = 0;
+
+    monomials(7, 0) = 0;
+    monomials(7, 1) = nij;
+    monomials(7, 2) = 0;
+  }
+
+  int index = 8;
+
+  // Base
+  if (nijBase > 1) {
+    for (int iedge = 0; iedge < 4; ++iedge) {
+      int i0 = iedge;
+      int i1 = (iedge+1) % 4;
+
+      int u0 = (monomials(i1,0)-monomials(i0,0)) / nijBase;
+      int u1 = (monomials(i1,1)-monomials(i0,1)) / nijBase;
+
+      for (int i = 1; i < nijBase; ++i, ++index) {
+        monomials(index, 0) = monomials(i0, 0) + i * u0;
+        monomials(index, 1) = monomials(i0, 1) + i * u1;
+        monomials(index, 2) = nk;
+      }
+    }
+
+    for (int i = 1; i < nijBase; ++i) {
+      for (int j = 1; j < nijBase; ++j, ++index) {
+        monomials(index, 0) = i;
+        monomials(index, 1) = j;
+        monomials(index, 2) = nk;
+      }
+    }
+  }
+
+  // Above base
+  if (nk > 0) {
+    // Top
+    if (nij > 1) {
+      for (int iedge = 0; iedge < 4; ++iedge) {
+        int i0 = 4 + iedge;
+        int i1 = 4 + (iedge+1)%4;
+
+        int u0 = (monomials(i1,0)-monomials(i0,0)) / nijBase;
+        int u1 = (monomials(i1,1)-monomials(i0,1)) / nijBase;
+
+        for (int i = 1; i < nijBase; ++i, ++index) {
+          monomials(index, 0) = monomials(i0, 0) + i * u0;
+          monomials(index, 1) = monomials(i0, 1) + i * u1;
+          monomials(index, 2) = 0;
+        }
+      }
+
+      for (int i = 1; i < nijBase; ++i) {
+        for (int j = 1; j < nijBase; ++j, ++index) {
+          monomials(index, 0) = i;
+          monomials(index, 1) = j;
+          monomials(index, 2) = 0;
+        }
+      }
+    }
+
+    // Between bottom & top
+    for (int k = nk-1; k > 0; ++k) {
+      int currentnij = pyr ? k+nij : nij;
+      for (int i = 0; i <= currentnij; ++i) {
+        for (int j = 0; j <= currentnij; ++j, ++index) {
+          monomials(index, 0) = i;
+          monomials(index, 1) = j;
+          monomials(index, 2) = k;
+        }
+      }
+    }
+  }
+
   return monomials;
 }
 

@@ -443,7 +443,7 @@ double MetricBasis::getBoundRmin(MElement *el, MetricData *&md, fullMatrix<doubl
 
 void MetricBasis::_fillInequalities(int metricOrder)
 {
-  int dimSimplex = _bezier->_dimSimplex;
+  int dimSimplex = _bezier->getDimSimplex();
   int dim = _bezier->getDim();
   fullMatrix<int> exp(_bezier->_exponents.size1(), _bezier->_exponents.size2());
   for (int i = 0; i < _bezier->_exponents.size1(); ++i) {
@@ -533,11 +533,11 @@ void MetricBasis::_fillInequalities(int metricOrder)
     }
   }
 
-  exp.resize(_jacobian->bezier->_exponents.size1(),
-             _jacobian->bezier->_exponents.size2());
-  for (int i = 0; i < _jacobian->bezier->_exponents.size1(); ++i) {
-    for (int j = 0; j < _jacobian->bezier->_exponents.size2(); ++j) {
-      exp(i, j) = static_cast<int>(_jacobian->bezier->_exponents(i, j) + .5);
+  exp.resize(_jacobian->getBezier()->_exponents.size1(),
+             _jacobian->getBezier()->_exponents.size2());
+  for (int i = 0; i < _jacobian->getBezier()->_exponents.size1(); ++i) {
+    for (int j = 0; j < _jacobian->getBezier()->_exponents.size2(); ++j) {
+      exp(i, j) = static_cast<int>(_jacobian->getBezier()->_exponents(i, j) + .5);
     }
   }
   int njac = _jacobian->getNumJacNodes();
@@ -1060,7 +1060,7 @@ double MetricBasis::_subdivideForRmin(
   const int numCoeff = md->_metcoeffs->size2();
   const int numMetPnts = md->_metcoeffs->size1();
   const int numJacPnts = md->_jaccoeffs->size();
-  const int numSub = _jacobian->getNumDivisions();
+  const int numSub = _bezier->getNumDivision();
   subdomains.push(md);
 
   static unsigned int aa = 200;
@@ -1082,7 +1082,7 @@ double MetricBasis::_subdivideForRmin(
     subcoeffs = new fullMatrix<double>(numSub*numMetPnts, numCoeff);
     subjac = new fullVector<double>(numSub*numJacPnts);
     _bezier->subDivisor.mult(*current->_metcoeffs, *subcoeffs);
-    _jacobian->subdivideBezierCoeff(*current->_jaccoeffs, *subjac);
+    _jacobian->getBezier()->subDivisor.mult(*current->_jaccoeffs, *subjac);
     int depth = current->_depth;
     int num = current->_num;
       //Msg::Info("d %d RminBez %g / %g", depth, current->_RminBez, RminLag);

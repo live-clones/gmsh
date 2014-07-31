@@ -13,6 +13,7 @@
 #include "BasisFactory.h"
 #include "Numeric.h"
 
+
 namespace {
 // Sub Control Points
 std::vector< fullMatrix<double> > generateSubPointsLine(int order)
@@ -229,8 +230,8 @@ std::vector< fullMatrix<double> > generateSubPointsPyr(int order)
     std::vector< fullMatrix<double> > subPoints(4);
     fullMatrix<double> prox;
 
-    subPoints[0] = JacobianBasis::generateJacMonomialsPyramid(0);
-    subPoints[0].scale(.5/(order+2));
+    subPoints[0] = gmshGenerateMonomialsPyramidGeneral(false, 2, 0);
+    subPoints[0].scale(.5/2);
 
     subPoints[1].copy(subPoints[0]);
     prox.setAsProxy(subPoints[1], 0, 1);
@@ -250,7 +251,7 @@ std::vector< fullMatrix<double> > generateSubPointsPyr(int order)
     std::vector< fullMatrix<double> > subPoints(8);
     fullMatrix<double> ref, prox;
 
-    subPoints[0] = JacobianBasis::generateJacMonomialsPyramid(order);
+    subPoints[0] = gmshGenerateMonomialsPyramidGeneral(false, order+2, order);
     subPoints[0].scale(.5/(order+2));
 
     subPoints[1].copy(subPoints[0]);
@@ -449,7 +450,7 @@ void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
   result.resize(uvw.size1(), coeffs.size2());
   int dimSimplex;
   fullMatrix<double> bezuvw = uvw;
-  switch (type) {
+  switch (_type) {
   case TYPE_HEX:
     if (!bezCoord) {
       bezuvw.add(1);
@@ -474,7 +475,7 @@ void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
 
   default:
   case TYPE_PYR:
-    Msg::Error("Bezier interpolation not implemented for type of element %d", type);
+    Msg::Error("Bezier interpolation not implemented for type of element %d", _type);
     /*bezuvw[0] = .5 * (1 + uvw[0]);
     bezuvw[1] = .5 * (1 + uvw[1]);
     bezuvw[2] = uvw[2];
@@ -489,7 +490,7 @@ void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
     for (int i = 0; i < numCoeff; i++) {
       double dd = 1;
       double pointCompl = 1.;
-      int exponentCompl = order;
+      int exponentCompl = _order;
       for (int k = 0; k < dimSimplex; k++) {
         dd *= nChoosek(exponentCompl, (int) _exponents(i, k))
           * pow(bezuvw(m, k), _exponents(i, k));
@@ -498,10 +499,10 @@ void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
       }
       dd *= pow_int(pointCompl, exponentCompl);
 
-      for (int k = dimSimplex; k < dim; k++) {
-        dd *= nChoosek(order, (int) _exponents(i, k))
+      for (int k = dimSimplex; k < _exponents.size2(); k++) {
+        dd *= nChoosek(_order, (int) _exponents(i, k))
             * pow_int(bezuvw(m, k), _exponents(i, k))
-            * pow_int(1. - bezuvw(m, k), order - _exponents(i, k));
+            * pow_int(1. - bezuvw(m, k), _order - _exponents(i, k));
       }
       for (int n = 0; n < coeffs.size2(); ++n)
         result(m, n) += coeffs(i, n) * dd;
@@ -511,108 +512,99 @@ void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
 
 void bezierBasis::_construct(int parentType, int p)
 {
-  order = p;
-  type = parentType;
+  _order = p;
+  _type = parentType;
   std::vector< fullMatrix<double> > subPoints;
 
   if (parentType == TYPE_PYR) {
-    dim = 3;
-    numLagCoeff = 8;
-    _exponents = JacobianBasis::generateJacMonomialsPyramid(order);
+    _numLagCoeff = p == 0 ? 4 : 8;
+    _exponents = gmshGenerateMonomialsPyramidGeneral(false, 2, _order);
 
-    subPoints = generateSubPointsPyr(order);
-    numDivisions = static_cast<int>(subPoints.size());
+    subPoints = generateSubPointsPyr(_order);
+    _numDivisions = static_cast<int>(subPoints.size());
 
     fullMatrix<double> bezierPoints;
     bezierPoints.resize(_exponents.size1(), _exponents.size2());
-    const double p = order + 2;
+    const double ord = _order + 2;
     for (int i = 0; i < bezierPoints.size1(); ++i) {
-      bezierPoints(i, 2) = _exponents(i, 2) / p;
+      bezierPoints(i, 2) = _exponents(i, 2) / ord;
       const double scale = 1. - bezierPoints(i, 2);
-      bezierPoints(i, 0) = _exponents(i, 0) / p * scale;
-      bezierPoints(i, 1) = _exponents(i, 1) / p * scale;
+      bezierPoints(i, 0) = _exponents(i, 0) / ord * scale;
+      bezierPoints(i, 1) = _exponents(i, 1) / ord * scale;
     }
 
-    matrixBez2Lag = generateBez2LagMatrixPyramid(_exponents, bezierPoints, order);
+    matrixBez2Lag = generateBez2LagMatrixPyramid(_exponents, bezierPoints, _order);
     matrixBez2Lag.invert(matrixLag2Bez);
-    subDivisor = generateSubDivisorPyramid(_exponents, subPoints, matrixLag2Bez, order);
+    subDivisor = generateSubDivisorPyramid(_exponents, subPoints, matrixLag2Bez, _order);
     return;
   }
 
   switch (parentType) {
     case TYPE_PNT :
-      dim = 0;
-      numLagCoeff = 1;
+      _numLagCoeff = 1;
       _dimSimplex = 0;
       _exponents = gmshGenerateMonomialsLine(0);
       subPoints.push_back(gmshGeneratePointsLine(0));
       break;
     case TYPE_LIN : {
-      dim = 1;
-      numLagCoeff = order == 0 ? 1 : 2;
+      _numLagCoeff = _order == 0 ? 1 : 2;
       _dimSimplex = 0;
-      _exponents = gmshGenerateMonomialsLine(order);
-      subPoints = generateSubPointsLine(order);
+      _exponents = gmshGenerateMonomialsLine(_order);
+      subPoints = generateSubPointsLine(_order);
       break;
     }
     case TYPE_TRI : {
-      dim = 2;
-      numLagCoeff = order == 0 ? 1 : 3;
+      _numLagCoeff = _order == 0 ? 1 : 3;
       _dimSimplex = 2;
-      _exponents = gmshGenerateMonomialsTriangle(order);
-      subPoints = generateSubPointsTriangle(order);
+      _exponents = gmshGenerateMonomialsTriangle(_order);
+      subPoints = generateSubPointsTriangle(_order);
       break;
     }
     case TYPE_QUA : {
-      dim = 2;
-      numLagCoeff = order == 0 ? 1 : 4;
+      _numLagCoeff = _order == 0 ? 1 : 4;
       _dimSimplex = 0;
-      _exponents = gmshGenerateMonomialsQuadrangle(order);
-      subPoints = generateSubPointsQuad(order);
+      _exponents = gmshGenerateMonomialsQuadrangle(_order);
+      subPoints = generateSubPointsQuad(_order);
       break;
     }
     case TYPE_TET : {
-      dim = 3;
-      numLagCoeff = order == 0 ? 1 : 4;
+      _numLagCoeff = _order == 0 ? 1 : 4;
       _dimSimplex = 3;
-      _exponents = gmshGenerateMonomialsTetrahedron(order);
-      subPoints = generateSubPointsTetrahedron(order);
+      _exponents = gmshGenerateMonomialsTetrahedron(_order);
+      subPoints = generateSubPointsTetrahedron(_order);
       break;
     }
     case TYPE_PRI : {
-      dim = 3;
-      numLagCoeff = order == 0 ? 1 : 6;
+      _numLagCoeff = _order == 0 ? 1 : 6;
       _dimSimplex = 2;
-      _exponents = gmshGenerateMonomialsPrism(order);
-      subPoints = generateSubPointsPrism(order);
+      _exponents = gmshGenerateMonomialsPrism(_order);
+      subPoints = generateSubPointsPrism(_order);
       break;
     }
     case TYPE_HEX : {
-      dim = 3;
-      numLagCoeff = order == 0 ? 1 : 8;
+      _numLagCoeff = _order == 0 ? 1 : 8;
       _dimSimplex = 0;
-      _exponents = gmshGenerateMonomialsHexahedron(order);
-      subPoints = generateSubPointsHex(order);
+      _exponents = gmshGenerateMonomialsHexahedron(_order);
+      subPoints = generateSubPointsHex(_order);
       break;
     }
     default : {
       Msg::Error("Unknown function space of parentType %d : "
           "reverting to TET_1", parentType);
-      dim = 3;
-      order = 0;
-      numLagCoeff = 4;
+      _order = 0;
+      _numLagCoeff = 4;
       _dimSimplex = 3;
-      _exponents = gmshGenerateMonomialsTetrahedron(order);
-      subPoints = generateSubPointsTetrahedron(order);
+      _exponents = gmshGenerateMonomialsTetrahedron(_order);
+      subPoints = generateSubPointsTetrahedron(_order);
       break;
     }
   }
-  numDivisions = static_cast<int>(subPoints.size());
+  _numDivisions = static_cast<int>(subPoints.size());
 
   fullMatrix<double> bezierPoints = _exponents;
-  bezierPoints.scale(1./order);
+  bezierPoints.scale(1./_order);
 
-  matrixBez2Lag = generateBez2LagMatrix(_exponents, bezierPoints, order, _dimSimplex);
+  matrixBez2Lag = generateBez2LagMatrix(_exponents, bezierPoints, _order, _dimSimplex);
   matrixBez2Lag.invert(matrixLag2Bez);
-  subDivisor = generateSubDivisor(_exponents, subPoints, matrixLag2Bez, order, _dimSimplex);
+  subDivisor = generateSubDivisor(_exponents, subPoints, matrixLag2Bez, _order, _dimSimplex);
 }

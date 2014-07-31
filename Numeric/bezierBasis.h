@@ -16,11 +16,11 @@ class MElement;
 class bezierBasis {
  private :
   // the 'numLagCoeff' first exponents are related to 'Lagrangian' values
-  int numLagCoeff;
-  int dim, type, order;
-  int numDivisions;
- public:
-  int _dimSimplex;
+  int _numLagCoeff;
+  int _type, _order;
+  int _numDivisions, _dimSimplex;
+
+  friend class MetricBasis;
   fullMatrix<double> _exponents;
 
  public :
@@ -37,10 +37,12 @@ class bezierBasis {
   }
 
   // get methods
-  inline int getDim() const {return dim;}
-  inline int getOrder() const {return order;}
-  inline int getNumLagCoeff() const {return numLagCoeff;}
-  inline int getNumDivision() const {return numDivisions;}
+  inline int getDim() const {return _exponents.size2();}
+  inline int getOrder() const {return _order;}
+  inline int getDimSimplex() const {return _dimSimplex;}
+  inline int getNumLagCoeff() const {return _numLagCoeff;}
+  inline int getNumDivision() const {return _numDivisions;}
+  inline int getNumSubNodes() const {return subDivisor.size1();}
 
   // Interpolation of n functions on N points :
   // coeffs(numCoeff, n) and uvw(N, dim)

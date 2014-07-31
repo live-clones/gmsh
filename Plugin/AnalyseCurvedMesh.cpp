@@ -38,12 +38,12 @@ private:
   fullVector<double> _jacBez;
   double _minL, _maxL, _minB, _maxB; //Extremum of Jac at corners and of bezier values
   int _depthSub;
-  const JacobianBasis *_jfs;
+  const bezierBasis *_bfs;
 
 public:
-  BezierJacobian(fullVector<double> &, const JacobianBasis *, int depth);
+  BezierJacobian(fullVector<double>&, const bezierBasis*, int depth);
   void subDivisions(fullVector<double> &vect) const
-    {_jfs->subdivideBezierCoeff(_jacBez, vect);}
+    {_bfs->subDivisor.mult(_jacBez, vect);}
 
   bool boundsOk(double tol, double minL, double maxL) {
     return (minL <= 0 || _minB > 0) &&
@@ -294,6 +294,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
     Msg::Error("Jacobian function space not implemented for type of element %d", el[0]->getNum());
     return;
   }
+  const bezierBasis *bfs = jfs->getBezier();
 
   _data.reserve(_data.size() + numEl);
 
@@ -301,7 +302,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
   const int numMapNodes = jfs->getNumMapNodes();
   fullVector<double> jacobian(numSamplingPt);
   fullVector<double> jacBez(numSamplingPt);
-  fullVector<double> subJacBez(jfs->getNumSubNodes());
+  fullVector<double> subJacBez(bfs->getNumSubNodes());
 
   for (int k = 0; k < numEl; ++k) {
     fullMatrix<double> nodesXYZ(numMapNodes,3);
@@ -309,7 +310,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
     jfs->getScaledJacobian(nodesXYZ,jacobian);
     jfs->lag2Bez(jacobian, jacBez);
 
-    BezierJacobian *bj = new BezierJacobian(jacBez, jfs, 0);
+    BezierJacobian *bj = new BezierJacobian(jacBez, bfs, 0);
     std::vector<BezierJacobian*> heap;
     heap.push_back(bj);
 
@@ -330,9 +331,9 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
                      el[k]->getTypeForMSH());
       }
 
-      for (int i = 0; i < jfs->getNumDivisions(); i++) {
+      for (int i = 0; i < bfs->getNumDivision(); i++) {
         jacBez.setAsProxy(subJacBez, i * numSamplingPt, numSamplingPt);
-        BezierJacobian *newbj = new BezierJacobian(jacBez, jfs, currentDepth);
+        BezierJacobian *newbj = new BezierJacobian(jacBez, bfs, currentDepth);
         minL = std::min(minL, newbj->minL());
         maxL = std::max(maxL, newbj->maxL());
 
@@ -358,9 +359,9 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
                      el[k]->getTypeForMSH());
       }
 
-      for (int i = 0; i < jfs->getNumDivisions(); i++) {
+      for (int i = 0; i < bfs->getNumDivision(); i++) {
         jacBez.setAsProxy(subJacBez, i * numSamplingPt, numSamplingPt);
-        BezierJacobian *newbj = new BezierJacobian(jacBez, jfs, currentDepth);
+        BezierJacobian *newbj = new BezierJacobian(jacBez, bfs, currentDepth);
         minL = std::min(minL, newbj->minL());
         maxL = std::max(maxL, newbj->maxL());
 
@@ -495,15 +496,15 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
 }
 
 BezierJacobian::BezierJacobian(fullVector<double> &v,
-    const JacobianBasis *jfs, int depth)
+    const bezierBasis *bfs, int depth)
 {
   _jacBez = v;
   _depthSub = depth;
-  _jfs = jfs;
+  _bfs = bfs;
 
   _minL = _maxL = v(0);
   int i = 1;
-  for (; i < jfs->getNumLagCoeff(); i++) {
+  for (; i < bfs->getNumLagCoeff(); i++) {
     if (_minL > v(i)) _minL = v(i);
     if (_maxL < v(i)) _maxL = v(i);
   }

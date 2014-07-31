@@ -29,6 +29,11 @@ fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip = false);
 
 fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip = false);
 
+// If 'serendip' == true, generate points for serendipity pyramid of order 'nk',
+// else if 'pyr' == true, generate points for space {X^i Y^j Z^k | i,j <= k+'nij', k <= 'nk'},
+// else if 'pyr' == false, generate points for space {X^i Y^j Z^k | i,j <= 'nij', k <= 'nk'}
+fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk, bool serendip = false);
+
 
 // Monomial exponents
 
@@ -45,7 +50,9 @@ fullMatrix<double> gmshGenerateMonomialsPrism(int order, bool forSerendipPoints 
 fullMatrix<double> gmshGenerateMonomialsPrismSerendipity(int order);
 
 fullMatrix<double> gmshGenerateMonomialsPyramid(int order, bool forSerendipPoints = false);
-//fullMatrix<double> gmshGenerateMonomialsPyramidSerendipity(int order); //TODO
+
+// See explanations for 'gmshGeneratePointsPyramidGeneral'
+fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij, int nk, bool forSerendipPoints = false);
 
 
 

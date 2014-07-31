@@ -3,6 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include "JacobianBasis.h"
+
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 
@@ -88,15 +90,11 @@ void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
   if (dxyzdZ) gradShapeMatZ.mult(nodes, *dxyzdZ);
 }
 
-JacobianBasis::JacobianBasis(int tag, int jacOrder)
+JacobianBasis::JacobianBasis(int tag, int jacOrder) :
+    _bezier(NULL), _tag(tag), _dim(ElementType::DimensionFromTag(tag)),
+    _jacOrder(jacOrder >= 0 ? jacOrder : JacobianBasis::jacobianOrder(tag))
 {
   const int parentType = ElementType::ParentTypeFromTag(tag);
-  const int order = ElementType::OrderFromTag(tag);
-  int jacobianOrder;
-  if (jacOrder < 0)
-    jacobianOrder = JacobianBasis::jacobianOrder(parentType, order);
-  else
-    jacobianOrder = jacOrder;
   const int primJacobianOrder = JacobianBasis::jacobianOrder(parentType, 1);
 
   fullMatrix<double> lagPoints;                                  // Sampling points
@@ -106,25 +104,25 @@ JacobianBasis::JacobianBasis(int tag, int jacOrder)
       lagPoints = gmshGeneratePointsLine(0);
       break;
     case TYPE_LIN :
-      lagPoints = gmshGeneratePointsLine(jacobianOrder);
+      lagPoints = gmshGeneratePointsLine(_jacOrder);
       break;
     case TYPE_TRI :
-      lagPoints = gmshGeneratePointsTriangle(jacobianOrder,false);
+      lagPoints = gmshGeneratePointsTriangle(_jacOrder,false);
       break;
     case TYPE_QUA :
-      lagPoints = gmshGeneratePointsQuadrangle(jacobianOrder,false);
+      lagPoints = gmshGeneratePointsQuadrangle(_jacOrder,false);
       break;
     case TYPE_TET :
-      lagPoints = gmshGeneratePointsTetrahedron(jacobianOrder,false);
+      lagPoints = gmshGeneratePointsTetrahedron(_jacOrder,false);
       break;
     case TYPE_PRI :
-      lagPoints = gmshGeneratePointsPrism(jacobianOrder,false);
+      lagPoints = gmshGeneratePointsPrism(_jacOrder,false);
       break;
     case TYPE_HEX :
-      lagPoints = gmshGeneratePointsHexahedron(jacobianOrder,false);
+      lagPoints = gmshGeneratePointsHexahedron(_jacOrder,false);
       break;
     case TYPE_PYR :
-      lagPoints = generateJacPointsPyramid(jacobianOrder);
+      lagPoints = generateJacPointsPyramid(_jacOrder);
       break;
     default :
       Msg::Error("Unknown Jacobian function space for element tag %d", tag);
@@ -132,11 +130,8 @@ JacobianBasis::JacobianBasis(int tag, int jacOrder)
   }
   numJacNodes = lagPoints.size1();
 
-  // Store Bezier basis
-  bezier = BasisFactory::getBezierBasis(parentType, jacobianOrder);
-
   // Store shape function gradients of mapping at Jacobian nodes
-  _gradBasis = BasisFactory::getGradientBasis(tag, jacobianOrder);
+  _gradBasis = BasisFactory::getGradientBasis(tag, _jacOrder);
 
   // Compute matrix for lifting from primary Jacobian basis to Jacobian basis
   int primJacType = ElementType::getTag(parentType, primJacobianOrder, false);
@@ -201,6 +196,14 @@ JacobianBasis::JacobianBasis(int tag, int jacOrder)
       gradShapeMatZFast(i, j) = allDPsiFast(j, 3*i+2);
     }
   }
+}
+
+const bezierBasis* JacobianBasis::getBezier() const {
+  if (_bezier) return _bezier;
+  const int parentType = ElementType::ParentTypeFromTag(_tag);
+  const_cast<JacobianBasis*>(this)->_bezier =
+      BasisFactory::getBezierBasis(parentType, _jacOrder);
+  return _bezier;
 }
 
 // Computes (unit) normals to straight line element at barycenter (with norm of gradient as return value)
@@ -286,10 +289,7 @@ inline void JacobianBasis::getJacobianGeneral(int nJacNodes, const fullMatrix<do
                                               const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
                                               const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const
 {
-
-  const int dim = bezier->getDim();
-
-  switch (dim) {
+  switch (_dim) {
 
     case 0 : {
       for (int i = 0; i < nJacNodes; i++) jacobian(i) = 1.;
@@ -383,8 +383,7 @@ inline void JacobianBasis::getJacobianGeneral(int nJacNodes, const fullMatrix<do
                                               const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
                                               const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const
 {
-
-  switch (bezier->getDim()) {
+  switch (_dim) {
 
     case 0 : {
       const int numEl = nodesX.size2();
@@ -508,8 +507,7 @@ void JacobianBasis::getSignedJacAndGradientsGeneral(int nJacNodes, const fullMat
                                                     const fullMatrix<double> &normals,
                                                     fullMatrix<double> &JDJ) const
 {
-
-  switch (bezier->getDim()) {
+  switch (_dim) {
 
     case 0 : {
       for (int i = 0; i < nJacNodes; i++) {
@@ -654,9 +652,9 @@ void JacobianBasis::getMetricMinAndGradients(const fullMatrix<double> &nodesXYZ,
       gradLambdaJ(l, i + 1 * numMapNodes) = aetaxi * dPhidX + aetaeta * dPhidY;
     }
   }
-
 }
 
+// Research purpose (to be removed ?)
 void JacobianBasis::interpolate(const fullVector<double> &jacobian,
                                 const fullMatrix<double> &uvw,
                                 fullMatrix<double> &result,
@@ -671,7 +669,7 @@ void JacobianBasis::interpolate(const fullVector<double> &jacobian,
   else
     lag2Bez(jacobian, bez);
 
-  bezier->interpolate(bezM, uvw, result);
+  getBezier()->interpolate(bezM, uvw, result);
 }
 
 fullMatrix<double> JacobianBasis::generateJacMonomialsPyramid(int order)
@@ -683,6 +681,7 @@ fullMatrix<double> JacobianBasis::generateJacMonomialsPyramid(int order)
     fullMatrix<double> prox, quad = gmshGenerateMonomialsQuadrangle(2);
     prox.setAsProxy(monomials, 0, 2);
     prox.setAll(quad);
+    // monomials has been initialized to 0, so third column is ok
     return monomials;
   }
 
@@ -787,6 +786,13 @@ fullMatrix<double> JacobianBasis::generateJacPointsPyramid(int order)
   }
 
   return points;
+}
+
+int JacobianBasis::jacobianOrder(int tag)
+{
+  const int parentType = ElementType::ParentTypeFromTag(tag);
+  const int order = ElementType::OrderFromTag(tag);
+  return jacobianOrder(parentType, order);
 }
 
 int JacobianBasis::jacobianOrder(int parentType, int order)
