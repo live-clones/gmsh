@@ -1105,7 +1105,7 @@ double gLevelsetYarn::operator()(double x, double y, double z) const
       MVertex *v2 = e->getVertex(1);
       SPoint3 p1(v1->x(), v1->y(), v1->z());
       SPoint3 p2(v2->x(), v2->y(), v2->z());
-      if(e->getType() == TYPE_LIN){
+      /*if(e->getType() == TYPE_LIN){
         signedDistancesPointsEllipseLine(iDistances, iDistancesE, iIsInYarn, iClosePts,
                                          pts, p1, p2, majorAxis, minorAxis,
                                          majorAxis, minorAxis, typeLs);
@@ -1114,7 +1114,7 @@ double gLevelsetYarn::operator()(double x, double y, double z) const
         MVertex *v3 = e->getVertex(2);
         SPoint3 p3(v3->x(),v3->y(),v3->z());
         signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1, p2, p3);
-      }
+      }*/
     }
   }
   return dist;
