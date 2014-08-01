@@ -107,9 +107,9 @@ fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk, b
   for (int i = 0; i < points.size1(); ++i) {
     int div = pyr ? nk+nij : std::max(nij, nk);
     points(i, 2) = (nk - points(i, 2)) / div;
-    const double duv = -1. + points(i, 2);
-    points(i, 0) = duv + points(i, 0) * 2. / div;
-    points(i, 1) = duv + points(i, 1) * 2. / div;
+    const double scale = 1. - points(i, 2);
+    points(i, 0) = scale * (-1 + points(i, 0) * 2. / div);
+    points(i, 1) = scale * (-1 + points(i, 1) * 2. / div);
   }
   return points;
 }
@@ -833,6 +833,8 @@ fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(
   monomials(3, 1) = nijBase;
   monomials(3, 2) = nk;
 
+  int index = 4;
+
   if (nk > 0) {
     monomials(4, 0) = 0;
     monomials(4, 1) = 0;
@@ -849,9 +851,9 @@ fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(
     monomials(7, 0) = 0;
     monomials(7, 1) = nij;
     monomials(7, 2) = 0;
-  }
 
-  int index = 8;
+    index = 8;
+  }
 
   // Base
   if (nijBase > 1) {

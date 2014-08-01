@@ -28,10 +28,6 @@ fullMatrix<double> gmshGeneratePointsHexahedron(int order, bool serendip = false
 fullMatrix<double> gmshGeneratePointsPrism(int order, bool serendip = false);
 
 fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip = false);
-
-// If 'serendip' == true, generate points for serendipity pyramid of order 'nk',
-// else if 'pyr' == true, generate points for space {X^i Y^j Z^k | i,j <= k+'nij', k <= 'nk'},
-// else if 'pyr' == false, generate points for space {X^i Y^j Z^k | i,j <= 'nij', k <= 'nk'}
 fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk, bool serendip = false);
 
 
@@ -49,9 +45,11 @@ fullMatrix<double> gmshGenerateMonomialsHexaSerendipity(int order);
 fullMatrix<double> gmshGenerateMonomialsPrism(int order, bool forSerendipPoints = false);
 fullMatrix<double> gmshGenerateMonomialsPrismSerendipity(int order);
 
+// Generate monomials of pyramidal nodal space {X^i Y^j Z^k | i,j <= k, k <= 'order'},
 fullMatrix<double> gmshGenerateMonomialsPyramid(int order, bool forSerendipPoints = false);
-
-// See explanations for 'gmshGeneratePointsPyramidGeneral'
+// If 'serendip' == true, generate monomials of serendipity pyramid at order 'nk',
+// else if 'pyr' == true, generate monomials of space {X^i Y^j Z^k | i,j <= k+'nij', k <= 'nk'},
+// else if 'pyr' == false, generate monomials of space {X^i Y^j Z^k | i,j <= 'nij', k <= 'nk'}
 fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(bool pyr, int nij, int nk, bool forSerendipPoints = false);
 
 

@@ -252,6 +252,9 @@ std::vector< fullMatrix<double> > generateSubPointsPyr(int order)
     fullMatrix<double> ref, prox;
 
     subPoints[0] = gmshGenerateMonomialsPyramidGeneral(false, order+2, order);
+    prox.setAsProxy(subPoints[0], 2, 1);
+    prox.scale(-1);
+    prox.add(order);
     subPoints[0].scale(.5/(order+2));
 
     subPoints[1].copy(subPoints[0]);
@@ -380,10 +383,10 @@ fullMatrix<double> generateBez2LagMatrixPyramid
           * nChoosek(order, exponent(j, 2))
           * pow_int(point(i, 0) / denom, exponent(j, 0))
           * pow_int(point(i, 1) / denom, exponent(j, 1))
-          * pow_int(point(i, 2)        , exponent(j, 2))
+          * pow_int(1. - point(i, 2)   , exponent(j, 2))
           * pow_int(1. - point(i, 0) / denom, order + 2 - exponent(j, 0))
           * pow_int(1. - point(i, 1) / denom, order + 2 - exponent(j, 1))
-          * pow_int(1. - point(i, 2)        , order     - exponent(j, 2));
+          * pow_int(point(i, 2)             , order     - exponent(j, 2));
     }
   }
   return bez2Lag;
@@ -527,7 +530,7 @@ void bezierBasis::_construct(int parentType, int p)
     bezierPoints.resize(_exponents.size1(), _exponents.size2());
     const double ord = _order + 2;
     for (int i = 0; i < bezierPoints.size1(); ++i) {
-      bezierPoints(i, 2) = _exponents(i, 2) / ord;
+      bezierPoints(i, 2) = (_order - _exponents(i, 2)) / ord;
       const double scale = 1. - bezierPoints(i, 2);
       bezierPoints(i, 0) = _exponents(i, 0) / ord * scale;
       bezierPoints(i, 1) = _exponents(i, 1) / ord * scale;

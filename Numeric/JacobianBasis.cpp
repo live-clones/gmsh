@@ -54,7 +54,7 @@ GradientBasis::GradientBasis(int tag, int order)
       samplingPoints = gmshGeneratePointsHexahedron(order,false);
       break;
     case TYPE_PYR :
-      samplingPoints = JacobianBasis::generateJacPointsPyramid(order);
+      samplingPoints = gmshGeneratePointsPyramidGeneral(false, order+2, order);
       break;
     default :
       Msg::Error("Unknown Jacobian function space for element tag %d", tag);
@@ -92,10 +92,10 @@ void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
 
 JacobianBasis::JacobianBasis(int tag, int jacOrder) :
     _bezier(NULL), _tag(tag), _dim(ElementType::DimensionFromTag(tag)),
-    _jacOrder(jacOrder >= 0 ? jacOrder : JacobianBasis::jacobianOrder(tag))
+    _jacOrder(jacOrder >= 0 ? jacOrder : jacobianOrder(tag))
 {
   const int parentType = ElementType::ParentTypeFromTag(tag);
-  const int primJacobianOrder = JacobianBasis::jacobianOrder(parentType, 1);
+  const int primJacobianOrder = jacobianOrder(parentType, 1);
 
   fullMatrix<double> lagPoints;                                  // Sampling points
 
@@ -122,7 +122,7 @@ JacobianBasis::JacobianBasis(int tag, int jacOrder) :
       lagPoints = gmshGeneratePointsHexahedron(_jacOrder,false);
       break;
     case TYPE_PYR :
-      lagPoints = generateJacPointsPyramid(_jacOrder);
+      lagPoints = gmshGeneratePointsPyramidGeneral(false, _jacOrder+2, _jacOrder);
       break;
     default :
       Msg::Error("Unknown Jacobian function space for element tag %d", tag);
