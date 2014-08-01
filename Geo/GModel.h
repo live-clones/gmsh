@@ -283,7 +283,7 @@ class GModel
   void snapVertices();
 
   // fill a vector containing all the entities in the model
-  void getEntities(std::vector<GEntity*> &entities) const;
+  void getEntities(std::vector<GEntity*> &entities,int dim=-1) const;
 
   // return the highest number associated with an elementary entity of
   // a given dimension (or the highest overall if dim < 0)

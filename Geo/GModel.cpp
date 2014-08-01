@@ -358,13 +358,39 @@ void GModel::snapVertices()
   }
 }
 
-void GModel::getEntities(std::vector<GEntity*> &entities) const
+void GModel::getEntities(std::vector<GEntity*> &entities,int dim) const
 {
   entities.clear();
-  entities.insert(entities.end(), vertices.begin(), vertices.end());
-  entities.insert(entities.end(), edges.begin(), edges.end());
-  entities.insert(entities.end(), faces.begin(), faces.end());
-  entities.insert(entities.end(), regions.begin(), regions.end());
+  switch (dim) {
+  case 0:
+    {
+      entities.insert(entities.end(), vertices.begin(), vertices.end());
+      break;
+    }
+  case 1:
+    {
+      entities.insert(entities.end(), edges.begin(), edges.end());
+      break;
+    }
+  case 2:
+    {
+      entities.insert(entities.end(), faces.begin(), faces.end());
+      break;
+    }
+  case 3:
+    {
+      entities.insert(entities.end(), regions.begin(), regions.end());
+      break;
+    }
+  default:
+    {
+      entities.insert(entities.end(), vertices.begin(), vertices.end());
+      entities.insert(entities.end(), edges.begin(), edges.end());
+      entities.insert(entities.end(), faces.begin(), faces.end());
+      entities.insert(entities.end(), regions.begin(), regions.end());
+      break;
+    }
+  }
 }
 
 int GModel::getMaxElementaryNumber(int dim)
