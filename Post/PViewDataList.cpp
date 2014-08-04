@@ -905,7 +905,7 @@ void PViewDataList::setOrder2(int type)
   case TYPE_TET: typeMSH = MSH_TET_10; break;
   case TYPE_HEX: typeMSH = MSH_HEX_27; break;
   case TYPE_PRI: typeMSH = MSH_PRI_18; break;
-  // case TYPE_PYR: typeMSH = MSH_PYR_14; break;
+  case TYPE_PYR: typeMSH = MSH_PYR_14; break;
   }
   const polynomialBasis *fs = (polynomialBasis*)BasisFactory::getNodalBasis(typeMSH);
   if(!fs){

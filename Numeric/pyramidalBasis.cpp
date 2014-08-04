@@ -18,7 +18,7 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
 
   int num_points = points.size1();
 
-  coefficients.resize(num_points, num_points);
+  bergotCoefficients.resize(num_points, num_points);
   double *fval = new double[num_points];
 
   // Invert the Vandermonde matrix
@@ -26,6 +26,29 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
   for (int j = 0; j < num_points; j++) {
     bergot->f(points(j,0), points(j,1), points(j, 2), fval);
     for (int i = 0; i < num_points; i++) VDM(i,j) = fval[i];
+  }
+  VDM.invert(bergotCoefficients);
+
+  coefficients.resize(num_points,num_points);
+  monomials.resize(num_points,3);
+
+  int idx = 0;
+  for (int i=0;i<=order;i++) {
+    for (int j=0;j<=order;j++) {
+      for (int k=0;k<=order-std::max(i,j);k++,idx++) {
+        monomials(idx,0) = i;
+        monomials(idx,1) = j;
+        monomials(idx,2) = k;
+        
+        for (int l=0;l<num_points;l++) {
+          double oneMinW = std::max(1e-14,1-points(l,2));
+          VDM(idx,l)  = std::pow(points(l,0),i);
+          VDM(idx,l) *= std::pow(points(l,1),j);
+          VDM(idx,l) *= std::pow(points(l,2),k);
+          VDM(idx,l) *= std::pow(oneMinW,std::max(i,j)-i-j);
+        }
+      }
+    }
   }
   VDM.invert(coefficients);
 
@@ -55,7 +78,7 @@ void pyramidalBasis::f(double u, double v, double w, double *val) const
 
   for (int i = 0; i < N; i++) {
     val[i] = 0.;
-    for (int j = 0; j < N; j++) val[i] += coefficients(i,j)*fval[j];
+    for (int j = 0; j < N; j++) val[i] += bergotCoefficients(i,j)*fval[j];
   }
 
   delete[] fval;
@@ -76,7 +99,7 @@ void pyramidalBasis::f(const fullMatrix<double> &coord, fullMatrix<double> &sf) 
     bergot->f(coord(iPt,0), coord(iPt,1), coord(iPt,2), fval);
     for (int i = 0; i < N; i++) {
       sf(iPt,i) = 0.;
-      for (int j = 0; j < N; j++) sf(iPt,i) += coefficients(i,j)*fval[j];
+      for (int j = 0; j < N; j++) sf(iPt,i) += bergotCoefficients(i,j)*fval[j];
     }
   }
 
@@ -97,9 +120,9 @@ void pyramidalBasis::df(double u, double v, double w, double grads[][3]) const
   for (int i = 0; i < N; i++) {
     grads[i][0] = 0.; grads[i][1] = 0.; grads[i][2] = 0.;
     for (int j = 0; j < N; j++) {
-      grads[i][0] += coefficients(i,j)*dfval[j][0];
-      grads[i][1] += coefficients(i,j)*dfval[j][1];
-      grads[i][2] += coefficients(i,j)*dfval[j][2];
+      grads[i][0] += bergotCoefficients(i,j)*dfval[j][0];
+      grads[i][1] += bergotCoefficients(i,j)*dfval[j][1];
+      grads[i][2] += bergotCoefficients(i,j)*dfval[j][2];
     }
   }
 

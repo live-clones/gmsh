@@ -9,6 +9,7 @@
 #include <list>
 #include <set>
 #include <vector>
+#include <cstdlib>
 #include "fullMatrix.h"
 
 class PViewData;
@@ -287,6 +288,55 @@ class adaptiveHexahedron {
   static void recurError(adaptiveHexahedron *h, double AVG, double tol);
 };
 
+// modif koen.hillewaert@cenaero.be, 31/07/2014
+
+class adaptivePyramid {
+ public:
+  bool visible;
+  adaptiveVertex *p[5];
+  adaptivePyramid *e[10];
+  static std::list<adaptivePyramid*> all;
+  static std::set<adaptiveVertex> allVertices;
+  static int numNodes, numEdges;
+ public:
+  adaptivePyramid(adaptiveVertex *p1, 
+                  adaptiveVertex *p2, 
+                  adaptiveVertex *p3, 
+                  adaptiveVertex *p4, 
+                  adaptiveVertex *p5)
+    : visible(false)
+  {
+    p[0] = p1;
+    p[1] = p2;
+    p[2] = p3;
+    p[3] = p4;
+    p[4] = p5;
+    for (int i=0;i<10;i++) e[i] = NULL;
+  }
+  inline double V() const
+  {
+    return (p[0]->val + 
+            p[1]->val + 
+            p[2]->val + 
+            p[3]->val +
+            p[4]->val) / 5.;
+  }
+  // barycentric coordinates ? 
+  inline static void GSF(double u, double v, double w, fullVector<double> &sf)
+  {
+    double ww = 0.25 / std::max(1e-14,1.-w);
+    sf(0) = (1 - u - w) * (1 - v - w) * ww;
+    sf(1) = (1 + u - w) * (1 - v - w) * ww;
+    sf(2) = (1 + u - w) * (1 + v - w) * ww;
+    sf(3) = (1 - u - w) * (1 + v - w) * ww;
+    sf(4) = w;
+  }
+  static void create(int maxlevel);
+  static void recurCreate(adaptivePyramid *h, int maxlevel, int level);
+  static void error(double AVG, double tol);
+  static void recurError(adaptivePyramid *h, double AVG, double tol);
+};
+
 class PCoords { 
  public:
   double c[3];
@@ -346,6 +396,7 @@ class adaptiveData {
   adaptiveElements<adaptiveTetrahedron> *_tetrahedra;
   adaptiveElements<adaptiveHexahedron> *_hexahedra;
   adaptiveElements<adaptivePrism> *_prisms;
+  adaptiveElements<adaptivePyramid> *_pyramids;
  public:
   static double timerInit, timerAdapt;
   adaptiveData(PViewData *data);

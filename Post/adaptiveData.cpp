@@ -20,6 +20,7 @@ std::set<adaptiveVertex> adaptiveQuadrangle::allVertices;
 std::set<adaptiveVertex> adaptiveTetrahedron::allVertices;
 std::set<adaptiveVertex> adaptiveHexahedron::allVertices;
 std::set<adaptiveVertex> adaptivePrism::allVertices;
+std::set<adaptiveVertex> adaptivePyramid::allVertices;
 
 std::list<adaptivePoint*> adaptivePoint::all;
 std::list<adaptiveLine*> adaptiveLine::all;
@@ -28,6 +29,7 @@ std::list<adaptiveQuadrangle*> adaptiveQuadrangle::all;
 std::list<adaptiveTetrahedron*> adaptiveTetrahedron::all;
 std::list<adaptiveHexahedron*> adaptiveHexahedron::all;
 std::list<adaptivePrism*> adaptivePrism::all;
+std::list<adaptivePyramid*> adaptivePyramid::all;
 
 int adaptivePoint::numNodes = 1;
 int adaptiveLine::numNodes = 2;
@@ -36,6 +38,7 @@ int adaptiveQuadrangle::numNodes = 4;
 int adaptivePrism::numNodes = 6;
 int adaptiveTetrahedron::numNodes = 4;
 int adaptiveHexahedron::numNodes = 8;
+int adaptivePyramid::numNodes = 5;
 
 int adaptivePoint::numEdges = 0;
 int adaptiveLine::numEdges = 1;
@@ -44,6 +47,7 @@ int adaptiveQuadrangle::numEdges = 4;
 int adaptivePrism::numEdges = 9;
 int adaptiveTetrahedron::numEdges = 6;
 int adaptiveHexahedron::numEdges = 12;
+int adaptivePyramid::numEdges = 8;
 
 template <class T>
 static void cleanElement()
@@ -62,6 +66,40 @@ static void computeShapeFunctions(fullMatrix<double> *coeffs, fullMatrix<double>
     (*tmp)(i) = pow(u, (*eexps)(i, 0));
     if(eexps->size2() > 1) (*tmp)(i) *= pow(v, (*eexps)(i, 1));
     if(eexps->size2() > 2) (*tmp)(i) *= pow(w, (*eexps)(i, 2));
+  }
+  coeffs->mult(*tmp, *sf);
+}
+
+/*! Bergot space is characterised by polynomials
+  \f$ \mathcal B_{ijk} = 
+  \mathcal P_i \left(\frac{\xi }{1-\zeta}\right) 
+  \mathcal P_j \left(\frac{\eta}{1-\zeta}\right) 
+  \left(1-\zeta\right)^{max(i,j)} 
+  \mathcal P^{2 max(i,j),0}_k \left(2 \zeta -1\right)~|~i,j \leq p, k \leq p - max(i,j) \f$
+  and hence by the "monomials"
+  \f$ \mu_{ijk} = 
+  \left(\frac{\xi }{\1-\zeta}\right)^i 
+  \left(\frac{\eta}{\1-\zeta}\right)^j 
+  \left(1-\zeta\right)^{max(i,j)} \zeta^k~|~i,j \leq p~,~k \leq p-max(i,j)
+  \f$
+*/
+static void computeShapeFunctionsPyramid(fullMatrix<double> *coeffs, 
+                                         fullMatrix<double> *eexps,
+                                         double u, double v, double w, 
+                                         fullVector<double> *sf,
+                                         fullVector<double> *tmp)
+{
+
+  double oneMinW = (w==1) ? 1e-12:1-w;
+  for(int l = 0; l < eexps->size1(); l++) {
+    int i = (*eexps)(l,0);
+    int j = (*eexps)(l,1);
+    int k = (*eexps)(l,2);
+    int m = std::max(i,j);
+    (*tmp)(l)  = pow(u,i);
+    (*tmp)(l) *= pow(v,j);
+    (*tmp)(l) *= pow(w,k);
+    (*tmp)(l) *= pow(oneMinW,m-i-j);
   }
   coeffs->mult(*tmp, *sf);
 }
@@ -883,6 +921,163 @@ void adaptivePrism::recurError(adaptivePrism *p, double AVG, double tol)
   }
 }
 
+void adaptivePyramid::create(int maxlevel)
+{
+  cleanElement<adaptivePyramid>();
+  adaptiveVertex *p1 = adaptiveVertex::add(-1, -1, 0, allVertices);
+  adaptiveVertex *p2 = adaptiveVertex::add(1, -1, 0, allVertices);
+  adaptiveVertex *p3 = adaptiveVertex::add(1, 1, 0, allVertices);
+  adaptiveVertex *p4 = adaptiveVertex::add(-1, 1, 0, allVertices);
+  adaptiveVertex *p5 = adaptiveVertex::add(0, 0, 1, allVertices);
+  adaptivePyramid *p = new adaptivePyramid(p1, p2, p3, p4, p5);
+  recurCreate(p, maxlevel, 0);
+}
+
+void adaptivePyramid::recurCreate(adaptivePyramid *p, int maxlevel, int level)
+{
+  all.push_back(p);
+  if(level++ >= maxlevel) return;
+
+  // quad points 
+  adaptiveVertex *p1 = p->p[0]; 
+  adaptiveVertex *p2 = p->p[1];
+  adaptiveVertex *p3 = p->p[2];
+  adaptiveVertex *p4 = p->p[3];
+
+  // apex
+  adaptiveVertex *p5 = p->p[4];
+  
+  // center of the quad
+
+  adaptiveVertex *p1234 = adaptiveVertex::add
+    ((p1->x + p2->x + p3->x + p4->x)*0.25,
+     (p1->y + p2->y + p3->y + p4->y)*0.25,
+     (p1->z + p2->z + p3->z + p4->z)*0.25,allVertices);
+  
+  // quad edge points
+
+  adaptiveVertex *p12 = adaptiveVertex::add
+    ((p1->x + p2->x)*0.5,
+     (p1->y + p2->y)*0.5,
+     (p1->z + p2->z)*0.5,allVertices);
+  
+  adaptiveVertex *p23 = adaptiveVertex::add
+    ((p2->x + p3->x)*0.5,
+     (p2->y + p3->y)*0.5,
+     (p2->z + p3->z)*0.5,allVertices);
+  
+  adaptiveVertex *p34 = adaptiveVertex::add
+    ((p3->x + p4->x)*0.5,
+     (p3->y + p4->y)*0.5,
+     (p3->z + p4->z)*0.5,allVertices);
+  
+  adaptiveVertex *p41 = adaptiveVertex::add
+    ((p4->x + p1->x)*0.5,
+     (p4->y + p1->y)*0.5,
+     (p4->z + p1->z)*0.5,allVertices);
+  
+  // quad vertex to apex edge points
+
+  adaptiveVertex *p15 = adaptiveVertex::add
+    ((p1->x + p5->x)*0.5,
+     (p1->y + p5->y)*0.5,
+     (p1->z + p5->z)*0.5,allVertices);
+  
+  adaptiveVertex *p25 = adaptiveVertex::add
+    ((p2->x + p5->x)*0.5,
+     (p2->y + p5->y)*0.5,
+     (p2->z + p5->z)*0.5,allVertices);
+  
+  adaptiveVertex *p35 = adaptiveVertex::add
+    ((p3->x + p5->x)*0.5,
+     (p3->y + p5->y)*0.5,
+     (p3->z + p5->z)*0.5,allVertices);
+  
+  adaptiveVertex *p45 = adaptiveVertex::add
+    ((p4->x + p5->x)*0.5,
+     (p4->y + p5->y)*0.5,
+     (p4->z + p5->z)*0.5,allVertices);
+  
+  // four base pyramids on the quad base 
+
+  p->e[0] = new adaptivePyramid(p1, p12, p1234, p41, p15);
+  recurCreate(p->e[0], maxlevel, level);
+  p->e[1] = new adaptivePyramid(p2, p23, p1234, p12, p25);
+  recurCreate(p->e[1], maxlevel, level);
+  p->e[2] = new adaptivePyramid(p3, p34, p1234, p23, p35);
+  recurCreate(p->e[2], maxlevel, level);
+  p->e[3] = new adaptivePyramid(p4, p41, p1234, p34, p45);
+  recurCreate(p->e[3], maxlevel, level);
+
+  // top pyramids
+
+  p->e[4] = new adaptivePyramid(p15,p25,p35,p45,p5);
+  recurCreate(p->e[4], maxlevel, level);
+  p->e[5] = new adaptivePyramid(p15,p45,p35,p25,p1234);
+  recurCreate(p->e[5], maxlevel, level);
+
+  // degenerated pyramids to replace the remaining tetrahedral holes
+  // degenerated quad in the interior of the element, apices on the quad edges
+
+  p->e[6] = new adaptivePyramid(p1234,p25,p15,p1234,p12);
+  recurCreate(p->e[6], maxlevel, level);
+  p->e[7] = new adaptivePyramid(p1234,p35,p25,p1234,p23);
+  recurCreate(p->e[7], maxlevel, level);
+  p->e[8] = new adaptivePyramid(p1234,p45,p35,p1234,p34);
+  recurCreate(p->e[8], maxlevel, level);
+  p->e[9] = new adaptivePyramid(p1234,p15,p45,p1234,p41);
+  recurCreate(p->e[9], maxlevel, level);
+}
+
+void adaptivePyramid::error(double AVG, double tol)
+{
+  adaptivePyramid *p = *all.begin();
+  recurError(p, AVG, tol);
+}
+
+void adaptivePyramid::recurError(adaptivePyramid *p, double AVG, double tol)
+{
+  if(!p->e[0])
+    p->visible = true;
+  else {
+    double vi[10];
+    for (int i = 0; i < 10; i++) vi[i] = p->e[i]->V();
+    double vr = 0;
+    for (int i = 0; i < 6 ; i++) vr += vi[i];     // pyramids   have volume V/8
+    for (int i = 6; i < 10; i++) vr += vi[i]*0.5; // tetrahedra have volume V/16
+    vr /= 8.;
+    const double v = p->V();
+    if(!p->e[0]->e[0]) {
+      if(fabs(v - vr) > AVG * tol){
+        p->visible = false;
+        for (int i = 0; i < 10; i++) recurError(p->e[i],AVG,tol);
+      }
+      else
+        p->visible = true;
+    }
+    else {
+      bool err = false;
+      for(int i = 0; i < 10; i++){
+        double vj[10];
+        for (int j = 0; j < 10; j++) vj[j] = p->e[i]->e[j]->V();
+        double vri = 0;
+        for (int j = 0; j < 6 ; j++) vri += vj[j];
+        for (int j = 6; j < 10; j++) vri += vj[j]*0.5;
+        vri /= 8.;
+        err |= (fabs((vi[i] - vri)) > AVG * tol);
+      }
+      err |= (fabs((v - vr)) > AVG * tol);
+      if(err) {
+        p->visible = false;
+        for(int i = 0; i < 10; i++)
+          recurError(p->e[i], AVG, tol);
+      }
+      else
+        p->visible = true;
+    }
+  }
+}
+
 template <class T>
 adaptiveElements<T>::adaptiveElements(std::vector<fullMatrix<double>*> &p)
   : _coeffsVal(0), _eexpsVal(0), _interpolVal(0),
@@ -945,6 +1140,61 @@ void adaptiveElements<T>::init(int level)
                             it->x, it->y, it->z, &sfg, tmpg);
     else
       T::GSF(it->x, it->y, it->z, sfg);
+    for(int j = 0; j < numNodes; j++)
+      (*_interpolGeom)(i, j) = sfg(j);
+
+    i++;
+  }
+
+  if(tmpv) delete tmpv;
+  if(tmpg) delete tmpg;
+
+#ifdef TIMER
+  adaptiveData::timerInit += GetTimeInSeconds() - t1;
+  return;
+#endif
+}
+
+template <>
+void adaptiveElements<adaptivePyramid>::init(int level)
+{
+#ifdef TIMER
+  double t1 = GetTimeInSeconds();
+#endif
+
+  adaptivePyramid::create(level);
+  int numVals  = _coeffsVal  ? _coeffsVal->size1()  : adaptivePyramid::numNodes;
+  int numNodes = _coeffsGeom ? _coeffsGeom->size1() : adaptivePyramid::numNodes;
+
+  if(_interpolVal) delete _interpolVal;
+  _interpolVal = new fullMatrix<double>(adaptivePyramid::allVertices.size(), numVals);
+
+  if(_interpolGeom) delete _interpolGeom;
+  _interpolGeom = new fullMatrix<double>(adaptivePyramid::allVertices.size(), numNodes);
+  
+  fullVector<double> sfv(numVals), *tmpv = 0;
+  fullVector<double> sfg(numNodes), *tmpg = 0;
+  if(_eexpsVal) tmpv = new fullVector<double>(_eexpsVal->size1());
+  if(_eexpsGeom) tmpg = new fullVector<double>(_eexpsGeom->size1());
+
+  int i = 0;
+  for(std::set<adaptiveVertex>::iterator it = adaptivePyramid::allVertices.begin();
+      it != adaptivePyramid::allVertices.end(); ++it) {
+
+    if(_coeffsVal && _eexpsVal)
+      computeShapeFunctionsPyramid(_coeffsVal, _eexpsVal,
+                            it->x, it->y, it->z, &sfv, tmpv);
+    else
+      adaptivePyramid::GSF(it->x, it->y, it->z, sfv);
+
+    for(int j = 0; j < numVals; j++)
+      (*_interpolVal)(i, j) = sfv(j);
+
+    if(_coeffsGeom && _eexpsGeom)
+      computeShapeFunctionsPyramid(_coeffsGeom, _eexpsGeom,
+                            it->x, it->y, it->z, &sfg, tmpg);
+    else
+      adaptivePyramid::GSF(it->x, it->y, it->z, sfg);
     for(int j = 0; j < numNodes; j++)
       (*_interpolGeom)(i, j) = sfg(j);
 
@@ -1134,6 +1384,11 @@ void adaptiveElements<T>::addInView(double tol, int step,
     outNb = (numComp == 1) ? &out->NbSI : &out->NbVI;
     outList = (numComp == 1) ? &out->SI : &out->VI;
     break;
+  case 8:
+    numEle = in->getNumPyramids();
+    outNb = (numComp == 1) ? &out->NbSY : &out->NbVY;
+    outList = (numComp == 1) ? &out->SY : &out->VY;
+    break;
   case 12:
     numEle = in->getNumHexahedra();
     outNb = (numComp == 1) ? &out->NbSH : &out->NbVH;
@@ -1227,6 +1482,10 @@ adaptiveData::adaptiveData(PViewData *data)
     _inData->getInterpolationMatrices(TYPE_HEX, p);
     _hexahedra = new adaptiveElements<adaptiveHexahedron>(p);
   }
+  if(_inData->getNumPyramids()){
+    _inData->getInterpolationMatrices(TYPE_PYR, p);
+    _pyramids = new adaptiveElements<adaptivePyramid>(p);
+  }
 }
 
 adaptiveData::~adaptiveData()
@@ -1238,6 +1497,7 @@ adaptiveData::~adaptiveData()
   if(_tetrahedra) delete _tetrahedra;
   if(_prisms) delete _prisms;
   if(_hexahedra) delete _hexahedra;
+  if(_pyramids) delete _pyramids;
   delete _outData;
 }
 
@@ -1257,6 +1517,7 @@ void adaptiveData::changeResolution(int step, int level, double tol,
     if(_tetrahedra) _tetrahedra->init(level);
     if(_prisms) _prisms->init(level);
     if(_hexahedra) _hexahedra->init(level);
+    if(_pyramids)  _pyramids->init(level);
   }
   if(plug || _step != step || _level != level || _tol != tol){
     _outData->setDirty(true);
@@ -1267,6 +1528,7 @@ void adaptiveData::changeResolution(int step, int level, double tol,
     if(_tetrahedra) _tetrahedra->addInView(tol, step, _inData, _outData, plug);
     if(_prisms) _prisms->addInView(tol, step, _inData, _outData, plug);
     if(_hexahedra) _hexahedra->addInView(tol, step, _inData, _outData, plug);
+    if(_pyramids) _pyramids->addInView(tol, step, _inData, _outData, plug);
     _outData->finalize();
   }
   _step = step;

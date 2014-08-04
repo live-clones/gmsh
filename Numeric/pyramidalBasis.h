@@ -18,7 +18,12 @@ class pyramidalBasis: public nodalBasis
  private:
   // Orthogonal basis for the pyramid
   BergotBasis *bergot;
+  fullMatrix<double> bergotCoefficients;
+
+ public:
+  
   fullMatrix<double> coefficients;
+  fullMatrix<double> monomials;
 
  public:
   pyramidalBasis(int tag);

@@ -702,6 +702,50 @@ static bool recur_sign_change(adaptivePrism *t,
   }
 }
 
+static bool recur_sign_change(adaptivePyramid *t,
+                              const GMSH_LevelsetPlugin *plug)
+{
+  if (!t->e[0] || t->visible){
+    double v1 = plug->levelset(t->p[0]->X, t->p[0]->Y, t->p[0]->Z, t->p[0]->val);
+    double v2 = plug->levelset(t->p[1]->X, t->p[1]->Y, t->p[1]->Z, t->p[1]->val);
+    double v3 = plug->levelset(t->p[2]->X, t->p[2]->Y, t->p[2]->Z, t->p[2]->val);
+    double v4 = plug->levelset(t->p[3]->X, t->p[3]->Y, t->p[3]->Z, t->p[3]->val);
+    double v5 = plug->levelset(t->p[4]->X, t->p[4]->Y, t->p[4]->Z, t->p[4]->val);
+    if(v1 * v2 > 0 && v1 * v3 > 0 && v1 * v4 > 0 && v1 * v5 > 0)
+      t->visible = false;
+    else
+      t->visible = true;
+    return t->visible;
+  }
+  else{
+    bool sc1  = recur_sign_change(t->e[0], plug);
+    bool sc2  = recur_sign_change(t->e[1], plug);
+    bool sc3  = recur_sign_change(t->e[2], plug);
+    bool sc4  = recur_sign_change(t->e[3], plug);
+    bool sc5  = recur_sign_change(t->e[4], plug);
+    bool sc6  = recur_sign_change(t->e[5], plug);
+    bool sc7  = recur_sign_change(t->e[6], plug);
+    bool sc8  = recur_sign_change(t->e[7], plug);
+    bool sc9  = recur_sign_change(t->e[8], plug);
+    bool sc10 = recur_sign_change(t->e[9], plug);
+    if(sc1 || sc2 || sc3 || sc4 || sc5 || sc6 || sc7 || sc8 || sc9 || sc10){
+      if (!sc1)  t->e[0]->visible = true;
+      if (!sc2)  t->e[1]->visible = true;
+      if (!sc3)  t->e[2]->visible = true;
+      if (!sc4)  t->e[3]->visible = true;
+      if (!sc5)  t->e[4]->visible = true;
+      if (!sc6)  t->e[5]->visible = true;
+      if (!sc7)  t->e[6]->visible = true;
+      if (!sc8)  t->e[7]->visible = true;
+      if (!sc9)  t->e[8]->visible = true;
+      if (!sc10) t->e[9]->visible = true;
+      return true;
+    }
+    t->visible = false;
+    return false;
+  }
+}
+
 void GMSH_LevelsetPlugin::assignSpecificVisibility() const
 {
   if(adaptiveTriangle::all.size()){
@@ -722,6 +766,10 @@ void GMSH_LevelsetPlugin::assignSpecificVisibility() const
   }
   if(adaptivePrism::all.size()){
     adaptivePrism *p = *adaptivePrism::all.begin();
+    if(!p->visible) p->visible = !recur_sign_change(p, this);
+  }
+  if(adaptivePyramid::all.size()){
+    adaptivePyramid *p = *adaptivePyramid::all.begin();
     if(!p->visible) p->visible = !recur_sign_change(p, this);
   }
 }
