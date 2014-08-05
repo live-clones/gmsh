@@ -558,7 +558,7 @@ void GetOptions(int argc, char *argv[])
                 listDistances.clear();
                 int nbOfCount = 17;
                 listDistances.resize(nbOfCount);
-                for (unsigned int Count = 0; Count < nbOfCount; Count++){
+                for (int Count = 0; Count < nbOfCount; Count++){
                 	std::cout<<"Count"<<Count<<std::endl;
                 	double distMinGlobal = 0.0;
                 	int jMinGlobal = 0;

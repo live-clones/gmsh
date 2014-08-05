@@ -682,10 +682,10 @@ void Frame_field::buildSmoothness(){
 	std::map<MVertex*, std::vector<MVertex* > > Neighbours;
 	for(unsigned int i = 0; i < entities.size(); i++){
 		GEntity* eTmp = entities[i];
-		for (int j = 0; j < eTmp->getNumMeshElements();j++){
+		for (unsigned int j = 0; j < eTmp->getNumMeshElements();j++){
 			MElement* elem = eTmp->getMeshElement(j);
-			for (unsigned int k = 0;k < elem->getNumVertices();k++){
-				for (unsigned int l = k;l < elem->getNumVertices();l++){
+			for (int k = 0;k < elem->getNumVertices();k++){
+				for (int l = k;l < elem->getNumVertices();l++){
 					if (k != l){
 						MVertex* v1 = elem->getVertex(k);
 						MVertex* v2 = elem->getVertex(l);

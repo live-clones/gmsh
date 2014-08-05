@@ -199,7 +199,7 @@ Qtn cross3D::correspQuat(){
 }
 
 Qtn cross3D::rotationDirectTo(const cross3D &y) const{
-	  double d, dmin, jmin, kmin, th1, th2;
+	  double dmin, th1, th2;
 	  SVector3 axis;
 	  Qtn Rxy1, Rxy2;
 
