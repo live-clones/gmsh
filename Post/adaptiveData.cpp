@@ -1449,7 +1449,7 @@ void adaptiveElements<T>::addInView(double tol, int step,
 adaptiveData::adaptiveData(PViewData *data)
   : _step(-1), _level(-1), _tol(-1.), _inData(data),
     _points(0), _lines(0), _triangles(0), _quadrangles(0),
-    _tetrahedra(0), _hexahedra(0), _prisms(0)
+    _tetrahedra(0), _hexahedra(0), _prisms(0),_pyramids(0)
 {
   _outData = new PViewDataList(true);
   _outData->setName(data->getName() + "_adapted");
