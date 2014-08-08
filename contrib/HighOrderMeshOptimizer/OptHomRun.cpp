@@ -690,7 +690,7 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
   std::map<MVertex*, std::vector<MElement *> > vertex2elements;
   std::map<MElement*,GEntity*> element2entity;
   std::set<MElement*> badasses;
-  double maxdist = 0;
+  double maxdist = 0.;                                                  // TODO: To be cleaned?
   for (int iEnt = 0; iEnt < entities.size(); ++iEnt) {
     GEntity* &entity = entities[iEnt];
     if (entity->dim() != p.dim || (p.onlyVisible && !entity->getVisibility())) continue;
@@ -698,21 +698,18 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
               entity->tag());
     calcVertex2Elements(p.dim,entity,vertex2elements);
     if (p.optPrimSurfMesh) calcElement2Entity(entity,element2entity);
-    for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) { // Detect bad elements
+    for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) {       // Detect bad elements
       double jmin, jmax;
       MElement *el = entity->getMeshElement(iEl);
-      const double DISTE =computeBndDist(el,2,fabs(p.discrTolerance));
-      //      printf("Element %d Distance %12.5E\n",iEl,DISTE);
-      maxdist = std::max(DISTE, maxdist);
       if (el->getDim() == p.dim) {
-	if (p.optCAD && DISTE > p.optCADDistMax)
-	  badasses.insert(el);
-
-	el->scaledJacRange(jmin, jmax, p.optPrimSurfMesh ? entity : 0);
-	if (p.BARRIER_MIN_METRIC > 0) jmax = jmin;
-	if (jmin < p.BARRIER_MIN || jmax > p.BARRIER_MAX){
-	  badasses.insert(el);
+        if (p.optCAD) {
+          const double DISTE =computeBndDist(el,2,fabs(p.discrTolerance));
+          maxdist = std::max(DISTE, maxdist);
+          if (DISTE > p.optCADDistMax) badasses.insert(el);
         }
+        el->scaledJacRange(jmin, jmax, p.optPrimSurfMesh ? entity : 0);
+        if (p.BARRIER_MIN_METRIC > 0) jmax = jmin;
+        if (jmin < p.BARRIER_MIN || jmax > p.BARRIER_MAX) badasses.insert(el);
       }
     }
   }
