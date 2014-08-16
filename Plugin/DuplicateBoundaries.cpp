@@ -1513,8 +1513,8 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 		std::map<GVertex*,GEdge* > SurroudingEdges;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			GVertex* vTmp = (*itv);
-			GVertex* v1;
-			GVertex* v2;
+			GVertex* v1=0;
+			GVertex* v2=0;
 			std::map<std::pair<GVertex*,GRegion*>,GVertex* >::iterator itMap = GVertexGlobalAssociation.find(std::make_pair(vTmp,reg1));
 			if (itMap != GVertexGlobalAssociation.end()){
 				v1 = itMap->second;
@@ -1534,8 +1534,8 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 		for (std::list<GEdge*>::iterator ite = elist.begin();ite != elist.end();ite++){
 			//duplication Gedge
 			GEdge* eTmp = (*ite);
-			GEdge* e1;
-			GEdge* e2;
+			GEdge* e1=0;
+			GEdge* e2=0;
 			std::map<std::pair<GEdge*,GRegion*>,GEdge* >::iterator itMap = GEdgeGlobalAssociation.find(std::make_pair(eTmp,reg1));
 			if (itMap != GEdgeGlobalAssociation.end()){
 				e1 = itMap->second;
@@ -1601,12 +1601,12 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 		m->add(createdRegion);
 		for (unsigned int i = 0; i < fTmp->getNumMeshElements();i++){
 			MElement* elem = fTmp->getMeshElement(i);
-			MVertex* v1;
-			MVertex* v2;
-			MVertex* v3;
-			MVertex* v4;
-			MVertex* v5;
-			MVertex* v6;
+			MVertex* v1=0;
+			MVertex* v2=0;
+			MVertex* v3=0;
+			MVertex* v4=0;
+			MVertex* v5=0;
+			MVertex* v6=0;
 			std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(elem->getVertex(0),reg1));
 			if (itMap != VertexGlobalAssociation.end()){
 				v1 = itMap->second;
@@ -1679,7 +1679,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 		std::map<GVertex*,GEdge* > SurroudingEdges;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			GVertex* vTmp = (*itv);
-			GVertex* v1;
+			GVertex* v1=0;
 			std::map<std::pair<GVertex*,GRegion*>,GVertex* >::iterator itMap = GVertexGlobalAssociation.find(std::make_pair(vTmp,reg1));
 			if (itMap != GVertexGlobalAssociation.end()){
 				v1 = itMap->second;
@@ -1695,7 +1695,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 		for (std::list<GEdge*>::iterator ite = elist.begin();ite != elist.end();ite++){
 			//duplication Gedge
 			GEdge* eTmp = (*ite);
-			GEdge* e1;
+			GEdge* e1=0;
 			std::map<std::pair<GEdge*,GRegion*>,GEdge* >::iterator itMap = GEdgeGlobalAssociation.find(std::make_pair(eTmp,reg1));
 			if (itMap != GEdgeGlobalAssociation.end()){
 				e1 = itMap->second;
@@ -1752,9 +1752,9 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 		m->add(createdRegion);
 		for (unsigned int i = 0; i < fTmp->getNumMeshElements();i++){
 			MElement* elem = fTmp->getMeshElement(i);
-			MVertex* v1;
-			MVertex* v2;
-			MVertex* v3;
+			MVertex* v1=0;
+			MVertex* v2=0;
+			MVertex* v3=0;
 			std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(elem->getVertex(0),reg1));
 			if (itMap != VertexGlobalAssociation.end()){
 				v1 = itMap->second;
@@ -2402,8 +2402,8 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 		std::map<GVertex*,GEdge* > SurroudingEdges;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			GVertex* vTmp = (*itv);
-			GVertex* v1;
-			GVertex* v2;
+			GVertex* v1=0;
+			GVertex* v2=0;
 			std::map<std::pair<GVertex*,GRegion*>,GVertex* >::iterator itMap = GVertexGlobalAssociation.find(std::make_pair(vTmp,reg1));
 			if (itMap != GVertexGlobalAssociation.end()){
 				v1 = itMap->second;
@@ -2423,8 +2423,8 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 		for (std::list<GEdge*>::iterator ite = elist.begin();ite != elist.end();ite++){
 			//duplication Gedge
 			GEdge* eTmp = (*ite);
-			GEdge* e1;
-			GEdge* e2;
+			GEdge* e1=0;
+			GEdge* e2=0;
 			std::map<std::pair<GEdge*,GRegion*>,GEdge* >::iterator itMap = GEdgeGlobalAssociation.find(std::make_pair(eTmp,reg1));
 			if (itMap != GEdgeGlobalAssociation.end()){
 				e1 = itMap->second;
@@ -2490,12 +2490,12 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 		m->add(createdRegion);
 		for (unsigned int i = 0; i < fTmp->getNumMeshElements();i++){
 			MElement* elem = fTmp->getMeshElement(i);
-			MVertex* v1;
-			MVertex* v2;
-			MVertex* v3;
-			MVertex* v4;
-			MVertex* v5;
-			MVertex* v6;
+			MVertex* v1=0;
+			MVertex* v2=0;
+			MVertex* v3=0;
+			MVertex* v4=0;
+			MVertex* v5=0;
+			MVertex* v6=0;
 			std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(elem->getVertex(0),reg1));
 			if (itMap != VertexGlobalAssociation.end()){
 				v1 = itMap->second;
@@ -2659,7 +2659,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 		std::map<GVertex*,GEdge* > SurroudingEdges;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			GVertex* vTmp = (*itv);
-			GVertex* v1;
+			GVertex* v1=0;
 			std::map<std::pair<GVertex*,GRegion*>,GVertex* >::iterator itMap = GVertexGlobalAssociation.find(std::make_pair(vTmp,reg1));
 			if (itMap != GVertexGlobalAssociation.end()){
 				v1 = itMap->second;
@@ -2675,7 +2675,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 		for (std::list<GEdge*>::iterator ite = elist.begin();ite != elist.end();ite++){
 			//duplication Gedge
 			GEdge* eTmp = (*ite);
-			GEdge* e1;
+			GEdge* e1=0;
 			std::map<std::pair<GEdge*,GRegion*>,GEdge* >::iterator itMap = GEdgeGlobalAssociation.find(std::make_pair(eTmp,reg1));
 			if (itMap != GEdgeGlobalAssociation.end()){
 				e1 = itMap->second;
@@ -2732,9 +2732,9 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 		m->add(createdRegion);
 		for (unsigned int i = 0; i < fTmp->getNumMeshElements();i++){
 			MElement* elem = fTmp->getMeshElement(i);
-			MVertex* v1;
-			MVertex* v2;
-			MVertex* v3;
+			MVertex* v1=0;
+			MVertex* v2=0;
+			MVertex* v3=0;
 			std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(elem->getVertex(0),reg1));
 			if (itMap != VertexGlobalAssociation.end()){
 				v1 = itMap->second;
@@ -3276,8 +3276,8 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 			GVertex* vTmp = (*itv);
 			std::cout<<"test1"<<std::endl;
 			std::cout<<"on a fac1 "<<fac1->tag()<<" et fac2 "<<fac2->tag()<<" et vTmp "<<vTmp->tag()<<std::endl;
-			GVertex* v1;
-			GVertex* v2;
+			GVertex* v1=0;
+			GVertex* v2=0;
 			std::map<std::pair<GVertex*,GFace*>,GVertex* >::iterator itMap = GVertexGlobalAssociation.find(std::make_pair(vTmp,fac1));
 			std::cout<<"test2"<<std::endl;
 			if (itMap != GVertexGlobalAssociation.end()){
@@ -3305,8 +3305,8 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 		std::vector<GFace*> SurroundingsFaces;
 		//duplication Gedge
 		//			GEdge* eTmp = (*ite);
-		GEdge* e1;
-		GEdge* e2;
+		GEdge* e1=0;
+		GEdge* e2=0;
 		std::map<std::pair<GEdge*,GFace*>,GEdge* >::iterator itMap = GEdgeGlobalAssociation.find(std::make_pair(eTmp,fac1));
 		if (itMap != GEdgeGlobalAssociation.end()){
 			e1 = itMap->second;
@@ -3352,10 +3352,10 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 		std::cout<<"eTmp->getNumMeshElements() "<<eTmp->getNumMeshElements()<<std::endl;
 		for (unsigned int i = 0; i < eTmp->getNumMeshElements();i++){
 			MElement* elem = eTmp->getMeshElement(i);
-			MVertex* v1;
-			MVertex* v2;
-			MVertex* v3;
-			MVertex* v4;
+			MVertex* v1=0;
+			MVertex* v2=0;
+			MVertex* v3=0;
+			MVertex* v4=0;
 			//MVertex* v5;
 			//MVertex* v6;
 			std::map<std::pair<MVertex*,GFace*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(elem->getVertex(0),fac1));
@@ -3927,8 +3927,8 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 			GVertex* vTmp = (*itv);
 //			std::cout<<"test1"<<std::endl;
 //			std::cout<<"on a fac1 "<<fac1->tag()<<" et fac2 "<<fac2->tag()<<" et vTmp "<<vTmp->tag()<<std::endl;
-			GVertex* v1;
-			GVertex* v2;
+			GVertex* v1=0;
+			GVertex* v2=0;
 			std::map<std::pair<GVertex*,GFace*>,GVertex* >::iterator itMap = GVertexGlobalAssociation.find(std::make_pair(vTmp,fac1));
 //			std::cout<<"test2"<<std::endl;
 			if (itMap != GVertexGlobalAssociation.end()){
@@ -3956,8 +3956,8 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 		std::vector<GFace*> SurroundingsFaces;
 		//duplication Gedge
 		//			GEdge* eTmp = (*ite);
-		GEdge* e1;
-		GEdge* e2;
+		GEdge* e1=0;
+		GEdge* e2=0;
 		std::map<std::pair<GEdge*,GFace*>,GEdge* >::iterator itMap = GEdgeGlobalAssociation.find(std::make_pair(eTmp,fac1));
 		if (itMap != GEdgeGlobalAssociation.end()){
 			e1 = itMap->second;
@@ -4003,10 +4003,10 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 //		std::cout<<"eTmp->getNumMeshElements() "<<eTmp->getNumMeshElements()<<std::endl;
 		for (unsigned int i = 0; i < eTmp->getNumMeshElements();i++){
 			MElement* elem = eTmp->getMeshElement(i);
-			MVertex* v1;
-			MVertex* v2;
-			MVertex* v3;
-			MVertex* v4;
+			MVertex* v1=0;
+			MVertex* v2=0;
+			MVertex* v3=0;
+			MVertex* v4=0;
 			//MVertex* v5;
 			//MVertex* v6;
 			std::map<std::pair<MVertex*,GFace*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(elem->getVertex(0),fac1));
@@ -4131,7 +4131,7 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 		std::map<GVertex*,GEdge* > SurroudingEdges;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			GVertex* vTmp = (*itv);
-			GVertex* v1;
+			GVertex* v1=0;
 			std::map<std::pair<GVertex*,GFace*>,GVertex* >::iterator itMap = GVertexGlobalAssociation.find(std::make_pair(vTmp,fac1));
 			if (itMap != GVertexGlobalAssociation.end()){
 				v1 = itMap->second;
@@ -4147,7 +4147,7 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 //		for (std::list<GEdge*>::iterator ite = elist.begin();ite != elist.end();ite++){
 		//duplication Gedge
 		//			GEdge* eTmp = (*ite);
-		GEdge* e1;
+		GEdge* e1=0;
 		std::map<std::pair<GEdge*,GFace*>,GEdge* >::iterator itMap = GEdgeGlobalAssociation.find(std::make_pair(eTmp,fac1));
 		if (itMap != GEdgeGlobalAssociation.end()){
 			e1 = itMap->second;
@@ -4204,8 +4204,8 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 //		m->add(createdRegion);
 		for (unsigned int i = 0; i < eTmp->getNumMeshElements();i++){
 			MElement* elem = eTmp->getMeshElement(i);
-			MVertex* v1;
-			MVertex* v2;
+			MVertex* v1=0;
+			MVertex* v2=0;
 			//MVertex* v3;
 			std::map<std::pair<MVertex*,GFace*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(elem->getVertex(0),fac1));
 			if (itMap != VertexGlobalAssociation.end()){
@@ -4673,8 +4673,8 @@ PView *GMSH_DuplicateBoundariesPlugin::executeTer(PView *view)
 		std::map<GVertex*,GEdge* > SurroudingEdges;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			GVertex* vTmp = (*itv);
-			GVertex* v1;
-			GVertex* v2;
+			GVertex* v1=0;
+			GVertex* v2=0;
 			std::map<std::pair<GVertex*,GRegion*>,GVertex* >::iterator itMap = GVertexGlobalAssociation.find(std::make_pair(vTmp,reg1));
 			if (itMap != GVertexGlobalAssociation.end()){
 				v1 = itMap->second;
@@ -4694,8 +4694,8 @@ PView *GMSH_DuplicateBoundariesPlugin::executeTer(PView *view)
 		for (std::list<GEdge*>::iterator ite = elist.begin();ite != elist.end();ite++){
 			//duplication Gedge
 			GEdge* eTmp = (*ite);
-			GEdge* e1;
-			GEdge* e2;
+			GEdge* e1=0;
+			GEdge* e2=0;
 			std::map<std::pair<GEdge*,GRegion*>,GEdge* >::iterator itMap = GEdgeGlobalAssociation.find(std::make_pair(eTmp,reg1));
 			if (itMap != GEdgeGlobalAssociation.end()){
 				e1 = itMap->second;
@@ -4761,12 +4761,12 @@ PView *GMSH_DuplicateBoundariesPlugin::executeTer(PView *view)
 		m->add(createdRegion);
 		for (unsigned int i = 0; i < fTmp->getNumMeshElements();i++){
 			MElement* elem = fTmp->getMeshElement(i);
-			MVertex* v1;
-			MVertex* v2;
-			MVertex* v3;
-			MVertex* v4;
-			MVertex* v5;
-			MVertex* v6;
+			MVertex* v1=0;
+			MVertex* v2=0;
+			MVertex* v3=0;
+			MVertex* v4=0;
+			MVertex* v5=0;
+			MVertex* v6=0;
 			std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(elem->getVertex(0),reg1));
 			if (itMap != VertexGlobalAssociation.end()){
 				v1 = itMap->second;
