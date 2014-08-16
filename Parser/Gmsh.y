@@ -117,7 +117,8 @@ struct doubleXstring{
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tStrFind tStrCmp
 %token tTextAttributes
-%token tBoundingBox tDraw tSetChanged tToday tOnelabAction tSyncModel
+%token tBoundingBox tDraw tSetChanged tToday tSyncModel
+%token tOnelabAction tOnelabRun
 %token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
@@ -2647,6 +2648,31 @@ Command :
 	yymsg(0, "Unknown command '%s'", $1);
       }
       Free($1); Free($2);
+    }
+  | tOnelabRun '(' RecursiveListOfStringExprVar ')' tEND
+    {
+      int n = List_Nbr($3);
+      if(n != 1 && n != 2){
+        yymsg(0, "OnelabRun takes one or two arguments");
+      }
+      else{
+        char *s0;
+        List_Read($3, 0, &s0);
+        if(n == 2){
+          char *s1;
+          List_Read($3, 1, &s1);
+          Msg::RunOnelabClient(s0, s1);
+        }
+        else{
+          Msg::RunOnelabClient(s0);
+        }
+      }
+      for(int i = 0; i < n; i++){
+        char *s;
+        List_Read($3, i, &s);
+        Free(s);
+      }
+      List_Delete($3);
     }
   | tSTRING tSTRING '[' FExpr ']' StringExprVar tEND
     {

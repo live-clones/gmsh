@@ -205,6 +205,7 @@ Memory                  return tMemory;
 Nurbs			return tNurbs;
 
 OnelabAction            return tOnelabAction;
+OnelabRun               return tOnelabRun;
 Order			return tNurbsOrder;
 
 Periodic                return tPeriodic;
