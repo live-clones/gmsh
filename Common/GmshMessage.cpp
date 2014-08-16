@@ -27,6 +27,7 @@
 
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
+#include "gmshLocalNetworkClient.h"
 #endif
 
 #if defined(HAVE_PETSC)
@@ -862,6 +863,7 @@ static void _setStandardOptions(onelab::parameter *p,
   // numbers
   if(fopt.count("Visible")) p->setVisible(fopt["Visible"][0] ? true : false);
   if(fopt.count("ReadOnly")) p->setReadOnly(fopt["ReadOnly"][0] ? true : false);
+  if(fopt.count("NeverChanged")) p->setNeverChanged(fopt["NeverChanged"][0] ? true : false);
   if(fopt.count("ReadOnlyRange"))
     p->setAttribute("ReadOnlyRange", fopt["ReadOnlyRange"][0] ? "1" : "0");
   if(fopt.count("AutoCheck"))
@@ -1083,19 +1085,32 @@ void Msg::ImportPhysicalsAsOnelabRegions()
 #endif
 }
 
-void Msg::RunOnelabClient(const std::string &name)
+void Msg::RunOnelabClient(const std::string &name, const std::string &command)
 {
 #if defined(HAVE_ONELAB)
   onelab::server::citer it = onelab::server::instance()->findClient(name);
-  if(it == onelab::server::instance()->lastClient()){
-    Msg::Error("Unknown ONELAB client `%s'", name.c_str());
-    return;
+  onelab::client *client = 0;
+  if(it != onelab::server::instance()->lastClient()){
+    client = it->second;
+  }
+  else{
+    if(command.empty()){
+      Msg::Error("Unknown ONELAB client `%s'", name.c_str());
+      return;
+    }
+    onelab::string o(name + "/Action", "initialize");
+    o.setVisible(false);
+    o.setNeverChanged(true);
+    onelab::server::instance()->set(o);
+    Msg::Info("Creating new ONELAB client `%s' (%s)", name.c_str(), command.c_str());
+    client = new gmshLocalNetworkClient(name, command);
+    client->run();
   }
   onelab::string o(name + "/Action", "compute");
   o.setVisible(false);
   o.setNeverChanged(true);
   onelab::server::instance()->set(o);
-  it->second->run();
+  client->run();
 #endif
 }
 
