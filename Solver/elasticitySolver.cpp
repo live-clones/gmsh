@@ -154,12 +154,8 @@ void elasticitySolver::readInputFile(const std::string &fn)
       return;
     }
     if(what[0]=='#'){
-      
-      char *line=NULL;
-      size_t l = 0;
-      getline(&line,&l,f);
-      free(line);
-      
+      char buffer[1024];
+      fgets(buffer, sizeof(buffer), f);
     }
     else if (!strcmp(what, "ElasticDomain")){
       elasticField field;
@@ -417,7 +413,7 @@ elasticitySolver::elasticitySolver(GModel *model, int tag)
   _tag = tag;
   pAssembler = NULL;
   if (_dim==3) LagSpace=new VectorLagrangeFunctionSpace(_tag);
-  if (_dim==2) LagSpace=new VectorLagrangeFunctionSpace(_tag, 
+  if (_dim==2) LagSpace=new VectorLagrangeFunctionSpace(_tag,
                 VectorLagrangeFunctionSpace::VECTOR_X,
                 VectorLagrangeFunctionSpace::VECTOR_Y);
   LagrangeMultiplierSpace = new ScalarLagrangeFunctionSpace(_tag+1);
@@ -502,53 +498,6 @@ void elasticitySolver::assemble(linearSystem<double> *lsys)
   printf("nDofs=%d\n",pAssembler->sizeOfR());
   printf("nFixed=%d\n",pAssembler->sizeOfF());
 
-}
-
-static void deformation(dofManager<double> *a, MElement *e,
-                        double u, double v, double w, int _tag, double *eps)
-{
-  double valx[256];
-  double valy[256];
-  double valz[256];
-  for (int k = 0; k < e->getNumVertices(); k++){
-    a->getDofValue(e->getVertex(k), 0, _tag, valx[k]);
-    a->getDofValue(e->getVertex(k), 1, _tag, valy[k]);
-    a->getDofValue(e->getVertex(k), 2, _tag, valz[k]);
-  }
-  double gradux[3];
-  double graduy[3];
-  double graduz[3];
-  e->interpolateGrad(valx, u, v, w, gradux);
-  e->interpolateGrad(valy, u, v, w, graduy);
-  e->interpolateGrad(valz, u, v, w, graduz);
-
-  eps[0] = gradux[0];
-  eps[1] = graduy[1];
-  eps[2] = graduz[2];
-  eps[3] = 0.5 * (gradux[1] + graduy[0]);
-  eps[4] = 0.5 * (gradux[2] + graduz[0]);
-  eps[5] = 0.5 * (graduy[2] + graduz[1]);
-}
-
-static double vonMises(dofManager<double> *a, MElement *e,
-                       double u, double v, double w,
-                       double E, double nu, int _tag)
-{
-  double eps[6];
-  deformation(a, e, u, v, w, _tag, eps);
-  double A = E / (1. + nu);
-  double B = A * (nu / (1. - 2 * nu));
-  double trace = eps[0] + eps[1] + eps[2] ;
-  double sxx = A * eps[0] + B * trace;
-  double syy = A * eps[1] + B * trace;
-  double szz = A * eps[2] + B * trace;
-  double sxy = A * eps[3];
-  double sxz = A * eps[4];
-  double syz = A * eps[5];
-
-  double s[9] = {sxx, sxy, sxz, sxy, syy, syz,sxz, syz, szz};
-
-  return ComputeVonMises(s);
 }
 
 void elasticitySolver::computeEffectiveStiffness(std::vector<double> stiff)
