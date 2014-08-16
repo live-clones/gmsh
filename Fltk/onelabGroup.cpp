@@ -907,7 +907,8 @@ void onelab_cb(Fl_Widget *w, void *data)
       onelab::client *c = it->second;
       if(c->getName() == "Gmsh" || // local Gmsh client
 	 c->getName() == "Listen" || // unknown client connecting through "-listen"
-	 c->getName() == "GmshRemote") // distant post-processing Gmsh client
+	 c->getName() == "GmshRemote" || // distant post-processing Gmsh client
+         c->getName().find("NoAutoRun") != std::string::npos) // client name contains "NoAutoRun"
 	continue;
       if(action != "initialize") onelabUtils::guessModelName(c);
       onelab::string o(c->getName() + "/Action", action);
