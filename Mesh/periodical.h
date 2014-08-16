@@ -35,3 +35,9 @@ class voroMetal3D{
   void correspondance(double,double,double,double,int,bool&,double,double,double);
   bool equal(double,double,double);
 };
+
+
+void microstructure(const char *filename);
+void computeBestSeeds(const char *filename);
+
+
