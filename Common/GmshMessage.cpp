@@ -1102,9 +1102,14 @@ void Msg::RunOnelabClient(const std::string &name, const std::string &command)
     o.setVisible(false);
     o.setNeverChanged(true);
     onelab::server::instance()->set(o);
+#if defined(HAVE_FLTK)
     Msg::Info("Creating new ONELAB client `%s' (%s)", name.c_str(), command.c_str());
     client = new gmshLocalNetworkClient(name, command);
     client->run();
+#else
+    Msg::Error("Cannot create ONELAB client without FLTK");
+    return;
+#endif
   }
   onelab::string o(name + "/Action", "compute");
   o.setVisible(false);

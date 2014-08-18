@@ -18,9 +18,7 @@
 #include "Context.h"
 
 StringXNumber DuplicateBoundariesOptions_Number[] = {
-//  {GMSH_FULLRC, "Dimension", NULL, 1.},
-//  {GMSH_FULLRC, "PhysicalGroup", NULL, 1.},
-//  {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", NULL, 0.},
+  {GMSH_FULLRC, "Dummy", NULL, 1.},
 };
 
 extern "C"
@@ -33,18 +31,7 @@ extern "C"
 
 std::string GMSH_DuplicateBoundariesPlugin::getHelp() const
 {
-  return "Plugin(Crack) creates a crack around the physical "
-    "group `PhysicalGroup' of dimension `Dimension' (1 or 2). "
-    "The plugin duplicates the vertices and the elements on "
-    "the crack and stores them in a new discrete curve "
-    "(`Dimension' = 1) or surface (`Dimension' = 2). The "
-    "elements touching the crack on the negative side "
-    "are modified to use the newly generated vertices."
-    "If `OpenBoundaryPhysicalGroup' is given (> 0), its "
-    "vertices are duplicated and the crack will be left "
-    "open on that (part of the) boundary. Otherwise, the "
-    "lips of the crack are sealed, i.e., its vertices are "
-    "not duplicated.";
+  return "Plugin(DuplicateBoundaries) is not documented yet.";
 }
 
 int GMSH_DuplicateBoundariesPlugin::getNbOptions() const
