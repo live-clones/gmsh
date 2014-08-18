@@ -64,10 +64,19 @@ static void GetQualityMeasure(std::vector<T*> &ele,
     eta += e;
     etaMin = std::min(etaMin, e);
     etaMax = std::max(etaMax, e);
+#ifdef METRICSHAPEMEASURE
+    static int aa = 0;
+    if (++aa == 1) Msg::Warning("Computing metric shape measure instead of rho shape measure !");
+    double r = ele[i]->metricShapeMeasure();
+    rho += r;
+    rhoMin = std::min(rhoMin, r);
+    rhoMax = std::max(rhoMax, r);
+#else
     double r = ele[i]->rhoShapeMeasure();
     rho += r;
     rhoMin = std::min(rhoMin, r);
     rhoMax = std::max(rhoMax, r);
+#endif
     double jmin,jmax; ele[i]->scaledJacRange(jmin,jmax);
     double d = jmin;
     disto += d;

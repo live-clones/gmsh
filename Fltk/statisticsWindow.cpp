@@ -75,7 +75,14 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
 	else if(name == "Eta3D")
 	  d[e->getNum()].push_back(e->etaShapeMeasure());
 	else if(name == "Rho3D")
-	  d[e->getNum()].push_back(e->rhoShapeMeasure());
+#ifdef METRICSHAPEMEASURE
+	  if (e->getDim() == 3)
+	    d[e->getNum()].push_back(e->metricShapeMeasure());
+	  else
+	    d[e->getNum()].push_back(1);
+#else
+    d[e->getNum()].push_back(e->rhoShapeMeasure());
+#endif
 	else
 	  d[e->getNum()].push_back(e->distoShapeMeasure());
       }

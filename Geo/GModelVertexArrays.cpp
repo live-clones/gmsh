@@ -104,7 +104,11 @@ bool isElementVisible(MElement *ele)
     if(CTX::instance()->mesh.qualityType == 3)
       q = ele->distoShapeMeasure();
     else if(CTX::instance()->mesh.qualityType == 2)
+#ifdef METRICSHAPEMEASURE
+      q = ele->metricShapeMeasure();
+#else
       q = ele->rhoShapeMeasure();
+#endif
     else if(CTX::instance()->mesh.qualityType == 1)
       q = ele->etaShapeMeasure();
     else

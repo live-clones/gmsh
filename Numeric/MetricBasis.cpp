@@ -75,6 +75,107 @@ double MetricBasis::boundMinR(MElement *el)
   return metric->getBoundRmin(el, md, dummy);
 }
 
+double MetricBasis::minRCorner(MElement *el)
+{
+  int tag = el->getTypeForMSH();
+  int order = 1;
+  if (el->getType() == TYPE_TRI || el->getType() == TYPE_TET) order = 0;
+
+  const GradientBasis *gradients = BasisFactory::getGradientBasis(tag, 1);
+  const JacobianBasis *jacobian = BasisFactory::getJacobianBasis(tag, 1);
+
+  int nSampPnts = jacobian->getNumJacNodes();
+  if (el->getType() == TYPE_PYR) nSampPnts = 4;
+
+  int nMapping = gradients->getNumMapNodes();
+  fullMatrix<double> nodes(nMapping, 3);
+  el->getNodesCoord(nodes);
+
+  // Metric coefficients
+  fullMatrix<double> metCoeffLag;
+
+  switch (el->getDim()) {
+  case 0 :
+    return -1.;
+  case 1 :
+  case 2 :
+    Msg::Fatal("not implemented");
+    break;
+
+  case 3 :
+    {
+      fullMatrix<double> dxyzdX(nSampPnts,3), dxyzdY(nSampPnts,3), dxyzdZ(nSampPnts,3);
+      gradients->getGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, &dxyzdZ);
+
+      metCoeffLag.resize(nSampPnts, 7);
+      for (int i = 0; i < nSampPnts; i++) {
+        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
+        const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
+        const double &dxdZ = dxyzdZ(i,0), &dydZ = dxyzdZ(i,1), &dzdZ = dxyzdZ(i,2);
+        const double dvxdX = dxdX*dxdX + dydX*dydX + dzdX*dzdX;
+        const double dvxdY = dxdY*dxdY + dydY*dydY + dzdY*dzdY;
+        const double dvxdZ = dxdZ*dxdZ + dydZ*dydZ + dzdZ*dzdZ;
+        metCoeffLag(i, 0) = (dvxdX + dvxdY + dvxdZ) / 3;
+        metCoeffLag(i, 1) = dvxdX - metCoeffLag(i, 0);
+        metCoeffLag(i, 2) = dvxdY - metCoeffLag(i, 0);
+        metCoeffLag(i, 3) = dvxdZ - metCoeffLag(i, 0);
+        const double fact = std::sqrt(2);
+        metCoeffLag(i, 4) = fact * (dxdX*dxdY + dydX*dydY + dzdX*dzdY);
+        metCoeffLag(i, 5) = fact * (dxdZ*dxdY + dydZ*dydY + dzdZ*dzdY);
+        metCoeffLag(i, 6) = fact * (dxdX*dxdZ + dydX*dydZ + dzdX*dzdZ);
+      }
+    }
+    break;
+  }
+
+  // Jacobian coefficients
+  fullVector<double> jacLag(jacobian->getNumJacNodes());
+  jacobian->getSignedJacobian(nodes, jacLag);
+
+  // Compute min_corner(R)
+  double Rmin = 1.;
+
+  for (int i = 0; i < nSampPnts; ++i) {
+    if (jacLag(i) <= 0.) {
+      Rmin = std::min(Rmin, 0.);
+    }
+    else {
+      double q = metCoeffLag(i, 0);
+      double p = 0;
+      for (int k = 1; k < 7; ++k) {
+        p += pow_int(metCoeffLag(i, k), 2);
+      }
+      p = std::sqrt(p/6);
+      const double a = q/p;
+      if (a > 1e4) {
+        Rmin = std::min(Rmin, std::sqrt((a - std::sqrt(3)) / (a + std::sqrt(3))));
+      }
+      else {
+        const double x = .5 * (jacLag(i)/p/p*jacLag(i)/p - a*a*a + 3*a);
+        if (x >  1.1 || x < -1.1) {
+          Msg::Error("x much smaller than -1 or much greater than 1");
+        }
+
+        double tmpR;
+        if (x >=  1)
+          tmpR = (a - 1) / (a + 2);
+        else if (x <= -1)
+          tmpR = (a - 2) / (a + 1);
+        else {
+          const double phi = std::acos(x)/3;
+          tmpR = (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
+        }
+        if (tmpR < 0) {
+          if (tmpR < -1e-7) Msg::Error("negative R !!!");
+          else tmpR = 0;
+        }
+        Rmin = std::min(Rmin, std::sqrt(tmpR));
+      }
+    }
+  }
+  return Rmin;
+}
+
 double MetricBasis::sampleR(MElement *el, int order)
 {
   MetricBasis *metric = (MetricBasis*)BasisFactory::getMetricBasis(el->getTypeForMSH());

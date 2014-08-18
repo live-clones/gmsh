@@ -6,6 +6,8 @@
 #ifndef _GMSH_DEFINES_H_
 #define _GMSH_DEFINES_H_
 
+//#define METRICSHAPEMEASURE
+
 // IO file formats (numbers should not be changed)
 #define FORMAT_MSH   1
 #define FORMAT_UNV   2

@@ -66,6 +66,7 @@ public:
   double getMinR(MElement*, MetricData*&, int) const;
   bool notStraight(MElement*, double &metric, int order) const;
   static double boundMinR(MElement *el);
+  static double minRCorner(MElement *el);
   static double sampleR(MElement *el, int order);
   //double getBoundRmin(int, MElement**, double*);
   //static double boundRmin(int, MElement**, double*, bool sameType = false);

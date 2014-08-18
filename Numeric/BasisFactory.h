@@ -15,13 +15,14 @@
 
 class BasisFactory
 {
+  typedef std::map<std::pair<int, int>, JacobianBasis*> Cont_jacBasis;
   typedef std::map<std::pair<int, int>, bezierBasis*> Cont_bezierBasis;
   typedef std::map<std::pair<int, int>, GradientBasis*> Cont_gradBasis;
 
  private:
   static std::map<int, nodalBasis*> fs;
-  static std::map<int, JacobianBasis*> js;
   static std::map<int, MetricBasis*> ms;
+  static Cont_jacBasis js;
   static Cont_gradBasis gs;
   static Cont_bezierBasis bs;
   // store bezier bases by parentType and order (no serendipity..)
@@ -29,7 +30,11 @@ class BasisFactory
  public:
   // Caution: the returned pointer can be NULL
   static const nodalBasis* getNodalBasis(int tag);
-  static const JacobianBasis* getJacobianBasis(int tag);
+  static const JacobianBasis* getJacobianBasis(int tag, int order);
+  static const JacobianBasis* getJacobianBasis(int tag) {
+    return getJacobianBasis(ElementType::ParentTypeFromTag(tag),
+                            ElementType::OrderFromTag(tag) );
+  }
   static const MetricBasis* getMetricBasis(int tag);
 
   static const GradientBasis* getGradientBasis(int tag, int order);

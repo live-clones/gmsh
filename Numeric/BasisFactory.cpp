@@ -13,10 +13,10 @@
 #include "MElement.h"
 
 std::map<int, nodalBasis*> BasisFactory::fs;
-std::map<int, JacobianBasis*> BasisFactory::js;
 std::map<int, MetricBasis*> BasisFactory::ms;
 BasisFactory::Cont_bezierBasis BasisFactory::bs;
 BasisFactory::Cont_gradBasis BasisFactory::gs;
+BasisFactory::Cont_jacBasis BasisFactory::js;
 
 const nodalBasis* BasisFactory::getNodalBasis(int tag)
 {
@@ -67,14 +67,15 @@ const nodalBasis* BasisFactory::getNodalBasis(int tag)
   return inserted.first->second;
 }
 
-const JacobianBasis* BasisFactory::getJacobianBasis(int tag)
+const JacobianBasis* BasisFactory::getJacobianBasis(int tag, int order)
 {
-  std::map<int, JacobianBasis*>::const_iterator it = js.find(tag);
+  std::pair<int, int> key(tag, order);
+  Cont_jacBasis::iterator it = js.find(key);
   if (it != js.end())
     return it->second;
 
-  JacobianBasis* J = new JacobianBasis(tag);
-  js.insert(std::make_pair(tag, J));
+  JacobianBasis* J = new JacobianBasis(tag, order);
+  js.insert(std::make_pair(key, J));
   return J;
 }
 
@@ -122,12 +123,26 @@ void BasisFactory::clearAll()
   }
   fs.clear();
 
-  std::map<int, JacobianBasis*>::iterator itJ = js.begin();
+  std::map<int, MetricBasis*>::iterator itM = ms.begin();
+  while (itM != ms.end()) {
+    delete itM->second;
+    itM++;
+  }
+  ms.clear();
+
+  Cont_jacBasis::iterator itJ = js.begin();
   while (itJ != js.end()) {
     delete itJ->second;
     itJ++;
   }
   js.clear();
+
+  Cont_gradBasis::iterator itG = gs.begin();
+  while (itG != gs.end()) {
+    delete itG->second;
+    itG++;
+  }
+  gs.clear();
 
   Cont_bezierBasis::iterator itB = bs.begin();
   while (itB != bs.end()) {

@@ -1624,7 +1624,11 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
   {
     std::ostringstream sstream;
     sstream << " Quality: "
+#ifdef METRICSHAPEMEASURE
+            << "metric = " << ele->metricShapeMeasure() << " "
+#else
             << "rho = " << ele->rhoShapeMeasure() << " "
+#endif
             << "gamma = " << ele->gammaShapeMeasure() << " "
             << "eta = " << ele->etaShapeMeasure();
     info.push_back(sstream.str());

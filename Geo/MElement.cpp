@@ -22,6 +22,7 @@
 #include "GEntity.h"
 #include "StringUtils.h"
 #include "Numeric.h"
+#include "MetricBasis.h"
 #include "Context.h"
 
 #define SQU(a)      ((a)*(a))
@@ -110,6 +111,11 @@ double MElement::rhoShapeMeasure()
     return min / max;
   else
     return 0.;
+}
+
+double MElement::metricShapeMeasure()
+{
+  return MetricBasis::minRCorner(this);
 }
 
 double MElement::maxDistToStraight()
@@ -924,7 +930,11 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
     }
   }
   if(printRho){
+#ifdef METRICSHAPEMEASURE
+    double rho = metricShapeMeasure();
+#else
     double rho = rhoShapeMeasure();
+#endif
     for(int i = 0; i < n; i++){
       if(first) first = false; else fprintf(fp, ",");
       fprintf(fp, "%g", rho);
