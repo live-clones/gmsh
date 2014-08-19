@@ -32,8 +32,7 @@ class BasisFactory
   static const nodalBasis* getNodalBasis(int tag);
   static const JacobianBasis* getJacobianBasis(int tag, int order);
   static const JacobianBasis* getJacobianBasis(int tag) {
-    return getJacobianBasis(ElementType::ParentTypeFromTag(tag),
-                            ElementType::OrderFromTag(tag) );
+    return getJacobianBasis(tag, JacobianBasis::jacobianOrder(tag) );
   }
   static const MetricBasis* getMetricBasis(int tag);
 
