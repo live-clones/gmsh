@@ -339,8 +339,8 @@ static void copyMesh(GFace *source, GFace *target)
     if (count == 0)
       DX = SVector3(vt->x() - vs->x(), vt->y() - vs->y(), vt->z() - vs->z());
     else {
-      SVector3 DX2 = DX - SVector3 (vt->x() - vs->x(), vt->y() - vs->y(),
-                                    vt->z() - vs->z());
+      SVector3 DX2 = DX - SVector3(vt->x() - vs->x(), vt->y() - vs->y(),
+                                   vt->z() - vs->z());
       if (DX2.norm() > DX.norm() * 1.e-5) translation = false;
     }
     count ++;
