@@ -122,95 +122,96 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
   return true;
 }
 
-
 // --------- Creation of high-order edge vertices -----------
 
-static bool getEdgeVerticesonGeo(GEdge *ge, MVertex *v0, MVertex *v1, std::vector<MVertex*> &ve, int nPts = 1)
+static bool getEdgeVerticesonGeo(GEdge *ge, MVertex *v0, MVertex *v1,
+                                 std::vector<MVertex*> &ve, int nPts = 1)
 {
-    double u0 = 0., u1 = 0., US[100];
-    bool reparamOK = reparamMeshVertexOnEdge(v0, ge, u0);
-    if(ge->periodic(0) && ge->getEndVertex()->getNumMeshVertices() > 0 &&
-       v1 == ge->getEndVertex()->mesh_vertices[0])
-      u1 = ge->parBounds(0).high();
-    else
-      reparamOK &= reparamMeshVertexOnEdge(v1, ge, u1);
+  double u0 = 0., u1 = 0., US[100];
+  bool reparamOK = reparamMeshVertexOnEdge(v0, ge, u0);
+  if(ge->periodic(0) && ge->getEndVertex()->getNumMeshVertices() > 0 &&
+     v1 == ge->getEndVertex()->mesh_vertices[0])
+    u1 = ge->parBounds(0).high();
+  else
+    reparamOK &= reparamMeshVertexOnEdge(v1, ge, u1);
 
-    if(reparamOK){
-      double relax = 1.;
-      while (1){
-        if(computeEquidistantParameters(ge, std::min(u0,u1), std::max(u0,u1),
-                                        nPts + 2, US, relax))
-          break;
+  if(reparamOK){
+    double relax = 1.;
+    while (1){
+      if(computeEquidistantParameters(ge, std::min(u0,u1), std::max(u0,u1),
+                                      nPts + 2, US, relax))
+        break;
 
-        relax /= 2.0;
-        if(relax < 1.e-2) break;
-      }
-      if(relax < 1.e-2){
-        Msg::Warning
-          ("Failed to compute equidistant parameters (relax = %g, value = %g) "
-           "for edge %d-%d parametrized with %g %g on GEdge %d",
-           relax, US[1], v0->getNum(), v1->getNum(),u0,u1,ge->tag());
-        reparamOK = false;
-      }
+      relax /= 2.0;
+      if(relax < 1.e-2) break;
     }
-    else
-      Msg::Error("Cannot reparam a mesh Vertex in high order meshing");
-    if (!reparamOK) return false;
-
-    for(int j = 0; j < nPts; j++) {
-      MVertex *v;
-      int count = u0<u1? j + 1 : nPts + 1  - (j + 1);
-      GPoint pc = ge->point(US[count]);
-      v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge,US[count]);
-      // this destroys the ordering of the mesh vertices on the edge
-      ve.push_back(v);
+    if(relax < 1.e-2){
+      Msg::Warning
+        ("Failed to compute equidistant parameters (relax = %g, value = %g) "
+         "for edge %d-%d parametrized with %g %g on GEdge %d",
+         relax, US[1], v0->getNum(), v1->getNum(),u0,u1,ge->tag());
+      reparamOK = false;
     }
+  }
+  else
+    Msg::Error("Cannot reparam a mesh Vertex in high order meshing");
+  if (!reparamOK) return false;
 
-    return true;
+  for(int j = 0; j < nPts; j++) {
+    MVertex *v;
+    int count = u0<u1? j + 1 : nPts + 1  - (j + 1);
+    GPoint pc = ge->point(US[count]);
+    v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge,US[count]);
+    // this destroys the ordering of the mesh vertices on the edge
+    ve.push_back(v);
+  }
+
+  return true;
 }
 
-static bool getEdgeVerticesonGeo(GFace *gf, MVertex *v0, MVertex *v1, std::vector<MVertex*> &ve, int nPts = 1)
+static bool getEdgeVerticesonGeo(GFace *gf, MVertex *v0, MVertex *v1,
+                                 std::vector<MVertex*> &ve, int nPts = 1)
 {
-      SPoint2 p0, p1;
-      double US[100], VS[100];
-      bool reparamOK = reparamMeshEdgeOnFace(v0, v1, gf, p0, p1);
-      if(reparamOK) {
-        if (nPts >= 30)
-          computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1], nPts + 2, US, VS);
-        else {
-          US[0]      =  p0[0];
-          VS[0]      =  p0[1];
-          US[nPts+1] =  p1[0];
-          VS[nPts+1] =  p1[1];
-          for(int j = 0; j < nPts; j++){
-            const double t = (double)(j + 1) / (nPts + 1);
-            SPoint3 pc(t*v1->x()+(1.-t)*v0->x(),
-                       t*v1->y()+(1.-t)*v0->y(),
-                       t*v1->z()+(1.-t)*v0->z());
-            SPoint2 guess = p0 * (1.-t) + p1 * t;
-            GPoint gp = gf->closestPoint(pc, guess);
-            if(gp.succeeded()){
-              US[j+1] = gp.u();
-              VS[j+1] = gp.v();
-            }
-            else{
-              US[j+1] = guess.x();
-              VS[j+1] = guess.y();
-            }
-          }
+  SPoint2 p0, p1;
+  double US[100], VS[100];
+  bool reparamOK = reparamMeshEdgeOnFace(v0, v1, gf, p0, p1);
+  if(reparamOK) {
+    if (nPts >= 30)
+      computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1], nPts + 2, US, VS);
+    else {
+      US[0]      =  p0[0];
+      VS[0]      =  p0[1];
+      US[nPts+1] =  p1[0];
+      VS[nPts+1] =  p1[1];
+      for(int j = 0; j < nPts; j++){
+        const double t = (double)(j + 1) / (nPts + 1);
+        SPoint3 pc(t*v1->x()+(1.-t)*v0->x(),
+                   t*v1->y()+(1.-t)*v0->y(),
+                   t*v1->z()+(1.-t)*v0->z());
+        SPoint2 guess = p0 * (1.-t) + p1 * t;
+        GPoint gp = gf->closestPoint(pc, guess);
+        if(gp.succeeded()){
+          US[j+1] = gp.u();
+          VS[j+1] = gp.v();
+        }
+        else{
+          US[j+1] = guess.x();
+          VS[j+1] = guess.y();
         }
       }
-      else
-        Msg::Error("Cannot reparam a mesh Vertex in high order meshing");
-      if (!reparamOK) return false;
+    }
+  }
+  else
+    Msg::Error("Cannot reparam a mesh Vertex in high order meshing");
+  if (!reparamOK) return false;
 
-      for(int j = 0; j < nPts; j++){
-        GPoint pc = gf->point(US[j + 1], VS[j + 1]);
-        MVertex *v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j + 1], VS[j + 1]);
-        ve.push_back(v);
-      }
+  for(int j = 0; j < nPts; j++){
+    GPoint pc = gf->point(US[j + 1], VS[j + 1]);
+    MVertex *v = new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j + 1], VS[j + 1]);
+    ve.push_back(v);
+  }
 
-      return true;
+  return true;
 }
 
 static void interpVerticesInExistingEdge(GEntity *ge, const MElement *edgeEl,
@@ -253,12 +254,14 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
   const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
   std::pair<MVertex*, MVertex*> p(vMin, vMax);
   std::vector<MVertex*> veEdge;
+  // Get vertices on geometry if asked
   bool gotVertOnGeo = linear ? false :
-                      getEdgeVerticesonGeo(ge, veOld[0], veOld[1], veEdge, nPts);       // Get vertices on geometry if asked
-  if (!gotVertOnGeo)                                                                    // If not on geometry, create from mesh interpolation
+    getEdgeVerticesonGeo(ge, veOld[0], veOld[1], veEdge, nPts);
+  // If not on geometry, create from mesh interpolation
+  if (!gotVertOnGeo)
     interpVerticesInExistingEdge(ge, ele, veEdge, nPts);
   newHOVert.insert(newHOVert.end(), veEdge.begin(), veEdge.end());
-  if(increasing)                                          // Add newly created vertices to list
+  if(increasing) // Add newly created vertices to list
     edgeVertices[p].insert(edgeVertices[p].end(), veEdge.begin(), veEdge.end());
   else
     edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(), veEdge.rend());
@@ -281,21 +284,23 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
     const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
     std::pair<MVertex*, MVertex*> p(vMin, vMax);
     std::vector<MVertex*> veEdge;
-    if(edgeVertices.count(p)) {                                                             // Vertices already exist
+    if(edgeVertices.count(p)) { // Vertices already exist
       if(increasing)
         veEdge.assign(edgeVertices[p].begin(), edgeVertices[p].end());
       else
         veEdge.assign(edgeVertices[p].rbegin(), edgeVertices[p].rend());
     }
-    else {                                                                                  // Vertices do not exist, create them
+    else { // Vertices do not exist, create them
+      // Get vertices on geometry if asked
       bool gotVertOnGeo = linear ? false :
-                          getEdgeVerticesonGeo(gf, veOld[0], veOld[1], veEdge, nPts);       // Get vertices on geometry if asked
-      if (!gotVertOnGeo) {                                                                   // If not on geometry, create from mesh interpolation
+        getEdgeVerticesonGeo(gf, veOld[0], veOld[1], veEdge, nPts);
+      if (!gotVertOnGeo) {
+        // If not on geometry, create from mesh interpolation
         const MLineN edgeEl(veOld, ele->getPolynomialOrder());
         interpVerticesInExistingEdge(gf, &edgeEl, veEdge, nPts);
       }
       newHOVert.insert(newHOVert.end(), veEdge.begin(), veEdge.end());
-      if(increasing)                                                                        // Add newly created vertices to list
+      if(increasing) // Add newly created vertices to list
         edgeVertices[p].insert(edgeVertices[p].end(), veEdge.begin(), veEdge.end());
       else
         edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(), veEdge.rend());
@@ -306,7 +311,8 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
 
 // Get new interior vertices for an edge in a 3D element
 static void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &ve,
-                            std::vector<MVertex*> &newHOVert, edgeContainer &edgeVertices,
+                            std::vector<MVertex*> &newHOVert,
+                            edgeContainer &edgeVertices,
                             bool linear, int nPts = 1)
 {
   for(int i = 0; i < ele->getNumEdges(); i++) {
@@ -316,17 +322,17 @@ static void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
     const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
     std::pair<MVertex*, MVertex*> p(vMin, vMax);
     std::vector<MVertex*> veEdge;
-    if(edgeVertices.count(p)) {                                                             // Vertices already exist
+    if(edgeVertices.count(p)) { // Vertices already exist
       if(increasing)
         veEdge.assign(edgeVertices[p].begin(), edgeVertices[p].end());
       else
         veEdge.assign(edgeVertices[p].rbegin(), edgeVertices[p].rend());
     }
-    else {                                                                                  // Vertices do not exist, create them
+    else { // Vertices do not exist, create them
       const MLineN edgeEl(veOld, ele->getPolynomialOrder());
       interpVerticesInExistingEdge(gr, &edgeEl, veEdge, nPts);
       newHOVert.insert(newHOVert.end(), veEdge.begin(), veEdge.end());
-      if(increasing)                                                                        // Add newly created vertices to list
+      if(increasing) // Add newly created vertices to list
         edgeVertices[p].insert(edgeVertices[p].end(), veEdge.begin(), veEdge.end());
       else
         edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(), veEdge.rend());
@@ -334,7 +340,6 @@ static void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &v
     ve.insert(ve.end(), veEdge.begin(), veEdge.end());
   }
 }
-
 
 // --------- Creation of high-order face vertices -----------
 
@@ -441,9 +446,9 @@ static void reorientQuadPoints(std::vector<MVertex*> &vtcs, int orientation,
   }
 }
 
-static int getNewFacePointsInVolume(MElement *incomplete, int nPts, fullMatrix<double> &points)
+static int getNewFacePointsInVolume(MElement *incomplete, int nPts,
+                                    fullMatrix<double> &points)
 {
-
   int startFace = 0;
 
   switch (incomplete->getType()){
@@ -589,25 +594,6 @@ static void interpVerticesInExistingFace(GEntity *ge, const MElement *faceEl,
   }
 }
 
-
-//static void interpVerticesInIncompleteFace(GRegion *gr, const MFace &face, const std::vector<MVertex*> &ve,
-//                                           std::vector<MVertex*> &veFace, int nPts)
-//{
-//  MElement *incomplete;
-//
-//  fullMatrix<double> points;
-//  int start = getNewFacePointsInFace(face.getNumVertices(), nPts, points);
-//  for (int k = start; k < points.size1(); k++) {
-//    double t1 = points(k, 0);
-//    double t2 = points(k, 1);
-//    SPoint3 pos;
-//    incomplete->pnt(t1, t2, 0, pos);
-//    MVertex* v = new MVertex(pos.x(), pos.y(), pos.z(), gr);
-//    veFace.push_back(v);
-//  }
-//  delete incomplete;
-//}
-
 // Get new interior vertices for a 2D element
 static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
                             std::vector<MVertex*> &vf, std::vector<MVertex*> &newHOVert,
@@ -619,9 +605,9 @@ static void getFaceVertices(GFace *gf, MElement *incomplete, MElement *ele,
 
   MFace face = ele->getFace(0);
   std::vector<MVertex*> veFace;
-  if (!linear)                                                                      // Get vertices on geometry if asked...
+  if (!linear) // Get vertices on geometry if asked...
     getFaceVerticesOnGeo(gf, incomplete, ele, veFace, nPts);
-  else                                                                              // ... otherwise, create from mesh interpolation
+  else // ... otherwise, create from mesh interpolation
     interpVerticesInExistingFace(gf, ele, veFace, nPts);
   newHOVert.insert(newHOVert.end(), veFace.begin(), veFace.end());
   faceVertices[face].insert(faceVertices[face].end(), veFace.begin(), veFace.end());
@@ -642,11 +628,12 @@ static void getFaceVertices(GRegion *gr, MElement *incomplete, MElement *ele,
     int numVert = (face.getNumVertices() == 3) ? nPts * (nPts-1) / 2 : nPts * nPts;
     std::vector<MVertex*> veFace;
     faceContainer::iterator fIter = faceVertices.find(face);
-    if(fIter != faceVertices.end()){                                                      // Vertices already exist
+    if(fIter != faceVertices.end()){ // Vertices already exist
       std::vector<MVertex*> vtcs = fIter->second;
       int orientation;
       bool swap;
-      if (fIter->first.computeCorrespondence(face, orientation, swap)) {                  // Check correspondence and apply permutation if needed
+      if (fIter->first.computeCorrespondence(face, orientation, swap)) {
+        // Check correspondence and apply permutation if needed
         if(face.getNumVertices() == 3 && nPts > 1)
           reorientTrianglePoints(vtcs, orientation, swap);
         else if(face.getNumVertices() == 4)
@@ -656,8 +643,8 @@ static void getFaceVertices(GRegion *gr, MElement *incomplete, MElement *ele,
         Msg::Error("Error in face lookup for recuperation of high order face nodes");
       veFace.assign(vtcs.begin(), vtcs.end());
     }
-    else {                                                                                // Vertices do not exist, create them by interpolation
-      if (linear) {                                                                       // Interpolate on existing mesh
+    else { // Vertices do not exist, create them by interpolation
+      if (linear) { // Interpolate on existing mesh
         std::vector<MVertex*> vfOld;
         ele->getFaceVertices(i,vfOld);
         MElement *faceEl;
@@ -669,7 +656,7 @@ static void getFaceVertices(GRegion *gr, MElement *incomplete, MElement *ele,
         delete faceEl;
       }
       else {
-        if (incomplete) {                                                                 // Interpolate in incomplete 3D element if given
+        if (incomplete) { // Interpolate in incomplete 3D element if given
           for(int k = index; k < index + numVert; k++){
             MVertex *v;
             const double t1 = points(k, 0);
@@ -681,7 +668,7 @@ static void getFaceVertices(GRegion *gr, MElement *incomplete, MElement *ele,
             veFace.push_back(v);
           }
         }
-        else {                                                                            // TODO: Interpolate in incomplete face constructed on the fly
+        else { // TODO: Interpolate in incomplete face constructed on the fly
 //          std::vector<MVertex*> &vtcs = faceVertices[face];
 //          fullMatrix<double> points;
 //          int start = getNewFacePointsInFace(face.getNumVertices(), nPts, points);
@@ -742,12 +729,10 @@ static void getFaceVertices(GRegion *gr, MElement *incomplete, MElement *ele,
   }
 }
 
-
 // --------- Creation of high-order volume vertices -----------
 
 static int getNewVolumePoints(MElement *incomplete, int nPts, fullMatrix<double> &points)
 {
-
   int startInter = 0;
 
   switch (incomplete->getType()){
@@ -767,7 +752,8 @@ static int getNewVolumePoints(MElement *incomplete, int nPts, fullMatrix<double>
       Msg::Error("getFaceAndInteriorVertices not implemented for order %i", nPts+1);
       break;
     }
-    startInter = ((nPts+2)*(nPts+3)*(nPts+4)-(nPts-2)*(nPts-1)*(nPts))/6;  // = 4+6*(p-1)+4*(p-2)*(p-1)/2 = 4*(p+1)*(p+2)/2-6*(p-1)-2*4 = 2*p*p+2
+    startInter = ((nPts+2)*(nPts+3)*(nPts+4)-(nPts-2)*(nPts-1)*(nPts))/6;
+    // = 4+6*(p-1)+4*(p-2)*(p-1)/2 = 4*(p+1)*(p+2)/2-6*(p-1)-2*4 = 2*p*p+2
     break;
   case TYPE_HEX :
     switch (nPts){
@@ -784,7 +770,8 @@ static int getNewVolumePoints(MElement *incomplete, int nPts, fullMatrix<double>
       Msg::Error("getFaceAndInteriorVertices not implemented for order %i", nPts+1);
       break;
     }
-    startInter = (nPts+2)*(nPts+2)*(nPts+2) - (nPts)*(nPts)*(nPts) ; // = 6*(p-1)*(p-1)+12*(p-1)+8 = 6*(p+1)*(p+1)-12*(p-1)-2*8 = 6*p*p+2
+    startInter = (nPts+2)*(nPts+2)*(nPts+2) - (nPts)*(nPts)*(nPts) ;
+    // = 6*(p-1)*(p-1)+12*(p-1)+8 = 6*(p+1)*(p+1)-12*(p-1)-2*8 = 6*p*p+2
     break;
   case TYPE_PRI :
     switch (nPts){
@@ -801,7 +788,9 @@ static int getNewVolumePoints(MElement *incomplete, int nPts, fullMatrix<double>
       Msg::Error("getFaceAndInteriorVertices not implemented for order %i", nPts+1);
       break;
     }
-    startInter = 4*(nPts+1)*(nPts+1)+2;  // = 4*p*p+2 = 6+9*(p-1)+2*(p-2)*(p-1)/2+3*(p-1)*(p-1) = 2*(p+1)*(p+2)/2+3*(p+1)*(p+1)-9*(p-1)-2*6
+    startInter = 4*(nPts+1)*(nPts+1)+2;
+    // = 4*p*p+2 = 6+9*(p-1)+2*(p-2)*(p-1)/2+3*(p-1)*(p-1)
+    // = 2*(p+1)*(p+2)/2+3*(p+1)*(p+1)-9*(p-1)-2*6
     break;
   case TYPE_PYR:
     switch (nPts){
@@ -829,7 +818,8 @@ static int getNewVolumePoints(MElement *incomplete, int nPts, fullMatrix<double>
 
 // Get new interior vertices for a 3D element (except pyramid)
 static void getVolumeVertices(GRegion *gr, MElement *incomplete, MElement *ele,
-                              std::vector<MVertex*> &vr,  std::vector<MVertex*> &newHOVert,
+                              std::vector<MVertex*> &vr,
+                              std::vector<MVertex*> &newHOVert,
                               bool linear, int nPts = 1)
 {
   fullMatrix<double> points;
@@ -849,8 +839,10 @@ static void getVolumeVertices(GRegion *gr, MElement *incomplete, MElement *ele,
 }
 
 // Get new interior vertices for a pyramid
-static void getVolumeVerticesPyramid(GRegion *gr, MElement *ele, const std::vector<MVertex*> &ve,
-                                     std::vector<MVertex*> &vr, std::vector<MVertex*> &newHOVert,
+static void getVolumeVerticesPyramid(GRegion *gr, MElement *ele,
+                                     const std::vector<MVertex*> &ve,
+                                     std::vector<MVertex*> &vr,
+                                     std::vector<MVertex*> &newHOVert,
                                      bool linear, int nPts = 1)
 {
   vr.reserve((nPts-1)*(nPts)*(2*(nPts-1)+1)/6);
@@ -976,16 +968,19 @@ static void setHighOrder(GEdge *ge, std::vector<MVertex*> &newHOVert,
     std::vector<MVertex*> ve;
     getEdgeVertices(ge, l, ve, newHOVert, edgeVertices, linear, nbPts);
     if(nbPts == 1)
-      lines2.push_back(new MLine3(l->getVertex(0), l->getVertex(1), ve[0], l->getPartition()));
+      lines2.push_back(new MLine3(l->getVertex(0), l->getVertex(1),
+                                  ve[0], l->getPartition()));
     else
-      lines2.push_back(new MLineN(l->getVertex(0), l->getVertex(1), ve, l->getPartition()));
+      lines2.push_back(new MLineN(l->getVertex(0), l->getVertex(1),
+                                  ve, l->getPartition()));
     delete l;
   }
   ge->lines = lines2;
   ge->deleteVertexArrays();
 }
 
-static MTriangle *setHighOrder(MTriangle *t, GFace *gf, std::vector<MVertex*> &newHOVert,
+static MTriangle *setHighOrder(MTriangle *t, GFace *gf,
+                               std::vector<MVertex*> &newHOVert,
                                edgeContainer &edgeVertices,
                                faceContainer &faceVertices,
                                bool linear, bool incomplete, int nPts)
@@ -1008,7 +1003,8 @@ static MTriangle *setHighOrder(MTriangle *t, GFace *gf, std::vector<MVertex*> &n
   }
 }
 
-static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf, std::vector<MVertex*> &newHOVert,
+static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
+                                 std::vector<MVertex*> &newHOVert,
                                  edgeContainer &edgeVertices,
                                  faceContainer &faceVertices,
                                  bool linear, bool incomplete, int nPts)
