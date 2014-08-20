@@ -167,10 +167,6 @@ if(NOT HOSTNAME)
 endif(NOT HOSTNAME)
 set(GMSH_HOST "${HOSTNAME}")
 
-# custom the drop site 
-set(CUSTOM_DROP_SITE "onelab.info")
-set(CUSTOM_DROP_LOCATION "/CDash/submit.php?project=Gmsh")
-set(CUSTOM_DROP_PROJECT "Gmsh")
 if(NOT PACKAGER)
   set(PACKAGER "unknown")
 endif(NOT PACKAGER)

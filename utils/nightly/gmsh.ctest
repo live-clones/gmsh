@@ -7,6 +7,10 @@
 # builds, on all architectures
 
 set(CTEST_SITE "ace36.montefiore")
+# custom the drop site 
+set(CUSTOM_DROP_SITE "onelab.info")
+set(CUSTOM_DROP_LOCATION "/CDash/submit.php?project=Gmsh")
+set(CUSTOM_DROP_PROJECT "Gmsh")
 
 find_program(CTEST_SVN_COMMAND NAMES svn)
 find_program(CTEST_COVERAGE_COMMAND NAMES gcov)
