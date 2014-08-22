@@ -63,6 +63,20 @@ typedef struct _p_KSP* KSP;
 #define PetscOptionsGetBool PetscOptionsGetTruth
 #endif
 
+// The petsc3.5 change log says:
+// "KSPSetOperators() no longer has the MatStructure argument. The Mat objects now track that information themselves.
+// Use KPS/PCSetReusePreconditioner() to prevent the recomputation of the preconditioner if the operator changed
+// in the way that SAME_PRECONDITIONER did with KSPSetOperators()"
+// So I guess this should be called with PETSC_TRUE as second argument only for SAME_PRECONDITIONER
+// and false otherwise (i.e. for SAME_NONZERO_PATTERN, DIFFRENT_NONZERO_PATTERN) but it is a guess...
+#if (PETSC_VERSION_MAJOR < 3  || (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR < 5))
+#define KSPSetOperators(_ksp, _a, _b, SAME_PRECONDITIONER) KSPSetOperators(_ksp, _a, _b, SAME_PRECONDITIONER)
+#else
+# define SAME_PRECONDITIONER 0
+# define SAME_NONZERO_PATTERN 1
+# define DIFFRENT_NONZERO_PATTERN 2
+# define KSPSetOperators(_ksp, _a, _b, OPT_PRECON) (KSPSetOperators(_ksp, _a, _b), KSPSetReusePreconditioner(_ksp,PetscBool(OPT_PRECON == SAME_PRECONDITIONER)))
+#endif
 
 template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {
