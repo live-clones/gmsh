@@ -72,9 +72,7 @@ typedef struct _p_KSP* KSP;
 #if (PETSC_VERSION_MAJOR < 3  || (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR < 5))
 #define KSPSetOperators(_ksp, _a, _b, SAME_PRECONDITIONER) KSPSetOperators(_ksp, _a, _b, SAME_PRECONDITIONER)
 #else
-# define SAME_PRECONDITIONER 0
-# define SAME_NONZERO_PATTERN 1
-# define DIFFRENT_NONZERO_PATTERN 2
+# define SAME_PRECONDITIONER 999
 # define KSPSetOperators(_ksp, _a, _b, OPT_PRECON) (KSPSetOperators(_ksp, _a, _b), KSPSetReusePreconditioner(_ksp,PetscBool(OPT_PRECON == SAME_PRECONDITIONER)))
 #endif
 
