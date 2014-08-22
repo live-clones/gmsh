@@ -118,6 +118,11 @@ double MElement::metricShapeMeasure()
   return MetricBasis::minRCorner(this);
 }
 
+double MElement::metricShapeMeasure2()
+{
+  return MetricBasis::boundMinR(this);
+}
+
 double MElement::maxDistToStraight()
 {
   const nodalBasis *lagBasis = getFunctionSpace();

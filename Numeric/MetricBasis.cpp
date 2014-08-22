@@ -11,7 +11,12 @@
 #include "OS.h"
 #include <sstream>
 
-double MetricBasis::_tol = 1e-2;
+double MetricBasis::_tol = 1e-3;
+double MetricBasis::tm0 = 0;
+double MetricBasis::tm1 = 0;
+double MetricBasis::tm2 = 0;
+double MetricBasis::tm3 = 0;
+double MetricBasis::tm4 = 0;
 int MetricBasis::_which = 0;
 
 namespace {
@@ -77,19 +82,25 @@ double MetricBasis::boundMinR(MElement *el)
 
 double MetricBasis::minRCorner(MElement *el)
 {
+  //double time = Cpu();
   int tag = el->getTypeForMSH();
   int order = 1;
   if (el->getType() == TYPE_TRI || el->getType() == TYPE_TET) order = 0;
 
-  const GradientBasis *gradients = BasisFactory::getGradientBasis(tag, 1);
-  const JacobianBasis *jacobian = BasisFactory::getJacobianBasis(tag, 1);
+  const GradientBasis *gradients = BasisFactory::getGradientBasis(tag, order);
+  const JacobianBasis *jacobian = BasisFactory::getJacobianBasis(tag, order);
 
   int nSampPnts = jacobian->getNumJacNodes();
   if (el->getType() == TYPE_PYR) nSampPnts = 4;
 
   int nMapping = gradients->getNumMapNodes();
   fullMatrix<double> nodes(nMapping, 3);
+  //tm0 += Cpu() - time;
+  //time = Cpu();
   el->getNodesCoord(nodes);
+
+  //tm1 += Cpu() - time;
+  //time = Cpu();
 
   // Metric coefficients
   fullMatrix<double> metCoeffLag;
@@ -128,9 +139,15 @@ double MetricBasis::minRCorner(MElement *el)
     break;
   }
 
+  //tm2 += Cpu() - time;
+  //time = Cpu();
+
   // Jacobian coefficients
   fullVector<double> jacLag(jacobian->getNumJacNodes());
   jacobian->getSignedJacobian(nodes, jacLag);
+
+  //tm3 += Cpu() - time;
+  //time = Cpu();
 
   // Compute min_corner(R)
   double Rmin = 1.;
@@ -173,6 +190,9 @@ double MetricBasis::minRCorner(MElement *el)
       }
     }
   }
+
+  //tm4 += Cpu() - time;
+  //time = Cpu();
   return Rmin;
 }
 
@@ -459,7 +479,9 @@ double MetricBasis::getBoundRmin(MElement *el, MetricData *&md, fullMatrix<doubl
     break;
   }
 
+#ifndef METRICSHAPEMEASURE
   lagCoeff = metCoeffLag;
+#endif
   fullMatrix<double> *metCoeff;
   metCoeff = new fullMatrix<double>(nSampPnts, metCoeffLag.size2());
   _bezier->matrixLag2Bez.mult(metCoeffLag, *metCoeff);
@@ -489,14 +511,17 @@ double MetricBasis::getBoundRmin(MElement *el, MetricData *&md, fullMatrix<doubl
   //Msg::Info("el %d", el->getNum());
   double mina, maxa;
   _minMaxA(*metCoeff, mina, maxa);
+#ifndef METRICSHAPEMEASURE
   static int cntRight = 0, cntTOT = 0;
   ++cntTOT;
   if (maxa-mina < 1e-10) {
     ++cntRight;
   }
+#endif
   //Msg::Info("right %d/%d", cntRight, cntTOT);
 
 
+#ifndef METRICSHAPEMEASURE
     fullVector<double> *jjac = new fullVector<double>(*jac);
     fullMatrix<double> *mmet = new fullMatrix<double>(*metCoeff);
     /*for (int i = 0; i < jjac->size(); ++i) {
@@ -507,6 +532,7 @@ double MetricBasis::getBoundRmin(MElement *el, MetricData *&md, fullMatrix<doubl
     }*/
     md = new MetricData(mmet, jjac, RminBez, 0, 0);
       //Msg::Info("+1 %d", md);
+#endif
 
   if (RminLag-RminBez < MetricBasis::_tol) {
     //Msg::Info("RETURNING %g", RminBez);
