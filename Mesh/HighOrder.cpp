@@ -58,6 +58,8 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
     u[i] = u[i - 1] + du;
   }
 
+  //return true;
+
   // create the tangent matrix
   const int M = N - 2;
   fullMatrix<double> J(M, M);
