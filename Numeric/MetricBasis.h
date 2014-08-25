@@ -78,9 +78,13 @@ private:
   void _getMetricData(MElement*, MetricData*&) const;
 
   double _subdivideForRmin(MetricData*, double RminLag, double tol) const;
+  static void _fillCoeff(const GradientBasis*,
+                  fullMatrix<double> &nodes, fullMatrix<double> &coeff);
+  static double _computeMinlagR(const fullVector<double> &jac,
+                                const fullMatrix<double> &coeff, int num);
 
   void _minMaxA(const fullMatrix<double>&, double &min, double &max) const;
-  void _minJ2P3(const fullMatrix<double>&, const fullVector<double>&, double &min) const;
+  void _minK(const fullMatrix<double>&, const fullVector<double>&, double &min) const;
   void _maxAstKpos(const fullMatrix<double>&, const fullVector<double>&,
                  double minK, double beta, double &maxa) const;
   void _maxAstKneg(const fullMatrix<double>&, const fullVector<double>&,
@@ -90,10 +94,26 @@ private:
   void _maxKstAsharp(const fullMatrix<double>&, const fullVector<double>&,
                  double mina, double beta, double &maxK) const;
 
-  double _Rsafe(double a, double K) const {
+  static double _Rsafe(double a, double K) {
     const double x = .5 * (K - a*a*a + 3*a);
-    const double phi = std::acos(x) / 3;
-    return (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
+    if (x > 1+1e-13 || x < -1-1e-13) {
+      Msg::Warning("x = %g (|1+%g|)", x, std::abs(x)-1);
+    }
+
+    double ans;
+    if (x >= 1)       ans = (a - 1) / (a + 2);
+    else if (x <= -1) ans = (a - 2) / (a + 1);
+    else {
+      const double phi = std::acos(x) / 3;
+      ans = (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
+    }
+
+    if (ans < 0 || ans > 1) {
+      Msg::Warning("R = %g", ans);
+      if (ans < 0) return 0;
+      else return 1;
+    }
+    return ans;
   }
 
 private:

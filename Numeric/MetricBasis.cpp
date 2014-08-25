@@ -89,87 +89,14 @@ double MetricBasis::minRCorner(MElement *el)
 
   // Metric coefficients
   fullMatrix<double> metCoeffLag;
-
-  switch (el->getDim()) {
-  case 0 :
-    return -1.;
-  case 1 :
-  case 2 :
-    Msg::Fatal("not implemented");
-    break;
-
-  case 3 :
-    {
-      fullMatrix<double> dxyzdX(nSampPnts,3), dxyzdY(nSampPnts,3), dxyzdZ(nSampPnts,3);
-      gradients->getGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, &dxyzdZ);
-
-      metCoeffLag.resize(nSampPnts, 7);
-      for (int i = 0; i < nSampPnts; i++) {
-        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
-        const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
-        const double &dxdZ = dxyzdZ(i,0), &dydZ = dxyzdZ(i,1), &dzdZ = dxyzdZ(i,2);
-        const double dvxdX = dxdX*dxdX + dydX*dydX + dzdX*dzdX;
-        const double dvxdY = dxdY*dxdY + dydY*dydY + dzdY*dzdY;
-        const double dvxdZ = dxdZ*dxdZ + dydZ*dydZ + dzdZ*dzdZ;
-        metCoeffLag(i, 0) = (dvxdX + dvxdY + dvxdZ) / 3;
-        metCoeffLag(i, 1) = dvxdX - metCoeffLag(i, 0);
-        metCoeffLag(i, 2) = dvxdY - metCoeffLag(i, 0);
-        metCoeffLag(i, 3) = dvxdZ - metCoeffLag(i, 0);
-        const double fact = std::sqrt(2);
-        metCoeffLag(i, 4) = fact * (dxdX*dxdY + dydX*dydY + dzdX*dzdY);
-        metCoeffLag(i, 5) = fact * (dxdZ*dxdY + dydZ*dydY + dzdZ*dzdY);
-        metCoeffLag(i, 6) = fact * (dxdX*dxdZ + dydX*dydZ + dzdX*dzdZ);
-      }
-    }
-    break;
-  }
+  _fillCoeff(gradients, nodes, metCoeffLag);
 
   // Jacobian coefficients
   fullVector<double> jacLag(jacobian->getNumJacNodes());
   jacobian->getSignedJacobian(nodes, jacLag);
 
   // Compute min_corner(R)
-  double Rmin = 1.;
-
-  for (int i = 0; i < nSampPnts; ++i) {
-    if (jacLag(i) <= 0.) {
-      Rmin = std::min(Rmin, 0.);
-    }
-    else {
-      double q = metCoeffLag(i, 0);
-      double p = 0;
-      for (int k = 1; k < 7; ++k) {
-        p += pow_int(metCoeffLag(i, k), 2);
-      }
-      p = std::sqrt(p/6);
-      const double a = q/p;
-      if (a > 1e4) {
-        Rmin = std::min(Rmin, std::sqrt((a - std::sqrt(3)) / (a + std::sqrt(3))));
-      }
-      else {
-        const double x = .5 * (jacLag(i)/p/p*jacLag(i)/p - a*a*a + 3*a);
-        if (x >  1.1 || x < -1.1) {
-          Msg::Error("x much smaller than -1 or much greater than 1");
-        }
-
-        double tmpR;
-        if (x >=  1)
-          tmpR = (a - 1) / (a + 2);
-        else if (x <= -1)
-          tmpR = (a - 2) / (a + 1);
-        else {
-          const double phi = std::acos(x)/3;
-          tmpR = (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
-        }
-        if (tmpR < 0) {
-          if (tmpR < -1e-7) Msg::Error("negative R !!!");
-          else tmpR = 0;
-        }
-        Rmin = std::min(Rmin, std::sqrt(tmpR));
-      }
-    }
-  }
-  return Rmin;
+  return _computeMinlagR(jacLag, metCoeffLag, nSampPnts);
 }
 
 double MetricBasis::minSampledR(MElement *el, int order)
@@ -244,41 +171,7 @@ double MetricBasis::getBoundMinR(MElement *el)
 
   // Metric coefficients
   fullMatrix<double> metCoeffLag;
-
-  switch (el->getDim()) {
-  case 0 :
-    return -1.;
-  case 1 :
-  case 2 :
-    Msg::Fatal("not implemented");
-    break;
-
-  case 3 :
-    {
-      fullMatrix<double> dxyzdX(nSampPnts,3), dxyzdY(nSampPnts,3), dxyzdZ(nSampPnts,3);
-      _gradients->getGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, &dxyzdZ);
-
-      metCoeffLag.resize(nSampPnts, 7);
-      for (int i = 0; i < nSampPnts; i++) {
-        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
-        const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
-        const double &dxdZ = dxyzdZ(i,0), &dydZ = dxyzdZ(i,1), &dzdZ = dxyzdZ(i,2);
-        const double dvxdX = dxdX*dxdX + dydX*dydX + dzdX*dzdX;
-        const double dvxdY = dxdY*dxdY + dydY*dydY + dzdY*dzdY;
-        const double dvxdZ = dxdZ*dxdZ + dydZ*dydZ + dzdZ*dzdZ;
-        metCoeffLag(i, 0) = (dvxdX + dvxdY + dvxdZ) / 3;
-        metCoeffLag(i, 1) = dvxdX - metCoeffLag(i, 0);
-        metCoeffLag(i, 2) = dvxdY - metCoeffLag(i, 0);
-        metCoeffLag(i, 3) = dvxdZ - metCoeffLag(i, 0);
-        const double fact = std::sqrt(2);
-        metCoeffLag(i, 4) = fact * (dxdX*dxdY + dydX*dydY + dzdX*dzdY);
-        metCoeffLag(i, 5) = fact * (dxdZ*dxdY + dydZ*dydY + dzdZ*dzdY);
-        metCoeffLag(i, 6) = fact * (dxdX*dxdZ + dydX*dydZ + dzdX*dzdZ);
-      }
-    }
-    break;
-  }
-
+  _fillCoeff(_gradients, nodes, metCoeffLag);
   fullMatrix<double> *metCoeff;
   metCoeff = new fullMatrix<double>(nSampPnts, metCoeffLag.size2());
   _bezier->matrixLag2Bez.mult(metCoeffLag, *metCoeff);
@@ -641,47 +534,14 @@ void MetricBasis::_computeRmin(
     double &RminLag, double &RminBez,
     int depth, bool debug) const
 {
-  RminLag = 1.;
-
-  for (int i = 0; i < _bezier->getNumLagCoeff(); ++i) {
-    if (jac(i) <= 0) {
-        RminLag = 0;
-        RminBez = 0;
-        return;
-    }
-    double q = coeff(i, 0);
-    double p = 0;
-    for (int k = 1; k < 7; ++k) {
-      p += pow_int(coeff(i, k), 2);
-    }
-    p = std::sqrt(p/6);
-    const double a = q/p;
-    if (a > 1e4) {
-      RminLag = std::min(RminLag, std::sqrt((a - std::sqrt(3)) / (a + std::sqrt(3))));
-    }
-    else {
-      const double x = .5 * (jac(i)/p/p*jac(i)/p - a*a*a + 3*a);
-
-      double tmpR;
-      if (x >=  1)
-        tmpR = (a - 1) / (a + 2);
-      else if (x <= -1)
-        tmpR = (a - 2) / (a + 1);
-      else {
-        const double phi = std::acos(x)/3;
-        tmpR = (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
-      }
-      if (tmpR <= 0) {
-        RminLag = 0;
-        RminBez = 0;
-        return;
-      }
-      else RminLag = std::min(RminLag, std::sqrt(tmpR));
-    }
+  RminLag = _computeMinlagR(jac, coeff, _bezier->getNumLagCoeff());
+  if (RminLag == 0) {
+    RminBez = 0;
+    return;
   }
 
   double minK;
-  _minJ2P3(coeff, jac, minK);
+  _minK(coeff, jac, minK);
   if (minK < 1e-10) {
     RminBez = 0;
     return;
@@ -810,23 +670,7 @@ void MetricBasis::_computeRmax(
       RmaxLag = std::max(RmaxLag, std::sqrt((a - std::sqrt(3)) / (a + std::sqrt(3))));
     }
     else {
-      const double x = .5 * (jac(i)/p/p*jac(i)/p - a*a*a + 3*a);
-
-      double tmpR;
-      if (x >=  1)
-        tmpR = (a - 1) / (a + 2);
-      else if (x <= -1)
-        tmpR = (a - 2) / (a + 1);
-      else {
-        const double phi = std::acos(x)/3;
-        tmpR = (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
-      }
-      if (tmpR < 0) {
-        if (tmpR < -1e-7) Msg::Fatal("3 s normal ? %g (%g, %g, %g) or (%g, %g)",
-            tmpR, p/std::sqrt(6), q, jac(i)*jac(i),
-            q/p*std::sqrt(6), jac(i)*jac(i)/p/p/p*6*std::sqrt(6));
-        else tmpR = 0;
-      }
+      const double tmpR = _Rsafe(a, jac(i)/p/p*jac(i)/p);
       RmaxLag = std::max(RmaxLag, std::sqrt(tmpR));
     }
   }
@@ -932,42 +776,7 @@ void MetricBasis::_getMetricData(MElement *el, MetricData *&md) const
 
   // Metric coefficients
   fullMatrix<double> metCoeffLag;
-
-  switch (el->getDim()) {
-  case 0 :
-    md = NULL;
-    return;
-  case 1 :
-  case 2 :
-    Msg::Fatal("not implemented");
-    break;
-
-  case 3 :
-    {
-      fullMatrix<double> dxyzdX(nSampPnts,3), dxyzdY(nSampPnts,3), dxyzdZ(nSampPnts,3);
-      _gradients->getGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, &dxyzdZ);
-
-      metCoeffLag.resize(nSampPnts, 7);
-      for (int i = 0; i < nSampPnts; i++) {
-        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
-        const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
-        const double &dxdZ = dxyzdZ(i,0), &dydZ = dxyzdZ(i,1), &dzdZ = dxyzdZ(i,2);
-        const double dvxdX = dxdX*dxdX + dydX*dydX + dzdX*dzdX;
-        const double dvxdY = dxdY*dxdY + dydY*dydY + dzdY*dzdY;
-        const double dvxdZ = dxdZ*dxdZ + dydZ*dydZ + dzdZ*dzdZ;
-        metCoeffLag(i, 0) = (dvxdX + dvxdY + dvxdZ) / 3;
-        metCoeffLag(i, 1) = dvxdX - metCoeffLag(i, 0);
-        metCoeffLag(i, 2) = dvxdY - metCoeffLag(i, 0);
-        metCoeffLag(i, 3) = dvxdZ - metCoeffLag(i, 0);
-        const double fact = std::sqrt(2);
-        metCoeffLag(i, 4) = fact * (dxdX*dxdY + dydX*dydY + dzdX*dzdY);
-        metCoeffLag(i, 5) = fact * (dxdZ*dxdY + dydZ*dydY + dzdZ*dzdY);
-        metCoeffLag(i, 6) = fact * (dxdX*dxdZ + dydX*dydZ + dzdX*dzdZ);
-      }
-    }
-    break;
-  }
-
+  _fillCoeff(_gradients, nodes, metCoeffLag);
   fullMatrix<double> *metCoeff;
   metCoeff = new fullMatrix<double>(nSampPnts, metCoeffLag.size2());
   _bezier->matrixLag2Bez.mult(metCoeffLag, *metCoeff);
@@ -979,6 +788,74 @@ void MetricBasis::_getMetricData(MElement *el, MetricData *&md) const
   _jacobian->lag2Bez(jacLag, *jac);
 
   md = new MetricData(metCoeff, jac, -1, 0, 0);
+}
+
+void MetricBasis::_fillCoeff(const GradientBasis *gradients,
+    fullMatrix<double> &nodes, fullMatrix<double> &coeff)
+{
+  const int nSampPnts = gradients->getNumSamplingPoints();
+
+  switch (nodes.size2()) {
+  case 0 :
+    return;
+  case 1 :
+  case 2 :
+    Msg::Fatal("not implemented");
+    break;
+
+  case 3 :
+    {
+      fullMatrix<double> dxyzdX(nSampPnts,3), dxyzdY(nSampPnts,3), dxyzdZ(nSampPnts,3);
+      gradients->getGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, &dxyzdZ);
+
+      coeff.resize(nSampPnts, 7);
+      for (int i = 0; i < nSampPnts; i++) {
+        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
+        const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
+        const double &dxdZ = dxyzdZ(i,0), &dydZ = dxyzdZ(i,1), &dzdZ = dxyzdZ(i,2);
+        const double dvxdX = dxdX*dxdX + dydX*dydX + dzdX*dzdX;
+        const double dvxdY = dxdY*dxdY + dydY*dydY + dzdY*dzdY;
+        const double dvxdZ = dxdZ*dxdZ + dydZ*dydZ + dzdZ*dzdZ;
+        coeff(i, 0) = (dvxdX + dvxdY + dvxdZ) / 3;
+        coeff(i, 1) = dvxdX - coeff(i, 0);
+        coeff(i, 2) = dvxdY - coeff(i, 0);
+        coeff(i, 3) = dvxdZ - coeff(i, 0);
+        const double fact = std::sqrt(2);
+        coeff(i, 4) = fact * (dxdX*dxdY + dydX*dydY + dzdX*dzdY);
+        coeff(i, 5) = fact * (dxdZ*dxdY + dydZ*dydY + dzdZ*dzdY);
+        coeff(i, 6) = fact * (dxdX*dxdZ + dydX*dydZ + dzdX*dzdZ);
+      }
+    }
+    break;
+  }
+}
+
+double MetricBasis::_computeMinlagR(const fullVector<double> &jac,
+                                    const fullMatrix<double> &coeff, int num)
+{
+  double Rmin = 1.;
+  for (int i = 0; i < num; ++i) {
+    if (jac(i) <= 0.) {
+      return 0;
+    }
+    else {
+      double q = coeff(i, 0);
+      double p = 0;
+      for (int k = 1; k < 7; ++k) {
+        p += pow_int(coeff(i, k), 2);
+      }
+      p = std::sqrt(p/6);
+      const double a = q/p;
+      if (a > 1e4) {
+        Rmin = std::min(Rmin, std::sqrt((a - std::sqrt(3)) / (a + std::sqrt(3))));
+      }
+      else {
+        const double tmpR = _Rsafe(a, jac(i)/p/p*jac(i)/p);
+        Rmin = std::min(Rmin, std::sqrt(tmpR));
+      }
+    }
+  }
+  return Rmin;
 }
 
 void MetricBasis::_minMaxA(
@@ -1012,7 +889,7 @@ void MetricBasis::_minMaxA(
   max = std::sqrt(max);
 }
 
-void MetricBasis::_minJ2P3(const fullMatrix<double> &coeff,
+void MetricBasis::_minK(const fullMatrix<double> &coeff,
     const fullVector<double> &jac, double &min) const
 {
   fullVector<double> r(coeff.size1());
