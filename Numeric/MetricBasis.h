@@ -20,13 +20,6 @@ private:
   const GradientBasis *_gradients;
   const bezierBasis *_bezier;
   static double _tol;
-  static int _which;
-
-  int __maxdepth, __numSubdivision, __TotSubdivision;
-  std::vector<int> __numSub;
-  MElement *__curElem;
-
-  static double tm0, tm1, tm2, tm3, tm4;
 
   std::fstream file;
 
@@ -61,25 +54,16 @@ public:
   MetricBasis(int elementTag);
 
   static void setTol(double tol) {_tol = tol;}
-  static double getTol() {return _tol;}
-  static void setWhich(int which) {_which = which;}
-
-  double getBoundRmin(MElement*, MetricData*&, fullMatrix<double>&);
-  double getMinR(MElement*, MetricData*&, int) const;
-  bool notStraight(MElement*, double &metric, int order) const;
   static double boundMinR(MElement *el);
   static double minRCorner(MElement *el);
-  static void printTm() {Msg::Info("%g %g %g %g %g", tm0, tm1, tm2, tm3, tm4);}
-  static double sampleR(MElement *el, int order);
-  //double getBoundRmin(int, MElement**, double*);
-  //static double boundRmin(int, MElement**, double*, bool sameType = false);
+  static double minSampledR(MElement *el, int order);
 
-  void interpolate(const MElement*, const MetricData*, const double *uvw, double *minmaxQ, bool write = false) const;
+  double getBoundMinR(MElement*);
+  double getMinSampledR(MElement*, int) const;
+
+  void interpolate(const MElement*, const MetricData*, const double *uvw, double *minmaxQ) const;
 
   static int metricOrder(int tag);
-  void printTotSubdiv(double n) const {
-    Msg::Info("SUBDIV %d, %g", __TotSubdivision, __TotSubdivision/2776.);
-  }
 
 private:
   void _fillInequalities(int order);
@@ -93,13 +77,8 @@ private:
                         double &term1, double &phip) const;
   void _getMetricData(MElement*, MetricData*&) const;
 
-  double _subdivideForRmin(MetricData*, double RminLag, double tol, int which) const;
+  double _subdivideForRmin(MetricData*, double RminLag, double tol) const;
 
-  double _minp(const fullMatrix<double>&) const;
-  double _minp2(const fullMatrix<double>&) const;
-  double _minq(const fullMatrix<double>&) const;
-  double _maxp(const fullMatrix<double>&) const;
-  double _maxq(const fullMatrix<double>&) const;
   void _minMaxA(const fullMatrix<double>&, double &min, double &max) const;
   void _minJ2P3(const fullMatrix<double>&, const fullVector<double>&, double &min) const;
   void _maxAstKpos(const fullMatrix<double>&, const fullVector<double>&,
@@ -110,39 +89,11 @@ private:
                  double mina, double beta, double &maxK) const;
   void _maxKstAsharp(const fullMatrix<double>&, const fullVector<double>&,
                  double mina, double beta, double &maxK) const;
-  void _minMaxJacobianSqr(const fullVector<double>&, double &min, double &max) const;
 
   double _Rsafe(double a, double K) const {
     const double x = .5 * (K - a*a*a + 3*a);
     const double phi = std::acos(x) / 3;
     return (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
-  }
-  bool _chknumber(double val) const {
-#if defined(_MSC_VER)
-    return _isnan(val) || !_finite(val);
-#else
-    return std::isnan(val) || std::isinf(val);
-#endif
-  }
-  bool _chka(double a) const {return _chknumber(a) || a < 1;}
-  bool _chkK(double K) const {return _chknumber(K) || K < 0;}
-  int _chkaK(double a, double K) const {
-    if (_chka(a)) return 1;
-    if (_chkK(K)) return 2;
-    if (std::abs(K - a*a*a + 3*a) > 2) {
-      Msg::Warning("x = %g", .5 * (K - a*a*a + 3*a));
-      return 3;
-    }
-    return 0;
-  }
-  bool _chkR(double R) const {return _chknumber(R) || R < 0 || R > 1;}
-  int _chkaKR(double a, double K, double R) const {
-    const int aK = _chkaK(a, K);
-    if (aK) return aK;
-    if (_chkR(R)) return 4;
-    const double myR = _Rsafe(a, K);
-    if (std::abs(myR-R) > 1e-10) return 5;
-    return 0;
   }
 
 private:

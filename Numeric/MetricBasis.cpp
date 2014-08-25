@@ -12,12 +12,6 @@
 #include <sstream>
 
 double MetricBasis::_tol = 1e-3;
-double MetricBasis::tm0 = 0;
-double MetricBasis::tm1 = 0;
-double MetricBasis::tm2 = 0;
-double MetricBasis::tm3 = 0;
-double MetricBasis::tm4 = 0;
-int MetricBasis::_which = 0;
 
 namespace {
   double cubicCardanoRoot(double p, double q)
@@ -69,20 +63,16 @@ MetricBasis::MetricBasis(int tag)
   _bezier = BasisFactory::getBezierBasis(type, metOrder);
 
   _fillInequalities(metOrder);
-  __TotSubdivision = 0;
 }
 
 double MetricBasis::boundMinR(MElement *el)
 {
   MetricBasis *metric = (MetricBasis*)BasisFactory::getMetricBasis(el->getTypeForMSH());
-  MetricData *md = NULL;
-  fullMatrix<double> dummy;
-  return metric->getBoundRmin(el, md, dummy);
+  return metric->getBoundMinR(el);
 }
 
 double MetricBasis::minRCorner(MElement *el)
 {
-  //double time = Cpu();
   int tag = el->getTypeForMSH();
   int order = 1;
   if (el->getType() == TYPE_TRI || el->getType() == TYPE_TET) order = 0;
@@ -95,12 +85,7 @@ double MetricBasis::minRCorner(MElement *el)
 
   int nMapping = gradients->getNumMapNodes();
   fullMatrix<double> nodes(nMapping, 3);
-  //tm0 += Cpu() - time;
-  //time = Cpu();
   el->getNodesCoord(nodes);
-
-  //tm1 += Cpu() - time;
-  //time = Cpu();
 
   // Metric coefficients
   fullMatrix<double> metCoeffLag;
@@ -139,15 +124,9 @@ double MetricBasis::minRCorner(MElement *el)
     break;
   }
 
-  //tm2 += Cpu() - time;
-  //time = Cpu();
-
   // Jacobian coefficients
   fullVector<double> jacLag(jacobian->getNumJacNodes());
   jacobian->getSignedJacobian(nodes, jacLag);
-
-  //tm3 += Cpu() - time;
-  //time = Cpu();
 
   // Compute min_corner(R)
   double Rmin = 1.;
@@ -190,21 +169,16 @@ double MetricBasis::minRCorner(MElement *el)
       }
     }
   }
-
-  //tm4 += Cpu() - time;
-  //time = Cpu();
   return Rmin;
 }
 
-double MetricBasis::sampleR(MElement *el, int order)
+double MetricBasis::minSampledR(MElement *el, int order)
 {
   MetricBasis *metric = (MetricBasis*)BasisFactory::getMetricBasis(el->getTypeForMSH());
-  MetricData *md = NULL;
-  fullMatrix<double> dummy;
-  return metric->getMinR(el, md, order);
+  return metric->getMinSampledR(el, order);
 }
 
-double MetricBasis::getMinR(MElement *el, MetricData *&md, int deg) const
+double MetricBasis::getMinSampledR(MElement *el, int deg) const
 {
   fullMatrix<double> samplingPoints;
 
@@ -238,170 +212,6 @@ double MetricBasis::getMinR(MElement *el, MetricData *&md, int deg) const
       return -1;
   }
 
-  if (!md) _getMetricData(el, md);
-
-  static unsigned int aa = 200;
-  bool write = false;
-  if (md->_num < 100000 && ++aa < 200) {
-    write = true;
-    std::stringstream name;
-    name << "HoleMetric_" << el->getNum() << "_";
-    name << (md->_num % 10);
-    name << (md->_num % 100)/10;
-    name << (md->_num % 1000)/100;
-    name << (md->_num % 10000)/1000;
-    name << (md->_num % 100000)/10000;
-    name << ".txt";
-    ((MetricBasis*)this)->file.open(name.str().c_str(), std::fstream::out);
-
-    {
-      fullMatrix<double> *coeff = md->_metcoeffs;
-      fullVector<double> *jac = md->_jaccoeffs;
-      double minp, minpp, maxp, minJ2, maxJ2, minK, mina, maxa, beta, minq, maxq, maxa2, maxa3, maxK2, maxK3, RminBez, RminLag;
-      minp = _minp(*coeff);
-      minpp = _minp2(*coeff);
-      maxp = _maxp(*coeff);
-      minq = _minq(*coeff);
-      maxq = _maxq(*coeff);
-      _minMaxJacobianSqr(*jac, minJ2, maxJ2);
-      _minJ2P3(*coeff, *jac, minK);
-      _minMaxA(*coeff, mina, maxa);
-
-      double phip, term1, dRda;
-      _computeTermBeta(mina, minK, dRda, term1, phip);
-      beta = -3 * mina*mina * term1 / dRda / 6;
-      if (beta*minK-mina*mina*mina < 0) {
-        _maxAstKneg(*coeff, *jac, minK, beta, maxa3);
-        _maxAstKpos(*coeff, *jac, minK, beta, maxa2);
-      }
-      else {
-        _maxAstKpos(*coeff, *jac, minK, beta, maxa3);
-        _maxAstKneg(*coeff, *jac, minK, beta, maxa2);
-        if (beta*minK-maxa3*maxa3*maxa3 < 0) {
-          _maxAstKneg(*coeff, *jac, minK, beta, maxa3);
-          _maxAstKpos(*coeff, *jac, minK, beta, maxa2);
-        }
-      }
-      _maxKstAfast(*coeff, *jac, mina, beta, maxK2);
-      _maxKstAsharp(*coeff, *jac, mina, beta, maxK3);
-
-      /*if (md->_num == 22)
-        _computeRmin(*coeff, *jac, RminLag, RminBez, 0, true);
-      else*/
-      _computeRmin(*coeff, *jac, RminLag, RminBez, 0, false);
-
-      double betaOpt = beta, minaOpt = mina, maxaOpt = maxa3, RminBezOpt;
-      {
-        /*const */double phi = std::acos(.5*(minK-maxa3*maxa3*maxa3+3*maxa3))/3;
-        RminBezOpt = (maxa3+2*std::cos(phi+2*M_PI/3))/(maxa3+2*std::cos(phi));
-        RminBezOpt = std::sqrt(RminBezOpt);
-
-        double RminBez0 = (mina+2*std::cos(phip+M_PI/3))/(mina+2*std::cos(phip-M_PI/3));
-        RminBez0 = std::sqrt(RminBez0);
-        double curmina = mina;
-        double curmaxa = maxa3;
-        while (std::min(RminLag, RminBez0)-RminBezOpt > MetricBasis::_tol) {
-          minaOpt = (curmina + curmaxa) / 2;
-          maxaOpt = curmina;
-          while (maxaOpt < minaOpt) {
-            _computeTermBeta(minaOpt, minK, dRda, term1, phip);
-            betaOpt = -3 * minaOpt*minaOpt * term1 / dRda / 6;
-            if (betaOpt*minK-minaOpt*minaOpt*minaOpt < 0)
-              _maxAstKneg(*coeff, *jac, minK, betaOpt, maxaOpt);
-            else {
-              _maxAstKpos(*coeff, *jac, minK, betaOpt, maxaOpt);
-              if (betaOpt*minK-maxaOpt*maxaOpt*maxaOpt < 0)
-                _maxAstKneg(*coeff, *jac, minK, betaOpt, maxaOpt);
-            }
-            minaOpt = (curmina + minaOpt) / 2;
-          }
-          curmina = minaOpt;
-          curmaxa = maxaOpt;
-          phi = std::acos(.5*(minK-curmaxa*curmaxa*curmaxa+3*curmaxa))/3;
-          RminBezOpt = (curmaxa+2*std::cos(phi+2*M_PI/3))/(curmaxa+2*std::cos(phi));
-          phi = std::acos(.5*(minK-curmina*curmina*curmina+3*curmina))/3;
-          RminBez0 = (curmina+2*std::cos(phi+2*M_PI/3))/(curmina+2*std::cos(phi));
-          RminBezOpt = std::sqrt(RminBezOpt);
-          RminBez0 = std::sqrt(RminBez0);
-        }
-      }
-
-      ((MetricBasis*)this)->file << minK << " ";
-      ((MetricBasis*)this)->file << maxJ2/minpp/minpp/minpp << " ";
-      ((MetricBasis*)this)->file << mina << " " << maxa << " ";
-      ((MetricBasis*)this)->file << beta << " ";
-      ((MetricBasis*)this)->file << minp << " " << maxp << " ";
-      ((MetricBasis*)this)->file << minJ2 << " " << maxJ2 << " ";
-      ((MetricBasis*)this)->file << minpp << " ";
-      ((MetricBasis*)this)->file << minq << " " << maxq << " ";
-      ((MetricBasis*)this)->file << maxa2 << " ";
-      ((MetricBasis*)this)->file << maxa3 << " ";
-      ((MetricBasis*)this)->file << maxK2 << " ";
-      ((MetricBasis*)this)->file << maxK3 << " ";
-      ((MetricBasis*)this)->file << RminBez << " " << RminLag << " ";
-      ((MetricBasis*)this)->file << betaOpt << " ";
-      ((MetricBasis*)this)->file << minaOpt << " " << maxaOpt << std::endl;
-    }
-  }
-
-  double uvw[3];
-  double minmaxQ[2];
-  uvw[0] = samplingPoints(0, 0);
-  uvw[1] = samplingPoints(0, 1);
-  uvw[2] = samplingPoints(0, 2);
-
-  interpolate(el, md, uvw, minmaxQ, write);
-  double min, max = min = std::sqrt(minmaxQ[0]/minmaxQ[1]);
-  for (int i = 1; i < samplingPoints.size1(); ++i) {
-    uvw[0] = samplingPoints(i, 0);
-    uvw[1] = samplingPoints(i, 1);
-    uvw[2] = samplingPoints(i, 2);
-    interpolate(el, md, uvw, minmaxQ, write);
-    double tmp = std::sqrt(minmaxQ[0]/minmaxQ[1]);
-    min = std::min(min, tmp);
-    max = std::max(max, tmp);
-    //Msg::Info("%g (%g, %g)", tmp, min, max);
-  }
-  if (write) {
-    ((MetricBasis*)this)->file.close();
-  }
-  return min;
-}
-
-bool MetricBasis::notStraight(MElement *el, double &metric, int deg) const
-{
-  fullMatrix<double> samplingPoints;
-
-  switch (el->getType()) {
-    case TYPE_PNT :
-      samplingPoints = gmshGeneratePointsLine(0);
-      break;
-    case TYPE_LIN :
-      samplingPoints = gmshGeneratePointsLine(deg);
-      break;
-    case TYPE_TRI :
-      samplingPoints = gmshGeneratePointsTriangle(deg,false);
-      break;
-    case TYPE_QUA :
-      samplingPoints = gmshGeneratePointsQuadrangle(deg,false);
-      break;
-    case TYPE_TET :
-      samplingPoints = gmshGeneratePointsTetrahedron(deg,false);
-      break;
-    case TYPE_PRI :
-      samplingPoints = gmshGeneratePointsPrism(deg,false);
-      break;
-    case TYPE_HEX :
-      samplingPoints = gmshGeneratePointsHexahedron(deg,false);
-      break;
-    case TYPE_PYR :
-      samplingPoints = JacobianBasis::generateJacPointsPyramid(deg);
-      break;
-    default :
-      Msg::Error("Unknown Jacobian function space for element type %d", el->getType());
-      return false;
-  }
-
   MetricData *md;
   _getMetricData(el, md);
 
@@ -421,22 +231,12 @@ bool MetricBasis::notStraight(MElement *el, double &metric, int deg) const
     double tmp = std::sqrt(minmaxQ[0]/minmaxQ[1]);
     min = std::min(min, tmp);
     max = std::max(max, tmp);
-    //Msg::Info("%g (%g, %g)", tmp, min, max);
   }
-
-  if (max-min < max*1e-12) {
-    metric = min;
-    return false;
-  }
-  else {
-    metric = -1;
-    return true;
-  }
+  return min;
 }
 
-double MetricBasis::getBoundRmin(MElement *el, MetricData *&md, fullMatrix<double> &lagCoeff)
+double MetricBasis::getBoundMinR(MElement *el)
 {
-  __curElem = el;
   int nSampPnts = _gradients->getNumSamplingPoints();
   int nMapping = _gradients->getNumMapNodes();
   fullMatrix<double> nodes(nMapping, 3);
@@ -479,9 +279,6 @@ double MetricBasis::getBoundRmin(MElement *el, MetricData *&md, fullMatrix<doubl
     break;
   }
 
-#ifndef METRICSHAPEMEASURE
-  lagCoeff = metCoeffLag;
-#endif
   fullMatrix<double> *metCoeff;
   metCoeff = new fullMatrix<double>(nSampPnts, metCoeffLag.size2());
   _bezier->matrixLag2Bez.mult(metCoeffLag, *metCoeff);
@@ -494,76 +291,14 @@ double MetricBasis::getBoundRmin(MElement *el, MetricData *&md, fullMatrix<doubl
 
   //
   double RminLag, RminBez;
-
-  /*Msg::Info("----------------");
-  Msg::Info("Jacobian");
-  for (int i = 0; i < jac->size(); ++i) {
-    Msg::Info("%g", (*jac)(i));
-  }
-  Msg::Info("----------------");
-  Msg::Info("Metric");
-  for (int i = 0; i < metCoeff->size1(); ++i) {
-    Msg::Info("%g %g %g %g %g %g %g", (*metCoeff)(i, 0), (*metCoeff)(i, 1), (*metCoeff)(i, 2), (*metCoeff)(i, 3), (*metCoeff)(i, 4), (*metCoeff)(i, 5), (*metCoeff)(i, 6));
-  }
-  Msg::Info("----------------");*/
-
   _computeRmin(*metCoeff, *jac, RminLag, RminBez, 0);
-  //Msg::Info("el %d", el->getNum());
-  double mina, maxa;
-  _minMaxA(*metCoeff, mina, maxa);
-#ifndef METRICSHAPEMEASURE
-  static int cntRight = 0, cntTOT = 0;
-  ++cntTOT;
-  if (maxa-mina < 1e-10) {
-    ++cntRight;
-  }
-#endif
-  //Msg::Info("right %d/%d", cntRight, cntTOT);
-
-
-#ifndef METRICSHAPEMEASURE
-    fullVector<double> *jjac = new fullVector<double>(*jac);
-    fullMatrix<double> *mmet = new fullMatrix<double>(*metCoeff);
-    /*for (int i = 0; i < jjac->size(); ++i) {
-      Msg::Info(":%g", (*jjac)(i));
-    }
-    for (int i = 0; i < mmet->size1(); ++i) {
-      Msg::Info(":%g | %g %g %g %g %g %g", (*mmet)(i, 0), (*mmet)(i, 1), (*mmet)(i, 2), (*mmet)(i, 3), (*mmet)(i, 4), (*mmet)(i, 5), (*mmet)(i, 6));
-    }*/
-    md = new MetricData(mmet, jjac, RminBez, 0, 0);
-      //Msg::Info("+1 %d", md);
-#endif
 
   if (RminLag-RminBez < MetricBasis::_tol) {
-    //Msg::Info("RETURNING %g", RminBez);
-    //Msg::Info("0 subdivision");
     return RminBez;
   }
   else {
-    //MetricData md(metCoeff, jac, RminBez, 0);
     MetricData *md2 = new MetricData(metCoeff, jac, RminBez, 0, 0);
-      //Msg::Info("+2 %d", md2);
-    ((MetricBasis*)this)->__numSubdivision = 0;
-    ((MetricBasis*)this)->__numSub.resize(20);
-    for (unsigned int i = 0; i < __numSub.size(); ++i) ((MetricBasis*)this)->__numSub[i] = 0;
-    ((MetricBasis*)this)->__maxdepth = 0;
-    //double time = Cpu();
-    static int maxsub = 0, elmax;
-    double tt = _subdivideForRmin(md2, RminLag, MetricBasis::_tol, MetricBasis::_which);
-    if (maxsub < __numSubdivision && tt > 10-10) {
-      maxsub = __numSubdivision;
-      elmax = el->getNum();
-    }
-    //Msg::Info("%d subdivisions (max %d, %d), el %d", __numSubdivision, maxsub, elmax, el->getNum());
-    /*//Msg::Info("> computation time %g", Cpu() - time);
-    Msg::Info("> maxDepth %d", __maxdepth);
-    Msg::Info("> numSubdivision %d", __numSubdivision);
-    int last = __numSub.size();
-    while (--last > 0 && __numSub[last] == 0);
-    for (unsigned int i = 0; i < last+1; ++i) {
-      Msg::Info("> depth %d: %d", i, __numSub[i]);
-    }
-    Msg::Info("RETURNING %g after subdivision", tt);*/
+    double tt = _subdivideForRmin(md2, RminLag, MetricBasis::_tol);
     return tt;
   }
 }
@@ -703,10 +438,6 @@ void MetricBasis::_fillInequalities(int metricOrder)
   }
 
   _lightenInequalities(countJ2, countP3, countA);
-
-  /*Msg::Info("A : %d / %d", countA, ncoeff*(ncoeff+1)/2);
-  Msg::Info("J2 : %d / %d", countJ2, njac*(njac+1)/2);
-  Msg::Info("P3 : %d / %d", countP3, ncoeff*(ncoeff+1)*(ncoeff+2)/6);*/
 }
 
 void MetricBasis::_lightenInequalities(int &countj, int &countp, int &counta)
@@ -744,7 +475,7 @@ void MetricBasis::_lightenInequalities(int &countj, int &countp, int &counta)
   counta -= cnt[2];
 }
 
-void MetricBasis::interpolate(const MElement *el, const MetricData *md, const double *uvw, double *minmaxQ, bool write) const
+void MetricBasis::interpolate(const MElement *el, const MetricData *md, const double *uvw, double *minmaxQ) const
 {
   if (minmaxQ == NULL) {
     Msg::Error("Cannot write solution of interpolation");
@@ -913,6 +644,11 @@ void MetricBasis::_computeRmin(
   RminLag = 1.;
 
   for (int i = 0; i < _bezier->getNumLagCoeff(); ++i) {
+    if (jac(i) <= 0) {
+        RminLag = 0;
+        RminBez = 0;
+        return;
+    }
     double q = coeff(i, 0);
     double p = 0;
     for (int k = 1; k < 7; ++k) {
@@ -925,14 +661,6 @@ void MetricBasis::_computeRmin(
     }
     else {
       const double x = .5 * (jac(i)/p/p*jac(i)/p - a*a*a + 3*a);
-      if (x >  1.1 || x < -1.1) {
-        if (!depth) {
-          Msg::Error("+ phi %g (jac %g, q %g, p %g)", x, jac(i), q, p);
-          Msg::Info("%g + %g - %g = %g", jac(i)*jac(i)/p/p/p, .5 * q/p, q*q*q/p/p/p, (jac(i)*jac(i)+.5 * q*p*p-q*q*q)/p/p/p);
-        }
-        else if (depth == 1)
-          Msg::Error("- phi %g @ %d(%d) (jac %g, q %g, p %g)", x, depth, i, jac(i), q, p);
-      }
 
       double tmpR;
       if (x >=  1)
@@ -943,18 +671,15 @@ void MetricBasis::_computeRmin(
         const double phi = std::acos(x)/3;
         tmpR = (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
       }
-      if (tmpR < 0) {
-        if (tmpR < -1e-7) Msg::Fatal("3 s normal ? %g (%g, %g, %g) or (%g, %g)",
-            tmpR, p/std::sqrt(6), q, jac(i)*jac(i),
-            q/p*std::sqrt(6), jac(i)*jac(i)/p/p/p*6*std::sqrt(6));
-        else tmpR = 0;
+      if (tmpR <= 0) {
+        RminLag = 0;
+        RminBez = 0;
+        return;
       }
-      RminLag = std::min(RminLag, std::sqrt(tmpR));
+      else RminLag = std::min(RminLag, std::sqrt(tmpR));
     }
   }
 
-  //static int numtot = 0;
-  //++numtot;
   double minK;
   _minJ2P3(coeff, jac, minK);
   if (minK < 1e-10) {
@@ -1013,8 +738,6 @@ void MetricBasis::_computeRmin(
       double R0 = _Rsafe(am0, minK);
       double R1 = _Rsafe(am1, minK);
       double Rnew = _Rsafe(am, minK);
-      if (_chkaK(am0, minK)) Msg::Error("chk am0: %d (%g, %g)", _chkaK(am0, minK), am0, minK);
-      if (_chkaK(am1, minK)) Msg::Error("chk am1: %d (%g, %g)", _chkaK(am1, minK), am1, minK);
 
       int cnt = 0;
       while (std::abs(R0-Rnew) > _tol*.01 || std::abs(R1-Rnew) > _tol*.01) {
@@ -1030,62 +753,16 @@ void MetricBasis::_computeRmin(
         am = (am0 + am1)/2;
         Rnew = _Rsafe(am, minK);
       }
-      /*static int maxcnt = 0, numcnt = 0, totcnt = 0;
-      ++numcnt;
-      totcnt += cnt;
-      if (maxcnt < cnt) {
-        maxcnt = cnt;
-      }
-      Msg::Info("maxcnt %d (num %d/%d=%g average %g)", maxcnt, numcnt, numtot, (double)numcnt/numtot, (double)totcnt/numcnt);
-      double TESTdRda, dum0, dum1;
-      _computeTermBeta(am0, minK, TESTdRda, dum0, dum1);
-      if (TESTdRda > 1e12) Msg::Fatal("> 0 [%g %g %g] (%g, %g), %g -> [%g, %g] for el %d", R0, Rnew, R1, am, minK, amApprox, am0S, am1S, __curElem->getNum());
-      _computeTermBeta(am1, minK, TESTdRda, dum0, dum1);
-      if (TESTdRda < -1e12) Msg::Fatal("< 0 [%g %g %g] (%g, %g), %g -> [%g, %g] for el %d", R0, Rnew, R1, am, minK, amApprox, am0S, am1S, __curElem->getNum());*/
+
       if (am < maxa) {
         RminBez = _Rsafe(am, minK);
-        //Msg::Info("cpt 1: %d (%g, %g, %g)", _chkaKR(am, minK, RminBez), am, minK, RminBez);
-        if (_chkaKR(am, minK, RminBez)) Msg::Error("cpt 1: %d (%g, %g, %g)", _chkaKR(am, minK, RminBez), am, minK, RminBez);
         RminBez = std::sqrt(RminBez);
         return;
       }
     }
 
     RminBez = _Rsafe(maxa, minK);
-    //Msg::Info("cpt 2: %d (%g, %g, %g)", _chkaKR(maxa, minK, RminBez), maxa, minK, RminBez);
-    if (_chkaKR(maxa, minK, RminBez)) Msg::Error("cpt 2: %d (%g, %g, %g)", _chkaKR(maxa, minK, RminBez), maxa, minK, RminBez);
     RminBez = std::sqrt(RminBez);
-
-    /*double RminBez0 = (mina+2*std::cos(phip+M_PI/3))/(mina+2*std::cos(phip-M_PI/3));
-    RminBez0 = std::sqrt(RminBez0);
-    double curmina = mina;
-    double curmaxa = maxa;
-      //Msg::Info(" ");
-    while (std::min(RminLag, RminBez0)-RminBez > MetricBasis::_tol) {
-      //Msg::Info("%g vs %g", RminBez0, RminBez);
-      double a = (curmina + curmaxa) / 2;
-      double newa = curmina;
-      while (newa < a) {
-        _computeTermBeta(a, minK, dRda, term1, phip, sqrt);
-        beta = -3 * a*a * term1 / sqrt / dRda / 6;
-        if (beta*minK-a*a*a < 0)
-          _maxAstKneg(coeff, jac, minK, beta, newa);
-        else {
-          _maxAstKpos(coeff, jac, minK, beta, newa);
-          if (newa < am && beta*minK-newa*newa*newa < 0)
-            _maxAstKneg(coeff, jac, minK, beta, newa);
-        }
-        a = (curmina + a) / 2;
-      }
-      curmina = a;
-      curmaxa = newa;
-      phi = std::acos(.5*(minK-curmaxa*curmaxa*curmaxa+3*curmaxa))/3;
-      RminBez = (curmaxa+2*std::cos(phi+2*M_PI/3))/(curmaxa+2*std::cos(phi));
-      phi = std::acos(.5*(minK-curmina*curmina*curmina+3*curmina))/3;
-      RminBez0 = (curmina+2*std::cos(phi+2*M_PI/3))/(curmina+2*std::cos(phi));
-      RminBez = std::sqrt(RminBez);
-      RminBez0 = std::sqrt(RminBez0);
-    }*/
     return;
   }
   else if (term1 < 0) {
@@ -1097,44 +774,19 @@ void MetricBasis::_computeRmin(
     const double x = .5*(maxK-mina*mina*mina+3*mina);
     const double phimin = std::acos(-1/mina) - M_PI/3;
     double myphi;
-    int which = 0;
-    double tmpphi;
     if (std::abs(x) > 1) {
       myphi = phimin;
-      which = 2;
     }
     else {
       const double phimaxK = std::acos(x)/3;
-      tmpphi = phimaxK;
       myphi = std::max(phimin, phimaxK);
-      if (phimin > phimaxK)
-        which = 2;
-      else
-        which = 1;
     }
     RminBez = (mina+2*std::cos(myphi+2*M_PI/3))/(mina+2*std::cos(myphi));
-    //Msg::Info("cpt 3: %d", _chkaKR(mina, maxK, RminBez));
-    int check;
-    if (which == 1) {
-      check = _chkaKR(mina, maxK, RminBez);
-      if (check) {
-        Msg::Error("cpt 3.1: %d (%g, %g, %g)", check, mina, maxK, RminBez);
-        double Kphimin = 2 * std::cos(3*phimin) + mina*mina*mina - 3*mina;
-        Msg::Info("%g->%g %g->%g", maxK, tmpphi/M_PI, Kphimin, phimin/M_PI);
-      }
-    }
-    else {
-      double Kphimin = 2 * std::cos(3*phimin) + mina*mina*mina - 3*mina;
-      check = _chkaKR(mina, Kphimin, RminBez);
-      if (check) Msg::Error("cpt 3.2: %d (%g, %g, %g)", check, mina, Kphimin, RminBez);
-    }
     RminBez = std::sqrt(RminBez);
     return;
   }
   else {
     RminBez = (mina+2*std::cos(phip+M_PI/3))/(mina+2*std::cos(phip-M_PI/3));
-    //Msg::Info("cpt 4: %d", _chkaKR(mina, minK, RminBez));
-    if (_chkaKR(mina, minK, RminBez)) Msg::Error("cpt 4: %d (%g, %g, %g) dRda %g", _chkaKR(mina, minK, RminBez), mina, minK, RminBez, dRda);
     RminBez = std::sqrt(RminBez);
     return;
   }
@@ -1180,8 +832,7 @@ void MetricBasis::_computeRmax(
   }
 }
 
-double MetricBasis::_subdivideForRmin(
-    MetricData *md, double RminLag, double tol, int which) const
+double MetricBasis::_subdivideForRmin(MetricData *md, double RminLag, double tol) const
 {
   std::priority_queue<MetricData*, std::vector<MetricData*>, lessMinB> subdomains;
   const int numCoeff = md->_metcoeffs->size2();
@@ -1190,18 +841,9 @@ double MetricBasis::_subdivideForRmin(
   const int numSub = _bezier->getNumDivision();
   subdomains.push(md);
 
-  static unsigned int aa = 200;
-  //bool write = false;
-  if (++aa < 200) {
-    getMinR(__curElem, md, 16);
-  }
-
   std::vector<fullVector<double>*> trash;
 
-  //Msg::Info("lagrange %g", RminLag);
-
   while (RminLag - subdomains.top()->_RminBez > tol && subdomains.size() < 25000) {
-    //Msg::Info("%g - %g > %g && %d < %d", RminLag, subdomains.top()->_RminBez, tol, subdomains.size(), pow_int(8,8));
     fullMatrix<double> *subcoeffs, *coeff;
     fullVector<double> *subjac, *jac;
 
@@ -1212,18 +854,8 @@ double MetricBasis::_subdivideForRmin(
     _jacobian->getBezier()->subDivisor.mult(*current->_jaccoeffs, *subjac);
     int depth = current->_depth;
     int num = current->_num;
-      //Msg::Info("d %d RminBez %g / %g", depth, current->_RminBez, RminLag);
-
-    //Msg::Info("delete %d (%d)", current, depth);
-    //Msg::Info(" ");
     delete current;
     subdomains.pop();
-
-    ++((MetricBasis*)this)->__numSubdivision;
-    ++((MetricBasis*)this)->__TotSubdivision;
-    ++((MetricBasis*)this)->__numSub[depth];
-    ((MetricBasis*)this)->__maxdepth = std::max(__maxdepth, depth+1);
-      //Msg::Info("subdividing %d", current);
 
     for (int i = 0; i < numSub; ++i) {
       coeff = new fullMatrix<double>(numMetPnts, numCoeff);
@@ -1232,48 +864,27 @@ double MetricBasis::_subdivideForRmin(
       jac->setAsProxy(*subjac, i * numJacPnts, numJacPnts);
       double minLag, minBez;
       _computeRmin(*coeff, *jac, minLag, minBez, depth+1);
-      //Msg::Info("new RminBez %g", minBez);
       RminLag = std::min(RminLag, minLag);
       int newNum = num + (i+1) * pow_int(10, depth);
       MetricData *metData = new MetricData(coeff, jac, minBez, depth+1, newNum);
-
-      if (aa < 200) {
-        getMinR(__curElem, metData, 16);
-      }
-
-      //Msg::Info("    %g (%d)", minLag, metData);
-      //Msg::Info("+4 %d", metData);
       subdomains.push(metData);
     }
     trash.push_back(subjac);
     delete subcoeffs;
-
-    /*for (unsigned int i = 0; i < vect.size(); ++i) {
-      Msg::Info("v %g", vect[i]->_RminBez);
-    }
-    Msg::Info("top %g (RminLag %g)", subdomains.top()->_RminBez, RminLag);
-    return 0;*/
-    //Msg::Info("RminLag %g - RminBez %g  @ %d", RminLag, subdomains.top()->_RminBez, subdomains.top()->_depth);
   }
-  //Msg::Info("%g - %g = %g >? %g", RminLag, subdomains.top()->_RminBez, RminLag - subdomains.top()->_RminBez, tol);
-  //Msg::Info("%d <? %d", subdomains.size(), 25000);
 
   md = subdomains.top();
   double ans = md->_RminBez;
-  if (_chknumber(ans)) Msg::Error("ISNAN %d", subdomains.size());
 
   while (subdomains.size()) {
     md = subdomains.top();
     subdomains.pop();
-    //Msg::Info("del %d", md);
-    //Msg::Info(" ");
     delete md;
   }
   for (unsigned int i = 0; i < trash.size(); ++i) {
     delete trash[i];
   }
 
-  //Msg::Info("bez%g lag%g", ans, RminLag);
   return ans;
 }
 
@@ -1370,85 +981,6 @@ void MetricBasis::_getMetricData(MElement *el, MetricData *&md) const
   md = new MetricData(metCoeff, jac, -1, 0, 0);
 }
 
-double MetricBasis::_minp2(const fullMatrix<double> &coeff) const
-{
-  double min = 1e10;
-  std::map<int, std::vector<IneqData> >::const_iterator it = _ineqA.begin();
-  while (it != _ineqA.end()) {
-    double val = 0;
-    for (unsigned int k = 0; k < it->second.size(); ++k) {
-      const int i = it->second[k].i;
-      const int j = it->second[k].j;
-      double tmp = 0;
-      for (int l = 1; l < 7; ++l) {
-        tmp += coeff(i, l) * coeff(j, l);
-      }
-      val += it->second[k].val * tmp;
-    }
-    min = std::min(val, min);
-    ++it;
-  }
-
-  return min > 0 ? std::sqrt(min/6) : 0;
-}
-
-double MetricBasis::_minp(const fullMatrix<double> &coeff) const
-{
-  fullMatrix<double> minmaxCoeff(2, 6);
-  for (int j = 0; j < 6; ++j) {
-    minmaxCoeff(0, j) = coeff(0, j+1);
-    minmaxCoeff(1, j) = coeff(0, j+1);
-  }
-
-  for (int i = 1; i < coeff.size1(); ++i) {
-    for (int j = 0; j < 6; ++j) {
-      minmaxCoeff(0, j) = std::min(coeff(i, j+1), minmaxCoeff(0, j));
-      minmaxCoeff(1, j) = std::max(coeff(i, j+1), minmaxCoeff(1, j));
-    }
-  }
-
-  double ans = 0;
-  for (int j = 0; j < 6; ++j) {
-    if (minmaxCoeff(0, j) * minmaxCoeff(1, j) > 0) {
-      ans += minmaxCoeff(0, j) > 0 ?
-          pow_int(minmaxCoeff(0, j), 2) :
-          pow_int(minmaxCoeff(1, j), 2);
-    }
-  }
-  return std::sqrt(ans/6);
-}
-
-double MetricBasis::_minq(const fullMatrix<double> &coeff) const
-{
-  double ans = coeff(0, 0);
-  for (int i = 1; i < coeff.size1(); ++i) {
-    if (ans > coeff(i, 0)) ans = coeff(i, 0);
-  }
-  return ans;
-}
-
-double MetricBasis::_maxp(const fullMatrix<double> &coeff) const
-{
-  double ans = 0;
-  for (int i = 0; i < coeff.size1(); ++i) {
-    double tmp = 0;
-    for (int j = 1; j < 7; ++j) {
-      tmp += pow_int(coeff(i, j), 2);
-    }
-    ans = std::max(ans, tmp);
-  }
-  return std::sqrt(ans/6);
-}
-
-double MetricBasis::_maxq(const fullMatrix<double> &coeff) const
-{
-  double ans = coeff(0, 0);
-  for (int i = 1; i < coeff.size1(); ++i) {
-    if (ans < coeff(i, 0)) ans = coeff(i, 0);
-  }
-  return ans;
-}
-
 void MetricBasis::_minMaxA(
     const fullMatrix<double> &coeff, double &min, double &max) const
 {
@@ -1478,42 +1010,6 @@ void MetricBasis::_minMaxA(
 
   min = min > 1 ? std::sqrt(min) : 1;
   max = std::sqrt(max);
-}
-
-void MetricBasis::_minMaxJacobianSqr(
-    const fullVector<double> &jac, double &min, double &max) const
-{
-  static int a = 1;
-  if (++a == 1) {
-    for (int i = 1; i < jac.size(); ++i) {
-      Msg::Info("<%g>", jac(i));
-    }
-  }
-  min = max = jac(0);
-  for (int i = 1; i < jac.size(); ++i) {
-    if (min > jac(i)) min = jac(i);
-    if (max < jac(i)) max = jac(i);
-  }
-
-  if (a == 1) {
-      Msg::Info("%g %g", min, max);
-  }
-
-  if (min*max < 0) {
-    max = max > -min ? max*max : min*min;
-    min = 0;
-  }
-  else {
-    if (max > 0) {
-      max = max*max;
-      min = min*min;
-    }
-    else {
-      double tmp = max;
-      max = min*min;
-      min = tmp*tmp;
-    }
-  }
 }
 
 void MetricBasis::_minJ2P3(const fullMatrix<double> &coeff,

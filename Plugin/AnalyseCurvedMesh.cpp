@@ -123,69 +123,6 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   _recompute     = static_cast<bool>(CurvedMeshOptions_Number[4].def);
   _tol           = static_cast<double>(CurvedMeshOptions_Number[5].def);
 
-
-
-  static int num = 0;
-  _computeMetric = 0;
-  _numPView = 1;
-  _threshold = 2;
-  _dim = 3;
-  _recompute = 0;
-  _tol = 10e-4  ;
-
-  switch(++num) {
-  case 1:
-    Msg::Info("here 1");
-    for (GModel::fiter it = _m->firstFace(); it != _m->lastFace(); it++) {
-      GFace *f = *it;
-      unsigned int numType[3] = {0, 0, 0};
-      f->getNumMeshElements(numType);
-
-      MElement *const *el = f->getStartElementType(0);
-      for (int n = 0; n < numType[0]; ++n) {
-        el[n]->setVisibility(0);
-      }
-    }
-    break;
-  case 2:
-    for (GModel::fiter it = _m->firstFace(); it != _m->lastFace(); it++) {
-      GFace *f = *it;
-      unsigned int numType[3] = {0, 0, 0};
-      f->getNumMeshElements(numType);
-
-      MElement *const *el = f->getStartElementType(1);
-      for (int n = 0; n < numType[1]; ++n) {
-        el[n]->setVisibility(0);
-      }
-    }
-    for (GModel::riter it = _m->firstRegion(); it != _m->lastRegion(); it++) {
-      GRegion *r = *it;
-      unsigned int numType[5] = {0, 0, 0, 0, 0};
-      r->getNumMeshElements(numType);
-
-      MElement *const *el = r->getStartElementType(0);
-      for (int n = 0; n < numType[0]; ++n) {
-        el[n]->setVisibility(0);
-      }
-    }
-    break;
-  case 3:
-    for (GModel::riter it = _m->firstRegion(); it != _m->lastRegion(); it++) {
-      GRegion *r = *it;
-      unsigned int numType[5] = {0, 0, 0, 0, 0};
-      r->getNumMeshElements(numType);
-
-      MElement *const *el = r->getStartElementType(0);
-      for (int n = 0; n < numType[0]; ++n) {
-        double coord = el[n]->getVertex(0)->z() + el[n]->getVertex(1)->z() + el[n]->getVertex(2)->z() + el[n]->getVertex(3)->z();
-        coord /= 4;
-        if (coord > 1)
-          el[n]->setVisibility(1);
-      }
-    }
-    break;
-  }
-
   if (_dim < 0 || _dim > 3) _dim = _m->getDim();
 
   if (_recompute) {
@@ -359,28 +296,15 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
   }
   const bezierBasis *bfs = jfs->getBezier();
 
-  static double time1;
-  static double time2;
-  static double time3;
-  double time4 = 0;
-  double mintm = 1000, maxtm = -1000;
-  time1 = time2 = time3 = 0;
-
-
   _data.reserve(_data.size() + numEl);
 
   const int numSamplingPt = jfs->getNumJacNodes();
   const int numMapNodes = jfs->getNumMapNodes();
-  //Msg::Info("samp%d map%d", numSamplingPt, numMapNodes);
   fullVector<double> jacobian(numSamplingPt);
   fullVector<double> jacBez(numSamplingPt);
   fullVector<double> subJacBez(bfs->getNumSubNodes());
 
-  int count2 = 0;
-  int count3 = 0;
-  int max2 = 0;
   for (int k = 0; k < numEl; ++k) {
-    double time = Cpu();
     fullMatrix<double> nodesXYZ(numMapNodes,3);
     el[k]->getNodesCoord(nodesXYZ);
     jfs->getScaledJacobian(nodesXYZ,jacobian);
@@ -392,22 +316,13 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
 
     double minL = bj->minL(), maxL = bj->maxL();
     int currentDepth = 0;
-    time1 += Cpu()-time;
 
-    time = Cpu();
-    int cnt = 0;
     while (!heap[0]->boundsOk(_tol, minL, maxL)) {
-      ++count2;
-      ++cnt;
       bj = heap[0];
       pop_heap(heap.begin(), heap.end(), lessMinVal());
       heap.pop_back();
 
-    double tm = Cpu();
       bj->subDivisions(subJacBez);
-    mintm = std::min(mintm, Cpu()-tm);
-    maxtm = std::max(maxtm, Cpu()-tm);
-      time4 += Cpu() - tm;
       currentDepth = bj->depth() + 1;
       if (currentDepth > 20) {
         static int a = 0;
@@ -427,15 +342,10 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
       }
       delete bj;
     }
-    max2 = std::max(max2, cnt);
 
-    time2 += Cpu()-time;
-
-    time = Cpu();
     make_heap(heap.begin(), heap.end(), lessMax());
 
     while (!heap[0]->boundsOk(_tol, minL, maxL)) {
-      ++count3;
       bj = heap[0];
       pop_heap(heap.begin(), heap.end(), lessMax());
       heap.pop_back();
@@ -468,13 +378,8 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
       maxB = std::max(maxB, heap[i]->maxB());
       delete heap[i];
     }
-    time3 += Cpu()-time;
     _data.push_back(CurvedMeshPluginData(el[k], minB, maxB));
   }
-  Msg::Info("times %g, %g(%g, %g, %g), %g(%g, %g)", time1, time2, (double)count2/numEl, time2/count2*1000, time4, time3, (double)count3/numEl, time3/count3*1000);
-  //Msg::Info("min %g, max %g, max%d", mintm*1000, maxtm*1000, max2);
-  Msg::Info("HHHHH %g HHHHHHHHH %d %d", time2/count2*10e10/numSamplingPt/numSamplingPt/8, count2, numSamplingPt);
-
 }
 
 void GMSH_AnalyseCurvedMeshPlugin::_computeMinR()
@@ -496,7 +401,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinR()
       if (_data[i].minJ() <= 0)
         _data[i].setMinR(0);
       else if (_data[i].maxJ() - _data[i].minJ() < _tol * 1e-2)
-        _data[i].setMinR(MetricBasis::sampleR(el, 0));
+        _data[i].setMinR(MetricBasis::minSampledR(el, 0));
       else
         _data[i].setMinR(MetricBasis::boundMinR(el));
     }
