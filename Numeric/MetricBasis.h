@@ -70,7 +70,7 @@ private:
   void _lightenInequalities(int&, int&, int&); //TODO change
 
   void _computeRmin(const fullMatrix<double>&, const fullVector<double>&,
-                    double &RminLag, double &RminBez, int depth, bool debug = false) const;
+                    double &RminLag, double &RminBez) const;
   void _computeRmax(const fullMatrix<double>&, const fullVector<double>&,
                     double &RmaxLag) const;
   void _computeTermBeta(double &a, double &K, double &dRda,
@@ -83,6 +83,9 @@ private:
   static double _computeMinlagR(const fullVector<double> &jac,
                                 const fullMatrix<double> &coeff, int num);
 
+  static int _paramOnPlane(const fullMatrix<double> &nodes3d,
+                           fullMatrix<double> &nodes2d);
+
   void _minMaxA(const fullMatrix<double>&, double &min, double &max) const;
   void _minK(const fullMatrix<double>&, const fullVector<double>&, double &min) const;
   void _maxAstKpos(const fullMatrix<double>&, const fullVector<double>&,
@@ -94,7 +97,7 @@ private:
   void _maxKstAsharp(const fullMatrix<double>&, const fullVector<double>&,
                  double mina, double beta, double &maxK) const;
 
-  static double _Rsafe(double a, double K) {
+  static double _R3Dsafe(double a, double K) {
     const double x = .5 * (K - a*a*a + 3*a);
     if (x > 1+1e-13 || x < -1-1e-13) {
       Msg::Warning("x = %g (|1+%g|)", x, std::abs(x)-1);
@@ -114,6 +117,10 @@ private:
       else return 1;
     }
     return ans;
+  }
+  static double _R2Dsafe(double a) {
+    if (a < 1) Msg::Warning("R2d = %g", (a - 1) / (a + 1));
+    return (a - 1) / (a + 1);
   }
 
 private:
