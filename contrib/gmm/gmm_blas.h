@@ -1242,8 +1242,8 @@ namespace gmm {
 
   template <typename L1, typename L2> inline
     void add_spec(const L1& l1, L2& l2, abstract_matrix) {
-    size_type m = mat_nrows(l1), n = mat_ncols(l1);
-    GMM_ASSERT2(m==mat_nrows(l2) && n==mat_ncols(l2), "dimensions mismatch");
+    GMM_ASSERT2(mat_nrows(l1)==mat_nrows(l2) &&
+                mat_ncols(l1)==mat_ncols(l2), "dimensions mismatch");
     add(l1, l2, typename linalg_traits<L1>::sub_orientation(),
 	typename linalg_traits<L2>::sub_orientation());
   }
@@ -1933,9 +1933,11 @@ namespace gmm {
   template <typename L1, typename L2, typename L3>
   void mult_dispatch(const L1& l1, const L2& l2, L3& l3, abstract_matrix) {
     typedef typename temporary_matrix<L3>::matrix_type temp_mat_type;
-    size_type m = mat_nrows(l1), n = mat_ncols(l1), k = mat_ncols(l2);
+    size_type n = mat_ncols(l1);
     if (n == 0) { gmm::clear(l3); return; }
-    GMM_ASSERT2(n == mat_nrows(l2) && m == mat_nrows(l3) && k == mat_ncols(l3),
+    GMM_ASSERT2(n == mat_nrows(l2) &&
+                mat_nrows(l1) == mat_nrows(l3) &&
+                mat_ncols(l2) == mat_ncols(l3),
 		"dimensions mismatch");
 
     if (same_origin(l2, l3) || same_origin(l1, l3)) {
