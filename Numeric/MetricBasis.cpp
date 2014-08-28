@@ -225,6 +225,8 @@ double MetricBasis::getBoundMinR(MElement *el)
   _computeRmin(*metCoeff, *jac, RminLag, RminBez);
 
   if (RminLag-RminBez < MetricBasis::_tol) {
+    delete jac;
+    delete metCoeff;
     return RminBez;
   }
   else {
@@ -970,7 +972,6 @@ int MetricBasis::_paramOnPlane(const fullMatrix<double> &nodes3d,
   if (i == nodes3d.size1()) {
     nodes2d.setAsProxy(const_cast<double*>(nodes3d.getDataPtr()),
                        nodes3d.size1(), 2);
-    Msg::Info("Was on xy-plane");
     return 0;
   }
 
