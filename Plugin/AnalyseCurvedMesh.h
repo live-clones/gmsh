@@ -41,31 +41,28 @@ public:
 class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
 {
 private :
-  int _dim;
   GModel *_m;
   double _threshold, _tol;
-  int _numPView, _computeMetric;
-  bool _recompute;
+  int _computeMetric;
 
-  bool _computedR3D, _computedR2D;
-  bool _computedJ3D, _computedJ2D, _computedJ1D;
-  bool _1PViewJ, _2PViewJ, _1PViewR, _2PViewR;
+  // for 1d, 2d, 3d
+  bool _computedR[3], _computedJ[3], _PViewJ[3], _PViewR[3];
   bool _msgHide;
 
   std::vector<CurvedMeshPluginData> _data;
 
 public :
   GMSH_AnalyseCurvedMeshPlugin() {
-    _computedR3D = false;
-    _computedR2D = false;
-    _computedJ3D = false;
-    _computedJ2D = false;
-    _computedJ1D = false;
+    _m = NULL;
+    _threshold = _tol = -1;
+    _computeMetric = -1;
+    for (int i = 0; i < 3; ++i) {
+      _computedR[i] = false;
+      _computedJ[i] = false;
+      _PViewJ[i] = false;
+      _PViewR[i] = false;
+    }
     _msgHide = true;
-    _1PViewJ = false;
-    _2PViewJ = false;
-    _1PViewR = false;
-    _2PViewR = false;
   }
   std::string getName() const { return "AnalyseCurvedMesh"; }
   std::string getShortHelp() const {
@@ -95,10 +92,10 @@ public :
   }
 
 private :
-  void _computeMinMaxJandValidity();
+  void _computeMinMaxJandValidity(int dim);
   void _computeMinMaxJandValidity(MElement *const *, int numEl);
-  void _computeMinR();
-  bool _hideWithThreshold();
+  void _computeMinR(int dim);
+  bool _hideWithThreshold(int askedDim);
   void _printStatMetric();
   void _printStatJacobian();
 };

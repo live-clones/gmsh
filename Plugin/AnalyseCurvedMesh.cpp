@@ -61,8 +61,8 @@ public:
 } // namespace
 
 StringXNumber CurvedMeshOptions_Number[] = {
-  {GMSH_FULLRC, "Show: (0) Jacobian, (1) Metric", NULL, 1},
-  {GMSH_FULLRC, "Number of PView", NULL, 2},
+  {GMSH_FULLRC, "Show: 0:J, 1:R, 2:J&&R", NULL, 1},
+  {GMSH_FULLRC, "Draw PView", NULL, 1},
   {GMSH_FULLRC, "Hidding threshold", NULL, .1},
   {GMSH_FULLRC, "Dimension of elements", NULL, -1},
   {GMSH_FULLRC, "Recompute bounds", NULL, 0},
@@ -86,30 +86,36 @@ StringXNumber *GMSH_AnalyseCurvedMeshPlugin::getOption(int iopt)
 std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
 {
   return "Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. "
-    "It computes, min(J) where J is the scaled Jacobian determinant. Eventually, "
-    "it computes min(R) where R is the ratio between the smaller and the greater "
-    "of the eigenvalues of the metric. It creates one or more PView and hides "
+    "It computes, min(J) where J is the scaled Jacobian determinant and, if "
+    "asked, min(R) where R is the ratio between the smaller and the greater "
+    "of the eigenvalues of the metric. It creates a PView and hides "
     "elements for which min({J, R}) < 'Hidding threshold'.\n"
+    "\n"
+    "J is faster to compute but gives informations only on validity while R "
+    "gives also informations on quality.\n"
     "\n"
     "Parameters:\n"
     "\n"
-    "- Show [...] = {0, 1}: If 0, computes Jacobian and shows min(J). If 1, computes "
-    "Jacobian and metric and shows min(R).\n"
+    "- Show [...] = {0, 1, 2}: If 0, computes Jacobian and shows min(J). If 1, "
+    "computes Jacobian and metric and shows min(R). If 2, behaves like it is 1 "
+    "but draw the two min(J) and min(R) PView\n"
     "\n"
-    "- Number of PView = {0, 1, 2}: If 1, create one PView with all elements. If 2, create "
-    "two PView, one with straight-sided elements and one with curved elements.\n"
+    "- Draw PView = {0, 1}: Creates a PView of min({J, R}) if it does not "
+    "exist already. If 'Recompute' = 1, a new PView is redrawed.\n"
     "\n"
     "- Hidding threshold = [0,1]: Hides all element for which min(R) or min(J) "
     "is strictly greater than the threshold. If = 1, no effect, if = 0 hide "
     "all elements except invalid.\n"
     "\n"
-    "- Dimension = {-1, 1, 2, 3}: If = -1, analyse element of the greater dimension.\n"
+    "- Dimension = {-1, 1, 2, 3, 4}: If = -1, analyse element of the greater "
+    "dimension. If = 4, analyse 2D and 3D elements\n"
     "\n"
-    "- Recompute = {0,1}: If the mesh has changed, set to 1 to recompute the bounds.\n"
+    "- Recompute = {0,1}: If the mesh has changed, set to 1 to recompute the "
+    "bounds.\n"
     "\n"
-    "- Tolerance = ]0, 1[: Tolerance on the computation of min(R) or min(J). "
-    "It should be at most 0.01 but it can be set to 1 to just check the validity of "
-    "the mesh.";
+    "- Tolerance = ]0, 1[: Tolerance on the computation of min({R, J}). "
+    "It should be at most 0.01 but it can be set to 1 to just check the "
+    "validity of the mesh.";
 }
 
 // Execution
@@ -117,115 +123,92 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
 {
   _m = GModel::current();
   _computeMetric = static_cast<int>(CurvedMeshOptions_Number[0].def);
-  _numPView      = static_cast<int>(CurvedMeshOptions_Number[1].def);
+  bool drawPView = static_cast<int>(CurvedMeshOptions_Number[1].def);
   _threshold     = static_cast<double>(CurvedMeshOptions_Number[2].def);
-  _dim           = static_cast<int>(CurvedMeshOptions_Number[3].def);
-  _recompute     = static_cast<bool>(CurvedMeshOptions_Number[4].def);
+  int askedDim   = static_cast<int>(CurvedMeshOptions_Number[3].def);
+  bool recompute = static_cast<bool>(CurvedMeshOptions_Number[4].def);
   _tol           = static_cast<double>(CurvedMeshOptions_Number[5].def);
 
-  if (_dim < 0 || _dim > 3) _dim = _m->getDim();
+  if (askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
 
-  if (_recompute) {
+  if (recompute) {
     _data.clear();
-    _computedJ3D = false;
-    _computedJ2D = false;
-    _computedJ1D = false;
-    _computedR3D = false;
-    _computedR2D = false;
+    if (askedDim < 4) {
+      _computedR[askedDim-1] = false;
+      _computedJ[askedDim-1] = false;
+      _PViewJ[askedDim-1] = false;
+      _PViewR[askedDim-1] = false;
+    }
+    else {
+      _computedR[1] = _computedR[2] = false;
+      _computedJ[1] = _computedJ[2] = false;
+      _PViewJ[1] = _PViewJ[2] = false;
+      _PViewR[1] = _PViewR[2] = false;
+    }
     _msgHide = true;
-    _1PViewJ = false;
-    _2PViewJ = false;
-    _1PViewR = false;
-    _2PViewR = false;
   }
 
-  if ((_dim == 1 && !_computedJ1D) ||
-      (_dim == 2 && !_computedJ2D) ||
-      (_dim == 3 && !_computedJ3D)   ) {
-    double time = Cpu();
-    Msg::StatusBar(true, "Computing Jacobian for %dD elements...", _dim);
-    _computeMinMaxJandValidity();
-    Msg::StatusBar(true, "... Done computing Jacobian (%g seconds)", Cpu()-time);
-    _printStatJacobian();
-  }
-
-  if (_computeMetric &&
-      ((_dim == 2 && !_computedR2D) ||
-       (_dim == 3 && !_computedR3D)   )) {
-    double time = Cpu();
-    Msg::StatusBar(true, "Computing metric for %dD elements...", _dim);
-    _computeMinR();
-    Msg::StatusBar(true, "... Done computing metric (%g seconds)", Cpu()-time);
-    _printStatMetric();
-  }
-
-  if (_computeMetric &&
-      (_dim == 1 ||
-       (_dim == 2 && !_computedR2D) ||
-       (_dim == 3 && !_computedR3D))) {
-    return 0;
+  // Compute J and/or R
+  for (int dim = 1; dim <= 3; ++dim) {
+    if ((askedDim == 4 && dim > 1) || dim == askedDim) {
+      if (!_computedJ[dim-1]) {
+        double time = Cpu();
+        Msg::StatusBar(true, "Computing Jacobian for %dD elements...", dim);
+        _computeMinMaxJandValidity(dim);
+        Msg::StatusBar(true, "... Done computing Jacobian (%g seconds)", Cpu()-time);
+        _printStatJacobian();
+      }
+      if (_computeMetric && !_computedR[dim-1]) {
+        double time = Cpu();
+        Msg::StatusBar(true, "Computing metric for %dD elements...", dim);
+        _computeMinR(dim);
+        Msg::StatusBar(true, "... Done computing metric (%g seconds)", Cpu()-time);
+        _printStatMetric();
+        return 0;
+      }
+    }
   }
 
   // Create PView
-
-  std::map<int, std::vector<double> > *dataPV1 = NULL;
-  std::map<int, std::vector<double> > *dataPV2 = NULL;
-  std::stringstream name1, name2;
-  if (_numPView == 1 &&
-      ((_computeMetric && !_1PViewR) || (!_computeMetric && !_1PViewJ))) {
-    dataPV1 = new std::map<int, std::vector<double> >();
-    if (_computeMetric) {
-      name1 << "min R";
-      _1PViewR = true;
-    }
-    else {
-      name1 << "min J";
-      _1PViewJ = true;
-    }
-    for (unsigned int i = 0; i < _data.size(); ++i) {
-      MElement *const el = _data[i].element();
-      if (el->getDim() == _dim) {
-        double val = _computeMetric ? _data[i].minR() : _data[i].minJ();
-        (*dataPV1)[el->getNum()].push_back(val);
+  if (drawPView)
+  for (int dim = 1; dim <= 3; ++dim) {
+    if ((askedDim == 4 && dim > 1) || dim == askedDim) {
+      if (!_PViewJ[dim-1] && _computeMetric != 1) {
+        _PViewJ[dim-1] = true;
+        std::map<int, std::vector<double> > dataPV;
+        for (unsigned int i = 0; i < _data.size(); ++i) {
+          MElement *const el = _data[i].element();
+          if (el->getDim() == dim) {
+            dataPV[el->getNum()].push_back(_data[i].minJ());
+          }
+        }
+        std::stringstream name;
+        name << "min J " << dim << "D";
+        new PView(name.str().c_str(), "ElementData", _m, dataPV);
       }
-    }
-  }
-  else if (_numPView == 2 &&
-      ((_computeMetric && !_2PViewR) || (!_computeMetric && !_2PViewJ))) {
-    dataPV1 = new std::map<int, std::vector<double> >();
-    dataPV2 = new std::map<int, std::vector<double> >();
-    if (_computeMetric) {
-      name1 << "min R straight";
-      name2 << "min R curved";
-      _2PViewR = true;
-    }
-    else {
-      name1 << "min J straight";
-      name2 << "min J curved";
-      _2PViewJ = true;
-    }
-    for (unsigned int i = 0; i < _data.size(); ++i) {
-      MElement *const el = _data[i].element();
-      if (el->getDim() == _dim) {
-        double val = _computeMetric ? _data[i].minR() : _data[i].minJ();
-        if (_data[i].maxJ() - _data[i].minJ() < _tol * 1e-1)
-          (*dataPV1)[el->getNum()].push_back(val);
-        else
-          (*dataPV2)[el->getNum()].push_back(val);
+      if (!_PViewR[dim-1] && _computeMetric) {
+        _PViewR[dim-1] = true;
+        std::map<int, std::vector<double> > dataPV;
+        for (unsigned int i = 0; i < _data.size(); ++i) {
+          MElement *const el = _data[i].element();
+          if (el->getDim() == dim) {
+            dataPV[el->getNum()].push_back(_data[i].minR());
+          }
+        }
+        std::stringstream name;
+        name << "min R " << dim << "D";
+        new PView(name.str().c_str(), "ElementData", _m, dataPV);
       }
     }
   }
 
-  if (dataPV1) new PView(name1.str().c_str(), "ElementData", _m, *dataPV1);
-  if (dataPV2) new PView(name2.str().c_str(), "ElementData", _m, *dataPV2);
-
-  //
-
+  // Hide elements
 #if defined(HAVE_OPENGL)
-  if (_hideWithThreshold() && _msgHide) {
+  if (_hideWithThreshold(askedDim) && _msgHide) {
     _msgHide = false;
     Msg::Info("Note: Some elements have been hidden (param 'Hidding Threshold').");
-    Msg::Info("      (To revert visibility : Tools > Visibility > Interactive > Show All)");
+    Msg::Info("      (To revert: set 'Hidding Threshold' to 1 and rerun");
+    Msg::Info("                  or, Tools > Visibility > Interactive > Show All)");
   }
   CTX::instance()->mesh.changed = (ENT_ALL);
   drawContext::global()->draw();
@@ -234,11 +217,12 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   return 0;
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity()
+void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
 {
-  switch (_dim) {
+  if (_computedJ[dim-1]) return;
+
+  switch (dim) {
     case 3 :
-      if (_computedJ3D) break;
       for (GModel::riter it = _m->firstRegion(); it != _m->lastRegion(); it++) {
         GRegion *r = *it;
         unsigned int numType[5] = {0, 0, 0, 0, 0};
@@ -249,11 +233,9 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity()
           _computeMinMaxJandValidity(el, numType[type]);
         }
       }
-      _computedJ3D = true;
       break;
 
     case 2 :
-      if (_computedJ2D) break;
       for (GModel::fiter it = _m->firstFace(); it != _m->lastFace(); it++) {
         GFace *f = *it;
         unsigned int numType[3] = {0, 0, 0};
@@ -264,24 +246,23 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity()
           _computeMinMaxJandValidity(el, numType[type]);
         }
       }
-      _computedJ2D = true;
       break;
 
     case 1 :
-      if (_computedJ1D) break;
       for (GModel::eiter it = _m->firstEdge(); it != _m->lastEdge(); it++) {
         GEdge *e = *it;
         unsigned int numElement = e->getNumMeshElements();
         MElement *const *el = e->getStartElementType(0);
         _computeMinMaxJandValidity(el, numElement);
       }
-      _computedJ1D = true;
       break;
 
     default :
-      Msg::Error("I can not analyse any element.");
+      Msg::Fatal("This should not happen.");
       return;
   }
+
+  _computedJ[dim-1] = true;
 }
 
 void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el, int numEl)
@@ -382,13 +363,9 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el
   }
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_computeMinR()
+void GMSH_AnalyseCurvedMeshPlugin::_computeMinR(int dim)
 {
-  if (_dim == 1 ||
-      (_dim == 2 && _computedR2D) ||
-      (_dim == 3 && _computedR3D)) {
-    return;
-  }
+  if (_computedR[dim-1]) return;
 
   MetricBasis::setTol(_tol);
 
@@ -397,7 +374,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinR()
 
   for (unsigned int i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
-    if (el->getDim() == _dim) {
+    if (el->getDim() == dim) {
       if (_data[i].minJ() <= 0)
         _data[i].setMinR(0);
       else if (_data[i].maxJ() - _data[i].minJ() < _tol * 1e-2)
@@ -407,27 +384,31 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinR()
     }
     if (i >= nextCheck) {
       nextCheck += _data.size() / 100;
-      if (Cpu() - time > 10. && i*100/_data.size() > percentage + 4) {
-        percentage = i*100/_data.size();
-        time = Cpu();
+      double curTime = Cpu();
+      unsigned int curPercentage = i*100/_data.size();
+      if ((curTime - time > 10. && curPercentage > percentage + 4) ||
+          (curTime - time > 15. && curPercentage < 5)) {
+        percentage = curPercentage;
+        time = curTime;
         Msg::StatusBar(true, "%d%% (remaining time ~%g secondes)",
-            percentage, (Cpu()-initial) / (i+1) * (_data.size() - i-1));
+            percentage, (time-initial) / (i+1) * (_data.size() - i-1));
       }
     }
   }
 
-  if (_dim == 2) _computedR2D = true;
-  if (_dim == 3) _computedR3D = true;
+  MetricBasis::printDatas();
+  _computedR[dim-1] = true;
 }
 
-bool GMSH_AnalyseCurvedMeshPlugin::_hideWithThreshold()
+bool GMSH_AnalyseCurvedMeshPlugin::_hideWithThreshold(int askedDim)
 {
   if (_threshold >= 1.) return false;
 
   bool ans = false;
   for (unsigned int i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
-    if (el->getDim() == _dim) {
+    const int dim = el->getDim();
+    if ((askedDim == 4 && dim > 1) || dim == askedDim) {
       if (( _computeMetric && _data[i].minR() > _threshold) ||
           (!_computeMetric && _data[i].minJ() > _threshold)   ) {
         el->setVisibility(0);
@@ -444,7 +425,7 @@ bool GMSH_AnalyseCurvedMeshPlugin::_hideWithThreshold()
 void GMSH_AnalyseCurvedMeshPlugin::_printStatMetric()
 {
   if (_data.empty()) {
-    Msg::Info("No stat to print...");
+    Msg::Info("No stat to print.");
     return;
   }
   double infminR, supminR, avgminR;
@@ -464,7 +445,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatMetric()
 void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
 {
   if (_data.empty()) {
-    Msg::Info("No stat to print...");
+    Msg::Info("No stat to print.");
     return;
   }
   double infminJ, supminJ, avgminJ;
