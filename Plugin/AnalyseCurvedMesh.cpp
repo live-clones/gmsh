@@ -114,8 +114,8 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
     "bounds.\n"
     "\n"
     "- Tolerance = ]0, 1[: Tolerance on the computation of min({R, J}). "
-    "It should be at most 0.01 but it can be set to 1 to just check the "
-    "validity of the mesh.";
+    "It should be at most 0.01 but it can be set to 1 or greater to just check "
+    "the validity of the mesh.";
 }
 
 // Execution
@@ -395,8 +395,6 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinR(int dim)
       }
     }
   }
-
-  MetricBasis::printDatas();
   _computedR[dim-1] = true;
 }
 
