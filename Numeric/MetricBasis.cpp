@@ -151,7 +151,7 @@ double MetricBasis::getMinSampledR(MElement *el, int deg) const
       samplingPoints = gmshGeneratePointsHexahedron(deg,false);
       break;
     case TYPE_PYR :
-      samplingPoints = JacobianBasis::generateJacPointsPyramid(deg);
+      samplingPoints = gmshGeneratePointsPyramidGeneral(true, deg+1, deg);
       break;
     default :
       Msg::Error("Unknown Jacobian function space for element type %d", el->getType());
@@ -877,6 +877,7 @@ void MetricBasis::_fillCoeff(const GradientBasis *gradients,
     {
       fullMatrix<double> dxydX(nSampPnts,2), dxydY(nSampPnts,2);
       gradients->getGradientsFromNodes(nodes, &dxydX, &dxydY, NULL);
+      gradients->mapFromIdealElement(&dxydX, &dxydY, NULL);
 
       coeff.resize(nSampPnts, 3);
       for (int i = 0; i < nSampPnts; i++) {
@@ -895,6 +896,7 @@ void MetricBasis::_fillCoeff(const GradientBasis *gradients,
     {
       fullMatrix<double> dxyzdX(nSampPnts,3), dxyzdY(nSampPnts,3), dxyzdZ(nSampPnts,3);
       gradients->getGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, &dxyzdZ);
+      gradients->mapFromIdealElement(&dxyzdX, &dxyzdY, &dxyzdZ);
 
       coeff.resize(nSampPnts, 7);
       for (int i = 0; i < nSampPnts; i++) {

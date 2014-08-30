@@ -164,7 +164,6 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
         _computeMinR(dim);
         Msg::StatusBar(true, "... Done computing metric (%g seconds)", Cpu()-time);
         _printStatMetric();
-        return 0;
       }
     }
   }
@@ -395,6 +394,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinR(int dim)
       }
     }
   }
+
   _computedR[dim-1] = true;
 }
 

@@ -25,7 +25,10 @@ namespace {
   }
 }
 
-GradientBasis::GradientBasis(int tag, int order)
+GradientBasis::GradientBasis(int tag, int order) :
+    _type(ElementType::ParentTypeFromTag(tag)),
+    _idealDifferent(_type == TYPE_TRI || _type == TYPE_PRI ||
+                    _type == TYPE_TET || _type == TYPE_PYR)
 {
   const int type = ElementType::ParentTypeFromTag(tag);
 
@@ -88,6 +91,41 @@ void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
   if (dxyzdX) gradShapeMatX.mult(nodes, *dxyzdX);
   if (dxyzdY) gradShapeMatY.mult(nodes, *dxyzdY);
   if (dxyzdZ) gradShapeMatZ.mult(nodes, *dxyzdZ);
+}
+
+void GradientBasis::mapFromIdealElement(fullMatrix<double> *dxyzdX,
+                                        fullMatrix<double> *dxyzdY,
+                                        fullMatrix<double> *dxyzdZ) const
+{
+  if (_idealDifferent) {
+    if (_type == TYPE_PYR) {
+      dxyzdZ->scale(.5);
+      return;
+    }
+
+    static const double cTri[2] = {-1./std::sqrt(3), 2./std::sqrt(3)};
+    dxyzdY->scale(cTri[1]);
+    dxyzdY->axpy(*dxyzdX, cTri[0]);
+
+    switch(_type) {
+    case TYPE_TRI:
+      return;
+
+    case TYPE_PRI:
+      dxyzdZ->scale(2);
+      return;
+
+    case TYPE_TET:
+    {
+      static const double cTet[3] = {-3./2/std::sqrt(6),
+                                     -1./2/std::sqrt(2),
+                                     std::sqrt(1.5)};
+      dxyzdZ->scale(cTet[2]);
+      dxyzdZ->axpy(*dxyzdX, cTet[0]);
+      dxyzdZ->axpy(*dxyzdY, cTet[1]);
+    }
+    }
+  }
 }
 
 JacobianBasis::JacobianBasis(int tag, int jacOrder) :
@@ -324,6 +362,7 @@ inline void JacobianBasis::getJacobianGeneral(int nJacNodes, const fullMatrix<do
       fullMatrix<double> dxyzdX(nJacNodes,3), dxyzdY(nJacNodes,3);
       gSMatX.mult(nodesXYZ, dxyzdX);
       gSMatY.mult(nodesXYZ, dxyzdY);
+      if (!scaling) _gradBasis->mapFromIdealElement(&dxyzdX, &dxyzdY, NULL);
       for (int i = 0; i < nJacNodes; i++) {
         const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
         const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
@@ -339,6 +378,7 @@ inline void JacobianBasis::getJacobianGeneral(int nJacNodes, const fullMatrix<do
       gSMatX.mult(nodesXYZ, dxyzdX);
       gSMatY.mult(nodesXYZ, dxyzdY);
       gSMatZ.mult(nodesXYZ, dxyzdZ);
+      if (!scaling) _gradBasis->mapFromIdealElement(&dxyzdX, &dxyzdY, &dxyzdZ);
       for (int i = 0; i < nJacNodes; i++) {
         const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
         const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
@@ -425,6 +465,11 @@ inline void JacobianBasis::getJacobianGeneral(int nJacNodes, const fullMatrix<do
       fullMatrix<double> dxdY(nJacNodes,numEl), dydY(nJacNodes,numEl), dzdY(nJacNodes,numEl);
       gSMatX.mult(nodesX, dxdX); gSMatX.mult(nodesY, dydX); gSMatX.mult(nodesZ, dzdX);
       gSMatY.mult(nodesX, dxdY); gSMatY.mult(nodesY, dydY); gSMatY.mult(nodesZ, dzdY);
+      if (!scaling) {
+        _gradBasis->mapFromIdealElement(&dxdX, &dxdY, NULL);
+        _gradBasis->mapFromIdealElement(&dydX, &dydY, NULL);
+        _gradBasis->mapFromIdealElement(&dzdX, &dzdY, NULL);
+      }
       for (int iEl = 0; iEl < numEl; iEl++) {
         fullMatrix<double> nodesXYZ(numPrimMapNodes,3);
         for (int i = 0; i < numPrimMapNodes; i++) {
@@ -455,6 +500,11 @@ inline void JacobianBasis::getJacobianGeneral(int nJacNodes, const fullMatrix<do
       gSMatX.mult(nodesX, dxdX); gSMatX.mult(nodesY, dydX); gSMatX.mult(nodesZ, dzdX);
       gSMatY.mult(nodesX, dxdY); gSMatY.mult(nodesY, dydY); gSMatY.mult(nodesZ, dzdY);
       gSMatZ.mult(nodesX, dxdZ); gSMatZ.mult(nodesY, dydZ); gSMatZ.mult(nodesZ, dzdZ);
+      if (!scaling) {
+        _gradBasis->mapFromIdealElement(&dxdX, &dxdY, &dxdZ);
+        _gradBasis->mapFromIdealElement(&dydX, &dydY, &dydZ);
+        _gradBasis->mapFromIdealElement(&dzdX, &dzdY, &dzdZ);
+      }
       for (int iEl = 0; iEl < numEl; iEl++) {
         for (int i = 0; i < nJacNodes; i++)
           jacobian(i,iEl) = calcDet3D(dxdX(i,iEl),dydX(i,iEl),dzdX(i,iEl),
@@ -543,6 +593,7 @@ void JacobianBasis::getSignedJacAndGradientsGeneral(int nJacNodes, const fullMat
       fullMatrix<double> dxyzdX(nJacNodes,3), dxyzdY(nJacNodes,3);
       gSMatX.mult(nodesXYZ, dxyzdX);
       gSMatY.mult(nodesXYZ, dxyzdY);
+      _gradBasis->mapFromIdealElement(&dxyzdX, &dxyzdY, NULL);
       for (int i = 0; i < nJacNodes; i++) {
         const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
         const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
@@ -572,6 +623,7 @@ void JacobianBasis::getSignedJacAndGradientsGeneral(int nJacNodes, const fullMat
       gSMatX.mult(nodesXYZ, dxyzdX);
       gSMatY.mult(nodesXYZ, dxyzdY);
       gSMatZ.mult(nodesXYZ, dxyzdZ);
+      _gradBasis->mapFromIdealElement(&dxyzdX, &dxyzdY, &dxyzdZ);
       for (int i = 0; i < nJacNodes; i++) {
         const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
         const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
@@ -670,122 +722,6 @@ void JacobianBasis::interpolate(const fullVector<double> &jacobian,
     lag2Bez(jacobian, bez);
 
   getBezier()->interpolate(bezM, uvw, result);
-}
-
-fullMatrix<double> JacobianBasis::generateJacMonomialsPyramid(int order)
-{
-  const int nbMonomials = (order+3)*(order+3)*(order+1);
-  fullMatrix<double> monomials(nbMonomials, 3);
-
-  if (order == 0) {
-    fullMatrix<double> prox, quad = gmshGenerateMonomialsQuadrangle(2);
-    prox.setAsProxy(monomials, 0, 2);
-    prox.setAll(quad);
-    // monomials has been initialized to 0, so third column is ok
-    return monomials;
-  }
-
-  monomials(0, 0) = 0;
-  monomials(0, 1) = 0;
-  monomials(0, 2) = 0;
-
-  monomials(1, 0) = order+2;
-  monomials(1, 1) = 0;
-  monomials(1, 2) = 0;
-
-  monomials(2, 0) = order+2;
-  monomials(2, 1) = order+2;
-  monomials(2, 2) = 0;
-
-  monomials(3, 0) = 0;
-  monomials(3, 1) = order+2;
-  monomials(3, 2) = 0;
-
-  monomials(4, 0) = 0;
-  monomials(4, 1) = 0;
-  monomials(4, 2) = order;
-
-  monomials(5, 0) = order+2;
-  monomials(5, 1) = 0;
-  monomials(5, 2) = order;
-
-  monomials(6, 0) = order+2;
-  monomials(6, 1) = order+2;
-  monomials(6, 2) = order;
-
-  monomials(7, 0) = 0;
-  monomials(7, 1) = order+2;
-  monomials(7, 2) = order;
-
-  int index = 8;
-
-  static const int bottom_edges[4][2] = {
-    {0, 1},
-    {1, 2},
-    {2, 3},
-    {3, 0}
-  };
-
-  // bottom & top "edges"
-  for (int iedge = 0; iedge < 4; ++iedge) {
-    int i0 = bottom_edges[iedge][0];
-    int i1 = bottom_edges[iedge][1];
-
-    int u_1 = (monomials(i1,0)-monomials(i0,0)) / (order + 2);
-    int u_2 = (monomials(i1,1)-monomials(i0,1)) / (order + 2);
-
-    for (int i = 1; i < order + 2; ++i, ++index) {
-      monomials(index, 0) = monomials(i0, 0) + i * u_1;
-      monomials(index, 1) = monomials(i0, 1) + i * u_2;
-      monomials(index, 2) = 0;
-    }
-    for (int i = 1; i < order + 2; ++i, ++index) {
-      monomials(index, 0) = monomials(i0, 0) + i * u_1;
-      monomials(index, 1) = monomials(i0, 1) + i * u_2;
-      monomials(index, 2) = order;
-    }
-  }
-
-  // bottom & top "face"
-  fullMatrix<double> uv = gmshGenerateMonomialsQuadrangle(order);
-  uv.add(1);
-  for (int i = 0; i < uv.size1(); ++i, ++index) {
-    monomials(index, 0) = uv(i, 0);
-    monomials(index, 1) = uv(i, 1);
-    monomials(index, 2) = 0;
-  }
-  for (int i = 0; i < uv.size1(); ++i, ++index) {
-    monomials(index, 0) = uv(i, 0);
-    monomials(index, 1) = uv(i, 1);
-    monomials(index, 2) = order;
-  }
-
-  // other monomials
-  uv = gmshGenerateMonomialsQuadrangle(order + 2);
-  for (int k = 1; k < order; ++k) {
-    for (int i = 0; i < uv.size1(); ++i, ++index) {
-      monomials(index, 0) = uv(i, 0);
-      monomials(index, 1) = uv(i, 1);
-      monomials(index, 2) = k;
-    }
-  }
-
-  return monomials;
-}
-
-fullMatrix<double> JacobianBasis::generateJacPointsPyramid(int order)
-{
-  fullMatrix<double> points = generateJacMonomialsPyramid(order);
-
-  const double p = order + 2;
-  for (int i = 0; i < points.size1(); ++i) {
-    points(i, 2) = points(i, 2) / p;
-    const double scale = 1. - points(i, 2);
-    points(i, 0) = (-1. + 2. * points(i, 0) / p) * scale;
-    points(i, 1) = (-1. + 2. * points(i, 1) / p) * scale;
-  }
-
-  return points;
 }
 
 int JacobianBasis::jacobianOrder(int tag)

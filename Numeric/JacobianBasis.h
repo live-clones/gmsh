@@ -16,8 +16,11 @@ class GradientBasis {
  public:
   fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
 
- public :
+ private:
+  const int _type;
+  const bool _idealDifferent;
 
+ public:
   GradientBasis(int tag, int order);
 
   int getNumSamplingPoints() const {return gradShapeMatX.size1();}
@@ -27,6 +30,9 @@ class GradientBasis {
                              fullMatrix<double> *dxyzdX,
                              fullMatrix<double> *dxyzdY,
                              fullMatrix<double> *dxyzdZ) const;
+  void mapFromIdealElement(fullMatrix<double> *dxyzdX,
+                           fullMatrix<double> *dxyzdY,
+                           fullMatrix<double> *dxyzdZ) const;
 };
 
 
@@ -116,8 +122,6 @@ class JacobianBasis {
   //
   static int jacobianOrder(int tag);
   static int jacobianOrder(int parentType, int order);
-  static fullMatrix<double> generateJacMonomialsPyramid(int order);
-  static fullMatrix<double> generateJacPointsPyramid(int order);
 
 
  private :
