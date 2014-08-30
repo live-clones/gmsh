@@ -78,13 +78,10 @@ private:
   void _getMetricData(MElement*, MetricData*&) const;
 
   double _subdivideForRmin(MetricData*, double RminLag, double tol) const;
-  static void _fillCoeff(const GradientBasis*,
+  static void _fillCoeff(int dim, const GradientBasis*,
                   fullMatrix<double> &nodes, fullMatrix<double> &coeff);
   static double _computeMinlagR(const fullVector<double> &jac,
                                 const fullMatrix<double> &coeff, int num);
-
-  static int _paramOnPlane(const fullMatrix<double> &nodes3d,
-                           fullMatrix<double> &nodes2d);
 
   void _minMaxA(const fullMatrix<double>&, double &min, double &max) const;
   void _minK(const fullMatrix<double>&, const fullVector<double>&, double &min) const;
@@ -101,6 +98,7 @@ private:
     const double x = .5 * (K - a*a*a + 3*a);
     if (x > 1+1e-13 || x < -1-1e-13) {
       Msg::Warning("x = %g (|1+%g|)", x, std::abs(x)-1);
+      Msg::Fatal("a");
     }
 
     double ans;

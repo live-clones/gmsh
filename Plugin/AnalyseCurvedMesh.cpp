@@ -190,9 +190,8 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
         std::map<int, std::vector<double> > dataPV;
         for (unsigned int i = 0; i < _data.size(); ++i) {
           MElement *const el = _data[i].element();
-          if (el->getDim() == dim) {
+          if (el->getDim() == dim)
             dataPV[el->getNum()].push_back(_data[i].minR());
-          }
         }
         std::stringstream name;
         name << "min R " << dim << "D";
