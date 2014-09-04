@@ -1545,7 +1545,7 @@ StringXNumber ViewOptions_Number[] = {
   { F,   "TransformZZ" , opt_view_transform22 , 1. ,
     "Element (3,3) of the 3x3 coordinate transformation matrix" },
   { F,   "Type" , opt_view_type , 1 ,
-    "Type of plot (1=3D, 2=2D space, 3=2D time)" },
+    "Type of plot (1=3D, 2=2D space, 3=2D time, 4=2D)" },
 
   { F|O, "UseGeneralizedRaise" , opt_view_use_gen_raise , 0 ,
     "Use generalized raise?" },
