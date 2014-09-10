@@ -114,7 +114,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   void zeroSolution();
   void printMatlab(const char *filename) const;
   virtual int systemSolve();
-  Mat &getMatrix(){ return _a; }
+  Mat getMatrix(){ return _a; }
   //std::vector<scalar> getData();
   //std::vector<int> getRowPointers();
   //std::vector<int> getColumnsIndices();

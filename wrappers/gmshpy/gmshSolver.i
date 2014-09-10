@@ -36,6 +36,9 @@
 %include "linearSystemFull.h"
 %template(linearSystemFullDouble) linearSystemFull<double> ;
 #if defined(HAVE_PETSC)
+#if defined(HAVE_PETSC4PY)
+%include petsc4py/petsc4py.i
+#endif
 %include "linearSystemPETSc.h"
 %template(linearSystemPETScDouble) linearSystemPETSc<double>;
 %template(linearSystemPETScBlockDouble) linearSystemPETSc<fullMatrix<double> >;
