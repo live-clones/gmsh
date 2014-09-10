@@ -450,7 +450,7 @@ const {
   return _computeDeterminantAndRegularize(this, jac);
 }
 
-double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][3])
+double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][3]) const
 {
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
@@ -471,7 +471,7 @@ double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][
   return _computeDeterminantAndRegularize(this, jac);
 }
 
-void MElement::getSignedJacobian(fullVector<double> &jacobian, int o)
+void MElement::getSignedJacobian(fullVector<double> &jacobian, int o) const
 {
   const int numNodes = getNumVertices();
   fullMatrix<double> nodesXYZ(numNodes,3);

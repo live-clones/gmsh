@@ -268,16 +268,16 @@ class MElement
     }
     return detJ;
   }
-  virtual double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
-  double getJacobianDeterminant(double u, double v, double w)
+  virtual double getPrimaryJacobian(double u, double v, double w, double jac[3][3]) const;
+  double getJacobianDeterminant(double u, double v, double w) const
   {
     double jac[3][3]; return getJacobian(u, v, w, jac);
   }
-  void getSignedJacobian(fullVector<double> &jacobian, int o = -1);
+  void getSignedJacobian(fullVector<double> &jacobian, int o = -1) const;
   void getNodesCoord(fullMatrix<double> &nodesXYZ) const;
-  virtual int getNumShapeFunctions() const{ return getNumVertices(); }
-  virtual int getNumPrimaryShapeFunctions() { return getNumPrimaryVertices(); }
-  virtual const MVertex *getShapeFunctionNode(int i) const{ return getVertex(i); }
+  virtual int getNumShapeFunctions() const { return getNumVertices(); }
+  virtual int getNumPrimaryShapeFunctions() const { return getNumPrimaryVertices(); }
+  virtual const MVertex *getShapeFunctionNode(int i) const { return getVertex(i); }
   virtual MVertex *getShapeFunctionNode(int i) { return getVertex(i); }
 
   // get the point in cartesian coordinates corresponding to the point
