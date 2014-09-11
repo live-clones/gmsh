@@ -1123,10 +1123,13 @@ if(HAVE_PYTHON)
   endif(ENABLE_NUMPY)
   if(HAVE_PETSC)
     if(ENABLE_PETSC4PY)
-      EXEC_PROGRAM (${PYTHON_EXECUTABLE}
-        ARGS "-c \"import petsc4py; print(petsc4py.get_include())\""
+      EXECUTE_PROCESS(
+        COMMAND ${PYTHON_EXECUTABLE} -c "import petsc4py; print(petsc4py.get_include())"
         OUTPUT_VARIABLE PETSC4PY_INC
-        RETURN_VALUE PETSC4PY_NOT_FOUND)
+        RESULT_VARIABLE PETSC4PY_NOT_FOUND
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
       if(PETSC4PY_INC)
         list(APPEND EXTERNAL_INCLUDES ${PETSC4PY_INC})
         set_config_option(HAVE_PETSC4PY "PETSc4py")
