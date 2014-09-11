@@ -64,7 +64,7 @@ double MSubTetrahedron::getJacobian(double u, double v, double w, double jac[3][
   if(_orig) return _orig->getJacobian(u, v, w, jac);
   return 0;
 }
-double MSubTetrahedron::getPrimaryJacobian(double u, double v, double w, double jac[3][3])
+double MSubTetrahedron::getPrimaryJacobian(double u, double v, double w, double jac[3][3]) const
 {
   if(_orig) return _orig->getPrimaryJacobian(u, v, w, jac);
   return 0;
@@ -76,7 +76,7 @@ int MSubTetrahedron::getNumShapeFunctions() const
   return 0;
 }
 
-int MSubTetrahedron::getNumPrimaryShapeFunctions()
+int MSubTetrahedron::getNumPrimaryShapeFunctions() const
 {
   if(_orig) return _orig->getNumPrimaryShapeFunctions();
   return 0;
@@ -303,7 +303,7 @@ double MSubTriangle::getJacobian(double u, double v, double w, double jac[3][3])
   if(_orig) return _orig->getJacobian(u, v, w, jac);
   return 0;
 }
-double MSubTriangle::getPrimaryJacobian(double u, double v, double w, double jac[3][3])
+double MSubTriangle::getPrimaryJacobian(double u, double v, double w, double jac[3][3]) const
 {
   if(_orig) return _orig->getPrimaryJacobian(u, v, w, jac);
   return 0;
@@ -315,7 +315,7 @@ int MSubTriangle::getNumShapeFunctions() const
   return 0;
 }
 
-int MSubTriangle::getNumPrimaryShapeFunctions()
+int MSubTriangle::getNumPrimaryShapeFunctions() const
 {
   if(_orig) return _orig->getNumPrimaryShapeFunctions();
   return 0;
@@ -531,7 +531,7 @@ double MSubLine::getJacobian(double u, double v, double w, double jac[3][3]) con
   if(_orig) return _orig->getJacobian(u, v, w, jac);
   return 0;
 }
-double MSubLine::getPrimaryJacobian(double u, double v, double w, double jac[3][3])
+double MSubLine::getPrimaryJacobian(double u, double v, double w, double jac[3][3]) const
 {
   if(_orig) return _orig->getPrimaryJacobian(u, v, w, jac);
   return 0;
@@ -543,7 +543,7 @@ int MSubLine::getNumShapeFunctions() const
   return 0;
 }
 
-int MSubLine::getNumPrimaryShapeFunctions()
+int MSubLine::getNumPrimaryShapeFunctions() const
 {
   if(_orig) return _orig->getNumPrimaryShapeFunctions();
   return 0;
@@ -723,7 +723,7 @@ double MSubPoint::getJacobian(double u, double v, double w, double jac[3][3]) co
   if(_orig) return _orig->getJacobian(u, v, w, jac);
   return 0;
 }
-double MSubPoint::getPrimaryJacobian(double u, double v, double w, double jac[3][3])
+double MSubPoint::getPrimaryJacobian(double u, double v, double w, double jac[3][3]) const
 {
   if(_orig) return _orig->getPrimaryJacobian(u, v, w, jac);
   return 0;
@@ -735,7 +735,7 @@ int MSubPoint::getNumShapeFunctions() const
   return 0;
 }
 
-int MSubPoint::getNumPrimaryShapeFunctions()
+int MSubPoint::getNumPrimaryShapeFunctions() const
 {
   if(_orig) return _orig->getNumPrimaryShapeFunctions();
   return 0;

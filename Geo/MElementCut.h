@@ -145,7 +145,7 @@ class MPolyhedron : public MElement {
   {
     return (_orig ? _orig->getNumShapeFunctions() : 0);
   }
-  virtual int getNumPrimaryShapeFunctions()
+  virtual int getNumPrimaryShapeFunctions() const
   {
     return (_orig ? _orig->getNumPrimaryShapeFunctions() : 0);
   }
@@ -295,7 +295,7 @@ class MPolygon : public MElement {
   {
     return (_orig ? _orig->getNumShapeFunctions() : 0);
   }
-  virtual int getNumPrimaryShapeFunctions()
+  virtual int getNumPrimaryShapeFunctions() const
   {
     return (_orig ? _orig->getNumPrimaryShapeFunctions() : 0);
   }

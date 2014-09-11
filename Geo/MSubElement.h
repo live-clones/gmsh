@@ -51,9 +51,9 @@ class MSubTetrahedron : public MTetrahedron
   virtual double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const;
   virtual double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])const;
   virtual double getJacobian(double u, double v, double w, double jac[3][3]) const;
-  virtual double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
+  virtual double getPrimaryJacobian(double u, double v, double w, double jac[3][3]) const;
   virtual int getNumShapeFunctions() const;
-  virtual int getNumPrimaryShapeFunctions();
+  virtual int getNumPrimaryShapeFunctions() const;
   virtual const MVertex* getShapeFunctionNode(int i) const;
   virtual MVertex* getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
@@ -109,9 +109,9 @@ class MSubTriangle : public MTriangle
   virtual double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const;
   virtual double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])const;
   virtual double getJacobian(double u, double v, double w, double jac[3][3])const;
-  virtual double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
+  virtual double getPrimaryJacobian(double u, double v, double w, double jac[3][3]) const;
   virtual int getNumShapeFunctions() const;
-  virtual int getNumPrimaryShapeFunctions();
+  virtual int getNumPrimaryShapeFunctions() const;
   virtual const MVertex* getShapeFunctionNode(int i) const;
   virtual MVertex* getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
@@ -167,9 +167,9 @@ class MSubLine : public MLine
   virtual double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const;
   virtual double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])const;
   virtual double getJacobian(double u, double v, double w, double jac[3][3]) const;
-  virtual double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
+  virtual double getPrimaryJacobian(double u, double v, double w, double jac[3][3]) const;
   virtual int getNumShapeFunctions() const;
-  virtual int getNumPrimaryShapeFunctions();
+  virtual int getNumPrimaryShapeFunctions() const;
   virtual const MVertex* getShapeFunctionNode(int i) const;
   virtual MVertex* getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
@@ -225,9 +225,9 @@ class MSubPoint : public MPoint
   virtual double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const;
   virtual double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])const;
   virtual double getJacobian(double u, double v, double w, double jac[3][3]) const;
-  virtual double getPrimaryJacobian(double u, double v, double w, double jac[3][3]);
+  virtual double getPrimaryJacobian(double u, double v, double w, double jac[3][3]) const;
   virtual int getNumShapeFunctions() const;
-  virtual int getNumPrimaryShapeFunctions();
+  virtual int getNumPrimaryShapeFunctions() const;
   virtual const MVertex* getShapeFunctionNode(int i) const;
   virtual MVertex* getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
