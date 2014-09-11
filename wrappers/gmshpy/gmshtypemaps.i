@@ -123,6 +123,14 @@
     }
     return array;
   }
+  PyObject *fullVector2PyArrayProxy(fullVector<double> &fv)
+  {
+    npy_intp dims[1] = {fv.size()};
+    double *data = &fv.operator()(0);
+    PyObject *array = PyArray_New(&PyArray_Type, 1, dims, NPY_DOUBLE, NULL, (void*)data, 0, NPY_ARRAY_F_CONTIGUOUS, NULL);
+    PyArray_UpdateFlags((PyArrayObject*)array, NPY_ARRAY_ALIGNED | NPY_ARRAY_WRITEABLE);
+    return array;
+  }
   %#endif
 }
 
@@ -175,6 +183,10 @@
 #ifdef HAVE_NUMPY
 %typemap(out, fragment="fullMatrixConversion") fullMatrix<double> {
   $result = fullMatrix2PyArray($1);
+}
+
+%typemap(out, fragment="fullMatrixConversion") fullVector<double>& {
+  $result = fullVector2PyArrayProxy(*$1);
 }
 #endif
 
