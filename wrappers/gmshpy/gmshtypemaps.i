@@ -15,6 +15,7 @@
   %#define NPY_ARRAY_FARRAY NPY_FARRAY
   %#define NPY_ARRAY_ALIGNED NPY_ALIGNED
   %#define NPY_ARRAY_F_CONTIGUOUS NPY_F_CONTIGUOUS
+  %#define NPY_ARRAY_WRITEABLE NPY_WRITEABLE
   %#define PyArray_SetBaseObject(a, b) PyArray_BASE(a) = b
   %#endif
   %#endif
