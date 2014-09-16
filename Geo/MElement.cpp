@@ -123,7 +123,7 @@ double MElement::metricShapeMeasure2()
   return MetricBasis::boundMinR(this);
 }
 
-double MElement::maxDistToStraight()
+double MElement::maxDistToStraight() const
 {
   const nodalBasis *lagBasis = getFunctionSpace();
   const fullMatrix<double> &uvw = lagBasis->points;
@@ -146,7 +146,7 @@ double MElement::maxDistToStraight()
   return maxdx;
 }
 
-void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge)
+void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge) const
 {
   jmin = jmax = 1.0;
 #if defined(HAVE_MESH)
@@ -161,7 +161,7 @@ void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge)
     SVector3 geoNorm(0.,0.,0.);
     // ... correct Jacobian sign with geometrical normal
     for (int i=0; i<jac->getNumPrimMapNodes(); i++) {
-      MVertex *vert = getVertex(i);
+      const MVertex *vert = getVertex(i);
       if (vert->onWhat() == ge) {
         double u, v;
         vert->getParameter(0,u);

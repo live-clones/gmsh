@@ -176,7 +176,7 @@ class MElement
   virtual double minEdge();
 
   // Max. distance between curved and straight element among all high-order nodes
-  double maxDistToStraight();
+  double maxDistToStraight() const;
 
   // get the quality measures
   double skewness();
@@ -190,7 +190,7 @@ class MElement
     return jmin;
   }
   virtual double angleShapeMeasure() { return 1.0; }
-  virtual void scaledJacRange(double &jmin, double &jmax, GEntity *ge = 0);
+  virtual void scaledJacRange(double &jmin, double &jmax, GEntity *ge = 0) const;
   virtual double metricShapeMeasure();
   virtual double metricShapeMeasure2();
 
