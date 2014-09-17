@@ -78,6 +78,7 @@ private:
   void _getMetricData(MElement*, MetricData*&) const;
 
   double _subdivideForRmin(MetricData*, double RminLag, double tol) const;
+  template<bool ideal>
   static void _fillCoeff(int dim, const GradientBasis*,
                   fullMatrix<double> &nodes, fullMatrix<double> &coeff);
   static double _computeMinlagR(const fullVector<double> &jac,

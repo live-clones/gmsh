@@ -125,11 +125,11 @@ class JacobianBasis {
 
 
  private :
-  template<bool scaling>
+  template<bool scaling, bool ideal>
   inline void getJacobianGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
                                  const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
                                  const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const;
-  template<bool scaling>
+  template<bool scaling, bool ideal>
   inline void getJacobianGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
                                  const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
                                  const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
@@ -149,6 +149,11 @@ class JacobianBasis {
                                 const fullMatrix<double> &nodesX, const fullMatrix<double> &nodesY,
                                 const fullMatrix<double> &nodesZ, fullMatrix<double> &jacobian) const;
 
+  template<bool ideal>
+  inline void getSignedJacAndGradientsGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
+                                       const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+                                       const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
+                                       fullMatrix<double> &JDJ) const;
   void getSignedJacAndGradientsGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
                                        const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
                                        const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,

@@ -95,7 +95,7 @@ double MetricBasis::minRCorner(MElement *el)
 
   // Metric coefficients
   fullMatrix<double> metCoeffLag;
-  _fillCoeff(el->getDim(), gradients, nodes, metCoeffLag);
+  _fillCoeff<false>(el->getDim(), gradients, nodes, metCoeffLag);
 
   // Compute min_corner(R)
   return _computeMinlagR(jacLag, metCoeffLag, nSampPnts);
@@ -183,7 +183,7 @@ double MetricBasis::getBoundMinR(MElement *el)
 
   // Metric coefficients
   fullMatrix<double> metCoeffLag;
-  _fillCoeff(el->getDim(), _gradients, nodes, metCoeffLag);
+  _fillCoeff<false>(el->getDim(), _gradients, nodes, metCoeffLag);
   fullMatrix<double> *metCoeff;
   metCoeff = new fullMatrix<double>(nSampPnts, metCoeffLag.size2());
   _bezier->matrixLag2Bez.mult(metCoeffLag, *metCoeff);
@@ -808,7 +808,7 @@ void MetricBasis::_getMetricData(MElement *el, MetricData *&md) const
 
   // Metric coefficients
   fullMatrix<double> metCoeffLag;
-  _fillCoeff(el->getDim(), _gradients, nodes, metCoeffLag);
+  _fillCoeff<false>(el->getDim(), _gradients, nodes, metCoeffLag);
   fullMatrix<double> *metCoeff;
   metCoeff = new fullMatrix<double>(nSampPnts, metCoeffLag.size2());
   _bezier->matrixLag2Bez.mult(metCoeffLag, *metCoeff);
@@ -816,6 +816,7 @@ void MetricBasis::_getMetricData(MElement *el, MetricData *&md) const
   md = new MetricData(metCoeff, jac, -1, 0, 0);
 }
 
+template<bool ideal>
 void MetricBasis::_fillCoeff(int dim, const GradientBasis *gradients,
     fullMatrix<double> &nodes, fullMatrix<double> &coeff)
 {
@@ -832,7 +833,7 @@ void MetricBasis::_fillCoeff(int dim, const GradientBasis *gradients,
     {
       fullMatrix<double> dxydX(nSampPnts,3), dxydY(nSampPnts,3);
       gradients->getGradientsFromNodes(nodes, &dxydX, &dxydY, NULL);
-      gradients->mapFromIdealElement(&dxydX, &dxydY, NULL);
+      if (ideal) gradients->mapFromIdealElement(&dxydX, &dxydY, NULL);
 
       coeff.resize(nSampPnts, 3);
       for (int i = 0; i < nSampPnts; i++) {
@@ -851,7 +852,7 @@ void MetricBasis::_fillCoeff(int dim, const GradientBasis *gradients,
     {
       fullMatrix<double> dxyzdX(nSampPnts,3), dxyzdY(nSampPnts,3), dxyzdZ(nSampPnts,3);
       gradients->getGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, &dxyzdZ);
-      gradients->mapFromIdealElement(&dxyzdX, &dxyzdY, &dxyzdZ);
+      if (ideal) gradients->mapFromIdealElement(&dxyzdX, &dxyzdY, &dxyzdZ);
 
       coeff.resize(nSampPnts, 7);
       for (int i = 0; i < nSampPnts; i++) {
