@@ -144,12 +144,18 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
           // the mesh is curved
           MElement *e = _getOneElementOfGivenType(model, it->first);
           if(e && e->getPolynomialOrder() > 1 && e->getFunctionSpace()){
-            const polynomialBasis *fs = (polynomialBasis*) e->getFunctionSpace();
-            setInterpolationMatrices(it->first, *(it->second[0]), *(it->second[1]),
+            if (it->first == TYPE_PYR) { // KH 18/9/2014 very nasty fix since pyramids /= polynomial
+              const pyramidalBasis  *fs = (pyramidalBasis*) e->getFunctionSpace();
+              setInterpolationMatrices(it->first, *(it->second[0]), *(it->second[1]),
                                      fs->coefficients, fs->monomials);
+            }
+            else {
+              const polynomialBasis *fs = (polynomialBasis*) e->getFunctionSpace();
+              setInterpolationMatrices(it->first, *(it->second[0]), *(it->second[1]),
+                                       fs->coefficients, fs->monomials);
+            }
           }
-          else
-            setInterpolationMatrices(it->first, *(it->second[0]), *(it->second[1]));
+          else setInterpolationMatrices(it->first, *(it->second[0]), *(it->second[1]));
         }
         else if(it->second.size() == 4){
           // use provided matrices for field and geometry
