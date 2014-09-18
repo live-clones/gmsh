@@ -15,6 +15,7 @@
   #include "GVertex.h"
   #include "GEdge.h"
   #include "GFace.h"
+  #include "GFaceCompound.h"
   #include "GRegion.h"
   #include "GPoint.h"
   #include "discreteFace.h"
@@ -49,6 +50,8 @@ namespace std {
   %template(GRegionVector) vector<GRegion*, std::allocator<GRegion*> >;
   %template(MVertexVector) vector< MVertex *,std::allocator< MVertex * > >;
   %template(MElementVector) vector< MElement *,std::allocator< MElement * > >;
+  %template(MTriangleVector) vector< MTriangle *,std::allocator< MTriangle * > >;
+  %template(MQuadrangleVector) vector< MQuadrangle *,std::allocator< MQuadrangle * > >;
   %template(GEdgeVectorVector) vector< std::vector< GEdge *,std::allocator< GEdge * > >,std::allocator< std::vector< GEdge *,std::allocator< GEdge * > > > >;
   %template(GFaceVectorVector) vector< std::vector< GFace *,std::allocator< GFace * > >,std::allocator< std::vector< GFace *,std::allocator< GFace * > > > >;
   %template(GFaceList) list<GFace*, std::allocator<GFace*> >;
@@ -77,6 +80,7 @@ namespace std {
 %apply std::vector<SPoint3> &OUTPUT{std::vector<SPoint3> &dpts}
 %include "GEdge.h"
 %include "GFace.h"
+%include "GFaceCompound.h"
 %include "GRegion.h"
 %include "GPoint.h"
 %include "discreteFace.h"
