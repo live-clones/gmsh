@@ -737,3 +737,105 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
   Msg::Error("High-order mesh optimizer requires BFGS");
 #endif
 }
+
+
+//#include "GModel.h"
+#include "GEntity.h"
+//#include "MElement.h"
+//#include "OptHomRun.h"
+#include "MeshOptCommon.h"
+#include "MeshOptObjContribFunc.h"
+#include "MeshOptObjectiveFunction.h"
+#include "MeshOptObjContrib.h"
+#include "MeshOptObjContribScaledNodeDispSq.h"
+#include "OptHomObjContribScaledJac.h"
+#include "OptHomObjContribMetricMin.h"
+#include "MeshOptimizer.h"
+
+
+struct HOPatchParameters : public MeshOptParameters::PatchParameters
+{
+  HOPatchParameters(const OptHomParameters &p);
+  virtual ~HOPatchParameters() {}
+  virtual double elBadness(const MElement *el);
+  virtual double maxDistance(const MElement *el);
+private:
+  double jacMin, jacMax;
+  double distanceFactor;
+};
+
+
+HOPatchParameters::HOPatchParameters(const OptHomParameters &p)
+{
+  jacMin = p.BARRIER_MIN;
+  jacMax = (p.BARRIER_MAX > 0.) ? p.BARRIER_MAX : 1.e300;
+  strategy = (p.strategy == 1) ? MeshOptParameters::STRAT_ONEBYONE :
+                                        MeshOptParameters::STRAT_CONNECTED;
+  minLayers = (p.dim == 3) ? 1 : 0;
+  maxLayers = p.nbLayers;
+  distanceFactor = p.distanceFactor;
+  if (strategy == MeshOptParameters::STRAT_CONNECTED)
+    weakMerge = (p.strategy == 2);
+  else {
+    maxAdaptPatch = p.maxAdaptBlob;
+    maxLayersAdaptFact = p.adaptBlobLayerFact;
+    distanceAdaptFact = p.adaptBlobDistFact;
+  }
+}
+
+
+double HOPatchParameters::elBadness(const MElement *el) {
+  double jmin, jmax;
+  el->scaledJacRange(jmin, jmax);
+  return std::min(jmin-jacMin, 0.) + std::min(jacMax-jmax, 0.);
+}
+
+
+double HOPatchParameters::maxDistance(const MElement *el) {
+  return distanceFactor * el->maxDistToStraight();
+}
+
+
+void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
+{
+  Msg::StatusBar(true, "Optimizing high order mesh...");
+
+  MeshOptParameters par;
+  par.dim = p.dim;
+  par.onlyVisible = p.onlyVisible;
+  par.fixBndNodes = p.fixBndNodes;
+  HOPatchParameters patch(p);
+  par.patch = &patch;
+  par.optDisplay = 30;
+  par.verbose = 4;
+  ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weightFixed, p.weightFree);
+  ObjContribScaledJac<ObjContribFuncBarrierMin> minJacBarFunc(1.);
+  ObjContribScaledJac<ObjContribFuncBarrierMinMax> minMaxJacBarFunc(1.);
+  MeshOptParameters::PassParameters minJacPass;
+  minJacPass.barrierIterMax = p.optPassMax;
+  minJacPass.optIterMax = p.itMax;
+  minJacPass.objFunc = ObjectiveFunction();
+  minJacPass.objFunc.push_back(&nodeDistFunc);
+  minJacBarFunc.setTarget(p.BARRIER_MIN, 1.);
+  minJacPass.objFunc.push_back(&minJacBarFunc);
+  par.pass.push_back(minJacPass);
+  if (p.BARRIER_MAX > 0.) {
+    MeshOptParameters::PassParameters minMaxJacPass;
+    minMaxJacPass.barrierIterMax = p.optPassMax;
+    minMaxJacPass.optIterMax = p.itMax;
+    minMaxJacPass.objFunc = ObjectiveFunction();
+    minMaxJacPass.objFunc.push_back(&nodeDistFunc);
+    minMaxJacBarFunc.setTarget(p.BARRIER_MAX, 1.);
+    minMaxJacPass.objFunc.push_back(&minMaxJacBarFunc);
+    par.pass.push_back(minMaxJacPass);
+  }
+  MeshOptResults res;
+
+  meshOptimizer(gm, par, res);
+
+  p.CPU = res.CPU;
+  p.minJac = res.minScaledJac;
+  p.maxJac = res.maxScaledJac;
+
+  Msg::StatusBar(true, "Done optimizing high order mesh (%g s)", p.CPU);
+}

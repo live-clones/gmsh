@@ -144,6 +144,13 @@ set(GMSH_API
   contrib/HighOrderMeshOptimizer/OptHOM.h contrib/HighOrderMeshOptimizer/OptHomMesh.h
   contrib/HighOrderMeshOptimizer/OptHomRun.h contrib/HighOrderMeshOptimizer/ParamCoord.h
   contrib/HighOrderMeshOptimizer/OptHomFastCurving.h contrib/HighOrderMeshOptimizer/SuperEl.h
+  contrib/HighOrderMeshOptimizer/OptHomObjContribScaledJac.h
+  contrib/HighOrderMeshOptimizer/OptHomObjContribMetricMin.h
+  contrib/HighOrderMeshOptimizer/OptHomObjContribCADDist.h
+  contrib/MeshOptimizer/MeshOptPatch.h contrib/MeshOptimizer/MeshOpt.h
+  contrib/MeshOptimizer/MeshOptCommon.h contrib/MeshOptimizer/MeshOptimizer.h
+  contrib/MeshOptimizer/MeshOptObjContribFunc.h contrib/MeshOptimizer/MeshOptObjContrib.h
+  contrib/MeshOptimizer/MeshOptObjectiveFunction.h contrib/MeshOptimizer/MeshOptVertexCoord.h 
   contrib/MathEx/mathex.h)
 
 get_property(IAMCHILD DIRECTORY  PROPERTY PARENT_DIRECTORY)
@@ -636,6 +643,8 @@ endif(ENABLE_DINTEGRATION)
 if(ENABLE_OPTHOM)
   add_subdirectory(contrib/HighOrderMeshOptimizer)
   include_directories(contrib/HighOrderMeshOptimizer)
+  add_subdirectory(contrib/MeshOptimizer)
+  include_directories(contrib/MeshOptimizer)
   set_config_option(HAVE_OPTHOM "OptHom")
 endif(ENABLE_OPTHOM)
 

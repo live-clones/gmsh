@@ -68,13 +68,14 @@ struct OptHomParameters {
     : BARRIER_MIN_METRIC(-1.), BARRIER_MIN(0.1), BARRIER_MAX(2.0), weightFixed(1000.),
       weightFree (1.), nbLayers (6) , dim(3) , itMax(300), onlyVisible(true),
       distanceFactor(12), fixBndNodes(false), strategy(0), maxAdaptBlob(3),
-      adaptBlobLayerFact(2.), adaptBlobDistFact(2.), optPrimSurfMesh(false),optCAD(false),
-      optCADWeight(1000.),optCADDistMax(1.e22),discrTolerance(1.e-4)
+      adaptBlobLayerFact(2.), adaptBlobDistFact(2.), optPrimSurfMesh(false), optCAD(false),
+      optCADWeight(1000.), optCADDistMax(1.e22), discrTolerance(1.e-4)
   {
   }
 };
 
 void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p);
+void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p);
 // distanceDefinition 1) Hausdorff 2) Area/Length 3) Frechet (not done)
 double ComputeDistanceToGeometry (GEntity *ge , int distanceDefinition,double tolerance) ;
 
