@@ -30,7 +30,7 @@ public:
   virtual void updateResults(MeshOptResults &res) const = 0;
 
 protected:
-  static const double BIGVAL = 1.e300;
+  static const double BIGVAL;
   std::string _measureName, _name;
   double _min, _max;
 };
