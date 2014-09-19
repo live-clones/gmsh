@@ -4,10 +4,9 @@
 #include "MeshOptObjContribFunc.h"
 
 
-namespace {
-
-
-}
+const double ObjContribFuncBarrier::LOWMARGINMULT = 0.9;
+const double ObjContribFuncBarrier::UPMARGINMULT = 1.1;
+const double ObjContribFuncBarrier::STAGTHRESHOLD = 0.01;
 
 
 ObjContribFuncBarrier::ObjContribFuncBarrier() :

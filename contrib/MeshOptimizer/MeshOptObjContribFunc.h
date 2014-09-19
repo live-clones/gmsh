@@ -26,9 +26,8 @@ public:
   void setTarget(double target, double opt=1.);
 
 protected:
-  static const double BLOWUPVAL = 1.e300, DIFFBLOWUPVAL = 1.e300;                 // Big values to set when function should be infinite
-  static const double LOWMARGINMULT = 0.9, UPMARGINMULT = 1.1;                    // Upper and lower margins w.r.t. min. & max. to set barrier
-  static const double STAGTHRESHOLD = 0.01;                                       // Threshold to consider that measures stagnates
+  static const double LOWMARGINMULT, UPMARGINMULT;                                // Upper and lower margins w.r.t. min. & max. to set barrier
+  static const double STAGTHRESHOLD;                                              // Threshold to consider that measures stagnates
   double _opt;                                                                    // Optimal value of measure in barrier function
   double _barrier, _target, _init;                                                // Current barrier, target and initial values of min./max. of measure
   static double logBarrier(double v, double barrier, double opt);
@@ -92,28 +91,28 @@ inline double ObjContribFuncBarrier::diffLogBarrier(double v, double barrier, do
 inline double ObjContribFuncBarrierMin::compute(double v)
 {
   if (v > _barrier) return logBarrier(v, _barrier, _opt);
-  else return BLOWUPVAL;
+  else return 1e300;
 }
 
 
 inline double ObjContribFuncBarrierMin::computeDiff(double v)
 {
   if (v > _barrier) return diffLogBarrier(v, _barrier, _opt);
-  else return -DIFFBLOWUPVAL;
+  else return -1e300;
 }
 
 
 inline double ObjContribFuncBarrierMax::compute(double v)
 {
   if (v < _barrier) return logBarrier(v, _barrier, _opt);
-  else return BLOWUPVAL;
+  else return 1e300;
 }
 
 
 inline double ObjContribFuncBarrierMax::computeDiff(double v)
 {
   if (v < _barrier) return diffLogBarrier(v, _barrier, _opt);
-  else return DIFFBLOWUPVAL;
+  else return 1e300;
 }
 
 
@@ -121,12 +120,12 @@ inline double ObjContribFuncBarrierMinMax::compute(double v)
 {
   double obj;
   if (v < _barrier) obj = logBarrier(v, _barrier, _opt);
-  else return BLOWUPVAL;
+  else return 1e300;
   if (v > _fixedMinBarrier) {
     obj += logBarrier(v, _fixedMinBarrier, _opt);
     return obj;
   }
-  else return BLOWUPVAL;
+  else return 1e300;
 }
 
 
@@ -134,14 +133,13 @@ inline double ObjContribFuncBarrierMinMax::computeDiff(double v)
 {
   double dobj;
   if (v < _barrier) dobj = diffLogBarrier(v, _barrier, _opt);
-  else return DIFFBLOWUPVAL;
+  else return 1e300;
   if (v > _fixedMinBarrier) {
     dobj += diffLogBarrier(v, _fixedMinBarrier, _opt);
     return dobj;
   }
-  else return -DIFFBLOWUPVAL;
+  else return -1e300;
 }
-
 
 
 #endif /* _MESHOPTOBJCONTRIBFUNC_H_ */
