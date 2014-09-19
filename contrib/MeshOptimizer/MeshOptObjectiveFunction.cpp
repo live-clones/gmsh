@@ -5,6 +5,14 @@
 #include "MeshOptObjectiveFunction.h"
 
 
+ObjectiveFunction::ObjectiveFunction(const std::vector<ObjContrib*> &allContrib,
+                                              const std::vector<int> &contribInd)
+{
+  resize(contribInd.size());
+  for (int i=0; i<contribInd.size(); i++) operator[](i) = allContrib[contribInd[i]];
+}
+
+
 void ObjectiveFunction::initialize(Patch *mesh)
 {
    for (std::vector<ObjContrib*>::iterator it=begin(); it!=end(); it++)

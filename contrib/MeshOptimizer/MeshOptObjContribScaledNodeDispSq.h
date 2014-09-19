@@ -13,6 +13,7 @@ class ObjContribScaledNodeDispSq : public ObjContrib, public FuncType
 public:
   ObjContribScaledNodeDispSq(double weightFixed, double weightFree);
   virtual ~ObjContribScaledNodeDispSq() {}
+  virtual ObjContrib *copy() const;
   virtual void initialize(Patch *mesh);
   virtual bool fail() { return false; }
   virtual bool addContrib(double &Obj, alglib::real_1d_array &gradObj);
@@ -35,6 +36,13 @@ ObjContribScaledNodeDispSq<FuncType>::ObjContribScaledNodeDispSq(double weightFi
   ObjContrib("ScaledNodeDispSq", FuncType::getNamePrefix()+"ScaledNodeDispSq"),
   _mesh(0), _weightFixed(weightFixed), _weightFree(weightFree)
 {
+}
+
+
+template<class FuncType>
+ObjContrib *ObjContribScaledNodeDispSq<FuncType>::copy() const
+{
+  return new ObjContribScaledNodeDispSq<FuncType>(*this);
 }
 
 

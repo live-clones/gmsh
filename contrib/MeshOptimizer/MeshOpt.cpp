@@ -65,11 +65,19 @@ void printProgressFunc(const alglib::real_1d_array &x, double Obj, void *MOInst)
 
 
 MeshOpt::MeshOpt(const std::map<MElement*,GEntity*> &element2entity,
-                 const std::set<MElement*> &els, std::set<MVertex*> & toFix,
-                 bool fixBndNodes) :
+                 const std::set<MElement*> &els, std::set<MVertex*> &toFix,
+                 bool fixBndNodes, const std::vector<ObjContrib*> &allContrib) :
   patch(element2entity, els, toFix, fixBndNodes), _verbose(0),
-  _iPass(0), _objFunc(0), _iter(0), _intervDisplay(0), _initObj(0)
+  _iPass(0), _objFunc(), _iter(0), _intervDisplay(0), _initObj(0)
 {
+  _allContrib.resize(allContrib.size());
+  for (int i = 0; i < allContrib.size(); i++) _allContrib[i] = allContrib[i]->copy();
+}
+
+
+MeshOpt::~MeshOpt()
+{
+  for (int i = 0; i < _allContrib.size(); i++) delete _allContrib[i];
 }
 
 
@@ -77,8 +85,8 @@ void MeshOpt::evalObjGrad(const alglib::real_1d_array &x, double &obj,
                                          alglib::real_1d_array &gradObj)
 {
   patch.updateMesh(x.getcontent());
-  _objFunc->compute(obj, gradObj);
-  if (_objFunc->targetReached()) {
+  _objFunc.compute(obj, gradObj);
+  if (_objFunc.targetReached()) {
     if (_verbose > 2) Msg::Info("Reached target values, setting null gradient");
     obj = 0.;
     for (int i = 0; i < gradObj.length(); i++) gradObj[i] = 0.;
@@ -92,7 +100,7 @@ void MeshOpt::printProgress(const alglib::real_1d_array &x, double Obj)
 
   if ((_verbose > 2) && (_iter % _intervDisplay == 0))
     Msg::Info(("--> Iteration %3d --- OBJ %12.5E (relative decrease = %12.5E)" +
-              _objFunc->minMaxStr()).c_str(), _iter, Obj, Obj/_initObj);
+              _objFunc.minMaxStr()).c_str(), _iter, Obj, Obj/_initObj);
 }
 
 
@@ -112,7 +120,7 @@ void MeshOpt::calcScale(alglib::real_1d_array &scale)
 
 void MeshOpt::updateResults(MeshOptResults &res)
 {
-  _objFunc->updateResults(res);
+  _objFunc.updateResults(res);
 }
 
 
@@ -180,15 +188,15 @@ int MeshOpt::optimize(MeshOptParameters &par)
   for (_iPass=0; _iPass<par.pass.size(); _iPass++) {
 
     // Set objective function Output if required
-    _objFunc = &par.pass[_iPass].objFunc;
+    _objFunc = ObjectiveFunction(_allContrib, par.pass[_iPass].contribInd);
     if (_verbose > 2) {
-      std::string msgStr = "* Pass %d with contributions: " + _objFunc->contribNames();
+      std::string msgStr = "* Pass %d with contributions: " + _objFunc.contribNames();
       Msg::Info(msgStr.c_str(), _iPass);
     }
 
     // Initialize contributions
-    _objFunc->initialize(&patch);
-    _objFunc->updateParameters();
+    _objFunc.initialize(&patch);
+    _objFunc.updateParameters();
 
     // Calculate initial objective function value and gradient
    _initObj = 0.;
@@ -198,14 +206,14 @@ int MeshOpt::optimize(MeshOptParameters &par)
     evalObjGrad(x, _initObj, gradObj);
 
     // Loop for update of objective function parameters (barrier movement)
-    bool targetReached = _objFunc->targetReached();
+    bool targetReached = _objFunc.targetReached();
     for (int iBar=0; (iBar<par.pass[_iPass].barrierIterMax) && (!targetReached); iBar++) {
       if (_verbose > 2) Msg::Info("--- Optimization run %d", iBar);
-      _objFunc->updateParameters();
+      _objFunc.updateParameters();
       runOptim(x, gradObj, par.pass[_iPass].optIterMax);
-      _objFunc->updateMinMax();
-      targetReached = _objFunc->targetReached();
-      if (_objFunc->stagnated()) {
+      _objFunc.updateMinMax();
+      targetReached = _objFunc.targetReached();
+      if (_objFunc.stagnated()) {
         if (_verbose > 2) Msg::Info("Stagnation detected, stopping optimization");
         break;
       }
@@ -213,7 +221,7 @@ int MeshOpt::optimize(MeshOptParameters &par)
 
     // Check results of pass and output if required
     if (!targetReached) result = 0;
-    std::string failMeasures = _objFunc->failMeasures();
+    std::string failMeasures = _objFunc.failMeasures();
     if (!failMeasures.empty()) {
       result = -1;
       if (_verbose > 2)
@@ -224,7 +232,7 @@ int MeshOpt::optimize(MeshOptParameters &par)
       if (targetReached)
         Msg::Info("Target reached for pass %d", _iPass);
       else {
-        std::string failedTargets = _objFunc->targetsNotReached();
+        std::string failedTargets = _objFunc.targetsNotReached();
         Msg::Warning("Failed to reach target in pass %d for "
                       "contributions %s", _iPass, failedTargets.c_str());
       }

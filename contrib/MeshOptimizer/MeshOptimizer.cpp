@@ -267,7 +267,7 @@ static void optimizeConnectedPatches
       Msg::Info("Optimizing patch %i/%i composed of %i elements", iPatch,
                       toOptimize.size()-1, toOptimize[iPatch].first.size());
     MeshOpt opt(element2entity, toOptimize[iPatch].first, toOptimize[iPatch].second,
-                                                                      par.fixBndNodes);
+                                                      par.fixBndNodes, par.allContrib);
     if (par.verbose > 3) {
       std::ostringstream ossI1;
       ossI1 << "initial_patch-" << iPatch << ".msh";
@@ -356,7 +356,7 @@ static void optimizeOneByOne
       if (par.verbose > 1)
         Msg::Info("Optimizing patch %i (max. %i remaining) composed of %4d elements",
                                             iBadEl, badElts.size(), toOptimize.size());
-      MeshOpt opt(element2entity, toOptimize, toFix, par.fixBndNodes);
+      MeshOpt opt(element2entity, toOptimize, toFix, par.fixBndNodes, par.allContrib);
       if (par.verbose > 3) {
         std::ostringstream ossI1;
         ossI1 << "initial_patch-" << iBadEl << ".msh";

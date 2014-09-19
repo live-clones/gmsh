@@ -16,6 +16,7 @@ class ObjContrib
 public:
   ObjContrib(std::string mesName, std::string name);
   virtual ~ObjContrib() {}
+  virtual ObjContrib *copy() const = 0;
   const double getMin() { return _min; }
   const double getMax() { return _max; }
   const std::string &getName() const { return _name; }

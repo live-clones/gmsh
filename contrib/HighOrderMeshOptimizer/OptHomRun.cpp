@@ -745,7 +745,6 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
 //#include "OptHomRun.h"
 #include "MeshOptCommon.h"
 #include "MeshOptObjContribFunc.h"
-#include "MeshOptObjectiveFunction.h"
 #include "MeshOptObjContrib.h"
 #include "MeshOptObjContribScaledNodeDispSq.h"
 #include "OptHomObjContribScaledJac.h"
@@ -808,27 +807,35 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   par.patchDef = &patchDef;
   par.optDisplay = 30;
   par.verbose = 4;
+
   ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weightFixed, p.weightFree);
   ObjContribScaledJac<ObjContribFuncBarrierMin> minJacBarFunc(1.);
+  minJacBarFunc.setTarget(p.BARRIER_MIN, 1.);
   ObjContribScaledJac<ObjContribFuncBarrierMinMax> minMaxJacBarFunc(1.);
+  minMaxJacBarFunc.setTarget(p.BARRIER_MAX, 1.);
+  par.allContrib.resize(3);
+  par.allContrib[0] = &nodeDistFunc;
+  par.allContrib[1] = &minJacBarFunc;
+  par.allContrib[2] = &minMaxJacBarFunc;
+
   MeshOptParameters::PassParameters minJacPass;
   minJacPass.barrierIterMax = p.optPassMax;
   minJacPass.optIterMax = p.itMax;
-  minJacPass.objFunc = ObjectiveFunction();
-  minJacPass.objFunc.push_back(&nodeDistFunc);
-  minJacBarFunc.setTarget(p.BARRIER_MIN, 1.);
-  minJacPass.objFunc.push_back(&minJacBarFunc);
+  minJacPass.contribInd.resize(2);
+  minJacPass.contribInd[0] = 0;
+  minJacPass.contribInd[1] = 1;
   par.pass.push_back(minJacPass);
+
   if (p.BARRIER_MAX > 0.) {
     MeshOptParameters::PassParameters minMaxJacPass;
     minMaxJacPass.barrierIterMax = p.optPassMax;
     minMaxJacPass.optIterMax = p.itMax;
-    minMaxJacPass.objFunc = ObjectiveFunction();
-    minMaxJacPass.objFunc.push_back(&nodeDistFunc);
-    minMaxJacBarFunc.setTarget(p.BARRIER_MAX, 1.);
-    minMaxJacPass.objFunc.push_back(&minMaxJacBarFunc);
+    minMaxJacPass.contribInd.resize(2);
+    minMaxJacPass.contribInd[0] = 0;
+    minMaxJacPass.contribInd[1] = 2;
     par.pass.push_back(minMaxJacPass);
   }
+
   MeshOptResults res;
 
   meshOptimizer(gm, par, res);

@@ -48,7 +48,9 @@ class MeshOpt
 public:
   Patch patch;
   MeshOpt(const std::map<MElement*,GEntity*> &element2entity,
-          const std::set<MElement*> &els, std::set<MVertex*> &toFix, bool fixBndNodes);
+          const std::set<MElement*> &els, std::set<MVertex*> &toFix,
+          bool fixBndNodes, const std::vector<ObjContrib*> &allContrib);
+  ~MeshOpt();
   int optimize(MeshOptParameters &par);
   void updateMesh(const alglib::real_1d_array &x);
   void updateResults(MeshOptResults &res);
@@ -59,7 +61,8 @@ public:
  private:
   int _verbose;
   int _iPass;
-  ObjectiveFunction *_objFunc;                                                      // Current contributions to objective function
+  std::vector<ObjContrib*> _allContrib;                                             // All contributions to objective function for all passes
+  ObjectiveFunction _objFunc;                                                       // Contributions to objective function for current pass
   int _iter, _intervDisplay;                                                        // Current iteration, interval of iterations for reporting
   double _initObj;                                                                  // Values for reporting
   void calcScale(alglib::real_1d_array &scale);

@@ -13,6 +13,7 @@ class ObjContribMetricMin : public ObjContrib, public FuncType
 public:
   ObjContribMetricMin(double weight);
   virtual ~ObjContribMetricMin() {}
+  virtual ObjContrib *copy() const;
   virtual void initialize(Patch *mesh);
   virtual bool fail() { return false; }
   virtual bool addContrib(double &Obj, alglib::real_1d_array &gradObj);
@@ -33,6 +34,13 @@ ObjContribMetricMin<FuncType>::ObjContribMetricMin(double weight) :
   ObjContrib("MetricMin", FuncType::getNamePrefix()+"MetricMin"),
   _mesh(0), _weight(weight)
 {
+}
+
+
+template<class FuncType>
+ObjContrib *ObjContribMetricMin<FuncType>::copy() const
+{
+  return new ObjContribMetricMin<FuncType>(*this);
 }
 
 

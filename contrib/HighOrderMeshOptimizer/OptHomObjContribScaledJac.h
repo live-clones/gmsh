@@ -13,6 +13,7 @@ class ObjContribScaledJac : public ObjContrib, public FuncType
 public:
   ObjContribScaledJac(double weight);
   virtual ~ObjContribScaledJac() {}
+  virtual ObjContrib *copy() const;
   virtual void initialize(Patch *mesh);
   virtual bool fail() { return _min <= 0.; }
   virtual bool addContrib(double &Obj, alglib::real_1d_array &gradObj);
@@ -33,6 +34,13 @@ ObjContribScaledJac<FuncType>::ObjContribScaledJac(double weight) :
   ObjContrib("ScaledJac", FuncType::getNamePrefix()+"ScaledJac"),
   _mesh(0), _weight(weight)
 {
+}
+
+
+template<class FuncType>
+ObjContrib *ObjContribScaledJac<FuncType>::copy() const
+{
+  return new ObjContribScaledJac<FuncType>(*this);
 }
 
 
