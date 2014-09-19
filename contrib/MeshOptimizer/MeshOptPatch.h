@@ -77,6 +77,23 @@ public:
   void updateGEntityPositions();
   void writeMSH(const char *filename);
 
+  // Node distance measure
+  void initScaledNodeDispSq();
+  inline double invLengthScaleSq() { return _invLengthScaleSq; }
+  double scaledNodeDispSq(int iFV);
+  void gradScaledNodeDispSq(int iFV, std::vector<double> &gDSq);
+
+  // High-order: scaled Jacobian and metric measures
+  inline const int &nBezEl(int iEl) { return _nBezEl[iEl]; }
+  inline int indGSJ(int iEl, int l, int iPC) { return iPC*_nBezEl[iEl]+l; }
+  void initScaledJac();
+  void scaledJacAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);
+  void initMetricMin();
+  void metricMinAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);
+
+  // TODO: Re-introduce distance to boundary
+//  bool bndDistAndGradients(int iEl, double &f , std::vector<double> &gradF, double eps);
+
 private:
 
   // Mesh entities and variables
@@ -113,6 +130,16 @@ private:
   {
     return indJB3DBase(_nNodEl[iEl],l,i,j,m);
   }
+
+  // Node displacement
+  double _invLengthScaleSq;                             // Square inverse of a length for node displacement scaling
+
+  // High-order: scaled Jacobian and metric measures
+  std::vector<int> _nBezEl;                             // Number of Bezier poly. and for an el.
+  std::vector<fullMatrix<double> > _scaledNormEl;       // Normals to 2D elements for Jacobian regularization and scaling
+  std::vector<double> _invStraightJac;                  // Initial Jacobians for 3D elements
+//  void calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2entity, int iEl);
+  void calcScaledNormalEl2D(int iEl);
 };
 
 

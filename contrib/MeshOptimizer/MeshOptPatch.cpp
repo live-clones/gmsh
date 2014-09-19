@@ -209,3 +209,289 @@ void Patch::writeMSH(const char *filename)
 
   fclose(f);
 }
+
+// TODO: allow user to choose type of scaling length
+void Patch::initScaledNodeDispSq()
+{
+  if (_invLengthScaleSq == 0.) {
+    double maxDSq = 0.;
+    for (int iEl = 0; iEl < nEl(); iEl++) {
+      const double d = el(iEl)->maxDistToStraight(), dd = d*d;
+      if (dd > maxDSq) maxDSq = dd;
+    }
+    if (maxDSq < 1.e-10) {
+      double maxSSq = 0.;
+      for (int iEl = 0; iEl < nEl(); iEl++) {
+        const double s = el(iEl)->getOuterRadius(), ss = s*s;
+        if (ss > maxSSq) maxSSq = ss;
+      }
+      _invLengthScaleSq = 1./maxSSq;
+    }
+    else _invLengthScaleSq = 1./maxDSq;
+  }
+}
+
+
+double Patch::scaledNodeDispSq(int iFV)
+{
+  const int &iV = _fv2V[iFV];
+  const SPoint3 d = _xyz[iV]-_ixyz[iV];
+  return (d[0]*d[0]+d[1]*d[1]+d[2]*d[2])*_invLengthScaleSq;
+}
+
+
+void Patch::gradScaledNodeDispSq(int iFV, std::vector<double> &gDSq)
+{
+  const int &iV = _fv2V[iFV];
+  const SPoint3 gXyz = (_xyz[iV]-_ixyz[iV])*2.*_invLengthScaleSq;
+  SPoint3 gUvw;
+  gXyz2gUvw(iFV, gXyz, gUvw);
+
+  gDSq[0] = gUvw[0];
+  if (_nPCFV[iFV] >= 2) gDSq[1] = gUvw[1];
+  if (_nPCFV[iFV] == 3) gDSq[2] = gUvw[2];
+}
+
+
+void Patch::initScaledJac()
+{
+  // Initialize _nBezEl
+  if (_nBezEl.empty()) {
+    _nBezEl.resize(nEl());
+    for (int iEl=0; iEl<nEl(); iEl++)
+     _nBezEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumJacNodes();
+  }
+
+  // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
+  // Jacobians of 3D elements
+  if ((_dim == 2) && _scaledNormEl.empty()) {
+    _scaledNormEl.resize(nEl());
+//    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
+    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(iEl);
+  }
+  else if (_invStraightJac.empty()) {
+    _invStraightJac.resize(nEl(),1.);
+    double dumJac[3][3];
+    for (int iEl = 0; iEl < nEl(); iEl++)
+      _invStraightJac[iEl] = 1. / fabs(_el[iEl]->getPrimaryJacobian(0.,0.,0.,dumJac));
+  }
+}
+
+
+void Patch::initMetricMin()
+{
+  // Initialize _nBezEl
+  if (_nBezEl.empty()) {
+    _nBezEl.resize(nEl());
+    for (int iEl=0; iEl<nEl(); iEl++)
+     _nBezEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumJacNodes();
+  }
+}
+
+
+// TODO: Re-introduce normal to geometry?
+//void Mesh::calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2entity, int iEl)
+void Patch::calcScaledNormalEl2D(int iEl)
+{
+  const JacobianBasis *jac = _el[iEl]->getJacobianFuncSpace();
+
+  fullMatrix<double> primNodesXYZ(jac->getNumPrimMapNodes(),3);
+//  SVector3 geoNorm(0.,0.,0.);
+//  std::map<MElement*,GEntity*>::const_iterator itEl2ent = element2entity.find(_el[iEl]);
+//  GEntity *ge = (itEl2ent == element2entity.end()) ? 0 : itEl2ent->second;
+//  const bool hasGeoNorm = ge && (ge->dim() == 2) && ge->haveParametrization();
+  for (int i=0; i<jac->getNumPrimMapNodes(); i++) {
+    const int &iV = _el2V[iEl][i];
+    primNodesXYZ(i,0) = _xyz[iV].x();
+    primNodesXYZ(i,1) = _xyz[iV].y();
+    primNodesXYZ(i,2) = _xyz[iV].z();
+//    if (hasGeoNorm && (_vert[iV]->onWhat() == ge)) {
+//      double u, v;
+//      _vert[iV]->getParameter(0,u);
+//      _vert[iV]->getParameter(1,v);
+//      geoNorm += ((GFace*)ge)->normal(SPoint2(u,v));
+//    }
+  }
+//  if (hasGeoNorm && (geoNorm.normSq() == 0.)) {
+//    SPoint2 param = ((GFace*)ge)->parFromPoint(_el[iEl]->barycenter(true),false);
+//    geoNorm = ((GFace*)ge)->normal(param);
+//  }
+
+  fullMatrix<double> &elNorm = _scaledNormEl[iEl];
+  elNorm.resize(1,3);
+  const double norm = jac->getPrimNormal2D(primNodesXYZ,elNorm);
+  double factor = 1./norm;
+//  if (hasGeoNorm) {
+//    const double scal = geoNorm(0)*elNorm(0,0)+geoNorm(1)*elNorm(0,1)+geoNorm(2)*elNorm(0,2);
+//    if (scal < 0.) factor = -factor;
+//  }
+  elNorm.scale(factor);   // Re-scaling normal here is faster than an extra scaling operation on the Jacobian
+
+}
+
+
+void Patch::scaledJacAndGradients(int iEl, std::vector<double> &sJ,
+                                  std::vector<double> &gSJ)
+{
+  const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
+  const int &numJacNodes = _nBezEl[iEl];
+  const int &numMapNodes = _nNodEl[iEl];
+  fullMatrix<double> JDJ(numJacNodes,3*numMapNodes+1), BDB(numJacNodes,3*numMapNodes+1);
+
+  // Coordinates of nodes
+  fullMatrix<double> nodesXYZ(numMapNodes,3), normals(_dim,3);
+  for (int i = 0; i < numMapNodes; i++) {
+    int &iVi = _el2V[iEl][i];
+    nodesXYZ(i,0) = _xyz[iVi].x();
+    nodesXYZ(i,1) = _xyz[iVi].y();
+    nodesXYZ(i,2) = _xyz[iVi].z();
+  }
+
+  // Calculate Jacobian and gradients, scale if 3D (already scaled by
+  // regularization normals in 2D)
+  jacBasis->getSignedJacAndGradients(nodesXYZ,_scaledNormEl[iEl],JDJ);
+  if (_dim == 3) JDJ.scale(_invStraightJac[iEl]);
+
+  // Transform Jacobian and gradients from Lagrangian to Bezier basis
+  jacBasis->lag2Bez(JDJ,BDB);
+
+  // Scaled jacobian
+  for (int l = 0; l < numJacNodes; l++) sJ [l] = BDB (l,3*numMapNodes);
+
+  // Gradients of the scaled jacobian
+  int iPC = 0;
+  std::vector<SPoint3> gXyzV(numJacNodes);
+  std::vector<SPoint3> gUvwV(numJacNodes);
+  for (int i = 0; i < numMapNodes; i++) {
+    int &iFVi = _el2FV[iEl][i];
+    if (iFVi >= 0) {
+      for (int l = 0; l < numJacNodes; l++)
+        gXyzV [l] = SPoint3(BDB(l,i+0*numMapNodes), BDB(l,i+1*numMapNodes),
+                            BDB(l,i+2*numMapNodes));
+      _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi],gXyzV,gUvwV);
+      for (int l = 0; l < numJacNodes; l++) {
+        gSJ[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
+        if (_nPCFV[iFVi] >= 2) gSJ[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
+        if (_nPCFV[iFVi] == 3) gSJ[indGSJ(iEl,l,iPC+2)] = gUvwV[l][2];
+      }
+      iPC += _nPCFV[iFVi];
+    }
+  }
+}
+
+
+void Patch::metricMinAndGradients(int iEl, std::vector<double> &lambda,
+                                  std::vector<double> &gradLambda)
+{
+  const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
+  const int &numJacNodes = jacBasis->getNumJacNodes();
+  const int &numMapNodes = jacBasis->getNumMapNodes();
+  const int &numPrimMapNodes = jacBasis->getNumPrimMapNodes();
+  fullVector<double> lambdaJ(numJacNodes), lambdaB(numJacNodes);
+  fullMatrix<double> gradLambdaJ(numJacNodes, 2 * numMapNodes);
+  fullMatrix<double> gradLambdaB(numJacNodes, 2 * numMapNodes);
+
+  // Coordinates of nodes
+  fullMatrix<double> nodesXYZ(numMapNodes,3), nodesXYZStraight(numPrimMapNodes,3);
+  for (int i = 0; i < numMapNodes; i++) {
+    int &iVi = _el2V[iEl][i];
+    nodesXYZ(i,0) = _xyz[iVi].x();
+    nodesXYZ(i,1) = _xyz[iVi].y();
+    nodesXYZ(i,2) = _xyz[iVi].z();
+    if (i < numPrimMapNodes) {
+      nodesXYZStraight(i,0) = _ixyz[iVi].x();
+      nodesXYZStraight(i,1) = _ixyz[iVi].y();
+      nodesXYZStraight(i,2) = _ixyz[iVi].z();
+    }
+  }
+
+  jacBasis->getMetricMinAndGradients(nodesXYZ,nodesXYZStraight,lambdaJ,gradLambdaJ);
+
+  //l2b.mult(lambdaJ, lambdaB);
+  //l2b.mult(gradLambdaJ, gradLambdaB);
+  lambdaB = lambdaJ;
+  gradLambdaB = gradLambdaJ;
+
+  int iPC = 0;
+  std::vector<SPoint3> gXyzV(numJacNodes);
+  std::vector<SPoint3> gUvwV(numJacNodes);
+  for (int l = 0; l < numJacNodes; l++) {
+    lambda[l] = lambdaB(l);
+  }
+  for (int i = 0; i < numMapNodes; i++) {
+    int &iFVi = _el2FV[iEl][i];
+    if (iFVi >= 0) {
+      for (int l = 0; l < numJacNodes; l++) {
+        gXyzV [l] = SPoint3(gradLambdaB(l,i+0*numMapNodes),
+                            gradLambdaB(l,i+1*numMapNodes),/*BDB(l,i+2*nbNod)*/ 0.);
+      }
+      _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi],gXyzV,gUvwV);
+      for (int l = 0; l < numJacNodes; l++) {
+        gradLambda[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
+        if (_nPCFV[iFVi] >= 2) gradLambda[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
+        if (_nPCFV[iFVi] == 3) gradLambda[indGSJ(iEl,l,iPC+2)] = gUvwV[l][2];
+      }
+      iPC += _nPCFV[iFVi];
+    }
+  }
+}
+
+
+//bool Patch::bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF, double eps)
+//{
+//  MElement *element = _el[iEl];
+//  f = 0.;
+//  // dommage ;-)
+//  if (element->getDim() != 2)
+//    return false;
+//
+//  int currentId = 0;
+//  std::vector<int> vertex2param(element->getNumVertices());
+//  for (size_t i = 0; i < element->getNumVertices(); ++i) {
+//    if (_el2FV[iEl][i] >= 0) {
+//      vertex2param[i] = currentId;
+//      currentId += _nPCFV[_el2FV[iEl][i]];
+//    }
+//    else
+//      vertex2param[i] = -1;
+//  }
+//  gradF.clear();
+//  gradF.resize(currentId, 0.);
+//
+//  const nodalBasis &elbasis = *element->getFunctionSpace();
+//  bool edgeFound = false;
+//  for (int iEdge = 0; iEdge < element->getNumEdges(); ++iEdge) {
+//    int clId = elbasis.getClosureId(iEdge, 1);
+//    const std::vector<int> &closure = elbasis.closures[clId];
+//    std::vector<MVertex *> vertices;
+//    GEdge *edge = NULL;
+//    for (size_t i = 0; i < closure.size(); ++i) {
+//      MVertex *v = element->getVertex(closure[i]);
+//      vertices.push_back(v);
+//      // only valid in 2D
+//      if ((int)i >= 2 && v->onWhat() && v->onWhat()->dim() == 1) {
+//        edge = v->onWhat()->cast2Edge();
+//      }
+//    }
+//    if (edge) {
+//      edgeFound = true;
+//      std::vector<double> localgrad;
+//      std::vector<SPoint3> nodes(closure.size());
+//      std::vector<double> params(closure.size());
+//      std::vector<bool> onedge(closure.size());
+//      for (size_t i = 0; i < closure.size(); ++i) {
+//        nodes[i] = _xyz[_el2V[iEl][closure[i]]];
+//        onedge[i] = element->getVertex(closure[i])->onWhat() == edge && _el2FV[iEl][closure[i]] >= 0;
+//        if (onedge[i]) {
+//          params[i] = _uvw[_el2FV[iEl][closure[i]]].x();
+//        }else
+//          reparamMeshVertexOnEdge(element->getVertex(closure[i]), edge, params[i]);
+//      }
+//      f += computeBndDistAndGradient(edge, params, vertices,
+//            *BasisFactory::getNodalBasis(elbasis.getClosureType(clId)), nodes, onedge, localgrad, eps);
+//      for (size_t i = 0; i < closure.size(); ++i)
+//        if (onedge[i]) gradF[vertex2param[closure[i]]] += localgrad[i];
+//    }
+//  }
+//  return edgeFound;
+//}

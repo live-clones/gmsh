@@ -56,7 +56,7 @@ struct MeshOptParameters {                             // Parameters controlling
     int optIterMax ;                                   // Max. number of opt. iterations each time the barrier is moved
     int barrierIterMax ;                               // Max. number of times the barrier is moved
   };
-  struct PatchParameters {
+  struct PatchDefParameters {
     int strategy;                                      // Strategy: connected patches or adaptive one-by-one
     int minLayers, maxLayers;                          // Min. and max. nb. of layers around a bad element in patch
     union {
@@ -73,7 +73,7 @@ struct MeshOptParameters {                             // Parameters controlling
   int dim ;                                             // Which dimension to optimize
   bool onlyVisible ;                                    // Apply optimization to visible entities ONLY
   bool fixBndNodes;                                     // If points can move on boundaries
-  PatchParameters *patch;
+  PatchDefParameters *patchDef;
   std::vector<PassParameters> pass;
   int optDisplay;                                       // Sampling rate in opt. iterations for display
   int verbose;                                          // Level of information displayed and written to disk

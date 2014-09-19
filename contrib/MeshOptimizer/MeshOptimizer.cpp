@@ -189,9 +189,9 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
   std::vector<std::set<MElement*> > primPatches;
   primPatches.reserve(badElements.size());
   for (std::set<MElement*>::const_iterator it = badElements.begin(); it != badElements.end(); ++it) {
-    const double limDist = par.patch->maxDistance(*it);
-    primPatches.push_back(getSurroundingPatch(*it, par.patch->minLayers,
-                            par.patch->maxLayers, limDist, vertex2elements));
+    const double limDist = par.patchDef->maxDistance(*it);
+    primPatches.push_back(getSurroundingPatch(*it, par.patchDef->minLayers,
+                            par.patchDef->maxLayers, limDist, vertex2elements));
   }
 
   // Compute patch connectivity
@@ -203,7 +203,7 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
     for(std::set<MElement*>::iterator itEl = patch.begin(); itEl != patch.end(); ++itEl) {
       std::set<int> &patchInd = tags[*itEl];
       if (!patchInd.empty() && (badElements.find(*itEl) != badElements.end() ||
-                               !par.patch->weakMerge)) {
+                               !par.patchDef->weakMerge)) {
         for (std::set<int>::iterator itBS = patchInd.begin();
              itBS != patchInd.end(); ++itBS) patchConnect[*itBS].insert(iB);
         patchConnect[iB].insert(patchInd.begin(), patchInd.end());
@@ -304,7 +304,7 @@ static MElement *getWorstElement(std::set<MElement*> &badElts, const MeshOptPara
   MElement *worstEl = 0;
 
   for (std::set<MElement*>::iterator it=badElts.begin(); it!=badElts.end(); it++) {
-    const double val = par.patch->elBadness(*it);
+    const double val = par.patchDef->elBadness(*it);
     if (val < worst) {
       worst = val;
       worstEl = *it;
@@ -335,16 +335,16 @@ static void optimizeOneByOne
     badElts.erase(worstEl);
 
     // Initialize patch size to be adapted
-    int maxLayers = par.patch->maxLayers;
+    int maxLayers = par.patchDef->maxLayers;
     double distanceFactor = 1.;
     int success;
 
     // Patch adaptation loop
-    for (int iAdapt=0; iAdapt<par.patch->maxAdaptPatch; iAdapt++) {
+    for (int iAdapt=0; iAdapt<par.patchDef->maxAdaptPatch; iAdapt++) {
 
       // Set up patch
-      const double limDist = par.patch->maxDistance(worstEl);
-      std::set<MElement*> toOptimizePrim = getSurroundingPatch(worstEl, par.patch->minLayers,
+      const double limDist = par.patchDef->maxDistance(worstEl);
+      std::set<MElement*> toOptimizePrim = getSurroundingPatch(worstEl, par.patchDef->minLayers,
                                                           maxLayers, limDist, vertex2elements);
       std::set<MVertex*> toFix = getAllBndVertices(toOptimizePrim, vertex2elements);
       std::set<MElement*> toOptimize;
@@ -379,15 +379,15 @@ static void optimizeOneByOne
       }
 
       // If (partial) success, update mesh and break adaptation loop, otherwise adapt
-      if ((success > 0) || (iAdapt == par.patch->maxAdaptPatch-1)) {
+      if ((success > 0) || (iAdapt == par.patchDef->maxAdaptPatch-1)) {
         opt.updateResults(res);
         if (success >= 0) {
           opt.patch.updateGEntityPositions();
           break;
         }
         else {
-          distanceFactor *= par.patch->distanceAdaptFact;
-          maxLayers *= par.patch->maxLayersAdaptFact;
+          distanceFactor *= par.patchDef->distanceAdaptFact;
+          maxLayers *= par.patchDef->maxLayersAdaptFact;
           if (par.verbose > 1)
             Msg::Info("Patch %i failed (adapt #%i), adapting with increased size", iBadEl, iAdapt);
         }
@@ -442,16 +442,16 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par, MeshOptResults &res)
 //          if (jmin < par.patchJac.min || jmax > par.patchJac.max) badElts.insert(el);
 //        }
 //      }
-      if ((el->getDim() == par.dim) && (par.patch->elBadness(el) < 0.)) badElts.insert(el);
+      if ((el->getDim() == par.dim) && (par.patchDef->elBadness(el) < 0.)) badElts.insert(el);
     }
   }
 
-  if (par.patch->strategy == MeshOptParameters::STRAT_CONNECTED)
+  if (par.patchDef->strategy == MeshOptParameters::STRAT_CONNECTED)
     optimizeConnectedPatches(vertex2elements, element2entity, badElts, par, res);
-  else if (par.patch->strategy == MeshOptParameters::STRAT_ONEBYONE)
+  else if (par.patchDef->strategy == MeshOptParameters::STRAT_ONEBYONE)
     optimizeOneByOne(vertex2elements, element2entity, badElts, par, res);
   else
-    Msg::Error("Unknown strategy %d for mesh optimization", par.patch->strategy);
+    Msg::Error("Unknown strategy %d for mesh optimization", par.patchDef->strategy);
 
   if (par.verbose > 0) {
     if (res.success == 1)

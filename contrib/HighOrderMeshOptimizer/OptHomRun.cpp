@@ -753,10 +753,10 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
 #include "MeshOptimizer.h"
 
 
-struct HOPatchParameters : public MeshOptParameters::PatchParameters
+struct HOPatchDefParameters : public MeshOptParameters::PatchDefParameters
 {
-  HOPatchParameters(const OptHomParameters &p);
-  virtual ~HOPatchParameters() {}
+  HOPatchDefParameters(const OptHomParameters &p);
+  virtual ~HOPatchDefParameters() {}
   virtual double elBadness(const MElement *el);
   virtual double maxDistance(const MElement *el);
 private:
@@ -765,7 +765,7 @@ private:
 };
 
 
-HOPatchParameters::HOPatchParameters(const OptHomParameters &p)
+HOPatchDefParameters::HOPatchDefParameters(const OptHomParameters &p)
 {
   jacMin = p.BARRIER_MIN;
   jacMax = (p.BARRIER_MAX > 0.) ? p.BARRIER_MAX : 1.e300;
@@ -784,14 +784,14 @@ HOPatchParameters::HOPatchParameters(const OptHomParameters &p)
 }
 
 
-double HOPatchParameters::elBadness(const MElement *el) {
+double HOPatchDefParameters::elBadness(const MElement *el) {
   double jmin, jmax;
   el->scaledJacRange(jmin, jmax);
   return std::min(jmin-jacMin, 0.) + std::min(jacMax-jmax, 0.);
 }
 
 
-double HOPatchParameters::maxDistance(const MElement *el) {
+double HOPatchDefParameters::maxDistance(const MElement *el) {
   return distanceFactor * el->maxDistToStraight();
 }
 
@@ -804,8 +804,8 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   par.dim = p.dim;
   par.onlyVisible = p.onlyVisible;
   par.fixBndNodes = p.fixBndNodes;
-  HOPatchParameters patch(p);
-  par.patch = &patch;
+  HOPatchDefParameters patchDef(p);
+  par.patchDef = &patchDef;
   par.optDisplay = 30;
   par.verbose = 4;
   ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weightFixed, p.weightFree);
