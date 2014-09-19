@@ -45,7 +45,7 @@ struct MeshOptResults {                             // Output of mesh optimizati
   double minMetricMin, maxMetricMin;                // Range of min. of metric
   MeshOptResults();
 private:
-  static const double BIGVAL = 1.e300;
+  static const double BIGVAL;
 };
 
 
