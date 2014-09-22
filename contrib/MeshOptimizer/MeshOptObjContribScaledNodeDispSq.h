@@ -21,7 +21,6 @@ public:
   virtual bool targetReached() { return FuncType::targetReached(_min, _max); }
   virtual bool stagnated() { return FuncType::stagnated(_min, _max); }
   virtual void updateMinMax();
-  virtual void updateResults(MeshOptResults &res) const;
 
 protected:
   Patch *_mesh;
@@ -91,15 +90,6 @@ void ObjContribScaledNodeDispSq<FuncType>::updateMinMax()
     _min = std::min(_min, dSq);
     _max = std::max(_max, dSq);
   }
-}
-
-
-template<class FuncType>
-void ObjContribScaledNodeDispSq<FuncType>::updateResults(MeshOptResults &res) const
-{
-  const double scaleSq = 1./_mesh->invLengthScaleSq();
-  res.minNodeDisp = std::min(sqrt(_min*scaleSq), res.minNodeDisp);
-  res.maxNodeDisp = std::max(sqrt(_max*scaleSq), res.maxNodeDisp);
 }
 
 

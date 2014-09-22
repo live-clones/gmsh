@@ -757,11 +757,13 @@ struct HOPatchDefParameters : public MeshOptParameters::PatchDefParameters
 {
   HOPatchDefParameters(const OptHomParameters &p);
   virtual ~HOPatchDefParameters() {}
-  virtual double elBadness(const MElement *el);
+  virtual double elBadness(MElement *el);
   virtual double maxDistance(const MElement *el);
 private:
   double jacMin, jacMax;
   double distanceFactor;
+  bool optCAD;
+  double optCADDistMax, optCADWeight, discrTolerance;
 };
 
 
@@ -781,13 +783,22 @@ HOPatchDefParameters::HOPatchDefParameters(const OptHomParameters &p)
     maxLayersAdaptFact = p.adaptBlobLayerFact;
     distanceAdaptFact = p.adaptBlobDistFact;
   }
+  optCAD = p.optCAD;
+  optCADDistMax = p.optCADDistMax;
+  optCADWeight = p.optCADWeight;
+  discrTolerance = p.discrTolerance;
 }
 
 
-double HOPatchDefParameters::elBadness(const MElement *el) {
+double HOPatchDefParameters::elBadness(MElement *el) {
   double jmin, jmax;
   el->scaledJacRange(jmin, jmax);
-  return std::min(jmin-jacMin, 0.) + std::min(jacMax-jmax, 0.);
+  double badness = std::min(jmin-jacMin, 0.) + std::min(jacMax-jmax, 0.);
+  if (optCAD) {
+    const double dist = computeBndDist(el, 2, fabs(discrTolerance));
+    badness += optCADWeight*std::min(optCADDistMax-dist, 0.);
+  }
+  return badness;
 }
 
 
@@ -814,37 +825,32 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   minJacBarFunc.setTarget(p.BARRIER_MIN, 1.);
   ObjContribScaledJac<ObjContribFuncBarrierFixMinMovMax> minMaxJacBarFunc(1.);
   minMaxJacBarFunc.setTarget(p.BARRIER_MAX, 1.);
-  ObjContribCADDist<ObjContribFuncSimple> CADDistFunc(p.optCADWeight, p.discrTolerance);
+  ObjContribCADDist<ObjContribFuncSimpleTargetMin> CADDistFunc(p.optCADWeight, p.discrTolerance);
+  CADDistFunc.setTarget(p.optCADDistMax);
 
   MeshOptParameters::PassParameters minJacPass;
   minJacPass.barrierIterMax = p.optPassMax;
   minJacPass.optIterMax = p.itMax;
-  minJacPass.contrib.resize(2);
-  minJacPass.contrib[0] = &nodeDistFunc;
-  minJacPass.contrib[1] = &minJacBarFunc;
+  minJacPass.contrib.push_back(&nodeDistFunc);
+  minJacPass.contrib.push_back(&minJacBarFunc);
+  if (p.optCAD) minJacPass.contrib.push_back(&CADDistFunc);
   par.pass.push_back(minJacPass);
 
   if (p.BARRIER_MAX > 0.) {
     MeshOptParameters::PassParameters minMaxJacPass;
     minMaxJacPass.barrierIterMax = p.optPassMax;
     minMaxJacPass.optIterMax = p.itMax;
-    minMaxJacPass.contrib.resize(2);
-    minMaxJacPass.contrib[0] = &nodeDistFunc;
-    minMaxJacPass.contrib[1] = &minMaxJacBarFunc;
+    minMaxJacPass.contrib.push_back(&nodeDistFunc);
+    minMaxJacPass.contrib.push_back(&minMaxJacBarFunc);
+    if (p.optCAD) minJacPass.contrib.push_back(&CADDistFunc);
     par.pass.push_back(minMaxJacPass);
   }
 
-  if (p.optCAD) {
+  meshOptimizer(gm, par);
 
-  }
-
-  MeshOptResults res;
-
-  meshOptimizer(gm, par, res);
-
-  p.CPU = res.CPU;
-  p.minJac = res.minScaledJac;
-  p.maxJac = res.maxScaledJac;
+  p.CPU = par.CPU;
+  p.minJac = minMaxJacBarFunc.getMin();
+  p.maxJac = minMaxJacBarFunc.getMax();
 
   Msg::StatusBar(true, "Done optimizing high order mesh (%g s)", p.CPU);
 }

@@ -53,7 +53,7 @@ public:
   ~MeshOpt();
   int optimize(const MeshOptParameters &par);
   void updateMesh(const alglib::real_1d_array &x);
-  void updateResults(MeshOptResults &res);
+  void updateResults();
   void evalObjGrad(const alglib::real_1d_array &x,
                     double &Obj, alglib::real_1d_array &gradObj);
   void printProgress(const alglib::real_1d_array &x, double Obj);

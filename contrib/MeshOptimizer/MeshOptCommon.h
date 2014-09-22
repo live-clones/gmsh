@@ -37,19 +37,6 @@ class MElement;
 class ObjContrib;
 
 
-struct MeshOptResults {                             // Output of mesh optimization
-  int success;                                      // Success flag: -1 = fail, 0 = partial fail (target not reached), 1 = success
-  double CPU;                                       // Time for optimization
-  double minNodeDisp, maxNodeDisp;                  // Range of node displacement
-  double minScaledJac, maxScaledJac;                // Range of Scaled Jacobians
-  double minMetricMin, maxMetricMin;                // Range of min. of metric
-  double minCADDist, maxCADDist;                    // Range of distance to CAD
-  MeshOptResults();
-private:
-  static const double BIGVAL;
-};
-
-
 struct MeshOptParameters {                             // Parameters controlling the strategy
   enum { STRAT_CONNECTED, STRAT_ONEBYONE };
   struct PassParameters {                              // Parameters controlling the optimization procedure in each pass
@@ -68,7 +55,7 @@ struct MeshOptParameters {                             // Parameters controlling
       };
       bool weakMerge;                                   // If connected strategy: weak or strong merging of patches
     };
-    virtual double elBadness(const MElement *el) = 0;   // Pointer to function returning "badness" of element (for patch creation)
+    virtual double elBadness(MElement *el) = 0;         // Pointer to function returning "badness" of element (for patch creation)
     virtual double maxDistance(const MElement *el) = 0; // Pointer to function checking the patch distance criterion for a given bad element
   };
   int dim ;                                             // Which dimension to optimize
@@ -78,6 +65,8 @@ struct MeshOptParameters {                             // Parameters controlling
   std::vector<PassParameters> pass;
   int optDisplay;                                       // Sampling rate in opt. iterations for display
   int verbose;                                          // Level of information displayed and written to disk
+  int success;                                          // Success flag: -1 = fail, 0 = partial fail (target not reached), 1 = success
+  double CPU;                                           // Time for optimization
 };
 
 

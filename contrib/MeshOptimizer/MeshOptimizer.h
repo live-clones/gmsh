@@ -33,10 +33,9 @@
 
 class GModel;
 class MeshOptParameters;
-class MeshOptResults;
 
 
-void meshOptimizer(GModel *gm, MeshOptParameters &par, MeshOptResults &res);
+void meshOptimizer(GModel *gm, MeshOptParameters &par);
 
 
 #endif

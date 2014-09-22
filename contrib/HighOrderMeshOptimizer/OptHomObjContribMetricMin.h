@@ -21,7 +21,6 @@ public:
   virtual bool targetReached() { return FuncType::targetReached(_min, _max); }
   virtual bool stagnated() { return FuncType::stagnated(_min, _max); }
   virtual void updateMinMax();
-  virtual void updateResults(MeshOptResults &res) const;
 
 protected:
   Patch *_mesh;
@@ -93,14 +92,6 @@ void ObjContribMetricMin<FuncType>::updateMinMax()
       _max = std::max(_max, mM[l]);
     }
   }
-}
-
-
-template<class FuncType>
-void ObjContribMetricMin<FuncType>::updateResults(MeshOptResults &res) const
-{
-  res.minMetricMin = std::min(_min, res.minMetricMin);
-  res.maxMetricMin = std::max(_max, res.maxMetricMin);
 }
 
 

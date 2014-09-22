@@ -11,7 +11,6 @@ set(SRC
   MeshOptObjContrib.cpp
   MeshOptObjContribFunc.cpp
   MeshOptVertexCoord.cpp
-  MeshOptCommon.cpp 
 )
 
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.hpp)

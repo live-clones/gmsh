@@ -8,7 +8,6 @@
 #include "ap.h"
 
 class ObjContrib;
-class MeshOptResults;
 class Patch;
 
 
@@ -20,7 +19,7 @@ public:
   std::string minMaxStr();
   void updateMinMax();
   void updateParameters();
-  void updateResults(MeshOptResults &res);
+  void updateResults();
   bool stagnated();
   bool targetReached();
   std::string failMeasures();

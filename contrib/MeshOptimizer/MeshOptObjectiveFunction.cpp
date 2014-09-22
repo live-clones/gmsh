@@ -48,10 +48,10 @@ void ObjectiveFunction::updateParameters()
 }
 
 
-void ObjectiveFunction::updateResults(MeshOptResults &res)
+void ObjectiveFunction::updateResults()
 {
   for (std::vector<ObjContrib*>::iterator it=begin(); it!=end(); it++)
-    (*it)->updateResults(res);
+    (*it)->updateResults();
 }
 
 

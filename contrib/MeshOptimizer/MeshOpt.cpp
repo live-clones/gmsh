@@ -123,9 +123,9 @@ void MeshOpt::calcScale(alglib::real_1d_array &scale)
 }
 
 
-void MeshOpt::updateResults(MeshOptResults &res)
+void MeshOpt::updateResults()
 {
-  _objFunc->updateResults(res);
+  _objFunc->updateResults();
 }
 
 

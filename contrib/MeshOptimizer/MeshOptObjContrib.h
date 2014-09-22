@@ -28,10 +28,11 @@ public:
   virtual bool targetReached() = 0;
   virtual bool stagnated() = 0;
   virtual void updateMinMax() = 0;
-  virtual void updateResults(MeshOptResults &res) const = 0;
+  void updateResults();
 
 protected:
   static const double BIGVAL;
+  ObjContrib *_parent;
   std::string _measureName, _name;
   double _min, _max;
 };

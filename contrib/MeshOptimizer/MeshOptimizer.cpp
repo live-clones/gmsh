@@ -252,10 +252,9 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
 static void optimizeConnectedPatches
   (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
    const std::map<MElement*,GEntity*> &element2entity,
-   std::set<MElement*> &badasses,
-   MeshOptParameters &par, MeshOptResults &res)
+   std::set<MElement*> &badasses, MeshOptParameters &par)
 {
-  res.success = 1;
+  par.success = 1;
 
   std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > toOptimize =
                               getConnectedPatches(vertex2elements, badasses, par);
@@ -288,11 +287,11 @@ static void optimizeConnectedPatches
     }
 
     // Evaluate mesh and update it if (partial) success
-    opt.updateResults(res);
+    opt.updateResults();
     if (success >= 0) opt.patch.updateGEntityPositions();
 
     //#pragma omp critical
-    res.success = std::min(res.success, success);
+    par.success = std::min(par.success, success);
   }
 
 }
@@ -318,9 +317,9 @@ static MElement *getWorstElement(std::set<MElement*> &badElts, const MeshOptPara
 static void optimizeOneByOne
   (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
    const std::map<MElement*,GEntity*> &element2entity,
-   std::set<MElement*> badElts, MeshOptParameters &par, MeshOptResults &res)
+   std::set<MElement*> badElts, MeshOptParameters &par)
 {
-  res.success = 1;
+  par.success = 1;
 
   const int initNumBadElts = badElts.size();
   if (par.verbose > 0) Msg::Info("%d bad elements, starting to iterate...", initNumBadElts);
@@ -380,7 +379,7 @@ static void optimizeOneByOne
 
       // If (partial) success, update mesh and break adaptation loop, otherwise adapt
       if ((success > 0) || (iAdapt == par.patchDef->maxAdaptPatch-1)) {
-        opt.updateResults(res);
+        opt.updateResults();
         if (success >= 0) {
           opt.patch.updateGEntityPositions();
           break;
@@ -405,7 +404,7 @@ static void optimizeOneByOne
         case -1: Msg::Info("Patch %i failed", iBadEl); break;
       }
 
-    res.success = std::min(res.success, success);
+    par.success = std::min(par.success, success);
 
   }
 }
@@ -413,7 +412,7 @@ static void optimizeOneByOne
 #endif
 
 
-void meshOptimizer(GModel *gm, MeshOptParameters &par, MeshOptResults &res)
+void meshOptimizer(GModel *gm, MeshOptParameters &par)
 {
 #if defined(HAVE_BFGS)
 
@@ -447,22 +446,22 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par, MeshOptResults &res)
   }
 
   if (par.patchDef->strategy == MeshOptParameters::STRAT_CONNECTED)
-    optimizeConnectedPatches(vertex2elements, element2entity, badElts, par, res);
+    optimizeConnectedPatches(vertex2elements, element2entity, badElts, par);
   else if (par.patchDef->strategy == MeshOptParameters::STRAT_ONEBYONE)
-    optimizeOneByOne(vertex2elements, element2entity, badElts, par, res);
+    optimizeOneByOne(vertex2elements, element2entity, badElts, par);
   else
     Msg::Error("Unknown strategy %d for mesh optimization", par.patchDef->strategy);
 
   if (par.verbose > 0) {
-    if (res.success == 1)
+    if (par.success == 1)
       Msg::Info("Optimization succeeded");
-    else if (res.success == 0)
+    else if (par.success == 0)
       Msg::Warning("Optimization partially failed (all measures above critical "
                     "value, but some below target)");
-    else if (res.success == -1)
+    else if (par.success == -1)
       Msg::Error("Optimization failed (some measures below critical value)");
-    res.CPU = Cpu()-startTime;
-    Msg::StatusBar(true, "Done optimizing mesh (%g s)", res.CPU);
+    par.CPU = Cpu()-startTime;
+    Msg::StatusBar(true, "Done optimizing mesh (%g s)", par.CPU);
   }
 
 

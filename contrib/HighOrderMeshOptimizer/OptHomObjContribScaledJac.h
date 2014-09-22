@@ -21,7 +21,6 @@ public:
   virtual bool targetReached() { return FuncType::targetReached(_min, _max); }
   virtual bool stagnated() { return FuncType::stagnated(_min, _max); }
   virtual void updateMinMax();
-  virtual void updateResults(MeshOptResults &res) const;
 
 protected:
   Patch *_mesh;
@@ -93,14 +92,6 @@ void ObjContribScaledJac<FuncType>::updateMinMax()
       _max = std::max(_max, sJ[l]);
     }
   }
-}
-
-
-template<class FuncType>
-void ObjContribScaledJac<FuncType>::updateResults(MeshOptResults &res) const
-{
-  res.minScaledJac = std::min(_min, res.minScaledJac);
-  res.maxScaledJac = std::max(_max, res.maxScaledJac);
 }
 
 
