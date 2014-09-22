@@ -1121,10 +1121,12 @@ endif(ENABLE_WRAP_PYTHON)
 
 if(HAVE_PYTHON)
   if(ENABLE_NUMPY)
-    EXEC_PROGRAM (${PYTHON_EXECUTABLE}
-      ARGS "-c \"import numpy; print(numpy.get_include())\""
-      OUTPUT_VARIABLE NUMPY_INC
-      RETURN_VALUE NUMPY_NOT_FOUND)
+    if (NOT NUMPY_INC)
+      EXEC_PROGRAM (${PYTHON_EXECUTABLE}
+        ARGS "-c \"import numpy; print(numpy.get_include())\""
+        OUTPUT_VARIABLE NUMPY_INC
+        RETURN_VALUE NUMPY_NOT_FOUND)
+    endif(NOT NUMPY_INC)
     if(NUMPY_INC)
       list(APPEND EXTERNAL_INCLUDES ${NUMPY_INC})
       set_config_option(HAVE_NUMPY "Numpy")
