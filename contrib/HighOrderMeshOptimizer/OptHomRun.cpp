@@ -749,6 +749,7 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
 #include "MeshOptObjContribScaledNodeDispSq.h"
 #include "OptHomObjContribScaledJac.h"
 #include "OptHomObjContribMetricMin.h"
+#include "OptHomObjContribCADDist.h"
 #include "MeshOptimizer.h"
 
 

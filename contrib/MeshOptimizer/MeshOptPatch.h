@@ -83,16 +83,14 @@ public:
   double scaledNodeDispSq(int iFV);
   void gradScaledNodeDispSq(int iFV, std::vector<double> &gDSq);
 
-  // High-order: scaled Jacobian and metric measures
+  // High-order: scaled Jacobian and metric measures, distance to CAD
   inline const int &nBezEl(int iEl) { return _nBezEl[iEl]; }
   inline int indGSJ(int iEl, int l, int iPC) { return iPC*_nBezEl[iEl]+l; }
   void initScaledJac();
   void scaledJacAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);
   void initMetricMin();
   void metricMinAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);
-
-  // TODO: Re-introduce distance to boundary
-//  bool bndDistAndGradients(int iEl, double &f , std::vector<double> &gradF, double eps);
+  bool bndDistAndGradients(int iEl, double &f , std::vector<double> &gradF, double eps);
 
 private:
 

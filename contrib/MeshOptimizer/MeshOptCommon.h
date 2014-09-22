@@ -43,6 +43,7 @@ struct MeshOptResults {                             // Output of mesh optimizati
   double minNodeDisp, maxNodeDisp;                  // Range of node displacement
   double minScaledJac, maxScaledJac;                // Range of Scaled Jacobians
   double minMetricMin, maxMetricMin;                // Range of min. of metric
+  double minCADDist, maxCADDist;                    // Range of distance to CAD
   MeshOptResults();
 private:
   static const double BIGVAL;
