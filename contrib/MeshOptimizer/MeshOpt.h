@@ -49,9 +49,9 @@ public:
   Patch patch;
   MeshOpt(const std::map<MElement*,GEntity*> &element2entity,
           const std::set<MElement*> &els, std::set<MVertex*> &toFix,
-          bool fixBndNodes, const std::vector<ObjContrib*> &allContrib);
+          const MeshOptParameters &par);
   ~MeshOpt();
-  int optimize(MeshOptParameters &par);
+  int optimize(const MeshOptParameters &par);
   void updateMesh(const alglib::real_1d_array &x);
   void updateResults(MeshOptResults &res);
   void evalObjGrad(const alglib::real_1d_array &x,
@@ -61,10 +61,10 @@ public:
  private:
   int _verbose;
   int _iPass;
-  std::vector<ObjContrib*> _allContrib;                                             // All contributions to objective function for all passes
-  ObjectiveFunction _objFunc;                                                       // Contributions to objective function for current pass
-  int _iter, _intervDisplay;                                                        // Current iteration, interval of iterations for reporting
-  double _initObj;                                                                  // Values for reporting
+  std::vector<ObjectiveFunction> _allObjFunc;                                        // Contributions to objective function for current pass
+  ObjectiveFunction *_objFunc;                                                       // Contributions to objective function for current pass
+  int _iter, _intervDisplay;                                                         // Current iteration, interval of iterations for reporting
+  double _initObj;                                                                   // Values for reporting
   void calcScale(alglib::real_1d_array &scale);
   void runOptim(alglib::real_1d_array &x,
                 const alglib::real_1d_array &initGradObj, int itMax);

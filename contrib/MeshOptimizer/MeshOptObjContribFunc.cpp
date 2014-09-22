@@ -22,34 +22,34 @@ void ObjContribFuncBarrier::setTarget(double target, double opt)
 }
 
 
-void ObjContribFuncBarrierMin::updateParameters(double vMin, double vMax)
+void ObjContribFuncBarrierMovMin::updateParameters(double vMin, double vMax)
 {
   _init = vMin;
   _barrier = vMin > 0. ? LOWMARGINMULT*vMin : UPMARGINMULT*vMin;
 }
 
 
-bool ObjContribFuncBarrierMin::stagnated(double vMin, double vMax)
+bool ObjContribFuncBarrierMovMin::stagnated(double vMin, double vMax)
 {
   return (fabs((vMin-_init)/_init) < STAGTHRESHOLD);
 }
 
 
-void ObjContribFuncBarrierMax::updateParameters(double vMin, double vMax)
+void ObjContribFuncBarrierMovMax::updateParameters(double vMin, double vMax)
 {
   _init = vMax;
   _barrier = vMax > 0. ? UPMARGINMULT*vMax : LOWMARGINMULT*vMax;
 }
 
 
-bool ObjContribFuncBarrierMax::stagnated(double vMin, double vMax)
+bool ObjContribFuncBarrierMovMax::stagnated(double vMin, double vMax)
 {
   return (fabs((vMax-_init)/_init) < STAGTHRESHOLD);
 }
 
 
-void ObjContribFuncBarrierMinMax::initialize(double vMin, double vMax)
+void ObjContribFuncBarrierFixMinMovMax::initialize(double vMin, double vMax)
 {
-  ObjContribFuncBarrierMax::initialize(vMin, vMax);
+  ObjContribFuncBarrierMovMax::initialize(vMin, vMax);
   _fixedMinBarrier = vMin > 0. ? LOWMARGINMULT*vMin : UPMARGINMULT*vMin;
 }

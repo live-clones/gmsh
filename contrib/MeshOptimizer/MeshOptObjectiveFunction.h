@@ -12,12 +12,9 @@ class MeshOptResults;
 class Patch;
 
 
-class ObjectiveFunction : protected std::vector<ObjContrib*>    // Contributions to objective function in each pass
+class ObjectiveFunction : public std::vector<ObjContrib*>    // Contributions to objective function in each pass
 {
 public:
-  ObjectiveFunction() {}
-  ObjectiveFunction(const std::vector<ObjContrib*> &model,
-                        const std::vector<int> &contribInd);
   void initialize(Patch *mesh);
   std::string contribNames();
   std::string minMaxStr();
