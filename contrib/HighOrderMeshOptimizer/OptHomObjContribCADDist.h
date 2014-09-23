@@ -30,7 +30,7 @@ protected:
 
 template<class FuncType>
 ObjContribCADDist<FuncType>::ObjContribCADDist(double weight, double geomTol) :
-  ObjContrib("MetricMin", FuncType::getNamePrefix()+"CADDist"),
+  ObjContrib("CADDist", FuncType::getNamePrefix()+"CADDist"),
   _mesh(0), _weight(weight), _geomTol(geomTol)
 {
 }

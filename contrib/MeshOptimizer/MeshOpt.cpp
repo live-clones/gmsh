@@ -68,7 +68,7 @@ MeshOpt::MeshOpt(const std::map<MElement*,GEntity*> &element2entity,
                  const std::set<MElement*> &els, std::set<MVertex*> &toFix,
                  const MeshOptParameters &par) :
   patch(element2entity, els, toFix, par.fixBndNodes), _verbose(0),
-  _iPass(0), _objFunc(), _iter(0), _intervDisplay(0), _initObj(0)
+  _iPass(0), _iter(0), _intervDisplay(0), _initObj(0)
 {
   _allObjFunc.resize(par.pass.size());
   for (int iPass=0; iPass<par.pass.size(); iPass++) {
@@ -76,6 +76,7 @@ MeshOpt::MeshOpt(const std::map<MElement*,GEntity*> &element2entity,
     for (int iC=0; iC<par.pass[iPass].contrib.size(); iC++)
       _allObjFunc[iPass][iC] = par.pass[iPass].contrib[iC]->copy();
   }
+  _objFunc = &_allObjFunc[0];
 }
 
 

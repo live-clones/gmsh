@@ -4,30 +4,30 @@
 #include "MeshOptObjContribFunc.h"
 
 
-const double ObjContribFuncSimpleTargetMin::STAGTHRESHOLD = 0.01;
+const double ObjContribFuncSimpleTargetMax::STAGTHRESHOLD = 0.01;
 
 
-ObjContribFuncSimpleTargetMin::ObjContribFuncSimpleTargetMin() :
+ObjContribFuncSimpleTargetMax::ObjContribFuncSimpleTargetMax() :
     _target(0.), _init(0.)
 {
 }
 
 
-void ObjContribFuncSimpleTargetMin::setTarget(double target)
+void ObjContribFuncSimpleTargetMax::setTarget(double target)
 {
   _target = target;
 }
 
 
-void ObjContribFuncSimpleTargetMin::updateParameters(double vMin, double vMax)
+void ObjContribFuncSimpleTargetMax::updateParameters(double vMin, double vMax)
 {
-  _init = vMin;
+  _init = vMax;
 }
 
 
-bool ObjContribFuncSimpleTargetMin::stagnated(double vMin, double vMax)
+bool ObjContribFuncSimpleTargetMax::stagnated(double vMin, double vMax)
 {
-  return (fabs((vMin-_init)/_init) < STAGTHRESHOLD);
+  return (fabs((vMax-_init)/_init) < STAGTHRESHOLD);
 }
 
 

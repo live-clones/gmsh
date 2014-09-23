@@ -19,17 +19,17 @@ protected:
 };
 
 
-class ObjContribFuncSimpleTargetMin : public ObjContribFuncSimple
+class ObjContribFuncSimpleTargetMax : public ObjContribFuncSimple
 {
 public:
-  ObjContribFuncSimpleTargetMin();
+  ObjContribFuncSimpleTargetMax();
   void setTarget(double target);
 
 protected:
   static const double STAGTHRESHOLD;                                              // Threshold to consider that measures stagnates
   double _target, _init;
   void updateParameters(double vMin, double vMax);
-  bool targetReached(double vMin, double vMax) { return (vMin >= _target); }
+  bool targetReached(double vMin, double vMax) { return (vMax <= _target); }
   bool stagnated(double vMin, double vMax);
 };
 

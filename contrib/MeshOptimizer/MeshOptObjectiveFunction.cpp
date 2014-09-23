@@ -57,9 +57,9 @@ void ObjectiveFunction::updateResults()
 
 bool ObjectiveFunction::stagnated()
 {
-  bool stagnated = false;
+  bool stagnated = true;
   for (std::vector<ObjContrib*>::iterator it=begin(); it!=end(); it++)
-    stagnated |= (*it)->stagnated();
+    stagnated &= (*it)->stagnated();
   return stagnated;
 }
 

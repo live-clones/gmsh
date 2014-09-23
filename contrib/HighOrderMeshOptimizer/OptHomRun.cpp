@@ -825,7 +825,7 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   minJacBarFunc.setTarget(p.BARRIER_MIN, 1.);
   ObjContribScaledJac<ObjContribFuncBarrierFixMinMovMax> minMaxJacBarFunc(1.);
   minMaxJacBarFunc.setTarget(p.BARRIER_MAX, 1.);
-  ObjContribCADDist<ObjContribFuncSimpleTargetMin> CADDistFunc(p.optCADWeight, p.discrTolerance);
+  ObjContribCADDist<ObjContribFuncSimpleTargetMax> CADDistFunc(p.optCADWeight, p.discrTolerance);
   CADDistFunc.setTarget(p.optCADDistMax);
 
   MeshOptParameters::PassParameters minJacPass;
@@ -842,7 +842,7 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
     minMaxJacPass.optIterMax = p.itMax;
     minMaxJacPass.contrib.push_back(&nodeDistFunc);
     minMaxJacPass.contrib.push_back(&minMaxJacBarFunc);
-    if (p.optCAD) minJacPass.contrib.push_back(&CADDistFunc);
+    if (p.optCAD) minMaxJacPass.contrib.push_back(&CADDistFunc);
     par.pass.push_back(minMaxJacPass);
   }
 
