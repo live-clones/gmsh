@@ -4,6 +4,11 @@
 @c
 
 @ftable @code
+@item PostProcessing.GraphPointCommand
+Command parsed when double-clicking on a graph data point (e.g. Merge Sprintf('file_%g.pos', PostProcessing.GraphPointX);)@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item PostProcessing.AnimationDelay
 Delay (in seconds) between frames in automatic animation mode@*
 Default value: @code{0.1}@*
@@ -32,6 +37,16 @@ Saved in: @code{General.OptionsFileName}
 @item PostProcessing.Format
 Default file format for post-processing views (0=ASCII view, 1=binary view, 2=parsed view, 3=STL triangulation, 4=raw text, 5=Gmsh mesh, 6=MED file, 10=automatic)@*
 Default value: @code{10}@*
+Saved in: @code{General.OptionsFileName}
+
+@item PostProcessing.GraphPointX
+Abscissa of last selected graph point@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item PostProcessing.GraphPointY
+Ordinate of last selected graph point@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.HorizontalScales

@@ -145,7 +145,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.AutoPosition
-Position the scale or 2D plot automatically (0: manual, 1: automatic, 2: top left, 3: top right, 4: bottom left, 5: bottom right, 6: top, 7: bottom, 8: left, 9: right, 10: full, 11: top third)@*
+Position the scale or 2D plot automatically (0: manual, 1: automatic, 2: top left, 3: top right, 4: bottom left, 5: bottom right, 6: top, 7: bottom, 8: left, 9: right, 10: full, 11: top third, 12: in model coordinates)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -484,6 +484,11 @@ Maximum value in the view (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item View.MaxVisble
+Maximum value in the visible parts of the view (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item View.MaxX
 Maximum view coordinate along the X-axis (read-only)@*
 Default value: @code{0}@*
@@ -501,6 +506,11 @@ Saved in: @code{-}
 
 @item View.Min
 Minimum value in the view (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item View.MinVisble
+Minimum value in the visible parts of the view (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -654,6 +664,11 @@ Current time step displayed@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item View.Time
+Current time displayed (if positive, sets the time step corresponding the given time value)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item View.TransformXX
 Element (1,1) of the 3x3 coordinate transformation matrix@*
 Default value: @code{1}@*
@@ -700,7 +715,7 @@ Default value: @code{1}@*
 Saved in: @code{-}
 
 @item View.Type
-Type of plot (1=3D, 2=2D space, 3=2D time)@*
+Type of plot (1=3D, 2=2D space, 3=2D time, 4=2D)@*
 Default value: @code{1}@*
 Saved in: @code{-}
 

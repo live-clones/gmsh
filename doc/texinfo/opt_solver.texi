@@ -104,6 +104,16 @@ Name of solver 9@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
+@item Solver.OctaveInterpreter
+Name of the Octave interpreter (used to run .m files)@*
+Default value: @code{"octave"}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.PythonInterpreter
+Name of the Python interpreter (used to run .py files if they are not executable)@*
+Default value: @code{"python"}@*
+Saved in: @code{General.SessionFileName}
+
 @item Solver.RemoteLogin0
 Command to login to a remote host to launch solver 0@*
 Default value: @code{""}@*

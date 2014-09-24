@@ -116,9 +116,11 @@ void GetStatistics(double stat[50], double quality[4][100])
     stat[4] += (*it)->mesh_vertices.size();
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+    // TODO: make this an option! if((*it)->getVisibility()){
     stat[5] += (*it)->mesh_vertices.size();
     stat[7] += (*it)->triangles.size();
     stat[8] += (*it)->quadrangles.size();
+    //}
   }
 
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){

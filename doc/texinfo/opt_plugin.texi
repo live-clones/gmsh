@@ -5,27 +5,29 @@
 
 @ftable @code
 @item Plugin(AnalyseCurvedMesh)
-Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. It computes, min(J) where J is the scaled Jacobian determinant. Eventually, it computes min(R) where R is the ratio between the smaller and the greater of the eigenvalues of the metric. It creates one or more PView and hides elements for which min(@{J, R@}) < 'Hidding threshold'.@*
+Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. It computes, min(J) where J is the scaled Jacobian determinant and, if asked, min(R) where R is the ratio between the smaller and the greater of the eigenvalues of the metric. It creates a PView and hides elements for which min(@{J, R@}) < 'Hidding threshold'.@*
+@*
+J is faster to compute but gives informations only on validity while R gives also informations on quality.@*
 @*
 Parameters:@*
 @*
-- Show [...] = @{0, 1@}: If 0, computes Jacobian and shows min(J). If 1, computes Jacobian and metric and shows min(R).@*
+- Show [...] = @{0, 1, 2@}: If 0, computes Jacobian and shows min(J). If 1, computes Jacobian and metric and shows min(R). If 2, behaves like it is 1 but draw the two min(J) and min(R) PView@*
 @*
-- Number of PView = @{0, 1, 2@}: If 1, create one PView with all elements. If 2, create two PView, one with straight-sided elements and one with curved elements.@*
+- Draw PView = @{0, 1@}: Creates a PView of min(@{J, R@}) if it does not exist already. If 'Recompute' = 1, a new PView is redrawed.@*
 @*
 - Hidding threshold = [0,1]: Hides all element for which min(R) or min(J) is strictly greater than the threshold. If = 1, no effect, if = 0 hide all elements except invalid.@*
 @*
-- Dimension = @{-1, 1, 2, 3@}: If = -1, analyse element of the greater dimension.@*
+- Dimension = @{-1, 1, 2, 3, 4@}: If = -1, analyse element of the greater dimension. If = 4, analyse 2D and 3D elements@*
 @*
 - Recompute = @{0,1@}: If the mesh has changed, set to 1 to recompute the bounds.@*
 @*
-- Tolerance = ]0, 1[: Tolerance on the computation of min(R) or min(J). It should be at most 0.01 but it can be set to 1 to just check the validity of the mesh.
+- Tolerance = ]0, 1[: Tolerance on the computation of min(@{R, J@}). It should be at most 0.01 but it can be set to 1 or greater to just check the validity of the mesh.
 Numeric options:
 @table @code
-@item Show: (0) Jacobian, (1) Metric
+@item Show: 0:J, 1:R, 2:J&&R
 Default value: @code{1}
-@item Number of PView
-Default value: @code{2}
+@item Draw PView
+Default value: @code{1}
 @item Hidding threshold
 Default value: @code{0.1}
 @item Dimension of elements
@@ -348,6 +350,14 @@ Numeric options:
 @table @code
 @item View
 Default value: @code{-1}
+@end table
+
+@item Plugin(DuplicateBoundaries)
+Plugin(DuplicateBoundaries) is not documented yet.
+Numeric options:
+@table @code
+@item Dummy
+Default value: @code{1}
 @end table
 
 @item Plugin(Eigenvalues)

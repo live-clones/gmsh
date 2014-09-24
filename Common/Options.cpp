@@ -6513,6 +6513,30 @@ double opt_view_max(OPT_ARGS_NUM)
 #endif
 }
 
+double opt_view_min_visible(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEW(0.);
+  if(!data) return 0.;
+  return data->getMin(opt->timeStep, true, opt->forceNumComponents,
+                      opt->componentMap);
+#else
+  return 0.;
+#endif
+}
+
+double opt_view_max_visible(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEW(0.);
+  if(!data) return 0.;
+  return data->getMax(opt->timeStep, true, opt->forceNumComponents,
+                      opt->componentMap);
+#else
+  return 0.;
+#endif
+}
+
 double opt_view_custom_min(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)

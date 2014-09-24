@@ -82,6 +82,15 @@ Select link mode between views (0, 1, 2, 3, 4)
 @item -combine
 Combine views having identical names into multi-time-step views
 @end ftable
+ Solver options:
+@ftable @code
+@item -listen
+Always listen to incoming connection requests
+@item -minterpreter string
+Name of Octave interpreter
+@item -pyinterpreter string
+Name of Python interpreter
+@end ftable
  Display options:
 @ftable @code
 @item -n
@@ -117,8 +126,6 @@ Open next files
 Start in automatic, geometry, mesh, solver or post-processing mode
 @item -pid
 Print process id on stdout
-@item -listen
-Always listen to incoming connection requests
 @item -watch pattern
 Pattern of files to merge as they become available
 @item -bg file

@@ -538,6 +538,8 @@ double opt_view_timestep(OPT_ARGS_NUM);
 double opt_view_time(OPT_ARGS_NUM);
 double opt_view_min(OPT_ARGS_NUM);
 double opt_view_max(OPT_ARGS_NUM);
+double opt_view_min_visible(OPT_ARGS_NUM);
+double opt_view_max_visible(OPT_ARGS_NUM);
 double opt_view_custom_min(OPT_ARGS_NUM);
 double opt_view_custom_max(OPT_ARGS_NUM);
 double opt_view_custom_abscissa_min(OPT_ARGS_NUM);
