@@ -7,6 +7,7 @@
 //
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
 #include <sys/types.h>
@@ -17,6 +18,7 @@
 #include <pthread.h>
 #include <sys/time.h>
 #include <time.h>
+#include <string.h>
 
 int getrlimit$UNIX2003( int resource, struct rlimit *rlp)
 {
@@ -139,4 +141,44 @@ ssize_t send$UNIX2003(int socket, const void *buffer, size_t length, int flags)
 clock_t clock$UNIX2003()
 {
     return clock();
+}
+
+int creat$UNIX2003(const char *path, mode_t mode)
+{
+  return creat(path, mode);
+}
+
+int nanosleep$UNIX2003(const struct timespec *rqtp, struct timespec *rmtp)
+{
+  return nanosleep(rqtp, rmtp);
+}
+
+FILE *popen$UNIX2003(const char *command, const char *mode)
+{
+  return popen(command, mode);
+}
+
+int setenv$UNIX2003(const char *name, const char *value, int overwrite)
+{
+  return setenv(name, value, overwrite);
+}
+
+unsigned int sleep$UNIX2003(unsigned int seconds)
+{
+  return sleep(seconds);
+}
+
+char *strerror$UNIX2003(int errnum)
+{
+  return strerror(errnum);
+}
+
+double strtod$UNIX2003(const char *restrict nptr, char **restrict endptr)
+{
+  return strtod(nptr, endptr);
+}
+
+int system$UNIX2003(const char *command)
+{
+  return system(command);
 }
