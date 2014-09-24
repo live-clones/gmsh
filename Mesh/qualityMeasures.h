@@ -6,6 +6,8 @@
 #ifndef _QUALITY_MEASURES_H_
 #define _QUALITY_MEASURES_H_
 
+#include "fullMatrix.h"
+
 class BDS_Point;
 class BDS_Face;
 class MVertex;
@@ -40,5 +42,33 @@ double qmTet(const double &x1, const double &y1, const double &z1,
              const double &x3, const double &y3, const double &z3, 
              const double &x4, const double &y4, const double &z4, 
              const qualityMeasure4Tet &cr, double *volume = 0);
+
+class measuresTriangle
+{
+public:
+  static void getNCJ(const double &x0, const double &y0, const double &z0,
+                     const double &x1, const double &y1, const double &z1,
+                     const double &x2, const double &y2, const double &z2,
+                     fullVector<double> &ncj);
+  static void getNCJAndGradients(const double &x0, const double &y0, const double &z0,
+                                 const double &x1, const double &y1, const double &z1,
+                                 const double &x2, const double &y2, const double &z2,
+                                 fullMatrix<double> &ncj);
+};
+
+class measuresQuadrangle
+{
+public:
+  static void getNCJ(const double &x0, const double &y0, const double &z0,
+                     const double &x1, const double &y1, const double &z1,
+                     const double &x2, const double &y2, const double &z2,
+                     const double &x3, const double &y3, const double &z3,
+                     fullVector<double> &ncj);
+  static void getNCJAndGradients(const double &x0, const double &y0, const double &z0,
+                                 const double &x1, const double &y1, const double &z1,
+                                 const double &x2, const double &y2, const double &z2,
+                                 const double &x3, const double &y3, const double &z3,
+                                 fullMatrix<double> &ncj);
+};
 
 #endif
