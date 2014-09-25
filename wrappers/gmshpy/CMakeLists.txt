@@ -141,6 +141,7 @@ set (GMSH_PYTHON_EXTRA_INCLUDE
   Mesh/meshGFaceLloyd.h
   contrib/HighOrderMeshOptimizer/OptHomRun.h
   contrib/HighOrderMeshOptimizer/OptHomElastic.h
+  contrib/MeshQualityOptimizer/MeshQualityOptimizer.h
   Post/PViewAsSimpleFunction.h
   Post/PViewDataList.h
   Post/PViewFactory.h

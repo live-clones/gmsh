@@ -295,6 +295,16 @@ double qmTriangle::angles(MTriangle *e)
 }
 
 
+void qmTriangle::NCJRange(const MTriangle *el, double &valMin, double &valMax)
+{
+  fullVector<double> ncj(3);
+  const MVertex *v0 = el->getVertex(0), *v1 = el->getVertex(1), *v2 = el->getVertex(2);
+  NCJ(v0->x(), v0->y(), v0->z(), v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(), ncj);
+  valMin = *std::min_element(ncj.getDataPtr(), ncj.getDataPtr()+3);
+  valMax = *std::max_element(ncj.getDataPtr(), ncj.getDataPtr()+3);
+}
+
+
 void qmTriangle::NCJ(const double &x0, const double &y0, const double &z0,
                      const double &x1, const double &y1, const double &z1,
                      const double &x2, const double &y2, const double &z2,
@@ -463,6 +473,18 @@ double qmQuadrangle::angles(MQuadrangle *e)
 
   return worst_quality;
 
+}
+
+
+void qmQuadrangle::NCJRange(const MQuadrangle *el, double &valMin, double &valMax)
+{
+  fullVector<double> ncj(4);
+  const MVertex *v0 = el->getVertex(0), *v1 = el->getVertex(1),
+                *v2 = el->getVertex(2), *v3 = el->getVertex(3);
+  NCJ(v0->x(), v0->y(), v0->z(), v1->x(), v1->y(), v1->z(),
+      v2->x(), v2->y(), v2->z(), v3->x(), v3->y(), v3->z(), ncj);
+  valMin = *std::min_element(ncj.getDataPtr(), ncj.getDataPtr()+4);
+  valMax = *std::max_element(ncj.getDataPtr(), ncj.getDataPtr()+4);
 }
 
 

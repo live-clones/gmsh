@@ -758,7 +758,7 @@ struct HOPatchDefParameters : public MeshOptParameters::PatchDefParameters
   HOPatchDefParameters(const OptHomParameters &p);
   virtual ~HOPatchDefParameters() {}
   virtual double elBadness(MElement *el);
-  virtual double maxDistance(const MElement *el);
+  virtual double maxDistance(MElement *el);
 private:
   double jacMin, jacMax;
   double distanceFactor;
@@ -802,7 +802,7 @@ double HOPatchDefParameters::elBadness(MElement *el) {
 }
 
 
-double HOPatchDefParameters::maxDistance(const MElement *el) {
+double HOPatchDefParameters::maxDistance(MElement *el) {
   return distanceFactor * el->maxDistToStraight();
 }
 

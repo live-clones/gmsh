@@ -33,6 +33,8 @@ public:
   static double eta(MTriangle *el);
   static double angles(MTriangle *e);
   static double minNCJ(const MTriangle *e);
+  static void NCJRange(const MTriangle *e, double &valMin, double &valMax);
+  static inline int numNCJVal() { return 3; }
   static void NCJ(const double &x0, const double &y0, const double &z0,
                   const double &x1, const double &y1, const double &z1,
                   const double &x2, const double &y2, const double &z2,
@@ -51,6 +53,8 @@ public:
   static double eta(MQuadrangle *el);
   static double angles(MQuadrangle *e);
   static double minNCJ(const MQuadrangle *e);
+  static void NCJRange(const MQuadrangle *e, double &valMin, double &valMax);
+  static inline int numNCJVal() { return 4; }
   static void NCJ(const double &x0, const double &y0, const double &z0,
                   const double &x1, const double &y1, const double &z1,
                   const double &x2, const double &y2, const double &z2,
@@ -93,6 +97,8 @@ public:
                      const double &x4, const double &y4, const double &z4,
                      double *volume = 0);
   static double minNCJ(const MTetrahedron *e);
+//  static void NCJRange(const MTetrahedron *e, double &valMin, double &valMax);
+  static inline int numNCJVal() { return 4; }
   static void NCJ(const double &x0, const double &y0, const double &z0,
                   const double &x1, const double &y1, const double &z1,
                   const double &x2, const double &y2, const double &z2,
@@ -110,6 +116,7 @@ class qmPrism
 {
 public:
   static double minNCJ(const MPrism *el);
+  static inline int numNCJVal() { return 6; }
 //  static void NCJ(const double &x0, const double &y0, const double &z0,
 //                  const double &x1, const double &y1, const double &z1,
 //                  const double &x2, const double &y2, const double &z2,
@@ -123,6 +130,7 @@ class qmHexahedron
 {
 public:
   static double angles(MHexahedron *el);
+  static inline int numNCJVal() { return 8; }
 //  static void NCJ(const double &x0, const double &y0, const double &z0,
 //                  const double &x1, const double &y1, const double &z1,
 //                  const double &x2, const double &y2, const double &z2,

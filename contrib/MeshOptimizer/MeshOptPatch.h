@@ -92,6 +92,13 @@ public:
   void metricMinAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);
   bool bndDistAndGradients(int iEl, double &f , std::vector<double> &gradF, double eps);
 
+  // Mesh quality
+  inline const int &nNCJEl(int iEl) { return _nNCJEl[iEl]; }
+  inline int indGNCJ(int iEl, int l, int iPC) { return iPC*_nNCJEl[iEl]+l; }
+  void initNCJ();
+  void NCJ(int iEl, std::vector<double> &NCJ);
+  void NCJAndGradients(int iEl, std::vector<double> &NCJ, std::vector<double> &gNCJ);
+
 private:
 
   // Mesh entities and variables
@@ -133,11 +140,14 @@ private:
   double _invLengthScaleSq;                             // Square inverse of a length for node displacement scaling
 
   // High-order: scaled Jacobian and metric measures
-  std::vector<int> _nBezEl;                             // Number of Bezier poly. and for an el.
+  std::vector<int> _nBezEl;                             // Number of Bezier poly. for an el.
   std::vector<fullMatrix<double> > _scaledNormEl;       // Normals to 2D elements for Jacobian regularization and scaling
   std::vector<double> _invStraightJac;                  // Initial Jacobians for 3D elements
 //  void calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2entity, int iEl);
   void calcScaledNormalEl2D(int iEl);
+
+  // Mesh quality
+  std::vector<int> _nNCJEl;                             // Number of NCJ values for an el.
 };
 
 

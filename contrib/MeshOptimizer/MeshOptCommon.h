@@ -56,7 +56,7 @@ struct MeshOptParameters {                             // Parameters controlling
       bool weakMerge;                                   // If connected strategy: weak or strong merging of patches
     };
     virtual double elBadness(MElement *el) = 0;         // Pointer to function returning "badness" of element (for patch creation)
-    virtual double maxDistance(const MElement *el) = 0; // Pointer to function checking the patch distance criterion for a given bad element
+    virtual double maxDistance(MElement *el) = 0; // Pointer to function checking the patch distance criterion for a given bad element
   };
   int dim ;                                             // Which dimension to optimize
   bool onlyVisible ;                                    // Apply optimization to visible entities ONLY

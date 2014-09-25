@@ -151,6 +151,8 @@ set(GMSH_API
   contrib/MeshOptimizer/MeshOptCommon.h contrib/MeshOptimizer/MeshOptimizer.h
   contrib/MeshOptimizer/MeshOptObjContribFunc.h contrib/MeshOptimizer/MeshOptObjContrib.h
   contrib/MeshOptimizer/MeshOptObjectiveFunction.h contrib/MeshOptimizer/MeshOptVertexCoord.h 
+  contrib/MeshQualityOptimizer/MeshQualityObjContribNCJ.h
+  contrib/MeshQualityOptimizer/MeshQualityOptimizer.h
   contrib/MathEx/mathex.h)
 
 get_property(IAMCHILD DIRECTORY  PROPERTY PARENT_DIRECTORY)
@@ -645,6 +647,8 @@ if(ENABLE_OPTHOM)
   include_directories(contrib/HighOrderMeshOptimizer)
   add_subdirectory(contrib/MeshOptimizer)
   include_directories(contrib/MeshOptimizer)
+  add_subdirectory(contrib/MeshQualityOptimizer)
+  include_directories(contrib/MeshQualityOptimizer)
   set_config_option(HAVE_OPTHOM "OptHom")
 endif(ENABLE_OPTHOM)
 

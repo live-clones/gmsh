@@ -35,6 +35,7 @@
 #include "MTetrahedron.h"
 #include "BasisFactory.h"
 #include "OptHomIntegralBoundaryDist.h"
+#include "qualityMeasures.h"
 #include "MeshOptPatch.h"
 
 
@@ -495,4 +496,99 @@ bool Patch::bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF, 
     }
   }
   return edgeFound;
+}
+
+
+void Patch::initNCJ()
+{
+  // Initialize _nBezEl
+  if (_nNCJEl.empty()) {
+    _nNCJEl.resize(nEl());
+    for (int iEl=0; iEl<nEl(); iEl++)
+      switch(_el[iEl]->getType()) {                                             // TODO: Complete with other types?
+      case TYPE_TRI: _nNCJEl[iEl] = qmTriangle::numNCJVal(); break;
+      case TYPE_QUA: _nNCJEl[iEl] = qmQuadrangle::numNCJVal(); break;
+      }
+  }
+}
+
+
+void Patch::NCJ(int iEl, std::vector<double> &NCJ)
+{
+  const int &numNCJVal = _nNCJEl[iEl];
+  const int &numNodes = _nNodEl[iEl];
+
+  std::vector<int> &iVEl = _el2V[iEl];
+  fullVector<double> val(numNCJVal);
+  switch(_el[iEl]->getType()) {                                                 // TODO: Complete with other types?
+  case TYPE_TRI: {
+    const int &iV0 = _el2V[iEl][0], &iV1 = _el2V[iEl][1], &iV2 = _el2V[iEl][2];
+    qmTriangle::NCJ(_xyz[iV0].x(), _xyz[iV0].y(), _xyz[iV0].z(),
+                    _xyz[iV1].x(), _xyz[iV1].y(), _xyz[iV1].z(),
+                    _xyz[iV2].x(), _xyz[iV2].y(), _xyz[iV2].z(), val);
+    break;
+  }
+  case TYPE_QUA: {
+    const int &iV0 = _el2V[iEl][0], &iV1 = _el2V[iEl][1],
+              &iV2 = _el2V[iEl][2], &iV3 = _el2V[iEl][3];
+    qmQuadrangle::NCJ(_xyz[iV0].x(), _xyz[iV0].y(), _xyz[iV0].z(),
+                      _xyz[iV1].x(), _xyz[iV1].y(), _xyz[iV1].z(),
+                      _xyz[iV2].x(), _xyz[iV2].y(), _xyz[iV2].z(),
+                      _xyz[iV3].x(), _xyz[iV3].y(), _xyz[iV3].z(), val);
+    break;
+  }
+  }
+
+  for (int l = 0; l < numNCJVal; l++) NCJ[l] = val(l);
+}
+
+
+void Patch::NCJAndGradients(int iEl, std::vector<double> &NCJ, std::vector<double> &gNCJ)
+{
+  const int &numNCJVal = _nNCJEl[iEl];
+  const int &numNodes = _nNodEl[iEl];
+
+  std::vector<int> &iVEl = _el2V[iEl];
+  fullMatrix<double> gradVal(numNCJVal, 3*numNodes+1);
+  switch(_el[iEl]->getType()) {                                                 // TODO: Complete with other types?
+  case TYPE_TRI: {
+    const int &iV0 = _el2V[iEl][0], &iV1 = _el2V[iEl][1], &iV2 = _el2V[iEl][2];
+    qmTriangle::NCJAndGradients(_xyz[iV0].x(), _xyz[iV0].y(), _xyz[iV0].z(),
+                                _xyz[iV1].x(), _xyz[iV1].y(), _xyz[iV1].z(),
+                                _xyz[iV2].x(), _xyz[iV2].y(), _xyz[iV2].z(), gradVal);
+    break;
+  }
+  case TYPE_QUA: {
+    const int &iV0 = _el2V[iEl][0], &iV1 = _el2V[iEl][1],
+              &iV2 = _el2V[iEl][2], &iV3 = _el2V[iEl][3];
+    qmQuadrangle::NCJAndGradients(_xyz[iV0].x(), _xyz[iV0].y(), _xyz[iV0].z(),
+                                  _xyz[iV1].x(), _xyz[iV1].y(), _xyz[iV1].z(),
+                                  _xyz[iV2].x(), _xyz[iV2].y(), _xyz[iV2].z(),
+                                  _xyz[iV3].x(), _xyz[iV3].y(), _xyz[iV3].z(), gradVal);
+    break;
+  }
+  }
+
+  // NCJ
+  for (int l = 0; l < numNCJVal; l++) NCJ[l] = gradVal(l,3*numNodes);
+
+  // Gradients of the NCJ
+  int iPC = 0;
+  std::vector<SPoint3> gXyzV(numNCJVal);
+  std::vector<SPoint3> gUvwV(numNCJVal);
+  for (int i = 0; i < numNodes; i++) {
+    int &iFVi = _el2FV[iEl][i];
+    if (iFVi >= 0) {
+      for (int l = 0; l < numNCJVal; l++)
+        gXyzV [l] = SPoint3(gradVal(l,i+0*numNodes), gradVal(l,i+1*numNodes),
+                            gradVal(l,i+2*numNodes));
+      _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi],gXyzV,gUvwV);
+      for (int l = 0; l < numNCJVal; l++) {
+        gNCJ[indGNCJ(iEl,l,iPC)] = gUvwV[l][0];
+        if (_nPCFV[iFVi] >= 2) gNCJ[indGNCJ(iEl,l,iPC+1)] = gUvwV[l][1];
+        if (_nPCFV[iFVi] == 3) gNCJ[indGNCJ(iEl,l,iPC+2)] = gUvwV[l][2];
+      }
+      iPC += _nPCFV[iFVi];
+    }
+  }
 }
