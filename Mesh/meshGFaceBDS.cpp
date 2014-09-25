@@ -234,10 +234,10 @@ bool evalSwapForOptimize(BDS_Edge *e, GFace *gf, BDS_Mesh &m)
 
   // First, evaluate what we gain in element quality if the
   // swap is performed
-  double qa1 = qmTriangle(p11, p12, p13, QMTRI_RHO);
-  double qa2 = qmTriangle(p21, p22, p23, QMTRI_RHO);
-  double qb1 = qmTriangle(p31, p32, p33, QMTRI_RHO);
-  double qb2 = qmTriangle(p41, p42, p43, QMTRI_RHO);
+  double qa1 = qmTriangle::gamma(p11, p12, p13);
+  double qa2 = qmTriangle::gamma(p21, p22, p23);
+  double qb1 = qmTriangle::gamma(p31, p32, p33);
+  double qb2 = qmTriangle::gamma(p41, p42, p43);
   double qa = std::min(qa1, qa2);
   double qb = std::min(qb1, qb2);
   double qualIndicator = qb - qa;
@@ -357,10 +357,10 @@ bool evalSwap(BDS_Edge *e, double &qa, double &qb)
 
   if(e->numfaces() != 2) return false;
   e->oppositeof (op);
-  double qa1 = qmTriangle(e->p1, e->p2, op[0], QMTRI_RHO);
-  double qa2 = qmTriangle(e->p1, e->p2, op[1], QMTRI_RHO);
-  double qb1 = qmTriangle(e->p1, op[0], op[1], QMTRI_RHO);
-  double qb2 = qmTriangle(e->p2, op[0], op[1], QMTRI_RHO);
+  double qa1 = qmTriangle::gamma(e->p1, e->p2, op[0]);
+  double qa2 = qmTriangle::gamma(e->p1, e->p2, op[1]);
+  double qb1 = qmTriangle::gamma(e->p1, op[0], op[1]);
+  double qb2 = qmTriangle::gamma(e->p2, op[0], op[1]);
   qa = std::min(qa1, qa2);
   qb = std::min(qb1, qb2);
   return true;
@@ -381,10 +381,10 @@ int edgeSwapTestQuality(BDS_Edge *e, double fact=1.1, bool force=false)
     if (!edgeSwapTestAngle(e, cos(CTX::instance()->mesh.allowSwapEdgeAngle * M_PI / 180.)))
       return -1;
 
-  double qa1 = qmTriangle(e->p1, e->p2, op[0], QMTRI_RHO);
-  double qa2 = qmTriangle(e->p1, e->p2, op[1], QMTRI_RHO);
-  double qb1 = qmTriangle(e->p1, op[0], op[1], QMTRI_RHO);
-  double qb2 = qmTriangle(e->p2, op[0], op[1], QMTRI_RHO);
+  double qa1 = qmTriangle::gamma(e->p1, e->p2, op[0]);
+  double qa2 = qmTriangle::gamma(e->p1, e->p2, op[1]);
+  double qb1 = qmTriangle::gamma(e->p1, op[0], op[1]);
+  double qb2 = qmTriangle::gamma(e->p2, op[0], op[1]);
   double qa = std::min(qa1, qa2);
   double qb = std::min(qb1, qb2);
   if(qb > fact * qa) return 1;

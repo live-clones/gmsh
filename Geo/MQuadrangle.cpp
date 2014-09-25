@@ -186,56 +186,26 @@ void MQuadrangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 double  MQuadrangle::etaShapeMeasure()
 {
-  double AR = 1;//(minEdge()/maxEdge());
-
-  SVector3 v01 (_v[1]->x()-_v[0]->x(),_v[1]->y()-_v[0]->y(),_v[1]->z()-_v[0]->z());
-  SVector3 v12 (_v[2]->x()-_v[1]->x(),_v[2]->y()-_v[1]->y(),_v[2]->z()-_v[1]->z());
-  SVector3 v23 (_v[3]->x()-_v[2]->x(),_v[3]->y()-_v[2]->y(),_v[3]->z()-_v[2]->z());
-  SVector3 v30 (_v[0]->x()-_v[3]->x(),_v[0]->y()-_v[3]->y(),_v[0]->z()-_v[3]->z());
-
-  SVector3 a = crossprod(v01,v12);
-  SVector3 b = crossprod(v12,v23);
-  SVector3 c = crossprod(v23,v30);
-  SVector3 d = crossprod(v30,v01);
-
-  double sign = 1.0;
-  if (dot(a,b) < 0 || dot(a,c) < 0 || dot(a,d) < 0 )sign = -1;
-  // FIXME ...
-  //  if (a.z() > 0 || b.z() > 0 || c.z() > 0 || d.z() > 0) sign = -1;
-
-  double a1 = 180 * angle3Vertices(_v[0], _v[1], _v[2]) / M_PI;
-  double a2 = 180 * angle3Vertices(_v[1], _v[2], _v[3]) / M_PI;
-  double a3 = 180 * angle3Vertices(_v[2], _v[3], _v[0]) / M_PI;
-  double a4 = 180 * angle3Vertices(_v[3], _v[0], _v[1]) / M_PI;
-
-  a1 = std::min(180.,a1);
-  a2 = std::min(180.,a2);
-  a3 = std::min(180.,a3);
-  a4 = std::min(180.,a4);
-  double angle = fabs(90. - a1);
-  angle = std::max(fabs(90. - a2),angle);
-  angle = std::max(fabs(90. - a3),angle);
-  angle = std::max(fabs(90. - a4),angle);
-
-  return sign*(1.-angle/90) * AR;
+#if defined(HAVE_MESH)
+  return qmQuadrangle::eta(this);
+#else
+  return 0.;
+#endif
 }
 
-/// a shape measure for quadrangles
-/// assume (for now) 2D elements --
-///  sf = (1 \pm xi) (1 \pm eta) / 4
-///  dsf_xi  =  \pm (1 \pm  eta) / 4
-///             1 + eta , -(1+eta) , -(1-eta), 1-eta
-///  dsf_eta =  \pm (1 \pm  xi)  / 4
-///             1 + xi , 1 - xi ,  -(1-xi), -(1+xi)
 double MQuadrangle::gammaShapeMeasure(){
-  return etaShapeMeasure();
+#if defined(HAVE_MESH)
+  return qmQuadrangle::gamma(this);
+#else
+  return 0.;
+#endif
 }
 
 
 double MQuadrangle::angleShapeMeasure()
 {
 #if defined(HAVE_MESH)
-  return qmQuadrangleAngles(this);
+  return qmQuadrangle::angles(this);
 #else
   return 1.;
 #endif

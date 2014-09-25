@@ -16,28 +16,28 @@
 enum localMeshModAction {GMSH_DOIT, GMSH_EVALONLY};
 
 bool edgeSwap(std::vector<MTet4*> &newTets, MTet4 *tet, 
-              int iLocalEdge, const qualityMeasure4Tet &cr);
+              int iLocalEdge, const qmTetrahedron::Measures &cr);
 
 bool faceSwap(std::vector<MTet4*> &newTets, MTet4 *tet, 
-              int iLocalFace, const qualityMeasure4Tet &cr);
+              int iLocalFace, const qmTetrahedron::Measures &cr);
 
 bool smoothVertex(MTet4 *t, int iLocalVertex,
-                  const qualityMeasure4Tet &cr);
+                  const qmTetrahedron::Measures &cr);
 
 bool smoothVertexOptimize(MTet4 *t, int iVertex,
-                          const qualityMeasure4Tet &cr);
+                          const qmTetrahedron::Measures &cr);
 
 bool collapseVertex(std::vector<MTet4*> &newTets, MTet4 *t, 
                     int iVertex, int iTarget,
-                    const qualityMeasure4Tet &cr,
+                    const qmTetrahedron::Measures &cr,
                     const localMeshModAction = GMSH_DOIT,
                     double *result = 0);
 
 bool egeSplit(std::vector<MTet4*> &newTets, MTet4 *tet,
               MVertex *newVertex, int iLocalEdge,
-              const qualityMeasure4Tet &cr);
+              const qmTetrahedron::Measures &cr);
 
 bool sliverRemoval(std::vector<MTet4*> &newTets, MTet4 *t, 
-                   const qualityMeasure4Tet &cr);
+                   const qmTetrahedron::Measures &cr);
 
 #endif

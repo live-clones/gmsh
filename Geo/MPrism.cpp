@@ -8,6 +8,10 @@
 #include "BasisFactory.h"
 #include "Context.h"
 
+#if defined(HAVE_MESH)
+#include "qualityMeasures.h"
+#endif
+
 int MPrism::getVolumeSign()
 {
   double mat[3][3];
@@ -517,35 +521,8 @@ void MPrismN::getFaceVertices(const int num, std::vector<MVertex*> &v) const
 
 }
 
-static double scaled_jacobian(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
-  double val;
-  double l1,l2,l3;
-  SVector3 vec1,vec2,vec3;
-
-  vec1 = SVector3(b->x()-a->x(),b->y()-a->y(),b->z()-a->z());
-  vec2 = SVector3(c->x()-a->x(),c->y()-a->y(),c->z()-a->z());
-  vec3 = SVector3(d->x()-a->x(),d->y()-a->y(),d->z()-a->z());
-
-  l1 = vec1.norm();
-  l2 = vec2.norm();
-  l3 = vec3.norm();
-
-  val = dot(vec1,crossprod(vec2,vec3));
-  return fabs(val)/(l1*l2*l3);
-}
-
-double MPrism::gammaShapeMeasure() {
-  MVertex *a = getVertex(0),*b= getVertex(1),*c= getVertex(2);
-  MVertex *d = getVertex(3),*e= getVertex(4),*f= getVertex(5);
-  const double j [6] = {
-    scaled_jacobian(a,b,c,d),
-    scaled_jacobian(b,a,c,e),
-    scaled_jacobian(c,a,b,f),
-    scaled_jacobian(d,a,e,f),
-    scaled_jacobian(e,b,d,f),
-    scaled_jacobian(f,c,d,e)};  
-  const double result = *std::min_element(j,j+6);
-  printf("%12.5E\n",result);
-  return result;
+double MPrism::gammaShapeMeasure()
+{
+  return qmPrism::minNCJ(this);
 }
 

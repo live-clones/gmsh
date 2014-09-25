@@ -210,7 +210,7 @@ void BuildSwapPattern7(SwapPattern *sc)
 bool edgeSwap(std::vector<MTet4 *> &newTets,
               MTet4 *tet,
               int iLocalEdge,
-              const qualityMeasure4Tet &cr)
+              const qmTetrahedron::Measures &cr)
 {
   std::vector<MTet4*> cavity;
   std::vector<MTet4*> outside;
@@ -250,8 +250,8 @@ bool edgeSwap(std::vector<MTet4 *> &newTets,
     int p1 = sp.triangles[i][0];
     int p2 = sp.triangles[i][1];
     int p3 = sp.triangles[i][2];
-    tetQuality1[i] = qmTet(ring[p1], ring[p2], ring[p3], v1, cr, &(volume1[i]));
-    tetQuality2[i] = qmTet(ring[p1], ring[p2], ring[p3], v2, cr, &(volume2[i]));
+    tetQuality1[i] = qmTetrahedron::qm(ring[p1], ring[p2], ring[p3], v1, cr, &(volume1[i]));
+    tetQuality2[i] = qmTetrahedron::qm(ring[p1], ring[p2], ring[p3], v2, cr, &(volume2[i]));
   }
 
   // look for the best triangulation, i.e. the one that maximize the
@@ -318,7 +318,7 @@ bool edgeSwap(std::vector<MTet4 *> &newTets,
 }
 
 bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
-               int iLocalEdge, const qualityMeasure4Tet &cr)
+               int iLocalEdge, const qmTetrahedron::Measures &cr)
 {
   std::vector<MTet4*> cavity;
   std::vector<MTet4*> outside;
@@ -352,7 +352,7 @@ bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
 
 // swap a face i.e. remove a face shared by 2 tets
 bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
-              const qualityMeasure4Tet &cr)
+              const qmTetrahedron::Measures &cr)
 {
   MTet4 *t2 = t1->getNeigh(iLocalFace);
   if (!t2) return false;
@@ -383,11 +383,11 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
   double q2 = t2->getQuality();
 
   double vol3;
-  double q3 = qmTet(f1, f2, v1, v2, cr, &vol3);
+  double q3 = qmTetrahedron::qm(f1, f2, v1, v2, cr, &vol3);
   double vol4;
-  double q4 = qmTet(f2, f3, v1, v2, cr, &vol4);
+  double q4 = qmTetrahedron::qm(f2, f3, v1, v2, cr, &vol4);
   double vol5;
-  double q5 = qmTet(f3, f1, v1, v2, cr, &vol5);
+  double q5 = qmTetrahedron::qm(f3, f1, v1, v2, cr, &vol5);
 
 
   if (fabs(vol1 + vol2 - vol3 - vol4 - vol5) > 1.e-10 * (vol1 + vol2)) return false;
@@ -481,7 +481,7 @@ void buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4*> &cavity)
 // after that crap, the sliver is trashed
 
 bool sliverRemoval(std::vector<MTet4*> &newTets, MTet4 *t,
-                   const qualityMeasure4Tet &cr)
+                   const qmTetrahedron::Measures &cr)
 {
   std::vector<MTet4*> cavity;
   std::vector<MTet4*> outside;
@@ -507,7 +507,7 @@ bool sliverRemoval(std::vector<MTet4*> &newTets, MTet4 *t,
   else if (nbSwappable == 1){
     // classical case, the sliver has 5 edges on the boundary
     // try to swap first
-    if (edgeSwap(newTets,t,iSwappable,QMTET_3))return true;
+    if (edgeSwap(newTets,t,iSwappable,qmTetrahedron::QMTET_ETA))return true;
     // if it does not work, split, smooth and collapse
     MVertex *v1 = t->tet()->getVertex(edges[iSwappable][0]);
     MVertex *v2 = t->tet()->getVertex(edges[iSwappable][1]);
@@ -516,7 +516,7 @@ bool sliverRemoval(std::vector<MTet4*> &newTets, MTet4 *t,
                                  0.5 * (v1->z() + v2->z()), t->onWhat());
     t->onWhat()->mesh_vertices.push_back(newv);
 
-    if (!edgeSplit(newTets, t, newv, iSwappable, QMTET_ONE)) return false;
+    if (!edgeSplit(newTets, t, newv, iSwappable, qmTetrahedron::QMTET_ONE)) return false;
     for (int i = 0; i < 4; i++){
       if (newTets[newTets.size() - 1]->tet()->getVertex(i) == newv){
         smoothVertex(newTets[newTets.size() - 1], i, cr);
@@ -556,7 +556,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets,
                         MTet4 *t,
                         int iVertex,
                         int iTarget,
-                        const qualityMeasure4Tet &cr,
+                        const qmTetrahedron::Measures &cr,
                         const localMeshModAction action,
                         double *minQual)
 {
@@ -609,7 +609,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets,
   }
   for (unsigned int i = 0; i < toUpdate.size(); i++){
     double vv;
-    newQuals[i] = qmTet(toUpdate[i]->tet(),cr,&vv);
+    newQuals[i] = qmTetrahedron::qm(toUpdate[i]->tet(),cr,&vv);
     worstAfter = std::min(worstAfter,newQuals[i]);
     volume_update += vv;
   }
@@ -648,7 +648,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets,
   return true;
 }
 
-bool smoothVertex(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
+bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
 {
   if(t->isDeleted()){
     Msg::Error("Impossible to collapse vertex");
@@ -702,7 +702,7 @@ bool smoothVertex(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
   }
   for (unsigned int i = 0; i < cavity.size(); i++){
     double volume;
-    newQuals[i] = qmTet(cavity[i]->tet(),cr,&volume);
+    newQuals[i] = qmTetrahedron::qm(cavity[i]->tet(),cr,&volume);
     volumeAfter += volume;
     worstAfter = std::min(worstAfter,newQuals[i]);
   }
@@ -742,7 +742,7 @@ double smoothing_objective_function_3D(double X, double Y, double Z,
   std::vector < MTet4 * >::iterator ite = ts.end();
   double qMin = 1, vol;
   while(it != ite){
-    qMin = std::min(qmTet((*it)->tet(), QMTET_2, &vol), qMin);
+    qMin = std::min(qmTetrahedron::qm((*it)->tet(), qmTetrahedron::QMTET_GAMMA, &vol), qMin);
     ++it;
   }
   v->x() = oldX;
@@ -776,7 +776,7 @@ double smooth_obj_3D(double *XYZ, void *data)
   return smoothing_objective_function_3D(XYZ[0], XYZ[1], XYZ[2], svd->v, svd->ts);
 }
 
-bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
+bool smoothVertexOptimize(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
 {
   if(t->tet()->getVertex(iVertex)->onWhat()->dim() < 3) return false;
 
@@ -817,7 +817,7 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qualityMeasure4Tet &cr)
   }
   for(unsigned int i = 0; i < vd.ts.size(); i++){
     double volume;
-    newQuals[i] = qmTet(vd.ts[i]->tet(), cr, &volume);
+    newQuals[i] = qmTetrahedron::qm(vd.ts[i]->tet(), cr, &volume);
     volumeAfter += volume;
   }
 

@@ -779,10 +779,10 @@ bool BDS_SwapEdgeTestQuality::operator () (BDS_Point *_p1, BDS_Point *_p2, BDS_P
   double cosnq; prosca(n, q, &cosnq);
   double cosonq; prosca(on, oq, &cosonq);
 
-  double qa1 = qmTriangle(_p1, _p2, _p3, QMTRI_RHO);
-  double qa2 = qmTriangle(_q1, _q2, _q3, QMTRI_RHO);
-  double qb1 = qmTriangle(_op1, _op2, _op3, QMTRI_RHO);
-  double qb2 = qmTriangle(_oq1, _oq2, _oq3, QMTRI_RHO);
+  double qa1 = qmTriangle::gamma(_p1, _p2, _p3);
+  double qa2 = qmTriangle::gamma(_q1, _q2, _q3);
+  double qb1 = qmTriangle::gamma(_op1, _op2, _op3);
+  double qb2 = qmTriangle::gamma(_oq1, _oq2, _oq3);
 
   // we swap for a better configuration
   double mina = std::min(qa1,qa2);
@@ -1113,8 +1113,8 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
         pt[1][nt] = (pts[1] == p) ? o : pts[1];
         pt[2][nt] = (pts[2] == p) ? o : pts[2];
 
-//      double qnew = qmTriangle(pt[0][nt], pt[1][nt], pt[2][nt], QMTRI_RHO);
-//      double qold = qmTriangle(pts[0], pts[1], pts[2], QMTRI_RHO);
+//      double qnew = qmTriangle::gamma(pt[0][nt], pt[1][nt], pt[2][nt]);
+//      double qold = qmTriangle::gamma(pts[0], pts[1], pts[2]);
 //      if(qold > 1.e-4 && qnew < 1.e-4) return false;
         nt++;
 //      pt[0][nt] = (pts[0] == p) ? o->iD : pts[0]->iD;
@@ -1263,14 +1263,14 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
       p->X = gp.x();
       p->Y = gp.y();
       p->Z = gp.z();
-      newWorst = std::min(newWorst, qmTriangle(*it, QMTRI_RHO));
+      newWorst = std::min(newWorst, qmTriangle::gamma(*it));
       double norm1[3],norm2[3];
       normal_triangle(n[0], n[1], n[2], norm1);
       p->X = oldX;
       p->Y = oldY;
       p->Z = oldZ;
       normal_triangle(n[0], n[1], n[2], norm2);
-      oldWorst = std::min(oldWorst, qmTriangle(*it, QMTRI_RHO));
+      oldWorst = std::min(oldWorst, qmTriangle::gamma(*it));
       double ps;
       prosca(norm1, norm2, &ps);
       double threshold = (isSphere ? 0.95 : 0.5);

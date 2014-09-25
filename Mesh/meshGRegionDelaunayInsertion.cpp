@@ -734,7 +734,7 @@ void non_recursive_classify(MTet4 *t, std::list<MTet4*> &theRegion,
 
 void adaptMeshGRegion::operator () (GRegion *gr)
 {
-  const qualityMeasure4Tet qm = QMTET_2;
+  const qmTetrahedron::Measures qm = qmTetrahedron::QMTET_GAMMA;
 
   typedef std::list<MTet4 *> CONTAINER ;
   CONTAINER allTets;
@@ -793,7 +793,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
       if (!(*it)->isDeleted()){
         for (int i = 0; i < 4; i++){
           for (int j = 0; j < 4; j++){
-            if (collapseVertex(newTets, *it, i, j, QMTET_2)){
+            if (collapseVertex(newTets, *it, i, j, qmTetrahedron::QMTET_GAMMA)){
               nbCollapse++; i = j = 10;
             }
           }
@@ -917,7 +917,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 }
 
 //template <class CONTAINER, class DATA>
-void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm)
+void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
 {
   
   typedef std::list<MTet4 *> CONTAINER ;
@@ -1443,7 +1443,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 	double qq = (*it)->getQuality();
 	if (qq < .4)
 	  for (int i = 0; i < 4; i++){
-	    if (smoothVertex(*it, i, QMTET_2)) nbReloc++;
+	    if (smoothVertex(*it, i, qmTetrahedron::QMTET_GAMMA)) nbReloc++;
 	  }
       }
     }
@@ -1656,7 +1656,7 @@ void bowyerWatsonFrontalLayers(GRegion *gr, bool hex)
 	double qq = (*it)->getQuality();
 	if (qq < .4)
 	  for (int i = 0; i < 4; i++){
-	    if (smoothVertex(*it, i, QMTET_2)) nbReloc++;
+	    if (smoothVertex(*it, i, qmTetrahedron::QMTET_GAMMA)) nbReloc++;
 	  }
       }
     }

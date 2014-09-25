@@ -72,12 +72,12 @@ class MTet4
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
   }
-  MTet4(MTetrahedron *t, const qualityMeasure4Tet &qm) 
+  MTet4(MTetrahedron *t, const qmTetrahedron::Measures &qm)
     : deleted(false), base(t), gr(0)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
     double vol;
-    circum_radius = qmTet(t, qm, &vol);
+    circum_radius = qmTetrahedron::qm(t, qm, &vol);
   }
   void circumcenter(double *res)
   {
@@ -266,6 +266,6 @@ class MTet4Factory
   container &getAllTets(){ return allTets; }
 };
 
-void optimizeMesh(GRegion *gr, const qualityMeasure4Tet &qm);
+void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm);
 
 #endif

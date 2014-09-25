@@ -1778,7 +1778,7 @@ void optimizeMeshGRegionGmsh::operator() (GRegion *gr)
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
 
   Msg::Info("Optimizing volume %d", gr->tag());
-  optimizeMesh(gr, QMTET_2);
+  optimizeMesh(gr, qmTetrahedron::QMTET_GAMMA);
 }
 
 

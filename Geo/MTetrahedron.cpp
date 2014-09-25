@@ -67,7 +67,7 @@ double MTetrahedron::gammaShapeMeasure()
 {
 #if defined(HAVE_MESH)
   double vol;
-  return qmTet(this, QMTET_2, &vol);
+  return qmTetrahedron::qm(this, qmTetrahedron::QMTET_GAMMA, &vol);
 #else
   return 0.;
 #endif
@@ -77,7 +77,7 @@ double MTetrahedron::etaShapeMeasure()
 {
 #if defined(HAVE_MESH)
   double vol;
-  return qmTet(this, QMTET_3, &vol);
+  return qmTetrahedron::qm(this, qmTetrahedron::QMTET_ETA, &vol);
 #else
   return 0.;
 #endif

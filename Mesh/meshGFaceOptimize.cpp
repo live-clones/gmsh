@@ -537,7 +537,7 @@ int _removeFourTrianglesNodes(GFace *gf,bool replace_by_quads)
           for(int i=0;i<4;i++){
             newt[i] = new MTriangle(edges[i][0],edges[(i+1)%4][0],edges[(i+2)%4][0]);
             surf[i] = surfaceFaceUV(newt[i],gf);
-            qual[i] = qmTriangle(newt[i],QMTRI_RHO);
+            qual[i] = qmTriangle::gamma(newt[i]);
           }
           double q02=(fabs((surf[0]+surf[2]-surfaceRef)/surfaceRef)<1e-8) ?
             std::min(qual[0],qual[2]) : -1;
@@ -2851,10 +2851,10 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   switch(cr){
   case SWCR_QUAL:
     {
-      const double triQualityRef = std::min(qmTriangle(t1->tri(), QMTRI_RHO),
-                                            qmTriangle(t2->tri(), QMTRI_RHO));
-      const double triQuality = std::min(qmTriangle(t1b, QMTRI_RHO),
-                                         qmTriangle(t2b, QMTRI_RHO));
+      const double triQualityRef = std::min(qmTriangle::gamma(t1->tri()),
+                                            qmTriangle::gamma(t2->tri()));
+      const double triQuality = std::min(qmTriangle::gamma(t1b),
+                                         qmTriangle::gamma(t2b));
       if (!edgeSwapDelProj(v1,v2,v3,v4)){
 	if(triQuality < triQualityRef){
 	  delete t1b;

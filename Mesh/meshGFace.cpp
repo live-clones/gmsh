@@ -58,7 +58,7 @@ static void computeElementShapes(GFace *gf, double &worst, double &avg,
   nT = 0;
   greaterThan = 0;
   for(unsigned int i = 0; i < gf->triangles.size(); i++){
-    double q = qmTriangle(gf->triangles[i], QMTRI_RHO);
+    double q = qmTriangle::gamma(gf->triangles[i]);
     if(q > .9) greaterThan++;
     avg += q;
     worst = std::min(worst, q);

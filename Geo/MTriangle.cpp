@@ -65,7 +65,7 @@ double MTriangle::getOuterRadius()
 double MTriangle::angleShapeMeasure()
 {
 #if defined(HAVE_MESH)
-  return qmTriangleAngles(this);
+  return qmTriangle::angles(this);
 #else
   return 0.;
 #endif
@@ -73,20 +73,18 @@ double MTriangle::angleShapeMeasure()
 
 double MTriangle::etaShapeMeasure()
 {
-  double a1 = 180 * angle3Vertices(_v[0], _v[1], _v[2]) / M_PI;
-  double a2 = 180 * angle3Vertices(_v[1], _v[2], _v[0]) / M_PI;
-  double a3 = 180 * angle3Vertices(_v[2], _v[0], _v[1]) / M_PI;
-
-  double amin = std::min(std::min(a1,a2),a3);
-  double angle = fabs(60. - amin);
-  return 1.-angle/60;
+#if defined(HAVE_MESH)
+  return qmTriangle::eta(this);
+#else
+  return 0.;
+#endif
 }
 
 
 double MTriangle::gammaShapeMeasure()
 {
 #if defined(HAVE_MESH)
-  return qmTriangle(this, QMTRI_RHO);
+  return qmTriangle::gamma(this);
 #else
   return 0.;
 #endif
