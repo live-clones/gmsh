@@ -541,7 +541,7 @@ void GetOptions(int argc, char *argv[])
       }
       else if (!strcmp(argv[i]+1, "setnumber")) {
         i++;
-	if (i + 1 < argc && argv[i][0] != '-' && argv[i + 1][0] != '-') {
+	if (i + 1 < argc && argv[i][0] != '-') {
           std::vector<double> val(1, atof(argv[i + 1]));
           gmsh_yysymbols[argv[i]].value = val;
           i += 2;
