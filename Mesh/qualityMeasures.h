@@ -6,8 +6,12 @@
 #ifndef _QUALITY_MEASURES_H_
 #define _QUALITY_MEASURES_H_
 
-#include "fullMatrix.h"
+//#include "fullMatrix.h"
+#include <vector>
+//#include "SPoint3.h"
 
+class SPoint3;
+class SVector3;
 class BDS_Point;
 class BDS_Face;
 class MVertex;
@@ -35,14 +39,11 @@ public:
   static double minNCJ(const MTriangle *e);
   static void NCJRange(const MTriangle *e, double &valMin, double &valMax);
   static inline int numNCJVal() { return 3; }
-  static void NCJ(const double &x0, const double &y0, const double &z0,
-                  const double &x1, const double &y1, const double &z1,
-                  const double &x2, const double &y2, const double &z2,
-                  fullVector<double> &ncj);
-  static void NCJAndGradients(const double &x0, const double &y0, const double &z0,
-                              const double &x1, const double &y1, const double &z1,
-                              const double &x2, const double &y2, const double &z2,
-                              fullMatrix<double> &ncj);
+  static void NCJ(const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
+                  const SVector3 &normal, std::vector<double> &NCJ);
+  static void NCJAndGradients(const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
+                              const SVector3 &normal,
+                              std::vector<double> &NCJ, std::vector<double> &dNCJ);
 };
 
 
@@ -55,16 +56,11 @@ public:
   static double minNCJ(const MQuadrangle *e);
   static void NCJRange(const MQuadrangle *e, double &valMin, double &valMax);
   static inline int numNCJVal() { return 4; }
-  static void NCJ(const double &x0, const double &y0, const double &z0,
-                  const double &x1, const double &y1, const double &z1,
-                  const double &x2, const double &y2, const double &z2,
-                  const double &x3, const double &y3, const double &z3,
-                  fullVector<double> &ncj);
-  static void NCJAndGradients(const double &x0, const double &y0, const double &z0,
-                              const double &x1, const double &y1, const double &z1,
-                              const double &x2, const double &y2, const double &z2,
-                              const double &x3, const double &y3, const double &z3,
-                              fullMatrix<double> &ncj);
+  static void NCJ(const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
+                  const SPoint3 &p3, const SVector3 &normal, std::vector<double> &ncj);
+  static void NCJAndGradients(const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
+                              const SPoint3 &p3, const SVector3 &normal,
+                              std::vector<double> &NCJ, std::vector<double> &dNCJ);
 };
 
 
@@ -99,16 +95,16 @@ public:
   static double minNCJ(const MTetrahedron *e);
 //  static void NCJRange(const MTetrahedron *e, double &valMin, double &valMax);
   static inline int numNCJVal() { return 4; }
-  static void NCJ(const double &x0, const double &y0, const double &z0,
-                  const double &x1, const double &y1, const double &z1,
-                  const double &x2, const double &y2, const double &z2,
-                  const double &x3, const double &y3, const double &z3,
-                  fullVector<double> &ncj);
-  static void NCJAndGradients(const double &x0, const double &y0, const double &z0,
-                              const double &x1, const double &y1, const double &z1,
-                              const double &x2, const double &y2, const double &z2,
-                              const double &x3, const double &y3, const double &z3,
-                              fullMatrix<double> &ncj);
+//  static void NCJ(const double &x0, const double &y0, const double &z0,
+//                  const double &x1, const double &y1, const double &z1,
+//                  const double &x2, const double &y2, const double &z2,
+//                  const double &x3, const double &y3, const double &z3,
+//                  fullVector<double> &ncj);
+//  static void NCJAndGradients(const double &x0, const double &y0, const double &z0,
+//                              const double &x1, const double &y1, const double &z1,
+//                              const double &x2, const double &y2, const double &z2,
+//                              const double &x3, const double &y3, const double &z3,
+//                              fullMatrix<double> &ncj);
 };
 
 

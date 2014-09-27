@@ -21,146 +21,83 @@
 namespace {
 
 
-// Compute unit vector
-inline void unitVec(const double &x0, const double &y0, const double &z0,
-                    const double &x1, const double &y1, const double &z1,
-                    double &x01n, double &y01n, double &z01n)
+// Compute unit vector and gradients w.r.t. x0, y0, z0
+// Remark: gradients w.r.t. x1, y1, z1 not computed as they are just the opposite
+inline void unitVecAndGrad(const SPoint3 &p0, const SPoint3 &p1,
+                           SVector3 &vec, std::vector<SVector3> &grad)
 {
-  const double x01 = x1-x0, y01 = y1-y0, z01 = z1-z0;
-  const double invL01 = 1./sqrt(x01*x01 + y01*y01 + z01*z01);
-  x01n = x01*invL01; y01n = y01*invL01; z01n = z01*invL01;
+  vec = SVector3(p0, p1);
+  const double n = vec.normalize(), invN = 1/n;
+  grad[0] = invN*vec[0]*vec; grad[0][0] -= invN;    // dv01/dx0
+  grad[1] = invN*vec[1]*vec; grad[1][1] -= invN;    // dv01/dy0
+  grad[2] = invN*vec[2]*vec; grad[2][2] -= invN;    // dv01/dz0
 }
 
 
-// Compute unit vector and gradients w.r.t. x0, y0, z0, x1, y1, z1
-inline void unitVecAndGrad(const double &x0, const double &y0, const double &z0,
-                           const double &x1, const double &y1, const double &z1,
-                           fullMatrix<double> &res)
+// Given vectors (0, 1) and (0, 2), their gradients and opposite of gradients,
+// and the unit normal vector, compute NCJ from area of triangle defined by both
+// vectors and gradients w.r.t. x0, y0, z0, x1, y1, z1, x2, y2, z2
+inline void NCJAndGrad2D(const SVector3 &v01,
+                         const std::vector<SVector3> &dv01dp0,
+                         const std::vector<SVector3> &dv01dp1,
+                         const SVector3 &v02, const std::vector<SVector3> &dv02dp0,
+                         const std::vector<SVector3> &dv02dp2,
+                         const SVector3 &normal,
+                         double &NCJ, std::vector<double> &dNCJ)
 {
-  const double x01 = x1-x0, y01 = y1-y0, z01 = z1-z0;
-  const double x01Sq = x01*x01, y01Sq = y01*y01, z01Sq = z01*z01;
-  const double invL01Sq = 1./(x01Sq+y01Sq+z01Sq), invL01 = sqrt(invL01Sq);
-  const double invL01Cu = invL01Sq*invL01;
+  const SVector3 dvndx0 = crossprod(v01, dv02dp0[0]) + crossprod(dv01dp0[0], v02);  // v01 x dv02/dx0 + dv01/dx0 x v02
+  const SVector3 dvndy0 = crossprod(v01, dv02dp0[1]) + crossprod(dv01dp0[1], v02);  // v01 x dv02/dy0 + dv01/dy0 x v02
+  const SVector3 dvndz0 = crossprod(v01, dv02dp0[2]) + crossprod(dv01dp0[2], v02);  // v01 x dv02/dz0 + dv01/dz0 x v02
+  const SVector3 dvndx1 = crossprod(dv01dp1[0], v02);                               // dv01/dx1 x v02 (= -dv01/dx0 x v02)
+  const SVector3 dvndy1 = crossprod(dv01dp1[1], v02);                               // dv01/dy1 x v02 (= -dv01/dy0 x v02)
+  const SVector3 dvndz1 = crossprod(dv01dp1[2], v02);                               // dv01/dz1 x v02 (= -dv01/dz0 x v02)
+  const SVector3 dvndx2 = crossprod(v01, dv02dp2[0]);                               // v01 x dv02/dx2 (= v01 x -dv02/dx0)
+  const SVector3 dvndy2 = crossprod(v01, dv02dp2[1]);                               // v01 x dv02/dy2 (= v01 x -dv02/dy0)
+  const SVector3 dvndz2 = crossprod(v01, dv02dp2[2]);                               // v01 x dv02/dz2 (= v01 x -dv02/dz0)
 
-  double &dx01ndx0 = res(0, 0), &dx01ndy0 = res(0, 1), &dx01ndz0 = res(0, 2),
-          &dx01ndx1 = res(0, 3), &dx01ndy1 = res(0, 4), &dx01ndz1 = res(0, 5), &x01n = res(0, 6);
-  double &dy01ndx0 = res(1, 0), &dy01ndy0 = res(1, 1), &dy01ndz0 = res(1, 2),
-          &dy01ndx1 = res(1, 3), &dy01ndy1 = res(1, 4), &dy01ndz1 = res(1, 5), &y01n = res(1, 6);
-  double &dz01ndx0 = res(2, 0), &dz01ndy0 = res(2, 1), &dz01ndz0 = res(2, 2),
-          &dz01ndx1 = res(2, 3), &dz01ndy1 = res(2, 4), &dz01ndz1 = res(2, 5), &z01n = res(2, 6);
-
-  dx01ndx0 = x01Sq*invL01Cu-invL01;
-  dx01ndy0 = x01*y01*invL01Cu;
-  dx01ndz0 = x01*z01*invL01Cu;
-  dx01ndx1 = -dx01ndx0;
-  dx01ndy1 = -dx01ndy0;
-  dx01ndz1 = -dx01ndz0;
-  x01n = x01*invL01;
-
-  dy01ndx0 = dx01ndy0;
-  dy01ndy0 = y01Sq*invL01Cu-invL01;
-  dy01ndz0 = y01*z01*invL01Cu;
-  dy01ndx1 = -dy01ndx0;
-  dy01ndy1 = -dy01ndy0;
-  dy01ndz1 = -dy01ndz0;
-  y01n = y01*invL01;
-
-  dz01ndx0 = dx01ndz0;
-  dz01ndy0 = dy01ndz0;
-  dz01ndz0 = z01Sq*invL01Cu-invL01;
-  dz01ndx1 = -dx01ndz0;
-  dz01ndy1 = -dz01ndy0;
-  dz01ndz1 = -dz01ndz0;
-  z01n = z01*invL01;
+  SVector3 vn = crossprod(v01, v02);
+  NCJ = dot(vn, normal);                                                            // NCJ
+  dNCJ[0] = dot(dvndx0, normal);                                                    // dNCJ/dx0
+  dNCJ[1] = dot(dvndy0, normal);                                                    // dNCJ/dy0
+  dNCJ[2] = dot(dvndz0, normal);                                                    // dNCJ/dz0
+  dNCJ[3] = dot(dvndx1, normal);                                                    // dNCJ/dx1
+  dNCJ[4] = dot(dvndy1, normal);                                                    // dNCJ/dy1
+  dNCJ[5] = dot(dvndz1, normal);                                                    // dNCJ/dz1
+  dNCJ[6] = dot(dvndx2, normal);                                                    // dNCJ/dx2
+  dNCJ[7] = dot(dvndy2, normal);                                                    // dNCJ/dy2
+  dNCJ[8] = dot(dvndz2, normal);                                                    // dNCJ/dz2
 }
 
 
-// Given vectors a and b, compute area of triangle defined by both vectors (times a factor)
-inline double triArea(const double fact,
-                      const double &xa, const double &ya, const double &za,
-                      const double &xb, const double &yb, const double &zb)
+//// Revert vector and gradients
+//inline void revertVG(const fullMatrix<double> &vg, fullMatrix<double> &res)
+//{
+//  res(0, 0) = -vg(0, 3); res(0, 1) = -vg(0, 4); res(0, 2) = -vg(0, 5); res(0, 6) = -vg(0, 6);
+//  res(1, 0) = -vg(1, 3); res(1, 1) = -vg(1, 4); res(1, 2) = -vg(1, 5); res(1, 6) = -vg(1, 6);
+//  res(2, 0) = -vg(2, 3); res(2, 1) = -vg(2, 4); res(2, 2) = -vg(2, 5); res(2, 6) = -vg(2, 6);
+//}
+
+
+// Scatter the NCJ gradients at vertex iV w.r.t vertices i0, i1 and i2
+// in the vector of gradients for 2D element of nV vertices
+template<int iV, int nV, int i0, int i1, int i2>
+inline void scatterNCJGrad(const std::vector<double> &dNCJi, std::vector<double> &dNCJ)
 {
-  const double zn = xa*yb - xb*ya, yn = za*xb - xa*zb, xn = ya*zb - za*yb;
-  return fact * sqrt(xn*xn + yn*yn + zn*zn);
+  dNCJ[(iV*nV+i0)*3] = dNCJi[0];   dNCJ[(iV*nV+i0)*3+1] = dNCJi[1];   dNCJ[(iV*nV+i0)*3+2] = dNCJi[2];
+  dNCJ[(iV*nV+i1)*3] = dNCJi[3];   dNCJ[(iV*nV+i1)*3+1] = dNCJi[4];   dNCJ[(iV*nV+i1)*3+2] = dNCJi[5];
+  dNCJ[(iV*nV+i2)*3] = dNCJi[6];   dNCJ[(iV*nV+i2)*3+1] = dNCJi[7];   dNCJ[(iV*nV+i2)*3+2] = dNCJi[8];
 }
 
 
-// Given vectors (0, 1) and (0, 2) and their gradients, compute area of triangle
-// defined by both vectors and grad. w.r.t. x0, y0, z0, x1, y1, z1, x2, y2, z2 (times a factor)
-inline void triAreaAndGrad(const double fact, const fullMatrix<double> &vga,
-                           const fullMatrix<double> &vgb, fullVector<double> &res)
+// Scatter the NCJ gradients at vertex iV w.r.t vertices i0, i1, i2 and i3
+// in the vector of gradients for 3D element of nV vertices
+template<int iV, int nV, int i0, int i1, int i2, int i3>
+inline void scatterNCJGrad(const std::vector<double> &dNCJi, std::vector<double> &dNCJ)
 {
-  const double &dxadx0 = vga(0, 0), &dxady0 = vga(0, 1), &dxadz0 = vga(0, 2),
-                &dxadx1 = vga(0, 3), &dxady1 = vga(0, 4), &dxadz1 = vga(0, 5), &xa = vga(0, 6);
-  const double &dyadx0 = vga(1, 0), &dyady0 = vga(1, 1), &dyadz0 = vga(1, 2),
-                &dyadx1 = vga(1, 3), &dyady1 = vga(1, 4), &dyadz1 = vga(1, 5), &ya = vga(1, 6);
-  const double &dzadx0 = vga(2, 0), &dzady0 = vga(2, 1), &dzadz0 = vga(2, 2),
-                &dzadx1 = vga(2, 3), &dzady1 = vga(2, 4), &dzadz1 = vga(2, 5), &za = vga(2, 6);
-
-  const double &dxbdx0 = vgb(0, 0), &dxbdy0 = vgb(0, 1), &dxbdz0 = vgb(0, 2),
-                &dxbdx2 = vgb(0, 3), &dxbdy2 = vgb(0, 4), &dxbdz2 = vgb(0, 5), &xb = vgb(0, 6);
-  const double &dybdx0 = vgb(1, 0), &dybdy0 = vgb(1, 1), &dybdz0 = vgb(1, 2),
-                &dybdx2 = vgb(1, 3), &dybdy2 = vgb(1, 4), &dybdz2 = vgb(1, 5), &yb = vgb(1, 6);
-  const double &dzbdx0 = vgb(2, 0), &dzbdy0 = vgb(2, 1), &dzbdz0 = vgb(2, 2),
-                &dzbdx2 = vgb(2, 3), &dzbdy2 = vgb(2, 4), &dzbdz2 = vgb(2, 5), &zb = vgb(2, 6);
-
-  const double xn = ya*zb - za*yb;
-  const double dxndx0 = ya*dzbdx0 + dyadx0*zb - yb*dzadx0 - dybdx0*za;
-  const double dxndy0 = ya*dzbdy0 + dyady0*zb - yb*dzady0 - dybdy0*za;
-  const double dxndz0 = ya*dzbdz0 + dyadz0*zb - yb*dzadz0 - dybdz0*za;
-  const double dxndx1 = dyadx1*zb - yb*dzadx1;
-  const double dxndy1 = dyady1*zb - yb*dzady1;
-  const double dxndz1 = dyadz1*zb - yb*dzadz1;
-  const double dxndx2 = ya*dzbdx2 - dybdx2*za;
-  const double dxndy2 = ya*dzbdy2 - dybdy2*za;
-  const double dxndz2 = ya*dzbdz2 - dybdz2*za;
-
-  const double yn = za*xb - xa*zb;
-  const double dyndx0 = -xa*dzbdx0 - dxadx0*zb + xb*dzadx0 + dxbdx0*za;
-  const double dyndy0 = -xa*dzbdy0 - dxady0*zb + xb*dzady0 + dxbdy0*za;
-  const double dyndz0 = -xa*dzbdz0 - dxadz0*zb + xb*dzadz0 + dxbdz0*za;
-  const double dyndx1 = xb*dzadx1 - dxadx1*zb;
-  const double dyndy1 = xb*dzady1 - dxady1*zb;
-  const double dyndz1 = xb*dzadz1 - dxadz1*zb;
-  const double dyndx2 = dxbdx2*za - xa*dzbdx2;
-  const double dyndy2 = dxbdy2*za - xa*dzbdy2;
-  const double dyndz2 = dxbdz2*za - xa*dzbdz2;
-
-  const double zn = xa*yb - xb*ya;
-  const double dzndx0 = xa*dybdx0 + dxadx0*yb - xb*dyadx0 - dxbdx0*ya;
-  const double dzndy0 = xa*dybdy0 + dxady0*yb - xb*dyady0 - dxbdy0*ya;
-  const double dzndz0 = xa*dybdz0 + dxadz0*yb - xb*dyadz0 - dxbdz0*ya;
-  const double dzndx1 = dxadx1*yb - xb*dyadx1;
-  const double dzndy1 = dxady1*yb - xb*dyady1;
-  const double dzndz1 = dxadz1*yb - xb*dyadz1;
-  const double dzndx2 = xa*dybdx2 - dxbdx2*ya;
-  const double dzndy2 = xa*dybdy2 - dxbdy2*ya;
-  const double dzndz2 = xa*dybdz2 - dxbdz2*ya;
-
-  double &dNCJdx0 = res(0), &dNCJdy0 = res(1), &dNCJdz0 = res(2),
-          &dNCJdx1 = res(3), &dNCJdy1 = res(4), &dNCJdz1 = res(5),
-          &dNCJdx2 = res(6), &dNCJdy2 = res(7), &dNCJdz2 = res(8), &NCJ = res(9);
-
-  const double n = sqrt(xn*xn + yn*yn + zn*zn), invN = 1./n, fact2 = fact*invN;
-  dNCJdx0 = (dxndx0*xn + dyndx0*yn + dzndx0*zn) * fact2;
-  dNCJdy0 = (dxndy0*xn + dyndy0*yn + dzndy0*zn) * fact2;
-  dNCJdz0 = (dxndz0*xn + dyndz0*yn + dzndz0*zn) * fact2;
-  dNCJdx1 = (dxndx1*xn + dyndx1*yn + dzndx1*zn) * fact2;
-  dNCJdy1 = (dxndy1*xn + dyndy1*yn + dzndy1*zn) * fact2;
-  dNCJdz1 = (dxndz1*xn + dyndz1*yn + dzndz1*zn) * fact2;
-  dNCJdx2 = (dxndx2*xn + dyndx2*yn + dzndx2*zn) * fact2;
-  dNCJdy2 = (dxndy2*xn + dyndy2*yn + dzndy2*zn) * fact2;
-  dNCJdz2 = (dxndz2*xn + dyndz2*yn + dzndz2*zn) * fact2;
-  NCJ = fact * n;
-}
-
-
-// Revert vector and gradients
-inline void revertVG(const fullMatrix<double> &vg, fullMatrix<double> &res)
-{
-  res(0, 0) = -vg(0, 3); res(0, 1) = -vg(0, 4); res(0, 2) = -vg(0, 5); res(0, 6) = -vg(0, 6);
-  res(1, 0) = -vg(1, 3); res(1, 1) = -vg(1, 4); res(1, 2) = -vg(1, 5); res(1, 6) = -vg(1, 6);
-  res(2, 0) = -vg(2, 3); res(2, 1) = -vg(2, 4); res(2, 2) = -vg(2, 5); res(2, 6) = -vg(2, 6);
+  dNCJ[iV*nV+i0*3] = dNCJi[0];   dNCJ[iV*nV+i0*3+1] = dNCJi[1];   dNCJ[iV*nV+i0*3+2] = dNCJi[2];
+  dNCJ[iV*nV+i1*3] = dNCJi[3];   dNCJ[iV*nV+i1*3+1] = dNCJi[4];   dNCJ[iV*nV+i1*3+2] = dNCJi[5];
+  dNCJ[iV*nV+i2*3] = dNCJi[6];   dNCJ[iV*nV+i2*3+1] = dNCJi[7];   dNCJ[iV*nV+i2*3+2] = dNCJi[8];
+  dNCJ[iV*nV+i2*3] = dNCJi[9];   dNCJ[iV*nV+i2*3+1] = dNCJi[10];   dNCJ[iV*nV+i2*3+2] = dNCJi[11];
 }
 
 
@@ -297,82 +234,133 @@ double qmTriangle::angles(MTriangle *e)
 
 void qmTriangle::NCJRange(const MTriangle *el, double &valMin, double &valMax)
 {
-  fullVector<double> ncj(3);
-  const MVertex *v0 = el->getVertex(0), *v1 = el->getVertex(1), *v2 = el->getVertex(2);
-  NCJ(v0->x(), v0->y(), v0->z(), v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(), ncj);
-  valMin = *std::min_element(ncj.getDataPtr(), ncj.getDataPtr()+3);
-  valMax = *std::max_element(ncj.getDataPtr(), ncj.getDataPtr()+3);
+  const JacobianBasis *jac = el->getJacobianFuncSpace();
+  fullMatrix<double> primNodesXYZ(3, 3);
+//  SVector3 geoNorm(0.,0.,0.);
+//  std::map<MElement*,GEntity*>::const_iterator itEl2ent = element2entity.find(_el[iEl]);
+//  GEntity *ge = (itEl2ent == element2entity.end()) ? 0 : itEl2ent->second;
+//  const bool hasGeoNorm = ge && (ge->dim() == 2) && ge->haveParametrization();
+  for (int i=0; i<jac->getNumPrimMapNodes(); i++) {
+    const MVertex *v = el->getVertex(i);
+    primNodesXYZ(i,0) = v->x();
+    primNodesXYZ(i,1) = v->y();
+    primNodesXYZ(i,2) = v->z();
+//    if (hasGeoNorm && (_vert[iV]->onWhat() == ge)) {
+//      double u, v;
+//      _vert[iV]->getParameter(0,u);
+//      _vert[iV]->getParameter(1,v);
+//      geoNorm += ((GFace*)ge)->normal(SPoint2(u,v));
+//    }
+  }
+//  if (hasGeoNorm && (geoNorm.normSq() == 0.)) {
+//    SPoint2 param = ((GFace*)ge)->parFromPoint(_el[iEl]->barycenter(true),false);
+//    geoNorm = ((GFace*)ge)->normal(param);
+//  }
+  fullMatrix<double> nM(1, 3);
+  jac->getPrimNormal2D(primNodesXYZ, nM);
+  SVector3 normal(nM(0, 0), nM(0, 1), nM(0, 2));
+
+  std::vector<double> ncj(3);
+  NCJ(el->getVertex(0)->point(), el->getVertex(1)->point(),
+      el->getVertex(2)->point(), normal, ncj);
+  valMin = *std::min_element(ncj.begin(), ncj.end());
+  valMax = *std::max_element(ncj.begin(), ncj.end());
 }
 
 
-void qmTriangle::NCJ(const double &x0, const double &y0, const double &z0,
-                     const double &x1, const double &y1, const double &z1,
-                     const double &x2, const double &y2, const double &z2,
-                     fullVector<double> &ncj)
+void qmTriangle::NCJ(const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
+                     const SVector3 &normal, std::vector<double> &NCJ)
 {
   // Compute unit vectors for each edge
-  double x01n, y01n, z01n, x12n, y12n, z12n, x20n, y20n, z20n;
-  unitVec(x0, y0, z0, x1, y1, z1, x01n, y01n, z01n);
-  unitVec(x1, y1, z1, x2, y2, z2, x12n, y12n, z12n);
-  unitVec(x2, y2, z2, x0, y0, z0, x20n, y20n, z20n);
+  SVector3 v01n(p0, p1), v12n(p1, p2), v20n(p2, p0);
+  v01n.normalize();
+  v12n.normalize();
+  v20n.normalize();
 
   // Compute NCJ at vertex from unit vectors a and b as 0.5*||a^b||/A_equilateral
   // Factor = 2./sqrt(3.) = 0.5/A_equilateral
   static const double fact = 2./sqrt(3.);
-  ncj(0) = triArea(fact, x01n, y01n, z01n, -x20n, -y20n, -z20n);
-  ncj(1) = triArea(fact, x12n, y12n, z12n, -x01n, -y01n, -z01n);
-  ncj(2) = triArea(fact, x20n, y20n, z20n, -x12n, -y12n, -z12n);
+  NCJ[0] = fact * dot(crossprod(v01n, -v20n), normal);
+  NCJ[1] = fact * dot(crossprod(v12n, -v01n), normal);
+  NCJ[2] = fact * dot(crossprod(v20n, -v12n), normal);
 }
 
 
-void qmTriangle::NCJAndGradients(const double &x0, const double &y0, const double &z0,
-                                 const double &x1, const double &y1, const double &z1,
-                                 const double &x2, const double &y2, const double &z2,
-                                 fullMatrix<double> &res)
+// Compute NCJ and its gradients at corners
+// Gradients packed in vector: (dNCJ0/dx0, dNCJ0/dy0, dNCJ0/dz0,
+//                              dNCJ0/dx1, ... dNCJ0/dz3, dNCJ1/dx0, ..., dNCJ3/dz3)
+void qmTriangle::NCJAndGradients(const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
+                                 const SVector3 &normal,
+                                 std::vector<double> &NCJ, std::vector<double> &dNCJ)
 {
   // Factor = 2./sqrt(3.) = 0.5/A_equilateral
   static const double fact = 2./sqrt(3.);
 
-  // Compute unit vector and its gradients for each edge
-  fullMatrix<double> vg01(3,7);
-  unitVecAndGrad(x0, y0, z0, x1, y1, z1, vg01);
-  fullMatrix<double> vg12(3,7);
-  unitVecAndGrad(x1, y1, z1, x2, y2, z2, vg12);
-  fullMatrix<double> vg20(3,7);
-  unitVecAndGrad(x2, y2, z2, x0, y0, z0, vg20);
-  fullMatrix<double> vg10(3,7);
-  revertVG(vg01, vg10);
-  fullMatrix<double> vg21(3,7);
-  revertVG(vg12, vg21);
-  fullMatrix<double> vg02(3,7);
-  revertVG(vg20, vg02);
+  // Compute unit vector, its gradients and opposite grandients for edge (0, 1)
+  SVector3 v01n, v10n;
+  std::vector<SVector3> dv01ndp0(3), dv01ndp1(3);
+  unitVecAndGrad(p0, p1, v01n, dv01ndp0);
+  v10n = -v01n;
+  for (int i=0; i<3; i++) dv01ndp1[i] = -dv01ndp0[i];
+  const std::vector<SVector3> &dv10ndp1 = dv01ndp0, &dv10ndp0 = dv01ndp1;
+
+  // Compute unit vector, its gradients and opposite grandients for edge (1, 2)
+  SVector3 v12n, v21n;
+  std::vector<SVector3> dv12ndp1(3), dv12ndp2(3);
+  unitVecAndGrad(p1, p2, v12n, dv12ndp1);
+  v21n = -v12n;
+  for (int i=0; i<3; i++) dv12ndp2[i] = -dv12ndp1[i];
+  const std::vector<SVector3> &dv21ndp2 = dv12ndp1, &dv21ndp1 = dv12ndp2;
+
+  // Compute unit vector, its gradients and opposite grandients for edge (2, 0)
+  SVector3 v20n, v02n;
+  std::vector<SVector3> dv20ndp2(3), dv20ndp0(3);
+  unitVecAndGrad(p2, p0, v20n, dv20ndp2);
+  v02n = -v20n;
+  for (int i=0; i<3; i++) dv20ndp0[i] = -dv20ndp2[i];
+  const std::vector<SVector3> &dv02ndp0 = dv20ndp2, &dv02ndp2 = dv20ndp0;
 
   // Compute NCJ at vertex 0 as 0.5*||u01^u02||/A_triEqui
   // and gradients w.r.t. x0, y0, z0, x1, y1, z1, x2, y2, z2
-  fullVector<double> res0(10);
-  triAreaAndGrad(fact, vg01, vg02, res0);
-  res(0, 0) = res0(0); res(0, 1) = res0(1); res(0, 2) = res0(2);
-  res(0, 3) = res0(3); res(0, 4) = res0(4); res(0, 5) = res0(5);
-  res(0, 6) = res0(6); res(0, 7) = res0(7); res(0, 8) = res0(8);
-  res(0, 9) = res0(9);
+  std::vector<double> dNCJ0(9);
+  NCJAndGrad2D(v01n, dv01ndp0, dv01ndp1, v02n, dv02ndp0, dv02ndp2, normal, NCJ[0], dNCJ0);
+//  dNCJ[0] = dNCJ0[0]; dNCJ[1] = dNCJ0[1]; dNCJ[2] = dNCJ0[2];
+//  dNCJ[3] = dNCJ0[3]; dNCJ[4] = dNCJ0[4]; dNCJ[5] = dNCJ0[5];
+//  dNCJ[6] = dNCJ0[6]; dNCJ[7] = dNCJ0[7]; dNCJ[8] = dNCJ0[8];
+  scatterNCJGrad<0, 3, 0, 1, 2>(dNCJ0, dNCJ);
 
   // Compute NCJ at vertex 1 as 0.5*||u12^u10||/A_triEqui
   // and gradients w.r.t. x1, y1, z1, x2, y2, z2, x0, y0, z0
-  fullVector<double> res1(10);
-  triAreaAndGrad(fact, vg12, vg10, res1);
-  res(1, 0) = res1(6); res(1, 1) = res1(7); res(1, 2) = res1(8);
-  res(1, 3) = res1(0); res(1, 4) = res1(1); res(1, 5) = res1(2);
-  res(1, 6) = res1(3); res(1, 7) = res1(4); res(1, 8) = res1(5);
-  res(1, 9) = res1(9);
+  std::vector<double> dNCJ1(9);
+  NCJAndGrad2D(v12n, dv12ndp1, dv12ndp2, v10n, dv10ndp1, dv10ndp0, normal, NCJ[1], dNCJ1);
+//  dNCJ[9] = dNCJ1[6]; dNCJ[10] = dNCJ1[7]; dNCJ[11] = dNCJ1[8];
+//  dNCJ[10] = dNCJ1[0]; dNCJ[11] = dNCJ1[1]; dNCJ[12] = dNCJ1[2];
+//  dNCJ[13] = dNCJ1[3]; dNCJ[14] = dNCJ1[4]; dNCJ[15] = dNCJ1[5];
+  scatterNCJGrad<1, 3, 1, 2, 0>(dNCJ1, dNCJ);
 
   // Compute NCJ at vertex 2 as 0.5*||u20^u21||/A_triEqui
   // Compute NCJ at vertex 2 and gradients w.r.t. x2, y2, z2, x0, y0, z0, x1, y1, z1
-  fullVector<double> res2(10);
-  triAreaAndGrad(fact, vg20, vg21, res2);
-  res(2, 0) = res2(3); res(2, 1) = res2(4); res(2, 2) = res2(5);
-  res(2, 3) = res2(6); res(2, 4) = res2(7); res(2, 5) = res2(8);
-  res(2, 6) = res2(0); res(2, 7) = res2(1); res(2, 8) = res2(2);
-  res(2, 9) = res2(9);
+  std::vector<double> dNCJ2(9);
+  NCJAndGrad2D(v20n, dv20ndp2, dv20ndp0, v21n, dv21ndp2, dv21ndp1, normal, NCJ[2], dNCJ2);
+//  dNCJ[16] = dNCJ2[3]; dNCJ[17] = dNCJ2[4]; dNCJ[18] = dNCJ2[5];
+//  dNCJ[19] = dNCJ2[6]; dNCJ[20] = dNCJ2[7]; dNCJ[21] = dNCJ2[8];
+//  dNCJ[22] = dNCJ2[0]; dNCJ[23] = dNCJ2[1]; dNCJ[24] = dNCJ2[2];
+  scatterNCJGrad<2, 3, 2, 0, 1>(dNCJ2, dNCJ);
+
+  for (int i=0; i<3; i++) NCJ[i] *= fact;
+  for (int i=0; i<27; i++) dNCJ[i] *= fact;
+
+//  for (int iV=0; iV<3; iV++) {
+//    std::cout << "DBGTT: Vertex " << iV << ":\n";
+//    std::cout << "DBGTT:     -> NCJ = " << NCJ[iV] << "\n";
+//    for (unsigned ig=0; ig<3; ig++) {
+//      int ind = iV*9+ig*3;
+//      std::cout << "DBGTT:     -> dNCJ/dp" << ig << " = (" << dNCJ[ind] << ", " <<  dNCJ[ind+1] << ", " <<  dNCJ[ind+2] << ")\n";
+////      int ind2 = ig*3;
+////      std::vector<double> dNCJLoc = (iV == 0) ? dNCJ0 : (iV == 1) ? dNCJ1 : dNCJ2;
+////      std::cout << "DBGTT:     -> dNCJ/dp" << ig << " (local) = (" << dNCJLoc[ind2] << ", " <<  dNCJLoc[ind2+1] << ", " <<  dNCJLoc[ind2+2] << ")\n";
+//    }
+//  }
 }
 
 
@@ -478,105 +466,130 @@ double qmQuadrangle::angles(MQuadrangle *e)
 
 void qmQuadrangle::NCJRange(const MQuadrangle *el, double &valMin, double &valMax)
 {
-  fullVector<double> ncj(4);
-  const MVertex *v0 = el->getVertex(0), *v1 = el->getVertex(1),
-                *v2 = el->getVertex(2), *v3 = el->getVertex(3);
-  NCJ(v0->x(), v0->y(), v0->z(), v1->x(), v1->y(), v1->z(),
-      v2->x(), v2->y(), v2->z(), v3->x(), v3->y(), v3->z(), ncj);
-  valMin = *std::min_element(ncj.getDataPtr(), ncj.getDataPtr()+4);
-  valMax = *std::max_element(ncj.getDataPtr(), ncj.getDataPtr()+4);
+  const JacobianBasis *jac = el->getJacobianFuncSpace();
+  fullMatrix<double> primNodesXYZ(4, 3);
+//  SVector3 geoNorm(0.,0.,0.);
+//  std::map<MElement*,GEntity*>::const_iterator itEl2ent = element2entity.find(_el[iEl]);
+//  GEntity *ge = (itEl2ent == element2entity.end()) ? 0 : itEl2ent->second;
+//  const bool hasGeoNorm = ge && (ge->dim() == 2) && ge->haveParametrization();
+  for (int i=0; i<jac->getNumPrimMapNodes(); i++) {
+    const MVertex *v = el->getVertex(i);
+    primNodesXYZ(i,0) = v->x();
+    primNodesXYZ(i,1) = v->y();
+    primNodesXYZ(i,2) = v->z();
+//    if (hasGeoNorm && (_vert[iV]->onWhat() == ge)) {
+//      double u, v;
+//      _vert[iV]->getParameter(0,u);
+//      _vert[iV]->getParameter(1,v);
+//      geoNorm += ((GFace*)ge)->normal(SPoint2(u,v));
+//    }
+  }
+//  if (hasGeoNorm && (geoNorm.normSq() == 0.)) {
+//    SPoint2 param = ((GFace*)ge)->parFromPoint(_el[iEl]->barycenter(true),false);
+//    geoNorm = ((GFace*)ge)->normal(param);
+//  }
+  fullMatrix<double> nM(1, 3);
+  jac->getPrimNormal2D(primNodesXYZ, nM);
+  SVector3 normal(nM(0, 0), nM(0, 1), nM(0, 2));
+
+  std::vector<double> ncj(4);
+  NCJ(el->getVertex(0)->point(), el->getVertex(1)->point(),
+      el->getVertex(2)->point(), el->getVertex(3)->point(),
+      normal, ncj);
+  valMin = *std::min_element(ncj.begin(), ncj.end());
+  valMax = *std::max_element(ncj.begin(), ncj.end());
 }
 
 
-void qmQuadrangle::NCJ(const double &x0, const double &y0, const double &z0,
-                       const double &x1, const double &y1, const double &z1,
-                       const double &x2, const double &y2, const double &z2,
-                       const double &x3, const double &y3, const double &z3,
-                       fullVector<double> &ncj)
+void qmQuadrangle::NCJ(const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
+                       const SPoint3 &p3, const SVector3 &normal, std::vector<double> &ncj)
 {
   // Compute unit vectors for each edge
-  double x01n, y01n, z01n, x12n, y12n, z12n, x23n, y23n, z23n, x30n, y30n, z30n;
-  unitVec(x0, y0, z0, x1, y1, z1, x01n, y01n, z01n);
-  unitVec(x1, y1, z1, x2, y2, z2, x12n, y12n, z12n);
-  unitVec(x2, y2, z2, x3, y3, z3, x23n, y23n, z23n);
-  unitVec(x3, y3, z3, x0, y0, z0, x30n, y30n, z30n);
+  SVector3 v01n(p0, p1), v12n(p1, p2), v23n(p2, p3), v30n(p3, p0);
+  v01n.normalize();
+  v12n.normalize();
+  v23n.normalize();
+  v30n.normalize();
 
-  // Compute NCJ at vertex from unit vectors a and b as 0.5*||a^b||/A_triRect
-  // Factor = 1. = 0.5/A_triRect
-  static const double fact = 1.;
-  ncj(0) = triArea(fact, x01n, y01n, z01n, -x30n, -y30n, -z30n);
-  ncj(1) = triArea(fact, x12n, y12n, z12n, -x01n, -y01n, -z01n);
-  ncj(2) = triArea(fact, x23n, y23n, z23n, -x12n, -y12n, -z12n);
-  ncj(3) = triArea(fact, x30n, y30n, z30n, -x23n, -y23n, -z23n);
+  // Compute NCJ at vertex from unit vectors a and b as 0.5*||a^b||/A_equilateral
+  ncj[0] = dot(crossprod(v01n, -v30n), normal);
+  ncj[1] = dot(crossprod(v12n, -v01n), normal);
+  ncj[2] = dot(crossprod(v23n, -v12n), normal);
+  ncj[3] = dot(crossprod(v30n, -v23n), normal);
 }
 
 
-void qmQuadrangle::NCJAndGradients(const double &x0, const double &y0, const double &z0,
-                                   const double &x1, const double &y1, const double &z1,
-                                   const double &x2, const double &y2, const double &z2,
-                                   const double &x3, const double &y3, const double &z3,
-                                   fullMatrix<double> &res)
+void qmQuadrangle::NCJAndGradients(const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
+                                   const SPoint3 &p3, const SVector3 &normal,
+                                   std::vector<double> &NCJ, std::vector<double> &dNCJ)
 {
-  // Factor = 1. = 0.5/A_triRect
-  static const double fact = 1.;
+  // Compute unit vector, its gradients and opposite gradients for edge (0,1)
+  SVector3 v01n, v10n;
+  std::vector<SVector3> dv01ndp0(3), dv01ndp1(3);
+  unitVecAndGrad(p0, p1, v01n, dv01ndp0);
+  v10n = -v01n;
+  for (int i=0; i<3; i++) dv01ndp1[i] = -dv01ndp0[i];
+  const std::vector<SVector3> &dv10ndp1 = dv01ndp0, &dv10ndp0 = dv01ndp1;
 
-  // Compute unit vector and its gradients for each edge
-  fullMatrix<double> vg01(3,7);
-  unitVecAndGrad(x0, y0, z0, x1, y1, z1, vg01);
-  fullMatrix<double> vg12(3,7);
-  unitVecAndGrad(x1, y1, z1, x2, y2, z2, vg12);
-  fullMatrix<double> vg23(3,7);
-  unitVecAndGrad(x2, y2, z2, x3, y3, z3, vg23);
-  fullMatrix<double> vg30(3,7);
-  unitVecAndGrad(x3, y3, z3, x0, y0, z0, vg30);
-  fullMatrix<double> vg10(3,7);
-  revertVG(vg01, vg10);
-  fullMatrix<double> vg21(3,7);
-  revertVG(vg12, vg21);
-  fullMatrix<double> vg32(3,7);
-  revertVG(vg23, vg32);
-  fullMatrix<double> vg03(3,7);
-  revertVG(vg30, vg03);
+  // Compute unit vector, its gradients and opposite gradients for edge (1,2)
+  SVector3 v12n, v21n;
+  std::vector<SVector3> dv12ndp1(3), dv12ndp2(3);
+  unitVecAndGrad(p1, p2, v12n, dv12ndp1);
+  v21n = -v12n;
+  for (int i=0; i<3; i++) dv12ndp2[i] = -dv12ndp1[i];
+  const std::vector<SVector3> &dv21ndp2 = dv12ndp1, &dv21ndp1 = dv12ndp2;
+
+  // Compute unit vector, its gradients and opposite gradients for edge (2,3)
+  SVector3 v23n, v32n;
+  std::vector<SVector3> dv23ndp2(3), dv23ndp3(3);
+  unitVecAndGrad(p2, p3, v23n, dv23ndp2);
+  v32n = -v23n;
+  for (int i=0; i<3; i++) dv23ndp3[i] = -dv23ndp2[i];
+  const std::vector<SVector3> &dv32ndp3 = dv23ndp2, &dv32ndp2 = dv23ndp3;
+
+  // Compute unit vector, its gradients and opposite gradients for edge (3,0)
+  SVector3 v30n, v03n;
+  std::vector<SVector3> dv30ndp3(3), dv30ndp0(3);
+  unitVecAndGrad(p3, p0, v30n, dv30ndp3);
+  v03n = -v30n;
+  for (int i=0; i<3; i++) dv30ndp0[i] = -dv30ndp3[i];
+  const std::vector<SVector3> &dv03ndp0 = dv30ndp3, &dv03ndp3 = dv30ndp0;
 
   // Compute NCJ at vertex 0 as 0.5*||u01^u03||/A_triRect
   // and gradients w.r.t. x0, y0, z0, x1, y1, z1, x3, y3, z3
-  fullVector<double> res0(10);
-  triAreaAndGrad(fact, vg01, vg03, res0);
-  res(0, 0) = res0(0); res(0, 1) =  res0(1); res(0, 2) =  res0(2);
-  res(0, 3) = res0(3); res(0, 4) =  res0(4); res(0, 5) =  res0(5);
-  res(0, 6) =      0.; res(0, 7) =       0.; res(0, 8) =       0.;
-  res(0, 9) = res0(6); res(0, 10) = res0(7); res(0, 11) = res0(8);
-  res(0, 12) = res0(9);
+  std::vector<double> dNCJ0(9);
+  NCJAndGrad2D( v01n, dv01ndp0, dv01ndp1, v03n, dv03ndp0, dv03ndp3, normal, NCJ[0], dNCJ0);
+  scatterNCJGrad<0, 4, 0, 1, 3>(dNCJ0, dNCJ);
 
   // Compute NCJ at vertex 1 as 0.5*||u12^u10||/A_triRect
   // and gradients w.r.t. x1, y1, z1, x2, y2, z2, x0, y0, z0
-  fullVector<double> res1(10);
-  triAreaAndGrad(fact, vg12, vg10, res1);
-  res(1, 0) = res1(6); res(1, 1) = res1(7); res(1, 2) = res1(8);
-  res(1, 3) = res1(0); res(1, 4) = res1(1); res(1, 5) = res1(2);
-  res(1, 6) = res1(3); res(1, 7) = res1(4); res(1, 8) = res1(5);
-  res(1, 9) =      0.; res(1, 10) =     0.; res(1, 11) =     0.;
-  res(1, 12) = res1(9);
+  std::vector<double> dNCJ1(9);
+  NCJAndGrad2D( v12n, dv12ndp1, dv12ndp2, v10n, dv10ndp1, dv10ndp0, normal, NCJ[1], dNCJ1);
+  scatterNCJGrad<1, 4, 1, 2, 0>(dNCJ1, dNCJ);
 
   // Compute NCJ at vertex 2 as 0.5*||u23^u21||/A_triRect
   // and gradients w.r.t. x2, y2, z2, x3, y3, z3, x1, y1, z1
-  fullVector<double> res2(10);
-  triAreaAndGrad(fact, vg23, vg21, res2);
-  res(2, 0) =      0.; res(2, 1) =       0.; res(2, 2) =       0.;
-  res(2, 3) = res2(6); res(2, 4) =  res2(7); res(2, 5) =  res2(8);
-  res(2, 6) = res2(0); res(2, 7) =  res2(1); res(2, 8) =  res2(2);
-  res(2, 9) = res2(3); res(2, 10) = res2(4); res(2, 11) = res2(5);
-  res(2, 12) = res2(9);
+  std::vector<double> dNCJ2(9);
+  NCJAndGrad2D( v23n, dv23ndp2, dv23ndp3, v21n, dv21ndp2, dv21ndp1, normal, NCJ[2], dNCJ2);
+  scatterNCJGrad<2, 4, 2, 3, 1>(dNCJ2, dNCJ);
 
   // Compute NCJ at vertex 3 as 0.5*||u30^u32||/A_triRect
   // and gradients w.r.t. x3, y3, z3, x0, y0, z0, x2, y2, z2
-  fullVector<double> res3(10);
-  triAreaAndGrad(fact, vg23, vg21, res3);
-  res(3, 0) = res3(3); res(3, 1) =  res3(4); res(3, 2) =  res3(5);
-  res(3, 3) =      0.; res(3, 4) =       0.; res(3, 5) =       0.;
-  res(3, 6) = res3(6); res(3, 7) =  res3(7); res(3, 8) =  res3(8);
-  res(3, 9) = res3(0); res(3, 10) = res3(1); res(3, 11) = res3(2);
-  res(3, 12) = res3(9);
+  std::vector<double> dNCJ3(9);
+  NCJAndGrad2D(v30n, dv30ndp3, dv30ndp0, v32n, dv32ndp3, dv32ndp2, normal, NCJ[3], dNCJ3);
+  scatterNCJGrad<3, 4, 3, 0, 2>(dNCJ3, dNCJ);
+
+//  for (int iV=0; iV<4; iV++) {
+//    std::cout << "DBGTT: Vertex " << iV << ":\n";
+//    std::cout << "DBGTT:     -> NCJ = " << NCJ[iV] << "\n";
+//    for (unsigned ig=0; ig<4; ig++) {
+//      int ind = iV*12+ig*3;
+//      std::cout << "DBGTT:     -> dNCJ/dp" << ig << " = (" << dNCJ[ind] << ", " <<  dNCJ[ind+1] << ", " <<  dNCJ[ind+2] << ")\n";
+////      int ind2 = ig*3;
+////      std::vector<double> dNCJLoc = (iV == 0) ? dNCJ0 : (iV == 1) ? dNCJ1 : dNCJ2;
+////      std::cout << "DBGTT:     -> dNCJ/dp" << ig << " (local) = (" << dNCJLoc[ind2] << ", " <<  dNCJLoc[ind2+1] << ", " <<  dNCJLoc[ind2+2] << ")\n";
+//    }
+//  }
 }
 
 

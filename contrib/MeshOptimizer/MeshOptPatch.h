@@ -144,10 +144,11 @@ private:
   std::vector<fullMatrix<double> > _scaledNormEl;       // Normals to 2D elements for Jacobian regularization and scaling
   std::vector<double> _invStraightJac;                  // Initial Jacobians for 3D elements
 //  void calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2entity, int iEl);
-  void calcScaledNormalEl2D(int iEl);
+  void calcNormalEl2D(int iEl, bool scale);
 
   // Mesh quality
   std::vector<int> _nNCJEl;                             // Number of NCJ values for an el.
+  std::vector<SVector3> _unitNormEl;                    // Normals to 2D elements for NCJ regularization
 };
 
 

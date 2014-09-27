@@ -269,7 +269,7 @@ void Patch::initScaledJac()
   if ((_dim == 2) && _scaledNormEl.empty()) {
     _scaledNormEl.resize(nEl());
 //    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
-    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(iEl);
+    for (int iEl = 0; iEl < nEl(); iEl++) calcNormalEl2D(iEl, true);
   }
   else if (_invStraightJac.empty()) {
     _invStraightJac.resize(nEl(),1.);
@@ -293,7 +293,7 @@ void Patch::initMetricMin()
 
 // TODO: Re-introduce normal to geometry?
 //void Mesh::calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2entity, int iEl)
-void Patch::calcScaledNormalEl2D(int iEl)
+void Patch::calcNormalEl2D(int iEl, bool scale)
 {
   const JacobianBasis *jac = _el[iEl]->getJacobianFuncSpace();
 
@@ -304,9 +304,9 @@ void Patch::calcScaledNormalEl2D(int iEl)
 //  const bool hasGeoNorm = ge && (ge->dim() == 2) && ge->haveParametrization();
   for (int i=0; i<jac->getNumPrimMapNodes(); i++) {
     const int &iV = _el2V[iEl][i];
-    primNodesXYZ(i,0) = _xyz[iV].x();
-    primNodesXYZ(i,1) = _xyz[iV].y();
-    primNodesXYZ(i,2) = _xyz[iV].z();
+    primNodesXYZ(i, 0) = _xyz[iV].x();
+    primNodesXYZ(i, 1) = _xyz[iV].y();
+    primNodesXYZ(i, 2) = _xyz[iV].z();
 //    if (hasGeoNorm && (_vert[iV]->onWhat() == ge)) {
 //      double u, v;
 //      _vert[iV]->getParameter(0,u);
@@ -319,16 +319,20 @@ void Patch::calcScaledNormalEl2D(int iEl)
 //    geoNorm = ((GFace*)ge)->normal(param);
 //  }
 
-  fullMatrix<double> &elNorm = _scaledNormEl[iEl];
-  elNorm.resize(1,3);
-  const double norm = jac->getPrimNormal2D(primNodesXYZ,elNorm);
-  double factor = 1./norm;
-//  if (hasGeoNorm) {
-//    const double scal = geoNorm(0)*elNorm(0,0)+geoNorm(1)*elNorm(0,1)+geoNorm(2)*elNorm(0,2);
-//    if (scal < 0.) factor = -factor;
-//  }
-  elNorm.scale(factor);   // Re-scaling normal here is faster than an extra scaling operation on the Jacobian
-
+  fullMatrix<double> uElNorm(1, 3);
+  fullMatrix<double> &elNorm = scale ? _scaledNormEl[iEl] : uElNorm;
+  elNorm.resize(1, 3);
+  const double norm = jac->getPrimNormal2D(primNodesXYZ, elNorm);
+  if (scale) {
+    double factor = 1./norm;
+//    if (hasGeoNorm) {
+//      const double scal = geoNorm(0)*elNorm(0,0)+geoNorm(1)*elNorm(0,1)+geoNorm(2)*elNorm(0,2);
+//      if (scal < 0.) factor = -factor;
+//    }
+    elNorm.scale(factor);   // Re-scaling normal here is faster than an extra scaling operation on the Jacobian
+  }
+  else
+    _unitNormEl[iEl] = SVector3(uElNorm(0, 0), uElNorm(0, 1), uElNorm(0, 2));
 }
 
 
@@ -510,6 +514,14 @@ void Patch::initNCJ()
       case TYPE_QUA: _nNCJEl[iEl] = qmQuadrangle::numNCJVal(); break;
       }
   }
+
+  // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
+  // Jacobians of 3D elements
+  if ((_dim == 2) && _unitNormEl.empty()) {
+    _unitNormEl.resize(nEl());
+//    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
+    for (int iEl = 0; iEl < nEl(); iEl++) calcNormalEl2D(iEl, false);
+  }
 }
 
 
@@ -519,27 +531,19 @@ void Patch::NCJ(int iEl, std::vector<double> &NCJ)
   const int &numNodes = _nNodEl[iEl];
 
   std::vector<int> &iVEl = _el2V[iEl];
-  fullVector<double> val(numNCJVal);
   switch(_el[iEl]->getType()) {                                                 // TODO: Complete with other types?
   case TYPE_TRI: {
     const int &iV0 = _el2V[iEl][0], &iV1 = _el2V[iEl][1], &iV2 = _el2V[iEl][2];
-    qmTriangle::NCJ(_xyz[iV0].x(), _xyz[iV0].y(), _xyz[iV0].z(),
-                    _xyz[iV1].x(), _xyz[iV1].y(), _xyz[iV1].z(),
-                    _xyz[iV2].x(), _xyz[iV2].y(), _xyz[iV2].z(), val);
+    qmTriangle::NCJ(_xyz[iV0], _xyz[iV1], _xyz[iV2], _unitNormEl[iEl], NCJ);
     break;
   }
   case TYPE_QUA: {
     const int &iV0 = _el2V[iEl][0], &iV1 = _el2V[iEl][1],
               &iV2 = _el2V[iEl][2], &iV3 = _el2V[iEl][3];
-    qmQuadrangle::NCJ(_xyz[iV0].x(), _xyz[iV0].y(), _xyz[iV0].z(),
-                      _xyz[iV1].x(), _xyz[iV1].y(), _xyz[iV1].z(),
-                      _xyz[iV2].x(), _xyz[iV2].y(), _xyz[iV2].z(),
-                      _xyz[iV3].x(), _xyz[iV3].y(), _xyz[iV3].z(), val);
+    qmQuadrangle::NCJ(_xyz[iV0], _xyz[iV1], _xyz[iV2], _xyz[iV3], _unitNormEl[iEl], NCJ);
     break;
   }
   }
-
-  for (int l = 0; l < numNCJVal; l++) NCJ[l] = val(l);
 }
 
 
@@ -549,28 +553,22 @@ void Patch::NCJAndGradients(int iEl, std::vector<double> &NCJ, std::vector<doubl
   const int &numNodes = _nNodEl[iEl];
 
   std::vector<int> &iVEl = _el2V[iEl];
-  fullMatrix<double> gradVal(numNCJVal, 3*numNodes+1);
+  std::vector<double> dNCJ(numNCJVal*3*numNodes);
   switch(_el[iEl]->getType()) {                                                 // TODO: Complete with other types?
   case TYPE_TRI: {
     const int &iV0 = _el2V[iEl][0], &iV1 = _el2V[iEl][1], &iV2 = _el2V[iEl][2];
-    qmTriangle::NCJAndGradients(_xyz[iV0].x(), _xyz[iV0].y(), _xyz[iV0].z(),
-                                _xyz[iV1].x(), _xyz[iV1].y(), _xyz[iV1].z(),
-                                _xyz[iV2].x(), _xyz[iV2].y(), _xyz[iV2].z(), gradVal);
+    qmTriangle::NCJAndGradients(_xyz[iV0], _xyz[iV1], _xyz[iV2],
+                                _unitNormEl[iEl], NCJ, dNCJ);
     break;
   }
   case TYPE_QUA: {
     const int &iV0 = _el2V[iEl][0], &iV1 = _el2V[iEl][1],
               &iV2 = _el2V[iEl][2], &iV3 = _el2V[iEl][3];
-    qmQuadrangle::NCJAndGradients(_xyz[iV0].x(), _xyz[iV0].y(), _xyz[iV0].z(),
-                                  _xyz[iV1].x(), _xyz[iV1].y(), _xyz[iV1].z(),
-                                  _xyz[iV2].x(), _xyz[iV2].y(), _xyz[iV2].z(),
-                                  _xyz[iV3].x(), _xyz[iV3].y(), _xyz[iV3].z(), gradVal);
+    qmQuadrangle::NCJAndGradients(_xyz[iV0], _xyz[iV1], _xyz[iV2], _xyz[iV3],
+                                  _unitNormEl[iEl], NCJ, dNCJ);
     break;
   }
   }
-
-  // NCJ
-  for (int l = 0; l < numNCJVal; l++) NCJ[l] = gradVal(l,3*numNodes);
 
   // Gradients of the NCJ
   int iPC = 0;
@@ -579,14 +577,15 @@ void Patch::NCJAndGradients(int iEl, std::vector<double> &NCJ, std::vector<doubl
   for (int i = 0; i < numNodes; i++) {
     int &iFVi = _el2FV[iEl][i];
     if (iFVi >= 0) {
-      for (int l = 0; l < numNCJVal; l++)
-        gXyzV [l] = SPoint3(gradVal(l,i+0*numNodes), gradVal(l,i+1*numNodes),
-                            gradVal(l,i+2*numNodes));
-      _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi],gXyzV,gUvwV);
       for (int l = 0; l < numNCJVal; l++) {
-        gNCJ[indGNCJ(iEl,l,iPC)] = gUvwV[l][0];
-        if (_nPCFV[iFVi] >= 2) gNCJ[indGNCJ(iEl,l,iPC+1)] = gUvwV[l][1];
-        if (_nPCFV[iFVi] == 3) gNCJ[indGNCJ(iEl,l,iPC+2)] = gUvwV[l][2];
+        int ind = (l*numNodes+i)*3;
+        gXyzV[l] = SPoint3(dNCJ[ind], dNCJ[ind+1], dNCJ[ind+2]);
+      }
+      _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi], gXyzV, gUvwV);
+      for (int l = 0; l < numNCJVal; l++) {
+        gNCJ[indGNCJ(iEl, l, iPC)] = gUvwV[l][0];
+        if (_nPCFV[iFVi] >= 2) gNCJ[indGNCJ(iEl, l, iPC+1)] = gUvwV[l][1];
+        if (_nPCFV[iFVi] == 3) gNCJ[indGNCJ(iEl, l, iPC+2)] = gUvwV[l][2];
       }
       iPC += _nPCFV[iFVi];
     }

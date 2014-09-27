@@ -86,7 +86,7 @@ void ObjContribNCJ<FuncType>::updateMinMax()
   for (int iEl = 0; iEl < _mesh->nEl(); iEl++) {
     std::vector<double> NCJ(_mesh->nNCJEl(iEl));                         // Scaled Jacobians
     _mesh->NCJ(iEl, NCJ);
-    for (int l = 0; l < _mesh->nBezEl(iEl); l++) {                      // Check each Bezier coeff.
+    for (int l = 0; l < _mesh->nNCJEl(iEl); l++) {                      // Check each Bezier coeff.
       _min = std::min(_min, NCJ[l]);
       _max = std::max(_max, NCJ[l]);
     }

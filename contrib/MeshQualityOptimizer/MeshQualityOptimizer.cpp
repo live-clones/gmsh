@@ -84,6 +84,7 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
   ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weightFixed, p.weightFree);
   ObjContribNCJ<ObjContribFuncBarrierMovMin> minNCJBarFunc(1.);
   minNCJBarFunc.setTarget(p.minTargetNCJ, 1.);
+//  minNCJBarFunc.setTarget(p.minTargetNCJ, 0.866025404);
   ObjContribNCJ<ObjContribFuncBarrierFixMinMovMax> minMaxNCJBarFunc(1.);
   minMaxNCJBarFunc.setTarget(p.maxTargetNCJ, 1.);
 
