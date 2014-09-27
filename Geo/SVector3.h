@@ -128,6 +128,9 @@ inline SVector3 operator+(const SVector3 &a,const SVector3 &b)
 inline SVector3 operator-(const SVector3 &a,const SVector3 &b)
 { return SVector3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
 
+inline SVector3 operator-(const SVector3 &a)
+{ return SVector3(-a[0], -a[1], -a[2]); }
+
 
 inline void buildOrthoBasis_naive(SVector3 &dir, SVector3 &dir1, SVector3 &dir2)
 {
