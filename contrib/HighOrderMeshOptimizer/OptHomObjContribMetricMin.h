@@ -65,9 +65,9 @@ bool ObjContribMetricMin<FuncType>::addContrib(double &Obj, alglib::real_1d_arra
     _mesh->metricMinAndGradients(iEl, mM, gMM);
     for (int l = 0; l < _mesh->nBezEl(iEl); l++) {                                  // Add contribution for each Bezier coeff.
       Obj += _weight * FuncType::compute(mM[l]);
+      const double dfact = _weight * FuncType::computeDiff(mM[l]);
       for (int iPC = 0; iPC < _mesh->nPCEl(iEl); iPC++)
-        gradObj[_mesh->indPCEl(iEl,iPC)] +=
-            _weight * FuncType::computeDiff(mM[l], gMM[_mesh->indGSJ(iEl, l, iPC)]);
+        gradObj[_mesh->indPCEl(iEl,iPC)] += dfact *  gMM[_mesh->indGSJ(iEl, l, iPC)];
       _min = std::min(_min, mM[l]);
       _max = std::max(_max, mM[l]);
     }
