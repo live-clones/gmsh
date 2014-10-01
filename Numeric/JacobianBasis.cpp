@@ -156,7 +156,7 @@ inline void calcIDI1D(double dxdX, double dxdY, double dxdZ,
                     + dydX*dydX + dydY*dydY + dydZ*dydZ
                     + dzdX*dzdX + dzdY*dzdY + dzdZ*dzdZ;
   const double invProd = 1./(nJSq*nInvJSq), sqrtInvProd = sqrt(invProd);
-  IDI(i, 3*numMapNodes) = sqrtInvProd;
+  IDI(i, 3*numMapNodes) = 3.*sqrtInvProd;
   for (int j = 0; j < numMapNodes; j++) {
     const double &dPhidX = gSMatX(i, j);
     const double &dJdxj = JDJ(i, j), &dJdyj = JDJ(i, j+numMapNodes),
@@ -181,6 +181,7 @@ inline void calcIDI1D(double dxdX, double dxdY, double dxdZ,
 
 // Compute inverse condition number and its gradients
 // w.r.t. node positions, at one location in a 2D element
+// FIXME: Precision issues?
 inline void calcIDI2D(double dxdX, double dxdY, double dxdZ,
                       double dydX, double dydY, double dydZ,
                       double dzdX, double dzdY, double dzdZ,
@@ -202,7 +203,7 @@ inline void calcIDI2D(double dxdX, double dxdY, double dxdZ,
                     + dydX*dydX + dydY*dydY + dydZ*dydZ
                     + dzdX*dzdX + dzdY*dzdY + dzdZ*dzdZ;
   const double invProd = 1./(nJSq*nInvJSq), sqrtInvProd = sqrt(invProd);
-  IDI(i, 3*numMapNodes) = 2.*sqrtInvProd;
+  IDI(i, 3*numMapNodes) = 3.*sqrtInvProd;
   for (int j = 0; j < numMapNodes; j++) {
     const double &dPhidX = gSMatX(i, j);
     const double &dPhidY = gSMatY(i, j);
@@ -963,8 +964,6 @@ inline void JacobianBasis::getInvCondGeneral(int nJacNodes, const fullMatrix<dou
                                                    dydX, dydY, dydZ,
                                                    dzdX, dzdY, dzdZ);
         invCond(i) = 3./sqrt(nJSq*nInvJSq);
-        std::cout << "DBGTT: normal = (" << dxdZ << ", " << dydZ<< ", " << dzdZ
-                  << "), nJSq = " << nJSq << ", nInvJSq = " << nInvJSq << "\n";
       }
       break;
     }
