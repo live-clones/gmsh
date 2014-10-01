@@ -158,6 +158,19 @@ class JacobianBasis {
                                        const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
                                        const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
                                        fullMatrix<double> &JDJ) const;
+
+  template<bool ideal>
+  inline void getInvCondGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
+                                const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+                                const fullMatrix<double> &nodesXYZ, fullVector<double> &invCond) const;
+
+  template<bool ideal>
+  inline void getInvCondAndGradientsGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
+                                            const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
+                                            const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
+                                            fullMatrix<double> &IDI) const;
+
+
 };
 
 #endif
