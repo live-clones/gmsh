@@ -8,6 +8,7 @@
 #include "Mesh.h"
 #include "Basis.h"
 #include "MElement.h"
+#include "Exception.h"
 #include "GroupOfElement.h"
 
 /**
@@ -159,6 +160,10 @@ inline const Basis& FunctionSpace::getBasis(const MElement& element) const{
 }
 
 inline const Basis& FunctionSpace::getBasis(size_t eType) const{
+  if(eType >= basis.size())
+    throw Exception("FunctionSpace::getBasis() -- unknown geometrical type %u",
+                    eType);
+
   return *basis[eType];
 }
 

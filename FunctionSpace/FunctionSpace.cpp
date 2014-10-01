@@ -3,7 +3,6 @@
 #include "ReferenceSpaceManager.h"
 #include "BasisGenerator.h"
 #include "ElementType.h"
-#include "Exception.h"
 
 #include "FunctionSpace.h"
 
