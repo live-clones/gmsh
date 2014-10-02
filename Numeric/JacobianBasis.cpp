@@ -376,9 +376,7 @@ void GradientBasis::mapFromIdealElement(fullMatrix<double> *dxyzdX,
 
     case TYPE_TET:
     {
-      static const double cTet[3] = {-3./2/std::sqrt(6),
-                                     -1./2/std::sqrt(2),
-                                     std::sqrt(1.5)};
+      static const double cTet[3] = {-1.5/sqrt(6), -0.75/sqrt(2), 3./sqrt(6)};
       dxyzdZ->scale(cTet[2]);
       dxyzdZ->axpy(*dxyzdX, cTet[0]);
       dxyzdZ->axpy(*dxyzdY, cTet[1]);
