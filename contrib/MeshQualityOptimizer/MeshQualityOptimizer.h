@@ -33,7 +33,8 @@
 class GModel;
 
 struct MeshQualOptParameters {
-  double minTargetNCJ, maxTargetNCJ;
+//  double minTargetNCJ, maxTargetNCJ;
+  double minTargetInvCond;
   double weightFixed ; // weight of the energy for fixed nodes
   double weightFree ; // weight of the energy for free nodes
   int nbLayers ; // number of layers taken around a bad element
@@ -51,11 +52,13 @@ struct MeshQualOptParameters {
   double adaptBlobDistFact; // Growth factor in distance factor for blob adaptation
 
   int SUCCESS ; // 0 --> success , 1 --> Not converged
-  double minNCJ, maxNCJ; // after optimization, range of jacobians
+//  double minNCJ, maxNCJ; // after optimization, range of jacobians
+  double minInvCond, maxInvCond; // after optimization, range of jacobians
   double CPU; // Time for optimization
 
   MeshQualOptParameters ()
-    : minTargetNCJ(0.5), maxTargetNCJ(1.5), weightFixed(1000.),
+//    : minTargetNCJ(0.5), maxTargetNCJ(1.5), weightFixed(1000.),
+    : minTargetInvCond(0.5), weightFixed(1000.),
       weightFree (1.), nbLayers (6) , dim(3) , itMax(300), optPassMax(50),
       onlyVisible(true), distanceFactor(12), fixBndNodes(false), strategy(0),
       maxAdaptBlob(3), adaptBlobLayerFact(2.), adaptBlobDistFact(2.)

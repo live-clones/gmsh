@@ -269,7 +269,7 @@ void Patch::initScaledJac()
   if ((_dim == 2) && _scaledNormEl.empty()) {
     _scaledNormEl.resize(nEl());
 //    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
-    for (int iEl = 0; iEl < nEl(); iEl++) calcNormalEl2D(iEl, true);
+    for (int iEl = 0; iEl < nEl(); iEl++) calcNormalEl2D(iEl, NS_INVNORM);
   }
   else if (_invStraightJac.empty()) {
     _invStraightJac.resize(nEl(),1.);
@@ -293,7 +293,7 @@ void Patch::initMetricMin()
 
 // TODO: Re-introduce normal to geometry?
 //void Mesh::calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2entity, int iEl)
-void Patch::calcNormalEl2D(int iEl, bool scale)
+void Patch::calcNormalEl2D(int iEl, NORMALSCALING scaling)
 {
   const JacobianBasis *jac = _el[iEl]->getJacobianFuncSpace();
 
@@ -320,11 +320,12 @@ void Patch::calcNormalEl2D(int iEl, bool scale)
 //  }
 
   fullMatrix<double> uElNorm(1, 3);
-  fullMatrix<double> &elNorm = scale ? _scaledNormEl[iEl] : uElNorm;
+  fullMatrix<double> &elNorm = (scaling == NS_INVNORM) ? _scaledNormEl[iEl] :
+                                ((scaling == NS_UNIT) ? uElNorm : _metricNormEl[iEl]);
   elNorm.resize(1, 3);
   const double norm = jac->getPrimNormal2D(primNodesXYZ, elNorm);
-  if (scale) {
-    double factor = 1./norm;
+  if (scaling != 0) {
+    double factor = (scaling == NS_SQRTNORM) ? 1./norm : sqrt(norm);
 //    if (hasGeoNorm) {
 //      const double scal = geoNorm(0)*elNorm(0,0)+geoNorm(1)*elNorm(0,1)+geoNorm(2)*elNorm(0,2);
 //      if (scal < 0.) factor = -factor;
@@ -520,7 +521,7 @@ void Patch::initNCJ()
   if ((_dim == 2) && _unitNormEl.empty()) {
     _unitNormEl.resize(nEl());
 //    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
-    for (int iEl = 0; iEl < nEl(); iEl++) calcNormalEl2D(iEl, false);
+    for (int iEl = 0; iEl < nEl(); iEl++) calcNormalEl2D(iEl, NS_UNIT);
   }
 }
 
@@ -586,6 +587,71 @@ void Patch::NCJAndGradients(int iEl, std::vector<double> &NCJ, std::vector<doubl
         gNCJ[indGNCJ(iEl, l, iPC)] = gUvwV[l][0];
         if (_nPCFV[iFVi] >= 2) gNCJ[indGNCJ(iEl, l, iPC+1)] = gUvwV[l][1];
         if (_nPCFV[iFVi] == 3) gNCJ[indGNCJ(iEl, l, iPC+2)] = gUvwV[l][2];
+      }
+      iPC += _nPCFV[iFVi];
+    }
+  }
+}
+
+
+void Patch::initInvCond()
+{
+  // Initialize _nBezEl
+  if (_nBezEl.empty()) {
+    _nBezEl.resize(nEl());
+    for (int iEl=0; iEl<nEl(); iEl++)
+     _nBezEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumJacNodes();
+  }
+
+  // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
+  // Jacobians of 3D elements
+  if ((_dim == 2) && _metricNormEl.empty()) {
+    _metricNormEl.resize(nEl());
+//    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
+    for (int iEl = 0; iEl < nEl(); iEl++) calcNormalEl2D(iEl, NS_SQRTNORM);
+  }
+}
+
+
+void Patch::invCondAndGradients(int iEl, std::vector<double> &invCond,
+                                std::vector<double> &gInvCond)
+{
+  const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
+  const int &numJacNodes = _nBezEl[iEl];
+  const int &numMapNodes = _nNodEl[iEl];
+  fullMatrix<double> IDI(numJacNodes,3*numMapNodes+1);
+
+  // Coordinates of nodes
+  fullMatrix<double> nodesXYZ(numMapNodes,3), normals(_dim,3);
+  for (int i = 0; i < numMapNodes; i++) {
+    int &iVi = _el2V[iEl][i];
+    nodesXYZ(i,0) = _xyz[iVi].x();
+    nodesXYZ(i,1) = _xyz[iVi].y();
+    nodesXYZ(i,2) = _xyz[iVi].z();
+  }
+
+  // Calculate Jacobian and gradients, scale if 3D (already scaled by
+  // regularization normals in 2D)
+  jacBasis->getInvCondAndGradients(nodesXYZ, _metricNormEl[iEl], IDI);
+
+  // Inverse condition number
+  for (int l = 0; l < numJacNodes; l++) invCond[l] = IDI(l, 3*numMapNodes);
+
+  // Gradients of the inverse condition number
+  int iPC = 0;
+  std::vector<SPoint3> gXyzV(numJacNodes);
+  std::vector<SPoint3> gUvwV(numJacNodes);
+  for (int i = 0; i < numMapNodes; i++) {
+    int &iFVi = _el2FV[iEl][i];
+    if (iFVi >= 0) {
+      for (int l = 0; l < numJacNodes; l++)
+        gXyzV[l] = SPoint3(IDI(l, i), IDI(l, i+numMapNodes),
+                            IDI(l, i+2*numMapNodes));
+      _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi],gXyzV,gUvwV);
+      for (int l = 0; l < numJacNodes; l++) {
+        gInvCond[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
+        if (_nPCFV[iFVi] >= 2) gInvCond[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
+        if (_nPCFV[iFVi] == 3) gInvCond[indGSJ(iEl,l,iPC+2)] = gUvwV[l][2];
       }
       iPC += _nPCFV[iFVi];
     }

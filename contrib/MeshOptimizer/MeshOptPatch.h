@@ -98,8 +98,12 @@ public:
   void initNCJ();
   void NCJ(int iEl, std::vector<double> &NCJ);
   void NCJAndGradients(int iEl, std::vector<double> &NCJ, std::vector<double> &gNCJ);
+  void initInvCond();
+  void invCondAndGradients(int iEl, std::vector<double> &invCond, std::vector<double> &ginvCond);
 
 private:
+
+  enum NORMALSCALING { NS_UNIT, NS_INVNORM, NS_SQRTNORM };
 
   // Mesh entities and variables
   int _dim;
@@ -144,11 +148,12 @@ private:
   std::vector<fullMatrix<double> > _scaledNormEl;       // Normals to 2D elements for Jacobian regularization and scaling
   std::vector<double> _invStraightJac;                  // Initial Jacobians for 3D elements
 //  void calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2entity, int iEl);
-  void calcNormalEl2D(int iEl, bool scale);
+  void calcNormalEl2D(int iEl, NORMALSCALING scaling);
 
   // Mesh quality
   std::vector<int> _nNCJEl;                             // Number of NCJ values for an el.
   std::vector<SVector3> _unitNormEl;                    // Normals to 2D elements for NCJ regularization
+  std::vector<fullMatrix<double> > _metricNormEl;       // Normals to 2D elements for inverse conditioning computation
 };
 
 
