@@ -261,7 +261,7 @@ int GModel::readMSH(const std::string &name)
               GRegion *gr = getRegionByTag(entity);
               double uvw[3];
               if(!binary){
-                if(fscanf(fp, "%lf %lf %lf", &uvw[0], &uvw[1], &uvw[2]) != 2){
+                if(fscanf(fp, "%lf %lf %lf", &uvw[0], &uvw[1], &uvw[2]) != 3){
                   fclose(fp);
                   return 0;
                 }
