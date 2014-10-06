@@ -65,6 +65,7 @@ class GEntity {
     GmshModel,
     FourierModel,
     OpenCascadeModel,
+    GenericModel,
     AcisModel
   };
 
@@ -239,6 +240,9 @@ class GEntity {
 
   // get the native pointer of the particular representation
   virtual void *getNativePtr() const { return 0; }
+  
+  // get the native id (int) of the particular representation
+  virtual int getNativeInt() const { return 0; }
 
   // the model owning this entity
   GModel *model() const { return _model; }
