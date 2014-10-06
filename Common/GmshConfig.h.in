@@ -49,6 +49,7 @@
 #cmakedefine HAVE_ONELAB
 #cmakedefine HAVE_ONELAB2
 #cmakedefine HAVE_ONELAB_METAMODEL
+#cmakedefine HAVE_UDT
 #cmakedefine HAVE_OPENGL
 #cmakedefine HAVE_OPTHOM
 #cmakedefine HAVE_OSMESA
