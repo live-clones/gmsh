@@ -21,6 +21,8 @@ public:
 	void clearAttrs();
 	unsigned short encodeMsg(UInt8 *buff, UInt32 len);
 	UInt32 parseMsg(UInt8 *buff, UInt32 len);
+  int parseHeader(UInt8 *buff, UInt32 len);
+  UInt32 parseMessage(UInt8 *buff, UInt32 len);
 	void showMsg();
 
 	short msgType() {return _type;}

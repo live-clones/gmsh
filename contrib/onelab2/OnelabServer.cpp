@@ -115,26 +115,24 @@ DWORD WINAPI listenOnClients(LPVOID param)
 	std::set<Socket> fdss;
 	int recvlen = 0;
   UInt8 prev[1024];
-  UInt32 unreaded = 0;
 	UInt8 buff[1024];
 	OnelabProtocol msg(-1), rep(-1);
 	int eid = OnelabServer::instance()->getEID();
-	while(UDT::ERROR != UDT::epoll_wait(eid, &fdus, NULL, -1, &fdss)) {
-    std::cout << "ok" << std::endl;
+	while(UDT::ERROR != UDT::epoll_wait(eid, &fdus, NULL, -1, &fdss, NULL)) {
 		//for(std::set<UDTSOCKET>::iterator it = fdus.begin(); it != fdus.end(); ++it) {
     for(std::set<Socket>::iterator it = fdss.begin(); it != fdss.end(); ++it) {
 			OnelabLocalNetworkClient *cli = OnelabServer::instance()->getClient(*it);
-      std::cout << "ok ->" << (void*)cli << std::endl;
 			if(cli == NULL) {
 				IPv4 ip;
 				//recvlen = udt_socket_recv(*it, buff, 1024);
-				recvlen = ip4_socket_recv(*it, buff, 1024, ip);
+				recvlen = ip4_socket_recv(*it, buff, 1024, ip); // FIXME
 		    std::clog << "recv " << recvlen << std::endl;
 				msg.parseMsg(buff, recvlen);
         msg.showMsg();
 				if(msg.msgType() == OnelabProtocol::OnelabStart && msg.attrs.size() > 0 && msg.attrs[0]->getAttributeType() == OnelabAttr::Start) {
 					std::string name = std::string(((OnelabAttrStart *)msg.attrs[0])->name());
 					if(OnelabServer::instance()->getClient(name) != NULL) {
+            std::cout << "A client exist with this name !" << std::endl;
 						rep.msgType(OnelabProtocol::OnelabMessage);
 						rep.attrs.push_back(new OnelabAttrMessage("A client exist with this name !", OnelabAttrMessage::Fatal));
 						recvlen = rep.encodeMsg(buff, 1024);
@@ -151,7 +149,7 @@ DWORD WINAPI listenOnClients(LPVOID param)
 					recvlen = rep.encodeMsg(buff, 1024);
 					cli = OnelabServer::instance()->getClient(*it);
 					cli->sendto(buff, recvlen);
-					//FIXME OnelabServer::instance()->sendAllParameter(cli);
+					OnelabServer::instance()->sendAllParameter(cli);
 					continue;
 				}
 				else {
@@ -163,20 +161,24 @@ DWORD WINAPI listenOnClients(LPVOID param)
 				}
 			}
 			else {
+        std::cout << "ok" << std::endl;
 				try {
-					//recvlen = cli->recvfrom(buff, 1024);
-          std::cout << "i've " << unreaded << "bytes from previous packet" << std::endl;
-          memcpy((char*)buff, (char*)prev, unreaded);
-					recvlen = cli->recvfrom(buff+unreaded, 1024-unreaded);
-          recvlen += unreaded;
+          recvlen = cli->recvmsg(msg);
 				}
-				catch(int &e) { // for UDT
-					if(UDT::getlasterror().getErrorCode() == 2001) { // ECONNLOST
+	 			catch(int &e) {
+	 				if(e == 50) { // Recv error (TCP)
+						std::cout << "\033[0;31m" << "Connection with client \"" << cli->getName() << "\" was broken, removing the client." << "\033[0m" << std::endl; // DEBUG
+						UDT::epoll_remove_ssock(eid, *it);
+						OnelabServer::instance()->removeClient(cli);
+						UDT::close(*it);
+					}
+          // TODO for UDT
+	 				/*if(UDT::getlasterror().getErrorCode() == 2001 || e == 50) { // ECONNLOST
 						std::cout << "\033[0;31m" << "Connection with client \"" << cli->getName() << "\" was broken, removing the client." << "\033[0m" << std::endl; // DEBUG
 						UDT::epoll_remove_usock(eid, *it);
 						OnelabServer::instance()->removeClient(cli);
 						UDT::close(*it);
-					}
+					}*/ 
 					continue;
 				}
         if(recvlen == 0) { // for TCP
@@ -186,11 +188,8 @@ DWORD WINAPI listenOnClients(LPVOID param)
           UDT::close(*it);
           continue;
         }
-				//std::clog << "recv " << recvlen << " bytes on client " << cli->getName() << std::endl;
-				unreaded = msg.parseMsg(buff, recvlen);
-        if(unreaded > 0) {
-          memcpy((char*)prev, (char*)buff+(recvlen-unreaded), unreaded);
-        }
+				std::clog << "recv " << recvlen << " bytes on client " << cli->getName() << std::endl;
+				//unreaded = msg.parseMsg(buff, recvlen);
 				switch (msg.msgType()) {
 					case OnelabProtocol::OnelabStop:
 						std::cout << "\033[0;31m" << "Client \"" << cli->getName() << "\" is going to stop" << "\033[0m" << std::endl; // DEBUG
@@ -348,10 +347,10 @@ void OnelabServer::Run()
 
 	udt_socket_listen(_fdu);
 	ip4_socket_listen(_fds);
-	std::clog << "listen on " << ip4_inet_ntop(_ip.address) << ":" << _ip.port << "(tcp)" << std::endl
-	  << "listen on " << ip4_inet_ntop(_ip.address) << ":" << _ip.port << "(udp/udt)" << std::endl;
-	//while(newcli = udt_socket_accept(_fdu, ip)) { // TODO accept ip4
-	while(newcli = ip4_socket_accept(_fds, ip)) { // TODO accept ip4
+	std::clog << "listen on " << ip4_inet_ntop(_ip.address) << ":" << _ip.port << "(tcp)" << std::endl;
+	//  << "listen on " << ip4_inet_ntop(_ip.address) << ":" << _ip.port << "(udp/udt)" << std::endl;
+	//while(newcli = udt_socket_accept(_fdu, ip)) { // TODO accept udt and tcp ?
+	while(newcli = ip4_socket_accept(_fds, ip)) {
 		std::clog << "\033[0;31m" << "accpet peer : " << ip4_inet_ntop(ip.address)<< ':' << ip.port <<  "\033[0m" << std::endl;
 		//UDT::epoll_add_usock(_eid, newcli);
 		UDT::epoll_add_ssock(_eid, newcli);
@@ -359,14 +358,15 @@ void OnelabServer::Run()
 #ifndef WIN32
 			pthread_create(&listen_thread, NULL, listenOnClients, NULL);
 #else
-			listen_thread =  CreateThread(NULL, 0, listenOnClients, NULL, 0, NULL);
+			listen_thread = CreateThread(NULL, 0, listenOnClients, NULL, 0, NULL);
+#endif
+		if(_clients.size() == 1)
+#ifndef WIN32
+  	  pthread_join(listen_thread, NULL);
+#else
+	    WaitForSingleObject(listen_thread, INFINITE);
 #endif
 	}
-#ifndef WIN32
-	pthread_join(listen_thread, NULL);
-#else
-	WaitForSingleObject(listen_thread, INFINITE);
-#endif
 	udt_socket_close(_fdu);
 #else
   // TODO

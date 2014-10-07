@@ -5,6 +5,7 @@
 #include "onelab.h"
 //#ifdef HAVE_UDT
 #include "UdtUtils.h"
+#include "OnelabProtocol.h"
 //#else
 //#include "NetworkUtils.h"
 //#endif
@@ -25,6 +26,7 @@ public:
 	OnelabLocalNetworkClient(std::string name, Socket fd, unsigned int ip, unsigned short port);
 	void sendto(UInt8 *buff, unsigned int len);
 	int recvfrom(UInt8 *buff, unsigned int maxlen);
+  int recvmsg(OnelabProtocol &msg);
 	UDTSOCKET getSSocket() {return _fds;}
 	UDTSOCKET getUSocket() {return _fdu;}
 	virtual ~OnelabLocalNetworkClient(){}

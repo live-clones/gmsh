@@ -39,6 +39,86 @@ unsigned short OnelabProtocol::encodeMsg(UInt8 *buff, UInt32 len)
 	encode(sizeptr, _size);
 	return (unsigned short)(ptr-buff);
 }
+int OnelabProtocol::parseHeader(UInt8 *buff, UInt32 len)
+{
+  this->clearAttrs();
+  if(len < 4) throw ERROR_BUFFER_TOO_SMALL;
+
+  UInt8 *ptr = buff;
+  UInt8 version = 0;
+  ptr = parse(ptr, version);
+  if(version != ONELAB_VERSION) throw ERROR_ONELAB_VERSION;
+  ptr = parse(ptr, _type);
+  ptr = parse(ptr, _size);
+
+  return _size;
+}
+UInt32 OnelabProtocol::parseMessage(UInt8 *buff, UInt32 len)
+{
+  UInt8 *ptr = buff;
+  UInt8 *payload = ptr;
+  unsigned short parsed = 4;
+  unsigned short size = _size;
+	while(size >= 4) {
+		UInt16 attrType = 0;
+		UInt16 attrSize = 0;
+		ptr = parse(ptr, attrType);
+		ptr = parse(ptr, attrSize);
+		size -= 4;
+		std::cout << "Try to parse an attribute of type 0x" << std::hex << (UInt16)attrType << std::dec << " and size : " << attrSize << std::endl;
+		if(attrSize > size) throw ERROR_BUFFER_TOO_SMALL;
+		switch(attrType) {
+			case OnelabAttr::Message:
+				this->attrs.push_back(new OnelabAttrMessage());
+				((OnelabAttrMessage *)this->attrs.back())->parseAttribute(ptr, attrSize);
+				break;
+			case OnelabAttr::Number:
+				this->attrs.push_back(new onelab::number());
+				((onelab::number *)this->attrs.back())->parseAttribute(ptr, attrSize);
+				break;
+			case OnelabAttr::String:
+				this->attrs.push_back(new onelab::string());
+				((onelab::string *)this->attrs.back())->parseAttribute(ptr, attrSize);
+				break;
+      case OnelabAttr::Region:
+        this->attrs.push_back(new onelab::region());
+        ((onelab::region *)this->attrs.back())->parseAttribute(ptr, attrSize);
+        break;
+      case OnelabAttr::Function:
+        this->attrs.push_back(new onelab::region());
+        ((onelab::function *)this->attrs.back())->parseAttribute(ptr, attrSize);
+        break;
+			case OnelabAttr::Start:
+				this->attrs.push_back(new OnelabAttrStart());
+				((onelab::string *)this->attrs.back())->parseAttribute(ptr, attrSize);
+				break;
+			case OnelabAttr::Parameter:
+				this->attrs.push_back(new OnelabAttrParameterQuery());
+				((OnelabAttrParameterQuery *)this->attrs.back())->parseAttribute(ptr, attrSize);
+				break;
+      case 0x0b:
+				this->attrs.push_back(new OnelabAttrFileQuery());
+				((OnelabAttrFileQuery *)this->attrs.back())->parseAttribute(ptr, attrSize);
+        break;
+      case 0x0c:
+				this->attrs.push_back(new OnelabAttrFile());
+				((OnelabAttrFile *)this->attrs.back())->parseAttribute(ptr, attrSize);
+        break;
+			default:
+        // FIXME unknown attribute
+				//if(attrSize != 0) throw "Size of attr must be 0!";
+				/*this->attrs.push_back(new OnelabAttr(attrType));
+				this->attrs.back()->parseAttribute(ptr, &attrSize);*/
+				break;
+		}
+		ptr += attrSize;
+		size -= attrSize;
+    parsed += attrSize+4;
+	}
+  if(parsed != len) {std::cout << "parse - size left:"  << len-parsed << '-' << size << "(len is "<< len <<" and parsed is "<< parsed <<" )" << std::endl;}
+ 
+  return len-parsed;
+}
 UInt32 OnelabProtocol::parseMsg(UInt8 *buff, UInt32 len)
 {
 	this->clearAttrs();

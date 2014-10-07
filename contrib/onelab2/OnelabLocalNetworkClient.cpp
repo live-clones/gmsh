@@ -38,6 +38,21 @@ int OnelabLocalNetworkClient::recvfrom(UInt8 *buff, unsigned int maxlen)
 //	return ip4_socket_recv(_fds, buff, maxlen);
 //#endif
 }
+int OnelabLocalNetworkClient::recvmsg(OnelabProtocol &msg)
+{
+  UInt8 header[8];
+  UInt8 *buff = NULL;
+  int recvlen = 0;
+  // recv the header
+  recvlen = recvfrom(header, 4);
+  if(recvlen != 4) return recvlen;
+  int msglen = msg.parseHeader(header, recvlen);
+  // then recv the message
+  buff = (UInt8 *) malloc(sizeof(UInt8)*msglen);
+  recvlen = recvfrom(buff, msglen); // recvlen should be equals to msglen
+  msg.parseMessage(buff, recvlen);
+  return recvlen + 4;
+}
 void OnelabLocalNetworkClient::updateParameter(onelab::parameter *p)
 {
   OnelabProtocol msg(OnelabProtocol::OnelabUpdate);
