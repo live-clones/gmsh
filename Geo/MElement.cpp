@@ -186,6 +186,59 @@ void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge) const
 #endif
 }
 
+void MElement::idealJacRange(double &jmin, double &jmax, GEntity *ge)
+{
+  jmin = jmax = 1.0;
+#if defined(HAVE_MESH)
+  const JacobianBasis *jac = getJacobianFuncSpace();
+  const int numJacNodes = jac->getNumJacNodes();
+  fullMatrix<double> nodesXYZ(jac->getNumMapNodes(),3);
+  getNodesCoord(nodesXYZ);
+  fullVector<double> iJi(numJacNodes), Bi(numJacNodes);
+  jac->getSignedIdealJacobian(nodesXYZ,iJi);
+  const int nEd = getNumEdges(), dim = getDim();
+  double sumEdLength = 0.;
+  for(int iEd = 0; iEd < nEd; iEd++)
+    sumEdLength += getEdge(iEd).length();
+  const double invMeanEdLength = double(nEd)/sumEdLength;
+  if (sumEdLength == 0.) {
+    jmin = 0.; jmax = 0.;
+    return;
+  }
+  double scale = (dim == 1.) ? invMeanEdLength :
+                 (dim == 2.) ? invMeanEdLength*invMeanEdLength :
+                 invMeanEdLength*invMeanEdLength*invMeanEdLength;
+  if (ge && (ge->dim() == 2) && ge->haveParametrization()) {
+    // If parametrized surface entity provided...
+    SVector3 geoNorm(0.,0.,0.);
+    // ... correct Jacobian sign with geometrical normal
+    for (int i=0; i<jac->getNumPrimMapNodes(); i++) {
+      const MVertex *vert = getVertex(i);
+      if (vert->onWhat() == ge) {
+        double u, v;
+        vert->getParameter(0,u);
+        vert->getParameter(1,v);
+        geoNorm += ((GFace*)ge)->normal(SPoint2(u,v));
+      }
+    }
+    if (geoNorm.normSq() == 0.) {
+      // If no vertex on surface or average is zero, take normal at barycenter
+      SPoint2 param = ((GFace*)ge)->parFromPoint(barycenter(true),false);
+      geoNorm = ((GFace*)ge)->normal(param);
+    }
+    fullMatrix<double> elNorm(1,3);
+    jac->getPrimNormal2D(nodesXYZ, elNorm, true);
+    const double dp = geoNorm(0) * elNorm(0,0) + geoNorm(1) * elNorm(0,1) +
+      geoNorm(2) * elNorm(0,2);
+    if (dp < 0.) scale = -scale;
+  }
+  iJi.scale(scale);
+  jac->lag2Bez(iJi,Bi);
+  jmin = *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
+  jmax = *std::max_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
+#endif
+}
+
 void MElement::getNode(int num, double &u, double &v, double &w) const
 {
   // only for MElements that don't have a lookup table for this

@@ -191,6 +191,7 @@ class MElement
   }
   virtual double angleShapeMeasure() { return 1.0; }
   virtual void scaledJacRange(double &jmin, double &jmax, GEntity *ge = 0) const;
+  virtual void idealJacRange(double &jmin, double &jmax, GEntity *ge = 0);
   virtual double metricShapeMeasure();
   virtual double metricShapeMeasure2();
 
