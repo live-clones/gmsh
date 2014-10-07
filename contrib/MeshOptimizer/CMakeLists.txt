@@ -5,6 +5,7 @@
 
 set(SRC
   MeshOpt.cpp
+  MeshOptCommon.cpp
   MeshOptimizer.cpp
   MeshOptPatch.cpp
   MeshOptObjectiveFunction.cpp

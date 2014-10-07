@@ -41,7 +41,8 @@
 
 Patch::Patch(const std::map<MElement*,GEntity*> &element2entity,
            const std::set<MElement*> &els, std::set<MVertex*> &toFix,
-           bool fixBndNodes)
+           bool fixBndNodes) :
+  _typeLengthScale(LS_NONE), _invLengthScaleSq(0.)
 {
 
   _dim = (*els.begin())->getDim();
@@ -212,24 +213,36 @@ void Patch::writeMSH(const char *filename)
   fclose(f);
 }
 
-// TODO: allow user to choose type of scaling length
-void Patch::initScaledNodeDispSq()
+
+void Patch::initScaledNodeDispSq(LengthScaling scaling)
 {
-  if (_invLengthScaleSq == 0.) {
+  if ((_invLengthScaleSq == 0.) || _typeLengthScale != scaling) {
+    _typeLengthScale = scaling;
     double maxDSq = 0.;
-    for (int iEl = 0; iEl < nEl(); iEl++) {
-      const double d = el(iEl)->maxDistToStraight(), dd = d*d;
-      if (dd > maxDSq) maxDSq = dd;
-    }
-    if (maxDSq < 1.e-10) {
-      double maxSSq = 0.;
-      for (int iEl = 0; iEl < nEl(); iEl++) {
-        const double s = el(iEl)->getOuterRadius(), ss = s*s;
-        if (ss > maxSSq) maxSSq = ss;
+    switch(scaling) {
+      case LS_MAXNODEDIST : {
+        for (int iEl = 0; iEl < nEl(); iEl++) {
+          const double d = el(iEl)->maxDistToStraight(), dd = d*d;
+          if (dd > maxDSq) maxDSq = dd;
+        }
+        break;
       }
-      _invLengthScaleSq = 1./maxSSq;
+      case LS_MAXOUTERRADIUS : {
+        for (int iEl = 0; iEl < nEl(); iEl++) {
+          const double d = el(iEl)->getOuterRadius(), dd = d*d;
+          if (dd > maxDSq) maxDSq = dd;
+        }
+        break;
+      }
+      case LS_MINEDGELENGTH : {
+        for (int iEl = 0; iEl < nEl(); iEl++) {
+          const double d = el(iEl)->minEdge(), dd = d*d;
+          if (dd > maxDSq) maxDSq = dd;
+        }
+        break;
+      }
     }
-    else _invLengthScaleSq = 1./maxDSq;
+    _invLengthScaleSq = 1./maxDSq;
   }
 }
 
@@ -266,13 +279,14 @@ void Patch::initScaledJac()
 
   // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
   // Jacobians of 3D elements
-  if ((_dim == 2) && _scaledNormEl.empty()) {
-    _scaledNormEl.resize(nEl());
+  if ((_dim == 2) && _JacNormEl.empty()) {
+    _JacNormEl.resize(nEl());
 //    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
-    for (int iEl = 0; iEl < nEl(); iEl++) calcNormalEl2D(iEl, NS_INVNORM);
+    for (int iEl = 0; iEl < nEl(); iEl++)
+      calcNormalEl2D(iEl, NS_INVNORM, _JacNormEl[iEl], false);
   }
   else if (_invStraightJac.empty()) {
-    _invStraightJac.resize(nEl(),1.);
+    _invStraightJac.resize(nEl(), 1.);
     double dumJac[3][3];
     for (int iEl = 0; iEl < nEl(); iEl++)
       _invStraightJac[iEl] = 1. / fabs(_el[iEl]->getPrimaryJacobian(0.,0.,0.,dumJac));
@@ -293,7 +307,8 @@ void Patch::initMetricMin()
 
 // TODO: Re-introduce normal to geometry?
 //void Mesh::calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2entity, int iEl)
-void Patch::calcNormalEl2D(int iEl, NORMALSCALING scaling)
+void Patch::calcNormalEl2D(int iEl, NormalScaling scaling,
+                           fullMatrix<double> &elNorm, bool ideal)
 {
   const JacobianBasis *jac = _el[iEl]->getJacobianFuncSpace();
 
@@ -319,21 +334,25 @@ void Patch::calcNormalEl2D(int iEl, NORMALSCALING scaling)
 //    geoNorm = ((GFace*)ge)->normal(param);
 //  }
 
-  fullMatrix<double> uElNorm(1, 3);
-  fullMatrix<double> &elNorm = (scaling == NS_INVNORM) ? _scaledNormEl[iEl] :
-                                ((scaling == NS_UNIT) ? uElNorm : _metricNormEl[iEl]);
   elNorm.resize(1, 3);
-  const double norm = jac->getPrimNormal2D(primNodesXYZ, elNorm);
-  if (scaling != 0) {
-    double factor = (scaling == NS_SQRTNORM) ? 1./norm : sqrt(norm);
-//    if (hasGeoNorm) {
-//      const double scal = geoNorm(0)*elNorm(0,0)+geoNorm(1)*elNorm(0,1)+geoNorm(2)*elNorm(0,2);
-//      if (scal < 0.) factor = -factor;
-//    }
-    elNorm.scale(factor);   // Re-scaling normal here is faster than an extra scaling operation on the Jacobian
+  const double norm = jac->getPrimNormal2D(primNodesXYZ, elNorm, ideal);
+  double factor;
+  switch (scaling) {
+    case NS_UNIT:
+      factor = 1.;
+      break;
+    case NS_INVNORM:
+      factor = 1./norm;
+      break;
+    case NS_SQRTNORM:
+      factor = sqrt(norm);
+      break;
   }
-  else
-    _unitNormEl[iEl] = SVector3(uElNorm(0, 0), uElNorm(0, 1), uElNorm(0, 2));
+//  if (hasGeoNorm) {
+//    const double scal = geoNorm(0)*elNorm(0,0)+geoNorm(1)*elNorm(0,1)+geoNorm(2)*elNorm(0,2);
+//    if (scal < 0.) factor = -factor;
+//  }
+  elNorm.scale(factor);   // Re-scaling normal here is faster than an extra scaling operation on the Jacobian
 }
 
 
@@ -356,7 +375,7 @@ void Patch::scaledJacAndGradients(int iEl, std::vector<double> &sJ,
 
   // Calculate Jacobian and gradients, scale if 3D (already scaled by
   // regularization normals in 2D)
-  jacBasis->getSignedJacAndGradients(nodesXYZ,_scaledNormEl[iEl],JDJ);
+  jacBasis->getSignedJacAndGradients(nodesXYZ,_JacNormEl[iEl],JDJ);
   if (_dim == 3) JDJ.scale(_invStraightJac[iEl]);
 
   // Transform Jacobian and gradients from Lagrangian to Bezier basis
@@ -504,89 +523,90 @@ bool Patch::bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF, 
 }
 
 
-void Patch::initNCJ()
+void Patch::initIdealJac()
 {
   // Initialize _nBezEl
-  if (_nNCJEl.empty()) {
-    _nNCJEl.resize(nEl());
+  if (_nIJacEl.empty()) {
+    _nIJacEl.resize(nEl());
     for (int iEl=0; iEl<nEl(); iEl++)
-      switch(_el[iEl]->getType()) {                                             // TODO: Complete with other types?
-      case TYPE_TRI: _nNCJEl[iEl] = qmTriangle::numNCJVal(); break;
-      case TYPE_QUA: _nNCJEl[iEl] = qmQuadrangle::numNCJVal(); break;
-      }
+      _nIJacEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumJacNodes();
   }
 
   // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
   // Jacobians of 3D elements
-  if ((_dim == 2) && _unitNormEl.empty()) {
-    _unitNormEl.resize(nEl());
+  if ((_dim == 2) && _IJacNormEl.empty()) {
+    _IJacNormEl.resize(nEl());
 //    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
-    for (int iEl = 0; iEl < nEl(); iEl++) calcNormalEl2D(iEl, NS_UNIT);
+    for (int iEl = 0; iEl < nEl(); iEl++)
+      calcNormalEl2D(iEl, NS_INVNORM, _IJacNormEl[iEl], true);
+  }
+  else if (_invStraightJac.empty()) {
+    _invIJac.resize(nEl(), 1.);
+    for (int iEl = 0; iEl < nEl(); iEl++) {
+      int nEd = _el[iEl]->getNumEdges();
+      double sumEdLength = 0.;
+      for(int iEd = 0; iEd < nEd; iEd++)
+        sumEdLength += _el[iEl]->getEdge(iEd).length();
+      const double invMeanEdLength = double(nEd)/sumEdLength;
+      _invIJac[iEl] = invMeanEdLength*invMeanEdLength*invMeanEdLength;
+    }
   }
 }
 
 
-void Patch::NCJ(int iEl, std::vector<double> &NCJ)
+void Patch::idealJacAndGradients(int iEl, std::vector<double> &iJ, std::vector<double> &gIJ)
 {
-  const int &numNCJVal = _nNCJEl[iEl];
-  const int &numNodes = _nNodEl[iEl];
+  const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
+  const int &numJacNodes = _nIJacEl[iEl];
+  const int &numMapNodes = _nNodEl[iEl];
+  fullMatrix<double> JDJ(numJacNodes,3*numMapNodes+1), BDB(numJacNodes,3*numMapNodes+1);
 
-  std::vector<int> &iVEl = _el2V[iEl];
-  switch(_el[iEl]->getType()) {                                                 // TODO: Complete with other types?
-  case TYPE_TRI: {
-    const int &iV0 = _el2V[iEl][0], &iV1 = _el2V[iEl][1], &iV2 = _el2V[iEl][2];
-    qmTriangle::NCJ(_xyz[iV0], _xyz[iV1], _xyz[iV2], _unitNormEl[iEl], NCJ);
-    break;
-  }
-  case TYPE_QUA: {
-    const int &iV0 = _el2V[iEl][0], &iV1 = _el2V[iEl][1],
-              &iV2 = _el2V[iEl][2], &iV3 = _el2V[iEl][3];
-    qmQuadrangle::NCJ(_xyz[iV0], _xyz[iV1], _xyz[iV2], _xyz[iV3], _unitNormEl[iEl], NCJ);
-    break;
-  }
-  }
-}
-
-
-void Patch::NCJAndGradients(int iEl, std::vector<double> &NCJ, std::vector<double> &gNCJ)
-{
-  const int &numNCJVal = _nNCJEl[iEl];
-  const int &numNodes = _nNodEl[iEl];
-
-  std::vector<int> &iVEl = _el2V[iEl];
-  std::vector<double> dNCJ(numNCJVal*3*numNodes);
-  switch(_el[iEl]->getType()) {                                                 // TODO: Complete with other types?
-  case TYPE_TRI: {
-    const int &iV0 = _el2V[iEl][0], &iV1 = _el2V[iEl][1], &iV2 = _el2V[iEl][2];
-    qmTriangle::NCJAndGradients(_xyz[iV0], _xyz[iV1], _xyz[iV2],
-                                _unitNormEl[iEl], NCJ, dNCJ);
-    break;
-  }
-  case TYPE_QUA: {
-    const int &iV0 = _el2V[iEl][0], &iV1 = _el2V[iEl][1],
-              &iV2 = _el2V[iEl][2], &iV3 = _el2V[iEl][3];
-    qmQuadrangle::NCJAndGradients(_xyz[iV0], _xyz[iV1], _xyz[iV2], _xyz[iV3],
-                                  _unitNormEl[iEl], NCJ, dNCJ);
-    break;
-  }
+  // Coordinates of nodes
+  fullMatrix<double> nodesXYZ(numMapNodes,3), normals(_dim,3);
+  for (int i = 0; i < numMapNodes; i++) {
+    int &iVi = _el2V[iEl][i];
+    nodesXYZ(i,0) = _xyz[iVi].x();
+    nodesXYZ(i,1) = _xyz[iVi].y();
+    nodesXYZ(i,2) = _xyz[iVi].z();
   }
 
-  // Gradients of the NCJ
+  // Calculate Jacobian and gradients, scale if 3D (already scaled by
+  // regularization normals in 2D)
+  jacBasis->getSignedIdealJacAndGradients(nodesXYZ,_IJacNormEl[iEl],JDJ);
+  if (_dim == 3) JDJ.scale(_invIJac[iEl]);
+//  if (_el[iEl]->getNum() == 90370) {
+//    std::cout << "DBGTT: bad el.: " << _el[iEl]->getNum() << "\n";
+//    for (int i = 0; i < numMapNodes; i++)
+//      std::cout << "DBGTT: {x,y,z}" << i << " = (" << nodesXYZ(i,0)
+//                << ", " << nodesXYZ(i,1) << ", " << nodesXYZ(i,2) << ")\n";
+//   for (int l = 0; l < numJacNodes; l++) {
+//      for (int i = 0; i < numMapNodes; i++)
+//        std::cout << "DBGTT: dJ" << l << "d{x,y,z}" << i << " = (" << JDJ(l, i)
+//                  << ", " << JDJ(l, i+numMapNodes) << ", " << JDJ(l, i+2*numMapNodes)<< ")\n";
+//      std::cout << "DBGTT: J" << l << " = " << JDJ(l, 3*numMapNodes)<< "\n";
+//    }
+//  }
+
+  // Transform Jacobian and gradients from Lagrangian to Bezier basis
+  jacBasis->lag2Bez(JDJ,BDB);
+
+  // Scaled jacobian
+  for (int l = 0; l < numJacNodes; l++) iJ [l] = BDB (l,3*numMapNodes);
+
+  // Gradients of the scaled jacobian
   int iPC = 0;
-  std::vector<SPoint3> gXyzV(numNCJVal);
-  std::vector<SPoint3> gUvwV(numNCJVal);
-  for (int i = 0; i < numNodes; i++) {
+  std::vector<SPoint3> gXyzV(numJacNodes);
+  std::vector<SPoint3> gUvwV(numJacNodes);
+  for (int i = 0; i < numMapNodes; i++) {
     int &iFVi = _el2FV[iEl][i];
     if (iFVi >= 0) {
-      for (int l = 0; l < numNCJVal; l++) {
-        int ind = (l*numNodes+i)*3;
-        gXyzV[l] = SPoint3(dNCJ[ind], dNCJ[ind+1], dNCJ[ind+2]);
-      }
-      _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi], gXyzV, gUvwV);
-      for (int l = 0; l < numNCJVal; l++) {
-        gNCJ[indGNCJ(iEl, l, iPC)] = gUvwV[l][0];
-        if (_nPCFV[iFVi] >= 2) gNCJ[indGNCJ(iEl, l, iPC+1)] = gUvwV[l][1];
-        if (_nPCFV[iFVi] == 3) gNCJ[indGNCJ(iEl, l, iPC+2)] = gUvwV[l][2];
+      for (int l = 0; l < numJacNodes; l++)
+        gXyzV [l] = SPoint3(BDB(l,i), BDB(l,i+numMapNodes), BDB(l,i+2*numMapNodes));
+      _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi],gXyzV,gUvwV);
+      for (int l = 0; l < numJacNodes; l++) {
+        gIJ[indGIJac(iEl,l,iPC)] = gUvwV[l][0];
+        if (_nPCFV[iFVi] >= 2) gIJ[indGIJac(iEl,l,iPC+1)] = gUvwV[l][1];
+        if (_nPCFV[iFVi] == 3) gIJ[indGIJac(iEl,l,iPC+2)] = gUvwV[l][2];
       }
       iPC += _nPCFV[iFVi];
     }
@@ -594,7 +614,7 @@ void Patch::NCJAndGradients(int iEl, std::vector<double> &NCJ, std::vector<doubl
 }
 
 
-void Patch::initInvCond()
+void Patch::initCondNum()
 {
   // Initialize _nBezEl
   if (_nBezEl.empty()) {
@@ -605,16 +625,17 @@ void Patch::initInvCond()
 
   // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
   // Jacobians of 3D elements
-  if ((_dim == 2) && _metricNormEl.empty()) {
-    _metricNormEl.resize(nEl());
+  if ((_dim == 2) && _condNormEl.empty()) {
+    _condNormEl.resize(nEl());
 //    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
-    for (int iEl = 0; iEl < nEl(); iEl++) calcNormalEl2D(iEl, NS_SQRTNORM);
+    for (int iEl = 0; iEl < nEl(); iEl++)
+      calcNormalEl2D(iEl, NS_SQRTNORM, _condNormEl[iEl], true);
   }
 }
 
 
-void Patch::invCondAndGradients(int iEl, std::vector<double> &invCond,
-                                std::vector<double> &gInvCond)
+void Patch::condNumAndGradients(int iEl, std::vector<double> &condNum,
+                                std::vector<double> &gCondNum)
 {
   const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
   const int &numJacNodes = _nBezEl[iEl];
@@ -632,10 +653,10 @@ void Patch::invCondAndGradients(int iEl, std::vector<double> &invCond,
 
   // Calculate Jacobian and gradients, scale if 3D (already scaled by
   // regularization normals in 2D)
-  jacBasis->getInvCondAndGradients(nodesXYZ, _metricNormEl[iEl], IDI);
+  jacBasis->getCondNumAndGradients(nodesXYZ, _condNormEl[iEl], IDI);
 
   // Inverse condition number
-  for (int l = 0; l < numJacNodes; l++) invCond[l] = IDI(l, 3*numMapNodes);
+  for (int l = 0; l < numJacNodes; l++) condNum[l] = IDI(l, 3*numMapNodes);
 
   // Gradients of the inverse condition number
   int iPC = 0;
@@ -649,9 +670,9 @@ void Patch::invCondAndGradients(int iEl, std::vector<double> &invCond,
                             IDI(l, i+2*numMapNodes));
       _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi],gXyzV,gUvwV);
       for (int l = 0; l < numJacNodes; l++) {
-        gInvCond[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
-        if (_nPCFV[iFVi] >= 2) gInvCond[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
-        if (_nPCFV[iFVi] == 3) gInvCond[indGSJ(iEl,l,iPC+2)] = gUvwV[l][2];
+        gCondNum[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
+        if (_nPCFV[iFVi] >= 2) gCondNum[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
+        if (_nPCFV[iFVi] == 3) gCondNum[indGSJ(iEl,l,iPC+2)] = gUvwV[l][2];
       }
       iPC += _nPCFV[iFVi];
     }

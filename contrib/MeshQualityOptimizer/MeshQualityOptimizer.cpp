@@ -10,35 +10,37 @@
 #include "MeshOptObjContribFunc.h"
 #include "MeshOptObjContrib.h"
 #include "MeshOptObjContribScaledNodeDispSq.h"
-#include "MeshQualityObjContribNCJ.h"
+#include "MeshQualityObjContribIdealJac.h"
 #include "MeshQualityObjContribInvCond.h"
 #include "MeshOptimizer.h"
 #include "MeshQualityOptimizer.h"
 
 
-struct QualPatchDefParameters : public MeshOptParameters::PatchDefParameters
+struct QualPatchDefParameters : public MeshOptPatchDef
 {
   QualPatchDefParameters(const MeshQualOptParameters &p);
   virtual ~QualPatchDefParameters() {}
-  virtual double elBadness(MElement *el);
-  virtual double maxDistance(MElement *el);
+  virtual double elBadness(MElement *el) const;
+  virtual double maxDistance(MElement *el) const;
+  virtual int inPatch(const SPoint3 &badBary,
+                      double limDist, MElement *el) const;
 private:
-//  double NCJMin, NCJMax;
-  double invCondMin;
-  double distanceFactor;
+  bool _excludeHex, _excludePrism;
+  double _idealJacMin;
+  double _distanceFactor;
 };
 
 
 QualPatchDefParameters::QualPatchDefParameters(const MeshQualOptParameters &p)
 {
-//  NCJMin = p.minTargetNCJ;
-//  NCJMax = (p.maxTargetNCJ > 0.) ? p.maxTargetNCJ : 1.e300;
-  invCondMin = p.minTargetInvCond;
+  _excludeHex = p.excludeHex;
+  _excludePrism = p.excludePrism;
+  _idealJacMin = p.minTargetIdealJac;
   strategy = (p.strategy == 1) ? MeshOptParameters::STRAT_ONEBYONE :
                                         MeshOptParameters::STRAT_CONNECTED;
   minLayers = (p.dim == 3) ? 1 : 0;
   maxLayers = p.nbLayers;
-  distanceFactor = p.distanceFactor;
+  _distanceFactor = p.distanceFactor;
   if (strategy == MeshOptParameters::STRAT_CONNECTED)
     weakMerge = (p.strategy == 2);
   else {
@@ -49,32 +51,29 @@ QualPatchDefParameters::QualPatchDefParameters(const MeshQualOptParameters &p)
 }
 
 
-double QualPatchDefParameters::elBadness(MElement *el) {
-//  double valMin, valMax;
-//  switch(el->getType()) {                                                 // TODO: Complete with other types?
-//  case TYPE_TRI: {
-//     qmTriangle::NCJRange(static_cast<MTriangle*>(el), valMin, valMax);
-//    break;
-//  }
-//  case TYPE_QUA: {
-//    qmQuadrangle::NCJRange(static_cast<MQuadrangle*>(el), valMin, valMax);
-//    break;
-//  }
-//  }
-  const JacobianBasis *jac = el->getJacobianFuncSpace();
-  fullMatrix<double> nodesXYZ(el->getNumShapeFunctions(), 3);
-  el->getNodesCoord(nodesXYZ);
-  fullVector<double> invCond(jac->getNumJacNodes());
-  jac->getInvCond(nodesXYZ, invCond);
-  const double valMin = *std::min_element(invCond.getDataPtr(),
-                          invCond.getDataPtr()+jac->getNumJacNodes());
-  double badness = std::min(valMin-invCondMin, 0.);
-  return badness;
+double QualPatchDefParameters::elBadness(MElement *el) const
+{
+  const int typ = el->getType();
+  if (_excludeHex && (typ == TYPE_HEX)) return 1.;
+  if (_excludePrism && (typ == TYPE_PRI)) return 1.;
+  double jMin, jMax;
+  el->idealJacRange(jMin, jMax);
+  return jMin-_idealJacMin;
 }
 
 
-double QualPatchDefParameters::maxDistance(MElement *el) {
-  return distanceFactor * el->getOuterRadius();
+double QualPatchDefParameters::maxDistance(MElement *el) const
+{
+  return _distanceFactor * el->maxEdge();
+}
+
+
+int QualPatchDefParameters::inPatch(const SPoint3 &badBary,
+                                    double limDist, MElement *el) const
+{
+  const int typ = el->getType();
+  if ((typ == TYPE_HEX) || (typ == TYPE_PRI)) return -1;
+  return testElInDist(badBary, limDist, el) ? 1 : 0;
 }
 
 
@@ -88,42 +87,24 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
   par.fixBndNodes = p.fixBndNodes;
   QualPatchDefParameters patchDef(p);
   par.patchDef = &patchDef;
-  par.optDisplay = 30;
+  par.optDisplay = 20;
   par.verbose = 4;
 
-  ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weightFixed, p.weightFree);
-//  ObjContribNCJ<ObjContribFuncBarrierMovMin> minNCJBarFunc(1.);
-//  minNCJBarFunc.setTarget(p.minTargetNCJ, 1.);
-////  minNCJBarFunc.setTarget(p.minTargetNCJ, 0.866025404);
-//  ObjContribNCJ<ObjContribFuncBarrierFixMinMovMax> minMaxNCJBarFunc(1.);
-//  minMaxNCJBarFunc.setTarget(p.maxTargetNCJ, 1.);
-  ObjContribInvCond<ObjContribFuncBarrierMovMin> minInvCondBarFunc(1.);
-  minInvCondBarFunc.setTarget(p.minTargetInvCond, 1.);
+  ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weightFixed, p.weightFree,
+                                                                Patch::LS_MINEDGELENGTH);
+  ObjContribIdealJac<ObjContribFuncBarrierMovMin> minIdealJacBarFunc(1.);
+  minIdealJacBarFunc.setTarget(p.minTargetIdealJac, 1.);
 
-  MeshOptParameters::PassParameters minJacPass;
+  MeshOptPass minJacPass;
   minJacPass.barrierIterMax = p.optPassMax;
   minJacPass.optIterMax = p.itMax;
   minJacPass.contrib.push_back(&nodeDistFunc);
-//  minJacPass.contrib.push_back(&minNCJBarFunc);
-  minJacPass.contrib.push_back(&minInvCondBarFunc);
+  minJacPass.contrib.push_back(&minIdealJacBarFunc);
   par.pass.push_back(minJacPass);
-
-//  if (p.maxTargetNCJ > 0.) {
-//    MeshOptParameters::PassParameters minMaxJacPass;
-//    minMaxJacPass.barrierIterMax = p.optPassMax;
-//    minMaxJacPass.optIterMax = p.itMax;
-//    minMaxJacPass.contrib.push_back(&nodeDistFunc);
-//    minMaxJacPass.contrib.push_back(&minMaxNCJBarFunc);
-//    par.pass.push_back(minMaxJacPass);
-//  }
 
   meshOptimizer(gm, par);
 
   p.CPU = par.CPU;
-//  p.minNCJ = minMaxNCJBarFunc.getMin();
-//  p.maxNCJ = minMaxNCJBarFunc.getMax();
-  p.minInvCond = minInvCondBarFunc.getMin();
-  p.maxInvCond = minInvCondBarFunc.getMax();
-
-  Msg::StatusBar(true, "Done optimizing high order mesh (%g s)", p.CPU);
+  p.minIdealJac = minIdealJacBarFunc.getMin();
+  p.maxIdealJac = minIdealJacBarFunc.getMax();
 }

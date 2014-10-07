@@ -33,15 +33,15 @@
 class GModel;
 
 struct MeshQualOptParameters {
-//  double minTargetNCJ, maxTargetNCJ;
-  double minTargetInvCond;
-  double weightFixed ; // weight of the energy for fixed nodes
-  double weightFree ; // weight of the energy for free nodes
-  int nbLayers ; // number of layers taken around a bad element
-  int dim ; // which dimension to optimize
-  int itMax ; // max number of iterations in the optimization process
-  int optPassMax ; // max number of optimization passes
-  bool onlyVisible ; // apply optimization to visible entities ONLY
+  bool excludeHex, excludePrism;
+  double minTargetIdealJac;
+  double weightFixed; // weight of the energy for fixed nodes
+  double weightFree; // weight of the energy for free nodes
+  int nbLayers; // number of layers taken around a bad element
+  int dim; // which dimension to optimize
+  int itMax; // max number of iterations in the optimization process
+  int optPassMax; // max number of optimization passes
+  bool onlyVisible; // apply optimization to visible entities ONLY
   double distanceFactor; // filter elements such that no elements further away
                          // than DistanceFactor times the max distance to
                          // straight sided version of an element are optimized
@@ -52,16 +52,15 @@ struct MeshQualOptParameters {
   double adaptBlobDistFact; // Growth factor in distance factor for blob adaptation
 
   int SUCCESS ; // 0 --> success , 1 --> Not converged
-//  double minNCJ, maxNCJ; // after optimization, range of jacobians
-  double minInvCond, maxInvCond; // after optimization, range of jacobians
+  double minIdealJac, maxIdealJac; // after optimization, range of jacobians
   double CPU; // Time for optimization
 
   MeshQualOptParameters ()
-//    : minTargetNCJ(0.5), maxTargetNCJ(1.5), weightFixed(1000.),
-    : minTargetInvCond(0.5), weightFixed(1000.),
+    : excludeHex(false), excludePrism(false), minTargetIdealJac(0.1), weightFixed(1000.),
       weightFree (1.), nbLayers (6) , dim(3) , itMax(300), optPassMax(50),
       onlyVisible(true), distanceFactor(12), fixBndNodes(false), strategy(0),
-      maxAdaptBlob(3), adaptBlobLayerFact(2.), adaptBlobDistFact(2.)
+      maxAdaptBlob(3), adaptBlobLayerFact(2.), adaptBlobDistFact(2.), CPU(0.),
+      minIdealJac(0.), maxIdealJac(0.), SUCCESS(-1)
   {
   }
 };

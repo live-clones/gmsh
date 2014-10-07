@@ -11,7 +11,8 @@ template<class FuncType>
 class ObjContribScaledNodeDispSq : public ObjContrib, public FuncType
 {
 public:
-  ObjContribScaledNodeDispSq(double weightFixed, double weightFree);
+  ObjContribScaledNodeDispSq(double weightFixed, double weightFree,
+                             Patch::LengthScaling scaling);
   virtual ~ObjContribScaledNodeDispSq() {}
   virtual ObjContrib *copy() const;
   virtual void initialize(Patch *mesh);
@@ -25,15 +26,16 @@ public:
 protected:
   Patch *_mesh;
   double _weightFixed, _weightFree;
-
+  Patch::LengthScaling _scaling;
 };
 
 
 template<class FuncType>
 ObjContribScaledNodeDispSq<FuncType>::ObjContribScaledNodeDispSq(double weightFixed,
-                                                                    double weightFree) :
+                                                                 double weightFree,
+                                                                 Patch::LengthScaling scaling) :
   ObjContrib("ScaledNodeDispSq", FuncType::getNamePrefix()+"ScaledNodeDispSq"),
-  _mesh(0), _weightFixed(weightFixed), _weightFree(weightFree)
+  _mesh(0), _weightFixed(weightFixed), _weightFree(weightFree), _scaling(scaling)
 {
 }
 
@@ -49,7 +51,7 @@ template<class FuncType>
 void ObjContribScaledNodeDispSq<FuncType>::initialize(Patch *mesh)
 {
   _mesh = mesh;
-  _mesh->initScaledNodeDispSq();
+  _mesh->initScaledNodeDispSq(_scaling);
   updateMinMax();
   FuncType::initialize(_min, _max);
 }

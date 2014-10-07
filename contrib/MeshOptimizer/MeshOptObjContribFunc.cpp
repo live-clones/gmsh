@@ -1,6 +1,7 @@
 // TODO: Copyright
 
 #include <cmath>
+#include "GmshMessage.h"
 #include "MeshOptObjContribFunc.h"
 
 
@@ -31,28 +32,37 @@ bool ObjContribFuncSimpleTargetMax::stagnated(double vMin, double vMax)
 }
 
 
-const double ObjContribFuncBarrier::LOWMARGINMULT = 0.9;
-const double ObjContribFuncBarrier::UPMARGINMULT = 1.1;
+const double ObjContribFuncBarrier::MARGINCOEFF = 0.1;
 const double ObjContribFuncBarrier::STAGTHRESHOLD = 0.01;
 
 
 ObjContribFuncBarrier::ObjContribFuncBarrier() :
-    _target(0.), _barrier(0.), _init(0.), _opt(0.)
+    _target(0.), _barrier(0.), _init(0.), _opt(0.), _defaultMargin(0.)
 {
 }
 
 
-void ObjContribFuncBarrier::setTarget(double target, double opt)
+void ObjContribFuncBarrier::setTarget(double target, double opt, double defaultMargin)
 {
   _target = target;
   _opt = opt;
+  _defaultMargin = defaultMargin;
+  if (_defaultMargin == 0.) {
+    if (opt != 0.)
+      _defaultMargin = MARGINCOEFF*fabs(opt);
+    else if (target != 0.)
+      _defaultMargin = MARGINCOEFF*fabs(target);
+    else
+      Msg::Warning("Could not find value to define a scale for default barrier margin");
+  }
 }
 
 
 void ObjContribFuncBarrierMovMin::updateParameters(double vMin, double vMax)
 {
   _init = vMin;
-  _barrier = vMin > 0. ? LOWMARGINMULT*vMin : UPMARGINMULT*vMin;
+  const double margin = (vMin == 0.) ? _defaultMargin : MARGINCOEFF*fabs(vMin);
+  _barrier = vMin - margin;
 }
 
 
@@ -65,7 +75,8 @@ bool ObjContribFuncBarrierMovMin::stagnated(double vMin, double vMax)
 void ObjContribFuncBarrierMovMax::updateParameters(double vMin, double vMax)
 {
   _init = vMax;
-  _barrier = vMax > 0. ? UPMARGINMULT*vMax : LOWMARGINMULT*vMax;
+  const double margin = (vMax == 0.) ? _defaultMargin : MARGINCOEFF*fabs(vMax);
+  _barrier = vMax + margin;
 }
 
 
@@ -78,5 +89,6 @@ bool ObjContribFuncBarrierMovMax::stagnated(double vMin, double vMax)
 void ObjContribFuncBarrierFixMinMovMax::initialize(double vMin, double vMax)
 {
   ObjContribFuncBarrierMovMax::initialize(vMin, vMax);
-  _fixedMinBarrier = vMin > 0. ? LOWMARGINMULT*vMin : UPMARGINMULT*vMin;
+  const double margin = (vMin == 0.) ? _defaultMargin : MARGINCOEFF*fabs(vMin);
+  _fixedMinBarrier = vMin - margin;
 }

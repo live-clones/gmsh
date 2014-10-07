@@ -34,35 +34,48 @@
 
 
 class MElement;
+class SPoint3;
 class ObjContrib;
 
 
-struct MeshOptParameters {                             // Parameters controlling the strategy
-  enum { STRAT_CONNECTED, STRAT_ONEBYONE };
-  struct PassParameters {                              // Parameters controlling the optimization procedure in each pass
-    std::vector<ObjContrib*> contrib;                  // Indices of contributions to objective function
-    int optIterMax;                                    // Max. number of opt. iterations each time the barrier is moved
-    int barrierIterMax;                                // Max. number of times the barrier is moved
-  };
-  struct PatchDefParameters {
-    int strategy;                                      // Strategy: connected patches or adaptive one-by-one
-    int minLayers, maxLayers;                          // Min. and max. nb. of layers around a bad element in patch
-    union {
-      struct {                                         // If adaptive strategy:
-        int maxAdaptPatch;                             // Max. nb. of adaptation iterations
-        int maxLayersAdaptFact;                        // Growth rate in number of layers around a bad element
-        double distanceAdaptFact;                      // Growth rate in max. distance from bad element
-      };
-      bool weakMerge;                                   // If connected strategy: weak or strong merging of patches
+class MeshOptPatchDef {
+public:
+  int strategy;                                         // Strategy: connected patches or adaptive one-by-one
+  int minLayers, maxLayers;                             // Min. and max. nb. of layers around a bad element in patch
+  union {
+    struct {                                            // If adaptive strategy:
+      int maxAdaptPatch;                                // Max. nb. of adaptation iterations
+      int maxLayersAdaptFact;                           // Growth rate in number of layers around a bad element
+      double distanceAdaptFact;                         // Growth rate in max. distance from bad element
     };
-    virtual double elBadness(MElement *el) = 0;         // Pointer to function returning "badness" of element (for patch creation)
-    virtual double maxDistance(MElement *el) = 0; // Pointer to function checking the patch distance criterion for a given bad element
+    bool weakMerge;                                     // If connected strategy: weak or strong merging of patches
   };
+  virtual ~MeshOptPatchDef() {}
+  virtual double elBadness(MElement *el) const = 0;     // Determine "badness" of a given element (for patch creation)
+  virtual double maxDistance(MElement *el) const = 0;   // Compute max. distance to a given bad element for elements in patch
+  virtual int inPatch(const SPoint3 &badBary,           // Determine whether a given element should be included in the patch around a...
+                      double limDist,                   // ... given bad element barycenter, with a limit distance if needed. Output: ...
+                      MElement *el) const = 0;          // ... -1 = excluded, 0 = included only up to minLayers, 1 = included up to maxLayers
+protected:
+  bool testElInDist(const SPoint3 &P, double limDist,   // Test whether an element is within a certain distance from a point
+                    MElement *el) const;
+};
+
+
+struct MeshOptPass {                                    // Parameters controlling the optimization procedure in each pass
+  std::vector<ObjContrib*> contrib;                     // Indices of contributions to objective function
+  int optIterMax;                                       // Max. number of opt. iterations each time the barrier is moved
+  int barrierIterMax;                                   // Max. number of times the barrier is moved
+};
+
+
+struct MeshOptParameters {                              // Parameters controlling the strategy
+  enum { STRAT_CONNECTED, STRAT_ONEBYONE };
   int dim ;                                             // Which dimension to optimize
   bool onlyVisible ;                                    // Apply optimization to visible entities ONLY
   bool fixBndNodes;                                     // If points can move on boundaries
-  PatchDefParameters *patchDef;
-  std::vector<PassParameters> pass;
+  MeshOptPatchDef *patchDef;
+  std::vector<MeshOptPass> pass;
   int optDisplay;                                       // Sampling rate in opt. iterations for display
   int verbose;                                          // Level of information displayed and written to disk
   int success;                                          // Success flag: -1 = fail, 0 = partial fail (target not reached), 1 = success

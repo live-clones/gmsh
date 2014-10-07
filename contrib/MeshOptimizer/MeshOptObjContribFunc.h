@@ -38,13 +38,16 @@ class ObjContribFuncBarrier
 {
 public:
   ObjContribFuncBarrier();
-  void setTarget(double target, double opt=1.);
+  void setTarget(double target, double opt=1.,
+                 double defaultMargin=0.);
 
 protected:
-  static const double LOWMARGINMULT, UPMARGINMULT;                                // Upper and lower margins w.r.t. min. & max. to set barrier
+  static const double MARGINCOEFF;                                                // Margin coefficient w.r.t. min. & max. to set barrier
   static const double STAGTHRESHOLD;                                              // Threshold to consider that measures stagnates
   double _opt;                                                                    // Optimal value of measure in barrier function
-  double _barrier, _target, _init;                                                // Current barrier, target and initial values of min./max. of measure
+  double _defaultMargin;                                                          // Default margin value to set barrier w.r.t. of min./max. of measure
+  double _barrier, _target;                                                       // Current barrier and target of min./max. of measure
+  double _init;                                                                   // Initial value of min./max. of measure
   static double logBarrier(double v, double barrier, double opt);
   static double diffLogBarrier(double v, double barrier, double opt);
 };

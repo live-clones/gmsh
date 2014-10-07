@@ -154,8 +154,10 @@ set(GMSH_API
   contrib/MeshOptimizer/MeshOptPatch.h contrib/MeshOptimizer/MeshOpt.h
   contrib/MeshOptimizer/MeshOptCommon.h contrib/MeshOptimizer/MeshOptimizer.h
   contrib/MeshOptimizer/MeshOptObjContribFunc.h contrib/MeshOptimizer/MeshOptObjContrib.h
+  contrib/MeshOptimizer/MeshOptObjContribScaledNodeDispSq.h
   contrib/MeshOptimizer/MeshOptObjectiveFunction.h contrib/MeshOptimizer/MeshOptVertexCoord.h 
-  contrib/MeshQualityOptimizer/MeshQualityObjContribNCJ.h
+  contrib/MeshQualityOptimizer/MeshQualityObjContribIdealJac.h
+  contrib/MeshQualityOptimizer/MeshQualityObjContribInvCond.h
   contrib/MeshQualityOptimizer/MeshQualityOptimizer.h
   contrib/MathEx/mathex.h)
 

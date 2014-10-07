@@ -47,7 +47,7 @@ template<class FuncType>
 void ObjContribInvCond<FuncType>::initialize(Patch *mesh)
 {
   _mesh = mesh;
-  _mesh->initInvCond();
+  _mesh->initCondNum();
   updateMinMax();
   FuncType::initialize(_min, _max);
 }
@@ -62,7 +62,7 @@ bool ObjContribInvCond<FuncType>::addContrib(double &Obj, alglib::real_1d_array 
   for (int iEl = 0; iEl < _mesh->nEl(); iEl++) {
     std::vector<double> invCond(_mesh->nBezEl(iEl));                                      // Min. of Metric
     std::vector<double> gInvCond(_mesh->nBezEl(iEl)*_mesh->nPCEl(iEl));                   // Dummy gradients of metric min.
-    _mesh->invCondAndGradients(iEl, invCond, gInvCond);
+    _mesh->condNumAndGradients(iEl, invCond, gInvCond);
     for (int l = 0; l < _mesh->nBezEl(iEl); l++) {                                        // Add contribution for each Bezier coeff.
       Obj += _weight * FuncType::compute(invCond[l]);
       const double dfact = _weight * FuncType::computeDiff(invCond[l]);
@@ -86,7 +86,7 @@ void ObjContribInvCond<FuncType>::updateMinMax()
   for (int iEl = 0; iEl < _mesh->nEl(); iEl++) {
     std::vector<double> invCond(_mesh->nBezEl(iEl));                                      // Min. of Metric
     std::vector<double> dumGInvCond(_mesh->nBezEl(iEl)*_mesh->nPCEl(iEl));                // Dummy gradients of metric min.
-    _mesh->invCondAndGradients(iEl, invCond, dumGInvCond);
+    _mesh->condNumAndGradients(iEl, invCond, dumGInvCond);
     for (int l = 0; l < _mesh->nBezEl(iEl); l++) {                                        // Add contribution for each Bezier coeff.
       _min = std::min(_min, invCond[l]);
       _max = std::max(_max, invCond[l]);
