@@ -58,6 +58,7 @@ public:
     //OnelabServer::instance(0, 0);
     _localClient = new GmshLocalClient("localGUI", OnelabServer::instance()->getParameterSpace());
     OnelabServer::instance()->addClient(_localClient); // TODO remove from server in _clear()
+
 #ifndef WIN32
     pthread_create(&_serverThread, NULL, OnelabDatabase_server, NULL);
 #else
@@ -114,12 +115,12 @@ public:
     if(_client) return _client->get(ps, name);
     //if(_localClient) _localClient->get(ps, name);
     return OnelabServer::instance()->get(ps, name, client);
-  }  
+  }
   bool fromFile(FILE *fp, const std::string &client="")
   {
     if(_client) return _client->fromFile(fp, client);
     return OnelabServer::instance()->fromFile(fp, client);
-    
+
   }
   void onelab_cb(std::string action) {
     if(_client) return; // TODO send action to the server
@@ -138,11 +139,11 @@ public:
         this->set(o);
         (*it).run();
       }
-      
+
     } while(action == "compute" &&
         //TODO incrementLoops() &&
         !false/*TODO onelab->stop*/);
-    
+
   }
 };
 
@@ -158,7 +159,7 @@ DWORD WINAPI OnelabDatabase_listen(LPVOID arg)
   while(1) {
     recvlen = OnelabDatabase::instance()->listen(buff, 1024);
     if(recvlen == 1 && buff[0] == 'S')
-      break; 
+      break;
     msg.parseMsg(buff, recvlen);
     msg.showMsg();
     switch(msg.msgType()) {
