@@ -4,23 +4,17 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "AnalyseCurvedMesh.h"
-#include "GModel.h"
 #include "OS.h"
 #include "Context.h"
-
-#include <cmath>
-#include <queue>
-#include <sstream>
-
-#include "GmshMessage.h"
-#include "PView.h"
-
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#endif
+#include "PView.h"
+#include "GModel.h"
+#include "MElement.h"
+#include "bezierBasis.h"
+#include "MetricBasis.h"
+#include <sstream>
 
 namespace {
 
@@ -181,9 +175,11 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
             dataPV[el->getNum()].push_back(_data[i].minJ());
           }
         }
-        std::stringstream name;
-        name << "min J " << dim << "D";
-        new PView(name.str().c_str(), "ElementData", _m, dataPV);
+        if (dataPV.size()) {
+          std::stringstream name;
+          name << "min J " << dim << "D";
+          new PView(name.str().c_str(), "ElementData", _m, dataPV);
+        }
       }
       if (!_PViewR[dim-1] && _computeMetric) {
         _PViewR[dim-1] = true;
@@ -193,9 +189,11 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
           if (el->getDim() == dim)
             dataPV[el->getNum()].push_back(_data[i].minR());
         }
-        std::stringstream name;
-        name << "min R " << dim << "D";
-        new PView(name.str().c_str(), "ElementData", _m, dataPV);
+        if (dataPV.size()) {
+          std::stringstream name;
+          name << "min R " << dim << "D";
+          new PView(name.str().c_str(), "ElementData", _m, dataPV);
+        }
       }
     }
   }

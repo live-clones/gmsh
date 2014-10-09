@@ -7,11 +7,8 @@
 #define _ANALYSECURVEDMESH_H_
 
 #include "Plugin.h"
-#include "JacobianBasis.h"
-#include "MetricBasis.h"
-#include "MElement.h"
-
 #include <vector>
+class MElement;
 
 extern "C"
 {
