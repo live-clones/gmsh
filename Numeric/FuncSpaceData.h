@@ -18,8 +18,8 @@ class FuncSpaceData
   // bezier and metric bases.
 
 private:
-  const int _tag, _spaceOrder, _nij, _nk;
-  const bool _pyramidalSpace, _serendipity;
+  int _tag, _spaceOrder, _nij, _nk;
+  bool _pyramidalSpace, _serendipity;
   // When '_parentType' == TYPE_PYR,
   // if _pyramidalSpace == true, then the space is {X^i Y^j Z^k | i,j <= k+'_nij', k <= '_nk'},
   // otherwise, the space is {X^i Y^j Z^k | i,j <= '_nij', k <= '_nk'},
