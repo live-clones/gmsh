@@ -10,6 +10,7 @@
 #include "Numeric.h"
 #include "SmoothData.h"
 #include "Context.h"
+#include "polynomialBasis.h"
 
 PViewDataList::PViewDataList(bool isAdapted)
   : PViewData(), NbTimeStep(0), Min(VAL_INF), Max(-VAL_INF),
