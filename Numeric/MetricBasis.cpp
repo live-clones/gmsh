@@ -12,6 +12,7 @@
 #include "OS.h"
 #include <queue>
 #include <sstream>
+#include <limits>
 
 double MetricBasis::_tol = 1e-3;
 
@@ -551,7 +552,6 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
   //
   static const double epsilon = std::numeric_limits<double>::epsilon();
   double sumRatio = 0;
-  int numRatio = 0;
 
   for (int tag = 1; tag <= MSH_NUM_TYPE; ++tag) {
     if (tag > 66 && tag < 71) continue; //not conventional elements
@@ -1531,13 +1531,8 @@ double MetricBasis::_R3Dsafe(double a, double K)
 
 double MetricBasis::_R2Dsafe(double q, double p)
 {
-  if (q < 0 || p < 0 || p > q) {
+  if (q < 0 || p < 0 || p > q)
     Msg::Error("wrong argument for 2d metric (%g, %g)", q, p);
-    int a[1];
-    int sum=0;
-    for(int i = 0; i  < 1000000; ++i) sum+=a[i];
-    Msg::Info("sum %d", sum);
-  }
   return (q-p) / (q+p);
 }
 
