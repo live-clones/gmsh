@@ -6,41 +6,65 @@
 #ifndef BASISFACTORY_H
 #define BASISFACTORY_H
 
-#include "MElement.h"
-#include "MPyramid.h"
-#include "nodalBasis.h"
-#include "bezierBasis.h"
 #include "JacobianBasis.h"
-#include "MetricBasis.h"
+#include "FuncSpaceData.h"
+class nodalBasis;
+class MetricBasis;
+class GradientBasis;
+class bezierBasis;
 
 class BasisFactory
 {
-  typedef std::map<std::pair<int, int>, JacobianBasis*> Cont_jacBasis;
-  typedef std::map<std::pair<int, int>, bezierBasis*> Cont_bezierBasis;
-  typedef std::map<std::pair<int, int>, GradientBasis*> Cont_gradBasis;
-
  private:
   static std::map<int, nodalBasis*> fs;
   static std::map<int, MetricBasis*> ms;
-  static Cont_jacBasis js;
-  static Cont_gradBasis gs;
-  static Cont_bezierBasis bs;
-  // store bezier bases by parentType and order (no serendipity..)
+  static std::map<FuncSpaceData, JacobianBasis*> js;
+  static std::map<FuncSpaceData, bezierBasis*> bs;
+  static std::map<FuncSpaceData, GradientBasis*> gs;
 
  public:
   // Caution: the returned pointer can be NULL
+
+  // Nodal
   static const nodalBasis* getNodalBasis(int tag);
-  static const JacobianBasis* getJacobianBasis(int tag, int order);
-  static const JacobianBasis* getJacobianBasis(int tag) {
-    return getJacobianBasis(tag, JacobianBasis::jacobianOrder(tag) );
+
+  // Jacobian
+  // Warning: bases returned by BasisFactory::getJacobianBasis(int tag) are the
+  // only safe bases for using Bezier on the jacobian determinant!
+  static const JacobianBasis* getJacobianBasis(FuncSpaceData);
+  static const JacobianBasis* getJacobianBasis(int tag, int order) {
+    const int type = ElementType::ParentTypeFromTag(tag);
+    if (type != TYPE_PYR)
+      return getJacobianBasis(FuncSpaceData(true, tag, order));
+    else
+      return getJacobianBasis(FuncSpaceData(true, tag, false, order+1, order));
   }
+  static const JacobianBasis* getJacobianBasis(int tag) {
+    const int order = JacobianBasis::jacobianOrder(tag);
+    const int type = ElementType::ParentTypeFromTag(tag);
+    if (type != TYPE_PYR)
+      return getJacobianBasis(FuncSpaceData(true, tag, order));
+    else
+      return getJacobianBasis(FuncSpaceData(true, tag, false, order+2, order));
+  }
+
+  // Metric
   static const MetricBasis* getMetricBasis(int tag);
 
-  static const GradientBasis* getGradientBasis(int tag, int order);
-  static const bezierBasis* getBezierBasis(int parentTag, int order);
+  // Gradients
+  static const GradientBasis* getGradientBasis(FuncSpaceData);
+  static const GradientBasis* getGradientBasis(int tag, int order) {
+    return getGradientBasis(FuncSpaceData(true, tag, order));
+  }
+
+  // Bezier
+  static const bezierBasis* getBezierBasis(FuncSpaceData);
+  static const bezierBasis* getBezierBasis(int parentTag, int order) {
+    int primaryTag = ElementType::getTag(parentTag, 1);
+    return getBezierBasis(FuncSpaceData(true, primaryTag, order));
+  }
   static const bezierBasis* getBezierBasis(int tag) {
-    return getBezierBasis(ElementType::ParentTypeFromTag(tag),
-                          ElementType::OrderFromTag(tag) );
+    return getBezierBasis(FuncSpaceData(tag));
   }
 
   static void clearAll();

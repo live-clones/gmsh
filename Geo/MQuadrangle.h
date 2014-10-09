@@ -375,7 +375,7 @@ class MQuadrangleN : public MQuadrangle {
   virtual const MVertex *getVertex(int num) const{ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual int getNumFaceVertices() const
   {
-    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+    if (getIsAssimilatedSerendipity())
       return 0;
     else
       return  (_order - 1) * (_order - 1);

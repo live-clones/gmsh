@@ -7,6 +7,7 @@ set(SRC
   Numeric.cpp
     fullMatrix.cpp
   BasisFactory.cpp
+    FuncSpaceData.cpp
   discreteFrechetDistance.cpp
   miniBasis.cpp
     nodalBasis.cpp

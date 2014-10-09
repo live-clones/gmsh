@@ -333,7 +333,7 @@ class MTetrahedronN : public MTetrahedron {
   virtual int getNumEdgeVertices() const { return 6 * (_order - 1); }
   virtual int getNumFaceVertices() const
   {
-    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+    if (getIsAssimilatedSerendipity())
       return 0;
     else
       return  4 * ((_order - 1) * (_order - 2)) / 2;
@@ -348,7 +348,7 @@ class MTetrahedronN : public MTetrahedron {
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
-    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0) {
+    if (getIsAssimilatedSerendipity()) {
       v.resize(3 * _order);
     }
     else {
@@ -379,7 +379,7 @@ class MTetrahedronN : public MTetrahedron {
   }
   virtual int getNumVolumeVertices() const
   {
-    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+    if (getIsAssimilatedSerendipity())
       return 0;
     else
       return ((_order - 1) * (_order - 2) * (_order - 3)) / 6;

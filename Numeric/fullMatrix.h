@@ -6,10 +6,10 @@
 #ifndef _FULL_MATRIX_H_
 #define _FULL_MATRIX_H_
 
-#include <math.h>
-#include <stdio.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include <cmath>
+#include <cstdio>
 
 template <class scalar> class fullMatrix;
 
@@ -148,6 +148,12 @@ class fullVector
       setAll(other);
     }
     return *this;
+  }
+
+  void copy(const fullVector<scalar> &v, int i0, int ni, int desti0)
+  {
+    for(int i = i0, desti = desti0; i < i0 + ni; i++, desti++)
+      (*this)(desti) = v(i);
   }
 
   // set

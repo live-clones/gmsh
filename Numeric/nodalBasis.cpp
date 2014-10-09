@@ -647,3 +647,20 @@ nodalBasis::nodalBasis(int tag)
   }
 
 }
+
+void nodalBasis::getReferenceNodesForBezier(fullMatrix<double> &nodes) const {
+  if (parentType != TYPE_PYR && !serendip) {
+    nodes = points;
+  }
+  else {
+    const bool serendipSpace = false;
+    if (parentType != TYPE_PYR) {
+      FuncSpaceData data(true, type, order, &serendipSpace);
+      gmshGeneratePoints(data, nodes);
+    }
+    else {
+      FuncSpaceData data(true, type, false, order, order, &serendipSpace);
+      gmshGeneratePoints(data, nodes);
+    }
+  }
+}

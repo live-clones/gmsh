@@ -486,14 +486,14 @@ class MHexahedronN : public MHexahedron {
   virtual int getNumEdgeVertices() const { return 12 * (_order - 1); }
   virtual int getNumFaceVertices() const
   {
-    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+    if (getIsAssimilatedSerendipity())
       return 0;
     else
       return 6 * (_order - 1)*(_order - 1);
   }
   virtual int getNumVolumeVertices() const
   {
-    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+    if (getIsAssimilatedSerendipity())
       return 0;
     else
       return (_order - 1) * (_order - 1) * (_order - 1);
@@ -508,7 +508,7 @@ class MHexahedronN : public MHexahedron {
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
-    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0) {
+    if (getIsAssimilatedSerendipity()) {
       v.resize(4 * _order);
     }
     else {

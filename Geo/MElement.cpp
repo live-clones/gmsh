@@ -49,6 +49,89 @@ MElement::MElement(int num, int part) : _visible(1)
   }
 }
 
+MElement* MElement::createElement(int tag, const std::vector<MVertex*> &vertices,
+                                  int num, int part)
+{
+  const int type = ElementType::ParentTypeFromTag(tag);
+  const int order = ElementType::OrderFromTag(tag);
+  const bool serendipity = ElementType::SerendipityFromTag(tag) > 1;
+
+  if (order == 0) {
+    Msg::Error("p0 elements can not be created (tag %d)", tag);
+    return NULL;
+  }
+
+  switch (type) {
+
+  case TYPE_PNT:
+    return new MPoint(vertices, num, part);
+
+  case TYPE_LIN:
+    if (order == 1)
+      return new MLine(vertices, num, part);
+    else if (order == 2)
+      return new MLine3(vertices, num, part);
+    else
+      return new MLineN(vertices, num, part);
+
+  case TYPE_TRI:
+    if (order == 1)
+      return new MTriangle(vertices, num, part);
+    else if (order == 2)
+      return new MTriangle6(vertices, num, part);
+    else
+      return new MTriangleN(vertices, order, num, part);
+
+  case TYPE_QUA:
+    if (order == 1)
+      return new MQuadrangle(vertices, num, part);
+    else if (order == 2 && serendipity)
+      return new MQuadrangle8(vertices, num, part);
+    else if (order == 2)
+      return new MQuadrangle9(vertices, num, part);
+    else
+      return new MQuadrangleN(vertices, order, num, part);
+
+  case TYPE_TET:
+    if (order == 1)
+      return new MTetrahedron(vertices, num, part);
+    else if (order == 2)
+      return new MTetrahedron10(vertices, num, part);
+    else
+      return new MTetrahedronN(vertices, order, num, part);
+
+  case TYPE_PYR:
+    if (order == 1)
+      return new MPyramid(vertices, num, part);
+    else
+      return new MPyramidN(vertices, order, num, part);
+
+  case TYPE_PRI:
+    if (order == 1)
+      return new MPrism(vertices, num, part);
+    else if (order == 2 && serendipity)
+      return new MPrism15(vertices, num, part);
+    else if (order == 2)
+      return new MPrism18(vertices, num, part);
+    else
+      return new MPrismN(vertices, order, num, part);
+
+  case TYPE_HEX:
+    if (order == 1)
+      return new MHexahedron(vertices, num, part);
+    else if (order == 2 && serendipity)
+      return new MHexahedron20(vertices, num, part);
+    else if (order == 2)
+      return new MHexahedron27(vertices, num, part);
+    else
+      return new MHexahedronN(vertices, order, num, part);
+
+  default:
+    break;
+  }
+  return NULL;
+}
+
 void MElement::_getEdgeRep(MVertex *v0, MVertex *v1,
                            double *x, double *y, double *z, SVector3 *n,
                            int faceIndex)
@@ -463,8 +546,8 @@ double MElement::getJacobian(double u, double v, double w, double jac[3][3]) con
       jac[j][1] += ver->y() * gg[j];
       jac[j][2] += ver->z() * gg[j];
     }
-    //    printf("GSF (%d,%g %g) = %g %g \n",i,u,v,gg[0],gg[1]);
   }
+
   return _computeDeterminantAndRegularize(this, jac);
 }
 
@@ -540,6 +623,62 @@ void MElement::getNodesCoord(fullMatrix<double> &nodesXYZ) const
     nodesXYZ(i,0) = v->x();
     nodesXYZ(i,1) = v->y();
     nodesXYZ(i,2) = v->z();
+  }
+}
+
+double MElement::getEigenvaluesMetric(double u, double v, double w, double values[3]) const
+{
+  double jac[3][3];
+  getJacobian(u, v, w, jac);
+  GradientBasis::mapFromIdealElement(getType(), jac);
+
+  switch (getDim()) {
+  case 1:
+    values[0] = 0;
+    values[1] = -1;
+    values[2] = -1;
+    for (int d = 0; d < 3; ++d)
+      values[0] += jac[d][0] * jac[d][0];
+    return 1;
+
+  case 2:
+  {
+    fullMatrix<double> metric(2, 2);
+    for (int i = 0; i < 2; ++i) {
+      for (int j = 0; j < 2; ++j) {
+        for (int d = 0; d < 3; ++d)
+          metric(i, j) += jac[d][i] * jac[d][j];
+      }
+    }
+    fullVector<double> valReal(values, 2), valImag(2);
+    fullMatrix<double> vecLeft(2, 2), vecRight(2, 2);
+    metric.eig(valReal, valImag, vecLeft, vecRight, true);
+    if (fabs(valImag(0)) + fabs(valImag(1)) > 1e-12)
+      Msg::Warning("not really real");
+    values[2] = -1;
+    return std::sqrt(valReal(0) / valReal(1));
+  }
+
+  case 3:
+  {
+    fullMatrix<double> metric(3, 3);
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        for (int d = 0; d < 3; ++d)
+          metric(i, j) += jac[d][i] * jac[d][j];
+      }
+    }
+
+    fullVector<double> valReal(values, 3), valImag(3);
+    fullMatrix<double> vecLeft(3, 3), vecRight(3, 3);
+    metric.eig(valReal, valImag, vecLeft, vecRight, true);
+
+    return std::sqrt(valReal(0) / valReal(2));
+  }
+
+  default:
+    Msg::Error("wrong dimension for getEigenvaluesMetric function");
+    return -1;
   }
 }
 

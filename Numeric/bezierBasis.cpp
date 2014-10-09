@@ -12,6 +12,7 @@
 #include "pointsGenerators.h"
 #include "BasisFactory.h"
 #include "Numeric.h"
+#include <sstream>
 
 
 namespace {
@@ -224,14 +225,14 @@ std::vector< fullMatrix<double> > generateSubPointsHex(int order)
   return subPoints;
 }
 
-std::vector< fullMatrix<double> > generateSubPointsPyr(int order)
+std::vector< fullMatrix<double> > generateSubPointsPyr(int nij, int nk)
 {
-  if (order == 0) {
+  if (nk == 0) {
     std::vector< fullMatrix<double> > subPoints(4);
     fullMatrix<double> prox;
 
-    subPoints[0] = gmshGenerateMonomialsPyramidGeneral(false, 2, 0);
-    subPoints[0].scale(.5/2);
+    subPoints[0] = gmshGenerateMonomialsPyramidGeneral(false, nij, nk);
+    subPoints[0].scale(.5/nij);
 
     subPoints[1].copy(subPoints[0]);
     prox.setAsProxy(subPoints[1], 0, 1);
@@ -251,11 +252,11 @@ std::vector< fullMatrix<double> > generateSubPointsPyr(int order)
     std::vector< fullMatrix<double> > subPoints(8);
     fullMatrix<double> ref, prox;
 
-    subPoints[0] = gmshGenerateMonomialsPyramidGeneral(false, order+2, order);
+    subPoints[0] = gmshGenerateMonomialsPyramidGeneral(false, nij, nk);
     prox.setAsProxy(subPoints[0], 2, 1);
     prox.scale(-1);
-    prox.add(order);
-    subPoints[0].scale(.5/(order+2));
+    prox.add(nk);
+    subPoints[0].scale(.5/std::max(nij,nk));
 
     subPoints[1].copy(subPoints[0]);
     prox.setAsProxy(subPoints[1], 0, 1);
@@ -285,13 +286,10 @@ std::vector< fullMatrix<double> > generateSubPointsPyr(int order)
     prox.setAsProxy(subPoints[7], 2, 1);
     prox.add(.5);
 
-    const int nPts = subPoints[0].size1();
     for (int i = 0; i < 8; ++i) {
-      for (int j = 0; j < nPts; ++j) {
-        const double factor = (1. - subPoints[i](j, 2));
-        subPoints[i](j, 0) = subPoints[i](j, 0) * factor;
-        subPoints[i](j, 1) = subPoints[i](j, 1) * factor;
-      }
+      prox.setAsProxy(subPoints[i], 2, 1);
+      prox.scale(-1);
+      prox.add(1);
     }
 
     return subPoints;
@@ -303,6 +301,10 @@ int nChoosek(int n, int k)
 {
   if (n < k || k < 0) {
     Msg::Error("Wrong argument for combination. (%d, %d)", n, k);
+      int a[10];
+      int e = 0;
+      for (int i = 0; i < 1000000; ++i) e += a[i];
+      Msg::Info("e%d", e);
     return 1;
   }
 
@@ -361,33 +363,35 @@ fullMatrix<double> generateBez2LagMatrix
 
 fullMatrix<double> generateBez2LagMatrixPyramid
   (const fullMatrix<double> &exponent, const fullMatrix<double> &point,
-   int order)
+   bool pyr, int nij, int nk)
 {
   if(exponent.size1() != point.size1() || exponent.size2() != point.size2() ||
       exponent.size2() != 3){
     Msg::Fatal("Wrong sizes for pyramid's bez2lag matrix generation %d %d -- %d %d",
-      exponent.size1(),point.size1(),
-      exponent.size2(),point.size2());
+      exponent.size1(), point.size1(),
+      exponent.size2(), point.size2());
     return fullMatrix<double>(1, 1);
   }
 
   const int ndofs = exponent.size1();
 
+  int n01 = nij;
   fullMatrix<double> bez2Lag(ndofs, ndofs);
   for (int i = 0; i < ndofs; i++) {
     for (int j = 0; j < ndofs; j++) {
-      double denom = 1. - point(i, 2);
+      if (pyr) n01 = exponent(j, 2) + nij;
       bez2Lag(i, j) =
-            nChoosek(order + 2, exponent(j, 0))
-          * nChoosek(order + 2, exponent(j, 1))
-          * nChoosek(order, exponent(j, 2))
-          * pow_int(point(i, 0) / denom, exponent(j, 0))
-          * pow_int(point(i, 1) / denom, exponent(j, 1))
-          * pow_int(1. - point(i, 2)   , exponent(j, 2))
-          * pow_int(1. - point(i, 0) / denom, order + 2 - exponent(j, 0))
-          * pow_int(1. - point(i, 1) / denom, order + 2 - exponent(j, 1))
-          * pow_int(point(i, 2)             , order     - exponent(j, 2));
+            nChoosek(n01, exponent(j, 0))
+          * nChoosek(n01, exponent(j, 1))
+          * nChoosek(nk , exponent(j, 2))
+          * pow_int(point(i, 0), exponent(j, 0))
+          * pow_int(point(i, 1), exponent(j, 1))
+          * pow_int(point(i, 2), exponent(j, 2))
+          * pow_int(1. - point(i, 0), n01 - exponent(j, 0))
+          * pow_int(1. - point(i, 1), n01 - exponent(j, 1))
+          * pow_int(1. - point(i, 2), nk  - exponent(j, 2));
     }
+    //Msg::Info("bb %g %g %g", point(i, 0) / denom, point(i, 1) / denom, 1. - point(i, 2));
   }
   return bez2Lag;
 }
@@ -420,7 +424,7 @@ fullMatrix<double> generateSubDivisor
 
 fullMatrix<double> generateSubDivisorPyramid
   (const fullMatrix<double> &exponents, const std::vector< fullMatrix<double> > &subPoints,
-   const fullMatrix<double> &lag2Bez, int order)
+   const fullMatrix<double> &lag2Bez, bool pyr, int nij, int nk)
 {
   if (exponents.size1() != lag2Bez.size1() || exponents.size1() != lag2Bez.size2()){
     Msg::Fatal("Wrong sizes for Bezier Divisor %d %d -- %d %d",
@@ -437,7 +441,8 @@ fullMatrix<double> generateSubDivisorPyramid
 
   for (unsigned int i = 0; i < subPoints.size(); i++) {
     fullMatrix<double> intermediate1 =
-      generateBez2LagMatrixPyramid(exponents, subPoints[i], order);
+      generateBez2LagMatrixPyramid(exponents, subPoints[i],
+                                   pyr, nij, nk);
     lag2Bez.mult(intermediate1, intermediate2);
     subDivisor.copy(intermediate2, 0, nbPts, 0, nbPts, i*nbPts, 0);
   }
@@ -445,56 +450,79 @@ fullMatrix<double> generateSubDivisorPyramid
 }
 }
 
+void bezierBasis::generateBezierPoints(fullMatrix<double> &points) const
+{
+  gmshGenerateMonomials(_data, points);
+  points.scale(1./_data.spaceOrder());
+
+  if (_data.elementType() == TYPE_PYR && _data.nk() < _data.spaceOrder()) {
+    fullMatrix<double> prox;
+    prox.setAsProxy(points, 2, 1);
+    prox.add(1-static_cast<double>(_data.nk())/_data.spaceOrder());
+  }
+}
+
+void bezierBasis::_FEpoints2BezPoints(fullMatrix<double> &points) const
+{
+  switch (_data.elementType()) {
+  case TYPE_TRI:
+  case TYPE_TET:
+    break;
+
+  case TYPE_QUA:
+  case TYPE_HEX:
+    points.add(1);
+    points.scale(.5);
+    break;
+
+  case TYPE_PRI:
+    {
+      fullMatrix<double> tmp;
+      tmp.setAsProxy(points, 2, 1);
+      tmp.add(1);
+      tmp.scale(.5);
+    }
+    break;
+
+  case TYPE_PYR:
+    for (int i = 0; i < points.size1(); ++i) {
+      points(i, 2) = 1. - points(i, 2);
+      points(i, 0) = .5 * (1 + points(i, 0) / points(i, 2));
+      points(i, 1) = .5 * (1 + points(i, 1) / points(i, 2));
+    }
+    break;
+
+  default:
+    Msg::Error("_FEpoints2BezPoints not implemented for "
+               "type of element %d", _data.elementType());
+    return;
+  }
+}
+
 void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
                               const fullMatrix<double> &uvw,
                               fullMatrix<double> &result,
                               bool bezCoord) const
 {
-  result.resize(uvw.size1(), coeffs.size2());
-  int dimSimplex;
+  if (result.size1() < uvw.size1() || result.size2() < coeffs.size2())
+    result.resize(uvw.size1(), coeffs.size2());
+
   fullMatrix<double> bezuvw = uvw;
-  switch (_type) {
-  case TYPE_HEX:
-    if (!bezCoord) {
-      bezuvw.add(1);
-      bezuvw.scale(.5);
-    }
-    dimSimplex = 0;
-    break;
+  if (!bezCoord) _FEpoints2BezPoints(bezuvw);
 
-  case TYPE_TET:
-    dimSimplex = 3;
-    break;
-
-  case TYPE_PRI:
-    if (!bezCoord) {
-      fullMatrix<double> tmp;
-      tmp.setAsProxy(bezuvw, 3, 1);
-      tmp.add(1);
-      tmp.scale(.5);
-    }
-    dimSimplex = 2;
-    break;
-
-  default:
-  case TYPE_PYR:
-    Msg::Error("Bezier interpolation not implemented for type of element %d", _type);
-    /*bezuvw[0] = .5 * (1 + uvw[0]);
-    bezuvw[1] = .5 * (1 + uvw[1]);
-    bezuvw[2] = uvw[2];
-    _interpolateBezierPyramid(uvw, minmaxQ);*/
-    return;
-  }
-
-  int numCoeff = _exponents.size1();
+  const int numCoeff = _exponents.size1();
+  const int dim = _exponents.size2();
+  int order[3];
 
   for (int m = 0; m < uvw.size1(); ++m) {
     for (int n = 0; n < coeffs.size2(); ++n) result(m, n) = 0;
     for (int i = 0; i < numCoeff; i++) {
+      _data.getOrderForBezier(order, _exponents(i, dim-1));
+      //if (m==0) Msg::Info("i=%d exp %g %g %g order %d %d %d", i, _exponents(i, 0), _exponents(i, 1), _exponents(i, 2), order[0], order[1], order[2]);
       double dd = 1;
       double pointCompl = 1.;
-      int exponentCompl = _order;
-      for (int k = 0; k < dimSimplex; k++) {
+      int exponentCompl = order[0];
+      for (int k = 0; k < _dimSimplex; k++) {
         dd *= nChoosek(exponentCompl, (int) _exponents(i, k))
           * pow(bezuvw(m, k), _exponents(i, k));
         pointCompl -= bezuvw(m, k);
@@ -502,10 +530,10 @@ void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
       }
       dd *= pow_int(pointCompl, exponentCompl);
 
-      for (int k = dimSimplex; k < _exponents.size2(); k++) {
-        dd *= nChoosek(_order, (int) _exponents(i, k))
+      for (int k = _dimSimplex; k < dim; k++) {
+        dd *= nChoosek(order[k], (int) _exponents(i, k))
             * pow_int(bezuvw(m, k), _exponents(i, k))
-            * pow_int(1. - bezuvw(m, k), _order - _exponents(i, k));
+            * pow_int(1. - bezuvw(m, k), order[k] - _exponents(i, k));
       }
       for (int n = 0; n < coeffs.size2(); ++n)
         result(m, n) += coeffs(i, n) * dd;
@@ -513,36 +541,35 @@ void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
   }
 }
 
-void bezierBasis::_construct(int parentType, int p)
+void bezierBasis::subdivideBezCoeff(const fullMatrix<double> &coeff,
+                                    fullMatrix<double> &subCoeff) const
 {
-  _order = p;
-  _type = parentType;
-  std::vector< fullMatrix<double> > subPoints;
+  if (subCoeff.size1() < subDivisor.size1()
+      || subCoeff.size2() < coeff.size2()  ) {
+    subCoeff.resize(subDivisor.size1(), coeff.size2());
+  }
+  subDivisor.mult(coeff, subCoeff);
+}
 
-  if (parentType == TYPE_PYR) {
-    _numLagCoeff = p == 0 ? 4 : 8;
-    _exponents = gmshGenerateMonomialsPyramidGeneral(false, _order+2, _order);
+void bezierBasis::subdivideBezCoeff(const fullVector<double> &coeff,
+                                    fullVector<double> &subCoeff) const
+{
+  if (subCoeff.size() < subDivisor.size1()) {
+    subCoeff.resize(subDivisor.size1());
+  }
+  subDivisor.mult(coeff, subCoeff);
+}
 
-    subPoints = generateSubPointsPyr(_order);
-    _numDivisions = static_cast<int>(subPoints.size());
-
-    fullMatrix<double> bezierPoints;
-    bezierPoints.resize(_exponents.size1(), _exponents.size2());
-    const double ord = _order + 2;
-    for (int i = 0; i < bezierPoints.size1(); ++i) {
-      bezierPoints(i, 2) = (_order - _exponents(i, 2)) / ord;
-      const double scale = 1. - bezierPoints(i, 2);
-      bezierPoints(i, 0) = _exponents(i, 0) / ord * scale;
-      bezierPoints(i, 1) = _exponents(i, 1) / ord * scale;
-    }
-
-    matrixBez2Lag = generateBez2LagMatrixPyramid(_exponents, bezierPoints, _order);
-    matrixBez2Lag.invert(matrixLag2Bez);
-    subDivisor = generateSubDivisorPyramid(_exponents, subPoints, matrixLag2Bez, _order);
-    return;
+void bezierBasis::_construct()
+{
+  if (_data.elementType() == TYPE_PYR) {
+    Msg::Fatal("This bezierBasis constructor is not for pyramids !");
   }
 
-  switch (parentType) {
+  std::vector< fullMatrix<double> > subPoints;
+  int order = _data.spaceOrder();
+
+  switch (_data.elementType()) {
     case TYPE_PNT :
       _numLagCoeff = 1;
       _dimSimplex = 0;
@@ -550,64 +577,94 @@ void bezierBasis::_construct(int parentType, int p)
       subPoints.push_back(gmshGeneratePointsLine(0));
       break;
     case TYPE_LIN : {
-      _numLagCoeff = _order == 0 ? 1 : 2;
+      _numLagCoeff = order == 0 ? 1 : 2;
       _dimSimplex = 0;
-      _exponents = gmshGenerateMonomialsLine(_order);
-      subPoints = generateSubPointsLine(_order);
+      _exponents = gmshGenerateMonomialsLine(order);
+      subPoints = generateSubPointsLine(order);
       break;
     }
     case TYPE_TRI : {
-      _numLagCoeff = _order == 0 ? 1 : 3;
+      _numLagCoeff = order == 0 ? 1 : 3;
       _dimSimplex = 2;
-      _exponents = gmshGenerateMonomialsTriangle(_order);
-      subPoints = generateSubPointsTriangle(_order);
+      _exponents = gmshGenerateMonomialsTriangle(order);
+      subPoints = generateSubPointsTriangle(order);
       break;
     }
     case TYPE_QUA : {
-      _numLagCoeff = _order == 0 ? 1 : 4;
+      _numLagCoeff = order == 0 ? 1 : 4;
       _dimSimplex = 0;
-      _exponents = gmshGenerateMonomialsQuadrangle(_order);
-      subPoints = generateSubPointsQuad(_order);
+      _exponents = gmshGenerateMonomialsQuadrangle(order);
+      subPoints = generateSubPointsQuad(order);
       break;
     }
     case TYPE_TET : {
-      _numLagCoeff = _order == 0 ? 1 : 4;
+      _numLagCoeff = order == 0 ? 1 : 4;
       _dimSimplex = 3;
-      _exponents = gmshGenerateMonomialsTetrahedron(_order);
-      subPoints = generateSubPointsTetrahedron(_order);
+      _exponents = gmshGenerateMonomialsTetrahedron(order);
+      subPoints = generateSubPointsTetrahedron(order);
       break;
     }
     case TYPE_PRI : {
-      _numLagCoeff = _order == 0 ? 1 : 6;
+      _numLagCoeff = order == 0 ? 1 : 6;
       _dimSimplex = 2;
-      _exponents = gmshGenerateMonomialsPrism(_order);
-      subPoints = generateSubPointsPrism(_order);
+      _exponents = gmshGenerateMonomialsPrism(order);
+      subPoints = generateSubPointsPrism(order);
       break;
     }
     case TYPE_HEX : {
-      _numLagCoeff = _order == 0 ? 1 : 8;
+      _numLagCoeff = order == 0 ? 1 : 8;
       _dimSimplex = 0;
-      _exponents = gmshGenerateMonomialsHexahedron(_order);
-      subPoints = generateSubPointsHex(_order);
+      _exponents = gmshGenerateMonomialsHexahedron(order);
+      subPoints = generateSubPointsHex(order);
       break;
     }
     default : {
       Msg::Error("Unknown function space of parentType %d : "
-          "reverting to TET_1", parentType);
-      _order = 0;
+          "reverting to TET_1", _data.elementType());
       _numLagCoeff = 4;
       _dimSimplex = 3;
-      _exponents = gmshGenerateMonomialsTetrahedron(_order);
-      subPoints = generateSubPointsTetrahedron(_order);
+      _exponents = gmshGenerateMonomialsTetrahedron(0);
+      subPoints = generateSubPointsTetrahedron(0);
       break;
     }
   }
   _numDivisions = static_cast<int>(subPoints.size());
 
   fullMatrix<double> bezierPoints = _exponents;
-  bezierPoints.scale(1./_order);
+  bezierPoints.scale(1./order);
 
-  matrixBez2Lag = generateBez2LagMatrix(_exponents, bezierPoints, _order, _dimSimplex);
+  matrixBez2Lag = generateBez2LagMatrix(_exponents, bezierPoints, order, _dimSimplex);
   matrixBez2Lag.invert(matrixLag2Bez);
-  subDivisor = generateSubDivisor(_exponents, subPoints, matrixLag2Bez, _order, _dimSimplex);
+  subDivisor = generateSubDivisor(_exponents, subPoints, matrixLag2Bez, order, _dimSimplex);
+}
+
+void bezierBasis::_constructPyr()
+{
+  if (_data.elementType() != TYPE_PYR) {
+    Msg::Fatal("This bezierBasis constructor is for pyramids !");
+  }
+
+  const bool pyr = _data.isPyramidalSpace();
+  const int nij = _data.nij(), nk = _data.nk();
+
+  _numLagCoeff = nk == 0 ? 4 : 8;
+  _dimSimplex = 0;
+  gmshGenerateMonomials(_data, _exponents);
+
+  fullMatrix<double> bezierPoints;
+  generateBezierPoints(bezierPoints);
+  matrixBez2Lag = generateBez2LagMatrixPyramid(_exponents, bezierPoints,
+                                               pyr, nij, nk);
+  matrixBez2Lag.invert(matrixLag2Bez);
+  if (pyr) {
+    _numDivisions = 0;
+  }
+  else {
+    std::vector< fullMatrix<double> > subPoints;
+    subPoints = generateSubPointsPyr(nij, nk);
+    _numDivisions = static_cast<int>(subPoints.size());
+    subDivisor = generateSubDivisorPyramid(_exponents, subPoints, matrixLag2Bez,
+                                           pyr, nij, nk);
+  }
+  return;
 }

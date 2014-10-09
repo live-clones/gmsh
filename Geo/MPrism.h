@@ -413,14 +413,14 @@ class MPrismN : public MPrism {
   virtual int getNumEdgeVertices() const { return 9*(_order-1); }
   virtual int getNumFaceVertices() const
   {
-    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+    if (getIsAssimilatedSerendipity())
       return 0;
     else
       {int n = _order-1; return (n-1 + 3*n) * n;}
   }
   virtual int getNumVolumeVertices() const
   {
-    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+    if (getIsAssimilatedSerendipity())
       return 0;
     else
       {int n = _order-1; return n * (n * (n+1) / 2);}

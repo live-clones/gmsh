@@ -90,9 +90,11 @@ int ElementType::ParentTypeFromTag(int tag)
     case(MSH_PNT_SUB):  case(MSH_LIN_SUB):
     case(MSH_TRI_SUB):  case(MSH_TET_SUB):
       return TYPE_XFEM;
+    case(MSH_TRI_MINI):
+      return TYPE_MINI;
     default:
-      Msg::Error("Unknown element tag %i, assuming tetrahedron.", tag);
-      return TYPE_TET;
+      Msg::Error("Unknown element tag %i for parent type, returning -1.", tag);
+      return -1;
   }
 }
 
@@ -318,8 +320,8 @@ int ElementType::DimensionFromTag(int tag)
       return 3;
 
     default:
-      Msg::Error("Unknown element tag %i, assuming dimension 3.", tag);
-      return 3;
+      Msg::Error("Unknown element tag %i for dimension, returning -1.", tag);
+      return -1;
   }
 }
 

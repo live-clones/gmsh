@@ -18,7 +18,6 @@
 #include "polynomialBasis.h"
 #include "JacobianBasis.h"
 #include "GaussIntegration.h"
-
 class GModel;
 
 // A mesh element.
@@ -45,6 +44,10 @@ class MElement
   MElement(int num=0, int part=0);
   virtual ~MElement(){}
 
+  // Create an element from tag
+  static MElement* createElement(int tag, const std::vector<MVertex*>&,
+                                 int num=0, int part=0);
+
   // set/get the tolerance for isInside() test
   static void setTolerance(const double tol){ _isInsideTolerance = tol; }
   static double getTolerance() { return _isInsideTolerance; }
@@ -57,6 +60,15 @@ class MElement
 
   // return the polynomial order the element
   virtual int getPolynomialOrder() const { return 1; }
+
+  // return true if the element can be considered as a serendipity element
+  virtual bool getIsAssimilatedSerendipity() const {
+    return ElementType::SerendipityFromTag(getTypeForMSH()) > 0;
+  }
+  // return true if the element has to be considered as a serendipity element
+  virtual bool getIsOnlySerendipity() const {
+    return ElementType::SerendipityFromTag(getTypeForMSH()) > 1;
+  }
 
   // get/set the partition to which the element belongs
   virtual int getPartition() const { return _partition; }
@@ -280,6 +292,10 @@ class MElement
   virtual int getNumPrimaryShapeFunctions() const { return getNumPrimaryVertices(); }
   virtual const MVertex *getShapeFunctionNode(int i) const { return getVertex(i); }
   virtual MVertex *getShapeFunctionNode(int i) { return getVertex(i); }
+
+  // return the eigenvalues of the metric evaluated at point (u,v,w) in
+  // parametric coordinates
+  virtual double getEigenvaluesMetric(double u, double v, double w, double values[3]) const;
 
   // get the point in cartesian coordinates corresponding to the point
   // (u,v,w) in parametric coordinates

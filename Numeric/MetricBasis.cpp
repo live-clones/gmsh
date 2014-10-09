@@ -1,15 +1,16 @@
-// Gmsh - Copyright (C) 1997-2013 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include "MElement.h"
 #include "AnalyseCurvedMesh.h"
 #include "MetricBasis.h"
 #include "BasisFactory.h"
 #include "pointsGenerators.h"
 #include "BasisFactory.h"
-#include <queue>
 #include "OS.h"
+#include <queue>
 #include <sstream>
 
 double MetricBasis::_tol = 1e-3;
@@ -48,20 +49,46 @@ namespace {
   }
 }
 
-MetricBasis::MetricBasis(int tag)
+MetricBasis::MetricBasis(int tag) : _type(ElementType::ParentTypeFromTag(tag)),
+    _dim(ElementType::DimensionFromTag(tag))
 {
-  const int type = ElementType::ParentTypeFromTag(tag);
+  const bool serendip = false;
   const int metOrder = metricOrder(tag);
-  if (type == TYPE_HEX || type == TYPE_PRI) {
-    int order = ElementType::OrderFromTag(tag);
-    _jacobian = BasisFactory::getJacobianBasis(tag, 3*order);
+  const int jacOrder = 3*metOrder/2;
+
+  // get bezier and gradients for metric space
+  FuncSpaceData *metricSpace = NULL;
+  if (_type != TYPE_PYR)
+    metricSpace = new FuncSpaceData(true, tag, metOrder, &serendip);
+  else
+    metricSpace = new FuncSpaceData(true, tag, false, metOrder+2,
+                                    metOrder, &serendip);
+
+  _gradients = BasisFactory::getGradientBasis(*metricSpace);
+  _bezier = BasisFactory::getBezierBasis(*metricSpace);
+  delete metricSpace;
+
+  // get jacobian
+  FuncSpaceData *jacSpace = NULL;
+  if (_type == TYPE_TRI || _type == TYPE_QUA) {
+    jacSpace = NULL;
   }
-  else if (type == TYPE_TET || type == TYPE_TRI || type == TYPE_QUA)
-    _jacobian = BasisFactory::getJacobianBasis(tag);
+  else if (_type == TYPE_TET || _type == TYPE_HEX || _type == TYPE_PRI) {
+    jacSpace = new FuncSpaceData(true, tag, jacOrder, &serendip);
+  }
+  else if (_type == TYPE_PYR) {
+    jacSpace = new FuncSpaceData(true, tag, false, jacOrder+3,
+                                 jacOrder, &serendip);
+  }
   else
     Msg::Fatal("metric not implemented for element tag %d", tag);
-  _gradients = BasisFactory::getGradientBasis(tag, metOrder);
-  _bezier = BasisFactory::getBezierBasis(type, metOrder);
+
+  if (jacSpace) {
+    _jacobian = BasisFactory::getJacobianBasis(*jacSpace);
+    delete jacSpace;
+  }
+  else
+    _jacobian = NULL;
 
   _fillInequalities(metOrder);
 }
@@ -78,8 +105,18 @@ double MetricBasis::minRCorner(MElement *el)
   int order = 1;
   if (el->getType() == TYPE_TRI || el->getType() == TYPE_TET) order = 0;
 
-  const GradientBasis *gradients = BasisFactory::getGradientBasis(tag, order);
-  const JacobianBasis *jacobian = BasisFactory::getJacobianBasis(tag, order);
+  const GradientBasis *gradients;
+  const JacobianBasis *jacobian;
+  if (el->getType() != TYPE_PYR) {
+    gradients = BasisFactory::getGradientBasis(tag, order);
+    jacobian = BasisFactory::getJacobianBasis(tag, order);
+  }
+  else {
+    const bool serendip = false;
+    FuncSpaceData fsd(true, tag, false, 1, 0, &serendip);
+    gradients = BasisFactory::getGradientBasis(fsd);
+    jacobian = BasisFactory::getJacobianBasis(fsd);
+  }
 
   int nSampPnts = jacobian->getNumJacNodes();
   if (el->getType() == TYPE_PYR) nSampPnts = 4;
@@ -144,29 +181,19 @@ double MetricBasis::getMinSampledR(MElement *el, int deg) const
   MetricData *md;
   _getMetricData(el, md);
 
-  double uvw[3];
-  double minmaxQ[2];
-  int dim = el->getDim();
-  uvw[0] = samplingPoints(0, 0);
-  uvw[1] = samplingPoints(0, 1);
-  if (dim == 3) uvw[2] = samplingPoints(0, 2);
-  else uvw[2] = 0;
-  interpolate(el, md, uvw, minmaxQ);
+  fullMatrix<double> R;
+  interpolate(el, md, samplingPoints, R);
 
-  double min, max = min = std::sqrt(minmaxQ[0]/minmaxQ[1]);
-  for (int i = 1; i < samplingPoints.size1(); ++i) {
-    uvw[0] = samplingPoints(i, 0);
-    uvw[1] = samplingPoints(i, 1);
-    if (dim == 3) uvw[2] = samplingPoints(i, 2);
-    interpolate(el, md, uvw, minmaxQ);
-    double tmp = std::sqrt(minmaxQ[0]/minmaxQ[1]);
-    min = std::min(min, tmp);
-    max = std::max(max, tmp);
-  }
+  if (R.size1() < 1) return -1;
+
+  double min = R(0, 1);
+  for (int i = 1; i < R.size1(); ++i)
+    min = std::min(min, R(i, 1));
+
   return min;
 }
 
-double MetricBasis::getBoundMinR(MElement *el)
+double MetricBasis::getBoundMinR(MElement *el) const
 {
   int nSampPnts = _gradients->getNumSamplingPoints();
   int nMapping = _gradients->getNumMapNodes();
@@ -178,12 +205,12 @@ double MetricBasis::getBoundMinR(MElement *el)
   // Jacobian coefficients
   fullVector<double> jacLag(_jacobian->getNumJacNodes());
   fullVector<double> *jac = new fullVector<double>(_jacobian->getNumJacNodes());
-  _jacobian->getSignedJacobian(nodes, jacLag);
+  _jacobian->getSignedIdealJacobian(nodes, jacLag);
   _jacobian->lag2Bez(jacLag, *jac);
 
   // Metric coefficients
   fullMatrix<double> metCoeffLag;
-  _fillCoeff<false>(el->getDim(), _gradients, nodes, metCoeffLag);
+  _fillCoeff<true>(el->getDim(), _gradients, nodes, metCoeffLag);
   fullMatrix<double> *metCoeff;
   metCoeff = new fullMatrix<double>(nSampPnts, metCoeffLag.size2());
   _bezier->matrixLag2Bez.mult(metCoeffLag, *metCoeff);
@@ -206,15 +233,21 @@ double MetricBasis::getBoundMinR(MElement *el)
 
 void MetricBasis::_fillInequalities(int metricOrder)
 {
-  int dimSimplex = _bezier->getDimSimplex();
-  int dim = _bezier->getDim();
+  if (_type == TYPE_PYR) {
+    _fillInequalitiesPyr(metricOrder);
+    return;
+  }
+
   fullMatrix<int> exp(_bezier->_exponents.size1(), _bezier->_exponents.size2());
   for (int i = 0; i < _bezier->_exponents.size1(); ++i) {
     for (int j = 0; j < _bezier->_exponents.size2(); ++j) {
       exp(i, j) = static_cast<int>(_bezier->_exponents(i, j) + .5);
     }
   }
+
   int ncoeff = _gradients->getNumSamplingPoints();
+  int dimSimplex = _bezier->getDimSimplex();
+  int dim = _bezier->getDim();
 
   int countP3 = 0, countJ2 = 0, countA = 0;
   for (int i = 0; i < ncoeff; i++) {
@@ -296,47 +329,160 @@ void MetricBasis::_fillInequalities(int metricOrder)
     }
   }
 
-  if (_jacobian) {
-    exp.resize(_jacobian->getBezier()->_exponents.size1(),
-               _jacobian->getBezier()->_exponents.size2());
-    for (int i = 0; i < _jacobian->getBezier()->_exponents.size1(); ++i) {
-      for (int j = 0; j < _jacobian->getBezier()->_exponents.size2(); ++j) {
-        exp(i, j) = static_cast<int>(_jacobian->getBezier()->_exponents(i, j) + .5);
+  if (_dim == 2) {
+    _lightenInequalities(countJ2, countP3, countA);
+    return;
+  }
+
+  exp.resize(_jacobian->getBezier()->_exponents.size1(),
+             _jacobian->getBezier()->_exponents.size2());
+  for (int i = 0; i < _jacobian->getBezier()->_exponents.size1(); ++i) {
+    for (int j = 0; j < _jacobian->getBezier()->_exponents.size2(); ++j) {
+      exp(i, j) = static_cast<int>(_jacobian->getBezier()->_exponents(i, j) + .5);
+    }
+  }
+  int njac = _jacobian->getNumJacNodes();
+  for (int i = 0; i < njac; i++) {
+    for (int j = i; j < njac; j++) {
+      int order = metricOrder/2*3;
+      double num = 1, den = 1;
+      {
+        int compl1 = order;
+        int compl2 = order;
+        int compltot = 2*order;
+        for (int k = 0; k < dimSimplex; k++) {
+          num *= nChoosek(compl1, exp(i, k))
+               * nChoosek(compl2, exp(j, k));
+          den *= nChoosek(compltot, exp(i, k) + exp(j, k));
+          compl1 -= exp(i, k);
+          compl2 -= exp(j, k);
+          compltot -= exp(i, k) + exp(j, k);
+        }
+      }
+      for (int k = dimSimplex; k < dim; k++) {
+        num *= nChoosek(order, exp(i, k))
+             * nChoosek(order, exp(j, k));
+        den *= nChoosek(2*order, exp(i, k) + exp(j, k));
+      }
+
+      if (i != j) num *= 2;
+
+      ++countJ2;
+      int hash = 0;
+      for (int k = 0; k < dim; k++) {
+        hash += (exp(i, k)+exp(j, k)) * pow_int(2*order+1, k);
+      }
+      _ineqJ2[hash].push_back(IneqData(num/den, i, j));
+    }
+  }
+
+  _lightenInequalities(countJ2, countP3, countA);
+}
+
+void MetricBasis::_fillInequalitiesPyr(int metricOrder)
+{
+  fullMatrix<int> exp(_bezier->_exponents.size1(), _bezier->_exponents.size2());
+  for (int i = 0; i < _bezier->_exponents.size1(); ++i) {
+    for (int j = 0; j < _bezier->_exponents.size2(); ++j) {
+      exp(i, j) = static_cast<int>(_bezier->_exponents(i, j) + .5);
+    }
+  }
+
+  int ncoeff = _gradients->getNumSamplingPoints();
+
+  int countP3 = 0, countJ2 = 0, countA = 0;
+  for (int i = 0; i < ncoeff; i++) {
+    for (int j = i; j < ncoeff; j++) {
+      double num, den;
+      num = nChoosek(metricOrder+2, exp(i, 0))
+          * nChoosek(metricOrder+2, exp(i, 1))
+          * nChoosek(metricOrder  , exp(i, 2))
+          * nChoosek(metricOrder+2, exp(j, 0))
+          * nChoosek(metricOrder+2, exp(j, 1))
+          * nChoosek(metricOrder  , exp(j, 2));
+      den = nChoosek(2*metricOrder+4, exp(i, 0) + exp(j, 0))
+          * nChoosek(2*metricOrder+4, exp(i, 1) + exp(j, 1))
+          * nChoosek(2*metricOrder  , exp(i, 2) + exp(j, 2));
+
+      if (i != j) num *= 2;
+
+      ++countA;
+      int hash = 0;
+      for (int l = 0; l < 3; l++) {
+        hash += (exp(i, l)+exp(j, l)) * pow_int(2*metricOrder+1, l);
+      }
+      _ineqA[hash].push_back(IneqData(num/den, i, j));
+
+
+      for (int k = j; k < ncoeff; ++k) {
+        double num, den;
+        num = nChoosek(metricOrder+2, exp(i, 0))
+            * nChoosek(metricOrder+2, exp(i, 1))
+            * nChoosek(metricOrder  , exp(i, 2))
+            * nChoosek(metricOrder+2, exp(j, 0))
+            * nChoosek(metricOrder+2, exp(j, 1))
+            * nChoosek(metricOrder  , exp(j, 2))
+            * nChoosek(metricOrder+2, exp(k, 0))
+            * nChoosek(metricOrder+2, exp(k, 1))
+            * nChoosek(metricOrder  , exp(k, 2));
+        den = nChoosek(3*metricOrder+6, exp(i, 0) + exp(j, 0) + exp(k, 0))
+            * nChoosek(3*metricOrder+6, exp(i, 1) + exp(j, 1) + exp(k, 1))
+            * nChoosek(3*metricOrder  , exp(i, 2) + exp(j, 2) + exp(k, 2));
+
+        if (i == j) {
+          if (j != k) num *= 3;
+        }
+        else {
+          if (j == k || i == k) {
+            num *= 3;
+          }
+          else num *= 6;
+        }
+
+        ++countP3;
+        int hash = 0;
+        for (int l = 0; l < 3; l++) {
+          hash += (exp(i, l)+exp(j, l)+exp(k, l)) * pow_int(3*metricOrder+1, l);
+        }
+        if (j == k && j != i)
+          _ineqP3[hash].push_back(IneqData(num/den, k, j, i));
+        else
+          _ineqP3[hash].push_back(IneqData(num/den, i, j, k));
       }
     }
-    int njac = _jacobian->getNumJacNodes();
-    for (int i = 0; i < njac; i++) {
-      for (int j = i; j < njac; j++) {
-        int order = metricOrder/2*3;
-        double num = 1, den = 1;
-        {
-          int compl1 = order;
-          int compl2 = order;
-          int compltot = 2*order;
-          for (int k = 0; k < dimSimplex; k++) {
-            num *= nChoosek(compl1, exp(i, k))
-                 * nChoosek(compl2, exp(j, k));
-            den *= nChoosek(compltot, exp(i, k) + exp(j, k));
-            compl1 -= exp(i, k);
-            compl2 -= exp(j, k);
-            compltot -= exp(i, k) + exp(j, k);
-          }
-        }
-        for (int k = dimSimplex; k < dim; k++) {
-          num *= nChoosek(order, exp(i, k))
-               * nChoosek(order, exp(j, k));
-          den *= nChoosek(2*order, exp(i, k) + exp(j, k));
-        }
+  }
 
-        if (i != j) num *= 2;
+  exp.resize(_jacobian->getBezier()->_exponents.size1(),
+             _jacobian->getBezier()->_exponents.size2());
+  for (int i = 0; i < _jacobian->getBezier()->_exponents.size1(); ++i) {
+    for (int j = 0; j < _jacobian->getBezier()->_exponents.size2(); ++j) {
+      exp(i, j) = static_cast<int>(_jacobian->getBezier()->_exponents(i, j) + .5);
+    }
+  }
+  int njac = _jacobian->getNumJacNodes();
+  for (int i = 0; i < njac; i++) {
+    for (int j = i; j < njac; j++) {
+      int order = metricOrder/2*3;
 
-        ++countJ2;
-        int hash = 0;
-        for (int k = 0; k < dim; k++) {
-          hash += (exp(i, k)+exp(j, k)) * pow_int(2*order+1, k);
-        }
-        _ineqJ2[hash].push_back(IneqData(num/den, i, j));
+      double num, den;
+      num = nChoosek(order+3, exp(i, 0))
+          * nChoosek(order+3, exp(i, 1))
+          * nChoosek(order  , exp(i, 2))
+          * nChoosek(order+3, exp(j, 0))
+          * nChoosek(order+3, exp(j, 1))
+          * nChoosek(order  , exp(j, 2));
+      den = nChoosek(2*order+6, exp(i, 0) + exp(j, 0))
+          * nChoosek(2*order+6, exp(i, 1) + exp(j, 1))
+          * nChoosek(2*order  , exp(i, 2) + exp(j, 2));
+
+      if (i != j) num *= 2;
+
+      ++countJ2;
+      int hash = 0;
+      for (int k = 0; k < 3; k++) {
+        hash += (exp(i, k)+exp(j, k)) * pow_int(2*order+1, k);
       }
+      _ineqJ2[hash].push_back(IneqData(num/den, i, j));
     }
   }
 
@@ -378,150 +524,297 @@ void MetricBasis::_lightenInequalities(int &countj, int &countp, int &counta)
   counta -= cnt[2];
 }
 
-void MetricBasis::interpolate(const MElement *el, const MetricData *md, const double *uvw, double *minmaxQ) const
+namespace {
+  static double symRand(double f = 1)
+  {
+    return f * (rand()%2001 - 1000) / 1000.;
+  }
+}
+
+bool MetricBasis::validateBezierForMetricAndJacobian()
 {
-  if (minmaxQ == NULL) {
-    Msg::Error("Cannot write solution of interpolation");
-    return;
-  }
+  Msg::Info("Testing Bezier interpolation and subdivision "
+      "for jacobien and metric on all element types...");
+  int numError = 0;
 
-  int order = _bezier->getOrder();
+  // Parameters
+  const int numType = 6;
+  const int acceptedTypes[numType] = {TYPE_TRI, TYPE_QUA, TYPE_TET,
+                                      TYPE_PYR, TYPE_PRI, TYPE_HEX};
+  const int maxOrder = 3; // at least 3 (so that serendip tet are tested)
+  const int numElem = 5; // at least 2 (first is reference element)
+  const int numSubdiv = 2; // at least 1
+  const int numSampPnt = 10; // at least 1
+  const double toleranceTensor = 1e-11; // at most 1e-5 (metric takes values in [0,1])
+  double tolerance; // computed in function of tag
 
-  int dimSimplex = 0;
-  fullMatrix<double> exponents;
-  double bezuvw[3];
-  switch (el->getType()) {
-  case TYPE_PYR:
-    bezuvw[0] = .5 * (1 + uvw[0]);
-    bezuvw[1] = .5 * (1 + uvw[1]);
-    bezuvw[2] = uvw[2];
-    //_interpolateBezierPyramid(uvw, minmaxQ);
-    return;
+  //
+  static const double epsilon = std::numeric_limits<double>::epsilon();
+  double sumRatio = 0;
+  int numRatio = 0;
 
-  case TYPE_HEX:
-    bezuvw[0] = .5 * (1 + uvw[0]);
-    bezuvw[1] = .5 * (1 + uvw[1]);
-    bezuvw[2] = .5 * (1 + uvw[2]);
-    dimSimplex = 0;
-    exponents = gmshGenerateMonomialsHexahedron(order);
-    break;
+  for (int tag = 1; tag <= MSH_NUM_TYPE; ++tag) {
+    if (tag > 66 && tag < 71) continue; //not conventional elements
+    if (tag > 75 && tag < 79) continue; //no element tag 76, 77, 78...
 
-  case TYPE_TET:
-    bezuvw[0] = uvw[0];
-    bezuvw[1] = uvw[1];
-    bezuvw[2] = uvw[2];
-    dimSimplex = 3;
-    exponents = gmshGenerateMonomialsTetrahedron(order);
-    break;
+    // Check if accepted type
+    const int type = ElementType::ParentTypeFromTag(tag);
+    bool knownType = false;
+    for (int i = 0; i < numType; ++i) {
+      knownType = (knownType || type == acceptedTypes[i]);
+    }
+    if (!knownType) continue;
 
-  case TYPE_PRI:
-    bezuvw[0] = uvw[0];
-    bezuvw[1] = uvw[1];
-    bezuvw[2] = .5 * (1 + uvw[2]);
-    dimSimplex = 2;
-    exponents = gmshGenerateMonomialsPrism(order);
-    break;
+    const int order = ElementType::OrderFromTag(tag);
+    const int dim = ElementType::DimensionFromTag(tag);
+    const bool serendip = ElementType::SerendipityFromTag(tag) > 1;
 
-  case TYPE_TRI:
-    bezuvw[0] = uvw[0];
-    bezuvw[1] = uvw[1];
-    bezuvw[2] = uvw[2];
-    dimSimplex = 2;
-    exponents = gmshGenerateMonomialsTriangle(order);
-    break;
-  }
+    // Skip p0 elements and elements for which order > 'maxOrder'
+    // and skip for now serendipty pyramids (not implemented)
+    if (order < 1 || order > maxOrder) continue;
+    if (type == TYPE_PYR && serendip) continue;
 
-  int numCoeff = exponents.size1();
-  int dim = exponents.size2();
+    Msg::Info("... testing element tag %d", tag);
 
-  fullMatrix<double> metcoeffs = *md->_metcoeffs;
-  fullVector<double> jaccoeffs = *md->_jaccoeffs;
+    // Compute tolerance
+    tolerance = epsilon * pow_int(10, order*dim);
+    if (type == TYPE_PYR) tolerance = std::max(tolerance, epsilon*1e9);
 
-  double *terms = new double[metcoeffs.size2()];
-  for (int t = 0; t < metcoeffs.size2(); ++t) {
-    terms[t] = 0;
-    for (int i = 0; i < numCoeff; i++) {
-      double dd = 1;
-      double pointCompl = 1.;
-      int exponentCompl = order;
-      for (int k = 0; k < dimSimplex; k++) {
-        dd *= nChoosek(exponentCompl, (int) exponents(i, k))
-          * pow(bezuvw[k], exponents(i, k));
-        pointCompl -= bezuvw[k];
-        exponentCompl -= (int) exponents(i, k);
+    // Get reference nodes
+    const nodalBasis *mapBasis = BasisFactory::getNodalBasis(tag);
+    fullMatrix<double> nodes;
+    mapBasis->getReferenceNodes(nodes);
+
+    // Create 'numElem' elements more and more randomized
+    for (int iel = 0; iel < numElem; ++iel) {
+      const double range = static_cast<double>(iel) / (numElem-1) / order;
+      std::vector<MVertex*> vertices(nodes.size1());
+      for (int i = 0; i < nodes.size1(); ++i) {
+        vertices[i] = new MVertex(nodes(i, 0) + symRand(range),
+                                  dim > 1 ? nodes(i, 1) + symRand(range) : 0,
+                                  dim > 2 ? nodes(i, 2) + symRand(range) : 0);
       }
-      dd *= pow(pointCompl, exponentCompl);
+      MElement *el = MElement::createElement(tag, vertices);
+      if (!el) {
+        Msg::Error("MElement was unable to create element for tag %d", tag);
+        ++numError;
+      }
 
-      for (int k = dimSimplex; k < dim; k++)
-        dd *= nChoosek(order, (int) exponents(i, k))
-            * pow(bezuvw[k], exponents(i, k))
-            * pow(1. - bezuvw[k], order - exponents(i, k));
-      terms[t] += metcoeffs(i, t) * dd;
+      const MetricBasis *metricBasis = BasisFactory::getMetricBasis(tag);
+
+      // compare the two metric
+
+      fullMatrix<double> metric_Bez(numSampPnt, 2);
+      fullVector<int> isub(numSubdiv);
+      fullMatrix<double> uvw(numSampPnt, 3);
+      metricBasis->interpolateAfterNSubdivisions(el, numSubdiv, numSampPnt,
+                                                 isub, uvw, metric_Bez);
+
+      double sumTol = 0;
+      int numBadMatch = 0;
+      int numBadMatchTensor = 0;
+      double maxBadMatch = 0;
+      double maxBadMatchTensor = 0;
+      for (int isamp = 0; isamp < numSampPnt; ++isamp) {
+        double dum[3];
+        double &u = uvw(isamp, 0);
+        double &v = uvw(isamp, 1);
+        double &w = uvw(isamp, 2);
+        double metric_Lag = el->getEigenvaluesMetric(u, v, w, dum);
+
+        double diff = std::abs(metric_Lag - metric_Bez(isamp, 0));
+        double diffTensor = std::abs(metric_Lag - metric_Bez(isamp, 1));
+        sumTol += diff;
+        double ratio = (metric_Bez(isamp, 0)-metric_Lag) / tolerance;
+        sumRatio += ratio;
+
+        if (diffTensor > toleranceTensor) {
+          ++numBadMatchTensor;
+          maxBadMatchTensor = std::max(maxBadMatchTensor, diffTensor);
+        }
+        else if (diff > tolerance) {
+          ++numBadMatch;
+          maxBadMatch = std::max(maxBadMatch, diff);
+        }
+      }
+      if (numBadMatchTensor > .2*numSampPnt) {
+        ++numError;
+        Msg::Error("Too much errors "
+            "even when computing by metric tensor (max %g)", maxBadMatchTensor);
+      }
+      else if (numBadMatch > .5*numSampPnt) {
+        ++numError;
+        Msg::Error("Too much errors (max %g)", maxBadMatch);
+      }
     }
   }
+
+  if (numError) Msg::Error("Validation of Bezier terminated with %d errors, "
+                           "you have work...", numError);
+  else Msg::Info("Validation of Bezier terminated without errors", numError);
+  return numError;
+}
+
+void MetricBasis::interpolate(const MElement *el,
+                              const MetricData *md,
+                              const fullMatrix<double> &nodes,
+                              fullMatrix<double> &R) const
+{
+  fullMatrix<double> &metcoeffs = *md->_metcoeffs, *metric = new fullMatrix<double>;
+  fullVector<double> &jaccoeffs = *md->_jaccoeffs, *jac = new fullVector<double>;
+
+  _bezier->interpolate(metcoeffs, nodes, *metric);
+
+  R.resize(nodes.size1(), 2);
 
   switch (metcoeffs.size2()) {
   case 1:
-    minmaxQ[0] = terms[0];
-    minmaxQ[1] = terms[0];
+    for (int i = 0; i < R.size1(); ++i)
+      R(i, 0) = R(i, 1) = 1;
     break;
 
   case 3:
-  {
-    double tmp = pow(terms[1], 2);
-    tmp += pow(terms[2], 2);
-    tmp = std::sqrt(tmp);
-    minmaxQ[0] = terms[0] - tmp;
-    minmaxQ[1] = terms[0] + tmp;
-  }
+    for (int i = 0; i < R.size1(); ++i) {
+      // Compute from q, p
+      double p = pow((*metric)(i, 1), 2);
+      p += pow((*metric)(i, 2), 2);
+      p = std::sqrt(p);
+      R(i, 0) = std::sqrt(_R2Dsafe((*metric)(i, 0), p));
+      // Comppute from tensor
+      fullMatrix<double> metricTensor(2, 2);
+      metricTensor(0, 0) = (*metric)(i, 0) + (*metric)(i, 1);
+      metricTensor(1, 1) = (*metric)(i, 0) - (*metric)(i, 1);
+      metricTensor(0, 1) = metricTensor(1, 0) = (*metric)(i, 2);
+      fullVector<double> valReal(2), valImag(2);
+      fullMatrix<double> vecLeft(2, 2), vecRight(2, 2);
+      metricTensor.eig(valReal, valImag, vecLeft, vecRight, true);
+      R(i, 1) = std::sqrt(valReal(0) / valReal(1));
+      }
     break;
 
   case 7:
-  {
-    double tmp = pow(terms[1], 2);
-    tmp += pow(terms[2], 2);
-    tmp += pow(terms[3], 2);
-    tmp += pow(terms[4], 2);
-    tmp += pow(terms[5], 2);
-    tmp += pow(terms[6], 2);
-    tmp = std::sqrt(tmp);
-    double factor = std::sqrt(6)/3;
-    if (tmp < 1e-3*terms[0]) {
-      minmaxQ[0] = terms[0] - factor * tmp;
-      minmaxQ[1] = terms[0] + factor * tmp;
+    _jacobian->getBezier()->interpolate(jaccoeffs, nodes, *jac);
+    for (int i = 0; i < R.size1(); ++i) {
+      // Compute from q, p, J
+      double p = 0;
+      for (int k = 1; k < 7; ++k) p += pow((*metric)(i, k), 2);
+      p = std::sqrt(p);
+      R(i, 0) = std::sqrt(_R3Dsafe((*metric)(i, 0), p, (*jac)(i)));
+      // Comppute from tensor
+      fullMatrix<double> metricTensor(3, 3);
+      for (int k = 0; k < 3; ++k) {
+        static double fact1 = std::sqrt(6);
+        static double fact2 = std::sqrt(3);
+        const int ki = k%2;
+        const int kj = std::min(k+1, 2);
+        metricTensor(k, k) = (*metric)(i, k+1)*fact1 + (*metric)(i, 0);
+        metricTensor(ki, kj) = metricTensor(kj, ki) = (*metric)(i, k+4)*fact2;
+      }
+      fullVector<double> valReal(3), valImag(3);
+      fullMatrix<double> vecLeft(3, 3), vecRight(3, 3);
+      metricTensor.eig(valReal, valImag, vecLeft, vecRight, true);
+      R(i, 1) = std::sqrt(valReal(0) / valReal(2));
     }
-    else {
-      double phi;
-      //{
-        fullMatrix<double> nodes(1, 3);
-        nodes(0, 0) = uvw[0];
-        nodes(0, 1) = uvw[1];
-        nodes(0, 2) = uvw[2];
-
-        fullMatrix<double> result;
-        _jacobian->interpolate(jaccoeffs, nodes, result, true);
-        phi = result(0, 0)*result(0, 0);
-      //}
-      phi -= terms[0]*terms[0]*terms[0];
-      phi += .5*terms[0]*tmp*tmp;
-      phi /= tmp*tmp*tmp;
-      phi *= 3*std::sqrt(6);
-      if (phi >  1) phi =  1;
-      if (phi < -1) phi = -1;
-      phi = std::acos(phi)/3;
-      minmaxQ[0] = terms[0] + factor * tmp * std::cos(phi + 2*M_PI/3);
-      minmaxQ[1] = terms[0] + factor * tmp * std::cos(phi);
-      ((MetricBasis*)this)->file << terms[0] << " " << tmp/std::sqrt(6) << " " << result(0, 0) << std::endl;
-    }
-  }
-  break;
+    break;
 
   default:
     Msg::Error("Wrong number of functions for metric: %d",
                metcoeffs.size2());
   }
 
-  delete[] terms;
+  delete jac;
+  //delete metric;
+}
+
+void MetricBasis::interpolateAfterNSubdivisions(
+    const MElement *el, int numSubdiv, int numPnt,
+    fullVector<int> &isub,
+    fullMatrix<double> &uvw,
+    fullMatrix<double> &metric) const
+{
+  // Interpolate metric after 'numSub' random subdivision at
+  //   'numPnt' random points.
+  // Return: isub, the subdomain tag of each subdivision,
+  //         uvw, the reference points at which metric has been interpolated.
+  //         metric, the interpolation.
+
+  MetricData *md;
+  _getMetricData(el, md);
+
+  // Keep trace of subdomain to be able to compute uvw.
+  // (Ensure to have the tag for the complete element):
+  const nodalBasis *mapBasis = BasisFactory::getNodalBasis(el->getTypeForMSH());
+  fullMatrix<double> nodes;
+  mapBasis->getReferenceNodesForBezier(nodes);
+
+  const int nSub = _bezier->getNumDivision();
+  const int numCoeff = md->_metcoeffs->size2();
+  const int numMetPnts = md->_metcoeffs->size1();
+  const int numJacPnts = md->_jaccoeffs ? md->_jaccoeffs->size() : 0;
+  const int numNodPnts = nodes.size1();
+
+  const bezierBasis *bezierMapping;
+  if (el->getType() != TYPE_PYR)
+    bezierMapping = BasisFactory::getBezierBasis(el->getTypeForMSH());
+  else {
+    FuncSpaceData data(true, el->getTypeForMSH(), false,
+                       el->getPolynomialOrder(), el->getPolynomialOrder());
+    bezierMapping = BasisFactory::getBezierBasis(data);
+  }
+
+  for (int k = 0; k < numSubdiv; ++k) {
+    fullMatrix<double> subcoeffs, subnodes;
+    fullVector<double> subjac;
+    _bezier->subdivideBezCoeff(*md->_metcoeffs, subcoeffs);
+    bezierMapping->subdivideBezCoeff(nodes, subnodes);
+
+    if (_dim == 3)
+      _jacobian->getBezier()->subdivideBezCoeff(*md->_jaccoeffs, subjac);
+    delete md;
+
+    isub(k) = std::rand() % nSub;
+
+    fullMatrix<double> *coeff = new fullMatrix<double>(numMetPnts, numCoeff);
+    coeff->copy(subcoeffs, isub(k) * numMetPnts, numMetPnts, 0, numCoeff, 0, 0);
+    nodes.copy(subnodes, isub(k) * numNodPnts, numNodPnts, 0, _dim, 0, 0);
+    fullVector<double> *jac = NULL;
+    if (_dim == 3) {
+      jac = new fullVector<double>(numJacPnts);
+      jac->copy(subjac, isub(k) * numJacPnts, numJacPnts, 0);
+    }
+
+    md = new MetricData(coeff, jac);
+  }
+
+  // compute a random convex combination of reference nodes
+  fullMatrix<double> subuvw(uvw.size1(), _dim);
+  {
+    int tagPrimary = ElementType::getTag(el->getType(), 1);
+    const nodalBasis *primMapBasis = BasisFactory::getNodalBasis(tagPrimary);
+    fullMatrix<double> refNodes;
+    primMapBasis->getReferenceNodes(refNodes);
+    double *c = new double[refNodes.size1()];
+
+    for (int k = 0; k < uvw.size1(); ++k) {
+      double sum = 0;
+      int exp = 1 + std::rand() % 5;
+      for (int i = 0; i < refNodes.size1(); ++i) {
+        c[i] = pow_int((std::rand() % 1000) / 1000., exp);
+        sum += c[i];
+      }
+      for (int i = 0; i < refNodes.size1(); ++i) {
+        c[i] /= sum;
+        subuvw(k, 0) += c[i] * refNodes(i, 0);
+        if (_dim > 1) subuvw(k, 1) += c[i] * refNodes(i, 1);
+        if (_dim > 2) subuvw(k, 2) += c[i] * refNodes(i, 2);
+      }
+    }
+
+    delete[] c;
+  }
+
+  interpolate(el, md, subuvw, metric);
+  bezierMapping->interpolate(nodes, subuvw, uvw, false);
 }
 
 int MetricBasis::metricOrder(int tag)
@@ -535,12 +828,13 @@ int MetricBasis::metricOrder(int tag)
     case TYPE_LIN : return order;
 
     case TYPE_TRI :
-    case TYPE_TET : return 2*order-2;
+    case TYPE_TET :
+    case TYPE_PYR : return 2*order-2;
 
     case TYPE_QUA :
     case TYPE_PRI :
-    case TYPE_HEX :
-    case TYPE_PYR : return 2*order;
+    case TYPE_HEX : return 2*order;
+
     default :
       Msg::Error("Unknown element type %d, return order 0", parentType);
       return 0;
@@ -688,7 +982,7 @@ void MetricBasis::_computeRmax(
     for (int k = 1; k < 7; ++k) {
       p += pow_int(coeff(i, k), 2);
     }
-    p = std::sqrt(p/6);
+    p = std::sqrt(p);
     const double a = q/p;
     if (a > 1e4) {
       RmaxLag = std::max(RmaxLag, std::sqrt((a - std::sqrt(3)) / (a + std::sqrt(3))));
@@ -791,7 +1085,7 @@ void MetricBasis::_computeTermBeta(double &a, double &K,
   dRda = sin * sqrt + .5 * term1 * (1-a*a);
 }
 
-void MetricBasis::_getMetricData(MElement *el, MetricData *&md) const
+void MetricBasis::_getMetricData(const MElement *el, MetricData *&md) const
 {
   int nSampPnts = _gradients->getNumSamplingPoints();
   int nMapping = _gradients->getNumMapNodes();
@@ -801,14 +1095,17 @@ void MetricBasis::_getMetricData(MElement *el, MetricData *&md) const
   el->getNodesCoord(nodes);
 
   // Jacobian coefficients
-  fullVector<double> jacLag(_jacobian->getNumJacNodes());
-  fullVector<double> *jac = new fullVector<double>(_jacobian->getNumJacNodes());
-  _jacobian->getSignedJacobian(nodes, jacLag);
-  _jacobian->lag2Bez(jacLag, *jac);
+  fullVector<double> *jac = NULL;
+  if (_dim == 3) {
+    fullVector<double> jacLag(_jacobian->getNumJacNodes());
+    jac = new fullVector<double>(_jacobian->getNumJacNodes());
+    _jacobian->getSignedIdealJacobian(nodes, jacLag);
+    _jacobian->lag2Bez(jacLag, *jac);
+  }
 
   // Metric coefficients
   fullMatrix<double> metCoeffLag;
-  _fillCoeff<false>(el->getDim(), _gradients, nodes, metCoeffLag);
+  _fillCoeff<true>(el->getDim(), _gradients, nodes, metCoeffLag);
   fullMatrix<double> *metCoeff;
   metCoeff = new fullMatrix<double>(nSampPnts, metCoeffLag.size2());
   _bezier->matrixLag2Bez.mult(metCoeffLag, *metCoeff);
@@ -818,7 +1115,7 @@ void MetricBasis::_getMetricData(MElement *el, MetricData *&md) const
 
 template<bool ideal>
 void MetricBasis::_fillCoeff(int dim, const GradientBasis *gradients,
-    fullMatrix<double> &nodes, fullMatrix<double> &coeff)
+    const fullMatrix<double> &nodes, fullMatrix<double> &coeff)
 {
   const int nSampPnts = gradients->getNumSamplingPoints();
 
@@ -837,8 +1134,17 @@ void MetricBasis::_fillCoeff(int dim, const GradientBasis *gradients,
 
       coeff.resize(nSampPnts, 3);
       for (int i = 0; i < nSampPnts; i++) {
-        const double &dxdX = dxydX(i,0), &dydX = dxydX(i,1), &dzdX = dxydX(i,2);
-        const double &dxdY = dxydY(i,0), &dydY = dxydY(i,1), &dzdY = dxydY(i,2);
+        const double &dxdX = dxydX(i,0), &dydX = dxydX(i,1);
+        const double &dxdY = dxydY(i,0), &dydY = dxydY(i,1);
+        double dzdX, dzdY;
+        if (nodes.size2() > 2) {
+          dzdX = dxydX(i,2);
+          dzdY = dxydY(i,2);
+        }
+        else {
+          dzdX = 0;
+          dzdY = 0;
+        }
         const double dvxdX = dxdX*dxdX + dydX*dydX + dzdX*dzdX;
         const double dvxdY = dxdY*dxdY + dydY*dydY + dzdY*dzdY;
         coeff(i, 0) = (dvxdX + dvxdY) / 2;
@@ -863,13 +1169,14 @@ void MetricBasis::_fillCoeff(int dim, const GradientBasis *gradients,
         const double dvxdY = dxdY*dxdY + dydY*dydY + dzdY*dzdY;
         const double dvxdZ = dxdZ*dxdZ + dydZ*dydZ + dzdZ*dzdZ;
         coeff(i, 0) = (dvxdX + dvxdY + dvxdZ) / 3;
-        coeff(i, 1) = dvxdX - coeff(i, 0);
-        coeff(i, 2) = dvxdY - coeff(i, 0);
-        coeff(i, 3) = dvxdZ - coeff(i, 0);
-        const double fact = std::sqrt(2);
-        coeff(i, 4) = fact * (dxdX*dxdY + dydX*dydY + dzdX*dzdY);
-        coeff(i, 5) = fact * (dxdZ*dxdY + dydZ*dydY + dzdZ*dzdY);
-        coeff(i, 6) = fact * (dxdX*dxdZ + dydX*dydZ + dzdX*dzdZ);
+        static double fact1 = 1./std::sqrt(6);
+        static double fact2 = 1./std::sqrt(3);
+        coeff(i, 1) = fact1 * (dvxdX - coeff(i, 0));
+        coeff(i, 2) = fact1 * (dvxdY - coeff(i, 0));
+        coeff(i, 3) = fact1 * (dvxdZ - coeff(i, 0));
+        coeff(i, 4) = fact2 * (dxdX*dxdY + dydX*dydY + dzdX*dzdY);
+        coeff(i, 5) = fact2 * (dxdZ*dxdY + dydZ*dydY + dzdZ*dzdY);
+        coeff(i, 6) = fact2 * (dxdX*dxdZ + dydX*dydZ + dzdX*dzdZ);
       }
     }
     break;
@@ -891,7 +1198,7 @@ double MetricBasis::_computeMinlagR(const fullVector<double> &jac,
       for (int k = 1; k < 7; ++k) {
         p += pow_int(coeff(i, k), 2);
       }
-      p = std::sqrt(p/6);
+      p = std::sqrt(p);
       const double a = q/p;
       if (a > 1e4) { // TODO: from _tol ?
         Rmin = std::min(Rmin, std::sqrt((a - std::sqrt(3)) / (a + std::sqrt(3))));
@@ -907,10 +1214,9 @@ double MetricBasis::_computeMinlagR(const fullVector<double> &jac,
     for (int i = 0; i < num; ++i) {
       if (jac(i) <= 0.) return 0;
 
-      const double q = coeff(i, 0);
+      const double &q = coeff(i, 0);
       const double p = pow_int(coeff(i, 1), 2) + pow_int(coeff(i, 2), 2);
-      const double a = q/std::sqrt(p);
-      const double tmpR = _R2Dsafe(a);
+      const double tmpR = _R2Dsafe(q, std::sqrt(p));
       Rmin = std::min(Rmin, std::sqrt(tmpR));
     }
     return Rmin;
@@ -945,10 +1251,6 @@ void MetricBasis::_minMaxA(
     max = std::max(val, max);
     ++it;
   }
-  if (coeff.size2() == 7) {
-    min *= 6;
-    max *= 6;
-  }
 
   min = min > 1 ? std::sqrt(min) : 1;
   max = std::sqrt(max);
@@ -963,7 +1265,7 @@ void MetricBasis::_minK(const fullMatrix<double> &coeff,
     for (int l = 1; l < 7; ++l) {
       r(i) += coeff(i, l) * coeff(i, l);
     }
-    r(i) = std::sqrt(r(i)/6);
+    r(i) = std::sqrt(r(i));
   }
 
   min = 1e10;
@@ -1015,7 +1317,7 @@ void MetricBasis::_maxAstKpos(const fullMatrix<double> &coeff,
     for (int l = 1; l < 7; ++l) {
       P(i) += coeff(i, l) * coeff(i, l);
     }
-    P(i) = std::sqrt(P(i)/6);
+    P(i) = std::sqrt(P(i));
   }
 
   double min = 1e10;
@@ -1057,13 +1359,12 @@ void MetricBasis::_maxAstKneg(const fullMatrix<double> &coeff,
     for (int l = 1; l < 7; ++l) {
       P(i) += coeff(i, l) * coeff(i, l);
     }
-    P(i) = std::sqrt(P(i)/6);
+    P(i) = std::sqrt(P(i));
     for (int j = 0; j < coeff.size1(); ++j) {
       Q(i, j) = 0;
       for (int l = 1; l < 7; ++l) {
         Q(i, j) += coeff(i, l) * coeff(j, l);
       }
-      Q(i, j) /= 6;
     }
   }
 
@@ -1108,7 +1409,7 @@ void MetricBasis::_maxKstAfast(const fullMatrix<double> &coeff,
     for (int l = 1; l < 7; ++l) {
       r(i) += coeff(i, l) * coeff(i, l);
     }
-    r(i) = std::sqrt(r(i)/6);
+    r(i) = std::sqrt(r(i));
   }
 
   double min = 1e10;
@@ -1150,13 +1451,12 @@ void MetricBasis::_maxKstAsharp(const fullMatrix<double> &coeff,
     for (int l = 1; l < 7; ++l) {
       P(i) += coeff(i, l) * coeff(i, l);
     }
-    P(i) = std::sqrt(P(i)/6);
+    P(i) = std::sqrt(P(i));
     for (int j = 0; j < coeff.size1(); ++j) {
       Q(i, j) = 0;
       for (int l = 1; l < 7; ++l) {
         Q(i, j) += coeff(i, l) * coeff(j, l);
       }
-      Q(i, j) /= 6;
     }
   }
 
@@ -1190,4 +1490,60 @@ void MetricBasis::_maxKstAsharp(const fullMatrix<double> &coeff,
   }
 
   maxK = 1/beta*(mina*mina*mina-min);
+}
+
+double MetricBasis::_R3Dsafe(double q, double p, double J)
+{
+  if (q > 1e5*p) {
+    const double m = p*std::sqrt(3)/q;
+    return (1-m) / (1+m);
+  }
+  const double a = q/p;
+  const double K = J*J/p/p/p;
+  //Msg::Info("%g %g", a-3, K-16);
+  return _R3Dsafe(a, K);
+}
+
+double MetricBasis::_R3Dsafe(double a, double K)
+{
+  const double x = .5 * (K + (3 - a*a)*a);
+  if (x > 1+1e-7 || x < -1-1e-7) {
+    Msg::Warning("x = %g (a,K) = (%g,%g)", x, a, K);
+    //Msg::Fatal("a");
+  }
+
+  double ans;
+  if (x >= 1)       ans = (a - 1) / (a + 2);
+  else if (x <= -1) ans = (a - 2) / (a + 1);
+  else {
+    const double phi = std::acos(x) / 3;
+    //Msg::Warning("phi %g", phi - M_PI/3);
+    ans = (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
+  }
+
+  if (ans < 0 || ans > 1) {
+    //Msg::Warning("R = %g", ans);
+    if (ans < 0) return 0;
+    else return 1;
+  }
+  return ans;
+}
+
+double MetricBasis::_R2Dsafe(double q, double p)
+{
+  if (q < 0 || p < 0 || p > q) {
+    Msg::Error("wrong argument for 2d metric (%g, %g)", q, p);
+    int a[1];
+    int sum=0;
+    for(int i = 0; i  < 1000000; ++i) sum+=a[i];
+    Msg::Info("sum %d", sum);
+  }
+  return (q-p) / (q+p);
+}
+
+double MetricBasis::_R2Dsafe(double a)
+{
+  if (a < 1 || !std::isfinite(a))
+    Msg::Error("wrong argument for 2d metric (%g)", a);
+  return (a - 1) / (a + 1);
 }

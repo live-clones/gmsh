@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "pointsGenerators.h"
+#include "GmshDefines.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
@@ -13,6 +14,48 @@
 
 
 // Points Generators
+
+void gmshGeneratePoints(FuncSpaceData data, fullMatrix<double> &points)
+{
+  switch (data.elementType()) {
+    case TYPE_PNT :
+      points = gmshGeneratePointsLine(0);
+      return;
+    case TYPE_LIN :
+      points = gmshGeneratePointsLine(data.spaceOrder());
+      return;
+    case TYPE_TRI :
+      points = gmshGeneratePointsTriangle(data.spaceOrder(),
+                                          data.spaceIsSerendipity());
+      return;
+    case TYPE_QUA :
+      points = gmshGeneratePointsQuadrangle(data.spaceOrder(),
+                                            data.spaceIsSerendipity());
+      return;
+    case TYPE_TET :
+      points = gmshGeneratePointsTetrahedron(data.spaceOrder(),
+                                             data.spaceIsSerendipity());
+      return;
+    case TYPE_PRI :
+      points = gmshGeneratePointsPrism(data.spaceOrder(),
+                                       data.spaceIsSerendipity());
+      return;
+    case TYPE_HEX :
+      points = gmshGeneratePointsHexahedron(data.spaceOrder(),
+                                            data.spaceIsSerendipity());
+      return;
+    case TYPE_PYR :
+      points = gmshGeneratePointsPyramidGeneral(data.isPyramidalSpace(),
+                                                data.nij(),
+                                                data.nk(),
+                                                data.spaceIsSerendipity());
+      return;
+    default :
+      Msg::Error("Unknown element type %d (tag %d) for points generation",
+          data.elementType(), data.elementTag());
+      return;
+  }
+}
 
 fullMatrix<double> gmshGeneratePointsLine(int order)
 {
@@ -104,8 +147,8 @@ fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk, b
 
   if (points.size1() == 1) return points;
 
+  const int div = pyr ? nk+nij : std::max(nij, nk);
   for (int i = 0; i < points.size1(); ++i) {
-    int div = pyr ? nk+nij : std::max(nij, nk);
     points(i, 2) = (nk - points(i, 2)) / div;
     const double scale = 1. - points(i, 2);
     points(i, 0) = scale * (-1 + points(i, 0) * 2. / div);
@@ -115,6 +158,48 @@ fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk, b
 }
 
 // Monomials Generators
+
+void gmshGenerateMonomials(FuncSpaceData data, fullMatrix<double> &monomials)
+{
+  switch (data.elementType()) {
+    case TYPE_PNT :
+      monomials = gmshGenerateMonomialsLine(0);
+      return;
+    case TYPE_LIN :
+      monomials = gmshGenerateMonomialsLine(data.spaceOrder());
+      return;
+    case TYPE_TRI :
+      monomials = gmshGenerateMonomialsTriangle(data.spaceOrder(),
+                                                data.spaceIsSerendipity());
+      return;
+    case TYPE_QUA :
+      monomials = gmshGenerateMonomialsQuadrangle(data.spaceOrder(),
+                                                  data.spaceIsSerendipity());
+      return;
+    case TYPE_TET :
+      monomials = gmshGenerateMonomialsTetrahedron(data.spaceOrder(),
+                                                   data.spaceIsSerendipity());
+      return;
+    case TYPE_PRI :
+      monomials = gmshGenerateMonomialsPrism(data.spaceOrder(),
+                                             data.spaceIsSerendipity());
+      return;
+    case TYPE_HEX :
+      monomials = gmshGenerateMonomialsHexahedron(data.spaceOrder(),
+                                                  data.spaceIsSerendipity());
+      return;
+    case TYPE_PYR :
+      monomials = gmshGenerateMonomialsPyramidGeneral(data.isPyramidalSpace(),
+                                                      data.nij(),
+                                                      data.nk(),
+                                                      data.spaceIsSerendipity());
+      return;
+    default :
+      Msg::Error("Unknown element type %d (tag %d) for monomials generation",
+          data.elementType(), data.elementTag());
+      return;
+  }
+}
 
 fullMatrix<double> gmshGenerateMonomialsLine(int order, bool serendip)
 {
@@ -786,7 +871,7 @@ fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(
     bool pyr, int nij, int nk, bool forSerendipPoints)
 {
   if (nij < 0 || nk < 0) {
-    Msg::Fatal("Wrong arguments for pyramid's monomials generation !");
+    Msg::Fatal("Wrong arguments for pyramid's monomials generation ! (%d & %d)", nij, nk);
   }
   if (!pyr && nk > 0 && nij == 0) {
     Msg::Error("Wrong argument association for pyramid's monomials generation ! Setting nij to 1");

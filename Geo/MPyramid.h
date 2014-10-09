@@ -249,7 +249,7 @@ class MPyramidN : public MPyramid {
   virtual int getNumEdgeVertices() const { return 8 * (_order - 1); }
   virtual int getNumFaceVertices() const
   {
-    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+    if (getIsAssimilatedSerendipity())
       return 0;
     else
       return (_order-1)*(_order-1) + 4 * ((_order - 1) * (_order - 2)) / 2;
@@ -264,7 +264,7 @@ class MPyramidN : public MPyramid {
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
-    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0) {
+    if (getIsAssimilatedSerendipity()) {
       num == 4 ? v.resize(4 * _order)
                : v.resize(3 * _order);
     }
@@ -290,7 +290,7 @@ class MPyramidN : public MPyramid {
   }
   virtual int getNumVolumeVertices() const
   {
-    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+    if (getIsAssimilatedSerendipity())
       return 0;
     else
       return (_order-2) * ((_order-2)+1) * (2*(_order-2)+1) / 6;

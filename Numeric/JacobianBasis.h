@@ -6,21 +6,19 @@
 #ifndef _JACOBIAN_BASIS_H_
 #define _JACOBIAN_BASIS_H_
 
-#include <map>
-#include <vector>
-#include "bezierBasis.h"
 #include "fullMatrix.h"
-
+#include "FuncSpaceData.h"
+#include "bezierBasis.h"
 
 class GradientBasis {
- public:
+public:
   fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
 
- private:
-  const int _type;
+private:
+  const FuncSpaceData _data;
 
- public:
-  GradientBasis(int tag, int order);
+public:
+  GradientBasis(FuncSpaceData);
 
   int getNumSamplingPoints() const {return gradShapeMatX.size1();}
   int getNumMapNodes() const {return gradShapeMatX.size2();}
@@ -31,35 +29,42 @@ class GradientBasis {
                              fullMatrix<double> *dxyzdZ) const;
   void mapFromIdealElement(fullMatrix<double> *dxyzdX,
                            fullMatrix<double> *dxyzdY,
-                           fullMatrix<double> *dxyzdZ) const;
+                           fullMatrix<double> *dxyzdZ) const {
+    GradientBasis::mapFromIdealElement(_data.elementType(), dxyzdX, dxyzdY, dxyzdZ);
+  }
+  static void mapFromIdealElement(int type,
+                                  fullMatrix<double> *dxyzdX,
+                                  fullMatrix<double> *dxyzdY,
+                                  fullMatrix<double> *dxyzdZ);
+  static void mapFromIdealElement(int type, double jac[3][3]);
 };
 
-
 class JacobianBasis {
- private:
+private:
   const GradientBasis *_gradBasis;
   const bezierBasis *_bezier;
 
-  const int _tag, _dim, _jacOrder;
+  const FuncSpaceData _data;
+  const int _dim;
 
   fullMatrix<double> gradShapeMatXFast, gradShapeMatYFast, gradShapeMatZFast;
   fullVector<double> primGradShapeBarycenterX, primGradShapeBarycenterY, primGradShapeBarycenterZ;
-  fullMatrix<double> matrixPrimJac2Jac;                                   // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
+  fullMatrix<double> matrixPrimJac2Jac; // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
 
   int numJacNodes, numPrimJacNodes;
   int numMapNodes, numPrimMapNodes;
   int numJacNodesFast;
 
- public :
-  JacobianBasis(int tag, int jacOrder = -1);
+public:
+  JacobianBasis(FuncSpaceData);
 
   // Get methods
-  inline int getJacOrder() const { return _jacOrder; }
-  inline int getNumJacNodes() const { return numJacNodes; }
-  inline int getNumJacNodesFast() const { return numJacNodesFast; }
-  inline int getNumMapNodes() const { return numMapNodes; }
-  inline int getNumPrimJacNodes() const { return numPrimJacNodes; }
-  inline int getNumPrimMapNodes() const { return numPrimMapNodes; }
+  inline int getJacOrder() const {return _data.spaceOrder();}
+  inline int getNumJacNodes() const {return numJacNodes;}
+  inline int getNumJacNodesFast() const {return numJacNodesFast;}
+  inline int getNumMapNodes() const {return numMapNodes;}
+  inline int getNumPrimJacNodes() const {return numPrimJacNodes;}
+  inline int getNumPrimMapNodes() const {return numPrimMapNodes;}
   const bezierBasis* getBezier() const;
 
   // Jacobian evaluation methods

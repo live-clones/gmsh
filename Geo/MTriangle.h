@@ -278,7 +278,7 @@ class MTriangleN : public MTriangle {
   virtual const MVertex *getVertex(int num) const { return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual int getNumFaceVertices() const
   {
-    if (ElementType::SerendipityFromTag(getTypeForMSH()) > 0)
+    if (getIsAssimilatedSerendipity())
       return 0;
     else
       return  (_order - 1) * (_order - 2) / 2;

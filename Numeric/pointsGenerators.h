@@ -7,7 +7,7 @@
 #define POINTSGENERATORS_H
 
 #include "fullMatrix.h"
-
+#include "FuncSpaceData.h"
  /*
   * Functions to generate point distributions on
   * the references elements, for all orders.
@@ -17,6 +17,8 @@
   */
 
 // Points
+
+void gmshGeneratePoints(FuncSpaceData, fullMatrix<double> &);
 
 fullMatrix<double> gmshGeneratePointsLine(int order);
 
@@ -32,6 +34,8 @@ fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk, b
 
 
 // Monomial exponents
+
+void gmshGenerateMonomials(FuncSpaceData, fullMatrix<double> &);
 
 fullMatrix<double> gmshGenerateMonomialsLine(int order, bool serendip = false);
 

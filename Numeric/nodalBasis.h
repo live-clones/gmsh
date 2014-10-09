@@ -15,19 +15,23 @@ class nodalBasis {
   bool serendip;
   fullMatrix<double> points;
 
-  nodalBasis() {};
+  nodalBasis() {}
   nodalBasis(int tag);
   virtual ~nodalBasis() {}
 
   virtual int getNumShapeFunctions() const = 0;
+  void getReferenceNodes(fullMatrix<double> &nodes) const {
+    nodes = points;
+  }
+  void getReferenceNodesForBezier(fullMatrix<double> &nodes) const;
 
   // Basis functions & gradients evaluation
   virtual void f(double u, double v, double w, double *sf) const = 0;
   virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const = 0;
   virtual void df(double u, double v, double w, double grads[][3]) const = 0;
   virtual void df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const = 0;
-  virtual void ddf(double u, double v, double w, double grads[][3][3]) const {Msg::Fatal("Not implemented");};
-  virtual void dddf(double u, double v, double w, double grads[][3][3][3]) const {Msg::Fatal("Not implemented");};
+  virtual void ddf(double u, double v, double w, double grads[][3][3]) const {Msg::Fatal("Not implemented");}
+  virtual void dddf(double u, double v, double w, double grads[][3][3][3]) const {Msg::Fatal("Not implemented");}
 
   // closures is the list of the nodes of each face, in the order of
   // the polynomialBasis of the face; fullClosures is mapping of the
@@ -50,27 +54,21 @@ class nodalBasis {
   virtual int getClosureType(int id) const { return closures[id].type; }
   virtual const std::vector<int> &getClosure(int id) const { return closures[id]; }
   virtual const std::vector<int> &getFullClosure(int id) const { return fullClosures[id]; }
-  inline int getClosureId(int iFace, int iSign=1, int iRot=0) const;
+  inline int getClosureId(int iFace, int iSign = 1, int iRot = 0) const;
   inline void breakClosureId(int i, int &iFace, int &iSign, int &iRot) const;
 };
 
-
-
 inline int nodalBasis::getClosureId(int iFace, int iSign, int iRot) const
 {
-  return iFace + numFaces*(iSign == 1 ? 0 : 1) + 2*numFaces*iRot;
+  return iFace + numFaces * (iSign == 1 ? 0 : 1) + 2 * numFaces * iRot;
 }
-
-
 
 inline void nodalBasis::breakClosureId(int i, int &iFace, int &iSign, int &iRot) const
 {
   iFace = i % numFaces;
-  i = (i - iFace)/numFaces;
+  i = (i - iFace) / numFaces;
   iSign = i % 2;
   iRot = (i - iSign) / 2;
 }
-
-
 
 #endif

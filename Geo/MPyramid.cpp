@@ -33,19 +33,12 @@ void MPyramid::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQPyrPts(pOrder);
 }
 
-const JacobianBasis* MPyramid::getJacobianFuncSpace(int o) const
+const JacobianBasis* MPyramid::getJacobianFuncSpace(int order) const
 {
-  // FIXME add other order and see MPyramid::getFunctionSpace for 'design'
-  int order = (o == -1) ? getPolynomialOrder() : o;
+  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
 
-  switch (order) {
-    case 1: return BasisFactory::getJacobianBasis(MSH_PYR_5);
-    case 2: return BasisFactory::getJacobianBasis(MSH_PYR_14);
-    case 3: return BasisFactory::getJacobianBasis(MSH_PYR_30);
-    default: Msg::Error("Order %d pyramid function space not implemented", order); break;
-  }
-
-  return 0;
+  int tag = ElementType::getTag(TYPE_PYR, order);
+  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
 }
 
 MPyramidN::~MPyramidN() {}

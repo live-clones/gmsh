@@ -3,20 +3,20 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include "BasisFactory.h"
 #include "GmshDefines.h"
-#include "GmshMessage.h"
-#include "miniBasis.h"
 #include "polynomialBasis.h"
 #include "pyramidalBasis.h"
-#include "pointsGenerators.h"
-#include "BasisFactory.h"
-#include "MElement.h"
+#include "miniBasis.h"
+#include "MetricBasis.h"
+#include <map>
+#include <cstddef>
 
 std::map<int, nodalBasis*> BasisFactory::fs;
 std::map<int, MetricBasis*> BasisFactory::ms;
-BasisFactory::Cont_bezierBasis BasisFactory::bs;
-BasisFactory::Cont_gradBasis BasisFactory::gs;
-BasisFactory::Cont_jacBasis BasisFactory::js;
+std::map<FuncSpaceData, JacobianBasis*> BasisFactory::js;
+std::map<FuncSpaceData, bezierBasis*> BasisFactory::bs;
+std::map<FuncSpaceData, GradientBasis*> BasisFactory::gs;
 
 const nodalBasis* BasisFactory::getNodalBasis(int tag)
 {
@@ -67,50 +67,47 @@ const nodalBasis* BasisFactory::getNodalBasis(int tag)
   return inserted.first->second;
 }
 
-const JacobianBasis* BasisFactory::getJacobianBasis(int tag, int order)
+const JacobianBasis* BasisFactory::getJacobianBasis(FuncSpaceData fsd)
 {
-  std::pair<int, int> key(tag, order);
-  Cont_jacBasis::iterator it = js.find(key);
-  if (it != js.end())
-    return it->second;
+  FuncSpaceData data = fsd.getForNonSerendipitySpace();
 
-  JacobianBasis* J = new JacobianBasis(tag, order);
-  js.insert(std::make_pair(key, J));
+  std::map<FuncSpaceData, JacobianBasis*>::const_iterator it = js.find(data);
+  if (it != js.end()) return it->second;
+
+  JacobianBasis* J = new JacobianBasis(data);
+  js.insert(std::make_pair(data, J));
   return J;
 }
 
 const MetricBasis* BasisFactory::getMetricBasis(int tag)
 {
   std::map<int, MetricBasis*>::const_iterator it = ms.find(tag);
-  if (it != ms.end())
-    return it->second;
+  if (it != ms.end()) return it->second;
 
   MetricBasis* M = new MetricBasis(tag);
   ms.insert(std::make_pair(tag, M));
   return M;
 }
 
-const GradientBasis* BasisFactory::getGradientBasis(int tag, int order)
+const GradientBasis* BasisFactory::getGradientBasis(FuncSpaceData data)
 {
-  std::pair<int, int> key(tag, order);
-  Cont_gradBasis::const_iterator it = gs.find(key);
-  if (it != gs.end())
-    return it->second;
+  std::map<FuncSpaceData, GradientBasis*>::const_iterator it = gs.find(data);
+  if (it != gs.end()) return it->second;
 
-  GradientBasis* G = new GradientBasis(tag, order);
-  gs.insert(std::make_pair(key, G));
+  GradientBasis* G = new GradientBasis(data);
+  gs.insert(std::make_pair(data, G));
   return G;
 }
 
-const bezierBasis* BasisFactory::getBezierBasis(int parentType, int order)
+const bezierBasis* BasisFactory::getBezierBasis(FuncSpaceData fsd)
 {
-  std::pair<int, int> key(parentType, order);
-  Cont_bezierBasis::iterator it = bs.find(key);
-  if (it != bs.end())
-    return it->second;
+  FuncSpaceData data = fsd.getForPrimaryElement();
 
-  bezierBasis* B = new bezierBasis(parentType, order);
-  bs.insert(std::make_pair(key, B));
+  std::map<FuncSpaceData, bezierBasis*>::const_iterator it = bs.find(data);
+  if (it != bs.end()) return it->second;
+
+  bezierBasis* B = new bezierBasis(data);
+  bs.insert(std::make_pair(data, B));
   return B;
 }
 
@@ -130,21 +127,21 @@ void BasisFactory::clearAll()
   }
   ms.clear();
 
-  Cont_jacBasis::iterator itJ = js.begin();
+  std::map<FuncSpaceData, JacobianBasis*>::iterator itJ = js.begin();
   while (itJ != js.end()) {
     delete itJ->second;
     itJ++;
   }
   js.clear();
 
-  Cont_gradBasis::iterator itG = gs.begin();
+  std::map<FuncSpaceData, GradientBasis*>::iterator itG = gs.begin();
   while (itG != gs.end()) {
     delete itG->second;
     itG++;
   }
   gs.clear();
 
-  Cont_bezierBasis::iterator itB = bs.begin();
+  std::map<FuncSpaceData, bezierBasis*>::iterator itB = bs.begin();
   while (itB != bs.end()) {
     delete itB->second;
     itB++;

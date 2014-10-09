@@ -7,7 +7,6 @@
 #include "Numeric.h"
 #include "Context.h"
 #include "BasisFactory.h"
-#include "nodalBasis.h"
 #include "polynomialBasis.h"
 #include "MQuadrangle.h"
 
