@@ -653,8 +653,6 @@ double MElement::getEigenvaluesMetric(double u, double v, double w, double value
     fullVector<double> valReal(values, 2), valImag(2);
     fullMatrix<double> vecLeft(2, 2), vecRight(2, 2);
     metric.eig(valReal, valImag, vecLeft, vecRight, true);
-    if (fabs(valImag(0)) + fabs(valImag(1)) > 1e-12)
-      Msg::Warning("not really real");
     values[2] = -1;
     return std::sqrt(valReal(0) / valReal(1));
   }

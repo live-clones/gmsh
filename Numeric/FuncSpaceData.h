@@ -27,6 +27,9 @@ private:
 
 public:
 
+  FuncSpaceData() : _tag(-1), _spaceOrder(-1), _nij(-1), _nk(-1),
+    _pyramidalSpace(false), _serendipity(false) {}
+
   // Constructors using MElement*
   FuncSpaceData(MElement *el, int *serendip = NULL);
   FuncSpaceData(MElement *el, int order, int *serendip = NULL);

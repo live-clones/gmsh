@@ -48,6 +48,11 @@ namespace {
     for (int i = 1; i <= k; i++, n--) (c *= n) /= i;
     return c;
   }
+
+  double symRand(double f = 1)
+  {
+    return f * (rand()%2001 - 1000) / 1000.;
+  }
 }
 
 MetricBasis::MetricBasis(int tag) : _type(ElementType::ParentTypeFromTag(tag)),
@@ -525,13 +530,6 @@ void MetricBasis::_lightenInequalities(int &countj, int &countp, int &counta)
   counta -= cnt[2];
 }
 
-namespace {
-  static double symRand(double f = 1)
-  {
-    return f * (rand()%2001 - 1000) / 1000.;
-  }
-}
-
 bool MetricBasis::validateBezierForMetricAndJacobian()
 {
   Msg::Info("Testing Bezier interpolation and subdivision "
@@ -551,7 +549,6 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
 
   //
   static const double epsilon = std::numeric_limits<double>::epsilon();
-  double sumRatio = 0;
 
   for (int tag = 1; tag <= MSH_NUM_TYPE; ++tag) {
     if (tag > 66 && tag < 71) continue; //not conventional elements
@@ -610,7 +607,6 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
       metricBasis->interpolateAfterNSubdivisions(el, numSubdiv, numSampPnt,
                                                  isub, uvw, metric_Bez);
 
-      double sumTol = 0;
       int numBadMatch = 0;
       int numBadMatchTensor = 0;
       double maxBadMatch = 0;
@@ -624,9 +620,6 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
 
         double diff = std::abs(metric_Lag - metric_Bez(isamp, 0));
         double diffTensor = std::abs(metric_Lag - metric_Bez(isamp, 1));
-        sumTol += diff;
-        double ratio = (metric_Bez(isamp, 0)-metric_Lag) / tolerance;
-        sumRatio += ratio;
 
         if (diffTensor > toleranceTensor) {
           ++numBadMatchTensor;
@@ -649,9 +642,8 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
     }
   }
 
-  if (numError) Msg::Error("Validation of Bezier terminated with %d errors, "
-                           "you have work...", numError);
-  else Msg::Info("Validation of Bezier terminated without errors", numError);
+  if (numError) Msg::Error("Validation of Bezier terminated with %d errors!", numError);
+  else Msg::Info("Validation of Bezier terminated without errors");
   return numError;
 }
 
@@ -723,7 +715,7 @@ void MetricBasis::interpolate(const MElement *el,
   }
 
   delete jac;
-  //delete metric;
+  delete metric;
 }
 
 void MetricBasis::interpolateAfterNSubdivisions(
@@ -1500,7 +1492,6 @@ double MetricBasis::_R3Dsafe(double q, double p, double J)
   }
   const double a = q/p;
   const double K = J*J/p/p/p;
-  //Msg::Info("%g %g", a-3, K-16);
   return _R3Dsafe(a, K);
 }
 
@@ -1509,7 +1500,6 @@ double MetricBasis::_R3Dsafe(double a, double K)
   const double x = .5 * (K + (3 - a*a)*a);
   if (x > 1+1e-7 || x < -1-1e-7) {
     Msg::Warning("x = %g (a,K) = (%g,%g)", x, a, K);
-    //Msg::Fatal("a");
   }
 
   double ans;
@@ -1517,12 +1507,10 @@ double MetricBasis::_R3Dsafe(double a, double K)
   else if (x <= -1) ans = (a - 2) / (a + 1);
   else {
     const double phi = std::acos(x) / 3;
-    //Msg::Warning("phi %g", phi - M_PI/3);
     ans = (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
   }
 
   if (ans < 0 || ans > 1) {
-    //Msg::Warning("R = %g", ans);
     if (ans < 0) return 0;
     else return 1;
   }

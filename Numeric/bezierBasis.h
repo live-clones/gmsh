@@ -29,9 +29,6 @@ class bezierBasis {
   fullMatrix<double> matrixBez2Lag;
   fullMatrix<double> subDivisor;
 
-  void printTag() const {Msg::Info("tagBezier is %d", _data.elementTag());}
-  void printFuncSpace() const {_data.print();}
-
   // Constructors
   inline bezierBasis(FuncSpaceData data) : _data(data) {
     if (_data.elementType() == TYPE_PYR)

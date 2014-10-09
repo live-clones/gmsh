@@ -63,10 +63,8 @@ void FuncSpaceData::getOrderForBezier(int order[3], int exponentZ) const
 {
   if (_pyramidalSpace && exponentZ < 0) {
     Msg::Error("getOrderForBezier needs third exponent for pyramidal space!");
-    int a[1];
-    int sum=0;
-    for(int i = 0; i  < 1000000; ++i) sum+=a[i];
-    Msg::Info("sum %d", sum);
+    order[0] = order[1] = order[2] = -1;
+    return;
   }
   if (elementType() == TYPE_PYR) {
     if (_pyramidalSpace) {

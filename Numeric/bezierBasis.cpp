@@ -301,10 +301,6 @@ int nChoosek(int n, int k)
 {
   if (n < k || k < 0) {
     Msg::Error("Wrong argument for combination. (%d, %d)", n, k);
-      int a[10];
-      int e = 0;
-      for (int i = 0; i < 1000000; ++i) e += a[i];
-      Msg::Info("e%d", e);
     return 1;
   }
 
@@ -391,7 +387,6 @@ fullMatrix<double> generateBez2LagMatrixPyramid
           * pow_int(1. - point(i, 1), n01 - exponent(j, 1))
           * pow_int(1. - point(i, 2), nk  - exponent(j, 2));
     }
-    //Msg::Info("bb %g %g %g", point(i, 0) / denom, point(i, 1) / denom, 1. - point(i, 2));
   }
   return bez2Lag;
 }
@@ -518,7 +513,6 @@ void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
     for (int n = 0; n < coeffs.size2(); ++n) result(m, n) = 0;
     for (int i = 0; i < numCoeff; i++) {
       _data.getOrderForBezier(order, _exponents(i, dim-1));
-      //if (m==0) Msg::Info("i=%d exp %g %g %g order %d %d %d", i, _exponents(i, 0), _exponents(i, 1), _exponents(i, 2), order[0], order[1], order[2]);
       double dd = 1;
       double pointCompl = 1.;
       int exponentCompl = order[0];
