@@ -1526,7 +1526,11 @@ double MetricBasis::_R2Dsafe(double q, double p)
 
 double MetricBasis::_R2Dsafe(double a)
 {
-  if (a < 1 || !std::isfinite(a))
+  if (a < 1
+#if !defined(_MSC_VER)
+      || !std::isfinite(a)
+#endif
+      )
     Msg::Error("wrong argument for 2d metric (%g)", a);
   return (a - 1) / (a + 1);
 }
