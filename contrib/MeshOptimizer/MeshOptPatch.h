@@ -95,11 +95,13 @@ public:
 
   // Mesh quality
   inline const int &nIJacEl(int iEl) { return _nIJacEl[iEl]; }
+  inline const int &nICNEl(int iEl) { return _nICNEl[iEl]; }
   inline int indGIJac(int iEl, int l, int iPC) { return iPC*_nIJacEl[iEl]+l; }
+  inline int indGICN(int iEl, int l, int iPC) { return iPC*_nICNEl[iEl]+l; }
   void initIdealJac();
   void idealJacAndGradients(int iEl, std::vector<double> &NCJ, std::vector<double> &gNCJ);
-  void initCondNum();
-  void condNumAndGradients(int iEl, std::vector<double> &condNum, std::vector<double> &gCondNum);
+  void initInvCondNum();
+  void invCondNumAndGradients(int iEl, std::vector<double> &condNum, std::vector<double> &gCondNum);
 
 private:
 
@@ -155,7 +157,8 @@ private:
   std::vector<int> _nIJacEl;                                    // Number of NCJ values for an el
   std::vector<fullMatrix<double> > _IJacNormEl;                 // Normals to 2D elements for Jacobian regularization and scaling
   std::vector<double> _invIJac;                                 // Initial Jacobians for 3D elements
-  std::vector<fullMatrix<double> > _condNormEl;                 // Normals to 2D elements for inverse conditioning computation
+  std::vector<int> _nICNEl;                              // Number of inv. cond. number values for an el.
+//  std::vector<fullMatrix<double> > _condNormEl;                 // Normals to 2D elements for inverse conditioning computation
 };
 
 

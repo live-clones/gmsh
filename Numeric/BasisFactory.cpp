@@ -9,11 +9,13 @@
 #include "pyramidalBasis.h"
 #include "miniBasis.h"
 #include "MetricBasis.h"
+#include "CondNumBasis.h"
 #include <map>
 #include <cstddef>
 
 std::map<int, nodalBasis*> BasisFactory::fs;
 std::map<int, MetricBasis*> BasisFactory::ms;
+std::map<int, CondNumBasis*> BasisFactory::cs;
 std::map<FuncSpaceData, JacobianBasis*> BasisFactory::js;
 std::map<FuncSpaceData, bezierBasis*> BasisFactory::bs;
 std::map<FuncSpaceData, GradientBasis*> BasisFactory::gs;
@@ -86,6 +88,16 @@ const MetricBasis* BasisFactory::getMetricBasis(int tag)
 
   MetricBasis* M = new MetricBasis(tag);
   ms.insert(std::make_pair(tag, M));
+  return M;
+}
+
+const CondNumBasis* BasisFactory::getCondNumBasis(int tag)
+{
+  std::map<int, CondNumBasis*>::const_iterator it = cs.find(tag);
+  if (it != cs.end()) return it->second;
+
+  CondNumBasis* M = new CondNumBasis(tag);
+  cs.insert(std::make_pair(tag, M));
   return M;
 }
 

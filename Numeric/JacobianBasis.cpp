@@ -22,30 +22,6 @@ inline double calcDet3D(double M11, double M12, double M13,
        + M13 * (M21*M32 - M22*M31);
 }
 
-// Compute the squared Frobenius norm a matrix
-inline double calcFrobNormSq3D(double M11, double M12, double M13,
-                               double M21, double M22, double M23,
-                               double M31, double M32, double M33)
-{
-  return M11*M11 + M12*M12 + M13*M13
-       + M21*M21 + M22*M22 + M23*M23
-       + M31*M31 + M32*M32 + M33*M33;
-}
-
-// Compute the squared Frobenius norm of the inverse of a matrix
-inline double calcFrobNormSqInv3D(double M11, double M12, double M13,
-                                  double M21, double M22, double M23,
-                                  double M31, double M32, double M33)
-{
-  const double invD = 1./calcDet3D(M11, M12, M13, M21, M22, M23, M31, M32, M33);
-  const double I11 = M22*M33-M23*M32, I12 = M13*M32-M12*M33, I13 = M12*M23-M13*M22,
-               I21 = M23*M31-M21*M33, I22 = M11*M33-M13*M31, I23 = M13*M21-M11*M23,
-               I31 = M21*M32-M22*M31, I32 = M12*M31-M11*M32, I33 = M11*M22-M12*M21;
-  return (I11*I11 + I12*I12 + I13*I13
-        + I21*I21 + I22*I22 + I23*I23
-        + I31*I31 + I32*I32 + I33*I33)*invD*invD;
-}
-
 // Compute signed Jacobian and its gradients w.r.t.
 // node positions, at one location in a 1D element
 inline void calcJDJ1D(double dxdX, double dxdY, double dxdZ,
@@ -129,156 +105,6 @@ inline void calcJDJ3D(double dxdX, double dxdY, double dxdZ,
                                     dzdX, dzdY, dzdZ);
 }
 
-// Compute condition number and its gradients
-// w.r.t. node positions, at one location in a 1D element
-// FIXME: TO BE UPDATED
-inline void calcIDI1D(double dxdX, double dxdY, double dxdZ,
-                      double dydX, double dydY, double dydZ,
-                      double dzdX, double dzdY, double dzdZ,
-                      int i, int numMapNodes,
-                      const fullMatrix<double> &gSMatX,
-                      const fullMatrix<double> &JDJ,
-                      fullMatrix<double> &IDI)
-{
-  const double &J = JDJ(i, 3*numMapNodes), JSq = J*J, JQuadInv = 1./(JSq*JSq);
-  const double A1 = dydY*dzdZ - dydZ*dzdY, A2 = dydX*dzdZ - dydZ*dzdX,
-               A3 = dxdY*dzdZ - dxdZ*dzdY, A4 = dxdX*dzdZ - dxdZ*dzdX,
-               A5 = dydX*dzdY - dydY*dzdX, A6 = dxdX*dzdY - dxdY*dzdX,
-               A7 = dxdY*dydZ - dxdZ*dydY, A8 = dxdX*dydZ - dxdZ*dydX,
-               A9 = dxdX*dydY - dxdY*dydX;
-  const double A = A1*A1 + A2*A2 + A3*A3 + A4*A4 + A5*A5 + A6*A6 + A7*A7 + A8*A8 + A9*A9;
-  const double nInvJSq = A/JSq;
-  const double nJSq = dxdX*dxdX + dxdY*dxdY + dxdZ*dxdZ
-                    + dydX*dydX + dydY*dydY + dydZ*dydZ
-                    + dzdX*dzdX + dzdY*dzdY + dzdZ*dzdZ;
-  const double invProd = 1./(nJSq*nInvJSq), sqrtInvProd = sqrt(invProd);
-  IDI(i, 3*numMapNodes) = 3.*sqrtInvProd;
-  for (int j = 0; j < numMapNodes; j++) {
-    const double &dPhidX = gSMatX(i, j);
-    const double &dJdxj = JDJ(i, j), &dJdyj = JDJ(i, j+numMapNodes),
-                 &dJdzj = JDJ(i, j+2*numMapNodes);
-    const double dAdxj = 2.*(dPhidX*dzdZ * A4 + dPhidX*dzdY * A6
-                           + dPhidX*dydZ * A8 + dPhidX*dydY * A9);
-    const double dnInvJSqdxj = (dAdxj*JSq-2.*dJdxj*J*A)*JQuadInv;
-    const double dnJSqdxj = 2.*dPhidX*dxdX;
-    IDI(i, j) = -1.5 * (dnJSqdxj*nInvJSq+nJSq*dnInvJSqdxj)*invProd*sqrtInvProd;
-    const double dAdyj = 2.*(dPhidX*dzdZ * A2 + dPhidX*dzdY * A5
-                           - dxdZ*dPhidX * A8 - dxdY*dPhidX * A9);
-    const double dnInvJSqdyj = (dAdyj*JSq-2.*dJdyj*J*A)*JQuadInv;
-    const double dnJSqdyj = 2.*dPhidX*dydX;
-    IDI(i, j+numMapNodes) = -1.5 * (dnJSqdyj*nInvJSq+nJSq*dnInvJSqdyj)*invProd*sqrtInvProd;
-    const double dAdzj = 2.*(-dydZ*dPhidX * A2 - dxdZ*dPhidX * A4
-                           - dydY*dPhidX * A5 - dxdY*dPhidX * A6);
-    const double dnInvJSqdzj = (dAdzj*JSq-2.*dJdzj*J*A)*JQuadInv;
-    const double dnJSqdzj = 2.*dPhidX*dzdX;
-    IDI(i, j+2*numMapNodes) = -1.5 * (dnJSqdzj*nInvJSq + nJSq*dnInvJSqdzj) * invProd*sqrtInvProd;
-  }
-}
-
-// Compute condition number and its gradients
-// w.r.t. node positions, at one location in a 2D element
-// FIXME: TO BE UPDATED
-inline void calcIDI2D(double dxdX, double dxdY, double dxdZ,
-                      double dydX, double dydY, double dydZ,
-                      double dzdX, double dzdY, double dzdZ,
-                      int i, int numMapNodes,
-                      const fullMatrix<double> &gSMatX,
-                      const fullMatrix<double> &gSMatY,
-                      const fullMatrix<double> &JDJ,
-                      fullMatrix<double> &IDI)
-{
-  const double &J = JDJ(i, 3*numMapNodes), JSq = J*J, JQuadInv = 1./(JSq*JSq);
-  const double A1 = dydY*dzdZ - dydZ*dzdY, A2 = dydX*dzdZ - dydZ*dzdX,
-               A3 = dxdY*dzdZ - dxdZ*dzdY, A4 = dxdX*dzdZ - dxdZ*dzdX,
-               A5 = dydX*dzdY - dydY*dzdX, A6 = dxdX*dzdY - dxdY*dzdX,
-               A7 = dxdY*dydZ - dxdZ*dydY, A8 = dxdX*dydZ - dxdZ*dydX,
-               A9 = dxdX*dydY - dxdY*dydX;
-  const double A = A1*A1 + A2*A2 + A3*A3 + A4*A4 + A5*A5 + A6*A6 + A7*A7 + A8*A8 + A9*A9;
-  const double nInvJSq = A/JSq;
-  const double nJSq = dxdX*dxdX + dxdY*dxdY + dxdZ*dxdZ
-                    + dydX*dydX + dydY*dydY + dydZ*dydZ
-                    + dzdX*dzdX + dzdY*dzdY + dzdZ*dzdZ;
-  const double invProd = 1./(nJSq*nInvJSq), sqrtInvProd = sqrt(invProd);
-  IDI(i, 3*numMapNodes) = 3.*sqrtInvProd;
-  for (int j = 0; j < numMapNodes; j++) {
-    const double &dPhidX = gSMatX(i, j);
-    const double &dPhidY = gSMatY(i, j);
-    const double &dJdxj = JDJ(i, j), &dJdyj = JDJ(i, j+numMapNodes),
-                 &dJdzj = JDJ(i, j+2*numMapNodes);
-    const double dAdxj = 2.*(dPhidY*dzdZ * A3 + dPhidX*dzdZ * A4
-                           + (dPhidX*dzdY - dPhidY*dzdX) * A6 + dPhidY*dydZ * A7
-                           + dPhidX*dydZ * A8 + (dPhidX*dydY - dPhidY*dydX) * A9);
-    const double dnInvJSqdxj = (dAdxj*JSq-2.*dJdxj*J*A)*JQuadInv;
-    const double dnJSqdxj = 2.*(dPhidX*dxdX + dPhidY*dxdY);
-    IDI(i, j) = -1.5 * (dnJSqdxj*nInvJSq+nJSq*dnInvJSqdxj)*invProd*sqrtInvProd;
-    const double dAdyj = 2.*(dPhidY*dzdZ * A1 + dPhidX*dzdZ * A2
-                           + (dPhidX*dzdY - dPhidY*dzdX) * A5 - dxdZ*dPhidY * A7
-                           - dxdZ*dPhidX * A8 + (dxdX*dPhidY - dxdY*dPhidX) * A9);
-    const double dnInvJSqdyj = (dAdyj*JSq-2.*dJdyj*J*A)*JQuadInv;
-    const double dnJSqdyj = 2.*(dPhidX*dydX + dPhidY*dydY);
-    IDI(i, j+numMapNodes) = -1.5 * (dnJSqdyj*nInvJSq+nJSq*dnInvJSqdyj)*invProd*sqrtInvProd;
-    const double dAdzj = 2.*(-dydZ*dPhidY * A1 - dydZ*dPhidX * A2
-                           - dxdZ*dPhidY * A3 - dxdZ*dPhidX * A4
-                           + (dydX*dPhidY - dydY*dPhidX) * A5 + (dxdX*dPhidY - dxdY*dPhidX) * A6);
-    const double dnInvJSqdzj = (dAdzj*JSq-2.*dJdzj*J*A)*JQuadInv;
-    const double dnJSqdzj = 2.*(dPhidX*dzdX + dPhidY*dzdY);
-    IDI(i, j+2*numMapNodes) = -1.5 * (dnJSqdzj*nInvJSq + nJSq*dnInvJSqdzj) * invProd*sqrtInvProd;
-  }
-}
-
-// Compute condition number and its gradients
-// w.r.t. node positions, at one location in a 3D element
-// FIXME: TO BE UPDATED
-inline void calcIDI3D(double dxdX, double dxdY, double dxdZ,
-                      double dydX, double dydY, double dydZ,
-                      double dzdX, double dzdY, double dzdZ,
-                      int i, int numMapNodes,
-                      const fullMatrix<double> &gSMatX,
-                      const fullMatrix<double> &gSMatY,
-                      const fullMatrix<double> &gSMatZ,
-                      const fullMatrix<double> &JDJ,
-                      fullMatrix<double> &IDI)
-{
-  const double &J = JDJ(i, 3*numMapNodes), JSq = J*J, JQuadInv = 1./(JSq*JSq);
-  const double A1 = dydY*dzdZ - dydZ*dzdY, A2 = dydX*dzdZ - dydZ*dzdX,
-               A3 = dxdY*dzdZ - dxdZ*dzdY, A4 = dxdX*dzdZ - dxdZ*dzdX,
-               A5 = dydX*dzdY - dydY*dzdX, A6 = dxdX*dzdY - dxdY*dzdX,
-               A7 = dxdY*dydZ - dxdZ*dydY, A8 = dxdX*dydZ - dxdZ*dydX,
-               A9 = dxdX*dydY - dxdY*dydX;
-  const double A = A1*A1 + A2*A2 + A3*A3 + A4*A4 + A5*A5 + A6*A6 + A7*A7 + A8*A8 + A9*A9;
-  const double nInvJSq = A/JSq;
-  const double nJSq = dxdX*dxdX + dxdY*dxdY + dxdZ*dxdZ
-                    + dydX*dydX + dydY*dydY + dydZ*dydZ
-                    + dzdX*dzdX + dzdY*dzdY + dzdZ*dzdZ;
-  const double invProd = 1./(nJSq*nInvJSq), sqrtInvProd = sqrt(invProd);
-  IDI(i, 3*numMapNodes) = 3.*sqrtInvProd;
-  for (int j = 0; j < numMapNodes; j++) {
-    const double &dPhidX = gSMatX(i, j);
-    const double &dPhidY = gSMatY(i, j);
-    const double &dPhidZ = gSMatZ(i, j);
-    const double &dJdxj = JDJ(i, j), &dJdyj = JDJ(i, j+numMapNodes),
-                 &dJdzj = JDJ(i, j+2*numMapNodes);
-    const double dAdxj = 2.*((dPhidY*dzdZ - dPhidZ*dzdY) * A3 + (dPhidX*dzdZ - dPhidZ*dzdX) * A4
-                           + (dPhidX*dzdY - dPhidY*dzdX) * A6 + (dPhidY*dydZ - dPhidZ*dydY) * A7
-                           + (dPhidX*dydZ - dPhidZ*dydX) * A8 + (dPhidX*dydY - dPhidY*dydX) * A9);
-    const double dnInvJSqdxj = (dAdxj*JSq-2.*dJdxj*J*A)*JQuadInv;
-    const double dnJSqdxj = 2.*(dPhidX*dxdX + dPhidY*dxdY + dPhidZ*dxdZ);
-    IDI(i, j) = -1.5*(dnJSqdxj*nInvJSq+nJSq*dnInvJSqdxj)*invProd*sqrtInvProd;
-    const double dAdyj = 2.*((dPhidY*dzdZ - dPhidZ*dzdY) * A1 + (dPhidX*dzdZ - dPhidZ*dzdX) * A2
-                           + (dPhidX*dzdY - dPhidY*dzdX) * A5 + (dxdY*dPhidZ - dxdZ*dPhidY) * A7
-                           + (dxdX*dPhidZ - dxdZ*dPhidX) * A8 + (dxdX*dPhidY - dxdY*dPhidX) * A9);
-    const double dnInvJSqdyj = (dAdyj*JSq-2.*dJdyj*J*A)*JQuadInv;
-    const double dnJSqdyj = 2.*(dPhidX*dydX + dPhidY*dydY + dPhidZ*dydZ);
-    IDI(i, j+numMapNodes) = -1.5*(dnJSqdyj*nInvJSq+nJSq*dnInvJSqdyj)*invProd*sqrtInvProd;
-    const double dAdzj = 2.*((dydY*dPhidZ - dydZ*dPhidY) * A1 + (dydX*dPhidZ - dydZ*dPhidX) * A2
-                           + (dxdY*dPhidZ - dxdZ*dPhidY) * A3 + (dxdX*dPhidZ - dxdZ*dPhidX) * A4
-                           + (dydX*dPhidY - dydY*dPhidX) * A5 + (dxdX*dPhidY - dxdY*dPhidX) * A6);
-    const double dnInvJSqdzj = (dAdzj*JSq-2.*dJdzj*J*A)*JQuadInv;
-    const double dnJSqdzj = 2.*(dPhidX*dzdX + dPhidY*dzdY + dPhidZ*dzdZ);
-    IDI(i, j+2*numMapNodes) = -1.5 * (dnJSqdzj*nInvJSq + nJSq*dnInvJSqdzj) * invProd*sqrtInvProd;
-  }
-}
-
 }
 
 GradientBasis::GradientBasis(FuncSpaceData data)
@@ -304,6 +130,12 @@ GradientBasis::GradientBasis(FuncSpaceData data)
       gradShapeMatZ(i, j) = allDPsi(j, 3*i+2);
     }
   }
+
+  gradShapeIdealMatX = gradShapeMatX;
+  gradShapeIdealMatY = gradShapeMatY;
+  gradShapeIdealMatZ = gradShapeMatZ;
+  mapFromIdealElement(_data.elementType(), &gradShapeIdealMatX,
+                      &gradShapeIdealMatY, &gradShapeIdealMatZ);
 }
 
 void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
@@ -314,6 +146,16 @@ void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
   if (dxyzdX) gradShapeMatX.mult(nodes, *dxyzdX);
   if (dxyzdY) gradShapeMatY.mult(nodes, *dxyzdY);
   if (dxyzdZ) gradShapeMatZ.mult(nodes, *dxyzdZ);
+}
+
+void GradientBasis::getIdealGradientsFromNodes(const fullMatrix<double> &nodes,
+                                               fullMatrix<double> *dxyzdX,
+                                               fullMatrix<double> *dxyzdY,
+                                               fullMatrix<double> *dxyzdZ) const
+{
+  if (dxyzdX) gradShapeIdealMatX.mult(nodes, *dxyzdX);
+  if (dxyzdY) gradShapeIdealMatY.mult(nodes, *dxyzdY);
+  if (dxyzdZ) gradShapeIdealMatZ.mult(nodes, *dxyzdZ);
 }
 
 void GradientBasis::mapFromIdealElement(int type,
@@ -358,6 +200,7 @@ void GradientBasis::mapFromIdealElement(int type,
       dxyzdZ->scale(cTet[2]);
       dxyzdZ->axpy(*dxyzdX, cTet[0]);
       dxyzdZ->axpy(*dxyzdY, cTet[1]);
+      break;
     }
   }
 }
@@ -866,211 +709,6 @@ inline void JacobianBasis::getSignedJacAndGradientsGeneral(int nJacNodes,
 
   }
 
-}
-
-// Calculate the inverse condition number in Frobenius norm for one element, with normal vectors to straight
-// element for regularization. Evaluation points depend on the given matrices for shape function gradients.
-template<bool ideal>
-inline void JacobianBasis::getCondNumGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
-                                            const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
-                                            const fullMatrix<double> &nodesXYZ, fullVector<double> &invCond) const
-{
-  switch (_dim) {
-
-    case 0 : {
-      for (int i = 0; i < nJacNodes; i++) invCond(i) = 1.;
-      break;
-    }
-
-    case 1 : {
-      fullMatrix<double> normals(2,3);
-      getPrimNormals1D(nodesXYZ,normals);
-      fullMatrix<double> dxyzdX(nJacNodes,3);
-      gSMatX.mult(nodesXYZ, dxyzdX);
-      for (int i = 0; i < nJacNodes; i++) {
-        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
-        const double &dxdY = normals(0,0), &dydY = normals(0,1), &dzdY = normals(0,2);
-        const double &dxdZ = normals(1,0), &dydZ = normals(1,1), &dzdZ = normals(1,2);
-        const double nJSq = calcFrobNormSq3D(dxdX, dxdY, dxdZ,
-                                             dydX, dydY, dydZ,
-                                             dzdX, dzdY, dzdZ);
-        const double nInvJSq = calcFrobNormSqInv3D(dxdX, dxdY, dxdZ,
-                                                   dydX, dydY, dydZ,
-                                                   dzdX, dzdY, dzdZ);
-        invCond(i) = 3./sqrt(nJSq*nInvJSq);
-      }
-      break;
-    }
-
-    case 2 : {
-      fullMatrix<double> normal(1,3);
-      const double scaleSq = getPrimNormal2D(nodesXYZ, normal, ideal), scale = sqrt(scaleSq);
-      normal(0, 0) *= scale; normal(0, 1) *= scale; normal(0, 2) *= scale;
-      fullMatrix<double> dxyzdX(nJacNodes,3), dxyzdY(nJacNodes,3);
-      gSMatX.mult(nodesXYZ, dxyzdX);
-      gSMatY.mult(nodesXYZ, dxyzdY);
-      if (ideal) _gradBasis->mapFromIdealElement(&dxyzdX, &dxyzdY, NULL);
-      for (int i = 0; i < nJacNodes; i++) {
-        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
-        const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
-        const double &dxdZ = normal(0,0), &dydZ = normal(0,1), &dzdZ = normal(0,2);
-        const double nJSq = calcFrobNormSq3D(dxdX, dxdY, dxdZ,
-                                             dydX, dydY, dydZ,
-                                             dzdX, dzdY, dzdZ);
-        const double nInvJSq = calcFrobNormSqInv3D(dxdX, dxdY, dxdZ,
-                                                   dydX, dydY, dydZ,
-                                                   dzdX, dzdY, dzdZ);
-        invCond(i) = 3./sqrt(nJSq*nInvJSq);
-      }
-      break;
-    }
-
-    case 3 : {
-      fullMatrix<double> dum;
-      fullMatrix<double> dxyzdX(nJacNodes,3), dxyzdY(nJacNodes,3), dxyzdZ(nJacNodes,3);
-      gSMatX.mult(nodesXYZ, dxyzdX);
-      gSMatY.mult(nodesXYZ, dxyzdY);
-      gSMatZ.mult(nodesXYZ, dxyzdZ);
-      if (ideal) _gradBasis->mapFromIdealElement(&dxyzdX, &dxyzdY, &dxyzdZ);
-      for (int i = 0; i < nJacNodes; i++) {
-        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
-        const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
-        const double &dxdZ = dxyzdZ(i,0), &dydZ = dxyzdZ(i,1), &dzdZ = dxyzdZ(i,2);
-        const double nJSq = calcFrobNormSq3D(dxdX, dxdY, dxdZ,
-                                             dydX, dydY, dydZ,
-                                             dzdX, dzdY, dzdZ);
-        const double nInvJSq = calcFrobNormSqInv3D(dxdX, dxdY, dxdZ,
-                                                   dydX, dydY, dydZ,
-                                                   dzdX, dzdY, dzdZ);
-        invCond(i) = 3./sqrt(nJSq*nInvJSq);
-     }
-      break;
-    }
-  }
-}
-
-void JacobianBasis::getCondNumGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
-                                      const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
-                                      const fullMatrix<double> &nodesXYZ, fullVector<double> &invCond) const
-{
-  getCondNumGeneral<true>(nJacNodes, gSMatX,  gSMatY,  gSMatZ, nodesXYZ, invCond);
-}
-
-// Calculate the inverse condition number in Frobenius norm and its gradients w.r.t. node position,
-// with normal vectors to straight element  for regularization. Evaluation points depend on the
-// given matrices for shape function gradients.
-template<bool ideal>
-inline void JacobianBasis::getCondNumAndGradientsGeneral(int nJacNodes,
-                                                         const fullMatrix<double> &gSMatX,
-                                                         const fullMatrix<double> &gSMatY,
-                                                         const fullMatrix<double> &gSMatZ,
-                                                         const fullMatrix<double> &nodesXYZ,
-                                                         const fullMatrix<double> &normals,
-                                                         fullMatrix<double> &IDI) const
-{
-  fullMatrix<double> JDJ(nJacNodes, 3*numMapNodes+1);
-
-  switch (_dim) {
-
-    case 0 : {
-      for (int i = 0; i < nJacNodes; i++) {
-        for (int j = 0; j < numMapNodes; j++) {
-          IDI(i,j) = 0.;
-          IDI(i,j+1*numMapNodes) = 0.;
-          IDI(i,j+2*numMapNodes) = 0.;
-        }
-        IDI(i,3*numMapNodes) = 1.;
-      }
-      break;
-    }
-
-    case 1 : {
-      fullMatrix<double> dxyzdX(nJacNodes,3), dxyzdY(nJacNodes,3);
-      gSMatX.mult(nodesXYZ, dxyzdX);
-      for (int i = 0; i < nJacNodes; i++) {
-        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
-        const double &dxdY = normals(0,0), &dydY = normals(0,1), &dzdY = normals(0,2);
-        const double &dxdZ = normals(1,0), &dydZ = normals(1,1), &dzdZ = normals(1,2);
-        calcJDJ1D(dxdX, dxdY, dxdZ,
-                  dydX, dydY, dydZ,
-                  dzdX, dzdY, dzdZ,
-                  i, numMapNodes,
-                  gSMatX, JDJ);
-        calcIDI1D(dxdX, dxdY, dxdZ,
-                  dydX, dydY, dydZ,
-                  dzdX, dzdY, dzdZ,
-                  i, numMapNodes,
-                  gSMatX, JDJ, IDI);
-      }
-      break;
-    }
-
-    case 2 : {
-      fullMatrix<double> dxyzdX(nJacNodes,3), dxyzdY(nJacNodes,3);
-      gSMatX.mult(nodesXYZ, dxyzdX);
-      gSMatY.mult(nodesXYZ, dxyzdY);
-      if (ideal) _gradBasis->mapFromIdealElement(&dxyzdX, &dxyzdY, NULL);
-      for (int i = 0; i < nJacNodes; i++) {
-        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
-        const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
-        const double &dxdZ = normals(0,0), &dydZ = normals(0,1), &dzdZ = normals(0,2);
-        calcJDJ2D(dxdX, dxdY, dxdZ,
-                  dydX, dydY, dydZ,
-                  dzdX, dzdY, dzdZ,
-                  i, numMapNodes,
-                  gSMatX, gSMatY, JDJ);
-        calcIDI2D(dxdX, dxdY, dxdZ,
-                  dydX, dydY, dydZ,
-                  dzdX, dzdY, dzdZ,
-                  i, numMapNodes,
-                  gSMatX, gSMatY, JDJ, IDI);
-      }
-      break;
-    }
-
-    case 3 : {
-      fullMatrix<double> dxyzdX(nJacNodes,3), dxyzdY(nJacNodes,3), dxyzdZ(nJacNodes,3);
-      gSMatX.mult(nodesXYZ, dxyzdX);
-      gSMatY.mult(nodesXYZ, dxyzdY);
-      gSMatZ.mult(nodesXYZ, dxyzdZ);
-      if (ideal) _gradBasis->mapFromIdealElement(&dxyzdX, &dxyzdY, &dxyzdZ);
-      for (int i = 0; i < nJacNodes; i++) {
-        const double &dxdX = dxyzdX(i,0), &dydX = dxyzdX(i,1), &dzdX = dxyzdX(i,2);
-        const double &dxdY = dxyzdY(i,0), &dydY = dxyzdY(i,1), &dzdY = dxyzdY(i,2);
-        const double &dxdZ = dxyzdZ(i,0), &dydZ = dxyzdZ(i,1), &dzdZ = dxyzdZ(i,2);
-        calcJDJ3D(dxdX, dxdY, dxdZ,
-                  dydX, dydY, dydZ,
-                  dzdX, dzdY, dzdZ,
-                  i, numMapNodes,
-                  gSMatX, gSMatY, gSMatZ, JDJ);
-        calcIDI3D(dxdX, dxdY, dxdZ,
-                  dydX, dydY, dydZ,
-                  dzdX, dzdY, dzdZ,
-                  i, numMapNodes,
-                  gSMatX, gSMatY, gSMatZ, JDJ, IDI);
-//        std::cout << "DBGTT: Jac. node " << i << ":\n";
-//        std::cout << "DBGTT:     -> g = " << IDI(i, 3*getNumMapNodes()) << ":\n";
-//        for (int j=0; j<getNumMapNodes(); j++)
-//          std::cout << "DBGTT:     -> djd{x,y,z}" << j << " = (" << JDJ(i, j)
-//                    << ", " << JDJ(i, j+getNumMapNodes()) << ", " << JDJ(i, j+2*getNumMapNodes()) << ")\n";
-//        for (int j=0; j<getNumMapNodes(); j++)
-//          std::cout << "DBGTT:     -> dgd{x,y,z}" << j << " = (" << IDI(i, j)
-//                    << ", " << IDI(i, j+getNumMapNodes()) << ", " << IDI(i, j+2*getNumMapNodes()) << ")\n";
-      }
-      break;
-    }
-  }
-}
-
-void JacobianBasis::getCondNumAndGradientsGeneral(int nJacNodes,
-                                                  const fullMatrix<double> &gSMatX,
-                                                  const fullMatrix<double> &gSMatY,
-                                                  const fullMatrix<double> &gSMatZ,
-                                                  const fullMatrix<double> &nodesXYZ,
-                                                  const fullMatrix<double> &normals,
-                                                  fullMatrix<double> &IDI) const
-{
-  getCondNumAndGradientsGeneral<true>(nJacNodes, gSMatX, gSMatY, gSMatZ, nodesXYZ, normals, IDI);
 }
 
 void JacobianBasis::getSignedJacAndGradientsGeneral(int nJacNodes,

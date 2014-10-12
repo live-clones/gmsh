@@ -13,6 +13,7 @@
 class GradientBasis {
 public:
   fullMatrix<double> gradShapeMatX, gradShapeMatY, gradShapeMatZ;
+  fullMatrix<double> gradShapeIdealMatX, gradShapeIdealMatY, gradShapeIdealMatZ;
 
 private:
   const FuncSpaceData _data;
@@ -27,6 +28,10 @@ public:
                              fullMatrix<double> *dxyzdX,
                              fullMatrix<double> *dxyzdY,
                              fullMatrix<double> *dxyzdZ) const;
+  void getIdealGradientsFromNodes(const fullMatrix<double> &nodes,
+                                  fullMatrix<double> *dxyzdX,
+                                  fullMatrix<double> *dxyzdY,
+                                  fullMatrix<double> *dxyzdZ) const;
   void mapFromIdealElement(fullMatrix<double> *dxyzdX,
                            fullMatrix<double> *dxyzdY,
                            fullMatrix<double> *dxyzdZ) const {
@@ -91,16 +96,6 @@ public:
     getSignedIdealJacAndGradientsGeneral(numJacNodesFast,gradShapeMatXFast,gradShapeMatYFast,
                                          gradShapeMatZFast,nodesXYZ,normals,JDJ);
   }
-  inline void getCondNumAndGradients(const fullMatrix<double> &nodesXYZ,
-                                     const fullMatrix<double> &normals, fullMatrix<double> &IDI) const {
-    getCondNumAndGradientsGeneral(numJacNodes, _gradBasis->gradShapeMatX,
-        _gradBasis->gradShapeMatY, _gradBasis->gradShapeMatZ, nodesXYZ, normals, IDI);
-  }
-  inline void getCondNumAndGradientsFast(const fullMatrix<double> &nodesXYZ,
-                                         const fullMatrix<double> &normals, fullMatrix<double> &IDI) const {
-    getCondNumAndGradientsGeneral(numJacNodesFast,gradShapeMatXFast,gradShapeMatYFast,
-                                    gradShapeMatZFast,nodesXYZ,normals,IDI);
-  }
   void getMetricMinAndGradients(const fullMatrix<double> &nodesXYZ,
                                 const fullMatrix<double> &nodesXYZStraight,
                                 fullVector<double> &lambdaJ , fullMatrix<double> &gradLambdaJ) const;
@@ -139,13 +134,6 @@ public:
   }
   inline void getScaledJacobianFast(const fullMatrix<double> &nodesXYZ, fullVector<double> &jacobian) const {
     getScaledJacobianGeneral(numJacNodesFast,gradShapeMatXFast,gradShapeMatYFast,gradShapeMatZFast,nodesXYZ,jacobian);
-  }
-  inline void getCondNum(const fullMatrix<double> &nodesXYZ, fullVector<double> &invCond) const {
-    getCondNumGeneral(numJacNodes, _gradBasis->gradShapeMatX,
-        _gradBasis->gradShapeMatY, _gradBasis->gradShapeMatZ, nodesXYZ, invCond);
-  }
-  inline void getCondNumFast(const fullMatrix<double> &nodesXYZ, fullVector<double> &invCond) const {
-    getCondNumGeneral(numJacNodesFast,gradShapeMatXFast,gradShapeMatYFast,gradShapeMatZFast,nodesXYZ,invCond);
   }
   //
   inline void lag2Bez(const fullVector<double> &jac, fullVector<double> &bez) const {
@@ -212,26 +200,6 @@ public:
                                             const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
                                             const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
                                             fullMatrix<double> &JDJ) const;
-
-  template<bool ideal>
-  void getCondNumGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
-                         const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
-                         const fullMatrix<double> &nodesXYZ, fullVector<double> &invCond) const;
-  void getCondNumGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
-                         const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
-                         const fullMatrix<double> &nodesXYZ, fullVector<double> &invCond) const;
-
-  template<bool ideal>
-  void getCondNumAndGradientsGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
-                                     const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
-                                     const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
-                                     fullMatrix<double> &IDI) const;
-  void getCondNumAndGradientsGeneral(int nJacNodes, const fullMatrix<double> &gSMatX,
-                                     const fullMatrix<double> &gSMatY, const fullMatrix<double> &gSMatZ,
-                                     const fullMatrix<double> &nodesXYZ, const fullMatrix<double> &normals,
-                                     fullMatrix<double> &IDI) const;
-
-
 };
 
 #endif

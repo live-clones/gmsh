@@ -35,6 +35,7 @@ class GModel;
 struct MeshQualOptParameters {
   bool excludeHex, excludePrism;
   double minTargetIdealJac;
+  double minTargetInvCondNum;
   double weightFixed; // weight of the energy for fixed nodes
   double weightFree; // weight of the energy for free nodes
   int nbLayers; // number of layers taken around a bad element
@@ -52,15 +53,18 @@ struct MeshQualOptParameters {
   double adaptBlobDistFact; // Growth factor in distance factor for blob adaptation
 
   int SUCCESS ; // 0 --> success , 1 --> Not converged
-  double minIdealJac, maxIdealJac; // after optimization, range of jacobians
+//  double minIdealJac, maxIdealJac; // after optimization, range of jacobians
+  double minInvCondNum, maxInvCondNum; // after optimization, range of jacobians
   double CPU; // Time for optimization
 
   MeshQualOptParameters ()
-    : excludeHex(false), excludePrism(false), minTargetIdealJac(0.1), weightFixed(1000.),
+    : excludeHex(false), excludePrism(false), minTargetIdealJac(0.1),
+      minTargetInvCondNum(0.1), weightFixed(1000.),
       weightFree (1.), nbLayers (6) , dim(3) , itMax(300), optPassMax(50),
       onlyVisible(true), distanceFactor(12), fixBndNodes(false), strategy(0),
       maxAdaptBlob(3), adaptBlobLayerFact(2.), adaptBlobDistFact(2.), CPU(0.),
-      minIdealJac(0.), maxIdealJac(0.), SUCCESS(-1)
+//      minIdealJac(0.), maxIdealJac(0.), SUCCESS(-1)
+      minInvCondNum(0.), maxInvCondNum(0.), SUCCESS(-1)
   {
   }
 };

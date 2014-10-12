@@ -19,6 +19,7 @@ set(SRC
     bezierBasis.cpp
     JacobianBasis.cpp
     MetricBasis.cpp
+    CondNumBasis.cpp
     pointsGenerators.cpp
   ElementType.cpp
   GaussIntegration.cpp

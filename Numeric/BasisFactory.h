@@ -12,12 +12,14 @@ class nodalBasis;
 class MetricBasis;
 class GradientBasis;
 class bezierBasis;
+class CondNumBasis;
 
 class BasisFactory
 {
  private:
   static std::map<int, nodalBasis*> fs;
   static std::map<int, MetricBasis*> ms;
+  static std::map<int, CondNumBasis*> cs;
   static std::map<FuncSpaceData, JacobianBasis*> js;
   static std::map<FuncSpaceData, bezierBasis*> bs;
   static std::map<FuncSpaceData, GradientBasis*> gs;
@@ -50,6 +52,9 @@ class BasisFactory
 
   // Metric
   static const MetricBasis* getMetricBasis(int tag);
+
+  // Condition number
+  static const CondNumBasis* getCondNumBasis(int tag);
 
   // Gradients
   static const GradientBasis* getGradientBasis(FuncSpaceData);

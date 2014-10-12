@@ -26,7 +26,7 @@ struct QualPatchDefParameters : public MeshOptPatchDef
                       double limDist, MElement *el) const;
 private:
   bool _excludeHex, _excludePrism;
-  double _idealJacMin;
+  double _idealJacMin, _invCondNumMin;
   double _distanceFactor;
 };
 
@@ -36,6 +36,7 @@ QualPatchDefParameters::QualPatchDefParameters(const MeshQualOptParameters &p)
   _excludeHex = p.excludeHex;
   _excludePrism = p.excludePrism;
   _idealJacMin = p.minTargetIdealJac;
+  _invCondNumMin = p.minTargetInvCondNum;
   strategy = (p.strategy == 1) ? MeshOptParameters::STRAT_ONEBYONE :
                                         MeshOptParameters::STRAT_CONNECTED;
   minLayers = (p.dim == 3) ? 1 : 0;
@@ -56,9 +57,12 @@ double QualPatchDefParameters::elBadness(MElement *el) const
   const int typ = el->getType();
   if (_excludeHex && (typ == TYPE_HEX)) return 1.;
   if (_excludePrism && (typ == TYPE_PRI)) return 1.;
-  double jMin, jMax;
-  el->idealJacRange(jMin, jMax);
-  return jMin-_idealJacMin;
+//  double jMin, jMax;
+//  el->idealJacRange(jMin, jMax);
+//  return jMin-_idealJacMin;
+  double iCNMin, iCNMax;
+  el->invCondNumRange(iCNMin, iCNMax);
+  return iCNMin-_invCondNumMin;
 }
 
 
@@ -94,6 +98,8 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
                                                                 Patch::LS_MINEDGELENGTH);
   ObjContribIdealJac<ObjContribFuncBarrierMovMin> minIdealJacBarFunc(1.);
   minIdealJacBarFunc.setTarget(p.minTargetIdealJac, 1.);
+  ObjContribInvCondNum<ObjContribFuncBarrierMovMin> minInvCondNumBarFunc(1.);
+  minInvCondNumBarFunc.setTarget(p.minTargetInvCondNum, 1.);
 
   MeshOptPass minJacPass;
   minJacPass.barrierIterMax = p.optPassMax;
@@ -102,9 +108,18 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
   minJacPass.contrib.push_back(&minIdealJacBarFunc);
   par.pass.push_back(minJacPass);
 
+  MeshOptPass minInvCondNumPass;
+  minInvCondNumPass.barrierIterMax = p.optPassMax;
+  minInvCondNumPass.optIterMax = p.itMax;
+  minInvCondNumPass.contrib.push_back(&nodeDistFunc);
+  minInvCondNumPass.contrib.push_back(&minInvCondNumBarFunc);
+  par.pass.push_back(minInvCondNumPass);
+
   meshOptimizer(gm, par);
 
   p.CPU = par.CPU;
-  p.minIdealJac = minIdealJacBarFunc.getMin();
-  p.maxIdealJac = minIdealJacBarFunc.getMax();
+//  p.minIdealJac = minIdealJacBarFunc.getMin();
+//  p.maxIdealJac = minIdealJacBarFunc.getMax();
+  p.minInvCondNum = minInvCondNumBarFunc.getMin();
+  p.maxInvCondNum = minInvCondNumBarFunc.getMax();
 }

@@ -34,6 +34,7 @@
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
 #include "BasisFactory.h"
+#include "CondNumBasis.h"
 #include "OptHomIntegralBoundaryDist.h"
 #include "qualityMeasures.h"
 #include "MeshOptPatch.h"
@@ -614,36 +615,38 @@ void Patch::idealJacAndGradients(int iEl, std::vector<double> &iJ, std::vector<d
 }
 
 
-void Patch::initCondNum()
+void Patch::initInvCondNum()
 {
   // Initialize _nBezEl
-  if (_nBezEl.empty()) {
-    _nBezEl.resize(nEl());
-    for (int iEl=0; iEl<nEl(); iEl++)
-     _nBezEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumJacNodes();
+  if (_nICNEl.empty()) {
+    _nICNEl.resize(nEl());
+    for (int iEl=0; iEl<nEl(); iEl++) {
+      const CondNumBasis *cnBasis = BasisFactory::getCondNumBasis(_el[iEl]->getTypeForMSH());
+      _nICNEl[iEl] = cnBasis->getNumCondNumNodes();
+    }
   }
 
-  // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
-  // Jacobians of 3D elements
-  if ((_dim == 2) && _condNormEl.empty()) {
-    _condNormEl.resize(nEl());
-//    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
-    for (int iEl = 0; iEl < nEl(); iEl++)
-      calcNormalEl2D(iEl, NS_SQRTNORM, _condNormEl[iEl], true);
-  }
+//  // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
+//  // Jacobians of 3D elements
+//  if ((_dim == 2) && _condNormEl.empty()) {
+//    _condNormEl.resize(nEl());
+////    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
+//    for (int iEl = 0; iEl < nEl(); iEl++)
+//      calcNormalEl2D(iEl, NS_SQRTNORM, _condNormEl[iEl], true);
+//  }
 }
 
 
-void Patch::condNumAndGradients(int iEl, std::vector<double> &condNum,
+void Patch::invCondNumAndGradients(int iEl, std::vector<double> &condNum,
                                 std::vector<double> &gCondNum)
 {
-  const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
-  const int &numJacNodes = _nBezEl[iEl];
+  const CondNumBasis *cnBasis = BasisFactory::getCondNumBasis(_el[iEl]->getTypeForMSH());
+  const int &numICN = _nICNEl[iEl];
   const int &numMapNodes = _nNodEl[iEl];
-  fullMatrix<double> IDI(numJacNodes,3*numMapNodes+1);
+  fullMatrix<double> IDI(numICN, 3*numMapNodes+1);
 
   // Coordinates of nodes
-  fullMatrix<double> nodesXYZ(numMapNodes,3), normals(_dim,3);
+  fullMatrix<double> nodesXYZ(numMapNodes,3), normals;
   for (int i = 0; i < numMapNodes; i++) {
     int &iVi = _el2V[iEl][i];
     nodesXYZ(i,0) = _xyz[iVi].x();
@@ -651,28 +654,32 @@ void Patch::condNumAndGradients(int iEl, std::vector<double> &condNum,
     nodesXYZ(i,2) = _xyz[iVi].z();
   }
 
-  // Calculate Jacobian and gradients, scale if 3D (already scaled by
-  // regularization normals in 2D)
-  jacBasis->getCondNumAndGradients(nodesXYZ, _condNormEl[iEl], IDI);
+  // Calculate ICN and gradients
+  // TODO: Use signed measure for 2D as well
+  if (_dim == 3) {
+    cnBasis->getSignedInvCondNumAndGradients(nodesXYZ, normals, IDI);
+  }
+  else
+    cnBasis->getInvCondNumAndGradients(nodesXYZ, IDI);
 
   // Inverse condition number
-  for (int l = 0; l < numJacNodes; l++) condNum[l] = IDI(l, 3*numMapNodes);
+  for (int l = 0; l < numICN; l++) condNum[l] = IDI(l, 3*numMapNodes);
 
   // Gradients of the inverse condition number
   int iPC = 0;
-  std::vector<SPoint3> gXyzV(numJacNodes);
-  std::vector<SPoint3> gUvwV(numJacNodes);
+  std::vector<SPoint3> gXyzV(numICN);
+  std::vector<SPoint3> gUvwV(numICN);
   for (int i = 0; i < numMapNodes; i++) {
     int &iFVi = _el2FV[iEl][i];
     if (iFVi >= 0) {
-      for (int l = 0; l < numJacNodes; l++)
+      for (int l = 0; l < numICN; l++)
         gXyzV[l] = SPoint3(IDI(l, i), IDI(l, i+numMapNodes),
                             IDI(l, i+2*numMapNodes));
-      _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi],gXyzV,gUvwV);
-      for (int l = 0; l < numJacNodes; l++) {
-        gCondNum[indGSJ(iEl,l,iPC)] = gUvwV[l][0];
-        if (_nPCFV[iFVi] >= 2) gCondNum[indGSJ(iEl,l,iPC+1)] = gUvwV[l][1];
-        if (_nPCFV[iFVi] == 3) gCondNum[indGSJ(iEl,l,iPC+2)] = gUvwV[l][2];
+      _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi], gXyzV, gUvwV);
+      for (int l = 0; l < numICN; l++) {
+        gCondNum[indGICN(iEl, l, iPC)] = gUvwV[l][0];
+        if (_nPCFV[iFVi] >= 2) gCondNum[indGICN(iEl, l, iPC+1)] = gUvwV[l][1];
+        if (_nPCFV[iFVi] == 3) gCondNum[indGICN(iEl, l, iPC+2)] = gUvwV[l][2];
       }
       iPC += _nPCFV[iFVi];
     }

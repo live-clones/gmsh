@@ -22,7 +22,7 @@
 #include "GEntity.h"
 #include "StringUtils.h"
 #include "Numeric.h"
-#include "MetricBasis.h"
+#include "CondNumBasis.h"
 #include "Context.h"
 
 #define SQU(a)      ((a)*(a))
@@ -319,6 +319,52 @@ void MElement::idealJacRange(double &jmin, double &jmax, GEntity *ge)
   jac->lag2Bez(iJi,Bi);
   jmin = *std::min_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
   jmax = *std::max_element(Bi.getDataPtr(),Bi.getDataPtr()+Bi.size());
+#endif
+}
+
+void MElement::invCondNumRange(double &iCNMin, double &iCNMax, GEntity *ge)
+{
+  iCNMin = iCNMax = 1.0;
+#if defined(HAVE_MESH)
+  const CondNumBasis *cnb = BasisFactory::getCondNumBasis(getTypeForMSH());
+  const int numCNNodes = cnb->getNumCondNumNodes();
+  fullMatrix<double> nodesXYZ(cnb->getNumMapNodes(), 3), normals;
+  getNodesCoord(nodesXYZ);
+  if (getDim() == 2.) {
+    SVector3 nVec = getFace(0).normal();
+    normals.resize(1, 3);
+    normals(0, 0) = nVec[0]; normals(0, 1) = nVec[1]; normals(0, 2) = nVec[2];
+  }
+  if (ge && (ge->dim() == 2) && ge->haveParametrization()) {
+    // If parametrized surface entity provided...
+    SVector3 geoNorm(0., 0., 0.);
+    // ... correct Jacobian sign with geometrical normal
+    for (int i=0; i<getNumPrimaryVertices(); i++) {
+      const MVertex *vert = getVertex(i);
+      if (vert->onWhat() == ge) {
+        double u, v;
+        vert->getParameter(0, u);
+        vert->getParameter(1, v);
+        geoNorm += ((GFace*)ge)->normal(SPoint2(u, v));
+      }
+    }
+    if (geoNorm.normSq() == 0.) {
+      // If no vertex on surface or average is zero, take normal at barycenter
+      SPoint2 param = ((GFace*)ge)->parFromPoint(barycenter(true), false);
+      geoNorm = ((GFace*)ge)->normal(param);
+    }
+    const double dp = geoNorm(0) * normals(0, 0) + geoNorm(1) * normals(0, 1)
+                    + geoNorm(2) * normals(0, 2);
+    if (dp < 0.) {
+       normals(0, 0) = -normals(0, 0);
+       normals(0, 1) = -normals(0, 1);
+       normals(0, 2) = -normals(0, 2);
+    }
+  }
+  fullVector<double> invCondNum(numCNNodes);
+  cnb->getSignedInvCondNum(nodesXYZ, normals, invCondNum);
+  iCNMin = *std::min_element(invCondNum.getDataPtr(), invCondNum.getDataPtr()+numCNNodes);
+  iCNMax = *std::max_element(invCondNum.getDataPtr(), invCondNum.getDataPtr()+numCNNodes);
 #endif
 }
 
