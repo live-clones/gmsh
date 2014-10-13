@@ -152,3 +152,30 @@ namespace std {
     return p;
   }
 }
+
+%extend GEdge {
+  void setTransfinite(int nbPointsTransfinite, int typeTransfinite = 0, double coeffTransfinite = 1) {
+    $self->meshAttributes.method = MESH_TRANSFINITE;
+    $self->meshAttributes.typeTransfinite = typeTransfinite;
+    $self->meshAttributes.nbPointsTransfinite = std::max(2, nbPointsTransfinite);
+    $self->meshAttributes.coeffTransfinite = coeffTransfinite;
+  }
+}
+
+%extend GFace {
+  void setTransfinite() {
+    $self->meshAttributes.method = MESH_TRANSFINITE;
+  }
+  void setRecombine() {
+    $self->meshAttributes.recombine = 1;
+  }
+}
+
+%extend GRegion {
+  void setTransfinite() {
+    $self->meshAttributes.method = MESH_TRANSFINITE;
+  }
+  void setRecombine() {
+    $self->meshAttributes.recombine3D = 1;
+  }
+}
