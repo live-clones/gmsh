@@ -1121,8 +1121,10 @@ void MetricBasis::_fillCoeff(int dim, const GradientBasis *gradients,
   case 2 :
     {
       fullMatrix<double> dxydX(nSampPnts,3), dxydY(nSampPnts,3);
-      gradients->getGradientsFromNodes(nodes, &dxydX, &dxydY, NULL);
-      if (ideal) gradients->mapFromIdealElement(&dxydX, &dxydY, NULL);
+      if (ideal)
+        gradients->getIdealGradientsFromNodes(nodes, &dxydX, &dxydY, NULL);
+      else
+        gradients->getGradientsFromNodes(nodes, &dxydX, &dxydY, NULL);
 
       coeff.resize(nSampPnts, 3);
       for (int i = 0; i < nSampPnts; i++) {
@@ -1149,8 +1151,10 @@ void MetricBasis::_fillCoeff(int dim, const GradientBasis *gradients,
   case 3 :
     {
       fullMatrix<double> dxyzdX(nSampPnts,3), dxyzdY(nSampPnts,3), dxyzdZ(nSampPnts,3);
-      gradients->getGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, &dxyzdZ);
-      if (ideal) gradients->mapFromIdealElement(&dxyzdX, &dxyzdY, &dxyzdZ);
+      if (ideal)
+        gradients->getIdealGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, &dxyzdZ);
+      else
+        gradients->getGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, &dxyzdZ);
 
       coeff.resize(nSampPnts, 7);
       for (int i = 0; i < nSampPnts; i++) {

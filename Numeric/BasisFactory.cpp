@@ -91,12 +91,12 @@ const MetricBasis* BasisFactory::getMetricBasis(int tag)
   return M;
 }
 
-const CondNumBasis* BasisFactory::getCondNumBasis(int tag)
+const CondNumBasis* BasisFactory::getCondNumBasis(int tag, int cnOrder)
 {
   std::map<int, CondNumBasis*>::const_iterator it = cs.find(tag);
   if (it != cs.end()) return it->second;
 
-  CondNumBasis* M = new CondNumBasis(tag);
+  CondNumBasis* M = new CondNumBasis(tag, cnOrder);
   cs.insert(std::make_pair(tag, M));
   return M;
 }

@@ -54,7 +54,7 @@ class BasisFactory
   static const MetricBasis* getMetricBasis(int tag);
 
   // Condition number
-  static const CondNumBasis* getCondNumBasis(int tag);
+  static const CondNumBasis* getCondNumBasis(int tag, int cnOrder = -1);
 
   // Gradients
   static const GradientBasis* getGradientBasis(FuncSpaceData);
