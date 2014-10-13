@@ -110,8 +110,6 @@ inline void calcGradInvCondNum2D(double dxdX, double dxdY,
                                  const fullMatrix<double> &gSMatY,
                                  fullMatrix<double> &IDI)
 {
-  static const double Eps = 1e-10;
-
   bool posJac = true;
   if (sign) {
     const double lnx = dydX*dzdY - dzdX*dydY, lny = dzdX*dxdY - dxdX*dzdY,            // Local normal from mapping gradients
@@ -138,7 +136,7 @@ inline void calcGradInvCondNum2D(double dxdX, double dxdY,
   const double S12 = Dx*Dy;
   const double S13 = Dx*Dx;
   const double S = 2.*(S2+S5+S12)+ 4.*(S7-S8+S9-S10) + 8.*(S3+S6) + S1+S4+S11+S13;
-  if (S < Eps) {                                                                      // S == 0. -> Ideal element
+  if (S == 0.) {                                                                        // S == 0. -> Ideal element
     for (int j = 0; j<3*numMapNodes; j++) IDI(i, j) = 0.;
     IDI(i, 3*numMapNodes) = posJac ? 1. : -1.;
     return;

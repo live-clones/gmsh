@@ -157,8 +157,8 @@ private:
   std::vector<int> _nIJacEl;                                    // Number of NCJ values for an el
   std::vector<fullMatrix<double> > _IJacNormEl;                 // Normals to 2D elements for Jacobian regularization and scaling
   std::vector<double> _invIJac;                                 // Initial Jacobians for 3D elements
-  std::vector<int> _nICNEl;                              // Number of inv. cond. number values for an el.
-//  std::vector<fullMatrix<double> > _condNormEl;                 // Normals to 2D elements for inverse conditioning computation
+  std::vector<int> _nICNEl;                                     // Number of inv. cond. number values for an el.
+  std::vector<fullMatrix<double> > _condNormEl;                 // Normals to 2D elements for inverse conditioning computation
 };
 
 

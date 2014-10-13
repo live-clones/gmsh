@@ -25,7 +25,7 @@ struct QualPatchDefParameters : public MeshOptPatchDef
   virtual int inPatch(const SPoint3 &badBary,
                       double limDist, MElement *el) const;
 private:
-  bool _excludeHex, _excludePrism;
+  bool _excludeQuad, _excludeHex, _excludePrism;
   double _idealJacMin, _invCondNumMin;
   double _distanceFactor;
 };
@@ -33,6 +33,7 @@ private:
 
 QualPatchDefParameters::QualPatchDefParameters(const MeshQualOptParameters &p)
 {
+  _excludeQuad = p.excludeQuad;
   _excludeHex = p.excludeHex;
   _excludePrism = p.excludePrism;
   _idealJacMin = p.minTargetIdealJac;
@@ -55,6 +56,7 @@ QualPatchDefParameters::QualPatchDefParameters(const MeshQualOptParameters &p)
 double QualPatchDefParameters::elBadness(MElement *el) const
 {
   const int typ = el->getType();
+  if (_excludeQuad && (typ == TYPE_QUA)) return 1.;
   if (_excludeHex && (typ == TYPE_HEX)) return 1.;
   if (_excludePrism && (typ == TYPE_PRI)) return 1.;
 //  double jMin, jMax;
@@ -76,7 +78,9 @@ int QualPatchDefParameters::inPatch(const SPoint3 &badBary,
                                     double limDist, MElement *el) const
 {
   const int typ = el->getType();
-  if ((typ == TYPE_HEX) || (typ == TYPE_PRI)) return -1;
+  if (_excludeQuad && (typ == TYPE_QUA)) return -1;
+  if (_excludeHex && (typ == TYPE_HEX)) return -1;
+  if (_excludePrism && (typ == TYPE_PRI)) return -1;
   return testElInDist(badBary, limDist, el) ? 1 : 0;
 }
 

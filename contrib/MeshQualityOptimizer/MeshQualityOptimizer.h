@@ -33,7 +33,7 @@
 class GModel;
 
 struct MeshQualOptParameters {
-  bool excludeHex, excludePrism;
+  bool excludeQuad, excludeHex, excludePrism;
   double minTargetIdealJac;
   double minTargetInvCondNum;
   double weightFixed; // weight of the energy for fixed nodes
@@ -58,8 +58,8 @@ struct MeshQualOptParameters {
   double CPU; // Time for optimization
 
   MeshQualOptParameters ()
-    : excludeHex(false), excludePrism(false), minTargetIdealJac(0.1),
-      minTargetInvCondNum(0.1), weightFixed(1000.),
+    : excludeQuad(false), excludeHex(false), excludePrism(false),
+      minTargetIdealJac(0.1), minTargetInvCondNum(0.1), weightFixed(1000.),
       weightFree (1.), nbLayers (6) , dim(3) , itMax(300), optPassMax(50),
       onlyVisible(true), distanceFactor(12), fixBndNodes(false), strategy(0),
       maxAdaptBlob(3), adaptBlobLayerFact(2.), adaptBlobDistFact(2.), CPU(0.),

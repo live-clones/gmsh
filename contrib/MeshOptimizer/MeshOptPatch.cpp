@@ -626,14 +626,13 @@ void Patch::initInvCondNum()
     }
   }
 
-//  // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
-//  // Jacobians of 3D elements
-//  if ((_dim == 2) && _condNormEl.empty()) {
-//    _condNormEl.resize(nEl());
-////    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
-//    for (int iEl = 0; iEl < nEl(); iEl++)
-//      calcNormalEl2D(iEl, NS_SQRTNORM, _condNormEl[iEl], true);
-//  }
+  // Set normals to 2D elements
+  if ((_dim == 2) && _condNormEl.empty()) {
+    _condNormEl.resize(nEl());
+//    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
+    for (int iEl = 0; iEl < nEl(); iEl++)
+      calcNormalEl2D(iEl, NS_UNIT, _condNormEl[iEl], true);
+  }
 }
 
 
@@ -655,12 +654,7 @@ void Patch::invCondNumAndGradients(int iEl, std::vector<double> &condNum,
   }
 
   // Calculate ICN and gradients
-  // TODO: Use signed measure for 2D as well
-  if (_dim == 3) {
-    cnBasis->getSignedInvCondNumAndGradients(nodesXYZ, normals, IDI);
-  }
-  else
-    cnBasis->getInvCondNumAndGradients(nodesXYZ, IDI);
+  cnBasis->getSignedInvCondNumAndGradients(nodesXYZ, _condNormEl[iEl], IDI);
 
   // Inverse condition number
   for (int l = 0; l < numICN; l++) condNum[l] = IDI(l, 3*numMapNodes);
