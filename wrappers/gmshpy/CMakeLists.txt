@@ -146,6 +146,7 @@ set (GMSH_PYTHON_EXTRA_INCLUDE
   Post/PViewDataList.h
   Post/PViewFactory.h
   Numeric/pyramidalBasis.h
+  Numeric/FuncSpaceData.h
   Solver/SElement.h
   Numeric/simpleFunctionPython.h
   Solver/STensor33.h
