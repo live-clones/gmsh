@@ -18,8 +18,9 @@ class GMSH_PostPlugin;
 
 class adaptiveVertex {
  public:
-  double x, y, z, X, Y, Z;
-  double val, valx, valy, valz;
+  float  x, y, z;        //!< parametric coordinates 
+  double X, Y, Z;        //!< cartesian coordinates
+  double val,valy,valz;  //!< maximal three values
  public:
   static adaptiveVertex *add(double x, double y, double z, 
                              std::set<adaptiveVertex> &allVertice);

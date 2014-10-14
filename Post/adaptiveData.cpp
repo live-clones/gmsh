@@ -1301,7 +1301,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
     adaptiveVertex *p = (adaptiveVertex*)&(*it);
     p->val = res(i);
     if(resxyz){
-      p->valx = (*resxyz)(i, 0);
+      p->val  = (*resxyz)(i, 0);
       p->valy = (*resxyz)(i, 1);
       p->valz = (*resxyz)(i, 2);
     }
@@ -1337,7 +1337,7 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
         if(numComp == 1)
           values.push_back(PValues(p[i]->val));
         else
-          values.push_back(PValues(p[i]->valx, p[i]->valy, p[i]->valz));
+          values.push_back(PValues(p[i]->val, p[i]->valy, p[i]->valz));
       }
     }
   }
