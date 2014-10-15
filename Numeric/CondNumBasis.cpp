@@ -37,7 +37,6 @@ inline double calcInvCondNum2D(double dxdX, double dxdY,
                                double dzdX, double dzdY,
                                double nx, double ny, double nz)
 {
-  static const double Eps = 1e-10;
   const double dxdXSq = dxdX*dxdX, dydXSq = dydX*dydX, dzdXSq = dzdX*dzdX;
   const double dxdYSq = dxdY*dxdY, dydYSq = dydY*dydY, dzdYSq = dzdY*dzdY;
   const double Dx = dxdXSq - dxdYSq, Dy = dydXSq - dydYSq;
@@ -59,14 +58,12 @@ inline double calcInvCondNum2D(double dxdX, double dxdY,
   const double N = dxdXSq + dxdYSq + dydXSq + dydYSq + dzdXSq + dzdYSq;
   const double sqrtS = sqrt(S);
   const double sigma1Sq = 0.5 * (N + sqrtS), sigma2Sq = 0.5 * (N - sqrtS);
-  if (sigma2Sq < Eps) return 0.;
-  const double iCN = 2. / sqrt((sigma1Sq + sigma2Sq) * (1./sigma1Sq + 1./sigma2Sq));
+  const double iCN = 2. * sqrt(sigma1Sq*sigma2Sq) / (sigma1Sq+sigma2Sq);
   if (sign) {
     const double lnx = dydX*dzdY - dzdX*dydY, lny = dzdX*dxdY - dxdX*dzdY,      // Local normal from mapping gradients
                  lnz = dxdX*dydY - dydX*dxdY;
     const double dp = lnx*nx + lny*ny + lnz*nz;                                 // Dot product to determine element validity
-    if (dp == 0.) return 0.;
-    return (dp > 0.) ? iCN : -iCN;
+    return (dp >= 0.) ? iCN : -iCN;
   }
   else
     return iCN;
@@ -110,12 +107,14 @@ inline void calcGradInvCondNum2D(double dxdX, double dxdY,
                                  const fullMatrix<double> &gSMatY,
                                  fullMatrix<double> &IDI)
 {
+  const double EpsDegen = 1.e-6;
+
   bool posJac = true;
   if (sign) {
     const double lnx = dydX*dzdY - dzdX*dydY, lny = dzdX*dxdY - dxdX*dzdY,            // Local normal from mapping gradients
                  lnz = dxdX*dydY - dydX*dxdY;
     const double dp = lnx*nx + lny*ny + lnz*nz;                                       // Dot product to determine element validity
-    posJac = (dp > 0.);
+    posJac = (dp >= 0.);
   }
 
   const double dxdXSq = dxdX*dxdX, dydXSq = dydX*dydX, dzdXSq = dzdX*dzdX;
@@ -144,26 +143,34 @@ inline void calcGradInvCondNum2D(double dxdX, double dxdY,
   const double N = dxdXSq + dxdYSq + dydXSq + dydYSq + dzdXSq + dzdYSq;
   const double sqrtS = sqrt(S), invSqrtS = 1./sqrtS;
   const double sigma1Sq = 0.5 * (N + sqrtS), sigma2Sq = 0.5 * (N - sqrtS);
-//  if (sigma2Sq < Eps) {                                                               // TODO: Degenerate element (sigma2 == 0.)
-//    const double dnx = dydX*nz - dzdX*ny, dny = dzdX*nx - dxdX*nz,
-//                 dnz = dxdX*ny - dydX*nx;
-//
-//  }
-  const double invSigma1Sq = 1./sigma1Sq;
-  const double invSigma2Sq = 1./sigma2Sq;
-  const double invProd = 1. / ((sigma1Sq + sigma2Sq) * (invSigma1Sq + invSigma2Sq));
-  const double invSqrtProd = sqrt(invProd);
-  IDI(i, 3*numMapNodes) = posJac ? 2. * invSqrtProd : -2. * invSqrtProd;
-//  std::cout << "DBGTT: Value " << i << "\n";
-//  std::cout << "DBGTT:   -> I = " << IDI(i, 3*numMapNodes) << "\n";
-//  std::cout << "DBGTT:   -> S = " << S << ", sqrt(S) = " << sqrtS << "\n";
-//  std::cout << "DBGTT:   -> N = " << N << "\n";
-//  std::cout << "DBGTT:   -> sigma1Sq, sigma2Sq = (" << sigma1Sq << ", " << sigma2Sq << ")\n";
+  const bool degen = (sigma2Sq < EpsDegen*sigma1Sq);                                    // Check for degenerate element
+  const double sum = sigma1Sq + sigma2Sq, invSum = 1. / sum;
+  const double prod = sigma1Sq * sigma2Sq;
+  const double sqrtProd = sqrt(prod);
+  const double halfICN = sqrtProd * invSum;
+  IDI(i, 3*numMapNodes) = posJac ? 2. * halfICN : -2. * halfICN;
+
+  if (degen) {                                                                          // Degenerate element: special formula for gradients
+    const double nnXx = dzdX*ny - dydX*nz, nnXy = dxdX*nz - dzdX*nx,
+                 nnXz = dydX*nx - dxdX*ny;
+    const double nnYx = dzdY*ny - dydY*nz, nnYy = dxdY*nz - dzdY*nx,
+                 nnYz = dydY*nx - dxdY*ny;
+    const double fact = 2./N;
+    for (int j = 0; j < numMapNodes; j++) {
+      const double &dPhidX = gSMatX(i, j);
+      const double &dPhidY = gSMatY(i, j);
+      IDI(i, j) = fact * (dPhidY*nnXx - dPhidX*nnYx);
+      IDI(i, j+numMapNodes) = fact * (dPhidY*nnXy - dPhidX*nnYy);
+      IDI(i, j+2*numMapNodes) = fact * (dPhidY*nnXz - dPhidX*nnYz);
+    }
+    return;
+  }
+
+  const double invSqrtProd = 1. / sqrtProd;
 
   for (int j = 0; j < numMapNodes; j++) {
     const double &dPhidX = gSMatX(i, j);
     const double &dPhidY = gSMatY(i, j);
-//    std::cout << "DBGTT:   -> Node " << j << ":\n";
 
     const double ddxdXSqdxj = 2.*dPhidX*dxdX, ddxdYSqdxj = 2.*dPhidY*dxdY;
     const double dDxdxj = ddxdXSqdxj - ddxdYSqdxj;
@@ -182,19 +189,10 @@ inline void calcGradInvCondNum2D(double dxdX, double dxdY,
     const double dsqrtSdxj = 0.5*dSdxj*invSqrtS;
     const double dsigma1Sqdxj = 0.5 * (dNdxj + dsqrtSdxj),
                  dsigma2Sqdxj = 0.5 * (dNdxj - dsqrtSdxj);
-    const double dinvSigma1Sqdxj = -dsigma1Sqdxj*invSigma1Sq*invSigma1Sq,
-                 dinvSigma2Sqdxj = -dsigma2Sqdxj*invSigma2Sq*invSigma2Sq;
-    const double dProddxj = (dsigma1Sqdxj + dsigma2Sqdxj) * (invSigma1Sq + invSigma2Sq)
-                          + (sigma1Sq + sigma2Sq) * (dinvSigma1Sqdxj + dinvSigma2Sqdxj);
-    const double mdiCNdxj = dProddxj*invProd*invSqrtProd;
-    IDI(i, j) = posJac ? -mdiCNdxj : mdiCNdxj;
-//    std::cout << "DBGTT:     -> d(dxdX)dxj  = " << dPhidX << ", d(dxdY)dxj = " << dPhidY << "\n";
-//    std::cout << "DBGTT:     -> dNdxj  = " << dNdxj << ", dSdxj = " << dSdxj << "\n";
-//    std::cout << "DBGTT:     -> dsigma1Sqdxj = " << dsigma1Sqdxj << ", dsigma2Sqdxj = " << dsigma2Sqdxj << "\n";
-//    std::cout << "DBGTT:     -> dinvSigma1Sqdxj = " << dinvSigma1Sqdxj << ", dinvSigma2Sqdxj = " << dinvSigma2Sqdxj << "\n";
-//    std::cout << "DBGTT:     -> mdiCNdxj = " << mdiCNdxj
-//              << ", -dsigma2Sqdxj/sqrt(sigma1Sq*sigma2Sq) = " << -dsigma2Sqdxj/sqrt(sigma1Sq*sigma2Sq)
-//              << ", T1 = " << -dNdxj/sqrt(N*N-S) << ", T21 = " << (0.5*dSdxj/sqrtS)/sqrt(N*N-S) << "\n";
+    const double dSumdxj = dsigma1Sqdxj + dsigma2Sqdxj;
+    const double dProddxj = dsigma1Sqdxj*sigma2Sq + sigma1Sq*dsigma2Sqdxj;
+    const double diCNdxj = (dProddxj*sum - 2.*prod*dSumdxj)*invSum*invSum*invSqrtProd;
+    IDI(i, j) = posJac ? diCNdxj : -diCNdxj;
 
     const double ddydXSqdyj = 2.*dPhidX*dydX, ddydYSqdyj = 2.*dPhidY*dydY;
     const double dDydyj = ddydXSqdyj - ddydYSqdyj;
@@ -213,16 +211,10 @@ inline void calcGradInvCondNum2D(double dxdX, double dxdY,
     const double dsqrtSdyj = 0.5*dSdyj*invSqrtS;
     const double dsigma1Sqdyj = 0.5 * (dNdyj + dsqrtSdyj),
                  dsigma2Sqdyj = 0.5 * (dNdyj - dsqrtSdyj);
-    const double dinvSigma1Sqdyj = -dsigma1Sqdyj*invSigma1Sq*invSigma1Sq,
-                 dinvSigma2Sqdyj = -dsigma2Sqdyj*invSigma2Sq*invSigma2Sq;
-    const double dProddyj = (dsigma1Sqdyj + dsigma2Sqdyj) * (invSigma1Sq + invSigma2Sq)
-                          + (sigma1Sq + sigma2Sq) * (dinvSigma1Sqdyj + dinvSigma2Sqdyj);
-    const double mdiCNdyj = dProddyj*invProd*invSqrtProd;
-    IDI(i, j+numMapNodes) = posJac ? -mdiCNdyj : mdiCNdyj;
-//    std::cout << "DBGTT:     -> d(dydX)dyj  = " << dPhidX << ", d(dydY)dyj = " << dPhidY << "\n";
-//    std::cout << "DBGTT:     -> dNdyj  = " << dNdyj << ", dSdyj = " << dSdyj << "\n";
-//    std::cout << "DBGTT:     -> dsigma1Sqdyj = " << dsigma1Sqdyj << ", dsigma2Sqdyj = " << dsigma2Sqdyj << "\n";
-//    std::cout << "DBGTT:     -> dinvSigma1Sqdyj = " << dinvSigma1Sqdyj << ", dinvSigma2Sqdyj = " << dinvSigma2Sqdyj << "\n";
+    const double dSumdyj = dsigma1Sqdyj + dsigma2Sqdyj;
+    const double dProddyj = dsigma1Sqdyj*sigma2Sq + sigma1Sq*dsigma2Sqdyj;
+    const double diCNdyj = (dProddyj*sum - 2.*prod*dSumdyj)*invSum*invSum*invSqrtProd;
+    IDI(i, j+numMapNodes) = posJac ? diCNdyj : -diCNdyj;
 
     const double ddzdXSqdzj = 2.*dPhidX*dzdX, ddzdYSqdzj = 2.*dPhidY*dzdY;
     const double dS1dzj = 2. * ddzdYSqdzj * dzdYSq;
@@ -236,18 +228,10 @@ inline void calcGradInvCondNum2D(double dxdX, double dxdY,
     const double dsqrtSdzj = 0.5*dSdzj*invSqrtS;
     const double dsigma1Sqdzj = 0.5 * (dNdzj + dsqrtSdzj),
                  dsigma2Sqdzj = 0.5 * (dNdzj - dsqrtSdzj);
-    const double dinvSigma1Sqdzj = -dsigma1Sqdzj*invSigma1Sq*invSigma1Sq,
-                 dinvSigma2Sqdzj = -dsigma2Sqdzj*invSigma2Sq*invSigma2Sq;
-    const double dProddzj = (dsigma1Sqdzj + dsigma2Sqdzj) * (invSigma1Sq + invSigma2Sq)
-                          + (sigma1Sq + sigma2Sq) * (dinvSigma1Sqdzj + dinvSigma2Sqdzj);
-    const double mdiCNdzj = dProddzj*invProd*invSqrtProd;
-    IDI(i, j+2*numMapNodes) = posJac ? -mdiCNdzj : mdiCNdzj;
-//    std::cout << "DBGTT:     -> d(dzdX)dzj  = " << dPhidX << ", d(dzdY)dzj = " << dPhidY << "\n";
-//    std::cout << "DBGTT:     -> dNdzj  = " << dNdzj << ", dSdzj = " << dSdzj << "\n";
-//    std::cout << "DBGTT:     -> dsigma1Sqdzj = " << dsigma1Sqdzj << ", dsigma2Sqdzj = " << dsigma2Sqdzj << "\n";
-//    std::cout << "DBGTT:     -> dinvSigma1Sqdzj = " << dinvSigma1Sqdzj << ", dinvSigma2Sqdzj = " << dinvSigma2Sqdzj << "\n";
-//    std::cout << "DBGTT:     -> dId{x,y,z} = (" << IDI(i, j) << ", "
-//              << IDI(i, j+numMapNodes) << ", " << IDI(i, j+2*numMapNodes) << ")\n";
+    const double dSumdzj = dsigma1Sqdzj + dsigma2Sqdzj;
+    const double dProddzj = dsigma1Sqdzj*sigma2Sq + sigma1Sq*dsigma2Sqdzj;
+    const double diCNdzj = (dProddzj*sum - 2.*prod*dSumdzj)*invSum*invSum*invSqrtProd;
+    IDI(i, j+2*numMapNodes) = posJac ? diCNdzj : -diCNdzj;
   }
 }
 
