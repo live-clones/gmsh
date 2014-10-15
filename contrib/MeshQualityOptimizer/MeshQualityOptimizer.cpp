@@ -106,24 +106,31 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
   minInvCondNumBarFunc.setTarget(p.minTargetInvCondNum, 1.);
 
   MeshOptPass minJacPass;
-  minJacPass.barrierIterMax = p.optPassMax;
-  minJacPass.optIterMax = p.itMax;
-  minJacPass.contrib.push_back(&nodeDistFunc);
-  minJacPass.contrib.push_back(&minIdealJacBarFunc);
-  par.pass.push_back(minJacPass);
-
   MeshOptPass minInvCondNumPass;
-  minInvCondNumPass.barrierIterMax = p.optPassMax;
-  minInvCondNumPass.optIterMax = p.itMax;
-  minInvCondNumPass.contrib.push_back(&nodeDistFunc);
-  minInvCondNumPass.contrib.push_back(&minInvCondNumBarFunc);
-  par.pass.push_back(minInvCondNumPass);
+  if (p.onlyValidity) {
+    minJacPass.barrierIterMax = p.optPassMax;
+    minJacPass.optIterMax = p.itMax;
+    minJacPass.contrib.push_back(&nodeDistFunc);
+    minJacPass.contrib.push_back(&minIdealJacBarFunc);
+    par.pass.push_back(minJacPass);
+  }
+  else {
+    minInvCondNumPass.barrierIterMax = p.optPassMax;
+    minInvCondNumPass.optIterMax = p.itMax;
+    minInvCondNumPass.contrib.push_back(&nodeDistFunc);
+    minInvCondNumPass.contrib.push_back(&minInvCondNumBarFunc);
+    par.pass.push_back(minInvCondNumPass);
+  }
 
   meshOptimizer(gm, par);
 
   p.CPU = par.CPU;
-//  p.minIdealJac = minIdealJacBarFunc.getMin();
-//  p.maxIdealJac = minIdealJacBarFunc.getMax();
-  p.minInvCondNum = minInvCondNumBarFunc.getMin();
-  p.maxInvCondNum = minInvCondNumBarFunc.getMax();
+  if (p.onlyValidity) {
+    p.minIdealJac = minIdealJacBarFunc.getMin();
+    p.maxIdealJac = minIdealJacBarFunc.getMax();
+  }
+  else {
+    p.minInvCondNum = minInvCondNumBarFunc.getMin();
+    p.maxInvCondNum = minInvCondNumBarFunc.getMax();
+  }
 }
