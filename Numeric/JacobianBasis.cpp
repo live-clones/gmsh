@@ -421,6 +421,10 @@ inline void JacobianBasis::getJacobianGeneral(int nJacNodes,
     case 1 : {
       fullMatrix<double> normals(2,3);
       const double invScale = getPrimNormals1D(nodesXYZ,normals);
+      if (invScale == 0) {
+        for (int i = 0; i < nJacNodes; i++) jacobian(i) = 0;
+        return;
+      }
       if (scaling) {
         const double scale = 1./invScale;
         normals(0,0) *= scale; normals(0,1) *= scale; normals(0,2) *= scale;            // Faster to scale 1 normal than afterwards
@@ -441,6 +445,10 @@ inline void JacobianBasis::getJacobianGeneral(int nJacNodes,
     case 2 : {
       fullMatrix<double> normal(1,3);
       const double invScale = getPrimNormal2D(nodesXYZ, normal, idealNorm);
+      if (invScale == 0) {
+        for (int i = 0; i < nJacNodes; i++) jacobian(i) = 0;
+        return;
+      }
       if (scaling) {
         const double scale = 1./invScale;
         normal(0,0) *= scale; normal(0,1) *= scale; normal(0,2) *= scale;               // Faster to scale normal than afterwards
@@ -547,6 +555,10 @@ inline void JacobianBasis::getJacobianGeneral(int nJacNodes,
         }
         fullMatrix<double> normals(2,3);
         const double invScale = getPrimNormals1D(nodesXYZ,normals);
+        if (invScale == 0) {
+          for (int i = 0; i < nJacNodes; i++) jacobian(i,iEl) = 0;
+          continue;
+        }
         if (scaling) {
           const double scale = 1./invScale;
           normals(0,0) *= scale; normals(0,1) *= scale; normals(0,2) *= scale;                // Faster to scale 1 normal than afterwards
@@ -576,6 +588,10 @@ inline void JacobianBasis::getJacobianGeneral(int nJacNodes,
         }
         fullMatrix<double> normal(1,3);
         const double invScale = getPrimNormal2D(nodesXYZ, normal, idealNorm);
+        if (invScale == 0) {
+          for (int i = 0; i < nJacNodes; i++) jacobian(i,iEl) = 0;
+          continue;
+        }
         if (scaling) {
           const double scale = 1./invScale;
           normal(0,0) *= scale; normal(0,1) *= scale; normal(0,2) *= scale;                   // Faster to scale normal than afterwards
