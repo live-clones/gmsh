@@ -202,6 +202,7 @@ public:
   //
   static int jacobianOrder(int tag);
   static int jacobianOrder(int parentType, int order);
+  static FuncSpaceData jacobianMatrixSpace(int type, int order);
 
 
  private :

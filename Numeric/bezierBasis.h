@@ -48,6 +48,9 @@ class bezierBasis {
   // generate Bezier points
   void generateBezierPoints(fullMatrix<double>&) const;
 
+  // transform coeff Lagrange into Bezier coeff
+  void lag2Bez(const fullMatrix<double> &lag, fullMatrix<double> &bez) const;
+
   // Subdivide Bezier coefficients
   void subdivideBezCoeff(const fullMatrix<double> &coeff,
                          fullMatrix<double> &subCoeff) const;

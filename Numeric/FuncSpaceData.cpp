@@ -6,19 +6,20 @@
 #include "FuncSpaceData.h"
 #include "MElement.h"
 
-FuncSpaceData::FuncSpaceData(MElement *el, int *serendip) :
+FuncSpaceData::FuncSpaceData(const MElement *el, const bool *serendip) :
   _tag(el->getTypeForMSH()), _spaceOrder(el->getPolynomialOrder()),
   _nij(0), _nk(_spaceOrder), _pyramidalSpace(el->getType() == TYPE_PYR),
   _serendipity(serendip ? *serendip : el->getIsOnlySerendipity())
 {}
 
-FuncSpaceData::FuncSpaceData(MElement *el, int order, int *serendip) :
+FuncSpaceData::FuncSpaceData(const MElement *el, int order, const bool *serendip) :
   _tag(el->getTypeForMSH()), _spaceOrder(order),
   _nij(0), _nk(_spaceOrder), _pyramidalSpace(el->getType() == TYPE_PYR),
   _serendipity(serendip ? *serendip : el->getIsOnlySerendipity())
 {}
 
-FuncSpaceData::FuncSpaceData(MElement *el, bool pyr, int nij, int nk, int *serendip) :
+FuncSpaceData::FuncSpaceData(const MElement *el, bool pyr, int nij, int nk,
+                             const bool *serendip) :
   _tag(el->getTypeForMSH()), _spaceOrder(pyr ? nij+nk : std::max(nij, nk)),
   _nij(nij), _nk(nk), _pyramidalSpace(pyr),
   _serendipity(serendip ? *serendip : el->getIsOnlySerendipity())
@@ -27,7 +28,7 @@ FuncSpaceData::FuncSpaceData(MElement *el, bool pyr, int nij, int nk, int *seren
     Msg::Error("Creation of pyramidal space data for a non-pyramid element !");
 }
 
-FuncSpaceData::FuncSpaceData(int tag, int *serendip) :
+FuncSpaceData::FuncSpaceData(int tag, const bool *serendip) :
   _tag(tag), _spaceOrder(ElementType::OrderFromTag(tag)),
   _nij(0), _nk(_spaceOrder),
   _pyramidalSpace(ElementType::ParentTypeFromTag(tag) == TYPE_PYR),

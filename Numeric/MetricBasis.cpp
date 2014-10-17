@@ -153,36 +153,8 @@ double MetricBasis::minSampledR(MElement *el, int order)
 double MetricBasis::getMinSampledR(MElement *el, int deg) const
 {
   fullMatrix<double> samplingPoints;
-
-  switch (el->getType()) {
-    case TYPE_PNT :
-      samplingPoints = gmshGeneratePointsLine(0);
-      break;
-    case TYPE_LIN :
-      samplingPoints = gmshGeneratePointsLine(deg);
-      break;
-    case TYPE_TRI :
-      samplingPoints = gmshGeneratePointsTriangle(deg,false);
-      break;
-    case TYPE_QUA :
-      samplingPoints = gmshGeneratePointsQuadrangle(deg,false);
-      break;
-    case TYPE_TET :
-      samplingPoints = gmshGeneratePointsTetrahedron(deg,false);
-      break;
-    case TYPE_PRI :
-      samplingPoints = gmshGeneratePointsPrism(deg,false);
-      break;
-    case TYPE_HEX :
-      samplingPoints = gmshGeneratePointsHexahedron(deg,false);
-      break;
-    case TYPE_PYR :
-      samplingPoints = gmshGeneratePointsPyramidGeneral(true, deg+1, deg);
-      break;
-    default :
-      Msg::Error("Unknown Jacobian function space for element type %d", el->getType());
-      return -1;
-  }
+  bool serendip = false;
+  gmshGeneratePoints(FuncSpaceData(el, deg, &serendip), samplingPoints);
 
   MetricData *md;
   _getMetricData(el, md);
@@ -197,6 +169,73 @@ double MetricBasis::getMinSampledR(MElement *el, int deg) const
     min = std::min(min, R(i, 1));
 
   return min;
+}
+
+double MetricBasis::minSampledRnew(MElement *el, int deg)
+{
+  int dim = el->getDim();
+  if (dim < 2) return 1;
+
+  fullMatrix<double> nodes(el->getNumVertices(), 3);
+  el->getNodesCoord(nodes);
+
+  // if deg is small: sample at every point
+  // otherwise: compute Bezier coefficients and interpolate
+  //const bool BezierInterp = deg > 100;
+
+  FuncSpaceData jacMatSpace;
+  /*if (BezierInterp) {
+    jacMatSpace =
+        JacobianBasis::jacobianMatrixSpace(el->getType(), el->getPolynomialOrder());
+  }
+  else {*/
+    const bool serendip = false;
+    jacMatSpace = FuncSpaceData(el, deg, &serendip);
+  //}
+
+  const GradientBasis *gb = BasisFactory::getGradientBasis(jacMatSpace);
+  fullMatrix<double> coeffJacMat(gb->getNumSamplingPoints(), 3*dim);
+  fullMatrix<double> dxyzdX(coeffJacMat, 0, 3);
+  fullMatrix<double> dxyzdY(coeffJacMat, 3, 3);
+  if (dim == 2)
+    gb->getIdealGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, NULL);
+  else {
+    fullMatrix<double> dxyzdZ(coeffJacMat, 6, 3);
+    gb->getIdealGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, &dxyzdZ);
+  }
+
+  /*if (BezierInterp) {
+    const bezierBasis *bb = BasisFactory::getBezierBasis(jacMatSpace);
+    fullMatrix<double> points;
+    const bool serendip = false;
+    gmshGeneratePoints(FuncSpaceData(el, deg, &serendip), points);
+
+    fullMatrix<double> bezCoeffJacMat;
+    bb->lag2Bez(coeffJacMat, bezCoeffJacMat);
+    bb->interpolate(bezCoeffJacMat, points, coeffJacMat);
+  }*/
+
+  double minR = 1;
+  for (int k = 0; k < coeffJacMat.size1(); ++k) {
+    fullMatrix<double> metric(dim, dim);
+    for (int i = 0; i < dim; ++i) {
+      for (int j = i; j < dim; ++j) {
+        for (int n = 0; n < 3; ++n)
+          metric(i, j) += coeffJacMat(k, 3*i+n) * coeffJacMat(k, 3*j+n);
+      }
+    }
+    metric(1, 0) = metric(0, 1);
+    if (dim == 3) {
+      metric(2, 0) = metric(0, 2);
+      metric(2, 1) = metric(1, 2);
+    }
+    fullVector<double> valReal(dim), valImag(dim);
+    fullMatrix<double> vecLeft(dim, dim), vecRight(dim, dim);
+    metric.eig(valReal, valImag, vecLeft, vecRight, true);
+    minR = std::min(minR, std::sqrt(valReal(0) / valReal(dim-1)));
+  }
+
+  return minR;
 }
 
 double MetricBasis::getBoundMinR(MElement *el) const
@@ -606,6 +645,30 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
       fullMatrix<double> uvw(numSampPnt, 3);
       metricBasis->interpolateAfterNSubdivisions(el, numSubdiv, numSampPnt,
                                                  isub, uvw, metric_Bez);
+
+      /*{
+        static int deg = 2;
+        MetricBasis::minSampledR(el, deg);
+        MetricBasis::minSampledRnew(el, deg);
+
+        double time = Cpu();
+        double minR1;
+        for (int cn = 0; cn < 100; ++cn)
+          minR1 = MetricBasis::minSampledR(el, deg);
+        double tm1 = Cpu()-time;
+
+        time = Cpu();
+        double minR2;
+        for (int cn = 0; cn < 100; ++cn)
+          minR2 = MetricBasis::minSampledRnew(el, deg);
+        double tm2 = Cpu()-time;
+
+        if (std::abs(minR1-minR2) < 1e-14)
+          Msg::Info("ok deg %d, times %g %g speedup %g", deg, tm1, tm2, tm1/tm2);
+        else
+          Msg::Error("not ok deg %d: %g vs %g, times %g %g speedup %g", deg, minR1, minR2, tm1, tm2, tm1/tm2);
+        //++deg;
+      }*/
 
       int numBadMatch = 0;
       int numBadMatchTensor = 0;

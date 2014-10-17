@@ -31,12 +31,14 @@ public:
     _pyramidalSpace(false), _serendipity(false) {}
 
   // Constructors using MElement*
-  FuncSpaceData(MElement *el, int *serendip = NULL);
-  FuncSpaceData(MElement *el, int order, int *serendip = NULL);
-  FuncSpaceData(MElement *el, bool pyr, int nij, int nk, int *serendip = NULL);
+  FuncSpaceData(const MElement *el, const bool *serendip = NULL);
+  FuncSpaceData(const MElement *el, int order, const bool *serendip = NULL);
+  FuncSpaceData(const MElement *el,
+                bool pyr, int nij, int nk,
+                const bool *serendip = NULL);
 
   // Constructors using element tag
-  FuncSpaceData(int tag, int *serendip = NULL);
+  FuncSpaceData(int tag, const bool *serendip = NULL);
 
   // constructors using element tag or element type
   FuncSpaceData(bool isTag, int tagOrType, int order,

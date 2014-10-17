@@ -499,7 +499,7 @@ void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
                               fullMatrix<double> &result,
                               bool bezCoord) const
 {
-  if (result.size1() < uvw.size1() || result.size2() < coeffs.size2())
+  if (result.size1() != uvw.size1() || result.size2() != coeffs.size2())
     result.resize(uvw.size1(), coeffs.size2());
 
   fullMatrix<double> bezuvw = uvw;
@@ -535,11 +535,24 @@ void bezierBasis::interpolate(const fullMatrix<double> &coeffs,
   }
 }
 
+void bezierBasis::lag2Bez(const fullMatrix<double> &lag,
+                          fullMatrix<double> &bez) const
+{
+  if (lag.size1() != matrixLag2Bez.size1()) {
+    Msg::Error("matrix not the right size in lag2Bez function %d vs %d",
+        lag.size1(), matrixLag2Bez.size1());
+  }
+  if (bez.size1() != lag.size1() || bez.size2() != lag.size2()) {
+    bez.resize(lag.size1(), lag.size2());
+  }
+  matrixLag2Bez.mult(lag, bez);
+}
+
 void bezierBasis::subdivideBezCoeff(const fullMatrix<double> &coeff,
                                     fullMatrix<double> &subCoeff) const
 {
-  if (subCoeff.size1() < subDivisor.size1()
-      || subCoeff.size2() < coeff.size2()  ) {
+  if (subCoeff.size1() != subDivisor.size1()
+      || subCoeff.size2() != coeff.size2()  ) {
     subCoeff.resize(subDivisor.size1(), coeff.size2());
   }
   subDivisor.mult(coeff, subCoeff);
@@ -548,7 +561,7 @@ void bezierBasis::subdivideBezCoeff(const fullMatrix<double> &coeff,
 void bezierBasis::subdivideBezCoeff(const fullVector<double> &coeff,
                                     fullVector<double> &subCoeff) const
 {
-  if (subCoeff.size() < subDivisor.size1()) {
+  if (subCoeff.size() != subDivisor.size1()) {
     subCoeff.resize(subDivisor.size1());
   }
   subDivisor.mult(coeff, subCoeff);

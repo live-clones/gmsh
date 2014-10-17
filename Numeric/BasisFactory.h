@@ -61,6 +61,9 @@ class BasisFactory
   static const GradientBasis* getGradientBasis(int tag, int order) {
     return getGradientBasis(FuncSpaceData(true, tag, order));
   }
+  static const GradientBasis* getGradientBasis(int tag) {
+    return getGradientBasis(FuncSpaceData(tag));
+  }
 
   // Bezier
   static const bezierBasis* getBezierBasis(FuncSpaceData);

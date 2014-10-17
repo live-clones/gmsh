@@ -854,3 +854,35 @@ int JacobianBasis::jacobianOrder(int parentType, int order)
       return 0;
   }
 }
+
+FuncSpaceData JacobianBasis::jacobianMatrixSpace(int type, int order)
+{
+  if (type == TYPE_PYR) {
+    Msg::Fatal("jacobianMatrixSpace not yet implemented for pyramids");
+    return FuncSpaceData(false, type, false, 1, 0);
+  }
+  int jacOrder = -1;
+  switch (type) {
+    case TYPE_PNT :
+      jacOrder = 0;
+      break;
+
+    case TYPE_LIN :
+    case TYPE_TRI :
+    case TYPE_TET :
+      jacOrder = order - 1;
+      break;
+
+    case TYPE_QUA :
+    case TYPE_PRI :
+    case TYPE_HEX :
+      jacOrder = order;
+      break;
+
+    default :
+      Msg::Error("Unknown element type %d, return order 0", type);
+      return 0;
+  }
+
+  return FuncSpaceData(true, ElementType::getTag(type, order), jacOrder);
+}
