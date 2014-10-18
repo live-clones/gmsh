@@ -117,7 +117,7 @@ class drawContextFltk : public drawContextGlobal{
     else{
       int w = Fl::w();
       if(w <= 1024)      return 11;
-      else if(w <= 1400) return 12;
+      else if(w <= 1440) return 12;
       else if(w <= 1680) return 13;
       else if(w <= 1920) return 14;
       else               return 15;
