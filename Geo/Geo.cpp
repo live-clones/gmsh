@@ -4544,7 +4544,6 @@ void GEO_Internals::alloc_all()
 {
   MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
   MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
-  ComputeMaxEntityNum();
   Points = Tree_Create(sizeof(Vertex *), compareVertex);
   Curves = Tree_Create(sizeof(Curve *), compareCurve);
   EdgeLoops = Tree_Create(sizeof(EdgeLoop *), compareEdgeLoop);
@@ -4573,18 +4572,6 @@ void GEO_Internals::reset_physicals()
 {
   List_Action(PhysicalGroups, Free_PhysicalGroup);
   List_Reset(PhysicalGroups);
-}
-
-void GEO_Internals::ComputeMaxEntityNum()
-{
-  MaxPointNum =
-    std::max(MaxPointNum, GModel::current()->getMaxElementaryNumber(0));
-  MaxLineNum =
-    std::max(MaxLineNum, GModel::current()->getMaxElementaryNumber(1));
-  MaxSurfaceNum =
-    std::max(MaxSurfaceNum, GModel::current()->getMaxElementaryNumber(2));
-  MaxVolumeNum =
-    std::max(MaxVolumeNum, GModel::current()->getMaxElementaryNumber(3));
 }
 
 int select_contour(int type, int num, List_T * List)

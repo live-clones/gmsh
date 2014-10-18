@@ -297,8 +297,6 @@ class GEO_Internals{
   void reset_physicals();
   std::map<int,int> periodicFaces;
   std::map<int,int> periodicEdges;
-
-  void ComputeMaxEntityNum();
 };
 
 class Shape{
