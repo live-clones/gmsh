@@ -112,6 +112,7 @@ set(GMSH_API
     Common/onelab.h Common/GmshSocket.h Common/onelabUtils.h
   Numeric/Numeric.h Numeric/GaussIntegration.h Numeric/polynomialBasis.h
     Numeric/JacobianBasis.h Numeric/MetricBasis.h Numeric/bezierBasis.h Numeric/fullMatrix.h
+    Numeric/FuncSpaceData.h
     Numeric/simpleFunction.h Numeric/cartesian.h Numeric/ElementType.h
     Numeric/BasisFactory.h
   Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h 
