@@ -48,7 +48,7 @@ int GModel::readGEO(const std::string &name)
 
 int GModel::exportDiscreteGEOInternals()
 {
-  int maxv = 1;
+  int maxv = 1; // FIXME: temporary - see TODO below
 
   if(_geo_internals){
     maxv = _geo_internals->MaxVolumeNum;
