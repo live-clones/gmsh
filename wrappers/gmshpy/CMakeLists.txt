@@ -75,6 +75,12 @@ include_directories(${PYTHON_INCLUDE_PATH})
 set(GMSH_PYTHON_MODULES_INCLUDE_CODE "")
 foreach(module ${SWIG_MODULES})
   set_source_files_properties(${module}.i PROPERTIES CPLUSPLUS ON)
+  # silent the warnings if DISABLE_SWIG_WARNING_FLAG has been set
+  string(COMPARE EQUAL "${DISABLE_SWIG_WARNINGS_FLAG}" "" swig_warnings_enabled)
+  if(NOT swig_warnings_enabled )
+    message("The swig warnings are disabled!")
+    set_source_files_properties(${module}.i PROPERTIES SWIG_FLAGS "${DISABLE_SWIG_WARNINGS_FLAG}")
+  endif(NOT swig_warnings_enabled )
 
   # code backported from CMake git version, see CMake bug 4147
   swig_get_wrapper_dependencies(${CMAKE_CURRENT_SOURCE_DIR}/\${module}.i 
