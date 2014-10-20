@@ -48,13 +48,18 @@ int GModel::readGEO(const std::string &name)
 
 int GModel::exportDiscreteGEOInternals()
 {
-  if(_geo_internals) delete _geo_internals;
+  int maxv = 1;
+
+  if(_geo_internals){
+    maxv = _geo_internals->MaxVolumeNum;
+    delete _geo_internals;
+  }
   _geo_internals = new GEO_Internals;
 
   for(viter it = firstVertex(); it != lastVertex(); it++){
     Vertex *v = Create_Vertex((*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z(),
                               (*it)->prescribedMeshSizeAtVertex(), 1.0);
-    Tree_Add(this->getGEOInternals()->Points, &v);
+    Tree_Add(_geo_internals->Points, &v);
   }
 
   for(eiter it = firstEdge(); it != lastEdge(); it++){
@@ -79,7 +84,7 @@ int GModel::exportDiscreteGEOInternals()
         }
       }
       End_Curve(c);
-      Tree_Add(this->getGEOInternals()->Curves, &c);
+      Tree_Add(_geo_internals->Curves, &c);
       CreateReversedCurve(c);
       List_Delete(points);
     }
@@ -100,12 +105,14 @@ int GModel::exportDiscreteGEOInternals()
           }
         }
       }
-      Tree_Add(this->getGEOInternals()->Surfaces, &s);
+      Tree_Add(_geo_internals->Surfaces, &s);
       List_Delete(curves);
     }
   }
 
-  // TODO: create Volumes from discreteRegions
+  // TODO: create Volumes from discreteRegions ; meanwhile, keep track of
+  // maximum volume num so that we don't break later operations:
+  _geo_internals->MaxVolumeNum = maxv;
 
   Msg::Debug("Geo internal model has:");
   Msg::Debug("%d Vertices", Tree_Nbr(_geo_internals->Points));

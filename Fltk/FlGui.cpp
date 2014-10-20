@@ -265,6 +265,9 @@ FlGui::FlGui(int argc, char **argv)
     Fl::scheme(CTX::instance()->guiTheme.c_str());
   Fl_Tooltip::size(FL_NORMAL_SIZE);
   Fl_Tooltip::delay(0.5);
+#if defined(__APPLE__)
+  Fl_Tooltip::color(FL_LIGHT2);
+#endif
 
   // register image formats not in core fltk library (jpeg/png)
   fl_register_images();
