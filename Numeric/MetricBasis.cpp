@@ -758,8 +758,8 @@ void MetricBasis::interpolate(const MElement *el,
       // Comppute from tensor
       fullMatrix<double> metricTensor(3, 3);
       for (int k = 0; k < 3; ++k) {
-        static double fact1 = std::sqrt(6);
-        static double fact2 = std::sqrt(3);
+        static double fact1 = std::sqrt(6.);
+        static double fact2 = std::sqrt(3.);
         const int ki = k%2;
         const int kj = std::min(k+1, 2);
         metricTensor(k, k) = (*metric)(i, k+1)*fact1 + (*metric)(i, 0);
@@ -1040,7 +1040,7 @@ void MetricBasis::_computeRmax(
     p = std::sqrt(p);
     const double a = q/p;
     if (a > 1e4) {
-      RmaxLag = std::max(RmaxLag, std::sqrt((a - std::sqrt(3)) / (a + std::sqrt(3))));
+      RmaxLag = std::max(RmaxLag, std::sqrt((a - std::sqrt(3.)) / (a + std::sqrt(3.))));
     }
     else {
       const double tmpR = _R3Dsafe(a, jac(i)/p/p*jac(i)/p);
@@ -1119,7 +1119,7 @@ void MetricBasis::_computeTermBeta(double &a, double &K,
     x0 = 1;
     phip = M_PI / 3;
     term1 = 1 + .5 * a;
-    sin = std::sqrt(3) / 2;
+    sin = std::sqrt(3.) / 2;
     sqrt = 0;
   }
   else if (x0 < -1) {
@@ -1128,7 +1128,7 @@ void MetricBasis::_computeTermBeta(double &a, double &K,
     x0 = -1;
     phip = 2 * M_PI / 3;
     term1 = 1 - .5 * a;
-    sin = std::sqrt(3) / 2;
+    sin = std::sqrt(3.) / 2;
     sqrt = 0;
   }
   else {
@@ -1228,8 +1228,8 @@ void MetricBasis::_fillCoeff(int dim, const GradientBasis *gradients,
         const double dvxdY = dxdY*dxdY + dydY*dydY + dzdY*dzdY;
         const double dvxdZ = dxdZ*dxdZ + dydZ*dydZ + dzdZ*dzdZ;
         coeff(i, 0) = (dvxdX + dvxdY + dvxdZ) / 3;
-        static double fact1 = 1./std::sqrt(6);
-        static double fact2 = 1./std::sqrt(3);
+        static double fact1 = 1./std::sqrt(6.);
+        static double fact2 = 1./std::sqrt(3.);
         coeff(i, 1) = fact1 * (dvxdX - coeff(i, 0));
         coeff(i, 2) = fact1 * (dvxdY - coeff(i, 0));
         coeff(i, 3) = fact1 * (dvxdZ - coeff(i, 0));
@@ -1260,7 +1260,7 @@ double MetricBasis::_computeMinlagR(const fullVector<double> &jac,
       p = std::sqrt(p);
       const double a = q/p;
       if (a > 1e4) { // TODO: from _tol ?
-        Rmin = std::min(Rmin, std::sqrt((a - std::sqrt(3)) / (a + std::sqrt(3))));
+        Rmin = std::min(Rmin, std::sqrt((a - std::sqrt(3.)) / (a + std::sqrt(3.))));
       }
       else {
         const double tmpR = _R3Dsafe(a, jac(i)/p/p*jac(i)/p);
@@ -1554,7 +1554,7 @@ void MetricBasis::_maxKstAsharp(const fullMatrix<double> &coeff,
 double MetricBasis::_R3Dsafe(double q, double p, double J)
 {
   if (q > 1e5*p) {
-    const double m = p*std::sqrt(3)/q;
+    const double m = p*std::sqrt(3.)/q;
     return (1-m) / (1+m);
   }
   const double a = q/p;

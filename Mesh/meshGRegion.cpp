@@ -904,7 +904,7 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr, spl
 
   // now treat the Wedges
   // we have to know the two target GFaces that are concerned with a GEdge
-  std::set<MEdge>::iterator ite =  edges.begin();
+  std::set<MEdge,Less_Edge>::iterator ite =  edges.begin();
   while(ite != edges.end()){
     MEdge e = *ite;
     MVertex *v1 = e.getVertex(0);

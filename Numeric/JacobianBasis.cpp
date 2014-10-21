@@ -25,7 +25,7 @@ void calcMapFromIdealElement(int type, T &gSMatX, T &gSMatY, T &gSMatZ)
       break;
     }
     default: {                                                // Tri, tet, prism: equilateral tri with side of length 1
-      static const double cTri[2] = {-1./std::sqrt(3), 2./std::sqrt(3)};
+      static const double cTri[2] = {-1./std::sqrt(3.), 2./std::sqrt(3.)};
       gSMatY.scale(cTri[1]);
       gSMatY.axpy(gSMatX, cTri[0]);
       break;
@@ -39,15 +39,15 @@ void calcMapFromIdealElement(int type, T &gSMatX, T &gSMatY, T &gSMatZ)
       gSMatZ.scale(2.);
       break;
     }
-    case TYPE_PYR: {                                          // Pyramid -> height sqrt(2)/2
+    case TYPE_PYR: {                                          // Pyramid -> height sqrt(2.)/2
       static const double cPyr = 1./sqrt(2.);
       gSMatZ.scale(cPyr);
       break;
     }
     case TYPE_TET:                                            // Tet: take into account (x, y) scaling to obtain regular tet
     {
-      static const double cTet[3] = {-3./2/std::sqrt(6),
-                                     -1./2/std::sqrt(2),
+      static const double cTet[3] = {-3./2/std::sqrt(6.),
+                                     -1./2/std::sqrt(2.),
                                      std::sqrt(1.5)};
       gSMatZ.scale(cTet[2]);
       gSMatZ.axpy(gSMatX, cTet[0]);
