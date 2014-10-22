@@ -8,7 +8,6 @@
 #include "MetricBasis.h"
 #include "BasisFactory.h"
 #include "pointsGenerators.h"
-#include "BasisFactory.h"
 #include "OS.h"
 #include <queue>
 #include <sstream>
@@ -55,8 +54,10 @@ namespace {
   }
 }
 
-MetricBasis::MetricBasis(int tag) : _type(ElementType::ParentTypeFromTag(tag)),
-    _dim(ElementType::DimensionFromTag(tag))
+MetricBasis::MetricBasis(int tag) :
+    _type(ElementType::ParentTypeFromTag(tag)),
+    _dim(ElementType::DimensionFromTag(tag)),
+    _jacobian(NULL)
 {
   const bool serendip = false;
   const int metOrder = metricOrder(tag);
@@ -76,25 +77,20 @@ MetricBasis::MetricBasis(int tag) : _type(ElementType::ParentTypeFromTag(tag)),
 
   // get jacobian
   FuncSpaceData *jacSpace = NULL;
-  if (_type == TYPE_TRI || _type == TYPE_QUA) {
-    jacSpace = NULL;
-  }
-  else if (_type == TYPE_TET || _type == TYPE_HEX || _type == TYPE_PRI) {
+  if (_type == TYPE_TET || _type == TYPE_HEX || _type == TYPE_PRI) {
     jacSpace = new FuncSpaceData(true, tag, jacOrder, &serendip);
   }
   else if (_type == TYPE_PYR) {
     jacSpace = new FuncSpaceData(true, tag, false, jacOrder+3,
                                  jacOrder, &serendip);
   }
-  else
+  else if (_type != TYPE_TRI || _type != TYPE_QUA)
     Msg::Fatal("metric not implemented for element tag %d", tag);
 
   if (jacSpace) {
     _jacobian = BasisFactory::getJacobianBasis(*jacSpace);
     delete jacSpace;
   }
-  else
-    _jacobian = NULL;
 
   _fillInequalities(metOrder);
 }
@@ -173,6 +169,10 @@ double MetricBasis::getMinSampledR(MElement *el, int deg) const
 
 double MetricBasis::minSampledRnew(MElement *el, int deg)
 {
+  static double tmEIG1 = 0;
+  static double tmEIG2 = 0;
+  static double tmOTH = 0;
+  double T = Cpu();
   int dim = el->getDim();
   if (dim < 2) return 1;
 
@@ -231,10 +231,19 @@ double MetricBasis::minSampledRnew(MElement *el, int deg)
     }
     fullVector<double> valReal(dim), valImag(dim);
     fullMatrix<double> vecLeft(dim, dim), vecRight(dim, dim);
+
+    tmOTH += Cpu()-T;
+    T = Cpu();
     metric.eig(valReal, valImag, vecLeft, vecRight, true);
+    tmEIG1 += Cpu()-T;
+    T = Cpu();
+    //metric.eigvalSym(valReal, true);
+    tmEIG2 += Cpu()-T;
+    T = Cpu();
     minR = std::min(minR, std::sqrt(valReal(0) / valReal(dim-1)));
   }
 
+  Msg::Warning("eig vs other %g %g %g", tmEIG1, tmEIG2, tmOTH);
   return minR;
 }
 
@@ -631,7 +640,7 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
                                   dim > 2 ? nodes(i, 2) + symRand(range) : 0);
       }
       MElement *el = MElement::createElement(tag, vertices);
-      if (!el) {
+      if (el != NULL) {
         Msg::Error("MElement was unable to create element for tag %d", tag);
         ++numError;
       }
@@ -648,13 +657,23 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
 
       /*{
         static int deg = 2;
+        BasisFactory::getCondNumBasis(el->getTypeForMSH(), deg);
         MetricBasis::minSampledR(el, deg);
         MetricBasis::minSampledRnew(el, deg);
 
         double time = Cpu();
         double minR1;
-        for (int cn = 0; cn < 100; ++cn)
-          minR1 = MetricBasis::minSampledR(el, deg);
+        for (int cn = 0; cn < 100; ++cn) {
+          const CondNumBasis *cnb =
+              BasisFactory::getCondNumBasis(el->getTypeForMSH(), deg);
+          fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
+          el->getNodesCoord(nodesXYZ);
+          fullVector<double> invCond(cnb->getNumCondNumNodes());
+          cnb->getInvCondNum(nodesXYZ, invCond);
+          minR1 = 1;
+          for (int i = 0; i < invCond.size(); ++i)
+            minR1 = std::min(minR1, invCond(i));
+        }
         double tm1 = Cpu()-time;
 
         time = Cpu();
@@ -805,7 +824,7 @@ void MetricBasis::interpolateAfterNSubdivisions(
   const int nSub = _bezier->getNumDivision();
   const int numCoeff = md->_metcoeffs->size2();
   const int numMetPnts = md->_metcoeffs->size1();
-  const int numJacPnts = md->_jaccoeffs ? md->_jaccoeffs->size() : 0;
+  const int numJacPnts = md->haveJac() ? md->_jaccoeffs->size() : 0;
   const int numNodPnts = nodes.size1();
 
   const bezierBasis *bezierMapping;

@@ -584,61 +584,56 @@ void bezierBasis::_construct()
       subPoints.push_back(gmshGeneratePointsLine(0));
       break;
     case TYPE_LIN : {
-      _numLagCoeff = order == 0 ? 1 : 2;
+      _numLagCoeff = order ? 2 : 1;
       _dimSimplex = 0;
       _exponents = gmshGenerateMonomialsLine(order);
       subPoints = generateSubPointsLine(order);
       break;
     }
     case TYPE_TRI : {
-      _numLagCoeff = order == 0 ? 1 : 3;
+      _numLagCoeff = order ? 3 : 1;
       _dimSimplex = 2;
       _exponents = gmshGenerateMonomialsTriangle(order);
       subPoints = generateSubPointsTriangle(order);
       break;
     }
     case TYPE_QUA : {
-      _numLagCoeff = order == 0 ? 1 : 4;
+      _numLagCoeff = order ? 4 : 1;
       _dimSimplex = 0;
       _exponents = gmshGenerateMonomialsQuadrangle(order);
       subPoints = generateSubPointsQuad(order);
       break;
     }
     case TYPE_TET : {
-      _numLagCoeff = order == 0 ? 1 : 4;
+      _numLagCoeff = order ? 4 : 1;
       _dimSimplex = 3;
       _exponents = gmshGenerateMonomialsTetrahedron(order);
       subPoints = generateSubPointsTetrahedron(order);
       break;
     }
     case TYPE_PRI : {
-      _numLagCoeff = order == 0 ? 1 : 6;
+      _numLagCoeff = order ? 6 : 1;
       _dimSimplex = 2;
       _exponents = gmshGenerateMonomialsPrism(order);
       subPoints = generateSubPointsPrism(order);
       break;
     }
     case TYPE_HEX : {
-      _numLagCoeff = order == 0 ? 1 : 8;
+      _numLagCoeff = order ? 8 : 1;
       _dimSimplex = 0;
       _exponents = gmshGenerateMonomialsHexahedron(order);
       subPoints = generateSubPointsHex(order);
       break;
     }
     default : {
-      Msg::Error("Unknown function space of parentType %d : "
-          "reverting to TET_1", _data.elementType());
-      _numLagCoeff = 4;
-      _dimSimplex = 3;
-      _exponents = gmshGenerateMonomialsTetrahedron(0);
-      subPoints = generateSubPointsTetrahedron(0);
-      break;
+      Msg::Fatal("Unknown function space for parentType %d", _data.elementType());
+      return;
     }
   }
   _numDivisions = static_cast<int>(subPoints.size());
 
   fullMatrix<double> bezierPoints = _exponents;
-  bezierPoints.scale(1./order);
+  if (order) bezierPoints.scale(1./order);
 
   matrixBez2Lag = generateBez2LagMatrix(_exponents, bezierPoints, order, _dimSimplex);
   matrixBez2Lag.invert(matrixLag2Bez);

@@ -51,6 +51,8 @@ private:
       delete _metcoeffs;
       delete _jaccoeffs;
     }
+
+    bool haveJac() {return _jaccoeffs != NULL;}
   };
 
 public:
