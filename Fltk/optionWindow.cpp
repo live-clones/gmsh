@@ -2514,8 +2514,8 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[5]->callback(mesh_options_ok_cb);
 
       static Fl_Menu_Item menu_quality_type[] = {
+        {"SICN", 0, 0, 0},
         {"Gamma", 0, 0, 0},
-        {"Eta", 0, 0, 0},
         {"Rho", 0, 0, 0},
         {"Disto", 0, 0, 0},
         {0}

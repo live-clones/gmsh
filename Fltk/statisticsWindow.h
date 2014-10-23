@@ -18,7 +18,7 @@ class statisticsWindow{
   Fl_Button *butt[8];
   Fl_Group *group[3];
   Fl_Box *memUsage;
-  double quality[4][100];
+  double quality[3][100];
  public:
   statisticsWindow(int deltaFontSize);
   void compute(bool elementQuality);

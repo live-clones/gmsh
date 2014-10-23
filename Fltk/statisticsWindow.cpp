@@ -18,6 +18,8 @@
 #include "OS.h"
 #include "Field.h"
 
+enum QM_HISTO {QMH_SICN_XY, QMH_SICN_3D, QMH_GAMMA_XY, QMH_GAMMA_3D, QMH_RHO_XY, QMH_RHO_3D};
+
 void statistics_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->stats->show();
@@ -30,64 +32,53 @@ static void statistics_update_cb(Fl_Widget *w, void *data)
 
 static void statistics_histogram_cb(Fl_Widget *w, void *data)
 {
-  std::string name((const char*)data);
+  QM_HISTO qmh = *(QM_HISTO*)data;
 
   std::vector<double> x, y;
 
-  if(name == "Gamma2D"){
+  if (qmh == QMH_SICN_XY) {
     for(int i = 0; i < 100; i++){
-      x.push_back((double)i / 99);
+      x.push_back((double)(2*i-99) / 99);
       y.push_back(FlGui::instance()->stats->quality[0][i]);
     }
-    new PView("Gamma", "# Elements", x, y);
+    new PView("SICN", "# Elements", x, y);
   }
-  else if(name == "Eta2D"){
+  else if (qmh == QMH_GAMMA_XY) {
     for(int i = 0; i < 100; i++){
       x.push_back((double)i / 99);
       y.push_back(FlGui::instance()->stats->quality[1][i]);
     }
-    new PView("Eta", "# Elements", x, y);
+    new PView("Gamma", "# Elements", x, y);
   }
-  else if(name == "Rho2D"){
+  else if (qmh == QMH_RHO_XY) {
     for(int i = 0; i < 100; i++){
       x.push_back((double)i / 99);
       y.push_back(FlGui::instance()->stats->quality[2][i]);
     }
     new PView("Rho", "# Elements", x, y);
   }
-  else if(name == "Disto2D"){
-    for(int i = 0; i < 100; i++){
-      x.push_back((double)i / 99);
-      y.push_back(FlGui::instance()->stats->quality[3][i]);
-    }
-    new PView("Disto", "# Elements", x, y);
-  }
-  else{
+  else {
     std::vector<GEntity*> entities_;
     GModel::current()->getEntities(entities_);
     std::map<int, std::vector<double> > d;
-    for(unsigned int i = 0; i < entities_.size(); i++){
-      if(entities_[i]->dim() < 2) continue;
-      for(unsigned int j = 0; j < entities_[i]->getNumMeshElements(); j++){
-	MElement *e = entities_[i]->getMeshElement(j);
-	if(name == "Gamma3D")
-	  d[e->getNum()].push_back(e->gammaShapeMeasure());
-	else if(name == "Eta3D")
-	  d[e->getNum()].push_back(e->etaShapeMeasure());
-	else if(name == "Rho3D")
-#ifdef METRICSHAPEMEASURE
-	  if (e->getDim() == 3)
-	    d[e->getNum()].push_back(e->metricShapeMeasure());
-	  else
-	    d[e->getNum()].push_back(1);
-#else
-    d[e->getNum()].push_back(e->rhoShapeMeasure());
-#endif
-	else
-	  d[e->getNum()].push_back(e->distoShapeMeasure());
+    for (unsigned int i = 0; i < entities_.size(); i++){
+      if (entities_[i]->dim() < 2) continue;
+      for (unsigned int j = 0; j < entities_[i]->getNumMeshElements(); j++) {
+        MElement *e = entities_[i]->getMeshElement(j);
+        if (qmh == QMH_SICN_3D) {
+          double minSICN, maxSICN;
+          e->invCondNumRange(minSICN, maxSICN);
+          d[e->getNum()].push_back(minSICN);
+        }
+        else if (qmh == QMH_GAMMA_3D)
+          d[e->getNum()].push_back(e->gammaShapeMeasure());
+        else if (qmh == QMH_RHO_3D)
+          d[e->getNum()].push_back(e->rhoShapeMeasure());
       }
     }
-    name.resize(name.size() - 2);
+    std::string name = (qmh == QMH_SICN_3D) ? "SICN" :
+                       (qmh == QMH_GAMMA_3D) ? "Gamma" :
+                       (qmh == QMH_RHO_3D) ? "Rho" : "";
     new PView(name, "ElementData", GModel::current(), d);
   }
 
@@ -101,7 +92,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
   int num = 0;
   int width = 26 * FL_NORMAL_SIZE;
-  int height = 5 * WB + 18 * BH;
+  int height = 5 * WB + 17 * BH;
 
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "Statistics");
@@ -135,16 +126,14 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
       value[num++] = new Fl_Output(2 * WB, 2 * WB + 11 * BH, IW, BH, "Time for 2D mesh");
       value[num++] = new Fl_Output(2 * WB, 2 * WB + 12 * BH, IW, BH, "Time for 3D mesh");
 
-      value[num] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "Gamma");
-      value[num]->tooltip("~ inscribed_radius / circumscribed_radius"); num++;
-      value[num] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "Eta");
-      value[num]->tooltip("~ volume^(2/3) / sum_edge_length^2"); num++;
+      value[num] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "SICN");
+      value[num]->tooltip("~ signed inverse condition number"); num++;
+      value[num] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "Gamma");
+      value[num]->tooltip("~ inscribed_radius / circumscribed_radius (simplices)"); num++;
       value[num] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Rho");
       value[num]->tooltip("~ min_edge_length / max_edge_length"); num++;
-      value[num] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "Disto");
-      value[num]->tooltip("~ min (J_min/J_0, J_0/J_max)"); num++;
 
-      for(int i = 0; i < 4; i++){
+      for(int i = 0; i < 3; i++){
         int ww = 3 * FL_NORMAL_SIZE;
         new Fl_Box
           (FL_NO_BOX, width - 3 * ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "Plot");
@@ -153,14 +142,14 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
         butt[2 * i + 1] = new Fl_Button
           (width - ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "3D");
       }
-      butt[0]->callback(statistics_histogram_cb, (void *)"Gamma2D");
-      butt[1]->callback(statistics_histogram_cb, (void *)"Gamma3D");
-      butt[2]->callback(statistics_histogram_cb, (void *)"Eta2D");
-      butt[3]->callback(statistics_histogram_cb, (void *)"Eta3D");
-      butt[4]->callback(statistics_histogram_cb, (void *)"Rho2D");
-      butt[5]->callback(statistics_histogram_cb, (void *)"Rho3D");
-      butt[6]->callback(statistics_histogram_cb, (void *)"Disto2D");
-      butt[7]->callback(statistics_histogram_cb, (void *)"Disto3D");
+      static const QM_HISTO qmh0 = QMH_SICN_XY, qmh1 = QMH_SICN_3D, qmh2 = QMH_GAMMA_XY,
+                            qmh3 = QMH_GAMMA_3D, qmh4 = QMH_RHO_XY, qmh5 = QMH_RHO_3D;
+      butt[0]->callback(statistics_histogram_cb, (void*) &qmh0);
+      butt[1]->callback(statistics_histogram_cb, (void*) &qmh1);
+      butt[2]->callback(statistics_histogram_cb, (void*) &qmh2);
+      butt[3]->callback(statistics_histogram_cb, (void*) &qmh3);
+      butt[4]->callback(statistics_histogram_cb, (void*) &qmh4);
+      butt[5]->callback(statistics_histogram_cb, (void*) &qmh5);
 
       group[1]->end();
     }
@@ -204,188 +193,6 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
 void statisticsWindow::compute(bool elementQuality)
 {
-#if 0
-  {
-    // MINIMUM MAXIMUM ANGLES
-    double minAngle = 1.0; //M_PI;
-    double meanAngle = 0.0;
-    int count = 0;
-    std::vector<GEntity*> entities;
-    GModel::current()->getEntities(entities);
-    std::map<int, std::vector<double> > d;
-    for(unsigned int i = 0; i < entities.size(); i++){
-      if(entities[i]->dim() == 3) {// continue;//<3
-	for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-	  MElement *e = entities[i]->getMeshElement(j);
-	  double angle = e->angleShapeMeasure();
-	  minAngle = std::min(minAngle, angle);
-	  meanAngle += angle;
-	  count++;
-	}
-      }
-    }
-    meanAngle  = meanAngle / count;
-    printf("Angles min =%g av=%g nbhex=%d\n", minAngle, meanAngle, count);
-  }
-
-  // {
-  //   // MESH DEGREE VERTICES
-  //   std::vector<GEntity*> entities;
-  //   std::set<MEdge, Less_Edge> edges;
-  //   GModel::current()->getEntities(entities);
-  //   std::map<MVertex*, int > vert2Deg;
-  //   for(unsigned int i = 0; i < entities.size(); i++){
-  //     if(entities[i]->dim() < 2 ) continue;
-  //     // if(entities[i]->tag() < 100) continue;
-  //     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-  // 	MElement *e =  entities[i]->getMeshElement(j);
-  // 	for(unsigned int k = 0; k < e->getNumEdges(); k++){
-  // 	  edges.insert(e->getEdge(k));
-  // 	}
-  // 	for(unsigned int k = 0; k < e->getNumVertices(); k++){
-  // 	  MVertex *v = e->getVertex(k);
-  // 	  if (v->onWhat()->dim() < 2) continue;
-  // 	  std::map<MVertex*, int >::iterator it = vert2Deg.find(v);
-  // 	  if (it == vert2Deg.end()) {
-  // 	    vert2Deg.insert(std::make_pair(v,1));
-  // 	  }
-  // 	  else{
-  // 	    int nbE = it->second+1;
-  // 	    it->second = nbE;
-  // 	  }
-  // 	}
-  //     }
-  //   }
-  //   int dMin = 10;
-  //   int dMax = 0;
-  //   int d4 = 0;
-  //   int nbElems = vert2Deg.size();
-  //   std::map<MVertex*, int >::const_iterator itmap = vert2Deg.begin();
-  //   for(; itmap !=vert2Deg.end(); itmap++){
-  //     MVertex *v = itmap->first;
-  //     int nbE =  itmap->second;
-  //     dMin = std::min(nbE, dMin);
-  //     dMax = std::max(nbE, dMax);
-  //     if (nbE == 4) d4 += 1;
-  //   }
-  //   if (nbElems > 0)
-  //     printf("Stats degree vertices: dMin=%d , dMax=%d, d4=%g \n",
-  // 	     dMin, dMax, (double)d4/nbElems);
-  //   FieldManager *fields = GModel::current()->getFields();
-  //   Field *f = fields->get(fields->background_field);
-  //   int nbEdges = edges.size();
-  //   printf("nb edges =%d \n", nbEdges);
-  //   if(system("rm qualEdges.txt"));
-  //   FILE *fp = Fopen("qualEdges.txt", "w");
-  //   std::vector<int> qualE;
-  //   int nbS = 50;
-  //   qualE.resize(nbS);
-  //   if(fields.getBackgroundField() > 0){
-  //     std::set<MEdge, Less_Edge>::iterator it = edges.begin();
-  //     double sum = 0;
-  //     for (; it !=edges.end();++it){
-  // 	MVertex *v0 = it->getVertex(0);
-  // 	MVertex *v1 = it->getVertex(1);
-  // 	double l = sqrt((v0->x()-v1->x())*(v0->x()-v1->x())+
-  // 			(v0->y()-v1->y())*(v0->y()-v1->y())+
-  // 			(v0->z()-v1->z())*(v0->z()-v1->z()));
-  // 	double lf =  (*f)(0.5*(v0->x()+v1->x()), 0.5*(v0->y()+v1->y()),
-  // 			  0.5*(v0->z()+v1->z()),v0->onWhat());
-  // 	double el = l/lf;
-  // 	int index = (int) ceil(el*nbS*0.5);
-  // 	qualE[index]+= 1;
-  // 	double e = (l>lf) ? lf/l : l/lf;
-  // 	sum += e - 1.0;
-  //     }
-  //     double tau = exp ((1./edges.size()) * sum);
-  //     printf("N edges = %d tau = %g\n",(int)edges.size(),tau);
-
-  //     double ibegin = 2./(2*nbS);
-  //     double inext = 2./nbS;
-  //     for (int i= 0; i< qualE.size(); i++){
-  // 	fprintf(fp, "0 0 0 0 %g 0 0 %g \n", ibegin+i*inext , (double)qualE[i]/nbEdges);
-  //     }
-
-  //   }
-  //   fclose(fp);
-  // }
-  // {
-  //   std::vector<GEntity*> entities;
-  //   std::set<MEdge, Less_Edge> edges;
-  //   GModel::current()->getEntities(entities);
-  //   std::map<MVertex*, int > vert2Deg;
-  //   for(unsigned int i = 0; i < entities.size(); i++){
-  //     if(entities[i]->dim() < 2 ) continue;
-  //     if(entities[i]->tag() != 10) continue;
-  //     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-  // 	MElement *e =  entities[i]->getMeshElement(j);
-  // 	for(unsigned int k = 0; k < e->getNumEdges(); k++){
-  // 	  edges.insert(e->getEdge(k));
-  // 	}
-  // 	for(unsigned int k = 0; k < e->getNumVertices(); k++){
-  // 	  MVertex *v = e->getVertex(k);
-  // 	  if (v->onWhat()->dim() < 2) continue;
-  // 	  std::map<MVertex*, int >::iterator it = vert2Deg.find(v);
-  // 	  if (it == vert2Deg.end()){
-  // 	    vert2Deg.insert(std::make_pair(v,1));
-  // 	  }
-  // 	  else{
-  // 	    int nbE = it->second+1;
-  // 	    it->second = nbE;
-  // 	  }
-  // 	}
-  //     }
-  //   }
-  //   int dMin = 10;
-  //   int dMax = 0;
-  //   int d4 = 0;
-  //   int nbElems = vert2Deg.size();
-  //   std::map<MVertex*, int >::const_iterator itmap = vert2Deg.begin();
-  //   for(; itmap !=vert2Deg.end(); itmap++){
-  //     MVertex *v = itmap->first;
-  //     int nbE =  itmap->second;
-  //     dMin = std::min(nbE, dMin);
-  //     dMax = std::max(nbE, dMax);
-  //     if (nbE == 4) d4 += 1;
-  //   }
-  //   if (nbElems > 0) printf("Stats degree vertices: dMin=%d , dMax=%d, d4=%g \n",
-  // 			    dMin, dMax, (double)d4/nbElems);
-  //   FieldManager *fields = GModel::current()->getFields();
-  //   Field *f = fields->get(fields.getBackgroundField());
-  //   int nbEdges = edges.size();
-  //   if(system("rm qualEdges.txt"));
-  //   FILE *fp = Fopen("qualEdges.txt", "w");
-  //   std::vector<int> qualE;
-  //   int nbS = 50;
-  //   qualE.resize(nbS);
-  //   if(fields.getBackgroundField() > 0){
-  //     std::set<MEdge, Less_Edge>::iterator it = edges.begin();
-  //     double sum = 0;
-  //     for (; it !=edges.end();++it){
-  // 	MVertex *v0 = it->getVertex(0);
-  // 	MVertex *v1 = it->getVertex(1);
-  // 	double l = sqrt((v0->x()-v1->x())*(v0->x()-v1->x())+
-  // 			(v0->y()-v1->y())*(v0->y()-v1->y())+
-  // 			(v0->z()-v1->z())*(v0->z()-v1->z()));
-  // 	double lf =  (*f)(0.5*(v0->x()+v1->x()), 0.5*(v0->y()+v1->y()),
-  // 			  0.5*(v0->z()+v1->z()),v0->onWhat());
-  // 	double el = l/lf;
-  // 	int index = (int) ceil(el*nbS*0.5);
-  // 	qualE[index]+= 1;
-  // 	double e = (l>lf) ? lf/l : l/lf;
-  // 	sum += e - 1.0;
-  //     }
-  //     double tau = exp ((1./edges.size()) * sum);
-  //     double ibegin = 2./(2*nbS);
-  //     double inext = 2./nbS;
-  //     for (int i= 0; i< qualE.size(); i++){
-  // 	fprintf(fp, "0 0 0 0 %g 0 0 %g \n", ibegin+i*inext , (double)qualE[i]/nbEdges);
-  //     }
-  //   }
-  //   fclose(fp);
-  // }
-#endif
-
   int num = 0;
   static double s[50];
   static char label[50][256];
@@ -418,10 +225,7 @@ void statisticsWindow::compute(bool elementQuality)
   sprintf(label[num], "%g", s[15]); value[num]->value(label[num]); num++;
 
   if(!elementQuality){
-    for(int i = 0; i < 8; i += 2) butt[i]->deactivate();
-    sprintf(label[num], "Press Update");
-    value[num]->deactivate();
-    value[num]->value(label[num]); num++;
+    for(int i = 0; i < 6; i += 2) butt[i]->deactivate();
     sprintf(label[num], "Press Update");
     value[num]->deactivate();
     value[num]->value(label[num]); num++;
@@ -433,7 +237,7 @@ void statisticsWindow::compute(bool elementQuality)
     value[num]->value(label[num]); num++;
   }
   else{
-    for(int i = 0; i < 8; i += 2) butt[i]->activate();
+    for(int i = 0; i < 6; i += 2) butt[i]->activate();
     sprintf(label[num], "%.4g (%.4g->%.4g)", s[17], s[18], s[19]);
     value[num]->activate();
     value[num]->value(label[num]); num++;
@@ -441,9 +245,6 @@ void statisticsWindow::compute(bool elementQuality)
     value[num]->activate();
     value[num]->value(label[num]); num++;
     sprintf(label[num], "%.4g (%.4g->%.4g)", s[23], s[24], s[25]);
-    value[num]->activate();
-    value[num]->value(label[num]); num++;
-    sprintf(label[num], "%.4g (%.4g->%.4g)", s[46], s[47], s[48]);
     value[num]->activate();
     value[num]->value(label[num]); num++;
   }
