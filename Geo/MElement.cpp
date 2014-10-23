@@ -322,7 +322,7 @@ void MElement::idealJacRange(double &jmin, double &jmax, GEntity *ge)
 #endif
 }
 
-void MElement::invCondNumRange(double &iCNMin, double &iCNMax, GEntity *ge)
+void MElement::signedInvCondNumRange(double &iCNMin, double &iCNMax, GEntity *ge)
 {
   iCNMin = iCNMax = 1.0;
 #if defined(HAVE_MESH)
@@ -1129,7 +1129,7 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
 }
 
 void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
-                        bool printGamma, bool printEta, bool printRho,
+                        bool printSICN, bool printGamma, bool printRho,
                         bool printDisto, double scalingFactor, int elementary)
 {
   const char *str = getStringForPOS();
@@ -1156,6 +1156,13 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
       fprintf(fp, "%d", getNum());
     }
   }
+  if(printSICN){
+    double sICNMin = minSICNShapeMeasure();
+    for(int i = 0; i < n; i++){
+      if(first) first = false; else fprintf(fp, ",");
+      fprintf(fp, "%g", sICNMin);
+    }
+  }
   if(printGamma){
     double gamma = gammaShapeMeasure();
     for(int i = 0; i < n; i++){
@@ -1163,19 +1170,8 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
       fprintf(fp, "%g", gamma);
     }
   }
-  if(printEta){
-    double eta = etaShapeMeasure();
-    for(int i = 0; i < n; i++){
-      if(first) first = false; else fprintf(fp, ",");
-      fprintf(fp, "%g", eta);
-    }
-  }
   if(printRho){
-#ifdef METRICSHAPEMEASURE
-    double rho = metricShapeMeasure();
-#else
     double rho = rhoShapeMeasure();
-#endif
     for(int i = 0; i < n; i++){
       if(first) first = false; else fprintf(fp, ",");
       fprintf(fp, "%g", rho);

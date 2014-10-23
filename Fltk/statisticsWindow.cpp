@@ -65,11 +65,8 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
       if (entities_[i]->dim() < 2) continue;
       for (unsigned int j = 0; j < entities_[i]->getNumMeshElements(); j++) {
         MElement *e = entities_[i]->getMeshElement(j);
-        if (qmh == QMH_SICN_3D) {
-          double minSICN, maxSICN;
-          e->invCondNumRange(minSICN, maxSICN);
-          d[e->getNum()].push_back(minSICN);
-        }
+        if (qmh == QMH_SICN_3D)
+          d[e->getNum()].push_back(e->minSICNShapeMeasure());
         else if (qmh == QMH_GAMMA_3D)
           d[e->getNum()].push_back(e->gammaShapeMeasure());
         else if (qmh == QMH_RHO_3D)

@@ -58,8 +58,7 @@ static void GetQualityMeasure(std::vector<T*> &ele,
     gamma += g;
     gammaMin = std::min(gammaMin, g);
     gammaMax = std::max(gammaMax, g);
-    double s, sDum;
-    ele[i]->invCondNumRange(s, sDum);
+    double s = ele[i]->minSICNShapeMeasure();
     minSICN += s;
     minSICNMin = std::min(minSICNMin, s);
     minSICNMax = std::max(minSICNMax, s);

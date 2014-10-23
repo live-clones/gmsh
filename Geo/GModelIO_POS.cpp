@@ -9,7 +9,7 @@
 #include "MElement.h"
 
 int GModel::writePOS(const std::string &name, bool printElementary,
-                     bool printElementNumber, bool printGamma, bool printEta,
+                     bool printElementNumber, bool printSICN, bool printGamma,
                      bool printRho, bool printDisto,
                      bool saveAll, double scalingFactor)
 {
@@ -36,7 +36,7 @@ int GModel::writePOS(const std::string &name, bool printElementary,
   }
   */
 
-  bool f[6] = {printElementary, printElementNumber, printGamma, printEta, printRho,
+  bool f[6] = {printElementary, printElementNumber, printSICN, printGamma, printRho,
                printDisto};
 
   bool first = true;
@@ -51,11 +51,11 @@ int GModel::writePOS(const std::string &name, bool printElementary,
   }
   if(f[2]){
     if(first) first = false; else names += ",";
-    names += "\"Gamma\"";
+    names += "\"SICN\"";
   }
   if(f[3]){
     if(first) first = false; else names += ",";
-    names += "\"Eta\"";
+    names += "\"Gamma\"";
   }
   if(f[4]){
     if(first) first = false; else names += ",";

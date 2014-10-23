@@ -2026,7 +2026,7 @@ struct opti_data_vertex_relocation {
     fprintf(f,"View \"\"{\n");
     for (unsigned int i=0;i<e.size();++i){
       MElement *el = e[i];
-      el->writePOS(f,false,false,true,false,false,false);
+      el->writePOS(f,false,false,false,true,false,false);
     }
     fprintf(f,"};");
     fclose (f);

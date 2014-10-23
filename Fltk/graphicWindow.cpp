@@ -1627,20 +1627,15 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
   {
     std::ostringstream sstream;
     sstream << " Quality: "
-#ifdef METRICSHAPEMEASURE
-            << "metric = " << ele->metricShapeMeasure() << " "
-#else
-            << "rho = " << ele->rhoShapeMeasure() << " "
-#endif
-            << "gamma = " << ele->gammaShapeMeasure() << " "
-            << "eta = " << ele->etaShapeMeasure();
+        << "gamma = " << ele->gammaShapeMeasure() << " "
+        << "rho = " << ele->rhoShapeMeasure();
     info.push_back(sstream.str());
   }
   {
     std::ostringstream sstream;
-    double jmin, jmax;
-    ele->scaledJacRange(jmin, jmax);
-    sstream << " Scaled Jacobian range: " << jmin << " " << jmax;
+    double sICNMin, sICNMax;
+    ele->signedInvCondNumRange(sICNMin, sICNMax);
+    sstream << " SICN range: " << sICNMin << " " << sICNMax;
     info.push_back(sstream.str());
   }
   {

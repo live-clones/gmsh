@@ -107,10 +107,8 @@ bool isElementVisible(MElement *ele)
       q = ele->rhoShapeMeasure();
     else if(CTX::instance()->mesh.qualityType == 1)
       q = ele->gammaShapeMeasure();
-    else {
-      double sICNMax;
-      ele->invCondNumRange(q, sICNMax);
-    }
+    else
+      q = ele->minSICNShapeMeasure();
     if(q < CTX::instance()->mesh.qualityInf ||
        q > CTX::instance()->mesh.qualitySup) return false;
   }

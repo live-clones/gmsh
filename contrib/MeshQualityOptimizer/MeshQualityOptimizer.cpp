@@ -63,7 +63,7 @@ double QualPatchDefParameters::elBadness(MElement *el) const
 //  el->idealJacRange(jMin, jMax);
 //  return jMin-_idealJacMin;
   double iCNMin, iCNMax;
-  el->invCondNumRange(iCNMin, iCNMax);
+  el->signedInvCondNumRange(iCNMin, iCNMax);
   return iCNMin-_invCondNumMin;
 }
 
