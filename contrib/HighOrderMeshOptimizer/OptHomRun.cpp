@@ -47,6 +47,17 @@
 
 #if defined(HAVE_BFGS)
 
+typedef std::vector<MElement*> elVec;
+typedef elVec::iterator elVecIter;
+typedef elVec::const_iterator elVecConstIter;
+typedef std::set<MElement*> elSet;
+typedef elSet::iterator elSetIter;
+typedef std::set<MVertex*> vertSet;
+
+typedef std::map<MVertex*, elVec> vertElVecMap;
+typedef std::map<MElement*, elSet> elElSetMap;
+typedef std::pair<elSet, vertSet> elSetVertSetPair;
+
 double distMaxStraight(MElement *el)
 {
   const polynomialBasis *lagrange = (polynomialBasis*)el->getFunctionSpace();
@@ -137,14 +148,12 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
   fclose(f);
 }
 
-static std::set<MVertex *> getAllBndVertices
-  (std::set<MElement*> &elements,
-   const std::map<MVertex*, std::vector<MElement*> > &vertex2elements)
+static vertSet getAllBndVertices(elSet &elements, const vertElVecMap &vertex2elements)
 {
-  std::set<MVertex*> bnd;
-  for (std::set<MElement*>::iterator itE = elements.begin(); itE != elements.end(); ++itE) {
+  vertSet bnd;
+  for (elSetIter itE = elements.begin(); itE != elements.end(); ++itE) {
     for (int i = 0; i < (*itE)->getNumPrimaryVertices(); ++i) {
-      const std::vector<MElement*> &neighbours = vertex2elements.find
+      const elVec &neighbours = vertex2elements.find
         ((*itE)->getVertex(i))->second;
       for (size_t k = 0; k < neighbours.size(); ++k) {
         if (elements.find(neighbours[k]) == elements.end()) {
@@ -158,36 +167,98 @@ static std::set<MVertex *> getAllBndVertices
   return bnd;
 }
 
+
+// Test intersection between sphere and segment
+static bool testSegSphereIntersect(SPoint3 A, SPoint3 B, const SPoint3& P, const double rr)
+{
+  // Test if separating plane between sphere and segment vertices
+  // For each vertex, separation if vertex is outside sphere and P on opposite side
+  // to other seg. vertex w.r.t plane of normal (vertex-P) through vertex
+  const SVector3 PA(P, A), PB(P, B);
+  const double aa = dot(PA, PA), ab = dot(PA, PB);
+  if ((aa > rr) & (ab > aa)) return false;
+  const double  bb = dot(PB, PB);
+  if ((bb > rr) & (ab > bb)) return false;
+
+  // Test if separating plane between sphere and line
+  // For A, separation if projection Q of P on (AB) lies outside the sphere
+  const SVector3 AB(A, B);
+  const double d = ab - aa, e = dot(AB, AB);
+  const  SVector3 PQ = PA * e - d * AB;
+  if (dot(PQ, PQ) > rr * e * e) return false;
+
+  // Return true (intersection) if no separation at all
+  return true;
+}
+
+
+// Test intersection between sphere and triangle
+// Inspired by Christer Ericson, http://realtimecollisiondetection.net/blog/?p=103
+static bool testTriSphereIntersect(SPoint3 A, SPoint3 B, SPoint3 C,
+                                   const SPoint3& P, const double rr)
+{
+  // Test if separating plane between sphere and triangle plane
+  const SVector3 PA(P, A), AB(A, B), AC(A, C);
+  const SVector3 V = crossprod(AB, AC);                                   // Normal to triangle plane
+  const double d = dot(PA, V);                                            // Dist. from P to triangle plane times norm of V
+  const double e = dot(V, V);                                             // Norm of V
+  if (d * d > rr * e) return false;                                       // Test if separating plane between sphere and triangle plane
+
+  // Test if separating plane between sphere and triangle vertices
+  const SVector3 PB(P, B), PC(P, B);
+  const double aa = dot(PA, PA), ab = dot(PA, PB), ac = dot(PA, PC);
+  const double bb = dot(PB, PB), bc = dot(PB, PC), cc = dot(PC, PC);
+  if ((aa > rr) & (ab > aa) & (ac > aa)) return false;                    // For each triangle vertex, separation if vertex is outside sphere
+  if ((bb > rr) & (ab > bb) & (bc > bb)) return false;                    // and P on opposite side to other two triangle vertices w.r.t
+  if ((cc > rr) & (ac > cc) & (bc > cc)) return false;                    // plane of normal (vertex-P) through vertex
+
+  // Test if separating plane between sphere and triangle edges
+  const SVector3 BC(B, C);
+  const double d1 = ab - aa, d2 = bc - bb, d3 = ac - cc;
+  const double e1 = dot(AB, AB), e2 = dot(BC, BC), e3 = dot(AC, AC);
+  const SVector3 PQ1 = PA * e1 - d1 * AB;                                 // Q1 projection of P on line (AB)
+  const SVector3 PQ2 = PB * e2 - d2 * BC;                                 // Q2 projection of P on line (BC)
+  const SVector3 PQ3 = PC * e3 + d3 * AC;                                 // Q3 projection of P on line (AC)
+  const SVector3 PQC = PC * e1 - PQ1;
+  const SVector3 PQA = PA * e2 - PQ2;
+  const SVector3 PQB = PB * e3 - PQ3;
+  if ((dot(PQ1, PQ1) > rr * e1 * e1) & (dot(PQ1, PQC) > 0)) return false; // For A, separation if Q lies outside the sphere and if P and C
+  if ((dot(PQ2, PQ2) > rr * e2 * e2) & (dot(PQ2, PQA) > 0)) return false; // are on opposite sides of plane through AB with normal PQ
+  if ((dot(PQ3, PQ3) > rr * e3 * e3) & (dot(PQ3, PQB) > 0)) return false; // Same for other two vertices
+
+  // Return true (intersection) if no separation at all
+  return true;
+}
+
 // Approximate test of intersection element with circle/sphere by sampling
 static bool testElInDist(const SPoint3 p, double limDist, MElement *el)
 {
   const double sampleLen = 0.5*limDist;                                   // Distance between sample points
+  const double limDistSq = limDist*limDist;
 
   if (el->getDim() == 2) {                                                // 2D?
     for (int iEd = 0; iEd < el->getNumEdges(); iEd++) {                   // Loop over edges of element
       MEdge ed = el->getEdge(iEd);
-      const int nPts = int(ed.length()/sampleLen)+2;                      // Nb of sample points based on edge length
-      for (int iPt = 0; iPt < nPts; iPt++) {                              // Loop over sample points
-        const SPoint3 pt = ed.interpolate(iPt/float(nPts-1));
-        if (p.distance(pt) < limDist) return true;
+      const SPoint3 A = ed.getVertex(0)->point();
+      const SPoint3 B = ed.getVertex(1)->point();
+      if (testSegSphereIntersect(A, B, p, limDistSq)) {
+        return true;
       }
     }
   }
   else {                                                                  // 3D
     for (int iFace = 0; iFace < el->getNumFaces(); iFace++) {             // Loop over faces of element
-      MFace face = el->getFace(iFace);
-      double lMax = 0.;                                                   // Max. edge length in face
-      const int nVert = face.getNumVertices();
-      for (int iEd = 0; iEd < nVert; iEd++)
-        lMax = std::max(lMax, face.getEdge(iEd).length());
-      const int nPts = int(lMax/sampleLen)+2;                             // Nb of sample points based on max. edge length in face
-      for (int iPt0 = 0; iPt0 < nPts; iPt0++) {
-        const double u = iPt0/float(nPts-1);
-        for (int iPt1 = 0; iPt1 < nPts; iPt1++) {                         // Loop over sample points
-          const double vMax = (nVert == 3) ? 1.-u : 1.;
-          const SPoint3 pt = face.interpolate(u, vMax*iPt1/float(nPts-1));
-          if (p.distance(pt) < limDist) return true;
-        }
+      std::vector<MVertex*> faceVert;
+      el->getFaceVertices(iFace, faceVert);
+      const SPoint3 A = faceVert[0]->point();
+      const SPoint3 B = faceVert[1]->point();
+      const SPoint3 C = faceVert[2]->point();
+      if (faceVert.size() == 3)
+        return testTriSphereIntersect(A, B, C, p, limDistSq);
+      else {
+        const SPoint3 D = faceVert[3]->point();
+        return (testTriSphereIntersect(A, B, C, p, limDistSq) ||
+                    testTriSphereIntersect(A, C, D, p, limDistSq));
       }
     }
   }
@@ -195,35 +266,52 @@ static bool testElInDist(const SPoint3 p, double limDist, MElement *el)
   return false;
 }
 
-static std::set<MElement*> getSurroundingBlob
-   (MElement *el, int depth,
-    const std::map<MVertex*, std::vector<MElement*> > &vertex2elements,
-    const double distFactor, int forceDepth, bool optPrimSurfMesh)
+// Get neighbours of element (computes and store them only if needed)
+static void getElementNeighbours(MElement *el, const vertElVecMap &v2e,
+                                 elElSetMap &e2e, elSet &neighbours)
 {
+  elElSetMap::iterator it = e2e.find(el);
+  if (it == e2e.end()) {                                                          // If not in e2e, compute and store
+    for (int i = 0; i < el->getNumPrimaryVertices(); ++i) {
+      const elVec &adjEl = v2e.find(el->getVertex(i))->second;
+      neighbours.clear();
+      neighbours.insert(adjEl.begin(), adjEl.end());
+      e2e.insert(std::pair<MElement*, elSet>(el, neighbours));
+    }
+  }
+  else neighbours = it->second;
+}
 
+static elSet getSurroundingBlob(MElement *el, int maxLayers,
+                                const vertElVecMap &vertex2elements,
+                                elElSetMap &element2elements, const double distFactor,
+                                int minLayers, bool optPrimSurfMesh)
+{
   const SPoint3 p = el->barycenter(true);
   const double dist = el->maxDistToStraight();
   const double limDist = ((optPrimSurfMesh && (dist < 1.e-10)) ?
                           el->getOuterRadius() : dist) * distFactor;
 
-  std::set<MElement*> blob;
-  std::list<MElement*> currentLayer, lastLayer;
+  elSet blob, currentLayer, lastLayer, outOfDist;
 
   blob.insert(el);
-  lastLayer.push_back(el);
-  for (int d = 0; d < depth; ++d) {
+  lastLayer.insert(el);
+  for (int d = 0; d < maxLayers; ++d) {
     currentLayer.clear();
-    for (std::list<MElement*>::iterator it = lastLayer.begin();
-         it != lastLayer.end(); ++it) {
-      for (int i = 0; i < (*it)->getNumPrimaryVertices(); ++i) {
-        const std::vector<MElement*> &neighbours = vertex2elements.find
-          ((*it)->getVertex(i))->second;
-        for (std::vector<MElement*>::const_iterator itN = neighbours.begin();
-             itN != neighbours.end(); ++itN){
-          if ((d < forceDepth) || testElInDist(p, limDist, *itN)){
-            // Assume that if an el is too far, its neighbours are too far as well
-            if (blob.insert(*itN).second) currentLayer.push_back(*itN);
+    for (elSetIter it = lastLayer.begin(); it != lastLayer.end(); ++it) {             // Loop over elements in last layer
+      elSet neighbours;
+      getElementNeighbours(*it, vertex2elements, element2elements, neighbours);
+      for (elSetIter itN = neighbours.begin(); itN != neighbours.end(); ++itN) {      // Loop over neighbours
+        if (lastLayer.find(*itN) == lastLayer.end()) {                                // If neighbour already in last layer, skip
+          bool isInserted = false;
+          if (d < minLayers) isInserted = blob.insert(*itN).second;                   // Below minLayers: insert neighbour in blob
+          else if (outOfDist.find(*itN) == outOfDist.end()) {                         // Above minLayers: check distance criterion
+            if (testElInDist(p, limDist, *itN))
+              isInserted = blob.insert(*itN).second;
+            else
+              outOfDist.insert(*itN);
           }
+          if (isInserted) currentLayer.insert(*itN);                                  // If inserted in blob, insert in current layer
         }
       }
     }
@@ -246,8 +334,7 @@ static void addBlobChaintoGroup(std::set<int> &group,
   }
 }
 
-static void calcVertex2Elements(int dim, GEntity *entity,
-                                std::map<MVertex*, std::vector<MElement *> > &vertex2elements)
+static void calcVertex2Elements(int dim, GEntity *entity, vertElVecMap &vertex2elements)
 {
   for (size_t i = 0; i < entity->getNumMeshElements(); ++i) {
     MElement *element = entity->getMeshElement(i);
@@ -261,26 +348,27 @@ static void calcElement2Entity(GEntity *entity, std::map<MElement*,GEntity*> &el
 {
   for (size_t i = 0; i < entity->getNumMeshElements(); ++i) {
     MElement *element = entity->getMeshElement(i);
-    element2entity.insert(std::pair<MElement*,GEntity*>(element,entity));
+    element2entity.insert(std::pair<MElement*, GEntity*>(element, entity));
   }
 }
 
-static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConnectedBlobs
-  (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
-   const std::set<MElement*> &badElements, int depth, const double distFactor,
+static std::vector<elSetVertSetPair> getConnectedBlobs
+  (const vertElVecMap &vertex2elements,
+   const elSet &badElements, int depth, const double distFactor,
    bool weakMerge, bool optPrimSurfMesh)
 {
 
   Msg::Info("Starting blob generation from %i bad elements...", badElements.size());
 
+  elElSetMap element2elements;                                                            // Element to element connectivity, built progressively
+
   // Contruct primary blobs
   Msg::Info("Constructing %i primary blobs", badElements.size());
-  std::vector<std::set<MElement*> > primBlobs;
+  std::vector<elSet> primBlobs;
   primBlobs.reserve(badElements.size());
-  for (std::set<MElement*>::const_iterator it = badElements.begin(); it != badElements.end(); ++it) {
-    //const int minLayers = ((*it)->getDim() == 3) ? 1 : 0;
-    const int minLayers = 3;
-    primBlobs.push_back(getSurroundingBlob(*it, depth, vertex2elements,
+  for (elSet::const_iterator it = badElements.begin(); it != badElements.end(); ++it) {
+    const int minLayers = ((*it)->getDim() == 3) ? 1 : 0;
+    primBlobs.push_back(getSurroundingBlob(*it, depth, vertex2elements, element2elements,
                                 distFactor, minLayers, optPrimSurfMesh));
   }
 
@@ -289,8 +377,8 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
   std::map<MElement*, std::set<int> > tags;
   std::vector<std::set<int> > blobConnect(primBlobs.size());
   for (int iB = 0; iB < primBlobs.size(); ++iB) {
-    std::set<MElement*> &blob = primBlobs[iB];
-    for(std::set<MElement*>::iterator itEl = blob.begin(); itEl != blob.end(); ++itEl) {
+    elSet &blob = primBlobs[iB];
+    for(elSetIter itEl = blob.begin(); itEl != blob.end(); ++itEl) {
       std::set<int> &blobInd = tags[*itEl];
       if (!blobInd.empty() && (badElements.find(*itEl) != badElements.end() ||
                                !weakMerge)) {
@@ -315,22 +403,22 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
 
   // Merge primary blobs according to groups
   Msg::Info("Merging primary blobs into %i blobs...", groups.size());
-  std::list<std::set<MElement*> > blobs;
+  std::list<elSet> blobs;
   for (std::list<std::set<int> >::iterator itG = groups.begin();
        itG != groups.end(); ++itG) {
-    blobs.push_back(std::set<MElement*>());
+    blobs.push_back(elSet());
     for (std::set<int>::iterator itB = itG->begin(); itB != itG->end(); ++itB) {
-      std::set<MElement*> primBlob = primBlobs[*itB];
+      elSet primBlob = primBlobs[*itB];
       blobs.back().insert(primBlob.begin(), primBlob.end());
     }
   }
 
   // Store and compute blob boundaries
   Msg::Info("Computing boundaries for %i blobs...", blobs.size());
-  std::vector<std::pair<std::set<MElement *>, std::set<MVertex*> > > result;
-  for (std::list<std::set<MElement*> >::iterator itB = blobs.begin();
+  std::vector<elSetVertSetPair> result;
+  for (std::list<elSet>::iterator itB = blobs.begin();
        itB != blobs.end(); ++itB)
-    result.push_back(std::pair<std::set<MElement*>, std::set<MVertex*> >
+    result.push_back(elSetVertSetPair
                      (*itB, getAllBndVertices(*itB, vertex2elements)));
 
   Msg::Info("Generated %i blobs", blobs.size());
@@ -338,17 +426,16 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
   return result;
 }
 
-static void optimizeConnectedBlobs
-  (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
-   const std::map<MElement*,GEntity*> &element2entity,
-   std::set<MElement*> &badasses,
-   OptHomParameters &p, int samples, bool weakMerge = false)
+static void optimizeConnectedBlobs(const vertElVecMap &vertex2elements,
+                                   const std::map<MElement*,GEntity*> &element2entity,
+                                   elSet &badasses, OptHomParameters &p,
+                                   int samples, bool weakMerge = false)
 {
   p.SUCCESS = 1;
   p.minJac = 1.e100;
   p.maxJac = -1.e100;
 
-  std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > toOptimize =
+  std::vector<elSetVertSetPair> toOptimize =
                           getConnectedBlobs(vertex2elements, badasses, p.nbLayers,
                                     p.distanceFactor, weakMerge, p.optPrimSurfMesh);
 
@@ -390,12 +477,12 @@ static void optimizeConnectedBlobs
 
 }
 
-static MElement *getWorstElement(std::set<MElement*> &badasses, OptHomParameters &p)
+static MElement *getWorstElement(elSet &badasses, OptHomParameters &p)
 {
   double worst = 1.e300;
   MElement *worstEl = 0;
 
-  for (std::set<MElement*>::iterator it=badasses.begin(); it!=badasses.end(); it++) {
+  for (elSetIter it=badasses.begin(); it!=badasses.end(); it++) {
     double jmin, jmax, val;
     (*it)->scaledJacRange(jmin,jmax);
     val = jmin-p.BARRIER_MIN + p.BARRIER_MAX-jmax;
@@ -408,111 +495,10 @@ static MElement *getWorstElement(std::set<MElement*> &badasses, OptHomParameters
   return worstEl;
 }
 
-static std::set<MVertex *> getPrimBndVertices
-  (std::set<MElement*> &elements,
-   const std::map<MVertex*, std::vector<MElement*> > &vertex2elements)
-{
-  std::set<MVertex*> bnd;
-  for (std::set<MElement*>::iterator itE = elements.begin(); itE != elements.end(); ++itE) {
-    for (int i = 0; i < (*itE)->getNumPrimaryVertices(); ++i) {
-      const std::vector<MElement*> &neighbours = vertex2elements.find
-        ((*itE)->getVertex(i))->second;
-      for (size_t k = 0; k < neighbours.size(); ++k) {
-        if (elements.find(neighbours[k]) == elements.end()) {
-            bnd.insert((*itE)->getVertex(i));
-        }
-      }
-    }
-  }
-  return bnd;
-}
-
-static std::set<MElement*> getSurroundingBlob3D
-  (MElement *el, int depth,
-   const std::map<MVertex*, std::vector<MElement*> > &vertex2elements,
-   const double distFactor)
-{
-  const double limDist = el->maxDistToStraight() * distFactor;
-
-  std::set<MElement*> blob;
-  std::list<MElement*> currentLayer, lastLayer;
-
-  std::list<SPoint3> seedPts;
-
-  blob.insert(el);
-  lastLayer.push_back(el);
-  for (int d = 0; d < depth; ++d) {
-    currentLayer.clear();
-    for (std::list<MElement*>::iterator it = lastLayer.begin();
-         it != lastLayer.end(); ++it) {
-      for (int i = 0; i < (*it)->getNumPrimaryVertices(); ++i) {
-        const std::vector<MElement*> &neighbours = vertex2elements.find
-          ((*it)->getVertex(i))->second;
-        for (std::vector<MElement*>::const_iterator itN = neighbours.begin();
-             itN != neighbours.end(); ++itN) {
-          // Check distance from all seed points
-          SPoint3 pt = (*itN)->barycenter();
-          bool nearSeed = false;
-          for (std::list<SPoint3>::const_iterator itS = seedPts.begin();
-               itS != seedPts.end(); ++itS)
-            if (itS->distance(pt) < limDist) {
-              nearSeed = true;
-              break;
-            }
-          if ((d == 0) || nearSeed){
-            // Assume that if an el is too far, its neighbours are too far as well
-            if (blob.insert(*itN).second) currentLayer.push_back(*itN);
-          }
-        }
-      }
-    }
-    if (d == 0) // Elts of 1st layer are seed points
-      for (std::list<MElement*>::iterator itL = currentLayer.begin();
-           itL != currentLayer.end(); ++itL)
-        seedPts.push_back((*itL)->barycenter_infty());
-    lastLayer = currentLayer;
-  }
-
-  return blob;
-
-}
-
-static std::set<MElement*> addBlobLayer
-  (std::set<MElement*> &blob,
-   const std::map<MVertex*, std::vector<MElement*> > &vertex2elements)
-{
-  std::set<MElement*> layer;
-  const std::set<MElement*> initBlob = blob;
-
-  for (std::set<MElement*>::const_iterator it = initBlob.begin();
-       it != initBlob.end(); ++it)
-    for (int i = 0; i < (*it)->getNumPrimaryVertices(); ++i) {
-      const std::vector<MElement*> &neighbours = vertex2elements.find
-        ((*it)->getVertex(i))->second;
-      for (std::vector<MElement*>::const_iterator itN = neighbours.begin();
-           itN != neighbours.end(); ++itN)
-        if (blob.insert(*itN).second) layer.insert(*itN);
-    }
-  return layer;
-}
-
-static bool detectNewBrokenElement(std::set<MElement*> &layer,
-                                   std::set<MElement*> &badasses,
-                                   OptHomParameters &p)
-{
-  for (std::set<MElement*>::iterator it=layer.begin(); it!=layer.end(); it++)
-    if (badasses.find(*it) == badasses.end()) {
-      double jmin, jmax, val;
-      (*it)->scaledJacRange(jmin,jmax);
-      if ((jmin < p.BARRIER_MIN) || (jmax > p.BARRIER_MAX)) return true;
-    }
-  return false;
-}
-
 static void optimizeOneByOne
   (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
    const std::map<MElement*,GEntity*> &element2entity,
-   std::set<MElement*> badElts, OptHomParameters &p, int samples)
+   elSet badElts, OptHomParameters &p, int samples)
 {
   p.SUCCESS = 1;
   p.minJac = 1.e100;
@@ -520,6 +506,8 @@ static void optimizeOneByOne
 
   const int initNumBadElts = badElts.size();
   Msg::Info("%d badasses, starting to iterate...", initNumBadElts);
+
+  elElSetMap element2elements;                                          // Element to element connectivity, built progressively
 
   for (int iBadEl=0; iBadEl<initNumBadElts; iBadEl++) {
 
@@ -535,68 +523,11 @@ static void optimizeOneByOne
     int success;
 
     for (int iterBlob=0; iterBlob<p.maxAdaptBlob; iterBlob++) {
-
-//      OptHOM *opt;
-//
-//      // First step: small blob with unsafe optimization (only 1st-order
-//      // bnd. vertices fixed)
-//      std::set<MElement*> toOptimizePrim = getSurroundingBlob
-//        (worstEl, nbLayers, vertex2elements, distanceFactor, 0, p.optPrimSurfMesh);
-//      std::set<MVertex*> toFix1 = getPrimBndVertices(toOptimizePrim, vertex2elements);
-//      std::set<MElement*> toOptimize1;
-//      std::set_difference(toOptimizePrim.begin(),toOptimizePrim.end(),
-//                          badElts.begin(),badElts.end(), // Do not optimize badElts
-//                          std::inserter(toOptimize1, toOptimize1.end()));
-//      Msg::Info("Optimizing primary blob %i (max. %i remaining) composed of"
-//                " %4d elements", iBadEl, badElts.size(), toOptimize1.size());
-//      fflush(stdout);
-//      opt = new OptHOM(element2entity, toOptimize1, toFix1, p.fixBndNodes);
-//      //std::ostringstream ossI1;
-//      //ossI1 << "initial_primary_" << iter << ".msh";
-//      //opt->mesh.writeMSH(ossI1.str().c_str());
-//      success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN, p.BARRIER_MAX,
-//                              false, samples, p.itMax, p.optPassMax);
-//
-//      // Second step: add external layer, check it and optimize it safely (all
-//      // bnd. vertices fixed) if new broken element
-//      if (success > 0) {
-//        opt->mesh.updateGEntityPositions();
-//        std::set<MElement*> layer = addBlobLayer(toOptimizePrim, vertex2elements);
-//        if (detectNewBrokenElement(layer, badElts, p)) {
-//          delete opt;
-//          std::set<MVertex*> toFix2 = getAllBndVertices(toOptimizePrim, vertex2elements);
-//          std::set<MElement*> toOptimize2;
-//          std::set_difference(toOptimizePrim.begin(),toOptimizePrim.end(),
-//                              badElts.begin(),badElts.end(),
-//                              std::inserter(toOptimize2, toOptimize2.end()));
-//          Msg::Info("Optimizing corrective blob %i (max. %i remaining) "
-//                    "composed of %4d elements", iBadEl, badElts.size(),
-//                    toOptimize2.size());
-//          fflush(stdout);
-//          opt = new OptHOM(element2entity, toOptimize2, toFix2, p.fixBndNodes);
-//          //std::ostringstream ossI1;
-//          //ossI1 << "initial_corrective_" << iter << ".msh";
-//          //opt->mesh.writeMSH(ossI1.str().c_str());
-//          success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN,
-//                                  p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax);
-//          if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
-//            Msg::Info("Jacobian optimization succeed, starting svd optimization");
-//            success = opt->optimize(p.weightFixed, p.weightFree, p.BARRIER_MIN_METRIC,
-//                                    p.BARRIER_MAX, true, samples, p.itMax, p.optPassMax);
-//          }
-//        }
-//        else {
-//          Msg::Info("Primary blob %i did not break new elements, "
-//                    "no correction needed", iBadEl);
-//          fflush(stdout);
-//        }
-//      }
-
-      std::set<MElement*> toOptimizePrim = getSurroundingBlob
-        (worstEl, nbLayers, vertex2elements, distanceFactor, 1, p.optPrimSurfMesh);
-//    std::set<MElement*> layer = addBlobLayer(toOptimizePrim, vertex2elements);
-      std::set<MVertex*> toFix = getAllBndVertices(toOptimizePrim, vertex2elements);
-      std::set<MElement*> toOptimize;
+      elSet toOptimizePrim = getSurroundingBlob(worstEl, nbLayers,
+                                                vertex2elements, element2elements,
+                                                distanceFactor, 1, p.optPrimSurfMesh);
+      vertSet toFix = getAllBndVertices(toOptimizePrim, vertex2elements);
+      elSet toOptimize;
       std::set_difference(toOptimizePrim.begin(),toOptimizePrim.end(),
                           badElts.begin(),badElts.end(),
                           std::inserter(toOptimize, toOptimize.end()));
@@ -641,7 +572,6 @@ static void optimizeOneByOne
 //        }
       }
       else break;
-
     }
 
     //#pragma omp critical
@@ -689,7 +619,7 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
 
   std::map<MVertex*, std::vector<MElement *> > vertex2elements;
   std::map<MElement*,GEntity*> element2entity;
-  std::set<MElement*> badasses;
+  elSet badasses;
   double maxdist = 0.;                                                  // TODO: To be cleaned?
   for (int iEnt = 0; iEnt < entities.size(); ++iEnt) {
     GEntity* &entity = entities[iEnt];
