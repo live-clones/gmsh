@@ -49,14 +49,27 @@
 #if defined(HAVE_BFGS)
 
 
-static std::set<MVertex *> getAllBndVertices
-  (std::set<MElement*> &elements,
-   const std::map<MVertex*, std::vector<MElement*> > &vertex2elements)
+typedef std::vector<MElement*> elVec;
+typedef elVec::const_iterator elVecConstIter;
+typedef std::set<MElement*> elSet;
+typedef elSet::iterator elSetIter;
+typedef std::set<MVertex*> vertSet;
+typedef std::map<MElement*, GEntity*> elEntMap;
+
+typedef std::map<MVertex*, elVec> vertElVecMap;
+typedef std::map<MElement*, elSet> elElSetMap;
+typedef std::pair<elSet, vertSet> elSetVertSetPair;
+
+
+namespace {
+
+
+vertSet getAllBndVertices(elSet &elements, const vertElVecMap &vertex2elements)
 {
-  std::set<MVertex*> bnd;
-  for (std::set<MElement*>::iterator itE = elements.begin(); itE != elements.end(); ++itE) {
+  vertSet bnd;
+  for (elSetIter itE = elements.begin(); itE != elements.end(); ++itE) {
     for (int i = 0; i < (*itE)->getNumPrimaryVertices(); ++i) {
-      const std::vector<MElement*> &neighbours = vertex2elements.find
+      const elVec &neighbours = vertex2elements.find
         ((*itE)->getVertex(i))->second;
       for (size_t k = 0; k < neighbours.size(); ++k) {
         if (elements.find(neighbours[k]) == elements.end()) {
@@ -71,31 +84,48 @@ static std::set<MVertex *> getAllBndVertices
 }
 
 
-static std::set<MElement*> getSurroundingPatch(MElement *el, const MeshOptPatchDef *patchDef,
-                            double limDist, int maxLayers,
-                            const std::map<MVertex*, std::vector<MElement*> > &vertex2elements)
+// Get neighbours of element (computes and store them only if needed)
+void getElementNeighbours(MElement *el, const vertElVecMap &v2e,
+                          elElSetMap &e2e, elSet &neighbours)
+{
+  elElSetMap::iterator it = e2e.find(el);
+  if (it == e2e.end()) {                                                          // If not in e2e, compute and store
+    neighbours.clear();
+    for (int i = 0; i < el->getNumPrimaryVertices(); ++i) {
+      const elVec &adjEl = v2e.find(el->getVertex(i))->second;
+      for(elVecConstIter itA = adjEl.begin(); itA != adjEl.end(); itA++)
+        if (*itA != el) neighbours.insert(*itA);
+    }
+    e2e.insert(std::pair<MElement*, elSet>(el, neighbours));
+  }
+  else neighbours = it->second;
+}
+
+
+elSet getSurroundingPatch(MElement *el, const MeshOptPatchDef *patchDef,
+                          double limDist, int maxLayers,
+                          const vertElVecMap &vertex2elements,
+                          elElSetMap &element2elements)
 {
   const SPoint3 pnt = el->barycenter(true);
 
-  std::set<MElement*> patch;
-  std::list<MElement*> currentLayer, lastLayer;
+  elSet patch, currentLayer, lastLayer, excluded;
 
   patch.insert(el);
-  lastLayer.push_back(el);
+  lastLayer.insert(el);
   for (int d = 0; d < maxLayers; ++d) {
     currentLayer.clear();
-    for (std::list<MElement*>::iterator it = lastLayer.begin();
-         it != lastLayer.end(); ++it) {
-      for (int i = 0; i < (*it)->getNumPrimaryVertices(); ++i) {
-        const std::vector<MElement*> &neighbours = vertex2elements.find
-          ((*it)->getVertex(i))->second;
-        for (std::vector<MElement*>::const_iterator itN = neighbours.begin();
-             itN != neighbours.end(); ++itN) {
-          if (patch.find(*itN) == patch.end()) {
-            const int elIn = patchDef->inPatch(pnt, limDist, *itN);
-            if ((elIn > 0) || ((d < patchDef->minLayers) && (elIn == 0)))
-              if (patch.insert(*itN).second) currentLayer.push_back(*itN);      // Assume that if an el is too far, its neighbours are too far as well
+    for (elSetIter it = lastLayer.begin(); it != lastLayer.end(); ++it) {             // Loop over elements in last layer
+      elSet neighbours;
+      getElementNeighbours(*it, vertex2elements, element2elements, neighbours);
+      for (elSetIter itN = neighbours.begin(); itN != neighbours.end(); ++itN) {      // Loop over neighbours
+        if ((lastLayer.find(*itN) == lastLayer.end()) &&                              // If neighbour already in last layer...
+            (excluded.find(*itN) == excluded.end())) {                                // ... or marked as excluded, skip
+          const int elIn = patchDef->inPatch(pnt, limDist, *itN);                     // Test if element in patch according to user-defined criteria
+          if ((elIn > 0) || ((d < patchDef->minLayers) && (elIn == 0))) {
+            if (patch.insert(*itN).second) currentLayer.insert(*itN);                 // If element in, insert in patch and in current layer...
           }
+          else excluded.insert(*itN);                                                 // ... otherwise, mark as excluded
         }
       }
     }
@@ -106,22 +136,23 @@ static std::set<MElement*> getSurroundingPatch(MElement *el, const MeshOptPatchD
 }
 
 
-static void addPatchChaintoGroup(std::set<int> &group,
-                                const std::vector<std::set<int> > &groupConnect,
-                                std::vector<bool> &todoPB, int iB)
+void addPatchChaintoGroup(std::set<int> &group,
+                          const std::vector<std::set<int> > &groupConnect,
+                          std::vector<bool> &todoPB, int iB)
 {
   if (todoPB[iB]) {
     todoPB[iB] = false;
     group.insert(iB);
     const std::set<int> &connect = groupConnect[iB];
-    for (std::set<int>::const_iterator itBC = connect.begin(); itBC != connect.end(); ++itBC)
+    for (std::set<int>::const_iterator itBC = connect.begin();
+         itBC != connect.end(); ++itBC)
       addPatchChaintoGroup(group, groupConnect, todoPB, *itBC);
   }
 }
 
 
-static void calcVertex2Elements(int dim, GEntity *entity,
-                                std::map<MVertex*, std::vector<MElement *> > &vertex2elements)
+void calcVertex2Elements(int dim, GEntity *entity,
+                         vertElVecMap &vertex2elements)
 {
   for (size_t i = 0; i < entity->getNumMeshElements(); ++i) {
     MElement *element = entity->getMeshElement(i);
@@ -132,7 +163,7 @@ static void calcVertex2Elements(int dim, GEntity *entity,
 }
 
 
-static void calcElement2Entity(GEntity *entity, std::map<MElement*,GEntity*> &element2entity)
+void calcElement2Entity(GEntity *entity, elEntMap &element2entity)
 {
   for (size_t i = 0; i < entity->getNumMeshElements(); ++i) {
     MElement *element = entity->getMeshElement(i);
@@ -141,21 +172,23 @@ static void calcElement2Entity(GEntity *entity, std::map<MElement*,GEntity*> &el
 }
 
 
-static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConnectedPatches
-  (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
-   const std::set<MElement*> &badElements, const MeshOptParameters &par)
+std::vector<elSetVertSetPair> getConnectedPatches(const vertElVecMap &vertex2elements,
+                                                  const elSet &badElements,
+                                                  const MeshOptParameters &par)
 {
-
   Msg::Info("Starting patch generation from %i bad elements...", badElements.size());
+
+  elElSetMap element2elements;                                                            // Element to element connectivity, built progressively
 
   // Contruct primary patches
   Msg::Info("Constructing %i primary patches", badElements.size());
-  std::vector<std::set<MElement*> > primPatches;
+  std::vector<elSet > primPatches;
   primPatches.reserve(badElements.size());
-  for (std::set<MElement*>::const_iterator it = badElements.begin(); it != badElements.end(); ++it) {
+  for (elSet::const_iterator it = badElements.begin(); it != badElements.end(); ++it) {
     const double limDist = par.patchDef->maxDistance(*it);
     primPatches.push_back(getSurroundingPatch(*it, par.patchDef, limDist,
-                                par.patchDef->maxLayers, vertex2elements));
+                                              par.patchDef->maxLayers,
+                                              vertex2elements, element2elements));
   }
 
   // Compute patch connectivity
@@ -163,8 +196,8 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
   std::map<MElement*, std::set<int> > tags;
   std::vector<std::set<int> > patchConnect(primPatches.size());
   for (int iB = 0; iB < primPatches.size(); ++iB) {
-    std::set<MElement*> &patch = primPatches[iB];
-    for(std::set<MElement*>::iterator itEl = patch.begin(); itEl != patch.end(); ++itEl) {
+    elSet &patch = primPatches[iB];
+    for(elSetIter itEl = patch.begin(); itEl != patch.end(); ++itEl) {
       std::set<int> &patchInd = tags[*itEl];
       if (!patchInd.empty() && (badElements.find(*itEl) != badElements.end() ||
                                !par.patchDef->weakMerge)) {
@@ -189,23 +222,22 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
 
   // Merge primary patches according to groups
   Msg::Info("Merging primary patches into %i patches...", groups.size());
-  std::list<std::set<MElement*> > patches;
+  std::list<elSet > patches;
   for (std::list<std::set<int> >::iterator itG = groups.begin();
        itG != groups.end(); ++itG) {
-    patches.push_back(std::set<MElement*>());
+    patches.push_back(elSet());
     for (std::set<int>::iterator itB = itG->begin(); itB != itG->end(); ++itB) {
-      std::set<MElement*> primPatch = primPatches[*itB];
+      elSet primPatch = primPatches[*itB];
       patches.back().insert(primPatch.begin(), primPatch.end());
     }
   }
 
   // Store and compute patch boundaries
   Msg::Info("Computing boundaries for %i patches...", patches.size());
-  std::vector<std::pair<std::set<MElement *>, std::set<MVertex*> > > result;
-  for (std::list<std::set<MElement*> >::iterator itB = patches.begin();
+  std::vector<elSetVertSetPair > result;
+  for (std::list<elSet >::iterator itB = patches.begin();
        itB != patches.end(); ++itB)
-    result.push_back(std::pair<std::set<MElement*>, std::set<MVertex*> >
-                     (*itB, getAllBndVertices(*itB, vertex2elements)));
+    result.push_back(elSetVertSetPair(*itB, getAllBndVertices(*itB, vertex2elements)));
 
   Msg::Info("Generated %i patches", patches.size());
 
@@ -213,15 +245,14 @@ static std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > getConn
 }
 
 
-static void optimizeConnectedPatches
-  (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
-   const std::map<MElement*,GEntity*> &element2entity,
-   std::set<MElement*> &badasses, MeshOptParameters &par)
+void optimizeConnectedPatches(const vertElVecMap &vertex2elements,
+                              const elEntMap &element2entity,
+                              elSet &badasses, MeshOptParameters &par)
 {
   par.success = 1;
 
-  std::vector<std::pair<std::set<MElement*>, std::set<MVertex*> > > toOptimize =
-                              getConnectedPatches(vertex2elements, badasses, par);
+  std::vector<elSetVertSetPair> toOptimize = getConnectedPatches(vertex2elements,
+                                                                 badasses, par);
 
   for (int iPatch = 0; iPatch < toOptimize.size(); ++iPatch) {
 
@@ -229,8 +260,7 @@ static void optimizeConnectedPatches
     if (par.verbose > 1)
       Msg::Info("Optimizing patch %i/%i composed of %i elements", iPatch,
                       toOptimize.size()-1, toOptimize[iPatch].first.size());
-    MeshOpt opt(element2entity, toOptimize[iPatch].first,
-                            toOptimize[iPatch].second, par);
+    MeshOpt opt(element2entity, toOptimize[iPatch].first, toOptimize[iPatch].second, par);
     if (par.verbose > 3) {
       std::ostringstream ossI1;
       ossI1 << "initial_patch-" << iPatch << ".msh";
@@ -257,16 +287,15 @@ static void optimizeConnectedPatches
     //#pragma omp critical
     par.success = std::min(par.success, success);
   }
-
 }
 
 
-static MElement *getWorstElement(std::set<MElement*> &badElts, const MeshOptParameters &par)
+MElement *getWorstElement(elSet &badElts, const MeshOptParameters &par)
 {
   double worst = 1.e300;
   MElement *worstEl = 0;
 
-  for (std::set<MElement*>::iterator it=badElts.begin(); it!=badElts.end(); it++) {
+  for (elSetIter it=badElts.begin(); it!=badElts.end(); it++) {
     const double val = par.patchDef->elBadness(*it);
     if (val < worst) {
       worst = val;
@@ -278,15 +307,16 @@ static MElement *getWorstElement(std::set<MElement*> &badElts, const MeshOptPara
 }
 
 
-static void optimizeOneByOne
-  (const std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
-   const std::map<MElement*,GEntity*> &element2entity,
-   std::set<MElement*> badElts, MeshOptParameters &par)
+void optimizeOneByOne(const vertElVecMap &vertex2elements,
+                      const elEntMap &element2entity,
+                      elSet badElts, MeshOptParameters &par)
 {
   par.success = 1;
 
   const int initNumBadElts = badElts.size();
   if (par.verbose > 0) Msg::Info("%d bad elements, starting to iterate...", initNumBadElts);
+
+  elElSetMap element2elements;                                                                // Element to element connectivity, built progressively
 
   // Loop over bad elements
   for (int iBadEl=0; iBadEl<initNumBadElts; iBadEl++) {
@@ -307,10 +337,10 @@ static void optimizeOneByOne
 
       // Set up patch
       const double limDist = par.patchDef->maxDistance(worstEl);
-      std::set<MElement*> toOptimizePrim = getSurroundingPatch(worstEl, par.patchDef, limDist,
-                                                                    maxLayers, vertex2elements);
-      std::set<MVertex*> toFix = getAllBndVertices(toOptimizePrim, vertex2elements);
-      std::set<MElement*> toOptimize;
+      elSet toOptimizePrim = getSurroundingPatch(worstEl, par.patchDef, limDist,
+                                                 maxLayers, vertex2elements, element2elements);
+      vertSet toFix = getAllBndVertices(toOptimizePrim, vertex2elements);
+      elSet toOptimize;
       std::set_difference(toOptimizePrim.begin(),toOptimizePrim.end(),
                           badElts.begin(),badElts.end(),
                           std::inserter(toOptimize, toOptimize.end()));
@@ -369,9 +399,12 @@ static void optimizeOneByOne
       }
 
     par.success = std::min(par.success, success);
-
   }
 }
+
+
+}
+
 
 #endif
 
@@ -386,9 +419,9 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par)
   std::vector<GEntity*> entities;
   gm->getEntities(entities);
 
-  std::map<MVertex*, std::vector<MElement *> > vertex2elements;
-  std::map<MElement*,GEntity*> element2entity;
-  std::set<MElement*> badElts;
+  vertElVecMap vertex2elements;
+  elEntMap element2entity;
+  elSet badElts;
   for (int iEnt = 0; iEnt < entities.size(); ++iEnt) {
     GEntity* &entity = entities[iEnt];
     if (entity->dim() != par.dim ||
@@ -396,15 +429,9 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par)
     Msg::Info("Computing connectivity and bad elements for entity %d...",
               entity->tag());
     calcVertex2Elements(par.dim,entity,vertex2elements);
-    for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) {       // Detect bad elements
+    for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) {                               // Detect bad elements
       double jmin, jmax;
       MElement *el = entity->getMeshElement(iEl);
-//      if (el->getDim() == par.dim) {
-//        if (par.patchJac.test) {
-//          el->scaledJacRange(jmin, jmax);
-//          if (jmin < par.patchJac.min || jmax > par.patchJac.max) badElts.insert(el);
-//        }
-//      }
       if ((el->getDim() == par.dim) && (par.patchDef->elBadness(el) < 0.)) badElts.insert(el);
     }
   }
@@ -428,9 +455,7 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par)
     Msg::StatusBar(true, "Done optimizing mesh (%g s)", par.CPU);
   }
 
-
 #else
   Msg::Error("Mesh optimizer requires BFGS");
 #endif
-
 }

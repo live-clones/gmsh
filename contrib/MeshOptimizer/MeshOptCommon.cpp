@@ -50,7 +50,7 @@ bool testSegSphereIntersect(SPoint3 A, SPoint3 B, const SPoint3& P, const double
   // For A, separation if projection Q of P on (AB) lies outside the sphere
   const SVector3 AB(A, B);
   const double d = ab - aa, e = dot(AB, AB);
-  const  SVector3 PQ = PA * e - d * AB;
+  const SVector3 PQ = PA * e - d * AB;
   if (dot(PQ, PQ) > rr * e * e) return false;
 
   // Return true (intersection) if no separation at all
@@ -81,12 +81,12 @@ bool testTriSphereIntersect(SPoint3 A, SPoint3 B, SPoint3 C, const SPoint3& P, c
   const SVector3 BC(B, C);
   const double d1 = ab - aa, d2 = bc - bb, d3 = ac - cc;
   const double e1 = dot(AB, AB), e2 = dot(BC, BC), e3 = dot(AC, AC);
-  const  SVector3 PQ1 = PA * e1 - d1 * AB;                                // Q1 projection of P on line (AB)
-  const  SVector3 PQ2 = PB * e2 - d2 * BC;                                // Q2 projection of P on line (BC)
-  const  SVector3 PQ3 = PC * e3 + d3 * AC;                                // Q3 projection of P on line (AC)
-  const  SVector3 PQC = PC * e1 - PQ1;
-  const  SVector3 PQA = PA * e2 - PQ2;
-  const  SVector3 PQB = PB * e3 - PQ3;
+  const SVector3 PQ1 = PA * e1 - d1 * AB;                                 // Q1 projection of P on line (AB)
+  const SVector3 PQ2 = PB * e2 - d2 * BC;                                 // Q2 projection of P on line (BC)
+  const SVector3 PQ3 = PC * e3 + d3 * AC;                                 // Q3 projection of P on line (AC)
+  const SVector3 PQC = PC * e1 - PQ1;
+  const SVector3 PQA = PA * e2 - PQ2;
+  const SVector3 PQB = PB * e3 - PQ3;
   if ((dot(PQ1, PQ1) > rr * e1 * e1) & (dot(PQ1, PQC) > 0)) return false; // For A, separation if Q lies outside the sphere and if P and C
   if ((dot(PQ2, PQ2) > rr * e2 * e2) & (dot(PQ2, PQA) > 0)) return false; // are on opposite sides of plane through AB with normal PQ
   if ((dot(PQ3, PQ3) > rr * e3 * e3) & (dot(PQ3, PQB) > 0)) return false; // Same for other two vertices
@@ -103,31 +103,30 @@ bool testTriSphereIntersect(SPoint3 A, SPoint3 B, SPoint3 C, const SPoint3& P, c
 bool MeshOptPatchDef::testElInDist(const SPoint3 &P, double limDist,
                                    MElement *el) const
 {
-  const double sampleLen = 0.5*limDist;                                   // Distance between sample points
   const double limDistSq = limDist*limDist;
 
   if (el->getDim() == 2) {                                                // 2D?
     for (int iEd = 0; iEd < el->getNumEdges(); iEd++) {                   // Loop over edges of element
-      MEdge ed = el->getEdge(iEd);
-      const SPoint3 A = ed.getVertex(0)->point();
-      const SPoint3 B = ed.getVertex(1)->point();
-      if (testSegSphereIntersect(A, B, P, limDistSq)) {
-        return true;
-      }
+      std::vector<MVertex*> edgeVert;
+      el->getEdgeVertices(iEd, edgeVert);
+      const SPoint3 A = edgeVert[0]->point();
+      const SPoint3 B = edgeVert[1]->point();
+      if (testSegSphereIntersect(A, B, P, limDistSq)) return true;
     }
   }
   else {                                                                  // 3D
     for (int iFace = 0; iFace < el->getNumFaces(); iFace++) {             // Loop over faces of element
-      MFace face = el->getFace(iFace);
-      const SPoint3 A = face.getVertex(0)->point();
-      const SPoint3 B = face.getVertex(1)->point();
-      const SPoint3 C = face.getVertex(2)->point();
-      if (face.getNumVertices() == 3)
-        return testTriSphereIntersect(A, B, C, P, limDistSq);
+      std::vector<MVertex*> faceVert;
+      el->getFaceVertices(iFace, faceVert);
+      const SPoint3 A = faceVert[0]->point();
+      const SPoint3 B = faceVert[1]->point();
+      const SPoint3 C = faceVert[2]->point();
+      if (faceVert.size() == 3)
+        if (testTriSphereIntersect(A, B, C, P, limDistSq)) return true;
       else {
-        const SPoint3 D = face.getVertex(3)->point();
-        return (testTriSphereIntersect(A, B, C, P, limDistSq) ||
-                    testTriSphereIntersect(A, C, D, P, limDistSq));
+        const SPoint3 D = faceVert[3]->point();
+        if (testTriSphereIntersect(A, B, C, P, limDistSq) ||
+            testTriSphereIntersect(A, C, D, P, limDistSq)) return true;
       }
     }
   }
