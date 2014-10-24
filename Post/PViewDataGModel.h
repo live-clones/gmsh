@@ -114,6 +114,7 @@ class stepData{
   }
   Real *getData(int index, bool allocIfNeeded=false, int mult=1)
   {
+    if(index < 0) return 0;
     if(allocIfNeeded){
       if(index >= getNumData()) resizeData(index + 100); // optimize this
       if(!(*_data)[index]){

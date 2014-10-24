@@ -89,6 +89,7 @@ bool PViewDataGModel::readMSH(const std::string &viewName, const std::string &fi
     else{
       if(fscanf(fp, "%d", &num) != 1) return false;
     }
+    if(num < 0) return false;
     int mult = 1;
     if(_type == ElementNodeData || _type == GaussPointData){
       if(binary){
