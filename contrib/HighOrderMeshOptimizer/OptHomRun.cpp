@@ -238,9 +238,10 @@ static bool testElInDist(const SPoint3 p, double limDist, MElement *el)
 
   if (el->getDim() == 2) {                                                // 2D?
     for (int iEd = 0; iEd < el->getNumEdges(); iEd++) {                   // Loop over edges of element
-      MEdge ed = el->getEdge(iEd);
-      const SPoint3 A = ed.getVertex(0)->point();
-      const SPoint3 B = ed.getVertex(1)->point();
+      std::vector<MVertex*> edgeVert;
+      el->getEdgeVertices(iEd, edgeVert);
+      const SPoint3 A = edgeVert[0]->point();
+      const SPoint3 B = edgeVert[1]->point();
       if (testSegSphereIntersect(A, B, p, limDistSq)) {
         return true;
       }
