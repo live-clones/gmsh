@@ -48,7 +48,6 @@
 #if defined(HAVE_BFGS)
 
 typedef std::vector<MElement*> elVec;
-typedef elVec::iterator elVecIter;
 typedef elVec::const_iterator elVecConstIter;
 typedef std::set<MElement*> elSet;
 typedef elSet::iterator elSetIter;
@@ -233,7 +232,6 @@ static bool testTriSphereIntersect(SPoint3 A, SPoint3 B, SPoint3 C,
 // Approximate test of intersection element with circle/sphere by sampling
 static bool testElInDist(const SPoint3 p, double limDist, MElement *el)
 {
-  const double sampleLen = 0.5*limDist;                                   // Distance between sample points
   const double limDistSq = limDist*limDist;
 
   if (el->getDim() == 2) {                                                // 2D?
@@ -242,9 +240,7 @@ static bool testElInDist(const SPoint3 p, double limDist, MElement *el)
       el->getEdgeVertices(iEd, edgeVert);
       const SPoint3 A = edgeVert[0]->point();
       const SPoint3 B = edgeVert[1]->point();
-      if (testSegSphereIntersect(A, B, p, limDistSq)) {
-        return true;
-      }
+      if (testSegSphereIntersect(A, B, p, limDistSq)) return true;
     }
   }
   else {                                                                  // 3D
@@ -255,11 +251,11 @@ static bool testElInDist(const SPoint3 p, double limDist, MElement *el)
       const SPoint3 B = faceVert[1]->point();
       const SPoint3 C = faceVert[2]->point();
       if (faceVert.size() == 3)
-        return testTriSphereIntersect(A, B, C, p, limDistSq);
+        if (testTriSphereIntersect(A, B, C, p, limDistSq)) return true;
       else {
         const SPoint3 D = faceVert[3]->point();
-        return (testTriSphereIntersect(A, B, C, p, limDistSq) ||
-                    testTriSphereIntersect(A, C, D, p, limDistSq));
+        if (testTriSphereIntersect(A, B, C, p, limDistSq) ||
+            testTriSphereIntersect(A, C, D, p, limDistSq)) return true;
       }
     }
   }
@@ -273,12 +269,13 @@ static void getElementNeighbours(MElement *el, const vertElVecMap &v2e,
 {
   elElSetMap::iterator it = e2e.find(el);
   if (it == e2e.end()) {                                                          // If not in e2e, compute and store
+    neighbours.clear();
     for (int i = 0; i < el->getNumPrimaryVertices(); ++i) {
       const elVec &adjEl = v2e.find(el->getVertex(i))->second;
-      neighbours.clear();
-      neighbours.insert(adjEl.begin(), adjEl.end());
-      e2e.insert(std::pair<MElement*, elSet>(el, neighbours));
+      for(elVecConstIter itA = adjEl.begin(); itA != adjEl.end(); itA++)
+        if (*itA != el) neighbours.insert(*itA);
     }
+    e2e.insert(std::pair<MElement*, elSet>(el, neighbours));
   }
   else neighbours = it->second;
 }
