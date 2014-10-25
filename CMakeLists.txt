@@ -460,8 +460,22 @@ if(ENABLE_FLTK)
       execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --includedir
                       OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
       string(STRIP ${FLTK_INCLUDE_DIR} FLTK_INCLUDE_DIR)
-      list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR} ${FLTK_INCLUDE_DIR}/FL/images
-           ${FLTK_INCLUDE_DIR}/jpeg ${FLTK_INCLUDE_DIR}/zlib ${FLTK_INCLUDE_DIR}/png)
+      list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR})
+      # On linux (at least OpenSuSE) the following directories are
+      # not existing (everything is in /usr/include). To avoid warnings
+      # check existance of these directories before adding them
+      if(EXISTS ${FLTK_INCLUDE_DIR}/FL/images)
+        list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR}/FL/images)
+      endif(EXISTS ${FLTK_INCLUDE_DIR}/FL/images)
+      if(EXISTS ${FLTK_INCLUDE_DIR}/jpeg)
+        list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR}/jpeg)
+      endif(EXISTS ${FLTK_INCLUDE_DIR}/jpeg)
+      if(EXISTS ${FLTK_INCLUDE_DIR}/zlib)
+        list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR}/zlib)
+      endif(EXISTS ${FLTK_INCLUDE_DIR}/zlib)
+      if(EXISTS ${FLTK_INCLUDE_DIR}/png)
+        list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR}/png)
+      endif(EXISTS ${FLTK_INCLUDE_DIR}/png)
       execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --ldflags
                       OUTPUT_VARIABLE FLTK_LIBRARIES)
       string(STRIP ${FLTK_LIBRARIES} FLTK_LIBRARIES)
@@ -950,7 +964,11 @@ if(HAVE_SOLVER)
           string(REPLACE "-I" "" PETSC_PACKAGES_INCLUDES ${PETSC_PACKAGES_INCLUDES})
           string(REPLACE " " ";" PETSC_PACKAGES_INCLUDES ${PETSC_PACKAGES_INCLUDES})
           foreach(VAR ${PETSC_PACKAGES_INCLUDES})
-            list(APPEND EXTERNAL_INCLUDES ${VAR})
+            # seem to include unexisting directories (/usr/include/lib64)
+	    # check to avoid warnings
+	    if(EXISTS ${VAR})
+	      list(APPEND EXTERNAL_INCLUDES ${VAR})
+            endif(EXISTS ${VAR})
           endforeach(VAR)
         endif(PETSC_PACKAGES_INCLUDES)
       endif(PETSC_PACKAGES_INCLUDES)
