@@ -69,18 +69,23 @@ class backgroundMesh : public simpleFunction<double>
   static backgroundMesh *current () { return _current; }
   static void setSizeFactor (double s) {sizeFactor = s;}
   void propagate1dMesh(GFace *);
+  void propagateCrossField(GFace *, simpleFunction<double> *);
+  void propagateCrossFieldHJ(GFace *);
   void propagateCrossField(GFace *);
   void propagateCrossFieldByDistance(GFace *);
   void updateSizes(GFace *);
   double operator () (double u, double v, double w) const; // returns mesh size
   bool inDomain (double u, double v, double w) const; // returns true if in domain
   double getAngle(double u, double v, double w) const ; 
+  double getSmoothness(double u, double v, double w)  ; 
+  double getSmoothness(MElement*) ; 
   void print(const std::string &filename, GFace *gf, 
-              const std::map<MVertex*, double>&) const;
-  void print(const std::string &filename, GFace *gf, int choice = 0) const
+	     const std::map<MVertex*, double>&, int smooth = 0) ;
+  void print(const std::string &filename, GFace *gf, int choice = 0) 
   {
     switch(choice) {
     case 0 : print(filename, gf, _sizes); return;
+    case 2 : print(filename, gf, _sizes, 1); return;
     default : print(filename, gf, _angles); return;
     }
   }

@@ -455,14 +455,14 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
                          {1.0, -2.5, 2.0, -0.5},
                          {-0.5, 0.0, 0.5, 0.0},
                          {0.0, 1.0, 0.0, 0.0} };
-  double matbs[4][4] = { {-1.0, 3, -3, 1},
-                         {3, -6, 3.0, 0},
-                         {-3, 0.0, 3, 0.0},
-                         {1, 4, 1, 0.0} };
-  double matbez[4][4] = { {-1.0, 3, -3, 1},
-                          {3, -6, 3.0, 0},
-                          {-3, 3.0, 0, 0.0},
-                          {1, 0, 0, 0.0} };
+  double matbs[4][4] = { {-1, 3, -3, 1},
+                         { 3,-6,  3, 0},
+                         {-3, 0,  3, 0},
+                         { 1, 4,  1, 0} };
+  double matbez[4][4] = { {-1, 3,-3, 1},
+                          { 3,-6, 3, 0},
+                          {-3, 3, 0, 0},
+                          { 1, 0, 0, 0} };
 
   Curve *pC = new Curve;
   pC->Color.type = 0;
@@ -4251,10 +4251,12 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
 
     for(int j = 0; j < List_Nbr(s->EmbeddedCurves) + List_Nbr(s->Generatrices); j++) {
       Curve *cDejaInSurf;
+      //      Msg::Info("hopla1 %d %d %d",j,List_Nbr(s->EmbeddedCurves), List_Nbr(s->Generatrices));
       if (j < s->EmbeddedCurves->n)
         List_Read(s->EmbeddedCurves, j, &cDejaInSurf);
       else
         List_Read(s->Generatrices, j-s->EmbeddedCurves->n, &cDejaInSurf);
+      //      Msg::Info("hopla2 %d",j);
       if (cDejaInSurf->Typ != MSH_SEGM_LINE)
         // compute intersections only avalaible for straight lines
         continue;
@@ -4285,6 +4287,8 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
           List_Read(cToAddInSurf->Control_Points, l, &w1);
           List_Read(cToAddInSurf->Control_Points, l+1, &w2);
 
+	  if (w1 == v1 || w1 == v2 || w2 == v1 || w2 == v2)continue; 
+
           SPoint3 q1 = SPoint3(w1->Pos.X, w1->Pos.Y, w1->Pos.Z);
           SPoint3 q2 = SPoint3(w2->Pos.X, w2->Pos.Y, w2->Pos.Z);
 
@@ -4296,7 +4300,12 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
 
           double x[2];
           int inters = intersection_segments(p3, p4, q3, q4, x);
-
+	  /*
+	   printf("%d %d vs %d %d\n",w1->Num,w2->Num,v1->Num,v2->Num);
+	  printf("%22.15E %22.15E %22.15E -- %22.15E %22.15E %22.15E\n",p3.x(),p3.y(),p3.z(),p4.x(),p4.y(),p4.z());
+	  printf("%22.15E %22.15E %22.15E -- %22.15E %22.15E %22.15E\n",q3.x(),q3.y(),q3.z(),q4.x(),q4.y(),q4.z());
+	  printf("%22.15E %22.15E\n",x[0],x[1]);
+	  */
           if (inters && x[0] != 0. && x[1] != 0. && x[0] != 1. && x[1] != 1.){
             SPoint3 p = SPoint3( (1.-x[0])*p3.x() + x[0]*p4.x(),
                                  (1.-x[0])*p3.y() + x[0]*p4.y(),
@@ -4410,6 +4419,7 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
     }
     List_Add(s->EmbeddedCurves, &cToAddInSurf);
   }
+  //  Msg::Info("coucou2");
 }
 
 void setVolumeEmbeddedSurfaces(Volume *v, List_T *surfaces)

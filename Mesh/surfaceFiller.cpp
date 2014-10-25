@@ -54,6 +54,7 @@ struct surfacePointWithExclusionRegion {
   SPoint2 _q[4];
   SMetric3 _meshMetric;
   double _distanceSummed;
+  double mat1[2][2], mat2[2][2];
   /*
          + p3
     p4   |
@@ -80,6 +81,10 @@ struct surfacePointWithExclusionRegion {
     else {
       _distanceSummed = father->_distanceSummed + distance (father->_v,_v);
     }
+    //test !!!
+    //    const double s = backgroundMesh::current()->getSmoothness(_mp.x(),_mp.y(),0);
+    //    if(s  > 0.02) 
+    //      _distanceSummed = 10000*s;
   }
   bool inExclusionZone (const SPoint2 &p){
     double mat[2][2];
@@ -180,7 +185,7 @@ bool inExclusionZone (SPoint2 &p,
   if (!backgroundMesh::current()->inDomain(p.x(),p.y(),0)) return true;
 
   my_wrapper w (p);
-  double _min[2] = {p.x()-1.e-1, p.y()-1.e-1},_max[2] = {p.x()+1.e-1,p.y()+1.e-1};
+  double _min[2] = {p.x()-1.e-8, p.y()-1.e-8},_max[2] = {p.x()+1.e-8,p.y()+1.e-8};
   rtree.Search(_min,_max,rtree_callback,&w);
 
   return w._tooclose;
@@ -967,7 +972,6 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
   }
 
   //  printf("initially : %d vertices in the domain\n",vertices.size());
-
 
   while(!fifo.empty()){
     //surfacePointWithExclusionRegion & parent = fifo.top();

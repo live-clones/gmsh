@@ -2122,7 +2122,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   {
     /// FIXME FOR PERIODIC : SOME MVERTices SHOULD BE DUPLICATED ...
     /// Still to be done...
-    printf("coucou1\n");
     std::vector<MVertex*> v;
     std::map<MVertex*, BDS_Point*> recoverMapInv;
     for(unsigned int i = 0; i < edgeLoops_BDS.size(); i++){
@@ -2134,7 +2133,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       }
     }
 
-    printf("coucou2 %d verices\n",v.size());
+    //    printf("coucou2 %d verices\n",v.size());
     std::map<MVertex*,SPoint3> pos;
     for(unsigned int i = 0; i < v.size(); i++) {
       MVertex *v0 = v[i];

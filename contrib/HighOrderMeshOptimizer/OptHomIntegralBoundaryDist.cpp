@@ -9,11 +9,13 @@
 
 parametricLineNodalBasis::parametricLineNodalBasis(const nodalBasis &basis,
                                                    const std::vector<SPoint3> &xyz):
-  _basis(basis), _xyz(xyz) {};
+  _basis(basis), _xyz(xyz) , psi(_xyz.size())
+{
+}
+
 
 SPoint3 parametricLineNodalBasis::operator()(double xi) const
 {
-  std::vector<double> psi(_xyz.size());
   SPoint3 p(0, 0, 0);
   _basis.f(-1 + 2 * xi, 0, 0, &psi[0]);
   for (size_t j = 0; j < psi.size(); ++j) {
@@ -245,7 +247,7 @@ double computeBndDistG_(GEdge *edge, std::vector<double> & p, // the model edge
 		       const nodalBasis &basis, const std::vector<SPoint3> &xyz,
 		       const unsigned int NN) // the mesh edge
 {
-  const unsigned int N = 256;
+  const unsigned int N = 200;
   std::vector<int> o;
   o.push_back(0);
   for (unsigned int i=2; i < p.size();i++)o.push_back(i);
@@ -298,15 +300,15 @@ double computeBndDistG(GEdge *edge, std::vector<double> & p, // the model edge
 		       const nodalBasis &basis, const std::vector<SPoint3> &xyz,
 		       double tolerance) // the mesh edge
 {
-  int N = 4;
+  int N = 5;
   double d = computeBndDistG_(edge, p, basis, xyz, N);
 
-  //    printf("GO !!\n");
+  //  printf("GO !!\n");
   while (1){
     N *= 2;
     double dp = computeBndDistG_(edge, p, basis, xyz, N);
-    //        printf("%12.5E %12.5E %12.5E %12.5E\n",d,dp,fabs(d - dp),tolerance);
-    if (fabs(d - dp) < tolerance) // Richardson with assumed linear convergence ...
+    //    printf("N %d %12.5E %12.5E %12.5E %12.5E\n",N,d,dp,fabs(d - dp),tolerance);
+    if (fabs(d - dp) < tolerance*(d+dp)) // Richardson with assumed linear convergence ...
       return dp;
     d = dp;
   }
@@ -362,7 +364,7 @@ double computeDeviationOfTangents(GEdge *edge,
   //  parametricLineGEdge l1 = parametricLineGEdge(edge,p[0],p[p.size()-1]);
   parametricLineNodalBasis l2 = parametricLineNodalBasis(basis, xyz);
   double  deviation = 0;
-  double ddeviation = 0;
+  //  double ddeviation = 0;
   std::vector<int> o;
   o.push_back(0);
   for (unsigned int i=2; i < p.size();i++)o.push_back(i);
@@ -373,27 +375,27 @@ double computeDeviationOfTangents(GEdge *edge,
   for (unsigned int i=0; i<p.size();i++){
     const double u = basis.points(o[i],0);
     SVector3 xp = edge->firstDer (p[o[i]]);
-    SVector3 xpp = edge->secondDer (p[o[i]]);
-    const double nxp = xp.norm();
-    const double onxp = 1./nxp;
-    SVector3 c = (onxp*onxp*onxp)*(xpp*nxp-xp*dot(xp,xpp)*onxp);
+    //    SVector3 xpp = edge->secondDer (p[o[i]]);
+    //    const double nxp = xp.norm();
+    //    const double onxp = 1./nxp;
+    //    SVector3 c = (onxp*onxp*onxp)*(xpp*nxp-xp*dot(xp,xpp)*onxp);
 
     SVector3 t_mesh_edge  = l2.derivative(0.5*(1+u));
-    SVector3 c2  = l2.curvature(0.5*(1+u));
+    //    SVector3 c2  = l2.curvature(0.5*(1+u));
     //    GPoint p0 = edge->point(p[o[i]]);
     //    SPoint3 p1 = l2 (0.5*(1+u));
     //    printf("%g = %g %g vs %g %g\n",u,p0.x(),p0.y(),p1.x(),p1.y());
     xp.normalize();
     t_mesh_edge.normalize();
     SVector3 diff1 = (dot(xp, t_mesh_edge) > 0) ? xp -  t_mesh_edge : xp +  t_mesh_edge;
-    SVector3 diff2 = (dot(c, c2) > 0) ? c -  c2 : c +  c2;
+    //    SVector3 diff2 = (dot(c, c2) > 0) ? c -  c2 : c +  c2;
     //printf("%g %g %g vs %g %g %g diff %g %g %g\n",c.x(),c.y(),c.z(),c2.x(),c2.y(),c2.z(),diff2.x(),diff2.y(),diff2.z());
     //    printf("%g %g %g vs %g %g %g val %g\n",t_model_edge.x(),t_model_edge.y(),t_model_edge.z(),
     //	   t_mesh_edge.x(),t_mesh_edge.y(),t_mesh_edge.z(),c.norm());
     //     deviation = std::max(diff1.norm(),deviation);
     //    ddeviation = std::max(diff2.norm(),ddeviation);
      deviation += diff1.norm();
-    ddeviation += diff2.norm();
+     //    ddeviation += diff2.norm();
   }
   const double h =  dx.norm();
   //  printf ("%g %g\n",deviation * h,ddeviation * h * h * 0.5);

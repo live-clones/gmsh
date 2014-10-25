@@ -23,7 +23,7 @@ static void writeElementsINP(FILE *fp, GEntity *ge, std::vector<T*> &elements,
     if(typ){
       const char *str = (ge->dim() == 3) ? "Volume" : (ge->dim() == 2) ?
         "Surface" : (ge->dim() == 1) ? "Line" : "Point";
-      fprintf(fp, "*Element, type=%s, ELSET=%s%d\n", typ, str, ge->tag());
+      fprintf(fp, "*ELEMENT, type=%s, ELSET=%s%d\n", typ, str, ge->tag());
       for(unsigned int i = 0; i < elements.size(); i++)
         elements[i]->writeINP(fp, elements[i]->getNum());
     }
@@ -62,11 +62,12 @@ int GModel::writeINP(const std::string &name, bool saveAll, bool saveGroupsOfNod
   fprintf(fp, "*Heading\n");
   fprintf(fp, " %s\n", name.c_str());
 
-  fprintf(fp, "*Node\n");
+  fprintf(fp, "*NODE\n");
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeINP(fp, scalingFactor);
 
+  fprintf(fp, "******* E L E M E N T S *************\n");
   for(viter it = firstVertex(); it != lastVertex(); ++it){
     writeElementsINP(fp, *it, (*it)->points, saveAll);
   }

@@ -13,6 +13,6 @@ EndIf
 
 Mesh.CharacteristicLengthFactor = 0.3*1.*0.5*2*0.6;
 Mesh.Smoothing = 5;
-Mesh.Algorithm = 1;
+//Mesh.Algorithm = 1;
 
 Coherence;

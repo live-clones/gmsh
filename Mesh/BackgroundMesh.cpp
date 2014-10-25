@@ -509,7 +509,8 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
       else newv = it->second;
       news[j] = newv;
     }
-    _triangles.push_back(new MTriangle(news[0],news[1],news[2]));
+    MTriangle *T2D = new MTriangle(news[0],news[1],news[2]);
+    _triangles.push_back(T2D);
   }
 
 #if defined(HAVE_ANN)
@@ -569,8 +570,9 @@ backgroundMesh::~backgroundMesh()
 }
 
 static void propagateValuesOnFace(GFace *_gf,
-    std::map<MVertex*,double> &dirichlet,
-    bool in_parametric_plane = false)
+                                  std::map<MVertex*,double> &dirichlet,
+				  simpleFunction<double> *ONE,
+				  bool in_parametric_plane = false)
 {
 #if defined(HAVE_SOLVER)
   linearSystem<double> *_lsys = 0;
@@ -616,8 +618,7 @@ static void propagateValuesOnFace(GFace *_gf,
     myAssembler.numberVertex(*it, 0, 1);
 
   // Assemble
-  simpleFunction<double> ONE(1.0);
-  laplaceTerm l(0, 1, &ONE);
+  laplaceTerm l(0, 1, ONE);
   for (unsigned int k = 0; k < _gf->triangles.size(); k++){
     MTriangle *t = _gf->triangles[k];
     SElement se(t);
@@ -670,10 +671,11 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
           }
         }
       }
-    }
+    }  
   }
 
-  propagateValuesOnFace(_gf, sizes);
+  simpleFunction<double> ONE(1.0);
+  propagateValuesOnFace(_gf, sizes,&ONE);
 
   std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
@@ -771,10 +773,93 @@ inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d){
   return atan2 (sinTheta,cosTheta);
 }
 
+// smoothness = h * (|grad (cos 4 a)| + |grad (sin 4 a)|) 
+// smoothness is of order 1 if not smooth
+// smoothness is of order h/L if smooth
+// h --> mesh size
+// L --> domain size
+double backgroundMesh::getSmoothness(MElement *e) 
+{
+  MVertex *v0 = _3Dto2D[e->getVertex(0)];
+  MVertex *v1 = _3Dto2D[e->getVertex(1)];
+  MVertex *v2 = _3Dto2D[e->getVertex(2)];
+  std::map<MVertex*,double> :: const_iterator i0 = _angles.find (v0);
+  std::map<MVertex*,double> :: const_iterator i1 = _angles.find (v1);
+  std::map<MVertex*,double> :: const_iterator i2 = _angles.find (v2);
+  double a[3] = {cos(4*i0->second),cos(4*i1->second),cos(4*i2->second)}; 
+  double b[3] = {sin(4*i0->second),sin(4*i1->second),sin(4*i2->second)}; 
+  //      printf("coucou\n");
+  double f[3];
+  e->interpolateGrad(a,0,0,0,f);      
+  const double gradcos = sqrt (f[0]*f[0]+f[1]*f[1]+f[2]*f[2]);
+  e->interpolateGrad(b,0,0,0,f);      
+  const double gradsin = sqrt (f[0]*f[0]+f[1]*f[1]+f[2]*f[2]);
+  const double h = e->maxEdge();
+  return (gradcos /*+ gradsin*/) * h;
+}
+
+double backgroundMesh::getSmoothness(double u, double v, double w)
+{
+  MElement *e = _octree->find(u, v, w, 2, true);
+  if (!e) return -1.0;
+  MVertex *v0 = e->getVertex(0);
+  MVertex *v1 = e->getVertex(1);
+  MVertex *v2 = e->getVertex(2);
+  std::map<MVertex*,double> :: const_iterator i0 = _angles.find (v0);
+  std::map<MVertex*,double> :: const_iterator i1 = _angles.find (v1);
+  std::map<MVertex*,double> :: const_iterator i2 = _angles.find (v2);
+  double a[3] = {cos(4*i0->second),cos(4*i1->second),cos(4*i2->second)}; 
+  double b[3] = {sin(4*i0->second),sin(4*i1->second),sin(4*i2->second)}; 
+  //      printf("coucou\n");
+  double f[3];
+  e->interpolateGrad(a,0,0,0,f);      
+  const double gradcos = sqrt (f[0]*f[0]+f[1]*f[1]+f[2]*f[2]);
+  e->interpolateGrad(b,0,0,0,f);      
+  const double gradsin = sqrt (f[0]*f[0]+f[1]*f[1]+f[2]*f[2]);
+  const double h = e->maxEdge();
+  return (gradcos /*+ gradsin*/) * h;
+}
 
 void backgroundMesh::propagateCrossField(GFace *_gf)
 {
+  //  printf("coucou\n");
+  propagateCrossFieldHJ (_gf);
+  // solve the non liear problem
+  constantPerElement<double> C;
+  int ITER = 0;
+  //  int NSMOOTH =  _gf->triangles.size();
+  while(0){
+    //    int NSMOOTH_NOW = 0;
+    for (unsigned int i = 0; i < _gf->triangles.size(); i++){
+      double smoothness = getSmoothness (_gf->triangles[i]);
+      double val = smoothness < .5 ? 1.0 : 1.e-3 ;//exp(-absf/10);      
+      C.set(_gf->triangles[i],val);
+    }
+    //    if (NSMOOTH_NOW == NSMOOTH) break;
+    //    NSMOOTH = NSMOOTH_NOW;
+    //    break;
+    _angles.clear();
+    propagateCrossField (_gf,&C);
+    if (++ITER > 0)break;
+  }
+  //  printf("converged in %d iterations\n",ITER);
+  char name[256];
+  sprintf(name,"cross-%d-%d.pos",_gf->tag(),ITER);
+  print(name,0,1);
+  sprintf(name,"smooth-%d-%d.pos",_gf->tag(),ITER);
+  print(name,_gf,2);
 
+
+}
+
+void backgroundMesh::propagateCrossFieldHJ(GFace *_gf)
+{
+  simpleFunction<double> ONE(1.0);
+  propagateCrossField (_gf, &ONE);
+
+}
+void backgroundMesh::propagateCrossField(GFace *_gf, simpleFunction<double> *ONE)
+{
   std::map<MVertex*,double> _cosines4,_sines4;
 
   std::list<GEdge*> e;
@@ -816,8 +901,8 @@ void backgroundMesh::propagateCrossField(GFace *_gf)
     }
   }
 
-  propagateValuesOnFace(_gf,_cosines4,false);
-  propagateValuesOnFace(_gf,_sines4,false);
+  propagateValuesOnFace(_gf,_cosines4,ONE,false);
+  propagateValuesOnFace(_gf,_sines4,ONE,false);
 
   std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
@@ -863,7 +948,7 @@ void backgroundMesh::updateSizes(GFace *_gf)
     }
   }
   const double _beta = 1.3;
-  for (int i=0;i<0;i++){
+  for (int i=0;i<3;i++){
     std::set<MEdge,Less_Edge>::iterator it = edges.begin();
     for ( ; it != edges.end(); ++it){
       MVertex *v0 = it->getVertex(0);
@@ -980,32 +1065,45 @@ double backgroundMesh::getAngle(double u, double v, double w) const
 }
 
 void backgroundMesh::print(const std::string &filename, GFace *gf,
-    const std::map<MVertex*,double> &_whatToPrint) const
+                           const std::map<MVertex*,double> &_whatToPrint, int smooth) 
 {
   FILE *f = Fopen (filename.c_str(),"w");
   fprintf(f,"View \"Background Mesh\"{\n");
-  for(unsigned int i=0;i<_triangles.size();i++){
-    MVertex *v1 = _triangles[i]->getVertex(0);
-    MVertex *v2 = _triangles[i]->getVertex(1);
-    MVertex *v3 = _triangles[i]->getVertex(2);
-    std::map<MVertex*,double>::const_iterator itv1 = _whatToPrint.find(v1);
-    std::map<MVertex*,double>::const_iterator itv2 = _whatToPrint.find(v2);
-    std::map<MVertex*,double>::const_iterator itv3 = _whatToPrint.find(v3);
-    if (!gf){
+  if (smooth){
+    for(unsigned int i=0;i<gf->triangles.size();i++){
+      MVertex *v1 = gf->triangles[i]->getVertex(0);
+      MVertex *v2 = gf->triangles[i]->getVertex(1);
+      MVertex *v3 = gf->triangles[i]->getVertex(2);
+      double x = getSmoothness (gf->triangles[i]);
       fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
-          v1->x(),v1->y(),v1->z(),
-          v2->x(),v2->y(),v2->z(),
-          v3->x(),v3->y(),v3->z(),itv1->second,itv2->second,itv3->second);
+	      v1->x(),v1->y(),v1->z(),
+	      v2->x(),v2->y(),v2->z(),
+	      v3->x(),v3->y(),v3->z(),x,x,x);
     }
-    else {
-
-      GPoint p1 = gf->point(SPoint2(v1->x(),v1->y()));
-      GPoint p2 = gf->point(SPoint2(v2->x(),v2->y()));
-      GPoint p3 = gf->point(SPoint2(v3->x(),v3->y()));
-      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
-          p1.x(),p1.y(),p1.z(),
-          p2.x(),p2.y(),p2.z(),
-          p3.x(),p3.y(),p3.z(),itv1->second,itv2->second,itv3->second);
+  }
+  else {
+    for(unsigned int i=0;i<_triangles.size();i++){
+      MVertex *v1 = _triangles[i]->getVertex(0);
+      MVertex *v2 = _triangles[i]->getVertex(1);
+      MVertex *v3 = _triangles[i]->getVertex(2);
+      std::map<MVertex*,double>::const_iterator itv1 = _whatToPrint.find(v1);
+      std::map<MVertex*,double>::const_iterator itv2 = _whatToPrint.find(v2);
+      std::map<MVertex*,double>::const_iterator itv3 = _whatToPrint.find(v3);
+      if (!gf){
+	fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
+		v1->x(),v1->y(),v1->z(),
+		v2->x(),v2->y(),v2->z(),
+		v3->x(),v3->y(),v3->z(),itv1->second,itv2->second,itv3->second);
+      }
+      else {      
+	GPoint p1 = gf->point(SPoint2(v1->x(),v1->y()));
+	GPoint p2 = gf->point(SPoint2(v2->x(),v2->y()));
+	GPoint p3 = gf->point(SPoint2(v3->x(),v3->y()));
+	fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
+		p1.x(),p1.y(),p1.z(),
+		p2.x(),p2.y(),p2.z(),
+		p3.x(),p3.y(),p3.z(),itv1->second,itv2->second,itv3->second);
+      }
     }
   }
   fprintf(f,"};\n");

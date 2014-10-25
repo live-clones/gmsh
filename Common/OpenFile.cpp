@@ -503,14 +503,13 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
   Msg::ImportPhysicalsAsOnelabRegions();
 
   if(!status) Msg::Error("Error loading '%s'", fileName.c_str());
-  Msg::StatusBar(true, "Done reading '%s'", fileName.c_str());
+  Msg::StatusBar(true, "Done reading '%s'", fileName.c_str());  
 
   CTX::instance()->fileread = true;
 
   // merge the associated option file if there is one
   if(!StatFile(fileName + ".opt"))
     MergeFile(fileName + ".opt");
-
   return status;
 }
 

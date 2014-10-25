@@ -230,6 +230,8 @@ static bool testTriSphereIntersect(SPoint3 A, SPoint3 B, SPoint3 C,
 }
 
 // Approximate test of intersection element with circle/sphere by sampling
+// This function takes 99% of the CPU !!
+
 static bool testElInDist(const SPoint3 p, double limDist, MElement *el)
 {
   const double limDistSq = limDist*limDist;
@@ -451,11 +453,11 @@ static void optimizeConnectedBlobs(const vertElVecMap &vertex2elements,
     if (temp.mesh.nPC() == 0)
       Msg::Info("Blob %i has no degree of freedom, skipping", i+1);
     else
-      success = temp.optimize(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN,
+      success = temp.optimize_inhouse(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN,
                               p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax, p.discrTolerance);
     if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
       Msg::Info("Jacobian optimization succeed, starting svd optimization");
-      success = temp.optimize(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN_METRIC, p.BARRIER_MAX,
+      success = temp.optimize_inhouse(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN_METRIC, p.BARRIER_MAX,
                               true, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,p.discrTolerance);
     }
     double minJac, maxJac, distMaxBND, distAvgBND;
@@ -537,11 +539,11 @@ static void optimizeOneByOne
       std::ostringstream ossI1;
       ossI1 << "initial_blob-" << iBadEl << ".msh";
       opt->mesh.writeMSH(ossI1.str().c_str());
-      success = opt->optimize(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN,
+      success = opt->optimize_inhouse(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN,
                               p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,p.discrTolerance);
       if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
         Msg::Info("Jacobian optimization succeed, starting svd optimization");
-        success = opt->optimize(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN_METRIC,
+        success = opt->optimize_inhouse(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN_METRIC,
                                 p.BARRIER_MAX, true, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,p.discrTolerance);
       }
 
@@ -581,6 +583,13 @@ static void optimizeOneByOne
 #endif
 
 #include "OptHomIntegralBoundaryDist.h"
+
+double ComputeDistanceToGeometry (GModel* gm)
+{
+  return distanceToGeometry(gm);
+}
+
+
 double ComputeDistanceToGeometry (GEntity *ge , int distanceDefinition, double tolerance)
 {
   double maxd = 0.0;
@@ -598,7 +607,8 @@ double ComputeDistanceToGeometry (GEntity *ge , int distanceDefinition, double t
       }
     }
   }
-  if (distanceDefinition == 2 && NUM) return sum / (double)NUM;
+  if (distanceDefinition == 2) return sum;
+  if (distanceDefinition == 6) return sum;
   return maxd;
 }
 
@@ -619,6 +629,10 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
   std::map<MElement*,GEntity*> element2entity;
   elSet badasses;
   double maxdist = 0.;                                                  // TODO: To be cleaned?
+
+  std::map<MElement*,double> distances;
+  distanceFromElementsToGeometry(gm, p.dim,distances);
+
   for (int iEnt = 0; iEnt < entities.size(); ++iEnt) {
     GEntity* &entity = entities[iEnt];
     if (entity->dim() != p.dim || (p.onlyVisible && !entity->getVisibility())) continue;
@@ -630,8 +644,12 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
       double jmin, jmax;
       MElement *el = entity->getMeshElement(iEl);
       if (el->getDim() == p.dim) {
+	// FIXME TEST
+	//        badasses.insert(el);
         if (p.optCAD) {
-          const double DISTE =computeBndDist(el,2,fabs(p.discrTolerance));
+	  //          const double DISTE =computeBndDist(el,2,fabs(p.discrTolerance));
+	  const double DISTE =distances[el];
+	  //	  if (DISTE > 0)printf("El %d dist %12.5E vs %12.5E\n",iEl,DISTE,p.optCADDistMax);
           maxdist = std::max(DISTE, maxdist);
           if (DISTE > p.optCADDistMax) badasses.insert(el);
         }

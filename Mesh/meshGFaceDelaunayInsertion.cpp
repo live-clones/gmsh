@@ -1737,13 +1737,14 @@ void bowyerWatsonParallelograms(GFace *gf,
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
   Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
-  std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
+  //std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
+  SortHilbert(packed);
 
   //  printf("staring to insert points\n");
   N_GLOBAL_SEARCH = 0;
   N_SEARCH = 0;
   DT_INSERT_VERTEX = 0;
-  // double t1 = Cpu();
+   double t1 = Cpu();
   MTri3 *oneNewTriangle = 0;
   for (unsigned int i=0;i<packed.size();){
     MTri3 *worst = *AllTris.begin();
@@ -1784,9 +1785,9 @@ void bowyerWatsonParallelograms(GFace *gf,
 
   }
   //  printf("%d vertices \n",(int)packed.size());
-  //clock_t t2 = clock();
-  //double DT = (double)(t2-t1)/CLOCKS_PER_SEC;
-  //if (packed.size())printf("points inserted DT %12.5E points per minut : %12.5E %d global searchs %d seachs per insertion\n",DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
+  clock_t t2 = clock();
+  double DT = (double)(t2-t1)/CLOCKS_PER_SEC;
+  if (packed.size())printf("points inserted DT %12.5E points per minut : %12.5E %d global searchs %d seachs per insertion\n",DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
   transferDataStructure(gf, AllTris, DATA);
   backgroundMesh::unset();
 #if defined(HAVE_ANN)

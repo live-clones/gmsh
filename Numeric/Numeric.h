@@ -9,6 +9,7 @@
 #include <math.h>
 #include <vector>
 #include "fullMatrix.h"
+#include "SPoint2.h"
 #include "SPoint3.h"
 #include "SVector3.h"
 
@@ -108,8 +109,6 @@ double ComputeScalarRep(int numComp, double *val);
 void invert_singular_matrix3x3(double MM[3][3], double II[3][3]);
 bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
                fullVector<double> &x, void *data, double relax=1., double tolx=1.e-6);
-double minimize_grad_fd(double (*func)(fullVector<double> &, void *),
-                        fullVector<double> &x, void *data);
 
 void signedDistancePointTriangle(const SPoint3 &p1,const SPoint3 &p2, const SPoint3 &p3,
 				 const SPoint3 &p, double &d, SPoint3 &closePt);
@@ -155,6 +154,9 @@ void signedDistancesPointsEllipseLine (std::vector<double>&distances,
 
 int intersection_segments (const SPoint3 &p1, const SPoint3 &p2,
 			   const SPoint3 &q1, const SPoint3 &q2,
+			   double x[2]);
+int intersection_segments (const SPoint2 &p1, const SPoint2 &p2,
+			   const SPoint2 &q1, const SPoint2 &q2,
 			   double x[2]);
 
 //tools for projection onto plane

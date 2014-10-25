@@ -3632,11 +3632,12 @@ void recombineIntoQuads(GFace *gf,
 	std::set<MEdge,Less_Edge> prioritory;
 	double exbad = -100;
         while(1){
-	  //          int maxCavitySize = CTX::instance()->mesh.bunin;
+	  //	  int maxCavitySize = CTX::instance()->mesh.bunin;
 	  //	  optistatus[0] = (ITERB == 1) ?splitFlatQuads(gf, .01, prioritory) : 0;
           //optistatus[1] =
 	  removeTwoQuadsNodes(gf);
-	  //optistatus[4] = _defectsRemovalBunin(gf,36);
+	  //optistatus[4] = 
+	  //	  _defectsRemovalBunin(gf,maxCavitySize);
 	  //optistatus[2] =
 	  removeDiamonds(gf) ;
 	  if(haveParam)laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);

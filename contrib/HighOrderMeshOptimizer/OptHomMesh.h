@@ -37,6 +37,8 @@
 #include "MVertex.h"
 #include "ParamCoord.h"
 #include "polynomialBasis.h"
+#include "simpleFunction.h"
+#include "approximationError.h"
 
 class Mesh
 {
@@ -54,7 +56,9 @@ public:
   inline int nPCEl(int iEl) { return _indPCEl[iEl].size(); }
   inline const int &indPCEl(int iEl, int iPC) { return _indPCEl[iEl][iPC]; }
   inline const int &nBezEl(int iEl) { return _nBezEl[iEl]; }
+  int getFreeVertexStartIndex(MVertex* vert);
 
+  void approximationErrorAndGradients(int iEl, double &f, std::vector<double> &gradF, double eps, simpleFunction<double> &fct);
   void metricMinAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);
   void scaledJacAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);
   bool bndDistAndGradients(int iEl, double &f , std::vector<double> &gradF, double eps);
@@ -73,6 +77,11 @@ public:
   void elInSize(std::vector<double> &s);
 
   void updateGEntityPositions();
+  void updateGEntityPositions(const std::vector<SPoint3> &xyz,
+			      const std::vector<SPoint3> &uvw);
+
+  void getGEntityPositions(std::vector<SPoint3> &xyz,
+			   std::vector<SPoint3> &uvw) ;
   void writeMSH(const char *filename);
 
 private:
@@ -81,6 +90,8 @@ private:
   int _nPC;
   // Use fast Jacobian estimation?
   bool _fastJacEval;
+  // Free vertex id numbers
+  std::map<MVertex*,int> _startPC4FV;
   // List of elements
   std::vector<MElement*> _el;
   // Normals to 2D elements for Jacobian regularization and scaling
@@ -130,7 +141,13 @@ private:
   {
     return indJB3DBase(_nNodEl[iEl],l,i,j,m);
   }
+public: 
+  double approximationErr(int iEl, simpleFunction<double> &f)
+  {
+    return approximationError (f, _el[iEl]);
+  }
 };
+
 
 double Mesh::distSq(int iFV)
 {

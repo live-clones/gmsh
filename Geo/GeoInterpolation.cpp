@@ -12,6 +12,45 @@
 
 #define SQU(a)      ((a)*(a))
 
+// Cubic spline : 
+
+static void InterpolateBezier(Vertex *v[4], double t, Vertex &V)
+{
+  V.lc = (1 - t) * v[1]->lc + t * v[2]->lc;
+  V.w = (1 - t) * v[1]->w + t * v[2]->w;
+  const double tt = 1.-t;
+  const double s[4] = {tt*tt*tt, 3*t*tt*tt,3*t*t*tt,t*t*t};
+  V.Pos.X = s[0]*v[0]->Pos.X+s[1]*v[1]->Pos.X+s[2]*v[2]->Pos.X+s[3]*v[3]->Pos.X;
+  V.Pos.Y = s[0]*v[0]->Pos.Y+s[1]*v[1]->Pos.Y+s[2]*v[2]->Pos.Y+s[3]*v[3]->Pos.Y;
+  V.Pos.Z = s[0]*v[0]->Pos.Z+s[1]*v[1]->Pos.Z+s[2]*v[2]->Pos.Z+s[3]*v[3]->Pos.Z;
+}
+
+static Vertex InterpolateCubicSpline(Vertex *v[4], double t)
+{
+  Vertex V;
+  V.lc = (1 - t) * v[1]->lc + t * v[2]->lc;
+  V.w = (1 - t) * v[1]->w + t * v[2]->w;
+  const double tt = 1.-t;
+  const double  t3 = t*t*t;
+  const double s[4] = {tt*tt*tt, 3*t3-6*t*t+4,-3*t3+3*t*t+3*t+1,t3};
+  V.Pos.X = (s[0]*v[0]->Pos.X+s[1]*v[1]->Pos.X+s[2]*v[2]->Pos.X+s[3]*v[3]->Pos.X)/6.0;
+  V.Pos.Y = (s[0]*v[0]->Pos.Y+s[1]*v[1]->Pos.Y+s[2]*v[2]->Pos.Y+s[3]*v[3]->Pos.Y)/6.0;
+  V.Pos.Z = (s[0]*v[0]->Pos.Z+s[1]*v[1]->Pos.Z+s[2]*v[2]->Pos.Z+s[3]*v[3]->Pos.Z)/6.0;
+  return V;
+}
+
+static void InterpolateCatmullRom(Vertex *v[4], double t, Vertex &V)
+{
+  V.lc = (1 - t) * v[1]->lc + t * v[2]->lc;
+  V.w = (1 - t) * v[1]->w + t * v[2]->w;
+  const double t2 = t*t;
+  const double  t3 = t*t*t;
+  const double s[4] = {-.5*t3+t2-.5*t, 1.5*t3-2.5*t2+1,-1.5*t3+2*t2+.5*t,0.5*t3-0.5*t2};
+  V.Pos.X = s[0]*v[0]->Pos.X+s[1]*v[1]->Pos.X+s[2]*v[2]->Pos.X+s[3]*v[3]->Pos.X;
+  V.Pos.Y = s[0]*v[0]->Pos.Y+s[1]*v[1]->Pos.Y+s[2]*v[2]->Pos.Y+s[3]*v[3]->Pos.Y;
+  V.Pos.Z = s[0]*v[0]->Pos.Z+s[1]*v[1]->Pos.Z+s[2]*v[2]->Pos.Z+s[3]*v[3]->Pos.Z;
+}
+
 static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
                                      int derivee, double t1, double t2)
 {
@@ -198,8 +237,9 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
     V.Pos.Z = pt.z();
     return V;
   }
-  else
-    return InterpolateCubicSpline(v, t, Curve->mat, derivee, t1, t2);
+  else    
+    //    return InterpolateCubicSpline(v, t, Curve->mat, derivee, t1, t2);
+    return InterpolateCubicSpline(v, t);
 }
 
 // Non Uniform BSplines
@@ -448,8 +488,9 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
       V.Pos.Y = pt.y();
       V.Pos.Z = pt.z();
     }
-    else
-      V = InterpolateCubicSpline(v, t, c->mat, 0, t1, t2);
+    else  
+      InterpolateCatmullRom(v, t, V);
+	//      V = InterpolateCubicSpline(v, t, c->mat, 0, t1, t2);
     break;
 
   case MSH_SEGM_BND_LAYER:

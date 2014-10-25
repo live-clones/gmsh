@@ -48,3 +48,4 @@ Plane Surface (20) = {10,11:(10+K)};
 
 //Physical Surface (30) = {20};
 
+Recombine Surface {20};

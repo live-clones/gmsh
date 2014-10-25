@@ -1,3 +1,4 @@
+//Mesh.RecombinationAlgorithm = 2;
 Point(1) = {0.0325, -0.13, 0, 0.0005};
 Point(2) = {0.0375, -0.13, 0, 0.0005};
 Point(3) = {0.0375, -0.09, 0, 0.0005};
@@ -186,3 +187,5 @@ Physical Surface (1002) = {6, 18, 30};
 Physical Surface (1003) = {12, 24, 36};
 Physical Surface (1004) = {111};
 Physical Surface (1005) = {48, 49};
+Recombine Surface {111};
+Recombine Surface {61, 6, 12, 18, 24, 30, 36, 48, 49, 55, 67, 73, 79, 85, 91, 97, 103, 109, 111};

@@ -153,6 +153,17 @@ void Mesh::calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2enti
 
 }
 
+int Mesh::getFreeVertexStartIndex(MVertex* vert)
+{
+  std::map<MVertex*,int>::iterator itVert = _startPC4FV.find(vert);
+  if (itVert == _startPC4FV.end()) {
+    //    Msg::Fatal("OptHOM Error : cannot find free vertex %d class %d %d (%d free vertices)",vert->getNum(),vert->onWhat()->tag(),vert->onWhat()->dim(),_freeVert.size());
+    return -1;
+  }  
+  return itVert->second;    
+}
+
+
 int Mesh::addVert(MVertex* vert)
 {
   std::vector<MVertex*>::iterator itVert = find(_vert.begin(),_vert.end(),vert);
@@ -172,6 +183,7 @@ int Mesh::addFreeVert(MVertex* vert, const int iV, const int nPCV,
   if (itVert == _freeVert.end()) {
     const int iStart = (_startPCFV.size() == 0)? 0 : _startPCFV.back()+_nPCFV.back();
     const bool forcedV = (vert->onWhat()->dim() < 2) || (toFix.find(vert) != toFix.end());
+    _startPC4FV[vert] = iStart;
     _freeVert.push_back(vert);
     _paramFV.push_back(param);
     _fv2V.push_back(iV);
@@ -230,12 +242,41 @@ void Mesh::elInSize(std::vector<double> &s)
     s[iEl] = fabs(_el[iEl]->getInnerRadius());
 }
 
-void Mesh::updateGEntityPositions()
+void Mesh::getGEntityPositions(std::vector<SPoint3> &xyz,
+			       std::vector<SPoint3> &uvw) 
+{
+  xyz.resize(nVert());
+  uvw.resize(nFV());
+  for (int iV = 0; iV < nVert(); iV++)
+    xyz[iV] = SPoint3(_vert[iV]->x(),_vert[iV]->y(),_vert[iV]->z());
+  for (int iFV = 0; iFV < nFV(); iFV++){
+    MVertex *v = _freeVert[iFV];
+    if (v->onWhat()->dim() == 1){
+      double t;
+      v->getParameter(0,t);
+      uvw[iFV] = SPoint3(t,0,0);
+    }
+    if (v->onWhat()->dim() == 2){
+      double uu,vv;
+      v->getParameter(0,uu);
+      v->getParameter(1,vv);
+      uvw[iFV] = SPoint3(uu,vv,0);
+    }
+  }
+}
+
+void Mesh::updateGEntityPositions(const std::vector<SPoint3> &xyz,
+				  const std::vector<SPoint3> &uvw)
 {
   for (int iV = 0; iV < nVert(); iV++)
-    _vert[iV]->setXYZ(_xyz[iV].x(),_xyz[iV].y(),_xyz[iV].z());
+    _vert[iV]->setXYZ(xyz[iV].x(),xyz[iV].y(),xyz[iV].z());
   for (int iFV = 0; iFV < nFV(); iFV++)
-    _paramFV[iFV]->exportParamCoord(_uvw[iFV]);
+      _paramFV[iFV]->exportParamCoord(uvw[iFV]);
+}
+
+void Mesh::updateGEntityPositions()
+{
+  updateGEntityPositions(_xyz,_uvw);
 }
 
 void Mesh::metricMinAndGradients(int iEl, std::vector<double> &lambda,
@@ -294,6 +335,70 @@ void Mesh::metricMinAndGradients(int iEl, std::vector<double> &lambda,
   }
 }
 
+void Mesh::approximationErrorAndGradients(int iEl, double &f, std::vector<double> &gradF, double eps, 
+					  simpleFunction<double> &fct)
+{
+  std::vector<SPoint3> _xyz_temp;
+  for (int iV = 0; iV < nVert(); iV++){
+    _xyz_temp.push_back(SPoint3( _vert[iV]->x(), _vert[iV]->y(), _vert[iV]->z()));
+    _vert[iV]->setXYZ(_xyz[iV].x(),_xyz[iV].y(),_xyz[iV].z());
+  }
+
+  MElement *element = _el[iEl];
+
+  f = approximationError (fct, element);
+  // FIME
+  //  if (iEl < 1)printf("approx error elem %d = %g\n",iEl,f);
+  int currentId = 0;
+  // compute the size of the gradient 
+  // depends on how many dofs exist per vertex (0,1,2 or 3)
+  for (size_t i = 0; i < element->getNumVertices(); ++i) {
+    if (_el2FV[iEl][i] >= 0) {// some free coordinates
+      currentId += _nPCFV[_el2FV[iEl][i]];
+    }
+  }
+  gradF.clear();
+  gradF.resize(currentId, 0.);
+  currentId = 0;
+  for (size_t i = 0; i < element->getNumVertices(); ++i) {
+    if (_el2FV[iEl][i] >= 0) {// some free coordinates
+      MVertex *v =  element->getVertex(i);
+      // vertex classified on a model edge
+      if (_nPCFV[_el2FV[iEl][i]] == 1){
+	double t = _uvw[_el2FV[iEl][i]].x();
+	GEdge *ge = (GEdge*)v->onWhat();
+	SPoint3 p (v->x(),v->y(),v->z()); 
+	GPoint d = ge->point(t+eps);
+	v->setXYZ(d.x(),d.y(),d.z());
+	double f_d = approximationError (fct, element);
+	gradF[currentId++] = (f_d-f)/eps;
+	if (iEl < 1)printf("df = %g\n",(f_d-f)/eps);
+	v->setXYZ(p.x(),p.y(),p.z());
+      }
+      else if (_nPCFV[_el2FV[iEl][i]] == 2){
+	double uu = _uvw[_el2FV[iEl][i]].x();
+	double vv = _uvw[_el2FV[iEl][i]].y();
+	GFace *gf = (GFace*)v->onWhat();
+	SPoint3 p (v->x(),v->y(),v->z()); 
+	GPoint  d = gf->point(uu+eps,vv);
+	v->setXYZ(d.x(),d.y(),d.z());
+	double f_u = approximationError (fct, element);
+	gradF[currentId++] = (f_u-f)/eps;
+	d = gf->point(uu,vv+eps);
+	v->setXYZ(d.x(),d.y(),d.z());
+	double f_v = approximationError (fct, element);
+	gradF[currentId++] = (f_v-f)/eps;
+	v->setXYZ(p.x(),p.y(),p.z());
+	//	if (iEl < 1)printf("df = %g %g\n",(f_u-f)/eps,(f_v-f)/eps);
+      }
+    }
+  }
+  for (int iV = 0; iV < nVert(); iV++)
+    _vert[iV]->setXYZ(_xyz_temp[iV].x(),_xyz_temp[iV].y(),_xyz_temp[iV].z());
+  
+}
+
+
 bool Mesh::bndDistAndGradients(int iEl, double &f , std::vector<double> &gradF, double eps)
 {
   MElement *element = _el[iEl];
@@ -303,9 +408,11 @@ bool Mesh::bndDistAndGradients(int iEl, double &f , std::vector<double> &gradF, 
     return false;
 
   int currentId = 0;
+  bool touches_boundary = false;
   std::vector<int> vertex2param(element->getNumVertices());
   for (size_t i = 0; i < element->getNumVertices(); ++i) {
     if (_el2FV[iEl][i] >= 0) {
+      if ( _nPCFV[_el2FV[iEl][i]] == 1) touches_boundary = true;
       vertex2param[i] = currentId;
       currentId += _nPCFV[_el2FV[iEl][i]];
     }
@@ -315,6 +422,7 @@ bool Mesh::bndDistAndGradients(int iEl, double &f , std::vector<double> &gradF, 
   gradF.clear();
   gradF.resize(currentId, 0.);
 
+  if (!touches_boundary){/*printf("ele %d\n",iEl);*/return true;}
   const nodalBasis &elbasis = *element->getFunctionSpace();
   bool edgeFound = false;
   for (int iEdge = 0; iEdge < element->getNumEdges(); ++iEdge) {

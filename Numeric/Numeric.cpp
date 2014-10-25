@@ -702,120 +702,6 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
   return false;
 }
 
-/*
-  min_a f(x+a*d);
-  f(x+a*d) = f(x) + f'(x) (
-*/
-
-void gmshLineSearch(double (*func)(fullVector<double> &, void *), void* data,
-                    fullVector<double> &x, fullVector<double> &p,
-                    fullVector<double> &g, double &f,
-                    double stpmax, int &check)
-{
-  int i;
-  double alam, alam2 = 1., alamin, f2 = 0., fold2 = 0., rhs1, rhs2, temp, tmplam = 0.;
-
-  const double ALF = 1.0e-4;
-  const double TOLX = 1.0e-9;
-
-  fullVector<double> xold(x);
-  const double fold = (*func)(xold, data);
-
-  check=0;
-  int n = x.size();
-  double norm = p.norm();
-  if (norm > stpmax) p.scale(stpmax / norm);
-  double slope=0.0;
-  for (i = 0; i < n; i++) slope += g(i)*p(i);
-  double test=0.0;
-  for (i = 0; i < n; i++) {
-    temp = fabs(p(i)) / std::max(fabs(xold(i)), 1.0);
-    if (temp > test) test = temp;
-  }
-  /*
-    for (int j=0;j<100;j++){
-    double sx = (double)j/99;
-    for (i=0;i<n;i++) x(i)=xold(i)+10*sx*p(i);
-    double jzede = (*func)(x,data);
-    }
-  */
-
-  alamin = TOLX / test;
-  alam = 1.0;
-  while(1) {
-    for (i = 0; i < n; i++) x(i) = xold(i) + alam*p(i);
-    f = (*func)(x, data);
-    //    printf("f = %g x = %g %g alam = %g p = %g %g\n",f,x(0),x(1),alam,p(0),p(1));
-    if (alam < alamin) {
-      for (i = 0; i <n; i++) x(i) = xold(i);
-      //      printf("ALERT : alam %g alamin %g\n",alam,alamin);
-      check = 1;
-      return;
-    }
-    else if (f <= fold + ALF * alam * slope) return;
-    else {
-      if (alam == 1.0)
-        tmplam = -slope / (2.0 * (f - fold - slope));
-      else {
-        rhs1 = f - fold - alam * slope;
-        rhs2 = f2 - fold2 - alam2 * slope;
-        const double a = (rhs1/(alam*alam)-rhs2/(alam2*alam2))/(alam-alam2);
-        const double b = (-alam2*rhs1/(alam*alam)+alam*rhs2/(alam2*alam2))/(alam-alam2);
-        if (a == 0.0) tmplam = -slope / (2.0 * b);
-        else {
-          const double disc = b*b-3.0*a*slope;
-          if (disc < 0.0) Msg::Error("Roundoff problem in gmshLineSearch.");
-          else tmplam = (-b+sqrt(disc))/(3.0*a);
-        }
-        if (tmplam > 0.5 * alam)
-          tmplam = 0.5 * alam;
-      }
-    }
-    alam2 = alam;
-    f2 = f;
-    fold2 = fold;
-    alam = std::max(tmplam, 0.1 * alam);
-  }
-}
-
-double minimize_grad_fd(double (*func)(fullVector<double> &, void *),
-                        fullVector<double> &x, void *data)
-{
-  const int MAXIT = 3;
-  const double EPS = 1.e-4;
-  const int N = x.size();
-
-  fullVector<double> grad(N);
-  fullVector<double> dir(N);
-  double f, feps;//, finit;
-
-  for (int iter = 0; iter < MAXIT; iter++){
-    // compute gradient of func
-    f = func(x, data);
-    //if (iter == 0) finit = f;
-    // printf("Opti iter %d x = (%g %g) f = %g\n",iter,x(0),x(1),f);
-    // printf("grad = (");
-    for (int j = 0; j < N; j++){
-      double h = EPS * fabs(x(j));
-      if(h == 0.) h = EPS;
-      x(j) += h;
-      feps = func(x, data);
-      grad(j) = (feps - f) / h;
-      // printf("%g ",grad(j));
-      dir(j) = -grad(j);
-      x(j) -= h;
-    }
-    // printf(")\n ");
-    // do a 1D line search to fine the minimum
-    // of f(x - \alpha \nabla f)
-    double f, stpmax=100000;
-    int check;
-    gmshLineSearch(func, data, x, dir, grad, f, stpmax, check);
-    // printf("Line search done x = (%g %g) f = %g\n",x(0),x(1),f);
-    if (check == 1) break;
-  }
-  return f;
-}
 
 /*
   P(p) = p1 + t1 xi + t2 eta
@@ -1404,8 +1290,8 @@ void signedDistancesPointsEllipseLine(std::vector<double>&distances,
   }
 }
 
-int intersection_segments(const SPoint3 &p1, const SPoint3 &p2,
-                          const SPoint3 &q1, const SPoint3 &q2,
+int intersection_segments(const SPoint2 &p1, const SPoint2 &p2,
+                          const SPoint2 &q1, const SPoint2 &q2,
                           double x[2])
 {
   double xp_max = std::max(p1.x(), p2.x());
@@ -1433,6 +1319,64 @@ int intersection_segments(const SPoint3 &p1, const SPoint3 &p2,
             x[1] >= 0.0 && x[1] <= 1.);
   }
 }
+/// 3D VERSION
+int intersection_segments(const SPoint3 &p1, const SPoint3 &p2,
+                          const SPoint3 &q1, const SPoint3 &q2,
+                          double x[2])
+{
+  SVector3 v1(p2,p1),v2(q2,q1);
+  double n1 = v1.norm();
+  double n2 = v2.norm();
+  double EPS = 1.e-10*std::max(n1,n2);
+  double A[2][2];
+  A[0][0] = p2.x() - p1.x();
+  A[0][1] = q1.x() - q2.x();
+  A[1][0] = p2.y() - p1.y();
+  A[1][1] = q1.y() - q2.y();
+  double a[2] = {q1.x() - p1.x(), q1.y() - p1.y()};
+  double B[2][2];
+  B[0][0] = p2.z() - p1.z();
+  B[0][1] = q1.z() - q2.z();
+  B[1][0] = p2.y() - p1.y();
+  B[1][1] = q1.y() - q2.y();
+  double b[2] = {q1.z() - p1.z(), q1.y() - p1.y()};
+  double C[2][2];
+  C[0][0] = p2.z() - p1.z();
+  C[0][1] = q1.z() - q2.z();
+  C[1][0] = p2.x() - p1.x();
+  C[1][1] = q1.x() - q2.x();
+  double c[2] = {q1.z() - p1.z(), q1.x() - p1.x()};
+  double detA = fabs(det2x2(A));
+  double detB = fabs(det2x2(B));
+  double detC = fabs(det2x2(C));
+  //  printf("%12.5E %12.5E %12.5E\n",detA,detB,detC);
+  if (detA > detB && detA > detC)
+    sys2x2(A, a, x);
+  else if (detB > detA && detB > detC)
+    sys2x2(B, b, x);
+  else
+    sys2x2(C, c, x);
+  if(x[0] >= 0.0 && x[0] <= 1. &&
+     x[1] >= 0.0 && x[1] <= 1.) {
+
+    SPoint3 x1 (p1.x()*(1.-x[0]) + p2.x()*x[0],
+		p1.y()*(1.-x[0]) + p2.y()*x[0],
+		p1.z()*(1.-x[0]) + p2.z()*x[0]);
+    SPoint3 x2 (q1.x()*(1.-x[0]) + q2.x()*x[0],
+		q1.y()*(1.-x[0]) + q2.y()*x[0],
+		q1.z()*(1.-x[0]) + q2.z()*x[0]);
+
+    SVector3 d (x2,x1);
+    double nd = norm(d);
+    if (nd > EPS){
+      x[0] = x[1] = 1.e22;
+      return false;
+    }
+    return true;
+  }  
+  return false;
+}
+
 
 void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &meanPlane)
 {

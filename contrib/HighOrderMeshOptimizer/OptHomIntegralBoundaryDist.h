@@ -34,6 +34,7 @@ class parametricLineNodalBasis : public parametricLine
 {
   const nodalBasis &_basis;
   const std::vector<SPoint3> &_xyz;
+  mutable std::vector<double> psi;
  public :
   parametricLineNodalBasis(const nodalBasis &basis, const std::vector<SPoint3> &xyz);
   virtual SPoint3 operator()(double xi) const;
