@@ -18,6 +18,9 @@ int linearSystemPETSc<scalar>::_getBlockSizeFromParameters() const
 template <class scalar>
 void linearSystemPETSc<scalar>::_kspCreate()
 {
+  // Set option given by the user in its (python script) without using argc,argv or .petscrc
+  if(this->_parameters.count("petsc_solver_options"))
+    _try(PetscOptionsInsertString(this->_parameters["petsc_solver_options"].c_str()));
   _try(KSPCreate(_comm, &_ksp));
   PC pc;
   _try(KSPGetPC(_ksp, &pc));
