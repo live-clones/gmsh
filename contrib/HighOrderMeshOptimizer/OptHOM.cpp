@@ -36,7 +36,7 @@ static int NEVAL = 0;
 #include "OptHomRun.h"
 #include "GmshMessage.h"
 #include "GmshConfig.h"
-#include "ConjugateGradients.h"
+//#include "ConjugateGradients.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "GModel.h"
@@ -142,21 +142,21 @@ bool OptHOM::addJacObjGrad(double &Obj, std::vector<double> &gradObj)
 }
 
 
-bool OptHOM::addApproximationErrorObjGrad(double factor, double &Obj, alglib::real_1d_array &gradObj, simpleFunction<double>& fct)
-{
-  std::vector<double> gradF;
-  for (int iEl = 0; iEl < mesh.nEl(); iEl++) {
-    double f;
-    mesh.approximationErrorAndGradients(iEl, f, gradF, 1.e-6, fct);
-    Obj += f * factor;
-    for (size_t i = 0; i < mesh.nPCEl(iEl); ++i){
-      gradObj[mesh.indPCEl(iEl, i)] += gradF[i] * factor;
-    }
-  }
-  //  printf("DIST = %12.5E\n",DISTANCE);
-  return true;
-
-}
+//bool OptHOM::addApproximationErrorObjGrad(double factor, double &Obj, alglib::real_1d_array &gradObj, simpleFunction<double>& fct)
+//{
+//  std::vector<double> gradF;
+//  for (int iEl = 0; iEl < mesh.nEl(); iEl++) {
+//    double f;
+//    mesh.approximationErrorAndGradients(iEl, f, gradF, 1.e-6, fct);
+//    Obj += f * factor;
+//    for (size_t i = 0; i < mesh.nPCEl(iEl); ++i){
+//      gradObj[mesh.indPCEl(iEl, i)] += gradF[i] * factor;
+//    }
+//  }
+//  //  printf("DIST = %12.5E\n",DISTANCE);
+//  return true;
+//
+//}
 
 static void computeGradSFAtNodes (MElement *e, std::vector<std::vector<SVector3> > &gsf)
 {
@@ -804,12 +804,12 @@ void OptHOM::calcScale(alglib::real_1d_array &scale)
   }
 }
 
-void OptHOM::OptimPass(std::vector<double> &x, int itMax)
-{
-  Msg::Info("--- In-house Optimization pass with initial jac. range (%g, %g), jacBar = %g",
-            minJac, maxJac, jacBar);
-  GradientDescent (evalObjGradFunc, x, this);
-} 
+//void OptHOM::OptimPass(std::vector<double> &x, int itMax)
+//{
+//  Msg::Info("--- In-house Optimization pass with initial jac. range (%g, %g), jacBar = %g",
+//            minJac, maxJac, jacBar);
+//  GradientDescent (evalObjGradFunc, x, this);
+//}
  
 
 void OptHOM::OptimPass(alglib::real_1d_array &x, int itMax)
@@ -880,7 +880,7 @@ void OptHOM::OptimPass(alglib::real_1d_array &x, int itMax)
 }
 
 
-int OptHOM::optimize_inhouse(double weightFixed, double weightFree, double weightCAD, double b_min,
+int OptHOM::optimize(double weightFixed, double weightFree, double weightCAD, double b_min,
                      double b_max, bool optimizeMetricMin, int pInt,
                      int itMax, int optPassMax, int optCAD, double distanceMax, double tolerance)
 {
@@ -981,100 +981,100 @@ int OptHOM::optimize_inhouse(double weightFixed, double weightFree, double weigh
 }
 
 
-int OptHOM::optimize(double weightFixed, double weightFree, double weightCAD, double b_min,
-			     double b_max, bool optimizeMetricMin, int pInt,
-			     int itMax, int optPassMax, int optCAD, double distanceMax, double tolerance)
-{
-  barrier_min = b_min;
-  barrier_max = b_max;
-  distance_max = distanceMax;
-  progressInterv = pInt;
-//  powM = 4;
-//  powP = 3;
-
-  _optimizeMetricMin = optimizeMetricMin;
-  _optimizeCAD = optCAD;
-  // Set weights & length scale for non-dimensionalization
-  lambda = weightFixed;
-  lambda2 = weightFree;
-  lambda3 = weightCAD;
-  geomTol = tolerance;
-  std::vector<double> dSq(mesh.nEl());
-  mesh.distSqToStraight(dSq);
-  const double maxDSq = *max_element(dSq.begin(),dSq.end());
-  if (maxDSq < 1.e-10) {                                        // Length scale for non-dim. distance
-    std::vector<double> sSq(mesh.nEl());
-    mesh.elSizeSq(sSq);
-    const double maxSSq = *max_element(sSq.begin(),sSq.end());
-    invLengthScaleSq = 1./maxSSq;
-  }
-  else invLengthScaleSq = 1./maxDSq;
-
-  // Set initial guess
-  std::vector<double> x(mesh.nPC());
-  mesh.getUvw(x.data());
-
-  // Calculate initial performance
-  recalcJacDist();
-  initMaxDist = maxDist;
-  initAvgDist = avgDist;
-
-  const double jacBarStart = (minJac > 0.) ? 0.9*minJac : 1.1*minJac;
-  jacBar = jacBarStart;
-
-  _optimizeBarrierMax = false;
-  // Calculate initial objective function value and gradient
-  initObj = 0.;
-  std::vector<double>gradObj(mesh.nPC());
-  for (int i = 0; i < mesh.nPC(); i++) gradObj[i] = 0.;
-  evalObjGrad(x, initObj, true, gradObj);
-
-  Msg::Info("Start optimizing %d elements (%d vertices, %d free vertices, %d variables) "
-            "with min barrier %g and max. barrier %g", mesh.nEl(), mesh.nVert(),
-            mesh.nFV(), mesh.nPC(), barrier_min, barrier_max);
-
-  int ITER = 0;
-  bool minJacOK = true;
-
-  while (minJac < barrier_min || (maxDistCAD > distance_max && _optimizeCAD)) {
-    const double startMinJac = minJac;
-    OptimPass(x, itMax);
-    recalcJacDist();
-    jacBar = (minJac > 0.) ? 0.9*minJac : 1.1*minJac;
-    if (_optimizeCAD)   jacBar = std::min(jacBar,barrier_min); 
-    if (ITER ++ > optPassMax) {
-      minJacOK = (minJac > barrier_min && (maxDistCAD < distance_max || !_optimizeCAD));
-      break;
-    }
-    if (fabs((minJac-startMinJac)/startMinJac) < 0.01) {
-      Msg::Info("Stagnation in minJac detected, stopping optimization");
-      minJacOK = false;
-      break;
-    }
-  }
-
-  ITER = 0;
-  if (minJacOK && (!_optimizeMetricMin)) {
-    _optimizeBarrierMax = true;
-    jacBar =  1.1 * maxJac;
-    while (maxJac > barrier_max ) {
-      const double startMaxJac = maxJac;
-      OptimPass(x, itMax);
-      recalcJacDist();
-      jacBar =  1.1 * maxJac;
-      if (ITER ++ > optPassMax) break;
-      if (fabs((maxJac-startMaxJac)/startMaxJac) < 0.01) {
-        Msg::Info("Stagnation in maxJac detected, stopping optimization");
-        break;
-      }
-    }
-  }
-
-  Msg::Info("Optimization done Range (%g,%g)", minJac, maxJac);
-
-  if (minJac > barrier_min && maxJac < barrier_max) return 1;
-  if (minJac > 0.0) return 0;
-  return -1;
-}
+//int OptHOM::optimize_inhouse(double weightFixed, double weightFree, double weightCAD, double b_min,
+//			     double b_max, bool optimizeMetricMin, int pInt,
+//			     int itMax, int optPassMax, int optCAD, double distanceMax, double tolerance)
+//{
+//  barrier_min = b_min;
+//  barrier_max = b_max;
+//  distance_max = distanceMax;
+//  progressInterv = pInt;
+////  powM = 4;
+////  powP = 3;
+//
+//  _optimizeMetricMin = optimizeMetricMin;
+//  _optimizeCAD = optCAD;
+//  // Set weights & length scale for non-dimensionalization
+//  lambda = weightFixed;
+//  lambda2 = weightFree;
+//  lambda3 = weightCAD;
+//  geomTol = tolerance;
+//  std::vector<double> dSq(mesh.nEl());
+//  mesh.distSqToStraight(dSq);
+//  const double maxDSq = *max_element(dSq.begin(),dSq.end());
+//  if (maxDSq < 1.e-10) {                                        // Length scale for non-dim. distance
+//    std::vector<double> sSq(mesh.nEl());
+//    mesh.elSizeSq(sSq);
+//    const double maxSSq = *max_element(sSq.begin(),sSq.end());
+//    invLengthScaleSq = 1./maxSSq;
+//  }
+//  else invLengthScaleSq = 1./maxDSq;
+//
+//  // Set initial guess
+//  std::vector<double> x(mesh.nPC());
+//  mesh.getUvw(x.data());
+//
+//  // Calculate initial performance
+//  recalcJacDist();
+//  initMaxDist = maxDist;
+//  initAvgDist = avgDist;
+//
+//  const double jacBarStart = (minJac > 0.) ? 0.9*minJac : 1.1*minJac;
+//  jacBar = jacBarStart;
+//
+//  _optimizeBarrierMax = false;
+//  // Calculate initial objective function value and gradient
+//  initObj = 0.;
+//  std::vector<double>gradObj(mesh.nPC());
+//  for (int i = 0; i < mesh.nPC(); i++) gradObj[i] = 0.;
+//  evalObjGrad(x, initObj, true, gradObj);
+//
+//  Msg::Info("Start optimizing %d elements (%d vertices, %d free vertices, %d variables) "
+//            "with min barrier %g and max. barrier %g", mesh.nEl(), mesh.nVert(),
+//            mesh.nFV(), mesh.nPC(), barrier_min, barrier_max);
+//
+//  int ITER = 0;
+//  bool minJacOK = true;
+//
+//  while (minJac < barrier_min || (maxDistCAD > distance_max && _optimizeCAD)) {
+//    const double startMinJac = minJac;
+//    OptimPass(x, itMax);
+//    recalcJacDist();
+//    jacBar = (minJac > 0.) ? 0.9*minJac : 1.1*minJac;
+//    if (_optimizeCAD)   jacBar = std::min(jacBar,barrier_min);
+//    if (ITER ++ > optPassMax) {
+//      minJacOK = (minJac > barrier_min && (maxDistCAD < distance_max || !_optimizeCAD));
+//      break;
+//    }
+//    if (fabs((minJac-startMinJac)/startMinJac) < 0.01) {
+//      Msg::Info("Stagnation in minJac detected, stopping optimization");
+//      minJacOK = false;
+//      break;
+//    }
+//  }
+//
+//  ITER = 0;
+//  if (minJacOK && (!_optimizeMetricMin)) {
+//    _optimizeBarrierMax = true;
+//    jacBar =  1.1 * maxJac;
+//    while (maxJac > barrier_max ) {
+//      const double startMaxJac = maxJac;
+//      OptimPass(x, itMax);
+//      recalcJacDist();
+//      jacBar =  1.1 * maxJac;
+//      if (ITER ++ > optPassMax) break;
+//      if (fabs((maxJac-startMaxJac)/startMaxJac) < 0.01) {
+//        Msg::Info("Stagnation in maxJac detected, stopping optimization");
+//        break;
+//      }
+//    }
+//  }
+//
+//  Msg::Info("Optimization done Range (%g,%g)", minJac, maxJac);
+//
+//  if (minJac > barrier_min && maxJac < barrier_max) return 1;
+//  if (minJac > 0.0) return 0;
+//  return -1;
+//}
 
 #endif

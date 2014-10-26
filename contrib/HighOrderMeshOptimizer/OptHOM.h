@@ -53,9 +53,9 @@ public:
   // mesh is invalid : some jacobians cannot be made positive
   int optimize(double lambda, double lambda2, double lambda3, double barrier_min, double barrier_max,
                bool optimizeMetricMin, int pInt, int itMax, int optPassMax, int optimizeCAD, double optCADDistMax, double tolerance);
-  int optimize_inhouse(double weightFixed, double weightFree, double weightCAD, double b_min,
-		       double b_max, bool optimizeMetricMin, int pInt,
-		       int itMax, int optPassMax, int optCAD, double distanceMax, double tolerance);
+//  int optimize_inhouse(double weightFixed, double weightFree, double weightCAD, double b_min,
+//		       double b_max, bool optimizeMetricMin, int pInt,
+//		       int itMax, int optPassMax, int optCAD, double distanceMax, double tolerance);
   void recalcJacDist();
   inline void getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD);
   void updateMesh(const alglib::real_1d_array &x);
@@ -77,7 +77,7 @@ public:
                             // true : fixed barrier min + moving barrier max
   bool _optimizeCAD; // false : do not minimize the distance between mesh and CAD
                      // true : minimize the distance between mesh and CAD
-  bool addApproximationErrorObjGrad(double Fact, double &Obj, alglib::real_1d_array &gradObj, simpleFunction<double>& fct);
+//  bool addApproximationErrorObjGrad(double Fact, double &Obj, alglib::real_1d_array &gradObj, simpleFunction<double>& fct);
   bool addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj);
   bool addJacObjGrad(double &Obj, std::vector<double> &);
   bool addBndObjGrad (double Fact, double &Obj, alglib::real_1d_array &gradObj);
@@ -90,7 +90,7 @@ public:
                       alglib::real_1d_array &gradObj);
   void calcScale(alglib::real_1d_array &scale);
   void OptimPass(alglib::real_1d_array &x, int itMax);
-  void OptimPass(std::vector<double> &x, int itMax);
+//  void OptimPass(std::vector<double> &x, int itMax);
 };
 
 void OptHOM::getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD)

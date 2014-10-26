@@ -38,7 +38,7 @@
 #include "ParamCoord.h"
 #include "polynomialBasis.h"
 #include "simpleFunction.h"
-#include "approximationError.h"
+//#include "approximationError.h"
 
 class Mesh
 {
@@ -58,7 +58,7 @@ public:
   inline const int &nBezEl(int iEl) { return _nBezEl[iEl]; }
   int getFreeVertexStartIndex(MVertex* vert);
 
-  void approximationErrorAndGradients(int iEl, double &f, std::vector<double> &gradF, double eps, simpleFunction<double> &fct);
+//  void approximationErrorAndGradients(int iEl, double &f, std::vector<double> &gradF, double eps, simpleFunction<double> &fct);
   void metricMinAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);
   void scaledJacAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);
   bool bndDistAndGradients(int iEl, double &f , std::vector<double> &gradF, double eps);
@@ -142,10 +142,10 @@ private:
     return indJB3DBase(_nNodEl[iEl],l,i,j,m);
   }
 public: 
-  double approximationErr(int iEl, simpleFunction<double> &f)
-  {
-    return approximationError (f, _el[iEl]);
-  }
+//  double approximationErr(int iEl, simpleFunction<double> &f)
+//  {
+//    return approximationError (f, _el[iEl]);
+//  }
 };
 
 
