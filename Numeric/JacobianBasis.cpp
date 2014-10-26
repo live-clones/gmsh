@@ -843,8 +843,7 @@ int JacobianBasis::jacobianOrder(int parentType, int order)
     case TYPE_LIN : return order - 1;
     case TYPE_TRI : return 2*order - 2;
     case TYPE_QUA : return 2*order - 1;
-      //    case TYPE_TET : return 3*order - 3;
-    case TYPE_TET : return order;
+    case TYPE_TET : return 3*order - 3;
     case TYPE_PRI : return 3*order - 1;
     case TYPE_HEX : return 3*order - 1;
     case TYPE_PYR : return 3*order - 3;
