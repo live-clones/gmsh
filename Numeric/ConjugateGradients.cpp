@@ -113,7 +113,7 @@ double GradientDescent(void (*func)(std::vector<double> &x,
   std::vector<double> dir(N);
   double f;
 
-  printf("entering gradient descent (%d unknowns)...\n",N);
+//  printf("entering gradient descent (%d unknowns)...\n",N);
 
   for (int iter = 0; iter < MAXIT; iter++){
     // compute gradient of func

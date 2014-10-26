@@ -37,8 +37,8 @@ set(SRC
  decasteljau.cpp
   mathEvaluator.cpp
   Iso.cpp
-#  approximationError.cpp
-#  ConjugateGradients.cpp
+  approximationError.cpp
+  ConjugateGradients.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
