@@ -230,8 +230,6 @@ static bool testTriSphereIntersect(SPoint3 A, SPoint3 B, SPoint3 C,
 }
 
 // Approximate test of intersection element with circle/sphere by sampling
-// This function takes 99% of the CPU !!
-
 static bool testElInDist(const SPoint3 p, double limDist, MElement *el)
 {
   const double limDistSq = limDist*limDist;
