@@ -777,11 +777,8 @@ bool insertVertexB (std::list<edgeXface> &shell,
   if (fabs(oldVolume - newVolume) < 1.e-12 * oldVolume && !onePointIsTooClose){
     connectTris(new_cavity.begin(), new_cavity.end(),conn);
     //    printf("%d %d\n",shell.size(),cavity.size());
-    //    clock_t t1 = clock();
     // 30 % of the time is spent here !!!
     allTets.insert(newTris, newTris + shell.size());
-    //    clock_t t2 = clock();
-    //    __DT2 += (double)(clock()-t1)/CLOCKS_PER_SEC;
     if (activeTets){
       for (std::list<MTri3*>::iterator i = new_cavity.begin(); i != new_cavity.end(); ++i){
         int active_edge;
@@ -1744,7 +1741,7 @@ void bowyerWatsonParallelograms(GFace *gf,
   N_GLOBAL_SEARCH = 0;
   N_SEARCH = 0;
   DT_INSERT_VERTEX = 0;
-   double t1 = Cpu();
+  double t1 = Cpu();
   MTri3 *oneNewTriangle = 0;
   for (unsigned int i=0;i<packed.size();){
     MTri3 *worst = *AllTris.begin();
@@ -1785,9 +1782,11 @@ void bowyerWatsonParallelograms(GFace *gf,
 
   }
   //  printf("%d vertices \n",(int)packed.size());
-  clock_t t2 = clock();
-  double DT = (double)(t2-t1)/CLOCKS_PER_SEC;
-  if (packed.size())printf("points inserted DT %12.5E points per minut : %12.5E %d global searchs %d seachs per insertion\n",DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
+  double t2 = Cpu();
+  double DT = (double)(t2-t1);
+  if (packed.size())
+    printf("points inserted DT %12.5E points per minute : %12.5E %d global searchs %d searchs per insertion\n",
+           DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
   transferDataStructure(gf, AllTris, DATA);
   backgroundMesh::unset();
 #if defined(HAVE_ANN)
@@ -1963,7 +1962,7 @@ void delaunayMeshIn2D(std::vector<MVertex*> &v,
     }
     delete t[i];
   }
-  
+
   if (removeBox){for (int i=0;i<4;i++)delete box[i];}
   else {for (int i=0;i<4;i++)v.push_back(box[i]);}
 
