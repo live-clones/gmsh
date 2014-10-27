@@ -83,7 +83,7 @@ MetricBasis::MetricBasis(int tag) :
     jacSpace = new FuncSpaceData(true, tag, false, jacOrder+3,
                                  jacOrder, &serendip);
   }
-  else if (_type != TYPE_TRI || _type != TYPE_QUA)
+  else if (_type != TYPE_TRI && _type != TYPE_QUA)
     Msg::Fatal("metric not implemented for element tag %d", tag);
 
   if (jacSpace) {
@@ -256,10 +256,13 @@ double MetricBasis::getBoundMinR(MElement *el) const
   el->getNodesCoord(nodes);
 
   // Jacobian coefficients
-  fullVector<double> jacLag(_jacobian->getNumJacNodes());
-  fullVector<double> *jac = new fullVector<double>(_jacobian->getNumJacNodes());
-  _jacobian->getSignedIdealJacobian(nodes, jacLag);
-  _jacobian->lag2Bez(jacLag, *jac);
+  fullVector<double> *jac = NULL;
+  if (_jacobian) {
+    fullVector<double> jacLag(_jacobian->getNumJacNodes());
+    jac = new fullVector<double>(_jacobian->getNumJacNodes());
+    _jacobian->getSignedIdealJacobian(nodes, jacLag);
+    _jacobian->lag2Bez(jacLag, *jac);
+  }
 
   // Metric coefficients
   fullMatrix<double> metCoeffLag;
@@ -1070,9 +1073,10 @@ void MetricBasis::_computeRmax(
 double MetricBasis::_subdivideForRmin(MetricData *md, double RminLag, double tol) const
 {
   std::priority_queue<MetricData*, std::vector<MetricData*>, lessMinB> subdomains;
+  const bool for3d = md->_jaccoeffs;
   const int numCoeff = md->_metcoeffs->size2();
   const int numMetPnts = md->_metcoeffs->size1();
-  const int numJacPnts = md->_jaccoeffs->size();
+  const int numJacPnts = for3d ? md->_jaccoeffs->size() : 0;
   const int numSub = _bezier->getNumDivision();
   subdomains.push(md);
 
@@ -1080,13 +1084,15 @@ double MetricBasis::_subdivideForRmin(MetricData *md, double RminLag, double tol
 
   while (RminLag - subdomains.top()->_RminBez > tol && subdomains.size() < 25000) {
     fullMatrix<double> *subcoeffs, *coeff;
-    fullVector<double> *subjac, *jac;
+    fullVector<double> *subjac, *jac = NULL;
 
     MetricData *current = subdomains.top();
     subcoeffs = new fullMatrix<double>(numSub*numMetPnts, numCoeff);
-    subjac = new fullVector<double>(numSub*numJacPnts);
     _bezier->subDivisor.mult(*current->_metcoeffs, *subcoeffs);
-    _jacobian->getBezier()->subDivisor.mult(*current->_jaccoeffs, *subjac);
+    if (for3d) {
+      subjac = new fullVector<double>(numSub*numJacPnts);
+      _jacobian->getBezier()->subDivisor.mult(*current->_jaccoeffs, *subjac);
+    }
     int depth = current->_depth;
     int num = current->_num;
     delete current;
@@ -1095,8 +1101,10 @@ double MetricBasis::_subdivideForRmin(MetricData *md, double RminLag, double tol
     for (int i = 0; i < numSub; ++i) {
       coeff = new fullMatrix<double>(numMetPnts, numCoeff);
       coeff->copy(*subcoeffs, i * numMetPnts, numMetPnts, 0, numCoeff, 0, 0);
-      jac = new fullVector<double>;
-      jac->setAsProxy(*subjac, i * numJacPnts, numJacPnts);
+      if (for3d) {
+        jac = new fullVector<double>;
+        jac->setAsProxy(*subjac, i * numJacPnts, numJacPnts);
+      }
       double minLag, minBez;
       _computeRmin(*coeff, *jac, minLag, minBez);
       RminLag = std::min(RminLag, minLag);
@@ -1104,7 +1112,7 @@ double MetricBasis::_subdivideForRmin(MetricData *md, double RminLag, double tol
       MetricData *metData = new MetricData(coeff, jac, minBez, depth+1, newNum);
       subdomains.push(metData);
     }
-    trash.push_back(subjac);
+    if (for3d) trash.push_back(subjac);
     delete subcoeffs;
   }
 
@@ -1289,8 +1297,6 @@ double MetricBasis::_computeMinlagR(const fullVector<double> &jac,
 
   case 3:
     for (int i = 0; i < num; ++i) {
-      if (jac(i) <= 0.) return 0;
-
       const double &q = coeff(i, 0);
       const double p = pow_int(coeff(i, 1), 2) + pow_int(coeff(i, 2), 2);
       const double tmpR = _R2Dsafe(q, std::sqrt(p));
