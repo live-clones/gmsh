@@ -1786,7 +1786,7 @@ void bowyerWatsonParallelograms(GFace *gf,
   double DT = (double)(t2-t1);
   if (packed.size())
     printf("points inserted DT %12.5E points per minute : %12.5E %d global searchs %d searchs per insertion\n",
-           DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
+           DT,60.*packed.size()/DT,N_GLOBAL_SEARCH, (int)(N_SEARCH/packed.size()));
   transferDataStructure(gf, AllTris, DATA);
   backgroundMesh::unset();
 #if defined(HAVE_ANN)

@@ -12,8 +12,9 @@
 
 #define SQU(a)      ((a)*(a))
 
-// Cubic spline : 
+// Cubic spline :
 
+/*
 static void InterpolateBezier(Vertex *v[4], double t, Vertex &V)
 {
   V.lc = (1 - t) * v[1]->lc + t * v[2]->lc;
@@ -24,6 +25,7 @@ static void InterpolateBezier(Vertex *v[4], double t, Vertex &V)
   V.Pos.Y = s[0]*v[0]->Pos.Y+s[1]*v[1]->Pos.Y+s[2]*v[2]->Pos.Y+s[3]*v[3]->Pos.Y;
   V.Pos.Z = s[0]*v[0]->Pos.Z+s[1]*v[1]->Pos.Z+s[2]*v[2]->Pos.Z+s[3]*v[3]->Pos.Z;
 }
+*/
 
 static Vertex InterpolateCubicSpline(Vertex *v[4], double t)
 {
@@ -237,7 +239,7 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
     V.Pos.Z = pt.z();
     return V;
   }
-  else    
+  else
     //    return InterpolateCubicSpline(v, t, Curve->mat, derivee, t1, t2);
     return InterpolateCubicSpline(v, t);
 }
@@ -488,7 +490,7 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
       V.Pos.Y = pt.y();
       V.Pos.Z = pt.z();
     }
-    else  
+    else
       InterpolateCatmullRom(v, t, V);
 	//      V = InterpolateCubicSpline(v, t, c->mat, 0, t1, t2);
     break;

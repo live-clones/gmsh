@@ -671,7 +671,7 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
           }
         }
       }
-    }  
+    }
   }
 
   simpleFunction<double> ONE(1.0);
@@ -773,12 +773,12 @@ inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d){
   return atan2 (sinTheta,cosTheta);
 }
 
-// smoothness = h * (|grad (cos 4 a)| + |grad (sin 4 a)|) 
+// smoothness = h * (|grad (cos 4 a)| + |grad (sin 4 a)|)
 // smoothness is of order 1 if not smooth
 // smoothness is of order h/L if smooth
 // h --> mesh size
 // L --> domain size
-double backgroundMesh::getSmoothness(MElement *e) 
+double backgroundMesh::getSmoothness(MElement *e)
 {
   MVertex *v0 = _3Dto2D[e->getVertex(0)];
   MVertex *v1 = _3Dto2D[e->getVertex(1)];
@@ -786,14 +786,14 @@ double backgroundMesh::getSmoothness(MElement *e)
   std::map<MVertex*,double> :: const_iterator i0 = _angles.find (v0);
   std::map<MVertex*,double> :: const_iterator i1 = _angles.find (v1);
   std::map<MVertex*,double> :: const_iterator i2 = _angles.find (v2);
-  double a[3] = {cos(4*i0->second),cos(4*i1->second),cos(4*i2->second)}; 
-  double b[3] = {sin(4*i0->second),sin(4*i1->second),sin(4*i2->second)}; 
+  double a[3] = {cos(4*i0->second),cos(4*i1->second),cos(4*i2->second)};
+  double b[3] = {sin(4*i0->second),sin(4*i1->second),sin(4*i2->second)};
   //      printf("coucou\n");
   double f[3];
-  e->interpolateGrad(a,0,0,0,f);      
+  e->interpolateGrad(a,0,0,0,f);
   const double gradcos = sqrt (f[0]*f[0]+f[1]*f[1]+f[2]*f[2]);
-  e->interpolateGrad(b,0,0,0,f);      
-  const double gradsin = sqrt (f[0]*f[0]+f[1]*f[1]+f[2]*f[2]);
+  e->interpolateGrad(b,0,0,0,f);
+  //const double gradsin = sqrt (f[0]*f[0]+f[1]*f[1]+f[2]*f[2]);
   const double h = e->maxEdge();
   return (gradcos /*+ gradsin*/) * h;
 }
@@ -808,14 +808,14 @@ double backgroundMesh::getSmoothness(double u, double v, double w)
   std::map<MVertex*,double> :: const_iterator i0 = _angles.find (v0);
   std::map<MVertex*,double> :: const_iterator i1 = _angles.find (v1);
   std::map<MVertex*,double> :: const_iterator i2 = _angles.find (v2);
-  double a[3] = {cos(4*i0->second),cos(4*i1->second),cos(4*i2->second)}; 
-  double b[3] = {sin(4*i0->second),sin(4*i1->second),sin(4*i2->second)}; 
+  double a[3] = {cos(4*i0->second),cos(4*i1->second),cos(4*i2->second)};
+  double b[3] = {sin(4*i0->second),sin(4*i1->second),sin(4*i2->second)};
   //      printf("coucou\n");
   double f[3];
-  e->interpolateGrad(a,0,0,0,f);      
+  e->interpolateGrad(a,0,0,0,f);
   const double gradcos = sqrt (f[0]*f[0]+f[1]*f[1]+f[2]*f[2]);
-  e->interpolateGrad(b,0,0,0,f);      
-  const double gradsin = sqrt (f[0]*f[0]+f[1]*f[1]+f[2]*f[2]);
+  e->interpolateGrad(b,0,0,0,f);
+  //const double gradsin = sqrt (f[0]*f[0]+f[1]*f[1]+f[2]*f[2]);
   const double h = e->maxEdge();
   return (gradcos /*+ gradsin*/) * h;
 }
@@ -832,7 +832,7 @@ void backgroundMesh::propagateCrossField(GFace *_gf)
     //    int NSMOOTH_NOW = 0;
     for (unsigned int i = 0; i < _gf->triangles.size(); i++){
       double smoothness = getSmoothness (_gf->triangles[i]);
-      double val = smoothness < .5 ? 1.0 : 1.e-3 ;//exp(-absf/10);      
+      double val = smoothness < .5 ? 1.0 : 1.e-3 ;//exp(-absf/10);
       C.set(_gf->triangles[i],val);
     }
     //    if (NSMOOTH_NOW == NSMOOTH) break;
@@ -1065,7 +1065,7 @@ double backgroundMesh::getAngle(double u, double v, double w) const
 }
 
 void backgroundMesh::print(const std::string &filename, GFace *gf,
-                           const std::map<MVertex*,double> &_whatToPrint, int smooth) 
+                           const std::map<MVertex*,double> &_whatToPrint, int smooth)
 {
   FILE *f = Fopen (filename.c_str(),"w");
   fprintf(f,"View \"Background Mesh\"{\n");
@@ -1095,7 +1095,7 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
 		v2->x(),v2->y(),v2->z(),
 		v3->x(),v3->y(),v3->z(),itv1->second,itv2->second,itv3->second);
       }
-      else {      
+      else {
 	GPoint p1 = gf->point(SPoint2(v1->x(),v1->y()));
 	GPoint p2 = gf->point(SPoint2(v2->x(),v2->y()));
 	GPoint p3 = gf->point(SPoint2(v3->x(),v3->y()));

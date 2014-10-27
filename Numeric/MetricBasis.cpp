@@ -55,9 +55,8 @@ namespace {
 }
 
 MetricBasis::MetricBasis(int tag) :
-    _type(ElementType::ParentTypeFromTag(tag)),
-    _dim(ElementType::DimensionFromTag(tag)),
-    _jacobian(NULL)
+  _jacobian(NULL), _type(ElementType::ParentTypeFromTag(tag)),
+  _dim(ElementType::DimensionFromTag(tag))
 {
   const bool serendip = false;
   const int metOrder = metricOrder(tag);
