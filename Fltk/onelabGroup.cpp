@@ -999,15 +999,17 @@ static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
       std::string name = c->getName();
       for(unsigned int i = 0; i < name.size(); i++)
         name[i] = tolower(name[i]);
-      std::string path = split[0] + name;
+      std::string path1 = split[0] + name;
+      std::string path2 = split[0] + "data/" + name;
 #if defined(WIN32)
-      path += ".exe";
+      path1 += ".exe";
+      path2 += ".exe";
 #endif
-      if(!StatFile(path)){
-        exe = path;
+      if(!StatFile(path1)) exe = path1;
+      else if(!StatFile(path2)) exe = path2;
+      if(exe.size())
         Msg::Info("Automatically found %s executable: %s", c->getName().c_str(),
                   exe.c_str());
-      }
     }
 
     if(exe.empty()){
