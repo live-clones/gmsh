@@ -34,6 +34,7 @@
 
 
 class MElement;
+class GEntity;
 class SPoint3;
 class ObjContrib;
 
@@ -51,11 +52,13 @@ public:
     bool weakMerge;                                     // If connected strategy: weak or strong merging of patches
   };
   virtual ~MeshOptPatchDef() {}
-  virtual double elBadness(MElement *el) const = 0;     // Determine "badness" of a given element (for patch creation)
+  virtual double elBadness(MElement *el,                // Determine "badness" of a given element (for patch creation)
+                           GEntity* gEnt) const = 0;
   virtual double maxDistance(MElement *el) const = 0;   // Compute max. distance to a given bad element for elements in patch
   virtual int inPatch(const SPoint3 &badBary,           // Determine whether a given element should be included in the patch around a...
                       double limDist,                   // ... given bad element barycenter, with a limit distance if needed. Output: ...
-                      MElement *el) const = 0;          // ... -1 = excluded, 0 = included only up to minLayers, 1 = included up to maxLayers
+                      MElement *el,                     // ... -1 = excluded, 0 = included only up to minLayers, 1 = included up to maxLayers
+                      GEntity* gEnt) const = 0;
 protected:
   bool testElInDist(const SPoint3 &P, double limDist,   // Test whether an element is within a certain distance from a point
                     MElement *el) const;
@@ -74,6 +77,7 @@ struct MeshOptParameters {                              // Parameters controllin
   int dim ;                                             // Which dimension to optimize
   bool onlyVisible ;                                    // Apply optimization to visible entities ONLY
   bool fixBndNodes;                                     // If points can move on boundaries
+  bool useGeom;                                         // Compute and use info from geometric (CAD model) entities where helpful
   MeshOptPatchDef *patchDef;
   std::vector<MeshOptPass> pass;
   int optDisplay;                                       // Sampling rate in opt. iterations for display

@@ -2,6 +2,8 @@
 
 //#include "GModel.h"
 #include "GEntity.h"
+#include "GFace.h"
+#include "GRegion.h"
 #include "MElement.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -20,12 +22,12 @@ struct QualPatchDefParameters : public MeshOptPatchDef
 {
   QualPatchDefParameters(const MeshQualOptParameters &p);
   virtual ~QualPatchDefParameters() {}
-  virtual double elBadness(MElement *el) const;
+  virtual double elBadness(MElement *el, GEntity* gEnt) const;
   virtual double maxDistance(MElement *el) const;
-  virtual int inPatch(const SPoint3 &badBary,
-                      double limDist, MElement *el) const;
+  virtual int inPatch(const SPoint3 &badBary, double limDist,
+                      MElement *el, GEntity* gEnt) const;
 private:
-  bool _excludeQuad, _excludeHex, _excludePrism;
+  bool _excludeQuad, _excludeHex, _excludePrism, _excludeBL;
   double _idealJacMin, _invCondNumMin;
   double _distanceFactor;
 };
@@ -36,6 +38,7 @@ QualPatchDefParameters::QualPatchDefParameters(const MeshQualOptParameters &p)
   _excludeQuad = p.excludeQuad;
   _excludeHex = p.excludeHex;
   _excludePrism = p.excludePrism;
+  _excludeBL = p.excludeBL;
   _idealJacMin = p.minTargetIdealJac;
   _invCondNumMin = p.minTargetInvCondNum;
   strategy = (p.strategy == 1) ? MeshOptParameters::STRAT_ONEBYONE :
@@ -53,12 +56,23 @@ QualPatchDefParameters::QualPatchDefParameters(const MeshQualOptParameters &p)
 }
 
 
-double QualPatchDefParameters::elBadness(MElement *el) const
+double QualPatchDefParameters::elBadness(MElement *el, GEntity* gEnt) const
 {
   const int typ = el->getType();
   if (_excludeQuad && (typ == TYPE_QUA)) return 1.;
   if (_excludeHex && (typ == TYPE_HEX)) return 1.;
   if (_excludePrism && (typ == TYPE_PRI)) return 1.;
+  if (_excludeBL) {
+    BoundaryLayerColumns *blc = 0;
+    if (gEnt->dim() == 2)
+      blc = static_cast<GFace*>(gEnt)->getColumns();
+    else if (gEnt->dim() == 3)
+      blc = static_cast<GRegion*>(gEnt)->getColumns();
+    if (blc) {
+      std::map<MElement*, MElement*>::iterator itBLEl = blc->_toFirst.find(el);
+      if (itBLEl != blc->_toFirst.end()) return 1.;
+    }
+  }
 //  double jMin, jMax;
 //  el->idealJacRange(jMin, jMax);
 //  return jMin-_idealJacMin;
@@ -74,13 +88,24 @@ double QualPatchDefParameters::maxDistance(MElement *el) const
 }
 
 
-int QualPatchDefParameters::inPatch(const SPoint3 &badBary,
-                                    double limDist, MElement *el) const
+int QualPatchDefParameters::inPatch(const SPoint3 &badBary, double limDist,
+                                    MElement *el, GEntity* gEnt) const
 {
   const int typ = el->getType();
   if (_excludeQuad && (typ == TYPE_QUA)) return -1;
   if (_excludeHex && (typ == TYPE_HEX)) return -1;
   if (_excludePrism && (typ == TYPE_PRI)) return -1;
+  if (_excludeBL) {
+    BoundaryLayerColumns *blc = 0;
+    if (gEnt->dim() == 2)
+      blc = static_cast<GFace*>(gEnt)->getColumns();
+    else if (gEnt->dim() == 3)
+      blc = static_cast<GRegion*>(gEnt)->getColumns();
+    if (blc) {
+      std::map<MElement*, MElement*>::iterator itBLEl = blc->_toFirst.find(el);
+      if (itBLEl != blc->_toFirst.end()) return -1;
+    }
+  }
   return testElInDist(badBary, limDist, el) ? 1 : 0;
 }
 
@@ -93,6 +118,7 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
   par.dim = p.dim;
   par.onlyVisible = p.onlyVisible;
   par.fixBndNodes = p.fixBndNodes;
+  par.useGeom = p.excludeBL;
   QualPatchDefParameters patchDef(p);
   par.patchDef = &patchDef;
   par.optDisplay = 20;

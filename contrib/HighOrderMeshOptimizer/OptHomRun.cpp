@@ -701,10 +701,11 @@ struct HOPatchDefParameters : public MeshOptPatchDef
 {
   HOPatchDefParameters(const OptHomParameters &p);
   virtual ~HOPatchDefParameters() {}
-  virtual double elBadness(MElement *el) const;
+  virtual double elBadness(MElement *el, GEntity* gEnt) const;
   virtual double maxDistance(MElement *el) const;
   virtual int inPatch(const SPoint3 &badBary,
-                      double limDist, MElement *el) const;
+                      double limDist, MElement *el,
+                      GEntity* gEnt) const;
 private:
   double jacMin, jacMax;
   double distanceFactor;
@@ -736,7 +737,7 @@ HOPatchDefParameters::HOPatchDefParameters(const OptHomParameters &p)
 }
 
 
-double HOPatchDefParameters::elBadness(MElement *el) const
+double HOPatchDefParameters::elBadness(MElement *el, GEntity* gEnt) const
 {
   double jmin, jmax;
   el->scaledJacRange(jmin, jmax);
@@ -756,7 +757,8 @@ double HOPatchDefParameters::maxDistance(MElement *el) const
 
 
 int HOPatchDefParameters::inPatch(const SPoint3 &badBary,
-                                  double limDist, MElement *el) const
+                                  double limDist, MElement *el,
+                                  GEntity* gEnt) const
 {
   return testElInDist(badBary, limDist, el) ? 1 : 0;
 }
@@ -770,6 +772,7 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   par.dim = p.dim;
   par.onlyVisible = p.onlyVisible;
   par.fixBndNodes = p.fixBndNodes;
+  par.useGeom = false;
   HOPatchDefParameters patchDef(p);
   par.patchDef = &patchDef;
   par.optDisplay = 30;

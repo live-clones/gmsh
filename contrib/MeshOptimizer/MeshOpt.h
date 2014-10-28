@@ -47,7 +47,7 @@ class MeshOpt
 {
 public:
   Patch patch;
-  MeshOpt(const std::map<MElement*,GEntity*> &element2entity,
+  MeshOpt(const std::map<MElement*, GEntity*> &element2entity,
           const std::set<MElement*> &els, std::set<MVertex*> &toFix,
           const MeshOptParameters &par);
   ~MeshOpt();

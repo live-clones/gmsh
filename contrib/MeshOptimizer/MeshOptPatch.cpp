@@ -40,7 +40,7 @@
 #include "MeshOptPatch.h"
 
 
-Patch::Patch(const std::map<MElement*,GEntity*> &element2entity,
+Patch::Patch(const std::map<MElement*, GEntity*> &element2entity,
            const std::set<MElement*> &els, std::set<MVertex*> &toFix,
            bool fixBndNodes) :
   _typeLengthScale(LS_NONE), _invLengthScaleSq(0.)
@@ -57,11 +57,16 @@ Patch::Patch(const std::map<MElement*,GEntity*> &element2entity,
   _el2V.resize(nElements);
   _nNodEl.resize(nElements);
   _indPCEl.resize(nElements);
+  if (!element2entity.empty()) _gEnt.resize(nElements);
   int iEl = 0;
   bool nonGeoMove = false;
   for(std::set<MElement*>::const_iterator it = els.begin();
       it != els.end(); ++it, ++iEl) {
     _el[iEl] = *it;
+    if (!element2entity.empty()) {
+      std::map<MElement*,GEntity*>::const_iterator itEl2Ent = element2entity.find(*it);
+      _gEnt[iEl] = (itEl2Ent == element2entity.end()) ? 0 : itEl2Ent->second;
+    }
     _nNodEl[iEl] = _el[iEl]->getNumVertices();
     for (int iVEl = 0; iVEl < _nNodEl[iEl]; iVEl++) {
       MVertex *vert = _el[iEl]->getVertex(iVEl);
@@ -88,7 +93,7 @@ Patch::Patch(const std::map<MElement*,GEntity*> &element2entity,
   }
 
   if (nonGeoMove) Msg::Warning("Some vertices will be moved along local lines "
-                            "or planes, they may not remain on the exact geometry");
+                               "or planes, they may not remain on the exact geometry");
 
   // Initial coordinates
   _ixyz.resize(nVert());
@@ -223,21 +228,21 @@ void Patch::initScaledNodeDispSq(LengthScaling scaling)
     switch(scaling) {
       case LS_MAXNODEDIST : {
         for (int iEl = 0; iEl < nEl(); iEl++) {
-          const double d = el(iEl)->maxDistToStraight(), dd = d*d;
+          const double d = _el[iEl]->maxDistToStraight(), dd = d*d;
           if (dd > maxDSq) maxDSq = dd;
         }
         break;
       }
       case LS_MAXOUTERRADIUS : {
         for (int iEl = 0; iEl < nEl(); iEl++) {
-          const double d = el(iEl)->getOuterRadius(), dd = d*d;
+          const double d = _el[iEl]->getOuterRadius(), dd = d*d;
           if (dd > maxDSq) maxDSq = dd;
         }
         break;
       }
       case LS_MINEDGELENGTH : {
         for (int iEl = 0; iEl < nEl(); iEl++) {
-          const double d = el(iEl)->minEdge(), dd = d*d;
+          const double d = _el[iEl]->minEdge(), dd = d*d;
           if (dd > maxDSq) maxDSq = dd;
         }
         break;
@@ -282,7 +287,6 @@ void Patch::initScaledJac()
   // Jacobians of 3D elements
   if ((_dim == 2) && _JacNormEl.empty()) {
     _JacNormEl.resize(nEl());
-//    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
     for (int iEl = 0; iEl < nEl(); iEl++)
       calcNormalEl2D(iEl, NS_INVNORM, _JacNormEl[iEl], false);
   }
@@ -306,34 +310,31 @@ void Patch::initMetricMin()
 }
 
 
-// TODO: Re-introduce normal to geometry?
-//void Mesh::calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2entity, int iEl)
 void Patch::calcNormalEl2D(int iEl, NormalScaling scaling,
                            fullMatrix<double> &elNorm, bool ideal)
 {
   const JacobianBasis *jac = _el[iEl]->getJacobianFuncSpace();
 
   fullMatrix<double> primNodesXYZ(jac->getNumPrimMapNodes(),3);
-//  SVector3 geoNorm(0.,0.,0.);
-//  std::map<MElement*,GEntity*>::const_iterator itEl2ent = element2entity.find(_el[iEl]);
-//  GEntity *ge = (itEl2ent == element2entity.end()) ? 0 : itEl2ent->second;
-//  const bool hasGeoNorm = ge && (ge->dim() == 2) && ge->haveParametrization();
+  SVector3 geoNorm(0.,0.,0.);
+  GEntity *ge = (_gEnt.empty()) ? 0 : _gEnt[iEl];
+  const bool hasGeoNorm = ge && (ge->dim() == 2) && ge->haveParametrization();
   for (int i=0; i<jac->getNumPrimMapNodes(); i++) {
     const int &iV = _el2V[iEl][i];
     primNodesXYZ(i, 0) = _xyz[iV].x();
     primNodesXYZ(i, 1) = _xyz[iV].y();
     primNodesXYZ(i, 2) = _xyz[iV].z();
-//    if (hasGeoNorm && (_vert[iV]->onWhat() == ge)) {
-//      double u, v;
-//      _vert[iV]->getParameter(0,u);
-//      _vert[iV]->getParameter(1,v);
-//      geoNorm += ((GFace*)ge)->normal(SPoint2(u,v));
-//    }
+    if (hasGeoNorm && (_vert[iV]->onWhat() == ge)) {
+      double u, v;
+      _vert[iV]->getParameter(0,u);
+      _vert[iV]->getParameter(1,v);
+      geoNorm += ((GFace*)ge)->normal(SPoint2(u,v));
+    }
   }
-//  if (hasGeoNorm && (geoNorm.normSq() == 0.)) {
-//    SPoint2 param = ((GFace*)ge)->parFromPoint(_el[iEl]->barycenter(true),false);
-//    geoNorm = ((GFace*)ge)->normal(param);
-//  }
+  if (hasGeoNorm && (geoNorm.normSq() == 0.)) {
+    SPoint2 param = ((GFace*)ge)->parFromPoint(_el[iEl]->barycenter(true),false);
+    geoNorm = ((GFace*)ge)->normal(param);
+  }
 
   elNorm.resize(1, 3);
   const double norm = jac->getPrimNormal2D(primNodesXYZ, elNorm, ideal);
@@ -349,10 +350,10 @@ void Patch::calcNormalEl2D(int iEl, NormalScaling scaling,
       factor = sqrt(norm);
       break;
   }
-//  if (hasGeoNorm) {
-//    const double scal = geoNorm(0)*elNorm(0,0)+geoNorm(1)*elNorm(0,1)+geoNorm(2)*elNorm(0,2);
-//    if (scal < 0.) factor = -factor;
-//  }
+  if (hasGeoNorm) {
+    const double scal = geoNorm(0)*elNorm(0,0)+geoNorm(1)*elNorm(0,1)+geoNorm(2)*elNorm(0,2);
+    if (scal < 0.) factor = -factor;
+  }
   elNorm.scale(factor);   // Re-scaling normal here is faster than an extra scaling operation on the Jacobian
 }
 
@@ -537,7 +538,6 @@ void Patch::initIdealJac()
   // Jacobians of 3D elements
   if ((_dim == 2) && _IJacNormEl.empty()) {
     _IJacNormEl.resize(nEl());
-//    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
     for (int iEl = 0; iEl < nEl(); iEl++)
       calcNormalEl2D(iEl, NS_INVNORM, _IJacNormEl[iEl], true);
   }
@@ -575,18 +575,6 @@ void Patch::idealJacAndGradients(int iEl, std::vector<double> &iJ, std::vector<d
   // regularization normals in 2D)
   jacBasis->getSignedIdealJacAndGradients(nodesXYZ,_IJacNormEl[iEl],JDJ);
   if (_dim == 3) JDJ.scale(_invIJac[iEl]);
-//  if (_el[iEl]->getNum() == 90370) {
-//    std::cout << "DBGTT: bad el.: " << _el[iEl]->getNum() << "\n";
-//    for (int i = 0; i < numMapNodes; i++)
-//      std::cout << "DBGTT: {x,y,z}" << i << " = (" << nodesXYZ(i,0)
-//                << ", " << nodesXYZ(i,1) << ", " << nodesXYZ(i,2) << ")\n";
-//   for (int l = 0; l < numJacNodes; l++) {
-//      for (int i = 0; i < numMapNodes; i++)
-//        std::cout << "DBGTT: dJ" << l << "d{x,y,z}" << i << " = (" << JDJ(l, i)
-//                  << ", " << JDJ(l, i+numMapNodes) << ", " << JDJ(l, i+2*numMapNodes)<< ")\n";
-//      std::cout << "DBGTT: J" << l << " = " << JDJ(l, 3*numMapNodes)<< "\n";
-//    }
-//  }
 
   // Transform Jacobian and gradients from Lagrangian to Bezier basis
   jacBasis->lag2Bez(JDJ,BDB);
@@ -629,7 +617,6 @@ void Patch::initInvCondNum()
   // Set normals to 2D elements
   if ((_dim == 2) && _condNormEl.empty()) {
     _condNormEl.resize(nEl());
-//    for (int iEl = 0; iEl < nEl(); iEl++) calcScaledNormalEl2D(element2entity,iEl);
     for (int iEl = 0; iEl < nEl(); iEl++)
       calcNormalEl2D(iEl, NS_UNIT, _condNormEl[iEl], true);
   }

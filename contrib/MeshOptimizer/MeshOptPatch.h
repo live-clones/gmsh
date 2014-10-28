@@ -63,7 +63,6 @@ public:
   inline const int &indPCEl(int iEl, int iPC) { return _indPCEl[iEl][iPC]; }
   inline const int &el2V(int iEl, int i) { return _el2V[iEl][i]; }
   inline const int &el2FV(int iEl, int i) { return _el2FV[iEl][i]; }
-  inline MElement *el(int iEl) { return _el[iEl]; }
   inline const int &fv2V(int iFV) { return _fv2V[iFV]; }
   inline const SPoint3 &xyz(int iV) { return _xyz[iV]; }
   inline const SPoint3 &ixyz(int iV) { return _ixyz[iV]; }
@@ -109,6 +108,7 @@ private:
   int _dim;
   int _nPC;                                         // Total nb. of parametric coordinates
   std::vector<MElement*> _el;                       // List of elements
+  std::vector<GEntity*> _gEnt;                      // Geometric entity corresponding to each element
   std::vector<MVertex*> _vert, _freeVert;           // List of vert., free vert.
   std::vector<int> _fv2V;                           // Index of free vert. -> index of vert.
   std::vector<bool> _forced;                        // Is vertex forced?
@@ -149,7 +149,6 @@ private:
   std::vector<int> _nBezEl;                                     // Number of Bezier poly. for an el.
   std::vector<fullMatrix<double> > _JacNormEl;                  // Normals to 2D elements for Jacobian regularization and scaling
   std::vector<double> _invStraightJac;                          // Initial Jacobians for 3D elements
-//  void calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2entity, int iEl);
   void calcNormalEl2D(int iEl, NormalScaling scaling,
                       fullMatrix<double> &elNorm, bool ideal);
 
