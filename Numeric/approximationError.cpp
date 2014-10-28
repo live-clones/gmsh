@@ -1,8 +1,8 @@
 #include "approximationError.h"
 #include "MElement.h"
-double approximationError (simpleFunction<double> &f, MElement *e) 
+double approximationError (simpleFunction<double> &f, MElement *e)
 {
-  double VALS [e->getNumVertices()];
+  std::vector<double> VALS(e->getNumVertices());
   for (int i=0;i<e->getNumVertices();i++){
     MVertex *v = e->getVertex(i);
     VALS[i] = f(v->x(),v->y(),v->z());
@@ -16,7 +16,7 @@ double approximationError (simpleFunction<double> &f, MElement *e)
     const double w = pts[k].pt[2];
     SPoint3 p; e->pnt(u, v, w, p);
     const double Jac = e->getJacobianDeterminant(u,v,w);
-    const double C = e->interpolate(VALS,u,v,w);
+    const double C = e->interpolate(&VALS[0],u,v,w);
     const double F = f(p.x(),p.y(),p.z());
     const double DIFF = C-F;
     errSqr += pts[k].weight * Jac * (DIFF*DIFF);
