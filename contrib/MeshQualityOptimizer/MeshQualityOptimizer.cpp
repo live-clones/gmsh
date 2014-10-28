@@ -134,15 +134,15 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
   MeshOptPass minJacPass;
   MeshOptPass minInvCondNumPass;
   if (p.onlyValidity) {
-    minJacPass.barrierIterMax = p.optPassMax;
-    minJacPass.optIterMax = p.itMax;
+    minJacPass.barrierIterMax = p.barrierIterMax;
+    minJacPass.optIterMax = p.optIterMax;
     minJacPass.contrib.push_back(&nodeDistFunc);
     minJacPass.contrib.push_back(&minIdealJacBarFunc);
     par.pass.push_back(minJacPass);
   }
   else {
-    minInvCondNumPass.barrierIterMax = p.optPassMax;
-    minInvCondNumPass.optIterMax = p.itMax;
+    minInvCondNumPass.barrierIterMax = p.barrierIterMax;
+    minInvCondNumPass.optIterMax = p.optIterMax;
     minInvCondNumPass.contrib.push_back(&nodeDistFunc);
     minInvCondNumPass.contrib.push_back(&minInvCondNumBarFunc);
     par.pass.push_back(minInvCondNumPass);

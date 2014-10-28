@@ -41,8 +41,8 @@ struct MeshQualOptParameters {
   double weightFree;                                                  // weight of the energy for free nodes
   int nbLayers;                                                       // number of layers taken around a bad element
   int dim;                                                            // which dimension to optimize
-  int itMax;                                                          // max number of iterations in the optimization process
-  int optPassMax;                                                     // max number of optimization passes
+  int optIterMax;                                                     // Max number of iterations in the optimization process
+  int barrierIterMax;                                                 // Max number of barrier moves ("runs")
   bool onlyVisible;                                                   // apply optimization to visible entities ONLY
   double distanceFactor;                                              // Distance criterion for patch creation
   bool fixBndNodes;                                                   // If points can move on boundaries
@@ -60,7 +60,7 @@ struct MeshQualOptParameters {
     : onlyValidity(false), excludeQuad(false),
       excludeHex(false), excludePrism(false), excludeBL(false),
       minTargetIdealJac(0.1), minTargetInvCondNum(0.1), weightFixed(1000.),
-      weightFree (1.), nbLayers (6) , dim(3) , itMax(300), optPassMax(50),
+      weightFree (1.), nbLayers (6) , dim(3) , optIterMax(300), barrierIterMax(50),
       onlyVisible(true), distanceFactor(12), fixBndNodes(false), strategy(0),
       maxAdaptBlob(3), adaptBlobLayerFact(2.), adaptBlobDistFact(2.), CPU(0.),
       minIdealJac(0.), maxIdealJac(0.), minInvCondNum(0.), maxInvCondNum(0.),
