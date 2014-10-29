@@ -11,24 +11,15 @@
 #include "GenericFace.h"
 #include "GenericRegion.h"
 
-//------------------------------------------------------------------------
-
 GenericRegion::GenericRegion(GModel *m, int num, int _native_id):GRegion(m, num), id(_native_id)
 {
 }
-
-//------------------------------------------------------------------------
 
 GenericRegion::~GenericRegion()
 {
 }
 
-//------------------------------------------------------------------------
-
 GEntity::GeomType GenericRegion::geomType() const
 {
   return Unknown;
 }
-
-//------------------------------------------------------------------------
-

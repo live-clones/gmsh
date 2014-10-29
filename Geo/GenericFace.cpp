@@ -14,9 +14,6 @@
 #include "Context.h"
 #include <math.h>
 
-
-//------------------------------------------------------------------------
-
 GenericFace::ptrfunction_int_refstring GenericFace::FaceGeomType = NULL;
 GenericFace::ptrfunction_int_refvector_refvector GenericFace::FaceUVFromXYZ = NULL;
 GenericFace::ptrfunction_int_refvector_refvector_refvector GenericFace::FaceClosestPoint = NULL;
@@ -29,9 +26,8 @@ GenericFace::ptrfunction_int_refvector_refvector GenericFace::FaceEvalNormal = N
 GenericFace::ptrfunction_int_refvector_refvector_refvector GenericFace::FaceFirstDer = NULL;
 GenericFace::ptrfunction_int_refvector_refvector_refvector_refvector GenericFace::FaceSecondDer = NULL;
 
-//------------------------------------------------------------------------
-
-GenericFace::GenericFace(GModel *m, int num, int _native_id):GFace(m, num), id(_native_id){
+GenericFace::GenericFace(GModel *m, int num, int _native_id):GFace(m, num), id(_native_id)
+{
   if (!FaceParBounds) Msg::Fatal("Genericface::ERROR: Callback FaceParBounds not set");
   Range<double> rangeu = parBounds(0);
   Range<double> rangev = parBounds(1);
@@ -39,58 +35,53 @@ GenericFace::GenericFace(GModel *m, int num, int _native_id):GFace(m, num), id(_
   umax = rangeu.high();
   vmin = rangev.low();
   vmax = rangev.high();
-  
+
   // TODO: set periodic or not !!!
   //bool _periodic[2];// is periodic in u, v
-//  throw;
+  //  throw;
 }
 
-//------------------------------------------------------------------------
-
-GenericFace::~GenericFace(){
+GenericFace::~GenericFace()
+{
 }
 
-//------------------------------------------------------------------------
-
-Range<double> GenericFace::parBounds(int i) const{
+Range<double> GenericFace::parBounds(int i) const
+{
   if(i == 0) return Range<double>(umin, umax);
   return Range<double>(vmin, vmax);
 }
 
-//------------------------------------------------------------------------
-
-SVector3 GenericFace::normal(const SPoint2 &param) const{
+SVector3 GenericFace::normal(const SPoint2 &param) const
+{
   vector<double> res(3,0.);
   vector<double> par(2,0.);
-  for (int i=0;i<3;i++) par[i] = param[i];
+  for (int i=0;i<2;i++) par[i] = param[i];
   if (!FaceEvalNormal) Msg::Fatal("Genericface::ERROR: Callback FaceEvalNormal not set");
   bool ok = FaceEvalNormal(id,par,res);
   if (!ok) Msg::Error("GenericFace::ERROR from FaceEvalNormal ! " );
   return SVector3(res[0],res[1],res[2]);
 }
 
-//------------------------------------------------------------------------
-
-Pair<SVector3,SVector3> GenericFace::firstDer(const SPoint2 &param) const{
+Pair<SVector3,SVector3> GenericFace::firstDer(const SPoint2 &param) const
+{
   if (!FaceFirstDer) Msg::Fatal("Genericface::ERROR: Callback FaceFirstDer not set");
   vector<double> deru(3,0.);
   vector<double> derv(3,0.);
   vector<double> par(2,0.);
-  for (int i=0;i<3;i++) par[i] = param[i];
+  for (int i=0;i<2;i++) par[i] = param[i];
   bool ok = FaceFirstDer(id,par,deru,derv);
   if (!ok) Msg::Error("GenericFace::ERROR from FaceFirstDer ! " );
   return Pair<SVector3,SVector3>(SVector3(deru[0],deru[1],deru[2]),
                                  SVector3(derv[0],derv[1],derv[2]));
 }
 
-//------------------------------------------------------------------------
-
-void GenericFace::secondDer(const SPoint2 &param,SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const{
+void GenericFace::secondDer(const SPoint2 &param,SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
+{
   vector<double> deruu(3,0.);
   vector<double> dervv(3,0.);
   vector<double> deruv(3,0.);
   vector<double> par(2,0.);
-  for (int i=0;i<3;i++) par[i] = param[i];
+  for (int i=0;i<2;i++) par[i] = param[i];
   if (!FaceSecondDer) Msg::Fatal("Genericface::ERROR: Callback FaceSecondDer not set");
   bool ok = FaceSecondDer(id,par,deruu,dervv,deruv);
   if (!ok) Msg::Error("GenericFace::ERROR from FaceSecondDer ! " );
@@ -100,9 +91,8 @@ void GenericFace::secondDer(const SPoint2 &param,SVector3 *dudu, SVector3 *dvdv,
   return;
 }
 
-//------------------------------------------------------------------------
-
-GPoint GenericFace::point(double par1, double par2) const{
+GPoint GenericFace::point(double par1, double par2) const
+{
   vector<double> uv(2,0.);
   uv[0] = par1;
   uv[1] = par2;
@@ -114,9 +104,8 @@ GPoint GenericFace::point(double par1, double par2) const{
   return GPoint(xyz[0], xyz[1], xyz[2], this, pp);
 }
 
-//------------------------------------------------------------------------
-
-GPoint GenericFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]) const{
+GPoint GenericFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]) const
+{
   vector<double> uvres(2,0.);
   vector<double> xyzres(3,0.);
   vector<double> queryPoint(3,0.);
@@ -140,9 +129,8 @@ GPoint GenericFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]
   return GPoint(xyzres[0], xyzres[1], xyzres[2], this, pp);
 }
 
-//------------------------------------------------------------------------
-
-SPoint2 GenericFace::parFromPoint(const SPoint3 &qp, bool onSurface) const{
+SPoint2 GenericFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
+{
   vector<double> uvres(2,0.);
   vector<double> xyzres(3,0.);
   vector<double> queryPoint(3,0.);
@@ -150,7 +138,7 @@ SPoint2 GenericFace::parFromPoint(const SPoint3 &qp, bool onSurface) const{
   bool ok=true;
   if (onSurface){
     if (!FaceUVFromXYZ) Msg::Fatal("Genericface::ERROR: Callback FaceUVFromXYZ not set");
-    ok = FaceUVFromXYZ(id,queryPoint,uvres);// assuming point is on surface 
+    ok = FaceUVFromXYZ(id,queryPoint,uvres);// assuming point is on surface
     if (!ok) Msg::Error("GenericFace::ERROR from FaceUVFromXYZ ! " );
   }
   if ((!onSurface)||(!ok)){// if not on surface
@@ -166,9 +154,8 @@ SPoint2 GenericFace::parFromPoint(const SPoint3 &qp, bool onSurface) const{
   return SPoint2(uvres[0],uvres[1]);
 }
 
-//------------------------------------------------------------------------
-
-GEntity::GeomType GenericFace::geomType() const{
+GEntity::GeomType GenericFace::geomType() const
+{
   string s;
   if (!FaceGeomType) Msg::Fatal("Genericface::ERROR: Callback FaceGeomType not set");
   bool ok = FaceGeomType(id,s);
@@ -197,40 +184,38 @@ GEntity::GeomType GenericFace::geomType() const{
   return Unknown;
 }
 
-//------------------------------------------------------------------------
-
-double GenericFace::curvatureMax(const SPoint2 &param) const{
+double GenericFace::curvatureMax(const SPoint2 &param) const
+{
   vector<double> dirMax(3,0.);
   vector<double> dirMin(3,0.);
   double curvMax,curvMin;
   vector<double> par(2,0.);
-  for (int i=0;i<3;i++) par[i] = param[i];
+  for (int i=0;i<2;i++) par[i] = param[i];
   if (!FaceCurvatures) Msg::Fatal("Genericface::ERROR: Callback FaceCurvatures not set");
   bool ok = FaceCurvatures(id,par,dirMax,dirMin,curvMax,curvMin);
   if (!ok) Msg::Error("GenericFace::ERROR from FaceCurvatures ! " );
   return std::max(fabs(curvMax), fabs(curvMin));
 }
 
-//------------------------------------------------------------------------
-
-double GenericFace::curvatures(const SPoint2 &_param,SVector3 *_dirMax,SVector3 *_dirMin,double *curvMax,double *curvMin) const{
+double GenericFace::curvatures(const SPoint2 &_param,SVector3 *_dirMax,SVector3 *_dirMin,
+                               double *curvMax,double *curvMin) const
+{
   vector<double> param(2,0.);
-  for (int i=0;i<3;i++) param[i] = _param[i];
+  for (int i=0;i<2;i++) param[i] = _param[i];
   vector<double> dirMax(3,0.);
   vector<double> dirMin(3,0.);
 
   if (!FaceCurvatures) Msg::Fatal("Genericface::ERROR: Callback FaceCurvatures not set");
   bool ok = FaceCurvatures(id,param,dirMax,dirMin,*curvMax,*curvMin);
   if (!ok) Msg::Error("GenericFace::ERROR from FaceCurvatures ! " );
-  
+
   *_dirMax = SVector3(dirMax[0],dirMax[1],dirMax[2]);
   *_dirMin = SVector3(dirMin[0],dirMin[1],dirMin[2]);
   return *curvMax;
 }
 
-//------------------------------------------------------------------------
-
-bool GenericFace::containsPoint(const SPoint3 &pt) const{
+bool GenericFace::containsPoint(const SPoint3 &pt) const
+{
   bool res;
   vector<double> queryPoint(3,0.);
   for (int i=0;i<3;i++) queryPoint[i] = pt[i];
@@ -239,6 +224,4 @@ bool GenericFace::containsPoint(const SPoint3 &pt) const{
   if (!ok) Msg::Error("GenericFace::ERROR from FaceContainsPointFromXYZ ! " );
   return res;
 }
-
-//------------------------------------------------------------------------
 
