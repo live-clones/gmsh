@@ -484,7 +484,7 @@ Maximum value in the view (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item View.MaxVisble
+@item View.MaxVisible
 Maximum value in the visible parts of the view (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
@@ -509,7 +509,7 @@ Minimum value in the view (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
-@item View.MinVisble
+@item View.MinVisible
 Minimum value in the visible parts of the view (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
