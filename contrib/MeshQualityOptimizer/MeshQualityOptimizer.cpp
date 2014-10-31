@@ -118,7 +118,8 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
   par.dim = p.dim;
   par.onlyVisible = p.onlyVisible;
   par.fixBndNodes = p.fixBndNodes;
-  par.useGeom = p.excludeBL;
+  par.useGeomForPatches = p.excludeBL;
+  par.useGeomForOpt = false;
   QualPatchDefParameters patchDef(p);
   par.patchDef = &patchDef;
   par.optDisplay = 20;

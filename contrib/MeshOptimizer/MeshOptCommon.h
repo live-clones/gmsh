@@ -77,7 +77,7 @@ struct MeshOptParameters {                              // Parameters controllin
   int dim ;                                             // Which dimension to optimize
   bool onlyVisible ;                                    // Apply optimization to visible entities ONLY
   bool fixBndNodes;                                     // If points can move on boundaries
-  bool useGeom;                                         // Compute and use info from geometric (CAD model) entities where helpful
+  bool useGeomForPatches, useGeomForOpt;                // Whether to use info from CAD for creation of patches and for optimization
   MeshOptPatchDef *patchDef;
   std::vector<MeshOptPass> pass;
   int optDisplay;                                       // Sampling rate in opt. iterations for display

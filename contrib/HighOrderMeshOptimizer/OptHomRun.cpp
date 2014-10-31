@@ -772,7 +772,8 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   par.dim = p.dim;
   par.onlyVisible = p.onlyVisible;
   par.fixBndNodes = p.fixBndNodes;
-  par.useGeom = false;
+  par.useGeomForPatches = false;
+  par.useGeomForOpt = false;
   HOPatchDefParameters patchDef(p);
   par.patchDef = &patchDef;
   par.optDisplay = 30;

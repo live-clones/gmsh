@@ -259,9 +259,11 @@ void optimizeConnectedPatches(const vertElVecMap &vertex2elements,
 {
   par.success = 1;
 
+  const elEntMap &e2ePatch = par.useGeomForPatches ? element2entity : elEntMap();
+  const elEntMap &e2eOpt = par.useGeomForOpt ? element2entity : elEntMap();
+
   std::vector<elSetVertSetPair> toOptimize = getConnectedPatches(vertex2elements,
-                                                                 element2entity,
-                                                                 badasses, par);
+                                                                 e2ePatch, badasses, par);
 
   for (int iPatch = 0; iPatch < toOptimize.size(); ++iPatch) {
 
@@ -269,7 +271,7 @@ void optimizeConnectedPatches(const vertElVecMap &vertex2elements,
     if (par.verbose > 1)
       Msg::Info("Optimizing patch %i/%i composed of %i elements", iPatch,
                       toOptimize.size()-1, toOptimize[iPatch].first.size());
-    MeshOpt opt(element2entity, toOptimize[iPatch].first, toOptimize[iPatch].second, par);
+    MeshOpt opt(e2eOpt, toOptimize[iPatch].first, toOptimize[iPatch].second, par);
     if (par.verbose > 3) {
       std::ostringstream ossI1;
       ossI1 << "initial_patch-" << iPatch << ".msh";
@@ -329,6 +331,9 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
 {
   par.success = 1;
 
+  const elEntMap &e2ePatch = par.useGeomForPatches ? element2entity : elEntMap();
+  const elEntMap &e2eOpt = par.useGeomForOpt ? element2entity : elEntMap();
+
   const int initNumBadElts = badElts.size();
   if (par.verbose > 0) Msg::Info("%d bad elements, starting to iterate...", initNumBadElts);
 
@@ -340,7 +345,7 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
     if (badElts.empty()) break;
 
     // Create patch around worst element and remove it from badElts
-    MElement *worstEl = getWorstElement(badElts, element2entity, par);
+    MElement *worstEl = getWorstElement(badElts, e2ePatch, par);
     badElts.erase(worstEl);
 
     // Initialize patch size to be adapted
@@ -355,7 +360,7 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
       const double limDist = par.patchDef->maxDistance(worstEl);
       elSet toOptimizePrim = getSurroundingPatch(worstEl, par.patchDef, limDist,
                                                  maxLayers, vertex2elements,
-                                                 element2elements, element2entity);
+                                                 element2elements, e2ePatch);
       vertSet toFix = getAllBndVertices(toOptimizePrim, vertex2elements);
       elSet toOptimize;
       std::set_difference(toOptimizePrim.begin(),toOptimizePrim.end(),
@@ -366,7 +371,7 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
       if (par.verbose > 1)
         Msg::Info("Optimizing patch %i (max. %i remaining) composed of %4d elements",
                                             iBadEl, badElts.size(), toOptimize.size());
-      MeshOpt opt(element2entity, toOptimize, toFix, par);
+      MeshOpt opt(e2eOpt, toOptimize, toFix, par);
       if (par.verbose > 3) {
         std::ostringstream ossI1;
         ossI1 << "initial_patch-" << iBadEl << ".msh";
@@ -446,7 +451,8 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par)
     Msg::Info("Computing connectivity and bad elements for entity %d...",
               entity->tag());
     calcVertex2Elements(par.dim, entity, vertex2elements);
-    if (par.useGeom) calcElement2Entity(entity, element2entity);
+    if ((par.useGeomForPatches) || (par.useGeomForOpt))
+      calcElement2Entity(entity, element2entity);
     for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) {                               // Detect bad elements
       double jmin, jmax;
       MElement *el = entity->getMeshElement(iEl);
