@@ -5046,13 +5046,20 @@ StringExpr :
       Free($3);
       Free($5);
     }
-  | tStrCat LP StringExprVar ',' StringExprVar RP
+  | tStrCat LP RecursiveListOfStringExprVar RP
     {
-      $$ = (char *)Malloc((strlen($3) + strlen($5) + 1) * sizeof(char));
-      strcpy($$, $3);
-      strcat($$, $5);
-      Free($3);
-      Free($5);
+      int size = 1;
+      for(int i = 0; i < List_Nbr($3); i++)
+        size += strlen(*(char**)List_Pointer($3, i)) + 1;
+      $$ = (char*)Malloc(size * sizeof(char));
+      $$[0] = '\0';
+      for(int i = 0; i < List_Nbr($3); i++){
+        char *s;
+        List_Read($3, i, &s);
+        strcat($$, s);
+        Free(s);
+      }
+      List_Delete($3);
     }
   | tStrPrefix '(' StringExprVar ')'
     {
@@ -5096,7 +5103,7 @@ StringExpr :
     }
   | tStr LP RecursiveListOfStringExprVar RP
     {
-      int size = 0;
+      int size = 1;
       for(int i = 0; i < List_Nbr($3); i++)
         size += strlen(*(char**)List_Pointer($3, i)) + 1;
       $$ = (char*)Malloc(size * sizeof(char));

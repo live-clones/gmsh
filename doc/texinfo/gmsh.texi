@@ -1109,8 +1109,8 @@ Character expressions are defined as:
   Today | OnelabAction |
   StrPrefix ( @var{char-expression} ) |
   StrRelative ( @var{char-expression} ) |
-  StrCat ( @var{char-expression} , @var{char-expression} ) |
-  Str ( @var{char-expression} , @dots{} ) |
+  StrCat ( @var{char-expression} <,@dots{}> ) |
+  Str ( @var{char-expression} <,@dots{}> ) |
   Sprintf ( @var{char-expression} , @var{expression-list} ) |
   Sprintf ( @var{char-expression} ) |
   Sprintf ( @var{char-option} ) |
