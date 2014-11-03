@@ -1519,9 +1519,16 @@ static void onelab_string_button_cb(Fl_Widget *w, void *data)
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings, name);
   if(strings.size()){
-    std::string tmp = FixRelativePath(GModel::current()->getFileName(),
-                                      strings[0].getValue());
-    MergeFile(tmp);
+    if(strings[0].getAttribute("Macro") == "GmshParseString"){
+      // parse string directly
+      ParseString(strings[0].getValue());
+    }
+    else{
+      // merge file
+      std::string tmp = FixRelativePath(GModel::current()->getFileName(),
+                                        strings[0].getValue());
+      MergeFile(tmp);
+    }
     setGmshOption(strings[0]);
     autoCheck(strings[0], strings[0], true);
     drawContext::global()->draw();
@@ -1619,7 +1626,9 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
   _treeStrings.push_back(path);
 
   // macro button
-  if(p.getAttribute("Macro") == "Gmsh"){
+  if(p.getAttribute("Macro") == "Gmsh" ||
+     p.getAttribute("Macro") == "GmshMergeFile" ||
+     p.getAttribute("Macro") == "GmshParseString"){
     Fl_Button *but = new Fl_Button(1, 1, ww / _widgetLabelRatio, hh);
     but->box(FL_FLAT_BOX);
     but->color(_tree->color());
