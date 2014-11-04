@@ -27,6 +27,7 @@ struct QualPatchDefParameters : public MeshOptPatchDef
   virtual int inPatch(const SPoint3 &badBary, double limDist,
                       MElement *el, GEntity* gEnt) const;
 private:
+  bool _onlyValidity;
   bool _excludeQuad, _excludeHex, _excludePrism, _excludeBL;
   double _idealJacMin, _invCondNumMin;
   double _distanceFactor;
@@ -35,6 +36,7 @@ private:
 
 QualPatchDefParameters::QualPatchDefParameters(const MeshQualOptParameters &p)
 {
+  _onlyValidity = p.onlyValidity;
   _excludeQuad = p.excludeQuad;
   _excludeHex = p.excludeHex;
   _excludePrism = p.excludePrism;
@@ -73,12 +75,16 @@ double QualPatchDefParameters::elBadness(MElement *el, GEntity* gEnt) const
       if (itBLEl != blc->_toFirst.end()) return 1.;
     }
   }
-//  double jMin, jMax;
-//  el->idealJacRange(jMin, jMax);
-//  return jMin-_idealJacMin;
-  double iCNMin, iCNMax;
-  el->signedInvCondNumRange(iCNMin, iCNMax);
-  return iCNMin-_invCondNumMin;
+  if (_onlyValidity) {
+    double jMin, jMax;
+    el->idealJacRange(jMin, jMax);
+    return jMin-_idealJacMin;
+  }
+  else {
+    double iCNMin, iCNMax;
+    el->signedInvCondNumRange(iCNMin, iCNMax);
+    return iCNMin-_invCondNumMin;
+  }
 }
 
 
