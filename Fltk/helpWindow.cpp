@@ -296,7 +296,7 @@ helpWindow::helpWindow()
             << "<p><a href=\"http://geuz.org/gmsh/doc/CREDITS.txt\">Credits</a> "
             << "and <a href=\"http://geuz.org/gmsh/doc/LICENSE.txt\">licensing "
             << "information</a>"
-            << "<p>Please send all questions and bug reports to "
+            << "<p>Please send all questions and bug reports to the public mailing list "
             << "<a href=\"mailto:gmsh@geuz.org\">gmsh@geuz.org</a></center>"
             << "<ul>"
             << "<li><i>Build OS:</i> " << GetGmshBuildOS()
