@@ -376,12 +376,12 @@ int CondNumBasis::condNumOrder(int parentType, int order)
   switch (parentType) {
     case TYPE_PNT : return 0;
     case TYPE_LIN : return order - 1;
-    case TYPE_TRI : return 2*order - 2;
-    case TYPE_QUA : return 2*order - 1;
-    case TYPE_TET : return 3*order - 3;
-    case TYPE_PRI : return 3*order - 1;
-    case TYPE_HEX : return 3*order - 1;
-    case TYPE_PYR : return 3*order - 3;
+    case TYPE_TRI : return (order == 1) ? 0 : order;
+    case TYPE_QUA : return order;
+    case TYPE_TET : return (order == 1) ? 0 : order;
+    case TYPE_PRI : return order;
+    case TYPE_HEX : return order;
+    case TYPE_PYR : return (order == 1) ? 0 : order;
     default :
       Msg::Error("Unknown element type %d, return order 0", parentType);
       return 0;
