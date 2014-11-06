@@ -157,12 +157,16 @@ double MetricBasis::getMinSampledR(MElement *el, int deg) const
   fullMatrix<double> R;
   interpolate(el, md, samplingPoints, R);
 
-  if (R.size1() < 1) return -1;
+  if (R.size1() < 1) {
+    delete md;
+    return -1;
+  }
 
   double min = R(0, 1);
   for (int i = 1; i < R.size1(); ++i)
     min = std::min(min, R(i, 1));
 
+  delete md;
   return min;
 }
 
@@ -891,6 +895,7 @@ void MetricBasis::interpolateAfterNSubdivisions(
 
   interpolate(el, md, subuvw, metric);
   bezierMapping->interpolate(nodes, subuvw, uvw, false);
+  delete md;
 }
 
 int MetricBasis::metricOrder(int tag)
