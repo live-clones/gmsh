@@ -106,8 +106,6 @@ TetEdgeBasis::TetEdgeBasis(size_t order){
   }
 
   // Face Based //
-  // TO CHECK: Are Triangles face matching tets ?
-
   for(size_t s = 0; s < nOrientation; s++){
     size_t i = nEdge;
 
@@ -121,8 +119,8 @@ TetEdgeBasis::TetEdgeBasis(size_t order){
             lagrange[faceIdx[s][f][2]];
 
           Polynomial u =
-            intLegendre[l1].compose(lagrange[faceIdx[s][f][0]] -
-                                    lagrange[faceIdx[s][f][1]]
+            intLegendre[l1].compose(lagrange[faceIdx[s][f][1]] -
+                                    lagrange[faceIdx[s][f][0]]
                                     ,
                                     lagrange[faceIdx[s][f][0]] +
                                     lagrange[faceIdx[s][f][1]]);
