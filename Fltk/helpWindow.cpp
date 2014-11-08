@@ -414,7 +414,7 @@ helpWindow::helpWindow()
     search->box(FL_FLAT_BOX);
     search->callback(help_options_cb);
     search->when(FL_WHEN_CHANGED);
-    search->take_focus();
+    //search->take_focus(); cannot call this here - it triggers show() on Linux in fltk 1.3.3
     o->resizable(search);
     o->end();
 
