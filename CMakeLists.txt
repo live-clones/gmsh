@@ -1670,7 +1670,8 @@ if(APPLE AND ENABLE_BUILD_LIB)
   file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_framework.plist F0)
   string(REPLACE GMSH_VERSION "${GMSH_VERSION}" F1 "${F0}")
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/Info_framework.plist "${F1}")
-  get_target_property(LIBNAME lib LOCATION)
+  get_target_property(LIBNAME lib LOCATION) # depracated
+  #set(LIBNAME $<TARGET_FILE:lib>) # FIXME: use this in the future
   add_custom_target(framework DEPENDS lib
     COMMAND ${CMAKE_COMMAND} -E remove_directory Gmsh.framework
     COMMAND ${CMAKE_COMMAND} -E make_directory Gmsh.framework/Headers
