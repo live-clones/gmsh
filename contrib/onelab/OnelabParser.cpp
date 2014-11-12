@@ -4,7 +4,6 @@
 
 #include "OnelabClients.h"
 
-
 // reserved keywords for the onelab parser
 
 namespace olkey{
@@ -354,8 +353,8 @@ std::string localSolverClient::resolveGetVal(std::string line) {
 	  else if(!action.compare("expand")) {
 	    std::string pattern;
 	    pattern.assign(extractExpandPattern(args[0]));
-	    OLMsg::Info("Expand parameter <%s> with pattern <%s>",
-		      paramName.c_str(),pattern.c_str());
+	    // OLMsg::Info("Expand parameter <%s> with pattern <%s>",
+	    // 	      paramName.c_str(),pattern.c_str());
 	    buff.assign(1,pattern[0]);
 	    for(std::vector<double>::iterator it = choices.begin();
 		it != choices.end(); it++){
@@ -1559,18 +1558,6 @@ void MetaModel::client_sentence(const std::string &name,
       }
     }
   }
-/* else if(!action.compare("commandLine")){
-    if(isTodo(REGISTER)){
-      if(arguments[0].size() >= 1)
-	OLMsg::SetOnelabString(name + "/CommandLine", arguments[0], false);
-      else
-	OLMsg::Error("No pathname given for client <%s>", name.c_str());
-      if(arguments[0].size() >= 2)
-	OLMsg::SetOnelabString(name + "/HostName", arguments[1], false);
-      if(arguments[0].size() >= 3)
-	OLMsg::SetOnelabString(name + "/RemoteDir",arguments[2], false);
-    }
-    }*/
   else if(!action.compare("workingSubdir")){
     localSolverClient *c;
     if((c=findClientByName(name)))

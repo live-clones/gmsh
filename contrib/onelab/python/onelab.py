@@ -36,8 +36,8 @@ def file_exist(filename):
       return True
   except IOError:
     return False
-
-def path(ref,inp=''):
+  
+def path(ref, inp=''):
   # ref is reference directory name
   # inp is an optional file or directory name
   dirname = os.path.dirname(ref)
@@ -47,11 +47,28 @@ def path(ref,inp=''):
     else :
       return '.'
   if inp[0] == '/' or inp[0] == '\\' or (len(inp) > 2 and inp[1] == '\:'):
-     return inp # do nothing, inp is an absolute path
+    return inp # do nothing, inp is an absolute path
   if dirname: 
     return dirname + os.sep + inp # append inp to the path of the reference file
   else:
     return inp
+
+class pth:
+  def path(self, ref, inp=''):
+    p = path(ref, inp='')
+    if not os.path.exists():
+      print('The path %s does not exist' %(p))
+      self.errors += 1
+    return p
+
+  def check_file(self, filename, workdir):
+    if not file_exist(workdir + os.sep + filename):
+      print('The file %s does not exist in %s' %(filename, workdir))
+      self.errors += 1
+
+  def __init__(self) :
+    self.errors = 0
+
 
 class _parameter() :
   _membersbase = [
@@ -311,7 +328,7 @@ class client :
     if not self.socket or not filename :
       return
     self._send(self._GMSH_MERGE_FILE, filename)
-
+        
   def openProject(self, filename) :
     if not self.socket or not filename :
       return
@@ -500,8 +517,10 @@ class client :
 
   def outputFiles(self, list) :
     if list :
-      self.setString(self.name+'/9Output files', value=list[0],
-                     choices=list, visible=0)
+      self.setString('0Metamodel/9Output files', value=list[0],
+                     choices=list, visible=1)
+#      self.setString(self.name+'/9Output files', value=list[0],
+#                     choices=list, visible=1)
 
 # tool to extract the (i, j)th element in an array file
 from rlcompleter import readline

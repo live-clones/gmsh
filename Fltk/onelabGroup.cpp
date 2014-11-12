@@ -400,14 +400,16 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 #if defined(HAVE_ONELAB_METAMODEL)
       std::string::size_type first = 0;
       std::string name = onelab::parameter::getNextToken(message, first);
-      std::string fileName = onelab::parameter::getNextToken(message, first);
-      std::vector<std::string> split = SplitOLFileName(fileName);
+      std::string fullName = onelab::parameter::getNextToken(message, first);
+      std::vector<std::string> split = SplitOLFileName(fullName);
       std::string ofileName = split[0] + split[1] ;
       std::ofstream outfile(ofileName.c_str());
-      localSolverClient *c = new InterfacedClient(name,"","");
+
+      std::vector<std::string> split2 = SplitFileName(split[1]);
+      localSolverClient *c = new InterfacedClient(name,"",split2[0]);
       if (outfile.is_open()) {
         Msg::Info("Preprocess file <%s>",ofileName.c_str());
-        c->convert_onefile(fileName, outfile);
+        c->convert_onefile(fullName, outfile);
       }
       else
         Msg::Error("The file <%s> cannot be opened",ofileName.c_str());
@@ -661,7 +663,7 @@ static void archiveOutputFiles(const std::string &fileName)
   std::vector<onelab::string> ps;
   onelab::server::instance()->get(ps,"0Metamodel/9Tag");
   if(ps.size())
-    stamp.assign(ps[0].getValue()+timeStamp());
+    stamp.assign(timeStamp() + ps[0].getValue());
   else
     stamp.assign(timeStamp());
 
@@ -845,8 +847,17 @@ void onelab_cb(Fl_Widget *w, void *data)
     onelab::server::instance()->get(ps,"0Metamodel/9Tag");
     if(ps.size()){
       fileName.assign("onelab" + ps[0].getValue() + ".db");
-      ps[0].setValue("");
-      onelab::server::instance()->set(ps[0]);
+      //ps[0].setValue("");
+      //onelab::server::instance()->set(ps[0]);
+    }
+
+    // switch to "run" mode"
+    std::vector<onelab::number> pn;
+    onelab::server::instance()->get(pn,"0Metamodel/9Use restored solution");
+    if(pn.size()){
+      pn[0].setValue(0);
+      pn[0].setVisible(1);
+      onelab::server::instance()->set(pn[0]);
     }
 
     std::string s;
@@ -875,6 +886,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     onelab::server::instance()->get(pn,"0Metamodel/9Use restored solution");
     if(pn.size()){
       pn[0].setValue(1);
+      pn[0].setVisible(1);
       onelab::server::instance()->set(pn[0]);
     }
     action = "check";
