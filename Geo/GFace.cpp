@@ -974,110 +974,61 @@ void bfgs_callback(const alglib::real_1d_array& x, double& func,
 GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[2]) const
 {
 #if defined(HAVE_BFGS)
-  // Creating the optimisation problem
-  // printf("STARTING OPTIMIZATION\n");
+  // Test initial guess
+  double min_u = initialGuess[0];
+  double min_v = initialGuess[1];
+  GPoint pnt = point(min_u, min_v);
+  SPoint3 spnt(pnt.x(), pnt.y(), pnt.z());
+  double min_dist = queryPoint.distance(spnt);
 
-  alglib::ae_int_t dim = 2;
-  alglib::ae_int_t corr = 2; // Num of corrections in the scheme in [3,7]
-  alglib::minlbfgsstate state;
-  alglib::real_1d_array x; // = "[0.5,0.5]";
-  std::vector<double> initial_conditions(dim);
-
-  double min_dist = 1e18;
-  double min_u = 0.5;
-  double min_v = 0.5;
-
-  Range<double> uu = parBounds(0);
-  Range<double> vv = parBounds(1);
-  {
-    GPoint pnt = point(initialGuess[0], initialGuess[1]);
-    SPoint3 spnt(pnt.x(), pnt.y(), pnt.z());
-    //double dist = queryPoint.distance(spnt);
-  }
-
-  // FILE *F = Fopen ("hop.pos","w");
-  // fprintf(F,"View \" \" {\n");
-  // fprintf(F,"SP(%g,%g,%g) {%g};\n",queryPoint.x(),queryPoint.y(),queryPoint.z(),0.0);
-  double initial_guesses = 10.0;
-  for(double u = uu.low(); u <= uu.high() + 1.e-5;
-      u += (uu.high() - uu.low()) / initial_guesses) {
-    //    printf("%f\n", u);
-    for(double v = vv.low(); v <= vv.high() + 1.e-5;
-        v += (vv.high() - vv.low()) / initial_guesses) {
+  // Try to find a better initial guess by sampling full parameter range
+  const double nGuesses = 10.;
+  const Range<double> uu = parBounds(0);
+  const Range<double> vv = parBounds(1);
+  const double ru = uu.high()-uu.low(), rv = vv.high()-vv.low();
+  const double epsU = 1e-5*ru, epsV = 1e-5*rv;
+  const double du = ru/nGuesses, dv = rv/nGuesses;
+  for(double u = uu.low(); u <= uu.high() + epsU; u += du) {
+    for(double v = vv.low(); v <= vv.high() + epsV; v += dv) {
       GPoint pnt = point(u, v);
       SPoint3 spnt(pnt.x(), pnt.y(), pnt.z());
       double dist = queryPoint.distance(spnt);
-      // fprintf(F,"SP(%g,%g,%g) {%g};\n",pnt.x(), pnt.y(), pnt.z(),dist);
-      // printf("lmocal (%12.5E %12.5E) (point) : %12.5E %12.5E %12.5E (query) : "
-      //        "%12.5E %12.5E %12.5E DSIT %12.5E\n",u,v, pnt.x(), pnt.y(), pnt.z(),
-      //         queryPoint.x(),queryPoint.y(),queryPoint.z(), dist);
       if (dist < min_dist) {
-	// printf("min_dist %f\n", dist);
-	min_dist = dist;
-	min_u = u;
-	min_v = v;
-	// GPoint pnt = point(min_u, min_v);
+        min_dist = dist;
+        min_u = u;
+        min_v = v;
       }
     }
   }
-  // fprintf(F,"};\n");
-  // fclose(F);
-  // getchar();
-  initial_conditions[0] = min_u;
-  initial_conditions[1] = min_v;
 
-  // printf("Initial conditions : %f %f %12.5E\n", min_u, min_v,min_dist);
-  // GPoint pnt = point(min_u, min_v);
-  // printf("Initial conditions (point) : %f %f %f local (%g %g) "
-  //        "Looking for %f %f %f DIST = %12.5E\n",
-  //         pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
-  //         queryPoint.x(),queryPoint.y(),queryPoint.z(), min_dist);
-
-  x.setcontent(dim, &initial_conditions[0]);
-
+  // Set up optimisation problem
+  alglib::ae_int_t dim = 2;
+  alglib::ae_int_t corr = 2; // Num of corrections in the scheme in [3,7]
+  alglib::minlbfgsstate state;
+  alglib::real_1d_array x;
+  const double initialCond[2] = {min_u, min_v};
+  x.setcontent(dim, initialCond);
   minlbfgscreate(2, corr, x, state);
 
-  // Defining the stopping criterion
-  double epsg = 1.e-12;
-  double epsf = 0.0;
-  double epsx = 0.0;
-  alglib::ae_int_t maxits = 500;
-
+  // Set stopping criteria
+  const double epsg = 1.e-12;
+  const double epsf = 0.;
+  const double epsx = 0.;
+  const alglib::ae_int_t maxits = 500;
   minlbfgssetcond(state, epsg, epsf, epsx, maxits);
 
-  // Solving the problem
+  // Solve problem
   data_wrapper w;
   w.set_point(queryPoint);
   w.set_face(this);
-
   minlbfgsoptimize(state, bfgs_callback, NULL, &w);
 
-  // Getting the results
+  // Get results
   alglib::minlbfgsreport rep;
-
   minlbfgsresults(state, x, rep);
-
   GPoint pntF = point(x[0], x[1]);
-  if (rep.terminationtype != 4){
-    // printf("Initial conditions (point) : %f %f %f local (%g %g) "
-    //        "Looking for %f %f %f DIST = %12.5E at the end (%f %f) %f %f %f\n",
-    //         pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
-    //         queryPoint.x(),queryPoint.y(),queryPoint.z(),
-    //         min_dist,x[0],x[1],pntF.x(), pntF.y(), pntF.z());
-    // double DDD =
-    //   ( queryPoint.x() - pntF.x()) * ( queryPoint.x() - pntF.x()) +
-    //   ( queryPoint.y() - pntF.y()) * ( queryPoint.y() - pntF.y()) +
-    //   ( queryPoint.z() - pntF.z()) * ( queryPoint.z() - pntF.z());
-    // if (sqrt(DDD) > 1.e-4)
-    /*
-    printf("Initial conditions (point) : %f %f %f local (%g %g) Looking for %f %f %f "
-           "DIST = %12.5E at the end (%f %f) %f %f %f termination %d\n",
-           pnt.x(), pnt.y(), pnt.z(),min_u,min_v,
-	   queryPoint.x(),queryPoint.y(),queryPoint.z(),
-	   min_dist,x[0],x[1],pntF.x(), pntF.y(), pntF.z(),rep.terminationtype);
-    */
-  }
   return pntF;
+
 #else
   Msg::Error("Closest point not implemented for this type of surface");
   SPoint2 p = parFromPoint(queryPoint, false);
