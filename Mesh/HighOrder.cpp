@@ -103,24 +103,28 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
 }
 
 static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
-                                         double v0, double vN, int N,
+                                         double v0, double vN, SPoint3 &p0,
+                                         SPoint3 &pN, int N, bool geodesic,
                                          double *u, double *v)
 {
-  double t[100];
-  // initialize the points by equal subdivision of geodesics
-  u[0] = u0;
-  v[0] = v0;
-  t[0] = 0;
-  for (int i = 1; i < N; i++){
-    t[i] = (double)i / (N - 1);
-    SPoint2 p = gf->geodesic(SPoint2(u0, v0), SPoint2(uN, vN), t[i]);
-    u[i] = p.x();
-    v[i] = p.y();
+  const int NI = N-1;
+  u[0] = u0; v[0] = v0;
+  u[NI] = uN; v[NI] = vN;
+  const double fact = 1./(double)NI;
+  for (int i = 1; i < NI; i++){
+    const double t = i*fact;
+    u[i] = u0 + (uN-u0)*t;
+    v[i] = v0 + (vN-v0)*t;
+    if (geodesic) {
+      SPoint3 pc(t*pN + (1.-t)*p0);
+      double guess[2] = {u[i], v[i]};
+      GPoint gp = gf->closestPoint(pc, guess);
+      if(gp.succeeded()){
+        u[i] = gp.u();
+        v[i] = gp.v();
+      }
+    }
   }
-  u[N] = uN;
-  v[N] = vN;
-  t[N] = 1.0;
-
   return true;
 }
 
@@ -178,34 +182,21 @@ static bool getEdgeVerticesonGeo(GFace *gf, MVertex *v0, MVertex *v1,
   double US[100], VS[100];
   bool reparamOK = reparamMeshEdgeOnFace(v0, v1, gf, p0, p1);
   if(reparamOK) {
+    SPoint3 pnt0, pnt1;
     if (nPts >= 30)
-      computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1], nPts + 2, US, VS);
+      computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1],
+                                   pnt0, pnt1, nPts + 2, false, US, VS);
     else {
-      US[0]      =  p0[0];
-      VS[0]      =  p0[1];
-      US[nPts+1] =  p1[0];
-      VS[nPts+1] =  p1[1];
-      for(int j = 0; j < nPts; j++){
-        const double t = (double)(j + 1) / (nPts + 1);
-        SPoint3 pc(t*v1->x()+(1.-t)*v0->x(),
-                   t*v1->y()+(1.-t)*v0->y(),
-                   t*v1->z()+(1.-t)*v0->z());
-        SPoint2 guess = p0 * (1.-t) + p1 * t;
-        GPoint gp = gf->closestPoint(pc, guess);
-        if(gp.succeeded()){
-          US[j+1] = gp.u();
-          VS[j+1] = gp.v();
-        }
-        else{
-          US[j+1] = guess.x();
-          VS[j+1] = guess.y();
-        }
-      }
+      pnt0 = v0->point();
+      pnt1 = v1->point();
+      computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1],
+                                   pnt0, pnt1, nPts + 2, true, US, VS);
     }
   }
-  else
+  else {
     Msg::Error("Cannot reparam a mesh Vertex in high order meshing");
-  if (!reparamOK) return false;
+    return false;
+  }
 
   for(int j = 0; j < nPts; j++){
     GPoint pc = gf->point(US[j + 1], VS[j + 1]);
