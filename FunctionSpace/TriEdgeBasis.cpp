@@ -51,6 +51,9 @@ TriEdgeBasis::TriEdgeBasis(size_t order){
       Polynomial(Polynomial(1, 0, 1, 0))
     };
 
+  // One //
+  Polynomial one(1, 0, 0, 0);
+
   // Basis //
   basis = new vector<Polynomial>**[nOrientation];
 
@@ -118,7 +121,7 @@ TriEdgeBasis::TriEdgeBasis(size_t order){
                                   lagrange[faceIdx[s][0][1]]);
         Polynomial v =
           lagrange[faceIdx[s][0][2]] *
-          legendre[l2].compose(lagrange[faceIdx[s][0][2]] * 2);
+          legendre[l2].compose(lagrange[faceIdx[s][0][2]] * 2 - one);
 
         // Preliminary Type 2
         vector<Polynomial> gradU = u.gradient();
@@ -164,22 +167,16 @@ TriEdgeBasis::TriEdgeBasis(size_t order){
 
 
         // Type 1
-        basis[s][i] =
-          new vector<Polynomial>((u * v).gradient());
-
+        basis[s][i] = new vector<Polynomial>((u * v).gradient());
         i++;
 
         // Type 2
-        basis[s][i] =
-          new vector<Polynomial>(subGradUV);
-
+        basis[s][i] = new vector<Polynomial>(subGradUV);
         i++;
 
         // Type 3
         if(l1 == 1){
-          basis[s][i] =
-            new vector<Polynomial>(subGradL1L2V);
-
+          basis[s][i] = new vector<Polynomial>(subGradL1L2V);
           i++;
         }
       }

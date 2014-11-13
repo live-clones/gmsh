@@ -172,22 +172,16 @@ TetEdgeBasis::TetEdgeBasis(size_t order){
 
 
           // Type 1
-          basis[s][i] =
-            new vector<Polynomial>((u * v).gradient());
-
+          basis[s][i] = new vector<Polynomial>((u * v).gradient());
           i++;
 
           // Type 2
-          basis[s][i] =
-            new vector<Polynomial>(subGradUV);
-
+          basis[s][i] = new vector<Polynomial>(subGradUV);
           i++;
 
           // Type 3
           if(l1 == 1){
-            basis[s][i] =
-              new vector<Polynomial>(subGradL1L2V);
-
+            basis[s][i] = new vector<Polynomial>(subGradL1L2V);
             i++;
           }
         }
