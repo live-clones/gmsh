@@ -55,17 +55,15 @@ def path(ref, inp=''):
 
 class pth:
   def path(self, ref, inp=''):
-    p = path(ref, inp='')
-    if not os.path.exists():
-      print('The path %s does not exist' %(p))
+    p = path(ref,inp)
+    if not os.path.exists(p):
+      print('PTH error: The path %s does not exist' %(p))
       self.errors += 1
     return p
 
-  def check_file(self, filename, workdir):
-    if not file_exist(workdir + os.sep + filename):
-      print('The file %s does not exist in %s' %(filename, workdir))
-      self.errors += 1
-
+  def copy(self, here, there):
+    os.system('cp '+ here + ' ' + there)
+    
   def __init__(self) :
     self.errors = 0
 
