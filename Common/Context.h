@@ -23,12 +23,14 @@ struct contextMeshOptions {
   int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms, pyramids;
   int surfacesEdges, surfacesFaces, volumesEdges, volumesFaces, numSubEdges;
   int pointsNum, linesNum, surfacesNum, volumesNum, qualityType, labelType;
-  int optimize, optimizeNetgen, optimizeLloyd, smoothCrossField, refineSteps, remove4triangles;
+  int optimize, optimizeNetgen, optimizeLloyd, smoothCrossField, refineSteps;
+  int remove4triangles;
   double normals, tangents, explode, angleSmoothNormals, allowSwapEdgeAngle;
   double mshFileVersion, mshFilePartitioned, pointSize, lineWidth;
   double qualityInf, qualitySup, radiusInf, radiusSup;
   double scalingFactor, lcFactor, randFactor, lcIntegrationPrecision;
-  double lcMin, lcMax, toleranceEdgeLength, anisoMax, smoothRatio;
+  double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
+  double anisoMax, smoothRatio;
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int fileFormat, nbSmoothing, algo2d, algo3d, algoSubdivide;
@@ -187,6 +189,8 @@ class CTX {
   // font name, FLTK enum and size for opengl graphics
   std::string glFont, glFontTitle, glFontEngine;
   int glFontEnum, glFontEnumTitle, glFontSize, glFontSizeTitle;
+  // font size of messages
+  int msgFontSize;
   // point/line widths
   double pointSize, lineWidth;
   // light options

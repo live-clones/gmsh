@@ -597,6 +597,8 @@ StringXNumber GeneralOptions_Number[] = {
     "Horizontal position (in pixels) of the (detached) menu tree" },
   { F|S, "MenuPositionY" , opt_general_menu_position1 , 400. ,
     "Vertical position (in pixels) of the (detached) menu tree" },
+  { F|O, "MessageFontSize" , opt_general_message_fontsize , -1. ,
+    "Size of the font in the message window (-1=automatic)" },
   { F|S, "MessageHeight" , opt_general_message_size , 300. ,
     "Height (in pixels) of the message console when it is visible (should be > 0)" },
   { F,   "MinX" , opt_general_xmin , 0. ,
@@ -1194,6 +1196,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ToleranceEdgeLength" , opt_mesh_tolerance_edge_length, 0.0,
     "Skip a model edge in mesh generation if its length is less than user's "
     "defined tolerance" },
+  { F|O, "ToleranceInitialDelaunay" , opt_mesh_tolerance_initial_delaunay, 1.e-8,
+    "Tolerance for initial 3D Delaunay mesher" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. ,
     "Display mesh triangles?" },
 

@@ -2079,6 +2079,19 @@ double opt_general_message_size(OPT_ARGS_NUM)
   return CTX::instance()->msgSize;
 }
 
+double opt_general_message_fontsize(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->msgFontSize = (int)val;
+#if defined(HAVE_FLTK)
+    if(FlGui::available() && (action & GMSH_GUI)){
+      FlGui::instance()->graph[0]->setMessageFontSize(CTX::instance()->msgFontSize);
+    }
+#endif
+  }
+  return CTX::instance()->msgFontSize;
+}
+
 double opt_general_detached_menu(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -4782,6 +4795,13 @@ double opt_mesh_tolerance_edge_length(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->mesh.toleranceEdgeLength = val;
   return CTX::instance()->mesh.toleranceEdgeLength;
+}
+
+double opt_mesh_tolerance_initial_delaunay(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.toleranceInitialDelaunay = val;
+  return CTX::instance()->mesh.toleranceInitialDelaunay;
 }
 
 double opt_mesh_lc_from_curvature(OPT_ARGS_NUM)

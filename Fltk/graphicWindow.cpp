@@ -2728,6 +2728,20 @@ static void message_menu_save_cb(Fl_Widget *w, void *data)
     g->saveMessages(fileChooserGetName(1).c_str());
 }
 
+#if 0
+static void message_menu_increase_font_cb(Fl_Widget *w, void *data)
+{
+  graphicWindow *g = (graphicWindow*)data;
+  g->changeMessageFontSize(1);
+}
+
+static void message_menu_decrease_font_cb(Fl_Widget *w, void *data)
+{
+  graphicWindow *g = (graphicWindow*)data;
+  g->changeMessageFontSize(-1);
+}
+#endif
+
 static void message_browser_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g = (graphicWindow*)data;
@@ -2738,6 +2752,8 @@ static void message_browser_cb(Fl_Widget *w, void *data)
         message_menu_scroll_cb, g },
       { "Clear Messages",   0, message_menu_clear_cb, g },
       { "Save Messages...", 0, message_menu_save_cb, g },
+      //{ "Increase font size", 0, message_menu_increase_font_cb, g },
+      //{ "Decrease font size", 0, message_menu_decrease_font_cb, g },
       { 0 }
     };
     const Fl_Menu_Item *m = rclick_menu->popup(Fl::event_x(), Fl::event_y(), 0, 0, 0);
@@ -2996,7 +3012,12 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _browser = new Fl_Browser(twidth, mh + glheight, glwidth, mheight);
     _browser->box(GMSH_SIMPLE_TOP_BOX);
     _browser->textfont(FL_SCREEN);
-    _browser->textsize(FL_NORMAL_SIZE - 2);
+    int s = CTX::instance()->msgFontSize;
+#if defined(WIN32) // screen font on Windows is really small
+    _browser->textsize(s <= 0 ? FL_NORMAL_SIZE - 1 : s);
+#else
+    _browser->textsize(s <= 0 ? FL_NORMAL_SIZE - 2 : s);
+#endif
     _browser->type(FL_MULTI_BROWSER);
     _browser->callback(message_browser_cb, this);
     _browser->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
@@ -3251,7 +3272,7 @@ void graphicWindow::setStereo(bool st)
       gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE | FL_STEREO);
     }
     else{
-      gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE );
+      gl[i]->mode(FL_RGB | FL_DEPTH | FL_DOUBLE);
     }
     gl[i]->show();
   }
@@ -3450,6 +3471,23 @@ void graphicWindow::copySelectedMessagesToClipboard()
   // bof bof bof
   Fl::copy(buff.c_str(), buff.size(), 0);
   Fl::copy(buff.c_str(), buff.size(), 1);
+}
+
+void graphicWindow::setMessageFontSize(int size)
+{
+  if(!_browser) return;
+#if defined(WIN32) // screen font on Windows is really small
+  _browser->textsize(size <= 0 ? FL_NORMAL_SIZE - 1 : size);
+#else
+  _browser->textsize(size <= 0 ? FL_NORMAL_SIZE - 2 : size);
+#endif
+  _browser->redraw();
+}
+
+void graphicWindow::changeMessageFontSize(int incr)
+{
+  if(!_browser) return;
+  setMessageFontSize(_browser->textsize() + incr);
 }
 
 void graphicWindow::fillRecentHistoryMenu()

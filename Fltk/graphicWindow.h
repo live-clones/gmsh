@@ -81,6 +81,8 @@ class graphicWindow{
   void clearMessages();
   void saveMessages(const char *filename);
   void copySelectedMessagesToClipboard();
+  void setMessageFontSize(int size);
+  void changeMessageFontSize(int incr);
   void fillRecentHistoryMenu();
 };
 

@@ -1153,9 +1153,9 @@ bool CreateAnEmptyVolumeMesh(GRegion *gr)
   char opts[128];
   buildTetgenStructure(gr, in, numberedV, sqr);
   printf("tetgen structure created\n");
-  sprintf(opts, "-Ype%c",
-	  (Msg::GetVerbosity() < 3) ? 'Q':
-	  (Msg::GetVerbosity() > 6) ? 'V': '\0');
+  sprintf(opts, "-Ype%sT%g",
+	  (Msg::GetVerbosity() < 3) ? "Q" : (Msg::GetVerbosity() > 6) ? "V" : "",
+          CTX::instance()->mesh.toleranceInitialDelaunay);
   try{
     tetrahedralize(opts, &in, &out);
   }
@@ -1214,29 +1214,10 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
     std::vector<MVertex*> numberedV;
     char opts[128];
     buildTetgenStructure(gr, in, numberedV, sqr);
-    if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL ||
-       CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX ||
-       CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D ||
-       CTX::instance()->mesh.algo2d == ALGO_2D_FRONTAL_QUAD ||
-       CTX::instance()->mesh.algo2d == ALGO_2D_BAMG){
-      sprintf(opts, "Ype%c",  (Msg::GetVerbosity() < 3) ? 'Q':
-	      (Msg::GetVerbosity() > 6) ? 'V': '\0');
-      // removed -q because mesh sizes at new vertices are wrong
-      // sprintf(opts, "-q1.5pY%c",  (Msg::GetVerbosity() < 3) ? 'Q':
-      // 	 (Msg::GetVerbosity() > 6) ? 'V': '\0');
-    }
-    else if (CTX::instance()->mesh.algo3d == ALGO_3D_RTREE){
-       sprintf(opts, "S0Ype%c",  (Msg::GetVerbosity() < 3) ? 'Q':
-	       (Msg::GetVerbosity() > 6) ? 'V': '\0');
-    }
-    else {
-      sprintf(opts, "Ype%c",
-              (Msg::GetVerbosity() < 3) ? 'Q':
-              (Msg::GetVerbosity() > 6) ? 'V': '\0');
-      // removed -q because mesh sizes at new vertices are wrong
-      // sprintf(opts, "-q3.5Ype%c", (Msg::GetVerbosity() < 3) ? 'Q':
-      //        (Msg::GetVerbosity() > 6) ? 'V': '\0');*/
-    }
+    sprintf(opts, "%sYpe%sT%g",
+            CTX::instance()->mesh.algo3d == ALGO_3D_RTREE ? "S0" : "",
+            (Msg::GetVerbosity() < 3) ? "Q" : (Msg::GetVerbosity() > 6) ? "V" : "",
+            CTX::instance()->mesh.toleranceInitialDelaunay);
     try{
       tetrahedralize(opts, &in, &out);
     }
