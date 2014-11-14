@@ -41,6 +41,7 @@ class ObjContrib;
 
 class MeshOptPatchDef {
 public:
+  enum { STRAT_CONNECTED, STRAT_ONEBYONE };
   int strategy;                                         // Strategy: connected patches or adaptive one-by-one
   int minLayers, maxLayers;                             // Min. and max. nb. of layers around a bad element in patch
   union {
@@ -73,7 +74,6 @@ struct MeshOptPass {                                    // Parameters controllin
 
 
 struct MeshOptParameters {                              // Parameters controlling the strategy
-  enum { STRAT_CONNECTED, STRAT_ONEBYONE };
   int dim ;                                             // Which dimension to optimize
   bool onlyVisible ;                                    // Apply optimization to visible entities ONLY
   bool fixBndNodes;                                     // If points can move on boundaries

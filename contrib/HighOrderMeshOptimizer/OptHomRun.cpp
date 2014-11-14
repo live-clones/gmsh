@@ -718,12 +718,12 @@ HOPatchDefParameters::HOPatchDefParameters(const OptHomParameters &p)
 {
   jacMin = p.BARRIER_MIN;
   jacMax = (p.BARRIER_MAX > 0.) ? p.BARRIER_MAX : 1.e300;
-  strategy = (p.strategy == 1) ? MeshOptParameters::STRAT_ONEBYONE :
-                                        MeshOptParameters::STRAT_CONNECTED;
+  strategy = (p.strategy == 1) ? MeshOptPatchDef::STRAT_ONEBYONE :
+                                 MeshOptPatchDef::STRAT_CONNECTED;
   minLayers = (p.dim == 3) ? 1 : 0;
   maxLayers = p.nbLayers;
   distanceFactor = p.distanceFactor;
-  if (strategy == MeshOptParameters::STRAT_CONNECTED)
+  if (strategy == MeshOptPatchDef::STRAT_CONNECTED)
     weakMerge = (p.strategy == 2);
   else {
     maxAdaptPatch = p.maxAdaptBlob;

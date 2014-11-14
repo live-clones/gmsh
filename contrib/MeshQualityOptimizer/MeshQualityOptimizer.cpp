@@ -43,12 +43,12 @@ QualPatchDefParameters::QualPatchDefParameters(const MeshQualOptParameters &p)
   _excludeBL = p.excludeBL;
   _idealJacMin = p.minTargetIdealJac;
   _invCondNumMin = p.minTargetInvCondNum;
-  strategy = (p.strategy == 1) ? MeshOptParameters::STRAT_ONEBYONE :
-                                        MeshOptParameters::STRAT_CONNECTED;
+  strategy = (p.strategy == 1) ? MeshOptPatchDef::STRAT_ONEBYONE :
+                                 MeshOptPatchDef::STRAT_CONNECTED;
   minLayers = (p.dim == 3) ? 1 : 0;
   maxLayers = p.nbLayers;
   _distanceFactor = p.distanceFactor;
-  if (strategy == MeshOptParameters::STRAT_CONNECTED)
+  if (strategy == MeshOptPatchDef::STRAT_CONNECTED)
     weakMerge = (p.strategy == 2);
   else {
     maxAdaptPatch = p.maxAdaptBlob;

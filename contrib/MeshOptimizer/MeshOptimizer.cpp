@@ -461,9 +461,9 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par)
     }
   }
 
-  if (par.patchDef->strategy == MeshOptParameters::STRAT_CONNECTED)
+  if (par.patchDef->strategy == MeshOptPatchDef::STRAT_CONNECTED)
     optimizeConnectedPatches(vertex2elements, element2entity, badElts, par);
-  else if (par.patchDef->strategy == MeshOptParameters::STRAT_ONEBYONE)
+  else if (par.patchDef->strategy == MeshOptPatchDef::STRAT_ONEBYONE)
     optimizeOneByOne(vertex2elements, element2entity, badElts, par);
   else
     Msg::Error("Unknown strategy %d for mesh optimization", par.patchDef->strategy);
