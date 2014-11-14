@@ -148,13 +148,15 @@ static void _myGetEdgeRep(MTetrahedron *tet, int num, double *x, double *y, doub
   n[0] = n[1] = tet->getFace(f[iEdge]).normal();
 }
 
-void MTetrahedron10::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MTetrahedron10::getEdgeRep(bool curved, int num,
+                                double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MTetrahedron::getEdgeRep(false, num, x, y, z, n);
 }
 
-void MTetrahedronN::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MTetrahedronN::getEdgeRep(bool curved, int num,
+                               double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MTetrahedron::getEdgeRep(false, num, x, y, z, n);
@@ -247,13 +249,15 @@ static void _myGetFaceRep(MTetrahedron *tet, int num, double *x, double *y, doub
   n[2] = n[0];
 }
 
-void MTetrahedronN::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MTetrahedronN::getFaceRep(bool curved, int num,
+                               double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MTetrahedron::getFaceRep(false, num, x, y, z, n);
 }
 
-void MTetrahedron10::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MTetrahedron10::getFaceRep(bool curved, int num,
+                                double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MTetrahedron::getFaceRep(false, num, x, y, z, n);

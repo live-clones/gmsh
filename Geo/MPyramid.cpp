@@ -43,11 +43,13 @@ const JacobianBasis* MPyramid::getJacobianFuncSpace(int order) const
 
 MPyramidN::~MPyramidN() {}
 
-int MPyramidN::getNumEdgesRep(bool curved) {
+int MPyramidN::getNumEdgesRep(bool curved)
+{
   return curved ? 8 * CTX::instance()->mesh.numSubEdges : 8;
 }
 
-void MPyramidN::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MPyramidN::getEdgeRep(bool curved, int num,
+                           double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) {
     int numSubEdges = CTX::instance()->mesh.numSubEdges;
@@ -83,7 +85,8 @@ void MPyramidN::getEdgeRep(bool curved, int num, double *x, double *y, double *z
 }
 
 
-int MPyramidN::getNumFacesRep(bool curved) {
+int MPyramidN::getNumFacesRep(bool curved)
+{
   return curved ? 6 * SQU(CTX::instance()->mesh.numSubEdges) : 6;
 }
 
@@ -323,7 +326,8 @@ static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *
   }
 }
 
-void MPyramidN::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MPyramidN::getFaceRep(bool curved, int num,
+                           double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MPyramid::getFaceRep(false, num, x, y, z, n);

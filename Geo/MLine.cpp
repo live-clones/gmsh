@@ -46,7 +46,8 @@ int MLine3::getNumEdgesRep(bool curved)
   return curved ? CTX::instance()->mesh.numSubEdges : 1;
 }
 
-void MLine3::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MLine3::getEdgeRep(bool curved, int num,
+                        double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) {
     int numSubEdges = CTX::instance()->mesh.numSubEdges;
@@ -107,8 +108,10 @@ void MLineN::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<doub
   if (order == 3) {
     SPoint3 p0 = getVertex(0)->point();
     SPoint3 p3 = getVertex(1)->point();
-    SPoint3 p1 = p0 * (-5./6) + p3 * (1./3) + getVertex(2)->point() * 3. - getVertex(3)->point() * 1.5;
-    SPoint3 p2 = p0 * (1./3) + p3 * (-5./6) - getVertex(2)->point() * 1.5 + getVertex(3)->point() * 3.;
+    SPoint3 p1 = p0 * (-5./6) + p3 * (1./3) + getVertex(2)->point() * 3. -
+      getVertex(3)->point() * 1.5;
+    SPoint3 p2 = p0 * (1./3) + p3 * (-5./6) - getVertex(2)->point() * 1.5 +
+      getVertex(3)->point() * 3.;
     decasteljau(tol, p0, p1, p2, p3, dpts, ts);
     for (size_t i = 0; i < ts.size(); ++i)
       ts[i] = -1 + 2 * ts[i];

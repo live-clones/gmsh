@@ -165,29 +165,32 @@ static void _myGetEdgeRep(MTriangle *t, int num, double *x, double *y, double *z
   }
 }
 
-void MTriangleN::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MTriangleN::getEdgeRep(bool curved, int num,
+                            double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MTriangle::getEdgeRep(false, num, x, y, z, n);
 }
 
-void MTriangle6::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MTriangle6::getEdgeRep(bool curved, int num,
+                            double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MTriangle::getEdgeRep(false, num, x, y, z, n);
 }
 
-int MTriangle6::getNumFacesRep(bool curved) {
+int MTriangle6::getNumFacesRep(bool curved)
+{
   return curved ? SQU(CTX::instance()->mesh.numSubEdges) : 1;
 }
-int MTriangleN::getNumFacesRep(bool curved) {
+int MTriangleN::getNumFacesRep(bool curved)
+{
   return curved ? SQU(CTX::instance()->mesh.numSubEdges) : 1;
 }
 
 static void _myGetFaceRep(MTriangle *t, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
 {
-
   // on the first layer, we have (numSubEdges-1) * 2 + 1 triangles
   // on the second layer, we have (numSubEdges-2) * 2 + 1 triangles
   // on the ith layer, we have (numSubEdges-1-i) * 2 + 1 triangles
@@ -247,12 +250,14 @@ static void _myGetFaceRep(MTriangle *t, int num, double *x, double *y, double *z
   z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
 }
 
-void MTriangleN::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MTriangleN::getFaceRep(bool curved, int num,
+                            double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MTriangle::getFaceRep(false, num, x, y, z, n);
 }
-void MTriangle6::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MTriangle6::getFaceRep(bool curved, int num,
+                            double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MTriangle::getFaceRep(false, num, x, y, z, n);

@@ -24,15 +24,18 @@ const JacobianBasis* MQuadrangle::getJacobianFuncSpace(int order) const
   return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
 }
 
-int MQuadrangleN::getNumEdgesRep(bool curved){
+int MQuadrangleN::getNumEdgesRep(bool curved)
+{
   return curved ? 4 * CTX::instance()->mesh.numSubEdges : 4;
 }
 
-int MQuadrangle8::getNumEdgesRep(bool curved){
+int MQuadrangle8::getNumEdgesRep(bool curved)
+{
   return curved ? 4 * CTX::instance()->mesh.numSubEdges : 4;
 }
 
-int MQuadrangle9::getNumEdgesRep(bool curved){
+int MQuadrangle9::getNumEdgesRep(bool curved)
+{
   return curved ? 4 * CTX::instance()->mesh.numSubEdges : 4;
 }
 
@@ -83,30 +86,39 @@ static void _myGetEdgeRep(MQuadrangle *q, int num, double *x, double *y, double 
   z[0] = pnt1.z(); z[1] = pnt2.z();
 }
 
-void MQuadrangleN::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-{
-  if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
-  else MQuadrangle::getEdgeRep(false, num, x, y, z, n);
-}
-void MQuadrangle8::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-{
-  if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
-  else MQuadrangle::getEdgeRep(false, num, x, y, z, n);
-}
-void MQuadrangle9::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MQuadrangleN::getEdgeRep(bool curved, int num,
+                              double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MQuadrangle::getEdgeRep(false, num, x, y, z, n);
 }
 
+void MQuadrangle8::getEdgeRep(bool curved, int num,
+                              double *x, double *y, double *z, SVector3 *n)
+{
+  if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+  else MQuadrangle::getEdgeRep(false, num, x, y, z, n);
+}
 
-int MQuadrangleN::getNumFacesRep(bool curved){
+void MQuadrangle9::getEdgeRep(bool curved, int num,
+                              double *x, double *y, double *z, SVector3 *n)
+{
+  if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+  else MQuadrangle::getEdgeRep(false, num, x, y, z, n);
+}
+
+int MQuadrangleN::getNumFacesRep(bool curved)
+{
   return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) : 2;
 }
-int MQuadrangle8::getNumFacesRep(bool curved){
+
+int MQuadrangle8::getNumFacesRep(bool curved)
+{
   return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) : 2;
 }
-int MQuadrangle9::getNumFacesRep(bool curved){
+
+int MQuadrangle9::getNumFacesRep(bool curved)
+{
   return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) : 2;
 }
 
@@ -162,17 +174,22 @@ static void _myGetFaceRep(MQuadrangle *t, int num, double *x, double *y, double 
   z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
 }
 
-void MQuadrangleN::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MQuadrangleN::getFaceRep(bool curved, int num,
+                              double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MQuadrangle::getFaceRep(false, num, x, y, z, n);
 }
-void MQuadrangle8::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+
+void MQuadrangle8::getFaceRep(bool curved, int num,
+                              double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MQuadrangle::getFaceRep(false, num, x, y, z, n);
 }
-void MQuadrangle9::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+
+void MQuadrangle9::getFaceRep(bool curved, int num,
+                              double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MQuadrangle::getFaceRep(false, num, x, y, z, n);
@@ -201,7 +218,6 @@ double MQuadrangle::gammaShapeMeasure(){
 #endif
 }
 
-
 double MQuadrangle::angleShapeMeasure()
 {
 #if defined(HAVE_MESH)
@@ -210,11 +226,13 @@ double MQuadrangle::angleShapeMeasure()
   return 1.;
 #endif
 }
+
 double MQuadrangle::getOuterRadius()
 {
-  // TO DO!!!!!!!!!!!!! (BRUNO SENY)
+  // FIXME: TODO! (BRUNO SENY)
   return 1.0;
 }
+
 double MQuadrangle::getInnerRadius()
 {
 #if defined(HAVE_LAPACK)

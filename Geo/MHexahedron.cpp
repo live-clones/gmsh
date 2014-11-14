@@ -43,7 +43,7 @@ double MHexahedron::angleShapeMeasure()
 #if defined(HAVE_MESH)
   return qmHexahedron::angles(this);
 #else
-   return 1.;
+   return 0.;
 #endif
 
 }
@@ -52,7 +52,8 @@ double MHexahedron::getInnerRadius()
   //Only for vertically aligned elements (not inclined)
   double innerRadius=std::numeric_limits<double>::max();
   for (int i=0; i<getNumFaces(); i++){
-    MQuadrangle quad(getFace(i).getVertex(0), getFace(i).getVertex(1), getFace(i).getVertex(2), getFace(i).getVertex(3));
+    MQuadrangle quad(getFace(i).getVertex(0), getFace(i).getVertex(1),
+                     getFace(i).getVertex(2), getFace(i).getVertex(3));
     innerRadius=std::min(innerRadius,quad.getInnerRadius());
   }
   return innerRadius;
@@ -141,17 +142,23 @@ static void _myGetEdgeRep(MHexahedron *hex, int num, double *x, double *y, doubl
   n[0] = n[1] = 1 ;
 }
 
-void MHexahedron20::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n) {
+void MHexahedron20::getEdgeRep(bool curved, int num,
+                               double *x, double *y, double *z, SVector3 *n)
+{
   if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MHexahedron::getEdgeRep(false, num, x, y, z, n);
 }
 
-void MHexahedron27::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n) {
+void MHexahedron27::getEdgeRep(bool curved, int num,
+                               double *x, double *y, double *z, SVector3 *n)
+{
   if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MHexahedron::getEdgeRep(false, num, x, y, z, n);
 }
 
-void MHexahedronN::getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n) {
+void MHexahedronN::getEdgeRep(bool curved, int num,
+                              double *x, double *y, double *z, SVector3 *n)
+{
   if (curved) _myGetEdgeRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MHexahedron::getEdgeRep(false, num, x, y, z, n);
 }
@@ -346,19 +353,22 @@ void _myGetFaceRep(MHexahedron *hex, int num, double *x, double *y, double *z,
 }
 
 
-void MHexahedron20::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MHexahedron20::getFaceRep(bool curved, int num,
+                               double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MHexahedron::getFaceRep(false, num, x, y, z, n);
 }
 
-void MHexahedron27::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MHexahedron27::getFaceRep(bool curved, int num,
+                               double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MHexahedron::getFaceRep(false, num, x, y, z, n);
 }
 
-void MHexahedronN::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+void MHexahedronN::getFaceRep(bool curved, int num,
+                              double *x, double *y, double *z, SVector3 *n)
 {
   if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MHexahedron::getFaceRep(false, num, x, y, z, n);
@@ -366,16 +376,19 @@ void MHexahedronN::getFaceRep(bool curved, int num, double *x, double *y, double
 
 int MHexahedron20::getNumFacesRep(bool curved)
 {
-  return curved ? 6 * (CTX::instance()->mesh.numSubEdges * CTX::instance()->mesh.numSubEdges * 2) : 12;
+  return curved ? 6 * (CTX::instance()->mesh.numSubEdges *
+                       CTX::instance()->mesh.numSubEdges * 2) : 12;
 }
 
 
 int MHexahedron27::getNumFacesRep(bool curved)
 {
-  return curved ? 6 * (CTX::instance()->mesh.numSubEdges * CTX::instance()->mesh.numSubEdges * 2) : 12;
+  return curved ? 6 * (CTX::instance()->mesh.numSubEdges *
+                       CTX::instance()->mesh.numSubEdges * 2) : 12;
 }
 
 int MHexahedronN::getNumFacesRep(bool curved)
 {
-  return curved ? 6 * (CTX::instance()->mesh.numSubEdges * CTX::instance()->mesh.numSubEdges * 2) : 12;
+  return curved ? 6 * (CTX::instance()->mesh.numSubEdges *
+                       CTX::instance()->mesh.numSubEdges * 2) : 12;
 }
