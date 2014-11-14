@@ -722,7 +722,7 @@ double qmTetrahedron::cond(const double &x1, const double &y1, const double &z1,
 // TODO: Replace this
 static double prismNCJ(const MVertex* a, const MVertex* b, const MVertex* c, const MVertex* d)
 {
-  static const double fact = 2./sqrt(3);
+  static const double fact = 2./sqrt(3.);
 
   const SVector3 vec1 = SVector3(b->x()-a->x(),b->y()-a->y(),b->z()-a->z());
   const SVector3 vec2 = SVector3(c->x()-a->x(),c->y()-a->y(),c->z()-a->z());

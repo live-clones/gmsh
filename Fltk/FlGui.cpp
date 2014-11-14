@@ -355,7 +355,7 @@ FlGui::FlGui(int argc, char **argv)
   fullscreen->mode(mode);
   fullscreen->end();
   fullscreen->fullscreen();
-#if not defined (__APPLE__)
+#if !defined (__APPLE__)
   fullscreen->icon(graph[0]->getWindow()->icon());
 #endif
 

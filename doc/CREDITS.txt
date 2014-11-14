@@ -130,4 +130,4 @@ Van den Abeele, Simon Vun, Simon Corbin, Thomas De-Soza, Marcus Drosson, Antoine
 Dechaume, Jose Paulo Moitinho de Almeida, Thomas Pinchard, Corrado Chisari, Axel
 Hackbarth, Peter Wainwright, Jiri Hnidek, Thierry Thomas, Konstantinos Poulios,
 Laurent Van Miegroet, Shahrokh Ghavamian, Geordie McBain, Jose Paulo Moitinho de
-Almeida, Guillaume Demesy, Wendy Merks-Swolfs, Cosmin Stefan Deaconu.
+Almeida, Guillaume Demesy, Wendy Merks-Swolfs, Cosmin Stefan Deaconu, Nigel Nunn.

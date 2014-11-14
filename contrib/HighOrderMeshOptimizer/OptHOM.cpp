@@ -170,7 +170,7 @@ static void computeGradSFAtNodes (MElement *e, std::vector<std::vector<SVector3>
     for (int k=0;k<e->getNumVertices();k++)
       g[k] = SVector3(s[k][0],s[k][1],s[k][2]);
     gsf.push_back(g);
-  }  
+  }
 }
 
 static double MFaceGFaceDistance (MTriangle *t, GFace *gf,  std::vector<std::vector<SVector3> > *gsfT=0,  std::map<MVertex*,SVector3> *normalsToCAD=0) {
@@ -192,19 +192,19 @@ static double MFaceGFaceDistance (MTriangle *t, GFace *gf,  std::vector<std::vec
       double v_mesh = elbasis.points(j,1);
       double detJ = t->getJacobian(u_mesh,v_mesh,0,jac);
     }
- 
+
     SVector3 tg_mesh (jac[2][0],jac[2][1],jac[2][2]);
     tg_mesh.normalize();
 
     SVector3 tg_cad ;
-    if (normalsToCAD)tg_cad = (*normalsToCAD)[t->getVertex(j)]; 
+    if (normalsToCAD)tg_cad = (*normalsToCAD)[t->getVertex(j)];
     else {
       SPoint2 p_cad;
       reparamMeshVertexOnFace(t->getVertex (j), gf, p_cad);
       tg_cad = gf->normal(p_cad);
       tg_cad.normalize();
     }
-    SVector3 diff1 = (dot(tg_cad, tg_mesh) > 0) ? 
+    SVector3 diff1 = (dot(tg_cad, tg_mesh) > 0) ?
       tg_cad - tg_mesh : tg_cad + tg_mesh;
     //    printf("%g %g %g vs %g %g %g\n",tg_cad.x(),tg_cad.y(),tg_cad.z(),tg_mesh.x(),tg_mesh.y(),tg_mesh.z());
     distFace += diff1.norm();
@@ -231,7 +231,7 @@ static double MLineGEdgeDistance (MLine *l, GEdge *ge, FILE *f = 0) {
     SVector3 tg_cad = ge->firstDer(t_cad);
     tg_cad.normalize();
 
-    SVector3 diff1 = (dot(tg_cad, tg_mesh) > 0) ? 
+    SVector3 diff1 = (dot(tg_cad, tg_mesh) > 0) ?
       tg_cad - tg_mesh : tg_cad + tg_mesh;
 
     if (f){
@@ -261,7 +261,7 @@ void distanceFromElementsToGeometry(GModel *gm, int dim, std::map<MElement*,doub
   }
 
   //  printf("DISTANCE TO GEOMETRY : 1D PART %22.15E\n",Obj);
-  
+
   std::map<MFace,double,Less_Face> dist2Face;
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it){
     if ((*it)->geomType() == GEntity::Plane)continue;
@@ -303,7 +303,7 @@ double distanceToGeometry(GModel *gm)
   fprintf(f,"View \"\"{\n");
 
   double Obj = 0.0;
- 
+
   for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it){
     if ((*it)->geomType() == GEntity::Line)continue;
     for (unsigned int i=0;i<(*it)->lines.size(); i++){
@@ -313,7 +313,7 @@ double distanceToGeometry(GModel *gm)
   }
 
     printf("DISTANCE TO GEOMETRY : 1D PART %22.15E\n",Obj);
-  
+
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it){
     if ((*it)->geomType() == GEntity::Plane)continue;
     //    printf("FACE %d with %d triangles\n",(*it)->tag(),(*it)->triangles.size());
@@ -322,7 +322,7 @@ double distanceToGeometry(GModel *gm)
       Obj = std::max(Obj,MFaceGFaceDistance ( (*it)->triangles[i] , *it ));
     }
   }
-  
+
   printf("DISTANCE TO GEOMETRY : 1D AND 2D PART %22.15E\n",Obj);
   fprintf(f,"};\n");
   fclose(f);
@@ -374,8 +374,8 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
     }
     // be clever to compute the derivative : iterate on all
     // Distance = \sum_{lines} Distance (line, GEdge)
-    // For a high order vertex, we compute the derivative only by 
-    // recomputing the distance to one only line     
+    // For a high order vertex, we compute the derivative only by
+    // recomputing the distance to one only line
     const double eps = 1.e-6;
     for (unsigned int i=0;i<(*it)->lines.size(); i++){
       if (doWeCompute[i]){
@@ -391,17 +391,17 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
 	    v->setParameter(0,t+eps);
 	    v->setXYZ(gp.x(),gp.y(),gp.z());
 	    double dist2 = MLineGEdgeDistance ( (*it)->lines[i] , *it );
-	    double deriv = (dist2 - dist[i])/eps;	
+	    double deriv = (dist2 - dist[i])/eps;
 	    v->setXYZ(pp.x(),pp.y(),pp.z());
 	    v->setParameter(0,t);
 	    //	  printf("%g %g %g\n",dist[i],dist2, MLineGEdgeDistance ( (*it)->lines[i] , *it ));
 	    // get the index of the vertex
-	    gradObj[index] += deriv * factor;	
+	    gradObj[index] += deriv * factor;
 	  }
 	}
       }
       //    printf("done\n");
-      // For a low order vertex classified on the GEdge, we recompute 
+      // For a low order vertex classified on the GEdge, we recompute
     // two distances for the two MLines connected to the vertex
       for (unsigned int i=0;i<(*it)->lines.size()-1; i++){
 	MVertex *v =  (*it)->lines[i]->getVertex(1);
@@ -416,15 +416,15 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
 	  MLine *l1 = (*it)->lines[i];
 	  MLine *l2 = (*it)->lines[i+1];
 	  //	printf("%d %d -- %d %d\n",l1->getVertex(0)->getNum(),l1->getVertex(1)->getNum(),l2->getVertex(0)->getNum(),l2->getVertex(1)->getNum());
-	  double deriv = 
+	  double deriv =
 	    (MLineGEdgeDistance ( l1 , *it ) - dist[i])  /eps +
-	    (MLineGEdgeDistance ( l2 , *it ) - dist[i+1])/eps;      
+	    (MLineGEdgeDistance ( l2 , *it ) - dist[i+1])/eps;
 	  v->setXYZ(pp.x(),pp.y(),pp.z());
 	  v->setParameter(0,t);
 	  gradObj[index] += deriv * factor;
 	}
       }
-    } 
+    }
   }
   //  printf("computing distance : 1D part %12.5E\n",distCAD);
 
@@ -447,7 +447,7 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
       for (unsigned int j=0;j<(*it)->triangles[i]->getNumVertices(); j++){
 	int index = mesh.getFreeVertexStartIndex((*it)->triangles[i]->getVertex(j));
 	if (index >=0){
-	  doWeCompute[i] = true;	  
+	  doWeCompute[i] = true;
 	}
       }
       if (doWeCompute[i]){
@@ -457,7 +457,7 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
 	    SPoint2 p_cad;
 	    reparamMeshVertexOnFace(v, *it, p_cad);
 	    SVector3 tg_cad = (*it)->normal(p_cad);
-	    tg_cad.normalize(); 
+	    tg_cad.normalize();
 	    normalsToCAD[v] = tg_cad;
 	  }
 	}
@@ -474,7 +474,7 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
       }
     }
 
-    // be clever again to compute the derivatives 
+    // be clever again to compute the derivatives
     const double eps = 1.e-6;
     for (unsigned int i=0;i<(*it)->triangles.size(); i++){
       if(doWeCompute[i]){
@@ -499,7 +499,7 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
 	      gradObj[index] += deriv * factor;
 	    }
 	  }
-	  
+
 	  if(v->onWhat() == *it){
 	    int index = mesh.getFreeVertexStartIndex(v);
 	    if (index >= 0){
@@ -508,9 +508,9 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
 	      v->getParameter(0,uu);
 	      v->getParameter(1,vv);
 	      SPoint3 pp (v->x(),v->y(),v->z());
-	      
+
 	      const double distT = dist[t];
-	      
+
 	      GPoint gp = (*it)->point(uu+eps,vv);
 	      v->setParameter(0,uu+eps);
 	      v->setXYZ(gp.x(),gp.y(),gp.z());
@@ -518,14 +518,14 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
 	      v->setXYZ(pp.x(),pp.y(),pp.z());
 	      v->setParameter(0,uu);
 	      gradObj[index] += deriv * factor;
-	      
+
 	      gp = (*it)->point(uu,vv+eps);
 	      v->setParameter(1,vv+eps);
-	      v->setXYZ(gp.x(),gp.y(),gp.z());	  
+	      v->setXYZ(gp.x(),gp.y(),gp.z());
 	      deriv = (MFaceGFaceDistance ( t , *it, &gsfT, &normalsToCAD ) - distT)  /eps;
 	      v->setXYZ(pp.x(),pp.y(),pp.z());
 	      v->setParameter(1,vv);
-	      gradObj[index+1] += deriv * factor;	
+	      gradObj[index+1] += deriv * factor;
 	    }
 	  }
 	}
@@ -536,6 +536,7 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
   Obj +=distCAD;
   //  printf("computing distance : 2D part %12.5E\n",distCAD);
   //  printf("%22.15E\n",distCAD);
+  return true;
 }
 
 bool OptHOM::addBndObjGrad2(double factor, double &Obj, alglib::real_1d_array &gradObj)
@@ -667,8 +668,8 @@ bool OptHOM::addDistObjGrad(double Fact, double Fact2, double &Obj,
 
 // FIXME TEST
 // Assume a unit square centered on 0,0
-// fct is 
-//class toto : public simpleFunction<double> 
+// fct is
+//class toto : public simpleFunction<double>
 //{
 //public :
 //  double operator () (double x, double y, double z) const{
@@ -679,10 +680,10 @@ bool OptHOM::addDistObjGrad(double Fact, double Fact2, double &Obj,
 //  }
 //};
 
-// Gmsh's (cheaper) version of the optimizer 
-void OptHOM::evalObjGrad(std::vector<double> &x, 
+// Gmsh's (cheaper) version of the optimizer
+void OptHOM::evalObjGrad(std::vector<double> &x,
 			 double &Obj,
-			 bool gradsNeeded, 
+			 bool gradsNeeded,
                          std::vector<double> &gradObj)
 {
   mesh.updateMesh(x.data());
@@ -695,7 +696,7 @@ void OptHOM::evalObjGrad(std::vector<double> &x,
   addDistObjGrad(lambda, lambda2, Obj, gradObj);
   if(_optimizeCAD)
     addBndObjGrad(lambda3, Obj, gradObj);
-  
+
 }
 
 
@@ -735,7 +736,7 @@ void evalObjGradFunc(const alglib::real_1d_array &x, double &Obj,
   (static_cast<OptHOM*>(HOInst))->evalObjGrad(x, Obj, gradObj);
 }
 
-void evalObjGradFunc(std::vector<double> &x, double &Obj, bool needGrad, 
+void evalObjGradFunc(std::vector<double> &x, double &Obj, bool needGrad,
                      std::vector<double> &gradObj, void *HOInst)
 {
   (static_cast<OptHOM*>(HOInst))->evalObjGrad(x, Obj, true, gradObj);
@@ -810,7 +811,7 @@ void OptHOM::OptimPass(std::vector<double> &x, int itMax)
             minJac, maxJac, jacBar);
   GradientDescent (evalObjGradFunc, x, this);
 }
- 
+
 
 void OptHOM::OptimPass(alglib::real_1d_array &x, int itMax)
 {
@@ -819,7 +820,7 @@ void OptHOM::OptimPass(alglib::real_1d_array &x, int itMax)
   static const double EPSF = 0.;
   static const double EPSX = 0.;
   static int OPTMETHOD = 1;
-  
+
   Msg::Info("--- Optimization pass with initial jac. range (%g, %g), jacBar = %g",
             minJac, maxJac, jacBar);
 
@@ -944,7 +945,7 @@ int OptHOM::optimize(double weightFixed, double weightFree, double weightCAD, do
     printf("######  NEVAL = %d\n",NEVAL);
     recalcJacDist();
     jacBar = (minJac > 0.) ? 0.9*minJac : 1.1*minJac;
-    if (_optimizeCAD)   jacBar = std::min(jacBar,barrier_min); 
+    if (_optimizeCAD)   jacBar = std::min(jacBar,barrier_min);
     if (ITER ++ > optPassMax) {
       minJacOK = (minJac > barrier_min && (maxDistCAD < distance_max || !_optimizeCAD));
       break;

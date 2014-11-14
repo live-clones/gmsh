@@ -563,9 +563,10 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p)
   }
   else {                                                                                        // No BL field
     for (int iEnt = 0; iEnt < allEntities.size(); ++iEnt) {
+      GEntity *dummy = 0;
       GEntity* &entity = allEntities[iEnt];
       if (entity->dim() == p.dim-1 && (!p.onlyVisible || entity->getVisibility()))              // Consider boundary entities
-        entities.insert(std::pair<GEntity*,GEntity*>(0, entity));
+        entities.insert(std::pair<GEntity*,GEntity*>(dummy, entity));
     }
   }
 
