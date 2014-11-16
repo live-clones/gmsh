@@ -382,7 +382,7 @@ void drawContext::drawScale()
   double height = size / 10.;
   double dh = height / 5;
 
-	// Draw the scale bar
+  // Draw the scale bar
   int nPview = 0;
   for(int i=0; i<PView::list.size();i++){
     PView *p = PView::list[i];
@@ -578,6 +578,51 @@ void drawContext::drawAxes()
   glPopMatrix();
 }
 
+int drawContext::fix2dCoordinates(double *x, double *y)
+{
+  int ret = (*x > 99999 && *y > 99999) ? 3 : (*y > 99999) ? 2 : (*x > 99999) ? 1 : 0;
+
+  if(*x < 0) // measure from right border
+    *x = _right + *x;
+  else if(*x > 99999) // by convention, x-centered
+    *x = _right / 2;
+
+  if(*y < 0) // measure from bottom border
+    *y = -(*y);
+  else if(*y > 99999) // by convention, y-centered
+    *y = _top / 2.;
+  else
+    *y = _top - *y;
+  return ret;
+}
+
+void drawContext::drawText2d()
+{
+  glPushMatrix();
+  glLoadIdentity();
+
+  for(unsigned int i = 0; i < PView::list.size(); i++){
+    PViewData *data = PView::list[i]->getData();
+    PViewOptions *opt = PView::list[i]->getOptions();
+    if(opt->visible && opt->drawStrings){
+      for(int j = 0; j < data->getNumStrings2D(); j++){
+        double x, y, style;
+        std::string str;
+        data->getString2D(j, opt->timeStep, str, x, y, style);
+        //fix2dCoordinates(&x, &y);
+        GLfloat colors[] = {0., 0, 0, 1.};
+        drawString s(str.c_str(), 20 * _fontFactor, colors);
+        // FIXME:
+        s.draw(_left + (_right - _left) / 2.,
+               _bottom + 0.8 * (_top - _bottom), 0,
+               _width/(_right-_left), _height/(_top-_bottom), true);
+      }
+    }
+  }
+
+  glPopMatrix();
+}
+
 void drawContext::drawView()
 {
   OrthofFromGModel();
@@ -651,6 +696,8 @@ void drawContext::drawView()
   checkGlError("Draw scales");
   drawAxes();
   checkGlError("Draw axes");
+  drawText2d();
+  checkGlError("Draw text2d");
 }
 
 std::vector<std::string> commandToVector(const std::string cmd)

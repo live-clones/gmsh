@@ -36,12 +36,14 @@ public:
   void setScale(int i, float s) {if(i>=0 && i<3) _scale[i] = s;}
   float getScale(int i) {if(i>=0 && i<3) return _scale[i]; return 0;}
   void initView(int w, int h);
+  int fix2dCoordinates(double *x, double *y);
   void drawView();
   void drawAxes();
   void drawGeom();
   void drawMesh();
   void drawPost();
   void drawScale();
+  void drawText2d();
 };
 
 void drawArray(VertexArray *va, int type, bool useColorArray=false,
