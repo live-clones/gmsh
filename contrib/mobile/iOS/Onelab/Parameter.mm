@@ -175,20 +175,6 @@
 	[[Utils traverseResponderChainForUIViewController:button] presentViewController:alertController animated:YES completion:nil]; // FIXME traverseResponderChainForUIViewController is a goo idea ??
 }
 
--(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-	std::cout << ("COUCOU ...") << std::endl;
-  std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
-  if(number.size() < 1) return;
-  if(buttonIndex > number[0].getChoices().size() - 1) return; // cancel
-  double selected = number[0].getChoices()[buttonIndex];
-  number[0].setValue(selected);
-  onelab::server::instance()->set(number[0]);
-  [button setTitle:[NSString stringWithFormat:@"%s", number[0].getValueLabel(number[0].getValue()).c_str()] forState:UIControlStateNormal];
-  [super editValue];
-}
-
 -(void)refresh
 {
   std::vector<onelab::number> number;
