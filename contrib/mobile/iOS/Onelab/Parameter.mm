@@ -1,4 +1,5 @@
 #import "parameter.h"
+#import "Utils.h"
 
 @implementation Parameter
 -(id)init
@@ -141,20 +142,42 @@
 
 -(void)selectValue
 {
-  std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
-  if(number.size() < 1) return;
-  UIActionSheet *popupSelectValue = [[UIActionSheet alloc] initWithTitle:[NSString stringWithFormat:@"%s", number[0].getLabel().c_str()] delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:nil];
-  std::vector<double> choices = number[0].getChoices();
+  std::vector<onelab::number> numbers;
+  onelab::server::instance()->get(numbers,[name UTF8String]);
+  onelab::number number = numbers[0];
+  if(numbers.size() < 1) return;
+  UIAlertController *alertController;
+  UIAlertAction *destroyAction;
+
+  alertController = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+  std::vector<double> choices = numbers[0].getChoices();
   for(int i=0;i<choices.size();i++)
-    [popupSelectValue addButtonWithTitle:[NSString stringWithFormat:@"%s", number[0].getValueLabel(choices[i]).c_str()]];
-  [popupSelectValue addButtonWithTitle:@"Cancel"];
-  [popupSelectValue setCancelButtonIndex:popupSelectValue.numberOfButtons - 1];
-  [popupSelectValue showInView:button];
+    [alertController addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:@"%s", numbers[0].getValueLabel(choices[i]).c_str()]
+      style:UIAlertActionStyleDefault
+      handler:^(UIAlertAction *action) {
+		  std::cout << numbers[0].getValueLabel(i).c_str() << std::endl;
+		  //FIXME number.setValue(i);
+		  onelab::server::instance()->set(numbers[0]);
+		  [button setTitle:[NSString stringWithFormat:@"%s", numbers[0].getValueLabel(numbers[0].getValue()).c_str()] forState:UIControlStateNormal];
+	}]];
+	destroyAction = [UIAlertAction actionWithTitle:@"Cancel"
+											 style:UIAlertActionStyleDestructive
+										   handler:^(UIAlertAction *action) {
+											   // do nothing
+										   }];
+	[alertController addAction:destroyAction];
+	[alertController setModalPresentationStyle:UIModalPresentationPopover];
+	
+	UIPopoverPresentationController *popPresenter = [alertController
+													 popoverPresentationController];
+	popPresenter.sourceView = button;
+	popPresenter.sourceRect = button.bounds;
+	[[Utils traverseResponderChainForUIViewController:button] presentViewController:alertController animated:YES completion:nil]; // FIXME traverseResponderChainForUIViewController is a goo idea ??
 }
 
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
+	std::cout << ("COUCOU ...") << std::endl;
   std::vector<onelab::number> number;
   onelab::server::instance()->get(number,[name UTF8String]);
   if(number.size() < 1) return;

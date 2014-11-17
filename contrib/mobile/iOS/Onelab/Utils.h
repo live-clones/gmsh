@@ -5,4 +5,7 @@
 + (NSString *) getApplicationDocumentsDirectory;
 + (void) copyRes;
 
++ (id) traverseResponderChainForUIViewController:(UIView *)v;
+
+
 @end

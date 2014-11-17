@@ -26,4 +26,15 @@
   }
 }
 
++ (UIViewController *) traverseResponderChainForUIViewController:(UIView *)v
+{
+	id nextResponder = [v nextResponder];
+	if ([nextResponder isKindOfClass:[UIViewController class]])
+		return nextResponder;
+	else if ([nextResponder isKindOfClass:[UIView class]])
+		return [Utils traverseResponderChainForUIViewController:nextResponder];
+	else
+		return nil;
+}
+
 @end
