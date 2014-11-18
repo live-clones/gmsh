@@ -1077,7 +1077,8 @@ if(ENABLE_OCC)
       # ModelingData
       TKBRep TKGeomBase TKG3d TKG2d
       # FoundationClasses
-      TKAdvTools TKMath TKernel)
+      # TKAdvTools -- not necessary? (and removed from OCC 6.8)
+      TKMath TKernel)
   if(ENABLE_SGEOM)
     set(OCC_LIBS_REQUIRED ${OCC_LIBS_REQUIRED}
       # For SGEOM

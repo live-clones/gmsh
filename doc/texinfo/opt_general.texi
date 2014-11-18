@@ -809,6 +809,11 @@ Vertical position (in pixels) of the (detached) menu tree@*
 Default value: @code{400}@*
 Saved in: @code{General.SessionFileName}
 
+@item General.MessageFontSize
+Size of the font in the message window (-1=automatic)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.MessageHeight
 Height (in pixels) of the message console when it is visible (should be > 0)@*
 Default value: @code{300}@*

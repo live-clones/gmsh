@@ -659,6 +659,11 @@ Skip a model edge in mesh generation if its length is less than user's defined t
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.ToleranceInitialDelaunay
+Tolerance for initial 3D Delaunay mesher@*
+Default value: @code{1e-08}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Triangles
 Display mesh triangles?@*
 Default value: @code{1}@*
