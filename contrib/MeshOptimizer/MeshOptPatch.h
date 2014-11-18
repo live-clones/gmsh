@@ -54,7 +54,6 @@ public:
   inline const int &nPC() { return _nPC; }
   inline int nVert() { return _vert.size(); }
   inline int nFV() { return _freeVert.size(); }
-  inline const bool forced(int iV) { return _forced[iV]; }
   inline int nEl() { return _el.size(); }
   inline const int &nPCFV(int iFV) { return _nPCFV[iFV]; }
   inline int indPCFV(int iFV, int iPC) { return _startPCFV[iFV]+iPC; }
@@ -111,7 +110,6 @@ private:
   std::vector<GEntity*> _gEnt;                      // Geometric entity corresponding to each element
   std::vector<MVertex*> _vert, _freeVert;           // List of vert., free vert.
   std::vector<int> _fv2V;                           // Index of free vert. -> index of vert.
-  std::vector<bool> _forced;                        // Is vertex forced?
   std::vector<SPoint3> _xyz, _ixyz;                 // Physical coord. of ALL vertices (current, straight, init.)
   std::vector<SPoint3> _uvw, _iuvw;                 // Parametric coord. of FREE vertices (current, straight, init.)
   std::vector<int> _startPCFV;                      // Start index of parametric coordinates for a free vertex

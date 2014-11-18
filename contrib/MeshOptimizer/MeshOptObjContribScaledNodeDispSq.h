@@ -11,8 +11,7 @@ template<class FuncType>
 class ObjContribScaledNodeDispSq : public ObjContrib, public FuncType
 {
 public:
-  ObjContribScaledNodeDispSq(double weightFixed, double weightFree,
-                             Patch::LengthScaling scaling);
+  ObjContribScaledNodeDispSq(double weight, Patch::LengthScaling scaling);
   virtual ~ObjContribScaledNodeDispSq() {}
   virtual ObjContrib *copy() const;
   virtual void initialize(Patch *mesh);
@@ -25,17 +24,16 @@ public:
 
 protected:
   Patch *_mesh;
-  double _weightFixed, _weightFree;
+  double _weight;
   Patch::LengthScaling _scaling;
 };
 
 
 template<class FuncType>
-ObjContribScaledNodeDispSq<FuncType>::ObjContribScaledNodeDispSq(double weightFixed,
-                                                                 double weightFree,
+ObjContribScaledNodeDispSq<FuncType>::ObjContribScaledNodeDispSq(double weight,
                                                                  Patch::LengthScaling scaling) :
   ObjContrib("ScaledNodeDispSq", FuncType::getNamePrefix()+"ScaledNodeDispSq"),
-  _mesh(0), _weightFixed(weightFixed), _weightFree(weightFree), _scaling(scaling)
+  _mesh(0), _weight(weight), _scaling(scaling)
 {
 }
 
@@ -65,12 +63,11 @@ bool ObjContribScaledNodeDispSq<FuncType>::addContrib(double &Obj,
   _max = -BIGVAL;
 
   for (int iFV = 0; iFV < _mesh->nFV(); iFV++) {
-    const double Factor = _mesh->forced(iFV) ? _weightFixed : _weightFree;
     const double dSq = _mesh->scaledNodeDispSq(iFV);
-    Obj += Factor * FuncType::compute(dSq);
+    Obj += _weight * FuncType::compute(dSq);
     std::vector<double> gDSq(_mesh->nPCFV(iFV));
     _mesh->gradScaledNodeDispSq(iFV, gDSq);
-    const double dfact = Factor * FuncType::computeDiff(dSq);
+    const double dfact = _weight * FuncType::computeDiff(dSq);
     for (int iPC = 0; iPC < _mesh->nPCFV(iFV); iPC++)
       gradObj[_mesh->indPCFV(iFV, iPC)] += dfact * gDSq[iPC];
     _min = std::min(_min, dSq);

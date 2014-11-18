@@ -151,8 +151,7 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     p.dim = dim;
     p.itMax = (int) o->value[3]->value();
     p.optPassMax = (int) o->value[4]->value();
-    p.weightFixed =  o->value[5]->value();
-    p.weightFree =  o->value[6]->value();
+    p.weight = o->value[5]->value();
     p.distanceFactor =  o->value[7]->value();
     p.fixBndNodes = (!o->CAD) || (o->choice[0]->value() == 0);
     p.strategy = o->choice[3]->value();
@@ -336,13 +335,9 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += BH;
   value[5] = new Fl_Value_Input
-    (x, y, IW/2, BH);
+    (x, y, IW, BH, "Weight on node displacement");
   value[5]->align(FL_ALIGN_RIGHT);
-  value[5]->value(1000.);
-  value[6] = new Fl_Value_Input
-    (x+IW/2,y, IW/2, BH, "W fixed / W free");
-  value[6]->align(FL_ALIGN_RIGHT);
-  value[6]->value(1.);
+  value[5]->value(1.);
 
   y += BH;
   value[3] = new Fl_Value_Input

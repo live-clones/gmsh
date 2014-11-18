@@ -615,7 +615,7 @@ bool OptHOM::addMetricMinObjGrad(double &Obj, alglib::real_1d_array &gradObj)
 
 // Contribution of the vertex distance to the objective function value and
 // gradients
-bool OptHOM::addDistObjGrad(double Fact, double Fact2, double &Obj,
+bool OptHOM::addDistObjGrad(double Fact, double &Obj,
                             alglib::real_1d_array &gradObj)
 {
   maxDist = 0;
@@ -623,13 +623,12 @@ bool OptHOM::addDistObjGrad(double Fact, double Fact2, double &Obj,
   int nbBnd = 0;
 
   for (int iFV = 0; iFV < mesh.nFV(); iFV++) {
-    const double Factor = invLengthScaleSq*(mesh.forced(iFV) ? Fact : Fact2);
     const double dSq = mesh.distSq(iFV), dist = sqrt(dSq);
-    Obj += Factor * dSq;
+    Obj += Fact * dSq;
     std::vector<double> gDSq(mesh.nPCFV(iFV));
     mesh.gradDistSq(iFV,gDSq);
     for (int iPC = 0; iPC < mesh.nPCFV(iFV); iPC++)
-      gradObj[mesh.indPCFV(iFV,iPC)] += Factor*gDSq[iPC];
+      gradObj[mesh.indPCFV(iFV,iPC)] += Fact*gDSq[iPC];
     maxDist = std::max(maxDist, dist);
     avgDist += dist;
     nbBnd++;
@@ -641,7 +640,7 @@ bool OptHOM::addDistObjGrad(double Fact, double Fact2, double &Obj,
   return true;
 }
 
-bool OptHOM::addDistObjGrad(double Fact, double Fact2, double &Obj,
+bool OptHOM::addDistObjGrad(double Fact, double &Obj,
                             std::vector<double> &gradObj)
 {
   maxDist = 0;
@@ -649,13 +648,12 @@ bool OptHOM::addDistObjGrad(double Fact, double Fact2, double &Obj,
   int nbBnd = 0;
 
   for (int iFV = 0; iFV < mesh.nFV(); iFV++) {
-    const double Factor = invLengthScaleSq*(mesh.forced(iFV) ? Fact : Fact2);
     const double dSq = mesh.distSq(iFV), dist = sqrt(dSq);
-    Obj += Factor * dSq;
+    Obj += Fact * dSq;
     std::vector<double> gDSq(mesh.nPCFV(iFV));
     mesh.gradDistSq(iFV,gDSq);
     for (int iPC = 0; iPC < mesh.nPCFV(iFV); iPC++)
-      gradObj[mesh.indPCFV(iFV,iPC)] += Factor*gDSq[iPC];
+      gradObj[mesh.indPCFV(iFV,iPC)] += Fact*gDSq[iPC];
     maxDist = std::max(maxDist, dist);
     avgDist += dist;
     nbBnd++;
@@ -693,7 +691,7 @@ void OptHOM::evalObjGrad(std::vector<double> &x,
   /// control Jacobians
   addJacObjGrad(Obj, gradObj);
   /// Control distance to the straight sided mesh
-  addDistObjGrad(lambda, lambda2, Obj, gradObj);
+  addDistObjGrad(lambda, Obj, gradObj);
   if(_optimizeCAD)
     addBndObjGrad(lambda3, Obj, gradObj);
 
@@ -713,7 +711,7 @@ void OptHOM::evalObjGrad(const alglib::real_1d_array &x, double &Obj,
   /// control Jacobians
   addJacObjGrad(Obj, gradObj);
   /// Control distance to the straight sided mesh
-  addDistObjGrad(lambda, lambda2, Obj, gradObj);
+  addDistObjGrad(lambda, Obj, gradObj);
 
   if(_optimizeMetricMin)
     addMetricMinObjGrad(Obj, gradObj);
@@ -881,7 +879,7 @@ void OptHOM::OptimPass(alglib::real_1d_array &x, int itMax)
 }
 
 
-int OptHOM::optimize(double weightFixed, double weightFree, double weightCAD, double b_min,
+int OptHOM::optimize(double weight, double weightCAD, double b_min,
                      double b_max, bool optimizeMetricMin, int pInt,
                      int itMax, int optPassMax, int optCAD, double distanceMax, double tolerance)
 {
@@ -895,8 +893,7 @@ int OptHOM::optimize(double weightFixed, double weightFree, double weightCAD, do
   _optimizeMetricMin = optimizeMetricMin;
   _optimizeCAD = optCAD;
   // Set weights & length scale for non-dimensionalization
-  lambda = weightFixed;
-  lambda2 = weightFree;
+  lambda = weight;
   lambda3 = weightCAD;
   geomTol = tolerance;
   std::vector<double> dSq(mesh.nEl());
@@ -982,7 +979,7 @@ int OptHOM::optimize(double weightFixed, double weightFree, double weightCAD, do
 }
 
 
-int OptHOM::optimize_inhouse(double weightFixed, double weightFree, double weightCAD, double b_min,
+int OptHOM::optimize_inhouse(double weight, double weightCAD, double b_min,
 			     double b_max, bool optimizeMetricMin, int pInt,
 			     int itMax, int optPassMax, int optCAD, double distanceMax, double tolerance)
 {
@@ -996,8 +993,7 @@ int OptHOM::optimize_inhouse(double weightFixed, double weightFree, double weigh
   _optimizeMetricMin = optimizeMetricMin;
   _optimizeCAD = optCAD;
   // Set weights & length scale for non-dimensionalization
-  lambda = weightFixed;
-  lambda2 = weightFree;
+  lambda = weight;
   lambda3 = weightCAD;
   geomTol = tolerance;
   std::vector<double> dSq(mesh.nEl());

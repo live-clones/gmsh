@@ -451,12 +451,14 @@ static void optimizeConnectedBlobs(const vertElVecMap &vertex2elements,
     if (temp.mesh.nPC() == 0)
       Msg::Info("Blob %i has no degree of freedom, skipping", i+1);
     else
-      success = temp.optimize(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN,
-                              p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax, p.discrTolerance);
+      success = temp.optimize(p.weight, p.optCADWeight, p.BARRIER_MIN, p.BARRIER_MAX,
+                              false, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,
+                              p.discrTolerance);
     if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
       Msg::Info("Jacobian optimization succeed, starting svd optimization");
-      success = temp.optimize(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN_METRIC, p.BARRIER_MAX,
-                              true, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,p.discrTolerance);
+      success = temp.optimize(p.weight, p.optCADWeight, p.BARRIER_MIN_METRIC, p.BARRIER_MAX,
+                              true, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,
+                              p.discrTolerance);
     }
     double minJac, maxJac, distMaxBND, distAvgBND;
     temp.recalcJacDist();
@@ -537,12 +539,14 @@ static void optimizeOneByOne
       std::ostringstream ossI1;
       ossI1 << "initial_blob-" << iBadEl << ".msh";
       opt->mesh.writeMSH(ossI1.str().c_str());
-      success = opt->optimize(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN,
-                              p.BARRIER_MAX, false, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,p.discrTolerance);
+      success = opt->optimize(p.weight, p.optCADWeight, p.BARRIER_MIN, p.BARRIER_MAX,
+                              false, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,
+                              p.discrTolerance);
       if (success >= 0 && p.BARRIER_MIN_METRIC > 0) {
         Msg::Info("Jacobian optimization succeed, starting svd optimization");
-        success = opt->optimize(p.weightFixed, p.weightFree, p.optCADWeight, p.BARRIER_MIN_METRIC,
-                                p.BARRIER_MAX, true, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,p.discrTolerance);
+        success = opt->optimize(p.weight, p.optCADWeight, p.BARRIER_MIN_METRIC, p.BARRIER_MAX,
+                                true, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,
+                                p.discrTolerance);
       }
 
       // Measure min and max Jac., update mesh
@@ -779,7 +783,7 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   par.optDisplay = 30;
   par.verbose = 4;
 
-  ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weightFixed, p.weightFree,
+  ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weight,
                                                                 Patch::LS_MAXNODEDIST);
   ObjContribScaledJac<ObjContribFuncBarrierMovMin> minJacBarFunc(1.);
   minJacBarFunc.setTarget(p.BARRIER_MIN, 1.);

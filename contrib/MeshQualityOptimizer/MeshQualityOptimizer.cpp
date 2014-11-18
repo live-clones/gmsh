@@ -131,7 +131,7 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
   par.optDisplay = 20;
   par.verbose = 4;
 
-  ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weightFixed, p.weightFree,
+  ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weight,
                                                                 Patch::LS_MINEDGELENGTH);
   ObjContribIdealJac<ObjContribFuncBarrierMovMin> minIdealJacBarFunc(1.);
   minIdealJacBarFunc.setTarget(p.minTargetIdealJac, 1.);

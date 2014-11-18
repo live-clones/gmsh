@@ -51,15 +51,16 @@ public:
   // are in the range; returns 0 if the mesh is valid (all jacobians positive,
   // JMIN > 0) but JMIN < barrier_min || JMAX > barrier_max; returns -1 if the
   // mesh is invalid : some jacobians cannot be made positive
-  int optimize(double lambda, double lambda2, double lambda3, double barrier_min, double barrier_max,
-               bool optimizeMetricMin, int pInt, int itMax, int optPassMax, int optimizeCAD, double optCADDistMax, double tolerance);
-  int optimize_inhouse(double weightFixed, double weightFree, double weightCAD, double b_min,
-		       double b_max, bool optimizeMetricMin, int pInt,
-		       int itMax, int optPassMax, int optCAD, double distanceMax, double tolerance);
+  int optimize(double lambda, double lambda3, double barrier_min, double barrier_max,
+               bool optimizeMetricMin, int pInt, int itMax, int optPassMax,
+               int optimizeCAD, double optCADDistMax, double tolerance);
+  int optimize_inhouse(double weight, double weightCAD, double b_min, double b_max,
+                       bool optimizeMetricMin, int pInt, int itMax, int optPassMax,
+                       int optCAD, double distanceMax, double tolerance);
   void recalcJacDist();
   inline void getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD);
   void updateMesh(const alglib::real_1d_array &x);
-  void evalObjGrad(std::vector<double> &x, double &Obj, bool gradsNeeded, 
+  void evalObjGrad(std::vector<double> &x, double &Obj, bool gradsNeeded,
 		   std::vector<double> &gradObj);
 
   void evalObjGrad(const alglib::real_1d_array &x, double &Obj,
@@ -68,7 +69,7 @@ public:
 
   double barrier_min, barrier_max, distance_max, geomTol;
  private:
-  double lambda, lambda2, lambda3, jacBar, invLengthScaleSq;
+  double lambda, lambda3, jacBar, invLengthScaleSq;
   int iter, progressInterv; // Current iteration, interval of iterations for reporting
   bool _optimizeMetricMin;
   double initObj, initMaxDist, initAvgDist; // Values for reporting
@@ -84,10 +85,8 @@ public:
   bool addBndObjGrad2(double Fact, double &Obj, alglib::real_1d_array &gradObj);
   bool addBndObjGrad(double Fact, double &Obj, std::vector<double> &gradObj);
   bool addMetricMinObjGrad(double &Obj, alglib::real_1d_array &gradObj);
-  bool addDistObjGrad(double Fact, double Fact2, double &Obj,
-                      std::vector<double> &gradObj);
-  bool addDistObjGrad(double Fact, double Fact2, double &Obj,
-                      alglib::real_1d_array &gradObj);
+  bool addDistObjGrad(double Fact, double &Obj, std::vector<double> &gradObj);
+  bool addDistObjGrad(double Fact, double &Obj, alglib::real_1d_array &gradObj);
   void calcScale(alglib::real_1d_array &scale);
   void OptimPass(alglib::real_1d_array &x, int itMax);
   void OptimPass(std::vector<double> &x, int itMax);

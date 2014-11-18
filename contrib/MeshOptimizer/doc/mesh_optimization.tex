@@ -689,9 +689,9 @@ in a straight-sided version of the bad element.
 \item \texttt{Boundary nodes} determines whether the boundary nodes
 are fixed or are allowed to move along the corresponding boundary
 in case a CAD model is available.
-\item \texttt{W fixed} and \texttt{W free} are the relative weights
-of the node displacement contribution for fixed and free vertices
-respectively, compared to the Jacobian contributions.
+\item \texttt{Weight on node displacement} is the relative weight
+of the node displacement contribution compared to the Jacobian
+contributions.
 \item \texttt{Maximum number of iterations} is the maximum number
 of iterations in the Conjugate Gradient algorithm (see
 \texttt{optIterMax} in Section~\ref{sec:input-param}).
@@ -732,8 +732,7 @@ struct MeshQualOptParameters {
   bool excludeQuad, excludeHex, excludePrism, excludeBL;
   double minTargetIdealJac;
   double minTargetInvCondNum;
-  double weightFixed;
-  double weightFree;
+  double weight;
   int nbLayers;
   int dim;
   int optIterMax;
@@ -754,9 +753,8 @@ struct MeshQualOptParameters {
     : onlyValidity(false), excludeQuad(false),
       excludeHex(false), excludePrism(false), excludeBL(false),
       minTargetIdealJac(0.1), minTargetInvCondNum(0.1),
-      weightFixed(1000.), weightFree (1.), nbLayers (6),
-      dim(3), optIterMax(300), barrierIterMax(50),
-      onlyVisible(true), distanceFactor(12),
+      weight(1.), nbLayers(6), dim(3), optIterMax(300),
+      barrierIterMax(50), onlyVisible(true), distanceFactor(12),
       fixBndNodes(false), strategy(0), maxAdaptBlob(3),
       adaptBlobLayerFact(2.), adaptBlobDistFact(2.), CPU(0.),
       minIdealJac(0.), maxIdealJac(0.), minInvCondNum(0.),
@@ -786,10 +784,9 @@ for the minimum ideal Jacobian (if \texttt{onlyValidity} is
 \item The field \texttt{minTargetInvCondNum} sets the target
 value for the inverse condition number (if \texttt{onlyValidity}
 is \texttt{false}).
-\item The fields \texttt{weightFixed} and \texttt{weightFree} are
-the relative weights of the node displacement contribution for
-fixed and free vertices respectively, compared to the inverse
-condition number or Jacobian contribution.
+\item The field \texttt{weight} is the relative weight of the node
+displacement contribution compared to the inverse condition number
+or Jacobian contribution.
 \item The field \texttt{strategy} determines the strategy in the
 manner of the patch selection options in
 Section~\ref{sec:patch-selec}: $0$ corresponds to

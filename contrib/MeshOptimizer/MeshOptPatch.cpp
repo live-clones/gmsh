@@ -133,7 +133,6 @@ int Patch::addFreeVert(MVertex* vert, const int iV, const int nPCV,
     _startPCFV.push_back(iStart);
     _nPCFV.push_back(nPCV);
     _nPC += nPCV;
-    _forced.push_back(forcedV);
     return _freeVert.size()-1;
   }
   else return std::distance(_freeVert.begin(),itVert);
