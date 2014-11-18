@@ -177,7 +177,7 @@ void MeshOpt::runOptim(alglib::real_1d_array &x,
 
 int MeshOpt::optimize(const MeshOptParameters &par)
 {
-  _intervDisplay = par.optDisplay;
+  _intervDisplay = par.displayInterv;
   _verbose = par.verbose;
 
   // Set initial guess & result
@@ -213,10 +213,10 @@ int MeshOpt::optimize(const MeshOptParameters &par)
 
     // Loop for update of objective function parameters (barrier movement)
     bool targetReached = _objFunc->targetReached();
-    for (int iBar=0; (iBar<par.pass[_iPass].barrierIterMax) && (!targetReached); iBar++) {
+    for (int iBar=0; (iBar<par.pass[_iPass].maxParamUpdates) && (!targetReached); iBar++) {
       if (_verbose > 2) Msg::Info("--- Optimization run %d", iBar);
       _objFunc->updateParameters();
-      runOptim(x, gradObj, par.pass[_iPass].optIterMax);
+      runOptim(x, gradObj, par.pass[_iPass].maxOptIter);
       _objFunc->updateMinMax();
       targetReached = _objFunc->targetReached();
       if (_objFunc->stagnated()) {

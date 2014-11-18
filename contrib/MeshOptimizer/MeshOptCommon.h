@@ -41,16 +41,16 @@ class ObjContrib;
 
 class MeshOptPatchDef {
 public:
-  enum { STRAT_CONNECTED, STRAT_ONEBYONE };
-  int strategy;                                         // Strategy: connected patches or adaptive one-by-one
+  enum { STRAT_DISJOINT, STRAT_ONEBYONE };
+  int strategy;                                         // Strategy: disjoint patches or adaptive one-by-one
   int minLayers, maxLayers;                             // Min. and max. nb. of layers around a bad element in patch
   union {
     struct {                                            // If adaptive strategy:
-      int maxAdaptPatch;                                // Max. nb. of adaptation iterations
+      int maxPatchAdapt;                                // Max. nb. of adaptation iterations
       int maxLayersAdaptFact;                           // Growth rate in number of layers around a bad element
       double distanceAdaptFact;                         // Growth rate in max. distance from bad element
     };
-    bool weakMerge;                                     // If connected strategy: weak or strong merging of patches
+    bool weakMerge;                                     // If disjoint strategy: weak or strong merging of patches
   };
   virtual ~MeshOptPatchDef() {}
   virtual double elBadness(MElement *el,                // Determine "badness" of a given element (for patch creation)
@@ -68,8 +68,8 @@ protected:
 
 struct MeshOptPass {                                    // Parameters controlling the optimization procedure in each pass
   std::vector<ObjContrib*> contrib;                     // Indices of contributions to objective function
-  int optIterMax;                                       // Max. number of opt. iterations each time the barrier is moved
-  int barrierIterMax;                                   // Max. number of times the barrier is moved
+  int maxOptIter;                                       // Max. number of opt. iterations each time the barrier is moved
+  int maxParamUpdates;                                  // Max. number of times the obj. func. parameters are updated (i.e. the barrier is moved)
 };
 
 
@@ -80,7 +80,7 @@ struct MeshOptParameters {                              // Parameters controllin
   bool useGeomForPatches, useGeomForOpt;                // Whether to use info from CAD for creation of patches and for optimization
   MeshOptPatchDef *patchDef;
   std::vector<MeshOptPass> pass;
-  int optDisplay;                                       // Sampling rate in opt. iterations for display
+  int displayInterv;                                    // Sampling rate in opt. iterations for display
   int verbose;                                          // Level of information displayed and written to disk
   int success;                                          // Success flag: -1 = fail, 0 = partial fail (target not reached), 1 = success
   double CPU;                                           // Time for optimization

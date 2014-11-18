@@ -44,16 +44,16 @@ QualPatchDefParameters::QualPatchDefParameters(const MeshQualOptParameters &p)
   _idealJacMin = p.minTargetIdealJac;
   _invCondNumMin = p.minTargetInvCondNum;
   strategy = (p.strategy == 1) ? MeshOptPatchDef::STRAT_ONEBYONE :
-                                 MeshOptPatchDef::STRAT_CONNECTED;
+                                 MeshOptPatchDef::STRAT_DISJOINT;
   minLayers = (p.dim == 3) ? 1 : 0;
   maxLayers = p.nbLayers;
   _distanceFactor = p.distanceFactor;
-  if (strategy == MeshOptPatchDef::STRAT_CONNECTED)
+  if (strategy == MeshOptPatchDef::STRAT_DISJOINT)
     weakMerge = (p.strategy == 2);
   else {
-    maxAdaptPatch = p.maxAdaptBlob;
-    maxLayersAdaptFact = p.adaptBlobLayerFact;
-    distanceAdaptFact = p.adaptBlobDistFact;
+    maxPatchAdapt = p.maxPatchAdapt;
+    maxLayersAdaptFact = p.maxLayersAdaptFact;
+    distanceAdaptFact = p.distanceAdaptFact;
   }
 }
 
@@ -128,7 +128,7 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
   par.useGeomForOpt = false;
   QualPatchDefParameters patchDef(p);
   par.patchDef = &patchDef;
-  par.optDisplay = 20;
+  par.displayInterv = 20;
   par.verbose = 4;
 
   ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weight,
@@ -141,15 +141,15 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
   MeshOptPass minJacPass;
   MeshOptPass minInvCondNumPass;
   if (p.onlyValidity) {
-    minJacPass.barrierIterMax = p.barrierIterMax;
-    minJacPass.optIterMax = p.optIterMax;
+    minJacPass.maxParamUpdates = p.maxBarrierUpdates;
+    minJacPass.maxOptIter = p.maxOptIter;
     minJacPass.contrib.push_back(&nodeDistFunc);
     minJacPass.contrib.push_back(&minIdealJacBarFunc);
     par.pass.push_back(minJacPass);
   }
   else {
-    minInvCondNumPass.barrierIterMax = p.barrierIterMax;
-    minInvCondNumPass.optIterMax = p.optIterMax;
+    minInvCondNumPass.maxParamUpdates = p.maxBarrierUpdates;
+    minInvCondNumPass.maxOptIter = p.maxOptIter;
     minInvCondNumPass.contrib.push_back(&nodeDistFunc);
     minInvCondNumPass.contrib.push_back(&minInvCondNumBarFunc);
     par.pass.push_back(minInvCondNumPass);

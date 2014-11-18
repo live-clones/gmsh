@@ -40,15 +40,15 @@ struct MeshQualOptParameters {
   double weight;                                                      // Weight of the node displacement contribution
   int nbLayers;                                                       // Number of layers taken around a bad element
   int dim;                                                            // Which dimension to optimize
-  int optIterMax;                                                     // Max number of iterations in the optimization process
-  int barrierIterMax;                                                 // Max number of barrier moves ("runs")
+  int maxOptIter;                                                     // Max. number of iterations in the optimization process
+  int maxBarrierUpdates;                                              // Max. number of barrier moves ("runs")
   bool onlyVisible;                                                   // If optimization applied to visible entities ONLY
   double distanceFactor;                                              // Distance criterion for patch creation
   bool fixBndNodes;                                                   // If points can move on boundaries
   int strategy;                                                       // 0 = connected blobs, 1 = adaptive one-by-one
-  int maxAdaptBlob;                                                   // Max. nb. of blob adaptation interations (if adaptive)
-  int adaptBlobLayerFact;                                             // Growth factor in number of layers for blob adaptation (if adaptive)
-  double adaptBlobDistFact;                                           // Growth factor in distance factor for blob adaptation (if adaptive)
+  int maxPatchAdapt;                                                  // Max. nb. of patch adaptation iterations (if adaptive)
+  int maxLayersAdaptFact;                                             // Growth factor in number of layers for patch adaptation (if adaptive)
+  double distanceAdaptFact;                                           // Growth factor in distance factor for patch adaptation (if adaptive)
 
   int SUCCESS ; // 0 --> success , 1 --> Not converged
   double minIdealJac, maxIdealJac; // after optimization, range of jacobians
@@ -59,9 +59,9 @@ struct MeshQualOptParameters {
     : onlyValidity(false), excludeQuad(false),
       excludeHex(false), excludePrism(false), excludeBL(false),
       minTargetIdealJac(0.1), minTargetInvCondNum(0.1), weight(1.),
-      nbLayers (6) , dim(3) , optIterMax(300), barrierIterMax(50),
+      nbLayers (6) , dim(3) , maxOptIter(300), maxBarrierUpdates(50),
       onlyVisible(true), distanceFactor(12), fixBndNodes(false), strategy(0),
-      maxAdaptBlob(3), adaptBlobLayerFact(2.), adaptBlobDistFact(2.), CPU(0.),
+      maxPatchAdapt(3), maxLayersAdaptFact(2), distanceAdaptFact(2.), CPU(0.),
       minIdealJac(0.), maxIdealJac(0.), minInvCondNum(0.), maxInvCondNum(0.),
       SUCCESS(-1)
   {

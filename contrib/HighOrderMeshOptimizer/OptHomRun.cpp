@@ -723,14 +723,14 @@ HOPatchDefParameters::HOPatchDefParameters(const OptHomParameters &p)
   jacMin = p.BARRIER_MIN;
   jacMax = (p.BARRIER_MAX > 0.) ? p.BARRIER_MAX : 1.e300;
   strategy = (p.strategy == 1) ? MeshOptPatchDef::STRAT_ONEBYONE :
-                                 MeshOptPatchDef::STRAT_CONNECTED;
+                                 MeshOptPatchDef::STRAT_DISJOINT;
   minLayers = (p.dim == 3) ? 1 : 0;
   maxLayers = p.nbLayers;
   distanceFactor = p.distanceFactor;
-  if (strategy == MeshOptPatchDef::STRAT_CONNECTED)
+  if (strategy == MeshOptPatchDef::STRAT_DISJOINT)
     weakMerge = (p.strategy == 2);
   else {
-    maxAdaptPatch = p.maxAdaptBlob;
+    maxPatchAdapt = p.maxAdaptBlob;
     maxLayersAdaptFact = p.adaptBlobLayerFact;
     distanceAdaptFact = p.adaptBlobDistFact;
   }
@@ -780,7 +780,7 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   par.useGeomForOpt = false;
   HOPatchDefParameters patchDef(p);
   par.patchDef = &patchDef;
-  par.optDisplay = 30;
+  par.displayInterv = 30;
   par.verbose = 4;
 
   ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weight,
@@ -793,8 +793,8 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   CADDistFunc.setTarget(p.optCADDistMax);
 
   MeshOptPass minJacPass;
-  minJacPass.barrierIterMax = p.optPassMax;
-  minJacPass.optIterMax = p.itMax;
+  minJacPass.maxParamUpdates = p.optPassMax;
+  minJacPass.maxOptIter = p.itMax;
   minJacPass.contrib.push_back(&nodeDistFunc);
   minJacPass.contrib.push_back(&minJacBarFunc);
   if (p.optCAD) minJacPass.contrib.push_back(&CADDistFunc);
@@ -802,8 +802,8 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
 
   if (p.BARRIER_MAX > 0.) {
     MeshOptPass minMaxJacPass;
-    minMaxJacPass.barrierIterMax = p.optPassMax;
-    minMaxJacPass.optIterMax = p.itMax;
+    minMaxJacPass.maxParamUpdates = p.optPassMax;
+    minMaxJacPass.maxOptIter = p.itMax;
     minMaxJacPass.contrib.push_back(&nodeDistFunc);
     minMaxJacPass.contrib.push_back(&minMaxJacBarFunc);
     if (p.optCAD) minMaxJacPass.contrib.push_back(&CADDistFunc);

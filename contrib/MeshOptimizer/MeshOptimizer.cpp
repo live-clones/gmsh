@@ -178,10 +178,10 @@ void calcElement2Entity(GEntity *entity, elEntMap &element2entity)
 }
 
 
-std::vector<elSetVertSetPair> getConnectedPatches(const vertElVecMap &vertex2elements,
-                                                  const elEntMap &element2entity,
-                                                  const elSet &badElements,
-                                                  const MeshOptParameters &par)
+std::vector<elSetVertSetPair> getDisjointPatches(const vertElVecMap &vertex2elements,
+                                                 const elEntMap &element2entity,
+                                                 const elSet &badElements,
+                                                 const MeshOptParameters &par)
 {
   Msg::Info("Starting patch generation from %i bad elements...", badElements.size());
 
@@ -253,16 +253,16 @@ std::vector<elSetVertSetPair> getConnectedPatches(const vertElVecMap &vertex2ele
 }
 
 
-void optimizeConnectedPatches(const vertElVecMap &vertex2elements,
-                              const elEntMap &element2entity,
-                              elSet &badasses, MeshOptParameters &par)
+void optimizeDisjointPatches(const vertElVecMap &vertex2elements,
+                             const elEntMap &element2entity,
+                             elSet &badasses, MeshOptParameters &par)
 {
   par.success = 1;
 
   const elEntMap &e2ePatch = par.useGeomForPatches ? element2entity : elEntMap();
   const elEntMap &e2eOpt = par.useGeomForOpt ? element2entity : elEntMap();
 
-  std::vector<elSetVertSetPair> toOptimize = getConnectedPatches(vertex2elements,
+  std::vector<elSetVertSetPair> toOptimize = getDisjointPatches(vertex2elements,
                                                                  e2ePatch, badasses, par);
 
   for (int iPatch = 0; iPatch < toOptimize.size(); ++iPatch) {
@@ -354,7 +354,7 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
     int success;
 
     // Patch adaptation loop
-    for (int iAdapt=0; iAdapt<par.patchDef->maxAdaptPatch; iAdapt++) {
+    for (int iAdapt=0; iAdapt<par.patchDef->maxPatchAdapt; iAdapt++) {
 
       // Set up patch
       const double limDist = par.patchDef->maxDistance(worstEl);
@@ -394,7 +394,7 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
       }
 
       // If (partial) success, update mesh and break adaptation loop, otherwise adapt
-      if ((success > 0) || (iAdapt == par.patchDef->maxAdaptPatch-1)) {
+      if ((success > 0) || (iAdapt == par.patchDef->maxPatchAdapt-1)) {
         opt.updateResults();
         if (success >= 0) {
           opt.patch.updateGEntityPositions();
@@ -461,8 +461,8 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par)
     }
   }
 
-  if (par.patchDef->strategy == MeshOptPatchDef::STRAT_CONNECTED)
-    optimizeConnectedPatches(vertex2elements, element2entity, badElts, par);
+  if (par.patchDef->strategy == MeshOptPatchDef::STRAT_DISJOINT)
+    optimizeDisjointPatches(vertex2elements, element2entity, badElts, par);
   else if (par.patchDef->strategy == MeshOptPatchDef::STRAT_ONEBYONE)
     optimizeOneByOne(vertex2elements, element2entity, badElts, par);
   else

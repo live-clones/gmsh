@@ -330,7 +330,7 @@ struct MeshOptParameters {
   bool useGeomForPatches, useGeomForOpt;
   MeshOptPatchDef *patchDef;
   std::vector<MeshOptPass> pass;
-  int optDisplay;
+  int displayInterv;
   int verbose;
   int success;
   double CPU;
@@ -364,7 +364,7 @@ Section~\ref{sec:patch-selec}).
 \item The vector \texttt{pass} contains instances of the structure
 \texttt{MeshOptPass}, which determines the optimization procedure
 for each pass, as described hereafter.
-\item The fields \texttt{optDisplay} and \texttt{verbose} control
+\item The fields \texttt{displayInterv} and \texttt{verbose} control
 the output (respectively the iteration interval at which the progress
 of the Conjugate Gradient procedure is printed to screen and the
 overall level of verbosity).
@@ -380,8 +380,8 @@ procedure for each pass, is as follows:
 \begin{verbatim}
 struct MeshOptPass {
   std::vector<ObjContrib*> contrib;
-  int optIterMax;
-  int barrierIterMax;
+  int maxOptIter;
+  int maxParamUpdates;
 };
 \end{verbatim}
 
@@ -392,10 +392,10 @@ where:
 of classes derived from \texttt{ObjContrib}, each instance
 describing a contribution to the objective function (see
 Section~\ref{sec:obj-func}).
-\item The field \texttt{optIterMax} gives the maximum number of
+\item The field \texttt{maxOptIter} gives the maximum number of
 Conjugate Gradient iterations to be performed for a given objective
 function (i.e. before a potential log barrier is moved).
-\item The field \texttt{barrierIterMax} determines the maximum
+\item The field \texttt{maxParamUpdates} determines the maximum
 number of times the objective function is changed, i.e. the number
 of times a potential log barrier is moved.
 \end{itemize}
@@ -414,7 +414,7 @@ public:
   int minLayers, maxLayers;
   union {
     struct {
-      int maxAdaptPatch;
+      int maxPatchAdapt;
       int maxLayersAdaptFact;
       double distanceAdaptFact;
     };
@@ -439,7 +439,7 @@ and the number of layers in the patch:
 
 \begin{itemize}
 \item The field \texttt{strategy} specifies the overall strategy
-with (\texttt{STRAT\_CONNECTED} for merging overlapping patches
+with (\texttt{STRAT\_DISJOINT} for merging overlapping patches
 or \texttt{STRAT\_ONEBYONE} for a sequential treatment, see
 Section~\ref{sec:strategy}).
 \item The fields \texttt{minLayers} and \texttt{maxLayers} give
@@ -448,14 +448,14 @@ surrounding the bad element to be included in the patch.
 \item Depending on the strategy chosen, additional information
 must be provided:
 \begin{itemize}
-\item If the strategy is \texttt{STRAT\_CONNECTED}, the field
+\item If the strategy is \texttt{STRAT\_DISJOINT}, the field
 \texttt{weakMerge} specifies whether two patches are merged if
 they overlap (value \texttt{false}), or only if a bad element
 of one patch is included in the other one (value \texttt{true}).
 \item If the strategy is \texttt{STRAT\_ONEBYONE}, an adaptive
 process loop is used: the patch size is progressively increased
 in case the optimization procedure fails. The maximum number of
-adaptations is then controlled by the field \texttt{maxAdaptPatch}.
+adaptations is then controlled by the field \texttt{maxPatchAdapt}.
 The growth factor in maximum number of layers and in the maximum
 distance criterion at each adaptation is specified by the fields
 \texttt{maxLayersAdaptFact} and \texttt{distanceAdaptFact}
@@ -694,17 +694,17 @@ of the node displacement contribution compared to the Jacobian
 contributions.
 \item \texttt{Maximum number of iterations} is the maximum number
 of iterations in the Conjugate Gradient algorithm (see
-\texttt{optIterMax} in Section~\ref{sec:input-param}).
-\item \texttt{Max. number of optimization passes} is the maximum number
-of times the log barriers are moved (see \texttt{barrierIterMax} in
+\texttt{maxOptIter} in Section~\ref{sec:input-param}).
+\item \texttt{Max. number of barrier updates} is the maximum number
+of times the log barriers are moved (see \texttt{maxParamUpdates} in
 Section~\ref{sec:input-param}).
 \item \texttt{Strategy} determines the strategy for the treatment of
 patches (see Sections~\ref{sec:strategy} and~\ref{sec:patch-selec}).
 \item \texttt{Max. number of blob adaptation iter.},
 \texttt{Num. layer adaptation factor} and
 \texttt{Distance adaptation factor} control the adaptation of the
-patch size with the ``adaptive one-by-one'' strategy (see
-\texttt{maxAdaptPatch}, \texttt{maxLayersAdaptFact} and
+patch size in the ``adaptive one-by-one'' strategy (see
+\texttt{maxPatchAdapt}, \texttt{maxLayersAdaptFact} and
 \texttt{distanceAdaptFact} in Section~\ref{sec:patch-selec}).
 \end{itemize}
 
@@ -735,15 +735,15 @@ struct MeshQualOptParameters {
   double weight;
   int nbLayers;
   int dim;
-  int optIterMax;
-  int barrierIterMax;
+  int maxOptIter;
+  int maxBarrierUpdates;
   bool onlyVisible;
   double distanceFactor;
   bool fixBndNodes;
   int strategy;
-  int maxAdaptBlob;
-  int adaptBlobLayerFact;
-  double adaptBlobDistFact;
+  int maxPatchAdapt;
+  int maxLayersAdaptFact;
+  double distanceAdaptFact;
   int SUCCESS;
   double minIdealJac, maxIdealJac;
   double minInvCondNum, maxInvCondNum;
@@ -753,12 +753,13 @@ struct MeshQualOptParameters {
     : onlyValidity(false), excludeQuad(false),
       excludeHex(false), excludePrism(false), excludeBL(false),
       minTargetIdealJac(0.1), minTargetInvCondNum(0.1),
-      weight(1.), nbLayers(6), dim(3), optIterMax(300),
-      barrierIterMax(50), onlyVisible(true), distanceFactor(12),
-      fixBndNodes(false), strategy(0), maxAdaptBlob(3),
-      adaptBlobLayerFact(2.), adaptBlobDistFact(2.), CPU(0.),
-      minIdealJac(0.), maxIdealJac(0.), minInvCondNum(0.),
-      maxInvCondNum(0.), SUCCESS(-1)
+      weight(1.), nbLayers(6), dim(3), maxOptIter(300),
+      maxBarrierUpdates(50), onlyVisible(true),
+      distanceFactor(12), fixBndNodes(false), strategy(0),
+      maxPatchAdapt(3), maxLayersAdaptFact(2),
+      distanceAdaptFact(2.), CPU(0.), minIdealJac(0.),
+      maxIdealJac(0.), minInvCondNum(0.), maxInvCondNum(0.),
+      SUCCESS(-1)
   {
   }
 };
@@ -790,9 +791,9 @@ or Jacobian contribution.
 \item The field \texttt{strategy} determines the strategy in the
 manner of the patch selection options in
 Section~\ref{sec:patch-selec}: $0$ corresponds to
-\texttt{STRAT\_CONNECTED} with \texttt{weakMerge} set to
+\texttt{STRAT\_DISJOINT} with \texttt{weakMerge} set to
 \texttt{false}, $1$ corresponds to \texttt{STRAT\_ONEBYONE}
-and $2$corresponds to \texttt{STRAT\_CONNECTED} with
+and $2$corresponds to \texttt{STRAT\_DISJOINT} with
 \texttt{weakMerge} set to \texttt{true}.
 \item The fields \texttt{minIdealJac} and \texttt{maxIdealJac}
 return the extrema of the ideal Jacobian in the output mesh

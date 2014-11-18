@@ -115,10 +115,10 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
 static void chooseopti_strategy(Fl_Widget *w, void *data)
 {
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
-  if (o->choice[3]->value() == 0)
-    for (int i=9;i<=11;i++) o->value[i]->deactivate();
-  else
+  if (o->choice[3]->value() == 1)
     for (int i=9;i<=11;i++) o->value[i]->activate();
+  else
+    for (int i=9;i<=11;i++) o->value[i]->deactivate();
 }
 
 static void highordertools_runopti_cb(Fl_Widget *w, void *data)
@@ -350,7 +350,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += BH;
   value[4] = new Fl_Value_Input
-    (x, y, IW, BH, "Max. number of optimization passes");
+    (x, y, IW, BH, "Max. number of barrier updates");
   value[4]->minimum(1);
   value[4]->maximum(100);
   value[4]->step(1);
@@ -358,8 +358,9 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[4]->value(50);
 
   static Fl_Menu_Item menu_strategy[] = {
-    {"Connected blobs", 0, 0, 0},
+    {"Disjoint strong", 0, 0, 0},
     {"Adaptive one-by-one", 0, 0, 0},
+    {"Disjoint weak", 0, 0, 0},
     {0}
   };
 
@@ -372,7 +373,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += BH;
   value[9] = new Fl_Value_Input
-    (x, y, IW, BH, "Max. number of blob adaptation iter.");
+    (x, y, IW, BH, "Max. number of patch adaptation iter.");
   value[9]->minimum(1);
   value[9]->maximum(100);
   value[9]->step(1);
