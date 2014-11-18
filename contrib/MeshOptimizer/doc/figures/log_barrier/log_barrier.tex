@@ -1,0 +1,16 @@
+\documentclass{standalone}
+\usepackage{tikz}
+\begin{document}
+\begin{tikzpicture}[yscale = 0.25, xscale = 2]
+  \draw[thick, ->] (0,0) -- (3.2,0) node[right] {$m$};
+  \draw[thick, ->] (0,0) -- (0,17) node[left] {$F_{\epsilon,\omega}$};
+%  \node at (2, 12) {$F_{\epsilon,\omega}(m) = (m - \omega)^2 + \log\Big(\frac{m - \epsilon} {\omega - \epsilon}\Big)^2$};
+  \foreach \y in {0, 5, 10, 15}
+    \draw[thick, shift={(0, \y)}] node[left] {$\y$}(-1pt, 0pt) -- (0pt,0pt) ;
+  \foreach \x in {0, 1, 2, 3}
+    \draw[thick, shift={(\x, 0)}] node[below] {$\x$}(0pt, -8pt) -- (0pt,0pt) ;
+  \clip(-1,-2) rectangle(3.5, 17);
+  \draw[very thick, dashed](0.2, 0) node[below]{$\epsilon$}-- (0.2, 20);
+  \draw[thick, domain = 0.2:3, samples=300] plot[id=opti] function{(log((x - 0.2)/ 0.8))**2 + (x - 1)**2}; 
+\end{tikzpicture}
+\end{document}
