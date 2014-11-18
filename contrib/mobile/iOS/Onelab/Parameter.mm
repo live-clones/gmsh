@@ -144,7 +144,6 @@
 {
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers,[name UTF8String]);
-  onelab::number number = numbers[0];
   if(numbers.size() < 1) return;
   UIAlertController *alertController;
   UIAlertAction *destroyAction;
@@ -156,9 +155,9 @@
       style:UIAlertActionStyleDefault
       handler:^(UIAlertAction *action) {
 		  std::cout << numbers[0].getValueLabel(i).c_str() << std::endl;
-		  //FIXME number.setValue(i);
-		  onelab::server::instance()->set(numbers[0]);
-		  [button setTitle:[NSString stringWithFormat:@"%s", numbers[0].getValueLabel(numbers[0].getValue()).c_str()] forState:UIControlStateNormal];
+		  [self updateNumber:numbers[0] withValue:i];
+		  
+		  [button setTitle:[NSString stringWithFormat:@"%s", numbers[0].getValueLabel(i).c_str()] forState:UIControlStateNormal];
 	}]];
 	destroyAction = [UIAlertAction actionWithTitle:@"Cancel"
 											 style:UIAlertActionStyleDestructive
@@ -173,6 +172,12 @@
 	popPresenter.sourceView = button;
 	popPresenter.sourceRect = button.bounds;
 	[[Utils traverseResponderChainForUIViewController:button] presentViewController:alertController animated:YES completion:nil]; // FIXME traverseResponderChainForUIViewController is a goo idea ??
+}
+
+-(void) updateNumber: (onelab::number)n withValue:(double)v
+{
+	n.setValue(v);
+	onelab::server::instance()->set(n);
 }
 
 -(void)refresh
