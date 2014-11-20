@@ -72,6 +72,8 @@ class FunctionSpace{
   void getKeys(const GroupOfElement& goe, std::set<Dof>& dof)  const;
   const std::vector<std::vector<Dof> >& getKeys(const GroupOfElement& goe)const;
 
+  void delKeys(const GroupOfElement& goe, std::set<Dof>& dof)  const;
+
  protected:
   FunctionSpace(void);
   void   build(const GroupOfElement& goe, std::string family);
@@ -136,8 +138,15 @@ class FunctionSpace{
    @param goe A GroupOfElement
    @return Returns a vector of vector of Dof such that:
    dof[i][j] is the jth Dof of the ith element of the given GroupOfElement
-*/
+   **
 
+   @fn void FunctionSpace::delKeys(const GroupOfElement&, std::set<Dof>&) const
+   @param goe A GroupOfElement
+   @param dof A set of Dof%s
+
+   Removes from the given set the Dof%s associated to the MElement%s
+   of the given GroupOfElement
+*/
 
 //////////////////////
 // Inline Functions //

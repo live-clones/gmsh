@@ -260,3 +260,28 @@ FunctionSpace::getKeys(const GroupOfElement& goe) const{
   // Return vector //
   return it->second;
 }
+
+void FunctionSpace::delKeys(const GroupOfElement& goe,
+                            std::set<Dof>& dof) const{
+  // Get Dofs //
+  const vector<vector<Dof> >& allDofs = getKeys(goe);
+
+  // Remove them from map //
+  const size_t size = allDofs.size();
+
+  set<Dof>::iterator end;
+  set<Dof>::iterator it;
+  size_t           nDof;
+
+  for(size_t i = 0; i < size; i++){
+    nDof = allDofs[i].size();
+
+    for(size_t j = 0; j < nDof; j++){
+      end = dof.end();
+      it  = dof.find(allDofs[i][j]);
+
+      if(it != end)
+        dof.erase(it);
+    }
+  }
+}
