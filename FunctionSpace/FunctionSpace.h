@@ -31,6 +31,9 @@ class GroupOfElement;
 
 class FunctionSpace{
  protected:
+  // A Dof suposed to be rejected
+  static const Dof rejectedDof;
+
   // Number of possible geomtrical topologies & Dof Type offset //
   static const size_t nGeoType;
   static       size_t nxtOffset;
@@ -55,6 +58,9 @@ class FunctionSpace{
   size_t form;
   size_t order;
 
+  // Rejected Dofs //
+  std::set<Dof> rejected;
+
   // Dofs //
   std::map<size_t, std::vector<std::vector<Dof> > > dof;
 
@@ -76,11 +82,21 @@ class FunctionSpace{
 
  protected:
   FunctionSpace(void);
-  void   build(const GroupOfElement& goe, std::string family);
-  void   buildDof(const GroupOfElement& goe);
+  void build(const std::vector<const GroupOfElement*>& goe,
+             const std::vector<const GroupOfElement*>& exl,
+             std::string family);
+
+  void getBases(const GroupOfElement& goe, std::string family);
+  void getMyDof(const GroupOfElement& goe);
+  void getRejec(const GroupOfElement& goe);
+
   size_t findMaxType(void);
 
-  void getUnorderedKeys(const MElement& element, std::vector<Dof>& dof) const;
+  void getUnorderedKeys(const MElement& element, std::vector<Dof>& dof,
+                        bool full) const;
+  void rejectKeys(std::vector<Dof>& dof) const;
+  void markMyKeys(std::vector<Dof>& dof) const;
+  void getKeys(const MElement& element, std::vector<Dof>& dof, bool full) const;
 };
 
 
@@ -174,6 +190,11 @@ inline const Basis& FunctionSpace::getBasis(size_t eType) const{
                     eType);
 
   return *basis[eType];
+}
+
+inline
+void FunctionSpace::getKeys(const MElement& elem, std::vector<Dof>& dof) const{
+  getKeys(elem, dof, false);
 }
 
 #endif

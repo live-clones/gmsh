@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <sstream>
 
 #include "ReferenceSpaceManager.h"
@@ -8,10 +9,15 @@
 
 using namespace std;
 
+const Dof    FunctionSpace::rejectedDof(INT_MAX, INT_MAX);
 const size_t FunctionSpace::nGeoType  = 9;
       size_t FunctionSpace::nxtOffset = 0;
 
 FunctionSpace::FunctionSpace(void){
+  // Clear //
+  dof.clear();
+  rejected.clear();
+
   // Alloc Basis Vector for all possible geomtrical types //
   basis.resize(nGeoType, NULL);
 
@@ -28,13 +34,34 @@ FunctionSpace::~FunctionSpace(void){
       delete basis[i];
 }
 
-void FunctionSpace::build(const GroupOfElement& goe, string family){
+void FunctionSpace::build(const vector<const GroupOfElement*>& goe,
+                          const vector<const GroupOfElement*>& exl,
+                          string family){
   // Save Dof type offset //
   offset = nxtOffset;
 
-  // Save Mesh //
-  this->mesh = &(goe.getMesh());
+  // Save Mesh & Get number of GoE//
+  const size_t nGoe = goe.size();
+  const size_t nExl = exl.size();
+  this->mesh        = &(goe[0]->getMesh());
 
+  // Build Bases //
+  for(size_t i = 0; i < nGoe; i++)
+    getBases(*goe[i], family);
+
+  // Build Dof to reject //
+  for(size_t i = 0; i < nExl; i++)
+    getRejec(*exl[i]);
+
+  // Build Dof //
+  for(size_t i = 0; i < nGoe; i++)
+    getMyDof(*goe[i]);
+
+  // Next Offset for next FunctionSpace
+  nxtOffset = findMaxType() + 1;
+}
+
+void FunctionSpace::getBases(const GroupOfElement& goe, string family){
   // Generate Bases //
   const vector<size_t>& geoTypeStat = goe.getTypeStats();
   const size_t             nGeoType = geoTypeStat.size();
@@ -65,12 +92,9 @@ void FunctionSpace::build(const GroupOfElement& goe, string family){
       fPerCell[i] = this->basis[i]->getNCellBased();
     }
   }
-
-  // Build Dof //
-  buildDof(goe);
 }
 
-void FunctionSpace::buildDof(const GroupOfElement& goe){
+void FunctionSpace::getMyDof(const GroupOfElement& goe){
   // Get Elements //
   const size_t                   nElement = goe.getNumber();
   const vector<const MElement*>&  element = goe.getAll();
@@ -94,6 +118,27 @@ void FunctionSpace::buildDof(const GroupOfElement& goe){
   // Create Dofs //
   for(size_t i = 0; i < nElement; i++)
     getKeys(*(element[i]), myDof[i]);
+}
+
+void FunctionSpace::getRejec(const GroupOfElement& goe){
+  // Get Elements //
+  const size_t                   nElement = goe.getNumber();
+  const vector<const MElement*>&  element = goe.getAll();
+
+  // Allocate //
+  vector<vector<Dof> > myDof(nElement);
+
+  // Create Dofs //
+  for(size_t i = 0; i < nElement; i++)
+    getKeys(*(element[i]), myDof[i]);
+
+  // Push in rejection map //
+  for(size_t i = 0; i < nElement; i++){
+    size_t nDof = myDof[i].size();
+
+    for(size_t j = 0; j < nDof; j++)
+      rejected.insert(myDof[i][j]);
+  }
 }
 
 size_t FunctionSpace::findMaxType(void){
@@ -132,7 +177,7 @@ size_t FunctionSpace::findMaxType(void){
 }
 
 void FunctionSpace::getUnorderedKeys(const MElement& elem,
-                                     std::vector<Dof>& dof) const{
+                                     std::vector<Dof>& dof, bool full) const{
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
 
@@ -199,9 +244,45 @@ void FunctionSpace::getUnorderedKeys(const MElement& elem,
     dof[it].setDof(mesh->getGlobalId(element), j + offset);
     it++;
   }
+
+  // Reject Keys or mark them rejected //
+  if(full)
+    markMyKeys(dof);
+  else
+    rejectKeys(dof);
 }
 
-void FunctionSpace::getKeys(const MElement& elem, std::vector<Dof>& dof) const{
+void FunctionSpace::rejectKeys(vector<Dof>& dof) const{
+  // Temp list
+  list<Dof> tmp(dof.begin(), dof.end());
+
+  // Look in rejection map
+  list<Dof>::iterator end = tmp.end();
+  list<Dof>::iterator  it = tmp.begin();
+
+  while(it != end)
+    if(rejected.count(*it) == 1)
+      it = tmp.erase(it);
+    else
+      it++;
+
+  // Rebuild dof vector (if needed)
+  if(tmp.size() != dof.size()){
+    dof.clear();
+    dof.assign(tmp.begin(), tmp.end());
+  }
+}
+
+void FunctionSpace::markMyKeys(vector<Dof>& dof) const{
+  const size_t nDof = dof.size();
+
+  for(size_t i = 0; i < nDof; i++)
+    if(rejected.count(dof[i]) == 1)
+      dof[i] = rejectedDof;
+}
+
+void FunctionSpace::getKeys(const MElement& elem, std::vector<Dof>& dof,
+                            bool full) const{
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
 
@@ -225,7 +306,7 @@ void FunctionSpace::getKeys(const MElement& elem, std::vector<Dof>& dof) const{
   MElement* permElement = factory.create(lowOrderTag, vertex, element.getNum());
 
   // Get Dofs from permuted Element //
-  getUnorderedKeys(*permElement, dof);
+  getUnorderedKeys(*permElement, dof, full);
 
   // Free and Return //
   delete permElement;

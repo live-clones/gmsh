@@ -16,14 +16,15 @@
 
 class FunctionSpaceScalar : public FunctionSpace{
  public:
-  FunctionSpaceScalar(const GroupOfElement& goe, size_t order);
   FunctionSpaceScalar(const std::vector<const GroupOfElement*>& goe,
-                      size_t order);
+                      const std::vector<const GroupOfElement*>& exclude,
+                      size_t order, std::string family = "hierarchical");
 
-  FunctionSpaceScalar(const GroupOfElement& goe, size_t order,
-                      std::string family);
   FunctionSpaceScalar(const std::vector<const GroupOfElement*>& goe,
-                      size_t order, std::string family);
+                      size_t order, std::string family = "hierarchical");
+
+  FunctionSpaceScalar(const GroupOfElement& goe,
+                      size_t order, std::string family = "hierarchical");
 
   virtual ~FunctionSpaceScalar(void);
 
@@ -44,6 +45,7 @@ class FunctionSpaceScalar : public FunctionSpace{
 
  private:
   void init(const std::vector<const GroupOfElement*>& goe,
+            const std::vector<const GroupOfElement*>& exclude,
             size_t order, std::string family);
 
   double interpolateInABC(const MElement& element,
@@ -57,30 +59,16 @@ class FunctionSpaceScalar : public FunctionSpace{
 
 
 /**
-   @fn FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement&,size_t)
-   @param goe A GroupOfElement
-   @param order A natural number
-   Instanciates a new FunctionSpaceScalar
-   on the given GroupOfElement and with the given order
-
-   The instanciated FunctionSpace will use a hierarchical Basis
-   **
-
-   @fn FunctionSpaceScalar::FunctionSpaceScalar(const std::vector<const GroupOfElement*>&,size_t)
+   @fn FunctionSpaceScalar::FunctionSpaceScalar(const std::vector<const GroupOfElement*>&,const std::vector<const GroupOfElement*>&,size_t,std::string)
    @param goe A vector of GroupOfElement
+   @param exclude An other of GroupOfElement
    @param order A natural number
-   Instanciates a new FunctionSpaceScalar
-   on the given GroupOfElement%s and with the given order
+   @param family A string (defaulted to 'hierarchical')
 
-   The instanciated FunctionSpace will use a hierarchical Basis
-   **
-
-   @fn FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement&,size_t,std::string)
-   @param goe A GroupOfElement
-   @param order A natural number
-   @param family A stringr
    Instanciates a new FunctionSpaceScalar
-   on the given GroupOfElement and with the given order
+   on the GroupOfElement%s of 'goe',
+   with the exception of the GroupOfElement%s of 'exclude',
+   and with the given order
 
    The instanciated FunctionSpace will use the requested Basis family:
    @li If family is equal to 'lagrange' a Lagrange Basis will be used
@@ -92,15 +80,17 @@ class FunctionSpaceScalar : public FunctionSpace{
    @fn FunctionSpaceScalar::FunctionSpaceScalar(const std::vector<const GroupOfElement*>&,size_t,std::string)
    @param goe A vector of GroupOfElement
    @param order A natural number
-   @param family A stringr
-   Instanciates a new FunctionSpaceScalar
-   on the given GroupOfElement%s and with the given order
+   @param family A string (defaulted to 'hierarchical')
 
-   The instanciated FunctionSpace will use the requested Basis family:
-   @li If family is equal to 'lagrange' a Lagrange Basis will be used
-   @li If family is equal to 'hierarchical' a hierarchical Basis will be used
+   Same as FunctionSpaceScalar::FunctionSpaceScalar(goe, [], order, family)
+   **
 
-   @see See BasisGenerator::generate()
+   @fn FunctionSpaceScalar::FunctionSpaceScalar(const GroupOfElement&,size_t,std::string)
+   @param goe A GroupOfElement
+   @param order A natural number
+   @param family A string  (defaulted to 'hierarchical')
+
+   Same as FunctionSpaceScalar::FunctionSpaceScalar([goe], [], order, family)
    **
 
    @fn FunctionSpaceScalar::~FunctionSpaceScalar
