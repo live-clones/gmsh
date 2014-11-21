@@ -20,9 +20,11 @@
     NSString *modelSrc = [[resPath stringByAppendingString:@"/"] stringByAppendingString:obj];
     NSString *modelDst = [[docPath stringByAppendingString:@"/"] stringByAppendingString:obj];
     [[NSFileManager defaultManager] removeItemAtPath:modelDst error:nil];
-    NSError *error;
+    NSError *error = nil;
     if (![[NSFileManager defaultManager] copyItemAtPath:modelSrc toPath:modelDst error:&error])
       NSLog(@"Error: %@", error);
+	else if(![[NSURL fileURLWithPath:modelDst] setResourceValue: [NSNumber numberWithBool: YES] forKey: NSURLIsExcludedFromBackupKey error: &error])
+      NSLog(@"Error %@", error);
   }
 }
 
