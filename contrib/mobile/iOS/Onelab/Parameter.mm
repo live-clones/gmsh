@@ -147,37 +147,38 @@
   if(numbers.size() < 1) return;
   UIAlertController *alertController;
   UIAlertAction *destroyAction;
-
   alertController = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
   std::vector<double> choices = numbers[0].getChoices();
-  for(int i=0;i<choices.size();i++)
+  for(unsigned int i = 0; i < choices.size(); i++)
     [alertController addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:@"%s", numbers[0].getValueLabel(choices[i]).c_str()]
-      style:UIAlertActionStyleDefault
-      handler:^(UIAlertAction *action) {
-		  std::cout << numbers[0].getValueLabel(i).c_str() << std::endl;
-		  [self updateNumber:numbers[0] withValue:i];
-		  
-		  [button setTitle:[NSString stringWithFormat:@"%s", numbers[0].getValueLabel(i).c_str()] forState:UIControlStateNormal];
+                                                        style:UIAlertActionStyleDefault
+                                                      handler:^(UIAlertAction *action) {
+          std::cout << numbers[0].getValueLabel(i).c_str() << std::endl;
+          [self updateNumber:numbers[0] withValue:i];
+          [button setTitle:[NSString stringWithFormat:@"%s", numbers[0].getValueLabel(i).c_str()] forState:UIControlStateNormal];
 	}]];
-	destroyAction = [UIAlertAction actionWithTitle:@"Cancel"
-											 style:UIAlertActionStyleDestructive
-										   handler:^(UIAlertAction *action) {
-											   // do nothing
-										   }];
-	[alertController addAction:destroyAction];
-	[alertController setModalPresentationStyle:UIModalPresentationPopover];
-	
-	UIPopoverPresentationController *popPresenter = [alertController
-													 popoverPresentationController];
-	popPresenter.sourceView = button;
-	popPresenter.sourceRect = button.bounds;
-	[[Utils traverseResponderChainForUIViewController:button] presentViewController:alertController animated:YES completion:nil]; // FIXME traverseResponderChainForUIViewController is a goo idea ??
+
+  destroyAction = [UIAlertAction actionWithTitle:@"Cancel"
+                                           style:UIAlertActionStyleDestructive
+                                         handler:^(UIAlertAction *action) {
+      // do nothing
+    }];
+
+  [alertController addAction:destroyAction];
+  [alertController setModalPresentationStyle:UIModalPresentationPopover];
+
+  UIPopoverPresentationController *popPresenter = [alertController popoverPresentationController];
+  popPresenter.sourceView = button;
+  popPresenter.sourceRect = button.bounds;
+  // FIXME: is traverseResponderChainForUIViewController a good idea?
+  [[Utils traverseResponderChainForUIViewController:button] presentViewController:alertController animated:YES completion:nil];
 }
 
 -(void) updateNumber: (onelab::number)n withValue:(double)v
 {
-	n.setValue(v);
-	onelab::server::instance()->set(n);
+  n.setValue(v);
+  onelab::server::instance()->set(n);
+  [super editValue];
 }
 
 -(void)refresh
