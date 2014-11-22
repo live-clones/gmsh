@@ -3440,6 +3440,11 @@ The format is defined as follows:
 $MeshFormat
 @var{version-number} @var{file-type} @var{data-size}
 $EndMeshFormat
+$PhysicalNames
+@var{number-of-names}
+@var{physical-dimension} @var{physical-number} "@var{physical-name}"
+@dots{}
+$EndPhysicalNames
 $Nodes
 @var{number-of-nodes}
 @var{node-number} @var{x-coord} @var{y-coord} @var{z-coord}
@@ -3457,11 +3462,6 @@ $Periodic
 @var{slave-node-number master-node-number}
 @dots{}
 $EndPeriodic
-$PhysicalNames
-@var{number-of-names}
-@var{physical-dimension} @var{physical-number} "@var{physical-name}"
-@dots{}
-$EndPhysicalNames
 $NodeData
 @var{number-of-string-tags}
 < "@var{string-tag}" >
