@@ -153,8 +153,7 @@
     [alertController addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:@"%s", numbers[0].getValueLabel(choices[i]).c_str()]
                                                         style:UIAlertActionStyleDefault
                                                       handler:^(UIAlertAction *action) {
-          std::cout << numbers[0].getValueLabel(i).c_str() << std::endl;
-          [self updateNumber:numbers[0] withValue:i];
+          [self updateNumber:numbers[0] withValue:choices[i]];
           [button setTitle:[NSString stringWithFormat:@"%s", numbers[0].getValueLabel(i).c_str()] forState:UIControlStateNormal];
 	}]];
 
@@ -178,6 +177,7 @@
 {
   n.setValue(v);
   onelab::server::instance()->set(n);
+
   [super editValue];
 }
 
