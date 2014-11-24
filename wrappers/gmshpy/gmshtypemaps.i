@@ -124,6 +124,27 @@
     }
     return array;
   }
+  PyObject *fullMatrix2PyArrayConst(const fullMatrix<double> &fm)
+  {
+    npy_intp dims[2] = {fm.size1(), fm.size2()};
+    double *data = (double*)fm.getDataPtr();
+    /*PyObject *array = PyArray_New(&PyArray_Type, 2, dims, NPY_DOUBLE, NULL, NULL, 0, NPY_ARRAY_F_CONTIGUOUS, NULL);
+    // copy data
+    memcpy((void*)PyArray_DATA(array), data, dims[0] * dims[1] * sizeof(double));*/
+    // do not copy data
+    PyObject *array = PyArray_New(&PyArray_Type, 2, dims, NPY_DOUBLE, NULL, (void*)data, 0, NPY_ARRAY_F_CONTIGUOUS, NULL);
+    PyArray_UpdateFlags((PyArrayObject*)array, NPY_ARRAY_ALIGNED);
+    /*if (fm.getOwnData()) {
+      fm.setOwnData(false);
+      %#if PY_MAJOR_VERSION==2 && PY_MINOR_VERSION==6
+      PyObject *capsule = PyCObject_FromVoidPtr((void*)data, deleteCapsuleArray);
+      %#else
+      PyObject *capsule = PyCapsule_New((void*) data, NULL, deleteCapsuleArray);
+      %#endif
+      PyArray_SetBaseObject((PyArrayObject*)array, capsule);
+    }*/
+    return array;
+  }
   PyObject *fullVector2PyArrayProxy(fullVector<double> &fv)
   {
     npy_intp dims[1] = {fv.size()};
@@ -184,6 +205,10 @@
 #ifdef HAVE_NUMPY
 %typemap(out, fragment="fullMatrixConversion") fullMatrix<double> {
   $result = fullMatrix2PyArray($1);
+}
+
+%typemap(out, fragment="fullMatrixConversion") const fullMatrix<double>& {
+  $result = fullMatrix2PyArrayConst(*$1);
 }
 
 %typemap(out, fragment="fullMatrixConversion") fullVector<double>& {
