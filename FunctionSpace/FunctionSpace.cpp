@@ -1,4 +1,3 @@
-#include <limits.h>
 #include <sstream>
 
 #include "ReferenceSpaceManager.h"
@@ -9,7 +8,6 @@
 
 using namespace std;
 
-const Dof    FunctionSpace::rejectedDof(INT_MAX, INT_MAX);
 const size_t FunctionSpace::nGeoType  = 9;
       size_t FunctionSpace::nxtOffset = 0;
 
@@ -162,12 +160,15 @@ size_t FunctionSpace::findMaxType(void){
       nDof = it->second[e].size();
 
       for(size_t d = 0; d < nDof; d++){
-        // This Dof Type
-        type = it->second[e][d].getType();
+        // Check if not a RejectedDof
+        if(it->second[e][d] != Dof::RejectedDof()){
+          // This Dof Type
+          type = it->second[e][d].getType();
 
-        // If this Dof type is bigger, it becomes the new 'maxType'
-        if(type > maxType)
-          maxType = type;
+          // If this Dof type is bigger, it becomes the new 'maxType'
+          if(type > maxType)
+            maxType = type;
+        }
       }
     }
   }
@@ -177,7 +178,7 @@ size_t FunctionSpace::findMaxType(void){
 }
 
 void FunctionSpace::getUnorderedKeys(const MElement& elem,
-                                     std::vector<Dof>& dof, bool full) const{
+                                     std::vector<Dof>& dof) const{
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
 
@@ -245,44 +246,21 @@ void FunctionSpace::getUnorderedKeys(const MElement& elem,
     it++;
   }
 
-  // Reject Keys or mark them rejected //
-  if(full)
-    markMyKeys(dof);
-  else
-    rejectKeys(dof);
+  // Mark rejected keys //
+  markKeys(dof);
 }
 
-void FunctionSpace::rejectKeys(vector<Dof>& dof) const{
-  // Temp list
-  list<Dof> tmp(dof.begin(), dof.end());
+void FunctionSpace::markKeys(vector<Dof>& dof) const{
+  if(rejected.size() != 0){
+    const size_t nDof = dof.size();
 
-  // Look in rejection map
-  list<Dof>::iterator end = tmp.end();
-  list<Dof>::iterator  it = tmp.begin();
-
-  while(it != end)
-    if(rejected.count(*it) == 1)
-      it = tmp.erase(it);
-    else
-      it++;
-
-  // Rebuild dof vector (if needed)
-  if(tmp.size() != dof.size()){
-    dof.clear();
-    dof.assign(tmp.begin(), tmp.end());
+    for(size_t i = 0; i < nDof; i++)
+      if(rejected.count(dof[i]) == 1)
+        dof[i] = Dof::RejectedDof();
   }
 }
 
-void FunctionSpace::markMyKeys(vector<Dof>& dof) const{
-  const size_t nDof = dof.size();
-
-  for(size_t i = 0; i < nDof; i++)
-    if(rejected.count(dof[i]) == 1)
-      dof[i] = rejectedDof;
-}
-
-void FunctionSpace::getKeys(const MElement& elem, std::vector<Dof>& dof,
-                            bool full) const{
+void FunctionSpace::getKeys(const MElement& elem, std::vector<Dof>& dof) const{
   // Const_Cast //
   MElement& element = const_cast<MElement&>(elem);
 
@@ -306,7 +284,7 @@ void FunctionSpace::getKeys(const MElement& elem, std::vector<Dof>& dof,
   MElement* permElement = factory.create(lowOrderTag, vertex, element.getNum());
 
   // Get Dofs from permuted Element //
-  getUnorderedKeys(*permElement, dof, full);
+  getUnorderedKeys(*permElement, dof);
 
   // Free and Return //
   delete permElement;
@@ -325,7 +303,8 @@ void FunctionSpace::getKeys(const GroupOfElement& goe,
     nDof = allDofs[i].size();
 
     for(size_t j = 0; j < nDof; j++)
-      dof.insert(allDofs[i][j]);
+      if(allDofs[i][j] != Dof::RejectedDof())
+        dof.insert(allDofs[i][j]);
   }
 }
 
@@ -340,29 +319,4 @@ FunctionSpace::getKeys(const GroupOfElement& goe) const{
 
   // Return vector //
   return it->second;
-}
-
-void FunctionSpace::delKeys(const GroupOfElement& goe,
-                            std::set<Dof>& dof) const{
-  // Get Dofs //
-  const vector<vector<Dof> >& allDofs = getKeys(goe);
-
-  // Remove them from map //
-  const size_t size = allDofs.size();
-
-  set<Dof>::iterator end;
-  set<Dof>::iterator it;
-  size_t           nDof;
-
-  for(size_t i = 0; i < size; i++){
-    nDof = allDofs[i].size();
-
-    for(size_t j = 0; j < nDof; j++){
-      end = dof.end();
-      it  = dof.find(allDofs[i][j]);
-
-      if(it != end)
-        dof.erase(it);
-    }
-  }
 }

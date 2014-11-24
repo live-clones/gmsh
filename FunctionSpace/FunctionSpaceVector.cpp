@@ -68,9 +68,9 @@ interpolateInABC(const MElement& element,
 
   basis.getFunctions(fun, element, abc[0], abc[1], abc[2]);
 
-  // Get All Dofs (even those that are supposed to be rejected)
+  // Get All Dofs
   vector<Dof> myDof;
-  getKeys(element, myDof, true);
+  getKeys(element, myDof);
 
   // Interpolate (in Reference Place) //
   fullMatrix<double> val(1, 3);
@@ -78,13 +78,11 @@ interpolateInABC(const MElement& element,
   val(0, 1) = 0;
   val(0, 2) = 0;
 
-  for(size_t i = 0, j = 0; i < nFun; i++){
-    if(myDof[i] != rejectedDof){
-      val(0, 0) += fun(i, 0) * coef[j];
-      val(0, 1) += fun(i, 1) * coef[j];
-      val(0, 2) += fun(i, 2) * coef[j];
-
-      j++;
+  for(size_t i = 0; i < nFun; i++){
+    if(myDof[i] != Dof::RejectedDof()){
+      val(0, 0) += fun(i, 0) * coef[i];
+      val(0, 1) += fun(i, 1) * coef[i];
+      val(0, 2) += fun(i, 2) * coef[i];
     }
   }
 
@@ -110,9 +108,9 @@ interpolateDerivativeInABC(const MElement& element,
 
   basis.getDerivative(fun, element, abc[0], abc[1], abc[2]);
 
-  // Get All Dofs (even those that are supposed to be rejected)
+  // Get All Dofs
   vector<Dof> myDof;
-  getKeys(element, myDof, true);
+  getKeys(element, myDof);
 
   // Interpolate (in Reference Place) //
   fullMatrix<double> val(1, 3);
@@ -120,13 +118,11 @@ interpolateDerivativeInABC(const MElement& element,
   val(0, 1) = 0;
   val(0, 2) = 0;
 
-  for(size_t i = 0, j = 0; i < nFun; i++){
-    if(myDof[i] != rejectedDof){
-      val(0, 0) += fun(i, 0) * coef[j];
-      val(0, 1) += fun(i, 1) * coef[j];
-      val(0, 2) += fun(i, 2) * coef[j];
-
-      j++;
+  for(size_t i = 0; i < nFun; i++){
+    if(myDof[i] != Dof::RejectedDof()){
+      val(0, 0) += fun(i, 0) * coef[i];
+      val(0, 1) += fun(i, 1) * coef[i];
+      val(0, 2) += fun(i, 2) * coef[i];
     }
   }
 

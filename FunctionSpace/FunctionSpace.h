@@ -31,9 +31,6 @@ class GroupOfElement;
 
 class FunctionSpace{
  protected:
-  // A Dof suposed to be rejected
-  static const Dof rejectedDof;
-
   // Number of possible geomtrical topologies & Dof Type offset //
   static const size_t nGeoType;
   static       size_t nxtOffset;
@@ -78,8 +75,6 @@ class FunctionSpace{
   void getKeys(const GroupOfElement& goe, std::set<Dof>& dof)  const;
   const std::vector<std::vector<Dof> >& getKeys(const GroupOfElement& goe)const;
 
-  void delKeys(const GroupOfElement& goe, std::set<Dof>& dof)  const;
-
  protected:
   FunctionSpace(void);
   void build(const std::vector<const GroupOfElement*>& goe,
@@ -92,11 +87,8 @@ class FunctionSpace{
 
   size_t findMaxType(void);
 
-  void getUnorderedKeys(const MElement& element, std::vector<Dof>& dof,
-                        bool full) const;
-  void rejectKeys(std::vector<Dof>& dof) const;
-  void markMyKeys(std::vector<Dof>& dof) const;
-  void getKeys(const MElement& element, std::vector<Dof>& dof, bool full) const;
+  void getUnorderedKeys(const MElement& element, std::vector<Dof>& dof) const;
+  void markKeys(std::vector<Dof>& dof) const;
 };
 
 
@@ -154,14 +146,6 @@ class FunctionSpace{
    @param goe A GroupOfElement
    @return Returns a vector of vector of Dof such that:
    dof[i][j] is the jth Dof of the ith element of the given GroupOfElement
-   **
-
-   @fn void FunctionSpace::delKeys(const GroupOfElement&, std::set<Dof>&) const
-   @param goe A GroupOfElement
-   @param dof A set of Dof%s
-
-   Removes from the given set the Dof%s associated to the MElement%s
-   of the given GroupOfElement
 */
 
 //////////////////////
@@ -190,11 +174,6 @@ inline const Basis& FunctionSpace::getBasis(size_t eType) const{
                     eType);
 
   return *basis[eType];
-}
-
-inline
-void FunctionSpace::getKeys(const MElement& elem, std::vector<Dof>& dof) const{
-  getKeys(elem, dof, false);
 }
 
 #endif
