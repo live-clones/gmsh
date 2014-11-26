@@ -125,12 +125,6 @@ class GModel
   void _storeVerticesInEntities(std::map<int, MVertex*> &vertices);
   void _storeVerticesInEntities(std::vector<MVertex*> &vertices);
 
-  // remove all mesh vertex associations to geometrical entities and
-  // remove vertices from geometrical entities, then
-  // _associateEntityWithMeshVertices and _storeVerticesInEntities
-  // are called to rebuild the associations
-  void _pruneMeshVertexAssociations();
-
   // store the physical tags in the geometrical entities
   void _storePhysicalTagsInEntities(int dim,
                                     std::map<int, std::map<int, std::string> > &map);
@@ -202,6 +196,11 @@ class GModel
   void destroyMeshCaches();
   //delete the mesh stored in entities and call destroMeshCaches
   void deleteMesh();
+
+  // remove all mesh vertex associations to geometrical entities and remove
+  // vertices from geometrical entities, then _associateEntityWithMeshVertices
+  // and _storeVerticesInEntities are called to rebuild the associations
+  void pruneMeshVertexAssociations();
 
   // access internal CAD representations
   GEO_Internals *getGEOInternals(){ return _geo_internals; }

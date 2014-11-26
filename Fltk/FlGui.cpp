@@ -269,6 +269,8 @@ FlGui::FlGui(int argc, char **argv)
   Fl_Tooltip::color(FL_LIGHT2);
 #endif
 
+  //Fl::option(Fl::OPTION_HIGH_RES_GL, 1);
+
   // register image formats not in core fltk library (jpeg/png)
   fl_register_images();
 

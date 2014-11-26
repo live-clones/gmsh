@@ -34,6 +34,7 @@ set(SRC
   NewView.cpp
   SimplePartition.cpp Crack.cpp DuplicateBoundaries.cpp
   FaultZone.cpp
+  MeshSubEntities.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

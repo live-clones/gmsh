@@ -62,6 +62,7 @@
 #include "CutMesh.h"
 #include "NewView.h"
 #include "FaultZone.h"
+#include "MeshSubEntities.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -184,10 +185,8 @@ void PluginManager::registerDefaultPlugins()
                       ("Skin", GMSH_RegisterSkinPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("MathEval", GMSH_RegisterMathEvalPlugin()));
-# if 1 // experimental (Amaury)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));
-#endif
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CurvedBndDist", GMSH_RegisterCurvedBndDistPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
@@ -260,6 +259,8 @@ void PluginManager::registerDefaultPlugins()
                       ("FaultZone", GMSH_RegisterFaultZonePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("DuplicateBoundaries", GMSH_RegisterDuplicateBoundariesPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("MeshSubEntities", GMSH_RegisterMeshSubEntitiesPlugin()));
 #if defined(HAVE_TETGEN)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));

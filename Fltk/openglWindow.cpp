@@ -159,6 +159,7 @@ void openglWindow::draw()
   _ctx->viewport[3] = h();
   glViewport(_ctx->viewport[0], _ctx->viewport[1],
              _ctx->viewport[2], _ctx->viewport[3]);
+             //2*_ctx->viewport[2], 2*_ctx->viewport[3]);
 
   if(lassoMode) {
     // draw the zoom or selection lasso on top of the current scene (without

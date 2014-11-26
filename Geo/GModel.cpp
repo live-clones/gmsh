@@ -1202,7 +1202,7 @@ void GModel::_storeVerticesInEntities(std::vector<MVertex*> &vertices)
   }
 }
 
-void GModel::_pruneMeshVertexAssociations()
+void GModel::pruneMeshVertexAssociations()
 {
   std::vector<GEntity*> entities;
   std::vector<MVertex*> vertices;
@@ -3550,7 +3550,7 @@ void GModel::computeHomology()
         }
       }
     }
-    _pruneMeshVertexAssociations();
+    pruneMeshVertexAssociations();
     delete homology;
   }
   Msg::Info("");
