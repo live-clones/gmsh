@@ -58,13 +58,9 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
   int outputdim = (int)MeshSubEntitiesOptions_Number[2].def;
   int outphysical = (int)MeshSubEntitiesOptions_Number[3].def;
 
-  if(inputdim < 0 || inputdim > 3 || outputdim > inputdim){
+  if(inputdim < 0 || inputdim > 3 || outputdim < 0 || outputdim > 3 ||
+     outputdim > inputdim){
     Msg::Error("Bad dimensions");
-    return view;
-  }
-
-  if(outputdim != 0){
-    Msg::Error("Only vertices coded for now");
     return view;
   }
 
@@ -84,30 +80,70 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
       elements.push_back(entities[i]->getMeshElement(j));
 
-  // FIXME: generalize this to outputdim != 0 !
-  std::set<MVertex*> vertices;
-  for(unsigned int i = 0; i < elements.size(); i++){
-    for(int j = 0; j < elements[i]->getNumVertices(); j++){
-      MVertex *v = elements[i]->getVertex(j);
-      vertices.insert(v);
+  if(outputdim == 0){ // create point elements for mesh vertices
+    std::set<MVertex*> vertices;
+    for(unsigned int i = 0; i < elements.size(); i++){
+      for(int j = 0; j < elements[i]->getNumVertices(); j++){
+        MVertex *v = elements[i]->getVertex(j);
+        vertices.insert(v);
+      }
+    }
+    for(std::set<MVertex*>::const_iterator it = vertices.begin();
+        it != vertices.end(); ++it){
+      MVertex *v = *it;
+      GVertex *gv = 0;
+      if(v->onWhat() && v->onWhat()->dim() == 0){
+        gv = (GVertex*)v->onWhat();
+      }
+      else{
+        gv = new discreteVertex(m, m->getMaxElementaryNumber(0) + 1);
+        v->setEntity(gv);
+        m->add(gv);
+      }
+      gv->physicals.push_back(outphysical);
+      if(gv->points.empty())
+        gv->points.push_back(new MPoint(v));
+    }
+    m->pruneMeshVertexAssociations();
+  }
+  else if(outputdim == 1){ // create line elements for mesh edges
+    std::set<MEdge, Less_Edge> edges;
+    for(unsigned int i = 0; i < elements.size(); i++){
+      for(int j = 0; j < elements[i]->getNumEdges(); j++){
+        MEdge e = elements[i]->getEdge(j);
+        edges.insert(e);
+      }
+    }
+    for(std::set<MEdge, Less_Edge>::const_iterator it = edges.begin();
+        it != edges.end(); ++it){
+      const MEdge &e = *it;
+      GEdge *ge = 0;
+      MVertex *v0 = e.getVertex(0), *v1 = e.getVertex(1);
+      if(v0->onWhat() && v1->onWhat()){
+        if(v0->onWhat()->dim() == 1 &&
+           ((v1->onWhat()->dim() == 1 && v0->onWhat() == v1->onWhat()) ||
+             v1->onWhat()->dim() == 0))
+          ge = (GEdge*)v0->onWhat();
+        else if(v1->onWhat()->dim() == 1 &&
+                ((v0->onWhat()->dim() == 1 && v0->onWhat() == v1->onWhat()) ||
+                  v0->onWhat()->dim() == 0))
+          ge = (GEdge*)v1->onWhat();
+      }
+      if(!ge){
+        ge = new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, 0, 0);
+        v0->setEntity(ge);
+        v1->setEntity(ge);
+        m->add(ge);
+      }
+      ge->physicals.push_back(outphysical);
+      if(ge->lines.empty())
+        ge->lines.push_back(new MLine(v0, v1));
     }
   }
-  for(std::set<MVertex*>::const_iterator it = vertices.begin(); 
-      it != vertices.end(); ++it){
-    MVertex *v = *it;
-    GVertex *gv = 0;
-    if(v->onWhat() && v->onWhat()->dim() == 0){
-      gv = (GVertex*)v->onWhat();
-    }
-    else{
-      gv = new discreteVertex(m, m->getMaxElementaryNumber(0) + 1);
-      v->setEntity(gv);
-      m->add(gv);
-    }
-    gv->physicals.push_back(outphysical);
-    gv->points.push_back(new MPoint(v));
+  else{
+    Msg::Error("Plugin(MeshSubEntities) not coded yet for output dim %d",
+               outputdim);
   }
-  m->pruneMeshVertexAssociations();
 
   CTX::instance()->mesh.changed = ENT_ALL;
 

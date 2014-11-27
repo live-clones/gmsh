@@ -23,20 +23,20 @@
     NSError *error = nil;
     if (![[NSFileManager defaultManager] copyItemAtPath:modelSrc toPath:modelDst error:&error])
       NSLog(@"Error: %@", error);
-	else if(![[NSURL fileURLWithPath:modelDst] setResourceValue: [NSNumber numberWithBool: YES] forKey: NSURLIsExcludedFromBackupKey error: &error])
+    else if(![[NSURL fileURLWithPath:modelDst] setResourceValue: [NSNumber numberWithBool: YES] forKey: NSURLIsExcludedFromBackupKey error: &error])
       NSLog(@"Error %@", error);
   }
 }
 
 + (UIViewController *) traverseResponderChainForUIViewController:(UIView *)v
 {
-	id nextResponder = [v nextResponder];
-	if ([nextResponder isKindOfClass:[UIViewController class]])
-		return nextResponder;
-	else if ([nextResponder isKindOfClass:[UIView class]])
-		return [Utils traverseResponderChainForUIViewController:nextResponder];
-	else
-		return nil;
+  id nextResponder = [v nextResponder];
+  if ([nextResponder isKindOfClass:[UIViewController class]])
+    return nextResponder;
+  else if ([nextResponder isKindOfClass:[UIView class]])
+    return [Utils traverseResponderChainForUIViewController:nextResponder];
+  else
+    return nil;
 }
 
 @end

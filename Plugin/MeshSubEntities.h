@@ -20,7 +20,7 @@ class GMSH_MeshSubEntitiesPlugin : public GMSH_PostPlugin
   std::string getName() const { return "MeshSubEntities"; }
   std::string getShortHelp() const
   {
-    return "Mesh entities generator";
+    return "Mesh subentities generator";
   }
   std::string getHelp() const;
   int getNbOptions() const;
