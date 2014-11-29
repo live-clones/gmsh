@@ -15,9 +15,8 @@
 #include "MQuadrangle.h"
 #include "MPrism.h"
 #include "MHexahedron.h"
-
-#if defined(HAVE_RTREE)
 #include "rtree.h"
+
 void MElementBB(void *a, double *min, double *max);
 int MElementInEle(void *a, double *x);
 
@@ -221,29 +220,3 @@ void filterOverlappingElements (std::vector<MElement*> &els,
   els = newEls;
 }
 
-#else
-
-void filterOverlappingElements (std::vector<MTriangle*> &blTris,
-				std::vector<MQuadrangle*>&blQuads,
-				std::map<MElement*,std::vector<MElement*> > &_elemColumns,
-				std::map<MElement*,MElement*> &_toFirst)
-{
-  Msg::Error("Gmsh needs to be compiled with RTREE support for bonudary layers");
-}
-
-void filterOverlappingElements (std::vector<MPrism*> &blPrisms,
-				std::vector<MHexahedron*>&blHexes,
-				std::map<MElement*,std::vector<MElement*> > &_elemColumns,
-				std::map<MElement*,MElement*> &_toFirst)
-{
-  Msg::Error("Gmsh needs to be compiled with RTREE support for bonudary layers");
-}
-
-void filterOverlappingElements (std::vector<MElement*> &els,
-				std::map<MElement*,std::vector<MElement*> > &_elemColumns,
-				std::map<MElement*,MElement*> &_toFirst )
-{
-  Msg::Error("Gmsh needs to be compiled with RTREE support for bonudary layers");
-}
-
-#endif

@@ -55,7 +55,7 @@ static void createQuaTri(std::vector<MVertex*> &v, GFace *to,
 	else
 	  addQuadrangle(v[0], v[1], v[3], v[2], to);
       }
-	
+
     }
     else if(!constrainedEdges){
       addTriangle(v[0], v[1], v[3], to);
@@ -179,23 +179,24 @@ static void copyMesh(GFace *from, GFace *to,
   int quadToTri_valid = IsValidQuadToTriTop(to, &quadToTri, &detectQuadToTriTop);
   bool is_toroidal = quadToTri_valid >= 2 ? true : false;
   bool is_noaddverts = quadToTri_valid == 3 ? true : false;
-  if( detectQuadToTriTop && !quadToTri_valid && !is_toroidal ){
+  if(detectQuadToTriTop && !quadToTri_valid && !is_toroidal){
     Msg::Error("In MeshGFaceExtrudedSurface::copyMesh(), Mesh of QuadToTri top "
                "surface %d likely has errors.", to->tag());
   }
-  
-  // if this is toroidal No New Vertices QuadToTri, then replace the root dependency face's boundary
-  // quads with triangles for better meshing.
-  if( is_toroidal && is_noaddverts ){
-    GFace *root = findRootSourceFaceForFace( from );
-    if( root == from ){
-      ReplaceBndQuadsInFace( root );
-      Msg::Warning("To facilitate QuadToTri interface on surface %d, source surface %d was re-meshed "
-                "with all triangles on boundary.  To avoid this, use QuadTriAddVerts instead of "
-		 "QuadTriNoNewVerts.", to->tag(), root->tag());
+
+  // if this is toroidal No New Vertices QuadToTri, then replace the root
+  // dependency face's boundary quads with triangles for better meshing.
+  if(is_toroidal && is_noaddverts){
+    GFace *root = findRootSourceFaceForFace(from);
+    if(root == from){
+      ReplaceBndQuadsInFace(root);
+      Msg::Warning("To facilitate QuadToTri interface on surface %d, source "
+                   "surface %d was re-meshed with all triangles on boundary. "
+                   "To avoid this, use QuadTriAddVerts instead of QuadTriNoNewVerts",
+                   to->tag(), root->tag());
     }
   }
-  
+
   // create triangle elements
   std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp;
   for(unsigned int i = 0; i < from->triangles.size(); i++){
@@ -227,7 +228,7 @@ static void copyMesh(GFace *from, GFace *to,
       Msg::Error("In MeshExtrudedSurface()::copyMesh(), mesh of QuadToTri top "
 		  "surface %d failed.", to->tag() );
     return;
-  } 
+  }
 
 
   // create quadrangle elements if NOT QuadToTri and NOT toroidal

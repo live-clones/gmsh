@@ -724,6 +724,20 @@ Default value: @code{0}
 Default value: @code{-1}
 @end table
 
+@item Plugin(MeshSubEntities)
+Plugin(MeshSubEntities) creates mesh elements for the entities of dimension `OutputDimension' (0 for vertices, 1 for edges, 2 for faces) of the `InputPhysicalGroup' of dimension `InputDimension'. The plugin creates new elements belonging to `OutputPhysicalGroup'.
+Numeric options:
+@table @code
+@item InputDimension
+Default value: @code{1}
+@item InputPhysicalGroup
+Default value: @code{1}
+@item OuputDimension
+Default value: @code{0}
+@item OuputPhysicalGroup
+Default value: @code{2000}
+@end table
+
 @item Plugin(MinMax)
 Plugin(MinMax) computes the min/max of a view.@*
 @*

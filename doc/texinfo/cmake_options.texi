@@ -29,6 +29,8 @@ Enable CGNS mesh export (experimental) (default: OFF)
 Enable Cairo to render fonts (experimental) (default: ON)
 @item ENABLE_CHACO
 Enable Chaco mesh partitioner (alternative to Metis) (default: ON)
+@item ENABLE_COMPRESSED_IO
+Enable compressed (gzip) input/output using zlib (default: OFF)
 @item ENABLE_DINTEGRATION
 Enable discrete integration (needed for levelsets) (default: ON)
 @item ENABLE_FLTK
@@ -57,16 +59,24 @@ Enable built-in MPEG movie encoder (default: ON)
 Enable MPI (mostly for parser and solver - mesh generation is sequential) (default: OFF)
 @item ENABLE_MSVC_STATIC_RUNTIME
 Enable static Visual C++ runtime (default: OFF)
+@item ENABLE_MUMPS
+Enable MUMPS sparse direct linear solver (default: OFF)
 @item ENABLE_NATIVE_FILE_CHOOSER
 Enable native file chooser in GUI (default: ON)
 @item ENABLE_NETGEN
 Enable Netgen 3D frontal mesh generator (default: ON)
+@item ENABLE_NUMPY
+Enable conversion between fullMatrix and numpy array (requires SWIG) (default: OFF)
+@item ENABLE_PETSC4PY
+Enable petsc4py wrappers for petsc matrices (default: ON)
 @item ENABLE_OCC
 Enable Open CASCADE geometrical models (default: ON)
 @item ENABLE_ONELAB
-Enable OneLab solver interface (default: ON)
+Enable ONELAB solver interface (default: ON)
+@item ENABLE_ONELAB2
+Enable experimental ONELAB-Cloud solver interface (default: OFF)
 @item ENABLE_ONELAB_METAMODEL
-Enable OneLab metamodels (experimental) (default: ON)
+Enable ONELAB metamodels (experimental) (default: ON)
 @item ENABLE_OPENMP
 Enable OpenMP (experimental) (default: OFF)
 @item ENABLE_OPTHOM
@@ -99,6 +109,8 @@ Enable SLEPc eigensolvers (required for conformal compounds) (default: ON)
 Enable built-in finite element solvers (required for compounds) (default: ON)
 @item ENABLE_TAUCS
 Enable Taucs linear solver (alternative to PETSc) (default: ON)
+@item ENABLE_TCMALLOC
+Enable libtcmalloc, a fast malloc implementation but that does not release memory (default: OFF)
 @item ENABLE_TETGEN
 Enable Tetgen 3D initial mesh generator (default: ON)
 @item ENABLE_TETGEN_OLD
