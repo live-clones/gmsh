@@ -628,7 +628,8 @@ void drawContext::drawView()
   OrthofFromGModel();
 
   glMatrixMode(GL_MODELVIEW);
-  // fill the background
+
+  // draw the background
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   if(CTX::instance()->bgGradient){
     glPushMatrix();
@@ -656,10 +657,73 @@ void drawContext::drawView()
   }
   checkGlError("Draw background");
 
+  // init lights
+  glPushMatrix();
   glLoadIdentity();
   glScalef(_scale[0], _scale[1], _scale[2]);
   glTranslatef(_translate[0], _translate[1], _translate[2]);
+  for(int i = 0; i < 6; i++) {
+    if(CTX::instance()->light[i]) {
+      GLfloat position[4] = {
+        (GLfloat)CTX::instance()->lightPosition[i][0],
+        (GLfloat)CTX::instance()->lightPosition[i][1],
+        (GLfloat)CTX::instance()->lightPosition[i][2],
+        (GLfloat)CTX::instance()->lightPosition[i][3]
+      };
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_POSITION, position);
+      GLfloat r = (GLfloat)(CTX::instance()->unpackRed
+                            (CTX::instance()->color.ambientLight[i]) / 255.);
+      GLfloat g = (GLfloat)(CTX::instance()->unpackGreen
+                            (CTX::instance()->color.ambientLight[i]) / 255.);
+      GLfloat b = (GLfloat)(CTX::instance()->unpackBlue
+                            (CTX::instance()->color.ambientLight[i]) / 255.);
+      GLfloat ambient[4] = {r, g, b, 1.0F};
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_AMBIENT, ambient);
+      r = (GLfloat)(CTX::instance()->unpackRed
+                    (CTX::instance()->color.diffuseLight[i]) / 255.);
+      g = (GLfloat)(CTX::instance()->unpackGreen
+                    (CTX::instance()->color.diffuseLight[i]) / 255.);
+      b = (GLfloat)(CTX::instance()->unpackBlue
+                    (CTX::instance()->color.diffuseLight[i]) / 255.);
+      GLfloat diffuse[4] = {r, g, b, 1.0F};
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_DIFFUSE, diffuse);
+      r = (GLfloat)(CTX::instance()->unpackRed
+                    (CTX::instance()->color.specularLight[i]) / 255.);
+      g = (GLfloat)(CTX::instance()->unpackGreen
+                    (CTX::instance()->color.specularLight[i]) / 255.);
+      b = (GLfloat)(CTX::instance()->unpackBlue
+                    (CTX::instance()->color.specularLight[i]) / 255.);
+      GLfloat specular[4] = {r, g, b, 1.0F};
+      glLightfv((GLenum)(GL_LIGHT0 + i), GL_SPECULAR, specular);
+      glEnable((GLenum)(GL_LIGHT0 + i));
+    }
+    else{
+      glDisable((GLenum)(GL_LIGHT0 + i));
+    }
+  }
+  glPopMatrix();
+  // ambient and diffuse material colors track glColor automatically
+  //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+  glEnable(GL_COLOR_MATERIAL);
+  // "white"-only specular material reflection color
+  GLfloat spec[4] = {(GLfloat)CTX::instance()->shine,
+                     (GLfloat)CTX::instance()->shine,
+                     (GLfloat)CTX::instance()->shine, 1.0F};
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
+  // specular exponent in [0,128] (larger means more "focused"
+  // reflection)
+  glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS,
+              (GLfloat)CTX::instance()->shineExponent);
+  glShadeModel(GL_SMOOTH);
+  glEnable(GL_RESCALE_NORMAL);
+  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, 1.);
+  glDisable(GL_LIGHTING);
+  checkGlError("Initialize lights");
 
+  // init position
+  glLoadIdentity();
+  glScalef(_scale[0], _scale[1], _scale[2]);
+  glTranslatef(_translate[0], _translate[1], _translate[2]);
   if(CTX::instance()->rotationCenterCg)
     glTranslatef(CTX::instance()->cg[0],
                  CTX::instance()->cg[1],
@@ -668,10 +732,8 @@ void drawContext::drawView()
     glTranslatef(CTX::instance()->rotationCenter[0],
                  CTX::instance()->rotationCenter[1],
                  CTX::instance()->rotationCenter[2]);
-
   buildRotationMatrix();
   glMultMatrixf(_rotatef);
-
   if(CTX::instance()->rotationCenterCg)
     glTranslatef(-CTX::instance()->cg[0],
                  -CTX::instance()->cg[1],
@@ -680,24 +742,19 @@ void drawContext::drawView()
     glTranslatef(-CTX::instance()->rotationCenter[0],
                  -CTX::instance()->rotationCenter[1],
                  -CTX::instance()->rotationCenter[2]);
-
   checkGlError("Initialize position");
 
+  // draw everything
   glEnable(GL_DEPTH_TEST);
-
-  drawMesh();
-  checkGlError("Draw mesh");
-  drawGeom();
-  checkGlError("Draw geometry");
-  drawPost();
-  checkGlError("Draw post-pro");
+  drawMesh(); checkGlError("Draw mesh");
+  drawGeom(); checkGlError("Draw geometry");
+  glEnable(GL_LIGHTING);
+  drawPost(); checkGlError("Draw post-pro");
+  glDisable(GL_LIGHTING);
   glDisable(GL_DEPTH_TEST);
-  drawScale();
-  checkGlError("Draw scales");
-  drawAxes();
-  checkGlError("Draw axes");
-  drawText2d();
-  checkGlError("Draw text2d");
+  drawScale(); checkGlError("Draw scales");
+  drawAxes(); checkGlError("Draw axes");
+  drawText2d(); checkGlError("Draw text2d");
 }
 
 std::vector<std::string> commandToVector(const std::string cmd)
