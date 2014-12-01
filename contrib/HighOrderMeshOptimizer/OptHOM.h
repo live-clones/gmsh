@@ -54,15 +54,9 @@ public:
   int optimize(double lambda, double lambda3, double barrier_min, double barrier_max,
                bool optimizeMetricMin, int pInt, int itMax, int optPassMax,
                int optimizeCAD, double optCADDistMax, double tolerance);
-  int optimize_inhouse(double weight, double weightCAD, double b_min, double b_max,
-                       bool optimizeMetricMin, int pInt, int itMax, int optPassMax,
-                       int optCAD, double distanceMax, double tolerance);
   void recalcJacDist();
   inline void getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD);
   void updateMesh(const alglib::real_1d_array &x);
-  void evalObjGrad(std::vector<double> &x, double &Obj, bool gradsNeeded,
-		   std::vector<double> &gradObj);
-
   void evalObjGrad(const alglib::real_1d_array &x, double &Obj,
                    alglib::real_1d_array &gradObj);
   void printProgress(const alglib::real_1d_array &x, double Obj);
@@ -80,16 +74,11 @@ public:
                      // true : minimize the distance between mesh and CAD
   bool addApproximationErrorObjGrad(double Fact, double &Obj, alglib::real_1d_array &gradObj, simpleFunction<double>& fct);
   bool addJacObjGrad(double &Obj, alglib::real_1d_array &gradObj);
-  bool addJacObjGrad(double &Obj, std::vector<double> &);
   bool addBndObjGrad (double Fact, double &Obj, alglib::real_1d_array &gradObj);
-  bool addBndObjGrad2(double Fact, double &Obj, alglib::real_1d_array &gradObj);
-  bool addBndObjGrad(double Fact, double &Obj, std::vector<double> &gradObj);
   bool addMetricMinObjGrad(double &Obj, alglib::real_1d_array &gradObj);
-  bool addDistObjGrad(double Fact, double &Obj, std::vector<double> &gradObj);
   bool addDistObjGrad(double Fact, double &Obj, alglib::real_1d_array &gradObj);
   void calcScale(alglib::real_1d_array &scale);
   void OptimPass(alglib::real_1d_array &x, int itMax);
-  void OptimPass(std::vector<double> &x, int itMax);
 };
 
 void OptHOM::getJacDist(double &minJ, double &maxJ, double &maxD, double &avgD)

@@ -8,6 +8,7 @@ set(SRC
   OptHOM.cpp 
   OptHomRun.cpp 
   OptHomIntegralBoundaryDist.cpp
+  OptHomCADDist.cpp
   ParamCoord.cpp 
   SuperEl.cpp 
   OptHomElastic.cpp
