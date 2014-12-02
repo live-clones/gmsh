@@ -88,6 +88,11 @@ public:
   // Validation for computation of Bezier coefficients & subdivision
   // of Jacobian determinant and Metric stuffs
   static bool validateBezierForMetricAndJacobian();
+  static int validateBezierForMetricAndJacobian(MElement *el,
+                                                int numSampPnt,
+                                                int numSubdiv,
+                                                int toleranceTensor,
+                                                int tolerance);
   void interpolate(const MElement*, const MetricData*, const double *uvw, double *minmaxQ) const;
   void interpolate(const MElement*, const MetricData*,
                    const fullMatrix<double> &nodes, fullMatrix<double> &R) const;

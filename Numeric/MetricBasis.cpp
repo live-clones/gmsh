@@ -651,88 +651,100 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
         ++numError;
       }
 
-      const MetricBasis *metricBasis = BasisFactory::getMetricBasis(tag);
-
-      // compare the two metric
-
-      fullMatrix<double> metric_Bez(numSampPnt, 2);
-      fullVector<int> isub(numSubdiv);
-      fullMatrix<double> uvw(numSampPnt, 3);
-      metricBasis->interpolateAfterNSubdivisions(el, numSubdiv, numSampPnt,
-                                                 isub, uvw, metric_Bez);
-
-      /*{
-        static int deg = 2;
-        BasisFactory::getCondNumBasis(el->getTypeForMSH(), deg);
-        MetricBasis::minSampledR(el, deg);
-        MetricBasis::minSampledRnew(el, deg);
-
-        double time = Cpu();
-        double minR1;
-        for (int cn = 0; cn < 100; ++cn) {
-          const CondNumBasis *cnb =
-              BasisFactory::getCondNumBasis(el->getTypeForMSH(), deg);
-          fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
-          el->getNodesCoord(nodesXYZ);
-          fullVector<double> invCond(cnb->getNumCondNumNodes());
-          cnb->getInvCondNum(nodesXYZ, invCond);
-          minR1 = 1;
-          for (int i = 0; i < invCond.size(); ++i)
-            minR1 = std::min(minR1, invCond(i));
-        }
-        double tm1 = Cpu()-time;
-
-        time = Cpu();
-        double minR2;
-        for (int cn = 0; cn < 100; ++cn)
-          minR2 = MetricBasis::minSampledRnew(el, deg);
-        double tm2 = Cpu()-time;
-
-        if (std::abs(minR1-minR2) < 1e-14)
-          Msg::Info("ok deg %d, times %g %g speedup %g", deg, tm1, tm2, tm1/tm2);
-        else
-          Msg::Error("not ok deg %d: %g vs %g, times %g %g speedup %g", deg, minR1, minR2, tm1, tm2, tm1/tm2);
-        //++deg;
-      }*/
-
-      int numBadMatch = 0;
-      int numBadMatchTensor = 0;
-      double maxBadMatch = 0;
-      double maxBadMatchTensor = 0;
-      for (int isamp = 0; isamp < numSampPnt; ++isamp) {
-        double dum[3];
-        double &u = uvw(isamp, 0);
-        double &v = uvw(isamp, 1);
-        double &w = uvw(isamp, 2);
-        double metric_Lag = el->getEigenvaluesMetric(u, v, w, dum);
-
-        double diff = std::abs(metric_Lag - metric_Bez(isamp, 0));
-        double diffTensor = std::abs(metric_Lag - metric_Bez(isamp, 1));
-
-        if (diffTensor > toleranceTensor) {
-          ++numBadMatchTensor;
-          maxBadMatchTensor = std::max(maxBadMatchTensor, diffTensor);
-        }
-        else if (diff > tolerance) {
-          ++numBadMatch;
-          maxBadMatch = std::max(maxBadMatch, diff);
-        }
-      }
-      if (numBadMatchTensor > .2*numSampPnt) {
-        ++numError;
-        Msg::Error("Too much errors "
-            "even when computing by metric tensor (max %g)", maxBadMatchTensor);
-      }
-      else if (numBadMatch > .5*numSampPnt) {
-        ++numError;
-        Msg::Error("Too much errors (max %g)", maxBadMatch);
-      }
+      numError += validateBezierForMetricAndJacobian(el, numSampPnt, numSubdiv,
+                                                     toleranceTensor, tolerance);
     }
   }
 
   if (numError) Msg::Error("Validation of Bezier terminated with %d errors!", numError);
   else Msg::Info("Validation of Bezier terminated without errors");
   return numError;
+}
+
+int MetricBasis::validateBezierForMetricAndJacobian(MElement *el,
+                                                    int numSampPnt,
+                                                    int numSubdiv,
+                                                    int toleranceTensor,
+                                                    int tolerance)
+{
+  const int tag = el->getTypeForMSH();
+  const MetricBasis *metricBasis = BasisFactory::getMetricBasis(tag);
+
+  // compare the two metric
+  fullMatrix<double> metric_Bez(numSampPnt, 2);
+  fullVector<int> isub(numSubdiv);
+  fullMatrix<double> uvw(numSampPnt, 3);
+  metricBasis->interpolateAfterNSubdivisions(el, numSubdiv, numSampPnt,
+                                             isub, uvw, metric_Bez);
+
+  /*{
+    static int deg = 2;
+    BasisFactory::getCondNumBasis(el->getTypeForMSH(), deg);
+    MetricBasis::minSampledR(el, deg);
+    MetricBasis::minSampledRnew(el, deg);
+
+    double time = Cpu();
+    double minR1;
+    for (int cn = 0; cn < 100; ++cn) {
+      const CondNumBasis *cnb =
+          BasisFactory::getCondNumBasis(el->getTypeForMSH(), deg);
+      fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
+      el->getNodesCoord(nodesXYZ);
+      fullVector<double> invCond(cnb->getNumCondNumNodes());
+      cnb->getInvCondNum(nodesXYZ, invCond);
+      minR1 = 1;
+      for (int i = 0; i < invCond.size(); ++i)
+        minR1 = std::min(minR1, invCond(i));
+    }
+    double tm1 = Cpu()-time;
+
+    time = Cpu();
+    double minR2;
+    for (int cn = 0; cn < 100; ++cn)
+      minR2 = MetricBasis::minSampledRnew(el, deg);
+    double tm2 = Cpu()-time;
+
+    if (std::abs(minR1-minR2) < 1e-14)
+      Msg::Info("ok deg %d, times %g %g speedup %g", deg, tm1, tm2, tm1/tm2);
+    else
+      Msg::Error("not ok deg %d: %g vs %g, times %g %g speedup %g", deg, minR1, minR2, tm1, tm2, tm1/tm2);
+    //++deg;
+  }*/
+
+  int numBadMatch = 0;
+  int numBadMatchTensor = 0;
+  double maxBadMatch = 0;
+  double maxBadMatchTensor = 0;
+  for (int isamp = 0; isamp < numSampPnt; ++isamp) {
+    double dum[3];
+    double &u = uvw(isamp, 0);
+    double &v = uvw(isamp, 1);
+    double &w = uvw(isamp, 2);
+    double metric_Lag = el->getEigenvaluesMetric(u, v, w, dum);
+
+    double diff = std::abs(metric_Lag - metric_Bez(isamp, 0));
+    double diffTensor = std::abs(metric_Lag - metric_Bez(isamp, 1));
+
+    if (diffTensor > toleranceTensor) {
+      ++numBadMatchTensor;
+      maxBadMatchTensor = std::max(maxBadMatchTensor, diffTensor);
+    }
+    else if (diff > tolerance) {
+      ++numBadMatch;
+      maxBadMatch = std::max(maxBadMatch, diff);
+    }
+  }
+
+  if (numBadMatchTensor > .2*numSampPnt) {
+    Msg::Error("Too much errors "
+        "even when computing by metric tensor (max %g)", maxBadMatchTensor);
+    return 1;
+  }
+  else if (numBadMatch > .5*numSampPnt) {
+    Msg::Error("Too much errors (max %g)", maxBadMatch);
+    return 1;
+  }
+  return 0;
 }
 
 void MetricBasis::interpolate(const MElement *el,
@@ -898,6 +910,10 @@ void MetricBasis::interpolateAfterNSubdivisions(
   delete md;
 }
 
+/*void MetricBasis::statsForMatlab() {
+
+}*/
+
 int MetricBasis::metricOrder(int tag)
 {
   const int parentType = ElementType::ParentTypeFromTag(tag);
@@ -928,16 +944,24 @@ void MetricBasis::_computeRmin(
 {
   RminLag = _computeMinlagR(jac, coeff, _bezier->getNumLagCoeff());
   if (RminLag == 0) {
+    //Msg::Info("Aaarg");
     RminBez = 0;
     return;
   }
 
   if (coeff.size2() == 3) { // 2d element
+    //coeff.print("coeff");
     double mina, dummy;
     _minMaxA(coeff, mina, dummy);
+    //printf("a%g\n", mina);
     RminBez = std::sqrt(_R2Dsafe(mina));
+    //printf("lag%g bez%g\n\n", RminLag, RminBez);
     return;
   }
+
+
+  //coeff.print("coeff");
+  //jac.print("jac");
 
   double minK;
   _minK(coeff, jac, minK);
@@ -1119,11 +1143,10 @@ double MetricBasis::_subdivideForRmin(MetricData *md, double RminLag, double tol
     }
     if (for3d) trash.push_back(subjac);
     delete subcoeffs;
+    //printf("NOW lag%g bez%g\n\n", RminLag, subdomains.top()->_RminBez);
   }
 
-  md = subdomains.top();
-  double ans = md->_RminBez;
-
+  double ans = subdomains.top()->_RminBez;
   while (subdomains.size()) {
     md = subdomains.top();
     subdomains.pop();
@@ -1219,6 +1242,11 @@ void MetricBasis::_fillCoeff(int dim, const GradientBasis *gradients,
         gradients->getIdealGradientsFromNodes(nodes, &dxydX, &dxydY, NULL);
       else
         gradients->getGradientsFromNodes(nodes, &dxydX, &dxydY, NULL);
+      //dxydX.print("dxydX");
+      //dxydY.print("dxydY");
+        gradients->getGradientsFromNodes(nodes, &dxydX, &dxydY, NULL);
+      //dxydX.print("dxydX");
+      //dxydY.print("dxydY");
 
       coeff.resize(nSampPnts, 3);
       for (int i = 0; i < nSampPnts; i++) {
@@ -1340,6 +1368,7 @@ void MetricBasis::_minMaxA(
     ++it;
   }
 
+  //printf("min%g\n", min);
   min = min > 1 ? std::sqrt(min) : 1;
   max = std::sqrt(max);
 }
