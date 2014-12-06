@@ -55,6 +55,7 @@ typedef std::set<MElement*> elSet;
 typedef elSet::iterator elSetIter;
 typedef std::set<MVertex*> vertSet;
 typedef std::map<MElement*, GEntity*> elEntMap;
+typedef std::map<MElement*, MElement*> elElMap;
 
 typedef std::map<MVertex*, elVec> vertElVecMap;
 typedef std::map<MElement*, elSet> elElSetMap;
@@ -178,6 +179,96 @@ void calcElement2Entity(GEntity *entity, elEntMap &element2entity)
 }
 
 
+MElement *getFaceInBndElements(const MFace &f, std::list<GFace*> gFaces)
+{
+  for (std::list<GFace*>::iterator itGF = gFaces.begin(); itGF != gFaces.end(); itGF++) {
+    if (f.getNumVertices() == 3) {
+      std::vector<MTriangle*> &tris = (*itGF)->triangles;
+      for (int iEl=0; iEl<tris.size(); iEl++)
+        if (tris[iEl]->getFace(0) == f) return tris[iEl];
+    }
+    else {
+      std::vector<MQuadrangle*> &quads = (*itGF)->quadrangles;
+      for (int iEl=0; iEl<quads.size(); iEl++)
+        if (quads[iEl]->getFace(0) == f) return quads[iEl];
+    }
+  }
+  return 0;
+}
+
+
+MElement *getEdgeInBndElements(const MEdge &e, std::list<GEdge*> gEdges)
+{
+  for (std::list<GEdge*>::iterator itGE = gEdges.begin(); itGE != gEdges.end(); itGE++) {
+    std::vector<MLine*> &lines = (*itGE)->lines;
+    for (int iEl=0; iEl<lines.size(); iEl++)
+      if (lines[iEl]->getEdge(0) == e) return lines[iEl];
+  }
+  return 0;
+}
+
+
+void calcBndInfo(GEntity *entity, elElMap &el2BndEl, elEntMap &bndEl2Ent)
+{
+  typedef std::list<GFace*> GFaceList;
+  typedef std::list<GEdge*> GEdgeList;
+
+  if (entity->dim() == 3) {                                                               // 3D
+
+    // Fill boundary element -> GEntity connectivity
+    GFaceList gFaces = entity->faces();
+    for (GFaceList::iterator itGF = gFaces.begin(); itGF != gFaces.end(); itGF++) {
+      std::vector<MTriangle*> &tris = (*itGF)->triangles;
+      for (int i=0; i<tris.size(); i++)
+        bndEl2Ent.insert(std::pair<MElement*, GEntity*>(tris[i], *itGF));
+      std::vector<MQuadrangle*> &quads = (*itGF)->quadrangles;
+      for (int i=0; i<quads.size(); i++)
+        bndEl2Ent.insert(std::pair<MElement*, GEntity*>(quads[i], *itGF));
+    }
+
+    // Fill element -> boundary element connectivity
+    for (int iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
+      MElement *el = entity->getMeshElement(iEl);
+      int nBndVert = 0;                                                                   // Compute nb. of bnd. vertices in element
+      for (int iV=0; iV<el->getNumPrimaryVertices(); iV++)
+        if (el->getVertex(iV)->onWhat() != entity) nBndVert++;
+      if (nBndVert >= 3)                                                                  // If more than 3 primary vert. on bnd., look for bnd. face(s)
+        for (int iF=0; iF<el->getNumFaces(); iF++) {
+          MElement *bndEl = getFaceInBndElements(el->getFace(iF), gFaces);
+          if (bndEl != 0)
+            el2BndEl.insert(std::pair<MElement*, MElement*>(el, bndEl));
+        }
+    }
+
+  }
+  else {                                                                                  // 2D
+
+    // Fill boundary element -> GEntity connectivity
+    GEdgeList gEdges = entity->edges();
+    for (GEdgeList::iterator itGE = gEdges.begin(); itGE != gEdges.end(); itGE++) {
+      std::vector<MLine*> &lines = (*itGE)->lines;
+      for (int i=0; i<lines.size(); i++)
+        bndEl2Ent.insert(std::pair<MElement*, GEntity*>(lines[i], *itGE));
+    }
+
+    // Fill element -> boundary element connectivity
+    for (int iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
+      MElement *el = entity->getMeshElement(iEl);
+      int nBndVert = 0;                                                                   // Compute nb. of bnd. vertices in element
+      for (int iV=0; iV<el->getNumPrimaryVertices(); iV++)
+        if (el->getVertex(iV)->onWhat() != entity) nBndVert++;
+      if (nBndVert >= 2)                                                                  // If more than 2 primary vert. on bnd., look for bnd. edge(s)
+        for (int iE=0; iE<el->getNumEdges(); iE++) {
+          MElement *bndEl = getEdgeInBndElements(el->getEdge(iE), gEdges);
+          if (bndEl != 0)
+            el2BndEl.insert(std::pair<MElement*, MElement*>(el, bndEl));
+        }
+    }
+
+  }
+}
+
+
 std::vector<elSetVertSetPair> getDisjointPatches(const vertElVecMap &vertex2elements,
                                                  const elEntMap &element2entity,
                                                  const elSet &badElements,
@@ -253,8 +344,25 @@ std::vector<elSetVertSetPair> getDisjointPatches(const vertElVecMap &vertex2elem
 }
 
 
+// Get (bad) boundary elements adjacent to patch
+void getAdjacentBndElts(const elElMap &el2BndEl, const elEntMap &bndEl2Ent,
+                        const elSet &elts, elSet &bndElts, MeshOptParameters &par)
+{
+  for (elSetIter itEl=elts.begin(); itEl!=elts.end(); itEl++) {
+    elElMap::const_iterator itBndEl = el2BndEl.find(*itEl);
+    if (itBndEl != el2BndEl.end()) {
+      MElement* bndEl = itBndEl->second;
+      elEntMap::const_iterator itEnt = bndEl2Ent.find(bndEl);
+      if (par.patchDef->bndElBadness(bndEl, itEnt->second) < 0.) bndElts.insert(bndEl);
+    }
+  }
+}
+
+
 void optimizeDisjointPatches(const vertElVecMap &vertex2elements,
                              const elEntMap &element2entity,
+                             const elElMap &el2BndEl,
+                             const elEntMap &bndEl2Ent,
                              elSet &badasses, MeshOptParameters &par)
 {
   par.success = 1;
@@ -262,16 +370,27 @@ void optimizeDisjointPatches(const vertElVecMap &vertex2elements,
   const elEntMap &e2ePatch = par.useGeomForPatches ? element2entity : elEntMap();
   const elEntMap &e2eOpt = par.useGeomForOpt ? element2entity : elEntMap();
 
+  // Get patches
   std::vector<elSetVertSetPair> toOptimize = getDisjointPatches(vertex2elements,
                                                                  e2ePatch, badasses, par);
+
+  // Get boundary elements adjacent to patch if required
+  std::vector<elSet> bndElts;
+  bndElts.resize(toOptimize.size());
+  if (!el2BndEl.empty()) {
+    for (int iPatch = 0; iPatch < toOptimize.size(); ++iPatch)
+      getAdjacentBndElts(el2BndEl, bndEl2Ent, toOptimize[iPatch].first, bndElts[iPatch], par);
+  }
 
   for (int iPatch = 0; iPatch < toOptimize.size(); ++iPatch) {
 
     // Initialize optimization and output if asked
     if (par.verbose > 1)
-      Msg::Info("Optimizing patch %i/%i composed of %i elements", iPatch,
-                      toOptimize.size()-1, toOptimize[iPatch].first.size());
-    MeshOpt opt(e2eOpt, toOptimize[iPatch].first, toOptimize[iPatch].second, par);
+      Msg::Info("Optimizing patch %i/%i composed of %i elements, "
+                "%i boundary elements", iPatch, toOptimize.size()-1,
+                toOptimize[iPatch].first.size(), bndElts[iPatch].size());
+    MeshOpt opt(e2eOpt, bndEl2Ent, toOptimize[iPatch].first,
+                toOptimize[iPatch].second, bndElts[iPatch], par);
     if (par.verbose > 3) {
       std::ostringstream ossI1;
       ossI1 << "initial_patch-" << iPatch << ".msh";
@@ -327,6 +446,8 @@ MElement *getWorstElement(elSet &badElts,
 
 void optimizeOneByOne(const vertElVecMap &vertex2elements,
                       const elEntMap &element2entity,
+                      const elElMap &el2BndEl,
+                      const elEntMap &bndEl2Ent,
                       elSet badElts, MeshOptParameters &par)
 {
   par.success = 1;
@@ -367,11 +488,17 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
                           badElts.begin(),badElts.end(),
                           std::inserter(toOptimize, toOptimize.end()));
 
+      // Get boundary elements adjacent to patch if required
+      elSet bndElts;
+      if (!el2BndEl.empty()) {
+        getAdjacentBndElts(el2BndEl, bndEl2Ent, toOptimize, bndElts, par);
+      }
+
       // Initialize optimization and output if asked
       if (par.verbose > 1)
         Msg::Info("Optimizing patch %i (max. %i remaining) composed of %4d elements",
                                             iBadEl, badElts.size(), toOptimize.size());
-      MeshOpt opt(e2eOpt, toOptimize, toFix, par);
+      MeshOpt opt(e2eOpt, bndEl2Ent, toOptimize, toFix, bndElts, par);
       if (par.verbose > 3) {
         std::ostringstream ossI1;
         ossI1 << "initial_patch-" << iBadEl << ".msh";
@@ -442,7 +569,8 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par)
   gm->getEntities(entities);
 
   vertElVecMap vertex2elements;
-  elEntMap element2entity;
+  elEntMap element2entity, bndEl2Ent;
+  elElMap el2BndEl;
   elSet badElts;
   for (int iEnt = 0; iEnt < entities.size(); ++iEnt) {
     GEntity* &entity = entities[iEnt];
@@ -453,18 +581,28 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par)
     calcVertex2Elements(par.dim, entity, vertex2elements);
     if ((par.useGeomForPatches) || (par.useGeomForOpt))
       calcElement2Entity(entity, element2entity);
-    for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) {                               // Detect bad elements
-      double jmin, jmax;
+    if (par.useBoundaries) calcBndInfo(entity, el2BndEl, bndEl2Ent);
+    for (int iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {                               // Detect bad elements
       MElement *el = entity->getMeshElement(iEl);
-      if ((el->getDim() == par.dim) && (par.patchDef->elBadness(el, entity) < 0.))
-        badElts.insert(el);
+      if (el->getDim() == par.dim) {
+        if (par.patchDef->elBadness(el, entity) < 0.) badElts.insert(el);
+        else if (par.useBoundaries) {
+          elElMap::iterator bndElIt = el2BndEl.find(el);
+          if (bndElIt != el2BndEl.end()) {
+            MElement* &bndEl = bndElIt->second;
+            if (par.patchDef->bndElBadness(bndEl, bndEl2Ent[bndEl])) badElts.insert(el);
+          }
+        }
+      }
     }
   }
 
   if (par.patchDef->strategy == MeshOptPatchDef::STRAT_DISJOINT)
-    optimizeDisjointPatches(vertex2elements, element2entity, badElts, par);
+    optimizeDisjointPatches(vertex2elements, element2entity,
+                            el2BndEl, bndEl2Ent, badElts, par);
   else if (par.patchDef->strategy == MeshOptPatchDef::STRAT_ONEBYONE)
-    optimizeOneByOne(vertex2elements, element2entity, badElts, par);
+    optimizeOneByOne(vertex2elements, element2entity,
+                     el2BndEl, bndEl2Ent, badElts, par);
   else
     Msg::Error("Unknown strategy %d for mesh optimization", par.patchDef->strategy);
 

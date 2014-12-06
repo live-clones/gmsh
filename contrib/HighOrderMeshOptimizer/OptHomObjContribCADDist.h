@@ -10,7 +10,7 @@ template<class FuncType>
 class ObjContribCADDist : public ObjContrib, public FuncType
 {
 public:
-  ObjContribCADDist(double weight, double geomTol);
+  ObjContribCADDist(double weight, double refDist);
   virtual ~ObjContribCADDist() {}
   virtual ObjContrib *copy() const;
   virtual void initialize(Patch *mesh);
@@ -24,14 +24,14 @@ public:
 protected:
   Patch *_mesh;
   double _weight;
-  double _geomTol;
+  double _refDist;
 };
 
 
 template<class FuncType>
-ObjContribCADDist<FuncType>::ObjContribCADDist(double weight, double geomTol) :
+ObjContribCADDist<FuncType>::ObjContribCADDist(double weight, double refDist) :
   ObjContrib("CADDist", FuncType::getNamePrefix()+"CADDist"),
-  _mesh(0), _weight(weight), _geomTol(geomTol)
+  _mesh(0), _weight(weight), _refDist(refDist)
 {
 }
 
@@ -47,7 +47,7 @@ template<class FuncType>
 void ObjContribCADDist<FuncType>::initialize(Patch *mesh)
 {
   _mesh = mesh;
-
+  _mesh->initScaledCADDist(_refDist);
   updateMinMax();
   FuncType::initialize(_min, _max);
 }
@@ -59,16 +59,26 @@ bool ObjContribCADDist<FuncType>::addContrib(double &Obj, alglib::real_1d_array 
   _min = BIGVAL;
   _max = -BIGVAL;
 
-  std::vector<double> gradF;
-  for (int iEl = 0; iEl < _mesh->nEl(); iEl++) {
+  const int bndDim = _mesh->dim()-1;
+
+  for (int iBndEl = 0; iBndEl < _mesh->nBndEl(); iBndEl++) {
+    const int nVEl = _mesh->nNodBndEl(iBndEl);
     double f;
-    if (_mesh->bndDistAndGradients(iEl, f, gradF, _geomTol)) {
-      _min = std::min(_min, f);
-      _max = std::max(_max, f);
-      Obj += FuncType::compute(f) * _weight;
-      const double dFact = _weight * FuncType::computeDiff(f);
-      for (size_t i = 0; i < _mesh->nPCEl(iEl); ++i)
-        gradObj[_mesh->indPCEl(iEl, i)] += gradF[i] * dFact;
+    std::vector<double> gradF(nVEl*bndDim);
+    _mesh->scaledCADDistAndGradients(iBndEl, f, gradF);
+    _min = std::min(_min, f);
+    _max = std::max(_max, f);
+    Obj += FuncType::compute(f) * _weight;
+    const double dFact = _weight * FuncType::computeDiff(f);
+    for (int i=0; i<nVEl; i++) {
+      const int iFVi = _mesh->bndEl2FV(iBndEl, i);
+      if (iFVi >= 0) {                                                                        // Skip if not free vertex
+        if (bndDim == 1) gradObj[_mesh->indPCFV(iFVi, 0)] += gradF[i] * dFact;                // 2D
+        else {                                                                                // 3D
+          gradObj[_mesh->indPCFV(iFVi, 0)] += gradF[2*i] * dFact;
+          gradObj[_mesh->indPCFV(iFVi, 1)] += gradF[2*i+1] * dFact;
+        }
+      }
     }
   }
 
@@ -82,13 +92,15 @@ void ObjContribCADDist<FuncType>::updateMinMax()
   _min = BIGVAL;
   _max = -BIGVAL;
 
-  std::vector<double> dumGradF;
-  for (int iEl = 0; iEl < _mesh->nEl(); iEl++) {
+  const int bndDim = _mesh->dim()-1;
+
+  for (int iBndEl = 0; iBndEl < _mesh->nBndEl(); iBndEl++) {
+    const int nVEl = _mesh->nNodBndEl(iBndEl);
     double f;
-    if (_mesh->bndDistAndGradients(iEl, f, dumGradF, _geomTol)) {
-      _min = std::min(_min, f);
-      _max = std::max(_max, f);
-    }
+    std::vector<double> dumGradF(nVEl*bndDim);
+    _mesh->scaledCADDistAndGradients(iBndEl, f, dumGradF);
+    _min = std::min(_min, f);
+    _max = std::max(_max, f);
   }
 }
 

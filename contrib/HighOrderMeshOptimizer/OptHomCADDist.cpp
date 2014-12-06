@@ -3,12 +3,16 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "GModel.h"
+
+#include "GEdge.h"
+#include "JacobianBasis.h"
+#include "BasisFactory.h"
 #include "OptHomCADDist.h"
 
 
-double MFaceGFaceDistance(MTriangle *t, GFace *gf,
-                          std::vector<std::vector<SVector3> > *gsfT,
-                          std::map<MVertex*,SVector3> *normalsToCAD) {
+double MFaceGFaceDistanceOld(MTriangle *t, GFace *gf,
+                             std::vector<std::vector<SVector3> > *gsfT,
+                             std::map<MVertex*,SVector3> *normalsToCAD) {
   const double h = t->maxEdge();
   double jac[3][3];
   double distFace = 0.0;
@@ -48,7 +52,7 @@ double MFaceGFaceDistance(MTriangle *t, GFace *gf,
 }
 
 
-double MLineGEdgeDistance (MLine *l, GEdge *ge, FILE *f) {
+double MLineGEdgeDistanceOld(MLine *l, GEdge *ge, FILE *f) {
   const nodalBasis &elbasis = *l->getFunctionSpace();
   const double h = .25*0.5*distance (l->getVertex (0), l->getVertex (1) ) / (l->getNumVertices()-1);
   double jac[3][3];
@@ -81,6 +85,93 @@ double MLineGEdgeDistance (MLine *l, GEdge *ge, FILE *f) {
   }
   //  if(f)printf("\n");
   return h*distEdge;
+}
+
+
+double distToCAD1D(const GradientBasis *gb, const fullMatrix<double> &nodesXYZ,
+                   const std::vector<SVector3> &tanCAD, double edLength)
+{
+  const int nV = nodesXYZ.size1();
+  const double h = .25*0.5*edLength/(nV-1);
+  fullMatrix<double> dxyzdX(nV, 3);
+  gb->getGradientsFromNodes(nodesXYZ, &dxyzdX, 0, 0);
+  double dist = 0.;
+  for (int i=0; i<nV; i++) {
+    SVector3 tanMesh(dxyzdX(i, 0), dxyzdX(i, 1), dxyzdX(i, 2));
+    tanMesh.normalize();
+    SVector3 diff = (dot(tanCAD[i], tanMesh) > 0) ?
+                    tanCAD[i] - tanMesh : tanCAD[i] + tanMesh;
+    dist += diff.norm();
+  }
+  return h*dist;
+}
+
+
+double distToCAD2D(const GradientBasis *gb, const fullMatrix<double> &nodesXYZ,
+                   const std::vector<SVector3> &normCAD)
+{
+  const int nV = nodesXYZ.size1();
+  fullMatrix<double> dxyzdX(nV, 3),dxyzdY(nV, 3);
+  gb->getGradientsFromNodes(nodesXYZ, &dxyzdX, &dxyzdY, 0);
+  double dist = 0.;
+  for (int i=0; i<nV; i++) {
+    const double nz = dxyzdX(i, 0) * dxyzdY(i, 1) - dxyzdX(i, 1) * dxyzdY(i, 0);
+    const double ny = -dxyzdX(i, 0) * dxyzdY(i, 2) + dxyzdX(i, 2) * dxyzdY(i, 0);
+    const double nx = dxyzdX(i, 1) * dxyzdY(i, 2) - dxyzdX(i, 2) * dxyzdY(i, 1);
+    SVector3 normMesh(nx, ny, nz);
+    normMesh.normalize();
+    SVector3 diff = (dot(normCAD[i], normMesh) > 0) ?
+                    normCAD[i] - normMesh : normCAD[i] + normMesh;
+    dist += diff.norm();
+  }
+  return dist;
+}
+
+
+double MLineGEdgeDistance(MLine *l, GEdge *ge)
+{
+  const int nV = l->getNumVertices();
+  const GradientBasis *gb = BasisFactory::getGradientBasis(FuncSpaceData(l));
+  const double edLength = l->getLength();
+
+  // Coordinates of vertices
+  fullMatrix<double> nodesXYZ(nV, 3);
+  l->getNodesCoord(nodesXYZ);
+
+  // Tangent to CAD at vertices
+  std::vector<SVector3> tanCAD(nV);
+  for (int i=0; i<nV; i++) {
+    double tCAD;
+    reparamMeshVertexOnEdge(l->getVertex(i), ge, tCAD);
+    tanCAD[i] = ge->firstDer(tCAD);
+    tanCAD[i].normalize();
+  }
+
+  // Compute distance
+  return distToCAD1D(gb, nodesXYZ, tanCAD, edLength);
+}
+
+
+double MFaceGFaceDistance(MElement *el, GFace *gf)
+{
+  const int nV = el->getNumVertices();
+  const GradientBasis *gb = BasisFactory::getGradientBasis(FuncSpaceData(el));
+
+  // Coordinates of vertices
+  fullMatrix<double> nodesXYZ(nV, 3);
+  el->getNodesCoord(nodesXYZ);
+
+  // Normal to CAD at vertices
+  std::vector<SVector3> normCAD(nV);
+  for (int i=0; i<nV; i++) {
+    SPoint2 pCAD;
+    reparamMeshVertexOnFace(el->getVertex(i), gf, pCAD);
+    normCAD[i] = gf->normal(pCAD);
+    normCAD[i].normalize();
+  }
+
+  // Compute distance
+  return distToCAD2D(gb, nodesXYZ, normCAD);
 }
 
 
@@ -134,35 +225,22 @@ void distanceFromElementsToGeometry(GModel *gm, int dim, std::map<MElement*,doub
 
 double distanceToGeometry(GModel *gm)
 {
-
-  FILE *f = fopen("toto.pos","w");
-  fprintf(f,"View \"\"{\n");
-
   double Obj = 0.0;
 
-  for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it){
-    if ((*it)->geomType() == GEntity::Line)continue;
-    for (unsigned int i=0;i<(*it)->lines.size(); i++){
-      //Obj += MLineGEdgeDistance ( (*it)->lines[i] , *it,f );
-      Obj = std::max(MLineGEdgeDistance ( (*it)->lines[i] , *it, f ),Obj);
+  for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
+    if ((*it)->geomType() == GEntity::Line) continue;
+    for (unsigned int i=0;i<(*it)->lines.size(); i++)
+      Obj = std::max(MLineGEdgeDistance((*it)->lines[i], *it), Obj);
+  }
+  printf("DISTANCE TO GEOMETRY : 1D PART %22.15E\n",Obj);
+
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+    if ((*it)->geomType() == GEntity::Plane) continue;
+    for (unsigned int i=0;i<(*it)->triangles.size(); i++) {
+      Obj = std::max(Obj,MFaceGFaceDistance( (*it)->triangles[i] , *it ));
     }
   }
-
-    printf("DISTANCE TO GEOMETRY : 1D PART %22.15E\n",Obj);
-
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it){
-    if ((*it)->geomType() == GEntity::Plane)continue;
-    //    printf("FACE %d with %d triangles\n",(*it)->tag(),(*it)->triangles.size());
-    for (unsigned int i=0;i<(*it)->triangles.size(); i++){
-      //Obj += MFaceGFaceDistance ( (*it)->triangles[i] , *it );
-      Obj = std::max(Obj,MFaceGFaceDistance ( (*it)->triangles[i] , *it ));
-    }
-  }
-
   printf("DISTANCE TO GEOMETRY : 1D AND 2D PART %22.15E\n",Obj);
-  fprintf(f,"};\n");
-  fclose(f);
+
   return Obj;
 }
-
-

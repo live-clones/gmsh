@@ -148,6 +148,8 @@ set(GMSH_API
   contrib/HighOrderMeshOptimizer/OptHOM.h contrib/HighOrderMeshOptimizer/OptHomMesh.h
   contrib/HighOrderMeshOptimizer/OptHomRun.h contrib/HighOrderMeshOptimizer/ParamCoord.h
   contrib/HighOrderMeshOptimizer/OptHomFastCurving.h contrib/HighOrderMeshOptimizer/SuperEl.h
+  contrib/HighOrderMeshOptimizer/OptHomIntegralBoundaryDist.h
+  contrib/HighOrderMeshOptimizer/OptHomCADDist.h
   contrib/HighOrderMeshOptimizer/OptHomObjContribScaledJac.h
   contrib/HighOrderMeshOptimizer/OptHomObjContribMetricMin.h
   contrib/HighOrderMeshOptimizer/OptHomObjContribCADDist.h

@@ -47,7 +47,9 @@ class Patch
 {
 public:
   Patch(const std::map<MElement*,GEntity*> &element2entity,
-        const std::set<MElement*> &els, std::set<MVertex*> &toFix, bool fixBndNodes);
+        const std::map<MElement*, GEntity*> &bndEl2Ent,
+        const std::set<MElement*> &els, std::set<MVertex*> &toFix,
+        const std::set<MElement*> &bndEls, bool fixBndNodes);
 
   // Mesh entities and variables
   inline const int &dim() { return _dim; }
@@ -85,11 +87,17 @@ public:
   // High-order: scaled Jacobian and metric measures, distance to CAD
   inline const int &nBezEl(int iEl) { return _nBezEl[iEl]; }
   inline int indGSJ(int iEl, int l, int iPC) { return iPC*_nBezEl[iEl]+l; }
+  inline int nBndEl() { return _bndEl.size(); }
+  inline int nNodBndEl(int iBndEl) { return _bndEl2V[iBndEl].size(); }
+  inline const int &bndEl2FV(int iBndEl, int i) { return _bndEl2FV[iBndEl][i]; }
   void initScaledJac();
   void scaledJacAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);
   void initMetricMin();
   void metricMinAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);
-  bool bndDistAndGradients(int iEl, double &f , std::vector<double> &gradF, double eps);
+  bool bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF, double eps);
+  void initScaledCADDist(double refCADDist);
+  void scaledCADDistAndGradients(int iBndEl, double &scaledDist,
+                                 std::vector<double> &gradScaledDist);
 
   // Mesh quality
   inline const int &nIJacEl(int iEl) { return _nIJacEl[iEl]; }
@@ -147,6 +155,10 @@ private:
   std::vector<int> _nBezEl;                                     // Number of Bezier poly. for an el.
   std::vector<fullMatrix<double> > _JacNormEl;                  // Normals to 2D elements for Jacobian regularization and scaling
   std::vector<double> _invStraightJac;                          // Initial Jacobians for 3D elements
+  std::vector<MElement*> _bndEl;                                // Boundary elements
+  std::vector<std::vector<int> > _bndEl2V, _bndEl2FV;           // Vertices & corresponding free vertices on the boundary elements
+  std::vector<GEntity*> _bndEl2Ent;                             // Geometric entities corresponding to the boundary elements
+  double _invRefCADDist;
   void calcNormalEl2D(int iEl, NormalScaling scaling,
                       fullMatrix<double> &elNorm, bool ideal);
 

@@ -55,6 +55,8 @@ public:
   virtual ~MeshOptPatchDef() {}
   virtual double elBadness(MElement *el,                // Determine "badness" of a given element (for patch creation)
                            GEntity* gEnt) const = 0;
+  virtual double bndElBadness(MElement *el,             // Determine "badness" of a given boundary element (for patch creation)
+                              GEntity* gEnt) const = 0;
   virtual double maxDistance(MElement *el) const = 0;   // Compute max. distance to a given bad element for elements in patch
   virtual int inPatch(const SPoint3 &badBary,           // Determine whether a given element should be included in the patch around a...
                       double limDist,                   // ... given bad element barycenter, with a limit distance if needed. Output: ...
@@ -78,6 +80,7 @@ struct MeshOptParameters {                              // Parameters controllin
   bool onlyVisible ;                                    // Apply optimization to visible entities ONLY
   bool fixBndNodes;                                     // If points can move on boundaries
   bool useGeomForPatches, useGeomForOpt;                // Whether to use info from CAD for creation of patches and for optimization
+  bool useBoundaries;                                   // Whether to use boundary elements
   MeshOptPatchDef *patchDef;
   std::vector<MeshOptPass> pass;
   int displayInterv;                                    // Sampling rate in opt. iterations for display

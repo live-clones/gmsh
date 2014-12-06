@@ -36,13 +36,15 @@
 #include "BasisFactory.h"
 #include "CondNumBasis.h"
 #include "OptHomIntegralBoundaryDist.h"
+#include "OptHomCADDist.h"
 #include "qualityMeasures.h"
 #include "MeshOptPatch.h"
 
 
 Patch::Patch(const std::map<MElement*, GEntity*> &element2entity,
-           const std::set<MElement*> &els, std::set<MVertex*> &toFix,
-           bool fixBndNodes) :
+             const std::map<MElement*, GEntity*> &bndEl2Ent,
+             const std::set<MElement*> &els, std::set<MVertex*> &toFix,
+             const std::set<MElement*> &bndEls, bool fixBndNodes) :
   _typeLengthScale(LS_NONE), _invLengthScaleSq(0.)
 {
 
@@ -94,6 +96,39 @@ Patch::Patch(const std::map<MElement*, GEntity*> &element2entity,
 
   if (nonGeoMove) Msg::Warning("Some vertices will be moved along local lines "
                                "or planes, they may not remain on the exact geometry");
+
+  // Initialize boundary elements and related connectivity if required
+  if (!bndEls.empty()) {
+    int nBndElts = bndEls.size();
+    _bndEl.resize(nBndElts);
+    _bndEl2Ent.resize(nBndElts);
+    _bndEl2V.resize(nBndElts);
+    _bndEl2FV.resize(nBndElts);
+    int iBndEl = 0;
+    bool unknownVert = false;
+    for(std::set<MElement*>::iterator it = bndEls.begin();
+        it != bndEls.end(); ++it, ++iBndEl) {
+      MElement* bndEl = *it;
+      _bndEl[iBndEl] = bndEl;
+      std::map<MElement*,GEntity*>::const_iterator itBndEl2Ent = bndEl2Ent.find(bndEl);
+      _bndEl2Ent[iBndEl] = (itBndEl2Ent == bndEl2Ent.end()) ? 0 : itBndEl2Ent->second;
+      int nBndElVerts = bndEl->getNumVertices();
+      _bndEl2V[iBndEl].resize(nBndElVerts);
+      _bndEl2FV[iBndEl].resize(nBndElVerts);
+      for (int iVBndEl=0; iVBndEl<nBndElVerts; iVBndEl++) {
+        MVertex *vert = bndEl->getVertex(iVBndEl);
+        std::vector<MVertex*>::iterator itV = std::find(_vert.begin(), _vert.end(), vert);
+        if (itV == _vert.end()) unknownVert = true;
+        else _bndEl2V[iBndEl][iVBndEl] = std::distance(_vert.begin(), itV);
+        std::vector<MVertex*>::iterator itFV = std::find(_freeVert.begin(),
+                                                         _freeVert.end(), vert);
+        if (itFV == _freeVert.end()) _bndEl2FV[iBndEl][iVBndEl] = -1;
+        else _bndEl2FV[iBndEl][iVBndEl] = std::distance(_freeVert.begin(), itFV);
+      }
+    }
+    if (unknownVert) Msg::Error("Unknown vertices in boundary element "
+                                "at patch initialization");
+  }
 
   // Initial coordinates
   _ixyz.resize(nVert());
@@ -309,6 +344,12 @@ void Patch::initMetricMin()
 }
 
 
+void Patch::initScaledCADDist(double refCADDist)
+{
+  _invRefCADDist = 1./refCADDist;
+}
+
+
 void Patch::calcNormalEl2D(int iEl, NormalScaling scaling,
                            fullMatrix<double> &elNorm, bool ideal)
 {
@@ -521,6 +562,107 @@ bool Patch::bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF, 
     }
   }
   return edgeFound;
+}
+
+
+void Patch::scaledCADDistAndGradients(int iBndEl, double &scaledDist,
+                                      std::vector<double> &gradScaledDist)
+{
+  const std::vector<int> &iV = _bndEl2V[iBndEl], &iFV = _bndEl2FV[iBndEl];
+  const int nV = iV.size();
+  const GradientBasis *gb = BasisFactory::getGradientBasis(FuncSpaceData(_bndEl[iBndEl]));
+
+  // Coordinates of nodes
+  fullMatrix<double> nodesXYZ(nV, 3);
+  for (int i = 0; i < nV; i++) {
+    const int &iVi = iV[i];
+    nodesXYZ(i,0) = _xyz[iVi].x();
+    nodesXYZ(i,1) = _xyz[iVi].y();
+    nodesXYZ(i,2) = _xyz[iVi].z();
+  }
+
+  // Compute distance and gradients (CAUTION: returns gradients w.r.t. vertices, not free vertices)
+  if (_dim == 2) {                                                                        // 2D
+    const GEdge *ge = _bndEl2Ent[iBndEl]->cast2Edge();
+    const Range<double> parBounds = ge->parBounds(0);
+    const double eps = 1.e-6 * (parBounds.high()-parBounds.low());
+    std::vector<SVector3> tanCAD(nV);
+    for (int i=0; i<nV; i++) {
+      const int &iVi = iV[i], &iFVi = iFV[i];
+      MVertex* &vert = _vert[iVi];
+      double tCAD;
+      if (iFVi >= 0)                                                                       // If free vertex, ...
+        tCAD = _uvw[iFVi].x();                                                             // ... get stored param. coord. (can be only line).
+      else {                                                                               // Otherwise, get param. coord. from CAD.
+        if(ge->getBeginVertex() && ge->getBeginVertex()->mesh_vertices[0] == vert)
+          tCAD = parBounds.low();
+        else if(ge->getEndVertex() && ge->getEndVertex()->mesh_vertices[0] == vert)
+          tCAD = parBounds.high();
+        else
+          tCAD = ge->parFromPoint(_xyz[iVi]);
+      }
+      tanCAD[i] = ge->firstDer(tCAD);                                                     // Compute tangent at vertex
+      tanCAD[i].normalize();                                                              // Normalize tangent
+    }
+    const double edLength = _xyz[iV[0]].distance(_xyz[iV[1]]);                            // Get edge length
+    scaledDist = _invRefCADDist * distToCAD1D(gb, nodesXYZ, tanCAD, edLength);
+    for (int i=0; i<nV; i++) {
+      const int &iFVi = iFV[i];
+      if (iFVi < 0) continue;                                                             // Skip if not free vertex
+      const double xS = nodesXYZ(i, 0), yS = nodesXYZ(i, 1), zS = nodesXYZ(i, 2);         // Save coord. of perturbed node for FD
+      const SVector3 tanCADS = tanCAD[i];                                                 // Save tangent to CAD at perturbed node
+      const double tCAD = _uvw[iFVi].x() + eps;                                           // New param. coord. of perturbed node
+      GPoint gp = ge->point(tCAD);                                                        // New coord. of perturbed node
+      nodesXYZ(i, 0) = gp.x(); nodesXYZ(i, 1) = gp.y(); nodesXYZ(i, 2) = gp.z();
+      tanCAD[i] = ge->firstDer(tCAD);                                                     // New tangent to CAD at perturbed node
+      tanCAD[i].normalize();                                                              // Normalize new tangent
+      double sDistDiff = _invRefCADDist * distToCAD1D(gb, nodesXYZ, tanCAD, edLength);    // Compute distance with perturbed node
+      gradScaledDist[i] = (sDistDiff-scaledDist) / eps;                                   // Compute gradient
+      nodesXYZ(i, 0) = xS; nodesXYZ(i, 1) = yS; nodesXYZ(i, 2) = zS;                      // Restore coord. of perturbed node
+      tanCAD[i] = tanCADS;                                                                // Restore tan. to CAD at perturbed node
+    }
+  }
+  else {                                                                                  // 3D
+    const GFace *gf = _bndEl2Ent[iBndEl]->cast2Face();
+    const Range<double> parBounds0 = gf->parBounds(0), parBounds1 = gf->parBounds(1);
+    const double eps0 = 1.e-6 * (parBounds0.high()-parBounds0.low());
+    const double eps1 = 1.e-6 * (parBounds1.high()-parBounds1.low());
+    std::vector<SVector3> normCAD(nV);
+    for (int i=0; i<nV; i++) {
+      const int &iVi = iV[i], &iFVi = iFV[i];
+      MVertex* &vert = _vert[iVi];
+      SPoint2 pCAD;
+      if ((iFVi >= 0) && (vert->onWhat() == gf))                                          // If free vertex and on surface, ...
+        pCAD = SPoint2(_uvw[iFVi].x(), _uvw[iFVi].y());                                   // ... get stored param. coord.
+      else
+        reparamMeshVertexOnFace(vert, gf, pCAD);                                          // Otherwise, get param. coord. from CAD.
+      normCAD[i] = gf->normal(pCAD);                                                      // Compute normal at vertex
+      normCAD[i].normalize();                                                             // Normalize normal
+    }
+    scaledDist = _invRefCADDist * distToCAD2D(gb, nodesXYZ, normCAD);
+    for (int i=0; i<nV; i++) {
+      const int &iFVi = iFV[i];
+      if (iFVi < 0) continue;                                                             // Skip if not free vertex
+      const double xS = nodesXYZ(i, 0), yS = nodesXYZ(i, 1), zS = nodesXYZ(i, 2);         // Save coord. of perturbed node for FD
+      const SVector3 tanCADS = normCAD[i];                                                // Save normal to CAD at perturbed node
+      const SPoint2 pCAD0 = SPoint2(_uvw[iFVi].x()+eps0, _uvw[iFVi].y());                 // New param. coord. of perturbed node in 1st dir.
+      GPoint gp0 = gf->point(pCAD0);                                                      // New coord. of perturbed node in 1st dir.
+      nodesXYZ(i, 0) = gp0.x(); nodesXYZ(i, 1) = gp0.y(); nodesXYZ(i, 2) = gp0.z();
+      normCAD[i] = gf->normal(pCAD0);                                                     // New normal to CAD at perturbed node in 1st dir.
+      normCAD[i].normalize();                                                             // Normalize new normal
+      double sDistDiff0 = _invRefCADDist * distToCAD2D(gb, nodesXYZ, normCAD);            // Compute distance with perturbed node in 1st dir.
+      gradScaledDist[2*i] = (sDistDiff0-scaledDist) / eps0;                               // Compute gradient in 1st dir.
+      const SPoint2 pCAD1 = SPoint2(_uvw[iFVi].x(), _uvw[iFVi].y()+eps1);                 // New param. coord. of perturbed node in 2nd dir.
+      GPoint gp1 = gf->point(pCAD1);                                                      // New coord. of perturbed node in 2nd dir.
+      nodesXYZ(i, 0) = gp1.x(); nodesXYZ(i, 1) = gp1.y(); nodesXYZ(i, 2) = gp1.z();
+      normCAD[i] = gf->normal(pCAD1);                                                     // New normal to CAD at perturbed node in 2nd dir.
+      normCAD[i].normalize();                                                             // Normalize new normal
+      double sDistDiff1 = _invRefCADDist * distToCAD2D(gb, nodesXYZ, normCAD);            // Compute distance with perturbed node in 2nd dir.
+      gradScaledDist[2*i+1] = (sDistDiff1-scaledDist) / eps0;                             // Compute gradient in 2nd dir.
+      nodesXYZ(i, 0) = xS; nodesXYZ(i, 1) = yS; nodesXYZ(i, 2) = zS;                      // Restore coord. of perturbed node
+      normCAD[i] = tanCADS;                                                               // Restore tan. to CAD at perturbed node
+    }
+  }
 }
 
 

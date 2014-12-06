@@ -283,7 +283,7 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
     for (unsigned int i=0;i<(*it)->triangles.size(); i++){
       // compute the distance from the geometry to the mesh
       if(doWeCompute[i]){
-        const double d = MFaceGFaceDistance ( (*it)->triangles[i] , *it , &gsfT, &normalsToCAD);
+        const double d = MFaceGFaceDistanceOld((*it)->triangles[i], *it, &gsfT, &normalsToCAD);
         dist[(*it)->triangles[i]] = d;
         maxDistCAD = std::max(maxDistCAD,d);
         distCAD += d * factor;
@@ -309,7 +309,7 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
               v->setParameter(0,t_+eps);
               v->setXYZ(gp.x(),gp.y(),gp.z());
               const double distT = dist[t];
-              double deriv =  (MFaceGFaceDistance ( t , *it , &gsfT, &normalsToCAD) - distT)  /eps;
+              double deriv =  (MFaceGFaceDistanceOld(t, *it, &gsfT, &normalsToCAD) - distT) /eps;
               v->setXYZ(pp.x(),pp.y(),pp.z());
               v->setParameter(0,t_);
               gradObj[index] += deriv * factor;
@@ -330,7 +330,7 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
               GPoint gp = (*it)->point(uu+eps,vv);
               v->setParameter(0,uu+eps);
               v->setXYZ(gp.x(),gp.y(),gp.z());
-              double deriv = (MFaceGFaceDistance ( t , *it, &gsfT, &normalsToCAD ) - distT)  /eps;
+              double deriv = (MFaceGFaceDistanceOld(t, *it, &gsfT, &normalsToCAD) - distT) /eps;
               v->setXYZ(pp.x(),pp.y(),pp.z());
               v->setParameter(0,uu);
               gradObj[index] += deriv * factor;
@@ -338,7 +338,7 @@ bool OptHOM::addBndObjGrad(double factor, double &Obj, alglib::real_1d_array &gr
               gp = (*it)->point(uu,vv+eps);
               v->setParameter(1,vv+eps);
               v->setXYZ(gp.x(),gp.y(),gp.z());
-              deriv = (MFaceGFaceDistance ( t , *it, &gsfT, &normalsToCAD ) - distT)  /eps;
+              deriv = (MFaceGFaceDistanceOld(t, *it, &gsfT, &normalsToCAD) - distT) /eps;
               v->setXYZ(pp.x(),pp.y(),pp.z());
               v->setParameter(1,vv);
               gradObj[index+1] += deriv * factor;

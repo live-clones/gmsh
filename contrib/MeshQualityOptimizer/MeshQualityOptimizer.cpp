@@ -23,6 +23,7 @@ struct QualPatchDefParameters : public MeshOptPatchDef
   QualPatchDefParameters(const MeshQualOptParameters &p);
   virtual ~QualPatchDefParameters() {}
   virtual double elBadness(MElement *el, GEntity* gEnt) const;
+  virtual double bndElBadness(MElement *el, GEntity* gEnt) const { return 1.; }
   virtual double maxDistance(MElement *el) const;
   virtual int inPatch(const SPoint3 &badBary, double limDist,
                       MElement *el, GEntity* gEnt) const;
@@ -126,6 +127,7 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
   par.fixBndNodes = p.fixBndNodes;
   par.useGeomForPatches = p.excludeBL;
   par.useGeomForOpt = false;
+  par.useBoundaries = false;
   QualPatchDefParameters patchDef(p);
   par.patchDef = &patchDef;
   par.displayInterv = 20;

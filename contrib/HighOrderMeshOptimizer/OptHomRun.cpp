@@ -691,6 +691,7 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
 #include "GEntity.h"
 //#include "MElement.h"
 //#include "OptHomRun.h"
+#include "OptHomCADDist.h"
 #include "MeshOptCommon.h"
 #include "MeshOptObjContribFunc.h"
 #include "MeshOptObjContrib.h"
@@ -706,6 +707,7 @@ struct HOPatchDefParameters : public MeshOptPatchDef
   HOPatchDefParameters(const OptHomParameters &p);
   virtual ~HOPatchDefParameters() {}
   virtual double elBadness(MElement *el, GEntity* gEnt) const;
+  virtual double bndElBadness(MElement *el, GEntity* gEnt) const;
   virtual double maxDistance(MElement *el) const;
   virtual int inPatch(const SPoint3 &badBary,
                       double limDist, MElement *el,
@@ -714,7 +716,7 @@ private:
   double jacMin, jacMax;
   double distanceFactor;
   bool optCAD;
-  double optCADDistMax, optCADWeight, discrTolerance;
+  double optCADDistMax, optCADWeight;
 };
 
 
@@ -737,7 +739,6 @@ HOPatchDefParameters::HOPatchDefParameters(const OptHomParameters &p)
   optCAD = p.optCAD;
   optCADDistMax = p.optCADDistMax;
   optCADWeight = p.optCADWeight;
-  discrTolerance = p.discrTolerance;
 }
 
 
@@ -746,11 +747,23 @@ double HOPatchDefParameters::elBadness(MElement *el, GEntity* gEnt) const
   double jmin, jmax;
   el->scaledJacRange(jmin, jmax);
   double badness = std::min(jmin-jacMin, 0.) + std::min(jacMax-jmax, 0.);
-  if (optCAD) {
-    const double dist = computeBndDist(el, 2, fabs(discrTolerance));
-    badness += optCADWeight*std::min(optCADDistMax-dist, 0.);
-  }
   return badness;
+}
+
+
+double HOPatchDefParameters::bndElBadness(MElement *el, GEntity* gEnt) const
+{
+  if (optCAD) {
+    if (el->getType() == TYPE_LIN) {                                              // 2D
+      if (gEnt->geomType() != GEntity::Line)                                      // Straight geometric line -> no distance
+        return MLineGEdgeDistance(static_cast<MLine*>(el), gEnt->cast2Edge());
+    }
+    else {                                                                        // 3D
+      if (gEnt->geomType() != GEntity::Plane)                                     // Straight geometric plance -> no distance
+        return MFaceGFaceDistance(el, gEnt->cast2Face());
+    }
+  }
+  return 1.;
 }
 
 
@@ -778,6 +791,7 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   par.fixBndNodes = p.fixBndNodes;
   par.useGeomForPatches = false;
   par.useGeomForOpt = false;
+  par.useBoundaries = p.optCAD;
   HOPatchDefParameters patchDef(p);
   par.patchDef = &patchDef;
   par.displayInterv = 30;
@@ -789,8 +803,8 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   minJacBarFunc.setTarget(p.BARRIER_MIN, 1.);
   ObjContribScaledJac<ObjContribFuncBarrierFixMinMovMax> minMaxJacBarFunc(1.);
   minMaxJacBarFunc.setTarget(p.BARRIER_MAX, 1.);
-  ObjContribCADDist<ObjContribFuncSimpleTargetMax> CADDistFunc(p.optCADWeight, p.discrTolerance);
-  CADDistFunc.setTarget(p.optCADDistMax);
+  ObjContribCADDist<ObjContribFuncSimpleTargetMax> CADDistFunc(p.optCADWeight, p.optCADDistMax);
+  CADDistFunc.setTarget(1.);
 
   MeshOptPass minJacPass;
   minJacPass.maxParamUpdates = p.optPassMax;
