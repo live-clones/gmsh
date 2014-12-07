@@ -45,7 +45,8 @@ class MVertexRTree{
     }
     else if(warnIfExists){
       Msg::Warning("Vertex %d (%.16g, %.16g, %.16g) already exists in the "
-                   "mesh with tolerance %g", _tol);
+                   "mesh with tolerance %g", v->getNum(),
+                   v->x(), v->y(), v->z(), _tol);
     }
     return 1;
   }
