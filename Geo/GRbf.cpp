@@ -112,18 +112,16 @@ GRbf::GRbf(double sizeBox, int variableEps, int rbfFun,
   pos.insert(vertices);
   for(unsigned int i = 0; i < vertices.size(); i++){
     MVertex *v = vertices[i];
-    pos.find(v->x(), v->y(), v->z());
+    if(!pos.find(v->x(), v->y(), v->z()))
+      myNodes.insert(v); // keep only no duplicate vertices
     allCenters(i,0) = v->x()/sBox;
     allCenters(i,1) = v->y()/sBox;
     allCenters(i,2) = v->z()/sBox;
     _mapAllV.insert(std::make_pair(v, i));
   }
-  // keep only no duplicate vertices
-  for(unsigned int i = 0; i < vertices.size(); i++)
-    if(vertices[i]->getIndex()) myNodes.insert(vertices[i]);
 
   // initialize with  points
-  nbNodes= myNodes.size();
+  nbNodes = myNodes.size();
   centers.resize(nbNodes,3);
   normals.resize(nbNodes,3);
   int index = 0;

@@ -146,7 +146,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   MVertexRTree pos(eps);
   pos.insert(vertices);
 
-  std::set<MFace,Less_Face> unique;
+  std::set<MFace, Less_Face> unique;
   int nbDuplic = 0;
   for(unsigned int i = 0; i < points.size(); i ++){
     for(unsigned int j = 0; j < points[i].size(); j += 3){
@@ -157,7 +157,10 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double z = points[i][j + k].z();
         v[k] = pos.find(x, y, z);
       }
-      MFace mf (v[0], v[1], v[2]);
+      // FIXME: is this unicity test really useful? it slows down large STL
+      // reads. It would be better to provide an API to detect/remove duplicate
+      // elements
+      MFace mf(v[0], v[1], v[2]);
       if (unique.find(mf) == unique.end()){
 	faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
 	unique.insert(mf);
@@ -167,7 +170,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
       }
     }
   }
-  if (nbDuplic)
+  if(nbDuplic)
     Msg::Warning("%d duplicate triangles in STL file", nbDuplic);
 
   _associateEntityWithMeshVertices();
