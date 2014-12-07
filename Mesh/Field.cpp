@@ -485,7 +485,7 @@ class CylinderField : public Field
   }
 };
 
-class SphereField : public Field
+class BallField : public Field
 {
   double v_in, v_out;
   double xc,yc,zc;
@@ -494,35 +494,33 @@ class SphereField : public Field
  public:
   std::string getDescription()
   {
-    return "The value of this field is VIn inside a sphere, VOut outside. "
-      "The sphere is given by\n\n"
+    return "The value of this field is VIn inside a spherical ball, VOut outside. "
+      "The ball is defined by\n\n"
       "  ||dX||^2 < R^2 &&\n"
       "  dX = (X - XC)^2 + (Y-YC)^2 + (Z-ZC)^2";
   }
-  SphereField()
+  BallField()
   {
     v_in = v_out = xc = yc = zc = R = 0;
 
     options["VIn"] = new FieldOptionDouble
-      (v_in, "Value inside the sphere");
+      (v_in, "Value inside the ball");
     options["VOut"] = new FieldOptionDouble
-      (v_out, "Value outside the sphere");
+      (v_out, "Value outside the ball");
 
     options["XCenter"] = new FieldOptionDouble
-      (xc, "X coordinate of the sphere center");
+      (xc, "X coordinate of the ball center");
     options["YCenter"] = new FieldOptionDouble
-      (yc, "Y coordinate of the sphere center");
+      (yc, "Y coordinate of the ball center");
     options["ZCenter"] = new FieldOptionDouble
-      (zc, "Z coordinate of the sphere center");
-
+      (zc, "Z coordinate of the ball center");
 
     options["Radius"] = new FieldOptionDouble
       (R,"Radius");
-
   }
   const char *getName()
   {
-    return "Sphere";
+    return "Ball";
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
@@ -2300,7 +2298,7 @@ FieldManager::FieldManager()
 #endif
   map_type_name["Box"] = new FieldFactoryT<BoxField>();
   map_type_name["Cylinder"] = new FieldFactoryT<CylinderField>();
-  map_type_name["Sphere"] = new FieldFactoryT<SphereField>();
+  map_type_name["Ball"] = new FieldFactoryT<BallField>();
   map_type_name["Frustum"] = new FieldFactoryT<FrustumField>();
   map_type_name["LonLat"] = new FieldFactoryT<LonLatField>();
 #if defined(HAVE_POST)
