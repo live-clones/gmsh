@@ -1500,7 +1500,7 @@ void GModel::checkMeshCoherence(double tolerance)
         double vol = e->getVolume();
         if(vol < 0)
           Msg::Warning("Element %d has negative volume", e->getNum());
-        else if(vol < 1e-12)
+        else if(vol < eps * eps * eps)
           Msg::Warning("Element %d has zero volume", e->getNum());
         SPoint3 p = e->barycenter();
         vertices.push_back(new MVertex(p.x(), p.y(), p.z()));
