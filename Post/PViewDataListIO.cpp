@@ -577,6 +577,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
     if(!pos.insert(vertices[i]))
       unique.push_back(vertices[i]);
   }
+  vertices.clear();
 
   std::map<MVertex *, nodeData> vertexData;
 
@@ -654,18 +655,16 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
       fprintf(fp, "3\n%d\n%d\n%d\n", ts, numComponents, size);
 
     if(forceNodeData){
-      for(unsigned int i = 0; i < vertices.size(); i++){
-        MVertex *v = vertices[i];
-        if(v->getIndex() > 0){
-          fprintf(fp, "%d", v->getIndex());
-          int nbnod = vertexData[v].nbnod;
-          int nod = vertexData[v].nod;
-          double *d = vertexData[v].data;
-          for(int j = 0; j < numComponents; j++)
-            fprintf(fp, " %.16g",
-                    d[numComponents * nbnod * ts + numComponents * nod + j]);
-          fprintf(fp, "\n");
-        }
+      for(unsigned int i = 0; i < unique.size(); i++){
+        MVertex *v = unique[i];
+        fprintf(fp, "%d", v->getIndex());
+        int nbnod = vertexData[v].nbnod;
+        int nod = vertexData[v].nod;
+        double *d = vertexData[v].data;
+        for(int j = 0; j < numComponents; j++)
+          fprintf(fp, " %.16g",
+                  d[numComponents * nbnod * ts + numComponents * nod + j]);
+        fprintf(fp, "\n");
       }
       fprintf(fp, "$EndNodeData\n");
     }
