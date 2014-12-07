@@ -572,7 +572,11 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
     createVertices(*list, *numEle, numNodes, vertices);
   }
   MVertexRTree pos(eps);
-  pos.insert(vertices);
+  std::vector<MVertex*> unique;
+  for(unsigned int i = 0; i < vertices.size(); i++){
+    if(!pos.insert(vertices[i]))
+      unique.push_back(vertices[i]);
+  }
 
   std::map<MVertex *, nodeData> vertexData;
 
@@ -584,20 +588,18 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
                    forceNodeData ? &vertexData : 0);
   }
 
-  int globalNumNodes = 0;
-  for(unsigned int i = 0; i < vertices.size(); i++)
-    if(vertices[i]->getIndex() < 0)
-      vertices[i]->setIndex(++globalNumNodes);
+  int num = 0;
+  for(unsigned int i = 0; i < unique.size(); i++)
+    unique[i]->setIndex(++num);
 
   fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
 
   if(saveMesh){
     fprintf(fp, "$Nodes\n");
-    fprintf(fp, "%d\n", globalNumNodes);
-    for(unsigned int i = 0; i < vertices.size(); i++){
-      MVertex *v = vertices[i];
-      if(v->getIndex() > 0)
-        fprintf(fp, "%d %.16g %.16g %.16g\n", v->getIndex(), v->x(), v->y(), v->z());
+    fprintf(fp, "%d\n", (int)unique.size());
+    for(unsigned int i = 0; i < unique.size(); i++){
+      MVertex *v = unique[i];
+      fprintf(fp, "%d %.16g %.16g %.16g\n", v->getIndex(), v->x(), v->y(), v->z());
     }
     fprintf(fp, "$EndNodes\n");
 
@@ -644,7 +646,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
     else
       fprintf(fp, "1\n\"%s\"\n", getName().c_str());
     fprintf(fp, "1\n%.16g\n", getTime(ts));
-    int size = forceNodeData ? globalNumNodes : (int)elements.size();
+    int size = forceNodeData ? (int)unique.size() : (int)elements.size();
     if(partitionNum)
       fprintf(fp, "4\n%d\n%d\n%d\n%d\n", ts, numComponents, size,
               partitionNum);
@@ -668,7 +670,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
       fprintf(fp, "$EndNodeData\n");
     }
     else{
-      int num = 0;
+      int n = 0;
       for(int i = 0; i < 24; i++){
         std::vector<double> *list = 0;
         int *numEle = 0, numComp, numNodes;
@@ -680,7 +682,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
           int nb = list->size() / *numEle;
           for(unsigned int i = 0; i < list->size(); i += nb){
             double *v = &(*list)[i + 3 * numNodes];
-            fprintf(fp, "%d %d", ++num, mult);
+            fprintf(fp, "%d %d", ++n, mult);
             for(int j = 0; j < numComponents * mult; j++)
               fprintf(fp, " %.16g", v[numComponents * mult * ts + j]);
             fprintf(fp, "\n");
