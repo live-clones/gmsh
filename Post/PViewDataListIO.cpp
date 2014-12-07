@@ -11,7 +11,7 @@
 #include "StringUtils.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
-#include "MVertexPositionSet.h"
+#include "MVertexRTree.h"
 #include "Context.h"
 #include "adaptiveData.h"
 #include "OS.h"
@@ -463,9 +463,8 @@ public:
 };
 
 static void createElements(std::vector<double> &list, int nbelm, int nbnod,
-                           MVertexPositionSet &pos, std::vector<MElement*> &elements,
-                           double eps, int type,
-                           std::map<MVertex*, nodeData> *vertexData)
+                           MVertexRTree &pos, std::vector<MElement*> &elements,
+                           int type, std::map<MVertex*, nodeData> *vertexData)
 {
   if(!nbelm) return;
   int t = 0;
@@ -533,7 +532,7 @@ static void createElements(std::vector<double> &list, int nbelm, int nbnod,
     double *z = &list[i + 2 * nbnod];
     std::vector<MVertex*> verts(nbnod);
     for(int j = 0; j < nbnod; j++){
-      verts[j] = pos.find(x[j], y[j], z[j], eps);
+      verts[j] = pos.find(x[j], y[j], z[j]);
       if(vertexData)
         (*vertexData)[verts[j]] = nodeData(nbnod, j, &list[i + 3 * nbnod]);
     }
@@ -572,7 +571,8 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
     if(*numEle) numComponents = std::min(numComponents, numComp);
     createVertices(*list, *numEle, numNodes, vertices);
   }
-  MVertexPositionSet pos(vertices);
+  MVertexRTree pos(eps);
+  pos.insert(vertices);
 
   std::map<MVertex *, nodeData> vertexData;
 
@@ -580,7 +580,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
     std::vector<double> *list = 0;
     int *numEle = 0, numComp, numNodes;
     int typ = _getRawData(i, &list, &numEle, &numComp, &numNodes);
-    createElements(*list, *numEle, numNodes, pos, elements, eps, typ,
+    createElements(*list, *numEle, numNodes, pos, elements, typ,
                    forceNodeData ? &vertexData : 0);
   }
 

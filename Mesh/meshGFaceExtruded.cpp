@@ -9,6 +9,7 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "ExtrudeParams.h"
+#include "MVertexRTree.h"
 #include "Context.h"
 #include "GmshMessage.h"
 #include "QuadTriExtruded2D.h"
@@ -75,8 +76,7 @@ static void createQuaTri(std::vector<MVertex*> &v, GFace *to,
   }
 }
 
-static void extrudeMesh(GEdge *from, GFace *to,
-                        std::set<MVertex*, MVertexLessThanLexicographic> &pos,
+static void extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
                         std::set<std::pair<MVertex*, MVertex*> > *constrainedEdges)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
@@ -120,7 +120,6 @@ static void extrudeMesh(GEdge *from, GFace *to,
   // create elements (note that it would be faster to access the
   // *interior* nodes by direct indexing, but it's just simpler to
   // query everything by position)
-  std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp;
   for(unsigned int i = 0; i < from->lines.size(); i++){
     MVertex *v0 = from->lines[i]->getVertex(0);
     MVertex *v1 = from->lines[i]->getVertex(1);
@@ -135,27 +134,21 @@ static void extrudeMesh(GEdge *from, GFace *to,
           ep->Extrude(j, k + 1, x[p + 2], y[p + 2], z[p + 2]);
         }
         for(int p = 0; p < 4; p++){
-          MVertex tmp(x[p], y[p], z[p], 0, -1);
-          itp = pos.find(&tmp);
-          if(itp == pos.end()){ // FIXME: workaround
-            Msg::Info("Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
-            itp = tmp.linearSearch(pos);
-          }
-          if(itp == pos.end()){
+          MVertex *tmp = pos.find(x[p], y[p], z[p]);
+          if(!tmp){
             Msg::Error("Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
-                tmp.x(), tmp.y(), tmp.z(), to->tag());
+                       x[p], y[p], z[p], to->tag());
             return;
           }
-          verts.push_back(*itp);
+          verts.push_back(tmp);
         }
-        createQuaTri(verts, to, constrainedEdges,from->lines[i], tri_quad_flag);
+        createQuaTri(verts, to, constrainedEdges, from->lines[i], tri_quad_flag);
       }
     }
   }
 }
 
-static void copyMesh(GFace *from, GFace *to,
-                     std::set<MVertex*, MVertexLessThanLexicographic> &pos)
+static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
@@ -198,58 +191,48 @@ static void copyMesh(GFace *from, GFace *to,
   }
 
   // create triangle elements
-  std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp;
   for(unsigned int i = 0; i < from->triangles.size(); i++){
     std::vector<MVertex*> verts;
     for(int j = 0; j < 3; j++){
       MVertex *v = from->triangles[i]->getVertex(j);
-      MVertex tmp(v->x(), v->y(), v->z(), 0, -1);
+      double x = v->x(), y = v->y(), z = v->z();
       ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
-                  tmp.x(), tmp.y(), tmp.z());
-      itp = pos.find(&tmp);
-      if(itp == pos.end()){ // FIXME: workaround
-        Msg::Info("Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
-        itp = tmp.linearSearch(pos);
-      }
-      if(itp == pos.end()) {
+                  x, y, z);
+      MVertex *tmp = pos.find(x, y, z);
+      if(!tmp) {
         Msg::Error("Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
-            tmp.x(), tmp.y(), tmp.z(), to->tag());
+                   x, y, z, to->tag());
         return;
       }
-      verts.push_back(*itp);
+      verts.push_back(tmp);
     }
     addTriangle(verts[0], verts[1], verts[2], to);
   }
 
   // Add triangles for divided quads for QuadTri -- Trevor Strickler
   // if quadtotri and not part of a toroidal extrusion, mesh the top surface accordingly
-  if( detectQuadToTriTop && !is_toroidal ){
-    if( !MeshQuadToTriTopSurface(from, to, pos))
+  if(detectQuadToTriTop && !is_toroidal){
+    if(!MeshQuadToTriTopSurface(from, to, pos))
       Msg::Error("In MeshExtrudedSurface()::copyMesh(), mesh of QuadToTri top "
-		  "surface %d failed.", to->tag() );
+                 "surface %d failed.", to->tag() );
     return;
   }
-
 
   // create quadrangle elements if NOT QuadToTri and NOT toroidal
   for(unsigned int i = 0; i < from->quadrangles.size(); i++){
     std::vector<MVertex*> verts;
     for(int j = 0; j < 4; j++){
       MVertex *v = from->quadrangles[i]->getVertex(j);
-      MVertex tmp(v->x(), v->y(), v->z(), 0, -1);
+      double x = v->x(), y = v->y(), z = v->z();
       ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
-                  tmp.x(), tmp.y(), tmp.z());
-      itp = pos.find(&tmp);
-      if(itp == pos.end()){ // FIXME: workaround
-        Msg::Info("Linear search for (%.16g, %.16g, %.16g)", tmp.x(), tmp.y(), tmp.z());
-        itp = tmp.linearSearch(pos);
-      }
-      if(itp == pos.end()) {
+                  x, y, z);
+      MVertex *tmp = pos.find(x, y, z);
+      if(!tmp) {
         Msg::Error("Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
-            tmp.x(), tmp.y(), tmp.z(), to->tag());
+            x, y, z, to->tag());
         return;
       }
-      verts.push_back(*itp);
+      verts.push_back(tmp);
     }
     addQuadrangle(verts[0], verts[1], verts[2], verts[3], to);
   }
@@ -265,26 +248,21 @@ int MeshExtrudedSurface(GFace *gf,
 
   Msg::Info("Meshing surface %d (extruded)", gf->tag());
 
-  // build a set with all the vertices on the boundary of the face gf
-  double old_tol = MVertexLessThanLexicographic::tolerance;
-  MVertexLessThanLexicographic::tolerance = 1.e-12 * CTX::instance()->lc;
-
-  std::set<MVertex*, MVertexLessThanLexicographic> pos;
+  // build an rtree with all the vertices on the boundary of the face gf
+  MVertexRTree pos(1.e-12 * CTX::instance()->lc);
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*>::iterator it = edges.begin();
   while(it != edges.end()){
-    pos.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
-    pos.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
-               (*it)->getBeginVertex()->mesh_vertices.end());
-    pos.insert((*it)->getEndVertex()->mesh_vertices.begin(),
-               (*it)->getEndVertex()->mesh_vertices.end());
+    pos.insert((*it)->mesh_vertices);
+    pos.insert((*it)->getBeginVertex()->mesh_vertices);
+    pos.insert((*it)->getEndVertex()->mesh_vertices);
     ++it;
   }
 
   // if the edges of the mesh are constrained, the vertices already
   // exist on the face--so we add them to the set
   if(constrainedEdges)
-    pos.insert(gf->mesh_vertices.begin(), gf->mesh_vertices.end());
+    pos.insert(gf->mesh_vertices);
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // surface is extruded from a curve
@@ -310,8 +288,6 @@ int MeshExtrudedSurface(GFace *gf,
     }
     copyMesh(from, gf, pos);
   }
-
-  MVertexLessThanLexicographic::tolerance = old_tol;
 
   gf->meshStatistics.status = GFace::DONE;
   return 1;

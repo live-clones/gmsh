@@ -33,7 +33,7 @@
 #include "Context.h"
 #include "OS.h"
 #include "GEdgeLoop.h"
-#include "MVertexPositionSet.h"
+#include "MVertexRTree.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"
@@ -1485,16 +1485,8 @@ void GModel::checkMeshCoherence(double tolerance)
     for(unsigned int i = 0; i < entities.size(); i++)
       vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(),
                       entities[i]->mesh_vertices.end());
-    MVertexPositionSet pos(vertices);
-    for(unsigned int i = 0; i < vertices.size(); i++)
-      pos.find(vertices[i]->x(), vertices[i]->y(), vertices[i]->z(), eps);
-    int num = 0;
-    for(unsigned int i = 0; i < vertices.size(); i++)
-      if(!vertices[i]->getIndex()){
-        Msg::Info("Duplicate vertex %d at (%.16g,%.16g,%.16g)", vertices[i]->getNum(),
-                  vertices[i]->x(), vertices[i]->y(), vertices[i]->z());
-        num++;
-      }
+    MVertexRTree pos(eps);
+    int num = pos.insert(vertices, true);
     if(num) Msg::Error("%d duplicate vert%s", num, num > 1 ? "ices" : "ex");
   }
 
@@ -1502,7 +1494,7 @@ void GModel::checkMeshCoherence(double tolerance)
   {
     Msg::Info("Checking for duplicate elements...");
     std::vector<MVertex*> vertices;
-    for(unsigned int i = 0; i < entities.size(); i++)
+    for(unsigned int i = 0; i < entities.size(); i++){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
         MElement *e = entities[i]->getMeshElement(j);
         double vol = e->getVolume();
@@ -1513,18 +1505,11 @@ void GModel::checkMeshCoherence(double tolerance)
         SPoint3 p = e->barycenter();
         vertices.push_back(new MVertex(p.x(), p.y(), p.z()));
       }
-    MVertexPositionSet pos(vertices);
-    for(unsigned int i = 0; i < vertices.size(); i++)
-      pos.find(vertices[i]->x(), vertices[i]->y(), vertices[i]->z(), eps);
-    int num = 0;
-    for(unsigned int i = 0; i < vertices.size(); i++){
-      if(!vertices[i]->getIndex()){
-        Msg::Info("Duplicate element with barycenter (%.16g,%.16g,%.16g)",
-                  vertices[i]->x(), vertices[i]->y(), vertices[i]->z());
-        num++;
-      }
-      delete vertices[i];
     }
+    MVertexRTree pos(eps);
+    int num = pos.insert(vertices, true);
+    for(unsigned int i = 0; i < vertices.size(); i++)
+      delete vertices[i];
     if(num) Msg::Error("%d duplicate element%s", num, num > 1 ? "s" : "");
   }
 
@@ -1543,17 +1528,14 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   getEntities(entities);
 
   std::vector<MVertex*> vertices;
-  for(unsigned int i = 0; i < entities.size(); i++)
+  for(unsigned int i = 0; i < entities.size(); i++){
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
       MVertex *v = entities[i]->mesh_vertices[j];
       vertices.push_back(new MVertex(v->x(), v->y(), v->z()));
     }
-  MVertexPositionSet pos(vertices);
-  for(unsigned int i = 0; i < vertices.size(); i++)
-    pos.find(vertices[i]->x(), vertices[i]->y(), vertices[i]->z(), eps);
-  int num = 0;
-  for(unsigned int i = 0; i < vertices.size(); i++)
-    if(!vertices[i]->getIndex()) num++;
+  }
+  MVertexRTree pos(eps);
+  int num = pos.insert(vertices);
 
   Msg::Info("Found %d duplicate vertices ", num);
 
@@ -1571,7 +1553,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
       std::vector<MVertex*> verts;
       for(int k = 0; k < e->getNumVertices(); k++){
         MVertex *v = e->getVertex(k);
-        MVertex *v2 = pos.find(v->x(), v->y(), v->z(), eps);
+        MVertex *v2 = pos.find(v->x(), v->y(), v->z());
         if(v2) verts.push_back(v2);
       }
       if((int)verts.size() == e->getNumVertices()){
@@ -2898,8 +2880,7 @@ static void computeDuplicates(GModel *model,
                               std::map<GVertex*, GVertex*> &Duplicates2Unique,
                               const double &eps)
 {
-  // FIXME: currently we use a greedy algorithm in n^2 (using a kd-tree:
-  // cf. MVertexPositionSet)
+  // FIXME: currently we use a greedy algorithm in n^2 (use e.g. MVertexRTree)
 
   // FIXME: add option to remove orphaned entities after duplicate check
   std::list<GVertex*> v;

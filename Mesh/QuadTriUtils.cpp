@@ -1,63 +1,39 @@
-/**************************************************************************************************
+/*******************************************************************************
 QuadTriUtils.cpp
 
 The code in this file was written by Dr. Trevor S. Strickler.
 email: <trevor.strickler@gmail.com>
 
-This file is part of the QuadTri contribution to Gmsh. QuadTri allows the conformal interface
-of quadrangle faces to triangle faces using pyramids and other mesh elements.
+This file is part of the QuadTri contribution to Gmsh. QuadTri allows the
+conformal interface of quadrangle faces to triangle faces using pyramids and
+other mesh elements.
 
-See READMEQUADTRI.txt for more information. The license information is in LICENSE.txt.
+See READMEQUADTRI.txt for more information. The license information is in
+LICENSE.txt.
 
-Trevor S. Strickler hereby transfers copyright of QuadTri files to
-Christophe Geuzaine and J.-F. Remacle with the understanding that
-his contribution shall be cited appropriately.
+Trevor S. Strickler hereby transfers copyright of QuadTri files to Christophe
+Geuzaine and J.-F. Remacle with the understanding that his contribution shall be
+cited appropriately.
 
-All reused or original Gmsh code is Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
-Gmsh is available at: www.geuz.org/gmsh
+All reused or original Gmsh code is Copyright (C) 1997-2014 C. Geuzaine,
+J.-F. Remacle Gmsh is available at: www.geuz.org/gmsh
 
-For Gmsh license information, see the LICENSE.txt file for license information. Please report all
-Gmsh bugs and problems to the public mailing list <gmsh@geuz.org>.
+For Gmsh license information, see the LICENSE.txt file for license
+information. Please report all Gmsh bugs and problems to the public mailing list
+<gmsh@geuz.org>.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License, Version 2,
-as published by the Free Software Foundation, or (at your option)
-any later version, with or without the exception given in the
-LICENSE.txt file supplied with this code and with Gmsh.
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License, Version 2, as published by the Free
+Software Foundation, or (at your option) any later version, with or without the
+exception given in the LICENSE.txt file supplied with this code and with Gmsh.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-****************************************************************************************************/
+********************************************************************************/
 #include <stdlib.h>
 #include "QuadTriUtils.h"
-
-
-// This is a member function for the element map in ExtrudeParams.
-// This allows insertion of a whole vector at once.
-/*void ExtrudeParams::
-ExtrusionElementMap::addExtrudedElemVector(MElement* source, std::vector<MElement*> *extrudedVector )
-{
-  std::map<MElement*,std::vector<MElement*> >::iterator it = _extrudedElements.find(source);
-
-  if(it != _extrudedElements.end()){
-    it->second.reserve(it->second.size()+extrudedVector->size());
-    it->second.insert(it->second.end(), extrudedVector->begin(), extrudedVector->end());
-  }
-  else {
-    int totalNbElems = 0;
-    for (int i = 0; i <_parent->mesh.NbLayer;i++)
-      totalNbElems += _parent->mesh.NbElmLayer[i];
-    unsigned int new_cap = totalNbElems > extrudedVector->size() ? totalNbElems : extrudedVector->size();
-    // automatically creates source key in map (single argument 'insert' is also logarithmic too, just like this).
-    std::vector<MElement*> *vec = &(_extrudedElements[source]);
-    vec->reserve( new_cap );
-    vec->insert( vec->end(), extrudedVector->begin(), extrudedVector->end());
-  }
-
-}*/
 
 
 // By Geuzaine, Remacle...
@@ -68,17 +44,17 @@ static void addTriangle(MVertex* v1, MVertex* v2, MVertex* v3,
   to->triangles.push_back(newTri);
 }
 
-// this determines if a face is a non-lateral face in a structured toroidal volume extrusion with at 
+// this determines if a face is a non-lateral face in a structured toroidal volume extrusion with at
 // least one QuadToTri region...
 int IsInToroidalQuadToTri(GFace *face)
 {
-   if( !face )
+   if(!face)
      return false;
-   
+
    GModel *model = face->model();
-   
+
    bool is_toroidal = false, is_quadtri = false, is_noaddverts = false;
-   
+
    // Find the root face first...then step back through extrusions as far as can find
    // another structured region.  If there is a single quadtri region, and this is a torus that
    // extrudes back onto the root source surface, then return true.
@@ -86,7 +62,7 @@ int IsInToroidalQuadToTri(GFace *face)
    root_face = findRootSourceFaceForFace(face);
    unsigned int numRegions = 0;
    std::vector<GRegion*> adj_extruded_reg;
-   
+
    //find the two regions adjacent to the root face. If this is a structured torus, then both regions
    // should be structured extrusions and BOTH should have the same root face
    std::set<GRegion *, GEntityLessThan>::iterator itreg;
@@ -104,10 +80,10 @@ int IsInToroidalQuadToTri(GFace *face)
       // does face belong to region and if so is it a structured extrusion?
       std::list<GFace *> region_faces = std::list<GFace *>( region->faces() );
       if( std::find( region_faces.begin(), region_faces.end(), root_face ) !=
-	    region_faces.end() && region->meshAttributes.extrude && 
+	    region_faces.end() && region->meshAttributes.extrude &&
 	  region->meshAttributes.extrude->mesh.ExtrudeMesh &&
 	  region->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY ){
-	
+
 	adj_extruded_reg.push_back(region);
 	numRegions++;
       }
@@ -115,9 +91,9 @@ int IsInToroidalQuadToTri(GFace *face)
 	continue;
     }
     // if there are two structured extruded regions adjacent to the root face,
-    // then find the one that is NOT extruded from the root directly.  Then follow this 
+    // then find the one that is NOT extruded from the root directly.  Then follow this
     // face as far as possible back to the source.
-    
+
     GRegion *last_region = 0;
     GFace *last_reg_source = 0;
     bool found_first = 0, found_last = 0;
@@ -125,12 +101,12 @@ int IsInToroidalQuadToTri(GFace *face)
       for( int ind = 0; ind <= 1; ind++ ){
 	ExtrudeParams *adj_ep = adj_extruded_reg[ind]->meshAttributes.extrude;
 	GFace *reg_source = 0;
-	
+
 	if( adj_ep && adj_ep->mesh.ExtrudeMesh ){
 	  reg_source = model->getFaceByTag(std::abs( adj_ep->geo.Source ) );
           if( adj_ep->mesh.QuadToTri ){
 	    is_quadtri = true;
-	    if( adj_ep->mesh.QuadToTri == QUADTRI_NOVERTS_1 || 
+	    if( adj_ep->mesh.QuadToTri == QUADTRI_NOVERTS_1 ||
 	        adj_ep->mesh.QuadToTri == QUADTRI_NOVERTS_1_RECOMB )
 	      is_noaddverts = true;
 	  }
@@ -153,7 +129,7 @@ int IsInToroidalQuadToTri(GFace *face)
       }
     }
 
-    //walk back around to beginning if possible 
+    //walk back around to beginning if possible
     if( last_region && found_first && found_last ){
       GFace *iter_face = last_reg_source;
       GFace *iter_source_face = 0;
@@ -164,7 +140,7 @@ int IsInToroidalQuadToTri(GFace *face)
 	counter++;
 	if( iter_face ){
 	  ExtrudeParams *iter_eps = iter_face->meshAttributes.extrude;
-	  if( iter_eps && iter_eps->mesh.ExtrudeMesh && 
+	  if( iter_eps && iter_eps->mesh.ExtrudeMesh &&
 	      iter_eps->geo.Mode == COPIED_ENTITY ){
 	    if( iter_eps->mesh.QuadToTri )
 	      is_quadtri = true;
@@ -192,7 +168,7 @@ int IsInToroidalQuadToTri(GFace *face)
 	}
       }
     }
-    
+
     // now return
     if( is_toroidal && is_quadtri ){
       if( !is_noaddverts )
@@ -209,37 +185,38 @@ void ReplaceBndQuadsInFace(GFace *face)
 {
   ExtrudeParams *ep = face->meshAttributes.extrude;
   bool is_struct = false;
-  if( (ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) ||
-      face->meshAttributes.method == MESH_TRANSFINITE  )
+  if((ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) ||
+     face->meshAttributes.method == MESH_TRANSFINITE)
     is_struct = true;
-  GFace *root_face = findRootSourceFaceForFace( face );
-  if( root_face == face ){
-    std::set<MVertex*, MVertexLessThanLexicographic> pos_src_edge;
+  GFace *root_face = findRootSourceFaceForFace(face);
+  if(root_face == face){
+    MVertexRTree pos_src_edge(1.e-12 * CTX::instance()->lc);
     QuadToTriInsertFaceEdgeVertices(face, pos_src_edge);
-    std::vector<MQuadrangle*> quads2; 
+    std::vector<MQuadrangle*> quads2;
     //loop through source quads, if on boundary, delete them
     for(unsigned int i = 0; i < face->quadrangles.size(); i++){
       std::vector<MVertex*> verts;
       int num_verts = face->quadrangles[i]->getNumVertices();
       bool on_edge = false;
-      
-      for( int j = 0; j < num_verts; j++ )
+
+      for(int j = 0; j < num_verts; j++)
 	verts.push_back(face->quadrangles[i]->getVertex(j));
-      
-      for( int j = 0; j < num_verts; j++ ){
-	if( pos_src_edge.find( verts[j] ) != pos_src_edge.end() ){
+
+      for(int j = 0; j < num_verts; j++){
+	if(pos_src_edge.find(verts[j]->x(), verts[j]->y(), verts[j]->z())){
 	  on_edge = true;
 	  break;
 	}
       }
-      if( on_edge ){
+      if(on_edge){
 	delete face->quadrangles[i];
-	if( is_struct ){
-	  addTriangle( verts[0],verts[2], verts[3],face);
-	  addTriangle( verts[0],verts[1], verts[2],face);
+	if(is_struct){
+	  addTriangle(verts[0],verts[2], verts[3],face);
+	  addTriangle(verts[0],verts[1], verts[2],face);
 	}
 	else{
-	  // draw other diagonals to minimize difference in average edge length with diagonal length, in quadrature
+	  // draw other diagonals to minimize difference in average edge length
+	  // with diagonal length, in quadrature
 
 	  double mag_sq_ave = 0.0;
 	  for( int p = 0; p < 4; p++ ){
@@ -267,15 +244,12 @@ void ReplaceBndQuadsInFace(GFace *face)
     face->quadrangles.clear();
     face->quadrangles = quads2;
   }
-  
+
 }
 
-
-// Insert all vertices on a region's source edge, including corners,
-// into pos_src_edge set.
-// Added 2010-01-09
-void QuadToTriInsertSourceEdgeVertices(GRegion *gr,
-                              std::set<MVertex*, MVertexLessThanLexicographic> &pos_src_edge)
+// Insert all vertices on a region's source edge, including corners, into
+// pos_src_edge set.  Added 2010-01-09
+void QuadToTriInsertSourceEdgeVertices(GRegion *gr, MVertexRTree &pos_src_edge)
 {
   ExtrudeParams *ep = gr->meshAttributes.extrude;
   if(!ep || !ep->mesh.ExtrudeMesh || ep->geo.Mode != EXTRUDED_ENTITY){
@@ -284,45 +258,35 @@ void QuadToTriInsertSourceEdgeVertices(GRegion *gr,
     return;
   }
 
-
-  GFace *source_face = gr->model()->getFaceByTag( std::abs(ep->geo.Source) );
+  GFace *source_face = gr->model()->getFaceByTag(std::abs(ep->geo.Source));
 
   std::list<GEdge*> edges = source_face->edges();
   std::list<GEdge*>::iterator ite = edges.begin();
-  for(ite = edges.begin(); ite != edges.end(); ite++ ){
-    pos_src_edge.insert( (*ite)->mesh_vertices.begin(), (*ite)->mesh_vertices.end() );
-    pos_src_edge.insert( (*ite)->getBeginVertex()->mesh_vertices.begin(),
-                          (*ite)->getBeginVertex()->mesh_vertices.end() );
-    pos_src_edge.insert( (*ite)->getEndVertex()->mesh_vertices.begin(),
-                          (*ite)->getEndVertex()->mesh_vertices.end() );
+  for(ite = edges.begin(); ite != edges.end(); ite++){
+    pos_src_edge.insert((*ite)->mesh_vertices);
+    pos_src_edge.insert((*ite)->getBeginVertex()->mesh_vertices);
+    pos_src_edge.insert((*ite)->getEndVertex()->mesh_vertices);
   }
 }
 
-// Insert all vertices on a faces edges, including corners,
-// into pos_edges set.
+// Insert all vertices on a faces edges, including corners, into pos_edges set.
 // Added 2010-01-18
-void QuadToTriInsertFaceEdgeVertices(GFace *face,
-                              std::set<MVertex*, MVertexLessThanLexicographic> &pos_edges)
+void QuadToTriInsertFaceEdgeVertices(GFace *face, MVertexRTree &pos_edges)
 {
-
-
   std::list<GEdge*> edges = face->edges();
   std::list<GEdge*>::iterator ite = edges.begin();
   while(ite != edges.end()){
-    pos_edges.insert((*ite)->mesh_vertices.begin(), (*ite)->mesh_vertices.end());
-    pos_edges.insert((*ite)->getBeginVertex()->mesh_vertices.begin(),
-               (*ite)->getBeginVertex()->mesh_vertices.end());
-    pos_edges.insert((*ite)->getEndVertex()->mesh_vertices.begin(),
-               (*ite)->getEndVertex()->mesh_vertices.end());
+    pos_edges.insert((*ite)->mesh_vertices);
+    pos_edges.insert((*ite)->getBeginVertex()->mesh_vertices);
+    pos_edges.insert((*ite)->getEndVertex()->mesh_vertices);
     ++ite;
   }
 }
 
 
-// Constructor for the CategorizedSourceElements structure.
-// See definition of CategorizedSourceElements in QuadTriUtils.h
-// file for details.
-CategorizedSourceElements::CategorizedSourceElements( GRegion *gr )
+// Constructor for the CategorizedSourceElements structure.  See definition of
+// CategorizedSourceElements in QuadTriUtils.h file for details.
+CategorizedSourceElements::CategorizedSourceElements(GRegion *gr)
 {
   region = (GRegion*)(NULL);
   source_face = (GFace*)(NULL);
@@ -330,7 +294,7 @@ CategorizedSourceElements::CategorizedSourceElements( GRegion *gr )
 
   ExtrudeParams *ep = gr->meshAttributes.extrude;
 
-  if( !ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh ){
+  if(!ep || !ep->mesh.QuadToTri || !ep->mesh.ExtrudeMesh){
     Msg::Error("In CategorizedSourceElements constructor, invalid extrusion "
                "in region %d for performing QuadToTri mesh generation.",
                gr->tag() );
@@ -338,7 +302,7 @@ CategorizedSourceElements::CategorizedSourceElements( GRegion *gr )
   }
 
   GModel *model = gr->model();
-  if( !model ){
+  if(!model){
     Msg::Error("In CategorizedSourceElements constructor, invalid model for region "
                "%d.", gr->tag() );
     return;
@@ -347,7 +311,7 @@ CategorizedSourceElements::CategorizedSourceElements( GRegion *gr )
   // now find and verify the source face
 
   GFace *source_tmp = model->getFaceByTag( std::abs( ep->geo.Source ) );
-  if( !source_tmp  ){
+  if(!source_tmp){
     Msg::Error("In CategorizedSourceElements constructor, invalid source face for region "
                "%d.", gr->tag() );
     return;
@@ -359,9 +323,8 @@ CategorizedSourceElements::CategorizedSourceElements( GRegion *gr )
   source_face = source_tmp;
 
   // get source face boundary verts
-  std::set<MVertex*, MVertexLessThanLexicographic> bnd_verts;
+  MVertexRTree bnd_verts(1.e-12 * CTX::instance()->lc);
   QuadToTriInsertSourceEdgeVertices(gr, bnd_verts);
-
 
   unsigned int num_tri = source_face->triangles.size();
   unsigned int num_quad = source_face->quadrangles.size();
@@ -370,18 +333,16 @@ CategorizedSourceElements::CategorizedSourceElements( GRegion *gr )
   tri_bool.assign(num_tri*4, false);
   quad_bool.assign(num_quad*5, false);
 
-
   // keep temporary set of one boundary point quad pivot indices
   std::set<MVertex*> one_pt_quad_pivots;
 
   // now classify the source elements in the vectors
-  for( int t = 0; t < 2; t++ ){    // t = 0 loop over triangles, t=1 loop over quads
-
+  for(int t = 0; t < 2; t++){    // t = 0 loop over triangles, t=1 loop over quads
     int size = !t ? source_face->triangles.size() : source_face->quadrangles.size();
-    for( int i = 0; i < size; i++ ){   // loop over total elements in current vector
+    for(int i = 0; i < size; i++){   // loop over total elements in current vector
       std::vector<MVertex*> elem_verts;
       MElement *elem;
-      if( !t ){
+      if(!t){
         elem = source_face->triangles[i];
         elem->getVertices(elem_verts);
       }
@@ -393,31 +354,31 @@ CategorizedSourceElements::CategorizedSourceElements( GRegion *gr )
       int bnd_count = 0;
       int bnd_vert = 0;
       // get the boundary vert bool values
-      for( int k = 0; k < elem_size; k++ ){
-        if( bnd_verts.find(elem_verts[k]) != bnd_verts.end() ){
+      for(int k = 0; k < elem_size; k++){
+        if(bnd_verts.find(elem_verts[k]->x(), elem_verts[k]->y(), elem_verts[k]->z())){
           if( !t ) tri_bool[4*i+k+1] = true;
           else     quad_bool[5*i+k+1] = true;
           bnd_vert = k;
           bnd_count++;
         }
       }
-      if( bnd_count ){
-        if( !t ) tri_bool[4*i] = true;
-        else     quad_bool[5*i] = true;
+      if(bnd_count){
+        if(!t) tri_bool[4*i] = true;
+        else   quad_bool[5*i] = true;
       }
 
       // Place element vector indices into appropriate set
-      if( !bnd_count )
+      if(!bnd_count)
         (!t) ? internal_tri.insert(i) : internal_quad.insert(i);
-      else if( bnd_count == 1 || bnd_count == 2 ||
-              (bnd_count == 3 && t) )
+      else if(bnd_count == 1 || bnd_count == 2 ||
+              (bnd_count == 3 && t))
         (!t) ? other_bnd_tri.insert(i) : other_bnd_quad.insert(i);
-      else if( (bnd_count == 3 && !t) || bnd_count == 4 ){
+      else if((bnd_count == 3 && !t) || bnd_count == 4){
         (!t) ? three_bnd_pt_tri.insert(i) : four_bnd_pt_quad.insert(i);
       }
 
       // if a one boundary point quad, record it in one_pt_quads set
-      if( t && bnd_count == 1 ){
+      if(t && bnd_count == 1){
         one_pt_quad_pivots.insert(elem_verts[(bnd_vert+2)%4]);
       }
     }
@@ -435,28 +396,28 @@ CategorizedSourceElements::CategorizedSourceElements( GRegion *gr )
   for( int s = 0; s < 2; s++ ){
     for( int q = 0; q < 2; q++ ){
       std::set<unsigned int> *int_elems;
-      if( !s ){
-        if( !q ) int_elems = &internal_tri;
+      if(!s){
+        if(!q) int_elems = &internal_tri;
         else  continue;
       }
       else
         int_elems = !q ? &internal_quad : &other_bnd_quad;
 
-      for( it_int = (*int_elems).begin(); it_int != (*int_elems).end(); it_int++ ){
+      for(it_int = (*int_elems).begin(); it_int != (*int_elems).end(); it_int++){
         std::vector<MVertex*> verts;
-        if( !s )
+        if(!s)
           source_face->triangles[(*it_int)]->getVertices(verts);
         else
           source_face->quadrangles[(*it_int)]->getVertices(verts);
 
         // for t == s == 1 (other_bnd_quads), only retain those with two boundary verts
-        if( s && q ){
+        if(s && q){
           int bnd_count = 0;
-          for(unsigned int k = 0; k < verts.size(); k++ ){
-            if( quad_bool[5*(*it_int)+k+1] )
+          for(unsigned int k = 0; k < verts.size(); k++){
+            if(quad_bool[5*(*it_int)+k+1])
               bnd_count++;
           }
-          if( bnd_count != 2 )
+          if(bnd_count != 2)
             continue;
         }
 
@@ -467,17 +428,17 @@ CategorizedSourceElements::CategorizedSourceElements( GRegion *gr )
         // will sometimes choose the wrong pivot.
         std::set<MVertex*>::iterator it_piv;
         bool found = false;
-        for( it_piv = one_pt_quad_pivots.begin(); it_piv != one_pt_quad_pivots.end(); it_piv++ ){
-          for(unsigned int t = 0; t < verts.size(); t++ ){
-            if( (*it_piv) == verts[t] ) {
+        for(it_piv = one_pt_quad_pivots.begin(); it_piv != one_pt_quad_pivots.end(); it_piv++){
+          for(unsigned int t = 0; t < verts.size(); t++){
+            if((*it_piv) == verts[t]) {
               found = true;
-              if( !s ){
+              if(!s){
                 internal_tri_touch_one_bnd_pt_quad.insert(*it_int);
                 tri_bool[4*(*it_int)] = true;
                 tri_bool[4*(*it_int)+t+1] = true;
               }
               else{
-                if( !q ){
+                if(!q){
                   internal_quad_touch_one_bnd_pt_quad.insert(*it_int);
                   quad_bool[5*(*it_int)] = true;
                   quad_bool[5*(*it_int)+t+1] = true;
@@ -488,19 +449,17 @@ CategorizedSourceElements::CategorizedSourceElements( GRegion *gr )
               break;
             }
           }
-          if( found ) break;
+          if(found) break;
         }
       }
     }
   }
 
-} // end of CategorizedSourceElements::CategorizedSourceElements( GRegion *gr )
-
+}
 
 // Find centroid of vertices in vector v, return in vector
-std::vector<double> QtFindVertsCentroid( std::vector<MVertex*> v )
+std::vector<double> QtFindVertsCentroid(std::vector<MVertex*> v)
 {
-
   std::vector<double> v_return;
   const int v_size = v.size();
 
@@ -538,15 +497,13 @@ std::vector<double> QtFindVertsCentroid( std::vector<MVertex*> v )
   v_return.push_back(z);
 
   return v_return;
-
 }
 
 // Add a new vertex at the centroid of a vector of vertices (this goes into a region
 // Added 2010-02-06
-MVertex* QtMakeCentroidVertex( std::vector<MVertex*> v, std::vector<MVertex*> *target,
-                             GEntity *entity, std::set<MVertex*, MVertexLessThanLexicographic> &pos )
+MVertex* QtMakeCentroidVertex(std::vector<MVertex*> v, std::vector<MVertex*> *target,
+                              GEntity *entity, MVertexRTree &pos)
 {
-
   int v_size = v.size();
   if( v_size != 6 && v_size != 8 && v_size != 3 && v_size != 4){
     Msg::Error("In makeCentroidVertex(), number of vertices does not equal 3, 4, 6, or 8.");
@@ -563,28 +520,24 @@ MVertex* QtMakeCentroidVertex( std::vector<MVertex*> v, std::vector<MVertex*> *t
   }
 
   // make new vertex
-  MVertex tmp(x, y, z, 0, -1);
-  std::set<MVertex*, MVertexLessThanLexicographic>::iterator itp = pos.find(&tmp);
+  MVertex *tmp = pos.find(x, y, z);
   MVertex *v_int;
   // simple check if it exists
-  if(itp == pos.end()){
+  if(!tmp){
     v_int = new MVertex(x, y, z, entity);
     target->push_back(v_int);
     pos.insert(v_int);
   }
   else
-    v_int = (*itp);
+    v_int = tmp;
 
   return (v_int);
-
 }
-
 
 // Finds the index of the lowest valued pointer in a vector of MVertex pointers
 // Added 2011-03-10
-int getIndexForLowestVertexPointer( std::vector<MVertex*> v )
+int getIndexForLowestVertexPointer(std::vector<MVertex*> v)
 {
-
   int ind_low = 0;
   int v_size = v.size();
   for( int i = 1; i < v_size; i++ ){
@@ -593,7 +546,6 @@ int getIndexForLowestVertexPointer( std::vector<MVertex*> v )
   }
   return ind_low;
 }
-
 
 // Given 4 verts on a face, find an existent diagonal, if any.
 // Two possible methods:  If the 'index_guess' argument is the index of the correct triangle,
@@ -653,7 +605,6 @@ std::pair<int, int> FindDiagonalEdgeIndices( std::vector<MVertex*> verts,
 
 }
 
-
 // Get number of regions neighboring a face
 int GetNeighborRegionsOfFace(GFace *face, std::vector<GRegion *> &neighbors)
 {
@@ -698,7 +649,6 @@ int GetNeighborRegionsOfFace(GFace *face, std::vector<GRegion *> &neighbors)
 // Trevor Strickler 12/09/10
 int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
 {
-
   // NOTE: don't necessarily require the face to be extruded! just in the position
   //  of lateral is all we care about here.
   ExtrudeParams *ep = face->meshAttributes.extrude;
@@ -730,7 +680,6 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
   if( std::find( region_faces.begin(), region_faces.end(), face) ==
       region_faces.end() )
     return 0;
-
 
   // if this face is a COPIED_ENTITY with source = region source face, this is the top.  Exit.
   if( ep && ep->geo.Mode == COPIED_ENTITY &&
@@ -898,7 +847,4 @@ void fill_touch_bnd( int touch_bnd[], std::vector<bool> vert_bnd, int n_lat )
     }
   }
 }
-
-
-
 

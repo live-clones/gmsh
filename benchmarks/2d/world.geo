@@ -2,7 +2,6 @@ lc = 0.1;
 Point(1) = {0,0,0,lc};
 Point(2) = {1,0,0,lc};
 
-// Fabien - enleve ceci:
 PolarSphere (1) = {1,2};
 
 Point(3) = {0.335046,-1.96526,0,lc};

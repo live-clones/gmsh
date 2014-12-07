@@ -9,7 +9,7 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
-#include "MVertexPositionSet.h"
+#include "MVertexRTree.h"
 #include "discreteFace.h"
 #include "StringUtils.h"
 
@@ -143,7 +143,8 @@ int GModel::readSTL(const std::string &name, double tolerance)
     for(unsigned int j = 0; j < points[i].size(); j++)
       vertices.push_back(new MVertex(points[i][j].x(), points[i][j].y(),
                                      points[i][j].z()));
-  MVertexPositionSet pos(vertices);
+  MVertexRTree pos(eps);
+  pos.insert(vertices);
 
   std::set<MFace,Less_Face> unique;
   int nbDuplic = 0;
@@ -154,7 +155,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
         double x = points[i][j + k].x();
         double y = points[i][j + k].y();
         double z = points[i][j + k].z();
-        v[k] = pos.find(x, y, z, eps);
+        v[k] = pos.find(x, y, z);
       }
       MFace mf (v[0], v[1], v[2]);
       if (unique.find(mf) == unique.end()){

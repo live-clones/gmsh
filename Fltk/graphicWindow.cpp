@@ -3103,8 +3103,11 @@ void graphicWindow::detachMenu()
   _tile->remove(_onelab);
   _browser->resize(0, _browser->y(), _browser->w() + w, _browser->h());
   for(unsigned int i = 0; i < gl.size(); i++){
-    if(gl[i]->x() == w)
+    if(gl[i]->x() == w){
       gl[i]->resize(0, gl[i]->y(), gl[i]->w() + w, gl[i]->h());
+      // FIXME RETINA
+      //gl[i]->redraw();
+    }
   }
   _tile->redraw();
 
@@ -3142,8 +3145,11 @@ void graphicWindow::attachMenu()
   if(_browser->w() - w < 0) w = _browser->w() / 2;
   _browser->resize(w, _browser->y(), _browser->w() - w, _browser->h());
   for(unsigned int i = 0; i < gl.size(); i++){
-    if(gl[i]->x() == 0)
+    if(gl[i]->x() == 0){
       gl[i]->resize(w, gl[i]->y(), gl[i]->w() - w, gl[i]->h());
+      // FIXME RETINA
+      //gl[i]->redraw();
+    }
   }
   _onelab->box(GMSH_SIMPLE_RIGHT_BOX);
   _tile->add(_onelab);
@@ -3331,8 +3337,11 @@ void graphicWindow::setMenuWidth(int w)
   double dw = w - _onelab->w();
   if(!dw) return;
   for(unsigned int i = 0; i < gl.size(); i++){
-    if(gl[i]->x() == _onelab->x() + _onelab->w())
+    if(gl[i]->x() == _onelab->x() + _onelab->w()){
       gl[i]->resize(gl[i]->x() + dw, gl[i]->y(), gl[i]->w() - dw, gl[i]->h());
+      // FIXME RETINA
+      //gl[i]->redraw();
+    }
   }
   _browser->resize(_browser->x() + dw, _browser->y(), _browser->w() - dw, _browser->h());
   _onelab->resize(_onelab->x(), _onelab->y(), _onelab->w() + dw, _onelab->h());
@@ -3373,8 +3382,11 @@ void graphicWindow::setMessageHeight(int h)
   int dh = h - _browser->h();
   if(!dh) return;
   for(unsigned int i = 0; i < gl.size(); i++){
-    if(gl[i]->y() + gl[i]->h() == _browser->y())
+    if(gl[i]->y() + gl[i]->h() == _browser->y()){
       gl[i]->resize(gl[i]->x(), gl[i]->y(), gl[i]->w(), gl[i]->h() - dh);
+      // FIXME RETINA
+      //gl[i]->redraw();
+    }
   }
   _browser->resize(_browser->x(), _browser->y() - dh,
                    _browser->w(), _browser->h() + dh);

@@ -11,7 +11,7 @@
 #include "GModel.h"
 #include "GeoInterpolation.h"
 #include "Context.h"
-#include "MVertexPositionSet.h"
+#include "MVertexRTree.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -2379,14 +2379,15 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
     v2V[v] = V;
   }
   List_Delete(tmp);
-  MVertexPositionSet pos(all);
+  MVertexRTree pos(tol);
+  pos.insert(all);
 
   // touch all points
   tmp = Tree2List(GModel::current()->getGEOInternals()->Points);
   for(int i = 0; i < List_Nbr(tmp); i++) {
     Vertex *V;
     List_Read(tmp, i, &V);
-    pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol);
+    pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z);
   }
   List_Delete(tmp);
 
@@ -2397,21 +2398,21 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
     Curve *c;
     List_Read(tmp, i, &c);
     // replace begin/end points
-    c->beg = v2V[pos.find(c->beg->Pos.X, c->beg->Pos.Y, c->beg->Pos.Z, tol)];
-    c->end = v2V[pos.find(c->end->Pos.X, c->end->Pos.Y, c->end->Pos.Z, tol)];
+    c->beg = v2V[pos.find(c->beg->Pos.X, c->beg->Pos.Y, c->beg->Pos.Z)];
+    c->end = v2V[pos.find(c->end->Pos.X, c->end->Pos.Y, c->end->Pos.Z)];
 
     // replace control points
     for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
       Vertex *V;
       List_Read(c->Control_Points, j, &V);
       List_Write(c->Control_Points, j,
-		 &v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol)]);
+		 &v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z)]);
     }
     // replace extrusion sources
     if(c->Extrude && c->Extrude->geo.Mode == EXTRUDED_ENTITY){
       Vertex *V = FindPoint(std::abs(c->Extrude->geo.Source));
       if(V) c->Extrude->geo.Source =
-	      v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol)]->Num;
+	      v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z)]->Num;
     }
   }
   List_Delete(tmp);
@@ -2426,7 +2427,7 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
       Vertex *V;
       List_Read(s->TrsfPoints, j, &V);
       List_Write(s->TrsfPoints, j,
-                 &v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol)]);
+                 &v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z)]);
     }
   }
   List_Delete(tmp);
@@ -2441,7 +2442,7 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
       Vertex *V;
       List_Read(vol->TrsfPoints, j, &V);
       List_Write(vol->TrsfPoints, j,
-                 &v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol)]);
+                 &v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z)]);
     }
   }
   List_Delete(tmp);
@@ -2456,7 +2457,7 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
         List_Read(p->Entities, j, &num);
         Vertex *V = FindPoint(std::abs(num));
         if(V) List_Write(p->Entities, j,
-                         &(v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z, tol)]->Num));
+                         &(v2V[pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z)]->Num));
       }
     }
   }
@@ -4287,7 +4288,7 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
           List_Read(cToAddInSurf->Control_Points, l, &w1);
           List_Read(cToAddInSurf->Control_Points, l+1, &w2);
 
-	  if (w1 == v1 || w1 == v2 || w2 == v1 || w2 == v2)continue; 
+	  if (w1 == v1 || w1 == v2 || w2 == v1 || w2 == v2)continue;
 
           SPoint3 q1 = SPoint3(w1->Pos.X, w1->Pos.Y, w1->Pos.Z);
           SPoint3 q2 = SPoint3(w2->Pos.X, w2->Pos.Y, w2->Pos.Z);

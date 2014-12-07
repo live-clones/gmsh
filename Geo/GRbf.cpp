@@ -17,7 +17,7 @@
 #include "SBoundingBox3d.h"
 #include "OS.h"
 #include "MVertex.h"
-#include "MVertexPositionSet.h"
+#include "MVertexRTree.h"
 
 #if defined(HAVE_SOLVER)
 #include "linearSystem.h"
@@ -107,11 +107,12 @@ GRbf::GRbf(double sizeBox, int variableEps, int rbfFun,
   }
 
   // then create Mvertex position
-  std::vector<MVertex*> vertices( allNodes.begin(), allNodes.end() );
-  MVertexPositionSet pos(vertices);
+  std::vector<MVertex*> vertices(allNodes.begin(), allNodes.end());
+  MVertexRTree pos(tol);
+  pos.insert(vertices);
   for(unsigned int i = 0; i < vertices.size(); i++){
     MVertex *v = vertices[i];
-    pos.find(v->x(), v->y(), v->z(), tol);
+    pos.find(v->x(), v->y(), v->z());
     allCenters(i,0) = v->x()/sBox;
     allCenters(i,1) = v->y()/sBox;
     allCenters(i,2) = v->z()/sBox;
