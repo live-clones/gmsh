@@ -2367,33 +2367,25 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
   if (tol < 0)
     tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
 
-  // create kdtree
+  // create rtree
+  MVertexRTree pos(tol);
   std::map<MVertex*, Vertex*> v2V;
-  std::vector<MVertex*> all;
+  std::vector<MVertex*> used, unused;
   List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Points);
   for(int i = 0; i < List_Nbr(tmp); i++) {
     Vertex *V;
     List_Read(tmp, i, &V);
     MVertex *v = new MVertex(V->Pos.X, V->Pos.Y, V->Pos.Z);
-    all.push_back(v);
+    if(!pos.insert(v))
+      used.push_back(v);
+    else
+      unused.push_back(v);
     v2V[v] = V;
-  }
-  List_Delete(tmp);
-  MVertexRTree pos(tol);
-  pos.insert(all);
-
-  // touch all points
-  tmp = Tree2List(GModel::current()->getGEOInternals()->Points);
-  for(int i = 0; i < List_Nbr(tmp); i++) {
-    Vertex *V;
-    List_Read(tmp, i, &V);
-    pos.find(V->Pos.X, V->Pos.Y, V->Pos.Z);
   }
   List_Delete(tmp);
 
   // replace points in curves
   tmp = Tree2List(GModel::current()->getGEOInternals()->Curves);
-
   for(int i = 0; i < List_Nbr(tmp); i++) {
     Curve *c;
     List_Read(tmp, i, &c);
@@ -2463,13 +2455,14 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
   }
 
   int start = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
-  for(unsigned int i = 0; i < all.size(); i++){
-    if(all[i]->getIndex() == 0){
-      Vertex *V = v2V[all[i]];
-      Tree_Suppress(GModel::current()->getGEOInternals()->Points, &V);
-      Free_Vertex(&V, NULL);
-    }
-    delete all[i];
+  for(unsigned int i = 0; i < unused.size(); i++){
+    Vertex *V = v2V[unused[i]];
+    Tree_Suppress(GModel::current()->getGEOInternals()->Points, &V);
+    Free_Vertex(&V, NULL);
+    delete unused[i];
+  }
+  for(unsigned int i = 0; i < used.size(); i++){
+    delete used[i];
   }
   int end = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
   Msg::Info("Done new Coherence (removed %d additional points)", end - start);
