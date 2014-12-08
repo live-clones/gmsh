@@ -38,8 +38,9 @@ def file_exist(filename):
     return False
   
 def path(ref, inp=''):
-  # ref is reference directory name
-  # inp is an optional file or directory name
+  # ref is a reference file name (not a directory)
+  # inp is an optional file or subdirectory name
+  # return the path to 'inp' in the same directory as 'ref' 
   dirname = os.path.dirname(ref)
   if not inp: 
     if dirname:
@@ -57,16 +58,19 @@ class pth:
   def path(self, ref, inp=''):
     p = path(ref,inp)
     if not os.path.exists(p):
-      print('PTH error: The path %s does not exist' %(p))
       self.errors += 1
+      self.msg += p + ' '
     return p
+
+  def status(self):
+    return '%d path errors: %s' %(self.errors, self.msg)
 
   def copy(self, here, there):
     os.system('cp '+ here + ' ' + there)
     
   def __init__(self) :
     self.errors = 0
-
+    self.msg = ''
 
 class _parameter() :
   _membersbase = [

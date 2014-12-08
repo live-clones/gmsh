@@ -377,50 +377,45 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       std::string::size_type first = 0;
       std::string clientName = onelab::parameter::getNextToken(message, first);
       std::string command = onelab::parameter::getNextToken(message, first);
-      gmshLocalNetworkClient* subClient =
-	new gmshLocalNetworkClient(clientName, command);
-      onelabGmshServer *server = new onelabGmshServer(subClient);
-      subClient->setPid(0);
-      int sock = server->LaunchClient();
-      if(sock < 0){ // could not establish the connection: aborting
-	server->Shutdown();
-	delete server;
-	Msg::Error("Could not connect client '%s'", subClient->getName().c_str());
+      if (!onelab::server::instance()->isRegistered(clientName)){
+	gmshLocalNetworkClient* subClient =
+	  new gmshLocalNetworkClient(clientName, command);
+	onelabGmshServer *server = new onelabGmshServer(subClient);
+	subClient->setPid(0);
+	int sock = server->LaunchClient();
+	if(sock < 0){ // could not establish the connection: aborting
+	  server->Shutdown();
+	  delete server;
+	  Msg::Error("Could not connect client '%s'", subClient->getName().c_str());
+	}
+	else{
+	  Msg::StatusBar(true, "Running '%s'...", subClient->getName().c_str());
+	  subClient->setGmshServer(server);
+	  subClient->setFather(this);
+	  master->addClient(subClient);
+	}
       }
-      else{
-	Msg::StatusBar(true, "Running '%s'...", subClient->getName().c_str());
-	subClient->setGmshServer(server);
-	subClient->setFather(this);
-	master->addClient(subClient);
-      }
+      else
+	Msg::Error("Redefinition of existing client <%s>",clientName.c_str());
     }
     break;
   case GmshSocket::GMSH_OLPARSE:
     {
 #if defined(HAVE_ONELAB_METAMODEL)
       std::string::size_type first = 0;
-      std::string name = onelab::parameter::getNextToken(message, first);
+      std::string clientName = onelab::parameter::getNextToken(message, first);
       std::string fullName = onelab::parameter::getNextToken(message, first);
-      std::vector<std::string> split = SplitOLFileName(fullName);
-      std::string ofileName = split[0] + split[1] ;
-      std::ofstream outfile(ofileName.c_str());
+      if (!onelab::server::instance()->isRegistered(clientName)){
+	preProcess(clientName, fullName); // contrib/onelab/OnelabParser.cpp
+	Msg::Info("Preprocess file <%s> done", fullName.c_str());
 
-      std::vector<std::string> split2 = SplitFileName(split[1]);
-      localSolverClient *c = new InterfacedClient(name,"",split2[0]);
-      if (outfile.is_open()) {
-        Msg::Info("Preprocess file <%s>",ofileName.c_str());
-        c->convert_onefile(fullName, outfile);
+	std::string reply = onelab::server::instance()->getChanged(clientName) ?
+	  "true" : "false";
+	getGmshServer()->SendMessage
+	  (GmshSocket::GMSH_OLPARSE, reply.size(), &reply[0]);
       }
       else
-        Msg::Error("The file <%s> cannot be opened",ofileName.c_str());
-      outfile.close();
-
-      std::string reply = onelab::server::instance()->getChanged(c->getName()) ?
-        "true" : "false";
-      getGmshServer()->SendMessage
-        (GmshSocket::GMSH_OLPARSE, reply.size(), &reply[0]);
-
-      delete c;
+	Msg::Error("Redefinition of existing client <%s>",clientName.c_str());
 #endif
     }
     break;

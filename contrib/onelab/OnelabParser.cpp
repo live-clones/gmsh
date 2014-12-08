@@ -1435,10 +1435,39 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
   }
 }
 
+void preProcess(const std::string &client, const std::string &fullName){
+  std::vector<std::string> split = SplitOLFileName(fullName);
+  std::string ifileName = split[1] + split[2] ; // remove heading "_" if any
+  std::string ofileName = split[0] + split[1] ; // remove trailing ".ol"
+
+  std::string workDir = SplitFileName(split[1]) [0];
+  localSolverClient *c = new InterfacedClient(client, "", workDir);
+
+  std::ifstream  infile(ifileName.c_str());
+  if( infile.is_open()) {
+    std::ofstream outfile(ofileName.c_str());
+    if(outfile.is_open()) {
+      OLMsg::Info("Preprocess file <%s> into <%s>",ifileName.c_str(), ofileName.c_str());
+      while ( infile.good() ) {
+	std::string line;
+	getline (infile,line);
+	c->convert_oneline(line,infile,outfile);
+      }
+      outfile.close();
+    }
+    else
+      OLMsg::Error("The file <%s> cannot be opened",ofileName.c_str());
+    infile.close();
+  }
+  else
+    OLMsg::Error("The file <%s> cannot be opened",ifileName.c_str());
+  delete c;
+}
+
 void localSolverClient::convert_onefile(std::string fileName, std::ofstream &outfile) {
   std::ifstream infile(fileName.c_str());
   if (infile.is_open()){
-    //OLMsg::Info("Convert file <%s>",fileName.c_str());
+    OLMsg::Info("Convert file <%s>",fileName.c_str());
     while ( infile.good() ) {
       std::string line;
       getline (infile,line);

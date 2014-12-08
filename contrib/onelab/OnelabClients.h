@@ -14,6 +14,7 @@
 #include "OS.h"
 #include "onelab.h"
 #include "OnelabMessage.h"
+#include "StringUtils.h"
 
 // Onelab file extension
 static std::string onelabExtension(".ol");
@@ -71,6 +72,8 @@ class ShortNameLessThan{
     return getShortName(p1) < getShortName(p2);
   }
 };
+
+void preProcess(const std::string &client, const std::string &fullName);
 
 /*
 VIRTUAL and BASE CLASSES

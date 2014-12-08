@@ -1337,6 +1337,10 @@ namespace onelab{
     {
       return _parameterSpace.getChanged(client);
     }
+    bool isRegistered(const std::string &client)
+    {
+      return _clients.count(client);
+    }
     unsigned int getNumParameters(){ return _parameterSpace.getNumParameters(); }
     std::vector<std::string> toChar(const std::string &client="")
     {
