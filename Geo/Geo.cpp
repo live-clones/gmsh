@@ -2465,7 +2465,7 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
     delete used[i];
   }
   int end = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
-  Msg::Info("Done new Coherence (removed %d additional points)", end - start);
+  Msg::Info("Done new Coherence (removed %d additional points)", start - end);
 }
 
 static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
