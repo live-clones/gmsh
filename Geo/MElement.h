@@ -141,21 +141,24 @@ class MElement
 
   // get an edge representation for drawing
   virtual int getNumEdgesRep(bool curved) = 0;
-  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n) = 0;
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
+                          SVector3 *n) = 0;
 
   // get the faces
   virtual int getNumFaces() = 0;
   virtual MFace getFace(int num) = 0;
 
   // give an MFace as input and get its local number, sign and rotation
-  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const
+  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign,
+                           int &rot) const
   {
     Msg::Error("Face information not available for this element");
   }
 
   // get a face representation for drawing
   virtual int getNumFacesRep(bool curved) = 0;
-  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n) = 0;
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
+                          SVector3 *n) = 0;
 
   // get all the vertices on a edge or a face
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
@@ -173,6 +176,7 @@ class MElement
   virtual int getNumChildren() const { return 0; }
   virtual MElement *getChild(int i) const { return NULL; }
   virtual bool ownsParent() const { return false; }
+
   // get base element in case of MSubElement
   virtual const MElement *getBaseElement() const { return this; }
   virtual MElement *getBaseElement() { return this; }
@@ -188,7 +192,7 @@ class MElement
   virtual double maxEdge();
   virtual double minEdge();
 
-  // Max. distance between curved and straight element among all high-order nodes
+  // max. distance between curved and straight element among all high-order nodes
   double maxDistToStraight() const;
 
   // get the quality measures

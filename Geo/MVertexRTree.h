@@ -21,7 +21,7 @@ class MVertexRTree{
   {
     MVertex **out = static_cast<MVertex**>(ctx);
     *out = v;
-    return false;
+    return false; // we're done searching
   }
  public:
   MVertexRTree(double tolerance = 1.e-8)
@@ -48,14 +48,14 @@ class MVertexRTree{
                    "mesh with tolerance %g", v->getNum(),
                    v->x(), v->y(), v->z(), _tol);
     }
-    return 1;
+    return 1; // one vertex not inserted
   }
   int insert(std::vector<MVertex*> &v, bool warnIfExists=false)
   {
     int num = 0;
     for(unsigned int i = 0; i < v.size(); i++)
       num += insert(v[i], warnIfExists);
-    return num;
+    return num; // number of vertices not inserted
   }
   MVertex *find(double x, double y, double z)
   {

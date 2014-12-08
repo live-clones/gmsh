@@ -18,17 +18,6 @@ class GEdge;
 class GFace;
 class MVertex;
 
-class MVertexLessThanLexicographic{
- public:
-  static double tolerance;
-  bool operator()(const MVertex *v1, const MVertex *v2) const;
-};
-
-class MVertexLessThanNum{
- public:
-  bool operator()(const MVertex *v1, const MVertex *v2) const;
-};
-
 // A mesh vertex.
 class MVertex{
  protected:
@@ -99,10 +88,6 @@ class MVertex{
     return sqrt(dx * dx + dy * dy + dz * dz);
   }
 
-  // linear coordinate search for the vertex in a set
-  std::set<MVertex*, MVertexLessThanLexicographic>::iterator
-  linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos);
-
   // IO routines
   void writeMSH(FILE *fp, bool binary=false, bool saveParametric=false,
                 double scalingFactor=1.0);
@@ -159,6 +144,17 @@ class MFaceVertex : public MVertex{
   }
 };
 
+class MVertexLessThanLexicographic{
+ public:
+  static double tolerance;
+  bool operator()(const MVertex *v1, const MVertex *v2) const;
+};
+
+class MVertexLessThanNum{
+ public:
+  bool operator()(const MVertex *v1, const MVertex *v2) const;
+};
+
 bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
                            SPoint2 &param1, SPoint2 &param2);
 bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
@@ -167,7 +163,8 @@ bool reparamMeshVertexOnEdge(MVertex *v, const GEdge *ge, double &param);
 
 double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3);
 
-inline double distance (MVertex *v1, MVertex *v2){
+inline double distance (MVertex *v1, MVertex *v2)
+{
   const double dx = v1->x() - v2->x();
   const double dy = v1->y() - v2->y();
   const double dz = v1->z() - v2->z();

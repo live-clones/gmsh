@@ -14,24 +14,6 @@
 #include "GmshMessage.h"
 #include "StringUtils.h"
 
-double MVertexLessThanLexicographic::tolerance = 1.e-6;
-
-bool MVertexLessThanLexicographic::operator()(const MVertex *v1, const MVertex *v2) const
-{
-  if(v1->x() - v2->x() >  tolerance) return true;
-  if(v1->x() - v2->x() < -tolerance) return false;
-  if(v1->y() - v2->y() >  tolerance) return true;
-  if(v1->y() - v2->y() < -tolerance) return false;
-  if(v1->z() - v2->z() >  tolerance) return true;
-  return false;
-}
-
-bool MVertexLessThanNum::operator()(const MVertex *v1, const MVertex *v2) const
-{
-  if(v1->getNum() < v2->getNum()) return true;
-  return false;
-}
-
 double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3)
 {
   SVector3 a(p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z());
@@ -349,13 +331,24 @@ void MVertex::writeSU2(FILE *fp, int dim, double scalingFactor)
             z() * scalingFactor, _index - 1);
 }
 
-std::set<MVertex*, MVertexLessThanLexicographic>::iterator
-MVertex::linearSearch(std::set<MVertex*, MVertexLessThanLexicographic> &pos)
+bool MVertexLessThanNum::operator()(const MVertex *v1, const MVertex *v2) const
 {
-  for(std::set<MVertex*, MVertexLessThanLexicographic>::iterator it = pos.begin();
-      it != pos.end(); ++it)
-    if(distance(*it) < MVertexLessThanLexicographic::tolerance) return it;
-  return pos.end();
+  if(v1->getNum() < v2->getNum()) return true;
+  return false;
+}
+
+double MVertexLessThanLexicographic::tolerance = 1.e-6;
+
+bool MVertexLessThanLexicographic::operator()(const MVertex *v1, const MVertex *v2) const
+{
+  // you should not use this unless you know what you are doing; to create
+  // unique vertices, use MVertexRTree
+  if(v1->x() - v2->x() >  tolerance) return true;
+  if(v1->x() - v2->x() < -tolerance) return false;
+  if(v1->y() - v2->y() >  tolerance) return true;
+  if(v1->y() - v2->y() < -tolerance) return false;
+  if(v1->z() - v2->z() >  tolerance) return true;
+  return false;
 }
 
 static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params)
@@ -375,7 +368,6 @@ static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params
     for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++){
       if((*it)->isSeam(gf)) {
         Range<double> range = (*it)->parBounds(0);
-	//	printf("%d %d %d\n",gv->tag(),(*it)->getBeginVertex()->tag(),(*it)->getEndVertex()->tag());
         if (gv == (*it)->getBeginVertex()){
           params.push_back((*it)->reparamOnFace(gf, range.low(),-1));
           params.push_back((*it)->reparamOnFace(gf, range.low(), 1));
