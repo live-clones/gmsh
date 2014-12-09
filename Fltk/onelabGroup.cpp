@@ -401,6 +401,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     break;
   case GmshSocket::GMSH_OLPARSE:
     {
+      std::string reply = "unavailable";
 #if defined(HAVE_ONELAB_METAMODEL)
       std::string::size_type first = 0;
       std::string clientName = onelab::parameter::getNextToken(message, first);
@@ -408,15 +409,13 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       if (!onelab::server::instance()->isRegistered(clientName)){
 	preProcess(clientName, fullName); // contrib/onelab/OnelabParser.cpp
 	Msg::Info("Preprocess file <%s> done", fullName.c_str());
-
-	std::string reply = onelab::server::instance()->getChanged(clientName) ?
-	  "true" : "false";
-	getGmshServer()->SendMessage
-	  (GmshSocket::GMSH_OLPARSE, reply.size(), &reply[0]);
+	reply = onelab::server::instance()->getChanged(clientName) ? "true" : "false";
       }
       else
 	Msg::Error("Redefinition of existing client <%s>",clientName.c_str());
-#endif
+#endif      
+      getGmshServer()->SendMessage
+	(GmshSocket::GMSH_OLPARSE, reply.size(), &reply[0]);
     }
     break;
   case GmshSocket::GMSH_CLIENT_CHANGED:
