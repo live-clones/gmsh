@@ -1395,7 +1395,8 @@ namespace nglib {
 }
 using namespace nglib;
 
-static void getAllBoundingVertices(GRegion *gr, std::set<MVertex*> &allBoundingVertices)
+static void getAllBoundingVertices(GRegion *gr,
+                                   std::set<MVertex*, MVertexLessThanNum> &allBoundingVertices)
 {
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator it = faces.begin();
@@ -1418,10 +1419,10 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
   Ng_Init();
   Ng_Mesh *ngmesh = Ng_NewMesh();
 
-  std::set<MVertex*> allBoundingVertices;
+  std::set<MVertex*, MVertexLessThanNum> allBoundingVertices;
   getAllBoundingVertices(gr, allBoundingVertices);
 
-  std::set<MVertex*>::iterator itv = allBoundingVertices.begin();
+  std::set<MVertex*, MVertexLessThanNum>::iterator itv = allBoundingVertices.begin();
   int I = 1;
   while(itv != allBoundingVertices.end()){
     double tmp[3];
@@ -1683,7 +1684,7 @@ void meshGRegion::operator() (GRegion *gr)
 
   // replace discreteFaces by their compounds
   {
-    std::set<GFace*> mySet;
+    std::set<GFace*, GEntityLessThan> mySet;
     std::list<GFace*>::iterator it = faces.begin();
     while(it != faces.end()){
       if((*it)->getCompound())

@@ -1077,7 +1077,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   // build a set with all points of the boundaries
-  std::set<MVertex*> all_vertices, boundary;
+  std::set<MVertex*, MVertexLessThanNum> all_vertices, boundary;
   std::list<GEdge*>::iterator ite = edges.begin();
   while(ite != edges.end()){
     if((*ite)->isSeam(gf)) return false;
@@ -1152,7 +1152,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   if(all_vertices.size() == 3){
     MVertex *vv[3];
     int i = 0;
-    for(std::set<MVertex*>::iterator it = all_vertices.begin();
+    for(std::set<MVertex*, MVertexLessThanNum>::iterator it = all_vertices.begin();
 	it != all_vertices.end(); it++){
       vv[i++] = *it;
     }
@@ -1170,7 +1170,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::vector<BDS_Point*> points(all_vertices.size());
   SBoundingBox3d bbox;
   int count = 0;
-  for(std::set<MVertex*>::iterator it = all_vertices.begin();
+  for(std::set<MVertex*, MVertexLessThanNum>::iterator it = all_vertices.begin();
       it != all_vertices.end(); it++){
     MVertex *here = *it;
     GEntity *ge = here->onWhat();
@@ -1266,7 +1266,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   {
     std::vector<MVertex*> v;
     std::vector<MTriangle*> result;
-    v.insert(v.end(),all_vertices.begin(),all_vertices.end());
+    v.insert(v.end(), all_vertices.begin(), all_vertices.end());
 
     std::map<MVertex*,SPoint3> pos;
     for(unsigned int i = 0; i < v.size(); i++) {

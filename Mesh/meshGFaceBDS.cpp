@@ -479,6 +479,14 @@ static void midpointsphere(GFace *gf, double u1, double v1, double u2, double v2
 }
 */
 
+bool edges_sort(std::pair<double, BDS_Edge*> a, std::pair<double, BDS_Edge*> b)
+{
+  if (a.first == b.first)
+    return ((*a.second) < (*b.second));
+  else
+    return (a.first < b.first);
+}
+
 void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 {
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
@@ -494,7 +502,7 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
     ++it;
   }
 
-  std::sort(edges.begin(), edges.end());
+  std::sort(edges.begin(), edges.end(), edges_sort);
 
   for (unsigned int i = 0; i < edges.size(); ++i){
     BDS_Edge *e = edges[i].second;
@@ -547,7 +555,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
     ++it;
   }
 
-  std::sort(edges.begin(), edges.end());
+  std::sort(edges.begin(), edges.end(), edges_sort);
 
   for (unsigned int i = 0; i < edges.size(); i++){
     BDS_Edge *e = edges[i].second;
