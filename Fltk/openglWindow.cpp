@@ -157,12 +157,7 @@ void openglWindow::draw()
   _ctx->viewport[1] = 0;
   _ctx->viewport[2] = w();
   _ctx->viewport[3] = h();
-  glViewport(_ctx->viewport[0], _ctx->viewport[1],
-             _ctx->viewport[2], _ctx->viewport[3]);
-
-  // FIXME RETINA
-  //glViewport(_ctx->viewport[0], _ctx->viewport[1],
-  //           2*_ctx->viewport[2], 2*_ctx->viewport[3]);
+  glViewport(0, 0, pixel_w(), pixel_h());
 
   if(lassoMode) {
     // draw the zoom or selection lasso on top of the current scene (without
@@ -245,12 +240,12 @@ void openglWindow::draw()
     if(CTX::instance()->camera && !CTX::instance()->stereo){
       Camera *cam = &(_ctx->camera);
       if (!cam->on) cam->init();
-      cam->giveViewportDimension(_ctx->viewport[2],_ctx->viewport[3]);
+      cam->giveViewportDimension(_ctx->viewport[2], _ctx->viewport[3]);
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
 
       glFrustum(cam->glFleft, cam->glFright, cam->glFbottom,
-                cam->glFtop, cam->glFnear , cam->glFfar*cam->Lc );
+                cam->glFtop, cam->glFnear, cam->glFfar*cam->Lc);
 
       glMatrixMode(GL_MODELVIEW);
       glLoadIdentity();
@@ -674,6 +669,29 @@ int openglWindow::handle(int event)
   default:
     return Fl_Gl_Window::handle(event);
   }
+}
+
+int openglWindow::pixel_w()
+{
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 4)
+  return Fl_Gl_Window::pixel_w();
+#else
+  return w();
+#endif
+}
+
+int openglWindow::pixel_h()
+{
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 4)
+  return Fl_Gl_Window::pixel_h();
+#else
+  return h();
+#endif
+}
+
+bool openglWindow::retina()
+{
+  return pixel_w() > w();
 }
 
 bool openglWindow::_select(int type, bool multiple, bool mesh,

@@ -135,8 +135,8 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
   openglWindow *newg = 0;
 
   if(CTX::instance()->print.width > 0 || CTX::instance()->print.height > 0){
-    GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
-    GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
+    GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+    GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
     if(CTX::instance()->print.width <= 0){
       double w = width * CTX::instance()->print.height / (double)height;
       width = (int)w;
@@ -168,8 +168,8 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 
   PixelBuffer *buffer;
   if(newg || !CTX::instance()->print.compositeWindows){
-    GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
-    GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
+    GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+    GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
     buffer = new PixelBuffer(width, height, format, type);
     buffer->fill(CTX::instance()->batch);
   }
@@ -188,11 +188,11 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
     std::vector<PixelBuffer*> buffers;
     for(unsigned int i = 0; i < g->gl.size(); i++){
       openglWindow::setLastHandled(g->gl[i]);
-      buffer = new PixelBuffer(g->gl[i]->w(), g->gl[i]->h(), format, type);
+      buffer = new PixelBuffer(g->gl[i]->pixel_w(), g->gl[i]->pixel_h(), format, type);
       buffer->fill(CTX::instance()->batch);
       buffers.push_back(buffer);
-      ww = std::max(ww, g->gl[i]->x() + g->gl[i]->w());
-      hh = std::max(hh, g->gl[i]->y() + g->gl[i]->h());
+      ww = std::max(ww, g->gl[i]->x() + g->gl[i]->pixel_w());
+      hh = std::max(hh, g->gl[i]->y() + g->gl[i]->pixel_h());
     }
     buffer = new PixelBuffer(ww, hh, format, type);
     for(unsigned int i = 0; i < g->gl.size(); i++){
@@ -434,9 +434,9 @@ void CreateOutputFile(const std::string &fileName, int format,
         break;
       }
       std::string base = SplitFileName(name)[1];
-      GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
-      GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
-      GLint viewport[4] = {0, 0, width, height};
+      GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+      GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+      GLint pixel_viewport[4] = {0, 0, width, height};
 
       PixelBuffer buffer(width, height, GL_RGB, GL_FLOAT);
 
@@ -464,7 +464,7 @@ void CreateOutputFile(const std::string &fileName, int format,
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
         buffsize += 2048 * 2048;
-        gl2psBeginPage(base.c_str(), "Gmsh", viewport,
+        gl2psBeginPage(base.c_str(), "Gmsh", pixel_viewport,
                        psformat, pssort, psoptions, GL_RGBA, 0, NULL,
                        15, 20, 10, buffsize, fp, base.c_str());
         if(CTX::instance()->print.epsQuality == 0){
@@ -473,8 +473,8 @@ void CreateOutputFile(const std::string &fileName, int format,
           glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
           glMatrixMode(GL_PROJECTION);
           glLoadIdentity();
-          glOrtho((double)viewport[0], (double)viewport[2],
-                  (double)viewport[1], (double)viewport[3], -1., 1.);
+          glOrtho((double)pixel_viewport[0], (double)pixel_viewport[2],
+                  (double)pixel_viewport[1], (double)pixel_viewport[3], -1., 1.);
           glMatrixMode(GL_MODELVIEW);
           glLoadIdentity();
           glRasterPos2d(0, 0);
@@ -505,14 +505,14 @@ void CreateOutputFile(const std::string &fileName, int format,
         break;
       }
       std::string base = SplitFileName(name)[1];
-      GLint width = FlGui::instance()->getCurrentOpenglWindow()->w();
-      GLint height = FlGui::instance()->getCurrentOpenglWindow()->h();
-      GLint viewport[4] = {0, 0, width, height};
+      GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+      GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+      GLint pixel_viewport[4] = {0, 0, width, height};
       GLint buffsize = 0;
       int res = GL2PS_OVERFLOW;
       while(res == GL2PS_OVERFLOW) {
         buffsize += 2048 * 2048;
-        gl2psBeginPage(base.c_str(), "Gmsh", viewport,
+        gl2psBeginPage(base.c_str(), "Gmsh", pixel_viewport,
                        GL2PS_TEX, GL2PS_NO_SORT, GL2PS_NONE, GL_RGBA, 0, NULL,
                        0, 0, 0, buffsize, fp, base.c_str());
         int oldtext = CTX::instance()->print.text;
@@ -545,7 +545,10 @@ void CreateOutputFile(const std::string &fileName, int format,
       }
       PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
       drawContext *ctx = FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
-      print_pgf(name, num, cnt, buffer, ctx->r, ctx->viewport, ctx->proj, ctx->model);
+      GLint width = FlGui::instance()->getCurrentOpenglWindow()->pixel_w();
+      GLint height = FlGui::instance()->getCurrentOpenglWindow()->pixel_h();
+      GLint pixel_viewport[4] = {0, 0, width, height};
+      print_pgf(name, num, cnt, buffer, ctx->r, pixel_viewport, ctx->proj, ctx->model);
       delete buffer;
       // restore view
       if(restoreGeneralAxis) opt_general_axes(0, GMSH_SET| GMSH_GUI, 1);

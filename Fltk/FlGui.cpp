@@ -269,8 +269,10 @@ FlGui::FlGui(int argc, char **argv)
   Fl_Tooltip::color(FL_LIGHT2);
 #endif
 
-  // FIXME RETINA
-  //Fl::use_high_res_GL(1);
+  // use retina resolution if available
+#if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 4)
+  Fl::use_high_res_GL(1);
+#endif
 
   // register image formats not in core fltk library (jpeg/png)
   fl_register_images();

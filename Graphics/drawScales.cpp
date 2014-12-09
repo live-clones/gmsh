@@ -10,7 +10,7 @@
 #include "Context.h"
 #include "gl2ps.h"
 
-static void drawScaleBar(PView *p, double xmin, double ymin, double width, 
+static void drawScaleBar(PView *p, double xmin, double ymin, double width,
                          double height, double tic, int horizontal)
 {
   PViewOptions *opt = p->getOptions();
@@ -91,7 +91,7 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
   drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
   double font_h = drawContext::global()->getStringHeight(); // total font height
-  double font_a = drawContext::global()->getStringHeight() - 
+  double font_a = drawContext::global()->getStringHeight() -
     drawContext::global()->getStringDescent(); // height above ref pt
 
   char label[1024];
@@ -153,19 +153,19 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
   }
 }
 
-static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin, 
+static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
                            double width, double height, double tic, int horizontal)
 {
   PViewOptions *opt = p->getOptions();
   PViewData *data;
-  
+
   // requested by Laurent: but is this really what we should be doing?
   if(opt->externalViewIndex >= 0 && opt->externalViewIndex < (int)PView::list.size())
     data = PView::list[opt->externalViewIndex]->getData();
   else
     data = p->getData();
 
-  drawContext::global()->setFont(CTX::instance()->glFontEnum, 
+  drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
   double font_h = drawContext::global()->getStringHeight();
 
@@ -178,22 +178,22 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
     sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
   }
   else if((opt->showTime == 3 && nt > 1) || opt->showTime == 4){
-    sprintf(label, "%s (%d/%d)", data->getName().c_str(), opt->timeStep, 
+    sprintf(label, "%s (%d/%d)", data->getName().c_str(), opt->timeStep,
             data->getNumTimeSteps() - 1);
   }
   else
     sprintf(label, "%s", data->getName().c_str());
- 
+
   if(horizontal){
     glRasterPos2d(xmin + width / 2., ymin + height + tic + 1.4 * font_h);
-    ctx->drawString(label, CTX::instance()->glFontTitle, 
+    ctx->drawString(label, CTX::instance()->glFontTitle,
                     CTX::instance()->glFontEnumTitle,
                     CTX::instance()->glFontSizeTitle, 1);
   }
   else{
     glRasterPos2d(xmin, ymin - 2 * font_h);
-    ctx->drawString(label, CTX::instance()->glFontTitle, 
-                    CTX::instance()->glFontEnumTitle, 
+    ctx->drawString(label, CTX::instance()->glFontTitle,
+                    CTX::instance()->glFontEnumTitle,
                     CTX::instance()->glFontSizeTitle, 0);
   }
 }
@@ -233,14 +233,14 @@ void drawContext::drawScales()
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
-    if(!data->getDirty() && opt->visible && opt->showScale && 
+    if(!data->getDirty() && opt->visible && opt->showScale &&
        opt->type == PViewOptions::Plot3D && data->getNumElements() &&
        isVisible(PView::list[i]))
       scales.push_back(PView::list[i]);
   }
   if(scales.empty()) return;
 
-  drawContext::global()->setFont(CTX::instance()->glFontEnum, 
+  drawContext::global()->setFont(CTX::instance()->glFontEnum,
                                  CTX::instance()->glFontSize);
   char label[1024];
   double maxw = 0.;
@@ -257,7 +257,7 @@ void drawContext::drawScales()
     PView *p = scales[i];
     PViewData *data = p->getData();
     PViewOptions *opt = p->getOptions();
-    
+
     if(!opt->autoPosition) {
       double w = opt->size[0], h = opt->size[1];
       double x = opt->position[0], y = opt->position[1] - h;
@@ -280,8 +280,8 @@ void drawContext::drawScales()
         if(w < 20.) w = 20.;
         double h = bar_size;
         double x = xc - (i % 2 ? -xsep / 1.5 : w + xsep / 1.5);
-        double y = viewport[1] + ysep + 
-          (i / 2) * (bar_size + tic + 
+        double y = viewport[1] + ysep +
+          (i / 2) * (bar_size + tic +
                      2 * drawContext::global()->getStringHeight() + ysep);
         drawScale(this, p, x, y, w, h, tic, 1);
       }

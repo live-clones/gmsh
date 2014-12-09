@@ -3257,11 +3257,13 @@ bool graphicWindow::split(openglWindow *g, char how)
     g2->mode(g->mode());
 
     gl.push_back(g2);
-    _tile->add(g2);
-    g2->show();
 
     g->resize(x1, y1, w1, h1);
     g2->resize(x2, y2, w2, h2);
+
+    _tile->add(g2);
+
+    g2->show();
   }
   return true;
 }

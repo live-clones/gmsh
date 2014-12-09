@@ -40,6 +40,9 @@ class openglWindow : public Fl_Gl_Window {
   void draw();
   int handle(int);
  public:
+  int pixel_w();
+  int pixel_h();
+  bool retina();
   time_t  rawtime,  prev_rawtime;
   double response_frequency;
   bool addPointMode, lassoMode, selectionMode;
