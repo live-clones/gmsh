@@ -66,7 +66,6 @@ public:
 
   static double boundMinR(MElement *el);
   static double minSampledR(MElement *el, int order);
-  static double minSampledRnew(MElement *el, int order);
   double getBoundMinR(MElement*) const;
   double getMinSampledR(MElement*, int order) const;
 

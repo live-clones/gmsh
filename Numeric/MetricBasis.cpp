@@ -170,86 +170,6 @@ double MetricBasis::getMinSampledR(MElement *el, int deg) const
   return min;
 }
 
-double MetricBasis::minSampledRnew(MElement *el, int deg)
-{
-  static double tmEIG1 = 0;
-  static double tmEIG2 = 0;
-  static double tmOTH = 0;
-  double T = Cpu();
-  int dim = el->getDim();
-  if (dim < 2) return 1;
-
-  fullMatrix<double> nodes(el->getNumVertices(), 3);
-  el->getNodesCoord(nodes);
-
-  // if deg is small: sample at every point
-  // otherwise: compute Bezier coefficients and interpolate
-  //const bool BezierInterp = deg > 100;
-
-  FuncSpaceData jacMatSpace;
-  /*if (BezierInterp) {
-    jacMatSpace =
-        JacobianBasis::jacobianMatrixSpace(el->getType(), el->getPolynomialOrder());
-  }
-  else {*/
-    const bool serendip = false;
-    jacMatSpace = FuncSpaceData(el, deg, &serendip);
-  //}
-
-  const GradientBasis *gb = BasisFactory::getGradientBasis(jacMatSpace);
-  fullMatrix<double> coeffJacMat(gb->getNumSamplingPoints(), 3*dim);
-  fullMatrix<double> dxyzdX(coeffJacMat, 0, 3);
-  fullMatrix<double> dxyzdY(coeffJacMat, 3, 3);
-  if (dim == 2)
-    gb->getIdealGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, NULL);
-  else {
-    fullMatrix<double> dxyzdZ(coeffJacMat, 6, 3);
-    gb->getIdealGradientsFromNodes(nodes, &dxyzdX, &dxyzdY, &dxyzdZ);
-  }
-
-  /*if (BezierInterp) {
-    const bezierBasis *bb = BasisFactory::getBezierBasis(jacMatSpace);
-    fullMatrix<double> points;
-    const bool serendip = false;
-    gmshGeneratePoints(FuncSpaceData(el, deg, &serendip), points);
-
-    fullMatrix<double> bezCoeffJacMat;
-    bb->lag2Bez(coeffJacMat, bezCoeffJacMat);
-    bb->interpolate(bezCoeffJacMat, points, coeffJacMat);
-  }*/
-
-  double minR = 1;
-  for (int k = 0; k < coeffJacMat.size1(); ++k) {
-    fullMatrix<double> metric(dim, dim);
-    for (int i = 0; i < dim; ++i) {
-      for (int j = i; j < dim; ++j) {
-        for (int n = 0; n < 3; ++n)
-          metric(i, j) += coeffJacMat(k, 3*i+n) * coeffJacMat(k, 3*j+n);
-      }
-    }
-    metric(1, 0) = metric(0, 1);
-    if (dim == 3) {
-      metric(2, 0) = metric(0, 2);
-      metric(2, 1) = metric(1, 2);
-    }
-    fullVector<double> valReal(dim), valImag(dim);
-    fullMatrix<double> vecLeft(dim, dim), vecRight(dim, dim);
-
-    tmOTH += Cpu()-T;
-    T = Cpu();
-    metric.eig(valReal, valImag, vecLeft, vecRight, true);
-    tmEIG1 += Cpu()-T;
-    T = Cpu();
-    //metric.eigvalSym(valReal, true);
-    tmEIG2 += Cpu()-T;
-    T = Cpu();
-    minR = std::min(minR, std::sqrt(valReal(0) / valReal(dim-1)));
-  }
-
-  Msg::Warning("eig vs other %g %g %g", tmEIG1, tmEIG2, tmOTH);
-  return minR;
-}
-
 double MetricBasis::getBoundMinR(MElement *el) const
 {
   int nSampPnts = _gradients->getNumSamplingPoints();
@@ -279,8 +199,6 @@ double MetricBasis::getBoundMinR(MElement *el) const
   double RminLag, RminBez;
   _computeRmin(*metCoeff, *jac, RminLag, RminBez);
 
-  //statsForMatlab(el, 20, NULL);
-
   if (RminLag-RminBez < MetricBasis::_tol) {
     delete jac;
     delete metCoeff;
@@ -288,7 +206,7 @@ double MetricBasis::getBoundMinR(MElement *el) const
   }
   else {
     MetricData *md2 = new MetricData(metCoeff, jac, RminBez, 0, 0);
-    double tt = _subdivideForRmin(md2, RminLag, MetricBasis::_tol, el);
+    double tt = _subdivideForRmin(md2, RminLag, MetricBasis::_tol);
     return tt;
   }
 }
@@ -679,40 +597,6 @@ int MetricBasis::validateBezierForMetricAndJacobian(MElement *el,
   metricBasis->interpolateAfterNSubdivisions(el, numSubdiv, numSampPnt,
                                              isub, uvw, metric_Bez);
 
-  /*{
-    static int deg = 2;
-    BasisFactory::getCondNumBasis(el->getTypeForMSH(), deg);
-    MetricBasis::minSampledR(el, deg);
-    MetricBasis::minSampledRnew(el, deg);
-
-    double time = Cpu();
-    double minR1;
-    for (int cn = 0; cn < 100; ++cn) {
-      const CondNumBasis *cnb =
-          BasisFactory::getCondNumBasis(el->getTypeForMSH(), deg);
-      fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
-      el->getNodesCoord(nodesXYZ);
-      fullVector<double> invCond(cnb->getNumCondNumNodes());
-      cnb->getInvCondNum(nodesXYZ, invCond);
-      minR1 = 1;
-      for (int i = 0; i < invCond.size(); ++i)
-        minR1 = std::min(minR1, invCond(i));
-    }
-    double tm1 = Cpu()-time;
-
-    time = Cpu();
-    double minR2;
-    for (int cn = 0; cn < 100; ++cn)
-      minR2 = MetricBasis::minSampledRnew(el, deg);
-    double tm2 = Cpu()-time;
-
-    if (std::abs(minR1-minR2) < 1e-14)
-      Msg::Info("ok deg %d, times %g %g speedup %g", deg, tm1, tm2, tm1/tm2);
-    else
-      Msg::Error("not ok deg %d: %g vs %g, times %g %g speedup %g", deg, minR1, minR2, tm1, tm2, tm1/tm2);
-    //++deg;
-  }*/
-
   int numBadMatch = 0;
   int numBadMatchTensor = 0;
   double maxBadMatch = 0;
@@ -783,8 +667,6 @@ void MetricBasis::interpolate(const MElement *el,
       fullMatrix<double> vecLeft(2, 2), vecRight(2, 2);
       metricTensor.eig(valReal, valImag, vecLeft, vecRight, true);
       R(i, 1) = std::sqrt(valReal(0) / valReal(1));
-      ((MetricBasis*)this)->file << (*metric)(i, 0) << " " << p << " ";
-      ((MetricBasis*)this)->file << R(i, 0) << " " << R(i, 1) << std::endl;
       }
     break;
 
@@ -810,8 +692,6 @@ void MetricBasis::interpolate(const MElement *el,
       fullMatrix<double> vecLeft(3, 3), vecRight(3, 3);
       metricTensor.eig(valReal, valImag, vecLeft, vecRight, true);
       R(i, 1) = std::sqrt(valReal(0) / valReal(2));
-      ((MetricBasis*)this)->file << (*metric)(i, 0)/p << " " << (*jac)(i)*(*jac)(i)/p/p/p << " ";
-      ((MetricBasis*)this)->file << R(i, 0) << " " << R(i, 1) << std::endl;
     }
     break;
 
