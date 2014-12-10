@@ -91,8 +91,9 @@ public:
   static int validateBezierForMetricAndJacobian(MElement *el,
                                                 int numSampPnt,
                                                 int numSubdiv,
-                                                int toleranceTensor,
-                                                int tolerance);
+                                                double toleranceTensor,
+                                                double tolerance);
+  void statsForMatlab(MElement *el, int deg, MetricData *md) const;
   void interpolate(const MElement*, const MetricData*, const double *uvw, double *minmaxQ) const;
   void interpolate(const MElement*, const MetricData*,
                    const fullMatrix<double> &nodes, fullMatrix<double> &R) const;
@@ -111,11 +112,9 @@ private:
                     double &RminLag, double &RminBez) const;
   void _computeRmax(const fullMatrix<double>&, const fullVector<double>&,
                     double &RmaxLag) const;
-  void _computeTermBeta(double &a, double &K, double &dRda,
-                        double &term1, double &phip) const;
   void _getMetricData(const MElement*, MetricData*&) const;
 
-  double _subdivideForRmin(MetricData*, double RminLag, double tol) const;
+  double _subdivideForRmin(MetricData*, double RminLag, double tol, MElement *el=NULL) const;
   template<bool ideal>
   static void _fillCoeff(int dim, const GradientBasis*,
                   const fullMatrix<double> &nodes, fullMatrix<double> &coeff);
@@ -123,7 +122,10 @@ private:
                                 const fullMatrix<double> &coeff, int num);
 
   void _minMaxA(const fullMatrix<double>&, double &min, double &max) const;
+  void _minA(const fullMatrix<double>&, double &min) const;
   void _minK(const fullMatrix<double>&, const fullVector<double>&, double &min) const;
+  void _computeTermBeta(double &a, double &K, double &dRda,
+                        double &term1, double &phip) const;
   void _maxAstKpos(const fullMatrix<double>&, const fullVector<double>&,
                  double minK, double beta, double &maxa) const;
   void _maxAstKneg(const fullMatrix<double>&, const fullVector<double>&,

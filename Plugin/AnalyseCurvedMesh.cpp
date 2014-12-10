@@ -57,7 +57,7 @@ public:
 StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "Show: 0:J, 1:R, 2:J&&R", NULL, 1},
   {GMSH_FULLRC, "Draw PView", NULL, 1},
-  {GMSH_FULLRC, "Hidding threshold", NULL, .1},
+  {GMSH_FULLRC, "Hidding threshold", NULL, 10},
   {GMSH_FULLRC, "Dimension of elements", NULL, -1},
   {GMSH_FULLRC, "Recompute bounds", NULL, 0},
   {GMSH_FULLRC, "Tolerance", NULL, 1e-3}
@@ -143,7 +143,7 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   }
 
   // Compute J and/or R
-  for (int dim = 1; dim <= 3; ++dim) {
+  for (int dim = 1; dim <= 3 && dim <= _m->getDim(); ++dim) {
     if ((askedDim == 4 && dim > 1) || dim == askedDim) {
       if (!_computedJ[dim-1]) {
         double time = Cpu();
