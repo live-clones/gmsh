@@ -557,7 +557,7 @@ endif(ENABLE_ONELAB2)
 
 if(ENABLE_ONELAB)
   set_config_option(HAVE_ONELAB "ONELAB")
-  if(EXISTS contrib/onelab)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
     if(ENABLE_ONELAB_METAMODEL)
       add_subdirectory(contrib/onelab)
       include_directories(contrib/onelab)
@@ -565,7 +565,7 @@ if(ENABLE_ONELAB)
     endif(ENABLE_ONELAB_METAMODEL)
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab/python/onelab.py
               DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-  endif(EXISTS contrib/onelab)
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
 endif(ENABLE_ONELAB)
 
 if(ENABLE_BUILD_IOS)
