@@ -190,7 +190,7 @@ void ReplaceBndQuadsInFace(GFace *face)
     is_struct = true;
   GFace *root_face = findRootSourceFaceForFace(face);
   if(root_face == face){
-    MVertexRTree pos_src_edge(1.e-12 * CTX::instance()->lc);
+    MVertexRTree pos_src_edge(CTX::instance()->geom.tolerance * CTX::instance()->lc);
     QuadToTriInsertFaceEdgeVertices(face, pos_src_edge);
     std::vector<MQuadrangle*> quads2;
     //loop through source quads, if on boundary, delete them
@@ -323,7 +323,7 @@ CategorizedSourceElements::CategorizedSourceElements(GRegion *gr)
   source_face = source_tmp;
 
   // get source face boundary verts
-  MVertexRTree bnd_verts(1.e-12 * CTX::instance()->lc);
+  MVertexRTree bnd_verts(CTX::instance()->geom.tolerance * CTX::instance()->lc);
   QuadToTriInsertSourceEdgeVertices(gr, bnd_verts);
 
   unsigned int num_tri = source_face->triangles.size();

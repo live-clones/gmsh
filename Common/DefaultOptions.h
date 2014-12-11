@@ -503,6 +503,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "HighOrderToolsPositionY" , opt_general_hot_position1 , 150. ,
     "Vertical position (in pixels) of the upper left corner of the high order "
     "tools window" },
+  { F|O, "HighResolutionGraphics" , opt_general_high_resolution_graphics , 1. ,
+    "Use high-resolution OpenGL graphics (e.g. for Macs with retina displays)" },
 
   { F|O, "InitialModule", opt_general_initial_context, 0. ,
     "Module launched on startup (0=automatic, 1=geometry, 2=mesh, 3=solver, "

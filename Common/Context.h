@@ -125,6 +125,8 @@ class CTX {
   int fileChooserPosition[2], extraPosition[2], extraSize[2];
   // use the system menu bar on Mac OS X?
   int systemMenuBar;
+  // use high-resolution opengl graphics (retina Macs)
+  int highResolutionGraphics;
   // batch mode (-4: lua session, -3: server daemon, -2: check coherence, -1: write
   // geo, 0: full gfx, 1: 1D mesh, 2: 2D mesh, 3: 3D mesh, 4: adapt
   // mesh, 5: refine mesh)

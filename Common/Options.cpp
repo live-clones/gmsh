@@ -2317,6 +2317,13 @@ double opt_general_hot_position1(OPT_ARGS_NUM)
   return CTX::instance()->hotPosition[1];
 }
 
+double opt_general_high_resolution_graphics(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->highResolutionGraphics = (int)val;
+  return CTX::instance()->highResolutionGraphics;
+}
+
 double opt_general_session_save(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

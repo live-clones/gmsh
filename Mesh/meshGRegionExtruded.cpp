@@ -223,7 +223,7 @@ void meshGRegionExtruded::operator() (GRegion *gr)
   dem(gr);
 
   // build an rtree with all the vertices on the boundary of gr
-  MVertexRTree pos(1.e-12 * CTX::instance()->lc);
+  MVertexRTree pos(CTX::instance()->geom.tolerance * CTX::instance()->lc);
   insertAllVertices(gr, pos);
 
   // volume is extruded from a surface
@@ -434,7 +434,7 @@ int SubdivideExtrudedMesh(GModel *m)
   // create a vector of quadToTri regions that have NOT been meshed
   // yet
   std::vector<GRegion*> regions, regions_quadToTri;
-  MVertexRTree pos(1.e-12 * CTX::instance()->lc);
+  MVertexRTree pos(CTX::instance()->geom.tolerance * CTX::instance()->lc);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++){
     ExtrudeParams *ep = (*it)->meshAttributes.extrude;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY &&
@@ -519,7 +519,7 @@ int SubdivideExtrudedMesh(GModel *m)
   // mesh the region (should already be done in ExtrudeMesh).
   for(unsigned int i = 0; i < regions_quadToTri.size(); i++){
     GRegion *gr = regions_quadToTri[i];
-    MVertexRTree pos_local(1.e-12 * CTX::instance()->lc);
+    MVertexRTree pos_local(CTX::instance()->geom.tolerance * CTX::instance()->lc);
     insertAllVertices(gr, pos_local);
     meshQuadToTriRegionAfterGlobalSubdivide(gr, &edges, pos_local);
   }

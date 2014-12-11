@@ -2665,7 +2665,7 @@ static int makeEdgesForElemsWithAllVertsOnBnd(GRegion *gr, bool is_addverts,
   }
 
   // find edge verts of source face
-  MVertexRTree pos_src_edge(1.e-12 * CTX::instance()->lc);
+  MVertexRTree pos_src_edge(CTX::instance()->geom.tolerance * CTX::instance()->lc);
   QuadToTriInsertFaceEdgeVertices(reg_source, pos_src_edge);
 
   // while Loop to diagonalize 3-boundary point triangles and 4-boundary point quadrangles:

@@ -76,6 +76,39 @@ type: float@*
 default value: @code{0.5}
 @end table
 
+@item Ball
+The value of this field is VIn inside a spherical ball, VOut outside. The ball is defined by@*
+@*
+  ||dX||^2 < R^2 &&@*
+  dX = (X - XC)^2 + (Y-YC)^2 + (Z-ZC)^2@*
+Options:@*
+@table @code
+@item Radius
+Radius@*
+type: float@*
+default value: @code{0}
+@item VIn
+Value inside the ball@*
+type: float@*
+default value: @code{0}
+@item VOut
+Value outside the ball@*
+type: float@*
+default value: @code{0}
+@item XCenter
+X coordinate of the ball center@*
+type: float@*
+default value: @code{0}
+@item YCenter
+Y coordinate of the ball center@*
+type: float@*
+default value: @code{0}
+@item ZCenter
+Z coordinate of the ball center@*
+type: float@*
+default value: @code{0}
+@end table
+
 @item BoundaryLayer
 hwall * ratio^(dist/hwall)@*
 Options:@*
@@ -597,39 +630,6 @@ default value: @code{1}
 Volume indices@*
 type: list@*
 default value: @code{@{@}}
-@end table
-
-@item Sphere
-The value of this field is VIn inside a sphere, VOut outside. The sphere is given by@*
-@*
-  ||dX||^2 < R^2 &&@*
-  dX = (X - XC)^2 + (Y-YC)^2 + (Z-ZC)^2@*
-Options:@*
-@table @code
-@item Radius
-Radius@*
-type: float@*
-default value: @code{0}
-@item VIn
-Value inside the sphere@*
-type: float@*
-default value: @code{0}
-@item VOut
-Value outside the sphere@*
-type: float@*
-default value: @code{0}
-@item XCenter
-X coordinate of the sphere center@*
-type: float@*
-default value: @code{0}
-@item YCenter
-Y coordinate of the sphere center@*
-type: float@*
-default value: @code{0}
-@item ZCenter
-Z coordinate of the sphere center@*
-type: float@*
-default value: @code{0}
 @end table
 
 @item Structured

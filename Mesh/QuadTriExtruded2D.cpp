@@ -370,7 +370,7 @@ static int MeshQuadToTriTopUnstructured(GFace *from, GFace *to, MVertexRTree &po
     return 0;
 
   // make set of source edge vertices
-  MVertexRTree pos_src_edge(1.e-12 * CTX::instance()->lc);
+  MVertexRTree pos_src_edge(CTX::instance()->geom.tolerance * CTX::instance()->lc);
   QuadToTriInsertFaceEdgeVertices(from, pos_src_edge);
 
   // Loop through all the quads and make the triangles with diagonals running
@@ -469,7 +469,7 @@ int MeshQuadToTriTopSurface(GFace *from, GFace *to, MVertexRTree &pos)
   // number.
 
   if(!is_addverts){
-    MVertexRTree pos_src_edge(1.e-12 * CTX::instance()->lc);
+    MVertexRTree pos_src_edge(CTX::instance()->geom.tolerance * CTX::instance()->lc);
     QuadToTriInsertFaceEdgeVertices(from, pos_src_edge);
 
     // loop through each element source quadrangle and extrude
