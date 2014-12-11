@@ -9,34 +9,166 @@
 #include "inputRange.h"
 #include "outputRange.h"
 #include "inputRegion.h"
+#include "drawContext.h"
+#include "viewButton.h"
+#include "solverButton.h"
 
+#include "Gmsh.h"
+#include "onelabUtils.h"
 #include "OnelabDatabase.h"
 #include "Options.h"
 #include "Context.h"
 
-OnelabDatabase *OnelabDatabase::_instance = NULL;
-
-void connect_cb(Fl_Widget *w, void *arg)
+static void initializeLoops()
 {
-  onelab2Group *obj = (onelab2Group *)arg;
-  obj->clearTree();
-  GmshNetworkClient *cli = OnelabDatabase::instance()->useAsNetworkClient(obj->getServerIP(), obj->getServerPort());
-  cli->setCallback(obj);
-  // FIXME just for debug
-  FILE *fp = fopen("/tmp/onelab.db", "rb");
-  if(fp){
-    std::cout << "Get database from onelab.db" << std::endl;
-    OnelabDatabase::instance()->fromFile(fp);
-    fclose(fp);
+  onelabUtils::initializeLoop("1");
+  onelabUtils::initializeLoop("2");
+  onelabUtils::initializeLoop("3");
+
+  if(FlGui::available() && onelab::server::instance()->getChanged())
+    FlGui::instance()->rebuildTree(false);
+}
+
+static bool incrementLoops()
+{
+  bool ret = (onelabUtils::incrementLoop("3") ||
+    onelabUtils::incrementLoop("2") ||
+    onelabUtils::incrementLoop("1"));
+
+  //Define ONELAB parameter indicating whether or not in a loop
+  onelab::number n("0Metamodel/Loop",ret?1:0);
+  n.setVisible(false);
+  onelab::server::instance()->set(n);
+
+  if(FlGui::available() && onelab::server::instance()->getChanged())
+    FlGui::instance()->rebuildTree(false);
+
+  return ret;
+}
+
+static void updateGraphs()
+{
+  bool redraw = false;
+  for(int i = 0; i < 18; i++){
+    std::ostringstream tmp;
+    tmp << i;
+    bool ret = onelabUtils::updateGraph(tmp.str());
+    redraw = redraw || ret;
+  }
+  if(redraw){
+    // don't delete the widgets, as this is called in widget callbacks
+    FlGui::instance()->updateViews(true, false);
+    drawContext::global()->draw();
   }
 }
 
-void onelab2_cb(Fl_Widget *w, void *data)
+void connect_cb(Fl_Widget *w, void *arg)
+{
+  if(!arg) return;
+  onelabGroup *obj = (onelabGroup *)arg;
+  if(strcmp(w->label(), "Connect") == 0) {
+    if(!obj->useServer()) return;
+    obj->clearTree();
+    GmshNetworkClient *cli = OnelabDatabase::instance()->useAsNetworkClient(obj->getServerIP(), obj->getServerPort());
+    cli->setCallback(obj);
+    w->label("Disconnect");
+  }
+  else {
+    obj->clearTree();
+    OnelabDatabase::instance()->useAsClient()->setCallback(obj);
+    w->label("Connect");
+  }
+}
+
+void useserver_cb(Fl_Widget *w, void *arg)
+{
+  if(!arg) return;
+  Fl_Check_Button *checkbox = (Fl_Check_Button *)w;
+  onelabGroup *obj = (onelabGroup *)arg;
+  obj->useServer(checkbox->value() == 1);
+}
+
+void onelab_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
 
   std::string action((const char*)data);
-  OnelabDatabase::instance()->onelab_cb(action);
+
+  if(action == "refresh"){
+    updateGraphs();
+    return;
+  }
+
+  if(action == "stop"){
+    // TODO
+    return;
+  }
+
+  if(action == "kill"){
+    // TODO
+    return;
+  }
+
+  if(FlGui::instance()->onelab->isBusy()){
+    Msg::Info("I'm busy! Ask me that later...");
+    return;
+  }
+  Msg::Info("Try to %s", action.c_str());
+  
+  if(action == "reset"){
+    //TODO resetDb(true);
+    action = "check";
+  }
+
+  Msg::ResetErrorCounter();
+
+  //TODO FlGui::instance()->onelab->setButtonMode("", "stop");
+
+  if(action == "compute") initializeLoops();
+
+  do{
+    //OnelabDatabase::instance()->run("Gmsh", action);
+    OnelabDatabase::instance()->run(action);
+  } while(action == "compute"
+          //&& !FlGui::instance()->onelab->stop()
+          && incrementLoops());
+}
+
+
+void solver_cb(Fl_Widget *w, void *data)
+{
+  if(!FlGui::instance()->onelab) return;
+
+  int num = (intptr_t)data;
+  if(num >= 0){
+    std::string name = opt_solver_name(num, GMSH_GET, "");
+    std::cout << name << ' ';
+    std::string exe = opt_solver_executable(num, GMSH_GET, "");
+    std::string host = opt_solver_remote_login(num, GMSH_GET, "");
+    // TODO check if the client exist, if not launch it
+    OnelabDatabase::instance()->run("initialize", name);
+  }
+  if(FlGui::instance()->onelab->isBusy())
+    FlGui::instance()->onelab->show();
+  else{
+    if(CTX::instance()->launchSolverAtStartup >= 0){
+      onelab_cb(0, (void*)"reset");
+      onelabUtils::setFirstComputationFlag(true);
+    }
+    else if(num >= 0) {
+      onelab_cb(0, (void*)"check");
+    }
+    else {
+      onelab_cb(0, (void*)"refresh");
+    }
+    FlGui::instance()->onelab->updateGearMenu();
+  }
+
+  CTX::instance()->launchSolverAtStartup = -1;
+}
+void solver_batch_cb(Fl_Widget *w, void *data)
+{
+  // TODO
 }
 
 static bool getFlColor(const std::string &str, Fl_Color &c)
@@ -56,7 +188,7 @@ static bool getFlColor(const std::string &str, Fl_Color &c)
   return false;
 }
 
-onelab2Group::onelab2Group(int x, int y, int w, int h, const char *l)
+onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   : Fl_Group(x, y, w, h, l), _stop(false), _enableTreeWidgetResize(false)
 {
   int col = FL_BACKGROUND2_COLOR;
@@ -79,18 +211,21 @@ onelab2Group::onelab2Group(int x, int y, int w, int h, const char *l)
 
   int BB2 = BB / 2 + 4;
   _butt[0] = new Fl_Button(x + w - 3 * WB - 3 * BB2, y + h - WB - BH, BB2, BH, "Check");
-  _butt[0]->callback(onelab2_cb, (void*)"check");
+  _butt[0]->callback(onelab_cb, (void*)"check");
 
   _butt[1] = new Fl_Button(x + w - 2 * WB - 2 * BB2, y + h - WB - BH, BB2, BH, "Run");
-  _butt[1]->callback(onelab2_cb, (void*)"compute");
+  _butt[1]->callback(onelab_cb, (void*)"compute");
 
-  Fl_Check_Button *useServer = new Fl_Check_Button(x+WB, y, w-2*WB, BH, "Use a distant server"); // TODO
-  Fl_Box *ip_lbl = new Fl_Box(x+WB , y+BH, w-2*WB, BH, "Server IP address:");
-  server_ip = new Fl_Input(x+WB, y+2*BH, w-2*WB, BH, "ip");
+  Fl_Check_Button *useServer = new Fl_Check_Button(x+WB, y, w-2*WB, BH, "Use a remote server");
+  useServer->callback(useserver_cb, this);
+  /*Fl_Box *ip_lbl = */new Fl_Box(x+WB , y+BH, w-2*WB, BH, "Server IP address:");
+  server_ip = new Fl_Input(x+WB, y+2*BH, w-2*WB, BH, "");
   server_ip->value("127.0.0.1");
-  Fl_Box *port_lbl = new Fl_Box(x+WB , y+3*BH, w-2*WB, BH, "Server port:");
-  server_port = new Fl_Input(x+WB, y+4*BH, w-2*WB, BH, "port");
-  server_port->value("3456");
+  server_ip->readonly(true);
+  /*Fl_Box *port_lbl = */new Fl_Box(x+WB , y+3*BH, w-2*WB, BH, "Server port:");
+  server_port = new Fl_Input(x+WB, y+4*BH, w-2*WB, BH, "");
+  server_port->value("1148");
+  server_port->readonly(true);
   Fl_Button *connect_btn = new Fl_Button(x+WB, y+5*BH, w-2*WB, BH, "Connect");
   connect_btn->callback(connect_cb, this);
 
@@ -98,12 +233,12 @@ onelab2Group::onelab2Group(int x, int y, int w, int h, const char *l)
   _widgetLabelRatio = 0.48;
   OnelabDatabase::instance()->useAsClient()->setCallback(this);
 }
-onelab2Group::~onelab2Group()
+onelabGroup::~onelabGroup()
 {
   Fl::delete_widget(_tree);
 }
 
-void onelab2Group::clearTree(bool deleteWidgets)
+void onelabGroup::clearTree(bool deleteWidgets)
 {
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
@@ -126,10 +261,77 @@ void onelab2Group::clearTree(bool deleteWidgets)
   }
 }
 
-template <class T>
-void onelab2Group::addParameter(T &p)
+void onelabGroup::openTreeItem(const std::string &name)
 {
-  std::cout << "add " << p.getName() << " to the tree (visible = " << p.getVisible() << ')' << std::endl;
+  Fl_Tree_Item *n = _tree->find_item(name.c_str());
+  if(n && n->has_children()){
+    n->open();
+    _tree->redraw();
+  }
+}
+
+void onelabGroup::updateGearMenu()
+{
+  return; // TODO
+  Fl_Menu_Item* menu = (Fl_Menu_Item*)_gear->menu();
+  int values[8] = {CTX::instance()->solver.autoSaveDatabase,
+                   CTX::instance()->solver.autoArchiveOutputFiles,
+                   CTX::instance()->solver.autoCheck,
+                   CTX::instance()->solver.autoMesh,
+                   CTX::instance()->solver.autoMergeFile,
+                   CTX::instance()->solver.autoShowViews,
+                   CTX::instance()->solver.autoShowLastStep,
+                   CTX::instance()->solver.showInvisibleParameters};
+  for(int i = 0; i < 8; i++){
+    int idx = _gearOptionsStart - 1 + i;
+    if(values[i])
+      menu[idx].set();
+    else
+      menu[idx].clear();
+  }
+}
+
+void onelabGroup::rebuildSolverList()
+{
+  updateGearMenu();
+
+  std::vector<std::string> names, exes, hosts;
+  for(int i = 0; i < NUM_SOLVERS; i++){
+    if(opt_solver_name(i, GMSH_GET, "").size()){
+      names.push_back(opt_solver_name(i, GMSH_GET, ""));
+      exes.push_back(opt_solver_executable(i, GMSH_GET, ""));
+      hosts.push_back(opt_solver_remote_login(i, GMSH_GET, ""));
+    }
+  }
+  for(unsigned int i = 0; i < NUM_SOLVERS; i++){
+    if(i < names.size()){
+      onelab::server::citer it = onelab::server::instance()->findClient(names[i]);
+      if(it != onelab::server::instance()->lastClient())
+        it->second->setIndex(i);
+      opt_solver_name(i, GMSH_SET, names[i]);
+      opt_solver_executable(i, GMSH_SET, exes[i]);
+      opt_solver_remote_login(i, GMSH_SET, hosts[i]);
+    }
+    else{
+      opt_solver_name(i, GMSH_SET, "");
+      opt_solver_executable(i, GMSH_SET, "");
+      opt_solver_remote_login(i, GMSH_SET, "");
+    }
+  }
+
+  //TODO setButtonVisibility();
+  rebuildTree(true);
+}
+bool onelabGroup::useServer() {return !server_ip->readonly();}
+void onelabGroup::useServer(bool use=false)
+{
+  server_ip->readonly(!use);
+  server_port->readonly(!use);
+}
+
+void onelabGroup::addParameter(onelab::parameter &p)
+{
+  std::cout << "add " << p.getName() << " to the tree (visible = " << p.getVisible() << ", changed = " << p.getChanged() << ")" << std::endl;
   if(!p.getVisible() || CTX::instance()->solver.showInvisibleParameters) return;
   bool highlight = false;
   Fl_Color c;
@@ -152,7 +354,7 @@ void onelab2Group::addParameter(T &p)
   _tree->end();
   _tree->redraw();
 }
-Fl_Widget *onelab2Group::_addParameterWidget(onelab::parameter &p, int ww, int hh, Fl_Tree_Item *n, bool highlight, Fl_Color c)
+Fl_Widget *onelabGroup::_addParameterWidget(onelab::parameter &p, int ww, int hh, Fl_Tree_Item *n, bool highlight, Fl_Color c)
 {
   int type = p.getAttributeType();
   if(type == onelab::number::attributeType())
@@ -165,6 +367,47 @@ Fl_Widget *onelab2Group::_addParameterWidget(onelab::parameter &p, int ww, int h
       return _addParameterWidget(*(onelab::function *)&p, ww, hh, n, highlight, c);
   return NULL;
 }
+
+template<class T>
+static void autoCheck(const T &pold, const T &pnew, bool force=false)
+{
+  if(onelabUtils::getFirstComputationFlag()){
+    if(pold.getValue() != pnew.getValue())
+      onelabUtils::setFirstComputationFlag(false);
+  }
+
+  if((CTX::instance()->solver.autoCheck && pnew.getAttribute("AutoCheck") != "0") ||
+     pnew.getAttribute("AutoCheck") == "1"){
+    if(force || pold.getValue() != pnew.getValue())
+      onelab_cb(0, (void*)"check");
+  }
+}
+
+template <class T>
+static void setGmshOption(T &n)
+{
+  std::string opt = n.getAttribute("GmshOption");
+  if(opt.empty()) return;
+  /*if(opt == "ResetDatabase"){ // special option to reset the onelab db
+    resetDb(false);
+    FlGui::instance()->rebuildTree(false);
+    return;
+  }
+  if(opt == "Reset"){ // reset db + models except current one
+    resetDb(false);
+    for(int i = PView::list.size() - 1; i >= 0; i--)
+      delete PView::list[i];
+    for(int i = GModel::list.size() - 1; i >= 0; i--)
+      if(GModel::list[i] != GModel::current()) delete GModel::list[i];
+    FlGui::instance()->rebuildTree(false);
+    return;
+  }*/
+  std::string::size_type dot = opt.find('.');
+  if(dot == std::string::npos) return;
+  GmshSetOption(opt.substr(0, dot), opt.substr(dot + 1), n.getValue());
+  drawContext::global()->draw();
+}
+
 // callback for number
 static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
 {
@@ -186,10 +429,10 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
     o->doCallbackOnValues(true);
     numbers[0].setAttribute("Loop", o->loop());
     numbers[0].setAttribute("Graph", o->graph());
-    //setGmshOption(numbers[0]);
-    OnelabDatabase::instance()->set(numbers[0]);
-    //updateGraphs();
-    //autoCheck(old, numbers[0]);
+    setGmshOption(numbers[0]);
+    OnelabDatabase::instance()->set(numbers[0], std::string("localGUI"));
+    updateGraphs();
+    autoCheck(old, numbers[0]);
   }
 }
 static void onelab_number_choice_cb(Fl_Widget *w, void *data)
@@ -203,9 +446,9 @@ static void onelab_number_choice_cb(Fl_Widget *w, void *data)
     std::vector<double> choices = numbers[0].getChoices();
     onelab::number old = numbers[0];
     if(o->value() < (int)choices.size()) numbers[0].setValue(choices[o->value()]);
-    //setGmshOption(numbers[0]);
-    OnelabDatabase::instance()->set(numbers[0]);
-    //autoCheck(old, numbers[0]);
+    setGmshOption(numbers[0]);
+    OnelabDatabase::instance()->set(numbers[0], std::string("localGUI"));
+    autoCheck(old, numbers[0]);
   }
 }
 static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
@@ -218,13 +461,13 @@ static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
     Fl_Check_Button *o = (Fl_Check_Button*)w;
     onelab::number old = numbers[0];
     numbers[0].setValue(o->value());
-    //setGmshOption(numbers[0]);
-    OnelabDatabase::instance()->set(numbers[0]);
-    //autoCheck(old, numbers[0]);
+    setGmshOption(numbers[0]);
+    OnelabDatabase::instance()->set(numbers[0], std::string("localGUI"));
+    autoCheck(old, numbers[0]);
   }
 }
 // add a parameter number to the tree
-Fl_Widget *onelab2Group::_addParameterWidget(onelab::number &p, int ww, int hh, Fl_Tree_Item *n, bool highlight, Fl_Color c)
+Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh, Fl_Tree_Item *n, bool highlight, Fl_Color c)
 {
   char *path = strdup(getPath(n).c_str());
   _treeStrings.push_back(path);
@@ -322,12 +565,12 @@ static void onelab_string_input_choice_cb(Fl_Widget *w, void *data)
     if(choices.size())
       strings[0].setAttribute("MultipleSelection", choices);
     //setGmshOption(strings[0]);
-    OnelabDatabase::instance()->set(strings[0]);
-    //autoCheck(old, strings[0]);
+    OnelabDatabase::instance()->set(strings[0], "localGUI");
+    autoCheck(old, strings[0]);
   }
 }
 // add parameter string to tree
-Fl_Widget *onelab2Group::_addParameterWidget(onelab::string &p, int ww, int hh,
+Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
                                             Fl_Tree_Item *n, bool highlight, Fl_Color c)
 {
   char *path = strdup(getPath(n).c_str());
@@ -402,7 +645,7 @@ Fl_Widget *onelab2Group::_addParameterWidget(onelab::string &p, int ww, int hh,
   if(highlight) but->input()->color(c);
   return but;
 }
-Fl_Widget *onelab2Group::_addParameterWidget(onelab::region &p, int ww, int hh,
+Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, int ww, int hh,
                                             Fl_Tree_Item *n, bool highlight, Fl_Color c)
 {
   char *path = strdup(getPath(n).c_str());
@@ -425,7 +668,7 @@ Fl_Widget *onelab2Group::_addParameterWidget(onelab::region &p, int ww, int hh,
   return but;
 }
 
-Fl_Widget *onelab2Group::_addParameterWidget(onelab::function &p, int ww, int hh,
+Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, int ww, int hh,
                                             Fl_Tree_Item *n, bool highlight, Fl_Color c)
 {
   // non-editable value
@@ -438,15 +681,16 @@ Fl_Widget *onelab2Group::_addParameterWidget(onelab::function &p, int ww, int hh
   }
 }
 
-void onelab2Group::updateParameter(onelab::parameter &p)
+void onelabGroup::updateParameter(onelab::parameter &p)
 {
+  std::cout << "update " << p.getName() << " to the tree (visible = " << p.getVisible() << ", changed = " << p.getChanged() << ")" << std::endl;
   int type = p.getAttributeType();
   if(type == onelab::number::attributeType())
       return updateParameter(*(onelab::number *)&p);
   if(type == onelab::string::attributeType())
       return updateParameter(*(onelab::string *)&p);
 }
-void onelab2Group::updateParameter(onelab::number &p)
+void onelabGroup::updateParameter(onelab::number &p)
 {
   Fl_Tree_Item *n = _tree->find_item(p.getName().c_str());
   if(!n) {
@@ -506,7 +750,7 @@ void onelab2Group::updateParameter(onelab::number &p)
   but->loop(p.getAttribute("Loop"));
   but->graph(p.getAttribute("Graph"));
 }
-void onelab2Group::updateParameter(onelab::string &p)
+void onelabGroup::updateParameter(onelab::string &p)
 {
   Fl_Tree_Item *n = _tree->find_item(p.getName().c_str());
   if(!n) {
@@ -538,19 +782,26 @@ void onelab2Group::updateParameter(onelab::string &p)
   but->value(p.getValue().c_str());
 }
 
-void onelab2Group::removeParameter(onelab::parameter &p)
+void onelabGroup::removeParameter(onelab::parameter &p)
 {
   Fl_Tree_Item *n = _tree->find_item(p.getName().c_str());
   _tree->remove(n);
 }
 
-void onelab2Group::_computeWidths()
+void onelabGroup::_computeWidths()
 {
   _baseWidth = (int)(_tree->w() - _tree->marginleft());
   _indent = (int)(_tree->connectorwidth() / 2. + _tree->openicon()->w() / 2.);
 }
 
-std::string onelab2Group::getPath(Fl_Tree_Item *item)
+bool onelabGroup::isBusy()
+{
+  std::string s(_butt[1]->label());
+  if(s == "Run") return false;
+  return true;
+}
+
+std::string onelabGroup::getPath(Fl_Tree_Item *item)
 {
   if(!item){
     Msg::Error("No item for path");
@@ -564,3 +815,72 @@ std::string onelab2Group::getPath(Fl_Tree_Item *item)
   return std::string(path);
 }
 
+void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback, void *data)
+{
+  Fl_Tree_Item *n = _tree->add(path.c_str());
+  _tree->begin();
+  int ww = _baseWidth - (n->depth() + 1) * _indent;
+  int hh = n->labelsize() + 4;
+  Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
+  Fl_Button *but = new Fl_Button(1, 1, ww, hh);
+  but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+  but->callback(callback, data);
+  but->box(FL_FLAT_BOX);
+  but->color(_tree->color());
+  but->selection_color(_tree->color());
+  grp->end();
+  if(!_enableTreeWidgetResize) grp->resizable(0);
+  _treeWidgets.push_back(grp);
+  std::string label = path;
+  std::string::size_type last = path.find_last_of('/');
+  if(last != std::string::npos) label = path.substr(last + 1);
+  but->copy_label(label.c_str());
+  n->widget(grp);
+  _tree->end();
+}
+
+void onelabGroup::_addSolverMenu(int num)
+{
+  std::ostringstream path;
+  path << "0Modules/Solver/Solver" << num;
+  Fl_Tree_Item *n = _tree->add(path.str().c_str());
+  int ww = _baseWidth - (n->depth() + 1) * _indent;
+  int hh = n->labelsize() + 4;
+  _tree->begin();
+  Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
+  new solverButton(1, 1, ww, hh, num, _tree->color());
+  grp->end();
+  if(!_enableTreeWidgetResize) grp->resizable(0);
+  _treeWidgets.push_back(grp);
+  n->widget(grp);
+  _tree->end();
+}
+
+void onelabGroup::_addViewMenu(int num)
+{
+  std::ostringstream path;
+  path << "0Modules/Post-processing/View" << num;
+  Fl_Tree_Item *n = _tree->add(path.str().c_str());
+  int ww = _baseWidth - (n->depth() + 1) * _indent;
+  int hh = n->labelsize() + 4;
+  _tree->begin();
+  Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
+  new viewButton(1, 1, ww, hh, num, _tree->color());
+  grp->end();
+  if(!_enableTreeWidgetResize) grp->resizable(0);
+  _treeWidgets.push_back(grp);
+  n->widget(grp);
+  _tree->end();
+}
+
+viewButton *onelabGroup::getViewButton(int num)
+{
+  char tmp[256];
+  sprintf(tmp, "0Modules/Post-processing/View%d", num);
+  Fl_Tree_Item *n = _tree->find_item(tmp);
+  if(n){
+    Fl_Group *grp = (Fl_Group*)n->widget();
+    return (viewButton*)grp->child(0);
+  }
+  return 0;
+}

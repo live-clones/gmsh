@@ -2,11 +2,15 @@
 #define _ONELABCLIENT_H_
 
 #include <vector>
+#include <unistd.h>
 
-#include "NetworkUtils.h"
 #include "VirtualClient.h"
-#include "OnelabLocalNetworkClient.h"
 #include "OnelabProtocol.h"
+#ifdef HAVE_UDT
+#include "UdtUtils.h"
+#else
+#include "NetworkUtils.h"
+#endif
 
 class OnelabNetworkClient : VirtualClient
 {
@@ -23,7 +27,16 @@ private:
 		OnelabProtocol msg(OnelabProtocol::OnelabRequest);
 		msg.attrs.push_back(new OnelabAttrParameterQuery(name.c_str(), T::attributeType()));
 		this->request(msg);
-		return true;
+		// wait for the answer
+    fd_set readfds;
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+    FD_ZERO(&readfds);
+    FD_SET(_fds, &readfds);
+    int nfds = select(_fds+1, &readfds, NULL, NULL, &timeout);
+    usleep(100000); // FIXME sleep while read the buffer
+    return nfds > 0;
 	}
 	void requestParameters(); // request all parameter for this client
 public:
@@ -59,7 +72,10 @@ public:
 	}
 	template <class T> bool get(std::vector<T> &ps, const std::string &name=""){
 		if(_parameterSpace->get(ps, name, this->_name) && ps.size() == 0)
-			return requestParameter(ps, name);
+			if(requestParameter(ps, name))
+        return _parameterSpace->get(ps, name, this->_name) && ps.size() == 0;
+      else
+        return false;
 		return true;
 	}
   FILE *openFile(const std::string name, const char *mode="rb")
@@ -121,15 +137,14 @@ public:
 	// network specific method
 	bool connect();
 	bool isConnected(){return _connected;}
-	void recvfrom(OnelabProtocol &msg);
+	int recvfrom(OnelabProtocol &msg);
 	int recvfrom(UInt8 *buff, UInt16 maxlen);
 	void sendto(UInt8 *buff, UInt16 len);
 	void disconnect();
 	void setRemoteIP(unsigned long ip){if(!_connected) _ip.address=ip;}
 	void setRemotePort(unsigned short port){if(!_connected) _ip.port=port;}
 
-  void run() {}
-  void stop() {}
+  void run(std::string action) {}
 };
 
 #endif

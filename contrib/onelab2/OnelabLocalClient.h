@@ -15,18 +15,18 @@ public:
 	OnelabLocalClient(std::string name, onelab::parameterSpace *parameterSpace)
 		: VirtualClient(name, parameterSpace){
 	}
-	template <class T> bool set(const T &p){
-		return _parameterSpace->set(p, this->_name);
-	}
-	template <class T> bool get(std::vector<T> &ps, const std::string &name=""){
-		return _parameterSpace->get(ps, name, this->_name);
-	}
 	virtual ~OnelabLocalClient(){}
-	void onNewParameter(onelab::parameter *p){}
-  void onUpdateParameter(onelab::parameter *p){}
-  void onRemoveParameter(onelab::parameter *p){}
+  template <class T> bool set(const T &p){
+    return _parameterSpace->set(p, this->_name);
+  }
+  template <class T> bool get(std::vector<T> &ps, const std::string &name){
+  	return _parameterSpace->get(ps, name, _name);
+  }
+	virtual void onNewParameter(onelab::parameter *p){}
+  virtual void onUpdateParameter(onelab::parameter *p){}
+  virtual void onRemoveParameter(onelab::parameter *p){}
 
-  void run() {}
+  virtual void run(std::string action) {}
   void stop() {}
 };
 

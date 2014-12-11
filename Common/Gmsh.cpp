@@ -46,7 +46,18 @@
 #include "FlGui.h"
 #include "graphicWindow.h"
 #include "drawContext.h"
+#if defined(HAVE_ONELAB2)
+#include "onelab2Group.h"
+#else
 #include "onelabGroup.h"
+#endif
+#endif
+
+#if defined(HAVE_ONELAB2)
+#include "OnelabDatabase.h"
+#include "NetworkUtils.h"
+
+OnelabDatabase *OnelabDatabase::_instance = NULL;
 #endif
 
 int GmshInitialize(int argc, char **argv)
@@ -207,6 +218,7 @@ int GmshBatch()
       MergeFile(CTX::instance()->files[i]);
   }
 
+
 #if defined(HAVE_POST) && defined(HAVE_MESH)
   if(!CTX::instance()->bgmFileName.empty()) {
     MergePostProcessingFile(CTX::instance()->bgmFileName);
@@ -333,7 +345,6 @@ int GmshFLTK(int argc, char **argv)
     else
       Msg::Error("Invalid background mesh (no view)");
   }
-
   // listen to external solvers
   if(CTX::instance()->solver.listen){
     gmshLocalNetworkClient *c = new gmshLocalNetworkClient("Listen", "");

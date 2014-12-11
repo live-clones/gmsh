@@ -18,7 +18,7 @@ UInt8 *OnelabAttrStart::parseAttribute(UInt8 *src, UInt32 length)
 
 	return src+length;
 }
-void OnelabAttrStart::showAttribute()
+void OnelabAttrStart::showAttribute() const
 {
 	std::cout << "\033[1m" << "Attribute start:"<< getAttributeType() << "\033[0m"<< std::endl
 		<< "name:   " << _name << std::endl;
@@ -43,7 +43,7 @@ UInt8 *OnelabAttrParameterQuery::parseAttribute(UInt8 *src, UInt32 length)
 
 	return src+length;
 }
-void OnelabAttrParameterQuery::showAttribute()
+void OnelabAttrParameterQuery::showAttribute() const
 {
 	std::cout << "\033[1m" << "Attribute parameter query:"<< getAttributeType() << "\033[0m"<< std::endl
 		<< "type:   " << this->_ptype << std::endl
@@ -72,14 +72,14 @@ UInt8 *OnelabAttrMessage::parseAttribute(UInt8 *src, UInt32 length)
 
 	return src;
 }
-void OnelabAttrMessage::showAttribute()
+void OnelabAttrMessage::showAttribute() const
 {
 	std::cout << "Attribute message:" << std::endl
 		<< "Level:   " << _level << std::endl
 		<< "Message: " << _message << std::endl;
 }
 
-UInt8 *OnelabAttrAction::encodeAttibute(UInt8 *dst)
+UInt8 *OnelabAttrAction::encodeAttribute(UInt8 *dst)
 {
   dst = encode(dst, getAttributeType());
   dst = encode(dst, getAttributeLength());
@@ -90,13 +90,20 @@ UInt8 *OnelabAttrAction::encodeAttibute(UInt8 *dst)
   return dst;
 }
 
-UInt8 *OnelabAttrAction::parseAttibute(UInt8 *src, UInt32 length)
+UInt8 *OnelabAttrAction::parseAttribute(UInt8 *src, UInt32 length)
 {
   _client.assign((char *)src);
   src += _client.size()+1;
   _action.assign((char *)src, length-_client.size()-1);
   src += _action.size();
   return src;
+}
+
+void OnelabAttrAction::showAttribute() const
+{
+	std::cout << "\033[1m" << "Attribute action:"<< getAttributeType() << "\033[0m"<< std::endl
+		<< "client (target):  " << _client << std::endl
+		<< "action:           " << _action << std::endl;
 }
 
 UInt8 *OnelabAttrFileQuery::encodeAttribute(UInt8 *dst)
@@ -126,6 +133,13 @@ void OnelabAttrFileQuery::setFilename(const std::string name)
   _length = name.size();
   _name = strndup(name.c_str(), _length);
 }
+void OnelabAttrFileQuery::showAttribute() const
+{
+	std::cout << "\033[1m" << "Attribute file query:"<< getAttributeType() << "\033[0m"<< std::endl
+		<< "client (file):  " << _client << std::endl
+		<< "file:           " << _name << std::endl;
+}
+
 
 UInt8 *OnelabAttrFile::encodeAttribute(UInt8 *dst)
 {
@@ -144,4 +158,9 @@ UInt8 *OnelabAttrFile::parseAttribute(UInt8 *src, UInt32 length)
   src = parse(src, _filelength);
   _name = strndup((char *)src, length-4);
   return  src+length-4;
+}
+void OnelabAttrFile::showAttribute() const
+{
+	std::cout << "\033[1m" << "Attribute file:"<< getAttributeType() << "\033[0m"<< std::endl
+		<< "file:           " << _name << std::endl;
 }

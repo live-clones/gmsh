@@ -252,6 +252,11 @@ class CTX {
     int autoSaveDatabase, autoArchiveOutputFiles, autoMesh, autoMergeFile;
     int autoShowViews, autoShowLastStep, autoCheck, showInvisibleParameters;
   }solver;
+  // onelab options
+  struct{
+    short listen_port, server_port;
+    char server_ip[16];
+  }onelab;
   // print options
   struct{
     int fileFormat, epsQuality, epsCompress, epsPS3Shading;

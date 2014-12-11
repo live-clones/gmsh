@@ -106,7 +106,6 @@ int ip4_socket_send(Socket fd, UInt8 *src, int length, IPv4 dst)
 
 	// TODO handle error (length != sent) for ??? and (sent < 0) for local error
   std::cout << "ip: send " << sent << "/" << length << "bytes to " << ip4_inet_ntop(dst.address)<< ':' << dst.port << std::endl;
-  //usleep(100000);
 	return (int)sent;
 }
 

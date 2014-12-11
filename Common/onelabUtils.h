@@ -12,9 +12,15 @@
 // onelab servers
 
 namespace onelabUtils {
+#ifdef HAVE_ONELAB2
+  std::vector<std::string> getCommandLine(const std::string client);
+  std::string getMshFileName();
+  void guessModelName(onelab::client *c); // TODO ?
+#else
   std::vector<std::string> getCommandLine(onelab::client *c);
   std::string getMshFileName(onelab::client *c);
   void guessModelName(onelab::client *c);
+#endif
   void initializeLoop(const std::string &level);
   bool incrementLoop(const std::string &level);
   std::vector<double> getRange(onelab::number &p);

@@ -3,19 +3,33 @@
 
 #include "OnelabLocalClient.h"
 
+#ifdef HAVE_FLTK
+class onelabGroup;
+#endif
+
 class GmshLocalClient : public OnelabLocalClient
 {
 private:
-  onelab2Group *_cb_obj;
+#ifdef HAVE_FLTK
+  onelabGroup *_cb_obj;
+#endif
 public:
+#ifdef HAVE_FLTK
 	GmshLocalClient(std::string name, onelab::parameterSpace *parameterSpace)
 		: OnelabLocalClient(name, parameterSpace){
+    _cb_obj = NULL;
 	}
 	~GmshLocalClient(){}
-  void setCallback(onelab2Group *cb) {_cb_obj = cb;}
-	void onNewParameter(onelab::parameter *p){_cb_obj->addParameter(*p);}
-  void onUpdateParameter(onelab::parameter *p){_cb_obj->updateParameter(*p);}
-  void onRemoveParameter(onelab::parameter *p){_cb_obj->removeParameter(*p);}
+  void setCallback(onelabGroup *cb);
+	void onNewParameter(onelab::parameter *p);
+  void onUpdateParameter(onelab::parameter *p);
+  void onRemoveParameter(onelab::parameter *p);
+#else
+	GmshLocalClient(std::string name, onelab::parameterSpace *parameterSpace)
+		: OnelabLocalClient(name, parameterSpace){}
+#endif
+
+  void run(std::string action);
 };
 
 #endif

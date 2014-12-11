@@ -38,8 +38,7 @@ public:
   virtual void onUpdateParameter(onelab::parameter *) = 0;
   virtual void onRemoveParameter(onelab::parameter *) = 0;
 
-  virtual void run() = 0;
-  virtual void stop() = 0;
+  virtual void run(std::string action) = 0;
 };
 
 #endif

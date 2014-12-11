@@ -48,9 +48,11 @@ int OnelabLocalNetworkClient::recvmsg(OnelabProtocol &msg)
   if(recvlen != 4) return recvlen;
   int msglen = msg.parseHeader(header, recvlen);
   // then recv the message
+  if(msglen == 0) return 4;
   buff = (UInt8 *) malloc(sizeof(UInt8)*msglen);
   recvlen = recvfrom(buff, msglen); // recvlen should be equals to msglen
   msg.parseMessage(buff, recvlen);
+  free(buff);
   return recvlen + 4;
 }
 void OnelabLocalNetworkClient::updateParameter(onelab::parameter *p)
@@ -60,4 +62,12 @@ void OnelabLocalNetworkClient::updateParameter(onelab::parameter *p)
   UInt8 buff[1024];
   unsigned int recvlen = msg.encodeMsg(buff, 1024);
   sendto(buff, recvlen);
+}
+void OnelabLocalNetworkClient::run(std::string action)
+{
+  OnelabProtocol msg(OnelabProtocol::OnelabAction);
+  msg.attrs.push_back(new OnelabAttrAction(action, _name));
+  UInt8 buff[1024];
+  unsigned int size = msg.encodeMsg(buff, 1024);
+  sendto(buff, size);
 }

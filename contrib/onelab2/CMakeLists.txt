@@ -1,10 +1,13 @@
 set(SRC
   NetworkUtils.cpp
   OnelabAttributes.cpp
+  OnelabDatabase.cpp
   OnelabProtocol.cpp
   OnelabLocalNetworkClient.cpp
   OnelabServer.cpp
-  OnelabNetworkClient.cpp)
+  OnelabNetworkClient.cpp
+  GmshNetworkClient.cpp
+  GmshLocalClient.cpp)
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(contrib/onelab2 "${SRC};${HDR}")

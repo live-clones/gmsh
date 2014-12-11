@@ -25,7 +25,7 @@ public:
 
 	virtual UInt8 *encodeAttribute(UInt8 *dst) = 0;
 	virtual UInt8 *parseAttribute(UInt8 *src, UInt32 length) = 0;
-	virtual void showAttribute() = 0;
+	virtual void showAttribute() const = 0;
 
 	virtual inline UInt16 getAttributeType() const = 0;
 	virtual inline UInt16 getAttributeLength() const = 0;
@@ -61,7 +61,7 @@ public:
 	~OnelabAttrStart(){}
 	UInt8 *encodeAttribute(UInt8 *dst);
 	UInt8 *parseAttribute(UInt8 *src, UInt32 length);
-	void showAttribute();
+	void showAttribute() const;
 
 	static UInt16 attributeType() {return 0x04;}
 	inline UInt16 getAttributeType() const {return this->attributeType();}
@@ -81,7 +81,7 @@ public:
 	~OnelabAttrParameterQuery() {}
 	UInt8 *encodeAttribute(UInt8 *buff);
 	UInt8 *parseAttribute(UInt8 *buff, UInt32 length);
-	void showAttribute();
+	void showAttribute() const;
 
 	static UInt16 attributeType() {return 0x05;}
 	inline UInt16 getAttributeType() const {return this->attributeType();}
@@ -94,17 +94,17 @@ public:
 class OnelabAttrMessage : public OnelabAttr
 {
 private:
-	UInt8 _level;
-	UInt8 *_message;
+	UInt8 *_message = NULL;
 	UInt16 _messageLength;
+	UInt8 _level;
 	
 public:
-	OnelabAttrMessage() {this->_message = NULL; this->_level = 0;}
-	OnelabAttrMessage(std::string message, const int level=OnelabAttrMessage::Debug) {setMessage(message, level);}
+	OnelabAttrMessage() : _message(NULL), _messageLength(0), _level(0) {}
+	OnelabAttrMessage(std::string message, const int level=OnelabAttrMessage::Debug) : _message(NULL){setMessage(message, level);}
 	~OnelabAttrMessage(){if(_message != NULL) free(_message);};
 	UInt8 *encodeAttribute(UInt8 *dst);
 	UInt8 *parseAttribute(UInt8 *src, UInt32 length);
-	void showAttribute();
+	void showAttribute() const;
 
 	static UInt16 attributeType() {return 0x0A;}
 	inline UInt16 getAttributeType() const {return this->attributeType();}
@@ -134,18 +134,19 @@ class OnelabAttrAction : public OnelabAttr
 private:
   std::string _action;
   std::string _client;
+
 public:
   OnelabAttrAction() : _action(""), _client("") {}
   OnelabAttrAction(std::string action, std::string client) : _action(action), _client(client) {}
   ~OnelabAttrAction() {}
 
-  static UInt16 attributeType() {return 0x10;}
-  inline UInt16 getAttibuteType() const {return attributeType();}
-  inline UInt16 getAttibuteLength() const {return _client.size()+1+_action.size();}
+  UInt8 *encodeAttribute(UInt8 *dst);
+  UInt8 *parseAttribute(UInt8 *src, UInt32 lenght);
+  void showAttribute() const;
 
-  UInt8 *encodeAttibute(UInt8 *dst);
-  UInt8 *parseAttibute(UInt8 *src, UInt32 lenght);
-  void showAttribute() {}
+  static UInt16 attributeType() {return 0x10;}
+  inline UInt16 getAttributeType() const {return attributeType();}
+  inline UInt16 getAttributeLength() const {return _client.size()+1+_action.size();}
 
   void setAction(std::string action) {_action = action;}
   void setClient(std::string client) {_client = client;}
@@ -166,7 +167,7 @@ public:
   ~OnelabAttrFileQuery() {if(_name != NULL) free(_name);}
   UInt8 *encodeAttribute(UInt8 *dst);
   UInt8 *parseAttribute(UInt8 *src, UInt32 length);
-  void showAttribute(){}
+  void showAttribute() const;
 
   static UInt16 attributeType() {return 0x0B;}
   inline UInt16 getAttributeType() const {return attributeType();}
@@ -190,7 +191,7 @@ public:
   ~OnelabAttrFile() {if(_name != NULL) free(_name);}
   UInt8 *encodeAttribute(UInt8 *dst);
   UInt8 *parseAttribute(UInt8 *src, UInt32 length);
-  void showAttribute(){}
+  void showAttribute() const;
 
   static UInt16 attributeType() {return 0x0C;}
   inline UInt16 getAttributeType() const {return attributeType();}

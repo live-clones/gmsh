@@ -874,8 +874,34 @@ void GetOptions(int argc, char *argv[])
           Msg::Fatal("Missing format");
       }
       else if(!strcmp(argv[i] + 1, "listen")) {
+#ifndef HAVE_ONELAB2
         CTX::instance()->solver.listen = 1;
+#else
+        CTX::instance()->batch = 1;
         i++;
+        if(argv[i]) {
+          CTX::instance()->onelab.listen_port = atoi(argv[i]);
+        }
+        else
+          CTX::instance()->onelab.listen_port = 1148;
+        // TODO get port if one is provided
+#endif
+      }
+      else if(!strcmp(argv[i] + 1, "server")) {
+        CTX::instance()->batch = 1;
+        i++;
+        if(argv[i]){
+          std::string hostname = std::string(argv[i]);
+          size_t colon = hostname.find(':');
+          if(colon != std::string::npos) {
+            strcpy(&CTX::instance()->onelab.server_ip[0], hostname.substr(0,colon).c_str());
+            CTX::instance()->onelab.server_port = atoi(hostname.substr(colon+1).c_str());
+          }
+          else {
+            CTX::instance()->onelab.server_ip[0] = '\0';
+            CTX::instance()->onelab.server_port = 0;
+          }
+        }
       }
       else if(!strcmp(argv[i] + 1, "minterpreter")) {
         i++;

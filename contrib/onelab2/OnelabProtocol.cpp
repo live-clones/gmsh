@@ -57,7 +57,7 @@ UInt32 OnelabProtocol::parseMessage(UInt8 *buff, UInt32 len)
 {
   UInt8 *ptr = buff;
   UInt8 *payload = ptr;
-  unsigned short parsed = 4;
+  unsigned short parsed = 4; // header size
   unsigned short size = _size;
 	while(size >= 4) {
 		UInt16 attrType = 0;
@@ -96,6 +96,10 @@ UInt32 OnelabProtocol::parseMessage(UInt8 *buff, UInt32 len)
 				this->attrs.push_back(new OnelabAttrParameterQuery());
 				((OnelabAttrParameterQuery *)this->attrs.back())->parseAttribute(ptr, attrSize);
 				break;
+      case 0x10:
+        this->attrs.push_back(new OnelabAttrAction());
+				((OnelabAttrAction *)this->attrs.back())->parseAttribute(ptr, attrSize);
+				break;
       case 0x0b:
 				this->attrs.push_back(new OnelabAttrFileQuery());
 				((OnelabAttrFileQuery *)this->attrs.back())->parseAttribute(ptr, attrSize);
@@ -113,7 +117,7 @@ UInt32 OnelabProtocol::parseMessage(UInt8 *buff, UInt32 len)
 		}
 		ptr += attrSize;
 		size -= attrSize;
-    parsed += attrSize+4;
+    parsed += (attrSize+4);
 	}
   if(parsed != len) {std::cout << "parse - size left:"  << len-parsed << '-' << size << "(len is "<< len <<" and parsed is "<< parsed <<" )" << std::endl;}
  
@@ -171,6 +175,10 @@ UInt32 OnelabProtocol::parseMsg(UInt8 *buff, UInt32 len)
 			case OnelabAttr::Parameter:
 				this->attrs.push_back(new OnelabAttrParameterQuery());
 				((OnelabAttrParameterQuery *)this->attrs.back())->parseAttribute(ptr, attrSize);
+				break;
+      case 0x10:
+        this->attrs.push_back(new OnelabAttrAction());
+				((OnelabAttrAction *)this->attrs.back())->parseAttribute(ptr, attrSize);
 				break;
       case 0x0b:
 				this->attrs.push_back(new OnelabAttrFileQuery());

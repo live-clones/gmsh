@@ -18,7 +18,11 @@
 #include "OpenFile.h"
 #include "Field.h"
 #include "OS.h"
+#ifdef HAVE_ONELAB2
+#include "onelab2Group.h"
+#else
 #include "onelabGroup.h"
+#endif
 #include "viewButton.h"
 
 static void view_toggle_cb(Fl_Widget *w, void *data)

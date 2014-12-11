@@ -33,10 +33,6 @@ typedef unsigned long intptr_t;
 #include "fieldWindow.h"
 #include "pluginWindow.h"
 #include "helpWindow.h"
-#include "onelabGroup.h"
-#ifdef HAVE_ONELAB2
-#include "onelab2Group.h"
-#endif
 #include "gmshLocalNetworkClient.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
@@ -3027,17 +3023,8 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   }
 
   if(main && !detachedMenu){
-#if defined(HAVE_ONELAB2)
-    // Hey Maxime, this is for you!
-    _onelab = NULL;
-    onelab2Group *_onelab2 = new onelab2Group(0, mh, twidth, height - mh - sh);
-    _tile->add(_onelab2);
-    _onelab2->resize(_tile->x(), _tile->y(), twidth, _tile->h());
-    _tile->redraw();
-#else
     _onelab = new onelabGroup(0, mh, twidth, height - mh - sh);
     _onelab->enableTreeWidgetResize(false);
-#endif
   }
   else{
     _onelab = 0;

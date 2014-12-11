@@ -35,7 +35,7 @@ public:
 	unsigned int getIp() {return _ip.address;}
 	unsigned short getPort() {return _ip.port;}
 
-  void run() {}
-  void stop() {}
+  void run(std::string action);
+  void stop() {} // TODO
 };
 #endif

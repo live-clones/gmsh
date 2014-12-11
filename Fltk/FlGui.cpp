@@ -29,7 +29,11 @@ typedef unsigned long intptr_t;
 #include "clippingWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
+#ifdef HAVE_ONELAB2
+#include "onelab2Group.h"
+#else
 #include "onelabGroup.h"
+#endif
 #include "helpWindow.h"
 #include "colorbarWindow.h"
 #include "fileDialogs.h"

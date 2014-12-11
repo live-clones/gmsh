@@ -58,9 +58,15 @@ class gmshLocalNetworkClient : public onelab::localNetworkClient{
     }
     return n;
   }
+#ifdef HAVE_ONELAB2 // Useless code in onelab2
+  bool receiveMessage(gmshLocalNetworkClient *master){return true;}
+  bool run(){return true;}
+  bool kill(){return true;}
+#else
   bool receiveMessage(gmshLocalNetworkClient *master);
   bool run();
   bool kill();
+#endif
 };
 
 #endif

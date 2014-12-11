@@ -42,7 +42,11 @@
 #if defined(HAVE_FLTK)
 #include <FL/fl_ask.H>
 #include "FlGui.h"
+#if defined(HAVE_ONELAB2)
+#include "onelab2Group.h"
+#else
 #include "onelabGroup.h"
+#endif
 #include "graphicWindow.h"
 #include "drawContext.h"
 #endif

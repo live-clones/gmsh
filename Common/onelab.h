@@ -371,7 +371,7 @@ namespace onelab{
 
       return src;
     }
-    void showAttribute()
+    void showAttribute() const
     {
       std::cout << "Name: " << getName() << std::endl
         << "Label: " << getLabel() << std::endl
@@ -560,7 +560,7 @@ namespace onelab{
 
       return src;
     }
-    void showAttribute()
+    void showAttribute() const
     {
       parameter::showAttribute();
       std::cout << "Value: " << this->_value << std::endl
@@ -671,7 +671,7 @@ namespace onelab{
 
       return src;
     }
-    void showAttribute()
+    void showAttribute() const
     {
       parameter::showAttribute();
       std::cout << "Value: " << this->_value << std::endl;
@@ -813,7 +813,7 @@ namespace onelab{
       }
       return src;
     }
-    void showAttribute() {}
+    void showAttribute() const {}
 #endif
 
   };
@@ -961,7 +961,7 @@ namespace onelab{
       }
       return src;
     }
-    void showAttribute() {}
+    void showAttribute() const {}
 #endif
   };
 

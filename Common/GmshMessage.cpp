@@ -27,8 +27,11 @@
 
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
-#include "gmshLocalNetworkClient.h"
 #endif
+#if defined(HAVE_ONELAB2)
+#include "OnelabDatabase.h"
+#endif
+#include "gmshLocalNetworkClient.h"
 
 #if defined(HAVE_PETSC)
 #include <petsc.h>
@@ -712,7 +715,17 @@ bool Msg::UseOnelab()
 
 void Msg::SetOnelabNumber(std::string name, double val, bool visible)
 {
-#if defined(HAVE_ONELAB)
+#ifdef HAVE_ONELAB2
+  std::vector<onelab::number> numbers;
+  OnelabDatabase::instance()->get(numbers, name);
+  if(numbers.empty()) {
+    numbers.resize(1);
+    numbers[0].setName(name);
+  }
+  numbers[0].setValue(val);
+  numbers[0].setVisible(visible);
+  OnelabDatabase::instance()->set(numbers[0], std::string("Gmsh"));
+#elif defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::number> numbers;
     _onelabClient->get(numbers, name);
@@ -740,6 +753,9 @@ void Msg::SetOnelabString(std::string name, std::string val, bool visible)
     strings[0].setValue(val);
     strings[0].setVisible(visible);
     _onelabClient->set(strings[0]);
+#ifdef HAVE_ONELAB2
+    OnelabDatabase::instance()->set(strings[0], std::string("Gmsh"));
+#endif
   }
 #endif
 }
@@ -782,6 +798,9 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
       FILE *fp = Fopen(name.c_str(), "rb");
       if(fp){
         _onelabClient->fromFile(fp);
+#ifdef HAVE_ONELAB2
+       OnelabDatabase::instance()->fromFile(fp); 
+#endif
         fclose(fp);
       }
       else
@@ -909,7 +928,11 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   }
 
   std::vector<onelab::number> ps;
+#ifdef HAVE_ONELAB2
+  OnelabDatabase::instance()->get(ps, name);
+#else
   _onelabClient->get(ps, name);
+#endif
   bool noRange = true, noChoices = true, noLoop = true;
   bool noGraph = true, noClosed = true;
   if(ps.size()){
@@ -989,7 +1012,11 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(noClosed && fopt.count("Closed"))
     ps[0].setAttribute("Closed", fopt["Closed"][0] ? "1" : "0");
   _setStandardOptions(&ps[0], fopt, copt);
+#ifdef HAVE_ONELAB2
+  OnelabDatabase::instance()->set(ps[0], std::string("Gmsh"));
+#else
   _onelabClient->set(ps[0]);
+#endif
 #endif
 }
 
@@ -1014,7 +1041,11 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   }
 
   std::vector<onelab::string> ps;
+#ifdef HAVE_ONELAB2
+  OnelabDatabase::instance()->get(ps, name);
+#else
   _onelabClient->get(ps, name);
+#endif
   bool noChoices = true, noClosed = true, noMultipleSelection = true;
   if(ps.size()){
     if(fopt.count("ReadOnly") && fopt["ReadOnly"][0])
@@ -1043,7 +1074,11 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(noMultipleSelection && copt.count("MultipleSelection"))
     ps[0].setAttribute("MultipleSelection", copt["MultipleSelection"][0]);
   _setStandardOptions(&ps[0], fopt, copt);
+#ifdef HAVE_ONELAB2
+    OnelabDatabase::instance()->set(ps[0], std::string("Gmsh"));
+#else
   _onelabClient->set(ps[0]);
+#endif
 #endif
 }
 

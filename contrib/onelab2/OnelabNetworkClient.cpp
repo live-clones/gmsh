@@ -80,12 +80,22 @@ int OnelabNetworkClient::recvfrom(UInt8 *buff, UInt16 maxlen)
   return udt_socket_recv(_fdu, buff, maxlen);
 #endif
 }
-void OnelabNetworkClient::recvfrom(OnelabProtocol &msg)
+int OnelabNetworkClient::recvfrom(OnelabProtocol &msg)
 {
-  UInt16 bufflen = 1024, recvlen = 0;
-  UInt8 buff[1024];
-  recvlen = this->recvfrom(buff, bufflen);
-  msg.parseMsg(buff, recvlen);
+  UInt8 header[8];
+  UInt8 *buff = NULL;
+  int recvlen = 0;
+  // recv the header
+  recvlen = recvfrom(header, 4);
+  if(recvlen != 4) return recvlen;
+  int msglen = msg.parseHeader(header, recvlen);
+  // then recv the message
+  if(msglen == 0) return 4;
+  buff = (UInt8 *) malloc(sizeof(UInt8)*msglen);
+  recvlen = recvfrom(buff, msglen); // recvlen should be equals to msglen
+  msg.parseMessage(buff, recvlen);
+  free(buff);
+  return recvlen + 4;
 }
 bool OnelabNetworkClient::connect()
 {
@@ -110,7 +120,7 @@ bool OnelabNetworkClient::connect()
 #ifdef HAVE_UDT
   udt_socket_timeout(_fdu, 3);
 #endif
-  //ip4_socket_timeout(_fds, 3);
+  ip4_socket_timeout(_fds, 3);
   recvlen = recvfrom(buff, bufflen);
 
 #ifdef HAVE_UDT

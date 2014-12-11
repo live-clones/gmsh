@@ -22,10 +22,63 @@
 #include "PViewOptions.h"
 #endif
 
+#if defined(HAVE_ONELAB2)
+#include "OnelabDatabase.h"
+#include "OnelabServer.h"
+#endif
+
 namespace onelabUtils {
 
   // get command line arguments for the client if "UseCommandLine" is set for
   // this client
+#ifdef HAVE_ONELAB2
+  std::vector<std::string> getCommandLine(const std::string client)
+  {
+    std::vector<std::string> args;
+    std::vector<onelab::number> n;
+    OnelabDatabase::instance()->get(n, client + "/UseCommandLine");
+    if(n.size() && n[0].getValue()){
+      std::vector<onelab::string> ps;
+      OnelabDatabase::instance()->get(ps, client + "/Action");
+      std::string action = (ps.empty() ? "" : ps[0].getValue());
+      OnelabDatabase::instance()->get(ps, client + "/1ModelName");
+      std::string modelName = (ps.empty() ? "" : ps[0].getValue());
+      OnelabDatabase::instance()->get(ps, client + "/9CheckCommand");
+      std::string checkCommand = (ps.empty() ? "" : ps[0].getValue());
+      OnelabDatabase::instance()->get(ps, client + "/9ComputeCommand");
+      std::string computeCommand = (ps.empty() ? "" : ps[0].getValue());
+      if(modelName.size()) args.push_back(" \"" + modelName + "\"");
+      if(action == "check")
+        args.push_back(" " + checkCommand) ;
+      else if(action == "compute")
+        args.push_back(" " + computeCommand);
+    }
+    return args;
+  }
+  std::string getMshFileName()
+  {
+    std::string name;
+    std::vector<onelab::string> ps;
+    OnelabDatabase::instance()->get(ps, "Gmsh/MshFileName");
+    if(ps.size()){
+      name = ps[0].getValue();
+    }
+    else{
+      name = CTX::instance()->outputFileName;
+      if(name.empty()){
+        if(CTX::instance()->mesh.fileFormat == FORMAT_AUTO)
+          name = GetDefaultFileName(FORMAT_MSH);
+        else
+          name = GetDefaultFileName(CTX::instance()->mesh.fileFormat);
+      }
+      onelab::string o("Gmsh/MshFileName", name, "Mesh name");
+      o.setKind("file");
+      o.setAttribute("Closed", "1");
+      OnelabDatabase::instance()->set(o, std::string("Gmsh"));
+    }
+  return name;
+}
+#else
   std::vector<std::string> getCommandLine(onelab::client *c)
   {
     std::vector<std::string> args;
@@ -50,9 +103,9 @@ namespace onelabUtils {
     }
     return args;
   }
-
   std::string getMshFileName(onelab::client *c)
   {
+
     std::string name;
     std::vector<onelab::string> ps;
     c->get(ps, "Gmsh/MshFileName");
@@ -83,6 +136,7 @@ namespace onelabUtils {
     */
     return name;
   }
+#endif
 
   void guessModelName(onelab::client *c)
   {
@@ -294,7 +348,86 @@ namespace onelabUtils {
   static bool _firstComputation = true;
   void setFirstComputationFlag(bool val){ _firstComputation = val; }
   bool getFirstComputationFlag(){ return _firstComputation; }
+#ifdef HAVE_ONELAB2
+  bool runGmshClient(const std::string &action, int meshAuto)
+  {
+    bool redraw = false;
 
+    // do nothing in case of a python metamodel
+    std::vector<onelab::number> pn;
+    OnelabDatabase::instance()->get(pn, "IsPyMetamodel");
+    if(pn.size() && pn[0].getValue()) return redraw;
+
+    OnelabLocalNetworkClient *c = OnelabServer::instance()->getClient("Gmsh");
+    std::cout << ((c != NULL)?"not":"ok") << std::endl;
+    if(c != NULL) return redraw; // Gmsh is remote TODO
+
+    std::string mshFileName = onelabUtils::getMshFileName();
+
+    Msg::SetGmshOnelabAction(action);
+
+    static std::string modelName = GModel::current()->getName();
+
+    if(action == "initialize"){
+      // nothing to do
+    }
+    else if(action == "reset"){
+      setFirstComputationFlag(false);
+      // nothing more to do: "check" will be called right afterwards
+    }
+    else if(action == "check"){
+      if(OnelabServer::instance()->getChanged("Gmsh") ||
+         modelName != GModel::current()->getName()){
+        // reload geometry if Gmsh parameters have been modified or
+        // if the model name has changed
+        modelName = GModel::current()->getName();
+        redraw = true;
+        OpenProject(GModel::current()->getFileName(), false);
+        OnelabServer::instance()->setChanged(true, "Gmsh");
+      }
+    }
+    else if(action == "compute"){
+      std::cout <<
+        "Gmsh getChanged is " << OnelabServer::instance()->getChanged("Gmsh") << std::endl <<
+        "modelName is " << modelName << std::endl <<
+        "current GModel is" << GModel::current()->getName() << std::endl <<
+        "stat file " << mshFileName << " is " << StatFile(mshFileName) << std::endl <<
+        "meshAuto is " << meshAuto 
+        << std::endl;
+      if(OnelabServer::instance()->getChanged("Gmsh") ||
+         modelName != GModel::current()->getName()){
+        // reload the geometry, mesh it and save the mesh if Gmsh parameters
+        // have been modified or if the model name has changed
+        modelName = GModel::current()->getName();
+        redraw = true;
+        OpenProject(GModel::current()->getFileName(), false);
+        if(getFirstComputationFlag() && !StatFile(mshFileName) && meshAuto != 2){
+          Msg::Info("Skipping mesh generation: assuming '%s' is up-to-date "
+                    "(use Solver.AutoMesh=2 to force mesh generation)",
+                    mshFileName.c_str());
+        }
+        else if(!GModel::current()->empty() && meshAuto){
+          GModel::current()->mesh(3);
+          CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
+        }
+      }
+      else if(StatFile(mshFileName)){
+        // mesh+save if the mesh file does not exist
+        if(meshAuto){
+          redraw = true;
+          GModel::current()->mesh(3);
+          CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
+        }
+      }
+      setFirstComputationFlag(false);
+      OnelabServer::instance()->setChanged(false, "Gmsh");
+    }
+
+    Msg::SetGmshOnelabAction("");
+
+    return redraw;
+  }
+#else
   bool runGmshClient(const std::string &action, int meshAuto)
   {
     bool redraw = false;
@@ -365,7 +498,7 @@ namespace onelabUtils {
 
     return redraw;
   }
-
+#endif
   // update x using y, giving priority to any settings in x that can be set in
   // the GUI. The value of x is only changed if y is read-only.
   double updateNumber(onelab::number &x, onelab::number &y, const bool readOnlyRange)

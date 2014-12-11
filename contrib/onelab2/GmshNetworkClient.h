@@ -8,20 +8,28 @@
 #include "OnelabNetworkClient.h"
 #include "OnelabProtocol.h"
 
-class onelab2Group;
+#ifdef HAVE_FLTK
+class onelabGroup;
+#endif
 
 class GmshNetworkClient : public OnelabNetworkClient
 {
 private:
-  onelab2Group *_cb_obj;
+#ifdef HAVE_FLTK
+  onelabGroup *_cb_obj;
+#endif
 public:
+#ifdef HAVE_FLTK
+	GmshNetworkClient(std::string name) : OnelabNetworkClient(name) {_cb_obj=NULL;}
+	GmshNetworkClient(std::string name, unsigned int ip, unsigned short port) : OnelabNetworkClient(name, ip, port) {_cb_obj =NULL;}
+  void setCallback(onelabGroup *cb);
+	void onNewParameter(onelab::parameter *p);
+  void onUpdateParameter(onelab::parameter *p);
+  void onRemoveParameter(onelab::parameter *p);
+#else
 	GmshNetworkClient(std::string name) : OnelabNetworkClient(name) {}
 	GmshNetworkClient(std::string name, unsigned int ip, unsigned short port) : OnelabNetworkClient(name, ip, port) {}
-	~GmshNetworkClient() {}
-  void setCallback(onelab2Group *cb) {_cb_obj = cb;}
-	void onNewParameter(onelab::parameter *p){_cb_obj->addParameter(*p);}
-  void onUpdateParameter(onelab::parameter *p){_cb_obj->updateParameter(*p);}
-  void onRemoveParameter(onelab::parameter *p){_cb_obj->removeParameter(*p);}
+#endif
 };
 
 #endif

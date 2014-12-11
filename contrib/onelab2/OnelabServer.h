@@ -39,6 +39,7 @@ public:
 	}
 	static void setInstance(OnelabServer *s) { _server = s; }
   onelab::parameterSpace *getParameterSpace() {return &_parameterSpace;}
+  UInt16 getPort() { return _ip.port;}
 #ifdef HAVE_UDT
 	~OnelabServer(){UDT::cleanup();}
 #else
@@ -54,11 +55,13 @@ public:
 	void addClient(std::string name, UInt32 ip, UInt16 port);
 #endif
   void addClient(OnelabLocalClient *cli) {_localClients.push_back(cli);}
+  int launchClient(const std::string &);
 	void removeClient(OnelabLocalNetworkClient *client);
   std::vector<OnelabLocalNetworkClient> &getClients() {return _clients;}
   std::vector<OnelabLocalClient *> &getLocalClients() {return _localClients;}
 	OnelabLocalNetworkClient *getClient(UInt32 ip, UInt16 port);
 	OnelabLocalNetworkClient *getClient(std::string name);
+  OnelabLocalClient *getLocalClient(std::string name);
 	void sendAllParameter(OnelabLocalNetworkClient *cli);
 	// Parameters methods
 	void clear(const std::string &name="", const std::string &client="") {
@@ -74,10 +77,14 @@ public:
 		_parameterSpace.set(p, client);
     T *pp;
     _parameterSpace.getPtr(&pp, p.getName());
-    for(std::vector<OnelabLocalClient *>::iterator it = _localClients.begin() ; it != _localClients.end(); ++it)
-      if((*it)->getName() != client)
+    if(pp->getVisible()) pp->addClient("GUI", true);
+    for(std::vector<OnelabLocalClient *>::iterator it = _localClients.begin() ; it != _localClients.end(); ++it) {
+      std::cout << (*it)->getName() << " and is " << ((isNew)?"new ":"updated ") << " from " << client << std::endl;
+      if((*it)->getName() != client) {
         if(isNew)(*it)->onNewParameter(pp);
         else (*it)->onUpdateParameter(pp);
+      }
+    }
     std::map<std::string, bool> clients = p.getClients();
     for(std::map<std::string, bool>::const_iterator it = clients.begin(); it != clients.end(); it++) {
       std::cout << "send " << p.getName() << " to " << it->first << " from " << client << std::endl; 
@@ -86,6 +93,7 @@ public:
       if(tmp == NULL) continue;
       tmp->updateParameter(pp);
     }
+    return true;
 	}
 	template <class T> bool get(std::vector<T> &ps, const std::string &name="", const std::string &client="") {
 		return _parameterSpace.get(ps, name, client);
@@ -122,5 +130,14 @@ public:
     if(onelab::parameter::fromFile(msg, fp)) return fromChar(msg, client);
     return false;
   }
+  bool getChanged(const std::string &client="") const {
+    return _parameterSpace.getChanged(client);
+  }
+  void setChanged(bool changed, const std::string &client="") {
+    _parameterSpace.setChanged(changed, client);
+    std::cout << "set " << client << ((changed)?" changed ":" unchanged ") << std::endl
+      << "get " << getChanged(client) << std::endl;
+  }
+  void performAction(const std::string action, const std::string client="");
 };
 #endif

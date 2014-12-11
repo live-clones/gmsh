@@ -32,11 +32,12 @@ public:
 	static const UInt8 BindResponseMsg	= 0x02;
 	static const UInt8 BindMessageMsg	= 0x03;
 
-	static const UInt8 OnelabStart		= 0x10;
-	static const UInt8 OnelabStop		= 0x11;
+	static const UInt8 OnelabStart		= 0x10; // Client send his name to the server (first message)
+	static const UInt8 OnelabStop 		= 0x11; // Client say to the server he is going to stop / the server ask a client to stop
 	static const UInt8 OnelabMessage	= 0x12;
 	static const UInt8 OnelabRequest	= 0x13;
 	static const UInt8 OnelabResponse	= 0x14;
 	static const UInt8 OnelabUpdate		= 0x15;
+	static const UInt8 OnelabAction		= 0x16;
 };
 #endif

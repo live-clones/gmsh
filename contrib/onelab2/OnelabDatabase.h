@@ -1,12 +1,15 @@
+#ifndef _ONELABDATABASE_H_
+#define _ONELABDATABASE_H_
+#endif
 #include <signal.h>
 #include <stdio.h>
 
 #include "GmshMessage.h"
+#include "onelabUtils.h"
 #include "OnelabServer.h"
+#include "VirtualClient.h"
 #include "GmshNetworkClient.h"
 #include "GmshLocalClient.h"
-#include "onelabUtils.h"
-
 
 #ifndef WIN32
 void *OnelabDatabase_listen(void *arg);
@@ -15,8 +18,6 @@ void *OnelabDatabase_server(void *arg);
 DWORD WINAPI OnelabDatabase_listen(LPVOID arg);
 DWORD WINAPI OnelabDatabase_server(void *arg);
 #endif
-
-OnelabServer *OnelabServer::_server = NULL;
 
 // OnelabDatabase is a singleton that get/set/... parameters from server/clients
 class OnelabDatabase {
@@ -27,8 +28,10 @@ private:
 #else
   HANDLER _listenThread, _serverThread;
 #endif
+  bool _haveToStop;
+  std::string _action;
   GmshNetworkClient *_client;
-  GmshLocalClient *_localClient;
+  GmshLocalClient *_localGUI, *_localGmsh;
   void _clear() {
 #ifndef WIN32
     // TODO send message to thread to exit the thread
@@ -37,14 +40,19 @@ private:
 #else
     // TODO
 #endif
-    if(_client) delete _client;
-    if(_localClient) delete _localClient;
-    _client = NULL; _localClient = NULL;
+    if(_client) {
+      _client->disconnect();
+      delete _client;
+    }
+    if(_localGUI) delete _localGUI;
+    if(_localGmsh) delete _localGmsh;
+    _client = NULL; _localGUI = _localGmsh = NULL;
   }
 
 public:
   OnelabDatabase() {
-    _localClient = NULL; _client = NULL;
+    _localGUI = NULL; _client = NULL; _localGmsh = NULL;
+    _action = ""; _haveToStop = false;
   }
   static OnelabDatabase *instance() {
     if(!_instance) _instance = new OnelabDatabase;
@@ -56,32 +64,54 @@ public:
 
     OnelabServer::instance(0x7F000001, 0);
     //OnelabServer::instance(0, 0);
-    _localClient = new GmshLocalClient("localGUI", OnelabServer::instance()->getParameterSpace());
-    OnelabServer::instance()->addClient(_localClient); // TODO remove from server in _clear()
+    _localGUI = new GmshLocalClient("localGUI", OnelabServer::instance()->getParameterSpace());
+    _localGmsh = new GmshLocalClient("Gmsh", OnelabServer::instance()->getParameterSpace());
+    OnelabServer::instance()->addClient(_localGUI); // TODO remove from server in _clear()
+    OnelabServer::instance()->addClient(_localGmsh); // TODO remove from server in _clear()
 
 #ifndef WIN32
-    pthread_create(&_serverThread, NULL, OnelabDatabase_server, NULL);
+    pthread_create(&_serverThread, NULL, OnelabDatabase_server, &(((OnelabLocalClient *)_localGmsh)->getName()));
 #else
     _serverThread = CreateThread(NULL, 0, NULL, OnelabDatabase_server, 0, NULL);
 #endif
-    return _localClient;
+    return _localGUI;
   }
-  GmshNetworkClient *useAsNetworkClient(UInt32 address, UInt16 port){
+  GmshNetworkClient *useAsNetworkClient(UInt32 address, UInt16 port, std::string cli="GUI"){
     // use this as a network client (take server address/port)
-    _clear();
+    if(!_client) {
+      _clear();
 
-    _client = new GmshNetworkClient("GUI", address, port);
-    if(_client->connect()) {
+      _client = new GmshNetworkClient(cli, address, port);
+      if(_client->connect()) {
 #ifndef WIN32
-      pthread_create(&_listenThread, NULL, OnelabDatabase_listen, NULL);
+        pthread_create(&_listenThread, NULL, OnelabDatabase_listen, &(((OnelabLocalClient *)_client)->getName()));
+#else
+        _listenThread = CreateThread(NULL, 0, NULL, OnelabDatabase_listen, 0, NULL);
+#endif
+        return _client;
+      }
+      else {
+        Msg::Error("Unable to connect to the server!");
+        return NULL;
+      }
+    }
+    else {
+#ifndef WIN32
+      pthread_create(&_listenThread, NULL, OnelabDatabase_listen, &(((OnelabLocalClient *)_client)->getName()));
 #else
       _listenThread = CreateThread(NULL, 0, NULL, OnelabDatabase_listen, 0, NULL);
 #endif
       return _client;
     }
-    else
-      Msg::Error("Unable to connect to the server!");
     return NULL;
+  }
+  void networkClientHaveToStop(bool haveToStop) {_haveToStop = haveToStop;}
+  bool networkClientHaveToStop() {return _haveToStop;}
+  void haveToDo(const std::string action) {_action = action;}
+  std::string &actionToDo() {return _action;}
+  int wait() {
+    if(_client) return pthread_join(_listenThread, NULL);
+    return pthread_join(_serverThread, NULL);
   }
   int listen(UInt8 *buff, unsigned int maxlen){
     if(_client) return _client->recvfrom(buff, maxlen);
@@ -95,25 +125,28 @@ public:
     _clear();
 
     OnelabServer::instance(address, port);
-    _localClient = new GmshLocalClient("localGUI", OnelabServer::instance()->getParameterSpace());
+    _localGUI = new GmshLocalClient("localGUI", OnelabServer::instance()->getParameterSpace());
 #ifndef WIN32
     pthread_create(&_serverThread, NULL, OnelabDatabase_server, NULL);
 #else
     _serverThread = CreateThread(NULL, 0, NULL, OnelabDatabase_server, 0, NULL);
 #endif
-    return _localClient;
-  }
-  template <class T> bool set(const T &p, bool update=true) {
-    if(_client) return _client->set(p, update);
-    //if(_localClient) return _localClient->set(p);
-    return OnelabServer::instance()->set(p, "");
+    return _localGUI;
   }
   template <class T> bool set(const T &p, const std::string &client) {
+    std::cout<<"set "<<p.getName()<<" from "<<client<<std::endl;
+    if(_client) return _client->set(p, true);
     return OnelabServer::instance()->set(p, client);
+  }
+  template <class T> bool set(const T &p, bool update=true) {
+    std::cout<<"set "<<p.getName()<<std::endl;
+    if(_client) return _client->set(p, update);
+    //if(_localGUI) return _localGUI->set(p);
+    return OnelabServer::instance()->set(p);
   }
   template <class T> bool get(std::vector<T> &ps, const std::string &name="", const std::string &client="") {
     if(_client) return _client->get(ps, name);
-    //if(_localClient) _localClient->get(ps, name);
+    //if(_localGUI) _localGUI->get(ps, name);
     return OnelabServer::instance()->get(ps, name, client);
   }
   bool fromFile(FILE *fp, const std::string &client="")
@@ -122,116 +155,62 @@ public:
     return OnelabServer::instance()->fromFile(fp, client);
 
   }
-  void onelab_cb(std::string action) {
-    if(_client) return; // TODO send action to the server
-    if(action == "stop"){
-      //FlGui::instance()->onelab->stop(true);
-      if(_client) _client->stop();
-    }
-    //TODO if(action == "compute") initializeLoops();
-
-    do {
-      for (std::vector<OnelabLocalNetworkClient>::iterator it = OnelabServer::instance()->getClients().begin() ; it != OnelabServer::instance()->getClients().end(); ++it)
-      {
-        onelab::string o((*it).getName() + "/Action", action);
-        o.setVisible(false);
-        o.setNeverChanged(true);
-        this->set(o);
-        (*it).run();
+  bool run(const std::string action, const std::string client="") {
+    UInt8 buff[1024];
+    OnelabProtocol msg(OnelabProtocol::OnelabAction);
+    if(client.size()) {
+      std::cout << "try to " << action << ' ' << client <<  std::endl;
+      onelab::string o(client + "/Action", action);
+      o.setVisible(false);
+      o.setNeverChanged(true);
+      set(o);
+      if(_client && ((OnelabLocalClient *)_client)->getName() == client) {
+        if(client == "Gmsh") onelabUtils::runGmshClient(action, true);
       }
+      else if(_client) {
+        std::cout << "client is remote" << std::endl;
+        msg.attrs.push_back(new OnelabAttrAction(action, client));
+        int size = msg.encodeMsg(buff, 1024);
+        sendbytes(buff, size);
+        return true;
+      }
+      else {
+        std::cout << "client is local" << std::endl;
+        OnelabServer::instance()->performAction(action, client);
+        return true;
+      }
+    }
+    else {
+      // run Gmsh client
+      run(action, "Gmsh");
 
-    } while(action == "compute" &&
-        //TODO incrementLoops() &&
-        !false/*TODO onelab->stop*/);
-
+      // iterate over all other clients
+      if(_client) {
+        std::cout << "server is remote" << std::endl;
+        msg.attrs.push_back(new OnelabAttrAction(action, client));
+        int size = msg.encodeMsg(buff, 1024);
+        sendbytes(buff, size);
+        return true;
+      }
+      else {
+        std::cout << "server is local" << std::endl;
+        OnelabServer::instance()->performAction(action);
+        return true;
+      }
+    }
+    return false;
+  }
+  bool getChanged(const std::string &client="") const {
+    if(!_client)
+      return OnelabServer::instance()->getChanged(client);
+    else
+      return true; // TODO
+  }
+  void setChanged(bool changed, const std::string &client="") {
+    if(!_client)
+      OnelabServer::instance()->setChanged(changed, client);
+    else
+      return; // TODO
   }
 };
 
-#ifndef WIN32
-void *OnelabDatabase_listen(void *arg)
-#else
-DWORD WINAPI OnelabDatabase_listen(LPVOID arg)
-#endif
-{
-  OnelabProtocol msg(-1);
-  UInt8 buff[1024];
-  int recvlen = 0;
-  while(1) {
-    recvlen = OnelabDatabase::instance()->listen(buff, 1024);
-    if(recvlen == 1 && buff[0] == 'S')
-      break;
-    msg.parseMsg(buff, recvlen);
-    msg.showMsg();
-    switch(msg.msgType()) {
-      case OnelabProtocol::OnelabStop:
-        return NULL;
-      case OnelabProtocol::OnelabMessage:
-        Msg::Info("Message from onelab"); // TODO
-        break;
-      case OnelabProtocol::OnelabResponse:
-      case OnelabProtocol::OnelabUpdate:
-        for(std::vector<OnelabAttr *>::iterator it = msg.attrs.begin() ; it != msg.attrs.end(); ++it) {
-          if((*it)->getAttributeType() == OnelabAttr::Number) {
-            onelab::number *attr = (onelab::number *)*it;
-            OnelabDatabase::instance()->set(*attr, false);
-          }
-          else if((*it)->getAttributeType() == OnelabAttr::String) {
-            onelab::string *attr = (onelab::string *)*it;
-            OnelabDatabase::instance()->set(*attr, false);
-          }
-          else if((*it)->getAttributeType() == OnelabAttr::Region) {
-            onelab::region *attr = (onelab::region *)*it;
-            OnelabDatabase::instance()->set(*attr, false);
-          }
-          else if((*it)->getAttributeType() == OnelabAttr::Function) {
-            onelab::function *attr = (onelab::function *)*it;
-            OnelabDatabase::instance()->set(*attr, false);
-          }
-          else if((*it)->getAttributeType() == OnelabAttrFileQuery::attributeType()) {
-            OnelabAttrFileQuery *attr = (OnelabAttrFileQuery *)*it;
-            const char *filename = attr->getFilename();
-            // FIXME path/filename ?
-            std::clog << "try to open " << filename << " for reading" << std::endl;
-            FILE *fp = fopen(filename, "rb");
-            if(fp != NULL){
-              OnelabProtocol rep(OnelabProtocol::OnelabUpdate);
-              rep.attrs.push_back(new OnelabAttrFile(std::string(filename), fp));
-              recvlen = rep.encodeMsg(buff, 1024);
-              OnelabDatabase::instance()->sendbytes(buff, recvlen);
-              while((recvlen = fread(buff, 1, 1024, fp)) > 0)
-                OnelabDatabase::instance()->sendbytes(buff, recvlen);
-            }
-          }
-          else if((*it)->getAttributeType() == OnelabAttrFile::attributeType()) {
-            OnelabAttrFile *attr = (OnelabAttrFile *)*it;
-            const char *filename = attr->getFilename();
-            std::clog << "try to open " << filename << " for writing" << std::endl;
-            FILE *fp = fopen(filename, "wb");
-            if(fp != NULL){
-              unsigned int filesize = ((OnelabAttrFile *)attr)->getFileSize();
-              unsigned int downloadsize = 0;
-              while(downloadsize < filesize) {
-                recvlen = OnelabDatabase::instance()->listen(buff, 1024);
-                downloadsize += recvlen;
-                fwrite(buff, 1, recvlen, fp);
-              }
-            }
-          }
-          else if((*it)->getAttributeType() == OnelabAttrAction::attributeType()) {
-            OnelabAttrAction *attr = (OnelabAttrAction *)*it;
-            OnelabLocalNetworkClient *target = OnelabServer::instance()->getClient(attr->getClient());
-            target->sendto(buff, recvlen);
-          }
-        }
-        break;
-    }
-  }
-}
-#ifndef WIN32
-void *OnelabDatabase_server(void *arg)
-#else
-DWORD WINAPI OnelabDatabase_server(LPVOID arg)
-#endif
-{
-  OnelabServer::instance()->Run();
-}

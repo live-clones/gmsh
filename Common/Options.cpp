@@ -50,7 +50,11 @@
 #include "manipWindow.h"
 #include "contextWindow.h"
 #include "clippingWindow.h"
+#ifdef HAVE_ONELAB2
+#include "onelab2Group.h"
+#else
 #include "onelabGroup.h"
+#endif
 #include "viewButton.h"
 #include "drawContextFltkCairo.h"
 #include "drawContextFltkStringTexture.h"

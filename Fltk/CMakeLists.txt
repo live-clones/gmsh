@@ -26,7 +26,20 @@ set(SRC
     projectionEditor.cpp
     classificationEditor.cpp
     partitionDialog.cpp
+)
+if(ENABLE_ONELAB2)
+  set(SRC
+    ${SRC}
+    onelab2Group.cpp
+  )
+else(ENALBE_ONELAB2)
+  set(SRC
+    ${SRC}
     onelabGroup.cpp
+  )
+endif(ENABLE_ONELAB2)
+set(SRC
+    ${SRC}
     inputValue.cpp inputRegion.cpp
     viewButton.cpp solverButton.cpp
     Navigator.cpp

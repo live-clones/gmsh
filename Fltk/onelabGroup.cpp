@@ -931,7 +931,7 @@ void onelab_cb(Fl_Widget *w, void *data)
         // for this solver
         onelab::server::instance()->setChanged(false, c->getName());
 
-	FlGui::instance()->onelab->checkForErrors(c->getName());
+        FlGui::instance()->onelab->checkForErrors(c->getName());
       }
       if(FlGui::instance()->onelab->stop()) break;
     }
