@@ -201,6 +201,26 @@ int GmshBatch()
             Msg::GetCommSize(), Msg::GetCommSize() > 1 ? "s" : "",
             Msg::GetMaxThreads(), Msg::GetMaxThreads() > 1 ? "s" : "");
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
+#ifdef HAVE_ONELAB2
+  if(CTX::instance()->onelab.listen_port > 0) {
+    OnelabServer::instance(0, CTX::instance()->onelab.listen_port);
+    OnelabServer::instance()->Run();
+    Msg::Exit(0);
+  }
+
+  if(CTX::instance()->onelab.server_ip[0] != '\0' && CTX::instance()->onelab.server_port > 0) {
+    OnelabDatabase::instance()->useAsNetworkClient(ip4_inet_pton(CTX::instance()->onelab.server_ip), CTX::instance()->onelab.server_port, "Gmsh");
+    OpenProject(GModel::current()->getFileName());
+    while(OnelabDatabase::instance()->wait() == 0 &&
+      !OnelabDatabase::instance()->networkClientHaveToStop()) {
+      std::cout << "ok now i " << OnelabDatabase::instance()->actionToDo() << std::endl;
+      OnelabDatabase::instance()->useAsNetworkClient(ip4_inet_pton(CTX::instance()->onelab.server_ip), CTX::instance()->onelab.server_port, "Gmsh"); // restart the listen thread
+      OnelabDatabase::instance()->run(OnelabDatabase::instance()->actionToDo(), "Gmsh");// run Gmsh
+    }
+    std::cout << "Exit had to stop ? " << OnelabDatabase::instance()->networkClientHaveToStop() << std::endl;
+    Msg::Exit(0);
+  }
+#endif
 
   OpenProject(GModel::current()->getFileName());
   bool open = false;
@@ -345,11 +365,13 @@ int GmshFLTK(int argc, char **argv)
     else
       Msg::Error("Invalid background mesh (no view)");
   }
+#ifndef HAVE_ONELAB2
   // listen to external solvers
   if(CTX::instance()->solver.listen){
     gmshLocalNetworkClient *c = new gmshLocalNetworkClient("Listen", "");
     c->run();
   }
+#endif
 
   // launch solver (if requested) and fill onelab tree
   solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
