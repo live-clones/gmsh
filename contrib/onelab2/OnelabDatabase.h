@@ -5,6 +5,8 @@
 #include <stdio.h>
 
 #include "GmshMessage.h"
+#include "Options.h"
+#include "Context.h"
 #include "onelabUtils.h"
 #include "OnelabServer.h"
 #include "VirtualClient.h"
@@ -185,16 +187,22 @@ public:
       run(action, "Gmsh");
 
       // iterate over all other clients
+      std::string solver = "";
+      if(CTX::instance()->solverToRun >= 0) solver = opt_solver_name(CTX::instance()->solverToRun, GMSH_GET, "");
       if(_client) {
         std::cout << "server is remote" << std::endl;
-        msg.attrs.push_back(new OnelabAttrAction(action, client));
-        int size = msg.encodeMsg(buff, 1024);
-        sendbytes(buff, size);
+        if(CTX::instance()->solverToRun >= 0) run(action, solver);
+        else {
+          msg.attrs.push_back(new OnelabAttrAction(action, client));
+          int size = msg.encodeMsg(buff, 1024);
+          sendbytes(buff, size);
+        }
         return true;
       }
       else {
         std::cout << "server is local" << std::endl;
-        OnelabServer::instance()->performAction(action);
+        if(CTX::instance()->solverToRun >= 0) OnelabServer::instance()->performAction(action, solver);
+        else OnelabServer::instance()->performAction(action, client);
         return true;
       }
     }

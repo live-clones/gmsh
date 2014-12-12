@@ -210,15 +210,6 @@ int GmshBatch()
 
   if(CTX::instance()->onelab.server_ip[0] != '\0' && CTX::instance()->onelab.server_port > 0) {
     OnelabDatabase::instance()->useAsNetworkClient(ip4_inet_pton(CTX::instance()->onelab.server_ip), CTX::instance()->onelab.server_port, "Gmsh");
-    OpenProject(GModel::current()->getFileName());
-    while(OnelabDatabase::instance()->wait() == 0 &&
-      !OnelabDatabase::instance()->networkClientHaveToStop()) {
-      std::cout << "ok now i " << OnelabDatabase::instance()->actionToDo() << std::endl;
-      OnelabDatabase::instance()->useAsNetworkClient(ip4_inet_pton(CTX::instance()->onelab.server_ip), CTX::instance()->onelab.server_port, "Gmsh"); // restart the listen thread
-      OnelabDatabase::instance()->run(OnelabDatabase::instance()->actionToDo(), "Gmsh");// run Gmsh
-    }
-    std::cout << "Exit had to stop ? " << OnelabDatabase::instance()->networkClientHaveToStop() << std::endl;
-    Msg::Exit(0);
   }
 #endif
 

@@ -32,7 +32,7 @@ namespace onelabUtils {
   // get command line arguments for the client if "UseCommandLine" is set for
   // this client
 #ifdef HAVE_ONELAB2
-  std::vector<std::string> getCommandLine(const std::string client)
+  std::vector<std::string> getCommandLine(const std::string &client)
   {
     std::vector<std::string> args;
     std::vector<onelab::number> n;
@@ -76,8 +76,29 @@ namespace onelabUtils {
       o.setAttribute("Closed", "1");
       OnelabDatabase::instance()->set(o, std::string("Gmsh"));
     }
-  return name;
-}
+    return name;
+  }
+
+  void guessModelName(const std::string &client)
+  {
+    std::vector<onelab::number> n;
+    OnelabDatabase::instance()->get(n, client + "/GuessModelName");
+    if(n.size() && n[0].getValue()){
+      std::vector<onelab::string> ps;
+      OnelabDatabase::instance()->get(ps, client + "/1ModelName");
+      if(ps.empty()){
+        std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+        std::string ext = "";
+        OnelabDatabase::instance()->get(ps, client + "/FileExtension");
+        if(ps.size()) ext = ps[0].getValue();
+        std::string name(split[0] + split[1] + ext);
+        onelab::string o(client + "/1ModelName", name, "Model name");
+        o.setKind("file");
+        OnelabDatabase::instance()->set(o, client);
+      }
+    }
+  }
+
 #else
   std::vector<std::string> getCommandLine(onelab::client *c)
   {
@@ -136,7 +157,6 @@ namespace onelabUtils {
     */
     return name;
   }
-#endif
 
   void guessModelName(onelab::client *c)
   {
@@ -157,6 +177,8 @@ namespace onelabUtils {
       }
     }
   }
+
+#endif
 
   void initializeLoop(const std::string &level)
   {

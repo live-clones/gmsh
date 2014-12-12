@@ -27,16 +27,7 @@ private:
 		OnelabProtocol msg(OnelabProtocol::OnelabRequest);
 		msg.attrs.push_back(new OnelabAttrParameterQuery(name.c_str(), T::attributeType()));
 		this->request(msg);
-		// wait for the answer
-    fd_set readfds;
-    struct timeval timeout;
-    timeout.tv_sec = 1;
-    timeout.tv_usec = 0;
-    FD_ZERO(&readfds);
-    FD_SET(_fds, &readfds);
-    int nfds = select(_fds+1, &readfds, NULL, NULL, &timeout);
-    usleep(100000); // FIXME sleep while read the buffer
-    return nfds > 0;
+    return true;
 	}
 	void requestParameters(); // request all parameter for this client
 public:
@@ -70,14 +61,26 @@ public:
 		}
 		return false;
 	}
-	template <class T> bool get(std::vector<T> &ps, const std::string &name=""){
-		if(_parameterSpace->get(ps, name, this->_name) && ps.size() == 0)
-			if(requestParameter(ps, name))
+	template <class T> bool get(std::vector<T> &ps, const std::string &name, bool needed="false"){
+		if(_parameterSpace->get(ps, name, this->_name) && ps.size() == 0) {
+			if(requestParameter(ps, name)) {
+		    if(needed) {// wait for the answer
+          fd_set readfds;
+          struct timeval timeout;
+          timeout.tv_sec = 1;
+          timeout.tv_usec = 0;
+          FD_ZERO(&readfds);
+          FD_SET(_fds, &readfds);
+          int nfds = select(_fds+1, &readfds, NULL, NULL, &timeout); // Wait for the server to answer
+          if(nfds > 0) recvfrom();
+        }
         return _parameterSpace->get(ps, name, this->_name) && ps.size() == 0;
+      }
       else
         return false;
+    }
 		return true;
-	}
+  }
   FILE *openFile(const std::string name, const char *mode="rb")
   {
     FILE *fp = fopen(name.c_str(), mode);
@@ -137,6 +140,7 @@ public:
 	// network specific method
 	bool connect();
 	bool isConnected(){return _connected;}
+	int recvfrom(); // empty the buffer (useful when the client do not listen on another thread)
 	int recvfrom(OnelabProtocol &msg);
 	int recvfrom(UInt8 *buff, UInt16 maxlen);
 	void sendto(UInt8 *buff, UInt16 len);
@@ -145,6 +149,21 @@ public:
 	void setRemotePort(unsigned short port){if(!_connected) _ip.port=port;}
 
   void run(std::string action) {}
+
+  void sendMessage(const int level, const std::string &message);
+  void sendInfo(const std::string &msg)
+  {
+    sendMessage(OnelabAttrMessage::Info, msg);
+  }
+  void sendWarning(const std::string &msg)
+  {
+    sendMessage(OnelabAttrMessage::Warning, msg);
+  }
+  void sendError(const std::string &msg)
+  {
+    sendMessage(OnelabAttrMessage::Error, msg);
+  }
+
 };
 
 #endif

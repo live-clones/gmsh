@@ -94,7 +94,6 @@ int OnelabServer::launchClient(const std::string &client) // FIXME OnelabDatabas
     std::string exe = opt_solver_executable(num, GMSH_GET, "");
     command.assign(exe);
   }
-  //std::string command = FixWindowsPath(_client->getExecutable()); // TODO
 
   if(command.size()){
     std::vector<std::string> args = onelabUtils::getCommandLine(client);
@@ -181,6 +180,7 @@ void OnelabServer::removeClient(OnelabLocalNetworkClient *client)
 void OnelabServer::performAction(const std::string action, const std::string client)
 {
   if(client.size()) {
+    onelabUtils::guessModelName(client);
     OnelabLocalNetworkClient *cli = getClient(client);
     OnelabLocalClient *localcli = getLocalClient(client);
     if(cli != NULL || localcli == NULL) {
@@ -254,7 +254,7 @@ void *listenOnClients(void *param)
     for(std::set<Socket>::iterator it = fdss.begin(); it != fdss.end(); ++it) {
 
       OnelabLocalNetworkClient *cli = OnelabServer::instance()->getClient(*it);
-      if(cli == NULL) { // Client is not in the list (it muste be a Start message)
+      if(cli == NULL) { // Client is not in the list (we should get a Start message)
         IPv4 ip;
         // recv the header
         recvlen = ip4_socket_recv(*it, buff, 4, ip);
@@ -274,7 +274,6 @@ void *listenOnClients(void *param)
         // then recv the message
         recvlen = ip4_socket_recv(*it, buff, msglen, ip);
         msg.parseMessage(buff, recvlen);
-        msg.showMsg();
         if(msg.msgType() == OnelabProtocol::OnelabStart && msg.attrs.size() > 0 && msg.attrs[0]->getAttributeType() == OnelabAttr::Start) {
           std::string name = std::string(((OnelabAttrStart *)msg.attrs[0])->name());
           if(OnelabServer::instance()->getClient(name) != NULL) {
@@ -348,8 +347,20 @@ void *listenOnClients(void *param)
           UDT::close(*it);
           break;
         case OnelabProtocol::OnelabMessage:
-          std::cout << "recv a message ... (TODO)" << std::endl;
-          // TODO
+          // TODO do not use Gmsh, send message to GUI
+          if(msg.attrs.size()==1 && msg.attrs[0]->getAttributeType() == OnelabAttrMessage::attributeType()) {
+            switch(((OnelabAttrMessage *)msg.attrs[0])->getLevel()) {
+              case OnelabAttrMessage::Info:
+                Msg::Direct("Info    : %s - %s", cli->getName().c_str(), ((OnelabAttrMessage *)msg.attrs[0])->getMessage());
+                break;
+              case OnelabAttrMessage::Warning:
+                Msg::Warning("%s - %s", cli->getName().c_str(), ((OnelabAttrMessage *)msg.attrs[0])->getMessage());
+                break;
+              case OnelabAttrMessage::Error:
+                Msg::Error("%s - %s", cli->getName().c_str(), ((OnelabAttrMessage *)msg.attrs[0])->getMessage());
+                break;
+            }
+          }
           break;
         case OnelabProtocol::OnelabRequest:
           rep.msgType(OnelabProtocol::OnelabResponse);
@@ -489,6 +500,8 @@ void OnelabServer::sendAllParameter(OnelabLocalNetworkClient *cli)
   UInt32 bufflen = 1024, recvlen = 0;
   UInt8 buff[1024];
   _parameterSpace.getAllParameters(ps);
+  if(ps.size() == 0) return;
+  // FIXME ...
   for(std::set<onelab::parameter*, onelab::parameterLessThan>::iterator it = ps.begin(); it != ps.end(); it++)
     if((*it)->hasClient(cli->getName())) msg.attrs.push_back(*it);
   recvlen = msg.encodeMsg(buff, bufflen);

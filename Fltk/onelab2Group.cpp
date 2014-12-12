@@ -145,13 +145,12 @@ void solver_cb(Fl_Widget *w, void *data)
     std::cout << name << ' ';
     std::string exe = opt_solver_executable(num, GMSH_GET, "");
     std::string host = opt_solver_remote_login(num, GMSH_GET, "");
-    // TODO check if the client exist, if not launch it
     OnelabDatabase::instance()->run("initialize", name);
   }
   if(FlGui::instance()->onelab->isBusy())
     FlGui::instance()->onelab->show();
   else{
-    if(CTX::instance()->launchSolverAtStartup >= 0){
+    if(CTX::instance()->solverToRun >= 0){
       onelab_cb(0, (void*)"reset");
       onelabUtils::setFirstComputationFlag(true);
     }
@@ -163,8 +162,6 @@ void solver_cb(Fl_Widget *w, void *data)
     }
     FlGui::instance()->onelab->updateGearMenu();
   }
-
-  CTX::instance()->launchSolverAtStartup = -1;
 }
 void solver_batch_cb(Fl_Widget *w, void *data)
 {

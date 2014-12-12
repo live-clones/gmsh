@@ -51,6 +51,8 @@ int OnelabProtocol::parseHeader(UInt8 *buff, UInt32 len)
   ptr = parse(ptr, _type);
   ptr = parse(ptr, _size);
 
+  //std::cout << "current version is " << (int)ONELAB_VERSION << ", message version is " << (int)version << "(length is " << len << ", size is "<< _size <<" )" << std::endl;
+
   return _size;
 }
 UInt32 OnelabProtocol::parseMessage(UInt8 *buff, UInt32 len)
@@ -65,7 +67,7 @@ UInt32 OnelabProtocol::parseMessage(UInt8 *buff, UInt32 len)
 		ptr = parse(ptr, attrType);
 		ptr = parse(ptr, attrSize);
 		size -= 4;
-		std::cout << "Try to parse an attribute of type 0x" << std::hex << (UInt16)attrType << std::dec << " and size : " << attrSize << std::endl;
+		//std::cout << "Try to parse an attribute of type 0x" << std::hex << (UInt16)attrType << std::dec << " and size : " << attrSize << std::endl;
 		if(attrSize > size) throw ERROR_BUFFER_TOO_SMALL;
 		switch(attrType) {
 			case OnelabAttr::Message:
@@ -119,7 +121,7 @@ UInt32 OnelabProtocol::parseMessage(UInt8 *buff, UInt32 len)
 		size -= attrSize;
     parsed += (attrSize+4);
 	}
-  if(parsed != len) {std::cout << "parse - size left:"  << len-parsed << '-' << size << "(len is "<< len <<" and parsed is "<< parsed <<" )" << std::endl;}
+  //if(parsed != len) {std::cout << "parse - size left:"  << len-parsed << '-' << size << "(len is "<< len <<" and parsed is "<< parsed <<" )" << std::endl;}
  
   return len-parsed;
 }
@@ -133,7 +135,7 @@ UInt32 OnelabProtocol::parseMsg(UInt8 *buff, UInt32 len)
 	if(version != ONELAB_VERSION) throw ERROR_ONELAB_VERSION;
 	ptr = parse(ptr, _type);
 	ptr = parse(ptr, _size);
-  std::cout << "current version is " << (int)ONELAB_VERSION << ", message version is " << (int)version << "(length is " << len << ", size is "<< _size <<" )" << std::endl; // TODO send to gmsh ?
+  //std::cout << "current version is " << (int)ONELAB_VERSION << ", message version is " << (int)version << "(length is " << len << ", size is "<< _size <<" )" << std::endl;
 
 	UInt8 *payload = ptr;
   unsigned short parsed = 4;

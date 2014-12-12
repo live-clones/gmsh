@@ -99,6 +99,8 @@ class CTX {
   int createAppendMeshStatReport;
   // should we launch a solver at startup?
   int launchSolverAtStartup ;
+  // solver to use with ONELAB2
+  int solverToRun ;
   // save session/option file on exit?
   int sessionSave, optionsSave;
   // ask confirmation when overwriting files?

@@ -13,9 +13,9 @@
 
 namespace onelabUtils {
 #ifdef HAVE_ONELAB2
-  std::vector<std::string> getCommandLine(const std::string client);
+  std::vector<std::string> getCommandLine(const std::string &client);
   std::string getMshFileName();
-  void guessModelName(onelab::client *c); // TODO ?
+  void guessModelName(const std::string &client);
 #else
   std::vector<std::string> getCommandLine(onelab::client *c);
   std::string getMshFileName(onelab::client *c);

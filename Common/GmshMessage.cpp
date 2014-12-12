@@ -742,7 +742,17 @@ void Msg::SetOnelabNumber(std::string name, double val, bool visible)
 
 void Msg::SetOnelabString(std::string name, std::string val, bool visible)
 {
-#if defined(HAVE_ONELAB)
+#ifdef HAVE_ONELAB2
+    std::vector<onelab::string> strings;
+    OnelabDatabase::instance()->get(strings, name);
+    if(strings.empty()){
+      strings.resize(1);
+      strings[0].setName(name);
+    }
+    strings[0].setValue(val);
+    strings[0].setVisible(visible);
+    OnelabDatabase::instance()->set(strings[0], std::string("Gmsh"));
+#elif defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::string> strings;
     _onelabClient->get(strings, name);
@@ -753,9 +763,6 @@ void Msg::SetOnelabString(std::string name, std::string val, bool visible)
     strings[0].setValue(val);
     strings[0].setVisible(visible);
     _onelabClient->set(strings[0]);
-#ifdef HAVE_ONELAB2
-    OnelabDatabase::instance()->set(strings[0], std::string("Gmsh"));
-#endif
   }
 #endif
 }
@@ -790,16 +797,17 @@ public:
 
 void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
-#if defined(HAVE_ONELAB)
+if defined(HAVE_ONELAB)
   if(_onelabClient) delete _onelabClient;
   if(sockname.empty()){
     _onelabClient = new localGmsh();
     if(name != "Gmsh"){ // load db from file:
       FILE *fp = Fopen(name.c_str(), "rb");
       if(fp){
-        _onelabClient->fromFile(fp);
 #ifdef HAVE_ONELAB2
        OnelabDatabase::instance()->fromFile(fp); 
+#else
+        _onelabClient->fromFile(fp);
 #endif
         fclose(fp);
       }
@@ -808,6 +816,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     }
   }
   else{
+    // TODO ONELAB2 client...
     onelab::remoteNetworkClient *c = new onelab::remoteNetworkClient(name, sockname);
     _onelabClient = c;
     _client = c->getGmshClient();

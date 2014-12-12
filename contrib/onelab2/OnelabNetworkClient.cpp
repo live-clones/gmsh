@@ -97,6 +97,44 @@ int OnelabNetworkClient::recvfrom(OnelabProtocol &msg)
   free(buff);
   return recvlen + 4;
 }
+int OnelabNetworkClient::recvfrom()
+{
+  OnelabProtocol msg(-1);
+  int totalrecv = 0;
+  int recvlen = 0;
+  do {
+    ip4_socket_timeout(_fds, 0, 1000);
+    recvlen = recvfrom(msg);
+    ip4_socket_timeout(_fds, 0);
+    if(recv > 0) totalrecv+=recvlen;
+
+    if(recv <= 0) return totalrecv;
+
+    switch(msg.msgType()) {
+      case OnelabProtocol::OnelabResponse:
+      case OnelabProtocol::OnelabUpdate:
+        for(std::vector<OnelabAttr *>::iterator it = msg.attrs.begin() ; it != msg.attrs.end(); ++it) {
+         if((*it)->getAttributeType() == OnelabAttr::Number) {
+           onelab::number *attr = (onelab::number *)*it;
+           set(*attr, false);
+         }
+         else if((*it)->getAttributeType() == OnelabAttr::String) {
+           onelab::string *attr = (onelab::string *)*it;
+           set(*attr, false);
+         }
+         else if((*it)->getAttributeType() == OnelabAttr::Region) {
+           onelab::region *attr = (onelab::region *)*it;
+           set(*attr, false);
+         }
+         else if((*it)->getAttributeType() == OnelabAttr::Function) {
+           onelab::function *attr = (onelab::function *)*it;
+           set(*attr, false);
+         }
+      }
+    }
+  } while(recvlen > 0);
+  return totalrecv;
+}
 bool OnelabNetworkClient::connect()
 {
   UInt16 bufflen = 1024;
@@ -121,14 +159,13 @@ bool OnelabNetworkClient::connect()
   udt_socket_timeout(_fdu, 3);
 #endif
   ip4_socket_timeout(_fds, 3);
-  recvlen = recvfrom(buff, bufflen);
+  recvlen = recvfrom(msg);
 
 #ifdef HAVE_UDT
   udt_socket_timeout(_fdu, -1);
 #endif
   ip4_socket_timeout(_fds, 0);
   if(recvlen <= 0) return false;
-  msg.parseMsg(buff, recvlen);
   if(recvlen > 0 && msg.msgType() == OnelabProtocol::OnelabStart) _connected = true;
   return _connected;
 }
@@ -157,4 +194,13 @@ void OnelabNetworkClient::requestParameters()
 {
   OnelabProtocol msg(OnelabProtocol::OnelabRequest);
   this->request(msg);
+}
+
+void OnelabNetworkClient::sendMessage(const int level, const std::string &message)
+{
+  OnelabProtocol msg(OnelabProtocol::OnelabMessage);
+  UInt8 buff[1024];
+  msg.attrs.push_back(new OnelabAttrMessage(message, level));
+  int recvlen = msg.encodeMsg(buff, 1024);
+  this->sendto(buff, recvlen);
 }

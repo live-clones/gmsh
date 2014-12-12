@@ -100,7 +100,7 @@ private:
 	
 public:
 	OnelabAttrMessage() : _message(NULL), _messageLength(0), _level(0) {}
-	OnelabAttrMessage(std::string message, const int level=OnelabAttrMessage::Debug) : _message(NULL){setMessage(message, level);}
+	OnelabAttrMessage(const std::string &message, const int level=OnelabAttrMessage::Debug) : _message(NULL){setMessage(message, level);}
 	~OnelabAttrMessage(){if(_message != NULL) free(_message);};
 	UInt8 *encodeAttribute(UInt8 *dst);
 	UInt8 *parseAttribute(UInt8 *src, UInt32 length);
@@ -110,8 +110,8 @@ public:
 	inline UInt16 getAttributeType() const {return this->attributeType();}
 	inline UInt16 getAttributeLength() const {return 1+_messageLength;}
 
-	void setMessage(std::string message, const int level=OnelabAttrMessage::Debug) {
-		_messageLength = message.size();
+	void setMessage(const std::string &message, const int level=OnelabAttrMessage::Debug) {
+		_messageLength = message.size()+1;
     if(_messageLength == 0) return;
 		_level = level;
 		if(_message != NULL) free(_message);
