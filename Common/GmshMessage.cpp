@@ -797,7 +797,7 @@ public:
 
 void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
-if defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB)
   if(_onelabClient) delete _onelabClient;
   if(sockname.empty()){
     _onelabClient = new localGmsh();

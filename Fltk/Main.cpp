@@ -11,6 +11,9 @@
 #include "Options.h"
 #include "PluginManager.h"
 #include "GModel.h"
+#if defined(__linux__) && !defined(BUILD_ANDROID)
+#include <X11/Xlib.h>
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -38,5 +41,8 @@ int main(int argc, char *argv[])
   }
 
   // Interactive Gmsh with FLTK GUI
+#if defined(__linux__) && !defined(BUILD_ANDROID)
+  XInitThreads();
+#endif
   return GmshFLTK(argc, argv);
 }
