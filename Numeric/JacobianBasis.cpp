@@ -402,14 +402,13 @@ double JacobianBasis::getPrimJac3D(const fullMatrix<double> &nodesXYZ, bool idea
 
 // Calculate (signed, possibly scaled) Jacobian for one element, with normal vectors to straight element
 // for regularization. Evaluation points depend on the given matrices for shape function gradients.
-template<bool scaling>
-inline void JacobianBasis::getJacobianGeneral(int nJacNodes,
-                                              const fullMatrix<double> &gSMatX,
-                                              const fullMatrix<double> &gSMatY,
-                                              const fullMatrix<double> &gSMatZ,
-                                              const fullMatrix<double> &nodesXYZ,
-                                              bool idealNorm,
-                                              fullVector<double> &jacobian) const
+void JacobianBasis::getJacobianGeneral(int nJacNodes,
+                                       const fullMatrix<double> &gSMatX,
+                                       const fullMatrix<double> &gSMatY,
+                                       const fullMatrix<double> &gSMatZ,
+                                       const fullMatrix<double> &nodesXYZ,
+                                       bool idealNorm, bool scaling,
+                                       fullVector<double> &jacobian) const
 {
   switch (_dim) {
 
@@ -493,45 +492,18 @@ inline void JacobianBasis::getJacobianGeneral(int nJacNodes,
 
 }
 
-// Calculate signed Jacobian for one element, with normal vectors to straight element for
-// regularization. Evaluation points depend on the given matrices for shape function gradients.
-void JacobianBasis::getSignedJacobianGeneral(int nJacNodes,
-                                             const fullMatrix<double> &gSMatX,
-                                             const fullMatrix<double> &gSMatY,
-                                             const fullMatrix<double> &gSMatZ,
-                                             const fullMatrix<double> &nodesXYZ,
-                                             bool idealNorm,
-                                             fullVector<double> &jacobian) const
-{
-  getJacobianGeneral<false>(nJacNodes, gSMatX,  gSMatY, gSMatZ, nodesXYZ, idealNorm, jacobian);
-}
-
-// Calculate (signed) scaled Jacobian for one element, with normal vectors to straight element
-// for regularization. Evaluation points depend on the given matrices for shape function gradients.
-void JacobianBasis::getScaledJacobianGeneral(int nJacNodes,
-                                             const fullMatrix<double> &gSMatX,
-                                             const fullMatrix<double> &gSMatY,
-                                             const fullMatrix<double> &gSMatZ,
-                                             const fullMatrix<double> &nodesXYZ,
-                                             bool idealNorm,
-                                             fullVector<double> &jacobian) const
-{
-  getJacobianGeneral<true>(nJacNodes, gSMatX,  gSMatY, gSMatZ, nodesXYZ, idealNorm, jacobian);
-}
-
 // Calculate (signed, possibly scaled) Jacobian for several elements, with normal vectors to straight
 // elements for regularization. Evaluation points depend on the given matrices for shape function gradients.
 // TODO: Optimize and test 1D & 2D
-template<bool scaling>
-inline void JacobianBasis::getJacobianGeneral(int nJacNodes,
-                                              const fullMatrix<double> &gSMatX,
-                                              const fullMatrix<double> &gSMatY,
-                                              const fullMatrix<double> &gSMatZ,
-                                              const fullMatrix<double> &nodesX,
-                                              const fullMatrix<double> &nodesY,
-                                              const fullMatrix<double> &nodesZ,
-                                              bool idealNorm,
-                                              fullMatrix<double> &jacobian) const
+void JacobianBasis::getJacobianGeneral(int nJacNodes,
+                                       const fullMatrix<double> &gSMatX,
+                                       const fullMatrix<double> &gSMatY,
+                                       const fullMatrix<double> &gSMatZ,
+                                       const fullMatrix<double> &nodesX,
+                                       const fullMatrix<double> &nodesY,
+                                       const fullMatrix<double> &nodesZ,
+                                       bool idealNorm, bool scaling,
+                                       fullMatrix<double> &jacobian) const
 {
   switch (_dim) {
 
@@ -634,38 +606,6 @@ inline void JacobianBasis::getJacobianGeneral(int nJacNodes,
 
   }
 
-}
-
-// Calculate signed Jacobian for several elements, with normal vectors to straight elements for
-// regularization. Evaluation points depend on the given matrices for shape function gradients.
-void JacobianBasis::getSignedJacobianGeneral(int nJacNodes,
-                                             const fullMatrix<double> &gSMatX,
-                                             const fullMatrix<double> &gSMatY,
-                                             const fullMatrix<double> &gSMatZ,
-                                             const fullMatrix<double> &nodesX,
-                                             const fullMatrix<double> &nodesY,
-                                             const fullMatrix<double> &nodesZ,
-                                             bool idealNorm,
-                                             fullMatrix<double> &jacobian) const
-{
-  getJacobianGeneral<false>(nJacNodes, gSMatX,  gSMatY, gSMatZ,
-                            nodesX, nodesY, nodesZ, idealNorm, jacobian);
-}
-
-// Calculate (signed) scaled Jacobian for several elements, with normal vectors to straight elements
-// for regularization. Evaluation points depend on the given matrices for shape function gradients.
-void JacobianBasis::getScaledJacobianGeneral(int nJacNodes,
-                                             const fullMatrix<double> &gSMatX,
-                                             const fullMatrix<double> &gSMatY,
-                                             const fullMatrix<double> &gSMatZ,
-                                             const fullMatrix<double> &nodesX,
-                                             const fullMatrix<double> &nodesY,
-                                             const fullMatrix<double> &nodesZ,
-                                             bool idealNorm,
-                                             fullMatrix<double> &jacobian) const
-{
-  getJacobianGeneral<true>(nJacNodes, gSMatX,  gSMatY, gSMatZ,
-                           nodesX, nodesY, nodesZ, idealNorm, jacobian);
 }
 
 // Calculate (signed) Jacobian and its gradients for one element, with normal vectors to straight element
