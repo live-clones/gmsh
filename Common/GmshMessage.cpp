@@ -786,6 +786,10 @@ public:
 void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
 #ifdef HAVE_ONELAB2
+  if(_onelabClient) {
+    delete _onelabClient;
+    _onelabClient = 0;
+  }
   if(sockname.empty()){
     if(name != "Gmsh"){ // load db from file:
       FILE *fp = Fopen(name.c_str(), "rb");
@@ -805,7 +809,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
       address = ip4_inet_pton(sockname.substr(0,colon).c_str());
       port = atoi(sockname.substr(colon+1).c_str());
     }
-    GmshNetworkClient *c = OnelabDatabase::instance()->useAsNetworkClient(address, port, "Gmsh");
+    GmshNetworkClient *c = OnelabDatabase::instance()->useAsNetworkClient(address, port, name);
     if(c == NULL) {
       Error("Unable to connect ONELAB server");
       Exit(1);

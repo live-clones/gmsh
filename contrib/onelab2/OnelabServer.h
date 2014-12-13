@@ -87,8 +87,8 @@ public:
     }
     std::map<std::string, bool> clients = p.getClients();
     for(std::map<std::string, bool>::const_iterator it = clients.begin(); it != clients.end(); it++) {
-      std::cout << "send " << p.getName() << " to " << it->first << " from " << client << std::endl; 
       if(it->first == client) continue;
+      std::cout << "send " << p.getName() << " to " << it->first << " from " << client << std::endl; 
       OnelabLocalNetworkClient *tmp = getClient(it->first);
       if(tmp == NULL) continue;
       tmp->updateParameter(pp);
