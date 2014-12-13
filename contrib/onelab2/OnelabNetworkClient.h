@@ -61,7 +61,7 @@ public:
 		}
 		return false;
 	}
-	template <class T> bool get(std::vector<T> &ps, const std::string &name, bool needed="false"){
+	template <class T> bool get(std::vector<T> &ps, const std::string &name, bool needed=false){
 		if(_parameterSpace->get(ps, name, this->_name) && ps.size() == 0) {
 			if(requestParameter(ps, name)) {
 		    if(needed) {// wait for the answer

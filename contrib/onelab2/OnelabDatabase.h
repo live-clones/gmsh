@@ -93,7 +93,6 @@ public:
         return _client;
       }
       else {
-        Msg::Error("Unable to connect to the server!");
         return NULL;
       }
     }
@@ -114,6 +113,10 @@ public:
   int wait() {
     if(_client) return pthread_join(_listenThread, NULL);
     return pthread_join(_serverThread, NULL);
+  }
+  int listen(OnelabProtocol &msg) {
+    if(_client) return _client->recvfrom(msg);
+    return 0;
   }
   int listen(UInt8 *buff, unsigned int maxlen){
     if(_client) return _client->recvfrom(buff, maxlen);

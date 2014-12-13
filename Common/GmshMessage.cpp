@@ -811,7 +811,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     }
     GmshNetworkClient *c = OnelabDatabase::instance()->useAsNetworkClient(address, port, name);
     if(c == NULL) {
-      Error("Unable to connect ONELAB server");
+      Error("Unable to connect ONELAB server (%s)", sockname.c_str());
       Exit(1);
     }
     _onelabClient = c;
@@ -821,7 +821,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     SetOnelabString(name + "/9CheckCommand", "-", false);
     SetOnelabString(name + "/9ComputeCommand", "-3", false);
     std::vector<onelab::string> ps;
-    _onelabClient->get(ps, name + "/Action", true); // FIXME good idea ?
+    _onelabClient->get(ps, name + "/Action");
     if(ps.size()){
       Info("Performing ONELAB '%s'", ps[0].getValue().c_str());
       if(ps[0].getValue() == "initialize") Exit(0);

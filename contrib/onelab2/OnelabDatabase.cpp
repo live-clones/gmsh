@@ -13,10 +13,9 @@ DWORD WINAPI OnelabDatabase_listen(LPVOID arg)
   UInt8 buff[1024];
   int recvlen = 0;
   while(1) {
-    recvlen = OnelabDatabase::instance()->listen(buff, 1024);
-    if(recvlen == 1 && buff[0] == 'S')
-      break;
-    msg.parseMsg(buff, recvlen);
+    recvlen = OnelabDatabase::instance()->listen(msg);
+    if(recvlen <= 0)
+      break; // invalid len
     switch(msg.msgType()) {
       case OnelabProtocol::OnelabStop:
         std::clog << "\033[0;35m" << "Client is going to stop" << "\033[0;0m" << std::endl;

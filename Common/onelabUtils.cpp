@@ -87,7 +87,10 @@ namespace onelabUtils {
       std::vector<onelab::string> ps;
       OnelabDatabase::instance()->get(ps, client + "/1ModelName");
       if(ps.empty()){
-        std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+        OnelabDatabase::instance()->get(ps, "Gmsh/1ModelName");
+        std::vector<std::string> split;
+        if(!ps.empty()) split = SplitFileName(ps[0].getValue());
+        else split = SplitFileName(GModel::current()->getFileName());
         std::string ext = "";
         OnelabDatabase::instance()->get(ps, client + "/FileExtension");
         if(ps.size()) ext = ps[0].getValue();
