@@ -81,6 +81,10 @@ public:
     }
 		return true;
   }
+  void clear(const std::string &name="", const std::string &client="")
+  {
+    // TODO
+  }
   FILE *openFile(const std::string name, const char *mode="rb")
   {
     FILE *fp = fopen(name.c_str(), mode);

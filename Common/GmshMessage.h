@@ -11,8 +11,13 @@
 #include <string>
 #include <stdarg.h>
 
+#include "GmshConfig.h"
+
 class GmshClient;
 namespace onelab{ class client; }
+#ifdef HAVE_ONELAB2
+class GmshNetworkClient;
+#endif
 
 // the external message handler
 class GmshMessage{
@@ -43,8 +48,13 @@ class Msg {
   static std::string _commandLine, _launchDate;
   // communication with Gmsh when run remotely
   static GmshClient *_client;
+#if defined(HAVE_ONELAB2)
+  // communication with onelab server (replace _client and old _onelabClient)
+  static GmshNetworkClient *_onelabClient;
+#elif defined(HAVE_ONELAB)
   // communication with onelab server
   static onelab::client *_onelabClient;
+#endif
   // internal onelab status for Gmsh parser
   static std::string _gmshOnelabAction;
   // executable name
@@ -97,7 +107,11 @@ class Msg {
   static std::string GetExecutableName() { return _execName; }
   static void LoadOnelabClient(const std::string &name, const std::string &sockName);
   static GmshClient *GetGmshClient(){ return _client; }
+#ifdef HAVE_ONELAB2
+  static GmshNetworkClient *GetOnelabClient(){ return _onelabClient; }
+#else
   static onelab::client *GetOnelabClient(){ return _onelabClient; }
+#endif
   static void FinalizeOnelab();
   static bool UseOnelab();
   static void SetOnelabNumber(std::string name, double val, bool visible);

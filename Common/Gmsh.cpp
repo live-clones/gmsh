@@ -54,10 +54,7 @@
 #endif
 
 #if defined(HAVE_ONELAB2)
-#include "OnelabDatabase.h"
-#include "NetworkUtils.h"
-
-OnelabDatabase *OnelabDatabase::_instance = NULL;
+#include "OnelabServer.h"
 #endif
 
 int GmshInitialize(int argc, char **argv)
@@ -206,10 +203,6 @@ int GmshBatch()
     OnelabServer::instance(0, CTX::instance()->onelab.listen_port);
     OnelabServer::instance()->Run();
     Msg::Exit(0);
-  }
-
-  if(CTX::instance()->onelab.server_ip[0] != '\0' && CTX::instance()->onelab.server_port > 0) {
-    OnelabDatabase::instance()->useAsNetworkClient(ip4_inet_pton(CTX::instance()->onelab.server_ip), CTX::instance()->onelab.server_port, "Gmsh");
   }
 #endif
 

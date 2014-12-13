@@ -108,8 +108,7 @@ int OnelabServer::launchClient(const std::string &client) // FIXME OnelabDatabas
   //TODO sprintf(cmd, command, _sockname.c_str());
 
   // TCP socket
-  if(client == "Gmsh") sprintf(cmd, command.c_str(), "-server %s:%d");
-  else sprintf(cmd, command.c_str(), " %s:%d");
+  sprintf(cmd, command.c_str(), " %s:%d");
   command.assign(cmd);
   sprintf(cmd, command.c_str(), (_ip.address==0)?"127.0.0.1":ip4_inet_ntop(_ip.address).c_str(), _ip.port);
 
@@ -183,12 +182,10 @@ void OnelabServer::performAction(const std::string action, const std::string cli
     onelabUtils::guessModelName(client);
     OnelabLocalNetworkClient *cli = getClient(client);
     OnelabLocalClient *localcli = getLocalClient(client);
-    if(cli != NULL || localcli == NULL) {
-      onelab::string o(client + "/Action", action);
-      o.setVisible(false);
-      o.setNeverChanged(true);
-      set(o);
-    }
+    onelab::string o(client + "/Action", action);
+    o.setVisible(false);
+    o.setNeverChanged(true);
+    set(o, client);
     if(cli != NULL){ // Gmsh is used as a server and the client is remote
       std::cout << action << " on " << client << "(client is remote)" << std::endl;
       cli->run(action);
@@ -197,7 +194,7 @@ void OnelabServer::performAction(const std::string action, const std::string cli
       std::cout << action << " on " << client << "(client is local)" << std::endl;
       localcli->run(action);
     }
-    else { // client is Gmsh but do not exist (Gmsh is used as a server), launch Gmsh
+    else { // client does not exist (Gmsh is used as a server), launch the client
       std::cout << action << " on " << client << "(launch a new remote Gmsh)" << std::endl;
       if(launchClient(client) >= 0)
         ;// FIXME then action or action is store in onelab DB ?
@@ -206,7 +203,7 @@ void OnelabServer::performAction(const std::string action, const std::string cli
     }
   }
   else {
-    // run all non Gmsh clients TODO, exclude GUI ?
+    // run all non Gmsh clients TODO; exclude GUI ?
     for(std::vector<OnelabLocalNetworkClient>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
       if((*it).getName() == "Gmsh") continue;
       std::cout << action << " on " << (*it).getName() << "(remote)" << std::endl;

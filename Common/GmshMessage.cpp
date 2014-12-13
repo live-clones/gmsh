@@ -28,10 +28,12 @@
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
 #endif
+#include "gmshLocalNetworkClient.h"
+
 #if defined(HAVE_ONELAB2)
 #include "OnelabDatabase.h"
+#include "NetworkUtils.h"
 #endif
-#include "gmshLocalNetworkClient.h"
 
 #if defined(HAVE_PETSC)
 #include <petsc.h>
@@ -46,6 +48,7 @@
 #include "FlGui.h"
 #include "extraDialogs.h"
 #endif
+
 
 int Msg::_commRank = 0;
 int Msg::_commSize = 1;
@@ -62,8 +65,13 @@ std::string Msg::_commandLine;
 std::string Msg::_launchDate;
 GmshClient *Msg::_client = 0;
 std::string Msg::_execName;
-#if defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB2)
+OnelabDatabase *OnelabDatabase::_instance = NULL;
+GmshNetworkClient *Msg::_onelabClient = 0;
+#elif defined(HAVE_ONELAB)
 onelab::client *Msg::_onelabClient = 0;
+#endif
+#if defined(HAVE_ONELAB)
 onelab::server *onelab::server::_server = 0;
 #endif
 std::string Msg::_gmshOnelabAction = "";
@@ -715,17 +723,7 @@ bool Msg::UseOnelab()
 
 void Msg::SetOnelabNumber(std::string name, double val, bool visible)
 {
-#ifdef HAVE_ONELAB2
-  std::vector<onelab::number> numbers;
-  OnelabDatabase::instance()->get(numbers, name);
-  if(numbers.empty()) {
-    numbers.resize(1);
-    numbers[0].setName(name);
-  }
-  numbers[0].setValue(val);
-  numbers[0].setVisible(visible);
-  OnelabDatabase::instance()->set(numbers[0], std::string("Gmsh"));
-#elif defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::number> numbers;
     _onelabClient->get(numbers, name);
@@ -742,17 +740,7 @@ void Msg::SetOnelabNumber(std::string name, double val, bool visible)
 
 void Msg::SetOnelabString(std::string name, std::string val, bool visible)
 {
-#ifdef HAVE_ONELAB2
-    std::vector<onelab::string> strings;
-    OnelabDatabase::instance()->get(strings, name);
-    if(strings.empty()){
-      strings.resize(1);
-      strings[0].setName(name);
-    }
-    strings[0].setValue(val);
-    strings[0].setVisible(visible);
-    OnelabDatabase::instance()->set(strings[0], std::string("Gmsh"));
-#elif defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::string> strings;
     _onelabClient->get(strings, name);
@@ -797,18 +785,12 @@ public:
 
 void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
-#if defined(HAVE_ONELAB)
-  if(_onelabClient) delete _onelabClient;
+#ifdef HAVE_ONELAB2
   if(sockname.empty()){
-    _onelabClient = new localGmsh();
     if(name != "Gmsh"){ // load db from file:
       FILE *fp = Fopen(name.c_str(), "rb");
       if(fp){
-#ifdef HAVE_ONELAB2
-       OnelabDatabase::instance()->fromFile(fp); 
-#else
-        _onelabClient->fromFile(fp);
-#endif
+        OnelabDatabase::instance()->fromFile(fp);
         fclose(fp);
       }
       else
@@ -816,7 +798,46 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     }
   }
   else{
-    // TODO ONELAB2 client...
+    UInt32 address = 0;
+    UInt16 port = 1148;
+    size_t colon = sockname.find(':');
+    if(colon != std::string::npos) {
+      address = ip4_inet_pton(sockname.substr(0,colon).c_str());
+      port = atoi(sockname.substr(colon+1).c_str());
+    }
+    GmshNetworkClient *c = OnelabDatabase::instance()->useAsNetworkClient(address, port, "Gmsh");
+    if(c == NULL) {
+      Error("Unable to connect ONELAB server");
+      Exit(1);
+    }
+    _onelabClient = c;
+
+    SetOnelabNumber(name + "/UseCommandLine", 1, false);
+    SetOnelabString(name + "/FileExtension", ".geo", false);
+    SetOnelabString(name + "/9CheckCommand", "-", false);
+    SetOnelabString(name + "/9ComputeCommand", "-3", false);
+    std::vector<onelab::string> ps;
+    _onelabClient->get(ps, name + "/Action", true); // FIXME good idea ?
+    if(ps.size()){
+      Info("Performing ONELAB '%s'", ps[0].getValue().c_str());
+      if(ps[0].getValue() == "initialize") Exit(0);
+    }
+  }
+#elif defined(HAVE_ONELAB)
+  if(_onelabClient) delete _onelabClient;
+  if(sockname.empty()){
+    _onelabClient = new localGmsh();
+    if(name != "Gmsh"){ // load db from file:
+      FILE *fp = Fopen(name.c_str(), "rb");
+      if(fp){
+        _onelabClient->fromFile(fp);
+        fclose(fp);
+      }
+      else
+        Error("Error loading onelab database '%s'", name.c_str());
+    }
+  }
+  else{
     onelab::remoteNetworkClient *c = new onelab::remoteNetworkClient(name, sockname);
     _onelabClient = c;
     _client = c->getGmshClient();
@@ -937,11 +958,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   }
 
   std::vector<onelab::number> ps;
-#ifdef HAVE_ONELAB2
-  OnelabDatabase::instance()->get(ps, name);
-#else
   _onelabClient->get(ps, name);
-#endif
   bool noRange = true, noChoices = true, noLoop = true;
   bool noGraph = true, noClosed = true;
   if(ps.size()){
@@ -1021,11 +1038,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(noClosed && fopt.count("Closed"))
     ps[0].setAttribute("Closed", fopt["Closed"][0] ? "1" : "0");
   _setStandardOptions(&ps[0], fopt, copt);
-#ifdef HAVE_ONELAB2
-  OnelabDatabase::instance()->set(ps[0], std::string("Gmsh"));
-#else
   _onelabClient->set(ps[0]);
-#endif
 #endif
 }
 
@@ -1050,11 +1063,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   }
 
   std::vector<onelab::string> ps;
-#ifdef HAVE_ONELAB2
-  OnelabDatabase::instance()->get(ps, name);
-#else
   _onelabClient->get(ps, name);
-#endif
   bool noChoices = true, noClosed = true, noMultipleSelection = true;
   if(ps.size()){
     if(fopt.count("ReadOnly") && fopt["ReadOnly"][0])
@@ -1083,11 +1092,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(noMultipleSelection && copt.count("MultipleSelection"))
     ps[0].setAttribute("MultipleSelection", copt["MultipleSelection"][0]);
   _setStandardOptions(&ps[0], fopt, copt);
-#ifdef HAVE_ONELAB2
-    OnelabDatabase::instance()->set(ps[0], std::string("Gmsh"));
-#else
   _onelabClient->set(ps[0]);
-#endif
 #endif
 }
 
@@ -1165,7 +1170,13 @@ void Msg::RunOnelabClient(const std::string &name, const std::string &command)
 
 void Msg::FinalizeOnelab()
 {
-#if defined(HAVE_ONELAB)
+#ifdef HAVE_ONELAB2
+  if(_onelabClient) {
+    _onelabClient->disconnect();
+    delete _onelabClient;
+    _onelabClient = 0;
+  }
+#elif defined(HAVE_ONELAB)
   if(_onelabClient){
     delete _onelabClient;
     _onelabClient = 0;

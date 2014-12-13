@@ -11,7 +11,7 @@
 #include "Options.h"
 #include "PluginManager.h"
 #include "GModel.h"
-#if defined(HAVE_ONELAB2) && defined(__linux__) && !defined(BUILD_ANDROID)
+#if defined(HAVE_ONELAB2) && defined(__linux__)
 #include <X11/Xlib.h>
 #endif
 
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
   }
 
   // Interactive Gmsh with FLTK GUI
-#if defined(HAVE_ONELAB2) && defined(__linux__) && !defined(BUILD_ANDROID)
+#if defined(HAVE_ONELAB2) && defined(__linux__)
   XInitThreads();
 #endif
   return GmshFLTK(argc, argv);
