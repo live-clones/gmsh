@@ -337,7 +337,14 @@ void *listenOnClients(void *param)
           std::cout << "\033[0;31m" << "Client \"" << cli->getName() << "\" is going to stop" << "\033[0m" << std::endl; // DEBUG
           rep.msgType(OnelabProtocol::OnelabStop);
           recvlen = rep.encodeMsg(buff, 1024);
-          cli->sendto(buff, recvlen);
+          fd_set writefds;
+          struct timeval timeout;
+          timeout.tv_sec = 0;
+          timeout.tv_usec = 5000;
+          FD_ZERO(&writefds);
+          FD_SET(cli->getSSocket(), &writefds);
+          if(select(cli->getSSocket()+1, NULL, writefds, NULL, timeout) > 0)
+            cli->sendto(buff, recvlen);
           //UDT::epoll_remove_usock(eid, *it);
           UDT::epoll_remove_ssock(eid, *it);
           OnelabServer::instance()->removeClient(cli);
@@ -413,16 +420,6 @@ void *listenOnClients(void *param)
                 OnelabServer::instance()->getPtr((onelab::function **)&parameter, attr->getName(), cli->getName());
                 break;
               }
-              // TODO
-              //rep.msgType(OnelabProtocol::OnelabUpdate);
-              //rep.attrs.push_back(parameter);
-              //recvlen = rep.encodeMsg(buff, 1024);
-              //std::map<std::string, bool> clients = attr->getClients();
-              //for(std::map<std::string, bool>::const_iterator it = clients.begin(); it != clients.end(); it++) {
-              //	OnelabLocalNetworkClient *tmp = OnelabServer::instance()->getClient(it->first);
-              //	if(tmp == NULL || cli == tmp) continue;
-              //	tmp->sendto(buff, recvlen);
-              //}
             }
             else
               switch((*it)->getAttributeType()) {
