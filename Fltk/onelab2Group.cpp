@@ -328,7 +328,6 @@ void onelabGroup::useServer(bool use=false)
 
 void onelabGroup::addParameter(onelab::parameter &p)
 {
-  std::cout << "add " << p.getName() << " to the tree (visible = " << p.getVisible() << ", changed = " << p.getChanged() << ")" << std::endl;
   if(!p.getVisible() || CTX::instance()->solver.showInvisibleParameters) return;
   bool highlight = false;
   Fl_Color c;
@@ -680,7 +679,6 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, int ww, int hh,
 
 void onelabGroup::updateParameter(onelab::parameter &p)
 {
-  std::cout << "update " << p.getName() << " to the tree (visible = " << p.getVisible() << ", changed = " << p.getChanged() << ")" << std::endl;
   int type = p.getAttributeType();
   if(type == onelab::number::attributeType())
       return updateParameter(*(onelab::number *)&p);

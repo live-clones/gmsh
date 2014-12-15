@@ -77,7 +77,10 @@ public:
 		_parameterSpace.set(p, client);
     T *pp;
     _parameterSpace.getPtr(&pp, p.getName());
-    if(pp->getVisible()) pp->addClient("GUI", true);
+    if(pp->getVisible()) {
+      pp->addClient("GUI", true);
+      pp->addClient("localGUI", true);
+    }
     for(std::vector<OnelabLocalClient *>::iterator it = _localClients.begin() ; it != _localClients.end(); ++it) {
       std::cout << (*it)->getName() << " and is " << ((isNew)?"new ":"updated ") << " from " << client << std::endl;
       if((*it)->getName() != client) {
@@ -85,10 +88,9 @@ public:
         else (*it)->onUpdateParameter(pp);
       }
     }
-    std::map<std::string, bool> clients = p.getClients();
+    std::map<std::string, bool> clients = pp->getClients();
     for(std::map<std::string, bool>::const_iterator it = clients.begin(); it != clients.end(); it++) {
       if(it->first == client) continue;
-      std::cout << "send " << p.getName() << " to " << it->first << " from " << client << std::endl; 
       OnelabLocalNetworkClient *tmp = getClient(it->first);
       if(tmp == NULL) continue;
       tmp->updateParameter(pp);
@@ -135,8 +137,6 @@ public:
   }
   void setChanged(bool changed, const std::string &client="") {
     _parameterSpace.setChanged(changed, client);
-    std::cout << "set " << client << ((changed)?" changed ":" unchanged ") << std::endl
-      << "get " << getChanged(client) << std::endl;
   }
   void performAction(const std::string action, const std::string client="");
 };

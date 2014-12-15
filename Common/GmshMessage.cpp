@@ -1177,6 +1177,7 @@ void Msg::FinalizeOnelab()
 #ifdef HAVE_ONELAB2
   if(_onelabClient) {
     _onelabClient->disconnect();
+    OnelabDatabase::instance()->wait();
     delete _onelabClient;
     _onelabClient = 0;
   }

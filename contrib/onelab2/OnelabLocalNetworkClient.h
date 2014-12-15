@@ -24,12 +24,12 @@ public:
 	OnelabLocalNetworkClient(std::string name, UDTSOCKET fd, unsigned int ip, unsigned short port, bool UDT);
 //#endif
 	OnelabLocalNetworkClient(std::string name, Socket fd, unsigned int ip, unsigned short port);
+	virtual ~OnelabLocalNetworkClient(){}
 	void sendto(UInt8 *buff, unsigned int len);
 	int recvfrom(UInt8 *buff, unsigned int maxlen);
   int recvmsg(OnelabProtocol &msg);
 	UDTSOCKET getSSocket() {return _fds;}
 	UDTSOCKET getUSocket() {return _fdu;}
-	virtual ~OnelabLocalNetworkClient(){}
 	std::string getName() {return _name;}
   void updateParameter(onelab::parameter *);
 	unsigned int getIp() {return _ip.address;}

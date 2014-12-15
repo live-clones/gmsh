@@ -57,6 +57,7 @@ int OnelabLocalNetworkClient::recvmsg(OnelabProtocol &msg)
 }
 void OnelabLocalNetworkClient::updateParameter(onelab::parameter *p)
 {
+  if(p == NULL) return;
   OnelabProtocol msg(OnelabProtocol::OnelabUpdate);
   msg.attrs.push_back(p);
   UInt8 buff[1024];

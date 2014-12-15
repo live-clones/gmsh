@@ -111,9 +111,8 @@ public:
 	inline UInt16 getAttributeLength() const {return 1+_messageLength;}
 
 	void setMessage(const std::string &message, const int level=OnelabAttrMessage::Debug) {
-		_messageLength = message.size()+1;
-    if(_messageLength == 0) return;
 		_level = level;
+		_messageLength = message.size()+1;
 		if(_message != NULL) free(_message);
 		_message = (UInt8 *)strndup(message.c_str(), _messageLength);
 	}

@@ -74,7 +74,7 @@ public:
           int nfds = select(_fds+1, &readfds, NULL, NULL, &timeout); // Wait for the server to answer
           if(nfds > 0) recvfrom();
         }
-        return _parameterSpace->get(ps, name, this->_name) && ps.size() == 0;
+        return _parameterSpace->get(ps, name, _name) && ps.size() == 0;
       }
       else
         return false;
@@ -148,7 +148,7 @@ public:
 	int recvfrom(OnelabProtocol &msg);
 	int recvfrom(UInt8 *buff, UInt16 maxlen);
 	void sendto(UInt8 *buff, UInt16 len);
-	void disconnect();
+	void disconnect(bool waitForServer=false);
 	void setRemoteIP(unsigned long ip){if(!_connected) _ip.address=ip;}
 	void setRemotePort(unsigned short port){if(!_connected) _ip.port=port;}
 

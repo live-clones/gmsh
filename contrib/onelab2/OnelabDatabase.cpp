@@ -26,8 +26,9 @@ DWORD WINAPI OnelabDatabase_listen(LPVOID arg)
         break;
       case OnelabProtocol::OnelabResponse:
       case OnelabProtocol::OnelabUpdate:
-        std::clog << "\033[0;35m" << "Update parameter on client" << "\033[0;0m" << std::endl;
+        std::clog << "\033[0;35m" << "Update " << msg.attrs.size() << " parameter(s) on client:" << "\033[0;0m" << std::endl;
         for(std::vector<OnelabAttr *>::iterator it = msg.attrs.begin() ; it != msg.attrs.end(); ++it) {
+          std::clog << "  - " << ((onelab::parameter *)*it)->getName() << std::endl; // FIXME
           if((*it)->getAttributeType() == OnelabAttr::Number) {
             onelab::number *attr = (onelab::number *)*it;
             OnelabDatabase::instance()->set(*attr, false);
@@ -79,16 +80,7 @@ DWORD WINAPI OnelabDatabase_listen(LPVOID arg)
       case OnelabProtocol::OnelabAction:
       {
         std::clog << "\033[0;35m" << "Client have to perform an action" << "\033[0;0m" << std::endl;
-        std::cout << "nb attr: " << msg.attrs.size() << std::endl;//" attr type: " << msg.attrs[0]->getAttributeType() << " and must be " << OnelabAttrAction::attributeType() << std::endl;
-        if(msg.attrs.size()==1 && msg.attrs[0]->getAttributeType() == OnelabAttrAction::attributeType()) {
-          OnelabAttrAction *attr = (OnelabAttrAction *)msg.attrs[0];
-          std::cout << attr->getAction() << " on " << attr->getClient() << "( i'm " << ((client)?*client:"nobody") << ") ?" << std::endl;
-          if(client && client->size() && *client == attr->getClient()) {
-            OnelabDatabase::instance()->haveToDo(attr->getAction());
-            return NULL;
-          }
-        }
-        break;
+        // nothing to do ?
       }
     }
   }

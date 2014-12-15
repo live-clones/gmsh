@@ -337,13 +337,7 @@ void *listenOnClients(void *param)
           std::cout << "\033[0;31m" << "Client \"" << cli->getName() << "\" is going to stop" << "\033[0m" << std::endl; // DEBUG
           rep.msgType(OnelabProtocol::OnelabStop);
           recvlen = rep.encodeMsg(buff, 1024);
-          fd_set writefds;
-          struct timeval timeout;
-          timeout.tv_sec = 0;
-          timeout.tv_usec = 5000;
-          FD_ZERO(&writefds);
-          FD_SET(cli->getSSocket(), &writefds);
-          if(select(cli->getSSocket()+1, NULL, writefds, NULL, timeout) > 0)
+          if(ip4_socket_connected(cli->getSSocket())) // FIXME cli can close socket before send
             cli->sendto(buff, recvlen);
           //UDT::epoll_remove_usock(eid, *it);
           UDT::epoll_remove_ssock(eid, *it);

@@ -170,16 +170,31 @@ bool OnelabNetworkClient::connect()
   return _connected;
 }
 
-void OnelabNetworkClient::disconnect()
+void OnelabNetworkClient::disconnect(bool waitForServer)
 {
-  // Send a message to the server to say the client stop (the server have to reply)
-  UInt16 bufflen = 1024, recvlen = 0;
-  UInt8 buff[1024];
-  OnelabProtocol msg(OnelabProtocol::OnelabStop);
   if(!_connected) return;
-  recvlen = msg.encodeMsg(buff, bufflen);
+  // Send a message to the server to say the client is going to stop (the server have to reply)
+  UInt8 buff[128];
+  fd_set readfds;
+  struct timeval timeout;
+  OnelabProtocol msg(OnelabProtocol::OnelabStop);
+  int recvlen = msg.encodeMsg(buff, 128);
   this->sendto(buff, recvlen);
-  _connected = false;
+  if(waitForServer) {
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+    FD_ZERO(&readfds);
+    FD_SET(_fds, &readfds);
+    while(select(_fds+1, &readfds, NULL, NULL, &timeout) > 0) { // Wait for the server to answer
+      recvlen = recvfrom(msg);
+      if(msg.msgType() == OnelabProtocol::OnelabStop) {
+        _connected = false;
+        break;
+      }
+    }
+  }
+  else
+    _connected = false;
 }
 
 void OnelabNetworkClient::request(OnelabProtocol &msg)

@@ -139,12 +139,10 @@ public:
     return _localGUI;
   }
   template <class T> bool set(const T &p, const std::string &client) {
-    std::cout<<"set "<<p.getName()<<" from "<<client<<std::endl;
     if(_client) return _client->set(p, true);
     return OnelabServer::instance()->set(p, client);
   }
   template <class T> bool set(const T &p, bool update=true) {
-    std::cout<<"set "<<p.getName()<<std::endl;
     if(_client) return _client->set(p, update);
     //if(_localGUI) return _localGUI->set(p);
     return OnelabServer::instance()->set(p);

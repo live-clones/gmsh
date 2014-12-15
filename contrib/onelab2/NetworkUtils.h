@@ -141,6 +141,13 @@ inline int ip4_socket_connect(Socket fd, IPv4 &ip)
   addr.sin_port = hton16(ip.port);
   return connect(fd, (struct sockaddr*)&addr, addrl);
 }
+inline bool ip4_socket_connected(Socket fd)
+{
+  int error_code;
+  unsigned int optlen = sizeof(error_code);
+  getsockopt(fd, SOL_SOCKET, SO_ERROR, &error_code, &optlen);
+  return (error_code == 0);
+}
 bool ip4_socket_get_local_address(Socket fd, IPv4 &ip);
 void ip4_socket_timeout(Socket d, long tos, long tous=0);
 inline void ip4_socket_reuse_address(Socket fd, bool reuse=true) {setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof reuse);}
