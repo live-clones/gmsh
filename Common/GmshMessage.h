@@ -107,9 +107,9 @@ class Msg {
   static std::string GetExecutableName() { return _execName; }
   static void LoadOnelabClient(const std::string &name, const std::string &sockName);
   static GmshClient *GetGmshClient(){ return _client; }
-#ifdef HAVE_ONELAB2
+#if defined(HAVE_ONELAB2)
   static GmshNetworkClient *GetOnelabClient(){ return _onelabClient; }
-#else
+#elif defined(HAVE_ONELAB)
   static onelab::client *GetOnelabClient(){ return _onelabClient; }
 #endif
   static void FinalizeOnelab();
