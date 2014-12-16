@@ -7,15 +7,17 @@
 import onelab
 import math, os
 
+c = onelab.client()
+
 def exportMsh(le1,le2):
-   mshFile = open(onelab.path(__file__, "pend.msh"),'w')
+   mshFile = open(c.cpath("pend.msh"),'w')
    mshFile.write('$MeshFormat\n2.2 0 8\n$EndMeshFormat\n')
    mshFile.write('$Nodes\n3\n1 0 0 0\n2 0 %s 0\n3 0 %s 0\n$EndNodes\n' %(-le1, -le1-le2))
    mshFile.write('$Elements\n3\n1 1 2 0 1 1 2\n2 1 2 0 1 2 3\n3 15 2 0 2 3\n$EndElements\n')
    mshFile.close()
 
 def exportMshOpt():
-   optFile = open(onelab.path(__file__, "pend.msh.opt"),'w')
+   optFile = open(c.cpath("pend.msh.opt"),'w')
    optFile.write('n = PostProcessing.NbViews - 1;\n')
    optFile.write('If(n >= 0)\nView[n].ShowScale = 0;\nView[n].VectorType = 5;\n')
    optFile.write('View[n].ExternalView = 0;\nView[n].DisplacementFactor = 1 ;\n')
@@ -24,12 +26,10 @@ def exportMshOpt():
    optFile.close()
 
 def exportIter(iter,t,x1,y1,x2,y2):
-   mshFile = open(onelab.path(__file__, "pend.msh"),'a')
+   mshFile = open(c.cpath("pend.msh"),'a')
    mshFile.write('$NodeData\n1\n"motion"\n1\n\t%f\n3\n\t%d\n3\n' % (t, iter))
    mshFile.write('\t3\n\t1 0 0 0\n\t2 %f %f 0\n\t3 %f %f 0\n$EndNodeData\n' %(x1,y1,x2,y2))
    mshFile.close()
-
-c = onelab.client()
 
 g = 9.8	# acceleration of gravity
 m = 0.3 # mass of pendulum balls
@@ -114,7 +114,7 @@ while (time < tmax):
 
       exportMsh(l1, l2)
       exportIter(iter, time, x1, y1+l1, x2, y2+l1+l2)
-      c.mergeFile(onelab.path(__file__, 'pend.msh'))
+      c.mergeFile(c.cpath('pend.msh'))
       iter += 1
 
 c.setNumber(c.name + '/Progress', value=0)
