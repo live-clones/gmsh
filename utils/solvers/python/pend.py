@@ -7,7 +7,7 @@
 import onelab
 import math, os
 
-c = onelab.client()
+c = onelab.client(__file__)
 
 def exportMsh(le1,le2):
    mshFile = open(c.cpath("pend.msh"),'w')
