@@ -38,7 +38,7 @@ def file_exist(filename):
     return False
 
 def path(dirname, inp):
-  # dirname is a directory, can be empty if model called in cmd line
+  # dirname is a directory, can be empty
   # inp is an aptional file or subdirectory name
   # returns the path to 'inp' in the same directory as 'ref' 
   if not inp: 
@@ -453,7 +453,7 @@ class client :
         self._send(self._GMSH_ERROR, line.rstrip().encode('utf-8'))
       sys.exit(1)
   
-  def path(self, inp='') :
+  def getPath(self, inp='') :
     return path(self.wdir,inp)
 
   def exists(self, p) :
@@ -462,7 +462,7 @@ class client :
       exit(0) 
     return True
 
-  def cpath(self, inp='') :
+  def checkPath(self, inp='') :
     p = path(self.wdir,inp)
     self.exists(p)
     return p
