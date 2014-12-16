@@ -36,41 +36,21 @@ def file_exist(filename):
       return True
   except IOError:
     return False
-  
-def path(ref, inp=''):
-  # ref is a reference file name (not a directory)
-  # inp is an optional file or subdirectory name
-  # return the path to 'inp' in the same directory as 'ref' 
-  dirname = os.path.dirname(ref)
+
+def path(dirname, inp):
+  # dirname is a directory, can be empty if model called in cmd line
+  # inp is an aptional file or subdirectory name
+  # returns the path to 'inp' in the same directory as 'ref' 
   if not inp: 
-    if dirname:
-      return dirname
-    else :
-      return '.'
+    return dirname
   if inp[0] == '/' or inp[0] == '\\' or (len(inp) > 2 and inp[1] == '\:'):
     return inp # do nothing, inp is an absolute path
+  if inp[0] == '.' :
+    inp = inp[2:] # cut off heading './' or '.\'
   if dirname: 
     return dirname + os.sep + inp # append inp to the path of the reference file
   else:
     return inp
-
-class pth:
-  def path(self, ref, inp=''):
-    p = path(ref,inp)
-    if not os.path.exists(p):
-      self.errors += 1
-      self.msg += p + ' '
-    return p
-
-  def status(self):
-    return '%d path errors: %s' %(self.errors, self.msg)
-
-  def copy(self, here, there):
-    os.system('cp '+ here + ' ' + there)
-    
-  def __init__(self) :
-    self.errors = 0
-    self.msg = ''
 
 class _parameter() :
   _membersbase = [
@@ -364,7 +344,7 @@ class client :
       if msg == "true" :
           return True
     return False
-
+  
   def isChanged(self, name) :
     if not self.socket :
       return
@@ -410,10 +390,11 @@ class client :
   def run(self, name, command, arguments=''):
     self.runSubClient(name, command, arguments)
 
-  def __init__(self):
+  def __init__(self, ref=''):
     self.socket = None
     self.name = ""
     self.addr = ""
+    self.wdir = os.path.dirname(ref)
     self._numSubClients = 0
     for i, v in enumerate(sys.argv) :
       if v == '-onelab':
@@ -424,7 +405,6 @@ class client :
     self.action = "compute" # default (subclients have no client.Action defined)
     self.action = self.getString(self.name + '/Action', False)
     self.setNumber('IsPyMetamodel',value=1,visible=0)
-    #self.defineNumber('0Metamodel/Loop',value=0,visible=0)
     self.loop = self.getNumber('0Metamodel/Loop', warn_if_not_found=False)
     self.batch = self.getNumber('0Metamodel/Batch', warn_if_not_found=False)
     self.sendInfo("Performing OneLab '" + self.action + "'")
@@ -472,7 +452,24 @@ class client :
       for line in iter(call.stderr.readline, b''):
         self._send(self._GMSH_ERROR, line.rstrip().encode('utf-8'))
       sys.exit(1)
-      
+  
+  def path(self, inp='') :
+    return path(self.wdir,inp)
+
+  def exists(self, p) :
+    if not os.path.exists(p):
+      self.sendError('path error: %s' %(p))
+      exit(0) 
+    return True
+
+  def cpath(self, inp='') :
+    p = path(self.wdir,inp)
+    self.exists(p)
+    return p
+
+  def copy(self, here, there):
+    os.system('cp '+ here + ' ' + there)
+    
   def upload(self, here, there, remote='') :
     if not here or not there :
       return
@@ -510,8 +507,9 @@ class client :
       if self.getNumber('0Metamodel/9Use restored solution') :
         return self.getStringChoices('0Metamodel/9Solution files')  
       else :
+        self.setNumber('0Metamodel/9Use restored solution', visible=0)
         self.setString('0Metamodel/9Solution files', value=list[0],
-                       choices=list, readOnly=1)      
+                       choices=list, readOnly=1)    
     return list
 
   def restoreSolution(self) :
@@ -521,11 +519,9 @@ class client :
     if list :
       self.setString('0Metamodel/9Output files', value=list[0],
                      choices=list, visible=1)
-#      self.setString(self.name+'/9Output files', value=list[0],
-#                     choices=list, visible=1)
 
 # tool to extract the (i, j)th element in an array file
-from rlcompleter import readline
+#from rlcompleter import readline
 def extract(filename,i,j):
     input = open(filename,'r')
     all_lines = input.readlines()
