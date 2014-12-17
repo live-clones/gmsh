@@ -26,6 +26,7 @@ public:
 	void onNewParameter(onelab::parameter *p);
   void onUpdateParameter(onelab::parameter *p);
   void onRemoveParameter(onelab::parameter *p);
+  void onMessage(const std::string &name, const std::string &message, int level);
 #else
 	GmshNetworkClient(std::string name) : OnelabNetworkClient(name) {}
 	GmshNetworkClient(std::string name, unsigned int ip, unsigned short port) : OnelabNetworkClient(name, ip, port) {}

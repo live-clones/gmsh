@@ -22,7 +22,10 @@ DWORD WINAPI OnelabDatabase_listen(LPVOID arg)
         OnelabDatabase::instance()->networkClientHaveToStop(true);
         return NULL;
       case OnelabProtocol::OnelabMessage:
-        Msg::Info("Message from onelab"); // TODO
+        if(msg.attrs.size()==1 && msg.attrs[0]->getAttributeType() == OnelabAttrMessage::attributeType()) {
+          OnelabNetworkClient *gui = OnelabDatabase::instance()->getNetworkClient();
+          if(gui) gui->onMessage("Server", ((OnelabAttrMessage *)msg.attrs[0])->getMessage(), ((OnelabAttrMessage *)msg.attrs[0])->getLevel());
+        }
         break;
       case OnelabProtocol::OnelabResponse:
       case OnelabProtocol::OnelabUpdate:

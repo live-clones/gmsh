@@ -93,6 +93,8 @@ public:
         return _client;
       }
       else {
+        delete _client;
+        _client = NULL;
         return NULL;
       }
     }
@@ -106,6 +108,7 @@ public:
     }
     return NULL;
   }
+  GmshNetworkClient *getNetworkClient(){return _client;}
   void networkClientHaveToStop(bool haveToStop) {_haveToStop = haveToStop;}
   bool networkClientHaveToStop() {return _haveToStop;}
   void haveToDo(const std::string action) {_action = action;}
@@ -163,10 +166,6 @@ public:
     OnelabProtocol msg(OnelabProtocol::OnelabAction);
     if(client.size()) {
       std::cout << "try to " << action << ' ' << client <<  std::endl;
-      onelab::string o(client + "/Action", action);
-      o.setVisible(false);
-      o.setNeverChanged(true);
-      set(o);
       if(_client && ((OnelabLocalClient *)_client)->getName() == client) {
         if(client == "Gmsh") onelabUtils::runGmshClient(action, true);
       }
@@ -188,22 +187,21 @@ public:
       run(action, "Gmsh");
 
       // iterate over all other clients
-      std::string solver = "";
-      if(CTX::instance()->solverToRun >= 0) solver = opt_solver_name(CTX::instance()->solverToRun, GMSH_GET, "");
-      if(_client) {
-        std::cout << "server is remote" << std::endl;
-        if(CTX::instance()->solverToRun >= 0) run(action, solver);
-        else {
+      if(CTX::instance()->solverToRun >= 0) {
+        std::string solver = opt_solver_name(CTX::instance()->solverToRun, GMSH_GET, "");
+        run(action, solver);
+      }
+      else {
+        if(_client) {
+          std::cout << "server is remote" << std::endl;
           msg.attrs.push_back(new OnelabAttrAction(action, client));
           int size = msg.encodeMsg(buff, 1024);
           sendbytes(buff, size);
         }
-        return true;
-      }
-      else {
-        std::cout << "server is local" << std::endl;
-        if(CTX::instance()->solverToRun >= 0) OnelabServer::instance()->performAction(action, solver);
-        else OnelabServer::instance()->performAction(action, client);
+        else {
+          std::cout << "server is local" << std::endl;
+          OnelabServer::instance()->performAction(action, client);
+        }
         return true;
       }
     }
