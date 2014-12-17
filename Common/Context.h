@@ -256,8 +256,7 @@ class CTX {
   }solver;
   // onelab options
   struct{
-    short listen_port, server_port;
-    char server_ip[16];
+    short listen_port;
   }onelab;
   // print options
   struct{

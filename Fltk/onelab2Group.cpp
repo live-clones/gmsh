@@ -142,7 +142,6 @@ void solver_cb(Fl_Widget *w, void *data)
   int num = (intptr_t)data;
   if(num >= 0){
     std::string name = opt_solver_name(num, GMSH_GET, "");
-    std::cout << name << ' ';
     std::string exe = opt_solver_executable(num, GMSH_GET, "");
     std::string host = opt_solver_remote_login(num, GMSH_GET, "");
     OnelabDatabase::instance()->run("initialize", name);
@@ -409,7 +408,6 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
   std::string name((char*)data);
-  std::cout << name << std::endl;
   std::vector<onelab::number> numbers;
   OnelabDatabase::instance()->get(numbers, name);
   if(numbers.size()){

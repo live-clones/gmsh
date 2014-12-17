@@ -487,6 +487,9 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
 #endif
     else {
       status = GModel::readGEO(fileName);
+#ifdef HAVE_ONELAB2
+      Msg::SetOnelabString("Gmsh/1ModelName", fileName, false);
+#endif
     }
   }
 

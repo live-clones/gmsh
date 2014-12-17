@@ -219,9 +219,6 @@ class GModel
   // get/set the model file name
   void setFileName(std::string fileName)
   {
-#ifdef HAVE_ONELAB2
-    Msg::SetOnelabString("Gmsh/1ModelName", fileName, false);
-#endif
     _fileName = fileName;
     _fileNames.insert(fileName);
   }

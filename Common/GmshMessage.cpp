@@ -67,7 +67,7 @@ GmshClient *Msg::_client = 0;
 std::string Msg::_execName;
 #if defined(HAVE_ONELAB2)
 OnelabDatabase *OnelabDatabase::_instance = NULL;
-GmshNetworkClient *Msg::_onelabClient = 0;
+OnelabDatabase *Msg::_onelabClient = 0;
 #elif defined(HAVE_ONELAB)
 onelab::client *Msg::_onelabClient = 0;
 #endif
@@ -714,7 +714,9 @@ int Msg::GetAnswer(const char *question, int defaultval, const char *zero,
 
 bool Msg::UseOnelab()
 {
-#if defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB2)
+  return true;
+#elif defined(HAVE_ONELAB)
   return _onelabClient ? true : false;
 #else
   return false;
@@ -786,10 +788,6 @@ public:
 void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
 #ifdef HAVE_ONELAB2
-  if(_onelabClient) {
-    delete _onelabClient;
-    _onelabClient = 0;
-  }
   if(sockname.empty()){
     if(name != "Gmsh"){ // load db from file:
       FILE *fp = Fopen(name.c_str(), "rb");
@@ -800,6 +798,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
       else
         Error("Error loading onelab database '%s'", name.c_str());
     }
+    _onelabClient = OnelabDatabase::instance();
   }
   else{
     UInt32 address = 0;
@@ -814,7 +813,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
       Error("Unable to connect ONELAB server (%s)", sockname.c_str());
       Exit(1);
     }
-    _onelabClient = c;
+    _onelabClient = OnelabDatabase::instance();
 
     SetOnelabNumber(name + "/UseCommandLine", 1, false);
     SetOnelabString(name + "/FileExtension", ".geo", false);
@@ -1176,8 +1175,7 @@ void Msg::FinalizeOnelab()
 {
 #ifdef HAVE_ONELAB2
   if(_onelabClient) {
-    _onelabClient->disconnect();
-    OnelabDatabase::instance()->wait();
+    _onelabClient->finalize();
     delete _onelabClient;
     _onelabClient = 0;
   }

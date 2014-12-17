@@ -110,10 +110,7 @@ public:
   bool networkClientHaveToStop() {return _haveToStop;}
   void haveToDo(const std::string action) {_action = action;}
   std::string &actionToDo() {return _action;}
-  int wait() {
-    if(_client) return pthread_join(_listenThread, NULL);
-    return pthread_join(_serverThread, NULL);
-  }
+  void finalize();
   int listen(OnelabProtocol &msg) {
     if(_client) return _client->recvfrom(msg);
     return 0;
@@ -151,6 +148,9 @@ public:
     if(_client) return _client->get(ps, name);
     //if(_localGUI) _localGUI->get(ps, name);
     return OnelabServer::instance()->get(ps, name, client);
+  }
+  void clear(const std::string &name="", const std::string &client="") {
+     if(_client) return _client->clear(name, client);
   }
   bool fromFile(FILE *fp, const std::string &client="")
   {

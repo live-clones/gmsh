@@ -137,11 +137,12 @@ int OnelabNetworkClient::recvfrom()
 }
 bool OnelabNetworkClient::connect()
 {
+  if(_connected) return true;
+
   UInt16 bufflen = 1024;
   int recvlen = 0;
   UInt8 buff[1024];
   OnelabProtocol msg(OnelabProtocol::OnelabStart);
-  if(_connected) return true;
 #ifdef HAVE_UDT
   if(_fds) {
     ip4_socket_connect(_fds, _ip);
@@ -156,16 +157,17 @@ bool OnelabNetworkClient::connect()
   recvlen = msg.encodeMsg(buff, bufflen);
   sendto(buff, recvlen);
 #ifdef HAVE_UDT
-  udt_socket_timeout(_fdu, 3);
+  if(_fdu)udt_socket_timeout(_fdu, 3);
+  else
 #endif
   ip4_socket_timeout(_fds, 3);
   recvlen = recvfrom(msg);
 
 #ifdef HAVE_UDT
-  udt_socket_timeout(_fdu, -1);
+  if(_fdu)udt_socket_timeout(_fdu, -1);
+  else
 #endif
   ip4_socket_timeout(_fds, 0);
-  if(recvlen <= 0) return false;
   if(recvlen > 0 && msg.msgType() == OnelabProtocol::OnelabStart) _connected = true;
   return _connected;
 }
@@ -189,12 +191,26 @@ void OnelabNetworkClient::disconnect(bool waitForServer)
       recvlen = recvfrom(msg);
       if(msg.msgType() == OnelabProtocol::OnelabStop) {
         _connected = false;
+        closeSocket();
         break;
       }
     }
   }
-  else
+  else {
     _connected = false;
+  }
+}
+
+void OnelabNetworkClient::closeSocket()
+{
+#ifdef HAVE_UDT
+  if(_fds)
+    ip4_socket_close(_fds);
+  else
+    udt_socket_close(_fdu);
+#else
+  ip4_socket_close(_fds);
+#endif
 }
 
 void OnelabNetworkClient::request(OnelabProtocol &msg)

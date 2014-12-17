@@ -149,6 +149,7 @@ public:
 	int recvfrom(UInt8 *buff, UInt16 maxlen);
 	void sendto(UInt8 *buff, UInt16 len);
 	void disconnect(bool waitForServer=false);
+  void closeSocket();
 	void setRemoteIP(unsigned long ip){if(!_connected) _ip.address=ip;}
 	void setRemotePort(unsigned short port){if(!_connected) _ip.port=port;}
 

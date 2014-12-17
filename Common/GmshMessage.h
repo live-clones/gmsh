@@ -16,7 +16,7 @@
 class GmshClient;
 namespace onelab{ class client; }
 #ifdef HAVE_ONELAB2
-class GmshNetworkClient;
+class OnelabDatabase;
 #endif
 
 // the external message handler
@@ -50,7 +50,7 @@ class Msg {
   static GmshClient *_client;
 #if defined(HAVE_ONELAB2)
   // communication with onelab server (replace _client and old _onelabClient)
-  static GmshNetworkClient *_onelabClient;
+  static OnelabDatabase *_onelabClient;
 #elif defined(HAVE_ONELAB)
   // communication with onelab server
   static onelab::client *_onelabClient;
@@ -108,7 +108,7 @@ class Msg {
   static void LoadOnelabClient(const std::string &name, const std::string &sockName);
   static GmshClient *GetGmshClient(){ return _client; }
 #if defined(HAVE_ONELAB2)
-  static GmshNetworkClient *GetOnelabClient(){ return _onelabClient; }
+  static OnelabDatabase *GetOnelabClient(){ return _onelabClient; }
 #elif defined(HAVE_ONELAB)
   static onelab::client *GetOnelabClient(){ return _onelabClient; }
 #endif

@@ -93,3 +93,14 @@ DWORD WINAPI OnelabDatabase_server(LPVOID arg)
 {
   OnelabServer::instance()->Run();
 }
+
+void OnelabDatabase::finalize()
+{
+  if(_client) {
+    _client->disconnect();
+    pthread_join(_listenThread, NULL);
+  }
+  else {
+    //TODO pthread_join(_serverThread, NULL);
+  }
+}
