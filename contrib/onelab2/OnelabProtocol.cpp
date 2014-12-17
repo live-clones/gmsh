@@ -39,6 +39,31 @@ unsigned short OnelabProtocol::encodeMsg(UInt8 *buff, UInt32 len)
 	encode(sizeptr, _size);
 	return (unsigned short)(ptr-buff);
 }
+unsigned short OnelabProtocol::encodeMsgs(UInt8 *buff, UInt32 len)
+{
+	if(len < 4) throw ERROR_BUFFER_TOO_SMALL;
+  if(!attrs.size()) return 0;
+	UInt8 *ptr = encode(buff, (UInt8)ONELAB_VERSION);
+	ptr = encode(ptr, _type);
+  UInt8 *sizeptr = ptr;
+	_size = 0;
+	ptr = encode(sizeptr, _size);
+  while(attrs.size() > 0) {
+    OnelabAttr *attr = attrs.back();
+    UInt16 attrLen = attr->getAttributeLength();
+    if(4+_size+attrLen > len) {
+	    encode(sizeptr, _size);
+      return (unsigned short)(ptr-buff);
+    }
+		ptr = attr->encodeAttribute(ptr);
+		if(!attr->isInDatabase()) delete attr;
+    attrs.pop_back();
+    _size+=attrLen+4;
+  }
+
+	encode(sizeptr, _size);
+	return (unsigned short)(ptr-buff);
+}
 int OnelabProtocol::parseHeader(UInt8 *buff, UInt32 len)
 {
   this->clearAttrs();

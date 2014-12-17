@@ -493,11 +493,12 @@ void OnelabServer::sendAllParameter(OnelabLocalNetworkClient *cli)
   UInt8 buff[1024];
   _parameterSpace.getAllParameters(ps);
   if(ps.size() == 0) return;
-  // FIXME ...
   for(std::set<onelab::parameter*, onelab::parameterLessThan>::iterator it = ps.begin(); it != ps.end(); it++)
     if((*it)->hasClient(cli->getName())) msg.attrs.push_back(*it);
-  recvlen = msg.encodeMsg(buff, bufflen);
-  cli->sendto(buff, recvlen);
+  while(recvlen = msg.encodeMsgs(buff, bufflen))
+  {
+    cli->sendto(buff, recvlen);
+  }
 }
 
 void OnelabServer::Run()
