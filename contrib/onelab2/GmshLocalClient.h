@@ -24,6 +24,7 @@ public:
 	void onNewParameter(onelab::parameter *p);
   void onUpdateParameter(onelab::parameter *p);
   void onRemoveParameter(onelab::parameter *p);
+  void onMessage(const std::string &name, const std::string &message, int level);
 #else
 	GmshLocalClient(std::string name, onelab::parameterSpace *parameterSpace)
 		: OnelabLocalClient(name, parameterSpace){}

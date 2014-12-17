@@ -21,6 +21,7 @@ public:
 	virtual void onNewParameter(onelab::parameter *p){}
   virtual void onUpdateParameter(onelab::parameter *p){}
   virtual void onRemoveParameter(onelab::parameter *p){}
+  virtual void onMessage(const std::string &name, const std::string &message, int level){}
 
   virtual void run(std::string action) {}
   void stop() {}

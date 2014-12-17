@@ -419,6 +419,11 @@ FlGui *FlGui::instance(int argc, char **argv)
 
 int FlGui::run()
 {
+#ifdef HAVE_ONELAB2
+  // Enable multi-thread support by locking from the main thread
+  Fl::lock();
+#endif
+
   // bounding box computation necessary if we run the gui without merging any
   // files (e.g. if we build the geometry with python and create the gui from
   // the python script)

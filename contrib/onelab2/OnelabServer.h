@@ -28,13 +28,16 @@ private:
 	UDTSOCKET _fdu;
 	int _eid;
 	void sendto(std::string client, UInt8 *buff, UInt32 len);
-	std::string waitForClientName(UDTSOCKET fd);
 #endif
 public:
 	OnelabServer(UInt16 port);
 	OnelabServer(UInt32 iface, UInt16 port);
 	static OnelabServer *instance(const UInt32 iface=0, const UInt16 port=0) {
 		if(!_server) _server = new OnelabServer(iface, port);
+    else if(iface != 0 || port != 0) {
+      delete _server;
+      _server = new OnelabServer(iface, port);
+    }
 		return _server;
 	}
 	static void setInstance(OnelabServer *s) { _server = s; }
@@ -59,9 +62,10 @@ public:
 	void removeClient(OnelabLocalNetworkClient *client);
   std::vector<OnelabLocalNetworkClient> &getClients() {return _clients;}
   std::vector<OnelabLocalClient *> &getLocalClients() {return _localClients;}
-	OnelabLocalNetworkClient *getClient(UInt32 ip, UInt16 port);
-	OnelabLocalNetworkClient *getClient(std::string name);
-  OnelabLocalClient *getLocalClient(std::string name);
+	OnelabLocalNetworkClient *getClient(const UInt32 ip, const UInt16 port);
+	OnelabLocalNetworkClient *getClient(const std::string &name);
+  OnelabLocalClient *getLocalClient(const std::string &name);
+  void waitForClient(const std::string &name);
 	void sendAllParameter(OnelabLocalNetworkClient *cli);
 	// Parameters methods
 	void clear(const std::string &name="", const std::string &client="") {
@@ -82,7 +86,6 @@ public:
       pp->addClient("localGUI", true);
     }
     for(std::vector<OnelabLocalClient *>::iterator it = _localClients.begin() ; it != _localClients.end(); ++it) {
-      std::cout << (*it)->getName() << " and is " << ((isNew)?"new ":"updated ") << " from " << client << std::endl;
       if((*it)->getName() != client) {
         if(isNew)(*it)->onNewParameter(pp);
         else (*it)->onUpdateParameter(pp);

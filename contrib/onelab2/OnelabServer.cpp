@@ -21,18 +21,11 @@
 #include "GModel.h"
 #include "Options.h"
 
-static bool haveToStop = false;
-
-void signalHandler(int unused)
-{
-  haveToStop = true;
-}
 
 OnelabServer::OnelabServer(UInt32 iface, UInt16 port)
 {
   _ip.address = iface;
   _ip.port = port;
-
 #ifdef HAVE_UDT
   UDT::startup();
   _fdu = udt_socket(_ip, SOCK_STREAM);
@@ -139,7 +132,7 @@ void OnelabServer::sendto(std::string client, UInt8 *buff, UInt32 len)
   }
 }
 
-OnelabLocalNetworkClient *OnelabServer::getClient(UInt32 ip, UInt16 port)
+OnelabLocalNetworkClient *OnelabServer::getClient(const UInt32 ip, const UInt16 port)
 {
   for(std::vector<OnelabLocalNetworkClient>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
     if((*it).getIp() == ip && (*it).getPort() == port)
@@ -148,7 +141,7 @@ OnelabLocalNetworkClient *OnelabServer::getClient(UInt32 ip, UInt16 port)
   return NULL;
 }
 
-OnelabLocalNetworkClient *OnelabServer::getClient(std::string name)
+OnelabLocalNetworkClient *OnelabServer::getClient(const std::string &name)
 {
   for(std::vector<OnelabLocalNetworkClient>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
     if((*it).getName() == name)
@@ -156,7 +149,7 @@ OnelabLocalNetworkClient *OnelabServer::getClient(std::string name)
   }
   return NULL;
 }
-OnelabLocalClient *OnelabServer::getLocalClient(std::string name)
+OnelabLocalClient *OnelabServer::getLocalClient(const std::string &name)
 {
   for(std::vector<OnelabLocalClient *>::iterator it = _localClients.begin(); it != _localClients.end(); ++it) {
     if((*it)->getName() == name)
@@ -164,6 +157,30 @@ OnelabLocalClient *OnelabServer::getLocalClient(std::string name)
   }
   return NULL;
 
+}
+
+void OnelabServer::waitForClient(const std::string &name)
+{
+  std::cout << "======= check when cli " << name << "end:" << std::cout;
+  OnelabLocalNetworkClient *cli = getClient(name);
+  OnelabLocalClient *lcli = getLocalClient(name);
+  if(lcli != NULL) {
+    // TODO
+    return;
+  }
+  if(cli == NULL) { // wait for the client to connect
+    sleep(1);
+    cli = getClient(name);
+  }
+  if(cli != NULL) { // wait for the client to stop
+    std::cout << "======= cli is remote wait with select()" << std::cout;
+    fd_set errorfds;
+    FD_ZERO(&errorfds);
+    FD_SET(cli->getSSocket(), &errorfds);
+    select(cli->getSSocket()+1, NULL, NULL, &errorfds, NULL); // Wait for the server to answer
+    // TODO wait until the client close
+    std::cout << "======= cli " << cli->getName() << "just ended ?" << std::cout;
+  }
 }
 
 void OnelabServer::removeClient(OnelabLocalNetworkClient *client)
@@ -195,11 +212,8 @@ void OnelabServer::performAction(const std::string action, const std::string cli
       localcli->run(action);
     }
     else { // client does not exist (Gmsh is used as a server), launch the client
-      std::cout << action << " on " << client << "(launch a new remote Gmsh)" << std::endl;
-      if(launchClient(client) >= 0)
-        ;// FIXME then action or action is store in onelab DB ?
-      else
-        ;// TODO save action and wait for the cli ?
+      std::cout << action << " on " << client << "(launch a new remote client)" << std::endl;
+      launchClient(client);
     }
   }
   else {
@@ -345,19 +359,9 @@ void *listenOnClients(void *param)
           UDT::close(*it);
           break;
         case OnelabProtocol::OnelabMessage:
-          // TODO do not use Gmsh, send message to GUI
           if(msg.attrs.size()==1 && msg.attrs[0]->getAttributeType() == OnelabAttrMessage::attributeType()) {
-            switch(((OnelabAttrMessage *)msg.attrs[0])->getLevel()) {
-              case OnelabAttrMessage::Info:
-                Msg::Direct("Info    : %s - %s", cli->getName().c_str(), ((OnelabAttrMessage *)msg.attrs[0])->getMessage());
-                break;
-              case OnelabAttrMessage::Warning:
-                Msg::Warning("%s - %s", cli->getName().c_str(), ((OnelabAttrMessage *)msg.attrs[0])->getMessage());
-                break;
-              case OnelabAttrMessage::Error:
-                Msg::Error("%s - %s", cli->getName().c_str(), ((OnelabAttrMessage *)msg.attrs[0])->getMessage());
-                break;
-            }
+            OnelabLocalClient *gui = OnelabServer::instance()->getLocalClient("localGUI");
+            if(gui) gui->onMessage(cli->getName(), ((OnelabAttrMessage *)msg.attrs[0])->getMessage(), ((OnelabAttrMessage *)msg.attrs[0])->getLevel());
           }
           break;
         case OnelabProtocol::OnelabRequest:
@@ -532,8 +536,6 @@ void OnelabServer::Run()
 #endif
   }
   udt_socket_close(_fdu);
-#else
-  // TODO
-  ip4_socket_close(_fds);
 #endif
+  ip4_socket_close(_fds);
 }
