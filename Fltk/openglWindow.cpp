@@ -42,7 +42,6 @@ static void navigator_handler(void *data)
   }
 }
 
-
 static void lassoZoom(drawContext *ctx, mousePosition &click1, mousePosition &click2)
 {
   if(click1.win[0] == click2.win[0] || click1.win[1] == click2.win[1]) return;
@@ -66,7 +65,8 @@ openglWindow::openglWindow(int x, int y, int w, int h)
   :  Fl_Gl_Window(x, y, w, h, "gl"), _lock(false), _drawn(false),
      _selection(ENT_NONE), _trySelection(0), Nautilus(0)
 {
-  _ctx = new drawContext();
+  _ctx = new drawContext(this);
+
   for(int i = 0; i < 3; i++) _point[i] = 0.;
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
   _lassoXY[0] = _lassoXY[1] = 0;
@@ -74,7 +74,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
   addPointMode = lassoMode = selectionMode = false;
   endSelection = undoSelection = invertSelection = quitSelection = 0;
 
-  if(CTX::instance()->gamepad)   Fl::add_timeout(.5, navigator_handler, (void*)this);
+  if(CTX::instance()->gamepad) Fl::add_timeout(.5, navigator_handler, (void*)this);
 }
 
 openglWindow::~openglWindow()
@@ -687,11 +687,6 @@ int openglWindow::pixel_h()
 #else
   return h();
 #endif
-}
-
-bool openglWindow::retina()
-{
-  return pixel_w() > w();
 }
 
 bool openglWindow::_select(int type, bool multiple, bool mesh,

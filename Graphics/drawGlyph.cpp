@@ -31,15 +31,21 @@ void drawContext::drawString(const std::string &s, const std::string &font_name,
     drawContext::global()->setFont(font_enum, font_size);
     double width = drawContext::global()->getStringWidth(s.c_str());
     double height = drawContext::global()->getStringHeight();
+    // width and height must here be computed in true pixel coordinates, because
+    // viewport2world uses the actual, pixel-sized (not FLTK-sized) viewport
+    if(isHighResolution()){
+      width *= 2;
+      height *= 2;
+    }
     switch(align){
-    case 1: w[0] -= width/2.;                     break; // bottom center
-    case 2: w[0] -= width;                        break; // bottom right
-    case 3:                    w[1] -= height;    break; // top left
-    case 4: w[0] -= width/2.;  w[1] -= height;    break; // top center
-    case 5: w[0] -= width;     w[1] -= height;    break; // top right
-    case 6:                    w[1] -= height/2.; break; // center left
-    case 7: w[0] -= width/2.;  w[1] -= height/2.; break; // center center
-    case 8: w[0] -= width;     w[1] -= height/2.; break; // center right
+    case 1: w[0] -= width/2.;                    break; // bottom center
+    case 2: w[0] -= width;                       break; // bottom right
+    case 3:                   w[1] -= height;    break; // top left
+    case 4: w[0] -= width/2.; w[1] -= height;    break; // top center
+    case 5: w[0] -= width;    w[1] -= height;    break; // top right
+    case 6:                   w[1] -= height/2.; break; // center left
+    case 7: w[0] -= width/2.; w[1] -= height/2.; break; // center center
+    case 8: w[0] -= width;    w[1] -= height/2.; break; // center right
     default: break;
     }
     viewport2World(w, x);

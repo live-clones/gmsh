@@ -34,6 +34,7 @@ class GEdge;
 class GFace;
 class GRegion;
 class MElement;
+class openglWindow;
 
 class drawTransform {
  public:
@@ -112,6 +113,7 @@ class drawContext {
   std::set<GModel*> _hiddenModels;
   std::set<PView*> _hiddenViews;
   GLuint _bgImageTexture, _bgImageW, _bgImageH;
+  openglWindow *_openglWindow;
  public:
   Camera camera;
   double r[3]; // current Euler angles (in degrees!)
@@ -127,8 +129,9 @@ class drawContext {
   enum RenderMode {GMSH_RENDER=1, GMSH_SELECT=2, GMSH_FEEDBACK=3};
   int render_mode; // current rendering mode
  public:
-  drawContext(drawTransform *transform=0);
+  drawContext(openglWindow *window, drawTransform *transform=0);
   ~drawContext();
+  bool isHighResolution();
   void copyViewAttributes(drawContext *other)
   {
     camera = other->camera;

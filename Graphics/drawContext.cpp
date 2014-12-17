@@ -24,6 +24,7 @@
 #include <FL/Fl_JPEG_Image.H>
 #include <FL/Fl_PNG_Image.H>
 #include <FL/gl.h>
+#include "openglWindow.h"
 #endif
 
 #if defined(HAVE_POPPLER)
@@ -34,8 +35,8 @@ drawContextGlobal *drawContext::_global = 0;
 
 extern SPoint2 getGraph2dDataPointForTag(unsigned int);
 
-drawContext::drawContext(drawTransform *transform)
-  : _transform(transform)
+drawContext::drawContext(openglWindow *window, drawTransform *transform)
+  : _transform(transform), _openglWindow(window)
 {
   // initialize from temp values in global context
   for(int i = 0; i < 3; i++){
@@ -63,6 +64,17 @@ drawContext::drawContext(drawTransform *transform)
 drawContext::~drawContext()
 {
   invalidateQuadricsAndDisplayLists();
+}
+
+bool drawContext::isHighResolution()
+{
+  // this must be dynamic: the high resolution can change when a window is moved
+  // across displays
+#if defined(HAVE_FLTK)
+  return _openglWindow->pixel_w() > _openglWindow->w();
+#else
+  return false;
+#endif
 }
 
 drawContextGlobal *drawContext::global()
@@ -299,6 +311,7 @@ void drawContext::draw2d()
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
+
   glOrtho((double)viewport[0], (double)viewport[2],
           (double)viewport[1], (double)viewport[3],
           -100., 100.); // in pixels, so we can draw some 3D glyphs
