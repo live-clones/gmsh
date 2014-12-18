@@ -395,8 +395,16 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 	  master->addClient(subClient);
 	}
       }
-      else
-	Msg::Error("Redefinition of existing client <%s>",clientName.c_str());
+      else{
+	std::string reply = "";
+	for(onelab::server::citer it = onelab::server::instance()->firstClient();
+	    it != onelab::server::instance()->lastClient(); it++){
+	  reply.append(it->second->getName() + " ");
+	}
+	Msg::Error("Skipping already existing client < %s> - Registered clients are <%s>",clientName.c_str(),reply.c_str());
+	getGmshServer()->SendMessage
+	  (GmshSocket::GMSH_STOP, reply.size(), &reply[0]); // reply is dummy
+      }
     }
     break;
   case GmshSocket::GMSH_OLPARSE:
@@ -411,8 +419,9 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 	Msg::Info("Preprocess file <%s> done", fullName.c_str());
 	reply = onelab::server::instance()->getChanged(clientName) ? "true" : "false";
       }
-      else
-	Msg::Error("Redefinition of existing client <%s>",clientName.c_str());
+      else{
+	Msg::Error("Skipping client with already existing name <%s>",clientName.c_str());
+      }
 #endif      
       getGmshServer()->SendMessage
 	(GmshSocket::GMSH_OLPARSE, reply.size(), &reply[0]);
@@ -422,12 +431,11 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     {
       std::string::size_type first = 0;
       std::string command = onelab::parameter::getNextToken(message, first);
-       std::string name = onelab::parameter::getNextToken(message, first);
-     if(command == "get"){
-       std::string reply = onelab::server::instance()->getChanged(name) ?
-        "true" : "false";
-      getGmshServer()->SendMessage
-        (GmshSocket::GMSH_CLIENT_CHANGED, reply.size(), &reply[0]);
+      std::string name = onelab::parameter::getNextToken(message, first);
+      if(command == "get"){
+	std::string reply = onelab::server::instance()->getChanged(name) ? "true" : "false";
+	getGmshServer()->SendMessage
+	  (GmshSocket::GMSH_CLIENT_CHANGED, reply.size(), &reply[0]);
       }
       else if(command == "set"){
 	std::string changed = onelab::parameter::getNextToken(message, first);

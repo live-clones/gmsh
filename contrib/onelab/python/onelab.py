@@ -39,7 +39,7 @@ def file_exist(filename):
 
 def path(dirname, inp):
   # dirname is a directory, can be empty
-  # inp is an aptional file or subdirectory name
+  # inp is an optional file or subdirectory name
   # returns the path to 'inp' in the same directory as 'ref' 
   if not inp: 
     return dirname
