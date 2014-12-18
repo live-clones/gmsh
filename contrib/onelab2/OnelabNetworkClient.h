@@ -12,7 +12,7 @@
 #include "NetworkUtils.h"
 #endif
 
-class OnelabNetworkClient : VirtualClient
+class OnelabNetworkClient : public VirtualClient
 {
 private:
 #ifdef HAVE_UDT
