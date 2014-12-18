@@ -25,6 +25,7 @@ public:
   void onUpdateParameter(onelab::parameter *p);
   void onRemoveParameter(onelab::parameter *p);
   void onMessage(const std::string &name, const std::string &message, int level);
+  void mergeFile(const std::string &filename);
 #else
 	GmshLocalClient(std::string name, onelab::parameterSpace *parameterSpace)
 		: OnelabLocalClient(name, parameterSpace){}

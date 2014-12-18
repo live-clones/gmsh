@@ -22,6 +22,7 @@ public:
   virtual void onUpdateParameter(onelab::parameter *p){}
   virtual void onRemoveParameter(onelab::parameter *p){}
   virtual void onMessage(const std::string &name, const std::string &message, int level){}
+  virtual void mergeFile(const std::string &filename){}
 
   virtual void run(std::string action) {}
   void stop() {}

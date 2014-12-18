@@ -70,8 +70,12 @@ void connect_cb(Fl_Widget *w, void *arg)
     if(!obj->useServer()) return;
     obj->clearTree();
     GmshNetworkClient *cli = OnelabDatabase::instance()->useAsNetworkClient(obj->getServerIP(), obj->getServerPort());
-    cli->setCallback(obj);
-    w->label("Disconnect");
+    if(cli) {
+      cli->setCallback(obj);
+      w->label("Disconnect");
+    }
+    else
+      fl_alert("Unable to connect to server");
   }
   else {
     obj->clearTree();
@@ -99,39 +103,17 @@ void onelab_cb(Fl_Widget *w, void *data)
     return;
   }
 
-  if(action == "stop"){
-    // TODO
-    return;
-  }
-
-  if(action == "kill"){
-    // TODO
-    return;
-  }
-
   if(FlGui::instance()->onelab->isBusy()){
     Msg::Info("I'm busy! Ask me that later...");
     return;
   }
   Msg::Info("Try to %s", action.c_str());
   
-  if(action == "reset"){
-    //TODO resetDb(true);
-    action = "check";
-  }
-
   Msg::ResetErrorCounter();
 
   //TODO FlGui::instance()->onelab->setButtonMode("", "stop");
 
-  if(action == "compute") initializeLoops();
-
-  do{
-    //OnelabDatabase::instance()->run("Gmsh", action);
-    OnelabDatabase::instance()->run(action);
-  } while(action == "compute"
-          //&& !FlGui::instance()->onelab->stop()
-          && incrementLoops());
+  OnelabDatabase::instance()->run(action);
 }
 
 
@@ -142,10 +124,12 @@ void solver_cb(Fl_Widget *w, void *data)
   int num = (intptr_t)data;
   if(num >= 0){
     std::string name = opt_solver_name(num, GMSH_GET, "");
+    if(name.empty()) return;// TODO
     std::string exe = opt_solver_executable(num, GMSH_GET, "");
     std::string host = opt_solver_remote_login(num, GMSH_GET, "");
     OnelabDatabase::instance()->run("initialize", name);
   }
+
   if(FlGui::instance()->onelab->isBusy())
     FlGui::instance()->onelab->show();
   else{
@@ -164,6 +148,16 @@ void solver_cb(Fl_Widget *w, void *data)
 }
 void solver_batch_cb(Fl_Widget *w, void *data)
 {
+  int num = (intptr_t)data;
+  if(num >= 0) {
+    std::string name = opt_solver_name(num, GMSH_GET, "");
+    std::string exe = opt_solver_executable(num, GMSH_GET, "");
+    if(exe.empty()){
+      Msg::Error("Solver executable name not provided");
+      return;
+    }
+  }
+  Msg::Warning("solver_batch_cb TODO");
   // TODO
 }
 

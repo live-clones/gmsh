@@ -141,6 +141,38 @@ void OnelabAttrFileQuery::showAttribute() const
 }
 
 
+UInt8 *OnelabAttrMergeFile::encodeAttribute(UInt8 *dst)
+{
+	dst = encode(dst, getAttributeType());
+	dst = encode(dst, getAttributeLength());
+
+  dst = encode(dst, (UInt8 *)_name, _length);
+
+  return dst;
+}
+UInt8 *OnelabAttrMergeFile::parseAttribute(UInt8 *src, UInt32 length)
+{
+  if(_name != NULL) free(_name);
+  _length = length;
+  _name = (char *)malloc(_length+1);
+  src = parse(src, (UInt8 *)_name, _length);
+  _name[_length] = '\0';
+  return src;
+}
+void OnelabAttrMergeFile::setFilename(const std::string name)
+{
+  if(_name != NULL) free(_name);
+
+  _length = name.size();
+  _name = strndup(name.c_str(), _length+1);
+}
+void OnelabAttrMergeFile::showAttribute() const
+{
+	std::cout << "\033[1m" << "Attribute merge file:"<< getAttributeType() << "\033[0m"<< std::endl
+		<< "file:           " << _name << std::endl;
+}
+
+
 UInt8 *OnelabAttrFile::encodeAttribute(UInt8 *dst)
 {
 	dst = encode(dst, getAttributeType());

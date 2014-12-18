@@ -140,7 +140,8 @@ public:
   }
 	virtual void onNewParameter(onelab::parameter *){}
   virtual void onUpdateParameter(onelab::parameter *){}
-  virtual void onRemoveParameter(onelab::parameter *){} // TODO call on clear
+  virtual void onRemoveParameter(onelab::parameter *){}
+  void onMessage(const std::string &name, const std::string &message, int level) {}
 	// network specific method
 	bool connect();
 	bool isConnected(){return _connected;}
@@ -168,7 +169,15 @@ public:
   {
     sendMessage(OnelabAttrMessage::Error, msg);
   }
-
+  void mergeFile(const std::string &filename)
+  {
+    OnelabProtocol msg(OnelabProtocol::OnelabUpdate);
+    UInt8 buff[1024];
+    msg.attrs.push_back(new OnelabAttrMergeFile(filename));
+    int recvlen = msg.encodeMsg(buff, 1024);
+    std::cout <<recvlen << std::endl;
+    sendto(buff, recvlen);
+  }
 };
 
 #endif

@@ -63,13 +63,18 @@ OnelabLocalNetworkClient *OnelabServer::getClient(UDTSOCKET fd) // UDTSOCKET Soc
 }
 #endif
 
-int OnelabServer::launchClient(const std::string &client) // FIXME OnelabDatabase instead of OnelabServer ?
+int OnelabServer::launchClient(const std::string &client, bool blocking) // FIXME OnelabDatabase instead of OnelabServer ?
 {
   // launch a new client with a system call
   std::string command = "";
   if(getClient(client) != NULL || getLocalClient(client) != NULL) return -1; // client already exist
 
-  if(client == "Gmsh") {
+  std::vector<onelab::string> s;
+  get(s, client + "/CommandLine");
+  if(s.size()) {
+    command.assign(s[0].getValue());
+  }
+  else if(client == "Gmsh") {
     command.assign(Msg::GetExecutableName());
   }
   else {
@@ -106,7 +111,7 @@ int OnelabServer::launchClient(const std::string &client) // FIXME OnelabDatabas
   sprintf(cmd, command.c_str(), (_ip.address==0)?"127.0.0.1":ip4_inet_ntop(_ip.address).c_str(), _ip.port);
 
   std::cout << "launch " << client << " with command: " << cmd << std::endl;
-  SystemCall(cmd);
+  SystemCall(cmd, blocking);
 
   return 0;
 }
@@ -177,7 +182,7 @@ void OnelabServer::waitForClient(const std::string &name)
     fd_set errorfds;
     FD_ZERO(&errorfds);
     FD_SET(cli->getSSocket(), &errorfds);
-    select(cli->getSSocket()+1, NULL, NULL, &errorfds, NULL); // Wait for the server to answer
+    select(cli->getSSocket()+1, NULL, NULL, &errorfds, NULL);
     // TODO wait until the client close
     std::cout << "======= cli " << cli->getName() << "just ended ?" << std::cout;
   }
@@ -360,8 +365,13 @@ void *listenOnClients(void *param)
           break;
         case OnelabProtocol::OnelabMessage:
           if(msg.attrs.size()==1 && msg.attrs[0]->getAttributeType() == OnelabAttrMessage::attributeType()) {
-            OnelabLocalClient *gui = OnelabServer::instance()->getLocalClient("localGUI");
-            if(gui) gui->onMessage(cli->getName(), ((OnelabAttrMessage *)msg.attrs[0])->getMessage(), ((OnelabAttrMessage *)msg.attrs[0])->getLevel());
+            OnelabLocalClient *localgui = OnelabServer::instance()->getLocalClient("localGUI");
+            OnelabLocalNetworkClient *gui = OnelabServer::instance()->getClient("GUI");
+            if(gui) {
+              recvlen = msg.encodeMsg(buff, 1024);
+              gui->sendto(buff, recvlen);
+            }
+            if(localgui) localgui->onMessage(cli->getName(), ((OnelabAttrMessage *)msg.attrs[0])->getMessage(), ((OnelabAttrMessage *)msg.attrs[0])->getLevel());
           }
           break;
         case OnelabProtocol::OnelabRequest:
@@ -401,27 +411,27 @@ void *listenOnClients(void *param)
               std::cout << "\033[0;31m" << "Client \"" << cli->getName() << " update parameter \"" << attr->getName() << "\"\033[0m" << std::endl; // DEBUG
               onelab::parameter *parameter = NULL;
               switch(attr->getAttributeType()) {
-              case OnelabAttr::Number:
-                OnelabServer::instance()->set(*(onelab::number *)attr, cli->getName());
-                OnelabServer::instance()->getPtr((onelab::number **)&parameter, attr->getName(), cli->getName());
-                break;
-              case OnelabAttr::String:
-                OnelabServer::instance()->set(*(onelab::string *)attr, cli->getName());
-                OnelabServer::instance()->getPtr((onelab::string **)&parameter, attr->getName(), cli->getName());
-                break;
-              case OnelabAttr::Region:
-                OnelabServer::instance()->set(*(onelab::region *)attr, cli->getName());
-                OnelabServer::instance()->getPtr((onelab::region **)&parameter, attr->getName(), cli->getName());
-                break;
-              case OnelabAttr::Function:
-                OnelabServer::instance()->set(*(onelab::function *)attr, cli->getName());
-                OnelabServer::instance()->getPtr((onelab::function **)&parameter, attr->getName(), cli->getName());
-                break;
+                case OnelabAttr::Number:
+                  OnelabServer::instance()->set(*(onelab::number *)attr, cli->getName());
+                  OnelabServer::instance()->getPtr((onelab::number **)&parameter, attr->getName(), cli->getName());
+                  break;
+                case OnelabAttr::String:
+                  OnelabServer::instance()->set(*(onelab::string *)attr, cli->getName());
+                  OnelabServer::instance()->getPtr((onelab::string **)&parameter, attr->getName(), cli->getName());
+                  break;
+                case OnelabAttr::Region:
+                  OnelabServer::instance()->set(*(onelab::region *)attr, cli->getName());
+                  OnelabServer::instance()->getPtr((onelab::region **)&parameter, attr->getName(), cli->getName());
+                  break;
+                case OnelabAttr::Function:
+                  OnelabServer::instance()->set(*(onelab::function *)attr, cli->getName());
+                  OnelabServer::instance()->getPtr((onelab::function **)&parameter, attr->getName(), cli->getName());
+                  break;
               }
             }
             else
               switch((*it)->getAttributeType()) {
-              case 0x0B:
+                case 0x0B:
                 {
                   // TODO check if file is on a specific client
                   const char *filename = ((OnelabAttrFileQuery *)*it)->getFilename();
@@ -441,40 +451,37 @@ void *listenOnClients(void *param)
                   std::clog << "file ok" << std::endl;
                   break;
                 }
-              case 0x0C:
-                const char *filename = ((OnelabAttrFile *)*it)->getFilename();
-                std::clog << "try to open " << filename << " to write" << std::endl;
-                FILE *fp = fopen(filename, "wb");
-                if(fp != NULL){
-                  std::clog << "file open" << std::endl;
-                  int filesize = ((OnelabAttrFile *)*it)->getFileSize();
-                  int downloadsize = 0;
-                  while(downloadsize < filesize) {
-                    recvlen = cli->recvfrom(buff, 1024);
-                    fwrite(buff, 1, recvlen, fp);
+                case 0x0C:
+                {
+                  const char *filename = ((OnelabAttrFile *)*it)->getFilename();
+                  std::clog << "try to open " << filename << " to write" << std::endl;
+                  FILE *fp = fopen(filename, "wb");
+                  if(fp != NULL){
+                    std::clog << "file open" << std::endl;
+                    int filesize = ((OnelabAttrFile *)*it)->getFileSize();
+                    int downloadsize = 0;
+                    while(downloadsize < filesize) {
+                      recvlen = cli->recvfrom(buff, 1024);
+                      fwrite(buff, 1, recvlen, fp);
+                    }
                   }
+                  std::clog << "file ok" << std::endl;
+                  break;
                 }
-                std::clog << "file ok" << std::endl;
-                break;
+                case 0x0D:
+                {
+                  // merge file only if the GUI and the server are local
+                  OnelabLocalClient *gui = OnelabServer::instance()->getLocalClient("localGUI");
+                  if(gui) gui->mergeFile(((OnelabAttrMergeFile *)*it)->getFilename());
+                }
               }
-          }
-          break;
+            }
+            break;
           case OnelabProtocol::OnelabAction:
           {
             if(msg.attrs.size()==1 && msg.attrs[0]->getAttributeType() == OnelabAttrAction::attributeType()) {
               std::clog << "\033[0;31m" << "Client " << cli->getName() << " ask " << ((OnelabAttrAction *)msg.attrs[0])->getClient() << " to " << ((OnelabAttrAction *)msg.attrs[0])->getAction() <<  "\033[0m" << std::endl;
               OnelabServer::instance()->performAction(((OnelabAttrAction *)msg.attrs[0])->getAction(), ((OnelabAttrAction *)msg.attrs[0])->getClient());
-              //OnelabLocalNetworkClient *cli = OnelabServer::instance()->getClient(((OnelabAttrAction *)msg.attrs[0])->getClient());
-              //OnelabLocalClient *localcli = OnelabServer::instance()->getLocalClient(((OnelabAttrAction *)msg.attrs[0])->getClient());
-              //std::cout << ((OnelabAttrAction *)msg.attrs[0])->getAction() << " on " << ((OnelabAttrAction *)msg.attrs[0])->getClient() << "(" << cli <<  " or local " << localcli << ")" << std::endl;
-              //if(cli == NULL && localcli == NULL) {
-              //}
-              //if(cli != NULL)
-              //  cli->run(((OnelabAttrAction *)msg.attrs[0])->getAction());
-              //else if(localcli != NULL)
-              //  localcli->run(((OnelabAttrAction *)msg.attrs[0])->getAction());
-              //else
-              //  ;// TODO save action and wait for the cli ?
             }
           }
           break;

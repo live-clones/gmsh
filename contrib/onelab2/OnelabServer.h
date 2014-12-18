@@ -58,7 +58,7 @@ public:
 	void addClient(std::string name, UInt32 ip, UInt16 port);
 #endif
   void addClient(OnelabLocalClient *cli) {_localClients.push_back(cli);}
-  int launchClient(const std::string &);
+  int launchClient(const std::string &, bool blocking=false);
 	void removeClient(OnelabLocalNetworkClient *client);
   std::vector<OnelabLocalNetworkClient> &getClients() {return _clients;}
   std::vector<OnelabLocalClient *> &getLocalClients() {return _localClients;}

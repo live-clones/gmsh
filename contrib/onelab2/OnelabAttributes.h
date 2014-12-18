@@ -177,6 +177,28 @@ public:
   const char *getFilename() {return _name;}
 };
 
+class OnelabAttrMergeFile : public OnelabAttr
+{
+private:
+  char *_name;
+  UInt16 _length;
+
+public:
+  OnelabAttrMergeFile() : _name(NULL), _length(0){}
+  OnelabAttrMergeFile(const std::string filename) : _name(NULL), _length(0) {setFilename(filename);}
+  ~OnelabAttrMergeFile() {if(_name != NULL) free(_name);}
+  UInt8 *encodeAttribute(UInt8 *dst);
+  UInt8 *parseAttribute(UInt8 *src, UInt32 length);
+  void showAttribute() const;
+
+  static UInt16 attributeType() {return 0x0D;}
+  inline UInt16 getAttributeType() const {return attributeType();}
+  inline UInt16 getAttributeLength() const {return _length;}
+
+  void setFilename(std::string name);
+  const char *getFilename() {return _name;}
+};
+
 class OnelabAttrFile : public OnelabAttr
 {
 private:

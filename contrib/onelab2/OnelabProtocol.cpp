@@ -27,10 +27,8 @@ unsigned short OnelabProtocol::encodeMsg(UInt8 *buff, UInt32 len)
 	for (std::vector<OnelabAttr*>::iterator it = this->attrs.begin() ; it != this->attrs.end(); ++it) {
     UInt16 attrLen = (*it)->getAttributeLength();
     if(4+_size+attrLen > len) {
-      // FIXME
 	    encode(sizeptr, _size);
       return (unsigned short)(ptr-buff);
-      // size = 0;
     }
 		ptr = (*it)->encodeAttribute(ptr);
     _size+=attrLen+4;
@@ -134,6 +132,10 @@ UInt32 OnelabProtocol::parseMessage(UInt8 *buff, UInt32 len)
       case 0x0c:
 				this->attrs.push_back(new OnelabAttrFile());
 				((OnelabAttrFile *)this->attrs.back())->parseAttribute(ptr, attrSize);
+        break;
+      case 0x0d:
+				this->attrs.push_back(new OnelabAttrMergeFile());
+				((OnelabAttrMergeFile *)this->attrs.back())->parseAttribute(ptr, attrSize);
         break;
 			default:
         // FIXME unknown attribute

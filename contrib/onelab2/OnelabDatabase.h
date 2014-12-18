@@ -182,16 +182,21 @@ public:
         return true;
       }
     }
-    else {
-      // run Gmsh client
-      run(action, "Gmsh");
+    else { // run all client
+      run(action, "Gmsh"); // run Gmsh client
 
-      // iterate over all other clients
-      if(CTX::instance()->solverToRun >= 0) {
+      if(CTX::instance()->solverToRun >= 0) { // launch the solver
         std::string solver = opt_solver_name(CTX::instance()->solverToRun, GMSH_GET, "");
+        std::string exe = opt_solver_executable(CTX::instance()->solverToRun, GMSH_GET, "");
+        if(_client && exe.size()) {
+          onelab::string o(solver + "/CommandLine", exe);
+          o.setVisible(false);
+          o.setNeverChanged(true);
+          set(o, solver);
+        }
         run(action, solver);
       }
-      else {
+      else { // send action to all connected client except Gmsh
         if(_client) {
           std::cout << "server is remote" << std::endl;
           msg.attrs.push_back(new OnelabAttrAction(action, client));

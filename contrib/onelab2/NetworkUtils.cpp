@@ -89,7 +89,7 @@ int ip4_socket_send(Socket fd, UInt8 *src, int length)
 	ssize_t sent = send(fd, src, length, 0);
 
 	// TODO handle error (length != sent) for ??? and (sent < 0) for local error
-  std::cout << "ip: send " << sent << "/" << length << "bytes" <<  std::endl;
+  //std::cout << "ip: send " << sent << "/" << length << "bytes" <<  std::endl;
 	return (int)sent;
 }
 int ip4_socket_send(Socket fd, UInt8 *src, int length, IPv4 dst)
@@ -105,7 +105,7 @@ int ip4_socket_send(Socket fd, UInt8 *src, int length, IPv4 dst)
 	ssize_t sent = sendto(fd, src, length, 0, (struct sockaddr *)&to, tol);
 
 	// TODO handle error (length != sent) for ??? and (sent < 0) for local error
-  std::cout << "ip: send " << sent << "/" << length << "bytes to " << ip4_inet_ntop(dst.address)<< ':' << dst.port << std::endl;
+  //std::cout << "ip: send " << sent << "/" << length << "bytes to " << ip4_inet_ntop(dst.address)<< ':' << dst.port << std::endl;
 	return (int)sent;
 }
 
@@ -114,7 +114,7 @@ int ip4_socket_recv(Socket fd, UInt8 *dst, int maxlength)
   ssize_t recved = recv(fd, dst, maxlength, 0);
   
 	// TODO handle error if(recvlength < 0)
-  std::cout << "ip: recv " << recved << "bytes" << std::endl;
+  //std::cout << "ip: recv " << recved << "bytes" << std::endl;
 	return recved;
 }
 int ip4_socket_recv(Socket fd, UInt8 *dst, int maxlength, IPv4 &src)
@@ -128,7 +128,7 @@ int ip4_socket_recv(Socket fd, UInt8 *dst, int maxlength, IPv4 &src)
 	src.address = ntoh32(from.sin_addr.s_addr);
 
 	// TODO handle error if(recvlength < 0)
-  std::cout << "ip: recv " << recvlength << "bytes from " << ip4_inet_ntop(src.address)<< ':' << src.port << std::endl;
+  //std::cout << "ip: recv " << recvlength << "bytes from " << ip4_inet_ntop(src.address)<< ':' << src.port << std::endl;
 	return recvlength;
 }
 

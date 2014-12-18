@@ -3,6 +3,8 @@
 #ifdef HAVE_FLTK
 #include "GmshMessage.h"
 #include "onelab2Group.h"
+#include "OpenFile.h"
+#include "Context.h"
 
 void GmshLocalClient::setCallback(onelabGroup *cb) {_cb_obj = cb;}
 void GmshLocalClient::onNewParameter(onelab::parameter *p)
@@ -46,6 +48,13 @@ void GmshLocalClient::onMessage(const std::string & name, const std::string &mes
       Msg::Error("%s - %s", name.c_str(), message.c_str());
       break;
   }
+  Fl::unlock();
+  Fl::awake((void *)NULL);
+}
+void GmshLocalClient::mergeFile(const std::string &filename)
+{
+  Fl::lock();
+  MergePostProcessingFile(filename, CTX::instance()->solver.autoShowViews, CTX::instance()->solver.autoShowLastStep, true);
   Fl::unlock();
   Fl::awake((void *)NULL);
 }
