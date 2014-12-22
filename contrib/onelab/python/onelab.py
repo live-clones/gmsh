@@ -453,20 +453,6 @@ class client :
         self._send(self._GMSH_ERROR, line.rstrip().encode('utf-8'))
       sys.exit(1)
   
-  def getPath(self, inp='') :
-    return path(self.wdir,inp)
-
-  def exists(self, p) :
-    if not os.path.exists(p):
-      self.sendError('path error: %s' %(p))
-      exit(0) 
-    return True
-
-  def checkPath(self, inp='') :
-    p = path(self.wdir,inp)
-    self.exists(p)
-    return p
-
   def copy(self, here, there):
     os.system('cp '+ here + ' ' + there)
     
@@ -499,21 +485,58 @@ class client :
       self._send(self._GMSH_INFO, 'download: ' + ' '.join(argv))
     else :
       print(call.stderr.read())
-      
-  def solutionFiles(self, list) :
+
+  def getPath(self, inp='') :
+    return path(self.wdir,inp)
+
+  def fileExists(self, p) :
+    return os.path.exists(p)
+
+  def checkFile(self, p) :
+    if not self.fileExists(p):
+      self.sendError('path error: %s' %(p))
+      exit(0) 
+    return True
+
+  def checkPath(self, inp='') :
+    p = path(self.wdir,inp)
+    self.checkFile(p)
+    return p
+
+  def solutionFiles(self, client, list) :
     self.defineNumber('0Metamodel/9Use restored solution', value=0, choices=[0,1])
     self.defineString('0Metamodel/9Tag', value='')
     if list :
       if self.getNumber('0Metamodel/9Use restored solution') :
-        return self.getStringChoices('0Metamodel/9Solution files')  
+        solFiles = self.getStringChoices('0Metamodel/9Solution files')
+        for i in solFiles:
+          self.checkFile(i)
       else :
-        self.setNumber('0Metamodel/9Use restored solution', visible=0)
-        self.setString('0Metamodel/9Solution files', value=list[0],
-                       choices=list, readOnly=1)    
-    return list
+        solFiles = list
+        self.setString('0Metamodel/9Solution files', value=solFiles[0],
+                       choices=solFiles, readOnly=1)
+        for i in solFiles:
+          if not self.fileExists(i) :
+            self.setChanged(client, True)
+    return solFiles
 
-  def restoreSolution(self) :
-    return self.getNumber('0Metamodel/9Use restored solution')
+  def needsCompute(self, client) :
+# Avoid recomputation when a database with restored solutions has just been loaded
+# Otherwise, stop using restored solutions when the client elmer has changed
+    if self.useRestoredSolution() == 2: # we have just loaded a database
+      self.setRestoredSolution(1)
+      self.setChanged(client, 0) # do not compute
+    else :
+      if self.isChanged(client):
+        self.setRestoredSolution(0)
+        return True
+    return False
+
+  def useRestoredSolution(self) :
+    return self.getNumber('0Metamodel/9Use restored solution') 
+
+  def setRestoredSolution(self, val) :
+    self.setNumber('0Metamodel/9Use restored solution', value=val)
 
   def outputFiles(self, list) :
     if list :

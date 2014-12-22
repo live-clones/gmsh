@@ -401,7 +401,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 	    it != onelab::server::instance()->lastClient(); it++){
 	  reply.append(it->second->getName() + " ");
 	}
-	Msg::Error("Skipping already existing client < %s> - Registered clients are <%s>",clientName.c_str(),reply.c_str());
+	Msg::Error("Skipping already existing client <%s> - Registered clients are < %s>",clientName.c_str(),reply.c_str());
 	getGmshServer()->SendMessage
 	  (GmshSocket::GMSH_STOP, reply.size(), &reply[0]); // reply is dummy
       }
@@ -725,7 +725,7 @@ static void archiveSolutionFiles(const std::string &fileName)
 	std::vector<std::string> split = SplitFileName(names[j]);
 	std::string old = names[j];
 	CreateSingleDir(dir);
-	names[j] = dir + split[1] + tag + split[2];
+	names[j] = dir + split[1] + tag + split[2]; 
 	Msg::Info("Renaming '%s' into '%s'", old.c_str(), names[j].c_str());
 	rename(old.c_str(), names[j].c_str());
       }
@@ -851,22 +851,24 @@ void onelab_cb(Fl_Widget *w, void *data)
     std::vector<onelab::string> ps;
     onelab::server::instance()->get(ps,"0Metamodel/9Tag");
     if(ps.size() && ps[0].getValue().size()){
-	fileName.assign("onelab_" + ps[0].getValue() + ".db");
+      fileName.assign("onelab_" + ps[0].getValue() + ".db");
     }
 
     // save db in "restore" mode"
+    double restoreMode=0;
     std::vector<onelab::number> pn;
     onelab::server::instance()->get(pn,"0Metamodel/9Use restored solution");
     if(pn.size()){
-      pn[0].setValue(1);
-      pn[0].setVisible(1);
+      restoreMode=pn[0].getValue();
+      pn[0].setValue(2);
       onelab::server::instance()->set(pn[0]);
     }
 
     std::string s;
     s.assign(SplitFileName(GModel::current()->getFileName())[0] + fileName);
     if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", s.c_str())){
-      archiveSolutionFiles(fileChooserGetName(1));
+      if(!restoreMode)
+	archiveSolutionFiles(fileChooserGetName(1));
       saveDb(fileChooserGetName(1));
     }
 
@@ -874,7 +876,6 @@ void onelab_cb(Fl_Widget *w, void *data)
     onelab::server::instance()->get(pn,"0Metamodel/9Use restored solution");
     if(pn.size()){
       pn[0].setValue(0);
-      pn[0].setVisible(0);
       onelab::server::instance()->set(pn[0]);
     }
     action = "check";
