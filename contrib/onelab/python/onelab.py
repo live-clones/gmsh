@@ -350,7 +350,7 @@ class client :
       return
     msg = ["get", name]
     self._send(self._GMSH_CLIENT_CHANGED, '\0'.join(msg))
-    (t, msg) = self._receive() 
+    (t, msg) = self._receive()
     if t == self._GMSH_CLIENT_CHANGED :
       if msg == "true" :
           return True
@@ -517,7 +517,7 @@ class client :
                        choices=solFiles, readOnly=1)
         for i in solFiles:
           if not self.fileExists(i) :
-            self.setChanged(client, True)
+            self.setChanged(client, 'true')
     return solFiles
 
   def needsCompute(self, client) :
@@ -525,12 +525,18 @@ class client :
 # Otherwise, stop using restored solutions when the client elmer has changed
     if self.useRestoredSolution() == 2: # we have just loaded a database
       self.setRestoredSolution(1)
-      self.setChanged(client, 0) # do not compute
+      self.setChanged(client, 'false') # do not compute
     else :
       if self.isChanged(client):
         self.setRestoredSolution(0)
         return True
     return False
+
+  def willCompute(self, client) : # Inform user about the value of needsCompute
+    if self.useRestoredSolution() == 2: # special value
+      return False
+    else :
+      return True if self.isChanged(client) else False
 
   def useRestoredSolution(self) :
     return self.getNumber('0Metamodel/9Use restored solution') 
