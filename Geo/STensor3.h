@@ -350,6 +350,14 @@ class STensor3 {
     }
     return sqrt(sqr);
   }
+  STensor3 dev() const{
+    double p= trace()/3.;
+    STensor3 de(*this);
+    de(0,0) -= p;
+    de(1,1) -= p;
+    de(2,2) -= p;
+    return de;
+  }
 };
 
 // tensor product
