@@ -44,6 +44,8 @@ class SPoint3 {
     if (P[2] < p.P[2]) return true;
     return false;
   }
+  const double* data() const{return P;}
+  double* data() {return P;}
 };
 
 inline SPoint3 operator + (const SPoint3 &a, const SPoint3 &b)

@@ -89,7 +89,8 @@ class SVector3 {
       return 2;
     }
   }
-
+  const double* data() const {return P.data();}
+  double* data() {return P.data();}
 };
 
 inline double dot(const SVector3 &a, const SVector3 &b)

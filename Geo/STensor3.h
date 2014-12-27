@@ -220,6 +220,8 @@ class STensor3 {
   inline double get_m13(){ return _val[2]; }
   inline double get_m23(){ return _val[5]; }
   inline double get_m33(){ return _val[8]; }
+  inline const double* data() const {return _val;}
+  inline double* data() {return _val;}
   void getMat(fullMatrix<double> &mat) const
   {
     for (int i = 0; i < 3; i++){
