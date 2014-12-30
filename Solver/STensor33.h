@@ -102,6 +102,9 @@ class STensor33 {
     return *this;
   }*/
   void print(const char *) const;
+
+  const double* data() const{return _val;}
+  double* data() {return _val;}
 };
 
 // tensor product
