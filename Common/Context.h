@@ -197,6 +197,7 @@ class CTX {
   int msgFontSize;
   // point/line widths
   double pointSize, lineWidth;
+  double highResolutionPointSizeFactor;
   // light options
   int light[6];
   double lightPosition[6][4], shine, shineExponent;

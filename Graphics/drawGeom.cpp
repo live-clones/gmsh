@@ -53,14 +53,21 @@ class drawGVertex {
       glPushName(v->tag());
     }
 
+    double ps = CTX::instance()->geom.pointSize;
+    double sps = CTX::instance()->geom.selectedPointSize;
+    if(_ctx->isHighResolution()){
+      ps *= CTX::instance()->highResolutionPointSizeFactor;
+      sps *= CTX::instance()->highResolutionPointSizeFactor;
+    }
+
     if(v->getSelection()) {
-      glPointSize((float)CTX::instance()->geom.selectedPointSize);
+      glPointSize((float)sps);
       gl2psPointSize((float)(CTX::instance()->geom.selectedPointSize *
                              CTX::instance()->print.epsPointSizeFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.selection);
     }
     else {
-      glPointSize((float)CTX::instance()->geom.pointSize);
+      glPointSize((float)ps);
       gl2psPointSize((float)(CTX::instance()->geom.pointSize *
                              CTX::instance()->print.epsPointSizeFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.point);
@@ -80,11 +87,9 @@ class drawGVertex {
     if(CTX::instance()->geom.points) {
       if(CTX::instance()->geom.pointType > 0) {
         if(v->getSelection())
-          _ctx->drawSphere(CTX::instance()->geom.selectedPointSize, x, y, z,
-                           CTX::instance()->geom.light);
+          _ctx->drawSphere(sps, x, y, z, CTX::instance()->geom.light);
         else
-          _ctx->drawSphere(CTX::instance()->geom.pointSize, x, y, z,
-                           CTX::instance()->geom.light);
+          _ctx->drawSphere(ps, x, y, z, CTX::instance()->geom.light);
       }
       else {
         glBegin(GL_POINTS);
@@ -94,7 +99,7 @@ class drawGVertex {
     }
 
     if(CTX::instance()->geom.pointsNum) {
-      double offset = (0.5 * CTX::instance()->geom.pointSize +
+      double offset = (0.5 * ps +
                        0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       drawEntityLabel(_ctx, v, x, y, z, offset);
     }

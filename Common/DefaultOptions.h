@@ -505,6 +505,8 @@ StringXNumber GeneralOptions_Number[] = {
     "tools window" },
   { F|O, "HighResolutionGraphics" , opt_general_high_resolution_graphics , 1. ,
     "Use high-resolution OpenGL graphics (e.g. for Macs with retina displays)" },
+  { F|O, "HighResolutionPointSizeFactor" , opt_general_high_resolution_point_size_factor , 2. ,
+    "Point size factor when using high-resolution OpenGL graphics" },
 
   { F|O, "InitialModule", opt_general_initial_context, 0. ,
     "Module launched on startup (0=automatic, 1=geometry, 2=mesh, 3=solver, "

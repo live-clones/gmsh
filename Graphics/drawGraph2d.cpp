@@ -240,7 +240,11 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     font_a *= ss;
   }
 
-  glPointSize((float)CTX::instance()->pointSize);
+  double ps = CTX::instance()->pointSize;
+  if(ctx->isHighResolution())
+    ps *= CTX::instance()->highResolutionPointSizeFactor;
+
+  glPointSize((float)ps);
   gl2psPointSize((float)(CTX::instance()->pointSize *
                          CTX::instance()->print.epsPointSizeFactor));
 
@@ -449,10 +453,13 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
       ctx->drawString(label);
     }
     else if(singlePoint && (opt->pointType == 1 || opt->pointType == 3)){
+      double ps = CTX::instance()->pointSize;
+      if(ctx->isHighResolution())
+        ps *= CTX::instance()->highResolutionPointSizeFactor;
       if(inModelCoordinates)
-        ctx->drawSphere(opt->pointSize, px, py, 0, opt->light);
+        ctx->drawSphere(ps, px, py, 0, opt->light);
       else
-        ctx->drawSphere(opt->pointSize, px, py, 0, 10, 10, opt->light);
+        ctx->drawSphere(ps, px, py, 0, 10, 10, opt->light);
     }
     else{
       if(singlePoint) glBegin(GL_POINTS);
@@ -478,7 +485,11 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft, double yto
 
   PViewOptions *opt = p->getOptions();
 
-  glPointSize((float)opt->pointSize);
+  double ps = CTX::instance()->pointSize;
+  if(ctx->isHighResolution())
+    ps *= CTX::instance()->highResolutionPointSizeFactor;
+
+  glPointSize((float)ps);
   gl2psPointSize((float)(opt->pointSize * CTX::instance()->print.epsPointSizeFactor));
 
   glLineWidth((float)opt->lineWidth);

@@ -2638,6 +2638,13 @@ double opt_general_point_size(OPT_ARGS_NUM)
   return CTX::instance()->pointSize;
 }
 
+double opt_general_high_resolution_point_size_factor(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->highResolutionPointSizeFactor = val;
+  return CTX::instance()->highResolutionPointSizeFactor;
+}
+
 double opt_general_line_width(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
