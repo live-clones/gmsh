@@ -473,10 +473,17 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
       if(status > 1) status = PView::readMSH(fileName);
 #endif
 #if defined(HAVE_MESH)
+      /*
+      This was introduced in r6039 by Koen to snap high order vertices on the
+      geometry. But it introduces subtle bugs when reading high-order
+      post-processing views ; we should have an explicit command to do this, and
+      not modify the mesh without warning just by reading a file --CG.
+
       if(CTX::instance()->mesh.order > 1)
         SetOrderN(GModel::current(), CTX::instance()->mesh.order,
                   CTX::instance()->mesh.secondOrderLinear,
                   CTX::instance()->mesh.secondOrderIncomplete);
+      */
 #endif
     }
 #if defined(HAVE_POST)
@@ -512,7 +519,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
   Msg::ImportPhysicalsAsOnelabRegions();
 
   if(!status) Msg::Error("Error loading '%s'", fileName.c_str());
-  Msg::StatusBar(true, "Done reading '%s'", fileName.c_str());  
+  Msg::StatusBar(true, "Done reading '%s'", fileName.c_str());
 
   CTX::instance()->fileread = true;
 

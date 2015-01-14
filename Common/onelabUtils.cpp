@@ -417,7 +417,7 @@ namespace onelabUtils {
         "modelName is " << modelName << std::endl <<
         "current GModel is" << GModel::current()->getName() << std::endl <<
         "stat file " << mshFileName << " is " << StatFile(mshFileName) << std::endl <<
-        "meshAuto is " << meshAuto 
+        "meshAuto is " << meshAuto
         << std::endl;
       if(OnelabServer::instance()->getChanged("Gmsh") ||
          modelName != GModel::current()->getName()){

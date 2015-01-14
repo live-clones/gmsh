@@ -422,7 +422,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       else{
 	Msg::Error("Skipping client with already existing name <%s>",clientName.c_str());
       }
-#endif      
+#endif
       getGmshServer()->SendMessage
 	(GmshSocket::GMSH_OLPARSE, reply.size(), &reply[0]);
     }
@@ -725,7 +725,7 @@ static void archiveSolutionFiles(const std::string &fileName)
 	std::vector<std::string> split = SplitFileName(names[j]);
 	std::string old = names[j];
 	CreateSingleDir(dir);
-	names[j] = dir + split[1] + tag + split[2]; 
+	names[j] = dir + split[1] + tag + split[2];
 	Msg::Info("Renaming '%s' into '%s'", old.c_str(), names[j].c_str());
 	rename(old.c_str(), names[j].c_str());
       }
