@@ -4678,11 +4678,20 @@ FExpr_Multi :
       Vertex *v = FindPoint((int)$3);
       $$ = List_Create(3, 1, sizeof(double));
       if(!v) {
-	yymsg(0, "Unknown point '%d'", (int)$3);
-	double d = 0.0;
-	List_Add($$, &d);
-	List_Add($$, &d);
-	List_Add($$, &d);
+        GVertex *gv = GModel::current()->getVertexByTag((int)$3);
+        if(gv){
+          double x = gv->x(), y = gv->y(), z = gv->z();
+          List_Add($$, &x);
+          List_Add($$, &y);
+          List_Add($$, &z);
+        }
+        else{
+          yymsg(0, "Unknown point '%d'", (int)$3);
+          double d = 0.0;
+          List_Add($$, &d);
+          List_Add($$, &d);
+          List_Add($$, &d);
+        }
       }
       else{
 	List_Add($$, &v->Pos.X);
@@ -5421,4 +5430,5 @@ void yymsg(int level, const char *fmt, ...)
   }
   else
     Msg::Warning("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
+
 }
