@@ -154,6 +154,7 @@ public:
   }
   void clear(const std::string &name="", const std::string &client="") {
      if(_client) return _client->clear(name, client);
+    return OnelabServer::instance()->clear(name, client);
   }
   bool fromFile(FILE *fp, const std::string &client="")
   {
@@ -205,7 +206,7 @@ public:
         }
         else {
           std::cout << "server is local" << std::endl;
-          OnelabServer::instance()->performAction(action, client);
+          OnelabServer::instance()->performAction(action, client, true);
         }
         return true;
       }

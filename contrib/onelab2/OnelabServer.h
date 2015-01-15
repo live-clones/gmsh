@@ -29,6 +29,12 @@ private:
 	int _eid;
 	void sendto(std::string client, UInt8 *buff, UInt32 len);
 #endif
+  bool _running;
+#ifndef WIN32
+  pthread_t _clientThread;
+#else
+  HANDLER _clientThread;
+#endif
 public:
 	OnelabServer(UInt16 port);
 	OnelabServer(UInt32 iface, UInt16 port);
@@ -49,9 +55,11 @@ public:
 	~OnelabServer(){}
 #endif
 	void Run();
+  bool isRunning() const {return _running;}
+  void running(bool running) {_running = running;}
 	// Client methods
 #ifdef HAVE_UDT
-	inline int getEID() {return _eid;}
+	inline int getEID() const {return _eid;}
 	void addClient(std::string name, UDTSOCKET fd, UInt32 ip, UInt16 port);
 	OnelabLocalNetworkClient *getClient(UDTSOCKET fd);
 #else
@@ -141,6 +149,6 @@ public:
   void setChanged(bool changed, const std::string &client="") {
     _parameterSpace.setChanged(changed, client);
   }
-  void performAction(const std::string action, const std::string client="");
+  void performAction(const std::string action, const std::string client="", bool blocking=false);
 };
 #endif

@@ -48,7 +48,7 @@ static bool incrementLoops()
 
 static void updateGraphs()
 {
-  bool redraw = false;
+  bool redraw = true;//FIXME false;
   for(int i = 0; i < 18; i++){
     std::ostringstream tmp;
     tmp << i;
@@ -97,6 +97,7 @@ void onelab_cb(Fl_Widget *w, void *data)
   if(!data) return;
 
   std::string action((const char*)data);
+  Msg::Info("Try to %s", action.c_str());
 
   if(action == "refresh"){
     updateGraphs();
@@ -107,13 +108,18 @@ void onelab_cb(Fl_Widget *w, void *data)
     Msg::Info("I'm busy! Ask me that later...");
     return;
   }
-  Msg::Info("Try to %s", action.c_str());
   
+  if(action == "reset"){
+    OnelabDatabase::instance()->clear(); // TODO keep persitant
+    return;
+  }
+
   Msg::ResetErrorCounter();
 
   //TODO FlGui::instance()->onelab->setButtonMode("", "stop");
 
   OnelabDatabase::instance()->run(action);
+  drawContext::global()->draw();
 }
 
 
@@ -121,6 +127,8 @@ void solver_cb(Fl_Widget *w, void *data)
 {
   if(!FlGui::instance()->onelab) return;
 
+  if(FlGui::instance()->onelab->isBusy())
+    FlGui::instance()->onelab->show();
   int num = (intptr_t)data;
   if(num >= 0){
     std::string name = opt_solver_name(num, GMSH_GET, "");
@@ -130,21 +138,13 @@ void solver_cb(Fl_Widget *w, void *data)
     OnelabDatabase::instance()->run("initialize", name);
   }
 
-  if(FlGui::instance()->onelab->isBusy())
-    FlGui::instance()->onelab->show();
-  else{
-    if(CTX::instance()->solverToRun >= 0){
-      onelab_cb(0, (void*)"reset");
-      onelabUtils::setFirstComputationFlag(true);
-    }
-    else if(num >= 0) {
-      onelab_cb(0, (void*)"check");
-    }
-    else {
-      onelab_cb(0, (void*)"refresh");
-    }
-    FlGui::instance()->onelab->updateGearMenu();
+  if(num >= 0) {
+    onelab_cb(0, (void*)"check");
   }
+  else {
+    onelab_cb(0, (void*)"refresh");
+  }
+  FlGui::instance()->onelab->updateGearMenu();
 }
 void solver_batch_cb(Fl_Widget *w, void *data)
 {

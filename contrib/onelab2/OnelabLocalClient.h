@@ -16,12 +16,11 @@ public:
 		: VirtualClient(name, parameterSpace){
 	}
 	virtual ~OnelabLocalClient(){}
-  template <class T> bool set(const T &p);
-  template <class T> bool get(std::vector<T> &ps, const std::string &name);
 	virtual void onNewParameter(onelab::parameter *p){}
   virtual void onUpdateParameter(onelab::parameter *p){}
   virtual void onRemoveParameter(onelab::parameter *p){}
   virtual void onMessage(const std::string &name, const std::string &message, int level){}
+  virtual void refresh(){}
   virtual void mergeFile(const std::string &filename){}
 
   virtual void run(std::string action) {}

@@ -12,8 +12,8 @@ void GmshNetworkClient::onNewParameter(onelab::parameter *p)
     Fl::lock();
     _cb_obj->addParameter(*p);
     Fl::unlock();
+    Fl::awake((void *)NULL);
   }
-  Fl::awake((void *)NULL);
 }
 void GmshNetworkClient::onUpdateParameter(onelab::parameter *p)
 {
@@ -21,8 +21,8 @@ void GmshNetworkClient::onUpdateParameter(onelab::parameter *p)
     Fl::lock();
     _cb_obj->updateParameter(*p);
     Fl::unlock();
+    Fl::awake((void *)NULL);
   }
-  Fl::awake((void *)NULL);
 }
 void GmshNetworkClient::onRemoveParameter(onelab::parameter *p)
 {
@@ -30,8 +30,8 @@ void GmshNetworkClient::onRemoveParameter(onelab::parameter *p)
     Fl::lock();
     _cb_obj->removeParameter(*p);
     Fl::unlock();
+    Fl::awake((void *)NULL);
   }
-  Fl::awake((void *)NULL);
 }
 void GmshNetworkClient::onMessage(const std::string & name, const std::string &message, int level)
 {

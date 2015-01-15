@@ -21,9 +21,15 @@
 #include "GModel.h"
 #include "Options.h"
 
+#ifndef WIN32
+void *runClientsBlocking(void *param);
+#else
+DWORD WINAPI listenOnClients(LPVOID param);
+#endif
 
 OnelabServer::OnelabServer(UInt32 iface, UInt16 port)
 {
+  _running = false;
   _ip.address = iface;
   _ip.port = port;
 #ifdef HAVE_UDT
@@ -36,6 +42,7 @@ OnelabServer::OnelabServer(UInt32 iface, UInt16 port)
 
 OnelabServer::OnelabServer(UInt16 port)
 {
+  _running = false;
   _ip.address = 0;
   _ip.port = port;
 
@@ -198,27 +205,31 @@ void OnelabServer::removeClient(OnelabLocalNetworkClient *client)
   }
 }
 
-void OnelabServer::performAction(const std::string action, const std::string client)
+void OnelabServer::performAction(const std::string action, const std::string client, bool blocking)
 {
+  std::cout << "perform action (" << action << ") on client (" << client << ") and " << (blocking?"block":"do not block") << std::endl;
   if(client.size()) {
     onelabUtils::guessModelName(client);
     OnelabLocalNetworkClient *cli = getClient(client);
     OnelabLocalClient *localcli = getLocalClient(client);
-    onelab::string o(client + "/Action", action);
-    o.setVisible(false);
-    o.setNeverChanged(true);
-    set(o, client);
+    if(action.size() > 0) {
+      std::cout << "set " << client << "/Action to" << action << std::endl;
+      onelab::string o(client + "/Action", action);
+      o.setVisible(false);
+      o.setNeverChanged(true);
+      set(o, client);
+    }
     if(cli != NULL){ // Gmsh is used as a server and the client is remote
       std::cout << action << " on " << client << "(client is remote)" << std::endl;
-      cli->run(action);
+      cli->run(action); // block ,use another thread ?
     }
     else if(localcli != NULL){ // client is local (in the same memory space than this server)
       std::cout << action << " on " << client << "(client is local)" << std::endl;
-      localcli->run(action);
+      localcli->run(action); // block, use another thread ?
     }
     else { // client does not exist (Gmsh is used as a server), launch the client
       std::cout << action << " on " << client << "(launch a new remote client)" << std::endl;
-      launchClient(client);
+      launchClient(client, blocking);
     }
   }
   else {
@@ -243,6 +254,24 @@ void OnelabServer::performAction(const std::string action, const std::string cli
       (*it)->run(action);
     }
   }
+  std::cout << "end perform action (" << action << ") on client (" << client << ") and " << (blocking?"block":"do not block") << std::endl;
+}
+
+#ifndef WIN32
+void *runClientsBlocking(void *param)
+#else
+DWORD WINAPI listenOnClients(LPVOID param)
+#endif
+{
+  if(OnelabServer::instance()->isRunning()) return NULL;
+
+  std::cout << "start" << std::endl;
+  OnelabServer::instance()->running(true);
+
+  // TODO
+
+  std::cout << "end" << std::endl;
+  OnelabServer::instance()->running(false);
 }
 
 #ifdef HAVE_UDT
@@ -350,7 +379,7 @@ void *listenOnClients(void *param)
           UDT::close(*it);
           continue;
         }
-        std::clog << "recv " << recvlen << " bytes on client " << cli->getName() << std::endl;
+        //std::clog << "recv " << recvlen << " bytes on client " << cli->getName() << std::endl;
         switch (msg.msgType()) {
         case OnelabProtocol::OnelabStop:
           std::cout << "\033[0;31m" << "Client \"" << cli->getName() << "\" is going to stop" << "\033[0m" << std::endl; // DEBUG
@@ -380,7 +409,7 @@ void *listenOnClients(void *param)
           else for(std::vector<OnelabAttr *>::iterator it = msg.attrs.begin() ; it != msg.attrs.end(); ++it) {
               if((*it)->getAttributeType() == OnelabAttr::Parameter) {
                 OnelabAttrParameterQuery *attr = (OnelabAttrParameterQuery *)*it;
-                std::cout << "\033[0;31m" << "Client \"" << cli->getName() << " ask for parameter \"" << attr->getName() << "\"\033[0m" << std::endl; // DEBUG
+                std::cout << "\033[0;31m" << "Client \"" << cli->getName() << " ask for parameter \"" << attr->getName() << " (type=" << (int)attr->paramType() << ")\"\033[0m" << std::endl; // DEBUG
                 onelab::parameter *p;
                 switch(attr->paramType()) {
                 case OnelabAttr::Number:
@@ -418,6 +447,10 @@ void *listenOnClients(void *param)
                 case OnelabAttr::String:
                   OnelabServer::instance()->set(*(onelab::string *)attr, cli->getName());
                   OnelabServer::instance()->getPtr((onelab::string **)&parameter, attr->getName(), cli->getName());
+                  if(((onelab::string *)parameter)->getName() == "Gmsh/Action") {
+                    OnelabLocalClient *localgui = OnelabServer::instance()->getLocalClient("localGUI");
+                    if(((onelab::string *)parameter)->getValue() == "refresh") localgui->refresh();
+                  }
                   break;
                 case OnelabAttr::Region:
                   OnelabServer::instance()->set(*(onelab::region *)attr, cli->getName());

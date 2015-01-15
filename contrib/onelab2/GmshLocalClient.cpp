@@ -13,8 +13,8 @@ void GmshLocalClient::onNewParameter(onelab::parameter *p)
     Fl::lock();
     _cb_obj->addParameter(*p);
     Fl::unlock();
+    Fl::awake((void *)NULL);
   }
-  Fl::awake((void *)NULL);
 }
 void GmshLocalClient::onUpdateParameter(onelab::parameter *p)
 {
@@ -22,8 +22,8 @@ void GmshLocalClient::onUpdateParameter(onelab::parameter *p)
     Fl::lock();
     _cb_obj->updateParameter(*p);
     Fl::unlock();
+    Fl::awake((void *)NULL);
   }
-  Fl::awake((void *)NULL);
 }
 void GmshLocalClient::onRemoveParameter(onelab::parameter *p)
 {
@@ -31,8 +31,8 @@ void GmshLocalClient::onRemoveParameter(onelab::parameter *p)
     Fl::lock();
     _cb_obj->removeParameter(*p);
     Fl::unlock();
+    Fl::awake((void *)NULL);
   }
-  Fl::awake((void *)NULL);
 }
 void GmshLocalClient::onMessage(const std::string & name, const std::string &message, int level)
 {
@@ -51,6 +51,10 @@ void GmshLocalClient::onMessage(const std::string & name, const std::string &mes
   Fl::unlock();
   Fl::awake((void *)NULL);
 }
+void GmshLocalClient::refresh()
+{
+  Fl::awake(onelab_cb, (void*)"refresh");
+}
 void GmshLocalClient::mergeFile(const std::string &filename)
 {
   Fl::lock();
@@ -61,5 +65,10 @@ void GmshLocalClient::mergeFile(const std::string &filename)
 #endif
 
 void GmshLocalClient::run(std::string action) {
-  if(getName() == "Gmsh") onelabUtils::runGmshClient(action, 2); 
+  if(getName() == "Gmsh") {
+    Fl::lock();
+    onelabUtils::runGmshClient(action, 2); 
+    Fl::unlock();
+    Fl::awake((void *)NULL);
+  }
 }
