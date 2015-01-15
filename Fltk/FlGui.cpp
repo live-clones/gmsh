@@ -399,6 +399,11 @@ FlGui *FlGui::instance(int argc, char **argv)
     _instance = new FlGui(argc, argv);
     // set all options in the new GUI
     InitOptionsGUI(0);
+#ifdef HAVE_ONELAB2
+    // Enable multi-thread support by locking from the main thread
+    Fl::lock();
+#endif
+
     // say welcome!
     Msg::StatusBar(false, "Gmsh %s", GetGmshVersion());
     // log the following for bug reports
@@ -419,11 +424,6 @@ FlGui *FlGui::instance(int argc, char **argv)
 
 int FlGui::run()
 {
-#ifdef HAVE_ONELAB2
-  // Enable multi-thread support by locking from the main thread
-  Fl::lock();
-#endif
-
   // bounding box computation necessary if we run the gui without merging any
   // files (e.g. if we build the geometry with python and create the gui from
   // the python script)
