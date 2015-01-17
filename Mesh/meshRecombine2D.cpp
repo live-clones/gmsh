@@ -4,7 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 //
 // Contributor(s):
-//   Amaury Johnen (amjohnen@gmail.com) adapted from meshGFaceOptimize
+//   Amaury Johnen, adapted from meshGFaceOptimize
 //
 
 #include "meshRecombine2D.h"

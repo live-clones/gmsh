@@ -4,7 +4,7 @@
 // bugs and problems to <gmsh@geuz.org>.
 //
 // Contributor(s):
-//   Amaury Johnen (amjohnen@gmail.com)
+//   Amaury Johnen
 //
 
 #ifndef _MESH_RECOMBINE_2D_H_
