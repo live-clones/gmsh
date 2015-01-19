@@ -125,6 +125,16 @@ void OCCFace::setup()
   // }
 }
 
+SBoundingBox3d OCCFace::bounds() const
+{
+  Bnd_Box b;
+  BRepBndLib::Add(s, b);
+  double xmin, ymin, zmin, xmax, ymax, zmax;
+  b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+  SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
+  return bbox;
+}
+
 Range<double> OCCFace::parBounds(int i) const
 {
   double umin2, umax2, vmin2, vmax2;

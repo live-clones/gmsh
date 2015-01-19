@@ -47,6 +47,16 @@ void OCCRegion::setup()
   Msg::Debug("OCC Region %d with %d faces", tag(), l_faces.size());
 }
 
+SBoundingBox3d OCCRegion::bounds() const
+{
+  Bnd_Box b;
+  BRepBndLib::Add(s, b);
+  double xmin, ymin, zmin, xmax, ymax, zmax;
+  b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+  SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
+  return bbox;
+}
+
 GEntity::GeomType OCCRegion::geomType() const
 {
   return Unknown;

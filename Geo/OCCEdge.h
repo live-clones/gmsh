@@ -28,6 +28,7 @@ class OCCEdge : public GEdge {
  public:
   OCCEdge(GModel *model, TopoDS_Edge _e, int num, GVertex *v1, GVertex *v2);
   virtual ~OCCEdge();
+  virtual SBoundingBox3d bounds() const;
   virtual Range<double> parBounds(int i) const;
   virtual GeomType geomType() const;
   virtual bool degenerate(int) const { return BRep_Tool::Degenerated(c); }

@@ -45,6 +45,16 @@ OCCEdge::~OCCEdge()
   model()->getOCCInternals()->unbind(c);
 }
 
+SBoundingBox3d OCCEdge::bounds() const
+{
+  Bnd_Box b;
+  BRepBndLib::Add(c, b);
+  double xmin, ymin, zmin, xmax, ymax, zmax;
+  b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+  SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
+  return bbox;
+}
+
 Range<double> OCCEdge::parBounds(int i) const
 {
   return Range<double>(s0, s1);
