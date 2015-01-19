@@ -93,7 +93,7 @@ namespace onelab{
       }
       else{
         for(std::map<std::string, bool>::iterator it = _clients.begin();
-            it != _clients.end(); it++)
+            it != _clients.end(); it++) 
           it->second = changed;
       }
     }
@@ -1048,6 +1048,16 @@ namespace onelab{
       }
       return true;
     }
+    template <class T> T* _getPtr(std::string name, const std::string client, std::set<T*, parameterLessThan> ps)
+    {
+      T tmp(name);
+      typename std::set<T*, parameterLessThan>::iterator it = ps.find(&tmp);
+      if(it != ps.end()){
+        if(client.size()) (*it)->addClient(client, true);
+        return *it;
+      }
+      return NULL;
+    }
     void _getAllParameters(std::set<parameter*, parameterLessThan> &ps) const
     {
       ps.insert(_numbers.begin(), _numbers.end());
@@ -1102,16 +1112,6 @@ namespace onelab{
       {*ptr = _getPtr(name, client, _regions);}
     void getPtr(function **ptr, const std::string name, const std::string client="")
       {*ptr = _getPtr(name, client, _functions);}
-    template <class T> T* _getPtr(std::string name, const std::string client, std::set<T*, parameterLessThan> ps)
-    {
-      T tmp(name);
-      typename std::set<T*, parameterLessThan>::iterator it = ps.find(&tmp);
-      if(it != ps.end()){
-        if(client.size()) (*it)->addClient(client, true);
-        return *it;
-      }
-      return NULL;
-    }
     void getAllParameters(std::set<parameter*, parameterLessThan> &ps) const
     {
       ps.insert(_numbers.begin(), _numbers.end());

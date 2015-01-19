@@ -384,7 +384,6 @@ namespace onelabUtils {
     if(pn.size() && pn[0].getValue()) return redraw;
 
     OnelabLocalNetworkClient *c = OnelabServer::instance()->getClient("Gmsh");
-    std::cout << ((c != NULL)?"not":"ok") << std::endl;
     if(c != NULL) return redraw; // Gmsh is remote TODO
 
     std::string mshFileName = onelabUtils::getMshFileName();
@@ -412,13 +411,6 @@ namespace onelabUtils {
       }
     }
     else if(action == "compute"){
-      std::cout <<
-        "Gmsh getChanged is " << OnelabServer::instance()->getChanged("Gmsh") << std::endl <<
-        "modelName is " << modelName << std::endl <<
-        "current GModel is" << GModel::current()->getName() << std::endl <<
-        "stat file " << mshFileName << " is " << StatFile(mshFileName) << std::endl <<
-        "meshAuto is " << meshAuto
-        << std::endl;
       if(OnelabServer::instance()->getChanged("Gmsh") ||
          modelName != GModel::current()->getName()){
         // reload the geometry, mesh it and save the mesh if Gmsh parameters

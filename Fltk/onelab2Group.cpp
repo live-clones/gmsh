@@ -19,33 +19,6 @@
 #include "Options.h"
 #include "Context.h"
 
-static void initializeLoops()
-{
-  onelabUtils::initializeLoop("1");
-  onelabUtils::initializeLoop("2");
-  onelabUtils::initializeLoop("3");
-
-  if(FlGui::available() && onelab::server::instance()->getChanged())
-    FlGui::instance()->rebuildTree(false);
-}
-
-static bool incrementLoops()
-{
-  bool ret = (onelabUtils::incrementLoop("3") ||
-    onelabUtils::incrementLoop("2") ||
-    onelabUtils::incrementLoop("1"));
-
-  //Define ONELAB parameter indicating whether or not in a loop
-  onelab::number n("0Metamodel/Loop",ret?1:0);
-  n.setVisible(false);
-  onelab::server::instance()->set(n);
-
-  if(FlGui::available() && onelab::server::instance()->getChanged())
-    FlGui::instance()->rebuildTree(false);
-
-  return ret;
-}
-
 static void updateGraphs()
 {
   bool redraw = true;//FIXME false;

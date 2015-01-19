@@ -310,7 +310,9 @@ void Msg::Error(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
+#ifndef HAVE_ONELAB2
     FlGui::instance()->check();
+#endif
     std::string tmp = std::string("@C1@.") + "Error   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstError.empty()) _firstError = str;
@@ -427,7 +429,9 @@ void Msg::Direct(const char *fmt, ...)
 #endif
   {
     if(FlGui::available()){
+#ifndef HAVE_ONELAB2
       FlGui::instance()->check();
+#endif
       std::string tmp = std::string("@C4@.") + str;
       FlGui::instance()->addMessage(tmp.c_str());
     }
@@ -466,7 +470,9 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
 #endif
   {
     if(FlGui::available()){
+#ifndef HAVE_ONELAB2
       if(log) FlGui::instance()->check();
+#endif
       if(!log || _verbosity > 4)
 	FlGui::instance()->setStatus(str);
       if(log){
@@ -728,14 +734,22 @@ void Msg::SetOnelabNumber(std::string name, double val, bool visible)
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::number> numbers;
+#ifdef HAVE_ONELAB2
+    _onelabClient->get(numbers, name, "Gmsh");
+#else
     _onelabClient->get(numbers, name);
+#endif
     if(numbers.empty()){
       numbers.resize(1);
       numbers[0].setName(name);
     }
     numbers[0].setValue(val);
     numbers[0].setVisible(visible);
+#ifdef HAVE_ONELAB2
+    _onelabClient->set(numbers[0], "Gmsh");
+#else
     _onelabClient->set(numbers[0]);
+#endif
   }
 #endif
 }
@@ -745,14 +759,22 @@ void Msg::SetOnelabString(std::string name, std::string val, bool visible)
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::string> strings;
+#ifdef HAVE_ONELAB2
+    _onelabClient->get(strings, name, "Gmsh");
+#else
     _onelabClient->get(strings, name);
+#endif
     if(strings.empty()){
       strings.resize(1);
       strings[0].setName(name);
     }
     strings[0].setValue(val);
     strings[0].setVisible(visible);
+#ifdef HAVE_ONELAB2
+    _onelabClient->set(strings[0], "Gmsh");
+#else
     _onelabClient->set(strings[0]);
+#endif
   }
 #endif
 }
@@ -820,7 +842,11 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     SetOnelabString(name + "/9CheckCommand", "-", false);
     SetOnelabString(name + "/9ComputeCommand", "-3", false);
     std::vector<onelab::string> ps;
+#ifdef HAVE_ONELAB2
+    _onelabClient->get(ps, name + "/Action", "Gmsh");
+#else
     _onelabClient->get(ps, name + "/Action");
+#endif
     if(ps.size()){
       Info("Performing ONELAB '%s'", ps[0].getValue().c_str());
       if(ps[0].getValue() == "initialize") Exit(0);
@@ -851,7 +877,11 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     SetOnelabString(name + "/9ComputeCommand", "-3", false);
 
     std::vector<onelab::string> ps;
+#ifdef HAVE_ONELAB2
+    _onelabClient->get(ps, name + "/Action", "Gmsh");
+#else
     _onelabClient->get(ps, name + "/Action");
+#endif
     if(ps.size()){
       //Info("Performing ONELAB '%s'", ps[0].getValue().c_str());
       if(ps[0].getValue() == "initialize") Exit(0);
@@ -961,7 +991,11 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   }
 
   std::vector<onelab::number> ps;
+#ifdef HAVE_ONELAB2
+  _onelabClient->get(ps, name, "Gmsh");
+#else
   _onelabClient->get(ps, name);
+#endif
   bool noRange = true, noChoices = true, noLoop = true;
   bool noGraph = true, noClosed = true;
   if(ps.size()){
@@ -1041,7 +1075,11 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(noClosed && fopt.count("Closed"))
     ps[0].setAttribute("Closed", fopt["Closed"][0] ? "1" : "0");
   _setStandardOptions(&ps[0], fopt, copt);
+#ifdef HAVE_ONELAB2
+  _onelabClient->set(ps[0], "Gmsh");
+#else
   _onelabClient->set(ps[0]);
+#endif
 #endif
 }
 
@@ -1095,7 +1133,11 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(noMultipleSelection && copt.count("MultipleSelection"))
     ps[0].setAttribute("MultipleSelection", copt["MultipleSelection"][0]);
   _setStandardOptions(&ps[0], fopt, copt);
+#ifdef HAVE_ONELAB2
+  _onelabClient->set(ps[0], "Gmsh");
+#else
   _onelabClient->set(ps[0]);
+#endif
 #endif
 }
 

@@ -35,7 +35,9 @@ class drawContextFltk : public drawContextGlobal{
         }
       }
     }
+#ifndef HAVE_ONELAB2
     FlGui::instance()->check();
+#endif
   }
   void drawCurrentOpenglWindow(bool make_current)
   {

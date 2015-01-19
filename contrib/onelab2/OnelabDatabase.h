@@ -21,6 +21,8 @@ DWORD WINAPI OnelabDatabase_listen(LPVOID arg);
 DWORD WINAPI OnelabDatabase_server(void *arg);
 #endif
 
+static void initializeLoops();
+static bool incrementLoops();
 // OnelabDatabase is a singleton that get/set/... parameters from server/clients
 class OnelabDatabase {
 private:
@@ -184,32 +186,37 @@ public:
       }
     }
     else { // run all client
-      run(action, "Gmsh"); // run Gmsh client
+      if(action == "compute") initializeLoops();
 
-      if(CTX::instance()->solverToRun >= 0) { // launch the solver
-        std::string solver = opt_solver_name(CTX::instance()->solverToRun, GMSH_GET, "");
-        std::string exe = opt_solver_executable(CTX::instance()->solverToRun, GMSH_GET, "");
-        if(_client && exe.size()) {
-          onelab::string o(solver + "/CommandLine", exe);
-          o.setVisible(false);
-          o.setNeverChanged(true);
-          set(o, solver);
+      do{ // enter loop
+        run(action, "Gmsh"); // run Gmsh client
+
+        if(CTX::instance()->solverToRun >= 0) { // launch the solver
+          std::string solver = opt_solver_name(CTX::instance()->solverToRun, GMSH_GET, "");
+          std::string exe = opt_solver_executable(CTX::instance()->solverToRun, GMSH_GET, "");
+          if(_client && exe.size()) {
+            onelab::string o(solver + "/CommandLine", exe);
+            o.setVisible(false);
+            o.setNeverChanged(true);
+            set(o, solver);
+          }
+          run(action, solver);
         }
-        run(action, solver);
-      }
-      else { // send action to all connected client except Gmsh
-        if(_client) {
-          std::cout << "server is remote" << std::endl;
-          msg.attrs.push_back(new OnelabAttrAction(action, client));
-          int size = msg.encodeMsg(buff, 1024);
-          sendbytes(buff, size);
+        else { // send action to all connected client except Gmsh
+          if(_client) {
+            std::cout << "server is remote" << std::endl;
+            msg.attrs.push_back(new OnelabAttrAction(action, client));
+            int size = msg.encodeMsg(buff, 1024);
+            sendbytes(buff, size);
+          }
+          else {
+            std::cout << "server is local" << std::endl;
+            OnelabServer::instance()->performAction(action, client, true);
+          }
+          return true;
         }
-        else {
-          std::cout << "server is local" << std::endl;
-          OnelabServer::instance()->performAction(action, client, true);
-        }
-        return true;
-      }
+      } while(action == "compute" && /*!FlGui::instance()->onelab->stop() &&*/
+          incrementLoops());
     }
     return false;
   }
@@ -226,4 +233,26 @@ public:
       return; // TODO
   }
 };
+
+static void initializeLoops()
+{
+  onelabUtils::initializeLoop("1");
+  onelabUtils::initializeLoop("2");
+  onelabUtils::initializeLoop("3");
+}
+
+static bool incrementLoops()
+{
+  bool ret = false;
+  if(onelabUtils::incrementLoop("3"))      ret = true;
+  else if(onelabUtils::incrementLoop("2")) ret = true;
+  else if(onelabUtils::incrementLoop("1")) ret = true;
+
+  //Define ONELAB parameter indicating whether or not in a loop
+  onelab::number n("0Metamodel/Loop",ret?1:0);
+  n.setVisible(false);
+  OnelabDatabase::instance()->set(n);
+
+  return ret;
+}
 
