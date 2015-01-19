@@ -282,7 +282,7 @@ class GModel
   void snapVertices();
 
   // fill a vector containing all the entities in the model
-  void getEntities(std::vector<GEntity*> &entities,int dim=-1) const;
+  void getEntities(std::vector<GEntity*> &entities, int dim=-1) const;
 
   // return the highest number associated with an elementary entity of
   // a given dimension (or the highest overall if dim < 0)
@@ -530,13 +530,20 @@ class GModel
   void    salomeconnect();
   void    occconnect();
 
-	// do stuff for all entities inside a bounding box
-  void    setPeriodicAllFaces(std::vector<double> FaceTranslationVector);
-  void    setPeriodicPairOfFaces(int numFaceMaster, std::vector<int> EdgeListMaster,
-																 int numFaceSlave, std::vector<int> EdgeListSlave);
-  void    setPhysicalNumToEntitiesInBox(int EntityType, int PhysicalGroupNumber,
-																				std::vector<double> p1,std::vector<double> p2);
+  void setPeriodicAllFaces(std::vector<double> FaceTranslationVector);
+  void setPeriodicPairOfFaces(int numFaceMaster, std::vector<int> EdgeListMaster,
+                              int numFaceSlave, std::vector<int> EdgeListSlave);
 
+  // do stuff for all entities inside a bounding box
+  void setPhysicalNumToEntitiesInBox(int EntityDimension, int PhysicalNumber,
+                                     SBoundingBox3d box);
+  void setPhysicalNumToEntitiesInBox(int EntityDimension, int PhysicalNumber,
+                                     std::vector<double> p1, std::vector<double> p2)
+  {
+    if(p1.size() != 3 || p2.size() != 3) return;
+    SBoundingBox3d bbox(p1[0], p1[2], p1[2], p2[0], p2[1], p2[3]);
+    setPhysicalNumToEntitiesInBox(EntityDimension, PhysicalNumber, bbox);
+  }
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements

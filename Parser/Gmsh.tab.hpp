@@ -219,7 +219,7 @@ extern int gmsh_yydebug;
 typedef union YYSTYPE
 {
 /* Line 2053 of yacc.c  */
-#line 100 "Gmsh.y"
+#line 99 "Gmsh.y"
 
   char *c;
   int i;

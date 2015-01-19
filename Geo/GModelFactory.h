@@ -210,15 +210,7 @@ class GModelFactory {
     Msg::Error("setPeriodicPairOfFaces not implemented yet");
   }
   ;
-  virtual void setPhysicalNumToEntitiesInBox(GModel *gm, int EntityType,
-                                             int PhysicalGroupNumber,
-                                             std::vector<double> p1,std::vector<double> p2)
-  {
-    Msg::Error("setPhysicalNumToEntitiesInBox not implemented yet");
-  }
-
   virtual void healGeometry(GModel *gm, double tolerance = -1.) = 0;
-
 };
 
 class GeoFactory : public GModelFactory {
@@ -287,9 +279,6 @@ class OCCFactory : public GModelFactory {
   void setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTranslationVector);
   void setPeriodicPairOfFaces(GModel *gm, int numFaceMaster, std::vector<int> EdgeListMaster,
                               int numFaceSlave, std::vector<int> EdgeListSlave);
-  void setPhysicalNumToEntitiesInBox(GModel *gm, int EntityType, int PhysicalGroupNumber,
-                                     std::vector<double> p1, std::vector<double> p2);
-
   void fillet(GModel *gm, std::vector<int> edges, double radius);
   void healGeometry(GModel *gm, double tolerance = -1.);
 };

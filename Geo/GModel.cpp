@@ -358,38 +358,28 @@ void GModel::snapVertices()
   }
 }
 
-void GModel::getEntities(std::vector<GEntity*> &entities,int dim) const
+void GModel::getEntities(std::vector<GEntity*> &entities, int dim) const
 {
   entities.clear();
   switch (dim) {
   case 0:
-    {
-      entities.insert(entities.end(), vertices.begin(), vertices.end());
-      break;
-    }
+    entities.insert(entities.end(), vertices.begin(), vertices.end());
+    break;
   case 1:
-    {
-      entities.insert(entities.end(), edges.begin(), edges.end());
-      break;
-    }
+    entities.insert(entities.end(), edges.begin(), edges.end());
+    break;
   case 2:
-    {
-      entities.insert(entities.end(), faces.begin(), faces.end());
-      break;
-    }
+    entities.insert(entities.end(), faces.begin(), faces.end());
+    break;
   case 3:
-    {
-      entities.insert(entities.end(), regions.begin(), regions.end());
-      break;
-    }
+    entities.insert(entities.end(), regions.begin(), regions.end());
+    break;
   default:
-    {
-      entities.insert(entities.end(), vertices.begin(), vertices.end());
-      entities.insert(entities.end(), edges.begin(), edges.end());
-      entities.insert(entities.end(), faces.begin(), faces.end());
-      entities.insert(entities.end(), regions.begin(), regions.end());
-      break;
-    }
+    entities.insert(entities.end(), vertices.begin(), vertices.end());
+    entities.insert(entities.end(), edges.begin(), edges.end());
+    entities.insert(entities.end(), faces.begin(), faces.end());
+    entities.insert(entities.end(), regions.begin(), regions.end());
+    break;
   }
 }
 
@@ -2868,11 +2858,19 @@ void GModel::setPeriodicPairOfFaces(int numFaceMaster, std::vector<int> EdgeList
                                      numFaceSlave, EdgeListSlave);
 }
 
-void GModel::setPhysicalNumToEntitiesInBox(int EntityType, int PhysicalGroupNumber,
-                                           std::vector<double> p1, std::vector<double> p2)
+void GModel::setPhysicalNumToEntitiesInBox(int EntityDimension, int PhysicalNumber,
+                                           SBoundingBox3d box)
 {
-  if(_factory)
-    _factory->setPhysicalNumToEntitiesInBox(this, EntityType, PhysicalGroupNumber, p1, p2);
+  // FIXME: if we use this often, create an rtree to avoid the linear search
+  std::vector<GEntity*> entities;
+  getEntities(entities, EntityDimension);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    SBoundingBox3d bbox = entities[i]->bounds();
+    if(bbox.min().x() >= box.min().x() && bbox.max().x() <= box.max().x() &&
+       bbox.min().y() >= box.min().y() && bbox.max().y() <= box.max().y() &&
+       bbox.min().z() >= box.min().z() && bbox.max().z() <= box.max().z())
+      entities[i]->addPhysicalEntity(PhysicalNumber);
+  }
 }
 
 static void computeDuplicates(GModel *model,
