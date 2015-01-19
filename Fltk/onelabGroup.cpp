@@ -860,7 +860,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     onelab::server::instance()->get(pn,"0Metamodel/9Use restored solution");
     if(pn.size()){
       restoreMode=pn[0].getValue();
-      pn[0].setValue(2);
+      pn[0].setValue(2); // special value 
       onelab::server::instance()->set(pn[0]);
     }
 

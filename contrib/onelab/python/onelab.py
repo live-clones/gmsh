@@ -27,7 +27,7 @@ Please report all bugs and problems to the public mailing list
 <gmsh@geuz.org>.
 """
 
-import socket, struct, os, sys, subprocess
+import socket, struct, os, sys, subprocess, time
 _VERSION = '1.1'
 
 def file_exist(filename):
@@ -424,7 +424,7 @@ class client :
   def __del__(self):
     self.finalize()
 
-  def call(self, name, cmdline, remote='', rundir='', logfile=''):
+  def call(self, name, cmdline, remote='', rundir='', logfile='', poll=0):
     cwd = None
     if not remote :
       argv = cmdline.rsplit(' ')
@@ -433,24 +433,43 @@ class client :
     else :
       argv=['ssh', remote , "cd %s ; %s" %(rundir,cmdline) ]
 
+    if poll and not logfile :
+        logfile = os.devnull
     if logfile:
       call = subprocess.Popen(argv, bufsize=1, cwd=cwd,
                               stdout=open(logfile,"w"),
-                              stderr=subprocess.PIPE)
+                              stderr=subprocess.STDOUT)
+      while call.poll() == None :
+        self.action = self.getString(self.name + '/Action', False)
+        if self.action == 'stop':
+          call.terminate()
+          self._send(self._GMSH_WARNING, 'client killed')
+          sys.exit(1)
+        time.sleep(1) # check every second for the stop signal from Gmsh
     else:
       call = subprocess.Popen(argv, bufsize=1, cwd=cwd,
                               stdout=subprocess.PIPE,
-                              stderr=subprocess.PIPE)
+                              stderr=subprocess.STDOUT)
+      count = 0
       for line in iter(call.stdout.readline, b''):
         print(line.rstrip())
+        count += 1
+        if count == 50 : # check every 50 lines for the stop signal from Gmsh
+          count = 0
+          self.action = self.getString(self.name + '/Action', False)
+          if self.action == 'stop':
+            call.terminate()
+            self._send(self._GMSH_WARNING, 'client killed')
+            sys.exit(1)
+      
     result = call.wait()
     if result == 0 :
-      self._send(self._GMSH_INFO, 'call \"' + ' '.join(argv) + '\"')
+      self._send(self._GMSH_INFO, 'done \"' + ' '.join(argv) + '\"')
       if self.action == 'compute':
         self.setChanged(name, False)
     else :
-      for line in iter(call.stderr.readline, b''):
-        self._send(self._GMSH_ERROR, line.rstrip().encode('utf-8'))
+      self._send(self._GMSH_WARNING,
+        'Error report in ' + self.name + '_stderr.log')
       sys.exit(1)
   
   def copy(self, here, there):
