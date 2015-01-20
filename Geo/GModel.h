@@ -292,7 +292,8 @@ class GModel
   bool noPhysicalGroups();
 
   // return all physical groups (one map per dimension: 0-D to 3-D)
-  void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]);
+  void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]) const;
+  void getPhysicalGroups(int dim, std::map<int, std::vector<GEntity*> > &groups) const;
 
   // delete physical groups in the model
   void deletePhysicalGroups();

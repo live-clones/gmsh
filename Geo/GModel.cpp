@@ -288,14 +288,13 @@ GVertex *GModel::getVertexByTag(int n) const
 std::vector<int> GModel::getEdgesByStringTag(const std::string tag)
 {
   std::vector<int> nums;
-  std::map<int, std::vector<GEntity*> > physicalGroups[4];
-  getPhysicalGroups(physicalGroups);
-  std::vector<GEntity*> allEdges = physicalGroups[1][this->getPhysicalNumber(1,tag)];
-  for ( std::vector<GEntity*>::iterator it = allEdges.begin(); it != allEdges.end(); it++){
+  std::map<int, std::vector<GEntity*> > physicalGroups;
+  getPhysicalGroups(1, physicalGroups);
+  std::vector<GEntity*> allEdges = physicalGroups[this->getPhysicalNumber(1, tag)];
+  for (std::vector<GEntity*>::iterator it = allEdges.begin(); it != allEdges.end(); it++){
     GEntity *ge = *it;
     nums.push_back(ge->tag());
   }
-
   return nums;
 }
 
@@ -403,7 +402,7 @@ bool GModel::noPhysicalGroups()
   return true;
 }
 
-void GModel::getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4])
+void GModel::getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]) const
 {
   std::vector<GEntity*> entities;
   getEntities(entities);
@@ -419,6 +418,21 @@ void GModel::getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4])
   }
 }
 
+void GModel::getPhysicalGroups(int dim, std::map<int, std::vector<GEntity*> > &groups) const
+{
+  std::vector<GEntity*> entities;
+  getEntities(entities, dim);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    for(unsigned int j = 0; j < entities[i]->physicals.size(); j++){
+      // physicals can be stored with negative signs when the entity
+      // should be "reversed"
+      int p = std::abs(entities[i]->physicals[j]);
+      if(std::find(groups[p].begin(), groups[p].end(), entities[i]) == groups[p].end())
+        groups[p].push_back(entities[i]);
+    }
+  }
+}
+
 void GModel::deletePhysicalGroups()
 {
   std::vector<GEntity*> entities;
@@ -430,15 +444,13 @@ void GModel::deletePhysicalGroups()
 void GModel::deletePhysicalGroup(int dim, int num)
 {
   std::vector<GEntity*> entities;
-  getEntities(entities);
+  getEntities(entities, dim);
   for(unsigned int i = 0; i < entities.size(); i++){
-    if(dim == entities[i]->dim()){
-      std::vector<int> p;
-      for(unsigned int j = 0; j < entities[i]->physicals.size(); j++)
-        if(entities[i]->physicals[j] != num)
-          p.push_back(entities[i]->physicals[j]);
-      entities[i]->physicals = p;
-    }
+    std::vector<int> p;
+    for(unsigned int j = 0; j < entities[i]->physicals.size(); j++)
+      if(entities[i]->physicals[j] != num)
+        p.push_back(entities[i]->physicals[j]);
+    entities[i]->physicals = p;
   }
 }
 
@@ -470,14 +482,6 @@ int GModel::setPhysicalName(std::string name, int dim, int number)
 
 std::string GModel::getPhysicalName(int dim, int number) const
 {
-  //Emi debug here
-  // printf("getPhysName size %d \n", physicalNames.size());
-  // std::map<std::pair<int, int>, std::string>::iterator itt = physicalNames.begin();
-  // for (; itt != physicalNames.end(); itt++){
-  //   printf("name %s \n", itt->second.c_str());
-  //   printf("par (%d,%d) \n", itt->first.first, itt->first.second);
-  // }
-
   std::map<std::pair<int, int>, std::string>::const_iterator it =
     physicalNames.find(std::pair<int, int>(dim, number));
   if(it != physicalNames.end()) return it->second;
@@ -836,10 +840,10 @@ MVertex *GModel::getMeshVertexByTag(int n)
 void GModel::getMeshVerticesForPhysicalGroup(int dim, int num, std::vector<MVertex*> &v)
 {
   v.clear();
-  std::map<int, std::vector<GEntity*> > groups[4];
-  getPhysicalGroups(groups);
-  std::map<int, std::vector<GEntity*> >::const_iterator it = groups[dim].find(num);
-  if(it == groups[dim].end()) return;
+  std::map<int, std::vector<GEntity*> > groups;
+  getPhysicalGroups(dim, groups);
+  std::map<int, std::vector<GEntity*> >::const_iterator it = groups.find(num);
+  if(it == groups.end()) return;
   const std::vector<GEntity *> &entities = it->second;
   std::set<MVertex*> sv;
   for(unsigned int i = 0; i < entities.size(); i++){
@@ -1033,8 +1037,8 @@ void GModel::deleteMeshPartitions()
 }
 
 void GModel::store(std::vector<MVertex*> &vertices, int dim,
-          std::map<int, std::vector<MElement*> > &entityMap,
-          std::map<int, std::map<int, std::string> > &physicalMap)
+                   std::map<int, std::vector<MElement*> > &entityMap,
+                   std::map<int, std::map<int, std::string> > &physicalMap)
 {
   _storeVerticesInEntities(vertices);
   _storeElementsInEntities(entityMap);

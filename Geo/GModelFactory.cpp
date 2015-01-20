@@ -20,7 +20,6 @@
 #include "Geo.h"
 #include "GmshDefines.h"
 
-
 GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {
   int num =  gm->getMaxElementaryNumber(0) + 1;
@@ -164,7 +163,6 @@ GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
 
 GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > faces)
 {
-
   //create surface loop
   int nLoops = faces.size();
   std::vector<SurfaceLoop *> vecLoops;

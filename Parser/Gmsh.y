@@ -4813,10 +4813,10 @@ FExpr_Multi :
           }
         }
         else{
-          std::map<int, std::vector<GEntity*> > groups[4];
-          GModel::current()->getPhysicalGroups(groups);
-          std::map<int, std::vector<GEntity*> >::iterator it = groups[0].find((int)num);
-          if(it != groups[0].end()){
+          std::map<int, std::vector<GEntity*> > groups;
+          GModel::current()->getPhysicalGroups(0, groups);
+          std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
+          if(it != groups.end()){
             for(unsigned j = 0; j < it->second.size(); j++){
               double d = it->second[j]->tag();
               List_Add($$, &d);
@@ -4842,10 +4842,10 @@ FExpr_Multi :
           }
         }
         else{
-          std::map<int, std::vector<GEntity*> > groups[4];
-          GModel::current()->getPhysicalGroups(groups);
-          std::map<int, std::vector<GEntity*> >::iterator it = groups[1].find((int)num);
-          if(it != groups[1].end()){
+          std::map<int, std::vector<GEntity*> > groups;
+          GModel::current()->getPhysicalGroups(1, groups);
+          std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
+          if(it != groups.end()){
             for(unsigned j = 0; j < it->second.size(); j++){
               double d = it->second[j]->tag();
               List_Add($$, &d);
@@ -4871,10 +4871,10 @@ FExpr_Multi :
           }
         }
         else{
-          std::map<int, std::vector<GEntity*> > groups[4];
-          GModel::current()->getPhysicalGroups(groups);
-          std::map<int, std::vector<GEntity*> >::iterator it = groups[2].find((int)num);
-          if(it != groups[2].end()){
+          std::map<int, std::vector<GEntity*> > groups;
+          GModel::current()->getPhysicalGroups(2, groups);
+          std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
+          if(it != groups.end()){
             for(unsigned j = 0; j < it->second.size(); j++){
               double d = it->second[j]->tag();
               List_Add($$, &d);
@@ -4900,10 +4900,10 @@ FExpr_Multi :
           }
         }
         else{
-          std::map<int, std::vector<GEntity*> > groups[4];
-          GModel::current()->getPhysicalGroups(groups);
-          std::map<int, std::vector<GEntity*> >::iterator it = groups[3].find((int)num);
-          if(it != groups[3].end()){
+          std::map<int, std::vector<GEntity*> > groups;
+          GModel::current()->getPhysicalGroups(3, groups);
+          std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
+          if(it != groups.end()){
             for(unsigned j = 0; j < it->second.size(); j++){
               double d = it->second[j]->tag();
               List_Add($$, &d);

@@ -65,9 +65,9 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
   }
 
   GModel *m = GModel::current();
-  std::map<int, std::vector<GEntity*> > groups[4];
-  m->getPhysicalGroups(groups);
-  std::vector<GEntity*> entities = groups[inputdim][inputphysical];
+  std::map<int, std::vector<GEntity*> > groups;
+  m->getPhysicalGroups(inputdim, groups);
+  std::vector<GEntity*> entities = groups[inputphysical];
 
   if(entities.empty()){
     Msg::Error("Physical group %d (dimension %d) is empty", inputphysical, inputdim);

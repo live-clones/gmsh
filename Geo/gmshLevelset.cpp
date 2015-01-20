@@ -1087,9 +1087,9 @@ gLevelsetTools::gLevelsetTools(const gLevelsetTools &lv) : gLevelset(lv)
 gLevelsetYarn::gLevelsetYarn(int dim, int phys, double minA, double majA, int type, int tag)
   : gLevelsetPrimitive(tag), minorAxis(minA), majorAxis(majA), typeLs(type)
 {
-  std::map<int, std::vector<GEntity*> > groups[4];
-  GModel::current()->getPhysicalGroups(groups);
-  entities = groups[dim][phys];
+  std::map<int, std::vector<GEntity*> > groups;
+  GModel::current()->getPhysicalGroups(dim, groups);
+  entities = groups[phys];
   if(!entities.size())
     printf("No physical %d found for levelset yarn!\n", phys);
 }
