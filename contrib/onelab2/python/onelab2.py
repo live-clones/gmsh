@@ -232,9 +232,28 @@ class client :
       print('onelab info : %s' % msg)
     return t, msg
 
+  def _parseParameter(msg):
+    def extract_attr(b):
+      t, l = struct.unpack('!HH', b[:4])
+      if l+4 > len(b):
+        RuntimeError('onelab invalid parameter')
+      return t ,b[4:]
+
+      ptype, p = extract_attr(msg)
+      if ptype == 0x06:
+        param = _parameter('number')
+        param.frombytes(msg)
+        return param
+      elif ptype == 0x07:
+        param = _parameter('string')
+        param.frombytes(msg)
+        return param
+      else:
+        return None
+    
+
   def _getParameter(self, param, warn_if_not_found=True) :
     def extract_attr(b):
-      print(len(b))
       t, l = struct.unpack('!HH', b[:4])
       if l+4 > len(b):
         RuntimeError('onelab invalid parameter')
@@ -246,8 +265,7 @@ class client :
     (t, msg) = self._receive()
     if t == self._ONELAB_RESPONSE :
       ptype, p = extract_attr(msg)
-      if ptype == 0x06 or ptype == 0x05:
-        print("recv")
+      if ptype == 0x06 or ptype == 0x07:
         param.frombytes(msg)
       elif ptype == 0x0A and warn_if_not_found:
         print('Unknown parameter %s' %(param.name))
@@ -270,14 +288,67 @@ class client :
     p.modify(**param)
     self._send(self._ONELAB_UPDATE, p.tobytes())
 
+  def setString(self, name, **param):
+    if not self.socket :
+      return
+    p = _parameter('string', name=name)
+    self._getParameter(p, False)
+    p.modify(**param)
+    self._send(self._ONELAB_UPDATE, p.tobytes())
+
   def _sendMessage(self, msg, lvl=5):
     if not self.socket :
       print (msg)
       return
     self._send(self._ONELAB_MESSAGE, struct.pack("!HHB", 0x0A, len(msg)+1, lvl)+msg)
 
+  def sendFatal(self, msg) :
+    self._sendMessage(msg+'\0', 1)
+  def sendError(self, msg) :
+    self._sendMessage(msg+'\0', 2)
+  def sendWarning(self, msg) :
+    self._sendMessage(msg+'\0', 3)
   def sendInfo(self, msg) :
-    self._sendMessage(msg+'\0')
+    self._sendMessage(msg+'\0', 5)
+  def sendDebug(self, msg) :
+    self._sendMessage(msg+'\0', 99)
+
+  def waitOnSubClient(self, name):
+    if not self.socket :
+      return
+    while self._numSubClients > 0:
+      (t, msg) = self._receive()
+      if t == _ONELAB_UPDATE:
+        param = _parseParameter(msg)
+        if param.type=='string' and param.name[-7:]=='/Action' and param.value=='stop':
+          if param.name[-7:] == name: return
+          self._numSubClients -= 1 # FIXME check that the client is a subclient ?
+
+
+  def waitOnSubClients(self):
+    if not self.socket :
+      return
+    while self._numSubClients > 0:
+      (t, msg) = self._receive()
+      if t == _ONELAB_UPDATE:
+        param = _parseParameter(msg)
+        if param.type=='string' and param.name[:-7]=='/Action' and param.value=='stop':
+          self._numSubClients -= 1 # FIXME check that the client is a subclient ?
+
+  def runNonBlockingSubClient(self, name, command, arguments=''):
+    if self.action == 'check':
+      cmd = command
+    else:
+      cmd = command + ' ' + arguments
+    os.system(cmd);
+    self._numSubClients +=1
+    self.getString(name+'/Action', False)
+
+  def runSubClient(self, name, command, arguments=''):
+    self.runNonBlockingSubClient(name, command, arguments)
+    self.waitOnSubClient(name) # makes the subclient blocking
+    #if self.action == 'compute': 
+    #TODO  self.setChanged(name, False)
 
   def __init__(self, ref=''):
     self.socket = None
@@ -306,12 +377,14 @@ class client :
   def finalize(self):
     # code aster python interpreter does not call the destructor at exit, it is
     # necessary to call finalize() epxlicitely
+    print("finalize")
     if self.socket :
-      #TODO self.waitOnSubClients()
+      self.waitOnSubClients()
       self._send(self._ONELAB_STOP)
       self._receive()
       self.socket.close()
       self.socket = None
+    print("finalize end")
     
   def __del__(self):
     self.finalize()
