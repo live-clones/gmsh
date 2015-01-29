@@ -1,6 +1,7 @@
 #include "GmshLocalClient.h"
 #include "onelabUtils.h"
 #ifdef HAVE_FLTK
+#include "FlGui.h"
 #include "GmshMessage.h"
 #include "onelab2Group.h"
 #include "OpenFile.h"
@@ -10,33 +11,33 @@ void GmshLocalClient::setCallback(onelabGroup *cb) {_cb_obj = cb;}
 void GmshLocalClient::onNewParameter(onelab::parameter *p)
 {
   if(_cb_obj) {
-    Fl::lock();
+    FlGui::instance()->lock();
     _cb_obj->addParameter(*p);
-    Fl::unlock();
+    FlGui::instance()->unlock();
     Fl::awake((void *)NULL);
   }
 }
 void GmshLocalClient::onUpdateParameter(onelab::parameter *p)
 {
   if(_cb_obj) {
-    Fl::lock();
+    FlGui::instance()->lock();
     _cb_obj->updateParameter(*p);
-    Fl::unlock();
+    FlGui::instance()->unlock();
     Fl::awake((void *)NULL);
   }
 }
 void GmshLocalClient::onRemoveParameter(onelab::parameter *p)
 {
   if(_cb_obj) {
-    Fl::lock();
+    FlGui::instance()->lock();
     _cb_obj->removeParameter(*p);
-    Fl::unlock();
+    FlGui::instance()->unlock();
     Fl::awake((void *)NULL);
   }
 }
 void GmshLocalClient::onMessage(const std::string & name, const std::string &message, int level)
 {
-  Fl::lock();
+  FlGui::instance()->lock();
   switch(level) {
     case OnelabAttrMessage::Info:
       Msg::Direct("Info    : %s - %s", name.c_str(), message.c_str());
@@ -48,7 +49,7 @@ void GmshLocalClient::onMessage(const std::string & name, const std::string &mes
       Msg::Error("%s - %s", name.c_str(), message.c_str());
       break;
   }
-  Fl::unlock();
+  FlGui::instance()->unlock();
   Fl::awake((void *)NULL);
 }
 void GmshLocalClient::refresh()
@@ -57,18 +58,18 @@ void GmshLocalClient::refresh()
 }
 void GmshLocalClient::mergeFile(const std::string &filename)
 {
-  Fl::lock();
+  FlGui::instance()->lock();
   MergePostProcessingFile(filename, CTX::instance()->solver.autoShowViews, CTX::instance()->solver.autoShowLastStep, true);
-  Fl::unlock();
+  FlGui::instance()->unlock();
   Fl::awake((void *)NULL);
 }
 #endif
 
 void GmshLocalClient::run(std::string action) {
   if(getName() == "Gmsh") {
-    Fl::lock();
+    FlGui::instance()->lock();
     onelabUtils::runGmshClient(action, 2); 
-    Fl::unlock();
+    FlGui::instance()->unlock();
     Fl::awake((void *)NULL);
   }
 }

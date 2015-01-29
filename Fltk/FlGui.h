@@ -45,6 +45,7 @@ class FlGui{
  private:
   static FlGui *_instance;
   static std::string _openedThroughMacFinder;
+  int _in_main_thread;
   std::string _lastStatus;
  public:
   std::vector<GVertex*> selectedVertices;
@@ -83,6 +84,9 @@ class FlGui{
   static void wait();
   // wait (at most time seconds) for any events, then process them
   static void wait(double time);
+  int lock();
+  void unlock();
+  bool in_main_thread() {return _in_main_thread==0;}
   // is a file opened through the Mac Finder?
   static void setOpenedThroughMacFinder(const std::string &name)
   {

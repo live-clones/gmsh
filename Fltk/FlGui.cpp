@@ -74,6 +74,9 @@ static int globalShortcut(int event)
   return FlGui::instance()->testGlobalShortcuts(event);
 }
 
+int FlGui::lock(){_in_main_thread++; Fl::lock();}
+void FlGui::unlock(){Fl::unlock(); _in_main_thread--;}
+
 static void simple_right_box_draw(int x, int y, int w, int h, Fl_Color c)
 {
   fl_color(c); fl_rectf(x, y, w, h);
@@ -383,6 +386,8 @@ FlGui::FlGui(int argc, char **argv)
 
   // init solver plugin stuff
   callForSolverPlugin(-1);
+
+  _in_main_thread = 0;
 
   // draw
   for(unsigned int i = 0; i < graph.size(); i++)
