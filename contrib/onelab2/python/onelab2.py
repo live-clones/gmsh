@@ -377,14 +377,12 @@ class client :
   def finalize(self):
     # code aster python interpreter does not call the destructor at exit, it is
     # necessary to call finalize() epxlicitely
-    print("finalize")
     if self.socket :
       self.waitOnSubClients()
       self._send(self._ONELAB_STOP)
       self._receive()
       self.socket.close()
       self.socket = None
-    print("finalize end")
     
   def __del__(self):
     self.finalize()

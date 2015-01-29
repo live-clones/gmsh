@@ -47,11 +47,14 @@ public:
   ~onelabGroup();
   void updateGearMenu();
   void rebuildSolverList();
+  void addLastPostProcessing();
   void rebuildTree(bool deleteWidgets){} // useless in ONELAB2 ?
   void enableTreeWidgetResize(bool value){ _enableTreeWidgetResize = value; }
   void clearTree(bool deleteWidgets=true);
   void openTreeItem(const std::string &name);
   void createRemoteTree(bool keepLocal=true);
+  void setButtonVisibility();
+  void setButtonMode(const std::string &butt0, const std::string &butt1);
   UInt32 getServerIP() {return ip4_inet_pton(server_ip->value());}
   UInt16 getServerPort() {return (UInt16)strtoul(server_port->value(), NULL, 0);}
   bool useServer();
@@ -66,6 +69,8 @@ public:
   void updateParameter(onelab::string &p);
   void removeParameter(onelab::parameter &p);
   std::string getPath(Fl_Tree_Item *item);
+  void addSolver(const std::string &name, const std::string &exe,
+                 const std::string &hostName, int index);
   void insertInManuallyClosed(const std::string &path)
   {
     _manuallyClosed.insert(path);

@@ -60,6 +60,7 @@ void GmshLocalClient::mergeFile(const std::string &filename)
 {
   FlGui::instance()->lock();
   MergePostProcessingFile(filename, CTX::instance()->solver.autoShowViews, CTX::instance()->solver.autoShowLastStep, true);
+  _cb_obj->addLastPostProcessing();
   FlGui::instance()->unlock();
   Fl::awake((void *)NULL);
 }

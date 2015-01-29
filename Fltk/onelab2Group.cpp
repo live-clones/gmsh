@@ -12,6 +12,7 @@
 #include "drawContext.h"
 #include "viewButton.h"
 #include "solverButton.h"
+#include "PView.h"
 
 #include "Gmsh.h"
 #include "onelabUtils.h"
@@ -89,12 +90,40 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   Msg::ResetErrorCounter();
 
-  //TODO FlGui::instance()->onelab->setButtonMode("", "stop");
+  FlGui::instance()->onelab->setButtonMode("", "stop");
 
   OnelabDatabase::instance()->run(action);
   drawContext::global()->draw();
+
+  FlGui::instance()->onelab->setButtonMode("check", "compute");
 }
 
+void onelab_option_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string what((const char*)data);
+  double val = ((Fl_Menu_*)w)->mvalue()->value() ? 1. : 0.;
+  if(what == "save")
+    CTX::instance()->solver.autoSaveDatabase = val;
+  else if(what == "archive")
+    CTX::instance()->solver.autoArchiveOutputFiles = val;
+  else if(what == "check"){
+    CTX::instance()->solver.autoCheck = val;
+    FlGui::instance()->onelab->setButtonVisibility();
+  }
+  else if(what == "mesh")
+    CTX::instance()->solver.autoMesh = val;
+  else if(what == "merge")
+    CTX::instance()->solver.autoMergeFile = val;
+  else if(what == "show")
+    CTX::instance()->solver.autoShowViews = val ? 2 : 0;
+  else if(what == "step")
+    CTX::instance()->solver.autoShowLastStep = val;
+  else if(what == "invisible"){
+    CTX::instance()->solver.showInvisibleParameters = val;
+    FlGui::instance()->onelab->rebuildTree(true);
+  }
+}
 
 void solver_cb(Fl_Widget *w, void *data)
 {
@@ -102,6 +131,7 @@ void solver_cb(Fl_Widget *w, void *data)
 
   if(FlGui::instance()->onelab->isBusy())
     FlGui::instance()->onelab->show();
+
   int num = (intptr_t)data;
   if(num >= 0){
     std::string name = opt_solver_name(num, GMSH_GET, "");
@@ -109,6 +139,7 @@ void solver_cb(Fl_Widget *w, void *data)
     std::string exe = opt_solver_executable(num, GMSH_GET, "");
     std::string host = opt_solver_remote_login(num, GMSH_GET, "");
     OnelabDatabase::instance()->run("initialize", name);
+    FlGui::instance()->onelab->addSolver(name, exe, host, num);
   }
 
   if(num >= 0) {
@@ -151,6 +182,15 @@ static bool getFlColor(const std::string &str, Fl_Color &c)
   return false;
 }
 
+#if !defined(__APPLE__)
+#define gear_width 16
+#define gear_height 16
+static unsigned char gear_bits[] = {
+   0x80, 0x01, 0x80, 0x01, 0x8c, 0x31, 0xfc, 0x3f, 0xf8, 0x1f, 0xf8, 0x1f,
+   0x38, 0x1c, 0x3f, 0xfc, 0x3f, 0xfc, 0x38, 0x1c, 0xf8, 0x1f, 0xf8, 0x1f,
+   0xfc, 0x3f, 0x8c, 0x31, 0x80, 0x01, 0x80, 0x01 };
+#endif
+
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   : Fl_Group(x, y, w, h, l), _stop(false), _enableTreeWidgetResize(false)
 {
@@ -170,22 +210,17 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   _tree->showroot(0);
   _tree->box(FL_FLAT_BOX);
   _tree->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2));
+  _tree->add("0Post-processing/");
   _tree->end();
 
-  int BB2 = BB / 2 + 4;
-  _butt[0] = new Fl_Button(x + w - 3 * WB - 3 * BB2, y + h - WB - BH, BB2, BH, "Check");
-  _butt[0]->callback(onelab_cb, (void*)"check");
-
-  _butt[1] = new Fl_Button(x + w - 2 * WB - 2 * BB2, y + h - WB - BH, BB2, BH, "Run");
-  _butt[1]->callback(onelab_cb, (void*)"compute");
 
   Fl_Check_Button *useServer = new Fl_Check_Button(x+WB, y, w-2*WB, BH, "Use a remote server");
   useServer->callback(useserver_cb, this);
-  /*Fl_Box *ip_lbl = */new Fl_Box(x+WB , y+BH, w-2*WB, BH, "Server IP address:");
+  new Fl_Box(x+WB , y+BH, w-2*WB, BH, "Server IP address:");
   server_ip = new Fl_Input(x+WB, y+2*BH, w-2*WB, BH, "");
   server_ip->value("127.0.0.1");
   server_ip->readonly(true);
-  /*Fl_Box *port_lbl = */new Fl_Box(x+WB , y+3*BH, w-2*WB, BH, "Server port:");
+  new Fl_Box(x+WB , y+3*BH, w-2*WB, BH, "Server port:");
   server_port = new Fl_Input(x+WB, y+4*BH, w-2*WB, BH, "");
   server_port->value("1148");
   server_port->readonly(true);
@@ -194,6 +229,58 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
 
   _computeWidths();
   _widgetLabelRatio = 0.48;
+
+  int BB2 = BB / 2 + 4;
+  _butt[0] = new Fl_Button(x + w - 3 * WB - 3 * BB2, y + h - WB - BH, BB2, BH, "Check");
+  _butt[0]->callback(onelab_cb, (void*)"check");
+
+  _butt[1] = new Fl_Button(x + w - 2 * WB - 2 * BB2, y + h - WB - BH, BB2, BH, "Run");
+  _butt[1]->callback(onelab_cb, (void*)"compute");
+
+  _gear = new Fl_Menu_Button(x + w - WB - BB2, y + h - WB - BH, BB2, BH);
+#if defined(__APPLE__)
+  _gear->label("@-1gmsh_gear");
+#else
+  _gear->image(new Fl_Bitmap(gear_bits, gear_width, gear_height));
+#endif
+  _gear->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+  _gear->add("Reset database", 0, onelab_cb, (void*)"reset");
+  _gear->add("Save database...", 0, onelab_cb, (void*)"save");
+  _gear->add("_Load database...", 0, onelab_cb, (void*)"load");
+
+  _minWindowWidth = 3 * BB2 + 4 * WB;
+  _minWindowHeight = 2 * BH + 3 * WB;
+
+  _gearOptionsStart = _gear->menu()->size();
+
+  _gear->add("Save && load database automatically", 0, onelab_option_cb, (void*)"save",
+             FL_MENU_TOGGLE);
+  _gear->add("Archive output files automatically", 0, onelab_option_cb, (void*)"archive",
+             FL_MENU_TOGGLE);
+  _gear->add("Check model after each change", 0, onelab_option_cb, (void*)"check",
+             FL_MENU_TOGGLE);
+  _gear->add("Remesh automatically", 0, onelab_option_cb, (void*)"mesh",
+             FL_MENU_TOGGLE);
+  _gear->add("Merge results automatically", 0, onelab_option_cb, (void*)"merge",
+             FL_MENU_TOGGLE);
+  _gear->add("Show new views", 0, onelab_option_cb, (void*)"show",
+             FL_MENU_TOGGLE);
+  _gear->add("Always show last step", 0, onelab_option_cb, (void*)"step",
+             FL_MENU_TOGGLE);
+  _gear->add("_Show hidden parameters", 0, onelab_option_cb, (void*)"invisible",
+             FL_MENU_TOGGLE);
+
+  _gearOptionsEnd = _gear->menu()->size();
+
+  //_gear->add("Add new solver...", 0, onelab_add_solver_cb);
+
+  end();
+
+  Fl_Box *resbox = new Fl_Box(x + WB, y + WB, WB, WB);
+  resizable(resbox);
+
+  rebuildSolverList();
+
   OnelabDatabase::instance()->useAsClient()->setCallback(this);
 }
 onelabGroup::~onelabGroup()
@@ -233,9 +320,73 @@ void onelabGroup::openTreeItem(const std::string &name)
   }
 }
 
+void onelabGroup::setButtonVisibility()
+{
+  std::vector<onelab::number> numbers;
+  OnelabDatabase::instance()->get(numbers);
+  bool showRun = /*OnelabDatabase::instance()->getNumClients() > 1 FIXME*/true || numbers.size();
+  if(CTX::instance()->solver.autoCheck){
+    _butt[0]->hide();
+    if(showRun)
+      _butt[1]->show();
+    else
+      _butt[1]->hide();
+  }
+  else if(showRun){
+    _butt[0]->show();
+    _butt[1]->show();
+  }
+  else{
+    _butt[0]->hide();
+    _butt[1]->hide();
+  }
+  redraw();
+}
+
+void onelabGroup::setButtonMode(const std::string &butt0, const std::string &butt1)
+{
+  if(butt0 == "check"){
+    _butt[0]->activate();
+    _butt[0]->label("Check");
+    _butt[0]->callback(onelab_cb, (void*)"check");
+  }
+  else{
+    _butt[0]->deactivate();
+  }
+
+  if(butt1 == "compute"){
+    _butt[1]->activate();
+    _butt[1]->label("Run");
+    _butt[1]->callback(onelab_cb, (void*)"compute");
+    for(int i = 0; i < _gear->menu()->size(); i++)
+      ((Fl_Menu_Item*)_gear->menu())[i].activate();
+  }
+  else if(butt1 == "stop"){
+    _butt[1]->activate();
+    _butt[1]->label("Stop");
+    _butt[1]->callback(onelab_cb, (void*)"stop");
+    for(int i = 0; i < _gear->menu()->size(); i++)
+      if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
+        ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+  }
+  else if(butt1 == "kill"){
+    _butt[1]->activate();
+    _butt[1]->label("Kill");
+    _butt[1]->callback(onelab_cb, (void*)"kill");
+    for(int i = 0; i < _gear->menu()->size(); i++)
+      if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
+        ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+  }
+  else{
+    _butt[1]->deactivate();
+    for(int i = 0; i < _gear->menu()->size(); i++)
+      if(i < _gearOptionsStart - 1 || i > _gearOptionsEnd - 2)
+        ((Fl_Menu_Item*)_gear->menu())[i].deactivate();
+  }
+}
+
 void onelabGroup::updateGearMenu()
 {
-  return; // TODO
   Fl_Menu_Item* menu = (Fl_Menu_Item*)_gear->menu();
   int values[8] = {CTX::instance()->solver.autoSaveDatabase,
                    CTX::instance()->solver.autoArchiveOutputFiles,
@@ -252,6 +403,13 @@ void onelabGroup::updateGearMenu()
     else
       menu[idx].clear();
   }
+}
+
+void onelabGroup::addLastPostProcessing()
+{
+  _tree->sortorder(FL_TREE_SORT_NONE);
+  _addViewMenu(PView::list.size()-1);
+  _tree->sortorder(FL_TREE_SORT_ASCENDING);
 }
 
 void onelabGroup::rebuildSolverList()
@@ -282,9 +440,42 @@ void onelabGroup::rebuildSolverList()
     }
   }
 
-  //TODO setButtonVisibility();
+  setButtonVisibility();
   rebuildTree(true);
 }
+
+void onelabGroup::addSolver(const std::string &name, const std::string &executable,
+                            const std::string &remoteLogin, int index)
+{
+  //onelab::server::citer it = onelab::server::instance()->findClient(name);
+  //if(it != onelab::server::instance()->lastClient()){
+  //  if(needToChooseExe(executable))
+  //    onelab_choose_executable_cb(0, (void *)it->second);
+  //  return; // solver already exists
+  //}
+
+  //// delete the other non-local clients so we keep only the new one
+  //std::vector<onelab::client*> networkClients;
+  //for(onelab::server::citer it = onelab::server::instance()->firstClient();
+  //    it != onelab::server::instance()->lastClient(); it++)
+  //  if(it->second->isNetworkClient())
+  //    networkClients.push_back(it->second);
+  //for(unsigned int i = 0; i < networkClients.size(); i++){
+  //  delete networkClients[i];
+  //}
+
+  //// create and register the new client
+  //onelab::localNetworkClient *c = new gmshLocalNetworkClient(name, executable,
+  //                                                           remoteLogin);
+  //c->setIndex(index);
+  //opt_solver_name(index, GMSH_SET, name);
+  //if(needToChooseExe(executable))
+  //  onelab_choose_executable_cb(0, (void *)c);
+  //opt_solver_remote_login(index, GMSH_SET, remoteLogin);
+
+  FlGui::instance()->onelab->rebuildSolverList();
+}
+
 bool onelabGroup::useServer() {return !server_ip->readonly();}
 void onelabGroup::useServer(bool use=false)
 {
@@ -295,11 +486,13 @@ void onelabGroup::useServer(bool use=false)
 void onelabGroup::addParameter(onelab::parameter &p)
 {
   if(!p.getVisible() || CTX::instance()->solver.showInvisibleParameters) return;
+
   bool highlight = false;
   Fl_Color c;
   if(getFlColor(p.getAttribute("Highlight"), c)) highlight = true;
   Fl_Tree_Item *n = _tree->add(p.getName().c_str());
   n->labelsize(FL_NORMAL_SIZE + 4);
+  _tree->begin();
   int ww = _baseWidth - (n->depth() + 1) * _indent;
   ww *= _widgetLabelRatio; // FIXME CHANGE THIS
   int hh = n->labelsize() + 4;
@@ -314,6 +507,7 @@ void onelabGroup::addParameter(onelab::parameter &p)
   widget->copy_tooltip(help.c_str());
   n->widget(grp);
   _tree->end();
+  if(p.getAttribute("Closed") == "1" && p.getPath().size()) _tree->close(p.getPath().c_str(), 0);
   _tree->redraw();
 }
 Fl_Widget *onelabGroup::_addParameterWidget(onelab::parameter &p, int ww, int hh, Fl_Tree_Item *n, bool highlight, Fl_Color c)
@@ -802,7 +996,7 @@ void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback, void 
 void onelabGroup::_addSolverMenu(int num)
 {
   std::ostringstream path;
-  path << "0Modules/Solver/Solver" << num;
+  path << "0Solver/View" << num;
   Fl_Tree_Item *n = _tree->add(path.str().c_str());
   int ww = _baseWidth - (n->depth() + 1) * _indent;
   int hh = n->labelsize() + 4;
@@ -819,7 +1013,7 @@ void onelabGroup::_addSolverMenu(int num)
 void onelabGroup::_addViewMenu(int num)
 {
   std::ostringstream path;
-  path << "0Modules/Post-processing/View" << num;
+  path << "0Post-processing/View" << num;
   Fl_Tree_Item *n = _tree->add(path.str().c_str());
   int ww = _baseWidth - (n->depth() + 1) * _indent;
   int hh = n->labelsize() + 4;
@@ -836,7 +1030,7 @@ void onelabGroup::_addViewMenu(int num)
 viewButton *onelabGroup::getViewButton(int num)
 {
   char tmp[256];
-  sprintf(tmp, "0Modules/Post-processing/View%d", num);
+  sprintf(tmp, "0Post-processing/View%d", num);
   Fl_Tree_Item *n = _tree->find_item(tmp);
   if(n){
     Fl_Group *grp = (Fl_Group*)n->widget();

@@ -2,7 +2,7 @@
 #define _ONELAB_PROTOCOL_H
 
 #define ERROR_ONELAB_VERSION 20
-#define ONELAB_VERSION 0x01
+#define ONELAB_VERSION 0x02
 
 #include <vector>
 

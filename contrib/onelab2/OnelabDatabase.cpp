@@ -19,7 +19,6 @@ DWORD WINAPI OnelabDatabase_listen(LPVOID arg)
     switch(msg.msgType()) {
       case OnelabProtocol::OnelabStop:
         std::clog << "\033[0;35m" << "Client is going to stop" << "\033[0;0m" << std::endl;
-        OnelabDatabase::instance()->networkClientHaveToStop(true);
         return NULL;
       case OnelabProtocol::OnelabMessage:
         if(msg.attrs.size()==1 && msg.attrs[0]->getAttributeType() == OnelabAttrMessage::attributeType()) {

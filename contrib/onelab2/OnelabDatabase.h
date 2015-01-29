@@ -32,13 +32,12 @@ private:
 #else
   HANDLER _listenThread, _serverThread;
 #endif
-  bool _haveToStop;
-  std::string _action;
   GmshNetworkClient *_client;
   GmshLocalClient *_localGUI, *_localGmsh;
   void _clear() {
 #ifndef WIN32
     // TODO send message to thread to exit the thread
+    // pthread_cancel
     //pthread_kill(_serverThread, 9);
     //if(_client) pthread_kill(_listenThread, 9);
 #else
@@ -56,7 +55,6 @@ private:
 public:
   OnelabDatabase() {
     _localGUI = NULL; _client = NULL; _localGmsh = NULL;
-    _action = ""; _haveToStop = false;
   }
   static OnelabDatabase *instance() {
     if(!_instance) _instance = new OnelabDatabase;
@@ -111,10 +109,6 @@ public:
     return NULL;
   }
   GmshNetworkClient *getNetworkClient(){return _client;}
-  void networkClientHaveToStop(bool haveToStop) {_haveToStop = haveToStop;}
-  bool networkClientHaveToStop() {return _haveToStop;}
-  void haveToDo(const std::string action) {_action = action;}
-  std::string &actionToDo() {return _action;}
   void finalize();
   int listen(OnelabProtocol &msg) {
     if(_client) return _client->recvfrom(msg);

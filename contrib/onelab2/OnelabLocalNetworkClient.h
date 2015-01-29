@@ -19,6 +19,7 @@ private:
 //#endif
 	IPv4 _ip;
 	std::string _name;
+  pthread_mutex_t _mutex_wait = PTHREAD_MUTEX_INITIALIZER;
 public:
 //#ifdef HAVE_UDT
 	OnelabLocalNetworkClient(std::string name, UDTSOCKET fd, unsigned int ip, unsigned short port, bool UDT);
@@ -36,6 +37,5 @@ public:
 	unsigned short getPort() {return _ip.port;}
 
   void run(std::string action);
-  void stop() {} // TODO
 };
 #endif
