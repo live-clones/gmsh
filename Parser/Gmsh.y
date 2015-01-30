@@ -3801,7 +3801,7 @@ Constraints :
             if(gr)
               gr->meshAttributes.QuadTri = TRANSFINITE_QUADTRI_1;
             else
-              yymsg(1, "Unknown region %d", (int)d);
+              yymsg(1, "Unknown volume %d", (int)d);
           }
         }
         List_Delete($2);
@@ -3994,9 +3994,14 @@ Constraints :
         GFace *gf = GModel::current()->getFaceByTag((int)$8);
         if(gf){
           for(int i = 0; i < List_Nbr($3); i++){
-            int iPoint;
-            List_Read($3, i, &iPoint);
+            double d;
+            List_Read($3, i, &d);
+            int iPoint = (int)d;
             GVertex *gv = GModel::current()->getVertexByTag(iPoint);
+            if(!gv){ // sync model in case the embedded point is a .geo point
+              GModel::current()->importGEOInternals();
+              gv = GModel::current()->getVertexByTag(iPoint);
+            }
             if(gv)
               gf->addEmbeddedVertex(gv);
             else
@@ -4017,9 +4022,14 @@ Constraints :
         GFace *gf = GModel::current()->getFaceByTag((int)$8);
         if(gf){
           for(int i = 0; i < List_Nbr($3); i++){
-            int iCurve;
-            List_Read($3, i, &iCurve);
+            double d;
+            List_Read($3, i, &d);
+            int iCurve = (int)d;
             GEdge *ge = GModel::current()->getEdgeByTag(iCurve);
+            if(!ge){ // sync model in case the embedded line is a .geo line
+              GModel::current()->importGEOInternals();
+              ge = GModel::current()->getEdgeByTag(iCurve);
+            }
             if(ge)
               gf->addEmbeddedEdge(ge);
             else
@@ -4048,9 +4058,14 @@ Constraints :
         GRegion *gr = GModel::current()->getRegionByTag((int)$8);
         if(gr){
           for(int i = 0; i < List_Nbr($3); i++){
-            int iSurface;
-            List_Read($3, i, &iSurface);
+            double d;
+            List_Read($3, i, &d);
+            int iSurface = (int)d;
             GFace *gf = GModel::current()->getFaceByTag(iSurface);
+            if(!gf){ // sync model in case the embedded face is a .geo face
+              GModel::current()->importGEOInternals();
+              gf = GModel::current()->getFaceByTag(iSurface);
+            }
             if(gf)
               gr->addEmbeddedFace(gf);
             else
@@ -4058,7 +4073,7 @@ Constraints :
           }
         }
         else
-          yymsg(0, "Unknown region %d", (int)$8);
+          yymsg(0, "Unknown volume %d", (int)$8);
       }
     }
   | tReverse tSurface ListOfDoubleOrAll tEND
