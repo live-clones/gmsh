@@ -1167,8 +1167,8 @@ void OCCFactory::setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTransla
          && IsEqualG(BarycenterFace1.X()+FaceTranslationVector[0],BarycenterFace2.X())
          && IsEqualG(BarycenterFace1.Y()+FaceTranslationVector[1],BarycenterFace2.Y())
          && IsEqualG(BarycenterFace1.Z()+FaceTranslationVector[2],BarycenterFace2.Z())){
-        numFaceMaster = gm->getOCCInternals()->getGTagOfOCCFaceByNativePtr(gm,aFace1);
-        numFaceSlave  = gm->getOCCInternals()->getGTagOfOCCFaceByNativePtr(gm,aFace2);
+        numFaceMaster = gm->getOCCInternals()->getOCCFaceByNativePtr(gm,aFace1)->tag();
+        numFaceSlave  = gm->getOCCInternals()->getOCCFaceByNativePtr(gm,aFace2)->tag();
         //Msg::Info("Face %d (slave) is most likely Face %d (master) translated by (%.2e,%.2e,%.2e)!",
         //           numFaceSlave,numFaceMaster,FaceTranslationVector[0],FaceTranslationVector[1],
         //           FaceTranslationVector[2]);
@@ -1181,7 +1181,7 @@ void OCCFactory::setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTransla
         for (TopExp_Explorer aEdgeExplorer1(aFace1,TopAbs_EDGE); aEdgeExplorer1.More();
              aEdgeExplorer1.Next()) {
           TopoDS_Edge aEdge1 = TopoDS::Edge(aEdgeExplorer1.Current());
-          int numEdgeMaster  = gm->getOCCInternals()->getGTagOfOCCEdgeByNativePtr(gm,aEdge1);
+          int numEdgeMaster  = gm->getOCCInternals()->getOCCEdgeByNativePtr(gm,aEdge1)->tag();
           EdgeListMaster[i1] = numEdgeMaster;
           //i2=0;
           for (TopExp_Explorer aEdgeExplorer2(aFace2,TopAbs_EDGE); aEdgeExplorer2.More();
@@ -1199,7 +1199,7 @@ void OCCFactory::setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTransla
                && IsEqualG(BarycenterEdge1.X()+FaceTranslationVector[0],BarycenterEdge2.X())
                && IsEqualG(BarycenterEdge1.Y()+FaceTranslationVector[1],BarycenterEdge2.Y())
                && IsEqualG(BarycenterEdge1.Z()+FaceTranslationVector[2],BarycenterEdge2.Z())){
-              int numEdgeSlave   = gm->getOCCInternals()->getGTagOfOCCEdgeByNativePtr(gm,aEdge2);
+              int numEdgeSlave   = gm->getOCCInternals()->getOCCEdgeByNativePtr(gm,aEdge2)->tag();
               EdgeListSlave[i1]  = numEdgeSlave;
             }
           }

@@ -242,7 +242,7 @@ void OCC_Internals::healGeometry(double tolerance, bool fixdegenerated,
                                  bool fixsmalledges, bool fixspotstripfaces,
                                  bool sewfaces, bool makesolids, bool connect)
 {
-  
+
   if(!fixdegenerated && !fixsmalledges && !fixspotstripfaces &&
      !sewfaces && !makesolids && !connect) return;
 
@@ -737,35 +737,6 @@ GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region)
   //  return getOCCRegionByNativePtr(model, region);
 }
 
-/* I needed getGTagOfOCC*ByNativePtr whithin setPhysicalNumToEntitiesInBox */
-int OCC_Internals::getGTagOfOCCVertexByNativePtr(GModel *model, TopoDS_Vertex toFind)
-{
-  if(gvNumCache.IsBound(toFind))
-    return (int)gvNumCache.Find(toFind);
-  return 0;
-}
-
-int OCC_Internals::getGTagOfOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind)
-{
-  if(gfNumCache.IsBound(toFind))
-    return (int)gfNumCache.Find(toFind);
-  return 0;
-}
-
-int OCC_Internals::getGTagOfOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind)
-{
-  if(geNumCache.IsBound(toFind))
-    return (int)geNumCache.Find(toFind);
-  return 0;
-}
-
-int OCC_Internals::getGTagOfOCCSolidByNativePtr(GModel *model, TopoDS_Solid toFind)
-{
-  if(grNumCache.IsBound(toFind))
-    return (int)grNumCache.Find(toFind);
-  return 0;
-}
-
 void OCC_Internals::buildGModel(GModel *model)
 {
   // building geom vertices
@@ -1080,7 +1051,7 @@ int GModel::readOCCIGES(const std::string &fn)
 int GModel::writeOCCBREP(const std::string &fn)
 {
   _occ_internals->buildShapeFromGModel(this);
-  
+
   if(!_occ_internals){
     Msg::Error("No OpenCASCADE model found");
     return 0;
