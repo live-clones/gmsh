@@ -4518,7 +4518,7 @@ double opt_geometry_occ_sew_faces(OPT_ARGS_NUM)
 double opt_geometry_occ_connect_faces(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->geom.occConnectFaces = val ? 1 : 0;
+    CTX::instance()->geom.occConnectFaces = (int)val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
     FlGui::instance()->options->geo.butt[15]->value

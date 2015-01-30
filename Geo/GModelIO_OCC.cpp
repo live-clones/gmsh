@@ -240,7 +240,7 @@ void OCC_Internals::addShapeToLists(TopoDS_Shape _shape)
 
 void OCC_Internals::healGeometry(double tolerance, bool fixdegenerated,
                                  bool fixsmalledges, bool fixspotstripfaces,
-                                 bool sewfaces, bool makesolids, bool connect)
+                                 bool sewfaces, bool makesolids, int connect)
 {
 
   if(!fixdegenerated && !fixsmalledges && !fixspotstripfaces &&
@@ -528,8 +528,8 @@ void OCC_Internals::healGeometry(double tolerance, bool fixdegenerated,
     }
   }
 
-  if(connect){
 #if defined(HAVE_SALOME)
+  if(connect == 2){
     Msg::Info("- cutting and connecting faces with Salome's Partition_Spliter");
     TopExp_Explorer e2;
     Partition_Spliter ps;
@@ -542,14 +542,16 @@ void OCC_Internals::healGeometry(double tolerance, bool fixdegenerated,
     catch(Standard_Failure &err){
       Msg::Error("%s", err.GetMessageString());
     }
-#else
+  }
+  else
+#endif
+  if(connect){
     Msg::Info("- cutting and connecting faces with OCC_Connect");
     OCC_Connect connect(1);
     for(TopExp_Explorer p(shape, TopAbs_SOLID); p.More(); p.Next())
       connect.Add(p.Current());
     connect.Connect();
     shape = connect;
-#endif
   }
 
   double newsurfacecont = 0;
