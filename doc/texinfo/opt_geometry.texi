@@ -125,7 +125,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCConnectFaces
-Cut and connect faces in STEP, IGES and BRep models@*
+Cut and connect faces in STEP, IGES and BRep models (0=no, 1=internal, 2=Salome)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

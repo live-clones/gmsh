@@ -29,7 +29,7 @@ Default value: @code{1}
 @item Draw PView
 Default value: @code{1}
 @item Hidding threshold
-Default value: @code{0.1}
+Default value: @code{10}
 @item Dimension of elements
 Default value: @code{-1}
 @item Recompute bounds
@@ -1228,13 +1228,15 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Triangulate)
-Plugin(Triangulate) triangulates the points in the view `View', assuming that all the points belong to a surface that can be projected one-to-one onto a plane.@*
+Plugin(Triangulate) triangulates the points in the view `View', assuming that all the points belong to a surface that can be projected one-to-one onto a plane. Algorithm selects the old (0) or new (1) meshing algorithm.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
 Plugin(Triangulate) creates one new view.
 Numeric options:
 @table @code
+@item Algorithm
+Default value: @code{0}
 @item View
 Default value: @code{-1}
 @end table

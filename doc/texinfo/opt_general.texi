@@ -609,6 +609,11 @@ Use high-resolution OpenGL graphics (e.g. for Macs with retina displays)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.HighResolutionPointSizeFactor
+Point size factor when using high-resolution OpenGL graphics@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.InitialModule
 Module launched on startup (0=automatic, 1=geometry, 2=mesh, 3=solver, 4=post-processing) @*
 Default value: @code{0}@*
