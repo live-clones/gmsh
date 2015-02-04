@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <queue>
 
 #include "onelab.h"
 #include "GmshSocket.h"
@@ -22,18 +23,21 @@ private:
 	IPv4 _ip;
 	std::vector<OnelabLocalNetworkClient> _clients;
   std::vector<OnelabLocalClient *> _localClients;
+#ifndef WIN32
+  pthread_t _runningThread;
+  pthread_mutex_t _mutex_todo;
+#else
+  HANDLER _runningThread;
+#endif
+  bool _running;
+  std::queue<std::string> _todoClient;
+  std::queue<std::string> _todoAction;
 	onelab::parameterSpace _parameterSpace;
 	Socket _fds;
 #ifdef HAVE_UDT
 	UDTSOCKET _fdu;
 	int _eid;
 	void sendto(std::string client, UInt8 *buff, UInt32 len);
-#endif
-  bool _running;
-#ifndef WIN32
-  pthread_t _clientThread;
-#else
-  HANDLER _clientThread;
 #endif
 public:
 	OnelabServer(UInt16 port);
@@ -150,5 +154,6 @@ public:
     _parameterSpace.setChanged(changed, client);
   }
   void performAction(const std::string action, const std::string client="", bool blocking=false);
+  bool performNextAction();
 };
 #endif

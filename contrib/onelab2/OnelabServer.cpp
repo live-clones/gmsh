@@ -22,9 +22,9 @@
 #include "Options.h"
 
 #ifndef WIN32
-void *runClientsBlocking(void *param);
+void *OnelabServer_run(void *param);
 #else
-DWORD WINAPI listenOnClients(LPVOID param);
+DWORD WINAPI OnelabServer_run(LPVOID param);
 #endif
 
 OnelabServer::OnelabServer(UInt32 iface, UInt16 port)
@@ -171,30 +171,6 @@ OnelabLocalClient *OnelabServer::getLocalClient(const std::string &name)
 
 }
 
-void OnelabServer::waitForClient(const std::string &name)
-{
-  std::cout << "======= check when cli " << name << "end:" << std::cout;
-  OnelabLocalNetworkClient *cli = getClient(name);
-  OnelabLocalClient *lcli = getLocalClient(name);
-  if(lcli != NULL) {
-    // TODO
-    return;
-  }
-  if(cli == NULL) { // wait for the client to connect
-    sleep(1);
-    cli = getClient(name);
-  }
-  if(cli != NULL) { // wait for the client to stop
-    std::cout << "======= cli is remote wait with select()" << std::cout;
-    fd_set errorfds;
-    FD_ZERO(&errorfds);
-    FD_SET(cli->getSSocket(), &errorfds);
-    select(cli->getSSocket()+1, NULL, NULL, &errorfds, NULL);
-    // TODO wait until the client close
-    std::cout << "======= cli " << cli->getName() << "just ended ?" << std::cout;
-  }
-}
-
 void OnelabServer::removeClient(OnelabLocalNetworkClient *client)
 {
   for(std::vector<OnelabLocalNetworkClient>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
@@ -205,44 +181,60 @@ void OnelabServer::removeClient(OnelabLocalNetworkClient *client)
   }
 }
 
+bool OnelabServer::performNextAction()
+{
+  pthread_mutex_lock(&_mutex_todo);
+  if(_todoClient.empty() || _todoAction.empty()) return false;
+
+  std::string client = _todoClient.front(),
+    action = _todoAction.front();
+  pthread_mutex_unlock(&_mutex_todo);
+  performAction(action, client, true);
+  pthread_mutex_lock(&_mutex_todo);
+  _todoAction.pop();
+  _todoClient.pop();
+  pthread_mutex_unlock(&_mutex_todo);
+
+  return true;
+}
 void OnelabServer::performAction(const std::string action, const std::string client, bool blocking)
 {
-  std::cout << "perform action (" << action << ") on client (" << client << ") and " << (blocking?"block":"do not block") << std::endl;
-  if(client.size()) {
-    onelabUtils::guessModelName(client);
-    OnelabLocalNetworkClient *cli = getClient(client);
-    OnelabLocalClient *localcli = getLocalClient(client);
-    if(action.size() > 0) {
-      std::cout << "set " << client << "/Action to" << action << std::endl;
-      onelab::string o(client + "/Action", action);
-      o.setVisible(false);
-      o.setNeverChanged(true);
-      set(o, client);
+  if(blocking) {
+    if(client.size()) {
+      onelabUtils::guessModelName(client);
+      OnelabLocalNetworkClient *cli = getClient(client);
+      OnelabLocalClient *localcli = getLocalClient(client);
+      if(action.size() > 0) {
+        std::cout << "set " << client << "/Action to" << action << std::endl;
+        onelab::string o(client + "/Action", action);
+        o.setVisible(false);
+        o.setNeverChanged(true);
+        set(o, client);
+      }
+      if(cli != NULL){ // Gmsh is used as a server and the client is remote
+        std::cout << action << " on " << client << "(client is remote)" << std::endl;
+        cli->run(action); // block ,use another thread ?
+      }
+      else if(localcli != NULL){ // client is local (in the same memory space than this server)
+        std::cout << action << " on " << client << "(client is local)" << std::endl;
+        localcli->run(action); // block, use another thread ?
+      }
+      else { // client does not exist (Gmsh is used as a server), launch the client
+        std::cout << action << " on " << client << "(launch a new remote client)" << std::endl;
+        launchClient(client, blocking);
+      }
     }
-    if(cli != NULL){ // Gmsh is used as a server and the client is remote
-      std::cout << action << " on " << client << "(client is remote)" << std::endl;
-      cli->run(action); // block ,use another thread ?
-    }
-    else if(localcli != NULL){ // client is local (in the same memory space than this server)
-      std::cout << action << " on " << client << "(client is local)" << std::endl;
-      localcli->run(action); // block, use another thread ?
-    }
-    else { // client does not exist (Gmsh is used as a server), launch the client
-      std::cout << action << " on " << client << "(launch a new remote client)" << std::endl;
-      launchClient(client, blocking);
-    }
-  }
-  else {
-    // run all non Gmsh clients TODO; exclude GUI ?
-    for(std::vector<OnelabLocalNetworkClient>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
-      if((*it).getName() == "Gmsh") continue;
-      std::cout << action << " on " << (*it).getName() << "(remote)" << std::endl;
-      onelab::string o((*it).getName() + "/Action", action);
-      o.setVisible(false);
-      o.setNeverChanged(true);
-      set(o);
-      (*it).run(action);
-    }
+    else {
+      // run all non Gmsh clients TODO; exclude GUI ?
+      for(std::vector<OnelabLocalNetworkClient>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+        if((*it).getName() == "Gmsh") continue;
+        std::cout << action << " on " << (*it).getName() << "(remote)" << std::endl;
+        onelab::string o((*it).getName() + "/Action", action);
+        o.setVisible(false);
+        o.setNeverChanged(true);
+        set(o, (*it).getName());
+        (*it).run(action);
+      }
 
     for(std::vector<OnelabLocalClient *>::iterator it = _localClients.begin(); it != _localClients.end(); ++it) {
       if((*it)->getName() == "Gmsh") continue;
@@ -252,25 +244,35 @@ void OnelabServer::performAction(const std::string action, const std::string cli
       set(o);
       std::cout << action << " on " << (*it)->getName() << "(local)" << std::endl;
       (*it)->run(action);
+      }
     }
   }
-  std::cout << "end perform action (" << action << ") on client (" << client << ") and " << (blocking?"block":"do not block") << std::endl;
+  else {
+    if(_running) {
+      pthread_mutex_lock(&_mutex_todo);
+      _todoClient.push(client);
+      _todoAction.push(action);
+      pthread_mutex_unlock(&_mutex_todo);
+    }
+    else {
+      _mutex_todo = PTHREAD_MUTEX_INITIALIZER;
+      _todoClient.push(client);
+      _todoAction.push(action);
+      pthread_create(&_runningThread, NULL, OnelabServer_run, NULL);
+    }
+  }
 }
 
 #ifndef WIN32
-void *runClientsBlocking(void *param)
+void *OnelabServer_run(void *param)
 #else
-DWORD WINAPI listenOnClients(LPVOID param)
+DWORD WINAPI OnelabServer_run(LPVOID param)
 #endif
 {
-  if(OnelabServer::instance()->isRunning()) return NULL;
-
-  std::cout << "start" << std::endl;
   OnelabServer::instance()->running(true);
 
-  // TODO
+  while(OnelabServer::instance()->performNextAction());
 
-  std::cout << "end" << std::endl;
   OnelabServer::instance()->running(false);
 }
 
@@ -291,10 +293,178 @@ void *listenOnClients(void *param)
   while(UDT::ERROR != UDT::epoll_wait(eid, &fdus, NULL, -1, &fdss, NULL)) {
     /*for(std::set<UDTSOCKET>::iterator it = fdus.begin(); it != fdus.end(); ++it) {
       OnelabLocalNetworkClient *cli = OnelabServer::instance()->getClient(*it);
-      if(cli == NULL) { // Client is not in the list (it muste be a Start message)
+      if(cli == NULL) { // Client is not in the list (it must be a Start message)
         IPv4 ip;
-        recvlen = udt_socket_recv(*it, buff, 1024);
-    }TODO*/
+        recvlen = udt_socket_recv(*it, buff, 4);
+        if(recvlen != 4) {
+          // invalid message header
+          UDT::epoll_remove_usock(eid, *it);
+          UDT::close(*it);
+          continue;
+        }
+        int msglen = msg.parseHeader(buff, recvlen);
+        if(msglen > 1024) {
+          // buffer size is too small
+          UDT::epoll_remove_ssock(eid, *it);
+          UDT::close(*it);
+          continue;
+        }
+        recvlen = udt_socket_recv(*it, buff, msglen);
+        msg.parseMessage(buff, recvlen);
+        if(msg.msgType() == OnelabProtocol::OnelabStart && msg.attrs.size() > 0 && msg.attrs[0]->getAttributeType() == OnelabAttr::Start) {
+          std::string name = std::string(((OnelabAttrStart *)msg.attrs[0])->name());
+          if(OnelabServer::instance()->getClient(name) != NULL) {
+            std::cout << "A client exist with this name !" << std::endl;
+            rep.msgType(OnelabProtocol::OnelabMessage);
+            rep.attrs.push_back(new OnelabAttrMessage("A client exist with this name !", OnelabAttrMessage::Fatal));
+            recvlen = rep.encodeMsg(buff, 1024);
+            //TODO ip4_socket_send(*it, buff, recvlen);
+            UDT::epoll_remove_usock(eid, *it);
+            UDT::close(*it);
+            continue;
+          }
+          // Add a new remote client
+          OnelabServer::instance()->addClient(name, *it, ip.address, ip.port);
+          std::clog << "\033[0;31m" << "Add a new (UDT) client: " << name <<  "\033[0m" << std::endl;
+          OnelabProtocol rep(OnelabProtocol::OnelabStart);
+          recvlen = rep.encodeMsg(buff, 1024);
+          cli = OnelabServer::instance()->getClient(*it);
+          cli->sendto(buff, recvlen);
+          OnelabServer::instance()->sendAllParameter(cli);
+          continue;
+        }
+        else {
+          // cli shoud send a name first
+          UDT::epoll_remove_usock(eid, *it);
+          UDT::close(*it);
+          continue;
+        }
+      }
+      else {
+        try {
+          recvlen = cli->recvmsg(msg);
+        }
+        catch(int &e) {
+          if(UDT::getlasterror().getErrorCode() == 2001 || e == 50) { // ECONNLOST
+            std::cout << "\033[0;31m" << "Connection with (UDT) client \"" << cli->getName() << "\" was broken, removing the client." << "\033[0m" << std::endl; // DEBUG
+            UDT::epoll_remove_usock(eid, *it);
+            OnelabServer::instance()->removeClient(cli);
+            UDT::close(*it);
+            }
+        }
+        switch (msg.msgType()) {
+        case OnelabProtocol::OnelabStop:
+          std::cout << "\033[0;31m" << "Client \"" << cli->getName() << "\" is going to stop" << "\033[0m" << std::endl; // DEBUG
+          rep.msgType(OnelabProtocol::OnelabStop);
+          recvlen = rep.encodeMsg(buff, 1024);
+          if(ip4_socket_connected(cli->getUSocket())) // FIXME cli can close socket before send
+            cli->sendto(buff, recvlen);
+          UDT::epoll_remove_usock(eid, *it);
+          OnelabServer::instance()->removeClient(cli);
+          UDT::close(*it);
+          break;
+        case OnelabProtocol::OnelabMessage:
+          if(msg.attrs.size()==1 && msg.attrs[0]->getAttributeType() == OnelabAttrMessage::attributeType()) {
+            OnelabLocalClient *localgui = OnelabServer::instance()->getLocalClient("localGUI");
+            OnelabLocalNetworkClient *gui = OnelabServer::instance()->getClient("GUI");
+            if(gui) {
+              recvlen = msg.encodeMsg(buff, 1024);
+              gui->sendto(buff, recvlen);
+            }
+            if(localgui) localgui->onMessage(cli->getName(), ((OnelabAttrMessage *)msg.attrs[0])->getMessage(), ((OnelabAttrMessage *)msg.attrs[0])->getLevel());
+          }
+          break;
+        case OnelabProtocol::OnelabRequest:
+          rep.msgType(OnelabProtocol::OnelabResponse);
+          if(msg.attrs.size() == 0) OnelabServer::instance()->sendAllParameter(cli);
+          else for(std::vector<OnelabAttr *>::iterator it = msg.attrs.begin() ; it != msg.attrs.end(); ++it) {
+              if((*it)->getAttributeType() == OnelabAttr::Parameter) {
+                OnelabAttrParameterQuery *attr = (OnelabAttrParameterQuery *)*it;
+                std::cout << "\033[0;31m" << "Client \"" << cli->getName() << " ask for parameter \"" << attr->getName() << " (type=" << (int)attr->paramType() << ")\"\033[0m" << std::endl; // DEBUG
+                onelab::parameter *p;
+                switch(attr->paramType()) {
+                case OnelabAttr::Number:
+                  OnelabServer::instance()->getPtr((onelab::number **)&p, attr->getName(), cli->getName());
+                  break;
+                case OnelabAttr::String:
+                  OnelabServer::instance()->getPtr((onelab::string **)&p, attr->getName(), cli->getName());
+                  break;
+                case OnelabAttr::Region:
+                  OnelabServer::instance()->getPtr((onelab::region **)&p, attr->getName(), cli->getName());
+                  break;
+                case OnelabAttr::Function:
+                  OnelabServer::instance()->getPtr((onelab::function **)&p, attr->getName(), cli->getName());
+                  break;
+                }
+                if(p != NULL) rep.attrs.push_back(p);
+                else rep.attrs.push_back(new OnelabAttrMessage("Unable to find the request parameter.", OnelabAttrMessage::Error));
+              }
+              // else ??
+            }
+          recvlen = rep.encodeMsg(buff, 1024);
+          cli->sendto(buff, recvlen);
+          break;
+        case OnelabProtocol::OnelabUpdate:
+          for(std::vector<OnelabAttr *>::iterator it = msg.attrs.begin() ; it != msg.attrs.end(); ++it) {
+            if((*it)->getAttributeType() >= OnelabAttr::Number && (*it)->getAttributeType() <= OnelabAttr::Function) {
+              onelab::parameter *attr = (onelab::parameter *)*it;
+              std::cout << "\033[0;31m" << "Client \"" << cli->getName() << " update parameter \"" << attr->getName() << "\"\033[0m" << std::endl; // DEBUG
+              onelab::parameter *parameter = NULL;
+              switch(attr->getAttributeType()) {
+                case OnelabAttr::Number:
+                  OnelabServer::instance()->set(*(onelab::number *)attr, cli->getName());
+                  OnelabServer::instance()->getPtr((onelab::number **)&parameter, attr->getName(), cli->getName());
+                  break;
+                case OnelabAttr::String:
+                  OnelabServer::instance()->set(*(onelab::string *)attr, cli->getName());
+                  OnelabServer::instance()->getPtr((onelab::string **)&parameter, attr->getName(), cli->getName());
+                  if(((onelab::string *)parameter)->getName() == "Gmsh/Action") {
+                    OnelabLocalClient *localgui = OnelabServer::instance()->getLocalClient("localGUI");
+                    if(((onelab::string *)parameter)->getValue() == "refresh") localgui->refresh();
+                  }
+                  break;
+                case OnelabAttr::Region:
+                  OnelabServer::instance()->set(*(onelab::region *)attr, cli->getName());
+                  OnelabServer::instance()->getPtr((onelab::region **)&parameter, attr->getName(), cli->getName());
+                  break;
+                case OnelabAttr::Function:
+                  OnelabServer::instance()->set(*(onelab::function *)attr, cli->getName());
+                  OnelabServer::instance()->getPtr((onelab::function **)&parameter, attr->getName(), cli->getName());
+                  break;
+              }
+            }
+            else
+              switch((*it)->getAttributeType()) {
+                case 0x0B:
+                {
+                  // TODO
+                  break;
+                }
+                case 0x0C:
+                {
+                  // TODO
+                  break;
+                }
+                case 0x0D:
+                {
+                  // merge file only if the GUI and the server are local
+                  OnelabLocalClient *gui = OnelabServer::instance()->getLocalClient("localGUI");
+                  if(gui) gui->mergeFile(((OnelabAttrMergeFile *)*it)->getFilename());
+                }
+              }
+            }
+            break;
+          case OnelabProtocol::OnelabAction:
+          {
+            if(msg.attrs.size()==1 && msg.attrs[0]->getAttributeType() == OnelabAttrAction::attributeType()) {
+              std::clog << "\033[0;31m" << "Client " << cli->getName() << " ask " << ((OnelabAttrAction *)msg.attrs[0])->getClient() << " to " << ((OnelabAttrAction *)msg.attrs[0])->getAction() <<  "\033[0m" << std::endl;
+              OnelabServer::instance()->performAction(((OnelabAttrAction *)msg.attrs[0])->getAction(), ((OnelabAttrAction *)msg.attrs[0])->getClient());
+            }
+          }
+          break;
+        }
+      }
+    }*/
 
     for(std::set<Socket>::iterator it = fdss.begin(); it != fdss.end(); ++it) {
 
@@ -326,9 +496,7 @@ void *listenOnClients(void *param)
             rep.msgType(OnelabProtocol::OnelabMessage);
             rep.attrs.push_back(new OnelabAttrMessage("A client exist with this name !", OnelabAttrMessage::Fatal));
             recvlen = rep.encodeMsg(buff, 1024);
-            //udt_socket_send(*it, buff, recvlen);
-            //TODO ip4_socket_send(*it, buff, recvlen);
-            //UDT::epoll_remove_usock(eid, *it);
+            ip4_socket_send(*it, buff, recvlen);
             UDT::epoll_remove_ssock(eid, *it);
             UDT::close(*it);
             continue;
@@ -345,7 +513,6 @@ void *listenOnClients(void *param)
         }
         else {
           // cli shoud send a name first
-          //UDT::epoll_remove_usock(eid, *it);
           UDT::epoll_remove_ssock(eid, *it);
           UDT::close(*it);
           continue;
@@ -362,13 +529,6 @@ void *listenOnClients(void *param)
             OnelabServer::instance()->removeClient(cli);
             UDT::close(*it);
           }
-          // TODO for UDT
-          /*if(UDT::getlasterror().getErrorCode() == 2001 || e == 50) { // ECONNLOST
-            std::cout << "\033[0;31m" << "Connection with client \"" << cli->getName() << "\" was broken, removing the client." << "\033[0m" << std::endl; // DEBUG
-            UDT::epoll_remove_usock(eid, *it);
-            OnelabServer::instance()->removeClient(cli);
-            UDT::close(*it);
-            }*/
           std::cerr << "Error while recv message." << std::endl;
           continue;
         }
@@ -379,7 +539,6 @@ void *listenOnClients(void *param)
           UDT::close(*it);
           continue;
         }
-        //std::clog << "recv " << recvlen << " bytes on client " << cli->getName() << std::endl;
         switch (msg.msgType()) {
         case OnelabProtocol::OnelabStop:
           std::cout << "\033[0;31m" << "Client \"" << cli->getName() << "\" is going to stop" << "\033[0m" << std::endl; // DEBUG
