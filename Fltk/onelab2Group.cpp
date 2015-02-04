@@ -13,6 +13,7 @@
 #include "viewButton.h"
 #include "solverButton.h"
 #include "PView.h"
+#include "PViewOptions.h"
 
 #include "Gmsh.h"
 #include "onelabUtils.h"
@@ -410,6 +411,8 @@ void onelabGroup::addLastPostProcessing()
   _tree->sortorder(FL_TREE_SORT_NONE);
   _addViewMenu(PView::list.size()-1);
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
+  for(unsigned int i = 0; i < PView::list.size(); i++)
+    getViewButton(i)->value(PView::list[i]->getOptions()->visible);
 }
 
 void onelabGroup::rebuildSolverList()
@@ -1012,6 +1015,7 @@ void onelabGroup::_addSolverMenu(int num)
 
 void onelabGroup::_addViewMenu(int num)
 {
+  // FIXME SEGFAULT in n->depth() with pend.py
   std::ostringstream path;
   path << "0Post-processing/View" << num;
   Fl_Tree_Item *n = _tree->add(path.str().c_str());
