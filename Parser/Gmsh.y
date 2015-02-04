@@ -744,6 +744,35 @@ Affectation :
       Free($1);
       List_Delete($5);
     }
+  | StringIndex '[' ']' NumericAffectation ListOfDouble tEND
+    {
+      gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+      s.list = true;
+      double d;
+      switch($4){
+      case 0: // affect
+        s.value.clear(); // fall-through
+      case 1: // append
+        for(int i = 0; i < List_Nbr($5); i++){
+          List_Read($5, i, &d);
+          s.value.push_back(d);
+        }
+        break;
+      case 2: // remove
+        for(int i = 0; i < List_Nbr($5); i++){
+          List_Read($5, i, &d);
+          std::vector<double>::iterator it = std::find(s.value.begin(),
+                                                       s.value.end(), d);
+          if(it != s.value.end()) s.value.erase(it);
+        }
+        break;
+      default:
+        yymsg(0, "Operators *= and /= not available for lists");
+        break;
+      }
+      Free($1);
+      List_Delete($5);
+    }
   | tSTRING '[' FExpr ']' NumericAffectation FExpr tEND
     {
       assignVariable($1, (int)$3, $5, $6);
