@@ -795,7 +795,7 @@ Affectation :
       List_Delete($4);
       List_Delete($8);
     }
-  | StringIndex '(' '{' RecursiveListOfDouble '}' ')' NumericAffectation ListOfDouble tEND
+  | StringIndex LP '{' RecursiveListOfDouble '}' RP NumericAffectation ListOfDouble tEND
     {
       assignVariables($1, $4, $7, $8);
       Free($1);
@@ -3105,7 +3105,7 @@ Loop :
 	  ImbricatedLoop--;
       }
     }
-  | tFunction tSTRING
+  | tFunction String__Index
     {
       if(!FunctionManager::Instance()->createFunction
          ($2, gmsh_yyin, gmsh_yyname, gmsh_yylineno))
@@ -3119,7 +3119,7 @@ Loop :
          (&gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Error while exiting function");
     }
-  | tCall tSTRING tEND
+  | tCall String__Index tEND
     {
       if(!FunctionManager::Instance()->enterFunction
          ($2, &gmsh_yyin, gmsh_yyname, gmsh_yylineno))
@@ -4989,7 +4989,19 @@ FExpr_Multi :
       }
       Free($1);
     }
-  | tList '[' tSTRING ']'
+  | StringIndex LP RP
+    {
+      $$ = List_Create(2, 1, sizeof(double));
+      if(!gmsh_yysymbols.count($1))
+	yymsg(0, "Unknown variable '%s'", $1);
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+	for(unsigned int i = 0; i < s.value.size(); i++)
+	  List_Add($$, &s.value[i]);
+      }
+      Free($1);
+    }
+  | tList '[' String__Index ']'
     {
       $$ = List_Create(2, 1, sizeof(double));
       if(!gmsh_yysymbols.count($3))
@@ -5002,6 +5014,24 @@ FExpr_Multi :
       Free($3);
     }
   | tSTRING LP '{' RecursiveListOfDouble '}' RP
+    {
+      $$ = List_Create(2, 1, sizeof(double));
+      if(!gmsh_yysymbols.count($1))
+	yymsg(0, "Unknown variable '%s'", $1);
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+	for(int i = 0; i < List_Nbr($4); i++){
+	  int index = (int)(*(double*)List_Pointer_Fast($4, i));
+	  if((int)s.value.size() < index + 1)
+	    yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+	  else
+	    List_Add($$, &s.value[index]);
+	}
+      }
+      Free($1);
+      List_Delete($4);
+    }
+  | StringIndex LP '{' RecursiveListOfDouble '}' RP
     {
       $$ = List_Create(2, 1, sizeof(double));
       if(!gmsh_yysymbols.count($1))
