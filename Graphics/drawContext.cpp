@@ -481,8 +481,8 @@ void drawContext::drawBackgroundImage(bool threeD)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, _bgImageTexture);
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   glBegin(GL_QUADS);
-  glColor4ubv((GLubyte *) & CTX::instance()->color.bg);
   if(threeD){
     glTexCoord2f(1.0f, 1.0f); glVertex2d(x+w, y);
     glTexCoord2f(1.0f, 0.0f); glVertex2d(x+w, y+h);
