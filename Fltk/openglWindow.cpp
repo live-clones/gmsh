@@ -215,7 +215,10 @@ void openglWindow::draw()
 
     _ctx->draw3d();
     glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
-    glPointSize((float)CTX::instance()->geom.pointSize);
+    float ps = CTX::instance()->geom.pointSize;
+    if(_ctx->isHighResolution())
+      ps *= CTX::instance()->highResolutionPointSizeFactor;
+    glPointSize(ps);
     glBegin(GL_POINTS);
     glVertex3d(_point[0], _point[1], _point[2]);
     glEnd();

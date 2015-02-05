@@ -755,21 +755,26 @@ void drawContext::initPosition()
 // Takes a cursor position in window coordinates and returns the line (given by
 // a point and a unit direction vector), in real space, that corresponds to that
 // cursor position
-void drawContext::unproject(double x, double y, double p[3], double d[3])
+void drawContext::unproject(double winx, double winy, double p[3], double d[3])
 {
+  if(isHighResolution()){
+    winx *= 2; // true pixels
+    winy *= 2;
+  }
+
   GLint vp[4];
   glGetIntegerv(GL_VIEWPORT, vp);
 
-  y = vp[3] - y;
+  winy = vp[3] - winy;
 
   GLdouble x0, y0, z0, x1, y1, z1;
 
   // we use the stored model and proj matrices instead of directly
   // getGetDouble'ing the matrices since unproject can be called in or after
   // draw2d
-  if(!gluUnProject(x, y, 0.0, model, proj, vp, &x0, &y0, &z0))
+  if(!gluUnProject(winx, winy, 0.0, model, proj, vp, &x0, &y0, &z0))
     Msg::Warning("unproject1 failed");
-  if(!gluUnProject(x, y, 1.0, model, proj, vp, &x1, &y1, &z1))
+  if(!gluUnProject(winx, winy, 1.0, model, proj, vp, &x1, &y1, &z1))
     Msg::Warning("unproject2 failed");
 
   p[0] = x0;
@@ -784,24 +789,24 @@ void drawContext::unproject(double x, double y, double p[3], double d[3])
   d[2] /= len;
 }
 
-void drawContext::viewport2World(double win[3], double xyz[3])
+void drawContext::viewport2World(double vp[3], double xyz[3])
 {
   GLint viewport[4];
   GLdouble model[16], proj[16];
   glGetIntegerv(GL_VIEWPORT, viewport);
   glGetDoublev(GL_PROJECTION_MATRIX, proj);
   glGetDoublev(GL_MODELVIEW_MATRIX, model);
-  gluUnProject(win[0], win[1], win[2], model, proj, viewport, &xyz[0], &xyz[1], &xyz[2]);
+  gluUnProject(vp[0], vp[1], vp[2], model, proj, viewport, &xyz[0], &xyz[1], &xyz[2]);
 }
 
-void drawContext::world2Viewport(double xyz[3], double win[3])
+void drawContext::world2Viewport(double xyz[3], double vp[3])
 {
   GLint viewport[4];
   GLdouble model[16], proj[16];
   glGetIntegerv(GL_VIEWPORT, viewport);
   glGetDoublev(GL_PROJECTION_MATRIX, proj);
   glGetDoublev(GL_MODELVIEW_MATRIX, model);
-  gluProject(xyz[0], xyz[1], xyz[2], model, proj, viewport, &win[0], &win[1], &win[2]);
+  gluProject(xyz[0], xyz[1], xyz[2], model, proj, viewport, &vp[0], &vp[1], &vp[2]);
 }
 
 class hit{
