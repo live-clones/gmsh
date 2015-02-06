@@ -382,6 +382,22 @@ void GModel::getEntities(std::vector<GEntity*> &entities, int dim) const
   }
 }
 
+void GModel::getEntitiesInBox(std::vector<GEntity*> &entities, SBoundingBox3d box,
+                              int dim) const
+{
+  entities.clear();
+  std::vector<GEntity*> all;
+  getEntities(all, dim);
+  // if we use this often, create an rtree to avoid the linear search
+  for(unsigned int i = 0; i < all.size(); i++){
+    SBoundingBox3d bbox = all[i]->bounds();
+    if(bbox.min().x() >= box.min().x() && bbox.max().x() <= box.max().x() &&
+       bbox.min().y() >= box.min().y() && bbox.max().y() <= box.max().y() &&
+       bbox.min().z() >= box.min().z() && bbox.max().z() <= box.max().z())
+      entities.push_back(all[i]);
+  }
+}
+
 int GModel::getMaxElementaryNumber(int dim)
 {
   std::vector<GEntity*> entities;
@@ -2865,16 +2881,18 @@ void GModel::setPeriodicPairOfFaces(int numFaceMaster, std::vector<int> EdgeList
 void GModel::setPhysicalNumToEntitiesInBox(int EntityDimension, int PhysicalNumber,
                                            SBoundingBox3d box)
 {
-  // FIXME: if we use this often, create an rtree to avoid the linear search
   std::vector<GEntity*> entities;
-  getEntities(entities, EntityDimension);
-  for(unsigned int i = 0; i < entities.size(); i++){
-    SBoundingBox3d bbox = entities[i]->bounds();
-    if(bbox.min().x() >= box.min().x() && bbox.max().x() <= box.max().x() &&
-       bbox.min().y() >= box.min().y() && bbox.max().y() <= box.max().y() &&
-       bbox.min().z() >= box.min().z() && bbox.max().z() <= box.max().z())
-      entities[i]->addPhysicalEntity(PhysicalNumber);
-  }
+  getEntitiesInBox(entities, box, EntityDimension);
+  for(unsigned int i = 0; i < entities.size(); i++)
+    entities[i]->addPhysicalEntity(PhysicalNumber);
+}
+
+void GModel::setPhysicalNumToEntitiesInBox(int EntityDimension, int PhysicalNumber,
+                                           std::vector<double> p1, std::vector<double> p2)
+{
+  if(p1.size() != 3 || p2.size() != 3) return;
+  SBoundingBox3d box(p1[0], p1[2], p1[2], p2[0], p2[1], p2[3]);
+  setPhysicalNumToEntitiesInBox(EntityDimension, PhysicalNumber, box);
 }
 
 static void computeDuplicates(GModel *model,

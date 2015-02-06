@@ -4,18 +4,9 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include <map>
-#include <stdio.h>
 #include <stack>
-#include <string.h>
+#include <string>
 #include "FunctionManager.h"
-
-struct ltstr
-{
-  bool operator() (const char *s1, const char *s2)const
-  {
-    return strcmp(s1, s2) < 0;
-  }
-};
 
 class File_Position
 {
@@ -34,8 +25,8 @@ class mystack
 
 class mymap
 {
- public: 
-  std::map<char*, File_Position, ltstr> m;
+ public:
+  std::map<std::string, File_Position> m;
 };
 
 FunctionManager *FunctionManager::instance = 0;
@@ -54,8 +45,8 @@ FunctionManager *FunctionManager::Instance()
   return instance;
 }
 
-int FunctionManager::enterFunction(char *name, gmshFILE * f, std::string &filename,
-                                   int &lno) const
+int FunctionManager::enterFunction(const std::string &name, gmshFILE * f,
+                                   std::string &filename, int &lno) const
 {
   if(functions->m.find(name) == functions->m.end())
     return 0;
@@ -87,8 +78,8 @@ int FunctionManager::leaveFunction(gmshFILE * f, std::string &filename, int &lno
   return 1;
 }
 
-int FunctionManager::createFunction(char *name, gmshFILE  f, std::string &filename,
-                                    int lno)
+int FunctionManager::createFunction(const std::string &name, gmshFILE f,
+                                    const std::string &filename, int lno)
 {
   File_Position fp;
   fp.file = f;

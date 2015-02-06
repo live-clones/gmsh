@@ -22,8 +22,10 @@ class FunctionManager
   static FunctionManager *instance;
  public :
   static FunctionManager* Instance();
-  int createFunction(char *name, gmshFILE f, std::string &filename, int lineno);
-  int enterFunction(char *name, gmshFILE *f, std::string &filename, int &lineno) const;
+  int createFunction(const std::string &name, gmshFILE f,
+                     const std::string &filename, int lineno);
+  int enterFunction(const std::string &name, gmshFILE *f,
+                    std::string &filename, int &lineno) const;
   int leaveFunction(gmshFILE *f, std::string &filename, int &lineno);
 };
 

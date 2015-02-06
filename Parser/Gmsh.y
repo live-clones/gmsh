@@ -2091,6 +2091,20 @@ ListOfShapes :
 	}
       }
     }
+  | ListOfShapes tPoint tIn tBoundingBox
+      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
+    {
+      GModel::current()->importGEOInternals();
+      SBoundingBox3d box($6, $8, $10, $12, $14, $16);
+      std::vector<GEntity*> entities;
+      GModel::current()->getEntitiesInBox(entities, box, 0);
+      for(unsigned int i = 0; i < entities.size(); i++){
+	Shape TheShape;
+	TheShape.Num = entities[i]->tag();
+        TheShape.Type = MSH_POINT_FROM_GMODEL;
+        List_Add($$, &TheShape);
+      }
+    }
   | ListOfShapes tLine '{' RecursiveListOfDouble '}' tEND
     {
       for(int i = 0; i < List_Nbr($4); i++){
@@ -3105,13 +3119,13 @@ Loop :
 	  ImbricatedLoop--;
       }
     }
-  | tFunction String__Index
+  | tFunction tSTRING
     {
       if(!FunctionManager::Instance()->createFunction
-         ($2, gmsh_yyin, gmsh_yyname, gmsh_yylineno))
+         (std::string($2), gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Redefinition of function %s", $2);
       skip_until(NULL, "Return");
-      //FIXME: wee leak $2
+      Free($2);
     }
   | tReturn
     {
@@ -3122,9 +3136,9 @@ Loop :
   | tCall String__Index tEND
     {
       if(!FunctionManager::Instance()->enterFunction
-         ($2, &gmsh_yyin, gmsh_yyname, gmsh_yylineno))
+         (std::string($2), &gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Unknown function %s", $2);
-      //FIXME: wee leak $2
+      Free($2);
     }
   | tIf '(' FExpr ')'
     {
