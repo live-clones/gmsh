@@ -1296,19 +1296,20 @@ class PostViewField : public Field
     if(!octree->searchTensorWithTol(x, y, z, l, 0, 0, 0.05))
       Msg::Info("No tensor element found containing point (%g,%g,%g)", x, y, z);
     if(crop_negative_values){
-      for(int i = 0; i < 9; i++){
-        if(l[i] <= 0) l[i] = MAX_LC;
+      if(l[0] <= 0 && l[1] <= 0 && l[2] <= 0 &&
+         l[3] <= 0 && l[4] <= 0 && l[5] <= 0 &&
+         l[6] <= 0 && l[7] <= 0 && l[8] <= 0){
+        for(int i = 0; i < 9; i++) l[i] = MAX_LC;
+      }
+      else{
+        for(int i = 0; i < 9; i++){
+          if(l[i] <= 0) l[i] = 0;
+        }
       }
     }
-    metr(0, 0) = l[0];
-    metr(0, 1) = l[1];
-    metr(0, 2) = l[2];
-    metr(1, 0) = l[3];
-    metr(1, 1) = l[4];
-    metr(1, 2) = l[5];
-    metr(2, 0) = l[6];
-    metr(2, 1) = l[7];
-    metr(2, 2) = l[8];
+    metr(0, 0) = l[0]; metr(0, 1) = l[1]; metr(0, 2) = l[2];
+    metr(1, 0) = l[3]; metr(1, 1) = l[4]; metr(1, 2) = l[5];
+    metr(2, 0) = l[6]; metr(2, 1) = l[7]; metr(2, 2) = l[8];
   }
   const char *getName()
   {
