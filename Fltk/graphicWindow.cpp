@@ -3010,7 +3010,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     _browser->textfont(FL_SCREEN);
     int s = CTX::instance()->msgFontSize;
 #if defined(WIN32) // screen font on Windows is really small
-    _browser->textsize(s <= 0 ? FL_NORMAL_SIZE - 1 : s);
+    _browser->textsize(s <= 0 ? FL_NORMAL_SIZE : s);
 #else
     _browser->textsize(s <= 0 ? FL_NORMAL_SIZE - 2 : s);
 #endif
