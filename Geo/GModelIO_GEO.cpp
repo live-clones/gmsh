@@ -134,6 +134,9 @@ int GModel::importGEOInternals()
         v = new gmshVertex(this, p);
         add(v);
       }
+      else{
+        v->resetMeshAttributes();
+      }
       if(!p->Visible) v->setVisibility(0);
     }
     List_Delete(points);
@@ -169,6 +172,9 @@ int GModel::importGEOInternals()
         else if(!e){
           e = new gmshEdge(this, c, 0, 0);
           add(e);
+        }
+        else{
+          e->resetMeshAttributes();
         }
 
         if(!c->Visible) e->setVisibility(0);
@@ -297,8 +303,9 @@ int GModel::importGEOInternals()
         r = new gmshRegion(this, v);
         add(r);
       }
-      else
+      else{
         r->resetMeshAttributes();
+      }
       if(!v->Visible) r->setVisibility(0);
       if(v->Color.type) r->setColor(v->Color.mesh);
     }
@@ -326,27 +333,29 @@ int GModel::importGEOInternals()
   }
 
   // create periodic mesh relationships
-
-  for (std::map<int,int>::iterator it = _geo_internals->periodicEdges.begin();
-       it != _geo_internals->periodicEdges.end(); ++it){
+  for(std::map<int,int>::iterator it = _geo_internals->periodicEdges.begin();
+      it != _geo_internals->periodicEdges.end(); ++it){
     GEdge *ge = getEdgeByTag(abs(it->first));
     if (ge){
       int MASTER = it->second * (it->first > 0 ? 1 : -1);
       ge->setMeshMaster(MASTER);
     }
   }
-  for (std::map<int,int>::iterator it = _geo_internals->periodicFaces.begin();
+  for(std::map<int,int>::iterator it = _geo_internals->periodicFaces.begin();
        it != _geo_internals->periodicFaces.end(); ++it){
     GFace *gf = getFaceByTag(abs(it->first));
     if (gf)gf->setMeshMaster(it->second * (it->first > 0 ? 1 : -1));
   }
-
-  for (eiter it = firstEdge() ; it != lastEdge() ; ++it){
+  for(eiter it = firstEdge() ; it != lastEdge() ; ++it){
     int meshMaster = (*it)->meshMaster();
     if (meshMaster != (*it)->tag()){
       GEdge *ge_master = getEdgeByTag(abs(meshMaster));
-      if(ge_master)(*it)->getBeginVertex()->setMeshMaster ( (meshMaster > 0)  ? ge_master->getBeginVertex()->tag() : ge_master->getEndVertex()->tag());
-      if(ge_master)(*it)->getEndVertex()->setMeshMaster ( (meshMaster < 0)  ? ge_master->getBeginVertex()->tag() : ge_master->getEndVertex()->tag());
+      if(ge_master)
+        (*it)->getBeginVertex()->setMeshMaster((meshMaster > 0) ? ge_master->getBeginVertex()->tag() :
+                                               ge_master->getEndVertex()->tag());
+      if(ge_master)
+        (*it)->getEndVertex()->setMeshMaster((meshMaster < 0) ? ge_master->getBeginVertex()->tag() :
+                                             ge_master->getEndVertex()->tag());
     }
   }
 
