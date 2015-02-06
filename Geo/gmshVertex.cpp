@@ -15,6 +15,7 @@
 gmshVertex::gmshVertex(GModel *m, Vertex *_v)
   : GVertex(m, _v->Num, _v->lc), v(_v)
 {
+  resetMeshAttributes();
 }
 
 void gmshVertex::resetMeshAttributes()
