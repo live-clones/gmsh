@@ -17,6 +17,11 @@ gmshVertex::gmshVertex(GModel *m, Vertex *_v)
 {
 }
 
+void gmshVertex::resetMeshAttributes()
+{
+  meshSize = v->lc;
+}
+
 void gmshVertex::setPosition(GPoint &p)
 {
   v->Pos.X = p.x();
@@ -42,16 +47,14 @@ SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
 
   Surface *s = (Surface*)face->getNativePtr();
 
-  //  printf("coucou HERE I AM %d\n",s->Typ);
-
   if(s->geometry){
     // It is not always right if it is periodic.
-    if(l_edges.size() == 1 && 
+    if(l_edges.size() == 1 &&
        (*l_edges.begin())->getBeginVertex() ==
        (*l_edges.begin())->getEndVertex()){
       Range<double> bb = (*l_edges.begin())->parBounds(0);
       return (*l_edges.begin())->reparamOnFace(face, bb.low(), dir);
-    } 
+    }
     return v->pntOnGeometry;
   }
 
@@ -60,7 +63,7 @@ SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
     for(int i = 0; i < 4; i++)
       List_Read(s->Generatrices, i, &C[i]);
 
-    double U, V;    
+    double U, V;
     if ((C[0]->beg == v && C[3]->beg == v) ||
         (C[0]->end == v && C[3]->beg == v) ||
         (C[0]->beg == v && C[3]->end == v) ||
@@ -95,12 +98,11 @@ SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
     return SPoint2(U, V);
   }
   else if(s->Typ ==  MSH_SURF_TRIC){
-    //    printf("coucou HERE I AM TRIC\n");
     Curve *C[3];
     for(int i = 0; i < 3; i++)
       List_Read(s->Generatrices, i, &C[i]);
 
-    double U, V;    
+    double U, V;
     if ((C[0]->beg == v && C[2]->beg == v) ||
         (C[0]->end == v && C[2]->beg == v) ||
         (C[0]->beg == v && C[2]->end == v) ||
@@ -125,7 +127,6 @@ SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
       Msg::Info("Reparameterizing point %d on face %d", v->Num, s->Num);
       return GVertex::reparamOnFace(face, dir);
     }
-    //    printf("coucou1 %g %g\n",U,V);
     return SPoint2(U, V);
   }
   else{

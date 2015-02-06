@@ -16,7 +16,8 @@ class gmshVertex : public GVertex {
  public:
   gmshVertex(GModel *m, Vertex *_v);
   virtual ~gmshVertex() {}
-  virtual GPoint point() const 
+  virtual void resetMeshAttributes();
+  virtual GPoint point() const
   {
     return GPoint(v->Pos.X, v->Pos.Y, v->Pos.Z, this);
   }
@@ -27,7 +28,7 @@ class gmshVertex : public GVertex {
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return GmshModel; }
   void *getNativePtr() const { return v; }
-  virtual void setPrescribedMeshSizeAtVertex(double l) 
+  virtual void setPrescribedMeshSizeAtVertex(double l)
   {
     meshSize = l;
     v->lc = meshSize;

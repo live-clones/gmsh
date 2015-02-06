@@ -33,6 +33,9 @@ class GVertex : public GEntity
   // delete mesh data
   virtual void deleteMesh();
 
+  // reset the mesh attributes to default values
+  virtual void resetMeshAttributes();
+
   // get/set the coordinates of the vertex
   virtual GPoint point() const = 0;
   virtual double x() const = 0;

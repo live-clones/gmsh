@@ -13,6 +13,7 @@
 
 GVertex::GVertex(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms)
 {
+  resetMeshAttributes();
 }
 
 GVertex::~GVertex()
@@ -28,6 +29,11 @@ void GVertex::deleteMesh()
   points.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
+}
+
+void GVertex::resetMeshAttributes()
+{
+  meshSize = MAX_LC;
 }
 
 void GVertex::setPosition(GPoint &p)
