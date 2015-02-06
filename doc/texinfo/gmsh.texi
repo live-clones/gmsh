@@ -1062,6 +1062,7 @@ List of expressions are also widely used, and are defined as:
   @var{extrude}
   Point @{ @var{expression} @} |
   Point|Line|Surface|Volume "*" |
+  Point|Line|Surface|Volume In BoundingBox @{ @var{expression-list} @} |
   Physical Point|Line|Surface|Volume @{ @var{expression-list} @}
 @c  @var{duplicata} - already implemented: should we explain this?
 @end example
@@ -1913,9 +1914,6 @@ created); the @var{expression-list} on the right hand side should
 contain the identification numbers of all the elementary points that
 need to be grouped inside the physical point.
 
-@item Physical Point ( @var{expression} | @var{char-expression} ) In BoundingBox @{ @var{expression-list} @};
-Creates a physical point with all the elementary points in the bounding
-box @var{xmin,ymin,zmin,xmax,ymax,zmax}. 
 @end ftable
 
 @c .........................................................................
@@ -2021,9 +2019,6 @@ identification numbers in the @var{expression-list} will reverse the
 orientation of the mesh elements belonging to the corresponding
 elementary lines in the saved mesh.
 
-@item Physical Line ( @var{expression} | @var{char-expression} ) In BoundingBox @{ @var{expression-list} @};
-Creates a physical line with all the elementary lines in the bounding
-box @var{xmin,ymin,zmin,xmax,ymax,zmax}. 
 @end ftable
 
 @c .........................................................................
@@ -2096,9 +2091,6 @@ negative identification numbers in the @var{expression-list} will
 reverse the orientation of the mesh elements belonging to the
 corresponding elementary surfaces in the saved mesh.
 
-@item Physical Surface ( @var{expression} | @var{char-expression} ) In BoundingBox @{ @var{expression-list} @};
-Creates a physical surface with all the elementary surfaces in the bounding
-box @var{xmin,ymin,zmin,xmax,ymax,zmax}. 
 @end ftable
 
 @c .........................................................................
@@ -2145,9 +2137,6 @@ is automatically created); the @var{expression-list} on the right hand
 side should contain the identification numbers of all the elementary
 volumes that need to be grouped inside the physical volume.
 
-@item Physical Volume ( @var{expression} | @var{char-expression} ) In BoundingBox @{ @var{expression-list} @};
-Creates a physical volume with all the elementary volumes in the bounding
-box @var{xmin,ymin,zmin,xmax,ymax,zmax}. 
 @end ftable
 
 @c .........................................................................

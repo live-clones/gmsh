@@ -1384,29 +1384,15 @@ Shape :
       $$.Type = MSH_PHYSICAL_POINT;
       $$.Num = num;
     }
-   | tPhysical tPoint '(' PhysicalId0 ')' tIn tBoundingBox
-      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
-    {
-      int num = (int)$4;
-      if(FindPhysicalGroup(num, MSH_PHYSICAL_POINT)){
-	yymsg(0, "Physical point %d already exists", num);
-      }
-      else{
-        GModel::current()->importGEOInternals();
-        SBoundingBox3d bbox($9, $11, $13, $15, $17, $19);
-        GModel::current()->setPhysicalNumToEntitiesInBox(0, num, bbox);
-      }
-      $$.Type = MSH_PHYSICAL_POINT;
-      $$.Num = num;
-    }
   | tCharacteristic tLength ListOfDouble tAFFECT FExpr tEND
     {
       for(int i = 0; i < List_Nbr($3); i++){
 	double d;
 	List_Read($3, i, &d);
 	Vertex *v = FindPoint((int)d);
-	if(v)
+	if(v){
 	  v->lc = $5;
+        }
 	else{
 	  GVertex *gv = GModel::current()->getVertexByTag((int)d);
 	  if(gv)
@@ -1653,21 +1639,6 @@ Shape :
       $$.Type = MSH_PHYSICAL_LINE;
       $$.Num = num;
     }
-   | tPhysical tLine '(' PhysicalId1 ')' tIn tBoundingBox
-      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
-    {
-      int num = (int)$4;
-      if(FindPhysicalGroup(num, MSH_PHYSICAL_LINE)){
-	yymsg(0, "Physical line %d already exists", num);
-      }
-      else{
-        GModel::current()->importGEOInternals();
-        SBoundingBox3d bbox($9, $11, $13, $15, $17, $19);
-        GModel::current()->setPhysicalNumToEntitiesInBox(1, num, bbox);
-      }
-      $$.Type = MSH_PHYSICAL_LINE;
-      $$.Num = num;
-    }
 
   // Surfaces
 
@@ -1883,21 +1854,6 @@ Shape :
       $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num = num;
     }
-   | tPhysical tSurface '(' PhysicalId2 ')' tIn tBoundingBox
-      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
-    {
-      int num = (int)$4;
-      if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
-	yymsg(0, "Physical surface %d already exists", num);
-      }
-      else{
-        GModel::current()->importGEOInternals();
-        SBoundingBox3d bbox($9, $11, $13, $15, $17, $19);
-        GModel::current()->setPhysicalNumToEntitiesInBox(2, num, bbox);
-      }
-      $$.Type = MSH_PHYSICAL_SURFACE;
-      $$.Num = num;
-    }
 
   // Volumes
 
@@ -1969,22 +1925,6 @@ Shape :
       $$.Type = MSH_PHYSICAL_VOLUME;
       $$.Num = num;
     }
-   | tPhysical tVolume '(' PhysicalId3 ')' tIn tBoundingBox
-      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
-    {
-      int num = (int)$4;
-      if(FindPhysicalGroup(num, MSH_PHYSICAL_VOLUME)){
-	yymsg(0, "Physical volume %d already exists", num);
-      }
-      else{
-        GModel::current()->importGEOInternals();
-        SBoundingBox3d bbox($9, $11, $13, $15, $17, $19);
-        GModel::current()->setPhysicalNumToEntitiesInBox(3, num, bbox);
-      }
-      $$.Type = MSH_PHYSICAL_VOLUME;
-      $$.Num = num;
-    }
-
 ;
 
 //  T R A N S F O R M
@@ -2089,20 +2029,6 @@ ListOfShapes :
 	  else
 	    yymsg(1, "Unknown point %d", TheShape.Num);
 	}
-      }
-    }
-  | ListOfShapes tPoint tIn tBoundingBox
-      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
-    {
-      GModel::current()->importGEOInternals();
-      SBoundingBox3d box($6, $8, $10, $12, $14, $16);
-      std::vector<GEntity*> entities;
-      GModel::current()->getEntitiesInBox(entities, box, 0);
-      for(unsigned int i = 0; i < entities.size(); i++){
-	Shape TheShape;
-	TheShape.Num = entities[i]->tag();
-        TheShape.Type = MSH_POINT_FROM_GMODEL;
-        List_Add($$, &TheShape);
       }
     }
   | ListOfShapes tLine '{' RecursiveListOfDouble '}' tEND
@@ -4970,6 +4896,58 @@ FExpr_Multi :
         }
       }
       List_Delete($4);
+    }
+  | tPoint tIn tBoundingBox
+      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
+    {
+      $$ = List_Create(10, 1, sizeof(double));
+      GModel::current()->importGEOInternals();
+      SBoundingBox3d box($5, $7, $9, $11, $13, $15);
+      std::vector<GEntity*> entities;
+      GModel::current()->getEntitiesInBox(entities, box, 0);
+      for(unsigned int i = 0; i < entities.size(); i++){
+        double d = entities[i]->tag();
+	List_Add($$, &d);
+      }
+    }
+  | tLine tIn tBoundingBox
+      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
+    {
+      $$ = List_Create(10, 1, sizeof(double));
+      GModel::current()->importGEOInternals();
+      SBoundingBox3d box($5, $7, $9, $11, $13, $15);
+      std::vector<GEntity*> entities;
+      GModel::current()->getEntitiesInBox(entities, box, 1);
+      for(unsigned int i = 0; i < entities.size(); i++){
+        double d = entities[i]->tag();
+	List_Add($$, &d);
+      }
+    }
+  | tSurface tIn tBoundingBox
+      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
+    {
+      $$ = List_Create(10, 1, sizeof(double));
+      GModel::current()->importGEOInternals();
+      SBoundingBox3d box($5, $7, $9, $11, $13, $15);
+      std::vector<GEntity*> entities;
+      GModel::current()->getEntitiesInBox(entities, box, 2);
+      for(unsigned int i = 0; i < entities.size(); i++){
+        double d = entities[i]->tag();
+	List_Add($$, &d);
+      }
+    }
+  | tVolume tIn tBoundingBox
+      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
+    {
+      $$ = List_Create(10, 1, sizeof(double));
+      GModel::current()->importGEOInternals();
+      SBoundingBox3d box($5, $7, $9, $11, $13, $15);
+      std::vector<GEntity*> entities;
+      GModel::current()->getEntitiesInBox(entities, box, 3);
+      for(unsigned int i = 0; i < entities.size(); i++){
+        double d = entities[i]->tag();
+	List_Add($$, &d);
+      }
     }
   | Transform
     {

@@ -116,7 +116,7 @@ MElement *GRegion::getMeshElement(unsigned int index)
 
 void GRegion::resetMeshAttributes()
 {
-  meshAttributes.recombine3D=0;
+  meshAttributes.recombine3D = 0;
   meshAttributes.method = MESH_UNSTRUCTURED;
   meshAttributes.extrude = 0;
   meshAttributes.QuadTri = NO_QUADTRI;
