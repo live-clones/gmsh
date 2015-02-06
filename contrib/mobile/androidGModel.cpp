@@ -109,15 +109,15 @@ void getBitmapFromString(const char *text, int textsize, unsigned char **map,
   jstring jtext = env->NewStringUTF(text);
   jmethodID mid = env->GetStaticMethodID(jClass, "getHeightFromString",
                                          "(Ljava/lang/String;I)I");
-  *height = env->CallIntMethod(gCallbackObject, mid, jtext, textsize);
+  *height = env->CallStaticIntMethod(jClass, mid, jtext, textsize);
   mid = env->GetStaticMethodID(jClass, "getWidthFromString", "(Ljava/lang/String;I)I");
-  *width =env->CallIntMethod(gCallbackObject, mid, jtext, textsize);
+  *width =env->CallStaticIntMethod(jClass, mid, jtext, textsize);
   if(realWidth != NULL){
     mid = env->GetStaticMethodID(jClass, "getRealWidthFromString", "(Ljava/lang/String;I)I");
-    *realWidth = env->CallIntMethod(gCallbackObject, mid, jtext, textsize);
+    *realWidth = env->CallStaticIntMethod(jClass, mid, jtext, textsize);
   }
   mid = env->GetStaticMethodID(jClass, "getBytesFromString", "(Ljava/lang/String;I)[B");
-  jobject jbuffer = env->CallObjectMethod(gCallbackObject, mid, jtext, textsize);
+  jobject jbuffer = env->CallStaticObjectMethod(jClass, mid, jtext, textsize);
   jbyteArray *jarray = reinterpret_cast<jbyteArray*>(&jbuffer);
   *map = (unsigned char *) malloc((*height)*(*width));
   env->GetByteArrayRegion(*jarray, 0, (*height)*(*width), (jbyte*)*map);

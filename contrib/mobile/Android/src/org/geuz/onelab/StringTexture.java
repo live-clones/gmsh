@@ -122,14 +122,6 @@ public class StringTexture {
         Canvas canvas = new Canvas(bitmap);
         canvas.setBitmap(bitmap);
         canvas.drawText(s, 0, baseline, paint);
-        // TMP
-        try {
-            FileOutputStream stream = new FileOutputStream(Environment.getExternalStorageDirectory()+"/test.jpg");
-            bitmap.compress(CompressFormat.JPEG, 80, stream);
-        } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
         // Get the pixel in a map
         ByteBuffer buffer = ByteBuffer.allocateDirect(width*height);
         buffer.order(ByteOrder.nativeOrder());
