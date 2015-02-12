@@ -278,7 +278,9 @@ int GmshBatch()
   }
 
   // launch solver (if requested)
+#if defined(HAVE_ONELAB)
   solver_batch_cb((void*)CTX::instance()->launchSolverAtStartup);
+#endif
 
   time_t now;
   time(&now);
