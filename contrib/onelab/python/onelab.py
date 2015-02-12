@@ -468,8 +468,7 @@ class client :
       if self.action == 'compute':
         self.setChanged(name, False)
     else :
-      self._send(self._GMSH_WARNING,
-        'Error report in ' + self.name + '_stderr.log')
+      self._send(self._GMSH_ERROR, 'error \"' + ' '.join(argv) + '\"')
       sys.exit(1)
   
   def copy(self, here, there):
