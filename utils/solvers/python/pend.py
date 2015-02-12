@@ -10,14 +10,14 @@ import math, os
 c = onelab.client(__file__)
 
 def exportMsh(le1,le2):
-   mshFile = open(c.checkPath("pend.msh"), 'w')
+   mshFile = open(c.getPath("pend.msh"), 'w')
    mshFile.write('$MeshFormat\n2.2 0 8\n$EndMeshFormat\n')
    mshFile.write('$Nodes\n3\n1 0 0 0\n2 0 %s 0\n3 0 %s 0\n$EndNodes\n' %(-le1, -le1-le2))
    mshFile.write('$Elements\n3\n1 1 2 0 1 1 2\n2 1 2 0 1 2 3\n3 15 2 0 2 3\n$EndElements\n')
    mshFile.close()
 
 def exportMshOpt():
-   optFile = open(c.checkPath("pend.msh.opt"),'w')
+   optFile = open(c.getPath("pend.msh.opt"),'w')
    optFile.write('n = PostProcessing.NbViews - 1;\n')
    optFile.write('If(n >= 0)\nView[n].ShowScale = 0;\nView[n].VectorType = 5;\n')
    optFile.write('View[n].ExternalView = 0;\nView[n].DisplacementFactor = 1 ;\n')
