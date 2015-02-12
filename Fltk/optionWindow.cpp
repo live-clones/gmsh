@@ -36,7 +36,7 @@ typedef unsigned long intptr_t;
 #include "Context.h"
 #include "StringUtils.h"
 
-#if defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB) && not defined(HAVE_ONELAB2)
 #include "gmshLocalNetworkClient.h"
 #endif
 
@@ -569,7 +569,7 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
   optionWindow *o = FlGui::instance()->options;
   o->activate((const char*)data);
 
-#if defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB) && not defined(HAVE_ONELAB2)
   int old_listen = (int)opt_solver_listen(0, GMSH_GET, o->solver.butt[0]->value());
   opt_solver_listen(0, GMSH_SET, o->solver.butt[0]->value());
   if(!old_listen && o->solver.butt[0]->value()){

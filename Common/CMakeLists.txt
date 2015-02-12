@@ -5,7 +5,6 @@
 
 set(SRC  
   Gmsh.cpp
-    GmshRemote.cpp
     GmshMessage.cpp
   gmshPopplerWrapper.cpp
   Context.cpp
@@ -29,6 +28,7 @@ set(SRC
 if(ENABLE_ONELAB AND NOT ENABLE_ONELAB2)
   set(SRC
     ${SRC}
+    GmshRemote.cpp
     gmshLocalNetworkClient.cpp
   )
 endif(ENABLE_ONELAB AND NOT ENABLE_ONELAB2)

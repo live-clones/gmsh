@@ -28,7 +28,9 @@
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
 #endif
+#if not defined(HAVE_ONELAB2)
 #include "gmshLocalNetworkClient.h"
+#endif
 
 #if defined(HAVE_ONELAB2)
 #include "OnelabDatabase.h"
@@ -63,7 +65,9 @@ std::string Msg::_firstError;
 GmshMessage *Msg::_callback = 0;
 std::string Msg::_commandLine;
 std::string Msg::_launchDate;
+#if not defined(HAVE_ONELAB2)
 GmshClient *Msg::_client = 0;
+#endif
 std::string Msg::_execName;
 #if defined(HAVE_ONELAB2)
 OnelabDatabase *OnelabDatabase::_instance = NULL;
@@ -260,7 +264,9 @@ void Msg::Fatal(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Fatal", str);
+#if not defined(HAVE_ONELAB2)
   if(_client) _client->Error(str);
+#endif
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -306,7 +312,9 @@ void Msg::Error(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Error", str);
+#if not defined(HAVE_ONELAB2)
   if(_client) _client->Error(str);
+#endif
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -344,8 +352,9 @@ void Msg::Warning(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Warning", str);
+#if not defined(HAVE_ONELAB2)
   if(_client) _client->Warning(str);
-
+#endif
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     if(FlGui::instance()->in_main_thread()) FlGui::instance()->check();
@@ -380,7 +389,9 @@ void Msg::Info(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Info", str);
+#if not defined(HAVE_ONELAB2)
   if(_client) _client->Info(str);
+#endif
 
 #if defined(HAVE_FLTK)
 #if defined(_OPENMP)
@@ -419,7 +430,9 @@ void Msg::Direct(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Direct", str);
+#if not defined(HAVE_ONELAB2)
   if(_client) _client->Info(str);
+#endif
 
 #if defined(HAVE_FLTK)
 #if defined(_OPENMP)
@@ -458,7 +471,9 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   va_end(args);
 
   if(_callback && log) (*_callback)("Info", str);
+#if not defined(HAVE_ONELAB2)
   if(_client && log) _client->Info(str);
+#endif
 
 #if defined(HAVE_FLTK)
 #if defined(_OPENMP)
@@ -511,7 +526,9 @@ void Msg::Debug(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Debug", str);
+#if not defined(HAVE_ONELAB2)
   if(_client) _client->Info(str);
+#endif
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -544,7 +561,9 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
     va_end(args);
     sprintf(str2, "%3d%%    : %s", _progressMeterCurrent, str);
 
+#if not defined(HAVE_ONELAB2)
     if(_client) _client->Progress(str2);
+#endif
 
 #if defined(HAVE_FLTK)
     if(FlGui::available() && _verbosity > 4){
@@ -836,11 +855,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     SetOnelabString(name + "/9CheckCommand", "-", false);
     SetOnelabString(name + "/9ComputeCommand", "-3", false);
     std::vector<onelab::string> ps;
-#ifdef HAVE_ONELAB2
     _onelabClient->get(ps, name + "/Action", "Gmsh");
-#else
-    _onelabClient->get(ps, name + "/Action");
-#endif
     if(ps.size()){
       Info("Performing ONELAB '%s'", ps[0].getValue().c_str());
       if(ps[0].getValue() == "initialize") Exit(0);
@@ -871,11 +886,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     SetOnelabString(name + "/9ComputeCommand", "-3", false);
 
     std::vector<onelab::string> ps;
-#ifdef HAVE_ONELAB2
-    _onelabClient->get(ps, name + "/Action", "Gmsh");
-#else
     _onelabClient->get(ps, name + "/Action");
-#endif
     if(ps.size()){
       //Info("Performing ONELAB '%s'", ps[0].getValue().c_str());
       if(ps[0].getValue() == "initialize") Exit(0);
@@ -901,17 +912,17 @@ void Msg::LoadOnelabClient(const std::string &clientName, const std::string &soc
       std::vector<onelab::string> ps;
       client->get(ps,clientName+"/FullCmdLine");
       if(ps.size() && ps[0].getValue().size())
-	cmd.assign(ps[0].getValue());
+        cmd.assign(ps[0].getValue());
 
       if(cmd.size()){
-	Msg::Info("Loader calls <%s>",cmd.c_str());
-	//client->sendInfo(strcat("Loader calls",cmd.c_str()));
-	std::cout << "Loader calls " << cmd << std::endl;
-	SystemCall(cmd.c_str(),true); //true->blocking
+        Msg::Info("Loader calls <%s>",cmd.c_str());
+	      //client->sendInfo(strcat("Loader calls",cmd.c_str()));
+	      std::cout << "Loader calls " << cmd << std::endl;
+	      SystemCall(cmd.c_str(),true); //true->blocking
       }
       else
-	Msg::Info("No full command line found for <%s>",
-		    clientName.c_str());
+	      Msg::Info("No full command line found for <%s>",
+		      clientName.c_str());
     }
     Msg::Info("Stopping client <%s>", clientName.c_str());
     delete client;
@@ -1175,7 +1186,7 @@ void Msg::ImportPhysicalsAsOnelabRegions()
 
 void Msg::RunOnelabClient(const std::string &name, const std::string &command)
 {
-#if defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB) && not defined(HAVE_ONELAB2)
   onelab::server::citer it = onelab::server::instance()->findClient(name);
   onelab::client *client = 0;
   if(it != onelab::server::instance()->lastClient()){

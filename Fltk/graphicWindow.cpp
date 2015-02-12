@@ -33,7 +33,9 @@ typedef unsigned long intptr_t;
 #include "fieldWindow.h"
 #include "pluginWindow.h"
 #include "helpWindow.h"
+#if not defined(HAVE_ONELAB2)
 #include "gmshLocalNetworkClient.h"
+#endif
 #include "fileDialogs.h"
 #include "extraDialogs.h"
 #include "partitionDialog.h"
@@ -180,6 +182,7 @@ static void file_clear_cb(Fl_Widget *w, void *data)
 
 static void file_remote_cb(Fl_Widget *w, void *data)
 {
+#if not defined(HAVE_ONELAB2)
   onelab::localNetworkClient *c;
   onelab::server::citer it = onelab::server::instance()->findClient("GmshRemote");
   if(it == onelab::server::instance()->lastClient()){
@@ -223,6 +226,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       server->SendString(GmshSocket::GMSH_SPEED_TEST, "Speed test");
     }
   }
+#endif
 }
 
 static void file_window_cb(Fl_Widget *w, void *data)

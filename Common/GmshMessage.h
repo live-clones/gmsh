@@ -46,8 +46,10 @@ class Msg {
   static GmshMessage *_callback;
   // command-line and startup time
   static std::string _commandLine, _launchDate;
+#if not defined(HAVE_ONELAB2)
   // communication with Gmsh when run remotely
   static GmshClient *_client;
+#endif
 #if defined(HAVE_ONELAB2)
   // communication with onelab server (replace _client and old _onelabClient)
   static OnelabDatabase *_onelabClient;
@@ -106,7 +108,11 @@ class Msg {
   static void SetExecutableName(const std::string &name) { _execName.assign(name); }
   static std::string GetExecutableName() { return _execName; }
   static void LoadOnelabClient(const std::string &name, const std::string &sockName);
+#if not defined(HAVE_ONELAB2)
   static GmshClient *GetGmshClient(){ return _client; }
+#else
+  static int GetGmshClient(){ return 1; }
+#endif
 #if defined(HAVE_ONELAB2)
   static OnelabDatabase *GetOnelabClient(){ return _onelabClient; }
 #elif defined(HAVE_ONELAB)

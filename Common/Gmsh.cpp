@@ -28,7 +28,7 @@
 //test new algo generation points
 #include "BasisFactory.h"
 
-#if defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB) && not defined(HAVE_ONELAB2)
 #include "gmshLocalNetworkClient.h"
 #endif
 
@@ -234,7 +234,9 @@ int GmshBatch()
 #endif
 
   if(CTX::instance()->batch == -3){
+#if not defined(HAVE_ONELAB2)
     GmshRemote();
+#endif
   }
   else if(CTX::instance()->batch == -2){
     GModel::current()->checkMeshCoherence(CTX::instance()->geom.tolerance);
