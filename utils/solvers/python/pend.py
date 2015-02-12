@@ -38,7 +38,7 @@ l = c.defineNumber('Geom/arm length [m]', value=1.0)
 time = c.defineNumber('Dyna/time [s]', value=0.0)
 dt = c.defineNumber('Dyna/time step [s]', value=0.001)
 tmax = c.defineNumber('Dyna/max time [s]', value=20)
-refresh = c.defineNumber('Dyna/refresh interval [s]', value=0.05)
+refresh = c.defineNumber('Dyna/refresh interval [s]', value=0.1)
 theta0 = c.defineNumber('Init/initial theta angle [deg]', value=10, 
                          attributes={'Highlight':'Pink'})
 phi0 = c.defineNumber('Init/initial phi angle [deg]', value=180,
