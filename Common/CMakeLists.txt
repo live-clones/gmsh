@@ -26,5 +26,12 @@ set(SRC
   GamePad.cpp
 )
 
+if(NOT ENABLE_ONELAB2)
+  set(SRC
+    ${SRC}
+    gmshLocalNetworkClient.cpp
+  )
+endif(NOT ENABLE_ONELAB2)
+
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
 append_gmsh_src(Common "${SRC};${HDR}")

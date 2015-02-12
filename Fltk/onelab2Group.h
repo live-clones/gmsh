@@ -89,6 +89,6 @@ public:
 void connect_cb(Fl_Widget *w, void *arg);
 void onelab_cb(Fl_Widget *w, void *data);
 inline void onelab_cb(void *data) {onelab_cb(0, data);}
-void solver_cb(Fl_Widget *w, void *data);
-void solver_batch_cb(Fl_Widget *w, void *data);
+void solver_cb(void *data);
+
 #endif

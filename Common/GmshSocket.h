@@ -28,9 +28,7 @@
 #ifndef _GMSH_SOCKET_H_
 #define _GMSH_SOCKET_H_
 
-#if !defined(ONELAB_LOADER)
 #include "GmshConfig.h"
-#endif
 
 #include <string>
 #include <stdio.h>

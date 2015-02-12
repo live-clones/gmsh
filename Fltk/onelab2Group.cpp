@@ -83,7 +83,7 @@ void onelab_cb(Fl_Widget *w, void *data)
     Msg::Info("I'm busy! Ask me that later...");
     return;
   }
-  
+
   if(action == "reset"){
     OnelabDatabase::instance()->clear(); // TODO keep persitant
     return;
@@ -150,20 +150,6 @@ void solver_cb(Fl_Widget *w, void *data)
     onelab_cb(0, (void*)"refresh");
   }
   FlGui::instance()->onelab->updateGearMenu();
-}
-void solver_batch_cb(Fl_Widget *w, void *data)
-{
-  int num = (intptr_t)data;
-  if(num >= 0) {
-    std::string name = opt_solver_name(num, GMSH_GET, "");
-    std::string exe = opt_solver_executable(num, GMSH_GET, "");
-    if(exe.empty()){
-      Msg::Error("Solver executable name not provided");
-      return;
-    }
-  }
-  Msg::Warning("solver_batch_cb TODO");
-  // TODO
 }
 
 static bool getFlColor(const std::string &str, Fl_Color &c)
