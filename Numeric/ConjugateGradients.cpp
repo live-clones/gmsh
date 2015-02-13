@@ -1,3 +1,9 @@
+// Gmsh - Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+
+#include <algorithm>
 #include <math.h>
 #include "GmshMessage.h"
 #include "ConjugateGradients.h"
@@ -15,16 +21,16 @@ static void scale (std::vector<double> &x, double s){
   for (unsigned int i=0;i<x.size();i++)x[i]*=s;
 }
 
-static void gmshLineSearch(void (*func)(std::vector<double> &x, 
+static void gmshLineSearch(void (*func)(std::vector<double> &x,
 					double &Obj,
 					bool needGrad,
 					std::vector<double> &gradObj, void *), // the function
 			   void* data, // eventual data
-			   std::vector<double> &x, // variables 
+			   std::vector<double> &x, // variables
 			   std::vector<double> &p, // search direction
 			   std::vector<double> &g, // gradient
 			   double &f,
-			   double stpmax, 
+			   double stpmax,
 			   int &check)
 {
   int i;
@@ -99,7 +105,7 @@ static void gmshLineSearch(void (*func)(std::vector<double> &x,
 
 // Simple Gradient Descent Minimization (use finite differences to compute the gradient)
 
-double GradientDescent(void (*func)(std::vector<double> &x, 
+double GradientDescent(void (*func)(std::vector<double> &x,
 				    double &Obj,
 				    bool needGrad,
 				    std::vector<double> &gradObj, void *), // its gradient

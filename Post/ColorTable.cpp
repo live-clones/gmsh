@@ -13,6 +13,7 @@
 // and Andre Battaiola.
 
 #include <string.h>
+#include <algorithm>
 #include "GmshMessage.h"
 #include "ColorTable.h"
 #include "Context.h"

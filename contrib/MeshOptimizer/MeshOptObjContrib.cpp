@@ -1,7 +1,7 @@
 // TODO: Copyright
 
 #include "MeshOptObjContrib.h"
-
+#include <algorithm>
 
 const double ObjContrib::BIGVAL = 1.e300;
 

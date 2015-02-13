@@ -11,6 +11,7 @@ typedef unsigned long intptr_t;
 #endif
 #include <string.h>
 #include <FL/Fl.H>
+#include <algorithm>
 #include "FlGui.h"
 #include "paletteWindow.h"
 #include "optionWindow.h"
@@ -50,7 +51,7 @@ gamepadWindow::gamepadWindow()
   int width = 34 * FL_NORMAL_SIZE + WB;
   int height = 15 * BH + 4 * WB;
   int L =  FL_NORMAL_SIZE;
- 
+
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false);
   win->box(GMSH_WINDOW_BOX);

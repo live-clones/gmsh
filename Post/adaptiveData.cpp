@@ -6,6 +6,7 @@
 #include <math.h>
 #include <list>
 #include <set>
+#include <algorithm>
 #include "adaptiveData.h"
 #include "Plugin.h"
 #include "OS.h"
@@ -71,21 +72,21 @@ static void computeShapeFunctions(fullMatrix<double> *coeffs, fullMatrix<double>
 }
 
 /*! Bergot space is characterised by polynomials
-  \f$ \mathcal B_{ijk} = 
-  \mathcal P_i \left(\frac{\xi }{1-\zeta}\right) 
-  \mathcal P_j \left(\frac{\eta}{1-\zeta}\right) 
-  \left(1-\zeta\right)^{max(i,j)} 
+  \f$ \mathcal B_{ijk} =
+  \mathcal P_i \left(\frac{\xi }{1-\zeta}\right)
+  \mathcal P_j \left(\frac{\eta}{1-\zeta}\right)
+  \left(1-\zeta\right)^{max(i,j)}
   \mathcal P^{2 max(i,j),0}_k \left(2 \zeta -1\right)~|~i,j \leq p, k \leq p - max(i,j) \f$
   and hence by the "monomials"
-  \f$ \mu_{ijk} = 
-  \left(\frac{\xi }{\1-\zeta}\right)^i 
-  \left(\frac{\eta}{\1-\zeta}\right)^j 
+  \f$ \mu_{ijk} =
+  \left(\frac{\xi }{\1-\zeta}\right)^i
+  \left(\frac{\eta}{\1-\zeta}\right)^j
   \left(1-\zeta\right)^{max(i,j)} \zeta^k~|~i,j \leq p~,~k \leq p-max(i,j)
   \f$
 */
-static void computeShapeFunctionsPyramid(fullMatrix<double> *coeffs, 
+static void computeShapeFunctionsPyramid(fullMatrix<double> *coeffs,
                                          fullMatrix<double> *eexps,
-                                         double u, double v, double w, 
+                                         double u, double v, double w,
                                          fullVector<double> *sf,
                                          fullVector<double> *tmp)
 {
@@ -938,67 +939,67 @@ void adaptivePyramid::recurCreate(adaptivePyramid *p, int maxlevel, int level)
   all.push_back(p);
   if(level++ >= maxlevel) return;
 
-  // quad points 
-  adaptiveVertex *p1 = p->p[0]; 
+  // quad points
+  adaptiveVertex *p1 = p->p[0];
   adaptiveVertex *p2 = p->p[1];
   adaptiveVertex *p3 = p->p[2];
   adaptiveVertex *p4 = p->p[3];
 
   // apex
   adaptiveVertex *p5 = p->p[4];
-  
+
   // center of the quad
 
   adaptiveVertex *p1234 = adaptiveVertex::add
     ((p1->x + p2->x + p3->x + p4->x)*0.25,
      (p1->y + p2->y + p3->y + p4->y)*0.25,
      (p1->z + p2->z + p3->z + p4->z)*0.25,allVertices);
-  
+
   // quad edge points
 
   adaptiveVertex *p12 = adaptiveVertex::add
     ((p1->x + p2->x)*0.5,
      (p1->y + p2->y)*0.5,
      (p1->z + p2->z)*0.5,allVertices);
-  
+
   adaptiveVertex *p23 = adaptiveVertex::add
     ((p2->x + p3->x)*0.5,
      (p2->y + p3->y)*0.5,
      (p2->z + p3->z)*0.5,allVertices);
-  
+
   adaptiveVertex *p34 = adaptiveVertex::add
     ((p3->x + p4->x)*0.5,
      (p3->y + p4->y)*0.5,
      (p3->z + p4->z)*0.5,allVertices);
-  
+
   adaptiveVertex *p41 = adaptiveVertex::add
     ((p4->x + p1->x)*0.5,
      (p4->y + p1->y)*0.5,
      (p4->z + p1->z)*0.5,allVertices);
-  
+
   // quad vertex to apex edge points
 
   adaptiveVertex *p15 = adaptiveVertex::add
     ((p1->x + p5->x)*0.5,
      (p1->y + p5->y)*0.5,
      (p1->z + p5->z)*0.5,allVertices);
-  
+
   adaptiveVertex *p25 = adaptiveVertex::add
     ((p2->x + p5->x)*0.5,
      (p2->y + p5->y)*0.5,
      (p2->z + p5->z)*0.5,allVertices);
-  
+
   adaptiveVertex *p35 = adaptiveVertex::add
     ((p3->x + p5->x)*0.5,
      (p3->y + p5->y)*0.5,
      (p3->z + p5->z)*0.5,allVertices);
-  
+
   adaptiveVertex *p45 = adaptiveVertex::add
     ((p4->x + p5->x)*0.5,
      (p4->y + p5->y)*0.5,
      (p4->z + p5->z)*0.5,allVertices);
-  
-  // four base pyramids on the quad base 
+
+  // four base pyramids on the quad base
 
   p->e[0] = new adaptivePyramid(p1, p12, p1234, p41, p15);
   recurCreate(p->e[0], maxlevel, level);
@@ -1171,7 +1172,7 @@ void adaptiveElements<adaptivePyramid>::init(int level)
 
   if(_interpolGeom) delete _interpolGeom;
   _interpolGeom = new fullMatrix<double>(adaptivePyramid::allVertices.size(), numNodes);
-  
+
   fullVector<double> sfv(numVals), *tmpv = 0;
   fullVector<double> sfg(numNodes), *tmpg = 0;
   if(_eexpsVal) tmpv = new fullVector<double>(_eexpsVal->size1());

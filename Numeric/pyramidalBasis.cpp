@@ -3,9 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include <cmath>
+#include <algorithm>
 #include "pyramidalBasis.h"
 #include "pointsGenerators.h"
-#include <cmath>
 
 pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
 {
@@ -39,7 +40,7 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
         monomials(idx,0) = i;
         monomials(idx,1) = j;
         monomials(idx,2) = k;
-        
+
         for (int l=0;l<num_points;l++) {
           double oneMinW = std::max(1e-14,1-points(l,2));
           VDM(idx,l)  = std::pow(points(l,0),i);

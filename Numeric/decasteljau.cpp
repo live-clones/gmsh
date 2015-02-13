@@ -5,6 +5,7 @@
 //
 // Contributed by J. Lambrechts
 
+#include <algorithm>
 #include "decasteljau.h"
 #include "SPoint3.h"
 #include "SVector3.h"

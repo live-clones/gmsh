@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include <algorithm>
 #include "drawContext.h"
 #include "PView.h"
 #include "PViewOptions.h"

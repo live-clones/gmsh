@@ -11723,7 +11723,7 @@ void yymsg(int level, const char *fmt, ...)
     Msg::Error("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
     gmsh_yyerrorstate++;
   }
-  else
+  else{
     Msg::Warning("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
-
+  }
 }

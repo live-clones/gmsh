@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include <string.h>
+#include <algorithm>
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "onelab.h"

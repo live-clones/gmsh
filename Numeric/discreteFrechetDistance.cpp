@@ -3,10 +3,12 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include <algorithm>
 #include "discreteFrechetDistance.h"
 #include "fullMatrix.h"
 
-static double distance (const SPoint3 &p1, const SPoint3 &p2){
+static double distance (const SPoint3 &p1, const SPoint3 &p2)
+{
   return p1.distance(p2);
 }
 

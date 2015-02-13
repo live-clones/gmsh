@@ -3,11 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-#include "jacobiPolynomials.h"
+#include <algorithm>
 #include <cmath>
 #include <iostream>
-
-
+#include "jacobiPolynomials.h"
 
 inline double Pochhammer(double x,int n)
 {
@@ -16,16 +15,10 @@ inline double Pochhammer(double x,int n)
   return result;
 }
 
-
-
 JacobiPolynomials::JacobiPolynomials(double a, double b, int o):
   alpha(a),beta(b),n(o),alphaPlusBeta(a+b),a2MinusB2(a*a-b*b) {}
 
-
-
 JacobiPolynomials::~JacobiPolynomials() {;}
-
-
 
 void JacobiPolynomials::f(double u, double *val) const
 {
@@ -43,15 +36,11 @@ void JacobiPolynomials::f(double u, double *val) const
     double a4i = 2.*(ii+alpha)*(ii+beta)*(twoI+alphaPlusBeta+2.);
 
     val[i+1] = ((a2i + a3i * u)* val[i] - a4i * val[i-1])/a1i;
-
   }
 }
 
-
-
 void JacobiPolynomials::df(double u, double *val) const
 {
-
   // Indeterminate form for u == -1 and u == 1
   // TODO: Extend to non-integer alpha & beta?
   if ((u == 1.) || (u == -1.)) {
@@ -71,7 +60,6 @@ void JacobiPolynomials::df(double u, double *val) const
     if ((u == -1.) && (n >= 2)) for (int k=2;k<=n;k+=2) val[k] = -val[k];
 
     return;
-
   }
 
   // Now general case

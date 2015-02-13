@@ -5,6 +5,7 @@
 
 #include <complex>
 #include <string.h>
+#include <algorithm>
 #include "GmshConfig.h"
 #include "fullMatrix.h"
 #include "GmshMessage.h"

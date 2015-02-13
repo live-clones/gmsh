@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-
+#include <algorithm>
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include <vector>
@@ -12,8 +12,6 @@
 #include "pointsGenerators.h"
 #include "BasisFactory.h"
 #include "Numeric.h"
-#include <sstream>
-
 
 namespace {
 // Sub Control Points

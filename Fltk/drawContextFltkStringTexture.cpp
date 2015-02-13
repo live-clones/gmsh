@@ -6,6 +6,7 @@
 // Contributed by Jonathan Lambrechts
 
 #include "drawContextFltkStringTexture.h"
+#include <algorithm>
 
 // FIXME: hack for current version of mingw
 #if defined(WIN32) && !defined(GL_TEXTURE_RECTANGLE_ARB)

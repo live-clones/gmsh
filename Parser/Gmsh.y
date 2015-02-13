@@ -642,7 +642,7 @@ NumericIncrement :
   | tMINUSMINUS    { $$ = -1; }
 ;
 
-// these are for either compatibility with getdp syntax (square brackets instead
+// these are for compatibility with the syntax in GetDP (square brackets instead
 // of parentheses)
 
 LP : '(' { $$ = (char*)"("; } | '[' { $$ = (char*)"["; } ;
@@ -5576,7 +5576,7 @@ void yymsg(int level, const char *fmt, ...)
     Msg::Error("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
     gmsh_yyerrorstate++;
   }
-  else
+  else{
     Msg::Warning("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
-
+  }
 }

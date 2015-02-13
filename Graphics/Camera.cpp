@@ -9,6 +9,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <math.h>
+#include <algorithm>
 #include "Camera.h"
 #include "Gmsh.h"
 #include "GmshConfig.h"
@@ -34,7 +35,7 @@ void Camera::init()
   glFnear=.0001*distance;
   glFfar=10000*distance;
   this->update();
-   
+
 }
 
 void Camera::alongX()
@@ -152,11 +153,11 @@ void Camera::update()
   right.x = front.y * up.z - front.z * up.y;
   right.y = front.z * up.x - front.x * up.z;
   right.z = front.x * up.y - front.y * up.x;
-    
+
   up.x = right.y * front.z - right.z * front.y;
   up.y = right.z * front.x - right.x * front.z;
   up.z = right.x * front.y - right.y * front.x;
-   
+
   ref_distance = distance;
   normalize(up);
   normalize(right);
@@ -171,23 +172,23 @@ void Camera::update()
   ndfl = glFnear / focallength;
 }
 
-void Camera::affiche() 
+void Camera::affiche()
 {
-  std::cout<<"  ------------ GENERAL PARAMETERS ------------"   <<std::endl ;       
-  std::cout<<"  CTX aperture "<< CTX::instance()->camera_aperture <<std::endl ;    
-  std::cout<<"  CTX eyesep ratio "<< CTX::instance()->eye_sep_ratio <<std::endl ;    
-  std::cout<<"  CTX focallength ratio "<< CTX::instance()->focallength_ratio <<std::endl ;    
-  std::cout<<"  ------------ CAMERA PARAMETERS ------------"   <<std::endl ;         
-  std::cout<<"  position "<<  position.x<<","<<position.y<<","<<position.z <<std::endl ;    
-  std::cout<<"  front "<<  front.x<<","<<front.y<<","<<front.z <<std::endl;              
-  std::cout<<"  up "<< up.x<<","<<up.y<<","<<up.z <<std::endl;                 
-  std::cout<<"  right "<< right.x<<","<<right.y<<","<<right.z  <<std::endl;              
-  std::cout<<"  target "<<  target.x<<","<<target.y<<","<<target.z <<std::endl;   
-  std::cout<<"  focallength_ratio "<<focallength_ratio <<std::endl;  
-  std::cout<<"  focallength "<<focallength <<std::endl;  
-  std::cout<<"  aperture "<<aperture <<std::endl;     
-  std::cout<<"  eyesep_ratio "<<eye_sep_ratio <<std::endl;       
-  std::cout<<"  eyesep "<<eyesep <<std::endl;       
+  std::cout<<"  ------------ GENERAL PARAMETERS ------------"   <<std::endl ;
+  std::cout<<"  CTX aperture "<< CTX::instance()->camera_aperture <<std::endl ;
+  std::cout<<"  CTX eyesep ratio "<< CTX::instance()->eye_sep_ratio <<std::endl ;
+  std::cout<<"  CTX focallength ratio "<< CTX::instance()->focallength_ratio <<std::endl ;
+  std::cout<<"  ------------ CAMERA PARAMETERS ------------"   <<std::endl ;
+  std::cout<<"  position "<<  position.x<<","<<position.y<<","<<position.z <<std::endl ;
+  std::cout<<"  front "<<  front.x<<","<<front.y<<","<<front.z <<std::endl;
+  std::cout<<"  up "<< up.x<<","<<up.y<<","<<up.z <<std::endl;
+  std::cout<<"  right "<< right.x<<","<<right.y<<","<<right.z  <<std::endl;
+  std::cout<<"  target "<<  target.x<<","<<target.y<<","<<target.z <<std::endl;
+  std::cout<<"  focallength_ratio "<<focallength_ratio <<std::endl;
+  std::cout<<"  focallength "<<focallength <<std::endl;
+  std::cout<<"  aperture "<<aperture <<std::endl;
+  std::cout<<"  eyesep_ratio "<<eye_sep_ratio <<std::endl;
+  std::cout<<"  eyesep "<<eyesep <<std::endl;
   std::cout<<"  screenwidth "<<screenwidth <<std::endl;
   std::cout<<"  screenheight "<<screenheight <<std::endl;
   std::cout<<"  distance "<<distance <<std::endl;
@@ -199,7 +200,7 @@ void Camera::affiche()
   std::cout<<"  Lc "<< Lc<<std::endl;
   std::cout<<"  eye_sep_ratio "<<eye_sep_ratio <<std::endl;
   std::cout<<"  closeness "<< closeness<<std::endl;
-  std::cout<<"  glFnear "<< glFnear <<std::endl; 
+  std::cout<<"  glFnear "<< glFnear <<std::endl;
   std::cout<<"  glFfar "<< glFfar <<std::endl;
   std::cout<<"  radians "<<radians <<std::endl;
   std::cout<<"  wd2 "<<wd2 <<std::endl;
@@ -230,21 +231,21 @@ void Camera::zoom(double& factor)
 void Camera::rotate(double* q)
 {
   this->update();
-  // rotation projection in global coordinates  
+  // rotation projection in global coordinates
   Quaternion omega;
   omega.x = q[0] * right.x + q[1] * up.x - q[2] * front.x;
   omega.y = q[0] * right.y + q[1] * up.y - q[2] * front.y;
   omega.z = q[0] * right.z + q[1] * up.z - q[2] * front.z;
   omega.w = q[3];
   normalize(omega);
-  Quaternion conj = conjugate(omega);  
+  Quaternion conj = conjugate(omega);
   front = omega * front * conj;
   up = omega * up * conj;
   right = omega * right * conj;
   normalize(front);
   normalize(up);
   normalize(right);
-  //actualize camera position 
+  //actualize camera position
   position = target - distance * front;
   this->update();
 }
@@ -275,7 +276,7 @@ void Camera::move_and_look(double _movfront,double _movright,double _movup,
   Quaternion omega;
   omega = omega_up * omega_right * omega_front;
   normalize(omega);
-  Quaternion conj = conjugate(omega);  
+  Quaternion conj = conjugate(omega);
   front = omega * front * conj;
   up = omega * up * conj;
   right = omega * right * conj;
@@ -307,10 +308,10 @@ void Camera::move_and_look(double _movfront,double _movright,double _movup,
 ////////////////////////////////////////////////////////////////
 //                 QUATERNION and XYZ functions
 ////////////////////////////////////////////////////////////////
- 
+
 double length(Quaternion &q)
-{ 
-  return  sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w); 
+{
+  return  sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
 }
 
 double length(XYZ &p)
@@ -330,14 +331,14 @@ void normalize_axe(Quaternion &q)
     l = 0.;
   }
   if(l != 0. ){
-    q.x /= l; q.y /= l; q.z /= l; 
+    q.x /= l; q.y /= l; q.z /= l;
    }
 }
 void normalize(Quaternion &q)
 {
   double L = length(q);
-    q.x /= L; q.y /= L; q.z /= L; q.w /= L; 
-  
+    q.x /= L; q.y /= L; q.z /= L; q.w /= L;
+
 }
 
 void normalize(XYZ &p)
@@ -346,7 +347,7 @@ void normalize(XYZ &p)
   p.x /= L; p.y /= L; p.z /= L;
 }
 
-XYZ::XYZ (const Quaternion &R) : x(R.x), y(R.y), z(R.z){} 
+XYZ::XYZ (const Quaternion &R) : x(R.x), y(R.y), z(R.z){}
 
 XYZ::XYZ(double _x,double _y,double _z) : x(_x),y(_y),z(_z){}
 
@@ -363,7 +364,7 @@ void rotate(Quaternion omega,XYZ axe)
 }
 
 XYZ operator* (const double &a, const XYZ &T)
-{ 
+{
   XYZ res(T);
   res.x *= a;
   res.y *= a;
@@ -372,7 +373,7 @@ XYZ operator* (const double &a, const XYZ &T)
 }
 
 XYZ operator+ (const XYZ &L, const XYZ &R)
-{ 
+{
   XYZ res(L);
   res.x += R.x;
   res.y += R.y;
@@ -380,7 +381,7 @@ XYZ operator+ (const XYZ &L, const XYZ &R)
   return res;
 }
 XYZ operator- (const XYZ &L, const XYZ &R)
-{ 
+{
   XYZ res(L);
   res.x -= R.x;
   res.y -= R.y;
@@ -388,7 +389,7 @@ XYZ operator- (const XYZ &L, const XYZ &R)
   return res;
 }
 XYZ operator- (const XYZ &R)
-{ 
+{
   XYZ res;
   res.x = -R.x;
   res.y = -R.y;
@@ -402,7 +403,7 @@ Quaternion::Quaternion(const XYZ &R, const double &A) {
   x=R.x*sin(A);
   y=R.y*sin(A);
   z=R.z*sin(A);
-  w=cos(A); 
+  w=cos(A);
 }
 Quaternion::Quaternion(): x(0.), y(0.),z(0.),w(1.) {}
 

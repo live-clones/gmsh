@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include <algorithm>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
@@ -1373,7 +1374,7 @@ int intersection_segments(const SPoint3 &p1, const SPoint3 &p2,
       return false;
     }
     return true;
-  }  
+  }
   return false;
 }
 

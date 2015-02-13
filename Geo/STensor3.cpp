@@ -3,8 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-// compute the largest inscribed ellipsoid...
+#include <algorithm>
 #include "STensor3.h"
+
+// compute the largest inscribed ellipsoid
 
 void SMetric3::print (const char *s) const
 {
@@ -38,7 +40,8 @@ SMetric3 intersection (const SMetric3 &m1, const SMetric3 &m2)
 
   // Correction from the PhD thesis of Frederic Alauzet p.16
   // If m2 = alpha*m1, then take the largest metric
-  static const double eps = 1.e-2;                              // Tolerance to detect triple eigenvalue (i.e. proportional metrics)
+  static const double eps = 1.e-2;  // Tolerance to detect triple eigenvalue
+                                    // (i.e. proportional metrics)
   const double max_eig = std::max(S(0), std::max(S(1), S(2)));
   const double min_eig = std::min(S(0), std::min(S(1), S(2)));
   const double range_eig = fabs((max_eig-min_eig)/max_eig);

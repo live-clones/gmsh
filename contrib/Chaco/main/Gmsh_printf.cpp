@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstring>
 #include "GmshMessage.h"
+#include <algorithm>
 
 // Overload the printf statements in Chaco to write using Msg::Debug in gmsh
 

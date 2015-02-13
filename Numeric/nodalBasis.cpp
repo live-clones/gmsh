@@ -5,11 +5,10 @@
 
 #include <limits>
 #include <cmath>
+#include <algorithm>
 #include "nodalBasis.h"
 #include "BasisFactory.h"
 #include "pointsGenerators.h"
-
-
 
 namespace ClosureGen {
   inline double pow2(double x)
@@ -40,7 +39,8 @@ namespace ClosureGen {
     }
   }
 
-  void rotateHexFull(int iFace, int iRot, int iSign, double uI, double vI, double wI, double &uO, double &vO, double &wO)
+  void rotateHexFull(int iFace, int iRot, int iSign, double uI, double vI,
+                     double wI, double &uO, double &vO, double &wO)
   {
     switch (iFace) {
       case 0: uO = uI; vO = vI; wO = wI; break;
@@ -344,7 +344,8 @@ namespace ClosureGen {
                               bool serendip, const fullMatrix<double> &points)
   {
     closure.clear();
-    const nodalBasis &fsFace = *BasisFactory::getNodalBasis(ElementType::getTag(TYPE_QUA, order, serendip));
+    const nodalBasis &fsFace = *BasisFactory::getNodalBasis
+      (ElementType::getTag(TYPE_QUA, order, serendip));
     for (int iRotate = 0; iRotate < 4; iRotate++){
       for (int iSign = 1; iSign >= -1; iSign -= 2){
         for (int iFace = 0; iFace < 6; iFace++) {
@@ -648,7 +649,8 @@ nodalBasis::nodalBasis(int tag)
 
 }
 
-void nodalBasis::getReferenceNodesForBezier(fullMatrix<double> &nodes) const {
+void nodalBasis::getReferenceNodesForBezier(fullMatrix<double> &nodes) const
+{
   if (parentType != TYPE_PYR && !serendip) {
     nodes = points;
   }

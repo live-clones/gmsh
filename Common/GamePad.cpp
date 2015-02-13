@@ -53,6 +53,7 @@
 #include <string>
 #include <iostream>
 #include <stdio.h>
+#include <algorithm>
 #include "GamePad.h"
 
 #if !defined(WIN32)

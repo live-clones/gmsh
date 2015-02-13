@@ -6,12 +6,12 @@
 // Contributed by Mark van Doesburg, Technolution B.V.
 
 #include "OCC_Connect.h"
-
 #include <vector>
 #include <list>
 #include <deque>
 #include <iostream>
 #include <iterator>
+#include <algorithm>
 
 #if defined(HAVE_OCC)
 

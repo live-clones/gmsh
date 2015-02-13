@@ -10,6 +10,7 @@
 #include <set>
 #include <vector>
 #include <cstdlib>
+#include <algorithm>
 #include "fullMatrix.h"
 
 class PViewData;
@@ -18,11 +19,11 @@ class GMSH_PostPlugin;
 
 class adaptiveVertex {
  public:
-  float  x, y, z;        //!< parametric coordinates 
+  float  x, y, z;        //!< parametric coordinates
   double X, Y, Z;        //!< cartesian coordinates
   double val,valy,valz;  //!< maximal three values
  public:
-  static adaptiveVertex *add(double x, double y, double z, 
+  static adaptiveVertex *add(double x, double y, double z,
                              std::set<adaptiveVertex> &allVertice);
   bool operator < (const adaptiveVertex &other) const
   {
@@ -49,7 +50,7 @@ class adaptivePoint {
   {
     p[0] = p1;
     e[0] = 0;
-  } 
+  }
   inline double V() const
   {
     return p[0]->val;
@@ -79,7 +80,7 @@ class adaptiveLine {
     p[0] = p1;
     p[1] = p2;
     e[0] = e[1] = 0;
-  } 
+  }
   inline double V() const
   {
     return (p[0]->val + p[1]->val) / 2.;
@@ -137,8 +138,8 @@ class adaptiveQuadrangle {
   static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
  public:
-  adaptiveQuadrangle(adaptiveVertex *p1, adaptiveVertex *p2, 
-                     adaptiveVertex *p3, adaptiveVertex *p4)    
+  adaptiveQuadrangle(adaptiveVertex *p1, adaptiveVertex *p2,
+                     adaptiveVertex *p3, adaptiveVertex *p4)
     : visible(false)
   {
     p[0] = p1;
@@ -173,7 +174,7 @@ class adaptivePrism {
   static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
  public:
-  adaptivePrism(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3, 
+  adaptivePrism(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3,
                 adaptiveVertex *p4, adaptiveVertex *p5, adaptiveVertex *p6)
     : visible(false)
   {
@@ -214,7 +215,7 @@ class adaptiveTetrahedron {
   static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
  public:
-  adaptiveTetrahedron(adaptiveVertex *p1, adaptiveVertex *p2, 
+  adaptiveTetrahedron(adaptiveVertex *p1, adaptiveVertex *p2,
                       adaptiveVertex *p3, adaptiveVertex *p4)
     : visible(false)
   {
@@ -251,8 +252,8 @@ class adaptiveHexahedron {
   static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
  public:
-  adaptiveHexahedron(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3, 
-                     adaptiveVertex *p4, adaptiveVertex *p5, adaptiveVertex *p6, 
+  adaptiveHexahedron(adaptiveVertex *p1, adaptiveVertex *p2, adaptiveVertex *p3,
+                     adaptiveVertex *p4, adaptiveVertex *p5, adaptiveVertex *p6,
                      adaptiveVertex *p7, adaptiveVertex *p8)
     : visible(false)
   {
@@ -300,10 +301,10 @@ class adaptivePyramid {
   static std::set<adaptiveVertex> allVertices;
   static int numNodes, numEdges;
  public:
-  adaptivePyramid(adaptiveVertex *p1, 
-                  adaptiveVertex *p2, 
-                  adaptiveVertex *p3, 
-                  adaptiveVertex *p4, 
+  adaptivePyramid(adaptiveVertex *p1,
+                  adaptiveVertex *p2,
+                  adaptiveVertex *p3,
+                  adaptiveVertex *p4,
                   adaptiveVertex *p5)
     : visible(false)
   {
@@ -316,13 +317,13 @@ class adaptivePyramid {
   }
   inline double V() const
   {
-    return (p[0]->val + 
-            p[1]->val + 
-            p[2]->val + 
+    return (p[0]->val +
+            p[1]->val +
+            p[2]->val +
             p[3]->val +
             p[4]->val) / 5.;
   }
-  // barycentric coordinates ? 
+  // barycentric coordinates ?
   inline static void GSF(double u, double v, double w, fullVector<double> &sf)
   {
     double ww = 0.25 / std::max(1e-14,1.-w);
@@ -338,7 +339,7 @@ class adaptivePyramid {
   static void recurError(adaptivePyramid *h, double AVG, double tol);
 };
 
-class PCoords { 
+class PCoords {
  public:
   double c[3];
   PCoords(double x, double y, double z)
@@ -380,7 +381,7 @@ class adaptiveElements {
   // adapt all the T-type elements in the input view and add the
   // refined elements in the output view (we will remove this when we
   // switch to true on-the-fly local refinement in drawPost())
-  void addInView(double tol, int step, PViewData *in, PViewDataList *out, 
+  void addInView(double tol, int step, PViewData *in, PViewDataList *out,
                  GMSH_PostPlugin *plug=0);
 };
 

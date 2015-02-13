@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include <vector>
+#include <algorithm>
 #include "GmshConfig.h"
 #include "ModifyComponent.h"
 #include "OctreePost.h"

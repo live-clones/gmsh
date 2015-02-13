@@ -5,6 +5,7 @@
 
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
+#include <algorithm>
 #include "FlGui.h"
 #include "drawContext.h"
 #include "clippingWindow.h"
