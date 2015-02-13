@@ -114,6 +114,7 @@ class onelabGmshServer : public GmshServer{
     std::string exe = FixWindowsPath(_client->getExecutable());
     std::string args;
     if(exe.size()){
+      args.append(_client->getExtraArguments());
       std::vector<std::string> cl = onelabUtils::getCommandLine(_client);
       for(unsigned int i = 0; i < cl.size(); i++)
         args.append(" " + cl[i]);
@@ -368,10 +369,10 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     {
       std::string::size_type first = 0;
       std::string clientName = onelab::parameter::getNextToken(message, first);
-      std::string command = onelab::parameter::getNextToken(message, first);
+      std::string exe = onelab::parameter::getNextToken(message, first);
       if (!onelab::server::instance()->isRegistered(clientName)){
 	gmshLocalNetworkClient* subClient =
-	  new gmshLocalNetworkClient(clientName, command);
+	  new gmshLocalNetworkClient(clientName, exe);
 	onelabGmshServer *server = new onelabGmshServer(subClient);
 	subClient->setPid(0);
 	int sock = server->LaunchClient();
@@ -824,7 +825,7 @@ void solver_batch_cb(void *data)
   onelab::server::instance()->set(n);
 
   // create client
-  onelab::localNetworkClient *c = new gmshLocalNetworkClient(name, exe, host);
+  onelab::localNetworkClient *c = new gmshLocalNetworkClient(name, exe, "", host);
   c->setIndex(num);
   onelab::string o(c->getName() + "/Action");
 
