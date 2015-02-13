@@ -30,9 +30,9 @@ class onelabMetaModelServer : public GmshServer{
     : GmshServer(), _client(client) {}
   ~onelabMetaModelServer(){}
 
-  int NonBlockingSystemCall(const char *str){
-    std::cout << "Calling now : " << str << std::endl;
-    return SystemCall(str);
+  int NonBlockingSystemCall(const char *exe, const char *args){
+    std::cout << "Calling now : " << exe << " " << args << std::endl;
+    return SystemCall(exe, args);
   }
   int NonBlockingWait(double waitint, double timeout, int socket)
   {
@@ -337,7 +337,8 @@ bool localNetworkSolverClient::run()
   }
 
   // Build the commande line
-  std::string command = buildCommandLine();
+  std::string exe = buildCommandLine();
+  std::string command(exe);
   if(command.size())
     command.append(appendArguments());
   else
@@ -350,7 +351,7 @@ bool localNetworkSolverClient::run()
 
   int sock;
   try{
-    sock = socketConnection->Start(command.c_str(), sockname.c_str(), 10);
+    sock = socketConnection->Start(exe.c_str(), command.c_str(), sockname.c_str(), 10);
   }
   catch(const char *err){
     OLMsg::Error("%s (on socket '%s')", err, sockname.c_str());

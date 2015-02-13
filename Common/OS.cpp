@@ -380,22 +380,10 @@ int KillProcess(int pid)
   return 1;
 }
 
-int SystemCall(const std::string &command, bool blocking)
+int SystemCallExe(const std::string &exe, const std::string &args, bool blocking)
 {
-  // separate (potential) executable from arguments
-  std::string exe, args;
-  std::string::size_type pos = command.find_first_of(" ");
-  if(pos != std::string::npos){
-    exe = command.substr(0, pos);
-    args = command.substr(pos, command.size() - pos);
-  }
-  else
-    exe = command;
-
-  // get executable extension
-  std::vector<std::string> split = SplitFileName(exe);
-
   // do we try to run a .py script, .m script or an .exe?
+  std::vector<std::string> split = SplitFileName(exe);
   bool isPython = (split[2] == ".py" || split[2] == ".PY");
   bool isOctave = (split[2] == ".m" || split[2] == ".M");
   bool isExe = (split[2] == ".exe" || split[2] == ".EXE");
@@ -406,6 +394,10 @@ int SystemCall(const std::string &command, bool blocking)
       return 1;
     }
   }
+
+  std::string command;
+  if(exe.size()) command.append("\"" + exe + "\"");
+  if(command.size() && args.size()) command.append(" " + args);
 
 #if defined(WIN32) && !defined(__CYGWIN__)
   if(isPython || isOctave){
@@ -472,6 +464,11 @@ int SystemCall(const std::string &command, bool blocking)
   if(!system(cmd.c_str())) return 1;
 #endif
   return 0;
+}
+
+int SystemCall(const std::string &command, bool blocking)
+{
+  return SystemCallExe("", command, blocking);
 }
 
 std::string GetCurrentWorkdir()

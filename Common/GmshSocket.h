@@ -326,11 +326,11 @@ class GmshServer : public GmshSocket{
  public:
   GmshServer() : GmshSocket(), _portno(-1) {}
   virtual ~GmshServer(){}
-  virtual int NonBlockingSystemCall(const char *str) = 0;
+  virtual int NonBlockingSystemCall(const char *exe, const char *args) = 0;
   virtual int NonBlockingWait(double waitint, double timeout, int socket=-1) = 0;
-  // start the client by launching "command" (command is supposed to contain
+  // start the client by launching "exe args" (args is supposed to contain
   // '%s' where the socket name should appear)
-  int Start(const char *command, const char *sockname, double timeout)
+  int Start(const char *exe, const char *args, const char *sockname, double timeout)
   {
     if(!sockname) throw "Invalid (null) socket name";
     _sockname = sockname;
@@ -395,10 +395,10 @@ class GmshServer : public GmshSocket{
       }
     }
 
-    if(command && strlen(command)){
-      char cmd[1024];
-      sprintf(cmd, command, _sockname.c_str());
-      NonBlockingSystemCall(cmd); // starts the solver
+    if(exe && strlen(exe) && args && strlen(args)){
+      char s[1024];
+      sprintf(s, args, _sockname.c_str());
+      NonBlockingSystemCall(exe, s); // starts the solver
     }
     else{
       timeout = 0.; // no command launched: don't set a timeout

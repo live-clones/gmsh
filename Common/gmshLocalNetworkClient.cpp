@@ -37,9 +37,9 @@ class onelabGmshServer : public GmshServer{
   onelabGmshServer(onelab::localNetworkClient *client)
     : GmshServer(), _client(client) {}
   ~onelabGmshServer(){}
-  int NonBlockingSystemCall(const char *str)
+  int NonBlockingSystemCall(const char *exe, const char *args)
   {
-    return SystemCall(str);
+    return SystemCallExe(exe, args);
   }
   int NonBlockingWait(double waitint, double timeout, int socket)
   {
@@ -112,14 +112,13 @@ class onelabGmshServer : public GmshServer{
     }
 
     std::string exe = FixWindowsPath(_client->getExecutable());
-    std::string command;
+    std::string args;
     if(exe.size()){
-      command.append("\"" + exe + "\"");
-      std::vector<std::string> args = onelabUtils::getCommandLine(_client);
-      for(unsigned int i = 0; i < args.size(); i++)
-        command.append(" " + args[i]);
-      command.append(" " + _client->getSocketSwitch() +
-                     " \"" + _client->getName() + "\" %s");
+      std::vector<std::string> cl = onelabUtils::getCommandLine(_client);
+      for(unsigned int i = 0; i < cl.size(); i++)
+        args.append(" " + cl[i]);
+      args.append(" " + _client->getSocketSwitch() +
+                  " \"" + _client->getName() + "\" %s");
     }
     else{
       Msg::Info("Listening on socket '%s'", sockname.c_str());
@@ -127,7 +126,7 @@ class onelabGmshServer : public GmshServer{
 
     int sock;
     try{
-      sock = Start(command.c_str(), sockname.c_str(),
+      sock = Start(exe.c_str(), args.c_str(), sockname.c_str(),
                    CTX::instance()->solver.timeout);
     }
     catch(const char *err){
