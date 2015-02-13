@@ -24,14 +24,8 @@ set(SRC
   onelabUtils.cpp
   GamePad.cpp
   GmshRemote.cpp
+  gmshLocalNetworkClient.cpp
 )
-
-if(ENABLE_ONELAB AND NOT ENABLE_ONELAB2)
-  set(SRC
-    ${SRC}
-    gmshLocalNetworkClient.cpp
-  )
-endif(ENABLE_ONELAB AND NOT ENABLE_ONELAB2)
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
 append_gmsh_src(Common "${SRC};${HDR}")

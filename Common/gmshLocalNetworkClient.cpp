@@ -3,18 +3,21 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-#include "gmshLocalNetworkClient.h"
 #include "GmshConfig.h"
 #include "Gmsh.h"
 #include "Context.h"
 #include "OS.h"
 #include "StringUtils.h"
-#include "onelabUtils.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "PView.h"
 #include "Options.h"
 #include "GModel.h"
+
+#if defined(HAVE_ONELAB)
+
+#include "gmshLocalNetworkClient.h"
+#include "onelabUtils.h"
 
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
@@ -862,3 +865,4 @@ void solver_batch_cb(void *data)
   }
 }
 
+#endif
