@@ -35,7 +35,8 @@ void OCC_Internals::buildLists()
   addShapeToLists(shape);
 }
 
-void  OCC_Internals::buildShapeFromGModel(GModel* gm){
+void  OCC_Internals::buildShapeFromGModel(GModel* gm)
+{
   somap.Clear();
   shmap.Clear();
   fmap.Clear();

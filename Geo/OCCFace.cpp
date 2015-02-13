@@ -70,6 +70,12 @@ void OCCFace::setup()
       if(!e){
 	Msg::Error("Unknown edge in face %d", tag());
       }
+      else if(edge.Orientation() == TopAbs_INTERNAL){
+        Msg::Info("Adding embedded edge %d", e->tag());
+        embedded_edges.push_back(e);
+        OCCEdge *occe = (OCCEdge*)e;
+        occe->setTrimmed(this);
+      }
       else{
         l_wire.push_back(e);
         Msg::Debug("Edge %d (%d --> %d) ori %d", e->tag(),
@@ -123,6 +129,20 @@ void OCCFace::setup()
   //          (*it)->getBeginVertex()->tag(), (*it)->getEndVertex()->tag(),
   //          (*it)->isSeam(this));
   // }
+
+  /*
+  for(exp2.Init(s, TopAbs_VERTEX); exp2.More(); exp2.Next()){
+    TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
+    GVertex *v = model()->getOCCInternals()->getOCCVertexByNativePtr(model(), vertex);
+    if(!v){
+      Msg::Error("Unknown vertex in face %d", tag());
+    }
+    else if(vertex.Orientation() == TopAbs_INTERNAL){
+      Msg::Info("Adding embedded vertex %d", v->tag());
+      embedded_vertices.push_back(v);
+    }
+  }
+  */
 }
 
 SBoundingBox3d OCCFace::bounds() const
