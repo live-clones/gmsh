@@ -19,7 +19,7 @@
 #include <sstream>
 #include "GmshMessage.h"
 
-#if defined(HAVE_ONELAB) && defined(HAVE_POST)
+#if defined(HAVE_ONELAB) && defined(HAVE_POST) && !defined(HAVE_ONELAB2)
 
 #include "onelab.h"
 #include "OpenFile.h"

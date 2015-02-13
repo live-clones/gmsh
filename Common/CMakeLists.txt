@@ -23,12 +23,12 @@ set(SRC
   MallocUtils.cpp
   onelabUtils.cpp
   GamePad.cpp
+  GmshRemote.cpp
 )
 
 if(ENABLE_ONELAB AND NOT ENABLE_ONELAB2)
   set(SRC
     ${SRC}
-    GmshRemote.cpp
     gmshLocalNetworkClient.cpp
   )
 endif(ENABLE_ONELAB AND NOT ENABLE_ONELAB2)
