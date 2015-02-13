@@ -28,7 +28,7 @@
 //test new algo generation points
 #include "BasisFactory.h"
 
-#if defined(HAVE_ONELAB) && not defined(HAVE_ONELAB2)
+#if defined(HAVE_ONELAB) && !defined(HAVE_ONELAB2)
 #include "gmshLocalNetworkClient.h"
 #endif
 
@@ -198,7 +198,7 @@ int GmshBatch()
             Msg::GetCommSize(), Msg::GetCommSize() > 1 ? "s" : "",
             Msg::GetMaxThreads(), Msg::GetMaxThreads() > 1 ? "s" : "");
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
-#ifdef HAVE_ONELAB2
+#if defined(HAVE_ONELAB2)
   if(CTX::instance()->onelab.listen_port > 0) {
     OnelabServer::instance(0, CTX::instance()->onelab.listen_port);
     OnelabServer::instance()->Run();
@@ -234,7 +234,7 @@ int GmshBatch()
 #endif
 
   if(CTX::instance()->batch == -3){
-#if not defined(HAVE_ONELAB2)
+#if !defined(HAVE_ONELAB2)
     GmshRemote();
 #endif
   }
@@ -350,7 +350,7 @@ int GmshFLTK(int argc, char **argv)
     else
       Msg::Error("Invalid background mesh (no view)");
   }
-#ifndef HAVE_ONELAB2
+#if !defined(HAVE_ONELAB2)
   // listen to external solvers
   if(CTX::instance()->solver.listen){
     gmshLocalNetworkClient *c = new gmshLocalNetworkClient("Listen", "");
