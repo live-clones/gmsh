@@ -899,14 +899,13 @@ void Msg::LoadOnelabClient(const std::string &clientName, const std::string &soc
 {
 #if defined(HAVE_ONELAB)
   onelab::remoteNetworkClient *client = 0;
-  client = new onelab::remoteNetworkClient(clientName,sockName);
+  client = new onelab::remoteNetworkClient(clientName, sockName);
   if(client){
     std::string action, cmd;
     std::vector<onelab::string> ps;
     client->get(ps,clientName+"/Action");
     if(ps.size() && ps[0].getValue().size())
       action.assign(ps[0].getValue());
-
     //cmd.assign("");
     if(!action.compare("compute")){
       std::vector<onelab::string> ps;
@@ -915,14 +914,14 @@ void Msg::LoadOnelabClient(const std::string &clientName, const std::string &soc
         cmd.assign(ps[0].getValue());
 
       if(cmd.size()){
-        Msg::Info("Loader calls <%s>",cmd.c_str());
-	      //client->sendInfo(strcat("Loader calls",cmd.c_str()));
-	      std::cout << "Loader calls " << cmd << std::endl;
-	      SystemCall(cmd.c_str(),true); //true->blocking
+        Msg::Info("Loader calls <%s>", cmd.c_str());
+        //client->sendInfo(strcat("Loader calls",cmd.c_str()));
+        std::cout << "Loader calls " << cmd << std::endl;
+        SystemCall(cmd.c_str(), true); //true->blocking
       }
       else
-	      Msg::Info("No full command line found for <%s>",
-		      clientName.c_str());
+        Msg::Info("No full command line found for <%s>",
+                  clientName.c_str());
     }
     Msg::Info("Stopping client <%s>", clientName.c_str());
     delete client;

@@ -111,8 +111,10 @@ class onelabGmshServer : public GmshServer{
       sockname = tmp.str();
     }
 
-    std::string command = FixWindowsPath(_client->getExecutable());
-    if(command.size()){
+    std::string exe = FixWindowsPath(_client->getExecutable());
+    std::string command;
+    if(exe.size()){
+      command.append("\"" + exe + "\"");
       std::vector<std::string> args = onelabUtils::getCommandLine(_client);
       for(unsigned int i = 0; i < args.size(); i++)
         command.append(" " + args[i]);
