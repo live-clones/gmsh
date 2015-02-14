@@ -396,8 +396,11 @@ int SystemCallExe(const std::string &exe, const std::string &args, bool blocking
   }
 
   std::string command;
-  if(exe.size()) command.append("\"" + exe + "\"");
-  if(command.size() && args.size()) command.append(" " + args);
+  if(exe.size()){
+    command.append("\"" + exe + "\""); // allows exe with white space
+    if(args.size()) command.append(" ");
+  }
+  command.append(args);
 
 #if defined(WIN32) && !defined(__CYGWIN__)
   if(isPython || isOctave){
