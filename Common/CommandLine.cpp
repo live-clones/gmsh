@@ -874,11 +874,11 @@ void GetOptions(int argc, char *argv[])
           Msg::Fatal("Missing format");
       }
       else if(!strcmp(argv[i] + 1, "listen")) {
-#ifndef HAVE_ONELAB2
+        i++;
+#if !defined(HAVE_ONELAB2)
         CTX::instance()->solver.listen = 1;
 #else
         CTX::instance()->batch = 1;
-        i++;
         if(argv[i]) {
           CTX::instance()->onelab.listen_port = atoi(argv[i++]);
         }
