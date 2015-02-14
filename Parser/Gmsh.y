@@ -2703,19 +2703,18 @@ Command :
   | tOnelabRun '(' RecursiveListOfStringExprVar ')' tEND
     {
       int n = List_Nbr($3);
-      if(n < 1 || n > 3){
-        yymsg(0, "OnelabRun takes from one to three arguments");
+      if(n == 1){
+        char *s; List_Read($3, 0, &s);
+        Msg::RunOnelabClient(s);
+        Free(s);
+      }
+      else if(n == 2){
+        char *s, *t; List_Read($3, 0, &s); List_Read($3, 1, &t);
+        Msg::RunOnelabClient(s, t);
+        Free(s); Free(t);
       }
       else{
-        char *s[3] = {"", "", ""};
-        for(int i = 0; i < n; i++)
-          List_Read($3, i, &s[i]);
-        Msg::RunOnelabClient(s[0], s[1], s[2]);
-      }
-      for(int i = 0; i < n; i++){
-        char *s;
-        List_Read($3, i, &s);
-        Free(s);
+        yymsg(0, "OnelabRun takes one or two arguments");
       }
       List_Delete($3);
     }

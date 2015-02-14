@@ -23,12 +23,10 @@ class gmshLocalNetworkClient : public onelab::localNetworkClient{
   // client that launched this one (with GMSH_CONNECT); _father is zero for the
   // master client (the one created by Gmsh).
   gmshLocalNetworkClient *_father;
-  std::string _extraArguments;
  public:
   gmshLocalNetworkClient(const std::string &name, const std::string &executable,
-                         const std::string &args="", const std::string &remoteLogin="")
-    : onelab::localNetworkClient(name, executable, remoteLogin), _father(0),
-      _extraArguments(args)
+                         const std::string &remoteLogin="")
+    : onelab::localNetworkClient(name, executable, remoteLogin), _father(0)
   {
     addClient(this);
   }
@@ -40,7 +38,6 @@ class gmshLocalNetworkClient : public onelab::localNetworkClient{
   {
     return _father;
   }
-  std::string getExtraArguments(){ return _extraArguments; }
   void addClient(gmshLocalNetworkClient *client)
   {
     _clients.push_back(client);

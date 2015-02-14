@@ -1434,7 +1434,6 @@ namespace onelab{
     void setPid(int pid){ _pid = pid; }
     GmshServer *getGmshServer(){ return _gmshServer; }
     void setGmshServer(GmshServer *server){ _gmshServer = server; }
-    virtual std::string getExtraArguments(){ return ""; }
     virtual bool run() = 0;
     virtual bool kill() = 0;
   };
