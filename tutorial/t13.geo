@@ -41,20 +41,17 @@ Volume(1) = {1};
 Physical Surface(1) = {s : s + #ss[]-1};
 Physical Volume(1) = 1;
 
-uniform = 1;
-If(uniform)
-  // uniform mesh size...
-  Mesh.CharacteristicLengthMin = 2.5;
-  Mesh.CharacteristicLengthMax = 2.5;
-EndIf
-If(!uniform)
-  // ... or apply a funny mesh size field, just because we can :-)
-  Field[1] = MathEval;
+// element size imposed by a size field
+Field[1] = MathEval;
+Field[1].F = "2.5";
+Background Field = 1;
+
+DefineConstant[ funny = {0, Choices{0,1}, Name "Apply funny mesh size field?"} ];
+If(funny)
   Field[1].F = "2*Sin((x+y)/5) + 3";
-  Background Field = 1;
 EndIf
 
-Mesh.RemeshAlgorithm = 1; // (0) no split (1) automatic (2) automatic only with metis
-Mesh.RemeshParametrization = 7; // (0) harmonic (1) conformal spectral (7) conformal finite element
+Mesh.RemeshAlgorithm = 1; // automatic
+Mesh.RemeshParametrization = 7; // conformal finite element
 Geometry.HideCompounds = 0; // don't hide the compound entities
 Mesh.Algorithm = 6; // Frontal
