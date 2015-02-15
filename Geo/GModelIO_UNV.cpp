@@ -183,6 +183,10 @@ int GModel::readUNV(const std::string &name)
             physicals[dim][elementary][physical] = "unnamed";
         }
       }
+      else if(record == 2477){ // groups elements
+        Msg::Info("Discarding element/node groups: currently still reading physical "
+                  "tags directly from elements");
+      }
     }
   }
 
@@ -309,8 +313,8 @@ int GModel::writeUNV(const std::string &name, bool saveAll, bool saveGroupsOfNod
         fprintf(fp, "\n");
       }
     }
-    fprintf(fp, "%6d\n", -1);
   }
+  fprintf(fp, "%6d\n", -1);
 
   fclose(fp);
   return 1;
