@@ -175,72 +175,72 @@ double MFaceGFaceDistance(MElement *el, GFace *gf)
 }
 
 
-void distanceFromElementsToGeometry(GModel *gm, int dim, std::map<MElement*,double> &distances){
-
-  std::map<MEdge,double,Less_Edge> dist2Edge;
-  for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it){
-    if ((*it)->geomType() == GEntity::Line)continue;
-    for (unsigned int i=0;i<(*it)->lines.size(); i++){
-      double d = MLineGEdgeDistance ( (*it)->lines[i] , *it );
-      MEdge e =  (*it)->lines[i]->getEdge(0);
-      dist2Edge[e] = d;
-    }
-  }
-
-  //  printf("DISTANCE TO GEOMETRY : 1D PART %22.15E\n",Obj);
-
-  std::map<MFace,double,Less_Face> dist2Face;
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it){
-    if ((*it)->geomType() == GEntity::Plane)continue;
-    for (unsigned int i=0;i<(*it)->triangles.size(); i++){
-      double d = MFaceGFaceDistance ( (*it)->triangles[i] , *it );
-      MFace f =  (*it)->triangles[i]->getFace(0);
-      dist2Face[f] = d;
-    }
-  }
-
-  std::vector<GEntity*> entities;
-  gm->getEntities(entities);
-  for (int iEnt = 0; iEnt < entities.size(); ++iEnt) {
-    GEntity* &entity = entities[iEnt];
-    if (entity->dim() != dim) continue;
-    for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) {       // Detect bad elements
-      MElement *element = entity->getMeshElement(iEl);
-      double d = 0.0;
-      for (int iEdge = 0; iEdge < element->getNumEdges(); ++iEdge) {
-  MEdge e =  element->getEdge(iEdge);
-  std::map<MEdge,double,Less_Edge>::iterator it = dist2Edge.find(e);
-  if(it != dist2Edge.end())d+=it->second;
-      }
-      for (int iFace = 0; iFace < element->getNumFaces(); ++iFace) {
-  MFace f =  element->getFace(iFace);
-  std::map<MFace,double,Less_Face>::iterator it = dist2Face.find(f);
-  if(it != dist2Face.end())d+=it->second;
-      }
-      distances[element] = d;
-    }
-  }
-}
-
-
-double distanceToGeometry(GModel *gm)
-{
-  double Obj = 0.0;
-
-  for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
-    if ((*it)->geomType() == GEntity::Line) continue;
-    for (unsigned int i=0;i<(*it)->lines.size(); i++)
-      Obj = std::max(MLineGEdgeDistance((*it)->lines[i], *it), Obj);
-  }
-  printf("DISTANCE TO GEOMETRY : 1D PART %22.15E\n",Obj);
-
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-    if ((*it)->geomType() == GEntity::Plane) continue;
-    for (unsigned int i=0;i<(*it)->triangles.size(); i++) {
-      Obj = std::max(Obj,MFaceGFaceDistance( (*it)->triangles[i] , *it ));
-    }
-  }
-  printf("DISTANCE TO GEOMETRY : 1D AND 2D PART %22.15E\n",Obj);
-
-  return Obj;
-}
+//void distanceFromElementsToGeometry(GModel *gm, int dim, std::map<MElement*,double> &distances){
+//
+//  std::map<MEdge,double,Less_Edge> dist2Edge;
+//  for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it){
+//    if ((*it)->geomType() == GEntity::Line)continue;
+//    for (unsigned int i=0;i<(*it)->lines.size(); i++){
+//      double d = MLineGEdgeDistance ( (*it)->lines[i] , *it );
+//      MEdge e =  (*it)->lines[i]->getEdge(0);
+//      dist2Edge[e] = d;
+//    }
+//  }
+//
+//  //  printf("DISTANCE TO GEOMETRY : 1D PART %22.15E\n",Obj);
+//
+//  std::map<MFace,double,Less_Face> dist2Face;
+//  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it){
+//    if ((*it)->geomType() == GEntity::Plane)continue;
+//    for (unsigned int i=0;i<(*it)->triangles.size(); i++){
+//      double d = MFaceGFaceDistance ( (*it)->triangles[i] , *it );
+//      MFace f =  (*it)->triangles[i]->getFace(0);
+//      dist2Face[f] = d;
+//    }
+//  }
+//
+//  std::vector<GEntity*> entities;
+//  gm->getEntities(entities);
+//  for (int iEnt = 0; iEnt < entities.size(); ++iEnt) {
+//    GEntity* &entity = entities[iEnt];
+//    if (entity->dim() != dim) continue;
+//    for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) {       // Detect bad elements
+//      MElement *element = entity->getMeshElement(iEl);
+//      double d = 0.0;
+//      for (int iEdge = 0; iEdge < element->getNumEdges(); ++iEdge) {
+//  MEdge e =  element->getEdge(iEdge);
+//  std::map<MEdge,double,Less_Edge>::iterator it = dist2Edge.find(e);
+//  if(it != dist2Edge.end())d+=it->second;
+//      }
+//      for (int iFace = 0; iFace < element->getNumFaces(); ++iFace) {
+//  MFace f =  element->getFace(iFace);
+//  std::map<MFace,double,Less_Face>::iterator it = dist2Face.find(f);
+//  if(it != dist2Face.end())d+=it->second;
+//      }
+//      distances[element] = d;
+//    }
+//  }
+//}
+//
+//
+//double distanceToGeometry(GModel *gm)
+//{
+//  double Obj = 0.0;
+//
+//  for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
+//    if ((*it)->geomType() == GEntity::Line) continue;
+//    for (unsigned int i=0;i<(*it)->lines.size(); i++)
+//      Obj = std::max(MLineGEdgeDistance((*it)->lines[i], *it), Obj);
+//  }
+//  printf("DISTANCE TO GEOMETRY : 1D PART %22.15E\n",Obj);
+//
+//  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+//    if ((*it)->geomType() == GEntity::Plane) continue;
+//    for (unsigned int i=0;i<(*it)->triangles.size(); i++) {
+//      Obj = std::max(Obj,MFaceGFaceDistance( (*it)->triangles[i] , *it ));
+//    }
+//  }
+//  printf("DISTANCE TO GEOMETRY : 1D AND 2D PART %22.15E\n",Obj);
+//
+//  return Obj;
+//}

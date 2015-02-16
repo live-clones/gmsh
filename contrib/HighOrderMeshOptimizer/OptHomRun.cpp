@@ -42,6 +42,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MLine.h"
+#include "CADDistances.h"
 #include "OS.h"
 #include <stack>
 
@@ -586,10 +587,10 @@ static void optimizeOneByOne
 
 #include "OptHomIntegralBoundaryDist.h"
 
-double ComputeDistanceToGeometry (GModel* gm)
-{
-  return distanceToGeometry(gm);
-}
+//double ComputeDistanceToGeometry (GModel* gm)
+//{
+//  return distanceToGeometry(gm);
+//}
 
 
 double ComputeDistanceToGeometry (GEntity *ge , int distanceDefinition, double tolerance)
@@ -691,7 +692,7 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
 #include "GEntity.h"
 //#include "MElement.h"
 //#include "OptHomRun.h"
-#include "OptHomCADDist.h"
+#include "CADDistances.h"
 #include "MeshOptCommon.h"
 #include "MeshOptObjContribFunc.h"
 #include "MeshOptObjContrib.h"
@@ -756,11 +757,13 @@ double HOPatchDefParameters::bndElBadness(MElement *el, GEntity* gEnt) const
   if (optCAD) {
     if (el->getType() == TYPE_LIN) {                                              // 2D
       if (gEnt->geomType() != GEntity::Line)                                      // Straight geometric line -> no distance
-        return MLineGEdgeDistance(static_cast<MLine*>(el), gEnt->cast2Edge());
+        return optCADDistMax -
+               taylorDistanceEdge(static_cast<MLine*>(el), gEnt->cast2Edge());
     }
     else {                                                                        // 3D
       if (gEnt->geomType() != GEntity::Plane)                                     // Straight geometric plance -> no distance
-        return MFaceGFaceDistance(el, gEnt->cast2Face());
+        return optCADDistMax -
+               taylorDistanceFace(el, gEnt->cast2Face());
     }
   }
   return 1.;
@@ -803,15 +806,19 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   minJacBarFunc.setTarget(p.BARRIER_MIN, 1.);
   ObjContribScaledJac<ObjContribFuncBarrierFixMinMovMax> minMaxJacBarFunc(1.);
   minMaxJacBarFunc.setTarget(p.BARRIER_MAX, 1.);
-  ObjContribCADDist<ObjContribFuncSimpleTargetMax> CADDistFunc(p.optCADWeight, p.optCADDistMax);
-  CADDistFunc.setTarget(1.);
+  ObjContribCADDistSq<ObjContribFuncSimpleTargetMax> CADDistFunc(p.optCADWeight, p.optCADDistMax);
+  CADDistFunc.setTarget(0.);
+//  ObjContribCADDistSq<ObjContribFuncBarrierMovMax> CADDistFunc(p.optCADWeight, p.optCADDistMax);
+//  CADDistFunc.setTarget(1., 0.);
+  ObjContribScaledJac<ObjContribFuncBarrierFixMin> minJacFixBarFunc(1.);
+  minJacFixBarFunc.setTarget(p.BARRIER_MIN, 1.);
 
   MeshOptPass minJacPass;
   minJacPass.maxParamUpdates = p.optPassMax;
   minJacPass.maxOptIter = p.itMax;
   minJacPass.contrib.push_back(&nodeDistFunc);
   minJacPass.contrib.push_back(&minJacBarFunc);
-  if (p.optCAD) minJacPass.contrib.push_back(&CADDistFunc);
+//  if (p.optCAD) minJacPass.contrib.push_back(&CADDistFunc);
   par.pass.push_back(minJacPass);
 
   if (p.BARRIER_MAX > 0.) {
@@ -820,8 +827,18 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
     minMaxJacPass.maxOptIter = p.itMax;
     minMaxJacPass.contrib.push_back(&nodeDistFunc);
     minMaxJacPass.contrib.push_back(&minMaxJacBarFunc);
-    if (p.optCAD) minMaxJacPass.contrib.push_back(&CADDistFunc);
+//    if (p.optCAD) minMaxJacPass.contrib.push_back(&CADDistFunc);
     par.pass.push_back(minMaxJacPass);
+  }
+
+  if (p.optCAD) {
+    MeshOptPass maxCADDistPass;
+    maxCADDistPass.maxParamUpdates = p.optPassMax;
+    maxCADDistPass.maxOptIter = p.itMax;
+    maxCADDistPass.contrib.push_back(&nodeDistFunc);
+    maxCADDistPass.contrib.push_back(&minJacFixBarFunc);
+    maxCADDistPass.contrib.push_back(&CADDistFunc);
+    par.pass.push_back(maxCADDistPass);
   }
 
   meshOptimizer(gm, par);

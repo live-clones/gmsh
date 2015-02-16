@@ -86,6 +86,13 @@ bool ObjContribFuncBarrierMovMax::stagnated(double vMin, double vMax)
 }
 
 
+void ObjContribFuncBarrierFixMin::initialize(double vMin, double vMax)
+{
+  const double margin = (vMin == 0.) ? _defaultMargin : MARGINCOEFF*fabs(vMin);
+  _barrier = vMin - margin;
+}
+
+
 void ObjContribFuncBarrierFixMinMovMax::initialize(double vMin, double vMax)
 {
   ObjContribFuncBarrierMovMax::initialize(vMin, vMax);

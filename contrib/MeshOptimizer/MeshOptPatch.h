@@ -95,9 +95,9 @@ public:
   void initMetricMin();
   void metricMinAndGradients(int iEl, std::vector<double> &sJ, std::vector<double> &gSJ);
   bool bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF, double eps);
-  void initScaledCADDist(double refCADDist);
-  void scaledCADDistAndGradients(int iBndEl, double &scaledDist,
-                                 std::vector<double> &gradScaledDist);
+  void initScaledCADDistSq(double refCADDist);
+  void scaledCADDistSqAndGradients(int iBndEl, double &scaledDist,
+                                   std::vector<double> &gradScaledDist);
 
   // Mesh quality
   inline const int &nIJacEl(int iEl) { return _nIJacEl[iEl]; }
@@ -158,7 +158,7 @@ private:
   std::vector<MElement*> _bndEl;                                // Boundary elements
   std::vector<std::vector<int> > _bndEl2V, _bndEl2FV;           // Vertices & corresponding free vertices on the boundary elements
   std::vector<GEntity*> _bndEl2Ent;                             // Geometric entities corresponding to the boundary elements
-  double _invRefCADDist;
+  double _invRefCADDistSq;
   void calcNormalEl2D(int iEl, NormalScaling scaling,
                       fullMatrix<double> &elNorm, bool ideal);
 

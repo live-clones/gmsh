@@ -13,7 +13,7 @@ protected:
   void initialize(double vMin, double vMax) {}
   void updateParameters(double vMin, double vMax) {}
   bool targetReached(double vMin, double vMax) { return true; }
-  bool stagnated(double vMin, double vMax) { return false; };
+  bool stagnated(double vMin, double vMax) { return false; }
   double compute(double v) { return v; }
   double computeDiff(double v) { return 1.; }
 };
@@ -79,6 +79,19 @@ protected:
 };
 
 
+class ObjContribFuncBarrierFixMin : public ObjContribFuncBarrier
+{
+protected:
+  std::string getNamePrefix() { return "BarrierFixMin"; }
+  void initialize(double vMin, double vMax);
+  void updateParameters(double vMin, double vMax) {}
+  bool targetReached(double vMin, double vMax) { return (vMin >= _barrier); }
+  bool stagnated(double vMin, double vMax) { return false; }
+  inline double compute(double v);
+  inline double computeDiff(double v);
+};
+
+
 class ObjContribFuncBarrierFixMinMovMax : public ObjContribFuncBarrierMovMax
 {
 protected:
@@ -131,6 +144,20 @@ inline double ObjContribFuncBarrierMovMax::computeDiff(double v)
 {
   if (v < _barrier) return diffLogBarrier(v, _barrier, _opt);
   else return 1e300;
+}
+
+
+inline double ObjContribFuncBarrierFixMin::compute(double v)
+{
+  if (v > _barrier) return logBarrier(v, _barrier, _opt);
+  else return 1e300;
+}
+
+
+inline double ObjContribFuncBarrierFixMin::computeDiff(double v)
+{
+  if (v > _barrier) return diffLogBarrier(v, _barrier, _opt);
+  else return -1e300;
 }
 
 

@@ -19,6 +19,7 @@
   #include "OptHomElastic.h"
   #include "OptHomFastCurving.h"
   #include "MeshQualityOptimizer.h"
+  #include "CADDistances.h"
 #endif
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
   #include "meshPartition.h"
@@ -59,6 +60,7 @@ namespace std {
 %include "OptHomElastic.h"
 %include "OptHomFastCurving.h"
 %include "MeshQualityOptimizer.h"
+%include "CADDistances.h"
 #endif
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
 %include "meshPartition.h"

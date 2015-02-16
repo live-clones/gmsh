@@ -36,7 +36,8 @@
 #include "BasisFactory.h"
 #include "CondNumBasis.h"
 #include "OptHomIntegralBoundaryDist.h"
-#include "OptHomCADDist.h"
+//#include "OptHomCADDist.h"
+#include "CADDistances.h"
 #include "qualityMeasures.h"
 #include "MeshOptPatch.h"
 
@@ -344,9 +345,9 @@ void Patch::initMetricMin()
 }
 
 
-void Patch::initScaledCADDist(double refCADDist)
+void Patch::initScaledCADDistSq(double refCADDist)
 {
-  _invRefCADDist = 1./refCADDist;
+  _invRefCADDistSq = 1./(refCADDist*refCADDist);
 }
 
 
@@ -565,8 +566,8 @@ bool Patch::bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF, 
 }
 
 
-void Patch::scaledCADDistAndGradients(int iBndEl, double &scaledDist,
-                                      std::vector<double> &gradScaledDist)
+void Patch::scaledCADDistSqAndGradients(int iBndEl, double &scaledDist,
+                                        std::vector<double> &gradScaledDist)
 {
   const std::vector<int> &iV = _bndEl2V[iBndEl], &iFV = _bndEl2FV[iBndEl];
   const int nV = iV.size();
@@ -604,8 +605,7 @@ void Patch::scaledCADDistAndGradients(int iBndEl, double &scaledDist,
       tanCAD[i] = ge->firstDer(tCAD);                                                     // Compute tangent at vertex
       tanCAD[i].normalize();                                                              // Normalize tangent
     }
-    const double edLength = _xyz[iV[0]].distance(_xyz[iV[1]]);                            // Get edge length
-    scaledDist = _invRefCADDist * distToCAD1D(gb, nodesXYZ, tanCAD, edLength);
+    scaledDist = _invRefCADDistSq * taylorDistanceSq1D(gb, nodesXYZ, tanCAD);
     for (int i=0; i<nV; i++) {
       const int &iFVi = iFV[i];
       if (iFVi < 0) continue;                                                             // Skip if not free vertex
@@ -616,7 +616,8 @@ void Patch::scaledCADDistAndGradients(int iBndEl, double &scaledDist,
       nodesXYZ(i, 0) = gp.x(); nodesXYZ(i, 1) = gp.y(); nodesXYZ(i, 2) = gp.z();
       tanCAD[i] = ge->firstDer(tCAD);                                                     // New tangent to CAD at perturbed node
       tanCAD[i].normalize();                                                              // Normalize new tangent
-      double sDistDiff = _invRefCADDist * distToCAD1D(gb, nodesXYZ, tanCAD, edLength);    // Compute distance with perturbed node
+      const double sDistDiff = _invRefCADDistSq *
+                               taylorDistanceSq1D(gb, nodesXYZ, tanCAD);                  // Compute distance with perturbed node
       gradScaledDist[i] = (sDistDiff-scaledDist) / eps;                                   // Compute gradient
       nodesXYZ(i, 0) = xS; nodesXYZ(i, 1) = yS; nodesXYZ(i, 2) = zS;                      // Restore coord. of perturbed node
       tanCAD[i] = tanCADS;                                                                // Restore tan. to CAD at perturbed node
@@ -639,7 +640,7 @@ void Patch::scaledCADDistAndGradients(int iBndEl, double &scaledDist,
       normCAD[i] = gf->normal(pCAD);                                                      // Compute normal at vertex
       normCAD[i].normalize();                                                             // Normalize normal
     }
-    scaledDist = _invRefCADDist * distToCAD2D(gb, nodesXYZ, normCAD);
+    scaledDist = _invRefCADDistSq * taylorDistanceSq2D(gb, nodesXYZ, normCAD);
     for (int i=0; i<nV; i++) {
       const int &iFVi = iFV[i];
       if (iFVi < 0) continue;                                                             // Skip if not free vertex
@@ -650,14 +651,16 @@ void Patch::scaledCADDistAndGradients(int iBndEl, double &scaledDist,
       nodesXYZ(i, 0) = gp0.x(); nodesXYZ(i, 1) = gp0.y(); nodesXYZ(i, 2) = gp0.z();
       normCAD[i] = gf->normal(pCAD0);                                                     // New normal to CAD at perturbed node in 1st dir.
       normCAD[i].normalize();                                                             // Normalize new normal
-      double sDistDiff0 = _invRefCADDist * distToCAD2D(gb, nodesXYZ, normCAD);            // Compute distance with perturbed node in 1st dir.
+      const double sDistDiff0 = _invRefCADDistSq *
+                                taylorDistanceSq2D(gb, nodesXYZ, normCAD);                // Compute distance with perturbed node in 1st dir.
       gradScaledDist[2*i] = (sDistDiff0-scaledDist) / eps0;                               // Compute gradient in 1st dir.
       const SPoint2 pCAD1 = SPoint2(_uvw[iFVi].x(), _uvw[iFVi].y()+eps1);                 // New param. coord. of perturbed node in 2nd dir.
       GPoint gp1 = gf->point(pCAD1);                                                      // New coord. of perturbed node in 2nd dir.
       nodesXYZ(i, 0) = gp1.x(); nodesXYZ(i, 1) = gp1.y(); nodesXYZ(i, 2) = gp1.z();
       normCAD[i] = gf->normal(pCAD1);                                                     // New normal to CAD at perturbed node in 2nd dir.
       normCAD[i].normalize();                                                             // Normalize new normal
-      double sDistDiff1 = _invRefCADDist * distToCAD2D(gb, nodesXYZ, normCAD);            // Compute distance with perturbed node in 2nd dir.
+      double sDistDiff1 = _invRefCADDistSq *
+                          taylorDistanceSq2D(gb, nodesXYZ, normCAD);                      // Compute distance with perturbed node in 2nd dir.
       gradScaledDist[2*i+1] = (sDistDiff1-scaledDist) / eps0;                             // Compute gradient in 2nd dir.
       nodesXYZ(i, 0) = xS; nodesXYZ(i, 1) = yS; nodesXYZ(i, 2) = zS;                      // Restore coord. of perturbed node
       normCAD[i] = tanCADS;                                                               // Restore tan. to CAD at perturbed node

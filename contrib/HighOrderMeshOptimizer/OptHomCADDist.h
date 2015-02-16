@@ -24,8 +24,8 @@ double distToCAD2D(const GradientBasis *gb, const fullMatrix<double> &nodesXYZ,
 double MLineGEdgeDistance (MLine *l, GEdge *ge);
 double MFaceGFaceDistance(MElement *el, GFace *gf);
 
-void distanceFromElementsToGeometry(GModel *gm, int dim, std::map<MElement*, double> &distances);
-double distanceToGeometry(GModel *gm);
+//void distanceFromElementsToGeometry(GModel *gm, int dim, std::map<MElement*, double> &distances);
+//double distanceToGeometry(GModel *gm);
 
 
 #endif /* OPTHOMCADDIST_H_ */

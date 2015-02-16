@@ -7,11 +7,11 @@
 
 
 template<class FuncType>
-class ObjContribCADDist : public ObjContrib, public FuncType
+class ObjContribCADDistSq : public ObjContrib, public FuncType
 {
 public:
-  ObjContribCADDist(double weight, double refDist);
-  virtual ~ObjContribCADDist() {}
+  ObjContribCADDistSq(double weight, double refDist);
+  virtual ~ObjContribCADDistSq() {}
   virtual ObjContrib *copy() const;
   virtual void initialize(Patch *mesh);
   virtual bool fail() { return false; }
@@ -29,7 +29,7 @@ protected:
 
 
 template<class FuncType>
-ObjContribCADDist<FuncType>::ObjContribCADDist(double weight, double refDist) :
+ObjContribCADDistSq<FuncType>::ObjContribCADDistSq(double weight, double refDist) :
   ObjContrib("CADDist", FuncType::getNamePrefix()+"CADDist"),
   _mesh(0), _weight(weight), _refDist(refDist)
 {
@@ -37,24 +37,24 @@ ObjContribCADDist<FuncType>::ObjContribCADDist(double weight, double refDist) :
 
 
 template<class FuncType>
-ObjContrib *ObjContribCADDist<FuncType>::copy() const
+ObjContrib *ObjContribCADDistSq<FuncType>::copy() const
 {
-  return new ObjContribCADDist<FuncType>(*this);
+  return new ObjContribCADDistSq<FuncType>(*this);
 }
 
 
 template<class FuncType>
-void ObjContribCADDist<FuncType>::initialize(Patch *mesh)
+void ObjContribCADDistSq<FuncType>::initialize(Patch *mesh)
 {
   _mesh = mesh;
-  _mesh->initScaledCADDist(_refDist);
+  _mesh->initScaledCADDistSq(_refDist);
   updateMinMax();
   FuncType::initialize(_min, _max);
 }
 
 
 template<class FuncType>
-bool ObjContribCADDist<FuncType>::addContrib(double &Obj, alglib::real_1d_array &gradObj)
+bool ObjContribCADDistSq<FuncType>::addContrib(double &Obj, alglib::real_1d_array &gradObj)
 {
   _min = BIGVAL;
   _max = -BIGVAL;
@@ -65,7 +65,7 @@ bool ObjContribCADDist<FuncType>::addContrib(double &Obj, alglib::real_1d_array 
     const int nVEl = _mesh->nNodBndEl(iBndEl);
     double f;
     std::vector<double> gradF(nVEl*bndDim);
-    _mesh->scaledCADDistAndGradients(iBndEl, f, gradF);
+    _mesh->scaledCADDistSqAndGradients(iBndEl, f, gradF);
     _min = std::min(_min, f);
     _max = std::max(_max, f);
     Obj += FuncType::compute(f) * _weight;
@@ -87,7 +87,7 @@ bool ObjContribCADDist<FuncType>::addContrib(double &Obj, alglib::real_1d_array 
 
 
 template<class FuncType>
-void ObjContribCADDist<FuncType>::updateMinMax()
+void ObjContribCADDistSq<FuncType>::updateMinMax()
 {
   _min = BIGVAL;
   _max = -BIGVAL;
@@ -98,7 +98,7 @@ void ObjContribCADDist<FuncType>::updateMinMax()
     const int nVEl = _mesh->nNodBndEl(iBndEl);
     double f;
     std::vector<double> dumGradF(nVEl*bndDim);
-    _mesh->scaledCADDistAndGradients(iBndEl, f, dumGradF);
+    _mesh->scaledCADDistSqAndGradients(iBndEl, f, dumGradF);
     _min = std::min(_min, f);
     _max = std::max(_max, f);
   }
