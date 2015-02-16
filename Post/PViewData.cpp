@@ -189,54 +189,54 @@ bool PViewData::combineSpace(nameData &nd)
 
 bool PViewData::searchScalar(double x, double y, double z, double *values,
                              int step, double *size, int qn,
-                             double *qx, double *qy, double *qz)
+                             double *qx, double *qy, double *qz, bool grad)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchScalar(x, y, z, values, step, size,
-                               qn, qx, qy, qz);
+                               qn, qx, qy, qz, grad);
 }
 
 bool PViewData::searchScalarWithTol(double x, double y, double z, double *values,
                                     int step, double *size, double tol, int qn,
-                                    double *qx, double *qy, double *qz)
+                                    double *qx, double *qy, double *qz, bool grad)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchScalarWithTol(x, y, z, values, step, size, tol,
-                                      qn, qx, qy, qz);
+                                      qn, qx, qy, qz, grad);
 }
 
 bool PViewData::searchVector(double x, double y, double z, double *values,
                              int step, double *size, int qn,
-                             double *qx, double *qy, double *qz)
+                             double *qx, double *qy, double *qz, bool grad)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchVector(x, y, z, values, step, size,
-                               qn, qx, qy, qz);
+                               qn, qx, qy, qz, grad);
 }
 
 bool PViewData::searchVectorWithTol(double x, double y, double z, double *values,
                                     int step, double *size, double tol, int qn,
-                                    double *qx, double *qy, double *qz)
+                                    double *qx, double *qy, double *qz, bool grad)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchVectorWithTol(x, y, z, values, step, size, tol,
-                                      qn, qx, qy, qz);
+                                      qn, qx, qy, qz, grad);
 }
 
 bool PViewData::searchTensor(double x, double y, double z, double *values,
                              int step, double *size, int qn,
-                             double *qx, double *qy, double *qz)
+                             double *qx, double *qy, double *qz, bool grad)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchTensor(x, y, z, values, step, size,
-                               qn, qx, qy, qz);
+                               qn, qx, qy, qz, grad);
 }
 
 bool PViewData::searchTensorWithTol(double x, double y, double z, double *values,
                                     int step, double *size, double tol, int qn,
-                                    double *qx, double *qy, double *qz)
+                                    double *qx, double *qy, double *qz, bool grad)
 {
   if(!_octree) _octree = new OctreePost(this);
   return _octree->searchTensorWithTol(x, y, z, values, step, size, tol,
-                                      qn, qx, qy, qz);
+                                      qn, qx, qy, qz, grad);
 }

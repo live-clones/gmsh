@@ -254,22 +254,22 @@ class PViewData {
   // to a different value than -1.
   bool searchScalar(double x, double y, double z, double *values,
                     int step=-1, double *size=0, int qn=0,
-                    double *qx=0, double *qy=0, double *qz=0);
+                    double *qx=0, double *qy=0, double *qz=0, bool grad=false);
   bool searchScalarWithTol(double x, double y, double z, double *values,
                            int step=-1, double *size=0, double tol=1.e-2, int qn=0,
-                           double *qx=0, double *qy=0, double *qz=0);
+                           double *qx=0, double *qy=0, double *qz=0, bool grad=false);
   bool searchVector(double x, double y, double z, double *values,
                     int step=-1, double *size=0, int qn=0,
-                    double *qx=0, double *qy=0, double *qz=0);
+                    double *qx=0, double *qy=0, double *qz=0, bool grad=false);
   bool searchVectorWithTol(double x, double y, double z, double *values,
                            int step=-1, double *size=0, double tol=1.e-2, int qn=0,
-                           double *qx=0, double *qy=0, double *qz=0);
+                           double *qx=0, double *qy=0, double *qz=0, bool grad=false);
   bool searchTensor(double x, double y, double z, double *values,
                     int step=-1, double *size=0, int qn=0,
-                    double *qx=0, double *qy=0, double *qz=0);
+                    double *qx=0, double *qy=0, double *qz=0, bool grad=false);
   bool searchTensorWithTol(double x, double y, double z, double *values,
                            int step=-1, double *size=0, double tol=1.e-2, int qn=0,
-                           double *qx=0, double *qy=0, double *qz=0);
+                           double *qx=0, double *qy=0, double *qz=0, bool grad=false);
 
   // I/O routines
   virtual bool writeSTL(const std::string &fileName);
