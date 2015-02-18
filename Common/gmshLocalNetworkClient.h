@@ -25,8 +25,10 @@ class gmshLocalNetworkClient : public onelab::localNetworkClient{
   gmshLocalNetworkClient *_father;
  public:
   gmshLocalNetworkClient(const std::string &name, const std::string &executable,
-                         const std::string &remoteLogin="")
-    : onelab::localNetworkClient(name, executable, remoteLogin), _father(0)
+                         const std::string &remoteLogin="",
+                         bool treatExecutableAsFullCommandLine=false)
+    : onelab::localNetworkClient(name, executable, remoteLogin,
+                                 treatExecutableAsFullCommandLine), _father(0)
   {
     addClient(this);
   }

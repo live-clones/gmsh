@@ -395,7 +395,7 @@ class GmshServer : public GmshSocket{
       }
     }
 
-    if(exe && strlen(exe) && args && strlen(args)){
+    if((exe && strlen(exe)) || (args && strlen(args))){
       char s[1024];
       sprintf(s, args, _sockname.c_str());
       NonBlockingSystemCall(exe, s); // starts the solver

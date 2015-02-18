@@ -114,9 +114,15 @@ class onelabGmshServer : public GmshServer{
     std::string exe = FixWindowsPath(_client->getExecutable());
     std::string args;
     if(exe.size()){
-      std::vector<std::string> cl = onelabUtils::getCommandLine(_client);
-      for(unsigned int i = 0; i < cl.size(); i++)
-        args.append(" " + cl[i]);
+      if(_client->treatExecutableAsFullCommandLine()){
+        args = exe;
+        exe = "";
+      }
+      else{
+        std::vector<std::string> cl = onelabUtils::getCommandLine(_client);
+        for(unsigned int i = 0; i < cl.size(); i++)
+          args.append(" " + cl[i]);
+      }
       args.append(" " + _client->getSocketSwitch() +
                   " \"" + _client->getName() + "\" %s");
     }
@@ -368,10 +374,10 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     {
       std::string::size_type first = 0;
       std::string clientName = onelab::parameter::getNextToken(message, first);
-      std::string exe = onelab::parameter::getNextToken(message, first);
+      std::string command = onelab::parameter::getNextToken(message, first);
       if (!onelab::server::instance()->isRegistered(clientName)){
 	gmshLocalNetworkClient* subClient =
-	  new gmshLocalNetworkClient(clientName, exe);
+	  new gmshLocalNetworkClient(clientName, command, "", true);
 	onelabGmshServer *server = new onelabGmshServer(subClient);
 	subClient->setPid(0);
 	int sock = server->LaunchClient();

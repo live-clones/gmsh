@@ -1409,6 +1409,10 @@ namespace onelab{
   private:
     // executable of the client (including filesystem path, if necessary)
     std::string _executable;
+    // treat the executable name as a full command line (will prevent the
+    // escaping of the exe name, and will assume that the command line has been
+    // correcly escaped)
+    bool _treatExecutableAsFullCommandLine;
     // command to login to a remote host (if necessary)
     std::string _remoteLogin;
     // command line option to specify socket
@@ -1419,14 +1423,21 @@ namespace onelab{
     GmshServer *_gmshServer;
   public:
     localNetworkClient(const std::string &name, const std::string &executable,
-                       const std::string &remoteLogin="")
-      : localClient(name), _executable(executable), _remoteLogin(remoteLogin),
-        _socketSwitch("-onelab"), _pid(-1), _gmshServer(0) {}
+                       const std::string &remoteLogin="",
+                       bool treatExecutableAsFullCommandLine=false)
+      : localClient(name), _executable(executable),
+        _treatExecutableAsFullCommandLine(treatExecutableAsFullCommandLine),
+        _remoteLogin(remoteLogin), _socketSwitch("-onelab"), _pid(-1),
+        _gmshServer(0) {}
     virtual ~localNetworkClient(){}
     virtual bool isNetworkClient(){ return true; }
     const std::string &getExecutable(){ return _executable; }
     void setExecutable(const std::string &s){ _executable = s; }
     const std::string &getRemoteLogin(){ return _remoteLogin; }
+    const bool treatExecutableAsFullCommandLine()
+    {
+      return _treatExecutableAsFullCommandLine;
+    }
     void setRemoteLogin(const std::string &s){ _remoteLogin = s; }
     const std::string &getSocketSwitch(){ return _socketSwitch; }
     void setSocketSwitch(const std::string &s){ _socketSwitch = s; }
