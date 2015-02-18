@@ -1305,6 +1305,8 @@ void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
 void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,
                          int physical)
 {
+  if(physical < 0) reverse();
+
   for(int i = 0; i < getNumVertices(); i++)
     if (getTypeForMSH() == MSH_TET_10 && i == 8)
       fprintf(fp, " %d", getVertex(9)->getIndex());
@@ -1313,18 +1315,24 @@ void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,
     else
       fprintf(fp, " %d", getVertex(i)->getIndex());
   fprintf(fp, " %d\n", (elementTagType == 3) ? _partition :
-          (elementTagType == 2) ? physical : elementary);
+          (elementTagType == 2) ? abs(physical) : elementary);
+
+  if(physical < 0) reverse();
 }
 
 void MElement::writeIR3(FILE *fp, int elementTagType, int num, int elementary,
                         int physical)
 {
+  if(physical < 0) reverse();
+
   int numVert = getNumVertices();
   fprintf(fp, "%d %d %d", num, (elementTagType == 3) ? _partition :
-          (elementTagType == 2) ? physical : elementary, numVert);
+          (elementTagType == 2) ? abs(physical) : elementary, numVert);
   for(int i = 0; i < numVert; i++)
     fprintf(fp, " %d", getVertex(i)->getIndex());
   fprintf(fp, "\n");
+
+  if(physical < 0) reverse();
 }
 
 void MElement::writeBDF(FILE *fp, int format, int elementTagType, int elementary,
@@ -1337,8 +1345,10 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType, int elementary
   const char *cont[4] = {"E", "F", "G", "H"};
   int ncont = 0;
 
+  if(physical < 0) reverse();
+
   int tag =  (elementTagType == 3) ? _partition : (elementTagType == 2) ?
-    physical : elementary;
+    abs(physical) : elementary;
 
   if(format == 0){ // free field format
     fprintf(fp, "%s,%d,%d", str, _num, tag);
@@ -1366,23 +1376,29 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType, int elementary
       fprintf(fp, "%-8s%-8s%-8s", "0.", "0.", "0.");
     fprintf(fp, "\n");
   }
+
+  if(physical < 0) reverse();
 }
 
-void MElement::writeDIFF(FILE *fp, int num, bool binary, int physical_property)
+void MElement::writeDIFF(FILE *fp, int num, bool binary, int physical)
 {
   const char *str = getStringForDIFF();
   if(!str) return;
+
+  if(physical < 0) reverse();
 
   int n = getNumVertices();
   if(binary){
     // TODO
   }
   else{
-    fprintf(fp, "%d %s %d ", num, str, physical_property);
+    fprintf(fp, "%d %s %d ", num, str, abs(physical));
     for(int i = 0; i < n; i++)
       fprintf(fp, " %d", getVertexDIFF(i)->getIndex());
     fprintf(fp, "\n");
   }
+
+  if(physical < 0) reverse();
 }
 
 void MElement::writeINP(FILE *fp, int num)
