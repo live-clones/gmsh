@@ -58,7 +58,7 @@ def path(dirname, inp):
 class _parameter() :
   _membersbase = [
     ('name', 'string'), ('label', 'string', ''), ('help', 'string', ''),
-    ('neverChanged', 'bool', 0), ('visible', 'bool', 1), ('readOnly', 'bool', 0), 
+    ('readOnly', 'bool', 0), ('neverChanged', 'bool', 0), ('visible', 'bool', 1), 
     ('attributes', ('dict', 'string', 'string'), {}),
     ('clients', ('dict', 'string', 'bool'), {})
   ]
@@ -250,7 +250,12 @@ class client :
         return param
       else:
         return None
-    
+
+  def _defineParameter(self, p) :
+    if not self.socket :
+      return p.value
+    self._send(self._ONELAB_UPDATE, p.tobytes())
+    return p.value
 
   def _getParameter(self, param, warn_if_not_found=True) :
     def extract_attr(b):
@@ -269,6 +274,18 @@ class client :
         param.frombytes(msg)
       elif ptype == 0x0A and warn_if_not_found:
         print('Unknown parameter %s' %(param.name))
+
+  def defineNumber(self, name, **param):
+    if 'labels' in param :
+      param["choices"] = param["labels"].keys()
+    p = _parameter('number', name=name, **param)
+    value = self._defineParameter(p)
+    return value
+
+  def defineString(self, name, **param):
+    p = _parameter('string', name=name, **param)
+    value = self._defineParameter(p)
+    return value
 
   def getString(self, name, warn_if_not_found=True):
     param = _parameter('string', name=name)
@@ -312,6 +329,11 @@ class client :
     self._sendMessage(msg+'\0', 5)
   def sendDebug(self, msg) :
     self._sendMessage(msg+'\0', 99)
+
+  def mergeFile(self, filename) :
+    if not self.socket or not filename :
+      return
+    self._send(self._ONELAB_UPDATE, struct.pack("!HH", 0x0D, len(filename))+filename)
 
   def waitOnSubClient(self, name):
     if not self.socket :
@@ -362,7 +384,10 @@ class client :
         self.addr = sys.argv[i + 2]
         self._createSocket()
         self._send(self._ONELAB_START, struct.pack('!HH', 0x04, len(self.name))+self.name)
-        self._receive() # wait for the server to reply
+        (t, msg) = self._receive() # wait for the server to reply
+        if t != self._ONELAB_START:
+          print("unable to connect the server")
+          exit(1)
         self._clearbuffer()
     self.action = "compute" # default (subclients have no client.Action defined)
     self.action = self.getString(self.name + '/Action', False)
@@ -383,6 +408,23 @@ class client :
       self._receive()
       self.socket.close()
       self.socket = None
+
+  def getPath(self, inp='') :
+    return path(self.wdir,inp)
+
+  def fileExists(self, p) :
+    return os.path.exists(p)
+
+  def checkFile(self, p) :
+    if not self.fileExists(p):
+      self.sendError('path error: %s' %(p))
+      exit(0) 
+    return True
+
+  def checkPath(self, inp='') :
+    p = path(self.wdir,inp)
+    self.checkFile(p)
+    return p
     
   def __del__(self):
     self.finalize()
