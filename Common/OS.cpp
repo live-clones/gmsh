@@ -380,7 +380,8 @@ int KillProcess(int pid)
   return 1;
 }
 
-int SystemCallExe(const std::string &exe, const std::string &args, bool blocking)
+int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
+                  bool blocking)
 {
   // do we try to run a .py script, .m script or an .exe?
   std::vector<std::string> split = SplitFileName(exe);
@@ -398,17 +399,17 @@ int SystemCallExe(const std::string &exe, const std::string &args, bool blocking
   std::string command;
   if(exe.size()){
     command.append("\"" + exe + "\""); // allows exe with white space
-    if(args.size()) command.append(" ");
+    if(argsOrCommand.size()) command.append(" ");
   }
-  command.append(args);
+  command.append(argsOrCommand);
 
 #if defined(WIN32) && !defined(__CYGWIN__)
   if(isPython || isOctave){
     Msg::Info("Shell opening '%s' with arguments '%s'", exe.c_str(),
-              args.c_str());
+              argsOrCommand.c_str());
     setwbuf(0, "open");
     setwbuf(1, exe.c_str());
-    setwbuf(2, args.c_str());
+    setwbuf(2, argsOrCommand.c_str());
     ShellExecuteW(NULL, wbuf[0], wbuf[1], wbuf[2], NULL, 0);
   }
   else{

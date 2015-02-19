@@ -1183,7 +1183,7 @@ void Msg::ImportPhysicalsAsOnelabRegions()
 #endif
 }
 
-void Msg::RunOnelabClient(const std::string &name, const std::string &exe)
+void Msg::RunOnelabClient(const std::string &name, const std::string &command)
 {
 #if defined(HAVE_ONELAB) && !defined(HAVE_ONELAB2)
   onelab::server::citer it = onelab::server::instance()->findClient(name);
@@ -1192,7 +1192,7 @@ void Msg::RunOnelabClient(const std::string &name, const std::string &exe)
     client = it->second;
   }
   else{
-    if(exe.empty()){
+    if(command.empty()){
       Msg::Error("Unknown ONELAB client `%s'", name.c_str());
       return;
     }
@@ -1202,8 +1202,8 @@ void Msg::RunOnelabClient(const std::string &name, const std::string &exe)
     onelab::server::instance()->set(o);
 #if defined(HAVE_FLTK)
     Msg::Info("Creating new ONELAB client `%s' (%s)", name.c_str(),
-              exe.c_str());
-    client = new gmshLocalNetworkClient(name, exe);
+              command.c_str());
+    client = new gmshLocalNetworkClient(name, command, "", true);
     client->run();
 #else
     Msg::Error("Cannot create ONELAB client without FLTK");

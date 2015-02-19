@@ -25,7 +25,8 @@ int KillProcess(int pid);
 int CreateSingleDir(const std::string &dirName);
 void CreatePath(const std::string &fullPath);
 int SystemCall(const std::string &command, bool blocking=false);
-int SystemCallExe(const std::string &exe, const std::string &args, bool blocking=false);
+int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
+                  bool blocking=false);
 std::string GetCurrentWorkdir();
 void RedirectIOToConsole();
 FILE *Fopen(const char* f, const char *mode);
