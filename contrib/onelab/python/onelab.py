@@ -30,17 +30,11 @@ Please report all bugs and problems to the public mailing list
 import socket, struct, os, sys, subprocess, time
 _VERSION = '1.1'
 
-def file_exist(filename):
-  try:
-    with open(filename) as f:
-      return True
-  except IOError:
-    return False
-
 def path(dirname, inp):
   # dirname is a directory, can be empty
   # inp is an optional file or subdirectory name
   # returns the path to 'inp' in the same directory as 'ref' 
+  dirname = os.path.dirname(dirname)
   if not inp: 
     return dirname
   if inp[0] == '/' or inp[0] == '\\' or (len(inp) > 2 and inp[1] == '\:'):
@@ -505,7 +499,7 @@ class client :
       print(call.stderr.read())
 
   def getPath(self, inp='') :
-    return path(self.wdir,inp)
+    return path(self.wdir, inp)
 
   def fileExists(self, p) :
     return os.path.exists(p)
@@ -539,8 +533,8 @@ class client :
     return solFiles
 
   def needsCompute(self, client) :
-# Avoid recomputation when a database with restored solutions has just been loaded
-# Otherwise, stop using restored solutions when the client elmer has changed
+    # Avoid recomputation when a database with restored solutions has just been loaded
+    # Otherwise, stop using restored solutions when the client elmer has changed
     if self.useRestoredSolution() == 2: # we have just loaded a database
       self.setRestoredSolution(1)
       self.setChanged(client, 'false') # do not compute
@@ -568,7 +562,7 @@ class client :
                      choices=list, visible=1)
 
 # tool to extract the (i, j)th element in an array file
-#from rlcompleter import readline
+# from rlcompleter import readline
 def extract(filename,i,j):
     input = open(filename,'r')
     all_lines = input.readlines()
