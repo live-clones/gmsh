@@ -610,7 +610,7 @@ void JacobianBasis::getJacobianGeneral(int nJacNodes,
 
 // Calculate (signed) Jacobian and its gradients for one element, with normal vectors to straight element
 // for regularization. Evaluation points depend on the given matrices for shape function gradients.
-inline void JacobianBasis::getSignedJacAndGradientsGeneral(int nJacNodes,
+void JacobianBasis::getSignedJacAndGradientsGeneral(int nJacNodes,
                                                            const fullMatrix<double> &gSMatX,
                                                            const fullMatrix<double> &gSMatY,
                                                            const fullMatrix<double> &gSMatZ,
