@@ -187,7 +187,7 @@ const char *GetEnvironmentVar(const char *var)
 #endif
 }
 
-const void SetEnvironmentVar(const char *var, const char *val)
+void SetEnvironmentVar(const char *var, const char *val)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
   // should probably use Unicode version here
