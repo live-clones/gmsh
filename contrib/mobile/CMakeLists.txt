@@ -155,10 +155,11 @@ if(ENABLE_BUILD_ANDROID)
   set_target_properties(androidOnelab PROPERTIES OUTPUT_NAME Onelab)
   target_link_libraries(androidOnelab ${LIBRARY_DEPS}  ${EXTERNAL_LIBRARIES})
   find_library(PETSC_LIB petsc PATH_SUFFIXES lib)
+  find_library(SLEPC_LIB slepc PATH_SUFFIXES lib)
   find_library(BLAS_LIB f2cblas PATH_SUFFIXES lib)
   find_library(LAPACK_LIB f2clapack PATH_SUFFIXES lib)
   set(ONELAB_LIB ${CMAKE_CURRENT_BINARY_DIR}/libs/libOnelab.so)
-  if(PETSC_LIB AND BLAS_LIB AND LAPACK_LIB AND ONELAB_LIB)
+  if(PETSC_LIB AND SLEPC_LIB AND BLAS_LIB AND LAPACK_LIB AND ONELAB_LIB)
     add_custom_target(androidProject
       COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/Onelab/
       COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/models/
@@ -168,6 +169,7 @@ if(ENABLE_BUILD_ANDROID)
       COMMAND ${CMAKE_COMMAND} -E copy ${GETDP_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
       COMMAND ${CMAKE_COMMAND} -E copy ${ONELAB_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
       COMMAND ${CMAKE_COMMAND} -E copy ${PETSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
+      COMMAND ${CMAKE_COMMAND} -E copy ${SLEPC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
       COMMAND ${CMAKE_COMMAND} -E copy ${LAPACK_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
       COMMAND ${CMAKE_COMMAND} -E copy ${BLAS_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
     )
@@ -187,7 +189,7 @@ if(ENABLE_BUILD_ANDROID)
   message(STATUS " * Finally you can build the app with ant 'ant debug'")
   message(STATUS "")
  
-  else(PETSC_LIB AND BLAS_LIB AND LAPACK_LIB AND ONELAB_LIB)
-    message(STATUS "Cannot make Android project without PETSc or without BLAS or without LAPACK or without \"Onelab library\"")
-  endif(PETSC_LIB AND BLAS_LIB AND LAPACK_LIB AND ONELAB_LIB)
+  else(PETSC_LIB AND SLEPC_LIB AND BLAS_LIB AND LAPACK_LIB AND ONELAB_LIB)
+    message(STATUS "Cannot make Android project without PETSc or SLEPc or without BLAS or without LAPACK or without \"Onelab library\"")
+  endif(PETSC_LIB AND SLEPC_LIB AND BLAS_LIB AND LAPACK_LIB AND ONELAB_LIB)
 endif(ENABLE_BUILD_ANDROID)
