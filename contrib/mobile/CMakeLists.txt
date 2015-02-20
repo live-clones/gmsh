@@ -97,10 +97,12 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${PETSC_FRAMEWORK}/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/petsc.framework/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${SLEPC_FRAMEWORK}/ ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/frameworks/slepc.framework/
   )
+  add_custom_command(TARGET xcodeProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove_directory
+                    ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/files)
   foreach(DIR ${BENCHMARKS})
     get_filename_component(DIRNAME ${DIR} NAME)
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/files/${DIRNAME})
+                       ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/files/${DIRNAME})
   endforeach(DIR)
 
   message(STATUS "")
@@ -173,6 +175,10 @@ if(ENABLE_BUILD_ANDROID)
       COMMAND ${CMAKE_COMMAND} -E copy ${LAPACK_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
       COMMAND ${CMAKE_COMMAND} -E copy ${BLAS_LIB} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/libs/armeabi-v7a/
     )
+    add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove_directory
+                      ${CMAKE_CURRENT_BINARY_DIR}/models)
+    add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove
+                      ${CMAKE_CURRENT_BINARY_DIR}/Onelab/res/raw/models.zip)
     foreach(DIR ${BENCHMARKS})
       get_filename_component(DIRNAME ${DIR} NAME)
       add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
