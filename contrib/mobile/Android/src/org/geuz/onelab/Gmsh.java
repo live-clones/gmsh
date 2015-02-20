@@ -22,12 +22,12 @@ public class Gmsh implements Parcelable {
     private native void eventHandler(long ptr, int event, float x, float y);
     public native String[] getParams(); // return the parameters for onelab
     public native int setParam(String type, String name, String value); // change a parameters
-    public native int setStringOption(String category, String name, String value);
-    public native int setDoubleOption(String category, String name, double value);
-    public native int setIntegerOption(String category, String name, int value);
-    public native String getStringOption(String category, String name);
-    public native double getDoubleOption(String category, String name);
-    public native int getIntegerOption(String category, String name);
+    public native int setStringOption(String category, String name, String value, int index);
+    public native int setDoubleOption(String category, String name, double value, int index);
+    public native int setIntegerOption(String category, String name, int value, int index);
+    public native String getStringOption(String category, String name, int index);
+    public native double getDoubleOption(String category, String name, int index);
+    public native int getIntegerOption(String category, String name, int index);
     public native String[] getPView(); // get a list of PViews
     public native void setPView(int position, int intervalsType,int visible,int nbIso, float raisez); // Change options for a PView
     public native int onelabCB(String action); // Call onelab

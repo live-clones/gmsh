@@ -162,7 +162,7 @@ extern "C" {
     ((drawContext *)jptr)->eventHandler(jevent, jx, jy);
   }
   JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setStringOption
-  (JNIEnv *env, jobject obj, jstring c, jstring n, jstring v)
+  (JNIEnv *env, jobject obj, jstring c, jstring n, jstring v, jint idx)
   {
     const char* tmp;
     tmp = env->GetStringUTFChars(v, NULL);
@@ -174,10 +174,10 @@ extern "C" {
     tmp = env->GetStringUTFChars(c, NULL);
     std::string category(tmp, strlen(tmp));
     env->ReleaseStringUTFChars(c, tmp);
-    GmshSetOption(category, name, value, 0);
+    GmshSetOption(category, name, value, (unsigned int)idx);
   }
   JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setDoubleOption
-  (JNIEnv *env, jobject obj, jstring c, jstring n, jdouble v)
+  (JNIEnv *env, jobject obj, jstring c, jstring n, jdouble v, jint idx)
   {
     const char* tmp;
     tmp = env->GetStringUTFChars(n, NULL);
@@ -186,10 +186,10 @@ extern "C" {
     tmp = env->GetStringUTFChars(c, NULL);
     const std::string category(tmp, strlen(tmp));
     env->ReleaseStringUTFChars(c, tmp);
-    GmshSetOption(category, name, (double)v);
+    GmshSetOption(category, name, (double)v, (unsigned int)idx);
   }
   JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setIntegerOption
-  (JNIEnv *env, jobject obj, jstring c, jstring n, jint v)
+  (JNIEnv *env, jobject obj, jstring c, jstring n, jint v, jint idx)
   {
     const char* tmp;
     tmp = env->GetStringUTFChars(n, NULL);
@@ -198,10 +198,10 @@ extern "C" {
     tmp = env->GetStringUTFChars(c, NULL);
     const std::string category(tmp, strlen(tmp));
     env->ReleaseStringUTFChars(c, tmp);
-    GmshSetOption(category, name, (unsigned int)v);
+    GmshSetOption(category, name, (unsigned int)v, (unsigned int)idx);
   }
   JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getStringOption
-  (JNIEnv *env, jobject obj, jstring c, jstring n)
+  (JNIEnv *env, jobject obj, jstring c, jstring n, jint idx)
   {
     const char* tmp;
     tmp = env->GetStringUTFChars(n, NULL);
@@ -210,12 +210,12 @@ extern "C" {
     tmp = env->GetStringUTFChars(c, NULL);
     const std::string category(tmp, strlen(tmp));
     std::string value;
-    GmshGetOption(category, name, value);
+    GmshGetOption(category, name, value, (unsigned int)idx);
     return env->NewStringUTF(value.c_str());
 
   }
   JNIEXPORT jdouble JNICALL Java_org_geuz_onelab_Gmsh_getDoubleOption
-  (JNIEnv *env, jobject obj, jstring c, jstring n)
+  (JNIEnv *env, jobject obj, jstring c, jstring n, jint idx)
   {
     const char* tmp;
     tmp = env->GetStringUTFChars(n, NULL);
@@ -224,11 +224,11 @@ extern "C" {
     tmp = env->GetStringUTFChars(c, NULL);
     const std::string category(tmp, strlen(tmp));
     double value;
-    GmshGetOption(category, name, value);
+    GmshGetOption(category, name, value, (unsigned int)idx);
     return value;
   }
   JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_getIntegerOption
-  (JNIEnv *env, jobject obj, jstring c, jstring n)
+  (JNIEnv *env, jobject obj, jstring c, jstring n, jint idx)
   {
     const char* tmp;
     tmp = env->GetStringUTFChars(n, NULL);
@@ -237,7 +237,7 @@ extern "C" {
     tmp = env->GetStringUTFChars(c, NULL);
     const std::string category(tmp, strlen(tmp));
     unsigned int value;
-    GmshGetOption(category, name, value, 0);
+    GmshGetOption(category, name, value, (unsigned int)idx);
     return value;
   }
 

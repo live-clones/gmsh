@@ -44,7 +44,7 @@ public class MainActivity extends Activity{
     public MainActivity() { }
 
     @Override
-	protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
@@ -85,13 +85,13 @@ public class MainActivity extends Activity{
     }
 
     @Override
-	protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(Bundle outState) {
         outState.putBoolean("Compute", _compute);
         super.onSaveInstanceState(outState);
     }
 
     @Override
-        public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu) {
     	super.onCreateOptionsMenu(menu);
     	if(!_twoPane) {
             _switchFragmentMenuItem = menu.add(R.string.menu_parameters);
@@ -103,13 +103,15 @@ public class MainActivity extends Activity{
     	shareMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         return true;
     }
+
     @Override
-	public boolean onMenuOpened(int featureId, Menu menu) {
+    public boolean onMenuOpened(int featureId, Menu menu) {
         _modelFragment.postDelay();
         return super.onMenuOpened(featureId, menu);
     }
+
     @Override
-        public boolean onMenuItemSelected(int featureId, MenuItem item) {
+    public boolean onMenuItemSelected(int featureId, MenuItem item) {
     	if (item.getTitle().equals(getString(R.string.menu_parameters))) {
             Intent intent = new Intent(this, OptionsActivity.class);
             intent.putExtra("Gmsh", (Parcelable)_gmsh);
@@ -170,7 +172,7 @@ public class MainActivity extends Activity{
     }
 
     @Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
         case 1:
@@ -191,20 +193,20 @@ public class MainActivity extends Activity{
     private class Run extends AsyncTask<Void, Void, Integer[]> {
 
     	@Override
-            protected void onPreExecute() {
+        protected void onPreExecute() {
             _compute = true;
             _runStopMenuItem.setTitle(R.string.menu_stop);
             super.onPreExecute();
     	}
 
         @Override
-            protected Integer[] doInBackground(Void... params) {
+        protected Integer[] doInBackground(Void... params) {
             _gmsh.onelabCB("compute");
             return new Integer[] {1};
         }
 
         @Override
-            protected void onPostExecute(Integer[] result) {
+        protected void onPostExecute(Integer[] result) {
             //(Vibrator) getSystemService(Context.VIBRATOR_SERVICE).vibrate(350);
             _runStopMenuItem.setTitle(R.string.menu_run);
             _runStopMenuItem.setEnabled(true);
@@ -238,14 +240,14 @@ public class MainActivity extends Activity{
     	}
     }
     @Override
-	protected void onPause() {
+    protected void onPause() {
         if(_compute) notifyComputing();
         super.onPause();
         _notify = true;
     }
 
     @Override
-	protected void onResume() {
+    protected void onResume() {
         super.onResume();
         NotificationManager mNotificationManager =
             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -254,14 +256,14 @@ public class MainActivity extends Activity{
     }
 
     @Override
-	protected void onStop() {
+    protected void onStop() {
         super.onStop();
         if(_compute) notifyComputing();
         _notify = true;
     }
 
     @Override
-	public void onLowMemory() {
+    public void onLowMemory() {
         if(!_compute) return;
         _gmsh.onelabCB("stop");
         Toast.makeText(this, "Low memory! Computation is going to stop", Toast.LENGTH_LONG).show();
@@ -269,7 +271,7 @@ public class MainActivity extends Activity{
     }
 
     @Override
-	public void onTrimMemory(int level) {
+    public void onTrimMemory(int level) {
         if(!_compute) return;
         if(level == Activity.TRIM_MEMORY_COMPLETE){
             _gmsh.onelabCB("stop");

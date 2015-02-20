@@ -44,7 +44,7 @@ class mGLSurfaceView extends GLSurfaceView {
     }
 
     @Override
-	public boolean onTouchEvent(MotionEvent event) {
+    public boolean onTouchEvent(MotionEvent event) {
         scaleGesture.onTouchEvent(event);
         return gesture.onTouchEvent(event);
     }

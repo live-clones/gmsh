@@ -29,7 +29,7 @@ public class AboutActivity extends Activity{
         setContentView(webview);
     }
     @Override
-	public boolean onMenuItemSelected(int featureId, MenuItem item) {
+    public boolean onMenuItemSelected(int featureId, MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
             Intent returnIntent = new Intent();
             this.setResult(RESULT_CANCELED, returnIntent);

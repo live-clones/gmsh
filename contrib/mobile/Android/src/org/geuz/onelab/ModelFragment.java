@@ -56,14 +56,14 @@ public class ModelFragment extends Fragment{
     }
 
     @Override
-	public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         _gmsh = getArguments().getParcelable("Gmsh");
     }
 
     @Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_model, container, false);
         RelativeLayout glViewLayout = (RelativeLayout)rootView.findViewById(R.id.glViewLayout);
         GLESRender renderer = new GLESRender(_gmsh);

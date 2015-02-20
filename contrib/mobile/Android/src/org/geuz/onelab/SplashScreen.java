@@ -58,11 +58,11 @@ public class SplashScreen extends Activity{
 	} catch (android.content.pm.PackageManager.NameNotFoundException e) {}
 	int modelsv = sharedPref.getInt("OnelabModelsVersion", 0);
 	if(modelsv == 0 || modelsv != codev) {
-		Log.d("Models", "Updating models to version "+codev);
-		SharedPreferences.Editor editor = sharedPref.edit();
-		editor.putInt("OnelabModelsVersion", codev);
-		editor.commit();
-		loadNative();
+            Log.d("Models", "Updating models to version "+codev);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putInt("OnelabModelsVersion", codev);
+            editor.commit();
+            loadNative();
 	}
 	else Log.d("Models", "Leaving models as-is (version "+modelsv+")");
         final Message msg = new Message();

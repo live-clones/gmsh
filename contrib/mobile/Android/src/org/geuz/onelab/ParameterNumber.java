@@ -38,7 +38,8 @@ public class ParameterNumber extends Parameter {
     public ParameterNumber(Context context, Gmsh gmsh, String name){
         super(context, gmsh, name);
     }
-    public ParameterNumber(Context context, Gmsh gmsh, String name,  double value, double min, double max, double step)
+    public ParameterNumber(Context context, Gmsh gmsh, String name,
+                           double value, double min, double max, double step)
     {
         this(context, gmsh, name);
         _value = value;
@@ -46,7 +47,8 @@ public class ParameterNumber extends Parameter {
         _max = max;
         _step = step;
     }
-    public ParameterNumber(Context context, Gmsh gmsh, String name, boolean readOnly, double value, double min, double max, double step)
+    public ParameterNumber(Context context, Gmsh gmsh, String name, boolean readOnly,
+                           double value, double min, double max, double step)
     {
         this(context, gmsh, name, value, min, max, step);
         _readOnly = readOnly;
@@ -182,42 +184,42 @@ public class ParameterNumber extends Parameter {
         if(!_readOnly) paramLayout.setOnLongClickListener(new View.OnLongClickListener(){
                 @Override
                 public boolean onLongClick(View v){
-			AlertDialog.Builder builder = new AlertDialog.Builder(_context);
-			LinearLayout layout = new LinearLayout(_context);
-			layout.setOrientation(LinearLayout.VERTICAL);
-			TextView label = new TextView(_context);
-			label.setText("Edit value of \n" + _name);
-			EditText edit = new EditText(_context);
-			edit.setText(String.valueOf(_value));
-			edit.addTextChangedListener(new TextWatcher() {
-				public void onTextChanged(CharSequence s, int start, int before, int count) {
-					try {
-						if(s.length() < 1)  _tmpValue = 1;
-						_tmpValue = Double.parseDouble(s.toString());
-					} catch(NumberFormatException e) {
-	                                	_tmpValue = 1;
-					}
-				}
-		                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {} // UNUSED Auto-generated method stub
-		                    public void afterTextChanged(Editable s) {} // UNUSED Auto-generated method stub
-		        	});
-			edit.requestFocus();
-			//_context.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-			layout.addView(label);
-			layout.addView(edit);
-			builder.setView(layout)
-				.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int id) {
-						setValue(_tmpValue);
-					}
-				})
-				.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int id) {
-						// User cancelled the dialog
-					}
-				});
-			builder.create().show();
-                	return true;
+                    AlertDialog.Builder builder = new AlertDialog.Builder(_context);
+                    LinearLayout layout = new LinearLayout(_context);
+                    layout.setOrientation(LinearLayout.VERTICAL);
+                    TextView label = new TextView(_context);
+                    label.setText("Edit value of \n" + _name);
+                    EditText edit = new EditText(_context);
+                    edit.setText(String.valueOf(_value));
+                    edit.addTextChangedListener(new TextWatcher() {
+                            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                                try {
+                                    if(s.length() < 1)  _tmpValue = 1;
+                                    _tmpValue = Double.parseDouble(s.toString());
+                                } catch(NumberFormatException e) {
+                                    _tmpValue = 1;
+                                }
+                            }
+                            public void beforeTextChanged(CharSequence s, int start, int count, int after) {} // UNUSED Auto-generated method stub
+                            public void afterTextChanged(Editable s) {} // UNUSED Auto-generated method stub
+                        });
+                    edit.requestFocus();
+                    //_context.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                    layout.addView(label);
+                    layout.addView(edit);
+                    builder.setView(layout)
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    setValue(_tmpValue);
+                                }
+                            })
+                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    // User cancelled the dialog
+                                }
+                            });
+                    builder.create().show();
+                    return true;
                 }
             });
         if(_spinner != null) {
