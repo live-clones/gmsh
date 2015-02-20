@@ -34,7 +34,6 @@ class Model {
     }
     public void setBitmap(File f) {
         BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 8;
         options.inJustDecodeBounds = false;
         options.inPreferredConfig = Bitmap.Config.RGB_565;
         options.inDither = true;
