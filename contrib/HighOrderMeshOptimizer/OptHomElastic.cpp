@@ -817,7 +817,7 @@ void highOrderTools::makePosViewWithJacobians (const char *fn)
 
 #else
 
-void ElasticAnalogy(GModel *m, double threshold, bool onlyVisible)
+void ElasticAnalogy(GModel *m, bool onlyVisible)
 {
   Msg::Error("Elastic analogy high-order optimzer requires the solver module");
 }
