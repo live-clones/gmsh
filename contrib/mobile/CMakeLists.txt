@@ -103,6 +103,14 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     get_filename_component(DIRNAME ${DIR} NAME)
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
                        ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/files/${DIRNAME})
+    file(GLOB PNG ${DIR}/*.png)
+    foreach(IMG ${PNG})
+      get_filename_component(IMGNAME ${IMG} NAME)
+      if(NOT (IMGNAME MATCHES ".*_128.png"))
+        add_custom_command(TARGET xcodeProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove
+                          "${CMAKE_CURRENT_BINARY_DIR}/Onelab/Onelab/files/${DIRNAME}/${IMGNAME}")
+      endif()
+    endforeach(IMG)
   endforeach(DIR)
 
   message(STATUS "")
