@@ -12,9 +12,11 @@ public class OptionsActivity extends Activity {
     boolean _compute;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                             WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_fragment);
         Bundle extra = getIntent().getExtras();
         Gmsh gmsh = extra.getParcelable("Gmsh");
@@ -26,7 +28,8 @@ public class OptionsActivity extends Activity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
         if(_compute) return super.onCreateOptionsMenu(menu);
         MenuItem runStopMenuItem = menu.add(R.string.menu_run);
         runStopMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -34,7 +37,8 @@ public class OptionsActivity extends Activity {
     }
 
     @Override
-    public boolean onMenuItemSelected(int featureId, MenuItem item) {
+    public boolean onMenuItemSelected(int featureId, MenuItem item)
+    {
         if(item.getTitle().equals(getString(R.string.menu_run))) {
             Intent returnIntent = new Intent();
             returnIntent.putExtra("Compute", true);

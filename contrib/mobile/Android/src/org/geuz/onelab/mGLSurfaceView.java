@@ -17,7 +17,8 @@ class mGLSurfaceView extends GLSurfaceView {
     private GLESRender _renderer;
     private boolean _rotate;
 
-    public mGLSurfaceView(Context context, GLESRender renderer) {
+    public mGLSurfaceView(Context context, GLESRender renderer)
+    {
         super(context);
         _renderer = renderer;
         gesture = new GestureDetector(context, new GestureListener());
@@ -44,7 +45,8 @@ class mGLSurfaceView extends GLSurfaceView {
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
+    public boolean onTouchEvent(MotionEvent event)
+    {
         scaleGesture.onTouchEvent(event);
         return gesture.onTouchEvent(event);
     }
@@ -54,18 +56,11 @@ class mGLSurfaceView extends GLSurfaceView {
             _renderer.startInteraction(e.getX(),e.getY());
             return true;
         }
-
+        // UNUSED Auto-generated method stub
         public boolean onFling(MotionEvent e1, MotionEvent e2,
-                               float velocityX, float velocityY) {
-            // UNUSED Auto-generated method stub
-            return false;
-        }
-
-        public void onLongPress(MotionEvent e) {
-            // UNUSED Auto-generated method stub
-
-        }
-
+                               float velocityX, float velocityY) { return false; }
+        // UNUSED Auto-generated method stub
+        public void onLongPress(MotionEvent e) { }
         public boolean onScroll(MotionEvent e1, MotionEvent e2,
 				float distanceX, float distanceY) {
             if(e1.getPointerCount() > 1 || e2.getPointerCount() > 1) return false;
@@ -76,39 +71,31 @@ class mGLSurfaceView extends GLSurfaceView {
             requestRender();
             return true;
         }
-
-        public void onShowPress(MotionEvent e) {
-            // UNUSED Auto-generated method stub
-
-        }
-
-        public boolean onSingleTapUp(MotionEvent e) {
-            // UNUSED Auto-generated method stub
-            return false;
-        }
-        public boolean onDoubleTap(MotionEvent e) {
-            // UNUSED Auto-generated method stub
-            return false;
-        }
+        // UNUSED Auto-generated method stub
+        public void onShowPress(MotionEvent e) { }
+        // UNUSED Auto-generated method stub
+        public boolean onSingleTapUp(MotionEvent e) { return false; }
+        // UNUSED Auto-generated method stub
+        public boolean onDoubleTap(MotionEvent e) { return false; }
         public boolean onDoubleTapEvent(MotionEvent e) {
             scaleFactor = 1f;
             _renderer.resetModelPosition();
             requestRender();
             return true;
         }
-        public boolean onSingleTapConfirmed(MotionEvent e) {
-            // UNUSED Auto-generated method stub
-            return false;
-        }
+        // UNUSED Auto-generated method stub
+        public boolean onSingleTapConfirmed(MotionEvent e) { return false; }
 
     }
-    public boolean getRotate() {return _rotate;}
-    public void setRotate(boolean r) {_rotate = r;}
-    public void resetScale(){
+    public boolean getRotate() { return _rotate; }
+    public void setRotate(boolean r) { _rotate = r; }
+    public void resetScale()
+    {
         scaleFactor = 1f;
         _renderer.scaleModel(scaleFactor);
     }
-    public Bitmap getScreenshot() {
+    public Bitmap getScreenshot()
+    {
         _renderer.needScreenshot();
         this.requestRender();
         while(_renderer.getScreenshot() == null);

@@ -14,24 +14,26 @@ import android.widget.TextView;
 public class ModelArrayAdapter extends ArrayAdapter<Model> {
     private List<Model> _models;
 
-    public ModelArrayAdapter(Context c) {
+    public ModelArrayAdapter(Context c)
+        {
         super(c, R.layout.model);
         _models = new ArrayList<Model>();
     }
 
     @Override
-	public void add(Model model) {
+    public void add(Model model)
+    {
         super.add(model);
         _models.add(model);
     }
 
-    public Model getModel(int pos) {
-        return _models.get(pos);
-    }
+    public Model getModel(int pos) { return _models.get(pos); }
 
     @Override
-	public View getView(int position, View convertView, final ViewGroup parent) {
-        LayoutInflater inflater = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    public View getView(int position, View convertView, final ViewGroup parent)
+    {
+        LayoutInflater inflater = (LayoutInflater) parent.getContext()
+            .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         final Model m = _models.get(position);
         View rowView = inflater.inflate(R.layout.model, parent, false);
         TextView title = (TextView) rowView.findViewById(R.id.title);
@@ -41,7 +43,6 @@ public class ModelArrayAdapter extends ArrayAdapter<Model> {
         if(m.getSummary() != null) description.setText(m.getSummary());
         if(m.getBitmap() != null) icon.setImageBitmap(m.getBitmap());
         else icon.setImageResource(R.drawable.ic_launcher);
-
         return rowView;
     }
 }

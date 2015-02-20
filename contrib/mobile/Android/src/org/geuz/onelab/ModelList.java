@@ -32,7 +32,8 @@ public class ModelList extends Activity {
     private ModelArrayAdapter _modelArrayAdapter;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         _modelArrayAdapter = new ModelArrayAdapter(this);
         try {
@@ -48,7 +49,6 @@ public class ModelList extends Activity {
     	ListView list = new ListView(this);
     	list.setAdapter(_modelArrayAdapter);
     	list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
                 public void onItemClick(AdapterView<?> parent, View view, int position,
 					long id) {
                     Model m = _modelArrayAdapter.getModel(position);
@@ -59,7 +59,6 @@ public class ModelList extends Activity {
                 }
             });
     	list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-
                 public boolean onItemLongClick(AdapterView<?> parent, View view,
                                                int position, long id) {
                     final Model m = _modelArrayAdapter.getModel(position);
@@ -103,7 +102,8 @@ public class ModelList extends Activity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
         MenuItem about = menu.add("About");
         about.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         MenuItem loadFile = menu.add(R.string.button_open_file);
@@ -112,7 +112,8 @@ public class ModelList extends Activity {
     }
 
     @Override
-    public boolean onMenuItemSelected(int featureId, MenuItem item) {
+    public boolean onMenuItemSelected(int featureId, MenuItem item)
+    {
         if(item.getTitle().equals(getString(R.string.button_open_file))) {
             Intent fileBrowserIntent = new Intent();
             fileBrowserIntent.setAction(Intent.ACTION_GET_CONTENT);
@@ -121,7 +122,8 @@ public class ModelList extends Activity {
                 startActivityForResult(fileBrowserIntent, 1);
             }
             catch(ActivityNotFoundException e) {
-                Toast.makeText(this, "No application found on your device to open the files.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "No application found on your device to open the files.",
+                               Toast.LENGTH_LONG).show();
             }
         }
         else if(item.getTitle().equals("About")) {
@@ -132,7 +134,8 @@ public class ModelList extends Activity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode == RESULT_CANCELED) return;
         switch (requestCode) {
@@ -180,7 +183,8 @@ public class ModelList extends Activity {
             }
         }
     }
-    private void readModel(XmlPullParser parser, String dir) throws XmlPullParserException, IOException{
+    private void readModel(XmlPullParser parser, String dir) throws XmlPullParserException, IOException
+    {
         parser.require(XmlPullParser.START_TAG, null, "model");
         String title = null;
         String summary = null;
@@ -231,7 +235,8 @@ public class ModelList extends Activity {
         if(url != null) newModel.setUrl(Uri.parse(url));
         _modelArrayAdapter.add(newModel);
     }
-    private void skipTag(XmlPullParser parser) throws XmlPullParserException, IOException {
+    private void skipTag(XmlPullParser parser) throws XmlPullParserException, IOException
+    {
         if (parser.getEventType() != XmlPullParser.START_TAG) {
             throw new IllegalStateException();
         }

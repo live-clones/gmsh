@@ -41,10 +41,11 @@ public class ModelFragment extends Fragment{
     private SeekBar _animationStepper;
 
     final Runnable hideControlsRunnable = new Runnable() {
-            public void run() {hideControlBar();}
+            public void run() { hideControlBar(); }
         };
 
-    public static ModelFragment newInstance(Gmsh g) {
+    public static ModelFragment newInstance(Gmsh g)
+    {
         ModelFragment fragment = new ModelFragment();
         Bundle bundle = new Bundle();
         bundle.putParcelable("Gmsh", g);
@@ -52,18 +53,19 @@ public class ModelFragment extends Fragment{
         return fragment;
     }
 
-    public ModelFragment() {
-    }
+    public ModelFragment() { }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         _gmsh = getArguments().getParcelable("Gmsh");
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+                             Bundle savedInstanceState)
+    {
         View rootView = inflater.inflate(R.layout.fragment_model, container, false);
         RelativeLayout glViewLayout = (RelativeLayout)rootView.findViewById(R.id.glViewLayout);
         GLESRender renderer = new GLESRender(_gmsh);
@@ -74,12 +76,20 @@ public class ModelFragment extends Fragment{
         _glView.requestRender();
         _hideDelay = new Handler();
         _gestureDetector = new GestureDetector(getActivity(), new OnGestureListener() {
-                public boolean onSingleTapUp(MotionEvent e) { return false; } // UNUSED Auto-generated method stub
-                public void onShowPress(MotionEvent e) {} // UNUSED Auto-generated method stub
-                public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) { return false; } // UNUSED Auto-generated method stub
-                public void onLongPress(MotionEvent e) {} // UNUSED Auto-generated method stub
-                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) { return false; } // UNUSED Auto-generated method stub
-                public boolean onDown(MotionEvent e) { return false; } // UNUSED Auto-generated method stub
+                // UNUSED Auto-generated method stub
+                public boolean onSingleTapUp(MotionEvent e) { return false; }
+                // UNUSED Auto-generated method stub
+                public void onShowPress(MotionEvent e) {}
+                // UNUSED Auto-generated method stub
+                public boolean onScroll(MotionEvent e1, MotionEvent e2,
+                                        float distanceX, float distanceY) { return false; }
+                // UNUSED Auto-generated method stub
+                public void onLongPress(MotionEvent e) {}
+                // UNUSED Auto-generated method stub
+                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+                                       float velocityY) { return false; }
+                // UNUSED Auto-generated method stub
+                public boolean onDown(MotionEvent e) { return false; }
             });
         _gestureDetector.setOnDoubleTapListener(new GestureDetector.OnDoubleTapListener() {
                 public boolean onSingleTapConfirmed(MotionEvent e) {
@@ -89,11 +99,12 @@ public class ModelFragment extends Fragment{
                         showControlBar();
                     return true;
                 }
-                public boolean onDoubleTapEvent(MotionEvent e) { return false; } // UNUSED Auto-generated method stub
-                public boolean onDoubleTap(MotionEvent e) { return false; } // UNUSED Auto-generated method stub
+                // UNUSED Auto-generated method stub
+                public boolean onDoubleTapEvent(MotionEvent e) { return false; }
+                // UNUSED Auto-generated method stub
+                public boolean onDoubleTap(MotionEvent e) { return false; }
             });
         _glView.setOnTouchListener(new View.OnTouchListener() {
-
                 public boolean onTouch(View v, MotionEvent event) {
                     return _gestureDetector.onTouchEvent(event);
                 }
@@ -106,7 +117,9 @@ public class ModelFragment extends Fragment{
         rotationButton.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     boolean rotate = !_glView.getRotate();
-                    ((ImageButton)v).setBackgroundResource((rotate)?R.drawable.icon_translate:R.drawable.icon_rotate);
+                    ((ImageButton)v).setBackgroundResource(rotate ?
+                                                           R.drawable.icon_translate :
+                                                           R.drawable.icon_rotate);
                     _glView.setRotate(rotate);
                 }
             });
@@ -142,15 +155,17 @@ public class ModelFragment extends Fragment{
              RelativeLayout.LayoutParams.WRAP_CONTENT);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         glViewLayout.addView(_progressLayout, layoutParams);
-        _controlBarLayout = (LinearLayout) getActivity().getLayoutInflater().inflate(R.layout.control_bar, null);
+        _controlBarLayout = (LinearLayout) getActivity().getLayoutInflater()
+            .inflate(R.layout.control_bar, null);
         final ImageButton prevButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlPrev);
         final ImageButton playPauseButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlPlay);
         final ImageButton nextButton = (ImageButton)_controlBarLayout.findViewById(R.id.controlNext);
         _animationStepper = (SeekBar)_controlBarLayout.findViewById(R.id.controlStepper);
         _animationStepper.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-
-                public void onStopTrackingTouch(SeekBar seekBar) {} // UNUSED Auto-generated method stub
-                public void onStartTrackingTouch(SeekBar seekBar) {} // UNUSED Auto-generated method stub
+                // UNUSED Auto-generated method stub
+                public void onStopTrackingTouch(SeekBar seekBar) {}
+                // UNUSED Auto-generated method stub
+                public void onStartTrackingTouch(SeekBar seekBar) {}
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     if(fromUser) {
                         postDelay();
@@ -207,15 +222,19 @@ public class ModelFragment extends Fragment{
         this._controlBarLayout.setVisibility(View.INVISIBLE);
         return rootView;
     }
-    public void postDelay(int delay) {
+    public void postDelay(int delay)
+    {
         _hideDelay.removeCallbacks(hideControlsRunnable);
         _hideDelay.postDelayed(hideControlsRunnable, delay);
     }
-    public void postDelay() {
+    public void postDelay()
+    {
         this.postDelay(6000);
     }
-    public void showControlBar() {
-        if(getActivity() == null || ((MainActivity)getActivity()).isComputing() || !_gmsh.haveAnimation()) return;
+    public void showControlBar()
+    {
+        if(getActivity() == null || ((MainActivity)getActivity()).isComputing() ||
+           !_gmsh.haveAnimation()) return;
         _controlBarLayout.setEnabled(true);
         _animationStepper.setMax(_gmsh.numberOfAnimation()-1);
         this.postDelay();
@@ -223,7 +242,8 @@ public class ModelFragment extends Fragment{
         _controlBarLayout.setVisibility(View.VISIBLE);
         _controlBarLayout.startAnimation(bottomUp);
     }
-    public void hideControlBar() {
+    public void hideControlBar()
+    {
         if(getActivity() == null || View.INVISIBLE == _controlBarLayout.getVisibility()) return;
         _hideDelay.removeCallbacks(hideControlsRunnable);
         Animation bottomDown = AnimationUtils.loadAnimation(getActivity(), android.R.anim.fade_out);
@@ -231,18 +251,22 @@ public class ModelFragment extends Fragment{
         _controlBarLayout.setVisibility(View.INVISIBLE);
 
     }
-    public void showProgress(String progress) {
+    public void showProgress(String progress)
+    {
         _progressLayout.setAlpha(1);
         _progress.setText(progress);
     }
-    public void hideProgress() {
+    public void hideProgress()
+    {
         _progressLayout.setAlpha(0);
         _progress.setText("");
     }
-    public void requestRender() {
+    public void requestRender()
+    {
         _glView.requestRender();
     }
-    public void takeScreenshot(File out) {
+    public void takeScreenshot(File out)
+    {
         Bitmap screenshot = _glView.getScreenshot();
         try {
             FileOutputStream f = new FileOutputStream(out);

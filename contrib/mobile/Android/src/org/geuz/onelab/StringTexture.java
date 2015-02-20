@@ -26,7 +26,8 @@ public class StringTexture {
         getBitmapFromText(12.0f, Color.BLACK);
     }
 
-    private void getBitmapFromText(float textSize, int textColor) {
+    private void getBitmapFromText(float textSize, int textColor)
+    {
         Paint paint = new Paint();
         paint.setTextSize(textSize);
         paint.setColor(textColor);
@@ -41,7 +42,8 @@ public class StringTexture {
         canvas.drawText(_text, 0, baseline, paint);
     }
 
-    private void loadGLTexture(GL10 gl) {
+    private void loadGLTexture(GL10 gl)
+    {
         if(_bitmap == null) return;
         gl.glGenTextures(1, _textures, 0);
 
@@ -55,7 +57,8 @@ public class StringTexture {
         _bitmap.recycle();
     }
 
-    public void draw(GL10 gl, int x, int y) {
+    public void draw(GL10 gl, int x, int y)
+    {
         gl.glEnable(GL10.GL_TEXTURE_2D);
         // VERTEX
         float vertex[] = {
@@ -86,7 +89,6 @@ public class StringTexture {
         textureBuffer.position(0);
         loadGLTexture(gl);
         gl.glBindTexture(GL10.GL_TEXTURE_2D, _textures[0]);
-
 
         // DRAW
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);

@@ -21,7 +21,8 @@ public class OptionsDisplayFragment extends Fragment{
     private Gmsh _gmsh;
     private SeparatedListView _listView;
 
-    public static OptionsDisplayFragment newInstance(Gmsh g) {
+    public static OptionsDisplayFragment newInstance(Gmsh g)
+    {
         OptionsDisplayFragment fragment = new OptionsDisplayFragment();
         Bundle bundle = new Bundle();
         bundle.putParcelable("Gmsh", g);
@@ -29,25 +30,28 @@ public class OptionsDisplayFragment extends Fragment{
         return fragment;
     }
 
-    public OptionsDisplayFragment() {
+    public OptionsDisplayFragment()
+    {
         super();
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         _gmsh = getArguments().getParcelable("Gmsh");
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup container,
-                             Bundle savedInstanceState) {
-        _listView = (SeparatedListView)inflater.inflate(R.layout.fragment_options_display, container, false);
+                             Bundle savedInstanceState)
+    {
+        _listView = (SeparatedListView)inflater.inflate(R.layout.fragment_options_display,
+                                                        container, false);
         CheckBox showGeomPoints = new CheckBox(_listView.getContext());
         showGeomPoints.setText("Show geometry points");
         showGeomPoints.setChecked((_gmsh.getDoubleOption("Geometry", "Points", 0) > 0.));
         showGeomPoints.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     _gmsh.setDoubleOption("Geometry", "Points", (isChecked)?1. : 0., 0);
                     if(mListener != null) mListener.OnModelOptionsChanged();
@@ -58,7 +62,6 @@ public class OptionsDisplayFragment extends Fragment{
         showGeomLines.setText("Show geometry lines");
         showGeomLines.setChecked((_gmsh.getDoubleOption("Geometry", "Lines", 0) > 0.));
         showGeomLines.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     _gmsh.setDoubleOption("Geometry", "Lines", (isChecked)?1. : 0., 0);
                     if(mListener != null) mListener.OnModelOptionsChanged();
@@ -69,7 +72,6 @@ public class OptionsDisplayFragment extends Fragment{
     	showMeshSurfaceEdges.setText("Show mesh surface edges");
     	showMeshSurfaceEdges.setChecked((_gmsh.getDoubleOption("Mesh", "SurfaceEdges", 0) > 0.));
     	showMeshSurfaceEdges.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     _gmsh.setDoubleOption("Mesh", "SurfaceEdges", (isChecked)?1. : 0., 0);
                     if(mListener != null) mListener.OnModelOptionsChanged();
@@ -80,7 +82,6 @@ public class OptionsDisplayFragment extends Fragment{
     	showMeshVolumesEdges.setText("Show mesh volume edges");
     	showMeshVolumesEdges.setChecked((_gmsh.getDoubleOption("Mesh", "VolumeEdges", 0) > 0.));
     	showMeshVolumesEdges.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     _gmsh.setDoubleOption("Mesh", "VolumeEdges", (isChecked)?1. : 0., 0);
                     if(mListener != null) mListener.OnModelOptionsChanged();
@@ -91,7 +92,8 @@ public class OptionsDisplayFragment extends Fragment{
         return _listView;
     }
 
-    public void refresh() {
+    public void refresh()
+    {
         if(_gmsh == null) return;
         String[] PViews = _gmsh.getPView();
         for(int i=0; i<_listView.itemsCountInSection("Result"); i++) {
@@ -106,15 +108,16 @@ public class OptionsDisplayFragment extends Fragment{
             }
         }
         for(int i=_listView.itemsCountInSection("Result"); i < PViews.length;i++) {
-            String[] infos = PViews[i].split("\n"); // name / IntervalsType (1=Iso 2=Continous 3=Discrete 4=Numeric)
+            // name / IntervalsType (1=Iso 2=Continous 3=Discrete 4=Numeric)
+            String[] infos = PViews[i].split("\n");
             final int myID = i;
             LinearLayout layout = new LinearLayout(_listView.getContext());
             CheckBox checkbox = new CheckBox(_listView.getContext());
-            checkbox.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
+            checkbox.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.WRAP_CONTENT,
+                                                                  LayoutParams.WRAP_CONTENT));
             checkbox.setText(infos[0]);
             checkbox.setChecked(infos[2].equals("1"));
             checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                         _gmsh.setPView(myID, -1, (isChecked)? 1 : 0, -1, -1);
                         if(mListener != null) mListener.OnModelOptionsChanged();
@@ -131,7 +134,8 @@ public class OptionsDisplayFragment extends Fragment{
                         if(mListener != null) mListener.OnModelOptionsChanged();
                     }
                 });
-            button.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            button.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT,
+                                                                LayoutParams.WRAP_CONTENT));
             button.setBackgroundColor(Color.TRANSPARENT);
             button.setGravity(Gravity.RIGHT);
             layout.addView(checkbox);
@@ -141,8 +145,12 @@ public class OptionsDisplayFragment extends Fragment{
     }
 
     private OnModelOptionsChangedListener mListener;
-    public void setOnModelOptionsChangedListener(OnModelOptionsChangedListener listener) { mListener = listener;}
-    public interface OnModelOptionsChangedListener {
+    public void setOnModelOptionsChangedListener(OnModelOptionsChangedListener listener)
+    {
+        mListener = listener;
+    }
+    public interface OnModelOptionsChangedListener
+    {
         void OnModelOptionsChanged();
     }
 }

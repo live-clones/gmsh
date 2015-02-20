@@ -27,9 +27,9 @@ public class GLESRender implements Renderer{
     public void scaleModel(float s) { mGModel.scale(s); }
     public void translateModel(float x, float y) { mGModel.translate(x, y); }
     public void resetModelPosition() { mGModel.resetPosition(); }
-    public void viewX() { mGModel.viewX();}
-    public void viewY() { mGModel.viewY();}
-    public void viewZ() { mGModel.viewZ();}
+    public void viewX() { mGModel.viewX(); }
+    public void viewY() { mGModel.viewY(); }
+    public void viewZ() { mGModel.viewZ(); }
 
     // OpenGL ES methods
     public void onDrawFrame(GL10 gl)
@@ -44,8 +44,8 @@ public class GLESRender implements Renderer{
         _height = height;
     }
     public void onSurfaceCreated(GL10 gl, EGLConfig config) { }
-    public void needScreenshot() {_screenshot = null; _needScreenshot = true;}
-    public Bitmap getScreenshot(){return _screenshot;}
+    public void needScreenshot() { _screenshot = null; _needScreenshot = true; }
+    public Bitmap getScreenshot(){ return _screenshot; }
     private void screenshot(GL10 gl)
     {
         _needScreenshot = false;
@@ -54,16 +54,19 @@ public class GLESRender implements Renderer{
         IntBuffer intBuffer = IntBuffer.wrap(bitmapBuffer);
         intBuffer.position(0);
 
-        gl.glReadPixels(0, 0, _width, _height, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE, intBuffer);
+        gl.glReadPixels(0, 0, _width, _height, GL10.GL_RGBA, GL10.GL_UNSIGNED_BYTE,
+                        intBuffer);
         int offset1, offset2;
         for (int i = 0; i < _height; i++) {
             offset1 = i * _width;
             offset2 = (_height - i - 1) * _width;
             for (int j = 0; j < _width; j++) {
                 int pixel = bitmapBuffer[offset1 + j];
-                bitmapSource[offset2 + j] = (pixel & 0xFF00FF00) | (pixel << 16) & 0x00FF0000 | (pixel >> 16) & 0x000000FF;
+                bitmapSource[offset2 + j] = (pixel & 0xFF00FF00) |
+                    (pixel << 16) & 0x00FF0000 | (pixel >> 16) & 0x000000FF;
             }
         }
-        _screenshot = Bitmap.createBitmap(bitmapSource, _width, _height, Bitmap.Config.ARGB_8888);
+        _screenshot = Bitmap.createBitmap(bitmapSource, _width, _height,
+                                          Bitmap.Config.ARGB_8888);
     }
 }

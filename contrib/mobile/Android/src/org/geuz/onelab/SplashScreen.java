@@ -23,8 +23,7 @@ public class SplashScreen extends Activity{
 
     private Intent newIntent;
 
-    private final Handler handler = new Handler()
-	{
+    private final Handler handler = new Handler() {
             public void handleMessage(Message msg) {
                 switch (msg.what) {
                 case STOPSPLASH:
@@ -40,11 +39,13 @@ public class SplashScreen extends Activity{
             };
 	};
 
-    protected void onCreate(android.os.Bundle savedInstanceState) {
+    protected void onCreate(android.os.Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.splash);
         Intent oldIntent = this.getIntent();
-        if(oldIntent != null && oldIntent.getAction() != null && oldIntent.getAction().equals(Intent.ACTION_VIEW)){
+        if(oldIntent != null && oldIntent.getAction() != null &&
+           oldIntent.getAction().equals(Intent.ACTION_VIEW)){
             newIntent = new Intent(SplashScreen.this, MainActivity.class);
             newIntent.setAction(oldIntent.getAction());
             newIntent.setData(oldIntent.getData());
@@ -54,8 +55,10 @@ public class SplashScreen extends Activity{
 	SharedPreferences sharedPref = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
 	int codev = 0;
 	try {
-		codev = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
-	} catch (android.content.pm.PackageManager.NameNotFoundException e) {}
+            codev = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+	}
+        catch (android.content.pm.PackageManager.NameNotFoundException e) {
+        }
 	int modelsv = sharedPref.getInt("OnelabModelsVersion", 0);
 	if(modelsv == 0 || modelsv != codev) {
             Log.d("Models", "Updating models to version "+codev);
@@ -76,7 +79,8 @@ public class SplashScreen extends Activity{
     private void loadNative()
     {
     	try {
-            ZipInputStream zipStream = new ZipInputStream(new BufferedInputStream(getResources().openRawResource(R.raw.models)));
+            ZipInputStream zipStream = new ZipInputStream
+                (new BufferedInputStream(getResources().openRawResource(R.raw.models)));
             ZipEntry entry;
             while ((entry = zipStream.getNextEntry()) != null) {
                 String name = entry.getName();
@@ -95,11 +99,13 @@ public class SplashScreen extends Activity{
                     outputStream = openFileOutput(name, Context.MODE_PRIVATE);
                 }
                 byte[] buffer = new byte[2048];
-                for (int i = zipStream.read(buffer, 0, buffer.length); i > 0;i = zipStream.read(buffer, 0, buffer.length))
+                for (int i = zipStream.read(buffer, 0, buffer.length); i > 0;
+                     i = zipStream.read(buffer, 0, buffer.length))
                     outputStream.write(buffer,0,i);
             }
             zipStream.close();
-        } catch (IOException e1) {
+        }
+        catch (IOException e1) {
             e1.printStackTrace();
         }
     }

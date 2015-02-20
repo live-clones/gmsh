@@ -35,7 +35,8 @@ public class ParameterNumber extends Parameter {
     private EditText _edittext;
     private Stepper _stepper;
 
-    public ParameterNumber(Context context, Gmsh gmsh, String name){
+    public ParameterNumber(Context context, Gmsh gmsh, String name)
+    {
         super(context, gmsh, name);
     }
     public ParameterNumber(Context context, Gmsh gmsh, String name,
@@ -110,7 +111,9 @@ public class ParameterNumber extends Parameter {
             _choices.add(value);
             if(_spinner == null) {
                 _spinner = new Spinner(_context);
-                _adapter = new ArrayAdapter<String>(_context, android.R.layout.simple_spinner_dropdown_item, _choices);
+                _adapter = new ArrayAdapter<String>(_context,
+                                                    android.R.layout.simple_spinner_dropdown_item,
+                                                    _choices);
                 _adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                 _spinner.setAdapter(_adapter);
             }
@@ -121,20 +124,19 @@ public class ParameterNumber extends Parameter {
                     _choices.set(i, value);
                     return;
                 }
-                else if(_values.get(i).equals(choice))
-                    {
-                        _choices.add(value);
-                        return;
-                    }
+                else if(_values.get(i).equals(choice)){
+                    _choices.add(value);
+                    return;
+                }
             }
             _values.add(choice);
             _choices.add(value);
         }
     }
-    public double getValue() {return _value;}
-    public double getMax() {return _max;}
-    public double getMin() {return _min;}
-    public double getStep() {return _step;}
+    public double getValue() { return _value; }
+    public double getMax() { return _max; }
+    public double getMin() { return _min; }
+    public double getStep() { return _step; }
     public int fromString(String s)
     {
         int pos = super.fromString(s);
@@ -151,7 +153,7 @@ public class ParameterNumber extends Parameter {
         pos++;// index
         int nChoix = Integer.parseInt(infos[pos++]); // choices' size
         double choices[] = new double[nChoix];
-        for(int i=0; i<nChoix; i++)
+        for(int i = 0; i < nChoix; i++)
             choices[i] = Double.parseDouble(infos[pos++]); // choice
         int nLabels = Integer.parseInt(infos[pos++]); // labels' size
         if(nChoix == 2 && choices[0] == 0 && choices[1] == 1 && nLabels == 0) {
@@ -161,7 +163,7 @@ public class ParameterNumber extends Parameter {
         }
         if(_choices != null)_choices.clear();
         if(_values != null) _values.clear();
-        for(int i=0; i<nLabels && nChoix == nLabels; i++){
+        for(int i = 0; i < nLabels && nChoix == nLabels; i++){
             double val = Double.parseDouble(infos[pos++]); // choice
             this.addChoice(val, infos[pos++]); // label
         }
@@ -183,7 +185,8 @@ public class ParameterNumber extends Parameter {
         paramLayout.addView(_title);
         if(!_readOnly) paramLayout.setOnLongClickListener(new View.OnLongClickListener(){
                 @Override
-                public boolean onLongClick(View v){
+                public boolean onLongClick(View v)
+                {
                     AlertDialog.Builder builder = new AlertDialog.Builder(_context);
                     LinearLayout layout = new LinearLayout(_context);
                     layout.setOrientation(LinearLayout.VERTICAL);
@@ -196,15 +199,19 @@ public class ParameterNumber extends Parameter {
                                 try {
                                     if(s.length() < 1)  _tmpValue = 1;
                                     _tmpValue = Double.parseDouble(s.toString());
-                                } catch(NumberFormatException e) {
+                                }
+                                catch(NumberFormatException e) {
                                     _tmpValue = 1;
                                 }
                             }
-                            public void beforeTextChanged(CharSequence s, int start, int count, int after) {} // UNUSED Auto-generated method stub
-                            public void afterTextChanged(Editable s) {} // UNUSED Auto-generated method stub
+                            // UNUSED Auto-generated method stub
+                            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                            // UNUSED Auto-generated method stub
+                            public void afterTextChanged(Editable s) {}
                         });
                     edit.requestFocus();
-                    //_context.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                    //_context.getWindow().setSoftInputMode
+                    //    (WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
                     layout.addView(label);
                     layout.addView(edit);
                     builder.setView(layout)
@@ -263,35 +270,37 @@ public class ParameterNumber extends Parameter {
             _edittext.setOnKeyListener(new View.OnKeyListener() {
                     public boolean onKey(View v, int keyCode, KeyEvent event) {
                         if(keyCode == KeyEvent.KEYCODE_ENTER){ // hide the keyboard
-                            InputMethodManager imm = (InputMethodManager)_context.getSystemService(
-                                                                                                   Context.INPUT_METHOD_SERVICE);
+                            InputMethodManager imm = (InputMethodManager)_context.getSystemService
+                                (Context.INPUT_METHOD_SERVICE);
                             imm.hideSoftInputFromWindow(_edittext.getWindowToken(), 0);
                             setValue(_value);
                             _edittext.clearFocus();
                             return true;
                         }
-                        if(keyCode > KeyEvent.KEYCODE_9 && keyCode != KeyEvent.KEYCODE_NUMPAD_DOT && (keyCode <KeyEvent.KEYCODE_NUMPAD_0 || keyCode >KeyEvent.KEYCODE_NUMPAD_9) && keyCode != KeyEvent.KEYCODE_DEL)
+                        if(keyCode > KeyEvent.KEYCODE_9 &&
+                           keyCode != KeyEvent.KEYCODE_NUMPAD_DOT &&
+                           (keyCode <KeyEvent.KEYCODE_NUMPAD_0 ||
+                            keyCode >KeyEvent.KEYCODE_NUMPAD_9) &&
+                           keyCode != KeyEvent.KEYCODE_DEL)
                             return true;
                         return false;
                     }
                 });
             _edittext.addTextChangedListener(new TextWatcher() {
-
                     public void onTextChanged(CharSequence s, int start, int before, int count) {
                         try {
                             if(s.length() < 1) _value = 1;
                             else _value = Double.parseDouble(s.toString());
                         }
-                        catch(NumberFormatException e)
-                            {
-                                _value = 1;
-                                //_edittext.setText("");
-                            }
+                        catch(NumberFormatException e){
+                            _value = 1;
+                            //_edittext.setText("");
+                        }
                     }
-
-                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {} // UNUSED Auto-generated method stub
-                    public void afterTextChanged(Editable s) {} // UNUSED Auto-generated method stub
-
+                    // UNUSED Auto-generated method stub
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                    // UNUSED Auto-generated method stub
+                    public void afterTextChanged(Editable s) {}
                 });
         }
         else if(_stepper != null) {

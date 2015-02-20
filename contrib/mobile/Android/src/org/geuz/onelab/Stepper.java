@@ -8,7 +8,6 @@ import android.widget.EditText;
 import android.text.TextWatcher;
 import android.text.Editable;
 
-
 class Stepper extends LinearLayout{
 
     private int _min, _max, _val;
@@ -58,7 +57,10 @@ class Stepper extends LinearLayout{
     public void inc(){setValue(_val+1);}
     public void dec(){setValue(_val-1);}
 
-    public void setOnValueChangedListener(OnValueChangedListener listener) {_listener = listener;}
+    public void setOnValueChangedListener(OnValueChangedListener listener)
+    {
+        _listener = listener;
+    }
     public void setMaximum(int max){_max = max;}
     public void setMinimum(int min){_min = min;}
     public void setValue(int val){

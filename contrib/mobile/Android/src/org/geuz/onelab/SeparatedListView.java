@@ -12,7 +12,6 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-
 public class SeparatedListView extends ListView{
 
     private SeparatedListAdaptater adapter;
@@ -35,15 +34,18 @@ public class SeparatedListView extends ListView{
         adapter = new SeparatedListAdaptater();
         this.setAdapter(adapter);
     }
-
-    public void addItem(String header, View item) {
-        TextView title = (TextView)((LayoutInflater) _context.getSystemService( Context.LAYOUT_INFLATER_SERVICE )).inflate(R.layout.list_header, null);
+    public void addItem(String header, View item)
+    {
+        TextView title = (TextView)
+            ((LayoutInflater) _context.getSystemService(Context.LAYOUT_INFLATER_SERVICE))
+            .inflate(R.layout.list_header, null);
         title.setText(header);
         adapter.addItem(header, title, item);
         adapter.notifyDataSetChanged();
         this.invalidateViews();
     }
-    public int itemsCountInSection(String header) {
+    public int itemsCountInSection(String header)
+    {
         return adapter.getCountForSection(header);
     }
     public void refresh()
@@ -51,13 +53,11 @@ public class SeparatedListView extends ListView{
         adapter.notifyDataSetChanged();
         this.invalidateViews();
     }
-
     public void clear()
     {
         adapter.clear();
         adapter.notifyDataSetChanged();
     }
-
     private class Section{
         private String _name;
         private List<View> _items;
@@ -78,17 +78,13 @@ public class SeparatedListView extends ListView{
             return _items.get(pos);
         }
     }
-
     private class SeparatedListAdaptater extends BaseAdapter{
-
         List<Section> sections;
         List<View> titles;
-
         public SeparatedListAdaptater() {
             sections = new ArrayList<SeparatedListView.Section>();
             titles = new ArrayList<View>();
         }
-
         public void addItem(String header, View title, View item) {
             for(Section s : sections){
                 if(s.getName().equals(header)){
@@ -101,7 +97,6 @@ public class SeparatedListView extends ListView{
             sections.add(s);
             titles.add(title);
         }
-
         //@Override
         public int getCount() {
             int count = 0;
