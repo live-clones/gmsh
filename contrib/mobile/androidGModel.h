@@ -35,10 +35,6 @@ JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getParams
   (JNIEnv *, jobject);
 JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setParam
   (JNIEnv *, jobject, jstring, jstring, jstring);
-JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getPView
-  (JNIEnv *, jobject);
-JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setPView
-  (JNIEnv *, jobject, jint, jint, jint, jint, jfloat);
 JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_onelabCB
   (JNIEnv *, jobject, jstring);
 JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_numberOfAnimation

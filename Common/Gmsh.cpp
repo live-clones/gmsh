@@ -132,6 +132,24 @@ int GmshSetOption(const std::string &category, const std::string &name,
   return ColorOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(), value);
 }
 
+void GmshSetStringOption(const std::string &category, const std::string &name,
+                         std::string value, int index)
+{
+  StringOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(), value);
+}
+
+void GmshSetNumberOption(const std::string &category, const std::string &name,
+                         double value, int index)
+{
+  NumberOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(), value);
+}
+
+void GmshSetColorOption(const std::string &category, const std::string &name,
+                        unsigned int value, int index)
+{
+  ColorOption(GMSH_SET|GMSH_GUI, category.c_str(), index, name.c_str(), value);
+}
+
 int GmshGetOption(const std::string &category, const std::string &name,
                   std::string &value, int index)
 {
@@ -148,6 +166,30 @@ int GmshGetOption(const std::string &category, const std::string &name,
                   unsigned int &value, int index)
 {
   return ColorOption(GMSH_GET, category.c_str(), index, name.c_str(), value);
+}
+
+std::string GmshGetStringOption(const std::string &category, const std::string &name,
+                                int index)
+{
+  std::string value;
+  StringOption(GMSH_GET, category.c_str(), index, name.c_str(), value);
+  return value;
+}
+
+double GmshGetNumberOption(const std::string &category, const std::string &name,
+                           int index)
+{
+  double value;
+  NumberOption(GMSH_GET, category.c_str(), index, name.c_str(), value);
+  return value;
+}
+
+int GmshGetColorOption(const std::string &category, const std::string &name,
+                       int index)
+{
+  unsigned int value;
+  ColorOption(GMSH_GET, category.c_str(), index, name.c_str(), value);
+  return value;
 }
 
 int GmshRestoreDefaultOptions()

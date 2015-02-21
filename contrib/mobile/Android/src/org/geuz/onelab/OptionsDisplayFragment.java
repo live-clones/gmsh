@@ -50,44 +50,45 @@ public class OptionsDisplayFragment extends Fragment{
                                                         container, false);
         CheckBox showGeomPoints = new CheckBox(_listView.getContext());
         showGeomPoints.setText("Show geometry points");
-        showGeomPoints.setChecked((_gmsh.getDoubleOption("Geometry", "Points", 0) > 0.));
+        showGeomPoints.setChecked(_gmsh.getDoubleOption("Geometry", "Points", 0) > 0.);
         showGeomPoints.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     _gmsh.setDoubleOption("Geometry", "Points", (isChecked)?1. : 0., 0);
                     if(mListener != null) mListener.OnModelOptionsChanged();
                 }
             });
-        _listView.addItem("Display", showGeomPoints);
+        _listView.addItem("Display Options", showGeomPoints);
         CheckBox showGeomLines = new CheckBox(_listView.getContext());
         showGeomLines.setText("Show geometry lines");
-        showGeomLines.setChecked((_gmsh.getDoubleOption("Geometry", "Lines", 0) > 0.));
+        showGeomLines.setChecked(_gmsh.getDoubleOption("Geometry", "Lines", 0) > 0.);
         showGeomLines.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     _gmsh.setDoubleOption("Geometry", "Lines", (isChecked)?1. : 0., 0);
                     if(mListener != null) mListener.OnModelOptionsChanged();
                 }
             });
-        _listView.addItem("Display", showGeomLines);
+        _listView.addItem("Display Options", showGeomLines);
         CheckBox showMeshSurfaceEdges = new CheckBox(_listView.getContext());
     	showMeshSurfaceEdges.setText("Show mesh surface edges");
-    	showMeshSurfaceEdges.setChecked((_gmsh.getDoubleOption("Mesh", "SurfaceEdges", 0) > 0.));
+    	showMeshSurfaceEdges.setChecked(_gmsh.getDoubleOption("Mesh", "SurfaceEdges", 0) > 0.);
     	showMeshSurfaceEdges.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     _gmsh.setDoubleOption("Mesh", "SurfaceEdges", (isChecked)?1. : 0., 0);
                     if(mListener != null) mListener.OnModelOptionsChanged();
                 }
             });
-    	_listView.addItem("Display", showMeshSurfaceEdges);
+    	_listView.addItem("Display Options", showMeshSurfaceEdges);
     	CheckBox showMeshVolumesEdges = new CheckBox(_listView.getContext());
     	showMeshVolumesEdges.setText("Show mesh volume edges");
-    	showMeshVolumesEdges.setChecked((_gmsh.getDoubleOption("Mesh", "VolumeEdges", 0) > 0.));
-    	showMeshVolumesEdges.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+    	showMeshVolumesEdges.setChecked(_gmsh.getDoubleOption("Mesh", "VolumeEdges", 0) > 0.);
+    	showMeshVolumesEdges.setOnCheckedChangeListener
+            (new CompoundButton.OnCheckedChangeListener() {
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     _gmsh.setDoubleOption("Mesh", "VolumeEdges", (isChecked)?1. : 0., 0);
                     if(mListener != null) mListener.OnModelOptionsChanged();
                 }
             });
-    	_listView.addItem("Display", showMeshVolumesEdges);
+    	_listView.addItem("Display Options", showMeshVolumesEdges);
     	this.refresh();
         return _listView;
     }
@@ -95,36 +96,34 @@ public class OptionsDisplayFragment extends Fragment{
     public void refresh()
     {
         if(_gmsh == null) return;
-        String[] PViews = _gmsh.getPView();
-        for(int i=0; i<_listView.itemsCountInSection("Result"); i++) {
-            View v = (View)_listView.getItemAtPosition(6+i);
+        int nbviews = (int)_gmsh.getDoubleOption("PostProcessing", "NbViews", 0);
+
+        for(int i = 0; i<_listView.itemsCountInSection("Result Options"); i++) {
+            View v = (View)_listView.getItemAtPosition(6 + i);
             if(!v.getClass().equals(LinearLayout.class)) continue;
-            for(int j=0; j<((LinearLayout)v).getChildCount(); j++) {
+            for(int j = 0; j < ((LinearLayout)v).getChildCount(); j++) {
                 View sv = ((LinearLayout)v).getChildAt(j);
                 if(sv.getClass().equals(CheckBox.class)){
-                    String[] infos = PViews[i].split("\n");
-                    ((CheckBox)sv).setChecked(infos[2].equals("1"));
+                    ((CheckBox)sv).setChecked(_gmsh.getDoubleOption("View", "Visible", i) > 0.);
                 }
             }
         }
-        for(int i=_listView.itemsCountInSection("Result"); i < PViews.length;i++) {
-            // name / IntervalsType (1=Iso 2=Continous 3=Discrete 4=Numeric)
-            String[] infos = PViews[i].split("\n");
+        for(int i = _listView.itemsCountInSection("Result Options"); i < nbviews; i++) {
             final int myID = i;
             LinearLayout layout = new LinearLayout(_listView.getContext());
             CheckBox checkbox = new CheckBox(_listView.getContext());
             checkbox.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.WRAP_CONTENT,
                                                                   LayoutParams.WRAP_CONTENT));
-            checkbox.setText(infos[0]);
-            checkbox.setChecked(infos[2].equals("1"));
+            checkbox.setText(_gmsh.getStringOption("View", "Name", myID));
+            checkbox.setChecked(_gmsh.getDoubleOption("View", "Visible", myID) > 0.);
             checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        _gmsh.setPView(myID, -1, (isChecked)? 1 : 0, -1, -1);
+                        _gmsh.setDoubleOption("View", "Visible", isChecked ? 1. : 0., myID);
                         if(mListener != null) mListener.OnModelOptionsChanged();
                     }
                 });
             Button button = new Button(_listView.getContext());
-            button.setText("More options >");
+            button.setText(">");
             button.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
                         Intent intent = new Intent(getActivity(), PostProcessingActivity.class);
@@ -140,7 +139,7 @@ public class OptionsDisplayFragment extends Fragment{
             button.setGravity(Gravity.RIGHT);
             layout.addView(checkbox);
             layout.addView(button);
-            _listView.addItem("Result", layout);
+            _listView.addItem("Result Options", layout);
         }
     }
 

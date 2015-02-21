@@ -37,10 +37,6 @@ public class Gmsh implements Parcelable {
     public native int getIntegerOption(String category, String name, int index);
     // call onelab
     public native int onelabCB(String action);
-    // FIXME: to be removed soon
-    public native String[] getPView();
-    public native void setPView(int position, int intervalsType, int visible,
-                                int nbIso, float raisez);
     public boolean haveAnimation() { return numberOfAnimation() > 1; }
     public native int numberOfAnimation();
     public native int animationNext();

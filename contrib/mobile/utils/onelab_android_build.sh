@@ -98,6 +98,9 @@ while read line; do
   target=$(($target+1))
 done < <($android_sdk/tools/android list target | grep -A 5 "id:")
 
+# to sign the APK:
+# cp utils/ant.properties build_android/Onelab/
+
 # to re-install on the device:
 # $android_sdk/platform-tools/adb install -r $gmsh_svn/contrib/mobile/build_android/Onelab/bin/Onelab-release.apk
 

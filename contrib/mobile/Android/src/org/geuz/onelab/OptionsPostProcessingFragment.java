@@ -1,6 +1,7 @@
 package org.geuz.onelab;
 
 import java.util.ArrayList;
+import java.lang.Math;
 
 import android.app.Fragment;
 import android.content.Context;
@@ -50,25 +51,11 @@ public class OptionsPostProcessingFragment extends Fragment{
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState)
     {
-        String[] PViews = _gmsh.getPView();
-        String[] infos = PViews[_pview].split("\n");
-        getActivity().getActionBar().setTitle(infos[0]);
+        getActivity().getActionBar().setTitle(_gmsh.getStringOption("View", "Name", _pview));
         LinearLayout layout =  (LinearLayout)inflater.inflate(R.layout.fragment_postprocessing,
                                                               container, false);
         final Spinner intervalsType = (Spinner)layout.findViewById(R.id.intervals_type);
-        final EditText intervals = (EditText)layout.findViewById(R.id.intervals);
-        final SeekBar raiseZ = (SeekBar)layout.findViewById(R.id.raisez);
-        raiseZ.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                public void onStopTrackingTouch(SeekBar seekBar) {
-                    _gmsh.setPView(_pview, -1, -1, -1, seekBar.getProgress());
-                }
-                // UNUSED Auto-generated method stub
-                public void onStartTrackingTouch(SeekBar seekBar) {}
-                // UNUSED Auto-generated method stub
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { }
-            });
-        raiseZ.setProgress(Integer.parseInt(infos[4]));
-        intervalsType.setEnabled(infos[2].equals("1"));
+        intervalsType.setEnabled(_gmsh.getDoubleOption("View", "Visible", _pview) > 0.);
         ArrayList<String> choices;
         ArrayAdapter<String> adapter;
         choices = new ArrayList<String>();
@@ -79,53 +66,53 @@ public class OptionsPostProcessingFragment extends Fragment{
                                            android.R.layout.simple_spinner_dropdown_item, choices);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         intervalsType.setAdapter(adapter);
-        intervalsType.setSelection(Integer.parseInt(infos[1])-1);
+        intervalsType.setSelection((int)_gmsh.getDoubleOption("View", "IntervalsType", _pview) - 1);
         intervalsType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-                    _gmsh.setPView(_pview, pos+1, -1, -1, -1);
+                    _gmsh.setDoubleOption("View", "IntervalsType", pos + 1, _pview);
                     // TODO glView.requestRender();
-                    intervals.setEnabled(pos == 0 || pos == 2);
                 }
                 // Unused Auto-generated method stub
                 public void onNothingSelected(AdapterView<?> arg0) {}
             });
-        intervals.setText(infos[3]);
-        intervals.setOnKeyListener(new View.OnKeyListener() {
-                public boolean onKey(View v, int keyCode, KeyEvent event) {
-                    if(keyCode == KeyEvent.KEYCODE_ENTER){ // hide the keyboard
-                        InputMethodManager imm = (InputMethodManager)intervals.getContext()
-                            .getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(intervals.getWindowToken(), 0);
-                        return true;
-                    }
-                    return false;
-                }
-            });
-        intervals.addTextChangedListener(new TextWatcher() {
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    int nIso = 1;
-                    try {
-                        if(s.length() < 1) nIso = 1;
-                        else nIso = Integer.parseInt(s.toString());
-                    }
-                    catch(NumberFormatException e){
-                        nIso = 1;
-                        intervals.setText("");
-                    }
-                    if(nIso > 1000) {
-                        _gmsh.setPView(_pview, -1, -1, 1000, -1); intervals.setText("1000");
-                    }
-                    else if(nIso > 0)
-                        _gmsh.setPView(_pview, -1, -1, nIso, -1);
-                    else
-                        _gmsh.setPView(_pview, -1, -1, 1, -1);
-                }
-                // UNUSED Auto-generated method stub
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                // UNUSED Auto-generated method stub
-                public void afterTextChanged(Editable s) {}
-            });
 
+        final SeekBar intervals = (SeekBar)layout.findViewById(R.id.intervals);
+        intervals.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    double d = seekBar.getProgress();
+                    if(d < 1.) d = 1.;
+                    _gmsh.setDoubleOption("View", "NbIso", d, _pview);
+                }
+                // UNUSED Auto-generated method stub
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+                // UNUSED Auto-generated method stub
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { }
+            });
+        intervals.setProgress((int)_gmsh.getDoubleOption("View", "NbIso", _pview));
+
+        final SeekBar raiseZ = (SeekBar)layout.findViewById(R.id.raisez);
+        raiseZ.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    double maxval = Math.max(Math.abs(_gmsh.getDoubleOption("View", "Min", _pview)),
+                                             Math.abs(_gmsh.getDoubleOption("View", "Max", _pview)));
+                    if(maxval == 0.) maxval = 1.;
+                    double val2 = 2. * _gmsh.getDoubleOption("General", "BoundingBoxSize", 0) / maxval;
+                    // map [0,100] to [-val2,val2]
+                    double d = 2 * val2 * (seekBar.getProgress() / 100. - 0.5);
+                    _gmsh.setDoubleOption("View", "RaiseZ", d, _pview);
+                }
+                // UNUSED Auto-generated method stub
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+                // UNUSED Auto-generated method stub
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) { }
+            });
+        double maxval = Math.max(Math.abs(_gmsh.getDoubleOption("View", "Min", _pview)),
+                                 Math.abs(_gmsh.getDoubleOption("View", "Max", _pview)));
+        if(maxval == 0.) maxval = 1.;
+        double val2 = 2. * _gmsh.getDoubleOption("General", "BoundingBoxSize", 0) / maxval;
+        // map [-val2,val2] to [0,100]
+        double d = 100. * (_gmsh.getDoubleOption("View", "RaiseZ", _pview) / (2 * val2) + 0.5);
+        raiseZ.setProgress((int)d);
         return layout;
     }
 }

@@ -1,3 +1,5 @@
+#undef NDEBUG
+
 #ifndef NDEBUG
 #include <android/log.h>
 #define  LOG_TAG    "Gmsh"
@@ -174,7 +176,7 @@ extern "C" {
     tmp = env->GetStringUTFChars(c, NULL);
     std::string category(tmp, strlen(tmp));
     env->ReleaseStringUTFChars(c, tmp);
-    GmshSetOption(category, name, value, (unsigned int)idx);
+    GmshSetStringOption(category, name, value, (int)idx);
   }
   JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setDoubleOption
   (JNIEnv *env, jobject obj, jstring c, jstring n, jdouble v, jint idx)
@@ -186,7 +188,7 @@ extern "C" {
     tmp = env->GetStringUTFChars(c, NULL);
     const std::string category(tmp, strlen(tmp));
     env->ReleaseStringUTFChars(c, tmp);
-    GmshSetOption(category, name, (double)v, (unsigned int)idx);
+    GmshSetNumberOption(category, name, (double)v, (int)idx);
   }
   JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setIntegerOption
   (JNIEnv *env, jobject obj, jstring c, jstring n, jint v, jint idx)
@@ -198,7 +200,7 @@ extern "C" {
     tmp = env->GetStringUTFChars(c, NULL);
     const std::string category(tmp, strlen(tmp));
     env->ReleaseStringUTFChars(c, tmp);
-    GmshSetOption(category, name, (unsigned int)v, (unsigned int)idx);
+    GmshSetColorOption(category, name, (unsigned int)v, (int)idx);
   }
   JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getStringOption
   (JNIEnv *env, jobject obj, jstring c, jstring n, jint idx)
@@ -209,10 +211,10 @@ extern "C" {
     env->ReleaseStringUTFChars(n, tmp);
     tmp = env->GetStringUTFChars(c, NULL);
     const std::string category(tmp, strlen(tmp));
+    env->ReleaseStringUTFChars(c, tmp);
     std::string value;
-    GmshGetOption(category, name, value, (unsigned int)idx);
+    value = GmshGetStringOption(category, name, (int)idx);
     return env->NewStringUTF(value.c_str());
-
   }
   JNIEXPORT jdouble JNICALL Java_org_geuz_onelab_Gmsh_getDoubleOption
   (JNIEnv *env, jobject obj, jstring c, jstring n, jint idx)
@@ -223,8 +225,7 @@ extern "C" {
     env->ReleaseStringUTFChars(n, tmp);
     tmp = env->GetStringUTFChars(c, NULL);
     const std::string category(tmp, strlen(tmp));
-    double value;
-    GmshGetOption(category, name, value, (unsigned int)idx);
+    double value = GmshGetNumberOption(category, name, (int)idx);
     return value;
   }
   JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_getIntegerOption
@@ -236,18 +237,16 @@ extern "C" {
     env->ReleaseStringUTFChars(n, tmp);
     tmp = env->GetStringUTFChars(c, NULL);
     const std::string category(tmp, strlen(tmp));
-    unsigned int value;
-    GmshGetOption(category, name, value, (unsigned int)idx);
+    unsigned int value = GmshGetColorOption(category, name, (int)idx);
     return value;
   }
-
   JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getParams
   (JNIEnv *env, jobject obj)
   {
     jclass stringClass = env->FindClass( "java/lang/String" );
     std::vector<std::string> tmp =  onelab::server::instance()->toChar();
-    for(unsigned int i=0;i<tmp.size();i++)
-      for(unsigned int j=0; j<tmp[i].size();j++)
+    for(unsigned int i = 0; i < tmp.size(); i++)
+      for(unsigned int j = 0; j < tmp[i].size(); j++)
         if(tmp[i][j] == '\0') tmp[i][j] = 0x03;
     jobjectArray params = env->NewObjectArray(tmp.size(), stringClass, 0);
     for(int i=0; i<tmp.size();i++){
@@ -257,7 +256,6 @@ extern "C" {
     }
     return params;
   }
-
   JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setParam
   (JNIEnv *env, jobject obj, jstring jtype, jstring jname, jstring jvalue)
   {
@@ -265,49 +263,20 @@ extern "C" {
     const char *name = env->GetStringUTFChars(jname, NULL);
     const char *value = env->GetStringUTFChars(jvalue, NULL);
     // Get the original param and then change the value
-    if(strcmp(type,"ParameterNumber") == 0){
+    if(strcmp(type, "ParameterNumber") == 0){
       std::vector<onelab::number> s;
       if(onelab::server::instance()->get(s,  name)){
         s[0].setValue(atof(value));
         onelab::server::instance()->set(s[0]);
       }
     }
-    else if(strcmp(type,"ParameterString") == 0){
+    else if(strcmp(type, "ParameterString") == 0){
       std::vector<onelab::string> s;
       if(onelab::server::instance()->get(s,  name)){
         s[0].setValue(value);
         onelab::server::instance()->set(s[0]);
       }
     }
-  }
-
-  JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getPView
-  (JNIEnv *env, jobject obj)
-  {
-    jclass stringClass = env->FindClass( "java/lang/String" );
-    jobjectArray jPView = env->NewObjectArray(PView::list.size(), stringClass, 0);
-    for(unsigned int i = 0; i < PView::list.size(); i++){
-      std::ostringstream sstream;
-      sstream	<< PView::list[i]->getData()->getName().c_str()
-                << "\n" <<  PView::list[i]->getOptions()->intervalsType
-                << "\n" << ((PView::list[i]->getOptions()->visible) ? 1 : 0)
-                << "\n" << PView::list[i]->getOptions()->nbIso
-                << "\n" << PView::list[i]->getOptions()->raise[2];
-      jstring s = env->NewStringUTF(sstream.str().c_str());
-      env->SetObjectArrayElement(jPView, i, s);
-      env->DeleteLocalRef(s);
-    }
-    return jPView;
-  }
-
-  JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setPView
-  (JNIEnv *env, jobject, jint pos, jint intervalsType, jint visible, jint nIntervals, jfloat raisez)
-  {
-    if(intervalsType > 0 && intervalsType < 4) PView::list[pos]->getOptions()->intervalsType = intervalsType;
-    if(visible >= 0) PView::list[pos]->getOptions()->visible = visible;
-    if(nIntervals > 0) PView::list[pos]->getOptions()->nbIso = nIntervals;
-    if(raisez>=0) PView::list[pos]->getOptions()->raise[2] = raisez;
-    PView::list[pos]->setChanged(true);
   }
 
   JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_onelabCB

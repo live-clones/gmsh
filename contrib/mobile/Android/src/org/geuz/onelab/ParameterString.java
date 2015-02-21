@@ -16,7 +16,7 @@ import android.widget.Spinner;
 
 public class ParameterString extends Parameter{
 
-    private  String _kind;
+    private String _kind;
     private int _index;
     private ArrayList<String> _choices;
     private ArrayAdapter<String> _adapter;

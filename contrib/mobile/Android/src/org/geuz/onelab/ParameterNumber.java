@@ -64,13 +64,13 @@ public class ParameterNumber extends Parameter {
     {
         super.update();
         if(_bar != null) {
-            _title.setText(getShortName() + " (" + formatDouble(_value)+ ")");
+            _title.setText(getShortName() + " (" + formatDouble(_value) + ")");
             _bar.setMax(100);
             _bar.setProgress((int)(100*(_value-_min)/(_max-_min)));
             _bar.setEnabled(!this.isReadOnly());
         }
         else if(_spinner != null) {
-            for(int i=0;i<_choices.size();i++)
+            for(int i = 0; i < _choices.size(); i++)
                 if(_values.get(i) == _value)
                     _spinner.setSelection(i, true);
         }
@@ -79,7 +79,7 @@ public class ParameterNumber extends Parameter {
             _checkbox.setChecked((_value == 0)? false : true);
         }
         else if(_edittext != null) {
-            _edittext.setText(""+formatDouble(_value));
+            _edittext.setText("" + formatDouble(_value));
         }
         else if(_stepper != null) {
             _stepper.setMaximum((int)Math.round(_max));
@@ -89,19 +89,15 @@ public class ParameterNumber extends Parameter {
     }
     public void setValue(double value)
     {
-        if(value < _min || value > _max) {
-            //Log.w("ParameterNumber", "Incorect value "+value+" (max="+_max+" min="+_min+")");
-            return;
-        }
         if(value == _value) return;
         _value = value;
         _changed = true;
         _gmsh.setParam(getType(), getName(), String.valueOf(value));
         if(mListener != null) mListener.OnParameterChanged();
     }
-    public void setMin(double min) {_min = min;this.update();}
-    public void setMax(double max) {_max = max;this.update();}
-    public void setStep(double step) {_step = step;this.update();}
+    public void setMin(double min) { _min = min; this.update(); }
+    public void setMax(double max) { _max = max; this.update(); }
+    public void setStep(double step) { _step = step;this.update(); }
     public void addChoice(double choice, String value)
     {
         if(_values == null) {
@@ -246,9 +242,7 @@ public class ParameterNumber extends Parameter {
                     public void onStopTrackingTouch(SeekBar seekBar) {
                         setValue(getMin() + (getMax() - getMin())*seekBar.getProgress()/100);
                     }
-
                     public void onStartTrackingTouch(SeekBar seekBar) {}
-
                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {}
                 });
         }
@@ -257,7 +251,6 @@ public class ParameterNumber extends Parameter {
             paramLayout.addView(_checkbox);
             _checkbox.setEnabled(!_readOnly);
             _checkbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                         setValue((isChecked)? 1 : 0);
                     }
@@ -314,7 +307,10 @@ public class ParameterNumber extends Parameter {
         return paramLayout;
     }
     private OnParameterChangedListener mListener;
-    public void setOnParameterChangedListener(OnParameterChangedListener listener) { mListener = listener;}
+    public void setOnParameterChangedListener(OnParameterChangedListener listener)
+    {
+        mListener = listener;
+    }
     public interface OnParameterChangedListener
     {
         void OnParameterChanged();
