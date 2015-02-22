@@ -38,10 +38,19 @@
 #include <sstream>
 #include "GmshSocket.h"
 
+#ifdef HAVE_ONELAB2
+#include "NetworkUtils.h"
+#include "OnelabAttributes.h"
+#endif
+
 namespace onelab{
 
   // The base parameter class.
-  class parameter{
+#ifdef HAVE_ONELAB2
+  class parameter : public OnelabAttr{
+#else
+  class parameter {
+#endif
   private:
     // the name of the parameter, including its '/'-separated path in the
     // parameter hierarchy. Parameters or subpaths can start with numbers to
@@ -292,6 +301,86 @@ namespace onelab{
       }
       return true;
     }
+#ifdef HAVE_ONELAB2
+    static UInt16 attributeType() {return 0x05;}
+    virtual inline UInt16 getAttributeType() const {return this->attributeType();}
+    virtual inline UInt16 getAttributeLength() const {
+      UInt16 len = _name.length()+_label.length()+_help.length()+10;
+      for(std::map<std::string, bool>::const_iterator it = getClients().begin(); it != getClients().end(); it++)
+        len += it->first.size()+2;
+      for(std::map<std::string, std::string>::const_iterator it = _attributes.begin(); it != _attributes.end(); it++)
+        len += it->first.size()+it->second.size()+2;
+      return len;
+    }
+    virtual UInt8 *encodeAttribute(UInt8 *dst)
+    {
+      dst = encode(dst, getAttributeType());
+      dst = encode(dst, getAttributeLength());
+
+      dst = encode(dst, (UInt8 *)_name.c_str(), this->_name.length()+1);
+      dst = encode(dst, (UInt8 *)_label.c_str(), this->_label.length()+1);
+      dst = encode(dst, (UInt8 *)_help.c_str(), this->_help.length()+1);
+      dst = encode(dst, (UInt8)_readOnly);
+      dst = encode(dst, (UInt8)_neverChanged);
+      dst = encode(dst, (UInt8)_visible);
+
+      dst = encode(dst, (UInt16)_attributes.size());
+      for(std::map<std::string, std::string>::const_iterator it = _attributes.begin(); it != _attributes.end(); it++) {
+        dst = encode(dst, (UInt8 *)it->first.c_str(), it->first.size()+1);
+        dst = encode(dst, (UInt8 *)it->second.c_str(), it->second.size()+1);
+      }
+
+      dst = encode(dst, (UInt16)_clients.size());
+      for(std::map<std::string, bool>::const_iterator it = getClients().begin(); it != getClients().end(); it++) {
+        dst = encode(dst, (UInt8 *)it->first.c_str(), it->first.size()+1);
+        dst = encode(dst, (UInt8)it->second);
+      }
+
+      return dst;
+    }
+    virtual UInt8 *parseAttribute(UInt8 *src, UInt32 length)
+    {
+      UInt8 tmp;
+      UInt16 n;
+
+      src = parse(src, _name, '\0');
+      src = parse(src, _label, '\0');
+      src = parse(src, _help, '\0');
+      src = parse(src, tmp);
+      this->_readOnly = (bool)tmp;
+      src = parse(src, tmp);
+      this->_neverChanged = (bool)tmp;
+      src = parse(src, tmp);
+      this->_visible = (bool)tmp;
+
+      src = parse(src, n);
+      for(int i=0; i<n; i++) {
+        std::string key, value;
+        src = parse(src, key, '\0');
+        src = parse(src, value, '\0');
+        setAttribute(key, value);
+      }
+
+      src = parse(src, n);
+      for(int i=0; i<n; i++) {
+        std::string client;
+        src = parse(src, client, '\0');
+        src = parse(src, tmp);
+        addClient(client, (bool)tmp);
+      }
+
+      return src;
+    }
+    void showAttribute() const
+    {
+      std::cout << "Name: " << getName() << std::endl
+        << "Label: " << getLabel() << std::endl
+        << "Help: " << getHelp() << std::endl
+        << "Never changed: " << getNeverChanged() << std::endl
+        << "Changed: " << getChanged() << std::endl
+        << "Visible: " << getVisible() << std::endl;
+    }
+#endif
   };
 
   class parameterLessThan{
@@ -412,6 +501,73 @@ namespace onelab{
       }
       return pos;
     }
+#ifdef HAVE_ONELAB2
+    static UInt16 attributeType() {return 0x06;}
+    virtual inline UInt16 getAttributeType() const {return this->attributeType();}
+    virtual inline UInt16 getAttributeLength() const {
+      UInt16 len = parameter::getAttributeLength()+sizeof(double)*4+8+sizeof(double)*_choices.size();
+      for(std::map<double, std::string>::const_iterator it = _valueLabels.begin(); it != _valueLabels.end(); it++)
+        len += it->second.size()+1+sizeof(double);
+      return len;
+    }
+    UInt8 *encodeAttribute(UInt8 *dst)
+    {
+      dst = parameter::encodeAttribute(dst);
+
+      dst = encode(dst, _value);
+      dst = encode(dst, _min);
+      dst = encode(dst, _max);
+      dst = encode(dst, _step);
+      dst = encode(dst, (UInt32)_index);
+
+      dst = encode(dst, (UInt16)_choices.size());
+      for(unsigned int i = 0; i < _choices.size(); i++)
+        dst = encode(dst, _choices[i]);
+
+      dst = encode(dst, (UInt16)_valueLabels.size());
+      for(std::map<double, std::string>::const_iterator it = _valueLabels.begin(); it != _valueLabels.end(); it++) {
+        dst = encode(dst, it->first);
+        dst = encode(dst, (UInt8 *)it->second.c_str(), it->second.size()+1);
+      }
+
+      return dst;
+    }
+    UInt8 *parseAttribute(UInt8 *src, UInt32 length)
+    {
+      UInt16 n;
+
+      src = parameter::parseAttribute(src, length);
+
+      src = parse(src, _value);
+      src = parse(src, _min);
+      src = parse(src, _max);
+      src = parse(src, _step);
+      src = parse(src, *(UInt32 *)&_index);
+
+      src = parse(src, n);
+      _choices.resize(n);
+      for(unsigned int i = 0; i < n; i++)
+        src = parse(src, _choices[i]);
+
+      src = parse(src, n);
+      for(int i=0; i<n; i++) {
+        double value;
+        std::string label;
+        src = parse(src, value);
+        src = parse(src, label, '\0');
+        setValueLabel(value, label);
+      }
+
+      return src;
+    }
+    void showAttribute() const
+    {
+      parameter::showAttribute();
+      std::cout << "Value: " << this->_value << std::endl
+        << "Min: " << this->_min << std::endl
+        << "Max: " << this->_max << std::endl;
+    }
+#endif
   };
 
   // The string class. A string has a mutable "kind": we do not derive
@@ -476,6 +632,51 @@ namespace onelab{
         _choices[i] = getNextToken(msg, pos);
       return pos;
     }
+#ifdef HAVE_ONELAB2
+    static UInt16 attributeType() {return 0x07;}
+    virtual inline UInt16 getAttributeType() const {return this->attributeType();}
+    virtual inline UInt16 getAttributeLength() const
+    {
+      UInt16 len =  parameter::getAttributeLength();
+      len += _value.size()+_kind.size()+4;
+      for(unsigned int i = 0; i < _choices.size(); i++)
+        len += _choices[i].size()+1;
+      return len;
+    }
+    UInt8 *encodeAttribute(UInt8 *dst)
+    {
+      dst = parameter::encodeAttribute(dst);
+
+      dst = encode(dst, (UInt8 *)_value.c_str(), _value.size()+1);
+      dst = encode(dst, (UInt8 *)_kind.c_str(), _kind.size()+1);
+
+      dst = encode(dst, (UInt16)_choices.size());
+      for(unsigned int i = 0; i < _choices.size(); i++)
+        dst = encode(dst, (UInt8 *)_choices[i].c_str(), _choices[i].size()+1);
+
+      return dst;
+     }
+    UInt8 *parseAttribute(UInt8 *src, UInt32 length)
+    {
+      UInt16 n;
+      src = parameter::parseAttribute(src, length);
+      src = parse(src, _value, '\0');
+      src = parse(src, _kind, '\0');
+
+      src = parse(src, n);
+      _choices.resize(n);
+      for(unsigned int i=0; i<n; i++) {
+        src = parse(src, _choices[i], '\0');
+      }
+
+      return src;
+    }
+    void showAttribute() const
+    {
+      parameter::showAttribute();
+      std::cout << "Value: " << this->_value << std::endl;
+    }
+#endif
   };
 
   // The region class. A region can be any kind of geometrical entity,
@@ -558,6 +759,63 @@ namespace onelab{
       }
       return pos;
     }
+#ifdef HAVE_ONELAB2
+    static UInt16 attributeType() {return 0x08;}
+    virtual inline UInt16 getAttributeType() const {return this->attributeType();}
+    virtual inline UInt16 getAttributeLength() const {
+      UInt16 len = parameter::getAttributeLength();
+      len += 2;
+      for(std::set<std::string>::const_iterator it = _value.begin(); it != _value.end(); it++)
+        len += it->size()+1;
+      len += 4;
+      len += 2;
+      for(unsigned int i = 0; i < _choices.size(); i++){
+        len += 2;
+        for(std::set<std::string>::const_iterator it = _choices[i].begin(); it != _choices[i].end(); it++)
+          len += it->size()+1;
+      }
+      return len;
+    }
+    UInt8 *encodeAttribute(UInt8 *dst)
+    {
+      dst = parameter::encodeAttribute(dst);
+      dst = encode(dst, (UInt16)this->_value.size());
+      for(std::set<std::string>::const_iterator it = _value.begin(); it != _value.end(); it++)
+        dst = encode(dst, (UInt8 *)it->c_str(), it->size()+1);
+      dst = encode(dst, (UInt32)_dimension);
+      dst = encode(dst, (UInt16)_choices.size());
+      for(unsigned int i = 0; i < _choices.size(); i++){
+        dst = encode(dst, (UInt16)_choices[i].size());
+        for(std::set<std::string>::const_iterator it = _choices[i].begin(); it != _choices[i].end(); it++)
+          dst = encode(dst, (UInt8 *)it->c_str(), it->size()+1);
+      }
+      return dst;
+    }
+    UInt8 *parseAttribute(UInt8 *src, UInt32 len)
+    {
+      src = parameter::parseAttribute(src, len);
+      UInt16 m = 0, n = 0;
+      std::string value;
+      src = parse(src, n);
+      for(int i=0; i<n; i++) {
+        src = parse(src, value, '\0');
+      	_value.insert(value);
+      }
+      src = parse(src, *(UInt32 *)&_dimension);
+      src = parse(src, n);
+      _choices.resize(n);
+      for(int i=0; i<n; i++) {
+        src = parse(src, m);
+        for(int j=0; j<m; j++) {
+          src = parse(src, value, '\0');
+          _choices[i].insert(value);
+        }
+      }
+      return src;
+    }
+    void showAttribute() const {}
+#endif
+
   };
 
   // The (possibly piece-wise defined on regions) function class. Functions are
@@ -642,6 +900,69 @@ namespace onelab{
       }
       return pos;
     }
+#ifdef HAVE_ONELAB2
+    static UInt16 attributeType() {return 0x09;}
+    virtual inline UInt16 getAttributeType() const {return this->attributeType();}
+    virtual inline UInt16 getAttributeLength() const {
+      UInt16 len = parameter::getAttributeLength();
+      len += 2;
+      for(std::map<std::string, std::string>::const_iterator it = _value.begin();
+          it != _value.end(); it++)
+        len += 2+it->first.size()+it->second.size();
+      for(unsigned int i = 0; i < _choices.size(); i++){
+        len += 2;
+        for(std::map<std::string, std::string>::const_iterator it = _choices[i].begin();
+            it != _choices[i].end(); it++) {
+          len += 2+it->first.size()+it->second.size();
+        }
+      }
+      return len;
+    }
+    UInt8 *encodeAttribute(UInt8 *dst)
+    {
+      dst = parameter::encodeAttribute(dst),
+      dst = encode(dst, (UInt16)this->_value.size());
+      for(std::map<std::string, std::string>::const_iterator it = _value.begin();
+          it != _value.end(); it++) {
+        dst = encode(dst, (UInt8 *)it->first.c_str(), it->first.size()+1);
+        dst = encode(dst, (UInt8 *)it->second.c_str(), it->second.size()+1);
+      }
+      dst = encode(dst, (UInt16)_choices.size());
+      for(unsigned int i = 0; i < _choices.size(); i++){
+        dst = encode(dst, (UInt16)_choices[i].size());
+        for(std::map<std::string, std::string>::const_iterator it = _choices[i].begin();
+            it != _choices[i].end(); it++) {
+          dst = encode(dst, (UInt8 *)it->first.c_str(), it->first.size()+1);
+          dst = encode(dst, (UInt8 *)it->second.c_str(), it->second.size()+1);
+        }
+      }
+      return dst;
+    }
+    UInt8 *parseAttribute(UInt8 *src, UInt32 len)
+    {
+      src = parameter::parseAttribute(src, len);
+      UInt16 m = 0, n = 0;
+      std::string key, value;
+      src = parse(src, n);
+      for(int i=0; i<n; i++) {
+        src = parse(src, key, '\0');
+        src = parse(src, value, '\0');
+      	_value[key] = value;
+      }
+      src = parse(src, n);
+      _choices.resize(n);
+      for(int i=0; i<n; i++) {
+        src = parse(src, m);
+        for(int j=0; j<m; j++) {
+          src = parse(src, key, '\0');
+          src = parse(src, value, '\0');
+          _choices[i][key] = value;
+        }
+      }
+      return src;
+    }
+    void showAttribute() const {}
+#endif
   };
 
   // The parameter space, i.e., the set of parameters stored and handled by the
@@ -695,6 +1016,9 @@ namespace onelab{
       }
       else{
         T* newp = new T(p);
+#ifdef HAVE_ONELAB2
+        newp->isInDatabase(true);
+#endif
         if(client.size()) newp->addClient(client, true);
         ps.insert(newp);
       }
@@ -723,6 +1047,16 @@ namespace onelab{
         }
       }
       return true;
+    }
+    template <class T> T* _getPtr(std::string name, const std::string client, std::set<T*, parameterLessThan> ps)
+    {
+      T tmp(name);
+      typename std::set<T*, parameterLessThan>::iterator it = ps.find(&tmp);
+      if(it != ps.end()){
+        if(client.size()) (*it)->addClient(client, true);
+        return *it;
+      }
+      return NULL;
     }
     void _getAllParameters(std::set<parameter*, parameterLessThan> &ps) const
     {
@@ -770,6 +1104,21 @@ namespace onelab{
              const std::string &client=""){ return _get(ps, name, client, _regions); }
     bool get(std::vector<function> &ps, const std::string &name="",
              const std::string &client=""){ return _get(ps, name, client, _functions); }
+    void getPtr(number **ptr, const std::string name, const std::string client="")
+      {*ptr = _getPtr(name, client, _numbers);}
+    void getPtr(string **ptr, const std::string name, const std::string client="")
+      {*ptr = _getPtr(name, client, _strings);}
+    void getPtr(region **ptr, const std::string name, const std::string client="")
+      {*ptr = _getPtr(name, client, _regions);}
+    void getPtr(function **ptr, const std::string name, const std::string client="")
+      {*ptr = _getPtr(name, client, _functions);}
+    void getAllParameters(std::set<parameter*, parameterLessThan> &ps) const
+    {
+      ps.insert(_numbers.begin(), _numbers.end());
+      ps.insert(_strings.begin(), _strings.end());
+      ps.insert(_regions.begin(), _regions.end());
+      ps.insert(_functions.begin(), _functions.end());
+    }
     unsigned int getNumParameters()
     {
       return (int)(_numbers.size() + _strings.size() + _regions.size() + _functions.size());
@@ -798,7 +1147,7 @@ namespace onelab{
       }
       return false;
     }
-    // set the changed flag for all the parameters that depend on the give
+    // set the changed flag for all the parameters that depend on the given
     // client (or for all parameters if no client name is provided)
     void setChanged(bool changed, const std::string &client="")
     {
@@ -935,7 +1284,6 @@ namespace onelab{
       return false;
     }
   };
-
   // The onelab server: a singleton that stores the parameter space and
   // interacts with onelab clients.
   class server{
@@ -988,6 +1336,10 @@ namespace onelab{
     bool getChanged(const std::string &client="")
     {
       return _parameterSpace.getChanged(client);
+    }
+    bool isRegistered(const std::string &client)
+    {
+      return _clients.count(client);
     }
     unsigned int getNumParameters(){ return _parameterSpace.getNumParameters(); }
     std::vector<std::string> toChar(const std::string &client="")
@@ -1057,6 +1409,10 @@ namespace onelab{
   private:
     // executable of the client (including filesystem path, if necessary)
     std::string _executable;
+    // treat the executable name as a full command line (will prevent the
+    // escaping of the exe name, and will assume that the command line has been
+    // correcly escaped)
+    bool _treatExecutableAsFullCommandLine;
     // command to login to a remote host (if necessary)
     std::string _remoteLogin;
     // command line option to specify socket
@@ -1067,14 +1423,21 @@ namespace onelab{
     GmshServer *_gmshServer;
   public:
     localNetworkClient(const std::string &name, const std::string &executable,
-                       const std::string &remoteLogin="")
-      : localClient(name), _executable(executable), _remoteLogin(remoteLogin),
-        _socketSwitch("-onelab"), _pid(-1), _gmshServer(0) {}
+                       const std::string &remoteLogin="",
+                       bool treatExecutableAsFullCommandLine=false)
+      : localClient(name), _executable(executable),
+        _treatExecutableAsFullCommandLine(treatExecutableAsFullCommandLine),
+        _remoteLogin(remoteLogin), _socketSwitch("-onelab"), _pid(-1),
+        _gmshServer(0) {}
     virtual ~localNetworkClient(){}
     virtual bool isNetworkClient(){ return true; }
     const std::string &getExecutable(){ return _executable; }
     void setExecutable(const std::string &s){ _executable = s; }
     const std::string &getRemoteLogin(){ return _remoteLogin; }
+    const bool treatExecutableAsFullCommandLine()
+    {
+      return _treatExecutableAsFullCommandLine;
+    }
     void setRemoteLogin(const std::string &s){ _remoteLogin = s; }
     const std::string &getSocketSwitch(){ return _socketSwitch; }
     void setSocketSwitch(const std::string &s){ _socketSwitch = s; }
