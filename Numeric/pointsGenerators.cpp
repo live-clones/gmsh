@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
@@ -297,12 +297,12 @@ fullMatrix<double> gmshGenerateMonomialsQuadrangle(int order, bool forSerendipPo
 }
 
 /*
-00 10 20 30 40 â..
-01 11 21 31 41 â..
+00 10 20 30 40 ...
+01 11 21 31 41 ...
 02 12
 03 13
 04 14
-â. â.
+...
 */
 
 fullMatrix<double> gmshGenerateMonomialsQuadSerendipity(int order)
