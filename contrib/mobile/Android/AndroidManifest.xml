@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="org.geuz.onelab"
-          android:versionCode="7"
-          android:versionName="1.0.8"
+          android:versionCode="8"
+          android:versionName="1.0.9"
           android:installLocation="auto" >
   
   <uses-sdk android:minSdkVersion="14"
@@ -16,7 +16,8 @@
                android:logo="@drawable/ic_launcher"
                android:allowBackup="true" >
     <activity android:name=".SplashScreen"
-              android:label="@string/title_activity_main">
+              android:label="@string/title_activity_main"
+              android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />

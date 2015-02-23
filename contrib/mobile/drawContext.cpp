@@ -46,8 +46,8 @@ drawContext::drawContext(float fontFactor, bool retina)
 
 static void checkGlError(const char* op)
 {
-  for (GLint error = glGetError(); error; error = glGetError())
-    Msg::Error("%s: glError (0x%x)",op,error);
+  //for (GLint error = glGetError(); error; error = glGetError())
+  //  Msg::Error("%s: glError (0x%x)",op,error);
 }
 
 void drawContext::load(std::string filename)
@@ -623,6 +623,25 @@ void drawContext::drawText2d()
   glPopMatrix();
 }
 
+void drawGraph2d()
+{
+  glPushMatrix();
+  glLoadIdentity();
+
+  std::vector<PView*> graphs;
+  for(unsigned int i = 0; i < PView::list.size(); i++){
+    PViewData *data = PView::list[i]->getData();
+    PViewOptions *opt = PView::list[i]->getOptions();
+    if(!data->getDirty() && opt->visible && opt->type != PViewOptions::Plot3D)
+      graphs.push_back(PView::list[i]);
+  }
+  if(graphs.empty()) return;
+
+  // FIXME: draw 2d graph(s)
+
+  glPopMatrix();
+}
+
 void drawContext::drawView()
 {
   OrthofFromGModel();
@@ -755,6 +774,7 @@ void drawContext::drawView()
   drawScale(); checkGlError("Draw scales");
   drawAxes(); checkGlError("Draw axes");
   drawText2d(); checkGlError("Draw text2d");
+  drawGraph2d(); checkGlError("Draw graph2d");
 }
 
 std::vector<std::string> commandToVector(const std::string cmd)
