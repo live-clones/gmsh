@@ -116,7 +116,7 @@ parametricLineNodalBasis::parametricLineNodalBasis(const nodalBasis &basis,
 
 SPoint3 parametricLineNodalBasis::operator()(double xi) const
 {
-  double psi[_xyz.size()];
+  double *psi = new double[_xyz.size()];
   SPoint3 p(0., 0., 0.);
   _basis.f(-1 + 2 * xi, 0., 0., psi);
   for (size_t j = 0; j < _xyz.size(); ++j) {
@@ -124,13 +124,14 @@ SPoint3 parametricLineNodalBasis::operator()(double xi) const
     p[1] += psi[j] * _xyz[j].y();
     p[2] += psi[j] * _xyz[j].z();
   }
+  delete[] psi;
   return p;
 }
 
 
 SVector3 parametricLineNodalBasis::derivative(double xi) const
 {
-  double dpsi[_xyz.size()][3];
+  double (*dpsi)[3] = new double[_xyz.size()][3];
   SVector3 p(0., 0., 0.);
   _basis.df(-1 + 2 * xi, 0., 0., dpsi);
   for (size_t j = 0; j < _xyz.size(); ++j) {
@@ -138,13 +139,14 @@ SVector3 parametricLineNodalBasis::derivative(double xi) const
     p[1] += dpsi[j][0] * _xyz[j].y();
     p[2] += dpsi[j][0] * _xyz[j].z();
   }
+  delete[] dpsi;
   return p;
 }
 
 
 SVector3 parametricLineNodalBasis::secondDerivative(double xi) const
 {
-  double ddpsi[_xyz.size()][3][3];
+  double (*ddpsi)[3][3] = new double[_xyz.size()][3][3];
   SVector3 p(0, 0, 0);
   _basis.ddf(-1 + 2 * xi, 0, 0, ddpsi);
   for (size_t j = 0; j < _xyz.size(); ++j) {
@@ -152,6 +154,7 @@ SVector3 parametricLineNodalBasis::secondDerivative(double xi) const
     p[1] += ddpsi[j][0][0] * _xyz[j].y();
     p[2] += ddpsi[j][0][0] * _xyz[j].z();
   }
+  delete[] ddpsi;
   return p;
 }
 
