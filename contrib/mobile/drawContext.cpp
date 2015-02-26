@@ -363,8 +363,12 @@ void drawContext::drawPView(PView *p)
   glLineWidth((GLfloat)opt->lineWidth);
 
   drawArray(p->va_points, GL_POINTS, true);
+
   drawArray(p->va_lines, GL_LINES, true);
+
+  glEnable(GL_LIGHTING);
   drawArray(p->va_triangles, GL_TRIANGLES, true, true);
+  glDisable(GL_LIGHTING);
 
   glLineWidth(1);
   glPointSize(1);
@@ -767,9 +771,7 @@ void drawContext::drawView()
   glEnable(GL_DEPTH_TEST);
   drawMesh(); checkGlError("Draw mesh");
   drawGeom(); checkGlError("Draw geometry");
-  glEnable(GL_LIGHTING);
   drawPost(); checkGlError("Draw post-pro");
-  glDisable(GL_LIGHTING);
   glDisable(GL_DEPTH_TEST);
   drawScale(); checkGlError("Draw scales");
   drawAxes(); checkGlError("Draw axes");
