@@ -5,7 +5,6 @@ import android.graphics.Color;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-
 public class Parameter {
     protected Context _context;
     protected Gmsh _gmsh;
