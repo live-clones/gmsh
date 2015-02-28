@@ -24,7 +24,7 @@ public class AboutActivity extends Activity{
         catch (android.content.pm.PackageManager.NameNotFoundException e) {
             aboutOnelab += "Version ?.?.?";
         }
-        aboutOnelab += "<p>Copyright (C) 2014 Christophe Geuzaine and Maxime Graulich, ";
+        aboutOnelab += "<p>Copyright (C) 2014-2015 Christophe Geuzaine and Maxime Graulich, ";
         aboutOnelab += "University of Li&egrave;ge</p>";
         aboutOnelab += "<p>Visit <a href=\"http://onelab.info/\">http://onelab.info/</a> ";
         aboutOnelab += "for more information</p>";
