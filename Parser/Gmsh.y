@@ -116,7 +116,7 @@ struct doubleXstring{
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tStrFind tStrCmp
 %token tTextAttributes
-%token tBoundingBox tDraw tSetChanged tToday tSyncModel
+%token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tSyncModel
 %token tOnelabAction tOnelabRun
 %token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateTopologyNoHoles
@@ -5289,6 +5289,13 @@ StringExpr :
 	Free($3);
       }
       List_Delete($5);
+    }
+  | tFixRelativePath '(' StringExprVar ')'
+    {
+      std::string tmp = FixRelativePath(gmsh_yyname, $3);
+      $$ = (char*)Malloc((tmp.size() + 1) * sizeof(char));
+      strcpy($$, tmp.c_str());
+      Free($3);
     }
   | tDefineString LP StringExpr
     { floatOptions.clear(); charOptions.clear(); }

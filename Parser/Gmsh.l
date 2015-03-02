@@ -164,6 +164,7 @@ Exists                  return tExists;
 Fabs                    return tFabs;
 Field                   return tField;
 FileExists              return tFileExists;
+FixRelativePath         return tFixRelativePath;
 Floor                   return tFloor;
 Fmod                    return tFmod;
 For                     return tFor;
