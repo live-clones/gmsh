@@ -1053,26 +1053,27 @@ int GModel::readOCCIGES(const std::string &fn)
 
 int GModel::writeOCCBREP(const std::string &fn)
 {
-  _occ_internals->buildShapeFromGModel(this);
-
   if(!_occ_internals){
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  else
+  else{
+    _occ_internals->buildShapeFromGModel(this);
     _occ_internals->writeBREP(fn.c_str());
+  }
   return 1;
 }
 
 int GModel::writeOCCSTEP(const std::string &fn)
 {
-  _occ_internals->buildShapeFromGModel(this);
   if(!_occ_internals){
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  else
+  else{
+    _occ_internals->buildShapeFromGModel(this);
     _occ_internals->writeSTEP(fn.c_str());
+  }
   return 1;
 }
 
