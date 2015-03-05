@@ -74,6 +74,10 @@ check
 make androidProject
 check
 
+# Potentially modify source tree for alternate branding
+
+
+
 # Onelab/Mobile package
 cd Onelab
 if [ ! -d "libs/armeabi-v7a/" ]; then mkdir -p libs/armeabi-v7a/; fi

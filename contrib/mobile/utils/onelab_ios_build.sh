@@ -80,6 +80,9 @@ cd $gmsh_svn/contrib/mobile/build_ios
 cmake -DCMAKE_INCLUDE_PATH="$frameworks_dir;$getdp_svn" ..
 make xcodeProject
 
+# Potentially modify source tree for alternate branding
+
+
 #TODO
 #xcodebuild -project "Onelab" -target "Onelab" -configuration Release
 #xcrun -sdk iphoneos PackageApplication -v "Onelab.app" -o "Onelab.ipa" --sign "iPhone Distribution: Your Signature\" --embed enterprise.mobileprovision
