@@ -941,6 +941,16 @@ if(HAVE_SOLVER)
       # find includes by parsing the petscvariables file
       file(STRINGS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables 
            PETSC_VARIABLES NEWLINE_CONSUME)
+    endif(EXISTS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables)
+    if(EXISTS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc-conf/petscvariables)
+      # old-style PETSc installations (using PETSC_DIR and PETSC_ARCH)
+      message(STATUS "Using PETSc dir: ${ENV_PETSC_DIR}")
+      message(STATUS "Using PETSc arch: ${ENV_PETSC_ARCH}")
+      # find includes by parsing the petscvariables file
+      file(STRINGS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc-conf/petscvariables 
+           PETSC_VARIABLES NEWLINE_CONSUME)
+    endif(EXISTS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc-conf/petscvariables)
+    if(PETSC_VARIABLES)
       # try to find PETSC_CC_INCLUDES for PETSc >= 3.4
       string(REGEX MATCH "PETSC_CC_INCLUDES = [^\n\r]*" PETSC_PACKAGES_INCLUDES
              ${PETSC_VARIABLES})
@@ -1031,7 +1041,7 @@ if(HAVE_SOLVER)
         string(STRIP ${LLIBS} LLIBS)
         list(APPEND EXTERNAL_LIBRARIES "${LLIBS}")
       endif(LLIBS)
-    else(EXISTS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables)
+    else(PETSC_VARIABLES)
       # new-style PETSc installations (in standard system directories)
       find_library(PETSC_LIBS petsc)
       find_path(PETSC_INC "petsc.h" PATH_SUFFIXES include/petsc)
@@ -1049,7 +1059,7 @@ if(HAVE_SOLVER)
         list(APPEND EXTERNAL_LIBRARIES ${PETSC_LIBS})
         list(APPEND EXTERNAL_INCLUDES ${PETSC_INC}) 
       endif(PETSC_LIBS AND PETSC_INC)
-    endif(EXISTS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables)
+    endif(PETSC_VARIABLES)
   endif(ENABLE_PETSC)
 endif(HAVE_SOLVER)
 
