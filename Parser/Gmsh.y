@@ -154,7 +154,7 @@ struct doubleXstring{
 %type <l> RecursiveListOfListOfDouble Enumeration
 %type <l> ListOfColor RecursiveListOfColor
 %type <l> ListOfShapes Transform Extrude MultipleShape
-%type <l> TransfiniteCorners InSphereCenter
+%type <l> TransfiniteCorners InSphereCenter PeriodicTransform
 %type <s> Shape
 
 // Operators (with ascending priority): cf. C language
@@ -3534,6 +3534,16 @@ RecombineAngle :
     }
 ;
 
+PeriodicTransform :
+    {
+      $$ = List_Create(1, 1, sizeof(double));
+    }
+  | tUsing ListOfDouble
+    {
+      $$ = $2;
+    }
+;
+
 Constraints :
     tTransfinite tLine ListOfDoubleOrAll tAFFECT FExpr TransfiniteType tEND
     {
@@ -3907,7 +3917,7 @@ Constraints :
       List_Delete($5);
     }
   | tPeriodic tSurface FExpr '{' RecursiveListOfDouble '}' tAFFECT FExpr
-    '{' RecursiveListOfDouble '}'  tEND
+    '{' RecursiveListOfDouble '}'  PeriodicTransform tEND
     {
       if (List_Nbr($5) != List_Nbr($10)){
 	yymsg(0, "Number of master surface edges (%d) different from number of "
@@ -3917,6 +3927,12 @@ Constraints :
         int j_master = (int)$8;
         int j_slave = (int)$3;
         Surface *s_slave = FindSurface(abs(j_slave));
+	std::vector<double> transfo;
+	for(int i = 0; i < List_Nbr($12); i++){
+	  double d;
+	  List_Read($12, i, &d);
+	  transfo.push_back(d);
+	}
         if(s_slave){
 	  GModel::current()->getGEOInternals()->periodicFaces[j_slave] = j_master;
           for (int i = 0; i < List_Nbr($5); i++){
@@ -3925,6 +3941,7 @@ Constraints :
             List_Read($10, i, &dm);
 	    GModel::current()->getGEOInternals()->periodicEdges[(int)ds] = (int)dm;
             s_slave->edgeCounterparts[(int)ds] = (int)dm;
+            s_slave->affineTransform = transfo;
           }
         }
         else{
@@ -3936,6 +3953,7 @@ Constraints :
               List_Read($5, i, &ds);
               List_Read($10, i, &dm);
               gf->edgeCounterparts[(int)ds] = (int)dm;
+	      gf->affineTransform = transfo;
 	      GEdge *ges = GModel::current()->getEdgeByTag(abs((int)ds));
 	      ges->setMeshMaster((int)dm);
             }
@@ -3945,6 +3963,7 @@ Constraints :
       }
       List_Delete($5);
       List_Delete($10);
+      List_Delete($12);
     }
   | tPoint '{' RecursiveListOfDouble '}' tIn tSurface '{' FExpr '}' tEND
     {

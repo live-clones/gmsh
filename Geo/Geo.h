@@ -193,6 +193,8 @@ class Surface{
   gmshSurface *geometry;
   // the mesh master surface
   std::map<int,int> edgeCounterparts;
+  // prescribed affine transform for periodic meshing
+  std::vector<double> affineTransform;
   std::vector<int> compound, compoundBoundary[4];
   int ReverseMesh;
   void SetVisible(int value, bool recursive)

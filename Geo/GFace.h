@@ -58,17 +58,19 @@ class GFace : public GEntity
   // periodic counterparts of edges
   std::map<int,int> edgeCounterparts;
 
+  // encoding of an explicit affine transformation for period meshing
+  std::vector<double> affineTransform;
+
   // an array with additional vertices that are supposed to exist in
   // the final mesh of the model face. This can be used for boundary
   // layer meshes or when using Lloyd-like smoothing algorithms those
   // vertices are classifed on this GFace, their type is MFaceVertex.
   // After mesh generation, those are moved to the mesh_vertices array
-
+  std::vector<MVertex*> additionalVertices;
+  
  public:
   GFace(GModel *model, int tag);
   virtual ~GFace();
-
-  std::vector<MVertex*> additionalVertices;
 
   // delete mesh data
   virtual void deleteMesh();

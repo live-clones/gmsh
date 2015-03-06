@@ -94,7 +94,10 @@ public:
 	  std::vector<MLine*> temp;
 	  (*ite)->mesh_vertices.clear();
 	  for(unsigned int i = 0; i< (*ite)->lines.size(); i+=2){
-	    if (i+1 >= (*ite)->lines.size())Msg::Fatal("1D mesh cannot be divided by 2");
+	    if (i+1 >= (*ite)->lines.size()){
+	      Msg::Error("1D mesh cannot be divided by 2");
+	      break;
+	    }
 	    MVertex *v1 = (*ite)->lines[i]->getVertex(0);
 	    MVertex *v2 = (*ite)->lines[i]->getVertex(1);
 	    MVertex *v3 = (*ite)->lines[i+1]->getVertex(1);
@@ -328,116 +331,137 @@ static void copyMesh(GFace *source, GFace *target)
   }
 
   bool translation = true;
-  bool rotation = false;
-
   SVector3 DX;
-  int count = 0;
-  for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin();
-       it != vs2vt.end() ; ++it){
-    MVertex *vs = it->first;
-    MVertex *vt = it->second;
-    if (count == 0)
-      DX = SVector3(vt->x() - vs->x(), vt->y() - vs->y(), vt->z() - vs->z());
-    else {
-      SVector3 DX2 = DX - SVector3(vt->x() - vs->x(), vt->y() - vs->y(),
-                                   vt->z() - vs->z());
-      if (DX2.norm() > DX.norm() * 1.e-5) translation = false;
-    }
-    count ++;
-  }
 
+  bool rotation = false;
   double rot[3][3] ;
   myLine LINE;
   double ANGLE=0;
-  if (!translation){
-    count = 0;
-    rotation = true;
-    std::vector<SPoint3> mps, mpt;
-    for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin();
-         it != vs2vt.end() ; ++it){
-      MVertex *vs = it->first;
-      MVertex *vt = it->second;
-      mps.push_back(SPoint3(vs->x(), vs->y(), vs->z()));
-      mpt.push_back(SPoint3(vt->x(), vt->y(), vt->z()));
-    }
-    mean_plane mean_source, mean_target;
-    computeMeanPlaneSimple(mps, mean_source);
-    computeMeanPlaneSimple(mpt, mean_target);
-    myPlane PLANE_SOURCE(SPoint3(mean_source.x,mean_source.y,mean_source.z),
-                         SVector3(mean_source.a,mean_source.b,mean_source.c));
-    myPlane PLANE_TARGET(SPoint3(mean_target.x,mean_target.y,mean_target.z),
-                         SVector3(mean_target.a,mean_target.b,mean_target.c));
-    LINE = myLine(PLANE_SOURCE, PLANE_TARGET);
 
-    // LINE is the axis of rotation
-    // let us compute the angle of rotation
-    count = 0;
-    for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin();
-         it != vs2vt.end(); ++it){
-      MVertex *vs = it->first;
-      MVertex *vt = it->second;
-      // project both points on the axis: that should be the same point !
-      SPoint3 ps = SPoint3(vs->x(), vs->y(), vs->z());
-      SPoint3 pt = SPoint3(vt->x(), vt->y(), vt->z());
-      SPoint3 p_ps = LINE.orthogonalProjection(ps);
-      SPoint3 p_pt = LINE.orthogonalProjection(pt);
-      SVector3 dist1 = ps - pt;
-      SVector3 dist2 = p_ps - p_pt;
-      if (dist1.norm() > CTX::instance()->geom.tolerance){
-        if (dist2.norm() > 1.e-8 * dist1.norm()){
-          rotation = false;
-        }
-        SVector3 t1 = ps - p_ps;
-        SVector3 t2 = pt - p_pt;
-        if (t1.norm() > 1.e-8 * dist1.norm()){
-          if (count == 0)
-            ANGLE = myAngle(t1, t2, LINE.t);
-          else {
-            double ANGLE2 = myAngle(t1, t2, LINE.t);
-            if (fabs (ANGLE2 - ANGLE) > 1.e-8){
-              rotation = false;
-            }
-          }
-          count++;
-        }
-      }
-    }
+  bool affine = false;
+  double mat[4][4];
 
-    if (rotation){
-      Msg::Info("Periodic mesh rotation found: axis (%g,%g,%g) point (%g %g %g) angle %g",
-                LINE.t.x(), LINE.t.y(), LINE.t.z(), LINE.p.x(), LINE.p.y(), LINE.p.z(),
-                ANGLE * 180 / M_PI);
-      double ux = LINE.t.x();
-      double uy = LINE.t.y();
-      double uz = LINE.t.z();
-      rot[0][0] = cos (ANGLE) + ux*ux*(1.-cos(ANGLE));
-      rot[0][1] = ux*uy*(1.-cos(ANGLE)) - uz * sin(ANGLE);
-      rot[0][2] = ux*uz*(1.-cos(ANGLE)) + uy * sin(ANGLE);
-      rot[1][0] = ux*uy*(1.-cos(ANGLE)) + uz * sin(ANGLE);
-      rot[1][1] = cos (ANGLE) + uy*uy*(1.-cos(ANGLE));
-      rot[1][2] = uy*uz*(1.-cos(ANGLE)) - ux * sin(ANGLE);
-      rot[2][0] = ux*uz*(1.-cos(ANGLE)) - uy * sin(ANGLE);
-      rot[2][1] = uy*uz*(1.-cos(ANGLE)) + ux * sin(ANGLE);
-      rot[2][2] = cos (ANGLE) + uz*uz*(1.-cos(ANGLE));
-    }
-    else {
-      Msg::Error("Only rotations or translations can be currently taken into account "
-                 "for periodic faces: face %d not meshed", target->tag());
-      return;
-    }
+  if(target->affineTransform.size() == 16){
+    Msg::Info("Affine transformation specified");
+    affine = true;
+    for(int i = 0; i < 4; i++)
+      for(int j = 0; j < 4; j++)
+    	mat[i][j] = target->affineTransform[4 * i + j];
   }
   else{
-    Msg::Info("Periodic mesh translation found: dx = (%g,%g,%g)",
-              DX.x(), DX.y(), DX.z());
+    int count = 0;
+    for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin();
+	 it != vs2vt.end() ; ++it){
+      MVertex *vs = it->first;
+      MVertex *vt = it->second;
+      if (count == 0)
+	DX = SVector3(vt->x() - vs->x(), vt->y() - vs->y(), vt->z() - vs->z());
+      else {
+	SVector3 DX2 = DX - SVector3(vt->x() - vs->x(), vt->y() - vs->y(),
+				     vt->z() - vs->z());
+	if (DX2.norm() > DX.norm() * 1.e-5) translation = false;
+      }
+      count ++;
+    }
+    
+    if (!translation){
+      count = 0;
+      rotation = true;
+      std::vector<SPoint3> mps, mpt;
+      for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin();
+	   it != vs2vt.end() ; ++it){
+	MVertex *vs = it->first;
+	MVertex *vt = it->second;
+	mps.push_back(SPoint3(vs->x(), vs->y(), vs->z()));
+	mpt.push_back(SPoint3(vt->x(), vt->y(), vt->z()));
+      }
+      mean_plane mean_source, mean_target;
+      computeMeanPlaneSimple(mps, mean_source);
+      computeMeanPlaneSimple(mpt, mean_target);
+      myPlane PLANE_SOURCE(SPoint3(mean_source.x,mean_source.y,mean_source.z),
+			   SVector3(mean_source.a,mean_source.b,mean_source.c));
+      myPlane PLANE_TARGET(SPoint3(mean_target.x,mean_target.y,mean_target.z),
+			   SVector3(mean_target.a,mean_target.b,mean_target.c));
+      LINE = myLine(PLANE_SOURCE, PLANE_TARGET);
+      
+      // LINE is the axis of rotation
+      // let us compute the angle of rotation
+      count = 0;
+      for (std::map<MVertex*, MVertex*>::iterator it = vs2vt.begin();
+	   it != vs2vt.end(); ++it){
+	MVertex *vs = it->first;
+	MVertex *vt = it->second;
+	// project both points on the axis: that should be the same point !
+	SPoint3 ps = SPoint3(vs->x(), vs->y(), vs->z());
+	SPoint3 pt = SPoint3(vt->x(), vt->y(), vt->z());
+	SPoint3 p_ps = LINE.orthogonalProjection(ps);
+	SPoint3 p_pt = LINE.orthogonalProjection(pt);
+	SVector3 dist1 = ps - pt;
+	SVector3 dist2 = p_ps - p_pt;
+	if (dist1.norm() > CTX::instance()->geom.tolerance){
+	  if (dist2.norm() > 1.e-8 * dist1.norm()){
+	    rotation = false;
+	  }
+	  SVector3 t1 = ps - p_ps;
+	  SVector3 t2 = pt - p_pt;
+	  if (t1.norm() > 1.e-8 * dist1.norm()){
+	    if (count == 0)
+	      ANGLE = myAngle(t1, t2, LINE.t);
+	    else {
+	      double ANGLE2 = myAngle(t1, t2, LINE.t);
+	      if (fabs (ANGLE2 - ANGLE) > 1.e-8){
+		rotation = false;
+	      }
+	    }
+	    count++;
+	  }
+	}
+      }
+      
+      if (rotation){
+	Msg::Info("Periodic mesh rotation found: axis (%g,%g,%g) point (%g %g %g) angle %g",
+		  LINE.t.x(), LINE.t.y(), LINE.t.z(), LINE.p.x(), LINE.p.y(), LINE.p.z(),
+		  ANGLE * 180 / M_PI);
+	double ux = LINE.t.x();
+	double uy = LINE.t.y();
+	double uz = LINE.t.z();
+	rot[0][0] = cos (ANGLE) + ux*ux*(1.-cos(ANGLE));
+	rot[0][1] = ux*uy*(1.-cos(ANGLE)) - uz * sin(ANGLE);
+	rot[0][2] = ux*uz*(1.-cos(ANGLE)) + uy * sin(ANGLE);
+	rot[1][0] = ux*uy*(1.-cos(ANGLE)) + uz * sin(ANGLE);
+	rot[1][1] = cos (ANGLE) + uy*uy*(1.-cos(ANGLE));
+	rot[1][2] = uy*uz*(1.-cos(ANGLE)) - ux * sin(ANGLE);
+	rot[2][0] = ux*uz*(1.-cos(ANGLE)) - uy * sin(ANGLE);
+	rot[2][1] = uy*uz*(1.-cos(ANGLE)) + ux * sin(ANGLE);
+	rot[2][2] = cos (ANGLE) + uz*uz*(1.-cos(ANGLE));
+      }
+      else {
+	Msg::Error("Only rotations or translations can be currently taken into account "
+		   "automatically for periodic faces: face %d not meshed", target->tag());
+	return;
+      }
+    }
+    else{
+      Msg::Info("Periodic mesh translation found: dx = (%g,%g,%g)",
+		DX.x(), DX.y(), DX.z());
+    }
   }
 
-  // now transform !!!
+  // now transform
   for(unsigned int i = 0; i < source->mesh_vertices.size(); i++){
     MVertex *vs = source->mesh_vertices[i];
-
     SPoint2 XXX;
-    if (translation) {
-      SPoint3 tp (vs->x() + DX.x(),vs->y() + DX.y(),vs->z() + DX.z());
+    if (affine) {
+      double ps[4] = {vs->x(), vs->y(), vs->z(), 1.};
+      double res[4] = {0., 0., 0., 0.};
+      for(int i = 0; i < 4; i++)
+	for(int j = 0; j < 4; j++)
+	  res[i] += mat[i][j] * ps[j];
+      SPoint3 tp (res[0], res[1], res[2]);
+      XXX = target->parFromPoint(tp);
+    }
+    else if (translation) {
+      SPoint3 tp (vs->x() + DX.x(), vs->y() + DX.y(), vs->z() + DX.z());
       XXX = target->parFromPoint(tp);
     }
     else if (rotation){
@@ -462,10 +486,11 @@ static void copyMesh(GFace *source, GFace *target)
       vt[j] = vs2vt[vs];
     }
     if (!vt[0] || !vt[1] ||!vt[2]){
-      Msg::Fatal("Yet another error in the copyMesh procedure %p %p %p %d %d %d",
+      Msg::Error("Problem in mesh copying procedure %p %p %p %d %d %d",
 		 vt[0], vt[1], vt[2], source->triangles[i]->getVertex(0)->onWhat()->dim(),
 		 source->triangles[i]->getVertex(1)->onWhat()->dim(),
 		 source->triangles[i]->getVertex(2)->onWhat()->dim());
+      return;
     }
     target->triangles.push_back(new MTriangle(vt[0], vt[1], vt[2]));
   }
@@ -476,7 +501,7 @@ static void copyMesh(GFace *source, GFace *target)
     MVertex *v3 = vs2vt[source->quadrangles[i]->getVertex(2)];
     MVertex *v4 = vs2vt[source->quadrangles[i]->getVertex(3)];
     if (!v1 || !v2 || !v3 || !v4){
-      Msg::Fatal("Yet another error in the copymesh procedure %p %p %p %p %d %d %d %d",
+      Msg::Error("Problem in mesh copying procedure %p %p %p %p %d %d %d %d",
 		 v1, v2, v3, v4,
 		 source->quadrangles[i]->getVertex(0)->onWhat()->dim(),
 		 source->quadrangles[i]->getVertex(1)->onWhat()->dim(),

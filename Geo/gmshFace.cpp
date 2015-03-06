@@ -26,6 +26,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
   resetMeshAttributes();
 
   edgeCounterparts = s->edgeCounterparts;
+  affineTransform = s->affineTransform;
 
   std::vector<GEdge*> eds;
   std::vector<int> nums;
