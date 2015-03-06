@@ -6,7 +6,7 @@ frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_android"
 
 petsc_lib="$frameworks_dir/petsc"
 slepc_lib="$frameworks_dir/slepc"
-android_ndk="${HOME}/android-ndk-r8b/"
+android_ndk="${HOME}/android-ndk-r8b/" 
 android_sdk="${HOME}/android-sdk/"
 
 cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=$gmsh_svn/contrib/mobile/utils/Android.cmake -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release"
@@ -16,11 +16,12 @@ function check {
   return_code=$?
   if [ $return_code != 0 ]; then
     echo "last command failed (return $return_code)"
-    exit $return_cod
+    exit $return_code
   fi
 }
 
 # PETSc and BLAS/LAPACK
+echo $petsc_lib/libpetsc.so
 if [ ! -f "$petsc_lib/libpetsc.so" ] || [ ! -f "$petsc_lib/libf2clapack.so" ] || [ ! -f "$petsc_lib/libf2cblas.so" ] || [ ! -d "$petsc_lib/Headers/" ]; then 
   echo -e "ERROR: Need BLAS (f2c), LAPACK (f2c) and PETSc\ncheck android_petsc_reconfigure-armv7-android-linux.py for compile options\n"
   exit 1
@@ -57,10 +58,11 @@ make get_headers
 check
 
 # Onelab/Mobile interface
-if [ ! -d "$gmsh_svn/contrib/mobile/build_android" ] || [ ! -f "$gmsh_svn/contrib/mobile/build_android/CMakeCache.txt" ]; then
+if [ ! -d "$gmsh_svn/contrib/mobile/build_android" ]; then
   mkdir $gmsh_svn/contrib/mobile/build_android
 fi
 cd $gmsh_svn/contrib/mobile/build_android
+
 cmake $cmake_default \
       -DCMAKE_INCLUDE_PATH="$getdp_svn/" \
       -DBLAS_LIB="$petsc_lib/libf2cblas.so" -DLAPACK_LIB="$petsc_lib/libf2clapack.so" \
@@ -75,11 +77,23 @@ make androidProject
 check
 
 # Potentially modify source tree for alternate branding
-
+cd Onelab
+if [ $# -eq 1 ] ; then
+  packagename=${1,,}
+  appname=$1
+  # change package name
+  mv src/org/geuz/onelab/ src/org/geuz/$packagename
+  mkdir src/org/geuz/onelab
+  mv src/org/geuz/$packagename/Gmsh.java src/org/geuz/onelab
+  find . -type f -name '*.java' -not -name 'Gmsh.java' -exec sed -i "s/org\.geuz\.onelab/org\.geuz\.$packagename/g" {} \;
+  sed -i "s/org\.geuz\.onelab/org\.geuz\.$packagename/g" AndroidManifest.xml
+  grep -r -m 1 'Gmsh' src | cut -d ':' -f 1 | xargs -n 1 sed -i "s/org\.geuz\.$packagename;/org\.geuz\.$packagename;\n\nimport org.geuz.onelab.Gmsh;/"
+  # change app name
+  sed -i "s/<string name=\"app_name\">Onelab<\/string>/<string name=\"app_name\">$appname<\/string>/" res/values/strings.xml
+fi
 
 
 # Onelab/Mobile package
-cd Onelab
 if [ ! -d "libs/armeabi-v7a/" ]; then mkdir -p libs/armeabi-v7a/; fi
 target=1
 while read line; do
