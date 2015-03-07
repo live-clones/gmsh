@@ -30,9 +30,9 @@ class onelabMetaModelServer : public GmshServer{
     : GmshServer(), _client(client) {}
   ~onelabMetaModelServer(){}
 
-  int NonBlockingSystemCall(const char *exe, const char *args){
+  int NonBlockingSystemCall(const std::string &exe, const std::string &args){
     std::cout << "Calling now : " << exe << " " << args << std::endl;
-    return SystemCall(exe, args);
+    return SystemCallExe(exe, args);
   }
   int NonBlockingWait(double waitint, double timeout, int socket)
   {

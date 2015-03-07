@@ -1434,7 +1434,7 @@ namespace onelab{
     const std::string &getExecutable(){ return _executable; }
     void setExecutable(const std::string &s){ _executable = s; }
     const std::string &getRemoteLogin(){ return _remoteLogin; }
-    const bool treatExecutableAsFullCommandLine()
+    bool treatExecutableAsFullCommandLine() const
     {
       return _treatExecutableAsFullCommandLine;
     }

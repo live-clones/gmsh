@@ -37,7 +37,7 @@ class onelabGmshServer : public GmshServer{
   onelabGmshServer(onelab::localNetworkClient *client)
     : GmshServer(), _client(client) {}
   ~onelabGmshServer(){}
-  int NonBlockingSystemCall(const char *exe, const char *args)
+  int NonBlockingSystemCall(const std::string &exe, const std::string &args)
   {
     return SystemCallExe(exe, args);
   }
@@ -399,7 +399,8 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 	    it != onelab::server::instance()->lastClient(); it++){
 	  reply.append(it->second->getName() + " ");
 	}
-	Msg::Error("Skipping already existing client <%s> - Registered clients are < %s>",clientName.c_str(),reply.c_str());
+	Msg::Error("Skipping already existing client <%s> - Registered clients are < %s>",
+                   clientName.c_str(), reply.c_str());
 	getGmshServer()->SendMessage
 	  (GmshSocket::GMSH_STOP, reply.size(), &reply[0]); // reply is dummy
       }
