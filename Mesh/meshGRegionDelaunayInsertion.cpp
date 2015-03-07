@@ -79,7 +79,7 @@ struct faceXtet{
     unsorted[0] = v0;
     unsorted[1] = v1;
     unsorted[2] = v2;
-    
+
     v[0] = std::min(std::min(v0,v1),v2);
     v[2] = std::max(std::max(v0,v1),v2);
     v[1] = (v0 != v[0] && v0 != v[2]) ? v0 : (v1 != v[0] && v1 != v[2]) ? v1 : v2;
@@ -130,7 +130,7 @@ void connectTets_vector2(std::vector<MTet4*> &t, std::vector<faceXtet> &conn)
   }
   if (!conn.size())return;
   std::sort(conn.begin(), conn.end());
-  
+
   for (unsigned int i=0;i<conn.size()-1;i++){
     faceXtet &f1  = conn[i];
     faceXtet &f2  = conn[i+1];
@@ -366,7 +366,7 @@ void recurFindCavity(std::vector<faceXtet> & shell,
       if (circ && (neigh->onWhat() == t->onWhat()))
         recurFindCavity(shell, cavity, v, neigh);
       else
-        shell.push_back(fxt);      
+        shell.push_back(fxt);
     }
   }
 }
@@ -378,7 +378,7 @@ void recurFindCavity(std::vector<faceXtet> & shell,
 // 			MTet4 *t,
 // 			std::stack<MTet4*> &_stack)
 // {
-  
+
 //   _stack.push(t);
 //   while(!_stack.empty()){
 //     t = _stack.top();
@@ -386,7 +386,7 @@ void recurFindCavity(std::vector<faceXtet> & shell,
 //     if (!t->isDeleted()){
 //       t->setDeleted(true);
 //       cavity.push_back(t);
-      
+
 //       for (int i = 0; i < 4; i++){
 // 	MTet4 *neigh = t->getNeigh(i) ;
 // 	faceXtet fxt (t, i);
@@ -468,7 +468,7 @@ bool insertVertexB(std::list<faceXtet> &shell,
 
     MTet4 *t4 = myFactory.Create(tr, vSizes, vSizesBGM);
     t4->setOnWhat(t->onWhat());
-    
+
     double d1 = sqrt((it->v[0]->x() - v->x()) * (it->v[0]->x() - v->x()) +
                      (it->v[0]->y() - v->y()) * (it->v[0]->y() - v->y()) +
                      (it->v[0]->z() - v->z()) * (it->v[0]->z() - v->z()));
@@ -480,7 +480,7 @@ bool insertVertexB(std::list<faceXtet> &shell,
                      (it->v[2]->z() - v->z()) * (it->v[2]->z() - v->z()));
 
     if (d1 < LL * .05 || d2 < LL * .05 || d3 < LL * .05) onePointIsTooClose = true;
-    
+
     newTets[k++] = t4;
     // all new tets are pushed front in order to ba able to destroy
     // them if the cavity is not star shaped around the new vertex.
@@ -557,6 +557,7 @@ bool insertVertex(MVertex *v,
 static void setLcs(MTriangle *t, std::map<MVertex*, double> &vSizes,
                    std::set<MVertex*> &bndVertices)
 {
+
   for(int i = 0; i < 3; i++){
     bndVertices.insert(t->getVertex(i));
     MEdge e = t->getEdge(i);
@@ -572,6 +573,31 @@ static void setLcs(MTriangle *t, std::map<MVertex*, double> &vSizes,
     if (iti == vSizes.end() || iti->second < l) vSizes[vi] = l;
     if (itj == vSizes.end() || itj->second < l) vSizes[vj] = l;
   }
+
+  /*
+  double l = 0;
+  for(int i = 0; i < 3; i++){
+    MEdge e = t->getEdge(i);
+    MVertex *vi = e.getVertex(0);
+    MVertex *vj = e.getVertex(1);
+    double dx = vi->x()-vj->x();
+    double dy = vi->y()-vj->y();
+    double dz = vi->z()-vj->z();
+    l += sqrt(dx * dx + dy * dy + dz * dz);
+  }
+  l /= 3;
+  for(int i = 0; i < 3; i++){
+    bndVertices.insert(t->getVertex(i));
+    MEdge e = t->getEdge(i);
+    MVertex *vi = e.getVertex(0);
+    MVertex *vj = e.getVertex(1);
+    std::map<MVertex*,double>::iterator iti = vSizes.find(vi);
+    std::map<MVertex*,double>::iterator itj = vSizes.find(vj);
+    // use largest edge length
+    if (iti == vSizes.end() || iti->second > l) vSizes[vi] = l;
+    if (itj == vSizes.end() || itj->second > l) vSizes[vj] = l;
+  }
+  */
 }
 
 static void setLcs(MTetrahedron *t, std::map<MVertex*, double> &vSizes,
@@ -919,7 +945,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 //template <class CONTAINER, class DATA>
 void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
 {
-  
+
   typedef std::list<MTet4 *> CONTAINER ;
   CONTAINER allTets;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
@@ -1715,7 +1741,7 @@ static void initialCube (std::vector<MVertex*> &v,
 
 int straddling_segment_intersects_triangle(SPoint3 &p1,SPoint3 &p2,
 					   SPoint3 &q1,SPoint3 &q2,
-					   SPoint3 &q3) 
+					   SPoint3 &q3)
 {
   double s1 = robustPredicates::orient3d(p1, p2, q2, q3);
   double s2 = robustPredicates::orient3d(p1, p2, q3, q1);
@@ -1748,7 +1774,7 @@ static MTet4* search4Tet (MTet4 *t, MVertex *v, int _size,int & ITER) {
 	SPoint3 q1(fxt.v[0]->x(),fxt.v[0]->y(),fxt.v[0]->z());
 	SPoint3 q2(fxt.v[1]->x(),fxt.v[1]->y(),fxt.v[1]->z());
 	SPoint3 q3(fxt.v[2]->x(),fxt.v[2]->y(),fxt.v[2]->z());
-	
+
 
 	if ( straddling_segment_intersects_triangle (p1,p2,q1,q2,q3)){
 	  found = i;
@@ -1821,7 +1847,7 @@ void sanityCheck1(MTet4 *t)
   double t1 = Cpu();
 
   /// double ta=0,tb=0,tc=0,td=0,T;
-  
+
   for (size_t i=0;i<v.size();i++){
     MVertex *pv = v[i];
 
@@ -1843,7 +1869,7 @@ void sanityCheck1(MTet4 *t)
     for (unsigned int k=0;k<cavity.size();k++)V+=fabs(cavity[k]->tet()->getVolume());
 
     std::vector<MTet4*> extended_cavity;
-    double Vb = 0.0;    
+    double Vb = 0.0;
 
     //    T = Cpu();
     for (unsigned int count = 0; count < shell.size(); count++){
@@ -1860,7 +1886,7 @@ void sanityCheck1(MTet4 *t)
 	tr->setVertex(0,v0);
 	tr->setVertex(1,v1);
 	tr->setVertex(2,v2);
-	tr->setVertex(3,pv);	
+	tr->setVertex(3,pv);
       }
       else{
 	tr = new MTetrahedron(v0,v1,v2,pv);
@@ -1873,9 +1899,9 @@ void sanityCheck1(MTet4 *t)
 	extended_cavity.push_back(otherSide);
     }
     //    tc += Cpu()-T;
-    
+
     if (fabs(Vb-V) > 1.e-8 * (Vb+V))printf("%12.5E %12.5E\n",Vb,V);
-    
+
     // reuse memory --> reinitialize MTet4s
     for (unsigned int k=0;k<std::min(cavity.size(),shell.size());k++){
       cavity[k]->setDeleted(false);
@@ -1892,7 +1918,7 @@ void sanityCheck1(MTet4 *t)
   Msg::Info("Delaunay 3D done for %d points : CPU = %g, %d global searches, AVG walk size %g",v.size(), t2-t1,NB_GLOBAL_SEARCH,1.+(double)AVG_ITER/v.size());
   //  printf("%d tets allocated (to compare with 7 #V = %d)\n",t.size(),7*v.size());
   //  printf("%g %g %g %g --> %g(%g)\n",ta,tb,tc,td,t2-t1,ta+tb+tc+td);
-  
+
   //  FILE *f = fopen ("tet.pos","w");
   //  fprintf(f,"View \"\"{\n");
   for (size_t i = 0;i<t.size();i++){
@@ -1903,7 +1929,7 @@ void sanityCheck1(MTet4 *t)
     }
     delete t[i];
   }
-  
+
   if (removeBox)for (int i=0;i<8;i++)delete box[i];
   else for (int i=0;i<8;i++)v.push_back(box[i]);
 
