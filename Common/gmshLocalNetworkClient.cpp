@@ -499,6 +499,7 @@ bool gmshLocalNetworkClient::run()
             delete s;
           }
           toDelete.push_back(c);
+          onelab::server::instance()->unregisterClient(c);
           continue;
         }
       }
@@ -556,6 +557,7 @@ bool gmshLocalNetworkClient::run()
       if(c->getPid() > 0)
         Msg::Error("Subclient %s was not stopped correctly", c->getName().c_str());
       toDelete.push_back(c);
+      onelab::server::instance()->unregisterClient(c);
     }
   }
   for(unsigned int i = 0; i < toDelete.size(); i++){
