@@ -1,10 +1,10 @@
-2.9.0 (..., 2015): improved robustness of spatial searches (extruded meshes,
+2.8.6 (..., 2015): improved robustness of spatial searches (extruded meshes,
 geometry coherence); improved reproductibility of 2D and 3D meshes; added
 support for high resolution ("retina") graphics; interactive graph point
 commands; on-the-fly creation of onelab clients in scripts; general periodic
 meshes using afine transforms; scripted selection of entities in bounding boxes;
-extended string and list handling functions; lines many small improvements and
-bug fixes all over the place.
+extended string and list handling functions; many small improvements and bug
+fixes.
 
 2.8.5 (Jul 9, 2014): improved stability and error handling, better Coherence
 function, updated onelab API version and inline parameter definitions, new
