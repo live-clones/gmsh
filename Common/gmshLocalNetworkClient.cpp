@@ -399,7 +399,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 	    it != onelab::server::instance()->lastClient(); it++){
 	  reply.append(it->second->getName() + " ");
 	}
-	Msg::Error("Skipping already existing client <%s> - Registered clients are < %s>",
+	Msg::Error("Skipping already existing client '%s' - Registered clients: %s",
                    clientName.c_str(), reply.c_str());
 	getGmshServer()->SendMessage
 	  (GmshSocket::GMSH_STOP, reply.size(), &reply[0]); // reply is dummy
