@@ -25,8 +25,7 @@ static void solver_remove_cb(Fl_Widget *w, void *data)
 
   onelab::server::citer it = onelab::server::instance()->findClient(name);
   if(it != onelab::server::instance()->lastClient()){
-    onelab::client *c = it->second;
-    delete c;
+    delete *it;
   }
   FlGui::instance()->onelab->rebuildSolverList();
 }

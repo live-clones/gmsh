@@ -190,7 +190,7 @@ static void file_remote_cb(Fl_Widget *w, void *data)
     c->setSocketSwitch("-socket");
   }
   else
-    c = (onelab::localNetworkClient*)it->second;
+    c = (onelab::localNetworkClient*)(*it);
   GmshServer *server = c->getGmshServer();
 
   std::string str((const char*)data);

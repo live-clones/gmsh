@@ -1292,8 +1292,8 @@ namespace onelab{
     static server *_server;
     // the address of the server
     std::string _address;
-    // the connected clients, indexed by name
-    std::map<std::string, client*> _clients;
+    // the connected clients
+    std::set<client*> _clients;
     // the parameter space
     parameterSpace _parameterSpace;
   public:
@@ -1318,17 +1318,22 @@ namespace onelab{
     {
       return _parameterSpace.get(ps, name, client);
     }
-    typedef std::map<std::string, client*>::iterator citer;
+    typedef std::set<client*>::iterator citer;
     citer firstClient(){ return _clients.begin(); }
     citer lastClient(){ return _clients.end(); }
     int getNumClients() { return (int)_clients.size(); };
-    citer findClient(const std::string &name){ return _clients.find(name); }
+    citer findClient(const std::string &name)
+    {
+      for(citer it = _clients.begin(); it != _clients.end(); it++)
+        if((*it)->getName() == name) return it;
+      return _clients.end();
+    }
     void registerClient(client *c)
     {
-      _clients[c->getName()] = c;
+      _clients.insert(c);
       c->setId(_clients.size());
     }
-    void unregisterClient(client *c){ _clients.erase(c->getName()); }
+    void unregisterClient(client *c){ _clients.erase(c); }
     void setChanged(bool changed, const std::string &client="")
     {
       _parameterSpace.setChanged(changed, client);
@@ -1336,10 +1341,6 @@ namespace onelab{
     bool getChanged(const std::string &client="")
     {
       return _parameterSpace.getChanged(client);
-    }
-    bool isRegistered(const std::string &client)
-    {
-      return _clients.count(client);
     }
     unsigned int getNumParameters(){ return _parameterSpace.getNumParameters(); }
     std::vector<std::string> toChar(const std::string &client="")

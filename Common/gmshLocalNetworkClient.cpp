@@ -375,34 +375,21 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       std::string::size_type first = 0;
       std::string clientName = onelab::parameter::getNextToken(message, first);
       std::string command = onelab::parameter::getNextToken(message, first);
-      if (!onelab::server::instance()->isRegistered(clientName)){
-	gmshLocalNetworkClient* subClient =
-	  new gmshLocalNetworkClient(clientName, command, "", true);
-	onelabGmshServer *server = new onelabGmshServer(subClient);
-	subClient->setPid(0);
-	int sock = server->LaunchClient();
-	if(sock < 0){ // could not establish the connection: aborting
-	  server->Shutdown();
-	  delete server;
-	  Msg::Error("Could not connect client '%s'", subClient->getName().c_str());
-	}
-	else{
-	  Msg::StatusBar(true, "Running '%s'...", subClient->getName().c_str());
-	  subClient->setGmshServer(server);
-	  subClient->setFather(this);
-	  master->addClient(subClient);
-	}
+      gmshLocalNetworkClient* subClient =
+        new gmshLocalNetworkClient(clientName, command, "", true);
+      onelabGmshServer *server = new onelabGmshServer(subClient);
+      subClient->setPid(0);
+      int sock = server->LaunchClient();
+      if(sock < 0){ // could not establish the connection: aborting
+        server->Shutdown();
+        delete server;
+        Msg::Error("Could not connect client '%s'", subClient->getName().c_str());
       }
       else{
-	std::string reply = "";
-	for(onelab::server::citer it = onelab::server::instance()->firstClient();
-	    it != onelab::server::instance()->lastClient(); it++){
-	  reply.append(it->second->getName() + " ");
-	}
-	Msg::Error("Skipping already existing client '%s' - Registered clients: %s",
-                   clientName.c_str(), reply.c_str());
-	getGmshServer()->SendMessage
-	  (GmshSocket::GMSH_STOP, reply.size(), &reply[0]); // reply is dummy
+        Msg::StatusBar(true, "Running '%s'...", subClient->getName().c_str());
+        subClient->setGmshServer(server);
+        subClient->setFather(this);
+        master->addClient(subClient);
       }
     }
     break;
@@ -413,14 +400,9 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       std::string::size_type first = 0;
       std::string clientName = onelab::parameter::getNextToken(message, first);
       std::string fullName = onelab::parameter::getNextToken(message, first);
-      if (!onelab::server::instance()->isRegistered(clientName)){
-	preProcess(clientName, fullName); // contrib/onelab/OnelabParser.cpp
-	Msg::Info("Preprocess file <%s> done", fullName.c_str());
-	reply = onelab::server::instance()->getChanged(clientName) ? "true" : "false";
-      }
-      else{
-	Msg::Error("Skipping client with already existing name <%s>",clientName.c_str());
-      }
+      preProcess(clientName, fullName); // contrib/onelab/OnelabParser.cpp
+      Msg::Info("Done preprocessing file '%s'", fullName.c_str());
+      reply = onelab::server::instance()->getChanged(clientName) ? "true" : "false";
 #endif
       getGmshServer()->SendMessage
 	(GmshSocket::GMSH_OLPARSE, reply.size(), &reply[0]);
@@ -499,7 +481,6 @@ bool gmshLocalNetworkClient::run()
             delete s;
           }
           toDelete.push_back(c);
-          onelab::server::instance()->unregisterClient(c);
           continue;
         }
       }
@@ -557,7 +538,6 @@ bool gmshLocalNetworkClient::run()
       if(c->getPid() > 0)
         Msg::Error("Subclient %s was not stopped correctly", c->getName().c_str());
       toDelete.push_back(c);
-      onelab::server::instance()->unregisterClient(c);
     }
   }
   for(unsigned int i = 0; i < toDelete.size(); i++){
@@ -784,7 +764,7 @@ void resetDb(bool runGmshClient)
   // released
   for(onelab::server::citer it = onelab::server::instance()->firstClient();
       it != onelab::server::instance()->lastClient(); it++){
-    onelab::client *c = it->second;
+    onelab::client *c = *it;
     std::vector<onelab::number> ps;
     c->get(ps, c->getName() + "/UseCommandLine");
     if(ps.size()) persistentNumbers.push_back(ps[0]);

@@ -579,7 +579,7 @@ static void solver_options_ok_cb(Fl_Widget *w, void *data)
       c->run();
     }
     else
-      it->second->run();
+      (*it)->run();
   }
 #endif
 

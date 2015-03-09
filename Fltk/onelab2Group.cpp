@@ -417,7 +417,7 @@ void onelabGroup::rebuildSolverList()
     if(i < names.size()){
       onelab::server::citer it = onelab::server::instance()->findClient(names[i]);
       if(it != onelab::server::instance()->lastClient())
-        it->second->setIndex(i);
+        (*it)->setIndex(i);
       opt_solver_name(i, GMSH_SET, names[i]);
       opt_solver_executable(i, GMSH_SET, exes[i]);
       opt_solver_remote_login(i, GMSH_SET, hosts[i]);
@@ -439,7 +439,7 @@ void onelabGroup::addSolver(const std::string &name, const std::string &executab
   //onelab::server::citer it = onelab::server::instance()->findClient(name);
   //if(it != onelab::server::instance()->lastClient()){
   //  if(needToChooseExe(executable))
-  //    onelab_choose_executable_cb(0, (void *)it->second);
+  //    onelab_choose_executable_cb(0, (void *)(*it));
   //  return; // solver already exists
   //}
 
@@ -447,8 +447,8 @@ void onelabGroup::addSolver(const std::string &name, const std::string &executab
   //std::vector<onelab::client*> networkClients;
   //for(onelab::server::citer it = onelab::server::instance()->firstClient();
   //    it != onelab::server::instance()->lastClient(); it++)
-  //  if(it->second->isNetworkClient())
-  //    networkClients.push_back(it->second);
+  //  if((*it)->isNetworkClient())
+  //    networkClients.push_back(*it);
   //for(unsigned int i = 0; i < networkClients.size(); i++){
   //  delete networkClients[i];
   //}
