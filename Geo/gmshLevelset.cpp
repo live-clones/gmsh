@@ -943,7 +943,8 @@ double gLevelsetDistMesh::operator()(double x, double y, double z) const
   std::vector<ANNidx> index(_nbClose);
   std::vector<ANNdist> dist(_nbClose);
   double point[3] = {x, y, z};
-  _kdtree->annkSearch(point, _nbClose, &index[0], &dist[0]);
+  SPoint3 pt(x, y, z);
+  _kdtree->annkSearch(point, _nbClose, &index[0], &dist[0]); // squared distances
   std::set<MElement*> elements;
   for(int i = 0; i < _nbClose; i++){
     int iVertex = index[i];
@@ -953,7 +954,8 @@ double gLevelsetDistMesh::operator()(double x, double y, double z) const
       elements.insert(itm->second);
   }
   double minDistance = 1.e22;
-  SPoint3 closest;
+  SPoint3 closestPoint;
+  std::vector<MElement*> closestElements;
   for(std::set<MElement*>::iterator it = elements.begin();
        it != elements.end(); ++it){
     double distance = 0.;
@@ -961,23 +963,66 @@ double gLevelsetDistMesh::operator()(double x, double y, double z) const
     MVertex *v2 = (*it)->getVertex(1);
     SPoint3 p1(v1->x(), v1->y(), v1->z());
     SPoint3 p2(v2->x(), v2->y(), v2->z());
-    SPoint3 pt;
+    SPoint3 closePt;
     if((*it)->getDim() == 1){
-      signedDistancePointLine(p1, p2, SPoint3(x, y, z), distance, pt);
+      signedDistancePointLine(p1, p2, pt, distance, closePt); // !! > 0
     }
     else if((*it)->getDim() == 2){
       MVertex *v3 = (*it)->getVertex(2);
       SPoint3 p3(v3->x(), v3->y(), v3->z());
-      signedDistancePointTriangle(p1, p2, p3, SPoint3(x, y, z), distance, pt);
+      if(p1 == p2 || p1 == p3 || p2 == p3) distance = 1.e22;
+      else signedDistancePointTriangle(p1, p2, p3, pt, distance, closePt);
     }
     else{
       Msg::Error("Cannot compute a distance to an entity of dimension %d\n",
                  (*it)->getDim());
     }
+    if(fabs(distance) == fabs(minDistance)){
+      closestElements.push_back(*it);
+    }
     if(fabs(distance) < fabs(minDistance)){
+      closestPoint = closePt;
       minDistance = distance;
+      closestElements.clear();
+      closestElements.push_back(*it);
     }
   }
+  if(closestElements.size() > 1){
+    SVector3 vd(closestPoint, pt);
+    SVector3 meanNorm(0., 0., 0.); // angle weighted mean normal
+    if(closestElements.size() == 2){ // closestPoint on edge
+      meanNorm = closestElements[0]->getFace(0).normal() + closestElements[1]->getFace(0).normal();
+    }
+    else{ // closestPoint on vertex
+      for(unsigned int i = 0; i < closestElements.size(); i++){
+        double alpha = 0.;
+        SPoint3 p1; bool found = false;
+        for(int j = 0; j < closestElements[i]->getNumEdges(); j++){
+          SPoint3 ep0 = closestElements[i]->getEdge(j).getVertex(0)->point();
+          SPoint3 ep1 = closestElements[i]->getEdge(j).getVertex(1)->point();
+          if(closestPoint == ep0){
+            if(!found) {p1 = ep1; found = true;}
+            else {
+              alpha = angle (SVector3(closestPoint, p1), SVector3(closestPoint, ep1));
+              break;
+            }
+          }
+          if(closestPoint == ep1){
+            if(!found) {p1 = ep0; found = true;}
+            else {
+              alpha = angle (SVector3(closestPoint, p1), SVector3(closestPoint, ep0));
+              break;
+            }
+          }
+        }
+        meanNorm = meanNorm + alpha * closestElements[i]->getFace(0).normal();
+      }
+    }
+    double dotDN = dot(vd, closestElements[0]->getFace(0).normal());
+    double dotDE = dot(vd, meanNorm);
+    if(dotDN * dotDE < 0.) minDistance *= -1.;
+  }
+
   return -1.0 * minDistance;
 }
 #endif

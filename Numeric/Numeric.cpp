@@ -705,6 +705,8 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
 
 
 /*
+  distance to triangle
+
   P(p) = p1 + t1 xi + t2 eta
 
   t1 = (p2-p1) ; t2 = (p3-p1) ;
@@ -712,7 +714,7 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
   (P(p) - p) = d n
 
   (p1 + t1 xi + t2 eta - p) = d n
-  t1 xi + t2 eta + d n = p - p1
+  t1 xi + t2 eta - d n = p - p1
 
   | t1x t2x -nx | |xi  |   |px-p1x|
   | t1y t2y -ny | |eta | = |py-p1y|
@@ -731,7 +733,6 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
 
 void signedDistancePointTriangle(const SPoint3 &p1,const SPoint3 &p2, const SPoint3 &p3,
 				 const SPoint3 &p, double &d, SPoint3 &closePt)
-
 {
   SVector3 t1 = p2 - p1;
   SVector3 t2 = p3 - p1;
@@ -754,9 +755,9 @@ void signedDistancePointTriangle(const SPoint3 &p1,const SPoint3 &p2, const SPoi
   v = (inv[1][0] * pp1.x() + inv[1][1] * pp1.y() + inv[1][2] * pp1.z());
   d = (inv[2][0] * pp1.x() + inv[2][1] * pp1.y() + inv[2][2] * pp1.z());
   double sign = (d > 0) ? 1. : -1.;
-  if (d == 0) sign = 1.e10;
-  if (u >= 0 && v >= 0 && 1.-u-v >= 0.0){
-    closePt = SPoint3(0.,0.,0.);//TO DO
+  if (d == 0.) sign = 1.e10;
+  if (u >= 0. && v >= 0. && 1.-u-v >= 0.0){ //P(p) inside triangle
+    closePt = p1 + (p2-p1)*u + (p3-p1)*v;
   }
   else {
     const double t12 = dot(pp1, t1) / n2t1;
@@ -764,7 +765,6 @@ void signedDistancePointTriangle(const SPoint3 &p1,const SPoint3 &p2, const SPoi
     SVector3 pp2 = p - p2;
     const double t23 = dot(pp2, t3) / n2t3;
     d = 1.e10;
-    SPoint3 closePt;
     if (t12 >= 0 && t12 <= 1.){
       d = sign * std::min(fabs(d), p.distance(p1 + (p2 - p1) * t12));
       closePt = p1 + (p2 - p1) * t12;
