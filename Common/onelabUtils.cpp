@@ -124,15 +124,15 @@ namespace onelabUtils {
         args.push_back(" " + checkCommand) ;
       else if(action == "compute")
         args.push_back(" " + computeCommand);
-      // FIXME: this would be the place to propagate the the client any
-      // -setnumber/-setstring command line options given to gmsh. Is this a
-      // good idea?
+      // Experimental: propagate -setnumber/-setnumber gmsh option to the
+      // client. Is this a good idea?
       std::vector<std::string> gmshOptions = onelab::parameter::split
         (Msg::GetCommandLineArgs(), ' ');
       for(unsigned int i = 0; i < gmshOptions.size(); i++){
-        if(gmshOptions[i] == "-setnumber" && i < gmshOptions.size() - 2){
-          printf("hello!! %s %s %s\n", gmshOptions[i].c_str(), gmshOptions[i+1].c_str(),
-                 gmshOptions[i + 2].c_str());
+        if((gmshOptions[i] == "-setnumber" || gmshOptions[i] == "-setstring") &&
+           i < gmshOptions.size() - 2){
+          args.push_back(" " + gmshOptions[i] + " " + gmshOptions[i + 1] +
+                         " " + gmshOptions[i + 2]);
         }
       }
     }

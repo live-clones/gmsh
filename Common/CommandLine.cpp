@@ -20,11 +20,6 @@
 #include "CreateFile.h"
 #include "OS.h"
 
-// keep track of -setnumber/-setstring command line option, so we can propagate
-// them to subclients later on
-//std::map<std::string, double> CommandLineNumbers;
-//std::map<std::string, std::string> CommandLineStrings;
-
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 3)
@@ -539,7 +534,6 @@ void GetOptions(int argc, char *argv[])
         i++;
 	if (i + 1 < argc && argv[i][0] != '-' && argv[i + 1][0] != '-') {
           gmsh_yystringsymbols[argv[i]] = argv[i + 1];
-          //CommandLineStrings[argv[i]] = argv[i + 1];
           i += 2;
 	}
         else
@@ -550,7 +544,6 @@ void GetOptions(int argc, char *argv[])
 	if (i + 1 < argc && argv[i][0] != '-') {
           std::vector<double> val(1, atof(argv[i + 1]));
           gmsh_yysymbols[argv[i]].value = val;
-          //CommandLineNumbers[argv[i]] = atof(argv[i + 1]);
           i += 2;
 	}
         else
