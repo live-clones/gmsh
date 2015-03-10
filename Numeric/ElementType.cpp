@@ -91,6 +91,7 @@ int ElementType::ParentTypeFromTag(int tag)
     case(MSH_TRI_SUB):  case(MSH_TET_SUB):
       return TYPE_XFEM;
     case(MSH_TRI_MINI):
+    case(MSH_TET_MINI):
       return TYPE_MINI;
     default:
       Msg::Error("Unknown element tag %i for parent type, returning -1.", tag);
@@ -132,6 +133,7 @@ int ElementType::OrderFromTag(int tag)
   case MSH_TRI_24  : return 8;
   case MSH_TRI_27  : return 9;
   case MSH_TRI_30  : return 10;
+  case MSH_TRI_MINI  : return 1;
   case MSH_POLYG_  : return 1;
   case MSH_POLYG_B : return 1;
   case MSH_TET_1   : return 0;
@@ -153,6 +155,7 @@ int ElementType::OrderFromTag(int tag)
   case MSH_TET_46  : return 8;
   case MSH_TET_52  : return 9;
   case MSH_TET_58  : return 10;
+  case MSH_TET_MINI  : return 1;
   case MSH_QUA_1   : return 0;
   case MSH_QUA_4   : return 1;
   case MSH_QUA_9   : return 2;
@@ -259,7 +262,7 @@ int ElementType::DimensionFromTag(int tag)
     case(MSH_TRI_21I):  case(MSH_TRI_24):
     case(MSH_TRI_27):   case(MSH_TRI_30):
     case(MSH_TRI_B):    case(MSH_TRI_1):
-    case(MSH_TRI_SUB):
+    case(MSH_TRI_SUB):  case(MSH_TRI_MINI):
 
     case(MSH_QUA_4):    case(MSH_QUA_9):
     case(MSH_QUA_8):    case(MSH_QUA_16):
@@ -285,6 +288,7 @@ int ElementType::DimensionFromTag(int tag)
     case(MSH_TET_46):   case(MSH_TET_52):
     case(MSH_TET_58):   case(MSH_TET_1):
     case(MSH_TET_16):   case(MSH_TET_SUB):
+    case(MSH_TET_MINI):
 
     case(MSH_PYR_5):    case(MSH_PYR_14):
     case(MSH_PYR_13):   case(MSH_PYR_30):
