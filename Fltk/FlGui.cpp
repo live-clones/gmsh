@@ -74,8 +74,18 @@ static int globalShortcut(int event)
   return FlGui::instance()->testGlobalShortcuts(event);
 }
 
-int FlGui::lock(){_in_main_thread++; Fl::lock();}
-void FlGui::unlock(){Fl::unlock(); _in_main_thread--;}
+int FlGui::lock()
+{
+  _in_main_thread++;
+  Fl::lock();
+  return _in_main_thread;
+}
+
+void FlGui::unlock()
+{
+  Fl::unlock();
+  _in_main_thread--;
+}
 
 static void simple_right_box_draw(int x, int y, int w, int h, Fl_Color c)
 {
