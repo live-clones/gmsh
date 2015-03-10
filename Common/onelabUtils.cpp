@@ -124,17 +124,17 @@ namespace onelabUtils {
         args.push_back(" " + checkCommand) ;
       else if(action == "compute")
         args.push_back(" " + computeCommand);
-      // Experimental: propagate -setnumber/-setnumber gmsh option to the
-      // client. Is this a good idea?
-      std::vector<std::string> gmshOptions = onelab::parameter::split
-        (Msg::GetCommandLineArgs(), ' ');
-      for(unsigned int i = 0; i < gmshOptions.size(); i++){
-        if((gmshOptions[i] == "-setnumber" || gmshOptions[i] == "-setstring") &&
-           i < gmshOptions.size() - 2){
-          args.push_back(" " + gmshOptions[i] + " " + gmshOptions[i + 1] +
-                         " " + gmshOptions[i + 2]);
-        }
-      }
+      // Propagate -setnumber/-setnumber gmsh option to the client. (Is this a
+      // good idea?)
+      std::ostringstream sstream;
+      sstream.precision(16);
+      std::map<std::string, double> cln(Msg::GetCommandLineNumbers());
+      for(std::map<std::string, double>::iterator it = cln.begin(); it != cln.end(); it++)
+        sstream << " -setnumber " << it->first << " " << it->second;
+      std::map<std::string, std::string> cls(Msg::GetCommandLineStrings());
+      for(std::map<std::string, std::string>::iterator it = cls.begin(); it != cls.end(); it++)
+        sstream << " -setstring " << it->first << " " << it->second;
+      args.push_back(sstream.str());
     }
     return args;
   }

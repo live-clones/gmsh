@@ -51,7 +51,6 @@
 #include "extraDialogs.h"
 #endif
 
-
 int Msg::_commRank = 0;
 int Msg::_commSize = 1;
 int Msg::_verbosity = 5;
@@ -65,6 +64,8 @@ std::string Msg::_firstError;
 GmshMessage *Msg::_callback = 0;
 std::string Msg::_commandLine;
 std::string Msg::_launchDate;
+std::map<std::string, double> Msg::_commandLineNumbers;
+std::map<std::string, std::string> Msg::_commandLineStrings;
 #if !defined(HAVE_ONELAB2)
 GmshClient *Msg::_client = 0;
 #endif

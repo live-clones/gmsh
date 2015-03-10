@@ -661,28 +661,25 @@ void OpenProject(const std::string &fileName, bool setWindowTitle)
     // reuse it
     GModel::current()->destroy();
     GModel::current()->getGEOInternals()->destroy();
-    // don't clear the parser variables if we just launched gmsh with the
-    // -string, -setstring or -setnumber command line options
-#if defined(HAVE_PARSER)
-    std::string c = Msg::GetCommandLineArgs();
-    if(c.find("-string") == std::string::npos &&
-       c.find("-setstring") == std::string::npos &&
-       c.find("-setnumber") == std::string::npos){
-      gmsh_yysymbols.clear();
-      gmsh_yystringsymbols.clear();
-    }
-#endif
   }
   else{
-    // if the current model is not empty make it invisible, clear the parser
-    // variables and add a new model
-#if defined(HAVE_PARSER)
-    gmsh_yysymbols.clear();
-    gmsh_yystringsymbols.clear();
-#endif
+    // if the current model is not empty make it invisible and add a new model
     new GModel();
     GModel::current(GModel::list.size() - 1);
   }
+
+  // clear parser variables, but keep -setnumber/-setstrings command line
+  // definitions
+#if defined(HAVE_PARSER)
+  gmsh_yysymbols.clear();
+  gmsh_yystringsymbols.clear();
+  std::map<std::string, double> cln(Msg::GetCommandLineNumbers());
+  for(std::map<std::string, double>::iterator it = cln.begin(); it != cln.end(); it++)
+    gmsh_yysymbols[it->first].value = std::vector<double>(1, it->second);
+  std::map<std::string, std::string> cls(Msg::GetCommandLineStrings());
+  for(std::map<std::string, std::string>::iterator it = cls.begin(); it != cls.end(); it++)
+    gmsh_yystringsymbols[it->first] = it->second;
+#endif
 
   // temporary hack until we fill the current GModel on the fly during parsing
   ResetTemporaryBoundingBox();
