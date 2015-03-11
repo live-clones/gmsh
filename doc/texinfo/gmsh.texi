@@ -21,7 +21,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename gmsh.info
-@set GMSH-VERSION 2.8
+@set GMSH-VERSION 2.9
 @set COPYRIGHT @copyright{} 1997-2015 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
