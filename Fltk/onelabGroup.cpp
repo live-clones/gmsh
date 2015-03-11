@@ -529,6 +529,7 @@ void onelabGroup::_addParameter(T &p)
 void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback, void *data)
 {
   Fl_Tree_Item *n = _tree->add(path.c_str());
+  //n->labelsize(FL_NORMAL_SIZE + 4);
   _tree->begin();
   int ww = _baseWidth - (n->depth() + 1) * _indent;
   int hh = n->labelsize() + 4;
@@ -1018,6 +1019,11 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   _tree->clear();
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
   _tree->selectmode(FL_TREE_SELECT_NONE);
+
+  // hide all the widgets we have added in the tree to make sure they don't get
+  // spurious events (until they are deleted)
+  for(unsigned int i = 0; i < _treeWidgets.size(); i++)
+    _treeWidgets[i]->hide();
 
   // we don't delete widgets everytime the tree is rebuilt to minimize potential
   // race conditions (e.g. during heavy user interaction with autoCheck, with
