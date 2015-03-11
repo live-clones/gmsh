@@ -4,4 +4,4 @@
 # bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 set(EXTRA_VERSION "-svn")
-include(gmsh_win.ctest)
+include(gmsh_win32.ctest)
