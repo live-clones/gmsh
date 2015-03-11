@@ -351,7 +351,8 @@ SurfaceLoop *FindSurfaceLoop(int inum);
 Volume *FindVolume(int inum);
 LevelSet *FindLevelSet(int inum);
 PhysicalGroup *FindPhysicalGroup(int inum, int type);
-List_T *GetAllEntityNumbers(int dim);
+List_T *GetAllElementaryEntityNumbers(int dim);
+List_T *GetAllPhysicalEntityNumbers(int dim);
 
 void TranslateShapes(double X,double Y,double Z, List_T *shapes);
 void DilatShapes(double X,double Y,double Z, double A, double B, double C,

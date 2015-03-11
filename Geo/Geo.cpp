@@ -878,7 +878,7 @@ PhysicalGroup *FindPhysicalGroup(int num, int type)
   return NULL;
 }
 
-static void GetAllEntityNumbers(int dim, std::set<int> &nums)
+static void GetAllElementaryEntityNumbers(int dim, std::set<int> &nums)
 {
   GModel *m = GModel::current();
   switch(dim){
@@ -940,10 +940,42 @@ static void GetAllEntityNumbers(int dim, std::set<int> &nums)
   }
 }
 
-List_T *GetAllEntityNumbers(int dim)
+List_T *GetAllElementaryEntityNumbers(int dim)
 {
   std::set<int> nums;
-  GetAllEntityNumbers(dim, nums);
+  GetAllElementaryEntityNumbers(dim, nums);
+  List_T *l = List_Create(nums.size(), 1, sizeof(double));
+  for(std::set<int>::iterator it = nums.begin(); it != nums.end(); it++){
+    double a = *it;
+    List_Add(l, &a);
+  }
+  return l;
+}
+
+static void GetAllPhysicalEntityNumbers(int dim, std::set<int> &nums)
+{
+  for(int i = 0; i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++){
+    PhysicalGroup *p;
+    List_Read(GModel::current()->getGEOInternals()->PhysicalGroups, i, &p);
+    if((dim == 0 && p->Typ == MSH_PHYSICAL_POINT) ||
+       (dim == 1 && p->Typ == MSH_PHYSICAL_LINE) ||
+       (dim == 2 && p->Typ == MSH_PHYSICAL_SURFACE) ||
+       (dim == 3 && p->Typ == MSH_PHYSICAL_VOLUME)){
+      nums.insert(p->Num);
+    }
+  }
+
+  std::map<int, std::vector<GEntity*> > groups;
+  GModel::current()->getPhysicalGroups(dim, groups);
+  for(std::map<int, std::vector<GEntity*> >::iterator it = groups.begin();
+      it != groups.end(); it++)
+    nums.insert(it->first);
+}
+
+List_T *GetAllPhysicalEntityNumbers(int dim)
+{
+  std::set<int> nums;
+  GetAllPhysicalEntityNumbers(dim, nums);
   List_T *l = List_Create(nums.size(), 1, sizeof(double));
   for(std::set<int>::iterator it = nums.begin(); it != nums.end(); it++){
     double a = *it;

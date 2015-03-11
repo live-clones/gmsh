@@ -1061,7 +1061,7 @@ List of expressions are also widely used, and are defined as:
   @var{transform} |
   @var{extrude}
   Point @{ @var{expression} @} |
-  Point|Line|Surface|Volume "*" |
+  <Physical> Point|Line|Surface|Volume "*" |
   Point|Line|Surface|Volume In BoundingBox @{ @var{expression-list} @} |
   Physical Point|Line|Surface|Volume @{ @var{expression-list} @}
 @c  @var{duplicata} - already implemented: should we explain this?

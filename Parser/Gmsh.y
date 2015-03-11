@@ -4779,19 +4779,35 @@ FExpr_Multi :
     }
   | tPoint tBIGSTR
     {
-      $$ = GetAllEntityNumbers(0);
+      $$ = GetAllElementaryEntityNumbers(0);
     }
   | tLine tBIGSTR
     {
-      $$ = GetAllEntityNumbers(1);
+      $$ = GetAllElementaryEntityNumbers(1);
     }
   | tSurface tBIGSTR
     {
-      $$ = GetAllEntityNumbers(2);
+      $$ = GetAllElementaryEntityNumbers(2);
     }
   | tVolume tBIGSTR
     {
-      $$ = GetAllEntityNumbers(3);
+      $$ = GetAllElementaryEntityNumbers(3);
+    }
+  | tPhysical tPoint tBIGSTR
+    {
+      $$ = GetAllPhysicalEntityNumbers(0);
+    }
+  | tPhysical tLine tBIGSTR
+    {
+      $$ = GetAllPhysicalEntityNumbers(1);
+    }
+  | tPhysical tSurface tBIGSTR
+    {
+      $$ = GetAllPhysicalEntityNumbers(2);
+    }
+  | tPhysical tVolume tBIGSTR
+    {
+      $$ = GetAllPhysicalEntityNumbers(3);
     }
   | tPhysical tPoint '{' RecursiveListOfDouble '}'
     {
