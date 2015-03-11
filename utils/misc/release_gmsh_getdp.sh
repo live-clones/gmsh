@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ $# -lt 2 ]; then
+if [ $# -lt 1 ]; then
   echo "Usage: $0 arch" 1>&2;
   echo "  with arch in [mac,linux32,linux64,win32,win64]" 1>&2;
   exit 1;
