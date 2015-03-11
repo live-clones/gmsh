@@ -1,4 +1,4 @@
-2.8.6 (March ?, 2015): improved robustness of spatial searches (extruded meshes,
+2.8.6 (March 11, 2015): improved robustness of spatial searches (extruded meshes,
 geometry coherence); improved reproductibility of 2D and 3D meshes; added
 support for high resolution ("retina") graphics; interactive graph point
 commands; on-the-fly creation of onelab clients in scripts; general periodic
