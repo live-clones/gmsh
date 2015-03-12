@@ -14,8 +14,8 @@ up-to-date versions, documentation and examples." > /tmp/README.txt
 GMSH=svn
 GETDP=svn
 
-#GMSH=2.9.0
-#GETDP=2.5.0
+#GMSH=2.8.5
+#GETDP=2.4.4
 
 rm -rf gmsh-getdp-Windows64
 mkdir gmsh-getdp-Windows64
@@ -40,11 +40,11 @@ rm -rf gmsh-getdp-Windows64
 
 rm -rf gmsh-getdp-Windows32
 mkdir gmsh-getdp-Windows32
-curl -O http://geuz.org/gmsh/bin/Windows/gmsh-${GMSH}-Windows.zip
+curl -O http://geuz.org/gmsh/bin/Windows/gmsh-${GMSH}-Windows32.zip
 curl -O http://geuz.org/getdp/bin/Windows/getdp-${GETDP}-Windows32c.zip
-mv gmsh-${GMSH}-Windows.zip /tmp
+mv gmsh-${GMSH}-Windows32.zip /tmp
 mv getdp-${GETDP}-Windows32c.zip /tmp
-unzip -q -o /tmp/gmsh-${GMSH}-Windows.zip -d /tmp
+unzip -q -o /tmp/gmsh-${GMSH}-Windows32.zip -d /tmp
 unzip -q -o /tmp/getdp-${GETDP}-Windows32c.zip -d /tmp
 cp /tmp/README.txt gmsh-getdp-Windows32
 mv /tmp/gmsh-*${GMSH}-Windows/gmsh.exe gmsh-getdp-Windows32
@@ -61,11 +61,11 @@ rm -rf gmsh-getdp-Windows32
 
 rm -rf gmsh-getdp-Linux32
 mkdir gmsh-getdp-Linux32
-curl -O http://geuz.org/gmsh/bin/Linux/gmsh-${GMSH}-Linux.tgz
+curl -O http://geuz.org/gmsh/bin/Linux/gmsh-${GMSH}-Linux32.tgz
 curl -O http://geuz.org/getdp/bin/Linux/getdp-${GETDP}-Linux32c.tgz
-mv gmsh-${GMSH}-Linux.tgz /tmp
+mv gmsh-${GMSH}-Linux32.tgz /tmp
 mv getdp-${GETDP}-Linux32c.tgz /tmp
-tar zxvf /tmp/gmsh-${GMSH}-Linux.tgz -C /tmp
+tar zxvf /tmp/gmsh-${GMSH}-Linux32.tgz -C /tmp
 tar zxvf /tmp/getdp-${GETDP}-Linux32c.tgz -C /tmp
 cp /tmp/README.txt gmsh-getdp-Linux32
 mv /tmp/gmsh-*${GMSH}-Linux/bin/gmsh gmsh-getdp-Linux32
