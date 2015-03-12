@@ -255,6 +255,7 @@ StrPrefix               return tStrPrefix;
 StrRelative             return tStrRelative;
 StrFind                 return tStrFind;
 StrCmp                  return tStrCmp;
+StrChoice               return tStrChoice;
 Show                    return tShow;
 Symmetry                return tSymmetry;
 SyncModel               return tSyncModel;

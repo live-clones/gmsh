@@ -1112,6 +1112,7 @@ Character expressions are defined as:
   StrRelative ( @var{char-expression} ) |
   StrCat ( @var{char-expression} <,@dots{}> ) |
   Str ( @var{char-expression} <,@dots{}> ) |
+  StrChoice ( @var{expression}, @var{char-expression}, @var{char-expression}) |
   Sprintf ( @var{char-expression} , @var{expression-list} ) |
   Sprintf ( @var{char-expression} ) |
   Sprintf ( @var{char-option} ) |

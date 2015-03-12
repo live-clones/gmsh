@@ -114,7 +114,7 @@ struct doubleXstring{
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil tRound
 %token tFmod tModulo tHypot tList
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
-%token tStrFind tStrCmp
+%token tStrFind tStrCmp tStrChoice
 %token tTextAttributes
 %token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tSyncModel
 %token tOnelabAction tOnelabRun
@@ -5302,6 +5302,17 @@ StringExpr :
       }
       List_Delete($3);
     }
+  | tStrChoice LP FExpr ',' StringExpr ',' StringExpr RP
+    {
+      if($3){
+        $$ = $5;
+        Free($7);
+      }
+      else{
+        $$ = $7;
+        Free($5);
+      }
+    }
   | tSprintf LP StringExprVar RP
     {
       $$ = $3;
@@ -5325,7 +5336,7 @@ StringExpr :
       }
       List_Delete($5);
     }
-  | tFixRelativePath '(' StringExprVar ')'
+  | tFixRelativePath LP StringExprVar RP
     {
       std::string tmp = FixRelativePath(gmsh_yyname, $3);
       $$ = (char*)Malloc((tmp.size() + 1) * sizeof(char));
