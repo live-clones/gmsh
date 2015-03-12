@@ -103,7 +103,7 @@ static bool emptyFieldBDF(char *field, int length)
 static void readLineBDF(char *buffer, int format, std::vector<char*> &fields)
 {
   int cmax = (format == 2) ? 16 : 8; // max char per (center) field
-  int nmax = (format == 2) ?  4 : 8; // max num of (center) fields per line
+  int nmax = (format == 2) ? 4 : 8; // max num of (center) fields per line
 
   if(format == 0){ // free fields
     for(unsigned int i = 0; i < strlen(buffer); i++){
@@ -122,86 +122,28 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
                           int &num, int &region, std::vector<MVertex*> &vertices,
                           std::map<int, MVertex*> &vertexMap)
 {
-  fpos_t position;
-  char ch, buffer2[256], buffer3[256];
+  char buffer2[256], buffer3[256];
   std::vector<char*> fields;
-  int nfields = 0, sizediff, j, c, cont;
   int format = getFormatBDF(buffer, keySize);
-  
-  for(unsigned int i = 0; i < sizeof(buffer2); i++)
-    buffer2[i] = buffer3[i] = '\0';
-  
+
+  for(unsigned int i = 0; i < sizeof(buffer2); i++) buffer2[i] = buffer3[i] = '\0';
+
   readLineBDF(buffer, format, fields);
-  sizediff = fields.size();
-  
-  cont = 0;
-  while(!feof(fp)) {
-    if(format == 0){ // free field
-        // bail out if fixed number of vertices are found
-        if(numVertices > 0 && (int)fields.size() - 2 == numVertices)
-            break;
-        
-        // read next line to check for automatic continuation
-        fgetpos(fp, &position);
-        j = 0;
-        while(j < 8) {
-            ch = (char)fgetc(fp);
-            if(feof(fp) || ch != ' ')
-                break;
-            j++;
-        }
-        fsetpos(fp, &position);
-        
-        if(j != 7)
-            break;
-    }
-    else if(format == 1){ // small field
-        if(sizediff == 9){
-            // normal continuation
-            fields.pop_back();
-        } else if(sizediff == 8){
-            // read next line to check for automatic continuation
-            c = fgetc(fp);
-            ch = (char)c;
-            if(feof(fp))
-                break;
-            ungetc(c, fp);
-            if(ch != '*')
-                break;
-        } else {
-            break;
-        }
-    }
-    else if(format == 2){ // long field
-        if(sizediff == 5){
-            // normal continuation
-            fields.pop_back();
-        } else if(sizediff == 4){
-            // read next line to check for automatic continuation
-            c = getc(fp);
-            ch = (char)c;
-            if(feof(fp))
-                break;
-            ungetc(c, fp);
-            if(ch != '*')
-                break;
-        } else {
-            break;
-        }
-    }
-    // get continuation line
-    if(cont == 0) {
-        if(!fgets(buffer2, sizeof(buffer2), fp)) break;
-        nfields = fields.size();
-        readLineBDF(buffer2, format, fields);
-        sizediff = fields.size() - nfields;
-        cont++;
-    } else {
-        if(!fgets(buffer3, sizeof(buffer3), fp)) break;
-        readLineBDF(buffer3, format, fields);
-        break;
-    }
+
+  if(((int)fields.size() - 2 < abs(numVertices)) ||
+     (numVertices < 0 && (fields.size() == 9))){
+    if(fields.size() == 9) fields.pop_back();
+    if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
+    readLineBDF(buffer2, format, fields);
   }
+
+  if(((int)fields.size() - 2 < abs(numVertices)) ||
+     (numVertices < 0 && (fields.size() == 17))){
+    if(fields.size() == 17) fields.pop_back();
+    if(!fgets(buffer3, sizeof(buffer3), fp)) return 0;
+    readLineBDF(buffer3, format, fields);
+  }
+
   // negative 'numVertices' gives the minimum required number of vertices
   if((int)fields.size() - 2 < abs(numVertices)){
     Msg::Error("Wrong number of vertices %d for element", fields.size() - 2);
@@ -214,10 +156,9 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
   strncpy(tmp, fields[0], cmax); num = atoi(tmp);
   strncpy(tmp, fields[1], cmax); region = atoi(tmp);
   for(unsigned int i = 2; i < fields.size(); i++){
-    strncpy(tmp, fields[i], cmax);
-    n[i - 2] = atoi(tmp);
+    strncpy(tmp, fields[i], cmax); n[i - 2] = atoi(tmp);
   }
-  
+
   // ignore the extra fields when we know how many vertices we need
   int numCheck = (numVertices > 0) ? numVertices : fields.size() - 2;
 
