@@ -706,10 +706,10 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
      p.getChoices().size() == p.getValueLabels().size()){
     Fl_Choice *but = new Fl_Choice(1, 1, ww, hh);
     std::vector<Fl_Menu_Item> menu;
+    std::vector<double> choices = p.getChoices();
     std::map<double, std::string> labels(p.getValueLabels());
-    for(std::map<double, std::string>::iterator it = labels.begin();
-        it != labels.end(); it++){
-      char *str = strdup(it->second.c_str());
+    for(unsigned int i = 0; i < choices.size(); i++){
+      char *str = strdup(labels[choices[i]].c_str());
       _treeStrings.push_back(str);
       Fl_Menu_Item menuItem = {str, 0, 0, 0, 0};
       if(highlight) menuItem.labelcolor(c);
@@ -718,8 +718,8 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
     Fl_Menu_Item it = {0};
     menu.push_back(it);
     but->copy(&menu[0]);
-    for(unsigned int i = 0; i < p.getChoices().size(); i++){
-      if(p.getValue() == p.getChoices()[i]){
+    for(unsigned int i = 0; i < choices.size(); i++){
+      if(p.getValue() == choices[i]){
         but->value(i);
         break;
       }
