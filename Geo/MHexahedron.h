@@ -267,6 +267,12 @@ class MHexahedron20 : public MHexahedron {
                                 19, 14, 11, 15, 13, 8, 16, 17, 10};
     return getVertex(map[num]);
   }
+  virtual MVertex *getVertexVTK(int num)
+  {
+	  static const int map[20] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 13,
+		  9, 16, 18, 19, 17, 10, 12, 14, 15 };
+	  return getVertex(map[num]);
+  }
   virtual int getNumEdgeVertices() const { return 12; }
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
@@ -371,6 +377,12 @@ class MHexahedron27 : public MHexahedron {
     static const int map[27] = {6, 8, 26, 24, 0, 2, 20, 18, 7, 15, 3, 17, 5, 25,
                                 23, 21, 1, 9, 11, 19, 16, 4, 12, 14, 22, 10, 13};
     return getVertex(map[num]);
+  }
+  virtual MVertex *getVertexVTK(int num)
+  {
+	  static const int map[27] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 13, 9, 16, 18, 19, 17, 10, 12, 14,15, 22, 
+									23, 21, 24, 20, 25, 26};
+	  return getVertex(map[num]);
   }
   virtual int getNumEdgeVertices() const { return 12; }
   virtual int getNumFaceVertices() const { return 6; }
