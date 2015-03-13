@@ -432,7 +432,7 @@ class MQuadrangleN : public MQuadrangle {
   virtual int getTypeForVTK() const
   {
     if(_order== 2 && _vs.size() + 4 == 9) return 28;
-    if(_order== 2 && _vs.size() + 4 == 8)  return 23;
+    if(_order== 2 && _vs.size() + 4 == 8) return 23;
     return MQuadrangle::getTypeForVTK();
   }
   virtual void reverse()

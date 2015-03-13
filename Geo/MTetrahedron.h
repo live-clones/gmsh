@@ -241,8 +241,8 @@ class MTetrahedron10 : public MTetrahedron {
   }
   virtual MVertex *getVertexVTK(int num)
   {
-	  static const int map[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 9, 8};
-	  return getVertex(map[num]);
+    static const int map[10] = {0, 1, 2, 3, 4, 5, 6, 7, 9, 8};
+    return getVertex(map[num]);
   }
   virtual MVertex *getVertexDIFF(int num){ return getVertexBDF(num); }
   virtual MVertex *getVertexINP(int num){ return getVertexBDF(num); }
