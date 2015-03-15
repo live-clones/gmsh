@@ -133,6 +133,7 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
 static bool getEdgeVerticesonGeo(GEdge *ge, MVertex *v0, MVertex *v1,
                                  std::vector<MVertex*> &ve, int nPts = 1)
 {
+  static const double relaxFail = 1e-2;
   double u0 = 0., u1 = 0., US[100];
   bool reparamOK = reparamMeshVertexOnEdge(v0, ge, u0);
   if(ge->periodic(0) && ge->getEndVertex()->getNumMeshVertices() > 0 &&
@@ -141,22 +142,22 @@ static bool getEdgeVerticesonGeo(GEdge *ge, MVertex *v0, MVertex *v1,
   else
     reparamOK &= reparamMeshVertexOnEdge(v1, ge, u1);
 
-  if(reparamOK){
+  if (reparamOK) {
+    double uMin = std::min(u0, u1), uMax = std::max(u0, u1);
+    bool failed = true;
     double relax = 1.;
-    while (1){
-      if(computeEquidistantParameters(ge, std::min(u0,u1), std::max(u0,u1),
-                                      nPts + 2, US, relax))
-        break;
-
-      relax /= 2.0;
-      if(relax < 1.e-2) break;
+    while (failed && (relax > relaxFail)) {
+      failed = !computeEquidistantParameters(ge, uMin, uMax, nPts + 2, US, relax);
+      relax *= 0.5;
     }
-    if(relax < 1.e-2){
+    if (failed) {
       Msg::Warning
         ("Failed to compute equidistant parameters (relax = %g, value = %g) "
          "for edge %d-%d parametrized with %g %g on GEdge %d",
          relax, US[1], v0->getNum(), v1->getNum(),u0,u1,ge->tag());
-      reparamOK = false;
+      US[0] = uMin;
+      const double du = (uMax - uMin) / (nPts+1);
+      for (int i = 1; i <= nPts; i++) US[i] = US[i - 1] + du;
     }
   }
   else
