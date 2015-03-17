@@ -18,6 +18,7 @@ double Cpu();
 double TotalRam();
 long GetMemoryUsage();
 int GetProcessId();
+std::string GetExecutableName(const std::string &argv0);
 std::string GetHostName();
 int UnlinkFile(const std::string &fileName);
 int StatFile(const std::string &fileName);

@@ -91,7 +91,8 @@ std::string FixRelativePath(const std::string &reference, const std::string &in)
 
 std::vector<std::string> SplitFileName(const std::string &fileName)
 {
-  // JFR DO NOT CHANGE TO std::vector<std::string> s(3), it segfaults while destructor si called 
+  // JFR DO NOT CHANGE TO std::vector<std::string> s(3), it segfaults while
+  // destructor si called
   std::vector<std::string> s; s.resize(3);
   if(fileName.size()){
     // returns [path, baseName, extension]

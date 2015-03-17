@@ -20,6 +20,7 @@
 
 #if defined(__APPLE__)
 #include <sys/sysctl.h>
+#include <mach-o/dyld.h>
 #endif
 
 #if defined(__linux__) && !defined(BUILD_ANDROID)
@@ -139,6 +140,68 @@ static unsigned utf8toUtf16(const char* src, unsigned srclen,
       if (ucs >= 0x10000) ++count;
     }
     ++count;
+  }
+  return count;
+}
+
+static unsigned utf8FromUtf16(char* dst, unsigned dstlen,
+                              const wchar_t* src, unsigned srclen)
+{
+  unsigned i = 0;
+  unsigned count = 0;
+  if (dstlen) {
+    for (;;) {
+      unsigned ucs;
+      if (i >= srclen) {dst[count] = 0; return count;}
+      ucs = src[i++];
+      if (ucs < 0x80U) {
+        dst[count++] = ucs;
+        if (count >= dstlen) {dst[count-1] = 0; break;}
+      }
+      else if (ucs < 0x800U) { /* 2 bytes */
+        if (count+2 >= dstlen) {dst[count] = 0; count += 2; break;}
+        dst[count++] = 0xc0 | (ucs >> 6);
+        dst[count++] = 0x80 | (ucs & 0x3F);
+      }
+      else if (ucs >= 0xd800 && ucs <= 0xdbff && i < srclen &&
+	       src[i] >= 0xdc00 && src[i] <= 0xdfff) {
+        /* surrogate pair */
+        unsigned ucs2 = src[i++];
+        ucs = 0x10000U + ((ucs&0x3ff)<<10) + (ucs2&0x3ff);
+        /* all surrogate pairs turn into 4-byte utf8 */
+        if (count+4 >= dstlen) {dst[count] = 0; count += 4; break;}
+        dst[count++] = 0xf0 | (ucs >> 18);
+        dst[count++] = 0x80 | ((ucs >> 12) & 0x3F);
+        dst[count++] = 0x80 | ((ucs >> 6) & 0x3F);
+        dst[count++] = 0x80 | (ucs & 0x3F);
+      }
+      else {
+        /* all others are 3 bytes: */
+        if (count+3 >= dstlen) {dst[count] = 0; count += 3; break;}
+        dst[count++] = 0xe0 | (ucs >> 12);
+        dst[count++] = 0x80 | ((ucs >> 6) & 0x3F);
+        dst[count++] = 0x80 | (ucs & 0x3F);
+      }
+    }
+  }
+  /* we filled dst, measure the rest: */
+  while (i < srclen) {
+    unsigned ucs = src[i++];
+    if (ucs < 0x80U) {
+      count++;
+    }
+    else if (ucs < 0x800U) { /* 2 bytes */
+      count += 2;
+    }
+    else if (ucs >= 0xd800 && ucs <= 0xdbff && i < srclen-1 &&
+             src[i+1] >= 0xdc00 && src[i+1] <= 0xdfff) {
+      /* surrogate pair */
+      ++i;
+      count += 4;
+    }
+    else {
+      count += 3;
+    }
   }
   return count;
 }
@@ -310,6 +373,44 @@ int GetProcessId()
 #else
   return getpid();
 #endif
+}
+
+std::string GetExecutableName(const std::string &argv0)
+{
+  std::string name = "";
+#if defined(WIN32) && !defined(__CYGWIN__)
+  WCHAR src[MAX_PATH];
+  DWARD size = GetModuleFileNameW(NULL, src, MAX_PATH);
+  if(size){
+    char dst[MAX_PATH];
+    utf8FromUtf16(dst, MAX_PATH, src, size);
+    name = std::string(dst);
+  }
+#elif defined(__APPLE__)
+  char path[PATH_MAX];
+  uint32_t size = sizeof(path);
+  if (_NSGetExecutablePath(path, &size) == 0){
+    char real[PATH_MAX];
+    if(realpath(path, real)){
+      name = std::string(real);
+    }
+  }
+#elif defined(__linux__)
+  char path[PATH_MAX];
+  int s = readlink("/proc/self/exe", path, sizeof(path));
+  if(s > 0){
+    path[s - 1] = '\0';
+    name = std::string(path);
+  }
+#endif
+  if(name.empty()){
+    name = argv0;
+    printf("Found executable name through argv0 = '%s'\n", name.c_str());
+  }
+  else
+    printf("Found executable name = '%s'\n", name.c_str());
+
+  return name;
 }
 
 std::string GetHostName()
