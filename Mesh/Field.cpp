@@ -1538,12 +1538,13 @@ class MaxField : public Field
 class RestrictField : public Field
 {
   int iField;
-  std::list<int> edges, faces, regions;
+  std::list<int> vertices, edges, faces, regions;
  public:
   RestrictField()
   {
     iField = 1;
     options["IField"] = new FieldOptionInt(iField, "Field index");
+    options["VerticesList"] = new FieldOptionList(vertices, "Point indices");
     options["EdgesList"] = new FieldOptionList(edges, "Curve indices");
     options["FacesList"] = new FieldOptionList(faces, "Surface indices");
     options["RegionsList"] = new FieldOptionList(regions, "Volume indices");
@@ -1551,14 +1552,15 @@ class RestrictField : public Field
   std::string getDescription()
   {
     return "Restrict the application of a field to a given list of geometrical "
-      "curves, surfaces or volumes.";
+      "points, curves, surfaces or volumes.";
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *f = (GModel::current()->getFields()->get(iField));
     if(!f || iField == id) return MAX_LC;
     if(!ge) return (*f) (x, y, z);
-    if((ge->dim() == 0) ||
+    if((ge->dim() == 0 && std::find
+        (vertices.begin(), vertices.end(), ge->tag()) != vertices.end()) ||
        (ge->dim() == 1 && std::find
         (edges.begin(), edges.end(), ge->tag()) != edges.end()) ||
        (ge->dim() == 2 && std::find
@@ -1820,7 +1822,6 @@ class AttractorField : public Field
           it != faces_id.end(); ++it) {
 	GFace *f = GModel::current()->getFaceByTag(*it);
 	if (f){
-
 	  if (f->mesh_vertices.size()){
 	    for (unsigned int i=0;i<f->mesh_vertices.size();i++){
 	      MVertex *v = f->mesh_vertices[i];
@@ -1847,7 +1848,7 @@ class AttractorField : public Field
         ((points.size()) ? points.size() :
          n_nodes_by_edge * n_nodes_by_edge * faces_id.size());
 
-      Msg::Info("%d points found in points clouds (%d edges)", totpoints,
+      Msg::Info("%d points found in point clouds (%d edges)", totpoints,
                 (int)edges_id.size());
 
       if(totpoints){
@@ -2030,7 +2031,8 @@ void BoundaryLayerField::setupFor2d(int iF)
 	 it != ed.end() ; ++it){
       bool isIn = false;
       int iE = (*it)->tag();
-      bool found = std::find ( edges_id_saved.begin(),edges_id_saved.end(),iE ) != edges_id_saved.end();
+      bool found = std::find(edges_id_saved.begin(), edges_id_saved.end(), iE) !=
+        edges_id_saved.end();
       //      printf("edges %d found %d\n",iE,found);
       // this edge is a BL Edge
       if (found){
@@ -2040,15 +2042,17 @@ void BoundaryLayerField::setupFor2d(int iF)
 	else {
 	  // more than one face and
 	  std::list<GFace*>::iterator itf = fc.begin();
-	  bool found_this = std::find ( faces_id_saved.begin(),faces_id_saved.end(),iF ) != faces_id_saved.end();
+	  bool found_this = std::find(faces_id_saved.begin(), faces_id_saved.end(), iF) !=
+            faces_id_saved.end();
 	  if (!found_this)isIn = true;
 	  else {
 	    bool foundAll = true;
 	    for ( ; itf != fc.end() ; ++itf){
 	      int iF2 = (*itf)->tag();
-	      foundAll &= std::find ( faces_id_saved.begin(),faces_id_saved.end(),iF2 ) != faces_id_saved.end();
+	      foundAll &= std::find(faces_id_saved.begin(), faces_id_saved.end(), iF2) !=
+                faces_id_saved.end();
 	    }
-	    if (foundAll)isIn = true;
+	    if(foundAll) isIn = true;
 	  }
 	}
       }
@@ -2058,8 +2062,7 @@ void BoundaryLayerField::setupFor2d(int iF)
 	nodes_id.push_back ((*it)->getEndVertex()->tag());
       }
     }
-    //    printf("face %d %d BL Edges\n", iF, (int)edges_id.size());
-
+    // printf("face %d %d BL Edges\n", iF, (int)edges_id.size());
     removeAttractors();
   }
 }
@@ -2070,10 +2073,8 @@ void BoundaryLayerField::setupFor3d()
   removeAttractors();
 }
 
-
 double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge)
 {
-
   if (update_needed){
     for(std::list<int>::iterator it = nodes_id.begin();
 	it != nodes_id.end(); ++it) {
@@ -2109,8 +2110,8 @@ double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge
 }
 
 // assume that the closest point is one of the model vertices
-void BoundaryLayerField::computeFor1dMesh (double x, double y, double z,
-					   SMetric3 &metr)
+void BoundaryLayerField::computeFor1dMesh(double x, double y, double z,
+                                          SMetric3 &metr)
 {
   double xpk = 0., ypk = 0., zpk = 0.;
   double distk = 1.e22;
