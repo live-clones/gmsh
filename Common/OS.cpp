@@ -380,7 +380,7 @@ std::string GetExecutableName(const std::string &argv0)
   std::string name = "";
 #if defined(WIN32) && !defined(__CYGWIN__)
   WCHAR src[MAX_PATH];
-  DWARD size = GetModuleFileNameW(NULL, src, MAX_PATH);
+  DWORD size = GetModuleFileNameW(NULL, src, MAX_PATH);
   if(size){
     char dst[MAX_PATH];
     utf8FromUtf16(dst, MAX_PATH, src, size);
