@@ -389,27 +389,21 @@ std::string GetExecutableName(const std::string &argv0)
 #elif defined(__APPLE__)
   char path[PATH_MAX];
   uint32_t size = sizeof(path);
-  if (_NSGetExecutablePath(path, &size) == 0){
+  if(_NSGetExecutablePath(path, &size) == 0){
     char real[PATH_MAX];
     if(realpath(path, real)){
       name = std::string(real);
     }
   }
 #elif defined(__linux__)
-  char path[PATH_MAX];
-  int s = readlink("/proc/self/exe", path, sizeof(path));
-  if(s > 0){
-    path[s - 1] = '\0';
+  char path[4096];
+  if(readlink("/proc/self/exe", path, 4096) > 0){
     name = std::string(path);
   }
 #endif
   if(name.empty()){
     name = argv0;
-    printf("Found executable name through argv0 = '%s'\n", name.c_str());
   }
-  else
-    printf("Found executable name = '%s'\n", name.c_str());
-
   return name;
 }
 
