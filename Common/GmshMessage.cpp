@@ -984,7 +984,12 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
                                   std::map<std::string, std::vector<std::string> > &copt)
 {
 #if defined(HAVE_ONELAB)
-  if(!_onelabClient || val.empty()) return;
+  if(!_onelabClient) return;
+
+  if(val.empty()){
+    Msg::Error("No value to exchange with ONELAB");
+    return;
+  }
 
   std::string name;
   if(copt.count("Name"))
@@ -1097,7 +1102,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
                                   std::map<std::string, std::vector<std::string> > &copt)
 {
 #if defined(HAVE_ONELAB)
-  if(!_onelabClient || val.empty()) return;
+  if(!_onelabClient) return;
 
   std::string name;
   if(copt.count("Name"))
