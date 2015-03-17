@@ -36,6 +36,7 @@ std::string opt_general_axes_format2(OPT_ARGS_STR);
 std::string opt_general_background_image_filename(OPT_ARGS_STR);
 std::string opt_general_display(OPT_ARGS_STR);
 std::string opt_general_filename(OPT_ARGS_STR);
+std::string opt_general_executable_filename(OPT_ARGS_STR);
 std::string opt_general_default_filename(OPT_ARGS_STR);
 std::string opt_general_tmp_filename(OPT_ARGS_STR);
 std::string opt_general_error_filename(OPT_ARGS_STR);

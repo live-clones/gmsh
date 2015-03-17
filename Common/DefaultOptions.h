@@ -53,6 +53,8 @@ StringXString GeneralOptions_String[] = {
     ".gmsh-errors" ,
 #endif
     "File into which the log is saved if a fatal error occurs" },
+  { F|S, "ExecutableFileName", opt_general_executable_filename , "" ,
+    "File name of the Gmsh executable (read-only)"},
 
   { F,   "FileName" , opt_general_filename , "" ,
     "Current project file name (read-only)" },

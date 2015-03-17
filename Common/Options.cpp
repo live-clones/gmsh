@@ -1113,6 +1113,11 @@ std::string opt_general_filename(OPT_ARGS_STR)
   return GModel::current()->getFileName();
 }
 
+std::string opt_general_executable_filename(OPT_ARGS_STR)
+{
+  return CTX::instance()->exeFileName;
+}
+
 std::string opt_general_default_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)

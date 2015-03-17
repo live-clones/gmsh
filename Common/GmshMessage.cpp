@@ -99,7 +99,7 @@ static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 
 static void addGmshPathToEnvironmentVar(const std::string &name)
 {
-  std::string gmshPath = SplitFileName(GetExecutableName(CTX::instance()->argv0))[0];
+  std::string gmshPath = SplitFileName(CTX::instance()->exeFileName)[0];
   if(gmshPath.size()){
     std::string path;
     char *tmp = getenv(name.c_str());
@@ -153,14 +153,15 @@ void Msg::Init(int argc, char **argv)
     _commandLine += argv[i];
   }
 
-  if(argc && argv){
-    CTX::instance()->argv0 = std::string(argv[0]);
-    // add the directory where the binary is installed to the path where Python
-    // looks for modules, and to the path for executables (this allows us to
-    // find the onelab.py module or subclients automatically)
-    addGmshPathToEnvironmentVar("PYTHONPATH");
-    addGmshPathToEnvironmentVar("PATH");
-  }
+  CTX::instance()->exeFileName = GetExecutableFileName();
+  if(CTX::instance()->exeFileName.empty() && argc && argv)
+    CTX::instance()->exeFileName = argv[0];
+
+  // add the directory where the binary is installed to the path where Python
+  // looks for modules, and to the path for executables (this allows us to find
+  // the onelab.py module or subclients automatically)
+  addGmshPathToEnvironmentVar("PYTHONPATH");
+  addGmshPathToEnvironmentVar("PATH");
 
   InitializeOnelab("Gmsh");
 }

@@ -375,7 +375,7 @@ int GetProcessId()
 #endif
 }
 
-std::string GetExecutableName(const std::string &argv0)
+std::string GetExecutableFileName()
 {
   std::string name = "";
 #if defined(WIN32) && !defined(__CYGWIN__)
@@ -401,9 +401,6 @@ std::string GetExecutableName(const std::string &argv0)
     name = std::string(path);
   }
 #endif
-  if(name.empty()){
-    name = argv0;
-  }
   return name;
 }
 

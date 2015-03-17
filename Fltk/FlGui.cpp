@@ -40,6 +40,7 @@ typedef unsigned long intptr_t;
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "OS.h"
 #include "MElement.h"
 #include "PView.h"
 #include "Field.h"
@@ -429,6 +430,7 @@ FlGui *FlGui::instance(int argc, char **argv)
     Msg::Info("Build date     : %s", GetGmshBuildDate());
     Msg::Info("Build host     : %s", GetGmshBuildHost());
     Msg::Info("Packager       : %s", GetGmshPackager());
+    Msg::Info("Executable     : %s", CTX::instance()->exeFileName.c_str());
     Msg::Info("Home directory : %s", CTX::instance()->homeDir.c_str());
     Msg::Info("Launch date    : %s", Msg::GetLaunchDate().c_str());
     Msg::Info("Command line   : %s", Msg::GetCommandLineArgs().c_str());

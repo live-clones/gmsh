@@ -90,7 +90,8 @@ class CTX {
   std::string bgmFileName, outputFileName, defaultFileName, tmpFileName;
   std::string sessionFileName, optionsFileName, errorFileName;
   std::string meshStatReportFileName;
-  std::string argv0;
+  // filename of the executable, with full path
+  std::string exeFileName;
   // the home directory
   std::string homeDir;
   // file history
