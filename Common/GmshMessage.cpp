@@ -100,19 +100,21 @@ static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 static void addGmshPathToEnvironmentVar(const std::string &name)
 {
   std::string gmshPath = SplitFileName(GetExecutableName(CTX::instance()->argv0))[0];
-  std::string path;
-  char *tmp = getenv(name.c_str());
-  if(tmp){
-    path = tmp;
+  if(gmshPath.size()){
+    std::string path;
+    char *tmp = getenv(name.c_str());
+    if(tmp){
+      path = tmp;
 #if defined(WIN32)
-    path += ";" + gmshPath;
+      path += ";" + gmshPath;
 #else
-    path += ":" + gmshPath;
+      path += ":" + gmshPath;
 #endif
+    }
+    else
+      path = gmshPath;
+    SetEnvironmentVar(name.c_str(), path.c_str());
   }
-  else
-    path = gmshPath;
-  SetEnvironmentVar(name.c_str(), path.c_str());
 }
 
 void Msg::Init(int argc, char **argv)

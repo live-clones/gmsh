@@ -253,13 +253,13 @@ static void onelab_choose_executable_cb(Fl_Widget *w, void *data)
 
     // try to find an executable automatically (this is really useful for
     // beginners)
-    if(CTX::instance()->argv0.size()){
-      std::vector<std::string> split = SplitFileName(CTX::instance()->argv0);
+    std::string gmshPath = SplitFileName(GetExecutableName(CTX::instance()->argv0))[0];
+    if(gmshPath.size()){
       std::string name = c->getName();
       for(unsigned int i = 0; i < name.size(); i++)
         name[i] = tolower(name[i]);
-      std::string path1 = split[0] + name;
-      std::string path2 = split[0] + "data/" + name;
+      std::string path1 = gmshPath + name;
+      std::string path2 = gmshPath + "data/" + name;
 #if defined(WIN32)
       path1 += ".exe";
       path2 += ".exe";
