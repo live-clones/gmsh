@@ -34,7 +34,7 @@ def path(dirname, inp):
   # dirname is a directory, can be empty
   # inp is an optional file or subdirectory name
   # returns the path to 'inp' in the same directory as 'ref' 
-  dirname = os.path.dirname(dirname)
+  dirname = os.path.dirname(dirname + os.sep)
   if not inp: 
     return dirname
   if inp[0] == '/' or inp[0] == '\\' or (len(inp) > 2 and inp[1] == '\:'):
