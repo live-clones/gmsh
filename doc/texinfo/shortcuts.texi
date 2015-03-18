@@ -140,6 +140,8 @@ Hide/show mesh lines
 Hide/show mesh points
 @item Alt+Shift+s
 Hide/show mesh surface edges
+@item Alt+Shift+t
+Same as Alt+t, but skip numeric mode
 @item Alt+Shift+v
 Hide/show mesh volume edges
 @item Alt+Shift+w
