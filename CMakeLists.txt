@@ -95,7 +95,7 @@ opt(WRAP_PYTHON "Enable generation of Python wrappers" OFF)
 
 set(GMSH_MAJOR_VERSION 2)
 set(GMSH_MINOR_VERSION 9)
-set(GMSH_PATCH_VERSION 1)
+set(GMSH_PATCH_VERSION 2)
 set(GMSH_EXTRA_VERSION "" CACHE STRING "Gmsh extra version string")
 
 set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
