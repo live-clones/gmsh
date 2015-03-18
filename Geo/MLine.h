@@ -206,6 +206,13 @@ class MLineN : public MLine {
     Msg::Error("no tag matches a line with %d vertices", 8+_vs.size());
     return 0;
   }
+  virtual void reverse()
+  {
+    MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
+    std::vector<MVertex*> inv;
+    inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
+    _vs = inv;
+  }
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 2 ? MLine::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
