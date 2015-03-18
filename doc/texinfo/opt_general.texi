@@ -54,6 +54,11 @@ File into which the log is saved if a fatal error occurs@*
 Default value: @code{".gmsh-errors"}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.ExecutableFileName
+File name of the Gmsh executable (read-only)@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
 @item General.FileName
 Current project file name (read-only)@*
 Default value: @code{""}@*

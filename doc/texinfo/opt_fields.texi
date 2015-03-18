@@ -611,7 +611,7 @@ default value: @code{0}
 @end table
 
 @item Restrict
-Restrict the application of a field to a given list of geometrical curves, surfaces or volumes.@*
+Restrict the application of a field to a given list of geometrical points, curves, surfaces or volumes.@*
 Options:@*
 @table @code
 @item EdgesList
@@ -628,6 +628,10 @@ type: integer@*
 default value: @code{1}
 @item RegionsList
 Volume indices@*
+type: list@*
+default value: @code{@{@}}
+@item VerticesList
+Point indices@*
 type: list@*
 default value: @code{@{@}}
 @end table
