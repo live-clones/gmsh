@@ -213,7 +213,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   butt[3] = new Fl_Check_Button
     (x, y, width - 4 * WB, BH, "Show detailed log messages");
   butt[3]->type(FL_TOGGLE_BUTTON);
-  butt[3]->value(1);
+  butt[3]->value(0);
 
   {
     y += BH / 2;
