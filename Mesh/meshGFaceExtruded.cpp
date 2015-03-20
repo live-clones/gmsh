@@ -152,9 +152,16 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
-  // create vertices
-  for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
-    MVertex *v = from->mesh_vertices[i];
+  // interior vertices
+  std::vector<MVertex*> mesh_vertices = from->mesh_vertices;
+
+  // add all embedded vertices
+  std::vector<MVertex*> embedded = from->getEmbeddedMeshVertices();
+  mesh_vertices.insert(mesh_vertices.end(), embedded.begin(), embedded.end());
+
+  // create extruded vertices
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++){
+    MVertex *v = mesh_vertices[i];
     double x = v->x(), y = v->y(), z = v->z();
     ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
                 x, y, z);
@@ -261,8 +268,9 @@ int MeshExtrudedSurface(GFace *gf,
 
   // if the edges of the mesh are constrained, the vertices already
   // exist on the face--so we add them to the set
-  if(constrainedEdges)
+  if(constrainedEdges){
     pos.insert(gf->mesh_vertices);
+  }
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // surface is extruded from a curve

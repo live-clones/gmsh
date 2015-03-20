@@ -276,6 +276,26 @@ surface_params GFace::getSurfaceParams() const
   return p;
 }
 
+std::vector<MVertex*> GFace::getEmbeddedMeshVertices() const
+{
+  std::set<MVertex*> tmp;
+  for(std::list<GEdge *>::const_iterator it = embedded_edges.begin();
+      it != embedded_edges.end(); it++){
+    tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
+    tmp.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
+               (*it)->getBeginVertex()->mesh_vertices.end());
+    tmp.insert((*it)->getEndVertex()->mesh_vertices.begin(),
+               (*it)->getEndVertex()->mesh_vertices.end());
+  }
+  for(std::list<GVertex *>::const_iterator it = embedded_vertices.begin();
+      it != embedded_vertices.end(); it++){
+    tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
+  }
+  std::vector<MVertex*> res;
+  res.insert(res.end(), tmp.begin(), tmp.end());
+  return res;
+}
+
 std::list<GVertex*> GFace::vertices() const
 {
   std::set<GVertex*> v;

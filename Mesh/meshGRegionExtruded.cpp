@@ -136,9 +136,16 @@ static void extrudeMesh(GFace *from, GRegion *to, MVertexRTree &pos)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
-  // create vertices
-  for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
-    MVertex *v = from->mesh_vertices[i];
+  // interior vertices
+  std::vector<MVertex*> mesh_vertices = from->mesh_vertices;
+
+  // add all embedded vertices
+  std::vector<MVertex*> embedded = from->getEmbeddedMeshVertices();
+  mesh_vertices.insert(mesh_vertices.end(), embedded.begin(), embedded.end());
+
+  // create extruded vertices
+  for(unsigned int i = 0; i < mesh_vertices.size(); i++){
+    MVertex *v = mesh_vertices[i];
     for(int j = 0; j < ep->mesh.NbLayer; j++) {
       for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
         double x = v->x(), y = v->y(), z = v->z();
@@ -194,6 +201,8 @@ static void insertAllVertices(GRegion *gr, MVertexRTree &pos)
   std::list<GFace*>::iterator itf = faces.begin();
   while(itf != faces.end()){
     pos.insert((*itf)->mesh_vertices);
+    std::vector<MVertex*> embedded = (*itf)->getEmbeddedMeshVertices();
+    pos.insert(embedded);
     std::list<GEdge*> edges = (*itf)->edges();
     std::list<GEdge*>::iterator ite = edges.begin();
     while(ite != edges.end()){

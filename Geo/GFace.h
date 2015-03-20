@@ -67,7 +67,7 @@ class GFace : public GEntity
   // vertices are classifed on this GFace, their type is MFaceVertex.
   // After mesh generation, those are moved to the mesh_vertices array
   std::vector<MVertex*> additionalVertices;
-  
+
  public:
   GFace(GModel *model, int tag);
   virtual ~GFace();
@@ -120,6 +120,8 @@ class GFace : public GEntity
 
   // edges that are embedded in the face
   virtual std::list<GVertex*> embeddedVertices() const { return embedded_vertices; }
+
+  std::vector<MVertex*> getEmbeddedMeshVertices() const;
 
   // vertices that bound the face
   virtual std::list<GVertex*> vertices() const;
