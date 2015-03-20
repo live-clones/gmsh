@@ -15,7 +15,7 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MLine.h"
-#include "BackgroundMesh.h"
+#include "BackgroundMeshTools.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
 #include "Generator.h"
@@ -148,6 +148,11 @@ void buildMeshGenerationDataStructures(GFace *gf,
 
   for(unsigned int i = 0;i < gf->triangles.size(); i++)
     setLcsInit(gf->triangles[i], vSizesMap);
+  std::map<MVertex*, double>::iterator itfind = vSizesMap.find(NULL);
+  if (itfind!=vSizesMap.end()){
+    std::cout << "***************************************** NULL" << std::endl;
+    throw;
+  }
 
   for(unsigned int i = 0;i < gf->triangles.size(); i++)
     setLcs(gf->triangles[i], vSizesMap, data);
@@ -3628,9 +3633,9 @@ void recombineIntoQuads(GFace *gf,
       if(haveParam){
         if (saveAll) gf->model()->writeMSH("smoothed.msh");
         int ITER=0;
-	//        int optistatus[6] = {0,0,0,0,0,0};
-	std::set<MEdge,Less_Edge> prioritory;
-	double exbad = -100;
+        //        int optistatus[6] = {0,0,0,0,0,0};
+        std::set<MEdge,Less_Edge> prioritory;
+        double exbad = -100;
         while(1){
 	  //	  int maxCavitySize = CTX::instance()->mesh.bunin;
 	  //	  optistatus[0] = (ITERB == 1) ?splitFlatQuads(gf, .01, prioritory) : 0;
@@ -3654,8 +3659,8 @@ void recombineIntoQuads(GFace *gf,
         }
       }
       if(haveParam) {
-	laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing, true);
-	optiSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
+        laplaceSmoothing(gf,CTX::instance()->mesh.nbSmoothing, true);
+        optiSmoothing(gf,CTX::instance()->mesh.nbSmoothing,true);
       }
       // untangleInvalidQuads(gf,CTX::instance()->mesh.nbSmoothing);
     }
@@ -3736,24 +3741,24 @@ Temporary::~Temporary(){}
 SVector3 Temporary::compute_gradient(MElement*element)
 {
   /*double x1,y1,z1;
-  double x2,y2,z2;
-  double x3,y3,z3;
-  double x,y,z;
-  MVertex*vertex1 = element->getVertex(0);
-  MVertex*vertex2 = element->getVertex(1);
-  MVertex*vertex3 = element->getVertex(2);
-  x1 = vertex1->x();
-  y1 = vertex1->y();
-  z1 = vertex1->z();
-  x2 = vertex2->x();
-  y2 = vertex2->y();
-  z2 = vertex2->z();
-  x3 = vertex3->x();
-  y3 = vertex3->y();
-  z3 = vertex3->z();
-  x = (x1+x2+x3)/3.0;
-  y = (y1+y2+y3)/3.0;
-  z = (z1+z2+z3)/3.0;*/
+    double x2,y2,z2;
+    double x3,y3,z3;
+    double x,y,z;
+    MVertex*vertex1 = element->getVertex(0);
+    MVertex*vertex2 = element->getVertex(1);
+    MVertex*vertex3 = element->getVertex(2);
+    x1 = vertex1->x();
+    y1 = vertex1->y();
+    z1 = vertex1->z();
+    x2 = vertex2->x();
+    y2 = vertex2->y();
+    z2 = vertex2->z();
+    x3 = vertex3->x();
+    y3 = vertex3->y();
+    z3 = vertex3->z();
+    x = (x1+x2+x3)/3.0;
+    y = (y1+y2+y3)/3.0;
+    z = (z1+z2+z3)/3.0;*/
   return SVector3(0.0,1.0,0.0);
 }
 
@@ -3815,7 +3820,7 @@ SVector3 Temporary::compute_other_vector(MElement *element)
 }
 
 double Temporary::compute_alignment(const MEdge &_edge, MElement *element1,
-                                    MElement *element2)
+    MElement *element2)
 {
   //int number;
   double scalar_productA,scalar_productB;
@@ -3831,7 +3836,7 @@ double Temporary::compute_alignment(const MEdge &_edge, MElement *element1,
   vertexA = _edge.getVertex(0);
   vertexB = _edge.getVertex(1);
   edge = SVector3(vertexB->x()-vertexA->x(), vertexB->y()-vertexA->y(),
-                  vertexB->z()-vertexA->z());
+      vertexB->z()-vertexA->z());
   edge = edge * (1/norm(edge));
   scalar_productA = fabs(dot(gradient,edge));
   scalar_productB = fabs(dot(other_vector,edge));
@@ -3852,15 +3857,15 @@ void Temporary::read_data(std::string file_name)
   for(i = 0;i < data->getNumEntities(0);i++)
   {
     if(data->skipEntity(0,i)) continue;
-	for(j = 0;j < data->getNumElements(0,i);j++){
-	  if(data->skipElement(0,i,j)) continue;
-	  element = data->getElement(0,i,j);
-	  number = element->getNum();
-	  data->getValue(0,i,j,0,x);
-	  data->getValue(0,i,j,1,y);
-	  data->getValue(0,i,j,2,z);
-	  gradients[number] = SVector3(x,y,z);
-	}
+    for(j = 0;j < data->getNumElements(0,i);j++){
+      if(data->skipElement(0,i,j)) continue;
+      element = data->getElement(0,i,j);
+      number = element->getNum();
+      data->getValue(0,i,j,0,x);
+      data->getValue(0,i,j,1,y);
+      data->getValue(0,i,j,2,z);
+      gradients[number] = SVector3(x,y,z);
+    }
   }
 #endif
 }

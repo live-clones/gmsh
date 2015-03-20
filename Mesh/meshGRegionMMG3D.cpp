@@ -15,7 +15,7 @@
 #include "MTetrahedron.h"
 #include "MTriangle.h"
 #include "MVertex.h"
-#include "BackgroundMesh.h"
+#include "BackgroundMeshTools.h"
 #include "Context.h"
 
 extern "C" {

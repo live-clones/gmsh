@@ -36,6 +36,8 @@
 #include "simple3D.h"
 #include "yamakawa.h"
 
+#include "pointInsertion.h"
+
 #if defined(HAVE_OPTHOM)
 #include "OptHomRun.h"
 #include "OptHomElastic.h"
@@ -46,7 +48,7 @@
 #include "PViewData.h"
 #endif
 
-template<class T>
+  template<class T>
 static void GetQualityMeasure(std::vector<T*> &ele,
                               double &gamma, double &gammaMin, double &gammaMax,
                               double &minSICN, double &minSICNMin, double &minSICNMax,
@@ -219,8 +221,8 @@ static void Mesh0D(GModel *m)
     GVertex *gv = *it;
     if (gv->meshMaster() != gv->tag()){
       if (gv->correspondingVertices.empty()){
-	GVertex *master = m->getVertexByTag(abs(gv->meshMaster()));
-	if(master)gv->correspondingVertices[gv->mesh_vertices[0]] = (master->mesh_vertices[0]);
+        GVertex *master = m->getVertexByTag(abs(gv->meshMaster()));
+        if(master)gv->correspondingVertices[gv->mesh_vertices[0]] = (master->mesh_vertices[0]);
       }
     }
   }
@@ -244,8 +246,8 @@ static void Mesh1D(GModel *m)
     int nPending = 0;
     for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
       if ((*it)->meshStatistics.status == GEdge::PENDING){
-	mesher(*it);
-	nPending++;
+        mesher(*it);
+        nPending++;
       }
       if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 1D...");
     }
@@ -274,8 +276,8 @@ static void PrintMesh2dStatistics(GModel *m)
 
   if(CTX::instance()->createAppendMeshStatReport == 1){
     fprintf(statreport, "2D stats\tname\t\t#faces\t\t#fail\t\t"
-            "#t\t\tQavg\t\tQbest\t\tQworst\t\t#Q>90\t\t#Q>90/#t\t"
-            "#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
+        "#t\t\tQavg\t\tQbest\t\tQworst\t\t#Q>90\t\t#Q>90/#t\t"
+        "#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
     if(m->empty()){
       fclose(statreport);
       return;
@@ -291,7 +293,7 @@ static void PrintMesh2dStatistics(GModel *m)
       e_long = std::max((*it)->meshStatistics.longest_edge_length, e_long);
       e_short = std::min((*it)->meshStatistics.smallest_edge_length, e_short);
       if ((*it)->meshStatistics.status == GFace::FAILED ||
-	  (*it)->meshStatistics.status == GFace::PENDING) nUnmeshed++;
+          (*it)->meshStatistics.status == GFace::PENDING) nUnmeshed++;
       nTotT += (*it)->meshStatistics.nbTriangle;
       nTotE += (*it)->meshStatistics.nbEdge;
       nTotGoodLength += (*it)->meshStatistics.nbGoodLength;
@@ -304,11 +306,11 @@ static void PrintMesh2dStatistics(GModel *m)
 
   fprintf(statreport,"\t%16s\t%d\t\t%d\t\t", m->getName().c_str(), numFaces, nUnmeshed);
   fprintf(statreport,"%d\t\t%8.7f\t%8.7f\t%8.7f\t%d\t\t%8.7f\t",
-          nTotT, avg / (double)nTotT, best, worst, nTotGoodQuality,
-          (double)nTotGoodQuality / nTotT);
+      nTotT, avg / (double)nTotT, best, worst, nTotGoodQuality,
+      (double)nTotGoodQuality / nTotT);
   fprintf(statreport,"%d\t\t%8.7f\t%d\t\t%8.7f\t%8.1f\n",
-          nTotE, exp(e_avg / (double)nTotE), nTotGoodLength,
-          (double)nTotGoodLength / nTotE, CTX::instance()->meshTimer[1]);
+      nTotE, exp(e_avg / (double)nTotE), nTotGoodLength,
+      (double)nTotGoodLength / nTotE, CTX::instance()->meshTimer[1]);
   fclose(statreport);
 }
 
@@ -343,10 +345,10 @@ static void Mesh2D(GModel *m)
 #pragma omp parallel for schedule (dynamic)
 #endif
       for(size_t K = 0 ; K < temp.size() ; K++){
-	if (temp[K]->meshStatistics.status == GFace::PENDING){
+        if (temp[K]->meshStatistics.status == GFace::PENDING){
           backgroundMesh::current()->unset();
-	  meshGFace mesher(true);
-	  mesher(temp[K]);
+          meshGFace mesher(true);
+          mesher(temp[K]);
 
 #if defined(HAVE_BFGS)
           if(CTX::instance()->mesh.optimizeLloyd){
@@ -358,8 +360,8 @@ static void Mesh2D(GModel *m)
                 //m->writeMSH("beforeLLoyd.msh");
                 smm.optimize_face(temp[K]);
                 int rec = ((CTX::instance()->mesh.recombineAll ||
-                            temp[K]->meshAttributes.recombine) &&
-                           !CTX::instance()->mesh.recombine3DAll);
+                      temp[K]->meshAttributes.recombine) &&
+                    !CTX::instance()->mesh.recombine3DAll);
                 //m->writeMSH("afterLLoyd.msh");
                 if (rec) recombineIntoQuads(temp[K]);
                 //m->writeMSH("afterRecombine.msh");
@@ -371,10 +373,10 @@ static void Mesh2D(GModel *m)
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-	  {
-	    nPending++;
-	  }
-	}
+          {
+            nPending++;
+          }
+        }
         if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
 #if defined(_OPENMP)
@@ -397,8 +399,8 @@ static void Mesh2D(GModel *m)
                 //m->writeMSH("beforeLLoyd.msh");
                 smm.optimize_face(*it);
                 int rec = ((CTX::instance()->mesh.recombineAll ||
-                            (*it)->meshAttributes.recombine) &&
-                           !CTX::instance()->mesh.recombine3DAll);
+                      (*it)->meshAttributes.recombine) &&
+                    !CTX::instance()->mesh.recombine3DAll);
                 //m->writeMSH("afterLLoyd.msh");
                 if (rec) recombineIntoQuads(*it);
                 //m->writeMSH("afterRecombine.msh");
@@ -426,7 +428,7 @@ static void Mesh2D(GModel *m)
 }
 
 static void FindConnectedRegions(std::vector<GRegion*> &delaunay,
-                                 std::vector<std::vector<GRegion*> > &connected)
+    std::vector<std::vector<GRegion*> > &connected)
 {
   const unsigned int nbVolumes = delaunay.size();
   if (!nbVolumes)return;
@@ -441,10 +443,10 @@ static void FindConnectedRegions(std::vector<GRegion*> &delaunay,
       oneDomain.insert(r);
       std::list<GFace*> faces = r->faces();
       for (std::list<GFace*> :: iterator it = faces.begin(); it != faces.end() ; ++it){
-	GFace *gf = *it;
-	GRegion *other = gf->getRegion(0) == r ? gf->getRegion(1) : gf->getRegion(0);
-	if (other != 0 && oneDomain.find(other) == oneDomain.end())
-	  _stack.push (other);
+        GFace *gf = *it;
+        GRegion *other = gf->getRegion(0) == r ? gf->getRegion(1) : gf->getRegion(0);
+        if (other != 0 && oneDomain.find(other) == oneDomain.end())
+          _stack.push (other);
       }
     }
     std::vector<GRegion*> temp1,temp2;
@@ -457,7 +459,7 @@ static void FindConnectedRegions(std::vector<GRegion*> &delaunay,
     delaunay=temp1;
   }
   Msg::Info("Delaunay Meshing %d volumes with %d connected components",
-	    nbVolumes,connected.size());
+      nbVolumes,connected.size());
 }
 
 static void Mesh3D(GModel *m)
@@ -492,14 +494,18 @@ static void Mesh3D(GModel *m)
     for(unsigned j=0;j<connected[i].size();j++){
       GRegion *gr = connected[i][j];
       if(CTX::instance()->mesh.recombine3DAll || gr->meshAttributes.recombine3D){
-	std::list<GFace*> f = gr->faces();
-	for (std::list<GFace*>::iterator it = f.begin();
-	     it != f.end() ; ++it) quadsToTriangles (*it,1000000);
+        std::list<GFace*> f = gr->faces();
+        for (std::list<GFace*>::iterator it = f.begin();
+            it != f.end() ; ++it) quadsToTriangles (*it,1000000);
       }
     }
   }
 
   // pragma OMP ICI ??
+  double time_recombination, vol_element_recombination, vol_hexa_recombination;
+  int nb_elements_recombination,nb_hexa_recombination;
+  time_recombination = vol_hexa_recombination = vol_element_recombination = 0.;
+  nb_elements_recombination = nb_hexa_recombination = 0;
   for(unsigned int i = 0; i < connected.size(); i++){
     MeshDelaunayVolume(connected[i]);
 
@@ -507,20 +513,61 @@ static void Mesh3D(GModel *m)
     for(unsigned j=0;j<connected[i].size();j++){
       GRegion *gr = connected[i][j];
       //R-tree
+      bool treat_region_ok=false;
       if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE){
-	Filler f;
-	f.treat_region(gr);
+        // PEB MODIF
+        if (old_algo_hexa()){
+          Filler f;
+          f.treat_region(gr);
+          treat_region_ok=true;
+        }
+        else{
+          Filler3D f;
+          treat_region_ok = f.treat_region(gr);
+        }
+        // END PEB MODIF
       }
       //Recombine3D into hex
-      if(CTX::instance()->mesh.recombine3DAll || gr->meshAttributes.recombine3D){
-	Recombinator rec;
-	rec.execute();
-	Supplementary sup;
-	sup.execute();
-	PostOp post;
-	post.execute(0);
+      if((CTX::instance()->mesh.recombine3DAll || gr->meshAttributes.recombine3D) && treat_region_ok){
+        clock_t a = clock();
+        //        Recombinator rec;
+        //        rec.execute();
+        Recombinator rec;
+        rec.execute(gr);
+//                Recombinator_Graph rec;
+//                rec.execute(1.e7,"test");
+        //        Supplementary sup;
+        //        sup.execute();
+        //        PostOp post;
+        //        post.execute(0);
+        Supplementary sup;
+        sup.execute(gr);
+        PostOp post;
+        post.execute(gr,0);
+
+        nb_elements_recombination += post.get_nb_elements();
+        nb_hexa_recombination += post.get_nb_hexahedra();
+        vol_element_recombination += post.get_vol_elements();
+        vol_hexa_recombination += post.get_vol_hexahedra();
+
+        // -- partial export
+        stringstream ss;
+        ss << "yamakawa_part_";
+        ss << gr->tag();
+        ss << ".msh";
+        export_gregion_mesh(gr,ss.str().c_str());
+        // -- end partial export
+
+        time_recombination += (clock() - a) / (double)CLOCKS_PER_SEC;
       }
     }
+  }
+  if(CTX::instance()->mesh.recombine3DAll){
+    cout << "RECOMBINATION timing:" << endl;
+    cout << "  ------- CUMULATIVE TIME RECOMBINATION : " << time_recombination << " s." << endl;
+    cout << "RECOMBINATION CUMULATIVE STATISTICS:" << endl;
+    cout << "............................  Percentage of hexahedra   (#) : " << nb_hexa_recombination*100./nb_elements_recombination << endl;
+    cout << "............................  Percentage of hexahedra (Vol) : " << vol_hexa_recombination*100./vol_element_recombination << endl;
   }
 
   // Ensure that all volume Jacobians are positive
@@ -637,7 +684,7 @@ void GenerateMesh(GModel *m, int ask)
   // Optimize quality of 3D tet mesh
   if(m->getMeshStatus() == 3){
     for(int i = 0; i < std::max(CTX::instance()->mesh.optimize,
-                                CTX::instance()->mesh.optimizeNetgen); i++){
+          CTX::instance()->mesh.optimizeNetgen); i++){
       if(CTX::instance()->mesh.optimize > i) OptimizeMesh(m);
       if(CTX::instance()->mesh.optimizeNetgen > i) OptimizeMeshNetgen(m);
     }
@@ -655,7 +702,7 @@ void GenerateMesh(GModel *m, int ask)
   // Create high order elements
   if(m->getMeshStatus() && CTX::instance()->mesh.order > 1)
     SetOrderN(m, CTX::instance()->mesh.order, CTX::instance()->mesh.secondOrderLinear,
-              CTX::instance()->mesh.secondOrderIncomplete);
+        CTX::instance()->mesh.secondOrderIncomplete);
 
   // Optimize high order elements
   if(CTX::instance()->mesh.hoOptimize){
@@ -678,7 +725,7 @@ void GenerateMesh(GModel *m, int ask)
   }
 
   Msg::Info("%d vertices %d elements",
-            m->getNumMeshVertices(), m->getNumMeshElements());
+      m->getNumMeshVertices(), m->getNumMeshElements());
 
   Msg::PrintErrorCounter("Mesh generation error summary");
 

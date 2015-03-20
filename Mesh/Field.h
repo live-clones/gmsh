@@ -8,6 +8,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 #include <list>
 #include "GmshConfig.h"
 #include "STensor3.h"
@@ -334,6 +335,29 @@ class FieldCallbackGeneric : public FieldCallback {
 template<class F> class FieldFactoryT : public FieldFactory {
  public:
   Field * operator()() { return new F; }
+};
+
+
+
+// the class GenericField contains a set of void* functions, which give a mesh size
+// All these functions are called when calling operator() ; then, the minimum size is returned.
+class GenericField : public Field{
+  public:
+    // callback prototypes:
+    // this callback is called with a void* previously given to the GenericField !
+    typedef bool (*ptrfunction)(double, double, double, void*, double&);
+
+    GenericField();
+    ~GenericField();
+    virtual double operator() (double x, double y, double z, GEntity *ge=0);
+    virtual const char *getName(){return "GenericField";};
+    
+    // sets the callbacks
+    void setCallbackWithData(ptrfunction fct, void *data);
+
+  private:
+    std::vector<ptrfunction> cbs;// the callbacks
+    std::vector<void*> user_data;// the data to be sent to the callbacks
 };
 
 #endif

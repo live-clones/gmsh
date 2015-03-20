@@ -16,7 +16,7 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MLine.h"
-#include "BackgroundMesh.h"
+#include "BackgroundMeshTools.h"
 #include "Numeric.h"
 #include "GmshMessage.h"
 #include "Generator.h"

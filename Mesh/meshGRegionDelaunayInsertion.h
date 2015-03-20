@@ -12,7 +12,7 @@
 #include <stack>
 #include "MTetrahedron.h"
 #include "Numeric.h"
-#include "BackgroundMesh.h"
+#include "BackgroundMeshTools.h"
 #include "qualityMeasures.h"
 #include "robustPredicates.h"
 

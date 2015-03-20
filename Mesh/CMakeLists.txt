@@ -18,7 +18,14 @@ set(SRC
       meshGRegionExtruded.cpp  meshGRegionCarveHole.cpp 
       meshGRegionLocalMeshMod.cpp meshGRegionMMG3D.cpp
     meshMetric.cpp
+    BackgroundMeshTools.cpp 
     BackgroundMesh.cpp 
+    BGMBase.cpp 
+    BackgroundMesh2D.cpp 
+    BackgroundMesh3D.cpp 
+    BackgroundMeshManager.cpp 
+    pointInsertionRTreeTools.cpp 
+    pointInsertion.cpp 
     qualityMeasures.cpp 
     BoundaryLayers.cpp 
     BDS.cpp 

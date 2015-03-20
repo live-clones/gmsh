@@ -6,6 +6,11 @@
 // Contributor(s):
 //   Tristan Carrier François Henrotte
 
+
+#ifndef _SIMPLE3D_H_
+#define _SIMPLE3D_H_
+
+
 #include "SVector3.h"
 #include <list>
 #include "GRegion.h"
@@ -37,3 +42,6 @@ class Filler{
   static int get_nbr_new_vertices();
   static MVertex* get_new_vertex(int);
 };
+
+#endif
+

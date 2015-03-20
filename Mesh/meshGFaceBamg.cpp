@@ -16,7 +16,7 @@
 #include "Context.h"
 #include <list>
 #include <map>
-#include "BackgroundMesh.h"
+#include "BackgroundMeshTools.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "Options.h"
 #include "meshGFace.h"

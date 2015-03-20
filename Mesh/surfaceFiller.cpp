@@ -1,10 +1,11 @@
-// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 //
 // Contributor(s):
 //   Tristan Carrier Baudoin
+
 
 #include "GmshConfig.h"
 #include "surfaceFiller.h"
@@ -13,187 +14,188 @@
 #include "OS.h"
 #include <queue>
 #include <stack>
+
+/// Here, we aim at producing a set of points that
+/// enables to generate a nice quad mesh
+
 #include "rtree.h"
+
 #include "MVertex.h"
 #include "MElement.h"
+//#include "directions3D.h"
 #include "BackgroundMesh.h"
 #include "intersectCurveSurface.h"
 
-// Here, we aim at producing a set of points that enables to generate a nice
-// quad mesh
+#include "pointInsertionRTreeTools.h"
 
 using namespace std;
 
-static const double FACTOR = .71;
-static const int NUMDIR = 3;
-static const double DIRS [NUMDIR] = {0.0, M_PI/20.,-M_PI/20.};
+//static const double FACTOR = .71;
+//static const int NUMDIR = 3;
+//static const double DIRS [NUMDIR] = {0.0, M_PI/20.,-M_PI/20.};
 //PE MODIF
 //static const int NUMDIR = 1;
 //static const double DIRS [NUMDIR] = {0.0};
 // END PE MODIF
 
-// a rectangle in the tangent plane is transformed into a parallelogram. We
-// define an exclusion zone that is centered around a vertex and that is used in
-// a r-tree structure for generating points with the right spacing in the
-// tangent plane
 
-struct surfacePointWithExclusionRegion {
-  MVertex *_v;
-  SPoint2 _center;
-  SPoint2 _p[4][NUMDIR];
-  SPoint2 _q[4];
-  SMetric3 _meshMetric;
-  double _distanceSummed;
-  double mat1[2][2], mat2[2][2];
-  /*
-         + p3
-    p4   |
-    +----c-----+ p2
-         |
-         + p1
 
-  */
-  surfacePointWithExclusionRegion (MVertex *v, SPoint2 p[4][NUMDIR],
-                                   SPoint2 &_mp, SMetric3 & meshMetric,
-                                   surfacePointWithExclusionRegion *father = 0)
-  {
-    _v = v;
-    _meshMetric = meshMetric;
-    _center = _mp;
-    for (int i=0;i<4;i++)_q[i] = _center + (p[i][0]+p[(i+1)%4][0]-_center*2)*FACTOR;
-    for (int i=0;i<4;i++)for (int j=0;j<NUMDIR;j++)_p[i][j] = p[i][j];
+/// a rectangle in the tangent plane is transformed
+/// into a parallelogram. We define an exclusion zone
+/// that is centered around a vertex and that is used
+/// in a r-tree structure for generating points with the
+/// right spacing in the tangent plane
 
-    if (!father){
-      fullMatrix<double> V(3,3);
-      fullVector<double> S(3);
-      meshMetric.eig(V,S);
-      double l = std::max(std::max(S(0),S(1)),S(2));
-      _distanceSummed = sqrt(1/(l*l));
-    }
-    else {
-      _distanceSummed = father->_distanceSummed + distance (father->_v,_v);
-    }
-    //test !!!
-    //    const double s = backgroundMesh::current()->getSmoothness(_mp.x(),_mp.y(),0);
-    //    if(s  > 0.02)
-    //      _distanceSummed = 10000*s;
-  }
-  bool inExclusionZone (const SPoint2 &p)
-  {
-    double mat[2][2];
-    double b[2] , uv[2];
-    mat[0][0]= _q[1].x()-_q[0].x();
-    mat[0][1]= _q[2].x()-_q[0].x();
-    mat[1][0]= _q[1].y()-_q[0].y();
-    mat[1][1]= _q[2].y()-_q[0].y();
-    b[0] = p.x() - _q[0].x();
-    b[1] = p.y() - _q[0].y();
-    sys2x2(mat, b, uv);
-    //    printf("inversion 1 : %g %g \n",uv[0],uv[1]);
-    if (uv[0] >= 0 && uv[1] >= 0 && 1.-uv[0] - uv[1] >= 0)return true;
-    mat[0][0]= _q[3].x()-_q[2].x();
-    mat[0][1]= _q[0].x()-_q[2].x();
-    mat[1][0]= _q[3].y()-_q[2].y();
-    mat[1][1]= _q[0].y()-_q[2].y();
-    b[0] = p.x() - _q[2].x();
-    b[1] = p.y() - _q[2].y();
-    sys2x2(mat, b, uv);
-    //    printf("inversion 2 : %g %g \n",uv[0],uv[1]);
-    if (uv[0] >= 0 && uv[1] >= 0 && 1.-uv[0] - uv[1] >= 0)return true;
-    return false;
-  }
-  void minmax  (double _min[2], double _max[2]) const
-  {
-    _min[0] = std::min(std::min(std::min(_q[0].x(),_q[1].x()),_q[2].x()),_q[3].x());
-    _min[1] = std::min(std::min(std::min(_q[0].y(),_q[1].y()),_q[2].y()),_q[3].y());
-    _max[0] = std::max(std::max(std::max(_q[0].x(),_q[1].x()),_q[2].x()),_q[3].x());
-    _max[1] = std::max(std::max(std::max(_q[0].y(),_q[1].y()),_q[2].y()),_q[3].y());
-  }
-  void print (FILE *f, int i)
-  {
-    fprintf(f,"SP(%g,%g,%g){%d};\n",_center.x(),_center.y(),0.0,i);
-    fprintf(f,"SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
-	    _q[0].x(),_q[0].y(),0.0,
-	    _q[1].x(),_q[1].y(),0.0,
-	    _q[2].x(),_q[2].y(),0.0,
-	    _q[3].x(),_q[3].y(),0.0,i,i,i,i);
 
-  }
-};
+//struct surfacePointWithExclusionRegion {
+//  MVertex *_v;
+//  SPoint2 _center;
+//  SPoint2 _p[4][NUMDIR];
+//  SPoint2 _q[4];
+//  SMetric3 _meshMetric;
+//  double _distanceSummed;
+//  /*
+//         + p3
+//    p4   |
+//    +----c-----+ p2
+//         |
+//         + p1
+//
+//*/
+//
+//  surfacePointWithExclusionRegion (MVertex *v, SPoint2 p[4][NUMDIR], SPoint2 &_mp, SMetric3 & meshMetric, surfacePointWithExclusionRegion *father = 0){
+//    _v = v;
+//    _meshMetric = meshMetric;
+//    _center = _mp;
+//    for (int i=0;i<4;i++)_q[i] = _center + (p[i][0]+p[(i+1)%4][0]-_center*2)*FACTOR;
+//    for (int i=0;i<4;i++)for (int j=0;j<NUMDIR;j++)_p[i][j] = p[i][j];
+//
+//    if (!father){
+//      fullMatrix<double> V(3,3);
+//      fullVector<double> S(3);
+//      meshMetric.eig(V,S);
+//      double l = std::max(std::max(S(0),S(1)),S(2));
+//      _distanceSummed = sqrt(1/(l*l));
+//    }
+//    else {
+//      _distanceSummed = father->_distanceSummed + distance (father->_v,_v);
+//    }
+//  }
+//  bool inExclusionZone (const SPoint2 &p){
+//    double mat[2][2];
+//    double b[2] , uv[2];
+//    mat[0][0]= _q[1].x()-_q[0].x();
+//    mat[0][1]= _q[2].x()-_q[0].x();
+//    mat[1][0]= _q[1].y()-_q[0].y();
+//    mat[1][1]= _q[2].y()-_q[0].y();
+//    b[0] = p.x() - _q[0].x();
+//    b[1] = p.y() - _q[0].y();
+//    sys2x2(mat, b, uv);
+//    //    printf("inversion 1 : %g %g \n",uv[0],uv[1]);
+//    if (uv[0] >= 0 && uv[1] >= 0 && 1.-uv[0] - uv[1] >= 0)return true;
+//    mat[0][0]= _q[3].x()-_q[2].x();
+//    mat[0][1]= _q[0].x()-_q[2].x();
+//    mat[1][0]= _q[3].y()-_q[2].y();
+//    mat[1][1]= _q[0].y()-_q[2].y();
+//    b[0] = p.x() - _q[2].x();
+//    b[1] = p.y() - _q[2].y();
+//    sys2x2(mat, b, uv);
+//    //    printf("inversion 2 : %g %g \n",uv[0],uv[1]);
+//    if (uv[0] >= 0 && uv[1] >= 0 && 1.-uv[0] - uv[1] >= 0)return true;
+//    return false;
+//  }
+//  void minmax  (double _min[2], double _max[2]) const{
+//    _min[0] = std::min(std::min(std::min(_q[0].x(),_q[1].x()),_q[2].x()),_q[3].x());
+//    _min[1] = std::min(std::min(std::min(_q[0].y(),_q[1].y()),_q[2].y()),_q[3].y());
+//    _max[0] = std::max(std::max(std::max(_q[0].x(),_q[1].x()),_q[2].x()),_q[3].x());
+//    _max[1] = std::max(std::max(std::max(_q[0].y(),_q[1].y()),_q[2].y()),_q[3].y());
+//  }
+//  void print (FILE *f, int i){
+//    fprintf(f,"SP(%g,%g,%g){%d};\n",_center.x(),_center.y(),0.0,i);
+//    fprintf(f,"SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
+//	    _q[0].x(),_q[0].y(),0.0,
+//	    _q[1].x(),_q[1].y(),0.0,
+//	    _q[2].x(),_q[2].y(),0.0,
+//	    _q[3].x(),_q[3].y(),0.0,i,i,i,i);
+//
+//  }
+//};
+//
+//struct my_wrapper {
+//  bool _tooclose;
+//  SPoint2 _p;
+//  my_wrapper (SPoint2 sp) : _tooclose (false), _p(sp) {}
+//};
+//
+//struct smoothness_point_pair{
+//  double rank;
+//  surfacePointWithExclusionRegion* ptr;
+//};
+//
+//class compareSurfacePointWithExclusionRegionPtr_Smoothness
+//{
+//  public:
+//    inline bool operator () (const smoothness_point_pair &a, const smoothness_point_pair &b)  const
+//    {
+//      if (a.rank == b.rank){
+//        if(a.ptr->_distanceSummed > b.ptr->_distanceSummed) return false;
+//        if(a.ptr->_distanceSummed < b.ptr->_distanceSummed) return true;
+//        return a.ptr<b.ptr;
+//      }
+//      // else
+//      return (a.rank < b.rank);
+//    }
+//};
+//
+//
+//class compareSurfacePointWithExclusionRegionPtr
+//{
+// public:
+//  inline bool operator () (const surfacePointWithExclusionRegion *a, const surfacePointWithExclusionRegion *b)  const
+//  {
+//    if(a->_distanceSummed > b->_distanceSummed) return false;
+//    if(a->_distanceSummed < b->_distanceSummed) return true;
+//    return a<b;
+//  }
+//};
+//
+//
+//
+//
+//bool rtree_callback(surfacePointWithExclusionRegion *neighbour,void* point){
+//  my_wrapper *w = static_cast<my_wrapper*>(point);
+//
+//  if (neighbour->inExclusionZone(w->_p)){
+//    w->_tooclose = true;
+//    return false;
+//  }
+//
+//  return true;
+//}
+//
+//bool inExclusionZone (SPoint2 &p,
+//		      RTree<surfacePointWithExclusionRegion*,double,2,double> &rtree,
+//		      std::vector<surfacePointWithExclusionRegion*> & all ){
+//  // should assert that the point is inside the domain
+//  if (!backgroundMesh::current()->inDomain(p.x(),p.y(),0)) return true;
+//
+//  my_wrapper w (p);
+//  double _min[2] = {p.x()-1.e-1, p.y()-1.e-1},_max[2] = {p.x()+1.e-1,p.y()+1.e-1};
+//  rtree.Search(_min,_max,rtree_callback,&w);
+//
+//  return w._tooclose;
+//
+//  for (unsigned int i=0;i<all.size();++i){
+//    if (all[i]->inExclusionZone(p)){
+//      //      printf("%g %g is in exclusion zone of %g %g\n",p.x(),p.y(),all[i]._center.x(),all[i]._center.y());
+//      return true;
+//    }
+//  }
+//  return false;
+//}
 
-struct my_wrapper {
-  bool _tooclose;
-  SPoint2 _p;
-  my_wrapper (SPoint2 sp) : _tooclose (false), _p(sp) {}
-};
 
-struct smoothness_point_pair{
-  double rank;
-  surfacePointWithExclusionRegion* ptr;
-};
 
-class compareSurfacePointWithExclusionRegionPtr_Smoothness
-{
-  public:
-    inline bool operator () (const smoothness_point_pair &a,
-                             const smoothness_point_pair &b)  const
-    {
-      if (a.rank == b.rank){
-        if(a.ptr->_distanceSummed > b.ptr->_distanceSummed) return false;
-        if(a.ptr->_distanceSummed < b.ptr->_distanceSummed) return true;
-        return a.ptr<b.ptr;
-      }
-      // else
-      return (a.rank < b.rank);
-    }
-};
-
-class compareSurfacePointWithExclusionRegionPtr
-{
- public:
-  inline bool operator () (const surfacePointWithExclusionRegion *a,
-                           const surfacePointWithExclusionRegion *b)  const
-  {
-    if(a->_distanceSummed > b->_distanceSummed) return false;
-    if(a->_distanceSummed < b->_distanceSummed) return true;
-    return a<b;
-  }
-};
-
-bool rtree_callback(surfacePointWithExclusionRegion *neighbour,void* point)
-{
-  my_wrapper *w = static_cast<my_wrapper*>(point);
-
-  if (neighbour->inExclusionZone(w->_p)){
-    w->_tooclose = true;
-    return false;
-  }
-
-  return true;
-}
-
-bool inExclusionZone (SPoint2 &p,
-		      RTree<surfacePointWithExclusionRegion*,double,2,double> &rtree,
-		      std::vector<surfacePointWithExclusionRegion*> & all)
-{
-  // should assert that the point is inside the domain
-  if (!backgroundMesh::current()->inDomain(p.x(),p.y(),0)) return true;
-
-  my_wrapper w (p);
-  double _min[2] = {p.x()-1.e-8, p.y()-1.e-8},_max[2] = {p.x()+1.e-8,p.y()+1.e-8};
-  rtree.Search(_min,_max,rtree_callback,&w);
-
-  return w._tooclose;
-
-  for (unsigned int i=0;i<all.size();++i){
-    if (all[i]->inExclusionZone(p)){
-      // printf("%g %g is in exclusion zone of %g %g\n",
-      //        p.x(),p.y(),all[i]._center.x(),all[i]._center.y());
-      return true;
-    }
-  }
-  return false;
-}
 
 // assume a point on the surface, compute the 4 possible neighbors.
 //
@@ -217,6 +219,7 @@ bool compute4neighbors (GFace *gf,   // the surface
 			SPoint2 newP[4][NUMDIR], // look into other directions
 			SMetric3 &metricField, FILE *crossf = 0) // the mesh metric
 {
+
   //Range<double> rangeU = gf->parBounds(0);
   //Range<double> rangeV = gf->parBounds(1);
 
@@ -240,6 +243,7 @@ bool compute4neighbors (GFace *gf,   // the surface
      }
   }
 
+
   // get the unit normal at that point
   Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(midpoint[0],midpoint[1]));
   SVector3 s1 = der.first();
@@ -251,6 +255,7 @@ bool compute4neighbors (GFace *gf,   // the surface
   double N = dot(s2,s2);
   double E = dot(s1,s2);
 
+
   // compute the first fundamental form i.e. the metric tensor at the point
   // M_{ij} = s_i \cdot s_j
   double metric[2][2] = {{M,E},{E,N}};
@@ -261,8 +266,7 @@ bool compute4neighbors (GFace *gf,   // the surface
   SVector3 basis_v = crossprod(n,basis_u);
 
   for (int DIR = 0 ; DIR < NUMDIR ; DIR ++){
-    double quadAngle = backgroundMesh::current()->getAngle
-      (midpoint[0], midpoint[1],0) + DIRS[DIR];
+    double quadAngle  = backgroundMesh::current()->getAngle (midpoint[0],midpoint[1],0) + DIRS[DIR];
 
     // normalize vector t1 that is tangent to gf at midpoint
     SVector3 t1 = basis_u * cos (quadAngle) + basis_v * sin (quadAngle) ;
@@ -271,18 +275,10 @@ bool compute4neighbors (GFace *gf,   // the surface
     // compute the second direction t2 and normalize (t1,t2,n) is the tangent frame
     SVector3 t2 = crossprod(n,t1);
     t2.normalize();
-    if (DIR == 0 && crossf)
-      fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",
-              v_center->x(),v_center->y(),v_center->z(),t1.x(),t1.y(),t1.z());
-    if (DIR == 0 && crossf)
-      fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",
-              v_center->x(),v_center->y(),v_center->z(),t2.x(),t2.y(),t2.z());
-    if (DIR == 0 && crossf)
-      fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",
-              v_center->x(),v_center->y(),v_center->z(),-t1.x(),-t1.y(),-t1.z());
-    if (DIR == 0 && crossf)
-      fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",
-              v_center->x(),v_center->y(),v_center->z(),-t2.x(),-t2.y(),-t2.z());
+    if (DIR == 0 && crossf)fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",v_center->x(),v_center->y(),v_center->z(),t1.x(),t1.y(),t1.z());
+    if (DIR == 0 && crossf)fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",v_center->x(),v_center->y(),v_center->z(),t2.x(),t2.y(),t2.z());
+    if (DIR == 0 && crossf)fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",v_center->x(),v_center->y(),v_center->z(),-t1.x(),-t1.y(),-t1.z());
+    if (DIR == 0 && crossf)fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",v_center->x(),v_center->y(),v_center->z(),-t2.x(),-t2.y(),-t2.z());
 
     double size_1 = sqrt(1. / dot(t1,metricField,t1));
     double size_2 = sqrt(1. / dot(t2,metricField,t2));
@@ -295,22 +291,21 @@ bool compute4neighbors (GFace *gf,   // the surface
     double rhs1[2] = {dot(t1,s1),dot(t1,s2)}, covar1[2];
     bool singular = false;
     if (!sys2x2(metric,rhs1,covar1)){
-      Msg::Info("Argh surface %d %g %g %g -- %g %g %g -- %g %g",
-                gf->tag(),s1.x(),s1.y(),s1.z(),s2.x(),s2.y(),s2.z(),size_1,size_2);
+      Msg::Info("Argh surface %d %g %g %g -- %g %g %g -- %g %g",gf->tag(),s1.x(),s1.y(),s1.z(),s2.x(),s2.y(),s2.z(),size_1,size_2);
       covar1[1] = 1.0; covar1[0] = 0.0;
       singular = true;
     }
     double rhs2[2] = {dot(t2,s1),dot(t2,s2)}, covar2[2];
     if (!sys2x2(metric,rhs2,covar2)){
-      Msg::Info("Argh surface %d %g %g %g -- %g %g %g",
-                gf->tag(),s1.x(),s1.y(),s1.z(),s2.x(),s2.y(),s2.z());
+      Msg::Info("Argh surface %d %g %g %g -- %g %g %g",gf->tag(),s1.x(),s1.y(),s1.z(),s2.x(),s2.y(),s2.z());
       covar2[0] = 1.0; covar2[1] = 0.0;
       singular = true;
     }
 
-    // transform the sizes with respect to the metric consider a vector v of
-    // size 1 in the parameter plane its length is sqrt (v^T M v) --> if I want
-    // a real size of size1 in direction v, it should be sqrt(v^T M v) * size1
+    // transform the sizes with respect to the metric
+    // consider a vector v of size 1 in the parameter plane
+    // its length is sqrt (v^T M v) --> if I want a real size
+    // of size1 in direction v, it should be sqrt(v^T M v) * size1
     double l1 = sqrt(covar1[0]*covar1[0]+covar1[1]*covar1[1]);
     double l2 = sqrt(covar2[0]*covar2[0]+covar2[1]*covar2[1]);
 
@@ -378,17 +373,17 @@ bool compute4neighbors (GFace *gf,   // the surface
       //      printf("L = %12.5E D = %12.5E ERR = %12.5E\n",L,D,100*fabs(D-L)/(D+L));
     }
 
-    if (1 && goNonLinear){
-      surfaceFunctorGFace ss (gf);
-      SVector3 dirs[4] = {t1*(-1.0),t2*(-1.0),t1*(1.0),t2*(1.0)};
-      for (int i=0;i<4;i++){
+    if (1 && goNonLinear){//---------------------------------------------------//
+      surfaceFunctorGFace ss (gf);                                        //
+      SVector3 dirs[4] = {t1*(-1.0),t2*(-1.0),t1*(1.0),t2*(1.0)};                     //
+      for (int i=0;i<4;i++){                                              //
 	if (ERR[i] > 12){
-	  double uvt[3] = {newPoint[i][0],newPoint[i][1],0.0};
+	  double uvt[3] = {newPoint[i][0],newPoint[i][1],0.0};              //
 	  //	  printf("Intersecting with circle N = %g %g %g dir = %g %g %g R = %g p = %g %g %g\n",n.x(),n.y(),n.z(),dirs[i].x(),dirs[i].y(),dirs[i].z(),L,v_center->x(),v_center->y(),v_center->z());
 	  curveFunctorCircle cf (dirs[i],n,
 				 SVector3(v_center->x(),v_center->y(),v_center->z()),
 				 L);
-	  if (intersectCurveSurface (cf,ss,uvt,size_param_1*1.e-3)){
+	  if (intersectCurveSurface (cf,ss,uvt,size_param_1*1.e-3)){          //
 	    GPoint pp = gf->point(SPoint2(uvt[0],uvt[1]));
 	    double D = sqrt ((pp.x() - v_center->x())*(pp.x() - v_center->x()) +
 			     (pp.y() - v_center->y())*(pp.y() - v_center->y()) +
@@ -396,15 +391,15 @@ bool compute4neighbors (GFace *gf,   // the surface
 	    double DP = sqrt ((newPoint[i][0]-uvt[0])*(newPoint[i][0]-uvt[0]) +
 			      (newPoint[i][1]-uvt[1])*(newPoint[i][1]-uvt[1]));
 	    double newErr = 100*fabs(D-L)/(D+L);
-	    //	if (v_center->onWhat() != gf && gf->tag() == 3){
-	    //	  crossField2d::normalizeAngle (uvt[2]);
-	    //	  printf("INTERSECT angle = %g DP %g\n",uvt[2],DP);
-	    //	}
+	    //	    if (v_center->onWhat() != gf && gf->tag() == 3){
+	    //	      crossField2d::normalizeAngle (uvt[2]);
+	    //	      printf("INTERSECT angle = %g DP %g\n",uvt[2],DP);
+	    //	    }
 	    if (newErr < 1 && DP < .1){
 	      //	      printf("%12.5E vs %12.5E : %12.5E  %12.5E vs %12.5E  %12.5E \n",ERR[i],newErr,newPoint[i][0],newPoint[i][1],uvt[0],uvt[1]);
-	      newPoint[i][0] = uvt[0];
-	      newPoint[i][1] = uvt[1];
-	    }
+	      newPoint[i][0] = uvt[0];                                        //
+	      newPoint[i][1] = uvt[1];                                        //
+	    }                                                                 //
 	    //	    printf("OK\n");
 	  }
 	  else{
@@ -412,8 +407,8 @@ bool compute4neighbors (GFace *gf,   // the surface
 	    //	    printf("NOT OK\n");
 	  }
 	}
-      }
-    } // end non linear
+      }                                                                   //
+    } /// end non linear -------------------------------------------------//
 
     // return the four new vertices
     for (int i=0;i<4;i++){
@@ -423,10 +418,10 @@ bool compute4neighbors (GFace *gf,   // the surface
   return true;
 }
 
+// ---------------------------------------------------------------------------------------------
+
 // recover element around vertex v and interpolate smoothness on this element...
-double get_smoothness(MVertex *v, GFace *gf,
-                      const map<MVertex*,double> &vertices2smoothness)
-{
+double get_smoothness(MVertex *v, GFace *gf, const map<MVertex*,double> &vertices2smoothness){
   // recover element around MVertex v
   //cout << "Looking for element around point (" << v->x() << "," << v->y() << "," << v->z() << ")" << endl;
   SPoint3 sp3(v->x(), v->y(), v->z());
@@ -475,8 +470,9 @@ double get_smoothness(MVertex *v, GFace *gf,
   return res;
 }
 
-void print_nodal_info_int(string filename, map<MVertex*, int> &mapp)
-{
+// ---------------------------------------------------------------------------------------------
+
+void print_nodal_info_int(string filename, map<MVertex*, int> &mapp){
   ofstream out(filename.c_str());
 
   out << "View \"\"{" << endl;
@@ -489,8 +485,9 @@ void print_nodal_info_int(string filename, map<MVertex*, int> &mapp)
   out.close();
 }
 
-void print_nodal_info_double(string filename, map<MVertex*, double> &mapp)
-{
+// ---------------------------------------------------------------------------------------------
+
+void print_nodal_info_double(string filename, map<MVertex*, double> &mapp){
   ofstream out(filename.c_str());
 
   out << "View \"\"{" << endl;
@@ -503,8 +500,9 @@ void print_nodal_info_double(string filename, map<MVertex*, double> &mapp)
   out.close();
 }
 
-void export_point(surfacePointWithExclusionRegion *sp, int DIR, FILE *crossf, GFace *gf)
-{
+// ---------------------------------------------------------------------------------------------
+
+void export_point(surfacePointWithExclusionRegion *sp, int DIR, FILE *crossf, GFace *gf){
   // get the unit normal at that point
   Pair<SVector3, SVector3> der = gf->firstDer(sp->_center);
   SVector3 s1 = der.first();
@@ -552,12 +550,9 @@ void export_point(surfacePointWithExclusionRegion *sp, int DIR, FILE *crossf, GF
   fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",sp->_v->x(),sp->_v->y(),sp->_v->z(),-t2.x()*size_2,-t2.y()*size_2,-t2.z()*size_2);
 }
 
-bool get_local_sizes_and_directions(const MVertex *v_center, const SPoint2 &midpoint,
-                                    const int DIR, GFace* gf, double (&covar1)[2],
-                                    double (&covar2)[2], double &size_param_1,
-                                    double &size_param_2, double &L, SVector3 &t1,
-                                    SVector3 &t2, SVector3 &n, FILE *crossf=NULL)
-{
+// ---------------------------------------------------------------------------------------------
+
+bool get_local_sizes_and_directions(const MVertex *v_center, const SPoint2 &midpoint, const int DIR, GFace* gf, double (&covar1)[2], double (&covar2)[2], double &size_param_1, double &size_param_2, double &L, SVector3 &t1, SVector3 &t2, SVector3 &n, FILE *crossf=NULL){
 //bool get_RK_stuff(const MVertex *v_center, const SPoint2 &midpoint, const int DIR, GFace* gf, double (&covar1)[2], double (&covar2)[2], double &size_param_1, double &size_param_2, double &L, SVector3 &t1, SVector3 &t2, SVector3 &n, FILE *crossf, const SVector3 &previous_t1, const SVector3 &previous_t2, bool use_previous_basis=false, bool export_cross=true){
 
   // !!!!!!!!!!!! check if point is in domain (for RK !!!)
@@ -692,12 +687,14 @@ bool get_local_sizes_and_directions(const MVertex *v_center, const SPoint2 &midp
   return true;
 }
 
+
+// ---------------------------------------------------------------------------------------------
+
 // using fifo based on smoothness criteria
-void packingOfParallelogramsSmoothness(GFace* gf,  std::vector<MVertex*> &packed,
-                                       std::vector<SMetric3> &metrics)
-{
+void packingOfParallelogramsSmoothness(GFace* gf,  std::vector<MVertex*> &packed, std::vector<SMetric3> &metrics){
   cout << endl << "------------------------------------------" << endl << "   PACKINGOFPARALLELOGRAMS: NEW ALGO BASED ON SMOOTHNESS" << endl << "------------------------------------------" << endl;
   const bool goNonLinear = true;
+
   const bool debug = false;
 
   // build vertex -> neighbors table
@@ -911,11 +908,13 @@ void packingOfParallelogramsSmoothness(GFace* gf,  std::vector<MVertex*> &packed
   fclose(f);
 }
 
+
+// ---------------------------------------------------------------------------------------------
+
+
 // fills a surface with points in order to build a nice
 // quad mesh ------------
-void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed,
-                             std::vector<SMetric3> &metrics)
-{
+void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vector<SMetric3> &metrics){
   //PE MODIF
 //  packingOfParallelogramsSmoothness(gf,packed,metrics);
 //  return;
@@ -924,6 +923,13 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed,
   const bool goNonLinear = true;
 
   //  FILE *f = Fopen ("parallelograms.pos","w");
+
+
+  // test test test
+  stringstream ssa;
+  ssa << "oldbgm_angles_" << gf->tag() << ".pos";
+  backgroundMesh::current()->print(ssa.str(),gf,1);
+  // test test test
 
   // get all the boundary vertices
   std::set<MVertex*> bnd_vertices;
@@ -964,6 +970,7 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed,
   }
 
   //  printf("initially : %d vertices in the domain\n",vertices.size());
+
 
   while(!fifo.empty()){
     //surfacePointWithExclusionRegion & parent = fifo.top();
@@ -1031,3 +1038,4 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed,
     //  printf("packed.size = %d\n",packed.size());
     //  delete rtree;
 }
+

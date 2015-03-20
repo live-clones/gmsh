@@ -8,7 +8,7 @@
 #include "meshGEdge.h"
 #include "GEdge.h"
 #include "MLine.h"
-#include "BackgroundMesh.h"
+#include "BackgroundMeshTools.h"
 #include "boundaryLayersData.h"
 #include "Numeric.h"
 #include "GmshMessage.h"

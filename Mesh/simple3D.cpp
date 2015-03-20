@@ -6,6 +6,7 @@
 // Contributor(s):
 //   Tristan Carrier François Henrotte
 
+
 #include "simple3D.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -835,3 +836,4 @@ void Filler::print_node(Node* node,std::ofstream& file)
 /*********static declarations*********/
 
 std::vector<MVertex*> Filler::new_vertices;
+

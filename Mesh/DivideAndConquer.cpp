@@ -19,7 +19,7 @@
 #include "DivideAndConquer.h"
 #include "Numeric.h"
 #include "robustPredicates.h"
-#include "BackgroundMesh.h"
+#include "BackgroundMeshTools.h"
 #include "OS.h"
 #include "GPoint.h"
 #include "GFace.h"

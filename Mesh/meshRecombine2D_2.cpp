@@ -8,7 +8,7 @@
 //
 
 #include "meshRecombine2D.h"
-#include "BackgroundMesh.h"
+#include "BackgroundMeshTools.h"
 #include "GFace.h"
 #include <cmath>
 #include <FL/Fl.H>

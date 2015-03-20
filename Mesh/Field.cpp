@@ -14,6 +14,7 @@
 #include <string>
 #include <string.h>
 #include <sstream>
+#include <algorithm>
 #include "GmshConfig.h"
 #include "Context.h"
 #include "Field.h"
@@ -22,7 +23,7 @@
 #include "GmshMessage.h"
 #include "Numeric.h"
 #include "mathEvaluator.h"
-#include "BackgroundMesh.h"
+#include "BackgroundMeshTools.h"
 #include "CenterlineField.h"
 #include "STensor3.h"
 #include "meshMetric.h"
@@ -2397,3 +2398,43 @@ void FieldManager::setBackgroundMesh(int iView)
   (*this)[id] = f;
   _background_field = id;
 }
+    
+
+
+//--------------------------------------------------
+
+GenericField::GenericField(){};
+
+//--------------------------------------------------
+
+GenericField::~GenericField(){};
+
+//--------------------------------------------------
+
+double GenericField::operator() (double x, double y, double z, GEntity *ge){
+  std::vector<double> sizes(cbs.size());
+  std::vector<ptrfunction>::iterator itcbs = cbs.begin();
+  std::vector<void*>::iterator itdata = user_data.begin();
+//  std::cout << "#callbacks=" << cbs.size() << std::endl;
+//  std::cout << "#user_data=" << user_data.size() << std::endl;
+  for (std::vector<double>::iterator it = sizes.begin();it!=sizes.end();it++,itdata++,itcbs++){
+    bool ok = (*itcbs)(x,y,z,(*itdata),(*it));
+    if (!ok){
+      Msg::Warning("GenericField::ERROR from callback ");
+      std::cout << "GenericField::ERROR from callback number " << std::distance(sizes.begin(),it) << std::endl;
+    }
+//    std::cout << "callback " << std::distance(sizes.begin(),it) << ": size set to " << *it << std::endl;
+  }
+//  std::cout << "   ----> min = " << (*std::min_element(sizes.begin(),sizes.end())) << std::endl;
+  return (*std::min_element(sizes.begin(),sizes.end()));
+}
+
+//--------------------------------------------------
+
+void GenericField::setCallbackWithData(ptrfunction fct, void *data){
+  user_data.push_back(data);
+  cbs.push_back(fct);
+}
+
+//--------------------------------------------------
+

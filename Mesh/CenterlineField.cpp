@@ -33,7 +33,7 @@
 #include "discreteFace.h"
 #include "GEdgeCompound.h"
 #include "GFaceCompound.h"
-#include "BackgroundMesh.h"
+#include "BackgroundMeshTools.h"
 #include "meshGFace.h"
 #include "meshGEdge.h"
 #include "MQuadrangle.h"

@@ -9,7 +9,7 @@
 #include "GmshMessage.h"
 #include "robustPredicates.h"
 #include "OS.h"
-#include "BackgroundMesh.h"
+//#include "BackgroundMesh.h"
 #include "meshGRegion.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "meshGRegionDelaunayInsertion.h"
@@ -1531,9 +1531,9 @@ void bowyerWatsonFrontalLayers(GRegion *gr, bool hex)
   std::set<MTet4*, compareTet4Ptr> activeTets;
   int NUM = 0;
 
-  if (!backgroundMesh::current()) {
-    // TODO !!!
-  }
+//  if (!backgroundMesh::current()) {
+//    // TODO !!!
+//  }
 
   if (hex){
     LIMIT_ = sqrt(2.) * .99;
