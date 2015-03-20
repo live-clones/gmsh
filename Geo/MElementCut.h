@@ -70,7 +70,7 @@ class MPolyhedron : public MElement {
   {
     return (num < (int)_vertices.size()) ? _vertices[num] : _innerVertices[num - _vertices.size()];
   }
-  virtual int getNumEdges() { return _edges.size(); }
+  virtual int getNumEdges()const { return _edges.size(); }
   virtual MEdge getEdge(int num) const{ return _edges[num]; }
   virtual int getNumEdgesRep(bool curved) { return _edges.size(); }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
@@ -227,7 +227,7 @@ class MPolygon : public MElement {
   {
     return (num < (int)_vertices.size()) ? _vertices[num] : _innerVertices[num - _vertices.size()];
   }
-  virtual int getNumEdges() { return _edges.size(); }
+  virtual int getNumEdges()const { return _edges.size(); }
   virtual MEdge getEdge(int num) const{ return _edges[num]; }
   virtual int getNumEdgesRep(bool curved) { return getNumEdges(); }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)

@@ -47,7 +47,7 @@ class MLine : public MElement {
   {
     ithVertex = _v[0] == vertex ? 0 : 1;
   }
-  virtual int getNumEdges(){ return 1; }
+  virtual int getNumEdges()const{ return 1; }
   virtual MEdge getEdge(int num) const{ return MEdge(_v[0], _v[1]); }
   virtual int getNumEdgesRep(bool curved){ return 1; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)

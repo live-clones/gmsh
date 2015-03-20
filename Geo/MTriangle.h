@@ -67,7 +67,7 @@ class MTriangle : public MElement {
     if(_v[2] != v1 && _v[2] != v2) return _v[2];
     return 0;
   }
-  virtual int getNumEdges(){ return 3; }
+  virtual int getNumEdges()const{ return 3; }
   virtual MEdge getEdge(int num) const
   {
     return MEdge(_v[edges_tri(num, 0)], _v[edges_tri(num, 1)]);

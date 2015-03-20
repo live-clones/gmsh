@@ -29,7 +29,7 @@ class SPoint2 {
   void operator+=(const SPoint2 &p);
   void operator-=(const SPoint2 &p);
   void operator*=(double mult);
-  SPoint2 operator*(double mult);
+  SPoint2 operator*(double mult)const;
   operator double *() { return P; }
   bool operator < (const SPoint2  &other) const
   {
@@ -79,7 +79,7 @@ inline void SPoint2::operator-=(const SPoint2 &p)
 inline void SPoint2::operator*=(double mult)
 { P[0] *= mult; P[1] *= mult; }
 
-inline SPoint2 SPoint2::operator*(double mult)
+inline SPoint2 SPoint2::operator*(double mult)const
 { return SPoint2(P[0]*mult, P[1]*mult); }
 
 inline double SPoint2::distance(const SPoint2 &p)const

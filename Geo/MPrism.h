@@ -66,7 +66,7 @@ class MPrism : public MElement {
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num)const{ return _v[num]; }
   virtual void setVertex(int num,   MVertex *v){ _v[num] = v; }
-  virtual int getNumEdges(){ return 9; }
+  virtual int getNumEdges()const{ return 9; }
   virtual MEdge getEdge(int num) const
   {
     return MEdge(_v[edges_prism(num, 0)], _v[edges_prism(num, 1)]);

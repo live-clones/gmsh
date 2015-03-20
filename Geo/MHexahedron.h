@@ -65,7 +65,7 @@ class MHexahedron : public MElement {
     static const int map[8] = {2, 3, 7, 6, 0, 1, 5, 4};
     return getVertex(map[num]);
   }
-  virtual int getNumEdges(){ return 12; }
+  virtual int getNumEdges()const{ return 12; }
   virtual MEdge getEdge(int num) const
   {
     return MEdge(_v[edges_hexa(num, 0)], _v[edges_hexa(num, 1)]);

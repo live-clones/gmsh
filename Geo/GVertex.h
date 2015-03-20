@@ -64,7 +64,7 @@ class GVertex : public GEntity
   virtual GeomType geomType() const { return Point; }
 
   // get/set the prescribed mesh size at the vertex
-  inline double prescribedMeshSizeAtVertex() const { return meshSize; }
+  virtual inline double prescribedMeshSizeAtVertex() const { return meshSize; }
   virtual void setPrescribedMeshSizeAtVertex(double l) { meshSize = l; }
 
   // get the bounding box

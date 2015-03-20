@@ -58,14 +58,14 @@ int GModel::exportDiscreteGEOInternals()
 
   for(viter it = firstVertex(); it != lastVertex(); it++){
     Vertex *v = Create_Vertex((*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z(),
-                              (*it)->prescribedMeshSizeAtVertex(), 1.0);
+        (*it)->prescribedMeshSizeAtVertex(), 1.0);
     Tree_Add(_geo_internals->Points, &v);
   }
 
   for(eiter it = firstEdge(); it != lastEdge(); it++){
     if((*it)->geomType() == GEntity::DiscreteCurve){
       Curve *c = Create_Curve((*it)->tag(), MSH_SEGM_DISCRETE, 1,
-                              NULL, NULL, -1, -1, 0., 1.);
+          NULL, NULL, -1, -1, 0., 1.);
       List_T *points = Tree2List(_geo_internals->Points);
       GVertex *gvb = (*it)->getBeginVertex();
       GVertex *gve = (*it)->getEndVertex();
@@ -147,7 +147,7 @@ int GModel::importGEOInternals()
       Curve *c;
       List_Read(curves, i, &c);
       if(c->Num >= 0){
-	GEdge *e = getEdgeByTag(c->Num);
+        GEdge *e = getEdgeByTag(c->Num);
         if(!e && c->Typ == MSH_SEGM_COMPOUND){
           std::vector<GEdge*> comp;
           for(unsigned int j = 0; j < c->compound.size(); j++){
@@ -155,18 +155,18 @@ int GModel::importGEOInternals()
             if(ge) comp.push_back(ge);
           }
           e = new GEdgeCompound(this, c->Num, comp);
-	  e->meshAttributes.method = c->Method;
-	  e->meshAttributes.nbPointsTransfinite = c->nbPointsTransfinite;
-	  e->meshAttributes.typeTransfinite = c->typeTransfinite;
-	  e->meshAttributes.coeffTransfinite = c->coeffTransfinite;
-	  e->meshAttributes.extrude = c->Extrude;
-	  e->meshAttributes.reverseMesh = c->ReverseMesh;
+          e->meshAttributes.method = c->Method;
+          e->meshAttributes.nbPointsTransfinite = c->nbPointsTransfinite;
+          e->meshAttributes.typeTransfinite = c->typeTransfinite;
+          e->meshAttributes.coeffTransfinite = c->coeffTransfinite;
+          e->meshAttributes.extrude = c->Extrude;
+          e->meshAttributes.reverseMesh = c->ReverseMesh;
           add(e);
         }
         else if(!e && c->beg && c->end){
           e = new gmshEdge(this, c,
-                           getVertexByTag(c->beg->Num),
-                           getVertexByTag(c->end->Num));
+              getVertexByTag(c->beg->Num),
+              getVertexByTag(c->end->Num));
           add(e);
         }
         else if(!e){
@@ -199,24 +199,24 @@ int GModel::importGEOInternals()
           if(gf)
             comp.push_back(gf);
         }
-	std::list<GEdge*> b[4];
+        std::list<GEdge*> b[4];
         for(int j = 0; j < 4; j++){
-	  for(unsigned int k = 0; k < s->compoundBoundary[j].size(); k++){
-	    GEdge *ge = getEdgeByTag(s->compoundBoundary[j][k]);
-	    if(ge) b[j].push_back(ge);
-	  }
-	}
+          for(unsigned int k = 0; k < s->compoundBoundary[j].size(); k++){
+            GEdge *ge = getEdgeByTag(s->compoundBoundary[j][k]);
+            if(ge) b[j].push_back(ge);
+          }
+        }
         int param = CTX::instance()->mesh.remeshParam;
-	GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_CIRCLE;
-	if (param == 1) typ =  GFaceCompound::CONFORMAL_SPECTRAL;
-	if (param == 2) typ =  GFaceCompound::RADIAL_BASIS;
-	if (param == 3) typ =  GFaceCompound::HARMONIC_PLANE;
-	if (param == 4) typ =  GFaceCompound::CONVEX_CIRCLE;
-	if (param == 5) typ =  GFaceCompound::CONVEX_PLANE;
-	if (param == 6) typ =  GFaceCompound::HARMONIC_SQUARE;
-	if (param == 7) typ =  GFaceCompound::CONFORMAL_FE;
+        GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_CIRCLE;
+        if (param == 1) typ =  GFaceCompound::CONFORMAL_SPECTRAL;
+        if (param == 2) typ =  GFaceCompound::RADIAL_BASIS;
+        if (param == 3) typ =  GFaceCompound::HARMONIC_PLANE;
+        if (param == 4) typ =  GFaceCompound::CONVEX_CIRCLE;
+        if (param == 5) typ =  GFaceCompound::CONVEX_PLANE;
+        if (param == 6) typ =  GFaceCompound::HARMONIC_SQUARE;
+        if (param == 7) typ =  GFaceCompound::CONFORMAL_FE;
         int algo = CTX::instance()->mesh.remeshAlgo;
-	f = new GFaceCompound(this, s->Num, comp, b[0], b[1], b[2], b[3], typ, algo);
+        f = new GFaceCompound(this, s->Num, comp, b[0], b[1], b[2], b[3], typ, algo);
         f->meshAttributes.recombine = s->Recombine;
         f->meshAttributes.recombineAngle = s->RecombineAngle;
         f->meshAttributes.method = s->Method;
@@ -320,14 +320,14 @@ int GModel::importGEOInternals()
       GEntity *ge = 0;
       int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
       switch(p->Typ){
-      case MSH_PHYSICAL_POINT:   ge = getVertexByTag(tag); break;
-      case MSH_PHYSICAL_LINE:    ge = getEdgeByTag(tag); break;
-      case MSH_PHYSICAL_SURFACE: ge = getFaceByTag(tag); break;
-      case MSH_PHYSICAL_VOLUME:  ge = getRegionByTag(tag); break;
+        case MSH_PHYSICAL_POINT:   ge = getVertexByTag(tag); break;
+        case MSH_PHYSICAL_LINE:    ge = getEdgeByTag(tag); break;
+        case MSH_PHYSICAL_SURFACE: ge = getFaceByTag(tag); break;
+        case MSH_PHYSICAL_VOLUME:  ge = getRegionByTag(tag); break;
       }
       int pnum = CTX::instance()->geom.orientedPhysicals ? (sign(num) * p->Num) : p->Num;
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
-         ge->physicals.end())
+          ge->physicals.end())
         ge->physicals.push_back(pnum);
     }
   }
@@ -342,7 +342,7 @@ int GModel::importGEOInternals()
     }
   }
   for(std::map<int,int>::iterator it = _geo_internals->periodicFaces.begin();
-       it != _geo_internals->periodicFaces.end(); ++it){
+      it != _geo_internals->periodicFaces.end(); ++it){
     GFace *gf = getFaceByTag(abs(it->first));
     if (gf)gf->setMeshMaster(it->second * (it->first > 0 ? 1 : -1));
   }
@@ -369,79 +369,79 @@ int GModel::importGEOInternals()
 }
 
 class writeFieldOptionGEO {
- private :
-  FILE *geo;
-  Field *field;
- public :
-  writeFieldOptionGEO(FILE *fp,Field *_field) { geo = fp ? fp : stdout; field=_field; }
-  void operator() (std::pair<std::string, FieldOption *> it)
-  {
-    std::string v;
-    it.second->getTextRepresentation(v);
-    fprintf(geo, "Field[%i].%s = %s;\n", field->id, it.first.c_str(), v.c_str());
-  }
+  private :
+    FILE *geo;
+    Field *field;
+  public :
+    writeFieldOptionGEO(FILE *fp,Field *_field) { geo = fp ? fp : stdout; field=_field; }
+    void operator() (std::pair<std::string, FieldOption *> it)
+    {
+      std::string v;
+      it.second->getTextRepresentation(v);
+      fprintf(geo, "Field[%i].%s = %s;\n", field->id, it.first.c_str(), v.c_str());
+    }
 };
 
 class writeFieldGEO {
- private :
-  FILE *geo;
- public :
-  writeFieldGEO(FILE *fp) { geo = fp ? fp : stdout; }
-  void operator() (std::pair<const int, Field *> it)
-  {
-    fprintf(geo, "Field[%i] = %s;\n", it.first, it.second->getName());
-    std::for_each(it.second->options.begin(), it.second->options.end(),
-                  writeFieldOptionGEO(geo, it.second));
-  }
+  private :
+    FILE *geo;
+  public :
+    writeFieldGEO(FILE *fp) { geo = fp ? fp : stdout; }
+    void operator() (std::pair<const int, Field *> it)
+    {
+      fprintf(geo, "Field[%i] = %s;\n", it.first, it.second->getName());
+      std::for_each(it.second->options.begin(), it.second->options.end(),
+          writeFieldOptionGEO(geo, it.second));
+    }
 };
 
 class writePhysicalGroupGEO {
- private :
-  FILE *geo;
-  int dim;
-  bool printLabels;
-  std::map<int, std::string> &oldLabels;
-  std::map<std::pair<int, int>, std::string> &newLabels;
- public :
-  writePhysicalGroupGEO(FILE *fp, int i, bool labels,
-                        std::map<int, std::string> &o,
-                        std::map<std::pair<int, int>, std::string> &n)
-    : dim(i), printLabels(labels), oldLabels(o), newLabels(n)
-  {
-    geo = fp ? fp : stdout;
-  }
-  void operator () (std::pair<const int, std::vector<GEntity *> > &g)
-  {
-    std::string oldName, newName;
-    if(printLabels){
-      if(newLabels.count(std::pair<int, int>(dim, g.first))) {
-        newName = newLabels[std::pair<int, int>(dim, g.first)];
+  private :
+    FILE *geo;
+    int dim;
+    bool printLabels;
+    std::map<int, std::string> &oldLabels;
+    std::map<std::pair<int, int>, std::string> &newLabels;
+  public :
+    writePhysicalGroupGEO(FILE *fp, int i, bool labels,
+        std::map<int, std::string> &o,
+        std::map<std::pair<int, int>, std::string> &n)
+      : dim(i), printLabels(labels), oldLabels(o), newLabels(n)
+    {
+      geo = fp ? fp : stdout;
+    }
+    void operator () (std::pair<const int, std::vector<GEntity *> > &g)
+    {
+      std::string oldName, newName;
+      if(printLabels){
+        if(newLabels.count(std::pair<int, int>(dim, g.first))) {
+          newName = newLabels[std::pair<int, int>(dim, g.first)];
+        }
+        else if(oldLabels.count(g.first)) {
+          oldName = oldLabels[g.first];
+          fprintf(geo, "%s = %d;\n", oldName.c_str(), g.first);
+        }
       }
-      else if(oldLabels.count(g.first)) {
-        oldName = oldLabels[g.first];
-        fprintf(geo, "%s = %d;\n", oldName.c_str(), g.first);
+
+      switch (dim) {
+        case 0: fprintf(geo, "Physical Point"); break;
+        case 1: fprintf(geo, "Physical Line"); break;
+        case 2: fprintf(geo, "Physical Surface"); break;
+        case 3: fprintf(geo, "Physical Volume"); break;
       }
-    }
 
-    switch (dim) {
-    case 0: fprintf(geo, "Physical Point"); break;
-    case 1: fprintf(geo, "Physical Line"); break;
-    case 2: fprintf(geo, "Physical Surface"); break;
-    case 3: fprintf(geo, "Physical Volume"); break;
+      if(oldName.size())
+        fprintf(geo, "(%s) = {", oldName.c_str());
+      else if(newName.size())
+        fprintf(geo, "(\"%s\") = {", newName.c_str());
+      else
+        fprintf(geo, "(%d) = {", g.first);
+      for(unsigned int i = 0; i < g.second.size(); i++) {
+        if(i) fprintf(geo, ", ");
+        fprintf(geo, "%d", g.second[i]->tag());
+      }
+      fprintf(geo, "};\n");
     }
-
-    if(oldName.size())
-      fprintf(geo, "(%s) = {", oldName.c_str());
-    else if(newName.size())
-      fprintf(geo, "(\"%s\") = {", newName.c_str());
-    else
-      fprintf(geo, "(%d) = {", g.first);
-    for(unsigned int i = 0; i < g.second.size(); i++) {
-      if(i) fprintf(geo, ", ");
-      fprintf(geo, "%d", g.second[i]->tag());
-    }
-    fprintf(geo, "};\n");
-  }
 };
 
 static bool skipRegion(GRegion *gr)
@@ -527,7 +527,7 @@ int GModel::writeGEO(const std::string &name, bool printLabels, bool onlyPhysica
   getPhysicalGroups(groups);
   for(int i = 0; i < 4; i++)
     std::for_each(groups[i].begin(), groups[i].end(),
-                  writePhysicalGroupGEO(fp, i, printLabels, labels, physicalNames));
+        writePhysicalGroupGEO(fp, i, printLabels, labels, physicalNames));
 
   std::for_each(getFields()->begin(), getFields()->end(), writeFieldGEO(fp));
   if(getFields()->getBackgroundField() > 0)

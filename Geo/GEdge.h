@@ -49,8 +49,8 @@ class GEdge : public GEntity {
   virtual void deleteMesh();
 
   // get the start/end vertices of the edge
-  GVertex *getBeginVertex() const { return v0; }
-  GVertex *getEndVertex() const { return v1; }
+  virtual GVertex *getBeginVertex() const { return v0; }
+  virtual GVertex *getEndVertex() const { return v1; }
 
   void reverse();
 
@@ -207,7 +207,7 @@ class GEdge : public GEntity {
 
   std::vector<MLine*> lines;
 
-  void addLine(MLine *line){ lines.push_back(line); }
+  virtual void addLine(MLine *line){ lines.push_back(line); }
 
   virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
   SPoint3 closestPoint (SPoint3 &p, double tolerance);

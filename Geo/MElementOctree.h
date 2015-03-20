@@ -11,6 +11,7 @@
 class Octree;
 class GModel;
 class MElement;
+class MTetrahedron;
 
 class MElementOctree{
  private:
@@ -20,6 +21,7 @@ class MElementOctree{
  public:
   MElementOctree(GModel *);
   MElementOctree(std::vector<MElement*> &);
+  MElementOctree(std::vector<MTetrahedron*> &);
   ~MElementOctree();
   MElement *find(double x, double y, double z, int dim = -1, bool strict = false) const;
   Octree *getInternalOctree(){ return _octree; }

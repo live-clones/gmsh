@@ -70,7 +70,7 @@ class MPyramid : public MElement {
   virtual const MVertex *getVertex(int num) const{ return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
   virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
-  virtual int getNumEdges(){ return 8; }
+  virtual int getNumEdges()const{ return 8; }
   virtual MEdge getEdge(int num) const
   {
     return MEdge(_v[edges_pyramid(num, 0)], _v[edges_pyramid(num, 1)]);

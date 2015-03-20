@@ -130,7 +130,7 @@ class MElement
   }
 
   // get the edges
-  virtual int getNumEdges() = 0;
+  virtual int getNumEdges() const = 0;
   virtual MEdge getEdge(int num) const= 0;
 
   // give an MEdge as input and get its local number and sign

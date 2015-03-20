@@ -22,7 +22,7 @@
 #if defined(HAVE_MESH)
 #include "meshGFaceOptimize.h"
 #include "meshGFaceLloyd.h"
-#include "BackgroundMesh.h"
+#include "BackgroundMeshTools.h"
 #endif
 
 #if defined(HAVE_BFGS)

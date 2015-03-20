@@ -5,6 +5,7 @@
 
 #include "GModel.h"
 #include "MElement.h"
+#include "MTetrahedron.h"
 #include "MElementOctree.h"
 #include "Octree.h"
 #include "Context.h"
@@ -91,6 +92,42 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m)
 
 MElementOctree::MElementOctree(std::vector<MElement*> &v) : _gm(0), _elems(v)
 {
+  SBoundingBox3d bb;
+  for (unsigned int i = 0; i < v.size(); i++){
+    for(int j = 0; j < v[i]->getNumVertices(); j++){
+      //if (!_gm) _gm = v[i]->getVertex(j)->onWhat()->model();
+      bb += SPoint3(v[i]->getVertex(j)->x(),
+                    v[i]->getVertex(j)->y(),
+                    v[i]->getVertex(j)->z());
+    }
+  }
+  // make bounding box larger up to (absolute) geometrical tolerance
+  double eps = CTX::instance()->geom.tolerance;
+  SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
+  bbmin -= bbeps;
+  bbmax += bbeps;
+  double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
+  double size[3] = {bbmax.x() - bbmin.x(),
+                    bbmax.y() - bbmin.y(),
+                    bbmax.z() - bbmin.z()};
+  const int maxElePerBucket = 100; // memory vs. speed trade-off
+  _octree = Octree_Create(maxElePerBucket, min, size,
+                          MElementBB, MElementCentroid, MElementInEle);
+  for (unsigned int i = 0; i < v.size(); i++)
+    Octree_Insert(v[i], _octree);
+  Octree_Arrange(_octree);
+}
+
+
+MElementOctree::MElementOctree(std::vector<MTetrahedron*> &v) : _gm(0)
+{
+  // exactly the same as MElementOctree::MElementOctree(vector<MElement*>) !!!
+  for (std::vector<MTetrahedron*>::iterator it = v.begin();it!=v.end();it++){
+    _elems.push_back(*it);
+  }
+  // exactly the same as MElementOctree::MElementOctree(vector<MElement*>) !!!
+
+
   SBoundingBox3d bb;
   for (unsigned int i = 0; i < v.size(); i++){
     for(int j = 0; j < v[i]->getNumVertices(); j++){

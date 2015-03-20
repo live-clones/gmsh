@@ -63,7 +63,7 @@ class MQuadrangle : public MElement {
     static const int map[4] = {0, 1, 3, 2};
     return getVertex(map[num]);
   }
-  virtual int getNumEdges(){ return 4; }
+  virtual int getNumEdges()const{ return 4; }
   virtual MEdge getEdge(int num) const
   {
     return MEdge(_v[edges_quad(num, 0)], _v[edges_quad(num, 1)]);
