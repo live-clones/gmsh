@@ -534,8 +534,8 @@ static void Mesh3D(GModel *m)
         //        rec.execute();
         Recombinator rec;
         rec.execute(gr);
-//                Recombinator_Graph rec;
-//                rec.execute(1.e7,"test");
+//                Recombinator_Graph rec(1.e7,"test");
+//                rec.execute(gr);
         //        Supplementary sup;
         //        sup.execute();
         //        PostOp post;

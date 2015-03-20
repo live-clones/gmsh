@@ -763,7 +763,7 @@ public:
     delmaxfliplevel = 1;
     order = 1;
     reversetetori = 0;
-    steinerleft = -1;
+    steinerleft = 0;//-1;
     no_sort = 0;
     hilbert_order = 52; //-1;
     hilbert_limit = 8;
@@ -2156,7 +2156,7 @@ public:
     insegments = 0l;
     hullsize = 0l;
     meshedges = meshhulledges = 0l;
-    steinerleft = -1;
+    steinerleft = 0;//-1;
     dupverts = 0l;
     unuverts = 0l;
     nonregularcount = 0l;

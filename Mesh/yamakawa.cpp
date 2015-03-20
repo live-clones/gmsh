@@ -6164,7 +6164,7 @@ void Recombinator_Graph::buildGraphOnly(GRegion* gr, unsigned int max_nb_cliques
 
 
 
-void Recombinator_Graph::execute(unsigned int max_nb_cliques,string filename){
+void Recombinator_Graph::execute(){
   GRegion* gr;
   GModel* model = GModel::current();
   GModel::riter it;
@@ -6175,7 +6175,7 @@ void Recombinator_Graph::execute(unsigned int max_nb_cliques,string filename){
   {
     gr = *it;
     if(gr->getNumMeshElements()>0){
-      execute(gr, max_nb_cliques,filename);
+      execute(gr);
     }
   }
 }
@@ -6452,8 +6452,10 @@ PETriangle* Recombinator_Graph::get_triangle(MElement *element, int i, int j, in
   return t;
 }
 
+Recombinator_Graph::Recombinator_Graph(unsigned int _n,string filename):max_nb_cliques(_n),graphfilename(filename){
+}
 
-void Recombinator_Graph::execute(GRegion* gr, unsigned int max_nb_cliques,string filename){
+void Recombinator_Graph::execute(GRegion* gr){
   printf("................HEXAHEDRA................\n");
 
   hex_to_tet.clear();
@@ -6494,9 +6496,9 @@ void Recombinator_Graph::execute(GRegion* gr, unsigned int max_nb_cliques,string
 
 
   int clique_number = 0;
-  if (filename.empty()) filename.assign("mygraph.dot");
+  if (graphfilename.empty()) graphfilename.assign("mygraph.dot");
   //export_clique_graphviz_format(cl,1,"mygraph2.dot");
-  export_the_clique_graphviz_format(cl,clique_number,filename);
+  export_the_clique_graphviz_format(cl,clique_number,graphfilename);
 
   merge_clique(gr,cl,clique_number);
 

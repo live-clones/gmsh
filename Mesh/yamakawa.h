@@ -255,14 +255,14 @@ class Tuple{
     bool operator<(const Tuple&) const;
 };
 
-inline std::ostream& operator<<(std::ostream& s, const PETriangle& t){
-  const MVertex *v;
-  for (int i=0;i<3;i++){
-    v = t.getVertex(i);
-    s << "(" << v->x() << "," << v->y() << "," << v->z() << ")";
-  }
-  return s;
-};
+//inline std::ostream& operator<<(std::ostream& s, const PETriangle& t){
+//  const MVertex *v;
+//  for (int i=0;i<3;i++){
+//    v = t.getVertex(i);
+//    s << "(" << v->x() << "," << v->y() << "," << v->z() << ")";
+//  }
+//  return s;
+//};
 
 class Recombinator{
   protected:
@@ -499,10 +499,14 @@ class Recombinator_Graph : public Recombinator{
     void export_direct_neighbor_table(int max);
     void export_hex_init_degree(GRegion *gr, const std::map<Hex*,int> &init_degree, const vector<Hex*> &chosen_hex);
 
+    int max_nb_cliques;
+    string graphfilename;
+
   public:
+    Recombinator_Graph(unsigned int max_nb_cliques, string filename=string());
     ~Recombinator_Graph();
-    virtual void execute(unsigned int max_nb_cliques, string filename=string());
-    virtual void execute(GRegion*, unsigned int max_nb_cliques, string filename=string());
+    virtual void execute();
+    virtual void execute(GRegion*);
     virtual void buildGraphOnly(unsigned int max_nb_cliques, string filename=string());
     virtual void buildGraphOnly(GRegion*, unsigned int max_nb_cliques, string filename=string());
     virtual void execute_blossom(unsigned int max_nb_cliques, string filename=string());
