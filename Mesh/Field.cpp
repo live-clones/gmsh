@@ -2401,15 +2401,12 @@ void FieldManager::setBackgroundMesh(int iView)
     
 
 
-//--------------------------------------------------
 
 GenericField::GenericField(){};
 
-//--------------------------------------------------
 
 GenericField::~GenericField(){};
 
-//--------------------------------------------------
 
 double GenericField::operator() (double x, double y, double z, GEntity *ge){
   std::vector<double> sizes(cbs.size());
@@ -2429,12 +2426,12 @@ double GenericField::operator() (double x, double y, double z, GEntity *ge){
   return (*std::min_element(sizes.begin(),sizes.end()));
 }
 
-//--------------------------------------------------
+
 
 void GenericField::setCallbackWithData(ptrfunction fct, void *data){
   user_data.push_back(data);
   cbs.push_back(fct);
 }
 
-//--------------------------------------------------
+
 

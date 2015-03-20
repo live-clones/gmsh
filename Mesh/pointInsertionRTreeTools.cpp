@@ -8,7 +8,6 @@
 #include "GEntity.h"
 
 
-//------------------------------------------------------------------------
 
 surfacePointWithExclusionRegion::surfacePointWithExclusionRegion (MVertex *v, SPoint2 p[4][NUMDIR], SPoint2 &_mp, SMetric3 & meshMetric, surfacePointWithExclusionRegion *father){
   _v = v;
@@ -29,7 +28,6 @@ surfacePointWithExclusionRegion::surfacePointWithExclusionRegion (MVertex *v, SP
   }
 }
 
-//------------------------------------------------------------------------
 
 bool surfacePointWithExclusionRegion::inExclusionZone (const SPoint2 &p){
   double mat[2][2];
@@ -55,7 +53,6 @@ bool surfacePointWithExclusionRegion::inExclusionZone (const SPoint2 &p){
   return false;
 }
 
-//------------------------------------------------------------------------
 
 void surfacePointWithExclusionRegion::minmax  (double _min[2], double _max[2]) const{
   _min[0] = std::min(std::min(std::min(_q[0].x(),_q[1].x()),_q[2].x()),_q[3].x());
@@ -64,7 +61,6 @@ void surfacePointWithExclusionRegion::minmax  (double _min[2], double _max[2]) c
   _max[1] = std::max(std::max(std::max(_q[0].y(),_q[1].y()),_q[2].y()),_q[3].y());
 }
 
-//------------------------------------------------------------------------
 
 void surfacePointWithExclusionRegion::print (FILE *f, int i){
   fprintf(f,"SP(%g,%g,%g){%d};\n",_center.x(),_center.y(),0.0,i);
@@ -76,14 +72,12 @@ void surfacePointWithExclusionRegion::print (FILE *f, int i){
 
 }
 
-//------------------------------------------------------------------------
 
 
 my_wrapper::my_wrapper (SPoint2 sp) : _tooclose (false), _p(sp) {}
 
 
 
-//------------------------------------------------------------------------
 
 
 bool rtree_callback(surfacePointWithExclusionRegion *neighbour,void* point){
@@ -98,7 +92,6 @@ bool rtree_callback(surfacePointWithExclusionRegion *neighbour,void* point){
 }
 
 
-//------------------------------------------------------------------------
 
 bool inExclusionZone (SPoint2 &p,
     RTree<surfacePointWithExclusionRegion*,double,2,double> &rtree,
@@ -138,7 +131,6 @@ frameFieldBackgroundMesh3D* Wrapper3D::bgmesh = NULL;
 
 bool compareSmoothnessVertexPairs::vectorial = false;
 
-//------------------------------------------------------------------------
 
 double infinity_distance_3D(const MVertex *v1,const MVertex *v2,STensor3 &cf){
   SPoint3 p1 = v1->point();
@@ -162,7 +154,6 @@ double infinity_distance_3D(const MVertex *v1,const MVertex *v2,STensor3 &cf){
   return std::max(std::max(fabs(x2-x1),fabs(y2-y1)),fabs(z2-z1));// distance
 };
 
-//------------------------------------------------------------------------
 
 void fill_min_max(double x,double y,double z,double h,double *min,double *max){
   min[0] = x - sqrt3*h;
@@ -173,7 +164,6 @@ void fill_min_max(double x,double y,double z,double h,double *min,double *max){
   max[2] = z + sqrt3*h;
 };
 
-//------------------------------------------------------------------------
 
 bool rtree_callback_3D(MVertex* neighbour,void* w){
   Wrapper3D* wrapper;
@@ -198,7 +188,6 @@ bool rtree_callback_3D(MVertex* neighbour,void* w){
   return true;
 };
 
-//------------------------------------------------------------------------
 
 bool far_from_boundary_3D(frameFieldBackgroundMesh3D *bgm, MVertex* v, double h){
   // check if the box (v->point +- k2*h) is in domain
@@ -217,7 +206,6 @@ bool far_from_boundary_3D(frameFieldBackgroundMesh3D *bgm, MVertex* v, double h)
   return true;
 };
 
-//------------------------------------------------------------------------
 
 // vient de l'ancien code hexa, mais... kesskessai ?
 //int code_kesskessai(int tag){
@@ -241,5 +229,4 @@ bool far_from_boundary_3D(frameFieldBackgroundMesh3D *bgm, MVertex* v, double h)
 //  return limit;
 //}
 
-//------------------------------------------------------------------------
 

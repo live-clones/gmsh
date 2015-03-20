@@ -29,7 +29,6 @@ static const double DIRS [NUMDIR] = {0.0};
 
 
 
-//------------------------------------------------------------------------
 
 
 class surfacePointWithExclusionRegion {
@@ -56,7 +55,6 @@ class surfacePointWithExclusionRegion {
     void print (FILE *f, int i);
 };
 
-//------------------------------------------------------------------------
 
 
 class my_wrapper {
@@ -66,7 +64,6 @@ class my_wrapper {
     my_wrapper (SPoint2 sp);
 };
 
-//------------------------------------------------------------------------
 
 
 struct smoothness_point_pair{
@@ -74,7 +71,6 @@ struct smoothness_point_pair{
   surfacePointWithExclusionRegion* ptr;
 };
 
-//------------------------------------------------------------------------
 
 
 class compareSurfacePointWithExclusionRegionPtr_Smoothness
@@ -93,7 +89,6 @@ class compareSurfacePointWithExclusionRegionPtr_Smoothness
 };
 
 
-//------------------------------------------------------------------------
 
 
 class compareSurfacePointWithExclusionRegionPtr
@@ -108,19 +103,16 @@ class compareSurfacePointWithExclusionRegionPtr
 };
 
 
-//------------------------------------------------------------------------
 
 
 extern bool rtree_callback(surfacePointWithExclusionRegion *neighbour,void* point);
 
-//------------------------------------------------------------------------
 
 
 
 extern bool inExclusionZone (SPoint2 &p, RTree<surfacePointWithExclusionRegion*,double,2,double> &rtree, std::vector<surfacePointWithExclusionRegion*> & all );
 
 
-//------------------------------------------------------------------------
 
 
 
@@ -162,7 +154,6 @@ class Wrapper3D{
     double* get_size(){return size;};
 };
 
-//------------------------------------------------------------------------
 
 
 
@@ -172,7 +163,6 @@ extern bool far_from_boundary_3D(frameFieldBackgroundMesh3D *bgm, MVertex* v, do
 //extern int code_kesskessai(int tag);
 extern void fill_min_max(double x,double y,double z,double h,double *min,double *max);
 
-//------------------------------------------------------------------------
 
 
 
@@ -195,7 +185,6 @@ class smoothness_vertex_pair{
     int dir,layer;
 };
 
-//------------------------------------------------------------------------
 
 
 class compareSmoothnessVertexPairs
@@ -262,7 +251,6 @@ class compareSmoothnessVertexPairs
 };
 
 
-//------------------------------------------------------------------------
 
 class listOfPoints{
   public:
@@ -279,7 +267,6 @@ class listOfPoints{
     virtual bool empty()=0;
 };
 
-//------------------------------------------------------------------------
 
 class listOfPointsScalarSmoothness : public listOfPoints{
   public:
@@ -312,7 +299,6 @@ class listOfPointsScalarSmoothness : public listOfPoints{
     set<smoothness_vertex_pair*, compareSmoothnessVertexPairs> points;
 };
 
-//------------------------------------------------------------------------
 
 class listOfPointsVectorialSmoothness : public listOfPointsScalarSmoothness{
   public:
@@ -329,7 +315,6 @@ class listOfPointsVectorialSmoothness : public listOfPointsScalarSmoothness{
     set<smoothness_vertex_pair*, compareSmoothnessVertexPairs> points;
 };
 
-//------------------------------------------------------------------------
 
 class listOfPointsFifo : public listOfPoints{
   public:

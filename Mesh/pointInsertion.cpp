@@ -26,13 +26,11 @@
 
 using namespace std;
 
-//------------------------------------------------------------------------
 
 bool old_algo_hexa(){
-  return false;
+  return true;
 }
 
-//------------------------------------------------------------------------
 
 template<typename T>
 void print_nodal_info(string filename, map<MVertex*, T> &mapp){
@@ -48,7 +46,6 @@ void print_nodal_info(string filename, map<MVertex*, T> &mapp){
   out.close();
 }
 
-//------------------------------------------------------------------------
 
 bool shoot(const SPoint2 &start, const SPoint2 &dir, const double &h, SPoint2 &res){
 
@@ -63,7 +60,6 @@ bool shoot(const SPoint2 &start, const SPoint2 &dir, const double &h, SPoint2 &r
   return false;
 }
 
-//------------------------------------------------------------------------
 
 bool computeFourNeighbors (frameFieldBackgroundMesh2D *bgm, MVertex *v_center, // the vertex for which we want to generate 4 neighbors (real vertex (xyz), not parametric !!! )
     SPoint2 &midpoint,
@@ -127,7 +123,7 @@ bool computeFourNeighbors (frameFieldBackgroundMesh2D *bgm, MVertex *v_center, /
   // We could stop here. Yet, if the metric varies a lot, we can solve
   // a nonlinear problem in order to find a better approximation in the real
   // surface
-  if (1 && goNonLinear){//---------------------------------------------------//
+  if (1 && goNonLinear){
     double L = infos.localsize;
     double newPoint[4][2];
     for (int j=0;j<2;j++){
@@ -191,7 +187,6 @@ bool computeFourNeighbors (frameFieldBackgroundMesh2D *bgm, MVertex *v_center, /
   return true;
 }
 
-//------------------------------------------------------------------------
 
 void computeTwoNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent, vector<MVertex*> &spawns, SVector3 dir, double h){
 
@@ -214,7 +209,6 @@ void computeTwoNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent, vecto
 }
 
 
-//------------------------------------------------------------------------
 
 void computeSixNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent, vector<MVertex*> &spawns, STensor3 dir, double h){
 
@@ -238,16 +232,13 @@ void computeSixNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent, vecto
   }
 }
 
-//------------------------------------------------------------------------
 
 double Filler2D::time_bgm_and_smoothing = 0.;
 double Filler2D::time_insertion = 0.;
 
-//------------------------------------------------------------------------
 
 Filler2D::Filler2D(){}
 
-//------------------------------------------------------------------------
 
 Filler2D::~Filler2D(){
   cout << "FILLER2D timing:" << endl;
@@ -256,7 +247,6 @@ Filler2D::~Filler2D(){
   cout << "  ------- TOTAL 2D TIME (new)   : " << time_bgm_and_smoothing+time_insertion << " s." << endl;
 }
 
-//------------------------------------------------------------------------
 
 void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMetric3> &metrics){
   // NB/ do not use the mesh in GFace, use the one in backgroundMesh2D !!!
@@ -462,7 +452,6 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMe
 
 }
 
-//------------------------------------------------------------------------
 
 bool Filler3D::treat_region(GRegion *gr){
 
@@ -801,23 +790,19 @@ bool Filler3D::treat_region(GRegion *gr){
   return true;
 }
 
-//------------------------------------------------------------------------
 
 int Filler3D::get_nbr_new_vertices(){
   return new_vertices.size();
 }
 
-//------------------------------------------------------------------------
 
 MVertex* Filler3D::get_new_vertex(int i){
   return new_vertices[i];
 }
 
-//------------------------------------------------------------------------
 
 Filler3D::Filler3D(){}
 
-//------------------------------------------------------------------------
 
 Filler3D::~Filler3D(){
   cout << "FILLER3D timing:" << endl;
@@ -827,17 +812,14 @@ Filler3D::~Filler3D(){
   cout << "  ------- CUMULATIVE TOTAL 3D TIME (new)   : " << time_meshing+time_smoothing+time_insert_points << " s." << endl;
 }
 
-//------------------------------------------------------------------------
 
 std::vector<MVertex*> Filler3D::new_vertices;
 
-//------------------------------------------------------------------------
 
 double Filler3D::time_smoothing = 0.;
 double Filler3D::time_insert_points = 0.;
 double Filler3D::time_meshing = 0.;
 
-//------------------------------------------------------------------------
 
 
 

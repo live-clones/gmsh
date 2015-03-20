@@ -10,7 +10,6 @@ class GVertex;
 class GEdge;
 class GEntity;
 
-//-------------------------------------------------------------
 
 SMetric3 buildMetricTangentToCurve (SVector3 &t, double l_t, double l_n);
 SMetric3 buildMetricTangentToSurface (SVector3 &t1, SVector3 &t2, double l_t1, double l_t2, double l_n);
@@ -22,7 +21,6 @@ SMetric3 max_edge_curvature_metric(const GVertex *gv);
 SMetric3 max_edge_curvature_metric(const GEdge *ge, double u, double &l);
 SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, double v, bool surface_isotropic = false,double d_normal = 1.e12,double d_tangent_max = 1.e12);
 
-//-------------------------------------------------------------
 //
 //static double LC_MVertex_CURV(GEntity *ge, double U, double V);
 //SMetric3 LC_MVertex_CURV_ANISO(GEntity *ge, double U, double V);

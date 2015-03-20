@@ -8,13 +8,11 @@
 #include "BackgroundMesh3D.h"
 
 
-//------------------------------------------------------------------------
 
 map<GEntity*,BGMBase*> BGMManager::data = map<GEntity*,BGMBase*>();
 BGMBase* BGMManager::latest2Dbgm = NULL;
 bool BGMManager::use_cross_field = true;
 
-//------------------------------------------------------------------------
 
 void BGMManager::set_use_cross_field(bool b){
   if (b && (BGMManager::use_cross_field==false)){// need to change...
@@ -23,7 +21,6 @@ void BGMManager::set_use_cross_field(bool b){
   BGMManager::use_cross_field = b;
 }
 
-//------------------------------------------------------------------------
 
 BGMBase* BGMManager::get(GRegion* gf){
   map<GEntity*,BGMBase*>::iterator itfind = data.find(gf);
@@ -42,7 +39,6 @@ BGMBase* BGMManager::get(GRegion* gf){
   return bgm;
 }
 
-//------------------------------------------------------------------------
 
 BGMBase* BGMManager::get(GFace* gf){
   map<GEntity*,BGMBase*>::iterator itfind = data.find(gf);
@@ -61,11 +57,9 @@ BGMBase* BGMManager::get(GFace* gf){
   return bgm;
 }
 
-//------------------------------------------------------------------------
 
 BGMBase* BGMManager::current2D(){return latest2Dbgm;};
 
-//------------------------------------------------------------------------
 
 
 

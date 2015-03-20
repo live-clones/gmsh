@@ -34,7 +34,6 @@
 
 using namespace std;
 
-//------------------------------------------------------------------------
 
 class evalDiffusivityFunction : public simpleFunction<double>{
   public:
@@ -47,7 +46,6 @@ class evalDiffusivityFunction : public simpleFunction<double>{
     const double threshold;
 };
 
-//------------------------------------------------------------------------
 
 //TODO: move this fct ???
 /* applies rotations of amplitude pi to set the 
@@ -59,7 +57,6 @@ void normalizeAngle(double &angle) {
     while ( angle >= M_PI * .5 ) angle -= (M_PI * .5);
 }
 
-//------------------------------------------------------------------------
 
 void backgroundMesh2D::create_face_mesh(){
 
@@ -85,7 +82,6 @@ void backgroundMesh2D::create_face_mesh(){
   create_mesh_copy();
 }
 
-//------------------------------------------------------------------------
 
 MElementOctree* backgroundMesh2D::getOctree(){
   if(!octree){
@@ -95,13 +91,11 @@ MElementOctree* backgroundMesh2D::getOctree(){
   return octree;
 }
 
-//------------------------------------------------------------------------
 
 const MElement* backgroundMesh2D::getElement(unsigned int i)const{
   return elements[i];
 }
 
-//------------------------------------------------------------------------
 
 void backgroundMesh2D::reset(bool erase_2D3D){
   unset();
@@ -126,7 +120,6 @@ void backgroundMesh2D::reset(bool erase_2D3D){
   }
 }
 
-//------------------------------------------------------------------------
 
 void backgroundMesh2D::unset(){
   for (unsigned int i = 0; i < vertices.size(); i++) delete vertices[i];
@@ -135,7 +128,6 @@ void backgroundMesh2D::unset(){
   octree=NULL;
 }
 
-//------------------------------------------------------------------------
 
 void backgroundMesh2D::create_mesh_copy(){
   // TODO: useful to extend it to other elements ???
@@ -164,13 +156,11 @@ void backgroundMesh2D::create_mesh_copy(){
   }
 }
 
-//------------------------------------------------------------------------------------------
 
 GPoint backgroundMesh2D::get_GPoint_from_MVertex(const MVertex *v)const{
   return dynamic_cast<GFace*>(gf)->point(SPoint2(v->x(),v->y()));
 }
 
-//------------------------------------------------------------------------
 
 backgroundMesh2D::backgroundMesh2D(GFace *_gf, bool erase_2D3D):BGMBase(2,_gf),sizeFactor(1.){
   if(debug) cout << "backgroundMesh2D::constructor " << endl;
@@ -184,13 +174,11 @@ backgroundMesh2D::backgroundMesh2D(GFace *_gf, bool erase_2D3D):BGMBase(2,_gf),s
 
 }
 
-//------------------------------------------------------------------------
 
 backgroundMesh2D::~backgroundMesh2D(){
   unset();
 }
 
-//------------------------------------------------------------------------
 
 void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet, simpleFunction<double> &eval_diffusivity, bool in_parametric_plane){
 #if defined(HAVE_SOLVER)
@@ -266,7 +254,6 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet, simpleFunct
 #endif
 }
 
-//------------------------------------------------------------------------
 
 void backgroundMesh2D::computeSizeField(){
   GFace *face = dynamic_cast<GFace*>(gf);
@@ -308,7 +295,6 @@ void backgroundMesh2D::computeSizeField(){
   }
 }
 
-//------------------------------------------------------------------------
 
 inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d){
   double cosTheta = dot(a,b);
@@ -316,7 +302,6 @@ inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d){
   return atan2 (sinTheta,cosTheta);
 }
 
-//------------------------------------------------------------------------
 
 void backgroundMesh2D::updateSizes(){
   DoubleStorageType::iterator itv = sizeField.begin();
@@ -368,14 +353,8 @@ void backgroundMesh2D::updateSizes(){
 }
 
 
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
 
 
-//------------------------------------------------------------------------
 
 frameFieldBackgroundMesh2D::frameFieldBackgroundMesh2D(GFace *_gf):backgroundMesh2D(_gf,false){
 
@@ -388,11 +367,9 @@ frameFieldBackgroundMesh2D::frameFieldBackgroundMesh2D(GFace *_gf):backgroundMes
   face->triangles = tempTR;
 }
 
-//------------------------------------------------------------------------
 
 frameFieldBackgroundMesh2D::~frameFieldBackgroundMesh2D(){}
 
-//------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh2D::reset(bool erase_2D3D){
 
@@ -425,28 +402,24 @@ void frameFieldBackgroundMesh2D::reset(bool erase_2D3D){
   }
 }
 
-//------------------------------------------------------------------------
 
 double frameFieldBackgroundMesh2D::get_smoothness(MVertex *v){
   if(debug) cout << "frameFieldBackgroundMesh2D::get_smoothness(MVertex *v)" << endl;
   return get_nodal_value(v,smoothness);
 }
 
-//------------------------------------------------------------------------
 
 double frameFieldBackgroundMesh2D::get_smoothness(double u, double v){
   if(debug) cout << "frameFieldBackgroundMesh2D::get_smoothness(double u, double v)" << endl;
   return get_field_value(u,v,0.,smoothness);
 }
 
-//------------------------------------------------------------------------
 
 double frameFieldBackgroundMesh2D::angle(MVertex *v){
   if(debug) cout << "frameFieldBackgroundMesh2D::angle(MVertex *v)" << endl;
   return get_nodal_value(v,angles);
 }
 
-//------------------------------------------------------------------------
 
 double frameFieldBackgroundMesh2D::angle(double u, double v){
   MElement *e = const_cast<MElement*>(findElement(u, v));
@@ -465,7 +438,6 @@ double frameFieldBackgroundMesh2D::angle(double u, double v){
   return a;
 }
 
-//------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_diffusivity){
   angles.clear();
@@ -528,7 +500,6 @@ void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_
   }
 }
 
-//------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh2D::eval_crossfield(double u, double v, STensor3 &cf){
   double quadAngle  = angle(u,v);
@@ -564,7 +535,6 @@ void frameFieldBackgroundMesh2D::eval_crossfield(double u, double v, STensor3 &c
   return;
 }
 
-//------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh2D::eval_crossfield(MVertex *vert, STensor3 &cf){
   SPoint2 parampoint;
@@ -573,7 +543,6 @@ void frameFieldBackgroundMesh2D::eval_crossfield(MVertex *vert, STensor3 &cf){
   return eval_crossfield(parampoint[0], parampoint[1], cf);
 }
 
-//------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh2D::computeSmoothness(){
   smoothness.clear();
@@ -618,7 +587,6 @@ void frameFieldBackgroundMesh2D::computeSmoothness(){
   }
 }
 
-//------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh2D::exportCrossField(const string &filename){
   FILE *f = Fopen (filename.c_str(),"w");
@@ -641,7 +609,6 @@ void frameFieldBackgroundMesh2D::exportCrossField(const string &filename){
   fclose(f);
 }
 
-//------------------------------------------------------------------------
 
 // returns the cross field as a pair of othogonal vectors (NOT in parametric coordinates, but real 3D coordinates)
 Pair<SVector3, SVector3> frameFieldBackgroundMesh2D::compute_crossfield_directions(double u,double v, double angle_current){
@@ -669,7 +636,6 @@ Pair<SVector3, SVector3> frameFieldBackgroundMesh2D::compute_crossfield_directio
       SVector3(t2[0],t2[1],t2[2]));
 }
 
-//------------------------------------------------------------------------
 
 bool frameFieldBackgroundMesh2D::compute_RK_infos(double u,double v, double x, double y, double z, RK_form &infos){
 

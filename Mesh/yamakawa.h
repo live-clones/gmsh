@@ -20,11 +20,9 @@
 
 using namespace std;
 
-//--------------------------------------------------------------------------------------
 
 extern void export_gregion_mesh(GRegion *gr, string filename);
 
-//--------------------------------------------------------------------------------------
 
 class PEEntity{
   protected:
@@ -68,7 +66,6 @@ class PEQuadrangle : public PEEntity{
     size_t get_max_nb_vertices() const;
 };
 
-//--------------------------------------------------------------------------------------
 
 template<class T>
 class clique_stop_criteria{
@@ -85,7 +82,6 @@ class clique_stop_criteria{
     const unsigned int total_number_tet;
 };
 
-//--------------------------------------------------------------------------------------
 
 template<class T>
 class cliques_compatibility_graph{
@@ -150,7 +146,6 @@ class cliques_compatibility_graph{
 };
 
 
-//--------------------------------------------------------------------------------------
 
 template<class T>
 class cliques_losses_graph : public cliques_compatibility_graph<T> {
@@ -174,7 +169,6 @@ class cliques_losses_graph : public cliques_compatibility_graph<T> {
     graph &G;
 };
 
-//--------------------------------------------------------------------------------------
 
 
 class Hex{

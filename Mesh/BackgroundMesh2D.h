@@ -78,7 +78,6 @@ class backgroundMesh2D : public BGMBase {
 
 };
 
-//------------------------------------------------------------------------
 
 class RK_form{// informations for RK at one point
   public:
@@ -105,7 +104,6 @@ class RK_form{// informations for RK at one point
     double angle,localsize;
 };
 
-//------------------------------------------------------------------------
 
 
 class frameFieldBackgroundMesh2D : public backgroundMesh2D{

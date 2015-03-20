@@ -373,7 +373,7 @@ bool compute4neighbors (GFace *gf,   // the surface
       //      printf("L = %12.5E D = %12.5E ERR = %12.5E\n",L,D,100*fabs(D-L)/(D+L));
     }
 
-    if (1 && goNonLinear){//---------------------------------------------------//
+    if (1 && goNonLinear){
       surfaceFunctorGFace ss (gf);                                        //
       SVector3 dirs[4] = {t1*(-1.0),t2*(-1.0),t1*(1.0),t2*(1.0)};                     //
       for (int i=0;i<4;i++){                                              //
@@ -418,7 +418,6 @@ bool compute4neighbors (GFace *gf,   // the surface
   return true;
 }
 
-// ---------------------------------------------------------------------------------------------
 
 // recover element around vertex v and interpolate smoothness on this element...
 double get_smoothness(MVertex *v, GFace *gf, const map<MVertex*,double> &vertices2smoothness){
@@ -470,7 +469,6 @@ double get_smoothness(MVertex *v, GFace *gf, const map<MVertex*,double> &vertice
   return res;
 }
 
-// ---------------------------------------------------------------------------------------------
 
 void print_nodal_info_int(string filename, map<MVertex*, int> &mapp){
   ofstream out(filename.c_str());
@@ -485,7 +483,6 @@ void print_nodal_info_int(string filename, map<MVertex*, int> &mapp){
   out.close();
 }
 
-// ---------------------------------------------------------------------------------------------
 
 void print_nodal_info_double(string filename, map<MVertex*, double> &mapp){
   ofstream out(filename.c_str());
@@ -500,7 +497,6 @@ void print_nodal_info_double(string filename, map<MVertex*, double> &mapp){
   out.close();
 }
 
-// ---------------------------------------------------------------------------------------------
 
 void export_point(surfacePointWithExclusionRegion *sp, int DIR, FILE *crossf, GFace *gf){
   // get the unit normal at that point
@@ -550,7 +546,6 @@ void export_point(surfacePointWithExclusionRegion *sp, int DIR, FILE *crossf, GF
   fprintf(crossf,"VP(%g,%g,%g) {%g,%g,%g};\n",sp->_v->x(),sp->_v->y(),sp->_v->z(),-t2.x()*size_2,-t2.y()*size_2,-t2.z()*size_2);
 }
 
-// ---------------------------------------------------------------------------------------------
 
 bool get_local_sizes_and_directions(const MVertex *v_center, const SPoint2 &midpoint, const int DIR, GFace* gf, double (&covar1)[2], double (&covar2)[2], double &size_param_1, double &size_param_2, double &L, SVector3 &t1, SVector3 &t2, SVector3 &n, FILE *crossf=NULL){
 //bool get_RK_stuff(const MVertex *v_center, const SPoint2 &midpoint, const int DIR, GFace* gf, double (&covar1)[2], double (&covar2)[2], double &size_param_1, double &size_param_2, double &L, SVector3 &t1, SVector3 &t2, SVector3 &n, FILE *crossf, const SVector3 &previous_t1, const SVector3 &previous_t2, bool use_previous_basis=false, bool export_cross=true){
@@ -688,7 +683,6 @@ bool get_local_sizes_and_directions(const MVertex *v_center, const SPoint2 &midp
 }
 
 
-// ---------------------------------------------------------------------------------------------
 
 // using fifo based on smoothness criteria
 void packingOfParallelogramsSmoothness(GFace* gf,  std::vector<MVertex*> &packed, std::vector<SMetric3> &metrics){
@@ -909,7 +903,6 @@ void packingOfParallelogramsSmoothness(GFace* gf,  std::vector<MVertex*> &packed
 }
 
 
-// ---------------------------------------------------------------------------------------------
 
 
 // fills a surface with points in order to build a nice

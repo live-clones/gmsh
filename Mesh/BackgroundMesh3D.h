@@ -38,7 +38,6 @@ using namespace std;
 
 
 
-//------------------------------------------------------------------------------------------
 
 class montripletbis{
   public:
@@ -53,7 +52,6 @@ class montripletbis{
     vector<int> vec;
 };
 
-//------------------------------------------------------------------------------------------
 
 // difference with BackgroundMesh2D: no copy of components, working directly on the vertices and elements of GRegion
 
@@ -83,7 +81,6 @@ class backgroundMesh3D : public BGMBase {
     virtual MVertex* get_nearest_neighbor(double x, double y, double z, double &distance );
 };
 
-//------------------------------------------------------------------------
 
 
 class frameFieldBackgroundMesh3D : public backgroundMesh3D{

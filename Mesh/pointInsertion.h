@@ -23,7 +23,6 @@ using namespace std;
 
 extern bool old_algo_hexa();
 
-//------------------------------------------------------------------------
 
 class Filler2D{
   public:
@@ -34,7 +33,6 @@ class Filler2D{
     static double time_bgm_and_smoothing,time_insertion;
 };
 
-//------------------------------------------------------------------------
 
 class Filler3D{
   private:
@@ -52,7 +50,6 @@ class Filler3D{
 
 
 
-//------------------------------------------------------------------------------------------
 
 //template<class T>
 //bool readValue(string filename, string keystr, T &value){

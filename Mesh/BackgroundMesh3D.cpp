@@ -33,7 +33,6 @@ int signof(int i){
   return ((i < 0) ? -1 : 1);
 }
 
-//------------------------------------------------------------------------
 
 // TODO: virer les trucs "vertextorank", mettre cette classe-ci :
 
@@ -48,18 +47,15 @@ int signof(int i){
 //    const double threshold;
 //};
 
-//------------------------------------------------------------------------------------------
 
 backgroundMesh3D::backgroundMesh3D(GRegion *_gr):BGMBase(3,_gr),debug(false),verbose(false){
   computeSizeField();
 }
 
-//------------------------------------------------------------------------------------------
 
 backgroundMesh3D::~backgroundMesh3D(){
 }
 
-//------------------------------------------------------------------------------------------
     
 void backgroundMesh3D::computeSizeField(){
 
@@ -94,7 +90,6 @@ void backgroundMesh3D::computeSizeField(){
 //  cout << "backgroundMesh3D::size of sizeField: " << sizeField.size()  << endl;
 }
 
-//------------------------------------------------------------------------------------------
 
 void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet, simpleFunction<double> &eval_diffusivity, bool in_parametric_plane){
   // same as Size_field::solve()
@@ -166,41 +161,35 @@ void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet, simpleFunct
 #endif
 }
 
-//------------------------------------------------------------------------------------------
 
 GPoint backgroundMesh3D::get_GPoint_from_MVertex(const MVertex *v)const{
   return GPoint(v->x(),v->y(),v->z(),dynamic_cast<GRegion*>(gf));
 }
 
-//------------------------------------------------------------------------------------------
 
 MVertex* backgroundMesh3D::get_nearest_neighbor(const MVertex *v){
   double distance;
   return get_nearest_neighbor(v->x(),v->y(),v->z(), distance);
 }
 
-//------------------------------------------------------------------------------------------
 
 MVertex* backgroundMesh3D::get_nearest_neighbor(const double* xyz){
   double distance;
   return get_nearest_neighbor(xyz, distance);
 }
 
-//------------------------------------------------------------------------------------------
 
 MVertex* backgroundMesh3D::get_nearest_neighbor(double x, double y, double z){
   double distance;
   return get_nearest_neighbor(x,y,z,distance);
 }
 
-//------------------------------------------------------------------------------------------
 
 MVertex* backgroundMesh3D::get_nearest_neighbor(double x, double y, double z, double &distance ){
   double xyz[3] = {x,y,z};
   return get_nearest_neighbor(xyz, distance);
 }
 
-//------------------------------------------------------------------------
 
 MElementOctree* backgroundMesh3D::getOctree(){
   if(!octree){
@@ -211,7 +200,6 @@ MElementOctree* backgroundMesh3D::getOctree(){
   return octree;
 }
 
-//------------------------------------------------------------------------------------------
 
 MVertex* backgroundMesh3D::get_nearest_neighbor(const double* xyz, double & distance ){
   // using the octree instead of ANN, faster.
@@ -240,16 +228,9 @@ MVertex* backgroundMesh3D::get_nearest_neighbor(const double* xyz, double & dist
 //  return it->second;
 }
 
-//------------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------------
 
 vector<montripletbis> frameFieldBackgroundMesh3D::permutation = vector<montripletbis>();
 
-//------------------------------------------------------------------------------------------
 
 frameFieldBackgroundMesh3D::frameFieldBackgroundMesh3D(GRegion *_gr):backgroundMesh3D(_gr){
 
@@ -286,7 +267,6 @@ frameFieldBackgroundMesh3D::frameFieldBackgroundMesh3D(GRegion *_gr):backgroundM
   }
 }
 
-//------------------------------------------------------------------------------------------
 
 frameFieldBackgroundMesh3D::~frameFieldBackgroundMesh3D(){
 #if defined(HAVE_ANN)
@@ -295,7 +275,6 @@ frameFieldBackgroundMesh3D::~frameFieldBackgroundMesh3D(){
 #endif
 }
 
-//------------------------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh3D::initiate_ANN_research(){
 #ifdef HAVE_ANN
@@ -315,7 +294,6 @@ void frameFieldBackgroundMesh3D::initiate_ANN_research(){
   return;
 }
 
-//------------------------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh3D::computeSmoothnessOnlyFromBoundaries(){
   // this is used when the crossfield is not smoothed !!!
@@ -351,7 +329,6 @@ void frameFieldBackgroundMesh3D::computeSmoothnessOnlyFromBoundaries(){
   }
 }
 
-//------------------------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh3D::computeCrossField(){
   // TODO: mettre des parametres façon gmsh ???
@@ -564,7 +541,6 @@ void frameFieldBackgroundMesh3D::computeCrossField(){
 
 }
 
-//------------------------------------------------------------------------------------------
 
 //STensor3 frameFieldBackgroundMesh3D::get_random_cross()const{
 //  SVector3 vec1(rand()%10000/9999. , rand()%10000/9999. , rand()%10000/9999. );
@@ -583,7 +559,6 @@ void frameFieldBackgroundMesh3D::computeCrossField(){
 //  return random_cross;
 //}
 
-//------------------------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh3D::initiate_crossfield(){
   crossField.clear();
@@ -634,14 +609,12 @@ void frameFieldBackgroundMesh3D::initiate_crossfield(){
   }
 }
 
-//------------------------------------------------------------------------------------------
 
 MVertex* frameFieldBackgroundMesh3D::get_nearest_neighbor_on_boundary(MVertex* v){
   double distance;
   return get_nearest_neighbor_on_boundary(v,distance);
 }
 
-//------------------------------------------------------------------------------------------
 
 MVertex* frameFieldBackgroundMesh3D::get_nearest_neighbor_on_boundary(MVertex* v, double &distance){
 #ifdef HAVE_ANN
@@ -665,37 +638,31 @@ MVertex* frameFieldBackgroundMesh3D::get_nearest_neighbor_on_boundary(MVertex* v
 #endif
 }
 
-//------------------------------------------------------------------------------------------
 
 double frameFieldBackgroundMesh3D::get_smoothness(double x, double y, double z){
   return get_field_value(x,y,z,crossFieldSmoothness);
 }; 
 
-//------------------------------------------------------------------------------------------
 
 double frameFieldBackgroundMesh3D::get_approximate_smoothness(double x, double y, double z){
   return crossFieldSmoothness[get_nearest_neighbor(x,y,z)];
 }
 
-//------------------------------------------------------------------------------------------
 
 double frameFieldBackgroundMesh3D::get_approximate_smoothness(MVertex *v){
   return get_approximate_smoothness(v->x(),v->y(),v->z());
 }
 
-//------------------------------------------------------------------------------------------
 
 double frameFieldBackgroundMesh3D::get_smoothness(MVertex *v){
   return get_nodal_value(v,crossFieldSmoothness);
 };
 
-//------------------------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh3D::eval_approximate_crossfield(double x, double y, double z, STensor3 &cf){
   cf = crossField[get_nearest_neighbor(x,y,z)];
 };
 
-//------------------------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh3D::eval_approximate_crossfield(const MVertex *vert, STensor3 &cf){
   // check if vertex is ours...
@@ -706,35 +673,30 @@ void frameFieldBackgroundMesh3D::eval_approximate_crossfield(const MVertex *vert
     eval_approximate_crossfield(vert->x(),vert->y(),vert->z(),cf);
 };
 
-//------------------------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh3D::get_vectorial_smoothness(double x, double y, double z, SVector3 &cf){
   vector<double>res = get_field_value(x,y,z,crossFieldVectorialSmoothness);
   for (int i=0;i<3;i++) cf(i)=res[i];
 };
 
-//------------------------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh3D::get_vectorial_smoothness(const MVertex *vert, SVector3 &cf){
   vector<double> res = get_nodal_value(vert,crossFieldVectorialSmoothness);
   for (int i=0;i<3;i++) cf(i)=res[i];
 };
 
-//------------------------------------------------------------------------------------------
 
 double frameFieldBackgroundMesh3D::get_vectorial_smoothness(const int idir, double x, double y, double z){
   vector<double>res = get_field_value(x,y,z,crossFieldVectorialSmoothness);
   return res[idir];
 };
 
-//------------------------------------------------------------------------------------------
 
 double frameFieldBackgroundMesh3D::get_vectorial_smoothness(const int idir, const MVertex *vert){
   vector<double> res = get_nodal_value(vert,crossFieldVectorialSmoothness);
   return res[idir];
 };
 
-//------------------------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh3D::build_vertex_to_element_table(){
   GRegion *gr = dynamic_cast<GRegion*>(gf);
@@ -760,21 +722,18 @@ void frameFieldBackgroundMesh3D::build_vertex_to_element_table(){
   }
 }
 
-//------------------------------------------------------------------------
 
 const MElement* backgroundMesh3D::getElement(unsigned int i)const{
   GRegion *gr = dynamic_cast<GRegion*>(gf);
   return gr->getMeshElement(i);
 }
 
-//------------------------------------------------------------------------
 
 unsigned int backgroundMesh3D::getNumMeshElements()const{
   GRegion *gr = dynamic_cast<GRegion*>(gf);
   return gr->getNumMeshElements();
 }
 
-//------------------------------------------------------------------------------------------
 
 // this function fills the multimap "graph": vertex to direct neighbors, or indirect neighbors, depending on the "max_recursion_level". 
 void frameFieldBackgroundMesh3D::build_neighbors(const int &max_recursion_level){
@@ -818,7 +777,6 @@ void frameFieldBackgroundMesh3D::build_neighbors(const int &max_recursion_level)
   }
 }
 
-//------------------------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh3D::get_recursive_neighbors(set<MVertex*> &start, set<MVertex*> &visited, set<MElement*> &visited_elements, multimap<int,MVertex*> &proximity, int max_level, int level){
   level++;
@@ -857,7 +815,6 @@ void frameFieldBackgroundMesh3D::get_recursive_neighbors(set<MVertex*> &start, s
 
 }
 
-//------------------------------------------------------------------------------------------
 
 double frameFieldBackgroundMesh3D::compare_to_neighbors(SPoint3 current, STensor3 &ref, multimap<double,MVertex*>::iterator itbegin, multimap<double,MVertex*>::iterator itend, SVector3 &mean_axis,double &mean_angle, vector<double> &vectorial_smoothness){
   for (int i=0;i<3;i++) mean_axis(i)=0.;
@@ -942,7 +899,6 @@ double frameFieldBackgroundMesh3D::compare_to_neighbors(SPoint3 current, STensor
   return smoothness_scalar;
 }
 
-//------------------------------------------------------------------------------------------
 
 STensor3 frameFieldBackgroundMesh3D::apply_rotation(const SVector3 &axis, const double &angle, const STensor3 &thecross){
   double rotmat[3][3];
@@ -1024,7 +980,6 @@ STensor3 frameFieldBackgroundMesh3D::apply_rotation(const SVector3 &axis, const 
   //  return res;
 }
 
-//------------------------------------------------------------------------------------------
 
 // TODO: ce genre de fct... mettre dans une classe FrameField ? Ou bien juste un set de fcts à part ? Parce que ça devient bizarre d'avoir ça dans un BGM ???
 void frameFieldBackgroundMesh3D::get_rotation_matrix(const double &angle_to_go, const SVector3 &rotvec, double* rotmat){
@@ -1048,7 +1003,6 @@ void frameFieldBackgroundMesh3D::get_rotation_matrix(const double &angle_to_go, 
   rotmat[8] = square2 +(1.-square2)*c;
 }
 
-//------------------------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh3D::get_min_rotation_matrix(const STensor3 &reference, const STensor3 &thecross, double &minimum_angle, SVector3 &rotation_axis, double threshold, bool debugflag){
 
@@ -1085,7 +1039,6 @@ void frameFieldBackgroundMesh3D::get_min_rotation_matrix(const STensor3 &referen
   return;
 }
 
-//------------------------------------------------------------------------------------------
 
 // compute the angle and axis of rotation between two (unit-orthogonal) cross fields
 // using crossfield vectors permutations defined by modulo and trip
@@ -1151,7 +1104,6 @@ void frameFieldBackgroundMesh3D::get_rotation_angle_and_axis(const STensor3 &ref
   return;
 }
 
-//------------------------------------------------------------------------
 
 void frameFieldBackgroundMesh3D::exportVectorialSmoothness(const string &filename){
   FILE *f = Fopen (filename.c_str(),"w");
@@ -1178,5 +1130,4 @@ void frameFieldBackgroundMesh3D::exportVectorialSmoothness(const string &filenam
   fclose(f);
 }
 
-//------------------------------------------------------------------------------------------
 

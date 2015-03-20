@@ -12,7 +12,6 @@
 
 #include <iostream>
 
-//------------------------------------------------------------------------
 
 static double max_surf_curvature(const GEdge *ge, double u)
 {
@@ -32,7 +31,6 @@ static double max_surf_curvature(const GEdge *ge, double u)
 }
 
 
-//------------------------------------------------------------------------
 
 static double max_edge_curvature(const GVertex *gv)
 {
@@ -50,7 +48,6 @@ static double max_edge_curvature(const GVertex *gv)
   return val;
 }
 
-//------------------------------------------------------------------------
 
 // the mesh vertex is classified on a model vertex.  we compute the
 // maximum of the curvature of model faces surrounding this point if
@@ -86,7 +83,6 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   return lc;
 }
 
-//------------------------------------------------------------------------
 
 SMetric3 max_edge_curvature_metric(const GEdge *ge, double u)
 {
@@ -98,7 +94,6 @@ SMetric3 max_edge_curvature_metric(const GEdge *ge, double u)
   return buildMetricTangentToCurve(t,l_t,l_n);
 }
 
-//------------------------------------------------------------------------
 
 static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u, bool iso_surf)
 {
@@ -143,7 +138,6 @@ static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u, boo
   }
 }
 
-//------------------------------------------------------------------------
 
 static SMetric3 metric_based_on_surface_curvature(const GVertex *gv, bool iso_surf)
 {
@@ -172,7 +166,6 @@ static SMetric3 metric_based_on_surface_curvature(const GVertex *gv, bool iso_su
   return mesh_size;
 }
 
-//------------------------------------------------------------------------
 
 SMetric3 LC_MVertex_CURV_ANISO(GEntity *ge, double U, double V)
 {
@@ -187,7 +180,6 @@ SMetric3 LC_MVertex_CURV_ANISO(GEntity *ge, double U, double V)
   return SMetric3();
 }
 
-//------------------------------------------------------------------------
 
 // compute the mesh size at a given vertex due to prescribed sizes at
 // mesh vertices
@@ -225,11 +217,6 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
   }
 }
 
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
 
 SMetric3 buildMetricTangentToCurve(SVector3 &t, double l_t, double l_n)
 {
@@ -254,7 +241,6 @@ SMetric3 buildMetricTangentToCurve(SVector3 &t, double l_t, double l_n)
   return Metric;
 }
 
-//------------------------------------------------------------------------
 
 SMetric3 buildMetricTangentToSurface(SVector3 &t1, SVector3 &t2,
                                      double l_t1, double l_t2, double l_n)
@@ -272,7 +258,6 @@ SMetric3 buildMetricTangentToSurface(SVector3 &t1, SVector3 &t2,
   return Metric;
 }
 
-//------------------------------------------------------------------------
 
 // This is the only function that is used by the meshers
 double BGM_MeshSize(GEntity *ge, double U, double V,
@@ -320,7 +305,6 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
 }
 
 
-//------------------------------------------------------------------------
 
 // anisotropic version of the background field
 SMetric3 BGM_MeshMetric(GEntity *ge,
@@ -365,21 +349,18 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
 
 }
 
-//------------------------------------------------------------------------
 
 bool Extend1dMeshIn2dSurfaces()
 {
   return CTX::instance()->mesh.lcExtendFromBoundary ? true : false;
 }
 
-//------------------------------------------------------------------------
 
 bool Extend2dMeshIn3dVolumes()
 {
   return CTX::instance()->mesh.lcExtendFromBoundary ? true : false;
 }
 
-//------------------------------------------------------------------------
 
 SMetric3 max_edge_curvature_metric(const GVertex *gv)
 {
@@ -411,7 +392,6 @@ SMetric3 max_edge_curvature_metric(const GVertex *gv)
   return val;
 }
 
-//------------------------------------------------------------------------
 
 SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, double v,
 					   bool surface_isotropic,
@@ -446,5 +426,4 @@ SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, double v,
   return curvMetric;
 }
 
-//------------------------------------------------------------------------
 

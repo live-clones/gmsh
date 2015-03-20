@@ -57,7 +57,6 @@ void BGMBase::export_scalar(const string &filename, const DoubleStorageType &_wh
 //  cout << "export_scalar DONE " << endl;
 }
 
-//------------------------------------------------------------------------
 
 void BGMBase::export_vector(const string &filename, const VectorStorageType &_whatToPrint)const{
   FILE *f = Fopen (filename.c_str(),"w");
@@ -109,7 +108,6 @@ void BGMBase::export_vector(const string &filename, const VectorStorageType &_wh
   fclose(f);
 }
 
-//------------------------------------------------------------------------
 
 void BGMBase::export_tensor_as_vectors(const string &filename, const TensorStorageType &_whatToPrint)const{
   FILE *f = Fopen (filename.c_str(),"w");
@@ -130,30 +128,25 @@ void BGMBase::export_tensor_as_vectors(const string &filename, const TensorStora
   fclose(f);
 }
 
-//------------------------------------------------------------------------
 
 BGMBase::BGMBase(int dim,GEntity *_gf):octree(NULL),gf(_gf), DIM(dim), order(1),debug(false){
   if(debug) cout << "BGMBase::constructor " << endl;
 }
 
-//------------------------------------------------------------------------
 
 BGMBase::~BGMBase(){
 }
 
-//------------------------------------------------------------------------
 
 bool BGMBase::inDomain (double u, double v, double w){
   return (findElement(u, v, w) != NULL);
 }
 
-//------------------------------------------------------------------------
 
 const MElement* BGMBase::findElement(double u, double v, double w, bool strict){
   return (getOctree()->find(u, v, w, DIM, strict));
 }
 
-//------------------------------------------------------------------------
 
 vector<double> BGMBase::get_field_value(double u, double v, double w, const VectorStorageType &data){
   MElement *e = const_cast<MElement*>(findElement(u, v, w ));
@@ -170,7 +163,6 @@ vector<double> BGMBase::get_field_value(double u, double v, double w, const Vect
   return res;
 }
 
-//------------------------------------------------------------------------
 
 double BGMBase::get_field_value(double u, double v, double w, const DoubleStorageType &data){
   MElement *e = const_cast<MElement*>(findElement(u, v, w));
@@ -184,19 +176,16 @@ double BGMBase::get_field_value(double u, double v, double w, const DoubleStorag
   return e->interpolate(values, element_uvw[0], element_uvw[1], element_uvw[2], 1, order);
 }
 
-//------------------------------------------------------------------------
 
 double BGMBase::size(double u, double v, double w){
   return get_field_value(u,v,w,sizeField);
 }
 
-//------------------------------------------------------------------------
 
 double BGMBase::size(const MVertex *v){
   return get_nodal_value(v,sizeField);
 }
 
-//------------------------------------------------------------------------
 
 vector<double> BGMBase::get_nodal_value(const MVertex *v,const VectorStorageType &data)const{
   if(debug) cout << "BGMBase::get_nodal_value(const MVertex *v,const map<MVertex*,vector<double> > &data)" << endl;
@@ -209,7 +198,6 @@ vector<double> BGMBase::get_nodal_value(const MVertex *v,const VectorStorageType
   return itfind->second;
 }
 
-//------------------------------------------------------------------------
 
 double BGMBase::get_nodal_value(const MVertex *v,const DoubleStorageType &data)const{
   if(debug) cout << "BGMBase::get_nodal_value(const MVertex *v,const map<MVertex*,double> &data)" << endl;
@@ -222,7 +210,6 @@ double BGMBase::get_nodal_value(const MVertex *v,const DoubleStorageType &data)c
   return itfind->second;
 }
 
-//------------------------------------------------------------------------
 
 vector<vector<double> > BGMBase::get_nodal_values(const MElement *e,const VectorStorageType &data)const{
   if(debug) cout << "BGMBase::get_nodal_values(const MElement *e,const map<MVertex*,vector<double> > &data)" << endl;
@@ -236,7 +223,6 @@ vector<vector<double> > BGMBase::get_nodal_values(const MElement *e,const Vector
   return res;
 }
 
-//------------------------------------------------------------------------
 
 vector<double> BGMBase::get_nodal_values(const MElement *e,const DoubleStorageType &data)const{
   if(debug) cout << "BGMBase::get_nodal_values(const MElement *e,const map<MVertex*,double> &data)" << endl;
@@ -247,7 +233,6 @@ vector<double> BGMBase::get_nodal_values(const MElement *e,const DoubleStorageTy
   return res;
 }
 
-//------------------------------------------------------------------------
 
 vector<double> BGMBase::get_element_uvw_from_xyz (const MElement *e, double x, double y,double z) const{
   double element_uvw[3];
@@ -260,7 +245,6 @@ vector<double> BGMBase::get_element_uvw_from_xyz (const MElement *e, double x, d
   return res;
 }
 
-//------------------------------------------------------------------------
 
 set<MVertex*> BGMBase::get_vertices_of_maximum_dim(int dim){
   set<MVertex*> bnd_vertices;
@@ -274,13 +258,11 @@ set<MVertex*> BGMBase::get_vertices_of_maximum_dim(int dim){
   return bnd_vertices;
 }
 
-//------------------------------------------------------------------------
 
 GEntity* BGMBase::getBackgroundGEntity(){
   return gf;
 }
 
-//------------------------------------------------------------------------
 
 
 
