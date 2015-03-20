@@ -88,8 +88,10 @@ class backgroundMesh3D : public BGMBase {
 
 class frameFieldBackgroundMesh3D : public backgroundMesh3D{
   public:
-    typedef tr1::unordered_map<hash_key_ptr, set<MElement*> > vert2elemtype;
-    typedef tr1::unordered_map<MElement*, set<MVertex*> > elem2verttype;
+//    typedef tr1::unordered_map<hash_key_ptr, set<MElement*> > vert2elemtype;
+//    typedef tr1::unordered_map<MElement*, set<MVertex*> > elem2verttype;
+    typedef std::map<hash_key_ptr, set<MElement*> > vert2elemtype;
+    typedef std::map<MElement*, set<MVertex*> > elem2verttype;
     typedef multimap<MVertex*, pair<int,MVertex*> > graphtype;
 
   protected:

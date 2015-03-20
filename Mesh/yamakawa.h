@@ -13,9 +13,10 @@
 #include "GRegion.h"
 #include "MVertex.h"
 #include <set>
+#include <map>
 
-#include <tr1/unordered_set>
-#include <tr1/unordered_map>
+//#include <tr1/unordered_set>
+//#include <tr1/unordered_map>
 
 using namespace std;
 
@@ -72,7 +73,8 @@ class PEQuadrangle : public PEEntity{
 template<class T>
 class clique_stop_criteria{
   public:
-    typedef tr1::unordered_set<T> graph_data_no_hash;
+    //typedef tr1::unordered_set<T> graph_data_no_hash;
+    typedef std::set<T> graph_data_no_hash;
     clique_stop_criteria(map<T, std::set<MElement*> > &_m, int _i);
     ~clique_stop_criteria();
     bool stop(const graph_data_no_hash &clique)const;
@@ -93,10 +95,14 @@ class cliques_compatibility_graph{
 //    typedef  set<T> graph_data;
 //    typedef  map<T, graph_data > graph;
 //    typedef multimap<int,T> ranking_data;
-    typedef tr1::unordered_set<T> graph_data_no_hash;
-    typedef tr1::unordered_multimap<hash_key, T> graph_data;
-    typedef tr1::unordered_multimap<hash_key, pair<T, graph_data > > graph;
-    typedef tr1::unordered_map<int,T> ranking_data;
+    //typedef tr1::unordered_set<T> graph_data_no_hash;
+    typedef std::set<T> graph_data_no_hash;
+//    typedef tr1::unordered_multimap<hash_key, T> graph_data;
+//    typedef tr1::unordered_multimap<hash_key, pair<T, graph_data > > graph;
+//    typedef tr1::unordered_map<int,T> ranking_data;
+    typedef std::multimap<hash_key, T> graph_data;
+    typedef std::multimap<hash_key, pair<T, graph_data > > graph;
+    typedef std::map<int,T> ranking_data;
 
     typedef void (*ptrfunction_export)(cliques_compatibility_graph<T>&, int, string);
 
@@ -154,8 +160,9 @@ class cliques_losses_graph : public cliques_compatibility_graph<T> {
 //    typedef tr1::unordered_map<T, graph_data > graph;
   public:
     typedef unsigned long long hash_key;
-    typedef tr1::unordered_multimap<hash_key, T> graph_data;
-    typedef tr1::unordered_multimap<hash_key, pair<T, graph_data > > graph;
+    typedef multimap<hash_key, T> graph_data;
+    typedef multimap<hash_key, pair<T, graph_data > > graph;
+//    typedef tr1::unordered_multimap<hash_key, T> graph_data;
     typedef void (*ptrfunction_export)(cliques_compatibility_graph<T>&, int, string);
 
     cliques_losses_graph(graph &_g, const map<T, std::vector<double> > &_hex_ranks, unsigned int _max_nb_cliques, unsigned int _nb_hex_potentiels, clique_stop_criteria<T> *csc, ptrfunction_export fct);
@@ -404,8 +411,10 @@ class Recombinator_Graph : public Recombinator{
 
 
     typedef unsigned long long hash_key;
-    typedef tr1::unordered_multimap<hash_key, Hex*> graph_data;
-    typedef tr1::unordered_multimap<hash_key, pair<Hex*, graph_data > > graph;
+//    typedef tr1::unordered_multimap<hash_key, Hex*> graph_data;
+//    typedef tr1::unordered_multimap<hash_key, pair<Hex*, graph_data > > graph;
+    typedef multimap<hash_key, Hex*> graph_data;
+    typedef multimap<hash_key, pair<Hex*, graph_data > > graph;
 
     graph incompatibility_graph;
     set<Hex*> set_of_all_hex_in_graph;

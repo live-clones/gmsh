@@ -16,8 +16,8 @@
 #include "MElement.h"
 #include "simpleFunction.h"
 
-#include <tr1/unordered_map>
-#include <tr1/unordered_set>
+//#include <tr1/unordered_map>
+//#include <tr1/unordered_set>
 
 
 class MElementOctree;
@@ -35,9 +35,12 @@ using namespace std;
 class BGMBase{
   public:
     typedef MVertex* hash_key_ptr;
-    typedef tr1::unordered_map<hash_key_ptr, STensor3 > TensorStorageType;
-    typedef tr1::unordered_map<hash_key_ptr, double > DoubleStorageType;
-    typedef tr1::unordered_map<hash_key_ptr, vector<double> > VectorStorageType;
+//    typedef tr1::unordered_map<hash_key_ptr, STensor3 > TensorStorageType;
+//    typedef tr1::unordered_map<hash_key_ptr, double > DoubleStorageType;
+//    typedef tr1::unordered_map<hash_key_ptr, vector<double> > VectorStorageType;
+    typedef std::map<hash_key_ptr, STensor3 > TensorStorageType;
+    typedef std::map<hash_key_ptr, double > DoubleStorageType;
+    typedef std::map<hash_key_ptr, vector<double> > VectorStorageType;
 
   protected:
     mutable MElementOctree *octree;

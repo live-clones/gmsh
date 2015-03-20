@@ -225,7 +225,7 @@ double BGMBase::get_nodal_value(const MVertex *v,const DoubleStorageType &data)c
 //------------------------------------------------------------------------
 
 vector<vector<double> > BGMBase::get_nodal_values(const MElement *e,const VectorStorageType &data)const{
-  if(debug) cout << "BGMBase::get_nodal_values(const MElement *e,const tr1::unordered_map<MVertex*,vector<double> > &data)" << endl;
+  if(debug) cout << "BGMBase::get_nodal_values(const MElement *e,const map<MVertex*,vector<double> > &data)" << endl;
   vector<vector<double> > res(e->getNumVertices());
 
   for (int i=0;i<e->getNumVertices();i++){
@@ -239,7 +239,7 @@ vector<vector<double> > BGMBase::get_nodal_values(const MElement *e,const Vector
 //------------------------------------------------------------------------
 
 vector<double> BGMBase::get_nodal_values(const MElement *e,const DoubleStorageType &data)const{
-  if(debug) cout << "BGMBase::get_nodal_values(const MElement *e,const tr1::unordered_map<MVertex*,double> &data)" << endl;
+  if(debug) cout << "BGMBase::get_nodal_values(const MElement *e,const map<MVertex*,double> &data)" << endl;
   vector<double> res(e->getNumVertices(),0.);
 
   for (int i=0;i<e->getNumVertices();i++)
