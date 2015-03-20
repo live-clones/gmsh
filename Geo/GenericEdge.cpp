@@ -11,7 +11,6 @@
 #include "GenericFace.h"
 #include "Context.h"
 
-//------------------------------------------------------------------------
 
 GenericEdge::ptrfunction_int_double_refvector GenericEdge::EdgeEvalXYZFromT = NULL;
 GenericEdge::ptrfunction_int_refdouble_refdouble GenericEdge::EdgeEvalParBounds = NULL;
@@ -23,7 +22,6 @@ GenericEdge::ptrfunction_int_refvector_refdouble_refvector_refbool GenericEdge::
 GenericEdge::ptrfunction_int_refbool GenericEdge::EdgeIs3D = NULL;
 GenericEdge::ptrfunction_int_int_double_int_refvector GenericEdge::EdgeReparamOnFace = NULL;
 
-//------------------------------------------------------------------------
 
 GenericEdge::GenericEdge(GModel *m, int num, int _native_id, GVertex *v1, GVertex *v2, bool _isseam):GEdge(m, num, v1, v2), id(_native_id),is_seam(_isseam){
   if ((!EdgeEvalParBounds)||(!EdgeEvalXYZFromT)) Msg::Error("GenericEdge::ERROR: Callback not set");
@@ -31,18 +29,15 @@ GenericEdge::GenericEdge(GModel *m, int num, int _native_id, GVertex *v1, GVerte
   if (!ok) Msg::Error("GenericEdge::ERROR from EdgeEvalParBounds ! " );
 }
 
-//------------------------------------------------------------------------
 
 GenericEdge::~GenericEdge(){
 }
 
-//------------------------------------------------------------------------
 
 Range<double> GenericEdge::parBounds(int i) const{
   return Range<double>(s0, s1);
 }
 
-//------------------------------------------------------------------------
 
 SPoint2 GenericEdge::reparamOnFace(const GFace *face, double par, int dir) const{
   vector<double> res(2,0.);
@@ -55,7 +50,6 @@ SPoint2 GenericEdge::reparamOnFace(const GFace *face, double par, int dir) const
   return SPoint2(res[0],res[1]);;
 }
 
-//------------------------------------------------------------------------
 
 GPoint GenericEdge::closestPoint(const SPoint3 &qp, double &param) const{
   vector<double> queryPoint(3,0.);
@@ -69,14 +63,12 @@ GPoint GenericEdge::closestPoint(const SPoint3 &qp, double &param) const{
   return GPoint(res[0], res[1], res[2], this, param);
 }
 
-//------------------------------------------------------------------------
 
 bool GenericEdge::isSeam(const GFace *face) const{
 //  return false;
   return is_seam;
 }
 
-//------------------------------------------------------------------------
 
 GPoint GenericEdge::point(double par) const{
   vector<double> res(3,0.);
@@ -86,7 +78,6 @@ GPoint GenericEdge::point(double par) const{
   return GPoint(res[0], res[1], res[2], this, par);
 }
 
-//------------------------------------------------------------------------
 
 SVector3 GenericEdge::firstDer(double par) const{
   vector<double> res(3,0.);
@@ -96,7 +87,6 @@ SVector3 GenericEdge::firstDer(double par) const{
   return SVector3(res[0],res[1],res[2]);
 }
 
-//------------------------------------------------------------------------
 
 GEntity::GeomType GenericEdge::geomType() const{
   string s;
@@ -131,7 +121,6 @@ GEntity::GeomType GenericEdge::geomType() const{
   return Unknown;
 }
 
-//------------------------------------------------------------------------
 
 double GenericEdge::curvature(double par) const{
   double res;
@@ -141,7 +130,6 @@ double GenericEdge::curvature(double par) const{
   return res;
 }
 
-//------------------------------------------------------------------------
 
 bool GenericEdge::is3D() const{
   bool res;
@@ -151,7 +139,6 @@ bool GenericEdge::is3D() const{
   return res;
 }
 
-//------------------------------------------------------------------------
 
 bool GenericEdge::degenerate(int) const{
   bool res=false;
@@ -161,7 +148,6 @@ bool GenericEdge::degenerate(int) const{
   return res;
 }
 
-//------------------------------------------------------------------------
 
 int GenericEdge::minimumDrawSegments() const
 {
@@ -171,17 +157,11 @@ int GenericEdge::minimumDrawSegments() const
     return CTX::instance()->geom.numSubEdges * GEdge::minimumDrawSegments();
 }
 
-//------------------------------------------------------------------------
 
 
 
 
 
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
 
 LinearSeamEdge::LinearSeamEdge(GModel *m, int num, GVertex *v1, GVertex *v2):GEdge(m, num, v1, v2){
   s0=0.;
@@ -190,60 +170,50 @@ LinearSeamEdge::LinearSeamEdge(GModel *m, int num, GVertex *v1, GVertex *v2):GEd
   first_der.normalize();
 }
 
-//------------------------------------------------------------------------
 
 LinearSeamEdge::~LinearSeamEdge(){
 }
 
-//------------------------------------------------------------------------
 
 Range<double> LinearSeamEdge::parBounds(int i) const{
   return Range<double>(s0, s1);
 }
 
-//------------------------------------------------------------------------
 
 GPoint LinearSeamEdge::point(double par) const{
   SVector3 res = v0->xyz() + par*first_der;
   return GPoint(res[0], res[1], res[2], this, par);
 }
 
-//------------------------------------------------------------------------
 
 SVector3 LinearSeamEdge::firstDer(double par) const{
   return first_der;
 }
 
-//------------------------------------------------------------------------
 
 GEntity::GeomType LinearSeamEdge::geomType() const{
   return Line;
 }
 
-//------------------------------------------------------------------------
 
 double LinearSeamEdge::curvature(double par) const{
   return 0.;
 }
 
-//------------------------------------------------------------------------
 
 bool LinearSeamEdge::is3D() const{
   return false;
 }
 
-//------------------------------------------------------------------------
 
 bool LinearSeamEdge::degenerate(int) const{
   return false;
 }
 
-//------------------------------------------------------------------------
 
 GPoint LinearSeamEdge::closestPoint(const SPoint3 &q, double &t) const
 {
   return GEdge::closestPoint(q,t);
 }
 
-//------------------------------------------------------------------------
 

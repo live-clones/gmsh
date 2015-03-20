@@ -15,7 +15,6 @@
 #include <math.h>
 
 
-//------------------------------------------------------------------------
 
 GenericFace::ptrfunction_int_refstring GenericFace::FaceGeomType = NULL;
 GenericFace::ptrfunction_int_refvector_refvector GenericFace::FaceUVFromXYZ = NULL;
@@ -30,7 +29,6 @@ GenericFace::ptrfunction_int_refvector_refvector_refvector GenericFace::FaceFirs
 GenericFace::ptrfunction_int_refvector_refvector_refvector_refvector GenericFace::FaceSecondDer = NULL;
 GenericFace::ptrfunction_int_refbool_refbool_refdouble_refdouble GenericFace::FacePeriodicInfo = NULL;
 
-//------------------------------------------------------------------------
 
 GenericFace::GenericFace(GModel *m, int num, int _native_id):GFace(m, num), id(_native_id){
   if (!FaceParBounds) Msg::Fatal("Genericface::ERROR: Callback FaceParBounds not set");
@@ -42,19 +40,16 @@ GenericFace::GenericFace(GModel *m, int num, int _native_id):GFace(m, num), id(_
   computePeriodicity();
 }
 
-//------------------------------------------------------------------------
 
 GenericFace::~GenericFace(){
 }
 
-//------------------------------------------------------------------------
 
 Range<double> GenericFace::parBounds(int i) const{
   if(i == 0) return Range<double>(umin, umax);
   return Range<double>(vmin, vmax);
 }
 
-//------------------------------------------------------------------------
 
 SVector3 GenericFace::normal(const SPoint2 &param) const{
   vector<double> res(3,0.);
@@ -66,7 +61,6 @@ SVector3 GenericFace::normal(const SPoint2 &param) const{
   return SVector3(res[0],res[1],res[2]);
 }
 
-//------------------------------------------------------------------------
 
 Pair<SVector3,SVector3> GenericFace::firstDer(const SPoint2 &param) const{
   if (!FaceFirstDer) Msg::Fatal("Genericface::ERROR: Callback FaceFirstDer not set");
@@ -80,7 +74,6 @@ Pair<SVector3,SVector3> GenericFace::firstDer(const SPoint2 &param) const{
                                  SVector3(derv[0],derv[1],derv[2]));
 }
 
-//------------------------------------------------------------------------
 
 void GenericFace::secondDer(const SPoint2 &param,SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const{
   vector<double> deruu(3,0.);
@@ -97,7 +90,6 @@ void GenericFace::secondDer(const SPoint2 &param,SVector3 *dudu, SVector3 *dvdv,
   return;
 }
 
-//------------------------------------------------------------------------
 
 GPoint GenericFace::point(double par1, double par2) const{
   vector<double> uv(2,0.);
@@ -116,7 +108,6 @@ GPoint GenericFace::point(double par1, double par2) const{
   return GPoint(xyz[0], xyz[1], xyz[2], this, pp);
 }
 
-//------------------------------------------------------------------------
 
 GPoint GenericFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]) const{
   vector<double> uvres(2,0.);
@@ -142,7 +133,6 @@ GPoint GenericFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]
   return GPoint(xyzres[0], xyzres[1], xyzres[2], this, pp);
 }
 
-//------------------------------------------------------------------------
 
 SPoint2 GenericFace::parFromPoint(const SPoint3 &qp, bool onSurface) const{
   vector<double> uvres(2,0.);
@@ -168,7 +158,6 @@ SPoint2 GenericFace::parFromPoint(const SPoint3 &qp, bool onSurface) const{
   return SPoint2(uvres[0],uvres[1]);
 }
 
-//------------------------------------------------------------------------
 
 GEntity::GeomType GenericFace::geomType() const{
   string s;
@@ -199,7 +188,6 @@ GEntity::GeomType GenericFace::geomType() const{
   return Unknown;
 }
 
-//------------------------------------------------------------------------
 
 double GenericFace::curvatureMax(const SPoint2 &param) const{
   vector<double> dirMax(3,0.);
@@ -213,7 +201,6 @@ double GenericFace::curvatureMax(const SPoint2 &param) const{
   return std::max(fabs(curvMax), fabs(curvMin));
 }
 
-//------------------------------------------------------------------------
 
 double GenericFace::curvatures(const SPoint2 &_param,SVector3 *_dirMax,SVector3 *_dirMin,double *curvMax,double *curvMin) const{
   vector<double> param(2,0.);
@@ -230,7 +217,6 @@ double GenericFace::curvatures(const SPoint2 &_param,SVector3 *_dirMax,SVector3 
   return *curvMax;
 }
 
-//------------------------------------------------------------------------
 
 bool GenericFace::containsPoint(const SPoint3 &pt) const{
   bool res;
@@ -242,7 +228,6 @@ bool GenericFace::containsPoint(const SPoint3 &pt) const{
   return res;
 }
 
-//------------------------------------------------------------------------
 
 void GenericFace::computePeriodicity(){
   if (!FacePeriodicInfo) Msg::Fatal("Genericface::ERROR: Callback FacePeriodicInfo not set");
@@ -252,7 +237,6 @@ void GenericFace::computePeriodicity(){
 
 }
 
-//------------------------------------------------------------------------
 
 void GenericFace::createLoops(){
   const bool debug = false;
@@ -299,5 +283,4 @@ void GenericFace::createLoops(){
   }
 }
 
-//------------------------------------------------------------------------
 

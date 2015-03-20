@@ -12,12 +12,10 @@
 #include "GenericFace.h"
 #include<algorithm>
 
-//------------------------------------------------------------------------
 
 GenericVertex::ptrfunction_int_vector GenericVertex::VertexXYZ = NULL;
 GenericVertex::ptrfunction_int_doubleptr_voidptr GenericVertex::VertexMeshSize = NULL;
 
-//------------------------------------------------------------------------
 
 GenericVertex::GenericVertex(GModel *m, int num, int _native_id):GVertex(m, num), id(_native_id){
   if (!VertexXYZ)
@@ -31,7 +29,6 @@ GenericVertex::GenericVertex(GModel *m, int num, int _native_id):GVertex(m, num)
   _z=vec[2];
 }
 
-//------------------------------------------------------------------------
 
 GenericVertex::GenericVertex(GModel *m, int num, int _native_id, const vector<double> &vec):GVertex(m, num), id(_native_id){
   if (!VertexXYZ)
@@ -42,12 +39,10 @@ GenericVertex::GenericVertex(GModel *m, int num, int _native_id, const vector<do
   _z=vec[2];
 }
 
-//------------------------------------------------------------------------
 
 GenericVertex::~GenericVertex(){
 }
 
-//------------------------------------------------------------------------
 
 SPoint2 GenericVertex::reparamOnFace(const GFace *gf, int dir) const
 {
@@ -57,7 +52,6 @@ SPoint2 GenericVertex::reparamOnFace(const GFace *gf, int dir) const
 
 }
 
-//------------------------------------------------------------------------
 
 void GenericVertex::setPosition(GPoint &p)
 {
@@ -71,4 +65,3 @@ void GenericVertex::setPosition(GPoint &p)
   }
 }
 
-//------------------------------------------------------------------------
