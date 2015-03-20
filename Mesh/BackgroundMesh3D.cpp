@@ -195,7 +195,11 @@ MElementOctree* backgroundMesh3D::getOctree(){
   if(!octree){
     GRegion *gr = dynamic_cast<GRegion*>(gf);
     Msg::Debug("Rebuilding BackgroundMesh element octree");
-    octree = new MElementOctree(gr->tetrahedra);
+    std::vector<MElement*> copy;// !!!
+    for (std::vector<MTetrahedron*>::iterator it = gr->tetrahedra.begin();it!=gr->tetrahedra.end();it++){
+      copy.push_back(*it);
+    }
+    octree = new MElementOctree(copy);
   }
   return octree;
 }
@@ -217,15 +221,15 @@ MVertex* backgroundMesh3D::get_nearest_neighbor(const double* xyz, double & dist
   return candidates[std::distance(distances.begin(),itmax)];
 
 
-//  map<double,MVertex*> distances;
-//  SPoint3 p(xyz[0],xyz[1],xyz[2]);
-//  for (int i=0;i<elem->getNumVertices();i++){
-//    MVertex *v = elem->getVertex(i);
-//    distances.insert(make_pair(p.distance(v->point()),v));
-//  }
-//  map<double,MVertex*>::iterator it = distances.begin();
-//  distance = it->first;
-//  return it->second;
+  //  map<double,MVertex*> distances;
+  //  SPoint3 p(xyz[0],xyz[1],xyz[2]);
+  //  for (int i=0;i<elem->getNumVertices();i++){
+  //    MVertex *v = elem->getVertex(i);
+  //    distances.insert(make_pair(p.distance(v->point()),v));
+  //  }
+  //  map<double,MVertex*>::iterator it = distances.begin();
+  //  distance = it->first;
+  //  return it->second;
 }
 
 
@@ -235,7 +239,7 @@ vector<montripletbis> frameFieldBackgroundMesh3D::permutation = vector<montriple
 frameFieldBackgroundMesh3D::frameFieldBackgroundMesh3D(GRegion *_gr):backgroundMesh3D(_gr){
 
 
-//  readValue("param.dat","SMOOTHCF",smooth_the_crossfield);
+  //  readValue("param.dat","SMOOTHCF",smooth_the_crossfield);
   smooth_the_crossfield = true;
 
   // for the different "quaternion" permutations...
@@ -325,7 +329,7 @@ void frameFieldBackgroundMesh3D::computeSmoothnessOnlyFromBoundaries(){
     multimap<double,MVertex*>::iterator it_neighbors_begin = themap.begin();
 
     crossFieldSmoothness[current] = compare_to_neighbors(current->point(), ref, it_neighbors_begin, themap.end(), mean_axis,mean_angle,vectorial_smoothness);
-//    crossFieldVectorialSmoothness[current] = vectorial_smoothness;
+    //    crossFieldVectorialSmoothness[current] = vectorial_smoothness;
   }
 }
 
@@ -383,12 +387,12 @@ void frameFieldBackgroundMesh3D::computeCrossField(){
   SVector3 mean_axis(0.);
   double mean_angle=0.;
   vector<double> vectorial_smoothness(3);
-//  vector<int> nb_local_iterations;
+  //  vector<int> nb_local_iterations;
 
 
   // main smoothing loop
   while (((norme_inf>norme_threshold) && (percentage_not_done<percentage_threshold)) && (iIter<Niter)){// for maximum Niter iterations, or until convergence
-//    nb_local_iterations.clear();
+    //    nb_local_iterations.clear();
     angles.clear();
     norme_inf=0.;
     int counter_done=0;
@@ -460,7 +464,7 @@ void frameFieldBackgroundMesh3D::computeCrossField(){
       for (;Nlocaliter<20;Nlocaliter++){// iterations, convergence of the local cavity...
         multimap<double,MVertex*>::iterator it_neighbors_to_trust = neighbors_to_trust.begin();
         crossFieldSmoothness[current] = compare_to_neighbors(current->point(), ref, it_neighbors_to_trust, neighbors_to_trust.end(), mean_axis,mean_angle,vectorial_smoothness);
-//        crossFieldVectorialSmoothness[current] = vectorial_smoothness;
+        //        crossFieldVectorialSmoothness[current] = vectorial_smoothness;
 
         // rotating directions to align closest vectors...
         angle_to_go = mean_angle;
@@ -468,7 +472,7 @@ void frameFieldBackgroundMesh3D::computeCrossField(){
         //                cout << "                     iter " << Nlocaliter << ": mean_angle = " << mean_angle << endl;
         if (fabs(mean_angle)<localangle_threshold/3.) break;
       }
-//      nb_local_iterations.push_back(Nlocaliter+1);
+      //      nb_local_iterations.push_back(Nlocaliter+1);
       if (verbose) cout << "iIter " << iIter << ", Nlocaliter = " << Nlocaliter << endl;
 
 
@@ -499,7 +503,7 @@ void frameFieldBackgroundMesh3D::computeCrossField(){
     if (angles.size()) norme = norme/M_PI*180./angles.size();
     percentage_not_done = ((double)counter_not_done)/(counter_done+counter_not_done);
     cout << "   --- iter " << iIter << " NormeInf=" << norme_inf << " mean Angle=" << norme << " counter_not_done=" << counter_not_done << " NotDone (%)=" << (percentage_not_done*100.) << " %" << endl;
-//    cout << "Average number of local iterations: " << ((double)std::accumulate(nb_local_iterations.begin(),nb_local_iterations.end(),0))/nb_local_iterations.size() << endl;
+    //    cout << "Average number of local iterations: " << ((double)std::accumulate(nb_local_iterations.begin(),nb_local_iterations.end(),0))/nb_local_iterations.size() << endl;
 
     //if (debug){
     double temp = log10(Niter);
@@ -531,7 +535,7 @@ void frameFieldBackgroundMesh3D::computeCrossField(){
       crossFieldSmoothness[current] = compare_to_neighbors(current->point(), ref, neighbors_to_trust.begin(), neighbors_to_trust.end(), mean_axis,mean_angle,vectorial_smoothness);
 
       //crossFieldSmoothness[current] = compare_to_neighbors(current->point(), ref, itgraph, range.second, mean_axis,mean_angle,vectorial_smoothness);
-//      crossFieldVectorialSmoothness[current] = vectorial_smoothness;
+      //      crossFieldVectorialSmoothness[current] = vectorial_smoothness;
     }
   }
 
@@ -826,8 +830,8 @@ double frameFieldBackgroundMesh3D::compare_to_neighbors(SPoint3 current, STensor
   vector<SVector3>all_axis;
   TensorStorageType::iterator itneighbor;
 
-//  vectorial_smoothness.assign(3,0.);
-//  vector<double> temp(3);
+  //  vectorial_smoothness.assign(3,0.);
+  //  vector<double> temp(3);
 
   vector<double> ponderations_vec;
 
@@ -847,35 +851,35 @@ double frameFieldBackgroundMesh3D::compare_to_neighbors(SPoint3 current, STensor
     all_angle.push_back(minimum_angle);
     alternative.push_back(fabs(minimum_angle));
 
-//    // now, computing vectorial smoothness
-//    for (int j=0;j<3;j++){// for every cross field vector
-//      temp.assign(3,0.);
-//      for (int ivec=0;ivec<3;ivec++){// for every neighbor vector
-//        for (int k=0;k<3;k++){
-//          temp[ivec] += (neibcross(k,ivec)*ref(k,j));// scalar products
-//        }
-//        temp[ivec] = fabs(temp[ivec]);
-//      }
-//      vectorial_smoothness[j] += acos(fmin(*std::max_element(temp.begin(),temp.end()),1.));
-//    }
+    //    // now, computing vectorial smoothness
+    //    for (int j=0;j<3;j++){// for every cross field vector
+    //      temp.assign(3,0.);
+    //      for (int ivec=0;ivec<3;ivec++){// for every neighbor vector
+    //        for (int k=0;k<3;k++){
+    //          temp[ivec] += (neibcross(k,ivec)*ref(k,j));// scalar products
+    //        }
+    //        temp[ivec] = fabs(temp[ivec]);
+    //      }
+    //      vectorial_smoothness[j] += acos(fmin(*std::max_element(temp.begin(),temp.end()),1.));
+    //    }
 
 
   }
 
   // Watch out !!!      acos(mean_angle)  !=  mean_acos    ->     second option gives better results, better contrast between smooth and not smooth
-//  for (int j=0;j<3;j++){
-//    vectorial_smoothness[j] = (1. - (vectorial_smoothness[j]/all_angle.size())/M_PI*4.);// between 0 (not smooth) and 1 (smooth)
-//  }
+  //  for (int j=0;j<3;j++){
+  //    vectorial_smoothness[j] = (1. - (vectorial_smoothness[j]/all_angle.size())/M_PI*4.);// between 0 (not smooth) and 1 (smooth)
+  //  }
 
-  
+
   // ----------------------------------------------------------------------------
   // Watch out !!!  The following definition of smoothness may change A LOT !!!
   // ----------------------------------------------------------------------------
   // may seem against intuition in some case, but min gives much better results
   // finally... mean angle !!!
 
-//  double smoothness_scalar = (*std::max_element(vectorial_smoothness.begin(),vectorial_smoothness.end()));
-//  double smoothness_scalar = (*std::min_element(vectorial_smoothness.begin(),vectorial_smoothness.end()));
+  //  double smoothness_scalar = (*std::max_element(vectorial_smoothness.begin(),vectorial_smoothness.end()));
+  //  double smoothness_scalar = (*std::min_element(vectorial_smoothness.begin(),vectorial_smoothness.end()));
   double smoothness_scalar = 1. - (std::accumulate(alternative.begin(),alternative.end(),0.)/alternative.size())/M_PI*4.;// APPROXIMATELY between 0 (not smooth) and 1 (smooth), (sometimes <0, always > 1).
 
 
