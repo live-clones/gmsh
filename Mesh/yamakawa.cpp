@@ -6,13 +6,19 @@
 // Contributor(s):
 //   Tristan Carrier
 
+// FIXME: This code should be cleaned up and made to conform with Gmsh's coding
+// style
+
+#include <numeric>
 #include <iterator>
-#include "yamakawa.h"
-#include "GModel.h"
-#include "MVertex.h"
-#include "MElement.h"
 #include <fstream>
 #include <sstream>
+#include <math.h>
+#include "yamakawa.h"
+#include "GModel.h"
+#include "OS.h"
+#include "MVertex.h"
+#include "MElement.h"
 #include "MHexahedron.h"
 #include "MQuadrangle.h"
 #include "MTriangle.h"
@@ -20,54 +26,61 @@
 #include "MPrism.h"
 #include "MTetrahedron.h"
 #include "MHexahedron.h"
-#include <numeric>
-#include <math.h>
 
-
-
-
-void export_gregion_mesh(GRegion *gr, string filename){
+void export_gregion_mesh(GRegion *gr, string filename)
+{
+  // FIXME: why not use MElement::writeMSH !?
 
   // create set of all tets
   map<MVertex*,int> vertices;
   int counterv=1;
-  
-  for (vector<MTetrahedron*>::iterator it = gr->tetrahedra.begin();it!=gr->tetrahedra.end();it++){
-      for (int i=0;i<(*it)->getNumVertices();i++){
-        vertices.insert(make_pair((*it)->getVertex(i),counterv));
-        counterv++;
-      }
+
+  for (vector<MTetrahedron*>::iterator it = gr->tetrahedra.begin();
+       it!=gr->tetrahedra.end(); it++){
+    for (int i=0;i<(*it)->getNumVertices();i++){
+      vertices.insert(make_pair((*it)->getVertex(i),counterv));
+      counterv++;
+    }
   }
-  for (vector<MHexahedron*>::iterator it = gr->hexahedra.begin();it!=gr->hexahedra.end();it++){
-      for (int i=0;i<(*it)->getNumVertices();i++){
-        vertices.insert(make_pair((*it)->getVertex(i),counterv));
-        counterv++;
-      }
+  for (vector<MHexahedron*>::iterator it = gr->hexahedra.begin();
+       it!=gr->hexahedra.end(); it++){
+    for (int i=0;i<(*it)->getNumVertices();i++){
+      vertices.insert(make_pair((*it)->getVertex(i),counterv));
+      counterv++;
+    }
   }
-  for (vector<MPrism*>::iterator it = gr->prisms.begin();it!=gr->prisms.end();it++){
-      for (int i=0;i<(*it)->getNumVertices();i++){
-        vertices.insert(make_pair((*it)->getVertex(i),counterv));
-        counterv++;
-      }
+  for (vector<MPrism*>::iterator it = gr->prisms.begin();
+       it!=gr->prisms.end(); it++){
+    for (int i=0;i<(*it)->getNumVertices();i++){
+      vertices.insert(make_pair((*it)->getVertex(i),counterv));
+      counterv++;
+    }
   }
-  for (vector<MPyramid*>::iterator it = gr->pyramids.begin();it!=gr->pyramids.end();it++){
-      for (int i=0;i<(*it)->getNumVertices();i++){
-        vertices.insert(make_pair((*it)->getVertex(i),counterv));
-        counterv++;
-      }
+  for (vector<MPyramid*>::iterator it = gr->pyramids.begin();
+       it!=gr->pyramids.end(); it++){
+    for (int i=0;i<(*it)->getNumVertices();i++){
+      vertices.insert(make_pair((*it)->getVertex(i),counterv));
+      counterv++;
+    }
   }
 
   // export mesh
   ofstream out(filename.c_str());
-  out << "$MeshFormat" << endl << "2.2 0 8" << endl << "$EndMeshFormat" << endl << "$Nodes" << endl << vertices.size() << endl;
+  out << "$MeshFormat" << endl << "2.2 0 8" << endl << "$EndMeshFormat"
+      << endl << "$Nodes" << endl << vertices.size() << endl;
   // write vertices
-  for (map<MVertex*,int>::iterator it = vertices.begin();it!=vertices.end();it++)
-    out << it->second << " " << it->first->x() << " " << it->first->y() << " " << it->first->z() << endl;
-  out << "$EndNodes" << endl << "$Elements" << endl << (gr->tetrahedra.size()+gr->hexahedra.size()+gr->prisms.size()+gr->pyramids.size()) << endl;
-  
+  for (map<MVertex*,int>::iterator it = vertices.begin();
+       it!=vertices.end(); it++)
+    out << it->second << " " << it->first->x() << " " << it->first->y()
+        << " " << it->first->z() << endl;
+  out << "$EndNodes" << endl << "$Elements" << endl
+      << (gr->tetrahedra.size() + gr->hexahedra.size() +
+          gr->prisms.size() + gr->pyramids.size()) << endl;
+
   // write elems
-  int counter=1;
-  for (vector<MTetrahedron*>::iterator it = gr->tetrahedra.begin();it!=gr->tetrahedra.end();it++){
+  int counter = 1;
+  for (vector<MTetrahedron*>::iterator it = gr->tetrahedra.begin();
+       it!=gr->tetrahedra.end();it++){
     out << counter << " 4 2 0 26";
     for (int i=0;i<(*it)->getNumVertices();i++){
       MVertex *v = (*it)->getVertex(i);
@@ -76,7 +89,8 @@ void export_gregion_mesh(GRegion *gr, string filename){
     out << endl;
     counter++;
   }
-  for (vector<MHexahedron*>::iterator it = gr->hexahedra.begin();it!=gr->hexahedra.end();it++){
+  for (vector<MHexahedron*>::iterator it = gr->hexahedra.begin();
+       it!=gr->hexahedra.end();it++){
     out << counter << " 5 2 0 26";
     for (int i=0;i<(*it)->getNumVertices();i++){
       MVertex *v = (*it)->getVertex(i);
@@ -85,7 +99,8 @@ void export_gregion_mesh(GRegion *gr, string filename){
     out << endl;
     counter++;
   }
-  for (vector<MPrism*>::iterator it = gr->prisms.begin();it!=gr->prisms.end();it++){
+  for (vector<MPrism*>::iterator it = gr->prisms.begin();
+       it!=gr->prisms.end();it++){
     out << counter << " 6 2 0 26";
     for (int i=0;i<(*it)->getNumVertices();i++){
       MVertex *v = (*it)->getVertex(i);
@@ -94,7 +109,8 @@ void export_gregion_mesh(GRegion *gr, string filename){
     out << endl;
     counter++;
   }
-  for (vector<MPyramid*>::iterator it = gr->pyramids.begin();it!=gr->pyramids.end();it++){
+  for (vector<MPyramid*>::iterator it = gr->pyramids.begin();
+       it!=gr->pyramids.end();it++){
     out << counter << " 7 2 0 26";
     for (int i=0;i<(*it)->getNumVertices();i++){
       MVertex *v = (*it)->getVertex(i);
@@ -103,20 +119,15 @@ void export_gregion_mesh(GRegion *gr, string filename){
     out << endl;
     counter++;
   }
-  
-  
-  
+
   out << "$EndElements" << endl;
   out.close();
-
-
 }
 
-
-
 template <class T>
-void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl, int clique_number,string filename){
-
+void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
+                                       int clique_number,string filename)
+{
   ofstream out(filename.c_str());
   out << "Graph G {" << endl;
   typename multimap<int,set<T> >::reverse_iterator it_all = cl.allQ.rbegin();
@@ -130,7 +141,6 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl, int c
 
   //typedef tr1::unordered_multimap<hash_key, T> graph_data;
   //typedef tr1::unordered_multimap<hash_key, pair<T, graph_data > > graph;
-
 
   int counter=1;
   map<T,int> visited_hex;
@@ -155,9 +165,6 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl, int c
     else
       num1 = itfind->second;
 
-
-
-
     itgraphdata = itgraph->second.second.begin();
     for(;itgraphdata!=itgraph->second.second.end();itgraphdata++){
       T secondhex = itgraphdata->second;
@@ -173,7 +180,8 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl, int c
 
       // search if num1 - num2 has already been written...
       bool found=false;
-      pair<multimap<int,int>::iterator, multimap<int,int>::iterator> range = done.equal_range(num1);
+      pair<multimap<int,int>::iterator, multimap<int,int>::iterator> range =
+        done.equal_range(num1);
       for(multimap<int,int>::iterator it = range.first;it!=range.second;it++){
         if (it->second==num2){
           found=true;
@@ -200,33 +208,29 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl, int c
       int num2=0;
       num2=counter;
       visited_hex[itfind->first] = counter++;
-      out << num2 << " [shape=circle, style=filled, fillcolor=red];" << endl; 
+      out << num2 << " [shape=circle, style=filled, fillcolor=red];" << endl;
     }
     else
-      out << itfind->second << " [shape=circle, style=filled, fillcolor=red];" << endl; 
+      out << itfind->second << " [shape=circle, style=filled, fillcolor=red];" << endl;
   }
-
-
 
   out << "}" << endl;
   out.close();
 }
 
-
-
-
-
 template<class T>
-clique_stop_criteria<T>::clique_stop_criteria(map<T, std::set<MElement*> > &_m, int _i):hex_to_tet(_m),total_number_tet(_i){
+clique_stop_criteria<T>::clique_stop_criteria(map<T, std::set<MElement*> > &_m, int _i)
+  : hex_to_tet(_m),total_number_tet(_i)
+{
 };
-
 
 template<class T>
 clique_stop_criteria<T>::~clique_stop_criteria(){};
 
-
 template<class T>
-void clique_stop_criteria<T>::export_corresponding_mesh(const graph_data_no_hash &clique)const{
+void clique_stop_criteria<T>::export_corresponding_mesh
+(const graph_data_no_hash &clique) const
+{
   // NB: fct not often called...
 
   // filename
@@ -271,15 +275,19 @@ void clique_stop_criteria<T>::export_corresponding_mesh(const graph_data_no_hash
     hexs.insert(h);
   }
 
-  // export mesh
+  // export mesh FIXME: why not use MElement::writeMSH
   ofstream out(filename.c_str());
   ofstream outtets(filenametets.c_str());
-  out << "$MeshFormat" << endl << "2.2 0 8" << endl << "$EndMeshFormat" << endl << "$Nodes" << endl << vertices.size() << endl;
-  outtets << "$MeshFormat" << endl << "2.2 0 8" << endl << "$EndMeshFormat" << endl << "$Nodes" << endl << vertices.size() << endl;
+  out << "$MeshFormat" << endl << "2.2 0 8" << endl << "$EndMeshFormat"
+      << endl << "$Nodes" << endl << vertices.size() << endl;
+  outtets << "$MeshFormat" << endl << "2.2 0 8" << endl << "$EndMeshFormat"
+          << endl << "$Nodes" << endl << vertices.size() << endl;
   // write vertices
   for (map<MVertex*,int>::iterator it = vertices.begin();it!=vertices.end();it++){
-    out << it->second << " " << it->first->x() << " " << it->first->y() << " " << it->first->z() << endl;
-    outtets << it->second << " " << it->first->x() << " " << it->first->y() << " " << it->first->z() << endl;
+    out << it->second << " " << it->first->x() << " "
+        << it->first->y() << " " << it->first->z() << endl;
+    outtets << it->second << " " << it->first->x() << " "
+            << it->first->y() << " " << it->first->z() << endl;
   }
   out << "$EndNodes" << endl << "$Elements" << endl << (hexs.size()+tets.size()) << endl;
   outtets << "$EndNodes" << endl << "$Elements" << endl << (hexs.size()+tets.size()) << endl;
@@ -313,13 +321,12 @@ void clique_stop_criteria<T>::export_corresponding_mesh(const graph_data_no_hash
   out.close();
   outtets << "$EndElements" << endl;
   outtets.close();
-
-
 }
 
 
 template<class T>
-bool clique_stop_criteria<T>::stop(const graph_data_no_hash &clique)const{
+bool clique_stop_criteria<T>::stop(const graph_data_no_hash &clique)const
+{
   unsigned int total = 0;
 
   // need to detect slivers !!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -350,7 +357,7 @@ bool clique_stop_criteria<T>::stop(const graph_data_no_hash &clique)const{
 
   }
 
-  // to be sure, adding volume criteria... 
+  // to be sure, adding volume criteria...
   vector<double> volumes;
   for (set<MElement*>::iterator it = thetets.begin();it!=thetets.end();it++){
     volumes.push_back((*it)->getVolume());
@@ -374,21 +381,28 @@ bool clique_stop_criteria<T>::stop(const graph_data_no_hash &clique)const{
 
 
 template<class T>
-cliques_compatibility_graph<T>::cliques_compatibility_graph(graph &_g, const map<T, std::vector<double> > &_hex_ranks, unsigned int _max_nb_cliques, unsigned int _nb_hex_potentiels, clique_stop_criteria<T> *csc, ptrfunction_export fct):debug(false), max_nb_cliques(_max_nb_cliques), nb_hex_potentiels(_nb_hex_potentiels), max_clique_size(0), position(0), total_nodes_number(0), cancel_search(false), hex_ranks(_hex_ranks), G(_g),criteria(csc),export_clique_graph(fct),found_the_ultimate_max_clique(false){
-
+cliques_compatibility_graph<T>::cliques_compatibility_graph
+(graph &_g, const map<T, std::vector<double> > &_hex_ranks,
+ unsigned int _max_nb_cliques, unsigned int _nb_hex_potentiels,
+ clique_stop_criteria<T> *csc, ptrfunction_export fct)
+  : debug(false), max_nb_cliques(_max_nb_cliques),
+    nb_hex_potentiels(_nb_hex_potentiels), max_clique_size(0), position(0),
+    total_nodes_number(0), cancel_search(false), hex_ranks(_hex_ranks),
+    G(_g),criteria(csc),export_clique_graph(fct),
+    found_the_ultimate_max_clique(false)
+{
   total_nb_of_cliques_searched = 0;
   max_nb_of_stored_cliques = 10;
-
 };
 
-
 template<class T>
-cliques_compatibility_graph<T>::~cliques_compatibility_graph(){
+cliques_compatibility_graph<T>::~cliques_compatibility_graph()
+{
 };
 
-
 template<class T>
-void cliques_compatibility_graph<T>::find_cliques(){
+void cliques_compatibility_graph<T>::find_cliques()
+{
   // init
   graph_data s;
   for (typename graph::iterator it = G.begin();it!=G.end();it++){
@@ -402,9 +416,9 @@ void cliques_compatibility_graph<T>::find_cliques(){
 
 };
 
-
 template<class T>
-void cliques_compatibility_graph<T>::export_cliques(){
+void cliques_compatibility_graph<T>::export_cliques()
+{
   typename multimap<int, set<T> >::reverse_iterator itstore = allQ.rbegin();
   for (;itstore!=allQ.rend();itstore++){
     cout << "clique of size " << itstore->first << ": {";
@@ -417,10 +431,9 @@ void cliques_compatibility_graph<T>::export_cliques(){
 
 
 template<class T>
-void cliques_compatibility_graph<T>::store_clique(int n){
-
+void cliques_compatibility_graph<T>::store_clique(int n)
+{
   total_nb_of_cliques_searched++;
-
 
   if(total_nb_of_cliques_searched%10000==0){
     if (max_nb_cliques>0)
@@ -429,12 +442,10 @@ void cliques_compatibility_graph<T>::store_clique(int n){
       cout << "found " << total_nb_of_cliques_searched << " cliques " << endl << flush;
   }
 
-
   if (debug){
     for (int i=0;i<n;i++) cout << " ";
     cout << "entering store_clique." << endl;
   }
-
 
   //  // check if the current clique already exists
   //  typename multimap<int, set<T> >::iterator itall = allQ.begin();
@@ -443,7 +454,7 @@ void cliques_compatibility_graph<T>::store_clique(int n){
   //    if (itall->first != currentsize) continue;
   //    typename std::vector<T> common(currentsize);
   //    typename std::vector<T>::iterator itfind = std::set_intersection (itall->second.begin(),itall->second.end(), Q.begin(),Q.end(), common.begin());
-  //    common.resize(itfind-common.begin()); 
+  //    common.resize(itfind-common.begin());
   //    if (common.size()==currentsize){
   //      cout << "deux cliques les mêmes !!!" << endl;
   //      cout << "première: " << endl;
@@ -461,8 +472,6 @@ void cliques_compatibility_graph<T>::store_clique(int n){
   //
   //  }
   //  // END
-
-
 
   bool found_best_clique_so_far=false;
   if (Q.size()>max_clique_size){
@@ -484,9 +493,6 @@ void cliques_compatibility_graph<T>::store_clique(int n){
     found_the_ultimate_max_clique=true;
   }
 
-
-
-
   const bool verbose=false;
   if (verbose) cout << "MAX CLIQUE found of size " << Q.size() << " # total cliques searched:" << total_nb_of_cliques_searched << endl;
 
@@ -496,7 +502,7 @@ void cliques_compatibility_graph<T>::store_clique(int n){
   }
 
   // storing the current clique... or not, depending of the number of cliques to store, to reduce memory footprint.
-  bool store_it = true; 
+  bool store_it = true;
   bool delete_worst=false;
   if ((max_nb_of_stored_cliques) && (allQ.size()>=max_nb_of_stored_cliques)){
     // then, compare sizes...
@@ -521,7 +527,7 @@ void cliques_compatibility_graph<T>::store_clique(int n){
     }
   }
 
-  // finally, possibly delete worst clique, to reduce memory footprint 
+  // finally, possibly delete worst clique, to reduce memory footprint
   if (delete_worst) allQ.erase(allQ.begin());
 
   if (debug){
@@ -539,7 +545,8 @@ void cliques_compatibility_graph<T>::store_clique(int n){
 
 
 template<class T>
-void cliques_compatibility_graph<T>::find_cliques(graph_data &s, int n){
+void cliques_compatibility_graph<T>::find_cliques(graph_data &s, int n)
+{
   // possible end
   if (s.size()==0){
     store_clique(n);
@@ -650,8 +657,10 @@ void cliques_compatibility_graph<T>::find_cliques(graph_data &s, int n){
 
 
 template<class T>
-void cliques_compatibility_graph<T>::erase_entry(graph_data &s, T &u, hash_key &key){
-  pair<typename graph_data::iterator, typename graph_data::iterator> range = s.equal_range(key);
+void cliques_compatibility_graph<T>::erase_entry(graph_data &s, T &u, hash_key &key)
+{
+  pair<typename graph_data::iterator, typename graph_data::iterator> range =
+    s.equal_range(key);
 
   typename graph_data::iterator it = range.first;
   for (;it!=range.second;it++){
@@ -664,7 +673,8 @@ void cliques_compatibility_graph<T>::erase_entry(graph_data &s, T &u, hash_key &
 
 
 template<class T>
-void cliques_compatibility_graph<T>::choose_u(const graph_data &s, T &u, hash_key &u_key){
+void cliques_compatibility_graph<T>::choose_u(const graph_data &s, T &u, hash_key &u_key)
+{
   if (s.size()==0){
     u=T();
     u_key=0;
@@ -698,19 +708,17 @@ void cliques_compatibility_graph<T>::choose_u(const graph_data &s, T &u, hash_ke
     }
   }
 
-
-
   //  typename map<T, std::vector<double> >::const_iterator itfind = hex_ranks.find(u);
   //  cout << "u: " << u << " # face tri: " << itfind->second[0] << " quality: " << u->get_quality() << " value max: " << valuemax << endl;
-
-
 
   return;
 }
 
-
 template<class T>
-void cliques_compatibility_graph<T>::split_set_BW(const T &u, const hash_key &u_key, const graph_data &s, graph_data &white, graph_data &black){
+void cliques_compatibility_graph<T>::split_set_BW(const T &u, const hash_key &u_key,
+                                                  const graph_data &s, graph_data &white,
+                                                  graph_data &black)
+{
   // splitting set s into white and black nodes
   white.insert(make_pair(u_key,u));
   typename graph_data::const_iterator it = s.begin();
@@ -726,7 +734,9 @@ void cliques_compatibility_graph<T>::split_set_BW(const T &u, const hash_key &u_
 
 
 template<class T>
-void cliques_compatibility_graph<T>::fill_black_set(const T &u, const hash_key &u_key, const graph_data &s, graph_data &black){
+void cliques_compatibility_graph<T>::fill_black_set(const T &u, const hash_key &u_key,
+                                                    const graph_data &s, graph_data &black)
+{
   // filling black set
   typename graph_data::const_iterator it = s.begin();
   for (;it!=s.end();it++){
@@ -739,7 +749,10 @@ void cliques_compatibility_graph<T>::fill_black_set(const T &u, const hash_key &
 
 // the maximum score (int) will be chosen...
 template<class T>
-double cliques_compatibility_graph<T>::function_to_maximize_for_u(const T &u, const hash_key &u_key, const graph_data &s){
+double cliques_compatibility_graph<T>::function_to_maximize_for_u(const T &u,
+                                                                  const hash_key &u_key,
+                                                                  const graph_data &s)
+{
   typename graph_data::const_iterator it = s.begin();
   int counter=0;
   for (;it!=s.end();it++){
@@ -760,8 +773,9 @@ double cliques_compatibility_graph<T>::function_to_maximize_for_u(const T &u, co
 
 
 template<class T>
-bool cliques_compatibility_graph<T>::compatibility(const T &u, const hash_key &u_key, const T &v, const hash_key &v_key){
-
+bool cliques_compatibility_graph<T>::compatibility(const T &u, const hash_key &u_key,
+                                                   const T &v, const hash_key &v_key)
+{
   // first, find u in graph
   pair<typename graph::const_iterator, typename graph::const_iterator> range_ukey = G.equal_range(u_key);
   typename graph::const_iterator itfind_u = range_ukey.first;
@@ -784,8 +798,9 @@ bool cliques_compatibility_graph<T>::compatibility(const T &u, const hash_key &u
 
 
 template<class T>
-bool cliques_losses_graph<T>::compatibility(const T &u, const hash_key &u_key, const T &v, const hash_key &v_key){
-
+bool cliques_losses_graph<T>::compatibility(const T &u, const hash_key &u_key,
+                                            const T &v, const hash_key &v_key)
+{
   // first, find u in graph
   pair<typename graph::const_iterator, typename graph::const_iterator> range_ukey = G.equal_range(u_key);
   typename graph::const_iterator itfind_u = range_ukey.first;
@@ -808,22 +823,24 @@ bool cliques_losses_graph<T>::compatibility(const T &u, const hash_key &u_key, c
 
 
 template<class T>
-cliques_losses_graph<T>::cliques_losses_graph(graph &_g, const map<T, std::vector<double> > &_hex_ranks, unsigned int _max_nb_cliques, unsigned int _nb_hex_potentiels, clique_stop_criteria<T> *csc, ptrfunction_export fct):cliques_compatibility_graph<T>(_g, _hex_ranks, _max_nb_cliques, _nb_hex_potentiels,csc,fct),G(_g){
+cliques_losses_graph<T>::cliques_losses_graph
+(graph &_g, const map<T, std::vector<double> > &_hex_ranks,
+ unsigned int _max_nb_cliques, unsigned int _nb_hex_potentiels,
+ clique_stop_criteria<T> *csc, ptrfunction_export fct)
+  : cliques_compatibility_graph<T>(_g, _hex_ranks, _max_nb_cliques,
+                                   _nb_hex_potentiels,csc,fct),G(_g)
+{
 };
-
 
 template<class T>
 cliques_losses_graph<T>::~cliques_losses_graph(){
 };
 
 
-
-
-
-
-
-bool compare_hex_ptr_by_quality (Hex *a,Hex *b) { return (a->get_quality()>(b->get_quality())); }
-
+bool compare_hex_ptr_by_quality (Hex *a,Hex *b)
+{
+  return (a->get_quality()>(b->get_quality()));
+}
 
 /*****************************************/
 /****************class Hex****************/
@@ -911,33 +928,33 @@ MVertex* Hex::get_h(){
 MVertex* Hex::getVertex(int n){
   MVertex *v;
   switch (n){
-    case 0:
-      v = get_a();
-      break;
-    case 1:
-      v = get_b();
-      break;
-    case 2:
-      v = get_c();
-      break;
-    case 3:
-      v = get_d();
-      break;
-    case 4:
-      v = get_e();
-      break;
-    case 5:
-      v = get_f();
-      break;
-    case 6:
-      v = get_g();
-      break;
-    case 7:
-      v = get_h();
-      break;
-    default:
-      cout << "Hex: unknown vertex number " << n << endl;
-      throw;
+  case 0:
+    v = get_a();
+    break;
+  case 1:
+    v = get_b();
+    break;
+  case 2:
+    v = get_c();
+    break;
+  case 3:
+    v = get_d();
+    break;
+  case 4:
+    v = get_e();
+    break;
+  case 5:
+    v = get_f();
+    break;
+  case 6:
+    v = get_g();
+    break;
+  case 7:
+    v = get_h();
+    break;
+  default:
+    cout << "Hex: unknown vertex number " << n << endl;
+    throw;
   }
   return v;
 }
@@ -1297,12 +1314,12 @@ void Recombinator::execute(){
   GModel::riter it;
 
   for(it=model->firstRegion();it!=model->lastRegion();it++)
-  {
-    gr = *it;
-    if(gr->getNumMeshElements()>0){
-      execute(gr);
+    {
+      gr = *it;
+      if(gr->getNumMeshElements()>0){
+        execute(gr);
+      }
     }
-  }
 }
 
 void Recombinator::execute(GRegion* gr){
@@ -1880,21 +1897,21 @@ void Recombinator::build_tuples(GRegion* gr){
   faces = gr->faces();
 
   for(it=faces.begin();it!=faces.end();it++)
-  {
-    gf = *it;
+    {
+      gf = *it;
 
-    for(i=0;i<gf->getNumMeshElements();i++){
-      element = gf->getMeshElement(i);
+      for(i=0;i<gf->getNumMeshElements();i++){
+        element = gf->getMeshElement(i);
 
-      if(element->getNumVertices()==3){
-        a = element->getVertex(0);
-        b = element->getVertex(1);
-        c = element->getVertex(2);
+        if(element->getNumVertices()==3){
+          a = element->getVertex(0);
+          b = element->getVertex(1);
+          c = element->getVertex(2);
 
-        tuples.insert(Tuple(a,b,c,element,gf));
+          tuples.insert(Tuple(a,b,c,element,gf));
+        }
       }
     }
-  }
 }
 
 void Recombinator::modify_surfaces(GRegion* gr){
@@ -1933,28 +1950,28 @@ void Recombinator::modify_surfaces(GRegion* gr){
   faces = gr->faces();
 
   for(it=faces.begin();it!=faces.end();it++)
-  {
-    gf = *it;
+    {
+      gf = *it;
 
-    opt.clear();
+      opt.clear();
 
-    for(i=0;i<gf->getNumMeshElements();i++){
-      element = gf->getMeshElement(i);
+      for(i=0;i<gf->getNumMeshElements();i++){
+        element = gf->getMeshElement(i);
 
-      if(element->getNumVertices()==3){
-        it2 = triangles.find(element);
-        if(it2==triangles.end()){
-          opt.push_back(element);
+        if(element->getNumVertices()==3){
+          it2 = triangles.find(element);
+          if(it2==triangles.end()){
+            opt.push_back(element);
+          }
         }
       }
-    }
 
-    gf->triangles.clear();
+      gf->triangles.clear();
 
-    for(i=0;i<opt.size();i++){
-      gf->triangles.push_back((MTriangle*)opt[i]);
+      for(i=0;i<opt.size();i++){
+        gf->triangles.push_back((MTriangle*)opt[i]);
+      }
     }
-  }
 }
 
 void Recombinator::modify_surfaces(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
@@ -2448,7 +2465,7 @@ MVertex* Recombinator::find(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* already
 }
 
 void Recombinator::intersection(const std::set<MVertex*>& bin1,const std::set<MVertex*>& bin2,
-    const std::vector<MVertex*>& already,std::set<MVertex*>& final){
+                                const std::vector<MVertex*>& already,std::set<MVertex*>& final){
   size_t i;
   bool ok;
   std::set<MVertex*> temp;
@@ -2473,7 +2490,7 @@ void Recombinator::intersection(const std::set<MVertex*>& bin1,const std::set<MV
 }
 
 void Recombinator::intersection(const std::set<MVertex*>& bin1,const std::set<MVertex*>& bin2,const std::set<MVertex*>& bin3,
-    const std::vector<MVertex*>& already,std::set<MVertex*>& final){
+                                const std::vector<MVertex*>& already,std::set<MVertex*>& final){
   size_t i;
   bool ok;
   std::set<MVertex*> temp;
@@ -2644,8 +2661,8 @@ bool Recombinator::duplicate(Diagonal diagonal){
 // est "conforme A" une face si ses 4 facets existent dans tableA, ou bien si aucune des ses facets ne se trouve dans table A
 // ça veut dire: un hex est condorme A s'il est tout seul.
 // Sinon, s'il est pas tout seul, s'il a des "voisins de face"... il faut que les faces en contact soient bien en contact... pas juste un triangle en commun, mais il faut un QUAD en commun !
-// ne pouvait-on pas écrire ça avec des quad, du coup ??? 
-// ça veut dire que pour les slivers, qu'ils soient ou pas dans l'hex, dans tous les cas, les hex sont compatibles ! 
+// ne pouvait-on pas écrire ça avec des quad, du coup ???
+// ça veut dire que pour les slivers, qu'ils soient ou pas dans l'hex, dans tous les cas, les hex sont compatibles !
 bool Recombinator::conformityA(Hex &hex){
   bool c1,c2,c3,c4,c5,c6;
   MVertex *a,*b,*c,*d;
@@ -2691,8 +2708,8 @@ bool Recombinator::conformityA(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
 }
 
 // return false si:
-//- une des 12 arrêtes de l'hex se trouve dans tableB !!! (pas C !!!), càd si une arrete a été utilisée comme diagonale d'un autre hex 
-//- (ou bien) si, pour chaque face de l'hex, on a une diagonale dans tableB et pas l'autre 
+//- une des 12 arrêtes de l'hex se trouve dans tableB !!! (pas C !!!), càd si une arrete a été utilisée comme diagonale d'un autre hex
+//- (ou bien) si, pour chaque face de l'hex, on a une diagonale dans tableB et pas l'autre
 // ce test conformityB n'est-il pas redondant avec conformityA ???
 bool Recombinator::conformityB(Hex &hex){
   bool flag1;
@@ -2932,7 +2949,7 @@ void Recombinator::build_vertex_to_vertices(GRegion* gr){
   for(i=0;i<gr->getNumMeshElements();i++){
     if(i%progress==0){
       done += percentage*100;
-      cout << "..." << done << "% " << flush; 
+      cout << "..." << done << "% " << flush;
     }
     element = gr->getMeshElement(i);
     for(j=0;j<element->getNumVertices();j++){
@@ -2967,7 +2984,7 @@ void Recombinator::build_vertex_to_elements(GRegion* gr){
   MVertex* vertex;
   std::set<MElement*> bin;
   std::map<MVertex*,std::set<MElement*> >::iterator it;
-  
+
   int nbElements = gr->getNumMeshElements();
   double percentage=0.05;
   double done=0.;
@@ -2978,7 +2995,7 @@ void Recombinator::build_vertex_to_elements(GRegion* gr){
   for(i=0;i<gr->getNumMeshElements();i++){
     if(i%progress==0){
       done += percentage*100;
-      cout << "..." << done << "% " << flush; 
+      cout << "..." << done << "% " << flush;
     }
     element = gr->getMeshElement(i);
     for(j=0;j<element->getNumVertices();j++){
@@ -2998,7 +3015,7 @@ void Recombinator::build_vertex_to_elements(GRegion* gr){
   cout << endl;
 }
 
-// pour les 6 faces de l'hex, stocke les 4 "facet" (équivalent à PETriangle) possibles dans la table A 
+// pour les 6 faces de l'hex, stocke les 4 "facet" (équivalent à PETriangle) possibles dans la table A
 void Recombinator::build_hash_tableA(Hex hex){
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
@@ -3054,7 +3071,7 @@ void Recombinator::build_hash_tableA(Facet facet){
   }
 }
 
-// pour les 6 faces de l'hex, stoke les 2 "diagonal" possibles dans la table B 
+// pour les 6 faces de l'hex, stoke les 2 "diagonal" possibles dans la table B
 void Recombinator::build_hash_tableB(Hex hex){
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
@@ -3215,9 +3232,9 @@ void Recombinator::print_hash_tableA(){
 
 void Recombinator::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
   file << "SL ("
-    << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "
-    << p2.x() << ", " << p2.y() << ", " << p2.z() << ")"
-    << "{10, 20};\n";
+       << p1.x() << ", " << p1.y() << ", " << p1.z() << ", "
+       << p2.x() << ", " << p2.y() << ", " << p2.z() << ")"
+       << "{10, 20};\n";
 }
 
 double Recombinator::scaled_jacobian(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
@@ -3393,12 +3410,12 @@ void Supplementary::execute(){
   GModel::riter it;
 
   for(it=model->firstRegion();it!=model->lastRegion();it++)
-  {
-    gr = *it;
-    if(gr->getNumMeshElements()>0){
-      execute(gr);
+    {
+      gr = *it;
+      if(gr->getNumMeshElements()>0){
+        execute(gr);
+      }
     }
-  }
 }
 
 void Supplementary::execute(GRegion* gr){
@@ -3701,21 +3718,21 @@ void Supplementary::build_tuples(GRegion* gr){
   faces = gr->faces();
 
   for(it=faces.begin();it!=faces.end();it++)
-  {
-    gf = *it;
+    {
+      gf = *it;
 
-    for(i=0;i<gf->getNumMeshElements();i++){
-      element = gf->getMeshElement(i);
+      for(i=0;i<gf->getNumMeshElements();i++){
+        element = gf->getMeshElement(i);
 
-      if(element->getNumVertices()==3){
-        a = element->getVertex(0);
-        b = element->getVertex(1);
-        c = element->getVertex(2);
+        if(element->getNumVertices()==3){
+          a = element->getVertex(0);
+          b = element->getVertex(1);
+          c = element->getVertex(2);
 
-        tuples.insert(Tuple(a,b,c,element,gf));
+          tuples.insert(Tuple(a,b,c,element,gf));
+        }
       }
     }
-  }
 }
 
 void Supplementary::modify_surfaces(GRegion* gr){
@@ -3749,28 +3766,28 @@ void Supplementary::modify_surfaces(GRegion* gr){
   faces = gr->faces();
 
   for(it=faces.begin();it!=faces.end();it++)
-  {
-    gf = *it;
+    {
+      gf = *it;
 
-    opt.clear();
+      opt.clear();
 
-    for(i=0;i<gf->getNumMeshElements();i++){
-      element = gf->getMeshElement(i);
+      for(i=0;i<gf->getNumMeshElements();i++){
+        element = gf->getMeshElement(i);
 
-      if(element->getNumVertices()==3){
-        it2 = triangles.find(element);
-        if(it2==triangles.end()){
-          opt.push_back(element);
+        if(element->getNumVertices()==3){
+          it2 = triangles.find(element);
+          if(it2==triangles.end()){
+            opt.push_back(element);
+          }
         }
       }
-    }
 
-    gf->triangles.clear();
+      gf->triangles.clear();
 
-    for(i=0;i<opt.size();i++){
-      gf->triangles.push_back((MTriangle*)opt[i]);
+      for(i=0;i<opt.size();i++){
+        gf->triangles.push_back((MTriangle*)opt[i]);
+      }
     }
-  }
 }
 
 void Supplementary::modify_surfaces(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
@@ -4068,7 +4085,7 @@ void Supplementary::find(MVertex* vertex,Prism prism,std::set<MElement*>& final)
 }
 
 void Supplementary::intersection(const std::set<MVertex*>& bin1,const std::set<MVertex*>& bin2,
-    const std::vector<MVertex*>& already,std::set<MVertex*>& final){
+                                 const std::vector<MVertex*>& already,std::set<MVertex*>& final){
   size_t i;
   bool ok;
   std::set<MVertex*> temp;
@@ -4714,12 +4731,12 @@ void PostOp::execute(bool flag){
   GModel::riter it;
 
   for(it=model->firstRegion();it!=model->lastRegion();it++)
-  {
-    gr = *it;
-    if(gr->getNumMeshElements()>0){
-      execute(gr,flag);
+    {
+      gr = *it;
+      if(gr->getNumMeshElements()>0){
+        execute(gr,flag);
+      }
     }
-  }
 }
 
 void PostOp::execute(GRegion* gr,bool flag){
@@ -5232,21 +5249,21 @@ void PostOp::build_tuples(GRegion* gr){
   faces = gr->faces();
 
   for(it=faces.begin();it!=faces.end();it++)
-  {
-    gf = *it;
+    {
+      gf = *it;
 
-    for(i=0;i<gf->getNumMeshElements();i++){
-      element = gf->getMeshElement(i);
+      for(i=0;i<gf->getNumMeshElements();i++){
+        element = gf->getMeshElement(i);
 
-      if(element->getNumVertices()==3){
-        a = element->getVertex(0);
-        b = element->getVertex(1);
-        c = element->getVertex(2);
+        if(element->getNumVertices()==3){
+          a = element->getVertex(0);
+          b = element->getVertex(1);
+          c = element->getVertex(2);
 
-        tuples.insert(Tuple(a,b,c,element,gf));
+          tuples.insert(Tuple(a,b,c,element,gf));
+        }
       }
     }
-  }
 }
 
 void PostOp::modify_surfaces(GRegion* gr){
@@ -5276,28 +5293,28 @@ void PostOp::modify_surfaces(GRegion* gr){
   faces = gr->faces();
 
   for(it=faces.begin();it!=faces.end();it++)
-  {
-    gf = *it;
+    {
+      gf = *it;
 
-    opt.clear();
+      opt.clear();
 
-    for(i=0;i<gf->getNumMeshElements();i++){
-      element = gf->getMeshElement(i);
+      for(i=0;i<gf->getNumMeshElements();i++){
+        element = gf->getMeshElement(i);
 
-      if(element->getNumVertices()==3){
-        it2 = triangles.find(element);
-        if(it2==triangles.end()){
-          opt.push_back(element);
+        if(element->getNumVertices()==3){
+          it2 = triangles.find(element);
+          if(it2==triangles.end()){
+            opt.push_back(element);
+          }
         }
       }
-    }
 
-    gf->triangles.clear();
+      gf->triangles.clear();
 
-    for(i=0;i<opt.size();i++){
-      gf->triangles.push_back((MTriangle*)opt[i]);
+      for(i=0;i<opt.size();i++){
+        gf->triangles.push_back((MTriangle*)opt[i]);
+      }
     }
-  }
 }
 
 void PostOp::modify_surfaces(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
@@ -6049,10 +6066,10 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex){
 
 
 
-  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  
-  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  
-  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  
-  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  
+  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!
+  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!
+  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!
+  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!
   // le test suivant déconne, cf. cube à 125 hex... sais pas pourquoi, mais ça élimine des hex potentiels tout à fait valides (et nécessaires à la solution optimale)!!!
   // dans le cas cube125: ce test fait passer le #hex potentiels recensés par les patterns de recombinaison d'environ 1000 à 2434 ??? !!!, ça double aussi le nbre d'hex dans le graphe des pertes
   // en fait, si les noeuds par exemple a b c d deviennent b c d a, on a une rotation et un hex tout pourri... mais qui a même hash et mêmes noeuds ?!?!
@@ -6065,10 +6082,10 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex){
       return;
     }
   }
-  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  
-  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  
-  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  
-  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  
+  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!
+  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!
+  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!
+  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!
 
 
 
@@ -6126,12 +6143,12 @@ void Recombinator_Graph::buildGraphOnly(unsigned int max_nb_cliques,string filen
   GModel::riter it;
 
   for(it=model->firstRegion();it!=model->lastRegion();it++)
-  {
-    gr = *it;
-    if(gr->getNumMeshElements()>0){
-      buildGraphOnly(gr, max_nb_cliques,filename);
+    {
+      gr = *it;
+      if(gr->getNumMeshElements()>0){
+        buildGraphOnly(gr, max_nb_cliques,filename);
+      }
     }
-  }
 }
 
 
@@ -6172,12 +6189,12 @@ void Recombinator_Graph::execute(){
   model->writeMSH("beforeyamakawa.msh");
 
   for(it=model->firstRegion();it!=model->lastRegion();it++)
-  {
-    gr = *it;
-    if(gr->getNumMeshElements()>0){
-      execute(gr);
+    {
+      gr = *it;
+      if(gr->getNumMeshElements()>0){
+        execute(gr);
+      }
     }
-  }
 }
 
 
@@ -6189,12 +6206,12 @@ void Recombinator_Graph::execute_blossom(unsigned int max_nb_cliques,string file
   model->writeMSH("beforeyamakawa.msh");
 
   for(it=model->firstRegion();it!=model->lastRegion();it++)
-  {
-    gr = *it;
-    if(gr->getNumMeshElements()>0){
-      execute_blossom(gr, max_nb_cliques,filename);
+    {
+      gr = *it;
+      if(gr->getNumMeshElements()>0){
+        execute_blossom(gr, max_nb_cliques,filename);
+      }
     }
-  }
 }
 
 
@@ -6210,7 +6227,7 @@ Recombinator_Graph::~Recombinator_Graph(){
 
 void Recombinator_Graph::createBlossomInfo(){
 
-  throw; 
+  throw;
 
 
   GRegion* gr;
@@ -6218,12 +6235,12 @@ void Recombinator_Graph::createBlossomInfo(){
   GModel::riter it;
 
   for(it=model->firstRegion();it!=model->lastRegion();it++)
-  {
-    gr = *it;
-    //    if(gr->getNumMeshElements()>0){
-    createBlossomInfo(gr);
-    //    }
-  }
+    {
+      gr = *it;
+      //    if(gr->getNumMeshElements()>0){
+      createBlossomInfo(gr);
+      //    }
+    }
 }
 
 
@@ -6350,7 +6367,7 @@ void Recombinator_Graph::execute_blossom(GRegion* gr, unsigned int max_nb_clique
 
   Msg::Info("Building Connectivity...");
 
-  clock_t a=clock();
+  double a = Cpu();
 
   build_vertex_to_vertices(gr);
   build_vertex_to_elements(gr);
@@ -6366,12 +6383,12 @@ void Recombinator_Graph::execute_blossom(GRegion* gr, unsigned int max_nb_clique
   create_losses_graph(gr);
   // add points to potential hexas containing original blossom pairs of triangles
   compute_hex_ranks_blossom();
-  
-  double time_building_graph = (clock() - a) / (double)CLOCKS_PER_SEC;
+
+  double time_building_graph = (Cpu() - a);
 
 
-  a=clock();
-  // a criteria to stop when the whole domain is exclusively composed of hex 
+  a=Cpu();
+  // a criteria to stop when the whole domain is exclusively composed of hex
   clique_stop_criteria<Hex*> criteria(hex_to_tet, gr->tetrahedra.size());
 
   cliques_losses_graph<Hex*> cl(incompatibility_graph, hex_ranks, max_nb_cliques, hex_to_tet.size(),&criteria,export_the_clique_graphviz_format);
@@ -6379,8 +6396,8 @@ void Recombinator_Graph::execute_blossom(GRegion* gr, unsigned int max_nb_clique
   //cl.export_cliques();
 
 
-  double time_cliques = (clock() - a) / (double)CLOCKS_PER_SEC;
-    
+  double time_cliques = (Cpu() - a) ;
+
   cout << "RECOMBINATOR_GRAPH timing:" << endl;
   cout << "  ------- TIME BUILDING GRAPH : " << time_building_graph << " s." << endl;
   cout << "  ------- TIME CLIQUE         : " << time_cliques << " s." << endl;
@@ -6481,7 +6498,7 @@ void Recombinator_Graph::execute(GRegion* gr){
   compute_hex_ranks();
 
 
-  // a criteria to stop when the whole domain is exclusively composed of hex 
+  // a criteria to stop when the whole domain is exclusively composed of hex
   found_the_ultimate_max_clique=false;
   clique_stop_criteria<Hex*> criteria(hex_to_tet, gr->tetrahedra.size());
 
@@ -6892,7 +6909,7 @@ void Recombinator_Graph::export_all_hex(int &file, GRegion *gr){
 }
 
 
-// check if the hex is good enough to be put into the graph. If not in the graph, it cannot be chosen... 
+// check if the hex is good enough to be put into the graph. If not in the graph, it cannot be chosen...
 bool Recombinator_Graph::is_not_good_enough(Hex* hex){
 
   //  // Hack
@@ -6909,447 +6926,639 @@ bool Recombinator_Graph::is_not_good_enough(Hex* hex){
     return true;
   }
   return false;
-  }
+}
 
 
-  // fills incompatibility_graph if two hex share a common (non-sliver!) tet 
-  void Recombinator_Graph::create_indirect_neighbors_graph(){
-    std::map<MElement*, std::set<Hex*> >::iterator it_tet = tet_to_hex.begin();
+// fills incompatibility_graph if two hex share a common (non-sliver!) tet
+void Recombinator_Graph::create_indirect_neighbors_graph()
+{
+  std::map<MElement*, std::set<Hex*> >::iterator it_tet = tet_to_hex.begin();
 
-    for (;it_tet!=tet_to_hex.end();it_tet++){
-      std::set<Hex*>::iterator it_hex1 = it_tet->second.begin();
-      for (;it_hex1!=it_tet->second.end();it_hex1++){
-        Hex *hex = *it_hex1;
+  for (;it_tet!=tet_to_hex.end();it_tet++){
+    std::set<Hex*>::iterator it_hex1 = it_tet->second.begin();
+    for (;it_hex1!=it_tet->second.end();it_hex1++){
+      Hex *hex = *it_hex1;
 
-        //      cout << " create_indirect_neighbors_graph:: treating hex " << hex << " made of ";
-        //      for (int i=0;i<8;i++)
-        //        cout << "  " << hex->getVertex(i)->getNum();
-        //      cout << endl;
+      //      cout << " create_indirect_neighbors_graph:: treating hex " << hex << " made of ";
+      //      for (int i=0;i<8;i++)
+      //        cout << "  " << hex->getVertex(i)->getNum();
+      //      cout << endl;
 
-        if (is_not_good_enough(hex)){
-          continue;
-        }
-        graph::iterator itfind_graph = find_hex_in_graph(hex);
-        if (itfind_graph==incompatibility_graph.end()){
-          incompatibility_graph.insert(make_pair(hex->get_hash(),make_pair(hex,graph_data())));// this creates an entry if none exists. Important ! if hex is good, but surrounded by "not good enough" hex, it has to be in the graph anyway ! A single node in the graph, without any connection... the perfect lonely hex.
-          set_of_all_hex_in_graph.insert(hex);
-        }
-        // check if the hex quality is sufficient to be put into the graph...
-        //cout << "creating graph for hex " << hex << " with quality " << hex->get_quality() << endl;
-        //      if (hex->get_quality()>=0.1)
-        // check if the tet is a sliver or not...
-        // if sliver, the tet should not be taken into account in the graph creation ! 
-        bool is_sliver = sliver(it_tet->first,*hex);
-        if (!is_sliver){
-          //cout << " is not sliver, size it_tet->second:" << it_tet->second.size() << endl;
-          std::set<Hex*>::iterator it_hex2 = it_tet->second.begin();
-          for (;it_hex2!=it_tet->second.end();it_hex2++){
-            if ((hex)!=(*it_hex2)){
-              if (is_not_good_enough(*it_hex2)){
-                continue;
-              }
-              //cout << "   hex put in graph, linked to hex " << *it_hex2 << endl;
-              add_graph_entry(hex,*it_hex2);
-              //cout << "hex's " << hex << " and " << *it_hex2 << " have one tet in common: " << it_tet->first << endl;
-              //            incompatibility_graph[*it_hex2].insert(hex);
-            }
-          }
-        }
-        //      else{
-        //        cout << " hex's " << hex << " has a sliver !!!!!!!!!!!!!!! : " << it_tet->first << endl;
-        //      }
-      }
-    }
-  }
-
-
-  std::multimap<unsigned long long, Hex* >::const_iterator  Recombinator_Graph::find_the_created_potential_hex(Hex *hex, const std::multimap<unsigned long long, Hex*> &list){
-    std::pair<std::multimap<unsigned long long, Hex* >::const_iterator, std::multimap<unsigned long long, Hex* >::const_iterator> range = list.equal_range(hex->get_hash());
-    for (std::multimap<unsigned long long, Hex*>::const_iterator it=range.first;it!=range.second;it++){
-      Hex *candidate = it->second;
-      if (candidate->same_vertices(hex)){
-        return it;
-      }
-    }
-    return list.end();
-  }
-
-
-  std::multimap<unsigned long long, pair<PETriangle*,int> >::iterator  Recombinator_Graph::find_the_triangle(PETriangle *t, std::multimap<unsigned long long, pair<PETriangle*, int> > &list){
-    std::pair<std::multimap<unsigned long long, pair<PETriangle*,int> >::iterator, std::multimap<unsigned long long, pair<PETriangle*,int> >::iterator> range = list.equal_range(t->get_hash());
-    for (std::multimap<unsigned long long, pair<PETriangle*,int> >::iterator it=range.first;it!=range.second;it++){
-      PETriangle *candidate = it->second.first;
-      if (candidate->same_vertices(t)){
-        it->second.second++;
-        return it;
-      }
-    }
-    return list.end();
-  }
-
-
-
-  Recombinator_Graph::citer  Recombinator_Graph::find_the_triangle(PETriangle *t, const trimap &list){
-    std::pair<citer, citer> range = list.equal_range(t->get_hash());
-    for (citer it=range.first;it!=range.second;it++){
-      if (it->second->same_vertices(t)) return it;
-    }
-    return list.end();
-  }
-
-
-  Recombinator_Graph::linemap::const_iterator  Recombinator_Graph::find_the_line(PELine *t, const linemap &list){
-    std::pair<linemap::const_iterator, linemap::const_iterator> range = list.equal_range(t->get_hash());
-    for (linemap::const_iterator it=range.first;it!=range.second;it++){
-      if (it->second->same_vertices(t)) return it;
-    }
-    return list.end();
-  }
-
-
-  void Recombinator_Graph::export_direct_neighbor_table(int max){
-    stringstream ss;
-    ss << "neighbors_table";
-    ofstream out(ss.str().c_str());
-
-    std::multimap<int,Hex*>::iterator it =  ndegree.begin();
-
-    int counter=0;
-    out << " n  neighbors_rank hex* quality" << endl;
-    for (;it!=ndegree.end();it++,counter++){
-      if (counter>=max) break;
-      Hex *hex = it->second;
-      out << counter << "  " << it->first << "  " << hex << "  " << hex->get_quality() << endl;
-      stringstream ss2;
-      ss2 << "neighbors_table_hex";
-      char chose[256];
-      sprintf(chose, "_%0*d", 2, counter);
-      ss2 << chose;
-      ss2 << ".pos";
-      ofstream out2(ss2.str().c_str());
-      out2 << "View \"hex\" {" << endl;
-      out2 << "SH(";
-      for (int n=0;n<8;n++){
-        MVertex *v = hex->getVertex(n);
-        out2 << v->x() << "," << v->y() << "," << v->z();
-        if (n!=7) out2 << ",";
-      }
-      out2 << "){";
-      for (int n=0;n<8;n++){
-        out2 << it->first;
-        if (n!=7) out2 << ",";
-      }
-      out2 << "};" << endl;
-      out2 << "};" << endl;
-      out2.close();
-    }
-
-
-
-
-    out.close();
-  }
-
-
-  // if two hex are not connected in the incompatibility_graph, they are compatible
-  void Recombinator_Graph::create_losses_graph(GRegion *gr){
-    incompatibility_graph.clear();
-    create_indirect_neighbors_graph();
-    create_direct_neighbors_incompatibility_graph();
-
-
-    // stats
-    graph::iterator it =  incompatibility_graph.begin();
-    graph::iterator ite =  incompatibility_graph.end();
-    int total=0;
-    for (;it!=ite;it++){
-      total+=it->second.second.size();
-    }
-    nbhex_in_losses_graph = incompatibility_graph.size();
-    cout << "total=" << total << endl;
-    cout << "nbhex_in_losses_graph=" << nbhex_in_losses_graph << endl;
-    average_connectivity = total/((double)(nbhex_in_losses_graph));
-    cout << "#hex potentiels recensés dans le graphe des pertes: " << nbhex_in_losses_graph << "   #connectivité moyenne: " << average_connectivity<< endl;
-    cout << "#hex potentiels recensés par les patterns de recombinaison: " << hex_to_tet.size() << endl;
-  };
-
-
-  // TODO: check only the direct neighbors !!! change the algo pour ne as parcourir les hex qui ont un tet commun. cad Filter au niveau des faces... juste les faces extérieures de l'hex !!! et attention aux slivers, du coup... c'est sans doute la source du pb...
-
-  // pour chaque hex, sortir un .pos avec l'hex, ses tets et ses faces extérieures pour checker... 
-  // pourquoi pas sortir aussi tous les slivers à part... ? 
-
-
-
-
-  // fills incompatibility_graph if two hex are incompatible direct neighbors, 
-  // i.e. (they DO NOT have one tet in common) and (they are neighbors (face(s) in common) but DO NOT pass the compatibility tests)
-  void Recombinator_Graph::create_direct_neighbors_incompatibility_graph(){
-
-    vector<Hex*> visited_hex;
-    std::map<Hex*, std::set<MElement*> >::iterator it_hex =  hex_to_tet.begin();
-    for (;it_hex!=hex_to_tet.end();it_hex++){// for all hex
-      Hex *hex = it_hex->first;
-      if (is_not_good_enough(hex))
+      if (is_not_good_enough(hex)){
         continue;
+      }
       graph::iterator itfind_graph = find_hex_in_graph(hex);
       if (itfind_graph==incompatibility_graph.end()){
         incompatibility_graph.insert(make_pair(hex->get_hash(),make_pair(hex,graph_data())));// this creates an entry if none exists. Important ! if hex is good, but surrounded by "not good enough" hex, it has to be in the graph anyway ! A single node in the graph, without any connection... the perfect lonely hex.
         set_of_all_hex_in_graph.insert(hex);
       }
-
-      hash_tableA.clear();
-      hash_tableB.clear();
-      hash_tableC.clear();
-      build_hash_tableA(*hex);
-      build_hash_tableB(*hex);
-      build_hash_tableC(*hex);
-
-      visited_hex.clear();
-
-      std::set<PETriangle*>::iterator it_faces = hex_to_faces[hex].begin();
-      std::set<PETriangle*>::iterator it_facesen = hex_to_faces[hex].end();
-      for (;it_faces!=it_facesen;it_faces++){// i.e. for all triangular external face
-        PETriangle *face = *it_faces;
-        std::set<Hex*>::iterator it_neighbors = faces_to_hex[face].begin();
-        std::set<Hex*>::iterator it_neighborsen = faces_to_hex[face].end();
-        for (;it_neighbors!=it_neighborsen;it_neighbors++){// for all its neighbors
-          if ((*it_neighbors)==hex) continue;
-          Hex *other_hex = *it_neighbors;
-
-          vector<Hex*>::iterator itfind_hex = std::find(visited_hex.begin(),visited_hex.end(),other_hex);
-          if (itfind_hex!=visited_hex.end()) continue;// already done
-          else visited_hex.push_back(other_hex);
-
-          evaluate_hex_couple(hex,other_hex);
+      // check if the hex quality is sufficient to be put into the graph...
+      //cout << "creating graph for hex " << hex << " with quality " << hex->get_quality() << endl;
+      //      if (hex->get_quality()>=0.1)
+      // check if the tet is a sliver or not...
+      // if sliver, the tet should not be taken into account in the graph creation !
+      bool is_sliver = sliver(it_tet->first,*hex);
+      if (!is_sliver){
+        //cout << " is not sliver, size it_tet->second:" << it_tet->second.size() << endl;
+        std::set<Hex*>::iterator it_hex2 = it_tet->second.begin();
+        for (;it_hex2!=it_tet->second.end();it_hex2++){
+          if ((hex)!=(*it_hex2)){
+            if (is_not_good_enough(*it_hex2)){
+              continue;
+            }
+            //cout << "   hex put in graph, linked to hex " << *it_hex2 << endl;
+            add_graph_entry(hex,*it_hex2);
+            //cout << "hex's " << hex << " and " << *it_hex2 << " have one tet in common: " << it_tet->first << endl;
+            //            incompatibility_graph[*it_hex2].insert(hex);
+          }
         }
       }
-      // change following...
-      std::set<PELine*>::iterator it_line = hex_to_edges[hex].begin();
-      std::set<PELine*>::iterator it_lineen = hex_to_edges[hex].end();
-      for (;it_line!=it_lineen;it_line++){// i.e. for all edges and diagonals -> check the hex neighbors too
-        PELine *line = *it_line;
-        std::set<Hex*>::iterator it_neighbors = edges_to_hex[line].begin();
-        std::set<Hex*>::iterator it_neighborsen = edges_to_hex[line].end();
-        for (;it_neighbors!=it_neighborsen;it_neighbors++){// for all its neighbors
-          if ((*it_neighbors)==hex) continue;
-          Hex *other_hex = *it_neighbors;
-
-          vector<Hex*>::iterator itfind_hex = std::find(visited_hex.begin(),visited_hex.end(),other_hex);
-          if (itfind_hex!=visited_hex.end()) continue;// already done
-          else visited_hex.push_back(other_hex);
-
-          evaluate_hex_couple(hex,other_hex);
-        }
-      }
+      //      else{
+      //        cout << " hex's " << hex << " has a sliver !!!!!!!!!!!!!!! : " << it_tet->first << endl;
+      //      }
     }
+  }
+}
 
 
+std::multimap<unsigned long long, Hex* >::const_iterator  Recombinator_Graph::find_the_created_potential_hex(Hex *hex, const std::multimap<unsigned long long, Hex*> &list){
+  std::pair<std::multimap<unsigned long long, Hex* >::const_iterator, std::multimap<unsigned long long, Hex* >::const_iterator> range = list.equal_range(hex->get_hash());
+  for (std::multimap<unsigned long long, Hex*>::const_iterator it=range.first;it!=range.second;it++){
+    Hex *candidate = it->second;
+    if (candidate->same_vertices(hex)){
+      return it;
+    }
+  }
+  return list.end();
+}
+
+
+std::multimap<unsigned long long, pair<PETriangle*,int> >::iterator  Recombinator_Graph::find_the_triangle(PETriangle *t, std::multimap<unsigned long long, pair<PETriangle*, int> > &list){
+  std::pair<std::multimap<unsigned long long, pair<PETriangle*,int> >::iterator, std::multimap<unsigned long long, pair<PETriangle*,int> >::iterator> range = list.equal_range(t->get_hash());
+  for (std::multimap<unsigned long long, pair<PETriangle*,int> >::iterator it=range.first;it!=range.second;it++){
+    PETriangle *candidate = it->second.first;
+    if (candidate->same_vertices(t)){
+      it->second.second++;
+      return it;
+    }
+  }
+  return list.end();
+}
+
+
+
+Recombinator_Graph::citer  Recombinator_Graph::find_the_triangle(PETriangle *t, const trimap &list){
+  std::pair<citer, citer> range = list.equal_range(t->get_hash());
+  for (citer it=range.first;it!=range.second;it++){
+    if (it->second->same_vertices(t)) return it;
+  }
+  return list.end();
+}
+
+
+Recombinator_Graph::linemap::const_iterator  Recombinator_Graph::find_the_line(PELine *t, const linemap &list){
+  std::pair<linemap::const_iterator, linemap::const_iterator> range = list.equal_range(t->get_hash());
+  for (linemap::const_iterator it=range.first;it!=range.second;it++){
+    if (it->second->same_vertices(t)) return it;
+  }
+  return list.end();
+}
+
+
+void Recombinator_Graph::export_direct_neighbor_table(int max){
+  stringstream ss;
+  ss << "neighbors_table";
+  ofstream out(ss.str().c_str());
+
+  std::multimap<int,Hex*>::iterator it =  ndegree.begin();
+
+  int counter=0;
+  out << " n  neighbors_rank hex* quality" << endl;
+  for (;it!=ndegree.end();it++,counter++){
+    if (counter>=max) break;
+    Hex *hex = it->second;
+    out << counter << "  " << it->first << "  " << hex << "  " << hex->get_quality() << endl;
+    stringstream ss2;
+    ss2 << "neighbors_table_hex";
+    char chose[256];
+    sprintf(chose, "_%0*d", 2, counter);
+    ss2 << chose;
+    ss2 << ".pos";
+    ofstream out2(ss2.str().c_str());
+    out2 << "View \"hex\" {" << endl;
+    out2 << "SH(";
+    for (int n=0;n<8;n++){
+      MVertex *v = hex->getVertex(n);
+      out2 << v->x() << "," << v->y() << "," << v->z();
+      if (n!=7) out2 << ",";
+    }
+    out2 << "){";
+    for (int n=0;n<8;n++){
+      out2 << it->first;
+      if (n!=7) out2 << ",";
+    }
+    out2 << "};" << endl;
+    out2 << "};" << endl;
+    out2.close();
   }
 
 
-  void Recombinator_Graph::evaluate_hex_couple(Hex* hex, Hex* other_hex){
-
-    const bool very_verbose=false;
 
 
+  out.close();
+}
 
-    if (very_verbose){
-      //    export_single_hex_all(other_hex,"");
-      //    export_single_hex_all(hex,"");
-      cout << " evaluate_hex_couple:: treating hex " << hex << " made of ";
-      for (int i=0;i<8;i++)
-        cout << "  " << hex->getVertex(i)->getNum();
-      cout << endl;
-      cout << " evaluate_hex_couple:: treating other_hex " << other_hex << " made of ";
-      for (int i=0;i<8;i++)
-        cout << "  " << other_hex->getVertex(i)->getNum();
-      cout << endl;
+
+// if two hex are not connected in the incompatibility_graph, they are compatible
+void Recombinator_Graph::create_losses_graph(GRegion *gr)
+{
+  incompatibility_graph.clear();
+  create_indirect_neighbors_graph();
+  create_direct_neighbors_incompatibility_graph();
+
+
+  // stats
+  graph::iterator it =  incompatibility_graph.begin();
+  graph::iterator ite =  incompatibility_graph.end();
+  int total=0;
+  for (;it!=ite;it++){
+    total+=it->second.second.size();
+  }
+  nbhex_in_losses_graph = incompatibility_graph.size();
+  cout << "total=" << total << endl;
+  cout << "nbhex_in_losses_graph=" << nbhex_in_losses_graph << endl;
+  average_connectivity = total/((double)(nbhex_in_losses_graph));
+  cout << "#hex potentiels recensés dans le graphe des pertes: " << nbhex_in_losses_graph << "   #connectivité moyenne: " << average_connectivity<< endl;
+  cout << "#hex potentiels recensés par les patterns de recombinaison: " << hex_to_tet.size() << endl;
+};
+
+
+// TODO: check only the direct neighbors !!! change the algo pour ne as parcourir les hex qui ont un tet commun. cad Filter au niveau des faces... juste les faces extérieures de l'hex !!! et attention aux slivers, du coup... c'est sans doute la source du pb...
+
+// pour chaque hex, sortir un .pos avec l'hex, ses tets et ses faces extérieures pour checker...
+// pourquoi pas sortir aussi tous les slivers à part... ?
+
+
+
+
+// fills incompatibility_graph if two hex are incompatible direct neighbors,
+// i.e. (they DO NOT have one tet in common) and (they are neighbors (face(s) in common) but DO NOT pass the compatibility tests)
+void Recombinator_Graph::create_direct_neighbors_incompatibility_graph()
+{
+
+  vector<Hex*> visited_hex;
+  std::map<Hex*, std::set<MElement*> >::iterator it_hex =  hex_to_tet.begin();
+  for (;it_hex!=hex_to_tet.end();it_hex++){// for all hex
+    Hex *hex = it_hex->first;
+    if (is_not_good_enough(hex))
+      continue;
+    graph::iterator itfind_graph = find_hex_in_graph(hex);
+    if (itfind_graph==incompatibility_graph.end()){
+      incompatibility_graph.insert(make_pair(hex->get_hash(),make_pair(hex,graph_data())));// this creates an entry if none exists. Important ! if hex is good, but surrounded by "not good enough" hex, it has to be in the graph anyway ! A single node in the graph, without any connection... the perfect lonely hex.
+      set_of_all_hex_in_graph.insert(hex);
     }
 
+    hash_tableA.clear();
+    hash_tableB.clear();
+    hash_tableC.clear();
+    build_hash_tableA(*hex);
+    build_hash_tableB(*hex);
+    build_hash_tableC(*hex);
 
+    visited_hex.clear();
 
-    if (is_not_good_enough(other_hex)){
-      if (very_verbose) cout << "hex " << hex << " not good enough" << endl;
-      return;
+    std::set<PETriangle*>::iterator it_faces = hex_to_faces[hex].begin();
+    std::set<PETriangle*>::iterator it_facesen = hex_to_faces[hex].end();
+    for (;it_faces!=it_facesen;it_faces++){// i.e. for all triangular external face
+      PETriangle *face = *it_faces;
+      std::set<Hex*>::iterator it_neighbors = faces_to_hex[face].begin();
+      std::set<Hex*>::iterator it_neighborsen = faces_to_hex[face].end();
+      for (;it_neighbors!=it_neighborsen;it_neighbors++){// for all its neighbors
+        if ((*it_neighbors)==hex) continue;
+        Hex *other_hex = *it_neighbors;
+
+        vector<Hex*>::iterator itfind_hex = std::find(visited_hex.begin(),visited_hex.end(),other_hex);
+        if (itfind_hex!=visited_hex.end()) continue;// already done
+        else visited_hex.push_back(other_hex);
+
+        evaluate_hex_couple(hex,other_hex);
+      }
     }
+    // change following...
+    std::set<PELine*>::iterator it_line = hex_to_edges[hex].begin();
+    std::set<PELine*>::iterator it_lineen = hex_to_edges[hex].end();
+    for (;it_line!=it_lineen;it_line++){// i.e. for all edges and diagonals -> check the hex neighbors too
+      PELine *line = *it_line;
+      std::set<Hex*>::iterator it_neighbors = edges_to_hex[line].begin();
+      std::set<Hex*>::iterator it_neighborsen = edges_to_hex[line].end();
+      for (;it_neighbors!=it_neighborsen;it_neighbors++){// for all its neighbors
+        if ((*it_neighbors)==hex) continue;
+        Hex *other_hex = *it_neighbors;
 
+        vector<Hex*>::iterator itfind_hex = std::find(visited_hex.begin(),visited_hex.end(),other_hex);
+        if (itfind_hex!=visited_hex.end()) continue;// already done
+        else visited_hex.push_back(other_hex);
 
-    if (find_hex_couple_in_graph(hex,other_hex)){
-      if (very_verbose) cout << "already incompatible: hex's " << hex << " and " << other_hex << endl;
-      return;
+        evaluate_hex_couple(hex,other_hex);
+      }
     }
-
-    // count the number of faces in common... 
-    // intuitivement: si !=2, c'est incompatible
-    //  bool two_faces_in_common=true;
-    //  std::vector<PETriangle*> common(12);
-    //  std::vector<PETriangle*>::iterator itfind_face = std::set_intersection (hex_to_faces[other_hex].begin(),hex_to_faces[other_hex].end(), hex_to_faces[hex].begin(), hex_to_faces[hex].end(), common.begin());
-    //  common.resize(itfind_face-common.begin()); 
-    //  if (common.size()!=2){
-    //    two_faces_in_common=false;
-    //  }
-
-    // check compatibility between the two neighbors
+  }
 
 
-    // if they do not pass the tests
-    //-> incompatible !
-
-    // the following depends on hex... on "hash_tables's"
-    //        std::set<MElement*> parts = hex_to_tet[other_hex];
-    //  std::set<MElement*> parts;
-    //  find(other_hex->get_a(),*other_hex,parts);
-    //  find(other_hex->get_b(),*other_hex,parts);
-    //  find(other_hex->get_c(),*other_hex,parts);
-    //  find(other_hex->get_d(),*other_hex,parts);
-    //  find(other_hex->get_e(),*other_hex,parts);
-    //  find(other_hex->get_f(),*other_hex,parts);
-    //  find(other_hex->get_g(),*other_hex,parts);
-    //  find(other_hex->get_h(),*other_hex,parts);
-    //  if(!valid(*other_hex,parts)){
-    //    if (very_verbose) cout << "valid incompatible: other_hex " << other_hex << " relative to " << hex << endl;
-    //    add_graph_entry(hex,other_hex);
-    //    return;
-    //  }
-    //  else if (very_verbose) cout << "valid compatible: other_hex " << other_hex << " relative to " << hex << endl;
-
-    if(!conformityA(*other_hex)){
-      if (very_verbose) cout << "conformA incompatible: other_hex " << other_hex << " relative to " << hex << endl;
-      add_graph_entry(hex,other_hex);
-      return;
-    }
-    else if (very_verbose) cout << "conformA compatible: other_hex " << other_hex << " relative to " << hex << endl;
+}
 
 
-    if(!conformityB(*other_hex)){
-      if (very_verbose) cout << "conformB incompatible: other_hex " << other_hex << " relative to " << hex << endl;
-      add_graph_entry(hex,other_hex);
-      return;
-    }
-    else if (very_verbose) cout << "conformB compatible: other_hex " << other_hex << " relative to " << hex << endl;
+void Recombinator_Graph::evaluate_hex_couple(Hex* hex, Hex* other_hex)
+{
 
-    if(!conformityC(*other_hex)){
-      if (very_verbose) cout << "conformC incompatible: other_hex " << other_hex << " relative to " << hex << endl;
-      add_graph_entry(hex,other_hex);
-      return;
-    }
-    else if (very_verbose) cout << "conformC compatible: other_hex " << other_hex << " relative to " << hex << endl;
+  const bool very_verbose=false;
 
-    if(!faces_statuquo(*other_hex)){
-      if (very_verbose) cout << "faces_statuquo incompatible: other_hex " << other_hex << " relative to " << hex << endl;
-      add_graph_entry(hex,other_hex);
-      return;
-    }
-    else if (very_verbose) cout << "faces_statuquo compatible: other_hex " << other_hex << " relative to " << hex << endl;
-
-    if (very_verbose) cout << "other_hex " << other_hex << " relative to " << hex << " totaly compatible !!! " << endl;
-    //  if (!two_faces_in_common){
+  if (very_verbose){
     //    export_single_hex_all(other_hex,"");
     //    export_single_hex_all(hex,"");
-    //
-    //    //cout << "******************************** not two faces in common and compatible !!!********************************************************** " << endl;
-    //  }
+    cout << " evaluate_hex_couple:: treating hex " << hex << " made of ";
+    for (int i=0;i<8;i++)
+      cout << "  " << hex->getVertex(i)->getNum();
+    cout << endl;
+    cout << " evaluate_hex_couple:: treating other_hex " << other_hex << " made of ";
+    for (int i=0;i<8;i++)
+      cout << "  " << other_hex->getVertex(i)->getNum();
+    cout << endl;
   }
 
-
-  bool Recombinator_Graph::post_check_validation(Hex* current_hex){
-    // post check...
-    //  std::set<MElement*> parts;
-    //  find(current_hex->get_a(),*current_hex,parts);
-    //  find(current_hex->get_b(),*current_hex,parts);
-    //  find(current_hex->get_c(),*current_hex,parts);
-    //  find(current_hex->get_d(),*current_hex,parts);
-    //  find(current_hex->get_e(),*current_hex,parts);
-    //  find(current_hex->get_f(),*current_hex,parts);
-    //  find(current_hex->get_g(),*current_hex,parts);
-    //  find(current_hex->get_h(),*current_hex,parts);
-    //  if(!valid(*current_hex,parts)){
-    //    std::cout << "     not valid ! : hex " << current_hex  << " made of ";
-    //    for (int i=0;i<8;i++)
-    //      cout << "  " << current_hex->getVertex(i)->getNum();
-    //    cout << endl;
-    //    return false;
-    //  }
-
-    if(!conformityA(*current_hex)){
-      std::cout << "     not conform A! : hex " << current_hex << " made of ";
-      for (int i=0;i<8;i++)
-        cout << "  " << current_hex->getVertex(i)->getNum();
-      cout << endl;
-      return false;
-    }
-
-    if(!conformityB(*current_hex)){
-      std::cout << "     not conform B! : hex " << current_hex  << " made of ";
-      for (int i=0;i<8;i++)
-        cout << "  " << current_hex->getVertex(i)->getNum();
-      cout << endl;
-      return false;
-    }
-
-    if(!conformityC(*current_hex)){
-      std::cout << "     not conform C! : hex " << current_hex  << " made of ";
-      for (int i=0;i<8;i++)
-        cout << "  " << current_hex->getVertex(i)->getNum();
-      cout << endl;
-      return false;
-    }
-
-    if(!faces_statuquo(*current_hex)){
-      std::cout << "     not ok faces status quo! : hex " << current_hex << " made of ";
-      for (int i=0;i<8;i++)
-        cout << "  " << current_hex->getVertex(i)->getNum();
-      cout << endl;
-      return false;
-    }
-
-    // end post check...
-
-
-    return true;
+  if (is_not_good_enough(other_hex)){
+    if (very_verbose) cout << "hex " << hex << " not good enough" << endl;
+    return;
   }
 
-
-  void Recombinator_Graph::add_face(const MVertex *a,const MVertex* b,const MVertex *c,std::multimap<unsigned long long, pair<PETriangle*,int> > &f){
-    vector<const MVertex*> v;
-    v.push_back(a);
-    v.push_back(b);
-    v.push_back(c);
-    PETriangle *q = new PETriangle(v);
-    std::multimap<unsigned long long, pair<PETriangle*,int> >::iterator itfind = find_the_triangle(q,f);
-    if (itfind==f.end()){
-      f.insert(make_pair(q->get_hash(),make_pair(q,1)));
-    }
-    else{
-      delete q;
-    }
+  if (find_hex_couple_in_graph(hex,other_hex)){
+    if (very_verbose) cout << "already incompatible: hex's " << hex << " and " << other_hex << endl;
+    return;
   }
 
+  // count the number of faces in common...
+  // intuitivement: si !=2, c'est incompatible
+  //  bool two_faces_in_common=true;
+  //  std::vector<PETriangle*> common(12);
+  //  std::vector<PETriangle*>::iterator itfind_face = std::set_intersection (hex_to_faces[other_hex].begin(),hex_to_faces[other_hex].end(), hex_to_faces[hex].begin(), hex_to_faces[hex].end(), common.begin());
+  //  common.resize(itfind_face-common.begin());
+  //  if (common.size()!=2){
+  //    two_faces_in_common=false;
+  //  }
 
-  void Recombinator_Graph::add_face(const MVertex *a,const MVertex* b,const MVertex *c,Hex *hex){
-    vector<const MVertex*> v;
-    v.push_back(a);
-    v.push_back(b);
-    v.push_back(c);
-    PETriangle *q = new PETriangle(v);
-    citer itfind = find_the_triangle(q,triangular_faces);
-    if (itfind==triangular_faces.end()){
-      itfind = triangular_faces.insert(make_pair(q->get_hash(),q));
-    }
-    else{
-      delete q;
-      q = itfind->second;
-    }
+  // check compatibility between the two neighbors
 
-    hex_to_faces[hex].insert(q);
-    faces_to_hex[q].insert(hex);
+
+  // if they do not pass the tests
+  //-> incompatible !
+
+  // the following depends on hex... on "hash_tables's"
+  //        std::set<MElement*> parts = hex_to_tet[other_hex];
+  //  std::set<MElement*> parts;
+  //  find(other_hex->get_a(),*other_hex,parts);
+  //  find(other_hex->get_b(),*other_hex,parts);
+  //  find(other_hex->get_c(),*other_hex,parts);
+  //  find(other_hex->get_d(),*other_hex,parts);
+  //  find(other_hex->get_e(),*other_hex,parts);
+  //  find(other_hex->get_f(),*other_hex,parts);
+  //  find(other_hex->get_g(),*other_hex,parts);
+  //  find(other_hex->get_h(),*other_hex,parts);
+  //  if(!valid(*other_hex,parts)){
+  //    if (very_verbose) cout << "valid incompatible: other_hex " << other_hex << " relative to " << hex << endl;
+  //    add_graph_entry(hex,other_hex);
+  //    return;
+  //  }
+  //  else if (very_verbose) cout << "valid compatible: other_hex " << other_hex << " relative to " << hex << endl;
+
+  if(!conformityA(*other_hex)){
+    if (very_verbose) cout << "conformA incompatible: other_hex " << other_hex << " relative to " << hex << endl;
+    add_graph_entry(hex,other_hex);
+    return;
+  }
+  else if (very_verbose) cout << "conformA compatible: other_hex " << other_hex << " relative to " << hex << endl;
+
+
+  if(!conformityB(*other_hex)){
+    if (very_verbose) cout << "conformB incompatible: other_hex " << other_hex << " relative to " << hex << endl;
+    add_graph_entry(hex,other_hex);
+    return;
+  }
+  else if (very_verbose) cout << "conformB compatible: other_hex " << other_hex << " relative to " << hex << endl;
+
+  if(!conformityC(*other_hex)){
+    if (very_verbose) cout << "conformC incompatible: other_hex " << other_hex << " relative to " << hex << endl;
+    add_graph_entry(hex,other_hex);
+    return;
+  }
+  else if (very_verbose) cout << "conformC compatible: other_hex " << other_hex << " relative to " << hex << endl;
+
+  if(!faces_statuquo(*other_hex)){
+    if (very_verbose) cout << "faces_statuquo incompatible: other_hex " << other_hex << " relative to " << hex << endl;
+    add_graph_entry(hex,other_hex);
+    return;
+  }
+  else if (very_verbose) cout << "faces_statuquo compatible: other_hex " << other_hex << " relative to " << hex << endl;
+
+  if (very_verbose) cout << "other_hex " << other_hex << " relative to " << hex << " totaly compatible !!! " << endl;
+  //  if (!two_faces_in_common){
+  //    export_single_hex_all(other_hex,"");
+  //    export_single_hex_all(hex,"");
+  //
+  //    //cout << "******************************** not two faces in common and compatible !!!********************************************************** " << endl;
+  //  }
+}
+
+
+bool Recombinator_Graph::post_check_validation(Hex* current_hex)
+{
+  // post check...
+  //  std::set<MElement*> parts;
+  //  find(current_hex->get_a(),*current_hex,parts);
+  //  find(current_hex->get_b(),*current_hex,parts);
+  //  find(current_hex->get_c(),*current_hex,parts);
+  //  find(current_hex->get_d(),*current_hex,parts);
+  //  find(current_hex->get_e(),*current_hex,parts);
+  //  find(current_hex->get_f(),*current_hex,parts);
+  //  find(current_hex->get_g(),*current_hex,parts);
+  //  find(current_hex->get_h(),*current_hex,parts);
+  //  if(!valid(*current_hex,parts)){
+  //    std::cout << "     not valid ! : hex " << current_hex  << " made of ";
+  //    for (int i=0;i<8;i++)
+  //      cout << "  " << current_hex->getVertex(i)->getNum();
+  //    cout << endl;
+  //    return false;
+  //  }
+
+  if(!conformityA(*current_hex)){
+    std::cout << "     not conform A! : hex " << current_hex << " made of ";
+    for (int i=0;i<8;i++)
+      cout << "  " << current_hex->getVertex(i)->getNum();
+    cout << endl;
+    return false;
   }
 
+  if(!conformityB(*current_hex)){
+    std::cout << "     not conform B! : hex " << current_hex  << " made of ";
+    for (int i=0;i<8;i++)
+      cout << "  " << current_hex->getVertex(i)->getNum();
+    cout << endl;
+    return false;
+  }
 
-  void Recombinator_Graph::add_edges(Hex *hex){
-    MVertex *a,*b,*c,*d;
-    MVertex *e,*f,*g,*h;
+  if(!conformityC(*current_hex)){
+    std::cout << "     not conform C! : hex " << current_hex  << " made of ";
+    for (int i=0;i<8;i++)
+      cout << "  " << current_hex->getVertex(i)->getNum();
+    cout << endl;
+    return false;
+  }
+
+  if(!faces_statuquo(*current_hex)){
+    std::cout << "     not ok faces status quo! : hex " << current_hex << " made of ";
+    for (int i=0;i<8;i++)
+      cout << "  " << current_hex->getVertex(i)->getNum();
+    cout << endl;
+    return false;
+  }
+
+  // end post check...
+
+
+  return true;
+}
+
+
+void Recombinator_Graph::add_face(const MVertex *a,const MVertex* b,const MVertex *c,std::multimap<unsigned long long, pair<PETriangle*,int> > &f)
+{
+  vector<const MVertex*> v;
+  v.push_back(a);
+  v.push_back(b);
+  v.push_back(c);
+  PETriangle *q = new PETriangle(v);
+  std::multimap<unsigned long long, pair<PETriangle*,int> >::iterator itfind = find_the_triangle(q,f);
+  if (itfind==f.end()){
+    f.insert(make_pair(q->get_hash(),make_pair(q,1)));
+  }
+  else{
+    delete q;
+  }
+}
+
+
+void Recombinator_Graph::add_face(const MVertex *a,const MVertex* b,const MVertex *c,Hex *hex)
+{
+  vector<const MVertex*> v;
+  v.push_back(a);
+  v.push_back(b);
+  v.push_back(c);
+  PETriangle *q = new PETriangle(v);
+  citer itfind = find_the_triangle(q,triangular_faces);
+  if (itfind==triangular_faces.end()){
+    itfind = triangular_faces.insert(make_pair(q->get_hash(),q));
+  }
+  else{
+    delete q;
+    q = itfind->second;
+  }
+
+  hex_to_faces[hex].insert(q);
+  faces_to_hex[q].insert(hex);
+}
+
+
+void Recombinator_Graph::add_edges(Hex *hex)
+{
+  MVertex *a,*b,*c,*d;
+  MVertex *e,*f,*g,*h;
+
+  a = hex->get_a();
+  b = hex->get_b();
+  c = hex->get_c();
+  d = hex->get_d();
+  e = hex->get_e();
+  f = hex->get_f();
+  g = hex->get_g();
+  h = hex->get_h();
+
+  fill_edges_table(a,b,c,d,hex);
+  fill_edges_table(e,f,g,h,hex);
+  fill_edges_table(a,b,f,e,hex);
+  fill_edges_table(b,c,g,f,hex);
+  fill_edges_table(d,c,g,h,hex);
+  fill_edges_table(d,a,e,h,hex);
+}
+
+
+void Recombinator_Graph::fill_edges_table(const MVertex *a, const MVertex *b, const MVertex *c, const MVertex *d, Hex *hex)
+{
+  vector<const MVertex* > v;
+  vector<const MVertex* > u;
+  v.push_back(a);
+  v.push_back(b);
+  v.push_back(c);
+  v.push_back(d);
+
+  vector<const MVertex*>::const_iterator it1 = v.begin();
+  for (;it1!=v.end();it1++){
+    vector<const MVertex*>::const_iterator it2 = it1;
+    for (;it2!=v.end();it2++){
+      if (it1==it2) continue;
+
+      u.clear();
+      u.push_back(*it1);
+      u.push_back(*it2);
+      // see if already exists or not...
+      PELine *l = new PELine(u);
+      linemap::const_iterator itfind = find_the_line(l,edges_and_diagonals);
+      if (itfind==edges_and_diagonals.end()){
+        itfind = edges_and_diagonals.insert(make_pair(l->get_hash(),l));
+      }
+      else{
+        delete l;
+        l = itfind->second;
+      }
+
+      hex_to_edges[hex].insert(l);
+      edges_to_hex[l].insert(hex);
+    }
+  }
+}
+
+
+Recombinator_Graph::graph::iterator Recombinator_Graph::find_hex_in_graph(Hex* hex)
+{
+  pair<graph::iterator, graph::iterator> range = incompatibility_graph.equal_range(hex->get_hash());
+  if (range.first==range.second) return incompatibility_graph.end();
+
+  graph::iterator it = range.first;
+  for (;it!=range.second;it++){
+    if (it->second.first==hex){
+      return it;
+    }
+  }
+  return incompatibility_graph.end();
+}
+
+Recombinator_Graph::graph_data::iterator Recombinator_Graph::find_hex_in_graphrow(Hex* hex, graph_data &row)
+{
+  pair<graph_data::iterator, graph_data::iterator> range = row.equal_range(hex->get_hash());
+  if (range.first==range.second) return row.end();
+
+  graph_data::iterator it = range.first;
+  for (;it!=range.second;it++){
+    if (it->second==hex){
+      return it;
+    }
+  }
+  return row.end();
+}
+
+bool Recombinator_Graph::find_hex_couple_in_graph(Hex* hex, Hex* other_hex)
+{
+  graph::iterator it = find_hex_in_graph(hex);
+  if (it==incompatibility_graph.end()) return false;
+
+  graph_data::iterator itt = find_hex_in_graphrow(other_hex, it->second.second);
+  if (itt==it->second.second.end()) return false;
+  return true;
+
+}
+
+
+void Recombinator_Graph::add_graph_entry(Hex* hex, Hex* other_hex)
+{
+
+  graph::iterator itfind_graph = find_hex_in_graph(hex);
+
+  if (itfind_graph==incompatibility_graph.end()){
+    itfind_graph = incompatibility_graph.insert(make_pair(hex->get_hash(),make_pair(hex, graph_data())));
+    itfind_graph->second.second.insert(make_pair(other_hex->get_hash(),other_hex));
+    set_of_all_hex_in_graph.insert(hex);
+    return;
+  }
+  else{
+    itfind_graph->second.second.insert(make_pair(other_hex->get_hash(),other_hex));
+  }
+
+}
+
+void Recombinator_Graph::compute_hex_ranks()
+{
+
+  create_faces_connectivity();
+
+  PETriangle* face;
+  Hex *hex;
+  double boundary_count;
+
+  for (map<Hex*,set<PETriangle*> >::iterator it = hex_to_faces.begin();it!=hex_to_faces.end();it++){
+    hex = it->first;
+    boundary_count=0.;
+    for (set<PETriangle*>::iterator itf = it->second.begin();itf!=it->second.end();itf++){
+      face = *itf;
+      if (faces_connectivity[face]==1) boundary_count+=1.;
+    }
+    //cout << " --- hex " << hex << " has " << boundary_count << " tri faces on boundaries, " << hex_to_faces[hex].size() << " total tri faces " << endl;
+    map<Hex*,vector<double> >::iterator itfind = hex_ranks.find(hex);
+    if (itfind==hex_ranks.end())
+      hex_ranks.insert(make_pair(hex,vector<double>(1)));
+    hex_ranks[hex][0] = boundary_count;
+    hex_ranks[hex][1] = hex->get_quality();
+  }
+}
+
+
+void Recombinator_Graph::create_faces_connectivity()
+{
+  for (std::map<MElement*, std::set<Hex*> >::iterator it_tet = tet_to_hex.begin(); it_tet!=tet_to_hex.end();it_tet++){
+    add_face_connectivity(it_tet->first, 0,1,2);
+    add_face_connectivity(it_tet->first, 0,1,3);
+    add_face_connectivity(it_tet->first, 0,2,3);
+    add_face_connectivity(it_tet->first, 1,2,3);
+  }
+}
+
+
+void Recombinator_Graph::add_face_connectivity(MElement *tet, int i, int j, int k)
+{
+  vector<const MVertex*> v;
+  PETriangle *t;
+  v.push_back(tet->getVertex(i));
+  v.push_back(tet->getVertex(j));
+  v.push_back(tet->getVertex(k));
+  t = new PETriangle(v);
+  citer itfind = find_the_triangle(t,triangular_faces);
+  if (itfind!=triangular_faces.end()){
+    faces_connectivity[itfind->second]++;
+  }
+  delete t;
+}
+
+void Recombinator_Graph::compute_hex_ranks_blossom()
+{
+
+  create_faces_connectivity();
+
+  PETriangle* face;
+  Hex *hex;
+  double boundary_count;
+  MVertex *a,*b,*c,*d;
+  MVertex *e,*f,*g,*h;
+
+  for (map<Hex*,set<PETriangle*> >::iterator it = hex_to_faces.begin();it!=hex_to_faces.end();it++){
+    hex = it->first;
+    boundary_count=0.;
+    for (set<PETriangle*>::iterator itf = it->second.begin();itf!=it->second.end();itf++){
+      face = *itf;
+      if (faces_connectivity[face]==1) boundary_count+=1.;
+    }
+    //cout << " --- hex " << hex << " has " << boundary_count << " tri faces on boundaries, " << hex_to_faces[hex].size() << " total tri faces " << endl;
+    map<Hex*,vector<double> >::iterator itfind = hex_ranks.find(hex);
+    if (itfind==hex_ranks.end())
+      hex_ranks.insert(make_pair(hex,vector<double>(1)));
+    hex_ranks[hex][0] = boundary_count;
+    hex_ranks[hex][1] = hex->get_quality();
+
 
     a = hex->get_a();
     b = hex->get_b();
@@ -7360,250 +7569,60 @@ bool Recombinator_Graph::is_not_good_enough(Hex* hex){
     g = hex->get_g();
     h = hex->get_h();
 
-    fill_edges_table(a,b,c,d,hex);
-    fill_edges_table(e,f,g,h,hex);
-    fill_edges_table(a,b,f,e,hex);
-    fill_edges_table(b,c,g,f,hex);
-    fill_edges_table(d,c,g,h,hex);
-    fill_edges_table(d,a,e,h,hex);
+    int count_blossom=0;
+    if (find_face_in_blossom_info(a,b,c,d)) count_blossom++;
+    if (find_face_in_blossom_info(e,f,g,h)) count_blossom++;
+    if (find_face_in_blossom_info(a,b,f,e)) count_blossom++;
+    if (find_face_in_blossom_info(b,c,g,f)) count_blossom++;
+    if (find_face_in_blossom_info(d,c,g,h)) count_blossom++;
+    if (find_face_in_blossom_info(d,a,e,h)) count_blossom++;
+
+    hex_ranks[hex][2] = count_blossom;
+
   }
+}
 
+bool Recombinator_Graph::find_face_in_blossom_info(MVertex *a, MVertex *b,
+                                                   MVertex *c, MVertex *d)
+{
+  PETriangle *t1,*t2;
 
-  void Recombinator_Graph::fill_edges_table(const MVertex *a, const MVertex *b, const MVertex *c, const MVertex *d, Hex *hex){
-    vector<const MVertex* > v;
-    vector<const MVertex* > u;
-    v.push_back(a);
-    v.push_back(b);
-    v.push_back(c);
-    v.push_back(d);
+  t1 = get_triangle(a,b,c);
+  t2 = get_triangle(a,c,d);
 
-    vector<const MVertex*>::const_iterator it1 = v.begin();
-    for (;it1!=v.end();it1++){
-      vector<const MVertex*>::const_iterator it2 = it1;
-      for (;it2!=v.end();it2++){
-        if (it1==it2) continue;
-
-        u.clear();
-        u.push_back(*it1);
-        u.push_back(*it2);
-        // see if already exists or not...
-        PELine *l = new PELine(u);
-        linemap::const_iterator itfind = find_the_line(l,edges_and_diagonals);
-        if (itfind==edges_and_diagonals.end()){
-          itfind = edges_and_diagonals.insert(make_pair(l->get_hash(),l));
-        }
-        else{
-          delete l;
-          l = itfind->second;
-        }
-
-        hex_to_edges[hex].insert(l);
-        edges_to_hex[l].insert(hex);
-      }
-    }
-  }
-
-
-  Recombinator_Graph::graph::iterator Recombinator_Graph::find_hex_in_graph(Hex* hex){
-    pair<graph::iterator, graph::iterator> range = incompatibility_graph.equal_range(hex->get_hash());
-    if (range.first==range.second) return incompatibility_graph.end();
-
-    graph::iterator it = range.first;
-    for (;it!=range.second;it++){
-      if (it->second.first==hex){
-        return it;
-      }
-    }
-    return incompatibility_graph.end();
-  }
-
-
-  Recombinator_Graph::graph_data::iterator Recombinator_Graph::find_hex_in_graphrow(Hex* hex, graph_data &row){
-    pair<graph_data::iterator, graph_data::iterator> range = row.equal_range(hex->get_hash());
-    if (range.first==range.second) return row.end();
-
-    graph_data::iterator it = range.first;
-    for (;it!=range.second;it++){
-      if (it->second==hex){
-        return it;
-      }
-    }
-    return row.end();
-  }
-
-
-
-  bool Recombinator_Graph::find_hex_couple_in_graph(Hex* hex, Hex* other_hex){
-    graph::iterator it = find_hex_in_graph(hex);
-    if (it==incompatibility_graph.end()) return false;
-
-    graph_data::iterator itt = find_hex_in_graphrow(other_hex, it->second.second);
-    if (itt==it->second.second.end()) return false;
+  if (is_blossom_pair(t1,t2))
     return true;
 
-  }
+
+  t1 = get_triangle(a,b,d);
+  t2 = get_triangle(b,c,d);
+  if (is_blossom_pair(t1,t2))
+    return true;
+
+  return false;
+}
 
 
-  void Recombinator_Graph::add_graph_entry(Hex* hex, Hex* other_hex){
-
-    graph::iterator itfind_graph = find_hex_in_graph(hex);
-
-    if (itfind_graph==incompatibility_graph.end()){
-      itfind_graph = incompatibility_graph.insert(make_pair(hex->get_hash(),make_pair(hex, graph_data())));
-      itfind_graph->second.second.insert(make_pair(other_hex->get_hash(),other_hex));
-      set_of_all_hex_in_graph.insert(hex);
-      return;
-    }
-    else{
-      itfind_graph->second.second.insert(make_pair(other_hex->get_hash(),other_hex));
-    }
-
-  }
+PETriangle* Recombinator_Graph::get_triangle(MVertex*a, MVertex* b, MVertex *c)
+{
+  vector<const MVertex*> v;
+  v.push_back(a);
+  v.push_back(b);
+  v.push_back(c);
+  PETriangle *t = new PETriangle(v);
+  citer it_find_tri = find_the_triangle(t, triangular_faces);
+  delete t;
+  return (it_find_tri->second);
+}
 
 
-  void Recombinator_Graph::compute_hex_ranks(){
-
-    create_faces_connectivity();
-
-    PETriangle* face;
-    Hex *hex;
-    double boundary_count;
-
-    for (map<Hex*,set<PETriangle*> >::iterator it = hex_to_faces.begin();it!=hex_to_faces.end();it++){
-      hex = it->first;
-      boundary_count=0.;
-      for (set<PETriangle*>::iterator itf = it->second.begin();itf!=it->second.end();itf++){
-        face = *itf;
-        if (faces_connectivity[face]==1) boundary_count+=1.;
-      }
-      //cout << " --- hex " << hex << " has " << boundary_count << " tri faces on boundaries, " << hex_to_faces[hex].size() << " total tri faces " << endl;
-      map<Hex*,vector<double> >::iterator itfind = hex_ranks.find(hex);
-      if (itfind==hex_ranks.end())
-        hex_ranks.insert(make_pair(hex,vector<double>(1)));
-      hex_ranks[hex][0] = boundary_count;
-      hex_ranks[hex][1] = hex->get_quality();
-    }
-  }
-
-
-  void Recombinator_Graph::create_faces_connectivity(){
-    for (std::map<MElement*, std::set<Hex*> >::iterator it_tet = tet_to_hex.begin(); it_tet!=tet_to_hex.end();it_tet++){
-      add_face_connectivity(it_tet->first, 0,1,2);
-      add_face_connectivity(it_tet->first, 0,1,3);
-      add_face_connectivity(it_tet->first, 0,2,3);
-      add_face_connectivity(it_tet->first, 1,2,3);
-    }
-  }
-
-
-  void Recombinator_Graph::add_face_connectivity(MElement *tet, int i, int j, int k){
-    vector<const MVertex*> v;
-    PETriangle *t;
-    v.push_back(tet->getVertex(i));
-    v.push_back(tet->getVertex(j));
-    v.push_back(tet->getVertex(k));
-    t = new PETriangle(v);
-    citer itfind = find_the_triangle(t,triangular_faces);
-    if (itfind!=triangular_faces.end()){
-      faces_connectivity[itfind->second]++;
-    }
-    delete t;
-  }
-
-
-  void Recombinator_Graph::compute_hex_ranks_blossom(){
-
-    create_faces_connectivity();
-
-    PETriangle* face;
-    Hex *hex;
-    double boundary_count;
-    MVertex *a,*b,*c,*d;
-    MVertex *e,*f,*g,*h;
-
-    for (map<Hex*,set<PETriangle*> >::iterator it = hex_to_faces.begin();it!=hex_to_faces.end();it++){
-      hex = it->first;
-      boundary_count=0.;
-      for (set<PETriangle*>::iterator itf = it->second.begin();itf!=it->second.end();itf++){
-        face = *itf;
-        if (faces_connectivity[face]==1) boundary_count+=1.;
-      }
-      //cout << " --- hex " << hex << " has " << boundary_count << " tri faces on boundaries, " << hex_to_faces[hex].size() << " total tri faces " << endl;
-      map<Hex*,vector<double> >::iterator itfind = hex_ranks.find(hex);
-      if (itfind==hex_ranks.end())
-        hex_ranks.insert(make_pair(hex,vector<double>(1)));
-      hex_ranks[hex][0] = boundary_count;
-      hex_ranks[hex][1] = hex->get_quality();
-
-
-      a = hex->get_a();
-      b = hex->get_b();
-      c = hex->get_c();
-      d = hex->get_d();
-      e = hex->get_e();
-      f = hex->get_f();
-      g = hex->get_g();
-      h = hex->get_h();
-
-      int count_blossom=0;
-      if (find_face_in_blossom_info(a,b,c,d)) count_blossom++;
-      if (find_face_in_blossom_info(e,f,g,h)) count_blossom++;
-      if (find_face_in_blossom_info(a,b,f,e)) count_blossom++;
-      if (find_face_in_blossom_info(b,c,g,f)) count_blossom++;
-      if (find_face_in_blossom_info(d,c,g,h)) count_blossom++;
-      if (find_face_in_blossom_info(d,a,e,h)) count_blossom++;
-
-      hex_ranks[hex][2] = count_blossom;
-
-    }
-  }
-
-
-  bool Recombinator_Graph::find_face_in_blossom_info(MVertex *a, MVertex *b, MVertex *c, MVertex *d){
-    PETriangle *t1,*t2;
-
-    t1 = get_triangle(a,b,c);
-    t2 = get_triangle(a,c,d);
-
-    if (is_blossom_pair(t1,t2))
+bool Recombinator_Graph::is_blossom_pair(PETriangle *t1, PETriangle *t2)
+{
+  tripair::iterator itfind = blossom_info.find(t1);
+  if (itfind!=blossom_info.end()){
+    if (t2==itfind->second)
       return true;
-
-
-    t1 = get_triangle(a,b,d);
-    t2 = get_triangle(b,c,d);
-    if (is_blossom_pair(t1,t2))
-      return true;
-
-    return false;
   }
-
-
-  PETriangle* Recombinator_Graph::get_triangle(MVertex*a, MVertex* b, MVertex *c){
-    vector<const MVertex*> v;
-    v.push_back(a);
-    v.push_back(b);
-    v.push_back(c);
-    PETriangle *t = new PETriangle(v);
-    citer it_find_tri = find_the_triangle(t, triangular_faces);
-    delete t;
-    return (it_find_tri->second);
-  }
-
-
-  bool Recombinator_Graph::is_blossom_pair(PETriangle *t1, PETriangle *t2){
-    tripair::iterator itfind = blossom_info.find(t1);
-    if (itfind!=blossom_info.end()){
-      if (t2==itfind->second)
-        return true;
-    }
-    return false;
-  }
-
-
-
-
-
-
-
-
+  return false;
+}
 

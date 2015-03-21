@@ -489,85 +489,73 @@ static void Mesh3D(GModel *m)
   FindConnectedRegions(delaunay, connected);
 
   // remove quads elements for volumes that are recombined
-  // pragma OMP ICI ??
+  // pragma OMP here ?
   for(unsigned int i = 0; i < connected.size(); i++){
-    for(unsigned j=0;j<connected[i].size();j++){
+    for(unsigned j = 0; j < connected[i].size(); j++){
       GRegion *gr = connected[i][j];
       if(CTX::instance()->mesh.recombine3DAll || gr->meshAttributes.recombine3D){
         std::list<GFace*> f = gr->faces();
-        for (std::list<GFace*>::iterator it = f.begin();
-            it != f.end() ; ++it) quadsToTriangles (*it,1000000);
+        for(std::list<GFace*>::iterator it = f.begin(); it != f.end() ; ++it)
+          quadsToTriangles(*it, 1000000);
       }
     }
   }
 
-  // pragma OMP ICI ??
-  double time_recombination, vol_element_recombination, vol_hexa_recombination;
-  int nb_elements_recombination,nb_hexa_recombination;
-  time_recombination = vol_hexa_recombination = vol_element_recombination = 0.;
-  nb_elements_recombination = nb_hexa_recombination = 0;
+  double time_recombination = 0., vol_element_recombination = 0.;
+  double vol_hexa_recombination = 0.;
+  int nb_elements_recombination = 0, nb_hexa_recombination = 0;
+
+  // pragma OMP here ?
   for(unsigned int i = 0; i < connected.size(); i++){
     MeshDelaunayVolume(connected[i]);
 
-    //Additional code for hex mesh begin
-    for(unsigned j=0;j<connected[i].size();j++){
+    // additional code for experimental hex mesh
+    for(unsigned j = 0; j < connected[i].size(); j++){
       GRegion *gr = connected[i][j];
-      //R-tree
-      bool treat_region_ok=false;
+      bool treat_region_ok = false;
       if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE){
-        // PEB MODIF
         if (old_algo_hexa()){
           Filler f;
           f.treat_region(gr);
-          treat_region_ok=true;
+          treat_region_ok = true;
         }
         else{
           Filler3D f;
           treat_region_ok = f.treat_region(gr);
         }
-        // END PEB MODIF
       }
-      //Recombine3D into hex
-      if((CTX::instance()->mesh.recombine3DAll || gr->meshAttributes.recombine3D) && treat_region_ok){
-        clock_t a = clock();
-        //        Recombinator rec;
-        //        rec.execute();
+      if(treat_region_ok && (CTX::instance()->mesh.recombine3DAll ||
+                             gr->meshAttributes.recombine3D)){
+        double a = Cpu();
         Recombinator rec;
         rec.execute(gr);
-//                Recombinator_Graph rec(1.e7,"test");
-//                rec.execute(gr);
-        //        Supplementary sup;
-        //        sup.execute();
-        //        PostOp post;
-        //        post.execute(0);
         Supplementary sup;
         sup.execute(gr);
         PostOp post;
         post.execute(gr,0);
-
         nb_elements_recombination += post.get_nb_elements();
         nb_hexa_recombination += post.get_nb_hexahedra();
         vol_element_recombination += post.get_vol_elements();
         vol_hexa_recombination += post.get_vol_hexahedra();
-
-        // -- partial export
+        // partial export
         stringstream ss;
         ss << "yamakawa_part_";
         ss << gr->tag();
         ss << ".msh";
-        export_gregion_mesh(gr,ss.str().c_str());
-        // -- end partial export
-
-        time_recombination += (clock() - a) / (double)CLOCKS_PER_SEC;
+        export_gregion_mesh(gr, ss.str().c_str());
+        time_recombination += (Cpu() - a);
       }
     }
   }
+
   if(CTX::instance()->mesh.recombine3DAll){
-    cout << "RECOMBINATION timing:" << endl;
-    cout << "  ------- CUMULATIVE TIME RECOMBINATION : " << time_recombination << " s." << endl;
-    cout << "RECOMBINATION CUMULATIVE STATISTICS:" << endl;
-    cout << "............................  Percentage of hexahedra   (#) : " << nb_hexa_recombination*100./nb_elements_recombination << endl;
-    cout << "............................  Percentage of hexahedra (Vol) : " << vol_hexa_recombination*100./vol_element_recombination << endl;
+    Msg::Info("RECOMBINATION timing:");
+    Msg::Info(" --- CUMULATIVE TIME RECOMBINATION : %g s.", time_recombination);
+    Msg::Info("RECOMBINATION CUMULATIVE STATISTICS:");
+    Msg::Info(".... Percentage of hexahedra   (#) : %g",
+              nb_hexa_recombination*100./nb_elements_recombination);
+    Msg::Info(".... Percentage of hexahedra (Vol) : %g",
+              vol_hexa_recombination*100./vol_element_recombination);
   }
 
   // Ensure that all volume Jacobians are positive

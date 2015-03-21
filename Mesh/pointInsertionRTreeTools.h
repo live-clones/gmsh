@@ -192,13 +192,14 @@ class compareSmoothnessVertexPairs
   private:
     const double threshold;
     double roundit(const double &d)const{
-      return (round(d/threshold)*threshold);
+      //return (round(d/threshold)*threshold);
+      return ((int)(d/threshold + 0.5)*threshold);
     }
   public:
     static bool vectorial;
 
     compareSmoothnessVertexPairs():threshold(0.05){};
-    
+
     inline bool operator () (const smoothness_vertex_pair *a, const smoothness_vertex_pair *b)  const
     {
 
