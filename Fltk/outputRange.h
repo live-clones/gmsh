@@ -142,7 +142,11 @@ class outputRange : public Fl_Group {
   }
   void graph(const std::string &val){ _set_graph_value(val); }
   std::string graph(){ return _graph_val; }
-  void color(int col){ _output->color(col); }
+  void color(int col)
+  {
+    _output->color(col);
+    _output->textcolor(fl_contrast(FL_FOREGROUND_COLOR, col));
+  }
 };
 
 #endif

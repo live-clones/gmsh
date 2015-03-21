@@ -253,11 +253,16 @@ FlGui::FlGui(int argc, char **argv)
   if(CTX::instance()->display.size())
     Fl::display(CTX::instance()->display.c_str());
 
-#if 0 // dark scheme... not bad, but needs work
-  Fl::background(110, 110, 110);
-  Fl::background2(140, 140, 140);
-  Fl::foreground(230, 230, 230);
-  //Fl::set_color(FL_SELECTION_COLOR, 50, 50, 0);
+//#define DARK_SCHEME
+#if defined(DARK_SCHEME)
+  Fl::background(50, 50, 50);
+  Fl::background2(145, 145, 145);
+  Fl::foreground(250, 250, 250);
+  for (int i = 0; i < FL_NUM_GRAY; i++) {
+    double min = 0., max = 165.;
+    int d = (int)(min + i * (max - min) / (FL_NUM_GRAY - 1.));
+    Fl::set_color(fl_gray_ramp(i), d, d, d);
+  }
 #endif
 
   // add new box types (dx dy dw dh)
@@ -283,7 +288,7 @@ FlGui::FlGui(int argc, char **argv)
     Fl::scheme(CTX::instance()->guiTheme.c_str());
   Fl_Tooltip::size(FL_NORMAL_SIZE);
   Fl_Tooltip::delay(0.5);
-#if defined(__APPLE__)
+#if defined(__APPLE__) && !defined(DARK_SCHEME)
   Fl_Tooltip::color(FL_LIGHT2);
 #endif
 
@@ -348,6 +353,10 @@ FlGui::FlGui(int argc, char **argv)
 
   graph[0]->getWindow()->show(argc >0 ? 1 : 0, argv);
   if(graph[0]->getMenuWindow()) graph[0]->getMenuWindow()->show();
+
+#if defined(DARK_SCHEME)
+  Fl::set_color(FL_SELECTION_COLOR, 200, 200, 200);
+#endif
 
   // graphic window should have the initial focus (so we can e.g. directly loop
   // through time steps with the keyboard)
