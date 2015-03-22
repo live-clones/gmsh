@@ -25,7 +25,7 @@
 
 void export_gregion_mesh(GRegion *gr, string filename)
 {
-  // FIXME: use MElement::writeMSH!
+  // FIXME: use MElement::writeMSH
 
   // create set of all tets
   map<MVertex*,int> vertices;
@@ -145,9 +145,8 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
   // export all hex
   typename cliques_compatibility_graph<T>::graph::const_iterator itgraph = cl.begin_graph();
   typename cliques_compatibility_graph<T>::graph_data::const_iterator itgraphdata;
-  int countttttt=0;
+
   for (;itgraph!=cl.end_graph();itgraph++){
-    //    cout << "counttttt : " << ++countttttt << endl;
 
     T firsthex = itgraph->second.first;
     //    if (!post_check_validation(firsthex)) continue;
@@ -382,14 +381,12 @@ cliques_compatibility_graph<T>::cliques_compatibility_graph
 (graph &_g, const map<T, std::vector<double> > &_hex_ranks,
  unsigned int _max_nb_cliques, unsigned int _nb_hex_potentiels,
  clique_stop_criteria<T> *csc, ptrfunction_export fct)
-  : debug(false), max_nb_cliques(_max_nb_cliques),
-    nb_hex_potentiels(_nb_hex_potentiels), max_clique_size(0), position(0),
-    total_nodes_number(0), cancel_search(false), hex_ranks(_hex_ranks),
-    G(_g),criteria(csc),export_clique_graph(fct),
-    found_the_ultimate_max_clique(false)
+  : found_the_ultimate_max_clique(false), export_clique_graph(fct), debug(false),
+    max_nb_cliques(_max_nb_cliques), nb_hex_potentiels(_nb_hex_potentiels),
+    max_clique_size(0), position(0), total_nodes_number(0),
+    total_nb_of_cliques_searched(0), max_nb_of_stored_cliques(10),
+    criteria(csc), cancel_search(false), hex_ranks(_hex_ranks), G(_g)
 {
-  total_nb_of_cliques_searched = 0;
-  max_nb_of_stored_cliques = 10;
 };
 
 template<class T>
@@ -504,7 +501,7 @@ void cliques_compatibility_graph<T>::store_clique(int n)
   if ((max_nb_of_stored_cliques) && (allQ.size()>=max_nb_of_stored_cliques)){
     // then, compare sizes...
     int worst_clique_size = (allQ.begin())->first;
-    if (Q.size() <= worst_clique_size){
+    if ((int)Q.size() <= worst_clique_size){
       store_it = false;// don't store if not good enough
     }
     else{
@@ -758,7 +755,7 @@ double cliques_compatibility_graph<T>::function_to_maximize_for_u(const T &u,
       counter++;
   }
 
-  typename map<T, std::vector<double> >::const_iterator itfind = hex_ranks.find(u);
+  //typename map<T, std::vector<double> >::const_iterator itfind = hex_ranks.find(u);
   //  cout << "u: " << u << " boundary score: " << itfind->second[0]*(nb_hex_potentiels/2.) << "  counter score : " << counter << " total: " << (itfind->second[0]*(nb_hex_potentiels/2.) + counter) << endl;
   //  return (itfind->second[0]*(nb_hex_potentiels/2.) + itfind->second[1]*1000 + counter);
   //return (itfind->second[0]*(nb_hex_potentiels/2.)*1000. + itfind->second[1]*3 + counter);
@@ -995,7 +992,7 @@ size_t PEEntity::get_hash() const{
 PEEntity::~PEEntity(){}
 
 const MVertex* PEEntity::getVertex(size_t n)const{
-  if ((n<0) || (n>get_max_nb_vertices()) || vertices.empty()){
+  if ((n>get_max_nb_vertices()) || vertices.empty()){
     cout << " PEEntity::getVertex : wrong vertex number : int n = " << n << endl;
     throw;
   }
