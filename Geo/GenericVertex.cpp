@@ -1,27 +1,28 @@
-// Gmsh - Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
+//
+// Contributed by Paul-Emile Bernard
 
-#include "GmshConfig.h"
+#include <algorithm>
 #include "GModel.h"
 #include "MVertex.h"
 #include "MPoint.h"
 #include "GenericVertex.h"
 #include "GenericEdge.h"
 #include "GenericFace.h"
-#include<algorithm>
-
 
 GenericVertex::ptrfunction_int_vector GenericVertex::VertexXYZ = NULL;
 GenericVertex::ptrfunction_int_doubleptr_voidptr GenericVertex::VertexMeshSize = NULL;
 
-
-GenericVertex::GenericVertex(GModel *m, int num, int _native_id):GVertex(m, num), id(_native_id){
+GenericVertex::GenericVertex(GModel *m, int num, int _native_id)
+ : GVertex(m, num), id(_native_id)
+{
   if (!VertexXYZ)
     Msg::Fatal("GenericVertex::ERROR: Callback not set");
 
-  vector<double> vec(3,0.);
+  std::vector<double> vec(3,0.);
   bool ok = VertexXYZ(id,vec);
   if (!ok) Msg::Error("GenericVertex::ERROR from callback VertexXYZ ");
   _x=vec[0];
@@ -29,29 +30,25 @@ GenericVertex::GenericVertex(GModel *m, int num, int _native_id):GVertex(m, num)
   _z=vec[2];
 }
 
-
-GenericVertex::GenericVertex(GModel *m, int num, int _native_id, const vector<double> &vec):GVertex(m, num), id(_native_id){
+GenericVertex::GenericVertex(GModel *m, int num, int _native_id, const std::vector<double> &vec)
+ : GVertex(m, num), id(_native_id)
+{
   if (!VertexXYZ)
     Msg::Fatal("GenericVertex::ERROR: Callback not set");
-
   _x=vec[0];
   _y=vec[1];
   _z=vec[2];
 }
 
-
 GenericVertex::~GenericVertex(){
-}
 
+}
 
 SPoint2 GenericVertex::reparamOnFace(const GFace *gf, int dir) const
 {
-
   SPoint3 pt(_x,_y,_z);
   return gf->parFromPoint(pt,true);
-
 }
-
 
 void GenericVertex::setPosition(GPoint &p)
 {

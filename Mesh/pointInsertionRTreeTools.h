@@ -206,7 +206,7 @@ public:
   virtual bool empty(){ return points.empty(); };
 
 protected:
-  set<smoothness_vertex_pair*, compareSmoothnessVertexPairs> points;
+  std::set<smoothness_vertex_pair*, compareSmoothnessVertexPairs> points;
 };
 
 class listOfPointsVectorialSmoothness : public listOfPointsScalarSmoothness{
@@ -218,7 +218,7 @@ public:
   };
   virtual SVector3 get_first_direction(){ return (*points.begin())->direction; };
 protected:
-  set<smoothness_vertex_pair*, compareSmoothnessVertexPairs> points;
+  std::set<smoothness_vertex_pair*, compareSmoothnessVertexPairs> points;
 };
 
 class listOfPointsFifo : public listOfPoints{
@@ -248,7 +248,7 @@ public:
   virtual bool empty(){ return points.empty(); };
 
 protected:
-  queue<smoothness_vertex_pair*> points;
+  std::queue<smoothness_vertex_pair*> points;
 };
 
 #endif
