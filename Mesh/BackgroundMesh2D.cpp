@@ -31,10 +31,6 @@
 #include "linearSystemPETSc.h"
 #endif
 
-
-using namespace std;
-
-
 class evalDiffusivityFunction : public simpleFunction<double>{
   public:
     evalDiffusivityFunction(frameFieldBackgroundMesh2D *_bgm, double t=0.95):bgm(_bgm),threshold(t){};
@@ -50,16 +46,16 @@ class evalDiffusivityFunction : public simpleFunction<double>{
 //TODO: move this fct ???
 /* applies rotations of amplitude pi to set the 
    angle in the first quadrant (in [0,pi/2[ ) */
-void normalizeAngle(double &angle) {
+void normalizeAngle(double &angle) 
+{
   if (angle < 0) 
     while ( angle <  0 ) angle += (M_PI * .5);
   else if (angle >= M_PI * .5) 
     while ( angle >= M_PI * .5 ) angle -= (M_PI * .5);
 }
 
-
-void backgroundMesh2D::create_face_mesh(){
-
+void backgroundMesh2D::create_face_mesh()
+{
   quadsToTriangles(dynamic_cast<GFace*>(gf), 100000);
 
   // storing the initial mesh from GFace
@@ -83,7 +79,8 @@ void backgroundMesh2D::create_face_mesh(){
 }
 
 
-MElementOctree* backgroundMesh2D::getOctree(){
+MElementOctree* backgroundMesh2D::getOctree()
+{
   if(!octree){
     Msg::Debug("Rebuilding BackgroundMesh element octree");
     octree = new MElementOctree(elements);
@@ -91,13 +88,13 @@ MElementOctree* backgroundMesh2D::getOctree(){
   return octree;
 }
 
-
-const MElement* backgroundMesh2D::getElement(unsigned int i)const{
+const MElement* backgroundMesh2D::getElement(unsigned int i)const
+{
   return elements[i];
 }
 
-
-void backgroundMesh2D::reset(bool erase_2D3D){
+void backgroundMesh2D::reset(bool erase_2D3D)
+{
   unset();
 
   // create face mesh - this was previously done for old backgroundmesh in buildBackGroundMesh !
@@ -108,7 +105,7 @@ void backgroundMesh2D::reset(bool erase_2D3D){
     computeSizeField();
   }
   else 
-    for (map<MVertex*, MVertex*>::iterator itv2 = _2Dto3D.begin() ; itv2 != _2Dto3D.end(); ++itv2)
+    for (std::map<MVertex*, MVertex*>::iterator itv2 = _2Dto3D.begin() ; itv2 != _2Dto3D.end(); ++itv2)
       sizeField[itv2->first] = CTX::instance()->mesh.lcMax;
 
   // ensure that other criteria are fullfilled
@@ -131,14 +128,14 @@ void backgroundMesh2D::unset(){
 
 void backgroundMesh2D::create_mesh_copy(){
   // TODO: useful to extend it to other elements ???
-  //set<SPoint2> myBCNodes;
+  //std::set<SPoint2> myBCNodes;
   GFace *face = dynamic_cast<GFace*>(gf);
   for (unsigned int i = 0; i < face->triangles.size(); i++){
     MTriangle *e = face->triangles[i];
     MVertex *news[3];
     for (int j=0;j<3;j++){
       MVertex *v = e->getVertex(j);
-      map<MVertex*,MVertex*>::iterator it = _3Dto2D.find(v);
+      std::map<MVertex*,MVertex*>::iterator it = _3Dto2D.find(v);
       MVertex *newv =0;
       if (it == _3Dto2D.end()){
         SPoint2 p;
@@ -162,20 +159,20 @@ GPoint backgroundMesh2D::get_GPoint_from_MVertex(const MVertex *v)const{
 }
 
 
-backgroundMesh2D::backgroundMesh2D(GFace *_gf, bool erase_2D3D):BGMBase(2,_gf),sizeFactor(1.){
-  if(debug) cout << "backgroundMesh2D::constructor " << endl;
+backgroundMesh2D::backgroundMesh2D(GFace *_gf, bool erase_2D3D):BGMBase(2,_gf),sizeFactor(1.)
+{
   reset(erase_2D3D);
 
   if (erase_2D3D){
-    // now, the new mesh has been copied in local in backgroundMesh2D, deleting the mesh from GFace, back to the previous one !
+    // now, the new mesh has been copied in local in backgroundMesh2D, deleting the mesh 
+    // from GFace, back to the previous one ! 
     GFace *face = dynamic_cast<GFace*>(gf);
     face->triangles = tempTR;
   }
-
 }
 
-
-backgroundMesh2D::~backgroundMesh2D(){
+backgroundMesh2D::~backgroundMesh2D()
+{
   unset();
 }
 
@@ -203,9 +200,8 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet, simpleFunct
     myAssembler.fixVertex(itv->first, 0, 1, itv->second);
   }
 
-
   // Number vertices
-  set<MVertex*> vs;
+  std::set<MVertex*> vs;
   GFace *face = dynamic_cast<GFace*>(gf);
   for (unsigned int k = 0; k < face->triangles.size(); k++)
     for (int j=0;j<3;j++)vs.insert(face->triangles[k]->getVertex(j));
@@ -213,9 +209,9 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet, simpleFunct
     for (int j=0;j<4;j++)vs.insert(face->quadrangles[k]->getVertex(j));
 
 
-  map<MVertex*,SPoint3> theMap;
+  std::map<MVertex*,SPoint3> theMap;
   if ( in_parametric_plane) {
-    for (set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it){
+    for (std::set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it){
       SPoint2 p;
       reparamMeshVertexOnFace ( *it, face, p);
       theMap[*it] = SPoint3((*it)->x(),(*it)->y(),(*it)->z());
@@ -223,7 +219,7 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet, simpleFunct
     }
   }
 
-  for (set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it)
+  for (std::set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it)
     myAssembler.numberVertex(*it, 0, 1);
 
   // Assemble
@@ -240,12 +236,12 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet, simpleFunct
   }
 
   // save solution
-  for (set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it){
+  for (std::set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it){
     myAssembler.getDofValue(*it, 0, 1, dirichlet[*it]);
   }
 
   if ( in_parametric_plane) {
-    for (set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it){
+    for (std::set<MVertex*>::iterator it = vs.begin(); it != vs.end(); ++it){
       SPoint3 p = theMap[(*it)];
       (*it)->setXYZ(p.x(),p.y(),p.z());
     }
@@ -287,7 +283,7 @@ void backgroundMesh2D::computeSizeField(){
   simpleFunction<double> ONE(1.0);
   propagateValues(sizes,ONE);
 
-  map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
+  std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
     MVertex *v_2D = itv2->first;
     MVertex *v_3D = itv2->second;
@@ -330,7 +326,7 @@ void backgroundMesh2D::updateSizes(){
   // do not allow large variations in the size field
   // (Int. J. Numer. Meth. Engng. 43, 1143-1165 (1998) MESH GRADATION
   // CONTROL, BOROUCHAKI, HECHT, FREY)
-  set<MEdge,Less_Edge> edges;
+  std::set<MEdge,Less_Edge> edges;
   for (unsigned int i = 0; i < getNumMeshElements(); i++){
     for (int j = 0; j < getElement(i)->getNumEdges(); j++){
       edges.insert(getElement(i)->getEdge(j));
@@ -338,7 +334,7 @@ void backgroundMesh2D::updateSizes(){
   }
   const double _beta = 1.3;
   for (int i=0;i<0;i++){
-    set<MEdge,Less_Edge>::iterator it = edges.begin();
+    std::set<MEdge,Less_Edge>::iterator it = edges.begin();
     for ( ; it != edges.end(); ++it){
       MVertex *v0 = it->getVertex(0);
       MVertex *v1 = it->getVertex(1);
@@ -356,27 +352,21 @@ void backgroundMesh2D::updateSizes(){
 
 
 
-frameFieldBackgroundMesh2D::frameFieldBackgroundMesh2D(GFace *_gf):backgroundMesh2D(_gf,false){
-
-  if(debug) cout << "frameFieldBackgroundMesh2D::constructor " << endl;
-
+frameFieldBackgroundMesh2D::frameFieldBackgroundMesh2D(GFace *_gf):backgroundMesh2D(_gf,false)
+{
   reset();
 
-  // now, the new mesh has been copied in local in backgroundMesh2D, deleting the mesh from GFace, back to the previous one !
+  // now, the new mesh has been copied in local in backgroundMesh2D, deleting the mesh
+  // from GFace, back to the previous one !
   GFace *face = dynamic_cast<GFace*>(gf);
   face->triangles = tempTR;
 }
 
-
 frameFieldBackgroundMesh2D::~frameFieldBackgroundMesh2D(){}
 
-
-void frameFieldBackgroundMesh2D::reset(bool erase_2D3D){
-
+void frameFieldBackgroundMesh2D::reset(bool erase_2D3D)
+{
   // computes cross field
-  if(debug) cout << "frameFieldBackgroundMesh2D::reset " << endl;
-
-
   simpleFunction<double> ONE(1.0);
   computeCrossField(ONE);
   computeSmoothness();
@@ -402,46 +392,42 @@ void frameFieldBackgroundMesh2D::reset(bool erase_2D3D){
   }
 }
 
-
-double frameFieldBackgroundMesh2D::get_smoothness(MVertex *v){
-  if(debug) cout << "frameFieldBackgroundMesh2D::get_smoothness(MVertex *v)" << endl;
+double frameFieldBackgroundMesh2D::get_smoothness(MVertex *v)
+{
   return get_nodal_value(v,smoothness);
 }
 
-
-double frameFieldBackgroundMesh2D::get_smoothness(double u, double v){
-  if(debug) cout << "frameFieldBackgroundMesh2D::get_smoothness(double u, double v)" << endl;
+double frameFieldBackgroundMesh2D::get_smoothness(double u, double v)
+{
   return get_field_value(u,v,0.,smoothness);
 }
 
-
-double frameFieldBackgroundMesh2D::angle(MVertex *v){
-  if(debug) cout << "frameFieldBackgroundMesh2D::angle(MVertex *v)" << endl;
+double frameFieldBackgroundMesh2D::angle(MVertex *v)
+{
   return get_nodal_value(v,angles);
 }
 
-
-double frameFieldBackgroundMesh2D::angle(double u, double v){
+double frameFieldBackgroundMesh2D::angle(double u, double v)
+{
   MElement *e = const_cast<MElement*>(findElement(u, v));
   if (!e) return -1000.0;
-  vector<double> val = get_nodal_values(e,angles);
-  vector<double> element_uvw = get_element_uvw_from_xyz(e,u,v,0.);
-  double cosvalues[e->getNumVertices()],sinvalues[e->getNumVertices()];
+  std::vector<double> val = get_nodal_values(e,angles);
+  std::vector<double> element_uvw = get_element_uvw_from_xyz(e,u,v,0.);
+  std::vector<double> cosvalues(e->getNumVertices()), sinvalues(e->getNumVertices());
   for (int i=0;i<e->getNumVertices();i++){
     cosvalues[i]=cos(4*val[i]);
     sinvalues[i]=sin(4*val[i]);
   }
-  double cos4 = e->interpolate(cosvalues, element_uvw[0], element_uvw[1], element_uvw[2], 1, order);
-  double sin4 = e->interpolate(sinvalues, element_uvw[0], element_uvw[1], element_uvw[2], 1, order);
+  double cos4 = e->interpolate(&cosvalues[0], element_uvw[0], element_uvw[1], element_uvw[2], 1, order);
+  double sin4 = e->interpolate(&sinvalues[0], element_uvw[0], element_uvw[1], element_uvw[2], 1, order);
   double a = atan2(sin4,cos4)/4.0;
   normalizeAngle (a);
   return a;
 }
 
-
-void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_diffusivity){
+void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_diffusivity)
+{
   angles.clear();
-  if(debug) cout << "frameFieldBackgroundMesh2D::computeCrossField " << endl;
 
   DoubleStorageType _cosines4,_sines4;
 
@@ -488,9 +474,7 @@ void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_
   propagateValues(_cosines4,eval_diffusivity,false);
   propagateValues(_sines4,eval_diffusivity,false);
 
-
-
-  map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
+  std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
     MVertex *v_2D = itv2->first;
     MVertex *v_3D = itv2->second;
@@ -500,8 +484,8 @@ void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_
   }
 }
 
-
-void frameFieldBackgroundMesh2D::eval_crossfield(double u, double v, STensor3 &cf){
+void frameFieldBackgroundMesh2D::eval_crossfield(double u, double v, STensor3 &cf)
+{
   double quadAngle  = angle(u,v);
   Pair<SVector3, SVector3> dirs = compute_crossfield_directions(u,v,quadAngle);
   SVector3 n = crossprod(dirs.first(),dirs.second());
@@ -511,8 +495,6 @@ void frameFieldBackgroundMesh2D::eval_crossfield(double u, double v, STensor3 &c
     cf(i,1) = dirs.second()[i];
     cf(i,2) = n[i];
   }
-
-
 
   //  SVector3 t1,t2,n;
   //  GFace *face = dynamic_cast<GFace*>(gf);
@@ -531,26 +513,22 @@ void frameFieldBackgroundMesh2D::eval_crossfield(double u, double v, STensor3 &c
   //    cf(i,1) = t2[i];
   //    cf(i,2) = n[i];
   //  }
-
-  return;
 }
 
-
-void frameFieldBackgroundMesh2D::eval_crossfield(MVertex *vert, STensor3 &cf){
+void frameFieldBackgroundMesh2D::eval_crossfield(MVertex *vert, STensor3 &cf)
+{
   SPoint2 parampoint;
   GFace *face = dynamic_cast<GFace*>(gf);
   reparamMeshVertexOnFace(vert, face, parampoint);
   return eval_crossfield(parampoint[0], parampoint[1], cf);
 }
 
-
-void frameFieldBackgroundMesh2D::computeSmoothness(){
+void frameFieldBackgroundMesh2D::computeSmoothness()
+{
   smoothness.clear();
 
-  if(debug) cout << "frameFieldBackgroundMesh2D::computeSmoothness " << endl;
-
   // build vertex -> neighbors table
-  multimap<MVertex*,MVertex*> vertex2vertex;
+  std::multimap<MVertex*,MVertex*> vertex2vertex;
   for (std::vector<MElement*>::iterator it = beginelements();it!=endelements();it++){
     MElement *e = *it;
     for (int i=0;i<e->getNumVertices();i++){
@@ -568,10 +546,10 @@ void frameFieldBackgroundMesh2D::computeSmoothness(){
     MVertex *v = *it;
     double angle_current = angle(v);
     // compare to all neighbors...
-    pair<multimap<MVertex*,MVertex*>::iterator, multimap<MVertex*,MVertex*>::iterator> range = vertex2vertex.equal_range(v);
+    std::pair<std::multimap<MVertex*,MVertex*>::iterator, std::multimap<MVertex*,MVertex*>::iterator> range = vertex2vertex.equal_range(v);
     double minangle,totalangle=0.;
     int N=0;
-    for (multimap<MVertex*,MVertex*>::iterator itneighbor = range.first;itneighbor!=range.second;itneighbor++){
+    for (std::multimap<MVertex*,MVertex*>::iterator itneighbor = range.first;itneighbor!=range.second;itneighbor++){
       N++;
       minangle=M_PI/2;
       MVertex *v_nb = itneighbor->second;
@@ -587,11 +565,11 @@ void frameFieldBackgroundMesh2D::computeSmoothness(){
   }
 }
 
-
-void frameFieldBackgroundMesh2D::exportCrossField(const string &filename){
+void frameFieldBackgroundMesh2D::exportCrossField(const std::string &filename)
+{
   FILE *f = Fopen (filename.c_str(),"w");
   fprintf(f,"View \"Cross Field\"{\n");
-  vector<double> deltas(2);
+  std::vector<double> deltas(2);
   deltas[0] = 0.;
   deltas[1] = M_PI;
 
@@ -609,10 +587,9 @@ void frameFieldBackgroundMesh2D::exportCrossField(const string &filename){
   fclose(f);
 }
 
-
 // returns the cross field as a pair of othogonal vectors (NOT in parametric coordinates, but real 3D coordinates)
-Pair<SVector3, SVector3> frameFieldBackgroundMesh2D::compute_crossfield_directions(double u,double v, double angle_current){
-
+Pair<SVector3, SVector3> frameFieldBackgroundMesh2D::compute_crossfield_directions(double u,double v, double angle_current)
+{
   // get the unit normal at that point
   GFace *face = dynamic_cast<GFace*>(gf);
   Pair<SVector3, SVector3> der = face->firstDer(SPoint2(u,v));
@@ -636,8 +613,8 @@ Pair<SVector3, SVector3> frameFieldBackgroundMesh2D::compute_crossfield_directio
       SVector3(t2[0],t2[1],t2[2]));
 }
 
-
-bool frameFieldBackgroundMesh2D::compute_RK_infos(double u,double v, double x, double y, double z, RK_form &infos){
+bool frameFieldBackgroundMesh2D::compute_RK_infos(double u,double v, double x, double y, double z, RK_form &infos)
+{
 
   // check if point is in domain
   if (!inDomain(u,v)) return false;
@@ -746,33 +723,4 @@ bool frameFieldBackgroundMesh2D::compute_RK_infos(double u,double v, double x, d
   infos.normal = n;
 
   return true;
-
 }
-
-
-
-
-//  if (use_previous_basis){
-//    std::map<double, double> angles;
-//    SVector3 temp = crossprod(previous_t1, t1);
-//    double a = atan2(dot(t1, previous_t1), sign(dot(temp,n))*temp.norm() );
-//    angles.insert(std::make_pair(abs(a),a));
-//    temp = crossprod(previous_t2, t1);
-//    a = atan2(dot(t1, previous_t2), sign(dot(temp,n))*temp.norm());
-//    angles.insert(std::make_pair(abs(a),a));
-//    temp = crossprod(-1.*previous_t1, t1);
-//    a = atan2(dot(t1, -1.*previous_t1), sign(dot(temp,n))*temp.norm());
-//    angles.insert(std::make_pair(abs(a),a));
-//    temp = crossprod(-1.*previous_t2, t1);
-//    a = atan2(dot(t1, -1.*previous_t2), sign(dot(temp,n))*temp.norm());
-//    angles.insert(std::make_pair(abs(a),a));
-//    //    std::if(debug) cout << "angles: " << std::endl;
-//    //    for (int i=0;i<4;i++)  std::if(debug) cout << angles[i] << "  " << std::endl;
-//    double min_angle = -(angles.begin()->second); 
-//    //    std::if(debug) cout << "min angle = " << min_angle << std::endl;
-//    t1 =  cos(min_angle)*previous_t1 + sin(min_angle)*previous_t2;
-//    t2 = -sin(min_angle)*previous_t1 + cos(min_angle)*previous_t2;
-//    //    std::if(debug) cout << "new corrected t        : (" << t1(0) << "," <<  t1(1) << ") (" << t2(0) << "," << t2(1) << std::endl;
-//  }
-
-

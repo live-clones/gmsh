@@ -1,3 +1,7 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 #include "pointInsertion.h"
 #include "BackgroundMeshManager.h"
@@ -5,35 +9,23 @@
 #include "BackgroundMesh3D.h"
 #include "GFace.h"
 #include "GRegion.h"
-
-
 #include "OS.h"
-
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-
 #include "Context.h"
 #include "meshGRegion.h"
-
 #include "pointInsertionRTreeTools.h"
-
 #include "intersectCurveSurface.h"
 
 //#include "google/profiler.h"
 
-
 using namespace std;
-
 
 bool old_algo_hexa(){
   return true;
 }
 
-
 template<typename T>
-void print_nodal_info(string filename, map<MVertex*, T> &mapp){
+void print_nodal_info(string filename, map<MVertex*, T> &mapp)
+{
   ofstream out(filename.c_str());
 
   out << "View \"\"{" << endl;
@@ -283,20 +275,18 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMe
 
   if (debug) cout << "ENTERING POINTINSERTION2D" << endl;
   
-  clock_t a;
+  double a;
 
   // acquire background mesh
   if(debug) cout << "pointInsertion2D: recover BGM" << endl;
-  a=clock();
+  a=Cpu();
   frameFieldBackgroundMesh2D *bgm = dynamic_cast<frameFieldBackgroundMesh2D*>(BGMManager::get(gf));
-  time_bgm_and_smoothing += (clock() - a) / (double)CLOCKS_PER_SEC;
-
+  time_bgm_and_smoothing += (Cpu() - a);
 
   if (!bgm){
-    cout << "pointInsertion2D:: BGM dynamic cast failed ! " << endl;
-    throw;
+    Msg::Error("BGM dynamic cast failed in filler2D::pointInsertion2D");
+    return;
   }
-
 
   // export BGM size field
   if(export_stuff){
@@ -319,7 +309,7 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMe
 
 
   // point insertion algorithm:
-  a=clock();
+  a=Cpu();
 
   // for debug check...
   int priority_counter=0;
@@ -417,7 +407,7 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMe
     }
     if(debug) cout << "////////// nbre of added point: " << count_nbaddedpt << endl;
   }
-  time_insertion += (clock() - a) / (double)CLOCKS_PER_SEC;
+  time_insertion += (Cpu() - a);
 
 
   if (debug){
@@ -496,16 +486,16 @@ bool Filler3D::treat_region(GRegion *gr){
 
   const bool debug=false;
   const bool export_stuff=true;
-  clock_t a;
+  double a;
 
   cout << "ENTERING POINTINSERTION3D" << endl;
 
 
   // acquire background mesh
   cout << "pointInsertion3D: recover BGM" << endl;
-  a = clock();
+  a = Cpu();
   frameFieldBackgroundMesh3D *bgm = dynamic_cast<frameFieldBackgroundMesh3D*>(BGMManager::get(gr));
-  time_smoothing += (clock() - a) / (double)CLOCKS_PER_SEC;
+  time_smoothing += (Cpu() - a);
 
   if (!bgm){
     cout << "pointInsertion3D:: BGM dynamic cast failed ! " << endl;
@@ -544,7 +534,7 @@ bool Filler3D::treat_region(GRegion *gr){
   cout << "pointInsertion3D : inserting points in region " << gr->tag()  << endl;
 
   //ProfilerStart("/home/bernard/profile");
-  a = clock();
+  a = Cpu();
 
   // ----- initialize fifo list -----
 
@@ -741,7 +731,7 @@ bool Filler3D::treat_region(GRegion *gr){
 
   //ProfilerStop();
 
-  time_insert_points += (clock() - a) / (double)CLOCKS_PER_SEC;
+  time_insert_points += (Cpu() - a);
 
 
   // --- output ---
@@ -760,7 +750,7 @@ bool Filler3D::treat_region(GRegion *gr){
   // ------- meshing using new points
   cout << "tets in gr before= " << gr->tetrahedra.size() << endl;
   cout << "nb new vertices= " << new_vertices.size() << endl;
-  a=clock();
+  a=Cpu();
 
   int option = CTX::instance()->mesh.algo3d;
   CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;
@@ -773,7 +763,7 @@ bool Filler3D::treat_region(GRegion *gr){
   meshGRegion mesher(regions); //?
   mesher(gr); //?
   MeshDelaunayVolume(regions);
-  time_meshing += (clock() - a) / (double)CLOCKS_PER_SEC;
+  time_meshing += (Cpu() - a);
 
   cout << "tets in gr after= " << gr->tetrahedra.size() << endl;
   cout << "gr tag=" << gr->tag() << endl;
@@ -812,21 +802,8 @@ Filler3D::~Filler3D(){
   cout << "  ------- CUMULATIVE TOTAL 3D TIME (new)   : " << time_meshing+time_smoothing+time_insert_points << " s." << endl;
 }
 
-
 std::vector<MVertex*> Filler3D::new_vertices;
-
 
 double Filler3D::time_smoothing = 0.;
 double Filler3D::time_insert_points = 0.;
 double Filler3D::time_meshing = 0.;
-
-
-
-
-
-
-
-
-
-
-
