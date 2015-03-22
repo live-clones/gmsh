@@ -401,6 +401,7 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
 
   _tree = new Fl_Tree(x + dx, y + dy, w - dw, h - dh - BH - 2 * WB);
   _tree->color(col);
+  //_tree->connectorcolor(fl_contrast(FL_WHITE, col));
   _tree->callback(onelab_tree_cb);
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
   // _tree->marginleft(0);

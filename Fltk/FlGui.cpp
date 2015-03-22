@@ -98,7 +98,6 @@ static void simple_top_box_draw(int x, int y, int w, int h, Fl_Color c)
 {
   fl_color(c); fl_rectf(x, y, w, h);
   fl_color(FL_DARK2); fl_line(x, y, x + w, y);
-  //fl_color(FL_LIGHT2); fl_line(x, y+1, x + w, y+1);
 }
 
 // Icons for the satus bar
@@ -256,10 +255,10 @@ FlGui::FlGui(int argc, char **argv)
 //#define DARK_SCHEME
 #if defined(DARK_SCHEME)
   Fl::background(50, 50, 50);
-  Fl::background2(145, 145, 145);
-  Fl::foreground(250, 250, 250);
+  Fl::background2(130, 130, 130);
+  Fl::foreground(245, 245, 245);
   for (int i = 0; i < FL_NUM_GRAY; i++) {
-    double min = 0., max = 165.;
+    double min = 0., max = 135.;
     int d = (int)(min + i * (max - min) / (FL_NUM_GRAY - 1.));
     Fl::set_color(fl_gray_ramp(i), d, d, d);
   }
