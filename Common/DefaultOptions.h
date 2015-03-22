@@ -58,7 +58,7 @@ StringXString GeneralOptions_String[] = {
 
   { F,   "FileName" , opt_general_filename , "" ,
     "Current project file name (read-only)" },
-  { F|O, "FltkTheme" , opt_general_gui_theme , "" ,
+  { F|S, "FltkTheme" , opt_general_gui_theme , "" ,
     "FLTK user interface theme (try e.g. plastic or gtk+)" },
 
   { F|O, "GraphicsFont" , opt_general_graphics_font , "Helvetica" ,
@@ -433,7 +433,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "ClipWholeElements" , opt_general_clip_whole_elements , 0. ,
     "Clip whole elements" },
   { F|O, "ColorScheme", opt_general_color_scheme , 1. ,
-    "Default color scheme (0=dark, 1=light or 2=grayscale)" },
+    "Default color scheme for graphics (0=dark, 1=light or 2=grayscale)" },
   { F|O, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. ,
     "Ask confirmation before overwriting files?" },
   { F|S, "ContextPositionX" , opt_general_context_position0 , 650. ,
@@ -481,6 +481,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "FileChooserPositionY" , opt_general_file_chooser_position1 , 200. ,
     "Vertical position (in pixels) of the upper left corner of the file chooser "
     "windows" },
+  { F|S, "FltkColorScheme" , opt_general_gui_color_scheme , 0. ,
+    "FLTK user interface color theme (0: standard, 1:dark)" },
   { F|O, "FontSize" , opt_general_fontsize , -1. ,
     "Size of the font in the user interface (-1=automatic)" },
 

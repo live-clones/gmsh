@@ -1942,6 +1942,13 @@ double opt_general_fontsize(OPT_ARGS_NUM)
   return CTX::instance()->fontSize;
 }
 
+double opt_general_gui_color_scheme(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->guiColorScheme = (int)val;
+  return CTX::instance()->guiColorScheme;
+}
+
 double opt_general_graphics_fontsize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

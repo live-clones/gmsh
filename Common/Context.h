@@ -110,6 +110,8 @@ class CTX {
   std::string display;
   // FLTK theme
   std::string guiTheme;
+  // FLTK color scheme
+  int guiColorScheme;
   // print messages on to the terminal?
   int terminal;
   // number of graphical windows/tiles
