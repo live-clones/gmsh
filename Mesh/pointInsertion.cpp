@@ -1,3 +1,10 @@
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+//
+// Contributed by Paul-Emile Bernard
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -38,26 +45,31 @@ void print_nodal_info(string filename, map<MVertex*, T> &mapp)
   out.close();
 }
 
-
-bool shoot(const SPoint2 &start, const SPoint2 &dir, const double &h, SPoint2 &res){
-
+bool shoot(const SPoint2 &start, const SPoint2 &dir,
+           const double &h, SPoint2 &res)
+{
   const int RK = 1;
 
   if (RK==1){
     res = start + (dir*h);
-    //    cout << "(" << start[0] << "," <<start[1] << ") -> (" << res[0] << "," <<res[1] << ") " << endl;
+    //    cout << "(" << start[0] << "," <<start[1] << ") -> (" << res[0] << ","
+    //    <<res[1] << ") " << endl;
     return true;
   }
 
   return false;
 }
 
-
-bool computeFourNeighbors (frameFieldBackgroundMesh2D *bgm, MVertex *v_center, // the vertex for which we want to generate 4 neighbors (real vertex (xyz), not parametric !!! )
-    SPoint2 &midpoint,
-    bool goNonLinear, // do we compute the position in the real surface which is nonlinear
-    SPoint2 newP[4][NUMDIR], // look into other directions
-    SMetric3 &metricField) // the mesh metric
+bool computeFourNeighbors (frameFieldBackgroundMesh2D *bgm,
+                           MVertex *v_center, // the vertex for which we want to
+                                              // generate 4 neighbors (real
+                                              // vertex (xyz), not parametric!)
+                           SPoint2 &midpoint,
+                           bool goNonLinear, // do we compute the position in
+                                             // the real surface which is
+                                             // nonlinear
+                           SPoint2 newP[4][NUMDIR], // look into other directions
+                           SMetric3 &metricField) // the mesh metric
 {
   // we assume that v is on surface gf, and backgroundMesh2D has been created based on gf
 
@@ -69,42 +81,38 @@ bool computeFourNeighbors (frameFieldBackgroundMesh2D *bgm, MVertex *v_center, /
 
   // get RK info on midpoint (infos in two directions...)
   RK_form infos;
-  bgm->compute_RK_infos(midpoint[0],midpoint[1],v_center->x(), v_center->y(),v_center->z(),infos);
+  bgm->compute_RK_infos(midpoint[0],midpoint[1],v_center->x(), v_center->y(),
+                        v_center->z(), infos);
   metricField = infos.metricField;
 
   // shoot in four directions
   SPoint2 param_vec;
   double h;
-  //  cout << "shooting..." << endl;
   for (int i=0;i<4;i++){// in four directions
     switch (i){
-      case 0:
-        param_vec = infos.paramt1;
-        h = infos.paramh.first;
-        break;
-      case 1:
-        param_vec = infos.paramt2;
-        h = infos.paramh.second;
-        break;
-      case 2:
-        param_vec = infos.paramt1 * -1.;
-        h = infos.paramh.first;
-        break;
-      case 3:
-        param_vec = infos.paramt2 * -1.;
-        h = infos.paramh.second;
-        break;
+    case 0:
+      param_vec = infos.paramt1;
+      h = infos.paramh.first;
+      break;
+    case 1:
+      param_vec = infos.paramt2;
+      h = infos.paramh.second;
+      break;
+    case 2:
+      param_vec = infos.paramt1 * -1.;
+      h = infos.paramh.first;
+      break;
+    case 3:
+      param_vec = infos.paramt2 * -1.;
+      h = infos.paramh.second;
+      break;
     }
     shoot(midpoint,param_vec,h,newP[i][0]);
-    //    cout << "(" << midpoint[0] << "," <<midpoint[1] << ") -> (" << newP[i][0][0] << "," << newP[i][0][1] << ") " << endl;
+    //    cout << "(" << midpoint[0] << "," <<midpoint[1] << ") -> (" <<
+    //    newP[i][0][0] << "," << newP[i][0][1] << ") " << endl;
   }
 
-
-
-  // -------------------------------------------------
   // the following comes from surfaceFiller.cpp...
-  // -------------------------------------------------
-
   const double EPS = 1.e-7;
   for (int j=0;j<2;j++){
     for (int i=0;i<4;i++){
@@ -112,8 +120,8 @@ bool computeFourNeighbors (frameFieldBackgroundMesh2D *bgm, MVertex *v_center, /
     }
   }
 
-  // We could stop here. Yet, if the metric varies a lot, we can solve
-  // a nonlinear problem in order to find a better approximation in the real
+  // We could stop here. Yet, if the metric varies a lot, we can solve a
+  // nonlinear problem in order to find a better approximation in the real
   // surface
   if (1 && goNonLinear){
     double L = infos.localsize;
@@ -131,8 +139,8 @@ bool computeFourNeighbors (frameFieldBackgroundMesh2D *bgm, MVertex *v_center, /
       //      if (newPoint[i][1] > rangeV.high())newPoint[i][1] = rangeV.high();
       GPoint pp = gf->point(newP[i][0]);
       double D = sqrt ((pp.x() - v_center->x())*(pp.x() - v_center->x()) +
-          (pp.y() - v_center->y())*(pp.y() - v_center->y()) +
-          (pp.z() - v_center->z())*(pp.z() - v_center->z()) );
+                       (pp.y() - v_center->y())*(pp.y() - v_center->y()) +
+                       (pp.z() - v_center->z())*(pp.z() - v_center->z()) );
       ERR[i] = 100*fabs(D-L)/(D+L);
       //      printf("L = %12.5E D = %12.5E ERR = %12.5E\n",L,D,100*fabs(D-L)/(D+L));
     }
@@ -142,46 +150,51 @@ bool computeFourNeighbors (frameFieldBackgroundMesh2D *bgm, MVertex *v_center, /
     for (int i=0;i<4;i++){
       if (ERR[i] > 12){
         double uvt[3] = {newPoint[i][0],newPoint[i][1],0.0};
-        //	  printf("Intersecting with circle N = %g %g %g dir = %g %g %g R = %g p = %g %g %g\n",n.x(),n.y(),n.z(),dirs[i].x(),dirs[i].y(),dirs[i].z(),L,v_center->x(),v_center->y(),v_center->z());
-        curveFunctorCircle cf (dirs[i],infos.normal, SVector3(v_center->x(),v_center->y(),v_center->z()), L);
+        // printf("Intersecting with circle N = %g %g %g dir = %g %g %g R
+        //	  = %g p = %g %g
+        //	  %g\n",n.x(),n.y(),n.z(),dirs[i].x(),dirs[i].y(),dirs[i].z(),L,
+        //        v_center->x(),v_center->y(),v_center->z());
+        curveFunctorCircle cf (dirs[i],infos.normal,
+                               SVector3(v_center->x(),v_center->y(),v_center->z()), L);
         if (intersectCurveSurface (cf,ss,uvt,infos.paramh.first*1.e-3)){
           GPoint pp = gf->point(SPoint2(uvt[0],uvt[1]));
           double D = sqrt ((pp.x() - v_center->x())*(pp.x() - v_center->x()) +
-              (pp.y() - v_center->y())*(pp.y() - v_center->y()) +
-              (pp.z() - v_center->z())*(pp.z() - v_center->z()) );
+                           (pp.y() - v_center->y())*(pp.y() - v_center->y()) +
+                           (pp.z() - v_center->z())*(pp.z() - v_center->z()) );
           double DP = sqrt ((newPoint[i][0]-uvt[0])*(newPoint[i][0]-uvt[0]) +
-              (newPoint[i][1]-uvt[1])*(newPoint[i][1]-uvt[1]));
+                            (newPoint[i][1]-uvt[1])*(newPoint[i][1]-uvt[1]));
           double newErr = 100*fabs(D-L)/(D+L);
           //	    if (v_center->onWhat() != gf && gf->tag() == 3){
           //	      crossField2d::normalizeAngle (uvt[2]);
           //	      printf("INTERSECT angle = %g DP %g\n",uvt[2],DP);
           //	    }
           if (newErr < 1 && DP < .1){
-            //	      printf("%12.5E vs %12.5E : %12.5E  %12.5E vs %12.5E  %12.5E \n",ERR[i],newErr,newPoint[i][0],newPoint[i][1],uvt[0],uvt[1]);
-            newPoint[i][0] = uvt[0];                                        //
-            newPoint[i][1] = uvt[1];                                        //
-          }                                                                 //
+            //	      printf("%12.5E vs %12.5E : %12.5E %12.5E vs %12.5E %12.5E
+            //	      \n",ERR[i],newErr,newPoint[i][0],newPoint[i][1],uvt[0],uvt[1]);
+            newPoint[i][0] = uvt[0];
+            newPoint[i][1] = uvt[1];
+          }
           //	    printf("OK\n");
         }
         else{
           Msg::Debug("Cannot put a new point on Surface %d",gf->tag());
-          //	    printf("NOT OK\n");
+          // printf("NOT OK\n");
         }
       }
-    }                                                                   //
+    }
 
     // return the four new vertices
     for (int i=0;i<4;i++){
       newP[i][0] = SPoint2(newPoint[i][0],newPoint[i][1]);
     }
-  } /// end non linear -------------------------------------------------//
+  }
 
   return true;
 }
 
-
-void computeTwoNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent, vector<MVertex*> &spawns, SVector3 dir, double h){
-
+void computeTwoNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent,
+                         vector<MVertex*> &spawns, SVector3 dir, double h)
+{
   // using approximate size, RK1...
   double x = parent->x();
   double y = parent->y();
@@ -200,10 +213,9 @@ void computeTwoNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent, vecto
   spawns[1] = new MVertex(newx,newy,newz,gr,0);
 }
 
-
-
-void computeSixNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent, vector<MVertex*> &spawns, STensor3 dir, double h){
-
+void computeSixNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent,
+                         vector<MVertex*> &spawns, STensor3 dir, double h)
+{
   // using approximate size, RK1...
   double x = parent->x();
   double y = parent->y();
@@ -224,25 +236,26 @@ void computeSixNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent, vecto
   }
 }
 
-
 double Filler2D::time_bgm_and_smoothing = 0.;
 double Filler2D::time_insertion = 0.;
 
-
 Filler2D::Filler2D(){}
 
-
-Filler2D::~Filler2D(){
+Filler2D::~Filler2D()
+{
   cout << "FILLER2D timing:" << endl;
-  cout << "  ------- CUMULATIVE TIME2D bgm & smoothing  : " << time_bgm_and_smoothing << " s." << endl;
-  cout << "  ------- CUMULATIVE TIME2D inserting points : " << time_insertion << " s." << endl;
-  cout << "  ------- TOTAL 2D TIME (new)   : " << time_bgm_and_smoothing+time_insertion << " s." << endl;
+  cout << "  ------- CUMULATIVE TIME2D bgm & smoothing  : "
+       << time_bgm_and_smoothing << " s." << endl;
+  cout << "  ------- CUMULATIVE TIME2D inserting points : "
+       << time_insertion << " s." << endl;
+  cout << "  ------- TOTAL 2D TIME (new)   : "
+       << time_bgm_and_smoothing+time_insertion << " s." << endl;
 }
 
-
-void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMetric3> &metrics){
-  // NB/ do not use the mesh in GFace, use the one in backgroundMesh2D !!!
-
+void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed,
+                                vector<SMetric3> &metrics)
+{
+  // NB/ do not use the mesh in GFace, use the one in backgroundMesh2D!
 
   //  if(debug) cout << " ------------------   OLD -------------------" << endl;
   //  stringstream ssa;
@@ -252,20 +265,18 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMe
   //  backgroundMesh::current()->print(ssa.str(),gf,0);
   //
   //
-  //  
-  //  
+  //
+  //
   //  if(debug) cout << " ------------------   NEW -------------------" << endl;
   //  backgroundMesh2D *bgm2 = dynamic_cast<backgroundMesh2D*>(BGMManager::get(gf));
   //  stringstream ss2;
   //  ss2 << "basebg_sizefield_" << gf->tag() << ".pos";
   //  bgm2->exportSizeField(ss2.str());
-  //  
-  //  
-  //  
+  //
+  //
+  //
   //  return;
   //
-
-
 
   BGMManager::set_use_cross_field(true);
 
@@ -274,13 +285,14 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMe
   const bool export_stuff=true;
 
   if (debug) cout << "ENTERING POINTINSERTION2D" << endl;
-  
+
   double a;
 
   // acquire background mesh
   if(debug) cout << "pointInsertion2D: recover BGM" << endl;
   a=Cpu();
-  frameFieldBackgroundMesh2D *bgm = dynamic_cast<frameFieldBackgroundMesh2D*>(BGMManager::get(gf));
+  frameFieldBackgroundMesh2D *bgm =
+    dynamic_cast<frameFieldBackgroundMesh2D*>(BGMManager::get(gf));
   time_bgm_and_smoothing += (Cpu() - a);
 
   if (!bgm){
@@ -319,10 +331,9 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMe
   if(debug) cout << "pointInsertion2D : get bnd vertices " << endl;
   set<MVertex*> bnd_vertices = bgm->get_vertices_of_maximum_dim(1);
 
-  // put boundary vertices in a fifo queue 
+  // put boundary vertices in a fifo queue
   set<smoothness_point_pair, compareSurfacePointWithExclusionRegionPtr_Smoothness> fifo;
   vector<surfacePointWithExclusionRegion*> vertices;
-
 
   // initiate the rtree
   if(debug) cout << "pointInsertion2D : initiate RTree " << endl;
@@ -334,14 +345,8 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMe
   for (; it !=  bnd_vertices.end() ; ++it){
     SPoint2 midpoint;
     computeFourNeighbors(bgm,*it, midpoint, goNonLinear, newp, metricField);
-    surfacePointWithExclusionRegion *sp = new surfacePointWithExclusionRegion (*it, newp, midpoint,metricField);
-
-    //    if(debug){
-    //      cout << "  treating parent uv=(" << midpoint[0] << "," << midpoint[1] << ")" << endl;
-    //      for (int ii=0;ii<4;ii++)
-    //        cout << "     child is uv=(" << newp[ii][0][0] << "," << newp[ii][0][1] << ")" << endl;
-    //    }
-
+    surfacePointWithExclusionRegion *sp = new surfacePointWithExclusionRegion
+      (*it, newp, midpoint,metricField);
 
     smoothness_point_pair mp;
     mp.ptr = sp;
@@ -354,9 +359,6 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMe
     rtree.Insert(_min,_max,sp);
   }
 
-
-
-
   // ---------- main loop -----------------
   while(!fifo.empty()){
     if(debug) cout << " -------- fifo.size() = " << fifo.size() << endl;
@@ -365,31 +367,20 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMe
     surfacePointWithExclusionRegion * parent = (*fifo.begin()).ptr;
     fifo.erase(fifo.begin());
 
-    //    if(debug) cout << "  treating parent (" << parent->_v->x() << "," << parent->_v->y() << "," << parent->_v->z() << ")    uv=(" << parent->_center[0] << "," << parent->_center[1] << ")" << endl;
-
     for (int dir=0;dir<NUMDIR;dir++){
       for (int i=0;i<4;i++){
-        //if(debug) cout << "pointInsertion2D main loop: check child " << i << endl;
-        //        if(debug) cout << "     treating child (" << gp.x() << "," << gp.y() << "," << gp.z() << ")    uv=(" << gp.u() << "," << gp.v() << ")" << endl;
-        ////        if(debug) cout << "     child is uv=(" << parent->_p[i][dir][0] << "," << parent->_p[i][dir][1] << ")" << endl;
-
         if (!inExclusionZone (parent->_p[i][dir], rtree, vertices) ){
 
           GPoint gp = gf->point(parent->_p[i][dir]);
-
-          //if(debug) cout << "pointInsertion2D main loop: one child not in exclusion zone "<< endl;
           MFaceVertex *v = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
           SPoint2 midpoint;
-          //if(debug) cout << "pointInsertion2D main loop: computeFourNeighbors " << endl;
           computeFourNeighbors(bgm,v, midpoint, goNonLinear, newp, metricField);
-          //if(debug) cout << "pointInsertion2D main loop: create new surfacePointWithExclusionRegion " << endl;
-          surfacePointWithExclusionRegion *sp = new surfacePointWithExclusionRegion (v, newp, midpoint, metricField, parent);
-          //if(debug) cout << "pointInsertion2D main loop: get smoothness " << endl;
+          surfacePointWithExclusionRegion *sp = new surfacePointWithExclusionRegion
+            (v, newp, midpoint, metricField, parent);
           smoothness_point_pair mp;mp.ptr = sp;mp.rank=(1.-bgm->get_smoothness(gp.u(),gp.v()));
 
           if (debug) vert_priority[v] = priority_counter++;
 
-          //if(debug) cout << "pointInsertion2D main loop: insert in RTree " << endl;
           fifo.insert(mp);
           vertices.push_back(sp);
           double _min[2],_max[2];
@@ -397,11 +388,12 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMe
           rtree.Insert(_min,_max,sp);
 
           if (debug){
-            cout << "  adding node (" << sp->_v->x() << "," << sp->_v->y() << "," << sp->_v->z() << ")" << endl;
-            cout << "    ----------------------------- sub --- fifo.size() = " << fifo.size() << endl;
+            cout << "  adding node (" << sp->_v->x() << "," << sp->_v->y()
+                 << "," << sp->_v->z() << ")" << endl;
+            cout << "    ----------------------------- sub --- fifo.size() = "
+                 << fifo.size() << endl;
           }
           count_nbaddedpt++;
-
         }
       }
     }
@@ -409,14 +401,12 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMe
   }
   time_insertion += (Cpu() - a);
 
-
   if (debug){
     stringstream ss;
     ss << "priority_" << gf->tag() << ".pos";
     print_nodal_info(ss.str().c_str(),vert_priority);
     ss.clear();
   }
-
 
   // add the vertices as additional vertices in the
   // surface mesh
@@ -435,47 +425,24 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed, vector<SMe
   }
   fprintf(f,"};");
   fclose(f);
-
-
-
-
-
 }
 
-
-bool Filler3D::treat_region(GRegion *gr){
-
-  //if (gr->tag()>=11) return false;
-  //  if (gr->tag()==11) return false;
-  //  if (gr->tag()==12) return false;
-  //  if (gr->tag()==13) return false;
-  //  if (gr->tag()==17) return false;
-
-
-
+bool Filler3D::treat_region(GRegion *gr)
+{
   BGMManager::set_use_cross_field(true);
 
   bool use_vectorial_smoothness;
   bool use_fifo;
   string algo;
 
-//  readValue("param.dat","SMOOTHNESSALGO",algo);
+  // readValue("param.dat","SMOOTHNESSALGO",algo);
   algo.assign("SCALAR");
 
   if (!algo.compare("SCALAR")){
-    compareSmoothnessVertexPairs::vectorial = false;
     use_vectorial_smoothness = false;
     use_fifo = false;
   }
-  else if (!algo.compare("VECTORIAL")){
-    compareSmoothnessVertexPairs::vectorial = true;
-    use_vectorial_smoothness = true;
-    use_fifo = false;
-    cout << "Vectorial smoothness algo: abandonné pour l'instant !" << endl;
-    throw;
-  }
   else if (!algo.compare("FIFO")){
-    compareSmoothnessVertexPairs::vectorial = false;
     use_vectorial_smoothness = false;
     use_fifo = true;
   }
@@ -490,18 +457,17 @@ bool Filler3D::treat_region(GRegion *gr){
 
   cout << "ENTERING POINTINSERTION3D" << endl;
 
-
   // acquire background mesh
   cout << "pointInsertion3D: recover BGM" << endl;
   a = Cpu();
-  frameFieldBackgroundMesh3D *bgm = dynamic_cast<frameFieldBackgroundMesh3D*>(BGMManager::get(gr));
+  frameFieldBackgroundMesh3D *bgm =
+    dynamic_cast<frameFieldBackgroundMesh3D*>(BGMManager::get(gr));
   time_smoothing += (Cpu() - a);
 
   if (!bgm){
     cout << "pointInsertion3D:: BGM dynamic cast failed ! " << endl;
     throw;
   }
-
 
   // export BGM fields
   if(export_stuff){
@@ -528,8 +494,6 @@ bool Filler3D::treat_region(GRegion *gr){
     }
   }
 
-
-
   // ---------------- START FILLING NEW POINTS ----------------
   cout << "pointInsertion3D : inserting points in region " << gr->tag()  << endl;
 
@@ -553,16 +517,16 @@ bool Filler3D::treat_region(GRegion *gr){
   map<MVertex*,double> smoothness_forplot;
   MElement *element;
   MVertex *vertex;
-  list<GFace*> faces = gr->faces();	
+  list<GFace*> faces = gr->faces();
   for(list<GFace*>::iterator it=faces.begin();it!=faces.end();it++){// for all faces
     GFace *gf = *it;
-    //    int limit = code_kesskessai(gf->tag());
+    // int limit = code_kesskessai(gf->tag());
     for(unsigned int i=0;i<gf->getNumMeshElements();i++){
       element = gf->getMeshElement(i);
       for(int j=0;j<element->getNumVertices();j++){// for all vertices
         vertex = element->getVertex(j);
         temp.insert(vertex);
-        //        limits.insert(make_pair(vertex,limit));
+        // limits.insert(make_pair(vertex,limit));
       }
     }
   }
@@ -580,7 +544,8 @@ bool Filler3D::treat_region(GRegion *gr){
     y = boundary_vertices[i]->y();
     z = boundary_vertices[i]->z();
 
-    MVertex *closest = bgm->get_nearest_neighbor_on_boundary(boundary_vertices[i]);// "on boundary since working on boundary_vertices ...
+    // "on boundary since working on boundary_vertices ...
+    MVertex *closest = bgm->get_nearest_neighbor_on_boundary(boundary_vertices[i]);
     h = bgm->size(closest);// get approximate size, closest vertex, faster ?!
 
     fill_min_max(x,y,z,h,min,max);
@@ -592,7 +557,7 @@ bool Filler3D::treat_region(GRegion *gr){
       svp->v = boundary_vertices[i];
       svp->rank = bgm->get_smoothness(x,y,z);
       svp->dir = 0;
-      svp->layer = 0; 
+      svp->layer = 0;
       svp->size = h;
       bgm->eval_approximate_crossfield(closest, svp->cf);
 
@@ -609,21 +574,19 @@ bool Filler3D::treat_region(GRegion *gr){
         svp->v = boundary_vertices[i];
         svp->rank = bgm->get_vectorial_smoothness(idir,x,y,z);
         svp->dir = idir;
-        svp->layer = 0; 
+        svp->layer = 0;
         svp->size = h;
         svp->cf = temp;
         for (int k=0;k<3;k++) svp->direction(k) = temp(k,idir);
 
-        //        cout << "fifo size=" << fifo->size() << " inserting   "  ;
+        // cout << "fifo size=" << fifo->size() << " inserting   "  ;
         fifo->insert(svp);
-        //        cout << " ->  fifo size=" << fifo->size() << endl;
+        // cout << " ->  fifo size=" << fifo->size() << endl;
       }
     }
   }
 
-  // TODO: si fifo était list of *PTR -> pas de copies, gain temps ? 
-
-
+  // TODO: si fifo était list of *PTR -> pas de copies, gain temps ?
   Wrapper3D wrapper;
   wrapper.set_bgm(bgm);
   MVertex *parent,*individual;
@@ -646,15 +609,19 @@ bool Filler3D::treat_region(GRegion *gr){
     vector<MVertex*> spawns;
     if (!use_vectorial_smoothness){
       spawns.resize(6);
-      computeSixNeighbors(bgm,parent,spawns,fifo->get_first_crossfield(),fifo->get_first_size());
+      computeSixNeighbors(bgm,parent,spawns,fifo->get_first_crossfield(),
+                          fifo->get_first_size());
     }
     else{
       spawns.resize(2);
-      computeTwoNeighbors(bgm,parent,spawns,fifo->get_first_direction(),fifo->get_first_size());
+      computeTwoNeighbors(bgm,parent,spawns,fifo->get_first_direction(),
+                          fifo->get_first_size());
     }
     fifo->erase_first();
 
-    //    cout << "while, fifo->size()=" << fifo->size() << "  parent=(" << parent->x() << "," << parent->y() << "," << parent->z() << ")" << endl;
+    //    cout << "while, fifo->size()=" << fifo->size() << " parent=(" <<
+    //    parent->x() << "," << parent->y() << "," << parent->z() << ")" <<
+    //    endl;
 
     for(unsigned int i=0;i<spawns.size();i++){
       spawn_created = false;
@@ -662,7 +629,8 @@ bool Filler3D::treat_region(GRegion *gr){
       x = individual->x();
       y = individual->y();
       z = individual->z();
-      //      cout << "  working on candidate " << "(" << individual->x() << "," << individual->y() << "," << individual->z() << ")" << endl;
+      //      cout << " working on candidate " << "(" << individual->x() << ","
+      //      << individual->y() << "," << individual->z() << ")" << endl;
 
       if(bgm->inDomain(x,y,z)){
         //        cout << "   spawn " << i << " in domain" << endl;
@@ -691,7 +659,7 @@ bool Filler3D::treat_region(GRegion *gr){
               svp->v = individual;
               svp->rank=bgm->get_smoothness(individual->x(),individual->y(),individual->z());
               svp->dir = 0;
-              svp->layer = parent_layer+1; 
+              svp->layer = parent_layer+1;
               svp->size = h;
               svp->cf = crossfield;
               fifo->insert(svp);
@@ -708,7 +676,7 @@ bool Filler3D::treat_region(GRegion *gr){
                 svp->v = individual;
                 svp->rank = bgm->get_vectorial_smoothness(idir,x,y,z);
                 svp->dir = idir;
-                svp->layer = parent_layer+1; 
+                svp->layer = parent_layer+1;
                 svp->size = h;
                 for (int k=0;k<3;k++) svp->direction(k) = crossfield(k,idir);
                 svp->cf = crossfield;
@@ -733,7 +701,6 @@ bool Filler3D::treat_region(GRegion *gr){
 
   time_insert_points += (Cpu() - a);
 
-
   // --- output ---
   if (debug){
     stringstream ss;
@@ -755,7 +722,6 @@ bool Filler3D::treat_region(GRegion *gr){
   int option = CTX::instance()->mesh.algo3d;
   CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;
 
-
   deMeshGRegion deleter;
   deleter(gr);
   std::vector<GRegion*> regions;
@@ -775,31 +741,32 @@ bool Filler3D::treat_region(GRegion *gr){
   new_vertices.clear();
   rtree.RemoveAll();
 
-
-
   return true;
 }
 
-
-int Filler3D::get_nbr_new_vertices(){
+int Filler3D::get_nbr_new_vertices()
+{
   return new_vertices.size();
 }
 
-
-MVertex* Filler3D::get_new_vertex(int i){
+MVertex* Filler3D::get_new_vertex(int i)
+{
   return new_vertices[i];
 }
 
-
 Filler3D::Filler3D(){}
 
-
-Filler3D::~Filler3D(){
+Filler3D::~Filler3D()
+{
   cout << "FILLER3D timing:" << endl;
-  cout << "  ------- CUMULATIVE TIME3D bgm & smoothing  : " << time_smoothing << " s." << endl;
-  cout << "  ------- CUMULATIVE TIME3D inserting points : " << time_insert_points << " s." << endl;
-  cout << "  ------- CUMULATIVE TIME3D meshing region   : " << time_meshing << " s." << endl;
-  cout << "  ------- CUMULATIVE TOTAL 3D TIME (new)   : " << time_meshing+time_smoothing+time_insert_points << " s." << endl;
+  cout << "  ------- CUMULATIVE TIME3D bgm & smoothing  : "
+       << time_smoothing << " s." << endl;
+  cout << "  ------- CUMULATIVE TIME3D inserting points : "
+       << time_insert_points << " s." << endl;
+  cout << "  ------- CUMULATIVE TIME3D meshing region   : "
+       << time_meshing << " s." << endl;
+  cout << "  ------- CUMULATIVE TOTAL 3D TIME (new)   : "
+       << time_meshing+time_smoothing+time_insert_points << " s." << endl;
 }
 
 std::vector<MVertex*> Filler3D::new_vertices;

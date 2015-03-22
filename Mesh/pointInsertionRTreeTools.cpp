@@ -1,15 +1,20 @@
-#include "pointInsertionRTreeTools.h"
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+//
+// Contributed by Tristan Carrier and Paul-Emile Bernard
 
+#include "pointInsertionRTreeTools.h"
 #include "BackgroundMesh.h"
 #include "BackgroundMeshManager.h"
-
 #include "pointInsertion.h"
-
 #include "GEntity.h"
 
-
-
-surfacePointWithExclusionRegion::surfacePointWithExclusionRegion (MVertex *v, SPoint2 p[4][NUMDIR], SPoint2 &_mp, SMetric3 & meshMetric, surfacePointWithExclusionRegion *father){
+surfacePointWithExclusionRegion::surfacePointWithExclusionRegion
+  (MVertex *v, SPoint2 p[4][NUMDIR], SPoint2 &_mp, SMetric3 & meshMetric,
+   surfacePointWithExclusionRegion *father)
+{
   _v = v;
   _meshMetric = meshMetric;
   _center = _mp;
@@ -28,8 +33,8 @@ surfacePointWithExclusionRegion::surfacePointWithExclusionRegion (MVertex *v, SP
   }
 }
 
-
-bool surfacePointWithExclusionRegion::inExclusionZone (const SPoint2 &p){
+bool surfacePointWithExclusionRegion::inExclusionZone (const SPoint2 &p)
+{
   double mat[2][2];
   double b[2] , uv[2];
   mat[0][0]= _q[1].x()-_q[0].x();
@@ -53,16 +58,16 @@ bool surfacePointWithExclusionRegion::inExclusionZone (const SPoint2 &p){
   return false;
 }
 
-
-void surfacePointWithExclusionRegion::minmax  (double _min[2], double _max[2]) const{
+void surfacePointWithExclusionRegion::minmax (double _min[2], double _max[2]) const
+{
   _min[0] = std::min(std::min(std::min(_q[0].x(),_q[1].x()),_q[2].x()),_q[3].x());
   _min[1] = std::min(std::min(std::min(_q[0].y(),_q[1].y()),_q[2].y()),_q[3].y());
   _max[0] = std::max(std::max(std::max(_q[0].x(),_q[1].x()),_q[2].x()),_q[3].x());
   _max[1] = std::max(std::max(std::max(_q[0].y(),_q[1].y()),_q[2].y()),_q[3].y());
 }
 
-
-void surfacePointWithExclusionRegion::print (FILE *f, int i){
+void surfacePointWithExclusionRegion::print (FILE *f, int i)
+{
   fprintf(f,"SP(%g,%g,%g){%d};\n",_center.x(),_center.y(),0.0,i);
   fprintf(f,"SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
       _q[0].x(),_q[0].y(),0.0,
@@ -72,15 +77,10 @@ void surfacePointWithExclusionRegion::print (FILE *f, int i){
 
 }
 
-
-
 my_wrapper::my_wrapper (SPoint2 sp) : _tooclose (false), _p(sp) {}
 
-
-
-
-
-bool rtree_callback(surfacePointWithExclusionRegion *neighbour,void* point){
+bool rtree_callback(surfacePointWithExclusionRegion *neighbour,void* point)
+{
   my_wrapper *w = static_cast<my_wrapper*>(point);
 
   if (neighbour->inExclusionZone(w->_p)){
@@ -91,11 +91,11 @@ bool rtree_callback(surfacePointWithExclusionRegion *neighbour,void* point){
   return true;
 }
 
-
-
-bool inExclusionZone (SPoint2 &p,
-    RTree<surfacePointWithExclusionRegion*,double,2,double> &rtree,
-    std::vector<surfacePointWithExclusionRegion*> & all ){
+bool inExclusionZone
+  (SPoint2 &p,
+   RTree<surfacePointWithExclusionRegion*,double,2,double> &rtree,
+   std::vector<surfacePointWithExclusionRegion*> & all )
+{
   // should assert that the point is inside the domain
   // OLD BGM
   if (old_algo_hexa()){
@@ -114,25 +114,18 @@ bool inExclusionZone (SPoint2 &p,
 
   for (unsigned int i=0;i<all.size();++i){
     if (all[i]->inExclusionZone(p)){
-      //      printf("%g %g is in exclusion zone of %g %g\n",p.x(),p.y(),all[i]._center.x(),all[i]._center.y());
+      // printf("%g %g is in exclusion zone of %g
+      //        %g\n",p.x(),p.y(),all[i]._center.x(),all[i]._center.y());
       return true;
     }
   }
   return false;
 }
 
-
-
-// ------------------------------------------------------------------------------------
-// ---------------------------------   3D  --------------------------------------------
-// ------------------------------------------------------------------------------------
-
 frameFieldBackgroundMesh3D* Wrapper3D::bgmesh = NULL;
 
-bool compareSmoothnessVertexPairs::vectorial = false;
-
-
-double infinity_distance_3D(const MVertex *v1,const MVertex *v2,STensor3 &cf){
+double infinity_distance_3D(const MVertex *v1,const MVertex *v2,STensor3 &cf)
+{
   SPoint3 p1 = v1->point();
   SPoint3 p2 = v2->point();
   double x1=0.;
@@ -154,8 +147,8 @@ double infinity_distance_3D(const MVertex *v1,const MVertex *v2,STensor3 &cf){
   return std::max(std::max(fabs(x2-x1),fabs(y2-y1)),fabs(z2-z1));// distance
 };
 
-
-void fill_min_max(double x,double y,double z,double h,double *min,double *max){
+void fill_min_max(double x,double y,double z,double h,double *min,double *max)
+{
   min[0] = x - sqrt3*h;
   max[0] = x + sqrt3*h;
   min[1] = y - sqrt3*h;
@@ -164,19 +157,18 @@ void fill_min_max(double x,double y,double z,double h,double *min,double *max){
   max[2] = z + sqrt3*h;
 };
 
-
-bool rtree_callback_3D(MVertex* neighbour,void* w){
+bool rtree_callback_3D(MVertex* neighbour,void* w)
+{
   Wrapper3D* wrapper;
   wrapper = static_cast<Wrapper3D*>(w);
   const MVertex* individual = wrapper->get_individual();
   const MVertex *parent = wrapper->get_parent();
   if (parent==neighbour) return true;
-
-//  frameFieldBackgroundMesh3D* bgm = wrapper->bgm();
-//  const MVertex *closest = bgm->get_nearest_neighbor(individual);
-//  const double h = bgm->size(closest);// get approximate size, closest vertex, faster ?!
-//  STensor3 crossfield;
-//  bgm->eval_approximate_crossfield(closest, crossfield);
+  // frameFieldBackgroundMesh3D* bgm = wrapper->bgm();
+  // const MVertex *closest = bgm->get_nearest_neighbor(individual);
+  // const double h = bgm->size(closest);// get approximate size, closest vertex, faster ?!
+  // STensor3 crossfield;
+  // bgm->eval_approximate_crossfield(closest, crossfield);
   double *h = wrapper->get_size();
   STensor3 *crossfield = wrapper->get_crossfield();
 
@@ -188,10 +180,10 @@ bool rtree_callback_3D(MVertex* neighbour,void* w){
   return true;
 };
 
-
-bool far_from_boundary_3D(frameFieldBackgroundMesh3D *bgm, MVertex* v, double h){
+bool far_from_boundary_3D(frameFieldBackgroundMesh3D *bgm, MVertex* v, double h)
+{
   // check if the box (v->point +- k2*h) is in domain
-  
+
   const double x = v->x();
   const double y = v->y();
   const double z = v->z();
@@ -205,28 +197,3 @@ bool far_from_boundary_3D(frameFieldBackgroundMesh3D *bgm, MVertex* v, double h)
 
   return true;
 };
-
-
-// vient de l'ancien code hexa, mais... kesskessai ?
-//int code_kesskessai(int tag){
-//  int limit;
-//  std::string s;
-//  std::stringstream s2;
-//
-//  limit = -1;
-//  s2 << tag;
-//  s = s2.str();
-//
-//  if(s.length()>=5){
-//    if(s.at(0)=='1' && s.at(1)=='1' && s.at(2)=='1' && s.at(3)=='1' && s.at(4)=='1'){
-//      limit = 0;
-//    }
-//    else if(s.at(0)=='2' && s.at(1)=='2' && s.at(2)=='2' && s.at(3)=='2' && s.at(4)=='2'){
-//      limit = 1;
-//    }
-//  }
-//
-//  return limit;
-//}
-
-

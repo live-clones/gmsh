@@ -3,11 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 //
-// Contributor(s):
-//   Tristan Carrier
-
-// FIXME: This code should be cleaned up and made to conform with Gmsh's coding
-// style
+// Contributed by Tristan Carrier and Paul-Emile Bernard
 
 #include <numeric>
 #include <iterator>
@@ -29,7 +25,7 @@
 
 void export_gregion_mesh(GRegion *gr, string filename)
 {
-  // FIXME: why not use MElement::writeMSH !?
+  // FIXME: use MElement::writeMSH!
 
   // create set of all tets
   map<MVertex*,int> vertices;
@@ -255,7 +251,8 @@ void clique_stop_criteria<T>::export_corresponding_mesh
   }
 
   // create MHexahedron, remove included tets from set "tets"
-  for (typename graph_data_no_hash::const_iterator it = clique.begin();it!=clique.end();it++){
+  for (typename graph_data_no_hash::const_iterator it = clique.begin();
+       it!=clique.end(); it++){
     typename map<T, std::set<MElement*> >::const_iterator itfind = hex_to_tet.find(*it);
     if (itfind==hex_to_tet.end()){
       cout << "clique_stop_criteria::void export_corresponding_mesh : not found !!!" << endl;

@@ -3,8 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 //
-// Contributor(s):
-//   Tristan Carrier
+// Contributed by Tristan Carrier
 
 #ifndef _YAMAKAWA_H_
 #define _YAMAKAWA_H_
