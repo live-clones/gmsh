@@ -986,10 +986,16 @@ void FlGui::setStatus(const std::string &msg, bool opengl)
 void FlGui::setLastStatus(int col)
 {
   for(unsigned int i = 0; i < graph.size(); i++){
-    if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE)
-      graph[i]->getProgress()->labelcolor(col);
-    else
+    if(col >= 0 && graph[0]->getMessageHeight() < FL_NORMAL_SIZE){
+      if(CTX::instance()->guiColorScheme) // dark
+        graph[i]->getProgress()->color(col);
+      else
+        graph[i]->getProgress()->labelcolor(col);
+    }
+    else{
+      graph[i]->getProgress()->color(FL_BACKGROUND_COLOR);
       graph[i]->getProgress()->labelcolor(FL_FOREGROUND_COLOR);
+    }
   }
   setStatus(_lastStatus);
 }
@@ -1005,12 +1011,6 @@ void FlGui::setProgress(const std::string &msg, double val, double min, double m
       FlGui::instance()->graph[i]->getProgress()->maximum(max);
   }
   setStatus(msg);
-}
-
-void FlGui::setProgressColor(int col)
-{
-  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
-    FlGui::instance()->graph[i]->getProgress()->labelcolor(col);
 }
 
 void FlGui::storeCurrentWindowsInfo()

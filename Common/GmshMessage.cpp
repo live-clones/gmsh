@@ -278,7 +278,8 @@ void Msg::Fatal(const char *fmt, ...)
     std::string tmp = std::string("@C1@.") + "Fatal   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstError.empty()) _firstError = str;
-    FlGui::instance()->setLastStatus(FL_RED);
+    FlGui::instance()->setLastStatus
+      (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
     FlGui::instance()->saveMessages
       ((CTX::instance()->homeDir + CTX::instance()->errorFileName).c_str());
     fl_alert("A fatal error has occurred which will force Gmsh to abort.\n"
@@ -323,10 +324,12 @@ void Msg::Error(const char *fmt, ...)
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     if(FlGui::instance()->in_main_thread()) FlGui::instance()->check();
-    std::string tmp = std::string("@C1@.") + "Error   : " + str;
+    std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
+      + "Error   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstError.empty()) _firstError = str;
-    FlGui::instance()->setLastStatus(FL_RED);
+    FlGui::instance()->setLastStatus
+      (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
   }
 #endif
 
@@ -362,7 +365,8 @@ void Msg::Warning(const char *fmt, ...)
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     if(FlGui::instance()->in_main_thread()) FlGui::instance()->check();
-    std::string tmp = std::string("@C5@.") + "Warning : " + str;
+    std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.")
+      + "Warning : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstWarning.empty()) _firstWarning = str;
     FlGui::instance()->setLastStatus();
@@ -445,7 +449,8 @@ void Msg::Direct(const char *fmt, ...)
   {
     if(FlGui::available()){
       if(FlGui::instance()->in_main_thread()) FlGui::instance()->check();
-      std::string tmp = std::string("@C4@.") + str;
+      std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
+        + str;
       FlGui::instance()->addMessage(tmp.c_str());
     }
   }
@@ -632,7 +637,9 @@ void Msg::PrintErrorCounter(const char *title)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    std::string col = _errorCount ? "@C1@." : "@C5@.";
+    std::string col = _errorCount ?
+      std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.") :
+      std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.");
     FlGui::instance()->addMessage((col + prefix + line).c_str());
     FlGui::instance()->addMessage((col + prefix + title).c_str());
     FlGui::instance()->addMessage((col + prefix + warn).c_str());

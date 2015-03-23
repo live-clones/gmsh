@@ -123,8 +123,6 @@ class FlGui{
   void setLastStatus(int col=-1);
   // display status message and update progress bar
   void setProgress(const std::string &msg, double val, double min, double max);
-  // set color of progress message
-  void setProgressColor(int col);
   // create the window for physical context dependant definitions
   void callForSolverPlugin(int dim);
   // add line in message console
