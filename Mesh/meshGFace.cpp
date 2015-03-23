@@ -363,7 +363,7 @@ static void copyMesh(GFace *source, GFace *target)
       }
       count ++;
     }
-    
+
     if (!translation){
       count = 0;
       rotation = true;
@@ -383,7 +383,7 @@ static void copyMesh(GFace *source, GFace *target)
       myPlane PLANE_TARGET(SPoint3(mean_target.x,mean_target.y,mean_target.z),
 			   SVector3(mean_target.a,mean_target.b,mean_target.c));
       LINE = myLine(PLANE_SOURCE, PLANE_TARGET);
-      
+
       // LINE is the axis of rotation
       // let us compute the angle of rotation
       count = 0;
@@ -417,7 +417,7 @@ static void copyMesh(GFace *source, GFace *target)
 	  }
 	}
       }
-      
+
       if (rotation){
 	Msg::Info("Periodic mesh rotation found: axis (%g,%g,%g) point (%g %g %g) angle %g",
 		  LINE.t.x(), LINE.t.y(), LINE.t.z(), LINE.p.x(), LINE.p.y(), LINE.p.z(),

@@ -1,3 +1,5 @@
+2.9.2: added support for extrusion of embedded points/curves.
+
 2.9.1 (March 18, 2015): minor bug fixes.
 
 2.9.0 (March 12, 2015): improved robustness of spatial searches (extruded meshes,

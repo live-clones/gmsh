@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
@@ -32,7 +32,7 @@ class backgroundMesh2D : public BGMBase {
 
     virtual inline unsigned int getNumMeshElements()const{return elements.size();}
     virtual const MElement* getElement(unsigned int i)const;
-    
+
     virtual GPoint get_GPoint_from_MVertex(const MVertex *) const;
 
     // only 2D:
@@ -44,7 +44,7 @@ class backgroundMesh2D : public BGMBase {
 
     double sizeFactor;
 
-  
+
     std::vector<MTriangle*> tempTR;
     vector<MElement*> elements;
     vector<MVertex*> vertices;
@@ -56,7 +56,7 @@ class backgroundMesh2D : public BGMBase {
   public:
     backgroundMesh2D(GFace *, bool erase_2D3D=true);
     virtual ~backgroundMesh2D();
-    
+
     virtual MElementOctree* getOctree();
 
     // TODO: only 2D
@@ -65,8 +65,8 @@ class backgroundMesh2D : public BGMBase {
 
     // not used !!!! TODO !!!
     void setSizeFactor (double s) {sizeFactor = s;}
-    
-    
+
+
     virtual vector<MVertex*>::iterator beginvertices(){return vertices.begin();}
     virtual vector<MVertex*>::iterator endvertices(){return vertices.end();}
     virtual vector<MElement*>::iterator beginelements(){return elements.begin();}
@@ -94,7 +94,7 @@ class RK_form{// informations for RK at one point
 //      paramt2 = other.paramt2;
 //      angle = other.angle;
 //    }
-  
+
     SMetric3 metricField;
     SVector3 t1, t2;// 3D cross field directions
     SVector3 normal;// 3D cross field directions
@@ -121,10 +121,10 @@ class frameFieldBackgroundMesh2D : public backgroundMesh2D{
 
     virtual void reset(bool erase_2D3D=true);
 
-    double angle(double u, double v); 
+    double angle(double u, double v);
     double angle(MVertex *v);
 
-    double get_smoothness(double u, double v); 
+    double get_smoothness(double u, double v);
     double get_smoothness(MVertex *v);
 
     void eval_crossfield(double u, double v, STensor3 &cf);

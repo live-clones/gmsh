@@ -1481,7 +1481,10 @@ optionWindow::optionWindow(int deltaFontSize)
       Fl_Button *b2 = new Fl_Button
         (L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Restore all options to default settings");
       b2->callback(options_restore_defaults_cb);
-      b2->labelcolor(FL_DARK_RED);
+      if(CTX::instance()->guiColorScheme)
+        b2->color(FL_DARK_RED);
+      else
+        b2->labelcolor(FL_DARK_RED);
 
       o->end();
     }

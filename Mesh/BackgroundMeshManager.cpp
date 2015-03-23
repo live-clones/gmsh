@@ -1,3 +1,7 @@
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include "BackgroundMeshManager.h"
 #include "BGMBase.h"
@@ -7,22 +11,20 @@
 #include "GRegion.h"
 #include "BackgroundMesh3D.h"
 
-
-
 map<GEntity*,BGMBase*> BGMManager::data = map<GEntity*,BGMBase*>();
 BGMBase* BGMManager::latest2Dbgm = NULL;
 bool BGMManager::use_cross_field = true;
 
-
-void BGMManager::set_use_cross_field(bool b){
+void BGMManager::set_use_cross_field(bool b)
+{
   if (b && (BGMManager::use_cross_field==false)){// need to change...
     data.clear();
   }
   BGMManager::use_cross_field = b;
 }
 
-
-BGMBase* BGMManager::get(GRegion* gf){
+BGMBase* BGMManager::get(GRegion* gf)
+{
   map<GEntity*,BGMBase*>::iterator itfind = data.find(gf);
   if (itfind!=data.end()){
     return itfind->second;
@@ -39,8 +41,8 @@ BGMBase* BGMManager::get(GRegion* gf){
   return bgm;
 }
 
-
-BGMBase* BGMManager::get(GFace* gf){
+BGMBase* BGMManager::get(GFace* gf)
+{
   map<GEntity*,BGMBase*>::iterator itfind = data.find(gf);
   if (itfind!=data.end()){
     latest2Dbgm = itfind->second;
@@ -57,10 +59,7 @@ BGMBase* BGMManager::get(GFace* gf){
   return bgm;
 }
 
-
-BGMBase* BGMManager::current2D(){return latest2Dbgm;};
-
-
-
-
-
+BGMBase* BGMManager::current2D()
+{
+  return latest2Dbgm;
+};

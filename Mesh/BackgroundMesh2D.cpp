@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
@@ -44,13 +44,13 @@ class evalDiffusivityFunction : public simpleFunction<double>{
 
 
 //TODO: move this fct ???
-/* applies rotations of amplitude pi to set the 
+/* applies rotations of amplitude pi to set the
    angle in the first quadrant (in [0,pi/2[ ) */
-void normalizeAngle(double &angle) 
+void normalizeAngle(double &angle)
 {
-  if (angle < 0) 
+  if (angle < 0)
     while ( angle <  0 ) angle += (M_PI * .5);
-  else if (angle >= M_PI * .5) 
+  else if (angle >= M_PI * .5)
     while ( angle >= M_PI * .5 ) angle -= (M_PI * .5);
 }
 
@@ -104,7 +104,7 @@ void backgroundMesh2D::reset(bool erase_2D3D)
   if (CTX::instance()->mesh.lcFromPoints){
     computeSizeField();
   }
-  else 
+  else
     for (std::map<MVertex*, MVertex*>::iterator itv2 = _2Dto3D.begin() ; itv2 != _2Dto3D.end(); ++itv2)
       sizeField[itv2->first] = CTX::instance()->mesh.lcMax;
 
@@ -164,8 +164,8 @@ backgroundMesh2D::backgroundMesh2D(GFace *_gf, bool erase_2D3D):BGMBase(2,_gf),s
   reset(erase_2D3D);
 
   if (erase_2D3D){
-    // now, the new mesh has been copied in local in backgroundMesh2D, deleting the mesh 
-    // from GFace, back to the previous one ! 
+    // now, the new mesh has been copied in local in backgroundMesh2D, deleting the mesh
+    // from GFace, back to the previous one !
     GFace *face = dynamic_cast<GFace*>(gf);
     face->triangles = tempTR;
   }
@@ -370,7 +370,7 @@ void frameFieldBackgroundMesh2D::reset(bool erase_2D3D)
   simpleFunction<double> ONE(1.0);
   computeCrossField(ONE);
   computeSmoothness();
-  
+
 //  evalDiffusivityFunction eval_diff(this);
 //  exportSmoothness("smoothness_iter_0.pos");
 //  for (int i=1;i<30;i++){
@@ -380,7 +380,7 @@ void frameFieldBackgroundMesh2D::reset(bool erase_2D3D)
 //    stringstream ss;
 //    ss << "smoothness_iter_" << i << ".pos";
 //    exportSmoothness(ss.str());
-//  
+//
 //    stringstream sscf;
 //    sscf << "crossfield_iter_" << i << ".pos";
 //    exportCrossField(sscf.str());
@@ -601,7 +601,7 @@ Pair<SVector3, SVector3> frameFieldBackgroundMesh2D::compute_crossfield_directio
   SVector3 basis_u = s1; basis_u.normalize();
   SVector3 basis_v = crossprod(n,basis_u);
 
-  // normalize vector t1 that is tangent to gf at uv 
+  // normalize vector t1 that is tangent to gf at uv
   SVector3 t1 = basis_u * cos(angle_current) + basis_v * sin(angle_current) ;
   t1.normalize();
 
@@ -634,7 +634,7 @@ bool frameFieldBackgroundMesh2D::compute_RK_infos(double u,double v, double x, d
   n.normalize();
   SVector3 basis_u = s1; basis_u.normalize();
   SVector3 basis_v = crossprod(n,basis_u);
-  // normalize vector t1 that is tangent to gf at uv 
+  // normalize vector t1 that is tangent to gf at uv
   SVector3 t1 = basis_u * cos(angle_current) + basis_v * sin(angle_current) ;
   t1.normalize();
   // compute the second direction t2 and normalize (t1,t2,n) is the tangent frame
