@@ -1,7 +1,7 @@
-/********************************************************************* 
+/*********************************************************************
  *
  *  Gmsh tutorial 6
- * 
+ *
  *  Transfinite meshes
  *
  *********************************************************************/
@@ -22,7 +22,7 @@ l3 = newl; Line(l3) = {p2, 4};
 
 // Create surface
 Line Loop(1) = {2, -1, l1, l2, l3, -3};
-Plane Surface(1) = {1};
+Plane Surface(1) = {-1};
 
 // Put 20 points with a refinement toward the extremities on curve 2
 Transfinite Line{2} = 20 Using Bump 0.05;
