@@ -1,22 +1,22 @@
-/********************************************************************* 
+/*********************************************************************
  *
  *  Gmsh tutorial 10
- * 
+ *
  *  General mesh size fields
  *
  *********************************************************************/
 
 // In addition to specifying target mesh sizes at the points of the
 // geometry (see t1) or using a background mesh (see t7), you can use
-// general mesh size "Fields". 
+// general mesh size "Fields".
 
 // Let's create a simple rectangular geometry
 lc = .15;
-Point(1) = {0.0,0.0,0,lc}; Point(2) = {1,0.0,0,lc}; 
-Point(3) = {1,1,0,lc};     Point(4) = {0,1,0,lc}; 
+Point(1) = {0.0,0.0,0,lc}; Point(2) = {1,0.0,0,lc};
+Point(3) = {1,1,0,lc};     Point(4) = {0,1,0,lc};
 Point(5) = {0.2,.5,0,lc};
 
-Line(1) = {3,2}; Line(2) = {2,1}; Line(3) = {1,4}; Line(4) = {4,3};
+Line(1) = {1,2}; Line(2) = {2,3}; Line(3) = {3,4}; Line(4) = {4,1};
 
 Line Loop(5) = {1,2,3,4}; Plane Surface(6) = {5};
 
@@ -73,7 +73,7 @@ Field[5].F = Sprintf("F4^3 + %g", lc / 100);
 Field[6] = Box;
 Field[6].VIn = lc / 15;
 Field[6].VOut = lc;
-Field[6].XMin = 0.3; 
+Field[6].XMin = 0.3;
 Field[6].XMax = 0.6;
 Field[6].YMin = 0.3;
 Field[6].YMax = 0.6;

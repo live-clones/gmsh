@@ -1,7 +1,7 @@
-/********************************************************************* 
+/*********************************************************************
  *
  *  Gmsh tutorial 12
- * 
+ *
  *  Cross-patch meshing with compounds
  *
  *********************************************************************/
@@ -19,9 +19,9 @@ Point(5) = {0.3, 0.2, 0, lc};   Point(6) = {0, 0.01, 0.01, lc};
 Point(7) = {0, 0.02, 0.02, lc}; Point(8) = {1, 0.05, 0.02, lc};
 Point(9) = {1, 0.32, 0.02, lc};
 
-Line(1) = {1, 2}; Line(2) = {2, 8}; Line(3) = {8, 9}; 
-Line(4) = {9, 3}; Line(5) = {3, 4}; Line(6) = {4, 7}; 
-Line(7) = {7, 6}; Line(8) = {6, 1}; Spline(9) = {7, 5, 9}; 
+Line(1) = {1, 2}; Line(2) = {2, 8}; Line(3) = {8, 9};
+Line(4) = {9, 3}; Line(5) = {3, 4}; Line(6) = {4, 7};
+Line(7) = {7, 6}; Line(8) = {6, 1}; Spline(9) = {7, 5, 9};
 Line(10) = {6, 8};
 
 Line Loop(11) = {5, 6, 9, 4};     Ruled Surface(12) = {11};
@@ -52,7 +52,7 @@ Compound Surface(200) = {12, 14, 16};
 //   and J-F Remacle, "Quality meshing based on STL triangulations for
 //   biomedical simulations", International Journal for Numerical
 //   Methods in Biomedical Engineering", 26 (7), pp. 876-889, 2010.
-// 
+//
 // * E. Marchandise, C. Carton de Wiart, W. G. Vos, C. Geuzaine and
 //   J.-F. Remacle, "High Quality Surface Remeshing Using Harmonic
 //   Maps. Part II: Surfaces with High Genus and of Large Aspect
