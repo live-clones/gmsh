@@ -69,6 +69,9 @@ class FunctionSpaceBase
   virtual ~FunctionSpaceBase(){}
   virtual int getNumKeys(MElement *ele) = 0; // if one needs the number of dofs
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys) = 0;
+  virtual void getKeysOnVertex(MElement* ele, MVertex* v, const std::vector<int>& comp, std::vector<Dof>& keys){
+    Msg::Warning("this function is defined to get Dofs of vertex %d on element %d",v->getNum(),ele->getNum());
+  }
   virtual FunctionSpaceBase* clone(const std::vector<int>& comp) const {return NULL;}
 };
 
