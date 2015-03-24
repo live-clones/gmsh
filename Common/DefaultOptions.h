@@ -432,7 +432,7 @@ StringXNumber GeneralOptions_Number[] = {
     "planes window" },
   { F|O, "ClipWholeElements" , opt_general_clip_whole_elements , 0. ,
     "Clip whole elements" },
-  { F|O, "ColorScheme", opt_general_color_scheme , 1. ,
+  { F|S, "ColorScheme", opt_general_color_scheme , 1. ,
     "Default color scheme for graphics (0=dark, 1=light or 2=grayscale)" },
   { F|O, "ConfirmOverwrite" , opt_general_confirm_overwrite, 1. ,
     "Ask confirmation before overwriting files?" },
@@ -1341,7 +1341,7 @@ StringXNumber ViewOptions_Number[] = {
     "Draw the `N minus b'-dimensional boundary of the element (N=element "
     "dimension, b=option value)" },
 
-  { F|O, "CenterGlyphs" , opt_view_center_glyphs , 1,
+  { F|O, "CenterGlyphs" , opt_view_center_glyphs , 0,
     "Center glyphs (arrows, numbers, etc.)? (0=left, 1=centered, 2=right)" },
   { F,   "Clip" , opt_view_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
@@ -1684,22 +1684,22 @@ StringXNumber PrintOptions_Number[] = {
 
 StringXColor GeneralOptions_Color[] = {
   { F|O, "Background" , opt_general_color_background ,
-    {0, 0, 0, 255}, {255, 255, 255, 255}, {255, 255, 255, 255},
+    {245, 245, 245, 255}, {255, 255, 255, 255}, {245, 245, 245, 255},
     "Background color" },
   { F|O, "BackgroundGradient" , opt_general_color_background_gradient ,
-    {0, 0, 128, 255}, {208, 215, 255, 255}, {125, 125, 125, 255},
+    {145, 145, 145, 255}, {208, 215, 255, 255}, {145, 145, 145, 255},
     "Background gradient color" },
   { F|O, "Foreground" , opt_general_color_foreground ,
-    {170, 170, 170, 255}, {85, 85, 85, 255}, {128, 128, 128, 255},
+    {85, 85, 85, 255}, {85, 85, 85, 255}, {128, 128, 128, 255},
     "Foreground color" },
   { F|O, "Text" , opt_general_color_text ,
-    {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
+    {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
     "Text color" },
   { F|O, "Axes" , opt_general_color_axes ,
-    {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
+    {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
     "Axes color" },
   { F|O, "SmallAxes" , opt_general_color_small_axes ,
-    {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
+    {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255},
     "Small axes color" },
   { F|O, "AmbientLight" , opt_general_color_ambient_light,
     {25, 25, 25, 255}, {25, 25, 25, 255}, {25, 25, 25, 255},
@@ -1715,7 +1715,7 @@ StringXColor GeneralOptions_Color[] = {
 
 StringXColor GeometryOptions_Color[] = {
   { F|O, "Points" , opt_geometry_color_points ,
-    {178, 182, 129, 255}, {90, 90, 90, 255}, {0, 0, 0, 255},
+    {90, 90, 90, 255}, {90, 90, 90, 255}, {0, 0, 0, 255},
     "Normal geometry point color" },
   { F|O, "Lines" , opt_geometry_color_lines ,
     {0, 0, 255, 255}, {0, 0, 255, 255}, {0, 0, 0, 255},
@@ -1862,7 +1862,7 @@ StringXColor PostProcessingOptions_Color[] = {
   { 0, 0 , 0 , {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} , 0 }
 } ;
 
-#define ELECOL  {255, 255, 255, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}
+#define ELECOL  {0, 0, 0, 255}, {0, 0, 0, 255}, {0, 0, 0, 255}
 
 StringXColor ViewOptions_Color[] = {
   { F|O, "Points" , opt_view_color_points , ELECOL, "Point color" },

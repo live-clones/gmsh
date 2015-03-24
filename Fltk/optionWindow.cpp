@@ -299,6 +299,12 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
                  (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
   opt_general_options_save(0, GMSH_SET, o->general.butt[9]->value());
   opt_general_expert_mode(0, GMSH_SET, o->general.butt[10]->value());
+
+  if(opt_general_gui_color_scheme(0, GMSH_GET, 0) != o->general.butt[21]->value()){
+    opt_general_gui_color_scheme(0, GMSH_SET, o->general.butt[21]->value());
+    opt_general_color_scheme(0, GMSH_SET|GMSH_GUI, o->general.butt[21]->value() ? 0. : 1.);
+  }
+
   opt_general_tooltips(0, GMSH_SET, o->general.butt[13]->value());
   opt_general_confirm_overwrite(0, GMSH_SET, o->general.butt[14]->value());
   opt_general_rotation_center_cg(0, GMSH_SET, o->general.butt[15]->value());
@@ -367,7 +373,6 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
   opt_general_gamepad(0, GMSH_SET, o->general.butt[19]->value() );
   opt_general_camera_mode(0, GMSH_SET, o->general.butt[18]->value());
   o->activate((const char*)data);
-
 
   opt_general_eye_sep_ratio(0, GMSH_SET, o->general.value[29]->value());
   opt_general_focallength_ratio(0, GMSH_SET, o->general.value[30]->value());
@@ -1362,67 +1367,73 @@ optionWindow::optionWindow(int deltaFontSize)
     {
       Fl_Group *o = new Fl_Group
         (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "General");
+
       general.butt[10] = new Fl_Check_Button
         (L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Enable expert mode");
       general.butt[10]->type(FL_TOGGLE_BUTTON);
       general.butt[10]->callback(general_options_ok_cb);
 
+      general.butt[21] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Use dark interface (requires restart)");
+      general.butt[21]->type(FL_TOGGLE_BUTTON);
+      general.butt[21]->callback(general_options_ok_cb);
+
       general.butt[13] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Show tooltips");
+        (L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Show tooltips");
       general.butt[13]->type(FL_TOGGLE_BUTTON);
       general.butt[13]->callback(general_options_ok_cb);
 
       general.butt[6] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Show bounding boxes");
+        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Show bounding boxes");
       general.butt[6]->tooltip("(Alt+b)");
       general.butt[6]->type(FL_TOGGLE_BUTTON);
       general.butt[6]->callback(general_options_ok_cb);
 
       general.butt[2] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH,
+        (L + 2 * WB, 2 * WB + 5 * BH, BW, BH,
          "Draw simplified model during user interaction");
       general.butt[2]->tooltip("(Alt+f)");
       general.butt[2]->type(FL_TOGGLE_BUTTON);
       general.butt[2]->callback(general_options_ok_cb, (void*)"fast_redraw");
 
       general.butt[11] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Enable mouse hover over meshes");
+        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Enable mouse hover over meshes");
       general.butt[11]->type(FL_TOGGLE_BUTTON);
       general.butt[11]->callback(general_options_ok_cb);
 
       general.butt[3] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Enable double buffering");
+        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Enable double buffering");
       general.butt[3]->type(FL_TOGGLE_BUTTON);
       general.butt[3]->callback(general_options_ok_cb);
 
       general.butt[12] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Enable antialiasing");
+        (L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Enable antialiasing");
       general.butt[12]->type(FL_TOGGLE_BUTTON);
       general.butt[12]->callback(general_options_ok_cb);
 
       general.butt[5] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 8 * BH, BW, BH,
+        (L + 2 * WB, 2 * WB + 9 * BH, BW, BH,
          "Use trackball rotation instead of Euler angles");
       general.butt[5]->type(FL_TOGGLE_BUTTON);
       general.butt[5]->callback(general_options_ok_cb);
 
       general.butt[15] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Rotate around pseudo center of mass");
+        (L + 2 * WB, 2 * WB + 10 * BH, BW, BH, "Rotate around pseudo center of mass");
       general.butt[15]->type(FL_TOGGLE_BUTTON);
       general.butt[15]->callback(general_options_ok_cb, (void*)"rotation_center");
 
       general.push[0] = new Fl_Button
-        (L + 2 * IW - 2 * WB, 2 * WB + 10 * BH, BB, BH, "Select");
+        (L + 2 * IW - 2 * WB, 2 * WB + 11 * BH, BB, BH, "Select");
       general.push[0]->callback(general_options_rotation_center_select_cb);
 
       general.value[8] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 10 * BH, IW / 3, BH);
+        (L + 2 * WB, 2 * WB + 11 * BH, IW / 3, BH);
       general.value[8]->callback(general_options_ok_cb, (void*)"rotation_center_coord");
       general.value[9] = new Fl_Value_Input
-        (L + 2 * WB + IW / 3, 2 * WB + 10 * BH, IW / 3, BH);
+        (L + 2 * WB + IW / 3, 2 * WB + 11 * BH, IW / 3, BH);
       general.value[9]->callback(general_options_ok_cb, (void*)"rotation_center_coord");
       general.value[10] = new Fl_Value_Input
-        (L + 2 * WB + 2 * IW / 3, 2 * WB + 10 * BH, IW / 3, BH, "Rotation center");
+        (L + 2 * WB + 2 * IW / 3, 2 * WB + 11 * BH, IW / 3, BH, "Rotation center");
       general.value[10]->align(FL_ALIGN_RIGHT);
       general.value[10]->callback(general_options_ok_cb, (void*)"rotation_center_coord");
 

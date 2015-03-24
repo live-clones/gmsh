@@ -33,7 +33,7 @@ class optionWindow{
 
   struct{
     Fl_Group *group;
-    Fl_Check_Button *butt[21];
+    Fl_Check_Button *butt[22];
     Fl_Button *push[20];
     Fl_Value_Input *value[50];
     Fl_Button *color[50];

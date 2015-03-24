@@ -1946,6 +1946,11 @@ double opt_general_gui_color_scheme(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->guiColorScheme = (int)val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.butt[21]->value
+      (CTX::instance()->guiColorScheme);
+#endif
   return CTX::instance()->guiColorScheme;
 }
 
@@ -3417,15 +3422,14 @@ double opt_general_stereo_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->stereo = (int)val;
-  if (CTX::instance()->stereo)    opt_general_camera_mode(num, action, 1.);
-
+  if (CTX::instance()->stereo)
+    opt_general_camera_mode(num, action, 1.);
 #if defined(HAVE_FLTK)
   /*
-  if(FlGui::available() && (action & GMSH_GUI))
-  FlGui::instance()->options->general.butt[17]->value(CTX::instance()->stereo);
-*/
+    if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.butt[17]->value(CTX::instance()->stereo);
+  */
 #endif
-
   return CTX::instance()->stereo ;
 }
 

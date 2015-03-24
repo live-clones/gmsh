@@ -390,7 +390,7 @@ static unsigned char gear_bits[] = {
 onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   : Fl_Group(x,y,w,h,l), _stop(false), _enableTreeWidgetResize(false)
 {
-  int col = FL_BACKGROUND2_COLOR;
+  int col = CTX::instance()->guiColorScheme ? FL_BACKGROUND2_COLOR : FL_BACKGROUND2_COLOR;
   color(col);
 
   box(GMSH_SIMPLE_RIGHT_BOX);

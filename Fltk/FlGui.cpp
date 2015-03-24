@@ -254,8 +254,8 @@ FlGui::FlGui(int argc, char **argv)
 
   if(CTX::instance()->guiColorScheme){ // dark mode
     Fl::background(50, 50, 50);
-    Fl::background2(130, 130, 130);
-    Fl::foreground(245, 245, 245);
+    Fl::background2(120, 120, 120);
+    Fl::foreground(240, 240, 240);
     for (int i = 0; i < FL_NUM_GRAY; i++) {
       double min = 0., max = 135.;
       int d = (int)(min + i * (max - min) / (FL_NUM_GRAY - 1.));
