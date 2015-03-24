@@ -1,4 +1,5 @@
-2.9.2: added support for extrusion of embedded points/curves.
+2.9.2: added support for extrusion of embedded points/curves; improved
+hex-dominant algorithm; new dark interface mode.
 
 2.9.1 (March 18, 2015): minor bug fixes.
 
