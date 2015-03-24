@@ -384,8 +384,10 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
       bool okay = true;
       for (std::vector<Segment>::iterator seg = convex_hull.begin();
            seg != convex_hull.end(); seg++) {
-        if ( ((*seg).from == segs[j].from && (*seg).from == segs[j].to) ||
-             ((*seg).from == segs[j].to && (*seg).from == segs[j].from)) {
+        if ( ((*seg).from == segs[j].from && (*seg).from == segs[j].to)
+             // FIXME:
+             // || ((*seg).from == segs[j].to && (*seg).from == segs[j].from)
+             ) {
           convex_hull.erase(seg);
           okay = false;
           break;
