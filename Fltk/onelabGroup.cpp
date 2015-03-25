@@ -44,6 +44,7 @@ typedef unsigned long intptr_t;
 #include "CreateFile.h"
 #include "drawContext.h"
 #include "PView.h"
+#include "treeIcons.h"
 
 // This file contains the Gmsh/FLTK specific parts of the ONELAB
 // interface. You'll need to reimplement this if you plan to build a different
@@ -401,7 +402,6 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
 
   _tree = new Fl_Tree(x + dx, y + dy, w - dw, h - dh - BH - 2 * WB);
   _tree->color(col);
-  //_tree->connectorcolor(fl_contrast(FL_WHITE, col));
   _tree->callback(onelab_tree_cb);
   _tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
   // _tree->marginleft(0);
@@ -1042,6 +1042,17 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   std::set<std::string> closed = _getClosedGmshMenus();
 
   _tree->clear();
+
+  if(CTX::instance()->guiColorScheme){
+    _tree->openicon(&open_pixmap_dark);
+    _tree->closeicon(&open_pixmap_dark);
+    _tree->connectorcolor(FL_BACKGROUND_COLOR);
+  }
+  else{
+    _tree->openicon(&open_pixmap_light);
+    _tree->closeicon(&open_pixmap_light);
+    _tree->connectorcolor(FL_BLACK);
+  }
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
   _tree->selectmode(FL_TREE_SELECT_NONE);
 

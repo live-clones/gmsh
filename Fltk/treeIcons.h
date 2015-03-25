@@ -1,0 +1,94 @@
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+
+#ifndef _TREE_ICONS_H_
+#define _TREE_ICONS_H_
+
+#include <FL/Fl_Pixmap.H>
+
+#define TREE_ICON_RIGHT(col)\
+  "11 11 2 1",\
+  ". c None",\
+  col,\
+  "...@.......",\
+  "...@@......",\
+  "...@@@.....",\
+  "...@@@@....",\
+  "...@@@@@...",\
+  "...@@@@@@..",\
+  "...@@@@@...",\
+  "...@@@@....",\
+  "...@@@.....",\
+  "...@@......",\
+  "...@......."
+
+#define TREE_ICON_DOWN(col)\
+  "11 11 2 1",\
+  ".  c None",\
+  col,\
+  "...........",\
+  "...........",\
+  "...........",\
+  "@@@@@@@@@@@",\
+  ".@@@@@@@@@.",\
+  "..@@@@@@@..",\
+  "...@@@@@...",\
+  "....@@@....",\
+  ".....@.....",\
+  "...........",\
+  "..........."
+
+#define TREE_ICON_PLUS(col)\
+  "11 11 3 1",\
+  col,\
+  "# c #323232",\
+  "@ c #000000",\
+  "###########",\
+  "#.........#",\
+  "#.........#",\
+  "#....@....#",\
+  "#....@....#",\
+  "#..@@@@@..#",\
+  "#....@....#",\
+  "#....@....#",\
+  "#.........#",\
+  "#.........#",\
+  "###########"
+
+#define TREE_ICON_MINUS(col)\
+  "11 11 3 1",\
+  col,\
+  "#	c #323232",\
+  "@	c #000000",\
+  "###########",\
+  "#.........#",\
+  "#.........#",\
+  "#.........#",\
+  "#.........#",\
+  "#..@@@@@..#",\
+  "#.........#",\
+  "#.........#",\
+  "#.........#",\
+  "#.........#",\
+  "###########"
+
+#if defined(__APPLE__)
+static const char * const open_xpm_light[] = {TREE_ICON_RIGHT("@ c #000000")};
+static const char * const close_xpm_light[] = {TREE_ICON_DOWN("@ c #000000")};
+static const char * const open_xpm_dark[] = {TREE_ICON_RIGHT("@ c #323232")};
+static const char * const close_xpm_dark[] = {TREE_ICON_DOWN("@ c #323232")};
+#else
+static const char * const open_xpm_light[] = {TREE_ICON_PLUS(". c #fefefe")};
+static const char * const close_xpm_light[] = {TREE_ICON_MINUS(". c #fefefe")};
+static const char * const open_xpm_dark[] = {TREE_ICON_PLUS(". c #bbbbbb")};
+static const char * const close_xpm_dark[] = {TREE_ICON_MINUS(". c #bbbbbb")};
+#endif
+
+static Fl_Pixmap open_pixmap_light(open_xpm_light);
+static Fl_Pixmap close_pixmap_light(close_xpm_light);
+static Fl_Pixmap open_pixmap_dark(open_xpm_dark);
+static Fl_Pixmap close_pixmap_dark(close_xpm_dark);
+
+#endif
