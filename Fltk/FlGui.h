@@ -133,6 +133,8 @@ class FlGui{
   void rebuildTree(bool deleteWidgets);
   // open module in tree
   void openModule(const std::string &name);
+  // apply color scheme to widgets
+  void applyColorScheme();
 };
 
 void redraw_cb(Fl_Widget *w, void *data);

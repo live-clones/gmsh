@@ -1374,7 +1374,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[10]->callback(general_options_ok_cb);
 
       general.butt[21] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Use dark interface (requires restart)");
+        (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Use dark interface");
       general.butt[21]->type(FL_TOGGLE_BUTTON);
       general.butt[21]->callback(general_options_ok_cb);
 

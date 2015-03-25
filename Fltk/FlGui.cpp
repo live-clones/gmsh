@@ -243,16 +243,24 @@ static void fatal_error_handler(const char *fmt, ...)
   Msg::Fatal("%s (FLTK internal error)", str);
 }
 
-FlGui::FlGui(int argc, char **argv)
+void FlGui::applyColorScheme()
 {
-  Fl::error = error_handler;
-  Fl::fatal = fatal_error_handler;
+  static int first = true;
+  int N = 4 + FL_NUM_GRAY;
+  static std::vector<unsigned char> r(N, 0), g(N, 0), b(N, 0);
 
-  // set X display
-  if(CTX::instance()->display.size())
-    Fl::display(CTX::instance()->display.c_str());
+  if(first){
+    // store default (OS-dependent) interface colors:
+    Fl::get_color(FL_BACKGROUND_COLOR, r[0], g[0], b[0]);
+    Fl::get_color(FL_BACKGROUND2_COLOR, r[1], g[1], b[1]);
+    Fl::get_color(FL_FOREGROUND_COLOR, r[2], g[2], b[2]);
+    Fl::get_color(FL_SELECTION_COLOR, r[3], g[3], b[3]);
+        for (int i = 0; i < FL_NUM_GRAY; i++) {
+      Fl::get_color(fl_gray_ramp(i), r[4 + i], g[4 + i], b[4 + i]);
+    }
+  }
 
-  if(CTX::instance()->guiColorScheme){ // dark mode
+  if(CTX::instance()->guiColorScheme == 1){ // dark mode
     Fl::background(50, 50, 50);
     Fl::background2(120, 120, 120);
     Fl::foreground(240, 240, 240);
@@ -261,7 +269,35 @@ FlGui::FlGui(int argc, char **argv)
       int d = (int)(min + i * (max - min) / (FL_NUM_GRAY - 1.));
       Fl::set_color(fl_gray_ramp(i), d, d, d);
     }
+    Fl::reload_scheme();
+    Fl::set_color(FL_SELECTION_COLOR, 200, 200, 200);
+    if(available()) updateViews(true, true);
   }
+  else if(!first && CTX::instance()->guiColorScheme == 0){
+    // retore default colors (only if not calling the routine for the first
+    // time)
+    Fl::background(r[0], g[0], b[0]);
+    Fl::background2(r[1], g[1], b[1]);
+    Fl::foreground(r[2], g[2], b[2]);
+    for (int i = 0; i < FL_NUM_GRAY; i++) {
+      Fl::set_color(fl_gray_ramp(i), r[4 + i], g[4 + i], b[4 + i]);
+    }
+    Fl::reload_scheme();
+    Fl::set_color(FL_SELECTION_COLOR, r[3], g[3], b[3]);
+    if(available()) updateViews(true, true);
+  }
+
+  first = false;
+}
+
+FlGui::FlGui(int argc, char **argv)
+{
+  Fl::error = error_handler;
+  Fl::fatal = fatal_error_handler;
+
+  // set X display
+  if(CTX::instance()->display.size())
+    Fl::display(CTX::instance()->display.c_str());
 
   // add new box types (dx dy dw dh)
   Fl::set_boxtype(GMSH_SIMPLE_RIGHT_BOX, simple_right_box_draw, 0, 0, 1, 0);
@@ -286,10 +322,6 @@ FlGui::FlGui(int argc, char **argv)
     Fl::scheme(CTX::instance()->guiTheme.c_str());
   Fl_Tooltip::size(FL_NORMAL_SIZE);
   Fl_Tooltip::delay(0.5);
-#if defined(__APPLE__)
-  if(!CTX::instance()->guiColorScheme)
-    Fl_Tooltip::color(FL_LIGHT2);
-#endif
 
   // use retina resolution if available
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 4)
@@ -353,8 +385,8 @@ FlGui::FlGui(int argc, char **argv)
   graph[0]->getWindow()->show(argc >0 ? 1 : 0, argv);
   if(graph[0]->getMenuWindow()) graph[0]->getMenuWindow()->show();
 
-  if(CTX::instance()->guiColorScheme)
-    Fl::set_color(FL_SELECTION_COLOR, 200, 200, 200);
+  // apply color scheme (noop if default color scheme is selected)
+  applyColorScheme();
 
   // graphic window should have the initial focus (so we can e.g. directly loop
   // through time steps with the keyboard)
