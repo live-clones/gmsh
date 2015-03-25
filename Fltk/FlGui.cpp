@@ -300,7 +300,8 @@ FlGui::FlGui(int argc, char **argv)
   if(CTX::instance()->display.size())
     Fl::display(CTX::instance()->display.c_str());
 
-  // apply color scheme (noop if default color scheme is selected)
+  // apply color scheme before widget creation (noop if default color scheme is
+  // selected), so that there's no color "flashing"
   applyColorScheme();
 
   // add new box types (dx dy dw dh)
@@ -389,8 +390,8 @@ FlGui::FlGui(int argc, char **argv)
   graph[0]->getWindow()->show(argc >0 ? 1 : 0, argv);
   if(graph[0]->getMenuWindow()) graph[0]->getMenuWindow()->show();
 
-  // apply color scheme (noop if default color scheme is selected); need to be
-  // called a second time one all the widgets are created
+  // re-apply color scheme (necessary for some reason to get the selection color
+  // right)
   applyColorScheme();
 
   // graphic window should have the initial focus (so we can e.g. directly loop
