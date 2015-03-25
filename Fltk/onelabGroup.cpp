@@ -740,7 +740,10 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
     but->color(_tree->color());
     but->value(p.getValue());
     but->callback(onelab_number_check_button_cb, (void*)path);
-    if(highlight) but->color(c);
+    if(highlight){
+      but->color(c);
+      but->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
+    }
     if(p.getReadOnly()) but->deactivate();
     return but;
   }
@@ -896,7 +899,10 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
     but->selection_color(_tree->color());
     but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     but->callback(onelab_string_button_cb, (void*)path);
-    if(highlight) but->color(c);
+    if(highlight){
+      but->color(c);
+      but->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
+    }
     return but;
   }
 
@@ -905,7 +911,10 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
     Fl_Output *but = new Fl_Output(1, 1, ww, hh);
     but->value(p.getValue().c_str());
     but->align(FL_ALIGN_RIGHT);
-    if(highlight) but->color(c);
+    if(highlight){
+      but->color(c);
+      but->textcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
+    }
     return but;
   }
 
@@ -916,7 +925,10 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
     but->callback(onelab_string_input_cb, (void*)path);
     but->when(FL_WHEN_ENTER_KEY);
     but->align(FL_ALIGN_RIGHT);
-    if(highlight) but->color(c);
+    if(highlight){
+      but->color(c);
+      but->textcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
+    }
     return but;
   }
 
@@ -954,7 +966,10 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
   but->callback(onelab_string_input_choice_cb, (void*)path);
   but->input()->when(FL_WHEN_ENTER_KEY);
   but->align(FL_ALIGN_RIGHT);
-  if(highlight) but->input()->color(c);
+  if(highlight){
+    but->input()->color(c);
+    but->input()->textcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
+  }
   return but;
 }
 
@@ -984,7 +999,10 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, int ww, int hh,
     inputRegion *but = new inputRegion(1, 1, ww, hh, true);
     but->value(p.getValue());
     but->align(FL_ALIGN_RIGHT);
-    if(highlight) but->color(c);
+    if(highlight){
+      but->color(c);
+      but->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
+    }
     return but;
   }
 
@@ -992,7 +1010,10 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, int ww, int hh,
   but->value(p.getValue());
   but->align(FL_ALIGN_RIGHT);
   but->callback(onelab_region_input_cb, (void*)path);
-  if(highlight) but->color(c);
+  if(highlight){
+    but->color(c);
+    but->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
+  }
   return but;
 }
 
@@ -1004,7 +1025,10 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, int ww, int hh,
     Fl_Output *but = new Fl_Output(1, 1, ww, hh);
     but->value("TODO function");
     but->align(FL_ALIGN_RIGHT);
-    if(highlight) but->color(c);
+    if(highlight){
+      but->color(c);
+      but->textcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
+    }
     return but;
   }
 }
