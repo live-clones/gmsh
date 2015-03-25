@@ -368,6 +368,13 @@ static void SetDefaultColorOptions(int num, StringXColor s[])
       i++;
     }
     break;
+  case 3:
+    while(s[i].str) {
+      s[i].function(num, GMSH_SET, CTX::instance()->packColor
+                    (s[i].def4[0], s[i].def4[1], s[i].def4[2], s[i].def4[3]));
+      i++;
+    }
+    break;
   default:
     while(s[i].str) {
       s[i].function(num, GMSH_SET, CTX::instance()->packColor
@@ -404,6 +411,10 @@ static void PrintColorOptions(int num, int level, int diff, int help,
       case 2:
         def = CTX::instance()->packColor
           (s[i].def3[0], s[i].def3[1], s[i].def3[2], s[i].def3[3]);
+        break;
+      case 3:
+        def = CTX::instance()->packColor
+          (s[i].def4[0], s[i].def4[1], s[i].def4[2], s[i].def4[3]);
         break;
       default:
         def = CTX::instance()->packColor
@@ -3254,7 +3265,7 @@ double opt_general_color_scheme(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     CTX::instance()->colorScheme = (int)val;
-    if(CTX::instance()->colorScheme > 2)
+    if(CTX::instance()->colorScheme > 3)
       CTX::instance()->colorScheme = 0;
     SetDefaultColorOptions(0, GeneralOptions_Color);
     SetDefaultColorOptions(0, GeometryOptions_Color);

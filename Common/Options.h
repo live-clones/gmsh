@@ -798,7 +798,7 @@ typedef struct {
   // the defaults are stored in individual bytes so that we can initialize
   // them statically independently of the machine endianness. They will be
   // packed into unsigned ints at runtime
-  unsigned char def1[4], def2[4], def3[4];
+  unsigned char def1[4], def2[4], def3[4], def4[4];
   const char *help;
 } StringXColor;
 

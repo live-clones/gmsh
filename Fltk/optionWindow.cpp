@@ -1795,6 +1795,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Dark", 0, 0, 0},
         {"Light", 0, 0, 0},
         {"Grayscale", 0, 0, 0},
+        {"Reverse", 0, 0, 0},
         {0}
       };
 
