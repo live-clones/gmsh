@@ -1951,7 +1951,7 @@ double opt_general_gui_color_scheme(OPT_ARGS_NUM)
     FlGui::instance()->options->general.butt[21]->value
       (CTX::instance()->guiColorScheme);
   }
-  if(FlGui::available()){
+  if(action & GMSH_SET && FlGui::available()){
     FlGui::instance()->applyColorScheme();
   }
 #endif
