@@ -7,6 +7,7 @@
 #include "BackgroundMeshTools.h"
 
 #include "GmshMessage.h"
+#include "GModel.h"
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GEdgeCompound.h"
@@ -21,6 +22,8 @@
 #include "MTriangle.h"
 #include "Field.h"
 #include "OS.h"
+#include "Context.h"
+#include "meshGFaceOptimize.h"
 
 #if defined(HAVE_SOLVER)
 #include "dofManager.h"
@@ -32,16 +35,17 @@
 #endif
 
 class evalDiffusivityFunction : public simpleFunction<double>{
-  public:
-    evalDiffusivityFunction(frameFieldBackgroundMesh2D *_bgm, double t=0.95):bgm(_bgm),threshold(t){};
-    double operator () (double u, double v, double w) const{
-      return ((bgm->get_smoothness(u,v) >= threshold) ? 1. : 1.e-3);
-    }
-  private:
-    frameFieldBackgroundMesh2D *bgm;
-    const double threshold;
+public:
+  evalDiffusivityFunction(frameFieldBackgroundMesh2D *_bgm, double t=0.95)
+    : bgm(_bgm),threshold(t){};
+  double operator () (double u, double v, double w) const
+  {
+    return ((bgm->get_smoothness(u,v) >= threshold) ? 1. : 1.e-3);
+  }
+private:
+  frameFieldBackgroundMesh2D *bgm;
+  const double threshold;
 };
-
 
 //TODO: move this fct ???
 /* applies rotations of amplitude pi to set the
