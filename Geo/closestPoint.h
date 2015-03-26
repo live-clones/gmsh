@@ -1,10 +1,19 @@
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+
 #ifndef _CLOSEST_POINT_H_
 #define _CLOSEST_POINT_H_
+
 #include "GmshConfig.h"
+
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
 #endif
+
 #include "SPoint3.h"
+
 class GEntity;
 class closestPointFinder
 {

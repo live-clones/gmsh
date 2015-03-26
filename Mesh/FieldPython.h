@@ -1,8 +1,14 @@
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+
 #ifndef _FIELD_PYTHON_H_
 #define _FIELD_PYTHON_H_
 
 #include "Field.h"
 #include "Python.h"
+
 class FieldPython : public Field
 {
   PyObject *_callback;
@@ -56,4 +62,5 @@ class FieldPython : public Field
     }
   }
 };
+
 #endif

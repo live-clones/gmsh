@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+
 #include <cstdio>
 #include <cmath>
 #include <vector>
@@ -7,18 +12,19 @@
 #include "gmshEdge.h"
 #include "Geo.h"
 
-
 class discreteList {
   std::vector<std::pair<SPoint3, double> > _pts;
   std::vector<int> _next;
-  public:
-  int insertPoint(int pos, const SPoint3 &pt, double t) {
+public:
+  int insertPoint(int pos, const SPoint3 &pt, double t)
+  {
     _pts.push_back(std::make_pair(pt, t));
     _next.push_back(_next[pos + 1]);
     _next[pos + 1] = _pts.size() - 1;
     return _pts.size() - 1;
   }
-  void sort(std::vector<SPoint3> &spts, std::vector<double> &ts) {
+  void sort(std::vector<SPoint3> &spts, std::vector<double> &ts)
+  {
     spts.clear();
     spts.reserve(_pts.size());
     ts.clear();
@@ -28,12 +34,15 @@ class discreteList {
       ts.push_back(_pts[p].second);
     }
   }
-  discreteList() {
+  discreteList()
+  {
     _next.push_back(-1);
   }
 };
 
-static void decasteljau(double tol, discreteList &discrete, int pos, const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2, const SPoint3 &p3, double t0, double t3)
+static void decasteljau(double tol, discreteList &discrete, int pos,
+                        const SPoint3 &p0, const SPoint3 &p1, const SPoint3 &p2,
+                        const SPoint3 &p3, double t0, double t3)
 {
   SVector3 d30 = p3 - p0;
   SVector3 d13 = p1 - p3;
@@ -60,7 +69,9 @@ static void decasteljau(double tol, discreteList &discrete, int pos, const SPoin
   decasteljau(tol, discrete, newpos, p0123, p123, p23, p3, t0123, t3);
 }
 
-static int discretizeBezier(double tol, discreteList &discrete, int pos, const SPoint3 pt[4], double t0, double t3, bool insertFirstPoint)
+static int discretizeBezier(double tol, discreteList &discrete, int pos,
+                            const SPoint3 pt[4], double t0, double t3,
+                            bool insertFirstPoint)
 {
   if (insertFirstPoint)
     pos = discrete.insertPoint(pos, pt[0], t0);
@@ -69,7 +80,9 @@ static int discretizeBezier(double tol, discreteList &discrete, int pos, const S
   return newp;
 }
 
-static int discretizeBSpline(double tol, discreteList &discrete, int pos, const SPoint3 pt[4], double t0, double t3, bool insertFirstPoint)
+static int discretizeBSpline(double tol, discreteList &discrete, int pos,
+                             const SPoint3 pt[4], double t0, double t3,
+                             bool insertFirstPoint)
 {
   SPoint3 bpt[4] = {
     SPoint3((pt[0] + 4 * pt[1]  + pt[2]) * (1./6.)),
@@ -80,7 +93,9 @@ static int discretizeBSpline(double tol, discreteList &discrete, int pos, const 
   return discretizeBezier(tol, discrete, pos, bpt, t0, t3, insertFirstPoint);
 }
 
-static int discretizeCatmullRom(double tol, discreteList &discrete, int pos, const SPoint3 pt[4], double t0, double t3, bool insertFirstPoint)
+static int discretizeCatmullRom(double tol, discreteList &discrete, int pos,
+                                const SPoint3 pt[4], double t0, double t3,
+                                bool insertFirstPoint)
 {
   SPoint3 bpt[4] = {
     pt[1],
@@ -98,99 +113,101 @@ static inline SPoint3 curveGetPoint(Curve *c, int i)
   return SPoint3(v->Pos.X, v->Pos.Y, v->Pos.Z);
 }
 
-static void discretizeCurve(Curve *c, double tol, std::vector<SPoint3> &pts, std::vector<double> &ts)
+static void discretizeCurve(Curve *c, double tol, std::vector<SPoint3> &pts,
+                            std::vector<double> &ts)
 {
   discreteList discrete;
   switch(c->Typ) {
-    case MSH_SEGM_LINE :
-      {
-        int NPt = List_Nbr(c->Control_Points);
-        pts.resize(NPt);
-        ts.resize(NPt);
-        for (int i = 0; i < NPt; ++i) {
-          pts[i]= curveGetPoint(c, i);
-          ts[i] = i / (double) (NPt - 1);
-        }
-        return;
+  case MSH_SEGM_LINE :
+    {
+      int NPt = List_Nbr(c->Control_Points);
+      pts.resize(NPt);
+      ts.resize(NPt);
+      for (int i = 0; i < NPt; ++i) {
+        pts[i]= curveGetPoint(c, i);
+        ts[i] = i / (double) (NPt - 1);
       }
-    case MSH_SEGM_BEZIER :
-      {
-        int back = -1;
-        int NbCurves = (List_Nbr(c->Control_Points) - 1) / 3;
-        for (int iCurve = 0; iCurve < NbCurves; ++iCurve) {
-          double t1 = (iCurve) / (double)(NbCurves);
-          double t2 = (iCurve+1) / (double)(NbCurves);
-          SPoint3 pt[4];
-          for(int i = 0; i < 4; i++) {
-            pt[i] = curveGetPoint(c, iCurve * 3 + i);
-          }
-          back = discretizeBezier(tol, discrete, back, pt, t1, t2, iCurve == 0);
-        }
-        break;
-      }
-    case MSH_SEGM_BSPLN:
-      {
-        int back = -1;
-        bool periodic = (c->end == c->beg);
-        int NbControlPoints = List_Nbr(c->Control_Points);
-        int NbCurves = NbControlPoints + (periodic ? -1 : 1);
+      return;
+    }
+  case MSH_SEGM_BEZIER :
+    {
+      int back = -1;
+      int NbCurves = (List_Nbr(c->Control_Points) - 1) / 3;
+      for (int iCurve = 0; iCurve < NbCurves; ++iCurve) {
+        double t1 = (iCurve) / (double)(NbCurves);
+        double t2 = (iCurve+1) / (double)(NbCurves);
         SPoint3 pt[4];
-        for (int iCurve = 0; iCurve < NbCurves; ++iCurve) {
-          double t1 = (iCurve) / (double)(NbCurves);
-          double t2 = (iCurve+1) / (double)(NbCurves);
-          for(int i = 0; i < 4; i++) {
-            int k;
-            if (periodic) {
-              k = (iCurve - 1 + i) % (NbControlPoints - 1);
-              if (k < 0)
-                k += NbControlPoints - 1;
-            }
-            else {
-              k = std::max(0, std::min(iCurve - 2 + i, NbControlPoints -1));
-            }
-            pt[i] = curveGetPoint(c, k);
-          }
-          back = discretizeBSpline(tol, discrete, back, pt, t1, t2, iCurve == 0);
+        for(int i = 0; i < 4; i++) {
+          pt[i] = curveGetPoint(c, iCurve * 3 + i);
         }
-        break;
+        back = discretizeBezier(tol, discrete, back, pt, t1, t2, iCurve == 0);
       }
-    case MSH_SEGM_SPLN:
-      {
-        int NbCurves = List_Nbr(c->Control_Points) - 1;
-        SPoint3 pt[4];
-        int back = -1;
-        for (int iCurve = 0; iCurve < NbCurves; ++iCurve) {
-          double t1 = (iCurve) / (double)(NbCurves);
-          double t2 = (iCurve+1) / (double)(NbCurves);
-          pt[1] = curveGetPoint(c, iCurve);
-          pt[2] = curveGetPoint(c, iCurve + 1);
-          if(iCurve == 0) {
-            if(c->beg == c->end)
-              pt[0] = curveGetPoint(c, NbCurves - 1);
-            else
-              pt[0] = SPoint3(pt[1] * 2 - pt[2]);
+      break;
+    }
+  case MSH_SEGM_BSPLN:
+    {
+      int back = -1;
+      bool periodic = (c->end == c->beg);
+      int NbControlPoints = List_Nbr(c->Control_Points);
+      int NbCurves = NbControlPoints + (periodic ? -1 : 1);
+      SPoint3 pt[4];
+      for (int iCurve = 0; iCurve < NbCurves; ++iCurve) {
+        double t1 = (iCurve) / (double)(NbCurves);
+        double t2 = (iCurve+1) / (double)(NbCurves);
+        for(int i = 0; i < 4; i++) {
+          int k;
+          if (periodic) {
+            k = (iCurve - 1 + i) % (NbControlPoints - 1);
+            if (k < 0)
+              k += NbControlPoints - 1;
           }
-          else
-            pt[0] = curveGetPoint(c, iCurve - 1);
-          if(iCurve == NbCurves - 1) {
-            if(c->beg == c->end)
-              pt[3] = curveGetPoint(c, 1);
-            else
-              pt[3] = SPoint3(2 * pt[2] - pt[1]);
+          else {
+            k = std::max(0, std::min(iCurve - 2 + i, NbControlPoints -1));
           }
-          else
-            pt[3] = curveGetPoint(c, iCurve + 2);
-          back = discretizeCatmullRom(tol, discrete, back, pt, t1, t2, iCurve == 0);
+          pt[i] = curveGetPoint(c, k);
         }
-        break;
+        back = discretizeBSpline(tol, discrete, back, pt, t1, t2, iCurve == 0);
       }
-    default :
-      Msg::Fatal("not implemented");
+      break;
+    }
+  case MSH_SEGM_SPLN:
+    {
+      int NbCurves = List_Nbr(c->Control_Points) - 1;
+      SPoint3 pt[4];
+      int back = -1;
+      for (int iCurve = 0; iCurve < NbCurves; ++iCurve) {
+        double t1 = (iCurve) / (double)(NbCurves);
+        double t2 = (iCurve+1) / (double)(NbCurves);
+        pt[1] = curveGetPoint(c, iCurve);
+        pt[2] = curveGetPoint(c, iCurve + 1);
+        if(iCurve == 0) {
+          if(c->beg == c->end)
+            pt[0] = curveGetPoint(c, NbCurves - 1);
+          else
+            pt[0] = SPoint3(pt[1] * 2 - pt[2]);
+        }
+        else
+          pt[0] = curveGetPoint(c, iCurve - 1);
+        if(iCurve == NbCurves - 1) {
+          if(c->beg == c->end)
+            pt[3] = curveGetPoint(c, 1);
+          else
+            pt[3] = SPoint3(2 * pt[2] - pt[1]);
+        }
+        else
+          pt[3] = curveGetPoint(c, iCurve + 2);
+        back = discretizeCatmullRom(tol, discrete, back, pt, t1, t2, iCurve == 0);
+      }
+      break;
+    }
+  default :
+    Msg::Fatal("not implemented");
   }
   discrete.sort(pts, ts);
 }
 
-void gmshEdge::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts)
+void gmshEdge::discretize(double tol, std::vector<SPoint3>
+                          &dpts, std::vector<double> &ts)
 {
   discretizeCurve(c, tol, dpts, ts);
 }

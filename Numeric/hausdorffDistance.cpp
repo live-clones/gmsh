@@ -1,8 +1,14 @@
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+
 /*
-compute the hausdorff distance between two polygonal curves 
-in n*m time where n and m are the nb of points of the 
-polygonal curves
+  compute the hausdorff distance between two polygonal curves
+  in n*m time where n and m are the nb of points of the
+  polygonal curves
 */
+
 #include "SVector3.h"
 #include "hausdorffDistance.h"
 
@@ -20,7 +26,8 @@ static double intersect (SPoint3 &q, SVector3 &n, // a plane
   return t;
 }
 
-static double projection (SPoint3 &p1, SPoint3 &p2, SPoint3 &q, SPoint3 &result){
+static double projection (SPoint3 &p1, SPoint3 &p2, SPoint3 &q, SPoint3 &result)
+{
   // x = p1 + t (p2 - p1)
   // (x - q) * (p2 - p1) = 0
   // (p1 + t (p2 - p1) - q) (p2 - p1) = 0
@@ -29,18 +36,19 @@ static double projection (SPoint3 &p1, SPoint3 &p2, SPoint3 &q, SPoint3 &result)
   const double t = dot(q-p1,p21)/dot(p21,p21);
   result = p1 *(1.-t)+ p2*t;
   return t;
-}  
+}
 
-static SPoint3 closestPoint (SPoint3 &p1, SPoint3 &p2, SPoint3 &q){
+static SPoint3 closestPoint (SPoint3 &p1, SPoint3 &p2, SPoint3 &q)
+{
   double result;
   const double t = projection (p1,p2,q,result);
   if (t >= 0.0 && t <= 1.0)return result;
   if (t < 0)return p1;
   return p2;
-}  
+}
 
-
-double closestPoint (const std::vector<SPoint3> &P, const SPoint3 &p, SPoint3 & result){
+double closestPoint (const std::vector<SPoint3> &P, const SPoint3 &p, SPoint3 & result)
+{
   double closestDistance = 1.e22;
   for (unsigned int i=1;i<P.size();i++){
     SPoint3 q = closestPoint (P[i-1],P[i],p);
@@ -48,18 +56,19 @@ double closestPoint (const std::vector<SPoint3> &P, const SPoint3 &p, SPoint3 & 
     if (pq < closestDistance){
       closestDistance = pq;
       result = q;
-    }   
+    }
   }
   return closestDistance;
-} 
+}
 
 // we test all points of P plus all points that are the intersections
 // of angle bissectors of Q with P
-double oneSidedHausdorffDistance (const std::vector<SPoint3> &P, 
-				  const std::vector<SPoint3> &Q, 
-				  SPoint3 &p1, SPoint3 &p2){
+double oneSidedHausdorffDistance (const std::vector<SPoint3> &P,
+				  const std::vector<SPoint3> &Q,
+				  SPoint3 &p1, SPoint3 &p2)
+{
   const double hausdorffDistance = 0.0;
-  
+
   // first test the points
   for (unsigned int i=0;i<P.size();i++){
     SPoint3 result;
@@ -92,7 +101,7 @@ double oneSidedHausdorffDistance (const std::vector<SPoint3> &P,
     for (unsigned int i=1;i<P.size();i++){
       SPoint3 result;
       const double t = intersect (b, n, P[i-1],P[i],result);
-      if (t >=0 && t <=1)intersections.push_back(result);	
+      if (t >=0 && t <=1)intersections.push_back(result);
     }
   }
 
@@ -108,8 +117,9 @@ double oneSidedHausdorffDistance (const std::vector<SPoint3> &P,
   return hausdorffDistance;
 }
 
-double hausdorffDistance (const std::vector<SPoint3> &P, 
-			  const std::vector<SPoint3> &Q){
+double hausdorffDistance (const std::vector<SPoint3> &P,
+			  const std::vector<SPoint3> &Q)
+{
   return std::max(oneSidedHausdorffDistance (P,Q),
-		  oneSidedHausdorffDistance (Q,P));  
+		  oneSidedHausdorffDistance (Q,P));
 }

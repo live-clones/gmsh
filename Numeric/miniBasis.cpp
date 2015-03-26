@@ -1,5 +1,11 @@
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+
 #include "miniBasis.h"
 #include "BasisFactory.h"
+
 miniBasisTri::miniBasisTri()
 {
   type = MSH_TRI_MINI;
@@ -47,7 +53,7 @@ miniBasisTri::miniBasisTri()
   coefficients(0, 0) = 1.; coefficients(0, 1) = -1.; coefficients(0, 2) = -1.;
   coefficients(1, 1) = 1.;
   coefficients(2, 2) = 1.;
-  coefficients(3, 3) = 1.; coefficients(3, 4) = -1.; coefficients(3, 5) = -1.; 
+  coefficients(3, 3) = 1.; coefficients(3, 4) = -1.; coefficients(3, 5) = -1.;
 }
 
 miniBasisTet::miniBasisTet()

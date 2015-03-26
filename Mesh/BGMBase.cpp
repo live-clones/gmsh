@@ -1,14 +1,19 @@
+// Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+
 #include "BGMBase.h"
 
 #include <iostream>
-
 #include "OS.h"
 #include "GPoint.h"
 #include "GFace.h"
 #include "GmshDefines.h"
 #include "MElementOctree.h"
 
-void BGMBase::export_scalar(const std::string &filename, const DoubleStorageType &_whatToPrint) const
+void BGMBase::export_scalar(const std::string &filename,
+                            const DoubleStorageType &_whatToPrint) const
 {
   FILE *f = Fopen (filename.c_str(),"w");
   fprintf(f,"View \"Background Mesh\"{\n");
@@ -56,7 +61,8 @@ void BGMBase::export_scalar(const std::string &filename, const DoubleStorageType
   fclose(f);
 }
 
-void BGMBase::export_vector(const std::string &filename, const VectorStorageType &_whatToPrint) const
+void BGMBase::export_vector(const std::string &filename,
+                            const VectorStorageType &_whatToPrint) const
 {
   FILE *f = Fopen (filename.c_str(),"w");
   fprintf(f,"View \"Background Mesh\"{\n");
@@ -108,7 +114,8 @@ void BGMBase::export_vector(const std::string &filename, const VectorStorageType
 }
 
 
-void BGMBase::export_tensor_as_vectors(const std::string &filename, const TensorStorageType &_whatToPrint)const
+void BGMBase::export_tensor_as_vectors(const std::string &filename,
+                                       const TensorStorageType &_whatToPrint) const
 {
   FILE *f = Fopen (filename.c_str(),"w");
   fprintf(f,"View \"Background Mesh\"{\n");
@@ -120,20 +127,22 @@ void BGMBase::export_tensor_as_vectors(const std::string &filename, const Tensor
     v = it->first;
     GPoint p = get_GPoint_from_MVertex(v);
     for (int i=0;i<3;i++){
-      fprintf(f,"%s(%g,%g,%g){%g,%g,%g};\n",s,p.x(),p.y(),p.z(),(it->second)(0,i),(it->second)(1,i),(it->second)(2,i));
-      fprintf(f,"%s(%g,%g,%g){%g,%g,%g};\n",s,p.x(),p.y(),p.z(),-(it->second)(0,i),-(it->second)(1,i),-(it->second)(2,i));
+      fprintf(f,"%s(%g,%g,%g){%g,%g,%g};\n",s,p.x(),p.y(),p.z(),
+              (it->second)(0,i),(it->second)(1,i),(it->second)(2,i));
+      fprintf(f,"%s(%g,%g,%g){%g,%g,%g};\n",s,p.x(),p.y(),p.z(),
+              -(it->second)(0,i),-(it->second)(1,i),-(it->second)(2,i));
     }
   }
   fprintf(f,"};\n");
   fclose(f);
 }
 
-
 BGMBase::BGMBase(int dim,GEntity *_gf):octree(NULL),gf(_gf), DIM(dim), order(1)
 {
 }
 
-BGMBase::~BGMBase(){
+BGMBase::~BGMBase()
+{
 }
 
 bool BGMBase::inDomain (double u, double v, double w)
@@ -146,7 +155,8 @@ const MElement* BGMBase::findElement(double u, double v, double w, bool strict)
   return (getOctree()->find(u, v, w, DIM, strict));
 }
 
-std::vector<double> BGMBase::get_field_value(double u, double v, double w, const VectorStorageType &data)
+std::vector<double> BGMBase::get_field_value(double u, double v, double w,
+                                             const VectorStorageType &data)
 {
   MElement *e = const_cast<MElement*>(findElement(u, v, w ));
   if (!e) return std::vector<double>(3,-1000.);
@@ -157,12 +167,14 @@ std::vector<double> BGMBase::get_field_value(double u, double v, double w, const
   for (int j=0;j<3;j++){
     std::vector<double> values(e->getNumVertices());
     for (int i=0;i<e->getNumVertices();i++) values[i]=val[i][j];
-    res[j] = e->interpolate(&values[0], element_uvw[0], element_uvw[1], element_uvw[2], 1, order);
+    res[j] = e->interpolate(&values[0], element_uvw[0], element_uvw[1],
+                            element_uvw[2], 1, order);
   }
   return res;
 }
 
-double BGMBase::get_field_value(double u, double v, double w, const DoubleStorageType &data)
+double BGMBase::get_field_value(double u, double v, double w,
+                                const DoubleStorageType &data)
 {
   MElement *e = const_cast<MElement*>(findElement(u, v, w));
   if (!e) return -1000.;
@@ -171,8 +183,9 @@ double BGMBase::get_field_value(double u, double v, double w, const DoubleStorag
   std::vector<double> values(e->getNumVertices());
   for (int i=0;i<e->getNumVertices();i++)
     values[i]=val[i];
-  
-  return e->interpolate(&values[0], element_uvw[0], element_uvw[1], element_uvw[2], 1, order);
+
+  return e->interpolate(&values[0], element_uvw[0], element_uvw[1],
+                        element_uvw[2], 1, order);
 }
 
 double BGMBase::size(double u, double v, double w)
@@ -185,7 +198,8 @@ double BGMBase::size(const MVertex *v)
   return get_nodal_value(v,sizeField);
 }
 
-std::vector<double> BGMBase::get_nodal_value(const MVertex *v,const VectorStorageType &data)const
+std::vector<double> BGMBase::get_nodal_value(const MVertex *v,
+                                             const VectorStorageType &data) const
 {
   VectorStorageType::const_iterator itfind = data.find(const_cast<MVertex*>(v));
   if (itfind==data.end()){
@@ -195,7 +209,7 @@ std::vector<double> BGMBase::get_nodal_value(const MVertex *v,const VectorStorag
   return itfind->second;
 }
 
-double BGMBase::get_nodal_value(const MVertex *v,const DoubleStorageType &data)const
+double BGMBase::get_nodal_value(const MVertex *v,const DoubleStorageType &data) const
 {
   DoubleStorageType::const_iterator itfind = data.find(const_cast<MVertex*>(v));
   if (itfind==data.end()){
@@ -205,7 +219,8 @@ double BGMBase::get_nodal_value(const MVertex *v,const DoubleStorageType &data)c
   return itfind->second;
 }
 
-std::vector<std::vector<double> > BGMBase::get_nodal_values(const MElement *e,const VectorStorageType &data)const
+std::vector<std::vector<double> >
+BGMBase::get_nodal_values(const MElement *e,const VectorStorageType &data) const
 {
   std::vector<std::vector<double> > res(e->getNumVertices());
 
@@ -217,7 +232,8 @@ std::vector<std::vector<double> > BGMBase::get_nodal_values(const MElement *e,co
   return res;
 }
 
-std::vector<double> BGMBase::get_nodal_values(const MElement *e,const DoubleStorageType &data)const
+std::vector<double> BGMBase::get_nodal_values(const MElement *e,
+                                              const DoubleStorageType &data) const
 {
   std::vector<double> res(e->getNumVertices(),0.);
 
@@ -226,7 +242,8 @@ std::vector<double> BGMBase::get_nodal_values(const MElement *e,const DoubleStor
   return res;
 }
 
-std::vector<double> BGMBase::get_element_uvw_from_xyz (const MElement *e, double x, double y,double z) const
+std::vector<double> BGMBase::get_element_uvw_from_xyz (const MElement *e, double x,
+                                                       double y, double z) const
 {
   double element_uvw[3];
   double xyz[3] = {x, y, z};
@@ -255,7 +272,3 @@ GEntity* BGMBase::getBackgroundGEntity()
 {
   return gf;
 }
-
-
-
-
