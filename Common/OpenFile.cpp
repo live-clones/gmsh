@@ -685,19 +685,22 @@ void OpenProject(const std::string &fileName, bool setWindowTitle)
   ResetTemporaryBoundingBox();
 
   // merge the file
-  if(MergeFile(fileName, false, setWindowTitle)) {
-    if(std::find(CTX::instance()->recentFiles.begin(),
-                 CTX::instance()->recentFiles.end(), fileName) ==
-       CTX::instance()->recentFiles.end())
-      CTX::instance()->recentFiles.insert
-        (CTX::instance()->recentFiles.begin(), fileName);
-    if(CTX::instance()->recentFiles.size() > 10)
-      CTX::instance()->recentFiles.resize(10);
-#if defined(HAVE_FLTK)
-    if(FlGui::available())
-      FlGui::instance()->graph[0]->fillRecentHistoryMenu();
-#endif
+  MergeFile(fileName, false, setWindowTitle);
+
+  // fill recent opened file list
+  std::vector<std::string> tmp = CTX::instance()->recentFiles;
+  CTX::instance()->recentFiles.clear();
+  CTX::instance()->recentFiles.push_back(fileName);
+  for(unsigned int i = 0; i < tmp.size(); i++){
+    if(tmp[i] != fileName)
+      CTX::instance()->recentFiles.push_back(tmp[i]);
   }
+  if(CTX::instance()->recentFiles.size() > 10)
+    CTX::instance()->recentFiles.resize(10);
+#if defined(HAVE_FLTK)
+  if(FlGui::available())
+    FlGui::instance()->graph[0]->fillRecentHistoryMenu();
+#endif
 
   // close the files that might have been left open by ParseFile
   if(openedFiles.size()){
