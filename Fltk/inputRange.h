@@ -32,6 +32,7 @@ class inputRange : public Fl_Group {
   void _values2string()
   {
     std::ostringstream tmp;
+    tmp.precision(12);
     if(_choices.size()){
       // construct range string using choices
       for(unsigned int i = 0; i < _choices.size(); i++){

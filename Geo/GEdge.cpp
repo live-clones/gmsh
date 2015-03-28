@@ -176,6 +176,8 @@ void GEdge::setVisibility(char val, bool recursive)
 std::string GEdge::getAdditionalInfoString()
 {
   std::ostringstream sstream;
+  sstream.precision(12);
+
   if(v0 && v1) sstream << "{" << v0->tag() << " " << v1->tag() << "}";
 
   if(meshAttributes.method == MESH_TRANSFINITE){

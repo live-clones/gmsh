@@ -11754,6 +11754,7 @@ void PrintParserSymbols(bool help, std::vector<std::string> &vec)
       it != gmsh_yysymbols.end(); it++){
     gmsh_yysymbol s(it->second);
     std::ostringstream sstream;
+    sstream.precision(12);
     sstream << it->first;
     if(s.list){
       sstream << "[] = {";

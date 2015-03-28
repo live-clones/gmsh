@@ -61,6 +61,7 @@ SPoint2 GVertex::reparamOnFace(const GFace *gf, int) const
 std::string GVertex::getAdditionalInfoString()
 {
   std::ostringstream sstream;
+  sstream.precision(12);
   sstream << "{" << x() << "," << y() << "," << z() << "}";
   double lc = prescribedMeshSizeAtVertex();
   if(lc < MAX_LC) sstream << " (mesh size: " << lc << ")";

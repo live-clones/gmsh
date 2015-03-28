@@ -491,7 +491,7 @@ int GModel::writeGEO(const std::string &name, bool printLabels, bool onlyPhysica
     if(meshSizeParameters.find(val) == meshSizeParameters.end()){
       std::ostringstream paramName;
       paramName << "cl__" << ++cpt;
-      fprintf(fp, "%s = %.16g;\n", paramName.str().c_str(),val);
+      fprintf(fp, "%s = %.16g;\n", paramName.str().c_str(), val);
       meshSizeParameters.insert(std::make_pair(val, paramName.str()));
     }
   }

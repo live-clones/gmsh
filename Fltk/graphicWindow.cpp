@@ -1613,12 +1613,14 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
   }
   {
     std::ostringstream sstream;
+    sstream.precision(12);
     SPoint3 pt = ele->barycenter();
     sstream << " Barycenter: (" << pt[0] << ", " << pt[1] << ", " << pt[2] << ")";
     info.push_back(sstream.str());
   }
   {
     std::ostringstream sstream;
+    sstream.precision(12);
     sstream << " Edge length: "
             << "min = " << ele->minEdge() << " "
             << "max = " << ele->maxEdge();
@@ -1626,6 +1628,7 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
   }
   {
     std::ostringstream sstream;
+    sstream.precision(12);
     sstream << " Quality: "
         << "gamma = " << ele->gammaShapeMeasure() << " "
         << "rho = " << ele->rhoShapeMeasure();
@@ -1633,6 +1636,7 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
   }
   {
     std::ostringstream sstream;
+    sstream.precision(12);
     double sICNMin, sICNMax;
     ele->signedInvCondNumRange(sICNMin, sICNMax);
     sstream << " SICN range: " << sICNMin << " " << sICNMax;
@@ -1640,6 +1644,7 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
   }
   {
     std::ostringstream sstream;
+    sstream.precision(12);
     sstream << " Inner / outer radius: "
             << ele->getInnerRadius() << " / " << ele->getOuterRadius();
     info.push_back(sstream.str());
