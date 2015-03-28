@@ -29,7 +29,7 @@ Line Loop(5) = {1,2,3,4}; Plane Surface(6) = {5};
 Field[1] = Attractor;
 Field[1].NodesList = {5};
 Field[1].NNodesByEdge = 100;
-Field[1].EdgesList = {1};
+Field[1].EdgesList = {2};
 
 // We then define a Threshold field, which uses the return value of
 // the Attractor Field[1] in order to define a simple change in
@@ -89,5 +89,6 @@ Field[7] = Min;
 Field[7].FieldsList = {2, 3, 5, 6};
 Background Field = 7;
 
-// Don't extend the elements sizes from the boundary inside the domain
-Mesh.CharacteristicLengthExtendFromBoundary = 0;
+// If the boundary mesh size was too small, we could ask not to extend the
+// elements sizes from the boundary inside the domain:
+// Mesh.CharacteristicLengthExtendFromBoundary = 0;

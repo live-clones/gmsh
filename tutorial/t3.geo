@@ -58,13 +58,12 @@ out[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , angle * Pi / 180 } {
 Physical Volume(101) = {1, 2, out[1]};
 
 // Let us now change some options... Since all interactive options are
-// accessible in Gmsh's scripting language, we can for example define
-// a global characteristic length factor or redefine some colors
-// directly in the input file:
+// accessible in Gmsh's scripting language, we can for example make point tags
+// visible or redefine some colors directly in the input file:
 
-Mesh.CharacteristicLengthFactor = 4;
-General.Color.Text = White;
+Geometry.PointNumbers = 1;
 Geometry.Color.Points = Orange;
+General.Color.Text = White;
 Mesh.Color.Points = {255,0,0};
 
 // Note that all colors can be defined literally or numerically, i.e.

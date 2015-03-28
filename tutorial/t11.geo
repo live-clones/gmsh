@@ -44,5 +44,4 @@ Recombine Surface{100};
 // "Delaunay for quads" (DelQuad) meshing algorithm: DelQuad is a
 // triangulation algorithm that enables to create right triangles
 // almost everywhere. Uncomment the following line to try DelQuad:
-
-Mesh.Algorithm = 8; // DelQuad (experimental)
+// Mesh.Algorithm = 8;
