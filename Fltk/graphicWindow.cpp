@@ -1953,6 +1953,11 @@ static Fl_Menu_Item bar_table[] = {
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {0},
   {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
     {"Watch Pattern...",    0, (Fl_Callback *)file_watch_cb, 0},
@@ -2016,6 +2021,11 @@ static Fl_Menu_Item sysbar_table[] = {
     {"New...",     FL_META+'n', (Fl_Callback *)file_new_cb, 0},
     {"Open...",    FL_META+'o', (Fl_Callback *)file_open_merge_cb, (void*)"open"},
     {"Open Recent", 0, 0, 0, FL_SUBMENU},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
+      {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
@@ -3505,7 +3515,7 @@ void graphicWindow::fillRecentHistoryMenu()
     table = sysbar_table;
 #endif
 
-  for(int i = 0; i < 5; i++){
+  for(int i = 0; i < 10; i++){
     table[4 + i].text = CTX::instance()->recentFiles[i].c_str();
     table[4 + i].user_data_ = (void*)CTX::instance()->recentFiles[i].c_str();
   }

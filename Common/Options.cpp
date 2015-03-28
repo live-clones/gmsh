@@ -1204,6 +1204,41 @@ std::string opt_general_recent_file4(OPT_ARGS_STR)
   return CTX::instance()->recentFiles[4];
 }
 
+std::string opt_general_recent_file5(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->recentFiles[5] = val;
+  return CTX::instance()->recentFiles[5];
+}
+
+std::string opt_general_recent_file6(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->recentFiles[6] = val;
+  return CTX::instance()->recentFiles[6];
+}
+
+std::string opt_general_recent_file7(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->recentFiles[7] = val;
+  return CTX::instance()->recentFiles[7];
+}
+
+std::string opt_general_recent_file8(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->recentFiles[8] = val;
+  return CTX::instance()->recentFiles[8];
+}
+
+std::string opt_general_recent_file9(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->recentFiles[9] = val;
+  return CTX::instance()->recentFiles[9];
+}
+
 std::string opt_general_editor(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)

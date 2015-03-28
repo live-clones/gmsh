@@ -71,7 +71,7 @@ CTX::CTX() : gamepad(0)
   hideUnselected = 0;
   numWindows = numTiles = 1;
   deltaFontSize = 0;
-  recentFiles.resize(5);
+  recentFiles.resize(10);
   mesh.optimizeLloyd = 0;
   gamepad = 0;
 

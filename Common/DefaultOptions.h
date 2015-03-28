@@ -86,6 +86,16 @@ StringXString GeneralOptions_String[] = {
     "4th most recent opened file"},
   { F|S, "RecentFile4", opt_general_recent_file4 , "untitled.geo" ,
     "5th most recent opened file"},
+  { F|S, "RecentFile5", opt_general_recent_file5 , "untitled.geo" ,
+    "6th most recent opened file"},
+  { F|S, "RecentFile6", opt_general_recent_file6 , "untitled.geo" ,
+    "7th most recent opened file"},
+  { F|S, "RecentFile7", opt_general_recent_file7 , "untitled.geo" ,
+    "8th most recent opened file"},
+  { F|S, "RecentFile8", opt_general_recent_file8 , "untitled.geo" ,
+    "9th most recent opened file"},
+  { F|S, "RecentFile9", opt_general_recent_file9 , "untitled.geo" ,
+    "10th most recent opened file"},
 
   { 0,   "SessionFileName" , opt_general_session_filename ,
 #if defined(WIN32)

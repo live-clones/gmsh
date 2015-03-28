@@ -686,11 +686,13 @@ void OpenProject(const std::string &fileName, bool setWindowTitle)
 
   // merge the file
   if(MergeFile(fileName, false, setWindowTitle)) {
-    if(fileName != CTX::instance()->recentFiles.front())
+    if(std::find(CTX::instance()->recentFiles.begin(),
+                 CTX::instance()->recentFiles.end(), fileName) ==
+       CTX::instance()->recentFiles.end())
       CTX::instance()->recentFiles.insert
         (CTX::instance()->recentFiles.begin(), fileName);
-    if(CTX::instance()->recentFiles.size() > 5)
-      CTX::instance()->recentFiles.resize(5);
+    if(CTX::instance()->recentFiles.size() > 10)
+      CTX::instance()->recentFiles.resize(10);
 #if defined(HAVE_FLTK)
     if(FlGui::available())
       FlGui::instance()->graph[0]->fillRecentHistoryMenu();
