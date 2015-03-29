@@ -779,7 +779,7 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   edges.insert(edges.begin(), embedded_edges.begin(),embedded_edges.end());
   std::list<GEdge*>::iterator ite = edges.begin();
   FILE *ff2 = Fopen ("tato.pos","w");
-  fprintf(ff2,"View \" \"{\n");
+  if(ff2) fprintf(ff2,"View \" \"{\n");
   std::set<MVertex*> verts;
   while(ite != edges.end()){
     for(unsigned int i = 0; i< (*ite)->lines.size(); i++){
@@ -812,13 +812,14 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 	  MQuadrangle *qq = new MQuadrangle(v11,v21,v22,v12);
 	  myCol.push_back(qq);
 	  blQuads.push_back(qq);
-	  fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
-		  v11->x(),v11->y(),v11->z(),
-		  v12->x(),v12->y(),v12->z(),
-		  v22->x(),v22->y(),v22->z(),
-		  v21->x(),v21->y(),v21->z());
+          if(ff2)
+            fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
+                    v11->x(),v11->y(),v11->z(),
+                    v12->x(),v12->y(),v12->z(),
+                    v22->x(),v22->y(),v22->z(),
+                    v21->x(),v21->y(),v21->z());
 	}
-	//	int M = std::max(c1._column.size(),c2._column.size());
+	// int M = std::max(c1._column.size(),c2._column.size());
 	for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
 	_columns->_elemColumns[myCol[0]] = myCol;
       }
@@ -852,20 +853,22 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 	  MQuadrangle *qq = new MQuadrangle(v11,v12,v22,v21);
 	  myCol.push_back(qq);
 	  blQuads.push_back(qq);
-	  fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
-		  v11->x(),v11->y(),v11->z(),
-		  v12->x(),v12->y(),v12->z(),
-		  v22->x(),v22->y(),v22->z(),
-		  v21->x(),v21->y(),v21->z());
+	  if(ff2)
+            fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
+                    v11->x(),v11->y(),v11->z(),
+                    v12->x(),v12->y(),v12->z(),
+                    v22->x(),v22->y(),v22->z(),
+                    v21->x(),v21->y(),v21->z());
 	}
 	else {
 	  MTriangle *qq = new MTriangle(v,v22,v21);
 	  myCol.push_back(qq);
 	  blTris.push_back(qq);
-	  fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
-		  v->x(),v->y(),v->z(),
-		  v22->x(),v22->y(),v22->z(),
-		  v21->x(),v21->y(),v21->z());
+          if(ff2)
+            fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
+                    v->x(),v->y(),v->z(),
+                    v22->x(),v22->y(),v22->z(),
+                    v21->x(),v21->y(),v21->z());
 	}
       }
     }
@@ -873,8 +876,10 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
     _columns->_elemColumns[myCol[0]] = myCol;
   }
 
-  fprintf(ff2,"};\n");
-  fclose(ff2);
+  if(ff2){
+    fprintf(ff2,"};\n");
+    fclose(ff2);
+  }
 
   //  filterOverlappingElements (blTris,blQuads,_columns->_elemColumns,_columns->_toFirst);
 
@@ -900,16 +905,18 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   std::set<MEdge,Less_Edge>::iterator it =  bedges.begin();
 
   FILE *ff = Fopen ("toto.pos","w");
-  fprintf(ff,"View \" \"{\n");
+  if(ff) fprintf(ff,"View \" \"{\n");
   for (; it != bedges.end(); ++it){
     ne.lines.push_back(new MLine (it->getVertex(0),it->getVertex(1)));
-    fprintf(ff,"SL (%g,%g,%g,%g,%g,%g){1,1};\n",
-	    it->getVertex(0)->x(),it->getVertex(0)->y(),it->getVertex(0)->z(),
-	    it->getVertex(1)->x(),it->getVertex(1)->y(),it->getVertex(1)->z());
+    if(ff)
+      fprintf(ff,"SL (%g,%g,%g,%g,%g,%g){1,1};\n",
+              it->getVertex(0)->x(),it->getVertex(0)->y(),it->getVertex(0)->z(),
+              it->getVertex(1)->x(),it->getVertex(1)->y(),it->getVertex(1)->z());
   }
-  fprintf(ff,"};\n");
-  fclose(ff);
-
+  if(ff){
+    fprintf(ff,"};\n");
+    fclose(ff);
+  }
   hop.push_back(&ne);
 
   deMeshGFace kil_;
@@ -1359,7 +1366,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
 
-    // effectively recover the medge
+  // effectively recover the medge
   ite = edges.begin();
   while(ite != edges.end()){
     if(!(*ite)->isMeshDegenerated()){

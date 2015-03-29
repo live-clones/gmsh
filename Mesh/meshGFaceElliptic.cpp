@@ -34,13 +34,18 @@
     (1.-u)*c4+u*c2+(1.-v)*c1+v*c3-((1.-u)*(1.-v)*s1+u*(1.-v)*s2+u*v*s3+(1.-u)*v*s4)
 
 static void printQuads(GFace *gf, fullMatrix<SPoint2> uv,
-                       std::vector<MQuadrangle*> quads,  int iter){
-
+                       std::vector<MQuadrangle*> quads,  int iter)
+{
   if(!CTX::instance()->mesh.saveAll) return;
 
   char name[234];
-  sprintf(name,"quadUV_%d_%d.pos", gf->tag(), iter);
-  FILE *f = Fopen(name,"w");
+  sprintf(name, "quadUV_%d_%d.pos", gf->tag(), iter);
+  FILE *f = Fopen(name, "w");
+  if(!f){
+    Msg::Error("Could not open file '%s'", name);
+    return;
+  }
+
   fprintf(f,"View \"%s\" {\n",name);
 
   for (int i = 1; i < uv.size1()-1; i++)
@@ -51,15 +56,19 @@ static void printQuads(GFace *gf, fullMatrix<SPoint2> uv,
   fclose(f);
 
   char name3[234];
-  sprintf(name3,"quadXYZ_%d_%d.pos", gf->tag(), iter);
+  sprintf(name3, "quadXYZ_%d_%d.pos", gf->tag(), iter);
   FILE *f3 = Fopen(name3,"w");
+  if(!f3){
+    Msg::Error("Could not open file '%s'", name3);
+    return;
+  }
+
   fprintf(f3,"View \"%s\" {\n",name3);
   for (unsigned int i = 0; i < quads.size(); i++){
     quads[i]->writePOS(f3,true,false,false,false,false,false);
   }
   fprintf(f3,"};\n");
   fclose(f3);
-
 }
 
 static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<MVertex*> vert2,
@@ -83,10 +92,14 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
     p2.push_back(pj);
   }
 
-
   char name[234];
   sprintf(name,"paramGrid_%d.pos", gf->tag());
   FILE *f = Fopen(name,"w");
+  if(!f){
+    Msg::Error("Could not open file '%s'", name);
+    return;
+  }
+
   fprintf(f,"View \"%s\" {\n",name);
 
   // for (unsigned int i = 0; i < p1.size(); i++)
@@ -107,8 +120,12 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
   char name2[234];
   sprintf(name2,"paramEdges_%d.pos", gf->tag());
   FILE *f2 = Fopen(name2,"w");
-  fprintf(f2,"View \"%s\" {\n",name2);
+  if(!f2){
+    Msg::Error("Could not open file '%s'", name2);
+    return;
+  }
 
+  fprintf(f2,"View \"%s\" {\n",name2);
   for (unsigned int i = 0; i < e01.size(); i++){
      SPoint2 pi; reparamMeshVertexOnFace(e01[i], gf, pi);
     fprintf(f2,"SP(%g,%g,%g) {%d};\n", pi.x(), pi.y(), 0.0, 1);
@@ -144,21 +161,23 @@ static void printParamGrid(GFace *gf, std::vector<MVertex*> vert1, std::vector<M
   char name3[234];
   sprintf(name3,"quadXYZ_%d.pos", gf->tag());
   FILE *f3 = Fopen(name3,"w");
+  if(!f3){
+    Msg::Error("Could not open file '%s'", name2);
+    return;
+  }
+
   fprintf(f3,"View \"%s\" {\n",name3);
   for (unsigned int i = 0; i < quads.size(); i++){
     quads[i]->writePOS(f3,true,false,false,false,false,false);
   }
   fprintf(f3,"};\n");
   fclose(f3);
-
-  return;
-
 }
 
 static void createQuadsFromUV(GFace *gf, fullMatrix<SPoint2> &uv,
 			      std::vector<std::vector<MVertex*> > &tab,
-			      std::vector<MQuadrangle*> &newq,  std::vector<MVertex*> &newv){
-
+			      std::vector<MQuadrangle*> &newq,  std::vector<MVertex*> &newv)
+{
   newq.clear();
   newv.clear();
 
@@ -193,8 +212,8 @@ static void createQuadsFromUV(GFace *gf, fullMatrix<SPoint2> &uv,
 
 }
 static std::vector<MVertex*> saturateEdgeRegular (GFace *gf, SPoint2 p1, SPoint2 p2,
-						  int M, std::vector<SPoint2> &pe){
-
+						  int M, std::vector<SPoint2> &pe)
+{
   std::vector<MVertex*> pts;
   for (int i=1;i<M;i++){
     double s = ((double)i/((double)(M)));
@@ -210,10 +229,11 @@ static std::vector<MVertex*> saturateEdgeRegular (GFace *gf, SPoint2 p1, SPoint2
   }
   return pts;
 }
+
 static std::vector<MVertex*> saturateEdgeHarmonic (GFace *gf, SPoint2 p1, SPoint2 p2,
 						  double H,  double L,
-						  int M, std::vector<SPoint2> &pe){
-
+						  int M, std::vector<SPoint2> &pe)
+{
   std::vector<MVertex*> pts;
   for (int i=1;i<M;i++){
     double y = ((double)(i))*H/M;
@@ -239,13 +259,13 @@ static void transfiniteSmoother(GFace* gf,
 				std::vector<std::vector<MVertex*> > &tab,
 				std::vector<MQuadrangle*> &newq,
 				std::vector<MVertex*> &newv,
-				bool isPeriodic=false){
+				bool isPeriodic=false)
+{
+  int M = uv.size1();
+  int N = uv.size2();
+  int jStart = isPeriodic ? 0 : 1;
 
-   int M = uv.size1();
-   int N = uv.size2();
-   int jStart = isPeriodic ? 0 : 1;
-
-   int numSmooth = 150;
+  int numSmooth = 150;
   fullMatrix<SPoint2> uvold = uv;
   for(int k = 0; k < numSmooth; k++){
     double norm = 0.0;
@@ -293,7 +313,6 @@ static void transfiniteSmoother(GFace* gf,
   //final print
   createQuadsFromUV(gf, uv, tab, newq, newv);
   printQuads(gf, uv, newq, numSmooth);
-
 }
 
 //elliptic surface grid generator
@@ -303,8 +322,8 @@ static void ellipticSmoother( GFace* gf,
 			      std::vector<std::vector<MVertex*> > &tab,
 			      std::vector<MQuadrangle*> &newq,
 			      std::vector<MVertex*> &newv,
-			      bool isPeriodic=false){
-
+			      bool isPeriodic=false)
+{
   printQuads(gf, uv, newq, 0);
 
   int nbSmooth = 70;
@@ -395,9 +414,6 @@ static void ellipticSmoother( GFace* gf,
 
   createQuadsFromUV(gf, uv, tab, newq, newv);
   printQuads(gf, uv, newq, nbSmooth);
-
-  //exit(1);
-
 }
 
 //create initial grid points MxN using transfinite interpolation
@@ -427,7 +443,6 @@ static void createRegularGrid (GFace *gf,
 			       fullMatrix<SPoint2> &uv,
 			       std::vector<std::vector<MVertex*> > &tab)
 {
-
   int M = e23.size();
   int N = e12.size();
 
@@ -528,7 +543,8 @@ static void createRegularGridPeriodic  (GFace *gf,int sign2,
   char name3[234];
   sprintf(name3,"quadParam_%d.pos", gf->tag());
   FILE *f3 = Fopen(name3,"w");
-  fprintf(f3,"View \"%s\" {\n",name3);
+
+  if(f3) fprintf(f3,"View \"%s\" {\n",name3);
 
   tab.resize(M+2);
   for(int i = 0; i < M+2; i++) tab[i].resize(N+2);
@@ -577,24 +593,24 @@ static void createRegularGridPeriodic  (GFace *gf,int sign2,
   }
 
   //print
-  for (int i=0;i<N+2;i++)
-    for (int j=0;j<M+2;j++)
-      fprintf(f3,"SP(%g,%g,%g) {%d};\n",   uv(j,i).x(), uv(j,i).y(), 0.0, j);
-
-  fprintf(f3,"};\n");
-  fclose(f3);
+  if(f3){
+    for (int i=0;i<N+2;i++)
+      for (int j=0;j<M+2;j++)
+        fprintf(f3,"SP(%g,%g,%g) {%d};\n",   uv(j,i).x(), uv(j,i).y(), 0.0, j);
+    fprintf(f3,"};\n");
+    fclose(f3);
+  }
 
 }
 
-static void updateFaceQuads(GFace *gf, std::vector<MQuadrangle*> &quads, std::vector<MVertex*> &newv){
-
+static void updateFaceQuads(GFace *gf, std::vector<MQuadrangle*> &quads, std::vector<MVertex*> &newv)
+{
   for (unsigned int i = 0; i < quads.size(); i++){
     gf->quadrangles.push_back(quads[i]);
   }
   for(unsigned int i = 0; i < newv.size(); i++){
     gf->mesh_vertices.push_back(newv[i]);
   }
-
 }
 
 static bool computeRingVertices(GFace *gf, Centerline *center,

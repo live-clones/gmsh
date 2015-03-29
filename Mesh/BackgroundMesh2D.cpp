@@ -571,7 +571,11 @@ void frameFieldBackgroundMesh2D::computeSmoothness()
 
 void frameFieldBackgroundMesh2D::exportCrossField(const std::string &filename)
 {
-  FILE *f = Fopen (filename.c_str(),"w");
+  FILE *f = Fopen(filename.c_str(), "w");
+  if(!f){
+    Msg::Error("Could not open file '%s'", filename.c_str());
+    return;
+  }
   fprintf(f,"View \"Cross Field\"{\n");
   std::vector<double> deltas(2);
   deltas[0] = 0.;

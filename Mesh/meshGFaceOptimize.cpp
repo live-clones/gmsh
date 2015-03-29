@@ -1020,10 +1020,10 @@ void createRegularMesh (GFace *gf,
   int N = e12.size();
   int M = e23.size();
 
- char name3[234];
+  char name3[234];
   sprintf(name3,"quadParam_%d.pos", gf->tag());
   FILE *f3 = Fopen(name3,"w");
-  fprintf(f3,"View \"%s\" {\n",name3);
+  if(f3) fprintf(f3,"View \"%s\" {\n",name3);
 
   //create points using transfinite interpolation
 
@@ -1059,7 +1059,7 @@ void createRegularMesh (GFace *gf,
                            c1.x(),c2.x(),c3.x(),c4.x(),u,v);
       double Vp = TRAN_QUA(p12.y(), p23.y(), p34.y(), p41.y(),
                            c1.y(),c2.y(),c3.y(),c4.y(),u,v);
-      fprintf(f3,"SP(%g,%g,%g) {%d};\n", Up, Vp, 0.0, 1);
+      if(f3) fprintf(f3,"SP(%g,%g,%g) {%d};\n", Up, Vp, 0.0, 1);
 
       // printf("v1=%d v2=%d v3=%d v4=%d \n", v1->getNum(), v2->getNum(), v3->getNum(), v4->getNum());
       // printf("c1=%g %g, c2=%g %g, c3=%g %g, c4=%g,%g \n", c1.x(),c1.y(),c2.x(),c2.y(),c3.x(),c3.y(),c4.x(),c4.y());
@@ -1069,7 +1069,7 @@ void createRegularMesh (GFace *gf,
           (p34.x() && p34.y() == -1.0) ||
           (p41.x() && p41.y() == -1.0)) {
         Msg::Error("Wrong param -1");
-        fclose(f3);
+        if(f3) fclose(f3);
         return;
       }
 
@@ -1085,9 +1085,10 @@ void createRegularMesh (GFace *gf,
     }
   }
 
-  fprintf(f3,"};\n");
-  fclose(f3);
-
+  if(f3){
+    fprintf(f3,"};\n");
+    fclose(f3);
+  }
 }
 
 void updateQuadCavity (GFace *gf,
@@ -1351,18 +1352,20 @@ struct  quadBlob {
     char name[234];
     sprintf(name,"blob%d_%d_%d.pos", iBlob, iter, method);
     FILE *f = Fopen(name,"w");
-    fprintf(f,"View \"%s\" {\n",name);
-    for (unsigned int i = 0; i < quads.size(); i++){
-      quads[i]->writePOS(f,true,false,false,false,false,false);
+    if(f){
+      fprintf(f,"View \"%s\" {\n",name);
+      for (unsigned int i = 0; i < quads.size(); i++){
+        quads[i]->writePOS(f,true,false,false,false,false,false);
+      }
+      for (unsigned int i = 0; i < bnodes.size(); i++){
+        fprintf(f,"SP(%g,%g,%g) {%d};\n",
+                bnodes[i]->x(),
+                bnodes[i]->y(),
+                bnodes[i]->z(),topologicalAngle(bnodes[i]));
+      }
+      fprintf(f,"};\n");
+      fclose(f);
     }
-    for (unsigned int i = 0; i < bnodes.size(); i++){
-      fprintf(f,"SP(%g,%g,%g) {%d};\n",
-              bnodes[i]->x(),
-              bnodes[i]->y(),
-              bnodes[i]->z(),topologicalAngle(bnodes[i]));
-    }
-    fprintf(f,"};\n");
-    fclose(f);
   }
   void smooth (int);
   bool meshable (int iter)
@@ -2026,15 +2029,18 @@ struct opti_data_vertex_relocation {
     }
   }
 
-  void print_cavity (char *name){
+  void print_cavity (char *name)
+  {
     FILE *f = Fopen(name,"w");
-    fprintf(f,"View \"\"{\n");
-    for (unsigned int i=0;i<e.size();++i){
-      MElement *el = e[i];
-      el->writePOS(f,false,false,false,true,false,false);
+    if(f){
+      fprintf(f,"View \"\"{\n");
+      for (unsigned int i=0;i<e.size();++i){
+        MElement *el = e[i];
+        el->writePOS(f,false,false,false,true,false,false);
+      }
+      fprintf(f,"};");
+      fclose (f);
     }
-    fprintf(f,"};");
-    fclose (f);
   }
 
   /// quality measure for a quad
@@ -3641,7 +3647,7 @@ void recombineIntoQuads(GFace *gf,
 	  //	  optistatus[0] = (ITERB == 1) ?splitFlatQuads(gf, .01, prioritory) : 0;
           //optistatus[1] =
 	  removeTwoQuadsNodes(gf);
-	  //optistatus[4] = 
+	  //optistatus[4] =
 	  //	  _defectsRemovalBunin(gf,maxCavitySize);
 	  //optistatus[2] =
 	  removeDiamonds(gf) ;

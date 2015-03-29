@@ -18,7 +18,10 @@
 void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace *gf)
 {
   FILE *f = Fopen(iii, "w");
-  if(!f) return;
+  if(!f){
+    Msg::Error("Could not open file '%s'", iii);
+    return;
+  }
   fprintf(f, "View \"scalar\" {\n");
   std::list<BDS_Face*>::iterator tit = t.begin();
   std::list<BDS_Face*>::iterator tite = t.end();
@@ -323,12 +326,12 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
 
     if (selfIntersection) return 0;
 
-//   if(ix > 300){
-//     Msg::Warning("edge %d %d cannot be recovered after %d iterations, trying again",
-//        num1, num2, ix);
-//     ix = 0;
-//   }
-//   printf("%d %d\n",intersected.size(),ix);
+    // if(ix > 300){
+    //   Msg::Warning("edge %d %d cannot be recovered after %d iterations, trying again",
+    //      num1, num2, ix);
+    //   ix = 0;
+    // }
+    // printf("%d %d\n",intersected.size(),ix);
 
     if(!intersected.size() || ix > 1000){
       BDS_Edge *eee = find_edge(num1, num2);

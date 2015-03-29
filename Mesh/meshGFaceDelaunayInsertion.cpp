@@ -9,11 +9,9 @@
 #include "GmshMessage.h"
 #include "OS.h"
 #include "robustPredicates.h"
-// PEB MODIF
 #include "BackgroundMesh.h"
 #include "surfaceFiller.h"
 #include "pointInsertion.h"
-// END PEB MODIF
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFace.h"
@@ -29,28 +27,20 @@
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
 
-double LIMIT_ = 0.5 * sqrt(2.0) * 1;
-int  N_GLOBAL_SEARCH;
-int  N_SEARCH;
-double DT_INSERT_VERTEX;
+static double LIMIT_ = 0.5 * sqrt(2.0) * 1;
+static int  N_GLOBAL_SEARCH;
+static int  N_SEARCH;
+static double DT_INSERT_VERTEX;
 int MTri3::radiusNorm = 2;
-
-/*
-static bool isBoundary(MTri3 *t, double limit_, int &active)
-{
-  if (t->isDeleted()) return false;
-  for (active = 0; active < 3; active++){
-    MTri3 *neigh = t->getNeigh(active);
-    if (!neigh) return true;
-  }
-  return false;
-}
-*/
 
 template <class ITERATOR>
 void _printTris(char *name, ITERATOR it,  ITERATOR end, bidimMeshData * data)
 {
   FILE *ff = Fopen (name,"w");
+  if(!ff){
+    Msg::Error("Could not open file '%s'", name);
+    return;
+  }
   fprintf(ff,"View\"test\"{\n");
   while ( it != end ){
     MTri3 *worst = *it;
@@ -90,7 +80,6 @@ void _printTris(char *name, ITERATOR it,  ITERATOR end, bidimMeshData * data)
   fprintf(ff,"};\n");
   fclose (ff);
 }
-
 
 static bool isActive(MTri3 *t, double limit_, int &active)
 {
@@ -1535,9 +1524,9 @@ void buildBackGroundMesh (GFace *gf,
     std::map<MVertex* , MVertex*>* equivalence,
     std::map<MVertex*, SPoint2> * parametricCoordinates)
 {
-  // TODO PEB : 
-  // this is now done in the new backgroundMesh !!! 
-  // on le vire ? On insère ici les operations sur le new backgmesh ? 
+  // TODO PEB :
+  // this is now done in the new backgroundMesh !!!
+  // on le vire ? On insère ici les operations sur le new backgmesh ?
   // parce que les opérations qui suivent sur l'ancien BGM sont inutiles maintenant... !
   if (!old_algo_hexa())
     return;
@@ -1969,26 +1958,19 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
     double t2 = Cpu();
     Msg::Debug("Delaunay 2D done for %d points : CPU = %g, %d global searches, AVG walk size %g , AVG cavity size %g",
         v.size(), t2-t1,NB_GLOBAL_SEARCH,1.+AVG_ITER/v.size(),AVG_CAVSIZE/v.size());
-    //  printf("%g %g %g %g --> %g(%g)\n",ta,tb,tc,td,t2-t1,ta+tb+tc+td);
 
     if (edgesToRecover)recoverEdges (t,*edgesToRecover);
 
-    //  FILE *f = fopen ("tri.pos","w");
-    //  fprintf(f,"View \"\"{\n");
     for (size_t i = 0;i<t.size();i++){
       if (t[i]->isDeleted() || (removeBox && triOnBox (t[i]->tri(),box))) delete t[i]->tri();
       else {
         result.push_back(t[i]->tri());
-        //      t[i]->tri()->writePOS (f, false,false,true,false,false,false);
       }
       delete t[i];
     }
 
     if (removeBox){for (int i=0;i<4;i++)delete box[i];}
     else {for (int i=0;i<4;i++)v.push_back(box[i]);}
-
-    //  fprintf(f,"};\n");
-    //  fclose(f);
   }
 
   bool swapedge (MVertex *v1 ,MVertex *v2, MVertex *v3, MVertex *v4, MTri3* t1, int iLocalEdge){

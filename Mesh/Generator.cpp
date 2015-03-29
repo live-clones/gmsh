@@ -267,7 +267,13 @@ static void PrintMesh2dStatistics(GModel *m)
     statreport = Fopen(CTX::instance()->meshStatReportFileName.c_str(), "w");
   else if(CTX::instance()->createAppendMeshStatReport == 2)
     statreport = Fopen(CTX::instance()->meshStatReportFileName.c_str(), "a");
-  else return;
+  else
+    return;
+
+  if(statreport){
+    Msg::Error("Could not open file '%s'", CTX::instance()->meshStatReportFileName.c_str());
+    return;
+  }
 
   double worst = 1, best = 0, avg = 0;
   double e_long = 0, e_short = 1.e22, e_avg = 0;

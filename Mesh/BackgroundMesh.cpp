@@ -648,9 +648,9 @@ double backgroundMesh::getAngle(double u, double v, double w) const
 void backgroundMesh::print(const std::string &filename, GFace *gf,
                            const std::map<MVertex*,double> &_whatToPrint, int smooth)
 {
-  FILE *f = Fopen (filename.c_str(),"w");
+  FILE *f = Fopen(filename.c_str(), "w");
   if(!f){
-    Msg::Warning("Could not open file '%s'", filename.c_str());
+    Msg::Error("Could not open file '%s'", filename.c_str());
     return;
   }
   fprintf(f, "View \"Background Mesh\"{\n");

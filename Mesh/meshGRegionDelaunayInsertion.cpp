@@ -408,19 +408,21 @@ void recurFindCavity(std::vector<faceXtet> & shell,
 void printTets (const char *fn, std::list<MTet4*> &cavity, bool force = false )
 {
   FILE *f = Fopen (fn,"w");
-  fprintf(f,"View \"\"{\n");
-  std::list<MTet4*>::iterator ittet = cavity.begin();
-  std::list<MTet4*>::iterator ittete = cavity.end();
-  while (ittet != ittete){
-    MTet4 *tet = *ittet;
-    if (force || !tet->isDeleted()){
-      MTetrahedron *t = tet->tet();
-      t->writePOS (f, false,false,false,true,false,false);
+  if(f){
+    fprintf(f,"View \"\"{\n");
+    std::list<MTet4*>::iterator ittet = cavity.begin();
+    std::list<MTet4*>::iterator ittete = cavity.end();
+    while (ittet != ittete){
+      MTet4 *tet = *ittet;
+      if (force || !tet->isDeleted()){
+        MTetrahedron *t = tet->tet();
+        t->writePOS (f, false,false,false,true,false,false);
+      }
+      ittet++;
     }
-    ittet++;
+    fprintf(f,"};\n");
+    fclose(f);
   }
-  fprintf(f,"};\n");
-  fclose(f);
 }
 
 

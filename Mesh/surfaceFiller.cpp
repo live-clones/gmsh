@@ -801,11 +801,11 @@ void packingOfParallelogramsSmoothness(GFace* gf,  std::vector<MVertex*> &packed
   std::set<MVertex*>::iterator it =  bnd_vertices.begin() ;
 
   char NAME[345]; sprintf(NAME,"crossReal%d.pos",gf->tag());
-  FILE *crossf=NULL;
+  FILE *crossf = NULL;
   if (debug){
     crossf = Fopen (NAME,"w");
   }
-  if (crossf)fprintf(crossf,"View \"\"{\n");
+  if (crossf) fprintf(crossf,"View \"\"{\n");
   for (; it !=  bnd_vertices.end() ; ++it){
     SPoint2 midpoint;
     //compute4neighbors_RK2 (gf, *it, midpoint, goNonLinear, newp, metricField,crossf);
@@ -887,9 +887,9 @@ void packingOfParallelogramsSmoothness(GFace* gf,  std::vector<MVertex*> &packed
   // surface mesh
   char ccc[256]; sprintf(ccc,"points%d.pos",gf->tag());
   FILE *f = Fopen(ccc,"w");
-  fprintf(f,"View \"\"{\n");
+  if(f) fprintf(f, "View \"\"{\n");
   for (unsigned int i=0;i<vertices.size();i++){
-    vertices[i]->print(f,i);
+    if(f) vertices[i]->print(f,i);
     if(vertices[i]->_v->onWhat() == gf) {
       packed.push_back(vertices[i]->_v);
       metrics.push_back(vertices[i]->_meshMetric);
@@ -898,8 +898,10 @@ void packingOfParallelogramsSmoothness(GFace* gf,  std::vector<MVertex*> &packed
     }
     delete  vertices[i];
   }
-  fprintf(f,"};");
-  fclose(f);
+  if(f){
+    fprintf(f,"};");
+    fclose(f);
+  }
 }
 
 
@@ -946,7 +948,7 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
 
   char NAME[345]; sprintf(NAME,"crossReal%d.pos",gf->tag());
   FILE *crossf = Fopen (NAME,"w");
-  if (crossf)fprintf(crossf,"View \"\"{\n");
+  if (crossf) fprintf(crossf,"View \"\"{\n");
   for (; it !=  bnd_vertices.end() ; ++it){
     SPoint2 midpoint;
     compute4neighbors (gf, *it, midpoint, goNonLinear, newp, metricField,crossf);
@@ -1009,10 +1011,10 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
     // surface mesh
     char ccc[256]; sprintf(ccc,"points%d.pos",gf->tag());
     FILE *f = Fopen(ccc,"w");
-    fprintf(f,"View \"\"{\n");
+    if(f) fprintf(f,"View \"\"{\n");
     for (unsigned int i=0;i<vertices.size();i++){
       //    if(vertices[i]->_v->onWhat() != gf)
-      vertices[i]->print(f,i);
+      if(f) vertices[i]->print(f,i);
       if(vertices[i]->_v->onWhat() == gf) {
         packed.push_back(vertices[i]->_v);
         metrics.push_back(vertices[i]->_meshMetric);
@@ -1026,8 +1028,10 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
       }
       delete  vertices[i];
     }
-    fprintf(f,"};");
-    fclose(f);
+    if(f){
+      fprintf(f,"};");
+      fclose(f);
+    }
     //  printf("packed.size = %d\n",packed.size());
     //  delete rtree;
 }

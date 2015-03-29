@@ -15,7 +15,12 @@
 void BGMBase::export_scalar(const std::string &filename,
                             const DoubleStorageType &_whatToPrint) const
 {
-  FILE *f = Fopen (filename.c_str(),"w");
+  FILE *f = Fopen(filename.c_str(), "w");
+  if(!f){
+    Msg::Error("Could not open file '%s'", filename.c_str());
+    return;
+  }
+
   fprintf(f,"View \"Background Mesh\"{\n");
 
   const MElement *elem;
@@ -64,7 +69,12 @@ void BGMBase::export_scalar(const std::string &filename,
 void BGMBase::export_vector(const std::string &filename,
                             const VectorStorageType &_whatToPrint) const
 {
-  FILE *f = Fopen (filename.c_str(),"w");
+  FILE *f = Fopen(filename.c_str(), "w");
+  if(!f){
+    Msg::Error("Could not open file '%s'", filename.c_str());
+    return;
+  }
+
   fprintf(f,"View \"Background Mesh\"{\n");
 
   const MElement *elem;
@@ -117,7 +127,12 @@ void BGMBase::export_vector(const std::string &filename,
 void BGMBase::export_tensor_as_vectors(const std::string &filename,
                                        const TensorStorageType &_whatToPrint) const
 {
-  FILE *f = Fopen (filename.c_str(),"w");
+  FILE *f = Fopen(filename.c_str(), "w");
+  if(!f){
+    Msg::Error("Could not open file '%s'", filename.c_str());
+    return;
+  }
+
   fprintf(f,"View \"Background Mesh\"{\n");
 
   TensorStorageType::const_iterator it = _whatToPrint.begin();

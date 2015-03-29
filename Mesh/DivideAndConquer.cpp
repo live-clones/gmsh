@@ -571,8 +571,12 @@ void DocRecord::voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const
 void DocRecord::makePosView(std::string fileName, GFace *gf)
 {
   FILE *f = Fopen(fileName.c_str(),"w");
-   if (_adjacencies){
-    fprintf(f,"View \"voronoi\" {\n");
+  if(!f){
+    Msg::Error("Could not open file '%s'", fileName.c_str());
+    return;
+  }
+  if (_adjacencies){
+    fprintf(f, "View \"voronoi\" {\n");
     for(PointNumero i = 0; i < numPoints; i++) {
       std::vector<SPoint2> pts;
       double pc[2] = {(double)points[i].where.h, (double)points[i].where.v};
@@ -607,7 +611,11 @@ void DocRecord::makePosView(std::string fileName, GFace *gf)
 void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf, GEdge *ge)
 {
   FILE *f = Fopen(fileName.c_str(),"w");
-   if (_adjacencies){
+  if(!f){
+    Msg::Error("Could not open file '%s'", fileName.c_str());
+    return;
+  }
+  if (_adjacencies){
     fprintf(f,"View \"medial axis\" {\n");
     for(PointNumero i = 0; i < numPoints; i++) {
       std::vector<SPoint2> pts;
@@ -625,8 +633,8 @@ void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf
 	  GPoint p1(pp1.x(), pp1.y(), 0.0);
 	  GPoint p2(pp2.x(), pp2.y(), 0.0);
 	  if (gf) {
-	     p1 = gf->point(p1.x(), p1.y());
-	     p2 = gf->point(p2.x(), p2.y());
+            p1 = gf->point(p1.x(), p1.y());
+            p2 = gf->point(p2.x(), p2.y());
 	  }
 	  double P1[3] = {p1.x(), p1.y(), p1.z()};
 	  double P2[3] = {p2.x(), p2.y(), p2.z()};
@@ -642,14 +650,13 @@ void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf
 		    p1.x(), p1.y(), p1.z(),
 		    p2.x(), p2.y(), p2.z(),
 		    (double)i, (double)i);
-	 }
+          }
         }
-       }
+      }
     }
     fprintf(f,"};\n");
   }
   fclose(f);
-
 }
 
 void centroidOfOrientedBox(std::vector<SPoint2> &pts, const double &angle,

@@ -33,27 +33,27 @@ void Frame_field::init_region(GRegion* gr){
   GFace* gf;
   std::list<GFace*> faces;
   std::list<GFace*>::iterator it;
-	
+
   Nearest_point::init_region(gr);
-	
+
   faces = gr->faces();
-	
+
   field.clear();
   labels.clear();
-	
+
   for(it=faces.begin();it!=faces.end();it++){
     gf = *it;
 	init_face(gf);
   }
-	
+
   ANNpointArray duplicate = annAllocPts(field.size(),3);
-	
+
   for(i=0;i<field.size();i++){
     duplicate[i][0] = field[i].first.x();
 	duplicate[i][1] = field[i].first.y();
 	duplicate[i][2] = field[i].first.z();
   }
-	
+
   kd_tree = new ANNkd_tree(duplicate,field.size(),3);
 #endif
 }
@@ -67,12 +67,12 @@ void Frame_field::init_face(GFace* gf){
   SVector3 v2;
   SVector3 v3;
   STensor3 m(1.0);
-	
+
   for(i=0;i<gf->storage1.size();i++){
     point = gf->storage1[i];
 	v1 = gf->storage2[i];
 	v2 = gf->storage3[i];
-		
+
 	v1.normalize();
 	v2.normalize();
 	v3 = crossprod(v1,v2);
@@ -98,7 +98,7 @@ STensor3 Frame_field::search(double x,double y,double z){
   double distance1;
   double distance2;
   double e2;
-	
+
   index1 = 0;
   index2 = 0;
   distance1 = 1000000.0;
@@ -108,31 +108,31 @@ STensor3 Frame_field::search(double x,double y,double z){
   ANNpoint query;
   ANNidxArray indices;
   ANNdistArray distances;
-	
+
   if(field.size()<=1){
     return STensor3(1.0);
   }
-	
+
   query = annAllocPt(3);
   query[0] = x;
   query[1] = y;
   query[2] = z;
-	
+
   indices = new ANNidx[2];
   distances = new ANNdist[2];
-	
+
   double e = 0.0;
   kd_tree->annkSearch(query,2,indices,distances,e);
   index1 = indices[0];
   index2 = indices[1];
   distance1 = distances[0];
   distance2 = distances[1];
-	
+
   annDeallocPt(query);
   delete[] indices;
   delete[] distances;
 #endif
-  
+
   if(fabs(sqrt(distance2)-sqrt(distance1))<e2){
     if(labels[index2]<labels[index1]){
 	  return field[index2].second;
@@ -155,21 +155,21 @@ STensor3 Frame_field::combine(double x,double y,double z){
   SVector3 vec1,vec2,vec3;
   SVector3 final1,final2;
   STensor3 m(1.0),m2(1.0);
-	
+
   m = search(x,y,z);
   m2 = m;
   ok = Nearest_point::search(x,y,z,vec);
   vec.normalize();
-	
+
   if(ok){
     vec1 = SVector3(m.get_m11(),m.get_m21(),m.get_m31());
 	vec2 = SVector3(m.get_m12(),m.get_m22(),m.get_m32());
 	vec3 = SVector3(m.get_m13(),m.get_m23(),m.get_m33());
-		
+
 	val1 = fabs(dot(vec,vec1));
 	val2 = fabs(dot(vec,vec2));
 	val3 = fabs(dot(vec,vec3));
-		
+
 	if(val1<=val2 && val1<=val3){
 	  other = vec1;
 	}
@@ -179,12 +179,12 @@ STensor3 Frame_field::combine(double x,double y,double z){
 	else{
 	  other = vec3;
 	}
-		
+
 	final1 = crossprod(vec,other);
 	final1.normalize();
 	final2 = crossprod(vec,final1);
 	final2.normalize();
-	
+
     m2.set_m11(vec.x());
 	m2.set_m21(vec.y());
 	m2.set_m31(vec.z());
@@ -195,7 +195,7 @@ STensor3 Frame_field::combine(double x,double y,double z){
 	m2.set_m23(final2.y());
 	m2.set_m33(final2.z());
   }
-	
+
   return m2;
 }
 
@@ -216,17 +216,17 @@ void Frame_field::print_field1(){
   SPoint3 point;
   SPoint3 p1,p2,p3,p4,p5,p6;
   STensor3 m(1.0);
-	
+
   k = 0.05;
   std::ofstream file("frame1.pos");
   file << "View \"cross field\" {\n";
   color1 = 10.0;
   color2 = 20.0;
-	
+
   for(i=0;i<field.size();i++){
     point = field[i].first;
 	m = field[i].second;
-		
+
 	p1 = SPoint3(point.x() + k*m.get_m11(),
 				 point.y() + k*m.get_m21(),
 				 point.z() + k*m.get_m31());
@@ -245,7 +245,7 @@ void Frame_field::print_field1(){
 	p6 = SPoint3(point.x() - k*m.get_m13(),
 				 point.y() - k*m.get_m23(),
 				 point.z() - k*m.get_m33());
-		
+
 	print_segment(point,p1,color1,color2,file);
 	print_segment(point,p2,color1,color2,file);
 	print_segment(point,p3,color1,color2,file);
@@ -253,7 +253,7 @@ void Frame_field::print_field1(){
 	print_segment(point,p5,color1,color2,file);
 	print_segment(point,p6,color1,color2,file);
   }
-	
+
   file << "};\n";
 }
 
@@ -269,13 +269,13 @@ void Frame_field::print_field2(GRegion* gr){
   MVertex* vertex;
   MElement* element;
   STensor3 m(1.0);
-	
+
   k = 0.05;
   std::ofstream file("frame2.pos");
   file << "View \"cross field\" {\n";
   color1 = 10.0;
   color2 = 20.0;
-	
+
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
 	for(j=0;j<element->getNumVertices();j++){
@@ -283,7 +283,7 @@ void Frame_field::print_field2(GRegion* gr){
 	  if(vertex->onWhat()->dim()>2){
 	    point = SPoint3(vertex->x(),vertex->y(),vertex->z());
 		m = search(vertex->x(),vertex->y(),vertex->z());
-				
+
 		p1 = SPoint3(point.x() + k*m.get_m11(),
 					 point.y() + k*m.get_m21(),
 					 point.z() + k*m.get_m31());
@@ -302,7 +302,7 @@ void Frame_field::print_field2(GRegion* gr){
 		p6 = SPoint3(point.x() - k*m.get_m13(),
 					 point.y() - k*m.get_m23(),
 					 point.z() - k*m.get_m33());
-				
+
 		print_segment(point,p1,color1,color2,file);
 		print_segment(point,p2,color1,color2,file);
 		print_segment(point,p3,color1,color2,file);
@@ -312,7 +312,7 @@ void Frame_field::print_field2(GRegion* gr){
 	  }
     }
   }
-	
+
   file << "};\n";
 }
 
@@ -857,8 +857,8 @@ void Frame_field::recur_connect_vert(FILE *fi, int count,
 				     MVertex *v,
 				     STensor3 &cross,
 				     std::multimap<MVertex*,MVertex*> &v2v,
-				     std::set<MVertex*> &touched){
-
+				     std::set<MVertex*> &touched)
+{
   if (touched.find(v) != touched.end()) return;
   touched.insert(v);
 
@@ -870,70 +870,71 @@ void Frame_field::recur_connect_vert(FILE *fi, int count,
     MVertex *nextV = it->second;
     if (touched.find(nextV) == touched.end()){
 
-    //compute dot product (N0,R0,A0) dot (Ni,Ri,Ai)^T
-    //where N,R,A are the 3 directions
-    std::map<MVertex*, STensor3>::iterator iter = crossField.find(nextV);
-    STensor3 nextCross = iter->second;
-    STensor3 nextCrossT = nextCross.transpose();
-    STensor3 prod = cross.operator*=(nextCrossT);
-    fullMatrix<double> mat(3,3); prod.getMat(mat);
+      //compute dot product (N0,R0,A0) dot (Ni,Ri,Ai)^T
+      //where N,R,A are the 3 directions
+      std::map<MVertex*, STensor3>::iterator iter = crossField.find(nextV);
+      STensor3 nextCross = iter->second;
+      STensor3 nextCrossT = nextCross.transpose();
+      STensor3 prod = cross.operator*=(nextCrossT);
+      fullMatrix<double> mat(3,3); prod.getMat(mat);
 
-    //find biggest dot product
-    fullVector<int> Id(3);
-    Id(0) = Id(1) = Id(2) = 0;
-    for (int j = 0; j < 3; j++){
-      double maxVal = 0.0;
-      for (int i = 0; i < 3; i++){
-	double val = fabs(mat(i,j));
-	if( val > maxVal ){
-	  maxVal  = val;
-	  Id(j) = i;
-	}
+      //find biggest dot product
+      fullVector<int> Id(3);
+      Id(0) = Id(1) = Id(2) = 0;
+      for (int j = 0; j < 3; j++){
+        double maxVal = 0.0;
+        for (int i = 0; i < 3; i++){
+          double val = fabs(mat(i,j));
+          if( val > maxVal ){
+            maxVal  = val;
+            Id(j) = i;
+          }
+        }
       }
-    }
 
-   //check
-    if (Id(0) +Id(1)+ Id(2) != 3 || (Id(0) == 1 && Id(1)==1 && Id(2)==1)) {
-      std::cout << "This should not happen: sum should be 0+1+2" << std::endl;
-      printf("Id =%d %d %d \n", Id(0), Id(1), Id(2));
-      return;
-    }
+      //check
+      if (Id(0) +Id(1)+ Id(2) != 3 || (Id(0) == 1 && Id(1)==1 && Id(2)==1)) {
+        std::cout << "This should not happen: sum should be 0+1+2" << std::endl;
+        printf("Id =%d %d %d \n", Id(0), Id(1), Id(2));
+        return;
+      }
 
-    //create new cross
-    fullMatrix<double> newmat(3,3);
-    for (int i = 0; i < 3; i++){
-     for (int j = 0; j < 3; j++){
-       newmat(i,j) = nextCross(Id(i),j) ;
-     }
-    }
+      //create new cross
+      fullMatrix<double> newmat(3,3);
+      for (int i = 0; i < 3; i++){
+        for (int j = 0; j < 3; j++){
+          newmat(i,j) = nextCross(Id(i),j) ;
+        }
+      }
 
-    STensor3 newcross(0.0);
-    newcross.setMat(newmat);
-    crossField[iter->first] = newcross;
+      STensor3 newcross(0.0);
+      newcross.setMat(newmat);
+      crossField[iter->first] = newcross;
 
-    //print info
-    printf("************** COUNT = %d \n", count);
-   if (Id(0) == 0 && Id(1) == 1 && Id(2) == 2)
-     printf("orient OK Id=%d %d %d\n", Id(0), Id(1), Id(2));
-   else{
-     printf("change orientation  Id=%d %d %d \n",  Id(0), Id(1), Id(2));
-     cross.print("cross ");
-     nextCross.print("nextCross ");
-     prod.print("product");
-     newcross.print("newcross");
-   }
+      //print info
+      printf("************** COUNT = %d \n", count);
+      if (Id(0) == 0 && Id(1) == 1 && Id(2) == 2)
+        printf("orient OK Id=%d %d %d\n", Id(0), Id(1), Id(2));
+      else{
+        printf("change orientation  Id=%d %d %d \n",  Id(0), Id(1), Id(2));
+        cross.print("cross ");
+        nextCross.print("nextCross ");
+        prod.print("product");
+        newcross.print("newcross");
+      }
 
-   fprintf(fi,"SP(%g,%g,%g) {%g};\n",nextV->x(),nextV->y(),nextV->z(), (double)count);
+      if(fi)
+        fprintf(fi,"SP(%g,%g,%g) {%g};\n",nextV->x(),nextV->y(),nextV->z(), (double)count);
 
-    //continue recursion
-    recur_connect_vert (fi, count, nextV, newcross, v2v,touched);
+      //continue recursion
+      recur_connect_vert (fi, count, nextV, newcross, v2v,touched);
     }
 
   }
-
 }
-void Frame_field::continuousCrossField(GRegion *gr, GFace *gf){
 
+void Frame_field::continuousCrossField(GRegion *gr, GFace *gf)
+{
   printf("continuous cross field \n");
 
   //start from a vertex of a face
@@ -969,14 +970,16 @@ void Frame_field::continuousCrossField(GRegion *gr, GFace *gf){
   STensor3 bCross = iter->second;
 
   FILE *fi = Fopen ("cross_recur.pos","w");
-  fprintf(fi,"View \"\"{\n");
-  fprintf(fi,"SP(%g,%g,%g) {%g};\n",beginV->x(),beginV->y(),beginV->z(), 0.0);
+  if(fi){
+    fprintf(fi,"View \"\"{\n");
+    fprintf(fi,"SP(%g,%g,%g) {%g};\n",beginV->x(),beginV->y(),beginV->z(), 0.0);
+  }
   int count = 0;
-
-  recur_connect_vert (fi, count, beginV,bCross,v2v,touched);
-
-  fprintf(fi,"};\n");
-  fclose (fi);
+  recur_connect_vert(fi, count, beginV,bCross,v2v,touched);
+  if(fi){
+    fprintf(fi,"};\n");
+    fclose (fi);
+  }
   //printf("touched =%d vert =%d \n", touched.size(), vertex_to_vertices.size());
 }
 
@@ -1141,9 +1144,9 @@ void Size_field::init_region(GRegion* gr){
   ANNpoint query;
   ANNidxArray indices;
   ANNdistArray distances;
-		
+
   faces = gr->faces();
-	
+
   field.clear();
 
   for(it=faces.begin();it!=faces.end();it++){
@@ -1158,47 +1161,47 @@ void Size_field::init_region(GRegion* gr){
   }
 
   ANNpointArray duplicate = annAllocPts(field.size(),3);
-	
+
   for(i=0;i<field.size();i++){
     duplicate[i][0] = field[i].first.x();
 	duplicate[i][1] = field[i].first.y();
 	duplicate[i][2] = field[i].first.z();
   }
-	
+
   kd_tree = new ANNkd_tree(duplicate,field.size(),3);
 
   boundary.clear();
-	
+
   query = annAllocPt(3);
   indices = new ANNidx[1];
   distances = new ANNdist[1];
-  
+
   index = 0;
   e = 0.0;
-	
+
   for(it=faces.begin();it!=faces.end();it++){
     gf = *it;
-    
+
 	for(i=0;i<gf->getNumMeshElements();i++){
-      element = gf->getMeshElement(i);  
-	
+      element = gf->getMeshElement(i);
+
 	  for(j=0;j<element->getNumVertices();j++){
 	    vertex = element->getVertex(j);
-	  
+
 	    query[0] = vertex->x();
 	    query[1] = vertex->y();
 	    query[2] = vertex->z();
-	
+
 	    kd_tree->annkSearch(query,1,indices,distances,e);
 	    index = indices[0];
-	
+
 	    boundary.insert(std::pair<MVertex*,double>(vertex,field[index].second));
 	  }
 	}
   }
-	
+
   octree = new MElementOctree(model);
-	
+
   annDeallocPt(query);
   delete[] indices;
   delete[] distances;
@@ -1416,7 +1419,7 @@ void Size_field::clear(){
   delete kd_tree;
   annClose();
 #endif
-	
+
 }
 
 /****************class Nearest_point****************/

@@ -575,8 +575,9 @@ void Centerline::computeRadii()
 
 void Centerline::buildKdTree()
 {
-  FILE * f = Fopen("myPOINTS.pos","w");
-  fprintf(f, "View \"\"{\n");
+  FILE *f = Fopen("myPOINTS.pos","w");
+
+  if(f) fprintf(f, "View \"\"{\n");
 
   int nbPL = 3;  //10 points per line
   //int nbNodes  = (lines.size()+1) + (nbPL*lines.size());
@@ -586,35 +587,37 @@ void Centerline::buildKdTree()
   int ind = 0;
   std::map<MVertex*, int>::iterator itp = colorp.begin();
   while (itp != colorp.end()){
-     MVertex *v = itp->first;
-     nodes[ind][0] = v->x();
-     nodes[ind][1] = v->y();
-     nodes[ind][2] = v->z();
-     itp++; ind++;
+    MVertex *v = itp->first;
+    nodes[ind][0] = v->x();
+    nodes[ind][1] = v->y();
+    nodes[ind][2] = v->z();
+    itp++; ind++;
   }
   for(unsigned int k = 0; k < lines.size(); ++k){
-   MVertex *v0 = lines[k]->getVertex(0);
-   MVertex *v1 = lines[k]->getVertex(1);
-   SVector3 P0(v0->x(),v0->y(), v0->z());
-   SVector3 P1(v1->x(),v1->y(), v1->z());
-   for (int j= 1; j < nbPL+1; j++){
-     double inc = (double)j/(double)(nbPL+1);
-     SVector3 Pj = P0+inc*(P1-P0);
-     nodes[ind][0] = Pj.x();
-     nodes[ind][1] = Pj.y();
-     nodes[ind][2] = Pj.z();
-     ind++;
-   }
- }
+    MVertex *v0 = lines[k]->getVertex(0);
+    MVertex *v1 = lines[k]->getVertex(1);
+    SVector3 P0(v0->x(),v0->y(), v0->z());
+    SVector3 P1(v1->x(),v1->y(), v1->z());
+    for (int j= 1; j < nbPL+1; j++){
+      double inc = (double)j/(double)(nbPL+1);
+      SVector3 Pj = P0+inc*(P1-P0);
+      nodes[ind][0] = Pj.x();
+      nodes[ind][1] = Pj.y();
+      nodes[ind][2] = Pj.z();
+      ind++;
+    }
+  }
 
- kdtree = new ANNkd_tree(nodes, nbNodes, 3);
+  kdtree = new ANNkd_tree(nodes, nbNodes, 3);
 
- for(int i = 0; i < nbNodes; ++i){
-   fprintf(f, "SP(%g,%g,%g){%g};\n",
-	   nodes[i][0], nodes[i][1],nodes[i][2],1.0);
- }
- fprintf(f,"};\n");
- fclose(f);
+  if(f){
+    for(int i = 0; i < nbNodes; ++i){
+      fprintf(f, "SP(%g,%g,%g){%g};\n",
+              nodes[i][0], nodes[i][1],nodes[i][2],1.0);
+    }
+    fprintf(f,"};\n");
+    fclose(f);
+  }
 }
 
 void Centerline::createSplitCompounds()
@@ -1033,9 +1036,10 @@ bool Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad)
       // char name[256];
       // sprintf(name, "myCUT-%d.pos", step);
       // FILE * f2 = Fopen(name,"w");
-      // fprintf(f2, "View \"\"{\n");
-      // std::set<MEdge,Less_Edge>::iterator itp =  newCut.begin();
-      // while (itp != newCut.end()){
+      // if(f2){
+      //   fprintf(f2, "View \"\"{\n");
+      //   std::set<MEdge,Less_Edge>::iterator itp =  newCut.begin();
+      //   while (itp != newCut.end()){
       // 	MEdge l = *itp;
       // 	fprintf(f2, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
       // 		  l.getVertex(0)->x(), l.getVertex(0)->y(), l.getVertex(0)->z(),
@@ -1045,6 +1049,7 @@ bool Centerline::cutByDisk(SVector3 &PT, SVector3 &NORM, double &maxRad)
       // 	}
       // 	fprintf(f2,"};\n");
       // 	fclose(f2);
+      // }
     }
   }
 
@@ -1282,46 +1287,51 @@ void Centerline::computeCrossField(double x,double y,double z,
 void Centerline::printSplit() const
 {
   FILE * f = Fopen("mySPLIT.pos","w");
-  fprintf(f, "View \"\"{\n");
-  for(unsigned int i = 0; i < edges.size(); ++i){
-    std::vector<MLine*> lines = edges[i].lines;
-    for(unsigned int k = 0; k < lines.size(); ++k){
-      MLine *l = lines[k];
-      fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
-	      l->getVertex(0)->x(), l->getVertex(0)->y(), l->getVertex(0)->z(),
-	      l->getVertex(1)->x(), l->getVertex(1)->y(), l->getVertex(1)->z(),
-	      (double)edges[i].tag, (double)edges[i].tag);
+  if(f){
+    fprintf(f, "View \"\"{\n");
+    for(unsigned int i = 0; i < edges.size(); ++i){
+      std::vector<MLine*> lines = edges[i].lines;
+      for(unsigned int k = 0; k < lines.size(); ++k){
+        MLine *l = lines[k];
+        fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
+                l->getVertex(0)->x(), l->getVertex(0)->y(), l->getVertex(0)->z(),
+                l->getVertex(1)->x(), l->getVertex(1)->y(), l->getVertex(1)->z(),
+                (double)edges[i].tag, (double)edges[i].tag);
+      }
     }
+    fprintf(f,"};\n");
+    fclose(f);
   }
-  fprintf(f,"};\n");
-  fclose(f);
 
   // FILE * f3 = Fopen("myJUNCTIONS.pos","w");
-  // fprintf(f3, "View \"\"{\n");
-  //  std::set<MVertex*>::const_iterator itj = junctions.begin();
-  //  while (itj != junctions.end()){
-  //    MVertex *v =  *itj;
-  //    fprintf(f3, "SP(%g,%g,%g){%g};\n",
+  // if(f3){
+  //   fprintf(f3, "View \"\"{\n");
+  //    std::set<MVertex*>::const_iterator itj = junctions.begin();
+  //    while (itj != junctions.end()){
+  //      MVertex *v =  *itj;
+  //      fprintf(f3, "SP(%g,%g,%g){%g};\n",
   // 	     v->x(),  v->y(), v->z(),
   // 	     (double)v->getNum());
-  //    itj++;
+  //      itj++;
+  //   }
+  //   fprintf(f3,"};\n");
+  //   fclose(f3);
   // }
-  // fprintf(f3,"};\n");
-  // fclose(f3);
 
   FILE * f4 = Fopen("myRADII.pos","w");
-  fprintf(f4, "View \"\"{\n");
-  for(unsigned int i = 0; i < lines.size(); ++i){
-    MLine *l = lines[i];
-    std::map<MLine*,double>::const_iterator itc =  radiusl.find(l);
-    fprintf(f4, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
- 	    l->getVertex(0)->x(), l->getVertex(0)->y(), l->getVertex(0)->z(),
- 	    l->getVertex(1)->x(), l->getVertex(1)->y(), l->getVertex(1)->z(),
- 	    itc->second,itc->second);
+  if(f4){
+    fprintf(f4, "View \"\"{\n");
+    for(unsigned int i = 0; i < lines.size(); ++i){
+      MLine *l = lines[i];
+      std::map<MLine*,double>::const_iterator itc =  radiusl.find(l);
+      fprintf(f4, "SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",
+              l->getVertex(0)->x(), l->getVertex(0)->y(), l->getVertex(0)->z(),
+              l->getVertex(1)->x(), l->getVertex(1)->y(), l->getVertex(1)->z(),
+              itc->second,itc->second);
+    }
+    fprintf(f4,"};\n");
+    fclose(f4);
   }
-  fprintf(f4,"};\n");
-  fclose(f4);
-
 }
 
 #endif

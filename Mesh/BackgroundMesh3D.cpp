@@ -1139,21 +1139,26 @@ void frameFieldBackgroundMesh3D::get_rotation_angle_and_axis
 
 void frameFieldBackgroundMesh3D::exportVectorialSmoothness(const string &filename)
 {
-  FILE *f = Fopen (filename.c_str(),"w");
-  fprintf(f,"View \"Background Mesh\"{\n");
+  FILE *f = Fopen(filename.c_str(), "w");
+  if(!f){
+    Msg::Error("Could not open file '%s'", filename.c_str());
+    return;
+  }
+
+  fprintf(f, "View \"Background Mesh\"{\n");
 
   set<const MVertex*> done;
 
-  for (unsigned int ie=0;ie<getNumMeshElements();ie++){// for all elements
+  for (unsigned int ie = 0; ie < getNumMeshElements(); ie++){// for all elements
     const MElement *e = getElement(ie);
-    for (int iv = 0;iv<e->getNumVertices();iv++){
+    for (int iv = 0; iv < e->getNumVertices(); iv++){
       const MVertex *v = e->getVertex(iv);
       set<const MVertex*>::iterator itfind = done.find(v);
       if (itfind!=done.end()) continue;
       done.insert(v);
       STensor3 cf;
       eval_approximate_crossfield(v,cf);
-      for (int i=0;i<3;i++){
+      for (int i = 0; i < 3; i++){
         double vs = get_vectorial_smoothness(i,v);
         fprintf(f,"VP(%g,%g,%g){%g,%g,%g};\n", v->x(), v->y(), v->z(),
                 cf(0,i)*vs,cf(1,i)*vs,cf(2,i)*vs);

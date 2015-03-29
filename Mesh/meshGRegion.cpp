@@ -162,10 +162,9 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
   }
 
   //print voronoi poles
-  FILE *outfile;
   //smooth_normals *snorm = gr->model()->normals;
-  outfile = Fopen("nodes.pos", "w");
-  fprintf(outfile, "View \"Voronoi poles\" {\n");
+  FILE *outfile = Fopen("nodes.pos", "w");
+  if(outfile) fprintf(outfile, "View \"Voronoi poles\" {\n");
   std::map<MVertex*, std::set<MTetrahedron*> >::iterator itmap = node2Tet.begin();
   for(; itmap != node2Tet.end(); itmap++){
     //MVertex *v = itmap->first;
@@ -176,35 +175,36 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
     for(; it != allTets.end(); it++){
       double radius =  (*it)->getCircumRadius();
       if (radius > maxRadius){
-    	maxRadius = radius;
-    	poleTet = *it;
+        maxRadius = radius;
+        poleTet = *it;
       }
     }
     //if (v->onWhat()->dim() == 2 ){
-      SPoint3 pc = poleTet->circumcenter();
-      //double nx,ny,nz;
-      // SVector3 vN = snorm->get(v->x(), v->y(), v->z(), nx,ny,nz);
-      // SVector3 pcv(pc.x()-nx, pc.y()-ny,pc.z()-nz);
-      // printf("nx=%g ny=%g nz=%g dot=%g \n",  nx,ny,nz, dot(vN, pcv));
-      // if ( dot(vN, pcv) > 0.0 )
-      double x[3] = {pc.x(), pc.y(), pc.z()};
-      double uvw[3];
-      poleTet->xyz2uvw(x, uvw);
-      //bool inside = poleTet->isInside(uvw[0], uvw[1], uvw[2]);
-      //if (inside){
-	fprintf(outfile,"SP(%g,%g,%g)  {%g};\n",
-		pc.x(), pc.y(), pc.z(), maxRadius);
-	candidates.insert(pc);
-	//}
+    SPoint3 pc = poleTet->circumcenter();
+    //double nx,ny,nz;
+    // SVector3 vN = snorm->get(v->x(), v->y(), v->z(), nx,ny,nz);
+    // SVector3 pcv(pc.x()-nx, pc.y()-ny,pc.z()-nz);
+    // printf("nx=%g ny=%g nz=%g dot=%g \n",  nx,ny,nz, dot(vN, pcv));
+    // if ( dot(vN, pcv) > 0.0 )
+    double x[3] = {pc.x(), pc.y(), pc.z()};
+    double uvw[3];
+    poleTet->xyz2uvw(x, uvw);
+    //bool inside = poleTet->isInside(uvw[0], uvw[1], uvw[2]);
+    //if (inside){
+    if(outfile)
+      fprintf(outfile,"SP(%g,%g,%g)  {%g};\n", pc.x(), pc.y(), pc.z(), maxRadius);
+    candidates.insert(pc);
+    //}
     //}
   }
-  fprintf(outfile,"};\n");
-  fclose(outfile);
+  if(outfile){
+    fprintf(outfile,"};\n");
+    fclose(outfile);
+  }
 
-  //print scalar lines
-  FILE *outfile2;
-  outfile2 = Fopen("edges.pos", "w");
-  fprintf(outfile2, "View \"Voronoi edges\" {\n");
+  // print scalar lines
+  FILE *outfile2 = Fopen("edges.pos", "w");
+  if(outfile2) fprintf(outfile2, "View \"Voronoi edges\" {\n");
   std::map<MFace, std::vector<MTetrahedron*> , Less_Face >::iterator itmap2 = face2Tet.begin();
   for(; itmap2 != face2Tet.end(); itmap2++){
     std::vector<MTetrahedron*>  allTets = itmap2->second;
@@ -214,13 +214,15 @@ void printVoronoi(GRegion *gr,  std::set<SPoint3> &candidates)
     //std::set<SPoint3>::const_iterator it1 = candidates.find(pc1);
     //std::set<SPoint3>::const_iterator it2 = candidates.find(pc2);
     //if( it1 != candidates.end() || it2 != candidates.end())
+    if(outfile2)
       fprintf(outfile2,"SL(%g,%g,%g,%g,%g,%g)  {%g,%g};\n",
-	      pc1.x(), pc1.y(), pc1.z(), pc2.x(), pc2.y(), pc2.z(),
-	      allTets[0]->getCircumRadius(),allTets[1]->getCircumRadius());
-   }
-  fprintf(outfile2,"};\n");
-  fclose(outfile2);
-
+              pc1.x(), pc1.y(), pc1.z(), pc2.x(), pc2.y(), pc2.z(),
+              allTets[0]->getCircumRadius(),allTets[1]->getCircumRadius());
+  }
+  if(outfile2){
+    fprintf(outfile2,"};\n");
+    fclose(outfile2);
+  }
 }
 
 
@@ -978,15 +980,17 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr, spl
   // ------------------------------------------------------------------------------------
   {
     FILE *ff2 = fopen ("tato3D.pos","w");
-    fprintf(ff2,"View \" \"{\n");
-    for (unsigned int i = 0; i < blPrisms.size();i++){
-      blPrisms[i]->writePOS(ff2,1,0,0,0,0,0);
+    if(ff2){
+      fprintf(ff2,"View \" \"{\n");
+      for (unsigned int i = 0; i < blPrisms.size();i++){
+        blPrisms[i]->writePOS(ff2,1,0,0,0,0,0);
+      }
+      for (unsigned int i = 0; i < blHexes.size();i++){
+        blHexes[i]->writePOS(ff2,1,0,0,0,0,0);
+      }
+      fprintf(ff2,"};\n");
+      fclose(ff2);
     }
-    for (unsigned int i = 0; i < blHexes.size();i++){
-      blHexes[i]->writePOS(ff2,1,0,0,0,0,0);
-    }
-    fprintf(ff2,"};\n");
-    fclose(ff2);
   }
 
   for (unsigned int i = 0; i < blPrisms.size();i++){
@@ -1008,14 +1012,15 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr, spl
   std::map<MFace,MElement*,Less_Face>::iterator it =  bfaces.begin();
 
   FILE *ff = fopen ("toto3D.pos","w");
-  fprintf(ff,"View \" \"{\n");
+  if(ff) fprintf(ff,"View \" \"{\n");
   for (; it != bfaces.end(); ++it){
     if (it->first.getNumVertices() == 3){
       nf->triangles.push_back(new MTriangle (it->first.getVertex(0),it->first.getVertex(1),it->first.getVertex(2)));
-      fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1};\n",
-	      it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
-	      it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
-	      it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z());
+      if(ff)
+        fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1};\n",
+                it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
+                it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
+                it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z());
     }
     else {
 
@@ -1061,35 +1066,38 @@ static bool modifyInitialMeshForTakingIntoAccountBoundaryLayers(GRegion *gr, spl
       nf->triangles.push_back(new MTriangle (it->first.getVertex(1),it->first.getVertex(2),newv));
       nf->triangles.push_back(new MTriangle (it->first.getVertex(2),it->first.getVertex(3),newv));
       nf->triangles.push_back(new MTriangle (it->first.getVertex(3),it->first.getVertex(0),newv));
+      if(ff){
+        fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
+                it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
+                it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
+                newv->x(),newv->y(),newv->z());
 
-      fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
-	      it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
-	      it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
-	      newv->x(),newv->y(),newv->z());
+        fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
+                it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
+                it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z(),
+                newv->x(),newv->y(),newv->z());
 
-      fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
-	      it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
-	      it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z(),
-	      newv->x(),newv->y(),newv->z());
+        fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
+                it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z(),
+                it->first.getVertex(3)->x(),it->first.getVertex(3)->y(),it->first.getVertex(3)->z(),
+                newv->x(),newv->y(),newv->z());
+        fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
+                it->first.getVertex(3)->x(),it->first.getVertex(3)->y(),it->first.getVertex(3)->z(),
+                it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
+                newv->x(),newv->y(),newv->z());
 
-      fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
-	      it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z(),
-	      it->first.getVertex(3)->x(),it->first.getVertex(3)->y(),it->first.getVertex(3)->z(),
-	      newv->x(),newv->y(),newv->z());
-      fprintf(ff,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){2,2,2};\n",
-	      it->first.getVertex(3)->x(),it->first.getVertex(3)->y(),it->first.getVertex(3)->z(),
-	      it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
-	      newv->x(),newv->y(),newv->z());
-
-      fprintf(ff,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){3,3,3,3};\n",
-	      it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
-	      it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
-	      it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z(),
-	      it->first.getVertex(3)->x(),it->first.getVertex(3)->y(),it->first.getVertex(3)->z());
+        fprintf(ff,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){3,3,3,3};\n",
+                it->first.getVertex(0)->x(),it->first.getVertex(0)->y(),it->first.getVertex(0)->z(),
+                it->first.getVertex(1)->x(),it->first.getVertex(1)->y(),it->first.getVertex(1)->z(),
+                it->first.getVertex(2)->x(),it->first.getVertex(2)->y(),it->first.getVertex(2)->z(),
+                it->first.getVertex(3)->x(),it->first.getVertex(3)->y(),it->first.getVertex(3)->z());
+      }
     }
   }
-  fprintf(ff,"};\n");
-  fclose(ff);
+  if(ff){
+    fprintf(ff,"};\n");
+    fclose(ff);
+  }
 
   printf("discrete face with %d %d elems\n", (int)nf->triangles.size(),
          (int)nf->quadrangles.size());
@@ -1652,12 +1660,14 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
   }
 
   // FILE *fp = Fopen("debug.pos", "w");
-  // fprintf(fp, "View \"debug\" {\n");
-  // for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
-  //   for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-  //     (*it)->triangles[i]->writePOS(fp, 1., (*it)->tag());
-  // fprintf(fp, "};\n");
-  // fclose(fp);
+  // if(fp){
+  //   fprintf(fp, "View \"debug\" {\n");
+  //   for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
+  //     for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
+  //       (*it)->triangles[i]->writePOS(fp, 1., (*it)->tag());
+  //   fprintf(fp, "};\n");
+  //   fclose(fp);
+  // }
 }
 
 void meshGRegion::operator() (GRegion *gr)

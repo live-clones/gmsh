@@ -412,19 +412,21 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed,
   // surface mesh
   char ccc[256]; sprintf(ccc,"points%d.pos",gf->tag());
   FILE *f = Fopen(ccc,"w");
-  fprintf(f,"View \"\"{\n");
-  for (unsigned int i=0;i<vertices.size();i++){
-    vertices[i]->print(f,i);
-    if(vertices[i]->_v->onWhat() == gf) {
-      packed.push_back(vertices[i]->_v);
-      metrics.push_back(vertices[i]->_meshMetric);
-      SPoint2 midpoint;
-      reparamMeshVertexOnFace(vertices[i]->_v, gf, midpoint);
+  if(f){
+    fprintf(f,"View \"\"{\n");
+    for (unsigned int i=0;i<vertices.size();i++){
+      vertices[i]->print(f,i);
+      if(vertices[i]->_v->onWhat() == gf) {
+        packed.push_back(vertices[i]->_v);
+        metrics.push_back(vertices[i]->_meshMetric);
+        SPoint2 midpoint;
+        reparamMeshVertexOnFace(vertices[i]->_v, gf, midpoint);
+      }
+      delete  vertices[i];
     }
-    delete  vertices[i];
+    fprintf(f,"};");
+    fclose(f);
   }
-  fprintf(f,"};");
-  fclose(f);
 }
 
 bool Filler3D::treat_region(GRegion *gr)

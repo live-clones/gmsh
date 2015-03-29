@@ -275,27 +275,29 @@ static void printLevel(std::vector<MElement *> &elements, int recur, int region)
 
   bool binary = false;
   FILE *fp = Fopen (fn, "w");
-  fprintf(fp, "$MeshFormat\n");
-  fprintf(fp, "%g %d %d\n", version, binary ? 1 : 0, (int)sizeof(double));
-  fprintf(fp, "$EndMeshFormat\n");
+  if(fp){
+    fprintf(fp, "$MeshFormat\n");
+    fprintf(fp, "%g %d %d\n", version, binary ? 1 : 0, (int)sizeof(double));
+    fprintf(fp, "$EndMeshFormat\n");
 
-  fprintf(fp,"$Nodes\n%d\n", (int)vs.size());
-  std::set<MVertex*> :: iterator it = vs.begin();
-  int index = 1;
-  for (; it != vs.end() ; ++it){
-    (*it)->setIndex(index++);
-    fprintf(fp,"%d %g %g %g\n",(*it)->getIndex(),
-            (*it)->x(),(*it)->y(),(*it)->z());
+    fprintf(fp,"$Nodes\n%d\n", (int)vs.size());
+    std::set<MVertex*> :: iterator it = vs.begin();
+    int index = 1;
+    for (; it != vs.end() ; ++it){
+      (*it)->setIndex(index++);
+      fprintf(fp,"%d %g %g %g\n",(*it)->getIndex(),
+              (*it)->x(),(*it)->y(),(*it)->z());
+    }
+    fprintf(fp,"$EndNodes\n");
+
+    fprintf(fp,"$Elements\n%d\n", (int)elements.size());
+    for (unsigned int i = 0; i < elements.size(); i++){
+      elements[i]->writeMSH(fp, version);
+    }
+    fprintf(fp,"$EndElements\n%d\n", (int)elements.size());
+
+    fclose(fp);
   }
-  fprintf(fp,"$EndNodes\n");
-
-  fprintf(fp,"$Elements\n%d\n", (int)elements.size());
-  for (unsigned int i = 0; i < elements.size(); i++){
-    elements[i]->writeMSH(fp, version);
-  }
-  fprintf(fp,"$EndElements\n%d\n", (int)elements.size());
-
-  fclose(fp);
 }
 */
 
