@@ -4238,7 +4238,9 @@ double opt_geometry_hide_compounds(OPT_ARGS_NUM)
     if(old != (int)val){
       GModel::current()->setCompoundVisibility();
       CTX::instance()->mesh.changed = ENT_ALL;
+#if defined(HAVE_FLTK)
       if(FlGui::available()) FlGui::instance()->resetVisibility();
+#endif
     }
   }
 #if defined(HAVE_FLTK)
