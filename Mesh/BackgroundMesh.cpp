@@ -177,7 +177,6 @@ static void propagateValuesOnFace(GFace *_gf,
     myAssembler.fixVertex(itv->first, 0, 1, itv->second);
   }
 
-
   // Number vertices
   std::set<MVertex*> vs;
   for (unsigned int k = 0; k < _gf->triangles.size(); k++)
@@ -348,7 +347,8 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
 #endif
 }
 
-inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d){
+inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d)
+{
   double cosTheta = dot(a,b);
   double sinTheta = dot(crossprod(a,b),d);
   return atan2 (sinTheta,cosTheta);
@@ -403,12 +403,11 @@ double backgroundMesh::getSmoothness(double u, double v, double w)
 
 void backgroundMesh::propagateCrossField(GFace *_gf)
 {
-  //  printf("coucou\n");
   propagateCrossFieldHJ (_gf);
   // solve the non liear problem
   constantPerElement<double> C;
   int ITER = 0;
-  //  int NSMOOTH =  _gf->triangles.size();
+  //  int NSMOOTH = _gf->triangles.size();
   while(0){
     //    int NSMOOTH_NOW = 0;
     for (unsigned int i = 0; i < _gf->triangles.size(); i++){
@@ -423,14 +422,14 @@ void backgroundMesh::propagateCrossField(GFace *_gf)
     propagateCrossField (_gf,&C);
     if (++ITER > 0)break;
   }
-  //  printf("converged in %d iterations\n",ITER);
+  //  printf("converged in %d iterations\n", ITER);
+#if 0 // debug print
   char name[256];
-  sprintf(name,"cross-%d-%d.pos",_gf->tag(),ITER);
-  print(name,0,1);
-  sprintf(name,"smooth-%d-%d.pos",_gf->tag(),ITER);
-  print(name,_gf,2);
-
-
+  sprintf(name, "cross-%d-%d.pos", _gf->tag(), ITER);
+  print(name, 0, 1);
+  sprintf(name, "smooth-%d-%d.pos", _gf->tag(), ITER);
+  print(name, _gf, 2);
+#endif
 }
 
 void backgroundMesh::propagateCrossFieldHJ(GFace *_gf)
@@ -650,21 +649,25 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
                            const std::map<MVertex*,double> &_whatToPrint, int smooth)
 {
   FILE *f = Fopen (filename.c_str(),"w");
-  fprintf(f,"View \"Background Mesh\"{\n");
+  if(!f){
+    Msg::Warning("Could not open file '%s'", filename.c_str());
+    return;
+  }
+  fprintf(f, "View \"Background Mesh\"{\n");
   if (smooth){
-    for(unsigned int i=0;i<gf->triangles.size();i++){
+    for(unsigned int i = 0; i < gf->triangles.size(); i++){
       MVertex *v1 = gf->triangles[i]->getVertex(0);
       MVertex *v2 = gf->triangles[i]->getVertex(1);
       MVertex *v3 = gf->triangles[i]->getVertex(2);
       double x = getSmoothness (gf->triangles[i]);
       fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
-	      v1->x(),v1->y(),v1->z(),
-	      v2->x(),v2->y(),v2->z(),
-	      v3->x(),v3->y(),v3->z(),x,x,x);
+	      v1->x(), v1->y(), v1->z(),
+	      v2->x(), v2->y(), v2->z(),
+	      v3->x(), v3->y(), v3->z(), x, x, x);
     }
   }
   else {
-    for(unsigned int i=0;i<_triangles.size();i++){
+    for(unsigned int i = 0; i < _triangles.size(); i++){
       MVertex *v1 = _triangles[i]->getVertex(0);
       MVertex *v2 = _triangles[i]->getVertex(1);
       MVertex *v3 = _triangles[i]->getVertex(2);
@@ -673,26 +676,27 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
       std::map<MVertex*,double>::const_iterator itv3 = _whatToPrint.find(v3);
       if (!gf){
 	fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
-		v1->x(),v1->y(),v1->z(),
-		v2->x(),v2->y(),v2->z(),
-		v3->x(),v3->y(),v3->z(),itv1->second,itv2->second,itv3->second);
+		v1->x(), v1->y(), v1->z(),
+		v2->x(), v2->y(), v2->z(),
+		v3->x(), v3->y(), v3->z(), itv1->second, itv2->second, itv3->second);
       }
       else {
 	GPoint p1 = gf->point(SPoint2(v1->x(),v1->y()));
 	GPoint p2 = gf->point(SPoint2(v2->x(),v2->y()));
 	GPoint p3 = gf->point(SPoint2(v3->x(),v3->y()));
 	fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n",
-		p1.x(),p1.y(),p1.z(),
-		p2.x(),p2.y(),p2.z(),
-		p3.x(),p3.y(),p3.z(),itv1->second,itv2->second,itv3->second);
+		p1.x(), p1.y(), p1.z(),
+		p2.x(), p2.y(), p2.z(),
+		p3.x(), p3.y(), p3.z(), itv1->second, itv2->second, itv3->second);
       }
     }
   }
-  fprintf(f,"};\n");
+  fprintf(f, "};\n");
   fclose(f);
 }
 
 MElementOctree* backgroundMesh::get_octree(){
+
   return _octree;
 }
 
