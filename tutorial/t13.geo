@@ -46,12 +46,18 @@ Field[1] = MathEval;
 Field[1].F = "2.5";
 Background Field = 1;
 
-DefineConstant[ funny = {0, Choices{0,1}, Name "Apply funny mesh size field?"} ];
+DefineConstant[
+  funny = {0, Choices{0,1}, Name "Apply funny mesh size field?"},
+  hide = {0, Choices{0,1}, Name "Hide compound sub-entities"}
+];
+
 If(funny)
   Field[1].F = "2*Sin((x+y)/5) + 3";
 EndIf
 
+DefineConstant[  ];
+
 Mesh.RemeshAlgorithm = 1; // automatic
 Mesh.RemeshParametrization = 7; // conformal finite element
-Geometry.HideCompounds = 0; // don't hide the compound entities
+Geometry.HideCompounds = hide; // hide the compound sub-entities?
 Mesh.Algorithm = 6; // Frontal

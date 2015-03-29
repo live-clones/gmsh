@@ -4232,8 +4232,15 @@ double opt_geometry_auto_coherence(OPT_ARGS_NUM)
 
 double opt_geometry_hide_compounds(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
+    int old = CTX::instance()->geom.hideCompounds;
     CTX::instance()->geom.hideCompounds = (int)val;
+    if(old != (int)val){
+      GModel::current()->setCompoundVisibility();
+      CTX::instance()->mesh.changed = ENT_ALL;
+      if(FlGui::available()) FlGui::instance()->resetVisibility();
+    }
+  }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)){
     FlGui::instance()->options->geo.butt[17]->value

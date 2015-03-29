@@ -432,7 +432,6 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_occ_connect_faces(0, GMSH_SET, o->geo.butt[15]->value());
 
   opt_geometry_light_two_side(0, GMSH_SET, o->geo.butt[14]->value());
-  int old_hide_compound = (int)opt_geometry_hide_compounds(0, GMSH_GET, 0);
   opt_geometry_hide_compounds(0, GMSH_SET, o->geo.butt[17]->value());
 
   opt_geometry_normals(0, GMSH_SET, o->geo.value[0]->value());
@@ -461,12 +460,6 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_surface_type(0, GMSH_SET, o->geo.choice[2]->value());
   opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
   opt_geometry_label_type(0, GMSH_SET, o->geo.choice[4]->value() + 1);
-
-  if(old_hide_compound != (int)opt_geometry_hide_compounds(0, GMSH_GET, 0)){
-    GModel::current()->setCompoundVisibility();
-    FlGui::instance()->resetVisibility();
-    CTX::instance()->mesh.changed = ENT_ALL;
-  }
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;

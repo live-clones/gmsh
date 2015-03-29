@@ -11,7 +11,7 @@
 // parametrization can then be used for remeshing the compound as if
 // it were a single CAD entity.
 
-lc = 0.2;
+lc = 0.1;
 
 Point(1) = {0, 0, 0, lc};       Point(2) = {1, 0, 0, lc};
 Point(3) = {1, 1, 0.5, lc};     Point(4) = {0, 1, 0.4, lc};
@@ -36,9 +36,10 @@ Compound Line(101) = {6, 7, 8};
 // Treat surfaces 12, 14 and 16 as a single surface
 Compound Surface(200) = {12, 14, 16};
 
-// Hide the original surfaces so we only see the compound
-// (cross-patch) mesh
-//Hide {Surface{12, 14, 16}; }
+// Add option to toggle visibility of sub-entities
+DefineConstant[ hide = {Geometry.HideCompounds, Choices{0,1},
+    Name "Hide compound sub-entities", GmshOption "Geometry.HideCompounds",
+    AutoCheck 0} ];
 
 // More details about the reparametrization technique can be found in
 // the following papers:
