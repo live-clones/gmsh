@@ -1408,7 +1408,7 @@ void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio
   SVector3 ez (0, 0, 1);
   std::list<GEdgeLoop>::iterator it = edgeLoops.begin();
   FILE *f = Fopen ("coucou.pos","w");
-  fprintf(f,"View \"\"{\n");
+  if(f) fprintf(f,"View \"\"{\n");
   for (; it != edgeLoops.end(); ++it){
     bool found = false;
     // look if this edge loop has the GVertex as an endpoint
@@ -1454,15 +1454,15 @@ void GFace::addLayersOfQuads(int nLayers, GVertex *gv, double hmin, double ratio
 	  double v = p1.y() + n.y() * hmin;
 	  GPoint gp = point(SPoint2(u,v));
 	  additionalVertices.push_back(new MFaceVertex(gp.x(),gp.y(),gp.z(),this,u,v));
-	  fprintf(f,"SP(%g, %g, 0){1};\n",gp.x(),gp.y());
+	  if(f) fprintf(f,"SP(%g, %g, 0){1};\n",gp.x(),gp.y());
 	}
 	hlayer *= ratio;
 	hmin += hlayer;
       }
-      fprintf(f,"};\n");
+      if(f) fprintf(f,"};\n");
     }
   }
-  fclose(f);
+  if(f) fclose(f);
 }
 
 void GFace::relocateMeshVertices()

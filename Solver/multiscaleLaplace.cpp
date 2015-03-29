@@ -632,28 +632,32 @@ static void printCut(std::map<MEdge,MVertex*,Less_Edge> &cutEdges,
    printf("Writing points.pos \n");
    std::map<MEdge,MVertex*,Less_Edge>::iterator ite = cutEdges.begin();
    FILE *f1 = Fopen("points.pos","w");
-   fprintf(f1,"View\"\"{\n");
-   for ( ; ite != cutEdges.end();++ite){
-     fprintf(f1,"SP(%g,%g,%g){1.0};\n",ite->second->x(),ite->second->y(),ite->second->z());
+   if(f1){
+     fprintf(f1,"View\"\"{\n");
+     for ( ; ite != cutEdges.end();++ite){
+       fprintf(f1,"SP(%g,%g,%g){1.0};\n",ite->second->x(),ite->second->y(),ite->second->z());
+     }
+     std::set<MVertex*>::iterator itv = cutVertices.begin();
+     for ( ; itv != cutVertices.end();++itv){
+       fprintf(f1,"SP(%g,%g,%g){3.0};\n",(*itv)->x(),(*itv)->y(),(*itv)->z());
+     }
+     fprintf(f1,"};\n");
+     fclose(f1);
    }
-   std::set<MVertex*>::iterator itv = cutVertices.begin();
-   for ( ; itv != cutVertices.end();++itv){
-     fprintf(f1,"SP(%g,%g,%g){3.0};\n",(*itv)->x(),(*itv)->y(),(*itv)->z());
-   }
-   fprintf(f1,"};\n");
-   fclose(f1);
 
    printf("Writing edges.pos \n");
    std::set<MEdge,Less_Edge>::iterator itc = theCut.begin();
    FILE *f2 = Fopen("edges.pos","w");
-   fprintf(f2,"View\"\"{\n");
-   for ( ; itc != theCut.end();++itc){
-     fprintf(f2,"SL(%g,%g,%g,%g,%g,%g){1.0,1.0};\n",itc->getVertex(0)->x(),
-             itc->getVertex(0)->y(),itc->getVertex(0)->z(),
-          itc->getVertex(1)->x(),itc->getVertex(1)->y(),itc->getVertex(1)->z());
+   if(f2){
+     fprintf(f2,"View\"\"{\n");
+     for ( ; itc != theCut.end();++itc){
+       fprintf(f2,"SL(%g,%g,%g,%g,%g,%g){1.0,1.0};\n",itc->getVertex(0)->x(),
+               itc->getVertex(0)->y(),itc->getVertex(0)->z(),
+               itc->getVertex(1)->x(),itc->getVertex(1)->y(),itc->getVertex(1)->z());
+     }
+     fprintf(f2,"};\n");
+     fclose(f2);
    }
-   fprintf(f2,"};\n");
-   fclose(f2);
 }
 
 static void printLevel(const char* fn,
@@ -671,6 +675,10 @@ static void printLevel(const char* fn,
 
   bool binary = false;
   FILE *fp = Fopen (fn, "w");
+  if(!fp){
+    Msg::Error("Could not open file '%s'", fn);
+    return;
+  }
   fprintf(fp, "$MeshFormat\n");
   fprintf(fp, "%g %d %d\n", version, binary ? 1 : 0, (int)sizeof(double));
   fprintf(fp, "$EndMeshFormat\n");

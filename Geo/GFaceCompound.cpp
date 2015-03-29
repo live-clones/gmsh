@@ -56,22 +56,6 @@ static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssemb
   }
 }
 
-/*
-static void printBound(std::vector<MVertex*> &l, int tag)
-{
-  char name[256];
-  sprintf(name, "myBOUND%d.pos", tag);
-  FILE * xyz = Fopen(name,"w");
-  fprintf(xyz,"View \"\"{\n");
-  for(unsigned int i = 0; i < l.size(); i++){
-    MVertex *v = l[i];
-    fprintf(xyz,"SP(%g,%g,%g){%d};\n", v->x(), v->y(), v->z(), i);
-  }
-  fprintf(xyz,"};\n");
-  fclose(xyz);
-}
-*/
-
 static std::vector<MVertex*> getBlob(unsigned int minNbPt, v2t_cont::iterator it,
                                      v2t_cont &adj)
 {
@@ -461,18 +445,20 @@ void GFaceCompound::printFillTris() const
     //std::list<GFace*>::const_iterator itf = _compound.begin();
     sprintf(name, "fillTris-%d.pos", tag());
     FILE * ftri = Fopen(name,"w");
-    fprintf(ftri,"View \"\"{\n");
-    for (std::list<MTriangle*>::iterator it2 = fillTris.begin();
-	 it2 !=fillTris.end(); it2++ ){
-      MTriangle *t = (*it2);
-      fprintf(ftri,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-	      t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
-	      t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
-	      t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
-	      1., 1., 1.);
+    if(ftri){
+      fprintf(ftri,"View \"\"{\n");
+      for (std::list<MTriangle*>::iterator it2 = fillTris.begin();
+           it2 !=fillTris.end(); it2++ ){
+        MTriangle *t = (*it2);
+        fprintf(ftri,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+                t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z(),
+                t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z(),
+                t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z(),
+                1., 1., 1.);
+      }
+      fprintf(ftri,"};\n");
+      fclose(ftri);
     }
-    fprintf(ftri,"};\n");
-    fclose(ftri);
   }
 }
 
@@ -2885,12 +2871,31 @@ void GFaceCompound::printStuff(int iNewton) const
 
   sprintf(name7, "UVM-%d.pos", (*it)->tag());
 
-  //FILE * uva = Fopen(name0,"w");
   FILE * uvx = Fopen(name1,"w");
+  if(!uvx){
+    Msg::Error("Could not open file '%s'", name1);
+    return;
+  }
   FILE * uvy = Fopen(name2,"w");
+  if(!uvy){
+    Msg::Error("Could not open file '%s'", name2);
+    return;
+  }
   FILE * uvz = Fopen(name3,"w");
+  if(!uvz){
+    Msg::Error("Could not open file '%s'", name3);
+    return;
+  }
   FILE * xyzu = Fopen(name4,"w");
+  if(!xyzu){
+    Msg::Error("Could not open file '%s'", name4);
+    return;
+  }
   FILE * xyzv = Fopen(name5,"w");
+  if(!xyzv){
+    Msg::Error("Could not open file '%s'", name5);
+    return;
+  }
 
   fprintf(uvx, "View \"\"{\n");
   fprintf(uvy, "View \"\"{\n");

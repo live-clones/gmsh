@@ -61,8 +61,8 @@ void elasticitySolver::setMesh(const std::string &meshFileName)
   _dim = pModel->getNumRegions() ? 3 : 2;
 
   if (LagSpace) delete LagSpace;
-  if (_dim==3) LagSpace=new VectorLagrangeFunctionSpace(_tag);
-  if (_dim==2) LagSpace=new VectorLagrangeFunctionSpace
+  if (_dim==3) LagSpace = new VectorLagrangeFunctionSpace(_tag);
+  if (_dim==2) LagSpace = new VectorLagrangeFunctionSpace
                  (_tag,VectorLagrangeFunctionSpace::VECTOR_X,
                   VectorLagrangeFunctionSpace::VECTOR_Y);
 
@@ -72,29 +72,27 @@ void elasticitySolver::setMesh(const std::string &meshFileName)
 
 void elasticitySolver::exportKb()
 {
-  FILE *f = Fopen ( "K.txt", "w" );
-  double valeur;
   std::string sysname = "A";
-  for ( int i = 0 ; i < pAssembler->sizeOfR() ; i ++ )
-  {
-    for ( int j = 0 ; j < pAssembler->sizeOfR() ; j ++ )
-    {
-      pAssembler->getLinearSystem ( sysname )->getFromMatrix ( i,j, valeur );
-      fprintf ( f,"%+e ",valeur ) ;
+  double valeur;
+  FILE *f = Fopen("K.txt", "w");
+  if(f){
+    for (int i = 0; i < pAssembler->sizeOfR(); i++){
+      for (int j = 0; j < pAssembler->sizeOfR(); j++ ){
+        pAssembler->getLinearSystem(sysname)->getFromMatrix (i, j, valeur);
+        fprintf (f, "%+e ", valeur) ;
+      }
+      fprintf(f,"\n");
     }
-    fprintf ( f,"\n" );
+    fclose (f);
   }
-
-  fclose ( f );
-
-  f = Fopen ( "b.txt", "w" );
-  for ( int i = 0 ; i < pAssembler->sizeOfR() ; i ++ )
-  {
-    pAssembler->getLinearSystem ( sysname )->getFromRightHandSide ( i,valeur );
-    fprintf ( f,"%+e\n",valeur ) ;
+  f = Fopen("b.txt", "w");
+  if(f){
+    for (int i = 0; i < pAssembler->sizeOfR(); i++){
+      pAssembler->getLinearSystem(sysname)->getFromRightHandSide(i, valeur);
+      fprintf(f, "%+e\n", valeur);
+    }
+    fclose(f);
   }
-
-  fclose ( f );
 }
 
 void elasticitySolver::solve()
@@ -147,6 +145,10 @@ void elasticitySolver::postSolve()
 void elasticitySolver::readInputFile(const std::string &fn)
 {
   FILE *f = Fopen(fn.c_str(), "r");
+  if(!f){
+    Msg::Error("Could not open file '%s'", fn.c_str());
+    return;
+  }
   char what[256];
   while(!feof(f)){
     if(fscanf(f, "%s", what) != 1){

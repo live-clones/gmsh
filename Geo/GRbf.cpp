@@ -61,27 +61,29 @@ static int SphereInEle(void *a, double*c)
 static void printNodes(std::set<MVertex *> myNodes)
 {
   FILE * xyz = Fopen("myNodes.pos","w");
-  fprintf(xyz,"View \"\"{\n");
-  for(std::set<MVertex *>::iterator itv = myNodes.begin(); itv !=myNodes.end(); ++itv){
-    MVertex *v = *itv;
-    fprintf(xyz,"SP(%g,%g,%g){%d};\n", v->x(), v->y(), v->z(), v->getNum());
+  if(xyz){
+    fprintf(xyz,"View \"\"{\n");
+    for(std::set<MVertex *>::iterator itv = myNodes.begin(); itv !=myNodes.end(); ++itv){
+      MVertex *v = *itv;
+      fprintf(xyz,"SP(%g,%g,%g){%d};\n", v->x(), v->y(), v->z(), v->getNum());
+    }
+    fprintf(xyz,"};\n");
+    fclose(xyz);
   }
-  fprintf(xyz,"};\n");
-  fclose(xyz);
 }
 
 static void exportParametrizedMesh(fullMatrix<double> &UV, int nbNodes)
 {
-  FILE *f = Fopen ("UV.pos", "w");
-  fprintf(f,"View  \" uv \" {\n");
-
-  Msg::Info("*** RBF exporting 'UV.pos' ");
-  for(int id = 0; id < nbNodes; id++){
-    fprintf(f,"SP(%g,%g,%g){%d};\n", UV(id,0), UV(id,1), 0.0, id);
+  FILE *f = Fopen("UV.pos", "w");
+  if(f){
+    fprintf(f,"View  \" uv \" {\n");
+    Msg::Info("*** RBF exporting 'UV.pos' ");
+    for(int id = 0; id < nbNodes; id++){
+      fprintf(f,"SP(%g,%g,%g){%d};\n", UV(id,0), UV(id,1), 0.0, id);
+    }
+    fprintf(f,"};\n");
+    fclose(f);
   }
-  fprintf(f,"};\n");
-
-  fclose(f);
 }
 
 GRbf::GRbf(double sizeBox, int variableEps, int rbfFun,

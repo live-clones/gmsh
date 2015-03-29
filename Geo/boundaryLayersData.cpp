@@ -735,25 +735,26 @@ bool buildAdditionalPoints2D(GFace *gf)
       }
     }
   }
-  // DEBUG STUFF
 
+  // DEBUG STUFF
   char name[256];
-  sprintf(name,"points_face_%d.pos",gf->tag());
+  sprintf(name, "points_face_%d.pos", gf->tag());
   FILE *f = Fopen (name,"w");
-  fprintf(f,"View \"\" {\n");
-  for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end() ; ++it){
-    MVertex *v = *it;
-    for (int i=0;i<_columns->getNbColumns(v);i++){
-      const BoundaryLayerData &data = _columns->getColumn(v,i);
-      for (unsigned int j = 0; j < data._column.size(); j++){
-	MVertex *blv = data._column[j];
-	fprintf(f,"SP(%g,%g,%g){%d};\n",blv->x(),blv->y(),blv->z(),v->getNum());
+  if(f){
+    fprintf(f,"View \"\" {\n");
+    for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end() ; ++it){
+      MVertex *v = *it;
+      for (int i=0;i<_columns->getNbColumns(v);i++){
+        const BoundaryLayerData &data = _columns->getColumn(v,i);
+        for (unsigned int j = 0; j < data._column.size(); j++){
+          MVertex *blv = data._column[j];
+          fprintf(f,"SP(%g,%g,%g){%d};\n",blv->x(),blv->y(),blv->z(),v->getNum());
+        }
       }
     }
+    fprintf(f,"};\n");
+    fclose (f);
   }
-  fprintf(f,"};\n");
-  fclose (f);
-
   // END OF DEBUG STUFF
 
   return 1;
@@ -1328,22 +1329,22 @@ bool buildAdditionalPoints3D(GRegion *gr)
   }
 
   // DEBUG STUFF
-
-  FILE *f = fopen ("POINTS3D.pos","w");
-  fprintf(f,"View \"\" {\n");
-  for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end() ; ++it){
-    MVertex *v = *it;
-    for (int i=0;i<_columns->getNbColumns(v);i++){
-      const BoundaryLayerData &data = _columns->getColumn(v,i);
-      for (unsigned int j=0;j<data._column.size();j++){
-	MVertex *blv = data._column[j];
-	fprintf(f,"SP(%g,%g,%g){%d};\n",blv->x(),blv->y(),blv->z(),v->getNum());
+  FILE *f = Fopen("POINTS3D.pos","w");
+  if(f){
+    fprintf(f,"View \"\" {\n");
+    for (std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end() ; ++it){
+      MVertex *v = *it;
+      for (int i=0;i<_columns->getNbColumns(v);i++){
+        const BoundaryLayerData &data = _columns->getColumn(v,i);
+        for (unsigned int j=0;j<data._column.size();j++){
+          MVertex *blv = data._column[j];
+          fprintf(f,"SP(%g,%g,%g){%d};\n",blv->x(),blv->y(),blv->z(),v->getNum());
+        }
       }
     }
+    fprintf(f,"};\n");
+    fclose (f);
   }
-  fprintf(f,"};\n");
-  fclose (f);
-
   // END OF DEBUG STUFF
 
   return true;

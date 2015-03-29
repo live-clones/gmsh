@@ -225,13 +225,15 @@ inline double evalRadialFnDer(int p, int index, double dx, double dy, double dz,
 inline void printNodes(fullMatrix<double> &myNodes, fullMatrix<double> &surf)
 {
   FILE * xyz = Fopen("myNodes.pos","w");
-  fprintf(xyz,"View \"\"{\n");
-  for(int itv = 1; itv != myNodes.size1(); ++itv){
-    fprintf(xyz,"SP(%g,%g,%g){%g};\n", myNodes(itv,0), myNodes(itv,1),
-            myNodes(itv,2), surf(itv,0));
+  if(xyz){
+    fprintf(xyz,"View \"\"{\n");
+    for(int itv = 1; itv != myNodes.size1(); ++itv){
+      fprintf(xyz,"SP(%g,%g,%g){%g};\n", myNodes(itv,0), myNodes(itv,1),
+              myNodes(itv,2), surf(itv,0));
+    }
+    fprintf(xyz,"};\n");
+    fclose(xyz);
   }
-  fprintf(xyz,"};\n");
-  fclose(xyz);
 }
 
 // extrude a list of the primitive levelsets with a "Level-order traversal sequence"
