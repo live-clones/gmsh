@@ -31,3 +31,15 @@
 %include "polynomialBasis.h"
 %include "pyramidalBasis.h"
 %include "BasisFactory.h"
+%extend nodalBasis {
+  fullMatrix<double> F(const fullMatrix<double> &xi) {
+    fullMatrix<double> psi;
+    $self->f(xi, psi);
+    return psi;
+  }
+  fullMatrix<double> DF(const fullMatrix<double> &xi) {
+    fullMatrix<double> dpsi;
+    $self->df(xi, dpsi);
+    return dpsi;
+  }
+}
