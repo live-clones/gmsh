@@ -1368,17 +1368,33 @@ Shape :
       $$.Type = MSH_POINT;
       $$.Num = num;
     }
-  | tPhysical tPoint '(' PhysicalId0 ')' tAFFECT ListOfDouble tEND
+  | tPhysical tPoint '(' PhysicalId0 ')' NumericAffectation ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindPhysicalGroup(num, MSH_PHYSICAL_POINT)){
+      int op = $6;
+      PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_POINT);
+      if(p && op == 0){
 	yymsg(0, "Physical point %d already exists", num);
       }
-      else{
+      else if(!p && op > 0){
+	yymsg(0, "Physical point %d does not exists", num);
+      }
+      else if(op == 0){
 	List_T *temp = ListOfDouble2ListOfInt($7);
-	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_POINT, temp);
+	p = Create_PhysicalGroup(num, MSH_PHYSICAL_POINT, temp);
 	List_Delete(temp);
 	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
+      }
+      else if(op == 1){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Add(p->Entities, &j);
+        }
+      }
+      else{
+	yymsg(0, "Unsupported operation on physical point %d", num);
       }
       List_Delete($7);
       $$.Type = MSH_PHYSICAL_POINT;
@@ -1623,17 +1639,33 @@ Shape :
       $$.Type = MSH_SEGM_COMPOUND;
       $$.Num = num;
     }
-  | tPhysical tLine '(' PhysicalId1 ')' tAFFECT ListOfDouble tEND
+  | tPhysical tLine '(' PhysicalId1 ')' NumericAffectation ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindPhysicalGroup(num, MSH_PHYSICAL_LINE)){
+      int op = $6;
+      PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_LINE);
+      if(p && op == 0){
 	yymsg(0, "Physical line %d already exists", num);
       }
-      else{
+      else if(!p && op > 0){
+	yymsg(0, "Physical line %d does not exists", num);
+      }
+      else if(op == 0){
 	List_T *temp = ListOfDouble2ListOfInt($7);
-	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_LINE, temp);
+	p = Create_PhysicalGroup(num, MSH_PHYSICAL_LINE, temp);
 	List_Delete(temp);
 	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
+      }
+      else if(op == 1){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Add(p->Entities, &j);
+        }
+      }
+      else{
+	yymsg(0, "Unsupported operation on physical line %d", num);
       }
       List_Delete($7);
       $$.Type = MSH_PHYSICAL_LINE;
@@ -1838,17 +1870,33 @@ Shape :
       $$.Type = MSH_SURF_COMPOUND;
       $$.Num = num;
     }
-  | tPhysical tSurface '(' PhysicalId2 ')' tAFFECT ListOfDouble tEND
+  | tPhysical tSurface '(' PhysicalId2 ')' NumericAffectation ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE)){
+      int op = $6;
+      PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE);
+      if(p && op == 0){
 	yymsg(0, "Physical surface %d already exists", num);
       }
-      else{
+      else if(!p && op > 0){
+	yymsg(0, "Physical surface %d does not exists", num);
+      }
+      else if(op == 0){
 	List_T *temp = ListOfDouble2ListOfInt($7);
-	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_SURFACE, temp);
+	p = Create_PhysicalGroup(num, MSH_PHYSICAL_SURFACE, temp);
 	List_Delete(temp);
 	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
+      }
+      else if(op == 1){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Add(p->Entities, &j);
+        }
+      }
+      else{
+	yymsg(0, "Unsupported operation on physical surface %d", num);
       }
       List_Delete($7);
       $$.Type = MSH_PHYSICAL_SURFACE;
@@ -1909,17 +1957,33 @@ Shape :
       $$.Type = MSH_VOLUME_COMPOUND;
       $$.Num = num;
     }
-  | tPhysical tVolume '(' PhysicalId3 ')' tAFFECT ListOfDouble tEND
+  | tPhysical tVolume '(' PhysicalId3 ')' NumericAffectation ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindPhysicalGroup(num, MSH_PHYSICAL_VOLUME)){
+      int op = $6;
+      PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_VOLUME);
+      if(p && op == 0){
 	yymsg(0, "Physical volume %d already exists", num);
       }
-      else{
+      else if(!p && op > 0){
+	yymsg(0, "Physical volume %d does not exists", num);
+      }
+      else if(op == 0){
 	List_T *temp = ListOfDouble2ListOfInt($7);
-	PhysicalGroup *p = Create_PhysicalGroup(num, MSH_PHYSICAL_VOLUME, temp);
+	p = Create_PhysicalGroup(num, MSH_PHYSICAL_VOLUME, temp);
 	List_Delete(temp);
 	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
+      }
+      else if(op == 1){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Add(p->Entities, &j);
+        }
+      }
+      else{
+	yymsg(0, "Unsupported operation on physical volume %d", num);
       }
       List_Delete($7);
       $$.Type = MSH_PHYSICAL_VOLUME;
