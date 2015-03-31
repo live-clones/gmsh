@@ -30,10 +30,10 @@ class eigenSolver {
               bool hermitian=true);
   bool solve(int numEigenValues=0, std::string which="", std::string method="krylovschur",
              double tolVal=1.e-7, int iterMax=20);
-  
+
   int getNumEigenValues() {return _eigenValues.size();}
   int getNumberEigenvectors() {return _eigenVectors.size();}
-  
+
   std::complex<double> getEigenValue(int num) {
     return _eigenValues[num];
   }
@@ -43,9 +43,9 @@ class eigenSolver {
   std::vector<std::complex<double> > &getEigenVector(int num) {
     return _eigenVectors[num];
   }
-  
-  void normalize_mode(double scale=1.);
-  
+
+  void normalize_mode(std::vector<int> modeView, double scale=1.);
+
   void clear() {
     _eigenValues.clear();
     _eigenVectors.clear();
@@ -73,7 +73,7 @@ class eigenSolver {
   std::complex<double> getEigenValue(int num) {return 0.;}
   std::complex<double> getEigenVectorComp(int num, int com) {return 0.;}
   std::vector<std::complex<double> > &getEigenVector(int num) {return _dummy;}
-  void normalize_mode(double scale=1.) {}
+  void normalize_mode(std::vector<int> modeView, double scale=1.) {}
   void clear() {}
 };
 

@@ -39,19 +39,19 @@ bool eigenSolver::solve(int numEigenValues, std::string which, std::string metho
   if(!_A) return false;
   Mat A = _A->getMatrix();
   Mat B = _B ? _B->getMatrix() : PETSC_NULL;
-  
+
   PetscInt N, M;
   _try(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
   _try(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
   _try(MatGetSize(A, &N, &M));
-  
+
   PetscInt N2, M2;
   if (_B) {
     _try(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
     _try(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
     _try(MatGetSize(B, &N2, &M2));
   }
-  
+
   // generalized eigenvalue problem A x - \lambda B x = 0
   EPS eps;
   _try(EPSCreate(PETSC_COMM_WORLD, &eps));
@@ -60,7 +60,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which, std::string metho
     _try(EPSSetProblemType(eps, _B ? EPS_GHEP : EPS_HEP));
   else
     _try(EPSSetProblemType(eps, _B ? EPS_GNHEP : EPS_NHEP));
-  
+
   // set some default options
   _try(EPSSetDimensions(eps, numEigenValues, PETSC_DECIDE, PETSC_DECIDE));
   _try(EPSSetTolerances(eps, tolVal, iterMax));
@@ -74,10 +74,10 @@ bool eigenSolver::solve(int numEigenValues, std::string which, std::string metho
     _try(EPSSetType(eps, EPSPOWER));
   else
     Msg::Fatal("eigenSolver: method '%s' not available", method.c_str());
-  
+
   // override these options at runtime, petsc-style
   _try(EPSSetFromOptions(eps));
-  
+
   // force options specified directly as arguments
   if (numEigenValues)
     _try(EPSSetDimensions(eps, numEigenValues, PETSC_DECIDE, PETSC_DECIDE));
@@ -87,7 +87,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which, std::string metho
     _try(EPSSetWhichEigenpairs(eps, EPS_SMALLEST_REAL));
   else if (which=="largest")
     _try(EPSSetWhichEigenpairs(eps, EPS_LARGEST_MAGNITUDE));
-  
+
   // print info
 #if (SLEPC_VERSION_RELEASE == 0 || (SLEPC_VERSION_MAJOR > 3 || (SLEPC_VERSION_MAJOR == 3 && SLEPC_VERSION_MINOR >= 4)))
   EPSType type;
@@ -96,7 +96,7 @@ bool eigenSolver::solve(int numEigenValues, std::string which, std::string metho
 #endif
   _try(EPSGetType(eps, &type));
   Msg::Debug("SLEPc solution method: %s", type);
-  
+
   PetscInt nev;
   _try(EPSGetDimensions(eps, &nev, PETSC_NULL, PETSC_NULL));
   Msg::Debug("SLEPc number of requested eigenvalues: %d", nev);
@@ -104,12 +104,12 @@ bool eigenSolver::solve(int numEigenValues, std::string which, std::string metho
   PetscInt maxit;
   _try(EPSGetTolerances(eps, &tol, &maxit));
   Msg::Debug("SLEPc stopping condition: tol=%g, maxit=%d", tol, maxit);
-  
+
   // solve
   Msg::Info("SLEPc solving...");
   double t1 = Cpu();
   _try(EPSSolve(eps));
-  
+
   // check convergence
   int its;
   _try(EPSGetIterationNumber(eps, &its));
@@ -127,12 +127,12 @@ bool eigenSolver::solve(int numEigenValues, std::string which, std::string metho
   else if (reason==EPS_DIVERGED_NONSYMMETRIC)
     Msg::Error("The operator is nonsymmetric");
 #endif
-  
+
   // get number of converged approximate eigenpairs
   PetscInt nconv;
   _try(EPSGetConverged(eps, &nconv));
   Msg::Debug("SLEPc number of converged eigenpairs: %d", nconv);
-  
+
   // ignore additional eigenvalues if we get more than what we asked
   if (nconv>nev) nconv = nev;
 
@@ -186,12 +186,13 @@ bool eigenSolver::solve(int numEigenValues, std::string which, std::string metho
     Msg::Warning("SLEPc failed");
     return false;
   }
-  
+
 }
 
-void eigenSolver::normalize_mode(double scale) {
+void eigenSolver::normalize_mode(std::vector<int> modeView, double scale) {
   Msg::Info("Normalize all eigenvectors");
-  for (unsigned int i=0; i<_eigenVectors.size(); i++) {
+  for (unsigned int imode=0; imode<modeView.size(); imode++) {
+    int i = modeView[imode];
     double norm = 0.;
     for (unsigned int j=0; j<_eigenVectors[i].size(); j++) {
       std::complex<double> val = _eigenVectors[i][j];
