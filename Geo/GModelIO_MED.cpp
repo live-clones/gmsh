@@ -374,7 +374,10 @@ int GModel::readMED(const std::string &name, int meshIndex)
       for(int k = 0; k < numNodPerEle; k++)
         v[k] = verts[conn[numNodPerEle * j + med2mshNodeIndex(type, k)] - 1];
       MElement *e = factory.create(mshType, v, eleTags.empty() ? 0 : eleTags[j]);
-      if(e) elements[-fam[j]].push_back(e);
+      // according to the MED documentation, fam[j] should be negative; still,
+      // accept all family ids, even positive, as some code do not export valid
+      // MED files
+      if(e) elements[std::abs(fam[j])].push_back(e);
     }
     _storeElementsInEntities(elements);
   }
@@ -429,7 +432,9 @@ int GModel::readMED(const std::string &name, int meshIndex)
       continue;
     }
 #endif
-    // family tags are unique (for all dimensions)
+    // element family tags are unique (for all dimensions), and <= 0 (node
+    // family tags are positive - these will simply never match any Gmsh GEntity
+    // tag and will be ignored)
     GEntity *ge;
     if((ge = getRegionByTag(-familyNum))){}
     else if((ge = getFaceByTag(-familyNum))){}
