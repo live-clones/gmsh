@@ -374,7 +374,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
       for(int k = 0; k < numNodPerEle; k++)
         v[k] = verts[conn[numNodPerEle * j + med2mshNodeIndex(type, k)] - 1];
       MElement *e = factory.create(mshType, v, eleTags.empty() ? 0 : eleTags[j]);
-      if(e) elements[std::abs(fam[j])].push_back(e);
+      if(e) elements[-fam[j]].push_back(e);
     }
     _storeElementsInEntities(elements);
   }
@@ -431,12 +431,12 @@ int GModel::readMED(const std::string &name, int meshIndex)
 #endif
     // family tags are unique (for all dimensions)
     GEntity *ge;
-    if((ge = getRegionByTag(std::abs(familyNum)))){}
-    else if((ge = getFaceByTag(std::abs(familyNum)))){}
-    else if((ge = getEdgeByTag(std::abs(familyNum)))){}
-    else ge = getVertexByTag(std::abs(familyNum));
+    if((ge = getRegionByTag(-familyNum))){}
+    else if((ge = getFaceByTag(-familyNum))){}
+    else if((ge = getEdgeByTag(-familyNum))){}
+    else ge = getVertexByTag(-familyNum);
     if(ge){
-      elementaryNames[std::pair<int, int>(ge->dim(), std::abs(familyNum))] = familyName;
+      elementaryNames[std::pair<int, int>(ge->dim(), -familyNum)] = familyName;
       if(numGroups > 0){
         for(int j = 0; j < numGroups; j++){
           char tmp[MED_TAILLE_LNOM + 1];
@@ -558,9 +558,8 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
 #endif
       Msg::Error("Could not create MED family 0");
 
-    // create one family per elementary entity, with one group per physical
-    // entity and no attributes; we use negative family numbers, as intructed by
-    // Code_Aster devs.
+    // create one family per elementary entity, with one group per
+    // physical entity and no attributes
     for(unsigned int i = 0; i < entities.size(); i++){
       if(saveAll || entities[i]->physicals.size()){
         int num = - ((int)families.size() + 1);
