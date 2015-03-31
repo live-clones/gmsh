@@ -79,7 +79,7 @@ void GenericFace::secondDer(const SPoint2 &param,SVector3 *dudu, SVector3 *dvdv,
   std::vector<double> dervv(3,0.);
   std::vector<double> deruv(3,0.);
   std::vector<double> par(2,0.);
-  for (int i=0;i<3;i++) par[i] = param[i];
+  for (int i=0;i<2;i++) par[i] = param[i];
   if (!FaceSecondDer) Msg::Fatal("Genericface::ERROR: Callback FaceSecondDer not set");
   bool ok = FaceSecondDer(id,par,deruu,dervv,deruv);
   if (!ok) Msg::Error("GenericFace::ERROR from FaceSecondDer ! " );
@@ -190,7 +190,7 @@ double GenericFace::curvatureMax(const SPoint2 &param) const
   std::vector<double> dirMin(3,0.);
   double curvMax,curvMin;
   std::vector<double> par(2,0.);
-  for (int i=0;i<3;i++) par[i] = param[i];
+  for (int i=0;i<2;i++) par[i] = param[i];
   if (!FaceCurvatures) Msg::Fatal("Genericface::ERROR: Callback FaceCurvatures not set");
   bool ok = FaceCurvatures(id,par,dirMax,dirMin,curvMax,curvMin);
   if (!ok) Msg::Error("GenericFace::ERROR from FaceCurvatures ! " );
@@ -201,7 +201,7 @@ double GenericFace::curvatures(const SPoint2 &_param,SVector3 *_dirMax,SVector3 
                                double *curvMax,double *curvMin) const
 {
   std::vector<double> param(2,0.);
-  for (int i=0;i<3;i++) param[i] = _param[i];
+  for (int i=0;i<2;i++) param[i] = _param[i];
   std::vector<double> dirMax(3,0.);
   std::vector<double> dirMin(3,0.);
 
