@@ -5174,11 +5174,9 @@ You can create simple MPEG animations by choosing MPEG as the format in
 post-processing data sets, or to change parameters according to
 @code{Print.Parameter}. To create fully customized animations or to use
 different output formats (AVI, MP4, etc.) you should write a
-script. Have a look at
-@url{https://geuz.org/svn/gmsh/trunk/tutorial/t8.geo,t8.geo}@footnote{Login
-and password: @code{gmsh}.} or
-@url{https://geuz.org/svn/gmsh/trunk/demos/anim.script,demos/anim.script}
-for some examples.
+script. Have a look at @ref{t8.geo} or
+@url{https://geuz.org/svn/gmsh/trunk/demos/anim.script,demos/anim.script}@footnote{Login
+and password: @code{gmsh}.} for some examples.
 
 @item Can I change values in input fields with the mouse in the GUI?
 
