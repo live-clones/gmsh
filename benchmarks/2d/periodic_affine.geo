@@ -139,7 +139,7 @@ Volume(193) = {192};
 Surface Loop(194) = {76, 56, 54, 58, 78, 66, 160, 118, 80, 82, 101, 111, 70, 96, 183, 64, 84, 150, 123, 86, 68, 143, 60, 62, 191, 178, 155, 168, 91, 173, 90, 88, 128, 133};
 Volume(195) = {194};
 
-//Conditions maitre-esclave :
+//Conditions maitre-esclave : ici en utilisant une transformation affine explicite
 //---------------------------
 Periodic Surface 168 {157, 92, 171, 172} = 54 {45, 46, 43, 44} Using {1,0,0,0, 0,-1,0,0, 0,0,-1,0, 0,0,0,1};
 

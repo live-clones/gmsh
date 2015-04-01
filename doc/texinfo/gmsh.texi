@@ -453,7 +453,8 @@ computations and process the results directly from within Gmsh's
 post-processing module. The default solver interfaced with Gmsh is GetDP
 (@uref{http://geuz.org/getdp/}). Examples on how to interface other
 solvers are available in the source distribution (in the
-@file{utils/solvers/} directory).
+@url{https://geuz.org/svn/gmsh/trunk/utils/solvers/,utils/solvers}
+@footnote{Login and password: @code{gmsh}.} directory).
 
 @c -------------------------------------------------------------------------
 @c Post-processing: scalar, vector and tensor field visualization
@@ -592,13 +593,14 @@ developers}) to remedy the aforementioned (and all other) shortcomings!
 @cindex E-mail, authors
 
 If you think you have found a bug in Gmsh, you can report it by email to
-the public Gmsh mailing list at @email{gmsh@@geuz.org}, or file it directly
-into our bug tracking database at @url{https://geuz.org/trac/gmsh/report} 
-(login: gmsh, password: gmsh). Please send as precise a description of
-the problem as you can, including sample input files that produce the
-bug. Don't forget to mention both the version of Gmsh and the version of
-your operation system (@pxref{Command-line options} to see how to get
-this information).
+the public Gmsh mailing list at @email{gmsh@@geuz.org}, or file it
+directly into our bug tracking database at
+@url{https://geuz.org/trac/gmsh/report}@footnote{Login and password:
+@code{gmsh}.}. Please send as precise a description of the problem as
+you can, including sample input files that produce the bug. Don't forget
+to mention both the version of Gmsh and the version of your operation
+system (@pxref{Command-line options} to see how to get this
+information).
 
 See @ref{Frequently asked questions}, and the bug tracking system to see
 which problems we already know about.
@@ -655,9 +657,12 @@ Application Programming Interface (API). No complete documentation of
 this API is available yet; a good starting point is @ref{Source code
 structure}, which gives a short introduction to Gmsh's internal source
 code structure. Then have a look e.g. at the examples in the
-@file{utils/api_demos/} directory in the source code.  To build the
+@url{https://geuz.org/svn/gmsh/trunk/utils/api_demos/,utils/api_demos}@footnote{Login
+and password: @code{gmsh}.} directory in the source code.  To build the
 library see the instructions in @ref{Compiling the source code} and in
-the top-level @file{README.txt} file in the source distribution.
+the top-level
+@url{https://geuz.org/svn/gmsh/trunk/README.txt,README.txt} file in the
+source distribution.
 
 @c -------------------------------------------------------------------------
 @c Syntactic rules used in the manual
@@ -737,8 +742,10 @@ on the right, and a status bar at the bottom. (You can detach the tree
 menu using `Window->Attach/Detach Menu'.)
 
 To open the first tutorial file (@pxref{Tutorial}), select the
-`File->Open' menu, and choose @file{t1.geo}. When using a terminal, you
-can specify the file name directly on the command line, i.e.:
+`File->Open' menu, and choose
+@url{https://geuz.org/svn/gmsh/trunk/tutorial/t1.geo,t1.geo}@footnote{Login
+and password: @code{gmsh}.}. When using a terminal, you can specify the
+file name directly on the command line, i.e.:
 
 @example
 > gmsh t1.geo
@@ -773,9 +780,12 @@ Several files can be loaded simultaneously in Gmsh. When specified on
 the command line, the first one defines the active model and the others
 are `merged' into this model. You can merge such files with the
 `File->Merge' menu. For example, to merge the post-processing views
-contained in the files @file{view1.pos} and @file{view5.msh} together
-with the geometry of the first tutorial @file{t1.geo}, you can type the
-following command:
+contained in the files
+@url{https://geuz.org/svn/gmsh/trunk/tutorial/view1.pos,view1.pos}@footnote{Login
+and password: @code{gmsh}.} and
+@url{https://geuz.org/svn/gmsh/trunk/tutorial/view5.msh,view5.msh}
+together with the geometry of the first tutorial @ref{t1.geo}, you can
+type the following command:
 
 @example
 > gmsh t1.geo view1.pos view5.msh
@@ -824,8 +834,10 @@ to mesh the first tutorial in batch mode, just type:
 > gmsh t1.geo -2
 @end example
 
-To mesh the same example, but with the background mesh available in the file
-@file{bgmesh.pos}, type:
+To mesh the same example, but with the background mesh available in the
+file
+@url{https://geuz.org/svn/gmsh/trunk/tutorial/bgmesh.pos,bgmesh.pos}@footnote{Login
+and password: @code{gmsh}.}, type:
 
 @example
 > gmsh t1.geo -2 -bgm bgmesh.pos
@@ -1170,11 +1182,13 @@ Colors expressions are hybrids between fixed-length braced
 
 @noindent The first case permits to use the X Windows names to refer to colors,
 e.g., @code{Red}, @code{SpringGreen}, @code{LavenderBlush3}, @dots{}
-(see @file{Common/Colors.h} in the source code for a complete list). The
-second case permits to define colors by using three expressions to
-specify their red, green and blue components (with values comprised
-between 0 and 255). The third case permits to define colors by using
-their red, green and blue color components as well as their alpha
+(see
+@url{https://geuz.org/svn/gmsh/trunk/Common/Colors.h,Common/Colors.h}@footnote{Login
+and password: @code{gmsh}.} in the source code for a complete
+list). The second case permits to define colors by using three
+expressions to specify their red, green and blue components (with values
+comprised between 0 and 255). The third case permits to define colors by
+using their red, green and blue color components as well as their alpha
 channel. The last case permits to use the value of a @var{color-option}
 as a @var{color-expression}. The various @w{@var{color-option}s} are
 listed in @ref{Options}.
@@ -2961,10 +2975,12 @@ solver module, you need to specify its name (@code{Solver.Name0},
 @ref{Solver options list}).
 
 The client-server API for the solver interface is defined in the
-@file{onelab.h} header. See @file{utils/solvers/c++/solver.cpp} for a
-simple example on how to use the ONELAB programming interface. See the
-sources of GetDP (@url{http://geuz.org/getdp} for a more comprehensive
-example.
+@url{https://geuz.org/svn/gmsh/trunk/Common/onelab.h,onelab.h}@footnote{Login
+and password: @code{gmsh}.} header. See
+@url{https://geuz.org/svn/gmsh/trunk/utils/solvers/c++/solver.cpp,utils/solvers/c++/solver.cpp}
+for a simple example on how to use the ONELAB programming interface. See
+the sources of GetDP (@url{http://geuz.org/getdp} for a more
+comprehensive example.
 
 @menu
 * Solver options::              
@@ -3052,10 +3068,12 @@ labels, etc.). Note that 2D plots can be positioned explicitly inside the
 graphical window, or be automatically positioned in order to avoid overlaps.
 
 Sample post-processing files in human-readable ``parsed'' format and in
-the native MSH file format are available in the @file{tutorial}
-directory of Gmsh's distribution (@file{.pos} and @file{.msh}
-files). The ``parsed'' format is defined in the next section (cf. the
-@code{View} command); the MSH format is defined in @ref{File formats}.
+the native MSH file format are available in the
+@url{https://geuz.org/svn/gmsh/trunk/tutorial,tutorial}@footnote{Login
+and password: @code{gmsh}.} directory of Gmsh's distribution
+(@file{.pos} and @file{.msh} files). The ``parsed'' format is defined in
+the next section (cf. the @code{View} command); the MSH format is
+defined in @ref{File formats}.
 
 @menu
 * Post-processing commands::    
@@ -4429,8 +4447,10 @@ the same for all other kinds of values.
 @cindex Tutorial
 
 The following examples introduce new features gradually, starting with
-@file{t1.geo}. The files corresponding to these examples are available
-in the @file{tutorial} directory of the Gmsh distribution.
+@ref{t1.geo}. The files corresponding to these examples are available in
+the
+@url{https://geuz.org/svn/gmsh/trunk/tutorial,tutorial}@footnote{Login
+and password: @code{gmsh}.} directory of the Gmsh distribution.
 
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
 system}. Screencasts that show how to use the GUI are available on
@@ -4459,7 +4479,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t1.geo, t2.geo, Tutorial, Tutorial
-@section @file{t1.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t1.geo,t1.geo}
 
 @verbatiminclude ../../tutorial/t1.geo
 
@@ -4468,7 +4488,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t2.geo, t3.geo, t1.geo, Tutorial
-@section @file{t2.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t2.geo,t2.geo}
 
 @verbatiminclude ../../tutorial/t2.geo
 
@@ -4477,7 +4497,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t3.geo, t4.geo, t2.geo, Tutorial
-@section @file{t3.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t3.geo,t3.geo}
 
 @verbatiminclude ../../tutorial/t3.geo
 
@@ -4486,7 +4506,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t4.geo, t5.geo, t3.geo, Tutorial
-@section @file{t4.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t4.geo,t4.geo}
 
 @verbatiminclude ../../tutorial/t4.geo
 
@@ -4495,7 +4515,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t5.geo, t6.geo, t4.geo, Tutorial
-@section @file{t5.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t5.geo,t5.geo}
 
 @verbatiminclude ../../tutorial/t5.geo
 
@@ -4504,7 +4524,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t6.geo, t7.geo, t5.geo, Tutorial
-@section @file{t6.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t6.geo,t6.geo}
 
 @verbatiminclude ../../tutorial/t6.geo
 
@@ -4513,7 +4533,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t7.geo, t8.geo, t6.geo, Tutorial
-@section @file{t7.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t7.geo,t7.geo}
 
 @verbatiminclude ../../tutorial/t7.geo
 
@@ -4522,7 +4542,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t8.geo, t9.geo, t7.geo, Tutorial
-@section @file{t8.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t8.geo,t8.geo}
 
 @verbatiminclude ../../tutorial/t8.geo
 
@@ -4531,7 +4551,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t9.geo, t10.geo, t8.geo, Tutorial
-@section @file{t9.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t9.geo,t9.geo}
 
 @verbatiminclude ../../tutorial/t9.geo
 
@@ -4540,7 +4560,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t10.geo, t11.geo, t9.geo, Tutorial
-@section @file{t10.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t10.geo,t10.geo}
 
 @verbatiminclude ../../tutorial/t10.geo
 
@@ -4549,7 +4569,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t11.geo, t12.geo, t10.geo, Tutorial
-@section @file{t11.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t11.geo,t11.geo}
 
 @verbatiminclude ../../tutorial/t11.geo
 
@@ -4558,7 +4578,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t12.geo, t13.geo, t11.geo, Tutorial
-@section @file{t12.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t12.geo,t12.geo}
 
 @verbatiminclude ../../tutorial/t12.geo
 
@@ -4567,7 +4587,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t13.geo, t14.geo, t12.geo, Tutorial
-@section @file{t13.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t13.geo,t13.geo}
 
 @verbatiminclude ../../tutorial/t13.geo
 
@@ -4576,7 +4596,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t14.geo, t15.geo, t13.geo, Tutorial
-@section @file{t14.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t14.geo,t14.geo}
 
 @verbatiminclude ../../tutorial/t14.geo
 
@@ -4585,7 +4605,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t15.geo,  , t14.geo, Tutorial
-@section @file{t15.geo}
+@section @url{https://geuz.org/svn/gmsh/trunk/tutorial/t15.geo,t15.geo}
 
 @verbatiminclude ../../tutorial/t15.geo
 
@@ -4686,7 +4706,7 @@ by hand.
 @appendix Compiling the source code
 
 Stable releases and nightly source snapshots are available from
-@uref{http://geuz.org/gmsh/src/}. You can also access the subversion
+@url{http://geuz.org/gmsh/src/}. You can also access the subversion
 repository directly:
 
 @enumerate
@@ -4694,7 +4714,7 @@ repository directly:
 The first time you want to download the latest full source, type:
 
 @example
-svn co https://geuz.org/svn/gmsh/trunk gmsh
+svn co @url{https://geuz.org/svn/gmsh/trunk} gmsh
 @end example
 
 You will be asked to accept the security certificate and to provide your
@@ -4736,8 +4756,10 @@ svn update --set-depth infinity
 @end enumerate
 
 Once you have the source code, you need to run CMake to configure your
-build (see the @file{README.txt} file in the top-level source directory
-for detailed information on how to run CMake). 
+build (see the
+@url{https://geuz.org/svn/gmsh/trunk/README.txt,README.txt}@footnote{Login
+and password: @code{gmsh}.} file in the top-level source directory for
+detailed information on how to run CMake).
 
 Each build can be configured using a series of options, to selectively
 enable optional modules or features. Here is the list of CMake options:
@@ -4780,21 +4802,35 @@ source code is provided in @ref{Compiling the source code} (see also
 @section Source code structure
 
 Gmsh's code is structured in several subdirectories, roughly separated
-between the four core modules (@file{Geo}, @file{Mesh}, @file{Solver},
-@file{Post}) and associated utilities (@file{Common}, @file{Numeric}) on
-one hand, and the graphics (@file{Graphics}) and interface (@file{Fltk},
-@file{Parser}) code on the other.
+between the four core modules
+(@url{https://geuz.org/svn/gmsh/trunk/Geo,Geo}@footnote{Login and
+password: @code{gmsh}.},
+@url{https://geuz.org/svn/gmsh/trunk/Mesh,Mesh},
+@url{https://geuz.org/svn/gmsh/trunk/Solver,Solver},
+@url{https://geuz.org/svn/gmsh/trunk/Post,Post}) and associated
+utilities (@url{https://geuz.org/svn/gmsh/trunk/Common,Common},
+@url{https://geuz.org/svn/gmsh/trunk/Numeric,Numeric}) on one hand, and
+the graphics (@url{https://geuz.org/svn/gmsh/trunk/Graphics,Graphics})
+and interface (@url{https://geuz.org/svn/gmsh/trunk/Fltk,Fltk},
+@url{https://geuz.org/svn/gmsh/trunk/Parser,Parser}) code on the other.
 
 The geometry and mesh modules are based on an object-oriented model
-class (@file{Geo/GModel.h}), built upon abstract geometrical entity
-classes (@file{Geo/GVertex.h}, @file{Geo/GEdge.h}, @file{Geo/GFace.h}
-and @file{Geo/GRegion.h}). Concrete implementations of the geometrical
-entity classes are provided for each supported CAD kernel
-(e.g. @file{Geo/gmshVertex.h} for geometry points in Gmsh's native CAD
-format, or @file{Geo/OCCVertex.h} for geometry points from
-OpenCASCADE). The post-processing module is based on the concept of
-views (@file{Post/PView.h}) and abstract data containers (derived from
-@file{Post/PViewData.h}).
+class (@url{https://geuz.org/svn/gmsh/trunk/Geo/GModel.h,Geo/GModel.h}),
+built upon abstract geometrical entity classes
+(@url{https://geuz.org/svn/gmsh/trunk/Geo/GVertex.h,Geo/GVertex.h},
+@url{https://geuz.org/svn/gmsh/trunk/Geo/GEdge.h,Geo/GEdge.h},
+@url{https://geuz.org/svn/gmsh/trunk/Geo/GFace.h,Geo/GFace.h} and
+@url{https://geuz.org/svn/gmsh/trunk/Geo/GRegion.h,Geo/GRegion.h}). Concrete
+implementations of the geometrical entity classes are provided for each
+supported CAD kernel
+(e.g. @url{https://geuz.org/svn/gmsh/trunk/Geo/gmshVertex.h,Geo/gmshVertex.h}
+for geometry points in Gmsh's native CAD format, or
+@url{https://geuz.org/svn/gmsh/trunk/Geo/OCCVertex.h,Geo/OCCVertex.h}
+for geometry points from OpenCASCADE). The post-processing module is
+based on the concept of views
+(@url{https://geuz.org/svn/gmsh/trunk/Post/PView.h,Post/PView.h}) and
+abstract data containers (derived from
+@url{https://geuz.org/svn/gmsh/trunk/Post/PViewData.h,Post/PViewData.h}).
 
 @c -------------------------------------------------------------------------
 @c Coding style
@@ -4858,19 +4894,26 @@ To add a new option in Gmsh:
 
 @enumerate
 @item
-create the option in the @code{CTX} class (@file{Common/Context.h}) if
-it's a classical option, or in the @code{PViewOptions} class
-(@file{Post/PViewOptions.h}) if it's a post-processing view-dependent
+create the option in the @code{CTX} class
+(@url{https://geuz.org/svn/gmsh/trunk/Common/Context.h,Common/Context.h}@footnote{Login
+and password: @code{gmsh}.}) if it's a classical option, or in the
+@code{PViewOptions} class
+(@url{https://geuz.org/svn/gmsh/trunk/Post/PViewOptions.h,Post/PViewOptions.h})
+if it's a post-processing view-dependent option;
+@item
+in
+@url{https://geuz.org/svn/gmsh/trunk/Common/DefaultOptions.h,Common/DefaultOptions.h},
+give a name (for the parser to be able to access it), a reference to a
+handling routine (i.e. @code{opt_XXX}) and a default value for this
 option;
 @item
-in @file{Common/DefaultOptions.h}, give a name (for the parser to be able to
-access it), a reference to a handling routine (i.e. @code{opt_XXX}) and a
-default value for this option;
+create the handling routine @code{opt_XXX} in
+@url{https://geuz.org/svn/gmsh/trunk/Common/Options.cpp,Common/Options.cpp}
+(and add the prototype in
+@url{https://geuz.org/svn/gmsh/trunk/Common/Options.h,Common/Options.h});
 @item
-create the handling routine @code{opt_XXX} in @file{Common/Options.cpp} (and
-add the prototype in @file{Common/Options.h});
-@item
-optional: create the associated widget in @file{Fltk/optionWindow.cpp};
+optional: create the associated widget in
+@url{https://geuz.org/svn/gmsh/trunk/Fltk/optionWindow.cpp,Fltk/optionWindow.h};
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -5064,8 +5107,10 @@ found at @url{http://www.mesa3d.org}.
 @item How do I compile Gmsh from the source code?
 
 You need cmake (@url{http://www.cmake.org}) and a C++ compiler. See
-@ref{Compiling the source code} and the @file{README.txt} file in the
-top-level source directory for more information.
+@ref{Compiling the source code} and the
+@url{https://geuz.org/svn/gmsh/trunk/README.txt,README.txt}@footnote{Login
+and password: @code{gmsh}.} file in the top-level source directory for
+more information.
 
 @item Where does Gmsh save its configuration files?
 
@@ -5129,8 +5174,11 @@ You can create simple MPEG animations by choosing MPEG as the format in
 post-processing data sets, or to change parameters according to
 @code{Print.Parameter}. To create fully customized animations or to use
 different output formats (AVI, MP4, etc.) you should write a
-script. Have a look at @file{tutorial/t8.geo} or
-@file{demos/anim.script} for some examples.
+script. Have a look at
+@url{https://geuz.org/svn/gmsh/trunk/tutorial/t8.geo,t8.geo}@footnote{Login
+and password: @code{gmsh}.} or
+@url{https://geuz.org/svn/gmsh/trunk/demos/anim.script,demos/anim.script}
+for some examples.
 
 @item Can I change values in input fields with the mouse in the GUI?
 
@@ -5276,9 +5324,10 @@ panel. From the command line, you can also use @code{-order 2}.
 
 @item Can I import an existing surface mesh in Gmsh and use it to build a 3D mesh?
 
-Yes, you can import a surface mesh in any one of the supported mesh
-file formats, define a volume, and mesh it. For an example see
-@file{demos/sphere-discrete.geo}.
+Yes, you can import a surface mesh in any one of the supported mesh file
+formats, define a volume, and mesh it. For an example see
+@url{https://geuz.org/svn/gmsh/trunk/demos/sphere-discrete.geo,demos/sphere-discrete.geo}@footnote{Login
+and password: @code{gmsh}.}.
 
 @item How do I define boundary conditions or material properties in Gmsh?
 
@@ -5289,7 +5338,7 @@ elements, and it is up to the solver to interpret these tags as boundary
 conditions, materials, etc. Associating tags with elements in Gmsh is
 done by defining Physical entities (Physical Points, Physical Lines,
 Physical Surfaces and Physical Volumes). See the reference manual as
-well as the tutorials (in particular @file{tutorial/t1.geo}) for a detailed
+well as the tutorials (in particular @ref{t1.geo}) for a detailed
 description and some examples.
 
 @item How can I display only the mesh associated with selected geometrical entities?
@@ -5345,13 +5394,14 @@ solver (@url{http://geuz.org/getdp}) to see how this is done.
 
 Sure. The simplest (but rather crude) approach if to re-launch Gmsh
 everytime you want to visualize something (a simple C program showing
-how to do this is given in @file{utils/misc/callgmsh.c}). A better approach
-is to modify your program so that it can communicate with Gmsh over a
-socket (see ``How do I integrate my own solver with Gmsh?'' above; you
-can skip the option file creation). Then select `Always listen to
-incoming connection requests' in the solver option panel (or run gmsh
-with the @code{-listen} command line option) and Gmsh will always listen for
-your program on the Solver.SocketName socket.
+how to do this is given in
+@url{https://geuz.org/svn/gmsh/trunk/utils/misc/callgmsh.c,utils/misc/callgmsh.c}). A
+better approach is to modify your program so that it can communicate
+with Gmsh over a socket (see ``How do I integrate my own solver with
+Gmsh?''  above; you can skip the option file creation). Then select
+`Always listen to incoming connection requests' in the solver option
+panel (or run gmsh with the @code{-listen} command line option) and Gmsh
+will always listen for your program on the Solver.SocketName socket.
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -5435,7 +5485,9 @@ Evaluate plugin.
 
 You can save simple MPEG animations directly from the `File->Save As'
 menu. For other formats you should write a script. Have a look at
-@file{tutorial/t8.geo} or @file{demos/anim.script} for some examples.
+@ref{t8.geo} or
+@url{https://geuz.org/svn/gmsh/trunk/demos/anim.script,demos/anim.script}
+for some examples.
 
 @item Is there a way to visualize only certain components of vector/tensor fields?
 
