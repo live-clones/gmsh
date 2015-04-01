@@ -1694,7 +1694,7 @@ StringXNumber PrintOptions_Number[] = {
 
 StringXColor GeneralOptions_Color[] = {
   { F|O, "Background" , opt_general_color_background ,
-    {245, 245, 245, 255}, {255, 255, 255, 255}, {245, 245, 245, 255}, {10, 10, 10, 255},
+    {245, 245, 245, 255}, {255, 255, 255, 255}, {245, 245, 245, 255}, {50, 50, 50, 255},
     "Background color" },
   { F|O, "BackgroundGradient" , opt_general_color_background_gradient ,
     {165, 165, 165, 255}, {208, 215, 255, 255}, {165, 165, 165, 255}, {50, 50, 50, 255},
