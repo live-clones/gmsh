@@ -979,14 +979,16 @@ double gLevelsetDistMesh::operator()(double x, double y, double z) const
       Msg::Error("Cannot compute a distance to an entity of dimension %d\n",
                  (*it)->getDim());
     }
-    if(fabs(distance) == fabs(minDistance)){
-      closestElements.push_back(*it);
-    }
-    if(fabs(distance) < fabs(minDistance)){
-      closestPoint = closePt;
-      minDistance = distance;
-      closestElements.clear();
-      closestElements.push_back(*it);
+    if ((*it)->getDim() == 2) {
+      if(fabs(distance) == fabs(minDistance)){
+        closestElements.push_back(*it);
+      }
+      if(fabs(distance) < fabs(minDistance)){
+        closestPoint = closePt;
+        minDistance = distance;
+        closestElements.clear();
+        closestElements.push_back(*it);
+      }
     }
   }
   if(closestElements.size() > 1){
