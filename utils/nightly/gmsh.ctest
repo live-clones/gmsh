@@ -101,4 +101,6 @@ macro(upload_package WEB ARCH EXTRA EXT1 EXT2)
       endif(${FILE} MATCHES "-svn")
     endif(FILE)
   endif($ENV{GMSH_BUILD_ERRORS} GREATER 0)
+  # also remove build files here to save space
+  ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
 endmacro(upload_package)
