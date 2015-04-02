@@ -6,6 +6,7 @@
 }
 
 %fragment("fullMatrixConversion", "header", fragment="fullMatrixConversionInit") {
+  %#undef HAVE_DLOPEN
   %#include "fullMatrix.h"
   %#include "GmshConfig.h"
   %#ifdef HAVE_NUMPY

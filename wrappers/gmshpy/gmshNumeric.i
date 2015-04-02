@@ -19,6 +19,8 @@
   #include "pyramidalBasis.h"
 %}
 
+%rename("_assign=") operator();
+%rename("_assign_operator=") operator=;
 %include "GaussIntegration.h"
 %include "JacobianBasis.h"
 %include "fullMatrix.h"
