@@ -6,6 +6,7 @@
 %import "gmshtypemaps.i"
 
 %{
+  #undef HAVE_DLOPEN
   #include "GmshConfig.h"
 #if defined(HAVE_SOLVER)
   #include "dofManager.h"
@@ -19,6 +20,8 @@
   #include "eigenSolver.h"
 #endif
 %}
+
+%rename ("_print") *::print;
 
 %include "GmshConfig.h"
 #if defined(HAVE_SOLVER)

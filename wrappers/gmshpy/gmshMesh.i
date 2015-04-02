@@ -5,6 +5,7 @@
 %import "gmshtypemaps.i"
 
 %{
+  #undef HAVE_DLOPEN
   #include "GmshConfig.h"
 #if defined(HAVE_MESH)
   #include "Generator.h"
@@ -49,6 +50,7 @@ namespace std {
 %include "GmshConfig.h"
 #if defined(HAVE_MESH)
 %include "Generator.h"
+#pragma SWIG nowarn=314
 %include "DivideAndConquer.h"
 #if defined(HAVE_BFGS)
 %include "meshGFaceLloyd.h"
@@ -65,6 +67,7 @@ namespace std {
 #if defined(HAVE_METIS) || defined(HAVE_CHACO)
 %include "meshPartition.h"
 #endif
+%warnfilter(401) FieldManager;
 %include "Field.h"
 %extend FieldManager {
   int addPythonField(PyObject *callback, int id = -1) {

@@ -1,4 +1,5 @@
 %feature("autodoc", "1");
+#pragma SWIG nowarn=312
 %module gmshGeo
 
 %include std_string.i
@@ -7,6 +8,7 @@
 %import "gmshtypemaps.i"
 
 %{
+  #undef HAVE_DLOPEN
   #include "GmshConfig.h"
 
   #include "GModel.h"
@@ -17,7 +19,6 @@
   #include "GFace.h"
   #include "GFaceCompound.h"
   #include "GRegion.h"
-  #include "GPoint.h"
   #include "discreteFace.h"
   #include "discreteEdge.h"
   #include "discreteRegion.h"
@@ -64,6 +65,23 @@ namespace std {
   %template(SPoint3Vector) std::vector<SPoint3, std::allocator<SPoint3> >;
 }
 
+%rename(__add__) *::operator+;
+%rename(__sub__) *::operator-;
+%rename(__neg__) *::operator-();
+%rename(_operator_mult) *::operator*;
+%rename(_operator_assign) *::operator=;
+%rename(_operator_equal) *::operator==;
+%ignore operator+;
+%ignore operator-;
+%ignore operator*;
+%ignore operator==;
+%ignore operator!=;
+%ignore operator double*;
+%ignore *::operator[](int);
+%rename(at) *::operator[];
+%rename(_print) *::print;
+
+
 %include "GmshConfig.h"
 %include "simpleFunction.h"
 %template(simpleFunctionDouble) simpleFunction<double>;
@@ -73,31 +91,42 @@ namespace std {
 }
 
 %include "GModel.h"
+%ignore GPoint::x();
+%ignore GPoint::y();
+%ignore GPoint::z();
 %include "GPoint.h"  
 %include "GEntity.h"
 %include "GVertex.h"
 %apply std::vector<double> &OUTPUT{std::vector<double> &ts}
 %apply std::vector<SPoint3> &OUTPUT{std::vector<SPoint3> &dpts}
 %include "GEdge.h"
+%ignore GFace::computeMeanPlane(std::vector< MVertex *>const&);
 %include "GFace.h"
 %include "GFaceCompound.h"
 %include "GRegion.h"
-%include "GPoint.h"
 %include "discreteFace.h"
 %include "discreteEdge.h"
 %include "discreteVertex.h"
 %include "discreteRegion.h"
 %include "SPoint3.h"
 %include "MElement.h"
+%ignore MVertex::x();
+%ignore MVertex::y();
+%ignore MVertex::z();
 %include "MVertex.h"
 %include "MTriangle.h"
 %include "MPrism.h"
 %include "MHexahedron.h"
 %include "MQuadrangle.h"
 %include "MLine.h"
+%warnfilter(401) Equal_Edge;
+%warnfilter(401) Less_Edge;
 %include "MEdge.h"
+%warnfilter(401) Equal_Face;
+%warnfilter(401) Less_Face;
 %include "MFace.h"
 %include "MPoint.h"
+%ignore SVector3::operator()(int);
 %include "SVector3.h"
 %include "SPoint2.h"
 %include "SBoundingBox3d.h"

@@ -1,4 +1,5 @@
 %feature("autodoc", "1");
+#pragma SWIG nowarn=312
 %module gmshCommon
 
 %include std_string.i
@@ -8,6 +9,7 @@
 %import "gmshtypemaps.i"
 
 %{
+  #undef HAVE_DLOPEN
   #include "GmshConfig.h"
 
   #include "Context.h"

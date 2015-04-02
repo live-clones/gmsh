@@ -7,6 +7,7 @@
 %import "gmshtypemaps.i"
 
 %{
+  #undef HAVE_DLOPEN
   #include "GmshConfig.h"
   #include "fullMatrix.h"
 #if defined(HAVE_POST)

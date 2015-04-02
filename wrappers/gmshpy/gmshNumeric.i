@@ -1,11 +1,13 @@
 %feature("autodoc", "1");
 %module gmshNumeric
+#pragma SWIG nowarn=325
 
 %include std_string.i
 %include std_vector.i
 %import "gmshtypemaps.i"
 
 %{
+  #undef HAVE_DLOPEN
   #include "GmshConfig.h"
 
   #include "GaussIntegration.h"
@@ -19,10 +21,12 @@
   #include "pyramidalBasis.h"
 %}
 
-%rename("_assign=") operator();
-%rename("_assign_operator=") operator=;
+%rename("_operator_assign") *::operator=;
+%rename("_print") *::print;
 %include "GaussIntegration.h"
 %include "JacobianBasis.h"
+%ignore fullMatrix<double>::operator()(int, int);
+%ignore fullVector<double>::operator()(int);
 %include "fullMatrix.h"
 %include "simpleFunction.h"
 %template(fullMatrixDouble) fullMatrix<double>;
