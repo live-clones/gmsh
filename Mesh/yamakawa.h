@@ -31,7 +31,7 @@ protected:
 public:
   PEEntity(const vector<const MVertex*> &_v);
   //PEEntity(size_t l);
-  ~PEEntity();
+  virtual ~PEEntity();
   virtual size_t get_max_nb_vertices() const=0;
   const MVertex* getVertex(size_t n) const;
   bool hasVertex(const MVertex *v)const;

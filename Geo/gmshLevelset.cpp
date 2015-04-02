@@ -1134,7 +1134,7 @@ gLevelsetTools::gLevelsetTools(const gLevelsetTools &lv) : gLevelset(lv)
 }
 
 gLevelsetYarn::gLevelsetYarn(int dim, int phys, double minA, double majA, int type, int tag)
-  : gLevelsetPrimitive(tag), minorAxis(minA), majorAxis(majA), typeLs(type)
+  : gLevelsetPrimitive(tag) //, minorAxis(minA), majorAxis(majA), typeLs(type)
 {
   std::map<int, std::vector<GEntity*> > groups;
   GModel::current()->getPhysicalGroups(dim, groups);

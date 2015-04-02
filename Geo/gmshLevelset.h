@@ -414,8 +414,8 @@ class gLevelsetNACA00 : public gLevelsetPrimitive
 
 class gLevelsetYarn : public gLevelsetPrimitive
 {
-  double minorAxis, majorAxis;
-  int typeLs;
+  //double minorAxis, majorAxis;
+  //int typeLs;
   std::vector<GEntity*> entities;
  public:
   gLevelsetYarn(int dim, int phys, double minA, double majA, int type, int tag = 1);
