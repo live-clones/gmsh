@@ -9,7 +9,8 @@
 StringXNumber MinMaxOptions_Number[] = {
   {GMSH_FULLRC, "View", NULL, -1.},
   {GMSH_FULLRC, "OverTime", NULL, 0},
-  {GMSH_FULLRC, "Argument", NULL, 0}
+  {GMSH_FULLRC, "Argument", NULL, 0},
+  {GMSH_FULLRC, "Visible", NULL, 1}
 };
 
 extern "C"
@@ -23,9 +24,11 @@ extern "C"
 std::string GMSH_MinMaxPlugin::getHelp() const
 {
   return "Plugin(MinMax) computes the min/max of a view.\n\n"
-    "If `View' < 0, the plugin is run on the current view.\n\n"
-    "If `OverTime' = 1, calculates the min/max over space AND time\n\n"
-    "If `Argument' = 1, calculates the min/max AND the argmin/argmax\n\n"
+    "If `View' < 0, the plugin is run on the current view. "
+    "If `OverTime' = 1, the plugin calculates the min/max over "
+    "space and time. If `Argument' = 1, the plugin calculates the "
+    "min/max and the argmin/argmax. If `Visible' = 1, the plugin "
+    "is only applied to visible entities.\n\n"
     "Plugin(MinMax) creates two new views.";
 }
 
@@ -44,6 +47,7 @@ PView *GMSH_MinMaxPlugin::execute(PView * v)
   int iView = (int)MinMaxOptions_Number[0].def;
   int overTime = (int)MinMaxOptions_Number[1].def;
   int argument = (int)MinMaxOptions_Number[2].def;
+  bool visible = (bool)MinMaxOptions_Number[3].def;
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -64,15 +68,16 @@ PView *GMSH_MinMaxPlugin::execute(PView * v)
     dataMax->NbSP = 1;
   }
 
-  double min=VAL_INF, max=-VAL_INF, timeMin=0, timeMax=0;
+  double min = VAL_INF, max = -VAL_INF, timeMin = 0, timeMax = 0;
 
   for(int step = 0; step < data1->getNumTimeSteps(); step++){
     if(data1->hasTimeStep(step)){
-
       double minView = VAL_INF, maxView = -VAL_INF;
       double xmin = 0., ymin = 0., zmin = 0., xmax = 0., ymax = 0., zmax = 0.;
       for(int ent = 0; ent < data1->getNumEntities(step); ent++){
+        if(visible && data1->skipEntity(step, ent)) continue;
 	for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
+	  if(data1->skipElement(step, ent, ele, visible)) continue;
 	  for(int nod = 0; nod < data1->getNumNodes(step, ent, ele); nod++){
 	    double val;
 	    data1->getScalarValue(step, ent, ele, nod, val);

@@ -52,7 +52,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
   int iView = (int)IntegrateOptions_Number[0].def;
   int overTime = (int)IntegrateOptions_Number[1].def;
   int dimension = (int)IntegrateOptions_Number[2].def;
-  bool checkVisible = (bool)IntegrateOptions_Number[3].def;
+  bool visible = (bool)IntegrateOptions_Number[3].def;
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -72,9 +72,9 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
       double res = 0, resv[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
       bool simpleSum = false;
       for(int ent = 0; ent < data1->getNumEntities(step); ent++){
-        if(checkVisible && data1->skipEntity(step, ent)) continue;
+        if(visible && data1->skipEntity(step, ent)) continue;
 	for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
-	  if(data1->skipElement(step, ent, ele, checkVisible)) continue;
+	  if(data1->skipElement(step, ent, ele, visible)) continue;
 	  int numComp = data1->getNumComponents(step, ent, ele);
 	  int numEdges = data1->getNumEdges(step, ent, ele);
 	  bool scalar = (numComp == 1);
