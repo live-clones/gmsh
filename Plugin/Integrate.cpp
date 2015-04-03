@@ -10,7 +10,8 @@
 StringXNumber IntegrateOptions_Number[] = {
   {GMSH_FULLRC, "View", NULL, -1.},
   {GMSH_FULLRC, "OverTime", NULL, -1.},
-  {GMSH_FULLRC, "Dimension", NULL, -1.}
+  {GMSH_FULLRC, "Dimension", NULL, -1.},
+  {GMSH_FULLRC, "Visible", NULL, 1.}
 };
 
 extern "C"
@@ -31,7 +32,8 @@ std::string GMSH_IntegratePlugin::getHelp() const
     "line/surface elements is calculated.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
     "If `OverTime' = 1 , the plugin integrates the scalar view "
-    "over time instead of over space.\n\n"
+    "over time instead of over space. If `Visible' = 1, the "
+    "plugin only integrates over visible entities.\n\n"
     "Plugin(Integrate) creates one new view.";
 }
 
@@ -50,6 +52,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
   int iView = (int)IntegrateOptions_Number[0].def;
   int overTime = (int)IntegrateOptions_Number[1].def;
   int dimension = (int)IntegrateOptions_Number[2].def;
+  bool checkVisible = (bool)IntegrateOptions_Number[3].def;
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -69,8 +72,9 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
       double res = 0, resv[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
       bool simpleSum = false;
       for(int ent = 0; ent < data1->getNumEntities(step); ent++){
+        if(checkVisible && data1->skipEntity(step, ent)) continue;
 	for(int ele = 0; ele < data1->getNumElements(step, ent); ele++){
-	  if(data1->skipElement(step, ent, ele)) continue;
+	  if(data1->skipElement(step, ent, ele, checkVisible)) continue;
 	  int numComp = data1->getNumComponents(step, ent, ele);
 	  int numEdges = data1->getNumEdges(step, ent, ele);
 	  bool scalar = (numComp == 1);
