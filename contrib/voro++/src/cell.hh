@@ -420,7 +420,7 @@ class voronoicell_neighbor : public voronoicell_base {
 		 * face that is clockwise from the jth edge. */
 		int **ne;
 		voronoicell_neighbor();
-		~voronoicell_neighbor();
+		virtual ~voronoicell_neighbor();
 		void operator=(voronoicell &c);
 		void operator=(voronoicell_neighbor &c);
 		/** Cuts the Voronoi cell by a particle whose center is at a
