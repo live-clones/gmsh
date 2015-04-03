@@ -33,6 +33,8 @@ set(CTEST_BUILD_OPTIONS ${OPT})
 include(gmsh.ctest)
 if(BUILD_DYNAMIC)
   upload_package(${WEB_BIN} Linux 64-dynamic .tar.gz .tgz)
+  # also remove build files here to save space
+  ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
 else(BUILD_DYNAMIC)
   upload_package(${WEB_BIN} Linux 64 .tar.gz .tgz)
 endif(BUILD_DYNAMIC)
