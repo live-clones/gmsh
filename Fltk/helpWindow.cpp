@@ -26,6 +26,10 @@
 #include "petsc.h"
 #endif
 
+#if defined(HAVE_OCC)
+#include "Standard_Version.hxx"
+#endif
+
 static const char *help_link(Fl_Widget *w, const char *uri)
 {
   fl_open_uri(uri);
@@ -309,10 +313,14 @@ helpWindow::helpWindow()
             << "<li><i>PETSc version:</i> " << PETSC_VERSION_MAJOR << "."
             << PETSC_VERSION_MINOR << "." << PETSC_VERSION_SUBMINOR
 #if defined(PETSC_USE_COMPLEX)
-            << "<li><i>PETSc arithmetic:</i> Complex"
+            << " (complex arithmetic)"
 #else
-            << "<li><i>PETSc arithmetic:</i> Real"
+            << " (real arithmetic)"
 #endif
+#endif
+#if defined(HAVE_OCC)
+            << "<li><i>OCC version:</i> " << OCC_VERSION_MAJOR << "."
+            << OCC_VERSION_MINOR << "." << OCC_VERSION_MAINTENANCE
 #endif
             << "<li><i>Packaged by:</i> " << GetGmshPackager()
             << "</ul>"

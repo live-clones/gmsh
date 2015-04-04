@@ -34,7 +34,7 @@
 #endif
 
 #if defined(HAVE_OCC)
-#include <Standard_Version.hxx>
+#include "Standard_Version.hxx"
 #endif
 
 #if defined(HAVE_POST)
@@ -929,13 +929,14 @@ void GetOptions(int argc, char *argv[])
                 FL_MINOR_VERSION, FL_PATCH_VERSION);
 #endif
 #if defined(HAVE_PETSC)
-        fprintf(stderr, "PETSc version    : %d.%d.%d\n", PETSC_VERSION_MAJOR,
-                PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR);
+        fprintf(stderr, "PETSc version    : %d.%d.%d (%s arithmtic)\n", PETSC_VERSION_MAJOR,
+                PETSC_VERSION_MINOR, PETSC_VERSION_SUBMINOR,
 #if defined(PETSC_USE_COMPLEX)
-        fprintf(stderr, "PETSc arithmetic : Complex\n");
+                "complex"
 #else
-        fprintf(stderr, "PETSc arithmetic : Real\n");
+                "real"
 #endif
+                );
 #endif
 #if defined(HAVE_OCC)
         fprintf(stderr, "OCC version      : %d.%d.%d\n", OCC_VERSION_MAJOR,
