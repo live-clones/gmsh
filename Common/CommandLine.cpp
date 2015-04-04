@@ -33,6 +33,10 @@
 #include "petsc.h"
 #endif
 
+#if defined(HAVE_OCC)
+#include <Standard_Version.hxx>
+#endif
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #endif
@@ -932,6 +936,10 @@ void GetOptions(int argc, char *argv[])
 #else
         fprintf(stderr, "PETSc arithmetic : Real\n");
 #endif
+#endif
+#if defined(HAVE_OCC)
+        fprintf(stderr, "OCC version      : %d.%d.%d\n", OCC_VERSION_MAJOR,
+                OCC_VERSION_MINOR, OCC_VERSION_MAINTENANCE);
 #endif
         fprintf(stderr, "Packaged by      : %s\n", GMSH_PACKAGER);
         fprintf(stderr, "Web site         : http://www.geuz.org/gmsh/\n");
