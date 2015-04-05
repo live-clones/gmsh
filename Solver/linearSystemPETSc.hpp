@@ -1,8 +1,8 @@
-#ifdef HAVE_PETSC
+#if defined(HAVE_PETSC)
+
 #include <petsc.h>
 #include <petscksp.h>
 #include "linearSystemPETSc.h"
-
 
 static void  _try(int ierr)
 {
@@ -79,17 +79,18 @@ linearSystemPETSc<scalar>::~linearSystemPETSc()
 template <class scalar>
 void linearSystemPETSc<scalar>::_assembleMatrixIfNeeded()
 {
+#if defined(HAVE_MPI)
   if (_comm == PETSC_COMM_WORLD){
-    if (Msg::GetCommSize()>1){
+    if (Msg::GetCommSize() > 1){
       int value = _valuesNotAssembled ? 1 : 0;
       int sumValue = 0;
       MPI_Allreduce((void*)&value, (void*)&sumValue, 1, MPI_INT, MPI_SUM, _comm);
       if ((sumValue > 0) &&(sumValue < Msg::GetCommSize())){
-        _valuesNotAssembled= 1;
+        _valuesNotAssembled = 1;
       }
     }
   }
-
+#endif
   if (_valuesNotAssembled) {
     _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
     _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
@@ -179,8 +180,8 @@ void linearSystemPETSc<scalar>::allocate(int nbRows)
   _try(MatSetFromOptions(_a));
   //since PETSc 3.3 GetOwnershipRange and MatGetSize cannot be called before MatXXXSetPreallocation
   _localSize = nbRows;
-  #ifdef HAVE_MPI
-  if (commSize>1){
+#if defined(HAVE_MPI)
+  if (commSize > 1){
     _localRowStart = 0;
     if (Msg::GetCommRank() != 0) {
       MPI_Status status;
@@ -197,11 +198,11 @@ void linearSystemPETSc<scalar>::allocate(int nbRows)
     _localRowEnd = nbRows;
     _globalSize = _localSize;
   }
-  #else
+#else
   _localRowStart = 0;
   _localRowEnd = nbRows;
   _globalSize = _localSize;
-  #endif
+#endif
   // preallocation option must be set after other options
   _try(VecCreate(_comm, &_x));
   _try(VecSetSizes(_x, blockSize * nbRows, PETSC_DETERMINE));
@@ -327,8 +328,9 @@ void linearSystemPETSc<scalar>::getFromSolution(int row, scalar &val) const
 template <class scalar>
 void linearSystemPETSc<scalar>::zeroMatrix()
 {
+#if defined(HAVE_MPI)
   if (_comm == PETSC_COMM_WORLD){
-    if (Msg::GetCommSize()>1){
+    if (Msg::GetCommSize() > 1){
       int value = _entriesPreAllocated ? 1 : 0;
       int sumValue = 0;
       MPI_Allreduce((void*)&value, (void*)&sumValue, 1, MPI_INT, MPI_SUM, _comm);
@@ -337,6 +339,7 @@ void linearSystemPETSc<scalar>::zeroMatrix()
       }
     }
   }
+#endif
   if (_isAllocated && _entriesPreAllocated) {
     _assembleMatrixIfNeeded();
     _try(MatZeroEntries(_a));
