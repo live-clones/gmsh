@@ -353,6 +353,7 @@ double discreteDistance(MLine *l, GEdge *ed, double tol, int meshDiscr, int geom
     double t0, t1;
     reparamMeshVertexOnEdge(l->getVertex(0), ed, t0);
     reparamMeshVertexOnEdge(l->getVertex(1), ed, t1);
+//    if (t1 == 0.) t1 = 1.;  // DBG: Workaround bug closed curves
     parametricLineGEdge l1(ed, t0, t1);
     l1.discretize(dpts1, ts1, tol, 5, 45);
   }
@@ -370,7 +371,6 @@ double discreteDistance(MLine *l, GEdge *ed, double tol, int meshDiscr, int geom
     l2.discretize(dpts2, ts2, tol, minDepth, 10*minDepth);
   }
   oversample(dpts2, tol);
-//  std::cout << "DBGTT: " << dpts1.size() << " points on model, " << dpts2.size() << " points on mesh\n";
 
   switch (distDef) {
     case 1: return discreteHausdorffDistanceBrute(dpts1, dpts2);
@@ -432,7 +432,7 @@ double taylorDistanceSq2D(const GradientBasis *gb, const fullMatrix<double> &nod
                           const std::vector<SVector3> &normCAD)
 {
   const int nV = nodesXYZ.size1();
-  fullMatrix<double> dxyzdX(nV, 3),dxyzdY(nV, 3);
+  fullMatrix<double> dxyzdX(nV, 3), dxyzdY(nV, 3);
   gb->getGradientsFromNodes(nodesXYZ, &dxyzdX, &dxyzdY, 0);
   double distSq = 0.;
   for (int i=0; i<nV; i++) {
@@ -512,8 +512,8 @@ void distanceFromElementsToGeometry(GModel *gm, int dim, std::map<MElement*,doub
 
   std::map<MFace,double,Less_Face> dist2Face;
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it){
-    if ((*it)->geomType() == GEntity::Plane)continue;
-    for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
+    if ((*it)->geomType() == GEntity::Plane) continue;
+    for (unsigned int i = 0; i < (*it)->triangles.size(); i++) {
       double d = taylorDistanceFace((*it)->triangles[i], *it);
       MFace f =  (*it)->triangles[i]->getFace(0);
       dist2Face[f] = d;
@@ -575,7 +575,6 @@ double distanceToGeometry(GModel *gm, int distType, double tol, int meshDiscr, i
       maxDist = std::max(dist, maxDist);
     }
   }
-//  printf("DISTANCE TO GEOMETRY : 1D PART %22.15E\n",Obj);
 
   if (distType == CADDIST_TAYLOR) {
     for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
@@ -585,7 +584,6 @@ double distanceToGeometry(GModel *gm, int distType, double tol, int meshDiscr, i
       }
     }
   }
-//  printf("DISTANCE TO GEOMETRY : 1D AND 2D PART %22.15E\n",Obj);
 
   return maxDist;
 }

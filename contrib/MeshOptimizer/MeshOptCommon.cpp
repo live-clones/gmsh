@@ -121,8 +121,9 @@ bool MeshOptPatchDef::testElInDist(const SPoint3 &P, double limDist,
       const SPoint3 A = faceVert[0]->point();
       const SPoint3 B = faceVert[1]->point();
       const SPoint3 C = faceVert[2]->point();
-      if (faceVert.size() == 3)
+      if (faceVert.size() == 3) {
         if (testTriSphereIntersect(A, B, C, P, limDistSq)) return true;
+      }
       else {
         const SPoint3 D = faceVert[3]->point();
         if (testTriSphereIntersect(A, B, C, P, limDistSq) ||

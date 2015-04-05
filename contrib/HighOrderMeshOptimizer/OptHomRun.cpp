@@ -806,10 +806,10 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   minJacBarFunc.setTarget(p.BARRIER_MIN, 1.);
   ObjContribScaledJac<ObjContribFuncBarrierFixMinMovMax> minMaxJacBarFunc(1.);
   minMaxJacBarFunc.setTarget(p.BARRIER_MAX, 1.);
-  ObjContribCADDistSq<ObjContribFuncSimpleTargetMax> CADDistFunc(p.optCADWeight, p.optCADDistMax);
-  CADDistFunc.setTarget(0.);
-//  ObjContribCADDistSq<ObjContribFuncBarrierMovMax> CADDistFunc(p.optCADWeight, p.optCADDistMax);
-//  CADDistFunc.setTarget(1., 0.);
+//  ObjContribCADDistSq<ObjContribFuncSimpleTargetMax> CADDistFunc(p.optCADWeight, p.optCADDistMax);
+//  CADDistFunc.setTarget(0.);
+  ObjContribCADDistSq<ObjContribFuncBarrierMovMax> CADDistFunc(p.optCADWeight, p.optCADDistMax);
+  CADDistFunc.setTarget(1., 0.);
   ObjContribScaledJac<ObjContribFuncBarrierFixMin> minJacFixBarFunc(1.);
   minJacFixBarFunc.setTarget(p.BARRIER_MIN, 1.);
 

@@ -633,37 +633,62 @@ void Patch::scaledCADDistSqAndGradients(int iBndEl, double &scaledDist,
       const int &iVi = iV[i], &iFVi = iFV[i];
       MVertex* &vert = _vert[iVi];
       SPoint2 pCAD;
-      if ((iFVi >= 0) && (vert->onWhat() == gf))                                          // If free vertex and on surface, ...
-        pCAD = SPoint2(_uvw[iFVi].x(), _uvw[iFVi].y());                                   // ... get stored param. coord.
+      if (iFVi >= 0) {                                                                      // If free vertex...
+        if (vert->onWhat() == gf)                                                           // If on surface, ...
+          pCAD = SPoint2(_uvw[iFVi].x(), _uvw[iFVi].y());                                   // ... get stored param. coord.
+        else {                                                                              // Otherwise, reparametrize on surface
+          const GEdge *ge = vert->onWhat()->cast2Edge();
+          pCAD = ge->reparamOnFace(gf, _uvw[iFVi].x(), 1);
+        }
+      }
       else
-        reparamMeshVertexOnFace(vert, gf, pCAD);                                          // Otherwise, get param. coord. from CAD.
+        reparamMeshVertexOnFace(vert, gf, pCAD);                                          // If not free vertex, reparametrize on surface
       normCAD[i] = gf->normal(pCAD);                                                      // Compute normal at vertex
       normCAD[i].normalize();                                                             // Normalize normal
     }
     scaledDist = _invRefCADDistSq * taylorDistanceSq2D(gb, nodesXYZ, normCAD);
+//    std::cout << "DBGTT: bnd el. " << _bndEl[iBndEl]->getNum() << ": scaledDist = " << scaledDist << "\n";
     for (int i=0; i<nV; i++) {
-      const int &iFVi = iFV[i];
+      const int &iVi = iV[i], &iFVi = iFV[i];
       if (iFVi < 0) continue;                                                             // Skip if not free vertex
       const double xS = nodesXYZ(i, 0), yS = nodesXYZ(i, 1), zS = nodesXYZ(i, 2);         // Save coord. of perturbed node for FD
-      const SVector3 tanCADS = normCAD[i];                                                // Save normal to CAD at perturbed node
-      const SPoint2 pCAD0 = SPoint2(_uvw[iFVi].x()+eps0, _uvw[iFVi].y());                 // New param. coord. of perturbed node in 1st dir.
-      GPoint gp0 = gf->point(pCAD0);                                                      // New coord. of perturbed node in 1st dir.
-      nodesXYZ(i, 0) = gp0.x(); nodesXYZ(i, 1) = gp0.y(); nodesXYZ(i, 2) = gp0.z();
-      normCAD[i] = gf->normal(pCAD0);                                                     // New normal to CAD at perturbed node in 1st dir.
-      normCAD[i].normalize();                                                             // Normalize new normal
-      const double sDistDiff0 = _invRefCADDistSq *
-                                taylorDistanceSq2D(gb, nodesXYZ, normCAD);                // Compute distance with perturbed node in 1st dir.
-      gradScaledDist[2*i] = (sDistDiff0-scaledDist) / eps0;                               // Compute gradient in 1st dir.
-      const SPoint2 pCAD1 = SPoint2(_uvw[iFVi].x(), _uvw[iFVi].y()+eps1);                 // New param. coord. of perturbed node in 2nd dir.
-      GPoint gp1 = gf->point(pCAD1);                                                      // New coord. of perturbed node in 2nd dir.
-      nodesXYZ(i, 0) = gp1.x(); nodesXYZ(i, 1) = gp1.y(); nodesXYZ(i, 2) = gp1.z();
-      normCAD[i] = gf->normal(pCAD1);                                                     // New normal to CAD at perturbed node in 2nd dir.
-      normCAD[i].normalize();                                                             // Normalize new normal
-      double sDistDiff1 = _invRefCADDistSq *
-                          taylorDistanceSq2D(gb, nodesXYZ, normCAD);                      // Compute distance with perturbed node in 2nd dir.
-      gradScaledDist[2*i+1] = (sDistDiff1-scaledDist) / eps0;                             // Compute gradient in 2nd dir.
+      const SVector3 normCADS = normCAD[i];                                               // Save normal to CAD at perturbed node
+      if (_nPCFV[iFVi] == 2) {                                                            // Vertex classified on surface, 2D gradient
+        const SPoint2 pCAD0 = SPoint2(_uvw[iFVi].x()+eps0, _uvw[iFVi].y());               // New param. coord. of perturbed node in 1st dir.
+        GPoint gp0 = gf->point(pCAD0);                                                    // New coord. of perturbed node in 1st dir.
+        nodesXYZ(i, 0) = gp0.x(); nodesXYZ(i, 1) = gp0.y(); nodesXYZ(i, 2) = gp0.z();
+        normCAD[i] = gf->normal(pCAD0);                                                   // New normal to CAD at perturbed node in 1st dir.
+        normCAD[i].normalize();                                                           // Normalize new normal
+        const double sDistDiff0 = _invRefCADDistSq *
+                                  taylorDistanceSq2D(gb, nodesXYZ, normCAD);              // Compute distance with perturbed node in 1st dir.
+        gradScaledDist[2*i] = (sDistDiff0-scaledDist) / eps0;                             // Compute gradient in 1st dir.
+        const SPoint2 pCAD1 = SPoint2(_uvw[iFVi].x(), _uvw[iFVi].y()+eps1);               // New param. coord. of perturbed node in 2nd dir.
+        GPoint gp1 = gf->point(pCAD1);                                                    // New coord. of perturbed node in 2nd dir.
+        nodesXYZ(i, 0) = gp1.x(); nodesXYZ(i, 1) = gp1.y(); nodesXYZ(i, 2) = gp1.z();
+        normCAD[i] = gf->normal(pCAD1);                                                   // New normal to CAD at perturbed node in 2nd dir.
+        normCAD[i].normalize();                                                           // Normalize new normal
+        double sDistDiff1 = _invRefCADDistSq *
+                            taylorDistanceSq2D(gb, nodesXYZ, normCAD);                    // Compute distance with perturbed node in 2nd dir.
+        gradScaledDist[2*i+1] = (sDistDiff1-scaledDist) / eps1;                           // Compute gradient in 2nd dir.
+      }
+      else if (_nPCFV[iFVi] == 1) {                                                       // Vertex classified on edge, 1D gradient
+        MVertex* &vert = _vert[iVi];
+        const GEdge *ge = vert->onWhat()->cast2Edge();
+        const Range<double> parBounds = ge->parBounds(0);
+        const double eps = 1.e-6 * (parBounds.high()-parBounds.low());
+        const double tCAD = _uvw[iFVi].x() + eps;                                         // New param. coord. of perturbed node
+        GPoint gp = ge->point(tCAD);                                                      // New coord. of perturbed node
+        nodesXYZ(i, 0) = gp.x(); nodesXYZ(i, 1) = gp.y(); nodesXYZ(i, 2) = gp.z();
+        SPoint2 pCAD = gf->parFromPoint(SPoint3(gp.x(), gp.y(), gp.z()), true);           // Get param. coord. of perturbed node in face from CAD
+        normCAD[i] = gf->normal(pCAD);                                                    // New normal to CAD at perturbed node
+        normCAD[i].normalize();                                                           // Normalize new normal
+        const double sDistDiff = _invRefCADDistSq *
+                                 taylorDistanceSq2D(gb, nodesXYZ, normCAD);               // Compute distance with perturbed node
+        gradScaledDist[2*i] = (sDistDiff-scaledDist) / eps;                               // Compute gradient
+      }
+      else std::cout << "DBGTT: Inconsistent _nPCFV(iFVi), vert. " << _vert[iVi]->getNum() << "\n";
       nodesXYZ(i, 0) = xS; nodesXYZ(i, 1) = yS; nodesXYZ(i, 2) = zS;                      // Restore coord. of perturbed node
-      normCAD[i] = tanCADS;                                                               // Restore tan. to CAD at perturbed node
+      normCAD[i] = normCADS;                                                              // Restore tan. to CAD at perturbed node
     }
   }
 }

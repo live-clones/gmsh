@@ -30,7 +30,7 @@ protected:
 
 template<class FuncType>
 ObjContribCADDistSq<FuncType>::ObjContribCADDistSq(double weight, double refDist) :
-  ObjContrib("CADDist", FuncType::getNamePrefix()+"CADDist"),
+  ObjContrib("ScaledCADDistSq", FuncType::getNamePrefix()+"ScaledCADDistSq"),
   _mesh(0), _weight(weight), _refDist(refDist)
 {
 }
@@ -72,11 +72,11 @@ bool ObjContribCADDistSq<FuncType>::addContrib(double &Obj, alglib::real_1d_arra
     const double dFact = _weight * FuncType::computeDiff(f);
     for (int i=0; i<nVEl; i++) {
       const int iFVi = _mesh->bndEl2FV(iBndEl, i);
-      if (iFVi >= 0) {                                                                        // Skip if not free vertex
-        if (bndDim == 1) gradObj[_mesh->indPCFV(iFVi, 0)] += gradF[i] * dFact;                // 2D
-        else {                                                                                // 3D
-          gradObj[_mesh->indPCFV(iFVi, 0)] += gradF[2*i] * dFact;
-          gradObj[_mesh->indPCFV(iFVi, 1)] += gradF[2*i+1] * dFact;
+      if (iFVi >= 0) {                                                                            // Skip if not free vertex
+        if (bndDim == 1) gradObj[_mesh->indPCFV(iFVi, 0)] += gradF[i] * dFact;                    // 2D
+        else {                                                                                    // 3D
+          gradObj[_mesh->indPCFV(iFVi, 0)] += gradF[2*i] * dFact;                                 // Deriv. w.r.t. 1st param.coord (edge or face vertex)
+          if (_mesh->nPCFV(iFVi) > 1) gradObj[_mesh->indPCFV(iFVi, 1)] += gradF[2*i+1] * dFact;   // Deriv. w.r.t. 2nd param. coord. (only if face vertex)
         }
       }
     }

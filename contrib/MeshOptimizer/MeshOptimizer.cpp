@@ -590,7 +590,7 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par)
           elElMap::iterator bndElIt = el2BndEl.find(el);
           if (bndElIt != el2BndEl.end()) {
             MElement* &bndEl = bndElIt->second;
-            if (par.patchDef->bndElBadness(bndEl, bndEl2Ent[bndEl])) badElts.insert(el);
+            if (par.patchDef->bndElBadness(bndEl, bndEl2Ent[bndEl]) < 0.) badElts.insert(el);
           }
         }
       }
