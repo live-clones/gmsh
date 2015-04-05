@@ -25,9 +25,6 @@
 #include "PView.h"
 #endif
 
-//test new algo generation points
-#include "BasisFactory.h"
-
 #if defined(HAVE_ONELAB) && !defined(HAVE_ONELAB2)
 #include "gmshLocalNetworkClient.h"
 #endif

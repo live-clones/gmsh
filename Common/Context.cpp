@@ -60,7 +60,7 @@ CTX::CTX() : gamepad(0)
   post.draw = 1;
   post.combineTime = 0; // try to combineTime views at startup
   lock = 0; // very primitive locking
-  fileread=false;
+  fileread = false;
 
 #if defined(HAVE_FLTK)
   glFontEnum = FL_HELVETICA;
@@ -74,6 +74,8 @@ CTX::CTX() : gamepad(0)
   recentFiles.resize(10);
   mesh.optimizeLloyd = 0;
   gamepad = 0;
+  mesh.switchElementTags = 0;
+  terminal = 0;
 
   // need to initialize these too, since the corresponding opt_XXX
   // routine uses the current value to set "mesh.changed"
@@ -95,10 +97,6 @@ CTX::CTX() : gamepad(0)
   color.mesh.tangents = color.mesh.line = color.mesh.quadrangle = 0;
   for (int i = 0; i < 20; i++)
     color.mesh.carousel[i] = 0;
-  // added by Gauthier Becker (these are not initialized by default
-  // leading to valgrind error) Feel free to change the default values)
-  mesh.switchElementTags=0;
-  terminal=0;
 }
 
 CTX::~CTX()
