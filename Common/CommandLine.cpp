@@ -37,6 +37,10 @@
 #include "Standard_Version.hxx"
 #endif
 
+#if defined(HAVE_MED)
+#include "med.h"
+#endif
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #endif
@@ -941,6 +945,10 @@ void GetOptions(int argc, char *argv[])
 #if defined(HAVE_OCC)
         fprintf(stderr, "OCC version      : %d.%d.%d\n", OCC_VERSION_MAJOR,
                 OCC_VERSION_MINOR, OCC_VERSION_MAINTENANCE);
+#endif
+#if defined(HAVE_MED)
+        fprintf(stderr, "MED version      : %d.%d.%d\n", MED_NUM_MAJEUR,
+                MED_NUM_MINEUR, MED_NUM_RELEASE);
 #endif
         fprintf(stderr, "Packaged by      : %s\n", GMSH_PACKAGER);
         fprintf(stderr, "Web site         : http://www.geuz.org/gmsh/\n");

@@ -30,6 +30,10 @@
 #include "Standard_Version.hxx"
 #endif
 
+#if defined(HAVE_MED)
+#include "med.h"
+#endif
+
 static const char *help_link(Fl_Widget *w, const char *uri)
 {
   fl_open_uri(uri);
@@ -283,7 +287,7 @@ helpWindow::helpWindow()
 {
   {
     int width = 28 * FL_NORMAL_SIZE;
-    int height = 18 * BH;
+    int height = 19 * BH;
 
     about = new paletteWindow
       (width, height, CTX::instance()->nonModalWindows ? true : false, "About Gmsh");
@@ -295,7 +299,7 @@ helpWindow::helpWindow()
     o->box(FL_FLAT_BOX);
     std::ostringstream sstream;
     sstream << "<center><h3>Gmsh</h3><br>version " << GetGmshVersion()
-            << "<p>Copyright (C) 1997-2014"
+            << "<p>Copyright (C) 1997-2015"
             << "<br>Christophe Geuzaine and Jean-Francois Remacle"
             << "<p><a href=\"http://geuz.org/gmsh/doc/CREDITS.txt\">Credits</a> "
             << "and <a href=\"http://geuz.org/gmsh/doc/LICENSE.txt\">licensing "
@@ -321,6 +325,10 @@ helpWindow::helpWindow()
 #if defined(HAVE_OCC)
             << "<li><i>OCC version:</i> " << OCC_VERSION_MAJOR << "."
             << OCC_VERSION_MINOR << "." << OCC_VERSION_MAINTENANCE
+#endif
+#if defined(HAVE_MED)
+            << "<li><i>MED version:</i> " << MED_NUM_MAJEUR << "."
+            << MED_NUM_MINEUR << "." << MED_NUM_RELEASE
 #endif
             << "<li><i>Packaged by:</i> " << GetGmshPackager()
             << "</ul>"
