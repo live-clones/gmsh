@@ -27,7 +27,7 @@
 #include "fullMatrix.h"
 #include "CenterlineField.h"
 #if defined(HAVE_ANN)
-#include <ANN/ANN.h>
+#include "ANN/ANN.h"
 #endif
 
 #define TRAN_QUAD(c1,c2,c3,c4,s1,s2,s3,s4,u,v) \

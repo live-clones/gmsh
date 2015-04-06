@@ -44,8 +44,7 @@
 #include "meshGRegion.h"
 
 #if defined(HAVE_ANN)
-#include <ANN/ANN.h>
-
+#include "ANN/ANN.h"
 
 static void erase(std::vector<MLine*>& lines, MLine* l)
 {

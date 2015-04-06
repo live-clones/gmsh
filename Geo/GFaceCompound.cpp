@@ -45,7 +45,7 @@
 #include "MPoint.h"
 #include "Numeric.h"
 #include "meshGFace.h"
-#include <ANN/ANN.h>
+#include "ANN/ANN.h"
 
 static void fixEdgeToValue(GEdge *ed, double value, dofManager<double> &myAssembler)
 {

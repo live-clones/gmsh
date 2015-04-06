@@ -24,7 +24,7 @@
 #endif
 
 #if defined(HAVE_ANN)
-#include <ANN/ANN.h>
+#include "ANN/ANN.h"
 #endif
 
 static void SphereBB(void *a, double*mmin, double*mmax)

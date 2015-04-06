@@ -13,7 +13,7 @@
 #include "BackgroundMeshTools.h"
 
 #if defined(HAVE_ANN)
-#include <ANN/ANN.h>
+#include "ANN/ANN.h"
 class ANNkd_tree;
 #endif
 
