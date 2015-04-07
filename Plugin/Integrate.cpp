@@ -31,9 +31,10 @@ std::string GMSH_IntegratePlugin::getHelp() const
     "the circulation/flux of the field over "
     "line/surface elements is calculated.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
-    "If `OverTime' = 1 , the plugin integrates the scalar view "
-    "over time instead of over space. If `Visible' = 1, the "
-    "plugin only integrates over visible entities.\n\n"
+    "If `OverTime' = i > -1 , the plugin integrates the scalar view "
+    "over time instead of over space, starting at iteration i."
+    "If `Visible' = 1, the plugin only integrates over"
+    "visible entities.\n\n"
     "Plugin(Integrate) creates one new view.";
 }
 
@@ -138,7 +139,7 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	int numNodes = data1->getNumNodes(timeBeg, ent, ele);
 	int type = data1->getType(timeBeg, ent, ele);
 	int numComp = data1->getNumComponents(timeBeg, ent, ele);
-	if (numComp != 1) Msg::Error("Can only integrate in time scalar views");
+	if (numComp != 1) Msg::Error("Can only integrate scalar views over time");
 	std::vector<double> *out = data2->incrementList(numComp, type, numNodes);
 	std::vector<double> x(numNodes), y(numNodes), z(numNodes);
 	for(int nod = 0; nod < numNodes; nod++)
@@ -147,9 +148,9 @@ PView *GMSH_IntegratePlugin::execute(PView * v)
 	for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
 	for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
 
-	double time = 0.0;
 	std::vector<double> timeIntegral(numNodes, 0.);
-	for(int step = timeBeg; step < timeEnd; step++){
+        double time = (overTime > 0) ? data1->getTime(timeBeg+overTime-1) : 0.0;
+	for(int step = timeBeg + overTime; step < timeEnd; step++){
 	  if(!data1->hasTimeStep(step)) continue;
 	  double newTime  = data1->getTime(step);
 	  double dt = newTime - time;
