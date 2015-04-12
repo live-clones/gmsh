@@ -163,6 +163,7 @@ Exists                  return tExists;
 
 Fabs                    return tFabs;
 Field                   return tField;
+Find                    return tFind;
 FileExists              return tFileExists;
 FixRelativePath         return tFixRelativePath;
 Floor                   return tFloor;

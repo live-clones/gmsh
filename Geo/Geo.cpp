@@ -3469,6 +3469,11 @@ int Extrude_ProtudeCurve(int type, int ic,
     return pc->Num;
   }
 
+  // FIXME: if we extrude by rotation a (non-straight) curve defined by 2 end
+  // points, with a rotation axis going through the end points, the resulting
+  // surface would have 2 bounding edges (the axis and the curve). We cannot
+  // handle this case.
+
   if(type == BOUNDARY_LAYER)
     s = Create_Surface(NEWSURFACE(), MSH_SURF_BND_LAYER);
   else if(!CurveBeg || !CurveEnd)

@@ -114,7 +114,7 @@ struct doubleXstring{
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil tRound
 %token tFmod tModulo tHypot tList
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
-%token tStrFind tStrCmp tStrChoice
+%token tFind tStrFind tStrCmp tStrChoice
 %token tTextAttributes
 %token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tSyncModel
 %token tOnelabAction tOnelabRun
@@ -4630,6 +4630,17 @@ FExpr_Single :
     {
       $$ = Msg::GetValue($3, $5);
       Free($3);
+    }
+  | tFind '(' ListOfDouble ',' ListOfDouble ')'
+    {
+      int matches = 0;
+      for(int i = 0; i < List_Nbr($3); i++){
+        double d;
+        List_Read($3, i, &d);
+        matches += List_Search($5, &d, fcmp_double);
+      }
+      $$ = matches;
+      Free($3); Free($5);
     }
   | tStrFind '(' StringExprVar ',' StringExprVar ')'
     {

@@ -991,6 +991,7 @@ parsing of the script file:
   @var{expression} @var{operator-ternary-left} @var{expression} @var{operator-ternary-right} @var{expression} |
   @var{built-in-function} |
   @var{real-option} |
+  Find(@var{expression-list-item}, @var{expression-list-item}) |
   StrFind(@var{char-expression}, @var{char-expression}) |
   StrCmp(@var{char-expression}, @var{char-expression}) |
   TextAttributes(@var{char-expression}<,@var{char-expression}@dots{}>) |
@@ -1026,14 +1027,16 @@ The brackets @code{[]} permit to extract one item from a list. The
 @var{operator-ternary-right} are defined in @ref{Operators}. For the
 definition of @w{@var{built-in-function}s}, see @ref{Built-in
 functions}. The various @w{@var{real-option}s} are listed in
-@ref{Options}. @code{StrFind} searches the first @var{char-expression}
-for any occurrence of the second @var{char-expression}. @code{StrCmp}
-compares the two strings (returns an integer greater than, equal to, or
-less than 0, according as the first string is greater than, equal to, or
-less than the second string).  @code{TextAttributes} creates attributes
-for text strings. @code{Exists} checks if a variable with the given name
-exists (i.e., has been defined previously), and @code{FileExists} checks
-if the file with the given name exists.
+@ref{Options}.  @code{Find} searches for occurrences of the first
+expression in the second (both of which can be lists).  @code{StrFind}
+searches the first @var{char-expression} for any occurrence of the
+second @var{char-expression}. @code{StrCmp} compares the two strings
+(returns an integer greater than, equal to, or less than 0, according as
+the first string is greater than, equal to, or less than the second
+string).  @code{TextAttributes} creates attributes for text
+strings. @code{Exists} checks if a variable with the given name exists
+(i.e., has been defined previously), and @code{FileExists} checks if the
+file with the given name exists.
 
 @code{DefineNumber} allows to define a ONELAB variable in-line. The
 @var{expression} given as the first argument is the default value; this
