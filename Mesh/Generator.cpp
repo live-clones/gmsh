@@ -48,7 +48,7 @@
 #include "PViewData.h"
 #endif
 
-  template<class T>
+template<class T>
 static void GetQualityMeasure(std::vector<T*> &ele,
                               double &gamma, double &gammaMin, double &gammaMax,
                               double &minSICN, double &minSICNMin, double &minSICNMax,
@@ -255,6 +255,9 @@ static void Mesh1D(GModel *m)
     if(nIter++ > 10) break;
   }
 
+  // re-orient according to geometrical/user constraints
+  std::for_each(m->firstEdge(), m->lastEdge(), orientMeshGEdge());
+
   double t2 = Cpu();
   CTX::instance()->meshTimer[0] = t2 - t1;
   Msg::StatusBar(true, "Done meshing 1D (%g s)", CTX::instance()->meshTimer[0]);
@@ -282,8 +285,8 @@ static void PrintMesh2dStatistics(GModel *m)
 
   if(CTX::instance()->createAppendMeshStatReport == 1){
     fprintf(statreport, "2D stats\tname\t\t#faces\t\t#fail\t\t"
-        "#t\t\tQavg\t\tQbest\t\tQworst\t\t#Q>90\t\t#Q>90/#t\t"
-        "#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
+            "#t\t\tQavg\t\tQbest\t\tQworst\t\t#Q>90\t\t#Q>90/#t\t"
+            "#e\t\ttau\t\t#Egood\t\t#Egood/#e\tCPU\n");
     if(m->empty()){
       fclose(statreport);
       return;
@@ -312,11 +315,11 @@ static void PrintMesh2dStatistics(GModel *m)
 
   fprintf(statreport,"\t%16s\t%d\t\t%d\t\t", m->getName().c_str(), numFaces, nUnmeshed);
   fprintf(statreport,"%d\t\t%8.7f\t%8.7f\t%8.7f\t%d\t\t%8.7f\t",
-      nTotT, avg / (double)nTotT, best, worst, nTotGoodQuality,
-      (double)nTotGoodQuality / nTotT);
+          nTotT, avg / (double)nTotT, best, worst, nTotGoodQuality,
+          (double)nTotGoodQuality / nTotT);
   fprintf(statreport,"%d\t\t%8.7f\t%d\t\t%8.7f\t%8.1f\n",
-      nTotE, exp(e_avg / (double)nTotE), nTotGoodLength,
-      (double)nTotGoodLength / nTotE, CTX::instance()->meshTimer[1]);
+          nTotE, exp(e_avg / (double)nTotE), nTotGoodLength,
+          (double)nTotGoodLength / nTotE, CTX::instance()->meshTimer[1]);
   fclose(statreport);
 }
 
@@ -355,19 +358,19 @@ static void Mesh2D(GModel *m)
           backgroundMesh::current()->unset();
           meshGFace mesher(true);
           mesher(temp[K]);
-
 #if defined(HAVE_BFGS)
           if(CTX::instance()->mesh.optimizeLloyd){
             if (temp[K]->geomType()==GEntity::CompoundSurface ||
-                temp[K]->geomType()==GEntity::Plane || temp[K]->geomType()==GEntity::RuledSurface) {
+                temp[K]->geomType()==GEntity::Plane ||
+                temp[K]->geomType()==GEntity::RuledSurface) {
               if (temp[K]->meshAttributes.method != MESH_TRANSFINITE &&
                   !temp[K]->meshAttributes.extrude) {
                 smoothing smm(CTX::instance()->mesh.optimizeLloyd,6);
                 //m->writeMSH("beforeLLoyd.msh");
                 smm.optimize_face(temp[K]);
                 int rec = ((CTX::instance()->mesh.recombineAll ||
-                      temp[K]->meshAttributes.recombine) &&
-                    !CTX::instance()->mesh.recombine3DAll);
+                            temp[K]->meshAttributes.recombine) &&
+                           !CTX::instance()->mesh.recombine3DAll);
                 //m->writeMSH("afterLLoyd.msh");
                 if (rec) recombineIntoQuads(temp[K]);
                 //m->writeMSH("afterRecombine.msh");
@@ -375,7 +378,6 @@ static void Mesh2D(GModel *m)
             }
           }
 #endif
-
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
@@ -394,19 +396,19 @@ static void Mesh2D(GModel *m)
           backgroundMesh::current()->unset();
           meshGFace mesher(true);
           mesher(*it);
-
 #if defined(HAVE_BFGS)
           if(CTX::instance()->mesh.optimizeLloyd){
             if ((*it)->geomType()==GEntity::CompoundSurface ||
-                (*it)->geomType()==GEntity::Plane || (*it)->geomType()==GEntity::RuledSurface) {
+                (*it)->geomType()==GEntity::Plane ||
+                (*it)->geomType()==GEntity::RuledSurface) {
               if ((*it)->meshAttributes.method != MESH_TRANSFINITE &&
                   !(*it)->meshAttributes.extrude) {
                 smoothing smm(CTX::instance()->mesh.optimizeLloyd,6);
                 //m->writeMSH("beforeLLoyd.msh");
                 smm.optimize_face(*it);
                 int rec = ((CTX::instance()->mesh.recombineAll ||
-                      (*it)->meshAttributes.recombine) &&
-                    !CTX::instance()->mesh.recombine3DAll);
+                            (*it)->meshAttributes.recombine) &&
+                           !CTX::instance()->mesh.recombine3DAll);
                 //m->writeMSH("afterLLoyd.msh");
                 if (rec) recombineIntoQuads(*it);
                 //m->writeMSH("afterRecombine.msh");
@@ -414,7 +416,6 @@ static void Mesh2D(GModel *m)
             }
           }
 #endif
-
           nPending++;
         }
         if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
@@ -426,6 +427,10 @@ static void Mesh2D(GModel *m)
 
   // collapseSmallEdges(*m);
 
+  // re-orient according to geometrical/user constraints
+  std::for_each(m->firstEdge(), m->lastEdge(), orientMeshGEdge());
+  std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
+
   double t2 = GetTimeInSeconds();
   CTX::instance()->meshTimer[1] = t2 - t1;
   Msg::StatusBar(true, "Done meshing 2D (%g s)", CTX::instance()->meshTimer[1]);
@@ -434,7 +439,7 @@ static void Mesh2D(GModel *m)
 }
 
 static void FindConnectedRegions(std::vector<GRegion*> &delaunay,
-    std::vector<std::vector<GRegion*> > &connected)
+                                 std::vector<std::vector<GRegion*> > &connected)
 {
   const unsigned int nbVolumes = delaunay.size();
   if (!nbVolumes)return;
@@ -465,7 +470,7 @@ static void FindConnectedRegions(std::vector<GRegion*> &delaunay,
     delaunay=temp1;
   }
   Msg::Info("Delaunay Meshing %d volumes with %d connected components",
-      nbVolumes,connected.size());
+            nbVolumes,connected.size());
 }
 
 static void Mesh3D(GModel *m)
@@ -566,6 +571,12 @@ static void Mesh3D(GModel *m)
 
   // Ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
+
+  // Ensure that all edge/surface meshes that could have been changed by the 3D
+  // algo (e.g. the Frontal), are re-oriented according to the geometrical/user
+  // constraints
+  std::for_each(m->firstEdge(), m->lastEdge(), orientMeshGEdge());
+  std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
 
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
@@ -668,17 +679,10 @@ void GenerateMesh(GModel *m, int ask)
     Mesh3D(m);
   }
 
-  // Orient the line and surface meshes so that they match the orientation of
-  // the geometrical entities and/or the user orientation constraints
-  if(m->getMeshStatus() >= 1)
-    std::for_each(m->firstEdge(), m->lastEdge(), orientMeshGEdge());
-  if(m->getMeshStatus() >= 2)
-    std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
-
   // Optimize quality of 3D tet mesh
   if(m->getMeshStatus() == 3){
     for(int i = 0; i < std::max(CTX::instance()->mesh.optimize,
-          CTX::instance()->mesh.optimizeNetgen); i++){
+                                CTX::instance()->mesh.optimizeNetgen); i++){
       if(CTX::instance()->mesh.optimize > i) OptimizeMesh(m);
       if(CTX::instance()->mesh.optimizeNetgen > i) OptimizeMeshNetgen(m);
     }
@@ -696,7 +700,7 @@ void GenerateMesh(GModel *m, int ask)
   // Create high order elements
   if(m->getMeshStatus() && CTX::instance()->mesh.order > 1)
     SetOrderN(m, CTX::instance()->mesh.order, CTX::instance()->mesh.secondOrderLinear,
-        CTX::instance()->mesh.secondOrderIncomplete);
+              CTX::instance()->mesh.secondOrderIncomplete);
 
   // Optimize high order elements
   if(CTX::instance()->mesh.hoOptimize){
@@ -719,7 +723,7 @@ void GenerateMesh(GModel *m, int ask)
   }
 
   Msg::Info("%d vertices %d elements",
-      m->getNumMeshVertices(), m->getNumMeshElements());
+            m->getNumMeshVertices(), m->getNumMeshElements());
 
   Msg::PrintErrorCounter("Mesh generation error summary");
 
