@@ -4603,6 +4603,19 @@ double opt_geometry_occ_connect_faces(OPT_ARGS_NUM)
   return CTX::instance()->geom.occConnectFaces;
 }
 
+double opt_geometry_occ_scaling(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occScaling = val;
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->geo.value[20]->value
+      (CTX::instance()->geom.occScaling);
+  }
+#endif
+  return CTX::instance()->geom.occScaling;
+}
+
 double opt_geometry_old_circle(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

@@ -430,6 +430,7 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_occ_fix_small_faces(0, GMSH_SET, o->geo.butt[12]->value());
   opt_geometry_occ_sew_faces(0, GMSH_SET, o->geo.butt[13]->value());
   opt_geometry_occ_connect_faces(0, GMSH_SET, o->geo.butt[15]->value());
+  opt_geometry_occ_scaling(0, GMSH_SET, o->geo.value[20]->value());
 
   opt_geometry_light_two_side(0, GMSH_SET, o->geo.butt[14]->value());
   opt_geometry_hide_compounds(0, GMSH_SET, o->geo.butt[17]->value());
@@ -1957,6 +1958,11 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[15]->type(FL_TOGGLE_BUTTON);
       geo.butt[15]->callback(geometry_options_ok_cb);
 
+      geo.value[20] = new Fl_Value_Input
+        (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Global model scaling");
+      geo.value[20]->align(FL_ALIGN_RIGHT);
+      geo.value[20]->callback(geometry_options_ok_cb);
+
 #if !defined(HAVE_OCC)
       b2->deactivate();
       geo.butt[16]->deactivate();
@@ -1964,6 +1970,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[12]->deactivate();
       geo.butt[13]->deactivate();
       geo.butt[15]->deactivate();
+      geo.value[20]->deactivate();
 #endif
       o->end();
     }

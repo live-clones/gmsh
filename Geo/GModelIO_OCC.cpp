@@ -22,6 +22,8 @@
 #include "Partition_Spliter.hxx"
 #endif
 
+#include <BRepBuilderAPI_Transform.hxx>
+
 void addSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList);
 
 void OCC_Internals::buildLists()
@@ -35,7 +37,7 @@ void OCC_Internals::buildLists()
   addShapeToLists(shape);
 }
 
-void  OCC_Internals::buildShapeFromGModel(GModel* gm)
+void OCC_Internals::buildShapeFromGModel(GModel* gm)
 {
   somap.Clear();
   shmap.Clear();
@@ -46,13 +48,13 @@ void  OCC_Internals::buildShapeFromGModel(GModel* gm)
   for (GModel::riter it = gm->firstRegion(); it != gm->lastRegion() ; ++it){
     if ((*it)->getNativeType() == GEntity::OpenCascadeModel){
       OCCRegion *occ = static_cast<OCCRegion*> (*it);
-      if (occ)addShapeToLists (occ->getTopoDS_Shape());
+      if(occ) addShapeToLists(occ->getTopoDS_Shape());
     }
   }
   for (GModel::fiter it = gm->firstFace(); it != gm->lastFace() ; ++it){
     if ((*it)->getNativeType() == GEntity::OpenCascadeModel){
       OCCFace *occ = static_cast<OCCFace*> (*it);
-      if(occ)addShapeToLists (occ->getTopoDS_Face ());
+      if(occ) addShapeToLists(occ->getTopoDS_Face());
     }
   }
   BRep_Builder B;
@@ -241,8 +243,16 @@ void OCC_Internals::addShapeToLists(TopoDS_Shape _shape)
 
 void OCC_Internals::healGeometry(double tolerance, bool fixdegenerated,
                                  bool fixsmalledges, bool fixspotstripfaces,
-                                 bool sewfaces, bool makesolids, int connect)
+                                 bool sewfaces, bool makesolids, int connect,
+                                 double scaling)
 {
+  if(scaling > 0.){
+    Msg::Info("Scaling geometry by factor %g", scaling);
+    gp_Trsf t;
+    t.SetScaleFactor(scaling);
+    BRepBuilderAPI_Transform trsf(shape, t);
+    shape = trsf.Shape();
+  }
 
   if(!fixdegenerated && !fixsmalledges && !fixspotstripfaces &&
      !sewfaces && !makesolids && !connect) return;
@@ -594,7 +604,8 @@ void OCC_Internals::loadBREP(const char *fn)
                CTX::instance()->geom.occFixSmallFaces,
                CTX::instance()->geom.occSewFaces,
                false,
-               CTX::instance()->geom.occConnectFaces);
+               CTX::instance()->geom.occConnectFaces,
+               CTX::instance()->geom.occScaling);
   BRepTools::Clean(shape);
   buildLists();
 }
@@ -626,7 +637,8 @@ void OCC_Internals::loadSTEP(const char *fn)
                CTX::instance()->geom.occFixSmallFaces,
                CTX::instance()->geom.occSewFaces,
                false,
-               CTX::instance()->geom.occConnectFaces);
+               CTX::instance()->geom.occConnectFaces,
+               CTX::instance()->geom.occScaling);
   BRepTools::Clean(shape);
   buildLists();
 }
@@ -653,7 +665,8 @@ void OCC_Internals::loadIGES(const char *fn)
                CTX::instance()->geom.occFixSmallFaces,
                CTX::instance()->geom.occSewFaces,
                false,
-               CTX::instance()->geom.occConnectFaces);
+               CTX::instance()->geom.occConnectFaces,
+               CTX::instance()->geom.occScaling);
   BRepTools::Clean(shape);
   buildLists();
 }

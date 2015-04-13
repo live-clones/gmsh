@@ -32,7 +32,7 @@ class OCC_Internals {
   void healGeometry(double tolerance, bool fixdegenerated,
                     bool fixsmalledges, bool fixspotstripfaces,
                     bool sewfaces, bool makesolids=false,
-                    int connect=0);
+                    int connect=0, double scaling=0.0);
   void loadBREP(const char *);
   void writeBREP(const char *);
   void loadSTEP(const char *);

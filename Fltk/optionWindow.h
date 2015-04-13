@@ -45,7 +45,7 @@ class optionWindow{
   struct{
     Fl_Group *group;
     Fl_Check_Button *butt[20];
-    Fl_Value_Input *value[20];
+    Fl_Value_Input *value[25];
     Fl_Button *color[50];
     Fl_Choice *choice[20];
   } geo;
