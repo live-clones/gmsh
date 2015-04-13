@@ -246,7 +246,7 @@ void OCC_Internals::healGeometry(double tolerance, bool fixdegenerated,
                                  bool sewfaces, bool makesolids, int connect,
                                  double scaling)
 {
-  if(scaling > 0.){
+  if(scaling != 1.0){
     Msg::Info("Scaling geometry by factor %g", scaling);
     gp_Trsf t;
     t.SetScaleFactor(scaling);

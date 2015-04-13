@@ -129,6 +129,11 @@ Cut and connect faces in STEP, IGES and BRep models (0=no, 1=internal, 2=Salome)
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCScaling
+Scale STEP, IGES and BRep model by given factor@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OffsetX
 Model display offset along X-axis (in model coordinates)@*
 Default value: @code{0}@*

@@ -584,7 +584,7 @@ Plugin(Integrate) integrates a scalar field over all the elements of the view `V
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-If `OverTime' = 1 , the plugin integrates the scalar view over time instead of over space.@*
+If `OverTime' = i > -1 , the plugin integrates the scalar view over time instead of over space, starting at iteration i.If `Visible' = 1, the plugin only integrates overvisible entities.@*
 @*
 Plugin(Integrate) creates one new view.
 Numeric options:
@@ -595,6 +595,8 @@ Default value: @code{-1}
 Default value: @code{-1}
 @item Dimension
 Default value: @code{-1}
+@item Visible
+Default value: @code{1}
 @end table
 
 @item Plugin(Isosurface)
@@ -741,11 +743,7 @@ Default value: @code{2000}
 @item Plugin(MinMax)
 Plugin(MinMax) computes the min/max of a view.@*
 @*
-If `View' < 0, the plugin is run on the current view.@*
-@*
-If `OverTime' = 1, calculates the min/max over space AND time@*
-@*
-If `Argument' = 1, calculates the min/max AND the argmin/argmax@*
+If `View' < 0, the plugin is run on the current view. If `OverTime' = 1, the plugin calculates the min/max over space and time. If `Argument' = 1, the plugin calculates the min/max and the argmin/argmax. If `Visible' = 1, the plugin is only applied to visible entities.@*
 @*
 Plugin(MinMax) creates two new views.
 Numeric options:
@@ -756,6 +754,8 @@ Default value: @code{-1}
 Default value: @code{0}
 @item Argument
 Default value: @code{0}
+@item Visible
+Default value: @code{1}
 @end table
 
 @item Plugin(ModifyComponent)
