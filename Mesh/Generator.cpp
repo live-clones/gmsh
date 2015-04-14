@@ -255,9 +255,6 @@ static void Mesh1D(GModel *m)
     if(nIter++ > 10) break;
   }
 
-  // re-orient according to geometrical/user constraints
-  std::for_each(m->firstEdge(), m->lastEdge(), orientMeshGEdge());
-
   double t2 = Cpu();
   CTX::instance()->meshTimer[0] = t2 - t1;
   Msg::StatusBar(true, "Done meshing 1D (%g s)", CTX::instance()->meshTimer[0]);
@@ -427,10 +424,6 @@ static void Mesh2D(GModel *m)
 
   // collapseSmallEdges(*m);
 
-  // re-orient according to geometrical/user constraints
-  std::for_each(m->firstEdge(), m->lastEdge(), orientMeshGEdge());
-  std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
-
   double t2 = GetTimeInSeconds();
   CTX::instance()->meshTimer[1] = t2 - t1;
   Msg::StatusBar(true, "Done meshing 2D (%g s)", CTX::instance()->meshTimer[1]);
@@ -572,12 +565,6 @@ static void Mesh3D(GModel *m)
   // Ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
-  // Ensure that all edge/surface meshes that could have been changed by the 3D
-  // algo (e.g. the Frontal), are re-oriented according to the geometrical/user
-  // constraints
-  std::for_each(m->firstEdge(), m->lastEdge(), orientMeshGEdge());
-  std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
-
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
   Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
@@ -678,6 +665,13 @@ void GenerateMesh(GModel *m, int ask)
   if(ask == 3) {
     Mesh3D(m);
   }
+
+  // Orient the line and surface meshes so that they match the orientation of
+  // the geometrical entities and/or the user orientation constraints
+  if(m->getMeshStatus() >= 1)
+    std::for_each(m->firstEdge(), m->lastEdge(), orientMeshGEdge());
+  if(m->getMeshStatus() >= 2)
+    std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
 
   // Optimize quality of 3D tet mesh
   if(m->getMeshStatus() == 3){
