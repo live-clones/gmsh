@@ -1560,10 +1560,9 @@ int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
   b[1] = P[1] - Y[0];
   b[2] = P[2] - Z[0];
 
-  if(!sys3x3_with_tol(mat, b, res, &det))
-    {
-      return 0;
-    }
+  if(!sys3x3_with_tol(mat, b, res, &det)){
+    return 0;
+  }
   //  printf("coucou %g %g %g\n",res[0],res[1],res[2]);
   if(res[0] >= eps_prec && res[0] <= 1.0 - eps_prec &&
      res[1] >= eps_prec && res[1] <= 1.0 - eps_prec &&
@@ -1595,8 +1594,13 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
   std::list<GFace*> faces = gr->faces();
   std::list<GFace*>::iterator it = faces.begin();
 
-  //for (std::list<GFace*>::iterator itb = faces.begin(); itb != faces.end(); itb ++)
-  //  printf("face=%d size =%d\n", (*itb)->tag(), faces.size());
+  // perform intersection check in normalized coordinates
+  SBoundingBox3d bbox = gr->bounds();
+  double scaling = norm(SVector3(bbox.max(), bbox.min()));
+  if(!scaling){
+    Msg::Warning("Bad scaling in meshNormalsPointOutOfTheRegion");
+    scaling = 1.;
+  }
 
   double rrr[6];
   setRand(rrr);
@@ -1609,6 +1613,12 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
       double X[3] = {t->getVertex(0)->x(), t->getVertex(1)->x(), t->getVertex(2)->x()};
       double Y[3] = {t->getVertex(0)->y(), t->getVertex(1)->y(), t->getVertex(2)->y()};
       double Z[3] = {t->getVertex(0)->z(), t->getVertex(1)->z(), t->getVertex(2)->z()};
+      for(int i = 0; i < 3; i++){
+        X[i] /= scaling;
+        Y[i] /= scaling;
+        Z[i] /= scaling;
+      }
+
       double P[3] = {(X[0] + X[1] + X[2]) / 3.,
                      (Y[0] + Y[1] + Y[2]) / 3.,
                      (Z[0] + Z[1] + Z[2]) / 3.};
@@ -1635,6 +1645,11 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
                              t_b->getVertex(2)->y()};
             double Z_b[3] = {t_b->getVertex(0)->z(), t_b->getVertex(1)->z(),
                              t_b->getVertex(2)->z()};
+            for(int i = 0; i < 3; i++){
+              X_b[i] /= scaling;
+              Y_b[i] /= scaling;
+              Z_b[i] /= scaling;
+            }
             int inters = intersect_line_triangle(X_b, Y_b, Z_b, P, N, 1.e-9);
             nb_intersect += inters;
           }
