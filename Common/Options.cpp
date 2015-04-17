@@ -6594,7 +6594,7 @@ double opt_view_time(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
   GET_VIEW(0.);
-  if(action & GMSH_SET) {
+  if(data && (action & GMSH_SET)) {
     if(val >= 0.){
       // if negative (the default), don't do anything so that we do not compete
       // with timestep
