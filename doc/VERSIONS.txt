@@ -1,5 +1,6 @@
-2.9.3: updated versions of PETSc/SLEPc and OpenCASCADE/OCE libraries used in
-official binary builds; new Find() command; miscellaneous code cleanups.
+2.9.3 (April 18, 2015): updated versions of PETSc/SLEPc and OpenCASCADE/OCE
+libraries used in official binary builds; new Find() command; miscellaneous code
+cleanups and small fixes.
 
 2.9.2 (March 31, 2015): added support for extrusion of embedded points/curves;
 improved hex-dominant algorithm; fixed crashes in quad algorithm; fix regression
