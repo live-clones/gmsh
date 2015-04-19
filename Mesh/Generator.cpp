@@ -270,8 +270,9 @@ static void PrintMesh2dStatistics(GModel *m)
   else
     return;
 
-  if(statreport){
-    Msg::Error("Could not open file '%s'", CTX::instance()->meshStatReportFileName.c_str());
+  if(!statreport){
+    Msg::Error("Could not open file '%s'",
+               CTX::instance()->meshStatReportFileName.c_str());
     return;
   }
 

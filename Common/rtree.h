@@ -940,6 +940,9 @@ bool RTREE_QUAL::InsertRectRec(Rect* a_rect, const DATATYPE& a_id, Node* a_node,
   if(a_node->m_level > a_level)
   {
     index = PickBranch(a_rect, a_node);
+
+    if(index < 0) return false; // Added for Gmsh
+
     if (!InsertRectRec(a_rect, a_id, a_node->m_branch[index].m_child, &otherNode, a_level))
     {
       // Child was not split
@@ -1434,6 +1437,7 @@ void RTREE_QUAL::Classify(int a_index, int a_group, PartitionVars* a_parVars)
 {
   ASSERT(a_parVars);
   ASSERT(!a_parVars->m_taken[a_index]);
+  ASSERT(a_index >= 0); // Added for Gmsh
 
   a_parVars->m_partition[a_index] = a_group;
   a_parVars->m_taken[a_index] = true;

@@ -53,7 +53,7 @@ SVector3 GenericFace::normal(const SPoint2 &param) const
 {
   std::vector<double> res(3,0.);
   std::vector<double> par(2,0.);
-  for (int i=0;i<3;i++) par[i] = param[i];
+  for (int i = 0; i < 2; i++) par[i] = param[i];
   if (!FaceEvalNormal) Msg::Fatal("Genericface::ERROR: Callback FaceEvalNormal not set");
   bool ok = FaceEvalNormal(id,par,res);
   if (!ok) Msg::Error("GenericFace::ERROR from FaceEvalNormal ! " );
@@ -66,7 +66,7 @@ Pair<SVector3,SVector3> GenericFace::firstDer(const SPoint2 &param) const
   std::vector<double> deru(3,0.);
   std::vector<double> derv(3,0.);
   std::vector<double> par(2,0.);
-  for (int i=0;i<3;i++) par[i] = param[i];
+  for (int i = 0; i < 2; i++) par[i] = param[i];
   bool ok = FaceFirstDer(id,par,deru,derv);
   if (!ok) Msg::Error("GenericFace::ERROR from FaceFirstDer ! " );
   return Pair<SVector3,SVector3>(SVector3(deru[0],deru[1],deru[2]),
@@ -79,7 +79,7 @@ void GenericFace::secondDer(const SPoint2 &param,SVector3 *dudu, SVector3 *dvdv,
   std::vector<double> dervv(3,0.);
   std::vector<double> deruv(3,0.);
   std::vector<double> par(2,0.);
-  for (int i=0;i<2;i++) par[i] = param[i];
+  for (int i = 0; i < 2; i++) par[i] = param[i];
   if (!FaceSecondDer) Msg::Fatal("Genericface::ERROR: Callback FaceSecondDer not set");
   bool ok = FaceSecondDer(id,par,deruu,dervv,deruv);
   if (!ok) Msg::Error("GenericFace::ERROR from FaceSecondDer ! " );
@@ -190,7 +190,7 @@ double GenericFace::curvatureMax(const SPoint2 &param) const
   std::vector<double> dirMin(3,0.);
   double curvMax,curvMin;
   std::vector<double> par(2,0.);
-  for (int i=0;i<2;i++) par[i] = param[i];
+  for (int i = 0; i < 2; i++) par[i] = param[i];
   if (!FaceCurvatures) Msg::Fatal("Genericface::ERROR: Callback FaceCurvatures not set");
   bool ok = FaceCurvatures(id,par,dirMax,dirMin,curvMax,curvMin);
   if (!ok) Msg::Error("GenericFace::ERROR from FaceCurvatures ! " );
@@ -201,7 +201,7 @@ double GenericFace::curvatures(const SPoint2 &_param,SVector3 *_dirMax,SVector3 
                                double *curvMax,double *curvMin) const
 {
   std::vector<double> param(2,0.);
-  for (int i=0;i<2;i++) param[i] = _param[i];
+  for (int i = 0; i < 2; i++) param[i] = _param[i];
   std::vector<double> dirMax(3,0.);
   std::vector<double> dirMin(3,0.);
 
@@ -218,7 +218,7 @@ bool GenericFace::containsPoint(const SPoint3 &pt) const
 {
   bool res;
   std::vector<double> queryPoint(3,0.);
-  for (int i=0;i<3;i++) queryPoint[i] = pt[i];
+  for (int i = 0; i < 3; i++) queryPoint[i] = pt[i];
   if (!FaceContainsPointFromXYZ) Msg::Fatal("Genericface::ERROR: Callback FaceContainsPointFromXYZ not set");
   bool ok = FaceContainsPointFromXYZ(id,queryPoint,res);
   if (!ok) Msg::Error("GenericFace::containsPoint::ERROR from FaceContainsPointFromXYZ ! " );
@@ -239,7 +239,7 @@ void GenericFace::createLoops()
   l_dirs.clear();
 
   for (std::set<int>::iterator it_loop = loopsnumber.begin();
-       it_loop!=loopsnumber.end();it_loop++){// for each loop
+       it_loop != loopsnumber.end(); it_loop++){// for each loop
     std::pair<std::multimap<int, std::pair<GEdge*,int> >::iterator,
               std::multimap<int, std::pair<GEdge*,int> >::iterator>
       range = bnd.equal_range(*it_loop);

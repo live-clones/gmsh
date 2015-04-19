@@ -565,7 +565,7 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace,
         continue;
 
       SPoint3 bary = mElem->barycenter();
-      MVertex* mVerts[8];
+      std::vector<MVertex*> mVerts(8, NULL);
 
       // check orientation
       SVector3 nor = _vectNormByFissure[gEdge];
@@ -579,11 +579,11 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace,
       for(int i = 0; i < mElem->getNumVertices(); i++){
         MVertex *mVert = mElem->getVertex(i);
 
-        int j = (changeOri && i<2)?!i:i;
-        if (j<2) // adding intern node
+        int j = (changeOri && i < 2) ? !i : i;
+        if (j < 2) // adding intern node
           mVerts[_numNodeJoint[j]] = _nodeJointByHeavOrJunctionNode[mVert];
 
-        if (_nodeByHeavNode.find( mVert ) != _nodeByHeavNode.end()){
+        if (_nodeByHeavNode.find(mVert) != _nodeByHeavNode.end()){
           // adding upper and under nodes
           mVerts[_numNodeHeavInf[j]] = mVert;
           mVerts[_numNodeHeavSup[j]] = _nodeByHeavNode[mVert];
@@ -619,7 +619,7 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace,
       // the new GEntity (created here)
       for(int j =0; j<8; j++){
         MVertex *mVert = mVerts[j];
-        assert(mVert!= NULL);
+        assert(mVert != NULL);
         if (mVert->onWhat() == 0){
           mVert->setEntity(jointFace);
           jointFace->addMeshVertex(mVert);

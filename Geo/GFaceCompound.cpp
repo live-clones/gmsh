@@ -2878,21 +2878,31 @@ void GFaceCompound::printStuff(int iNewton) const
   }
   FILE * uvy = Fopen(name2,"w");
   if(!uvy){
+    fclose(uvx);
     Msg::Error("Could not open file '%s'", name2);
     return;
   }
   FILE * uvz = Fopen(name3,"w");
   if(!uvz){
+    fclose(uvx);
+    fclose(uvy);
     Msg::Error("Could not open file '%s'", name3);
     return;
   }
   FILE * xyzu = Fopen(name4,"w");
   if(!xyzu){
+    fclose(uvx);
+    fclose(uvy);
+    fclose(uvz);
     Msg::Error("Could not open file '%s'", name4);
     return;
   }
   FILE * xyzv = Fopen(name5,"w");
   if(!xyzv){
+    fclose(uvx);
+    fclose(uvy);
+    fclose(uvz);
+    fclose(xyzu);
     Msg::Error("Could not open file '%s'", name5);
     return;
   }
