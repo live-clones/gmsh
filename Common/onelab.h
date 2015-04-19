@@ -979,12 +979,16 @@ namespace onelab{
                                    std::set<T*, parameterLessThan> &ps)
     {
       if(name.empty() && client.size()){
+        std::vector<T*> toDelete;
         for(typename std::set<T*, parameterLessThan>::iterator it = ps.begin();
-            it != ps.end(); it++){
+            it != ps.end(); ){
           T *p = *it;
           if(p->hasClient(client)){
-            ps.erase(it);
+            ps.erase(it++); // to avoid invalid iterator
             delete p;
+          }
+          else{
+            it++;
           }
         }
       }

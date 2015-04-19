@@ -407,7 +407,7 @@ void gmshEdge::writeGEO(FILE *fp)
       fprintf(fp, ", %d", v->Num);
     else
       fprintf(fp, "{%d", v->Num);
-    if(i % 6 == 7)
+    if(i % 8 == 7)
       fprintf(fp, "\n");
   }
   fprintf(fp, "};\n");

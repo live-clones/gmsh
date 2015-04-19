@@ -2534,7 +2534,8 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
         std::map<int, int>::iterator m_it = v_report->find(v->Num);
         if(m_it != v_report->end()){
 	  Vertex **v_rep = (Vertex **)Tree_PQuery(allNonDuplicatedPoints, &v);
-	  m_it->second = (*v_rep)->Num;
+          if(v_rep)
+            m_it->second = (*v_rep)->Num;
         }
       }
     }
@@ -2711,12 +2712,14 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
 	  std::map<int, int>::iterator m_it = c_report->find(c->Num);
 	  if(m_it != c_report->end()){
 	    Curve **c_rep = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c);
-	    m_it->second = (*c_rep)->Num;
+            if(c_rep)
+              m_it->second = (*c_rep)->Num;
 	  }
 	  m_it = c_report->find(c2->Num);
 	  if(m_it != c_report->end()){
 	    Curve **c_rep_neg = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c2);
-	    m_it->second = (*c_rep_neg)->Num;
+            if(c_rep_neg)
+              m_it->second = (*c_rep_neg)->Num;
 	  }
 	}
       }
@@ -3005,7 +3008,8 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
 	  std::map<int, int>::iterator m_it = (*s_report).find(s->Num);
 	  if(m_it != s_report->end()){
 	    Surface **s_rep = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s);
-	    m_it->second = (*s_rep)->Num;
+            if(s_rep)
+              m_it->second = (*s_rep)->Num;
 	  }
 	}
       }

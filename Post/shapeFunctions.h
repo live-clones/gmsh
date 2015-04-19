@@ -912,7 +912,7 @@ public:
   }
   void getGradShapeFunction(int num, double u, double v, double w, double s[3])
   {
-    if(w == 1. && num != 4) {
+    if(w == 1.) {
       switch(num) {
       case 0 : s[0] = -0.25 ;
                s[1] = -0.25 ;
