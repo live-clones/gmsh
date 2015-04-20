@@ -26,6 +26,8 @@ xyzv::xyzv(const xyzv &other)
     for(int i = 0; i < nbvals; i++)
       vals[i] = other.vals[i];
   }
+  else
+    vals = 0;
 }
 
 xyzv &xyzv::operator = (const xyzv &other)
@@ -103,7 +105,7 @@ void smooth_data::add_scale(double x, double y, double z, double scale_val)
   std::set<xyzv, lessthanxyzv>::const_iterator it = c.find(xyz);
   if(it == c.end()){
     xyz.scale_update(scale_val);
-    c.insert(xyz); 
+    c.insert(xyz);
   }
   else {
     // we can do this because we know that it will not destroy the set

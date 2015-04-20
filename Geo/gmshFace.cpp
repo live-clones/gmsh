@@ -21,7 +21,7 @@
 #endif
 
 gmshFace::gmshFace(GModel *m, Surface *face)
-  : GFace(m, face->Num), s(face)
+  : GFace(m, face->Num), s(face), isSphere(false), radius(0.)
 {
   resetMeshAttributes();
 

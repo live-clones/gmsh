@@ -16,15 +16,17 @@ class orthogonalTerm : public helmholtzTerm<double> {
   bool withDof;
   std::map<MVertex*, double > *_distance_map;
  public:
- orthogonalTerm(GModel *gm, int iField, simpleFunction<double> *k,
-                std::map<MVertex*, double > *distance_map)
-   : helmholtzTerm<double>(gm, iField, iField, k, 0), withDof(false),
-     _distance_map(distance_map) {}
+  orthogonalTerm(GModel *gm, int iField, simpleFunction<double> *k,
+                 std::map<MVertex*, double > *distance_map)
+    : helmholtzTerm<double>(gm, iField, iField, k, 0), _pview(0), _dofView(0),
+      withDof(false), _distance_map(distance_map) {}
   orthogonalTerm(GModel *gm, int iField, simpleFunction<double> *k, PView *pview)
-    : helmholtzTerm<double>(gm, iField, iField, k, 0), _pview(pview), withDof(false) {}
- orthogonalTerm(GModel *gm, int iField, simpleFunction<double> *k,
-                dofManager<double> *dofView)
-   : helmholtzTerm<double>(gm, iField, iField, k, 0), _dofView(dofView), withDof(true) {}
+    : helmholtzTerm<double>(gm, iField, iField, k, 0), _pview(pview), _dofView(0),
+      withDof(false) {}
+  orthogonalTerm(GModel *gm, int iField, simpleFunction<double> *k,
+                 dofManager<double> *dofView)
+    : helmholtzTerm<double>(gm, iField, iField, k, 0), _pview(0), _dofView(dofView),
+      withDof(true) {}
   void elementVector(SElement *se, fullVector<double> &m) const
   {
     MElement *e = se->getMeshElement();

@@ -16,7 +16,8 @@
 #include "VertexArray.h"
 #include "boundaryLayersData.h"
 
-GRegion::GRegion(GModel *model, int tag) : GEntity (model, tag)
+GRegion::GRegion(GModel *model, int tag)
+  : GEntity (model, tag), compound(0)
 {
   resetMeshAttributes();
 }

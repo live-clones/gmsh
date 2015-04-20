@@ -63,8 +63,9 @@ GModel::GModel(std::string name)
   : _maxVertexNum(0), _maxElementNum(0),
     _checkPointedMaxVertexNum(0), _checkPointedMaxElementNum(0),
     _name(name), _visible(1), _octree(0), _geo_internals(0),
-    _occ_internals(0), _acis_internals(0), _fm_internals(0),
-    _factory(0), _fields(0), _currentMeshEntity(0), normals(0)
+    _occ_internals(0), _sgeom_internals(0), _acis_internals(0),
+    _fm_internals(0), _factory(0), _fields(0), _currentMeshEntity(0),
+    normals(0)
 {
   partitionSize[0] = 0; partitionSize[1] = 0;
 

@@ -113,10 +113,10 @@ class MEdgeVertex : public MVertex{
 
   MEdgeVertex(double x, double y, double z, GEntity *ge, double u, double lc = -1.0,
               int num = 0)
-    : MVertex(x, y, z, ge,num), _u(u), _lc(lc)
+    : MVertex(x, y, z, ge,num), _u(u), _lc(lc), bl_data(0)
   {
   }
-  virtual ~MEdgeVertex(){}
+  virtual ~MEdgeVertex(){ if(bl_data) delete bl_data; }
   virtual bool getParameter(int i, double &par) const { par = _u; return true; }
   virtual bool setParameter(int i, double par){ _u = par; return true; }
   double getLc() const { return _lc; }
@@ -129,10 +129,10 @@ class MFaceVertex : public MVertex{
   MVertexBoundaryLayerData* bl_data;
 
   MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v, int num = 0)
-    : MVertex(x, y, z, ge, num), _u(u), _v(v),bl_data(0)
+    : MVertex(x, y, z, ge, num), _u(u), _v(v), bl_data(0)
   {
   }
-  virtual ~MFaceVertex(){if(bl_data) delete bl_data;}
+  virtual ~MFaceVertex(){ if(bl_data) delete bl_data; }
   virtual bool getParameter(int i, double &par) const { par = (i ? _v : _u); return true; }
   virtual bool setParameter(int i, double par)
   {

@@ -77,7 +77,7 @@ class FieldOption {
 
 class Field {
  public:
-  Field() {}
+  Field() : update_needed(false) {}
   virtual ~Field();
   int id;
   std::map<std::string, FieldOption *> options;
@@ -87,12 +87,10 @@ class Field {
   virtual double operator() (double x, double y, double z, GEntity *ge=0) = 0;
   // anisotropic
   virtual void operator() (double x, double y, double z, SMetric3 &, GEntity *ge=0){}
-
-  //temporary
-  virtual void operator()(double x,double y,double z,SVector3& v1,SVector3& v2,SVector3& v3,GEntity* ge=0){}
-
+  // temporary
+  virtual void operator()(double x, double y, double z, SVector3& v1, SVector3& v2,
+                          SVector3& v3,GEntity* ge=0){}
   bool update_needed;
-  //void update(){ printf("up f \n"); return;}
   virtual const char *getName() = 0;
 #if defined(HAVE_POST)
   void putOnView(PView * view, int comp = -1);
@@ -351,7 +349,7 @@ class GenericField : public Field{
     ~GenericField();
     virtual double operator() (double x, double y, double z, GEntity *ge=0);
     virtual const char *getName(){return "GenericField";};
-    
+
     // sets the callbacks
     void setCallbackWithData(ptrfunction fct, void *data);
 

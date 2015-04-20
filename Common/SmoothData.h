@@ -16,19 +16,21 @@ struct xyzv {
   double x, y, z, *vals;
   int nbvals;
   int nboccurences;
-  double scaleValue;  // Added by Trevor Strickler for scaling last element layer in quadtri boundary layer to make better quality interfaces
+  // Added by Trevor Strickler for scaling last element layer in quadtri
+  // boundary layer to make better quality interfaces
+  double scaleValue;
   int scale_numvals;
   static double eps;
   xyzv(double xx, double yy, double zz)
-    : x(xx), y(yy), z(zz), vals(0), nbvals(0), nboccurences(0), scaleValue(1.0), scale_numvals(0) {}  // Trevor Strickler modified
+    : x(xx), y(yy), z(zz), vals(0), nbvals(0), nboccurences(0),
+      scaleValue(1.0), scale_numvals(0) {}
   ~xyzv(){ if(vals) delete [] vals; }
-  // these are needed for set<> operations since the default copy
-  // constructor won't allocate *vals
+  // these are needed for set<> operations since the default copy constructor
+  // won't allocate *vals
   xyzv(const xyzv & other);
   xyzv & operator = (const xyzv &other);
   void update(int n, double *v);
-  void scale_update(double scale_val);  // Trevor Strickler
-
+  void scale_update(double scale_val);
 };
 
 struct lessthanxyzv {
@@ -50,7 +52,7 @@ struct lessthanxyzv {
 
 class smooth_data{
  private:
-  std::set<xyzv, lessthanxyzv> c;  
+  std::set<xyzv, lessthanxyzv> c;
  public:
   typedef std::set<xyzv, lessthanxyzv>::iterator iter;
   iter begin(){ return c.begin(); }
@@ -105,7 +107,7 @@ struct lessthanxyzn
 class smooth_normals{
  private:
   float tol;
-  std::set<xyzn, lessthanxyzn> c;  
+  std::set<xyzn, lessthanxyzn> c;
  public:
   smooth_normals(double angle) : tol((float)angle) {}
   void add(double x, double y, double z, double nx, double ny, double nz);
