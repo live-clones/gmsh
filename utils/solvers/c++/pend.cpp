@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include "onelab.h"
 
-void exportMsh(double le1, double le2)
+void exportMsh(const std::string &path, double le1, double le2)
 {
-  FILE *mshFile = fopen("pend.msh","w");
+  FILE *mshFile = fopen((path + "pend.msh").c_str(),"w");
   if(!mshFile) return;
   fprintf(mshFile, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
   fprintf(mshFile, "$Nodes\n3\n1 0 0 0\n2 0 %f 0\n3 0 %f 0\n$EndNodes\n",
@@ -17,9 +17,9 @@ void exportMsh(double le1, double le2)
   fclose(mshFile);
 }
 
-void exportMshOpt()
+void exportMshOpt(const std::string &path)
 {
-  FILE *optFile = fopen("pend.msh.opt", "w");
+  FILE *optFile = fopen((path + "pend.msh.opt").c_str(), "w");
   if(!optFile) return;
   fprintf(optFile, "n = PostProcessing.NbViews - 1;\n");
   fprintf(optFile, "If(n >= 0)\nView[n].ShowScale = 0;\nView[n].VectorType = 5;\n");
@@ -29,9 +29,10 @@ void exportMshOpt()
   fclose(optFile);
 }
 
-void exportIter(int iter, double t, double x1, double y1, double x2, double y2)
+void exportIter(const std::string &path, int iter, double t, double x1, double y1,
+                double x2, double y2)
 {
-  FILE *mshFile = fopen("pend.msh", "a");
+  FILE *mshFile = fopen((path + "pend.msh").c_str(), "a");
   if(!mshFile) return;
   fprintf(mshFile, "$NodeData\n1\n\"motion\"\n1\n\t%f\n3\n\t%d\n3\n", t, iter);
   fprintf(mshFile, "\t3\n\t1 0 0 0\n\t2 %f %f 0\n\t3 %f %f 0\n$EndNodeData\n",
@@ -95,6 +96,13 @@ int main(int argc, char **argv)
   c->get(ns, name + "/Action");
   if(ns.size()) action = ns[0].getValue();
 
+  std::string path(argv[0]);
+  int islash = (int)path.find_last_of("/\\");
+  if(islash > 0)
+    path = path.substr(0, islash + 1);
+  else
+    path = "";
+
   double g = 9.8; // acceleration of gravity
   double m = 0.3; // mass of pendulum balls
 
@@ -157,7 +165,7 @@ int main(int argc, char **argv)
     time += dt;
     refr += dt;
 
-    exportMshOpt();
+    exportMshOpt(path);
 
     if(refr >= refresh){
       refr = 0;
@@ -180,9 +188,9 @@ int main(int argc, char **argv)
       c->get(ns, name + "/Action");
       if(ns.size() && ns[0].getValue() == "stop") break;
 
-      exportMsh(l1, l2);
-      exportIter(iter, time, x1, y1+l1, x2, y2+l1+l2);
-      c->sendMergeFileRequest("pend.msh");
+      exportMsh(path, l1, l2);
+      exportIter(path, iter, time, x1, y1+l1, x2, y2+l1+l2);
+      c->sendMergeFileRequest(path + "pend.msh");
       iter += 1;
     }
   }
