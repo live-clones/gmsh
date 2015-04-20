@@ -3803,9 +3803,9 @@ $Elements
 @dots{}
 $EndElements
 
-[ all other sections are identical to ASCII, except that @var{node-number},
+[ All other sections are identical to ASCII, except that @var{node-number},
   @var{elm-number}, @var{number-of-nodes-per-element} and @var{values} are written in
-  binary format ]
+  binary format. Beware that all the $End tags must start on a new line. ]
 @end example
 
 @noindent
