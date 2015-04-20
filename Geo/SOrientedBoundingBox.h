@@ -34,6 +34,7 @@ class SOrientedBoundingBox {
   SVector3 axisX;
   SVector3 axisY;
   SVector3 axisZ;
+  void fillp();
 
  public:
   double p1x, p1y, p1z;
@@ -50,8 +51,8 @@ class SOrientedBoundingBox {
   // axis system of the box. The axis form the local coordinates
   // system of the box. All these data are given in the local
   // coordinates system of the object.
-  SOrientedBoundingBox(SVector3& center, double sizeX, double sizeY, 
-                       double sizeZ, const SVector3 &axisX, 
+  SOrientedBoundingBox(SVector3& center, double sizeX, double sizeY,
+                       double sizeZ, const SVector3 &axisX,
                        const SVector3 &axisY, const SVector3 &axisZ);
 
   SOrientedBoundingBox(SOrientedBoundingBox* other);
@@ -68,11 +69,11 @@ class SOrientedBoundingBox {
 
   // valid values for axis are 0 (X-axis), 1 (Y-axis) or 2 (Z-axis)
   SVector3 getAxis(int axis);
-  
+
   static SOrientedBoundingBox* buildOBB(std::vector<SPoint3> vertices);
-  
+
   bool intersects(SOrientedBoundingBox &obb);
-  
+
   static double compare(SOrientedBoundingBox &obb1, SOrientedBoundingBox &obb2);
 };
 

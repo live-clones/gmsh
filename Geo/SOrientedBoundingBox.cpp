@@ -42,32 +42,8 @@ SOrientedBoundingRectangle::~SOrientedBoundingRectangle()
   delete axisY;
 }
 
-SOrientedBoundingBox::SOrientedBoundingBox()
+void SOrientedBoundingBox::fillp()
 {
-  center = SVector3();
-  size = SVector3();
-  axisX = SVector3();
-  axisY = SVector3();
-  axisZ = SVector3();
-}
-
-SOrientedBoundingBox::SOrientedBoundingBox(SVector3 &center_,
-                                           double sizeX,
-                                           double sizeY,
-                                           double sizeZ,
-                                           const SVector3 &axisX_,
-                                           const SVector3 &axisY_,
-                                           const SVector3 &axisZ_)
-{
-  center = center_;
-  size = SVector3(sizeX, sizeY, sizeZ);
-  axisX = axisX_;
-  axisX.normalize();
-  axisY = axisY_;
-  axisY.normalize();
-  axisZ = axisZ_;
-  axisZ.normalize();
-
   double dx = 0.5 * size[0];
   double dy = 0.5 * size[1];
   double dz = 0.5 * size[2];
@@ -105,6 +81,35 @@ SOrientedBoundingBox::SOrientedBoundingBox(SVector3 &center_,
   p8z = center[2] + (axisX[2]*dx) + (axisY[2]*dy) + (axisZ[2]*dz);
 }
 
+SOrientedBoundingBox::SOrientedBoundingBox()
+{
+  center = SVector3();
+  size = SVector3();
+  axisX = SVector3();
+  axisY = SVector3();
+  axisZ = SVector3();
+  fillp();
+}
+
+SOrientedBoundingBox::SOrientedBoundingBox(SVector3 &center_,
+                                           double sizeX,
+                                           double sizeY,
+                                           double sizeZ,
+                                           const SVector3 &axisX_,
+                                           const SVector3 &axisY_,
+                                           const SVector3 &axisZ_)
+{
+  center = center_;
+  size = SVector3(sizeX, sizeY, sizeZ);
+  axisX = axisX_;
+  axisX.normalize();
+  axisY = axisY_;
+  axisY.normalize();
+  axisZ = axisZ_;
+  axisZ.normalize();
+  fillp();
+}
+
 SOrientedBoundingBox::SOrientedBoundingBox(SOrientedBoundingBox* other)
 {
   size = other->getSize();
@@ -112,43 +117,7 @@ SOrientedBoundingBox::SOrientedBoundingBox(SOrientedBoundingBox* other)
   axisY = other->getAxis(1);
   axisZ = other->getAxis(2);
   center = other->getCenter();
-
-  double dx = 0.5*size[0];
-  double dy = 0.5*size[1];
-  double dz = 0.5*size[2];
-
-  p1x = center[0] - (axisX[0]*dx) - (axisY[0]*dy) - (axisZ[0]*dz);
-  p1y = center[1] - (axisX[1]*dx) - (axisY[1]*dy) - (axisZ[1]*dz);
-  p1z = center[2] - (axisX[2]*dx) - (axisY[2]*dy) - (axisZ[2]*dz);
-
-  p2x = center[0] + (axisX[0]*dx) - (axisY[0]*dy) - (axisZ[0]*dz);
-  p2y = center[1] + (axisX[1]*dx) - (axisY[1]*dy) - (axisZ[1]*dz);
-  p2z = center[2] + (axisX[2]*dx) - (axisY[2]*dy) - (axisZ[2]*dz);
-
-  p3x = center[0] - (axisX[0]*dx) + (axisY[0]*dy) - (axisZ[0]*dz);
-  p3y = center[1] - (axisX[1]*dx) + (axisY[1]*dy) - (axisZ[1]*dz);
-  p3z = center[2] - (axisX[2]*dx) + (axisY[2]*dy) - (axisZ[2]*dz);
-
-  p4x = center[0] + (axisX[0]*dx) + (axisY[0]*dy) - (axisZ[0]*dz);
-  p4y = center[1] + (axisX[1]*dx) + (axisY[1]*dy) - (axisZ[1]*dz);
-  p4z = center[2] + (axisX[2]*dx) + (axisY[2]*dy) - (axisZ[2]*dz);
-
-  p5x = center[0] - (axisX[0]*dx) - (axisY[0]*dy) + (axisZ[0]*dz);
-  p5y = center[1] - (axisX[1]*dx) - (axisY[1]*dy) + (axisZ[1]*dz);
-  p5z = center[2] - (axisX[2]*dx) - (axisY[2]*dy) + (axisZ[2]*dz);
-
-  p6x = center[0] + (axisX[0]*dx) - (axisY[0]*dy) + (axisZ[0]*dz);
-  p6y = center[1] + (axisX[1]*dx) - (axisY[1]*dy) + (axisZ[1]*dz);
-  p6z = center[2] + (axisX[2]*dx) - (axisY[2]*dy) + (axisZ[2]*dz);
-
-  p7x = center[0] - (axisX[0]*dx) + (axisY[0]*dy) + (axisZ[0]*dz);
-  p7y = center[1] - (axisX[1]*dx) + (axisY[1]*dy) + (axisZ[1]*dz);
-  p7z = center[2] - (axisX[2]*dx) + (axisY[2]*dy) + (axisZ[2]*dz);
-
-  p8x = center[0] + (axisX[0]*dx) + (axisY[0]*dy) + (axisZ[0]*dz);
-  p8y = center[1] + (axisX[1]*dx) + (axisY[1]*dy) + (axisZ[1]*dz);
-  p8z = center[2] + (axisX[2]*dx) + (axisY[2]*dy) + (axisZ[2]*dz);
-
+  fillp();
 }
 
 double SOrientedBoundingBox::getMaxSize()
@@ -165,9 +134,9 @@ SVector3 SOrientedBoundingBox::getAxis(int axis)
 {
   SVector3 ret;
   switch (axis) {
-  case 0: ret=axisX; break;
-  case 1: ret=axisY; break;
-  case 2: ret=axisZ; break;
+  case 0: ret = axisX; break;
+  case 1: ret = axisY; break;
+  case 2: ret = axisZ; break;
   }
   return ret;
 }

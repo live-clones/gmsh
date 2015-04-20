@@ -132,8 +132,7 @@ class onelabGmshServer : public GmshServer{
 
     int sock;
     try{
-      sock = Start(exe.c_str(), args.c_str(), sockname.c_str(),
-                   CTX::instance()->solver.timeout);
+      sock = Start(exe, args, sockname, CTX::instance()->solver.timeout);
     }
     catch(const char *err){
       Msg::Error("Abnormal server termination (%s on socket %s)", err,

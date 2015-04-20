@@ -180,7 +180,7 @@ int GModel::readMSH(const std::string &name)
 
     // $Nodes section
     else if(!strncmp(&str[1], "Nodes", 5)) {
-      if(!fgets(str, sizeof(str), fp)){  return 0; fclose(fp); }
+      if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
       int numVertices;
       if(sscanf(str, "%d", &numVertices) != 1){ fclose(fp); return 0; }
       Msg::Info("%d vertices", numVertices);

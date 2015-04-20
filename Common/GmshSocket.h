@@ -330,9 +330,9 @@ class GmshServer : public GmshSocket{
   virtual int NonBlockingWait(double waitint, double timeout, int socket=-1) = 0;
   // start the client by launching "exe args" (args is supposed to contain
   // '%s' where the socket name should appear)
-  int Start(const char *exe, const char *args, const char *sockname, double timeout)
+  int Start(const std::string &exe, const std::string &args, const std::string &sockname,
+            double timeout)
   {
-    if(!sockname) throw "Invalid (null) socket name";
     _sockname = sockname;
     int tmpsock;
     if(strstr(_sockname.c_str(), "/") || strstr(_sockname.c_str(), "\\") ||
@@ -395,9 +395,9 @@ class GmshServer : public GmshSocket{
       }
     }
 
-    if((exe && strlen(exe)) || (args && strlen(args))){
+    if(exe.size() || args.size()){
       char s[1024];
-      sprintf(s, args, _sockname.c_str());
+      sprintf(s, args.c_str(), _sockname.c_str());
       NonBlockingSystemCall(exe, s); // starts the solver
     }
     else{
