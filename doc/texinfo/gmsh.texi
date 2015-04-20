@@ -1798,6 +1798,9 @@ Changes the name of the current model.
 Forces an immediate transfer from the old geometrical database into the
 new one (this transfer normally occurs right after a file is read).
 
+@item NewModel;
+Creates a new current model.
+
 @item Include @var{char-expression};
 Includes the file named @var{char-expression} at the current position in the
 input file. The include command should be given on a line of its own.  If

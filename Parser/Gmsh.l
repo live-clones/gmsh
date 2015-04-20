@@ -204,6 +204,7 @@ MPI_Rank                return tMPI_Rank;
 MPI_Size                return tMPI_Size;
 Memory                  return tMemory;
 
+NewModel                return tNewModel;
 Nurbs			return tNurbs;
 
 OnelabAction            return tOnelabAction;

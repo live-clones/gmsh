@@ -116,7 +116,8 @@ struct doubleXstring{
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tFind tStrFind tStrCmp tStrChoice
 %token tTextAttributes
-%token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tSyncModel
+%token tBoundingBox tDraw tSetChanged tToday tFixRelativePath
+%token tSyncModel tNewModel
 %token tOnelabAction tOnelabRun
 %token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateTopologyNoHoles
@@ -2884,6 +2885,11 @@ Command :
       // the new DB. This will become unnecessary if/when we fill the
       // GModel directly during parsing.
       GModel::current()->importGEOInternals();
+    }
+   | tNewModel tEND
+    {
+      new GModel();
+      GModel::current(GModel::list.size() - 1);
     }
    | tBoundingBox tEND
     {
