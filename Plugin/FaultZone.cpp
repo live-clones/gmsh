@@ -565,7 +565,7 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace,
         continue;
 
       SPoint3 bary = mElem->barycenter();
-      std::vector<MVertex*> mVerts(8, NULL);
+      std::vector<MVertex*> mVerts(8, (MVertex*)0);
 
       // check orientation
       SVector3 nor = _vectNormByFissure[gEdge];
