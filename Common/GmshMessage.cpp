@@ -813,13 +813,16 @@ double Msg::GetOnelabNumber(std::string name)
 #else
     _onelabClient->get(numbers, name);
 #endif
-    if(numbers.empty())
-      Msg::Error("Unknown ONELAB parameter '%s'", name.c_str());
+    if(numbers.empty()){
+      Msg::Error("Unknown ONELAB number parameter '%s'", name.c_str());
+      return 0.;
+    }
     else
       return numbers[0].getValue();
   }
-  return 0.;
 #endif
+  Msg::Error("GetNumber requires a ONELAB client");
+  return 0.;
 }
 
 std::string Msg::GetOnelabString(std::string name)
@@ -832,12 +835,15 @@ std::string Msg::GetOnelabString(std::string name)
 #else
     _onelabClient->get(strings, name);
 #endif
-    if(strings.empty())
-      Msg::Error("Unknown ONELAB parameter '%s'", name.c_str());
+    if(strings.empty()){
+      Msg::Error("Unknown ONELAB string parameter '%s'", name.c_str());
+      return "";
+    }
     else
       return strings[0].getValue();
   }
 #endif
+  Msg::Error("GetString requires a ONELAB client");
   return "";
 }
 
