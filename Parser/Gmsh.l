@@ -173,10 +173,12 @@ Function                return tFunction;
 
 GetEnv                  return tGetEnv;
 GetString               return tGetString;
+GetNumber               return tGetNumber;
 GetValue                return tGetValue;
 GMSH_MAJOR_VERSION      return tGMSH_MAJOR_VERSION;
 GMSH_MINOR_VERSION      return tGMSH_MINOR_VERSION;
 GMSH_PATCH_VERSION      return tGMSH_PATCH_VERSION;
+GmshExecutableName      return tGmshExecutableName;
 
 Hide                    return tHide;
 Hole                    return tHole;
@@ -242,6 +244,8 @@ Reverse                 return tReverse;
 ScaleLastLayer          return tScaleLast;
 Smoother                return tSmoother;
 SetOrder                return tSetOrder;
+SetNumber               return tSetNumber;
+SetString               return tSetString;
 Sqrt                    return tSqrt;
 Sin                     return tSin;
 Sinh                    return tSinh;

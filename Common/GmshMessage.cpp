@@ -803,6 +803,44 @@ void Msg::SetOnelabString(std::string name, std::string val, bool visible)
 #endif
 }
 
+double Msg::GetOnelabNumber(std::string name)
+{
+#if defined(HAVE_ONELAB)
+  if(_onelabClient){
+    std::vector<onelab::number> numbers;
+#if defined(HAVE_ONELAB2)
+    _onelabClient->get(numbers, name, "Gmsh");
+#else
+    _onelabClient->get(numbers, name);
+#endif
+    if(numbers.empty())
+      Msg::Error("Unknown ONELAB parameter '%s'", name.c_str());
+    else
+      return numbers[0].getValue();
+  }
+  return 0.;
+#endif
+}
+
+std::string Msg::GetOnelabString(std::string name)
+{
+#if defined(HAVE_ONELAB)
+  if(_onelabClient){
+    std::vector<onelab::string> strings;
+#if defined(HAVE_ONELAB2)
+    _onelabClient->get(strings, name, "Gmsh");
+#else
+    _onelabClient->get(strings, name);
+#endif
+    if(strings.empty())
+      Msg::Error("Unknown ONELAB parameter '%s'", name.c_str());
+    else
+      return strings[0].getValue();
+  }
+#endif
+  return "";
+}
+
 #if defined(HAVE_ONELAB)
 class localGmsh : public onelab::localClient {
 public:

@@ -132,8 +132,10 @@ class Msg {
 #endif
   static void FinalizeOnelab();
   static bool UseOnelab();
-  static void SetOnelabNumber(std::string name, double val, bool visible);
-  static void SetOnelabString(std::string name, std::string val, bool visible);
+  static void SetOnelabNumber(std::string name, double val, bool visible=true);
+  static void SetOnelabString(std::string name, std::string val, bool visible=true);
+  static double GetOnelabNumber(std::string name);
+  static std::string GetOnelabString(std::string name);
   static void SetGmshOnelabAction(std::string action){ _gmshOnelabAction = action; }
   static std::string GetGmshOnelabAction(){ return _gmshOnelabAction; }
   static void ExchangeOnelabParameter(const std::string &key,

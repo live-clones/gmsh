@@ -122,7 +122,7 @@ struct doubleXstring{
 %token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
-%token tDefineNumber tDefineString
+%token tDefineNumber tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh
@@ -137,9 +137,10 @@ struct doubleXstring{
 %token tText2D tText3D tInterpolationScheme tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit tAbort
-%token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString
+%token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString tGetNumber
 %token tHomology tCohomology tBetti tSetOrder tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
+%token tGmshExecutableName
 
 %type <d> FExpr FExpr_Single
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
@@ -655,6 +656,17 @@ Affectation :
 
     tDefineConstant '[' DefineConstants ']' tEND
   | tUndefineConstant '[' UndefineConstants ']' tEND
+  | tSetNumber LP StringExpr ',' FExpr RP tEND
+    {
+      Msg::SetOnelabNumber($3, $5);
+      Free($3);
+    }
+  | tSetString LP String__Index ',' StringExpr RP tEND
+    {
+      Msg::SetOnelabString($3, $5);
+      Free($3);
+      Free($5);
+    }
   | String__Index NumericAffectation ListOfDouble tEND
     {
       if(!gmsh_yysymbols.count($1) && $2 && List_Nbr($3) == 1){
@@ -4470,6 +4482,11 @@ FExpr_Single :
       Msg::ExchangeOnelabParameter("", val, floatOptions, charOptions);
       $$ = val[0];
     }
+  | tGetNumber LP StringExprVar RP
+    {
+      $$ = Msg::GetOnelabNumber($3);
+      Free($3);
+    }
   | String__Index
     {
       if(!gmsh_yysymbols.count($1)){
@@ -5290,6 +5307,12 @@ StringExpr :
       strcpy($$, ctime(&now));
       $$[strlen($$) - 1] = '\0';
     }
+  | tGmshExecutableName
+    {
+      std::string exe = Msg::GetExecutableName();
+      $$ = (char *)Malloc(exe.size() + 1);
+      strcpy($$, exe.c_str());
+    }
   | tOnelabAction
     {
       std::string action = Msg::GetGmshOnelabAction();
@@ -5311,6 +5334,13 @@ StringExpr :
       strcpy($$, s.c_str());
       Free($3);
       Free($5);
+    }
+  | tGetString '(' StringExprVar ')'
+    {
+      std::string s = Msg::GetOnelabString($3);
+      $$ = (char *)Malloc((s.size() + 1) * sizeof(char));
+      strcpy($$, s.c_str());
+      Free($3);
     }
   | tStrCat LP RecursiveListOfStringExprVar RP
     {
