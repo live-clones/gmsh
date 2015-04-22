@@ -1050,7 +1050,8 @@ int mshFileDialog(const char *name)
         opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI,
                                   (dialog->c->value() == 0) ? 1.0 :
                                   (dialog->c->value() < 3) ? 2.2 : 3.0);
-        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, (dialog->c->value() == 2) ? 1 : 0);
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, (dialog->c->value() == 2 ||
+                                                 dialog->c->value() == 4) ? 1 : 0);
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
         opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value() ? 1 : 0);
         opt_mesh_msh_file_partitioned(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value() ? 1 : 0);
