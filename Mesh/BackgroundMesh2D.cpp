@@ -60,13 +60,21 @@ void normalizeAngle(double &angle)
 
 void backgroundMesh2D::create_face_mesh()
 {
-  quadsToTriangles(dynamic_cast<GFace*>(gf), 100000);
+  GFace *face = dynamic_cast<GFace*>(gf);
+  if(!face){
+    Msg::Error("Entity is not a face in background mesh");
+    return;
+  }
+
+  quadsToTriangles(face, 100000);
 
   // storing the initial mesh from GFace
   tempTR.clear();
-  GFace *face = dynamic_cast<GFace*>(gf);
+
   for(unsigned int i = 0; i < face->triangles.size(); i++)
-    tempTR.push_back(new MTriangle(face->triangles[i]->getVertex(0), face->triangles[i]->getVertex(1), face->triangles[i]->getVertex(2)));
+    tempTR.push_back(new MTriangle(face->triangles[i]->getVertex(0),
+                                   face->triangles[i]->getVertex(1),
+                                   face->triangles[i]->getVertex(2)));
 
   // avoid computing curvatures on the fly : only on the
   // BGM computes once curvatures at each node
@@ -121,19 +129,23 @@ void backgroundMesh2D::reset(bool erase_2D3D)
   }
 }
 
-
-void backgroundMesh2D::unset(){
+void backgroundMesh2D::unset()
+{
   for (unsigned int i = 0; i < vertices.size(); i++) delete vertices[i];
   for (unsigned int i = 0; i < getNumMeshElements(); i++) delete elements[i];
   if (octree)delete octree;
   octree=NULL;
 }
 
-
-void backgroundMesh2D::create_mesh_copy(){
+void backgroundMesh2D::create_mesh_copy()
+{
   // TODO: useful to extend it to other elements ???
   //std::set<SPoint2> myBCNodes;
   GFace *face = dynamic_cast<GFace*>(gf);
+  if(!face){
+    Msg::Error("Entity is not a face in background mesh");
+    return;
+  }
   for (unsigned int i = 0; i < face->triangles.size(); i++){
     MTriangle *e = face->triangles[i];
     MVertex *news[3];
@@ -158,8 +170,14 @@ void backgroundMesh2D::create_mesh_copy(){
 }
 
 
-GPoint backgroundMesh2D::get_GPoint_from_MVertex(const MVertex *v)const{
-  return dynamic_cast<GFace*>(gf)->point(SPoint2(v->x(),v->y()));
+GPoint backgroundMesh2D::get_GPoint_from_MVertex(const MVertex *v)const
+{
+  GFace *face = dynamic_cast<GFace*>(gf);
+  if(!face){
+    Msg::Error("Entity is not a face in background mesh");
+    return GPoint();
+  }
+  return face->point(SPoint2(v->x(),v->y()));
 }
 
 
@@ -171,7 +189,10 @@ backgroundMesh2D::backgroundMesh2D(GFace *_gf, bool erase_2D3D):BGMBase(2,_gf),s
     // now, the new mesh has been copied in local in backgroundMesh2D, deleting the mesh
     // from GFace, back to the previous one !
     GFace *face = dynamic_cast<GFace*>(gf);
-    face->triangles = tempTR;
+    if(!face)
+      Msg::Error("Entity is not a face in background mesh");
+    else
+      face->triangles = tempTR;
   }
 }
 
@@ -181,7 +202,10 @@ backgroundMesh2D::~backgroundMesh2D()
 }
 
 
-void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet, simpleFunction<double> &eval_diffusivity, bool in_parametric_plane){
+void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
+                                       simpleFunction<double> &eval_diffusivity,
+                                       bool in_parametric_plane)
+{
 #if defined(HAVE_SOLVER)
   linearSystem<double> *_lsys = 0;
 #if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
@@ -207,11 +231,15 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet, simpleFunct
   // Number vertices
   std::set<MVertex*> vs;
   GFace *face = dynamic_cast<GFace*>(gf);
+  if(!face){
+    Msg::Error("Entity is not a face in background mesh");
+    delete _lsys;
+    return;
+  }
   for (unsigned int k = 0; k < face->triangles.size(); k++)
     for (int j=0;j<3;j++)vs.insert(face->triangles[k]->getVertex(j));
   for (unsigned int k = 0; k < face->quadrangles.size(); k++)
     for (int j=0;j<4;j++)vs.insert(face->quadrangles[k]->getVertex(j));
-
 
   std::map<MVertex*,SPoint3> theMap;
   if ( in_parametric_plane) {
@@ -254,10 +282,15 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet, simpleFunct
 #endif
 }
 
-
-void backgroundMesh2D::computeSizeField(){
+void backgroundMesh2D::computeSizeField()
+{
   GFace *face = dynamic_cast<GFace*>(gf);
-  list<GEdge*> e;// = face->edges();
+  if(!face){
+    Msg::Error("Entity is not a face in background mesh");
+    return;
+  }
+
+  list<GEdge*> e;
   replaceMeshCompound(face, e);
   list<GEdge*>::const_iterator it = e.begin();
   DoubleStorageType sizes;
@@ -303,7 +336,8 @@ inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d){
 }
 
 
-void backgroundMesh2D::updateSizes(){
+void backgroundMesh2D::updateSizes()
+{
   DoubleStorageType::iterator itv = sizeField.begin();
   for ( ; itv != sizeField.end(); ++itv){
     SPoint2 p;
@@ -319,6 +353,10 @@ void backgroundMesh2D::updateSizes(){
     }
     else{
       GFace *face = dynamic_cast<GFace*>(gf);
+      if(!face){
+        Msg::Error("Entity is not a face in background mesh");
+        return;
+      }
       reparamMeshVertexOnFace(v, face, p);
       lc = sizeFactor * BGM_MeshSize(face, p.x(), p.y(), v->x(), v->y(), v->z());
     }
@@ -363,7 +401,10 @@ frameFieldBackgroundMesh2D::frameFieldBackgroundMesh2D(GFace *_gf):backgroundMes
   // now, the new mesh has been copied in local in backgroundMesh2D, deleting the mesh
   // from GFace, back to the previous one !
   GFace *face = dynamic_cast<GFace*>(gf);
-  face->triangles = tempTR;
+  if(!face)
+    Msg::Error("Entity is not a face in background mesh");
+  else
+    face->triangles = tempTR;
 }
 
 frameFieldBackgroundMesh2D::~frameFieldBackgroundMesh2D(){}
@@ -437,6 +478,11 @@ void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_
 
   list<GEdge*> e;
   GFace *face = dynamic_cast<GFace*>(gf);
+  if(!face){
+    Msg::Error("Entity is not a face in background mesh");
+    return;
+  }
+
   replaceMeshCompound(face, e);
 
   list<GEdge*>::const_iterator it = e.begin();
@@ -523,6 +569,10 @@ void frameFieldBackgroundMesh2D::eval_crossfield(MVertex *vert, STensor3 &cf)
 {
   SPoint2 parampoint;
   GFace *face = dynamic_cast<GFace*>(gf);
+  if(!face){
+    Msg::Error("Entity is not a face in background mesh");
+    return;
+  }
   reparamMeshVertexOnFace(vert, face, parampoint);
   return eval_crossfield(parampoint[0], parampoint[1], cf);
 }
@@ -596,10 +646,16 @@ void frameFieldBackgroundMesh2D::exportCrossField(const std::string &filename)
 }
 
 // returns the cross field as a pair of othogonal vectors (NOT in parametric coordinates, but real 3D coordinates)
-Pair<SVector3, SVector3> frameFieldBackgroundMesh2D::compute_crossfield_directions(double u,double v, double angle_current)
+Pair<SVector3, SVector3> frameFieldBackgroundMesh2D::compute_crossfield_directions(double u, double v,
+                                                                                   double angle_current)
 {
   // get the unit normal at that point
   GFace *face = dynamic_cast<GFace*>(gf);
+  if(!face){
+    Msg::Error("Entity is not a face in background mesh");
+    return Pair<SVector3,SVector3>(SVector3(), SVector3());
+  }
+
   Pair<SVector3, SVector3> der = face->firstDer(SPoint2(u,v));
   SVector3 s1 = der.first();
   SVector3 s2 = der.second();
@@ -623,7 +679,6 @@ Pair<SVector3, SVector3> frameFieldBackgroundMesh2D::compute_crossfield_directio
 
 bool frameFieldBackgroundMesh2D::compute_RK_infos(double u,double v, double x, double y, double z, RK_form &infos)
 {
-
   // check if point is in domain
   if (!inDomain(u,v)) return false;
 
@@ -635,6 +690,11 @@ bool frameFieldBackgroundMesh2D::compute_RK_infos(double u,double v, double x, d
 
   // get the unit normal at that point
   GFace *face = dynamic_cast<GFace*>(gf);
+  if(!face){
+    Msg::Error("Entity is not a face in background mesh");
+    return false;
+  }
+
   Pair<SVector3, SVector3> der = face->firstDer(SPoint2(u,v));
   SVector3 s1 = der.first();
   SVector3 s2 = der.second();

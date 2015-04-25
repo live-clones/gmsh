@@ -483,6 +483,10 @@ static bool skipVertex(GVertex *gv)
 int GModel::writeGEO(const std::string &name, bool printLabels, bool onlyPhysicals)
 {
   FILE *fp = Fopen(name.c_str(), "w");
+  if(!fp){
+    Msg::Error("Could not open file '%s'", name.c_str());
+    return 0;
+  }
 
   std::map<double, std::string> meshSizeParameters;
   int cpt = 0;
@@ -533,6 +537,6 @@ int GModel::writeGEO(const std::string &name, bool printLabels, bool onlyPhysica
   if(getFields()->getBackgroundField() > 0)
     fprintf(fp, "Background Field = %i;\n", getFields()->getBackgroundField());
 
-  if(fp) fclose(fp);
+  fclose(fp);
   return 1;
 }

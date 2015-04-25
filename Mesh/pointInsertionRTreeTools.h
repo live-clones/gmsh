@@ -106,23 +106,29 @@ private:
   SVector3 *vec;
   bool ok;
 public:
-  Wrapper3D():ok(true){};
-  Wrapper3D(MVertex* _i,MVertex* _p):individual(_i), parent(_p),ok(true){};
-  ~Wrapper3D(){};
-  void set_ok(bool b){ok=b;};
-  void set_individual(MVertex *vertex){individual=vertex;};
-  void set_parent(MVertex *vertex){parent=vertex;};
-  void set_size(double *h){size=h;};
-  void set_crossfield(STensor3 *_cf){cf=_cf;};
-  void set_direction(SVector3 *_v){vec=_v;};
-  bool get_ok(){return ok;};
-  void set_bgm(frameFieldBackgroundMesh3D *bgm){bgmesh = bgm;};
-  frameFieldBackgroundMesh3D * bgm(){return bgmesh;};
-  MVertex* get_individual(){return individual;};
-  MVertex* get_parent(){return parent;};
-  STensor3* get_crossfield(){return cf;};
-  SVector3* get_direction(){return vec;};
-  double* get_size(){return size;};
+  Wrapper3D()
+    : individual(0), parent(0), size(0), cf(0), vec(0), ok(true)
+  {
+  }
+  Wrapper3D(MVertex* _i,MVertex* _p)
+    : individual(_i), parent(_p), size(0), cf(0), vec(0), ok(true)
+  {
+  }
+  ~Wrapper3D(){}
+  void set_ok(bool b){ ok = b; }
+  void set_individual(MVertex *vertex){ individual = vertex; }
+  void set_parent(MVertex *vertex){ parent = vertex; }
+  void set_size(double *h){ size = h; }
+  void set_crossfield(STensor3 *_cf){ cf = _cf; }
+  void set_direction(SVector3 *_v){ vec = _v; }
+  bool get_ok(){ return ok; }
+  void set_bgm(frameFieldBackgroundMesh3D *bgm){ bgmesh = bgm; }
+  frameFieldBackgroundMesh3D * bgm(){ return bgmesh; }
+  MVertex* get_individual(){ return individual; }
+  MVertex* get_parent(){ return parent; }
+  STensor3* get_crossfield(){ return cf; }
+  SVector3* get_direction(){ return vec; }
+  double* get_size(){ return size; }
 };
 
 extern double infinity_distance_3D(const MVertex *v1,const MVertex *v2,STensor3 &cf);
@@ -134,8 +140,8 @@ extern void fill_min_max(double x,double y,double z,double h,double *min,double 
 // listOfPoints AND in RTree: larger memory footprint but less CPU time...
 class smoothness_vertex_pair{
 public:
-  smoothness_vertex_pair(){};
-  ~smoothness_vertex_pair(){};
+  smoothness_vertex_pair() : rank(0.), size(0.), v(0), dir(0), layer(0) {}
+  ~smoothness_vertex_pair(){}
   STensor3 cf;
   SVector3 direction;
   double rank, size;
@@ -180,30 +186,30 @@ public:
 
 class listOfPointsScalarSmoothness : public listOfPoints{
 public:
-  listOfPointsScalarSmoothness(){ };
+  listOfPointsScalarSmoothness(){ }
   virtual ~listOfPointsScalarSmoothness()
   {
     while (!empty())
       erase_first();
-  };
-  virtual void insert(smoothness_vertex_pair *svp){ points.insert(svp); };
-  virtual unsigned int size(){ return points.size(); };
-  virtual MVertex* get_first_vertex(){ return (*points.begin())->v; };
-  virtual STensor3 get_first_crossfield(){ return (*points.begin())->cf; };
-  virtual double get_first_size(){ return (*points.begin())->size; };
-  virtual int get_first_layer(){ return (*points.begin())->layer; };
+  }
+  virtual void insert(smoothness_vertex_pair *svp){ points.insert(svp); }
+  virtual unsigned int size(){ return points.size(); }
+  virtual MVertex* get_first_vertex(){ return (*points.begin())->v; }
+  virtual STensor3 get_first_crossfield(){ return (*points.begin())->cf; }
+  virtual double get_first_size(){ return (*points.begin())->size; }
+  virtual int get_first_layer(){ return (*points.begin())->layer; }
   virtual SVector3 get_first_direction()
   {
     Msg::Error("listOfPointsScalarSmoothness::get_first_direction NOT applicable");
     return SVector3(0.);
-  };
+  }
   virtual void erase_first()
   {
     smoothness_vertex_pair *ptr = *(points.begin());
     points.erase(points.begin());
     delete ptr;
-  };
-  virtual bool empty(){ return points.empty(); };
+  }
+  virtual bool empty(){ return points.empty(); }
 
 protected:
   std::set<smoothness_vertex_pair*, compareSmoothnessVertexPairs> points;
@@ -211,12 +217,12 @@ protected:
 
 class listOfPointsVectorialSmoothness : public listOfPointsScalarSmoothness{
 public:
-  listOfPointsVectorialSmoothness(){};
+  listOfPointsVectorialSmoothness(){}
   virtual ~listOfPointsVectorialSmoothness(){
     while (!empty())
       erase_first();
-  };
-  virtual SVector3 get_first_direction(){ return (*points.begin())->direction; };
+  }
+  virtual SVector3 get_first_direction(){ return (*points.begin())->direction; }
 protected:
   std::set<smoothness_vertex_pair*, compareSmoothnessVertexPairs> points;
 };
@@ -228,24 +234,24 @@ public:
     while (!empty())
       erase_first();
   };
-  virtual void insert(smoothness_vertex_pair *svp){ points.push(svp); };
-  virtual unsigned int size(){ return points.size(); };
-  virtual MVertex* get_first_vertex(){ return (points.front())->v; };
-  virtual STensor3 get_first_crossfield(){ return (points.front())->cf; };
-  virtual double get_first_size(){ return (points.front())->size; };
-  virtual int get_first_layer(){ return (points.front())->layer; };
+  virtual void insert(smoothness_vertex_pair *svp){ points.push(svp); }
+  virtual unsigned int size(){ return points.size(); }
+  virtual MVertex* get_first_vertex(){ return (points.front())->v; }
+  virtual STensor3 get_first_crossfield(){ return (points.front())->cf; }
+  virtual double get_first_size(){ return (points.front())->size; }
+  virtual int get_first_layer(){ return (points.front())->layer; }
   virtual SVector3 get_first_direction()
   {
     Msg::Error("listOfPointsFifo::get_first_direction NOT applicable");
     return SVector3(0.);
-  };
+  }
   virtual void erase_first()
   {
     smoothness_vertex_pair *ptr = points.front();
     points.pop();
     delete ptr;
-  };
-  virtual bool empty(){ return points.empty(); };
+  }
+  virtual bool empty(){ return points.empty(); }
 
 protected:
   std::queue<smoothness_vertex_pair*> points;

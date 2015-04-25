@@ -110,6 +110,10 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity*> _entities,
 
   Msg::Info("Writing %s", _fileName.c_str());
   FILE *fName = Fopen(_fileName.c_str(),"w");
+  if(!fName){
+    Msg::Error("Could not open file '%s'", _fileName.c_str());
+    return;
+  }
   fprintf(fName, "View \"distance \"{\n");
 
   for (unsigned int ii=0; ii<_entities.size(); ii++) {
@@ -201,7 +205,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   std::vector<GEntity*> _entities;
   GModel::current()->getEntities(_entities);
   if (!_entities.size() || !_entities[_entities.size()-1]->getMeshElement(0)) {
-    Msg::Error("This plugin needs a mesh !");
+    Msg::Error("This plugin needs a mesh!");
     return view;
   }
 
@@ -495,7 +499,16 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     data2->setName("ortogonal field");
 
     Msg::Info("Writing  orthogonal.pos");
-    FILE * f5 = Fopen("orthogonal.pos","w");
+    FILE *f5 = Fopen("orthogonal.pos","w");
+    if(!f5){
+      Msg::Error("Could not open file 'orthogonal.pos'");
+#if defined(HAVE_SOLVER)
+      delete lsys;
+      delete dofView;
+#endif
+      return view;
+    }
+
     fprintf(f5,"View \"orthogonal\"{\n");
     for (std::vector<MElement* >::iterator it = allElems.begin();
          it != allElems.end(); it++){
