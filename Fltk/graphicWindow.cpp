@@ -2219,6 +2219,10 @@ void quick_access_cb(Fl_Widget *w, void *data)
     mesh_options_cb(0, 0);
   else if(what == "view")
     view_options_cb(0, (void *)-1);
+  else if(what == "reset_viewport"){
+    status_xyz1p_cb(0, (void *)"1:1");
+    status_xyz1p_cb(0, (void *)"z");
+  }
   else if(what == "axes"){
     opt_general_axes(0, GMSH_SET|GMSH_GUI, !opt_general_axes(0, GMSH_GET, 0));
     for(unsigned int i = 0; i < PView::list.size(); i++)
@@ -2469,6 +2473,8 @@ void status_options_cb(Fl_Widget *w, void *data)
   }
   else if(what == "quick_access"){ // quick access menu
     static Fl_Menu_Item menu[] = {
+      { "Reset viewport", 0, quick_access_cb, (void*)"reset_viewport",
+        FL_MENU_DIVIDER },
       { "Axes", FL_ALT + 'a', quick_access_cb, (void*)"axes",
         FL_MENU_TOGGLE },
       { "Projection mode", 0, 0, 0, FL_SUBMENU },
@@ -2529,39 +2535,40 @@ void status_options_cb(Fl_Widget *w, void *data)
         0, 0, FL_ITALIC },
       { 0 }
     };
-    if(opt_general_axes(0, GMSH_GET, 0)) menu[0].set(); else menu[0].clear();
+    int a = 1;
+    if(opt_general_axes(0, GMSH_GET, 0)) menu[a + 0].set(); else menu[a + 0].clear();
     for(unsigned int i = 0; i < PView::list.size(); i++)
       if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
-        menu[0].set();
-    if(opt_geometry_points(0, GMSH_GET, 0)) menu[7].set(); else menu[7].clear();
-    if(opt_geometry_lines(0, GMSH_GET, 0)) menu[8].set(); else menu[8].clear();
-    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[9].set(); else menu[9].clear();
-    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[10].set(); else menu[10].clear();
-    if(opt_mesh_points(0, GMSH_GET, 0)) menu[14].set(); else menu[14].clear();
-    if(opt_mesh_lines(0, GMSH_GET, 0)) menu[15].set(); else menu[15].clear();
-    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[16].set(); else menu[16].clear();
-    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) menu[17].set(); else menu[17].clear();
-    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[18].set(); else menu[18].clear();
-    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[19].set(); else menu[19].clear();
+        menu[a + 0].set();
+    if(opt_geometry_points(0, GMSH_GET, 0)) menu[a + 7].set(); else menu[a + 7].clear();
+    if(opt_geometry_lines(0, GMSH_GET, 0)) menu[a + 8].set(); else menu[a + 8].clear();
+    if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[a + 9].set(); else menu[a + 9].clear();
+    if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[a + 10].set(); else menu[a + 10].clear();
+    if(opt_mesh_points(0, GMSH_GET, 0)) menu[a + 14].set(); else menu[a + 14].clear();
+    if(opt_mesh_lines(0, GMSH_GET, 0)) menu[a + 15].set(); else menu[a + 15].clear();
+    if(opt_mesh_surfaces_edges(0, GMSH_GET, 0)) menu[a + 16].set(); else menu[a + 16].clear();
+    if(opt_mesh_surfaces_faces(0, GMSH_GET, 0)) menu[a + 17].set(); else menu[a + 17].clear();
+    if(opt_mesh_volumes_edges(0, GMSH_GET, 0)) menu[a + 18].set(); else menu[a + 18].clear();
+    if(opt_mesh_volumes_faces(0, GMSH_GET, 0)) menu[a + 19].set(); else menu[a + 19].clear();
     if(PView::list.empty()){
-      menu[23].flags = 0;
-      for(int i = 24; i < 42; i++) menu[i].hide();
+      menu[a + 23].flags = 0;
+      for(int i = 24; i < 42; i++) menu[a + i].hide();
     }
     else{
-      menu[23].flags = FL_MENU_DIVIDER;
-      for(int i = 24; i < 42; i++) menu[i].show();
-      menu[24].clear();
+      menu[a + 23].flags = FL_MENU_DIVIDER;
+      for(int i = 24; i < 42; i++) menu[a + i].show();
+      menu[a + 24].clear();
       for(unsigned int i = 0; i < PView::list.size(); i++){
         if(opt_view_visible(i, GMSH_GET, 0) && opt_view_show_element(i, GMSH_GET, 0)){
-          menu[24].set();
+          menu[a + 24].set();
           break;
         }
       }
     }
-    static Fl_Menu_Item *picked = &menu[21];
+    static Fl_Menu_Item *picked = &menu[a + 21];
     picked = (Fl_Menu_Item*)menu->popup(Fl::event_x(), Fl::event_y(), 0,
                                         (picked && picked->visible()) ? picked :
-                                        &menu[21], 0);
+                                        &menu[a + 21], 0);
     if(picked && picked->callback()) picked->do_callback(0, picked->user_data());
     drawContext::global()->draw();
   }
