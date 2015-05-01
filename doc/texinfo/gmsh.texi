@@ -1430,7 +1430,8 @@ statement.
 @item Function @var{string}
 Begins the declaration of a user-defined function named @var{string}. The
 body of the function starts on the line after `@code{Function
-@var{string}}', and can contain any Gmsh command.
+@var{string}}', and can contain any Gmsh command. @code{Macro} is a
+synonym for @code{Function}.
 
 @item Return
 Ends the body of the current user-defined function. Function declarations

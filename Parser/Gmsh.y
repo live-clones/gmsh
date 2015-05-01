@@ -137,7 +137,7 @@ struct doubleXstring{
 %token tText2D tText3D tInterpolationScheme tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit tAbort
-%token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString tGetNumber
+%token tField tReturn tCall tMacro tShow tHide tGetValue tGetEnv tGetString tGetNumber
 %token tHomology tCohomology tBetti tSetOrder tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName
@@ -3120,7 +3120,7 @@ Loop :
 	  ImbricatedLoop--;
       }
     }
-  | tFunction tSTRING
+  | tMacro tSTRING
     {
       if(!FunctionManager::Instance()->createFunction
          (std::string($2), gmsh_yyin, gmsh_yyname, gmsh_yylineno))
