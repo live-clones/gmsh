@@ -81,6 +81,8 @@ int FunctionManager::leaveFunction(gmshFILE * f, std::string &filename, int &lno
 int FunctionManager::createFunction(const std::string &name, gmshFILE f,
                                     const std::string &filename, int lno)
 {
+  if(functions->m.find(name) != functions->m.end())
+    return 0;
   File_Position fp;
   fp.file = f;
   fp.filename = filename;
