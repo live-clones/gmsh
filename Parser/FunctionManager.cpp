@@ -45,6 +45,11 @@ FunctionManager *FunctionManager::Instance()
   return instance;
 }
 
+void FunctionManager::clear()
+{
+  functions->m.clear();
+}
+
 int FunctionManager::enterFunction(const std::string &name, gmshFILE * f,
                                    std::string &filename, int &lno) const
 {

@@ -27,6 +27,7 @@ class FunctionManager
   int enterFunction(const std::string &name, gmshFILE *f,
                     std::string &filename, int &lineno) const;
   int leaveFunction(gmshFILE *f, std::string &filename, int &lineno);
+  void clear();
 };
 
 #endif

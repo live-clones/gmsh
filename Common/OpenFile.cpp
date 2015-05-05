@@ -27,6 +27,7 @@
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
+#include "FunctionManager.h"
 #endif
 
 #if defined(HAVE_MESH)
@@ -679,6 +680,7 @@ void OpenProject(const std::string &fileName, bool setWindowTitle)
   std::map<std::string, std::string> cls(Msg::GetCommandLineStrings());
   for(std::map<std::string, std::string>::iterator it = cls.begin(); it != cls.end(); it++)
     gmsh_yystringsymbols[it->first] = it->second;
+  FunctionManager::Instance()->clear();
 #endif
 
   // temporary hack until we fill the current GModel on the fly during parsing
