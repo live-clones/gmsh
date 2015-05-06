@@ -66,7 +66,7 @@ Function CheeseHole
   // In the following commands we use the reserved variable name
   // `newp', which automatically selects a new point number. This
   // number is chosen as the highest current point number, plus
-  // one. (Note that, analogously to `newp', the variables `newc',
+  // one. (Note that, analogously to `newp', the variables `newl',
   // `news', `newv' and `newreg' select the highest number amongst
   // currently defined curves, surfaces, volumes and `any entities
   // other than points', respectively.)
