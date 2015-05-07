@@ -1465,6 +1465,65 @@ void VisibilityShape(char *str, int Type, int Mode, bool Recursive)
   }
 }
 
+void SetPartition(int Type, int Num, int Partition)
+{
+  switch (Type) {
+  case MSH_POINT:
+  case MSH_POINT_FROM_GMODEL:
+    {
+      GVertex *gv = GModel::current()->getVertexByTag(Num);
+      if(gv){
+        for(unsigned int j = 0; j < gv->getNumMeshElements(); j++)
+          gv->getMeshElement(j)->setPartition(Partition);
+      }
+    }
+    break;
+  case MSH_SEGM_LINE:
+  case MSH_SEGM_SPLN:
+  case MSH_SEGM_BSPLN:
+  case MSH_SEGM_BEZIER:
+  case MSH_SEGM_CIRC:
+  case MSH_SEGM_CIRC_INV:
+  case MSH_SEGM_ELLI:
+  case MSH_SEGM_ELLI_INV:
+  case MSH_SEGM_NURBS:
+  case MSH_SEGM_COMPOUND:
+  case MSH_SEGM_FROM_GMODEL:
+    {
+      GEdge *ge = GModel::current()->getEdgeByTag(Num);
+      if(ge){
+        for(unsigned int j = 0; j < ge->getNumMeshElements(); j++)
+          ge->getMeshElement(j)->setPartition(Partition);
+      }
+    }
+    break;
+  case MSH_SURF_TRIC:
+  case MSH_SURF_REGL:
+  case MSH_SURF_PLAN:
+  case MSH_SURF_COMPOUND:
+  case MSH_SURF_FROM_GMODEL:
+    {
+      GFace *gf = GModel::current()->getFaceByTag(Num);
+      if(gf){
+        for(unsigned int j = 0; j < gf->getNumMeshElements(); j++)
+          gf->getMeshElement(j)->setPartition(Partition);
+      }
+    }
+    break;
+  case MSH_VOLUME:
+  case MSH_VOLUME_COMPOUND:
+  case MSH_VOLUME_FROM_GMODEL:
+    {
+      GRegion *gr = GModel::current()->getRegionByTag(Num);
+      if(gr){
+        for(unsigned int j = 0; j < gr->getNumMeshElements(); j++)
+          gr->getMeshElement(j)->setPartition(Partition);
+      }
+    }
+    break;
+  }
+}
+
 Curve *CreateReversedCurve(Curve *c)
 {
   Curve *newc = Create_Curve(-c->Num, c->Typ, 1, NULL, NULL, -1, -1, 0., 1.);

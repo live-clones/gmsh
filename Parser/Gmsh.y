@@ -140,7 +140,7 @@ struct doubleXstring{
 %token tField tReturn tCall tMacro tShow tHide tGetValue tGetEnv tGetString tGetNumber
 %token tHomology tCohomology tBetti tSetOrder tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
-%token tGmshExecutableName
+%token tGmshExecutableName tSetPartition
 
 %type <d> FExpr FExpr_Single
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
@@ -201,6 +201,7 @@ GeoFormatItem :
   | Transform   { List_Delete($1); return 1; }
   | Delete      { return 1; }
   | Colorify    { return 1; }
+  | SetPartition{ return 1; }
   | Visibility  { return 1; }
   | Extrude     { List_Delete($1); return 1; }
   | Constraints { return 1; }
@@ -2662,6 +2663,20 @@ Colorify :
 	ColorShape(TheShape.Type, TheShape.Num, $3, true);
       }
       List_Delete($5);
+    }
+;
+
+//  S E T P A R T I T I O N
+
+SetPartition :
+    tSetPartition FExpr '{' ListOfShapes '}'
+    {
+      for(int i = 0; i < List_Nbr($4); i++){
+	Shape TheShape;
+	List_Read($4, i, &TheShape);
+	SetPartition(TheShape.Type, TheShape.Num, $2);
+      }
+      List_Delete($4);
     }
 ;
 

@@ -364,6 +364,7 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined);
 void CopyShape(int Type, int Num, int *New);
 void DeleteShape(int Type, int Num);
 void ColorShape(int Type, int Num, unsigned int Color, bool Recursive);
+void SetPartition(int Type, int Num, int Partition);
 void VisibilityShape(int Type, int Num, int Mode, bool Recursive);
 void VisibilityShape(char *str, int Type, int Mode, bool Recursive);
 void ExtrudeShape(int extrude_type, int shape_type, int shape_num,

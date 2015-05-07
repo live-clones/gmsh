@@ -247,6 +247,7 @@ Smoother                return tSmoother;
 SetOrder                return tSetOrder;
 SetNumber               return tSetNumber;
 SetString               return tSetString;
+SetPartition            return tSetPartition;
 Sqrt                    return tSqrt;
 Sin                     return tSin;
 Sinh                    return tSinh;

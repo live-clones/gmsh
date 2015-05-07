@@ -2896,6 +2896,9 @@ matrix given by row).
 @item Coherence Mesh;
 Removes all duplicate mesh vertices.
 
+@item SetPartition @var{expression} @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+Sets the partition tag of the mesh elements in the entities in @var{expression-list} to @var{expression}.
+
 @item < Recursive > Color @var{color-expression} @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Sets the mesh color of the entities in @var{expression-list} to @var{color-expression}.
 

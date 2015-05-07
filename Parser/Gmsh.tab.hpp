@@ -206,19 +206,20 @@ extern int gmsh_yydebug;
      tGMSH_MINOR_VERSION = 415,
      tGMSH_PATCH_VERSION = 416,
      tGmshExecutableName = 417,
-     tAFFECTDIVIDE = 418,
-     tAFFECTTIMES = 419,
-     tAFFECTMINUS = 420,
-     tAFFECTPLUS = 421,
-     tOR = 422,
-     tAND = 423,
-     tNOTEQUAL = 424,
-     tEQUAL = 425,
-     tGREATEROREQUAL = 426,
-     tLESSOREQUAL = 427,
-     UNARYPREC = 428,
-     tMINUSMINUS = 429,
-     tPLUSPLUS = 430
+     tSetPartition = 418,
+     tAFFECTDIVIDE = 419,
+     tAFFECTTIMES = 420,
+     tAFFECTMINUS = 421,
+     tAFFECTPLUS = 422,
+     tOR = 423,
+     tAND = 424,
+     tNOTEQUAL = 425,
+     tEQUAL = 426,
+     tGREATEROREQUAL = 427,
+     tLESSOREQUAL = 428,
+     UNARYPREC = 429,
+     tMINUSMINUS = 430,
+     tPLUSPLUS = 431
    };
 #endif
 
@@ -239,7 +240,7 @@ typedef union YYSTYPE
 
 
 /* Line 2053 of yacc.c  */
-#line 243 "Gmsh.tab.hpp"
+#line 244 "Gmsh.tab.hpp"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
