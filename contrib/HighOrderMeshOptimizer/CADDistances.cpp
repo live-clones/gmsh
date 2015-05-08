@@ -8,6 +8,7 @@
 #include "MElement.h"
 #include "MLine.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "BasisFactory.h"
 #include "GModel.h"
 #if defined(HAVE_ANN)
@@ -353,7 +354,8 @@ double discreteDistance(MLine *l, GEdge *ed, double tol, int meshDiscr, int geom
     double t0, t1;
     reparamMeshVertexOnEdge(l->getVertex(0), ed, t0);
     reparamMeshVertexOnEdge(l->getVertex(1), ed, t1);
-//    if (t1 == 0.) t1 = 1.;  // DBG: Workaround bug closed curves
+    Range<double> uBounds = ed->parBounds(0);
+    if (t1 == uBounds.low()) t1 = uBounds.high();     // Avoid problem with closed curves, assuming nodes are always ordered with increasing u
     parametricLineGEdge l1(ed, t0, t1);
     l1.discretize(dpts1, ts1, tol, 5, 45);
   }
@@ -546,43 +548,112 @@ void distanceFromElementsToGeometry(GModel *gm, int dim, std::map<MElement*,doub
 
 double distanceToGeometry(GModel *gm, int distType, double tol, int meshDiscr, int geomDiscr)
 {
+  const int dim = gm->getDim();
   double maxDist = 0.;
 
-  for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
-    if ((*it)->geomType() == GEntity::Line) continue;
-    for (unsigned int i = 0; i < (*it)->lines.size(); i++) {
+  if (dim == 2) {
+    for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
+      if ((*it)->geomType() == GEntity::Line) continue;
+      for (unsigned int i = 0; i < (*it)->lines.size(); i++) {
+        double dist;
+        switch (distType) {
+          case CADDIST_TAYLOR:
+            dist = taylorDistanceEdge((*it)->lines[i], *it);
+            break;
+          case CADDIST_FRECHET:
+            dist = discreteFrechetDistanceEdge((*it)->lines[i], *it,
+                                               tol, meshDiscr, geomDiscr);
+            break;
+          case CADDIST_HAUSFAST:
+            dist = discreteHausdorffDistanceFastEdge((*it)->lines[i], *it,
+                                                     tol, meshDiscr, geomDiscr);
+            break;
+          case CADDIST_HAUSBRUTE:
+            dist = discreteHausdorffDistanceBruteEdge((*it)->lines[i], *it,
+                                                      tol, meshDiscr, geomDiscr);
+            break;
+          default:
+            Msg::Error("Wrong CAD distance type in distanceToGeometry");
+            break;
+        }
+        maxDist = std::max(dist, maxDist);
+      }
+    }
+  }
+  else if (dim == 3) {
+    if (distType == CADDIST_TAYLOR) {
+      for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+        if ((*it)->geomType() == GEntity::Plane) continue;
+        for (unsigned int i = 0; i < (*it)->triangles.size(); i++) {
+          maxDist = std::max(taylorDistanceFace((*it)->triangles[i], *it), maxDist);
+        }
+      }
+    }
+    else {
+      Msg::Error("CAD distance type %i not implemented for surfaces", distType);
+      return -1.;
+    }
+  }
+  else {
+    Msg::Error("CAD distance cannot be computed for dimension %i", dim);
+    return -1.;
+  }
+
+  return maxDist;
+}
+
+
+double distanceToGeometry(GModel *gm, int dim, int tag, int distType,
+                          double tol, int meshDiscr, int geomDiscr)
+{
+  double maxDist = 0.;
+
+  if (dim == 2) {
+    GEdge *ge = gm->getEdgeByTag(tag);
+    if (ge->geomType() == GEntity::Line) return 0.;
+    for (unsigned int i = 0; i < ge->lines.size(); i++) {
       double dist;
       switch (distType) {
         case CADDIST_TAYLOR:
-          dist = taylorDistanceEdge((*it)->lines[i], *it);
+          dist = taylorDistanceEdge(ge->lines[i], ge);
           break;
         case CADDIST_FRECHET:
-          dist = discreteFrechetDistanceEdge((*it)->lines[i], *it,
+          dist = discreteFrechetDistanceEdge(ge->lines[i], ge,
                                              tol, meshDiscr, geomDiscr);
           break;
         case CADDIST_HAUSFAST:
-          dist = discreteHausdorffDistanceFastEdge((*it)->lines[i], *it,
+          dist = discreteHausdorffDistanceFastEdge(ge->lines[i], ge,
                                                    tol, meshDiscr, geomDiscr);
           break;
         case CADDIST_HAUSBRUTE:
-          dist = discreteHausdorffDistanceBruteEdge((*it)->lines[i], *it,
+          dist = discreteHausdorffDistanceBruteEdge(ge->lines[i], ge,
                                                     tol, meshDiscr, geomDiscr);
           break;
         default:
           Msg::Error("Wrong CAD distance type in distanceToGeometry");
+          return -1.;
           break;
       }
       maxDist = std::max(dist, maxDist);
     }
   }
-
-  if (distType == CADDIST_TAYLOR) {
-    for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-      if ((*it)->geomType() == GEntity::Plane) continue;
-      for (unsigned int i = 0; i < (*it)->triangles.size(); i++) {
-        maxDist = std::max(taylorDistanceFace((*it)->triangles[i], *it), maxDist);
-      }
+  else if (dim == 3) {
+    if (distType == CADDIST_TAYLOR) {
+      GFace *gf = gm->getFaceByTag(tag);
+      if (gf->geomType() == GEntity::Plane) return 0.;
+      for (unsigned int i = 0; i < gf->triangles.size(); i++)
+        maxDist = std::max(taylorDistanceFace(gf->triangles[i], gf), maxDist);
+      for (unsigned int i = 0; i < gf->quadrangles.size(); i++)
+        maxDist = std::max(taylorDistanceFace(gf->quadrangles[i], gf), maxDist);
     }
+    else {
+      Msg::Error("CAD distance type %i not implemented for surfaces", distType);
+      return -1.;
+    }
+  }
+  else {
+    Msg::Error("CAD distance cannot be computed for dimension %i", dim);
+    return -1.;
   }
 
   return maxDist;

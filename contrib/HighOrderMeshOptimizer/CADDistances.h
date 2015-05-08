@@ -38,6 +38,10 @@ void distanceFromElementsToGeometry(GModel *gm, int dim, std::map<MElement*, dou
 double distanceToGeometry(GModel *gm, int distType = CADDIST_TAYLOR, double tol = 1e-3,
                           int meshDiscr = CADDIST_DECASTELJAU,
                           int geomDiscr = CADDIST_DECASTELJAU);
+double distanceToGeometry(GModel *gm, int dim, int tag,
+                          int distType = CADDIST_TAYLOR, double tol = 1e-3,
+                          int meshDiscr = CADDIST_DECASTELJAU,
+                          int geomDiscr = CADDIST_DECASTELJAU);
 
 
 #endif /* _CADDISTANCES_H_ */
