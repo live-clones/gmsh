@@ -728,8 +728,7 @@ Affectation :
       Free($1);
       List_Delete($3);
     }
-  // This variant can be used to force the variable type to "list"
-  | tSTRING '[' ']' NumericAffectation ListOfDouble tEND
+  | tSTRING LP RP NumericAffectation ListOfDouble tEND
     {
       gmsh_yysymbol &s(gmsh_yysymbols[$1]);
       s.list = true;
@@ -758,7 +757,7 @@ Affectation :
       Free($1);
       List_Delete($5);
     }
-  | StringIndex '[' ']' NumericAffectation ListOfDouble tEND
+  | StringIndex LP RP NumericAffectation ListOfDouble tEND
     {
       gmsh_yysymbol &s(gmsh_yysymbols[$1]);
       s.list = true;
@@ -802,6 +801,11 @@ Affectation :
       assignVariable($1, (int)$3, $5, $6);
       Free($1);
     }
+  | StringIndex '(' FExpr ')' NumericAffectation FExpr tEND
+    {
+      assignVariable($1, (int)$3, $5, $6);
+      Free($1);
+    }
   | tSTRING LP '{' RecursiveListOfDouble '}' RP NumericAffectation ListOfDouble tEND
     {
       assignVariables($1, $4, $7, $8);
@@ -836,7 +840,17 @@ Affectation :
       incrementVariable($1, $3, $5);
       Free($1);
     }
+  | tSTRING '(' FExpr ')' NumericIncrement tEND
+    {
+      incrementVariable($1, $3, $5);
+      Free($1);
+    }
   | StringIndex '[' FExpr ']' NumericIncrement tEND
+    {
+      incrementVariable($1, $3, $5);
+      Free($1);
+    }
+  | StringIndex '(' FExpr ')' NumericIncrement tEND
     {
       incrementVariable($1, $3, $5);
       Free($1);
@@ -4537,7 +4551,43 @@ FExpr_Single :
       }
       Free($1);
     }
+  | tSTRING '(' FExpr ')'
+    {
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else
+          $$ = s.value[index];
+      }
+      Free($1);
+    }
   | StringIndex '[' FExpr ']'
+    {
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else
+          $$ = s.value[index];
+      }
+      Free($1);
+    }
+  | StringIndex '(' FExpr ')'
     {
       int index = (int)$3;
       if(!gmsh_yysymbols.count($1)){
@@ -4566,7 +4616,7 @@ FExpr_Single :
       $$ = !StatFile(tmp);
       Free($3);
     }
-  | '#' String__Index '[' ']'
+  | '#' String__Index LP RP
     {
       if(!gmsh_yysymbols.count($2)){
 	yymsg(0, "Unknown variable '%s'", $2);
@@ -4613,7 +4663,43 @@ FExpr_Single :
       }
       Free($1);
     }
+  | tSTRING '(' FExpr ')' NumericIncrement
+    {
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else
+          $$ = (s.value[index] += $5);
+      }
+      Free($1);
+    }
   | StringIndex '[' FExpr ']' NumericIncrement
+    {
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else
+          $$ = (s.value[index] += $5);
+      }
+      Free($1);
+    }
+  | StringIndex '(' FExpr ')' NumericIncrement
     {
       int index = (int)$3;
       if(!gmsh_yysymbols.count($1)){
@@ -5134,6 +5220,7 @@ FExpr_Multi :
       }
       Free($1);
     }
+   // for compatibility with GetDP
   | tList '[' String__Index ']'
     {
       $$ = List_Create(2, 1, sizeof(double));
