@@ -245,7 +245,7 @@ class CTX {
   struct{
     int draw, link, horizontalScales;
     int smooth, animCycle, animStep, combineTime, combineRemoveOrig;
-    int fileFormat, plugins, forceNodeData;
+    int fileFormat, plugins, forceNodeData, forceElementData;
     double animDelay;
     std::string graphPointCommand;
     double graphPointX, graphPointY;

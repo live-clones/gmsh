@@ -544,7 +544,7 @@ static void createElements(std::vector<double> &list, int nbelm, int nbnod,
 bool PViewDataList::writeMSH(const std::string &fileName, double version, bool binary,
                              bool saveMesh, bool multipleView,
                              int partitionNum, bool saveInterpolationMatrices,
-                             bool forceNodeData)
+                             bool forceNodeData, bool forceElementData)
 {
   if(_adaptive){
     Msg::Warning("Writing adapted dataset (will only export current time step)");
@@ -615,7 +615,8 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
     fprintf(fp, "$EndElements\n");
   }
 
-  if(saveInterpolationMatrices && haveInterpolationMatrices() && !forceNodeData){
+  if(saveInterpolationMatrices && haveInterpolationMatrices() &&
+     !forceNodeData && !forceElementData){
     fprintf(fp, "$InterpolationScheme\n");
     fprintf(fp, "\"INTERPOLATION_SCHEME\"\n");
     fprintf(fp, "%d\n", (int)_interpolation.size());
@@ -640,9 +641,12 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
   for(int ts = 0; ts < NbTimeStep; ts++){
     if(forceNodeData)
       fprintf(fp, "$NodeData\n");
+    else if(forceElementData)
+      fprintf(fp, "$ElementData\n");
     else
       fprintf(fp, "$ElementNodeData\n");
-    if(saveInterpolationMatrices && haveInterpolationMatrices() && !forceNodeData)
+    if(saveInterpolationMatrices && haveInterpolationMatrices() &&
+       !forceNodeData && !forceElementData)
       fprintf(fp, "2\n\"%s\"\n\"INTERPOLATION_SCHEME\"\n", getName().c_str());
     else
       fprintf(fp, "1\n\"%s\"\n", getName().c_str());
@@ -681,14 +685,24 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version, bool b
           int nb = list->size() / *numEle;
           for(unsigned int i = 0; i < list->size(); i += nb){
             double *v = &(*list)[i + 3 * numNodes];
-            fprintf(fp, "%d %d", ++n, mult);
-            for(int j = 0; j < numComponents * mult; j++)
-              fprintf(fp, " %.16g", v[numComponents * mult * ts + j]);
+            if(forceElementData){ // just keep first vertex value
+              fprintf(fp, "%d", ++n);
+              for(int j = 0; j < numComponents; j++)
+                fprintf(fp, " %.16g", v[numComponents * mult * ts + j]);
+            }
+            else{
+              fprintf(fp, "%d %d", ++n, mult);
+              for(int j = 0; j < numComponents * mult; j++)
+                fprintf(fp, " %.16g", v[numComponents * mult * ts + j]);
+            }
             fprintf(fp, "\n");
           }
         }
       }
-      fprintf(fp, "$EndElementNodeData\n");
+      if(forceElementData)
+        fprintf(fp, "$EndElementData\n");
+      else
+        fprintf(fp, "$EndElementNodeData\n");
     }
 
   }

@@ -254,7 +254,7 @@ class PViewDataGModel : public PViewData {
   virtual bool writeMSH(const std::string &fileName, double version=2.2, bool binary=false,
                         bool savemesh=true, bool multipleView=false,
                         int partitionNum=0, bool saveInterpolationMatrices=true,
-                        bool forceNodeData=false);
+                        bool forceNodeData=false, bool forceElementData=false);
   bool readMED(const std::string &fileName, int fileIndex);
   bool writeMED(const std::string &fileName);
   void importLists(int N[24], std::vector<double> *V[24]);

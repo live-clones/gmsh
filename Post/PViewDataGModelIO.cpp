@@ -135,7 +135,8 @@ bool PViewDataGModel::readMSH(const std::string &viewName, const std::string &fi
 
 bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool binary,
                                bool saveMesh, bool multipleView, int partitionNum,
-                               bool saveInterpolationMatrices, bool forceNodeData)
+                               bool saveInterpolationMatrices, bool forceNodeData,
+                               bool forceElementData)
 {
   if(_steps.empty()) return true;
 
@@ -146,6 +147,10 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version, bool
 
   if(forceNodeData && _type != NodeData){
     Msg::Warning("Cannot force NodeData for this dataset: saving native data");
+  }
+
+  if(forceElementData && _type != ElementData){
+    Msg::Warning("Cannot force ElementData for this dataset: saving native data");
   }
 
   GModel *model = _steps[0]->getModel();

@@ -279,7 +279,7 @@ class PViewData {
   virtual bool writeMSH(const std::string &fileName, double version=2.2, bool binary=false,
                         bool saveMesh=true, bool multipleView=false,
                         int partitionNum=0, bool saveInterpolationMatrices=true,
-                        bool forceNodeData=false);
+                        bool forceNodeData=false, bool forceElementData=false);
   virtual bool writeMED(const std::string &fileName);
   virtual bool toVector(std::vector<std::vector<double> > &vec);
   virtual bool fromVector(const std::vector<std::vector<double> > &vec);

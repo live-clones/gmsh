@@ -6516,6 +6516,13 @@ double opt_post_force_node_data(OPT_ARGS_NUM)
   return CTX::instance()->post.forceNodeData;
 }
 
+double opt_post_force_element_data(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->post.forceElementData = (int)val;
+  return CTX::instance()->post.forceElementData;
+}
+
 double opt_post_graph_point_x(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

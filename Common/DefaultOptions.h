@@ -1278,6 +1278,8 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "CombineRemoveOriginal" , opt_post_combine_remove_orig , 1. ,
     "Remove original views after a Combine operation" },
 
+  { F|O, "ForceElementData" , opt_post_force_element_data , 0. ,
+    "Try to force saving datasets as ElementData" },
   { F|O, "ForceNodeData" , opt_post_force_node_data , 0. ,
     "Try to force saving datasets as NodeData" },
   { F|O, "Format" , opt_post_file_format , 10. ,
