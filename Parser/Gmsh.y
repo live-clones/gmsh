@@ -73,7 +73,7 @@ static int ImbricatedLoop = 0;
 static gmshfpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
-static const char *LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
+static std::string LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
 static std::map<std::string, std::vector<double> > floatOptions;
 static std::map<std::string, std::vector<std::string> > charOptions;
 
@@ -3043,7 +3043,7 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][0] = $3;
       LoopControlVariablesTab[ImbricatedLoop][1] = $5;
       LoopControlVariablesTab[ImbricatedLoop][2] = 1.0;
-      LoopControlVariablesNameTab[ImbricatedLoop] = NULL;
+      LoopControlVariablesNameTab[ImbricatedLoop] = "";
       gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if($3 > $5)
@@ -3060,7 +3060,7 @@ Loop :
       LoopControlVariablesTab[ImbricatedLoop][0] = $3;
       LoopControlVariablesTab[ImbricatedLoop][1] = $5;
       LoopControlVariablesTab[ImbricatedLoop][2] = $7;
-      LoopControlVariablesNameTab[ImbricatedLoop] = NULL;
+      LoopControlVariablesNameTab[ImbricatedLoop] = "";
       gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if(($7 > 0. && $3 > $5) || ($7 < 0. && $3 < $5))
@@ -3092,6 +3092,7 @@ Loop :
 	yymsg(0, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS - 1;
       }
+      Free($2);
     }
   | tFor tSTRING tIn '{' FExpr tDOTS FExpr tDOTS FExpr '}'
     {
@@ -3113,6 +3114,7 @@ Loop :
 	yymsg(0, "Reached maximum number of imbricated loops");
 	ImbricatedLoop = MAX_RECUR_LOOPS - 1;
       }
+      Free($2);
     }
   | tEndFor
     {
@@ -3122,10 +3124,10 @@ Loop :
       }
       else{
 	double step = LoopControlVariablesTab[ImbricatedLoop - 1][2];
-        const char *name = LoopControlVariablesNameTab[ImbricatedLoop - 1];
-        if(name){
+        std::string name = LoopControlVariablesNameTab[ImbricatedLoop - 1];
+        if(name.size()){
           if(!gmsh_yysymbols.count(name))
-            yymsg(0, "Unknown loop variable '%s'", name);
+            yymsg(0, "Unknown loop variable '%s'", name.c_str());
           else{
             gmsh_yysymbol &s(gmsh_yysymbols[name]);
             if(!s.list && s.value.size()){
@@ -3133,7 +3135,7 @@ Loop :
               LoopControlVariablesTab[ImbricatedLoop - 1][0] = s.value[0];
             }
             else
-              yymsg(0, "Bad loop variable %s", name);
+              yymsg(0, "Bad loop variable %s", name.c_str());
           }
         }
         else{
