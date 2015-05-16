@@ -6,7 +6,7 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
 # do not warn about non-definition of WIN32 on cygwin
-set(CMAKE_LEGACY_CYGWIN_WIN32 0) 
+set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
 # if CMAKE_BUILD_TYPE is specified use it; otherwise set the default
 # build type to "RelWithDebInfo" ("-O2 -g" with gcc) prior to calling
@@ -103,10 +103,10 @@ set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
 set(GMSH_API
-  ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h 
+  ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h
   ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h
   Common/Gmsh.h Common/Context.h Common/GmshDefines.h Common/GmshMessage.h
-    Common/VertexArray.h Common/Octree.h Common/OctreeInternals.h 
+    Common/VertexArray.h Common/Octree.h Common/OctreeInternals.h
     Common/OS.h Common/StringUtils.h Common/OpenFile.h
     Common/onelab.h Common/GmshSocket.h Common/onelabUtils.h
   Numeric/Numeric.h Numeric/GaussIntegration.h Numeric/polynomialBasis.h
@@ -114,35 +114,35 @@ set(GMSH_API
     Numeric/FuncSpaceData.h
     Numeric/simpleFunction.h Numeric/cartesian.h Numeric/ElementType.h
     Numeric/BasisFactory.h
-  Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h 
-    Geo/GFace.h Geo/GRegion.h Geo/GEdgeLoop.h Geo/GEdgeCompound.h 
+  Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h
+    Geo/GFace.h Geo/GRegion.h Geo/GEdgeLoop.h Geo/GEdgeCompound.h
     Geo/GFaceCompound.h Geo/GRegionCompound.h Geo/GRbf.h Geo/MVertex.h
-    Geo/MVertexBoundaryLayerData.h Geo/MEdge.h 
-    Geo/MFace.h Geo/MElement.h Geo/MElementOctree.h Geo/MPoint.h Geo/MLine.h 
-    Geo/MTriangle.h Geo/MQuadrangle.h Geo/MTetrahedron.h Geo/MHexahedron.h 
-    Geo/MPrism.h Geo/MPyramid.h Geo/MElementCut.h Geo/MElementOctree.h 
-    Geo/discreteVertex.h Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h 
-    Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/STensor3.h Geo/SBoundingBox3d.h 
-    Geo/Pair.h Geo/Range.h Geo/SOrientedBoundingBox.h 
-    Geo/CellComplex.h Geo/ChainComplex.h Geo/Cell.h Geo/Homology.h Geo/Chain.h 
+    Geo/MVertexBoundaryLayerData.h Geo/MEdge.h
+    Geo/MFace.h Geo/MElement.h Geo/MElementOctree.h Geo/MPoint.h Geo/MLine.h
+    Geo/MTriangle.h Geo/MQuadrangle.h Geo/MTetrahedron.h Geo/MHexahedron.h
+    Geo/MPrism.h Geo/MPyramid.h Geo/MElementCut.h Geo/MElementOctree.h
+    Geo/discreteVertex.h Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h
+    Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/STensor3.h Geo/SBoundingBox3d.h
+    Geo/Pair.h Geo/Range.h Geo/SOrientedBoundingBox.h
+    Geo/CellComplex.h Geo/ChainComplex.h Geo/Cell.h Geo/Homology.h Geo/Chain.h
     Geo/GenericVertex.h Geo/GenericEdge.h Geo/GenericFace.h Geo/GenericRegion.h
     Geo/partitionEdge.h Geo/CGNSOptions.h Geo/gmshLevelset.h Geo/boundaryLayersData.h
-  Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h 
-    Mesh/meshGFaceElliptic.h Mesh/meshPartition.h Mesh/meshGFaceDelaunayInsertion.h 
+  Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h
+    Mesh/meshGFaceElliptic.h Mesh/meshPartition.h Mesh/meshGFaceDelaunayInsertion.h
     Mesh/simple3D.h Mesh/meshPartitionOptions.h Mesh/directions3D.h Mesh/yamakawa.h
     Mesh/Voronoi3D.h Mesh/Levy3D.h Mesh/periodical.h Mesh/meshMetric.h
   Numeric/mathEvaluator.h
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
     Solver/crossConfTerm.h Solver/orthogonalTerm.h
-    Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h 
-    Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h 
+    Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h
+    Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h
     Solver/groupOfElements.h Solver/linearSystemPETSc.h Solver/linearSystemMUMPS.h
     Solver/thermicSolver.h
-  Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h 
+  Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h
   Post/PViewDataList.h Post/PViewDataGModel.h Post/PViewOptions.h Post/ColorTable.h
    Numeric/nodalBasis.h
   Graphics/drawContext.h
-  contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h 
+  contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h
     contrib/kbipack/gmp_blas.h contrib/kbipack/mpz.h
   contrib/DiscreteIntegration/Integration3D.h
   contrib/HighOrderMeshOptimizer/OptHOM.h contrib/HighOrderMeshOptimizer/OptHomMesh.h
@@ -157,7 +157,7 @@ set(GMSH_API
   contrib/MeshOptimizer/MeshOptCommon.h contrib/MeshOptimizer/MeshOptimizer.h
   contrib/MeshOptimizer/MeshOptObjContribFunc.h contrib/MeshOptimizer/MeshOptObjContrib.h
   contrib/MeshOptimizer/MeshOptObjContribScaledNodeDispSq.h
-  contrib/MeshOptimizer/MeshOptObjectiveFunction.h contrib/MeshOptimizer/MeshOptVertexCoord.h 
+  contrib/MeshOptimizer/MeshOptObjectiveFunction.h contrib/MeshOptimizer/MeshOptVertexCoord.h
   contrib/MeshQualityOptimizer/MeshQualityObjContribIdealJac.h
   contrib/MeshQualityOptimizer/MeshQualityObjContribInvCond.h
   contrib/MeshQualityOptimizer/MeshQualityOptimizer.h
@@ -168,11 +168,11 @@ if(IAMCHILD)
   set(GMSH_API ${GMSH_API} PARENT_SCOPE)
 endif(IAMCHILD)
 
-execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE 
+execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process(COMMAND hostname OUTPUT_VARIABLE HOSTNAME 
+execute_process(COMMAND hostname OUTPUT_VARIABLE HOSTNAME
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process(COMMAND whoami OUTPUT_VARIABLE PACKAGER 
+execute_process(COMMAND whoami OUTPUT_VARIABLE PACKAGER
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 if(NOT DATE)
@@ -239,7 +239,11 @@ macro(find_all_libraries VARNAME LISTNAME PATH SUFFIX)
   set(${VARNAME})
   list(LENGTH ${LISTNAME} NUM_LIST)
   foreach(LIB ${${LISTNAME}})
-    find_library(FOUND_LIB ${LIB} PATHS ${PATH} PATH_SUFFIXES ${SUFFIX})
+    if("${PATH}" STREQUAL "")
+      find_library(FOUND_LIB ${LIB} PATH_SUFFIXES ${SUFFIX})
+    else("${PATH}" STREQUAL "")
+      find_library(FOUND_LIB ${LIB} PATHS ${PATH} NO_DEFAULT_PATH)
+    endif("${PATH}" STREQUAL "")
     if(FOUND_LIB)
       list(APPEND ${VARNAME} ${FOUND_LIB})
     endif(FOUND_LIB)
@@ -374,7 +378,7 @@ if(ENABLE_BLAS_LAPACK)
         if(GFORTRAN_LIB)
           list(APPEND LAPACK_LIBRARIES ${GFORTRAN_LIB})
         endif(GFORTRAN_LIB)
-      endif(LAPACK_LIBRARIES)  
+      endif(LAPACK_LIBRARIES)
     endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
 
     if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
@@ -517,7 +521,7 @@ if(ENABLE_FLTK)
         foreach(DIR ${FLTK_INCLUDE_DIR})
           list(APPEND EXTERNAL_INCLUDES ${DIR}/FL/images ${DIR}/png)
         endforeach(DIR)
-      endif(FLTK_PNG)   
+      endif(FLTK_PNG)
     endif(FLTK_FOUND)
   endif(NOT HAVE_FLTK)
 elseif(ENABLE_QT)
@@ -771,7 +775,7 @@ if(HAVE_MESH)
 
   if(ENABLE_NETGEN)
     add_subdirectory(contrib/Netgen)
-    include_directories(contrib/Netgen contrib/Netgen/libsrc/include 
+    include_directories(contrib/Netgen contrib/Netgen/libsrc/include
                         contrib/Netgen/nglib)
     set_config_option(HAVE_NETGEN "Netgen")
     add_definitions(-DNO_PARALLEL_THREADS -DNOTCL)
@@ -840,7 +844,7 @@ if(ENABLE_MED OR ENABLE_CGNS)
         set_config_option(HAVE_MED "Med")
         list(APPEND EXTERNAL_LIBRARIES ${MED_LIB})
       endif(MED_LIB)
-    endif(ENABLE_MED)    
+    endif(ENABLE_MED)
     if(ENABLE_CGNS)
       find_library(CGNS_LIB cgns PATHS ENV CGNS_ROOT PATH_SUFFIXES lib)
       find_path(CGNS_INC "cgnslib.h" PATHS ENV CGNS_ROOT PATH_SUFFIXES include)
@@ -849,7 +853,7 @@ if(ENABLE_MED OR ENABLE_CGNS)
         list(APPEND EXTERNAL_LIBRARIES ${CGNS_LIB})
         list(APPEND EXTERNAL_INCLUDES ${CGNS_INC})
       endif(CGNS_LIB AND CGNS_INC)
-    endif(ENABLE_CGNS)    
+    endif(ENABLE_CGNS)
     if(MED_LIB OR CGNS_LIB)
       list(APPEND EXTERNAL_LIBRARIES ${HDF5_LIB})
       find_library(SZ_LIB NAMES szlib sz)
@@ -939,7 +943,7 @@ if(HAVE_SOLVER)
       message(STATUS "Using PETSc dir: ${ENV_PETSC_DIR}")
       message(STATUS "Using PETSc arch: ${ENV_PETSC_ARCH}")
       # find includes by parsing the petscvariables file
-      file(STRINGS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables 
+      file(STRINGS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables
            PETSC_VARIABLES NEWLINE_CONSUME)
     endif(EXISTS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables)
     if(EXISTS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc-conf/petscvariables)
@@ -947,7 +951,7 @@ if(HAVE_SOLVER)
       message(STATUS "Using PETSc dir: ${ENV_PETSC_DIR}")
       message(STATUS "Using PETSc arch: ${ENV_PETSC_ARCH}")
       # find includes by parsing the petscvariables file
-      file(STRINGS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc-conf/petscvariables 
+      file(STRINGS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc-conf/petscvariables
            PETSC_VARIABLES NEWLINE_CONSUME)
     endif(EXISTS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc-conf/petscvariables)
     if(PETSC_VARIABLES)
@@ -981,7 +985,7 @@ if(HAVE_SOLVER)
       endif(PETSC_PACKAGES_INCLUDES)
       # find libraries (<= 3.0)
       set(PETSC_LIBS_REQUIRED petscksp petscdm petscmat petscvec petsc)
-      find_all_libraries(PETSC_LIBS PETSC_LIBS_REQUIRED 
+      find_all_libraries(PETSC_LIBS PETSC_LIBS_REQUIRED
                          ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib "")
       # petsc 3.1 creates only one library (libpetsc)
       if(NOT PETSC_LIBS)
@@ -1007,17 +1011,17 @@ if(HAVE_SOLVER)
         find_library(SLEPC_LIB slepc PATHS ${ENV_SLEPC_DIR}/${ENV_PETSC_ARCH}/lib
                      NO_DEFAULT_PATH)
         if(SLEPC_LIB)
-          find_path(SLEPC_INC "slepc.h" PATHS ${ENV_SLEPC_DIR} PATH_SUFFIXES include 
+          find_path(SLEPC_INC "slepc.h" PATHS ${ENV_SLEPC_DIR} PATH_SUFFIXES include
                     ${ENV_PETSC_ARCH}/include include/slepc NO_DEFAULT_PATH)
           if(SLEPC_INC)
             message(STATUS "Using SLEPc dir: ${ENV_SLEPC_DIR}")
             set_config_option(HAVE_SLEPC "SLEPc")
             list(APPEND EXTERNAL_LIBRARIES ${SLEPC_LIB})
-            list(APPEND EXTERNAL_INCLUDES ${SLEPC_INC}) 
-            find_path(SLEPC_INC2 "slepcconf.h" PATHS ${ENV_SLEPC_DIR} 
+            list(APPEND EXTERNAL_INCLUDES ${SLEPC_INC})
+            find_path(SLEPC_INC2 "slepcconf.h" PATHS ${ENV_SLEPC_DIR}
                       PATH_SUFFIXES ${ENV_PETSC_ARCH}/include NO_DEFAULT_PATH)
             if(SLEPC_INC2)
-              list(APPEND EXTERNAL_INCLUDES ${SLEPC_INC2}) 
+              list(APPEND EXTERNAL_INCLUDES ${SLEPC_INC2})
             endif(SLEPC_INC2)
           endif(SLEPC_INC)
         endif(SLEPC_LIB)
@@ -1055,11 +1059,11 @@ if(HAVE_SOLVER)
           if(SLEPC_LIB AND SLEPC_INC)
             set_config_option(HAVE_SLEPC "SLEPc")
             list(APPEND EXTERNAL_LIBRARIES ${SLEPC_LIB})
-            list(APPEND EXTERNAL_INCLUDES ${SLEPC_INC}) 
+            list(APPEND EXTERNAL_INCLUDES ${SLEPC_INC})
           endif(SLEPC_LIB AND SLEPC_INC)
         endif(ENABLE_SLEPC)
         list(APPEND EXTERNAL_LIBRARIES ${PETSC_LIBS})
-        list(APPEND EXTERNAL_INCLUDES ${PETSC_INC}) 
+        list(APPEND EXTERNAL_INCLUDES ${PETSC_INC})
       endif(PETSC_LIBS AND PETSC_INC)
     endif(PETSC_VARIABLES)
   endif(ENABLE_PETSC)
@@ -1089,7 +1093,7 @@ if(ENABLE_OCC)
   if(ENABLE_SGEOM)
     set(OCC_LIBS_REQUIRED ${OCC_LIBS_REQUIRED}
       # For SGEOM
-      TKBin TKBinL TKBinTObj TKBinXCAF TKCAF TKCDF TKLCAF TKPLCAF TKMeshVS 
+      TKBin TKBinL TKBinTObj TKBinXCAF TKCAF TKCDF TKLCAF TKPLCAF TKMeshVS
       TKNIS TKOpenGl TKPCAF TKPShape TKSTL TKService TKShapeSchema TKStdSchema
       TKTObj TKV2d TKV3d TKVRML TKVoxel TKXCAF TKXCAFSchema TKXDEIGES TKXDESTEP
       TKXMesh TKXSBase TKXml TKXmkL TKXmlTObj)
@@ -1097,7 +1101,7 @@ if(ENABLE_OCC)
   list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS_REQUIRED)
   set(OCC_LIBS)
   foreach(OCC ${OCC_LIBS_REQUIRED})
-    find_library(OCC_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES lib 
+    find_library(OCC_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES lib
                  ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib)
     if(OCC_LIB)
       list(APPEND OCC_LIBS ${OCC_LIB})
@@ -1108,7 +1112,7 @@ if(ENABLE_OCC)
   endforeach(OCC)
   list(LENGTH OCC_LIBS NUM_OCC_LIBS)
   if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
-    find_path(OCC_INC "BRep_Tool.hxx" PATHS ENV CASROOT PATH_SUFFIXES inc 
+    find_path(OCC_INC "BRep_Tool.hxx" PATHS ENV CASROOT PATH_SUFFIXES inc
               include include/oce opencascade)
     if(OCC_INC)
       set_config_option(HAVE_OCC "OpenCascade")
@@ -1245,7 +1249,7 @@ if(LINUX_JOYSTICK_H)
 endif(LINUX_JOYSTICK_H)
 
 if(MSVC)
-  add_definitions(-D_USE_MATH_DEFINES -DNOMINMAX 
+  add_definitions(-D_USE_MATH_DEFINES -DNOMINMAX
                   -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_DEPRECATE)
   set(GMSH_SRC ${GMSH_SRC};Fltk/Win32Icon.rc)
 endif(MSVC)
@@ -1302,7 +1306,7 @@ foreach(OPT ${CONFIG_OPTIONS})
   set(GMSH_CONFIG_OPTIONS "${GMSH_CONFIG_OPTIONS} ${OPT}")
 endforeach(OPT)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshConfig.h.in 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshConfig.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshVersion.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h)
@@ -1332,7 +1336,7 @@ if(EXTERNAL_INCLUDES)
 endif(EXTERNAL_INCLUDES)
 
 if(HAVE_FLTK)
-  set(LINK_LIBRARIES ${FLTK_LIBRARIES} ${EXTERNAL_LIBRARIES} 
+  set(LINK_LIBRARIES ${FLTK_LIBRARIES} ${EXTERNAL_LIBRARIES}
                      ${OPENGL_LIBRARIES} ${LAPACK_LIBRARIES})
 elseif(HAVE_QT)
   set(LINK_LIBRARIES ${QT_LIBRARIES} ${EXTERNAL_LIBRARIES}
@@ -1371,9 +1375,9 @@ include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser
   Plugin Post Qt ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/Common)
 
 # set this for external codes that might include this CMakeList file
-set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} CACHE 
+set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} CACHE
     STRING "External include directories" FORCE)
-set(GMSH_EXTERNAL_LIBRARIES ${LINK_LIBRARIES} CACHE 
+set(GMSH_EXTERNAL_LIBRARIES ${LINK_LIBRARIES} CACHE
     STRING "External libraries" FORCE)
 
 # group sources for easier navigation in IDEs
@@ -1387,7 +1391,7 @@ if(ENABLE_BUILD_LIB)
   add_library(lib STATIC ${GMSH_SRC})
   set_target_properties(lib PROPERTIES OUTPUT_NAME Gmsh)
   if(MSVC)
-    set_target_properties(lib PROPERTIES DEBUG_POSTFIX d) 
+    set_target_properties(lib PROPERTIES DEBUG_POSTFIX d)
     if(ENABLE_MSVC_STATIC_RUNTIME)
       set_target_properties(lib PROPERTIES LINK_FLAGS_RELEASE "/nodefaultlib:LIBCMT")
     endif(ENABLE_MSVC_STATIC_RUNTIME)
@@ -1409,11 +1413,11 @@ if(ENABLE_BUILD_ANDROID)
 endif(ENABLE_BUILD_ANDROID)
 
 # shared library target
-if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR 
+if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
    ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
   add_library(shared SHARED ${GMSH_SRC})
   set_target_properties(shared PROPERTIES OUTPUT_NAME Gmsh)
-  set_target_properties(shared PROPERTIES 
+  set_target_properties(shared PROPERTIES
     VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
     SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(HAVE_LAPACK AND LAPACK_FLAGS)
@@ -1422,9 +1426,9 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
   if(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
     message(STATUS "Note: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library "
             "won't link. In MSVC change /MT to /MD in the shared project properties")
-  endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)		  
+  endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
   target_link_libraries(shared ${LINK_LIBRARIES})
-endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR 
+endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
       ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
 
 # binary targets
@@ -1458,13 +1462,13 @@ if(WIN32 AND NOT MSVC OR CYGWIN)
   endif(HAVE_64BIT_SIZE_T)
   if(ENABLE_BUILD_DYNAMIC)
     set(FLAGS "${FLAGS} -Wl,-Bstatic -lgfortran")
-    set_target_properties(gmsh PROPERTIES 
+    set_target_properties(gmsh PROPERTIES
       LINK_FLAGS "${FLAGS} -Wl,--enable-auto-import")
     set(LIBGMSH_DEF "libGmsh-${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.def")
     set_target_properties(shared PROPERTIES PREFIX "lib"
       LINK_FLAGS "${FLAGS} -Wl,--export-all-symbols,--output-def,${LIBGMSH_DEF}")
   else(ENABLE_BUILD_DYNAMIC)
-    set_target_properties(gmsh PROPERTIES 
+    set_target_properties(gmsh PROPERTIES
       LINK_FLAGS "${FLAGS} -static")
     # remove -Wl,-Bdynamic flags
     set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
@@ -1479,7 +1483,7 @@ endif(WIN32 AND NOT MSVC OR CYGWIN)
 find_program(BISON bison)
 find_program(FLEX flex)
 if(BISON AND FLEX)
-  add_custom_target(parser 
+  add_custom_target(parser
                     COMMAND ${BISON} -p gmsh_yy --output Gmsh.tab.cpp -d Gmsh.y
                     COMMAND ${FLEX} -P gmsh_yy -o Gmsh.yy.cpp Gmsh.l
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Parser)
@@ -1488,10 +1492,10 @@ endif(BISON AND FLEX)
 if(UNIX)
   # cannot use cmake's file search functions here (they would only find files
   # existing at configuration time)
-  add_custom_target(purge 
+  add_custom_target(purge
                     COMMAND rm -f `find . -name *~ -o -name *~~`
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-  add_custom_target(etags 
+  add_custom_target(etags
                     COMMAND etags `find . -name *.cpp -o -name *.h -o -name *.y`
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif(UNIX)
@@ -1505,8 +1509,8 @@ file(GLOB DEMO_FILES ${CMAKE_CURRENT_SOURCE_DIR}/demos/?*.*)
 set(TEX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo)
 file(GLOB TEX_SRC ${TEX_DIR}/*.texi)
 set(TEX_OBJ ${TEX_DIR}/gmsh.aux ${TEX_DIR}/gmsh.cp ${TEX_DIR}/gmsh.cps
-    ${TEX_DIR}/gmsh.fn ${TEX_DIR}/gmsh.html ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.ky 
-    ${TEX_DIR}/gmsh.log ${TEX_DIR}/gmsh.pdf ${TEX_DIR}/gmsh.pg ${TEX_DIR}/gmsh.toc 
+    ${TEX_DIR}/gmsh.fn ${TEX_DIR}/gmsh.html ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.ky
+    ${TEX_DIR}/gmsh.log ${TEX_DIR}/gmsh.pdf ${TEX_DIR}/gmsh.pg ${TEX_DIR}/gmsh.toc
     ${TEX_DIR}/gmsh.tp ${TEX_DIR}/gmsh.tps ${TEX_DIR}/gmsh.txt ${TEX_DIR}/gmsh.vr)
 
 macro(unix2dos VARNAME)
@@ -1572,7 +1576,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     # by MSVC
     install(TARGETS shared RUNTIME DESTINATION ${GMSH_LIB} OPTIONAL)
     # install .def file
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LIBGMSH_DEF} 
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LIBGMSH_DEF}
             DESTINATION ${GMSH_LIB})
     # install these DLLs until we figure out how to link them in statically
     # (libstc++ and libgcc should be linkable statically with -static-libstdc++
@@ -1623,22 +1627,22 @@ add_custom_target(get_headers
   COMMAND ${CMAKE_COMMAND} -E make_directory Headers/gmsh
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 foreach(FILE ${GMSH_API})
-  add_custom_command(TARGET get_headers POST_BUILD COMMAND ${CMAKE_COMMAND} 
+  add_custom_command(TARGET get_headers POST_BUILD COMMAND ${CMAKE_COMMAND}
     -E copy_if_different ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endforeach(FILE)
 
 find_program(MAKEINFO makeinfo)
 if(MAKEINFO)
-  add_custom_command(OUTPUT ${TEX_DIR}/gmsh.info DEPENDS ${TEX_SRC} 
+  add_custom_command(OUTPUT ${TEX_DIR}/gmsh.info DEPENDS ${TEX_SRC}
                      COMMAND ${MAKEINFO} --split-size 1000000
                      ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(info DEPENDS ${TEX_DIR}/gmsh.info)
-  add_custom_command(OUTPUT ${TEX_DIR}/gmsh.txt DEPENDS ${TEX_SRC} 
+  add_custom_command(OUTPUT ${TEX_DIR}/gmsh.txt DEPENDS ${TEX_SRC}
                      COMMAND ${MAKEINFO} --plaintext -o gmsh.txt
                      ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(txt DEPENDS ${TEX_DIR}/gmsh.txt)
-  add_custom_command(OUTPUT ${TEX_DIR}/gmsh.html DEPENDS ${TEX_SRC} 
+  add_custom_command(OUTPUT ${TEX_DIR}/gmsh.html DEPENDS ${TEX_SRC}
                      COMMAND ${MAKEINFO} --html --css-ref=http://geuz.org/geuz.css --no-split
                      ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(html DEPENDS ${TEX_DIR}/gmsh.html)
@@ -1649,8 +1653,8 @@ endif(MAKEINFO)
 
 find_program(TEXI2PDF texi2pdf)
 if(TEXI2PDF)
-  add_custom_command(OUTPUT ${TEX_DIR}/gmsh.pdf DEPENDS ${TEX_SRC} 
-                     COMMAND ${TEXI2PDF} ARGS gmsh.texi 
+  add_custom_command(OUTPUT ${TEX_DIR}/gmsh.pdf DEPENDS ${TEX_SRC}
+                     COMMAND ${TEXI2PDF} ARGS gmsh.texi
                      WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(pdf DEPENDS ${TEX_DIR}/gmsh.pdf)
   install(FILES ${TEX_DIR}/gmsh.pdf DESTINATION ${GMSH_DOC} OPTIONAL)
@@ -1660,13 +1664,13 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${OPT_TEXI}"
                 OUTPUT_FILE cmake_options.texi)
 
 if(MAKEINFO AND TEXI2PDF)
-  add_custom_target(doc COMMAND ${CMAKE_COMMAND} -E tar zcf 
+  add_custom_target(doc COMMAND ${CMAKE_COMMAND} -E tar zcf
                     ${CMAKE_CURRENT_BINARY_DIR}/gmsh-${GMSH_VERSION}-doc.tgz
                     doc/CREDITS.txt doc/LICENSE.txt doc/VERSIONS.txt
-                    doc/gmsh.1 doc/texinfo/gmsh.html doc/texinfo/gmsh.info 
+                    doc/gmsh.1 doc/texinfo/gmsh.html doc/texinfo/gmsh.info
                     doc/texinfo/gmsh.pdf doc/texinfo/gmsh.txt
                     COMMAND ${CMAKE_COMMAND} -E remove ${TEX_OBJ}
-                    DEPENDS ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.txt 
+                    DEPENDS ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.txt
                     ${TEX_DIR}/gmsh.html ${TEX_DIR}/gmsh.pdf
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif(MAKEINFO AND TEXI2PDF)
@@ -1686,7 +1690,7 @@ if(APPLE AND ENABLE_BUILD_LIB)
     COMMAND ${CMAKE_COMMAND} -E make_directory Gmsh.framework/Headers
     COMMAND ${CMAKE_COMMAND} -E make_directory Gmsh.framework/Resources
     COMMAND ${CMAKE_COMMAND} -E copy ${LIBNAME} Gmsh.framework/Gmsh
-    COMMAND ${CMAKE_COMMAND} -E copy Info_framework.plist 
+    COMMAND ${CMAKE_COMMAND} -E copy Info_framework.plist
                                      Gmsh.framework/Resources/Info.plist
     COMMAND ${CMAKE_COMMAND} -E create_symlink . Gmsh.framework/Headers/gmsh
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
@@ -1702,7 +1706,7 @@ set(CPACK_PACKAGE_VERSION_MAJOR ${GMSH_MAJOR_VERSION})
 set(CPACK_PACKAGE_VERSION_MINOR ${GMSH_MINOR_VERSION})
 set(CPACK_PACKAGE_VERSION_PATCH ${GMSH_PATCH_VERSION})
 set(CPACK_PACKAGE_DESCRIPTION_FILE ${WELCOME_FILE})
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY 
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     "3D finite element mesh generator with built-in CAD engine and post-processor")
 set(CPACK_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-${GMSH_OS})
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "Gmsh")
@@ -1713,10 +1717,10 @@ set(CPACK_PACKAGE_EXECUTABLE "gmsh;Gmsh")
 set(CPACK_STRIP_FILES TRUE)
 set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-source)
 set(CPACK_SOURCE_GENERATOR TGZ)
-set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "~$" 
-    "DS_Store$" "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/" 
-    "/bin/" "/lib/" "/nightly/" "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/" 
-    "/projects/" 
+set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "~$"
+    "DS_Store$" "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/"
+    "/bin/" "/lib/" "/nightly/" "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/"
+    "/projects/"
     "/FunctionSpace/" "/Mesh/meshRecombine*" "/utils/solvers/legacy/"
     "/contrib/3M/")
 
@@ -1754,11 +1758,11 @@ if(HAVE_PYTHON)
   add_subdirectory(wrappers/gmshpy)
 endif(HAVE_PYTHON)
 
-if(ENABLE_WRAP_JAVA) 
-  if(NOT HAVE_BLAS OR NOT HAVE_LAPACK) 
+if(ENABLE_WRAP_JAVA)
+  if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
     message(WARNING "Java wrapping samples will not work without BLAS and LAPACK")
   endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
-  add_subdirectory(wrappers/java) 
+  add_subdirectory(wrappers/java)
 endif(ENABLE_WRAP_JAVA)
 
 include(CPack)
@@ -1766,10 +1770,10 @@ include(CPack)
 if(NOT DISABLE_GMSH_TESTS)
   #disabling tests is usefull when including this CMakeLists in an external project
   include(CTest)
-  file(GLOB_RECURSE TESTFILES 
+  file(GLOB_RECURSE TESTFILES
        tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo)
   foreach(TESTFILE ${TESTFILES})
-    # use relative path for cygwin/mingw (the pure win exe built with the mingw 
+    # use relative path for cygwin/mingw (the pure win exe built with the mingw
     # compilers does not understand a full cygwin-style path)
     FILE(RELATIVE_PATH TEST ${CMAKE_CURRENT_BINARY_DIR} ${TESTFILE})
     add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
@@ -1777,7 +1781,7 @@ if(NOT DISABLE_GMSH_TESTS)
   # if(HAVE_PYTHON)
   #   file(GLOB_RECURSE TESTFILES tutorial/*.py)
   #   foreach(TESTFILE ${TESTFILES})
-  #     add_test(NAME ${TESTFILE} 
+  #     add_test(NAME ${TESTFILE}
   #              COMMAND ${PYTHON_EXECUTABLE}
   #                      ${TESTFILE} $<CONFIGURATION>)
   #     # sys.path.insert(0, "path/to/your/package")
@@ -1795,10 +1799,10 @@ message(STATUS " * C++ compiler: " ${CMAKE_CXX_COMPILER})
 message(STATUS " * Install prefix: " ${CMAKE_INSTALL_PREFIX})
 message(STATUS "")
 
-mark_as_advanced(GMSH_EXTRA_VERSION 
-                 ACIS_LIB ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC 
-                 GMP_INC GMP_LIB MMG3D_INC MMG3D_LIB TAUCS_INC TAUCS_LIB HDF5_LIB 
-                 MED_LIB OCC_INC OCC_CONFIG_H SZ_LIB 
+mark_as_advanced(GMSH_EXTRA_VERSION
+                 ACIS_LIB ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
+                 GMP_INC GMP_LIB MMG3D_INC MMG3D_LIB TAUCS_INC TAUCS_LIB HDF5_LIB
+                 MED_LIB OCC_INC OCC_CONFIG_H SZ_LIB
                  PETSC_LIBS SLEPC_INC SLEPC_INC2 SLEPC_LIB
                  BISON FLEX MAKEINFO TEXI2PDF FLTK_CONFIG_SCRIPT
                  GMSH_EXTERNAL_INCLUDE_DIRS GMSH_EXTERNAL_LIBRARIES)
