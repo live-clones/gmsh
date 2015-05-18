@@ -553,11 +553,28 @@ void GetOptions(int argc, char *argv[])
         i++;
 	if (i + 1 < argc && argv[i][0] != '-') {
           gmsh_yysymbols[argv[i]].value = std::vector<double>(1, atof(argv[i + 1]));
-          Msg::GetCommandLineNumbers()[argv[i]] = atof(argv[i + 1]);
+          Msg::GetCommandLineNumbers()[argv[i]] = std::vector<double>(1, atof(argv[i + 1]));
           i += 2;
 	}
         else
           Msg::Error("Missing name and/or value for number definition");
+      }
+      else if (!strcmp(argv[i]+1, "setlist") ||
+               !strcmp(argv[i]+1, "setlistofnumbers")) {
+        i++;
+	if (i + 1 < argc && argv[i][0] != '-') {
+          std::string n(argv[i]);
+          std::vector<double> v(1, atof(argv[i + 1]));
+          i += 2;
+          while(i < argc && argv[i][0] != '-'){
+            v.push_back(atof(argv[i]));
+            i++;
+          }
+          gmsh_yysymbols[n].value = v;
+          Msg::GetCommandLineNumbers()[n] = v;
+	}
+        else
+          Msg::Error("Missing name and/or value for definition of list of numbers");
       }
 #endif
       else if(!strcmp(argv[i] + 1, "option")) {

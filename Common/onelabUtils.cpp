@@ -128,9 +128,17 @@ namespace onelabUtils {
       // good idea?)
       std::ostringstream sstream;
       sstream.precision(16);
-      std::map<std::string, double> cln(Msg::GetCommandLineNumbers());
-      for(std::map<std::string, double>::iterator it = cln.begin(); it != cln.end(); it++)
-        sstream << " -setnumber " << it->first << " " << it->second;
+      std::map<std::string, std::vector<double> > cln(Msg::GetCommandLineNumbers());
+      for(std::map<std::string, std::vector<double> >::iterator it = cln.begin(); it != cln.end(); it++){
+        if(it->second.size() == 1){
+          sstream << " -setnumber " << it->first << " " << it->second[0];
+        }
+        else{
+          sstream << " -setlistofnumbers " << it->first;
+          for(unsigned int i = 0; i < it->second.size(); i++)
+            sstream << " " << it->second[i];
+        }
+      }
       std::map<std::string, std::string> cls(Msg::GetCommandLineStrings());
       for(std::map<std::string, std::string>::iterator it = cls.begin(); it != cls.end(); it++)
         sstream << " -setstring " << it->first << " " << it->second;

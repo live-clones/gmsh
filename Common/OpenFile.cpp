@@ -674,9 +674,9 @@ void OpenProject(const std::string &fileName, bool setWindowTitle)
 #if defined(HAVE_PARSER)
   gmsh_yysymbols.clear();
   gmsh_yystringsymbols.clear();
-  std::map<std::string, double> cln(Msg::GetCommandLineNumbers());
-  for(std::map<std::string, double>::iterator it = cln.begin(); it != cln.end(); it++)
-    gmsh_yysymbols[it->first].value = std::vector<double>(1, it->second);
+  std::map<std::string, std::vector<double> > cln(Msg::GetCommandLineNumbers());
+  for(std::map<std::string, std::vector<double> >::iterator it = cln.begin(); it != cln.end(); it++)
+    gmsh_yysymbols[it->first].value = it->second;
   std::map<std::string, std::string> cls(Msg::GetCommandLineStrings());
   for(std::map<std::string, std::string>::iterator it = cls.begin(); it != cls.end(); it++)
     gmsh_yystringsymbols[it->first] = it->second;

@@ -48,7 +48,7 @@ class Msg {
   // command-line and startup time
   static std::string _commandLine, _launchDate;
   // command-line-specified numbers and strings
-  static std::map<std::string, double> _commandLineNumbers;
+  static std::map<std::string, std::vector<double> > _commandLineNumbers;
   static std::map<std::string, std::string> _commandLineStrings;
 #if !defined(HAVE_ONELAB2)
   // communication with Gmsh when run remotely
@@ -83,7 +83,7 @@ class Msg {
   static int GetVerbosity(){ return _verbosity; }
   static std::string GetLaunchDate(){ return _launchDate; }
   static std::string GetCommandLineArgs(){ return _commandLine; }
-  static std::map<std::string, double> &GetCommandLineNumbers()
+  static std::map<std::string, std::vector<double> > &GetCommandLineNumbers()
   {
     return _commandLineNumbers;
   }

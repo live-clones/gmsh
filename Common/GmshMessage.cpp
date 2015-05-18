@@ -64,7 +64,7 @@ std::string Msg::_firstError;
 GmshMessage *Msg::_callback = 0;
 std::string Msg::_commandLine;
 std::string Msg::_launchDate;
-std::map<std::string, double> Msg::_commandLineNumbers;
+std::map<std::string, std::vector<double> > Msg::_commandLineNumbers;
 std::map<std::string, std::string> Msg::_commandLineStrings;
 #if !defined(HAVE_ONELAB2)
 GmshClient *Msg::_client = 0;
