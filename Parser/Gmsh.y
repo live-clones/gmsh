@@ -137,7 +137,7 @@ struct doubleXstring{
 %token tText2D tText3D tInterpolationScheme tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit tAbort
-%token tField tReturn tCall tMacro tShow tHide tGetValue tGetEnv tGetString tGetNumber
+%token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString tGetNumber
 %token tHomology tCohomology tBetti tSetOrder tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName tSetPartition
@@ -1151,17 +1151,23 @@ DefineConstants :
       }
       Free($3);
     }
-  | DefineConstants Comma String__Index tAFFECT '{' FExpr
+  | DefineConstants Comma String__Index tAFFECT '{' ListOfDouble
     { floatOptions.clear(); charOptions.clear(); }
     FloatParameterOptions '}'
     {
       std::string key($3);
-      std::vector<double> val(1, $6);
+      std::vector<double> val;
+      for(int i = 0; i < List_Nbr($6); i++){
+        double d;
+        List_Read($6, i, &d);
+        val.push_back(d);
+      }
       if(!gmsh_yysymbols.count(key)){
         Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
         gmsh_yysymbols[key].value = val;
       }
       Free($3);
+      Free($6);
     }
   | DefineConstants Comma String__Index tAFFECT StringExpr
     {
@@ -3151,7 +3157,7 @@ Loop :
 	  ImbricatedLoop--;
       }
     }
-  | tMacro tSTRING
+  | tFunction tSTRING
     {
       if(!FunctionManager::Instance()->createFunction
          (std::string($2), gmsh_yyin, gmsh_yyname, gmsh_yylineno))

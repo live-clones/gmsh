@@ -169,7 +169,7 @@ FixRelativePath         return tFixRelativePath;
 Floor                   return tFloor;
 Fmod                    return tFmod;
 For                     return tFor;
-Function                return tMacro;
+Function                return tFunction;
 
 GetEnv                  return tGetEnv;
 GetString               return tGetString;
@@ -200,7 +200,6 @@ Log10                   return tLog10;
 Layers                  return tLayers;
 Levelset                return tLevelset;
 
-Macro                   return tMacro;
 MeshAlgorithm           return tMeshAlgorithm;
 Modulo                  return tModulo;
 MPI_Rank                return tMPI_Rank;
