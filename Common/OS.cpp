@@ -208,7 +208,7 @@ static unsigned int utf8FromUtf16(char* dst, unsigned int dstlen,
 
 static wchar_t *wbuf[3] = {NULL, NULL, NULL};
 
-static unsigned int setwbuf(int i, const char *f)
+static void setwbuf(int i, const char *f)
 {
   // all strings in Gmsh are supposed to be UTF8-encoded, which is natively
   // supported by Mac and Linux. Windows does not support UTF-8, but UTF-16
@@ -219,7 +219,6 @@ static unsigned int setwbuf(int i, const char *f)
   wbuf[i] = (wchar_t*)realloc(wbuf[i], sizeof(wchar_t)*wn);
   wn = utf8toUtf16(f, (unsigned) l, (unsigned short *)wbuf[i], wn);
   wbuf[i][wn] = 0;
-  return wn;
 }
 
 #endif
