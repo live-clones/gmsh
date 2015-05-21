@@ -8084,7 +8084,7 @@ yyreduce:
           yyerror("Number of techniques != number of levelsets");
         }
         else{
-          if(List_Nbr((yyvsp[(9) - (16)].l)) != f.size()){
+          if(List_Nbr((yyvsp[(9) - (16)].l)) != (int)f.size()){
             yyerror("Number of parameters != number of levelsets");
           }
           else{

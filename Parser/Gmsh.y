@@ -3003,7 +3003,7 @@ Command :
           yyerror("Number of techniques != number of levelsets");
         }
         else{
-          if(List_Nbr($9) != f.size()){
+          if(List_Nbr($9) != (int)f.size()){
             yyerror("Number of parameters != number of levelsets");
           }
           else{
