@@ -19,6 +19,7 @@ double TotalRam();
 long GetMemoryUsage();
 int GetProcessId();
 std::string GetExecutableFileName();
+std::string GetAbsolutePath(const std::string &fileName);
 std::string GetHostName();
 int UnlinkFile(const std::string &fileName);
 int StatFile(const std::string &fileName);

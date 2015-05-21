@@ -50,7 +50,7 @@
 
 // Unicode utility routines borrowed from FLTK
 
-static unsigned utf8decode(const char* p, const char* end, int* len)
+static unsigned int utf8decode(const char* p, const char* end, int* len)
 {
   static unsigned short cp1252[32] = {
     0x20ac, 0x0081, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021,
@@ -107,18 +107,18 @@ static unsigned utf8decode(const char* p, const char* end, int* len)
   }
 }
 
-static unsigned utf8toUtf16(const char* src, unsigned srclen,
-                            unsigned short* dst, unsigned dstlen)
+static unsigned int utf8toUtf16(const char* src, unsigned int srclen,
+                                unsigned short* dst, unsigned int dstlen)
 {
   const char* p = src;
   const char* e = src+srclen;
-  unsigned count = 0;
+  unsigned int count = 0;
   if (dstlen) for (;;) {
     if (p >= e) {dst[count] = 0; return count;}
     if (!(*p & 0x80)) { // ascii
       dst[count] = *p++;
     } else {
-      int len; unsigned ucs = utf8decode(p,e,&len);
+      int len; unsigned int ucs = utf8decode(p,e,&len);
       p += len;
       if (ucs < 0x10000) {
 	dst[count] = ucs;
@@ -135,7 +135,7 @@ static unsigned utf8toUtf16(const char* src, unsigned srclen,
   while (p < e) {
     if (!(*p & 0x80)) p++;
     else {
-      int len; unsigned ucs = utf8decode(p,e,&len);
+      int len; unsigned int ucs = utf8decode(p,e,&len);
       p += len;
       if (ucs >= 0x10000) ++count;
     }
@@ -144,14 +144,14 @@ static unsigned utf8toUtf16(const char* src, unsigned srclen,
   return count;
 }
 
-static unsigned utf8FromUtf16(char* dst, unsigned dstlen,
-                              const wchar_t* src, unsigned srclen)
+static unsigned int utf8FromUtf16(char* dst, unsigned int dstlen,
+                                  const wchar_t* src, unsigned int srclen)
 {
-  unsigned i = 0;
-  unsigned count = 0;
+  unsigned int i = 0;
+  unsigned int count = 0;
   if (dstlen) {
     for (;;) {
-      unsigned ucs;
+      unsigned int ucs;
       if (i >= srclen) {dst[count] = 0; return count;}
       ucs = src[i++];
       if (ucs < 0x80U) {
@@ -166,7 +166,7 @@ static unsigned utf8FromUtf16(char* dst, unsigned dstlen,
       else if (ucs >= 0xd800 && ucs <= 0xdbff && i < srclen &&
 	       src[i] >= 0xdc00 && src[i] <= 0xdfff) {
         /* surrogate pair */
-        unsigned ucs2 = src[i++];
+        unsigned int ucs2 = src[i++];
         ucs = 0x10000U + ((ucs&0x3ff)<<10) + (ucs2&0x3ff);
         /* all surrogate pairs turn into 4-byte utf8 */
         if (count+4 >= dstlen) {dst[count] = 0; count += 4; break;}
@@ -186,7 +186,7 @@ static unsigned utf8FromUtf16(char* dst, unsigned dstlen,
   }
   /* we filled dst, measure the rest: */
   while (i < srclen) {
-    unsigned ucs = src[i++];
+    unsigned int ucs = src[i++];
     if (ucs < 0x80U) {
       count++;
     }
@@ -208,17 +208,18 @@ static unsigned utf8FromUtf16(char* dst, unsigned dstlen,
 
 static wchar_t *wbuf[3] = {NULL, NULL, NULL};
 
-static void setwbuf(int i, const char *f)
+static unsigned int setwbuf(int i, const char *f)
 {
   // all strings in Gmsh are supposed to be UTF8-encoded, which is natively
   // supported by Mac and Linux. Windows does not support UTF-8, but UTF-16
   // (through wchar_t), so we need to convert.
   if(i < 0 || i > 2) return;
   size_t l = strlen(f);
-  unsigned wn = utf8toUtf16(f, (unsigned) l, NULL, 0) + 1;
+  unsigned int wn = utf8toUtf16(f, (unsigned int) l, NULL, 0) + 1;
   wbuf[i] = (wchar_t*)realloc(wbuf[i], sizeof(wchar_t)*wn);
   wn = utf8toUtf16(f, (unsigned) l, (unsigned short *)wbuf[i], wn);
   wbuf[i][wn] = 0;
+  return wn;
 }
 
 #endif
@@ -379,8 +380,8 @@ std::string GetExecutableFileName()
 {
   std::string name = "";
 #if defined(WIN32) && !defined(__CYGWIN__)
-  WCHAR src[MAX_PATH];
-  DWORD size = GetModuleFileNameW(NULL, src, MAX_PATH);
+  wchar_t src[MAX_PATH];
+  unsigned long size = GetModuleFileNameW(NULL, src, MAX_PATH);
   if(size){
     char dst[MAX_PATH];
     utf8FromUtf16(dst, MAX_PATH, src, size);
@@ -402,6 +403,25 @@ std::string GetExecutableFileName()
   }
 #endif
   return name;
+}
+
+std::string GetAbsolutePath(const std::string &fileName)
+{
+#if defined(WIN32) && !defined(__CYGWIN__)
+  setwbuf(0, fileName.c_str());
+  wchar_t path[MAX_PATH];
+  unsigned long size = GetFullPathNameW(wbuf[0], MAX_PATH, path, NULL);
+  if(size){
+    char dst[MAX_PATH];
+    utf8FromUtf16(dst, MAX_PATH, path, size);
+    return std::string(dst);
+  }
+#else
+  char path[4096];
+  if(realpath(fileName.c_str(), path))
+    return path;
+#endif
+  return fileName;
 }
 
 std::string GetHostName()

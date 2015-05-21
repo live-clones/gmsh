@@ -1123,7 +1123,8 @@ Character expressions are defined as:
 @example
 @var{char-expression}:
   "@var{string}" |
-  Today | OnelabAction | GmshExecutableName |
+  Today | OnelabAction | GmshExecutableName | 
+  CurrentDirectory | CurrentDir
   StrPrefix ( @var{char-expression} ) |
   StrRelative ( @var{char-expression} ) |
   StrCat ( @var{char-expression} <,@dots{}> ) |
@@ -1139,22 +1140,25 @@ Character expressions are defined as:
   DefineString(@var{char-expression}, @var{onelab-options})
 @end example
 
-@noindent @code{StrPrefix} and @code{StrRelative} permit to take the
-prefix (e.g. to remove the extension) or the relative path of a file
-name. @code{StrCat} and @code{Str} permit to concatenate character
-expressions (@code{Str} adds a newline character after each string
-except the last). @code{Sprintf} is equivalent to the @code{sprintf} C
-function (where @var{char-expression} is a format string that can
-contain floating point formatting characters: @code{%e}, @code{%g},
-etc.) The various @w{@var{char-option}s} are listed in
-@ref{Options}. @code{GetEnvThe} gets the value of an environment
-variable from the operating system. @code{GetString} allows to get a
-ONELAB string value (with one argument, the name of the ONELAB
-variable), or ask the user for a value interactively (with two
-arguments). @code{StrReplace}'s arguments are: input string, old
-substring, new substring.@footnote{For compatibility with GetDP
-(@uref{http://geuz.org/getdp/}), parentheses can be replaced by brackets
-@code{[]} in @code{Str} and @code{Sprintf}.}
+@code{Today} returns the current date. @code{OnelabAction} returns the
+current ONELAB action. @code{GmshExecutableName} returns the full path
+of the Gmsh executable.  @code{CurrentDirectory} and @code{CurrentDir}
+return the directory of the @code{.geo} file.  @code{StrPrefix} and
+@code{StrRelative} permit to take the prefix (e.g. to remove the
+extension) or the relative path of a file name. @code{StrCat} and
+@code{Str} permit to concatenate character expressions (@code{Str} adds
+a newline character after each string except the last). @code{Sprintf}
+is equivalent to the @code{sprintf} C function (where
+@var{char-expression} is a format string that can contain floating point
+formatting characters: @code{%e}, @code{%g}, etc.) The various
+@w{@var{char-option}s} are listed in @ref{Options}. @code{GetEnvThe}
+gets the value of an environment variable from the operating
+system. @code{GetString} allows to get a ONELAB string value (with one
+argument, the name of the ONELAB variable), or ask the user for a value
+interactively (with two arguments). @code{StrReplace}'s arguments are:
+input string, old substring, new substring.@footnote{For compatibility
+with GetDP (@uref{http://geuz.org/getdp/}), parentheses can be replaced
+by brackets @code{[]} in @code{Str} and @code{Sprintf}.}
 
 @code{DefineString} allows to define a ONELAB variable in-line. The
 @var{char-expression} given as the first argument is the default value; this

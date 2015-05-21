@@ -139,6 +139,8 @@ Call                    return tCall;
 CreateTopology          return tCreateTopology;
 CreateTopologyNoHoles   return tCreateTopologyNoHoles;
 Cpu                     return tCpu;
+CurrentDirectory        return tCurrentDirectory;
+CurrentDir              return tCurrentDirectory;
 
 DefineConstant          return tDefineConstant;
 DefineNumber            return tDefineNumber;
