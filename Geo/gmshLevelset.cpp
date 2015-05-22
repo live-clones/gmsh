@@ -955,6 +955,7 @@ double gLevelsetDistMesh::operator()(double x, double y, double z) const
          _v2e.lower_bound(v); itm != _v2e.upper_bound(v); ++itm)
       elements.insert(itm->second);
   }
+  int dimE = elements[0]->getDim();
   double minDistance = 1.e22;
   SPoint3 closestPoint;
   std::vector<MElement*> closestElements;
@@ -966,24 +967,26 @@ double gLevelsetDistMesh::operator()(double x, double y, double z) const
     SPoint3 p1(v1->x(), v1->y(), v1->z());
     SPoint3 p2(v2->x(), v2->y(), v2->z());
     SPoint3 closePt;
-    if((*it)->getDim() == 1){
+    if(dimE == 1){
       signedDistancePointLine(p1, p2, pt, distance, closePt); // !! > 0
     }
-    else if((*it)->getDim() == 2){
+    else if(dimE == 2){
       MVertex *v3 = (*it)->getVertex(2);
       SPoint3 p3(v3->x(), v3->y(), v3->z());
       if(p1 == p2 || p1 == p3 || p2 == p3) distance = 1.e22;
       else signedDistancePointTriangle(p1, p2, p3, pt, distance, closePt);
     }
     else{
-      Msg::Error("Cannot compute a distance to an entity of dimension %d\n",
-                 (*it)->getDim());
+      Msg::Error("Cannot compute a distance to an entity of dimension %d\n", dimE);
     }
-    if ((*it)->getDim() == 2) {
-      if(fabs(distance) == fabs(minDistance)){
+    if(dimE == 1 && fabs(distance) < fabs(minDistance)){
+      minDistance = distance;
+    }
+    else if(dimE == 2){
+      if(fabs(distance) - fabs(minDistance) < 1.e-9){
         closestElements.push_back(*it);
       }
-      if(fabs(distance) < fabs(minDistance)){
+      else if(fabs(distance) < fabs(minDistance)){
         closestPoint = closePt;
         minDistance = distance;
         closestElements.clear();
