@@ -948,14 +948,16 @@ double gLevelsetDistMesh::operator()(double x, double y, double z) const
   SPoint3 pt(x, y, z);
   _kdtree->annkSearch(point, _nbClose, &index[0], &dist[0]); // squared distances
   std::set<MElement*> elements;
+  int dimE = 1;
   for(int i = 0; i < _nbClose; i++){
     int iVertex = index[i];
     MVertex *v = _vertices[iVertex];
     for(std::multimap<MVertex*,MElement*>::const_iterator itm =
-         _v2e.lower_bound(v); itm != _v2e.upper_bound(v); ++itm)
+          _v2e.lower_bound(v); itm != _v2e.upper_bound(v); ++itm){
       elements.insert(itm->second);
+      dimE = itm->second->getDim();
+    }
   }
-  int dimE = elements[0]->getDim();
   double minDistance = 1.e22;
   SPoint3 closestPoint;
   std::vector<MElement*> closestElements;
