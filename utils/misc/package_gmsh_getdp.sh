@@ -17,10 +17,10 @@ examples." > /tmp/README.txt
 GMSH=svn
 GETDP=svn
 
-#GMSH=2.8.5
-#GETDP=2.4.4
+#GMSH=2.9.3
+#GETDP=2.5.1
 
-MODELS='machines relay inductor indheat magnetometer antennas acoustic_scattering time_reversal shielding waveguides transfo_simple ddm_wave_simple bloch_periodic_waveguides magnets thermal_conduction magnetostriction'
+MODELS='machines relay inductor indheat magnetometer antennas acoustic_scattering time_reversal shielding waveguides transfo_simple ddm_waves bloch_periodic_waveguides magnets thermal_conduction magnetostriction'
 
 # get onelab models
 mkdir /tmp/models
