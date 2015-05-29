@@ -404,7 +404,7 @@ helpWindow::helpWindow()
 
     options = new paletteWindow
       (width, height, CTX::instance()->nonModalWindows ? true : false,
-       "Current Options and Worskspace");
+       "Current Options and Workspace");
     options->box(GMSH_WINDOW_BOX);
 
     int BW = (width - 4 * WB) / 3;
