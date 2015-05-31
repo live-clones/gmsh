@@ -12,25 +12,23 @@ lcar1 = .1;
 lcar2 = .0005;
 lcar3 = .055;
 
-// If we wanted to change these mesh sizes globally (without changing
-// the above definitions), we could give a global scaling factor for
-// all characteristic lengths on the command line with the `-clscale'
-// option (or with `Mesh.CharacteristicLengthFactor' in an option
-// file). For example, with:
+// If we wanted to change these mesh sizes globally (without changing the above
+// definitions), we could give a global scaling factor for all characteristic
+// lengths on the command line with the `-clscale' option (or with
+// `Mesh.CharacteristicLengthFactor' in an option file). For example, with:
 //
 // > gmsh t5.geo -clscale 1
 //
-// this input file produces a mesh of approximately 1,300 nodes and
-// 11,000 tetrahedra. With
+// this input file produces a mesh of approximately 1,300 nodes and 11,000
+// tetrahedra. With
 //
 // > gmsh t5.geo -clscale 0.2
 //
-// the mesh counts approximately 350,000 nodes and 2.1 million
-// tetrahedra. You can check mesh statistics in the graphical user
-// interface with the `Tools->Statistics' menu.
+// the mesh counts approximately 350,000 nodes and 2.1 million tetrahedra. You
+// can check mesh statistics in the graphical user interface with the
+// `Tools->Statistics' menu.
 
-// We proceed by defining some elementary entities describing a
-// truncated cube:
+// We proceed by defining some elementary entities describing a truncated cube:
 
 Point(1) = {0.5,0.5,0.5,lcar2}; Point(2) = {0.5,0.5,0,lcar1};
 Point(3) = {0,0.5,0.5,lcar1};   Point(4) = {0,0,0.5,lcar1};
@@ -58,18 +56,17 @@ Line Loop(34) = {7,3,8,9};           Plane Surface(35) = {34};
 Line Loop(36) = {-10,18,-16,-20,4,-8}; Plane Surface(37) = {36};
 Line Loop(38) = {-14,-13,-12,19};    Plane Surface(39) = {38};
 
-// Instead of using included files, we now use a user-defined function
-// in order to carve some holes in the cube:
+// Instead of using included files, we now use a user-defined function in order
+// to carve some holes in the cube:
 
 Function CheeseHole
 
-  // In the following commands we use the reserved variable name
-  // `newp', which automatically selects a new point number. This
-  // number is chosen as the highest current point number, plus
-  // one. (Note that, analogously to `newp', the variables `newl',
-  // `news', `newv' and `newreg' select the highest number amongst
-  // currently defined curves, surfaces, volumes and `any entities
-  // other than points', respectively.)
+  // In the following commands we use the reserved variable name `newp', which
+  // automatically selects a new point number. This number is chosen as the
+  // highest current point number, plus one. (Note that, analogously to `newp',
+  // the variables `newl', `news', `newv' and `newreg' select the highest number
+  // amongst currently defined curves, surfaces, volumes and `any entities other
+  // than points', respectively.)
 
   p1 = newp; Point(p1) = {x,  y,  z,  lcar3} ;
   p2 = newp; Point(p2) = {x+r,y,  z,  lcar3} ;
@@ -86,8 +83,8 @@ Function CheeseHole
   c9 = newreg; Circle(c9) = {p7,p1,p3}; c10 = newreg; Circle(c10) = {p3,p1,p4};
   c11 = newreg; Circle(c11) = {p4,p1,p6}; c12 = newreg; Circle(c12) = {p6,p1,p7};
 
-  // We need non-plane surfaces to define the spherical holes. Here we
-  // use ruled surfaces, which can have 3 or 4 sides:
+  // We need non-plane surfaces to define the spherical holes. Here we use ruled
+  // surfaces, which can have 3 or 4 sides:
 
   l1 = newreg; Line Loop(l1) = {c5,c10,c4};   Ruled Surface(newreg) = {l1};
   l2 = newreg; Line Loop(l2) = {c9,-c5,c1};   Ruled Surface(newreg) = {l2};
@@ -98,9 +95,8 @@ Function CheeseHole
   l7 = newreg; Line Loop(l7) = {-c2,-c7,-c12};Ruled Surface(newreg) = {l7};
   l8 = newreg; Line Loop(l8) = {-c6,-c9,c2};  Ruled Surface(newreg) = {l8};
 
-  // We then store the surface loops identification numbers in a list
-  // for later reference (we will need these to define the final
-  // volume):
+  // We then store the surface loops identification numbers in a list for later
+  // reference (we will need these to define the final volume):
 
   theloops[t] = newreg ;
 
@@ -128,34 +124,32 @@ For t In {1:5}
 
   Physical Volume (t) = thehole ;
 
-  // We also print some variables on the terminal (note that, since
-  // all variables are treated internally as floating point numbers,
-  // the format string should only contain valid floating point format
-  // specifiers like `%g', `%f', '%e', etc.):
+  // We also print some variables on the terminal (note that, since all
+  // variables are treated internally as floating point numbers, the format
+  // string should only contain valid floating point format specifiers like
+  // `%g', `%f', '%e', etc.):
 
   Printf("Hole %g (center = {%g,%g,%g}, radius = %g) has number %g!",
 	 t, x, y, z, r, thehole) ;
 
 EndFor
 
-// We can then define the surface loop for the exterior surface of the
-// cube:
+// We can then define the surface loop for the exterior surface of the cube:
 
 theloops[0] = newreg ;
 
 Surface Loop(theloops[0]) = {35,31,29,37,33,23,39,25,27} ;
 
-// The volume of the cube, without the 5 holes, is now defined by 6
-// surface loops: the first surface loop defines the exterior surface;
-// the surface loops other than the first one define holes.  (Again,
-// to reference an array of variables, its identifier is followed by
-// square brackets):
+// The volume of the cube, without the 5 holes, is now defined by 6 surface
+// loops: the first surface loop defines the exterior surface; the surface loops
+// other than the first one define holes.  (Again, to reference an array of
+// variables, its identifier is followed by square brackets):
 
 Volume(186) = {theloops[]} ;
 
-// We finally define a physical volume for the elements discretizing
-// the cube, without the holes (whose elements were already tagged
-// with numbers 1 to 5 in the `For' loop):
+// We finally define a physical volume for the elements discretizing the cube,
+// without the holes (whose elements were already tagged with numbers 1 to 5 in
+// the `For' loop):
 
 Physical Volume (10) = 186 ;
 

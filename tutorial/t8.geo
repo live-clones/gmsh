@@ -53,10 +53,9 @@ View[v2].Height = 130;
 
 View[v3].Visible = 0;
 
-// We then loop from 1 to 3 with a step of 1. (To use a different
-// step, just add a third argument in the list. For example, `For num
-// In {0.5:1.5:0.1}' would increment num from 0.5 to 1.5 with a step
-// of 0.1.)
+// We then loop from 1 to 3 with a step of 1. (To use a different step, just add
+// a third argument in the list. For example, `For num In {0.5:1.5:0.1}' would
+// increment num from 0.5 to 1.5 with a step of 0.1.)
 
 t = 0;
 
@@ -92,8 +91,8 @@ For num In {1:3}
           // clipping)
 
     If (num == 3)
-      // The `Print' command saves the graphical window; the `Sprintf'
-      // function permits to create the file names on the fly:
+      // The `Print' command saves the graphical window; the `Sprintf' function
+      // permits to create the file names on the fly:
       /*
       Print Sprintf("t8-%02g.gif", num2);
       Print Sprintf("t8-%02g.ppm", num2);

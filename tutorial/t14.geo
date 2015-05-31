@@ -1,15 +1,14 @@
-/********************************************************************* 
+/*********************************************************************
  *
  *  Gmsh tutorial 14
  *
  *  Homology and cohomology computation
  *
  *********************************************************************/
- 
-// Homology computation in Gmsh finds representative chains of
-// (relative) (co)homology space bases using a mesh of a model. 
-// The representative basis chains are stored in the mesh as 
-// physical groups of Gmsh, one for each chain. 
+
+// Homology computation in Gmsh finds representative chains of (relative)
+// (co)homology space bases using a mesh of a model.  The representative basis
+// chains are stored in the mesh as physical groups of Gmsh, one for each chain.
 
 // Create an example geometry
 
@@ -56,18 +55,16 @@ Physical Surface(80) = bnd[];
 bnd[] -= {36, 44, 52, 60};
 Physical Surface(75) = bnd[];
 
-// Find bases for relative homology spaces of 
-// the domain modulo the four terminals.
+// Find bases for relative homology spaces of the domain modulo the four
+// terminals.
 Homology {{1}, {70, 71, 72, 73}};
 
-// Find homology space bases isomorphic to the previous bases: 
-// homology spaces modulo the non-terminal domain surface,
-// a.k.a the thin cuts.
+// Find homology space bases isomorphic to the previous bases: homology spaces
+// modulo the non-terminal domain surface, a.k.a the thin cuts.
 Homology {{1}, {75}};
 
-// Find cohomology space bases isomorphic to the previous bases: 
-// cohomology spaces of the domain modulo the four terminals,
-// a.k.a the thick cuts.
+// Find cohomology space bases isomorphic to the previous bases: cohomology
+// spaces of the domain modulo the four terminals, a.k.a the thick cuts.
 Cohomology {{1}, {70, 71, 72, 73}};
 
 // More examples:

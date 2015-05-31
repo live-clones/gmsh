@@ -1307,6 +1307,11 @@ PhysicalId0 :
         (std::string($1), 0, ++GModel::current()->getGEOInternals()->MaxPhysicalNum);
       Free($1);
     }
+  | StringExpr ',' FExpr
+    {
+      $$ = GModel::current()->setPhysicalName(std::string($1), 0, $3);
+      Free($1);
+    }
 ;
 
 PhysicalId1 :
@@ -1318,6 +1323,11 @@ PhysicalId1 :
     {
       $$ = GModel::current()->setPhysicalName
         (std::string($1), 1, ++GModel::current()->getGEOInternals()->MaxPhysicalNum);
+      Free($1);
+    }
+  | StringExpr ',' FExpr
+    {
+      $$ = GModel::current()->setPhysicalName(std::string($1), 1, $3);
       Free($1);
     }
 ;
@@ -1333,6 +1343,11 @@ PhysicalId2 :
         (std::string($1), 2, ++GModel::current()->getGEOInternals()->MaxPhysicalNum);
       Free($1);
     }
+  | StringExpr ',' FExpr
+    {
+      $$ = GModel::current()->setPhysicalName(std::string($1), 2, $3);
+      Free($1);
+    }
 ;
 
 PhysicalId3 :
@@ -1344,6 +1359,11 @@ PhysicalId3 :
     {
       $$ = GModel::current()->setPhysicalName
         (std::string($1), 3, ++GModel::current()->getGEOInternals()->MaxPhysicalNum);
+      Free($1);
+    }
+  | StringExpr ',' FExpr
+    {
+      $$ = GModel::current()->setPhysicalName(std::string($1), 3, $3);
       Free($1);
     }
 ;

@@ -6,10 +6,9 @@
  *
  *********************************************************************/
 
-// Compound geometrical entities can be defined to compute a new
-// parametrization of groups of elementary geometrical entities. This
-// parametrization can then be used for remeshing the compound as if
-// it were a single CAD entity.
+// Compound geometrical entities can be defined to compute a new parametrization
+// of groups of elementary geometrical entities. This parametrization can then
+// be used for remeshing the compound as if it were a single CAD entity.
 
 lc = 0.1;
 
@@ -41,21 +40,19 @@ DefineConstant[ hide = {Geometry.HideCompounds, Choices{0,1},
     Name "Hide compound sub-entities", GmshOption "Geometry.HideCompounds",
     AutoCheck 0} ];
 
-// More details about the reparametrization technique can be found in
-// the following papers:
+// More details about the reparametrization technique can be found in the
+// following papers:
 //
-// * J.-F. Remacle, C. Geuzaine, G. Compère and E. Marchandise,
-//   "High-Quality Surface Remeshing Using Harmonic Maps",
-//   International Journal for Numerical Methods in Engineering,
-//   83 (4), pp. 403-425, 2010.
+// * J.-F. Remacle, C. Geuzaine, G. Compère and E. Marchandise, "High-Quality
+//   Surface Remeshing Using Harmonic Maps", International Journal for Numerical
+//   Methods in Engineering, 83 (4), pp. 403-425, 2010.
 //
-// * E. Marchandise, G. Compère, M. Willemet, G. Bricteux, C. Geuzaine
-//   and J-F Remacle, "Quality meshing based on STL triangulations for
-//   biomedical simulations", International Journal for Numerical
-//   Methods in Biomedical Engineering", 26 (7), pp. 876-889, 2010.
+// * E. Marchandise, G. Compère, M. Willemet, G. Bricteux, C. Geuzaine and J-F
+//   Remacle, "Quality meshing based on STL triangulations for biomedical
+//   simulations", International Journal for Numerical Methods in Biomedical
+//   Engineering", 26 (7), pp. 876-889, 2010.
 //
 // * E. Marchandise, C. Carton de Wiart, W. G. Vos, C. Geuzaine and
-//   J.-F. Remacle, "High Quality Surface Remeshing Using Harmonic
-//   Maps. Part II: Surfaces with High Genus and of Large Aspect
-//   Ratio", International Journal for Numerical Methods in
-//   Engineering, 86 (11), pp. 1303-1321, 2011.
+//   J.-F. Remacle, "High Quality Surface Remeshing Using Harmonic Maps. Part
+//   II: Surfaces with High Genus and of Large Aspect Ratio", International
+//   Journal for Numerical Methods in Engineering, 86 (11), pp. 1303-1321, 2011.

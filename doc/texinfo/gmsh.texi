@@ -1941,13 +1941,16 @@ mesh element size at that point. See @ref{Specifying mesh element
 sizes}, for more information about how this value is used in the meshing
 process.
 
-@item Physical Point ( @var{expression} | @var{char-expression} ) <+>= @{ @var{expression-list} @};
+@item Physical Point ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+>= @{ @var{expression-list} @};
 Creates a physical point. The @var{expression} inside the parentheses is
-the physical point's identification number (if a @var{char-expression}
-is given instead, a unique identification number is automatically
-created); the @var{expression-list} on the right hand side should
-contain the identification numbers of all the elementary points that
-need to be grouped inside the physical point.
+the physical point's identification number; the @var{expression-list} on
+the right hand side should contain the identification numbers of all the
+elementary points that need to be grouped inside the physical point.  If
+a @var{char-expression} is given instead instead of @var{expression}
+inside the parentheses, a string label is associated with the physical
+identification number, which can be either provided explicitly (after
+the comma) or not (in which case a unique identification number is
+automatically created).
 
 @end ftable
 
@@ -2043,16 +2046,19 @@ number of the elementary lines that should be reparametrized as a single
 line. See @code{Compound Surface} for additional information on compound
 entities.
 
-@item Physical Line ( @var{expression} | @var{char-expression} ) <+>= @{ @var{expression-list} @};
+@item Physical Line ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+>= @{ @var{expression-list} @};
 Creates a physical line. The @var{expression} inside the parentheses is
-the physical line's identification number (if a @var{char-expression} is
-given instead, a unique identification number is automatically
-created); the @var{expression-list} on the right hand side should
-contain the identification numbers of all the elementary lines that need
-to be grouped inside the physical line. Specifying negative
-identification numbers in the @var{expression-list} will reverse the
-orientation of the mesh elements belonging to the corresponding
-elementary lines in the saved mesh.
+the physical line's identification number; the @var{expression-list} on
+the right hand side should contain the identification numbers of all the
+elementary lines that need to be grouped inside the physical line. If a
+@var{char-expression} is given instead instead of @var{expression}
+inside the parentheses, a string label is associated with the physical
+identification number, which can be either provided explicitly (after
+the comma) or not (in which case a unique identification number is
+automatically created). Specifying negative identification numbers in
+the @var{expression-list} will reverse the orientation of the mesh
+elements belonging to the corresponding elementary lines in the saved
+mesh.
 
 @end ftable
 
@@ -2115,15 +2121,18 @@ surface's identification number; the mandatory @var{expression-list} on
 the right hand side contains the identification number of the elementary
 surfaces that should be reparametrized as a single surface.
 
-@item Physical Surface ( @var{expression} | @var{char-expression} ) <+>= @{ @var{expression-list} @};
+@item Physical Surface ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+>= @{ @var{expression-list} @};
 Creates a physical surface. The @var{expression} inside the parentheses
-is the physical surface's identification number (if a
-@var{char-expression} is given instead, a unique identification number
-is automatically created); the @var{expression-list} on the right hand
-side should contain the identification numbers of all the elementary
-surfaces that need to be grouped inside the physical surface. Specifying
-negative identification numbers in the @var{expression-list} will
-reverse the orientation of the mesh elements belonging to the
+is the physical surface's identification number; the
+@var{expression-list} on the right hand side should contain the
+identification numbers of all the elementary surfaces that need to be
+grouped inside the physical surface.  If a @var{char-expression} is
+given instead instead of @var{expression} inside the parentheses, a
+string label is associated with the physical identification number,
+which can be either provided explicitly (after the comma) or not (in
+which case a unique identification number is automatically created).
+Specifying negative identification numbers in the @var{expression-list}
+will reverse the orientation of the mesh elements belonging to the
 corresponding elementary surfaces in the saved mesh.
 
 @end ftable
@@ -2164,13 +2173,16 @@ number of the elementary volumes that should be reparametrized as a
 single volume. See @code{Compound Surface} for additional information on
 compound entities.
 
-@item Physical Volume ( @var{expression} | @var{char-expression} ) <+>= @{ @var{expression-list} @};
+@item Physical Volume ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+>= @{ @var{expression-list} @};
 Creates a physical volume. The @var{expression} inside the parentheses
-is the physical volume's identification number (if a
-@var{char-expression} is given instead, a unique identification number
-is automatically created); the @var{expression-list} on the right hand
-side should contain the identification numbers of all the elementary
-volumes that need to be grouped inside the physical volume.
+is the physical volume's identification number; the
+@var{expression-list} on the right hand side should contain the
+identification numbers of all the elementary volumes that need to be
+grouped inside the physical volume. If a @var{char-expression} is given
+instead instead of @var{expression} inside the parentheses, a string
+label is associated with the physical identification number, which can
+be either provided explicitly (after the comma) or not (in which case a
+unique identification number is automatically created).
 
 @end ftable
 
