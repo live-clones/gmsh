@@ -352,12 +352,10 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
     for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++)
       if(FlGui::instance()->visibility->browser->selected(i + 1))
         VisibilityList::instance()->setVisibility(i, 1, recursive, allmodels);
-    // then refresh the browser to account for recursive selections
+    FlGui::instance()->visibility->browser->deselect();
     for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++)
       if(VisibilityList::instance()->getVisibility(i))
-        FlGui::instance()->visibility->browser->select(i + 1,true);
-      else
-        FlGui::instance()->visibility->browser->select(i + 1,false);
+        FlGui::instance()->visibility->browser->select(i + 1, 1);
     drawContext::global()->draw();
   }
 }
@@ -445,6 +443,8 @@ static void visibility_sort_cb(Fl_Widget *w, void *data)
 class listBrowser : public Fl_Browser{
   int handle(int event)
   {
+    void *l = selection();
+
     switch(event){
     case FL_SHORTCUT:
     case FL_KEYBOARD:
@@ -456,7 +456,24 @@ class listBrowser : public Fl_Browser{
       else if(Fl::test_shortcut(FL_Enter) ||
               Fl::test_shortcut(FL_KP_Enter)){
         visibility_browser_apply_cb(NULL, NULL);
+        Fl_Browser_::select(l);
         return 1;
+      }
+      else if(Fl::test_shortcut(FL_Up)){
+        if(l && (l = item_prev(l))){
+          select_only(l, 1);
+          visibility_browser_apply_cb(NULL, NULL);
+          Fl_Browser_::select(l);
+          return 1;
+        }
+      }
+      else if(Fl::test_shortcut(FL_Down)){
+        if(l && (l = item_next(l))){
+          select_only(l, 1);
+          visibility_browser_apply_cb(NULL, NULL);
+          Fl_Browser_::select(l);
+          return 1;
+        }
       }
     }
     return Fl_Browser::handle(event);
