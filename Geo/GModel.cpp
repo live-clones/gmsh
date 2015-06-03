@@ -822,6 +822,13 @@ std::vector<MElement*> GModel::getMeshElementsByCoord(SPoint3 &p, int dim, bool 
   return _octree->findAll(p.x(), p.y(), p.z(), dim, strict);
 }
 
+void GModel::deleteOctree() {
+  if (_octree) {
+    delete _octree;
+    _octree = NULL;
+  }
+}
+
 MVertex *GModel::getMeshVertexByTag(int n)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()){

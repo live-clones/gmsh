@@ -89,7 +89,7 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m)
   Octree_Arrange(_octree);
 }
 
-MElementOctree::MElementOctree(std::vector<MElement*> &v) : _gm(0), _elems(v)
+MElementOctree::MElementOctree(const std::vector<MElement*> &v) : _gm(0), _elems(v)
 {
   SBoundingBox3d bb;
   for (unsigned int i = 0; i < v.size(); i++){

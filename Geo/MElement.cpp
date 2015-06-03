@@ -803,15 +803,6 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3]) const
   }
 }
 
-void MElement::xyzTouvw(fullMatrix<double> *xu) const
-{
-  double _xyz[3] = {(*xu)(0,0),(*xu)(0,1),(*xu)(0,2)}, _uvw[3];
-  xyz2uvw(_xyz, _uvw);
-  (*xu)(1,0) = _uvw[0];
-  (*xu)(1,1) = _uvw[1];
-  (*xu)(1,2) = _uvw[2];
-}
-
 void MElement::movePointFromParentSpaceToElementSpace(double &u, double &v, double &w) const
 {
   if(!getParent()) return;

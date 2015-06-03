@@ -25,6 +25,7 @@
   #include "discreteVertex.h"
   #include "gmshLevelset.h"
   #include "MElement.h"
+  #include "MElementOctree.h"
   #include "MVertex.h"
   #include "MTriangle.h"
   #include "MTetrahedron.h"
@@ -112,6 +113,8 @@ namespace std {
 %include "discreteRegion.h"
 %include "SPoint3.h"
 %include "MElement.h"
+%ignore MElementOctree::MElementOctree(GModel*);
+%include "MElementOctree.h"
 %ignore MVertex::x();
 %ignore MVertex::y();
 %ignore MVertex::z();
@@ -183,6 +186,12 @@ namespace std {
     $self->pnt(xi0, xi1, xi2, p);
     return p;
   }
+  std::vector<double> xyz2uvw(double x, double y, double z) {
+    double xyz[3] = {x, y, z};
+    std::vector<double> uvw(3, 0.);
+    $self->xyz2uvw(xyz, &uvw[0]);
+    return uvw;
+  }
 }
 
 %extend GEdge {
@@ -211,3 +220,4 @@ namespace std {
     $self->meshAttributes.recombine3D = 1;
   }
 }
+
