@@ -10,6 +10,7 @@ StringXNumber HarmonicToTimeOptions_Number[] = {
   {GMSH_FULLRC, "RealPart", NULL, 0.},
   {GMSH_FULLRC, "ImaginaryPart", NULL, 1.},
   {GMSH_FULLRC, "NumSteps", NULL, 20.},
+  {GMSH_FULLRC, "TimeSign", NULL, -1.},
   {GMSH_FULLRC, "View", NULL, -1.}
 };
 
@@ -27,8 +28,9 @@ std::string GMSH_HarmonicToTimePlugin::getHelp() const
     "time steps `RealPart' and `ImaginaryPart' of "
     "the view `View', and creates a new view "
     "containing\n\n"
-    "`View'[`RealPart'] * cos(p) - `View'[`ImaginaryPart'] * sin(p)\n\n"
-    "with p = 2*Pi*k/`NumSteps', k = 0, ..., `NumSteps'-1.\n\n"
+    "`View'[`RealPart'] * cos(p) +- `View'[`ImaginaryPart'] * sin(p)\n\n"
+    "with p = 2*Pi*k/`NumSteps', k = 0, ..., `NumSteps'-1.\n"
+    "The + or - sign is controlled by `TimeSign'.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
     "Plugin(HarmonicToTime) creates one new view.";
 }
@@ -48,7 +50,8 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
   int rIndex = (int)HarmonicToTimeOptions_Number[0].def;
   int iIndex = (int)HarmonicToTimeOptions_Number[1].def;
   int nSteps = (int)HarmonicToTimeOptions_Number[2].def;
-  int iView = (int)HarmonicToTimeOptions_Number[3].def;
+  double tsign = HarmonicToTimeOptions_Number[3].def > 0 ? 1. : -1.;
+  int iView = (int)HarmonicToTimeOptions_Number[4].def;
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -72,7 +75,7 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
 
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
-  
+
   for(int ent = 0; ent < data1->getNumEntities(0); ent++){
     for(int ele = 0; ele < data1->getNumElements(0, ent); ele++){
       if(data1->skipElement(0, ent, ele)) continue;
@@ -89,14 +92,15 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
           data1->getValue(iIndex, ent, ele, nod, comp, vi[numComp * nod + comp]);
         }
       }
-      for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]); 
-      for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]); 
-      for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]); 
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]);
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
+      for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
       for(int t = 0; t < nSteps; t++) {
         double p = 2. * M_PI * t / nSteps;
         for(int nod = 0; nod < numNodes; nod++) {
           for(int comp = 0; comp < numComp; comp++) {
-            double val = vr[numComp * nod + comp] * cos(p) - 
+            double val =
+              vr[numComp * nod + comp] * cos(p) + tsign *
               vi[numComp * nod + comp] * sin(p);
             out->push_back(val);
           }
