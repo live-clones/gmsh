@@ -27,6 +27,7 @@
   #include "MElement.h"
   #include "MVertex.h"
   #include "MTriangle.h"
+  #include "MTetrahedron.h"
   #include "MPrism.h"
   #include "MHexahedron.h"
   #include "MQuadrangle.h"
@@ -52,6 +53,7 @@ namespace std {
   %template(MVertexVector) vector< MVertex *,std::allocator< MVertex * > >;
   %template(MElementVector) vector< MElement *,std::allocator< MElement * > >;
   %template(MTriangleVector) vector< MTriangle *,std::allocator< MTriangle * > >;
+  %template(MTetrahedronVector) vector< MTetrahedron *,std::allocator< MTetrahedron * > >;
   %template(MQuadrangleVector) vector< MQuadrangle *,std::allocator< MQuadrangle * > >;
   %template(GEdgeVectorVector) vector< std::vector< GEdge *,std::allocator< GEdge * > >,std::allocator< std::vector< GEdge *,std::allocator< GEdge * > > > >;
   %template(GFaceVectorVector) vector< std::vector< GFace *,std::allocator< GFace * > >,std::allocator< std::vector< GFace *,std::allocator< GFace * > > > >;
@@ -115,6 +117,7 @@ namespace std {
 %ignore MVertex::z();
 %include "MVertex.h"
 %include "MTriangle.h"
+%include "MTetrahedron.h"
 %include "MPrism.h"
 %include "MHexahedron.h"
 %include "MQuadrangle.h"
