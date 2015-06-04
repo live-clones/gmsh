@@ -137,7 +137,7 @@ struct doubleXstring{
 %token tText2D tText3D tInterpolationScheme tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit tAbort
-%token tField tReturn tCall tFunction tShow tHide tGetValue tGetEnv tGetString tGetNumber
+%token tField tReturn tCall tMacro tShow tHide tGetValue tGetEnv tGetString tGetNumber
 %token tHomology tCohomology tBetti tSetOrder tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName tSetPartition
@@ -1276,6 +1276,14 @@ CharParameterOption :
       std::string val($3);
       charOptions[key].push_back(val);
       Free($2);
+      Free($3);
+    }
+
+  | ',' tMacro StringExpr // Macro is already a reserved keyword
+    {
+      std::string key("Macro");
+      std::string val($3);
+      charOptions[key].push_back(val);
       Free($3);
     }
 
@@ -3177,7 +3185,7 @@ Loop :
 	  ImbricatedLoop--;
       }
     }
-  | tFunction tSTRING
+  | tMacro tSTRING
     {
       if(!FunctionManager::Instance()->createFunction
          (std::string($2), gmsh_yyin, gmsh_yyname, gmsh_yylineno))

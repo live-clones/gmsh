@@ -2,7 +2,7 @@
  *
  *  Gmsh tutorial 5
  *
- *  Characteristic lengths, arrays of variables, functions, loops
+ *  Characteristic lengths, arrays of variables, macros, loops
  *
  *********************************************************************/
 
@@ -56,10 +56,10 @@ Line Loop(34) = {7,3,8,9};           Plane Surface(35) = {34};
 Line Loop(36) = {-10,18,-16,-20,4,-8}; Plane Surface(37) = {36};
 Line Loop(38) = {-14,-13,-12,19};    Plane Surface(39) = {38};
 
-// Instead of using included files, we now use a user-defined function in order
+// Instead of using included files, we now use a user-defined macro in order
 // to carve some holes in the cube:
 
-Function CheeseHole
+Macro CheeseHole
 
   // In the following commands we use the reserved variable name `newp', which
   // automatically selects a new point number. This number is chosen as the
@@ -116,7 +116,7 @@ For t In {1:5}
   x += 0.166 ;
   z += 0.166 ;
 
-  // We call the `CheeseHole' function:
+  // We call the `CheeseHole' macro:
 
   Call CheeseHole ;
 

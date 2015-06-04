@@ -190,7 +190,7 @@ extern int gmsh_yydebug;
      tField = 399,
      tReturn = 400,
      tCall = 401,
-     tFunction = 402,
+     tMacro = 402,
      tShow = 403,
      tHide = 404,
      tGetValue = 405,

@@ -160,7 +160,7 @@ General tools
 * Expressions::                 
 * Operators::                   
 * Built-in functions::          
-* User-defined functions::      
+* User-defined macros::      
 * Loops and conditionals::      
 * General commands::            
 * General options::             
@@ -488,8 +488,8 @@ Here is a tentative list of what Gmsh does best:
 @itemize @bullet
 @item
 quickly describe simple and/or ``repetitive'' geometries, thanks to
-user-defined functions, loops, conditionals and includes (see
-@ref{User-defined functions}, @ref{Loops and conditionals}, and @ref{General
+user-defined macros, loops, conditionals and includes (see
+@ref{User-defined macros}, @ref{Loops and conditionals}, and @ref{General
 commands});
 @item
 parametrize these geometries. Gmsh's scripting language enables all
@@ -568,7 +568,7 @@ features, and many aspects of the interface could be enhanced
 (especially manipulators).
 @item
 Gmsh's scripting language is fairly limited, providing only very crude
-loop controls and user-defined functions, with no local variables.
+loop controls and user-defined macros, with no local variables.
 @item
 there is no global ``undo'' capability. You will often need to edit a
 text file to correct mistakes.
@@ -908,7 +908,7 @@ modules''. Commands peculiar to these modules will be introduced in
 * Expressions::                 
 * Operators::                   
 * Built-in functions::          
-* User-defined functions::      
+* User-defined macros::      
 * Loops and conditionals::      
 * General commands::            
 * General options::             
@@ -1418,42 +1418,43 @@ Hyperbolic tangent of @var{expression}.
 @end ftable
 
 @c -------------------------------------------------------------------------
-@c User-defined functions
+@c User-defined macros
 @c -------------------------------------------------------------------------
 
-@node User-defined functions, Loops and conditionals, Built-in functions, General tools
+@node User-defined macros, Loops and conditionals, Built-in functions, General tools
 @section User-defined functions
 
-@cindex Functions, user-defined
+@cindex Macros, user-defined
 
-User-defined functions take no arguments, and are evaluated as if a file
-containing the function body was included at the location of the @code{Call}
+User-defined macros take no arguments, and are evaluated as if a file
+containing the macro body was included at the location of the @code{Call}
 statement.
 
 @ftable @code
-@item Function @var{string}
-Begins the declaration of a user-defined function named @var{string}. The
-body of the function starts on the line after `@code{Function
-@var{string}}', and can contain any Gmsh command. 
+@item Macro @var{string}
+Begins the declaration of a user-defined macro named @var{string}. The
+body of the macro starts on the line after `@code{Macro @var{string}}',
+and can contain any Gmsh command.  A synonym for @code{Macro} is
+@code{Function}.
 
 @item Return
-Ends the body of the current user-defined function. Function declarations
+Ends the body of the current user-defined macro. Macro declarations
 cannot be imbricated.
 
 @item Call @var{string};
-Executes the body of a (previously defined) function named @var{string}.
+Executes the body of a (previously defined) macro named @var{string}.
 @end ftable
 
-See @ref{t5.geo}, for an example of a user-defined function. A
+See @ref{t5.geo}, for an example of a user-defined macro. A
 shortcoming of Gmsh's scripting language is that all variables are
-``public''. Variables defined inside the body of a function will thus be
+``public''. Variables defined inside the body of a macro will thus be
 available outside, too!
 
 @c -------------------------------------------------------------------------
 @c Loops and conditionals
 @c -------------------------------------------------------------------------
 
-@node Loops and conditionals, General commands, User-defined functions, General tools
+@node Loops and conditionals, General commands, User-defined macros, General tools
 @section Loops and conditionals
 
 @cindex Loops
@@ -1568,8 +1569,8 @@ Returns the total memory available (in Mb).
 Returns the next available point number. As explained in @ref{Geometry
 module}, a unique number must be associated with every geometrical point:
 @code{newp} permits to know the highest number already attributed (plus
-one). This is mostly useful when writing user-defined functions
-(@pxref{User-defined functions}) or general geometric primitives, when one
+one). This is mostly useful when writing user-defined macros
+(@pxref{User-defined macros}) or general geometric primitives, when one
 does not know @emph{a priori} which numbers are already attributed, and
 which ones are still available.
 
