@@ -1,5 +1,5 @@
 This directory contains the source code for Onelab/Mobile, the mobile version of
-Onelab for iOS and Android devices.
+ONELAB for iOS and Android devices.
 
 Copyright (C) 2014-2015 Christophe Geuzaine and Maxime Graulich, University of Liege
 
