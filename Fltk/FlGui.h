@@ -40,6 +40,7 @@ class GEdge;
 class GFace;
 class GRegion;
 class MElement;
+class PView;
 
 class FlGui{
  private:
@@ -54,6 +55,7 @@ class FlGui{
   std::vector<GRegion*> selectedRegions;
   std::vector<MElement*> selectedElements;
   std::vector<SPoint2> selectedPoints;
+  std::vector<PView*> selectedViews;
  public:
   std::vector<graphicWindow*> graph;
   optionWindow *options;

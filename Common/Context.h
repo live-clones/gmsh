@@ -75,7 +75,9 @@ struct contextGeometryOptions {
   double occScaling;
   int copyMeshingMethod, copyDisplayAttributes, exactExtrusion;
   int matchGeomAndMesh;
-  int hideCompounds, orientedPhysicals;
+  int hideCompounds, orientedPhysicals, doubleClickedEntityTag;
+  std::string doubleClickedPointCommand, doubleClickedLineCommand;
+  std::string doubleClickedSurfaceCommand, doubleClickedVolumeCommand;
 };
 
 class CTX {
@@ -247,8 +249,8 @@ class CTX {
     int smooth, animCycle, animStep, combineTime, combineRemoveOrig;
     int fileFormat, plugins, forceNodeData, forceElementData;
     double animDelay;
-    std::string graphPointCommand;
-    double graphPointX, graphPointY;
+    std::string doubleClickedGraphPointCommand;
+    double doubleClickedGraphPointX, doubleClickedGraphPointY;
   }post;
   // solver options
   struct{

@@ -15,6 +15,8 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "MElement.h"
+#include "PView.h"
+#include "PViewOptions.h"
 #include "Numeric.h"
 #include "FlGui.h"
 #include "OpenFile.h"
@@ -353,13 +355,32 @@ int openglWindow::handle(int event)
       std::vector<GRegion*> regions;
       std::vector<MElement*> elements;
       std::vector<SPoint2> points;
+      std::vector<PView*> views;
       _select(ENT_ALL, false, false, Fl::event_x(), Fl::event_y(), 5, 5,
-              vertices, edges, faces, regions, elements, points);
-      if(points.size()){ // double-click on graph point
-        CTX::instance()->post.graphPointX = points[0].x();
-        CTX::instance()->post.graphPointY = points[0].y();
-        if(CTX::instance()->post.graphPointCommand.size())
-          ParseString(CTX::instance()->post.graphPointCommand, true);
+              vertices, edges, faces, regions, elements, points, views);
+      if(vertices.size() && CTX::instance()->geom.doubleClickedPointCommand.size()){
+        CTX::instance()->geom.doubleClickedEntityTag = vertices[0]->tag();
+        ParseString(CTX::instance()->geom.doubleClickedPointCommand, true);
+      }
+      else if(edges.size() && CTX::instance()->geom.doubleClickedLineCommand.size()){
+        CTX::instance()->geom.doubleClickedEntityTag = edges[0]->tag();
+        ParseString(CTX::instance()->geom.doubleClickedLineCommand, true);
+      }
+      else if(faces.size() && CTX::instance()->geom.doubleClickedSurfaceCommand.size()){
+        CTX::instance()->geom.doubleClickedEntityTag = faces[0]->tag();
+        ParseString(CTX::instance()->geom.doubleClickedSurfaceCommand, true);
+      }
+      else if(regions.size() && CTX::instance()->geom.doubleClickedVolumeCommand.size()){
+        CTX::instance()->geom.doubleClickedEntityTag = regions[0]->tag();
+        ParseString(CTX::instance()->geom.doubleClickedVolumeCommand, true);
+      }
+      else if(views.size() && views[0]->getOptions()->doubleClickedCommand.size()){
+        ParseString(views[0]->getOptions()->doubleClickedCommand, true);
+      }
+      else if(points.size() && CTX::instance()->post.doubleClickedGraphPointCommand.size()){
+        CTX::instance()->post.doubleClickedGraphPointX = points[0].x();
+        CTX::instance()->post.doubleClickedGraphPointY = points[0].y();
+        ParseString(CTX::instance()->post.doubleClickedGraphPointCommand, true);
       }
       else{ // popup quick access menu
         status_options_cb(0, (void*)"quick_access");
@@ -629,9 +650,10 @@ int openglWindow::handle(int event)
         std::vector<GRegion*> regions;
         std::vector<MElement*> elements;
         std::vector<SPoint2> points;
+        std::vector<PView*> views;
         bool res = _select(_selection, false, CTX::instance()->mouseHoverMeshes,
                            (int)_curr.win[0], (int)_curr.win[1], 5, 5,
-                           vertices, edges, faces, regions, elements, points);
+                           vertices, edges, faces, regions, elements, points, views);
         if((_selection == ENT_ALL && res) ||
            (_selection == ENT_POINT && vertices.size()) ||
            (_selection == ENT_LINE && edges.size()) ||
@@ -640,25 +662,42 @@ int openglWindow::handle(int event)
           cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
         else
           cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
-        GEntity *ge = 0;
-        if(vertices.size()) ge = vertices[0];
-        else if(edges.size()) ge = edges[0];
-        else if(faces.size()) ge = faces[0];
-        else if(regions.size()) ge = regions[0];
-        MElement *me = elements.size() ? elements[0] : 0;
-        std::string text;
-        if(ge) text += ge->getInfoString();
-        if(me) text += me->getInfoString();
-        if(points.size()){
+        std::string text, cmd;
+        if(vertices.size()){
+          text = vertices[0]->getInfoString();
+          cmd = CTX::instance()->geom.doubleClickedPointCommand;
+        }
+        else if(edges.size()){
+          text = edges[0]->getInfoString();
+          cmd = CTX::instance()->geom.doubleClickedLineCommand;
+        }
+        else if(faces.size()){
+          text = faces[0]->getInfoString();
+          cmd = CTX::instance()->geom.doubleClickedSurfaceCommand;
+        }
+        else if(regions.size()){
+          text = regions[0]->getInfoString();
+          cmd = CTX::instance()->geom.doubleClickedVolumeCommand;
+        }
+        else if(elements.size()){
+          text = elements[0]->getInfoString();
+        }
+        else if(points.size()){
           char tmp[256];
           sprintf(tmp, "Point (%g, %g)", points[0].x(), points[0].y());
-          text += tmp;
-          if(CTX::instance()->post.graphPointCommand.size()){
-            text += std::string(" - Double-click to execute\n\n");
-            std::string cmd = CTX::instance()->post.graphPointCommand;
-            std::replace(cmd.begin(), cmd.end(), '\r', ' ');
-            text += cmd;
-          }
+          text = tmp;
+          cmd = CTX::instance()->post.doubleClickedGraphPointCommand;
+        }
+        else if(views.size()){
+          char tmp[256];
+          sprintf(tmp, "View[%d]", views[0]->getIndex());
+          text = tmp;
+          cmd = views[0]->getOptions()->doubleClickedCommand;
+        }
+        if(cmd.size()){
+          text += std::string(" - Double-click to execute\n\n");
+          std::replace(cmd.begin(), cmd.end(), '\r', ' ');
+          text += cmd;
         }
         if(CTX::instance()->tooltips)
           drawTooltip(text);
@@ -699,7 +738,8 @@ bool openglWindow::_select(int type, bool multiple, bool mesh,
                            std::vector<GFace*> &faces,
                            std::vector<GRegion*> &regions,
                            std::vector<MElement*> &elements,
-                           std::vector<SPoint2> &points)
+                           std::vector<SPoint2> &points,
+                           std::vector<PView*> &views)
 {
   // same lock as in draw() to prevent firing up a GL_SELECT rendering pass
   // while a GL_RENDER pass is happening (due to the asynchronus nature of
@@ -709,7 +749,7 @@ bool openglWindow::_select(int type, bool multiple, bool mesh,
   make_current();
   bool ret = _ctx->select(type, multiple, mesh, x, y, w, h,
                           vertices, edges, faces, regions, elements,
-                          points);
+                          points, views);
   _lock = false;
   return ret;
 }
@@ -720,7 +760,8 @@ char openglWindow::selectEntity(int type,
                                 std::vector<GFace*> &faces,
                                 std::vector<GRegion*> &regions,
                                 std::vector<MElement*> &elements,
-                                std::vector<SPoint2> &points)
+                                std::vector<SPoint2> &points,
+                                std::vector<PView*> &views)
 {
   // force keyboard focus in GL window
   take_focus();
@@ -771,7 +812,7 @@ char openglWindow::selectEntity(int type,
       else if(_select(_selection, multi, true, _trySelectionXYWH[0],
                       _trySelectionXYWH[1], _trySelectionXYWH[2],
                       _trySelectionXYWH[3], vertices, edges, faces,
-                      regions, elements, points)){
+                      regions, elements, points, views)){
         _selection = ENT_NONE;
         selectionMode = false;
         if(add)

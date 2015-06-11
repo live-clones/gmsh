@@ -130,6 +130,15 @@ StringXString GeneralOptions_String[] = {
 } ;
 
 StringXString GeometryOptions_String[] = {
+  { F|O, "DoubleClickedPointCommand" , opt_geometry_double_clicked_point_command, "" ,
+    "Command parsed when double-clicking on a point" },
+  { F|O, "DoubleClickedLineCommand" , opt_geometry_double_clicked_line_command, "" ,
+    "Command parsed when double-clicking on a line" },
+  { F|O, "DoubleClickedSurfaceCommand" , opt_geometry_double_clicked_surface_command, "" ,
+    "Command parsed when double-clicking on a surface" },
+  { F|O, "DoubleClickedVolumeCommand" , opt_geometry_double_clicked_volume_command, "" ,
+    "Command parsed when double-clicking on a volume" },
+
   { 0, 0 , 0 , "" , 0 }
 } ;
 
@@ -221,9 +230,12 @@ StringXString SolverOptions_String[] = {
 } ;
 
 StringXString PostProcessingOptions_String[] = {
-  { F|O, "GraphPointCommand" , opt_post_graph_point_command, "" ,
+  { F|O, "DoubleClickedGraphPointCommand" , opt_post_double_clicked_graph_point_command, "" ,
     "Command parsed when double-clicking on a graph data point "
     "(e.g. Merge Sprintf('file_%g.pos', PostProcessing.GraphPointX);)" },
+
+  { F|O, "GraphPointCommand" , opt_post_double_clicked_graph_point_command, "" ,
+    "Synonym for `DoubleClickedGraphPointCommand'" },
 
   { 0, 0 , 0 , "" , 0 }
 } ;
@@ -231,7 +243,6 @@ StringXString PostProcessingOptions_String[] = {
 StringXString ViewOptions_String[] = {
   { F|O, "Attributes" , opt_view_attributes , "" ,
     "Optional string attributes" },
-
   { F|O, "AxesFormatX" , opt_view_axes_format0 , "%.3g" ,
     "Number format for X-axis (in standard C form)" },
   { F|O, "AxesFormatY" , opt_view_axes_format1 , "%.3g" ,
@@ -244,6 +255,9 @@ StringXString ViewOptions_String[] = {
     "Y-axis label" },
   { F|O, "AxesLabelZ" , opt_view_axes_label2 , "" ,
     "Z-axis label" },
+
+  { F|O, "DoubleClickedCommand" , opt_view_double_clicked_command , "" ,
+    "Command parsed when double-clicking on the view" },
 
   { F,   "FileName" , opt_view_filename , "" ,
     "Default post-processing view file name" },
@@ -768,7 +782,8 @@ StringXNumber GeneralOptions_Number[] = {
 
 StringXNumber GeometryOptions_Number[] = {
   { F|O, "AutoCoherence" , opt_geometry_auto_coherence , 1. ,
-    "Should all duplicate entities be automatically removed? (if ==2, also remove degenerate entities)" },
+    "Should all duplicate entities be automatically removed? (If AutoCoherence == 2, "
+    "also remove degenerate entities)" },
 
   { F,   "Clip" , opt_geometry_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
@@ -776,6 +791,9 @@ StringXNumber GeometryOptions_Number[] = {
     "Copy meshing method (unstructured or transfinite) when duplicating geometrical entities?" },
   { F|O, "CopyDisplayAttributes" , opt_geometry_copy_display_attributes, 0. ,
     "Copy display attributes (visibiliy, color) when duplicating geometrical entities?" },
+
+  { F, "DoubleClickedEntityTag" , opt_geometry_double_clicked_entity_tag, 0. ,
+    "Tag of last double-clicked geometrical entity" },
 
   { F|O, "ExactExtrusion" , opt_geometry_exact_extrusion, 1. ,
     "Use exact extrusion formula in interpolations (set to 0 to allow "
@@ -1278,6 +1296,11 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "CombineRemoveOriginal" , opt_post_combine_remove_orig , 1. ,
     "Remove original views after a Combine operation" },
 
+  { F, "DoubleClickedGraphPointX" , opt_post_double_clicked_graph_point_x , 0. ,
+    "Abscissa of last double-clicked graph point" },
+  { F, "DoubleClickedGraphPointY" , opt_post_double_clicked_graph_point_y , 0. ,
+    "Ordinate of last double-clicked graph point" },
+
   { F|O, "ForceElementData" , opt_post_force_element_data , 0. ,
     "Try to force saving datasets as ElementData" },
   { F|O, "ForceNodeData" , opt_post_force_node_data , 0. ,
@@ -1287,10 +1310,10 @@ StringXNumber PostProcessingOptions_Number[] = {
     "view, 2=parsed view, 3=STL triangulation, 4=raw text, 5=Gmsh mesh, 6=MED file, "
     "10=automatic)" },
 
-  { F|O, "GraphPointX" , opt_post_graph_point_x , 0. ,
-    "Abscissa of last selected graph point" },
-  { F|O, "GraphPointY" , opt_post_graph_point_y , 0. ,
-    "Ordinate of last selected graph point" },
+  { F, "GraphPointX" , opt_post_double_clicked_graph_point_x , 0. ,
+    "Synonym for `DoubleClickedGraphPointX'" },
+  { F, "GraphPointY" , opt_post_double_clicked_graph_point_y , 0. ,
+    "Synonym for `DoubleClickedGraphPointY'" },
 
   { F|O, "HorizontalScales" , opt_post_horizontal_scales , 1. ,
     "Display value scales horizontally" },

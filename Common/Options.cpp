@@ -1335,6 +1335,34 @@ std::string opt_general_graphics_font_engine(OPT_ARGS_STR)
   return CTX::instance()->glFontEngine;
 }
 
+std::string opt_geometry_double_clicked_point_command(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.doubleClickedPointCommand = val;
+  return CTX::instance()->geom.doubleClickedPointCommand;
+}
+
+std::string opt_geometry_double_clicked_line_command(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.doubleClickedLineCommand = val;
+  return CTX::instance()->geom.doubleClickedLineCommand;
+}
+
+std::string opt_geometry_double_clicked_surface_command(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.doubleClickedSurfaceCommand = val;
+  return CTX::instance()->geom.doubleClickedSurfaceCommand;
+}
+
+std::string opt_geometry_double_clicked_volume_command(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.doubleClickedVolumeCommand = val;
+  return CTX::instance()->geom.doubleClickedVolumeCommand;
+}
+
 std::string opt_solver_socket_name(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
@@ -1545,11 +1573,11 @@ std::string opt_solver_octave_interpreter(OPT_ARGS_STR)
   return CTX::instance()->solver.octaveInterpreter;
 }
 
-std::string opt_post_graph_point_command(OPT_ARGS_STR)
+std::string opt_post_double_clicked_graph_point_command(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)
-    CTX::instance()->post.graphPointCommand = val;
-  return CTX::instance()->post.graphPointCommand;
+    CTX::instance()->post.doubleClickedGraphPointCommand = val;
+  return CTX::instance()->post.doubleClickedGraphPointCommand;
 }
 
 #if defined(HAVE_FLTK)
@@ -1605,6 +1633,19 @@ std::string opt_view_format(OPT_ARGS_STR)
     FlGui::instance()->options->view.input[1]->value(opt->format.c_str());
 #endif
   return opt->format;
+#else
+  return "";
+#endif
+}
+
+std::string opt_view_double_clicked_command(OPT_ARGS_STR)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo("");
+  if(action & GMSH_SET) {
+    opt->doubleClickedCommand = val;
+  }
+  return opt->doubleClickedCommand;
 #else
   return "";
 #endif
@@ -4735,6 +4776,13 @@ double opt_geometry_copy_display_attributes(OPT_ARGS_NUM)
   return CTX::instance()->geom.copyDisplayAttributes;
 }
 
+double opt_geometry_double_clicked_entity_tag(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.doubleClickedEntityTag = (int)val;
+  return CTX::instance()->geom.doubleClickedEntityTag;
+}
+
 double opt_geometry_exact_extrusion(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -6523,18 +6571,18 @@ double opt_post_force_element_data(OPT_ARGS_NUM)
   return CTX::instance()->post.forceElementData;
 }
 
-double opt_post_graph_point_x(OPT_ARGS_NUM)
+double opt_post_double_clicked_graph_point_x(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->post.graphPointX = val;
-  return CTX::instance()->post.graphPointX;
+    CTX::instance()->post.doubleClickedGraphPointX = val;
+  return CTX::instance()->post.doubleClickedGraphPointX;
 }
 
-double opt_post_graph_point_y(OPT_ARGS_NUM)
+double opt_post_double_clicked_graph_point_y(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->post.graphPointY = val;
-  return CTX::instance()->post.graphPointY;
+    CTX::instance()->post.doubleClickedGraphPointY = val;
+  return CTX::instance()->post.doubleClickedGraphPointY;
 }
 
 double opt_view_nb_timestep(OPT_ARGS_NUM)

@@ -1411,4 +1411,3 @@ void flgui_wait_cb(double time)
 {
   FlGui::instance()->wait(time);
 }
-

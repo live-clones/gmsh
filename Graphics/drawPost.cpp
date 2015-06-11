@@ -409,6 +409,11 @@ class drawPView {
     if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
     if(!_ctx->isVisible(p)) return;
 
+    if(_ctx->render_mode == drawContext::GMSH_SELECT){
+      glPushName(5);
+      glPushName(p->getIndex());
+    }
+
     glPointSize((float)opt->pointSize);
     gl2psPointSize((float)(opt->pointSize *
                            CTX::instance()->print.epsPointSizeFactor));
@@ -513,6 +518,12 @@ class drawPView {
 
     for(int i = 0; i < 6; i++)
       glDisable((GLenum)(GL_CLIP_PLANE0 + i));
+
+    if(_ctx->render_mode == drawContext::GMSH_SELECT){
+      glPopName();
+      glPopName();
+    }
+
   }
 };
 

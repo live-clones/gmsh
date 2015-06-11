@@ -1,6 +1,8 @@
 2.9.4: new Get/SetNumber and Get/SetString for direct access to ONELAB
 variables; new Physical specification with both label and numeric id; improved
-visibility browser navigation; code cleanups.
+visibility browser navigation; geometrical entities and post-processing views
+can now react to double-clicks, via new generic DoubleClick options; code
+cleanups.
 
 2.9.3 (April 18, 2015): updated versions of PETSc/SLEPc and OpenCASCADE/OCE
 libraries used in official binary builds; new Find() command; miscellaneous code

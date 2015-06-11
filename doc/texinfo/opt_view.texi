@@ -39,6 +39,11 @@ Z-axis label@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.DoubleClickedCommand
+Command parsed when double-clicking on the view@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.FileName
 Default post-processing view file name@*
 Default value: @code{""}@*

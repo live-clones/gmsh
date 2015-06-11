@@ -479,9 +479,10 @@ Default value: @code{-1}
 @item Plugin(HarmonicToTime)
 Plugin(HarmonicToTime) takes the values in the time steps `RealPart' and `ImaginaryPart' of the view `View', and creates a new view containing@*
 @*
-`View'[`RealPart'] * cos(p) - `View'[`ImaginaryPart'] * sin(p)@*
+`View'[`RealPart'] * cos(p) +- `View'[`ImaginaryPart'] * sin(p)@*
 @*
 with p = 2*Pi*k/`NumSteps', k = 0, ..., `NumSteps'-1.@*
+The + or - sign is controlled by `TimeSign'.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
@@ -494,6 +495,8 @@ Default value: @code{0}
 Default value: @code{1}
 @item NumSteps
 Default value: @code{20}
+@item TimeSign
+Default value: @code{-1}
 @item View
 Default value: @code{-1}
 @end table

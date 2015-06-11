@@ -4,8 +4,13 @@
 @c
 
 @ftable @code
-@item PostProcessing.GraphPointCommand
+@item PostProcessing.DoubleClickedGraphPointCommand
 Command parsed when double-clicking on a graph data point (e.g. Merge Sprintf('file_%g.pos', PostProcessing.GraphPointX);)@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item PostProcessing.GraphPointCommand
+Synonym for `DoubleClickedGraphPointCommand'@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -29,6 +34,21 @@ Remove original views after a Combine operation@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item PostProcessing.DoubleClickedGraphPointX
+Abscissa of last double-clicked graph point@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item PostProcessing.DoubleClickedGraphPointY
+Ordinate of last double-clicked graph point@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item PostProcessing.ForceElementData
+Try to force saving datasets as ElementData@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item PostProcessing.ForceNodeData
 Try to force saving datasets as NodeData@*
 Default value: @code{0}@*
@@ -40,14 +60,14 @@ Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
 @item PostProcessing.GraphPointX
-Abscissa of last selected graph point@*
+Synonym for `DoubleClickedGraphPointX'@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
+Saved in: @code{-}
 
 @item PostProcessing.GraphPointY
-Ordinate of last selected graph point@*
+Synonym for `DoubleClickedGraphPointY'@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
+Saved in: @code{-}
 
 @item PostProcessing.HorizontalScales
 Display value scales horizontally@*

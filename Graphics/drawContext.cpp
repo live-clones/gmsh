@@ -848,21 +848,24 @@ bool drawContext::select(int type, bool multiple, bool mesh,
                          std::vector<GFace*> &faces,
                          std::vector<GRegion*> &regions,
                          std::vector<MElement*> &elements,
-                         std::vector<SPoint2> &points)
+                         std::vector<SPoint2> &points,
+                         std::vector<PView*> &views)
 {
   vertices.clear();
   edges.clear();
   faces.clear();
   regions.clear();
   elements.clear();
+  points.clear();
+  views.clear();
 
   // in our case the selection buffer size is equal to between 5 and 7 times the
   // maximum number of possible hits
   GModel *m = GModel::current();
   int eles = (mesh && CTX::instance()->pickElements) ? 4 * m->getNumMeshElements() : 0;
-  int views = PView::list.size() * 100;
+  int nviews = PView::list.size() * 100;
   int size = 7 * (m->getNumVertices() + m->getNumEdges() + m->getNumFaces() +
-                  m->getNumRegions() + eles) + views;
+                  m->getNumRegions() + eles) + nviews;
   if(!size) return false; // the model is empty, don't bother!
 
   // allocate selection buffer
@@ -881,6 +884,7 @@ bool drawContext::select(int type, bool multiple, bool mesh,
   initPosition();
   drawGeom();
   if(mesh) drawMesh();
+  drawPost();
   drawGraph2d(true);
 
   // 2d stuff
@@ -1030,12 +1034,20 @@ bool drawContext::select(int type, bool multiple, bool mesh,
           if(!multiple) return true;
         }
         break;
+      case 5:
+        {
+          int tag = hits[i].ient;
+          if(tag >= 0 && tag < PView::list.size())
+            views.push_back(PView::list[tag]);
+          if(!multiple) return true;
+        }
+        break;
       }
     }
   }
 
-  if(vertices.size() || edges.size() || faces.size() ||
-     regions.size() || elements.size() || points.size())
+  if(vertices.size() || edges.size() || faces.size() || regions.size() ||
+     elements.size() || points.size() || views.size())
     return true;
   return false;
 }

@@ -4,8 +4,28 @@
 @c
 
 @ftable @code
+@item Geometry.DoubleClickedPointCommand
+Command parsed when double-clicking on a point@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.DoubleClickedLineCommand
+Command parsed when double-clicking on a line@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.DoubleClickedSurfaceCommand
+Command parsed when double-clicking on a surface@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.DoubleClickedVolumeCommand
+Command parsed when double-clicking on a volume@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.AutoCoherence
-Should all duplicate entities be automatically removed? (if ==2, also remove degenerate entities)@*
+Should all duplicate entities be automatically removed? (If AutoCoherence == 2, also remove degenerate entities)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -23,6 +43,11 @@ Saved in: @code{General.OptionsFileName}
 Copy display attributes (visibiliy, color) when duplicating geometrical entities?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
+
+@item Geometry.DoubleClickedEntityTag
+Tag of last double-clicked geometrical entity@*
+Default value: @code{0}@*
+Saved in: @code{-}
 
 @item Geometry.ExactExtrusion
 Use exact extrusion formula in interpolations (set to 0 to allow geometrical transformations of extruded entities)@*
