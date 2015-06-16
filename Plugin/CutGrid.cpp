@@ -44,17 +44,14 @@ void GMSH_CutGridPlugin::draw(void *context)
   drawContext *ctx = (drawContext*)context;
 
   getPoint(0, 0, p);
-  glRasterPos3d(p[0], p[1], p[2]);
-  ctx->drawString("(X0, Y0, Z0)");
+  ctx->drawString("(X0, Y0, Z0)", p[0], p[1], p[2]);
   if(getNbU() > 1){
     getPoint(getNbU() - 1, 0, p);
-    glRasterPos3d(p[0], p[1], p[2]);
-    ctx->drawString("(X1, Y1, Z1)");
+    ctx->drawString("(X1, Y1, Z1)", p[0], p[1], p[2]);
   }
   if(getNbV() > 1){
     getPoint(0, getNbV() - 1, p);
-    glRasterPos3d(p[0], p[1], p[2]);
-    ctx->drawString("(X2, Y2, Z2)");
+    ctx->drawString("(X2, Y2, Z2)", p[0], p[1], p[2]);
   }
 
   if(CutGridOptions_Number[11].def){
@@ -219,25 +216,25 @@ void GMSH_CutGridPlugin::getPoint(int iU, int iV, double *X)
 {
   double u = getNbU() > 1 ? (double)iU / (double)(getNbU() - 1.) : 0.;
   double v = getNbV() > 1 ? (double)iV / (double)(getNbV() - 1.) : 0.;
-  X[0] = CutGridOptions_Number[0].def + 
+  X[0] = CutGridOptions_Number[0].def +
     u  * (CutGridOptions_Number[3].def-CutGridOptions_Number[0].def) +
     v  * (CutGridOptions_Number[6].def-CutGridOptions_Number[0].def);
-  X[1] = CutGridOptions_Number[1].def + 
+  X[1] = CutGridOptions_Number[1].def +
     u  * (CutGridOptions_Number[4].def-CutGridOptions_Number[1].def) +
     v  * (CutGridOptions_Number[7].def-CutGridOptions_Number[1].def);
-  X[2] = CutGridOptions_Number[2].def + 
+  X[2] = CutGridOptions_Number[2].def +
     u  * (CutGridOptions_Number[5].def-CutGridOptions_Number[2].def) +
     v  * (CutGridOptions_Number[8].def-CutGridOptions_Number[2].def);
 }
 
-void GMSH_CutGridPlugin::addInView(int numsteps, int connect, int nbcomp, 
-                                   double ***pnts, double ***vals, 
-                                   std::vector<double> &P, int *nP, 
-                                   std::vector<double> &L, int *nL, 
+void GMSH_CutGridPlugin::addInView(int numsteps, int connect, int nbcomp,
+                                   double ***pnts, double ***vals,
+                                   std::vector<double> &P, int *nP,
+                                   std::vector<double> &L, int *nL,
                                    std::vector<double> &Q, int *nQ)
 {
   if(!connect || (getNbU() == 1 && getNbV() == 1)){ // generate points
-    
+
     for(int i = 0; i < getNbU(); ++i){
       for(int j = 0; j < getNbV(); ++j){
         P.push_back(pnts[i][j][0]);
@@ -250,10 +247,10 @@ void GMSH_CutGridPlugin::addInView(int numsteps, int connect, int nbcomp,
         }
       }
     }
-    
+
   }
   else{ // generate lines or quads
-    
+
     if(getNbU() == 1){
       for(int i = 0; i < getNbV()-1; ++i){
         L.push_back(pnts[0][i][0]); L.push_back(pnts[0][i+1][0]);
@@ -305,7 +302,7 @@ void GMSH_CutGridPlugin::addInView(int numsteps, int connect, int nbcomp,
         }
       }
     }
-  }     
+  }
 }
 
 PView *GMSH_CutGridPlugin::GenerateView(PView *v1, int connect)
@@ -317,7 +314,7 @@ PView *GMSH_CutGridPlugin::GenerateView(PView *v1, int connect)
 
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
- 
+
   OctreePost o(v1);
 
   int nbs = data1->getNumScalars();
@@ -337,12 +334,12 @@ PView *GMSH_CutGridPlugin::GenerateView(PView *v1, int connect)
       getPoint(i, j, pnts[i][j]);
     }
   }
-  
+
   if(nbs){
     for(int i = 0; i < getNbU(); i++)
       for(int j = 0; j < getNbV(); j++)
         o.searchScalar(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
-    addInView(numsteps, connect, 1, pnts, vals, data2->SP, &data2->NbSP, 
+    addInView(numsteps, connect, 1, pnts, vals, data2->SP, &data2->NbSP,
               data2->SL, &data2->NbSL, data2->SQ, &data2->NbSQ);
   }
 
@@ -358,7 +355,7 @@ PView *GMSH_CutGridPlugin::GenerateView(PView *v1, int connect)
     for(int i = 0; i < getNbU(); i++)
       for(int j = 0; j < getNbV(); j++)
         o.searchTensor(pnts[i][j][0], pnts[i][j][1], pnts[i][j][2], vals[i][j]);
-    addInView(numsteps, connect, 9, pnts, vals, data2->TP, &data2->NbTP, 
+    addInView(numsteps, connect, 9, pnts, vals, data2->TP, &data2->NbTP,
               data2->TL, &data2->NbTL, data2->TQ, &data2->NbTQ);
   }
 

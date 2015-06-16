@@ -11,13 +11,21 @@
 #include "Context.h"
 #include "gl2ps.h"
 #include "SVector3.h"
+#include "GModel.h"
 
-void drawContext::drawString(const std::string &s, const std::string &font_name,
-                             int font_enum, int font_size, int align)
+void drawContext::drawString(const std::string &s, double x, double y, double z,
+                             const std::string &font_name, int font_enum,
+                             int font_size, int align)
 {
   if(s.empty()) return;
   if(CTX::instance()->printing && !CTX::instance()->print.text) return;
 
+  if(s.size() > 8 && s.substr(0, 7) == "file://"){
+    drawImage(s.substr(7), x, y, z);
+    return;
+  }
+
+  glRasterPos3d(x, y, z);
   GLboolean valid;
   glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
   if(valid == GL_FALSE) return; // the primitive is culled
@@ -88,30 +96,31 @@ void drawContext::drawString(const std::string &s, const std::string &font_name,
   }
 }
 
-void drawContext::drawString(const std::string &s)
+void drawContext::drawString(const std::string &s, double x, double y, double z)
 {
-  drawString(s, CTX::instance()->glFont, CTX::instance()->glFontEnum,
+  drawString(s, x, y, z, CTX::instance()->glFont, CTX::instance()->glFontEnum,
              CTX::instance()->glFontSize, 0);
 }
 
-void drawContext::drawStringCenter(const std::string &s)
+void drawContext::drawStringCenter(const std::string &s, double x, double y, double z)
 {
-  drawString(s, CTX::instance()->glFont, CTX::instance()->glFontEnum,
+  drawString(s, x, y, z, CTX::instance()->glFont, CTX::instance()->glFontEnum,
              CTX::instance()->glFontSize, 1);
 }
 
-void drawContext::drawStringRight(const std::string &s)
+void drawContext::drawStringRight(const std::string &s, double x, double y, double z)
 {
-  drawString(s, CTX::instance()->glFont, CTX::instance()->glFontEnum,
+  drawString(s, x, y, z, CTX::instance()->glFont, CTX::instance()->glFontEnum,
              CTX::instance()->glFontSize, 2);
 }
 
-void drawContext::drawString(const std::string &s, double style)
+void drawContext::drawString(const std::string &s, double x, double y, double z,
+                             double style)
 {
   unsigned int bits = (unsigned int)style;
 
   if(!bits){ // use defaults
-    drawString(s);
+    drawString(s, x, y, z);
   }
   else{
     int size = (bits & 0xff);
@@ -120,8 +129,67 @@ void drawContext::drawString(const std::string &s, double style)
     int font_enum = drawContext::global()->getFontEnum(font);
     std::string font_name = drawContext::global()->getFontName(font);
     if(!size) size = CTX::instance()->glFontSize;
-    drawString(s, font_name, font_enum, size, align);
+    drawString(s, x, y, z, font_name, font_enum, size, align);
   }
+}
+
+void drawContext::drawImage(const std::string &name, double x, double y, double z)
+{
+  std::string file = name;
+  int scaling = file.find_last_of("@");
+  if(scaling != std::string::npos)
+    file = file.substr(0, file.size() - scaling - 1);
+
+  printf("drawing image %s x=%g y=%g z=%g!\n", name.c_str(), x, y, z);
+
+  imgtex *img;
+  double w = 0.;
+  double h = 0.;
+
+  if(!_imageTextures.count(file)){
+    img = &_imageTextures[file];
+    file = FixRelativePath(GModel::current()->getFileName(), file);
+    if(!generateTextureForImage(file, 1, img->tex, img->w, img->h)){
+      Msg::Error("Problem generating image texture");
+      return;
+    }
+  }
+  else{
+    img = &_imageTextures[file];
+  }
+
+  if(!img->tex){
+    Msg::Error("No texture for image");
+    return;
+  }
+
+  if(w == 0 && h == 0){
+    w = img->w;
+    h = img->h;
+  }
+  else if(h == 0){
+    h = w * img->h / img->w;
+  }
+  else if(w == 0){
+    w = h * img->w / img->h;
+  }
+
+  //w=0.4;
+  //h=0.1;
+
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, img->tex);
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+  glBegin(GL_QUADS);
+  glTexCoord2f(1.0f, 1.0f); glVertex3d(x+w, y, z);
+  glTexCoord2f(1.0f, 0.0f); glVertex3d(x+w, y+h, z);
+  glTexCoord2f(0.0f, 0.0f); glVertex3d(x, y+h, z);
+  glTexCoord2f(0.0f, 1.0f); glVertex3d(x, y, z);
+  glEnd();
+  glDisable(GL_TEXTURE_2D);
+  glDisable(GL_BLEND);
 }
 
 void drawContext::drawSphere(double R, double x, double y, double z,
@@ -549,16 +617,14 @@ void drawContext::drawBox(double xmin, double ymin, double zmin,
   if(labels){
     char label[256];
     double offset = 0.3 * CTX::instance()->glFontSize * pixel_equiv_x;
-    glRasterPos3d(xmin + offset / s[0],
-                  ymin + offset / s[1],
-                  zmin + offset / s[2]);
     sprintf(label, "(%g,%g,%g)", xmin, ymin, zmin);
-    drawString(label);
-    glRasterPos3d(xmax + offset / s[0],
-                  ymax + offset / s[1],
-                  zmax + offset / s[2]);
+    drawString(label, xmin + offset / s[0],
+               ymin + offset / s[1],
+               zmin + offset / s[2]);
     sprintf(label, "(%g,%g,%g)", xmax, ymax, zmax);
-    drawString(label);
+    drawString(label, xmax + offset / s[0],
+               ymax + offset / s[1],
+               zmax + offset / s[2]);
   }
 }
 

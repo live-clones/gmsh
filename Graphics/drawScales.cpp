@@ -125,12 +125,11 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
       double v = opt->getScaleValue(i, nbv + 1, opt->tmpMin, opt->tmpMax);
       sprintf(label, opt->format.c_str(), v);
       if(horizontal){
-        glRasterPos2d(xmin + i * vbox, ymin + height + tic);
-        ctx->drawStringCenter(label);
+        ctx->drawStringCenter(label, xmin + i * vbox, ymin + height + tic, 0.);
       }
       else{
-        glRasterPos2d(xmin + width + tic, ymin + i * vbox - font_a / 3.);
-        ctx->drawString(label);
+        ctx->drawString(label, xmin + width + tic,
+                        ymin + i * vbox - font_a / 3., 0.);
       }
     }
   }
@@ -143,12 +142,12 @@ static void drawScaleValues(drawContext *ctx, PView *p, double xmin, double ymin
       double v = opt->getScaleValue(i, nbv, opt->tmpMin, opt->tmpMax);
       sprintf(label, opt->format.c_str(), v);
       if(horizontal){
-        glRasterPos2d(xmin + box / 2. + i * vbox, ymin + height + tic);
-        ctx->drawStringCenter(label);
+        ctx->drawStringCenter(label, xmin + box / 2. + i * vbox,
+                              ymin + height + tic, 0.);
       }
       else{
-        glRasterPos2d(xmin + width + tic, ymin + box / 2. + i * vbox - font_a / 3.);
-        ctx->drawString(label);
+        ctx->drawString(label, xmin + width + tic,
+                        ymin + box / 2. + i * vbox - font_a / 3., 0.);
       }
     }
   }
@@ -186,14 +185,14 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
     sprintf(label, "%s", data->getName().c_str());
 
   if(horizontal){
-    glRasterPos2d(xmin + width / 2., ymin + height + tic + 1.4 * font_h);
-    ctx->drawString(label, CTX::instance()->glFontTitle,
+    ctx->drawString(label, xmin + width / 2., ymin + height + tic + 1.4 * font_h, 0.,
+                    CTX::instance()->glFontTitle,
                     CTX::instance()->glFontEnumTitle,
                     CTX::instance()->glFontSizeTitle, 1);
   }
   else{
-    glRasterPos2d(xmin, ymin - 2 * font_h);
-    ctx->drawString(label, CTX::instance()->glFontTitle,
+    ctx->drawString(label, xmin, ymin - 2 * font_h, 0.,
+                    CTX::instance()->glFontTitle,
                     CTX::instance()->glFontEnumTitle,
                     CTX::instance()->glFontSizeTitle, 0);
   }

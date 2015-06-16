@@ -377,6 +377,61 @@ void drawContext::invalidateBgImageTexture()
   _bgImageTexture = 0;
 }
 
+bool drawContext::generateTextureForImage(const std::string &name, int page,
+                                          GLuint &imageTexture, GLuint &imageW,
+                                          GLuint &imageH)
+{
+  std::string ext = SplitFileName(name)[2];
+  if(ext == ".pdf" || ext == ".PDF"){
+#if defined(HAVE_POPPLER)
+    if(!imageTexture){
+      if(!gmshPopplerWrapper::instance()->loadFromFile(name)){
+        Msg::Error("Could not load PDF file '%s'", name.c_str());
+        return false;
+      }
+    }
+    gmshPopplerWrapper::instance()->setCurrentPage(page);
+    imageTexture = gmshPopplerWrapper::instance()->getTextureForPage(300, 300);
+    imageW = gmshPopplerWrapper::instance()->width();
+    imageH = gmshPopplerWrapper::instance()->height();
+#else
+    Msg::Error("Gmsh must be compiled with Poppler support to load PDFs");
+    return false;
+#endif
+  }
+  else{
+#if defined(HAVE_FLTK)
+    if(!imageTexture){
+      Fl_RGB_Image *img = 0;
+      if(ext == ".jpg" || ext == ".JPG" || ext == ".jpeg" || ext == ".JPEG")
+        img = new Fl_JPEG_Image(name.c_str());
+      else if(ext == ".png" || ext == ".PNG")
+        img = new Fl_PNG_Image(name.c_str());
+      if(!img){
+        Msg::Error("Could not load background image '%s'", name.c_str());
+        return false;
+      }
+      Fl_RGB_Image *img2 = (Fl_RGB_Image*)img->copy(2048, 2048);
+      glGenTextures(1, &imageTexture);
+      glBindTexture(GL_TEXTURE_2D, imageTexture);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img2->w(), img2->h(), 0,
+                   (img2->d() == 4) ? GL_RGBA : GL_RGB,
+                   GL_UNSIGNED_BYTE, img2->array);
+      imageW = img->w();
+      imageH = img->h();
+      delete img;
+      delete img2;
+    }
+#else
+    Msg::Error("Gmsh must be compiled with FLTK support to load JPEGs or PNGs");
+    return false;
+#endif
+  }
+  return true;
+}
+
 void drawContext::drawBackgroundImage(bool threeD)
 {
   if(CTX::instance()->bgImageFileName.empty() ||
@@ -385,63 +440,16 @@ void drawContext::drawBackgroundImage(bool threeD)
 
   std::string name = FixRelativePath(GModel::current()->getFileName(),
                                      CTX::instance()->bgImageFileName);
-  std::string ext = SplitFileName(CTX::instance()->bgImageFileName)[2];
 
   double x = CTX::instance()->bgImagePosition[0];
   double y = CTX::instance()->bgImagePosition[1];
   double w = CTX::instance()->bgImageSize[0];
   double h = CTX::instance()->bgImageSize[1];
 
-  if(ext == ".pdf" || ext == ".PDF"){
-#if defined(HAVE_POPPLER)
-    if(!_bgImageTexture){
-      if(!gmshPopplerWrapper::instance()->loadFromFile(name)){
-        Msg::Error("Could not load PDF file '%s'", name.c_str());
-        CTX::instance()->bgImageFileName.clear();
-        return;
-      }
-    }
-    gmshPopplerWrapper::instance()->setCurrentPage(CTX::instance()->bgImagePage);
-    _bgImageTexture = gmshPopplerWrapper::instance()->getTextureForPage(300, 300);
-    _bgImageW = gmshPopplerWrapper::instance()->width();
-    _bgImageH = gmshPopplerWrapper::instance()->height();
-#else
-    Msg::Error("Gmsh must be compiled with Poppler support to load PDFs");
+  if(!generateTextureForImage(name, CTX::instance()->bgImagePage,
+                              _bgImageTexture, _bgImageW, _bgImageH)){
     CTX::instance()->bgImageFileName.clear();
     return;
-#endif
-  }
-  else{
-#if defined(HAVE_FLTK)
-    if(!_bgImageTexture){
-      Fl_RGB_Image *img = 0;
-      if(ext == ".jpg" || ext == ".JPG" || ext == ".jpeg" || ext == ".JPEG")
-        img = new Fl_JPEG_Image(name.c_str());
-      else if(ext == ".png" || ext == ".PNG")
-        img = new Fl_PNG_Image(name.c_str());
-      if(!img){
-        Msg::Error("Could not load background image '%s'", name.c_str());
-        CTX::instance()->bgImageFileName.clear();
-        return;
-      }
-      Fl_RGB_Image *img2 = (Fl_RGB_Image*)img->copy(2048, 2048);
-      glGenTextures(1, &_bgImageTexture);
-      glBindTexture(GL_TEXTURE_2D, _bgImageTexture);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img2->w(), img2->h(), 0,
-                   (img2->d() == 4) ? GL_RGBA : GL_RGB,
-                   GL_UNSIGNED_BYTE, img2->array);
-      _bgImageW = img->w();
-      _bgImageH = img->h();
-      delete img;
-      delete img2;
-    }
-#else
-    Msg::Error("Gmsh must be compiled with FLTK support to load JPEGs or PNGs");
-    CTX::instance()->bgImageFileName.clear();
-    return;
-#endif
   }
 
   if(!_bgImageTexture) return;
@@ -898,6 +906,7 @@ bool drawContext::select(int type, bool multiple, bool mesh,
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   drawGraph2d(false);
+  drawText2d();
 
   glPopMatrix();
 

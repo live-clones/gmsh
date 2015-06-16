@@ -49,22 +49,18 @@ void GMSH_CutBoxPlugin::draw(void *context)
   drawContext *ctx = (drawContext*)context;
 
   getPoint(0, 0, 0, p);
-  glRasterPos3d(p[0], p[1], p[2]);
-  ctx->drawString("(X0, Y0, Z0)");
+  ctx->drawString("(X0, Y0, Z0)", p[0], p[1], p[2]);
   if(getNbU() > 1){
     getPoint(getNbU() - 1, 0, 0, p);
-    glRasterPos3d(p[0], p[1], p[2]);
-    ctx->drawString("(X1, Y1, Z1)");
+    ctx->drawString("(X1, Y1, Z1)", p[0], p[1], p[2]);
   }
   if(getNbV() > 1){
     getPoint(0, getNbV() - 1, 0, p);
-    glRasterPos3d(p[0], p[1], p[2]);
-    ctx->drawString("(X2, Y2, Z2)");
+    ctx->drawString("(X2, Y2, Z2)", p[0], p[1], p[2]);
   }
   if(getNbW() > 1){
     getPoint(0, 0, getNbW() - 1, p);
-    glRasterPos3d(p[0], p[1], p[2]);
-    ctx->drawString("(X3, Y3, Z3)");
+    ctx->drawString("(X3, Y3, Z3)", p[0], p[1], p[2]);
   }
 
   if(CutBoxOptions_Number[15].def){
@@ -98,7 +94,7 @@ void GMSH_CutBoxPlugin::draw(void *context)
       glVertex3d(p[0], p[1], p[2]);
       getPoint(i, 0, getNbW()-1, p);
       glVertex3d(p[0], p[1], p[2]);
- 
+
       getPoint(i, getNbV()-1, 0, p);
       glVertex3d(p[0], p[1], p[2]);
       getPoint(i, getNbV()-1, getNbW()-1, p);
@@ -108,12 +104,12 @@ void GMSH_CutBoxPlugin::draw(void *context)
       getPoint(0, 0, i, p);
       glVertex3d(p[0], p[1], p[2]);
       getPoint(getNbU()-1, 0, i, p);
-      glVertex3d(p[0], p[1], p[2]); 
+      glVertex3d(p[0], p[1], p[2]);
 
       getPoint(0, getNbV()-1, i, p);
       glVertex3d(p[0], p[1], p[2]);
       getPoint(getNbU()-1, getNbV()-1, i, p);
-      glVertex3d(p[0], p[1], p[2]); 
+      glVertex3d(p[0], p[1], p[2]);
     }
     // VW
     for(int i = 0; i < getNbV(); ++i){
@@ -131,12 +127,12 @@ void GMSH_CutBoxPlugin::draw(void *context)
       getPoint(0, 0, i, p);
       glVertex3d(p[0], p[1], p[2]);
       getPoint(0, getNbV()-1, i, p);
-      glVertex3d(p[0], p[1], p[2]); 
+      glVertex3d(p[0], p[1], p[2]);
 
       getPoint(getNbU()-1, 0, i, p);
       glVertex3d(p[0], p[1], p[2]);
       getPoint(getNbU()-1, getNbV()-1, i, p);
-      glVertex3d(p[0], p[1], p[2]); 
+      glVertex3d(p[0], p[1], p[2]);
     }
 
     glEnd();
@@ -311,7 +307,7 @@ std::string GMSH_CutBoxPlugin::getHelp() const
     "otherwise, the plugin generates hexahedra, quadrangles, lines or "
     "points depending on the values of `NumPointsU', "
     "`NumPointsV' and `NumPointsW'.\n\n"
-    "If `Boundary' is zero, the plugin interpolates the view inside " 
+    "If `Boundary' is zero, the plugin interpolates the view inside "
     "the box; otherwise the plugin interpolates the view at its boundary.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
     "Plugin(CutBox) creates one new view.";
@@ -349,28 +345,28 @@ void GMSH_CutBoxPlugin::getPoint(int iU, int iV, int iW, double *X)
   double v = getNbV() > 1 ? (double)iV / (double)(getNbV() - 1.) : 0.;
   double w = getNbW() > 1 ? (double)iW / (double)(getNbW() - 1.) : 0.;
 
-  X[0] = CutBoxOptions_Number[0].def + 
+  X[0] = CutBoxOptions_Number[0].def +
     u  * (CutBoxOptions_Number[3].def-CutBoxOptions_Number[0].def) +
-    v  * (CutBoxOptions_Number[6].def-CutBoxOptions_Number[0].def) + 
+    v  * (CutBoxOptions_Number[6].def-CutBoxOptions_Number[0].def) +
     w  * (CutBoxOptions_Number[9].def-CutBoxOptions_Number[0].def) ;
-  X[1] = CutBoxOptions_Number[1].def + 
+  X[1] = CutBoxOptions_Number[1].def +
     u  * (CutBoxOptions_Number[4].def-CutBoxOptions_Number[1].def) +
     v  * (CutBoxOptions_Number[7].def-CutBoxOptions_Number[1].def) +
     w  * (CutBoxOptions_Number[10].def-CutBoxOptions_Number[1].def) ;
-  X[2] = CutBoxOptions_Number[2].def + 
+  X[2] = CutBoxOptions_Number[2].def +
     u  * (CutBoxOptions_Number[5].def-CutBoxOptions_Number[2].def) +
     v  * (CutBoxOptions_Number[8].def-CutBoxOptions_Number[2].def) +
     w  * (CutBoxOptions_Number[11].def-CutBoxOptions_Number[2].def) ;
 }
 
-void GMSH_CutBoxPlugin::addInView( int connect, int boundary, int numsteps, int nbcomp, 
-                                   double ****pnts, double ****vals, 
-                                   std::vector<double> &P, int *nP, 
-                                   std::vector<double> &L, int *nL, 
+void GMSH_CutBoxPlugin::addInView( int connect, int boundary, int numsteps, int nbcomp,
+                                   double ****pnts, double ****vals,
+                                   std::vector<double> &P, int *nP,
+                                   std::vector<double> &L, int *nL,
                                    std::vector<double> &Q, int *nQ,
                                    std::vector<double> &H, int *nH)
 {
-  if(!connect || (getNbU() == 1 && getNbV() == 1 && getNbW() == 1)){ // generate points    
+  if(!connect || (getNbU() == 1 && getNbV() == 1 && getNbW() == 1)){ // generate points
     if(!boundary)
       for(int i = 0; i < getNbU(); ++i){
         for(int j = 0; j < getNbV(); ++j){
@@ -628,7 +624,7 @@ void GMSH_CutBoxPlugin::addInView( int connect, int boundary, int numsteps, int 
             Q.push_back(pnts[i  ][0][j  ][1]); Q.push_back(pnts[i+1][0][j  ][1]);
             Q.push_back(pnts[i+1][0][j+1][1]); Q.push_back(pnts[i  ][0][j+1][1]);
             Q.push_back(pnts[i  ][0][j  ][2]); Q.push_back(pnts[i+1][0][j  ][2]);
-            Q.push_back(pnts[i+1][0][j+1][2]); Q.push_back(pnts[i  ][0][j+1][2]);          
+            Q.push_back(pnts[i+1][0][j+1][2]); Q.push_back(pnts[i  ][0][j+1][2]);
             (*nQ)++;
             for(int k = 0; k < numsteps; ++k){
               for(int l = 0; l < nbcomp; ++l)
@@ -709,7 +705,7 @@ void GMSH_CutBoxPlugin::addInView( int connect, int boundary, int numsteps, int 
                 Q.push_back(vals[i+1][j+1][0][nbcomp*k+l]);
               for(int l = 0; l < nbcomp; ++l)
                 Q.push_back(vals[i  ][j+1][0][nbcomp*k+l]);
-            }  
+            }
           }
         }
       else{
@@ -798,7 +794,7 @@ void GMSH_CutBoxPlugin::addInView( int connect, int boundary, int numsteps, int 
                   H.push_back(vals[i+1][j+1][m+1][nbcomp*k+l]);
                 for(int l = 0; l < nbcomp; ++l)
                   H.push_back(vals[i  ][j+1][m+1][nbcomp*k+l]);
-              }         
+              }
             }
           }
         }
@@ -822,7 +818,7 @@ void GMSH_CutBoxPlugin::addInView( int connect, int boundary, int numsteps, int 
                 Q.push_back(vals[i+1][j+1][0][nbcomp*k+l]);
               for(int l = 0; l < nbcomp; ++l)
                 Q.push_back(vals[i+1][j  ][0][nbcomp*k+l]);
-            }          
+            }
             Q.push_back(pnts[i  ][j  ][getNbW()-1][0]); Q.push_back(pnts[i+1][j  ][getNbW()-1][0]);
             Q.push_back(pnts[i+1][j+1][getNbW()-1][0]); Q.push_back(pnts[i  ][j+1][getNbW()-1][0]);
             Q.push_back(pnts[i  ][j  ][getNbW()-1][1]); Q.push_back(pnts[i+1][j  ][getNbW()-1][1]);
@@ -860,7 +856,7 @@ void GMSH_CutBoxPlugin::addInView( int connect, int boundary, int numsteps, int 
                 Q.push_back(vals[i+1][0][j+1][nbcomp*k+l]);
               for(int l = 0; l < nbcomp; ++l)
                 Q.push_back(vals[i  ][0][j+1][nbcomp*k+l]);
-            }          
+            }
             Q.push_back(pnts[i  ][getNbV()-1][j  ][0]); Q.push_back(pnts[i  ][getNbV()-1][j+1][0]);
             Q.push_back(pnts[i+1][getNbV()-1][j+1][0]); Q.push_back(pnts[i+1][getNbV()-1][j  ][0]);
             Q.push_back(pnts[i  ][getNbV()-1][j  ][1]); Q.push_back(pnts[i  ][getNbV()-1][j+1][1]);
@@ -880,7 +876,7 @@ void GMSH_CutBoxPlugin::addInView( int connect, int boundary, int numsteps, int 
             }
           }
         }
-        
+
         for(int i = 0; i < getNbV()-1; ++i){
           for(int j = 0; j < getNbW()-1; ++j){
             Q.push_back(pnts[0][i  ][j  ][0]); Q.push_back(pnts[0][i  ][j+1][0]);
@@ -899,7 +895,7 @@ void GMSH_CutBoxPlugin::addInView( int connect, int boundary, int numsteps, int 
                 Q.push_back(vals[0][i+1][j+1][nbcomp*k+l]);
               for(int l = 0; l < nbcomp; ++l)
                 Q.push_back(vals[0][i+1][j  ][nbcomp*k+l]);
-            }          
+            }
             Q.push_back(pnts[getNbU()-1][i  ][j  ][0]); Q.push_back(pnts[getNbU()-1][i+1][j  ][0]);
             Q.push_back(pnts[getNbU()-1][i+1][j+1][0]); Q.push_back(pnts[getNbU()-1][i  ][j+1][0]);
             Q.push_back(pnts[getNbU()-1][i  ][j  ][1]); Q.push_back(pnts[getNbU()-1][i+1][j  ][1]);
@@ -918,12 +914,12 @@ void GMSH_CutBoxPlugin::addInView( int connect, int boundary, int numsteps, int 
                 Q.push_back(vals[getNbU()-1][i  ][j+1][nbcomp*k+l]);
             }
           }
-        }        
+        }
       }
-    }     
+    }
   }
 }
-    
+
 PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
 {
   if(getNbU() <= 0 || getNbV() <= 0 || getNbW() <= 0)
@@ -933,7 +929,7 @@ PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
 
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
- 
+
   OctreePost o(v1);
 
   int nbs = data1->getNumScalars();
@@ -941,7 +937,7 @@ PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
   int nbt = data1->getNumTensors();
   int maxcomp = nbt ? 9 : (nbv ? 3 : 1);
   int numsteps = data1->getNumTimeSteps();
-  
+
   double ****pnts = new double*** [getNbU()];
   double ****vals = new double*** [getNbU()];
   for(int i = 0; i < getNbU(); i++){
@@ -963,10 +959,10 @@ PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
       for(int j = 0; j < getNbV(); j++)
         for(int k = 0; k < getNbW(); k++)
           o.searchScalar(pnts[i][j][k][0], pnts[i][j][k][1], pnts[i][j][k][2], vals[i][j][k]);
-    addInView(connect, boundary, numsteps, 1, pnts, vals, data2->SP, &data2->NbSP, 
+    addInView(connect, boundary, numsteps, 1, pnts, vals, data2->SP, &data2->NbSP,
               data2->SL, &data2->NbSL, data2->SQ, &data2->NbSQ, data2->SH, &data2->NbSH);
   }
-  
+
   if(nbv){
     for(int i = 0; i < getNbU(); i++)
       for(int j = 0; j < getNbV(); j++)
@@ -975,13 +971,13 @@ PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
     addInView(connect, boundary, numsteps, 3, pnts, vals, data2->VP, &data2->NbVP,
               data2->VL, &data2->NbVL, data2->VQ, &data2->NbVQ, data2->VH, &data2->NbVH);
   }
-  
+
   if(nbt){
     for(int i = 0; i < getNbU(); i++)
       for(int j = 0; j < getNbV(); j++)
         for(int k = 0; k < getNbW(); k++)
           o.searchTensor(pnts[i][j][k][0], pnts[i][j][k][1], pnts[i][j][k][2], vals[i][j][k]);
-    addInView(connect, boundary, numsteps, 9, pnts, vals, data2->TP, &data2->NbTP, 
+    addInView(connect, boundary, numsteps, 9, pnts, vals, data2->TP, &data2->NbTP,
               data2->TL, &data2->NbTL, data2->TQ, &data2->NbTQ, data2->TH, &data2->NbTH);
   }
 
@@ -999,7 +995,7 @@ PView *GMSH_CutBoxPlugin::GenerateView(PView *v1, int connect, int boundary)
   }
   delete [] pnts;
   delete [] vals;
-  
+
   data2->setName(data1->getName() + "_CutBox");
   data2->setFileName(data1->getName() + "_CutBox.pos");
   data2->finalize();

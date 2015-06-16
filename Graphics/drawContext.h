@@ -115,6 +115,8 @@ class drawContext {
   std::set<PView*> _hiddenViews;
   GLuint _bgImageTexture, _bgImageW, _bgImageH;
   openglWindow *_openglWindow;
+  struct imgtex{ GLuint tex, w, h; };
+  std::map<std::string, imgtex> _imageTextures;
  public:
   Camera camera;
   double r[3]; // current Euler angles (in degrees!)
@@ -182,6 +184,9 @@ class drawContext {
   bool isVisible(PView *v){ return (_hiddenViews.find(v) == _hiddenViews.end()); }
   void createQuadricsAndDisplayLists();
   void invalidateQuadricsAndDisplayLists();
+  bool generateTextureForImage(const std::string &name, int page,
+                               GLuint &imageTexture, GLuint &imageW,
+                               GLuint &imageH);
   void invalidateBgImageTexture();
   void buildRotationMatrix();
   void setQuaternion(double p1x, double p1y, double p2x, double p2y);
@@ -222,12 +227,14 @@ class drawContext {
   void drawSmallAxes();
   void drawTrackball();
   void drawScales();
-  void drawString(const std::string &s, const std::string &font_name, int font_enum,
+  void drawString(const std::string &s, double x, double y, double z,
+                  const std::string &font_name, int font_enum,
                   int font_size, int align);
-  void drawString(const std::string &s);
-  void drawStringCenter(const std::string &s);
-  void drawStringRight(const std::string &s);
-  void drawString(const std::string &s, double style);
+  void drawString(const std::string &s, double x, double y, double z);
+  void drawStringCenter(const std::string &s, double x, double y, double z);
+  void drawStringRight(const std::string &s, double x, double y, double z);
+  void drawString(const std::string &s, double x, double y, double z, double style);
+  void drawImage(const std::string &s, double x, double y, double z);
   void drawSphere(double R, double x, double y, double z, int n1, int n2, int light);
   void drawEllipsoid(double x, double y, double z, float v0[3], float v1[3],
                      float v2[3], int light);

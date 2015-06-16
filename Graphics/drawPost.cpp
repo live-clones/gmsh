@@ -216,13 +216,15 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numCo
     if(v >= vmin && v <= vmax){
       unsigned int col = opt->getColor(v, vmin, vmax, false, opt->nbIso);
       glColor4ubv((GLubyte *) & col);
-      glRasterPos3d(pc.x(), pc.y(), pc.z());
       if(opt->centerGlyphs == 2)
-        ctx->drawStringRight(stringValue(numComp, d, v, opt->format.c_str()));
+        ctx->drawStringRight(stringValue(numComp, d, v, opt->format.c_str()),
+                             pc.x(), pc.y(), pc.z());
       else if(opt->centerGlyphs == 1)
-        ctx->drawStringCenter(stringValue(numComp, d, v, opt->format.c_str()));
+        ctx->drawStringCenter(stringValue(numComp, d, v, opt->format.c_str()),
+                              pc.x(), pc.y(), pc.z());
       else
-        ctx->drawString(stringValue(numComp, d, v, opt->format.c_str()));
+        ctx->drawString(stringValue(numComp, d, v, opt->format.c_str()),
+                        pc.x(), pc.y(), pc.z());
     }
   }
   else if(opt->glyphLocation == PViewOptions::Vertex){
@@ -231,13 +233,15 @@ static void drawNumberGlyphs(drawContext *ctx, PView *p, int numNodes, int numCo
       if(v >= vmin && v <= vmax){
         unsigned int col = opt->getColor(v, vmin, vmax, false, opt->nbIso);
         glColor4ubv((GLubyte *) & col);
-        glRasterPos3d(xyz[i][0], xyz[i][1], xyz[i][2]);
         if(opt->centerGlyphs == 2)
-          ctx->drawStringRight(stringValue(numComp, val[i], v, opt->format.c_str()));
+          ctx->drawStringRight(stringValue(numComp, val[i], v, opt->format.c_str()),
+                               xyz[i][0], xyz[i][1], xyz[i][2]);
         else if(opt->centerGlyphs == 1)
-          ctx->drawStringCenter(stringValue(numComp, val[i], v, opt->format.c_str()));
+          ctx->drawStringCenter(stringValue(numComp, val[i], v, opt->format.c_str()),
+                                xyz[i][0], xyz[i][1], xyz[i][2]);
         else
-          ctx->drawString(stringValue(numComp, val[i], v, opt->format.c_str()));
+          ctx->drawString(stringValue(numComp, val[i], v, opt->format.c_str()),
+                          xyz[i][0], xyz[i][1], xyz[i][2]);
       }
     }
   }
@@ -506,8 +510,7 @@ class drawPView {
         double x, y, z, style;
         std::string str;
         data->getString3D(i, opt->timeStep, str, x, y, z, style);
-        glRasterPos3d(x, y, z);
-        _ctx->drawString(str, style);
+        _ctx->drawString(str, x, y, z, style);
       }
     }
 

@@ -30,10 +30,10 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e,
       strcat(str, tmp);
     }
   }
-  glRasterPos3d(x + offset / ctx->s[0],
-                y + offset / ctx->s[1],
-                z + offset / ctx->s[2]);
-  ctx->drawString(str);
+  ctx->drawString(str,
+                  x + offset / ctx->s[0],
+                  y + offset / ctx->s[1],
+                  z + offset / ctx->s[2]);
 }
 
 class drawGVertex {

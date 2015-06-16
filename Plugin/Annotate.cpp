@@ -58,8 +58,7 @@ void GMSH_AnnotatePlugin::draw(void *context)
 
   glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
   if(AnnotateOptions_Number[3].def){ // 3D
-    glRasterPos3d(X, Y, Z);
-    ctx->drawString(AnnotateOptions_String[0].def, style);
+    ctx->drawString(AnnotateOptions_String[0].def, X, Y, Z, style);
     // draw 10-pixel marker
     double d = 10 * ctx->pixel_equiv_x / ctx->s[0];
     glBegin(GL_LINES);
@@ -80,8 +79,7 @@ void GMSH_AnnotatePlugin::draw(void *context)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     ctx->fix2dCoordinates(&X, &Y);
-    glRasterPos2d(X, Y);
-    ctx->drawString(AnnotateOptions_String[0].def, style);
+    ctx->drawString(AnnotateOptions_String[0].def, X, Y, 0., style);
     // draw 10-pixel marker
     glBegin(GL_LINES);
     glVertex2d(X-10,Y); glVertex2d(X+10,Y);
@@ -123,8 +121,8 @@ double GMSH_AnnotatePlugin::callbackX(int num, int action, double value)
   // not perfect: the change will only take place if we reopen the dialog...
   int dim3 = (int)AnnotateOptions_Number[3].def;
   return callback(num, action, value, &AnnotateOptions_Number[0].def,
-                  dim3 ? CTX::instance()->lc/200. : 0.5, 
-                  dim3 ? -CTX::instance()->lc : -100., 
+                  dim3 ? CTX::instance()->lc/200. : 0.5,
+                  dim3 ? -CTX::instance()->lc : -100.,
                   dim3 ? CTX::instance()->lc : 100000.);
 }
 
@@ -133,8 +131,8 @@ double GMSH_AnnotatePlugin::callbackY(int num, int action, double value)
   // not perfect: the change will only take place if we reopen the dialog...
   int dim3 = (int)AnnotateOptions_Number[3].def;
   return callback(num, action, value, &AnnotateOptions_Number[1].def,
-                  dim3 ? CTX::instance()->lc/200. : 0.5, 
-                  dim3 ? -CTX::instance()->lc : -100., 
+                  dim3 ? CTX::instance()->lc/200. : 0.5,
+                  dim3 ? -CTX::instance()->lc : -100.,
                   dim3 ? CTX::instance()->lc : 100000.);
 }
 
@@ -143,8 +141,8 @@ double GMSH_AnnotatePlugin::callbackZ(int num, int action, double value)
   // not perfect: the change will only take place if we reopen the dialog...
   int dim3 = (int)AnnotateOptions_Number[3].def;
   return callback(num, action, value, &AnnotateOptions_Number[2].def,
-                  dim3 ? CTX::instance()->lc/200. : 0.5, 
-                  dim3 ? -CTX::instance()->lc : -100., 
+                  dim3 ? CTX::instance()->lc/200. : 0.5,
+                  dim3 ? -CTX::instance()->lc : -100.,
                   dim3 ? CTX::instance()->lc : 100000.);
 }
 
@@ -223,7 +221,7 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
   PView *v1 = getView(iView, v);
   if(!v1) return v;
   PViewData *data1 = v1->getData();
-  
+
   PView *v2 = v1;
   PViewDataList *data2 = getDataList(v2, false);
   if(!data2){
@@ -235,9 +233,9 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
     data2->T3D.push_back(X);
     data2->T3D.push_back(Y);
     data2->T3D.push_back(Z);
-    data2->T3D.push_back(style); 
-    data2->T3D.push_back(data2->T3C.size()); 
-    for(unsigned int i = 0; i < text.size(); i++) 
+    data2->T3D.push_back(style);
+    data2->T3D.push_back(data2->T3C.size());
+    for(unsigned int i = 0; i < text.size(); i++)
       data2->T3C.push_back(text[i]);
     data2->T3C.push_back('\0');
     data2->NbT3++;
@@ -245,9 +243,9 @@ PView *GMSH_AnnotatePlugin::execute(PView *v)
   else{
     data2->T2D.push_back(X);
     data2->T2D.push_back(Y);
-    data2->T2D.push_back(style); 
-    data2->T2D.push_back(data2->T2C.size()); 
-    for(unsigned int i = 0; i < text.size(); i++) 
+    data2->T2D.push_back(style);
+    data2->T2D.push_back(data2->T2C.size());
+    for(unsigned int i = 0; i < text.size(); i++)
       data2->T2C.push_back(text[i]);
     data2->T2C.push_back('\0');
     data2->NbT2++;

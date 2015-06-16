@@ -60,8 +60,7 @@ static void drawElementLabels(drawContext *ctx, GEntity *e,
         sprintf(str, "%d", e->tag());
       else
         sprintf(str, "%d", ele->getNum());
-      glRasterPos3d(pc.x(), pc.y(), pc.z());
-      ctx->drawString(str);
+      ctx->drawString(str, pc.x(), pc.y(), pc.z());
     }
   }
 }
@@ -135,10 +134,9 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
   }
   double offset = (0.5 * CTX::instance()->mesh.pointSize +
                    0.1 * CTX::instance()->glFontSize) * ctx->pixel_equiv_x;
-  glRasterPos3d(v->x() + offset / ctx->s[0],
-                v->y() + offset / ctx->s[1],
-                v->z() + offset / ctx->s[2]);
-  ctx->drawString(str);
+  ctx->drawString(str, v->x() + offset / ctx->s[0],
+                  v->y() + offset / ctx->s[1],
+                  v->z() + offset / ctx->s[2]);
 }
 
 static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)

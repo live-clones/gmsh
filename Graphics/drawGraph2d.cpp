@@ -36,14 +36,21 @@ void drawContext::drawText2d()
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
     if(opt->visible && opt->drawStrings && isVisible(PView::list[i])){
+      if(render_mode == drawContext::GMSH_SELECT){
+        glPushName(5);
+        glPushName(PView::list[i]->getIndex());
+      }
       glColor4ubv((GLubyte *) & opt->color.text2d);
       for(int j = 0; j < data->getNumStrings2D(); j++){
         double x, y, style;
         std::string str;
         data->getString2D(j, opt->timeStep, str, x, y, style);
         fix2dCoordinates(&x, &y);
-        glRasterPos2d(x, y);
-        drawString(str, style);
+        drawString(str, x, y, 0., style);
+      }
+      if(render_mode == drawContext::GMSH_SELECT){
+        glPopName();
+        glPopName();
       }
     }
   }
@@ -286,16 +293,16 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
   }
   if(opt->scaleType == PViewOptions::Logarithmic)
     label = "Log10 " + label;
-  glRasterPos2d(xleft + (overlay ? width : 0), ytop + font_h + tic);
-  ctx->drawString(label,CTX::instance()->glFontTitle,
+  ctx->drawString(label, xleft + (overlay ? width : 0), ytop + font_h + tic, 0,
+                  CTX::instance()->glFontTitle,
                   CTX::instance()->glFontEnumTitle,
                   CTX::instance()->glFontSizeTitle, 1);
 
   // x label
   label = opt->axesLabel[0];
-  glRasterPos2d(xleft + width / 2,
-                ytop - height - 2 * font_h - 2 * tic - overlay * (font_h + tic));
-  ctx->drawString(label,CTX::instance()->glFontTitle,
+  ctx->drawString(label, xleft + width / 2,
+                  ytop - height - 2 * font_h - 2 * tic - overlay * (font_h + tic), 0,
+                  CTX::instance()->glFontTitle,
                   CTX::instance()->glFontEnumTitle,
                   CTX::instance()->glFontSizeTitle, 1);
 
@@ -334,12 +341,10 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
         sprintf(tmp, opt->format.c_str(), (i == nb) ? opt->tmpMin :
                 (opt->tmpMax - i * dv));
         if(!overlay){
-          glRasterPos2d(xleft - 2 * tic, ytop - i * dy - font_a / 3.);
-          ctx->drawStringRight(tmp);
+          ctx->drawStringRight(tmp, xleft - 2 * tic, ytop - i * dy - font_a / 3., 0.);
         }
         else{
-          glRasterPos2d(xleft + width + 2 * tic, ytop - i * dy - font_a / 3.);
-          ctx->drawString(tmp);
+          ctx->drawString(tmp, xleft + width + 2 * tic, ytop - i * dy - font_a / 3., 0.);
         }
       }
     }
@@ -388,9 +393,8 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
         else
           sprintf(tmp, opt->axesFormat[0].c_str(),
                   xmin + i * (xmax - xmin) / (double)(nb - 1));
-        glRasterPos2d(xleft + i * dx,
-                      ybot - font_h - tic - overlay * (font_h + tic));
-        ctx->drawStringCenter(tmp);
+        ctx->drawStringCenter(tmp, xleft + i * dx,
+                              ybot - font_h - tic - overlay * (font_h + tic), 0.);
       }
     }
   }
@@ -448,10 +452,9 @@ static void addGraphPoint(drawContext *ctx, PView *p, double xleft, double ytop,
     if(numeric){
       double offset = 3;
       if(inModelCoordinates) offset *= ctx->pixel_equiv_x / ctx->s[0];
-      glRasterPos2d(px + offset, py + offset);
       char label[256];
       sprintf(label, opt->format.c_str(), y);
-      ctx->drawString(label);
+      ctx->drawString(label, px + offset, py + offset, 0.);
     }
     else if(singlePoint && (opt->pointType == 1 || opt->pointType == 3)){
       double ps = CTX::instance()->pointSize;

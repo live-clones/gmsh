@@ -32,8 +32,7 @@ static int drawTics(drawContext *ctx, int comp, double n, std::string &format,
   double w2 = w * 1.25; // distance to labels
 
   // draw label at the end of the axis
-  glRasterPos3d(p2[0] + t[0] * w2, p2[1] + t[1] * w2, p2[2] + t[2] * w2);
-  ctx->drawString(label);
+  ctx->drawString(label, p2[0] + t[0] * w2, p2[1] + t[1] * w2, p2[2] + t[2] * w2);
 
   // return number of tics in special cases
   if(n < 2.) return 0;
@@ -105,8 +104,7 @@ static int drawTics(drawContext *ctx, int comp, double n, std::string &format,
     else if(winr[1] < winp[1]) // top align
       winr[1] -= drawContext::global()->getStringHeight();
     ctx->viewport2World(winr, r);
-    glRasterPos3d(r[0], r[1], r[2]);
-    ctx->drawString(tmp);
+    ctx->drawString(tmp, r[0], r[1], r[2]);
   }
 
   return n;
@@ -381,7 +379,7 @@ void drawContext::drawSmallAxes()
     zx = l * fvViewMatrix[8];
     zy = l * fvViewMatrix[9];
     ///
-    
+
     ///
   }
   else{
@@ -405,10 +403,7 @@ void drawContext::drawSmallAxes()
   glVertex2d(cx, cy);
   glVertex2d(cx + zx, cy + zy);
   glEnd();
-  glRasterPos2d(cx + xx + o, cy + xy + o);
-  drawString("X");
-  glRasterPos2d(cx + yx + o, cy + yy + o);
-  drawString("Y");
-  glRasterPos2d(cx + zx + o, cy + zy + o);
-  drawString("Z");
+  drawString("X", cx + xx + o, cy + xy + o, 0.);
+  drawString("Y", cx + yx + o, cy + yy + o, 0.);
+  drawString("Z", cx + zx + o, cy + zy + o, 0.);
 }
