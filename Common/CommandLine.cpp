@@ -572,7 +572,7 @@ void GetOptions(int argc, char *argv[])
             i++; j++;
           }
           if(j < s)
-            Message::Error("Missing values in list (got %d instead of %d)", j, s);
+            Msg::Error("Missing values in list (got %d instead of %d)", j, s);
           gmsh_yysymbols[n].value = v;
           Msg::GetCommandLineNumbers()[n] = v;
 	}
