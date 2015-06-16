@@ -564,12 +564,15 @@ void GetOptions(int argc, char *argv[])
         i++;
 	if (i + 1 < argc && argv[i][0] != '-') {
           std::string n(argv[i]);
-          std::vector<double> v(1, atof(argv[i + 1]));
+          std::vector<double> v;
+          int s = atoi(argv[i + 1]), j = 0;
           i += 2;
-          while(i < argc && argv[i][0] != '-'){
+          while(j < s && i < argc){
             v.push_back(atof(argv[i]));
-            i++;
+            i++; j++;
           }
+          if(j < s)
+            Message::Error("Missing values in list (got %d instead of %d)", j, s);
           gmsh_yysymbols[n].value = v;
           Msg::GetCommandLineNumbers()[n] = v;
 	}
