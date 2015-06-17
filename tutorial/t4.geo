@@ -90,7 +90,17 @@ View "comments" {
 
   // Add a text string in model coordinates at (X,Y,Z) = (0, 0.11, 0):
   T3(0, 0.11, 0, 0){ "Hole" };
+
+  // If a string starts with `file://', the rest is interpreted as an image
+  // file, whose size and orientation can be specified after a `@' symbol:
+  T3(-0.01, 0.09, 0, 0){ "file://image.png@0.02x0" };
+  T2(195, -7, 0){ "file://image.png@20x0" };
 };
+
+// Views and geometrical entities can be made to respond to double-click events:
+View[0].DoubleClickedCommand = "Printf('View[0] has been double-clicked!');";
+Geometry.DoubleClickedLineCommand = "Printf('Line %g has been double-clicked!',
+  Geometry.DoubleClickedEntityTag);";
 
 Color Grey50{ Surface{ 22 }; }
 Color Purple{ Surface{ 24 }; }
