@@ -89,7 +89,7 @@ View "comments" {
   // If a string starts with `file://', the rest is interpreted as an image
   // file, whose size and orientation can be specified after a `@' symbol:
   T3(-0.01, 0.09, 0, 0){ "file://image.png@0.02x0" };
-  T3(-0.01, 0.09, 0, 0){ "file://image.png@0.02x0,0,1,0,0,0,1" };
+  T3(-0.01, 0.09, 0, 0){ "file://image.png@0.02x0,0,0,1,0,1,0" };
   T2(350, -7, 0){ "file://image.png@20x0" };
 };
 
