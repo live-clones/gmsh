@@ -1141,9 +1141,10 @@ Character expressions are defined as:
 @end example
 
 @code{Today} returns the current date. @code{OnelabAction} returns the
-current ONELAB action. @code{GmshExecutableName} returns the full path
-of the Gmsh executable.  @code{CurrentDirectory} and @code{CurrentDir}
-return the directory of the @code{.geo} file.  @code{StrPrefix} and
+current ONELAB action (e.g. @code{check} or
+@code{compute}). @code{GmshExecutableName} returns the full path of the
+Gmsh executable.  @code{CurrentDirectory} and @code{CurrentDir} return
+the directory of the @code{.geo} file.  @code{StrPrefix} and
 @code{StrRelative} permit to take the prefix (e.g. to remove the
 extension) or the relative path of a file name. @code{StrCat} and
 @code{Str} permit to concatenate character expressions (@code{Str} adds
@@ -3318,7 +3319,15 @@ world) coordinates.  The fourth @var{expression} has the same meaning as the
 third @var{expression} in 2D text objects.
 
 For both 2D and 3D text objects, the @var{list-of-values} can contain an
-arbitrary number of @w{@var{char-expression}s}.
+arbitrary number of @w{@var{char-expression}s}. If the
+@var{char-expression} starts with @code{file://}, the remainder of the
+string is interpreted as the name of an image file, and the image is
+displayed instead of the string. A format string in the form
+@code{@@wxh} or @code{@@wxh,wx,wy,wz,hx,hy,hz}, where @code{w} and
+@code{h} are the width and height (in model coordinates for @code{T3} or
+in pixels for @code{T2}) of the image, @code{wx,wy,wz} is the direction
+of the bottom edge of the image and @code{hx,hy,hz} is the direction of
+the left edge of the image.
 
 The optional @code{TIME} list can contain a list of expressions giving the
 value of the time (or any other variable) for which an evolution was saved.

@@ -18,6 +18,7 @@
 #include "PViewOptions.h"
 #include "VertexArray.h"
 #include "StringUtils.h"
+#include "OS.h"
 #include "gl2ps.h"
 
 #if defined(HAVE_FLTK)
@@ -381,6 +382,11 @@ bool drawContext::generateTextureForImage(const std::string &name, int page,
                                           GLuint &imageTexture, GLuint &imageW,
                                           GLuint &imageH)
 {
+  if(StatFile(name)){
+    Msg::Warning("Could not open file `%s'", name.c_str());
+    return false;
+  }
+
   std::string ext = SplitFileName(name)[2];
   if(ext == ".pdf" || ext == ".PDF"){
 #if defined(HAVE_POPPLER)
