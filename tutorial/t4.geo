@@ -80,21 +80,17 @@ Plane Surface(24) = {23,21};
 
 View "comments" {
   // Add a text string in window coordinates, 10 pixels from the left and 10
-  // pixels from the bottom:
-  T2(10, -10, 0){ "Copyright (C) My Company" };
+  // pixels from the bottom, using the StrCat function to concatenate strings:
+  T2(10, -10, 0){ StrCat("Created on ", Today, " with Gmsh") };
 
-  // Add another text string in window coordinates, 10 pixels from the left and
-  // 15 pixels from the top, using the StrCat() function to concatenate a string
-  // with the current date:
-  T2(10, 15, 0){ StrCat("File created on ", Today) };
-
-  // Add a text string in model coordinates at (X,Y,Z) = (0, 0.11, 0):
-  T3(0, 0.11, 0, 0){ "Hole" };
+  // Add a text string in model coordinates centered at (X,Y,Z) = (0, 0.11, 0):
+  T3(0, 0.11, 0, TextAttributes("Align", "Center", "Font", "Helvetica")){ "Hole" };
 
   // If a string starts with `file://', the rest is interpreted as an image
   // file, whose size and orientation can be specified after a `@' symbol:
   T3(-0.01, 0.09, 0, 0){ "file://image.png@0.02x0" };
-  T2(195, -7, 0){ "file://image.png@20x0" };
+  T3(-0.01, 0.09, 0, 0){ "file://image.png@0.02x0,0,1,0,0,0,1" };
+  T2(350, -7, 0){ "file://image.png@20x0" };
 };
 
 // Views and geometrical entities can be made to respond to double-click events:
