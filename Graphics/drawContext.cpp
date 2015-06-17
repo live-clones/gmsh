@@ -1046,7 +1046,7 @@ bool drawContext::select(int type, bool multiple, bool mesh,
       case 5:
         {
           int tag = hits[i].ient;
-          if(tag >= 0 && tag < PView::list.size())
+          if(tag >= 0 && tag < (int)PView::list.size())
             views.push_back(PView::list[tag]);
           if(!multiple) return true;
         }

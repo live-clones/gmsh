@@ -135,17 +135,29 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
 
 void drawContext::drawImage(const std::string &name, double x, double y, double z)
 {
-  std::string file = name;
-  int scaling = file.find_last_of("@");
-  if(scaling != std::string::npos)
-    file = file.substr(0, file.size() - scaling - 1);
-
-  printf("drawing image %s x=%g y=%g z=%g!\n", name.c_str(), x, y, z);
+  // format can be "@wxh" or "@wxh,wx,wy,wz,hx,hy,hz", where w and h are the
+  // width and height (in model coordinates for T3 or in pixels for T2) of the
+  // image, wx,wy,wz is direction of the bottom edge of the image and hx,hy,hz
+  // is the direction of the left edge of the image.
+  size_t p = name.find_last_of("@");
+  std::string file = name, format;
+  if(p != std::string::npos){
+    format = name.substr(p + 1);
+    file = name.substr(0, p);
+  }
+  double w = 0., h = 0., wx = 1., wy = 0., wz = 0., hx = 0., hy = 0., hz = 0.;
+  if(format.size()){
+    bool ok;
+    if(format.find(",") != std::string::npos)
+      ok = (sscanf(format.c_str(), "%lfx%lf,%lf,%lf,%lf,%lf,%lf,%lf",
+                   &w, &h, &wx, &wy, &wz, &hx, &hy, &hz) == 8);
+    else
+      ok = (sscanf(format.c_str(), "%lfx%lf", &w, &h) == 2);
+    if(!ok)
+      Msg::Warning("Bad image format: use `@wxh' or `@wxh,wx,wy,wz,hx,hy,hz'");
+  }
 
   imgtex *img;
-  double w = 0.;
-  double h = 0.;
-
   if(!_imageTextures.count(file)){
     img = &_imageTextures[file];
     file = FixRelativePath(GModel::current()->getFileName(), file);
@@ -157,7 +169,6 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
   else{
     img = &_imageTextures[file];
   }
-
   if(!img->tex){
     Msg::Error("No texture for image");
     return;
@@ -174,18 +185,15 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
     w = h * img->w / img->h;
   }
 
-  //w=0.4;
-  //h=0.1;
-
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, img->tex);
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
   glBegin(GL_QUADS);
-  glTexCoord2f(1.0f, 1.0f); glVertex3d(x+w, y, z);
-  glTexCoord2f(1.0f, 0.0f); glVertex3d(x+w, y+h, z);
-  glTexCoord2f(0.0f, 0.0f); glVertex3d(x, y+h, z);
+  glTexCoord2f(1.0f, 1.0f); glVertex3d(x+wx*w, y+wy*w, z+wz*w);
+  glTexCoord2f(1.0f, 0.0f); glVertex3d(x+wx*w+hx*h, y+wy*w+hy*h, z+wz*w+hz*h);
+  glTexCoord2f(0.0f, 0.0f); glVertex3d(x+hx*h, y+hy*h, z+hz*h);
   glTexCoord2f(0.0f, 1.0f); glVertex3d(x, y, z);
   glEnd();
   glDisable(GL_TEXTURE_2D);
