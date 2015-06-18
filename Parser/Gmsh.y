@@ -2649,7 +2649,7 @@ Delete :
 #endif
       Free($2);
     }
-  | tDelete StringIndex tEND
+  | tDelete String__Index tEND
     {
       if(!strcmp($2, "Meshes") || !strcmp($2, "All")){
         ClearProject();
