@@ -267,7 +267,7 @@ class GEntity {
 
   // returns the master entity (for mesh)
   GEntity* meshMaster() const;
-  virtual void setMeshMaster(GEntity*);
+  void setMeshMaster(GEntity*);
   
   void setMeshMaster(GEntity*,const std::vector<double>&);
 
