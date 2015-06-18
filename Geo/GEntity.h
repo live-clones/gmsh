@@ -269,7 +269,7 @@ class GEntity {
   GEntity* meshMaster() const;
   virtual void setMeshMaster(GEntity*);
   
-  virtual void setMeshMaster(GEntity*,const std::vector<double>&);
+  void setMeshMaster(GEntity*,const std::vector<double>&);
 
   // get the bounding box
   virtual SBoundingBox3d bounds() const { return SBoundingBox3d(); }

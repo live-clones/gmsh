@@ -26,6 +26,7 @@ class closestPointFinder;
 
 // A model edge.
 class GEdge : public GEntity {
+
   
  private:
   double _length;
@@ -57,10 +58,10 @@ class GEdge : public GEntity {
   int masterOrientation;
 
   // specify mesh master with transformation, deduce edgeCounterparts
-  virtual void setMeshMaster(GEdge* master,const std::vector<double>&);
+  void setMeshMaster(GEdge* master,const std::vector<double>&);
 
   // specify mesh master and edgeCounterparts, deduce transformation
-  virtual void setMeshMaster(GEdge* master,int sign);
+  void setMeshMaster(GEdge* master,int sign);
   
   void reverse();
 

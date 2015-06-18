@@ -59,10 +59,10 @@ class GFace : public GEntity
   std::map<GEdge*,std::pair<GEdge*,int> > edgeCounterparts;
   
   // specify mesh master with transformation, deduce edgeCounterparts
-  virtual void setMeshMaster(GFace* master,const std::vector<double>&);
+  void setMeshMaster(GFace* master,const std::vector<double>&);
 
   // specify mesh master and edgeCounterparts, deduce transformation
-  virtual void setMeshMaster(GFace* master,const std::map<int,int>&);
+  void setMeshMaster(GFace* master,const std::map<int,int>&);
   
   // an array with additional vertices that are supposed to exist in
   // the final mesh of the model face. This can be used for boundary

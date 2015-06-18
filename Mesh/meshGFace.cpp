@@ -220,9 +220,6 @@ public:
 
 static void copyMesh(GFace *source, GFace *target)
 {
-  
-#warning periodic face mesh does not take embedded vertices/edges into account
-
   std::map<MVertex*, MVertex*> vs2vt;
       
   // add principal vertex pairs
