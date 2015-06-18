@@ -5,6 +5,7 @@
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 #include <sstream>
+#include <map>
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
@@ -89,6 +90,11 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer);
 void PrintParserSymbols(std::vector<std::string> &vec);
 fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 
+void addPeriodicEdge(int,int,const std::vector<double>&);
+void addPeriodicFace(int,int,const std::map<int,int>&);
+void addPeriodicFace(int,int,const std::vector<double>&);
+void computeAffineTransformation(SPoint3&,SPoint3&,double,SPoint3&,std::vector<double>&);
+
 struct doubleXstring{
   double d;
   char *s;
@@ -124,9 +130,10 @@ struct doubleXstring{
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tDefineNumber tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
+%token tLines tSurfaces
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh
-%token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
+%token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic tTransform
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
 %token tRecombine tSmoother tSplit tDelete tCoherence
@@ -4019,99 +4026,201 @@ Constraints :
   | tSmoother tSurface ListOfDouble tAFFECT FExpr tEND
     {
       for(int i = 0; i < List_Nbr($3); i++){
-	double d;
-	List_Read($3, i, &d);
-	int j = (int)d;
-	Surface *s = FindSurface(j);
-	if(s){
-          s->TransfiniteSmoothing = (int)$5;
-        }
-        else{
-	  GFace *gf = GModel::current()->getFaceByTag(j);
-	  if(gf)
-            gf->meshAttributes.transfiniteSmoothing = (int)$5;
-          else
-	    yymsg(1, "Unknown surface %d", (int)$5);
-        }
+				double d;
+				List_Read($3, i, &d);
+				int j = (int)d;
+				Surface *s = FindSurface(j);
+				if(s){
+					s->TransfiniteSmoothing = (int)$5;
+				}
+				else{
+					GFace *gf = GModel::current()->getFaceByTag(j);
+					if(gf)
+						gf->meshAttributes.transfiniteSmoothing = (int)$5;
+					else
+						yymsg(1, "Unknown surface %d", (int)$5);
+				}
       }
       List_Delete($3);
     }
-  | tPeriodic tLine ListOfDouble tAFFECT ListOfDouble tEND
-    {
-      if(List_Nbr($5) != List_Nbr($3)){
-	yymsg(0, "Number of master (%d) different from number of slave (%d) lines",
-              List_Nbr($5), List_Nbr($3));
-      }
-      else{
-        for(int i = 0; i < List_Nbr($3); i++){
-          double d_master, d_slave;
-          List_Read($5, i, &d_master);
-          List_Read($3, i, &d_slave);
-          int j_master = (int)d_master;
-          int j_slave  = (int)d_slave;
-          Curve *c_slave = FindCurve(abs(j_slave));
-          if(c_slave){
-	    GModel::current()->getGEOInternals()->periodicEdges[j_slave] = j_master;
-          }
-          else{
-            GEdge *ge = GModel::current()->getEdgeByTag(abs(j_slave));
-            if(ge) ge->setMeshMaster(j_master);
-            else yymsg(0, "Unknown line %d", j_slave);
-          }
-        }
-      }
-      List_Delete($3);
-      List_Delete($5);
-    }
-  | tPeriodic tSurface FExpr '{' RecursiveListOfDouble '}' tAFFECT FExpr
-    '{' RecursiveListOfDouble '}'  PeriodicTransform tEND
-    {
-      if (List_Nbr($5) != List_Nbr($10)){
-	yymsg(0, "Number of master surface edges (%d) different from number of "
-              "slave (%d) edges", List_Nbr($10), List_Nbr($5));
-      }
-      else{
-        int j_master = (int)$8;
-        int j_slave = (int)$3;
-        Surface *s_slave = FindSurface(abs(j_slave));
-	std::vector<double> transfo;
-	for(int i = 0; i < List_Nbr($12); i++){
-	  double d;
-	  List_Read($12, i, &d);
-	  transfo.push_back(d);
+  | tPeriodic tLine '{' RecursiveListOfDouble '}' tAFFECT '{' RecursiveListOfDouble '}' tTransform PeriodicTransform tEND
+	{
+		if (List_Nbr($4) != List_Nbr($8)){
+			yymsg(0, "Number of master lines (%d) different from number of "
+						"slaves (%d) ", List_Nbr($8), List_Nbr($4));
+		}
+		else{
+			if (List_Nbr($11) < 12){
+				yymsg(0, "Affine transformation requires at least 12 entries");
+			}
+			else {
+				
+				std::vector<double> transfo(16,0);
+				for(int i = 0; i < List_Nbr($11); i++) List_Read($11, i, &transfo[i]);
+				
+				for(int i = 0; i < List_Nbr($4); i++){ 
+					double d_master, d_slave;
+					List_Read($8, i, &d_master);
+					List_Read($4, i, &d_slave);
+					int j_master = (int)d_master;
+					int j_slave  = (int)d_slave;
+					
+					addPeriodicEdge(j_slave,j_master,transfo);
+				}
+			}
+		}	
+		List_Delete($8);
+		List_Delete($4);
 	}
-        if(s_slave){
-	  GModel::current()->getGEOInternals()->periodicFaces[j_slave] = j_master;
-          for (int i = 0; i < List_Nbr($5); i++){
-            double dm, ds;
-            List_Read($5, i, &ds);
-            List_Read($10, i, &dm);
-	    GModel::current()->getGEOInternals()->periodicEdges[(int)ds] = (int)dm;
-            s_slave->edgeCounterparts[(int)ds] = (int)dm;
-            s_slave->affineTransform = transfo;
-          }
-        }
-        else{
-          GFace *gf = GModel::current()->getFaceByTag(abs(j_slave));
-          if(gf){
-            gf->setMeshMaster(j_master);
-            for (int i = 0; i < List_Nbr($5); i++){
-              double dm, ds;
-              List_Read($5, i, &ds);
-              List_Read($10, i, &dm);
-              gf->edgeCounterparts[(int)ds] = (int)dm;
-	      gf->affineTransform = transfo;
-	      GEdge *ges = GModel::current()->getEdgeByTag(abs((int)ds));
-	      ges->setMeshMaster((int)dm);
-            }
-          }
-          else yymsg(0, "Unknown surface %d", j_slave);
-        }
-      }
-      List_Delete($5);
-      List_Delete($10);
-      List_Delete($12);
-    }
+  | tPeriodic tSurface '{' RecursiveListOfDouble '}' tAFFECT '{' RecursiveListOfDouble '}'  tTransform PeriodicTransform tEND
+	{
+		if (List_Nbr($4) != List_Nbr($8)){
+			yymsg(0, "Number of master faces (%d) different from number of "
+						"slaves (%d) ", List_Nbr($8), List_Nbr($4));
+		}
+		else{
+			if (List_Nbr($11) < 12){
+				yymsg(0, "Affine transformation requires at least 12 entries");
+			}
+			else {
+				std::vector<double> transfo(16,0);
+				for(int i = 0; i < List_Nbr($11); i++) List_Read($11, i, &transfo[i]);
+				
+				for(int i = 0; i < List_Nbr($4); i++){ 
+					double d_master, d_slave;
+					List_Read($8, i, &d_master);
+					List_Read($4, i, &d_slave);
+					addPeriodicFace(d_slave,d_master,transfo);
+				}
+			}
+		}
+		List_Delete($4);
+		List_Delete($8);
+	}
+  | tPeriodic tLine '{' RecursiveListOfDouble '}' tAFFECT '{' RecursiveListOfDouble '}' tRotate '{' VExpr ',' VExpr ',' FExpr '}' tEND
+	{		
+		if (List_Nbr($4) != List_Nbr($8)){
+			yymsg(0, "Number of master edges (%d) different from number of "
+						"slaves (%d) ", List_Nbr($8), List_Nbr($4));
+		}
+		else{
+			SPoint3 origin($12[0],$12[1],$12[2]);
+			SPoint3 axis($14[0],$14[1],$14[2]);
+			double  angle($16);
+			SPoint3 translation(0,0,0);
+			
+			std::vector<double> transfo;
+			computeAffineTransformation(origin,axis,angle,translation,transfo);
+			
+			for(int i = 0; i < List_Nbr($4); i++){ 
+				double d_master, d_slave;
+				List_Read($8, i, &d_master);
+				List_Read($4, i, &d_slave);
+				addPeriodicEdge(d_slave,d_master,transfo);
+			}
+		}
+		List_Delete($4);
+		List_Delete($8);
+	}
+  | tPeriodic tSurface '{' RecursiveListOfDouble '}' tAFFECT '{' RecursiveListOfDouble '}' tRotate '{' VExpr ',' VExpr ',' FExpr '}' tEND
+	{
+		if (List_Nbr($4) != List_Nbr($8)){
+			yymsg(0, "Number of master faces (%d) different from number of "
+						"slaves (%d) ", List_Nbr($8), List_Nbr($4));
+		}
+		else{
+				
+			SPoint3 origin($12[0],$12[1],$12[2]);
+			SPoint3 axis($14[0],$14[1],$14[2]);
+			double  angle($16);
+			SPoint3 translation(0,0,0);
+			
+			std::vector<double> transfo;
+			computeAffineTransformation(origin,axis,angle,translation,transfo);
+			
+			for(int i = 0; i < List_Nbr($4); i++){ 
+				double d_master, d_slave;
+				List_Read($8, i, &d_master);
+				List_Read($4, i, &d_slave);
+				addPeriodicFace(d_slave,d_master,transfo);
+			}
+		}
+		List_Delete($4);
+		List_Delete($8);
+	}
+  | tPeriodic tLine '{' RecursiveListOfDouble '}' tAFFECT '{' RecursiveListOfDouble '}' tTranslate VExpr tEND
+	{		
+		if (List_Nbr($4) != List_Nbr($8)){
+			yymsg(0, "Number of master edges (%d) different from number of "
+						"slaves (%d) ", List_Nbr($8), List_Nbr($4));
+		}
+		else{
+			SPoint3 origin(0,0,0);
+			SPoint3 axis(0,0,0);
+			double  angle(0);
+			SPoint3 translation($11[0],$11[1],$11[2]);
+			
+			std::vector<double> transfo;
+			computeAffineTransformation(origin,axis,angle,translation,transfo);
+			
+			for(int i = 0; i < List_Nbr($4); i++){ 
+				double d_master, d_slave;
+				List_Read($8, i, &d_master);
+				List_Read($4, i, &d_slave);
+				addPeriodicEdge(d_slave,d_master,transfo);
+			}
+		}
+		List_Delete($4);
+		List_Delete($8);
+	}
+  | tPeriodic tSurface '{' RecursiveListOfDouble '}' tAFFECT '{' RecursiveListOfDouble '}' tTranslate VExpr tEND
+	{
+		if (List_Nbr($4) != List_Nbr($8)){
+			yymsg(0, "Number of master faces (%d) different from number of "
+						"slaves (%d) ", List_Nbr($8), List_Nbr($4));
+		}
+		else{
+			SPoint3 origin(0,0,0);
+			SPoint3 axis(0,0,0);
+			double  angle(0);
+			SPoint3 translation($11[0],$11[1],$11[2]);
+			
+			std::vector<double> transfo;
+			computeAffineTransformation(origin,axis,angle,translation,transfo);
+			
+			for(int i = 0; i < List_Nbr($4); i++){ 
+				double d_master, d_slave;
+				List_Read($8, i, &d_master);
+				List_Read($4, i, &d_slave);
+				addPeriodicFace(d_slave,d_master,transfo);
+			}
+		}
+		List_Delete($4);
+		List_Delete($8);
+	}
+  | tPeriodic tSurface FExpr '{' RecursiveListOfDouble '}' tAFFECT FExpr '{' RecursiveListOfDouble '}' tEND
+	{
+		if (List_Nbr($5) != List_Nbr($10)){
+			yymsg(0, "Number of master surface edges (%d) different from number of "
+						"slave (%d) edges", List_Nbr($10), List_Nbr($5));
+		}
+		else{
+			int j_master = (int)$8;
+			int j_slave = (int)$3;
+			
+			std::map<int,int> edgeCounterParts;
+			for (int i = 0; i < List_Nbr($5); i++){
+				double ds,dm;
+				List_Read($5,i,&ds);
+				List_Read($10,i,&dm);
+				edgeCounterParts[(int) ds] = (int) dm;
+				std::cout << "edge " << ds << " to " << dm << std::endl;
+			}
+			addPeriodicFace(j_slave,j_master,edgeCounterParts);
+		}
+		List_Delete($5);
+		List_Delete($10);
+	}
   | tPoint '{' RecursiveListOfDouble '}' tIn tSurface '{' FExpr '}' tEND
     {
       Surface *s = FindSurface((int)$8);
@@ -5881,4 +5990,125 @@ void yymsg(int level, const char *fmt, ...)
   else{
     Msg::Warning("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
   }
+}
+
+
+void addPeriodicFace(int iTarget,int iSource,
+										 const std::vector<double>& affineTransform) {
+	
+	Surface *target = FindSurface(abs(iTarget));
+	
+	if (target) {
+		GEO_Internals::MasterFace& mf = 
+			GModel::current()->getGEOInternals()->periodicFaces[iTarget];
+		mf.tag = iSource;
+		mf.edgeCounterparts.clear();
+		mf.affineTransform = affineTransform;
+	}
+	else{
+		GFace *target = GModel::current()->getFaceByTag(abs(iTarget)); 
+		GFace *source = GModel::current()->getFaceByTag(abs(iSource)); 
+		if (!target)  Msg::Error("Could not find edge %d for periodic copy from %d",
+														iTarget,iSource);
+		target->setMeshMaster(source,affineTransform);
+	}
+}
+
+
+void addPeriodicFace(int iTarget,int iSource,
+										 const std::map<int,int>& edgeCounterparts) {
+	
+	Surface *target = FindSurface(abs(iTarget));	
+	
+	std::cout << "Encoding periodic connection between " << iTarget << " and " << iSource << std::endl;
+	std::map<int,int>::const_iterator sIter = edgeCounterparts.begin();
+	for (;sIter!=edgeCounterparts.end();++sIter) {
+		std::cout << sIter->first << " - " << sIter->second << std::endl;
+	}
+
+
+	if (target) {
+		GEO_Internals::MasterFace& mf = 
+			GModel::current()->getGEOInternals()->periodicFaces[iTarget];
+		mf.tag = iSource;
+		mf.edgeCounterparts = edgeCounterparts;
+		mf.affineTransform.clear();
+	}
+	else{
+		GFace *target = GModel::current()->getFaceByTag(abs(iTarget)); 
+		GFace *source = GModel::current()->getFaceByTag(abs(iSource)); 
+		if (!target || !source)  Msg::Error("Could not find surface %d or %d for periodic copy",
+																				iTarget,iSource);
+		target->setMeshMaster(source,edgeCounterparts);
+	}
+}
+
+void addPeriodicEdge(int iTarget,int iSource,
+										 const std::vector<double>& affineTransform) {
+	
+	Curve *target = FindCurve(abs(iTarget));
+	if (target) {
+		GEO_Internals::MasterEdge& me = GModel::current()->getGEOInternals()->periodicEdges[iTarget];
+		me.tag = iSource;
+		me.affineTransform = affineTransform;
+		
+		GEO_Internals::MasterEdge& test = GModel::current()->getGEOInternals()->periodicEdges[iTarget];
+	}
+	else{
+		GEdge *target = GModel::current()->getEdgeByTag(abs(iTarget)); 
+		GEdge *source = GModel::current()->getEdgeByTag(abs(iSource)); 
+		if (!target || !source) Msg::Error("Could not find surface %d or %d for periodic copy",
+																			 iTarget,iSource);
+		if (affineTransform.size() == 16) {
+			target->setMeshMaster(source,affineTransform);
+		}
+		else {
+			target->setMeshMaster(source,iSource*iTarget < 0 ? -1:1);
+		}
+	}
+}
+
+void computeAffineTransformation(SPoint3& origin,
+																 SPoint3& axis,
+																 double angle,
+																 SPoint3& translation,
+																 std::vector<double>& tfo) {
+
+	tfo.resize(16,0.0);
+
+	angle *= acos(-1.)/180.;
+	
+	double ca = cos(angle);
+	double sa = sin(angle);
+
+	double ux = axis.x();
+	double uy = axis.y();
+	double uz = axis.z();
+	
+	tfo.resize(16);
+  
+	tfo[0*4+0] = ca + ux*ux*(1.-ca);
+	tfo[0*4+1] = ux*uy*(1.-ca) - uz * sa;
+	tfo[0*4+2] = ux*uz*(1.-ca) + uy * sa;
+  
+	tfo[1*4+0] = ux*uy*(1.-ca) + uz * sa;
+	tfo[1*4+1] = ca + uy*uy*(1.-ca);
+	tfo[1*4+2] = uy*uz*(1.-ca) - ux * sa;
+  
+	tfo[2*4+0] = ux*uz*(1.-ca) - uy * sa;
+	tfo[2*4+1] = uy*uz*(1.-ca) + ux * sa;
+	tfo[2*4+2] = ca + uz*uz*(1.-ca);
+	
+	int idx = 0;
+	for (size_t i=0;i<3;i++) {
+		int tIdx = i*4+3;
+		tfo[tIdx] = translation[i];
+		for (int j=0;j<3;j++,idx++) {
+			tfo[tIdx] -= tfo[idx] * origin[j];
+		}
+		idx++;
+	}
+	
+	for (int i=0;i<4;i++) tfo[12+i] = 0;
+	tfo[15] = 1;
 }

@@ -54,13 +54,16 @@ class GFace : public GEntity
 
  public: // this will become protected or private
   std::list<GEdgeLoop> edgeLoops;
-
+  
   // periodic counterparts of edges
-  std::map<int,int> edgeCounterparts;
+  std::map<GEdge*,std::pair<GEdge*,int> > edgeCounterparts;
+  
+  // specify mesh master with transformation, deduce edgeCounterparts
+  virtual void setMeshMaster(GFace* master,const std::vector<double>&);
 
-  // encoding of an explicit affine transformation for period meshing
-  std::vector<double> affineTransform;
-
+  // specify mesh master and edgeCounterparts, deduce transformation
+  virtual void setMeshMaster(GFace* master,const std::map<int,int>&);
+  
   // an array with additional vertices that are supposed to exist in
   // the final mesh of the model face. This can be used for boundary
   // layer meshes or when using Lloyd-like smoothing algorithms those

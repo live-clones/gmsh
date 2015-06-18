@@ -34,7 +34,8 @@ class GEntity {
 
   // gives the number of the master entity in periodic mesh, gives _tag
   // if non-periodic
-  int _meshMaster;
+  GEntity* _meshMaster;
+
 
   // the visibility and the selection flag
   char _visible, _selection;
@@ -47,10 +48,13 @@ class GEntity {
 
  protected:
   SOrientedBoundingBox *_obb;
-
+  
  public: // these will become protected at some point
   // the mesh vertices uniquely owned by the entity
   std::vector<MVertex*> mesh_vertices;
+
+  // corresponding principal vertices
+  std::map<GVertex*,GVertex*> vertexCounterparts;
 
   // the physical entitites (if any) that contain this entity
   std::vector<int> physicals;
@@ -167,7 +171,7 @@ class GEntity {
       return name[type];
   }
 
-  GEntity(GModel *m, int t);
+  GEntity(GModel *m,int t);
 
   virtual ~GEntity(){}
 
@@ -261,9 +265,11 @@ class GEntity {
     return physicals;
   }
 
-  // returns the tag of the entity that its master entity (for mesh)
-  int meshMaster() const;
-  void setMeshMaster(int m);
+  // returns the master entity (for mesh)
+  GEntity* meshMaster() const;
+  virtual void setMeshMaster(GEntity*);
+  
+  virtual void setMeshMaster(GEntity*,const std::vector<double>&);
 
   // get the bounding box
   virtual SBoundingBox3d bounds() const { return SBoundingBox3d(); }
@@ -315,7 +321,7 @@ class GEntity {
 
   // get the number of mesh vertices in the entity
   unsigned int getNumMeshVertices() { return (int)mesh_vertices.size(); }
-
+  
   // get the mesh vertex at the given index
   MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }
 
@@ -332,7 +338,7 @@ class GEntity {
   GRegion *cast2Region();
 
   // periodic data
-  double periodicTransformation[4][4];
+  std::vector<double> affineTransform;
   std::map<MVertex*,MVertex*> correspondingVertices;
 
 };

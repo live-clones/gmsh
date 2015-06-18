@@ -261,6 +261,31 @@ macro(set_config_option VARNAME STRING)
   message(STATUS "Found " ${STRING})
 endmacro(set_config_option)
 
+
+if (ENABLE_PARSER)
+	find_package(BISON)
+	find_package(FLEX)
+	
+	if(BISON_FOUND AND FLEX_FOUND)
+		bison_target(ParserBison ${CMAKE_CURRENT_SOURCE_DIR}/Parser/Gmsh.y
+      ${CMAKE_CURRENT_BINARY_DIR}/Parser/Gmsh.tab.cpp
+      COMPILE_FLAGS -pgmsh_yy)
+		flex_target(ParserFlex ${CMAKE_CURRENT_SOURCE_DIR}/Parser/Gmsh.l
+      ${CMAKE_CURRENT_BINARY_DIR}/Parser/Gmsh.yy.cpp
+      COMPILE_FLAGS -Pgmsh_yy)  
+		include_directories(${CMAKE_CURRENT_BINARY_DIR})
+		add_flex_bison_dependency(ParserFlex ParserBison)
+		set(GMSH_SRC ${GMSH_SRC} 	${BISON_ParserBison_OUTPUTS} 	${FLEX_ParserFlex_OUTPUTS})
+		message(STATUS "Gmsh sources are ${GMSH_SRC}")
+	else()
+		message(STATUS "Could not find bison or flex")
+	endif(BISON_FOUND AND FLEX_FOUND)
+	
+  add_subdirectory(Parser)
+  set_config_option(HAVE_PARSER "Parser")
+endif(ENABLE_PARSER)
+
+
 # check if the machine is 64 bits (this is more reliable than using
 # CMAKE_SIZEOF_VOID_P, which does not seem to work e.g. on some Suse
 # machines)
@@ -444,11 +469,6 @@ if(ENABLE_POST)
     set_config_option(HAVE_PLUGINS "Plugins")
   endif(ENABLE_PLUGINS)
 endif(ENABLE_POST)
-
-if(ENABLE_PARSER)
-  add_subdirectory(Parser)
-  set_config_option(HAVE_PARSER "Parser")
-endif(ENABLE_PARSER)
 
 if(ENABLE_FLTK)
   # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy on Unix,
@@ -1478,16 +1498,6 @@ elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS
     "/STACK:16777216 /SAFESEH:NO")
 endif(WIN32 AND NOT MSVC OR CYGWIN)
-
-# parser target
-find_program(BISON bison)
-find_program(FLEX flex)
-if(BISON AND FLEX)
-  add_custom_target(parser
-                    COMMAND ${BISON} -p gmsh_yy --output Gmsh.tab.cpp -d Gmsh.y
-                    COMMAND ${FLEX} -P gmsh_yy -o Gmsh.yy.cpp Gmsh.l
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Parser)
-endif(BISON AND FLEX)
 
 if(UNIX)
   # cannot use cmake's file search functions here (they would only find files

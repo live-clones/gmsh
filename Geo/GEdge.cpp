@@ -45,6 +45,79 @@ void GEdge::deleteMesh()
   model()->destroyMeshCaches();
 }
 
+void GEdge::setMeshMaster(GEdge* ge,int ori) {
+
+#warning missing:computation of affine transformation during setMeshMaster
+  
+  GEntity::setMeshMaster(ge);
+  masterOrientation = ori > 0 ? 1:-1;
+  
+  if (ori < 0) {
+    vertexCounterparts[getBeginVertex()] = ge->getEndVertex();
+    vertexCounterparts[getEndVertex()] = ge->getBeginVertex();
+    getBeginVertex()->setMeshMaster(ge->getEndVertex());
+    getEndVertex()  ->setMeshMaster(ge->getBeginVertex());  
+  }
+  else {
+    vertexCounterparts[getBeginVertex()] = ge->getBeginVertex();
+    vertexCounterparts[getEndVertex()] = ge->getEndVertex();
+    getBeginVertex()->setMeshMaster(ge->getBeginVertex());
+    getEndVertex()  ->setMeshMaster(ge->getEndVertex());
+  }
+}
+
+void GEdge::setMeshMaster(GEdge* ge,const std::vector<double>& tfo) {
+  
+  SPoint3 oriXYZ0 = ge->getBeginVertex()->xyz();
+  SPoint3 oriXYZ1 = ge->getEndVertex()->xyz();
+
+  SPoint3 tfoXYZ0(0,0,0);
+  SPoint3 tfoXYZ1(0,0,0);
+
+  int idx = 0;
+  for (int i=0;i<3;i++,idx++) {
+    for (int j=0;j<3;j++,idx++) {
+      tfoXYZ0[i] += tfo[idx] * oriXYZ0[j];
+      tfoXYZ1[i] += tfo[idx] * oriXYZ1[j];
+    }
+    tfoXYZ0[i] += tfo[idx];
+    tfoXYZ1[i] += tfo[idx];
+  }
+  
+  SPoint3 locXYZ0 = getBeginVertex()->xyz();
+  SPoint3 locXYZ1 = getEndVertex()->xyz();
+    
+  SVector3 d00 = locXYZ0 - tfoXYZ0;
+  SVector3 d10 = locXYZ1 - tfoXYZ0;
+  SVector3 d01 = locXYZ0 - tfoXYZ1;
+  SVector3 d11 = locXYZ1 - tfoXYZ1;
+
+  double tol = CTX::instance()->geom.tolerance;
+  
+  if ((d00.norm() < tol) && (d11.norm() < tol)) {
+    GEntity::setMeshMaster(ge,tfo);
+    masterOrientation = 1;
+    vertexCounterparts[getBeginVertex()] = ge->getBeginVertex();
+    vertexCounterparts[getEndVertex()]   = ge->getEndVertex();
+    getBeginVertex()->setMeshMaster(ge->getBeginVertex(),tfo);
+    getEndVertex()  ->setMeshMaster(ge->getEndVertex()  ,tfo);
+    return;
+  }
+  if ((d01.norm() < tol) && (d10.norm() < tol)) {
+    GEntity::setMeshMaster(ge,tfo);
+    masterOrientation = -1;
+    vertexCounterparts[getBeginVertex()] = ge->getEndVertex();
+    vertexCounterparts[getEndVertex()] = ge->getBeginVertex();
+    getBeginVertex()->setMeshMaster(ge->getEndVertex()  ,tfo);
+    getEndVertex()  ->setMeshMaster(ge->getBeginVertex(),tfo);
+    return;
+  }
+  
+  Msg::Error("Transformation from edge %d (%d-%d) to %d (%d-%d) is incorrect",
+             ge->tag(),ge->getBeginVertex()->tag(),ge->getEndVertex()->tag(),
+             this->tag(),this->getBeginVertex()->tag(),this->getEndVertex()->tag());
+}
+
 void GEdge::reverse()
 {
   GVertex* tmp = v0;

@@ -435,11 +435,11 @@ int GModel::_readMSH2(const std::string &name)
           bool own = false;
 
 	  // search parent element
-	  if (parent){
+	  if (parent != 0){
 #if (FAST_ELEMENTS == 1)
             std::map<int, MElement* >::iterator ite = elems.find(parent);
             if (ite == elems.end())
-              Msg::Error("Parent element %d not found for element %d", parent, num);
+              Msg::Error("Parent element (ascii) %d not found for element %d of type %d", parent, num, type);
             else{
               p = ite->second;
               parents[parent] = p;
@@ -456,7 +456,7 @@ int GModel::_readMSH2(const std::string &name)
               p = getParent(parent, type, elements);
               if (p)
                 parents[parent] = p;
-              else Msg::Error("Parent element %d not found for element %d", parent, num);
+              else Msg::Error("Parent element %d not found for element %d dedju", parent, num);
             }
             else
               p = itp->second;
@@ -564,7 +564,7 @@ int GModel::_readMSH2(const std::string &name)
 #if (FAST_ELEMENTS == 1)
 	      std::map<int, MElement* >::iterator ite = elems.find(parent);
 	      if (ite == elems.end())
-                Msg::Error("Parent element %d not found for element %d", parent, num);
+                Msg::Error("Parent (binary) element %d not found for element %d", parent, num);
 	      else{
                 p = ite->second;
                 parents[parent] = p;
@@ -580,7 +580,7 @@ int GModel::_readMSH2(const std::string &name)
               if(itp == parents.end()){
                 p = getParent(parent, type, elements);
                 if(p) parents[parent] = p;
-                else Msg::Error("Parent element %d not found", parent);
+                else Msg::Error("Parent (binary) element %d not found", parent);
               }
               else p = itp->second;
 	      std::set<MElement* >::iterator itpo = parentsOwned.find(p);

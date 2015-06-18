@@ -1479,4 +1479,404 @@ void GFace::relocateMeshVertices()
   }
 }
 
+void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo) {
+  
+  std::list<GEdge*>::iterator eIter;
+  std::list<GVertex*>::iterator vIter;
+  
+  // list all vertices and construct vertex to edge correspondence for local edge
+  
+  std::set<GVertex*> l_vertices;
+  std::map<std::pair<GVertex*,GVertex*>,GEdge* > l_vtxToEdge;
+  
+  for (eIter=l_edges.begin();eIter!=l_edges.end();++eIter) {
+    GVertex* v0 = (*eIter)->getBeginVertex();
+    GVertex* v1 = (*eIter)->getEndVertex();
+    l_vertices.insert(v0);
+    l_vertices.insert(v1);
+    l_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
+  }
 
+  for (eIter=embedded_edges.begin();eIter!=embedded_edges.end();++eIter) {
+    GVertex* v0 = (*eIter)->getBeginVertex();
+    GVertex* v1 = (*eIter)->getEndVertex();
+    l_vertices.insert(v0);
+    l_vertices.insert(v1);
+    l_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
+  }
+  
+  l_vertices.insert(embedded_vertices.begin(),embedded_vertices.end());    
+
+  // list all vertices and vertex to edge correspondence for remote edge
+  
+  std::list<GEdge*> m_edges = master->edges();
+  std::set<GVertex*> m_vertices;
+  std::map<std::pair<GVertex*,GVertex*>,GEdge* > m_vtxToEdge;
+  for (eIter=m_edges.begin();eIter!=m_edges.end();++eIter) {
+    GVertex* v0 = (*eIter)->getBeginVertex();
+    GVertex* v1 = (*eIter)->getEndVertex();
+    m_vertices.insert(v0);
+    m_vertices.insert(v1);
+    m_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
+  }
+  
+  std::list<GEdge*> m_embedded_edges = master->embeddedEdges();
+
+  for (eIter=m_embedded_edges.begin();eIter!=m_embedded_edges.end();eIter++) {
+    GVertex* v0 = (*eIter)->getBeginVertex();
+    GVertex* v1 = (*eIter)->getEndVertex();
+    m_vertices.insert(v0);
+    m_vertices.insert(v1);
+    m_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
+  }
+    
+  std::list<GVertex*> m_embedded_vertices = master->embeddedVertices();
+  m_vertices.insert(m_embedded_vertices.begin(),m_embedded_vertices.end());
+
+  // check topological correspondence
+  
+  if (l_vertices.size() != m_vertices.size()) {
+    Msg::Error("Periodic connection specified between topologically "
+               "incompatible surfaces %d and %d (that have %d vs %d model vertices)",
+               master->tag(),tag(),l_vertices.size(),m_vertices.size());
+    return;
+  }
+
+  if (l_vtxToEdge.size() != m_vtxToEdge.size()) {
+    Msg::Error("Periodic connection specified between topologically "
+               "incompatible surfaces %d and %d (that have %d vs %d model edges)",
+               master->tag(),tag(),l_vtxToEdge.size(),m_vtxToEdge.size());
+    return;
+  }
+  
+  // compute corresponding vertices 
+
+  std::map<GVertex*,GVertex*> gVertexCounterparts;
+  
+  std::set<GVertex*>::iterator mvIter;
+  for (mvIter=m_vertices.begin();mvIter!=m_vertices.end();++mvIter) {
+    
+    GVertex* m_vertex = *mvIter;
+    
+    double xyzOri[4] = {m_vertex->x(),
+                        m_vertex->y(),
+                        m_vertex->z(),1};
+    SPoint3 xyzTfo(0,0,0);
+    
+    for (size_t i=0,ij=0;i<3;i++) {
+      for (size_t j=0;j<4;j++,ij++) {
+        xyzTfo[i] += tfo[ij] * xyzOri[j];
+      }
+    }
+    
+    GVertex* l_vertex = NULL;
+
+    std::set<GVertex*>::iterator lvIter = l_vertices.begin();
+    for (;lvIter!=l_vertices.end();++lvIter) {
+      
+      SPoint3 xyz((*lvIter)->x(),(*lvIter)->y(),(*lvIter)->z());
+      SVector3 dist = xyz - xyzTfo;
+      
+      if (dist.norm() < CTX::instance()->geom.tolerance) {
+        l_vertex = *lvIter;
+        break;
+      }
+    }
+    
+    if (l_vertex==NULL) {
+      Msg::Error("Was not able to find corresponding node for %d "
+                 "for periodic connection of surface %d to %d "
+                 "using the specified transformation",
+                 m_vertex->tag(),master->tag(),tag());
+      return;
+    }
+    gVertexCounterparts[l_vertex] = m_vertex;
+  }
+  
+  if (gVertexCounterparts.size() != m_vertices.size()) {
+    Msg::Error("Could not find all node correspondances "
+               "for the periodic connection from surface %d to %d",
+               master->tag(),tag());
+    return;
+  }
+
+  // construct edge correspondence and update the edge masters
+
+  std::map<GEdge*,std::pair<GEdge*,int> > gEdgeCounterparts;
+
+  std::map<std::pair<GVertex*,GVertex*>,GEdge*>::iterator lv2eIter;
+  for (lv2eIter=l_vtxToEdge.begin();lv2eIter!=l_vtxToEdge.end();lv2eIter++) {
+    
+    std::pair<GVertex*,GVertex*> lPair = lv2eIter->first;
+    GEdge* localEdge = lv2eIter->second;
+    
+    std::pair<GVertex*,GVertex*> mPair(gVertexCounterparts[lPair.first],
+                                       gVertexCounterparts[lPair.second]);
+		int sign = 1;
+    std::map<std::pair<GVertex*,GVertex*>,GEdge*>::iterator mv2eIter = m_vtxToEdge.find(mPair);
+    if (mv2eIter == m_vtxToEdge.end()) {
+      sign *= -1;
+      std::pair<GVertex*,GVertex*> backward(mPair.second,mPair.first);
+      mv2eIter = m_vtxToEdge.find(backward);
+    }
+      
+    if (mv2eIter == m_vtxToEdge.end()) {
+      Msg::Error("Could not find periodic copy of edge %d-%d "
+                 "(corresponding to vertices %d %d) in face %d",
+                 lPair.first->tag(),lPair.second->tag(),
+                 mPair.first->tag(),mPair.second->tag(),
+                 master->tag());
+      return;
+    }
+    GEdge* masterEdge = mv2eIter->second;
+    localEdge->setMeshMaster(masterEdge,tfo);
+    gEdgeCounterparts[localEdge] = std::make_pair(masterEdge,sign);
+  }		
+  
+  // complete the information at the edge level
+  
+  edgeCounterparts   = gEdgeCounterparts;
+  vertexCounterparts = gVertexCounterparts;
+  GEntity::setMeshMaster(master,tfo);
+}
+
+inline double myAngle(const SVector3 &a, const SVector3 &b, const SVector3 &d)
+{
+  double cosTheta = dot(a, b);
+  double sinTheta = dot(crossprod(a, b), d);
+  return atan2(sinTheta, cosTheta);
+}
+
+struct myPlane {
+  SPoint3 p;
+  SVector3 n;
+  double a;
+  // nx x + ny y + nz z + a = 0
+  myPlane(SPoint3 _p, SVector3 _n) : p(_p),n(_n)
+  {
+    n.normalize();
+    a = -(n.x()*p.x()+n.y()*p.y()+n.z()*p.z());
+  }
+  double eval (double x, double y, double z)
+  {
+    return n.x() * x + n.y() * y + n.z() * z + a;
+  }
+};
+struct myLine {
+  SPoint3 p;
+  SVector3 t;
+  myLine() : p(0,0,0) , t (0,0,1) {}
+  myLine(myPlane &p1, myPlane &p2)
+  {
+    t = crossprod(p1.n, p2.n);
+    if (t.norm() == 0.0){
+      Msg::Error("parallel planes do not intersect");
+    }
+    else
+      t.normalize();
+    // find a point, assume z = 0
+    double a[2][2] = {{p1.n.x(), p1.n.y()}, {p2.n.x(), p2.n.y()}};
+    double b[2] = {-p1.a, -p2.a}, x[2];
+    if (!sys2x2(a, b, x)){
+      // assume x = 0
+      double az[2][2] = {{p1.n.y(), p1.n.z()}, {p2.n.y(), p2.n.z()}};
+      double bz[2] = {-p1.a, -p2.a};
+      if (!sys2x2(az, bz, x)){
+	// assume y = 0
+	double ay[2][2] = {{p1.n.x(), p1.n.z()}, {p2.n.x(), p2.n.z()}};
+	double by[2] = {-p1.a, -p2.a};
+	if (!sys2x2(ay,by,x)){
+	  Msg::Error("parallel planes do not intersect");
+	}
+	else {
+	  p = SPoint3(x[0], 0., x[1]);
+	}
+      }
+      else{
+	p = SPoint3(0., x[0], x[1]);
+      }
+    }
+    else{
+      p = SPoint3(x[0], x[1], 0.);
+    }
+  }
+  SPoint3 orthogonalProjection (SPoint3 &a)
+  {
+    // (x - a) * t = 0 -->
+    // x = p + u t --> (p + ut - a) * t = 0 --> u = (a-p) * t
+    const double u = dot(a - p, t);
+    return SPoint3(p.x() + t.x() * u,p.y() + t.y() * u,p.z() + t.z() * u);
+  }
+};
+
+
+
+void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies) {
+
+  std::map<GVertex*,GVertex*> vs2vt;
+  
+  for (std::list<GEdge*>::iterator it=l_edges.begin();it!=l_edges.end();++it){
+    
+    // slave edge 
+    GEdge* le = *it;
+
+    int sign = 1;
+    std::map<int,int>::const_iterator adnksd = edgeCopies.find(le->tag());
+    int source_e;
+    if (adnksd != edgeCopies.end()) source_e = adnksd->second;
+    else{
+      sign = -1;
+      adnksd = edgeCopies.find(-(*it)->tag());
+      if(adnksd != edgeCopies.end()) source_e = adnksd->second;
+      else{
+        Msg::Error("Could not find edge counterpart %d in slave surface %d",
+                   (*it)->tag(), master->tag());
+        return;
+      }
+    }
+    
+    // master edge
+    GEdge *me = master->model()->getEdgeByTag(abs(source_e));
+    
+    if (source_e * sign > 0){
+      vs2vt[me->getBeginVertex()] = le->getBeginVertex();
+      vs2vt[me->getEndVertex()]   = le->getEndVertex();
+    }
+    else {
+      vs2vt[me->getBeginVertex()] = le->getEndVertex();
+      vs2vt[me->getEndVertex()]   = le->getBeginVertex();
+    }
+  }
+
+  // --- find out the transformation 
+
+  bool translation = true;
+  SVector3 DX;
+ 
+  int count = 0;
+  for (std::map<GVertex*, GVertex*>::iterator it = vs2vt.begin();
+       it != vs2vt.end() ; ++it){
+    GVertex *vs = it->first;
+    GVertex *vt = it->second;
+    if (count == 0)
+      DX = SVector3(vt->x()-vs->x(),vt->y()-vs->y(),vt->z()-vs->z());
+    else {
+      SVector3 DX2(vt->x()-vs->x(),vt->y()-vs->y(),vt->z()-vs->z());
+      SVector3 DDX(DX2 - DX);
+      if (DDX.norm() > DX.norm() * 1.e-5) translation = false;
+    }
+    count ++;
+  }
+
+  std::vector<double> tfo(16);
+  
+  if (translation) {
+    Msg::Info("Periodic mesh translation found: dx = (%g,%g,%g)",
+              DX.x(), DX.y(), DX.z());
+    
+    for (size_t i=0;i<16;i++) tfo[i] = 0;
+    for (size_t i=0;i<3;i++)  tfo[i*4+i] = 1;
+    tfo[3]  = DX.x();
+    tfo[7]  = DX.y();
+    tfo[11] = DX.z(); 
+  }
+  
+  else {
+    
+    bool rotation = false;
+    myLine LINE;
+    double ANGLE=0;
+    
+    count = 0;
+    rotation = true;
+    std::vector<SPoint3> mps, mpt;
+    for (std::map<GVertex*, GVertex*>::iterator it = vs2vt.begin();
+         it != vs2vt.end() ; ++it){
+      GVertex *vs = it->first;
+      GVertex *vt = it->second;
+      mps.push_back(SPoint3(vs->x(), vs->y(), vs->z()));
+      mpt.push_back(SPoint3(vt->x(), vt->y(), vt->z()));
+    }
+    mean_plane mean_source, mean_target;
+    computeMeanPlaneSimple(mps, mean_source);
+    computeMeanPlaneSimple(mpt, mean_target);
+    
+    myPlane PLANE_SOURCE(SPoint3(mean_source.x,mean_source.y,mean_source.z),
+                         SVector3(mean_source.a,mean_source.b,mean_source.c));
+    myPlane PLANE_TARGET(SPoint3(mean_target.x,mean_target.y,mean_target.z),
+                         SVector3(mean_target.a,mean_target.b,mean_target.c));
+    
+    LINE = myLine(PLANE_SOURCE, PLANE_TARGET);
+    
+    // LINE is the axis of rotation
+    // let us compute the angle of rotation
+    count = 0;
+    for (std::map<GVertex*, GVertex*>::iterator it = vs2vt.begin();
+         it != vs2vt.end(); ++it){
+      GVertex *vs = it->first;
+      GVertex *vt = it->second;
+      // project both points on the axis: that should be the same point !
+      SPoint3 ps = SPoint3(vs->x(), vs->y(), vs->z());
+      SPoint3 pt = SPoint3(vt->x(), vt->y(), vt->z());
+      SPoint3 p_ps = LINE.orthogonalProjection(ps);
+      SPoint3 p_pt = LINE.orthogonalProjection(pt);
+      SVector3 dist1 = ps - pt;
+      SVector3 dist2 = p_ps - p_pt;
+      if (dist1.norm() > CTX::instance()->geom.tolerance){
+        if (dist2.norm() > 1.e-8 * dist1.norm()){
+          rotation = false;
+        }
+        SVector3 t1 = ps - p_ps;
+        SVector3 t2 = pt - p_pt;
+        if (t1.norm() > 1.e-8 * dist1.norm()){
+          if (count == 0)
+            ANGLE = myAngle(t1, t2, LINE.t);
+          else {
+            double ANGLE2 = myAngle(t1, t2, LINE.t);
+            if (fabs (ANGLE2 - ANGLE) > 1.e-8){
+              rotation = false;
+            }
+          }
+          count++;
+        }
+      }
+    }
+    
+    if (rotation){
+      Msg::Info("Periodic mesh rotation found: axis (%g,%g,%g) point (%g %g %g) angle %g",
+                LINE.t.x(), LINE.t.y(), LINE.t.z(), LINE.p.x(), LINE.p.y(), LINE.p.z(),
+                ANGLE * 180 / M_PI);
+
+      double ux = LINE.t.x();
+      double uy = LINE.t.y();
+      double uz = LINE.t.z();
+      
+      tfo[0*4+0] = cos (ANGLE) + ux*ux*(1.-cos(ANGLE));
+      tfo[0*4+1] = ux*uy*(1.-cos(ANGLE)) - uz * sin(ANGLE);
+      tfo[0*4+2] = ux*uz*(1.-cos(ANGLE)) + uy * sin(ANGLE);
+      
+      tfo[1*4+0] = ux*uy*(1.-cos(ANGLE)) + uz * sin(ANGLE);
+      tfo[1*4+1] = cos (ANGLE) + uy*uy*(1.-cos(ANGLE));
+      tfo[1*4+2] = uy*uz*(1.-cos(ANGLE)) - ux * sin(ANGLE);
+      
+      tfo[2*4+0] = ux*uz*(1.-cos(ANGLE)) - uy * sin(ANGLE);
+      tfo[2*4+1] = uy*uz*(1.-cos(ANGLE)) + ux * sin(ANGLE);
+      tfo[2*4+2] = cos (ANGLE) + uz*uz*(1.-cos(ANGLE));
+      
+      tfo[3] = tfo[7] = tfo[11] = 0;
+      for (int i=0;i<4;i++) tfo[12+i] = 0;
+      
+    }
+    else {
+      Msg::Error("Only rotations or translations can currently be computed "
+                 "automatically for periodic faces: face %d not meshed",
+                 tag());
+      return;
+    }
+  }
+  
+  // --- now check and encode the transformation
+  // --- including for edges and vertices
+
+  setMeshMaster(master,tfo);
+}

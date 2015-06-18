@@ -267,8 +267,8 @@ static double Integration(GEdge *ge, double t1, double t2,
   return Points.back().p;
 }
 
-static void copyMesh(GEdge *from, GEdge *to, int direction)
-{
+void copyMesh(GEdge *from, GEdge *to, int direction)
+{  
   Range<double> u_bounds = from->parBounds(0);
   double u_min = u_bounds.low();
   double u_max = u_bounds.high();
@@ -351,12 +351,12 @@ void meshGEdge::operator() (GEdge *ge)
 
   if(MeshExtrudedCurve(ge)) return;
 
-  if (ge->meshMaster() != ge->tag()){
-    GEdge *gef = ge->model()->getEdgeByTag(abs(ge->meshMaster()));
+  if (ge->meshMaster() != ge){
+    GEdge *gef = dynamic_cast<GEdge*> (ge->meshMaster());
     if (gef->meshStatistics.status == GEdge::PENDING) return;
     Msg::Info("Meshing curve %d (%s) as a copy of %d", ge->tag(),
-              ge->getTypeString().c_str(), ge->meshMaster());
-    copyMesh(gef, ge, ge->meshMaster());
+              ge->getTypeString().c_str(), ge->meshMaster()->tag());
+    copyMesh(gef, ge, ge->masterOrientation);
     ge->meshStatistics.status = GEdge::DONE;
     return;
   }

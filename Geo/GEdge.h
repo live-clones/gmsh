@@ -26,6 +26,7 @@ class closestPointFinder;
 
 // A model edge.
 class GEdge : public GEntity {
+  
  private:
   double _length;
   bool _tooSmall;
@@ -38,9 +39,9 @@ class GEdge : public GEntity {
   GEdgeCompound *compound; // this model edge belongs to a compound
   std::list<GFace *> l_faces;
   // for specific solid modelers that need to re-do the internal curve
-  // if a topological change ending points is done (gluing)
+  // if a topological change ending points is done (glueing)
   virtual void replaceEndingPointsInternals(GVertex *, GVertex *) {}
-
+    
  public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   virtual ~GEdge();
@@ -52,6 +53,15 @@ class GEdge : public GEntity {
   virtual GVertex *getBeginVertex() const { return v0; }
   virtual GVertex *getEndVertex() const { return v1; }
 
+  // same or opposite direction to the master
+  int masterOrientation;
+
+  // specify mesh master with transformation, deduce edgeCounterparts
+  virtual void setMeshMaster(GEdge* master,const std::vector<double>&);
+
+  // specify mesh master and edgeCounterparts, deduce transformation
+  virtual void setMeshMaster(GEdge* master,int sign);
+  
   void reverse();
 
   // add/delete a face bounded by this edge

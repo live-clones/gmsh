@@ -8,6 +8,7 @@
 
 #include <math.h>
 #include <vector>
+#include <list>
 #include "GmshDefines.h"
 #include "gmshSurface.h"
 #include "ListUtils.h"
@@ -137,6 +138,8 @@ class Curve{
   gmshSurface *geometry;
   std::vector<int> compound;
   int ReverseMesh;
+  int master;
+  std::list<double> affineTransformation;
   void SetVisible(int value, bool recursive)
   {
     Visible = value;
@@ -191,6 +194,8 @@ class Surface{
   // should be the only one in gmsh, so parameter "Type" should
   // disappear from the class Surface.
   gmshSurface *geometry;
+  //
+  int master;
   // the mesh master surface
   std::map<int,int> edgeCounterparts;
   // prescribed affine transform for periodic meshing
@@ -283,6 +288,7 @@ class GEO_Internals{
   void alloc_all();
   void free_all();
  public:
+  
   Tree_T *Points;
   Tree_T *Curves;
   Tree_T *Surfaces;
@@ -293,12 +299,28 @@ class GEO_Internals{
   List_T *PhysicalGroups;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
+
+  
+  struct MasterEdge {
+    int tag; // signed
+    std::vector<double> affineTransform;
+  };
+  
+  std::map<int,MasterEdge> periodicEdges;
+
+  struct MasterFace {
+    int tag;
+    // map from slave to master edges
+    std::map<int,int> edgeCounterparts;
+    std::vector<double> affineTransform;
+  };
+
+  std::map<int,MasterFace> periodicFaces;
+  
   GEO_Internals(){ alloc_all(); }
   ~GEO_Internals(){ free_all(); }
   void destroy(){ free_all(); alloc_all(); }
   void reset_physicals();
-  std::map<int,int> periodicFaces;
-  std::map<int,int> periodicEdges;
 };
 
 class Shape{

@@ -1220,31 +1220,35 @@ void OCCFactory::setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTransla
 
 /* setPeriodicPairOfFaces: set periodic given a Slave/Master pair of
    numFace-Edgelist */
-void OCCFactory::setPeriodicPairOfFaces(GModel *gm, int numFaceMaster, std::vector<int> EdgeListMaster,
-                                        int numFaceSlave, std::vector<int> EdgeListSlave)
+void OCCFactory::setPeriodicPairOfFaces(GModel *gm, int numFaceMaster, 
+                                        std::vector<int> EdgeListMaster,
+                                        int numFaceSlave, 
+                                        std::vector<int> EdgeListSlave)
 {
   int NEdges=EdgeListMaster.size();
   if (EdgeListMaster.size() != EdgeListSlave.size()){
     Msg::Error("Slave/Master faces don't have the same number of edges!");
   }
-  else{
+  else {
+    
+    std::map<int,int> edgeCounterparts;
+    std::vector<int>::iterator siter = EdgeListSlave.begin();
+    std::vector<int>::iterator miter = EdgeListMaster.begin();
+    
+    for (;siter!=EdgeListSlave.end();++siter,++miter) {
+      edgeCounterparts[*siter] = *miter;
+    }
+    
     Surface *s_slave = FindSurface(abs(numFaceSlave));
     if(s_slave){
-      GModel::current()->getGEOInternals()->periodicFaces[numFaceSlave] = numFaceMaster;
-      for (int i = 0; i < NEdges; i++){
-        GModel::current()->getGEOInternals()->periodicEdges[EdgeListSlave[i]] = EdgeListMaster[i];
-        s_slave->edgeCounterparts[EdgeListSlave[i]] = EdgeListMaster[i];
-      }
+      s_slave->master = numFaceMaster;
+      s_slave->edgeCounterparts = edgeCounterparts;
     }
     else{
       GFace *gf = GModel::current()->getFaceByTag(abs(numFaceSlave));
-      if(gf){
-        gf->setMeshMaster(numFaceMaster);
-        for (int i = 0; i < NEdges; i++){
-          gf->edgeCounterparts[EdgeListSlave[i]] = EdgeListMaster[i];
-          GEdge *ges = GModel::current()->getEdgeByTag(abs(EdgeListSlave[i]));
-          ges->setMeshMaster(EdgeListMaster[i]);
-        }
+      if (gf) {
+        GFace *master = GModel::current()->getFaceByTag(abs(numFaceMaster));
+        gf->setMeshMaster(master,edgeCounterparts);
       }
       else Msg::Error("Slave surface %d not found", numFaceSlave);
     }

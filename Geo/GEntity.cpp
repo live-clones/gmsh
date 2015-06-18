@@ -14,8 +14,8 @@
 #include "GFace.h"
 #include "GRegion.h"
 
-GEntity::GEntity(GModel *m, int t)
-  : _model(m), _tag(t), _meshMaster(t), _visible(1), _selection(0),
+GEntity::GEntity(GModel *m,int t)
+  : _model(m), _tag(t),_meshMaster(this),_visible(1), _selection(0),
     _allElementsVisible(1), _obb(0), va_lines(0), va_triangles(0)
 {
   _color = CTX::instance()->packColor(0, 0, 255, 0);
@@ -70,56 +70,40 @@ GFace *GEntity::cast2Face() { return dynamic_cast<GFace*>(this); }
 GRegion *GEntity::cast2Region() { return dynamic_cast<GRegion*>(this); }
 
 // sets the entity m from which the mesh will be copied
-void GEntity::setMeshMaster(int m_signed)
+void GEntity::setMeshMaster(GEntity* gMaster)
 {
-  if(m_signed == tag()){ _meshMaster = m_signed; return; }
-
-  GEntity *gMaster = 0;
-  int m = abs(m_signed);
-  switch(dim()){
-  case 0 : gMaster = model()->getVertexByTag(m); break;
-  case 1 : gMaster = model()->getEdgeByTag(m); break;
-  case 2 : gMaster = model()->getFaceByTag(m); break;
-  case 3 : gMaster = model()->getRegionByTag(m); break;
-  }
-  if (!gMaster){
-    Msg::Error("Model entity %d of dimension %d cannot be the mesh master of entity %d",
-               m, dim(), tag());
+  if (gMaster->dim() != dim()){
+    Msg::Error("Model entity %d of dimension %d cannot" 
+               "be the mesh master of entity %d of dimension %d",
+               gMaster->tag(),gMaster->dim(),tag(),dim());
     return;
   }
-  int masterOfMaster = gMaster->meshMaster();
-
-  if (masterOfMaster == gMaster->tag()){
-    _meshMaster = m_signed;
-  }
-  else {
-    setMeshMaster ( masterOfMaster * ((m_signed > 0) ? 1 : -1));
-  }
+  _meshMaster = gMaster;
 }
+
+void GEntity::setMeshMaster(GEntity* gMaster,const std::vector<double>& tfo)
+{
+  if (gMaster->dim() != dim()){
+    Msg::Error("Model entity %d of dimension %d cannot" 
+               "be the mesh master of entity %d of dimension %d",
+               gMaster->tag(),gMaster->dim(),tag(),dim());
+    return;
+  }
+
+  if (tfo.size() != 16) {
+    Msg::Error("Periodicity transformation from entity %d to %d (dim %d) has %d components"
+               ", while 16 are required",
+               gMaster->tag(),tag(),gMaster->dim(),tfo.size());
+    return;
+  }
+
+  affineTransform = tfo;
+  _meshMaster = gMaster;
+}
+
+
+
 
 // gets the entity from which the mesh will be copied
-int GEntity::meshMaster() const
-{
-  if (_meshMaster == tag()) return tag();
-
-  GEntity *gMaster = 0;
-  switch(dim()){
-  case 0 : gMaster = model()->getVertexByTag(abs(_meshMaster)); break;
-  case 1 : gMaster = model()->getEdgeByTag(abs(_meshMaster)); break;
-  case 2 : gMaster = model()->getFaceByTag(abs(_meshMaster)); break;
-  case 3 : gMaster = model()->getRegionByTag(abs(_meshMaster)); break;
-  }
-  if (!gMaster){
-    Msg::Error("Could not find mesh master entity %d",_meshMaster);
-    return tag();
-  }
-  int masterOfMaster = gMaster->meshMaster();
-
-  if (masterOfMaster == gMaster->tag()){
-    return _meshMaster ;
-  }
-  else {
-    return gMaster->meshMaster() * ((_meshMaster > 0) ? 1 : -1);
-  }
-}
+GEntity* GEntity::meshMaster() const {return _meshMaster;}
 

@@ -219,14 +219,13 @@ static void Mesh0D(GModel *m)
   }
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
     GVertex *gv = *it;
-    if (gv->meshMaster() != gv->tag()){
+    if (gv->meshMaster() != gv){
       if (gv->correspondingVertices.empty()){
-        GVertex *master = m->getVertexByTag(abs(gv->meshMaster()));
+        GVertex *master = dynamic_cast<GVertex*> (gv->meshMaster());
         if(master)gv->correspondingVertices[gv->mesh_vertices[0]] = (master->mesh_vertices[0]);
       }
     }
   }
-
 }
 
 static void Mesh1D(GModel *m)

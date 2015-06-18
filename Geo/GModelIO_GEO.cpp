@@ -331,32 +331,41 @@ int GModel::importGEOInternals()
         ge->physicals.push_back(pnum);
     }
   }
+  
+  std::map<int,GEO_Internals::MasterEdge>::iterator peIter = _geo_internals->periodicEdges.begin();
+  for (;peIter!=_geo_internals->periodicEdges.end();++peIter) {
+    
+    int iTarget = peIter->first;
+    GEO_Internals::MasterEdge& me = peIter->second;
+    int iSource = me.tag;
 
-  // create periodic mesh relationships
-  for(std::map<int,int>::iterator it = _geo_internals->periodicEdges.begin();
-      it != _geo_internals->periodicEdges.end(); ++it){
-    GEdge *ge = getEdgeByTag(abs(it->first));
-    if (ge){
-      int MASTER = it->second * (it->first > 0 ? 1 : -1);
-      ge->setMeshMaster(MASTER);
-    }
+    GEdge* target = getEdgeByTag(iTarget);
+    GEdge* source = getEdgeByTag(iSource);
+
+    if (!target) Msg::Error("Unknown target line for periodic connection from %d to %d",iTarget,iSource);
+    if (!source) Msg::Error("Unknown source line for periodic connection from %d to %d",iTarget,iSource);
+
+    if (me.affineTransform.size()==16) target->setMeshMaster(source,me.affineTransform);
+    else                               target->setMeshMaster(source,me.tag > 0 ? 1 : -1);
+    
   }
-  for(std::map<int,int>::iterator it = _geo_internals->periodicFaces.begin();
-      it != _geo_internals->periodicFaces.end(); ++it){
-    GFace *gf = getFaceByTag(abs(it->first));
-    if (gf)gf->setMeshMaster(it->second * (it->first > 0 ? 1 : -1));
-  }
-  for(eiter it = firstEdge() ; it != lastEdge() ; ++it){
-    int meshMaster = (*it)->meshMaster();
-    if (meshMaster != (*it)->tag()){
-      GEdge *ge_master = getEdgeByTag(abs(meshMaster));
-      if(ge_master)
-        (*it)->getBeginVertex()->setMeshMaster((meshMaster > 0) ? ge_master->getBeginVertex()->tag() :
-                                               ge_master->getEndVertex()->tag());
-      if(ge_master)
-        (*it)->getEndVertex()->setMeshMaster((meshMaster < 0) ? ge_master->getBeginVertex()->tag() :
-                                             ge_master->getEndVertex()->tag());
-    }
+
+
+  std::map<int,GEO_Internals::MasterFace>::iterator pfIter = _geo_internals->periodicFaces.begin();
+  for (;pfIter!=_geo_internals->periodicFaces.end();++pfIter) {
+
+    int iTarget = pfIter->first;
+    GEO_Internals::MasterFace& mf = pfIter->second;
+    int iSource = mf.tag;
+    
+    GFace* target = getFaceByTag(iTarget);
+    GFace* source = getFaceByTag(iSource);
+
+    if (!target) Msg::Error("Unknown target surface for periodic connection from %d to %d",iTarget,iSource);
+    if (!source) Msg::Error("Unknown source surface for periodic connection from %d to %d",iTarget,iSource);
+    
+    if (mf.affineTransform.size()==16) target->setMeshMaster(source,mf.affineTransform);
+    else                               target->setMeshMaster(source,mf.edgeCounterparts);
   }
 
   Msg::Debug("Gmsh model (GModel) imported:");

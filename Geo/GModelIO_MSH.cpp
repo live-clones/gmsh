@@ -21,28 +21,28 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities)
 {
   int count = 0;
   for (unsigned int i = 0; i < entities.size(); i++)
-    if (entities[i]->meshMaster() != entities[i]->tag()) count++;
+    if (entities[i]->meshMaster() != entities[i]) count++;
   if (!count) return;
   fprintf(fp, "$Periodic\n");
   fprintf(fp, "%d\n", count);
   for(unsigned int i = 0; i < entities.size(); i++){
-    GEntity *g_slave = entities[i];
-    int meshMaster = g_slave->meshMaster();
-    if (g_slave->tag() != meshMaster){
-      GEntity *g_master = 0;
-      switch(g_slave->dim()){
-      case 0 : g_master = g_slave->model()->getVertexByTag(abs(meshMaster));break;
-      case 1 : g_master = g_slave->model()->getEdgeByTag(abs(meshMaster));break;
-      case 2 : g_master = g_slave->model()->getFaceByTag(abs(meshMaster));break;
-      case 3 : g_master = g_slave->model()->getRegionByTag(abs(meshMaster));break;
-      }
+    GEntity *g_slave  = entities[i];
+    GEntity *g_master = g_slave->meshMaster();
+    if (g_slave != g_master){
       fprintf(fp,"%d %d %d\n", g_slave->dim(), g_slave->tag(), g_master->tag());
-      fprintf(fp,"%d\n", (int)g_slave->correspondingVertices.size());
+
+      if (g_slave->affineTransform.size() == 16) {
+        fprintf(fp,"Affine");
+        for (int i=0;i<16;i++) fprintf(fp," %.16g",g_slave->affineTransform[i]);
+        fprintf(fp,"\n");
+      }
+
+      fprintf(fp,"%d\n", (int) g_slave->correspondingVertices.size());
       for (std::map<MVertex*,MVertex*>::iterator it = g_slave->correspondingVertices.begin();
            it != g_slave->correspondingVertices.end(); it++){
-	MVertex *v1 = it->first;
-	MVertex *v2 = it->second;
-	fprintf(fp,"%d %d\n", v1->getIndex(), v2->getIndex());
+        MVertex *v1 = it->first;
+        MVertex *v2 = it->second;
+        fprintf(fp,"%d %d\n", v1->getIndex(), v2->getIndex());
       }
     }
   }
@@ -59,19 +59,33 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm)
     GEntity *s = 0, *m = 0;
     switch(dim){
     case 0 : s = gm->getVertexByTag(slave); m = gm->getVertexByTag(master); break;
-    case 1 : s = gm->getEdgeByTag(slave); m = gm->getEdgeByTag(master); break;
-    case 2 : s = gm->getFaceByTag(slave); m = gm->getFaceByTag(master); break;
+    case 1 : s = gm->getEdgeByTag(slave);   m = gm->getEdgeByTag(master);   break;
+    case 2 : s = gm->getFaceByTag(slave);   m = gm->getFaceByTag(master);   break;
     }
     if (s && m){
-      s->setMeshMaster(m->tag());
+      
+      char token[6];
+      fpos_t pos;
+      fgetpos(fp,&pos);
+      fscanf(fp,"%s",token);
+      if (strcmp(token,"Affine") == 0) {
+        std::vector<double> tfo;
+        for (int i=0;i<16;i++) fscanf(fp,"%lf",&tfo[i]);
+        s->setMeshMaster(m,tfo);
+      }
+      else {
+        fsetpos(fp,&pos);
+        s->setMeshMaster(m);
+      }
+      
       int numv;
       if(fscanf(fp, "%d", &numv) != 1) numv = 0;
       for(int j = 0; j < numv; j++){
-	int v1, v2;
-	if(fscanf(fp,"%d %d", &v1, &v2) != 2) continue;
-	MVertex *mv1 = gm->getMeshVertexByTag(v1);
-	MVertex *mv2 = gm->getMeshVertexByTag(v2);
-	s->correspondingVertices[mv1] = mv2;
+        int v1, v2;
+        if(fscanf(fp,"%d %d", &v1, &v2) != 2) continue;
+        MVertex *mv1 = gm->getMeshVertexByTag(v1);
+        MVertex *mv2 = gm->getMeshVertexByTag(v2);
+        s->correspondingVertices[mv1] = mv2;
       }
     }
   }
