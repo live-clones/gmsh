@@ -4,6 +4,8 @@
 # bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 set(SRC
+  Gmsh.tab.cpp
+  Gmsh.yy.cpp
   FunctionManager.cpp
 )
 
