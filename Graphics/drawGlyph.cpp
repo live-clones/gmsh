@@ -189,12 +189,10 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
     w = h * img->w / img->h;
   }
 
+  GLboolean valid = GL_TRUE;
   GLint matrixMode = 0;
   if(billboard){
     glRasterPos3d(x, y, z);
-    GLboolean valid;
-    glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
-    if(valid == GL_FALSE) return; // the primitive is culled
     GLfloat pos[4];
     glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
     glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
@@ -206,39 +204,38 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
     glLoadIdentity();
     double fact = isHighResolution() ? 2. : 1.;
     glOrtho((double)viewport[0], (double)viewport[2] * fact,
-            (double)viewport[1], (double)viewport[3] * fact, -1e3, 1e3);
+            (double)viewport[1], (double)viewport[3] * fact, -1, 1);
     x = pos[0]; y = pos[1]; z = 0;
     w *= fact * s[0] / pixel_equiv_x;
     h *= fact * s[1] / pixel_equiv_y;
+    glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
   }
-
-  switch(align){
-  case 1: x -= w/2.;            break; // bottom center
-  case 2: x -= w;               break; // bottom right
-  case 3:            y -= h;    break; // top left
-  case 4: x -= w/2.; y -= h;    break; // top center
-  case 5: x -= w;    y -= h;    break; // top right
-  case 6:            y -= h/2.; break; // center left
-  case 7: x -= w/2.; y -= h/2.; break; // center center
-  case 8: x -= w;    y -= h/2.; break; // center right
-  default: break;
+  if(valid == GL_TRUE){
+    switch(align){
+    case 1: x -= w/2.;            break; // bottom center
+    case 2: x -= w;               break; // bottom right
+    case 3:            y -= h;    break; // top left
+    case 4: x -= w/2.; y -= h;    break; // top center
+    case 5: x -= w;    y -= h;    break; // top right
+    case 6:            y -= h/2.; break; // center left
+    case 7: x -= w/2.; y -= h/2.; break; // center center
+    case 8: x -= w;    y -= h/2.; break; // center right
+    default: break;
+    }
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, img->tex);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glBegin(GL_QUADS);
+    glTexCoord2f(1.0f, 1.0f); glVertex3d(x+wx*w, y+wy*w, z+wz*w);
+    glTexCoord2f(1.0f, 0.0f); glVertex3d(x+wx*w+hx*h, y+wy*w+hy*h, z+wz*w+hz*h);
+    glTexCoord2f(0.0f, 0.0f); glVertex3d(x+hx*h, y+hy*h, z+hz*h);
+    glTexCoord2f(0.0f, 1.0f); glVertex3d(x, y, z);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_BLEND);
   }
-
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, img->tex);
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-  glBegin(GL_QUADS);
-  glTexCoord2f(1.0f, 1.0f); glVertex3d(x+wx*w, y+wy*w, z+wz*w);
-  glTexCoord2f(1.0f, 0.0f); glVertex3d(x+wx*w+hx*h, y+wy*w+hy*h, z+wz*w+hz*h);
-  glTexCoord2f(0.0f, 0.0f); glVertex3d(x+hx*h, y+hy*h, z+hz*h);
-  glTexCoord2f(0.0f, 1.0f); glVertex3d(x, y, z);
-  glEnd();
-  glDisable(GL_TEXTURE_2D);
-  glDisable(GL_BLEND);
-
   if(billboard){
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);

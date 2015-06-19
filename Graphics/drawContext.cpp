@@ -952,7 +952,7 @@ bool drawContext::select(int type, bool multiple, bool mesh,
       hits.push_back(hit(type, ient, depth));
     }
     else if(names == 4){
-      GLuint depth = maxdepth+ 0 * mindepth; // could do something with mindepth
+      GLuint depth = maxdepth + 0 * mindepth; // could do something with mindepth
       GLuint type = *ptr++;
       GLuint ient = *ptr++;
       GLuint type2 = *ptr++;
