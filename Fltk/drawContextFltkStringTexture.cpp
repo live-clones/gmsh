@@ -73,11 +73,16 @@ class drawContextFltkStringTexture::queueString {
     glLoadIdentity ();
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glLoadIdentity ();
+    glLoadIdentity();
+
+    // FIXME: this is not correct with high-resolution graphics, as w(), h() are
+    // in FLTK coordinates, and glRasterPos uses true pixels.
+    // The size of the QUAD needs to be changed, too.
     float winw = Fl_Window::current()->w();
     float winh = Fl_Window::current()->h();
     glScalef(2.0f / winw, 2.0f /  winh, 1.0f);
     glTranslatef(-winw / 2.0f, -winh / 2.0f, 0.0f);
+
     //write the texture on screen
     glEnable(GL_TEXTURE_RECTANGLE_ARB);
     glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT | GL_COLOR_BUFFER_BIT);
