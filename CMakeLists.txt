@@ -938,22 +938,19 @@ if(HAVE_SOLVER)
     else(PETSC_ARCH)
       set(ENV_PETSC_ARCH $ENV{PETSC_ARCH})
     endif(PETSC_ARCH)
-    if(EXISTS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables)
-      # old-style PETSc installations (using PETSC_DIR and PETSC_ARCH)
-      message(STATUS "Using PETSc dir: ${ENV_PETSC_DIR}")
-      message(STATUS "Using PETSc arch: ${ENV_PETSC_ARCH}")
-      # find includes by parsing the petscvariables file
-      file(STRINGS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables
-           PETSC_VARIABLES NEWLINE_CONSUME)
-    endif(EXISTS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables)
-    if(EXISTS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc-conf/petscvariables)
-      # old-style PETSc installations (using PETSC_DIR and PETSC_ARCH)
-      message(STATUS "Using PETSc dir: ${ENV_PETSC_DIR}")
-      message(STATUS "Using PETSc arch: ${ENV_PETSC_ARCH}")
-      # find includes by parsing the petscvariables file
-      file(STRINGS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc-conf/petscvariables
-           PETSC_VARIABLES NEWLINE_CONSUME)
-    endif(EXISTS ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc-conf/petscvariables)
+    set(PETSC_POSSIBLE_CONF_FILES 
+        ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables
+        ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc-conf/petscvariables
+        ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc/conf/petscvariables)
+    foreach(FILE ${PETSC_POSSIBLE_CONF_FILES})
+      if(EXISTS ${FILE})
+        # old-style PETSc installations (using PETSC_DIR and PETSC_ARCH)
+        message(STATUS "Using PETSc dir: ${ENV_PETSC_DIR}")
+        message(STATUS "Using PETSc arch: ${ENV_PETSC_ARCH}")
+        # find includes by parsing the petscvariables file
+        file(STRINGS ${FILE} PETSC_VARIABLES NEWLINE_CONSUME)
+      endif(EXISTS ${FILE})
+    endforeach(FILE)
     if(PETSC_VARIABLES)
       # try to find PETSC_CC_INCLUDES for PETSc >= 3.4
       string(REGEX MATCH "PETSC_CC_INCLUDES = [^\n\r]*" PETSC_PACKAGES_INCLUDES

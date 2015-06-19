@@ -18,7 +18,8 @@ void eigenSolver::_try(int ierr) const
   CHKERRABORT(PETSC_COMM_WORLD, ierr);
 }
 
-eigenSolver::eigenSolver(dofManager<double> *manager, std::string A, std::string B, bool hermitian)
+eigenSolver::eigenSolver(dofManager<double> *manager, std::string A, std::string B,
+                         bool hermitian)
   : _A(0), _B(0), _hermitian(hermitian)
 {
   if (A.size()) {
@@ -34,7 +35,8 @@ eigenSolver::eigenSolver(dofManager<double> *manager, std::string A, std::string
 eigenSolver::eigenSolver(linearSystemPETSc<double> *A, linearSystemPETSc<double> *B,
   bool hermitian) : _A(A), _B(B), _hermitian(hermitian) {}
 
-bool eigenSolver::solve(int numEigenValues, std::string which, std::string method, double tolVal, int iterMax)
+bool eigenSolver::solve(int numEigenValues, std::string which, std::string method,
+                        double tolVal, int iterMax)
 {
   if(!_A) return false;
   Mat A = _A->getMatrix();
@@ -138,15 +140,24 @@ bool eigenSolver::solve(int numEigenValues, std::string which, std::string metho
 
   if (nconv>0) {
     Vec xr, xi;
+#if (PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR < 6)
     _try(MatGetVecs(A, PETSC_NULL, &xr));
     _try(MatGetVecs(A, PETSC_NULL, &xi));
+#else
+  _try(MatCreateVecs(A, PETSC_NULL, &xr));
+  _try(MatCreateVecs(A, PETSC_NULL, &xi));
+#endif
     Msg::Debug("         Re[EigenValue]          Im[EigenValue]"
          "          Relative error");
     for (int i=0; i<nconv; i++) {
       PetscScalar kr, ki;
       _try(EPSGetEigenpair(eps, i, &kr, &ki, xr, xi));
       PetscReal error;
+#if (PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR < 6)
       _try(EPSComputeRelativeError(eps, i, &error));
+#else
+      _try(EPSComputeError(eps, i, EPS_ERROR_RELATIVE, &error));
+#endif
 #if defined(PETSC_USE_COMPLEX)
       PetscReal re = PetscRealPart(kr);
       PetscReal im = PetscImaginaryPart(kr);
@@ -189,7 +200,8 @@ bool eigenSolver::solve(int numEigenValues, std::string which, std::string metho
 
 }
 
-void eigenSolver::normalize_mode(std::vector<int> modeView, double scale) {
+void eigenSolver::normalize_mode(std::vector<int> modeView, double scale)
+{
   Msg::Info("Normalize all eigenvectors");
   for (unsigned int imode=0; imode<modeView.size(); imode++) {
     int i = modeView[imode];
