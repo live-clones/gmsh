@@ -21,7 +21,7 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
   if(CTX::instance()->printing && !CTX::instance()->print.text) return;
 
   if(s.size() > 8 && s.substr(0, 7) == "file://"){
-    drawImage(s.substr(7), x, y, z);
+    drawImage(s.substr(7), x, y, z, align);
     return;
   }
 
@@ -133,7 +133,8 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
   }
 }
 
-void drawContext::drawImage(const std::string &name, double x, double y, double z)
+void drawContext::drawImage(const std::string &name, double x, double y, double z,
+                            int align)
 {
   // format can be "@wxh" or "@wxh,wx,wy,wz,hx,hy,hz", where w and h are the
   // width and height (in model coordinates for T3 or in pixels for T2) of the
@@ -146,6 +147,7 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
     file = name.substr(0, p);
   }
   double w = 0., h = 0., wx = 1., wy = 0., wz = 0., hx = 0., hy = 1., hz = 0.;
+  bool billboard = false;
   if(format.size()){
     bool ok;
     if(format.find(",") != std::string::npos)
@@ -155,6 +157,8 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
       ok = (sscanf(format.c_str(), "%lfx%lf", &w, &h) == 2);
     if(!ok)
       Msg::Warning("Bad image format: use `@wxh' or `@wxh,wx,wy,wz,hx,hy,hz'");
+    if(format.find("#") != std::string::npos)
+      billboard = true; // texture will always face camera
   }
 
   imgtex *img;
@@ -185,6 +189,38 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
     w = h * img->w / img->h;
   }
 
+  GLint matrixMode = 0;
+  if(billboard){
+    glRasterPos3d(x, y, z);
+    GLfloat pos[4];
+    glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
+    glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    double fact = isHighResolution() ? 2. : 1.;
+    glOrtho((double)viewport[0], (double)viewport[2] * fact,
+            (double)viewport[1], (double)viewport[3] * fact, -1e3, 1e3);
+    x = pos[0]; y = pos[1]; z = 0;
+    w *= fact * s[0] / pixel_equiv_x;
+    h *= fact * s[1] / pixel_equiv_y;
+  }
+
+  switch(align){
+  case 1: x -= w/2.;            break; // bottom center
+  case 2: x -= w;               break; // bottom right
+  case 3:            y -= h;    break; // top left
+  case 4: x -= w/2.; y -= h;    break; // top center
+  case 5: x -= w;    y -= h;    break; // top right
+  case 6:            y -= h/2.; break; // center left
+  case 7: x -= w/2.; y -= h/2.; break; // center center
+  case 8: x -= w;    y -= h/2.; break; // center right
+  default: break;
+  }
+
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_TEXTURE_2D);
@@ -198,6 +234,13 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
   glEnd();
   glDisable(GL_TEXTURE_2D);
   glDisable(GL_BLEND);
+
+  if(billboard){
+    glPopMatrix();
+    glMatrixMode (GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(matrixMode);
+  }
 }
 
 void drawContext::drawSphere(double R, double x, double y, double z,

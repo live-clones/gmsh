@@ -234,7 +234,7 @@ class drawContext {
   void drawStringCenter(const std::string &s, double x, double y, double z);
   void drawStringRight(const std::string &s, double x, double y, double z);
   void drawString(const std::string &s, double x, double y, double z, double style);
-  void drawImage(const std::string &s, double x, double y, double z);
+  void drawImage(const std::string &s, double x, double y, double z, int align=0);
   void drawSphere(double R, double x, double y, double z, int n1, int n2, int light);
   void drawEllipsoid(double x, double y, double z, float v0[3], float v1[3],
                      float v2[3], int light);
