@@ -1479,16 +1479,16 @@ void GFace::relocateMeshVertices()
   }
 }
 
-void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo) {
-  
+void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo)
+{
   std::list<GEdge*>::iterator eIter;
   std::list<GVertex*>::iterator vIter;
-  
+
   // list all vertices and construct vertex to edge correspondence for local edge
-  
+
   std::set<GVertex*> l_vertices;
   std::map<std::pair<GVertex*,GVertex*>,GEdge* > l_vtxToEdge;
-  
+
   for (eIter=l_edges.begin();eIter!=l_edges.end();++eIter) {
     GVertex* v0 = (*eIter)->getBeginVertex();
     GVertex* v1 = (*eIter)->getEndVertex();
@@ -1504,11 +1504,11 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo) {
     l_vertices.insert(v1);
     l_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
   }
-  
-  l_vertices.insert(embedded_vertices.begin(),embedded_vertices.end());    
+
+  l_vertices.insert(embedded_vertices.begin(),embedded_vertices.end());
 
   // list all vertices and vertex to edge correspondence for remote edge
-  
+
   std::list<GEdge*> m_edges = master->edges();
   std::set<GVertex*> m_vertices;
   std::map<std::pair<GVertex*,GVertex*>,GEdge* > m_vtxToEdge;
@@ -1519,7 +1519,7 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo) {
     m_vertices.insert(v1);
     m_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
   }
-  
+
   std::list<GEdge*> m_embedded_edges = master->embeddedEdges();
 
   for (eIter=m_embedded_edges.begin();eIter!=m_embedded_edges.end();eIter++) {
@@ -1529,12 +1529,12 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo) {
     m_vertices.insert(v1);
     m_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
   }
-    
+
   std::list<GVertex*> m_embedded_vertices = master->embeddedVertices();
   m_vertices.insert(m_embedded_vertices.begin(),m_embedded_vertices.end());
 
   // check topological correspondence
-  
+
   if (l_vertices.size() != m_vertices.size()) {
     Msg::Error("Periodic connection specified between topologically "
                "incompatible surfaces %d and %d (that have %d vs %d model vertices)",
@@ -1548,41 +1548,41 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo) {
                master->tag(),tag(),l_vtxToEdge.size(),m_vtxToEdge.size());
     return;
   }
-  
-  // compute corresponding vertices 
+
+  // compute corresponding vertices
 
   std::map<GVertex*,GVertex*> gVertexCounterparts;
-  
+
   std::set<GVertex*>::iterator mvIter;
   for (mvIter=m_vertices.begin();mvIter!=m_vertices.end();++mvIter) {
-    
+
     GVertex* m_vertex = *mvIter;
-    
+
     double xyzOri[4] = {m_vertex->x(),
                         m_vertex->y(),
                         m_vertex->z(),1};
     SPoint3 xyzTfo(0,0,0);
-    
+
     for (size_t i=0,ij=0;i<3;i++) {
       for (size_t j=0;j<4;j++,ij++) {
         xyzTfo[i] += tfo[ij] * xyzOri[j];
       }
     }
-    
+
     GVertex* l_vertex = NULL;
 
     std::set<GVertex*>::iterator lvIter = l_vertices.begin();
     for (;lvIter!=l_vertices.end();++lvIter) {
-      
+
       SPoint3 xyz((*lvIter)->x(),(*lvIter)->y(),(*lvIter)->z());
       SVector3 dist = xyz - xyzTfo;
-      
+
       if (dist.norm() < CTX::instance()->geom.tolerance) {
         l_vertex = *lvIter;
         break;
       }
     }
-    
+
     if (l_vertex==NULL) {
       Msg::Error("Was not able to find corresponding node for %d "
                  "for periodic connection of surface %d to %d "
@@ -1592,7 +1592,7 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo) {
     }
     gVertexCounterparts[l_vertex] = m_vertex;
   }
-  
+
   if (gVertexCounterparts.size() != m_vertices.size()) {
     Msg::Error("Could not find all node correspondances "
                "for the periodic connection from surface %d to %d",
@@ -1606,10 +1606,10 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo) {
 
   std::map<std::pair<GVertex*,GVertex*>,GEdge*>::iterator lv2eIter;
   for (lv2eIter=l_vtxToEdge.begin();lv2eIter!=l_vtxToEdge.end();lv2eIter++) {
-    
+
     std::pair<GVertex*,GVertex*> lPair = lv2eIter->first;
     GEdge* localEdge = lv2eIter->second;
-    
+
     std::pair<GVertex*,GVertex*> mPair(gVertexCounterparts[lPair.first],
                                        gVertexCounterparts[lPair.second]);
 		int sign = 1;
@@ -1619,7 +1619,7 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo) {
       std::pair<GVertex*,GVertex*> backward(mPair.second,mPair.first);
       mv2eIter = m_vtxToEdge.find(backward);
     }
-      
+
     if (mv2eIter == m_vtxToEdge.end()) {
       Msg::Error("Could not find periodic copy of edge %d-%d "
                  "(corresponding to vertices %d %d) in face %d",
@@ -1631,10 +1631,10 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo) {
     GEdge* masterEdge = mv2eIter->second;
     localEdge->setMeshMaster(masterEdge,tfo);
     gEdgeCounterparts[localEdge] = std::make_pair(masterEdge,sign);
-  }		
-  
+  }
+
   // complete the information at the edge level
-  
+
   edgeCounterparts   = gEdgeCounterparts;
   vertexCounterparts = gVertexCounterparts;
   GEntity::setMeshMaster(master,tfo);
@@ -1709,15 +1709,13 @@ struct myLine {
   }
 };
 
-
-
-void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies) {
-
+void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
+{
   std::map<GVertex*,GVertex*> vs2vt;
-  
+
   for (std::list<GEdge*>::iterator it=l_edges.begin();it!=l_edges.end();++it){
-    
-    // slave edge 
+
+    // slave edge
     GEdge* le = *it;
 
     int sign = 1;
@@ -1734,10 +1732,10 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies) {
         return;
       }
     }
-    
+
     // master edge
     GEdge *me = master->model()->getEdgeByTag(abs(source_e));
-    
+
     if (source_e * sign > 0){
       vs2vt[me->getBeginVertex()] = le->getBeginVertex();
       vs2vt[me->getEndVertex()]   = le->getEndVertex();
@@ -1748,11 +1746,11 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies) {
     }
   }
 
-  // --- find out the transformation 
+  // --- find out the transformation
 
   bool translation = true;
   SVector3 DX;
- 
+
   int count = 0;
   for (std::map<GVertex*, GVertex*>::iterator it = vs2vt.begin();
        it != vs2vt.end() ; ++it){
@@ -1769,24 +1767,24 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies) {
   }
 
   std::vector<double> tfo(16);
-  
+
   if (translation) {
     Msg::Info("Periodic mesh translation found: dx = (%g,%g,%g)",
               DX.x(), DX.y(), DX.z());
-    
+
     for (size_t i=0;i<16;i++) tfo[i] = 0;
     for (size_t i=0;i<3;i++)  tfo[i*4+i] = 1;
     tfo[3]  = DX.x();
     tfo[7]  = DX.y();
-    tfo[11] = DX.z(); 
+    tfo[11] = DX.z();
   }
-  
+
   else {
-    
+
     bool rotation = false;
     myLine LINE;
     double ANGLE=0;
-    
+
     count = 0;
     rotation = true;
     std::vector<SPoint3> mps, mpt;
@@ -1800,14 +1798,14 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies) {
     mean_plane mean_source, mean_target;
     computeMeanPlaneSimple(mps, mean_source);
     computeMeanPlaneSimple(mpt, mean_target);
-    
+
     myPlane PLANE_SOURCE(SPoint3(mean_source.x,mean_source.y,mean_source.z),
                          SVector3(mean_source.a,mean_source.b,mean_source.c));
     myPlane PLANE_TARGET(SPoint3(mean_target.x,mean_target.y,mean_target.z),
                          SVector3(mean_target.a,mean_target.b,mean_target.c));
-    
+
     LINE = myLine(PLANE_SOURCE, PLANE_TARGET);
-    
+
     // LINE is the axis of rotation
     // let us compute the angle of rotation
     count = 0;
@@ -1841,7 +1839,7 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies) {
         }
       }
     }
-    
+
     if (rotation){
       Msg::Info("Periodic mesh rotation found: axis (%g,%g,%g) point (%g %g %g) angle %g",
                 LINE.t.x(), LINE.t.y(), LINE.t.z(), LINE.p.x(), LINE.p.y(), LINE.p.z(),
@@ -1850,22 +1848,22 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies) {
       double ux = LINE.t.x();
       double uy = LINE.t.y();
       double uz = LINE.t.z();
-      
+
       tfo[0*4+0] = cos (ANGLE) + ux*ux*(1.-cos(ANGLE));
       tfo[0*4+1] = ux*uy*(1.-cos(ANGLE)) - uz * sin(ANGLE);
       tfo[0*4+2] = ux*uz*(1.-cos(ANGLE)) + uy * sin(ANGLE);
-      
+
       tfo[1*4+0] = ux*uy*(1.-cos(ANGLE)) + uz * sin(ANGLE);
       tfo[1*4+1] = cos (ANGLE) + uy*uy*(1.-cos(ANGLE));
       tfo[1*4+2] = uy*uz*(1.-cos(ANGLE)) - ux * sin(ANGLE);
-      
+
       tfo[2*4+0] = ux*uz*(1.-cos(ANGLE)) - uy * sin(ANGLE);
       tfo[2*4+1] = uy*uz*(1.-cos(ANGLE)) + ux * sin(ANGLE);
       tfo[2*4+2] = cos (ANGLE) + uz*uz*(1.-cos(ANGLE));
-      
+
       tfo[3] = tfo[7] = tfo[11] = 0;
       for (int i=0;i<4;i++) tfo[12+i] = 0;
-      
+
     }
     else {
       Msg::Error("Only rotations or translations can currently be computed "
@@ -1874,9 +1872,9 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies) {
       return;
     }
   }
-  
+
   // --- now check and encode the transformation
   // --- including for edges and vertices
 
-  setMeshMaster(master,tfo);
+  setMeshMaster(master, tfo);
 }

@@ -1220,25 +1220,24 @@ void OCCFactory::setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTransla
 
 /* setPeriodicPairOfFaces: set periodic given a Slave/Master pair of
    numFace-Edgelist */
-void OCCFactory::setPeriodicPairOfFaces(GModel *gm, int numFaceMaster, 
+void OCCFactory::setPeriodicPairOfFaces(GModel *gm, int numFaceMaster,
                                         std::vector<int> EdgeListMaster,
-                                        int numFaceSlave, 
+                                        int numFaceSlave,
                                         std::vector<int> EdgeListSlave)
 {
-  int NEdges=EdgeListMaster.size();
   if (EdgeListMaster.size() != EdgeListSlave.size()){
     Msg::Error("Slave/Master faces don't have the same number of edges!");
   }
   else {
-    
+
     std::map<int,int> edgeCounterparts;
     std::vector<int>::iterator siter = EdgeListSlave.begin();
     std::vector<int>::iterator miter = EdgeListMaster.begin();
-    
+
     for (;siter!=EdgeListSlave.end();++siter,++miter) {
       edgeCounterparts[*siter] = *miter;
     }
-    
+
     Surface *s_slave = FindSurface(abs(numFaceSlave));
     if(s_slave){
       s_slave->master = numFaceMaster;

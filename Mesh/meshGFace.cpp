@@ -70,8 +70,6 @@ static void computeElementShapes(GFace *gf, double &worst, double &avg,
   avg /= nT;
 }
 
-
-
 class quadMeshRemoveHalfOfOneDMesh
 {
   GFace *_gf;
@@ -79,10 +77,12 @@ public:
   std::map<GEdge*,std::vector<MLine*> > _backup;
   std::map<MEdge, MVertex*,Less_Edge> _middle;
   // remove one point every two and remember middle points
-  quadMeshRemoveHalfOfOneDMesh (GFace* gf) : _gf(gf){
+  quadMeshRemoveHalfOfOneDMesh (GFace* gf) : _gf(gf)
+  {
     // only do it if a recombination has to be done
-    if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) && CTX::instance()->mesh.algoRecombine == 2){
-      //      printf("GFace %d removing half of the points in the 1D mesh\n",gf->tag());
+    if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
+       CTX::instance()->mesh.algoRecombine == 2){
+      // printf("GFace %d removing half of the points in the 1D mesh\n",gf->tag());
       std::list<GEdge*> edges = gf->edges();
       std::list<GEdge*>::iterator ite = edges.begin();
       while(ite != edges.end()){
@@ -110,7 +110,8 @@ public:
     }
     backgroundMesh::setSizeFactor(2.0);
   }
-  void subdivide (){
+  void subdivide ()
+  {
     std::vector<MQuadrangle*> qnew;
 
     std::map<MEdge,MVertex*,Less_Edge> eds;
@@ -184,9 +185,11 @@ public:
     _gf->quadrangles = qnew;
     //    printf("%d triangles %d quads\n",_gf->triangles.size(),_gf->quadrangles.size());
   }
-  void finish (){
+  void finish ()
+  {
     backgroundMesh::setSizeFactor(1.0);
-    if((CTX::instance()->mesh.recombineAll || _gf->meshAttributes.recombine) && CTX::instance()->mesh.algoRecombine == 2){
+    if((CTX::instance()->mesh.recombineAll || _gf->meshAttributes.recombine) &&
+       CTX::instance()->mesh.algoRecombine == 2){
       // recombine the elements on the half mesh
       recombineIntoQuads(_gf,true,true,.1);
       Msg::Info("subdividing");
@@ -203,7 +206,8 @@ public:
 			   _gf->meshStatistics.nbGoodQuality);
     }
   }
-  void restore (){
+  void restore ()
+  {
     std::list<GEdge*> edges = _gf->edges();
     std::list<GEdge*>::iterator ite = edges.begin();
     while(ite != edges.end()){
@@ -216,53 +220,47 @@ public:
   }
 };
 
-
-
 static void copyMesh(GFace *source, GFace *target)
 {
   std::map<MVertex*, MVertex*> vs2vt;
-      
+
   // add principal vertex pairs
-  
+
   std::list<GVertex*> s_vtcs = source->vertices();
   std::list<GVertex*> t_vtcs = target->vertices();
-  
-  
+
   if (s_vtcs.size() != t_vtcs.size()) {
     Msg::Info("Periodicity imposed on topologically incompatible surfaces"
               "(%d vs %d bounding vertices)",s_vtcs.size(),t_vtcs.size());
   }
-  
-  
+
   std::set<GVertex*> checkVtcs;
   checkVtcs.insert(s_vtcs.begin(),s_vtcs.end());
 
   for (std::list<GVertex*>::iterator tvIter=t_vtcs.begin();tvIter!=t_vtcs.end();++tvIter) {
-    
+
     GVertex* gvt = *tvIter;
     std::map<GVertex*,GVertex*>::iterator gvsIter = target->vertexCounterparts.find(gvt);
-    
-    
+
     if (gvsIter == target->vertexCounterparts.end()) {
       Msg::Info("Error during periodic meshing of surface %d with surface %d:"
                 "vertex %d has no periodic counterpart",
                 target->tag(),source->tag(),gvt->tag());
     }
-    
+
     GVertex* gvs = gvsIter->second;
     if (checkVtcs.find(gvs) == checkVtcs.end()) {
       if (gvs) Msg::Info("Error during periodic meshing of surface %d with surface %d:"
                          "vertex %d has periodic counterpart %d outside of source surface",
                          target->tag(),source->tag(),gvt->tag(),gvs->tag());
-      
+
       else Msg::Info("Error during periodic meshing of surface %d with surface %d:"
                      "vertex %d has no periodic counterpart",
                      target->tag(),source->tag(),gvt->tag());
     }
-    
+
     vs2vt[gvs->mesh_vertices[0]] = gvt->mesh_vertices[0];
   }
-  
 
   // add corresponding edge nodes assuming edges were correctly meshed already
 
@@ -271,26 +269,26 @@ static void copyMesh(GFace *source, GFace *target)
 
   std::set<GEdge*> checkEdges;
   checkEdges.insert(s_edges.begin(),s_edges.end());
-  
-  for (std::list<GEdge*>::iterator te_iter = t_edges.begin();te_iter!=t_edges.end();++te_iter) {
-    
+
+  for (std::list<GEdge*>::iterator te_iter = t_edges.begin();
+       te_iter != t_edges.end(); ++te_iter) {
+
     GEdge* get = *te_iter;
-    std::map<GEdge*,std::pair<GEdge*,int> >::iterator gesIter = target->edgeCounterparts.find(get);
-    
+
+    std::map<GEdge*,std::pair<GEdge*,int> >::iterator gesIter =
+      target->edgeCounterparts.find(get);
     if (gesIter == target->edgeCounterparts.end()) {
       Msg::Info("Error during periodic meshing of surface %d with surface %d:"
                 "edge %d has no periodic counterpart",
                 target->tag(),source->tag(),get->tag());
     }
-    
-    GEdge* ges = gesIter->second.first;
 
+    GEdge* ges = gesIter->second.first;
     if (checkEdges.find(ges) == checkEdges.end()) {
       Msg::Info("Error during periodic meshing of surface %d with surface %d:"
                 "edge %d has periodic counterpart %d outside of get surface",
                 target->tag(),source->tag(),get->tag(),ges->tag());
     }
-
 
     if (get->mesh_vertices.size() != ges->mesh_vertices.size()) {
       Msg::Info("Error during periodic meshing of surface %d with surface %d:"
@@ -299,34 +297,32 @@ static void copyMesh(GFace *source, GFace *target)
                 get->tag(),get->mesh_vertices.size(),
                 ges->tag(),ges->mesh_vertices.size());
     }
-    
+
     int orientation = gesIter->second.second;
     int is = orientation == 1 ? 0 : get->mesh_vertices.size()-1;
-    
+
     for (unsigned it=0;it<get->mesh_vertices.size();it++,is+=orientation) {
       vs2vt[ges->mesh_vertices[is]] = get->mesh_vertices[it];
     }
   }
-  
-  // now transform
-  
-  std::vector<double>& tfo = target->affineTransform;
 
+  // now transform
+  std::vector<double>& tfo = target->affineTransform;
 
   for(unsigned int i = 0; i < source->mesh_vertices.size(); i++){
     MVertex *vs = source->mesh_vertices[i];
     SPoint2 XXX;
-    
+
     double ps[4] = {vs->x(), vs->y(), vs->z(), 1.};
     double res[4] = {0., 0., 0., 0.};
     int idx = 0;
     for(int i = 0; i < 4; i++)
       for(int j = 0; j < 4; j++)
         res[i] +=  tfo[idx++] * ps[j];
-    
+
     SPoint3 tp (res[0], res[1], res[2]);
     XXX = target->parFromPoint(tp);
-    
+
     GPoint gp = target->point(XXX);
     MVertex *vt = new MFaceVertex(gp.x(), gp.y(), gp.z(), target, gp.u(), gp.v());
     target->mesh_vertices.push_back(vt);
@@ -536,9 +532,10 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
         BDS_Edge *e = m->recover_edge(pstart->iD, pend->iD, _fatallyFailed, e2r, notRecovered);
         if(e) e->g = g;
         else {
-	  if (_fatallyFailed) Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
-					 vstart->x(), vstart->y(), vend->x(), vend->y(), i,
-					 ge->mesh_vertices.size());
+	  if (_fatallyFailed)
+            Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
+                       vstart->x(), vstart->y(), vend->x(), vend->y(), i,
+                       ge->mesh_vertices.size());
 	  return !_fatallyFailed;
 	}
       }
@@ -2745,9 +2742,10 @@ static void getGFaceOrientation(GFace *gf, BoundaryLayerColumns *blc,
     const bool isBLEl = existBL &&
                         (blc->_toFirst.find(e) != blc->_toFirst.end());
     SVector3 nf;
-    if ((!isBLEl && orientNonBL == 0) || (isBLEl && orientBL == 0)) {       // Check only if orientation of BL/non-BL el. not already known
+    // Check only if orientation of BL/non-BL el. not already known
+    if ((!isBLEl && orientNonBL == 0) || (isBLEl && orientBL == 0)) {
       const bool found = fromVert ? getGFaceNormalFromVert(gf, e, nf) :
-                                    getGFaceNormalFromBary(gf, e, nf);
+        getGFaceNormalFromBary(gf, e, nf);
       if (found) {
         SVector3 ne = e->getFace(0).normal();
         const int orient = (dot(ne, nf) > 0.) ? 1 : -1;
@@ -2755,7 +2753,8 @@ static void getGFaceOrientation(GFace *gf, BoundaryLayerColumns *blc,
         else orientNonBL = orient;
       }
     }
-    if ((orientNonBL != 0) && (orientBL != 0)) break;                       // Stop when orientation found for non-BL and BL el.
+    // Stop when orientation found for non-BL and BL el.
+    if ((orientNonBL != 0) && (orientBL != 0)) break;
   }
 }
 
@@ -2804,18 +2803,21 @@ void orientMeshGFace::operator()(GFace *gf)
     }
 
     // Reverse BL and non-BL elements if needed
-    if (existBL) {                                                          // If there is a BL, test BL/non-BL elements
+    if (existBL) { // If there is a BL, test BL/non-BL elements
       if ((orientNonBL == -1) || (orientBL == -1))
         for (unsigned int iEl = 0; iEl < gf->getNumMeshElements(); iEl++) {
           MElement *e = gf->getMeshElement(iEl);
-          if (blc->_toFirst.find(e) == blc->_toFirst.end()) {               // If el. outside of BL...
-            if (orientNonBL == -1) e->reverse();                            // ... reverse if needed
+          // If el. outside of BL...
+          if (blc->_toFirst.find(e) == blc->_toFirst.end()) {
+            // ... reverse if needed
+            if (orientNonBL == -1) e->reverse();
           }
-          else                                                              // If el. in BL
-            if (orientBL == -1) e->reverse();                               // ... reverse if needed
+          else // If el. in BL
+            // ... reverse if needed
+            if (orientBL == -1) e->reverse();
         }
     }
-    else                                                                    // If no BL, reverse all elements if needed
+    else // If no BL, reverse all elements if needed
       if (orientNonBL == -1)
         for (unsigned int iEl = 0; iEl < gf->getNumMeshElements(); iEl++)
           gf->getMeshElement(iEl)->reverse();

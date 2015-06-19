@@ -73,7 +73,7 @@ GRegion *GEntity::cast2Region() { return dynamic_cast<GRegion*>(this); }
 void GEntity::setMeshMaster(GEntity* gMaster)
 {
   if (gMaster->dim() != dim()){
-    Msg::Error("Model entity %d of dimension %d cannot" 
+    Msg::Error("Model entity %d of dimension %d cannot"
                "be the mesh master of entity %d of dimension %d",
                gMaster->tag(),gMaster->dim(),tag(),dim());
     return;
@@ -84,7 +84,7 @@ void GEntity::setMeshMaster(GEntity* gMaster)
 void GEntity::setMeshMaster(GEntity* gMaster,const std::vector<double>& tfo)
 {
   if (gMaster->dim() != dim()){
-    Msg::Error("Model entity %d of dimension %d cannot" 
+    Msg::Error("Model entity %d of dimension %d cannot"
                "be the mesh master of entity %d of dimension %d",
                gMaster->tag(),gMaster->dim(),tag(),dim());
     return;
@@ -101,9 +101,5 @@ void GEntity::setMeshMaster(GEntity* gMaster,const std::vector<double>& tfo)
   _meshMaster = gMaster;
 }
 
-
-
-
 // gets the entity from which the mesh will be copied
-GEntity* GEntity::meshMaster() const {return _meshMaster;}
-
+GEntity* GEntity::meshMaster() const { return _meshMaster; }

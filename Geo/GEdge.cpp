@@ -48,15 +48,15 @@ void GEdge::deleteMesh()
 void GEdge::setMeshMaster(GEdge* ge,int ori) {
 
 #warning missing:computation of affine transformation during setMeshMaster
-  
+
   GEntity::setMeshMaster(ge);
   masterOrientation = ori > 0 ? 1:-1;
-  
+
   if (ori < 0) {
     vertexCounterparts[getBeginVertex()] = ge->getEndVertex();
     vertexCounterparts[getEndVertex()] = ge->getBeginVertex();
     getBeginVertex()->setMeshMaster(ge->getEndVertex());
-    getEndVertex()  ->setMeshMaster(ge->getBeginVertex());  
+    getEndVertex()  ->setMeshMaster(ge->getBeginVertex());
   }
   else {
     vertexCounterparts[getBeginVertex()] = ge->getBeginVertex();
@@ -66,8 +66,8 @@ void GEdge::setMeshMaster(GEdge* ge,int ori) {
   }
 }
 
-void GEdge::setMeshMaster(GEdge* ge,const std::vector<double>& tfo) {
-  
+void GEdge::setMeshMaster(GEdge* ge,const std::vector<double>& tfo)
+{
   SPoint3 oriXYZ0 = ge->getBeginVertex()->xyz();
   SPoint3 oriXYZ1 = ge->getEndVertex()->xyz();
 
@@ -83,17 +83,17 @@ void GEdge::setMeshMaster(GEdge* ge,const std::vector<double>& tfo) {
     tfoXYZ0[i] += tfo[idx];
     tfoXYZ1[i] += tfo[idx];
   }
-  
+
   SPoint3 locXYZ0 = getBeginVertex()->xyz();
   SPoint3 locXYZ1 = getEndVertex()->xyz();
-    
+
   SVector3 d00 = locXYZ0 - tfoXYZ0;
   SVector3 d10 = locXYZ1 - tfoXYZ0;
   SVector3 d01 = locXYZ0 - tfoXYZ1;
   SVector3 d11 = locXYZ1 - tfoXYZ1;
 
   double tol = CTX::instance()->geom.tolerance;
-  
+
   if ((d00.norm() < tol) && (d11.norm() < tol)) {
     GEntity::setMeshMaster(ge,tfo);
     masterOrientation = 1;
@@ -112,7 +112,7 @@ void GEdge::setMeshMaster(GEdge* ge,const std::vector<double>& tfo) {
     getEndVertex()  ->setMeshMaster(ge->getBeginVertex(),tfo);
     return;
   }
-  
+
   Msg::Error("Transformation from edge %d (%d-%d) to %d (%d-%d) is incorrect",
              ge->tag(),ge->getBeginVertex()->tag(),ge->getEndVertex()->tag(),
              this->tag(),this->getBeginVertex()->tag(),this->getEndVertex()->tag());

@@ -229,6 +229,7 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, img->tex);
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
   glBegin(GL_QUADS);
   glTexCoord2f(1.0f, 1.0f); glVertex3d(x+wx*w, y+wy*w, z+wz*w);
   glTexCoord2f(1.0f, 0.0f); glVertex3d(x+wx*w+hx*h, y+wy*w+hy*h, z+wz*w+hz*h);
@@ -240,7 +241,7 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
 
   if(billboard){
     glPopMatrix();
-    glMatrixMode (GL_PROJECTION);
+    glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(matrixMode);
   }

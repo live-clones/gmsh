@@ -36,7 +36,6 @@ class GEntity {
   // if non-periodic
   GEntity* _meshMaster;
 
-
   // the visibility and the selection flag
   char _visible, _selection;
 
@@ -48,7 +47,7 @@ class GEntity {
 
  protected:
   SOrientedBoundingBox *_obb;
-  
+
  public: // these will become protected at some point
   // the mesh vertices uniquely owned by the entity
   std::vector<MVertex*> mesh_vertices;
@@ -244,7 +243,7 @@ class GEntity {
 
   // get the native pointer of the particular representation
   virtual void *getNativePtr() const { return 0; }
-  
+
   // get the native id (int) of the particular representation
   virtual int getNativeInt() const { return 0; }
 
@@ -268,7 +267,6 @@ class GEntity {
   // returns the master entity (for mesh)
   GEntity* meshMaster() const;
   void setMeshMaster(GEntity*);
-  
   void setMeshMaster(GEntity*,const std::vector<double>&);
 
   // get the bounding box
@@ -321,7 +319,7 @@ class GEntity {
 
   // get the number of mesh vertices in the entity
   unsigned int getNumMeshVertices() { return (int)mesh_vertices.size(); }
-  
+
   // get the mesh vertex at the given index
   MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }
 

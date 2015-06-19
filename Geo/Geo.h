@@ -288,7 +288,7 @@ class GEO_Internals{
   void alloc_all();
   void free_all();
  public:
-  
+
   Tree_T *Points;
   Tree_T *Curves;
   Tree_T *Surfaces;
@@ -300,12 +300,11 @@ class GEO_Internals{
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
 
-  
   struct MasterEdge {
     int tag; // signed
     std::vector<double> affineTransform;
   };
-  
+
   std::map<int,MasterEdge> periodicEdges;
 
   struct MasterFace {
@@ -316,7 +315,7 @@ class GEO_Internals{
   };
 
   std::map<int,MasterFace> periodicFaces;
-  
+
   GEO_Internals(){ alloc_all(); }
   ~GEO_Internals(){ free_all(); }
   void destroy(){ free_all(); alloc_all(); }
