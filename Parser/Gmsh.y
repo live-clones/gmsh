@@ -130,7 +130,6 @@ struct doubleXstring{
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tDefineNumber tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
-%token tLines tSurfaces
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic tTransform

@@ -196,7 +196,6 @@ Knots			return tNurbsKnots;
 
 Length                  return tLength;
 Line                    return tLine;
-Lines                   return tLines;
 List                    return tList;
 Log                     return tLog;
 Log10                   return tLog10;
@@ -258,7 +257,6 @@ Sphere                  return tSphere;
 Spline                  return tSpline;
 Split                   return tSplit;
 Surface                 return tSurface;
-Surfaces                return tSurfaces;
 Str                     return tStr;
 Sprintf                 return tSprintf;
 StrCat                  return tStrCat;
