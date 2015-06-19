@@ -192,6 +192,9 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
   GLint matrixMode = 0;
   if(billboard){
     glRasterPos3d(x, y, z);
+    GLboolean valid;
+    glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
+    if(valid == GL_FALSE) return; // the primitive is culled
     GLfloat pos[4];
     glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
     glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
