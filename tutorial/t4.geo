@@ -2,7 +2,7 @@
  *
  *  Gmsh tutorial 4
  *
- *  Built-in functions, holes, strings, mesh color
+ *  Built-in functions, surface holes, annotations, mesh colors
  *
  *********************************************************************/
 
@@ -76,7 +76,7 @@ Plane Surface(24) = {23,21};
 // boundaries of the holes.
 
 // Finally, we can add some comments by embedding a post-processing view
-// containing some strings, and change the color of some mesh entities:
+// containing some strings:
 
 View "comments" {
   // Add a text string in window coordinates, 10 pixels from the left and 10
@@ -106,9 +106,12 @@ View "comments" {
 };
 
 // Views and geometrical entities can be made to respond to double-click events:
+
 View[0].DoubleClickedCommand = "Printf('View[0] has been double-clicked!');";
 Geometry.DoubleClickedLineCommand = "Printf('Line %g has been double-clicked!',
   Geometry.DoubleClickedEntityTag);";
+
+// We can also change the color of some mesh entities:
 
 Color Grey50{ Surface{ 22 }; }
 Color Purple{ Surface{ 24 }; }
