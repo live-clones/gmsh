@@ -34,8 +34,7 @@ struct surface_params
 class GRegion;
 
 // A model face.
-class GFace : public GEntity
-{
+class GFace : public GEntity{
  protected:
   // edge loops might replace what follows (list of all the edges of
   // the face + directions)
@@ -54,16 +53,16 @@ class GFace : public GEntity
 
  public: // this will become protected or private
   std::list<GEdgeLoop> edgeLoops;
-  
+
   // periodic counterparts of edges
   std::map<GEdge*,std::pair<GEdge*,int> > edgeCounterparts;
-  
+
   // specify mesh master with transformation, deduce edgeCounterparts
   void setMeshMaster(GFace* master,const std::vector<double>&);
 
   // specify mesh master and edgeCounterparts, deduce transformation
   void setMeshMaster(GFace* master,const std::map<int,int>&);
-  
+
   // an array with additional vertices that are supposed to exist in
   // the final mesh of the model face. This can be used for boundary
   // layer meshes or when using Lloyd-like smoothing algorithms those

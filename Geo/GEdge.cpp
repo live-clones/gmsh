@@ -18,7 +18,7 @@
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0),
-    v0(_v0), v1(_v1), compound(0)
+    v0(_v0), v1(_v1), compound(0), masterOrientation(0)
 {
   if(v0) v0->addEdge(this);
   if(v1 && v1 != v0) v1->addEdge(this);
@@ -45,12 +45,13 @@ void GEdge::deleteMesh()
   model()->destroyMeshCaches();
 }
 
-void GEdge::setMeshMaster(GEdge* ge,int ori) {
-
+void GEdge::setMeshMaster(GEdge* ge,int ori)
+{
+#if !defined(_MSC_VER)
 #warning missing:computation of affine transformation during setMeshMaster
-
+#endif
   GEntity::setMeshMaster(ge);
-  masterOrientation = ori > 0 ? 1:-1;
+  masterOrientation = ori > 0 ? 1 : -1;
 
   if (ori < 0) {
     vertexCounterparts[getBeginVertex()] = ge->getEndVertex();
@@ -571,7 +572,6 @@ SPoint3 GEdge :: closestPoint (SPoint3 &p, double tolerance)
   }
   return (*_cp)(p);
 }
-
 
 typedef struct {
   SPoint3 p;

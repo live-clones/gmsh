@@ -63,21 +63,21 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm)
     case 2 : s = gm->getFaceByTag(slave);   m = gm->getFaceByTag(master);   break;
     }
     if (s && m){
-      
       char token[6];
       fpos_t pos;
-      fgetpos(fp,&pos);
-      fscanf(fp,"%s",token);
-      if (strcmp(token,"Affine") == 0) {
+      fgetpos(fp, &pos);
+      if(fscanf(fp, "%s", token) != 1) return;
+      if(strcmp(token, "Affine") == 0) {
         std::vector<double> tfo;
-        for (int i=0;i<16;i++) fscanf(fp,"%lf",&tfo[i]);
-        s->setMeshMaster(m,tfo);
+        for(int i = 0; i < 16; i++){
+          if(fscanf(fp, "%lf", &tfo[i]) != 1) return;
+        }
+        s->setMeshMaster(m, tfo);
       }
       else {
-        fsetpos(fp,&pos);
+        fsetpos(fp, &pos);
         s->setMeshMaster(m);
       }
-      
       int numv;
       if(fscanf(fp, "%d", &numv) != 1) numv = 0;
       for(int j = 0; j < numv; j++){
