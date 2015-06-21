@@ -1651,6 +1651,19 @@ std::string opt_view_double_clicked_command(OPT_ARGS_STR)
 #endif
 }
 
+std::string opt_view_group(OPT_ARGS_STR)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo("");
+  if(action & GMSH_SET) {
+    opt->group = val;
+  }
+  return opt->group;
+#else
+  return "";
+#endif
+}
+
 std::string opt_view_filename(OPT_ARGS_STR)
 {
 #if defined(HAVE_POST)

@@ -273,6 +273,8 @@ StringXString ViewOptions_String[] = {
   { F|O, "GeneralizedRaiseZ" , opt_view_gen_raise2 , "v2" ,
     "Generalized elevation of the view along Z-axis (in model coordinates, "
     "using formula possibly containing x, y, z, s[tep], t[ime], v0, ... v8)" },
+  { F|O, "Group" , opt_view_group , "" ,
+    "Group to which this view belongs" },
 
   { F,   "Name" , opt_view_name , "" ,
     "Default post-processing view name" },

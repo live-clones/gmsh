@@ -103,6 +103,7 @@ std::string opt_view_name(OPT_ARGS_STR);
 std::string opt_view_format(OPT_ARGS_STR);
 std::string opt_view_filename(OPT_ARGS_STR);
 std::string opt_view_double_clicked_command(OPT_ARGS_STR);
+std::string opt_view_group(OPT_ARGS_STR);
 std::string opt_view_axes_label0(OPT_ARGS_STR);
 std::string opt_view_axes_label1(OPT_ARGS_STR);
 std::string opt_view_axes_label2(OPT_ARGS_STR);

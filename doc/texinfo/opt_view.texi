@@ -69,6 +69,11 @@ Generalized elevation of the view along Z-axis (in model coordinates, using form
 Default value: @code{"v2"}@*
 Saved in: @code{General.OptionsFileName}
 
+@item View.Group
+Group to which this view belongs@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item View.Name
 Default post-processing view name@*
 Default value: @code{""}@*

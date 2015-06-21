@@ -44,6 +44,7 @@ typedef unsigned long intptr_t;
 #include "CreateFile.h"
 #include "drawContext.h"
 #include "PView.h"
+#include "PViewOptions.h"
 #include "treeIcons.h"
 
 // This file contains the Gmsh/FLTK specific parts of the ONELAB
@@ -573,7 +574,11 @@ void onelabGroup::_addSolverMenu(int num)
 void onelabGroup::_addViewMenu(int num)
 {
   std::ostringstream path;
-  path << "0Modules/Post-processing/View" << num;
+  path << "0Modules/Post-processing/";
+  if(num >= 0 && num < PView::list.size() &&
+     PView::list[num]->getOptions()->group.size())
+    path << PView::list[num]->getOptions()->group << "/";
+  path << "View" << num;
   Fl_Tree_Item *n = _tree->add(path.str().c_str());
   int ww = _baseWidth - (n->depth() + 1) * _indent;
   int hh = n->labelsize() + 4;
@@ -590,7 +595,12 @@ void onelabGroup::_addViewMenu(int num)
 viewButton *onelabGroup::getViewButton(int num)
 {
   char tmp[256];
-  sprintf(tmp, "0Modules/Post-processing/View%d", num);
+  if(num >= 0 && num < PView::list.size() &&
+     PView::list[num]->getOptions()->group.size())
+    sprintf(tmp, "0Modules/Post-processing/%s/View%d",
+            PView::list[num]->getOptions()->group.c_str(), num);
+  else
+    sprintf(tmp, "0Modules/Post-processing/View%d", num);
   Fl_Tree_Item *n = _tree->find_item(tmp);
   if(n){
     Fl_Group *grp = (Fl_Group*)n->widget();
@@ -1046,11 +1056,11 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
 
   if(CTX::instance()->guiColorScheme){
     _tree->openicon(&open_pixmap_dark);
-    _tree->closeicon(&open_pixmap_dark);
+    _tree->closeicon(&close_pixmap_dark);
   }
   else{
     _tree->openicon(&open_pixmap_light);
-    _tree->closeicon(&open_pixmap_light);
+    _tree->closeicon(&close_pixmap_light);
   }
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
   _tree->selectmode(FL_TREE_SELECT_NONE);
@@ -1128,6 +1138,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
       but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       but->callback(onelab_subtree_cb, (void*)n);
 #else
+      // FIXME: if view group, add special widget with on/off switch
       Fl_Box *but = new Fl_Box(1, 1, ww, hh);
       //but->labelfont(FL_HELVETICA_ITALIC);
       but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
