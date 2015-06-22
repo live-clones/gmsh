@@ -322,6 +322,24 @@ static void setClosed(const std::string &path, std::vector<T> &ps,
   }
 }
 
+static std::string getViewPathName(int num)
+{
+  if(num < 0 || num >= (int)PView::list.size()) return "";
+  PViewOptions *opt = PView::list[num]->getOptions();
+  std::ostringstream path;
+  path << "0Modules/Post-processing/";
+  if(opt->group.size()) path << opt->group << "/";
+  path << "View" << num;
+  return path.str();
+}
+
+static std::string getViewPath(int num)
+{
+  std::string s = getViewPathName(num);
+  std::string::size_type last = s.find_last_of('/');
+  return s.substr(0, last);
+}
+
 static void setOpenedClosed(Fl_Tree_Item *item, int reason)
 {
   std::vector<onelab::number> numbers;
@@ -336,6 +354,9 @@ static void setOpenedClosed(Fl_Tree_Item *item, int reason)
     setClosed(path, strings, "0");
     setClosed(path, regions, "0");
     setClosed(path, functions, "0");
+    for(unsigned int i = 0; i < PView::list.size(); i++){
+      if(getViewPath(i) == path) PView::list[i]->getOptions()->closed = 0;
+    }
     break;
   case FL_TREE_REASON_CLOSED:
     FlGui::instance()->onelab->insertInManuallyClosed(path);
@@ -343,6 +364,9 @@ static void setOpenedClosed(Fl_Tree_Item *item, int reason)
     setClosed(path, strings, "1");
     setClosed(path, regions, "1");
     setClosed(path, functions, "1");
+    for(unsigned int i = 0; i < PView::list.size(); i++){
+      if(getViewPath(i) == path) PView::list[i]->getOptions()->closed = 1;
+    }
     break;
   default:
     break;
@@ -572,20 +596,9 @@ void onelabGroup::_addSolverMenu(int num)
   _tree->end();
 }
 
-static std::string _getViewPathName(int num)
-{
-  if(num < 0 || num >= (int)PView::list.size()) return "";
-  PViewOptions *opt = PView::list[num]->getOptions();
-  std::ostringstream path;
-  path << "0Modules/Post-processing/";
-  if(opt->group.size()) path << opt->group << "/";
-  path << "View" << num;
-  return path.str();
-}
-
 void onelabGroup::_addViewMenu(int num)
 {
-  std::string path = _getViewPathName(num);
+  std::string path = getViewPathName(num);
   if(path.empty()) return;
   Fl_Tree_Item *n = _tree->add(path.c_str());
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
@@ -603,7 +616,7 @@ void onelabGroup::_addViewMenu(int num)
 
 viewButton *onelabGroup::getViewButton(int num)
 {
-  std::string path = _getViewPathName(num);
+  std::string path = getViewPathName(num);
   if(path.empty()) return 0;
   Fl_Tree_Item *n = _tree->find_item(path.c_str());
   if(n){
@@ -615,7 +628,7 @@ viewButton *onelabGroup::getViewButton(int num)
 
 void onelabGroup::openCloseViewButton(int num)
 {
-  std::string path = _getViewPathName(num);
+  std::string path = getViewPathName(num);
   if(path.empty()) return;
   Fl_Tree_Item *n = _tree->find_item(path.c_str());
   if(n){
