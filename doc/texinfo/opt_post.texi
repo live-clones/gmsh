@@ -44,6 +44,11 @@ Ordinate of last double-clicked graph point@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
+@item PostProcessing.DoubleClickedView
+Index of last double-clicked view@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
 @item PostProcessing.ForceElementData
 Try to force saving datasets as ElementData@*
 Default value: @code{0}@*
