@@ -1302,6 +1302,8 @@ StringXNumber PostProcessingOptions_Number[] = {
     "Abscissa of last double-clicked graph point" },
   { F, "DoubleClickedGraphPointY" , opt_post_double_clicked_graph_point_y , 0. ,
     "Ordinate of last double-clicked graph point" },
+  { F, "DoubleClickedView" , opt_post_double_clicked_view, 0. ,
+    "Index of last double-clicked view" },
 
   { F|O, "ForceElementData" , opt_post_force_element_data , 0. ,
     "Try to force saving datasets as ElementData" },

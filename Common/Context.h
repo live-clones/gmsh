@@ -251,6 +251,7 @@ class CTX {
     double animDelay;
     std::string doubleClickedGraphPointCommand;
     double doubleClickedGraphPointX, doubleClickedGraphPointY;
+    int doubleClickedView;
   }post;
   // solver options
   struct{

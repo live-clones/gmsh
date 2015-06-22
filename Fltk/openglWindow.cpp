@@ -375,6 +375,7 @@ int openglWindow::handle(int event)
         ParseString(CTX::instance()->geom.doubleClickedVolumeCommand, true);
       }
       else if(views.size() && views[0]->getOptions()->doubleClickedCommand.size()){
+        CTX::instance()->post.doubleClickedView = views[0]->getIndex();
         ParseString(views[0]->getOptions()->doubleClickedCommand, true);
       }
       else if(points.size() && CTX::instance()->post.doubleClickedGraphPointCommand.size()){

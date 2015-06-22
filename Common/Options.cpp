@@ -6598,6 +6598,13 @@ double opt_post_double_clicked_graph_point_y(OPT_ARGS_NUM)
   return CTX::instance()->post.doubleClickedGraphPointY;
 }
 
+double opt_post_double_clicked_view(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->post.doubleClickedView = (int)val;
+  return CTX::instance()->post.doubleClickedView;
+}
+
 double opt_view_nb_timestep(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
