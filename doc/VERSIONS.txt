@@ -3,7 +3,8 @@ variables; new Physical specification with both label and numeric id; improved
 visibility browser navigation; geometrical entities and post-processing views
 can now react to double-clicks, via new generic DoubleClicked options; images
 can now be used as glyphs in post-processing views, using tex annotations with
-the `file://' prefix; generalized periodic meshing constraints; code cleanups.
+the `file://' prefix; Views can be grouped and presented in subtrees;
+generalized periodic meshing constraints; code cleanups.
 
 2.9.3 (April 18, 2015): updated versions of PETSc/SLEPc and OpenCASCADE/OCE
 libraries used in official binary builds; new Find() command; miscellaneous code
