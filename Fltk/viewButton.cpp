@@ -268,8 +268,7 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   PViewData *data = view->getData();
   PViewOptions *opt = view->getOptions();
 
-  int ws = FL_NORMAL_SIZE - 2; // right margin to allow for scrollbar
-  _toggle = new Fl_Check_Button(x, y, w - popw - ws, h);
+  _toggle = new Fl_Check_Button(x, y, w - popw, h);
   _toggle->box(FL_FLAT_BOX);
   _toggle->color(col);
   _toggle->callback(view_toggle_cb, (void *)num);
@@ -281,13 +280,13 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   strcpy(_tooltip, data->getFileName().c_str());
   _toggle->tooltip(_tooltip);
 
-  _butt = new Fl_Button(x + w - popw - ws, y, popw, h, "@>");
+  _butt = new Fl_Button(x + w - popw, y, popw, h, "@>");
   _butt->align(FL_ALIGN_RIGHT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _butt->tooltip("Show view options (Shift+w)");
   _butt->box(FL_FLAT_BOX);
   _butt->color(col);
   _butt->selection_color(col);
-  _popup = new Fl_Menu_Button(x + w - popw - ws, y, popw, h);
+  _popup = new Fl_Menu_Button(x + w - popw, y, popw, h);
   _popup->type(Fl_Menu_Button::POPUP123);
 
   _popup->add("Options", 'o',

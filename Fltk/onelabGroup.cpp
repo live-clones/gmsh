@@ -400,7 +400,8 @@ static void onelab_subtree_cb(Fl_Widget *w, void *data)
 
 void onelabGroup::_computeWidths()
 {
-  _baseWidth = _tree->w() - _tree->marginleft();
+  // "-FL_NORMAL_SIZE" to have space for a scrollbar to the right
+  _baseWidth = _tree->w() - _tree->marginleft() - FL_NORMAL_SIZE;
   // not sure why we have the "-2" correction at the end, but this is what is
   // needed to make things pixel-correct.
   _indent = _tree->connectorwidth() / 2. + _tree->openicon()->w() / 2. - 2.;
@@ -557,7 +558,6 @@ void onelabGroup::_addParameter(T &p)
 void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback, void *data)
 {
   Fl_Tree_Item *n = _tree->add(path.c_str());
-  //n->labelsize(FL_NORMAL_SIZE + 4);
   _tree->begin();
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
   int hh = n->labelsize() + 4;
@@ -1030,6 +1030,20 @@ static void onelab_region_input_cb(Fl_Widget *w, void *data)
   }
 }
 
+static void view_group_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string group((char*)data);
+  if(group.front() == '/') group = group.substr(1);
+  if(group.back() == '/') group.pop_back();
+  for(unsigned int i = 0; i < PView::list.size(); i++){
+    PViewOptions *opt = PView::list[i]->getOptions();
+    if(opt->group.find(group) == 0)
+      opt_view_visible(i, GMSH_SET | GMSH_GUI, !opt->visible);
+  }
+  drawContext::global()->draw();
+}
+
 Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, int ww, int hh,
                                             Fl_Tree_Item *n, bool highlight, Fl_Color c)
 {
@@ -1160,17 +1174,29 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
       int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
       int hh = n->labelsize() + 4;
       _tree->begin();
+      Fl_Widget *but;
 #if 0 // FIXME this can crash FLTK when submenus are intially closed (somehow
       // the widget is badly positioned and overlaps the open icon, leading to
       // a corrupted Fl_Tree_Item)
-      Fl_Button *but = new Fl_Button(1, 1, ww, hh);
+      but = new Fl_Button(1, 1, ww, hh);
       but->box(FL_NO_BOX);
       but->clear_visible_focus();
       but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       but->callback(onelab_subtree_cb, (void*)n);
 #else
-      Fl_Box *but = new Fl_Box(1, 1, ww, hh);
-      but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+      if(getPath(n).find("0Modules/Post-processing") != std::string::npos){
+        but = new Fl_Button(1, 1, ww, hh);
+        but->box(FL_NO_BOX);
+        but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+        but->tooltip("Toggle visibility of child views");
+        char *group = strdup(getPath(n).substr(24).c_str());
+        _treeStrings.push_back(group);
+        but->callback(view_group_cb, (void*)group);
+      }
+      else{
+        but = new Fl_Box(1, 1, ww, hh);
+        but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+      }
 #endif
       _treeWidgets.push_back(but);
       onelab::string o(n->label());
