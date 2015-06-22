@@ -441,6 +441,7 @@ helpWindow::helpWindow()
     browser->type(FL_MULTI_BROWSER);
     browser->callback(browser_cb);
     browser->tooltip("Double-click to edit value");
+    browser->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
 
     options->resizable(browser);
     options->position(Fl::x() + Fl::w()/2 - width / 2,

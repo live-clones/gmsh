@@ -1220,6 +1220,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       browser->type(FL_MULTI_BROWSER);
       browser->textsize(FL_NORMAL_SIZE - 1);
       browser->column_widths(cols);
+      browser->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
 
       gg->end();
       Fl_Group::current()->resizable(gg);
@@ -1259,6 +1260,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     tree->labelsize(FL_NORMAL_SIZE - 1);
     tree->selectmode(FL_TREE_SELECT_MULTI);
     tree->connectorstyle(FL_TREE_CONNECTOR_SOLID);
+    tree->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
     tree->hide();
 
     tree_create = new Fl_Button
@@ -1426,6 +1428,7 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     per_window = new Fl_Multi_Browser
       (2 * WB, 2 * WB + BH, brw, height - 6 * WB - 3 * BH);
     per_window->callback(visibility_per_window_cb, (void*)"item");
+    per_window->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
 
     Fl_Button *b1 = new Fl_Button
       (width - 1 * CC - 2 * WB, height - 2 * BH - 3 * WB, CC, BH, "Reset all");
