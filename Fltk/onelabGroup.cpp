@@ -376,8 +376,10 @@ static void onelab_subtree_cb(Fl_Widget *w, void *data)
 
 void onelabGroup::_computeWidths()
 {
-  _baseWidth = (int)(_tree->w() - _tree->marginleft());
-  _indent = (int)(_tree->connectorwidth() / 2. + _tree->openicon()->w() / 2.);
+  _baseWidth = _tree->w() - _tree->marginleft();
+  // not sure why we have the "-2" correction at the end, but this is what is
+  // needed to make things pixel-correct.
+  _indent = _tree->connectorwidth() / 2. + _tree->openicon()->w() / 2. - 2.;
 }
 
 #if !defined(__APPLE__)
@@ -513,11 +515,10 @@ void onelabGroup::_addParameter(T &p)
   Fl_Tree_Item *n = _tree->add(p.getName().c_str());
   n->labelsize(FL_NORMAL_SIZE + 4);
   _tree->begin();
-  int ww = _baseWidth - (n->depth() + 1) * _indent;
-  ww *= _widgetLabelRatio; // FIXME CHANGE THIS
+  int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
   int hh = n->labelsize() + 4;
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
-  Fl_Widget *widget = _addParameterWidget(p, ww, hh, n, highlight, c);
+  Fl_Widget *widget = _addParameterWidget(p, ww * _widgetLabelRatio, hh, n, highlight, c);
   grp->end();
   if(!_enableTreeWidgetResize) grp->resizable(0);
   _treeWidgets.push_back(grp);
@@ -534,7 +535,7 @@ void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback, void 
   Fl_Tree_Item *n = _tree->add(path.c_str());
   //n->labelsize(FL_NORMAL_SIZE + 4);
   _tree->begin();
-  int ww = _baseWidth - (n->depth() + 1) * _indent;
+  int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
   int hh = n->labelsize() + 4;
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
   Fl_Button *but = new Fl_Button(1, 1, ww, hh);
@@ -559,7 +560,7 @@ void onelabGroup::_addSolverMenu(int num)
   std::ostringstream path;
   path << "0Modules/Solver/Solver" << num;
   Fl_Tree_Item *n = _tree->add(path.str().c_str());
-  int ww = _baseWidth - (n->depth() + 1) * _indent;
+  int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
   int hh = n->labelsize() + 4;
   _tree->begin();
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
@@ -571,16 +572,23 @@ void onelabGroup::_addSolverMenu(int num)
   _tree->end();
 }
 
-void onelabGroup::_addViewMenu(int num)
+static std::string _getViewPathName(int num)
 {
+  if(num < 0 || num >= (int)PView::list.size()) return "";
+  PViewOptions *opt = PView::list[num]->getOptions();
   std::ostringstream path;
   path << "0Modules/Post-processing/";
-  if(num >= 0 && num < PView::list.size() &&
-     PView::list[num]->getOptions()->group.size())
-    path << PView::list[num]->getOptions()->group << "/";
+  if(opt->group.size()) path << opt->group << "/";
   path << "View" << num;
-  Fl_Tree_Item *n = _tree->add(path.str().c_str());
-  int ww = _baseWidth - (n->depth() + 1) * _indent;
+  return path.str();
+}
+
+void onelabGroup::_addViewMenu(int num)
+{
+  std::string path = _getViewPathName(num);
+  if(path.empty()) return;
+  Fl_Tree_Item *n = _tree->add(path.c_str());
+  int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
   int hh = n->labelsize() + 4;
   _tree->begin();
   Fl_Group *grp = new Fl_Group(1, 1, ww, hh);
@@ -590,23 +598,33 @@ void onelabGroup::_addViewMenu(int num)
   _treeWidgets.push_back(grp);
   n->widget(grp);
   _tree->end();
+  if(PView::list[num]->getOptions()->closed) n->parent()->close();
 }
 
 viewButton *onelabGroup::getViewButton(int num)
 {
-  char tmp[256];
-  if(num >= 0 && num < PView::list.size() &&
-     PView::list[num]->getOptions()->group.size())
-    sprintf(tmp, "0Modules/Post-processing/%s/View%d",
-            PView::list[num]->getOptions()->group.c_str(), num);
-  else
-    sprintf(tmp, "0Modules/Post-processing/View%d", num);
-  Fl_Tree_Item *n = _tree->find_item(tmp);
+  std::string path = _getViewPathName(num);
+  if(path.empty()) return 0;
+  Fl_Tree_Item *n = _tree->find_item(path.c_str());
   if(n){
     Fl_Group *grp = (Fl_Group*)n->widget();
     return (viewButton*)grp->child(0);
   }
   return 0;
+}
+
+void onelabGroup::openCloseViewButton(int num)
+{
+  std::string path = _getViewPathName(num);
+  if(path.empty()) return;
+  Fl_Tree_Item *n = _tree->find_item(path.c_str());
+  if(n){
+    if(PView::list[num]->getOptions()->closed)
+      n->parent()->close();
+    else
+      n->parent()->open();
+    _tree->redraw();
+  }
 }
 
 template <class T>
@@ -1126,7 +1144,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
 
   for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()){
     if(n->has_children()){
-      int ww = _baseWidth - (n->depth() + 1) * _indent;
+      int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
       int hh = n->labelsize() + 4;
       _tree->begin();
 #if 0 // FIXME this can crash FLTK when submenus are intially closed (somehow
@@ -1138,9 +1156,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
       but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
       but->callback(onelab_subtree_cb, (void*)n);
 #else
-      // FIXME: if view group, add special widget with on/off switch
       Fl_Box *but = new Fl_Box(1, 1, ww, hh);
-      //but->labelfont(FL_HELVETICA_ITALIC);
       but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 #endif
       _treeWidgets.push_back(but);

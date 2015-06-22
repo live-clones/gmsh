@@ -8788,6 +8788,24 @@ double opt_view_component_map6(OPT_ARGS_NUM){ return ovcm(num, action, val, 6); 
 double opt_view_component_map7(OPT_ARGS_NUM){ return ovcm(num, action, val, 7); }
 double opt_view_component_map8(OPT_ARGS_NUM){ return ovcm(num, action, val, 8); }
 
+double opt_view_closed(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0.);
+  if(action & GMSH_SET) {
+    opt->closed = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI) && num >= 0){
+    FlGui::instance()->onelab->openCloseViewButton(num);
+  }
+#endif
+  return opt->closed;
+#else
+  return 0.;
+#endif
+}
+
 double opt_print_file_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

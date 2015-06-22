@@ -677,6 +677,7 @@ double opt_view_component_map5(OPT_ARGS_NUM);
 double opt_view_component_map6(OPT_ARGS_NUM);
 double opt_view_component_map7(OPT_ARGS_NUM);
 double opt_view_component_map8(OPT_ARGS_NUM);
+double opt_view_closed(OPT_ARGS_NUM);
 double opt_print_file_format(OPT_ARGS_NUM);
 double opt_print_eps_compress(OPT_ARGS_NUM);
 double opt_print_eps_ps3shading(OPT_ARGS_NUM);

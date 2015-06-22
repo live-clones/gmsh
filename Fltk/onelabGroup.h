@@ -25,7 +25,7 @@ class onelabGroup : public Fl_Group{
   std::vector<Fl_Widget*> _treeWidgets;
   std::vector<char*> _treeStrings;
   bool _stop;
-  int _baseWidth, _indent;
+  double _baseWidth, _indent;
   int _minWindowWidth, _minWindowHeight;
   double _widgetLabelRatio;
   std::set<std::string> _manuallyClosed;
@@ -72,6 +72,7 @@ class onelabGroup : public Fl_Group{
     return _manuallyClosed.find(path) != _manuallyClosed.end();
   }
   viewButton *getViewButton(int num);
+  void openCloseViewButton(int num);
   void addSolver(const std::string &name, const std::string &exe,
                  const std::string &hostName, int index);
   void removeSolver(const std::string &name);

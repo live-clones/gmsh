@@ -100,6 +100,7 @@ class PViewOptions {
   int forceNumComponents, componentMap[9];
   int sampling;
   std::string attributes, doubleClickedCommand, group;
+  int closed;
   struct{
     unsigned int point, line, triangle, quadrangle;
     unsigned int tetrahedron, hexahedron, prism, pyramid;

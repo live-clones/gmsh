@@ -1384,6 +1384,8 @@ StringXNumber ViewOptions_Number[] = {
     "Center glyphs (arrows, numbers, etc.)? (0=left, 1=centered, 2=right)" },
   { F,   "Clip" , opt_view_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
+  { F|O, "Closed" , opt_view_closed , 0,
+    "Close the subtree containing this view" },
   { F|O, "ColormapAlpha" , opt_view_colormap_alpha , 1.0 ,
     "Colormap alpha channel value (used only if != 1)" },
   { F|O, "ColormapAlphaPower" , opt_view_colormap_alpha_power , 0.0 ,
