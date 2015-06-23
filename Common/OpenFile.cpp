@@ -697,8 +697,7 @@ void OpenProject(const std::string &fileName, bool setWindowTitle)
     if(tmp[i] != fileName)
       CTX::instance()->recentFiles.push_back(tmp[i]);
   }
-  if(CTX::instance()->recentFiles.size() > 10)
-    CTX::instance()->recentFiles.resize(10);
+  CTX::instance()->recentFiles.resize(10);
 #if defined(HAVE_FLTK)
   if(FlGui::available())
     FlGui::instance()->graph[0]->fillRecentHistoryMenu();
