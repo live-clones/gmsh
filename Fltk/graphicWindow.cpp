@@ -3524,7 +3524,7 @@ void graphicWindow::fillRecentHistoryMenu()
 
   static char recent[10][256];
   for(int i = 0; i < 10; i++){
-    if(i < CTX::instance()->recentFiles.size())
+    if(i < (int)CTX::instance()->recentFiles.size())
       strcpy(recent[i], CTX::instance()->recentFiles[i].c_str());
     else
       strcpy(recent[i], "");
