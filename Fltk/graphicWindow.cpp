@@ -3522,9 +3522,11 @@ void graphicWindow::fillRecentHistoryMenu()
     table = sysbar_table;
 #endif
 
+  static char recent[10][256];
   for(int i = 0; i < 10; i++){
-    table[4 + i].text = CTX::instance()->recentFiles[i].c_str();
-    table[4 + i].user_data_ = (void*)CTX::instance()->recentFiles[i].c_str();
+    strcpy(recent[i], CTX::instance()->recentFiles[i].c_str());
+    table[4 + i].text = recent[i];
+    table[4 + i].user_data_ = (void*)recent[i];
   }
 
 #if defined(__APPLE__)
