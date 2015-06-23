@@ -1034,8 +1034,10 @@ static void view_group_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
   std::string group((char*)data);
-  if(group.front() == '/') group = group.substr(1);
-  if(group.back() == '/') group.pop_back();
+  while(group.size() && group[0] == '/')
+    group = group.substr(1);
+  while(group.size() && group[group.size() - 1] == '/')
+    group = group.substr(0, group.size() - 1);
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PViewOptions *opt = PView::list[i]->getOptions();
     if(opt->group.find(group) == 0)
