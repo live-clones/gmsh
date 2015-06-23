@@ -3524,7 +3524,10 @@ void graphicWindow::fillRecentHistoryMenu()
 
   static char recent[10][256];
   for(int i = 0; i < 10; i++){
-    strcpy(recent[i], CTX::instance()->recentFiles[i].c_str());
+    if(i < CTX::instance()->recentFiles.size())
+      strcpy(recent[i], CTX::instance()->recentFiles[i].c_str());
+    else
+      strcpy(recent[i], "");
     table[4 + i].text = recent[i];
     table[4 + i].user_data_ = (void*)recent[i];
   }
