@@ -275,7 +275,6 @@ T3                      return tText3D;
 TextAttributes          return tTextAttributes;
 TIME                    return tTime;
 Transfinite             return tTransfinite;
-Transform               return tTransform;
 Transf[qQ]uad[tT]ri     return tTransfQuadTri;
 Translate               return tTranslate;
 Tanh                    return tTanh;

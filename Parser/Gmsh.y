@@ -132,7 +132,7 @@ struct doubleXstring{
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh
-%token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic tTransform
+%token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
 %token tRecombine tSmoother tSplit tDelete tCoherence
@@ -4043,20 +4043,20 @@ Constraints :
       List_Delete($3);
     }
   | tPeriodic tLine '{' RecursiveListOfDouble '}' tAFFECT
-    '{' RecursiveListOfDouble '}' tTransform PeriodicTransform tEND
+    '{' RecursiveListOfDouble '}' PeriodicTransform tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
         yymsg(0, "Number of master lines (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
-        if (List_Nbr($11) < 12){
+        if (List_Nbr($10) < 12){
           yymsg(0, "Affine transformation requires at least 12 entries");
         }
         else {
 
           std::vector<double> transfo(16,0);
-          for(int i = 0; i < List_Nbr($11); i++) List_Read($11, i, &transfo[i]);
+          for(int i = 0; i < List_Nbr($10); i++) List_Read($10, i, &transfo[i]);
 
           for(int i = 0; i < List_Nbr($4); i++){
             double d_master, d_slave;
@@ -4069,23 +4069,23 @@ Constraints :
           }
         }
       }
-      List_Delete($8);
       List_Delete($4);
+      List_Delete($8);
     }
   | tPeriodic tSurface '{' RecursiveListOfDouble '}' tAFFECT
-    '{' RecursiveListOfDouble '}'  tTransform PeriodicTransform tEND
+    '{' RecursiveListOfDouble '}' PeriodicTransform tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
         yymsg(0, "Number of master faces (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
-        if (List_Nbr($11) < 12){
+        if (List_Nbr($10) < 12){
           yymsg(0, "Affine transformation requires at least 12 entries");
         }
         else {
           std::vector<double> transfo(16,0);
-          for(int i = 0; i < List_Nbr($11); i++) List_Read($11, i, &transfo[i]);
+          for(int i = 0; i < List_Nbr($10); i++) List_Read($10, i, &transfo[i]);
 
           for(int i = 0; i < List_Nbr($4); i++){
             double d_master, d_slave;
