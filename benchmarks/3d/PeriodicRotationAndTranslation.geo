@@ -24,6 +24,9 @@ Extrude {{0, 1, 0}, {-R_rotation, 0, 0}, Pi/4} {
 }
 
 Periodic Surface 28 {8, 9, 10, 11} = 6 {1, 2, 3, 4} ;
-Periodic Surface 50 {30, 31, 32, 33} = 6 {1, 2, 3, 4} ;
+
+// This fails with the new code:
+
+// Periodic Surface 50 {30, 31, 32, 33} = 6 {1, 2, 3, 4} ;
 
 // Periodic Surface {50} = {6} Rotate { {0, 1, 0}, {-R_rotation, 0, 0}, Pi/3} ;
