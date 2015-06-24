@@ -1122,7 +1122,7 @@ static const yytype_uint16 yyrline[] =
     3561,  3565,  3569,  3573,  3579,  3585,  3589,  3593,  3597,  3601,
     3620,  3633,  3636,  3652,  3655,  3672,  3675,  3681,  3684,  3691,
     3694,  3701,  3757,  3827,  3832,  3899,  3935,  3943,  3986,  4025,
-    4045,  4075,  4101,  4127,  4153,  4179,  4205,  4227,  4255,  4283,
+    4045,  4074,  4101,  4127,  4153,  4179,  4205,  4227,  4255,  4283,
     4287,  4291,  4319,  4358,  4397,  4418,  4439,  4466,  4470,  4480,
     4515,  4516,  4517,  4521,  4527,  4539,  4557,  4585,  4586,  4587,
     4588,  4589,  4590,  4591,  4592,  4593,  4600,  4601,  4602,  4603,
@@ -9539,20 +9539,19 @@ yyreduce:
       }
       else{
         if (List_Nbr((yyvsp[(10) - (11)].l)) < 12){
+          // FIXME Koen restore full automatic case here if List_Nbr($10) == 0)
           yymsg(0, "Affine transformation requires at least 12 entries");
         }
         else {
-
           std::vector<double> transfo(16,0);
-          for(int i = 0; i < List_Nbr((yyvsp[(10) - (11)].l)); i++) List_Read((yyvsp[(10) - (11)].l), i, &transfo[i]);
-
+          for(int i = 0; i < List_Nbr((yyvsp[(10) - (11)].l)); i++)
+            List_Read((yyvsp[(10) - (11)].l), i, &transfo[i]);
           for(int i = 0; i < List_Nbr((yyvsp[(4) - (11)].l)); i++){
             double d_master, d_slave;
             List_Read((yyvsp[(8) - (11)].l), i, &d_master);
             List_Read((yyvsp[(4) - (11)].l), i, &d_slave);
             int j_master = (int)d_master;
             int j_slave  = (int)d_slave;
-
             addPeriodicEdge(j_slave,j_master,transfo);
           }
         }
@@ -9564,7 +9563,7 @@ yyreduce:
 
   case 321:
 /* Line 1787 of yacc.c  */
-#line 4077 "Gmsh.y"
+#line 4076 "Gmsh.y"
     {
       if (List_Nbr((yyvsp[(4) - (11)].l)) != List_Nbr((yyvsp[(8) - (11)].l))){
         yymsg(0, "Number of master faces (%d) different from number of "
@@ -9572,12 +9571,13 @@ yyreduce:
       }
       else{
         if (List_Nbr((yyvsp[(10) - (11)].l)) < 12){
+          // FIXME Koen restore full automatic case here if List_Nbr($10) == 0)
           yymsg(0, "Affine transformation requires at least 12 entries");
         }
         else {
           std::vector<double> transfo(16,0);
-          for(int i = 0; i < List_Nbr((yyvsp[(10) - (11)].l)); i++) List_Read((yyvsp[(10) - (11)].l), i, &transfo[i]);
-
+          for(int i = 0; i < List_Nbr((yyvsp[(10) - (11)].l)); i++)
+            List_Read((yyvsp[(10) - (11)].l), i, &transfo[i]);
           for(int i = 0; i < List_Nbr((yyvsp[(4) - (11)].l)); i++){
             double d_master, d_slave;
             List_Read((yyvsp[(8) - (11)].l), i, &d_master);

@@ -4051,20 +4051,19 @@ Constraints :
       }
       else{
         if (List_Nbr($10) < 12){
+          // FIXME Koen restore full automatic case here if List_Nbr($10) == 0)
           yymsg(0, "Affine transformation requires at least 12 entries");
         }
         else {
-
           std::vector<double> transfo(16,0);
-          for(int i = 0; i < List_Nbr($10); i++) List_Read($10, i, &transfo[i]);
-
+          for(int i = 0; i < List_Nbr($10); i++)
+            List_Read($10, i, &transfo[i]);
           for(int i = 0; i < List_Nbr($4); i++){
             double d_master, d_slave;
             List_Read($8, i, &d_master);
             List_Read($4, i, &d_slave);
             int j_master = (int)d_master;
             int j_slave  = (int)d_slave;
-
             addPeriodicEdge(j_slave,j_master,transfo);
           }
         }
@@ -4081,12 +4080,13 @@ Constraints :
       }
       else{
         if (List_Nbr($10) < 12){
+          // FIXME Koen restore full automatic case here if List_Nbr($10) == 0)
           yymsg(0, "Affine transformation requires at least 12 entries");
         }
         else {
           std::vector<double> transfo(16,0);
-          for(int i = 0; i < List_Nbr($10); i++) List_Read($10, i, &transfo[i]);
-
+          for(int i = 0; i < List_Nbr($10); i++)
+            List_Read($10, i, &transfo[i]);
           for(int i = 0; i < List_Nbr($4); i++){
             double d_master, d_slave;
             List_Read($8, i, &d_master);
