@@ -36,7 +36,7 @@ Line Loop(s2b)= {l0, l022b, -l1b, -l011b};
 Ruled Surface(s2b)= {s2b};
 //Plane Surface(s2b)= {s2b};
 
-Periodic Line {l1b, l011b, l022b} = {l1, l011, l022};
+//Periodic Line {l1b, l011b, l022b} = {l1, l011, l022};
 
 // Periodic Surface seems to work properly only with Ruled Surfaces (meshing problem with Plane Surface)
 Periodic Surface s2b {Boundary{Surface{s2b};}} = s2 {Boundary{Surface{s2};}};

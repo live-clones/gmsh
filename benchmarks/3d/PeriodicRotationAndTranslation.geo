@@ -1,4 +1,3 @@
-
 lc = 1.0;
 R = 5;
 R_rotation = 15;
@@ -20,13 +19,11 @@ Extrude {0, 0, 1} {
   Surface{6};
 }
 
-// C'est cette opration (d'extrusion autour d'un axe) qui fait planter periodic surface
-// le bug tant dependant de l'angle d'extrusion specifie
-
-Extrude {{0, 1, 0}, {-R_rotation, 0, 0}, Pi/3} {
+Extrude {{0, 1, 0}, {-R_rotation, 0, 0}, Pi/4} {
   Surface{6};
 }
 
 Periodic Surface 28 {8, 9, 10, 11} = 6 {1, 2, 3, 4} ;
-Periodic Surface  50 {30, 31, 32, 33} = 6 {1, 2, 3, 4} ;
+Periodic Surface 50 {30, 31, 32, 33} = 6 {1, 2, 3, 4} ;
 
+// Periodic Surface {50} = {6} Rotate { {0, 1, 0}, {-R_rotation, 0, 0}, Pi/3} ;
