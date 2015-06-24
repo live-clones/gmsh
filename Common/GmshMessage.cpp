@@ -59,6 +59,7 @@ int Msg::_progressMeterCurrent = 0;
 std::map<std::string, double> Msg::_timers;
 int Msg::_warningCount = 0;
 int Msg::_errorCount = 0;
+int Msg::_atLeastOneErrorInRun = 0;
 std::string Msg::_firstWarning;
 std::string Msg::_firstError;
 GmshMessage *Msg::_callback = 0;
@@ -218,7 +219,7 @@ void Msg::Exit(int level)
   MPI_Finalize();
 #endif
   FinalizeOnelab();
-  exit(_errorCount);
+  exit(_atLeastOneErrorInRun);
 }
 
 static int streamIsFile(FILE* stream)
@@ -260,6 +261,7 @@ static int streamIsVT100(FILE* stream)
 void Msg::Fatal(const char *fmt, ...)
 {
   _errorCount++;
+  _atLeastOneErrorInRun = 1;
 
   char str[5000];
   va_list args;
@@ -307,6 +309,7 @@ void Msg::Fatal(const char *fmt, ...)
 void Msg::Error(const char *fmt, ...)
 {
   _errorCount++;
+  _atLeastOneErrorInRun = 1;
 
   if(_verbosity < 1) return;
 

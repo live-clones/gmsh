@@ -41,7 +41,7 @@ class Msg {
   // timers
   static std::map<std::string, double> _timers;
   // counters
-  static int _warningCount, _errorCount;
+  static int _warningCount, _errorCount, _atLeastOneErrorInRun;
   static std::string _firstWarning, _firstError;
   // callback
   static GmshMessage *_callback;

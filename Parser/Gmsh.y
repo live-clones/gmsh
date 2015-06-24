@@ -4212,14 +4212,12 @@ Constraints :
       else{
         int j_master = (int)$8;
         int j_slave = (int)$3;
-
         std::map<int,int> edgeCounterParts;
         for (int i = 0; i < List_Nbr($5); i++){
           double ds,dm;
           List_Read($5,i,&ds);
           List_Read($10,i,&dm);
           edgeCounterParts[(int) ds] = (int) dm;
-          std::cout << "edge " << ds << " to " << dm << std::endl;
         }
         addPeriodicFace(j_slave,j_master,edgeCounterParts);
       }
@@ -5997,7 +5995,6 @@ void yymsg(int level, const char *fmt, ...)
   }
 }
 
-
 void addPeriodicFace(int iTarget,int iSource,
                      const std::vector<double>& affineTransform)
 {
@@ -6024,10 +6021,10 @@ void addPeriodicFace(int iTarget,int iSource,
 {
   Surface *target = FindSurface(abs(iTarget));
 
-  std::cout << "Encoding periodic connection between " << iTarget << " and " << iSource << std::endl;
+  Msg::Info("Encoding periodic connection between %d and %d", iTarget, iSource);
   std::map<int,int>::const_iterator sIter = edgeCounterparts.begin();
-  for (;sIter!=edgeCounterparts.end();++sIter) {
-    std::cout << sIter->first << " - " << sIter->second << std::endl;
+  for (; sIter != edgeCounterparts.end(); ++sIter) {
+    Msg::Info("%d - %d", sIter->first, sIter->second);
   }
 
   if (target) {
@@ -6040,8 +6037,9 @@ void addPeriodicFace(int iTarget,int iSource,
   else{
     GFace *target = GModel::current()->getFaceByTag(abs(iTarget));
     GFace *source = GModel::current()->getFaceByTag(abs(iSource));
-    if (!target || !source)  Msg::Error("Could not find surface %d or %d for periodic copy",
-                                        iTarget,iSource);
+    if (!target || !source)
+      Msg::Error("Could not find surface %d or %d for periodic copy",
+                 iTarget,iSource);
     target->setMeshMaster(source,edgeCounterparts);
   }
 }
@@ -6059,8 +6057,9 @@ void addPeriodicEdge(int iTarget,int iSource,
   else{
     GEdge *target = GModel::current()->getEdgeByTag(abs(iTarget));
     GEdge *source = GModel::current()->getEdgeByTag(abs(iSource));
-    if (!target || !source) Msg::Error("Could not find surface %d or %d for periodic copy",
-                                       iTarget,iSource);
+    if (!target || !source)
+      Msg::Error("Could not find surface %d or %d for periodic copy",
+                 iTarget,iSource);
     if (affineTransform.size() == 16) {
       target->setMeshMaster(source,affineTransform);
     }
@@ -6070,10 +6069,8 @@ void addPeriodicEdge(int iTarget,int iSource,
   }
 }
 
-void computeAffineTransformation(SPoint3& origin,
-                                 SPoint3& axis,
-                                 double angle,
-                                 SPoint3& translation,
+void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
+                                 double angle, SPoint3& translation,
                                  std::vector<double>& tfo)
 {
   tfo.resize(16,0.0);
