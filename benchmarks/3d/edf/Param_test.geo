@@ -14,8 +14,3 @@ NbBoxSup = 3.;
 NbBoxInf = 3.;
 
 NbBoxGen = 2.;
-
-// Densité de maillage (taille des mailles autour d'un point géomètrique)
-
-lfour =  LongueurFour/NbElLongF ;
-

@@ -1,4 +1,4 @@
-// Ce fichier est la description geometrique utilisee par GMSH pour 
+// Ce fichier est la description geometrique utilisee par GMSH pour
 // generer le fichier "four.msh".
 //
 // Copyright (C) 2003 Ali ABAKAR <abakar@edf.fr>
@@ -17,10 +17,15 @@ ProfondeurMarche = 1. ; LongueurMarche = 2. ;
 
 Include "Param_test.geo";
 
+// Densité de maillage (taille des mailles autour d'un point géomètrique)
+
+lfour =  LongueurFour/NbElLongF ;
+
+
 // Description géomètrique du four
 
 // Création des points
- 
+
 pf1 = newp; Point(pf1) = { LongueurFour,                LargeurFour/2., -ProfondeurMarche, lfour};
 pf2 = newp; Point(pf2) = { LongueurFour-LongueurMarche, LargeurFour/2., -ProfondeurMarche, lfour};
 pf3 = newp; Point(pf3) = { LongueurFour-LongueurMarche, LargeurFour/2.,                0., lfour};
@@ -70,13 +75,13 @@ lf18 = newreg; Line(lf18) = {pf5, pf12};
 
 // Définition des contour(s) du dessus du four
 
-DessusFour[0] = newreg; Line Loop(DessusFour[0]) = {lf9,lf10,lf11,lf12}; 
+DessusFour[0] = newreg; Line Loop(DessusFour[0]) = {lf9,lf10,lf11,lf12};
 
 // Définitions des contours des bords du four
 
 // Bord en y = LargeurFour/2.
 
-BordFour[0] = newreg; Line Loop(BordFour[0]) = {lf1,lf14,lf5,lf15,-lf9, -lf13}; 
+BordFour[0] = newreg; Line Loop(BordFour[0]) = {lf1,lf14,lf5,lf15,-lf9, -lf13};
 
 // Bord en x = 0.
 
@@ -88,7 +93,7 @@ BordFour[2] = newreg; Line Loop(BordFour[2]) = {lf7,-lf17,lf3,lf18,-lf11,-lf16};
 
 // Bord en x = LongueurFour
 
-BordFour[3] = newreg; Line Loop(BordFour[3]) = {lf4, lf13,-lf12,-lf18}; 
+BordFour[3] = newreg; Line Loop(BordFour[3]) = {lf4, lf13,-lf12,-lf18};
 
 // Définitions des contour(s) du fond du Four
 
@@ -118,7 +123,7 @@ Include "Electrode_8.geo" ;
 
 // Rayon et Hauteur Electrode
 
-r = 0.076/2.; l = 0.35; 
+r = 0.076/2.; l = 0.35;
 
 // Vecteur axe electrode
 
@@ -139,7 +144,7 @@ Call Electrode;
 t = t + 1 ;
 R = 0.5 ;
 L = 0.8 ;
-yc = 3.5 ; zc = 0 ; 
+yc = 3.5 ; zc = 0 ;
 
 Call Electrode;
 
@@ -167,7 +172,7 @@ Call Electrode;
 t = t + 1 ;
 R = 0.5 ;
 L = 0.8 ;
-yc = 3.5 ; zc = 0 ; 
+yc = 3.5 ; zc = 0 ;
 
 Call Electrode;
 
@@ -195,7 +200,7 @@ Call Electrode;
 t = t + 1 ;
 R = 0.5 ;
 L = 0.8 ;
-yc = 3.5 ; zc = 0 ; 
+yc = 3.5 ; zc = 0 ;
 
 Call Electrode;
 
@@ -214,7 +219,7 @@ xc = xc + 2.5 ;
 // ELECTRODE I
 
 t = t+1;
-R = 1. ; 
+R = 1. ;
 yc = 0 ; zc = 0 ;
 
 Call Electrode;
@@ -224,7 +229,7 @@ Call Electrode;
 t = t + 1 ;
 R = 0.5 ;
 L = 0.8 ;
-yc = 3.5 ; zc = 0 ; 
+yc = 3.5 ; zc = 0 ;
 
 Call Electrode;
 
@@ -253,7 +258,7 @@ Call Electrode;
 // ELECTRODE II
 
 t = t + 1 ;
-yc = 0.9 ; zc = 0 ; 
+yc = 0.9 ; zc = 0 ;
 
 Call Electrode;
 
@@ -314,7 +319,7 @@ Call Electrode;
 
 Plane Surface(FondFour[0]) = { FondFour[0]};
 Plane Surface(FondFour[1]) = { FondFour[1],ContBaseBoiteElect[]};
-Plane Surface(FondFour[2]) = { FondFour[2]}; 
+Plane Surface(FondFour[2]) = { FondFour[2]};
 
 // Surface dessus du Four - trace(s) Electrode(s)
 
@@ -331,7 +336,7 @@ Plane Surface(BordFour[3]) = { BordFour[3]};
 // -------------------------------------------------
 
 FrontExtFour = newreg;
-Surface Loop(FrontExtFour) = {FondFour[],DessusFour[],BordFour[]}; 
+Surface Loop(FrontExtFour) = {FondFour[],DessusFour[],BordFour[]};
 
 Verre = newreg ;
 Volume(Verre) = {FrontExtFour,FrontElect[]};
