@@ -28,7 +28,7 @@ Extrude {0,0,h} {
 // ({0,1,0}), an axis point ({-0.1,0,0.1}) and a rotation angle (-Pi/2):
 
 Extrude { {0,1,0} , {-0.1,0,0.1} , -Pi/2 } {
-  Surface{122}; Layers{7}; Recombine;
+  Surface{28}; Layers{7}; Recombine;
 }
 
 // Note that a translation ({-2*h,0,0}) and a rotation ({1,0,0}, {0,0.15,0.25},
@@ -41,7 +41,7 @@ DefineConstant[ angle = {90, Min 0, Max 120, Step 1,
                          Name "Parameters/Twisting angle"} ];
 
 out[] = Extrude { {-2*h,0,0}, {1,0,0} , {0,0.15,0.25} , angle * Pi / 180 } {
-  Surface{144}; Layers{10}; Recombine;
+  Surface{50}; Layers{10}; Recombine;
 };
 
 // In this last extrusion command we retrieved the volume number programatically
