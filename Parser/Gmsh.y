@@ -134,7 +134,7 @@ struct doubleXstring{
 %token tRelocateMesh
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated tRecursive
-%token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset
+%token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tRecombine tSmoother tSplit tDelete tCoherence
 %token tIntersect tMeshAlgorithm tReverse
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
@@ -3691,7 +3691,7 @@ PeriodicTransform :
     {
       $$ = List_Create(1, 1, sizeof(double));
     }
-  | tUsing ListOfDouble
+  | tAffine ListOfDouble
     {
       $$ = $2;
     }
@@ -4106,8 +4106,8 @@ Constraints :
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
-        SPoint3 origin($12[0],$12[1],$12[2]);
-        SPoint3 axis($14[0],$14[1],$14[2]);
+        SPoint3 axis($12[0],$12[1],$12[2]);
+        SPoint3 origin($14[0],$14[1],$14[2]);
         double  angle($16);
         SPoint3 translation(0,0,0);
 
@@ -4132,11 +4132,11 @@ Constraints :
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
-        SPoint3 origin($12[0],$12[1],$12[2]);
-        SPoint3 axis($14[0],$14[1],$14[2]);
+        SPoint3 origin($14[0],$14[1],$14[2]);
+        SPoint3 axis($12[0],$12[1],$12[2]);
         double  angle($16);
         SPoint3 translation(0,0,0);
-
+				
         std::vector<double> transfo;
         computeAffineTransformation(origin,axis,angle,translation,transfo);
 
@@ -6074,8 +6074,7 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
                                  std::vector<double>& tfo)
 {
   tfo.resize(16,0.0);
-  angle *= acos(-1.)/180.;
-
+	
   double ca = cos(angle);
   double sa = sin(angle);
 
@@ -6096,15 +6095,12 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
   tfo[2*4+0] = ux*uz*(1.-ca) - uy * sa;
   tfo[2*4+1] = uy*uz*(1.-ca) + ux * sa;
   tfo[2*4+2] = ca + uz*uz*(1.-ca);
-
+	
   int idx = 0;
-  for (size_t i = 0; i < 3; i++) {
+  for (size_t i = 0; i < 3; i++,idx++) {
     int tIdx = i*4+3;
-    tfo[tIdx] = translation[i];
-    for (int j = 0; j < 3; j++, idx++) {
-      tfo[tIdx] -= tfo[idx] * origin[j];
-    }
-    idx++;
+    tfo[tIdx] = origin[i] + translation[i];
+    for (int j = 0; j < 3; j++,idx++) tfo[tIdx] -= tfo[idx] * origin[j];
   }
 
   for (int i = 0; i < 4; i++) tfo[12+i] = 0;

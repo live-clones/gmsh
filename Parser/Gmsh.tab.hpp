@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 2.7.12-4996.  */
+/* A Bison parser, made by GNU Bison 2.6.5.  */
 
 /* Bison interface for Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989-1990, 2000-2012 Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -148,79 +148,80 @@ extern int gmsh_yydebug;
      tDilate = 357,
      tExtrude = 358,
      tLevelset = 359,
-     tRecombine = 360,
-     tSmoother = 361,
-     tSplit = 362,
-     tDelete = 363,
-     tCoherence = 364,
-     tIntersect = 365,
-     tMeshAlgorithm = 366,
-     tReverse = 367,
-     tLayers = 368,
-     tScaleLast = 369,
-     tHole = 370,
-     tAlias = 371,
-     tAliasWithOptions = 372,
-     tCopyOptions = 373,
-     tQuadTriAddVerts = 374,
-     tQuadTriNoNewVerts = 375,
-     tQuadTriSngl = 376,
-     tQuadTriDbl = 377,
-     tRecombLaterals = 378,
-     tTransfQuadTri = 379,
-     tText2D = 380,
-     tText3D = 381,
-     tInterpolationScheme = 382,
-     tTime = 383,
-     tCombine = 384,
-     tBSpline = 385,
-     tBezier = 386,
-     tNurbs = 387,
-     tNurbsOrder = 388,
-     tNurbsKnots = 389,
-     tColor = 390,
-     tColorTable = 391,
-     tFor = 392,
-     tIn = 393,
-     tEndFor = 394,
-     tIf = 395,
-     tEndIf = 396,
-     tExit = 397,
-     tAbort = 398,
-     tField = 399,
-     tReturn = 400,
-     tCall = 401,
-     tMacro = 402,
-     tShow = 403,
-     tHide = 404,
-     tGetValue = 405,
-     tGetEnv = 406,
-     tGetString = 407,
-     tGetNumber = 408,
-     tHomology = 409,
-     tCohomology = 410,
-     tBetti = 411,
-     tSetOrder = 412,
-     tExists = 413,
-     tFileExists = 414,
-     tGMSH_MAJOR_VERSION = 415,
-     tGMSH_MINOR_VERSION = 416,
-     tGMSH_PATCH_VERSION = 417,
-     tGmshExecutableName = 418,
-     tSetPartition = 419,
-     tAFFECTDIVIDE = 420,
-     tAFFECTTIMES = 421,
-     tAFFECTMINUS = 422,
-     tAFFECTPLUS = 423,
-     tOR = 424,
-     tAND = 425,
-     tNOTEQUAL = 426,
-     tEQUAL = 427,
-     tGREATEROREQUAL = 428,
-     tLESSOREQUAL = 429,
-     UNARYPREC = 430,
-     tMINUSMINUS = 431,
-     tPLUSPLUS = 432
+     tAffine = 360,
+     tRecombine = 361,
+     tSmoother = 362,
+     tSplit = 363,
+     tDelete = 364,
+     tCoherence = 365,
+     tIntersect = 366,
+     tMeshAlgorithm = 367,
+     tReverse = 368,
+     tLayers = 369,
+     tScaleLast = 370,
+     tHole = 371,
+     tAlias = 372,
+     tAliasWithOptions = 373,
+     tCopyOptions = 374,
+     tQuadTriAddVerts = 375,
+     tQuadTriNoNewVerts = 376,
+     tQuadTriSngl = 377,
+     tQuadTriDbl = 378,
+     tRecombLaterals = 379,
+     tTransfQuadTri = 380,
+     tText2D = 381,
+     tText3D = 382,
+     tInterpolationScheme = 383,
+     tTime = 384,
+     tCombine = 385,
+     tBSpline = 386,
+     tBezier = 387,
+     tNurbs = 388,
+     tNurbsOrder = 389,
+     tNurbsKnots = 390,
+     tColor = 391,
+     tColorTable = 392,
+     tFor = 393,
+     tIn = 394,
+     tEndFor = 395,
+     tIf = 396,
+     tEndIf = 397,
+     tExit = 398,
+     tAbort = 399,
+     tField = 400,
+     tReturn = 401,
+     tCall = 402,
+     tMacro = 403,
+     tShow = 404,
+     tHide = 405,
+     tGetValue = 406,
+     tGetEnv = 407,
+     tGetString = 408,
+     tGetNumber = 409,
+     tHomology = 410,
+     tCohomology = 411,
+     tBetti = 412,
+     tSetOrder = 413,
+     tExists = 414,
+     tFileExists = 415,
+     tGMSH_MAJOR_VERSION = 416,
+     tGMSH_MINOR_VERSION = 417,
+     tGMSH_PATCH_VERSION = 418,
+     tGmshExecutableName = 419,
+     tSetPartition = 420,
+     tAFFECTDIVIDE = 421,
+     tAFFECTTIMES = 422,
+     tAFFECTMINUS = 423,
+     tAFFECTPLUS = 424,
+     tOR = 425,
+     tAND = 426,
+     tNOTEQUAL = 427,
+     tEQUAL = 428,
+     tGREATEROREQUAL = 429,
+     tLESSOREQUAL = 430,
+     UNARYPREC = 431,
+     tMINUSMINUS = 432,
+     tPLUSPLUS = 433
    };
 #endif
 
@@ -228,7 +229,7 @@ extern int gmsh_yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
 {
-/* Line 2053 of yacc.c  */
+/* Line 2042 of yacc.c  */
 #line 105 "Gmsh.y"
 
   char *c;
@@ -240,8 +241,8 @@ typedef union YYSTYPE
   List_T *l;
 
 
-/* Line 2053 of yacc.c  */
-#line 245 "Gmsh.tab.hpp"
+/* Line 2042 of yacc.c  */
+#line 246 "Gmsh.tab.hpp"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

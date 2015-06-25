@@ -105,6 +105,7 @@ string	{alpha}({alpha}|{digit})*
 Abort                   return tAbort;
 Acos                    return tAcos;
 AdaptMesh               return tAdaptMesh;
+Affine                  return tAffine;
 ArcCos                  return tAcos;
 Alias                   return tAlias;
 AliasWithOptions        return tAliasWithOptions;

@@ -1860,10 +1860,13 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
       tfo[2*4+0] = ux*uz*(1.-cos(ANGLE)) - uy * sin(ANGLE);
       tfo[2*4+1] = uy*uz*(1.-cos(ANGLE)) + ux * sin(ANGLE);
       tfo[2*4+2] = cos (ANGLE) + uz*uz*(1.-cos(ANGLE));
-
-      tfo[3] = tfo[7] = tfo[11] = 0;
+      
+      double origin[3] = {LINE.p.x(),LINE.p.y(),LINE.p.z()};
+      
+      for (int i=0;i<3;i++) tfo[i*4+3] =  origin[i];
+      for (int i=0;i<3;i++) for (int j=0;j<3;j++) tfo[i*4+3] -= tfo[i*4+j] * origin[j];
       for (int i=0;i<4;i++) tfo[12+i] = 0;
-
+      
     }
     else {
       Msg::Error("Only rotations or translations can currently be computed "
