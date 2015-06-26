@@ -141,6 +141,6 @@ Volume(195) = {194};
 
 //Conditions maitre-esclave : ici en utilisant une transformation affine explicite
 //---------------------------
-Periodic Surface {168} = {54} Using {1,0,0,0, 0,-1,0,0, 0,0,-1,0, 0,0,0,1};
+Periodic Surface {168} = {54} Affine {1,0,0,0, 0,-1,0,0, 0,0,-1,0, 0,0,0,1};
 
 Characteristic Length{13} = 0.02;

@@ -2903,11 +2903,11 @@ the mesh of the surface.
 Force mesh of lines on the left-hand side (slaves) to match the mesh of
 the lines on the right-hand side (masters).
 
-@item Periodic Surface @var{expression} @{ @var{expression-list} @} = @var{expression} @{ @var{expression-list} @} < Using  @{ @var{expression-list} @} >;
+@item Periodic Surface @var{expression} @{ @var{expression-list} @} = @var{expression} @{ @var{expression-list} @} < Affine  @{ @var{expression-list} @} >;
 Force mesh of the surface on the left-hand side (slave, with boundary
 edges specified between braces) to match the mesh of the surface on the
 right-hand side (master, with boundary edges specified between braces). The
-optional @code{Using} list specifies an explicit affine transform (as a 4 x 4
+optional @code{Affine} list specifies an explicit affine transform (as a 4 x 4
 matrix given by row).
 
 @item Coherence Mesh;
