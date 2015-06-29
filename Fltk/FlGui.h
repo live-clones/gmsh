@@ -22,6 +22,7 @@
 class graphicWindow;
 class openglWindow;
 class optionWindow;
+class onelabWindow;
 class fieldWindow;
 class pluginWindow;
 class statisticsWindow;
@@ -59,6 +60,7 @@ class FlGui{
  public:
   std::vector<graphicWindow*> graph;
   optionWindow *options;
+  onelabWindow *onelab2;
   fieldWindow *fields;
   pluginWindow *plugins;
   statisticsWindow *stats;

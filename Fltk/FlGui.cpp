@@ -31,6 +31,7 @@ typedef unsigned long intptr_t;
 #include "contextWindow.h"
 #ifdef HAVE_ONELAB2
 #include "onelab2Group.h"
+#include "OnelabWindow.h"
 #else
 #include "onelabGroup.h"
 #endif
@@ -78,8 +79,7 @@ static int globalShortcut(int event)
 int FlGui::lock()
 {
   _in_main_thread++;
-  Fl::lock();
-  return _in_main_thread;
+  return Fl::lock();
 }
 
 void FlGui::unlock()
@@ -429,6 +429,9 @@ FlGui::FlGui(int argc, char **argv)
 
   // create all other windows
   options = new optionWindow(CTX::instance()->deltaFontSize);
+#if defined(HAVE_ONELAB2)
+  onelab2 = new onelabWindow();
+#endif
   fields = new fieldWindow(CTX::instance()->deltaFontSize);
   plugins = new pluginWindow(CTX::instance()->deltaFontSize);
   stats = new statisticsWindow(CTX::instance()->deltaFontSize);

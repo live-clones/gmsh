@@ -48,7 +48,7 @@ public:
   void updateGearMenu();
   void rebuildSolverList();
   void addLastPostProcessing();
-  void rebuildTree(bool deleteWidgets){} // useless in ONELAB2 ?
+  void rebuildTree(bool deleteWidgets) {}
   void enableTreeWidgetResize(bool value){ _enableTreeWidgetResize = value; }
   void clearTree(bool deleteWidgets=true);
   void openTreeItem(const std::string &name);
@@ -84,12 +84,12 @@ public:
     return _manuallyClosed.find(path) != _manuallyClosed.end();
   }
   viewButton *getViewButton(int num);
+  void openCloseViewButton(int num);
 };
 
 void connect_cb(Fl_Widget *w, void *arg);
 void onelab_cb(Fl_Widget *w, void *data);
 inline void onelab_cb(void *data) {onelab_cb(0, data);}
 void solver_cb(Fl_Widget *w, void *data);
-inline void solver_batch_cb(void *data){} // TODO ?
 
 #endif
