@@ -36,18 +36,6 @@ OnelabNetworkClient::OnelabNetworkClient(std::string name, unsigned int ip, unsi
   else _fds = ip4_socket(local, SOCK_STREAM);
 }
 #else
-OnelabNetworkClient::OnelabNetworkClient(std::string name)
-  : VirtualClient(name)
-{
-  _ip.address = 0;
-  _ip.port = 0;
-  _connected = false;
-
-  IPv4 local;
-  local.address = 0;// FIXME ip4_default_iface();
-  local.port = 0;
-  _fds = ip4_socket(local, SOCK_STREAM);
-}
 OnelabNetworkClient::OnelabNetworkClient(std::string name, unsigned int ip, unsigned short port)
   : VirtualClient(name)
 {
@@ -61,10 +49,21 @@ OnelabNetworkClient::OnelabNetworkClient(std::string name, unsigned int ip, unsi
   _fds = ip4_socket(local, SOCK_STREAM);
 }
 #endif
+OnelabNetworkClient::OnelabNetworkClient(std::string name, const char *sockname)
+  : VirtualClient(name)
+{
+  _ip.address = 0;
+  _ip.port = 0;
+  _connected = false;
+
+  _sockname = std::string(sockname);
+
+  _fds = unix_socket(SOCK_STREAM);
+}
 void OnelabNetworkClient::sendto(UInt8 *buff, UInt16 len)
 {
 #ifndef HAVE_UDT
-  ip4_socket_send(_fds, buff, len, _ip);
+  ip4_socket_send(_fds, buff, len);
 #else
   if(_fds) ip4_socket_send(_fds, buff, len);
   else udt_socket_send(_fdu, buff, len);
@@ -145,13 +144,18 @@ bool OnelabNetworkClient::connect()
   OnelabProtocol msg(OnelabProtocol::OnelabStart);
 #ifdef HAVE_UDT
   if(_fds) {
-    ip4_socket_connect(_fds, _ip);
+    if(_sockname.size())
+      unix_socket_connect(_fds, _sockname.c_str());
+    else
+      ip4_socket_connect(_fds, _ip);
   }
-  else{
+  else
     udt_socket_connect(_fdu, _ip);
-  }
 #else
-  ip4_socket_connect(_fds, _ip);
+  if(_sockname.size())
+    unix_socket_connect(_fds, _sockname.c_str());
+  else
+    ip4_socket_connect(_fds, _ip);
 #endif
   msg.attrs.push_back(new OnelabAttrStart(_name));
   recvlen = msg.encodeMsg(buff, bufflen);

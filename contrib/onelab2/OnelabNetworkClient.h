@@ -18,6 +18,7 @@ private:
 #ifdef HAVE_UDT
 	UDTSOCKET _fdu;
 #endif
+  std::string _sockname;
 	Socket _fds;
 	bool _connected;
 	IPv4 _ip;
@@ -31,6 +32,7 @@ private:
 	}
 	void requestParameters(); // request all parameter for this client
 public:
+	OnelabNetworkClient(std::string name, const char *sockname);
 #ifdef HAVE_UDT
 	OnelabNetworkClient(std::string name, bool UDT=false);
 	OnelabNetworkClient(std::string name, unsigned int ip, unsigned short port, bool UDT=false);

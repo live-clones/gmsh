@@ -13,16 +13,18 @@
 #include "GmshNetworkClient.h"
 #include "GmshLocalClient.h"
 
+#include "OnelabException.h"
+
+void solver_batch_cb(void *data);
 #ifndef WIN32
 void *OnelabDatabase_listen(void *arg);
-void *OnelabDatabase_server(void *arg);
 #else
 DWORD WINAPI OnelabDatabase_listen(LPVOID arg);
-DWORD WINAPI OnelabDatabase_server(void *arg);
 #endif
 
 static void initializeLoops();
 static bool incrementLoops();
+
 // OnelabDatabase is a singleton that get/set/... parameters from server/clients
 class OnelabDatabase {
 private:
@@ -36,10 +38,14 @@ private:
   GmshLocalClient *_localGUI, *_localGmsh;
   void _clear() {
 #ifndef WIN32
-    // TODO send message to thread to exit the thread
-    // pthread_cancel
-    //pthread_kill(_serverThread, 9);
-    //if(_client) pthread_kill(_listenThread, 9);
+    if(_client) pthread_cancel(_listenThread);
+    else {
+      OnelabServer::instance()->stopTcp();
+      OnelabServer::instance()->stopUnix();
+#ifdef HAVE_UDT
+      OnelabServer::instance()->stopUdt();
+#endif
+    }
 #else
     // TODO
 #endif
@@ -64,18 +70,46 @@ public:
     // the server is in the same memory space
     _clear();
 
-    OnelabServer::instance(0x7F000001, 0);
-    //OnelabServer::instance(0, 0);
-    _localGUI = new GmshLocalClient("localGUI", OnelabServer::instance()->getParameterSpace());
-    _localGmsh = new GmshLocalClient("Gmsh", OnelabServer::instance()->getParameterSpace());
-    OnelabServer::instance()->addClient(_localGUI); // TODO remove from server in _clear()
-    OnelabServer::instance()->addClient(_localGmsh); // TODO remove from server in _clear()
+    CTX::instance()->onelab.unixConnected = CTX::instance()->onelab.tcpConnected = CTX::instance()->onelab.udtConnected = false;
 
-#ifndef WIN32
-    pthread_create(&_serverThread, NULL, OnelabDatabase_server, &(((OnelabLocalClient *)_localGmsh)->getName()));
-#else
-    _serverThread = CreateThread(NULL, 0, NULL, OnelabDatabase_server, 0, NULL);
+    try {
+      if(CTX::instance()->onelab.unixSock.size() > 0) { // UNIX
+        std::ostringstream tmp;
+        tmp << CTX::instance()->homeDir << CTX::instance()->onelab.unixSock;
+        OnelabServer::instance()->listenOnUnix(tmp.str().c_str());
+        CTX::instance()->onelab.unixConnected = true;
+      }
+      if(CTX::instance()->onelab.tcpSock.size() > 0) {
+        std::size_t colon = CTX::instance()->onelab.tcpSock.find(":");
+        OnelabServer::instance()->listenOnTcp(
+          ip4_inet_pton(CTX::instance()->onelab.tcpSock.substr(0, colon).c_str()),
+          atoi(CTX::instance()->onelab.tcpSock.substr(colon+1, CTX::instance()->onelab.tcpSock.size()-colon-1).c_str()));
+        CTX::instance()->onelab.tcpConnected = true;
+      }
+#ifdef HAVE_UDT
+      if(CTX::instance()->onelab.udtSock.size() > 0) {
+        std::size_t colon = CTX::instance()->onelab.tcpSock.find(":");
+        OnelabServer::instance()->listenOnUdt(
+          ip4_inet_pton(CTX::instance()->onelab.tcpSock.substr(0, colon).c_str()),
+          atoi(CTX::instance()->onelab.tcpSock.substr(colon+1, CTX::instance()->onelab.tcpSock.size()-colon-1).c_str()));
+        CTX::instance()->onelab.udtConnected = true;
+      }
 #endif
+      if(CTX::instance()->onelab.unixSock.size() == 0 && CTX::instance()->onelab.tcpSock.size() == 0 && CTX::instance()->onelab.udtSock.size() == 0) {
+        OnelabServer::instance()->listenOnTcp(0x7F000001, 0);
+        CTX::instance()->onelab.tcpConnected = true;
+      }
+    } catch(NetworkException e) {
+      std::cout << e.what() << std::endl;
+      OnelabServer::instance()->listenOnTcp(0x7F000001, 0);
+      CTX::instance()->onelab.tcpSock = "127.0.0.1:0";
+      CTX::instance()->onelab.tcpConnected = true;
+    }
+    _localGUI = new GmshLocalClient("localGUI", OnelabServer::instance()->getParameterSpace());
+    OnelabServer::instance()->addClient(_localGUI);
+    _localGmsh = new GmshLocalClient("Gmsh", OnelabServer::instance()->getParameterSpace());
+    OnelabServer::instance()->addClient(_localGmsh);
+
     return _localGUI;
   }
   GmshNetworkClient *useAsNetworkClient(UInt32 address, UInt16 port, std::string cli="GUI"){
@@ -108,6 +142,7 @@ public:
     }
     return NULL;
   }
+  bool isNetworkClient() {return _client != NULL;}
   GmshNetworkClient *getNetworkClient(){return _client;}
   void finalize();
   int listen(OnelabProtocol &msg) {
@@ -125,13 +160,9 @@ public:
     // use this as a network server (take interface/port to listen to)
     _clear();
 
-    OnelabServer::instance(address, port);
+    // FIXME TCP / UDT ?
+    OnelabServer::instance()->listenOnTcp(address, port);
     _localGUI = new GmshLocalClient("localGUI", OnelabServer::instance()->getParameterSpace());
-#ifndef WIN32
-    pthread_create(&_serverThread, NULL, OnelabDatabase_server, NULL);
-#else
-    _serverThread = CreateThread(NULL, 0, NULL, OnelabDatabase_server, 0, NULL);
-#endif
     return _localGUI;
   }
   template <class T> bool set(const T &p, const std::string &client) {

@@ -52,6 +52,13 @@ void GmshLocalClient::onMessage(const std::string & name, const std::string &mes
   FlGui::instance()->unlock();
   Fl::awake((void *)NULL);
 }
+void GmshLocalClient::onStop()
+{
+  FlGui::instance()->lock();
+  _cb_obj->setButtonMode("check", "compute");
+  FlGui::instance()->unlock();
+  Fl::awake((void *)NULL);
+}
 void GmshLocalClient::refresh()
 {
   Fl::awake(onelab_cb, (void*)"refresh");
@@ -64,7 +71,6 @@ void GmshLocalClient::mergeFile(const std::string &filename)
   FlGui::instance()->unlock();
   Fl::awake((void *)NULL);
 }
-#endif
 
 void GmshLocalClient::run(std::string action) {
   if(getName() == "Gmsh") {
@@ -74,3 +80,4 @@ void GmshLocalClient::run(std::string action) {
     Fl::awake((void *)NULL);
   }
 }
+#endif

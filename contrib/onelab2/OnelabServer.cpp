@@ -13,8 +13,9 @@
 #include "OnelabAttributes.h"
 #include "onelab.h"
 #include "onelabUtils.h"
+#include "OnelabException.h"
 
-// FIXME no Gmsh specific header (used in launchClient)
+// FIXME no Gmsh specific header ?
 #include "StringUtils.h"
 #include "GmshMessage.h"
 #include "OS.h"
@@ -23,54 +24,159 @@
 
 #ifndef WIN32
 void *OnelabServer_run(void *param);
+void *listenOnClients(void *param);
+void *acceptTcpClient(void *param);
+void *acceptUnixClient(void *param);
+void *acceptUdtClient(void *param);
 #else
 DWORD WINAPI OnelabServer_run(LPVOID param);
 #endif
 
-OnelabServer::OnelabServer(UInt32 iface, UInt16 port)
+OnelabServer::OnelabServer()
 {
   _running = false;
-  _ip.address = iface;
-  _ip.port = port;
-#ifdef HAVE_UDT
+  _udtServer = false;
+  _tcpServer = false;
+  _unixServer = false;
+  _ipu.address = _ip.address = 0;
+  _ipu.port = _ip.port = 0;
   UDT::startup();
-  _fdu = udt_socket(_ip, SOCK_STREAM);
-#endif
-  _fds = ip4_socket(_ip, SOCK_STREAM);
-  ip4_socket_ip(_fds, _ip);
+
+  _eid = UDT::epoll_create();
 }
 
-OnelabServer::OnelabServer(UInt16 port)
+void OnelabServer::listenOnTcp(unsigned int iface, unsigned short port)
 {
-  _running = false;
-  _ip.address = 0;
-  _ip.port = port;
+  if(_tcpServer) return;
 
-#ifdef HAVE_UDT
-  UDT::startup();
-  _fdu = udt_socket(_ip, SOCK_STREAM);
-#endif
-  _fds = ip4_socket(_ip, SOCK_STREAM);
+  IPv4 ip = {iface, port};
+  _fds = ip4_socket(ip, SOCK_STREAM);
   ip4_socket_ip(_fds, _ip);
+  ip4_socket_listen(_fds);
+
+  std::clog << "\033[0;31m" << "listen on TCP - " << ip4_inet_ntop(iface) << ":" << port << "\033[0m" << std::endl;
+
+  pthread_create(&_tcpThread, NULL, acceptTcpClient, NULL);
+  _tcpServer = true;
 }
 
-#ifdef HAVE_UDT
-void OnelabServer::addClient(std::string name, UDTSOCKET fd, UInt32 ip, UInt16 port)
+void OnelabServer::listenOnUnix(const char *sockname)
 {
-  this->_clients.push_back(OnelabLocalNetworkClient(name, fd, ip, port));
-}
+#if !defined(WIN32) || defined(__CYGWIN__)
+  if(_unixServer) return;
 
-OnelabLocalNetworkClient *OnelabServer::getClient(UDTSOCKET fd) // UDTSOCKET Socket
+  _fdx = unix_socket(SOCK_STREAM);
+  unix_socket_listen(_fdx, sockname);
+
+  std::clog << "\033[0;31m" << "listen on UNIX - " << sockname << "\033[0m" << std::endl;
+  _sockname = std::string(sockname);
+
+  pthread_create(&_unixThread, NULL, acceptUnixClient, NULL);
+  _unixServer = true;
+#else
+  throw NetworkException(NetworkException::nUnix);
+#endif
+}
+void OnelabServer::acceptTcp()
+{
+  IPv4 ip;
+  while(Socket newcli = ip4_socket_accept(_fds, ip)) {
+    std::clog << "\033[0;31m" << "accept TCP peer : " << ip4_inet_ntop(ip.address)<< ':' << ip.port <<  "\033[0m" << std::endl;
+    UDT::epoll_add_ssock(_eid, newcli);
+    if(_clients.size() == 0)
+#ifndef WIN32
+      pthread_create(&_listenThread, NULL, listenOnClients, NULL);
+#else
+      listenThread = CreateThread(NULL, 0, listenOnClients, NULL, 0, NULL);
+#endif
+  }
+}
+void OnelabServer::acceptUnix()
+{
+  while(Socket newcli = unix_socket_accept(_fdx)) {
+    std::clog << "\033[0;31m" << "accept peer on UNIX socket : " << _sockname << "\033[0m" << std::endl;
+    UDT::epoll_add_ssock(_eid, newcli);
+    if(_clients.size() == 0)
+#ifndef WIN32
+      pthread_create(&_listenThread, NULL, listenOnClients, NULL);
+#else
+      listenThread = CreateThread(NULL, 0, listenOnClients, NULL, 0, NULL);
+#endif
+  }
+}
+void OnelabServer::stopTcp()
+{
+  if(!_tcpServer) return;
+
+  pthread_cancel(_tcpThread);
+  close(_fds);
+
+  _tcpServer = false;
+}
+void OnelabServer::stopUnix()
+{
+  if(!_unixServer) return;
+
+  pthread_cancel(_unixThread);
+  unlink(_sockname.c_str());
+
+  _unixServer = false;
+}
+#ifdef HAVE_UDT
+void OnelabServer::listenOnUdt(unsigned int iface, unsigned short port)
+{
+  if(_udtServer) return;
+
+  IPv4 ip = {iface, port};
+  _fdu = udt_socket(ip, SOCK_STREAM);
+  udt_socket_listen(_fdu);
+
+  std::clog << "\033[0;31m" << "listen on UDT - " << ip4_inet_ntop(iface) << ":" << port << "\033[0m" << std::endl;
+
+  pthread_create(&_udtThread, NULL, acceptUdtClient, NULL);
+  _udtServer = true;
+}
+void OnelabServer::acceptUdt()
+{
+  IPv4 ip;
+  while(Socket newcli = udt_socket_accept(_fdu, ip)) {
+    std::clog << "\033[0;31m" << "accept peer on UNIX socket\033[0m" << std::endl;
+    UDT::epoll_add_usock(_eid, newcli);
+    if(_clients.size() == 0)
+#ifndef WIN32
+      pthread_create(&_listenThread, NULL, listenOnClients, NULL);
+#else
+      listenThread = CreateThread(NULL, 0, listenOnClients, NULL, 0, NULL);
+#endif
+  }
+}
+void OnelabServer::stopUdt()
+{
+  if(!_udtServer) return;
+
+  pthread_cancel(_udtThread);
+
+  _udtServer = false;
+}
+#endif
+
+OnelabLocalNetworkClient *OnelabServer::getClient(Socket fd)
 {
   for(std::vector<OnelabLocalNetworkClient>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+#ifdef HAVE_UDT
     if(it->getUSocket() == fd) return &(*it);
+#endif
     if(it->getSSocket() == fd) return &(*it);
   }
   return NULL;
 }
-#endif
 
-int OnelabServer::launchClient(const std::string &client, bool blocking) // FIXME OnelabDatabase instead of OnelabServer ?
+void OnelabServer::addClient(std::string name, Socket fd, UInt32 ip, UInt16 port)
+{
+  this->_clients.push_back(OnelabLocalNetworkClient(name, fd, ip, port));
+}
+
+int OnelabServer::launchClient(const std::string &client, bool blocking)
 {
   // launch a new client with a system call
   std::string command = "";
@@ -110,12 +216,25 @@ int OnelabServer::launchClient(const std::string &client, bool blocking) // FIXM
 
   char cmd[1024];
   // UNIX socket
-  //TODO sprintf(cmd, command, _sockname.c_str());
-
+  if(_sockname.size())
+    sprintf(cmd, command.c_str(), _sockname.c_str());
   // TCP socket
-  sprintf(cmd, command.c_str(), " %s:%d");
-  command.assign(cmd);
-  sprintf(cmd, command.c_str(), (_ip.address==0)?"127.0.0.1":ip4_inet_ntop(_ip.address).c_str(), _ip.port);
+  else if(_ip.port > 0) {
+    sprintf(cmd, command.c_str(), " %s:%d");
+    command.assign(cmd);
+    if(_ip.address > 0) sprintf(cmd, command.c_str(), ip4_inet_ntop(_ip.address).c_str(), _ip.port);
+    else  sprintf(cmd, command.c_str(), "127.0.0.1", _ip.port);
+  }
+  // UDP (UDT) socket
+  else if(_ipu.port > 0){
+    sprintf(cmd, command.c_str(), " u%s:%d");
+    command.assign(cmd);
+    sprintf(cmd, command.c_str(), ip4_inet_ntop(_ipu.address).c_str(), _ipu.port);
+  }
+  else {
+    // unknown....
+    return 1;
+  }
 
   std::cout << "launch " << client << " with command: " << cmd << std::endl;
   SystemCall(cmd, blocking);
@@ -123,18 +242,6 @@ int OnelabServer::launchClient(const std::string &client, bool blocking) // FIXM
   return 0;
 }
 
-//void OnelabServer::addClient(std::string name, Socket fd, UInt32 ip, UInt16 port)
-//{
-//  if(ip == 0 || port == 0) throw "Unable to add client (invalid ip or port)";
-//  this->_clients.push_back(OnelabLocalNetworkClient(name, fd, ip, port));
-//}
-//OnelabLocalNetworkClient *OnelabServer::getClient(Socket fd)
-//{
-//	for(std::vector<OnelabLocalNetworkClient>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
-//		if(it->getSSocket() == fd) return &(*it);
-//	}
-//  return NULL;
-//}
 void OnelabServer::sendto(std::string client, UInt8 *buff, UInt32 len)
 {
   for(std::vector<OnelabLocalNetworkClient>::iterator it = this->_clients.begin() ; it != this->_clients.end(); ++it) {
@@ -181,14 +288,58 @@ void OnelabServer::removeClient(OnelabLocalNetworkClient *client)
   }
 }
 
+void OnelabServer::stopClient(OnelabLocalNetworkClient *cli)
+{
+  // FIXME check if listenOnClients does not perform action on this client
+  UInt8 buff[16];
+#ifdef HAVE_UDT
+  bool isUDT = cli->getSSocket() == 0;
+  Socket fd = (!isUDT)? cli->getSSocket() : cli->getUSocket();
+#else
+  Socket fd = cli->getSSocket();
+#endif
+  OnelabProtocol msg(OnelabProtocol::OnelabStop);
+  int recvlen = msg.encodeMsg(buff, 16);
+  onelab::string o(cli->getName() + "/Action", "stop");
+  o.setVisible(false);
+  o.setNeverChanged(true);
+  set(o);
+  cli->sendto(buff, recvlen);
+#ifdef HAVE_UDT
+  if(isUDT) {
+    UDT::epoll_remove_usock(_eid, fd);
+    UDT::close(fd);
+  }
+  else {
+    UDT::epoll_remove_ssock(_eid, fd);
+    close(fd);
+  }
+#else
+  UDT::epoll_remove_ssock(_eid, fd);
+  close(fd);
+#endif
+  removeClient(cli);
+}
+
+void OnelabServer::stopClients()
+{
+  std::cout << _clients.size() << std::endl;
+  for(int i=0; i < _clients.size(); i++) {
+    stopClient(&_clients[i]);
+  }
+}
+
+void OnelabServer::waitOnClients()
+{
+  if(_running) pthread_join(_runningThread, NULL);
+}
+
 bool OnelabServer::performNextAction()
 {
-  pthread_mutex_lock(&_mutex_todo);
-  if(_todoClient.empty() || _todoAction.empty()) return false;
+  if(_todoClient.size() == 0 || _todoAction.size() == 0) return false;
 
   std::string client = _todoClient.front(),
     action = _todoAction.front();
-  pthread_mutex_unlock(&_mutex_todo);
   performAction(action, client, true);
   pthread_mutex_lock(&_mutex_todo);
   _todoAction.pop();
@@ -197,7 +348,7 @@ bool OnelabServer::performNextAction()
 
   return true;
 }
-void OnelabServer::performAction(const std::string action, const std::string client, bool blocking)
+void OnelabServer::performAction(const std::string &action, const std::string &client, bool blocking)
 {
   if(blocking) {
     if(client.size()) {
@@ -213,11 +364,11 @@ void OnelabServer::performAction(const std::string action, const std::string cli
       }
       if(cli != NULL){ // Gmsh is used as a server and the client is remote
         std::cout << action << " on " << client << "(client is remote)" << std::endl;
-        cli->run(action); // block ,use another thread ?
+        cli->run(action);
       }
       else if(localcli != NULL){ // client is local (in the same memory space than this server)
         std::cout << action << " on " << client << "(client is local)" << std::endl;
-        localcli->run(action); // block, use another thread ?
+        localcli->run(action);
       }
       else { // client does not exist (Gmsh is used as a server), launch the client
         std::cout << action << " on " << client << "(launch a new remote client)" << std::endl;
@@ -225,25 +376,25 @@ void OnelabServer::performAction(const std::string action, const std::string cli
       }
     }
     else {
-      // run all non Gmsh clients TODO; exclude GUI ?
+      // run all non Gmsh clients
       for(std::vector<OnelabLocalNetworkClient>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
-        if((*it).getName() == "Gmsh") continue;
+        if((*it).getName() == "Gmsh" || (*it).getName() == "GUI") continue;
         std::cout << action << " on " << (*it).getName() << "(remote)" << std::endl;
         onelab::string o((*it).getName() + "/Action", action);
         o.setVisible(false);
         o.setNeverChanged(true);
         set(o, (*it).getName());
-        (*it).run(action);
+        (*it).run(action); // FIXME Block
       }
 
-    for(std::vector<OnelabLocalClient *>::iterator it = _localClients.begin(); it != _localClients.end(); ++it) {
-      if((*it)->getName() == "Gmsh") continue;
-      onelab::string o((*it)->getName() + "/Action", action);
-      o.setVisible(false);
-      o.setNeverChanged(true);
-      set(o);
-      std::cout << action << " on " << (*it)->getName() << "(local)" << std::endl;
-      (*it)->run(action);
+      for(std::vector<OnelabLocalClient *>::iterator it = _localClients.begin(); it != _localClients.end(); ++it) {
+        if((*it)->getName() == "Gmsh") continue;
+        onelab::string o((*it)->getName() + "/Action", action);
+        o.setVisible(false);
+        o.setNeverChanged(true);
+        set(o);
+        std::cout << action << " on " << (*it)->getName() << "(local)" << std::endl;
+        (*it)->run(action);
       }
     }
   }
@@ -255,12 +406,28 @@ void OnelabServer::performAction(const std::string action, const std::string cli
       pthread_mutex_unlock(&_mutex_todo);
     }
     else {
+      _running = true;
       _mutex_todo = PTHREAD_MUTEX_INITIALIZER;
-      _todoClient.push(client);
-      _todoAction.push(action);
+      _todoClient.push(std::string(client));
+      _todoAction.push(std::string(action));
       pthread_create(&_runningThread, NULL, OnelabServer_run, NULL);
     }
   }
+}
+
+void *acceptTcpClient(void *param)
+{
+  OnelabServer::instance()->acceptTcp();
+}
+void *acceptUnixClient(void *param)
+{
+  OnelabServer::instance()->acceptUnix();
+}
+void *acceptUdtClient(void *param)
+{
+#ifdef HAVE_UDT
+  OnelabServer::instance()->acceptUdt();
+#endif
 }
 
 #ifndef WIN32
@@ -276,7 +443,6 @@ DWORD WINAPI OnelabServer_run(LPVOID param)
   OnelabServer::instance()->running(false);
 }
 
-#ifdef HAVE_UDT
 #ifndef WIN32
 void *listenOnClients(void *param)
 #else
@@ -284,14 +450,16 @@ void *listenOnClients(void *param)
 #endif
 {
   IPv4 ip;
-  std::set<UDTSOCKET> fdus;
-  std::set<Socket> fdss;
   int recvlen = 0;
   UInt8 buff[1024];
   OnelabProtocol msg(-1), rep(-1);
   int eid = OnelabServer::instance()->getEID();
+  std::set<Socket> fdss;
+#ifdef HAVE_UDT
+  std::set<UDTSOCKET> fdus;
   while(UDT::ERROR != UDT::epoll_wait(eid, &fdus, NULL, -1, &fdss, NULL)) {
-    /*for(std::set<UDTSOCKET>::iterator it = fdus.begin(); it != fdus.end(); ++it) {
+    /*
+    for(std::set<UDTSOCKET>::iterator it = fdus.begin(); it != fdus.end(); ++it) {
       OnelabLocalNetworkClient *cli = OnelabServer::instance()->getClient(*it);
       if(cli == NULL) { // Client is not in the list (it must be a Start message)
         IPv4 ip;
@@ -464,30 +632,32 @@ void *listenOnClients(void *param)
           break;
         }
       }
-    }*/
-
-    for(std::set<Socket>::iterator it = fdss.begin(); it != fdss.end(); ++it) {
-
+    }
+    */
+#else
+  while(UDT::ERROR != UDT::epoll_wait(eid, NULL, NULL, -1, &fdss, NULL)) {
+#endif
+    for(std::set<Socket>::iterator it = fdss.begin(); it != fdss.end(); ++it) { // For TCP and UNIX
       OnelabLocalNetworkClient *cli = OnelabServer::instance()->getClient(*it);
       if(cli == NULL) { // Client is not in the list (we should get a Start message)
         IPv4 ip;
         // recv the header
-        recvlen = ip4_socket_recv(*it, buff, 4, ip);
+        recvlen = ip4_socket_recv(*it, buff, 4);
         if(recvlen != 4) {
           // invalid message header
           UDT::epoll_remove_ssock(eid, *it);
-          UDT::close(*it);
+          close(*it);
           continue;
         }
         int msglen = msg.parseHeader(buff, recvlen);
         if(msglen > 1024) {
           // FIXME? buffer is too small
           UDT::epoll_remove_ssock(eid, *it);
-          UDT::close(*it);
+          close(*it);
           continue;
         }
         // then recv the message
-        recvlen = ip4_socket_recv(*it, buff, msglen, ip);
+        recvlen = ip4_socket_recv(*it, buff, msglen);
         msg.parseMessage(buff, recvlen);
         if(msg.msgType() == OnelabProtocol::OnelabStart && msg.attrs.size() > 0 && msg.attrs[0]->getAttributeType() == OnelabAttr::Start) {
           std::string name = std::string(((OnelabAttrStart *)msg.attrs[0])->name());
@@ -498,7 +668,7 @@ void *listenOnClients(void *param)
             recvlen = rep.encodeMsg(buff, 1024);
             ip4_socket_send(*it, buff, recvlen);
             UDT::epoll_remove_ssock(eid, *it);
-            UDT::close(*it);
+            close(*it);
             continue;
           }
           // Add a new remote client
@@ -514,7 +684,7 @@ void *listenOnClients(void *param)
         else {
           // cli shoud send a name first
           UDT::epoll_remove_ssock(eid, *it);
-          UDT::close(*it);
+          close(*it);
           continue;
         }
       }
@@ -527,7 +697,7 @@ void *listenOnClients(void *param)
             std::cout << "\033[0;31m" << "Connection with client \"" << cli->getName() << "\" was broken, removing the client." << "\033[0m" << std::endl; // DEBUG
             UDT::epoll_remove_ssock(eid, *it);
             OnelabServer::instance()->removeClient(cli);
-            UDT::close(*it);
+            close(*it);
           }
           std::cerr << "Error while recv message." << std::endl;
           continue;
@@ -536,20 +706,13 @@ void *listenOnClients(void *param)
           std::cout << "\033[0;31m" << "Connection with client \"" << cli->getName() << "\" was broken, removing the client." << "\033[0m" << std::endl; // DEBUG
           UDT::epoll_remove_ssock(eid, *it);
           OnelabServer::instance()->removeClient(cli);
-          UDT::close(*it);
+          close(*it);
           continue;
         }
         switch (msg.msgType()) {
         case OnelabProtocol::OnelabStop:
           std::cout << "\033[0;31m" << "Client \"" << cli->getName() << "\" is going to stop" << "\033[0m" << std::endl; // DEBUG
-          rep.msgType(OnelabProtocol::OnelabStop);
-          recvlen = rep.encodeMsg(buff, 1024);
-          if(ip4_socket_connected(cli->getSSocket())) // FIXME cli can close socket before send
-            cli->sendto(buff, recvlen);
-          //UDT::epoll_remove_usock(eid, *it);
-          UDT::epoll_remove_ssock(eid, *it);
-          OnelabServer::instance()->removeClient(cli);
-          UDT::close(*it);
+          OnelabServer::instance()->stopClient(cli);
           break;
         case OnelabProtocol::OnelabMessage:
           if(msg.attrs.size()==1 && msg.attrs[0]->getAttributeType() == OnelabAttrMessage::attributeType()) {
@@ -682,7 +845,6 @@ void *listenOnClients(void *param)
     }
   }
 }
-#endif
 
 void OnelabServer::sendAllParameter(OnelabLocalNetworkClient *cli)
 {
@@ -700,42 +862,22 @@ void OnelabServer::sendAllParameter(OnelabLocalNetworkClient *cli)
   }
 }
 
-void OnelabServer::Run()
+void OnelabServer::finalize()
 {
-  UInt32 bufflen = 1024, recvlen = 0;
-  UInt8 buff[1024];
-  IPv4 ip;
-  OnelabProtocol msg(-1), rep(OnelabProtocol::OnelabResponse);
-  OnelabLocalNetworkClient *currentClient = NULL;
-
-#ifdef HAVE_UDT
-  UDTSOCKET newcli = 0;
-#ifndef WIN32
-  pthread_t listen_thread;
-#else
-  HANDLER listen_thread;
-#endif
-
-  _eid = UDT::epoll_create();
-
-  udt_socket_listen(_fdu);
-  ip4_socket_listen(_fds);
-  std::clog << "listen on " << ip4_inet_ntop(_ip.address) << ":" << _ip.port << "(tcp)" << std::endl;
-  //  << "listen on " << ip4_inet_ntop(_ip.address) << ":" << _ip.port << "(udp/udt)" << std::endl;
-  //while(newcli = udt_socket_accept(_fdu, ip)) { // TODO accept udt and tcp ?
-
-  while(newcli = ip4_socket_accept(_fds, ip)) {
-    std::clog << "\033[0;31m" << "accpet peer : " << ip4_inet_ntop(ip.address)<< ':' << ip.port <<  "\033[0m" << std::endl;
-    //UDT::epoll_add_usock(_eid, newcli);
-    UDT::epoll_add_ssock(_eid, newcli);
-    if(_clients.size() == 0)
-#ifndef WIN32
-      pthread_create(&listen_thread, NULL, listenOnClients, NULL);
-#else
-      listen_thread = CreateThread(NULL, 0, listenOnClients, NULL, 0, NULL);
-#endif
+  stopClients();
+#if !defined(WIN32) || defined(__CYGWIN__)
+  if(_sockname.size()) {
+    unlink(_sockname.c_str());
   }
-  udt_socket_close(_fdu);
 #endif
-  ip4_socket_close(_fds);
+}
+void OnelabServer::running(bool running)
+{
+  _running = running;
+  if(!_running){
+    OnelabLocalClient *localgui = OnelabServer::instance()->getLocalClient("localGUI");
+    OnelabLocalNetworkClient *gui = OnelabServer::instance()->getClient("GUI");
+    if(localgui) localgui->onStop();
+    if(gui) ;// TODO
+  }
 }

@@ -1,8 +1,8 @@
 #ifndef _UDTUTILS_H_
 #define _UDTUTILS_H_
-#include <iostream>// FIXME debug only
-#include <udt.h>
+#include <iostream>
 #include "NetworkUtils.h"
+#include <udt.h>
 
 inline UDTSOCKET udt_socket(IPv4 ip, int socketType)
 {

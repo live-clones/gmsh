@@ -20,58 +20,69 @@ class OnelabServer
 {
 private:
 	static OnelabServer *_server;
-	IPv4 _ip;
+  std::string _sockname;
+	IPv4 _ip, // TCP
+    _ipu; // UDT
 	std::vector<OnelabLocalNetworkClient> _clients;
   std::vector<OnelabLocalClient *> _localClients;
 #ifndef WIN32
-  pthread_t _runningThread;
+  pthread_t _runningThread,
+    _listenThread, // thread to listen on connected clients
+    _tcpThread, _udtThread, _unixThread; // thread to accept new clients
   pthread_mutex_t _mutex_todo;
 #else
-  HANDLER _runningThread;
+  HANDLER _runningThread,
+    _listenThread,
+    _tcpThread, _udtThread, _unixThread; 
 #endif
-  bool _running;
+  bool _running,
+    _tcpServer, _udtServer, _unixServer;
   std::queue<std::string> _todoClient;
   std::queue<std::string> _todoAction;
 	onelab::parameterSpace _parameterSpace;
-	Socket _fds;
+	Socket _fds, _fdx; // system socket (TCP and UNIX)
+	int _eid;
 #ifdef HAVE_UDT
 	UDTSOCKET _fdu;
-	int _eid;
-	void sendto(std::string client, UInt8 *buff, UInt32 len);
 #endif
+	void sendto(std::string client, UInt8 *buff, UInt32 len);
+
 public:
-	OnelabServer(UInt16 port);
-	OnelabServer(UInt32 iface, UInt16 port);
-	static OnelabServer *instance(const UInt32 iface=0, const UInt16 port=0) {
-		if(!_server) _server = new OnelabServer(iface, port);
-    else if(iface != 0 || port != 0) {
-      delete _server;
-      _server = new OnelabServer(iface, port);
-    }
+	OnelabServer();
+	static OnelabServer *instance() {
+    if(!_server) _server = new OnelabServer();
 		return _server;
 	}
 	static void setInstance(OnelabServer *s) { _server = s; }
+  void listenOnTcp(unsigned int iface=0, unsigned short port=0);
+  void listenOnUnix(const char *sockname);
+  void acceptTcp();
+  void acceptUnix();
+  void stopTcp();
+  void stopUnix();
   onelab::parameterSpace *getParameterSpace() {return &_parameterSpace;}
   UInt16 getPort() { return _ip.port;}
 #ifdef HAVE_UDT
 	~OnelabServer(){UDT::cleanup();}
+  void listenOnUdt(unsigned int iface=0, unsigned short port=0);
+  void acceptUdt();
+  void stopUdt();
 #else
 	~OnelabServer(){}
 #endif
-	void Run();
+  void finalize();
   bool isRunning() const {return _running;}
-  void running(bool running) {_running = running;}
+  void running(bool running);
 	// Client methods
-#ifdef HAVE_UDT
 	inline int getEID() const {return _eid;}
-	void addClient(std::string name, UDTSOCKET fd, UInt32 ip, UInt16 port);
-	OnelabLocalNetworkClient *getClient(UDTSOCKET fd);
-#else
+	OnelabLocalNetworkClient *getClient(Socket fd);
 	void addClient(std::string name, UInt32 ip, UInt16 port);
-#endif
   void addClient(OnelabLocalClient *cli) {_localClients.push_back(cli);}
+  void addClient(std::string name, Socket fd, UInt32 ip, UInt16 port);
   int launchClient(const std::string &, bool blocking=false);
 	void removeClient(OnelabLocalNetworkClient *client);
+  void stopClient(OnelabLocalNetworkClient *cli);
+  void stopClients();
   std::vector<OnelabLocalNetworkClient> &getClients() {return _clients;}
   std::vector<OnelabLocalClient *> &getLocalClients() {return _localClients;}
 	OnelabLocalNetworkClient *getClient(const UInt32 ip, const UInt16 port);
@@ -153,7 +164,8 @@ public:
   void setChanged(bool changed, const std::string &client="") {
     _parameterSpace.setChanged(changed, client);
   }
-  void performAction(const std::string action, const std::string client="", bool blocking=false);
+  void performAction(const std::string &action, const std::string &client="", bool blocking=false);
   bool performNextAction();
+  void waitOnClients();
 };
 #endif

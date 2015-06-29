@@ -1,10 +1,12 @@
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netdb.h>
 #include <ifaddrs.h>
 #include <iostream>
 #include <unistd.h>
 
 #include "NetworkUtils.h"
+#include "OnelabException.h"
 
 UInt32 ip4_inet_pton(const char *ip)
 {
@@ -69,9 +71,9 @@ Socket ip4_socket(IPv4 ip, int socketType)
 	addr.sin_addr.s_addr = hton32((ip.address==0)? INADDR_ANY : ip.address);
 	addr.sin_port = hton16(ip.port);
 
-	if((fd = socket(AF_INET, socketType, 0)) < 0) throw ERROR_SOCKET_CREATE;
+	if((fd = socket(AF_INET, socketType, 0)) < 0) throw NetworkException(NetworkException::Create);
 
-	if(bind(fd, (struct sockaddr*)&addr, sizeof(addr)) != 0) throw ERROR_SOCKET_BIND;	
+	if(bind(fd, (struct sockaddr*)&addr, sizeof(addr)) != 0) throw NetworkException(NetworkException::Bind);	
 
 	return fd;
 }
@@ -143,4 +145,45 @@ bool ip4_socket_get_local_address(Socket fd, IPv4 &ip)
 		return true;
 	}
 	return false;
+}
+
+Socket unix_socket(int socketType)
+{
+	Socket fd;
+
+	if((fd = socket(PF_UNIX, socketType, 0)) < 0) throw NetworkException(NetworkException::Create);
+
+	return fd;
+}
+void unix_socket_listen(Socket fd, const char *sockname, int maxconnection)
+{
+	struct sockaddr_un addr;
+	memset(&addr, 0, sizeof(struct sockaddr_un));
+	addr.sun_family = AF_UNIX;
+	strcpy(addr.sun_path, sockname);
+
+	if(bind(fd, (struct sockaddr*)&addr, sizeof(addr)) != 0) throw NetworkException(NetworkException::Bind);	
+	if(-1 == listen(fd, maxconnection))  throw NetworkException(NetworkException::Listen);
+}
+Socket unix_socket_accept(Socket fd)
+{
+	struct sockaddr_un addr;
+  unsigned int addrl = sizeof(addr);
+
+	memset(&addr, 0, addrl);
+	addr.sun_family = AF_UNIX;
+
+  Socket cli = accept(fd, (struct sockaddr*)&addr, &addrl);
+  return cli;
+}
+
+Socket unix_socket_connect(Socket fd, const char* sockname)
+{
+  struct sockaddr_un addr;
+  memset(&addr, 0, sizeof(addr));
+
+  addr.sun_family = AF_UNIX;
+  strcpy(addr.sun_path, sockname);
+
+  return connect(fd, (struct sockaddr *)&addr, sizeof(addr));
 }

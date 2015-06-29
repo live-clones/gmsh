@@ -87,14 +87,6 @@ DWORD WINAPI OnelabDatabase_listen(LPVOID arg)
     }
   }
 }
-#ifndef WIN32
-void *OnelabDatabase_server(void *arg)
-#else
-DWORD WINAPI OnelabDatabase_server(LPVOID arg)
-#endif
-{
-  OnelabServer::instance()->Run();
-}
 
 void OnelabDatabase::finalize()
 {
@@ -103,6 +95,24 @@ void OnelabDatabase::finalize()
     pthread_join(_listenThread, NULL);
   }
   else {
-    //TODO pthread_join(_serverThread, NULL);
+    OnelabServer::instance()->finalize();
   }
+}
+
+void solver_batch_cb(void *data)
+{
+  int num = (intptr_t)data;
+  if(num < 0) return;
+  std::string name = opt_solver_name(num, GMSH_GET, "");
+  std::string exe = opt_solver_executable(num, GMSH_GET, "");
+  std::string host = opt_solver_remote_login(num, GMSH_GET, "");
+  if(exe.empty()){
+    Msg::Error("Solver executable name not provided");
+    return;
+  }
+
+  onelab::number n("0Metamodel/Batch", CTX::instance()->batch);
+  n.setVisible(false);
+  //onelab::server::instance()->set(n);
+  // TODO
 }
