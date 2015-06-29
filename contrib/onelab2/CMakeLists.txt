@@ -19,7 +19,7 @@ if(NOT ENABLE_UDT)
 set(SRC
   ${SRC}
   noudt.cpp)
-endif(ENABLE_UDT)
+endif(NOT ENABLE_UDT)
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(contrib/onelab2 "${SRC};${HDR}")
