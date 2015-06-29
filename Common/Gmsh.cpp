@@ -52,6 +52,8 @@
 
 #if defined(HAVE_ONELAB2)
 #include "OnelabServer.h"
+#include "OnelabDatabase.h"
+#include "OnelabException.h"
 #endif
 
 int GmshInitialize(int argc, char **argv)
@@ -238,9 +240,35 @@ int GmshBatch()
             Msg::GetMaxThreads(), Msg::GetMaxThreads() > 1 ? "s" : "");
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
 #if defined(HAVE_ONELAB2)
-  if(CTX::instance()->onelab.listen_port > 0) {
-    OnelabServer::instance(0, CTX::instance()->onelab.listen_port);
-    OnelabServer::instance()->Run();
+  try {
+    if(CTX::instance()->onelab.unixSock.size() > 0) { // UNIX
+      std::ostringstream tmp;
+      tmp << CTX::instance()->homeDir << CTX::instance()->onelab.unixSock;
+      OnelabServer::instance()->listenOnUnix(tmp.str().c_str());
+    }
+    if(CTX::instance()->onelab.tcpSock.size() > 0) {
+      std::size_t colon = CTX::instance()->onelab.tcpSock.find(":");
+      OnelabServer::instance()->listenOnTcp(
+        ip4_inet_pton(CTX::instance()->onelab.tcpSock.substr(0, colon).c_str()),
+        atoi(CTX::instance()->onelab.tcpSock.substr(colon+1, CTX::instance()->onelab.tcpSock.size()-colon-1).c_str()));
+    }
+#if defined(HAVE_UDT)
+    if(CTX::instance()->onelab.udtSock.size() > 0) {
+      std::size_t colon = CTX::instance()->onelab.tcpSock.find(":");
+      OnelabServer::instance()->listenOnUdt(
+        ip4_inet_pton(CTX::instance()->onelab.tcpSock.substr(0, colon).c_str()),
+        atoi(CTX::instance()->onelab.tcpSock.substr(colon+1, CTX::instance()->onelab.tcpSock.size()-colon-1).c_str()));
+    }
+#endif
+  } catch(NetworkException e) {
+    std::cout << e.what() << std::endl;
+    Msg::Exit(1);
+  }
+  if(CTX::instance()->onelab.unixSock.size() > 0
+    || CTX::instance()->onelab.tcpSock.size() > 0
+    || CTX::instance()->onelab.udtSock.size() > 0) {
+    std::cout << "Press any key to stop the server." << std::endl;
+    std::cin.get();
     Msg::Exit(0);
   }
 #endif

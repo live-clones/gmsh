@@ -906,6 +906,12 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
       Error("Unable to connect ONELAB server (%s)", sockname.c_str());
       Exit(1);
     }
+#if defined(HAVE_FLTK)
+    else if(FlGui::available()) // FIXME
+      c->setCallback(FlGui::instance()->onelab);
+    else
+      Warning("FlGUI not available");
+#endif
     _onelabClient = OnelabDatabase::instance();
 
     SetOnelabNumber(name + "/UseCommandLine", 1, false);
@@ -946,7 +952,7 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     std::vector<onelab::string> ps;
     _onelabClient->get(ps, name + "/Action");
     if(ps.size()){
-      //Info("Performing ONELAB '%s'", ps[0].getValue().c_str());
+      Info("Performing ONELAB '%s'", ps[0].getValue().c_str());
       if(ps[0].getValue() == "initialize") Exit(0);
     }
   }

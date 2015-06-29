@@ -264,7 +264,8 @@ class CTX {
   }solver;
   // onelab options
   struct{
-    short listen_port;
+    std::string unixSock, tcpSock, udtSock;
+    bool unixConnected, tcpConnected, udtConnected;
   }onelab;
   // print options
   struct{
