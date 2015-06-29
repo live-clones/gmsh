@@ -4050,24 +4050,25 @@ Constraints :
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
-        if (List_Nbr($10) < 12){
-          // FIXME Koen restore full automatic case here if List_Nbr($10) == 0)
-          yymsg(0, "Affine transformation requires at least 12 entries");
-        }
-        else {
-          std::vector<double> transfo(16,0);
-          for(int i = 0; i < List_Nbr($10); i++)
-            List_Read($10, i, &transfo[i]);
-          for(int i = 0; i < List_Nbr($4); i++){
-            double d_master, d_slave;
-            List_Read($8, i, &d_master);
-            List_Read($4, i, &d_slave);
-            int j_master = (int)d_master;
-            int j_slave  = (int)d_slave;
-            addPeriodicEdge(j_slave,j_master,transfo);
-          }
-        }
-      }
+				std::vector<double> transfo;
+				if (List_Nbr($10) != 0) {	
+					if (List_Nbr($10) < 12){
+						yymsg(0, "Affine transformation requires at least 12 entries (we have %d)",List_Nbr($10));
+					}
+					else {
+						transfo.resize(List_Nbr($10));
+						for(int i = 0; i < List_Nbr($10); i++) List_Read($10, i, &transfo[i]);
+					}
+				}
+				for(int i = 0; i < List_Nbr($4); i++){
+					double d_master, d_slave;
+					List_Read($8, i, &d_master);
+					List_Read($4, i, &d_slave);
+					int j_master = (int)d_master;
+					int j_slave  = (int)d_slave;
+					addPeriodicEdge(j_slave,j_master,transfo);
+				}
+			}
       List_Delete($4);
       List_Delete($8);
     }
@@ -6060,7 +6061,7 @@ void addPeriodicEdge(int iTarget,int iSource,
     if (!target || !source)
       Msg::Error("Could not find surface %d or %d for periodic copy",
                  iTarget,iSource);
-    if (affineTransform.size() == 16) {
+    if (affineTransform.size() >= 12) {
       target->setMeshMaster(source,affineTransform);
     }
     else {

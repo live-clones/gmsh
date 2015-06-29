@@ -339,7 +339,7 @@ int GModel::importGEOInternals()
     GEO_Internals::MasterEdge& me = peIter->second;
     int iSource = me.tag;
     GEdge* target = getEdgeByTag(iTarget);
-    GEdge* source = getEdgeByTag(iSource);
+    GEdge* source = getEdgeByTag(abs(iSource));
     if (!target)
       Msg::Error("Unknown target line for periodic connection from %d to %d",
                  iTarget, iSource);
