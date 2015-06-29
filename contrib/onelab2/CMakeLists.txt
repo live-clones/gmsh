@@ -9,6 +9,18 @@ set(SRC
   GmshNetworkClient.cpp
   GmshLocalClient.cpp)
 
+if(HAVE_FLTK)
+set(SRC
+  ${SRC}
+  OnelabWindow.cpp)
+endif(HAVE_FLTK)
+
+if(NOT ENABLE_UDT)
+set(SRC
+  ${SRC}
+  noudt.cpp)
+endif(ENABLE_UDT)
+
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(contrib/onelab2 "${SRC};${HDR}")
 

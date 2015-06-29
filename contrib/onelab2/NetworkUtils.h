@@ -19,12 +19,19 @@ typedef int socklen_t;
 typedef int Socket;
 #endif
 
+#include "GmshConfig.h"
+#ifndef HAVE_UDT
+#include "noudt.h"
+#endif
+
 typedef unsigned char  UInt8;
 typedef unsigned short UInt16;
 typedef unsigned int UInt32;
 typedef unsigned long long UInt64;
 typedef struct {unsigned char bytes[16];} UInt128;
 typedef struct {UInt32 address; UInt16 port;} IPv4;
+
+// TODO check double/float size
 
 // host to network (and network to host) order, Reference RFC 791
 #define hton64 ntoh64
@@ -152,5 +159,10 @@ bool ip4_socket_get_local_address(Socket fd, IPv4 &ip);
 void ip4_socket_timeout(Socket d, long tos, long tous=0);
 inline void ip4_socket_reuse_address(Socket fd, bool reuse=true) {setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof reuse);}
 inline void ip4_socket_close(Socket fd) {/*if(-1 == */close(fd);}
+
+Socket unix_socket(int socketType);
+void unix_socket_listen(Socket fd, const char *sockname, int maxconnection=1024);
+Socket unix_socket_accept(Socket fd);
+Socket unix_socket_connect(Socket fd, const char *sockname);
 
 #endif
