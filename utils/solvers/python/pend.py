@@ -26,7 +26,7 @@ def exportMshOpt():
    optFile.close()
 
 def exportIter(iter,t,x1,y1,x2,y2):
-   mshFile = open(c.checkPath("pend.msh"),'a')
+   mshFile = open(c.getPath("pend.msh"),'a')
    mshFile.write('$NodeData\n1\n"motion"\n1\n\t%f\n3\n\t%d\n3\n' % (t, iter))
    mshFile.write('\t3\n\t1 0 0 0\n\t2 %f %f 0\n\t3 %f %f 0\n$EndNodeData\n' %(x1,y1,x2,y2))
    mshFile.close()
