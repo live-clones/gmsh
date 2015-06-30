@@ -94,7 +94,7 @@ public:
 class OnelabAttrMessage : public OnelabAttr
 {
 private:
-	UInt8 *_message = NULL;
+	UInt8 *_message;
 	UInt16 _messageLength;
 	UInt8 _level;
 	

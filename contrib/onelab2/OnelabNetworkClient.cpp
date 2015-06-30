@@ -147,7 +147,7 @@ bool OnelabNetworkClient::connect()
     if(_sockname.size())
       unix_socket_connect(_fds, _sockname.c_str());
     else
-      ip4_socket_connect(_fds, _ip);
+      _connected = ip4_socket_connect(_fds, _ip) != -1;
   }
   else
     udt_socket_connect(_fdu, _ip);
@@ -155,8 +155,11 @@ bool OnelabNetworkClient::connect()
   if(_sockname.size())
     unix_socket_connect(_fds, _sockname.c_str());
   else
-    ip4_socket_connect(_fds, _ip);
+    _connected = ip4_socket_connect(_fds, _ip) != -1;
 #endif
+
+  if(!_connected) return false;
+
   msg.attrs.push_back(new OnelabAttrStart(_name));
   recvlen = msg.encodeMsg(buff, bufflen);
   sendto(buff, recvlen);

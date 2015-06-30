@@ -4,37 +4,39 @@
 #ifdef HAVE_UDT
 OnelabLocalNetworkClient::OnelabLocalNetworkClient(std::string name, UDTSOCKET fd, unsigned int ip, unsigned short port, bool UDT)
 {
-	_name = name;
+  _mutex_wait = PTHREAD_MUTEX_INITIALIZER;
+  _name = name;
   _fds = 0;
-	_fdu = fd;
-	_ip.address = ip;
-	_ip.port = port;
+  _fdu = fd;
+  _ip.address = ip;
+  _ip.port = port;
 }
 #endif
 OnelabLocalNetworkClient::OnelabLocalNetworkClient(std::string name, Socket fd, unsigned int ip, unsigned short port)
 {
-	_name = name;
-	_fds = fd;
-	_ip.address = ip;
-	_ip.port = port;
+  _mutex_wait = PTHREAD_MUTEX_INITIALIZER;
+  _name = name;
+  _fds = fd;
+  _ip.address = ip;
+  _ip.port = port;
 }
 void OnelabLocalNetworkClient::sendto(UInt8 *buff, unsigned int len)
 {
 #ifdef HAVE_UDT
-	if(_fds) ip4_socket_send(_fds, buff, len);
+  if(_fds) ip4_socket_send(_fds, buff, len);
   else udt_socket_send(_fdu, buff, len);
 #else
-	ip4_socket_send(_fds, buff, len);
+  ip4_socket_send(_fds, buff, len);
 #endif
 }
 int OnelabLocalNetworkClient::recvfrom(UInt8 *buff, unsigned int maxlen)
 {
   IPv4 unused;
 #ifdef HAVE_UDT
-	if(_fds) return ip4_socket_recv(_fds, buff, maxlen, unused);
-	return udt_socket_recv(_fdu, buff, maxlen);
+  if(_fds) return ip4_socket_recv(_fds, buff, maxlen, unused);
+  return udt_socket_recv(_fdu, buff, maxlen);
 #else
-	return ip4_socket_recv(_fds, buff, maxlen);
+  return ip4_socket_recv(_fds, buff, maxlen);
 #endif
 }
 int OnelabLocalNetworkClient::recvmsg(OnelabProtocol &msg)

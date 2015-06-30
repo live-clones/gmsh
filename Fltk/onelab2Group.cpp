@@ -262,7 +262,7 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
 
   rebuildSolverList();
 
-  OnelabDatabase::instance()->useAsClient()->setCallback(this);
+  if(!OnelabDatabase::instance()->isNetworkClient()) OnelabDatabase::instance()->useAsClient()->setCallback(this);
 }
 onelabGroup::~onelabGroup()
 {
