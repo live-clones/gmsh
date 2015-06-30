@@ -54,7 +54,7 @@ void OnelabServer::listenOnTcp(unsigned int iface, unsigned short port)
   ip4_socket_ip(_fds, _ip);
   ip4_socket_listen(_fds);
 
-  std::clog << "\033[0;31m" << "listen on TCP - " << ip4_inet_ntop(iface) << ":" << port << "\033[0m" << std::endl;
+  std::clog << "\033[0;31m" << "listen on TCP - " << ip4_inet_ntop(_ip.address) << ":" << _ip.port << "\033[0m" << std::endl;
 
   pthread_create(&_tcpThread, NULL, acceptTcpClient, NULL);
   _tcpServer = true;
