@@ -212,7 +212,20 @@ class client :
       #self.socket.send(struct.pack('ii%is' %len(m), t, len(m), m))
 
   def _clearbuffer(self):
-    self.socket.recv(1024)
+    self.socket.settimeout(0.)
+    try:
+      msg = self.socket.recv(1024)
+    except socket.error:
+      self.socket.settimeout(None)
+      return
+    self.socket.settimeout(None)
+    if len(msg) >= 4:
+      v, t, l = struct.unpack('!BBH', msg[:4])
+      if t == self._ONELAB_MESSAGE :
+        print('onelab info : %s' % msg)
+      elif t == self._ONELAB_STOP :
+        print('server ask to stop')
+        os._exit(1)
 
   def _receive(self) :
     def buffered_receive(l) :
@@ -230,6 +243,9 @@ class client :
     msg = buffered_receive(l)
     if t == self._ONELAB_MESSAGE :
       print('onelab info : %s' % msg)
+    elif t == self._ONELAB_STOP:
+      print('server ask to stop')
+      os._exit(1)
     return t, msg
 
   def _parseParameter(msg):
@@ -274,6 +290,7 @@ class client :
         param.frombytes(msg)
       elif ptype == 0x0A and warn_if_not_found:
         print('Unknown parameter %s' %(param.name))
+    self._clearbuffer()
 
   def defineNumber(self, name, **param):
     if 'labels' in param :
@@ -363,7 +380,7 @@ class client :
     else:
       cmd = command + ' ' + arguments
     os.system(cmd);
-    self._numSubClients +=1
+    self._numSubClients += 1
     self.getString(name+'/Action', False)
 
   def runSubClient(self, name, command, arguments=''):
