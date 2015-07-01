@@ -371,7 +371,7 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
     }
   }
   if (!v2){
-    Msg::Error("Impossible to swap face");
+    Msg::Warning("Impossible to swap face");
     return false;
   }
 
@@ -561,7 +561,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets,
                         double *minQual)
 {
   if(t->isDeleted()){
-    Msg::Error("Impossible to collapse vertex");
+    Msg::Warning("Impossible to collapse vertex");
     return false;
   }
 
@@ -604,7 +604,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets,
   double worstAfter = 1.0;
   double newQuals[2000];
   if (toUpdate.size() >= 2000){
-    Msg::Error("Impossible to collapse vertex");
+    Msg::Warning("Impossible to collapse vertex");
     return false;
   }
   for (unsigned int i = 0; i < toUpdate.size(); i++){
@@ -651,7 +651,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets,
 bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
 {
   if(t->isDeleted()){
-    Msg::Error("Impossible to collapse vertex");
+    Msg::Warning("Impossible to collapse vertex");
     return false;
   }
   if(t->tet()->getVertex(iVertex)->onWhat()->dim() < 3) return false;
@@ -697,7 +697,7 @@ bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
   double worstAfter = 1.0;
   double newQuals[2000];
   if (cavity.size() >= 2000){
-    Msg::Error("Impossible to smooth vertex");
+    Msg::Warning("Impossible to smooth vertex");
     return false;
   }
   for (unsigned int i = 0; i < cavity.size(); i++){
@@ -812,7 +812,7 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex, const qmTetrahedron::Measures &
 
   double newQuals[2000];
   if(vd.ts.size() >= 2000){
-    Msg::Error("Impossible to smooth vertex");
+    Msg::Warning("Impossible to smooth vertex");
     return false;
   }
   for(unsigned int i = 0; i < vd.ts.size(); i++){
