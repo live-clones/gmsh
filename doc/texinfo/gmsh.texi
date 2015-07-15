@@ -134,135 +134,135 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 
 Overview
 
-* Geometry::                    
-* Mesh::                        
-* Solver::                      
-* Post-processing::             
-* What Gmsh is pretty good at::  
-* and what Gmsh is not so good at::  
-* Bug reports::                 
+* Geometry::
+* Mesh::
+* Solver::
+* Post-processing::
+* What Gmsh is pretty good at::
+* and what Gmsh is not so good at::
+* Bug reports::
 
 How to read this reference manual?
 
-* Syntactic rules::             
+* Syntactic rules::
 
 Running Gmsh on your system
 
-* Interactive mode::            
-* Non-interactive mode::        
-* Command-line options::        
-* Mouse actions::               
-* Keyboard shortcuts::          
+* Interactive mode::
+* Non-interactive mode::
+* Command-line options::
+* Mouse actions::
+* Keyboard shortcuts::
 
 General tools
 
-* Comments::                    
-* Expressions::                 
-* Operators::                   
-* Built-in functions::          
-* User-defined macros::      
-* Loops and conditionals::      
-* General commands::            
-* General options::             
+* Comments::
+* Expressions::
+* Operators::
+* Built-in functions::
+* User-defined macros::
+* Loops and conditionals::
+* General commands::
+* General options::
 
 Expressions 
 
-* Floating point expressions::  
-* Character expressions::       
-* Color expressions::           
+* Floating point expressions::
+* Character expressions::
+* Color expressions::
 
 Geometry module
 
-* Geometry commands::           
-* Geometry options::            
+* Geometry commands::
+* Geometry options::
 
 Geometry commands
 
-* Points::                      
-* Lines::                       
-* Surfaces::                    
-* Volumes::                     
-* Extrusions::                  
-* Transformations::             
-* Miscellaneous geometry commands::  
+* Points::
+* Lines::
+* Surfaces::
+* Volumes::
+* Extrusions::
+* Transformations::
+* Miscellaneous geometry commands::
 
 Mesh module
 
-* Choosing the right unstructured algorithm::  
-* Elementary vs physical entities::  
-* Mesh commands::               
-* Mesh options::                
+* Choosing the right unstructured algorithm::
+* Elementary vs physical entities::
+* Mesh commands::
+* Mesh options::
 
 Mesh commands
 
-* Specifying mesh element sizes::  
-* Structured grids::            
-* Miscellaneous mesh commands::  
+* Specifying mesh element sizes::
+* Structured grids::
+* Miscellaneous mesh commands::
 
 Solver module
 
-* Solver options::              
+* Solver options::
 
 Post-processing module
 
-* Post-processing commands::    
-* Post-processing plugins::     
-* Post-processing options::     
+* Post-processing commands::
+* Post-processing plugins::
+* Post-processing options::
 
 File formats
 
-* MSH ASCII file format::       
-* MSH binary file format::      
-* Node ordering::               
-* Legacy formats::              
+* MSH ASCII file format::
+* MSH binary file format::
+* Node ordering::
+* Legacy formats::
 
 Legacy formats
 
-* MSH file format version 1.0::  
-* POS ASCII file format::       
-* POS binary file format::      
+* MSH file format version 1.0::
+* POS ASCII file format::
+* POS binary file format::
 
 Tutorial
 
-* t1.geo::                      
-* t2.geo::                      
-* t3.geo::                      
-* t4.geo::                      
-* t5.geo::                      
-* t6.geo::                      
-* t7.geo::                      
-* t8.geo::                      
-* t9.geo::                      
-* t10.geo::                     
-* t11.geo::                     
-* t12.geo::                     
-* t13.geo::                     
-* t14.geo::                     
-* t15.geo::                     
+* t1.geo::
+* t2.geo::
+* t3.geo::
+* t4.geo::
+* t5.geo::
+* t6.geo::
+* t7.geo::
+* t8.geo::
+* t9.geo::
+* t10.geo::
+* t11.geo::
+* t12.geo::
+* t13.geo::
+* t14.geo::
+* t15.geo::
 
 Options
 
-* General options list::        
-* Geometry options list::       
-* Mesh options list::           
-* Solver options list::         
-* Post-processing options list::  
+* General options list::
+* Geometry options list::
+* Mesh options list::
+* Solver options list::
+* Post-processing options list::
 
 Information for developers
 
-* Source code structure::       
-* Coding style::                
-* Adding a new option::         
+* Source code structure::
+* Coding style::
+* Adding a new option::
 
 Frequently asked questions
 
-* The basics::                  
-* Installation problems::       
-* General questions::           
-* Geometry module questions::   
-* Mesh module questions::       
-* Solver module questions::     
-* Post-processing module questions::  
+* The basics::
+* Installation problems::
+* General questions::
+* Geometry module questions::
+* Mesh module questions::
+* Solver module questions::
+* Post-processing module questions::
 
 @end detailmenu
 @end menu
@@ -362,13 +362,13 @@ treatments, using loops, conditionals and external system calls. A brief
 description of the four modules is given hereafter.
 
 @menu
-* Geometry::                    
-* Mesh::                        
-* Solver::                      
-* Post-processing::             
-* What Gmsh is pretty good at::  
-* and what Gmsh is not so good at::  
-* Bug reports::                 
+* Geometry::
+* Mesh::
+* Solver::
+* Post-processing::
+* What Gmsh is pretty good at::
+* and what Gmsh is not so good at::
+* Bug reports::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -669,7 +669,7 @@ source distribution.
 @c -------------------------------------------------------------------------
 
 @menu
-* Syntactic rules::             
+* Syntactic rules::
 @end menu
 
 @node Syntactic rules,  , How to read this manual?, How to read this manual?
@@ -713,11 +713,11 @@ preceding rule.
 @cindex Running Gmsh
 
 @menu
-* Interactive mode::            
-* Non-interactive mode::        
-* Command-line options::        
-* Mouse actions::               
-* Keyboard shortcuts::          
+* Interactive mode::
+* Non-interactive mode::
+* Command-line options::
+* Mouse actions::
+* Keyboard shortcuts::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -904,14 +904,14 @@ modules''. Commands peculiar to these modules will be introduced in
 @ref{Post-processing module}, respectively.
 
 @menu
-* Comments::                    
-* Expressions::                 
-* Operators::                   
-* Built-in functions::          
-* User-defined macros::      
-* Loops and conditionals::      
-* General commands::            
-* General options::             
+* Comments::
+* Expressions::
+* Operators::
+* Built-in functions::
+* User-defined macros::
+* Loops and conditionals::
+* General commands::
+* General options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -955,9 +955,9 @@ The two constant types used in Gmsh scripts are @var{real} and
 meaning and syntax as in the C or C++ programming languages.
 
 @menu
-* Floating point expressions::  
-* Character expressions::       
-* Color expressions::           
+* Floating point expressions::
+* Character expressions::
+* Color expressions::
 @end menu
 
 @c .........................................................................
@@ -1328,7 +1328,7 @@ evaluation:
 @c Built-in functions
 @c -------------------------------------------------------------------------
 
-@node Built-in functions, User-defined functions, Operators, General tools
+@node Built-in functions, User-defined macros, Operators, General tools
 @section Built-in functions
 
 @cindex Functions, built-in
@@ -1423,7 +1423,7 @@ Hyperbolic tangent of @var{expression}.
 @c -------------------------------------------------------------------------
 
 @node User-defined macros, Loops and conditionals, Built-in functions, General tools
-@section User-defined functions
+@section User-defined macros
 
 @cindex Macros, user-defined
 
@@ -1889,8 +1889,8 @@ physical volume must be assigned a unique identification number. See
 the way meshes are saved.
 
 @menu
-* Geometry commands::           
-* Geometry options::            
+* Geometry commands::
+* Geometry options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -1911,13 +1911,13 @@ is enclosed between parentheses. If an @var{expression} refers to a
 previously defined entity, it is enclosed between braces.''
 
 @menu
-* Points::                      
-* Lines::                       
-* Surfaces::                    
-* Volumes::                     
-* Extrusions::                  
-* Transformations::             
-* Miscellaneous geometry commands::  
+* Points::
+* Lines::
+* Surfaces::
+* Volumes::
+* Extrusions::
+* Transformations::
+* Miscellaneous geometry commands::
 @end menu
 
 @c .........................................................................
@@ -2426,10 +2426,10 @@ algorithm can be quite poor.
 @c primitives, etc.)
 
 @menu
-* Choosing the right unstructured algorithm::  
-* Elementary vs physical entities::  
-* Mesh commands::               
-* Mesh options::                
+* Choosing the right unstructured algorithm::
+* Elementary vs physical entities::
+* Mesh commands::
+* Mesh options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -2591,9 +2591,9 @@ given either in the GUI or on the command line (see @ref{Running Gmsh on
 your system}, and @ref{Command-line options}).
 
 @menu
-* Specifying mesh element sizes::  
-* Structured grids::            
-* Miscellaneous mesh commands::  
+* Specifying mesh element sizes::
+* Structured grids::
+* Miscellaneous mesh commands::
 @end menu
 
 @c .........................................................................
@@ -2899,16 +2899,21 @@ will conform to the mesh of the point(s) or lines(s).
 Embed the surface in the given volume. The volume mesh will conform to
 the mesh of the surface. 
 
-@item Periodic Line @{ @var{expression-list} @} = @{ @var{expression-list} @};
+@item Periodic Line @{ @var{expression-list} @} = @{ @var{expression-list} @} ;
 Force mesh of lines on the left-hand side (slaves) to match the mesh of
-the lines on the right-hand side (masters).
+the lines on the right-hand side (masters). 
 
-@item Periodic Surface @var{expression} @{ @var{expression-list} @} = @var{expression} @{ @var{expression-list} @} < Affine  @{ @var{expression-list} @} >;
+@item Periodic Surface @var{expression} @{ @var{expression-list} @} = @var{expression} @{ @var{expression-list} @} ;
 Force mesh of the surface on the left-hand side (slave, with boundary
 edges specified between braces) to match the mesh of the surface on the
-right-hand side (master, with boundary edges specified between braces). The
-optional @code{Affine} list specifies an explicit affine transform (as a 4 x 4
-matrix given by row).
+right-hand side (master, with boundary edges specified between braces).
+
+@item Periodic Line | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Rotate | Translate @{ @var{expression-list} @} ;
+Force mesh of lines or surfaces on the left-hand side (slaves) to match
+the mesh of the lines on the right-hand side (masters), using prescribed
+geometrical transformations. @code{Affine} takes a 4 x 4 affine
+transform matrix given by row; @code{Rotate} and @code{Translate} are
+specified as in @ref{Transformations}.
 
 @item Coherence Mesh;
 Removes all duplicate mesh vertices.
@@ -3020,7 +3025,7 @@ the sources of GetDP (@url{http://geuz.org/getdp} for a more
 comprehensive example.
 
 @menu
-* Solver options::              
+* Solver options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -3113,9 +3118,9 @@ the next section (cf. the @code{View} command); the MSH format is
 defined in @ref{File formats}.
 
 @menu
-* Post-processing commands::    
-* Post-processing plugins::     
-* Post-processing options::     
+* Post-processing commands::
+* Post-processing plugins::
+* Post-processing options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -3451,10 +3456,10 @@ underlying mesh, and can therefore be easier to use in some
 cases.)
 
 @menu
-* MSH ASCII file format::       
-* MSH binary file format::      
-* Node ordering::               
-* Legacy formats::              
+* MSH ASCII file format::
+* MSH binary file format::
+* Node ordering::
+* Legacy formats::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4123,9 +4128,9 @@ you do not use them in new applications.
 @c .........................................................................
 
 @menu
-* MSH file format version 1.0::  
-* POS ASCII file format::       
-* POS binary file format::      
+* MSH file format version 1.0::
+* POS ASCII file format::
+* POS binary file format::
 @end menu
 
 @node MSH file format version 1.0, POS ASCII file format, Legacy formats, Legacy formats
@@ -4502,21 +4507,21 @@ system}. Screencasts that show how to use the GUI are available on
 @uref{http://geuz.org/gmsh/screencasts/}.
 
 @menu
-* t1.geo::                      
-* t2.geo::                      
-* t3.geo::                      
-* t4.geo::                      
-* t5.geo::                      
-* t6.geo::                      
-* t7.geo::                      
-* t8.geo::                      
-* t9.geo::                      
-* t10.geo::                     
-* t11.geo::                     
-* t12.geo::                     
-* t13.geo::                     
-* t14.geo::                     
-* t15.geo::                     
+* t1.geo::
+* t2.geo::
+* t3.geo::
+* t4.geo::
+* t5.geo::
+* t6.geo::
+* t7.geo::
+* t8.geo::
+* t9.geo::
+* t10.geo::
+* t11.geo::
+* t12.geo::
+* t13.geo::
+* t14.geo::
+* t15.geo::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4683,11 +4688,11 @@ by hand.
 @c All the included files are generated automatically with `gmsh -doc'
 
 @menu
-* General options list::        
-* Geometry options list::       
-* Mesh options list::           
-* Solver options list::         
-* Post-processing options list::  
+* General options list::
+* Geometry options list::
+* Mesh options list::
+* Solver options list::
+* Post-processing options list::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4834,9 +4839,9 @@ source code is provided in @ref{Compiling the source code} (see also
 @ref{Frequently asked questions}).
 
 @menu
-* Source code structure::       
-* Coding style::                
-* Adding a new option::         
+* Source code structure::
+* Coding style::
+* Adding a new option::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5082,13 +5087,13 @@ optional: create the associated widget in
 @cindex FAQ
 
 @menu
-* The basics::                  
-* Installation problems::       
-* General questions::           
-* Geometry module questions::   
-* Mesh module questions::       
-* Solver module questions::     
-* Post-processing module questions::  
+* The basics::
+* Installation problems::
+* General questions::
+* Geometry module questions::
+* Mesh module questions::
+* Solver module questions::
+* Post-processing module questions::
 @end menu
 
 @c -------------------------------------------------------------------------
