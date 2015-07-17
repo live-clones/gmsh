@@ -1,4 +1,4 @@
-2.9.4: new Get/SetNumber and Get/SetString for direct access to ONELAB
+2.10.0: new Get/SetNumber and Get/SetString for direct access to ONELAB
 variables; new Physical specification with both label and numeric id; improved
 visibility browser navigation; geometrical entities and post-processing views
 can now react to double-clicks, via new generic DoubleClicked options; images
