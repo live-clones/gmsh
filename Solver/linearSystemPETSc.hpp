@@ -394,6 +394,18 @@ int linearSystemPETSc<scalar>::systemSolve()
 }
 
 template <class scalar>
+int linearSystemPETSc<scalar>::matMult()
+{
+  _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));
+  _try(MatAssemblyEnd(_a, MAT_FINAL_ASSEMBLY));
+  _try(VecAssemblyBegin(_b));
+  _try(VecAssemblyEnd(_b));
+  _try(MatMult(_a,_b,_x));
+  return 1;
+}
+
+
+template <class scalar>
 void linearSystemPETSc<scalar>::printMatlab(const char *filename) const
 {
   _try(MatAssemblyBegin(_a, MAT_FINAL_ASSEMBLY));

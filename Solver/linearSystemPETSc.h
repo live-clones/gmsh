@@ -115,6 +115,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   void printMatlab(const char *filename) const;
   virtual int systemSolve();
   Mat getMatrix(){ return _a; }
+  virtual int matMult();
   //std::vector<scalar> getData();
   //std::vector<int> getRowPointers();
   //std::vector<int> getColumnsIndices();
@@ -149,6 +150,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   void printMatlab(const char *filename) const{};
   virtual int systemSolve() { return 0; }
   double normInfRightHandSide() const{return 0;}
+  virtual int matMult() { return 0; }
 };
 #endif
 #endif

@@ -24,6 +24,9 @@ class linearSystemBase {
   virtual void zeroRightHandSide() = 0;
   virtual void zeroSolution() = 0;
   virtual int systemSolve() = 0;
+  // x = A*b
+  virtual int matMult() { return 0; }
+
   void setParameter (std::string key, std::string value);
   std::string getParameter(std::string key) const;
   virtual void insertInSparsityPattern(int _row, int _col){};
