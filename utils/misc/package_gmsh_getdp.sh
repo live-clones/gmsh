@@ -30,6 +30,29 @@ for m in ${MODELS}; do
   rm -f ${m}.zip
 done
 
+rm -rf gmsh-getdp-source*
+mkdir gmsh-getdp-source
+curl -O http://geuz.org/gmsh/src/gmsh-${GMSH}-source.tgz
+curl -O http://geuz.org/getdp/src/getdp-${GETDP}-source.tgz
+mv gmsh-${GMSH}-source.tgz /tmp
+mv getdp-${GETDP}-source.tgz /tmp
+tar zxvf /tmp/gmsh-${GMSH}-source.tgz -C /tmp
+tar zxvf /tmp/getdp-${GETDP}-source.tgz -C /tmp
+cp /tmp/README.txt gmsh-getdp-source
+mv /tmp/gmsh-*${GMSH}*-source gmsh-getdp-source
+mv /tmp/getdp-*${GETDP}*-source gmsh-getdp-source
+cp gmsh-getdp-source/gmsh-*${GMSH}*-source/doc/LICENSE.txt gmsh-getdp-source/LICENSE.txt
+echo "\n\n" >> gmsh-getdp-source/LICENSE.txt
+cat gmsh-getdp-source/getdp-*${GETDP}*-source/doc/LICENSE.txt >> gmsh-getdp-source/LICENSE.txt
+cp gmsh-getdp-source/gmsh-*${GMSH}*-source/doc/CREDITS.txt gmsh-getdp-source/CREDITS.txt
+echo "\n\n" >> gmsh-getdp-source/CREDITS.txt
+cat gmsh-getdp-source/getdp-*${GETDP}*-source/doc/CREDITS.txt >> gmsh-getdp-source/CREDITS.txt
+cp -R /tmp/models gmsh-getdp-source
+rm -rf /tmp/gmsh-*
+rm -rf /tmp/getdp-*
+zip -r gmsh-getdp-source.zip gmsh-getdp-source
+rm -rf gmsh-getdp-source
+
 rm -rf gmsh-getdp-Windows64*
 mkdir gmsh-getdp-Windows64
 curl -O http://geuz.org/gmsh/bin/Windows/gmsh-${GMSH}-Windows64.zip
