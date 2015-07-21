@@ -70,8 +70,6 @@ Set random perturbation factor
 Load background mesh from file
 @item -check
 Perform various consistency checks on mesh
-@item -mpass int
-Do several passes on the mesh for complex background fields
 @item -ignorePartBound
 Ignore partitions boundaries
 @end ftable
