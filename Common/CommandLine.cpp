@@ -117,6 +117,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-listen",            "Always listen to incoming connection requests"));
   s.push_back(mp("-minterpreter string", "Name of Octave interpreter"));
   s.push_back(mp("-pyinterpreter string", "Name of Python interpreter"));
+  s.push_back(mp("-run",               "Run ONELAB solver(s)"));
   s.push_back(mp("Display options:", ""));
   s.push_back(mp("-n",                 "Hide all meshes and post-processing views on startup"));
   s.push_back(mp("-nodb",              "Disable double buffering"));
@@ -306,6 +307,13 @@ void GetOptions(int argc, char *argv[])
       if(!strcmp(argv[i] + 1, "") ||
          !strcmp(argv[i] + 1, "parse_and_exit")) {
         CTX::instance()->batch = -99;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "run")) {
+        // same as '-', but will run local Gmsh client (if no other clients are
+        // requested, e.g. by opening a '.pro' or '.py' file)
+        CTX::instance()->batch = -99;
+        CTX::instance()->launchSolverAtStartup = -2;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "onelab")) {

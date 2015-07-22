@@ -88,6 +88,8 @@ Always listen to incoming connection requests
 Name of Octave interpreter
 @item -pyinterpreter string
 Name of Python interpreter
+@item -run
+Run ONELAB solver(s)
 @end ftable
  Display options:
 @ftable @code

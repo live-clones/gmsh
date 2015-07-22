@@ -798,12 +798,27 @@ void resetDb(bool runGmshClient)
 void solver_batch_cb(void *data)
 {
   int num = (intptr_t)data;
-  if(num < 0) return;
-  std::string name = opt_solver_name(num, GMSH_GET, "");
-  std::string exe = opt_solver_executable(num, GMSH_GET, "");
-  std::string host = opt_solver_remote_login(num, GMSH_GET, "");
-  if(exe.empty()){
-    Msg::Error("Solver executable name not provided");
+  std::string name, exe, host;
+
+  if(num == -1){
+    // no solver to run
+    return;
+  }
+  else if(num == -2){
+    // just run local Gmsh client
+  }
+  else if(num >= 0){
+    // run local Gmsh client + solver num
+    name = opt_solver_name(num, GMSH_GET, "");
+    exe = opt_solver_executable(num, GMSH_GET, "");
+    host = opt_solver_remote_login(num, GMSH_GET, "");
+    if(exe.empty()){
+      Msg::Error("Solver executable name not provided");
+      return;
+    }
+  }
+  else{
+    Msg::Error("Unknown client to run in batch mode (%d)", num);
     return;
   }
 
@@ -812,15 +827,21 @@ void solver_batch_cb(void *data)
   onelab::server::instance()->set(n);
 
   // create client
-  onelab::localNetworkClient *c = new gmshLocalNetworkClient(name, exe, host);
-  c->setIndex(num);
-  onelab::string o(c->getName() + "/Action");
+  onelab::localNetworkClient *c = 0;
+  onelab::string o;
+  if(name.size()){
+    c = new gmshLocalNetworkClient(name, exe, host);
+    c->setIndex(num);
+    o = c->getName() + "/Action";
+  }
 
   // initialize
   onelabUtils::runGmshClient("initialize", CTX::instance()->solver.autoMesh);
-  o.setValue("initialize");
-  onelab::server::instance()->set(o);
-  c->run();
+  if(c){
+    o.setValue("initialize");
+    onelab::server::instance()->set(o);
+    c->run();
+  }
 
   // load db
   if(CTX::instance()->solver.autoSaveDatabase){
@@ -830,20 +851,24 @@ void solver_batch_cb(void *data)
 
   // check
   onelabUtils::runGmshClient("check", CTX::instance()->solver.autoMesh);
-  onelabUtils::guessModelName(c);
-  o.setValue("check");
-  onelab::server::instance()->set(o);
-  c->run();
+  if(c){
+    onelabUtils::guessModelName(c);
+    o.setValue("check");
+    onelab::server::instance()->set(o);
+    c->run();
+  }
 
   // compute
   initializeLoops();
   do{
     onelabUtils::runGmshClient("compute", CTX::instance()->solver.autoMesh);
-    onelabUtils::guessModelName(c);
-    o.setValue("compute");
-    onelab::server::instance()->set(o);
-    c->run();
-    onelab::server::instance()->setChanged(false, c->getName());
+    if(c){
+      onelabUtils::guessModelName(c);
+      o.setValue("compute");
+      onelab::server::instance()->set(o);
+      c->run();
+      onelab::server::instance()->setChanged(false, c->getName());
+    }
   } while(incrementLoops());
 
   if(CTX::instance()->solver.autoSaveDatabase ||
