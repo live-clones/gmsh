@@ -80,7 +80,6 @@ onelab::client *Msg::_onelabClient = 0;
 #if defined(HAVE_ONELAB)
 onelab::server *onelab::server::_server = 0;
 #endif
-std::string Msg::_gmshOnelabAction = "";
 
 #if defined(HAVE_NO_VSNPRINTF)
 static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
@@ -959,6 +958,33 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 #endif
 }
 
+void Msg::SetOnelabAction(const std::string &action)
+{
+#if defined(HAVE_ONELAB)
+  if(_onelabClient){
+    onelab::string o(_onelabClient->getName() + "/Action", action);
+    o.setVisible(false);
+    o.setNeverChanged(true);
+    _onelabClient->set(o);
+  }
+#endif
+}
+
+std::string Msg::GetOnelabAction()
+{
+#if defined(HAVE_ONELAB)
+  if(_onelabClient){
+    std::vector<onelab::string> ps;
+    _onelabClient->get(ps, _onelabClient->getName() + "/Action");
+#ifdef HAVE_ONELAB2
+    _onelabClient->recvfrom();
+#endif
+    if(ps.size()) return ps[0].getValue();
+  }
+  return "";
+#endif
+}
+
 void Msg::LoadOnelabClient(const std::string &clientName, const std::string &sockName)
 {
 #if defined(HAVE_ONELAB)
@@ -967,7 +993,7 @@ void Msg::LoadOnelabClient(const std::string &clientName, const std::string &soc
   if(client){
     std::string action, cmd;
     std::vector<onelab::string> ps;
-    client->get(ps,clientName+"/Action");
+    client->get(ps, clientName + "/Action");
     if(ps.size() && ps[0].getValue().size())
       action.assign(ps[0].getValue());
     //cmd.assign("");

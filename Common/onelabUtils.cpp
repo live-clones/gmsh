@@ -407,7 +407,7 @@ namespace onelabUtils {
 
     std::string mshFileName = onelabUtils::getMshFileName();
 
-    Msg::SetGmshOnelabAction(action);
+    Msg::SetOnelabAction(action);
 
     static std::string modelName = GModel::current()->getName();
 
@@ -459,7 +459,7 @@ namespace onelabUtils {
       OnelabServer::instance()->setChanged(false, "Gmsh");
     }
 
-    Msg::SetGmshOnelabAction("");
+    Msg::SetOnelabAction("");
 
     return redraw;
   }
@@ -479,7 +479,7 @@ namespace onelabUtils {
     onelab::client *c = *it;
     std::string mshFileName = onelabUtils::getMshFileName(c);
 
-    Msg::SetGmshOnelabAction(action);
+    Msg::SetOnelabAction(action);
 
     static std::string modelName = GModel::current()->getName();
 
@@ -530,7 +530,7 @@ namespace onelabUtils {
       onelab::server::instance()->setChanged(false, "Gmsh");
     }
 
-    Msg::SetGmshOnelabAction("");
+    Msg::SetOnelabAction("");
 
     return redraw;
   }

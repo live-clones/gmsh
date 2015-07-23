@@ -5568,7 +5568,7 @@ StringExpr :
     }
   | tOnelabAction
     {
-      std::string action = Msg::GetGmshOnelabAction();
+      std::string action = Msg::GetOnelabAction();
       $$ = (char *)Malloc(action.size() + 1);
       strcpy($$, action.c_str());
     }
