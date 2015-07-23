@@ -378,6 +378,10 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
         new gmshLocalNetworkClient(clientName, command, "", true);
       onelabGmshServer *server = new onelabGmshServer(subClient);
       subClient->setPid(0);
+      onelab::string o(subClient->getName() + "/Action", "compute");
+      o.setVisible(false);
+      o.setNeverChanged(true);
+      onelab::server::instance()->set(o);
       int sock = server->LaunchClient();
       if(sock < 0){ // could not establish the connection: aborting
         server->Shutdown();

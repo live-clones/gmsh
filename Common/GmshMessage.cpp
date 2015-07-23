@@ -1281,8 +1281,14 @@ void Msg::ImportPhysicalsAsOnelabRegions()
 void Msg::RunOnelabClient(const std::string &name, const std::string &command)
 {
 #if defined(HAVE_ONELAB) && !defined(HAVE_ONELAB2)
-  gmshLocalNetworkClient client(name, command, "", true);
-  client.run();
+  onelab::remoteNetworkClient *c = dynamic_cast<onelab::remoteNetworkClient*>(_onelabClient);
+  if(c){
+    c->runSubClient(name, command);
+  }
+  else{
+    gmshLocalNetworkClient client(name, command, "", true);
+    client.run();
+  }
 #endif
 }
 
