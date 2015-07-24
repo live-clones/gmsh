@@ -22,7 +22,9 @@ gmshEdge::gmshEdge(GModel *m, Curve *edge, GVertex *v1, GVertex *v2)
 
 bool gmshEdge::degenerate(int dim) const
 {
-  if (c->beg == c->end && c->Typ ==  MSH_SEGM_LINE){
+  if (c->beg == c->end &&
+      c->Typ ==  MSH_SEGM_LINE &&
+      List_Nbr(c->Control_Points) == 0){
     Msg::Info("Model Edge %d is degenerate", tag());
     return true;
   }
