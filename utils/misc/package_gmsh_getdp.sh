@@ -20,7 +20,7 @@ GETDP=svn
 #GMSH=2.9.3
 #GETDP=2.5.1
 
-MODELS='machines relay inductor indheat magnetometer antennas acoustic_scattering time_reversal shielding waveguides transfo_simple ddm_waves bloch_periodic_waveguides magnets thermal_conduction magnetostriction'
+MODELS='machines relay inductor indheat magnetometer antennas acoustic_scattering time_reversal shielding waveguides transfo_simple ddm_waves bloch_periodic_waveguides magnets thermal_conduction magnetostriction superconductors'
 
 # get onelab models
 mkdir /tmp/models
