@@ -1,4 +1,4 @@
-2.10.1: small fixes.
+2.10.1 (July 30, 2015): minor fixes.
 
 2.10.0 (July 21, 2015): improved periodic meshing constraints; new Physical
 specification with both label and numeric id; images can now be used as glyphs
