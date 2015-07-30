@@ -185,7 +185,10 @@ void Msg::Exit(int level)
 #if defined(HAVE_MPI)
     // force general abort (wven if the fatal error occurred on 1 cpu only)
     MPI_Abort(MPI_COMM_WORLD, level);
-    MPI_Finalize();
+    int finalized;
+    MPI_Finalized(&finalized);
+    if (!finalized)
+      MPI_Finalize();
 #endif
     FinalizeOnelab();
     exit(level);
@@ -215,7 +218,10 @@ void Msg::Exit(int level)
   PetscFinalize();
 #endif
 #if defined(HAVE_MPI)
-  MPI_Finalize();
+  int finalized; //Some PETSc versions call MPI_FINALIZE
+  MPI_Finalized(&finalized);
+  if (!finalized)
+    MPI_Finalize();
 #endif
   FinalizeOnelab();
   exit(_atLeastOneErrorInRun);
