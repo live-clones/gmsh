@@ -129,6 +129,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * Concept index::               Index of concepts
 * Syntax index::                Index of reserved keywords in the Gmsh language
 
+@ifnothtml
 @detailmenu
  --- The Detailed Node Listing ---
 
@@ -265,6 +266,7 @@ Frequently asked questions
 * Post-processing module questions::
 
 @end detailmenu
+@end ifnothtml
 @end menu
 
 @c =========================================================================
