@@ -22,6 +22,8 @@ class adaptiveVertex {
   float  x, y, z;        //!< parametric coordinates
   double X, Y, Z;        //!< cartesian coordinates
   double val,valy,valz;  //!< maximal three values
+  double valyx,valyy,valyz;
+  double valzx,valzy,valzz;
  public:
   static adaptiveVertex *add(double x, double y, double z,
                              std::set<adaptiveVertex> &allVertice);
@@ -350,7 +352,7 @@ class PCoords {
 
 class PValues{
  public:
-  double v[3];
+  double v[9];
   PValues(double vx)
   {
     v[0] = vx;
@@ -358,6 +360,14 @@ class PValues{
   PValues(double vx, double vy, double vz)
   {
     v[0] = vx; v[1] = vy; v[2] = vz;
+  }
+  PValues(double vxx, double vxy, double vxz,
+          double vyx, double vyy, double vyz,
+          double vzx, double vzy, double vzz)
+  {
+    v[0] = vxx; v[1] = vxy; v[2] = vxz;
+    v[3] = vyx; v[4] = vyy; v[5] = vyz;
+    v[6] = vzx; v[7] = vzy; v[8] = vzz;
   }
 };
 

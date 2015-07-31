@@ -1219,11 +1219,6 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
                                 GMSH_PostPlugin *plug,
                                 bool onlyComputeMinMax)
 {
-  if(numComp != 1 && numComp != 3){
-    Msg::Error("Can only adapt scalar or vector data");
-    return;
-  }
-
   int numVertices = T::allVertices.size();
 
   if(!numVertices){
@@ -1243,15 +1238,28 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
 #endif
 
   fullVector<double> val(numVals), res(numVertices);
-  if(numComp == 1){
-    for(int i = 0; i < numVals; i++)
-      val(i) = values[i].v[0];
+  switch (numComp) {
+  case 1:
+    {
+      for(int i = 0; i < numVals; i++) val(i) = values[i].v[0];
+      break;
+    }
+  case 3:
+  case 9:
+    {
+      for(int i = 0; i < numVals; i++) {
+        val(i) = 0;
+        for (int k=0; k < numComp;  k++) val(i) += values[i].v[k] * values[i].v[k];
+      }
+      break;
+    }
+  default:
+    {
+      Msg::Error("Can only adapt scalar, vector or tensor data");
+      return;
+    }
   }
-  else{
-    for(int i = 0; i < numVals; i++)
-      val(i) = values[i].v[0] * values[i].v[0] + values[i].v[1] * values[i].v[1] +
-        values[i].v[2] * values[i].v[2];
-  }
+  
   _interpolVal->mult(val, res);
 
   //minVal = VAL_INF;
@@ -1263,13 +1271,13 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
   if(onlyComputeMinMax) return;
 
   fullMatrix<double> *resxyz = 0;
-  if(numComp == 3){
-    fullMatrix<double> valxyz(numVals, 3);
-    resxyz = new fullMatrix<double>(numVertices, 3);
+  if(numComp == 3 || numComp == 9){
+    fullMatrix<double> valxyz(numVals,numComp);
+    resxyz = new fullMatrix<double>(numVertices,numComp);
     for(int i = 0; i < numVals; i++){
-      valxyz(i, 0) = values[i].v[0];
-      valxyz(i, 1) = values[i].v[1];
-      valxyz(i, 2) = values[i].v[2];
+      for (int k=0;k<numComp;k++) { 
+        valxyz(i,k) = values[i].v[k];
+      }
     }
     _interpolVal->mult(valxyz, *resxyz);
   }
@@ -1305,6 +1313,14 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
       p->val  = (*resxyz)(i, 0);
       p->valy = (*resxyz)(i, 1);
       p->valz = (*resxyz)(i, 2);
+      if (numComp == 9) {
+        p->valyx = (*resxyz)(i,3);
+        p->valyy = (*resxyz)(i,4);
+        p->valyz = (*resxyz)(i,5);
+        p->valzx = (*resxyz)(i,6);
+        p->valzy = (*resxyz)(i,7);
+        p->valzz = (*resxyz)(i,8);
+      }
     }
     p->X = XYZ(i, 0);
     p->Y = XYZ(i, 1);
@@ -1335,10 +1351,20 @@ void adaptiveElements<T>::adapt(double tol, int numComp,
       adaptiveVertex **p = (*it)->p;
       for(int i = 0; i < T::numNodes; i++) {
         coords.push_back(PCoords(p[i]->X, p[i]->Y, p[i]->Z));
-        if(numComp == 1)
+        switch (numComp) {
+        case 1:
           values.push_back(PValues(p[i]->val));
-        else
+          break;
+        case 3:
           values.push_back(PValues(p[i]->val, p[i]->valy, p[i]->valz));
+          break;
+        case 9:
+          values.push_back(PValues(p[i]->val, 
+                                   p[i]->valy, p[i]->valz,
+                                   p[i]->valyx,p[i]->valyy,p[i]->valyz,
+                                   p[i]->valzx,p[i]->valzy,p[i]->valzz));
+          break;
+        }
       }
     }
   }
@@ -1350,50 +1376,50 @@ void adaptiveElements<T>::addInView(double tol, int step,
                                     GMSH_PostPlugin *plug)
 {
   int numComp = in->getNumComponents(0, 0, 0);
-  if(numComp != 1 && numComp != 3) return;
+  if(numComp != 1 && numComp != 3 && numComp != 9) return;
 
   int numEle = 0, *outNb = 0;
   std::vector<double> *outList = 0;
   switch(T::numEdges){
   case 0:
     numEle = in->getNumPoints();
-    outNb = (numComp == 1) ? &out->NbSP : &out->NbVP;
-    outList = (numComp == 1) ? &out->SP : &out->VP;
+    outNb = (numComp == 1) ? &out->NbSP : ((numComp == 3) ? &out->NbVP : &out->NbTP);
+    outList = (numComp == 1) ? &out->SP : ((numComp == 3) ? &out->VP   : &out->TP);
     break;
   case 1:
     numEle = in->getNumLines();
-    outNb = (numComp == 1) ? &out->NbSL : &out->NbVL;
-    outList = (numComp == 1) ? &out->SL : &out->VL;
+    outNb = (numComp == 1) ? &out->NbSL : ((numComp == 3) ? &out->NbVL : &out->NbTL);
+    outList = (numComp == 1) ? &out->SL : ((numComp == 3) ? &out->VL   : &out->TL);
     break;
   case 3:
     numEle = in->getNumTriangles();
-    outNb = (numComp == 1) ? &out->NbST : &out->NbVT;
-    outList = (numComp == 1) ? &out->ST : &out->VT;
+    outNb = (numComp == 1) ? &out->NbST : ((numComp == 3) ? &out->NbVT : &out->NbTT);
+    outList = (numComp == 1) ? &out->ST : ((numComp == 3) ? &out->VT   : &out->TT);
     break;
   case 4:
     numEle = in->getNumQuadrangles();
-    outNb = (numComp == 1) ? &out->NbSQ : &out->NbVQ;
-    outList = (numComp == 1) ? &out->SQ : &out->VQ;
+    outNb = (numComp == 1) ? &out->NbSQ : ((numComp == 3) ? &out->NbVQ : &out->NbTQ);
+    outList = (numComp == 1) ? &out->SQ : ((numComp == 3) ? &out->VQ   : &out->TQ);
     break;
   case 6:
     numEle = in->getNumTetrahedra();
-    outNb = (numComp == 1) ? &out->NbSS : &out->NbVS;
-    outList = (numComp == 1) ? &out->SS : &out->VS;
+    outNb = (numComp == 1) ? &out->NbSS : ((numComp == 3) ? &out->NbVS : &out->NbTS);
+    outList = (numComp == 1) ? &out->SS : ((numComp == 3) ? &out->VS   : &out->TS);
     break;
   case 9:
     numEle = in->getNumPrisms();
-    outNb = (numComp == 1) ? &out->NbSI : &out->NbVI;
-    outList = (numComp == 1) ? &out->SI : &out->VI;
+    outNb = (numComp == 1) ? &out->NbSI : ((numComp == 3) ? &out->NbVI : &out->NbTI);
+    outList = (numComp == 1) ? &out->SI : ((numComp == 3) ? &out->VI   : &out->TI);
     break;
   case 8:
     numEle = in->getNumPyramids();
-    outNb = (numComp == 1) ? &out->NbSY : &out->NbVY;
-    outList = (numComp == 1) ? &out->SY : &out->VY;
+    outNb = (numComp == 1) ? &out->NbSY : ((numComp == 3) ? &out->NbVY : &out->NbTY);
+    outList = (numComp == 1) ? &out->SY : ((numComp == 3) ? &out->VY   : &out->TY);
     break;
   case 12:
     numEle = in->getNumHexahedra();
-    outNb = (numComp == 1) ? &out->NbSH : &out->NbVH;
-    outList = (numComp == 1) ? &out->SH : &out->VH;
+    outNb = (numComp == 1) ? &out->NbSH : ((numComp == 3) ? &out->NbVH : &out->NbTH);
+    outList = (numComp == 1) ? &out->SH : ((numComp == 3) ? &out->VH   : &out->TH);
     break;
   }
   if(!numEle) return;
@@ -1414,20 +1440,44 @@ void adaptiveElements<T>::addInView(double tol, int step,
       }
       int numVal = in->getNumValues(step, ent, ele);
       std::vector<PValues> values;
-      if(numComp == 1){
+      
+      switch (numComp) {
+      case 1:
         for(int i = 0; i < numVal; i++){
           double val;
           in->getValue(step, ent, ele, i, val);
           values.push_back(PValues(val));
         }
-      }
-      else if(numComp == 3){
-        for(int i = 0; i < numVal / 3; i++){
-          double vx, vy, vz;
-          in->getValue(step, ent, ele, 3 * i, vx);
-          in->getValue(step, ent, ele, 3 * i + 1, vy);
-          in->getValue(step, ent, ele, 3 * i + 2, vz);
-          values.push_back(PValues(vx, vy, vz));
+        break;
+      case 3:
+        {
+          for(int i = 0; i < numVal / 3; i++){
+            double vx, vy, vz;
+            in->getValue(step, ent, ele, 3 * i + 0, vx);
+            in->getValue(step, ent, ele, 3 * i + 1, vy);
+            in->getValue(step, ent, ele, 3 * i + 2, vz);
+            values.push_back(PValues(vx, vy, vz));
+          }
+          break;
+        }
+      case 9:
+        {
+          for(int i = 0; i < numVal / 9; i++){
+            double vxx, vxy, vxz,vyx, vyy, vyz,vzx, vzy, vzz ;
+            in->getValue(step, ent, ele, 9 * i + 0, vxx);
+            in->getValue(step, ent, ele, 9 * i + 1, vxy);
+            in->getValue(step, ent, ele, 9 * i + 2, vxz);
+            in->getValue(step, ent, ele, 9 * i + 3, vyx);
+            in->getValue(step, ent, ele, 9 * i + 4, vyy);
+            in->getValue(step, ent, ele, 9 * i + 5, vyz);
+            in->getValue(step, ent, ele, 9 * i + 6, vzx);
+            in->getValue(step, ent, ele, 9 * i + 7, vzy);
+            in->getValue(step, ent, ele, 9 * i + 8, vzz);
+            values.push_back(PValues(vxx,vxy,vxz,
+                                     vyx,vyy,vyz,
+                                     vzx,vzy,vzz));
+          }
+          break;
         }
       }
       adapt(tol, numComp, coords, values, out->Min, out->Max, plug);
