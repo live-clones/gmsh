@@ -101,7 +101,7 @@ View "comments" {
   // the camera, by using the `#' symbol:
   T3(0, 0.12, 0, TextAttributes("Align", "Center")){ "file://image.png@0.01x0#" };
 
-  // The size of 2D annotations is goven directly in pixels:
+  // The size of 2D annotations is given directly in pixels:
   T2(350, -7, 0){ "file://image.png@20x0" };
 };
 
