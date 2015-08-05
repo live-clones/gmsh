@@ -3199,13 +3199,28 @@ Loop :
       skip_until(NULL, "Return");
       Free($2);
     }
+  | tMacro StringExpr
+    {
+      if(!FunctionManager::Instance()->createFunction
+         (std::string($2), gmsh_yyin, gmsh_yyname, gmsh_yylineno))
+	yymsg(0, "Redefinition of function %s", $2);
+      skip_until(NULL, "Return");
+      Free($2);
+    }
   | tReturn
     {
       if(!FunctionManager::Instance()->leaveFunction
          (&gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Error while exiting function");
     }
-  | tCall String__Index tEND
+  | tCall tSTRING tEND
+    {
+      if(!FunctionManager::Instance()->enterFunction
+         (std::string($2), &gmsh_yyin, gmsh_yyname, gmsh_yylineno))
+	yymsg(0, "Unknown function %s", $2);
+      Free($2);
+    }
+  | tCall StringExpr tEND
     {
       if(!FunctionManager::Instance()->enterFunction
          (std::string($2), &gmsh_yyin, gmsh_yyname, gmsh_yylineno))
