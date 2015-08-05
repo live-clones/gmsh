@@ -1434,7 +1434,7 @@ containing the macro body was included at the location of the @code{Call}
 statement.
 
 @ftable @code
-@item Macro @var{string}
+@item Macro @var{string} | @var{char-expression}
 Begins the declaration of a user-defined macro named @var{string}. The
 body of the macro starts on the line after `@code{Macro @var{string}}',
 and can contain any Gmsh command.  A synonym for @code{Macro} is
@@ -1444,7 +1444,7 @@ and can contain any Gmsh command.  A synonym for @code{Macro} is
 Ends the body of the current user-defined macro. Macro declarations
 cannot be imbricated.
 
-@item Call @var{string};
+@item Call @var{string} | @var{char-expression} ;
 Executes the body of a (previously defined) macro named @var{string}.
 @end ftable
 
