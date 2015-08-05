@@ -147,6 +147,7 @@ struct doubleXstring{
 %token tHomology tCohomology tBetti tSetOrder tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName tSetPartition
+%token tNameFromString tStringFromName
 
 %type <d> FExpr FExpr_Single
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
@@ -3213,7 +3214,7 @@ Loop :
          (&gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Error while exiting function");
     }
-  | tCall tSTRING tEND
+  | tCall String__Index tEND
     {
       if(!FunctionManager::Instance()->enterFunction
          (std::string($2), &gmsh_yyin, gmsh_yyname, gmsh_yylineno))
@@ -5567,6 +5568,10 @@ StringExpr :
     {
       $$ = $1;
     }
+  | tStringFromName '[' String__Index ']'
+    {
+      $$ = $3;
+    }
   | tToday
     {
       $$ = (char *)Malloc(32 * sizeof(char));
@@ -5780,6 +5785,9 @@ String__Index :
   | StringIndex
     { $$ = $1; }
 
+  // Name from any string
+  | tNameFromString '[' StringExprVar ']'
+    { $$ = $3; }
  ;
 
 %%

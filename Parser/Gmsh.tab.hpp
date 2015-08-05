@@ -208,19 +208,21 @@ extern int gmsh_yydebug;
     tGMSH_PATCH_VERSION = 418,
     tGmshExecutableName = 419,
     tSetPartition = 420,
-    tAFFECTPLUS = 421,
-    tAFFECTMINUS = 422,
-    tAFFECTTIMES = 423,
-    tAFFECTDIVIDE = 424,
-    tOR = 425,
-    tAND = 426,
-    tEQUAL = 427,
-    tNOTEQUAL = 428,
-    tLESSOREQUAL = 429,
-    tGREATEROREQUAL = 430,
-    tPLUSPLUS = 431,
-    tMINUSMINUS = 432,
-    UNARYPREC = 433
+    tNameFromString = 421,
+    tStringFromName = 422,
+    tAFFECTPLUS = 423,
+    tAFFECTMINUS = 424,
+    tAFFECTTIMES = 425,
+    tAFFECTDIVIDE = 426,
+    tOR = 427,
+    tAND = 428,
+    tEQUAL = 429,
+    tNOTEQUAL = 430,
+    tLESSOREQUAL = 431,
+    tGREATEROREQUAL = 432,
+    tPLUSPLUS = 433,
+    tMINUSMINUS = 434,
+    UNARYPREC = 435
   };
 #endif
 
@@ -239,7 +241,7 @@ union YYSTYPE
   Shape s;
   List_T *l;
 
-#line 243 "Gmsh.tab.hpp" /* yacc.c:1909  */
+#line 245 "Gmsh.tab.hpp" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
