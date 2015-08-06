@@ -21,6 +21,21 @@ CAO, OpenGL, GL2PS, Gmesh">
 <style type="text/css"><!--
   div.small { font-size:80%; }
   ul.small { margin-top:1ex; margin-bottom:1ex; }
+  #spacer { margin-bottom:5ex; }
+  div.highlight { 
+    padding: 1ex; background-color: #f3f7ff; 
+  }
+  img.image { width:inherit; padding-bottom:0.5ex; }
+  #image-container { float:right; width:350px; padding-right:0px; padding-top:0ex; 
+                     padding-left:2em; padding-bottom:2ex; background: white; }
+  @media screen and (max-width: 1200px) {
+    #image-container { width:200px; }
+  }
+  @media screen and (max-width: 500px) {
+    h1 { font-size: 160%; }
+    h2 { font-size: 125%; }
+    #image-container { width:80px; padding-left:1em; padding-bottom:1ex;}
+  }
 --></style>
 </head>
 
@@ -31,20 +46,26 @@ element mesh generator with built-in pre- and post-processing facilities</span><
 
 <h4 align="center">Christophe Geuzaine and Jean-François Remacle</h4>
 
-<h4 align="center">Version 2.10.1, July 30 2015</h4>
-
 <center>
-  <a href="#Description">Description</a> |
   <a href="#Download"><strong>Download</strong></a> |
-  <a href="#Authors">Authors and credits</a> |
   <a href="#Documentation">Documentation</a> |
+  <a href="#Authors">Authors and credits</a> |
   <a href="#Licensing">Licensing</a> |
   <a href="#Screenshots">Screenshots</a> |
   <a href="#Links">Links</a> |
   <a href="#References">References</a>
 </center>
 
-<h2><a name="Description"></a>Description</h2>
+<div id=spacer></div>
+
+<div id="image-container">
+  <img class="image" src="http://geuz.org/gmsh/gallery/a319_4_small.png" alt="">
+  <img class="image" src="http://geuz.org/gmsh/gallery/TapGeo_small.png" alt="">
+  <img class="image" src="http://geuz.org/gmsh/gallery/gmsh_quad2_small.png" alt="">
+  <img class="image" src="http://geuz.org/gmsh/gallery/Zylkopf3D_small.png" alt="">
+  <img class="image" src="http://geuz.org/gmsh/gallery/hex_small.png" alt="">
+  <img class="image" src="http://geuz.org/gmsh/gallery/aniso_normal_lifting_small.png" alt="">
+</div>
 
 Gmsh is a 3D finite element grid generator with a build-in CAD engine
 and post-processor. Its design goal is to provide a fast, light and
@@ -70,7 +91,8 @@ the <a href="doc/LICENSE.txt">GNU General Public License
 <ul>
   <li>
     <p class="highlight">
-      <strong>Download current stable release</strong>: Windows
+      <strong>Download current stable release (version 2.10.1, July 30 2015)</strong>:
+      Windows
       <a href="bin/Windows/gmsh-2.10.1-Windows32.zip"><strong>32 bit</strong></a> /
       <a href="bin/Windows/gmsh-2.10.1-Windows64.zip"><strong>64 bit</strong></a>,
       Linux
@@ -112,19 +134,6 @@ Numerical Methods in Engineering 79(11), pp. 1309-1331, 2009</a>. You can also
 cite additional references for <a href="#References">specific features and
 algorithms</a>.
 
-<h2><a name="Authors"></a>Authors and credits</h2>
-
-Gmsh was created by <a href="http://www.montefiore.ulg.ac.be/~geuzaine">Christophe
-Geuzaine</a> and <a href="http://perso.uclouvain.be/jean-francois.remacle">Jean-François
-Remacle</a>. The <a href="doc/CREDITS.txt">CREDITS</a> file has
-more information.
-<p>
-Please use the public mailing list <a HREF="mailto:gmsh@geuz.org">gmsh@geuz.org</a>
-to send questions or ask for help. If you think you have found a bug in the
-program, you can file a report directly
-<a href="https://geuz.org/trac/gmsh/newticket">here</a> (username:
-gmsh, password: gmsh).
-
 <h2><a name="Documentation"></a>Documentation</h2>
 
 <ul>
@@ -164,6 +173,19 @@ gmsh, password: gmsh).
 </select>
 </form>
 
+<h2><a name="Authors"></a>Authors and credits</h2>
+
+Gmsh was created by <a href="http://www.montefiore.ulg.ac.be/~geuzaine">Christophe
+Geuzaine</a> and <a href="http://perso.uclouvain.be/jean-francois.remacle">Jean-François
+Remacle</a>. The <a href="doc/CREDITS.txt">CREDITS</a> file has
+more information.
+<p>
+Please use the public mailing list <a HREF="mailto:gmsh@geuz.org">gmsh@geuz.org</a>
+to send questions or ask for help. If you think you have found a bug in the
+program, you can file a report directly
+<a href="https://geuz.org/trac/gmsh/newticket">here</a> (username:
+gmsh, password: gmsh).
+
 <h2><a name="Licensing"></a>Licensing</h2>
 
 Gmsh is copyright (C) 1997-2014 by C. Geuzaine and J.-F. Remacle and
@@ -187,59 +209,18 @@ information.
 
 <h2><a name="Screenshots"></a>Screenshots</h2>
 
-<a href="gallery/screenshot.png"><img src="gallery/thumbnail.png"
-alt="Screenshot thumbnail"></a>&nbsp;<a href="gallery/screenshot2.png"><img 
-src="gallery/thumbnail2.png" alt="Screenshot thumbnail"></a>
+<p>
+  <a href="http://geuz.org/gmsh/gallery/screenshot.png">
+    <img src="http://geuz.org/gmsh/gallery/thumbnail.png" alt="Screenshot thumbnail">
+  </a>
+  <a href="http://geuz.org/gmsh/gallery/screenshot2.png">
+    <img src="http://geuz.org/gmsh/gallery/thumbnail2.png" alt="Screenshot thumbnail">
+  </a>
+</p>
 
-<ul>
-<li>Sample STEP/BREP models:
-    <a href="gallery/bike.png">bike</a>,
-    <a href="gallery/Zylkopf3D.png">zylkopf</a>,
-    <a href="gallery/TapGeo.png">tap</a>,
-    <a href="gallery/linkrods3Db.png">linkrods</a>,
-    <a href="gallery/Block3D.png">block</a>,
-    <a href="gallery/hammer.png">hammer</a>,
-    <a href="gallery/propeller.png">propeller</a>,
-    <a href="gallery/piston.png">piston</a>,
-    <a href="gallery/pump.png">pump</a> (EDF R&amp;D).
-<li>Native models: 
-    <a href="gallery/MURUROA.png">ocean</a>,
-    <a href="gallery/violin.png">violin</a> (S. Hardesty)
-    <a href="gallery/magnetron3.gif">magnetron 1</a>,
-    <a href="gallery/magnetron4.gif">magnetron 2</a> (P. Lefèvre),
-    <a href="gallery/breaker.gif">circuit breaker</a> (S. K. Choi),
-    <a href="gallery/machine.gif">electrical machine</a> (J. Gyselinck),
-    <a href="gallery/tresse1.gif">braid 1</a>,
-    <a href="gallery/tresse2.gif">braid 2</a> (D. Colignon).
-<li>Mesh around an airplane:
-    <a href="gallery/a319_4.png">A319 1</a>,
-    <a href="gallery/a319_2.png">A319 2</a>.
-<li>Structured vs. unstructured grids:
-    <a href="gallery/spirale.gif">spirale</a>,
-    <a href="gallery/piece1.gif">unstructured</a>, 
-    <a href="gallery/piece2.gif">structured tet</a>, 
-    <a href="gallery/piece3.gif">structured hex/pri</a>.
-<li>Post-processing:
-    <a href="gallery/hugo.png">Isosurfaces and vector fields</a>,
-    <a href="gallery/sebastian_lehmann.divx">Streamlines</a> (S. Lehmann),
-    <a href="gallery/f16_stream.jpg">F16 streamlines</a>,
-    <a href="gallery/f18_stream.jpg">F18 streamlines</a>,
-    <a href="gallery/pressure-ring.png">pressure ring</a>,
-    <a href="gallery/boeing.jpg">Boing</a> (P. Geuzaine),
-    <a href="gallery/blob.gif">post-pro</a>,
-    <a href="gallery/contact.png">post-pro 2</a>,
-    <a href="gallery/cmap.png">colormaps</a>.
-<li>Miscellaneous features:
-    <a href="gallery/lenna.gif">Lenna as background mesh</a>,
-    <a href="gallery/spiranim.gif">animated cutting spiral</a>,
-    <a href="gallery/select.png">selection</a>,
-    <a href="gallery/runner.png">clipping</a>.
-<li>Various screen captures:
-    <a href="gallery/screenshot1.gif">magnetron</a>,
-    <a href="gallery/screenshot2.gif">F16</a>,
-    <a href="gallery/screenshot3.gif">electrical machine</a>,
-    <a href="gallery/screenshot4.gif">neutron scattering</a>.
-</ul>
+<p>
+  See the <a href="http://onelab.info">ONELAB</a> web site for more screenshots.
+</p>
 
 <h2><a name="Links"></a>Links</h2>
 
