@@ -143,6 +143,55 @@ int GModel::importGEOInternals()
   }
   if(Tree_Nbr(_geo_internals->Curves)) {
     List_T *curves = Tree2List(_geo_internals->Curves);
+
+    // generate all curves except compounds 
+
+    for(int i = 0; i < List_Nbr(curves); i++){
+      Curve *c;
+      List_Read(curves, i, &c);
+      if(c->Num >= 0){
+        GEdge *e = getEdgeByTag(c->Num);
+        if(!e && c->Typ == MSH_SEGM_COMPOUND){
+          Msg::Debug("Postpone creation of compound edge %d"
+                     "until all others have been created",c->Num);
+          // std::vector<GEdge*> comp;
+          // for(unsigned int j = 0; j < c->compound.size(); j++){
+          //   GEdge *ge = getEdgeByTag(c->compound[j]);
+          //   if(ge) comp.push_back(ge);
+          // }
+          // e = new GEdgeCompound(this, c->Num, comp);
+          // e->meshAttributes.method = c->Method;
+          // e->meshAttributes.nbPointsTransfinite = c->nbPointsTransfinite;
+          // e->meshAttributes.typeTransfinite = c->typeTransfinite;
+          // e->meshAttributes.coeffTransfinite = c->coeffTransfinite;
+          // e->meshAttributes.extrude = c->Extrude;
+          // e->meshAttributes.reverseMesh = c->ReverseMesh;
+          // add(e);
+        }
+        else if(!e && c->beg && c->end){
+          e = new gmshEdge(this, c,
+              getVertexByTag(c->beg->Num),
+              getVertexByTag(c->end->Num));
+          add(e);
+        }
+        else if(!e){
+          e = new gmshEdge(this, c, 0, 0);
+          add(e);
+        }
+        else{
+          e->resetMeshAttributes();
+        }
+
+        if(!c->Visible) e->setVisibility(0);
+        if(c->Color.type) e->setColor(c->Color.mesh);
+        if(c->degenerated) {
+          e->setTooSmall(true);
+        }
+      }
+    }
+    
+    // now generate the compound curves
+
     for(int i = 0; i < List_Nbr(curves); i++){
       Curve *c;
       List_Read(curves, i, &c);
@@ -163,19 +212,19 @@ int GModel::importGEOInternals()
           e->meshAttributes.reverseMesh = c->ReverseMesh;
           add(e);
         }
-        else if(!e && c->beg && c->end){
-          e = new gmshEdge(this, c,
-              getVertexByTag(c->beg->Num),
-              getVertexByTag(c->end->Num));
-          add(e);
-        }
-        else if(!e){
-          e = new gmshEdge(this, c, 0, 0);
-          add(e);
-        }
-        else{
-          e->resetMeshAttributes();
-        }
+        // else if(!e && c->beg && c->end){
+        //   e = new gmshEdge(this, c,
+        //       getVertexByTag(c->beg->Num),
+        //       getVertexByTag(c->end->Num));
+        //   add(e);
+        // }
+        // else if(!e){
+        //   e = new gmshEdge(this, c, 0, 0);
+        //   add(e);
+        // }
+        // else{
+        //   e->resetMeshAttributes();
+        // }
 
         if(!c->Visible) e->setVisibility(0);
         if(c->Color.type) e->setColor(c->Color.mesh);

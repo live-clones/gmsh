@@ -427,6 +427,61 @@ void End_Curve(Curve *c)
     }
 
   }
+  
+  if (c->Typ == MSH_SEGM_COMPOUND) {
+
+    std::list<Curve*> tmp;
+    for (std::vector<int>::const_iterator cIter=c->compound.begin();
+         cIter!=c->compound.end();++cIter) {
+      Curve* comp = FindCurve(*cIter);
+      if (!comp) Msg::Error("Could not find curve %d as part of compound edge %d",*cIter,c->Num);
+      tmp.push_back(comp);
+    }
+
+    std::list<int> ordered;
+
+    Curve* c0 = *(tmp.begin());
+    tmp.pop_front();
+  
+    ordered.push_back(c0->Num);
+    std::pair<Vertex*,Vertex*> vtcs(c0->beg,c0->end);
+    
+    while (tmp.size() != 0) {
+      unsigned nbCurrent = tmp.size();
+      for (std::list<Curve*>::iterator tIter=tmp.begin();tIter!=tmp.end();tIter++) {
+        Curve* c1 = *tIter;
+        if (c1->beg == vtcs.first) {
+          vtcs.first = c1->end;
+          ordered.push_front(c1->Num);
+          tmp.erase(tIter);
+          break;
+        }
+        if (c1->end == vtcs.first) {
+          vtcs.first = c1->beg;
+          ordered.push_front(c1->Num);
+          tmp.erase(tIter);
+          break;
+        }
+        if (c1->beg == vtcs.second) {
+          vtcs.second = c1->end;
+          ordered.push_back(c1->Num);
+          tmp.erase(tIter);
+          break;
+        }
+        if (c1->end == vtcs.second) {
+          vtcs.second = c1->beg;
+          ordered.push_back(c1->Num);
+          tmp.erase(tIter);
+          break;
+        }
+      } 
+      if (tmp.size() == nbCurrent) Msg::Error("Could not order compound edge %d to find begin and end vertex", c->Num);
+    }
+    c->beg = vtcs.first;
+    c->end = vtcs.second;
+    c->compound.clear();
+    c->compound.insert(c->compound.end(),ordered.begin(),ordered.end());
+  }
 }
 
 void End_Surface(Surface *s)
@@ -1550,6 +1605,10 @@ Curve *CreateReversedCurve(Curve *c)
     newc->k = new float[c->degre + List_Nbr(c->Control_Points) + 1];
     for(int i = 0; i < c->degre + List_Nbr(c->Control_Points) + 1; i++)
       newc->k[c->degre + List_Nbr(c->Control_Points) - i] = c->k[i];
+  }
+
+  if(c->Typ == MSH_SEGM_COMPOUND) {
+    newc->compound.insert(newc->compound.end(),c->compound.rbegin(),c->compound.rend());
   }
 
   if(c->Typ == MSH_SEGM_CIRC)
