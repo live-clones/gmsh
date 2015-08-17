@@ -845,7 +845,15 @@ and password: @code{gmsh}.}, type:
 > gmsh t1.geo -2 -bgm bgmesh.pos
 @end example
 
-For the list of all command-line options, see @ref{Command-line options}.
+For the list of all command-line options, see @ref{Command-line
+options}. In particular, any complicated workflow can be written in a
+@code{.geo} file, and this file can be executed as a script using
+
+@example
+> gmsh script.geo -
+@end example
+
+The script can contain e.g. meshing commands, like @code{Mesh 3;}.
 
 @c -------------------------------------------------------------------------
 @c Command-line options
