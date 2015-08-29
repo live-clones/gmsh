@@ -1664,7 +1664,7 @@ class AttractorAnisoCurveField : public Field {
         it != edges_id.end(); ++it) {
       Curve *c = FindCurve(*it);
       if(c) {
-        for(int i = 1; i < n_nodes_by_edge-1; i++) {
+        for(int i = 1; i < n_nodes_by_edge - 1; i++) {
           double u = (double)i / (n_nodes_by_edge - 1);
           Vertex V = InterpolateCurve(c, u, 0);
           zeronodes[k][0] = V.Pos.X;
@@ -1679,7 +1679,7 @@ class AttractorAnisoCurveField : public Field {
       else {
         GEdge *e = GModel::current()->getEdgeByTag(*it);
         if(e) {
-          for(int i = 1; i < n_nodes_by_edge-1; i++) {
+          for(int i = 1; i < n_nodes_by_edge - 1; i++) {
             double u = (double)i / (n_nodes_by_edge - 1);
             Range<double> b = e->parBounds(0);
             double t = b.low() + u * (b.high() - b.low());
@@ -1746,6 +1746,7 @@ class AttractorField : public Field
     if (dim == 0) nodes_id.push_back(tag);
     else if (dim == 1) edges_id.push_back(tag);
     else if (dim == 2) faces_id.push_back(tag);
+    _xField = _yField = _zField = NULL;
     _xFieldId = _yFieldId = _zFieldId = -1;
     update_needed = true;
   }
@@ -1792,7 +1793,8 @@ class AttractorField : public Field
       "nodes is computed.";
   }
   void getCoord(double x, double y, double z, double &cx, double &cy, double &cz,
-                GEntity *ge = NULL) {
+                GEntity *ge = NULL)
+  {
     cx = _xField ? (*_xField)(x, y, z, ge) : x;
     cy = _yField ? (*_yField)(x, y, z, ge) : y;
     cz = _zField ? (*_zField)(x, y, z, ge) : z;
@@ -1824,13 +1826,13 @@ class AttractorField : public Field
 	GFace *f = GModel::current()->getFaceByTag(*it);
 	if (f){
 	  if (f->mesh_vertices.size()){
-	    for (unsigned int i=0;i<f->mesh_vertices.size();i++){
+	    for (unsigned int i = 0; i < f->mesh_vertices.size(); i++){
 	      MVertex *v = f->mesh_vertices[i];
-	      double uu,vv;
+	      double uu, vv;
 	      v->getParameter(0,uu);
 	      v->getParameter(1,vv);
-	      points.push_back(SPoint3(v->x(),v->y(),v->z()));
-	      uvpoints.push_back(SPoint2(uu,vv));
+	      points.push_back(SPoint3(v->x(), v->y(), v->z()));
+	      uvpoints.push_back(SPoint2(uu, vv));
 	    }
 	  }
 	  else {
@@ -1843,27 +1845,18 @@ class AttractorField : public Field
 	}
       }
 
-      int totpoints =
-	nodes_id.size() +
-	(n_nodes_by_edge-2) * edges_id.size() +
-        ((points.size()) ? points.size() :
-         n_nodes_by_edge * n_nodes_by_edge * faces_id.size());
+      double x, y, z;
+      std::vector<double> px, py, pz;
 
-      Msg::Info("%d points found in point clouds (%d edges)", totpoints,
-                (int)edges_id.size());
-
-      if(totpoints){
-        zeronodes = annAllocPts(totpoints, 3);
-        _infos.resize(totpoints);
-      }
-      int k = 0;
       for(std::list<int>::iterator it = nodes_id.begin();
           it != nodes_id.end(); ++it) {
 	GVertex *gv = GModel::current()->getVertexByTag(*it);
 	if(gv) {
-	  getCoord(gv->x(), gv->y(), gv->z(), zeronodes[k][0],
-		   zeronodes[k][1], zeronodes[k][2], gv);
-	  _infos[k++] = AttractorInfo(*it,0,0,0);
+	  getCoord(gv->x(), gv->y(), gv->z(), x, y, z, gv);
+          px.push_back(x);
+          py.push_back(y);
+          pz.push_back(z);
+	  _infos.push_back(AttractorInfo(*it, 0, 0, 0));
         }
       }
       for(std::list<int>::iterator it = edges_id.begin();
@@ -1872,11 +1865,14 @@ class AttractorField : public Field
 	if(e) {
 	  if (e->mesh_vertices.size()){
 	    for(unsigned int i = 0; i < e->mesh_vertices.size(); i++) {
-	      double u ; e->mesh_vertices[i]->getParameter(0,u);
+	      double u ;
+              e->mesh_vertices[i]->getParameter(0, u);
 	      GPoint gp = e->point(u);
-	      getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0],
-		       zeronodes[k][1], zeronodes[k][2], e);
-	      _infos[k++] = AttractorInfo(*it,1,u,0);
+	      getCoord(gp.x(), gp.y(), gp.z(), x, y, z, e);
+              px.push_back(x);
+              py.push_back(y);
+              pz.push_back(z);
+	      _infos.push_back(AttractorInfo(*it, 1, u, 0));
 	    }
 	  }
 	  int NNN = n_nodes_by_edge - e->mesh_vertices.size();
@@ -1885,26 +1881,27 @@ class AttractorField : public Field
 	    Range<double> b = e->parBounds(0);
 	    double t = b.low() + u * (b.high() - b.low());
 	    GPoint gp = e->point(t);
-	    getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0],
-		     zeronodes[k][1], zeronodes[k][2], e);
-	    _infos[k++] = AttractorInfo(*it,1,t,0);
+	    getCoord(gp.x(), gp.y(), gp.z(), x, y, z, e);
+            px.push_back(x);
+            py.push_back(y);
+            pz.push_back(z);
+            _infos.push_back(AttractorInfo(*it, 1, t, 0));
           }
         }
       }
-      // This can lead to weird results as we generate attractors over
-      // the whole parametric plane (we should really use a mesh,
-      // e.g. a refined STL.)
+      // This can lead to weird results as we generate attractors over the whole
+      // parametric plane (we should really use a mesh, e.g. a refined STL.)
       int count = 0;
       for(std::list<int>::iterator it = faces_id.begin();
           it != faces_id.end(); ++it) {
 	GFace *f = GModel::current()->getFaceByTag(*it);
 	if(f) {
 	  if (points.size()){
-	    for(int j = offset[count]; j < offset[count+1];j++) {
-	      zeronodes[k][0] = points[j].x();
-	      zeronodes[k][1] = points[j].y();
-	      zeronodes[k][2] = points[j].z();
-	      _infos[k++] = AttractorInfo(*it,2,uvpoints[j].x(),uvpoints[j].y());
+	    for(int j = offset[count]; j < offset[count + 1]; j++) {
+	      px.push_back(points[j].x());
+	      py.push_back(points[j].y());
+	      pz.push_back(points[j].z());
+	      _infos.push_back(AttractorInfo(*it, 2, uvpoints[j].x(), uvpoints[j].y()));
 	    }
 	    count++;
 	  }
@@ -1918,20 +1915,31 @@ class AttractorField : public Field
 		double t1 = b1.low() + u * (b1.high() - b1.low());
 		double t2 = b2.low() + v * (b2.high() - b2.low());
 		GPoint gp = f->point(t1, t2);
-		getCoord(gp.x(), gp.y(), gp.z(), zeronodes[k][0],
-			 zeronodes[k][1], zeronodes[k][2], f);
-		_infos[k++] = AttractorInfo(*it,2,u,v);
+		getCoord(gp.x(), gp.y(), gp.z(), x, y, z, f);
+                px.push_back(x);
+                py.push_back(y);
+                pz.push_back(z);
+		_infos.push_back(AttractorInfo(*it, 2, u, v));
 	      }
 	    }
 	  }
 	}
 	else {
-	  printf("face %d not yet created\n",*it);
+          Msg::Error("Face %d not yet created", *it);
 	}
+      }
+
+      int totpoints = px.size();
+      zeronodes = annAllocPts(totpoints, 3);
+      for(int i = 0; i < totpoints; i++){
+        zeronodes[i][0] = px[i];
+        zeronodes[i][1] = py[i];
+        zeronodes[i][2] = pz[i];
       }
       kdtree = new ANNkd_tree(zeronodes, totpoints, 3);
       update_needed = false;
     }
+
     double xyz[3];
     getCoord(X, Y, Z, xyz[0], xyz[1], xyz[2], ge);
     kdtree->annkSearch(xyz, 1, index, dist);
@@ -2398,7 +2406,7 @@ void FieldManager::setBackgroundMesh(int iView)
   (*this)[id] = f;
   _background_field = id;
 }
-    
+
 
 
 
@@ -2432,6 +2440,3 @@ void GenericField::setCallbackWithData(ptrfunction fct, void *data){
   user_data.push_back(data);
   cbs.push_back(fct);
 }
-
-
-
