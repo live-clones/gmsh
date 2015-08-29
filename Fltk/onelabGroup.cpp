@@ -59,7 +59,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "refresh"){
     updateGraphs();
-    FlGui::instance()->rebuildTree(false); // FIXME: true would be better
+    FlGui::instance()->rebuildTree(true); // FIXME: true would be better
     return;
   }
 

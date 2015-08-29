@@ -35,6 +35,7 @@ set(SRC
   SimplePartition.cpp Crack.cpp DuplicateBoundaries.cpp
   FaultZone.cpp
   MeshSubEntities.cpp
+  CVTRemesh.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

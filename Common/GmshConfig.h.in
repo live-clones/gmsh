@@ -60,6 +60,7 @@
 #cmakedefine HAVE_POST
 #cmakedefine HAVE_POPPLER
 #cmakedefine HAVE_QT
+#cmakedefine HAVE_REVOROPT
 #cmakedefine HAVE_SALOME
 #cmakedefine HAVE_SGEOM
 #cmakedefine HAVE_SLEPC

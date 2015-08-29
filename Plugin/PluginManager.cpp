@@ -63,6 +63,7 @@
 #include "NewView.h"
 #include "FaultZone.h"
 #include "MeshSubEntities.h"
+#include "CVTRemesh.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -261,6 +262,10 @@ void PluginManager::registerDefaultPlugins()
                       ("DuplicateBoundaries", GMSH_RegisterDuplicateBoundariesPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("MeshSubEntities", GMSH_RegisterMeshSubEntitiesPlugin()));
+#if defined(HAVE_REVOROPT)
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("CVTRemesh", GMSH_RegisterCVTRemeshPlugin()));
+#endif
 #if defined(HAVE_TETGEN)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("Tetrahedralize", GMSH_RegisterTetrahedralizePlugin()));
@@ -336,4 +341,3 @@ void PluginManager::addPlugin(std::string fileName)
   Msg::Info("Loaded Plugin '%s' (%s)", p->getName().c_str(), p->getAuthor().c_str());
 #endif
 }
-
