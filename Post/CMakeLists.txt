@@ -5,7 +5,7 @@
 
 set(SRC
   PView.cpp PViewIO.cpp PViewVertexArrays.cpp
-    PViewData.cpp PViewDataIO.cpp
+    PViewData.cpp PViewDataIO.cpp PViewX3D.cpp
       PViewDataList.cpp PViewDataListIO.cpp
       PViewDataGModel.cpp PViewDataGModelIO.cpp
     PViewOptions.cpp

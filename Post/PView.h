@@ -10,6 +10,8 @@
 #include <map>
 #include <string>
 #include "SPoint3.h"
+#include "drawContext.h"
+
 
 class PViewData;
 class PViewOptions;
@@ -39,7 +41,7 @@ class PView{
   PViewData *_data;
   // initialize private stuff
   void _init(int tag=-1);
-
+ 
  public:
   // create a new view with list-based data
   PView(int tag=-1);
@@ -75,6 +77,8 @@ class PView{
   // get/set the view data
   PViewData *getData(bool useAdaptiveIfAvailable=false);
   void setData(PViewData *val){ _data = val; }
+  // current drawContext
+  drawContext *_ctx;
 
   // get the view tag (unique and immutable)
   int getTag(){ return _tag; }
@@ -93,6 +97,7 @@ class PView{
   // get/set the eye position (for transparency calculations)
   SPoint3 &getEye(){ return _eye; }
   void setEye(SPoint3 &p){ _eye = p; }
+  void setDrawContext(drawContext *ctx){_ctx=ctx;}
 
   // get (approx.) memory used by the view, in Mb
   double getMemoryInMb();
@@ -121,7 +126,7 @@ class PView{
   static bool readPOS(const std::string &fileName, int fileIndex=-1);
   static bool readMSH(const std::string &fileName, int fileIndex=-1);
   static bool readMED(const std::string &fileName, int fileIndex=-1);
-
+  static bool writeX3D(const std::string &fileName );
   // IO write routine
   bool write(const std::string &fileName, int format, bool append=false);
 
@@ -137,6 +142,9 @@ class PView{
 
   // smoothed normals
   smooth_normals *normals;
+
+
+
 };
 
 // this is the maximum number of nodes of elements we actually *draw*
@@ -147,4 +155,8 @@ void changeCoordinates(PView *p, int ient, int iele,
                        double **xyz, double **val);
 bool isElementVisible(PViewOptions *opt, int dim, int numNodes,
                       double **xyz);
+
+
 #endif
+
+

@@ -408,10 +408,11 @@ class drawPView {
     // use adaptive data if available
     PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
-
+    p->setDrawContext(_ctx);
+   
     if(data->getDirty() || !data->getNumTimeSteps()) return;
     if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
-    if(!_ctx->isVisible(p)) return;
+    if(!_ctx->isVisible(p))  return;
 
     if(_ctx->render_mode == drawContext::GMSH_SELECT){
       glPushName(5);
@@ -578,5 +579,5 @@ void drawContext::drawPost()
 
   for(unsigned int i = 0; i < PView::list.size(); i++)
     PView::list[i]->fillVertexArrays();
-  std::for_each(PView::list.begin(), PView::list.end(), drawPView(this));
+    std::for_each(PView::list.begin(), PView::list.end(), drawPView(this));
 }

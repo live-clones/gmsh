@@ -6,8 +6,11 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "PView.h"
+#include "PViewData.h"
+#include "PViewOptions.h"
 #include "PViewDataList.h"
 #include "PViewDataGModel.h"
+#include "VertexArray.h"
 #include "StringUtils.h"
 #include "Context.h"
 #include "OS.h"
@@ -302,6 +305,7 @@ bool PView::write(const std::string &fileName, int format, bool append)
                                 0, true, CTX::instance()->post.forceNodeData,
                                 CTX::instance()->post.forceElementData); break;
   case 6: ret = _data->writeMED(fileName); break;
+  case 7: ret = writeX3D(fileName); break;
   case 10:
     {
       std::string ext = SplitFileName(fileName)[2];
@@ -326,3 +330,6 @@ bool PView::write(const std::string &fileName, int format, bool append)
   if(ret) Msg::StatusBar(true, "Done writing '%s'", fileName.c_str());
   return ret;
 }
+
+
+
