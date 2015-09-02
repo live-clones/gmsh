@@ -408,7 +408,6 @@ class drawPView {
     // use adaptive data if available
     PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
-    p->setDrawContext(_ctx);
    
     if(data->getDirty() || !data->getNumTimeSteps()) return;
     if(!opt->visible || opt->type != PViewOptions::Plot3D) return;

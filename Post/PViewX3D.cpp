@@ -23,6 +23,9 @@
 #include "SBoundingBox3d.h"
 #include <math.h>     
 #include "PViewX3D.h"
+#include <iostream>
+
+using namespace std;
 
 bool PView::writeX3D(const std::string &fileName )
 {
@@ -115,8 +118,10 @@ bool PView::writeX3D(const std::string &fileName )
   fprintf(fp,"        </Shape> \n");
   ------------------------------------------------------------*/
 
-  // here contour legends in frame (-.45,-.28, 0.) and (.45, .28,0.) : viewport .9 x .56
-
+  // here contour/scalebar legends in frame (-.45,-.28, 0.) and (.45, .28,0.) : viewport .9 x .56
+  double viewportWidth  =.9   ;
+  double viewportHeight =.56  ;
+  double font_size      = 0.02;
   std::vector<PView*> scales;
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PViewData *data = PView::list[i]->getData();
@@ -124,99 +129,76 @@ bool PView::writeX3D(const std::string &fileName )
     if(!data->getDirty() 
        && opt->visible && opt->showScale 
        &&  opt->type == PViewOptions::Plot3D && data->getNumElements() 
-       &&  PView::list[i]->_ctx->isVisible(PView::list[i])
        )
       scales.push_back(PView::list[i]);
   }
   if(!scales.empty()) {
-   char label[1024];
-    double maxw = 0.;
-    for(unsigned int i = 0; i < scales.size(); i++) {
-      PViewOptions *opt = scales[i]->getOptions();
-      sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
-      maxw = std::max(maxw, drawContext::global()->getStringWidth(label));
-    }
-
-    const  double tic = 10., bar_size = 16.;    double width = 0., width_prev = 0., width_total = 0.;
+    char label[1024];
+    double maxw = 10.*font_size*3./4.;
+    const  double tic = viewportWidth/100 ;
+    const  double bar_size = tic*1.6 ;
+    double width = 0., width_prev = 0., width_total = 0.;
 
     for(unsigned int i = 0; i < scales.size(); i++) {
       PView *p = scales[i];
       PViewData *data = p->getData();
       PViewOptions *opt = p->getOptions();
-      double vph =  p->_ctx->viewport[3] - p->_ctx->viewport[1];
-      double vpw =  p->_ctx->viewport[2] - p->_ctx->viewport[0];
-      double xfactor = .9 /vpw;
-      double yfactor = .56/vph;
-      double ratio =2.*min(xfactor,yfactor);
  
       if(!opt->autoPosition) {
-	double w = opt->size[0], h = opt->size[1];
-	double x = opt->position[0], y = opt->position[1] - h;
-	int c = p->_ctx->fix2dCoordinates(&x, &y);
-	if(c & 1) x -= w ;
-	if(c & 2) y += h / 2.;
-
-	x -=vpw/2.;	y -=vph/2.;
-	writeX3DScale(fp, p, x*xfactor, y*yfactor, w*xfactor, h*yfactor, tic*yfactor/2, CTX::instance()->post.horizontalScales,ratio);
+	double w= viewportWidth/3;
+	double h= viewportHeight/11;
+	double x=0.;
+	double y=-viewportHeight;
+	writeX3DScale(fp, p, x, y, w, h, tic, CTX::instance()->post.horizontalScales,font_size);
       }
       else if(CTX::instance()->post.horizontalScales){
-	double ysep = 20.;
-	double xc = ( p->_ctx->viewport[2] -  p->_ctx->viewport[0]) / 2.;
+	double ysep = viewportHeight/40;
+	double xc = 0.;
 	if(scales.size() == 1){
-	  double w = ( p->_ctx->viewport[2] -  p->_ctx->viewport[0]) / 2., h = bar_size;
-	  double x = xc - w / 2., y =  p->_ctx->viewport[1] + ysep;
-
-	x -=vpw/2.;	y -=vph/2.;
-	writeX3DScale(fp, p, x*xfactor, y*yfactor, w*xfactor, h*yfactor, tic*yfactor/2, 1,ratio);
+	  double w = viewportWidth / 2., h = bar_size;
+	  double x = xc - w / 2., y =  -viewportHeight/2 + ysep;
+	  writeX3DScale(fp, p, x, y, w, h, tic, 1,font_size);
 	}
 	else{
-	  double xsep = maxw / 4. + ( p->_ctx->viewport[2] -  p->_ctx->viewport[0]) / 10.;
-	  double w = ( p->_ctx->viewport[2] -  p->_ctx->viewport[0] - 4 * xsep) / 2.;
-	  if(w < 20.) w = 20.;
+	  double xsep = maxw / 4. + viewportWidth / 10.;
+	  double w = ( viewportWidth - 4. * xsep) / 2.;
+	  if(w < 30.*viewportWidth/1000) w =30.*viewportWidth/1000  ;
 	  double h = bar_size;
 	  double x = xc - (i % 2 ? -xsep / 1.5 : w + xsep / 1.5);
-	  double y =  p->_ctx->viewport[1] + ysep +
-	    (i / 2) * (bar_size + tic +2 * drawContext::global()->getStringHeight() + ysep);
-
-	x -=vpw/2.;	y -=vph/2.;
-	  writeX3DScale(fp, p, x*xfactor, y*yfactor, w*xfactor, h*yfactor, tic*yfactor/2, 1,ratio);
+	  double y = -viewportHeight/2 + ysep +  (i / 2) * (bar_size + tic +2 * font_size + ysep);
+	  writeX3DScale(fp, p, x, y, w, h, tic, 1,font_size);
 	}
       }
       else{
-	double xsep = 20.;
-	double dy = 2. * drawContext::global()->getStringHeight();
+	double xsep = viewportWidth / 50;
+	double dy = 2. * font_size ;
 	if(scales.size() == 1){
-	  double ysep = ( p->_ctx->viewport[3] -  p->_ctx->viewport[1]) / 6.;
-	  double w = bar_size, h =  p->_ctx->viewport[3] -  p->_ctx->viewport[1] - 2 * ysep - dy;
-	  double x =  p->_ctx->viewport[0] + xsep, y =  p->_ctx->viewport[1] + ysep + dy;
-
-	x -=vpw/2.;	y -=vph/2.;
-	    writeX3DScale(fp, p, x*xfactor, y*yfactor, w*xfactor, h*yfactor, tic*yfactor/2, 1,ratio);
+	  double ysep = ( viewportHeight) / 6.;
+	  double w = bar_size, h =  viewportHeight - 2 * ysep - dy;
+	  double x =  -viewportWidth/2 + xsep, y =  -viewportHeight/2 + ysep + dy;
+	  writeX3DScale(fp, p, x, y, w, h, tic, 1,font_size);
 
 	}
 	else{
-	  double ysep = ( p->_ctx->viewport[3] -  p->_ctx->viewport[1]) / 15.;
+	  double ysep =  viewportHeight / 30.;
 	  double w = bar_size;
-	  double h = ( p->_ctx->viewport[3] -  p->_ctx->viewport[1] - 3 * ysep - 2.5 * dy) / 2.;
-	  double x =  p->_ctx->viewport[0] + xsep + width_total + (i / 2) * xsep;
-	  double y =  p->_ctx->viewport[1] + ysep + dy + (1 - i % 2) * (h + 1.5 * dy + ysep);
-
-	x -=vpw/2.;	y -=vph/2.;
-	  writeX3DScale(fp, p, x*xfactor, y*yfactor, w*xfactor, h*yfactor, tic*yfactor/2, 1,ratio);
-
+	  double h = ( viewportHeight - 3 * ysep - 2.5 * dy) / 2.;
+	  double x =  -viewportWidth/2 + xsep + width_total + (i / 2) * xsep;
+	  double y =  -viewportHeight/2 + ysep + dy + (1 - i % 2) * (h + 1.5 * dy + ysep);
+	  writeX3DScale(fp, p, x, y, w, h, tic, 1, font_size);
 	}
 	// compute width
 	width_prev = width;
-	sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
-	width = bar_size + tic + drawContext::global()->getStringWidth(label);
+ 	width =bar_size + tic + 10.* font_size *3/4;
 	if(opt->showTime){
 	  char tmp[256];
 	  sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
 	  sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
 	}
-	else
+	else{
 	  sprintf(label, "%s", data->getName().c_str());
-	width = std::max(width, drawContext::global()->getStringWidth(label));
+	}
+	width =max(width, strlen(label)* font_size *3/4);
 	if(i % 2) width_total += std::max(bar_size + width, bar_size + width_prev);
       }
     }
@@ -250,7 +232,6 @@ bool PView::writeX3D(const std::string &fileName )
       va=(*pvit)->va_points;
       for(int ipt = 0; ipt < va->getNumVertices(); ipt++){
 	float *p = va->getVertexArray(3 * ipt);
-	// glColor4ubv((GLubyte *)va_points->getColorArray(4 * ipt));
 	double f = 1.;
 	if(opt->pointType > 1){
 	  char *n = va->getNormalArray(3 * ipt);
@@ -378,7 +359,7 @@ bool PView::writeX3D(const std::string &fileName )
 
 
 static void writeX3DScale(FILE *fp, PView *p, double xmin, double ymin,
-			  double width, double height, double tic, int horizontal,double ratio)
+			  double width, double height, double tic, int horizontal,double font_size)
 {
   // use adaptive data if available
   PViewData *data = p->getData(true);
@@ -402,8 +383,8 @@ static void writeX3DScale(FILE *fp, PView *p, double xmin, double ymin,
   }
 
   writeX3DScaleBar(fp, p, xmin, ymin, width, height, tic, horizontal);
-  writeX3DScaleValues(fp, p, xmin, ymin, width, height, tic, horizontal,ratio);
-  writeX3DScaleLabel (fp, p, xmin, ymin, width, height, tic, horizontal,ratio);
+  writeX3DScaleValues(fp, p, xmin, ymin, width, height, tic, horizontal,font_size);
+  writeX3DScaleLabel (fp, p, xmin, ymin, width, height, tic, horizontal,font_size);
 }
 
 
@@ -484,18 +465,20 @@ static void writeX3DScaleBar(FILE *fp, PView *p, double xmin, double ymin, doubl
 
 
 static void  writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
-				 double width, double height, double tic, int horizontal,double ratio)
+				 double width, double height, double tic, int horizontal,double font_size)
 {
   PViewOptions *opt = p->getOptions();
   if(!opt->nbIso) return;
-  double font_h = drawContext::global()->getStringHeight(); // total font height
-  double font_a = drawContext::global()->getStringHeight() -  drawContext::global()->getStringDescent(); // height above ref pt
+  double font_h = font_size ; // total font height
+  double font_a = font_size*3./4.   ; // height above ref pt
   char label[1024];
-  sprintf(label, opt->format.c_str(), -M_PI * 1.e-4);
-  double maxw = drawContext::global()->getStringWidth(label);
-  font_h *=ratio;font_a *=ratio;
-  maxw *=ratio;
   int nbv = opt->nbIso;
+  double maxw =0.;
+  for(int i = 0; i < nbv + 1; i++) {
+    double v = opt->getScaleValue(i, nbv + 1, opt->tmpMin, opt->tmpMax);
+    sprintf(label, opt->format.c_str(), v);
+    maxw = max(maxw,strlen(label)*font_size*3./4.);
+  }
   double f = (opt->intervalsType == PViewOptions::Discrete ||
               opt->intervalsType == PViewOptions::Numeric ||
               opt->intervalsType == PViewOptions::Continuous) ? 2 : 2.5;
@@ -511,7 +494,7 @@ static void  writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
   double box = (horizontal ? width : height) / opt->nbIso;
   double vbox = (horizontal ? width : height) / nbv;
 
-  glColor4ubv((GLubyte *) & CTX::instance()->color.text);
+  //  glColor4ubv((GLubyte *) & CTX::instance()->color.text);
 
   if(opt->intervalsType == PViewOptions::Discrete ||
      opt->intervalsType == PViewOptions::Numeric ||
@@ -523,7 +506,7 @@ static void  writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
         writeX3DStringCenter( fp,label, xmin + i * vbox, ymin + height + tic, 0.,font_h );
       }
       else{
-        writeX3DStringCenter( fp,label, xmin + width + tic,ymin + i * vbox - font_a*ratio / 3., 0.,font_h );
+        writeX3DStringCenter( fp,label, xmin + width + tic,ymin + i * vbox - font_a / 3., 0.,font_h );
       }
     }
   }
@@ -546,7 +529,7 @@ static void  writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
 }
 
 static void writeX3DScaleLabel(FILE *fp , PView *p, double xmin, double ymin,
-			       double width, double height, double tic, int horizontal,double ratio)
+			       double width, double height, double tic, int horizontal,double font_size)
 {
   PViewOptions *opt = p->getOptions();
   PViewData *data;
@@ -556,8 +539,8 @@ static void writeX3DScaleLabel(FILE *fp , PView *p, double xmin, double ymin,
     data = PView::list[opt->externalViewIndex]->getData();
   else
     data = p->getData();
-  double font_h = drawContext::global()->getStringHeight();
-  font_h *=ratio*1.2;
+  double font_h = font_size;
+  font_h *=1.2;
   char label[1024];
   int nt = data->getNumTimeSteps();
   if((opt->showTime == 1 && nt > 1) || opt->showTime == 2){
@@ -570,7 +553,6 @@ static void writeX3DScaleLabel(FILE *fp , PView *p, double xmin, double ymin,
   }
   else
     sprintf(label, "%s", data->getName().c_str());
-
   if(horizontal){
     writeX3DStringCenter( fp,label,  xmin + width / 2., ymin + height + tic + .9  * font_h, 0.,font_h );
   }

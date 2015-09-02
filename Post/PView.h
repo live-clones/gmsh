@@ -10,7 +10,7 @@
 #include <map>
 #include <string>
 #include "SPoint3.h"
-#include "drawContext.h"
+//#include "drawContext.h"
 
 
 class PViewData;
@@ -78,7 +78,7 @@ class PView{
   PViewData *getData(bool useAdaptiveIfAvailable=false);
   void setData(PViewData *val){ _data = val; }
   // current drawContext
-  drawContext *_ctx;
+  //  drawContext *_ctx;
 
   // get the view tag (unique and immutable)
   int getTag(){ return _tag; }
@@ -97,7 +97,7 @@ class PView{
   // get/set the eye position (for transparency calculations)
   SPoint3 &getEye(){ return _eye; }
   void setEye(SPoint3 &p){ _eye = p; }
-  void setDrawContext(drawContext *ctx){_ctx=ctx;}
+  //  void setDrawContext(drawContext *ctx){_ctx=ctx;}
 
   // get (approx.) memory used by the view, in Mb
   double getMemoryInMb();
