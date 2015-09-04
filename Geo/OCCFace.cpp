@@ -242,8 +242,10 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]) co
   GeomAPI_ProjectPointOnSurf proj(pnt, occface, umin, umax, vmin, vmax);
 
   if(!proj.NbPoints()){
-    Msg::Error("OCC Project Point on Surface FAIL");
-    return GPoint(0, 0);
+    Msg::Warning("OCC Project Point on Surface FAIL");
+    GPoint gp(0, 0);
+    gp.setNoSuccess();
+    return gp;
   }
 
   double pp[2] = {initialGuess[0],initialGuess[1]};
@@ -252,8 +254,10 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]) co
   // Msg::Info("projection lower distance parameters %g %g",pp[0],pp[1]);
 
   if((pp[0] < umin || umax < pp[0]) || (pp[1]<vmin || vmax<pp[1])){
-    Msg::Error("Point projection is out of face bounds");
-    return GPoint(0, 0);
+    Msg::Warning("Point projection is out of face bounds");
+    GPoint gp(0, 0);
+    gp.setNoSuccess();
+    return gp;
   }
 
   pnt = proj.NearestPoint();
