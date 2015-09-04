@@ -190,6 +190,8 @@ static bool getEdgeVerticesonGeo(GFace *gf, MVertex *v0, MVertex *v1,
     else {
       pnt0 = v0->point();
       pnt1 = v1->point();
+      // FIXME: using the geodesic is sometimes a bad idea when the edge is "far
+      // away" from the surface (e.g. on the diameter of a circle!)
       computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1],
                                    pnt0, pnt1, nPts + 2, true, US, VS);
     }
