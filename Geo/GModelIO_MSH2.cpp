@@ -895,9 +895,12 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
     if(numPhysicalNames()){
       fprintf(fp, "$PhysicalNames\n");
       fprintf(fp, "%d\n", numPhysicalNames());
-      for(piter it = firstPhysicalName(); it != lastPhysicalName(); it++)
+      for(piter it = firstPhysicalName(); it != lastPhysicalName(); it++){
+        std::string name = it->second;
+        if(name.size() > 128) name.resize(128);
         fprintf(fp, "%d %d \"%s\"\n", it->first.first, it->first.second,
-                it->second.c_str());
+                name.c_str());
+      }
       fprintf(fp, "$EndPhysicalNames\n");
     }
 
