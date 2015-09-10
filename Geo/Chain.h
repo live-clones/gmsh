@@ -465,14 +465,18 @@ Chain<C>& Chain<C>::operator*=(const C& coeff)
 }
 
 template <class C>
-int Chain<C>::addToModel(GModel* m, bool post,
-                         int physicalNumRequest) const
+int Chain<C>::addToModel(GModel* m, bool post, int physicalNumRequest) const
 {
   if(this->isZero()) {
     Msg::Info("A chain is zero element of C%d, not added to the model",
               this->getDim());
     return -1;
   }
+
+  std::string name = _name;
+  // avoid too long names, which screw up the GUI and the msh file
+  if(name.size() > 128) name.resize(128);
+
   std::vector<MElement*> elements;
   std::map<int, std::vector<double> > data;
   int dim = this->getDim();
@@ -511,16 +515,16 @@ int Chain<C>::addToModel(GModel* m, bool post,
   entityMap[entityNum] = elements;
   std::map<int, std::map<int, std::string> > physicalMap;
   std::map<int, std::string> physicalInfo;
-  physicalInfo[physicalNum] = _name;
+  physicalInfo[physicalNum] = name;
   physicalMap[entityNum] = physicalInfo;
   m->storeChain(dim, entityMap, physicalMap);
-  m->setPhysicalName(_name, dim, physicalNum);
+  m->setPhysicalName(name, dim, physicalNum);
 
 #if defined(HAVE_POST)
   if(post && CTX::instance()->batch == 0) {
     // create PView for instant visualization
     std::string pnum = convertInt(physicalNum);
-    std::string postname = pnum + "=" + _name;
+    std::string postname = pnum + "=" + name;
     PView* view = new PView(postname, "ElementData", m, data, 0., 1);
     // the user should be interested about the orientations
     int size = 30;

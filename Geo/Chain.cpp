@@ -27,7 +27,8 @@ void updateFltk()
 #endif
 }
 
-std::string convertInt(int number){
+std::string convertInt(int number)
+{
   std::stringstream stream;
   stream << number;
   return stream.str();
@@ -49,8 +50,7 @@ inline void ElemChain::_sortVertexIndices()
 }
 
 void findEntitiesInPhysicalGroups
-(GModel* m, const std::vector<int>& physicalGroups,
-std::vector<GEntity*>& entities)
+(GModel* m, const std::vector<int>& physicalGroups, std::vector<GEntity*>& entities)
 {
   std::map<int, std::vector<GEntity*> > groups[4];
   m->getPhysicalGroups(groups);

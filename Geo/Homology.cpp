@@ -624,6 +624,7 @@ std::string Homology::_getDomainString(const std::vector<int>& domain,
     }
     domainString += "}";
   }
+
   return domainString;
 }
 
@@ -673,4 +674,3 @@ void Homology::storeCells(CellComplex* cellComplex, int dim)
 }
 
 #endif
-
