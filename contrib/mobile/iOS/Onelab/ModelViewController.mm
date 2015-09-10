@@ -381,7 +381,7 @@ void getBitmap(void *self, const char *text, int textsize, unsigned char **map, 
 {
   UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 1024, 7*textsize/6)];
   lbl.font = [UIFont systemFontOfSize:textsize];
-  [lbl setText:[NSString stringWithCString:text  encoding:[NSString defaultCStringEncoding]]];
+  [lbl setText:[NSString stringWithCString:text  encoding:NSUTF8StringEncoding]];
   [lbl setBackgroundColor:[UIColor clearColor]];
   CGSize lblSize = [[lbl text] sizeWithAttributes:@{NSFontAttributeName:[lbl font]}];
   *realWidth = lblSize.width;
