@@ -1,4 +1,4 @@
-#!/opt/local/bin/python
+#!/Users/geuzaine/anaconda/bin/python
 if __name__ == '__main__':
   import sys
   import os
@@ -6,9 +6,9 @@ if __name__ == '__main__':
   import configure
   configure_options = [
     '--CC=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang',
-    '--CFLAGS=-arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS7.1.sdk -miphoneos-version-min=7.0',
+    '--CFLAGS=-DPETSC_BLASLAPACK_UNDERSCORE -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS8.4.sdk -miphoneos-version-min=7.0',
     '--CXX=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++',
-    '--CXXFLAGS=-arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS7.1.sdk -miphoneos-version-min=7.0',
+    '--CXXFLAGS=-DPETSC_BLASLAPACK_UNDERSCORE -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS8.4.sdk -miphoneos-version-min=7.0',
     '--known-bits-per-byte=8',
     '--known-endian=little',
     '--known-level1-dcache-assoc=1',
@@ -25,17 +25,17 @@ if __name__ == '__main__':
     '--known-sizeof-size_t=8',
     '--known-sizeof-void-p=8',
     '--with-batch=1',
-    '--with-blas-lib=/path/to/libf2cblas.a',
+    '--with-blas-lib=/Users/geuzaine/src/gmsh/contrib/mobile/frameworks_ios/petsc.framework/libf2cblas.a',
     '--with-clanguage=cxx',
     '--with-cmake=1',
     '--with-debugging=0',
     '--with-fc=0',
-    '--with-lapack-lib=/path/to/libf2clapack.a',
+    '--with-ios=1',
+    '--with-lapack-lib=/Users/geuzaine/src/gmsh/contrib/mobile/frameworks_ios/petsc.framework/libf2clapack.a',
     '--with-mpi=0',
-    '--with-parmetis=0',
-    '--with-scalapack=0',
     '--with-shared-libraries=0',
+    '--with-ssl=0',
     '--with-x=0',
-    'PETSC_ARCH=arm64-unknown-darwin',
+    'PETSC_ARCH=ios_real',
   ]
   configure.petsc_configure(configure_options)

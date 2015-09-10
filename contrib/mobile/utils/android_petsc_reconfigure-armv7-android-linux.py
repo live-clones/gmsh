@@ -1,4 +1,14 @@
-#!/usr/bin/python2
+#!/usr/bin/python
+
+######## FOR PETSC 3.6.0
+######## I had to
+########   change Cxx.py in the PETSc 3.6.0 distrib to replace CXXCPP by CPP
+########   edit src/system/err.c to remove the exception throwing code
+########   edit android_real/lib/petsc/conf/petscvariables:
+########         remove the dylib stuff
+########         and edit SL_LINKER_FUNCTION : just define as "-shared"
+########         add "-Wl,--unresolved-symbols=ignore-all" to fix undefined ref to 'main'
+
 if __name__ == '__main__':
   import sys
   import os
@@ -16,14 +26,10 @@ if __name__ == '__main__':
     '--CPP=' + ndkbin + 'arm-linux-androideabi-cpp',
     '--CPPFLAGS=--sysroot=' + ndkroot + 'platforms/android-8/arch-arm',
     '--CXX=' + ndkbin + 'arm-linux-androideabi-g++',
-    '--CXXFLAGS=--sysroot=' + ndkroot + 'platforms/android-8/arch-arm -fsigned-char -march=armv7-a -mfloat-abi=softfp -mfpu=vfp -fdata-sections -ffunction-sections -fPIC -Wno-psabi -frtti -fexceptions -mthumb -O3 -fomit-frame-pointer -DNDEBUG -fPIC -isystem ' + ndkroot + 'platforms/android-8/arch-arm/usr/include -isystem ' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/4.6/include -isystem ' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi-v7a/include -lstdc++',
+    '--CXXFLAGS=--sysroot=' + ndkroot + 'platforms/android-8/arch-arm -fsigned-char -march=armv7-a -mfloat-abi=softfp -mfpu=vfp -fdata-sections -ffunction-sections -fPIC -Wno-psabi -frtti -fexceptions -mthumb -O3 -fomit-frame-pointer -DNDEBUG -fPIC -isystem ' + ndkroot + 'platforms/android-8/arch-arm/usr/include -isystem ' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/4.6/include -isystem ' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi-v7a/include -lstdc++ -I' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/4.6/include/ -I' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/4.6/include/backward -I' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi/include',
     '--LDFLAGS= -L' + ndklibs + 'armeabi-v7a -L' + ndklibs2 + ' -lm',
     '--LD_SHARED=' + ndkbin + 'arm-linux-androideabi-ld',
-    '--download-blacs=0',
-    '--download-mumps=0',
-    '--download-parmetis=0',
-    '--download-scalapack=0',
-    '--download-umfpack=0',
+    '--CLINKER=' + ndkbin + 'arm-linux-androideabi-gcc',
     '--known-bits-per-byte=8',
     '--known-endian=little',
     '--known-level1-dcache-assoc=1',
@@ -48,11 +54,11 @@ if __name__ == '__main__':
     '--with-mpi=0',
     '--with-shared-libraries=1',
     '--with-x=0',
-    '-I' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/include/',
-    '-I' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/include/backward',
-    '-I' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/libs/armeabi/include',
+    '-I' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/4.6/include/',
+    '-I' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/4.6/include/backward',
+    '-I' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi/include',
     '-lstdc++',
     '-with-batch=1',
-    'PETSC_ARCH=armv7-android-linux',
+    'PETSC_ARCH=android_real',
   ]
   configure.petsc_configure(configure_options)

@@ -68,6 +68,7 @@
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGEN
 #cmakedefine HAVE_VORO3D
+#cmakedefine HAVE_ZIPPER
 
 #define GMSH_CONFIG_OPTIONS "${GMSH_CONFIG_OPTIONS}"
 
