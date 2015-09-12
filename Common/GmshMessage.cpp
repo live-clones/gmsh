@@ -430,6 +430,7 @@ void Msg::Info(const char *fmt, ...)
     fflush(stdout);
   }
 }
+
 void Msg::RequestRender()
 {
   if(_callback) (*_callback)("RequestRender", "");
