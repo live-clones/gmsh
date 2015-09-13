@@ -6,8 +6,9 @@
 ########   edit src/system/err.c to remove the exception throwing code
 ########   edit android_real/lib/petsc/conf/petscvariables:
 ########         remove the dylib stuff
-########         and edit SL_LINKER_FUNCTION : just define as "-shared"
-########         add "-Wl,--unresolved-symbols=ignore-all" to fix undefined ref to 'main'
+########         edit SL_LINKER_FUNCTION
+########         add "-Wl,--unresolved-symbols=ignore-all" to the linker flags to
+########           fix undefined ref to 'main'
 
 if __name__ == '__main__':
   import sys
