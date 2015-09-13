@@ -813,8 +813,8 @@ if( ARMEABI OR ARMEABI_V7A )
   # It is recommended to use the -mthumb compiler flag to force the generation
   # of 16-bit Thumb-1 instructions (the default being 32-bit ARM ones).
   # O3 instead of O2/Os in release mode - like cmake sets for desktop gcc
-  set( _CMAKE_CXX_FLAGS_RELEASE "-mthumb -O2 -g" )
-  set( _CMAKE_C_FLAGS_RELEASE   "-mthumb -O2 -g" )
+  set( _CMAKE_CXX_FLAGS_RELEASE "-mthumb -O2" ) # -g
+  set( _CMAKE_C_FLAGS_RELEASE   "-mthumb -O2" ) # -g
   set( _CMAKE_CXX_FLAGS_DEBUG "-marm -Os -finline-limit=64" )
   set( _CMAKE_C_FLAGS_DEBUG   "-marm -Os -finline-limit=64" )
  else()
