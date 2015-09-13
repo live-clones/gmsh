@@ -20,13 +20,6 @@ function check {
   fi
 }
 
-# PETSc and BLAS/LAPACK
-echo $petsc_lib/libpetsc.so
-if [ ! -f "$petsc_lib/libpetsc.so" ] || [ ! -f "$petsc_lib/libf2clapack.so" ] || [ ! -f "$petsc_lib/libf2cblas.so" ] || [ ! -d "$petsc_lib/Headers/" ]; then 
-  echo -e "ERROR: Need BLAS (f2c), LAPACK (f2c) and PETSc\ncheck android_petsc_reconfigure-armv7-android-linux.py for compile options\n"
-  exit 1
-fi
-
 export ANDROID_NDK=$android_ndk 
 
 # Gmsh

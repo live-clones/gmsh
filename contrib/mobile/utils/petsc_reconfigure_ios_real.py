@@ -1,4 +1,11 @@
 #!/Users/geuzaine/anaconda/bin/python
+
+######## FOR PETSC 3.6.0
+########## You will need to compile 3 times, with arch=arm64, armv7, armv7s)
+##########   and lipo the 3 libs
+########## I had to  remove  sys.exit(0) after message saying ".reconfigure..."
+##########   in config/BuildSystem/config/framework.py"
+
 if __name__ == '__main__':
   import sys
   import os
