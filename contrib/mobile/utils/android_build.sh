@@ -57,10 +57,10 @@ make get_headers
 check
 
 # Onelab/Mobile interface
-if [ ! -d "$gmsh_svn/contrib/mobile/build_android" ]; then
-  mkdir $gmsh_svn/contrib/mobile/build_android
+if [ ! -d "$gmsh_svn/contrib/mobile/build_android_${appname}" ]; then
+  mkdir $gmsh_svn/contrib/mobile/build_android_${appname}
 fi
-cd $gmsh_svn/contrib/mobile/build_android
+cd $gmsh_svn/contrib/mobile/build_android_${appname}
 
 cmake $cmake_default \
       -DCMAKE_INCLUDE_PATH="$getdp_svn/" \
@@ -114,10 +114,10 @@ while read line; do
 done < <($android_sdk/tools/android list target | grep -A 5 "id:")
 
 # to sign the APK:
-# cp utils/ant.properties build_android/Onelab/
+# cp utils/ant.properties build_android_Onelab/Onelab/
 
 # to re-install on the device:
-# ~/android-sdk/platform-tools/adb install -r build_android/Onelab/bin/Onelab-release.apk
+# ~/android-sdk/platform-tools/adb install -r build_android_Onelab/Onelab/bin/Onelab-release.apk
 
 # to launch the app on the device:
 # ~/android-sdk/platform-tools/adb shell am start -n org.geuz.onelab/org.geuz.onelab.SplashScreen
@@ -126,4 +126,4 @@ done < <($android_sdk/tools/android list target | grep -A 5 "id:")
 # ~/android-sdk/tools/ddms
 
 # see stack traces after crashes:
-# ~/android-sdk/platform-tools/adb logcat | ~/android-ndk-r8b/ndk-stack -sym build_android/
+# ~/android-sdk/platform-tools/adb logcat | ~/android-ndk-r8b/ndk-stack -sym build_android_Onelab/
