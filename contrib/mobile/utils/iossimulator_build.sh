@@ -1,5 +1,11 @@
 #/usr/bin/env bash
 
+appname=Onelab
+if [ $# -eq 1 ] ; then
+  appname=${1}
+  echo "Rebranding Onelab app as ${appname}"
+fi
+
 gmsh_svn="${HOME}/src/gmsh/"
 getdp_svn="${HOME}/src/getdp/"
 frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_iossimulator/"
@@ -51,7 +57,7 @@ cd $frameworks_dir/GetDP.framework/Headers
 cp $getdp_svn/build_iossimulator/Headers/getdp/* .
 
 # create xcode project
-mkdir $gmsh_svn/contrib/mobile/build_iossimulator
-cd $gmsh_svn/contrib/mobile/build_iossimulator
-cmake -DCMAKE_INCLUDE_PATH="$frameworks_dir;$getdp_svn" ..
+mkdir $gmsh_svn/contrib/mobile/build_iossimulator_${appname}
+cd $gmsh_svn/contrib/mobile/build_iossimulator_${appname}
+cmake -DCMAKE_INCLUDE_PATH="$frameworks_dir;$getdp_svn" -DAPPNAME:STRING=${appname} ..
 make xcodeProject

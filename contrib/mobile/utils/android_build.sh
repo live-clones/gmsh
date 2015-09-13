@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+appname=Onelab
+if [ $# -eq 1 ] ; then
+  appname=${1}
+  echo "Rebranding Onelab app as ${appname}"
+fi
+
 gmsh_svn="${HOME}/src/gmsh"
 getdp_svn="${HOME}/src/getdp"
 frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_android"
@@ -72,15 +78,13 @@ check
 # Potentially modify source tree for alternate branding
 cd Onelab
 if [ $# -eq 1 ] ; then
-  packagename=${1,,}
-  appname=$1
   # change package name
-  mv src/org/geuz/onelab/ src/org/geuz/$packagename
+  mv src/org/geuz/onelab/ src/org/geuz/$appname
   mkdir src/org/geuz/onelab
-  mv src/org/geuz/$packagename/Gmsh.java src/org/geuz/onelab
-  find . -type f -name '*.java' -not -name 'Gmsh.java' -exec sed -i "s/org\.geuz\.onelab/org\.geuz\.$packagename/g" {} \;
-  sed -i "s/org\.geuz\.onelab/org\.geuz\.$packagename/g" AndroidManifest.xml
-  grep -r -m 1 'Gmsh' src | cut -d ':' -f 1 | xargs -n 1 sed -i "s/org\.geuz\.$packagename;/org\.geuz\.$packagename;\n\nimport org.geuz.onelab.Gmsh;/"
+  mv src/org/geuz/$appname/Gmsh.java src/org/geuz/onelab
+  find . -type f -name '*.java' -not -name 'Gmsh.java' -exec sed -i "s/org\.geuz\.onelab/org\.geuz\.$appname/g" {} \;
+  sed -i "s/org\.geuz\.onelab/org\.geuz\.$appname/g" AndroidManifest.xml
+  grep -r -m 1 'Gmsh' src | cut -d ':' -f 1 | xargs -n 1 sed -i "s/org\.geuz\.$appname;/org\.geuz\.$appname;\n\nimport org.geuz.onelab.Gmsh;/"
   # change app name
   sed -i "s/<string name=\"app_name\">Onelab<\/string>/<string name=\"app_name\">$appname<\/string>/" res/values/strings.xml
 fi
