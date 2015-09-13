@@ -1,5 +1,11 @@
 #/usr/bin/env bash
 
+appname=Onelab
+if [ $# -eq 1 ] ; then
+  appname=${1}
+  echo "Rebranding Onelab app as ${appname}"
+fi
+
 gmsh_svn="${HOME}/src/gmsh/"
 getdp_svn="${HOME}/src/getdp/"
 frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_ios/"
@@ -75,13 +81,10 @@ cd $frameworks_dir/GetDP.framework/Headers
 cp $getdp_svn/build_ios_armv7/Headers/getdp/* .
 
 # create xcode project
-mkdir $gmsh_svn/contrib/mobile/build_ios
-cd $gmsh_svn/contrib/mobile/build_ios
-cmake -DCMAKE_INCLUDE_PATH="$frameworks_dir;$getdp_svn" ..
+mkdir $gmsh_svn/contrib/mobile/build_ios_${appname}
+cd $gmsh_svn/contrib/mobile/build_ios_${appname}
+cmake -DCMAKE_INCLUDE_PATH="$frameworks_dir;$getdp_svn" -DAPPNAME:STRING=${appname} ..
 make xcodeProject
-
-# Potentially modify source tree for alternate branding
-
 
 #TODO
 #xcodebuild -project "Onelab" -target "Onelab" -configuration Release
