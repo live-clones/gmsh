@@ -13,10 +13,16 @@ if(APPNAME)
 else(APPNAME)
   set(APPNAME Onelab)
 endif(APPNAME)
-  
+
 # find all benchmarks who provide infos.xml
-find_path(BENCHMARKSDIR benchmarks/)
-file(GLOB BENCHMARKSDIR ${BENCHMARKSDIR}/benchmarks/*)
+if("${APPNAME}" STREQUAL "BBEMG")
+  find_path(BENCHMARKSDIR benchmarks_private/)
+  file(GLOB BENCHMARKSDIR ${BENCHMARKSDIR}/benchmarks_private/bbemg*)
+else("${APPNAME}" STREQUAL "BBEMG")
+  find_path(BENCHMARKSDIR benchmarks/)
+  file(GLOB BENCHMARKSDIR ${BENCHMARKSDIR}/benchmarks/*)
+endif("${APPNAME}" STREQUAL "BBEMG")
+
 foreach(SUBDIR ${BENCHMARKSDIR})
   if(IS_DIRECTORY ${SUBDIR})
     file(GLOB INFOSFILE ${SUBDIR}/infos.xml)
@@ -117,13 +123,20 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     endforeach(IMG)
   endforeach(DIR)
 
-  # if(APPNAME NOT EQUAL Onelab)
-  #  add custom command in target xcodeProject that:
-  #   modifies project.pbxproj
-  #   modifies ipad/iphone story board
-  #    using sed
-  #   copies new image assets
-  # endif()
+  if("${APPNAME}" STREQUAL "BBEMG")
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
+      sed -e \"s|Onelab|BBEMG|\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG.xcodeproj/project.pbxproj")
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
+      sed -e \"s|Images.xcassets|ImagesBBEMG.xcassets|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG.xcodeproj/project.pbxproj")
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
+      sed -e \"s|ONELAB|BBEMG|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/en.lproj/iPhoneiPodStoryboard.storyboard")
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
+      sed -e \"s|ONELAB|BBEMG|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/en.lproj/iPadStoryboard.storyboard")
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
+      sed -e \"s|Onelab/Mobile|BBEMG|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/AboutViewController.mm")
+    add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
+      sed -e \"s|onelab.info|www.bbemg.be|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/AboutViewController.mm")
+  endif("${APPNAME}" STREQUAL "BBEMG")
   
   message(STATUS "")
   message(STATUS "${APPNAME} for iOS successfully configured:")
