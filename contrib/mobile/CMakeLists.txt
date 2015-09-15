@@ -127,7 +127,7 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
       sed -e \"s|Onelab|BBEMG|\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG.xcodeproj/project.pbxproj")
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
-      sed -e \"s|Images.xcassets|ImagesBBEMG.xcassets|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG.xcodeproj/project.pbxproj")
+      sed -e \"s|Images.xcassets|Images_BBEMG.xcassets|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG.xcodeproj/project.pbxproj")
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
       sed -e \"s|ONELAB|BBEMG|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/en.lproj/iPhoneiPodStoryboard.storyboard")
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
