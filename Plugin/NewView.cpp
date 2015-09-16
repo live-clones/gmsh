@@ -7,13 +7,13 @@
 //   Ruth Sabariego  & Francois Henrotte
 //
 
-
 #include "NewView.h"
 #include "GModel.h"
 #include "MElement.h"
 
 StringXNumber NewViewOptions_Number[] = {
-  {GMSH_FULLRC, "View", NULL, -1.}
+  {GMSH_FULLRC, "View", NULL, -1.},
+  {GMSH_FULLRC, "Number of zero values", NULL, 1.}
 };
 
 extern "C"
@@ -26,7 +26,9 @@ extern "C"
 
 std::string GMSH_NewViewPlugin::getHelp() const
 {
-  return "Plugin(NewView) creates a new view from a mesh." ;
+  return "Plugin(NewView) creates a new view from a mesh."
+    "The parameter is the dimension of the NodeData vector,"
+    "initialized to zero";
 }
 
 int GMSH_NewViewPlugin::getNbOptions() const
@@ -45,13 +47,15 @@ PView *GMSH_NewViewPlugin::execute(PView * v)
     Msg::Error("No mesh available to create the view: please mesh your model!");
     return v ;
   }
+  int nbrValues = (int)NewViewOptions_Number[1].def;
+
   std::map<int, std::vector<double> > d;
   std::vector<GEntity*> entities;
   GModel::current()->getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++){
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
       MVertex *ve = entities[i]->mesh_vertices[j];
-      d[ve->getNum()].push_back(0.);
+      d[ve->getNum()].resize(nbrValues);
     }
   }
 
