@@ -3,7 +3,7 @@
 icon_source=../../../utils/icons/gmsh_mobile_master.png
 launch_source=../../../utils/icons/gmsh_mobile_master.png
 
-icon_source=../../../utils/icons/bbemg-logo-twitter-300.png
+icon_source=../../../utils/icons/bbemg-logo-twitter-white.png
 launch_source=../../../utils/icons/bbemg-logo-color-rgb.png
 
 mkdir -p AppIcon.appiconset
