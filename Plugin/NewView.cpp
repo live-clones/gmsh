@@ -13,7 +13,7 @@
 
 StringXNumber NewViewOptions_Number[] = {
   {GMSH_FULLRC, "View", NULL, -1.},
-  {GMSH_FULLRC, "Number of zero values", NULL, 1.}
+  {GMSH_FULLRC, "Dimension", NULL, 1.}
 };
 
 extern "C"
@@ -27,8 +27,8 @@ extern "C"
 std::string GMSH_NewViewPlugin::getHelp() const
 {
   return "Plugin(NewView) creates a new view from a mesh."
-    "The parameter is the dimension of the NodeData vector,"
-    "initialized to zero";
+    "The parameter `Dimension' gives the dimension"
+    "of the initialized to zero NodeData vector";
 }
 
 int GMSH_NewViewPlugin::getNbOptions() const
