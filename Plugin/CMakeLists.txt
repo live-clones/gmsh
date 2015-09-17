@@ -16,7 +16,7 @@ set(SRC
   Triangulate.cpp Tetrahedralize.cpp
   Warp.cpp SphericalRaise.cpp
   Skin.cpp
-  MathEval.cpp ModifyComponent.cpp ExtractElements.cpp
+  MathEval.cpp ModifyComponents.cpp ExtractElements.cpp
   MakeSimplex.cpp
   Integrate.cpp Gradient.cpp Curl.cpp Divergence.cpp
   Annotate.cpp Remove.cpp

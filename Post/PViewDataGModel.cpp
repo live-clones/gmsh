@@ -127,8 +127,7 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
   if(!haveInterpolationMatrices()){
 
     GModel *model = _steps[0]->getModel();
-    
-    // michel.rasquin@cenaero.be:
+
     // Required for ParaView plugin linked to GMSH as external library.
     setInterpolationSchemeName(interpolationScheme);
 
@@ -184,7 +183,7 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
       if(!haveInterpolationMatrices(types[i])){
         MElement *e = _getOneElementOfGivenType(model, types[i]);
         if(e){
-          
+
           const polynomialBasis *fs = dynamic_cast<const polynomialBasis*> (e->getFunctionSpace());
           if(fs){
             if(e->getPolynomialOrder() > 1){

@@ -6,12 +6,11 @@
 #include <vector>
 #include <algorithm>
 #include "GmshConfig.h"
-#include "ModifyComponent.h"
+#include "ModifyComponents.h"
 #include "OctreePost.h"
 #include "mathEvaluator.h"
 
-StringXNumber ModifyComponentOptions_Number[] = {
-  {GMSH_FULLRC, "Component", NULL, -1.},
+StringXNumber ModifyComponentsOptions_Number[] = {
   {GMSH_FULLRC, "TimeStep", NULL, -1.},
   {GMSH_FULLRC, "View", NULL, -1.},
   {GMSH_FULLRC, "OtherTimeStep", NULL, -1.},
@@ -19,8 +18,8 @@ StringXNumber ModifyComponentOptions_Number[] = {
   {GMSH_FULLRC, "ForceInterpolation", NULL, 0.}
 };
 
-StringXString ModifyComponentOptions_String[] = {
-  {GMSH_FULLRC, "Expression", NULL, "v0 * Sin(x)"},
+StringXString ModifyComponentsOptions_String[] = {
+  {GMSH_FULLRC, "Expression0", NULL, "v0 * Sin(x)"},
   {GMSH_FULLRC, "Expression1", NULL, ""},
   {GMSH_FULLRC, "Expression2", NULL, ""},
   {GMSH_FULLRC, "Expression3", NULL, ""},
@@ -33,87 +32,72 @@ StringXString ModifyComponentOptions_String[] = {
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterModifyComponentPlugin()
+  GMSH_Plugin *GMSH_RegisterModifyComponentsPlugin()
   {
-    return new GMSH_ModifyComponentPlugin();
+    return new GMSH_ModifyComponentsPlugin();
   }
 }
 
-std::string GMSH_ModifyComponentPlugin::getHelp() const
+std::string GMSH_ModifyComponentsPlugin::getHelp() const
 {
-  return "Plugin(ModifyComponent) sets the `Component'-th "
-    "component of the `TimeStep'-th time step in the "
-    "view `View' to the expression `Expression'.\n\n"
-    "`Expression' can contain:\n\n"
+  return "Plugin(ModifyComponents) modifies the components of "
+    "the `TimeStep'-th time step in the view `View', using the "
+    "expressions provided in `Expression0', ..., `Expression8'. "
+    "If an expression is empty, the corresponding component in "
+    "the view is not modified.\n\n"
+    "The expressions can contain:\n\n"
     "- the usual mathematical functions (Log, Sqrt, "
     "Sin, Cos, Fabs, ...) and operators (+, -, *, /, ^);\n\n"
-    "If only `Expression' is given (and `Expression1', "
-    "..., `Expression8' are all empty), the plugin "
-    "creates a scalar view. If `Expression', `Expression1' "
-    "and/or `Expression2' are given (and `Expression3', "
-    "..., `Expression8' are all empty) the plugin creates "
-    "a vector view. Otherwise the plugin creates a tensor "
-    "view.\n\n"
     "- the symbols x, y and z, to retrieve the "
     "coordinates of the current node;\n\n"
     "- the symbols Time and TimeStep, to retrieve the "
     "current time and time step values;\n\n"
-    "- the symbol v, to retrieve the `Component'-th "
-    "component of the field in `View' at the "
-    "`TimeStep'-th time step;\n\n"
     "- the symbols v0, v1, v2, ..., v8, to retrieve each "
     "component of the field in `View' at the "
     "`TimeStep'-th time step;\n\n"
-    "- the symbol w, to retrieve the `Component'-th "
+    "- the symbols w0, w1, w2, ..., w8, to retrieve each "
     "component of the field in `OtherView' at the "
     "`OtherTimeStep'-th time step. If `OtherView' "
     "and `View' are based on different spatial grids, "
     "or if their data types are different, `OtherView' "
-    "is interpolated onto `View';\n\n"
-    "- the symbols w0, w1, w2, ..., w8, to retrieve each "
-    "component of the field in `OtherView' at the "
-    "`OtherTimeStep'-th time step.\n\n"
+    "is interpolated onto `View'.\n\n"
     "If `TimeStep' < 0, the plugin automatically loops "
     "over all the time steps in `View' and evaluates "
-    "`Expression' for each one.\n\n"
+    "the expressions for each one.\n\n"
     "If `OtherTimeStep' < 0, the plugin uses `TimeStep' "
     "instead.\n\n"
-    "If `Component' < 0, the plugin automatically  ops\n"
-    "over all the components in the view and "
-    "evaluates `Expression' for each one.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
     "If `OtherView' < 0, the plugin uses `View' instead.\n\n"
-    "Plugin(ModifyComponent) is executed in-place.";
+    "Plugin(ModifyComponents) is executed in-place.";
 }
 
-int GMSH_ModifyComponentPlugin::getNbOptions() const
+int GMSH_ModifyComponentsPlugin::getNbOptions() const
 {
-  return sizeof(ModifyComponentOptions_Number) / sizeof(StringXNumber);
+  return sizeof(ModifyComponentsOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_ModifyComponentPlugin::getOption(int iopt)
+StringXNumber *GMSH_ModifyComponentsPlugin::getOption(int iopt)
 {
-  return &ModifyComponentOptions_Number[iopt];
+  return &ModifyComponentsOptions_Number[iopt];
 }
 
-int GMSH_ModifyComponentPlugin::getNbOptionsStr() const
+int GMSH_ModifyComponentsPlugin::getNbOptionsStr() const
 {
-  return sizeof(ModifyComponentOptions_String) / sizeof(StringXString);
+  return sizeof(ModifyComponentsOptions_String) / sizeof(StringXString);
 }
 
-StringXString *GMSH_ModifyComponentPlugin::getOptionStr(int iopt)
+StringXString *GMSH_ModifyComponentsPlugin::getOptionStr(int iopt)
 {
-  return &ModifyComponentOptions_String[iopt];
+  return &ModifyComponentsOptions_String[iopt];
 }
 
-PView *GMSH_ModifyComponentPlugin::execute(PView *view)
+PView *GMSH_ModifyComponentsPlugin::execute(PView *view)
 {
-  int component = (int)ModifyComponentOptions_Number[0].def;
-  int timeStep = (int)ModifyComponentOptions_Number[1].def;
-  int iView = (int)ModifyComponentOptions_Number[2].def;
-  int otherTimeStep = (int)ModifyComponentOptions_Number[3].def;
-  int otherView = (int)ModifyComponentOptions_Number[4].def;
-  int forceInterpolation = (int)ModifyComponentOptions_Number[5].def;
+  int timeStep = (int)ModifyComponentsOptions_Number[0].def;
+  int iView = (int)ModifyComponentsOptions_Number[1].def;
+  int otherTimeStep = (int)ModifyComponentsOptions_Number[2].def;
+  int otherView = (int)ModifyComponentsOptions_Number[3].def;
+  int forceInterpolation = (int)ModifyComponentsOptions_Number[4].def;
 
   PView *v1 = getView(iView, view);
   if(!v1) return view;
@@ -147,35 +131,25 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
     otherTimeStep = 0;
   }
 
-  std::vector<std::string> expressions(9);
-  for(int i = 0; i < 9; i++) expressions[i] = ModifyComponentOptions_String[i].def;
-  int numComp3;
-  if(expressions[3].size() || expressions[4].size() || expressions[5].size() ||
-     expressions[6].size() || expressions[7].size() || expressions[8].size()){
-    numComp3 = 9;
-    for(int i = 0; i < 9; i++)
-      if(expressions[i].empty()) expressions[i] = "0";
+  std::vector<std::string> expressions(9), expressions0(9);
+  for(int i = 0; i < 9; i++){
+    expressions[i] = ModifyComponentsOptions_String[i].def;
+    if(expressions[i].size())
+      expressions0[i] = expressions[i];
+    else
+      expressions0[i] = "0.";
   }
-  else if(expressions[1].size() || expressions[2].size()){
-    numComp3 = 3;
-    for(int i = 0; i < 3; i++)
-      if(expressions[i].empty()) expressions[i] = "0";
-  }
-  else{
-    numComp3 = 1;
-  }
-  expressions.resize(numComp3);
 
   const char *names[] =
     {"x", "y", "z", "Time", "TimeStep",
-     "v", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
-     "w", "w0", "w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8"};
+     "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
+     "w0", "w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8"};
   unsigned int numVariables = sizeof(names) / sizeof(names[0]);
   std::vector<std::string> variables(numVariables);
   for(unsigned int i = 0; i < numVariables; i++) variables[i] = names[i];
-  mathEvaluator f(expressions, variables);
-  if(expressions.empty()) return view;
-  std::vector<double> values(numVariables), res(numComp3);
+  mathEvaluator f(expressions0, variables);
+
+  std::vector<double> values(numVariables), res(9);
 
   OctreePost *octree = 0;
   if(forceInterpolation ||
@@ -227,22 +201,22 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
                 octree->searchTensor(x[nod], y[nod], z[nod], &w[0], step2,
                                      0, qn, &x[0], &y[0], &z[0]);
           }
-          else
+          else{
             for(int comp = 0; comp < numComp2; comp++)
               data2->getValue(step2, ent, ele, nod, comp, w[comp]);
-          for(int comp = 0; comp < numComp; comp++){
-            if(component >= 0 && component != comp) continue;
-            values[0] = x[nod]; values[1] = y[nod]; values[2] = z[nod];
-            values[3] = time; values[4] = step;
-            values[5] = v[comp];
-            for(int i = 0; i < 9; i++) values[6 + i] = v[i];
-            values[15] = w[comp];
-            for(int i = 0; i < 9; i++) values[16 + i] = w[i];
-            if(f.eval(values, res))
-	      for(int comp = 0; comp < numComp3; comp++)
-                data1->setValue(step, ent, ele, nod, comp, res[comp]);
-            if(data1->isNodeData()) data1->tagNode(step, ent, ele, nod, 1);
           }
+          values[0] = x[nod]; values[1] = y[nod]; values[2] = z[nod];
+          values[3] = time; values[4] = step;
+          for(int i = 0; i < 9; i++) values[5 + i] = v[i];
+          for(int i = 0; i < 9; i++) values[14 + i] = w[i];
+          if(f.eval(values, res)){
+            for(int comp = 0; comp < numComp; comp++){
+              if(expressions[comp].size()){
+                data1->setValue(step, ent, ele, nod, comp, res[comp]);
+              }
+            }
+          }
+          if(data1->isNodeData()) data1->tagNode(step, ent, ele, nod, 1);
         }
       }
     }

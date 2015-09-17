@@ -48,7 +48,7 @@
 #include "Eigenvectors.h"
 #include "Eigenvalues.h"
 #include "Lambda2.h"
-#include "ModifyComponent.h"
+#include "ModifyComponents.h"
 #include "Probe.h"
 #include "HomologyComputation.h"
 #include "HomologyPostProcessing.h"
@@ -191,7 +191,7 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CurvedBndDist", GMSH_RegisterCurvedBndDistPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
-                      ("ModifyComponent", GMSH_RegisterModifyComponentPlugin()));
+                      ("ModifyComponents", GMSH_RegisterModifyComponentsPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("ExtractElements", GMSH_RegisterExtractElementsPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>

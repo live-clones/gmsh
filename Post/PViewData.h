@@ -198,15 +198,15 @@ class PViewData {
 
   // initialize/destroy adaptive data
   void initAdaptiveData(int step, int level, double tol);
-  
-  // michel.rasquin@cenaero.be:
-  // Routines for 
-  // - export of adapted views to pvtu file format for parallel visualization with paraview,
+
+  // Routines for
+  // - export of adapted views to pvtu file format for parallel visualization
+  //   with paraview,
   // - and/or generation of VTK data structure for ParaView plugin.
   void initAdaptiveDataLight(int step, int level, double tol);
-  void saveAdaptedViewForVTK(const std::string &guifileName, int useDefaultName, 
+  void saveAdaptedViewForVTK(const std::string &guifileName, int useDefaultName,
                              int step, int level, double tol, int npart, bool isBinary);
-  
+
   void destroyAdaptiveData();
 
   // return the adaptive data

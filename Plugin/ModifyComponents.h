@@ -10,23 +10,23 @@
 
 extern "C"
 {
-  GMSH_Plugin *GMSH_RegisterModifyComponentPlugin();
+  GMSH_Plugin *GMSH_RegisterModifyComponentsPlugin();
 }
 
-class GMSH_ModifyComponentPlugin : public GMSH_PostPlugin
+class GMSH_ModifyComponentsPlugin : public GMSH_PostPlugin
 {
  public:
-  GMSH_ModifyComponentPlugin(){}
-  std::string getName() const { return "ModifyComponent"; }
+  GMSH_ModifyComponentsPlugin(){}
+  std::string getName() const { return "ModifyComponents"; }
   std::string getShortHelp() const
   {
-    return "Modify a component using a mathematical expression";
+    return "Modify components in a view using mathematical expressions";
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber* getOption(int iopt);  
+  StringXNumber* getOption(int iopt);
   int getNbOptionsStr() const;
-  StringXString* getOptionStr(int iopt);  
+  StringXString* getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

@@ -13,7 +13,7 @@ frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_ios/"
 petsc_framework="$frameworks_dir/petsc.framework"
 slepc_framework="$frameworks_dir/slepc.framework"
 
-cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=$gmsh_svn/contrib/mobile/utils/iOS.cmake -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=Release -GXcode"
+cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=$gmsh_svn/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=OS -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=Release -GXcode"
 
 build_cmd="xcodebuild -verbose -target lib -configuration Release"
 headers_cmd="xcodebuild -verbose -target get_headers -configuration Release"
