@@ -127,6 +127,10 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
   if(!haveInterpolationMatrices()){
 
     GModel *model = _steps[0]->getModel();
+    
+    // michel.rasquin@cenaero.be:
+    // Required for ParaView plugin linked to GMSH as external library.
+    setInterpolationSchemeName(interpolationScheme);
 
     // if an interpolation scheme is explicitly provided, use it
     if(interpolationScheme.size()){

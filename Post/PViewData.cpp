@@ -41,6 +41,34 @@ void PViewData::initAdaptiveData(int step, int level, double tol)
   }
 }
 
+void PViewData::initAdaptiveDataLight(int step, int level, double tol)
+{
+  if(!_adaptive){
+    Msg::Info("Initializing adaptive data %p interp size=%d", this, _interpolation.size());
+    // michel.rasquin@cenaero.be:
+    // _outData in adaptive.h is only used for visualization of adapted views in the GMSH GUI.
+    // In some cases (export of adapted views under pvtu format, use of GMSH as external lib), 
+    // this object is not needed so avoid its allocation in order to limit memory consumption
+    bool outDataInit = false;
+    _adaptive = new adaptiveData(this,outDataInit);
+  }
+}
+
+void PViewData::saveAdaptedViewForVTK(const std::string &guifileName, int useDefaultName, 
+                                      int step, int level, double tol, int npart, bool isBinary)
+{
+  if(_adaptive) { 
+    // _adaptiveData has already been allocated from the adaptive view panel of the GUI for instance.
+    _adaptive->changeResolutionForVTK(step, level, tol, npart, isBinary, guifileName, useDefaultName);
+  }
+  else {    
+    initAdaptiveDataLight(step, level, tol);
+    _adaptive->changeResolutionForVTK(step, level, tol, npart, isBinary, guifileName, useDefaultName);
+    destroyAdaptiveData();
+  }
+}
+
+
 void PViewData::destroyAdaptiveData()
 {
   if(_adaptive) delete _adaptive;

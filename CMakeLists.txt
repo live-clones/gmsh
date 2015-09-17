@@ -143,7 +143,7 @@ set(GMSH_API
     Solver/thermicSolver.h
   Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h
   Post/PViewDataList.h Post/PViewDataGModel.h Post/PViewOptions.h Post/ColorTable.h
-   Numeric/nodalBasis.h
+   Numeric/nodalBasis.h Post/adaptiveData.h
   Graphics/drawContext.h
   contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h
     contrib/kbipack/gmp_blas.h contrib/kbipack/mpz.h

@@ -34,6 +34,7 @@ int GetFileFormatFromExtension(const std::string &ext)
   if     (ext == ".geo")  return FORMAT_GEO;
   else if(ext == ".msh")  return FORMAT_MSH;
   else if(ext == ".pos")  return FORMAT_POS;
+  else if(ext == ".pvtu") return FORMAT_PVTU;
   else if(ext == ".opt")  return FORMAT_OPT;
   else if(ext == ".unv")  return FORMAT_UNV;
   else if(ext == ".vtk")  return FORMAT_VTK;
@@ -91,6 +92,7 @@ std::string GetDefaultFileName(int format)
   case FORMAT_GEO:  name += ".geo_unrolled"; break;
   case FORMAT_MSH:  name += ".msh"; break;
   case FORMAT_POS:  name += ".pos"; break;
+  case FORMAT_PVTU:  name += ".pvtu"; break;
   case FORMAT_OPT:  name += ".opt"; break;
   case FORMAT_UNV:  name += ".unv"; break;
   case FORMAT_VTK:  name += ".vtk"; break;

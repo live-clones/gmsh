@@ -229,6 +229,20 @@ int GmshWriteFile(const std::string &fileName)
 
 int GmshFinalize()
 {
+  //michel.rasquin@cenaero.be:
+  // Cleaning routine critical for ParaView plugin,
+  // where GMSH can be called several time successively.
+  // For that purpose, static variables need to be cleared.
+  
+  // Clear all PViews 
+  PView::list.clear();  
+  
+  //  Clear all GModels
+  GModel::list.clear();
+  
+  // Clear files from CTX::instance()
+  CTX::instance()->files.clear(); 
+
   return 1;
 }
 

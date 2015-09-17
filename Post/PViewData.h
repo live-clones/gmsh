@@ -46,6 +46,8 @@ class PViewData {
   interpolationMatrices _interpolation;
   // global map of "named" interpolation matrices
   static std::map<std::string, interpolationMatrices> _interpolationSchemes;
+  // string for the name of the interpolation scheme
+  std::string _interpolationSchemeName;
 
  public:
   PViewData();
@@ -196,6 +198,15 @@ class PViewData {
 
   // initialize/destroy adaptive data
   void initAdaptiveData(int step, int level, double tol);
+  
+  // michel.rasquin@cenaero.be:
+  // Routines for 
+  // - export of adapted views to pvtu file format for parallel visualization with paraview,
+  // - and/or generation of VTK data structure for ParaView plugin.
+  void initAdaptiveDataLight(int step, int level, double tol);
+  void saveAdaptedViewForVTK(const std::string &guifileName, int useDefaultName, 
+                             int step, int level, double tol, int npart, bool isBinary);
+  
   void destroyAdaptiveData();
 
   // return the adaptive data
@@ -218,6 +229,9 @@ class PViewData {
   static void removeInterpolationScheme(const std::string &name);
   static void addMatrixToInterpolationScheme(const std::string &name, int type,
                                              fullMatrix<double> &mat);
+  static int getSizeInterpolationScheme() {return _interpolationSchemes.size();}
+  std::string getInterpolationSchemeName() {return _interpolationSchemeName;}
+  void setInterpolationSchemeName(std::string name) {_interpolationSchemeName = name;}
 
   // smooth the data in the view (makes it C0)
   virtual void smooth();

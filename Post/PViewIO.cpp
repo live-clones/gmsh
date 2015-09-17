@@ -14,6 +14,7 @@
 #include "StringUtils.h"
 #include "Context.h"
 #include "OS.h"
+#include "adaptiveData.h"
 
 bool PView::readPOS(const std::string &fileName, int fileIndex)
 {
@@ -331,5 +332,12 @@ bool PView::write(const std::string &fileName, int format, bool append)
   return ret;
 }
 
-
-
+// michel.rasquin@cenaero.be:
+// Routines for export of adapted views to pvtu file format for parallel visualization with paraview.
+bool PView::writeAdapt(const std::string &guifileName, int useDefaultName, bool isBinary,
+                       int adaptLev, double adaptErr, int npart, bool append)
+{
+  Msg::StatusBar(true, "Writing '%s'...", guifileName.c_str());
+  _data->saveAdaptedViewForVTK(guifileName, useDefaultName, _options->timeStep, adaptLev, adaptErr, npart, isBinary);
+  return true;
+}

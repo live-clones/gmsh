@@ -318,6 +318,7 @@ static int _save_svg(const char *name){ return gl2psFileDialog
 static int _save_yuv(const char *name){ return genericBitmapFileDialog
     (name, "YUV Options", FORMAT_YUV); }
 static int _save_view_pos(const char *name){ return posFileDialog(name); }
+static int _save_view_adapt_pvtu(const char *name){ return pvtuAdaptFileDialog(name); }
 static int _save_view_med(const char *name){ return genericViewFileDialog
     (name, "MED Options", 6); }
 static int _save_view_txt(const char *name){ return genericViewFileDialog
@@ -330,6 +331,7 @@ static int _save_auto(const char *name)
   switch(GuessFileFormatFromFileName(name)){
   case FORMAT_MSH  : return _save_msh(name);
   case FORMAT_POS  : return _save_view_pos(name);
+  case FORMAT_PVTU : return _save_view_adapt_pvtu(name);
   case FORMAT_TXT  : return _save_view_txt(name);
   case FORMAT_OPT  : return _save_options(name);
   case FORMAT_GEO  : return _save_geo(name);
@@ -413,6 +415,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
 #endif
     {"Post-processing - Generic TXT" TT "*.txt", _save_view_txt},
     {"Post-processing - Mesh Statistics" TT "*.pos", _save_mesh_stat},
+    {"Post-processing - Adapted data" TT "*.pvtu", _save_view_adapt_pvtu},
     {"Image - Encapsulated PostScript" TT "*.eps", _save_eps},
     {"Image - GIF" TT "*.gif", _save_gif},
 #if defined(HAVE_LIBJPEG)

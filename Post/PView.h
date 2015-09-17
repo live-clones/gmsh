@@ -129,6 +129,11 @@ class PView{
   static bool writeX3D(const std::string &fileName );
   // IO write routine
   bool write(const std::string &fileName, int format, bool append=false);
+  
+  // michel.rasquin@cenaero.be:
+  // Routines for export of adapted views to pvtu file format for parallel visualization with paraview
+  bool writeAdapt(const std::string &fileName, int useDefaultName, bool isBinary, 
+                  int adaptLev, double adaptErr, int npart, bool append=false);
 
   // vertex arrays to draw the elements efficiently
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;

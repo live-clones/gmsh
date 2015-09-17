@@ -11,11 +11,31 @@
 #include <vector>
 #include <cstdlib>
 #include <algorithm>
+#include <sys/stat.h>
+#include <assert.h>
+#include <fstream>
+#include <stdio.h>
+#include <string>
+#include <sstream>
 #include "fullMatrix.h"
+
+
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+typedef std::vector<int> vectInt;
 
 class PViewData;
 class PViewDataList;
 class GMSH_PostPlugin;
+
+// For old compilers that do not support yet std::to_string()
+template <class T>
+std::string ToString(const T& val)
+{
+  std::stringstream stream;
+  stream << val;
+  return stream.str();
+}
 
 class adaptiveVertex {
  public:
@@ -36,6 +56,23 @@ class adaptiveVertex {
     if(other.z < z) return true;
     return false;
   }
+};
+
+template <class T>
+class nodMap {
+public:
+  std::vector<int> mapping;
+  
+public:
+  void cleanMapping()
+  { 
+    mapping.clear(); 
+  }
+  ~nodMap()
+  { 
+    cleanMapping();
+  }
+  int getSize() {return (int) mapping.size();}
 };
 
 class adaptivePoint {
@@ -352,22 +389,209 @@ class PCoords {
 
 class PValues{
  public:
-  double v[9];
+  short int sizev; //acceptable values: 1 (scalar), 3 (vector), 9 (tensor)
+  double *v;
+  PValues(const PValues& obj) {
+    sizev = obj.sizev;
+    v = new double[sizev];
+    for(int i=0;i<sizev;i++) {
+      v[i] = obj.v[i];
+    }
+  }
+  PValues(int size)
+  {
+    sizev = size;
+    v = new double[sizev];
+    for(int i=0;i<sizev;i++) {
+      v[i] = 0.0;
+    }
+  }
   PValues(double vx)
   {
+    sizev = 1;
+    v = new double[sizev];
     v[0] = vx;
   }
   PValues(double vx, double vy, double vz)
   {
+    sizev = 3;
+    v = new double[sizev];
     v[0] = vx; v[1] = vy; v[2] = vz;
   }
   PValues(double vxx, double vxy, double vxz,
           double vyx, double vyy, double vyz,
           double vzx, double vzy, double vzz)
   {
+    sizev = 9;
+    v = new double[sizev];
     v[0] = vxx; v[1] = vxy; v[2] = vxz;
     v[3] = vyx; v[4] = vyy; v[5] = vyz;
     v[6] = vzx; v[7] = vzy; v[8] = vzz;
+  }
+  ~PValues() {
+    delete[] v;
+  }
+  void operator = (const PValues& obj) {
+    // Assume PValues object has already been generated 
+    // and v allocated when the operator = is called
+    if(sizev != obj.sizev) Msg::Error("In PValues overlodaing operator: size mistmatch %d %d",sizev);
+    for(int i=0;i<sizev;i++) {
+      v[i] = obj.v[i];
+    }
+  }
+};
+
+class globalVTKData {
+ public:
+  
+  static std::vector<vectInt> vtkGlobalConnectivity; // conectivity (vector of vector)
+  static std::vector<int> vtkGlobalCellType; // topology
+  static std::vector<PCoords> vtkGlobalCoords; // coordinates
+  static std::vector<PValues> vtkGlobalValues; // nodal values (either scalar or vector)
+
+  globalVTKData();
+  
+  static void clearGlobalConnectivity() {
+    for(std::vector<vectInt>::iterator it = vtkGlobalConnectivity.begin();it != vtkGlobalConnectivity.end(); ++it) {
+      it->clear();
+    }
+    vtkGlobalConnectivity.clear();
+  }
+  
+  static void clearGlobalCellType() {
+    vtkGlobalCellType.clear();
+  }  
+  
+  static void clearGlobalCoords() {
+    vtkGlobalCoords.clear();
+  } 
+  
+  static void clearGlobalValues() {
+    vtkGlobalValues.clear();
+  } 
+  
+  static void clearGlobalData() {     
+    clearGlobalConnectivity();
+    clearGlobalCellType();
+    clearGlobalCoords();
+    clearGlobalValues();
+  }
+  
+  ~globalVTKData() {
+    clearGlobalData();
+  }
+  
+};
+
+class VTKData {
+ public:
+  // Data container to write output files readable for ParaView
+  // vtk legacy and vtu for now
+  std::string vtkFieldName;
+  std::string vtkFileName;
+  std::string vtkFormat;
+  std::string vtkDirName;
+  
+  int vtkStep;
+  int vtkLevel;
+  int vtkNumComp;
+  double vtkTol;
+  int vtkNpart;
+  
+  bool vtkIsBinary;
+  int vtkUseDefaultName;
+  int minElmPerPart, maxElmPerPart, numPartMinElm, numPartMaxElm;
+
+  // File variables
+  FILE *vtkFile;
+  FILE *vtkFileCoord;
+  FILE *vtkFileConnect;
+  FILE *vtkFileCellOffset;
+  FILE *vtkFileCellType;
+  FILE *vtkFileNodVal;
+  int vtkCountFile;
+  
+  int vtkTotNumElmLev0;
+  int vtkCountTotElmLev0;
+  int vtkCountTotNod;
+  int vtkCountTotElm;  
+  int vtkCountCoord;
+  int vtkCountTotNodConnect;
+  int vtkCountTotVal;
+  int vtkCountCellOffset; //used only for ascii output
+  int vtkCountCellType;  //used only for ascii output
+  
+  std::vector<vectInt> vtkLocalConnectivity; // conectivity (vector of vector)
+  std::vector<int> vtkLocalCellType; // topology
+  std::vector<PCoords> vtkLocalCoords; // coordinates
+  std::vector<PValues> vtkLocalValues; // nodal values (either scalar or vector)
+
+
+public:
+  VTKData(std::string fieldName="unknown", int numComp = -1, int step = -1, int level = -1, double tol=0.0,
+          std::string filename="unknown", int useDefaultName = 1, int npart = -1, bool isBinary = true) {
+    
+    vtkIsBinary = isBinary;                    // choice: true, false
+    vtkFormat = std::string("vtu");      // choice: vtk (VTK legacy), vtu (XML appended)     
+    
+    vtkFieldName = fieldName;
+    vtkFileName = filename;
+    vtkUseDefaultName = useDefaultName;
+    vtkNumComp = numComp;
+    vtkStep = step;
+    vtkLevel = level;
+    vtkTol = tol;
+    vtkNpart = npart;
+    
+    vtkCountFile = 0;
+    vtkTotNumElmLev0 = 0;
+    vtkCountTotElmLev0 = 0;
+    vtkCountTotNod = 0;
+    vtkCountTotElm = 0;  
+    vtkCountCoord = 0;
+    vtkCountTotNodConnect = 0;
+    vtkCountTotVal = 0;
+    vtkCountCellOffset = 0; //used only for ascii output
+    vtkCountCellType = 0;
+  }
+  
+  void clearLocalData()
+  {
+    for(std::vector<vectInt>::iterator it = vtkLocalConnectivity.begin();it != vtkLocalConnectivity.end(); ++it) {
+      it->clear();
+    }
+    vtkLocalConnectivity.clear();
+    vtkLocalCellType.clear();
+    vtkLocalCoords.clear();
+    vtkLocalValues.clear();
+  }
+  
+  ~VTKData()
+  {
+    clearLocalData();
+  }
+
+  void incrementTotNod(int increment) {vtkCountTotNod+=increment;}
+  void incrementTotElm(int increment) {vtkCountTotElm+=increment;}
+  void incrementTotElmLev0(int increment) {vtkCountTotElmLev0+=increment;}
+  
+  bool isLittleEndian();
+  void SwapArrayByteOrder(void* array, int nbytes, int nItems); // used only for VTK
+  int getPVCellType(int numEdges); 
+//   void writeParaViewData();
+  void writeVTKElmData();
+  void initVTKFile();
+  void finalizeVTKFile();
+  void setFileDistribution() {
+    int tmpmod = vtkTotNumElmLev0 % vtkNpart;
+    minElmPerPart = (vtkTotNumElmLev0-tmpmod)/vtkNpart;
+    numPartMinElm = vtkNpart - tmpmod;
+    
+    if(tmpmod == 0 ) maxElmPerPart = minElmPerPart;
+    else maxElmPerPart = minElmPerPart+1;
+    numPartMaxElm = tmpmod;
+    assert(vtkTotNumElmLev0 == minElmPerPart*numPartMinElm+maxElmPerPart*numPartMaxElm);
+    
   }
 };
 
@@ -393,6 +617,26 @@ class adaptiveElements {
   // switch to true on-the-fly local refinement in drawPost())
   void addInView(double tol, int step, PViewData *in, PViewDataList *out,
                  GMSH_PostPlugin *plug=0);
+  
+  // michel.rasquin@cenaero.be:
+  // Routines for 
+  // - export of adapted views to pvtu file format for parallel visualization with paraview,
+  // - and/or generation of VTK data structure for ParaView plugin.
+  
+  // Clone of adapt for VTK output files
+  void adaptForVTK(double tol, int numComp,
+                   std::vector<PCoords> &coords, std::vector<PValues> &values);
+  
+  // Clone of addInView for VTK output files
+  void addInViewForVTK(int step, PViewData *in, VTKData &myVTKData, 
+                       bool writeVtk=true, bool buildStaticData=false);
+  
+  int countElmLev0(int step, PViewData *in);
+  
+  // Build a mapping between all the nodes of the refined element 
+  // and the node of the canonical refined element in order to 
+  // generate a connectivity related to the canonical element
+  void buildMapping(nodMap<T> &myNodMap, double tol, int &numNodInsert);
 };
 
 class adaptiveData {
@@ -409,12 +653,32 @@ class adaptiveData {
   adaptiveElements<adaptiveHexahedron> *_hexahedra;
   adaptiveElements<adaptivePrism> *_prisms;
   adaptiveElements<adaptivePyramid> *_pyramids;
+
+  // When set to true, this builds a global VTK data structure (connectivity, coords, etc) for the adaptive views.
+  // This can be very memory consuming for high adaptation levels. Use with caution.
+  // Usefull  when GMSH is used as an external library to provide for instance a GMSH reader in a ParaView plugin.
+  // By default, set to false in the constructor.
+  bool buildStaticData;
+  
+  // This variable helps limit memory consumption (no global data structure) when GMSH is requested to 
+  // write the data structure of adapted view under pvtu format
+  // In this case, one adapted element is considered at a time so that it can generate 
+  // billions of adapted elements on a single core, as long as disk space allows it.
+  // This variable is set to true by default in the constructor.
+  bool writeVTK;
+  
  public:
   static double timerInit, timerAdapt;
-  adaptiveData(PViewData *data);
+  adaptiveData(PViewData *data, bool outDataInit=true);
   ~adaptiveData();
   PViewData *getData(){ return (PViewData*)_outData; }
   void changeResolution(int step, int level, double tol, GMSH_PostPlugin *plug=0);
+  int countTotElmLev0(int step, PViewData *in);
+  void changeResolutionForVTK(int step, int level, double tol, int npart = 1, bool isBinary = true, 
+                              const std::string &guifileName = "unknown", int useDefaultName = 1);
+  void upBuildStaticData(bool newValue) { buildStaticData = newValue; }
+  void upWriteVTK(bool newValue) { writeVTK = newValue; }
+  
 };
 
 #endif

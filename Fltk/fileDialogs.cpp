@@ -1414,6 +1414,168 @@ int posFileDialog(const char *name)
   return 0;
 }
 
+static void _saveAdaptedViews(const std::string &name, int useDefaultName, int which, bool isBinary, 
+                              int adaptLev, double adaptErr, int npart, bool canAppend)
+{
+  if(PView::list.empty()){
+    Msg::Error("No views to save");
+  }
+  else if(which == 0){
+    int iview = FlGui::instance()->options->view.index;
+    if(iview < 0 || iview >= (int)PView::list.size()){
+      Msg::Info("No or invalid current view: saving View[0]");
+      iview = 0;
+    }
+    PView::list[iview]->writeAdapt(name, useDefaultName, isBinary, adaptLev, adaptErr, npart);
+  }
+  else if(which == 1){
+    int numVisible = 0;
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(PView::list[i]->getOptions()->visible)
+        numVisible++;
+      if(!numVisible){
+        Msg::Error("No visible view");
+      }
+      else{
+        bool first = true;
+        for(unsigned int i = 0; i < PView::list.size(); i++){
+          if(PView::list[i]->getOptions()->visible){
+            std::string fileName = name;
+            if(!canAppend && numVisible > 1){
+              std::ostringstream os;
+              os << "_" << i;
+              fileName += os.str();
+            }
+            PView::list[i]->writeAdapt(fileName, useDefaultName, isBinary, adaptLev, adaptErr, 
+                                       npart, first ? false : canAppend);
+            first = false;
+          }
+        }
+      }
+  }
+  else{
+    for(unsigned int i = 0; i < PView::list.size(); i++){
+      std::string fileName = name;
+      if(!canAppend && PView::list.size() > 1){
+        std::ostringstream os;
+        os << "_" << i;
+        fileName += os.str();
+      }
+      PView::list[i]->writeAdapt(fileName, useDefaultName, isBinary, adaptLev, adaptErr, 
+                                 npart, i ? canAppend : false);
+    }
+  }
+}
+
+int pvtuAdaptFileDialog(const char *name)
+{
+  struct _pvtuAdaptFileDialog{
+    Fl_Window *window;
+    Fl_Choice *c[2];
+    Fl_Button *ok, *cancel, *push[2];
+    Fl_Value_Input *vi[3];
+    Fl_Check_Button *defautName;
+  };
+  static _pvtuAdaptFileDialog *dialog = NULL;
+  
+  static Fl_Menu_Item viewmenu[] = {
+    {"Current", 0, 0, 0},
+    {"Visible", 0, 0, 0},
+    {"All", 0, 0, 0},
+    {0}
+  };
+  static Fl_Menu_Item formatmenu[] = {
+    {"Binary", 0, 0, 0},
+    {"ASCII", 0, 0, 0},
+    {0}
+  };
+  
+  int BBB = BB + 9; // labels too long
+  
+  if(!dialog){
+    dialog = new _pvtuAdaptFileDialog;
+    int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    dialog->window = new Fl_Double_Window(2*w, 2.5*h, "Adaptive View Options"); //FIXME: dimensions of the window
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
+    dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "View(s)"); y += BH;
+    dialog->c[0]->menu(viewmenu);
+    dialog->c[0]->align(FL_ALIGN_RIGHT);
+    dialog->c[1] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format"); y += BH;
+    dialog->c[1]->menu(formatmenu);
+    dialog->c[1]->align(FL_ALIGN_RIGHT);
+    
+    dialog->vi[0] = new Fl_Value_Input(WB, y, BBB + BBB / 2, BH, "Adaptive recursion level"); y += BH;
+    dialog->vi[0]->align(FL_ALIGN_RIGHT);
+    dialog->vi[0]->minimum(0);
+    dialog->vi[0]->maximum(6);
+    dialog->vi[0]->step(1);
+    dialog->vi[0]->value(1);
+    dialog->vi[0]->when(FL_WHEN_RELEASE);
+   
+    dialog->vi[1] = new Fl_Value_Input(WB, y, BBB + BBB / 2, BH, "Target error"); y += BH;
+    dialog->vi[1]->align(FL_ALIGN_RIGHT);
+    dialog->vi[1]->minimum(-1.e-4);
+    dialog->vi[1]->maximum(0.1);
+    dialog->vi[1]->step(1.e-4);
+    dialog->vi[1]->value(-1.e-4);
+    dialog->vi[1]->when(FL_WHEN_RELEASE);
+    
+    dialog->vi[2] = new Fl_Value_Input(WB, y, BBB + BBB / 2, BH, "Number of viz parts"); y += BH;
+    dialog->vi[2]->align(FL_ALIGN_RIGHT);
+    dialog->vi[2]->minimum(1);
+    dialog->vi[2]->maximum(262144);
+    dialog->vi[2]->step(1);
+    dialog->vi[2]->value(4);
+    dialog->vi[2]->when(FL_WHEN_RELEASE);
+    
+    dialog->defautName = new Fl_Check_Button(WB, y, BBB + BBB / 2, BH, "Use default filename (recommended)"); y += BH;
+    dialog->defautName->value(1);
+    
+    
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+  
+  dialog->window->show();
+  
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+        bool isBinary;
+        switch(dialog->c[1]->value()){
+          case 0: isBinary = true; break;
+          case 1: isBinary = false; break;
+        }
+        
+        // Only one view can currently be saved at a time in a pvtu file set, with a repetition of the topology structure.
+        // Views/Fields can then be appended in ParaView using the AppendAttributes filter
+        // bool canAppend = (format == 2) ? true : false;
+        
+        int adaptLev = dialog->vi[0]->value();
+        double adaptErr = dialog->vi[1]->value();
+        int npart = dialog->vi[2]->value();
+        int useDefaultName = dialog->defautName->value();
+        bool canAppend = false; // Not yet implemented for VTK format here due to a tradeoff
+                                // to limit memory consumption for high levels of adaptation
+        _saveAdaptedViews(name, useDefaultName, dialog->c[0]->value(), isBinary, adaptLev, adaptErr, npart, canAppend);
+        dialog->window->hide();
+        return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+        dialog->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
 int genericViewFileDialog(const char *name, const char *title, int format)
 {
   struct _viewFileDialog{
