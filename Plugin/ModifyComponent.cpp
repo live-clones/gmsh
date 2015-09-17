@@ -20,7 +20,15 @@ StringXNumber ModifyComponentOptions_Number[] = {
 };
 
 StringXString ModifyComponentOptions_String[] = {
-  {GMSH_FULLRC, "Expression", NULL, "v0 * Sin(x)"}
+  {GMSH_FULLRC, "Expression", NULL, "v0 * Sin(x)"},
+  {GMSH_FULLRC, "Expression1", NULL, ""},
+  {GMSH_FULLRC, "Expression2", NULL, ""},
+  {GMSH_FULLRC, "Expression3", NULL, ""},
+  {GMSH_FULLRC, "Expression4", NULL, ""},
+  {GMSH_FULLRC, "Expression5", NULL, ""},
+  {GMSH_FULLRC, "Expression6", NULL, ""},
+  {GMSH_FULLRC, "Expression7", NULL, ""},
+  {GMSH_FULLRC, "Expression8", NULL, ""}
 };
 
 extern "C"
@@ -39,6 +47,13 @@ std::string GMSH_ModifyComponentPlugin::getHelp() const
     "`Expression' can contain:\n\n"
     "- the usual mathematical functions (Log, Sqrt, "
     "Sin, Cos, Fabs, ...) and operators (+, -, *, /, ^);\n\n"
+    "If only `Expression' is given (and `Expression1', "
+    "..., `Expression8' are all empty), the plugin "
+    "creates a scalar view. If `Expression', `Expression1' "
+    "and/or `Expression2' are given (and `Expression3', "
+    "..., `Expression8' are all empty) the plugin creates "
+    "a vector view. Otherwise the plugin creates a tensor "
+    "view.\n\n"
     "- the symbols x, y and z, to retrieve the "
     "coordinates of the current node;\n\n"
     "- the symbols Time and TimeStep, to retrieve the "
@@ -132,17 +147,35 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
     otherTimeStep = 0;
   }
 
+  std::vector<std::string> expressions(9);
+  for(int i = 0; i < 9; i++) expressions[i] = ModifyComponentOptions_String[i].def;
+  int numComp3;
+  if(expressions[3].size() || expressions[4].size() || expressions[5].size() ||
+     expressions[6].size() || expressions[7].size() || expressions[8].size()){
+    numComp3 = 9;
+    for(int i = 0; i < 9; i++)
+      if(expressions[i].empty()) expressions[i] = "0";
+  }
+  else if(expressions[1].size() || expressions[2].size()){
+    numComp3 = 3;
+    for(int i = 0; i < 3; i++)
+      if(expressions[i].empty()) expressions[i] = "0";
+  }
+  else{
+    numComp3 = 1;
+  }
+  expressions.resize(numComp3);
+
   const char *names[] =
     {"x", "y", "z", "Time", "TimeStep",
      "v", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8",
      "w", "w0", "w1", "w2", "w3", "w4", "w5", "w6", "w7", "w8"};
   unsigned int numVariables = sizeof(names) / sizeof(names[0]);
-  std::vector<std::string> expressions(1), variables(numVariables);
-  expressions[0] = ModifyComponentOptions_String[0].def;
+  std::vector<std::string> variables(numVariables);
   for(unsigned int i = 0; i < numVariables; i++) variables[i] = names[i];
   mathEvaluator f(expressions, variables);
   if(expressions.empty()) return view;
-  std::vector<double> values(numVariables), res(1);
+  std::vector<double> values(numVariables), res(numComp3);
 
   OctreePost *octree = 0;
   if(forceInterpolation ||
@@ -206,7 +239,8 @@ PView *GMSH_ModifyComponentPlugin::execute(PView *view)
             values[15] = w[comp];
             for(int i = 0; i < 9; i++) values[16 + i] = w[i];
             if(f.eval(values, res))
-              data1->setValue(step, ent, ele, nod, comp, res[0]);
+	      for(int comp = 0; comp < numComp3; comp++)
+                data1->setValue(step, ent, ele, nod, comp, res[comp]);
             if(data1->isNodeData()) data1->tagNode(step, ent, ele, nod, 1);
           }
         }
