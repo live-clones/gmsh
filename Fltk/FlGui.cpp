@@ -511,6 +511,10 @@ int FlGui::testGlobalShortcuts(int event)
     geometry_reload_cb(0, 0);
     status = 1;
   }
+  if(Fl::test_shortcut(FL_CTRL + '0') || Fl::test_shortcut(FL_META + '0')) {
+    onelab_reload_cb(0, 0);
+    status = 1;
+  }
   else if(Fl::test_shortcut('1') || Fl::test_shortcut(FL_F + 1)) {
     mesh_1d_cb(0, 0);
     status = 1;

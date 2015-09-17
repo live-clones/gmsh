@@ -76,7 +76,7 @@ make androidProject
 check
 
 # Potentially modify source tree for alternate branding
-cd Onelab
+cd Android
 if [ $# -eq 1 ] ; then
   # change package name
   mv src/org/geuz/onelab/ src/org/geuz/$appname
@@ -84,11 +84,10 @@ if [ $# -eq 1 ] ; then
   mv src/org/geuz/$appname/Gmsh.java src/org/geuz/onelab
   find . -type f -name '*.java' -not -name 'Gmsh.java' -exec sed -i "s/org\.geuz\.onelab/org\.geuz\.$appname/g" {} \;
   sed -i "s/org\.geuz\.onelab/org\.geuz\.$appname/g" AndroidManifest.xml
-  grep -r -m 1 'Gmsh' src | cut -d ':' -f 1 | xargs -n 1 sed -i "s/org\.geuz\.$appname;/org\.geuz\.$appname;\n\nimport org.geuz.onelab.Gmsh;/"
+  grep -r -m 1 'Gmsh' src | cut -d ':' -f 1 | xargs -n 1 sed -i "s/org\.geuz\.onelab;/org\.geuz\.$appname;\n\nimport org.geuz.onelab.Gmsh;/"
   # change app name
   sed -i "s/<string name=\"app_name\">Onelab<\/string>/<string name=\"app_name\">$appname<\/string>/" res/values/strings.xml
 fi
-
 
 # Onelab/Mobile package
 if [ ! -d "libs/armeabi-v7a/" ]; then mkdir -p libs/armeabi-v7a/; fi

@@ -99,6 +99,7 @@ void mod_post_cb(Fl_Widget *w, void *data);
 void mod_back_cb(Fl_Widget *w, void *data);
 void mod_forward_cb(Fl_Widget *w, void *data);
 void geometry_reload_cb(Fl_Widget *w, void *data);
+void onelab_reload_cb(Fl_Widget *w, void *data);
 void mesh_1d_cb(Fl_Widget *w, void *data);
 void mesh_2d_cb(Fl_Widget *w, void *data);
 void mesh_3d_cb(Fl_Widget *w, void *data);

@@ -324,7 +324,7 @@ static int _save_view_med(const char *name){ return genericViewFileDialog
 static int _save_view_txt(const char *name){ return genericViewFileDialog
     (name, "TXT Options", 4); }
 static int _save_view_wrl(const char *name){ return genericViewFileDialog
-    (name, "X3D Options", 7); } 
+    (name, "X3D Options", 7); }
 
 static int _save_auto(const char *name)
 {
@@ -568,7 +568,7 @@ static void geometry_edit_cb(Fl_Widget *w, void *data)
   SystemCall(ReplaceSubString("%s", file, prog));
 }
 
-void geometry_reload_cb(Fl_Widget *w, void *data)
+void onelab_reload_cb(Fl_Widget *w, void *data)
 {
   if(CTX::instance()->lock || FlGui::instance()->onelab->isBusy()) {
     Msg::Info("I'm busy! Ask me that later...");
@@ -582,6 +582,13 @@ void geometry_reload_cb(Fl_Widget *w, void *data)
   //OpenProject(fileName);
   onelab_cb(0, (void*)"reset"); // this will call OpenProject
 
+  drawContext::global()->draw();
+}
+
+void geometry_reload_cb(Fl_Widget *w, void *data)
+{
+  std::string fileName = GModel::current()->getFileName();
+  OpenProject(fileName);
   drawContext::global()->draw();
 }
 
