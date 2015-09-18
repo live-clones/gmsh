@@ -31,21 +31,14 @@
   if ((self = [super initWithCoder:coder])) {
     // Get the layer
     CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
-    int w = 320;
-    int h = 480;
-    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 3.2f) {
-      // There is no retina display above 3.2
-      UIScreen* mainscr = [UIScreen mainScreen];
-      w = mainscr.currentMode.size.width;
-      h = mainscr.currentMode.size.height;
-    }
-    if ((w == 640 && h == 960) ||
-        (h == 1136 && w == 640) ||
-        (h == 1536 && w == 2048)) {
-      // Retina display (iPhone or iPhone 4-inch or iPad/iPad mini)
+
+    // detect retina display
+    if ([[UIScreen mainScreen] respondsToSelector:@selector(displayLinkWithTarget:selector:)] &&
+        ([UIScreen mainScreen].scale == 2.0)) {
       self.contentScaleFactor = 2.0;
-      eaglLayer.contentsScale=2;
+      eaglLayer.contentsScale = 2;
     }
+
     eaglLayer.opaque = YES;
     eaglLayer.drawableProperties =
       [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:NO],
@@ -57,8 +50,8 @@
       //[self release];
       return nil;
     }
-    mContext = new drawContext((eaglLayer.contentsScale==2) ? 1.5 : 1,
-                               eaglLayer.contentsScale==2);
+    mContext = new drawContext((eaglLayer.contentsScale == 2) ? 1.5 : 1,
+                               eaglLayer.contentsScale == 2);
   }
   rendering = NO;
   return self;

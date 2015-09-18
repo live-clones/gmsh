@@ -5,14 +5,14 @@ if __name__ == '__main__':
   sys.path.insert(0, os.path.abspath('config'))
   import configure
   configure_options = [
-    '--CC=gcc',
-    '--CFLAGS=-m32 -DPETSC_BLASLAPACK_UNDERSCORE',
-    '--CXX=g++',
-    '--CXXFLAGS=-m32 -DPETSC_BLASLAPACK_UNDERSCORE',
+    '--CFLAGS=-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk -miphoneos-version-min=7.0 -arch i386 -arch x86_64 -DPETSC_BLASLAPACK_UNDERSCORE',
+    '--CXXFLAGS=-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk -miphoneos-version-min=7.0 -arch i386 -arch x86_64 -DPETSC_BLASLAPACK_UNDERSCORE',
+    '--with-blas-lib=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks/Accelerate.framework/Frameworks/vecLib.framework/libBLAS.dylib',
     '--with-clanguage=cxx',
     '--with-debugging=0',
     '--with-fc=0',
     '--with-ios=1',
+    '--with-lapack-lib=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks/Accelerate.framework/Frameworks/vecLib.framework/libLAPACK.dylib',
     '--with-mpi=0',
     '--with-shared-libraries=0',
     '--with-ssl=0',

@@ -1,21 +1,12 @@
 #!/Users/geuzaine/anaconda/bin/python
-
-######## FOR PETSC 3.6.0
-########## You will need to compile 3 times, with arch=arm64, armv7, armv7s)
-##########   and lipo the 3 libs
-########## I had to  remove  sys.exit(0) after message saying ".reconfigure..."
-##########   in config/BuildSystem/config/framework.py"
-
 if __name__ == '__main__':
   import sys
   import os
   sys.path.insert(0, os.path.abspath('config'))
   import configure
   configure_options = [
-    '--CC=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang',
-    '--CFLAGS=-DPETSC_BLASLAPACK_UNDERSCORE -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS8.4.sdk -miphoneos-version-min=7.0',
-    '--CXX=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++',
-    '--CXXFLAGS=-DPETSC_BLASLAPACK_UNDERSCORE -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS8.4.sdk -miphoneos-version-min=7.0',
+    '--CFLAGS=-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=7.0 -arch armv7 -arch armv7s -arch arm64 -fembed-bitcode -DPETSC_BLASLAPACK_UNDERSCORE',
+    '--CXXFLAGS=-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=7.0 -arch armv7 -arch armv7s -arch arm64 -fembed-bitcode -DPETSC_BLASLAPACK_UNDERSCORE',
     '--known-bits-per-byte=8',
     '--known-endian=little',
     '--known-level1-dcache-assoc=1',

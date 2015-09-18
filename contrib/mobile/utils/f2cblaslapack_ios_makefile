@@ -9,10 +9,9 @@ ALL: blas_lib lapack_lib
 ########################################################################################
 # Specify options to compile and create libraries
 ########################################################################################
-ARCH       = "armv7"
 CC         = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang
-COPTFLAGS  = -O -arch $(ARCH) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS7.1.sdk -miphoneos-version-min=7.0
-CNOOPT     = -O0 -arch $(ARCH) -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS7.1.sdk -miphoneos-version-min=7.0
+COPTFLAGS  = -O -arch armv7 -arch armv7s -arch arm64 -fembed-bitcode -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=7.0
+CNOOPT     = -O0 -arch armv7 -arch armv7s -arch arm64 -fembed-bitcode -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=7.0
 RM         = /bin/rm
 AR         = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar
 AR_FLAGS   = cr
@@ -32,12 +31,10 @@ MAKE_OPTIONS_LAPACK = $(MAKE_OPTIONS) LIBNAME="$(LAPACK_LIB_NAME)"
 blas_lib:
 	-@cd blas;   $(MAKE) lib $(MAKE_OPTIONS_BLAS)
 	-@$(RANLIB) $(BLAS_LIB_NAME)
-	-@mv $(BLAS_LIB_NAME) $(ARCH)-unknown-darwin/
 
 lapack_lib:
 	-@cd lapack; $(MAKE) lib $(MAKE_OPTIONS_LAPACK)
 	-@$(RANLIB) $(LAPACK_LIB_NAME)
-	-@mv $(LAPACK_LIB_NAME) $(ARCH)-unknown-darwin/
 
 clean: cleanblaslapck cleanlib
 

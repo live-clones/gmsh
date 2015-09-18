@@ -1,3 +1,5 @@
+2.10.2: Plugin(ModifyComponents) replaces Plugin(ModifyComponent).
+
 2.10.1 (July 30, 2015): minor fixes.
 
 2.10.0 (July 21, 2015): improved periodic meshing constraints; new Physical
