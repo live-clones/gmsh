@@ -1836,7 +1836,11 @@ void VTKData::initVTKFile()
       vtkDirName = vtkFileName;
     }
 
-    mkdir(vtkDirName.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH); //755
+#if defined(WIN32)
+    mkdir(vtkDirName.c_str());
+#else
+    mkdir(vtkDirName.c_str(),S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH); //755
+#endif
 
     vtkFileName = vtkDirName + ".p" + vtkFormat; // add pvtu extension to file name
     vtkFile = fopen(vtkFileName.c_str(),"w");
