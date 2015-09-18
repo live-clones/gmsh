@@ -69,7 +69,7 @@ IntPt *getGQHPts(int order)
   if(order < 2) return GQH[order];
   if(order == 2) return GQH[3];
   if(order == 3) return GQH[3];
-  int n = (order+3)/2;
+  int n = (order + 1) / (float)2 + 0.5;
   int index = n-2 + 4;
   if(index >= (int)(sizeof(GQH) / sizeof(IntPt*))){
     Msg::Error("Increase size of GQH in gauss quadrature hex");
@@ -100,5 +100,6 @@ int getNGQHPts(int order)
   if(order == 2)return 8;
   if(order < 2)
     return GQHnPt[order];
-  return ((order+3)/2)*((order+3)/2)*((order+3)/2);
+  int n = (order + 1) / (float)2 + 0.5;
+  return n * n * n;
 }

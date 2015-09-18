@@ -110,7 +110,7 @@ IntPt *getGQQPts(int order)
   if(order < 2) return GQQ[order];
   if(order == 2) return GQQ[3];
   if(order == 3) return GQQ[3];
-  int n = (order+3)/2;
+  int n = (order + 1) / (float)2 + 0.5;
   int index = n-2 + 7;
   if(index >= (int)(sizeof(GQQ) / sizeof(IntPt*))){
     Msg::Error("Increase size of GQQ in gauss quadrature quad");
@@ -139,5 +139,6 @@ int getNGQQPts(int order)
   if(order == 2) return 4;
   if(order < 2)
     return GQQnPt[order];
-  return ((order+3)/2)*((order+3)/2);
+  int n = (order + 1) / (float)2 + 0.5;
+  return n * n;
 }
