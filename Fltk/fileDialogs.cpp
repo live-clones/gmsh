@@ -1547,7 +1547,7 @@ int pvtuAdaptFileDialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-        bool isBinary;
+        bool isBinary = true;
         switch(dialog->c[1]->value()){
           case 0: isBinary = true; break;
           case 1: isBinary = false; break;
