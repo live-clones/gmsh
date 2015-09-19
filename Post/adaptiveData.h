@@ -21,7 +21,7 @@
 
 #if defined(WIN32)
   typedef unsigned __int8 uint8_t; // Valid for _MSC_VER >= 1300
-  typedef unsigned __int64 uint64_t
+  typedef unsigned __int64 uint64_t;
   #define PRIu8 "u"
   #define PRIu64 "I64u"
 #else
