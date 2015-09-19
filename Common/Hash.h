@@ -6,8 +6,6 @@
 #ifndef _HASH_H_
 #define _HASH_H_
 
-#include "GmshConfig.h"
-
 //--FNV hashing parameters
 
 #if defined(HAVE_64BIT_SIZE_T)
@@ -48,7 +46,7 @@ template <> struct Hash1FNV1a<1> {
 
 // Entry point
 template <int N> struct HashFNV1a {
-  static size_t eval(const void *const key) 
+  static size_t eval(const void *const key)
   {
     size_t hash = FNV_OFFSET_BASIS;
     return Hash1FNV1a<N>::eval(hash, static_cast<const unsigned char*>(key));

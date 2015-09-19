@@ -1,10 +1,10 @@
 #!/bin/sh
 
-icon_source=../../../utils/icons/gmsh_mobile_master.png
-launch_source=../../../utils/icons/gmsh_mobile_master.png
+icon_source=../../../utils/icons/gmsh_mobile_1024x1024.png
+launch_source=../../../utils/icons/gmsh_mobile_1024x1024.png
 
-icon_source=$HOME/tex/proposals/bbemg/bbemg-logo-twitter-white.png
-launch_source=$HOME/tex/proposals/bbemg/bbemg-logo-color-rgb.png
+#icon_source=$HOME/tex/proposals/bbemg/bbemg-logo-twitter-white.png
+#launch_source=$HOME/tex/proposals/bbemg/bbemg-logo-color-rgb.png
 
 mkdir -p AppIcon.appiconset
 # App icons (iPad)

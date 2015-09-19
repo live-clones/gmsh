@@ -269,7 +269,7 @@ endmacro(set_config_option)
 # machines)
 check_type_size("void*" SIZEOF_VOID_P)
 if(SIZEOF_VOID_P EQUAL 8)
-  set_config_option(HAVE_64BIT_SIZE_T "64Bit")
+  set(HAVE_64BIT_SIZE_T TRUE)
 endif(SIZEOF_VOID_P EQUAL 8)
 
 if(ENABLE_BLAS_LAPACK)
