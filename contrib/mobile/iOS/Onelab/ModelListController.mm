@@ -103,7 +103,8 @@
 {
   AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
   selectedModel = [[models objectAtIndex:indexPath.row] getFile];
-  if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
+  if([[UIDevice currentDevice].model isEqualToString:@"iPad"] ||
+     [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
     appDelegate.splitViewController.initialModel = selectedModel;
     [UIView transitionWithView:appDelegate.window
                       duration:0.5

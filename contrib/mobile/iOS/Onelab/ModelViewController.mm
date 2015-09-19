@@ -8,7 +8,6 @@
 
 #import "AppDelegate.h"
 
-
 @implementation UIErrorAlertView
 
 -(void)dismissWithClickedButtonIndex:(NSInteger)buttonIndex animated:(BOOL)animated
@@ -45,8 +44,13 @@
 
 -(void)viewWillAppear:(BOOL)animated
 {
-  if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]) {
-    _loadingAlert = [[UIAlertView alloc] initWithTitle:@"Please wait..." message: @"The model is loading" delegate: self cancelButtonTitle: nil otherButtonTitles: nil];
+  if([[UIDevice currentDevice].model isEqualToString:@"iPad"] ||
+     [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]) {
+    _loadingAlert = [[UIAlertView alloc] initWithTitle:@"Please wait..."
+                                               message: @"The model is loading"
+                                              delegate: self
+                                     cancelButtonTitle: nil
+                                     otherButtonTitles: nil];
     [_loadingAlert show];
   }
 }
@@ -87,7 +91,8 @@
 
   _runStopButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStyleBordered target:self action:@selector(compute)];
   //UIBarButtonItem *share = [[UIBarButtonItem alloc] initWithTitle:@"Share" style:UIBarButtonItemStyleBordered target:self action:@selector(share)];
-  if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
+  if([[UIDevice currentDevice].model isEqualToString:@"iPad"] ||
+     [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
     UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Model list" style:UIBarButtonItemStyleBordered target:self action:@selector(showModelsList)];
     [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, model, /*share,*/ nil]];
   }
@@ -268,7 +273,8 @@
     [alert show];
     return;
   }
-  if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
+  if([[UIDevice currentDevice].model isEqualToString:@"iPad"] ||
+     [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
     AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
     [UIView transitionWithView:appDelegate.window
                       duration:0.5

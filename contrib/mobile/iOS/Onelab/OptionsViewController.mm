@@ -39,7 +39,8 @@
   UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
   self.toolbarItems = [[NSArray alloc] initWithObjects:flexibleSpace, controlBtn, flexibleSpace, nil];
   [control addTarget:self action:@selector(indexDidChangeForSegmentedControl:) forControlEvents:UIControlEventValueChanged];
-  if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
+  if(![[UIDevice currentDevice].model isEqualToString:@"iPad"]
+     && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
     self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain target:self action:@selector(backButtonPressed:)];
   else
     self.navigationItem.hidesBackButton = true;
@@ -201,7 +202,8 @@
 {
   if(indexPath.section != 1) return;
   UIStoryboard *storyboard;
-  if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
+  if([[UIDevice currentDevice].model isEqualToString:@"iPad"] ||
+     [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
     storyboard = [UIStoryboard storyboardWithName:@"iPadStoryboard" bundle:nil];
   else
     storyboard = [UIStoryboard storyboardWithName:@"iPhoneiPodStoryboard" bundle:nil];
