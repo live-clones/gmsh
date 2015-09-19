@@ -188,7 +188,7 @@
       [showHide setTag:i];
       [showHide addTarget:self action:@selector(PViewVisible:) forControlEvents:UIControlEventValueChanged];
       [lbl setBackgroundColor: [UIColor clearColor]];
-      [lbl setText:[NSString stringWithCString:PView::list[i]->getData()->getName().c_str() encoding:[NSString defaultCStringEncoding]]];
+      [lbl setText:[NSString stringWithCString:PView::list[i]->getData()->getName().c_str() encoding:NSUTF8StringEncoding]];
       [cell addSubview:showHide];
       [cell addSubview:lbl];
     }

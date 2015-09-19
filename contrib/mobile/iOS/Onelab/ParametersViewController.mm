@@ -179,7 +179,7 @@
   // check for new/updated parameters (number)
   for(int i=0;i<number.size();i++) {
     if(!number[i].getVisible()) continue; // Do not add invisible parameter
-    NSString *name=[NSString stringWithCString:number[i].getName().c_str() encoding:[NSString defaultCStringEncoding]];
+    NSString *name=[NSString stringWithCString:number[i].getName().c_str() encoding:NSUTF8StringEncoding];
     NSString *sectiontitle = [[name componentsSeparatedByString:@"/"] objectAtIndex:0];
     Boolean found = false;
 
@@ -211,7 +211,7 @@
   // check for new/updated parameters (string)
   for(int i=0;i<string.size();i++) {
     if(!string[i].getVisible() || string[i].getKind() == "file") continue; // Do not add invisible parameter
-    NSString *name=[NSString stringWithCString:string[i].getName().c_str() encoding:[NSString defaultCStringEncoding]];
+    NSString *name=[NSString stringWithCString:string[i].getName().c_str() encoding:NSUTF8StringEncoding];
     NSString *sectiontitle = [[name componentsSeparatedByString:@"/"] objectAtIndex:0];
     Boolean found = false;
 

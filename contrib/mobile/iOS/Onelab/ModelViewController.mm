@@ -18,7 +18,6 @@
 @end
 
 @interface ModelViewController ()
-@property (strong, nonatomic) UIPopoverController *masterPopoverController;
 - (void)configureView;
 @end
 
@@ -34,10 +33,6 @@
     // Update the view.
     [self configureView];
   }
-
-  if (self.masterPopoverController != nil) {
-    [self.masterPopoverController dismissPopoverAnimated:YES];
-  }
 }
 
 - (void)configureView
@@ -50,7 +45,6 @@
 
 -(void)viewWillAppear:(BOOL)animated
 {
-  //if(self.initialModel != nil) {
   if([[UIDevice currentDevice].model isEqualToString:@"iPad"] || [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]) {
     _loadingAlert = [[UIAlertView alloc] initWithTitle:@"Please wait..." message: @"The model is loading" delegate: self cancelButtonTitle: nil otherButtonTitles: nil];
     [_loadingAlert show];
@@ -316,7 +310,7 @@
 
 -(void)addError:(std::string)msg
 {
-  [_errors addObject:[NSString stringWithCString:msg.c_str() encoding:[NSString defaultCStringEncoding]]];
+  [_errors addObject:[NSString stringWithCString:msg.c_str() encoding:NSUTF8StringEncoding]];
 }
 
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
@@ -335,19 +329,12 @@
 
 #pragma mark - Split view
 
-- (void)splitViewController:(UISplitViewController *)splitController willHideViewController:(UIViewController *)viewController withBarButtonItem:(UIBarButtonItem *)barButtonItem forPopoverController:(UIPopoverController *)popoverController
+
+-(BOOL)splitViewController:(UISplitViewController *)svc shouldHideViewController:(UIViewController *)vc inOrientation:(UIInterfaceOrientation)orientation
 {
-  barButtonItem.title = NSLocalizedString(@"Parameters", @"Parameters");
-  [self.navigationItem setLeftBarButtonItem:barButtonItem];
-  self.masterPopoverController = popoverController;
+	return NO;
 }
 
-- (void)splitViewController:(UISplitViewController *)splitController willShowViewController:(UIViewController *)viewController invalidatingBarButtonItem:(UIBarButtonItem *)barButtonItem
-{
-  // Called when the view is shown again in the split view, invalidating the button and popover controller.
-  [self.navigationItem setLeftBarButtonItem:nil animated:YES];
-  self.masterPopoverController = nil;
-}
 
 void messageFromCpp (void *self, std::string level, std::string msg)
 {
@@ -356,7 +343,7 @@ void messageFromCpp (void *self, std::string level, std::string msg)
     [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
   }
   else if(level == "Progress"){
-    [(__bridge id)self performSelectorOnMainThread:@selector(setProgress:) withObject:[NSString stringWithCString:msg.c_str() encoding:[NSString defaultCStringEncoding]] waitUntilDone:YES];
+    [(__bridge id)self performSelectorOnMainThread:@selector(setProgress:) withObject:[NSString stringWithCString:msg.c_str() encoding:NSUTF8StringEncoding] waitUntilDone:YES];
   }
   else if(level == "Error")
     [(__bridge id)self addError:msg];

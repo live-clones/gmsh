@@ -59,8 +59,8 @@
   self = [super init];
   if(self){
     label.alpha = (string.getReadOnly())? 0.439216f : 1.0f;
-    [label setText:[NSString stringWithCString:string.getShortName().c_str() encoding:[NSString defaultCStringEncoding]]];
-    name = [NSString stringWithCString:string.getName().c_str() encoding:[NSString defaultCStringEncoding]];
+    [label setText:[NSString stringWithCString:string.getShortName().c_str() encoding:NSUTF8StringEncoding]];
+    name = [NSString stringWithCString:string.getName().c_str() encoding:NSUTF8StringEncoding];
     button = [UIButton buttonWithType:UIButtonTypeSystem];
     [button addTarget:self action:@selector(selectValue) forControlEvents:UIControlEventTouchDown];
     [button setTitle:[NSString stringWithFormat:@"%s", string.getValue().c_str()] forState:UIControlStateNormal];
@@ -131,8 +131,8 @@
   self = [super init];
   if(self) {
     label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-    [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]]];
-    name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
+    [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:NSUTF8StringEncoding]];
+    name = [NSString stringWithCString:number.getName().c_str() encoding:NSUTF8StringEncoding];
     button = [UIButton buttonWithType:UIButtonTypeSystem];
     [button addTarget:self action:@selector(selectValue) forControlEvents:UIControlEventTouchDown];
     [button setTitle:[NSString stringWithFormat:@"%s", number.getValueLabel(number.getValue()).c_str()] forState:UIControlStateNormal];
@@ -218,8 +218,8 @@
   self = [super init];
   if(self) {
     label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-    [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]]];
-    name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
+    [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:NSUTF8StringEncoding]];
+    name = [NSString stringWithCString:number.getName().c_str() encoding:NSUTF8StringEncoding];
     checkbox = [[UISwitch alloc] init];
     [checkbox setOn:(number.getValue() == 1)];
     [checkbox addTarget:self action:@selector(valueChange:) forControlEvents:UIControlEventValueChanged];
@@ -273,7 +273,7 @@
 {
   self = [super init];
   if(self) {
-    name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
+    name = [NSString stringWithCString:number.getName().c_str() encoding:NSUTF8StringEncoding];
     label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
     stepper = [[UIStepper alloc] init];
     [stepper setValue:number.getValue()];
@@ -328,7 +328,7 @@
   self = [super init];
   if(self) {
     label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-    name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
+    name = [NSString stringWithCString:number.getName().c_str() encoding:NSUTF8StringEncoding];
     slider = [[UISlider alloc] init];
     [slider setMaximumValue:number.getMax()];
     [slider setMinimumValue:number.getMin()];
@@ -336,7 +336,7 @@
     //TODO add step ?
     [slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventTouchUpOutside];
     [slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventTouchUpInside];
-    [label setText:[NSString stringWithFormat:@"%@ %g", [NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]], number.getValue()]];
+    [label setText:[NSString stringWithFormat:@"%@ %g", [NSString stringWithCString:number.getShortName().c_str() encoding:NSUTF8StringEncoding], number.getValue()]];
   }
   return self;
 }
@@ -349,7 +349,7 @@
   [slider setMaximumValue:number[0].getMax()];
   [slider setMinimumValue:number[0].getMin()];
   [slider setValue:number[0].getValue()];
-  [label setText:[NSString stringWithFormat:@"%@ %g", [NSString stringWithCString:number[0].getShortName().c_str() encoding:[NSString defaultCStringEncoding]], number[0].getValue()]];
+  [label setText:[NSString stringWithFormat:@"%@ %g", [NSString stringWithCString:number[0].getShortName().c_str() encoding:NSUTF8StringEncoding], number[0].getValue()]];
 }
 
 -(void)sliderValueChanged:(UISlider *)sender
@@ -393,8 +393,8 @@
   self = [super init];
   if(self) {
     label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-    [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:[NSString defaultCStringEncoding]]];
-    name = [NSString stringWithCString:number.getName().c_str() encoding:[NSString defaultCStringEncoding]];
+    [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:NSUTF8StringEncoding]];
+    name = [NSString stringWithCString:number.getName().c_str() encoding:NSUTF8StringEncoding];
     textbox = [[UITextField alloc] init];
     [textbox setBorderStyle:UITextBorderStyleRoundedRect];
     [textbox setText:[NSString stringWithFormat:@"%g", number.getValue()]];

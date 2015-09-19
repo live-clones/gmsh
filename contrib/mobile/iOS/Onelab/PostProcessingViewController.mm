@@ -27,7 +27,7 @@
   [super viewDidLoad];
   // Do any additional setup after loading the view.
   if(_pview) {
-    [_Name setText:[NSString stringWithCString:_pview->getData()->getName().c_str() encoding:[NSString defaultCStringEncoding]]];
+    [_Name setText:[NSString stringWithCString:_pview->getData()->getName().c_str() encoding:NSUTF8StringEncoding]];
     [_IntervalsType setDataSource:self];
     [_IntervalsType setDelegate:self];
     [_Intervals setText:[NSString stringWithFormat:@"%d",_pview->getOptions()->nbIso]];
