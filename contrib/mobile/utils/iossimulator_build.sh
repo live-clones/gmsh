@@ -62,3 +62,7 @@ mkdir $gmsh_svn/contrib/mobile/build_iossimulator_${appname}
 cd $gmsh_svn/contrib/mobile/build_iossimulator_${appname}
 cmake -DCMAKE_INCLUDE_PATH="$frameworks_dir;$getdp_svn" -DAPPNAME:STRING=${appname} ..
 make xcodeProject
+
+# change blas/lapack for simulator
+sed -e "s|lastKnownFileType = archive.ar; name = libf2cblas.a; path = ../../frameworks_ios/libf2cblas.a;|lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework;|" -i "" $gmsh_svn/contrib/mobile/build_iossimulator_${appname}/${appname}/${appname}.xcodeproj/project.pbxproj
+sed -e "s|lastKnownFileType = archive.ar; name = libf2clapack.a; path = ../../frameworks_ios/libf2clapack.a;|lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework;|" -i "" $gmsh_svn/contrib/mobile/build_iossimulator_${appname}/${appname}/${appname}.xcodeproj/project.pbxproj
