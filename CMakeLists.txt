@@ -1168,6 +1168,9 @@ if(HAVE_LIBZ AND ENABLE_COMPRESSED_IO)
 endif(HAVE_LIBZ AND ENABLE_COMPRESSED_IO)
 
 if(ENABLE_ZIPPER)
+  if(ENABLE_BUILD_IOS)
+    set_config_option(HAVE_LIBZ "Zlib")
+  endif(ENABLE_BUILD_IOS)
   if(NOT HAVE_LIBZ) # necessary for non-GUI builds
     find_package(ZLIB)
     if(ZLIB_FOUND)
