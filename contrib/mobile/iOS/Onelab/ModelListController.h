@@ -8,7 +8,7 @@
     NSMutableArray *models;
     NSString *currentElement;
     NSMutableString *currentElementValue;
-	NSString *currentDir;
+    NSString *currentDir;
     NSString *selectedModel;
 }
 @property (nonatomic, retain) EAGLView *glView;
