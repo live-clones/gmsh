@@ -162,7 +162,7 @@ namespace ziputils
       }
   }
 
-  // Dump the currently open entry to the uotput stream
+  // Dump the currently open entry to the output stream
   unzipper& unzipper::operator>>( std::ostream& os )
   {
     if ( isOpenEntry() )

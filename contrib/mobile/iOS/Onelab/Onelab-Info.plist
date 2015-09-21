@@ -68,5 +68,27 @@
       <string>UIInterfaceOrientationLandscapeLeft</string>
       <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleTypeName</key>
+        <string>Zip archive</string>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>LSItemContentTypes</key>
+        <array>
+          <string>com.pkware.zip-archive</string>
+        </array>
+        <key>UTTypeTagSpecification</key>
+        <dict>
+          <key>public.filename-extension</key>
+          <string>zip</string>
+          <key>public.mime-type</key>
+          <string>application/zip</string>
+        </dict>
+        <key>LSHandlerRank</key>
+        <string>Owner</string>
+      </dict>
+    </array>
   </dict>
 </plist>

@@ -4,8 +4,7 @@
 
 + (NSString *) getApplicationDocumentsDirectory;
 + (void) copyRes;
-
++ (void) openModelURL:(NSURL*)url;
 + (id) traverseResponderChainForUIViewController:(UIView *)v;
-
 
 @end

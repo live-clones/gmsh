@@ -94,7 +94,7 @@ opt(TETGEN_OLD "Enable older version of Tetgen" OFF)
 opt(VORO3D "Enable Voro3D (for hex meshing, experimental)" ${DEFAULT})
 opt(WRAP_JAVA "Enable generation of Java wrappers (experimental)" OFF)
 opt(WRAP_PYTHON "Enable generation of Python wrappers" OFF)
-opt(ZIPPER "Enable zip compression/decompression" OFF)
+opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 2)
 set(GMSH_MINOR_VERSION 10)

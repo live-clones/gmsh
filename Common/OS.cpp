@@ -19,6 +19,13 @@
 #include "StringUtils.h"
 #include "Context.h"
 
+#if defined(HAVE_ZIPPER)
+#include <iostream>
+#include <fstream>
+#include "zipper.h"
+#include "unzipper.h"
+#endif
+
 #if defined(__APPLE__)
 #include <sys/sysctl.h>
 #include <mach-o/dyld.h>
@@ -666,5 +673,41 @@ void RedirectIOToConsole()
   // make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog point to console
   // as well
   std::ios::sync_with_stdio();
+#endif
+}
+
+void UnzipFile(const std::string &fileName, const std::string &prependDir)
+{
+#if defined(HAVE_ZIPPER)
+  std::string dir = prependDir;
+  if(dir.size() && dir[dir.size()-1] != '/' && dir[dir.size()-1] != '\\')
+    dir.push_back('/');
+
+  ziputils::unzipper zipFile;
+  zipFile.open(fileName.c_str());
+  std::vector<std::string> dirnames = zipFile.getFolders();
+  for (std::vector<std::string>::const_iterator it = dirnames.begin();
+       it != dirnames.end(); it++){
+    std::string folder = dir + *it;
+    Msg::Info("Creating folder `%s'", folder.c_str());
+    CreatePath(folder);
+  }
+  std::vector<std::string> filenames = zipFile.getFilenames();
+  for (std::vector<std::string>::const_iterator it = filenames.begin();
+       it != filenames.end(); it++){
+    zipFile.openEntry(it->c_str());
+    std::string name = dir + *it;
+    Msg::Info("Extracting file `%s'", name.c_str());
+    std::ofstream ofs;
+    ofs.open(name.c_str());
+    if(ofs.is_open()){
+      zipFile >> ofs;
+      ofs.close();
+    }
+    else
+      Msg::Error("Could not create file `%s'", name.c_str());
+  }
+#else
+  Msg::Error("Gmsh must be compiled with Zipper support to extract zip files");
 #endif
 }

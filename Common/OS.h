@@ -9,6 +9,7 @@
 #include <string>
 #include <stdio.h>
 
+FILE *Fopen(const char* f, const char *mode);
 const char *GetEnvironmentVar(const char *var);
 void SetEnvironmentVar(const char *var, const char *val);
 double GetTimeInSeconds();
@@ -31,6 +32,6 @@ int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
                   bool blocking=false);
 std::string GetCurrentWorkdir();
 void RedirectIOToConsole();
-FILE *Fopen(const char* f, const char *mode);
+void UnzipFile(const std::string &fileName, const std::string &prependDir="");
 
 #endif

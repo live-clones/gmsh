@@ -1,5 +1,7 @@
 #import "Utils.h"
 
+#include <gmsh/OS.h>
+
 @implementation Utils
 
 + (NSString *) getApplicationDocumentsDirectory
@@ -25,6 +27,24 @@
       NSLog(@"Error: %@", error);
     else if(![[NSURL fileURLWithPath:modelDst] setResourceValue: [NSNumber numberWithBool: YES] forKey: NSURLIsExcludedFromBackupKey error: &error])
       NSLog(@"Error %@", error);
+  }
+}
+
++ (void) openModelURL:(NSURL*)url
+{
+  if(!url) return;
+  NSString *filepath = [url path];
+  NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+  NSString *docPath = [paths objectAtIndex:0]; //Get the docs directory
+  NSString *extension = [filepath pathExtension];
+  if([extension isEqualToString:@"zip"] || [extension isEqualToString:@"ZIP"]){
+    NSLog(@"Unzipping %@", filepath);
+    UnzipFile([filepath UTF8String], [docPath UTF8String]);
+    NSLog(@"Removing %@", filepath);
+    [[NSFileManager defaultManager] removeItemAtPath:filepath error:nil];
+  }
+  else{
+    NSLog(@"Unknown model file extension: only .zip files are currently accepted");
   }
 }
 

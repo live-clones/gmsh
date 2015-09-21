@@ -28,6 +28,17 @@
   else{
     NSLog(@"Leaving models as-is (version %@)", prefsv);
   }
+
+  // Check if there is a model to open
+  NSURL* url = [launchOptions objectForKey:UIApplicationLaunchOptionsURLKey];
+  [Utils openModelURL:url];
+
+  return YES;
+}
+
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
+{
+  [Utils openModelURL:url];
   return YES;
 }
 
