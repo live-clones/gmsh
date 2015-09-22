@@ -126,9 +126,9 @@
   if(indexPath == nil) return;
   UIActionSheet *actionSheet;
   if([[models objectAtIndex:indexPath.row] getUrl])
-    actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open this model", @"More information", nil];
+    actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open model", @"Remove model", @"More information", nil];
   else
-    actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open this model", nil];
+    actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open model", @"Remove model", nil];
   actionSheet.tag = indexPath.row;
   [actionSheet showInView:self.view];
 }
@@ -136,8 +136,16 @@
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
   switch (buttonIndex) {
-  case 1:
+  case 2:
     [[UIApplication sharedApplication] openURL:[[models objectAtIndex:actionSheet.tag] getUrl]];
+    break;
+  case 1:
+    {
+      NSString *file = [[models objectAtIndex:actionSheet.tag] getFile];
+      // just remove xml file; should probably remove the whole directory to save space?
+      [[NSFileManager defaultManager] removeItemAtPath:file error:nil];
+      [self refreshList];
+    }
     break;
   case 0:
     [self tableView:self.tableView didSelectRowAtIndexPath:[NSIndexPath indexPathForRow:actionSheet.tag inSection:0]];
