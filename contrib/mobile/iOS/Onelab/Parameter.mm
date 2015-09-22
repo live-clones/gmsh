@@ -383,7 +383,7 @@
 
 +(double)getHeight
 {
-  return 60.0f;
+  return 65.0f;
 }
 @end
 

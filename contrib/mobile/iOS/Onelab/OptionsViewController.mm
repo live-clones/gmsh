@@ -72,6 +72,7 @@
 {
   [self performSelectorOnMainThread:@selector(refreshOptions) withObject:nil waitUntilDone:NO];
 }
+
 - (void)refreshOptions
 {
   NSInteger nrow = [self.tableView numberOfRowsInSection:1];
@@ -98,11 +99,8 @@
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
   return 2;
-    /**
-     Section    Name
-        0       Options (Show mesh, Show geometry)
-        1       Post-processing
-     **/
+  // Section 0: Display options
+  // Section 1: Result options
 }
 
 -(NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section
@@ -143,8 +141,8 @@
   case 0:
     {
       [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-      UISwitch *showHideOptions = [[UISwitch alloc] initWithFrame: CGRectMake(10, 10, 100, 30)];
-      UILabel *lblOptions = [[UILabel alloc] initWithFrame:CGRectMake(10 + (showHideOptions.frame.size.width)+25 , 10, (cell.bounds.size.width - (showHideOptions.frame.size.width) - 25), 30)];
+      UISwitch *showHideOptions = [[UISwitch alloc] initWithFrame: CGRectMake(15, 7, 100, 30)];
+      UILabel *lblOptions = [[UILabel alloc] initWithFrame:CGRectMake(25 + (showHideOptions.frame.size.width), 10, (tableView.frame.size.width - (showHideOptions.frame.size.width) - 50), 30)];
       if(indexPath.row == 0) {
         [lblOptions setText:@"Show geometry points"];
         [showHideOptions setOn:(CTX::instance()->geom.points)];
@@ -183,8 +181,8 @@
       [cell setSelectionStyle:UITableViewCellSelectionStyleGray];
       int i = PView::list.size() - 1 - indexPath.row;
       cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-      UISwitch *showHide = [[UISwitch alloc] initWithFrame: CGRectMake(10, 10, 100, 30)];
-      UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(25 + (showHide.frame.size.width), 10, (cell.bounds.size.width - showHide.frame.size.width - 50), 30)];
+      UISwitch *showHide = [[UISwitch alloc] initWithFrame: CGRectMake(15, 7, 100, 30)];
+      UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(25 + (showHide.frame.size.width), 10, (tableView.frame.size.width - showHide.frame.size.width - 50), 30)];
       [showHide setOn:(PView::list[i]->getOptions()->visible == 1)];
       [showHide setTag:i];
       [showHide addTarget:self action:@selector(PViewVisible:) forControlEvents:UIControlEventValueChanged];

@@ -8,12 +8,10 @@
     @private
     NSMutableArray *_sections;
     NSMutableArray *_sectionstitle;
-	NSDate *_lastRefresh;
-
+    NSDate *_lastRefresh;
     UIBarButtonItem *runButton;
     UIBarButtonItem *stopButton;
-
-	UISegmentedControl *control;
+    UISegmentedControl *control;
 }
 
 @property (strong, nonatomic) ModelListController *modelListController;

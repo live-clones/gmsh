@@ -29,9 +29,9 @@
     NSLog(@"Leaving models as-is (version %@)", prefsv);
   }
 
-  // Check if there is a model to open
+  // Check if there is a model to extract (unzip)
   NSURL* url = [launchOptions objectForKey:UIApplicationLaunchOptionsURLKey];
-  [Utils openModelURL:url];
+  if(url) [Utils openModelURL:url];
 
   return YES;
 }
@@ -39,6 +39,7 @@
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
 {
   [Utils openModelURL:url];
+
   return YES;
 }
 

@@ -73,6 +73,7 @@
 {
   return [models count];
 }
+
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
   UITableViewCell *cell;
@@ -126,7 +127,7 @@
   if(indexPath == nil) return;
   UIActionSheet *actionSheet;
   if([[models objectAtIndex:indexPath.row] getUrl])
-    actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open model", @"Remove model", @"More information", nil];
+    actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open model", @"Remove model", @"View model website", nil];
   else
     actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open model", @"Remove model", nil];
   actionSheet.tag = indexPath.row;
@@ -142,8 +143,8 @@
   case 1:
     {
       NSString *file = [[models objectAtIndex:actionSheet.tag] getFile];
-      // just remove xml file; should probably remove the whole directory to save space?
-      [[NSFileManager defaultManager] removeItemAtPath:file error:nil];
+      NSString *path = [file stringByDeletingLastPathComponent];
+      [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
       [self refreshList];
     }
     break;

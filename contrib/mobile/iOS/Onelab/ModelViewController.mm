@@ -170,6 +170,7 @@
       }
       [[UIApplication sharedApplication] endBackgroundTask: _computeBackgroundTaskIdentifier];
       _computeBackgroundTaskIdentifier = UIBackgroundTaskInvalid;
+      [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
     });
 
   dispatch_group_notify(group, queue, ^{
