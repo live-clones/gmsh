@@ -352,23 +352,23 @@
   }
   else if([tmp isKindOfClass:[ParameterNumberCheckbox class]]) {
     ParameterNumberCheckbox *param = (ParameterNumberCheckbox *)tmp;
-    [param setLabelFrame:CGRectMake(85, 5, tableView.frame.size.width - 95, cell.frame.size.height/1.5)];
+    [param setLabelFrame:CGRectMake(85, 10, tableView.frame.size.width - 95, cell.frame.size.height/2)];
     [param setFrame:CGRectMake(20, 5, tableView.frame.size.width - 40, cell.frame.size.height)];
     [cell addSubview:[param getCheckbox]];
   }
   else if([tmp isKindOfClass:[ParameterNumberStepper class]]) {
     ParameterNumberStepper *param = (ParameterNumberStepper *)tmp;
-    [param setFrame:CGRectMake(20, cell.frame.size.height/2+5, tableView.frame.size.width - 40, cell.frame.size.height/2.5)];
+    [param setFrame:CGRectMake(20, cell.frame.size.height/2 + 5, tableView.frame.size.width - 40, cell.frame.size.height/2)];
     [cell addSubview:[param getStepper]];
   }
   else if([tmp isKindOfClass:[ParameterNumberRange class]]) {
     ParameterNumberRange *param = (ParameterNumberRange *)tmp;
-    [param setFrame:CGRectMake(20, cell.frame.size.height/2+5, tableView.frame.size.width - 40, cell.frame.size.height/1.5)];
+    [param setFrame:CGRectMake(20, cell.frame.size.height/2 + 10, tableView.frame.size.width - 40, cell.frame.size.height/2)];
     [cell addSubview:[param getSlider]];
   }
   else if([tmp isKindOfClass:[ParameterNumberTextbox class]]) {
     ParameterNumberTextbox *param = (ParameterNumberTextbox *)tmp;
-    [param setFrame:CGRectMake(20, cell.frame.size.height/2+5, tableView.frame.size.width - 40, cell.frame.size.height/1.75)];
+    [param setFrame:CGRectMake(20, cell.frame.size.height/2 + 10, tableView.frame.size.width - 40, cell.frame.size.height/2)];
     [cell addSubview:[param getTextbox]];
   }
 
