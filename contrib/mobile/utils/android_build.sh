@@ -76,7 +76,7 @@ make androidProject
 check
 
 # Potentially modify source tree for alternate branding
-cd Android
+cd Onelab
 if [ $# -eq 1 ] ; then
   # change package name
   mv src/org/geuz/onelab/ src/org/geuz/$appname
