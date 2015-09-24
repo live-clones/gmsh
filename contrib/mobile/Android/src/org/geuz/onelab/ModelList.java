@@ -65,12 +65,13 @@ public class ModelList extends Activity {
                     CharSequence[] actions;
                     if(m.getUrl() != null) {
                         actions = new CharSequence[2];
-                        actions[0] = "Open this model";
-                        actions[1] = "More information";
+                        actions[0] = "Open model";
+                        actions[1] = "View model website";
+                        // FIXME: add "Remove model" as in iOS
                     }
                     else {
                         actions = new CharSequence[1];
-                        actions[0] = "Open this model";
+                        actions[0] = "Open model";
                     }
                     AlertDialog.Builder builder = new AlertDialog.Builder(parent.getContext());
                     builder.setTitle(m.getName());
@@ -182,6 +183,7 @@ public class ModelList extends Activity {
                 }
             }
         }
+        _modelArrayAdapter.sortByName();
     }
     private void readModel(XmlPullParser parser, String dir) throws XmlPullParserException, IOException
     {

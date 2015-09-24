@@ -2,6 +2,7 @@ package org.geuz.onelab;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -15,7 +16,7 @@ public class ModelArrayAdapter extends ArrayAdapter<Model> {
     private List<Model> _models;
 
     public ModelArrayAdapter(Context c)
-        {
+    {
         super(c, R.layout.model);
         _models = new ArrayList<Model>();
     }
@@ -27,7 +28,15 @@ public class ModelArrayAdapter extends ArrayAdapter<Model> {
         _models.add(model);
     }
 
-    public Model getModel(int pos) { return _models.get(pos); }
+    public void sortByName()
+    {
+        Collections.sort(_models, new ModelComp());
+    }
+
+    public Model getModel(int pos)
+    {
+        return _models.get(pos);
+    }
 
     @Override
     public View getView(int position, View convertView, final ViewGroup parent)

@@ -2,6 +2,7 @@ package org.geuz.onelab;
 
 import java.io.File;
 import android.net.Uri;
+import java.util.Comparator;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -31,4 +32,11 @@ class Model {
         _bitmap = BitmapFactory.decodeFile(f.toString(), options);
     }
     public void setUrl(Uri url) { _url = url; }
+}
+
+class ModelComp implements Comparator<Model>{
+    @Override
+    public int compare(Model e1, Model e2) {
+        return e1.getName().compareTo(e2.getName());
+    }
 }
