@@ -18,4 +18,6 @@
 -(UIImage *) getPreview;
 -(void) setPreview:(NSString *)path;
 -(void) setUrl:(NSString *)url;
+-(NSComparisonResult)compare:(Model *)p;
+
 @end

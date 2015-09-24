@@ -73,4 +73,9 @@
   _url = [NSURL URLWithString:url];
 }
 
+-(NSComparisonResult) compare:(Model *)p
+{
+  return [[self getName] compare:[p getName]];
+}
+
 @end

@@ -29,6 +29,7 @@
       }
     }
   }
+  [models sortUsingSelector:@selector(compare:)];
 
   UIBarButtonItem *about = [[UIBarButtonItem alloc] initWithTitle:@"About" style:UIBarButtonItemStyleBordered target:self action:@selector(showAbout)];
   [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects: about, nil]];
@@ -60,6 +61,7 @@
       i--;
     }
   }
+  [models sortUsingSelector:@selector(compare:)];
   [self.tableView reloadData];
   [self.refreshControl endRefreshing];
 }
