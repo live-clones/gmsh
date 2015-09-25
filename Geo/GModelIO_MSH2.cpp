@@ -1070,7 +1070,8 @@ int GModel::writePartitionedMSH(const std::string &baseName, bool binary,
                                 bool saveAll, bool saveParametric,
                                 double scalingFactor)
 {
-  int index = 0;
+  int numElements;
+  int startNum = 0;
   for(std::set<int>::iterator it = meshPartitions.begin();
       it != meshPartitions.end(); it++){
     int partition = *it;
@@ -1078,11 +1079,11 @@ int GModel::writePartitionedMSH(const std::string &baseName, bool binary,
     std::ostringstream sstream;
     sstream << baseName << "_" << std::setw(6) << std::setfill('0') << partition;
 
-    int startNum = index ? getNumElementsMSH(this, saveAll, partition) : 0;
+    numElements = getNumElementsMSH(this, saveAll, partition);
     Msg::Info("Writing partition %d in file '%s'", partition, sstream.str().c_str());
     _writeMSH2(sstream.str(), 2.2, binary, saveAll, saveParametric,
                scalingFactor, startNum, partition);
-    index++;
+    startNum += numElements; // update for next iteration in the loop
   }
 
 #if 0
