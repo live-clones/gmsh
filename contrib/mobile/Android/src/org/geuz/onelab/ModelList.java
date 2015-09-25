@@ -107,8 +107,10 @@ public class ModelList extends Activity {
     {
         MenuItem about = menu.add("About");
         about.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-        MenuItem loadFile = menu.add(R.string.button_open_file);
-        loadFile.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+
+        // FIXME: should we keep this, only accept .zip files, and call it "import model" ?
+        //MenuItem loadFile = menu.add(R.string.button_open_file);
+        //loadFile.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         return super.onCreateOptionsMenu(menu);
     }
 
