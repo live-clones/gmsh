@@ -57,13 +57,11 @@ public class MainActivity extends Activity{
         actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#64000000")));
         Intent intent = getIntent();
     	Bundle extras = intent.getExtras();
-    	if(savedInstanceState != null);
-    	else if(intent.getAction() != null &&
-                intent.getAction().equals(Intent.ACTION_VIEW)) {
-            String tmp = intent.getData().getPath();
-            _gmsh.load(tmp);
-    	}
+    	if(savedInstanceState != null){
+            // nothing
+        }
     	else if(extras != null) {
+            // request to load a file (from ModelList)
             String name = extras.getString("name");
             this.getActionBar().setTitle(name);
             String tmp = extras.getString("file");

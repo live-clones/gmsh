@@ -26,6 +26,7 @@ import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
+import android.util.Log;
 
 public class ModelList extends Activity {
 
@@ -35,6 +36,7 @@ public class ModelList extends Activity {
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+
         _modelArrayAdapter = new ModelArrayAdapter(this);
         try {
             this.getModels();
@@ -108,28 +110,13 @@ public class ModelList extends Activity {
         MenuItem about = menu.add("About");
         about.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 
-        // FIXME: should we keep this, only accept .zip files, and call it "import model" ?
-        //MenuItem loadFile = menu.add(R.string.button_open_file);
-        //loadFile.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item)
     {
-        if(item.getTitle().equals(getString(R.string.button_open_file))) {
-            Intent fileBrowserIntent = new Intent();
-            fileBrowserIntent.setAction(Intent.ACTION_GET_CONTENT);
-            fileBrowserIntent.setType("file/*");
-            try {
-                startActivityForResult(fileBrowserIntent, 1);
-            }
-            catch(ActivityNotFoundException e) {
-                Toast.makeText(this, "No application found on your device to open the files.",
-                               Toast.LENGTH_LONG).show();
-            }
-        }
-        else if(item.getTitle().equals("About")) {
+        if(item.getTitle().equals("About")) {
             Intent intent = new Intent(ModelList.this, AboutActivity.class);
             startActivity(intent);
         }
