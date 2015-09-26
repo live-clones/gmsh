@@ -9,16 +9,15 @@ source mesh generator Gmsh (http://gmsh.info) and the solver GetDP
 problems: electromagnetics, thermics, mechanics...
 
 Onelab/Mobile comes packaged with a selection of ready-to-use examples. New
-models can be added through iTunes file sharing on iOS devices, or opened
-directly on your devices on Android: see http://onelab.info/wiki/Mobile for more
-information.
+models can be added simply by opening the corresponding zip archive on your
+device: see http://onelab.info/wiki/Mobile for more information.
 
 Onelab/Mobile is available on the AppStore and the Google Play store:
 
 https://itunes.apple.com/us/app/onelab/id845930897
 https://play.google.com/store/apps/details?id=org.geuz.onelab
 
-Sample scripts for building Onelab/Mobile are available in utils/onelab_*_build.sh
+Sample scripts for building Onelab/Mobile are available in utils/*_build.sh
 
                               ***
 
