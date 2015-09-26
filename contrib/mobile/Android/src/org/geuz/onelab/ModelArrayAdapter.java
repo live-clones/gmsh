@@ -28,6 +28,12 @@ public class ModelArrayAdapter extends ArrayAdapter<Model> {
         _models.add(model);
     }
 
+    public void reset()
+    {
+        super.clear();
+        _models.clear();
+    }
+
     public void sortByName()
     {
         Collections.sort(_models, new ModelComp());

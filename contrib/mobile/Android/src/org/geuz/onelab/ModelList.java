@@ -32,6 +32,15 @@ public class ModelList extends Activity {
 
     private ModelArrayAdapter _modelArrayAdapter;
 
+    private void deleteRecursive(File fileOrDirectory)
+    {
+        if (fileOrDirectory.isDirectory()){
+            for (File child : fileOrDirectory.listFiles())
+                deleteRecursive(child);
+        }
+        fileOrDirectory.delete();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -66,29 +75,41 @@ public class ModelList extends Activity {
                     final Model m = _modelArrayAdapter.getModel(position);
                     CharSequence[] actions;
                     if(m.getUrl() != null) {
-                        actions = new CharSequence[2];
+                        actions = new CharSequence[3];
                         actions[0] = "Open model";
-                        actions[1] = "View model website";
-                        // FIXME: add "Remove model" as in iOS
+                        actions[1] = "Remove model";
+                        actions[2] = "View model website";
                     }
                     else {
-                        actions = new CharSequence[1];
+                        actions = new CharSequence[2];
                         actions[0] = "Open model";
+                        actions[1] = "Remove model";
                     }
                     AlertDialog.Builder builder = new AlertDialog.Builder(parent.getContext());
                     builder.setTitle(m.getName());
                     builder.setItems(actions, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int position) {
                                 switch (position) {
-                                case 1:
-                                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, m.getUrl());
-                                    startActivity(browserIntent);
-                                    break;
-                                default:
+                                case 0:
                                     Intent intent = new Intent(ModelList.this, MainActivity.class);
                                     intent.putExtra("file", m.getFile().toString());
                                     intent.putExtra("name", m.getName());
                                     startActivity(intent);
+                                    break;
+                                case 1:
+                                    deleteRecursive(m.getFile().getParentFile());
+                                    _modelArrayAdapter.reset();
+                                    try {
+                                        getModels();
+                                    } catch (XmlPullParserException e) {
+                                        e.printStackTrace();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                    break;
+                                case 2:
+                                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, m.getUrl());
+                                    startActivity(browserIntent);
                                     break;
                                 }
                             }
