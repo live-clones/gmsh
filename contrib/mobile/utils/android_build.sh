@@ -37,7 +37,7 @@ fi
 cd $gmsh_svn/build_android
 cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_ANN=1 -DENABLE_TETGEN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 -DBLAS_LIB="$petsc_lib/libf2cblas.so" -DLAPACK_LIB="$petsc_lib/libf2clapack.so" ..
 check
-make androidGmsh VERBOSE=1 -j$cmake_thread
+make androidGmsh -j$cmake_thread
 check
 make get_headers
 check
@@ -51,7 +51,7 @@ fi
 cd $getdp_svn/build_android
 PETSC_DIR= PETSC_ARCH= SLEPC_DIR= cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_lib/Headers;$petsc_lib/Headers/mpiuni" -DPETSC_LIBS="$petsc_lib/libpetsc.so" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_lib/Headers/" -DSLEPC_LIB="$slepc_lib/libslepc.so" -DGMSH_INC="$gmsh_svn/build_android/Headers/" -DGMSH_LIB="$gmsh_svn/build_android/libs/libGmsh.so" -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" ..
 check
-make androidGetdp VERBOSE=1 -j$cmake_thread
+make androidGetdp -j$cmake_thread
 check
 make get_headers
 check
@@ -89,20 +89,20 @@ if [ $# -eq 1 ] ; then
   cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-128x128.png res/drawable-hdpi/ic_launcher.png
   cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-64x64.png res/drawable-mdpi/ic_launcher.png
   cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-48x48.png res/drawable-ldpi/ic_launcher.png
-  $android_sdk/tools/android update project --name $appname --path . --target 1
+  $android_sdk/tools/android update project --name $appname --path . --target 1 --subprojects
 else
   cd Onelab
-  $android_sdk/tools/android update project --name Onelab --path . --target 1
+  $android_sdk/tools/android update project --name Onelab --path . --target 1 --subprojects
 fi
 
 check
+if [ ! -f "ant.properties" ]; then
+    cp $gmsh_svn/contrib/mobile/utils/ant.properties .
+fi
 ant release
 check
 
-# to sign the APK:
-# cp utils/ant.properties build_android_Onelab/Onelab/
-
-# to re-install on the device:
+# to install on the device:
 # ~/android-sdk/platform-tools/adb install -r build_android_Onelab/Onelab/bin/Onelab-release.apk
 
 # to launch the app on the device:
@@ -111,5 +111,5 @@ check
 # to debug and check the log:
 # ~/android-sdk/tools/ddms
 
-# see stack traces after crashes:
+# to see stack traces after crashes:
 # ~/android-sdk/platform-tools/adb logcat | ~/android-ndk-r8b/ndk-stack -sym build_android_Onelab/

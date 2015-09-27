@@ -17,8 +17,8 @@ getdp_framework="$frameworks_dir/GetDP.framework"
 
 cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=$gmsh_svn/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=OS -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=armv7;armv7s;arm64 -GXcode"
 
-build_cmd="xcodebuild -verbose -target lib -configuration Release"
-headers_cmd="xcodebuild -verbose -target get_headers -configuration Release"
+build_cmd="xcodebuild -target lib -configuration Release"
+headers_cmd="xcodebuild -target get_headers -configuration Release"
 
 function check {
   return_code=$?
