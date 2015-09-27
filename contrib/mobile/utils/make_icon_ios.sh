@@ -5,8 +5,8 @@ launch_source=../../../utils/icons/gmsh_128x128.png
 launch_source2=../../../utils/icons/gmsh_256x256.png
 bg=black
 
-#icon_source=$HOME/tex/proposals/bbemg/bbemg-logo-twitter-white.png
-#launch_source=$HOME/tex/proposals/bbemg/bbemg-logo-color-rgb.png
+#icon_source=$HOME/tex/proposals/bbemg/icons/bbemg-logo-white.png
+#launch_source=$HOME/tex/proposals/bbemg/icons/bbemg-logo-text.png
 #launch_source2=${launch_source}
 #bg=white
 

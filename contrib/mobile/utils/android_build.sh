@@ -62,7 +62,7 @@ if [ ! -d "$gmsh_svn/contrib/mobile/build_android_${appname}" ]; then
 fi
 cd $gmsh_svn/contrib/mobile/build_android_${appname}
 
-cmake $cmake_default \
+cmake $cmake_default -DAPPNAME:STRING=${appname} \
       -DCMAKE_INCLUDE_PATH="$getdp_svn/" \
       -DBLAS_LIB="$petsc_lib/libf2cblas.so" -DLAPACK_LIB="$petsc_lib/libf2clapack.so" \
       -DPETSC_LIB="$petsc_lib/libpetsc.so" -DSLEPC_LIB="$slepc_lib/libslepc.so" \
@@ -75,42 +75,23 @@ check
 make androidProject
 check
 
-# Potentially modify source tree for alternate branding
-cd Onelab
 if [ $# -eq 1 ] ; then
-  # change package name
-  mv src/org/geuz/onelab/ src/org/geuz/$appname
-  mkdir src/org/geuz/onelab
-  mv src/org/geuz/$appname/Gmsh.java src/org/geuz/onelab
-  find . -type f -name '*.java' -not -name 'Gmsh.java' -exec sed -i "s/org\.geuz\.onelab/org\.geuz\.$appname/g" {} \;
-  sed -i "s/org\.geuz\.onelab/org\.geuz\.$appname/g" AndroidManifest.xml
-  grep -r -m 1 'Gmsh' src | cut -d ':' -f 1 | xargs -n 1 sed -i "s/org\.geuz\.onelab;/org\.geuz\.$appname;\n\nimport org.geuz.onelab.Gmsh;/"
-  # change app name
-  sed -i "s/<string name=\"app_name\">Onelab<\/string>/<string name=\"app_name\">$appname<\/string>/" res/values/strings.xml
+  cd $appname; 
+  # change app name and icons
+  sed -e "s/package=\"org\.geuz\.onelab/package=\"org\.geuz\.$appname/" -i "" AndroidManifest.xml
+  sed -e "s/Onelab/$appname/" -i "" res/values/strings.xml
+  cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-128x128.png res/drawable-hdpi/ic_launcher.png
+  cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-64x64.png res/drawable-mdpi/ic_launcher.png
+  cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-48x48.png res/drawable-ldpi/ic_launcher.png
+  $android_sdk/tools/android update project --name $appname --path . --target 1
+else
+  cd Onelab
+  $android_sdk/tools/android update project --name Onelab --path . --target 1
 fi
 
-# Onelab/Mobile package
-if [ ! -d "libs/armeabi-v7a/" ]; then mkdir -p libs/armeabi-v7a/; fi
-target=1
-while read line; do
-  read line # Name
-  target_name=$(echo $line | awk '{print $2}')
-  target_version=$(echo $line | awk '{print $3}')
-  read line # Type
-  read line # API level
-  target_api=$(echo $line | awk '{print $3}')
-  read line # Revision
-  read line # Skins
-  if [ $target_api -ge 14 ]; then
-    $android_sdk/tools/android update project --name Onelab --path . --target $target
-    check
-    ant release
-    check
-    break
-  fi
-  read line # HACK
-  target=$(($target+1))
-done < <($android_sdk/tools/android list target | grep -A 5 "id:")
+check
+ant release
+check
 
 # to sign the APK:
 # cp utils/ant.properties build_android_Onelab/Onelab/
