@@ -80,12 +80,16 @@ if [ $# -eq 1 ] ; then
   # change package name
   rm -rf src/org/geuz/$appname
   mv src/org/geuz/onelab/ src/org/geuz/$appname
+  # Gmsh.java and StringTexture.java are accessed from C++ as onelab packages
   mkdir src/org/geuz/onelab
   mv src/org/geuz/$appname/Gmsh.java src/org/geuz/onelab
+  mv src/org/geuz/$appname/StringTexture.java src/org/geuz/onelab
   sed -e "s/org\.geuz\.onelab/org\.geuz\.$appname/g" -i "" AndroidManifest.xml
-  find . -type f -name '*.java' -not -name 'Gmsh.java' -exec sed -e "s/package org\.geuz\.onelab/package org\.geuz\.$appname/g" -i "" {} \;
+  find src/org/geuz/$appname -type f -name '*.java' -exec sed -e "s/package org\.geuz\.onelab/package org\.geuz\.$appname/g" -i "" {} \;
+  find res -type f -name '*.xml' -exec sed -e "s/org\.geuz\.onelab/org\.geuz\.$appname/g" -i "" {} \;
   # change app name and icons
   sed -e "s/Onelab/$appname/" -i "" res/values/strings.xml
+  sed -e "s/Onelab\/Mobile/$appname/" -i "" src/org/geuz/$appname/AboutActivity.java
   cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-128x128.png res/drawable-hdpi/ic_launcher.png
   cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-64x64.png res/drawable-mdpi/ic_launcher.png
   cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-48x48.png res/drawable-ldpi/ic_launcher.png
