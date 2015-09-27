@@ -286,6 +286,7 @@ Today                   return tToday;
 TotalMemory             return tTotalMemory;
 
 UndefineConstant        return tUndefineConstant;
+UpperCase               return tUpperCase;
 Using                   return tUsing;
 
 Volume                  return tVolume;

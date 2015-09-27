@@ -120,7 +120,7 @@ struct doubleXstring{
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil tRound
 %token tFmod tModulo tHypot tList
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
-%token tFind tStrFind tStrCmp tStrChoice
+%token tFind tStrFind tStrCmp tStrChoice tUpperCase
 %token tTextAttributes
 %token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tCurrentDirectory
 %token tSyncModel tNewModel
@@ -5685,6 +5685,15 @@ StringExpr :
         if(i != List_Nbr($3) - 1) strcat($$, "\n");
       }
       List_Delete($3);
+    }
+  | tUpperCase LP StringExpr RP
+    {
+      int i = 0;
+      while ($3[i]) {
+        $3[i] = toupper($3[i]);
+        i++;
+      }
+      $$ = $3;
     }
   | tStrChoice LP FExpr ',' StringExpr ',' StringExpr RP
     {
