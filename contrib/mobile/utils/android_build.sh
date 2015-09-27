@@ -76,9 +76,15 @@ make androidProject
 check
 
 if [ $# -eq 1 ] ; then
-  cd $appname; 
+  cd $appname
+  # change package name
+  rm -rf src/org/geuz/$appname
+  mv src/org/geuz/onelab/ src/org/geuz/$appname
+  mkdir src/org/geuz/onelab
+  mv src/org/geuz/$appname/Gmsh.java src/org/geuz/onelab
+  sed -e "s/org\.geuz\.onelab/org\.geuz\.$appname/g" -i "" AndroidManifest.xml
+  find . -type f -name '*.java' -not -name 'Gmsh.java' -exec sed -e "s/package org\.geuz\.onelab/package org\.geuz\.$appname/g" -i "" {} \;
   # change app name and icons
-  sed -e "s/package=\"org\.geuz\.onelab/package=\"org\.geuz\.$appname/" -i "" AndroidManifest.xml
   sed -e "s/Onelab/$appname/" -i "" res/values/strings.xml
   cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-128x128.png res/drawable-hdpi/ic_launcher.png
   cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-64x64.png res/drawable-mdpi/ic_launcher.png

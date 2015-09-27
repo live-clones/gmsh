@@ -1,5 +1,7 @@
 package org.geuz.onelab;
 
+import org.geuz.onelab.Gmsh;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;

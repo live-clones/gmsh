@@ -1,5 +1,7 @@
 package org.geuz.onelab;
 
+import org.geuz.onelab.Gmsh;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;

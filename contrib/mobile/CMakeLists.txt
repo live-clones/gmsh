@@ -145,11 +145,6 @@ if(ENABLE_BUILD_ANDROID)
   append_src(drawString.cpp)
   append_src(drawGeom.cpp)
   append_src(drawMesh.cpp)
-  # android-cmake toolchain
-  find_file(CMAKE_TOOLCHAIN_FILE "android.toolchain.cmake")
-  if(NOT CMAKE_TOOLCHAIN_FILE)
-    message(SEND_ERROR "Could not find Android CMake toolchain")
-  endif(NOT CMAKE_TOOLCHAIN_FILE)
   # GetDP lib
   find_library(GETDP_LIB Getdp PATH_SUFFIXES lib)
   find_path(GETDP_INC "GetDP.h" PATH_SUFFIXES include getdp include/getdp)

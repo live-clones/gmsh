@@ -15,7 +15,7 @@
                android:theme="@style/AppTheme"
                android:logo="@drawable/ic_launcher"
                android:allowBackup="true" >
-    <activity android:name="org.geuz.onelab.SplashScreen"
+    <activity android:name=".SplashScreen"
               android:label="@string/title_activity_main"
               android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
       <intent-filter>
@@ -38,15 +38,15 @@
         <data android:mimeType="application/zip" />
       </intent-filter>
     </activity>
-    <activity android:name="org.geuz.onelab.MainActivity"
+    <activity android:name=".MainActivity"
               android:label="@string/title_activity_main"/>
-    <activity android:name="org.geuz.onelab.ModelList"
+    <activity android:name=".ModelList"
               android:label="@string/title_activity_main"/>
-    <activity android:name="org.geuz.onelab.AboutActivity"
+    <activity android:name=".AboutActivity"
               android:label="@string/title_activity_about"/>
-    <activity android:name="org.geuz.onelab.PostProcessingActivity"
+    <activity android:name=".PostProcessingActivity"
               android:label="@string/title_activity_main"/>
-    <activity android:name="org.geuz.onelab.OptionsActivity"
+    <activity android:name=".OptionsActivity"
               android:label="@string/title_activity_options">
     </activity>
   </application>

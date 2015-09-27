@@ -1,5 +1,7 @@
 package org.geuz.onelab;
 
+import org.geuz.onelab.Gmsh;
+
 import java.nio.IntBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
