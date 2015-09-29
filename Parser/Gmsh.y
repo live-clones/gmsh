@@ -120,7 +120,7 @@ struct doubleXstring{
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil tRound
 %token tFmod tModulo tHypot tList
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
-%token tFind tStrFind tStrCmp tStrChoice tUpperCase
+%token tFind tStrFind tStrCmp tStrChoice tUpperCase tLowerCase tLowerCaseIn
 %token tTextAttributes
 %token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tCurrentDirectory
 %token tSyncModel tNewModel
@@ -5686,11 +5686,30 @@ StringExpr :
       }
       List_Delete($3);
     }
-  | tUpperCase LP StringExpr RP
+  | tUpperCase LP StringExprVar RP
     {
       int i = 0;
       while ($3[i]) {
         $3[i] = toupper($3[i]);
+        i++;
+      }
+      $$ = $3;
+    }
+  | tLowerCase LP StringExprVar RP
+    {
+      int i = 0;
+      while ($3[i]) {
+        $3[i] = tolower($3[i]);
+        i++;
+      }
+      $$ = $3;
+    }
+  | tLowerCaseIn LP StringExprVar RP
+    {
+      int i = 0;
+      while ($3[i]) {
+        if (i > 0 && $3[i-1] != '_')
+          $3[i] = tolower($3[i]);
         i++;
       }
       $$ = $3;

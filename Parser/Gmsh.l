@@ -287,6 +287,8 @@ TotalMemory             return tTotalMemory;
 
 UndefineConstant        return tUndefineConstant;
 UpperCase               return tUpperCase;
+LowerCase               return tLowerCase;
+LowerCaseIn             return tLowerCaseIn;
 Using                   return tUsing;
 
 Volume                  return tVolume;
