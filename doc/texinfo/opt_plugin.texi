@@ -87,7 +87,7 @@ Default value: @code{0}
 @end table
 
 @item Plugin(Crack)
-Plugin(Crack) creates a crack around the physical group `PhysicalGroup' of dimension `Dimension' (1 or 2). The plugin duplicates the vertices and the elements on the crack and stores them in a new discrete curve (`Dimension' = 1) or surface (`Dimension' = 2). The elements touching the crack on the negative side are modified to use the newly generated vertices.If `OpenBoundaryPhysicalGroup' is given (> 0), its vertices are duplicated and the crack will be left open on that (part of the) boundary. Otherwise, the lips of the crack are sealed, i.e., its vertices are not duplicated.
+Plugin(Crack) creates a crack around the physical group `PhysicalGroup' of dimension `Dimension' (1 or 2), embedded in a mesh of dimension `Dimension' + 1. The plugin duplicates the vertices and the elements on the crack and stores them in a new discrete curve (`Dimension' = 1) or surface (`Dimension' = 2). The elements touching the crack on the ``negative'' side are modified to use the newly generated vertices.If `OpenBoundaryPhysicalGroup' is given (> 0), its vertices are duplicated and the crack will be left open on that (part of the) boundary. Otherwise, the lips of the crack are sealed, i.e., its vertices are not duplicated. For 1D cracks, `NormalX', `NormalY' and `NormalZ' provide the reference normal of the surface in which the crack is supposed to be embedded.
 Numeric options:
 @table @code
 @item Dimension
@@ -96,6 +96,12 @@ Default value: @code{1}
 Default value: @code{1}
 @item OpenBoundaryPhysicalGroup
 Default value: @code{0}
+@item NormalX
+Default value: @code{0}
+@item NormalY
+Default value: @code{0}
+@item NormalZ
+Default value: @code{1}
 @end table
 
 @item Plugin(Curl)
@@ -761,10 +767,10 @@ Default value: @code{0}
 Default value: @code{1}
 @end table
 
-@item Plugin(ModifyComponent)
-Plugin(ModifyComponent) sets the `Component'-th component of the `TimeStep'-th time step in the view `View' to the expression `Expression'.@*
+@item Plugin(ModifyComponents)
+Plugin(ModifyComponents) modifies the components of the `TimeStep'-th time step in the view `View', using the expressions provided in `Expression0', ..., `Expression8'. If an expression is empty, the corresponding component in the view is not modified.@*
 @*
-`Expression' can contain:@*
+The expressions can contain:@*
 @*
 - the usual mathematical functions (Log, Sqrt, Sin, Cos, Fabs, ...) and operators (+, -, *, /, ^);@*
 @*
@@ -772,35 +778,42 @@ Plugin(ModifyComponent) sets the `Component'-th component of the `TimeStep'-th t
 @*
 - the symbols Time and TimeStep, to retrieve the current time and time step values;@*
 @*
-- the symbol v, to retrieve the `Component'-th component of the field in `View' at the `TimeStep'-th time step;@*
-@*
 - the symbols v0, v1, v2, ..., v8, to retrieve each component of the field in `View' at the `TimeStep'-th time step;@*
 @*
-- the symbol w, to retrieve the `Component'-th component of the field in `OtherView' at the `OtherTimeStep'-th time step. If `OtherView' and `View' are based on different spatial grids, or if their data types are different, `OtherView' is interpolated onto `View';@*
+- the symbols w0, w1, w2, ..., w8, to retrieve each component of the field in `OtherView' at the `OtherTimeStep'-th time step. If `OtherView' and `View' are based on different spatial grids, or if their data types are different, `OtherView' is interpolated onto `View'.@*
 @*
-- the symbols w0, w1, w2, ..., w8, to retrieve each component of the field in `OtherView' at the `OtherTimeStep'-th time step.@*
-@*
-If `TimeStep' < 0, the plugin automatically loops over all the time steps in `View' and evaluates `Expression' for each one.@*
+If `TimeStep' < 0, the plugin automatically loops over all the time steps in `View' and evaluates the expressions for each one.@*
 @*
 If `OtherTimeStep' < 0, the plugin uses `TimeStep' instead.@*
-@*
-If `Component' < 0, the plugin automatically  ops@*
-over all the components in the view and evaluates `Expression' for each one.@*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
 If `OtherView' < 0, the plugin uses `View' instead.@*
 @*
-Plugin(ModifyComponent) is executed in-place.
+Plugin(ModifyComponents) is executed in-place.
 String options:
 @table @code
-@item Expression
+@item Expression0
 Default value: @code{"v0 * Sin(x)"}
+@item Expression1
+Default value: @code{""}
+@item Expression2
+Default value: @code{""}
+@item Expression3
+Default value: @code{""}
+@item Expression4
+Default value: @code{""}
+@item Expression5
+Default value: @code{""}
+@item Expression6
+Default value: @code{""}
+@item Expression7
+Default value: @code{""}
+@item Expression8
+Default value: @code{""}
 @end table
 Numeric options:
 @table @code
-@item Component
-Default value: @code{-1}
 @item TimeStep
 Default value: @code{-1}
 @item View
@@ -883,11 +896,13 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(NewView)
-Plugin(NewView) creates a new view from a mesh.
+Plugin(NewView) creates a new view from a mesh.The parameter `Dimension' gives the dimensionof the initialized to zero NodeData vector
 Numeric options:
 @table @code
 @item View
 Default value: @code{-1}
+@item Dimension
+Default value: @code{1}
 @end table
 
 @item Plugin(Particles)
