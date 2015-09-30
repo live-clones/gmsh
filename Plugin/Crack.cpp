@@ -18,6 +18,9 @@ StringXNumber CrackOptions_Number[] = {
   {GMSH_FULLRC, "Dimension", NULL, 1.},
   {GMSH_FULLRC, "PhysicalGroup", NULL, 1.},
   {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", NULL, 0.},
+  {GMSH_FULLRC, "NormalX", NULL, 0.},
+  {GMSH_FULLRC, "NormalY", NULL, 0.},
+  {GMSH_FULLRC, "NormalZ", NULL, 1.}
 };
 
 extern "C"
@@ -41,7 +44,9 @@ std::string GMSH_CrackPlugin::getHelp() const
     "vertices are duplicated and the crack will be left "
     "open on that (part of the) boundary. Otherwise, the "
     "lips of the crack are sealed, i.e., its vertices are "
-    "not duplicated.";
+    "not duplicated. For 1D cracks, `NormalX', `NormalY' and "
+    "`NormalZ' provide the reference normal of the surface "
+    "in which the crack is supposed to be embedded.";
 }
 
 int GMSH_CrackPlugin::getNbOptions() const
@@ -76,6 +81,9 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   int dim = (int)CrackOptions_Number[0].def;
   int physical = (int)CrackOptions_Number[1].def;
   int open = (int)CrackOptions_Number[2].def;
+  SVector3 normal1d(CrackOptions_Number[3].def,
+                    CrackOptions_Number[4].def,
+                    CrackOptions_Number[5].def);
 
   if(dim != 1 && dim != 2){
     Msg::Error("Crack dimension should be 1 or 2");
@@ -174,7 +182,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     SVector3 n;
     for(unsigned int i = 0; i < it->second.size(); i++){
       if(dim == 1)
-        n += it->second[i]->getEdge(0).normal();
+        n += crossprod(normal1d, it->second[i]->getEdge(0).tangent());
       else
         n += it->second[i]->getFace(0).normal();
     }
