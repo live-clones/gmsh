@@ -90,6 +90,9 @@ if [ $# -eq 1 ] ; then
   # change app name and icons
   sed -e "s/Onelab/$appname/" -i "" res/values/strings.xml
   sed -e "s/Onelab\/Mobile/$appname/" -i "" src/org/geuz/$appname/AboutActivity.java
+  if [ "$appname" == "BBEMG" ] ; then
+      sed -e "s/onelab\.info/www\.bbemg\.be/g" -i "" src/org/geuz/$appname/AboutActivity.java
+  fi
   cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-128x128.png res/drawable-hdpi/ic_launcher.png
   cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-64x64.png res/drawable-mdpi/ic_launcher.png
   cp $HOME/tex/proposals/bbemg/icons/bbemg-logo-48x48.png res/drawable-ldpi/ic_launcher.png
