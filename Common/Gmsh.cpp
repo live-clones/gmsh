@@ -229,7 +229,9 @@ int GmshWriteFile(const std::string &fileName)
 
 int GmshFinalize()
 {
+#if defined(HAVE_POST)
   PView::list.clear();
+#endif
   GModel::list.clear();
   CTX::instance()->files.clear();
   return 1;
