@@ -90,10 +90,10 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer);
 void PrintParserSymbols(std::vector<std::string> &vec);
 fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 
-void addPeriodicEdge(int,int,const std::vector<double>&);
-void addPeriodicFace(int,int,const std::map<int,int>&);
-void addPeriodicFace(int,int,const std::vector<double>&);
-void computeAffineTransformation(SPoint3&,SPoint3&,double,SPoint3&,std::vector<double>&);
+void addPeriodicEdge(int, int, const std::vector<double>&);
+void addPeriodicFace(int, int, const std::map<int,int>&);
+void addPeriodicFace(int, int, const std::vector<double>&);
+void computeAffineTransformation(SPoint3&, SPoint3&, double, SPoint3&, std::vector<double>&);
 
 struct doubleXstring{
   double d;
@@ -4110,7 +4110,7 @@ Constraints :
             double d_master, d_slave;
             List_Read($8, i, &d_master);
             List_Read($4, i, &d_slave);
-            addPeriodicFace(d_slave,d_master,transfo);
+            addPeriodicFace(d_slave, d_master, transfo);
           }
         }
       }
@@ -4163,7 +4163,7 @@ Constraints :
           double d_master, d_slave;
           List_Read($8, i, &d_master);
           List_Read($4, i, &d_slave);
-          addPeriodicFace(d_slave,d_master,transfo);
+          addPeriodicFace(d_slave, d_master, transfo);
         }
       }
       List_Delete($4);
@@ -4215,7 +4215,7 @@ Constraints :
           double d_master, d_slave;
           List_Read($8, i, &d_master);
           List_Read($4, i, &d_slave);
-          addPeriodicFace(d_slave,d_master,transfo);
+          addPeriodicFace(d_slave, d_master, transfo);
         }
       }
       List_Delete($4);
@@ -4238,7 +4238,7 @@ Constraints :
           List_Read($10,i,&dm);
           edgeCounterParts[(int) ds] = (int) dm;
         }
-        addPeriodicFace(j_slave,j_master,edgeCounterParts);
+        addPeriodicFace(j_slave, j_master, edgeCounterParts);
       }
       List_Delete($5);
       List_Delete($10);
@@ -6049,7 +6049,7 @@ void yymsg(int level, const char *fmt, ...)
   }
 }
 
-void addPeriodicFace(int iTarget,int iSource,
+void addPeriodicFace(int iTarget, int iSource,
                      const std::vector<double>& affineTransform)
 {
   Surface *target = FindSurface(abs(iTarget));
@@ -6066,11 +6066,11 @@ void addPeriodicFace(int iTarget,int iSource,
     GFace *source = GModel::current()->getFaceByTag(abs(iSource));
     if (!target)  Msg::Error("Could not find edge %d for periodic copy from %d",
                              iTarget,iSource);
-    target->setMeshMaster(source,affineTransform);
+    target->setMeshMaster(source, affineTransform);
   }
 }
 
-void addPeriodicFace(int iTarget,int iSource,
+void addPeriodicFace(int iTarget, int iSource,
                      const std::map<int,int>& edgeCounterparts)
 {
   Surface *target = FindSurface(abs(iTarget));
@@ -6094,7 +6094,7 @@ void addPeriodicFace(int iTarget,int iSource,
     if (!target || !source)
       Msg::Error("Could not find surface %d or %d for periodic copy",
                  iTarget,iSource);
-    target->setMeshMaster(source,edgeCounterparts);
+    target->setMeshMaster(source, edgeCounterparts);
   }
 }
 
@@ -6115,10 +6115,10 @@ void addPeriodicEdge(int iTarget,int iSource,
       Msg::Error("Could not find surface %d or %d for periodic copy",
                  iTarget,iSource);
     if (affineTransform.size() >= 12) {
-      target->setMeshMaster(source,affineTransform);
+      target->setMeshMaster(source, affineTransform);
     }
     else {
-      target->setMeshMaster(source,iSource*iTarget < 0 ? -1:1);
+      target->setMeshMaster(source, iSource * iTarget < 0 ? -1 : 1);
     }
   }
 }

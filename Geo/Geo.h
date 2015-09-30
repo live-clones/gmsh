@@ -305,16 +305,16 @@ class GEO_Internals{
     std::vector<double> affineTransform;
   };
 
-  std::map<int,MasterEdge> periodicEdges;
+  std::map<int, MasterEdge> periodicEdges;
 
   struct MasterFace {
     int tag;
     // map from slave to master edges
-    std::map<int,int> edgeCounterparts;
+    std::map<int, int> edgeCounterparts;
     std::vector<double> affineTransform;
   };
 
-  std::map<int,MasterFace> periodicFaces;
+  std::map<int, MasterFace> periodicFaces;
 
   GEO_Internals(){ alloc_all(); }
   ~GEO_Internals(){ free_all(); }
