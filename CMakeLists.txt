@@ -1502,26 +1502,26 @@ if(WIN32 AND NOT MSVC OR CYGWIN)
   else(HAVE_64BIT_SIZE_T)
     set(FLAGS "${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res")
   endif(HAVE_64BIT_SIZE_T)
-  if(ENABLE_BUILD_DYNAMIC)
+  if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
     set(FLAGS "${FLAGS} -Wl,-Bstatic -lgfortran")
     set_target_properties(gmsh PROPERTIES
       LINK_FLAGS "${FLAGS} -Wl,--enable-auto-import")
     set(LIBGMSH_DEF "libGmsh-${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.def")
     set_target_properties(shared PROPERTIES PREFIX "lib"
       LINK_FLAGS "${FLAGS} -Wl,--export-all-symbols,--output-def,${LIBGMSH_DEF}")
-  else(ENABLE_BUILD_DYNAMIC)
+  else(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
     set_target_properties(gmsh PROPERTIES
       LINK_FLAGS "${FLAGS} -static")
     # remove -Wl,-Bdynamic flags
     set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
     set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
-  endif(ENABLE_BUILD_DYNAMIC)
+  endif(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS
     "/STACK:16777216 /SAFESEH:NO")
-  if(ENABLE_BUILD_DYNAMIC)
+  if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-  endif(ENABLE_BUILD_DYNAMIC)
+  endif(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
 endif(WIN32 AND NOT MSVC OR CYGWIN)
 
 # parser target
