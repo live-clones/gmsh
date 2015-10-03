@@ -427,7 +427,7 @@ void End_Curve(Curve *c)
     }
 
   }
-  
+
   if (c->Typ == MSH_SEGM_COMPOUND) {
 
     std::list<Curve*> tmp;
@@ -442,10 +442,10 @@ void End_Curve(Curve *c)
 
     Curve* c0 = *(tmp.begin());
     tmp.pop_front();
-  
+
     ordered.push_back(c0->Num);
     std::pair<Vertex*,Vertex*> vtcs(c0->beg,c0->end);
-    
+
     while (tmp.size() != 0) {
       unsigned nbCurrent = tmp.size();
       for (std::list<Curve*>::iterator tIter=tmp.begin();tIter!=tmp.end();tIter++) {
@@ -474,7 +474,7 @@ void End_Curve(Curve *c)
           tmp.erase(tIter);
           break;
         }
-      } 
+      }
       if (tmp.size() == nbCurrent) Msg::Error("Could not order compound edge %d to find begin and end vertex", c->Num);
     }
     c->beg = vtcs.first;
@@ -4309,16 +4309,16 @@ void sortEdgesInLoop(int num, List_T *edges, bool orient)
     List_Read(edges, i, &j);
     if((c = FindCurve(j))){
       List_Add(temp, &c);
-      if(c->Typ == MSH_SEGM_DISCRETE){
-        Msg::Debug("Aborting line loop sort for discrete edge: hope you know "
-		   "what you're doing ;-)");
+      if(c->Typ == MSH_SEGM_DISCRETE || c->Typ == MSH_SEGM_COMPOUND){
+        Msg::Debug("Aborting line loop sort for discrete or compound edge: "
+                   "let's hope you know what you're doing ;-)");
         List_Delete(temp);
         return;
       }
     }
     else{
-      Msg::Debug("Unknown curve %d, aborting line loop sort: hope you know "
-                 "what you're doing ;-)", j);
+      Msg::Debug("Unknown curve %d, aborting line loop sort: "
+                 "let's hope you know what you're doing ;-)", j);
       List_Delete(temp);
       return;
     }
@@ -4332,7 +4332,7 @@ void sortEdgesInLoop(int num, List_T *edges, bool orient)
   while(List_Nbr(edges) < nbEdges) {
     for(int i = 0; i < List_Nbr(temp); i++) {
       c2 = *(Curve **)List_Pointer(temp, i);
-       //reverse loop if not ordered correctly !
+      //reverse loop if not ordered correctly !
       if (orient && c1->end == c2->end){
 	Curve *c2R = CreateReversedCurve(c2);
 	c2 = c2R;
@@ -4352,8 +4352,8 @@ void sortEdgesInLoop(int num, List_T *edges, bool orient)
         }
         break;
       }
-     }
-     if(j++ > nbEdges) {
+    }
+    if(j++ > nbEdges) {
       Msg::Error("Line Loop %d is wrong", num);
       break;
     }
