@@ -1693,9 +1693,9 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
           coords = ((*it)._sign == 1) ? mesh1d : mesh1d_reversed;
           found = (*it);
         }
-        unordered.erase(it);
         if(MYDEBUG)
           printf("Starting with edge = %d seam %d\n", (*it).ge->tag(), seam);
+        unordered.erase(it);
         break;
       }
       else{
