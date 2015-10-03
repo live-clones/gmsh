@@ -221,7 +221,9 @@ if(MSVC)
     endforeach(VAR)
   endif(ENABLE_MSVC_STATIC_RUNTIME)
   if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
-    # automatically export .def file (requires CMake 3.4)
+    # automatically export .def file with all symbols (requires CMake 3.4);
+    # depending on the compiling options this might lead to more than 64k export
+    # symbols; just trim the .def file to keep the ones you need
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
   endif(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
 endif(MSVC)
@@ -1511,6 +1513,7 @@ if(WIN32 AND NOT MSVC OR CYGWIN)
     set_target_properties(gmsh PROPERTIES
       LINK_FLAGS "${FLAGS} -Wl,--enable-auto-import")
     set(LIBGMSH_DEF "libGmsh-${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.def")
+    # automatically export .def file with all symbols
     set_target_properties(shared PROPERTIES PREFIX "lib"
       LINK_FLAGS "${FLAGS} -Wl,--export-all-symbols,--output-def,${LIBGMSH_DEF}")
   else(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
