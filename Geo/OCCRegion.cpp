@@ -36,14 +36,20 @@ void OCCRegion::setup()
     for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()){
       TopoDS_Face face = TopoDS::Face(exp3.Current());
       GFace *f = model()->getOCCInternals()->getOCCFaceByNativePtr(model(),face);
-      if(f){
+      if(!f){
+        Msg::Error("Unknown face in region %d", tag());
+      }
+      else if (face.Orientation() == TopAbs_INTERNAL){
+        Msg::Info("Adding embedded face %d", f->tag());
+        embedded_faces.push_back(f);
+      }
+      else{
         l_faces.push_back(f);
         f->addRegion(this);
       }
-      else
-        Msg::Error("Unknown face in region %d", tag());
     }
   }
+
   Msg::Debug("OCC Region %d with %d faces", tag(), l_faces.size());
 }
 

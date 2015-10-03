@@ -42,7 +42,7 @@
 #endif
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
-  : GFace(m, num), s(_s)
+  : GFace(m, num), s(TopoDS::Face(_s.Oriented(TopAbs_FORWARD)))
 {
   setup();
   model()->getOCCInternals()->bind(s, num);
