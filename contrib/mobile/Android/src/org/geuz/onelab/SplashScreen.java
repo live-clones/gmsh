@@ -73,36 +73,35 @@ public class SplashScreen extends Activity{
     /**
      * Uncompress zip archive into the files directory of the application.
      */
-    private void ImportZipArchive(InputStream stream)
+    private boolean ImportZipArchive(InputStream stream)
     {
-    	try {
-            ZipInputStream zipStream = new ZipInputStream(stream);
-            ZipEntry entry;
-            while ((entry = zipStream.getNextEntry()) != null) {
-                String name = entry.getName();
-                FileOutputStream outputStream;
-                if(name.charAt(name.length()-1) == '/') {
+        try {
+            String path = this.getFilesDir().getAbsolutePath() + File.separator;
+            ZipInputStream zis = new ZipInputStream(stream);
+            byte[] buffer = new byte[1024];
+            ZipEntry ze;
+            while ((ze = zis.getNextEntry()) != null) {
+                String filename = ze.getName();
+                if (ze.isDirectory()) {
+                    File fmd = new File(path + filename);
+                    fmd.mkdirs();
                     continue;
                 }
-                else if(name.lastIndexOf("/") > 0) {
-                    File document = this.getFilesDir();
-                    File currentDirectory = new File(document, name.substring(0, name.lastIndexOf("/")));
-                    currentDirectory.mkdir();
-                    File currentFile = new File(currentDirectory, name.substring(name.lastIndexOf("/")+1));
-                    outputStream = new FileOutputStream(currentFile);
+                FileOutputStream fout = new FileOutputStream(path + filename);
+                int count;
+                while ((count = zis.read(buffer)) != -1) {
+                    fout.write(buffer, 0, count);
                 }
-                else {
-                    outputStream = openFileOutput(name, Context.MODE_PRIVATE);
-                }
-                byte[] buffer = new byte[2048];
-                for (int i = zipStream.read(buffer, 0, buffer.length); i > 0;
-                     i = zipStream.read(buffer, 0, buffer.length))
-                    outputStream.write(buffer, 0, i);
+                fout.close();
+                zis.closeEntry();
             }
-            zipStream.close();
+            zis.close();
         }
-        catch (IOException e1) {
-            e1.printStackTrace();
+        catch(IOException e) {
+            e.printStackTrace();
+            return false;
         }
+        return true;
     }
+
 }
