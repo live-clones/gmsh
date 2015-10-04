@@ -768,7 +768,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
       }
     }
     but->callback(onelab_number_choice_cb, (void*)path);
-    but->align(FL_ALIGN_RIGHT);
+    but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     if(p.getReadOnly()) but->deactivate();
     return but;
   }
@@ -782,6 +782,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
     but->color(_tree->color());
     but->value(p.getValue());
     but->callback(onelab_number_check_button_cb, (void*)path);
+    but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
     if(highlight){
       but->color(c);
       but->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
@@ -795,7 +796,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
     outputRange *but = new outputRange(1, 1, ww, hh);
     but->callback(onelab_number_output_range_cb, (void*)path);
     but->value(p.getValue());
-    but->align(FL_ALIGN_RIGHT);
+    but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     but->graph(p.getAttribute("Graph"));
     if(highlight) but->color(c);
     return but;
@@ -813,7 +814,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::number &p, int ww, int hh,
   but->graph(p.getAttribute("Graph"));
   but->callback(onelab_number_input_range_cb, (void*)path);
   but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
-  but->align(FL_ALIGN_RIGHT);
+  but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
   if(highlight) but->color(c);
   return but;
 }
@@ -952,7 +953,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
   if(p.getReadOnly()){
     Fl_Output *but = new Fl_Output(1, 1, ww, hh);
     but->value(p.getValue().c_str());
-    but->align(FL_ALIGN_RIGHT);
+    but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     if(highlight){
       but->color(c);
       but->textcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
@@ -966,7 +967,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
     but->value(p.getValue().c_str());
     but->callback(onelab_string_input_cb, (void*)path);
     but->when(FL_WHEN_ENTER_KEY);
-    but->align(FL_ALIGN_RIGHT);
+    but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     if(highlight){
       but->color(c);
       but->textcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
@@ -1007,7 +1008,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
   but->value(p.getValue().c_str());
   but->callback(onelab_string_input_choice_cb, (void*)path);
   but->input()->when(FL_WHEN_ENTER_KEY);
-  but->align(FL_ALIGN_RIGHT);
+  but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
   if(highlight){
     but->input()->color(c);
     but->input()->textcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
@@ -1056,7 +1057,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, int ww, int hh,
   if(p.getReadOnly()){
     inputRegion *but = new inputRegion(1, 1, ww, hh, true);
     but->value(p.getValue());
-    but->align(FL_ALIGN_RIGHT);
+    but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     if(highlight){
       but->color(c);
       but->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
@@ -1066,7 +1067,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, int ww, int hh,
 
   inputRegion *but = new inputRegion(1, 1, ww, hh, false);
   but->value(p.getValue());
-  but->align(FL_ALIGN_RIGHT);
+  but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
   but->callback(onelab_region_input_cb, (void*)path);
   if(highlight){
     but->color(c);
@@ -1082,7 +1083,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, int ww, int hh,
   if(1 || p.getReadOnly()){
     Fl_Output *but = new Fl_Output(1, 1, ww, hh);
     but->value("TODO function");
-    but->align(FL_ALIGN_RIGHT);
+    but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     if(highlight){
       but->color(c);
       but->textcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
@@ -1183,13 +1184,13 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
       but = new Fl_Button(1, 1, ww, hh);
       but->box(FL_NO_BOX);
       but->clear_visible_focus();
-      but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+      but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
       but->callback(onelab_subtree_cb, (void*)n);
 #else
       if(getPath(n).find("0Modules/Post-processing") != std::string::npos){
         but = new Fl_Button(1, 1, ww, hh);
         but->box(FL_NO_BOX);
-        but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+        but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
         but->tooltip("Toggle visibility of child views");
         char *group = strdup(getPath(n).substr(24).c_str());
         _treeStrings.push_back(group);
@@ -1197,7 +1198,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
       }
       else{
         but = new Fl_Box(1, 1, ww, hh);
-        but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+        but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
       }
 #endif
       _treeWidgets.push_back(but);
