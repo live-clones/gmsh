@@ -70,9 +70,7 @@ public class SplashScreen extends Activity{
         handler.sendMessageDelayed(msg, 500); // 500 milliseconds
     }
 
-    /**
-     * Uncompress zip archive into the files directory of the application.
-     */
+    // Uncompress zip archive into the files directory of the application.
     private boolean ImportZipArchive(InputStream stream)
     {
         try {

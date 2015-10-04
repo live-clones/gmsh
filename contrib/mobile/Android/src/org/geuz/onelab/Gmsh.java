@@ -5,7 +5,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 public class Gmsh implements Parcelable {
-    /** from C/C++ code **/
+    // from C/C++ code:
     static {
         System.loadLibrary("f2cblas");
         System.loadLibrary("f2clapack");
@@ -45,7 +45,7 @@ public class Gmsh implements Parcelable {
     public static native String getAboutGmsh();
     public static native String getAboutGetDP();
 
-    /** Java CLASS **/
+    // Java class:
     private long ptr;
     private Handler handler;
     public Gmsh(Handler handler, float fontFactor)
