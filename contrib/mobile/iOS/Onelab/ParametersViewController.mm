@@ -22,29 +22,37 @@
   [super viewDidLoad];
 
   // Do any additional setup after loading the view, typically from a nib.
-  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshParameters:) name:@"refreshParameters" object:nil];
-  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetParameters:) name:@"resetParameters" object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshParameters:)
+                                               name:@"refreshParameters" object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resetParameters:)
+                                               name:@"resetParameters" object:nil];
 
   self.navigationItem.title = @"Model";
 
   _sections = [[NSMutableArray alloc] init];
   _sectionstitle = [[NSMutableArray alloc] init];
 
-  UILongPressGestureRecognizer *lpgr = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
+  UILongPressGestureRecognizer *lpgr =
+    [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
   lpgr.minimumPressDuration = 1.0;
   [self.tableView addGestureRecognizer:lpgr];
 
   [self.navigationController setToolbarHidden:NO];
   control = [[UISegmentedControl alloc] initWithItems:[[NSArray alloc] initWithObjects:@"Model", @"Display", nil]];
   UIBarButtonItem *controlBtn = [[UIBarButtonItem alloc] initWithCustomView:control];
-  UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
+  UIBarButtonItem *flexibleSpace =
+    [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
   self.toolbarItems = [[NSArray alloc] initWithObjects:flexibleSpace, controlBtn, flexibleSpace, nil];
   [control addTarget:self action:@selector(indexDidChangeForSegmentedControl:) forControlEvents:UIControlEventValueChanged];
   if(![[UIDevice currentDevice].model isEqualToString:@"iPad"] &&
      ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain target:self action:@selector(backButtonPressed:)];
+    self.navigationItem.leftBarButtonItem =
+      [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain
+                                      target:self action:@selector(backButtonPressed:)];
   }
-  self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStyleBordered target:self action:@selector(resetParameters:)];
+  self.navigationItem.rightBarButtonItem =
+    [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStyleBordered
+                                    target:self action:@selector(resetParameters:)];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -74,7 +82,9 @@
   onelab::server::instance()->get(number,[name UTF8String]);
   if(number.size() && !number[0].getReadOnly()){
     NSLog(@"Manual edit of parameter '%s' with value '%g'", number[0].getName().c_str(), number[0].getValue());
-    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:@"%s", number[0].getShortName().c_str()] message:name delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Ok", nil];
+    UIAlertView *alertView =
+      [[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:@"%s", number[0].getShortName().c_str()]
+                                 message:name delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Ok", nil];
     alertView.alertViewStyle = UIAlertViewStylePlainTextInput;
     [alertView textFieldAtIndex:0].text = [NSString stringWithFormat:@"%g", number[0].getValue()];
     [alertView show];
@@ -130,7 +140,8 @@
     [section addObject:param];
   }
   [self.tableView beginUpdates];
-  [self.tableView insertRowsAtIndexPaths:[[NSArray alloc] initWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationAutomatic];
+  [self.tableView insertRowsAtIndexPaths:[[NSArray alloc] initWithObjects:indexPath, nil]
+                        withRowAnimation:UITableViewRowAnimationAutomatic];
   [self.tableView endUpdates];
 }
 
@@ -140,14 +151,16 @@
   ParameterStringList *param = [[ParameterStringList alloc] initWithString:p];
   [section addObject:param];
   [self.tableView beginUpdates];
-  [self.tableView insertRowsAtIndexPaths:[[NSArray alloc] initWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationAutomatic];
+  [self.tableView insertRowsAtIndexPaths:[[NSArray alloc] initWithObjects:indexPath, nil]
+                        withRowAnimation:UITableViewRowAnimationAutomatic];
   [self.tableView endUpdates];
 }
 
 - (void)removeParemeterNumberAtIndex:(NSIndexPath*)index
 {
   [self.tableView beginUpdates];
-  [self.tableView deleteRowsAtIndexPaths: [NSArray arrayWithObject:index] withRowAnimation:UITableViewRowAnimationAutomatic];
+  [self.tableView deleteRowsAtIndexPaths: [NSArray arrayWithObject:index]
+                        withRowAnimation:UITableViewRowAnimationAutomatic];
   [self.tableView endUpdates];
 }
 
@@ -156,7 +169,8 @@
   [_sections addObject:s];
   [_sectionstitle addObject:t];
   [self.tableView beginUpdates];
-  [self.tableView insertSections:[[NSIndexSet alloc] initWithIndex:[_sections count]-1] withRowAnimation:UITableViewRowAnimationAutomatic];
+  [self.tableView insertSections:[[NSIndexSet alloc] initWithIndex:[_sections count]-1]
+                withRowAnimation:UITableViewRowAnimationAutomatic];
   [self.tableView endUpdates];
   [self addParameterNumber:p atIndexPath:[NSIndexPath indexPathForRow:0 inSection:[_sections count]-1]];
 }
@@ -166,9 +180,29 @@
   [_sections addObject:s];
   [_sectionstitle addObject:t];
   [self.tableView beginUpdates];
-  [self.tableView insertSections:[[NSIndexSet alloc] initWithIndex:[_sections count]-1] withRowAnimation:UITableViewRowAnimationAutomatic];
+  [self.tableView insertSections:[[NSIndexSet alloc] initWithIndex:[_sections count]-1]
+                withRowAnimation:UITableViewRowAnimationAutomatic];
   [self.tableView endUpdates];
   [self addParameterString:p atIndexPath:[NSIndexPath indexPathForRow:0 inSection:[_sections count]-1]];
+}
+
+NSString *GetSectionTitle(NSString *name)
+{
+  NSString *s = @"";
+  NSArray *split = [name componentsSeparatedByString:@"/"];
+  for(int i = 0; i < [split count] - 1; i++){
+    NSString *name = [split objectAtIndex:i];
+    while([name length] && [name characterAtIndex:0] == ' ')
+      name = [name substringFromIndex:1];
+    while([name length] && ([name characterAtIndex:0] == '{' || [name characterAtIndex:0] == '}'))
+      name = [name substringFromIndex:1];
+    while([name length] && [name characterAtIndex:0] >= '0' && [name characterAtIndex:0] <= '9')
+      name = [name substringFromIndex:1];
+    if(i)
+      s = [s stringByAppendingString:@" > "];
+    s = [s stringByAppendingString:name];
+  }
+  return s;
 }
 
 - (void)refreshTableView
@@ -177,30 +211,29 @@
   onelab::server::instance()->get(number);
 
   // check for new/updated parameters (number)
-  for(int i=0;i<number.size();i++) {
-    if(!number[i].getVisible()) continue; // Do not add invisible parameter
-    NSString *name=[NSString stringWithCString:number[i].getName().c_str() encoding:NSUTF8StringEncoding];
-    NSString *sectiontitle = [[name componentsSeparatedByString:@"/"] objectAtIndex:0];
+  for(int i = 0; i < number.size(); i++) {
+    if(!number[i].getVisible()) continue; // do not add invisible parameter
+    NSString *name = [NSString stringWithCString:number[i].getName().c_str() encoding:NSUTF8StringEncoding];
+    NSString *sectiontitle = GetSectionTitle(name);
     Boolean found = false;
-
-    for(int iSection=0; iSection<[_sectionstitle count]; iSection++) { // Check if the section exist
+    for(int iSection = 0; iSection < [_sectionstitle count]; iSection++) { // check if the section exist
       if([sectiontitle isEqualToString:[_sectionstitle objectAtIndex:iSection]]) {
         NSMutableArray *section = [_sections objectAtIndex:iSection];
         for(int iparameter = 0; iparameter<[section count]; iparameter++) {
-          if([[[section objectAtIndex: iparameter] getName] isEqualToString:name]) { // The parameter is in the section
+          if([[[section objectAtIndex: iparameter] getName] isEqualToString:name]) { // the parameter is in the section
             Parameter * p = [section objectAtIndex: iparameter];
             [p refresh]; // just refresh the parameter
             found = true;
             break;
           }
         }
-        if(!found) // The parameter is not in the section, add it
+        if(!found) // the parameter is not in the section, add it
           [self addParameterNumber:number[i] atIndexPath:[NSIndexPath indexPathForRow:[section count] inSection:iSection]];
         found = true; break;
       }
     }
     if(found) continue; // the parameter is in the tableView
-    // The section has to be created
+    // the section has to be created
     NSMutableArray *newSection = [[NSMutableArray alloc] init];
     [self addSection:newSection withTitle:sectiontitle withParameterNumber:number[i]];
   }
@@ -209,38 +242,37 @@
   onelab::server::instance()->get(string);
 
   // check for new/updated parameters (string)
-  for(int i=0;i<string.size();i++) {
-    if(!string[i].getVisible() || string[i].getKind() == "file") continue; // Do not add invisible parameter
-    NSString *name=[NSString stringWithCString:string[i].getName().c_str() encoding:NSUTF8StringEncoding];
-    NSString *sectiontitle = [[name componentsSeparatedByString:@"/"] objectAtIndex:0];
+  for(int i = 0; i < string.size(); i++) {
+    if(!string[i].getVisible() || string[i].getKind() == "file") continue; // do not add invisible parameter
+    NSString *name = [NSString stringWithCString:string[i].getName().c_str() encoding:NSUTF8StringEncoding];
+    NSString *sectiontitle = GetSectionTitle(name);
     Boolean found = false;
-
-    for(int iSection=0; iSection<[_sectionstitle count]; iSection++) { // Check if the section exist
+    for(int iSection = 0; iSection < [_sectionstitle count]; iSection++) { // check if the section exist
       if([sectiontitle isEqualToString:[_sectionstitle objectAtIndex:iSection]]) {
         NSMutableArray *section = [_sections objectAtIndex:iSection];
         for(int iparameter = 0; iparameter<[section count]; iparameter++) {
-          if([[[section objectAtIndex: iparameter] getName] isEqualToString:name]) { // The parameter is in the section
+          if([[[section objectAtIndex: iparameter] getName] isEqualToString:name]) { // the parameter is in the section
             Parameter * p = [section objectAtIndex: iparameter];
             [p refresh]; // just refresh the parameter
             found = true;
             break;
           }
         }
-        if(!found) // The parameter is not in the section, add it
+        if(!found) // the parameter is not in the section, add it
           [self addParameterString:string[i] atIndexPath:[NSIndexPath indexPathForRow:[section count] inSection:iSection]];
         found = true; break;
       }
     }
     if(found) continue; // the parameter is in the tableView
-    // The section have to be create
+    // the section has to be created
     NSMutableArray *newSection = [[NSMutableArray alloc] init];
     [self addSection:newSection withTitle:sectiontitle withParameterString:string[i]];
   }
 
   // check for hidden/deleted parameters
-  for(int iSection=0; iSection<[_sectionstitle count]; iSection++) {
+  for(int iSection = 0; iSection < [_sectionstitle count]; iSection++) {
     NSMutableArray *section = [_sections objectAtIndex:iSection];
-    for(int iparameter = 0; iparameter<[section count]; iparameter++) {
+    for(int iparameter = 0; iparameter < [section count]; iparameter++) {
       Parameter * p = [section objectAtIndex: iparameter];
       std::vector<onelab::number> number;
       onelab::server::instance()->get(number,[[p getName] UTF8String]);
@@ -286,7 +318,9 @@
 {
   if(((AppDelegate *)[UIApplication sharedApplication].delegate)->compute) {
     UIAlertView *alert;
-    alert = [[UIAlertView alloc] initWithTitle:@"Can't reset model parameters" message:@"The computation has to complete before you can reset the parameters." delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+    alert = [[UIAlertView alloc] initWithTitle:@"Can't reset model parameters"
+                                       message:@"The computation has to complete before you can reset the parameters."
+                                      delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
     [alert show];
     return;
   }
@@ -324,9 +358,11 @@
 {
   // get the param with his name
   static NSString *CellIdentifier = @"parameterCell";
-  if(indexPath.section >= _sections.count) return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+  if(indexPath.section >= _sections.count)
+    return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
   NSMutableArray *sectionContent = [_sections objectAtIndex:[indexPath section]];
-  if(indexPath.row >= sectionContent.count) return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+  if(indexPath.row >= sectionContent.count)
+    return [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
   Parameter *tmp = [sectionContent objectAtIndex:[indexPath row]];
 
   UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
