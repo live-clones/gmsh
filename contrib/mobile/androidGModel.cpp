@@ -243,7 +243,7 @@ extern "C" {
   JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getParams
   (JNIEnv *env, jobject obj)
   {
-    jclass stringClass = env->FindClass( "java/lang/String" );
+    jclass stringClass = env->FindClass("java/lang/String");
     std::vector<std::string> tmp =  onelab::server::instance()->toChar();
     for(unsigned int i = 0; i < tmp.size(); i++)
       for(unsigned int j = 0; j < tmp[i].size(); j++)

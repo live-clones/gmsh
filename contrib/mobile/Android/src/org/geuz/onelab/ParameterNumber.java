@@ -175,7 +175,7 @@ public class ParameterNumber extends Parameter {
         this.update();
         return pos;
     }
-    public String getType(){return "ParameterNumber";}
+    public String getType(){ return "ParameterNumber"; }
     public LinearLayout getView()
     {
         LinearLayout paramLayout = new LinearLayout(_context);

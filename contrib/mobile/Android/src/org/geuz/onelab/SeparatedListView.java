@@ -159,4 +159,3 @@ public class SeparatedListView extends ListView{
     }
 
 }
-

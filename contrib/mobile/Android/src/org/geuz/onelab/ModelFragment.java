@@ -216,8 +216,7 @@ public class ModelFragment extends Fragment{
                     requestRender();
                 }
             });
-        layoutParams = new RelativeLayout.LayoutParams(
-                                                       RelativeLayout.LayoutParams.MATCH_PARENT,
+        layoutParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT,
                                                        RelativeLayout.LayoutParams.WRAP_CONTENT);
         layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         glViewLayout.addView(_controlBarLayout, layoutParams);

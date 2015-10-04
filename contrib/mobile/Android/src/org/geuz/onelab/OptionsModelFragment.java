@@ -61,9 +61,9 @@ public class OptionsModelFragment extends Fragment{
     private void getAvailableParam()
     {
     	String[] tmp = _gmsh.getParams();
-        for(String s : tmp){ // for each parameters in ONEALB
+        for(String s : tmp){ // for each parameter in ONEALB
             boolean found = false;
-            for(int i = 0; i<params.size(); i++){ // for each parameters
+            for(int i = 0; i < params.size(); i++){ // for each parameter in the GUI
                 Parameter p = params.get(i);
                 if(s.split(Character.toString((char)0x03))[2].equals(p.getName())){
                     // the parameter already exist, just refresh it
@@ -94,10 +94,7 @@ public class OptionsModelFragment extends Fragment{
                     });
                 params.add(mParam);
                 if(_listView != null)
-                    _listView.addItem(mParam.getName().split("/")[0].equals("Parameters")?
-                                      mParam.getName().split("/")[0] + " > " +
-                                      mParam.getName().split("/")[1] :
-                                      mParam.getName().split("/")[0], mParam.getView());
+                    _listView.addItem(mParam.getSectionName(), mParam.getView());
             }
             else if(s.split("|")[1].equals("string")){
                 ParameterString mParam = new ParameterString(_listView.getContext(), _gmsh, "");
@@ -112,10 +109,7 @@ public class OptionsModelFragment extends Fragment{
                             });
                     params.add(mParam);
                     if(_listView != null)
-                        _listView.addItem(mParam.getName().split("/")[0].equals("Parameters") ?
-                                          mParam.getName().split("/")[0] + " > " +
-                                          mParam.getName().split("/")[1] :
-                                          mParam.getName().split("/")[0], mParam.getView());
+                        _listView.addItem(mParam.getSectionName(), mParam.getView());
                 }
             }
         }

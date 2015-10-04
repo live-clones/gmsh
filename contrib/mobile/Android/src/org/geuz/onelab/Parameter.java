@@ -36,10 +36,7 @@ public class Parameter {
 
     protected void update()
     {
-        if(_label != null && !_label.equals(""))
-            _title.setText(_label);
-        else
-            _title.setText(getShortName());
+        _title.setText(getShortName());
         if(isReadOnly()) _title.setAlpha(0.423f);
     }
 
@@ -54,14 +51,37 @@ public class Parameter {
     public String getShortName()
     {
         if(_label != null && _label.length() > 0) return _label;
-        String[] splited = _name.split("/");
-        String name = splited[splited.length-1];
+        String[] split = _name.split("/");
+        String name = split[split.length-1];
+        while(name.length() > 0 && name.charAt(0) == ' ')
+            name = name.substring(1);
+        while(name.length() > 0 && (name.charAt(0) == '{' || name.charAt(0) == '}'))
+            name = name.substring(1);
         while(name.length() > 0 && name.charAt(0) >= '0' && name.charAt(0) <= '9')
             name = name.substring(1);
         return name;
     }
+    public String getSectionName()
+    {
+        String name = "";
+        if (_name.contains("/")) {
+            String[] split = _name.split("/");
+            for(int i = 0; i < split.length - 1; i++){
+                String s = split[i];
+                while(s.length() > 0 && s.charAt(0) == ' ')
+                    s = s.substring(1);
+                while(s.length() > 0 && (s.charAt(0) == '{' || s.charAt(0) == '}'))
+                    s = s.substring(1);
+                while(s.length() > 0 && s.charAt(0) >= '0' && s.charAt(0) <= '9')
+                    s = s.substring(1);
+                if(i != 0)
+                    name += " > ";
+                name += s;
+            }
+        }
+        return name;
+    }
     public boolean isReadOnly() { return _readOnly; }
-    public String getLabel() { return _label; }
     public int fromString(String s)
     {
         String[] infos = s.split(Character.toString((char)0x03));
