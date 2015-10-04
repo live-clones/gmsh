@@ -140,9 +140,12 @@ namespace onelab{
       std::string::size_type last = _name.find_last_of('/');
       if(last != std::string::npos)
         s = _name.substr(last + 1);
+      // remove starting white space
+      while(s.size() && s[0] == ' ')
+        s = s.substr(1);
       // remove starting braces: can be used to order parameters 'from the end',
       // as the ASCII code is after numbers and letters
-      while(s.size() && (s[0] == '}' || s[0] == '{' || s[0] == '{'))
+      while(s.size() && (s[0] == '}' || s[0] == '{'))
         s = s.substr(1);
       // remove starting numbers: can be used to order parameters 'from the
       // start'
