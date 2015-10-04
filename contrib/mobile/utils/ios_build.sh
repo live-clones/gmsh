@@ -34,7 +34,7 @@ mkdir -p $gmsh_svn/build_ios
 cd $gmsh_svn/build_ios
 cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_ANN=1 -DENABLE_TETGEN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 ..
 check
-$build_cmd OTHER_CPLUSPLUSFLAGS="-miphoneos-version-min=7.0 -fembed-bitcode"
+$build_cmd OTHER_CFLAGS="-miphoneos-version-min=7.0 -fembed-bitcode" OTHER_CPLUSPLUSFLAGS="-miphoneos-version-min=7.0 -fembed-bitcode"
 check
 $headers_cmd
 mkdir -p $gmsh_framework/Headers
@@ -49,7 +49,7 @@ mkdir -p $getdp_svn/build_ios
 cd $getdp_svn/build_ios
 PETSC_DIR= PETSC_ARCH= SLEPC_DIR= cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_LEGACY=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_framework/Headers/" -DSLEPC_LIB="$slepc_framework/slepc" -DGMSH_INC="$gmsh_framework/Headers/" -DGMSH_LIB="$gmsh_framework/Gmsh" ..
 check
-$build_cmd OTHER_CPLUSPLUSFLAGS="-miphoneos-version-min=7.0 -fembed-bitcode"
+$build_cmd OTHER_CFLAGS="-miphoneos-version-min=7.0 -fembed-bitcode" OTHER_CPLUSPLUSFLAGS="-miphoneos-version-min=7.0 -fembed-bitcode"
 check
 $headers_cmd
 mkdir -p $getdp_framework/Headers
