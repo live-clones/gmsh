@@ -52,6 +52,7 @@
 #define FORMAT_MPEG_PREVIEW 43
 #define FORMAT_PGF   44
 #define FORMAT_PVTU  45
+#define FORMAT_X3D  46
 
 // Element types
 #define TYPE_PNT     1

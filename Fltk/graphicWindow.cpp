@@ -323,14 +323,17 @@ static int _save_view_med(const char *name){ return genericViewFileDialog
     (name, "MED Options", 6); }
 static int _save_view_txt(const char *name){ return genericViewFileDialog
     (name, "TXT Options", 4); }
-static int _save_view_wrl(const char *name){ return genericViewFileDialog
-    (name, "X3D Options", 7); }
+
+//static int _save_view_wrl(const char *name){ return genericViewFileDialog    (name, "X3D Options", 7); } 
+static int _save_view_x3d(const char *name){ return x3dViewFileDialog    (name, "X3D Options", 7); } 
+
 
 static int _save_auto(const char *name)
 {
   switch(GuessFileFormatFromFileName(name)){
   case FORMAT_MSH  : return _save_msh(name);
   case FORMAT_POS  : return _save_view_pos(name);
+  case FORMAT_X3D  : return _save_view_x3d(name);
   case FORMAT_PVTU : return _save_view_adapt_pvtu(name);
   case FORMAT_TXT  : return _save_view_txt(name);
   case FORMAT_OPT  : return _save_options(name);
@@ -409,7 +412,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     {"Mesh - PLY2 Surface" TT "*.ply2", _save_ply2},
     {"Mesh - SU2" TT "*.su2", _save_su2},
     {"Post-processing - Gmsh POS" TT "*.pos", _save_view_pos},
-    {"Post-processing - X3D (X3D)" TT "*.x3d", _save_view_wrl},
+    {"Post-processing - X3D (X3D)" TT "*.x3d", _save_view_x3d},
 #if defined(HAVE_MED)
     {"Post-processing - MED" TT "*.rmed", _save_view_med},
 #endif

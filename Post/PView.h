@@ -25,11 +25,15 @@ namespace onelab{ class localNetworkClient; }
 class PView{
  private:
   static int _globalTag;
+  //  transparency in x3d output
+  static double _transparency;
+  // merge partitionned model in delete duplicate as common border (for x3d export)
+  static bool _removeInnerBorders ;
   // unique tag of the view (>= 0)
   int _tag;
   // index of the view in the current view list
   int _index;
-  // flag to mark that the view has changed
+  // flag to mark that the view has changed1
   bool _changed;
   // tag of the source view if this view is an alias, -1 otherwise
   int _aliasOf;
@@ -63,8 +67,16 @@ class PView{
   // default destructor
   ~PView();
 
+  //  precision for inner border deletion in x3d output
+  static double _precision;
   // get/set global tag
-  static int getGlobalTag(){ return _globalTag; }
+  static double getTransparencyValue()          { return _transparency ;  }
+  static void   setTransparencyValue( double tr){        _transparency = tr; }
+  static double getPrecisionValue()              { return  log10( _precision ) ;  }
+      static void   setPrecisionValue( double pr){                _precision=pow( 10., pr) ; }
+  static bool getInnerBorder()        { return _removeInnerBorders; }
+  static void setInnerBorder(bool tag){        _removeInnerBorders = tag; }
+  static int  getGlobalTag(){ return _globalTag; }
   static void setGlobalTag(int tag){ _globalTag = tag; }
 
   // delete the vertex arrays, used to draw the view efficiently

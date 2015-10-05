@@ -34,7 +34,7 @@
 #include "GModel.h"
 #include "PView.h"
 #include "PViewOptions.h"
-
+#include <iostream>
 // File chooser
 
 #if defined(HAVE_NATIVE_FILE_CHOOSER)
@@ -1575,6 +1575,92 @@ int pvtuAdaptFileDialog(const char *name)
   }
   return 0;
 }
+
+
+int x3dViewFileDialog(const char *name, const char *title, int format)
+{
+  struct _viewFileDialog{
+    Fl_Window *window;
+    Fl_Choice *c[1];
+    Fl_Choice *d[1];
+    Fl_Value_Input *input[2];
+    Fl_Button *ok, *cancel;
+  };
+  static _viewFileDialog *dialog = NULL;
+
+  static Fl_Menu_Item viewmenu[] = {
+    {"Current", 0, 0, 0},
+    {"Visible", 0, 0, 0},
+    {"All", 0, 0, 0},
+    {0}
+  };
+  static Fl_Menu_Item viewmenu2[] = {
+    {"Keep", 0, 0, 0},
+    {"Remove", 0, 0, 0},
+    {0}
+  };
+
+  int BBB = BB + 9; // labels too long
+
+  if(!dialog){
+    dialog = new _viewFileDialog;
+    int h = 6 * WB + 5 * BH, w = 2 * BBB +  BBB  / 3  +  12 * WB , y = WB;
+    dialog->window = new Fl_Double_Window(w, h);
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
+    dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "View(s)"); y += BH+WB;
+    dialog->c[0]->menu(viewmenu);
+    dialog->c[0]->align(FL_ALIGN_RIGHT);
+    dialog->d[0] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Inner Borders"); y += BH+WB;
+    dialog->d[0]->menu(viewmenu2);
+    dialog->d[0]->align(FL_ALIGN_RIGHT);
+    dialog->input[0] = new Fl_Value_Input( WB, y, BBB + BBB / 2, BH, "Log10( Precision )");y += BH+WB;  
+    dialog->input[0]->minimum(-16);
+    dialog->input[0]->maximum(16);
+    dialog->input[0]->step(.25);
+    dialog->input[1] = new Fl_Value_Input( WB, y, BBB + BBB / 2, BH, "Transparency");y += BH+WB;  
+    dialog->input[1]->minimum(0.);
+    dialog->input[1]->maximum(1.);
+    dialog->input[1]->step(0.05);
+    dialog->ok     = new Fl_Return_Button( WB          , y , BBB, BH, "OK");
+    dialog->cancel = new Fl_Button       ( 2 * WB + BBB, y , BBB, BH, "Cancel");
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+
+  dialog->window->label(title);
+  dialog->window->show();
+  dialog->input[0]->value(	PView::getPrecisionValue() );
+  dialog->input[0]->align(FL_ALIGN_RIGHT);
+  dialog->input[1]->value(	PView::getTransparencyValue() );
+  dialog->input[1]->align(FL_ALIGN_RIGHT);
+
+  while(dialog->window->shown()){
+    Fl::wait();
+    for (;;) {
+      Fl_Widget* o = Fl::readqueue();
+      if (!o) break;
+      if (o == dialog->ok) {
+	dialog->d[0]->value()==1 ? PView::setInnerBorder(true) :   PView::setInnerBorder(false) ;
+	PView::setTransparencyValue( dialog->input[1]->value() );
+	PView::setPrecisionValue( dialog->input[0]->value() );
+
+        _saveViews(name, dialog->c[0]->value(),format, false);
+        dialog->window->hide();
+        return 1;
+      }
+      if (o == dialog->window || o == dialog->cancel){
+        dialog->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+ 
+}
+
+
+
 
 int genericViewFileDialog(const char *name, const char *title, int format)
 {

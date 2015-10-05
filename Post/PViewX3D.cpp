@@ -27,13 +27,148 @@
 
 using namespace std;
 
+
+bool compare_xmin_triangle (const TriangleToSort* first, const TriangleToSort* second) {  return (first->xmin < second->xmin );  }
+bool compare_ymin_triangle (const TriangleToSort* first, const TriangleToSort* second) {  return (first->ymin < second->ymin );  }
+bool compare_zmin_triangle (const TriangleToSort* first, const TriangleToSort* second) {  return (first->zmin < second->zmin );  }
+bool compare_xmax_triangle (const TriangleToSort* first, const TriangleToSort* second) {  return (first->xmax < second->xmax );  }
+bool compare_ymax_triangle (const TriangleToSort* first, const TriangleToSort* second) {  return (first->ymax < second->ymax );  }
+bool compare_zmax_triangle (const TriangleToSort* first, const TriangleToSort* second) {  return (first->zmax < second->zmax );  }
+
+
 bool PView::writeX3D(const std::string &fileName )
 {
+  
+  // tags duplicated triangles ---------------------
+  int _size=0;
+  if (  PView::getInnerBorder() ) {   
+    for(unsigned int i = 0; i < PView::list.size(); i++){
+      VertexArray *va =PView::list[i]->va_triangles;
+      _size += va->getNumVertices()/3;
+    }
+  }
+  int _count=0;
+  bool visible[_size] ;
+  if (  PView::getInnerBorder() ) {   
+    // evaluate bbox of each triangle
+    std::list< TriangleToSort* > tlist ;
+    tlist.clear();
+    for(unsigned int ivp = 0; ivp < PView::list.size(); ivp++){
+      VertexArray *va =PView::list[ivp]->va_triangles;
+      for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3){
+	float *p0 = va->getVertexArray(3 *  ipt     );
+	float *p1 = va->getVertexArray(3 * (ipt + 1));
+	float *p2 = va->getVertexArray(3 * (ipt + 2));
+	TriangleToSort *_current = new TriangleToSort ;
+	_current->_index = ipt;
+	_current->_globalIndex=_count; visible[_count]=true; _count++; 
+	_current->_ppv   = PView::list[ivp] ;
+	_current->xmin    = min(p0[0], min(p1[0],p2[0]) );
+	_current->ymin    = min(p0[1], min(p1[1],p2[1]) );
+	_current->zmin    = min(p0[2], min(p1[2],p2[2]) );
+	_current->xmax    = max(p0[0], max(p1[0],p2[0]) );
+	_current->ymax    = max(p0[1], max(p1[1],p2[1]) );
+	_current->zmax    = max(p0[2], max(p1[2],p2[2]) );
+
+	tlist.push_back(_current);
+      }
+    }
+    // sort triangles upon the position of bbbox
+    tlist.sort(compare_zmax_triangle);
+    tlist.sort(compare_ymax_triangle);
+    tlist.sort(compare_xmax_triangle);
+    tlist.sort(compare_zmin_triangle);
+    tlist.sort(compare_ymin_triangle);
+    tlist.sort(compare_xmin_triangle);
+
+    // estimate and tags triangles which are identical
+    std::list< TriangleToSort* >::iterator pt,nt;
+     for ( pt=tlist.begin() ; pt != tlist.end() ; pt++ ) {
+      nt=pt; 	nt++;
+      bool found=false;
+      VertexArray *vap = ( (*pt)->_ppv)->va_triangles;
+      int    ip = (*pt)->_index;
+      float *p0 = vap->getVertexArray( 3*  ip    );
+      float *p1 = vap->getVertexArray( 3* (ip+1) );
+      float *p2 = vap->getVertexArray( 3* (ip+2) );
+      int gip=(*pt)->_globalIndex;
+      while (  nt != tlist.end() && !found ) {
+	int gin=(*nt)->_globalIndex;
+	if    ( ( ( ( abs( (*pt)->xmin - (*nt)->xmin ) < 1.e-9 ) && ( abs( (*pt)->ymin - (*nt)->ymin ) < 1.e-9) ) && ( abs( (*pt)->zmin - (*nt)->zmin ) < 1.e-9 ) )  
+		&& ( ( ( abs( (*pt)->xmax - (*nt)->xmax ) < 1.e-9 ) && ( abs( (*pt)->ymax - (*nt)->ymax ) < 1.e-9) ) && ( abs( (*pt)->zmax - (*nt)->zmax ) < 1.e-9 ) ) )  {
+	  VertexArray *van = ( (*nt)->_ppv)->va_triangles;
+	  int in=(*nt)->_index;	
+	  float *n0 = van->getVertexArray( 3*  in    );
+	  float *n1 = van->getVertexArray( 3* (in+1) );
+	  float *n2 = van->getVertexArray( 3* (in+2) );
+	  //	  bool cas00 = (p0[0]==n0[0] &&  p0[1]==n0[1] &&  p0[2]==n0[2]);
+	  //	  bool cas01 = (p0[0]==n1[0] &&  p0[1]==n1[1] &&  p0[2]==n1[2]);
+	  //	  bool cas02 = (p0[0]==n2[0] &&  p0[1]==n2[1] &&  p0[2]==n2[2]);
+	  //	  bool cas10 = (p1[0]==n0[0] &&  p1[1]==n0[1] &&  p1[2]==n0[2]);
+	  //	  bool cas11 = (p1[0]==n1[0] &&  p1[1]==n1[1] &&  p1[2]==n1[2]);
+	  //	  bool cas12 = (p1[0]==n2[0] &&  p1[1]==n2[1] &&  p1[2]==n2[2]);
+	  //	  bool cas20 = (p2[0]==n0[0] &&  p2[1]==n0[1] &&  p2[2]==n0[2]);
+	  //	  bool cas21 = (p2[0]==n1[0] &&  p2[1]==n1[1] &&  p2[2]==n1[2]);
+	  //	  bool cas22 = (p2[0]==n2[0] &&  p2[1]==n2[1] &&  p2[2]==n2[2]);
+	  /*
+	  if ( p0[0]==n0[0] &&  p0[1]==n0[1] &&  p0[2]==n0[2] ){ 
+	    if ( p1[0]==n1[0] &&  p1[1]==n1[1] &&  p1[2]==n1[2] ){
+	      if ( p2[0]==n2[0] &&  p2[1]==n2[1] &&  p2[2]==n2[2] ) { found=true;  } }
+	    else if ( p1[0]==n2[0] &&  p1[1]==n2[1] &&  p1[2]==n2[2] ) {
+	      if ( p2[0]==n1[0] &&  p2[1]==n1[1] &&  p2[2]==n1[2] ) { found=true;  } } }
+	  else if ( p0[0]==n1[0] &&  p0[1]==n1[1] &&  p0[2]==n1[2] ) {
+	    if ( p1[0]==n0[0] &&  p1[1]==n0[1] &&  p1[2]==n0[2] ){
+	      if ( p2[0]==n2[0] &&  p2[1]==n2[1] &&  p2[2]==n2[2] ) { found=true; } }
+	    else if ( p1[0]==n2[0] &&  p1[1]==n2[1] &&  p1[2]==n2[2] ) {
+	      if ( p2[0]==n0[0] &&  p2[1]==n0[1] &&  p2[2]==n0[2] ) { found=true; } } }
+	  else if ( p0[0]==n2[0] &&  p0[1]==n2[1] &&  p0[2]==n2[2] ) { 
+	    if ( p1[0]==n0[0] &&  p1[1]==n0[1] &&  p1[2]==n0[2] ){
+	      if ( p2[0]==n1[0] &&  p2[1]==n1[1] &&  p2[2]==n1[2] ) { found=true;  } }
+	    else if ( p1[0]==n1[0] &&  p1[1]==n1[1] &&  p1[2]==n1[2] ) { 
+	      if ( p2[0]==n0[0] &&  p2[1]==n0[1] &&  p2[2]==n0[2] ) { found=true; } } }
+    */
+	  if ( almostEqual(p0[0],n0[0]) &&  almostEqual(p0[1],n0[1]) &&  almostEqual(p0[2],n0[2]) ){ 
+	    if ( almostEqual(p1[0],n1[0]) &&  almostEqual(p1[1],n1[1]) &&  almostEqual(p1[2],n1[2]) ){
+	      if ( almostEqual(p2[0],n2[0]) &&  almostEqual(p2[1],n2[1]) &&  almostEqual(p2[2],n2[2]) ) { found=true;  } }
+	    else if ( almostEqual(p1[0],n2[0]) &&  almostEqual(p1[1],n2[1]) &&  almostEqual(p1[2],n2[2]) ) {
+	      if ( almostEqual(p2[0],n1[0]) &&  almostEqual(p2[1],n1[1]) &&  almostEqual(p2[2],n1[2]) ) { found=true;  } } }
+	  else if ( almostEqual(p0[0],n1[0]) &&  almostEqual(p0[1],n1[1]) &&  almostEqual(p0[2],n1[2]) ) {
+	    if ( almostEqual(p1[0],n0[0]) &&  almostEqual(p1[1],n0[1]) &&  almostEqual(p1[2],n0[2]) ){
+	      if ( almostEqual(p2[0],n2[0]) &&  almostEqual(p2[1],n2[1]) &&  almostEqual(p2[2],n2[2]) ) { found=true; } }
+	    else if ( almostEqual(p1[0],n2[0]) &&  almostEqual(p1[1],n2[1]) &&  almostEqual(p1[2],n2[2]) ) {
+	      if ( almostEqual(p2[0],n0[0]) &&  almostEqual(p2[1],n0[1]) &&  almostEqual(p2[2],n0[2]) ) { found=true; } } }
+	  else if ( almostEqual(p0[0],n2[0]) &&  almostEqual(p0[1],n2[1]) &&  almostEqual(p0[2],n2[2]) ) { 
+	    if ( almostEqual(p1[0],n0[0]) &&  almostEqual(p1[1],n0[1]) &&  almostEqual(p1[2],n0[2]) ){
+	      if ( almostEqual(p2[0],n1[0]) &&  almostEqual(p2[1],n1[1]) &&  almostEqual(p2[2],n1[2]) ) { found=true;  } }
+	    else if ( almostEqual(p1[0],n1[0]) &&  almostEqual(p1[1],n1[1]) &&  almostEqual(p1[2],n1[2]) ) { 
+	      if ( almostEqual(p2[0],n0[0]) &&  almostEqual(p2[1],n0[1]) &&  almostEqual(p2[2],n0[2]) ) { found=true; } } }
+
+
+	  if (found){
+	    visible[gip]=false;
+	    visible[gin]=false;
+	    if ( pt != tlist.end() ) pt++;
+	  }
+	  else{
+	    nt++;
+	  }
+	} // if ( ( ( abs( (*pt)->xmin-(*nt)->xmin ) ...
+	else {
+	  nt = tlist.end();
+   	} // if ( ( ( abs( (*pt)->xmin-(*nt)->xmin ) ...
+      } //	while (  nt != tlist.end() && !found ) ...
+    } //     for ( pt=tlist.begin() ; pt != tlist.end() ; pt++ ) ...
+    for ( pt=tlist.begin() ;  pt  != tlist.end() ; pt++) {
+      //      delete (*pt);
+    }
+  }
+  // end tags duplicated triangles  ---------------------
+
+  // beginning writing x3d file     ---------------------
   time_t rawtime;
   struct tm * timeinfo;
   time ( &rawtime );
   timeinfo = localtime ( &rawtime );
-
   FILE *fp = Fopen(fileName.c_str(), "w");
   if(!fp){
     Msg::Error("Unable to open file '%s'", fileName.c_str());
@@ -221,15 +356,16 @@ bool PView::writeX3D(const std::string &fileName )
   fprintf(fp,"      </fieldValue> \n");
   fprintf(fp,"    </ProtoInstance> \n");
  
-
+  //count all visible triangles of previous visited PView
+  _count=0;
   // geometrical objects
-  for(std::vector<PView*>::iterator pvit=PView::list.begin() ; pvit < PView::list.end(); pvit++){
-    PViewData *data = (*pvit)->getData(true);
-    PViewOptions *opt = (*pvit)->getOptions();
+  for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++){
+    PViewData *data = PView::list[ipv]->getData(true);
+    PViewOptions *opt = PView::list[ipv]->getOptions();
     if( !data->getDirty() && opt->visible ) {
       VertexArray *va;
       // points ------------------------NOT TREATED YET-------------------------------
-      va=(*pvit)->va_points;
+      va=PView::list[ipv]->va_points;
       for(int ipt = 0; ipt < va->getNumVertices(); ipt++){
 	float *p = va->getVertexArray(3 * ipt);
 	double f = 1.;
@@ -249,7 +385,7 @@ bool PView::writeX3D(const std::string &fileName )
 
 
       // lines -----------------------------------------------------------------------
-      va=(*pvit)->va_lines;
+      va=PView::list[ipv]->va_lines;
       fprintf(fp,"<Shape> \n");
       fprintf(fp,"   <IndexedLineSet coordIndex=' ");
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 2){
@@ -277,12 +413,12 @@ bool PView::writeX3D(const std::string &fileName )
 
 
       //vectors --------------------colored arrow replaced by colored cones-------------------
-      va=(*pvit)->va_vectors;
+      va=PView::list[ipv]->va_vectors;
 
-      for(int i = 0; i < va->getNumVertices(); i += 2){
-	float *s = va->getVertexArray(3 * i);
-	float *v = va->getVertexArray(3 * (i + 1));
-	unsigned char *c = va->getColorArray(4 * i);
+      for(int iv = 0; iv < va->getNumVertices(); iv += 2){
+	float *s = va->getVertexArray(3 * iv);
+	float *v = va->getVertexArray(3 * (iv + 1));
+	unsigned char *c = va->getColorArray(4 * iv);
 	double rgba[4];
 	UnsignedChar2rgba(c,rgba) ;    
 	double l = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
@@ -306,48 +442,72 @@ bool PView::writeX3D(const std::string &fileName )
       }
   
        //triangles --------------------------colored triangles -------------------------------
-      va=(*pvit)->va_triangles;
+      va=PView::list[ipv]->va_triangles;
 
       fprintf(fp,"<Transform> \n");
       fprintf(fp,"<Shape> \n");
       fprintf(fp,"   <IndexedTriangleSet index=' ");
+      // index of point of the visible tirangle
+      int ind=0;
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3){  
-	fprintf(fp,"%i %i %i ",ipt,ipt+1,ipt+2);  
+	if ( (PView::getInnerBorder() &&  visible[_count+ipt/3] ) ||  !PView::getInnerBorder() ) {   
+	  fprintf(fp,"%i %i %i ",ind,ind+1,ind+2);  
+	  ind+=3;
+	}
       }
       fprintf(fp,"   ' solid='false' ccw='true' colorPerVertex='true' normalPerVertex='true' containerField='geometry'> \n");
       fprintf(fp,"      <Coordinate point='");
+      
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3){
-	float *p0 = va->getVertexArray(3 * ipt);
-	float *p1 = va->getVertexArray(3 * (ipt + 1));
-	float *p2 = va->getVertexArray(3 * (ipt + 2));
-	fprintf(fp,"%e %e %e %e %e %e %e %e %e " 
-		, p0[0], p0[1], p0[2]
-		, p1[0], p1[1], p1[2]
-		, p2[0], p2[1], p2[2]);
+	if ( ( PView::getInnerBorder() &&  visible[_count+ipt/3] ) ||  !PView::getInnerBorder()) {   
+	    float *p0 = va->getVertexArray(3 * ipt);
+	    float *p1 = va->getVertexArray(3 * (ipt + 1));
+	    float *p2 = va->getVertexArray(3 * (ipt + 2));
+	    /*
+	    std::cout<<" PV" << ipv<<" ipt "<<ipt<<" coord "<<p0[0]<<","
+	    <<p0[1]<<","<<p0[2]<<"|"<<p1[0]<<","<<p1[1]<<","<<p1[2]
+	    <<"|"<<p2[0]<<","<<p2[1]<<","<<p2[2]<<std::endl;
+	    */
+	    fprintf(fp,"%e %e %e %e %e %e %e %e %e " 
+		    , p0[0], p0[1], p0[2]
+		    , p1[0], p1[1], p1[2]
+		    , p2[0], p2[1], p2[2]);
+	     
+	  }
       }
       fprintf(fp,"      '/> \n");
-      fprintf(fp,"      <Color color='");
-      for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3){
-	unsigned char *c0 = va->getColorArray(4 * ipt);
-	unsigned char *c1 = va->getColorArray(4 * (ipt+1));
-	unsigned char *c2 = va->getColorArray(4 * (ipt+2));
-	double rgba0[4] , rgba1[4] ,rgba2[4];
-	UnsignedChar2rgba(c0,rgba0) ;    
-	UnsignedChar2rgba(c1,rgba1) ;    
-	UnsignedChar2rgba(c2,rgba2) ;    
-	fprintf(fp,"%g %g %g %g %g %g %g %g %g " 
-		, rgba0[0],rgba0[1],rgba0[2]
-		, rgba1[0],rgba1[1],rgba1[2]
-		, rgba2[0],rgba2[1],rgba2[2]);
+           fprintf(fp,"      <Color color='");
+       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3){
+	if ( ( PView::getInnerBorder() &&  visible[_count+ipt/3] ) ||  !PView::getInnerBorder() ) {   
+	    unsigned char *c0 = va->getColorArray(4 * ipt);
+	    unsigned char *c1 = va->getColorArray(4 * (ipt+1));
+	    unsigned char *c2 = va->getColorArray(4 * (ipt+2));
+	    double rgba0[4] , rgba1[4] ,rgba2[4];
+	    UnsignedChar2rgba(c0,rgba0) ;    
+	    UnsignedChar2rgba(c1,rgba1) ;    
+	    UnsignedChar2rgba(c2,rgba2) ;    
+	  	    fprintf(fp,"%g %g %g %g %g %g %g %g %g " 
+		    , rgba0[0],rgba0[1],rgba0[2]
+		    , rgba1[0],rgba1[1],rgba1[2]
+		    , rgba2[0],rgba2[1],rgba2[2]);	    
+	  }
       }
       fprintf(fp,"      '/>\n"); 
       fprintf(fp,"   </IndexedTriangleSet> \n");
+      fprintf(fp,"            <Appearance> \n");
+      fprintf(fp,"              <Material  transparency='%g' /> \n",  PView::getTransparencyValue() );
+      fprintf(fp,"                         ambientIntensity=\"0.5\"");
+      fprintf(fp,"                         diffuseColor=\".5 .5 .5\"");
+      fprintf(fp,"                         emissiveColor=\"0.0 0.0 0.0\"");
+      fprintf(fp,"                         shininess=\"0.25\"");
+      fprintf(fp,"                         specularColor=\".1 .1 .1\"  /> ");
+      fprintf(fp,"            </Appearance> \n");
       fprintf(fp,"</Shape> \n");
       fprintf(fp,"</Transform> \n");
 
-
-    }
-  }// end loop of pvit
+      _count += va->getNumVertices()/3;
+    } // enf if dirty
+  }// end loop on PView::list
 
   fprintf(fp,"</Scene>\n");
   fprintf(fp,"</X3D>\n");
@@ -577,3 +737,4 @@ static void writeX3DStringCenter( FILE *fp,char *label,double x, double y, doubl
   fprintf(fp,"              </Transform> \n");
 
 }
+

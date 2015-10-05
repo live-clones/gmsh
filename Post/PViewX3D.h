@@ -12,6 +12,7 @@
 #define _PVIEWX3D_H_
 
 #include <iostream>
+#include <limits>
 
 using namespace std;
 
@@ -42,6 +43,23 @@ static void writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin, do
 static void writeX3DScaleLabel (FILE *fp, PView *p, double xmin, double ymin, double width, double height, double tic, int horizontal,double font_size);
 static void writeX3DStringCenter( FILE *fp,char *label,double x, double y, double z,double font_size); 
  
+
+class TriangleToSort{
+ public:
+  PView* _ppv;
+  int _index;
+  int _globalIndex;
+  float xmin,ymin,zmin;
+  float xmax,ymax,zmax;
+};
+
+
+static bool almostEqual(double x,double y){
+  return std::abs(x-y) <  PView::_precision  ;
+    
+}
+
+
 
 #endif
 

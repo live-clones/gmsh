@@ -32,6 +32,7 @@
 #include "drawContext.h"
 #include "GModel.h"
 #include "Context.h"
+#include "PView.h"
 
 // Arrow editor
 
