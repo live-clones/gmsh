@@ -495,7 +495,7 @@ bool PView::writeX3D(const std::string &fileName )
       fprintf(fp,"      '/>\n"); 
       fprintf(fp,"   </IndexedTriangleSet> \n");
       fprintf(fp,"            <Appearance> \n");
-      fprintf(fp,"              <Material  transparency='%g' /> \n",  PView::getTransparencyValue() );
+      fprintf(fp,"              <Material  transparency='%g' \n",  PView::getTransparencyValue() );
       fprintf(fp,"                         ambientIntensity=\"0.5\"");
       fprintf(fp,"                         diffuseColor=\".5 .5 .5\"");
       fprintf(fp,"                         emissiveColor=\"0.0 0.0 0.0\"");
