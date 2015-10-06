@@ -40,7 +40,7 @@ bool PView::writeX3D(const std::string &fileName )
 {
   
   // tags duplicated triangles ---------------------
-  int _size=0;
+  int _size=1;
   if (  PView::getInnerBorder() ) {   
     for(unsigned int i = 0; i < PView::list.size(); i++){
       VertexArray *va =PView::list[i]->va_triangles;
