@@ -53,7 +53,7 @@ GFace::~GFace()
   deleteMesh();
 }
 
-int GFace::getCurvatureControlParameter () const
+int GFace::getCurvatureControlParameter() const
 {
   std::map<int,int>::iterator it =
     CTX::instance()->mesh.curvature_control_per_face.find(tag());
@@ -61,19 +61,19 @@ int GFace::getCurvatureControlParameter () const
     CTX::instance()->mesh.minCircPoints : it->second ;
 }
 
-void GFace::setCurvatureControlParameter (int n)
+void GFace::setCurvatureControlParameter(int n)
 {
   CTX::instance()->mesh.curvature_control_per_face[tag()] = n;
 }
 
-int GFace::getMeshingAlgo () const
+int GFace::getMeshingAlgo() const
 {
   std::map<int,int>::iterator it = CTX::instance()->mesh.algo2d_per_face.find(tag());
   return it == CTX::instance()->mesh.algo2d_per_face.end() ?
     CTX::instance()->mesh.algo2d : it->second ;
 }
 
-void GFace::setMeshingAlgo (int algo)
+void GFace::setMeshingAlgo(int algo)
 {
   CTX::instance()->mesh.algo2d_per_face[tag()] = algo;
 }
@@ -196,6 +196,7 @@ void GFace::resetMeshAttributes()
   meshAttributes.transfiniteSmoothing = -1;
   meshAttributes.extrude = 0;
   meshAttributes.reverseMesh = false;
+  meshAttributes.meshSize = MAX_LC;
 }
 
 SBoundingBox3d GFace::bounds() const
@@ -1860,13 +1861,13 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
       tfo[2*4+0] = ux*uz*(1.-cos(ANGLE)) - uy * sin(ANGLE);
       tfo[2*4+1] = uy*uz*(1.-cos(ANGLE)) + ux * sin(ANGLE);
       tfo[2*4+2] = cos (ANGLE) + uz*uz*(1.-cos(ANGLE));
-      
+
       double origin[3] = {LINE.p.x(),LINE.p.y(),LINE.p.z()};
-      
+
       for (int i=0;i<3;i++) tfo[i*4+3] =  origin[i];
       for (int i=0;i<3;i++) for (int j=0;j<3;j++) tfo[i*4+3] -= tfo[i*4+j] * origin[j];
       for (int i=0;i<4;i++) tfo[12+i] = 0;
-      
+
     }
     else {
       Msg::Error("Only rotations or translations can currently be computed "

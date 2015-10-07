@@ -273,8 +273,11 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
     if(f) l4 = (*f)(X, Y, Z, ge);
   }
 
+  // global lc from entity
+  double l5 = ge->getMeshSize();
+
   // take the minimum, then constrain by lcMin and lcMax
-  double lc = std::min(std::min(std::min(l1, l2), l3), l4);
+  double lc = std::min(std::min(std::min(std::min(l1, l2), l3), l4), l5);
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
 
@@ -283,12 +286,6 @@ double BGM_MeshSize(GEntity *ge, double U, double V,
                lc, CTX::instance()->mesh.lcMin, CTX::instance()->mesh.lcMax);
     lc = l1;
   }
-
-  //Msg::Debug("BGM X,Y,Z=%g,%g,%g L4=%g L3=%g L2=%g L1=%g LC=%g LFINAL=%g DIM =%d ",
-  //X, Y, Z, l4, l3, l2, l1, lc, lc * CTX::instance()->mesh.lcFactor, ge->dim());
-
-  //Emi fix
-  //if (lc == l1) lc /= 10.;
 
   return lc * CTX::instance()->mesh.lcFactor;
 }
@@ -304,7 +301,9 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
   // Element size = min. between default lc and lc from point (if applicable),
   // constrained by lcMin and lcMax
   double lc = CTX::instance()->lc;
-  if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2) lc = std::min(lc, LC_MVertex_PNTS(ge, U, V));
+  if(CTX::instance()->mesh.lcFromPoints && ge->dim() < 2)
+    lc = std::min(lc, LC_MVertex_PNTS(ge, U, V));
+  lc = std::min(lc, ge->getMeshSize());
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
   lc = std::min(lc, CTX::instance()->mesh.lcMax);
   if(lc <= 0.){

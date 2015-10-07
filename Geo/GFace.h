@@ -285,16 +285,16 @@ class GFace : public GEntity{
                       std::vector<SVector3> *normals=0);
 
   // apply Lloyd's algorithm to the mesh
-  void lloyd (int nIter, int infNorm = 0);
+  void lloyd(int nIter, int infNorm = 0);
 
   // replace edges (gor gluing)
   void replaceEdges(std::list<GEdge*> &);
 
   // tells if it's a sphere, and if it is, returns parameters
-  virtual bool isSphere (double &radius, SPoint3 &center) const {return false;}
+  virtual bool isSphere(double &radius, SPoint3 &center) const { return false; }
 
   // add layers of quads
-  void addLayersOfQuads (int nLayers, GVertex *start, double hmin, double factor);
+  void addLayersOfQuads(int nLayers, GVertex *start, double hmin, double factor);
 
   struct {
     // do we recombine the triangles of the mesh?
@@ -314,12 +314,15 @@ class GFace : public GEntity{
     ExtrudeParams *extrude;
     // reverse mesh orientation
     bool reverseMesh;
+    // global mesh size constraint for the surface
+    double meshSize;
   } meshAttributes ;
 
-  int getMeshingAlgo () const;
-  void setMeshingAlgo (int) ;
+  int getMeshingAlgo() const;
+  void setMeshingAlgo(int);
   int getCurvatureControlParameter () const;
-  void setCurvatureControlParameter (int) ;
+  void setCurvatureControlParameter(int);
+  virtual double getMeshSize() const { return meshAttributes.meshSize; }
 
   struct {
     mutable GEntity::MeshGenerationStatus status;

@@ -14,6 +14,8 @@
 #include "SBoundingBox3d.h"
 #include "SOrientedBoundingBox.h"
 
+#define MAX_LC 1.e22
+
 class GModel;
 class GVertex;
 class GEdge;
@@ -298,6 +300,9 @@ class GEntity {
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes() { return; }
+
+  // global mesh size constraint for the entity
+  virtual double getMeshSize() const { return MAX_LC; }
 
   // number of types of elements
   virtual int getNumElementTypes() const { return 0; }

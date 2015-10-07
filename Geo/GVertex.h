@@ -15,8 +15,6 @@
 #include "SPoint2.h"
 #include "SPoint3.h"
 
-#define MAX_LC 1.e22
-
 class MElement;
 class MPoint;
 
