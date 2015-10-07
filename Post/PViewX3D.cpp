@@ -21,7 +21,7 @@
 #include "OS.h"
 #include <ctime>
 #include "SBoundingBox3d.h"
-#include <math.h>     
+#include <math.h>
 #include "PViewX3D.h"
 #include <iostream>
 
@@ -38,18 +38,18 @@ bool compare_zmax_triangle (const TriangleToSort* first, const TriangleToSort* s
 
 bool PView::writeX3D(const std::string &fileName )
 {
-  
+
   // tags duplicated triangles ---------------------
   int _size=1;
-  if (  PView::getInnerBorder() ) {   
+  if (  PView::getInnerBorder() ) {
     for(unsigned int i = 0; i < PView::list.size(); i++){
       VertexArray *va =PView::list[i]->va_triangles;
       _size += va->getNumVertices()/3;
     }
   }
   int _count=0;
-  bool visible[_size] ;
-  if (  PView::getInnerBorder() ) {   
+  std::vector<bool> visible(_size, false) ;
+  if (  PView::getInnerBorder() ) {
     // evaluate bbox of each triangle
     std::list< TriangleToSort* > tlist ;
     tlist.clear();
@@ -61,7 +61,7 @@ bool PView::writeX3D(const std::string &fileName )
 	float *p2 = va->getVertexArray(3 * (ipt + 2));
 	TriangleToSort *_current = new TriangleToSort ;
 	_current->_index = ipt;
-	_current->_globalIndex=_count; visible[_count]=true; _count++; 
+	_current->_globalIndex=_count; visible[_count]=true; _count++;
 	_current->_ppv   = PView::list[ivp] ;
 	_current->xmin    = min(p0[0], min(p1[0],p2[0]) );
 	_current->ymin    = min(p0[1], min(p1[1],p2[1]) );
@@ -94,10 +94,10 @@ bool PView::writeX3D(const std::string &fileName )
       int gip=(*pt)->_globalIndex;
       while (  nt != tlist.end() && !found ) {
 	int gin=(*nt)->_globalIndex;
-	if    ( ( ( ( abs( (*pt)->xmin - (*nt)->xmin ) < 1.e-9 ) && ( abs( (*pt)->ymin - (*nt)->ymin ) < 1.e-9) ) && ( abs( (*pt)->zmin - (*nt)->zmin ) < 1.e-9 ) )  
+	if    ( ( ( ( abs( (*pt)->xmin - (*nt)->xmin ) < 1.e-9 ) && ( abs( (*pt)->ymin - (*nt)->ymin ) < 1.e-9) ) && ( abs( (*pt)->zmin - (*nt)->zmin ) < 1.e-9 ) )
 		&& ( ( ( abs( (*pt)->xmax - (*nt)->xmax ) < 1.e-9 ) && ( abs( (*pt)->ymax - (*nt)->ymax ) < 1.e-9) ) && ( abs( (*pt)->zmax - (*nt)->zmax ) < 1.e-9 ) ) )  {
 	  VertexArray *van = ( (*nt)->_ppv)->va_triangles;
-	  int in=(*nt)->_index;	
+	  int in=(*nt)->_index;
 	  float *n0 = van->getVertexArray( 3*  in    );
 	  float *n1 = van->getVertexArray( 3* (in+1) );
 	  float *n2 = van->getVertexArray( 3* (in+2) );
@@ -111,7 +111,7 @@ bool PView::writeX3D(const std::string &fileName )
 	  //	  bool cas21 = (p2[0]==n1[0] &&  p2[1]==n1[1] &&  p2[2]==n1[2]);
 	  //	  bool cas22 = (p2[0]==n2[0] &&  p2[1]==n2[1] &&  p2[2]==n2[2]);
 	  /*
-	  if ( p0[0]==n0[0] &&  p0[1]==n0[1] &&  p0[2]==n0[2] ){ 
+	  if ( p0[0]==n0[0] &&  p0[1]==n0[1] &&  p0[2]==n0[2] ){
 	    if ( p1[0]==n1[0] &&  p1[1]==n1[1] &&  p1[2]==n1[2] ){
 	      if ( p2[0]==n2[0] &&  p2[1]==n2[1] &&  p2[2]==n2[2] ) { found=true;  } }
 	    else if ( p1[0]==n2[0] &&  p1[1]==n2[1] &&  p1[2]==n2[2] ) {
@@ -121,13 +121,13 @@ bool PView::writeX3D(const std::string &fileName )
 	      if ( p2[0]==n2[0] &&  p2[1]==n2[1] &&  p2[2]==n2[2] ) { found=true; } }
 	    else if ( p1[0]==n2[0] &&  p1[1]==n2[1] &&  p1[2]==n2[2] ) {
 	      if ( p2[0]==n0[0] &&  p2[1]==n0[1] &&  p2[2]==n0[2] ) { found=true; } } }
-	  else if ( p0[0]==n2[0] &&  p0[1]==n2[1] &&  p0[2]==n2[2] ) { 
+	  else if ( p0[0]==n2[0] &&  p0[1]==n2[1] &&  p0[2]==n2[2] ) {
 	    if ( p1[0]==n0[0] &&  p1[1]==n0[1] &&  p1[2]==n0[2] ){
 	      if ( p2[0]==n1[0] &&  p2[1]==n1[1] &&  p2[2]==n1[2] ) { found=true;  } }
-	    else if ( p1[0]==n1[0] &&  p1[1]==n1[1] &&  p1[2]==n1[2] ) { 
+	    else if ( p1[0]==n1[0] &&  p1[1]==n1[1] &&  p1[2]==n1[2] ) {
 	      if ( p2[0]==n0[0] &&  p2[1]==n0[1] &&  p2[2]==n0[2] ) { found=true; } } }
     */
-	  if ( almostEqual(p0[0],n0[0]) &&  almostEqual(p0[1],n0[1]) &&  almostEqual(p0[2],n0[2]) ){ 
+	  if ( almostEqual(p0[0],n0[0]) &&  almostEqual(p0[1],n0[1]) &&  almostEqual(p0[2],n0[2]) ){
 	    if ( almostEqual(p1[0],n1[0]) &&  almostEqual(p1[1],n1[1]) &&  almostEqual(p1[2],n1[2]) ){
 	      if ( almostEqual(p2[0],n2[0]) &&  almostEqual(p2[1],n2[1]) &&  almostEqual(p2[2],n2[2]) ) { found=true;  } }
 	    else if ( almostEqual(p1[0],n2[0]) &&  almostEqual(p1[1],n2[1]) &&  almostEqual(p1[2],n2[2]) ) {
@@ -137,10 +137,10 @@ bool PView::writeX3D(const std::string &fileName )
 	      if ( almostEqual(p2[0],n2[0]) &&  almostEqual(p2[1],n2[1]) &&  almostEqual(p2[2],n2[2]) ) { found=true; } }
 	    else if ( almostEqual(p1[0],n2[0]) &&  almostEqual(p1[1],n2[1]) &&  almostEqual(p1[2],n2[2]) ) {
 	      if ( almostEqual(p2[0],n0[0]) &&  almostEqual(p2[1],n0[1]) &&  almostEqual(p2[2],n0[2]) ) { found=true; } } }
-	  else if ( almostEqual(p0[0],n2[0]) &&  almostEqual(p0[1],n2[1]) &&  almostEqual(p0[2],n2[2]) ) { 
+	  else if ( almostEqual(p0[0],n2[0]) &&  almostEqual(p0[1],n2[1]) &&  almostEqual(p0[2],n2[2]) ) {
 	    if ( almostEqual(p1[0],n0[0]) &&  almostEqual(p1[1],n0[1]) &&  almostEqual(p1[2],n0[2]) ){
 	      if ( almostEqual(p2[0],n1[0]) &&  almostEqual(p2[1],n1[1]) &&  almostEqual(p2[2],n1[2]) ) { found=true;  } }
-	    else if ( almostEqual(p1[0],n1[0]) &&  almostEqual(p1[1],n1[1]) &&  almostEqual(p1[2],n1[2]) ) { 
+	    else if ( almostEqual(p1[0],n1[0]) &&  almostEqual(p1[1],n1[1]) &&  almostEqual(p1[2],n1[2]) ) {
 	      if ( almostEqual(p2[0],n0[0]) &&  almostEqual(p2[1],n0[1]) &&  almostEqual(p2[2],n0[2]) ) { found=true; } } }
 
 
@@ -178,7 +178,7 @@ bool PView::writeX3D(const std::string &fileName )
   // x3 Header ---------------------------------------------------------------------------
   fprintf(fp,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
   fprintf(fp,"<!DOCTYPE X3D PUBLIC \"ISO//Web3D//DTD X3D 3.3//EN\" \"http://www.web3d.org/specifications/x3d-3.3.dtd\">\n");
-  fprintf(fp,"<X3D profile='Interchange' version='3.3'  xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' >\n"); 
+  fprintf(fp,"<X3D profile='Interchange' version='3.3'  xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' >\n");
   fprintf(fp,"<head>\n");
   fprintf(fp,"   <meta name='title' content='PView'/> \n");
   fprintf(fp,"   <meta name='description' content='%s'/>\n", fileName.c_str());
@@ -204,7 +204,7 @@ bool PView::writeX3D(const std::string &fileName )
   // HUD : Head Up Display
   fprintf(fp,"<ProtoDeclare appinfo='Heads-up display (HUD)' name='HeadsUpDisplay'> \n");
   fprintf(fp,"      <ProtoInterface> \n");
-  fprintf(fp,"        <field accessType='inputOutput' appinfo='offset position for HUD' name='screenOffset' type='SFVec3f' value='%g %g %g'/> \n",  _center.x(), _center.y() , 5*_center.z()+_diagonal*1.2 ); 
+  fprintf(fp,"        <field accessType='inputOutput' appinfo='offset position for HUD' name='screenOffset' type='SFVec3f' value='%g %g %g'/> \n",  _center.x(), _center.y() , 5*_center.z()+_diagonal*1.2 );
   fprintf(fp,"        <field accessType='inputOutput' appinfo='X3D content positioned at HUD offset' name='children' type='MFNode'>   \n");
   fprintf(fp,"        </field>  \n");
   fprintf(fp,"        <field accessType='outputOnly' appinfo='HUD position update (in world coordinates) relative to original location' name='position_changed' type='SFVec3f'/>   \n");
@@ -236,7 +236,7 @@ bool PView::writeX3D(const std::string &fileName )
   fprintf(fp,"      </ProtoBody> \n");
   fprintf(fp,"    </ProtoDeclare>  \n");
   fprintf(fp,"   <Background skyColor='.7 .7 1'/>  \n");
-  fprintf(fp,"    <Viewpoint description='Book View' orientation='0 0. 1. 0.' position='%g %g %g'/> \n",  _center.x(), _center.y() , _center.z()+_diagonal*1.2  ); 
+  fprintf(fp,"    <Viewpoint description='Book View' orientation='0 0. 1. 0.' position='%g %g %g'/> \n",  _center.x(), _center.y() , _center.z()+_diagonal*1.2  );
   fprintf(fp,"    <!-- ProtoDeclare is the \"cookie cutter\" template, ProtoInstance creates an actual occurrence --> \n");
   fprintf(fp,"    <ProtoInstance DEF='HeadsUpDisplay' name='HeadsUpDisplay'> \n");
   fprintf(fp,"      <!-- example: upper left-hand corner of screen (x=-2, y=1) and set back z=-5 from user view --> \n");
@@ -261,9 +261,9 @@ bool PView::writeX3D(const std::string &fileName )
   for(unsigned int i = 0; i < PView::list.size(); i++){
     PViewData *data = PView::list[i]->getData();
     PViewOptions *opt = PView::list[i]->getOptions();
-    if(!data->getDirty() 
-       && opt->visible && opt->showScale 
-       &&  opt->type == PViewOptions::Plot3D && data->getNumElements() 
+    if(!data->getDirty()
+       && opt->visible && opt->showScale
+       &&  opt->type == PViewOptions::Plot3D && data->getNumElements()
        )
       scales.push_back(PView::list[i]);
   }
@@ -278,7 +278,7 @@ bool PView::writeX3D(const std::string &fileName )
       PView *p = scales[i];
       PViewData *data = p->getData();
       PViewOptions *opt = p->getOptions();
- 
+
       if(!opt->autoPosition) {
 	double w= viewportWidth/3;
 	double h= viewportHeight/11;
@@ -355,7 +355,7 @@ bool PView::writeX3D(const std::string &fileName )
   //-----------------------------------------------------------------------------
   fprintf(fp,"      </fieldValue> \n");
   fprintf(fp,"    </ProtoInstance> \n");
- 
+
   //count all visible triangles of previous visited PView
   _count=0;
   // geometrical objects
@@ -389,23 +389,23 @@ bool PView::writeX3D(const std::string &fileName )
       fprintf(fp,"<Shape> \n");
       fprintf(fp,"   <IndexedLineSet coordIndex=' ");
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 2){
-	if(opt->lineType != 2 && opt->lineType != 1) {  
+	if(opt->lineType != 2 && opt->lineType != 1) {
 	  fprintf(fp,"%i %i %i ",ipt,ipt+1,-1);
 	}
       }
       fprintf(fp,"'> \n");
       fprintf(fp,"   <Coordinate DEF='TurnPoints' point=' ");
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 2){
-	if(opt->lineType != 2 && opt->lineType != 1) {  
+	if(opt->lineType != 2 && opt->lineType != 1) {
 	  float *p0 = va->getVertexArray(3 * ipt);
 	  float *p1 = va->getVertexArray(3 * (ipt + 1));
-	  fprintf(fp,"%g %g %g %g %g %g ",  p0[0], p0[1], p0[2], p1[0], p1[1], p1[2]); 
+	  fprintf(fp,"%g %g %g %g %g %g ",  p0[0], p0[1], p0[2], p1[0], p1[1], p1[2]);
 	}
       }
       fprintf(fp,"'/>\n");
       fprintf(fp,"   </IndexedLineSet> \n");
       fprintf(fp,"   <Appearance> \n");
-      fprintf(fp,"      <Material emissiveColor='0 0 0'/>\n"); 
+      fprintf(fp,"      <Material emissiveColor='0 0 0'/>\n");
       fprintf(fp,"      <LineProperties containerField='lineProperties'> \n");
       fprintf(fp,"      </LineProperties> \n");
       fprintf(fp,"   </Appearance> \n");
@@ -420,12 +420,12 @@ bool PView::writeX3D(const std::string &fileName )
 	float *v = va->getVertexArray(3 * (iv + 1));
 	unsigned char *c = va->getColorArray(4 * iv);
 	double rgba[4];
-	UnsignedChar2rgba(c,rgba) ;    
+	UnsignedChar2rgba(c,rgba) ;
 	double l = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 	double lmax = opt->tmpMax;
 	if((l || opt->vectorType == 6) && lmax){
 	  double scale=.5/_diagonal;
-	  double theta=acos(v[1]/l); 
+	  double theta=acos(v[1]/l);
 	  fprintf(fp,"<Transform rotation='%g %g %g %g' translation='%e %e %e' >\n"
 		  ,v[2],0.,-v[0],theta
 		  ,s[0]+.5*scale*v[0],s[1]+.5*scale*v[1],s[2]+.5*scale*v[2]);
@@ -440,7 +440,7 @@ bool PView::writeX3D(const std::string &fileName )
 	  fprintf(fp,"</Transform>\n");
 	}
       }
-  
+
        //triangles --------------------------colored triangles -------------------------------
       va=PView::list[ipv]->va_triangles;
 
@@ -449,17 +449,17 @@ bool PView::writeX3D(const std::string &fileName )
       fprintf(fp,"   <IndexedTriangleSet index=' ");
       // index of point of the visible tirangle
       int ind=0;
-      for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3){  
-	if ( (PView::getInnerBorder() &&  visible[_count+ipt/3] ) ||  !PView::getInnerBorder() ) {   
-	  fprintf(fp,"%i %i %i ",ind,ind+1,ind+2);  
+      for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3){
+	if ( (PView::getInnerBorder() &&  visible[_count+ipt/3] ) ||  !PView::getInnerBorder() ) {
+	  fprintf(fp,"%i %i %i ",ind,ind+1,ind+2);
 	  ind+=3;
 	}
       }
       fprintf(fp,"   ' solid='false' ccw='true' colorPerVertex='true' normalPerVertex='true' containerField='geometry'> \n");
       fprintf(fp,"      <Coordinate point='");
-      
+
       for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3){
-	if ( ( PView::getInnerBorder() &&  visible[_count+ipt/3] ) ||  !PView::getInnerBorder()) {   
+	if ( ( PView::getInnerBorder() &&  visible[_count+ipt/3] ) ||  !PView::getInnerBorder()) {
 	    float *p0 = va->getVertexArray(3 * ipt);
 	    float *p1 = va->getVertexArray(3 * (ipt + 1));
 	    float *p2 = va->getVertexArray(3 * (ipt + 2));
@@ -468,31 +468,31 @@ bool PView::writeX3D(const std::string &fileName )
 	    <<p0[1]<<","<<p0[2]<<"|"<<p1[0]<<","<<p1[1]<<","<<p1[2]
 	    <<"|"<<p2[0]<<","<<p2[1]<<","<<p2[2]<<std::endl;
 	    */
-	    fprintf(fp,"%e %e %e %e %e %e %e %e %e " 
+	    fprintf(fp,"%e %e %e %e %e %e %e %e %e "
 		    , p0[0], p0[1], p0[2]
 		    , p1[0], p1[1], p1[2]
 		    , p2[0], p2[1], p2[2]);
-	     
+
 	  }
       }
       fprintf(fp,"      '/> \n");
            fprintf(fp,"      <Color color='");
        for(int ipt = 0; ipt < va->getNumVertices(); ipt += 3){
-	if ( ( PView::getInnerBorder() &&  visible[_count+ipt/3] ) ||  !PView::getInnerBorder() ) {   
+	if ( ( PView::getInnerBorder() &&  visible[_count+ipt/3] ) ||  !PView::getInnerBorder() ) {
 	    unsigned char *c0 = va->getColorArray(4 * ipt);
 	    unsigned char *c1 = va->getColorArray(4 * (ipt+1));
 	    unsigned char *c2 = va->getColorArray(4 * (ipt+2));
 	    double rgba0[4] , rgba1[4] ,rgba2[4];
-	    UnsignedChar2rgba(c0,rgba0) ;    
-	    UnsignedChar2rgba(c1,rgba1) ;    
-	    UnsignedChar2rgba(c2,rgba2) ;    
-	  	    fprintf(fp,"%g %g %g %g %g %g %g %g %g " 
+	    UnsignedChar2rgba(c0,rgba0) ;
+	    UnsignedChar2rgba(c1,rgba1) ;
+	    UnsignedChar2rgba(c2,rgba2) ;
+	  	    fprintf(fp,"%g %g %g %g %g %g %g %g %g "
 		    , rgba0[0],rgba0[1],rgba0[2]
 		    , rgba1[0],rgba1[1],rgba1[2]
-		    , rgba2[0],rgba2[1],rgba2[2]);	    
+		    , rgba2[0],rgba2[1],rgba2[2]);
 	  }
       }
-      fprintf(fp,"      '/>\n"); 
+      fprintf(fp,"      '/>\n");
       fprintf(fp,"   </IndexedTriangleSet> \n");
       fprintf(fp,"            <Appearance> \n");
       fprintf(fp,"              <Material  transparency='%g' \n",  PView::getTransparencyValue() );
@@ -555,29 +555,29 @@ static void writeX3DScaleBar(FILE *fp, PView *p, double xmin, double ymin, doubl
   double box = (horizontal ? width : height) / (opt->nbIso ? opt->nbIso : 1);
 
   for(int i = 0; i < opt->nbIso; i++) {
-    if(opt->intervalsType == PViewOptions::Continuous 
-       || opt->intervalsType == PViewOptions::Discrete 
+    if(opt->intervalsType == PViewOptions::Continuous
+       || opt->intervalsType == PViewOptions::Discrete
        || opt->intervalsType == PViewOptions::Numeric){
       fprintf(fp,"        <Shape> \n");
       fprintf(fp,"           <IndexedFaceSet colorPerVertex='true' normalPerVertex='true' coordIndex='0 1 2 3 -1' solid='false' ccw='true' > \n");
       fprintf(fp,"              <Coordinate point='");
       if(horizontal){
-	fprintf(fp,"%e %e %e %e %e %e %e %e %e %e %e %e " 
+	fprintf(fp,"%e %e %e %e %e %e %e %e %e %e %e %e "
 		,xmin + i * box      , ymin, 0.
 		,xmin + (i + 1) * box, ymin, 0.
 		,xmin + (i + 1) * box, ymin + height, 0.
 		,xmin + i * box      , ymin + height, 0.);
       }
       else{
-	fprintf(fp,"%e %e %e %e %e %e %e %e %e %e %e %e " 
+	fprintf(fp,"%e %e %e %e %e %e %e %e %e %e %e %e "
 		,xmin, ymin + i * box, 0.
 		,xmin + width, ymin + i * box, 0.
 		,xmin + width, ymin + (i + 1) * box, 0.
 		,xmin, ymin + (i + 1) * box, 0.);
       }
       fprintf(fp,"      '/> \n");
-    
-      if(opt->intervalsType == PViewOptions::Discrete 
+
+      if(opt->intervalsType == PViewOptions::Discrete
 	 || opt->intervalsType == PViewOptions::Numeric){
 	double rgba[4]= { .5,.5,.5,1. };
 	unsigned int col = opt->getColor(i, opt->nbIso);
@@ -737,4 +737,3 @@ static void writeX3DStringCenter( FILE *fp,char *label,double x, double y, doubl
   fprintf(fp,"              </Transform> \n");
 
 }
-
