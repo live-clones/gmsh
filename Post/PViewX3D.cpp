@@ -490,14 +490,12 @@ bool PView::writeX3D(const std::string &fileName )
 	  UnsignedChar2rgba(c0,rgba0) ;
 	  UnsignedChar2rgba(c1,rgba1) ;
 	  UnsignedChar2rgba(c2,rgba2) ;
-	  /*
+	  
 	  fprintf(fp,"%g %g %g %g %g %g %g %g %g "
 		  , rgba0[0],rgba0[1],rgba0[2]
 		  , rgba1[0],rgba1[1],rgba1[2]
 		  , rgba2[0],rgba2[1],rgba2[2]);
-	  */
-	  fprintf(fp,"%g %g %g %g %g %g %g %g %g "
-		  , .5,.5,.5,.5,.5,.5,.5,.5,.5);
+	  
 	}
 	_count++;
       }
