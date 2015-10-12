@@ -111,6 +111,10 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     }
   }
 
+  std::set<GEntity*> crackEntities;
+  crackEntities.insert(entities.begin(), entities.end());
+  crackEntities.insert(openEntities.begin(), openEntities.end());
+
   // get crack elements
   std::vector<MElement*> crackElements;
   for(unsigned int i = 0; i < entities.size(); i++)
@@ -196,7 +200,8 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   std::vector<GEntity*> allentities;
   m->getEntities(allentities);
   for(unsigned int ent = 0; ent < allentities.size(); ent++){
-    if(allentities[ent]->dim() != dim + 1) continue;
+    //if(allentities[ent]->dim() != dim + 1) continue;
+    if(crackEntities.find(allentities[ent]) != crackEntities.end()) continue;
     for(unsigned int i = 0; i < allentities[ent]->getNumMeshElements(); i++){
       MElement *e = allentities[ent]->getMeshElement(i);
       for(int j = 0; j < e->getNumVertices(); j++){
