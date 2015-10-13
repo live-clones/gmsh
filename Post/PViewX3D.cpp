@@ -153,12 +153,12 @@ bool PView::writeX3D(const std::string &fileName )
   fprintf(fp,"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
   fprintf(fp,"<!DOCTYPE X3D PUBLIC \"ISO//Web3D//DTD X3D 3.3//EN\" \"http://www.web3d.org/specifications/x3d-3.3.dtd\">\n");
   fprintf(fp,"<X3D profile='Interchange' version='3.3'  xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' >\n");
-  fprintf(fp,"<head>\n");
-  fprintf(fp,"   <meta name='title' content='PView'/> \n");
-  fprintf(fp,"   <meta name='description' content='%s'/>\n", fileName.c_str());
-  fprintf(fp,"   <meta name='creator' content='gmsh'/> \n");
-  fprintf(fp,"   <meta name='created' content='%s'/>\n", asctime(timeinfo) );
-  fprintf(fp,"</head>\n");
+  fprintf(fp,"  <head>\n");
+  fprintf(fp,"    <meta name='title' content='PView'/> \n");
+  fprintf(fp,"    <meta name='description' content='%s'/>\n", fileName.c_str());
+  fprintf(fp,"    <meta name='creator' content='gmsh'/> \n");
+  fprintf(fp,"    <meta name='created' content=' %s    '/>\n", asctime(timeinfo) );
+  fprintf(fp,"  </head>\n");
   // Viewport ---------------------------------------------------------------------------
   SBoundingBox3d bb(0.,0.,0.,0.,0.,0.);
   for(std::vector<PView*>::iterator pvit=PView::list.begin() ; pvit < PView::list.end(); pvit++){
@@ -170,151 +170,153 @@ bool PView::writeX3D(const std::string &fileName )
   }
   SPoint3 _center = bb.center();
   double _diagonal = bb.diag();
-  fprintf(fp,"<Scene>\n");
-  fprintf(fp,"<Viewpoint description='Book View' orientation='0 0. 1. 0.' position='%g %g %g'/> \n",
+  fprintf(fp,"  <Scene>\n");
+  fprintf(fp,"    <Viewpoint description='Book View' orientation='0 0. 1. 0.' position='%g %g %g'/> \n",
 	  _center.x(), _center.y() , _center.z()+_diagonal*1.2  );
-  fprintf(fp,"<Background skyColor='.7 .7 1'/> \n");
+  fprintf(fp,"    <Background skyColor='.7 .7 1'/> \n");
   //****************
   // HUD : Head Up Display
-  fprintf(fp,"<ProtoDeclare appinfo='Heads-up display (HUD)' name='HeadsUpDisplay'> \n");
-  fprintf(fp,"      <ProtoInterface> \n");
-  fprintf(fp,"        <field accessType='inputOutput' appinfo='offset position for HUD' name='screenOffset' type='SFVec3f' value='%g %g %g'/> \n",  _center.x(), _center.y() , 5*_center.z()+_diagonal*1.2 );
-  fprintf(fp,"        <field accessType='inputOutput' appinfo='X3D content positioned at HUD offset' name='children' type='MFNode'>   \n");
-  fprintf(fp,"        </field>  \n");
-  fprintf(fp,"        <field accessType='outputOnly' appinfo='HUD position update (in world coordinates) relative to original location' name='position_changed' type='SFVec3f'/>   \n");
-  fprintf(fp,"        <field accessType='outputOnly' appinfo='HUD orientation update relative to original location' name='orientation_changed' type='SFRotation'/> \n");
-  fprintf(fp,"      </ProtoInterface> \n");
-  fprintf(fp,"      <ProtoBody> \n");
-  fprintf(fp,"        <Group bboxCenter=\"%g %g %g\"> \n",  _center.x(), _center.y() , _center.z() );
-  fprintf(fp,"          <Transform DEF='HudContainer'> \n");
-  fprintf(fp,"            <Transform> \n");
-  fprintf(fp,"              <IS> \n");
-  fprintf(fp,"                <connect nodeField='translation' protoField='screenOffset'/> \n");
-  fprintf(fp,"              </IS> \n");
-  fprintf(fp,"              <Group> \n");
-  fprintf(fp,"                <IS> \n");
-  fprintf(fp,"                  <connect nodeField='children' protoField='children'/> \n");
-  fprintf(fp,"                </IS> \n");
-  fprintf(fp,"              </Group> \n");
-  fprintf(fp,"            </Transform> \n");
-  fprintf(fp,"          </Transform> \n");
-  fprintf(fp,"          <ProximitySensor DEF='HereIAm' size='10000000 10000000 10000000'> \n");
-  fprintf(fp,"            <IS> \n");
-  fprintf(fp,"              <connect nodeField='position_changed' protoField='position_changed'/> \n");
-  fprintf(fp,"              <connect nodeField='orientation_changed' protoField='orientation_changed'/> \n");
-  fprintf(fp,"            </IS> \n");
-  fprintf(fp,"          </ProximitySensor> \n");
-  fprintf(fp,"          <ROUTE fromField='orientation_changed' fromNode='HereIAm' toField='rotation' toNode='HudContainer'/> \n");
-  fprintf(fp,"          <ROUTE fromField='position_changed' fromNode='HereIAm' toField='translation' toNode='HudContainer'/> \n");
-  fprintf(fp,"        </Group> \n");
-  fprintf(fp,"      </ProtoBody> \n");
-  fprintf(fp,"    </ProtoDeclare>  \n");
-  fprintf(fp,"   <Background skyColor='.7 .7 1'/>  \n");
-  fprintf(fp,"    <Viewpoint description='Book View' orientation='0 0. 1. 0.' position='%g %g %g'/> \n",  _center.x(), _center.y() , _center.z()+_diagonal*1.2  );
-  fprintf(fp,"    <!-- ProtoDeclare is the \"cookie cutter\" template, ProtoInstance creates an actual occurrence --> \n");
-  fprintf(fp,"    <ProtoInstance DEF='HeadsUpDisplay' name='HeadsUpDisplay'> \n");
-  fprintf(fp,"      <!-- example: upper left-hand corner of screen (x=-2, y=1) and set back z=-5 from user view --> \n");
-  fprintf(fp,"      <fieldValue name='screenOffset' value='%g %g %g'/> \n",  _center.x(),  _center.y() ,  _center.z()-.2*_diagonal );
-  fprintf(fp,"      <fieldValue name='children'> \n");
-
-
-  // here contour/scalebar legends in frame (-.45,-.28, 0.) and (.45, .28,0.) : viewport .9 x .56
+   // here contour/scalebar legends in frame (-.45,-.28, 0.) and (.45, .28,0.) : viewport .9 x .56
   double viewportWidth  =.9   ;
   double viewportHeight =.56  ;
   double font_size      = 0.02;
-  std::vector<PView*> scales;
-  for(unsigned int i = 0; i < PView::list.size(); i++){
-    PViewData *data = PView::list[i]->getData();
-    PViewOptions *opt = PView::list[i]->getOptions();
-    if(!data->getDirty()
-       && opt->visible && opt->showScale
-       &&  opt->type == PViewOptions::Plot3D && data->getNumElements()
-       )
-      scales.push_back(PView::list[i]);
-  }
-  if(!scales.empty()) {
-    char label[1024];
-    double maxw = 10.*font_size*3./4.;
-    const  double tic = viewportWidth/100 ;
-    const  double bar_size = tic*1.6 ;
-    double width = 0., width_prev = 0., width_total = 0.;
-
-    for(unsigned int i = 0; i < scales.size(); i++) {
-      PView *p = scales[i];
-      PViewData *data = p->getData();
-      PViewOptions *opt = p->getOptions();
-
-      if(!opt->autoPosition) {
-	double w= viewportWidth/3;
-	double h= viewportHeight/11;
-	double x=0.;
-	double y=-viewportHeight;
-	writeX3DScale(fp, p, x, y, w, h, tic, CTX::instance()->post.horizontalScales,font_size);
-      }
-      else if(CTX::instance()->post.horizontalScales){
-	double ysep = viewportHeight/40;
-	double xc = 0.;
-	if(scales.size() == 1){
-	  double w = viewportWidth / 2., h = bar_size;
-	  double x = xc - w / 2., y =  -viewportHeight/2 + ysep;
-	  writeX3DScale(fp, p, x, y, w, h, tic, 1,font_size);
-	}
-	else{
-	  double xsep = maxw / 4. + viewportWidth / 10.;
-	  double w = ( viewportWidth - 4. * xsep) / 2.;
-	  if(w < 30.*viewportWidth/1000) w =30.*viewportWidth/1000  ;
-	  double h = bar_size;
-	  double x = xc - (i % 2 ? -xsep / 1.5 : w + xsep / 1.5);
-	  double y = -viewportHeight/2 + ysep +  (i / 2) * (bar_size + tic +2 * font_size + ysep);
-	  writeX3DScale(fp, p, x, y, w, h, tic, 1,font_size);
-	}
-      }
-      else{
-	double xsep = viewportWidth / 50;
-	double dy = 2. * font_size ;
-	if(scales.size() == 1){
-	  double ysep = ( viewportHeight) / 6.;
-	  double w = bar_size, h =  viewportHeight - 2 * ysep - dy;
-	  double x =  -viewportWidth/2 + xsep, y =  -viewportHeight/2 + ysep + dy;
-	  writeX3DScale(fp, p, x, y, w, h, tic, 1,font_size);
-
-	}
-	else{
-	  double ysep =  viewportHeight / 30.;
-	  double w = bar_size;
-	  double h = ( viewportHeight - 3 * ysep - 2.5 * dy) / 2.;
-	  double x =  -viewportWidth/2 + xsep + width_total + (i / 2) * xsep;
-	  double y =  -viewportHeight/2 + ysep + dy + (1 - i % 2) * (h + 1.5 * dy + ysep);
-	  writeX3DScale(fp, p, x, y, w, h, tic, 1, font_size);
-	}
-	// compute width
-	width_prev = width;
- 	width =bar_size + tic + 10.* font_size *3/4;
-	if(opt->showTime){
-	  char tmp[256];
-	  sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
-	  sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
-	}
-	else{
-	  sprintf(label, "%s", data->getName().c_str());
-	}
-	width =max(width, strlen(label)* font_size *3/4);
-	if(i % 2) width_total += std::max(bar_size + width, bar_size + width_prev);
-      }
+  if ( !getX3dCompatibility() ) {
+    std::vector<PView*> scales;
+    for(unsigned int i = 0; i < PView::list.size(); i++){
+      PViewData *data = PView::list[i]->getData();
+      PViewOptions *opt = PView::list[i]->getOptions();
+      if(!data->getDirty()
+	 && opt->visible && opt->showScale
+	 &&  opt->type == PViewOptions::Plot3D && data->getNumElements()
+	 )
+	scales.push_back(PView::list[i]);
     }
-  }
-
-  fprintf(fp,"      </fieldValue> \n");
-  fprintf(fp,"    </ProtoInstance> \n");
 
 
-  // geometrical objects
+    if ( !scales.empty() ){
+      fprintf(fp,"    <ProtoDeclare appinfo='Heads-up display (HUD)' name='HeadsUpDisplay'> \n");
+      fprintf(fp,"      <ProtoInterface> \n");
+      fprintf(fp,"        <field accessType='inputOutput' appinfo='offset position for HUD' name='screenOffset' type='SFVec3f' value='%g %g %g'/> \n",  _center.x(), _center.y() , 5*_center.z()+_diagonal*1.2 );
+      fprintf(fp,"        <field accessType='inputOutput' appinfo='X3D content positioned at HUD offset' name='children' type='MFNode'>   \n");
+      fprintf(fp,"        </field>  \n");
+      fprintf(fp,"        <field accessType='outputOnly' appinfo='HUD position update (in world coordinates) relative to original location' name='position_changed' type='SFVec3f'/>   \n");
+      fprintf(fp,"        <field accessType='outputOnly' appinfo='HUD orientation update relative to original location' name='orientation_changed' type='SFRotation'/> \n");
+      fprintf(fp,"      </ProtoInterface> \n");
+      fprintf(fp,"      <ProtoBody> \n");
+      fprintf(fp,"        <Group bboxCenter=\"%g %g %g\"> \n",  _center.x(), _center.y() , _center.z() );
+      fprintf(fp,"          <Transform DEF='HudContainer'> \n");
+      fprintf(fp,"            <Transform> \n");
+      fprintf(fp,"              <IS> \n");
+      fprintf(fp,"                <connect nodeField='translation' protoField='screenOffset'/> \n");
+      fprintf(fp,"              </IS> \n");
+      fprintf(fp,"              <Group> \n");
+      fprintf(fp,"                <IS> \n");
+      fprintf(fp,"                  <connect nodeField='children' protoField='children'/> \n");
+      fprintf(fp,"                </IS> \n");
+      fprintf(fp,"              </Group> \n");
+      fprintf(fp,"            </Transform> \n");
+      fprintf(fp,"          </Transform> \n");
+      fprintf(fp,"          <ProximitySensor DEF='HereIAm' size='10000000 10000000 10000000'> \n");
+      fprintf(fp,"            <IS> \n");
+      fprintf(fp,"              <connect nodeField='position_changed' protoField='position_changed'/> \n");
+      fprintf(fp,"              <connect nodeField='orientation_changed' protoField='orientation_changed'/> \n");
+      fprintf(fp,"            </IS> \n");
+      fprintf(fp,"          </ProximitySensor> \n");
+      fprintf(fp,"          <ROUTE fromField='orientation_changed' fromNode='HereIAm' toField='rotation' toNode='HudContainer'/> \n");
+      fprintf(fp,"          <ROUTE fromField='position_changed' fromNode='HereIAm' toField='translation' toNode='HudContainer'/> \n");
+      fprintf(fp,"        </Group> \n");
+      fprintf(fp,"      </ProtoBody> \n");
+      fprintf(fp,"    </ProtoDeclare>  \n");
+      //      fprintf(fp,"    <Background skyColor='.7 .7 1'/>  \n");
+      fprintf(fp,"    <Viewpoint description='Book View' orientation='0 0. 1. 0.' position='%g %g %g'/> \n",  _center.x(), _center.y() , _center.z()+_diagonal*1.2  );
+      fprintf(fp,"    <!-- ProtoDeclare is the \"cookie cutter\" template, ProtoInstance creates an actual occurrence --> \n");
+      fprintf(fp,"    <ProtoInstance DEF='HeadsUpDisplay' name='HeadsUpDisplay'> \n");
+      fprintf(fp,"      <!-- example: upper left-hand corner of screen (x=-2, y=1) and set back z=-5 from user view --> \n");
+      fprintf(fp,"      <fieldValue name='screenOffset' value='%g %g %g'/> \n",  _center.x(),  _center.y() ,  _center.z()-.2*_diagonal );
+      fprintf(fp,"      <fieldValue name='children'> \n");
+
+
+      char label[1024];
+      double maxw = 10.*font_size*3./4.;
+      const  double tic = viewportWidth/100 ;
+      const  double bar_size = tic*1.6 ;
+      double width = 0., width_prev = 0., width_total = 0.;
+
+      for(unsigned int i = 0; i < scales.size(); i++) {
+	PView *p = scales[i];
+	PViewData *data = p->getData();
+	PViewOptions *opt = p->getOptions();
+
+	if(!opt->autoPosition) {
+	  double w= viewportWidth/3;
+	  double h= viewportHeight/11;
+	  double x=0.;
+	  double y=-viewportHeight;
+	  writeX3DScale(fp, p, x, y, w, h, tic, CTX::instance()->post.horizontalScales,font_size);
+	}
+	else if(CTX::instance()->post.horizontalScales){
+	  double ysep = viewportHeight/40;
+	  double xc = 0.;
+	  if(scales.size() == 1){
+	    double w = viewportWidth / 2., h = bar_size;
+	    double x = xc - w / 2., y =  -viewportHeight/2 + ysep;
+	    writeX3DScale(fp, p, x, y, w, h, tic, 1,font_size);
+	  }
+	  else{
+	    double xsep = maxw / 4. + viewportWidth / 10.;
+	    double w = ( viewportWidth - 4. * xsep) / 2.;
+	    if(w < 30.*viewportWidth/1000) w =30.*viewportWidth/1000  ;
+	    double h = bar_size;
+	    double x = xc - (i % 2 ? -xsep / 1.5 : w + xsep / 1.5);
+	    double y = -viewportHeight/2 + ysep +  (i / 2) * (bar_size + tic +2 * font_size + ysep);
+	    writeX3DScale(fp, p, x, y, w, h, tic, 1,font_size);
+	  }
+	}
+	else{
+	  double xsep = viewportWidth / 50;
+	  double dy = 2. * font_size ;
+	  if(scales.size() == 1){
+	    double ysep = ( viewportHeight) / 6.;
+	    double w = bar_size, h =  viewportHeight - 2 * ysep - dy;
+	    double x =  -viewportWidth/2 + xsep, y =  -viewportHeight/2 + ysep + dy;
+	    writeX3DScale(fp, p, x, y, w, h, tic, 1,font_size);
+
+	  }
+	  else{
+	    double ysep =  viewportHeight / 30.;
+	    double w = bar_size;
+	    double h = ( viewportHeight - 3 * ysep - 2.5 * dy) / 2.;
+	    double x =  -viewportWidth/2 + xsep + width_total + (i / 2) * xsep;
+	    double y =  -viewportHeight/2 + ysep + dy + (1 - i % 2) * (h + 1.5 * dy + ysep);
+	    writeX3DScale(fp, p, x, y, w, h, tic, 1, font_size);
+	  }
+	  // compute width
+	  width_prev = width;
+	  width =bar_size + tic + 10.* font_size *3/4;
+	  if(opt->showTime){
+	    char tmp[256];
+	    sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
+	    sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
+	  }
+	  else{
+	    sprintf(label, "%s", data->getName().c_str());
+	  }
+	  width =max(width, strlen(label)* font_size *3/4);
+	  if(i % 2) width_total += std::max(bar_size + width, bar_size + width_prev);
+	}
+      }
+      fprintf(fp,"      </fieldValue> \n");
+      fprintf(fp,"    </ProtoInstance> \n");
+    } // if ( !scales.empty() )
+  } // if ( !getX3dCompatibility()
+
+    // geometrical objects
   VertexArray *va;
   PViewData *data;
   PViewOptions *opt;
   // points ------------------------NOT TREATED YET-------------------------------
   /*
-  for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++){
+    for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++){
     data = PView::list[ipv]->getData(true);
     opt  = PView::list[ipv]->getOptions();
     if( !data->getDirty() && opt->visible ) {
@@ -344,8 +346,8 @@ bool PView::writeX3D(const std::string &fileName )
 
   // lines -----------------------------------------------------------------------
   int _ind=0;
-  fprintf(fp,"<Shape> \n");
-  fprintf(fp,"   <IndexedLineSet coordIndex=' ");
+  fprintf(fp,"    <Shape> \n");
+  fprintf(fp,"      <IndexedLineSet coordIndex=' ");
   for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++){
     PViewData *data = PView::list[ipv]->getData(true);
     PViewOptions *opt = PView::list[ipv]->getOptions();
@@ -360,7 +362,7 @@ bool PView::writeX3D(const std::string &fileName )
     } // end if dirty
   }// end for loop on PView::list
   fprintf(fp,"'>\n");
-  fprintf(fp,"   <Coordinate DEF='TurnPoints' point=' ");
+  fprintf(fp,"        <Coordinate DEF='TurnPoints' point=' ");
   for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++){
     PViewData *data = PView::list[ipv]->getData(true);
     PViewOptions *opt = PView::list[ipv]->getOptions();
@@ -376,13 +378,13 @@ bool PView::writeX3D(const std::string &fileName )
     } // end if dirty
   }// end for loop on PView::list
   fprintf(fp,"'/> \n");
-  fprintf(fp,"   </IndexedLineSet> \n");
-  fprintf(fp,"   <Appearance> \n");
-  fprintf(fp,"      <Material emissiveColor='0 0 0'/>\n");
-  fprintf(fp,"      <LineProperties containerField='lineProperties'> \n");
-  fprintf(fp,"      </LineProperties> \n");
-  fprintf(fp,"   </Appearance> \n");
-  fprintf(fp,"</Shape>\n");
+  fprintf(fp,"      </IndexedLineSet> \n");
+  fprintf(fp,"      <Appearance> \n");
+  fprintf(fp,"        <Material emissiveColor='0 0 0'/>\n");
+  fprintf(fp,"        <LineProperties containerField='lineProperties'> \n");
+  fprintf(fp,"        </LineProperties> \n");
+  fprintf(fp,"      </Appearance> \n");
+  fprintf(fp,"    </Shape>\n");
 
 
 
@@ -403,18 +405,18 @@ bool PView::writeX3D(const std::string &fileName )
 	if((l || opt->vectorType == 6) && lmax){
 	  double scale=.5/_diagonal;
 	  double theta=acos(v[1]/l);
-	  fprintf(fp,"<Transform rotation='%g %g %g %g' translation='%e %e %e' >\n"
+	  fprintf(fp,"    <Transform rotation='%g %g %g %g' translation='%e %e %e' >\n"
 		  ,v[2],0.,-v[0],theta
 		  ,s[0]+.5*scale*v[0],s[1]+.5*scale*v[1],s[2]+.5*scale*v[2]);
-	  fprintf(fp,"<Shape>\n");
-	  fprintf(fp,"   <Cone bottomRadius='%g' height='%g'/>\n",
+	  fprintf(fp,"      <Shape>\n");
+	  fprintf(fp,"        <Cone bottomRadius='%g' height='%g'/>\n",
 		  .05*l*scale,
 		  l*scale);
-	  fprintf(fp,"           <Appearance>\n");
-	  fprintf(fp,"             <Material diffuseColor='%g %g %g'/>\n",rgba[0], rgba[1], rgba[2]);
-	  fprintf(fp,"           </Appearance>\n");
-	  fprintf(fp,"</Shape>\n");
-	  fprintf(fp,"</Transform>\n");
+	  fprintf(fp,"        <Appearance>\n");
+	  fprintf(fp,"          <Material diffuseColor='%g %g %g'/>\n",rgba[0], rgba[1], rgba[2]);
+	  fprintf(fp,"        </Appearance>\n");
+	  fprintf(fp,"      </Shape>\n");
+	  fprintf(fp,"    </Transform>\n");
 	} // end if l
       } // end for iv
     } // end if dirty
@@ -425,15 +427,15 @@ bool PView::writeX3D(const std::string &fileName )
   //count all visible triangles of previous visited PView
   _count=0;
   _ind=0.;
-  fprintf(fp,"<Transform> \n");
-  fprintf(fp,"<Shape> \n");
-  fprintf(fp,"  <Appearance> \n");
-  fprintf(fp,"    <Material  transparency='%g' ",  PView::getTransparencyValue() );
-  fprintf(fp,"       ambientIntensity='0.15'   diffuseColor='.5 .5 .5'    emissiveColor='0 0 0' ");
-  fprintf(fp,"       shininess='0.1'   specularColor='.1 .1 .1'  />  \n");
-  fprintf(fp,"  </Appearance> \n");
-  fprintf(fp,"  <IndexedTriangleSet  solid='true' ccw='true' colorPerVertex='true' \n ");
-  fprintf(fp,"       normalPerVertex='true'  containerField='geometry' index=' ");
+  fprintf(fp,"    <Transform> \n");
+  fprintf(fp,"      <Shape> \n");
+  fprintf(fp,"        <Appearance> \n");
+  fprintf(fp,"          <Material  transparency='%g' ",  PView::getTransparencyValue() );
+  fprintf(fp,"           ambientIntensity='0.15'   diffuseColor='.5 .5 .5'    emissiveColor='0 0 0' ");
+  fprintf(fp,"           shininess='0.1'   specularColor='.1 .1 .1'  />  \n");
+  fprintf(fp,"        </Appearance> \n");
+  fprintf(fp,"        <IndexedTriangleSet  solid='true' ccw='true' colorPerVertex='true' \n ");
+  fprintf(fp,"         normalPerVertex='true'  containerField='geometry' index=' ");
   for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++){
     data = PView::list[ipv]->getData(true);
     opt  = PView::list[ipv]->getOptions();
@@ -450,7 +452,7 @@ bool PView::writeX3D(const std::string &fileName )
   }// end loop on PView::list
 
   fprintf(fp," ' > \n");
-  fprintf(fp,"      <Coordinate point='");
+  fprintf(fp,"          <Coordinate point='");
   _count=0;
   for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++){
     data = PView::list[ipv]->getData(true);
@@ -474,7 +476,7 @@ bool PView::writeX3D(const std::string &fileName )
   }// end loop on PView::list
   fprintf(fp," '/> \n");
 
-  fprintf(fp,"      <Color color='");
+  fprintf(fp,"          <Color color='");
   _count=0;
   for(unsigned int ipv = 0; ipv < PView::list.size(); ipv++){
     data = PView::list[ipv]->getData(true);
@@ -502,11 +504,11 @@ bool PView::writeX3D(const std::string &fileName )
     } // enf if dirty
   }// end loop on PView::list
   fprintf(fp," '/>\n");
-  fprintf(fp,"   </IndexedTriangleSet> \n");
-  fprintf(fp,"</Shape> \n");
-  fprintf(fp,"</Transform> \n");
+  fprintf(fp,"        </IndexedTriangleSet> \n");
+  fprintf(fp,"      </Shape> \n");
+  fprintf(fp,"    </Transform> \n");
 
-  fprintf(fp,"</Scene>\n");
+  fprintf(fp,"  </Scene>\n");
   fprintf(fp,"</X3D>\n");
   fclose(fp);
   return true;
@@ -555,9 +557,9 @@ static void writeX3DScaleBar(FILE *fp, PView *p, double xmin, double ymin, doubl
     if(opt->intervalsType == PViewOptions::Continuous
        || opt->intervalsType == PViewOptions::Discrete
        || opt->intervalsType == PViewOptions::Numeric){
-      fprintf(fp,"        <Shape> \n");
-      fprintf(fp,"           <IndexedFaceSet colorPerVertex='true' normalPerVertex='true' coordIndex='0 1 2 3 -1' solid='false' ccw='true' > \n");
-      fprintf(fp,"              <Coordinate point='");
+      fprintf(fp,"      <Shape> \n");
+      fprintf(fp,"        <IndexedFaceSet colorPerVertex='true' normalPerVertex='true' coordIndex='0 1 2 3 -1' solid='false' ccw='true' > \n");
+      fprintf(fp,"          <Coordinate point='");
       if(horizontal){
 	fprintf(fp,"%e %e %e %e %e %e %e %e %e %e %e %e "
 		,xmin + i * box      , ymin, 0.
@@ -579,7 +581,7 @@ static void writeX3DScaleBar(FILE *fp, PView *p, double xmin, double ymin, doubl
 	double rgba[4]= { .5,.5,.5,1. };
 	unsigned int col = opt->getColor(i, opt->nbIso);
 	unsignedInt2RGBA(col,rgba[0],rgba[1],rgba[2],rgba[3]);
-	fprintf(fp,"              <Color color=' %g %g %g  %g %g %g  %g %g %g  %g %g %g '/>\n"
+	fprintf(fp,"          <Color color=' %g %g %g  %g %g %g  %g %g %g  %g %g %g '/>\n"
 		, rgba[0],rgba[1],rgba[2], rgba[0],rgba[1],rgba[2], rgba[0],rgba[1],rgba[2], rgba[0],rgba[1],rgba[2] );
       }
       else if(opt->intervalsType == PViewOptions::Continuous){
@@ -592,15 +594,15 @@ static void writeX3DScaleBar(FILE *fp, PView *p, double xmin, double ymin, doubl
 	double rgba2[4]= { .5,.5,.5,1. };
 	unsignedInt2RGBA(col1,rgba1[0],rgba1[1],rgba1[2],rgba1[3]);
 	unsignedInt2RGBA(col2,rgba2[0],rgba2[1],rgba2[2],rgba2[3]);
-	fprintf(fp,"              <Color color=' %g %g %g  %g %g %g  %g %g %g  %g %g %g '/>\n"
+	fprintf(fp,"          <Color color=' %g %g %g  %g %g %g  %g %g %g  %g %g %g '/>\n"
 		, rgba1[0],rgba1[1],rgba1[2], rgba2[0],rgba2[1],rgba2[2], rgba2[0],rgba2[1],rgba2[2], rgba1[0],rgba1[1],rgba1[2] );
       }
-      fprintf(fp,"           </IndexedFaceSet> \n");
+      fprintf(fp,"        </IndexedFaceSet> \n");
     }
     else{
-      fprintf(fp,"        <Shape> \n");
-      fprintf(fp,"           <IndexedLineSet colorPerVertex='true'  coordIndex='0 1 -1'  > \n");
-      fprintf(fp,"              <Coordinate point='");
+      fprintf(fp,"      <Shape> \n");
+      fprintf(fp,"        <IndexedLineSet colorPerVertex='true'  coordIndex='0 1 -1'  > \n");
+      fprintf(fp,"          <Coordinate point='");
       if(horizontal){
 	fprintf(fp,"%e %e %e %e %e %e  ",xmin+box/2.+i*box , ymin , 0.,xmin+box/2.+i*box , ymin+height , 0.);
       }
@@ -611,10 +613,10 @@ static void writeX3DScaleBar(FILE *fp, PView *p, double xmin, double ymin, doubl
       double rgba[4]= { .5,.5,.5,1. };
       unsigned int col = opt->getColor(i, opt->nbIso);
       unsignedInt2RGBA(col,rgba[0],rgba[1],rgba[2],rgba[3]);
-      fprintf(fp,"              <Color color=' %g %g %g  %g %g %g '/>\n", rgba[0],rgba[1],rgba[2], rgba[0],rgba[1],rgba[2] );
-      fprintf(fp,"           </IndexedLineSet> \n");
+      fprintf(fp,"          <Color color=' %g %g %g  %g %g %g '/>\n", rgba[0],rgba[1],rgba[2], rgba[0],rgba[1],rgba[2] );
+      fprintf(fp,"        </IndexedLineSet> \n");
     }
-    fprintf(fp,"        </Shape> \n");
+    fprintf(fp,"      </Shape> \n");
   }
 }
 
@@ -722,15 +724,15 @@ static void writeX3DScaleLabel(FILE *fp , PView *p, double xmin, double ymin,
 
 
 static void writeX3DStringCenter( FILE *fp,char *label,double x, double y, double z,double font_size){
-  fprintf(fp,"              <Transform translation='%g %g %g'>  \n",x,y,0.);
-  fprintf(fp,"                <Shape> \n");
-  fprintf(fp,"                  <Text  string='\"%s\"'>\n",label);
-  fprintf(fp,"	                  <FontStyle justify='\"MIDDLE\" \"MIDDLE\"' size=' %g '/>  \n",font_size);
-  fprintf(fp,"	                </Text>\n");
-  fprintf(fp,"	                <Appearance>\n");
-  fprintf(fp,"                    <Material diffuseColor='0. 0. 0. '/>\n");
-  fprintf(fp,"                  </Appearance>\n");
-  fprintf(fp,"                </Shape>\n");
-  fprintf(fp,"              </Transform> \n");
+  fprintf(fp,"      <Transform translation='%g %g %g'>  \n",x,y,0.);
+  fprintf(fp,"        <Shape> \n");
+  fprintf(fp,"          <Text string='\"%s\"'>\n",label);
+  fprintf(fp,"            <FontStyle justify='\"MIDDLE\" \"MIDDLE\"' size=' %d '/>  \n",font_size);
+  fprintf(fp,"          </Text>\n");
+  fprintf(fp,"          <Appearance>\n");
+  fprintf(fp,"            <Material diffuseColor='0. 0. 0. '/>\n");
+  fprintf(fp,"          </Appearance>\n");
+  fprintf(fp,"        </Shape>\n");
+  fprintf(fp,"      </Transform> \n");
 
 }

@@ -16,6 +16,7 @@
 
 int PView::_globalTag = 0;
 bool PView::_removeInnerBorders = false;
+bool PView::_x3dCompatibility = false;
 double PView::_transparency=0.;
 double PView::_precision=pow(10.,-9.);
 std::vector<PView*> PView::list;

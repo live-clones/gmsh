@@ -1584,6 +1584,7 @@ int x3dViewFileDialog(const char *name, const char *title, int format)
     Fl_Choice *c[1];
     Fl_Choice *d[1];
     Fl_Value_Input *input[2];
+    Fl_Check_Button *e;
     Fl_Button *ok, *cancel;
   };
   static _viewFileDialog *dialog = NULL;
@@ -1604,7 +1605,7 @@ int x3dViewFileDialog(const char *name, const char *title, int format)
 
   if(!dialog){
     dialog = new _viewFileDialog;
-    int h = 6 * WB + 5 * BH, w = 2 * BBB +  BBB  / 3  +  12 * WB , y = WB;
+    int h = 7 * WB + 6 * BH, w = 2 * BBB +  BBB  / 3  +  12 * WB , y = WB;
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -1622,6 +1623,7 @@ int x3dViewFileDialog(const char *name, const char *title, int format)
     dialog->input[1]->minimum(0.);
     dialog->input[1]->maximum(1.);
     dialog->input[1]->step(0.05);
+    dialog->e = new Fl_Check_Button (WB, y, w - 2 * WB , BH, "High compatibility (no scale bar)"); y += BH;
     dialog->ok     = new Fl_Return_Button( WB          , y , BBB, BH, "OK");
     dialog->cancel = new Fl_Button       ( 2 * WB + BBB, y , BBB, BH, "Cancel");
     dialog->window->end();
@@ -1630,11 +1632,12 @@ int x3dViewFileDialog(const char *name, const char *title, int format)
 
   dialog->window->label(title);
   dialog->window->show();
-  dialog->input[0]->value(	PView::getPrecisionValue() );
+  dialog->input[0]->value( PView::getPrecisionValue() );
   dialog->input[0]->align(FL_ALIGN_RIGHT);
-  dialog->input[1]->value(	PView::getTransparencyValue() );
+  dialog->input[1]->value( PView::getTransparencyValue() );
   dialog->input[1]->align(FL_ALIGN_RIGHT);
-
+  dialog->e->type(FL_TOGGLE_BUTTON); 
+  dialog->e->value(PView::getX3dCompatibility() );
   while(dialog->window->shown()){
     Fl::wait();
     for (;;) {
@@ -1642,6 +1645,7 @@ int x3dViewFileDialog(const char *name, const char *title, int format)
       if (!o) break;
       if (o == dialog->ok) {
 	dialog->d[0]->value()==1 ? PView::setInnerBorder(true) :   PView::setInnerBorder(false) ;
+	dialog->e->value()==1 ? PView::setX3dCompatibility(true) :   PView::setX3dCompatibility(false) ;
 	PView::setTransparencyValue( dialog->input[1]->value() );
 	PView::setPrecisionValue( dialog->input[0]->value() );
 

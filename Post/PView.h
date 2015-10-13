@@ -69,7 +69,10 @@ class PView{
 
   //  precision for inner border deletion in x3d output
   static double _precision;
+  static bool _x3dCompatibility;
   // get/set global tag
+  static double getX3dCompatibility()         { return _x3dCompatibility  ;  }
+  static void   setX3dCompatibility ( bool br){        _x3dCompatibility  = br; }
   static double getTransparencyValue()          { return _transparency ;  }
   static void   setTransparencyValue( double tr){        _transparency = tr; }
   static double getPrecisionValue()              { return  log10( _precision ) ;  }
