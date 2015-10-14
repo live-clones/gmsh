@@ -169,63 +169,55 @@ PView *GMSH_CrackPlugin::execute(PView *view)
       }
     }
   }
-
   for(std::set<MVertex*>::iterator it = bndVertices.begin();
       it != bndVertices.end(); it++)
     crackVertices.erase(*it);
 
-  // compute smoothed normals on crack vertices
-  std::map<MVertex*, std::vector<MElement*> > vxe;
-  for(unsigned int i = 0; i < crackElements.size(); i++){
-    MElement *e = crackElements[i];
-    for(int k = 0; k < e->getNumVertices(); k++)
-      vxe[e->getVertex(k)].push_back(e);
-  }
-  std::map<MVertex*, SVector3> vxn;
-  for(std::map<MVertex*, std::vector<MElement*> >::iterator it = vxe.begin();
-      it != vxe.end(); it++){
-    SVector3 n;
-    for(unsigned int i = 0; i < it->second.size(); i++){
-      if(dim == 1)
-        n += crossprod(normal1d, it->second[i]->getEdge(0).tangent());
-      else
-        n += it->second[i]->getFace(0).normal();
-    }
-    n.normalize();
-    vxn[it->first] = n;
-  }
-
   // compute elements on one side of the crack
-  vxe.clear();
+  std::set<MElement*> oneside;
   std::vector<GEntity*> allentities;
   m->getEntities(allentities);
   for(unsigned int ent = 0; ent < allentities.size(); ent++){
-    //if(allentities[ent]->dim() != dim + 1) continue;
     if(crackEntities.find(allentities[ent]) != crackEntities.end()) continue;
     for(unsigned int i = 0; i < allentities[ent]->getNumMeshElements(); i++){
       MElement *e = allentities[ent]->getMeshElement(i);
       for(int j = 0; j < e->getNumVertices(); j++){
-        MVertex *v = e->getVertex(j);
-        if(crackVertices.find(v) != crackVertices.end()){
-          MVertex *vclose = 0;
-          double d = 1e22;
-          SVector3 dv;
-          for(std::set<MVertex*>::iterator it = crackVertices.begin();
-              it != crackVertices.end(); it++){
-            MVertex *v = *it;
-            double d2 = v->point().distance(e->barycenter());
+        if(crackVertices.find(e->getVertex(j)) != crackVertices.end()){
+          // element touches the crack: find the closest crack element
+          SPoint3 b = e->barycenter();
+          double d = 1e200;
+          MElement *ce = 0;
+          for(unsigned int k = 0; k < crackElements.size(); k++){
+            double d2 = b.distance(crackElements[k]->barycenter());
             if(d2 < d){
               d = d2;
-              vclose = v;
-              dv = SVector3(e->barycenter(), vclose->point());
+              ce = crackElements[k];
             }
           }
-          if(dot(vxn[vclose], dv) < 0)
-            vxe[v].push_back(e);
+          SVector3 dv = SVector3(e->barycenter(), ce->barycenter());
+          SVector3 n;
+          if(dim == 1)
+            n = crossprod(normal1d, ce->getEdge(0).tangent());
+          else
+            n = ce->getFace(0).normal();
+          if(dot(n, dv) < 0){
+            oneside.insert(e);
+          }
         }
       }
     }
   }
+
+  /*
+  FILE *fp = fopen("debug.pos", "w");
+  if(fp){
+    fprintf(fp, "View \"Ele < 0\" {\n");
+    for(std::set<MElement*>::iterator it = oneside.begin(); it != oneside.end(); it++)
+      (*it)->writePOS(fp, false, true, false, false, false, false);
+    fprintf(fp, "};\n");
+    fclose(fp);
+  }
+  */
 
   // create new crack entity
   GEdge *crackEdge = 0;
@@ -271,13 +263,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   }
 
   // replace vertices in elements on one side of the crack
-  std::set<MElement*> eles;
-  for(std::map<MVertex*, std::vector<MElement*> >::iterator it = vxe.begin();
-      it != vxe.end(); it++){
-    for(unsigned int i = 0; i < it->second.size(); i++)
-      eles.insert(it->second[i]);
-  }
-  for(std::set<MElement*>::iterator it = eles.begin(); it != eles.end(); it++){
+  for(std::set<MElement*>::iterator it = oneside.begin(); it != oneside.end(); it++){
     MElement *e = *it;
     for(int i = 0; i < e->getNumVertices(); i++){
       if(vxv.count(e->getVertex(i)))
