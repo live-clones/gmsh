@@ -69,8 +69,10 @@ static std::vector<double> *ViewValueList = 0;
 static int *ViewNumList = 0;
 static ExtrudeParams extr;
 static gmshSurface *myGmshSurface = 0;
+#define MAX_RECUR_TESTS 100
+static int statusImbricatedTests[MAX_RECUR_TESTS];
 #define MAX_RECUR_LOOPS 100
-static int ImbricatedLoop = 0;
+static int ImbricatedLoop = 0, ImbricatedTest = 0;
 static gmshfpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
@@ -80,7 +82,9 @@ static std::map<std::string, std::vector<std::string> > charOptions;
 
 void yyerror(const char *s);
 void yymsg(int level, const char *fmt, ...);
+bool is_alpha(const int c);
 void skip_until(const char *skip, const char *until);
+void skip_until_test(const char *skip, const char *until, const char *until2, int *flag_until2);
 void assignVariable(const std::string &name, int index, int assignType,
                     double value);
 void assignVariables(const std::string &name, List_T *indices, int assignType,
@@ -115,7 +119,7 @@ struct doubleXstring{
 %token <d> tDOUBLE
 %token <c> tSTRING tBIGSTR
 
-%token tEND tAFFECT tDOTS tPi tMPI_Rank tMPI_Size tEuclidian tCoordinates
+%token tEND tAFFECT tDOTS tPi tMPI_Rank tMPI_Size tEuclidian tCoordinates tTestLevel
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil tRound
 %token tFmod tModulo tHypot tList
@@ -142,7 +146,7 @@ struct doubleXstring{
 %token tRecombLaterals tTransfQuadTri
 %token tText2D tText3D tInterpolationScheme tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
-%token tColor tColorTable tFor tIn tEndFor tIf tEndIf tExit tAbort
+%token tColor tColorTable tFor tIn tEndFor tIf tElse tEndIf tExit tAbort
 %token tField tReturn tCall tMacro tShow tHide tGetValue tGetEnv tGetString tGetNumber
 %token tHomology tCohomology tBetti tSetOrder tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
@@ -3230,10 +3234,36 @@ Loop :
     }
   | tIf '(' FExpr ')'
     {
-      if(!$3) skip_until("If", "EndIf");
+      ImbricatedTest++;
+      if(ImbricatedTest > MAX_RECUR_TESTS-1){
+	yymsg(0, "Reached maximum number of imbricated tests");
+        ImbricatedTest = MAX_RECUR_TESTS-1;
+      }
+
+      if(!$3){
+        statusImbricatedTests[ImbricatedTest] = 0; // Will be useful later for ElseIf
+        int flag_until2 = 0;
+        skip_until_test("If", "EndIf", "Else", &flag_until2);
+        if(!flag_until2)
+          ImbricatedTest--;
+      }
+      else{
+        statusImbricatedTests[ImbricatedTest] = 1;
+      }
+
+    }
+  | tElse
+    {
+      if (ImbricatedTest > 0 && statusImbricatedTests[ImbricatedTest]){
+        skip_until("If", "EndIf");
+        ImbricatedTest--;
+      }
     }
   | tEndIf
     {
+      ImbricatedTest--;
+      if (ImbricatedTest < 0)
+        yymsg(1, "Orphan EndIf");
     }
 ;
 
@@ -4659,6 +4689,7 @@ FExpr_Single :
 
     tDOUBLE   { $$ = $1; }
   | tPi       { $$ = 3.141592653589793; }
+  | tTestLevel { $$ = (double)ImbricatedTest; }
   | tMPI_Rank { $$ = Msg::GetCommRank(); }
   | tMPI_Size { $$ = Msg::GetCommSize(); }
   | tGMSH_MAJOR_VERSION { $$ = GetGmshMajorVersion(); }

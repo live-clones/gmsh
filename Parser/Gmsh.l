@@ -155,6 +155,7 @@ SetChanged              return tSetChanged;
 Exp                     return tExp;
 Ellipsis                return tEllipse;
 Ellipse                 return tEllipse;
+Else                    return tElse;
 Extrude                 return tExtrude;
 Elliptic		return tElliptic;
 EndFor                  return tEndFor;
@@ -275,6 +276,7 @@ SyncModel               return tSyncModel;
 
 T2                      return tText2D;
 T3                      return tText3D;
+TestLevel               return tTestLevel;
 TextAttributes          return tTextAttributes;
 TIME                    return tTime;
 Transfinite             return tTransfinite;
@@ -363,19 +365,19 @@ void skipline()
   }
 }
 
+bool is_alpha(const int c)
+{
+  return (c>='a' && c<='z') || (c>='A' && c<='Z') || c=='_';
+}
+
 void skip_until(const char *skip, const char *until)
 {
-  int i, nb_skip;
+  int i, nb_skip = 0;
   int l, l_skip, l_until;
   char chars[256];
+  int c_next, c_next_skip, c_next_until, c_previous = 0;
 
-  nb_skip = 0;
-
-  if(skip)
-    l_skip = strlen(skip);
-  else
-    l_skip = 0;
-
+  l_skip = (skip)? strlen(skip) : 0;
   l_until = strlen(until);
 
   while(1){
@@ -385,8 +387,17 @@ void skip_until(const char *skip, const char *until)
 	Msg::Error("Unexpected end of file");
 	return;
       }
-      if(chars[0] == until[0]) break;
-      if(skip && chars[0] == skip[0]) break;
+      if(chars[0] == '/'){
+        c_next = yyinput();
+        if     (c_next ==  '*') skipcomments();
+        else if(c_next ==  '/') skipline();
+        else unput(c_next);
+      }
+      if(!c_previous || !is_alpha(c_previous)){
+        if(chars[0] == until[0]) break;
+        if(skip && chars[0] == skip[0]) break;
+      }
+      c_previous = chars[0];
     }
 
     l = std::max(l_skip,l_until);
@@ -402,7 +413,11 @@ void skip_until(const char *skip, const char *until)
       }
     }
 
-    if(!strncmp(chars,until,l_until)){
+    c_next = yyinput(); unput(c_next);
+    c_next_skip = (l_skip<l)? chars[l_skip] : c_next;
+    c_next_until = (l_until<l)? chars[l_until] : c_next;
+
+    if(!strncmp(chars,until,l_until) && !is_alpha(c_next_until)){
       if(!nb_skip){
 	return;
       }
@@ -410,7 +425,85 @@ void skip_until(const char *skip, const char *until)
 	nb_skip--;
       }
     }
-    else if(skip && !strncmp(chars,skip,l_skip)){
+    else if(skip && !strncmp(chars,skip,l_skip) && !is_alpha(c_next_skip)){
+      nb_skip++;
+    }
+    else{
+      for(i=1;i<l-1;i++){
+	unput(chars[l-i]);
+      }
+    }
+
+  }
+}
+
+void skip_until_test(const char *skip, const char *until, const char *until2, int *flag_until2)
+{
+  int i, nb_skip = 0;
+  int l, l_skip, l_until, l_until2;
+  char chars[256];
+  int c_next, c_next_skip, c_next_until, c_next_until2, c_previous = 0;
+
+  l_skip = (skip)? strlen(skip) : 0;
+
+  l_until = strlen(until);
+  l_until2 = (until2)? strlen(until2) : 0;
+
+  while(1){
+    while (1){
+      chars[0] = yyinput();
+      if(gmsheof(yyin)){
+	Msg::Error("Unexpected end of file");
+	return;
+      }
+      if(chars[0] == '/'){
+        c_next = yyinput();
+        if     (c_next ==  '*') skipcomments();
+        else if(c_next ==  '/') skipline();
+        else unput(c_next);
+      }
+      if(!c_previous || !is_alpha(c_previous)){
+        if(chars[0] == until[0]) break;
+        if(skip && chars[0] == skip[0]) break;
+        if(until2 && chars[0] == until2[0]) break;
+      }
+      c_previous = chars[0];
+    }
+
+    l = std::max(l_skip,l_until);
+    l = std::max(l,l_until2);
+    if(l >= (int)sizeof(chars)){
+      Msg::Error("Search pattern too long in skip_until");
+      return;
+    }
+    for(i=1; i<l; i++){
+      chars[i] = yyinput();
+      if(gmsheof(yyin)){
+	l = i;
+	break;
+      }
+    }
+
+    c_next = yyinput(); unput(c_next);
+    c_next_skip = (l_skip<l)? chars[l_skip] : c_next;
+    c_next_until = (l_until<l)? chars[l_until] : c_next;
+    c_next_until2 = (l_until2<l)? chars[l_until2] : c_next;
+
+    if(!strncmp(chars,until2,l_until2) && !is_alpha(c_next_until2)){
+      if(!nb_skip){
+        *flag_until2 = 1;
+	return;
+      }
+    }
+    else if(!strncmp(chars,until,l_until) && !is_alpha(c_next_until)){
+      if(!nb_skip){
+	return;
+      }
+      else{
+	nb_skip--;
+      }
+    }
+    else if(skip && !strncmp(chars,skip,l_skip) && !is_alpha(c_next_skip)){
       nb_skip++;
     }
     else{
