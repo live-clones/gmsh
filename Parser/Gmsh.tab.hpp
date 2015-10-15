@@ -182,46 +182,47 @@
      tIn = 398,
      tEndFor = 399,
      tIf = 400,
-     tElse = 401,
-     tEndIf = 402,
-     tExit = 403,
-     tAbort = 404,
-     tField = 405,
-     tReturn = 406,
-     tCall = 407,
-     tMacro = 408,
-     tShow = 409,
-     tHide = 410,
-     tGetValue = 411,
-     tGetEnv = 412,
-     tGetString = 413,
-     tGetNumber = 414,
-     tHomology = 415,
-     tCohomology = 416,
-     tBetti = 417,
-     tSetOrder = 418,
-     tExists = 419,
-     tFileExists = 420,
-     tGMSH_MAJOR_VERSION = 421,
-     tGMSH_MINOR_VERSION = 422,
-     tGMSH_PATCH_VERSION = 423,
-     tGmshExecutableName = 424,
-     tSetPartition = 425,
-     tNameFromString = 426,
-     tStringFromName = 427,
-     tAFFECTDIVIDE = 428,
-     tAFFECTTIMES = 429,
-     tAFFECTMINUS = 430,
-     tAFFECTPLUS = 431,
-     tOR = 432,
-     tAND = 433,
-     tNOTEQUAL = 434,
-     tEQUAL = 435,
-     tGREATEROREQUAL = 436,
-     tLESSOREQUAL = 437,
-     UNARYPREC = 438,
-     tMINUSMINUS = 439,
-     tPLUSPLUS = 440
+     tElseIf = 401,
+     tElse = 402,
+     tEndIf = 403,
+     tExit = 404,
+     tAbort = 405,
+     tField = 406,
+     tReturn = 407,
+     tCall = 408,
+     tMacro = 409,
+     tShow = 410,
+     tHide = 411,
+     tGetValue = 412,
+     tGetEnv = 413,
+     tGetString = 414,
+     tGetNumber = 415,
+     tHomology = 416,
+     tCohomology = 417,
+     tBetti = 418,
+     tSetOrder = 419,
+     tExists = 420,
+     tFileExists = 421,
+     tGMSH_MAJOR_VERSION = 422,
+     tGMSH_MINOR_VERSION = 423,
+     tGMSH_PATCH_VERSION = 424,
+     tGmshExecutableName = 425,
+     tSetPartition = 426,
+     tNameFromString = 427,
+     tStringFromName = 428,
+     tAFFECTDIVIDE = 429,
+     tAFFECTTIMES = 430,
+     tAFFECTMINUS = 431,
+     tAFFECTPLUS = 432,
+     tOR = 433,
+     tAND = 434,
+     tNOTEQUAL = 435,
+     tEQUAL = 436,
+     tGREATEROREQUAL = 437,
+     tLESSOREQUAL = 438,
+     UNARYPREC = 439,
+     tMINUSMINUS = 440,
+     tPLUSPLUS = 441
    };
 #endif
 /* Tokens.  */
@@ -368,53 +369,54 @@
 #define tIn 398
 #define tEndFor 399
 #define tIf 400
-#define tElse 401
-#define tEndIf 402
-#define tExit 403
-#define tAbort 404
-#define tField 405
-#define tReturn 406
-#define tCall 407
-#define tMacro 408
-#define tShow 409
-#define tHide 410
-#define tGetValue 411
-#define tGetEnv 412
-#define tGetString 413
-#define tGetNumber 414
-#define tHomology 415
-#define tCohomology 416
-#define tBetti 417
-#define tSetOrder 418
-#define tExists 419
-#define tFileExists 420
-#define tGMSH_MAJOR_VERSION 421
-#define tGMSH_MINOR_VERSION 422
-#define tGMSH_PATCH_VERSION 423
-#define tGmshExecutableName 424
-#define tSetPartition 425
-#define tNameFromString 426
-#define tStringFromName 427
-#define tAFFECTDIVIDE 428
-#define tAFFECTTIMES 429
-#define tAFFECTMINUS 430
-#define tAFFECTPLUS 431
-#define tOR 432
-#define tAND 433
-#define tNOTEQUAL 434
-#define tEQUAL 435
-#define tGREATEROREQUAL 436
-#define tLESSOREQUAL 437
-#define UNARYPREC 438
-#define tMINUSMINUS 439
-#define tPLUSPLUS 440
+#define tElseIf 401
+#define tElse 402
+#define tEndIf 403
+#define tExit 404
+#define tAbort 405
+#define tField 406
+#define tReturn 407
+#define tCall 408
+#define tMacro 409
+#define tShow 410
+#define tHide 411
+#define tGetValue 412
+#define tGetEnv 413
+#define tGetString 414
+#define tGetNumber 415
+#define tHomology 416
+#define tCohomology 417
+#define tBetti 418
+#define tSetOrder 419
+#define tExists 420
+#define tFileExists 421
+#define tGMSH_MAJOR_VERSION 422
+#define tGMSH_MINOR_VERSION 423
+#define tGMSH_PATCH_VERSION 424
+#define tGmshExecutableName 425
+#define tSetPartition 426
+#define tNameFromString 427
+#define tStringFromName 428
+#define tAFFECTDIVIDE 429
+#define tAFFECTTIMES 430
+#define tAFFECTMINUS 431
+#define tAFFECTPLUS 432
+#define tOR 433
+#define tAND 434
+#define tNOTEQUAL 435
+#define tEQUAL 436
+#define tGREATEROREQUAL 437
+#define tLESSOREQUAL 438
+#define UNARYPREC 439
+#define tMINUSMINUS 440
+#define tPLUSPLUS 441
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 109 "Gmsh.y"
+#line 110 "Gmsh.y"
 {
   char *c;
   int i;
@@ -425,7 +427,7 @@ typedef union YYSTYPE
   List_T *l;
 }
 /* Line 1529 of yacc.c.  */
-#line 429 "Gmsh.tab.hpp"
+#line 431 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

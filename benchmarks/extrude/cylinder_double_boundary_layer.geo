@@ -1,3 +1,6 @@
+Geometry.OldNewReg = 1;
+
+
 //-*- C++ -*-
 /*********************************************       
 Cube uniformly meshed along all three axes      
@@ -28,9 +31,8 @@ EndFor
 
 out[] = Extrude{0, 0, L}{Line{1:4}; Layers{nb_layers};};
 
-Extrude { Surface{out[{1, 5, 9, 13}]}; Layers{5, 0.1}; Recombine; Using Index[0]; }
-Extrude { Surface{- out[{1, 5, 9, 13}]}; Layers{5, 0.1}; Recombine; Using Index[1]; }
-
+out0[] = Extrude { Surface{out[{1, 5, 9, 13}]}; Layers{5, 0.1}; Recombine; Using Index[0]; };
+out1[] = Extrude { Surface{- out[{1, 5, 9, 13}]}; Layers{5, 0.1}; Recombine; Using Index[1]; };
 
 Line Loop(197) = {132, 154, 176, 110};
 Plane Surface(198) = {197};

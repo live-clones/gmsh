@@ -84,7 +84,8 @@ void yyerror(const char *s);
 void yymsg(int level, const char *fmt, ...);
 bool is_alpha(const int c);
 void skip_until(const char *skip, const char *until);
-void skip_until_test(const char *skip, const char *until, const char *until2, int *flag_until2);
+void skip_until_test(const char *skip, const char *until,
+                     const char *until2, int l_until2_sub, int *type_until2);
 void assignVariable(const std::string &name, int index, int assignType,
                     double value);
 void assignVariables(const std::string &name, List_T *indices, int assignType,
@@ -146,7 +147,7 @@ struct doubleXstring{
 %token tRecombLaterals tTransfQuadTri
 %token tText2D tText3D tInterpolationScheme tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
-%token tColor tColorTable tFor tIn tEndFor tIf tElse tEndIf tExit tAbort
+%token tColor tColorTable tFor tIn tEndFor tIf tElseIf tElse tEndIf tExit tAbort
 %token tField tReturn tCall tMacro tShow tHide tGetValue tGetEnv tGetString tGetNumber
 %token tHomology tCohomology tBetti tSetOrder tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
@@ -3240,22 +3241,48 @@ Loop :
         ImbricatedTest = MAX_RECUR_TESTS-1;
       }
 
-      if(!$3){
-        statusImbricatedTests[ImbricatedTest] = 0; // Will be useful later for ElseIf
-        int flag_until2 = 0;
-        skip_until_test("If", "EndIf", "Else", &flag_until2);
-        if(!flag_until2)
-          ImbricatedTest--;
-      }
-      else{
+      if($3){
+        // Current test is true
         statusImbricatedTests[ImbricatedTest] = 1;
       }
-
+      else{
+        statusImbricatedTests[ImbricatedTest] = 0;
+        // Go after the next ElseIf or Else or EndIf
+        int type_until2 = 0;
+        skip_until_test("If", "EndIf", "ElseIf", 4, &type_until2);
+        if(!type_until2) ImbricatedTest--;
+      }
+    }
+  | tElseIf '(' FExpr ')'
+    {
+      if(ImbricatedTest > 0){
+        if (statusImbricatedTests[ImbricatedTest]){
+          // Last test (If or ElseIf) was true, thus go after EndIf (out of If EndIf)
+          skip_until("If", "EndIf");
+          ImbricatedTest--;
+        }
+        else{
+          // Previous test(s) (If and ElseIf) not yet true
+          if($3){
+            statusImbricatedTests[ImbricatedTest] = 1;
+          }
+          else{
+            // Current test still not true: statusImbricatedTests[ImbricatedTest] = 0;
+            // Go after the next ElseIf or Else or EndIf
+            int type_until2 = 0;
+            skip_until_test("If", "EndIf", "ElseIf", 4, &type_until2);
+            if(!type_until2) ImbricatedTest--;
+          }
+        }
+      }
+      else{
+	yymsg(0, "Orphan ElseIf");
+      }
     }
   | tElse
     {
-      if (ImbricatedTest > 0){
-        if (statusImbricatedTests[ImbricatedTest]){
+      if(ImbricatedTest > 0){
+        if(statusImbricatedTests[ImbricatedTest]){
           skip_until("If", "EndIf");
           ImbricatedTest--;
         }
@@ -3267,7 +3294,7 @@ Loop :
   | tEndIf
     {
       ImbricatedTest--;
-      if (ImbricatedTest < 0)
+      if(ImbricatedTest < 0)
         yymsg(1, "Orphan EndIf");
     }
 ;

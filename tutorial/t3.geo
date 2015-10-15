@@ -5,7 +5,7 @@
  *  Extruded meshes, parameters, options
  *
  *********************************************************************/
-
+Geometry.OldNewReg = 1;
 // Again, we start by including the first tutorial:
 
 Include "t1.geo";

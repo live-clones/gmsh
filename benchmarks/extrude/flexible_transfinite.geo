@@ -1,3 +1,6 @@
+//Geometry.OldNewReg = 1;
+
+
 // Define parameters
 charLength = 1.0;
 

@@ -156,6 +156,7 @@ Exp                     return tExp;
 Ellipsis                return tEllipse;
 Ellipse                 return tEllipse;
 Else                    return tElse;
+ElseIf                  return tElseIf;
 Extrude                 return tExtrude;
 Elliptic		return tElliptic;
 EndFor                  return tEndFor;
@@ -380,6 +381,12 @@ void skip_until(const char *skip, const char *until)
   l_skip = (skip)? strlen(skip) : 0;
   l_until = strlen(until);
 
+  l = std::max(l_skip,l_until);
+  if(l >= (int)sizeof(chars)){
+    Msg::Error("Search pattern too long in skip_until");
+    return;
+  }
+
   while(1){
     while (1){
       chars[0] = yyinput();
@@ -400,11 +407,6 @@ void skip_until(const char *skip, const char *until)
       c_previous = chars[0];
     }
 
-    l = std::max(l_skip,l_until);
-    if(l >= (int)sizeof(chars)){
-      Msg::Error("Search pattern too long in skip_until");
-      return;
-    }
     for(i=1; i<l; i++){
       chars[i] = yyinput();
       if(gmsheof(yyin)){
@@ -427,6 +429,7 @@ void skip_until(const char *skip, const char *until)
     }
     else if(skip && !strncmp(chars,skip,l_skip) && !is_alpha(c_next_skip)){
       nb_skip++;
+      // Attention: unput(.) should be applied a number of times equal to l-l_skip (always >0 for skip="For" and until="EndFor", or skip="If" and until="EndIf"); in particular, because "If" is followed by a minimum of 3 chars (e.g., '(1)'), with a total lenght thus exactly equal to the one of "EndIf", one avoid an error when looking then for "EndIf". (Patrick)
     }
     else{
       for(i=1;i<l-1;i++){
@@ -437,8 +440,8 @@ void skip_until(const char *skip, const char *until)
   }
 }
 
-// Patrick: to be unified soon with skip_until (or perhaps made particular when ElseIf will be added)
-void skip_until_test(const char *skip, const char *until, const char *until2, int *flag_until2)
+void skip_until_test(const char *skip, const char *until,
+                     const char *until2, int l_until2_sub, int *type_until2)
 {
   int i, nb_skip = 0;
   int l, l_skip, l_until, l_until2;
@@ -446,9 +449,15 @@ void skip_until_test(const char *skip, const char *until, const char *until2, in
   int c_next, c_next_skip, c_next_until, c_next_until2, c_previous = 0;
 
   l_skip = (skip)? strlen(skip) : 0;
-
   l_until = strlen(until);
   l_until2 = (until2)? strlen(until2) : 0;
+
+  l = std::max(l_skip,l_until);
+  l = std::max(l,l_until2);
+  if(l >= (int)sizeof(chars)){
+    Msg::Error("Search pattern too long in skip_until_test");
+    return;
+  }
 
   while(1){
     while (1){
@@ -466,17 +475,12 @@ void skip_until_test(const char *skip, const char *until, const char *until2, in
       if(!c_previous || !is_alpha(c_previous)){
         if(chars[0] == until[0]) break;
         if(skip && chars[0] == skip[0]) break;
-        if(until2 && chars[0] == until2[0]) break;
+        if(!nb_skip && until2 && chars[0] == until2[0]) break;
+        // Useless to search for until2 if nb_skip!=0
       }
       c_previous = chars[0];
     }
 
-    l = std::max(l_skip,l_until);
-    l = std::max(l,l_until2);
-    if(l >= (int)sizeof(chars)){
-      Msg::Error("Search pattern too long in skip_until");
-      return;
-    }
     for(i=1; i<l; i++){
       chars[i] = yyinput();
       if(gmsheof(yyin)){
@@ -488,13 +492,22 @@ void skip_until_test(const char *skip, const char *until, const char *until2, in
     c_next = yyinput(); unput(c_next);
     c_next_skip = (l_skip<l)? chars[l_skip] : c_next;
     c_next_until = (l_until<l)? chars[l_until] : c_next;
-    c_next_until2 = (l_until2<l)? chars[l_until2] : c_next;
+    if (!nb_skip)
+      c_next_until2 = (l_until2<l)? chars[l_until2] : c_next;
 
-    if(!strncmp(chars,until2,l_until2) && !is_alpha(c_next_until2)){
-      if(!nb_skip){
-        *flag_until2 = 1;
-	return;
+    if(!nb_skip && !strncmp(chars,until2,l_until2) && !is_alpha(c_next_until2)){
+      *type_until2 = 1; // Found word is full until2 (e.g., "ElseIf")
+      for(int i = 1; i <= l; i++){ // Only correct if l == l_until2
+        unput(chars[l-i]);
+      } // New file position points "ElseIf", that will be then analysed by the parser
+      return;
+    }
+    else if(!nb_skip && !strncmp(chars,until2,l_until2_sub) && !is_alpha(chars[l_until2_sub])){
+      *type_until2 = 2; // Found word is subword from until2 (e.g., "Else")
+      for(int i = 1; i <= l-l_until2_sub; i++){ // Only correct if l_until2_sub < l
+        unput(chars[l-i]);
       }
+      return;
     }
     else if(!strncmp(chars,until,l_until) && !is_alpha(c_next_until)){
       if(!nb_skip){
