@@ -3254,9 +3254,14 @@ Loop :
     }
   | tElse
     {
-      if (ImbricatedTest > 0 && statusImbricatedTests[ImbricatedTest]){
-        skip_until("If", "EndIf");
-        ImbricatedTest--;
+      if (ImbricatedTest > 0){
+        if (statusImbricatedTests[ImbricatedTest]){
+          skip_until("If", "EndIf");
+          ImbricatedTest--;
+        }
+      }
+      else{
+	yymsg(0, "Orphan Else");
       }
     }
   | tEndIf
