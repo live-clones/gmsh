@@ -437,6 +437,7 @@ void skip_until(const char *skip, const char *until)
   }
 }
 
+// Patrick: to be unified soon with skip_until (or perhaps made particular when ElseIf will be added)
 void skip_until_test(const char *skip, const char *until, const char *until2, int *flag_until2)
 {
   int i, nb_skip = 0;
