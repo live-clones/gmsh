@@ -3,6 +3,7 @@
 #import "OptionsViewController.h"
 #import "AppDelegate.h"
 #import "parameter.h"
+#import "Utils.h"
 
 @interface ParametersViewController () {
 
@@ -79,12 +80,14 @@
   if(!parameter) return;
   NSString *name = [parameter getName];
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
+  onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() && !number[0].getReadOnly()){
-    NSLog(@"Manual edit of parameter '%s' with value '%g'", number[0].getName().c_str(), number[0].getValue());
+    NSLog(@"Manual edit of parameter '%s' with value '%g'", number[0].getName().c_str(),
+          number[0].getValue());
     UIAlertView *alertView =
-      [[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:@"%s", number[0].getShortName().c_str()]
-                                 message:name delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Ok", nil];
+      [[UIAlertView alloc] initWithTitle:[Utils getStringFromCString:number[0].getShortName().c_str()]
+                                 message:name delegate:self cancelButtonTitle:@"Cancel"
+                       otherButtonTitles:@"Ok", nil];
     alertView.alertViewStyle = UIAlertViewStylePlainTextInput;
     [alertView textFieldAtIndex:0].text = [NSString stringWithFormat:@"%g", number[0].getValue()];
     [alertView show];
@@ -95,7 +98,7 @@
 {
   NSLog(@"%@ -> %@", [alertView message], [alertView textFieldAtIndex:0].text);
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[[alertView message] UTF8String]);
+  onelab::server::instance()->get(number, [[alertView message] UTF8String]);
   if(number.size()){
     double value = [[alertView textFieldAtIndex:0].text doubleValue];
     number[0].setValue(value);
@@ -213,7 +216,7 @@ NSString *GetSectionTitle(NSString *name)
   // check for new/updated parameters (number)
   for(int i = 0; i < number.size(); i++) {
     if(!number[i].getVisible()) continue; // do not add invisible parameter
-    NSString *name = [NSString stringWithCString:number[i].getName().c_str() encoding:NSUTF8StringEncoding];
+    NSString *name = [Utils getStringFromCString:number[i].getName().c_str()];
     NSString *sectiontitle = GetSectionTitle(name);
     Boolean found = false;
     for(int iSection = 0; iSection < [_sectionstitle count]; iSection++) { // check if the section exist
@@ -244,7 +247,7 @@ NSString *GetSectionTitle(NSString *name)
   // check for new/updated parameters (string)
   for(int i = 0; i < string.size(); i++) {
     if(!string[i].getVisible() || string[i].getKind() == "file") continue; // do not add invisible parameter
-    NSString *name = [NSString stringWithCString:string[i].getName().c_str() encoding:NSUTF8StringEncoding];
+    NSString *name = [Utils getStringFromCString:string[i].getName().c_str()];
     NSString *sectiontitle = GetSectionTitle(name);
     Boolean found = false;
     for(int iSection = 0; iSection < [_sectionstitle count]; iSection++) { // check if the section exist
@@ -275,9 +278,9 @@ NSString *GetSectionTitle(NSString *name)
     for(int iparameter = 0; iparameter < [section count]; iparameter++) {
       Parameter * p = [section objectAtIndex: iparameter];
       std::vector<onelab::number> number;
-      onelab::server::instance()->get(number,[[p getName] UTF8String]);
+      onelab::server::instance()->get(number, [[p getName] UTF8String]);
       std::vector<onelab::string> string;
-      onelab::server::instance()->get(string,[[p getName] UTF8String]);
+      onelab::server::instance()->get(string, [[p getName] UTF8String]);
       if((number.size() < 1 && string.size() < 1) ||
          (number.size() > 0 && !number[0].getVisible()) ||
          (string.size() > 0 && !string[0].getVisible())){

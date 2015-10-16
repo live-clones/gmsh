@@ -59,4 +59,9 @@
     return nil;
 }
 
++ (NSString *) getStringFromCString:(const char*)s
+{
+  return [NSString stringWithCString:s encoding:NSUTF8StringEncoding];
+}
+
 @end

@@ -317,7 +317,7 @@
 
 -(void)addError:(std::string)msg
 {
-  [_errors addObject:[NSString stringWithCString:msg.c_str() encoding:NSUTF8StringEncoding]];
+  [_errors addObject:[Utils getStringFromCString:msg.c_str()]];
 }
 
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
@@ -350,7 +350,8 @@ void messageFromCpp (void *self, std::string level, std::string msg)
     [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
   }
   else if(level == "Progress"){
-    [(__bridge id)self performSelectorOnMainThread:@selector(setProgress:) withObject:[NSString stringWithCString:msg.c_str() encoding:NSUTF8StringEncoding] waitUntilDone:YES];
+    [(__bridge id) self performSelectorOnMainThread:@selector(setProgress:)
+                                         withObject:[Utils getStringFromCString:msg.c_str()] waitUntilDone:YES];
   }
   else if(level == "Error")
     [(__bridge id)self addError:msg];
@@ -375,7 +376,7 @@ void getBitmap(void *self, const char *text, int textsize, unsigned char **map, 
 {
   UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 1024, 7*textsize/6)];
   lbl.font = [UIFont systemFontOfSize:textsize];
-  [lbl setText:[NSString stringWithCString:text  encoding:NSUTF8StringEncoding]];
+  [lbl setText:[Utils getStringFromCString:text]];
   [lbl setBackgroundColor:[UIColor clearColor]];
   CGSize lblSize = [[lbl text] sizeWithAttributes:@{NSFontAttributeName:[lbl font]}];
   *realWidth = lblSize.width;

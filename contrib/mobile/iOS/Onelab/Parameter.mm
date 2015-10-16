@@ -59,11 +59,11 @@
   self = [super init];
   if(self){
     label.alpha = (string.getReadOnly())? 0.439216f : 1.0f;
-    [label setText:[NSString stringWithCString:string.getShortName().c_str() encoding:NSUTF8StringEncoding]];
-    name = [NSString stringWithCString:string.getName().c_str() encoding:NSUTF8StringEncoding];
+    [label setText:[Utils getStringFromCString:string.getShortName().c_str()]];
+    name = [Utils getStringFromCString:string.getName().c_str()];
     button = [UIButton buttonWithType:UIButtonTypeSystem];
     [button addTarget:self action:@selector(selectValue) forControlEvents:UIControlEventTouchDown];
-    [button setTitle:[NSString stringWithFormat:@"%s", string.getValue().c_str()] forState:UIControlStateNormal];
+    [button setTitle:[Utils getStringFromCString:string.getValue().c_str()] forState:UIControlStateNormal];
   }
   return self;
 }
@@ -71,12 +71,15 @@
 -(void)selectValue
 {
   std::vector<onelab::string> string;
-  onelab::server::instance()->get(string,[name UTF8String]);
+  onelab::server::instance()->get(string, [name UTF8String]);
   if(string.size() < 1) return;
-  UIActionSheet *popupSelectValue = [[UIActionSheet alloc] initWithTitle:[NSString stringWithFormat:@"%s", string[0].getLabel().c_str()] delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil otherButtonTitles:nil];
+  UIActionSheet *popupSelectValue =
+    [[UIActionSheet alloc] initWithTitle:[Utils getStringFromCString:string[0].getLabel().c_str()]
+                                delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil
+                       otherButtonTitles:nil];
   std::vector<std::string> choices = string[0].getChoices();
   for(int i=0;i<choices.size();i++)
-    [popupSelectValue addButtonWithTitle:[NSString stringWithFormat:@"%s", choices[i].c_str()]];
+    [popupSelectValue addButtonWithTitle:[Utils getStringFromCString:choices[i].c_str()]];
   [popupSelectValue addButtonWithTitle:@"Cancel"];
   [popupSelectValue setCancelButtonIndex:popupSelectValue.numberOfButtons - 1];
   [popupSelectValue showInView:button];
@@ -85,7 +88,7 @@
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
   std::vector<onelab::string> string;
-  onelab::server::instance()->get(string,[name UTF8String]);
+  onelab::server::instance()->get(string, [name UTF8String]);
   if(string.size() < 1) return;
   if(buttonIndex > string[0].getChoices().size() - 1) return; // cancel
   std::string selected = string[0].getChoices()[buttonIndex];
@@ -97,8 +100,8 @@
 -(void)refresh
 {
   std::vector<onelab::string> string;
-  onelab::server::instance()->get(string,[name UTF8String]);
-  [button setTitle:[NSString stringWithFormat:@"%s", string[0].getValue().c_str()] forState:UIControlStateNormal];
+  onelab::server::instance()->get(string, [name UTF8String]);
+  [button setTitle:[Utils getStringFromCString:string[0].getValue().c_str()] forState:UIControlStateNormal];
 }
 
 -(void)setFrame:(CGRect)frame
@@ -114,7 +117,7 @@
 -(bool)isReadOnly
 {
   std::vector<onelab::string> string;
-  onelab::server::instance()->get(string,[name UTF8String]);
+  onelab::server::instance()->get(string, [name UTF8String]);
   if(string.size() < 1) return YES;
   return string[0].getReadOnly();
 }
@@ -131,11 +134,12 @@
   self = [super init];
   if(self) {
     label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-    [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:NSUTF8StringEncoding]];
-    name = [NSString stringWithCString:number.getName().c_str() encoding:NSUTF8StringEncoding];
+    [label setText:[Utils getStringFromCString:number.getShortName().c_str()]];
+    name = [Utils getStringFromCString:number.getName().c_str()];
     button = [UIButton buttonWithType:UIButtonTypeSystem];
     [button addTarget:self action:@selector(selectValue) forControlEvents:UIControlEventTouchDown];
-    [button setTitle:[NSString stringWithFormat:@"%s", number.getValueLabel(number.getValue()).c_str()] forState:UIControlStateNormal];
+    [button setTitle:[Utils getStringFromCString:number.getValueLabel(number.getValue()).c_str()]
+            forState:UIControlStateNormal];
   }
   return self;
 }
@@ -143,18 +147,21 @@
 -(void)selectValue
 {
   std::vector<onelab::number> numbers;
-  onelab::server::instance()->get(numbers,[name UTF8String]);
+  onelab::server::instance()->get(numbers, [name UTF8String]);
   if(numbers.size() < 1) return;
   UIAlertController *alertController;
   UIAlertAction *destroyAction;
-  alertController = [UIAlertController alertControllerWithTitle:nil message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+  alertController = [UIAlertController alertControllerWithTitle:nil message:nil
+                                                 preferredStyle:UIAlertControllerStyleActionSheet];
   std::vector<double> choices = numbers[0].getChoices();
   for(unsigned int i = 0; i < choices.size(); i++)
-    [alertController addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:@"%s", numbers[0].getValueLabel(choices[i]).c_str()]
-                                                        style:UIAlertActionStyleDefault
-                                                      handler:^(UIAlertAction *action) {
+    [alertController
+      addAction:[UIAlertAction
+                  actionWithTitle:[Utils getStringFromCString:numbers[0].getValueLabel(choices[i]).c_str()]
+                            style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
           [self updateNumber:numbers[0] withValue:choices[i]];
-          [button setTitle:[NSString stringWithFormat:@"%s", numbers[0].getValueLabel(i).c_str()] forState:UIControlStateNormal];
+          [button setTitle:[Utils getStringFromCString:numbers[0].getValueLabel(i).c_str()]
+                  forState:UIControlStateNormal];
 	}]];
 
   destroyAction = [UIAlertAction actionWithTitle:@"Cancel"
@@ -170,7 +177,8 @@
   popPresenter.sourceView = button;
   popPresenter.sourceRect = button.bounds;
   // FIXME: is traverseResponderChainForUIViewController a good idea?
-  [[Utils traverseResponderChainForUIViewController:button] presentViewController:alertController animated:YES completion:nil];
+  [[Utils traverseResponderChainForUIViewController:button] presentViewController:alertController
+                                                                         animated:YES completion:nil];
 }
 
 -(void) updateNumber: (onelab::number)n withValue:(double)v
@@ -184,8 +192,9 @@
 -(void)refresh
 {
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
-  [button setTitle:[NSString stringWithFormat:@"%s", number[0].getValueLabel(number[0].getValue()).c_str()] forState:UIControlStateNormal];
+  onelab::server::instance()->get(number, [name UTF8String]);
+  [button setTitle:[Utils getStringFromCString:number[0].getValueLabel(number[0].getValue()).c_str()]
+          forState:UIControlStateNormal];
 }
 
 -(void)setFrame:(CGRect)frame
@@ -201,7 +210,7 @@
 -(bool)isReadOnly
 {
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
+  onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() < 1) return YES;
   return number[0].getReadOnly();
 }
@@ -218,8 +227,8 @@
   self = [super init];
   if(self) {
     label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-    [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:NSUTF8StringEncoding]];
-    name = [NSString stringWithCString:number.getName().c_str() encoding:NSUTF8StringEncoding];
+    [label setText:[Utils getStringFromCString:number.getShortName().c_str()]];
+    name = [Utils getStringFromCString:number.getName().c_str()];
     checkbox = [[UISwitch alloc] init];
     [checkbox setOn:(number.getValue() == 1)];
     [checkbox addTarget:self action:@selector(valueChange:) forControlEvents:UIControlEventValueChanged];
@@ -230,14 +239,14 @@
 -(void)refresh
 {
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
+  onelab::server::instance()->get(number, [name UTF8String]);
   [checkbox setSelected:(number[0].getValue() == 1)];
 }
 
 -(void) valueChange:(UISwitch *)sender
 {
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
+  onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() < 1) return;
   number[0].setValue(([sender isOn])? 1 : 0);
   onelab::server::instance()->set(number[0]);
@@ -257,7 +266,7 @@
 -(bool)isReadOnly
 {
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
+  onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() < 1) return YES;
   return number[0].getReadOnly();
 }
@@ -273,7 +282,7 @@
 {
   self = [super init];
   if(self) {
-    name = [NSString stringWithCString:number.getName().c_str() encoding:NSUTF8StringEncoding];
+    name = [Utils getStringFromCString:number.getName().c_str()];
     label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
     stepper = [[UIStepper alloc] init];
     [stepper setValue:number.getValue()];
@@ -281,7 +290,8 @@
     [stepper setMaximumValue:number.getMax()];
     [stepper setMinimumValue:number.getMin()];
     [stepper addTarget:self action:@selector(stepperValueChanged:) forControlEvents:UIControlEventValueChanged];
-    [label setText:[NSString stringWithFormat:@"%s %d" ,number.getShortName().c_str(), (int)number.getValue()]];
+    [label setText:[NSString stringWithFormat:@"%@ %d", [Utils getStringFromCString:number.getShortName().c_str()],
+                             (int)number.getValue()]];
   }
   return self;
 }
@@ -289,21 +299,23 @@
 -(void)stepperValueChanged:(UIStepper *)sender
 {
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
+  onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() < 1) return;
   number[0].setValue(sender.value);
   onelab::server::instance()->set(number[0]);
-  [label setText:[NSString stringWithFormat:@"%s %d" ,number[0].getShortName().c_str(), (int)number[0].getValue()]];
+  [label setText:[NSString stringWithFormat:@"%@ %d", [Utils getStringFromCString:number[0].getShortName().c_str()],
+                           (int)number[0].getValue()]];
   [super editValue];
 }
 
 -(void)refresh
 {
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
+  onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() < 1) return;
   [stepper setValue:number[0].getValue()];
-  [label setText:[NSString stringWithFormat:@"%s %d" ,number[0].getShortName().c_str(), (int)number[0].getValue()]];
+  [label setText:[NSString stringWithFormat:@"%@ %d", [Utils getStringFromCString:number[0].getShortName().c_str()],
+                           (int)number[0].getValue()]];
 }
 
 -(void)setFrame:(CGRect)frame
@@ -328,7 +340,7 @@
   self = [super init];
   if(self) {
     label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-    name = [NSString stringWithCString:number.getName().c_str() encoding:NSUTF8StringEncoding];
+    name = [Utils getStringFromCString:number.getName().c_str()];
     slider = [[UISlider alloc] init];
     [slider setMaximumValue:number.getMax()];
     [slider setMinimumValue:number.getMin()];
@@ -336,7 +348,8 @@
     //TODO add step ?
     [slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventTouchUpOutside];
     [slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventTouchUpInside];
-    [label setText:[NSString stringWithFormat:@"%@ %g", [NSString stringWithCString:number.getShortName().c_str() encoding:NSUTF8StringEncoding], number.getValue()]];
+    [label setText:[NSString stringWithFormat:@"%@ %g", [Utils getStringFromCString:number.getShortName().c_str()],
+                             number.getValue()]];
   }
   return self;
 }
@@ -344,22 +357,24 @@
 -(void)refresh
 {
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
+  onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() < 1) return;
   [slider setMaximumValue:number[0].getMax()];
   [slider setMinimumValue:number[0].getMin()];
   [slider setValue:number[0].getValue()];
-  [label setText:[NSString stringWithFormat:@"%@ %g", [NSString stringWithCString:number[0].getShortName().c_str() encoding:NSUTF8StringEncoding], number[0].getValue()]];
+  [label setText:[NSString stringWithFormat:@"%@ %g", [Utils getStringFromCString:number[0].getShortName().c_str()],
+                           number[0].getValue()]];
 }
 
 -(void)sliderValueChanged:(UISlider *)sender
 {
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
+  onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() < 1) return;
   number[0].setValue(sender.value);
   onelab::server::instance()->set(number[0]);
-  [label setText:[NSString stringWithFormat:@"%s %g" ,number[0].getShortName().c_str(), number[0].getValue()]];
+  [label setText:[NSString stringWithFormat:@"%@ %g", [Utils getStringFromCString:number[0].getShortName().c_str()],
+                           number[0].getValue()]];
   [super editValue];
 }
 
@@ -376,7 +391,7 @@
 -(bool)isReadOnly
 {
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
+  onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() < 1) return YES;
   return number[0].getReadOnly();
 }
@@ -393,8 +408,8 @@
   self = [super init];
   if(self) {
     label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
-    [label setText:[NSString stringWithCString:number.getShortName().c_str() encoding:NSUTF8StringEncoding]];
-    name = [NSString stringWithCString:number.getName().c_str() encoding:NSUTF8StringEncoding];
+    [label setText:[Utils getStringFromCString:number.getShortName().c_str()]];
+    name = [Utils getStringFromCString:number.getName().c_str()];
     textbox = [[UITextField alloc] init];
     [textbox setBorderStyle:UITextBorderStyleRoundedRect];
     [textbox setText:[NSString stringWithFormat:@"%g", number.getValue()]];
@@ -413,7 +428,7 @@
 -(void)refresh
 {
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
+  onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() < 1) return;
   [textbox setText:[NSString stringWithFormat:@"%g", number[0].getValue()]];
   [textbox reloadInputViews];
@@ -422,7 +437,7 @@
 -(BOOL)textFieldShouldEndEditing:(UITextField *)textField
 {
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
+  onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() < 1) return YES;
   number[0].setValue([textField.text doubleValue]);
   onelab::server::instance()->set(number[0]);
@@ -454,7 +469,7 @@
 -(bool)isReadOnly
 {
   std::vector<onelab::number> number;
-  onelab::server::instance()->get(number,[name UTF8String]);
+  onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() < 1) return YES;
   return number[0].getReadOnly();
 }

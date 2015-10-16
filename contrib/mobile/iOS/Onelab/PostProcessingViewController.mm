@@ -1,4 +1,5 @@
 #import "PostProcessingViewController.h"
+#import "Utils.h"
 
 #include <gmsh/Context.h>
 
@@ -27,15 +28,18 @@
   [super viewDidLoad];
   // Do any additional setup after loading the view.
   if(_pview) {
-    [_Name setText:[NSString stringWithCString:_pview->getData()->getName().c_str() encoding:NSUTF8StringEncoding]];
+    [_Name setText:[Utils getStringFromCString:_pview->getData()->getName().c_str()]];
     [_IntervalsType setDataSource:self];
     [_IntervalsType setDelegate:self];
     [_Intervals setText:[NSString stringWithFormat:@"%d",_pview->getOptions()->nbIso]];
     UIToolbar* numberToolbar = [[UIToolbar alloc]initWithFrame:CGRectMake(0, 0, 320, 50)];
-    numberToolbar.items = [NSArray arrayWithObjects:
-                                     [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil],
-                                   [[UIBarButtonItem alloc]initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(doneWithNumberPad)],
-                                   nil];
+    numberToolbar.items =
+      [NSArray arrayWithObjects:
+                 [[UIBarButtonItem alloc]initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
+                                                              target:nil action:nil],
+               [[UIBarButtonItem alloc]initWithTitle:@"Done" style:UIBarButtonItemStyleDone
+                                              target:self action:@selector(doneWithNumberPad)],
+               nil];
     [numberToolbar sizeToFit];
     _Intervals.delegate = self;
     _Intervals.inputAccessoryView = numberToolbar;
@@ -132,4 +136,5 @@
   [self setIntervalsStepper:nil];
   [super viewDidUnload];
 }
+
 @end
