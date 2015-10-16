@@ -366,7 +366,7 @@ void skipline()
   }
 }
 
-bool is_alpha(const int c)
+static bool is_alpha(const int c)
 {
   return (c>='a' && c<='z') || (c>='A' && c<='Z') || c=='_';
 }
@@ -429,7 +429,12 @@ void skip_until(const char *skip, const char *until)
     }
     else if(skip && !strncmp(chars,skip,l_skip) && !is_alpha(c_next_skip)){
       nb_skip++;
-      // Attention: unput(.) should be applied a number of times equal to l-l_skip (always >0 for skip="For" and until="EndFor", or skip="If" and until="EndIf"); in particular, because "If" is followed by a minimum of 3 chars (e.g., '(1)'), with a total lenght thus exactly equal to the one of "EndIf", one avoid an error when looking then for "EndIf". (Patrick)
+      // Attention: unput(.) should be applied a number of times equal to
+      // l-l_skip (always >0 for skip="For" and until="EndFor", or skip="If" and
+      // until="EndIf"); in particular, because "If" is followed by a minimum of
+      // 3 chars (e.g., '(1)'), with a total lenght thus exactly equal to the
+      // one of "EndIf", one avoid an error when looking then for
+      // "EndIf". (Patrick)
     }
     else{
       for(i=1;i<l-1;i++){

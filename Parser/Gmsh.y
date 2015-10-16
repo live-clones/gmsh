@@ -82,7 +82,6 @@ static std::map<std::string, std::vector<std::string> > charOptions;
 
 void yyerror(const char *s);
 void yymsg(int level, const char *fmt, ...);
-bool is_alpha(const int c);
 void skip_until(const char *skip, const char *until);
 void skip_until_test(const char *skip, const char *until,
                      const char *until2, int l_until2_sub, int *type_until2);
