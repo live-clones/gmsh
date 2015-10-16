@@ -1806,7 +1806,6 @@ void VTKData::writeVTKElmData()
   else
     Msg::Error("Unknown format");
 
-  clearLocalData();
 }
 
 void VTKData::initVTKFile()
@@ -2575,6 +2574,8 @@ void adaptiveElements<T>::addInViewForVTK(int step,
           globalVTKData::vtkGlobalValues.push_back(myVTKData.vtkLocalValues[i]);
         }
       }
+      
+      myVTKData.clearLocalData();
 
     } // loop over mesh element
   }
