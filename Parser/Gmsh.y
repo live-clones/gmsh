@@ -3249,7 +3249,7 @@ Loop :
         // Go after the next ElseIf or Else or EndIf
         int type_until2 = 0;
         skip_until_test("If", "EndIf", "ElseIf", 4, &type_until2);
-        if(!type_until2) ImbricatedTest--;
+        if(!type_until2) ImbricatedTest--; // EndIf reached
       }
     }
   | tElseIf '(' FExpr ')'
