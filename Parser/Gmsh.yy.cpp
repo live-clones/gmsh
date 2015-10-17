@@ -28,7 +28,7 @@
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 5
-#define YY_FLEX_SUBMINOR_VERSION 37
+#define YY_FLEX_SUBMINOR_VERSION 35
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -66,6 +66,7 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
+typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -73,6 +74,7 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
+#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -102,8 +104,6 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
-
-#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -375,7 +375,7 @@ static void yy_fatal_error (yyconst char msg[]  );
  */
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
-	gmsh_yyleng = (size_t) (yy_cp - yy_bp); \
+	gmsh_yyleng = (yy_size_t) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
@@ -1245,7 +1245,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO do { if (fwrite( gmsh_yytext, gmsh_yyleng, 1, gmsh_yyout )) {} } while (0)
+#define ECHO fwrite( gmsh_yytext, gmsh_yyleng, 1, gmsh_yyout )
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -1256,7 +1256,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		size_t n; \
+		yy_size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( gmsh_yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -2654,7 +2654,7 @@ static int yy_get_next_buffer (void)
 			{ /* Not enough room in the buffer - grow it. */
 
 			/* just a shorter name for the current buffer */
-			YY_BUFFER_STATE b = YY_CURRENT_BUFFER_LVALUE;
+			YY_BUFFER_STATE b = YY_CURRENT_BUFFER;
 
 			int yy_c_buf_p_offset =
 				(int) ((yy_c_buf_p) - b->yy_ch_buf);
@@ -2787,7 +2787,7 @@ static int yy_get_next_buffer (void)
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 	yy_is_jam = (yy_current_state == 1058);
 
-		return yy_is_jam ? 0 : yy_current_state;
+	return yy_is_jam ? 0 : yy_current_state;
 }
 
     static void yyunput (int c, register char * yy_bp )
@@ -2875,7 +2875,7 @@ static int yy_get_next_buffer (void)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( gmsh_yywrap( ) )
-						return EOF;
+						return 0;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
 						YY_NEW_FILE;
@@ -3011,6 +3011,10 @@ static void gmsh_yy_load_buffer_state  (void)
 	gmsh_yyfree((void *) b  );
 }
 
+#ifndef __cplusplus
+extern int isatty (int );
+#endif /* __cplusplus */
+    
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
  * such as during a gmsh_yyrestart() or at EOF.
@@ -3215,8 +3219,8 @@ YY_BUFFER_STATE gmsh_yy_scan_string (yyconst char * yystr )
 
 /** Setup the input buffer state to scan the given bytes. The next call to gmsh_yylex() will
  * scan from a @e copy of @a bytes.
- * @param yybytes the byte buffer to scan
- * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
+ * @param bytes the byte buffer to scan
+ * @param len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */
@@ -3224,8 +3228,7 @@ YY_BUFFER_STATE gmsh_yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t n;
-	int i;
+	yy_size_t n, i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
@@ -3526,15 +3529,15 @@ static bool is_alpha(const int c)
 void skip_until(const char *skip, const char *until)
 {
   int i, nb_skip = 0;
-  int l, l_skip, l_until;
+  int l_skip, l_until, l_max, l;
   char chars[256];
   int c_next, c_next_skip, c_next_until, c_previous = 0;
 
   l_skip = (skip)? strlen(skip) : 0;
   l_until = strlen(until);
 
-  l = std::max(l_skip,l_until);
-  if(l >= (int)sizeof(chars)){
+  l_max = std::max(l_skip,l_until);
+  if(l_max >= (int)sizeof(chars)){
     Msg::Error("Search pattern too long in skip_until");
     return;
   }
@@ -3558,6 +3561,8 @@ void skip_until(const char *skip, const char *until)
       }
       c_previous = chars[0];
     }
+
+    l = l_max;
 
     for(i=1; i<l; i++){
       chars[i] = yyinput();
@@ -3601,17 +3606,17 @@ void skip_until_test(const char *skip, const char *until,
                      const char *until2, int l_until2_sub, int *type_until2)
 {
   int i, nb_skip = 0;
-  int l, l_skip, l_until, l_until2;
+  int l_skip, l_until, l_until2, l_max, l;
   char chars[256];
-  int c_next, c_next_skip, c_next_until, c_next_until2, c_previous = 0;
+  int c_next, c_next_skip, c_next_until, c_next_until2, c_previous = 0, flag_EOL_EOF = 0;
 
   l_skip = (skip)? strlen(skip) : 0;
   l_until = strlen(until);
   l_until2 = (until2)? strlen(until2) : 0;
 
-  l = std::max(l_skip,l_until);
-  l = std::max(l,l_until2);
-  if(l >= (int)sizeof(chars)){
+  l_max = std::max(l_skip,l_until);
+  l_max = std::max(l_max,l_until2);
+  if(l_max >= (int)sizeof(chars)){
     Msg::Error("Search pattern too long in skip_until_test");
     return;
   }
@@ -3638,19 +3643,31 @@ void skip_until_test(const char *skip, const char *until,
       c_previous = chars[0];
     }
 
+    l = l_max;
+    flag_EOL_EOF = 0;
+
     for(i=1; i<l; i++){
       chars[i] = yyinput();
+      if(chars[i] == '\n'){
+        unput(chars[i]); chars[i] = 0; l = i; flag_EOL_EOF = 1;
+        break;
+      }
       if(gmsheof(gmsh_yyin)){
-	l = i;
+	l = i; flag_EOL_EOF = 1;
 	break;
       }
     }
 
-    c_next = yyinput(); unput(c_next);
-    c_next_skip = (l_skip<l)? chars[l_skip] : c_next;
-    c_next_until = (l_until<l)? chars[l_until] : c_next;
-    if (!nb_skip)
-      c_next_until2 = (l_until2<l)? chars[l_until2] : c_next;
+    if(!flag_EOL_EOF){
+      c_next = yyinput(); unput(c_next);
+      c_next_skip = (l_skip<l)? chars[l_skip] : c_next;
+      c_next_until = (l_until<l)? chars[l_until] : c_next;
+      if (!nb_skip)
+        c_next_until2 = (l_until2<l)? chars[l_until2] : c_next;
+    }
+    else{
+      c_next = 0; c_next_skip = 0; c_next_until = 0; c_next_until2 = 0;
+    }
 
     if(!nb_skip && !strncmp(chars,until2,l_until2) && !is_alpha(c_next_until2)){
       *type_until2 = 1; // Found word is full until2 (e.g., "ElseIf")
@@ -3667,6 +3684,9 @@ void skip_until_test(const char *skip, const char *until,
       return;
     }
     else if(!strncmp(chars,until,l_until) && !is_alpha(c_next_until)){
+      for(int i = 1; i <= l-l_until; i++){
+        unput(chars[l-i]);
+      }
       if(!nb_skip){
 	return;
       }

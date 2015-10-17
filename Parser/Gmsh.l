@@ -374,15 +374,15 @@ static bool is_alpha(const int c)
 void skip_until(const char *skip, const char *until)
 {
   int i, nb_skip = 0;
-  int l, l_skip, l_until;
+  int l_skip, l_until, l_max, l;
   char chars[256];
   int c_next, c_next_skip, c_next_until, c_previous = 0;
 
   l_skip = (skip)? strlen(skip) : 0;
   l_until = strlen(until);
 
-  l = std::max(l_skip,l_until);
-  if(l >= (int)sizeof(chars)){
+  l_max = std::max(l_skip,l_until);
+  if(l_max >= (int)sizeof(chars)){
     Msg::Error("Search pattern too long in skip_until");
     return;
   }
@@ -406,6 +406,8 @@ void skip_until(const char *skip, const char *until)
       }
       c_previous = chars[0];
     }
+
+    l = l_max;
 
     for(i=1; i<l; i++){
       chars[i] = yyinput();
@@ -449,17 +451,17 @@ void skip_until_test(const char *skip, const char *until,
                      const char *until2, int l_until2_sub, int *type_until2)
 {
   int i, nb_skip = 0;
-  int l, l_skip, l_until, l_until2;
+  int l_skip, l_until, l_until2, l_max, l;
   char chars[256];
-  int c_next, c_next_skip, c_next_until, c_next_until2, c_previous = 0;
+  int c_next, c_next_skip, c_next_until, c_next_until2, c_previous = 0, flag_EOL_EOF = 0;
 
   l_skip = (skip)? strlen(skip) : 0;
   l_until = strlen(until);
   l_until2 = (until2)? strlen(until2) : 0;
 
-  l = std::max(l_skip,l_until);
-  l = std::max(l,l_until2);
-  if(l >= (int)sizeof(chars)){
+  l_max = std::max(l_skip,l_until);
+  l_max = std::max(l_max,l_until2);
+  if(l_max >= (int)sizeof(chars)){
     Msg::Error("Search pattern too long in skip_until_test");
     return;
   }
@@ -486,19 +488,31 @@ void skip_until_test(const char *skip, const char *until,
       c_previous = chars[0];
     }
 
+    l = l_max;
+    flag_EOL_EOF = 0;
+
     for(i=1; i<l; i++){
       chars[i] = yyinput();
+      if(chars[i] == '\n'){
+        unput(chars[i]); chars[i] = 0; l = i; flag_EOL_EOF = 1;
+        break;
+      }
       if(gmsheof(yyin)){
-	l = i;
+	l = i; flag_EOL_EOF = 1;
 	break;
       }
     }
 
-    c_next = yyinput(); unput(c_next);
-    c_next_skip = (l_skip<l)? chars[l_skip] : c_next;
-    c_next_until = (l_until<l)? chars[l_until] : c_next;
-    if (!nb_skip)
-      c_next_until2 = (l_until2<l)? chars[l_until2] : c_next;
+    if(!flag_EOL_EOF){
+      c_next = yyinput(); unput(c_next);
+      c_next_skip = (l_skip<l)? chars[l_skip] : c_next;
+      c_next_until = (l_until<l)? chars[l_until] : c_next;
+      if (!nb_skip)
+        c_next_until2 = (l_until2<l)? chars[l_until2] : c_next;
+    }
+    else{
+      c_next = 0; c_next_skip = 0; c_next_until = 0; c_next_until2 = 0;
+    }
 
     if(!nb_skip && !strncmp(chars,until2,l_until2) && !is_alpha(c_next_until2)){
       *type_until2 = 1; // Found word is full until2 (e.g., "ElseIf")
@@ -515,6 +529,9 @@ void skip_until_test(const char *skip, const char *until,
       return;
     }
     else if(!strncmp(chars,until,l_until) && !is_alpha(c_next_until)){
+      for(int i = 1; i <= l-l_until; i++){
+        unput(chars[l-i]);
+      }
       if(!nb_skip){
 	return;
       }
