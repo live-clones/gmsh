@@ -18,6 +18,103 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "StringUtils.h"
+#include "discreteVertex.h"
+#include "discreteEdge.h"
+#include "discreteFace.h"
+#include "discreteRegion.h"
+
+// writes the topology associated to the mesh
+void writeMSHBrep(FILE *fp, GModel *gm) {
+  fprintf(fp, "$Brep\n");
+  fprintf (fp,"%d %d %d %d\n",gm->getNumVertices(),gm->getNumEdges(),gm->getNumFaces(),
+	   gm->getNumRegions());
+  for (GModel::viter it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
+    fprintf (fp,"%d\n",(*it)->tag());
+  }
+  for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
+    fprintf (fp,"%d %d %d\n",(*it)->tag(),(*it)->getBeginVertex()->tag(),(*it)->getEndVertex()->tag());
+  }
+  for (GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+    std::list<GEdge*> edges = (*it)->edges();
+    fprintf (fp,"%d %lu ",(*it)->tag(),edges.size());
+    for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
+      fprintf (fp,"%d ",(*ite)->tag());      
+    }
+    fprintf (fp,"\n");      
+  }
+  for (GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
+    std::list<GFace*> faces = (*it)->faces();
+    fprintf (fp,"%d %lu ",(*it)->tag(),faces.size());
+    for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++){
+      fprintf (fp,"%d ",(*itf)->tag());      
+    }
+    fprintf (fp,"\n");      
+  }
+  fprintf(fp, "$EndBrep\n");
+}
+
+// writes the topology associated to the mesh
+void readMSHBrep(FILE *fp, GModel *gm) {
+  int nv, ne, nf, nr;
+  int tag;
+  if(fscanf(fp, "%d %d %d %d", &nv, &ne, &nf, &nr) != 4) return;
+  //  printf("%d\n",nv);
+  for (int i=0;i<nv;i++){
+    fscanf (fp,"%d",&tag);
+    GVertex *gv = gm->getVertexByTag(tag);
+    if (!gv)gm->add(new discreteVertex (gm, tag));    
+  }
+  //  printf("%d\n",ne);
+  for (int i=0;i<ne;i++){
+    fscanf (fp,"%d",&tag);
+    GEdge *ge = gm->getEdgeByTag(tag);
+    if (!ge){
+      int tagv;
+      fscanf (fp,"%d",&tagv);
+      GVertex *v1 = gm->getVertexByTag(tagv);
+      if (!v1) Msg::Error("Unknown GVertex %d",tagv);
+      fscanf (fp,"%d",&tagv);
+      GVertex *v2 = gm->getVertexByTag(tagv);
+      if (!v2) Msg::Error("Unknown GVertex %d",tagv);
+      gm->add(new discreteEdge (gm, tag,v1,v2));    
+    }
+  }
+  //  printf("%d\n",nf);
+  for (int i=0;i<nf;i++){
+    int n;
+    fscanf (fp,"%d %d",&tag,&n);
+    //    printf("%d %d\n",tag,n);
+    GFace *gf = gm->getFaceByTag(tag);
+    if (!gf){
+      discreteFace * df = new discreteFace (gm, tag);
+      std::vector<int> edges;
+      for (int j=0;j<n;j++){
+	int tage;
+	fscanf (fp,"%d",&tage);
+	edges.push_back(tage);
+      }
+      df->setBoundEdges (gm, edges);
+      gm->add(df);
+    }
+  }
+  //  printf("%d\n",nr);
+  for (int i=0;i<nr;i++){
+    int n;
+    fscanf (fp,"%d %d",&tag,&n);
+    GRegion *gr = gm->getRegionByTag(tag);
+    if (!gr){
+      discreteRegion *dr = new discreteRegion (gm, tag);
+      std::set<int> faces;
+      for (int j=0;j<n;j++){
+	int tagf;
+	fscanf (fp,"%d",&tagf);
+	faces.insert(tagf);
+      }
+      dr->setBoundFaces (faces);
+      gm->add(dr);
+    }
+  }
+}
 
 void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities)
 {
@@ -392,6 +489,9 @@ int GModel::readMSH(const std::string &name)
     else if(!strncmp(&str[1], "Periodical", 10)) {
       readMSHPeriodicNodes (fp, this);
     }
+    else if(!strncmp(&str[1], "Brep", 4)) {
+      readMSHBrep (fp, this);
+    }
 
     do {
       if(!fgets(str, sizeof(str), fp) || feof(fp))
@@ -536,6 +636,9 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     }
     fprintf(fp, "$EndPhysicalNames\n");
   }
+
+  // write the topology of the model
+  writeMSHBrep (fp,this);
 
   fprintf(fp, "$Entities\n");
   std::vector<GEntity*> entitiesWithPhysical;
