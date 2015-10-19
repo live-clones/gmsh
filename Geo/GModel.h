@@ -53,6 +53,9 @@ class GModel
                  double scalingFactor=1.0, int elementStartNum=0,
                  int saveSinglePartition=0,
                  bool multipleView=false);
+  int _writePartitionedMSH2(const std::string &baseName, bool binary=false,
+                            bool saveAll=false, bool saveParametric=false,
+                            double scalingFactor=1.0);
 
   // the maximum vertex and element id number in the mesh
   int _maxVertexNum, _maxElementNum;
@@ -617,9 +620,9 @@ class GModel
                bool saveAll=false, bool saveParametric=false,
                double scalingFactor=1.0, int elementStartNum=0,
                int saveSinglePartition=0, bool multipleView=false);
-  int writePartitionedMSH(const std::string &baseName, bool binary=false,
-                          bool saveAll=false, bool saveParametric=false,
-                          double scalingFactor=1.0);
+  int writePartitionedMSH(const std::string &baseName, double version=2.2,
+                          bool binary=false, bool saveAll=false,
+                          bool saveParametric=false, double scalingFactor=1.0);
 
   // Iridium file format
   int writeIR3(const std::string &name, int elementTagType,

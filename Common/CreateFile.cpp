@@ -257,8 +257,9 @@ void CreateOutputFile(const std::string &fileName, int format,
     if(GModel::current()->getMeshPartitions().size() &&
        CTX::instance()->mesh.mshFilePartitioned == 1)
       GModel::current()->writePartitionedMSH
-        (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
-         CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
+        (name, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary,
+         CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric,
+         CTX::instance()->mesh.scalingFactor);
     else if(GModel::current()->getMeshPartitions().size() &&
             CTX::instance()->mesh.mshFilePartitioned == 2)
       GModel::current()->writeMSH

@@ -3,6 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include <sstream>
+#include <iomanip>
 #include "GModel.h"
 #include "OS.h"
 #include "GmshMessage.h"
@@ -605,5 +607,25 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
 
   fclose(fp);
 
+  return 1;
+}
+
+int GModel::writePartitionedMSH(const std::string &baseName, double version,
+                                bool binary, bool saveAll, bool saveParametric,
+                                double scalingFactor)
+{
+  if(version < 3)
+    return _writePartitionedMSH2(baseName, binary, saveAll, saveParametric,
+                                 scalingFactor);
+
+  for(std::set<int>::iterator it = meshPartitions.begin();
+      it != meshPartitions.end(); it++){
+    int partition = *it;
+    std::ostringstream sstream;
+    sstream << baseName << "_" << std::setw(6) << std::setfill('0') << partition;
+    Msg::Info("Writing partition %d in file '%s'", partition, sstream.str().c_str());
+    writeMSH(sstream.str(), version, binary, saveAll, saveParametric,
+             scalingFactor, 0, partition);
+  }
   return 1;
 }

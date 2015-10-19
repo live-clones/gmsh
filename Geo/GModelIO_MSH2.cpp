@@ -1066,9 +1066,9 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
   return 1;
 }
 
-int GModel::writePartitionedMSH(const std::string &baseName, bool binary,
-                                bool saveAll, bool saveParametric,
-                                double scalingFactor)
+int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
+                                  bool saveAll, bool saveParametric,
+                                  double scalingFactor)
 {
   int numElements;
   int startNum = 0;
