@@ -23,129 +23,87 @@
 #include "discreteFace.h"
 #include "discreteRegion.h"
 
-// writes the topology associated to the mesh
-void writeMSHBrep(FILE *fp, GModel *gm) {
-  fprintf(fp, "$Brep\n");
-  fprintf (fp,"%d %d %d %d\n",gm->getNumVertices(),gm->getNumEdges(),gm->getNumFaces(),
-	   gm->getNumRegions());
-  for (GModel::viter it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
-    fprintf (fp,"%d\n",(*it)->tag());
+static int readMSHPhysicals(FILE *fp, GEntity *ge)
+{
+  int nump;
+  if(fscanf(fp, "%d", &nump) != 1) return 0;
+  for(int i = 0; i < nump; i++){
+    int tag;
+    if(fscanf(fp, "%d", &tag) != 1) return 0;
+    ge->physicals.push_back(tag);
   }
-  for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
-    fprintf (fp,"%d %d %d\n",(*it)->tag(),(*it)->getBeginVertex()->tag(),(*it)->getEndVertex()->tag());
-  }
-  for (GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-    std::list<GEdge*> edges = (*it)->edges();
-    fprintf (fp,"%d %lu ",(*it)->tag(),edges.size());
-    for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
-      fprintf (fp,"%d ",(*ite)->tag());      
-    }
-    fprintf (fp,"\n");      
-  }
-  for (GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
-    std::list<GFace*> faces = (*it)->faces();
-    fprintf (fp,"%d %lu ",(*it)->tag(),faces.size());
-    for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++){
-      fprintf (fp,"%d ",(*itf)->tag());      
-    }
-    fprintf (fp,"\n");      
-  }
-  fprintf(fp, "$EndBrep\n");
+  return 1;
 }
 
-// writes the topology associated to the mesh
-void readMSHBrep(FILE *fp, GModel *gm) {
+static void readMSHEntities(FILE *fp, GModel *gm)
+{
   int nv, ne, nf, nr;
   int tag;
   if(fscanf(fp, "%d %d %d %d", &nv, &ne, &nf, &nr) != 4) return;
-  //  printf("%d\n",nv);
-  for (int i=0;i<nv;i++){
-    fscanf (fp,"%d",&tag);
+  for (int i = 0; i < nv; i++){
+    if(fscanf(fp, "%d", &tag) != 1) return;
     GVertex *gv = gm->getVertexByTag(tag);
-    if (!gv)gm->add(new discreteVertex (gm, tag));    
+    if (!gv){
+      gv = new discreteVertex(gm, tag);
+      gm->add(gv);
+    }
+    if(!readMSHPhysicals(fp, gv)) return;
   }
-  //  printf("%d\n",ne);
-  for (int i=0;i<ne;i++){
-    fscanf (fp,"%d",&tag);
+  for (int i = 0; i < ne; i++){
+    int n;
+    if(fscanf(fp, "%d %d", &tag, &n) != 2) return;
     GEdge *ge = gm->getEdgeByTag(tag);
     if (!ge){
-      int tagv;
-      fscanf (fp,"%d",&tagv);
-      GVertex *v1 = gm->getVertexByTag(tagv);
-      if (!v1) Msg::Error("Unknown GVertex %d",tagv);
-      fscanf (fp,"%d",&tagv);
-      GVertex *v2 = gm->getVertexByTag(tagv);
-      if (!v2) Msg::Error("Unknown GVertex %d",tagv);
-      gm->add(new discreteEdge (gm, tag,v1,v2));    
+      GVertex *v1 = 0, *v2 = 0;
+      for(int j = 0; j < n; j++){
+        int tagv;
+        if(fscanf(fp, "%d", &tagv) != 1) return;
+        GVertex *v = gm->getVertexByTag(tagv);
+        if (!v) Msg::Error("Unknown GVertex %d", tagv);
+        if(j == 0) v1 = v;
+        if(j == 1) v2 = v;
+      }
+      ge = new discreteEdge(gm, tag, v1, v2);
+      gm->add(ge);
     }
+    if(!readMSHPhysicals(fp, ge)) return;
   }
-  //  printf("%d\n",nf);
-  for (int i=0;i<nf;i++){
+  for (int i = 0; i < nf; i++){
     int n;
-    fscanf (fp,"%d %d",&tag,&n);
-    //    printf("%d %d\n",tag,n);
+    if(fscanf(fp, "%d %d", &tag, &n) != 2) return;
     GFace *gf = gm->getFaceByTag(tag);
     if (!gf){
-      discreteFace * df = new discreteFace (gm, tag);
+      discreteFace *df = new discreteFace(gm, tag);
       std::vector<int> edges;
-      for (int j=0;j<n;j++){
+      for (int j = 0; j < n; j++){
 	int tage;
-	fscanf (fp,"%d",&tage);
+	if(fscanf(fp, "%d", &tage) != 1) return;
 	edges.push_back(tage);
       }
-      df->setBoundEdges (gm, edges);
+      df->setBoundEdges(gm, edges);
       gm->add(df);
+      gf = df;
     }
+    if(!readMSHPhysicals(fp, gf)) return;
   }
-  //  printf("%d\n",nr);
-  for (int i=0;i<nr;i++){
+  for (int i = 0; i < nr; i++){
     int n;
-    fscanf (fp,"%d %d",&tag,&n);
+    if(fscanf(fp, "%d %d", &tag, &n) != 2) return;
     GRegion *gr = gm->getRegionByTag(tag);
     if (!gr){
-      discreteRegion *dr = new discreteRegion (gm, tag);
+      discreteRegion *dr = new discreteRegion(gm, tag);
       std::set<int> faces;
-      for (int j=0;j<n;j++){
+      for (int j = 0; j < n; j++){
 	int tagf;
-	fscanf (fp,"%d",&tagf);
+	if(fscanf(fp, "%d", &tagf) != 1) return;
 	faces.insert(tagf);
       }
-      dr->setBoundFaces (faces);
+      dr->setBoundFaces(faces);
       gm->add(dr);
+      gr = dr;
     }
+    if(!readMSHPhysicals(fp, gr)) return;
   }
-}
-
-void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities)
-{
-  int count = 0;
-  for (unsigned int i = 0; i < entities.size(); i++)
-    if (entities[i]->meshMaster() != entities[i]) count++;
-  if (!count) return;
-  fprintf(fp, "$Periodic\n");
-  fprintf(fp, "%d\n", count);
-  for(unsigned int i = 0; i < entities.size(); i++){
-    GEntity *g_slave  = entities[i];
-    GEntity *g_master = g_slave->meshMaster();
-    if (g_slave != g_master){
-      fprintf(fp,"%d %d %d\n", g_slave->dim(), g_slave->tag(), g_master->tag());
-
-      if (g_slave->affineTransform.size() == 16) {
-        fprintf(fp,"Affine");
-        for (int i=0;i<16;i++) fprintf(fp," %.16g",g_slave->affineTransform[i]);
-        fprintf(fp,"\n");
-      }
-
-      fprintf(fp,"%d\n", (int) g_slave->correspondingVertices.size());
-      for (std::map<MVertex*,MVertex*>::iterator it = g_slave->correspondingVertices.begin();
-           it != g_slave->correspondingVertices.end(); it++){
-        MVertex *v1 = it->first;
-        MVertex *v2 = it->second;
-        fprintf(fp,"%d %d\n", v1->getIndex(), v2->getIndex());
-      }
-    }
-  }
-  fprintf(fp, "$EndPeriodic\n");
 }
 
 void readMSHPeriodicNodes(FILE *fp, GModel *gm)
@@ -181,7 +139,7 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm)
       if(fscanf(fp, "%d", &numv) != 1) numv = 0;
       for(int j = 0; j < numv; j++){
         int v1, v2;
-        if(fscanf(fp,"%d %d", &v1, &v2) != 2) continue;
+        if(fscanf(fp, "%d %d", &v1, &v2) != 2) continue;
         MVertex *mv1 = gm->getMeshVertexByTag(v1);
         MVertex *mv2 = gm->getMeshVertexByTag(v2);
         s->correspondingVertices[mv1] = mv2;
@@ -212,7 +170,6 @@ int GModel::readMSH(const std::string &name)
   double version = 0.;
   bool binary = false, swap = false, postpro = false;
   int minVertex = 0;
-  std::map<int, std::vector<int> > entities[4];
   std::map<int, std::vector<MElement*> > elements[10];
 
   while(1) {
@@ -249,12 +206,6 @@ int GModel::readMSH(const std::string &name)
       }
     }
 
-    // FIXME:
-    // change this into "$PhysicalAttributes"
-    //  #attribs
-    //    dim num #nums num1 num2... #str str1 str2...
-    //    dum num ...
-
     // $PhysicalNames section
     else if(!strncmp(&str[1], "PhysicalNames", 13)) {
       if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
@@ -272,23 +223,7 @@ int GModel::readMSH(const std::string &name)
 
     // $Entities section
     else if(!strncmp(&str[1], "Entities", 8)) {
-      if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
-      int numEntities;
-      if(sscanf(str, "%d", &numEntities) != 1){ fclose(fp); return 0; }
-      for(int i = 0; i < numEntities; i++) {
-        int num, dim, numPhysicals;
-        if(fscanf(fp, "%d %d %d", &num, &dim, &numPhysicals) != 3){
-          fclose(fp);
-          return 0;
-        }
-        if(numPhysicals > 0){
-          std::vector<int> physicals(numPhysicals);
-          for(int j = 0; j < numPhysicals; j++){
-            if(fscanf(fp, "%d", &physicals[j]) != 1){ fclose(fp); return 0; }
-          }
-          entities[dim][num] = physicals;
-        }
-      }
+      readMSHEntities(fp, this);
     }
 
     // $Nodes section
@@ -479,18 +414,17 @@ int GModel::readMSH(const std::string &name)
       }
     }
 
+    // $Periodical section
+    else if(!strncmp(&str[1], "Periodical", 10)) {
+      readMSHPeriodicNodes(fp, this);
+    }
+
     // Post-processing sections
     else if(!strncmp(&str[1], "NodeData", 8) ||
             !strncmp(&str[1], "ElementData", 11) ||
             !strncmp(&str[1], "ElementNodeData", 15)) {
       postpro = true;
       break;
-    }
-    else if(!strncmp(&str[1], "Periodical", 10)) {
-      readMSHPeriodicNodes (fp, this);
-    }
-    else if(!strncmp(&str[1], "Brep", 4)) {
-      readMSHBrep (fp, this);
     }
 
     do {
@@ -513,25 +447,59 @@ int GModel::readMSH(const std::string &name)
   else
     _storeVerticesInEntities(_vertexMapCache);
 
-  // store physicals in entities
-  for(int dim = 0; dim < 4; dim++){
-    for(std::map<int, std::vector<int> >::iterator it = entities[dim].begin();
-        it != entities[dim].end(); it++){
-      GEntity *ge = 0;
-      switch(dim){
-      case 0: ge = getVertexByTag(it->first); break;
-      case 1: ge = getEdgeByTag(it->first); break;
-      case 2: ge = getFaceByTag(it->first); break;
-      case 3: ge = getRegionByTag(it->first); break;
-      }
-      if(ge)
-        ge->physicals = it->second;
-    }
-  }
-
   fclose(fp);
 
   return postpro ? 2 : 1;
+}
+
+static void writeMSHPhysicals(FILE *fp, GEntity *ge)
+{
+  std::vector<int> phys = ge->getPhysicalEntities();
+  fprintf(fp, "%d ", (int)phys.size());
+  for(std::vector<int>::iterator itp = phys.begin(); itp != phys.end(); itp++)
+    fprintf(fp, "%d ", *itp);
+}
+
+static void writeMSHEntities(FILE *fp, GModel *gm)
+{
+  fprintf(fp, "$Entities\n");
+  fprintf (fp, "%d %d %d %d\n", gm->getNumVertices(), gm->getNumEdges(),
+           gm->getNumFaces(), gm->getNumRegions());
+  for (GModel::viter it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
+    fprintf(fp, "%d ", (*it)->tag());
+    writeMSHPhysicals(fp, *it);
+    fprintf(fp, "\n");
+  }
+  for (GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
+    std::list<GVertex*> vertices;
+    if((*it)->getBeginVertex()) vertices.push_back((*it)->getBeginVertex());
+    if((*it)->getEndVertex()) vertices.push_back((*it)->getEndVertex());
+    fprintf(fp, "%d %d ", (*it)->tag(), (int)vertices.size());
+    for(std::list<GVertex*>::iterator itv = vertices.begin(); itv != vertices.end(); itv++){
+      fprintf(fp, "%d ", (*itv)->tag());
+    }
+    writeMSHPhysicals(fp, *it);
+    fprintf(fp, "\n");
+  }
+  for (GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+    std::list<GEdge*> edges = (*it)->edges();
+    fprintf(fp, "%d %d ", (*it)->tag(), (int)edges.size());
+    for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
+      fprintf(fp, "%d ", (*ite)->tag());
+    }
+    writeMSHPhysicals(fp, *it);
+    fprintf(fp, "\n");
+  }
+  for (GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
+    std::list<GFace*> faces = (*it)->faces();
+    fprintf(fp, "%d %d ", (*it)->tag(), (int)faces.size());
+    for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++){
+      fprintf(fp, "%d ", (*itf)->tag());
+    }
+    writeMSHPhysicals(fp, *it);
+    fprintf(fp, "\n");
+  }
+  fprintf(fp, "$EndEntities\n");
 }
 
 static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
@@ -576,6 +544,38 @@ static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge, std::vector<T
       continue;
     writeElementMSH(fp, model, ele[i], binary, ge->tag());
   }
+}
+
+void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities)
+{
+  int count = 0;
+  for (unsigned int i = 0; i < entities.size(); i++)
+    if (entities[i]->meshMaster() != entities[i]) count++;
+  if (!count) return;
+  fprintf(fp, "$Periodic\n");
+  fprintf(fp, "%d\n", count);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *g_slave  = entities[i];
+    GEntity *g_master = g_slave->meshMaster();
+    if (g_slave != g_master){
+      fprintf(fp, "%d %d %d\n", g_slave->dim(), g_slave->tag(), g_master->tag());
+
+      if (g_slave->affineTransform.size() == 16) {
+        fprintf(fp, "Affine");
+        for (int i = 0; i < 16;i++) fprintf(fp, " %.16g", g_slave->affineTransform[i]);
+        fprintf(fp, "\n");
+      }
+
+      fprintf(fp, "%d\n", (int) g_slave->correspondingVertices.size());
+      for (std::map<MVertex*,MVertex*>::iterator it = g_slave->correspondingVertices.begin();
+           it != g_slave->correspondingVertices.end(); it++){
+        MVertex *v1 = it->first;
+        MVertex *v2 = it->second;
+        fprintf(fp, "%d %d\n", v1->getIndex(), v2->getIndex());
+      }
+    }
+  }
+  fprintf(fp, "$EndPeriodic\n");
 }
 
 int GModel::writeMSH(const std::string &name, double version, bool binary,
@@ -637,30 +637,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
     fprintf(fp, "$EndPhysicalNames\n");
   }
 
-  // write the topology of the model
-  writeMSHBrep (fp,this);
-
-  fprintf(fp, "$Entities\n");
-  std::vector<GEntity*> entitiesWithPhysical;
-  if(saveAll)
-    entitiesWithPhysical = entities;
-  else{
-    for(unsigned int i = 0; i < entities.size(); i++){
-      GEntity *ge = entities[i];
-      std::vector<int> physicallist = ge->getPhysicalEntities();
-      if(physicallist.size()) entitiesWithPhysical.push_back(ge);
-    }
-  }
-  fprintf(fp, "%d\n", (int)entitiesWithPhysical.size());
-  for(unsigned int i = 0; i < entitiesWithPhysical.size(); i++){
-    GEntity *ge = entitiesWithPhysical[i];
-    std::vector<int> physicallist = ge->getPhysicalEntities();
-    fprintf(fp, "%d %d %d", ge->tag(), ge->dim(), (int)physicallist.size());
-    for(unsigned int j = 0; j < physicallist.size(); j++)
-      fprintf(fp, " %d", physicallist[j]);
-    fprintf(fp, "\n");
-  }
-  fprintf(fp, "$EndEntities\n");
+  writeMSHEntities(fp, this);
 
   fprintf(fp, "$Nodes\n");
   fprintf(fp, "%d\n", numVertices);
