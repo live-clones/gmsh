@@ -1513,7 +1513,19 @@ Ends a matching @code{For} command.
 
 @item If ( @var{expression} )
 The body enclosed between `@code{If ( @var{expression} )}' and the matching
-@code{Endif} is evaluated if @var{expression} is non-zero.
+@code{ElseIf}, @code{Else} or @code{EndIf}, is evaluated if @var{expression} 
+is non-zero.
+
+@item ElseIf ( @var{expression} )
+The body enclosed between `@code{ElseIf ( @var{expression} )}' and the next 
+matching @code{ElseIf}, @code{Else} or @code{EndIf}, is evaluated if 
+@var{expression} is non-zero and none of the @var{expression} of the 
+previous matching codes @code{If} and @code{ElseIf} were non-zero.
+
+@item Else
+The body enclosed between @code{Else} and the matching @code{EndIf} is evaluated 
+if none of the @var{expression} of the previous matching codes
+@code{If} and @code{ElseIf} were non-zero.
 
 @item EndIf
 Ends a matching @code{If} command.
