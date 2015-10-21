@@ -433,8 +433,12 @@ void End_Curve(Curve *c)
     std::list<Curve*> tmp;
     for (std::vector<int>::const_iterator cIter=c->compound.begin();
          cIter!=c->compound.end();++cIter) {
-      Curve* comp = FindCurve(*cIter);
-      if (!comp) Msg::Error("Could not find curve %d as part of compound edge %d",*cIter,c->Num);
+      Curve* comp;
+      if (!(comp = FindCurve(*cIter))){
+        Msg::Debug("Could not find curve %d as part of compound edge %d. "
+                   "Aborting sort.",*cIter,c->Num);
+        return;
+      }
       tmp.push_back(comp);
     }
 
