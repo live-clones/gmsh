@@ -49,6 +49,8 @@ struct MeshQualOptParameters {
   int maxPatchAdapt;                                                  // Max. nb. of patch adaptation iterations (if adaptive)
   int maxLayersAdaptFact;                                             // Growth factor in number of layers for patch adaptation (if adaptive)
   double distanceAdaptFact;                                           // Growth factor in distance factor for patch adaptation (if adaptive)
+  int nCurses;                                                        // Enhanced text output
+  std::string logFileName;                                            // External log file
 
   int SUCCESS ; // 0 --> success , 1 --> Not converged
   double minIdealJac, maxIdealJac; // after optimization, range of jacobians
@@ -61,7 +63,7 @@ struct MeshQualOptParameters {
       minTargetIdealJac(0.1), minTargetInvCondNum(0.1), weight(1.),
       nbLayers (6) , dim(3) , maxOptIter(300), maxBarrierUpdates(50),
       onlyVisible(true), distanceFactor(12), fixBndNodes(false), strategy(0),
-      maxPatchAdapt(3), maxLayersAdaptFact(2), distanceAdaptFact(2.), CPU(0.),
+    maxPatchAdapt(3), maxLayersAdaptFact(2), distanceAdaptFact(2.), nCurses(1), logFileName(""), CPU(0.),
       minIdealJac(0.), maxIdealJac(0.), minInvCondNum(0.), maxInvCondNum(0.),
       SUCCESS(-1)
   {

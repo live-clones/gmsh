@@ -799,6 +799,8 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
   par.patchDef = &patchDef;
   par.displayInterv = 30;
   par.verbose = 4;
+  par.logFileName = "";
+  par.nCurses = false;
 
   ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weight,
                                                                 Patch::LS_MAXNODEDIST);

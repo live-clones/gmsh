@@ -132,7 +132,10 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
   par.patchDef = &patchDef;
   par.displayInterv = 20;
   par.verbose = 4;
+  par.nCurses = p.nCurses;
+  par.logFileName = p.logFileName;
 
+  
   ObjContribScaledNodeDispSq<ObjContribFuncSimple> nodeDistFunc(p.weight,
                                                                 Patch::LS_MINEDGELENGTH);
   ObjContribIdealJac<ObjContribFuncBarrierMovMin> minIdealJacBarFunc(1.);
