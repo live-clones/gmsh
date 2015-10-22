@@ -30,6 +30,8 @@
 #ifndef _MESHOPT_H_
 #define _MESHOPT_H_
 
+#include <iostream>
+#include <fstream>
 #include <string>
 #include <math.h>
 #include "MeshOptObjectiveFunction.h"
@@ -58,9 +60,11 @@ public:
   void evalObjGrad(const alglib::real_1d_array &x,
                     double &Obj, alglib::real_1d_array &gradObj);
   void printProgress(const alglib::real_1d_array &x, double Obj);
-
+  ObjectiveFunction *objFunction();
  private:
   int _verbose;
+  bool _nCurses;
+  std::list<char*> _iterHistory, _optHistory;
   int _iPass;
   std::vector<ObjectiveFunction> _allObjFunc;                                        // Contributions to objective function for current pass
   ObjectiveFunction *_objFunc;                                                       // Contributions to objective function for current pass
@@ -68,7 +72,7 @@ public:
   double _initObj;                                                                   // Values for reporting
   void calcScale(alglib::real_1d_array &scale);
   void runOptim(alglib::real_1d_array &x,
-                const alglib::real_1d_array &initGradObj, int itMax);
+                const alglib::real_1d_array &initGradObj, int itMax, int iBar);
 };
 
 

@@ -17,6 +17,8 @@ public:
   void initialize(Patch *mesh);
   std::string contribNames();
   std::string minMaxStr();
+  std::vector< std::pair<double,double> > minMax();
+  std::vector<std::string> names();
   void updateMinMax();
   void updateParameters();
   void updateResults();

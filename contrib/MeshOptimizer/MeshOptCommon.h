@@ -30,14 +30,42 @@
 #ifndef _MESHOPTCOMMON_H_
 #define _MESHOPTCOMMON_H_
 
-#include <vector>
 
+#include <vector>
+#include "GmshMessage.h"
+#include "MeshOptimizerConfig.h"
 
 class MElement;
 class GEntity;
 class SPoint3;
 class ObjContrib;
 
+//ncurses shortcuts
+void mvinit();
+void mvterminate();
+void mvpause();
+void mvgetScreenSize(int &nbRow, int &nbCol);
+void mvprintCenter(int row, const char* fmt, ...);
+void mvprintLeft(int row, const char* fmt, ...);
+void mvprintRight(int row, const char* fmt, ...);
+void mvprintXY(int row, int col, const char* fmt, ...);
+//color scheme: 0=default, 1=last in yellow back, others in white back, 2=even numbers in white back
+void mvprintList(int row, int maxSize, std::list<char*> listStr, int colorScheme=0);
+void mvfillRow(int row, char fillWith=' ');
+void mvbold(bool on);
+void mvcolor(int colorScheme, bool on);
+
+
+
+class redirectMessage : public GmshMessage
+{
+ private:
+  std::string _logFileName;
+  bool _console;
+ public:
+  virtual void operator()(std::string level, std::string message);
+  redirectMessage(std::string logFileName , bool console);
+};
 
 class MeshOptPatchDef {
 public:
@@ -85,6 +113,8 @@ struct MeshOptParameters {                              // Parameters controllin
   std::vector<MeshOptPass> pass;
   int displayInterv;                                    // Sampling rate in opt. iterations for display
   int verbose;                                          // Level of information displayed and written to disk
+  int nCurses;                                          // Enhanced text output (not affected by verbose)
+  std::string logFileName;                              // External log file (affected by verbose)
   int success;                                          // Success flag: -1 = fail, 0 = partial fail (target not reached), 1 = success
   double CPU;                                           // Time for optimization
 };

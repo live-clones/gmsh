@@ -1,6 +1,8 @@
 // TODO: Copyright
 
 #include <sstream>
+#include <iostream>
+#include <iomanip>
 #include "MeshOptObjContrib.h"
 #include "MeshOptObjectiveFunction.h"
 
@@ -26,13 +28,31 @@ std::string ObjectiveFunction::minMaxStr()
   std::string str;
   for (std::vector<ObjContrib*>::iterator it=begin(); it!=end(); it++) {
     std::ostringstream oss;
-    oss << " -- Min. " + (*it)->getMeasureName() + " = " << (*it)->getMin();
-    oss << " -- Max. " + (*it)->getMeasureName() + " = " << (*it)->getMax();
+    if (it != begin())
+      oss << "  |  ";
+    oss <<  std::scientific << std::setw(13) << (*it)->getMin() << " <= " << (*it)->getMeasureName() << " <= " << std::setw(13) << (*it)->getMax();
     str += oss.str();
   }
   return str;
 }
 
+std::vector<std::pair<double,double> > ObjectiveFunction::minMax() {
+  std::vector<std::pair<double,double> > range;
+  for (std::vector<ObjContrib*>::iterator it=begin(); it!=end(); it++) {
+    std::pair<double,double> oneRange = std::make_pair((*it)->getMin(),(*it)->getMax());
+    range.push_back(oneRange);
+  }
+  return range;
+}
+
+std::vector<std::string> ObjectiveFunction::names(){
+  std::vector<std::string > namesStr;
+  for (std::vector<ObjContrib*>::iterator it=begin(); it!=end(); it++) {
+    std::string name = (*it)->getMeasureName();
+    namesStr.push_back(name);
+  }
+  return namesStr;
+}
 
 void ObjectiveFunction::updateMinMax()
 {

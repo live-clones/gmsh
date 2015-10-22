@@ -30,8 +30,10 @@
 #include <stdio.h>
 #include <sstream>
 #include <iterator>
+#include <limits>
 #include <string.h>
 #include <stack>
+#include "Context.h"
 #include "GmshConfig.h"
 #include "Gmsh.h"
 #include "GModel.h"
@@ -274,6 +276,9 @@ std::vector<elSetVertSetPair> getDisjointPatches(const vertElVecMap &vertex2elem
                                                  const elSet &badElements,
                                                  const MeshOptParameters &par)
 {
+  if (par.nCurses) {
+    mvprintCenter(16, "Starting patch generation from %5i bad elements...", badElements.size());
+  }
   Msg::Info("Starting patch generation from %i bad elements...", badElements.size());
 
   elElSetMap element2elements;                                                            // Element to element connectivity, built progressively
@@ -358,6 +363,63 @@ void getAdjacentBndElts(const elElMap &el2BndEl, const elEntMap &bndEl2Ent,
   }
 }
 
+void displayMinMaxVal(int nbPatchSuccess[3], std::vector<std::string > &objFunctionNames, std::vector<std::pair<double,double> > newObjFunctionRange){
+  for (int i = 0; i < objFunctionNames.size(); i++){
+    if (nbPatchSuccess[0] > 0)
+      mvcolor(6, true);
+    else if (nbPatchSuccess[1] > 0)
+      mvcolor(8, true);
+    else
+      mvcolor(7, true);
+    mvprintRight(28+i, "%s on optimized patches: min %+.6e max %+.6e",objFunctionNames[i].c_str(), newObjFunctionRange[i].first, newObjFunctionRange[i].second);
+    if (nbPatchSuccess[0] > 0)
+      mvcolor(6, false);
+    else if (nbPatchSuccess[1] > 0)
+      mvcolor(8, false);
+    else
+      mvcolor(7, false);
+  }
+}
+  
+void displayResultTable(int nbPatchSuccess[3], int nbPatch){
+  mvcolor(1, true);
+  mvprintLeft(28," TOTAL PATCHES : %4i ",nbPatch);
+  mvcolor(1, false);
+  mvcolor(3, true);
+  mvprintLeft(29," Fail          : %4i ",nbPatchSuccess[0]);
+  mvcolor(3, false);
+  mvcolor(5, true);
+  mvprintLeft(30," Partial fail  : %4i ",nbPatchSuccess[1]);
+  mvcolor(5, false);
+  mvcolor(4, true);
+  mvprintLeft(31," Success       : %4i ",nbPatchSuccess[2]);
+  mvcolor(4, false);
+  mvcolor(1, true);
+  mvprintLeft(32," REMAINING     : %4i ",nbPatch-nbPatchSuccess[0]-nbPatchSuccess[1]-nbPatchSuccess[2]);
+  mvcolor(1, false);
+}
+
+void  updateDisplayPatchHistory(std::list<char*> &_patchHistory, const std::string &objFunctionStr, int iPatch, int iAdapt){
+  if (_patchHistory.size() < 8){
+    _patchHistory.push_front(new char[1000]);
+  } else {
+    _patchHistory.push_front(_patchHistory.back());
+    _patchHistory.pop_back();
+  }
+  if (iAdapt < 0)
+    sprintf(_patchHistory.front(),"Patch %i", iPatch);
+  else
+    sprintf(_patchHistory.front(),"Patch %i - Adaptation step %i", iPatch, iAdapt);
+  if (_patchHistory.size() < 8){
+    _patchHistory.push_front(new char[1000]);
+  } else {
+    _patchHistory.push_front(_patchHistory.back());
+    _patchHistory.pop_back();
+  }
+  sprintf(_patchHistory.front(), objFunctionStr.c_str());
+  mvprintList(9, -8, _patchHistory, 2);
+}
+
 
 void optimizeDisjointPatches(const vertElVecMap &vertex2elements,
                              const elEntMap &element2entity,
@@ -365,6 +427,12 @@ void optimizeDisjointPatches(const vertElVecMap &vertex2elements,
                              const elEntMap &bndEl2Ent,
                              elSet &badasses, MeshOptParameters &par)
 {
+  int nbPatchSuccess[3] = {0, 0, 0}; //0: fail, 1: partial fail, 2: success
+  std::list<char*> _patchHistory;
+  std::vector<std::pair<double,double> > newObjFunctionRange;
+  std::vector<std::string > objFunctionNames;
+
+ 
   par.success = 1;
 
   const elEntMap &e2ePatch = par.useGeomForPatches ? element2entity : elEntMap();
@@ -381,10 +449,16 @@ void optimizeDisjointPatches(const vertElVecMap &vertex2elements,
     for (int iPatch = 0; iPatch < toOptimize.size(); ++iPatch)
       getAdjacentBndElts(el2BndEl, bndEl2Ent, toOptimize[iPatch].first, bndElts[iPatch], par);
   }
-
+  if (par.nCurses)
+    displayResultTable(nbPatchSuccess, toOptimize.size());
   for (int iPatch = 0; iPatch < toOptimize.size(); ++iPatch) {
 
     // Initialize optimization and output if asked
+    if (par.nCurses){
+      mvbold(true);
+      mvprintCenter(10, " PATCH %5i ", iPatch);
+      mvbold(false);
+    }
     if (par.verbose > 1)
       Msg::Info("Optimizing patch %i/%i composed of %i elements, "
                 "%i boundary elements", iPatch, toOptimize.size()-1,
@@ -412,10 +486,30 @@ void optimizeDisjointPatches(const vertElVecMap &vertex2elements,
 
     // Evaluate mesh and update it if (partial) success
     opt.updateResults();
+    if (newObjFunctionRange.size() == 0){
+      newObjFunctionRange = opt.objFunction()->minMax();
+      objFunctionNames = opt.objFunction()->names();
+    } else {
+      for (int i = 0; i < newObjFunctionRange.size(); i++){
+        newObjFunctionRange[i].first = std::min(newObjFunctionRange[i].first, opt.objFunction()->minMax()[i].first);
+        newObjFunctionRange[i].second = std::max(newObjFunctionRange[i].second, opt.objFunction()->minMax()[i].second);
+      }
+    }
     if (success >= 0) opt.patch.updateGEntityPositions();
 
     //#pragma omp critical
     par.success = std::min(par.success, success);
+    
+    nbPatchSuccess[success+1]++;
+    if (par.nCurses){
+      displayMinMaxVal(nbPatchSuccess, objFunctionNames, newObjFunctionRange);
+      displayResultTable(nbPatchSuccess, toOptimize.size());
+      updateDisplayPatchHistory(_patchHistory, opt.objFunction()->minMaxStr(), iPatch, -1);
+    }
+  }
+  while (_patchHistory.size() > 0){
+    delete[] _patchHistory.back();
+    _patchHistory.pop_back();
   }
 }
 
@@ -443,28 +537,36 @@ MElement *getWorstElement(elSet &badElts,
   return worstEl;
 }
 
-
+  
 void optimizeOneByOne(const vertElVecMap &vertex2elements,
                       const elEntMap &element2entity,
                       const elElMap &el2BndEl,
                       const elEntMap &bndEl2Ent,
                       elSet badElts, MeshOptParameters &par)
 {
+  int nbPatchSuccess[3] = {0, 0, 0}; //0: fail, 1: partial fail, 2: success
+  std::list<char*> _patchHistory;
+  std::vector<std::pair<double,double> > newObjFunctionRange;
+  std::vector<std::string > objFunctionNames;
+
   par.success = 1;
 
   const elEntMap &e2ePatch = par.useGeomForPatches ? element2entity : elEntMap();
   const elEntMap &e2eOpt = par.useGeomForOpt ? element2entity : elEntMap();
 
   const int initNumBadElts = badElts.size();
+  if (par.nCurses)
+    displayResultTable(nbPatchSuccess, initNumBadElts);
   if (par.verbose > 0) Msg::Info("%d bad elements, starting to iterate...", initNumBadElts);
 
   elElSetMap element2elements;                                                                // Element to element connectivity, built progressively
-
+  
   // Loop over bad elements
   for (int iBadEl=0; iBadEl<initNumBadElts; iBadEl++) {
 
+    int success;
     if (badElts.empty()) break;
-
+    
     // Create patch around worst element and remove it from badElts
     MElement *worstEl = getWorstElement(badElts, e2ePatch, par);
     badElts.erase(worstEl);
@@ -472,8 +574,7 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
     // Initialize patch size to be adapted
     int maxLayers = par.patchDef->maxLayers;
     double distanceFactor = 1.;
-    int success;
-
+    
     // Patch adaptation loop
     for (int iAdapt=0; iAdapt<par.patchDef->maxPatchAdapt; iAdapt++) {
 
@@ -495,6 +596,11 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
       }
 
       // Initialize optimization and output if asked
+      if (par.nCurses){
+        mvbold(true);
+        mvprintCenter(10, " PATCH %5i - ADAPTATION STEP %i ", iBadEl, iAdapt);
+        mvbold(false);
+      }
       if (par.verbose > 1)
         Msg::Info("Optimizing patch %i (max. %i remaining) composed of %4d elements",
                                             iBadEl, badElts.size(), toOptimize.size());
@@ -520,9 +626,21 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
         opt.patch.writeMSH(ossI2.str().c_str());
       }
 
+       if (par.nCurses)
+         updateDisplayPatchHistory(_patchHistory, opt.objFunction()->minMaxStr(), iBadEl, iAdapt);
+
       // If (partial) success, update mesh and break adaptation loop, otherwise adapt
       if ((success > 0) || (iAdapt == par.patchDef->maxPatchAdapt-1)) {
         opt.updateResults();
+        if (newObjFunctionRange.size() == 0){
+          newObjFunctionRange = opt.objFunction()->minMax();
+          objFunctionNames = opt.objFunction()->names();
+        } else {
+          for (int i = 0; i < newObjFunctionRange.size(); i++){
+            newObjFunctionRange[i].first = std::min(newObjFunctionRange[i].first, opt.objFunction()->minMax()[i].first);
+            newObjFunctionRange[i].second = std::max(newObjFunctionRange[i].second, opt.objFunction()->minMax()[i].second);
+          }
+        }
         if (success >= 0) {
           opt.patch.updateGEntityPositions();
           break;
@@ -535,19 +653,30 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
         }
       }
 
+      
     }                                                                       // End of adaptation loop
-
+              
+    nbPatchSuccess[success+1]++;
+    if (par.nCurses){
+      displayMinMaxVal(nbPatchSuccess, objFunctionNames, newObjFunctionRange);
+      displayResultTable(nbPatchSuccess, initNumBadElts);
+    }
     if (par.verbose > 1)
       switch (success) {
-        case 1: Msg::Info("Patch %i succeeded", iBadEl); break;
-        case 0:
-          Msg::Info("Patch %i partially failed (measure "
-                    "above critical value but below target)", iBadEl);
-          break;
-        case -1: Msg::Info("Patch %i failed", iBadEl); break;
+      case 1: Msg::Info("Patch %i succeeded", iBadEl); break;
+      case 0:
+        Msg::Info("Patch %i partially failed (measure "
+                  "above critical value but below target)", iBadEl);
+        break;
+      case -1: Msg::Info("Patch %i failed", iBadEl); break;
       }
-
+    
     par.success = std::min(par.success, success);
+  }
+
+  while (_patchHistory.size() > 0){
+    delete[] _patchHistory.back();
+    _patchHistory.pop_back();
   }
 }
 
@@ -561,8 +690,23 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
 void meshOptimizer(GModel *gm, MeshOptParameters &par)
 {
 #if defined(HAVE_BFGS)
+  if (par.nCurses)
+    mvinit();
+  redirectMessage _logWriter(par.logFileName, !par.nCurses);
+  if (par.logFileName.compare("") != 0 || par.nCurses)
+    Msg::SetCallback(&_logWriter);
 
+    
   double startTime = Cpu();
+  if (par.nCurses) {
+    mvbold(true);
+    mvprintCenter(0, "OPTIMIZING MESH");
+    mvfillRow(1,'-');
+    mvfillRow(10,'-');
+    mvfillRow(20,'-');
+    mvfillRow(27,'-');
+    mvbold(false);
+  }
   if (par.verbose > 0) Msg::StatusBar(true, "Optimizing mesh...");
 
   std::vector<GEntity*> entities;
@@ -576,6 +720,9 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par)
     GEntity* &entity = entities[iEnt];
     if (entity->dim() != par.dim ||
         (par.onlyVisible && !entity->getVisibility())) continue;
+    if (par.nCurses) {
+      mvprintCenter(15, "Computing connectivity and bad elements for entity %3d...", entity->tag());
+    }
     Msg::Info("Computing connectivity and bad elements for entity %d...",
               entity->tag());
     calcVertex2Elements(par.dim, entity, vertex2elements);
@@ -603,21 +750,63 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par)
   else if (par.patchDef->strategy == MeshOptPatchDef::STRAT_ONEBYONE)
     optimizeOneByOne(vertex2elements, element2entity,
                      el2BndEl, bndEl2Ent, badElts, par);
-  else
-    Msg::Error("Unknown strategy %d for mesh optimization", par.patchDef->strategy);
+  else {
+    if (par.nCurses){
+      mvcolor(2,true);
+      mvbold(true);
+      mvprintCenter(-2, " ERROR: Unknown strategy %d for mesh optimization ", par.patchDef->strategy);
+      mvcolor(2,false);
+      mvbold(false);    
+    }
+    else
+      Msg::Error("Unknown strategy %d for mesh optimization", par.patchDef->strategy);
+  }
 
   if (par.verbose > 0) {
-    if (par.success == 1)
-      Msg::Info("Optimization succeeded");
-    else if (par.success == 0)
-      Msg::Warning("Optimization partially failed (all measures above critical "
-                    "value, but some below target)");
-    else if (par.success == -1)
-      Msg::Error("Optimization failed (some measures below critical value)");
+    if (par.success == 1){
+      if (par.nCurses){
+        mvcolor(4,true);
+        mvbold(true);
+        mvprintCenter(-2, " Optimization succeeded ");
+        mvcolor(4,false);
+        mvbold(false);    
+      }
+      else
+        Msg::Info("Optimization succeeded");
+    }
+    else if (par.success == 0){
+      if (par.nCurses){
+        mvcolor(5,true);
+        mvbold(true);
+        mvprintCenter(-2, " Optimization partially failed (all measures above critical value, but some below target) ");
+        mvcolor(5,false);
+        mvbold(false);    
+      }
+      else
+        Msg::Warning("Optimization partially failed (all measures above critical "
+                     "value, but some below target)");
+    }
+    else if (par.success == -1){
+      if (par.nCurses){
+        mvcolor(3,true);
+        mvbold(true);
+        mvprintCenter(-2, "Optimization Failed");
+        mvcolor(3,false);
+        mvbold(false);    
+      }
+      else
+        Msg::Error("Optimization failed (some measures below critical value)");
+    }
     par.CPU = Cpu()-startTime;
     Msg::StatusBar(true, "Done optimizing mesh (%g s)", par.CPU);
   }
-
+  if (par.nCurses){
+    mvpause();
+    mvterminate();
+  }
+  if (par.logFileName.compare("") != 0 || par.nCurses)
+    Msg::SetCallback(NULL);
+  
 #else
   Msg::Error("Mesh optimizer requires BFGS");
 #endif
