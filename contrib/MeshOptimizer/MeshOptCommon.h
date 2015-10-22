@@ -33,7 +33,7 @@
 
 #include <vector>
 #include "GmshMessage.h"
-#include "MeshOptimizerConfig.h"
+//#include "MeshOptimizerConfig.h"
 
 class MElement;
 class GEntity;
