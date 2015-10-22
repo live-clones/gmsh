@@ -14,7 +14,8 @@ set(SRC
   MeshOptVertexCoord.cpp
 )
 
-
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshOptimizerConfig.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/MeshOptimizerConfig.h)
 
 opt(NCURSES "Enable ncurses console tools" OFF)
 
@@ -34,5 +35,3 @@ mark_as_advanced(NCURSES_INC NCURSES_LIB)
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.hpp)
 append_gmsh_src(contrib/MeshOptimizer "${SRC};${HDR}")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshOptimizerConfig.h.in
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshOptimizerConfig.h)
