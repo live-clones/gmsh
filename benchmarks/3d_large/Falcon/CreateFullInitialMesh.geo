@@ -18,7 +18,7 @@ Merge "tmp.msh";
 Mesh.SwitchElementTags = 0;
 Merge "InitialMeshFalcon.msh";
 
-Geometry.Tolerance = 1.e-4;
+Geometry.Tolerance = 1.e-5;
 Coherence Mesh;
 
 Mesh.SaveAll = 1;
