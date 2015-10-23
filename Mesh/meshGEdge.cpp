@@ -273,11 +273,15 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
   double u_min = u_bounds.low();
   double u_max = u_bounds.high();
 
+  Range<double> to_u_bounds = to->parBounds(0);
+  double to_u_min = to_u_bounds.low();
+  double to_u_max = to_u_bounds.high();
+
   for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
     MVertex *v = from->mesh_vertices[index];
     double u; v->getParameter(0, u);
-    double newu = (direction > 0) ? u : (u_max - u + u_min);
+    double newu = (direction > 0) ? (u-u_min+to_u_min) : (u_max-u+to_u_min);
     GPoint gp = to->point(newu);
     MEdgeVertex *vv = new MEdgeVertex(gp.x(), gp.y(), gp.z(), to, newu);
     to->mesh_vertices.push_back(vv);
