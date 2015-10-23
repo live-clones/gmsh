@@ -36,8 +36,6 @@
 #include "MeshOptCommon.h"
 #include "MeshOpt.h"
 
-#include <unistd.h>
-
 #if defined(HAVE_BFGS)
 
 #include "ap.h"
@@ -49,7 +47,7 @@
 
 namespace {
 
-  
+
 
 void evalObjGradFunc(const alglib::real_1d_array &x, double &Obj,
                      alglib::real_1d_array &gradObj, void *MOInst)
