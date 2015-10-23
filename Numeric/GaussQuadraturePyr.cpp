@@ -48,7 +48,7 @@ IntPt *getGQPyrPts(int order)
 
       // std::cout << "Points " << iU << " " << iV << " " << iW << std::endl;
 
-      int wt = linWt[iU]*linWt[iV]*GJ20Wt[iW];
+      double wt = linWt[iU]*linWt[iV]*GJ20Wt[iW];
 
       double up = linPt[iU];
       double vp = linPt[iV];
