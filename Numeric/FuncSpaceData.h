@@ -14,16 +14,28 @@ class MElement;
 
 class FuncSpaceData
 {
-  // Store data that allow to easily know how to construct gradient, jacobian,
+  // Store data that allows to easily know how to construct gradient, jacobian,
   // bezier and metric bases.
 
 private:
-  int _tag, _spaceOrder, _nij, _nk;
-  bool _pyramidalSpace, _serendipity;
-  // When '_parentType' == TYPE_PYR,
-  // if _pyramidalSpace == true, then the space is {X^i Y^j Z^k | i,j <= k+'_nij', k <= '_nk'},
-  // otherwise, the space is {X^i Y^j Z^k | i,j <= '_nij', k <= '_nk'},
-  // where X = xi/(1-zeta), Y = eta/(1-zeta) and Z = 1-zeta.
+  int _tag, _spaceOrder;
+  bool _serendipity;
+  // '_tag' determine the type and the order of the element and if it is serendipity.
+  //
+  // For non-pyramidal elements, the space is the space of the same type element
+  // at order '_spaceOrder'. It is a serendipity space if '_serendipity' is true.
+  //
+  // Pyramids
+  int _nij, _nk;
+  bool _pyramidalSpace;
+  // For pyramids, '_spaceOrder' is not used.
+  // There are two possible spaces in function of '_pyramidalSpace'.
+  // if '_pyramidalSpace' == true,
+  //   the space is {X^i Y^j Z^k | i,j <= k+'_nij', k <= '_nk'}, (pyramid-like space)
+  // otherwise,
+  //   the space is {X^i Y^j Z^k | i,j <= '_nij', k <= '_nk'}, (hex-like space)
+  // where X = xi/(1-zeta), Y = eta/(1-zeta) and Z = (1-zeta).
+  // Note that (x, y, z) are here the reference coordinates.
 
 public:
 
