@@ -39,8 +39,9 @@ private:
 
 public:
 
-  FuncSpaceData() : _tag(-1), _spaceOrder(-1), _nij(-1), _nk(-1),
-    _pyramidalSpace(false), _serendipity(false) {}
+  FuncSpaceData()
+    : _tag(-1), _spaceOrder(-1), _serendipity(false), _nij(-1), _nk(-1),
+      _pyramidalSpace(false) {}
 
   // Constructors using MElement*
   FuncSpaceData(const MElement *el, const bool *serendip = NULL);
