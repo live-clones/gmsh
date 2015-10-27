@@ -316,17 +316,16 @@ CondNumBasis::CondNumBasis(int tag, int cnOrder) :
     _condNumOrder(cnOrder >= 0 ? cnOrder : condNumOrder(tag))
 {
   const bool serendip = false;
-  FuncSpaceData data(true, tag, _condNumOrder, &serendip);
 
+  FuncSpaceData data = ( ElementType::ParentTypeFromTag(tag) == TYPE_PYR )? FuncSpaceData(true, tag, true, _condNumOrder+2, _condNumOrder, &serendip) : FuncSpaceData(true, tag, _condNumOrder, &serendip);
   _gradBasis = BasisFactory::getGradientBasis(data);
-
   fullMatrix<double> lagPoints;                                  // Sampling points
   gmshGeneratePoints(data, lagPoints);
   _nCondNumNodes = lagPoints.size1();
   _nMapNodes = BasisFactory::getNodalBasis(tag)->getNumShapeFunctions();
 
   // Store shape function gradients of mapping at condition number nodes
-  _gradBasis = BasisFactory::getGradientBasis(tag, _condNumOrder);
+  _gradBasis = BasisFactory::getGradientBasis(data);
 
   // Compute shape function gradients of primary mapping at barycenter,
   // in order to compute normal to straight element
