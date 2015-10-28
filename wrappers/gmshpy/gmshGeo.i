@@ -57,6 +57,7 @@ namespace std {
   %template(MTriangleVector) vector< MTriangle *,std::allocator< MTriangle * > >;
   %template(MTetrahedronVector) vector< MTetrahedron *,std::allocator< MTetrahedron * > >;
   %template(MQuadrangleVector) vector< MQuadrangle *,std::allocator< MQuadrangle * > >;
+  %template(MPyramidVector) vector< MPyramid *,std::allocator< MPyramid * > >;
   %template(GEdgeVectorVector) vector< std::vector< GEdge *,std::allocator< GEdge * > >,std::allocator< std::vector< GEdge *,std::allocator< GEdge * > > > >;
   %template(GFaceVectorVector) vector< std::vector< GFace *,std::allocator< GFace * > >,std::allocator< std::vector< GFace *,std::allocator< GFace * > > > >;
   %template(GFaceList) list<GFace*, std::allocator<GFace*> >;
