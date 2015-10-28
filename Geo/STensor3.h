@@ -364,6 +364,13 @@ class STensor3 {
     de(2,2) -= p;
     return de;
   }
+  void eig(fullMatrix<double> &V, fullVector<double> &S, bool s=false) const
+  {
+    fullMatrix<double> me(3, 3), left(3, 3);
+    fullVector<double> im(3);
+    this->getMat(me);
+    me.eig(S, im, left, V, s);
+  }
 };
 
 // tensor product
