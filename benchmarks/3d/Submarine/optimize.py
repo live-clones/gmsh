@@ -1,20 +1,20 @@
 from gmshpy import *
 import sys
+import pickle
 
-name = "Submarine"
+name = "Submarine2"
 
 g = GModel()
 g.load(name + ".geo")
-#g.mesh(2)
-#g.save(name + "_KO.msh")
+#g.mesh(3)
+#g.save(name + ".msh")
 g.load(name + ".msh")
-
 
 
 OH = MeshQualOptParameters()
 OH.onlyVisible = False
 OH.dim = 3
-OH.fixBndNodes = False    # Fix boundary nodes or not
+OH.fixBndNodes = True    # Fix boundary nodes or not
 OH.strategy = 1           # 0 = Connected blobs, 1 = Adaptive one-by-one (recommended in 3D)
 
 OH.excludeHex = False
@@ -27,16 +27,16 @@ OH.distanceAdaptFact = 3 # Factor to multiply distance factor when adapting
 #OH.weight = 0
 OH.onlyValidity = False
 #OH.minTargetIdealJac = 0.1
-OH.minTargetInvCondNum = 0.2
+OH.minTargetInvCondNum = 0.3
 
 #OH.weightFixed = 1.e-3
 #OH.weightFree = 1.e-6
 
-OH.nCurses = 0
+OH.nCurses = 1
 OH.logFileName = "log"
 
 OH.maxOptIter = 20             # Nb of optimixation iterations
-OH.maxBarrierUpdates = 20        # Nb. of optimization passes
+OH.maxBarrierUpdates = 30        # Nb. of optimization passes
 
 #print("minTargetIdealJac = %g" % OH.minTargetIdealJac)
 print("minTargetInvCondNum = %g" % OH.minTargetInvCondNum)
