@@ -250,7 +250,6 @@ Reverse                 return tReverse;
 
 ScaleLastLayer          return tScaleLast;
 Smoother                return tSmoother;
-SetOrder                return tSetOrder;
 SetNumber               return tSetNumber;
 SetString               return tSetString;
 SetPartition            return tSetPartition;

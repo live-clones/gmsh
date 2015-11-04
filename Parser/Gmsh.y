@@ -148,7 +148,7 @@ struct doubleXstring{
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tElseIf tElse tEndIf tExit tAbort
 %token tField tReturn tCall tMacro tShow tHide tGetValue tGetEnv tGetString tGetNumber
-%token tHomology tCohomology tBetti tSetOrder tExists tFileExists
+%token tHomology tCohomology tBetti tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName tSetPartition
 %token tNameFromString tStringFromName
@@ -2846,6 +2846,9 @@ Command :
       else if(!strcmp($1, "OnelabRun")){
         Msg::RunOnelabClient($2);
       }
+      else if(!strcmp($1, "OptimizeMesh")){
+        GModel::current()->optimizeMesh($2);
+      }
       else{
 	yymsg(0, "Unknown command '%s'", $1);
       }
@@ -2915,6 +2918,13 @@ Command :
 	GModel::current()->importGEOInternals();
 	GModel::current()->mesh((int)$2);
 	CTX::instance()->lock = lock;
+      }
+      else if(!strcmp($1, "SetOrder")){
+#if defined(HAVE_MESH)
+        SetOrderN(GModel::current(), $2, CTX::instance()->mesh.secondOrderLinear,
+                  CTX::instance()->mesh.secondOrderIncomplete,
+                  CTX::instance()->mesh.meshOnlyVisible);
+#endif
       }
       else
 	yymsg(0, "Unknown command '%s'", $1);
@@ -3069,14 +3079,6 @@ Command :
         List_Delete(*(List_T**)List_Pointer($9, i));
       List_Delete($9);
       CTX::instance()->lock = lock;
-    }
-   | tSetOrder FExpr tEND
-    {
-#if defined(HAVE_MESH)
-      SetOrderN(GModel::current(), $2, CTX::instance()->mesh.secondOrderLinear,
-                CTX::instance()->mesh.secondOrderIncomplete,
-                CTX::instance()->mesh.meshOnlyVisible);
-#endif
     }
 ;
 

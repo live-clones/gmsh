@@ -726,6 +726,20 @@ int GModel::refineMesh(int linear)
 #endif
 }
 
+int GModel::optimizeMesh(const std::string &how)
+{
+#if defined(HAVE_MESH)
+  if(how == "Netgen")
+    OptimizeMeshNetgen(this);
+  else
+    OptimizeMesh(this);
+  return true;
+#else
+  Msg::Error("Mesh module not compiled");
+  return false;
+#endif
+}
+
 int GModel::setOrderN(int order, int linear, int incomplete)
 {
 #if defined(HAVE_MESH)
@@ -3617,6 +3631,3 @@ void GModel::setCompoundVisibility()
   }
 
 }
-
-
-

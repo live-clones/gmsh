@@ -476,6 +476,9 @@ class GModel
   // refine the mesh by splitting all elements
   int refineMesh(int linear);
 
+  // optimize the mesh
+  int optimizeMesh(const std::string &how);
+
   // create partition boundaries
   void createPartitionBoundaries(int createGhostCells, int createAllDims = 0);
 

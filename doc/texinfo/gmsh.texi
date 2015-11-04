@@ -21,7 +21,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename gmsh.info
-@set GMSH-VERSION 2.10
+@set GMSH-VERSION 2.11
 @set COPYRIGHT @copyright{} 1997-2015 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
@@ -1726,6 +1726,9 @@ Aborts the current script.
 @item Exit;
 Exits Gmsh.
 
+@item CreateDir @var{char-expression};
+Create the directory @var{char-expression}.
+
 @item Printf ( @var{char-expression} <, @var{expression-list}> );
 Prints a character expression in the information window and/or on the
 terminal. @code{Printf} is equivalent to the @code{printf} C function:
@@ -1798,26 +1801,6 @@ Deletes the current options and revert to the default values.
 @item Delete @var{string};
 Deletes the expression @var{string}.
 
-@item Mesh @var{expression};
-Generates @var{expression}-D mesh.
-
-@item RefineMesh;
-Refines the current mesh by splitting all elements. If
-@code{Mesh.SecondOrderLinear} is set, the new vertices are inserted by
-linear interpolatinon. Otherwise they are snapped on the actual
-geometry.
-
-@item AdaptMesh @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @{ @var{expression-list} < , @dots{} >  @} @};
-Performs adaptive mesh generation. Documentation not yet available.
-
-@item RelocateMesh Point | Line | Surface @{ @var{expression-list} @} | "*";
-Relocates the mesh vertices on the given entities using the parametric
-coordinates stored in the vertices. Useful for creating perturbation of
-meshes e.g. for sensitivity analyzes.
-
-@item SetOrder @var{expression};
-Changes the order of the elements in the current mesh.
-
 @item Print @var{char-expression};
 Prints the graphic window in a file named @var{char-expression}, using
 the current @code{Print.Format} (@pxref{General options list}). If the
@@ -1832,6 +1815,10 @@ Executes a (blocking) system call.
 
 @item NonBlockingSystemCall @var{char-expression};
 Executes a (non-blocking) system call.
+
+@item OnelabRun ( @var{char-expression} <, @var{char-expression} > )
+Runs a ONELAB client (first argument is the client name, second optional
+arguement is the command line).
 
 @item SetName @var{char-expression};
 Changes the name of the current model.
@@ -2917,6 +2904,30 @@ volumes, TransfQuadTri has no effect on those volumes.
 Here is a list of all other mesh commands currently available:
 
 @ftable @code
+@item Mesh @var{expression};
+Generates @var{expression}-D mesh.
+
+@item RefineMesh;
+Refines the current mesh by splitting all elements. If
+@code{Mesh.SecondOrderLinear} is set, the new vertices are inserted by
+linear interpolatinon. Otherwise they are snapped on the actual
+geometry.
+
+@item OptimizeMesh @var{char-expression};
+Optimizes the current mesh with the given algorithm (currently
+@code{"Gmsh"} or @code{"Netgen"}).
+
+@item AdaptMesh @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @{ @var{expression-list} < , @dots{} >  @} @};
+Performs adaptive mesh generation. Documentation not yet available.
+
+@item RelocateMesh Point | Line | Surface @{ @var{expression-list} @} | "*";
+Relocates the mesh vertices on the given entities using the parametric
+coordinates stored in the vertices. Useful for creating perturbation of
+meshes e.g. for sensitivity analyzes.
+
+@item SetOrder @var{expression};
+Changes the order of the elements in the current mesh.
+
 @item Point | Line @{ @var{expression-list} @} In Surface @{ @var{expression} @};
 Embed the point(s) or line(s) in the given surface. The surface mesh
 will conform to the mesh of the point(s) or lines(s). 
@@ -2976,9 +2987,6 @@ Saves the mesh in a file named @var{char-expression}, using the current
 @code{Mesh.Format} (@pxref{Mesh options list}). If the path in
 @var{char-expression} is not absolute, @var{char-expression} is appended
 to the path of the current file.
-
-@item CreateDir @var{char-expression};
-Create the directory @var{char-expression}.
 
 @item < Recursive > Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Shows the mesh of the entities in @var{expression-list}, if
@@ -3800,11 +3808,12 @@ for triangles, 4 for quadrangles, 5 for tetrahedra, 6 for pyramids, 7
 for prisms, 8 for hexahedra, 9 for polygons and 10 for polyhedra.
 
 @item @var{number-of-interpolation-matrices} 
-is the number of interpolation matrices provided for this element
-topology. Currently you should provide 2 matrices, i.e., the matrices
-that specify how to interpolate the data (they have the same meaning as
-in @ref{Post-processing commands}).  The matrices are specified by 2
-integers (@var{num-rows} and @var{num-columns}) followed by the values.
+is the number of interpolation matrices provided for the element
+topology @var{elm-topology}. Currently you should provide 2 matrices,
+i.e., the matrices that specify how to interpolate the data (they have
+the same meaning as in @ref{Post-processing commands}). The matrices are
+specified by 2 integers (@var{num-rows} and @var{num-columns}) followed
+by the values.
 
 @end table
 
