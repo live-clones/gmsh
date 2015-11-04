@@ -23,7 +23,7 @@
 #include <getdp/GetDPConfig.h>
 #include <getdp/GetDPVersion.h>
 
-#include "androidGModel.h"
+#include "androidUtils.h"
 #include "drawContext.h"
 
 extern "C"

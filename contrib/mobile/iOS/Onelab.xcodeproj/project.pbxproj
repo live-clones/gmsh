@@ -45,7 +45,7 @@
 		9CE1A65717B0F39D00E5152F /* Utils.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CE1A65617B0F39D00E5152F /* Utils.mm */; };
 		9CE1A65A17B0FB9700E5152F /* iPhoneiPodStoryboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9CE1A65817B0FB9600E5152F /* iPhoneiPodStoryboard.storyboard */; };
 		9CE2773B17E197F50076E728 /* Social.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE2773917E197DA0076E728 /* Social.framework */; };
-		9CEAE86E17AF824B00813524 /* iosGModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAE86D17AF824B00813524 /* iosGModel.cpp */; };
+		9CEAE86E17AF824B00813524 /* iosUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAE86D17AF824B00813524 /* iosUtils.cpp */; };
 		9CEAE87D17AFD5BB00813524 /* SplitViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAE87C17AFD5BB00813524 /* SplitViewController.mm */; };
 		9CEAECC717A91CD20014D229 /* ModelListController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CEAECC617A91CD20014D229 /* ModelListController.mm */; };
 		9CF34DE417C62FC500A3D5E3 /* PostProcessingViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CF34DE317C62FC500A3D5E3 /* PostProcessingViewController.mm */; };
@@ -82,7 +82,7 @@
 		9C96089C1712C7F600E1D4A0 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		9C96089E1712C8EB00E1D4A0 /* emulatorFix.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = emulatorFix.c; sourceTree = "<group>"; usesTabs = 1; };
 		9C9608AB1712EF0900E1D4A0 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/iPadStoryboard.storyboard; sourceTree = "<group>"; };
-		9C99754C17390DEE0036EC24 /* iosGModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iosGModel.h; sourceTree = "<group>"; usesTabs = 1; };
+		9C99754C17390DEE0036EC24 /* iosUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iosUtils.h; sourceTree = "<group>"; usesTabs = 1; };
 		9CB1CD9618DB2D8700110882 /* icon_rotate.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_rotate.png; sourceTree = "<group>"; };
 		9CB1CD9918DC36AC00110882 /* AboutViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AboutViewController.h; sourceTree = "<group>"; };
 		9CB1CD9A18DC36AC00110882 /* AboutViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AboutViewController.mm; sourceTree = "<group>"; };
@@ -94,7 +94,6 @@
 		9CDCED2217D5C00500B39082 /* Model.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Model.mm; sourceTree = "<group>"; };
 		9CE08E01178AE6BE00A83B4B /* drawContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drawContext.cpp; sourceTree = "<group>"; usesTabs = 1; };
 		9CE08E02178AE6BE00A83B4B /* drawContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drawContext.h; sourceTree = "<group>"; usesTabs = 1; };
-		9CE08E03178AE6BE00A83B4B /* movePosition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = movePosition.h; sourceTree = "<group>"; usesTabs = 1; };
 		9CE08E04178AE6BE00A83B4B /* Trackball.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Trackball.cpp; sourceTree = "<group>"; usesTabs = 1; };
 		9CE08E05178AE6BE00A83B4B /* Trackball.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Trackball.h; sourceTree = "<group>"; usesTabs = 1; };
 		9CE08E0D178AEB1600A83B4B /* GetDP.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GetDP.framework; path = Onelab/frameworks/GetDP.framework; sourceTree = "<group>"; };
@@ -106,7 +105,7 @@
 		9CE1A65617B0F39D00E5152F /* Utils.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Utils.mm; sourceTree = "<group>"; usesTabs = 1; };
 		9CE1A65917B0FB9700E5152F /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = en.lproj/iPhoneiPodStoryboard.storyboard; sourceTree = "<group>"; };
 		9CE2773917E197DA0076E728 /* Social.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Social.framework; path = System/Library/Frameworks/Social.framework; sourceTree = SDKROOT; };
-		9CEAE86D17AF824B00813524 /* iosGModel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = iosGModel.cpp; sourceTree = "<group>"; usesTabs = 1; };
+		9CEAE86D17AF824B00813524 /* iosUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = iosUtils.cpp; sourceTree = "<group>"; usesTabs = 1; };
 		9CEAE87B17AFD5BB00813524 /* SplitViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SplitViewController.h; sourceTree = "<group>"; usesTabs = 1; };
 		9CEAE87C17AFD5BB00813524 /* SplitViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SplitViewController.mm; sourceTree = "<group>"; usesTabs = 1; };
 		9CEAECC517A91CD20014D229 /* ModelListController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ModelListController.h; sourceTree = "<group>"; usesTabs = 1; };
@@ -202,15 +201,14 @@
 				9CE1A65817B0FB9600E5152F /* iPhoneiPodStoryboard.storyboard */,
 				9C9608491712C16300E1D4A0 /* AppDelegate.h */,
 				9C96084A1712C16300E1D4A0 /* AppDelegate.mm */,
-				9C99754C17390DEE0036EC24 /* iosGModel.h */,
-				9CEAE86D17AF824B00813524 /* iosGModel.cpp */,
+				9C99754C17390DEE0036EC24 /* iosUtils.h */,
+				9CEAE86D17AF824B00813524 /* iosUtils.cpp */,
 				9CE08E02178AE6BE00A83B4B /* drawContext.h */,
 				9CE08E01178AE6BE00A83B4B /* drawContext.cpp */,
 				9CC6EBB617BA0A38001CA21A /* drawGeom.cpp */,
 				9CC6EBB817BA1CC7001CA21A /* drawMesh.cpp */,
 				9C6A645717A7C3DB00DEDAFC /* drawString.h */,
 				9C6A645617A7C3DB00DEDAFC /* drawString.cpp */,
-				9CE08E03178AE6BE00A83B4B /* movePosition.h */,
 				9CE08E05178AE6BE00A83B4B /* Trackball.h */,
 				9CE08E04178AE6BE00A83B4B /* Trackball.cpp */,
 				9CE1A65517B0F39C00E5152F /* Utils.h */,
@@ -336,7 +334,7 @@
 				9C95B7F61726C88E00C0CCE2 /* main.mm in Sources */,
 				9C6A645817A7C3DB00DEDAFC /* drawString.cpp in Sources */,
 				9CEAECC717A91CD20014D229 /* ModelListController.mm in Sources */,
-				9CEAE86E17AF824B00813524 /* iosGModel.cpp in Sources */,
+				9CEAE86E17AF824B00813524 /* iosUtils.cpp in Sources */,
 				9CEAE87D17AFD5BB00813524 /* SplitViewController.mm in Sources */,
 				9CE1A65717B0F39D00E5152F /* Utils.mm in Sources */,
 				9CE18C2017B27EDB009BA06E /* Parameter.mm in Sources */,

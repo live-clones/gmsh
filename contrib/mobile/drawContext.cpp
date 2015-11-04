@@ -17,7 +17,7 @@
 #if defined(BUILD_ANDROID)
 #include <GLES/gl.h>
 #include <GLES/glext.h>
-#include "androidGModel.h"
+#include "androidUtils.h"
 #else // iOS
 #include <OpenGLES/ES1/gl.h>
 #include <OpenGLES/ES1/glext.h>

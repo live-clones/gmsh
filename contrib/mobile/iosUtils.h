@@ -1,5 +1,5 @@
-#ifndef __Onelab__iosGModel__
-#define __Onelab__iosGModel__
+#ifndef _IOS_UTILS_ONELAB_H_
+#define _IOS_UTILS_ONELAB_H_
 
 #include <iostream>
 #include <string>

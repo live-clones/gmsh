@@ -1,9 +1,9 @@
 #include <string>
 
 #if defined(BUILD_ANDROID)
-#include "androidGModel.h"
+#include "androidUtils.h"
 #else
-#include "iosGModel.h"
+#include "iosUtils.h"
 #endif
 
 class drawString

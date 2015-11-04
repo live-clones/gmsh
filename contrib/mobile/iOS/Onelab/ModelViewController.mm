@@ -3,7 +3,7 @@
 
 #import "ModelViewController.h"
 #import "drawContext.h"
-#import "iosGModel.h"
+#import "iosUtils.h"
 #import "Utils.h"
 
 #import "AppDelegate.h"
