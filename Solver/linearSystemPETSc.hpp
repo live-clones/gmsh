@@ -266,20 +266,16 @@ void linearSystemPETSc<scalar>::addToRightHandSide(int row, const scalar &val)
   PetscScalar s = val;
   _try(VecSetValues(_b, 1, &i, &s, ADD_VALUES));
 }
+#if defined(PETSC_USE_COMPLEX)
+// this specialization will cast to a double (take the real part) if "val" is a double wheras Petsc is built in complex mode.
+template <>
+void linearSystemPETSc<double>::getFromRightHandSide(int row, double &val) const;
+#endif
 
 template <class scalar>
 void linearSystemPETSc<scalar>::getFromRightHandSide(int row, scalar &val) const
 {
-#if defined(PETSC_USE_COMPLEX)
-  PetscScalar *tmp;
-  _try(VecGetArray(_b, &tmp));
-  PetscScalar s = tmp[row];
-  _try(VecRestoreArray(_b, &tmp));
-  // FIXME specialize this routine
-  val = s.real();
-#else
   _try(VecGetValues(_b, 1, &row, &val));
-#endif
 }
 
 template <class scalar>
@@ -310,19 +306,16 @@ void linearSystemPETSc<scalar>::addToSolution(int row, const scalar &val)
   PetscScalar s = val;
   _try(VecSetValues(_x, 1, &i, &s, ADD_VALUES));
 }
+#if defined(PETSC_USE_COMPLEX)
+// this specialization will cast to a double (take the real part) if "val" is a double wheras Petsc is built in complex mode.
+template <>
+void linearSystemPETSc<double>::getFromSolution(int row, double &val) const;
+#endif
 
 template <class scalar>
 void linearSystemPETSc<scalar>::getFromSolution(int row, scalar &val) const
 {
-#if defined(PETSC_USE_COMPLEX)
-  PetscScalar *tmp;
-  _try(VecGetArray(_x, &tmp));
-  PetscScalar s = tmp[row];
-  _try(VecRestoreArray(_x, &tmp));
-  val = s.real();
-#else
   _try(VecGetValues(_x, 1, &row, &val));
-#endif
 }
 
 template <class scalar>

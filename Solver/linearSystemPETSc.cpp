@@ -15,8 +15,32 @@
 #include "linearSystemPETSc.hpp"
 
 template class linearSystemPETSc<double>;
+
+
 #ifdef PETSC_USE_COMPLEX
 template class linearSystemPETSc<std::complex<double> >;
+
+// this specialization will cast to a double (take the real part) if "val" is a double wheras Petsc is built in complex mode.
+template <>
+void linearSystemPETSc<double>::getFromRightHandSide(int row, double &val) const
+{
+  PetscScalar *tmp;
+  _try(VecGetArray(_b, &tmp));
+  PetscScalar s = tmp[row];
+  _try(VecRestoreArray(_b, &tmp));
+  val = s.real();
+}
+
+// this specialization will cast to a double (take the real part) if "val" is a double wheras Petsc is built in complex mode.
+template <>
+void linearSystemPETSc<double>::getFromSolution(int row, double &val) const
+{
+  PetscScalar *tmp;
+  _try(VecGetArray(_x, &tmp));
+  PetscScalar s = tmp[row];
+  _try(VecRestoreArray(_x, &tmp));
+  val = s.real();
+}
 #endif
 
 template<>
