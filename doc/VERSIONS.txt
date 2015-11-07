@@ -1,4 +1,4 @@
-2.11.0 (??, 2015): new Else/ElseIf commands; new OptimizeMesh command;
+2.11.0 (November 7, 2015): new Else/ElseIf commands; new OptimizeMesh command;
 Plugin(ModifyComponents) replaces Plugin(ModifyComponent); new VTK and X3D
 outputs; separate 0/Ctrl+0 shortcuts for geometry/full model reload; small bug
 fixes in homology solver, handling of embedded entities, and Plugin(Crack).
