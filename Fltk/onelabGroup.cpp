@@ -555,6 +555,12 @@ void onelabGroup::_addParameter(T &p)
   _tree->end();
 }
 
+template<class T>
+void onelabGroup::_updateParameter(T &p, Fl_Tree_Item *n)
+{
+  printf("updating parameter %s\n", p.getName().c_str());
+}
+
 void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback, void *data)
 {
   Fl_Tree_Item *n = _tree->add(path.c_str());
@@ -1092,6 +1098,124 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, int ww, int hh,
   }
 }
 
+// XXXXXXXXXXXXXXXXXXXXX
+//#define NEW_CODE
+
+#ifdef NEW_CODE
+
+void onelabGroup::rebuildTree(bool fullRebuild)
+{
+  // Current version (until we have a message to explicitly remove/add a
+  // parameter):
+
+  // loop over all parameters in the tree and put all the names in a std::set<>
+  //
+  // loop over all (visible) parameters in the database and check if they exist
+  // in the std::set<>
+  //
+  // - if they are not the the set<>, add a new param in the tree ! add it at
+  //    the right location
+  // - if they are in the set<> call updateParameterInTree
+  // - otherwise, remove the name from the set<>
+  //
+  // loop over all names remaining in the set<> and remove the corresponding
+  // parameters from the tree
+
+  // updateParameterInTree()
+  //   - check if the value, any attributes, readOnly, etc. changed
+  //   - if yes, modifiy accordingly
+  //   - if not, do nothing
+
+  FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
+
+  std::set<std::string> closed = _getClosedGmshMenus();
+  _computeWidths();
+  if(CTX::instance()->guiColorScheme){
+    _tree->openicon(&open_pixmap_dark);
+    _tree->closeicon(&close_pixmap_dark);
+  }
+  else{
+    _tree->openicon(&open_pixmap_light);
+    _tree->closeicon(&close_pixmap_light);
+  }
+  _tree->sortorder(FL_TREE_SORT_ASCENDING);
+  _tree->selectmode(FL_TREE_SELECT_NONE);
+
+  static bool first = true;
+
+  if(fullRebuild){
+    printf("tree full rebuild\n");
+    _tree->clear();
+    first = true;
+  }
+  else{
+    printf("tree update\n");
+  }
+
+  std::map<std::string, Fl_Tree_Item*> existing;
+  for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()){
+    existing[getPath(n)] = n;
+  }
+
+  if(first){
+    //_addGmshMenus();
+  }
+
+  std::vector<onelab::number> numbers;
+  onelab::server::instance()->get(numbers);
+  for(unsigned int i = 0; i < numbers.size(); i++){
+    if(!numbers[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
+      continue;
+    if(!existing.count(numbers[i].getName()))
+      _addParameter(numbers[i]);
+    else
+      _updateParameter(numbers[i], existing[numbers[i].getName()]);
+  }
+
+  /*
+  std::vector<onelab::string> strings;
+  onelab::server::instance()->get(strings);
+  for(unsigned int i = 0; i < strings.size(); i++){
+    if(!strings[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
+      continue;
+    if(strings[i].getAttribute("Closed") == "1")
+      closed.insert(strings[i].getPath());
+    _addParameter(strings[i]);
+  }
+
+  std::vector<onelab::region> regions;
+  onelab::server::instance()->get(regions);
+  for(unsigned int i = 0; i < regions.size(); i++){
+    if(!regions[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
+      continue;
+    if(regions[i].getAttribute("Closed") == "1")
+      closed.insert(regions[i].getPath());
+    _addParameter(regions[i]);
+  }
+
+  std::vector<onelab::function> functions;
+  onelab::server::instance()->get(functions);
+  for(unsigned int i = 0; i < functions.size(); i++){
+    if(!functions[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
+      continue;
+    if(functions[i].getAttribute("Closed") == "1")
+      closed.insert(functions[i].getPath());
+    _addParameter(functions[i]);
+  }
+  */
+
+  for(std::set<std::string>::iterator it = closed.begin(); it != closed.end(); it++){
+    if(it->size()) _tree->close(it->c_str(), 0);
+  }
+  _tree->redraw();
+
+  FL_NORMAL_SIZE += CTX::instance()->deltaFontSize;
+
+  FlGui::check(); // necessary e.g. on windows to avoid "ghosting"
+}
+
+#else
+
 void onelabGroup::rebuildTree(bool deleteWidgets)
 {
   FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
@@ -1228,6 +1352,8 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
       free(delStrings[i]);
   }
 }
+
+#endif
 
 void onelabGroup::openTreeItem(const std::string &name)
 {

@@ -32,6 +32,7 @@ class onelabGroup : public Fl_Group{
   bool _enableTreeWidgetResize;
   void _computeWidths();
   template <class T> void _addParameter(T &p);
+  template <class T> void _updateParameter(T &p, Fl_Tree_Item *n);
   Fl_Widget *_addParameterWidget(onelab::number &p, int ww, int hh,
                                  Fl_Tree_Item *n, bool highlight, Fl_Color c);
   Fl_Widget *_addParameterWidget(onelab::string &p, int ww, int hh,
