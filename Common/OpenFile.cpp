@@ -443,6 +443,14 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
     CTX::instance()->solverToRun = num; // used in ONELAB2
     return 1;
   }
+  else if(ext == ".vnek" || ext == ".VNEK"){
+    int num = defineSolver("vNek.exe");
+    GModel::current()->setName(split[1] + ".vnek");
+    GModel::current()->setFileName(split[0] + split[1] + ".vnek");
+    CTX::instance()->launchSolverAtStartup = num;
+    CTX::instance()->solverToRun = num; // used in ONELAB2
+    return 1;
+  }
   else if(ext == ".py" || ext == ".PY" ||
           ext == ".m" || ext == ".M" ||
           ext == ".exe" || ext == ".EXE"){
