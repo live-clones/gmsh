@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <complex>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "linearSystemCSR.h"
@@ -136,6 +137,49 @@ void linearSystemCSR<double>::preAllocateEntries ()
 }
 
 template<>
+void linearSystemCSR<std::complex<double> >::preAllocateEntries ()
+{
+  if (_entriesPreAllocated) return;
+  if (_sparsity.getNbRows() == 0) return;
+  INDEX_TYPE nnz = 0;
+  int nbRows = _b->size();
+  for (int i = 0; i < nbRows; i++){
+    int nInRow;
+    _sparsity.getRow (i, nInRow);
+    nnz += nInRow;
+  }
+  CSRList_Resize_strict (_ai, nnz);
+  CSRList_Resize_strict (_ptr, nnz);
+  INDEX_TYPE *jptr = (INDEX_TYPE*) _jptr->array;
+  INDEX_TYPE *ai = (INDEX_TYPE*) _ai->array;
+  INDEX_TYPE *ptr = (INDEX_TYPE*) _ptr->array;
+  jptr[0] = 0;
+  nnz = 0;
+  for (int i = 0; i < nbRows; i++){
+    int nInRow;
+    const int *row = _sparsity.getRow (i, nInRow);
+    for (int j = 0; j < nInRow; j++) {
+      ai[nnz] = row[j];
+      ptr[nnz] = nnz+1;
+      nnz ++;
+    }
+    if (nInRow != 0)
+      ptr[nnz - 1] = 0;
+    jptr[i + 1] = nnz;
+    something[i] = (nInRow == 0 ? 0 : 1);
+  }
+  _entriesPreAllocated = true;
+  sorted = true;
+  _sparsity.clear();
+  // we do this after _sparsity.clear so that the peak memory usage is reduced
+  CSRList_Resize_strict (_a, nnz);
+  std::complex<double> *a = ( std::complex<double> * ) _a->array;
+  for (int i = 0; i < nnz; i++) {
+    a[i] = std::complex<double>();
+  }
+}
+
+template<>
 void linearSystemCSR<double>::allocate(int nbRows)
 {
   if(_a) {
@@ -171,6 +215,44 @@ void linearSystemCSR<double>::allocate(int nbRows)
 
   _b = new std::vector<double>(nbRows);
   _x = new std::vector<double>(nbRows);
+}
+
+template<>
+void linearSystemCSR<std::complex<double> >::allocate(int nbRows)
+{
+  if(_a) {
+    CSRList_Delete(_a);
+    CSRList_Delete(_ai);
+    CSRList_Delete(_ptr);
+    CSRList_Delete(_jptr);
+    delete _x;
+    delete _b;
+    delete[] something;
+  }
+
+  if(nbRows == 0){
+    _a = 0;
+    _ai = 0;
+    _ptr = 0;
+    _jptr = 0;
+    _b = 0;
+    _x = 0;
+    sorted = false;
+    something = 0;
+    return;
+  }
+
+  _a    = CSRList_Create(nbRows, nbRows, sizeof(std::complex<double>));
+  _ai   = CSRList_Create(nbRows, nbRows, sizeof(INDEX_TYPE));
+  _ptr  = CSRList_Create(nbRows, nbRows, sizeof(INDEX_TYPE));
+  _jptr = CSRList_Create(nbRows + 1, nbRows, sizeof(INDEX_TYPE));
+
+  something = new char[nbRows];
+
+  for (int i = 0; i < nbRows; i++) something[i] = 0;
+
+  _b = new std::vector<std::complex<double> >(nbRows);
+  _x = new std::vector<std::complex<double> >(nbRows);
 }
 
 const int NSTACK = 50;
@@ -339,6 +421,18 @@ void linearSystemCSR<double>::getMatrix(INDEX_TYPE*& jptr,INDEX_TYPE*& ai,double
   sorted = true;
 }
 
+template<>
+void linearSystemCSR<std::complex<double> >::getMatrix(INDEX_TYPE*& jptr,INDEX_TYPE*& ai,double *& a)
+{
+  jptr = (INDEX_TYPE*) _jptr->array;
+  ai = (INDEX_TYPE*) _ai->array;
+  a = ( double  * ) _a->array;
+  if (!sorted)
+    sortColumns_(_b->size(), CSRList_Nbr(_a), (INDEX_TYPE *) _ptr->array, jptr,
+                 ai, (std::complex<double> *)a);
+  sorted = true;
+}
+
 #if defined(HAVE_GMM)
 
 #include "gmm.h"
@@ -401,6 +495,45 @@ int linearSystemCSRTaucs<double>::systemSolve()
   myVeryCuteTaucsMatrix.flags = TAUCS_SYMMETRIC | TAUCS_LOWER | TAUCS_DOUBLE;
 
   char* options[] = { (char*)"taucs.factor.LLT=true", NULL };
+  double t1 = Cpu();
+  int result = taucs_linsolve(&myVeryCuteTaucsMatrix,
+                              NULL,
+                              1,
+                              &(*_x)[0],
+                              &(*_b)[0],
+                              options,
+                              NULL);
+  double t2 = Cpu();
+  Msg::Debug("TAUCS has solved %d unknowns in %8.3f seconds", _b->size(), t2 - t1);
+  if (result != TAUCS_SUCCESS){
+    Msg::Error("Taucs Was Not Successfull %d", result);
+  }
+  return 1;
+}
+
+template<>
+int linearSystemCSRTaucs<std::complex<double> >::systemSolve()
+{
+  if (!_a)return 1;
+  if(!sorted){
+    sortColumns_(_b->size(),
+                CSRList_Nbr(_a),
+                (INDEX_TYPE *) _ptr->array,
+                (INDEX_TYPE *) _jptr->array,
+                (INDEX_TYPE *) _ai->array,
+                (std::complex<double>*) _a->array);
+  }
+  sorted = true;
+
+  taucs_ccs_matrix myVeryCuteTaucsMatrix;
+  myVeryCuteTaucsMatrix.n = myVeryCuteTaucsMatrix.m = _b->size();
+  //myVeryCuteTaucsMatrix.rowind = (INDEX_TYPE*)_ptr->array;
+  //myVeryCuteTaucsMatrix.colptr = (INDEX_TYPE*)_ai->array;
+  myVeryCuteTaucsMatrix.rowind = (INDEX_TYPE*)_ai->array;
+  myVeryCuteTaucsMatrix.colptr = (INDEX_TYPE*)_jptr->array;
+  myVeryCuteTaucsMatrix.values.z = (taucs_dcomplex*)_a->array;
+  myVeryCuteTaucsMatrix.flags = TAUCS_SYMMETRIC | TAUCS_LOWER | TAUCS_DCOMPLEX;
+  char* options[] = { (char*)"taucs.factor.mf=true", NULL };
   double t1 = Cpu();
   int result = taucs_linsolve(&myVeryCuteTaucsMatrix,
                               NULL,

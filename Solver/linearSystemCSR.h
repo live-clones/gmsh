@@ -12,6 +12,7 @@
 #include "linearSystem.h"
 #include "sparsityPattern.h"
 
+
 typedef int INDEX_TYPE ;
 typedef struct {
   int nmax;
@@ -53,6 +54,7 @@ class linearSystemCSR : public linearSystem<scalar> {
   virtual void preAllocateEntries ();
   virtual void addToMatrix(int il, int ic, const scalar &val) 
   {
+    
     if (!_entriesPreAllocated)
       preAllocateEntries();
     INDEX_TYPE  *jptr  = (INDEX_TYPE*) _jptr->array;
@@ -123,11 +125,11 @@ class linearSystemCSR : public linearSystem<scalar> {
   }
   virtual void addToRightHandSide(int row, const scalar &val)
   {
-    if(val != 0.0) (*_b)[row] += val;
+    if(val != scalar()) (*_b)[row] += val;
   }
   virtual void addToSolution(int row, const scalar &val)
   {
-    if(val != 0.0) (*_x)[row] += val;
+    if(val != scalar()) (*_x)[row] += val;
   }
   virtual void getFromRightHandSide(int row, scalar &val) const
   {
@@ -142,17 +144,17 @@ class linearSystemCSR : public linearSystem<scalar> {
     if (!_a) return;
     int N = CSRList_Nbr(_a);
     scalar *a = (scalar*) _a->array;
-    for (int i = 0; i < N; i++) a[i] = 0;
+    for (int i = 0; i < N; i++) a[i] = scalar();
   }
   virtual void zeroRightHandSide()
   {
     if (!_b) return;
-    for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = 0.;
+    for(unsigned int i = 0; i < _b->size(); i++) (*_b)[i] = scalar();
   }
   virtual void zeroSolution()
   {
     if (!_x) return;
-    for(unsigned int i = 0; i < _x->size(); i++) (*_x)[i] = 0.;
+    for(unsigned int i = 0; i < _x->size(); i++) (*_x)[i] = scalar();
   }
 
   virtual double normInfRightHandSide() const
@@ -160,8 +162,7 @@ class linearSystemCSR : public linearSystem<scalar> {
     double nor = 0.;
     double temp;
     for(unsigned int i = 0; i < _b->size(); i++){
-      temp = (*_b)[i];
-      if(temp < 0) temp = -temp;
+      temp = std::abs((*_b)[i]);
       if(nor < temp) nor = temp;
     }
     return nor;
@@ -194,7 +195,7 @@ class linearSystemCSRTaucs : public linearSystemCSR<scalar> {
  public:
   linearSystemCSRTaucs(){}
   virtual ~linearSystemCSRTaucs(){}
-  virtual void addToMatrix(int il, int ic, const double &val)
+  virtual void addToMatrix(int il, int ic, const scalar &val)
   {
     if (il <= ic) {
       linearSystemCSR<scalar>::addToMatrix(il, ic, val);
