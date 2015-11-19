@@ -15,6 +15,9 @@
 #define SWAP(a, b)  temp = (a); (a) = (b); (b) = temp;
 #define SWAPI(a, b) tempi = (a); (a) = (b); (b) = tempi;
 
+
+
+
 static void *CSRMalloc(size_t size)
 {
   void *ptr;
@@ -470,6 +473,9 @@ int linearSystemCSRGmm<double>::systemSolve()
 extern "C" {
 #include "taucs.h"
 }
+
+template class linearSystemCSRTaucs<double>;
+template class linearSystemCSRTaucs<std::complex<double> >;
 
 template<>
 int linearSystemCSRTaucs<double>::systemSolve()
