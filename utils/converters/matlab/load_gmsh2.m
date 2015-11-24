@@ -172,7 +172,7 @@ if strcmp(tline,'$ELM') || strcmp(tline, '$Elements')
                                             % format 2: 1 - physical number, 2 - geometrical number, 3 - mesh partition number
     msh.nbType = zeros(ntypes,1);
     for I = 1:msh.nbElm
-        if (fileformat == 2)
+        if (fileformat >= 2)
             finnish = start + 2; 
             msh.ELE_INFOS(I, 1:3) = aux(start:finnish); 
             ntags = aux(finnish); 
