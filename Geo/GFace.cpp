@@ -410,6 +410,57 @@ void GFace::writeGEO(FILE *fp)
 void GFace::computeMeanPlane()
 {
   std::vector<SPoint3> pts;
+
+  if(geomType() == Plane) {
+    // Special case for planar surfaces: we first try to compute the
+    // parametrization in a way that is more robust with respect to
+    // perturbations of the boundary. This is crucial for sensitivity analyses
+    // and GFace::relocateMeshVertices(): after perturbation of the boundary, we
+    // want a parametrization of the surface that is "close" to the original
+    // one. If this fails, we fallback to the classical (SVD-based) algorithm.
+    std::list<GEdge*> edg = edges();
+    for(std::list<GEdge*>::const_iterator ite = edg.begin(); ite != edg.end(); ite++){
+      const GEdge *e = *ite;
+      Range<double> b = e->parBounds(0);
+      GPoint p1 = e->point(b.low() + 0.333 * (b.high() - b.low()));
+      pts.push_back(SPoint3(p1.x(), p1.y(), p1.z()));
+      GPoint p2 = e->point(b.low() + 0.666 * (b.high() - b.low()));
+      pts.push_back(SPoint3(p2.x(), p2.y(), p2.z()));
+    }
+    bool ok = false;
+    double res[4] = {0., 0., 0., 0.}, xm = 0., ym = 0., zm = 0.;
+    if(pts.size() >= 3){
+      SVector3 d01(pts[0], pts[1]);
+      for(unsigned int i = 2; i < pts.size(); i++){
+        SVector3 d0i(pts[0], pts[i]);
+        SVector3 n = crossprod(d01, d0i);
+        if(norm(n) > 1e-12){
+          res[0] = n.x(); res[1] = n.y(); res[2] = n.z();
+          xm = pts[0].x(); ym = pts[0].y(); zm = pts[0].z();
+          ok = true;
+          break;
+        }
+      }
+    }
+    if(ok){
+      double ex[3], t1[3], t2[3];
+      ex[0] = ex[1] = ex[2] = 0.0;
+      if(res[0] == 0.)
+        ex[0] = 1.0;
+      else if(res[1] == 0.)
+        ex[1] = 1.0;
+      else
+        ex[2] = 1.0;
+      prodve(res, ex, t1);
+      norme(t1);
+      prodve(t1, res, t2);
+      norme(t2);
+      res[3] = (xm * res[0] + ym * res[1] + zm * res[2]);
+      fillMeanPlane(res, t1, t2, meanPlane);
+      return;
+    }
+  }
+
   std::list<GVertex*> verts = vertices();
   std::list<GVertex*>::const_iterator itv = verts.begin();
   for(; itv != verts.end(); itv++){
@@ -552,30 +603,7 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
 end:
   res[3] = (xm * res[0] + ym * res[1] + zm * res[2]);
 
-  for(int i = 0; i < 3; i++)
-    meanPlane.plan[0][i] = t1[i];
-  for(int i = 0; i < 3; i++)
-    meanPlane.plan[1][i] = t2[i];
-  for(int i = 0; i < 3; i++)
-    meanPlane.plan[2][i] = res[i];
-
-  meanPlane.a = res[0];
-  meanPlane.b = res[1];
-  meanPlane.c = res[2];
-  meanPlane.d = res[3];
-
-  meanPlane.x = meanPlane.y = meanPlane.z = 0.;
-  if(fabs(meanPlane.a) >= fabs(meanPlane.b) &&
-     fabs(meanPlane.a) >= fabs(meanPlane.c) ){
-    meanPlane.x = meanPlane.d / meanPlane.a;
-  }
-  else if(fabs(meanPlane.b) >= fabs(meanPlane.a) &&
-          fabs(meanPlane.b) >= fabs(meanPlane.c)){
-    meanPlane.y = meanPlane.d / meanPlane.b;
-  }
-  else{
-    meanPlane.z = meanPlane.d / meanPlane.c;
-  }
+  fillMeanPlane(res, t1, t2, meanPlane);
 
   Msg::Debug("Surface: %d", tag());
   Msg::Debug("SVD    : %g,%g,%g (min=%d)", svd[0], svd[1], svd[2], min);

@@ -160,10 +160,13 @@ int intersection_segments (const SPoint2 &p1, const SPoint2 &p2,
 			   double x[2]);
 
 //tools for projection onto plane
+void fillMeanPlane(double res[4], double t1[3], double t2[3], mean_plane &meanPlane);
 void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &meanPlane);
 void projectPointToPlane(const SPoint3 &pt, SPoint3 &ptProj, const mean_plane &meanPlane);
-void projectPointsToPlane(const std::vector<SPoint3> &pts, std::vector<SPoint3> &ptsProj, const mean_plane &meanPlane);
-void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,  std::vector<SPoint3> &pointsUV,
+void projectPointsToPlane(const std::vector<SPoint3> &pts, std::vector<SPoint3> &ptsProj,
+                          const mean_plane &meanPlane);
+void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,
+                                   std::vector<SPoint3> &pointsUV,
 				   const SPoint3 &ptCG, const mean_plane &meanPlane);
 
 #endif

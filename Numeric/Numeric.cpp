@@ -1378,6 +1378,33 @@ int intersection_segments(const SPoint3 &p1, const SPoint3 &p2,
   return false;
 }
 
+void fillMeanPlane(double res[4], double t1[3], double t2[3], mean_plane &meanPlane)
+{
+  for(int i = 0; i < 3; i++)
+    meanPlane.plan[0][i] = t1[i];
+  for(int i = 0; i < 3; i++)
+    meanPlane.plan[1][i] = t2[i];
+  for(int i = 0; i < 3; i++)
+    meanPlane.plan[2][i] = res[i];
+
+  meanPlane.a = res[0];
+  meanPlane.b = res[1];
+  meanPlane.c = res[2];
+  meanPlane.d = res[3];
+
+  meanPlane.x = meanPlane.y = meanPlane.z = 0.;
+  if(fabs(meanPlane.a) >= fabs(meanPlane.b) &&
+     fabs(meanPlane.a) >= fabs(meanPlane.c) ){
+    meanPlane.x = meanPlane.d / meanPlane.a;
+  }
+  else if(fabs(meanPlane.b) >= fabs(meanPlane.a) &&
+          fabs(meanPlane.b) >= fabs(meanPlane.c)){
+    meanPlane.y = meanPlane.d / meanPlane.b;
+  }
+  else{
+    meanPlane.z = meanPlane.d / meanPlane.c;
+  }
+}
 
 void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &meanPlane)
 {
@@ -1434,30 +1461,7 @@ void computeMeanPlaneSimple(const std::vector<SPoint3> &points, mean_plane &mean
 
   res[3] = (xm * res[0] + ym * res[1] + zm * res[2]);
 
-  for(int i = 0; i < 3; i++)
-    meanPlane.plan[0][i] = t1[i];
-  for(int i = 0; i < 3; i++)
-    meanPlane.plan[1][i] = t2[i];
-  for(int i = 0; i < 3; i++)
-    meanPlane.plan[2][i] = res[i];
-
-  meanPlane.a = res[0];
-  meanPlane.b = res[1];
-  meanPlane.c = res[2];
-  meanPlane.d = res[3];
-
-  meanPlane.x = meanPlane.y = meanPlane.z = 0.;
-  if(fabs(meanPlane.a) >= fabs(meanPlane.b) &&
-     fabs(meanPlane.a) >= fabs(meanPlane.c) ){
-    meanPlane.x = meanPlane.d / meanPlane.a;
-  }
-  else if(fabs(meanPlane.b) >= fabs(meanPlane.a) &&
-          fabs(meanPlane.b) >= fabs(meanPlane.c)){
-    meanPlane.y = meanPlane.d / meanPlane.b;
-  }
-  else{
-    meanPlane.z = meanPlane.d / meanPlane.c;
-  }
+  fillMeanPlane(res, t1, t2, meanPlane);
 }
 
 void projectPointToPlane(const SPoint3 &pt, SPoint3 &ptProj, const mean_plane &meanPlane)
