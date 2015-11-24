@@ -1,18 +1,18 @@
-function msh = load_gmsh4(filename, which)
+function msh = load_gmsh2(filename, which)
 
 %% Reads a mesh in msh format, version 1 or 2
 
 % Usage: 
 % To define all variables m.LINES, M.TRIANGLES, etc 
 % (Warning: This creates a very large structure. Do you really need it?)
-%            m = load_gmsh4('a.msh')
+%            m = load_gmsh2('a.msh')
 %
 % To define only certain variables (for example TETS and HEXS)
-%            m = load_gmsh4('a.msh', [ 5 6])
+%            m = load_gmsh2('a.msh', [ 5 6])
 %
 % To define no variables (i.e. if you prefer to use m.ELE_INFOS(i,2))
-%            m = load_gmsh4('a.msh', -1)
-%            m = load_gmsh4('a.msh', [])
+%            m = load_gmsh2('a.msh', -1)
+%            m = load_gmsh2('a.msh', [])
 %
 % Copyright (C) 2007  JP Moitinho de Almeida (moitinho@civil.ist.utl.pt)
 % and  R Lorphevre(r(point)lorphevre(at)ulg(point)ac(point)be)
@@ -111,7 +111,7 @@ elseif (strcmp(tline, '$MeshFormat'))
         fileformat = 0;
     end
     [ form ] = sscanf( tline, '%f %d %d');
-    if (form(1) ~= 2)
+    if (form(1) < 2 || form(1) > 2.2)
         disp (sprintf('Unknown mesh format: %s', tline));
         fileformat = 0;
     end
