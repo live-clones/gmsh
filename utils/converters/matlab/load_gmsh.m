@@ -191,7 +191,6 @@ while 1
     end
     tline = fgetl(fid);
     disp('elements have been read')
-    
   end
 end
 
