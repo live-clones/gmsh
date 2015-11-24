@@ -124,16 +124,22 @@ elseif (strcmp(tline, '$MeshFormat'))
         disp (sprintf('Syntax error (no $EndMeshFormat) in: %s',  filename));
         fileformat = 0;
     end
-    tline = fgetl(fid);    % this should be $Nodes
-    if (feof(fid))
-        disp (sprintf('Syntax error (no $Nodes) in: %s',  filename));
-        fileformat = 0;
-    end
+    tline = fgetl(fid);    % this should be $Nodes or $PhysicalNames
 end
 
 if (~fileformat)
     msh = [];
     return
+end
+
+%% Read (and ignore) physical names
+
+if strcmp(tline, '$PhysicalNames')
+  np = fscanf(fid, '%d', 1);
+  tline = fgetl(fid);
+  for I = 1:np+2
+    tline = fgetl(fid);
+  end
 end
 
 %% Read nodes
