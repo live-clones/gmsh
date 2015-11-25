@@ -82,7 +82,7 @@ class PViewOptions {
   double currentTime;
   int drawStrings;
   int drawPoints, drawLines, drawTriangles, drawQuadrangles, drawPolygons;
-  int drawTetrahedra, drawHexahedra, drawPrisms, drawPyramids, drawPolyhedra;
+  int drawTetrahedra, drawHexahedra, drawPrisms, drawPyramids, drawTrihedra, drawPolyhedra;
   int drawScalars, drawVectors, drawTensors;
   int boundary, pointType, lineType, drawSkinOnly;
   double pointSize, lineWidth;
@@ -103,7 +103,7 @@ class PViewOptions {
   int closed;
   struct{
     unsigned int point, line, triangle, quadrangle;
-    unsigned int tetrahedron, hexahedron, prism, pyramid;
+    unsigned int tetrahedron, hexahedron, prism, pyramid, trihedron;
     unsigned int tangents, normals;
     unsigned int text2d, text3d, axes, background2d;
   } color;

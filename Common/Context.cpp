@@ -83,7 +83,7 @@ CTX::CTX() : gamepad(0)
   mesh.qualityInf = mesh.qualitySup = mesh.qualityType = 0;
   mesh.radiusInf = mesh.radiusSup = 0;
   mesh.lines = mesh.triangles = mesh.tetrahedra = mesh.quadrangles = 0;
-  mesh.prisms = mesh.pyramids = mesh.hexahedra = 0;
+  mesh.prisms = mesh.pyramids = mesh.hexahedra = mesh.trihedra = 0;
   mesh.volumesEdges = mesh.volumesFaces = mesh.surfacesEdges = mesh.surfacesFaces = 0;
   mesh.volumesFaces = mesh.surfacesEdges = mesh.surfacesFaces = 0;
   mesh.hoOptimize = mesh.smoothNormals = mesh.reverseAllNormals = 0;
@@ -93,7 +93,7 @@ CTX::CTX() : gamepad(0)
   mesh.ignorePartBound = 0;
   mesh.saveTri = 0;
   color.mesh.tangents = color.mesh.tetrahedron = color.mesh.triangle = 0;
-  color.mesh.prism = color.mesh.pyramid = color.mesh.hexahedron = 0;
+  color.mesh.prism = color.mesh.pyramid = color.mesh.hexahedron = color.mesh.trihedron = 0;
   color.mesh.tangents = color.mesh.line = color.mesh.quadrangle = 0;
   for (int i = 0; i < 20; i++)
     color.mesh.carousel[i] = 0;

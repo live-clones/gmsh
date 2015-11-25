@@ -41,6 +41,8 @@ class PViewDataList : public PViewData {
   std::vector<double> SI, VI, TI; // prisms
   int NbSY, NbVY, NbTY;
   std::vector<double> SY, VY, TY; // pyramids
+  int NbSR, NbVR, NbTR;
+  std::vector<double> SR, VR, TR; // trihedra
   int NbSD, NbVD, NbTD;
   std::vector<double> SD, VD, TD; // polyhedra
   int NbT2, NbT3;
@@ -50,7 +52,7 @@ class PViewDataList : public PViewData {
   std::vector<int> polyAgNumNodes[2];
   int polyTotNumNodes[2];
  private:
-  int _index[30];
+  int _index[33];
   int _lastElement, _lastDimension;
   int _lastNumNodes, _lastNumComponents, _lastNumValues, _lastNumEdges, _lastType;
   double *_lastXYZ, *_lastVal;
@@ -90,6 +92,7 @@ class PViewDataList : public PViewData {
   int getNumHexahedra(int step=-1){ return NbSH + NbVH + NbTH; }
   int getNumPrisms(int step=-1){ return NbSI + NbVI + NbTI; }
   int getNumPyramids(int step=-1){ return NbSY + NbVY + NbTY; }
+  int getNumTrihedra(int step=-1){ return NbSR + NbVR + NbTR; }
   int getNumPolyhedra(int step=-1){ return NbSD + NbVD + NbTD; }
   int getNumEntities(int step=-1){ return 1; }
   int getNumElements(int step=-1, int ent=-1);

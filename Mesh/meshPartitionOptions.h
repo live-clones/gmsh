@@ -78,6 +78,7 @@ class meshPartitionOptions
   int tetWeight;
   int priWeight;
   int pyrWeight;
+  int trihWeight;
   int hexWeight;
 
   // NODAL WEIGHT
@@ -130,6 +131,7 @@ class meshPartitionOptions
     tetWeight = 1;
     priWeight = 1;
     pyrWeight = 1;
+    trihWeight = 0;
     hexWeight = 1;
   }
 };

@@ -1,26 +1,38 @@
 from gmshpy import *
 import sys
 import pickle
-
-name = "Submarine2"
+import preprofix
+name = "Submarine"
 
 g = GModel()
 g.load(name + ".geo")
-#g.mesh(3)
-#g.save(name + ".msh")
-g.load(name + ".msh")
+g.mesh(3)
+g.writeMSH(name + ".msh", 3.0)
+#g.load(name + ".msh")
+g.setAllVolumesPositiveTopology()
 
+g.writeMSH(name + "_topology.msh", 3.0)
+preprofix.fixTetras(g)
+preprofix.fixPyramids(g)
+preprofix.fixPrisms(g)
+preprofix.fixHexs(g)
+g.writeMSH(name + "_FIX.msh", 3.0)
+
+#exit()
+#preprofix.fixPyramids(g)
+
+#g.writeMSH(name + "Fix.msh",3.0)
 
 OH = MeshQualOptParameters()
 OH.onlyVisible = False
 OH.dim = 3
-OH.fixBndNodes = True    # Fix boundary nodes or not
-OH.strategy = 1           # 0 = Connected blobs, 1 = Adaptive one-by-one (recommended in 3D)
+OH.fixBndNodes = False    # Fix boundary nodes or not
+OH.strategy = 0           # 0 = Connected blobs, 1 = Adaptive one-by-one (recommended in 3D)
 
 OH.excludeHex = False
 OH.excludePrism = False
-OH.nbLayers = 2          # Nb. of layers around invalid element to construct blob
-OH.distanceFactor = 2    # Distance factor to construct blob
+OH.nbLayers = 3          # Nb. of layers around invalid element to construct blob
+OH.distanceFactor = 3    # Distance factor to construct blob
 OH.maxPatchAdapt = 5       # Number of blob adaption iteration
 OH.maxLayersAdaptFact = 3 # Factor to multiply nb. of layers when adapting
 OH.distanceAdaptFact = 3 # Factor to multiply distance factor when adapting
@@ -36,7 +48,7 @@ OH.nCurses = 1
 OH.logFileName = "log"
 
 OH.maxOptIter = 20             # Nb of optimixation iterations
-OH.maxBarrierUpdates = 30        # Nb. of optimization passes
+OH.maxBarrierUpdates = 15        # Nb. of optimization passes
 
 #print("minTargetIdealJac = %g" % OH.minTargetIdealJac)
 print("minTargetInvCondNum = %g" % OH.minTargetInvCondNum)
@@ -55,6 +67,11 @@ MeshQualityOptimizer(g, OH)
 print("RESULT: minInvCondNum = %g, maxInvCondNum = %g, CPU = %g" %
       (OH.minInvCondNum, OH.maxInvCondNum, OH.CPU))
 
-g.save(name + "_opt.msh")
+g.writeMSH(name + "_opt.msh", 3.0)
+pOpt = meshPartitionOptions()
+pOpt.setNumOfPartitions(5)
+PartitionMesh(g,  pOpt)
+g.writeMSH(name + "_opt_part.msh", 3.0)
+
 #g.writeMSH(name + "_OK.msh",3.0,False,False,False,1.0,0,0)
 

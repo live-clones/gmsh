@@ -17,6 +17,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MTrihedron.h"
 #include "MElementCut.h"
 #include "MSubElement.h"
 #include "GEntity.h"
@@ -116,6 +117,9 @@ MElement* MElement::createElement(int tag, const std::vector<MVertex*> &vertices
     else
       return new MPrismN(vertices, order, num, part);
 
+  case TYPE_TRIH:
+    return new MTrihedron(vertices, num, part);
+    
   case TYPE_HEX:
     if (order == 1)
       return new MHexahedron(vertices, num, part);
@@ -1547,6 +1551,7 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_PYR_53  : if(name) *name = "Pyramid 53";       return 5 + 8*6;
   case MSH_PYR_61  : if(name) *name = "Pyramid 61";       return 5 + 8*7;
   case MSH_PYR_69  : if(name) *name = "Pyramid 69";       return 5 + 8*8;
+  case MSH_TRIH_4 : if(name) *name = "Trihedron 4";       return 4;
   case MSH_POLYH_  : if(name) *name = "Polyhedron";       return 0;
   case MSH_PNT_SUB : if(name) *name = "Point Xfem";       return 1;
   case MSH_LIN_SUB : if(name) *name = "Line Xfem";        return 2;
@@ -1757,6 +1762,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_PYR_204: return new MPyramidN(v, 7, num, part);
   case MSH_PYR_285: return new MPyramidN(v, 8, num, part);
   case MSH_PYR_385: return new MPyramidN(v, 9, num, part);
+  case MSH_TRIH_4: return new MTrihedron(v, num, part);
   default:          return 0;
   }
 }

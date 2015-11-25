@@ -31,6 +31,7 @@
   #include "MTetrahedron.h"
   #include "MPrism.h"
   #include "MPyramid.h"
+  #include "MTrihedron.h"
   #include "MHexahedron.h"
   #include "MQuadrangle.h"
   #include "MLine.h"
@@ -58,6 +59,9 @@ namespace std {
   %template(MTetrahedronVector) vector< MTetrahedron *,std::allocator< MTetrahedron * > >;
   %template(MQuadrangleVector) vector< MQuadrangle *,std::allocator< MQuadrangle * > >;
   %template(MPyramidVector) vector< MPyramid *,std::allocator< MPyramid * > >;
+  %template(MTrihedronVector) vector< MTrihedron *,std::allocator< MTrihedron * > >;
+  %template(MHexahedronVector) vector< MHexahedron *,std::allocator< MHexahedron * > >;
+  %template(MPrismVector) vector< MPrism *,std::allocator< MPrism * > >;
   %template(GEdgeVectorVector) vector< std::vector< GEdge *,std::allocator< GEdge * > >,std::allocator< std::vector< GEdge *,std::allocator< GEdge * > > > >;
   %template(GFaceVectorVector) vector< std::vector< GFace *,std::allocator< GFace * > >,std::allocator< std::vector< GFace *,std::allocator< GFace * > > > >;
   %template(GFaceList) list<GFace*, std::allocator<GFace*> >;
@@ -125,6 +129,7 @@ namespace std {
 %include "MTetrahedron.h"
 %include "MPrism.h"
 %include "MPyramid.h"
+%include "MTrihedron.h"
 %include "MHexahedron.h"
 %include "MQuadrangle.h"
 %include "MLine.h"
@@ -194,6 +199,11 @@ namespace std {
     std::vector<double> uvw(3, 0.);
     $self->xyz2uvw(xyz, &uvw[0]);
     return uvw;
+  }
+  std::vector<MVertex*> getVertices() {
+    std::vector <MVertex*> vertices;
+    $self->getVertices(vertices);
+    return vertices;
   }
 }
 

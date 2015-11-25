@@ -21,6 +21,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MTrihedron.h"
 #include "MElementCut.h"
 #include "MElementOctree.h"
 #include "discreteRegion.h"
@@ -587,6 +588,128 @@ bool GModel::setAllVolumesPositive()
   return ok;
 }
 
+static void addToMap(std::multimap< MFace , MElement *, Less_Face> &faceToElement, std::map< MElement *, std::vector < std::pair <MElement *, bool> > > &elToNeighbors, const MFace &face,  MElement *el){
+  std::map< MFace , MElement *, Less_Face>::iterator fit = faceToElement.find(face);
+  if (fit == faceToElement.end()){
+    faceToElement.insert(std::pair< MFace , MElement *>(face, el));
+  } else { //We found the neighbor face outFace
+    faceToElement.insert(std::pair< MFace , MElement *>(face, el));
+    if (faceToElement.count(face) > 2)
+      Msg::Fatal("Topological fault: Face sharing two other faces. Element %i. Number of nodes %i. Count of faces: %i Three first nodes %i %i %i",el->getNum(),face.getNumVertices(),faceToElement.count(face),face.getVertex(0)->getNum(),face.getVertex(1)->getNum(),face.getVertex(2)->getNum());
+    MFace outFace = fit->first;
+    std::vector<std::pair<MElement *, bool> > &neigh = elToNeighbors[el];
+    for (size_t iN = 0; iN < neigh.size(); iN++)
+      if (neigh[iN].first == fit->second)
+        return;
+    int i0 = -1;
+    while (face.getVertex(0) != outFace.getVertex(++i0));
+    bool sameOrientation = face.getVertex(1) == outFace.getVertex((i0+1)%face.getNumVertices());
+    //    if (sameOrientation) printf("Non-matching orientation between el %i and el %i for face IN %i %i %i out %i %i %i\n",el->getNum(),fit->second->getNum(),face.getVertex(0)->getNum(),face.getVertex(1)->getNum(),face.getVertex(2)->getNum(),outFace.getVertex(0)->getNum(),outFace.getVertex(1)->getNum(),outFace.getVertex(2)->getNum());
+    neigh.push_back(std::make_pair(fit->second, !sameOrientation));
+    elToNeighbors[fit->second].push_back(std::make_pair(el, !sameOrientation));
+  }
+}
+
+//static void checkConformity(std::multimap< MFace , MElement *, Less_Face> &faceToElement, std::map< MElement *, std::vector < std::pair <MElement *, bool> > > &elToNeighbors, const MFace &face,  MElement *el){
+//  //Check conformity
+//  if (face.getNumVertices() == 4){
+//    MVertex *v0  =  face.getVertex(0);
+//    MVertex *v1  =  face.getVertex(1);
+//    MVertex *v2  =  face.getVertex(2);
+//    MVertex *v3  =  face.getVertex(3);
+//    MFace f[5] = {MFace(v0, v1, v2), MFace(v0, v2, v3), MFace(v0, v1, v3), MFace(v1, v2, v3)};
+//    if (faceToElement.find(f[0])!= faceToElement.end() || faceToElement.find(f[1])!= faceToElement.end() || faceToElement.find(f[2])!= faceToElement.end() || faceToElement.find(f[3])!= faceToElement.end() ){
+//      //Check if the element is a trihedron used to recover conformity:
+//      //A single element contains the two triangles, the quad and no other face
+//      std::multiset<size_t> facesNeighborsId;
+//      int nFaces=0;
+//      for (int iFace = 0; iFace<4; iFace++){
+//        int nbCount = faceToElement.count(f[iFace]);
+//        if (nbCount != 0){
+//          nFaces++;
+//          if (nFaces > 3) Msg::Fatal("Topological fault: A quad face shares more than 3 triangles (element %i)",el->getNum());
+//          std::pair <std::multimap< MFace , MElement *, Less_Face>::iterator, std::multimap< MFace , MElement *, Less_Face>::iterator> faceNeighbors;
+//          faceNeighbors = faceToElement.equal_range(f[iFace]);
+//          for (std::multimap< MFace , MElement *, Less_Face>::iterator itEl=faceNeighbors.first; itEl!=faceNeighbors.second; ++itEl)
+//            facesNeighborsId.insert(itEl->second->getNum());
+//        }
+//      }
+//      //In some cases, there can be 3 triangles matching a quad face and result in a valid trihedron (1 or 4 triangles not allowed)
+//      if ((nFaces != 2 || nFaces != 3) && faceToElement.count(face)!= 2) Msg::Fatal("Nonconforming element which is not a trihedron (element %i  nFaces %i nodes %i %i %i %i)",el->getNum(),nFaces,v0->getNum(),v1->getNum(),v2->getNum(),v3->getNum());
+//      size_t maxOccurence=0;
+//      for (std::multiset<size_t>::iterator iElId = facesNeighborsId.begin(); iElId != facesNeighborsId.end(); ++iElId){
+//        maxOccurence = std::max(facesNeighborsId.count(*iElId), maxOccurence);
+//      }
+//      if (maxOccurence != 3) //A trihedron should have 3 and only 3 neighbors      
+//        Msg::Fatal("Nonconforming face for element: %i vertices %i %i %i %i. Number of neighbors: %i",el->getNum(), v0->getNum(), v1->getNum(), v2->getNum(), v3->getNum(),maxOccurence);
+//    }
+//  }
+//}
+
+static void checkConformity(std::multimap< MFace , MElement *, Less_Face> &faceToElement, std::map< MElement *, std::vector < std::pair <MElement *, bool> > > &elToNeighbors, MFace face, MElement *el){
+  int connectivity = faceToElement.count(face);
+  if (ElementType::ParentTypeFromTag(el->getType()) == TYPE_TRIH){
+    //Each face of a trihedron should exist twice (no face on the boundary)
+    if (connectivity != 2) Msg::Fatal("Non conforming trihedron %i (nb connections for a face %i)",el->getNum(), faceToElement.count(face));
+  }else{
+    //A face can exist  twice (inside) or once (boundary)
+    if (connectivity != 2){
+      for (int iV = 0; iV < face.getNumVertices(); iV++)
+        if (face.getVertex(iV)->onWhat()->dim() == 3 || connectivity != 1){
+          for (int jV = 0; jV < face.getNumVertices(); jV++)
+            Msg::Info("Vertex %i",face.getVertex(jV)->getNum());
+          Msg::Fatal("Non conforming element %i (nb connections for a face %i vertex %i)",el->getNum(), connectivity, face.getVertex(iV)->getNum());
+        }
+    }
+  }
+}
+
+void GModel::setAllVolumesPositiveTopology()
+{
+  Msg::Info("Orienting volumes according to topology");
+  std::map< MElement *, std::vector < std::pair < MElement *, bool> > > elToNeighbors;
+  std::multimap< MFace , MElement *, Less_Face> faceToElement;
+
+  MElement *el;
+  for(riter it = regions.begin(); it != regions.end(); ++it){
+    for (unsigned int iEl = 0; iEl < (*it)->getNumMeshElements(); ++iEl) {
+      el = (*it)->getMeshElement(iEl);
+      for (int iFace = 0; iFace < el->getNumFaces(); iFace++){
+        addToMap(faceToElement, elToNeighbors, el->getFace(iFace), el);
+      }
+    }
+  }
+  for(riter it = regions.begin(); it != regions.end(); ++it){
+    for (unsigned int iEl = 0; iEl < (*it)->getNumMeshElements(); ++iEl) {
+      el = (*it)->getMeshElement(iEl);
+      for (int iFace = 0; iFace < el->getNumFaces(); iFace++){
+        checkConformity(faceToElement, elToNeighbors, el->getFace(iFace), el);
+      }
+    }
+  }
+  std::vector< std::pair <MElement *, bool > > queue;
+  std::set<MElement*> queued;
+  if ( (*regions.begin())->tetrahedra.size() == 0)
+    Msg::Fatal("setAllVolumePositiveTopology needs at least one tetrahedron to start");
+  el = (*regions.begin())->tetrahedra[0];
+  queue.push_back(std::make_pair(el, true));
+  for (size_t i = 0; i < queue.size(); i++){
+    el = queue[i].first;
+    if (!queue[i].second){
+      el->reverse();
+      //      Msg::Info("Reverted element %i of type %i", el->getNum(), el->getType());
+    }
+    const std::vector < std::pair <MElement *, bool> > &neigh = elToNeighbors[el];
+    for (size_t iN = 0; iN < neigh.size(); iN++)
+      if (queued.count(neigh[iN].first) == 0){
+        queue.push_back(std::make_pair(neigh[iN].first, neigh[iN].second == queue[i].second));
+        //        if (!(neigh[iN].second == queue[i].second))
+        //          Msg::Info("Queuing  element %i (%i) from el %i (%i)", neigh[iN].first->getNum(), neigh[iN].second, el->getNum(),queue[i].second);
+        queued.insert(neigh[iN].first);
+      }
+  }
+}
+
 int GModel::adaptMesh(std::vector<int> technique,
                       std::vector<simpleFunction<double>* > f,
                       std::vector<std::vector<double> > parameters,
@@ -758,7 +881,7 @@ int GModel::getMeshStatus(bool countDiscrete)
                           (*it)->meshAttributes.method != MESH_NONE)) &&
        ((*it)->tetrahedra.size() ||(*it)->hexahedra.size() ||
         (*it)->prisms.size() || (*it)->pyramids.size() ||
-        (*it)->polyhedra.size())) return 3;
+        (*it)->polyhedra.size() || (*it)->trihedra.size())) return 3;
   for(fiter it = firstFace(); it != lastFace(); ++it)
     if((countDiscrete || ((*it)->geomType() != GEntity::DiscreteSurface &&
                           (*it)->meshAttributes.method != MESH_NONE)) &&
@@ -803,12 +926,12 @@ int GModel::getNumMeshParentElements()
   return n;
 }
 
-int GModel::getNumMeshElements(unsigned c[5])
+int GModel::getNumMeshElements(unsigned c[6])
 {
-  c[0] = 0; c[1] = 0; c[2] = 0; c[3] = 0; c[4] = 0;
+  c[0] = 0; c[1] = 0; c[2] = 0; c[3] = 0; c[4] = 0; c[5] = 0;
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     (*it)->getNumMeshElements(c);
-  if(c[0] + c[1] + c[2] + c[3] + c[4]) return 3;
+  if(c[0] + c[1] + c[2] + c[3] + c[4] + c[5]) return 3;
   for(fiter it = firstFace(); it != lastFace(); ++it)
     (*it)->getNumMeshElements(c);
   if(c[0] + c[1] + c[2]) return 2;
@@ -970,6 +1093,7 @@ void GModel::removeInvisibleElements()
     removeInvisible((*it)->hexahedra, all);
     removeInvisible((*it)->prisms, all);
     removeInvisible((*it)->pyramids, all);
+    removeInvisible((*it)->trihedra, all);
     removeInvisible((*it)->polyhedra, all);
     (*it)->deleteVertexArrays();
   }
@@ -1148,7 +1272,7 @@ void GModel::_storeElementsInEntities(std::map< int, std::vector<MElement* > >& 
         else _addElements(f->polygons, it->second);
       }
       break;
-    case TYPE_TET: case TYPE_HEX: case TYPE_PYR: case TYPE_PRI: case TYPE_POLYH:
+    case TYPE_TET: case TYPE_HEX: case TYPE_PYR: case TYPE_TRIH: case TYPE_PRI: case TYPE_POLYH:
       {
         GRegion *r = getRegionByTag(it->first);
         if(!r){
@@ -1159,6 +1283,7 @@ void GModel::_storeElementsInEntities(std::map< int, std::vector<MElement* > >& 
         else if(type == TYPE_HEX) _addElements(r->hexahedra, it->second);
         else if(type == TYPE_PRI) _addElements(r->prisms, it->second);
         else if(type == TYPE_PYR) _addElements(r->pyramids, it->second);
+        else if(type == TYPE_TRIH) _addElements(r->trihedra, it->second);
         else _addElements(r->polyhedra, it->second);
       }
       break;
@@ -1190,6 +1315,7 @@ void GModel::_associateEntityWithMeshVertices()
     _associateEntityWithElementVertices(*it, (*it)->hexahedra);
     _associateEntityWithElementVertices(*it, (*it)->prisms);
     _associateEntityWithElementVertices(*it, (*it)->pyramids);
+    _associateEntityWithElementVertices(*it, (*it)->trihedra);
     _associateEntityWithElementVertices(*it, (*it)->polyhedra);
   }
   for(fiter it = firstFace(); it != lastFace(); ++it){
@@ -1254,6 +1380,7 @@ void GModel::pruneMeshVertexAssociations()
     _associateEntityWithElementVertices(*it, (*it)->hexahedra, true);
     _associateEntityWithElementVertices(*it, (*it)->prisms, true);
     _associateEntityWithElementVertices(*it, (*it)->pyramids, true);
+    _associateEntityWithElementVertices(*it, (*it)->trihedra, true);
     _associateEntityWithElementVertices(*it, (*it)->polyhedra, true);
   }
   for(fiter it = _chainFaces.begin(); it != _chainFaces.end(); ++it){
@@ -1355,7 +1482,7 @@ GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
   }
 
   GModel *gm = new GModel();
-  std::map<int, std::vector<MElement*> > elements[10];
+  std::map<int, std::vector<MElement*> > elements[11];
   std::map<int, std::map<int, std::string> > physicals[4];
   std::vector<MVertex*> vertexVector;
 
@@ -1428,8 +1555,9 @@ GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
     case TYPE_HEX : elements[5][elementary[i]].push_back(e); break;
     case TYPE_PRI : elements[6][elementary[i]].push_back(e); break;
     case TYPE_PYR : elements[7][elementary[i]].push_back(e); break;
-    case TYPE_POLYG: elements[8][elementary[i]].push_back(e); break;
-    case TYPE_POLYH: elements[9][elementary[i]].push_back(e); break;
+    case TYPE_TRIH : elements[8][elementary[i]].push_back(e); break;
+    case TYPE_POLYG: elements[9][elementary[i]].push_back(e); break;
+    case TYPE_POLYH: elements[10][elementary[i]].push_back(e); break;
     default : Msg::Error("Wrong type of element"); delete gm; return 0;
     }
     int dim = e->getDim();
@@ -1578,7 +1706,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
     return 0;
   }
 
-  std::map<int, std::vector<MElement*> > elements[10];
+  std::map<int, std::vector<MElement*> > elements[11];
   for(unsigned int i = 0; i < entities.size(); i++){
     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
       MElement *e = entities[i]->getMeshElement(j);
@@ -1601,8 +1729,9 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
         case TYPE_HEX: elements[5][entities[i]->tag()].push_back(e2); break;
         case TYPE_PRI: elements[6][entities[i]->tag()].push_back(e2); break;
         case TYPE_PYR: elements[7][entities[i]->tag()].push_back(e2); break;
-        case TYPE_POLYG: elements[8][entities[i]->tag()].push_back(e2); break;
-        case TYPE_POLYH: elements[9][entities[i]->tag()].push_back(e2); break;
+        case TYPE_TRIH: elements[8][entities[i]->tag()].push_back(e2); break;
+        case TYPE_POLYG: elements[9][entities[i]->tag()].push_back(e2); break;
+        case TYPE_POLYH: elements[10][entities[i]->tag()].push_back(e2); break;
         }
       }
       else
@@ -1824,6 +1953,7 @@ void GModel::makeDiscreteRegionsSimplyConnected()
         case TYPE_HEX: r->hexahedra.push_back((MHexahedron*)e2); break;
         case TYPE_PRI: r->prisms.push_back((MPrism*)e2); break;
         case TYPE_PYR: r->pyramids.push_back((MPyramid*)e2); break;
+        case TYPE_TRIH: r->trihedra.push_back((MTrihedron*)e2); break;
         }
       }
       r->mesh_vertices.insert
@@ -2299,6 +2429,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
     std::vector<MHexahedron*> newHexahedra;
     std::vector<MPrism*> newPrisms;
     std::vector<MPyramid*> newPyramids;
+    std::vector<MTrihedron*> newTrihedra;
     for (unsigned int i = 0; i < gr->getNumMeshElements(); ++i){
       MElement *e = gr->getMeshElement(i);
       std::vector<MVertex *> v;
@@ -2317,6 +2448,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
       case TYPE_HEX: newHexahedra.push_back((MHexahedron*)e2); break;
       case TYPE_PRI: newPrisms.push_back((MPrism*)e2); break;
       case TYPE_PYR: newPyramids.push_back((MPyramid*)e2); break;
+      case TYPE_TRIH: newTrihedra.push_back((MTrihedron*)e2); break;
       }
     }
     gr->deleteVertexArrays();
@@ -2324,16 +2456,18 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
     for(unsigned int i = 0; i < gr->hexahedra.size(); i++) delete gr->hexahedra[i];
     for(unsigned int i = 0; i < gr->prisms.size(); i++) delete gr->prisms[i];
     for(unsigned int i = 0; i < gr->pyramids.size(); i++) delete gr->pyramids[i];
+    for(unsigned int i = 0; i < gr->trihedra.size(); i++) delete gr->trihedra[i];
     gr->tetrahedra = newTetrahedra;
     gr->hexahedra = newHexahedra;
     gr->prisms = newPrisms;
     gr->pyramids = newPyramids;
+    gr->trihedra = newTrihedra;
   }
 
   Msg::Debug("Done creating topology for edges");
 }
 
-void makeSimplyConnected(std::map<int, std::vector<MElement*> > elements[10])
+void makeSimplyConnected(std::map<int, std::vector<MElement*> > elements[11])
 {
   //only for tetras and triangles
   Msg::Info("Make simply connected regions and surfaces.");
@@ -2502,7 +2636,7 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
   else
     CTX::instance()->mesh.saveTri = 0;
 
-  std::map<int, std::vector<MElement*> > elements[10];
+  std::map<int, std::vector<MElement*> > elements[11];
   std::map<int, std::map<int, std::string> > physicals[4];
   std::map<int, MVertex*> vertexMap;
 

@@ -449,6 +449,16 @@ int PViewDataGModel::getNumPyramids(int step)
   return n;
 }
 
+int PViewDataGModel::getNumTrihedra(int step)
+{
+  if(_steps.empty()) return 0;
+  GModel *m = _steps[0]->getModel(); // to generalize
+  int n = 0;
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+    n += (*it)->trihedra.size();
+  return n;
+}
+
 int PViewDataGModel::getNumPolyhedra(int step)
 {
   if(_steps.empty()) return 0;

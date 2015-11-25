@@ -315,10 +315,16 @@ CondNumBasis::CondNumBasis(int tag, int cnOrder) :
     _tag(tag), _dim(ElementType::DimensionFromTag(tag)),
     _condNumOrder(cnOrder >= 0 ? cnOrder : condNumOrder(tag))
 {
+  if ( ElementType::ParentTypeFromTag(tag) == TYPE_TRIH){
+    _nCondNumNodes = 1;
+    _nMapNodes = 4;
+    _nPrimMapNodes = 4;
+    return;
+  }
   const bool serendip = false;
 
-  FuncSpaceData data = ( ElementType::ParentTypeFromTag(tag) == TYPE_PYR )? FuncSpaceData(true, tag, true, _condNumOrder+2, _condNumOrder, &serendip) : FuncSpaceData(true, tag, _condNumOrder, &serendip);
-  _gradBasis = BasisFactory::getGradientBasis(data);
+  FuncSpaceData data = ( ElementType::ParentTypeFromTag(tag) == TYPE_PYR )? FuncSpaceData(true, tag, true, _condNumOrder+1, _condNumOrder, &serendip) : FuncSpaceData(true, tag, _condNumOrder, &serendip);
+
   fullMatrix<double> lagPoints;                                  // Sampling points
   gmshGeneratePoints(data, lagPoints);
   _nCondNumNodes = lagPoints.size1();
@@ -381,6 +387,7 @@ int CondNumBasis::condNumOrder(int parentType, int order)
     case TYPE_PRI : return order;
     case TYPE_HEX : return order;
     case TYPE_PYR : return (order == 1) ? 0 : order;
+    case TYPE_TRIH : return 0;
     default :
       Msg::Error("Unknown element type %d, return order 0", parentType);
       return 0;
@@ -398,7 +405,7 @@ inline void CondNumBasis::getInvCondNumGeneral(int nCondNumNodes,
                                                const fullMatrix<double> &nodesXYZ,
                                                const fullMatrix<double> &normals,
                                                fullVector<double> &condNum) const
-{
+{ 
   switch (_dim) {
 
     case 0 : {
@@ -426,6 +433,10 @@ inline void CondNumBasis::getInvCondNumGeneral(int nCondNumNodes,
     }
 
     case 3 : {
+      if (ElementType::ParentTypeFromTag(_tag) == TYPE_TRIH){
+        for (int i = 0; i < nCondNumNodes; i++) condNum(i) = 1.;
+        break;
+      }
       fullMatrix<double> dxyzdX(nCondNumNodes, 3), dxyzdY(nCondNumNodes, 3), dxyzdZ(nCondNumNodes, 3);
       gSMatX.mult(nodesXYZ, dxyzdX);
       gSMatY.mult(nodesXYZ, dxyzdY);
@@ -519,6 +530,17 @@ inline void CondNumBasis::getInvCondNumAndGradientsGeneral(int nCondNumNodes,
     }
 
     case 3 : {
+      if (ElementType::ParentTypeFromTag(_tag) == TYPE_TRIH){
+        for (int i = 0; i < nCondNumNodes; i++) {
+          for (int j = 0; j < _nMapNodes; j++) {
+            IDI(i,j) = 0.;
+            IDI(i,j+1*_nMapNodes) = 0.;
+            IDI(i,j+2*_nMapNodes) = 0.;
+          }
+          IDI(i,3*_nMapNodes) = 1.;
+        }
+        break;
+      }
       fullMatrix<double> dxyzdX(nCondNumNodes,3), dxyzdY(nCondNumNodes,3), dxyzdZ(nCondNumNodes,3);
       gSMatX.mult(nodesXYZ, dxyzdX);
       gSMatY.mult(nodesXYZ, dxyzdY);

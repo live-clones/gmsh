@@ -857,6 +857,20 @@ static void addScalarPyramid(PView *p, double **xyz,
     addScalarTetrahedron(p, xyz, val, pre, is[i][0], is[i][1], is[i][2], is[i][3]);
 }
 
+static void addOutlineTrihedron(PView *p, double **xyz,
+                              unsigned int color, bool pre)
+{
+  addOutlineQuadrangle(p, xyz, color, pre, 0, 1, 2, 3);
+}
+
+static void addScalarTrihedron(PView *p, double **xyz,
+                                double **val, bool pre, int i0=0,
+                                int i1=1, int i2=2, int i3=3, bool unique=false)
+{
+  addScalarQuadrangle(p, xyz, val, pre, i0, i1, i2, i3, unique);
+}
+
+
 static void addOutlinePolyhedron(PView *p, double **xyz,
                                  unsigned int color, bool pre, int numNodes)
 {
@@ -915,6 +929,7 @@ static void addOutlineElement(PView *p, int type, double **xyz,
   case TYPE_HEX: addOutlineHexahedron(p, xyz, opt->color.hexahedron, pre); break;
   case TYPE_PRI: addOutlinePrism(p, xyz, opt->color.prism, pre); break;
   case TYPE_PYR: addOutlinePyramid(p, xyz, opt->color.pyramid, pre); break;
+  case TYPE_TRIH: addOutlineTrihedron(p, xyz, opt->color.pyramid, pre); break;
   case TYPE_POLYH: addOutlinePolyhedron(p, xyz, opt->color.pyramid, pre, numNodes); break;
   }
 }
@@ -932,6 +947,7 @@ static void addScalarElement(PView *p, int type, double **xyz,
   case TYPE_HEX: addScalarHexahedron(p, xyz, val, pre); break;
   case TYPE_PRI: addScalarPrism(p, xyz, val, pre); break;
   case TYPE_PYR: addScalarPyramid(p, xyz, val, pre); break;
+  case TYPE_TRIH: addScalarTrihedron(p, xyz, val, pre); break;
   case TYPE_POLYH: addScalarPolyhedron(p, xyz, val, pre, numNodes); break;
   }
 }
@@ -1342,6 +1358,7 @@ class initPView {
     int tets = data->getNumTetrahedra(opt->timeStep);
     int prisms = data->getNumPrisms(opt->timeStep);
     int pyrs = data->getNumPyramids(opt->timeStep);
+    int trihs = data->getNumTrihedra(opt->timeStep);
     int hexas = data->getNumHexahedra(opt->timeStep);
     int polyhs = data->getNumPolyhedra(opt->timeStep);
     int heuristic = 0;
@@ -1349,10 +1366,10 @@ class initPView {
       heuristic = (tets + prisms + pyrs + hexas + polyhs) / 10;
     else if(opt->intervalsType == PViewOptions::Continuous)
       heuristic = (tris + 2 * quads + 3 * polygs + 6 * tets +
-                   8 * prisms + 6 * pyrs + 12 * hexas + 10 * polyhs);
+                   8 * prisms + 6 * pyrs + 2 * trihs  + 12 * hexas + 10 * polyhs);
     else if(opt->intervalsType == PViewOptions::Discrete)
       heuristic = (tris + 2 * quads + 3 * polygs + 6 * tets +
-                   8 * prisms + 6 * pyrs + 12 * hexas + 10 * polyhs) * 2;
+                   8 * prisms + 6 * pyrs + 2 * trihs + 12 * hexas + 10 * polyhs) * 2;
     heuristic = _estimateIfClipped(p, heuristic);
     return heuristic + 10000;
   }

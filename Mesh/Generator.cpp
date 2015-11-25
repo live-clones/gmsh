@@ -111,11 +111,12 @@ void GetStatistics(double stat[50], double quality[3][100])
     stat[10] += (*it)->hexahedra.size();
     stat[11] += (*it)->prisms.size();
     stat[12] += (*it)->pyramids.size();
+    stat[13] += (*it)->trihedra.size();
   }
 
-  stat[13] = CTX::instance()->meshTimer[0];
-  stat[14] = CTX::instance()->meshTimer[1];
-  stat[15] = CTX::instance()->meshTimer[2];
+  stat[14] = CTX::instance()->meshTimer[0];
+  stat[15] = CTX::instance()->meshTimer[1];
+  stat[16] = CTX::instance()->meshTimer[2];
 
   if(quality){
     for(int i = 0; i < 3; i++)
@@ -125,7 +126,7 @@ void GetStatistics(double stat[50], double quality[3][100])
     double gamma = 0., gammaMin = 1., gammaMax = 0.;
     double rho = 0., rhoMin = 1., rhoMax = 0.;
 
-    double N = stat[9] + stat[10] + stat[11] + stat[12];
+    double N = stat[9] + stat[10] + stat[11] + stat[12] + stat[13];
     if(N){ // if we have 3D elements
       for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
         GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax,
@@ -148,25 +149,25 @@ void GetStatistics(double stat[50], double quality[3][100])
       }
     }
     if(N){
-      stat[17] = minSICN / N; stat[18] = minSICNMin; stat[19] = minSICNMax;
-      stat[20] = gamma / N;   stat[21] = gammaMin;   stat[22] = gammaMax;
-      stat[23] = rho / N;     stat[24] = rhoMin;     stat[25] = rhoMax;
+      stat[18] = minSICN / N; stat[19] = minSICNMin; stat[20] = minSICNMax;
+      stat[21] = gamma / N;   stat[22] = gammaMin;   stat[23] = gammaMax;
+      stat[25] = rho / N;     stat[25] = rhoMin;     stat[26] = rhoMax;
     }
   }
 
 #if defined(HAVE_POST)
-  stat[26] = PView::list.size();
+  stat[27] = PView::list.size();
   for(unsigned int i = 0; i < PView::list.size(); i++) {
     PViewData *data = PView::list[i]->getData(true);
-    stat[27] += data->getNumPoints();
-    stat[28] += data->getNumLines();
-    stat[29] += data->getNumTriangles();
-    stat[30] += data->getNumQuadrangles();
-    stat[31] += data->getNumTetrahedra();
-    stat[32] += data->getNumHexahedra();
-    stat[33] += data->getNumPrisms();
-    stat[34] += data->getNumPyramids();
-    stat[35] += data->getNumStrings2D() + data->getNumStrings3D();
+    stat[28] += data->getNumPoints();
+    stat[29] += data->getNumLines();
+    stat[30] += data->getNumTriangles();
+    stat[31] += data->getNumQuadrangles();
+    stat[32] += data->getNumTetrahedra();
+    stat[33] += data->getNumHexahedra();
+    stat[34] += data->getNumPrisms();
+    stat[35] += data->getNumPyramids();
+    stat[36] += data->getNumStrings2D() + data->getNumStrings3D();
   }
 #endif
 }
@@ -534,9 +535,9 @@ static void Mesh3D(GModel *m)
         Recombinator rec;
         rec.execute(gr);
         Supplementary sup;
-        sup.execute(gr);
+        //        sup.execute(gr);
         PostOp post;
-        post.execute(gr,0);
+        post.execute(gr,0, true); //0: no pyramid, 1: single-step, 2: two-steps (conforming), true: fill non-conformities with trihedra
         nb_elements_recombination += post.get_nb_elements();
         nb_hexa_recombination += post.get_nb_hexahedra();
         vol_element_recombination += post.get_vol_elements();

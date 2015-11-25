@@ -847,6 +847,7 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
         if((*it)->polyhedra[i]->ownsParent())
           n += (saveAll ? 1 : (*it)->physicals.size());
     }
+    n -= (*it)->trihedra.size();
   }
   return n;
 }

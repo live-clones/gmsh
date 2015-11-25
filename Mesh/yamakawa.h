@@ -609,7 +609,7 @@ public:
 
 class PostOp{
 private:
-  int nbr,nbr8,nbr6,nbr5,nbr4;
+  int nbr,nbr8,nbr6,nbr5,nbr4,nbr4Trih;
   double vol,vol8,vol6,vol5,vol4;
   int estimate1;
   int estimate2;
@@ -623,8 +623,9 @@ public:
   PostOp();
   ~PostOp();
 
-  void execute(bool);
-  void execute(GRegion*,bool);
+  void execute(int, bool);
+  //0: no pyramid, 1: single-step, 2: two-steps (conforming), true: fill non-conformities with trihedra
+  void execute(GRegion*,int level, bool addTrihedra);
 
   inline int get_nb_hexahedra()const{return nbr8;};
   inline double get_vol_hexahedra()const{return vol8;};
@@ -634,8 +635,10 @@ public:
   void init_markings(GRegion*);
   void pyramids1(GRegion*);
   void pyramids2(GRegion*);
+  void trihedra(GRegion*);
   void pyramids1(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
   void pyramids2(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
+  void trihedra(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
   void rearrange(GRegion*);
   void statistics(GRegion*);
   void build_tuples(GRegion*);
@@ -643,6 +646,7 @@ public:
   void modify_surfaces(MVertex*,MVertex*,MVertex*,MVertex*);
 
   bool four(MElement*);
+  bool fourTrih(MElement*);
   bool five(MElement*);
   bool six(MElement*);
   bool eight(MElement*);
@@ -656,6 +660,8 @@ public:
 
   MVertex* find(MVertex*,MVertex*,MVertex*,MVertex*,MElement*);
   void find_tetrahedra(MVertex*,MVertex*,std::set<MElement*>&);
+  void find_tetrahedra(MVertex*,MVertex*,MVertex*,std::set<MElement*>&);
+  void find_pyramids_from_tri(MVertex*,MVertex*,MVertex*,std::set<MElement*>&);
   void find_pyramids(MVertex*,MVertex*,std::set<MElement*>&);
 
   void intersection(const std::set<MElement*>&,const std::set<MElement*>&,std::set<MElement*>&);

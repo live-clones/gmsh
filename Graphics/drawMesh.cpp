@@ -17,6 +17,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MTrihedron.h"
 #include "MElementCut.h"
 #include "Context.h"
 #include "OS.h"
@@ -585,6 +586,10 @@ class drawMeshGRegion {
         drawElementLabels(_ctx, r, r->pyramids, CTX::instance()->mesh.volumesFaces ||
                           CTX::instance()->mesh.surfacesFaces,
                           CTX::instance()->color.mesh.line);
+      if(CTX::instance()->mesh.trihedra)
+        drawElementLabels(_ctx, r, r->trihedra, CTX::instance()->mesh.volumesFaces ||
+                          CTX::instance()->mesh.surfacesFaces,
+                          CTX::instance()->color.mesh.line);
       drawElementLabels(_ctx, r, r->polyhedra, CTX::instance()->mesh.volumesFaces ||
                         CTX::instance()->mesh.surfacesFaces,
                         CTX::instance()->color.mesh.line);
@@ -598,6 +603,7 @@ class drawMeshGRegion {
         if(CTX::instance()->mesh.hexahedra) drawVerticesPerElement(_ctx, r, r->hexahedra);
         if(CTX::instance()->mesh.prisms) drawVerticesPerElement(_ctx, r, r->prisms);
         if(CTX::instance()->mesh.pyramids) drawVerticesPerElement(_ctx, r, r->pyramids);
+        if(CTX::instance()->mesh.trihedra) drawVerticesPerElement(_ctx, r, r->trihedra);
         drawVerticesPerElement(_ctx, r, r->polyhedra);
       }
     }
@@ -607,6 +613,7 @@ class drawMeshGRegion {
       if(CTX::instance()->mesh.hexahedra) drawBarycentricDual(r->hexahedra);
       if(CTX::instance()->mesh.prisms) drawBarycentricDual(r->prisms);
       if(CTX::instance()->mesh.pyramids) drawBarycentricDual(r->pyramids);
+      if(CTX::instance()->mesh.trihedra) drawBarycentricDual(r->trihedra);
       drawBarycentricDual(r->polyhedra);
     }
 

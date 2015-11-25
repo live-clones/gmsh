@@ -93,6 +93,9 @@ int ElementType::ParentTypeFromTag(int tag)
     case(MSH_TRI_MINI):
     case(MSH_TET_MINI):
       return TYPE_MINI;
+    case(MSH_TRIH_4):
+      return TYPE_TRIH;
+
     default:
       Msg::Error("Unknown element tag %i for parent type, returning -1.", tag);
       return -1;
@@ -230,6 +233,7 @@ int ElementType::OrderFromTag(int tag)
   case MSH_PYR_53 : return 7;
   case MSH_PYR_61 : return 8;
   case MSH_PYR_69 : return 9;
+  case MSH_TRIH_4 : return 1;
   case MSH_POLYH_ : return 1;
   default :
     Msg::Warning("Unknown element tag %d, assuming order 1.",tag);
@@ -320,6 +324,8 @@ int ElementType::DimensionFromTag(int tag)
     case(MSH_HEX_68):   case(MSH_HEX_80):
     case(MSH_HEX_92):   case(MSH_HEX_104):
 
+    case(MSH_TRIH_4):
+      
     case(MSH_POLYH_):
       return 3;
 
@@ -393,6 +399,8 @@ int ElementType::SerendipityFromTag(int tag)
   case MSH_PYR_140 : case MSH_PYR_204 :
   case MSH_PYR_285 : case MSH_PYR_385 :
 
+  case MSH_TRIH_4 :
+    
     return 0; // Not Serendipity
 
 
@@ -549,6 +557,8 @@ int ElementType::getTag(int parentTag, int order, bool serendip)
     default : Msg::Error("pyramid order %i unknown", order); return 0;
     }
     break;
+  case TYPE_TRIH :
+    return MSH_TRIH_4;
   default : Msg::Warning("unknown element type %i, returning 0", parentTag); return 0;
   }
 }

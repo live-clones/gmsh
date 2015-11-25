@@ -20,7 +20,7 @@ class GamePad;
 
 struct contextMeshOptions {
   int draw, changed, light, lightTwoSide, lightLines, pointType;
-  int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms, pyramids;
+  int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms, pyramids, trihedra;
   int surfacesEdges, surfacesFaces, volumesEdges, volumesFaces, numSubEdges;
   int pointsNum, linesNum, surfacesNum, volumesNum, qualityType, labelType;
   int optimize, optimizeNetgen, optimizeLloyd, smoothCrossField, refineSteps;
@@ -293,7 +293,7 @@ class CTX {
     } geom;
     struct{
       unsigned int vertex, vertexSup, line, triangle, quadrangle;
-      unsigned int tetrahedron, hexahedron, prism, pyramid;
+      unsigned int tetrahedron, hexahedron, prism, pyramid, trihedron;
       unsigned int carousel[20];
       unsigned int tangents, normals;
     } mesh;

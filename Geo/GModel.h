@@ -362,7 +362,7 @@ class GModel
 
   // get the number of each type of element in the mesh at the largest
   // dimension and return the dimension
-  int getNumMeshElements(unsigned c[5]);
+  int getNumMeshElements(unsigned c[6]);
 
   // access a mesh element by coordinates (using an octree search)
   MElement *getMeshElementByCoord(SPoint3 &p, int dim=-1, bool strict=true);
@@ -467,6 +467,7 @@ class GModel
 
   // Ensure that the Jacobian of all volume elements is positive
   bool setAllVolumesPositive();
+  void setAllVolumesPositiveTopology();
 
   // make the mesh a high order mesh at order N
   // linear is 1 if the high order points are not placed on the geometry of the model

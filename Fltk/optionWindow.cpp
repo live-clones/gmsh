@@ -496,6 +496,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_hexahedra(0, GMSH_SET, o->mesh.menu->menu()[3].value() ? 1 : 0);
   opt_mesh_prisms(0, GMSH_SET, o->mesh.menu->menu()[4].value() ? 1 : 0);
   opt_mesh_pyramids(0, GMSH_SET, o->mesh.menu->menu()[5].value() ? 1 : 0);
+  opt_mesh_trihedra(0, GMSH_SET, o->mesh.menu->menu()[6].value() ? 1 : 0);
   opt_mesh_surfaces_edges(0, GMSH_SET, o->mesh.butt[8]->value());
   opt_mesh_surfaces_faces(0, GMSH_SET, o->mesh.butt[9]->value());
   opt_mesh_volumes_edges(0, GMSH_SET, o->mesh.butt[10]->value());
@@ -2503,6 +2504,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Hexahedra",   0, 0, 0, FL_MENU_TOGGLE},
         {"Prisms",      0, 0, 0, FL_MENU_TOGGLE},
         {"Pyramids",    0, 0, 0, FL_MENU_TOGGLE},
+        {"Trihedra",    0, 0, 0, FL_MENU_TOGGLE},
         {0}
       };
 
@@ -3687,6 +3689,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_draw_hexahedra(index, GMSH_GUI, 0);
   opt_view_draw_prisms(index, GMSH_GUI, 0);
   opt_view_draw_pyramids(index, GMSH_GUI, 0);
+  opt_view_draw_trihedra(index, GMSH_GUI, 0);
   opt_view_draw_scalars(index, GMSH_GUI, 0);
   opt_view_draw_vectors(index, GMSH_GUI, 0);
   opt_view_draw_tensors(index, GMSH_GUI, 0);
@@ -3792,6 +3795,7 @@ void optionWindow::updateViewGroup(int index)
   opt_view_color_hexahedra(index, GMSH_GUI, 0);
   opt_view_color_prisms(index, GMSH_GUI, 0);
   opt_view_color_pyramids(index, GMSH_GUI, 0);
+  opt_view_color_trihedra(index, GMSH_GUI, 0);
   opt_view_color_tangents(index, GMSH_GUI, 0);
   opt_view_color_normals(index, GMSH_GUI, 0);
   opt_view_color_text2d(index, GMSH_GUI, 0);

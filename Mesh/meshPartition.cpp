@@ -19,6 +19,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MTrihedron.h"
 #include "MElementCut.h"
 #include "MPoint.h"
 #include "partitionVertex.h"
@@ -219,6 +220,8 @@ int RenumberMeshElements(std::vector<MElement*> &elements, meshPartitionOptions 
         gr->prisms.push_back((MPrism*)(*it));
       else if  ((*it)->getType() == TYPE_PYR)
         gr->pyramids.push_back((MPyramid*)(*it));
+      else if  ((*it)->getType() == TYPE_TRIH)
+        gr->trihedra.push_back((MTrihedron*)(*it));
     }
     tmp_model->add(gr);
     RenumberMesh(tmp_model, options, elements);
@@ -556,7 +559,8 @@ int MakeGraph(GModel *const model, Graph &graph, meshPartitionOptions &options, 
     ElemTypeHexa = 1,
     ElemTypePrism = 2,
     ElemTypePyramid = 3,
-    ElemTypePolyh = 4
+    ElemTypeTrih = 4,
+    ElemTypePolyh = 5
   };
   enum {
     ElemTypeTri = 0,
@@ -574,7 +578,7 @@ int MakeGraph(GModel *const model, Graph &graph, meshPartitionOptions &options, 
 
 //--Get the dimension of the mesh and count the numbers of elements
 
-      unsigned numElem[5];
+      unsigned numElem[6];
       const int meshDim = model->getNumMeshElements(numElem);
       if(meshDim < 2) {
         Msg::Error("No mesh elements were found");
@@ -613,11 +617,11 @@ int MakeGraph(GModel *const model, Graph &graph, meshPartitionOptions &options, 
             const int numGrVert =
               numElem[ElemTypeTetra] + numElem[ElemTypeHexa] +
               numElem[ElemTypePrism] + numElem[ElemTypePyramid] +
-              numElem[ElemTypePolyh];
+              + numElem[ElemTypeTrih] + numElem[ElemTypePolyh];
             const int maxGrEdge =
               (numElem[ElemTypeTetra]*4 + numElem[ElemTypeHexa]*6 +
                numElem[ElemTypePrism]*5 + numElem[ElemTypePyramid]*5 +
-               numElem[ElemTypePolyh]*5)/2;
+               numElem[ElemTypeTrih]*3 + numElem[ElemTypePolyh]*5)/2;
             graph.allocate(numGrVert, maxGrEdge);
             // Make the graph
             MakeGraphDIM<3>(model->firstRegion(), model->lastRegion(),
@@ -1204,6 +1208,7 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells, bool createA
       fillit_(faceToElement, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
       fillit_(faceToElement, (*it)->prisms.begin(), (*it)->prisms.end());
       fillit_(faceToElement, (*it)->pyramids.begin(), (*it)->pyramids.end());
+      fillit_(faceToElement, (*it)->trihedra.begin(), (*it)->trihedra.end());
       fillit_(faceToElement, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
     }
     std::multimap<MFace, MElement*, Less_Face>::iterator it = faceToElement.begin();
@@ -1235,6 +1240,7 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells, bool createA
         fillit_(edgeToElement, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
         fillit_(edgeToElement, (*it)->prisms.begin(), (*it)->prisms.end());
         fillit_(edgeToElement, (*it)->pyramids.begin(), (*it)->pyramids.end());
+        fillit_(edgeToElement, (*it)->trihedra.begin(), (*it)->trihedra.end());
         fillit_(edgeToElement, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
       }
     }
@@ -1268,6 +1274,7 @@ int CreatePartitionBoundaries(GModel *model, bool createGhostCells, bool createA
         fillit_(vertexToElement, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
         fillit_(vertexToElement, (*it)->prisms.begin(), (*it)->prisms.end());
         fillit_(vertexToElement, (*it)->pyramids.begin(), (*it)->pyramids.end());
+        fillit_(vertexToElement, (*it)->trihedra.begin(), (*it)->trihedra.end());
         fillit_(vertexToElement, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
       }
     }

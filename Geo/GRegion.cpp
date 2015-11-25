@@ -11,6 +11,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MTrihedron.h"
 #include "MElementCut.h"
 #include "GmshMessage.h"
 #include "VertexArray.h"
@@ -45,8 +46,11 @@ void GRegion::deleteMesh()
   prisms.clear();
   for(unsigned int i = 0; i < pyramids.size(); i++) delete pyramids[i];
   pyramids.clear();
+  for(unsigned int i = 0; i < trihedra.size(); i++) delete trihedra[i];
+  trihedra.clear();
   for(unsigned int i = 0; i < polyhedra.size(); i++) delete polyhedra[i];
   polyhedra.clear();
+
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }
@@ -54,7 +58,7 @@ void GRegion::deleteMesh()
 unsigned int GRegion::getNumMeshElements()
 {
   return tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size() +
-    polyhedra.size();
+    trihedra.size() + polyhedra.size();
 }
 
 unsigned int GRegion::getNumMeshParentElements()
@@ -72,7 +76,8 @@ void GRegion::getNumMeshElements(unsigned *const c) const
   c[1] += hexahedra.size();
   c[2] += prisms.size();
   c[3] += pyramids.size();
-  c[4] += polyhedra.size();
+  c[4] += trihedra.size();
+  c[5] += polyhedra.size();
 }
 
 MElement *const *GRegion::getStartElementType(int type) const
@@ -91,6 +96,9 @@ MElement *const *GRegion::getStartElementType(int type) const
     if(pyramids.empty()) return 0; // msvc would throw an exception
     return reinterpret_cast<MElement *const *>(&pyramids[0]);
   case 4:
+    if(trihedra.empty()) return 0;
+    return reinterpret_cast<MElement *const *>(&trihedra[0]);
+  case 5:
     if(polyhedra.empty()) return 0;
     return reinterpret_cast<MElement *const *>(&polyhedra[0]);
   }
@@ -109,9 +117,14 @@ MElement *GRegion::getMeshElement(unsigned int index)
           pyramids.size())
     return pyramids[index - tetrahedra.size() - hexahedra.size() - prisms.size()];
   else if(index < tetrahedra.size() + hexahedra.size() + prisms.size() +
-          pyramids.size() + polyhedra.size())
+          pyramids.size() + trihedra.size())
+    return trihedra[index - tetrahedra.size() - hexahedra.size() - prisms.size() -
+                    pyramids.size()];
+  else if(index < tetrahedra.size() + hexahedra.size() + prisms.size() +
+          pyramids.size() + trihedra.size() + polyhedra.size())
     return polyhedra[index - tetrahedra.size() - hexahedra.size() - prisms.size() -
-                     pyramids.size()];
+                     pyramids.size() - trihedra.size()];
+
   return 0;
 }
 

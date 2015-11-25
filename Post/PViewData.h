@@ -113,6 +113,7 @@ class PViewData {
   virtual int getNumHexahedra(int step=-1){ return 0; }
   virtual int getNumPrisms(int step=-1){ return 0; }
   virtual int getNumPyramids(int step=-1){ return 0; }
+  virtual int getNumTrihedra(int step=-1){ return 0; }
   virtual int getNumPolyhedra(int step=-1){ return 0; }
 
   // return the number of geometrical entities in the view

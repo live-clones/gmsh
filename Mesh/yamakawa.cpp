@@ -19,9 +19,14 @@
 #include "MQuadrangle.h"
 #include "MTriangle.h"
 #include "MPyramid.h"
+#include "MTrihedron.h"
 #include "MPrism.h"
 #include "MTetrahedron.h"
 #include "MHexahedron.h"
+
+#include "CondNumBasis.h"
+
+
 
 void export_gregion_mesh(GRegion *gr, string filename)
 {
@@ -2297,6 +2302,111 @@ bool Recombinator::valid(Hex &hex,const std::set<MElement*>& parts){
   }
 }
 
+//A face with 4 nodes on the boundary should be close to planar
+//A face with 3 nodes on the boundary should not exist
+bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d){
+    //A face should not have exactly 3 nodes on the same surface
+    //or the face tag is undefined
+  //A better option would be to topologically check that the fase has not  4 nodes
+  //on the surface while the face is not no the surface (face2elems map)
+    MVertex *v[4] = {a, b, c, d};
+    std::map<GFace*, int> nbTagOccurences;
+    int maxOccurences = 0;
+    for (int iV = 0; iV < 4; iV++){
+      if (v[iV]->onWhat()->dim() < 3){
+        std::list<GFace*> faces;
+        if (v[iV]->onWhat()->dim() == 2)
+          faces.push_back((GFace*) v[iV]->onWhat());
+        else
+          faces = v[iV]->onWhat()->faces();
+        //        printf("nbFaces %i\n",faces.size());
+        for (std::list<GFace*>::iterator it=faces.begin(); it != faces.end(); it++){
+          GFace* idFace = (*it);
+          //          printf("Id is %p %i\n",idFace,idFace->getNativeInt());
+          if (nbTagOccurences.find(idFace)==nbTagOccurences.end())
+            nbTagOccurences[idFace] = 1;
+          else
+            nbTagOccurences[idFace]++;
+          maxOccurences = std::max(nbTagOccurences[idFace], maxOccurences);
+        } 
+      }
+    }
+    if (maxOccurences == 3) return false;
+
+
+
+    //Geometry: A face with 4 nodes on the boundary should be close enough to planar
+    int nbBndNodes = 0;
+    if (a->onWhat()->dim() < 3) nbBndNodes++;
+    if (b->onWhat()->dim() < 3) nbBndNodes++;
+    if (c->onWhat()->dim() < 3) nbBndNodes++;
+    if (d->onWhat()->dim() < 3) nbBndNodes++;
+    if (nbBndNodes == 4){
+      SVector3 vec1 = SVector3(b->x()-a->x(),b->y()-a->y(),b->z()-a->z()).unit();
+      SVector3 vec2 = SVector3(c->x()-a->x(),c->y()-a->y(),c->z()-a->z()).unit();
+      SVector3 vec3 = SVector3(d->x()-a->x(),d->y()-a->y(),d->z()-a->z()).unit();
+      
+      SVector3 crossVec1Vec2 = crossprod(vec1, vec2);
+      double angle = fabs(acos(dot(crossVec1Vec2, vec3))*180/M_PI);
+      double maxAngle = 15;
+      if (fabs(angle-90) > maxAngle) return false;
+    }
+    //A face with 3 nodes on the boundary should not exist
+    //Constraint should be relaxed
+    if (nbBndNodes == 3){
+      return false;
+    }
+  return true;
+}
+
+bool validFaces(Hex &hex){
+  bool v1, v2, v3, v4, v5, v6;
+  MVertex *a,*b,*c,*d;
+  MVertex *e,*f,*g,*h;
+
+  a = hex.get_a();
+  b = hex.get_b();
+  c = hex.get_c();
+  d = hex.get_d();
+  e = hex.get_e();
+  f = hex.get_f();
+  g = hex.get_g();
+  h = hex.get_h();
+
+  v1 = validFace(a,b,c,d);  //SHOULD CHECK GEOMETRY
+  v2 = validFace(e,f,g,h);
+  v3 = validFace(a,b,f,e);
+  v4 = validFace(b,c,g,f);
+  v5 = validFace(d,c,g,h);
+  v6 = validFace(d,a,e,h);
+
+  return v1 && v2 && v3 && v4 && v5 && v6;
+}
+
+bool validCondNum(Hex &hex){
+  return true;
+  CondNumBasis basis(MSH_HEX_8);
+  fullMatrix<double> nodesXYZ(8,3);
+  for (int iV = 0; iV < 8; iV++){
+    nodesXYZ(iV,0) = hex.getVertex(iV)->x();
+    nodesXYZ(iV,1) = hex.getVertex(iV)->y();
+    nodesXYZ(iV,2) = hex.getVertex(iV)->z();
+  }
+  fullMatrix<double> normals(8,3);
+  fullVector<double> invCondNum(basis.getNumCondNumNodes());
+  basis.getSignedInvCondNum(nodesXYZ, normals, invCondNum);
+  for (int i=0; i<invCondNum.size(); i++){
+    if (invCondNum(i) * invCondNum(0) <= 0){
+      //      nodesXYZ.print("HEX nodes");
+      //      invCondNum.print("HEX invCondNum");
+      //      Msg::Error("Wrong Hex");
+      return false;
+    }
+  }
+  return true;
+}
+
+
 // renvoie true si le "MQuadrangle::etaShapeMeasure" des 6 faces est plus grand que 0.000001
 bool Recombinator::valid(Hex &hex){
   double k;
@@ -2324,10 +2434,10 @@ bool Recombinator::valid(Hex &hex){
   eta6 = eta(d,c,g,h);
 
   if(eta1>k && eta2>k && eta3>k && eta4>k && eta5>k && eta6>k){
-    return 1;
+    return (validFaces(hex) && validCondNum(hex));
   }
   else{
-    return 0;
+    return false;
   }
 }
 
@@ -3982,6 +4092,65 @@ bool Supplementary::valid(Prism prism,const std::set<MElement*>& parts){
   }
 }
 
+
+bool validFaces(Prism &prism){
+  bool v1, v2, v3;
+  MVertex *a,*b,*c;
+  MVertex *d, *e,*f;
+
+  a = prism.get_a();
+  b = prism.get_b();
+  c = prism.get_c();
+  d = prism.get_d();
+  e = prism.get_e();
+  f = prism.get_f();
+
+  v1 = validFace(a,d,f,c);  //SHOULD CHECK GEOMETRY
+  v2 = validFace(a,d,e,b);
+  v3 = validFace(b,c,e,f);
+
+  return v1 && v2 && v3;
+}
+
+
+bool validCondNum(Prism &prism){
+  return true;
+  CondNumBasis basis(MSH_PRI_6);
+  fullMatrix<double> nodesXYZ(6,3);
+  nodesXYZ(0,0) = prism.get_a()->x();
+  nodesXYZ(0,1) = prism.get_a()->y();
+  nodesXYZ(0,2) = prism.get_a()->z();
+  nodesXYZ(1,0) = prism.get_b()->x();
+  nodesXYZ(1,1) = prism.get_b()->y();
+  nodesXYZ(1,2) = prism.get_b()->z();
+  nodesXYZ(2,0) = prism.get_c()->x();
+  nodesXYZ(2,1) = prism.get_c()->y();
+  nodesXYZ(2,2) = prism.get_c()->z();
+  nodesXYZ(3,0) = prism.get_d()->x();
+  nodesXYZ(3,1) = prism.get_d()->y();
+  nodesXYZ(3,2) = prism.get_d()->z();
+  nodesXYZ(4,0) = prism.get_e()->x();
+  nodesXYZ(4,1) = prism.get_e()->y();
+  nodesXYZ(4,2) = prism.get_e()->z();
+  nodesXYZ(5,0) = prism.get_f()->x();
+  nodesXYZ(5,1) = prism.get_f()->y();
+  nodesXYZ(5,2) = prism.get_f()->z();
+
+  fullMatrix<double> normals(6,3);
+  fullVector<double> invCondNum(basis.getNumCondNumNodes());
+  basis.getSignedInvCondNum(nodesXYZ, normals, invCondNum);
+  for (int i=0; i<invCondNum.size(); i++){
+    if (invCondNum(i) * invCondNum(0) <= 0){
+      //      nodesXYZ.print("HEX nodes");
+      //      invCondNum.print("HEX invCondNum");
+      //      Msg::Error("Wrong PRISM");
+      return false;
+    }
+  }
+  return true;
+}
+
+
 bool Supplementary::valid(Prism prism){
   double k;
   double eta1,eta2,eta3;
@@ -4002,7 +4171,7 @@ bool Supplementary::valid(Prism prism){
   eta3 = eta(b,c,f,e);
 
   if(eta1>k && eta2>k && eta3>k){
-    return 1;
+    return (validFaces(prism) && validCondNum(prism));
   }
   else{
     return 0;
@@ -4719,7 +4888,7 @@ PostOp::PostOp(){}
 
 PostOp::~PostOp(){}
 
-void PostOp::execute(bool flag){
+void PostOp::execute(int level, bool insertTrihedra){
   GRegion* gr;
   GModel* model = GModel::current();
   GModel::riter it;
@@ -4728,30 +4897,41 @@ void PostOp::execute(bool flag){
     {
       gr = *it;
       if(gr->getNumMeshElements()>0){
-        execute(gr,flag);
+        execute(gr,level, insertTrihedra);
       }
     }
 }
 
-void PostOp::execute(GRegion* gr,bool flag){
+void PostOp::execute(GRegion* gr,int level,bool insertTrihedra){
   printf("................PYRAMIDS................\n");
   estimate1 = 0;
   estimate2 = 0;
   iterations = 0;
 
   build_tuples(gr);
-  init_markings(gr);
-  build_vertex_to_tetrahedra(gr);
-  pyramids1(gr);
-  rearrange(gr);
+  if (level >= 1){
+    init_markings(gr);
+    build_vertex_to_tetrahedra(gr);
+    pyramids1(gr);
+    rearrange(gr);
+  }
 
-  if(flag){
+  if(level >= 2){
     init_markings(gr);
     build_vertex_to_tetrahedra(gr);
     build_vertex_to_pyramids(gr);
     pyramids2(gr);
     rearrange(gr);
   }
+
+  if (insertTrihedra){
+    init_markings(gr);
+    build_vertex_to_tetrahedra(gr);
+    build_vertex_to_pyramids(gr);
+    trihedra(gr);
+    rearrange(gr);
+  }
+    
 
   statistics(gr);
 
@@ -4807,11 +4987,11 @@ void PostOp::pyramids1(GRegion* gr){
     g = element->getVertex(6);
     h = element->getVertex(7);
 
-    pyramids1(a,b,c,d,gr);
+    pyramids1(b,a,d,c,gr);
     pyramids1(e,f,g,h,gr);
     pyramids1(a,b,f,e,gr);
     pyramids1(b,c,g,f,gr);
-    pyramids1(d,c,g,h,gr);
+    pyramids1(c,d,h,g,gr);
     pyramids1(d,a,e,h,gr);
   }
 
@@ -4844,6 +5024,7 @@ void PostOp::pyramids1(GRegion* gr){
   }
 }
 
+
 void PostOp::pyramids2(GRegion* gr){
   unsigned int i;
   MVertex *a,*b,*c,*d;
@@ -4870,7 +5051,7 @@ void PostOp::pyramids2(GRegion* gr){
 
   for(i=0;i<hexahedra.size();i++){
     element = hexahedra[i];
-
+  
     a = element->getVertex(0);
     b = element->getVertex(1);
     c = element->getVertex(2);
@@ -4933,40 +5114,144 @@ void PostOp::pyramids2(GRegion* gr){
 void PostOp::pyramids1(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
   MVertex* vertex;
   std::set<MElement*> bin;
-  std::set<MElement*> bin1;
-  std::set<MElement*> bin2;
+  std::set<MElement*> bin1a;
+  std::set<MElement*> bin2a;
+  std::set<MElement*> bin1b;
+  std::set<MElement*> bin2b;
   std::set<MElement*>::iterator it;
   std::map<MElement*,bool>::iterator it1;
   std::map<MElement*,bool>::iterator it2;
 
-  bin1.clear();
-  bin2.clear();
-  find_tetrahedra(a,c,bin1);
-  find_tetrahedra(b,d,bin2);
+    bin1a.clear();
+  bin1b.clear();
+  bin2a.clear();
+  bin2b.clear();
+  find_tetrahedra(a,c,d,bin1a);
+  find_tetrahedra(a,b,c,bin1b);
+  find_tetrahedra(b,d,a,bin2a);
+  find_tetrahedra(b,c,d,bin2b);
+
+//  bin1.clear();
+//  bin2.clear();
+//  find_tetrahedra(a,c,bin1);
+//  find_tetrahedra(b,d,bin2);
 
   bin.clear();
-  for(it=bin1.begin();it!=bin1.end();it++){
+  for(it=bin1a.begin();it!=bin1a.end();it++){
     bin.insert(*it);
   }
-  for(it=bin2.begin();it!=bin2.end();it++){
+  for(it=bin1b.begin();it!=bin1b.end();it++){
+    bin.insert(*it);
+  }
+  for(it=bin2a.begin();it!=bin2a.end();it++){
+    bin.insert(*it);
+  }
+  for(it=bin2b.begin();it!=bin2b.end();it++){
     bin.insert(*it);
   }
 
-  if(bin.size()==2){
-    it = bin.begin();
-    it1 = markings.find(*it);
+  if(bin.size()==2){ //2 tetrahedra on face
+    it = bin.begin(); 
+    it1 = markings.find(*it); //1st tetrahedra
     it++;
-    it2 = markings.find(*it);
+    it2 = markings.find(*it); //2nd tetrahedra
 
     if(it1->second==0 && it2->second==0){
       vertex = find(a,b,c,d,*it);
-
-      if(vertex!=0){
-        gr->addPyramid(new MPyramid(a,b,c,d,vertex));
+      MVertex* vertex1 = find(a,b,c,d,*bin.begin());
+      if(vertex!=0 && vertex == vertex1){//Seb added this 2nd condition. Is it necessary??
+        gr->addPyramid(new MPyramid(a,d,c,b,vertex));
         it1->second = 1;
         it2->second = 1;
       }
     }
+  }
+}
+
+
+void PostOp::trihedra(GRegion* gr){
+  unsigned int i;
+  MVertex *a,*b,*c,*d;
+  MVertex *e,*f,*g,*h;
+  MElement* element;
+  std::vector<MElement*> hexahedra;
+  std::vector<MElement*> prisms;
+  std::vector<MTetrahedron*> opt1;
+  std::vector<MPyramid*> opt2;
+  std::map<MElement*,bool>::iterator it;
+
+  hexahedra.clear();
+  prisms.clear();
+
+  for(i=0;i<gr->getNumMeshElements();i++){
+    element = gr->getMeshElement(i);
+    if(eight(element)){
+      hexahedra.push_back(element);
+    }
+    else if(six(element)){
+      prisms.push_back(element);
+    }
+  }
+
+  for(i=0;i<hexahedra.size();i++){
+    element = hexahedra[i];
+  
+    a = element->getVertex(0);
+    b = element->getVertex(1);
+    c = element->getVertex(2);
+    d = element->getVertex(3);
+    e = element->getVertex(4);
+    f = element->getVertex(5);
+    g = element->getVertex(6);
+    h = element->getVertex(7);
+
+    trihedra(a,b,c,d,gr);
+    trihedra(e,f,g,h,gr);
+    trihedra(a,b,f,e,gr);
+    trihedra(b,c,g,f,gr);
+    trihedra(d,c,g,h,gr);
+    trihedra(d,a,e,h,gr);
+  }
+
+  for(i=0;i<prisms.size();i++){
+    element = prisms[i];
+
+    a = element->getVertex(0);
+    b = element->getVertex(1);
+    c = element->getVertex(2);
+    d = element->getVertex(3);
+    e = element->getVertex(4);
+    f = element->getVertex(5);
+
+    trihedra(a,d,f,c,gr);
+    trihedra(a,b,e,d,gr);
+    trihedra(b,c,f,e,gr);
+  }
+
+}
+
+void PostOp::trihedra(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
+  std::set<MElement*> diag1a;
+  std::set<MElement*> diag1b;
+  std::set<MElement*> diag2a;
+  std::set<MElement*> diag2b;
+
+  find_tetrahedra(a,b,c,diag1a);
+  find_tetrahedra(a,c,d,diag1b);
+  find_tetrahedra(b,c,d,diag2a);
+  find_tetrahedra(a,b,d,diag2b);
+  find_pyramids_from_tri(a,b,c,diag1a);
+  find_pyramids_from_tri(a,c,d,diag1b);
+  find_pyramids_from_tri(b,c,d,diag2a);
+  find_pyramids_from_tri(a,b,d,diag2b);
+  if(diag1a.size()==1 && diag1b.size()==1){
+    MTrihedron *trih = new MTrihedron(b, c, d, a);
+    //    if (diag1a.size() != 1 || diag1b.size() != 1) Msg::Error("Quad face neighbor with %i+%i triangular faces (other diagonal: %i+%i) Trihedron: %i",diag1a.size(),diag1b.size(),diag2a.size(),diag2b.size(),trih->getNum());
+    gr->addTrihedron(trih);
+  }else if(diag2a.size()==1 && diag2b.size()==1){
+    MTrihedron *trih = new MTrihedron(a, b, c, d);
+    //    if (diag2a.size() != 1 || diag2b.size() != 1) Msg::Error("Quad face neighbor with %i+%i triangular faces (other diagonal: %i+%i) Trihedron: %i",diag2a.size(),diag2b.size(),diag1a.size(),diag1b.size(),trih->getNum());
+    gr->addTrihedron(trih);
   }
 }
 
@@ -5055,6 +5340,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
     gr->addMeshVertex(mid);
 
     temp2 = new MPyramid(a,b,c,d,mid);
+    
     gr->addPyramid(temp2);
     markings.insert(std::pair<MElement*,bool>(temp2,false));
     build_vertex_to_pyramids(temp2);
@@ -5173,6 +5459,7 @@ void PostOp::statistics(GRegion* gr){
   nbr6 = 0;
   nbr5 = 0;
   nbr4 = 0;
+  nbr4Trih = 0;
   vol = 0.0;
   vol8 = 0.0;
   vol6 = 0.0;
@@ -5202,6 +5489,10 @@ void PostOp::statistics(GRegion* gr){
       vol4 = vol4 + element->getVolume();
     }
 
+    if(fourTrih(element)){
+      nbr4Trih = nbr4Trih + 1;
+    }
+
     nbr = nbr + 1;
 
     if(!five(element)){
@@ -5218,6 +5509,7 @@ void PostOp::statistics(GRegion* gr){
   printf("  percentage of prisms : %.2f\n",nbr6*100.0/nbr);
   printf("  percentage of pyramids : %.2f\n",nbr5*100.0/nbr);
   printf("  percentage of tetrahedra : %.2f\n",nbr4*100.0/nbr);
+  printf("  percentage of trihedra : %.2f\n",nbr4Trih*100.0/nbr);
   printf("Volume :\n");
   printf("  percentage of hexahedra : %.2f\n",vol8*100.0/vol);
   printf("  percentage of prisms : %.2f\n",vol6*100.0/vol);
@@ -5412,7 +5704,12 @@ void PostOp::modify_surfaces(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
 }
 
 bool PostOp::four(MElement* element){
-  if(element->getNumVertices()==4) return 1;
+  if(element->getNumVertices()==4 && element->getNumFaces()==4) return 1;
+  else return 0;
+}
+
+bool PostOp::fourTrih(MElement* element){
+  if(element->getNumVertices()==4 && element->getNumFaces()==3) return 1;
   else return 0;
 }
 
@@ -5610,6 +5907,72 @@ void PostOp::find_tetrahedra(MVertex* v1,MVertex* v2,std::set<MElement*>& final)
   }
 }
 
+void PostOp::find_tetrahedra(MVertex* v1,MVertex* v2,MVertex* v3,std::set<MElement*>& final){
+  std::map<MVertex*,std::set<MElement*> >::iterator it1;
+  std::map<MVertex*,std::set<MElement*> >::iterator it2;
+  std::map<MVertex*,std::set<MElement*> >::iterator it3;
+
+  it1 = vertex_to_tetrahedra.find(v1);
+  it2 = vertex_to_tetrahedra.find(v2);
+  it3 = vertex_to_tetrahedra.find(v3);
+
+  std::set<MElement*> buf;
+
+  if(it1!=vertex_to_tetrahedra.end() && it2!=vertex_to_tetrahedra.end()  && it3!=vertex_to_tetrahedra.end()){
+    intersection(it1->second,it2->second,buf);
+    intersection(buf,it3->second,final);
+    
+  }
+}
+
+void PostOp::find_pyramids_from_tri(MVertex* v1,MVertex* v2,MVertex* v3,std::set<MElement*>& final){
+  bool flag;
+  std::set<MElement*>::iterator it;
+  std::map<MVertex*,std::set<MElement*> >::iterator it1;
+  std::map<MVertex*,std::set<MElement*> >::iterator it2;
+  std::map<MVertex*,std::set<MElement*> >::iterator it3;
+  std::set<MElement*> temp1, temp2;
+
+  it1 = vertex_to_pyramids.find(v1);
+  it2 = vertex_to_pyramids.find(v2);
+  it3 = vertex_to_pyramids.find(v3);
+
+  temp1.clear();
+  temp2.clear();
+
+  if(it1!=vertex_to_pyramids.end() && it2!=vertex_to_pyramids.end() && it3!=vertex_to_pyramids.end()){
+    intersection(it1->second,it2->second,temp1);
+    intersection(temp1,it3->second,temp2);
+  }
+  //Now temp2 contains pyramids containing the 3 vertices
+  //We check that one vertex is on the summit and the others are neighbors in the base
+  for(it=temp2.begin();it!=temp2.end();it++){
+    flag = false;
+    if (v1 == (*it)->getVertex(4)){
+      flag = (equal(v2,v3,(*it)->getVertex(0),(*it)->getVertex(1)) ||
+              equal(v2,v3,(*it)->getVertex(1),(*it)->getVertex(2)) ||
+              equal(v2,v3,(*it)->getVertex(2),(*it)->getVertex(3)) ||
+              equal(v2,v3,(*it)->getVertex(3),(*it)->getVertex(0)));
+    }      
+    if (v2 == (*it)->getVertex(4)){
+      flag = (equal(v1,v3,(*it)->getVertex(0),(*it)->getVertex(1)) ||
+              equal(v1,v3,(*it)->getVertex(1),(*it)->getVertex(2)) ||
+              equal(v1,v3,(*it)->getVertex(2),(*it)->getVertex(3)) ||
+              equal(v1,v3,(*it)->getVertex(3),(*it)->getVertex(0)));
+    }
+    if (v3 == (*it)->getVertex(4)){
+      flag = (equal(v1,v2,(*it)->getVertex(0),(*it)->getVertex(1)) ||
+              equal(v1,v2,(*it)->getVertex(1),(*it)->getVertex(2)) ||
+              equal(v1,v2,(*it)->getVertex(2),(*it)->getVertex(3)) ||
+              equal(v1,v2,(*it)->getVertex(3),(*it)->getVertex(0)));
+    }
+    if(flag){
+      final.insert(*it);
+    }
+  }
+}
+
+
 void PostOp::find_pyramids(MVertex* v1,MVertex* v2,std::set<MElement*>& final){
   bool flag1,flag2,flag3,flag4;
   bool flag5,flag6,flag7,flag8;
@@ -5641,6 +6004,39 @@ void PostOp::find_pyramids(MVertex* v1,MVertex* v2,std::set<MElement*>& final){
     }
   }
 }
+
+//void PostOp::find_pyramids(MVertex* v1,MVertex* v2,std::set<MElement*>& final){
+//  bool flag1,flag2,flag3,flag4;
+//  bool flag5,flag6,flag7,flag8;
+//  std::set<MElement*>::iterator it;
+//  std::map<MVertex*,std::set<MElement*> >::iterator it1;
+//  std::map<MVertex*,std::set<MElement*> >::iterator it2;
+//  std::set<MElement*> temp;
+//
+//  it1 = vertex_to_pyramids.find(v1);
+//  it2 = vertex_to_pyramids.find(v2);
+//
+//  temp.clear();
+//
+//  if(it1!=vertex_to_pyramids.end() && it2!=vertex_to_pyramids.end()){
+//    intersection(it1->second,it2->second,temp);
+//  }
+//
+//  for(it=temp.begin();it!=temp.end();it++){
+//    flag1 = equal(v1,v2,(*it)->getVertex(0),(*it)->getVertex(1));
+//    flag2 = equal(v1,v2,(*it)->getVertex(1),(*it)->getVertex(2));
+//    flag3 = equal(v1,v2,(*it)->getVertex(2),(*it)->getVertex(3));
+//    flag4 = equal(v1,v2,(*it)->getVertex(3),(*it)->getVertex(0));
+//    flag5 = equal(v1,v2,(*it)->getVertex(0),(*it)->getVertex(4));
+//    flag6 = equal(v1,v2,(*it)->getVertex(1),(*it)->getVertex(4));
+//    flag7 = equal(v1,v2,(*it)->getVertex(2),(*it)->getVertex(4));
+//    flag8 = equal(v1,v2,(*it)->getVertex(3),(*it)->getVertex(4));
+//    if(flag1 || flag2 || flag3 || flag4 || flag5 || flag6 || flag7 || flag8){
+//      final.insert(*it);
+//    }
+//  }
+//}
+
 
 void PostOp::intersection(const std::set<MElement*>& bin1,const std::set<MElement*>& bin2,std::set<MElement*>& final){
   std::set_intersection(bin1.begin(),bin1.end(),bin2.begin(),bin2.end(),std::inserter(final,final.end()));
@@ -6221,7 +6617,7 @@ Recombinator_Graph::~Recombinator_Graph(){
 
 void Recombinator_Graph::createBlossomInfo(){
 
-  throw;
+ throw;
 
 
   GRegion* gr;
@@ -6606,7 +7002,8 @@ void Recombinator_Graph::merge_clique(GRegion* gr, cliques_losses_graph<Hex*> &c
 
       // inserting the hex
       quality = quality + current_hex->get_quality();
-      gr->addHexahedron(new MHexahedron(current_hex->get_a(), current_hex->get_b(),current_hex->get_c(),current_hex->get_d(),current_hex->get_e(),current_hex->get_f(),current_hex->get_g(),current_hex->get_h()));
+      MHexahedron *h=new MHexahedron(current_hex->get_a(), current_hex->get_b(),current_hex->get_c(),current_hex->get_d(),current_hex->get_e(),current_hex->get_f(),current_hex->get_g(),current_hex->get_h());
+      gr->addHexahedron(h);
       count++;
       //      hex_to_export.insert(current_hex);
       //      cout << " inserting " << current_hex << " made of ";

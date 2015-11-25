@@ -17,6 +17,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MTrihedron.h"
 #include "StringUtils.h"
 #include "discreteVertex.h"
 #include "discreteEdge.h"
@@ -170,7 +171,7 @@ int GModel::readMSH(const std::string &name)
   double version = 0.;
   bool binary = false, swap = false, postpro = false;
   int minVertex = 0;
-  std::map<int, std::vector<MElement*> > elements[10];
+  std::map<int, std::vector<MElement*> > elements[11];
 
   while(1) {
 
@@ -406,8 +407,9 @@ int GModel::readMSH(const std::string &name)
         case TYPE_HEX: elements[5][entity].push_back(element); break;
         case TYPE_PRI: elements[6][entity].push_back(element); break;
         case TYPE_PYR: elements[7][entity].push_back(element); break;
-        case TYPE_POLYG: elements[8][entity].push_back(element); break;
-        case TYPE_POLYH: elements[9][entity].push_back(element); break;
+        case TYPE_TRIH: elements[8][entity].push_back(element); break;
+        case TYPE_POLYG: elements[9][entity].push_back(element); break;
+        case TYPE_POLYH: elements[10][entity].push_back(element); break;
         }
         if(numElements > 100000)
           Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
@@ -664,6 +666,9 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                      binary);
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     writeElementsMSH(fp, this, *it, (*it)->pyramids, saveAll, saveSinglePartition,
+                     binary);
+  for(riter it = firstRegion(); it != lastRegion(); ++it)
+    writeElementsMSH(fp, this, *it, (*it)->trihedra, saveAll, saveSinglePartition,
                      binary);
   for(fiter it = firstFace(); it != lastFace(); ++it)
     writeElementsMSH(fp, this, *it, (*it)->triangles, saveAll, saveSinglePartition,

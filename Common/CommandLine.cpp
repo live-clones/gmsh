@@ -407,6 +407,10 @@ void GetOptions(int argc, char *argv[])
               i++;
               opt_mesh_partition_pyr_weight(0,GMSH_SET,atoi(argv[i]));
             }
+            else if (!strcmp(argv[i],"trihedron")) {
+              i++;
+              opt_mesh_partition_trih_weight(0,GMSH_SET,atoi(argv[i]));
+            }
             else if (!strcmp(argv[i],"hex")) {
               i++;
               opt_mesh_partition_hex_weight(0,GMSH_SET,atoi(argv[i]));

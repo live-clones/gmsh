@@ -67,6 +67,7 @@
 #define TYPE_POLYH   10
 #define TYPE_XFEM    11
 #define TYPE_MINI    12
+#define TYPE_TRIH    13
 
 // Element types in .msh file format (numbers should not be changed)
 #define MSH_LIN_2    1
@@ -215,8 +216,9 @@
 #define MSH_TET_16  137
 #define MSH_TRI_MINI 138
 #define MSH_TET_MINI 139
+#define MSH_TRIH_4   140
 
-#define MSH_NUM_TYPE 139
+#define MSH_NUM_TYPE 140
 
 // Geometric entities
 #define ENT_NONE     0

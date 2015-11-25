@@ -15,6 +15,7 @@
   #include "fullMatrix.h"
   #include "nodalBasis.h"
   #include "BasisFactory.h"
+  #include "CondNumBasis.h"
   #include "simpleFunction.h"
   #include "simpleFunctionPython.h"
   #include "polynomialBasis.h"
@@ -37,6 +38,7 @@
 %include "polynomialBasis.h"
 %include "pyramidalBasis.h"
 %include "BasisFactory.h"
+%include "CondNumBasis.h"
 %extend nodalBasis {
   fullMatrix<double> F(const fullMatrix<double> &xi) {
     fullMatrix<double> psi;

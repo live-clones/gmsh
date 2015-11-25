@@ -5251,6 +5251,25 @@ double opt_mesh_pyramids(OPT_ARGS_NUM)
   return CTX::instance()->mesh.pyramids;
 }
 
+double opt_mesh_trihedra(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(CTX::instance()->mesh.trihedra != val)
+      CTX::instance()->mesh.changed |= ENT_VOLUME;
+    CTX::instance()->mesh.trihedra = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)){
+    if(CTX::instance()->mesh.trihedra)
+      ((Fl_Menu_Item*)FlGui::instance()->options->mesh.menu->menu())[6].set();
+    else
+      ((Fl_Menu_Item*)FlGui::instance()->options->mesh.menu->menu())[6].clear();
+  }
+#endif
+  return CTX::instance()->mesh.trihedra;
+}
+
+
 double opt_mesh_surfaces_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -5560,6 +5579,13 @@ double opt_mesh_partition_pyr_weight(OPT_ARGS_NUM)
   if (action & GMSH_SET)
     CTX::instance()->partitionOptions.pyrWeight = (int) val;
   return CTX::instance()->partitionOptions.pyrWeight;
+}
+
+double opt_mesh_partition_trih_weight(OPT_ARGS_NUM)
+{
+  if (action & GMSH_SET)
+    CTX::instance()->partitionOptions.trihWeight = (int) val;
+  return CTX::instance()->partitionOptions.trihWeight;
 }
 
 double opt_mesh_partition_qua_weight(OPT_ARGS_NUM)
@@ -6129,11 +6155,18 @@ double opt_mesh_nb_pyramids(OPT_ARGS_NUM)
   return s[12];
 }
 
+double opt_mesh_nb_trihedra(OPT_ARGS_NUM)
+{
+  double s[50];
+  GetStatistics(s);
+  return s[13];
+}
+
 double opt_mesh_cpu_time(OPT_ARGS_NUM)
 {
   double s[50];
   GetStatistics(s);
-  return s[13] + s[14] + s[15];
+  return s[14] + s[15] + s[16];
 }
 
 double opt_mesh_partition_partitioner(OPT_ARGS_NUM)
@@ -8134,6 +8167,28 @@ double opt_view_draw_pyramids(OPT_ARGS_NUM)
 #endif
 }
 
+double opt_view_draw_trihedra(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0.);
+  if(action & GMSH_SET) {
+    opt->drawTrihedra = (int)val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    if(opt->drawTrihedra)
+      ((Fl_Menu_Item*)FlGui::instance()->options->view.menu[1]->menu())[8].set();
+    else
+      ((Fl_Menu_Item*)FlGui::instance()->options->view.menu[1]->menu())[8].clear();
+  }
+#endif
+  return opt->drawTrihedra;
+#else
+  return 0.;
+#endif
+}
+
 double opt_view_draw_scalars(OPT_ARGS_NUM)
 {
 #if defined(HAVE_POST)
@@ -9428,13 +9483,29 @@ unsigned int opt_mesh_color_pyramid(OPT_ARGS_COL)
   return CTX::instance()->color.mesh.pyramid;
 }
 
+unsigned int opt_mesh_color_trihedron(OPT_ARGS_COL)
+{
+  if(action & GMSH_SET) {
+    // vertex arrays need to be regenerated only when we color by
+    // element type
+    if(CTX::instance()->color.mesh.trihedron != val &&
+       CTX::instance()->mesh.colorCarousel == 0)
+      CTX::instance()->mesh.changed |= ENT_VOLUME;
+    CTX::instance()->color.mesh.trihedron = val;
+  }
+#if defined(HAVE_FLTK)
+  CCC(CTX::instance()->color.mesh.trihedron, FlGui::instance()->options->mesh.color[9]);
+#endif
+  return CTX::instance()->color.mesh.trihedron;
+}
+
 unsigned int opt_mesh_color_tangents(OPT_ARGS_COL)
 {
   if(action & GMSH_SET) {
     CTX::instance()->color.mesh.tangents = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.tangents, FlGui::instance()->options->mesh.color[9]);
+  CCC(CTX::instance()->color.mesh.tangents, FlGui::instance()->options->mesh.color[10]);
 #endif
   return CTX::instance()->color.mesh.tangents;
 }
@@ -9445,7 +9516,7 @@ unsigned int opt_mesh_color_normals(OPT_ARGS_COL)
     CTX::instance()->color.mesh.normals = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.normals, FlGui::instance()->options->mesh.color[10]);
+  CCC(CTX::instance()->color.mesh.normals, FlGui::instance()->options->mesh.color[11]);
 #endif
   return CTX::instance()->color.mesh.normals;
 }
@@ -9461,7 +9532,7 @@ unsigned int opt_mesh_color_(int i, OPT_ARGS_COL)
     CTX::instance()->color.mesh.carousel[i] = val;
   }
 #if defined(HAVE_FLTK)
-  CCC(CTX::instance()->color.mesh.carousel[i], FlGui::instance()->options->mesh.color[11+i]);
+  CCC(CTX::instance()->color.mesh.carousel[i], FlGui::instance()->options->mesh.color[12+i]);
 #endif
   return CTX::instance()->color.mesh.carousel[i];
 }
@@ -9639,6 +9710,25 @@ unsigned int opt_view_color_pyramids(OPT_ARGS_COL)
 #endif
 }
 
+unsigned int opt_view_color_trihedra(OPT_ARGS_COL)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0);
+  if(action & GMSH_SET) {
+    opt->color.trihedron = val;
+    if(view) view->setChanged(true);
+  }
+#if defined(HAVE_FLTK)
+  if(_gui_action_valid(action, num)){
+    CCC(opt->color.trihedron, FlGui::instance()->options->view.color[8]);
+  }
+#endif
+  return opt->color.trihedron;
+#else
+  return 0;
+#endif
+}
+
 unsigned int opt_view_color_tangents(OPT_ARGS_COL)
 {
 #if defined(HAVE_POST)
@@ -9649,7 +9739,7 @@ unsigned int opt_view_color_tangents(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.tangents, FlGui::instance()->options->view.color[8]);
+    CCC(opt->color.tangents, FlGui::instance()->options->view.color[9]);
   }
 #endif
   return opt->color.tangents;
@@ -9668,7 +9758,7 @@ unsigned int opt_view_color_normals(OPT_ARGS_COL)
   }
 #if defined(HAVE_FLTK)
   if(_gui_action_valid(action, num)){
-    CCC(opt->color.normals, FlGui::instance()->options->view.color[9]);
+    CCC(opt->color.normals, FlGui::instance()->options->view.color[10]);
   }
 #endif
   return opt->color.normals;

@@ -89,7 +89,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
   int num = 0;
   int width = 26 * FL_NORMAL_SIZE;
-  int height = 5 * WB + 17 * BH;
+  int height = 5 * WB + 18 * BH;
 
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "Statistics");
@@ -118,26 +118,27 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
       value[num++] = new Fl_Output(2 * WB, 2 * WB + 7 * BH, IW, BH, "Hexahedra");
       value[num++] = new Fl_Output(2 * WB, 2 * WB + 8 * BH, IW, BH, "Prisms");
       value[num++] = new Fl_Output(2 * WB, 2 * WB + 9 * BH, IW, BH, "Pyramids");
+      value[num++] = new Fl_Output(2 * WB, 2 * WB + 10 * BH, IW, BH, "Trihedra");
 
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 10 * BH, IW, BH, "Time for 1D mesh");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 11 * BH, IW, BH, "Time for 2D mesh");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 12 * BH, IW, BH, "Time for 3D mesh");
+      value[num++] = new Fl_Output(2 * WB, 2 * WB + 11 * BH, IW, BH, "Time for 1D mesh");
+      value[num++] = new Fl_Output(2 * WB, 2 * WB + 12 * BH, IW, BH, "Time for 2D mesh");
+      value[num++] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "Time for 3D mesh");
 
-      value[num] = new Fl_Output(2 * WB, 2 * WB + 13 * BH, IW, BH, "SICN");
+      value[num] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "SICN");
       value[num]->tooltip("~ signed inverse condition number"); num++;
-      value[num] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "Gamma");
+      value[num] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Gamma");
       value[num]->tooltip("~ inscribed_radius / circumscribed_radius (simplices)"); num++;
-      value[num] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Rho");
+      value[num] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "Rho");
       value[num]->tooltip("~ min_edge_length / max_edge_length"); num++;
 
       for(int i = 0; i < 3; i++){
         int ww = 3 * FL_NORMAL_SIZE;
         new Fl_Box
-          (FL_NO_BOX, width - 3 * ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "Plot");
+          (FL_NO_BOX, width - 3 * ww - 2 * WB, 2 * WB + (14 + i) * BH, ww, BH, "Plot");
         butt[2 * i] = new Fl_Button
-          (width - 2 * ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "X-Y");
+          (width - 2 * ww - 2 * WB, 2 * WB + (14 + i) * BH, ww, BH, "X-Y");
         butt[2 * i + 1] = new Fl_Button
-          (width - ww - 2 * WB, 2 * WB + (13 + i) * BH, ww, BH, "3D");
+          (width - ww - 2 * WB, 2 * WB + (14 + i) * BH, ww, BH, "3D");
       }
       static const QM_HISTO qmh0 = QMH_SICN_XY, qmh1 = QMH_SICN_3D, qmh2 = QMH_GAMMA_XY,
                             qmh3 = QMH_GAMMA_3D, qmh4 = QMH_RHO_XY, qmh5 = QMH_RHO_3D;
@@ -162,7 +163,8 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
       value[num++] = new Fl_Output(2 * WB, 2 * WB + 7 * BH, IW, BH, "Hexahedra");
       value[num++] = new Fl_Output(2 * WB, 2 * WB + 8 * BH, IW, BH, "Prisms");
       value[num++] = new Fl_Output(2 * WB, 2 * WB + 9 * BH, IW, BH, "Pyramids");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 10 * BH, IW, BH, "Strings");
+      value[num++] = new Fl_Output(2 * WB, 2 * WB + 10 * BH, IW, BH, "Trihedra");
+      value[num++] = new Fl_Output(2 * WB, 2 * WB + 11 * BH, IW, BH, "Strings");
       group[2]->end();
     }
     o->end();
@@ -216,10 +218,11 @@ void statisticsWindow::compute(bool elementQuality)
   sprintf(label[num], "%g", s[10]); value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[11]); value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[12]); value[num]->value(label[num]); num++;
-
   sprintf(label[num], "%g", s[13]); value[num]->value(label[num]); num++;
+
   sprintf(label[num], "%g", s[14]); value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[15]); value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[16]); value[num]->value(label[num]); num++;
 
   if(!elementQuality){
     for(int i = 0; i < 6; i += 2) butt[i]->deactivate();
@@ -235,19 +238,18 @@ void statisticsWindow::compute(bool elementQuality)
   }
   else{
     for(int i = 0; i < 6; i += 2) butt[i]->activate();
-    sprintf(label[num], "%.4g (%.4g->%.4g)", s[17], s[18], s[19]);
+    sprintf(label[num], "%.4g (%.4g->%.4g)", s[18], s[19], s[20]);
     value[num]->activate();
     value[num]->value(label[num]); num++;
-    sprintf(label[num], "%.4g (%.4g->%.4g)", s[20], s[21], s[22]);
+    sprintf(label[num], "%.4g (%.4g->%.4g)", s[21], s[22], s[23]);
     value[num]->activate();
     value[num]->value(label[num]); num++;
-    sprintf(label[num], "%.4g (%.4g->%.4g)", s[23], s[24], s[25]);
+    sprintf(label[num], "%.4g (%.4g->%.4g)", s[24], s[25], s[26]);
     value[num]->activate();
     value[num]->value(label[num]); num++;
   }
 
   // post
-  sprintf(label[num], "%g", s[26]); value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[27]); value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[28]); value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[29]); value[num]->value(label[num]); num++;
@@ -257,6 +259,8 @@ void statisticsWindow::compute(bool elementQuality)
   sprintf(label[num], "%g", s[33]); value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[34]); value[num]->value(label[num]); num++;
   sprintf(label[num], "%g", s[35]); value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[36]); value[num]->value(label[num]); num++;
+  sprintf(label[num], "%g", s[37]); value[num]->value(label[num]); num++;
 
   static char mem[256];
   long m = GetMemoryUsage();

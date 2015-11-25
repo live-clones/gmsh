@@ -14,6 +14,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MTrihedron.h"
 #include "MElementCut.h"
 #include "Context.h"
 #include "VertexArray.h"
@@ -56,6 +57,7 @@ static unsigned int getColorByElement(MElement *ele)
     case TYPE_HEX: return CTX::instance()->color.mesh.hexahedron;
     case TYPE_PRI: return CTX::instance()->color.mesh.prism;
     case TYPE_PYR: return CTX::instance()->color.mesh.pyramid;
+    case TYPE_TRIH: return CTX::instance()->color.mesh.trihedron;
     default: return CTX::instance()->color.mesh.vertex;
     }
   }
@@ -353,7 +355,7 @@ class initMeshGRegion {
       for(unsigned int i = 0; i < r->polyhedra.size(); i++)
         numLP += 2 * r->polyhedra[i]->getNumEdges();
       num += (12 * r->tetrahedra.size() + 24 * r->hexahedra.size() +
-              18 * r->prisms.size() + 16 * r->pyramids.size() + numLP) / 4;
+              18 * r->prisms.size() + 16 * r->pyramids.size() + 10 * r->trihedra.size() + numLP) / 4;
       num = _estimateIfClipped(num);
       if(CTX::instance()->mesh.explode != 1.) num *= 4;
       if(_curved) num *= 2;
@@ -368,7 +370,7 @@ class initMeshGRegion {
       for(unsigned int i = 0; i < r->polyhedra.size(); i++)
         numFP += r->polyhedra[i]->getNumFaces();
       num += (4 * r->tetrahedra.size() + 12 * r->hexahedra.size() +
-              8 * r->prisms.size() + 6 * r->pyramids.size() + numFP) / 2;
+              8 * r->prisms.size() + 6 * r->pyramids.size() + 4 * r->trihedra.size() + numFP) / 2;
       num = _estimateIfClipped(num);
       if(CTX::instance()->mesh.explode != 1.) num *= 2;
       if(_curved) num *= 4;
@@ -384,7 +386,8 @@ class initMeshGRegion {
       (CTX::instance()->mesh.tetrahedra && areAllElementsVisible(r->tetrahedra) &&
        CTX::instance()->mesh.hexahedra && areAllElementsVisible(r->hexahedra) &&
        CTX::instance()->mesh.prisms && areAllElementsVisible(r->prisms) &&
-       CTX::instance()->mesh.pyramids && areAllElementsVisible(r->pyramids));
+       CTX::instance()->mesh.pyramids && areAllElementsVisible(r->pyramids) &&
+       CTX::instance()->mesh.trihedra && areAllElementsVisible(r->trihedra));
 
     bool edg = CTX::instance()->mesh.volumesEdges;
     bool fac = CTX::instance()->mesh.volumesFaces;
@@ -392,13 +395,15 @@ class initMeshGRegion {
       _curved = (areSomeElementsCurved(r->tetrahedra) ||
                  areSomeElementsCurved(r->hexahedra) ||
                  areSomeElementsCurved(r->prisms) ||
-                 areSomeElementsCurved(r->pyramids));
+                 areSomeElementsCurved(r->pyramids) ||
+                 areSomeElementsCurved(r->trihedra));
       r->va_lines = new VertexArray(2, _estimateNumLines(r));
       r->va_triangles = new VertexArray(3, _estimateNumTriangles(r));
       if(CTX::instance()->mesh.tetrahedra) addElementsInArrays(r, r->tetrahedra, edg, fac);
       if(CTX::instance()->mesh.hexahedra) addElementsInArrays(r, r->hexahedra, edg, fac);
       if(CTX::instance()->mesh.prisms) addElementsInArrays(r, r->prisms, edg, fac);
       if(CTX::instance()->mesh.pyramids) addElementsInArrays(r, r->pyramids, edg, fac);
+      if(CTX::instance()->mesh.trihedra) addElementsInArrays(r, r->trihedra, edg, fac);
       addElementsInArrays(r, r->polyhedra, edg, fac);
       r->va_lines->finalize();
       r->va_triangles->finalize();

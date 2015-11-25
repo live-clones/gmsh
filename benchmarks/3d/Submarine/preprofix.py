@@ -1,48 +1,60 @@
 import gmshpy
-import sys
-m = gmshpy.GModel()
-if (len(sys.argv) < 3) :
-    print("please specify input and output files")
-    exit()
-m.load(sys.argv[1])
+import math
 
-# generate a list of boundary elements
-
-def isBoundaryFace(f) :
-    vent = [f.getVertex(i).onWhat() for i in range(f.getNumVertices())]
-    return  all([e.dim() < 3 for e in vent])
 
 def areCoplanarFaces(f0, f1, tol) :
     n0 = f0.normal()
     n1 = f1.normal()
-    return abs(gmshpy.dot(n0, n1)) > tol
+    return (abs(math.acos(gmshpy.dot(n0, n1))*180/math.pi) < tol)
 
-def isBadPyramid(p) :
-    fs = [p.getFace(i) for i in range(p.getNumFaces())]
-    bndfs = [f for f in fs if (isBoundaryFace(f) and f.getNumVertices() == 3)]
+def nbVerticesOnSurface(el) :
+    vent = [el.getVertex(i).onWhat().dim() for i in range(el.getNumVertices())]
+    return  len([e for e in vent if e < 3])
+
+def isBadElement(el) :
+    fs = [el.getFace(i) for i in range(el.getNumFaces())]
     bad = False
-    for i in range(len(bndfs)) :
+    for i in range(len(fs)) :
         for j in range(i):
-            bad |= areCoplanarFaces(bndfs[0], bndfs[1], 0.9)
-    return bad
+            bad |= areCoplanarFaces(fs[i], fs[j], 10) #10 degrees min angle allowed
+    return bad    
 
-
-for r in m.bindingsGetRegions() :
-    badp = [p for p in r.pyramids if isBadPyramid(p)]
-    for p in badp :
-        cog = p.barycenter()
-        nv = gmshpy.MVertex(cog.x(), cog.y(), cog.z(), r);
-        nv.thisown = False
-        r.addMeshVertex(nv)
-        for i in range(4) :
-            f = p.getFace(i)
-            vs = [f.getVertex(i) for i in range(3)] + [nv]
-            t = gmshpy.MTetrahedron(*vs)
-            t.thisown = False
+def fixTetras(m):
+    for r in m.bindingsGetRegions() :
+	goodt = [t for t in r.tetrahedra if (not ((nbVerticesOnSurface(t) == 4) and  isBadElement(t)))]
+        oldSize = r.tetrahedra.size()
+        r.tetrahedra.clear()
+        for t in goodt :
             r.addTetrahedron(t)
-        p.setVertex(4, nv)
+        print("-- Removed %i tetrahedra over %i"%(oldSize-r.tetrahedra.size(), oldSize))
 
-m.save(sys.argv[2])
+
+def fixPyramids(m):
+    for r in m.bindingsGetRegions() :
+	goodp = [p for p in r.pyramids if (not ((nbVerticesOnSurface(p) == 5) and  isBadElement(p)))]
+        oldSize = r.pyramids.size()
+        r.pyramids.clear()
+        for p in goodp :
+            r.addPyramid(p)
+        print("-- Removed %i pyramids over %i"%(oldSize-r.pyramids.size(), oldSize))
+
+def fixPrisms(m):
+    for r in m.bindingsGetRegions() :
+	goodp = [p for p in r.prisms if (not ((nbVerticesOnSurface(p) == 6) and  isBadElement(p)))]
+        oldSize = r.prisms.size()
+        r.prisms.clear()
+        for p in goodp :
+            r.addPrism(p)
+        print("-- Removed %i prisms over %i"%(oldSize-r.prisms.size(), oldSize))
+
+def fixHexs(m):
+    for r in m.bindingsGetRegions() :
+	goodh = [h for h in r.hexahedra if (not ((nbVerticesOnSurface(h) == 8) and  isBadElement(p)))]
+        oldSize = r.hexahedra.size()
+        r.hexahedra.clear()
+        for h in goodh :
+            r.addHexahedron(h)
+        print("-- Removed %i hexahedra over %i"%(oldSize-r.hexahedra.size(), oldSize))
 
 
 

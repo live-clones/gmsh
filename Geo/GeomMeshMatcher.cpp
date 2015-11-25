@@ -22,6 +22,7 @@
 #include "MVertex.h"
 #include "MLine.h"
 #include "MPyramid.h"
+#include "MTrihedron.h"
 #include "MPrism.h"
 #include "MPoint.h"
 #include "MHexahedron.h"
@@ -722,6 +723,7 @@ void copy_elements (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_me
     copy_elements<MHexahedron> (dest->hexahedra ,orig->hexahedra ,_mesh_to_geom);
     copy_elements<MPrism>      (dest->prisms    ,orig->prisms    ,_mesh_to_geom);
     copy_elements<MPyramid>    (dest->pyramids  ,orig->pyramids  ,_mesh_to_geom);
+    copy_elements<MTrihedron>  (dest->trihedra  ,orig->trihedra  ,_mesh_to_geom);
   }
 }
 

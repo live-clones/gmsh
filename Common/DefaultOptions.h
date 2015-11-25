@@ -1096,6 +1096,8 @@ StringXNumber MeshOptions_Number[] = {
     "Weight of prismatic element (wedge) for METIS load balancing" },
   { F|O, "PartitionPyramidWeight" , opt_mesh_partition_pyr_weight , 1 ,
     "Weight of pyramidal element for METIS load balancing" },
+  { F|O, "PartitionTrihedronWeight" , opt_mesh_partition_trih_weight , 0 ,
+    "Weight of trihedron element for METIS load balancing" },
   { F|O, "PartitionQuadWeight"    , opt_mesh_partition_qua_weight , 1 ,
     "Weight of quadrangle for METIS load balancing" },
   { F|O, "PartitionTetWeight"     , opt_mesh_partition_tet_weight , 1 ,
@@ -1113,6 +1115,8 @@ StringXNumber MeshOptions_Number[] = {
     "Number of prisms in the current mesh (read-only)" },
   { F, "NbPyramids" , opt_mesh_nb_pyramids , 0. ,
     "Number of pyramids in the current mesh (read-only)" },
+  { F, "NbTrihedra" , opt_mesh_nb_trihedra , 0. ,
+    "Number of trihedra in the current mesh (read-only)" },
   { F, "NbQuadrangles" , opt_mesh_nb_quadrangles , 0. ,
     "Number of quadrangles in the current mesh (read-only)" },
   { F, "NbTetrahedra" , opt_mesh_nb_tetrahedra , 0. ,
@@ -1144,6 +1148,8 @@ StringXNumber MeshOptions_Number[] = {
     "Display mesh prisms?" },
   { F|O, "Pyramids" , opt_mesh_pyramids , 1. ,
     "Display mesh pyramids?" },
+  { F|O, "Trihedra" , opt_mesh_trihedra , 1. ,
+    "Display mesh trihedra?" },
 
   { F|O, "Quadrangles" , opt_mesh_quadrangles , 1. ,
     "Display mesh quadrangles?" },
@@ -1445,6 +1451,8 @@ StringXNumber ViewOptions_Number[] = {
     "Display post-processing prisms?" },
   { F|O, "DrawPyramids" , opt_view_draw_pyramids , 1. ,
     "Display post-processing pyramids?" },
+  { F|O, "DrawTrihedra" , opt_view_draw_trihedra , 1. ,
+    "Display post-processing trihedra?" },
   { F|O, "DrawQuadrangles" , opt_view_draw_quadrangles , 1. ,
     "Display post-processing quadrangles?" },
   { F|O, "DrawScalars" , opt_view_draw_scalars , 1. ,
@@ -1798,6 +1806,7 @@ StringXColor GeometryOptions_Color[] = {
 #define COLQ  {130, 120, 225, 255}
 #define COLP  {232, 210, 23, 255}
 #define COLY  {217, 113, 38, 255}
+#define COLR  {20, 255, 0, 255}
 
 #define COL0  {255, 120, 0, 255}
 #define COL2  {255, 160, 0, 255}
@@ -1848,6 +1857,9 @@ StringXColor MeshOptions_Color[] = {
   { F|O, "Pyramids" , opt_mesh_color_pyramid ,
     COLY, COLY, COLW, COLY,
      "Mesh pyramid color (if Mesh.ColorCarousel=0)" },
+  { F|O, "Trihedra" , opt_mesh_color_trihedron ,
+    COLR, COLR, COLW, COLR,
+     "Mesh trihedron color (if Mesh.ColorCarousel=0)" },
   { F|O, "Tangents" , opt_mesh_color_tangents ,
     {255, 255, 0, 255}, {255, 255, 0, 255}, {0, 0, 0, 255}, {255, 255, 0, 255},
     "Tangent mesh vector color" },
@@ -1916,6 +1928,7 @@ StringXColor ViewOptions_Color[] = {
   { F|O, "Hexahedra" , opt_view_color_hexahedra , ELECOL, "Hexahedron color" },
   { F|O, "Prisms" , opt_view_color_prisms , ELECOL, "Prism color" },
   { F|O, "Pyramids" , opt_view_color_pyramids , ELECOL, "Pyramid color" },
+  { F|O, "Trihedra" , opt_view_color_trihedra , ELECOL, "Trihedron color" },
   { F|O, "Tangents" , opt_view_color_tangents ,
     {255, 255, 0, 255}, {255, 255, 0, 255}, {0, 0, 0, 255}, {255, 255, 0, 255},
     "Tangent vector color" },
