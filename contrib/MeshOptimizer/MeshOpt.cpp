@@ -80,8 +80,6 @@ MeshOpt::MeshOpt(const std::map<MElement*,GEntity*> &element2entity,
   }
   _objFunc = &_allObjFunc[0];
   if (par.nCurses){
-    int nbRow, nbCol;
-    mvgetScreenSize(nbRow, nbCol);
     int minCol = 0;
     for (int i=0; i < _objFunc->names().size(); i++){
       if (i > 0)
@@ -91,7 +89,9 @@ MeshOpt::MeshOpt(const std::map<MElement*,GEntity*> &element2entity,
     }
     minCol = std::max(minCol, 96);
     int minRow = std::max(34, 34+(int)_objFunc->names().size()-5);
-    if (nbRow < minRow || nbCol < minCol){
+    int nbRow, nbCol;
+    mvgetScreenSize(nbRow, nbCol);
+    while (nbRow < minRow || nbCol < minCol){
       for (int i=0; i<nbRow; i++){
         mvfillRow(i,' ');
       }
@@ -99,11 +99,19 @@ MeshOpt::MeshOpt(const std::map<MElement*,GEntity*> &element2entity,
       mvprintCenter(firstRow,"Given the number of contributions to the objective function, ncurses");
       mvprintCenter(firstRow+1,"enhanced interface requires a terminal window of minimal size");
       mvprintCenter(firstRow+2,"%4ix%4i characters. Yours is %4ix%4i, try resizing the window", minRow, minCol, nbRow, nbCol);
-      mvprintCenter(firstRow+3,"or disabling the ncurses interface.");
+      mvprintCenter(firstRow+3,"then press SPACE.");
       mvpause();
-      mvterminate();
-      Msg::SetCallback(NULL);
-      Msg::Exit(EXIT_FAILURE);
+      for (int i=0; i<nbRow; i++){
+        mvfillRow(i,' ');
+      }
+      mvbold(true);
+      mvprintCenter(0, "OPTIMIZING MESH");
+      mvfillRow(1,'-');
+      mvfillRow(10,'-');
+      mvfillRow(20,'-');
+      mvfillRow(27,'-');
+      mvbold(false);
+      mvgetScreenSize(nbRow, nbCol);
     }
   }
 }
@@ -157,7 +165,7 @@ void MeshOpt::printProgress(const alglib::real_1d_array &x, double Obj)
     sprintf(_iterHistory.back(), _objFunc->minMaxStr().c_str());
     mvprintList(22, 5, _iterHistory, 1);
   }
-  if ((_verbose > 2) && (_iter % _intervDisplay == 0))
+  if ((_verbose > 2) && (_iter % _intervDisplay == 0 || _nCurses))
     Msg::Info(("--> Iteration %3d --- OBJ %12.5E (relative decrease = %12.5E)" +
               _objFunc->minMaxStr()).c_str(), _iter, Obj, Obj/_initObj);
 }
@@ -309,7 +317,10 @@ int MeshOpt::optimize(const MeshOptParameters &par)
         }
         mvprintList(19, -8, _optHistory, 2);
       }
-      if (_verbose > 2) Msg::Info("--- Optimization run %d", iBar);
+      if (_verbose > 2){
+        Msg::Info("--- Optimization run %d", iBar);
+        Msg::Info("%s", _objFunc->minMaxStr().c_str());
+      }
       _objFunc->updateParameters();
       runOptim(x, gradObj, par.pass[_iPass].maxOptIter, iBar);
       _objFunc->updateMinMax();
