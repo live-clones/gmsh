@@ -412,7 +412,7 @@ void GFace::computeMeanPlane()
   std::vector<SPoint3> pts;
 
   if(geomType() == Plane) {
-    // Special case for planar surfaces: we first try to compute the
+    // Special case for planar CAD surfaces: we first try to compute the
     // parametrization in a way that is more robust with respect to
     // perturbations of the boundary. This is crucial for sensitivity analyses
     // and GFace::relocateMeshVertices(): after perturbation of the boundary, we
@@ -421,6 +421,11 @@ void GFace::computeMeanPlane()
     std::list<GEdge*> edg = edges();
     for(std::list<GEdge*>::const_iterator ite = edg.begin(); ite != edg.end(); ite++){
       const GEdge *e = *ite;
+      if(e->geomType() == GEntity::DiscreteCurve ||
+         e->geomType() == GEntity::BoundaryLayerCurve){
+        pts.clear();
+        break;
+      }
       Range<double> b = e->parBounds(0);
       GPoint p1 = e->point(b.low() + 0.333 * (b.high() - b.low()));
       pts.push_back(SPoint3(p1.x(), p1.y(), p1.z()));
