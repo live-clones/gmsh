@@ -10,8 +10,6 @@
 #include <map>
 #include <string>
 #include "SPoint3.h"
-//#include "drawContext.h"
-
 
 class PViewData;
 class PViewOptions;

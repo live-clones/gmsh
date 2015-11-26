@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <algorithm>
 #include <string>
-#include "GmshDefines.h"
+
 #include "GmshMessage.h"
 #include "MVertex.h"
 #include "MEdge.h"
@@ -19,6 +19,7 @@
 #include "JacobianBasis.h"
 #include "MetricBasis.h"
 #include "GaussIntegration.h"
+
 class GModel;
 
 // A mesh element.

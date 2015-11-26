@@ -16,6 +16,7 @@
 #include "GmshMessage.h"
 #include "VertexArray.h"
 #include "boundaryLayersData.h"
+#include "GmshDefines.h"
 
 GRegion::GRegion(GModel *model, int tag)
   : GEntity (model, tag), compound(0)
@@ -431,4 +432,30 @@ std::list<GVertex*> GRegion::vertices() const
   std::list<GVertex*> res;
   res.insert(res.begin(), v.begin(), v.end());
   return res;
+}
+
+void GRegion::addElement(int type, MElement *e)
+{
+  switch (type){
+  case TYPE_TET:
+    addTetrahedron((MTetrahedron*) e);
+    break;
+  case TYPE_HEX:
+    addHexahedron((MHexahedron*) e);
+    break;
+  case TYPE_PRI:
+    addPrism((MPrism*) e);
+    break;
+  case TYPE_PYR:
+    addPyramid((MPyramid*) e);
+    break;
+  case TYPE_TRIH:
+    addTrihedron((MTrihedron*) e);
+    break;
+  case TYPE_POLYH:
+    addPolyhedron((MPolyhedron*) e);
+    break;
+  default:
+    Msg::Error("Trying to add unsupported element in region");
+  }
 }

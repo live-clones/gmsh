@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include "GEntity.h"
 #include "boundaryLayersData.h"
-#include "GmshDefines.h"
 
 class MElement;
 class MTetrahedron;
@@ -67,7 +66,6 @@ class GRegion : public GEntity {
 
   // vertices that bound the region
   virtual std::list<GVertex*> vertices() const;
-
 
   // get the bounding box
   virtual SBoundingBox3d bounds() const;
@@ -137,39 +135,15 @@ class GRegion : public GEntity {
   std::vector<MPolyhedron*> polyhedra;
 
   void addTetrahedron(MTetrahedron *t){ tetrahedra.push_back(t); }
-  
   void addHexahedron(MHexahedron *h){ hexahedra.push_back(h); }
   void addPrism(MPrism *p){ prisms.push_back(p); }
   void addPyramid(MPyramid *p){ pyramids.push_back(p); }
   void addPolyhedron(MPolyhedron *p){ polyhedra.push_back(p); }
   void addTrihedron(MTrihedron *t){ trihedra.push_back(t); }
-  void addElement(int type, MElement *e){
-    switch (type){
-    case TYPE_TET:
-      addTetrahedron((MTetrahedron*) e);
-      break;
-    case TYPE_HEX:
-      addHexahedron((MHexahedron*) e);
-      break;
-    case TYPE_PRI:
-      addPrism((MPrism*) e);
-      break;
-    case TYPE_PYR:
-      addPyramid((MPyramid*) e);
-      break;
-    case TYPE_TRIH:
-      addTrihedron((MTrihedron*) e);
-      break;
-    case TYPE_POLYH:
-      addPolyhedron((MPolyhedron*) e);
-      break;
-    default:
-      Msg::Fatal("Trying to add unsupported element");
-    }
-  }
-  
+  void addElement(int type, MElement *e);
+
   // get the boundary layer columns
-  BoundaryLayerColumns *getColumns () {return &_columns;}
+  BoundaryLayerColumns *getColumns () { return &_columns; }
 };
 
 #endif
