@@ -493,13 +493,13 @@ void adaptiveTetrahedron::recurCreate(adaptiveTetrahedron *t, int maxlevel, int 
   adaptiveVertex *pe5 = adaptiveVertex::add
     ((p2->x + p3->x) * 0.5, (p2->y + p3->y) * 0.5, (p2->z + p3->z) * 0.5,
      allVertices);
-  adaptiveTetrahedron *t1 = new adaptiveTetrahedron(p0, pe0, pe2, pe1);
+  adaptiveTetrahedron *t1 = new adaptiveTetrahedron(p0, pe0, pe1, pe2);
   recurCreate(t1, maxlevel, level);
-  adaptiveTetrahedron *t2 = new adaptiveTetrahedron(p1, pe0, pe3, pe4);
+  adaptiveTetrahedron *t2 = new adaptiveTetrahedron(pe0, p1, pe3, pe4);
   recurCreate(t2, maxlevel, level);
-  adaptiveTetrahedron *t3 = new adaptiveTetrahedron(p2, pe3, pe1, pe5);
+  adaptiveTetrahedron *t3 = new adaptiveTetrahedron(pe1, pe3, p2, pe5);
   recurCreate(t3, maxlevel, level);
-  adaptiveTetrahedron *t4 = new adaptiveTetrahedron(p3, pe2, pe4, pe5);
+  adaptiveTetrahedron *t4 = new adaptiveTetrahedron(pe2, pe4, pe5, p3);
   recurCreate(t4, maxlevel, level);
   adaptiveTetrahedron *t5 = new adaptiveTetrahedron(pe3, pe5, pe2, pe4);
   recurCreate(t5, maxlevel, level);
@@ -2574,7 +2574,7 @@ void adaptiveElements<T>::addInViewForVTK(int step,
           globalVTKData::vtkGlobalValues.push_back(myVTKData.vtkLocalValues[i]);
         }
       }
-      
+
       myVTKData.clearLocalData();
 
     } // loop over mesh element
