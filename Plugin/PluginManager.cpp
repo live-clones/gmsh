@@ -26,6 +26,7 @@
 #include "SimplePartition.h"
 #include "Crack.h"
 #include "DuplicateBoundaries.h"
+#include "ThinLayerFixMesh.h"
 #include "HarmonicToTime.h"
 #include "ModulusPhase.h"
 #include "Integrate.h"
@@ -260,6 +261,8 @@ void PluginManager::registerDefaultPlugins()
                       ("FaultZone", GMSH_RegisterFaultZonePlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("DuplicateBoundaries", GMSH_RegisterDuplicateBoundariesPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("ThinLayerFixMesh", GMSH_RegisterThinLayerFixMeshPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("MeshSubEntities", GMSH_RegisterMeshSubEntitiesPlugin()));
 #if defined(HAVE_REVOROPT)

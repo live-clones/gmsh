@@ -1036,3 +1036,171 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
     //  delete rtree;
 }
 
+
+// fills a surface with points in order to build a nice
+// quad mesh ------------
+void packingOfParallelogramsConstrained(GFace* gf, std::set<MVertex*> constr_vertices, std::vector<MVertex*> &packed, std::vector<SMetric3> &metrics){
+  //PE MODIF
+//  packingOfParallelogramsSmoothness(gf,packed,metrics);
+//  return;
+  // END PE MODIF
+#if defined(HAVE_RTREE)
+
+	std::cout<<"      inside packingOfParallelogramsConstrained"<<std::endl;
+  const bool goNonLinear = true;
+
+  //  FILE *f = Fopen ("parallelograms.pos","w");
+
+  // get all the boundary vertices
+  std::set<MVertex*> bnd_vertices;
+  for(unsigned int i=0;i<gf->getNumMeshElements();i++){
+    MElement* element = gf->getMeshElement(i);
+    for(int j=0;j<element->getNumVertices();j++){
+      MVertex *vertex = element->getVertex(j);
+      if (vertex->onWhat()->dim() < 2)bnd_vertices.insert(vertex);
+    }
+  }
+  std::cout<<"      got all the boundary vertices"<<std::endl;
+
+  // put boundary vertices in a fifo queue
+  // std::queue<surfacePointWithExclusionRegion*> fifo;
+  std::set<surfacePointWithExclusionRegion*,  compareSurfacePointWithExclusionRegionPtr> fifo;
+  std::vector<surfacePointWithExclusionRegion*> vertices;
+  // put the RTREE
+  RTree<surfacePointWithExclusionRegion*,double,2,double> rtree;
+  SMetric3 metricField(1.0);
+  SPoint2 newp[4][NUMDIR];
+  std::set<MVertex*>::iterator it =  bnd_vertices.begin() ;
+
+  char NAME[345]; sprintf(NAME,"crossReal%d.pos",gf->tag());
+  FILE *crossf = Fopen (NAME,"w");
+  if (crossf)fprintf(crossf,"View \"\"{\n");
+  std::cout<<"      entering first for"<<std::endl;
+  for (; it !=  bnd_vertices.end() ; ++it){
+    SPoint2 midpoint;
+    compute4neighbors (gf, *it, midpoint, goNonLinear, newp, metricField,crossf);
+    surfacePointWithExclusionRegion *sp =
+      new surfacePointWithExclusionRegion (*it, newp, midpoint,metricField);
+    //    fifo.push(sp);
+    fifo.insert(sp);
+    vertices.push_back(sp);
+    double _min[2],_max[2];
+    sp->minmax(_min,_max);
+    //    printf("%g %g .. %g %g\n",_min[0],_min[1],_max[0],_max[1]);
+    rtree.Insert(_min,_max,sp);
+    //    sp->print(f);
+  }
+
+  std::set<MVertex*>::iterator it_constr =  constr_vertices.begin() ;
+  std::cout<<"      entering second for"<<std::endl;
+  for (; it_constr !=  constr_vertices.end() ; ++it_constr){
+    SPoint2 midpoint;
+    std::cout<<"going to test out parameterisation of the new point"<<std::endl;
+    double para0, para1;
+    (*it_constr)->getParameter(0,para0);
+    (*it_constr)->getParameter(1,para1);
+    std::cout<<"            point tested: para 1 "<<para0<<" and para 2 "<<para1<<std::endl;
+    std::cout<<"         going to compute4neighbors"<<std::endl;
+    compute4neighbors (gf, *it_constr, midpoint, goNonLinear, newp, metricField,crossf);
+    std::cout<<"         going to surfacePointWithExclusionRegion"<<std::endl;
+    surfacePointWithExclusionRegion *sp =
+      new surfacePointWithExclusionRegion (*it_constr, newp, midpoint,metricField);
+    //    fifo.push(sp);
+    std::cout<<"         done surfacePointWithExclusionRegion"<<std::endl;
+    fifo.insert(sp);
+    vertices.push_back(sp);
+    double _min[2],_max[2];
+    sp->minmax(_min,_max);
+    //    printf("%g %g .. %g %g\n",_min[0],_min[1],_max[0],_max[1]);
+    rtree.Insert(_min,_max,sp);
+    //    sp->print(f);
+  }
+
+  //  printf("initially : %d vertices in the domain\n",vertices.size());
+
+
+  std::cout<<"      entering while"<<std::endl;
+  while(!fifo.empty()){
+    //surfacePointWithExclusionRegion & parent = fifo.top();
+    //    surfacePointWithExclusionRegion * parent = fifo.front();
+    surfacePointWithExclusionRegion * parent = *fifo.begin();
+    //    fifo.pop();
+    fifo.erase(fifo.begin());
+    for (int dir=0;dir<NUMDIR;dir++){
+      //      printf("dir = %d\n",dir);
+      int countOK = 0;
+      for (int i=0;i<4;i++){
+        //	printf("i = %d %12.5E %12.5E \n",i,parent._p[i][dir].x(),parent._p[i][dir].y());
+
+        //	if (!w._tooclose){
+        if (!inExclusionZone (parent->_p[i][dir], rtree, vertices) ){
+          countOK++;
+          GPoint gp = gf->point(parent->_p[i][dir]);
+          MFaceVertex *v = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+          std::cout<<"going to test out parameterisation of the new point"<<std::endl;
+          double para0, para1;
+          v->getParameter(0,para0);
+          v->getParameter(1,para1);
+//          if (v->getNum() == 341){
+//        	  std::cout<<" 341 dans surface filler !!!!"<<std::endl;
+//      		std::system("pause");
+//      		getchar();
+//          }
+          std::cout<<"            point tested: para 1 "<<para0<<" and para 2 "<<para1<<std::endl;
+          //	  	printf(" %g %g %g %g\n",parent._center.x(),parent._center.y(),gp.u(),gp.v());
+          SPoint2 midpoint;
+          compute4neighbors (gf, v, midpoint, goNonLinear, newp, metricField,crossf);
+          surfacePointWithExclusionRegion *sp =
+            new surfacePointWithExclusionRegion (v, newp, midpoint, metricField, parent);
+          //	  fifo.push(sp);
+          fifo.insert(sp);
+          vertices.push_back(sp);
+          double _min[2],_max[2];
+          sp->minmax(_min,_max);
+          rtree.Insert(_min,_max,sp);
+        }
+      }
+      if (countOK)break;
+      }
+      //    printf("%d\n",vertices.size());
+    }
+  std::cout<<"      entering if"<<std::endl;
+    if (crossf){
+      fprintf(crossf,"};\n");
+      fclose (crossf);
+    }
+    //  printf("done\n");
+
+    // add the vertices as additional vertices in the
+    // surface mesh
+    char ccc[256]; sprintf(ccc,"points%d.pos",gf->tag());
+    FILE *f = Fopen(ccc,"w");
+    fprintf(f,"View \"\"{\n");
+    std::cout<<"      entering another for"<<std::endl;
+    for (unsigned int i=0;i<vertices.size();i++){
+      //    if(vertices[i]->_v->onWhat() != gf)
+      vertices[i]->print(f,i);
+      if(vertices[i]->_v->onWhat() == gf) {
+        packed.push_back(vertices[i]->_v);
+        metrics.push_back(vertices[i]->_meshMetric);
+        SPoint2 midpoint;
+        reparamMeshVertexOnFace(vertices[i]->_v, gf, midpoint);
+        std::cout<<"going to test out parameterisation of the REPARAM point"<<std::endl;
+        double para0, para1;
+        vertices[i]->_v->getParameter(0,para0);
+        vertices[i]->_v->getParameter(1,para1);
+        std::cout<<"            point tested: para 1 "<<para0<<" and para 2 "<<para1<<std::endl;
+        //      fprintf(f,"TP(%22.15E,%22.15E,%g){%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E};\n",vertices[i]->_v->x(),vertices[i]->_v->y(),vertices[i]->_v->z(),
+        //	      vertices[i]->_meshMetric(0,0),vertices[i]->_meshMetric(0,1),vertices[i]->_meshMetric(0,2),
+        //	      vertices[i]->_meshMetric(1,0),vertices[i]->_meshMetric(1,1),vertices[i]->_meshMetric(1,2),
+        //	      vertices[i]->_meshMetric(2,0),vertices[i]->_meshMetric(2,1),vertices[i]->_meshMetric(2,2));
+        //fprintf(f,"SP(%22.15E,%22.15E,%g){1};\n",midpoint.x(),midpoint.y(),0.0);
+      }
+      delete  vertices[i];
+    }
+    fprintf(f,"};");
+    fclose(f);
+    //  printf("packed.size = %d\n",packed.size());
+    //  delete rtree;
+#endif
+}

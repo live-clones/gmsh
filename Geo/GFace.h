@@ -74,6 +74,10 @@ class GFace : public GEntity{
   GFace(GModel *model, int tag);
   virtual ~GFace();
 
+
+  std::vector<MVertex*> additionalVertices;
+  std::set<MVertex*> constr_vertices;
+
   // delete mesh data
   virtual void deleteMesh();
 

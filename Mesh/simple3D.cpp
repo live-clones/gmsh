@@ -17,6 +17,7 @@
 #include "CenterlineField.h"
 #include <algorithm>
 #include "directions3D.h"
+#include "ThinLayer.h"
 #include "Context.h"
 #include <iostream>
 #include <string>

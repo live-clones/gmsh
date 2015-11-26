@@ -496,6 +496,7 @@ static bool algoDelaunay2D(GFace *gf)
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL ||
      gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
+     gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR ||
      gf->getMeshingAlgo() == ALGO_2D_BAMG)
     return true;
 
@@ -1498,7 +1499,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   bool infty = false;
   if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
-      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
+      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
+      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
     infty = true;
   if (!onlyInitialMesh) {
     if (infty)
@@ -1518,6 +1520,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS){
       bowyerWatsonParallelograms(gf);
+    }
+    else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR){
+      bowyerWatsonParallelogramsConstrained(gf,gf->constr_vertices);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO)
@@ -2313,7 +2318,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   bool infty = false;
   if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
-      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
+      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
+      gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
     infty = true;
   if (infty)
     buildBackGroundMesh (gf, &equivalence, &parametricCoordinates);
@@ -2328,6 +2334,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       bowyerWatsonFrontalLayers(gf,true, &equivalence, &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
       bowyerWatsonParallelograms(gf,&equivalence, &parametricCoordinates);
+    else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
+      bowyerWatsonParallelogramsConstrained(gf,gf->constr_vertices,&equivalence, &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO)
       bowyerWatson(gf,1000000000, &equivalence, &parametricCoordinates);

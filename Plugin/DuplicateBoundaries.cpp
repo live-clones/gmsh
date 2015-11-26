@@ -177,26 +177,8 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 
 		for (unsigned int i = 0; i < fTmp->getNumMeshElements();i++){
 			MElement* elem = fTmp->getMeshElement(i);
-//			std::cout<<"TEST INITIAL"<<std::endl;
 
-			if (elem->getVertex(0)->getNum() > 100000){
-				std::cout<<"on a un getnum de "<<elem->getVertex(0)->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
-			if (elem->getVertex(1)->getNum() > 100000){
-				std::cout<<"on a un getnum de "<<elem->getVertex(1)->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
-			if (elem->getVertex(2)->getNum() > 100000){
-				std::cout<<"on a un getnum de "<<elem->getVertex(2)->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
+	
 		}
 
 
@@ -205,10 +187,8 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 		}
 		else{
 			facesBound.push_back(fTmp);
-			//ToDuplicateListBoundary.insert(fTmp);
 		}
 	}
-	std::cout<<"FIN INIT"<<std::endl;
 
 	for(unsigned int i=0;i<facesBound.size();i++){
 		double x = 0.0;
@@ -250,63 +230,34 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 					if (abs((p2.z()-p1.z()))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-						std::cout<<"case 1"<<std::endl;
-//						std::cout<<"on a p1.x() = "<<p1.x()<<" et p2.x() = "<<p2.x()<<" et abs((p2.x()-p1.x()-1.0)) = "<<abs((p2.x()-p1.x()-1.0))<<std::endl;
-//						std::cout<<"on a abs(0.5) = "<<abs(0.5)<<" et abs(-0.5) = "<<abs(-0.5)<<" et abs(1.5) = "<<abs(1.5)<<" et abs(-1.5) = "<<abs(-1.5)<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if(abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 2"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 3"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}
 				}else if (abs((p2.y()-p1.y()-1.0))<0.0001){
 					if (abs((p2.z()-p1.z()))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 4"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 5"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 6"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}
 				}else if (abs((p1.y()-p2.y()-1.0))<0.0001){
 					if (abs((p2.z()-p1.z()))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 7"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 8"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 9"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}
 				}
 			}else if (abs((p1.x()-p2.x()-1.0))<0.0001){
@@ -340,21 +291,12 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 					if (abs((p2.z()-p1.z()))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 10"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 11"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 12"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}
 				}else if (abs((p1.y()-p2.y()-1.0))<0.0001){
 					if (abs((p2.z()-p1.z()))<0.0001){
@@ -368,9 +310,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 					if (abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 13"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						//NOTHING
 					}
@@ -378,12 +317,10 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 			}
 		}
 	}
-	std::cout<<"on a une taille de facesBound = "<<facesBound.size()<<" et ToDuplicateListBoundary = "<<ToDuplicateListBoundary.size()<<std::endl;
 
 	int counterNbDone = 10000;
 	//int tagEdges = 10000;
 	for (std::set<GFace*>::iterator itr = ToDuplicateList.begin();itr != ToDuplicateList.end();itr++){
-		std::cout<<"on est entre pour la fois numero "<<counterNbDone<<std::endl;
 		counterNbDone++;
 		GFace* fTmp = (*itr);
 		//on doit dupliquer la face, les noeuds, les aretes, puis creer une region entre les deux
@@ -395,10 +332,8 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 		GRegion *rTmp = fTmp->getRegion(1);
 		std::list<GFace*> facesReg;
 		facesReg = rTmp->faces();
-		std::cout<<"rmtp a un nombre INITIAL de faces de "<<rTmp->faces().size()<<std::endl;
 		for (std::list<GFace*>::iterator it2=facesReg.begin();it2!=facesReg.end();it2++){
 			GFace* fTemp = (*it2);
-			std::cout<<" ID "<<fTemp->tag();
 		}
 		double xCenterReg = 0.0;
 		double yCenterReg = 0.0;
@@ -407,9 +342,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 
 
 
-		std::cout<<"nb de faces de la region 2: "<<rTmp->faces().size()<<std::endl;
-		std::cout<<"nb de points de la face 1 de region 2: "<<rTmp->faces().front()->vertices().size()<<std::endl;
-		std::cout<<"nb de points de la region 2: "<<rTmp->vertices().size()<<std::endl;
 
 		int counterPts = 0;
 		for(std::list<GFace*>::iterator it2=facesReg.begin();it2!=facesReg.end();it2++){
@@ -427,12 +359,9 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 		yCenterReg = yCenterReg/counterPts;
 		zCenterReg = zCenterReg/counterPts;
 
-		std::cout<<"debut boucle for "<<counterNbDone<<std::endl;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			//duplication Gvertex
-			std::cout<<"point 1 "<<counterNbDone<<std::endl;
 			GVertex* vTmp = (*itv);
-			std::cout<<"point 2 "<<counterNbDone<<std::endl;
 			double ponderatedX = 0.99999999999 * vTmp->x() + 0.00000000001 * xCenterReg;
 			double ponderatedY = 0.99999999999 * vTmp->y() + 0.00000000001 * yCenterReg;
 			double ponderatedZ = 0.99999999999 * vTmp->z() + 0.00000000001 * zCenterReg;
@@ -441,42 +370,19 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 //			double ponderatedZ = 1.0 * vTmp->z() + 0.0 * zCenterReg;
 			//GVertex* newv = new gmshVertex(m,vTmp->prescribedMeshSizeAtVertex());
 			GVertex* newv = m->addVertex(ponderatedX,ponderatedY,ponderatedZ,vTmp->prescribedMeshSizeAtVertex());
-			std::cout<<"point 3 "<<counterNbDone<<std::endl;
 			GVertexAssociation[vTmp] = newv;
-			std::cout<<"test du ancien point: "<<vTmp->x()<<" et "<<vTmp->y()<<" et "<<vTmp->z()<<std::endl;
 			//creation des Gedge correspondantes
-			std::cout<<"point 4 "<<counterNbDone<<std::endl;
-			std::cout<<"test du nouveau point: "<<newv->x()<<" et "<<newv->y()<<" et "<<newv->z()<<std::endl;
 			//GEdge* newE = new GEdge(m,tagEdges,vTmp,newv);
 			//tagEdges++;
 			//m->add(newE);
-			std::cout<<"point gloubigoulba "<<counterNbDone<<std::endl;
 			GEdge* newE = m->addLine(vTmp,newv);
-			std::cout<<"point 5 "<<counterNbDone<<std::endl;
 			SurroudingEdges[vTmp] = newE;
 			//maintenant traitement mesh
-			std::cout<<"point 6 "<<counterNbDone<<std::endl;
 			MVertex *vMesh = vTmp->mesh_vertices[0];
-			std::cout<<"point 7 "<<counterNbDone<<std::endl;
 			MVertex *newMv = new MVertex(vMesh->x(), vMesh->y(), vMesh->z(), (GEntity*)newv);
-			std::cout<<"point 8 "<<counterNbDone<<std::endl;
 			VertexAssociation[vMesh] = newMv;
-			std::cout<<"point 9 "<<counterNbDone<<std::endl;
 			newv->addMeshVertex(newMv);
-			if (newMv->getNum() > 100000){
-				std::cout<<"on a un getnum de "<<newMv->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
-			if (vMesh->getNum() > 100000){
-				std::cout<<"What ? on a un getnum vtmp de "<<newMv->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
 		}
-		std::cout<<"apres points "<<counterNbDone<<std::endl;
 		std::list<GEdge*> elist = fTmp->edges();
 		std::vector<GEdge*> newEdgesVector;
 		std::vector<GFace*> SurroundingsFaces;
@@ -513,7 +419,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 				newE->addLine(newLine);
 			}
 		}
-		std::cout<<"apres lignes "<<counterNbDone<<std::endl;
 		std::vector<std::vector<GEdge*> > VecOfVec;
 		VecOfVec.push_back(newEdgesVector);
 		//creation de la nouvelle face
@@ -533,46 +438,9 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 			MTriangle *newTri = new MTriangle(firstE,secondE,thirdE);
 			GFaceAssociation->addTriangle(newTri);
 
-			if (elem->getVertex(0)->getNum() > 100000){
-				std::cout<<"ANCIENT TRI on a un getnum de "<<elem->getVertex(0)->getNum()<<std::endl;
-				while (1){
 
-				}
-			}
-			if (elem->getVertex(1)->getNum() > 100000){
-				std::cout<<"ANCIENT TRI on a un getnum de "<<elem->getVertex(1)->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
-			if (elem->getVertex(2)->getNum() > 100000){
-				std::cout<<"ANCIENT TRI on a un getnum de "<<elem->getVertex(2)->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
-
-			if (firstE->getNum() > 100000){
-				std::cout<<"CREAT TRI on a un getnum de "<<firstE->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
-			if (secondE->getNum() > 100000){
-				std::cout<<"CREAT TRI on a un getnum de "<<secondE->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
-			if (thirdE->getNum() > 100000){
-				std::cout<<"CREAT TRI on a un getnum de "<<thirdE->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
 
 		}
-		std::cout<<"apres faces "<<counterNbDone<<std::endl;
 		std::vector<GFace*> VectorFaces;
 		std::list<GFace*> listFaces;
 		VectorFaces.push_back(fTmp);
@@ -585,150 +453,66 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 		listFaces.push_back(GFaceAssociation);
 		std::vector<std::vector<GFace*> > VecOfVecGFace;
 		VecOfVecGFace.push_back(VectorFaces);
-		std::cout<<"creation de la nouvelle region "<<counterNbDone<<std::endl;
 		//creation de la nouvelle region
 
 		GRegion* createdRegion = new GRegion(m,counterNbDone);
 		createdRegion->addPhysicalEntity(PhysicalInterface);
 		createdRegion->set(listFaces);
 		m->add(createdRegion);
-//		std::cout<<"plop 1"<<std::endl;
 		std::list<GFace*> RegFaces = rTmp->faces();
-//		std::cout<<"plop 2"<<std::endl;
 		std::list<GFace*>::iterator it = std::find(RegFaces.begin(), RegFaces.end(), fTmp);
-//		std::cout<<"plop 3"<<std::endl;
-//		std::cout<<"RegFaces a un nombre de faces de "<<RegFaces.size()<<std::endl;
 		std::cout<<(*it)->tag()<<std::endl;
 		if(it != RegFaces.end()) RegFaces.erase(it);
-//		std::cout<<"RegFaces a un nombre de faces de "<<RegFaces.size()<<std::endl;
-//		if(it != RegFaces.end()) RegFaces.remove((*it));
-//		std::cout<<"plop 4"<<std::endl;
 		RegFaces.push_back(GFaceAssociation);
-//		std::cout<<GFaceAssociation->tag()<<std::endl;
-//		std::cout<<"plop 5"<<std::endl;
 		rTmp->set(RegFaces);
-//		std::cout<<"rmtp a un nombre de faces de "<<rTmp->faces().size()<<std::endl;
 		std::list<GFace*> NewFacesReg;
 		NewFacesReg = rTmp->faces();
 		for (std::list<GFace*>::iterator it2=NewFacesReg.begin();it2!=NewFacesReg.end();it2++){
 			GFace* fTemp = (*it2);
-//			std::cout<<" ID "<<fTemp->tag();
 			for (std::list<GEdge*>::iterator ite = elist.begin();ite != elist.end();ite++){
 				GEdge* eTmp = (*ite);
 				GEdge* newE = GEdgeAssociation[eTmp];
 				fTemp->replaceEdge(eTmp,newE);
 			}
 		}
-		std::cout<<"plop 6"<<std::endl;
 		for (unsigned int i = 0; i < fTmp->getNumMeshElements();i++){
 			MElement* elem = fTmp->getMeshElement(i);
-//			std::cout<<"on an element with a number of vertices of: "<<elem->getNumVertices()<<std::endl;
 
-			if (elem->getVertex(0)->getNum() > 100000){
-				std::cout<<"on a un getnum de "<<elem->getVertex(0)->getNum()<<std::endl;
-				while (1){
+	
 
-				}
-			}
-			if (elem->getVertex(1)->getNum() > 100000){
-				std::cout<<"on a un getnum de "<<elem->getVertex(1)->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
-			if (elem->getVertex(2)->getNum() > 100000){
-				std::cout<<"on a un getnum de "<<elem->getVertex(2)->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
-
-//			std::cout<<"on a un element avec un nb de vertex de "<<elem->getNumVertices()<<std::endl;
 			MVertex *firstE = VertexAssociation.find(elem->getVertex(0))->second;
 			MVertex *secondE = VertexAssociation.find(elem->getVertex(1))->second;
 			MVertex *thirdE = VertexAssociation.find(elem->getVertex(2))->second;
 
-			if (firstE->getNum() > 100000){
-				std::cout<<"on a un getnum de "<<firstE->getNum()<<std::endl;
-				while (1){
+	
 
-				}
-			}
-			if (secondE->getNum() > 100000){
-				std::cout<<"on a un getnum de "<<secondE->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
-			if (thirdE->getNum() > 100000){
-				std::cout<<"on a un getnum de "<<thirdE->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
-//			std::cout<<"on a les 3 vertices: "<<elem->getVertex(0)->getNum()<<" "<<elem->getVertex(1)->getNum()<<" "<<elem->getVertex(2)->getNum()<<std::endl;
-//			std::cout<<"et les 3 vertices: "<<firstE->getNum()<<" "<<secondE->getNum()<<" "<<thirdE->getNum()<<std::endl;
-//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MPrism *newPri = new MPrism(elem->getVertex(0),elem->getVertex(1),elem->getVertex(2),firstE,secondE,thirdE);
-//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			createdRegion->addPrism(newPri);
-//			std::cout<<"fin de for"<<std::endl;
 		}
-		std::cout<<"apres region, refonte points "<<counterNbDone<<std::endl;
 		for (unsigned int i = 0; i < rTmp->getNumMeshElements();i++){
 			MElement* elem = rTmp->getMeshElement(i);
 			for (int j = 0;j < elem->getNumVertices();j++){
 				MVertex* vert = elem->getVertex(j);
 				std::map<MVertex*,MVertex* >::iterator itMap = VertexAssociation.find(vert);
 				if (itMap != VertexAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
-		std::cout<<"plop 7"<<std::endl;
-//		std::cout<<"rmtp a un nombre de faces de "<<rTmp->faces().size()<<std::endl;
 		int countTmp = 0;
 		//maitenant refonte points dans faces
 		for (std::list<GFace*>::iterator itTmp = NewFacesReg.begin();itTmp != NewFacesReg.end();itTmp++){
 			GFace* GFaceTmp = (*itTmp);
-//			std::cout<<GFaceTmp->tag()<<std::endl;
 			countTmp++;
-//			std::cout<<" iteration "<<countTmp<<std::endl;
 			for (unsigned int i = 0; i < GFaceTmp->getNumMeshElements();i++){
-//				std::cout<<" plop 7.1"<<std::endl;
 				MElement* elem = GFaceTmp->getMeshElement(i);
 				for (int j = 0;j < elem->getNumVertices();j++){
-//					std::cout<<" plop 7.2"<<std::endl;
 					MVertex* vert = elem->getVertex(j);
-//					std::cout<<" plop 7.3"<<std::endl;
 					std::map<MVertex*,MVertex* >::iterator itMap = VertexAssociation.find(vert);
-//					std::cout<<" plop 7.4"<<std::endl;
 					if (itMap != VertexAssociation.end()){
-//						std::cout<<"on va changer un point"<<std::endl;
-//						if (elem->getNumVertices() != 3){
-//							std::cout<<"on a un pb ! nb de vertices de "<<elem->getNumVertices()<<std::endl;
-//							while (1){
-//
-//							}
-//						}
 						elem->setVertex(j,itMap->second);
-						if (elem->getVertex(j)->getNum() > 100000){
-							std::cout<<"PENDANT CHANGEMENT on a un getnum de "<<elem->getVertex(j)->getNum()<<std::endl;
-							while (1){
-
-							}
-						}
-						if (itMap->second->getNum() > 100000){
-							std::cout<<"PENDANT CHANGEMENT on a un ITMAP getnum de "<<itMap->second->getNum()<<std::endl;
-							while (1){
-
-							}
-						}
+	
 
 
 						std::vector<MVertex*> FaceVerti = GFaceTmp->mesh_vertices;
@@ -740,20 +524,14 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 						}
 
 
-//						std::cout<<"rmtp a un nombre de faces de "<<rTmp->faces().size()<<std::endl;
-//						std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//						std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//						std::cout<<"youpi"<<std::endl;
 					}
 				}
 			}
-//			std::cout<<"plop 8"<<std::endl;
 		}
 	}
 
 	//maintenant on attaque les faces au bord
 	for (std::set<GFace*>::iterator itr = ToDuplicateListBoundary.begin();itr != ToDuplicateListBoundary.end();itr++){
-		std::cout<<"AU BORD on est entre pour la fois numero "<<counterNbDone<<std::endl;
 		counterNbDone++;
 		GFace* fTmp = (*itr);
 		//on doit dupliquer la face, les noeuds, les aretes, puis creer une region entre les deux
@@ -787,48 +565,23 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 		yCenterReg = yCenterReg/counterPts;
 		zCenterReg = zCenterReg/counterPts;
 
-//		std::cout<<"debut boucle for "<<counterNbDone<<std::endl;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			//duplication Gvertex
-//			std::cout<<"point 1 "<<counterNbDone<<std::endl;
 			GVertex* vTmp = (*itv);
-//			std::cout<<"point 2 "<<counterNbDone<<std::endl;
 			double ponderatedX = 0.99999999999 * vTmp->x() + 0.00000000001 * xCenterReg;
 			double ponderatedY = 0.99999999999 * vTmp->y() + 0.00000000001 * yCenterReg;
 			double ponderatedZ = 0.99999999999 * vTmp->z() + 0.00000000001 * zCenterReg;
-//			double ponderatedX = 1.0 * vTmp->x() + 0.0 * xCenterReg;
-//			double ponderatedY = 1.0 * vTmp->y() + 0.0 * yCenterReg;
-//			double ponderatedZ = 1.0 * vTmp->z() + 0.0 * zCenterReg;
-			//GVertex* newv = new gmshVertex(m,vTmp->prescribedMeshSizeAtVertex());
 			GVertex* newv = m->addVertex(ponderatedX,ponderatedY,ponderatedZ,vTmp->prescribedMeshSizeAtVertex());
-//			std::cout<<"point 3 "<<counterNbDone<<std::endl;
 			GVertexAssociation[vTmp] = newv;
 			//creation des Gedge correspondantes
-//			std::cout<<"point 4 "<<counterNbDone<<std::endl;
-//			std::cout<<"test du nouveau point: "<<newv->x()<<" et "<<newv->y()<<" et "<<newv->z()<<std::endl;
-			//GEdge* newE = new GEdge(m,tagEdges,vTmp,newv);
-			//tagEdges++;
-			//m->add(newE);
 			GEdge* newE = m->addLine(vTmp,newv);
-//			std::cout<<"point 5 "<<counterNbDone<<std::endl;
 			SurroudingEdges[vTmp] = newE;
 			//maintenant traitement mesh
-//			std::cout<<"point 6 "<<counterNbDone<<std::endl;
 			MVertex *vMesh = vTmp->mesh_vertices[0];
-//			std::cout<<"point 7 "<<counterNbDone<<std::endl;
 			MVertex *newMv = new MVertex(vMesh->x(), vMesh->y(), vMesh->z(), (GEntity*)newv);
-//			std::cout<<"point 8 "<<counterNbDone<<std::endl;
 			VertexAssociation[vMesh] = newMv;
-//			std::cout<<"point 9 "<<counterNbDone<<std::endl;
 			newv->addMeshVertex(newMv);
-			if (newMv->getNum() > 100000){
-				std::cout<<"on a un getnum de "<<newMv->getNum()<<std::endl;
-				while (1){
-
-				}
-			}
 		}
-//		std::cout<<"apres points "<<counterNbDone<<std::endl;
 		std::list<GEdge*> elist = fTmp->edges();
 		std::vector<GEdge*> newEdgesVector;
 		std::vector<GFace*> SurroundingsFaces;
@@ -865,7 +618,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 				newE->addLine(newLine);
 			}
 		}
-//		std::cout<<"apres lignes "<<counterNbDone<<std::endl;
 		std::vector<std::vector<GEdge*> > VecOfVec;
 		VecOfVec.push_back(newEdgesVector);
 		//creation de la nouvelle face
@@ -885,7 +637,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 			MTriangle *newTri = new MTriangle(firstE,secondE,thirdE);
 			GFaceAssociation->addTriangle(newTri);
 		}
-//		std::cout<<"apres faces "<<counterNbDone<<std::endl;
 		std::vector<GFace*> VectorFaces;
 		std::list<GFace*> listFaces;
 		VectorFaces.push_back(fTmp);
@@ -898,7 +649,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 		listFaces.push_back(GFaceAssociation);
 		std::vector<std::vector<GFace*> > VecOfVecGFace;
 		VecOfVecGFace.push_back(VectorFaces);
-//		std::cout<<"creation de la nouvelle region "<<counterNbDone<<std::endl;
 		//creation de la nouvelle region
 
 		GRegion* createdRegion = new GRegion(m,counterNbDone);
@@ -927,16 +677,12 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 
 		for (unsigned int i = 0; i < fTmp->getNumMeshElements();i++){
 			MElement* elem = fTmp->getMeshElement(i);
-//			std::cout<<"on a un element avec un nb de vertex de "<<elem->getNumVertices()<<std::endl;
 			MVertex *firstE = VertexAssociation.find(elem->getVertex(0))->second;
 			MVertex *secondE = VertexAssociation.find(elem->getVertex(1))->second;
 			MVertex *thirdE = VertexAssociation.find(elem->getVertex(2))->second;
-//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MPrism *newPri = new MPrism(elem->getVertex(0),elem->getVertex(1),elem->getVertex(2),firstE,secondE,thirdE);
-//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			createdRegion->addPrism(newPri);
-//			std::cout<<"fin de for"<<std::endl;
 		}
 		for (unsigned int i = 0; i < rTmp->getNumMeshElements();i++){
 			MElement* elem = rTmp->getMeshElement(i);
@@ -1004,84 +750,11 @@ PView *GMSH_DuplicateBoundariesPlugin::executeBis(PView *view)
 
 
 
-/*
-	std::map<std::pair<MVertex*,GRegion*>,MVertex* > VertexAssociation;
-	for (GModel::viter itv = m->firstVertex();itv != m->lastVertex();itv++){
-//		std::cout<<"entering first for"<<std::endl;
-		GVertex* vTmp = (*itv);
-		std::list<GRegion*> r = vTmp->regions();
-		std::cout<<"size of mesh_vertices: "<<vTmp->mesh_vertices.size()<<std::endl;
-		MVertex *vMesh = vTmp->mesh_vertices[0];
-		std::cout<<"size of r: "<<r.size()<<std::endl;
-		// for all regions, create association
-//		for (int i = 0; i < vTmp->getNumMeshVertices();i++){
-//			std::cout<<"entering second for"<<std::endl;
-//			MVertex* vMesh = vTmp->getMeshVertex(i);
-//			for (GModel::riter itr = vTmp->regions().begin();itr != vTmp->regions().end();itr++){
-		for (std::list<GRegion*>::iterator itr = r.begin();itr != r.end();itr++){
-			std::cout<<"entering third for"<<std::endl;
-			GRegion* vReg = (*itr);
-			//				std::cout<<"we have the region "<<vReg->
-			MVertex *newv = new MVertex(vMesh->x(), vMesh->y(), vMesh->z(), (GEntity*)vReg);
-			vReg->mesh_vertices.push_back(newv);
-			VertexAssociation[std::make_pair(vMesh,vReg)] = newv;
-			std::cout<<"end third for"<<std::endl;
-		}
-//			std::cout<<"end second for"<<std::endl;
-//		}
-//		std::cout<<"end first for"<<std::endl;
-	}
-	std::cout<<"Phase 1 done for DuplicateBoundaries"<<std::endl;
-	for (GModel::eiter ite = m->firstEdge();ite != m->lastEdge();ite++){
-		GEdge* eTmp = (*ite);
-		for (int i = 0; i < eTmp->mesh_vertices.size();i++){
-			MVertex* vMesh = eTmp->mesh_vertices[i];
-			std::list<GRegion*> r = eTmp->regions();
-			for (std::list<GRegion*>::iterator itr = r.begin();itr != r.end();itr++){
-				GRegion* vReg = (*itr);
-				MVertex *newv = new MVertex(vMesh->x(), vMesh->y(), vMesh->z(), (GEntity*)vReg);
-				vReg->mesh_vertices.push_back(newv);
-				VertexAssociation[std::make_pair(vMesh,vReg)] = newv;
-			}
-		}
-	}
-	std::cout<<"Phase 2 done for DuplicateBoundaries"<<std::endl;
-	for (GModel::fiter itf = m->firstFace();itf != m->lastFace();itf++){
-		GFace* fTmp = (*itf);
-		for (int i = 0; i < fTmp->mesh_vertices.size();i++){
-			MVertex* vMesh = fTmp->mesh_vertices[i];
-			std::list<GRegion*> r = fTmp->regions();
-			for (std::list<GRegion*>::iterator itr = r.begin();itr != r.end();itr++){
-				GRegion* vReg = (*itr);
-				MVertex *newv = new MVertex(vMesh->x(), vMesh->y(), vMesh->z(), (GEntity*)vReg);
-				vReg->mesh_vertices.push_back(newv);
-				VertexAssociation[std::make_pair(vMesh,vReg)] = newv;
-			}
-		}
-	}
-	std::cout<<"Phase 3 done for DuplicateBoundaries"<<std::endl;
-	for (GModel::riter itr = m->firstRegion();itr != m->lastRegion();itr++){
-		GRegion* rTmp = (*itr);
-		for (int i = 0; i < rTmp->getNumMeshElements();i++){
-			MElement* elem = rTmp->getMeshElement(i);
-			for (int j = 0;j < elem->getNumVertices();j++){
-				MVertex* vert = elem->getVertex(j);
-				std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexAssociation.find(std::make_pair(vert,rTmp));
-				if (itMap != VertexAssociation.end()){
-					elem->setVertex(j,itMap->second);
-				}
-			}
-		}
-	}
-	*/
-//	std::cout<<"number for seeds: "<<PhysicalSeeds<<" and for interface: "<<PhysicalInterface<<std::endl;
-	std::cout<<"End of DuplicateBoundaries"<<std::endl;
 	return view;
 }
 
 PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 {
-	std::cout<<"starting DuplicateBoundaries"<<std::endl;
 	GModel *m = GModel::current();
 	m->setFactory("geo");
 	std::set<GFace*> ToDuplicateList;
@@ -1152,63 +825,34 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 					if (abs((p2.z()-p1.z()))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 1"<<std::endl;
-//						std::cout<<"on a p1.x() = "<<p1.x()<<" et p2.x() = "<<p2.x()<<" et abs((p2.x()-p1.x()-1.0)) = "<<abs((p2.x()-p1.x()-1.0))<<std::endl;
-//						std::cout<<"on a abs(0.5) = "<<abs(0.5)<<" et abs(-0.5) = "<<abs(-0.5)<<" et abs(1.5) = "<<abs(1.5)<<" et abs(-1.5) = "<<abs(-1.5)<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if(abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 2"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 3"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}
 				}else if (abs((p2.y()-p1.y()-1.0))<0.0001){
 					if (abs((p2.z()-p1.z()))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 4"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 5"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 6"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}
 				}else if (abs((p1.y()-p2.y()-1.0))<0.0001){
 					if (abs((p2.z()-p1.z()))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 7"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 8"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 9"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}
 				}
 			}else if (abs((p1.x()-p2.x()-1.0))<0.0001){
@@ -1242,21 +886,12 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 					if (abs((p2.z()-p1.z()))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 10"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 11"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 12"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}
 				}else if (abs((p1.y()-p2.y()-1.0))<0.0001){
 					if (abs((p2.z()-p1.z()))<0.0001){
@@ -1270,9 +905,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 					if (abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 13"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						//NOTHING
 					}
@@ -1280,7 +912,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 			}
 		}
 	}
-	std::cout<<"on a une taille de facesBound = "<<facesBound.size()<<" et ToDuplicateListBoundary = "<<ToDuplicateListBoundary.size()<<std::endl;
 
 
 
@@ -1295,49 +926,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 	std::map<std::pair<GVertex*,GRegion*>,GVertex* > GVertexGlobalAssociation;
 	std::map<std::pair<GEdge*,GRegion*>,GEdge* > GEdgeGlobalAssociation;
 	std::map<std::pair<GFace*,GRegion*>,GFace* > GFaceGlobalAssociation;
-//	for (GModel::viter itv= m->firstVertex();itv != m->lastVertex();itv++){
-//		GVertex* vTmp = (*itv);
-//		std::vector<GVertex* > vecTmp;
-//		vecTmp.clear();
-//		GVertexGlobalAssociation[vTmp] = vecTmp;
-//		for (int i = 0; i < vTmp->mesh_vertices.size();i++){
-//			MVertex *vMesh = vTmp->mesh_vertices[i];
-//			std::vector<MVertex* > vecTmpBis;
-//			vecTmpBis.clear();
-//			VertexGlobalAssociation[vMesh] = vecTmpBis;
-//		}
-//	}
-//	for (GModel::eiter ite= m->firstEdge();ite != m->lastEdge();ite++){
-//		GEdge* eTmp = (*ite);
-//		std::vector<GEdge* > vecTmp;
-//		vecTmp.clear();
-//		GEdgeGlobalAssociation[eTmp] = vecTmp;
-//		for (int i = 0; i < eTmp->mesh_vertices.size();i++){
-//			MVertex *vMesh = eTmp->mesh_vertices[i];
-//			std::vector<MVertex* > vecTmpBis;
-//			vecTmpBis.clear();
-//			VertexGlobalAssociation[vMesh] = vecTmpBis;
-//		}
-//	}
-//	for (GModel::fiter itf= m->firstFace();itf != m->lastFace();itf++){
-//		GFace* fTmp = (*itf);
-//		for (int i = 0; i < fTmp->mesh_vertices.size();i++){
-//			MVertex *vMesh = fTmp->mesh_vertices[i];
-//			std::vector<MVertex* > vecTmpBis;
-//			vecTmpBis.clear();
-//			VertexGlobalAssociation[vMesh] = vecTmpBis;
-//		}
-//	}
-//	for (GModel::riter itr= m->firstRegion();itr != m->lastRegion();itr++){
-//		GRegion* rTmp = (*itr);
-//		for (int i = 0; i < rTmp->mesh_vertices.size();i++){
-//			MVertex *vMesh = rTmp->mesh_vertices[i];
-//			std::vector<MVertex* > vecTmpBis;
-//			vecTmpBis.clear();
-//			VertexGlobalAssociation[vMesh] = vecTmpBis;
-//		}
-//	}
-	std::cout<<"entree dans regions first pass"<<std::endl;
+
 	for (GModel::riter itr= m->firstRegion();itr != m->lastRegion();itr++){
 		GRegion* rTmp = (*itr);
 		std::list<GFace*> RegFaces = rTmp->faces();
@@ -1366,27 +955,17 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 		std::list<GVertex*> vlist;
 
 
-		std::cout<<"wut 1"<<std::endl;
 		std::list<GFace*> listFacesTmp = rTmp->faces();
 		for (std::list<GFace*>::iterator itTp = listFacesTmp.begin();itTp != listFacesTmp.end();itTp++){
-			std::cout<<"wut 2"<<std::endl;
 			std::list<GVertex*> vlist2;
-			std::cout<<"wut 3"<<std::endl;
 			vlist2 = (*itTp)->vertices();
-			std::cout<<"wut 4"<<std::endl;
 			for (std::list<GVertex*>::iterator itTp2 = vlist2.begin();itTp2 != vlist2.end();itTp2++){
-				std::cout<<"wut 5"<<std::endl;
 				if(std::find(vlist.begin(), vlist.end(), *itTp2) == vlist.end())
 					vlist.push_back(*itTp2);
-				std::cout<<"wut 6"<<std::endl;
 			}
-			std::cout<<"wut 7"<<std::endl;
 		}
-		std::cout<<"wut 8"<<std::endl;
 
 
-		std::cout<<"on a une taille vlist de "<<vlist.size()<<std::endl;
-		std::cout<<"init done entering vertices"<<std::endl;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			//duplication Gvertex
 			GVertex* vTmp = (*itv);
@@ -1394,7 +973,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 			double ponderatedY = 0.99999999999 * vTmp->y() + 0.00000000001 * yCenterReg;
 			double ponderatedZ = 0.99999999999 * vTmp->z() + 0.00000000001 * zCenterReg;
 			GVertex* newv = m->addVertex(ponderatedX,ponderatedY,ponderatedZ,vTmp->prescribedMeshSizeAtVertex());
-			std::cout<<"inserted correspondance between : "<<vTmp->tag()<<" and : "<<newv->tag()<<std::endl;
 			GVertexAssociation[vTmp] = newv;
 			GVertexGlobalAssociation[std::make_pair(vTmp,rTmp)] = newv;
 			//creation des Gedge correspondantes
@@ -1409,18 +987,12 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 		}
 		//maintenant on soccupe de duppliquer les edges de la region
 		std::list<GEdge*> elist = rTmp->edges();
-		std::cout<<"on a une taille elist de "<<elist.size()<<std::endl;
-		std::cout<<"vertices done entering edges"<<std::endl;
 
 		std::vector<GFace*> SurroundingsFaces;
 		for (std::list<GEdge*>::iterator ite = elist.begin();ite != elist.end();ite++){
 			//duplication Gedge
 			GEdge* eTmp = (*ite);
-			std::cout<<"before addline"<<std::endl;
-			std::cout<<"begin ID : "<<eTmp->getBeginVertex()->tag()<<" and end ID : "<<eTmp->getEndVertex()->tag()<<std::endl;
-			std::cout<<"corresponding begin ID : "<<GVertexAssociation[eTmp->getBeginVertex()]->tag()<<" and end ID : "<<GVertexAssociation[eTmp->getEndVertex()]->tag()<<std::endl;
 			GEdge* newE = m->addLine(GVertexAssociation[eTmp->getEndVertex()],GVertexAssociation[eTmp->getBeginVertex()]);
-			std::cout<<"after addline"<<std::endl;
 			GEdgeAssociation[eTmp] = newE;
 			GEdgeGlobalAssociation[std::make_pair(eTmp,rTmp)] = newE;
 			//creation des GFace correspondantes
@@ -1443,7 +1015,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 				VertexGlobalAssociation[std::make_pair(vMesh,rTmp)] = newMv;
 				newE->addMeshVertex(newMv);
 			}
-			std::cout<<"after newvertices"<<std::endl;
 			for (unsigned int i = 0; i < eTmp->getNumMeshElements();i++){
 				MElement* elem = eTmp->getMeshElement(i);
 				MVertex *firstETmp = VertexAssociation.find(elem->getVertex(0))->second;
@@ -1451,9 +1022,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 				MLine *newLine = new MLine(firstETmp,lastETmp);
 				newE->addLine(newLine);
 			}
-			std::cout<<"after newMlines"<<std::endl;
 		}
-		std::cout<<"edges done entering faces"<<std::endl;
 		for (std::list<GFace*>::iterator itf = RegFaces.begin();itf != RegFaces.end();itf++){
 			GFace* fTmp = (*itf);
 			std::vector<GEdge*> newEdgesVector;
@@ -1485,9 +1054,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 			}
 			GFaceGlobalAssociation[std::make_pair(fTmp,rTmp)] = GFaceAssociation;
 		}
-		std::cout<<"faces done for regions"<<std::endl;
 	}
-	std::cout<<"Regions done first pass"<<std::endl;
 	int counterNbDone = 10000;
 	//maintenant on va traiter les faces initiales
 	for (std::set<GFace*>::iterator itf = ToDuplicateList.begin();itf != ToDuplicateList.end();itf++){
@@ -1618,25 +1185,17 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 			if (itMap != VertexGlobalAssociation.end()){
 				v6 = itMap->second;
 			}
-//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MPrism *newPri = new MPrism(v1,v2,v3,v4,v5,v6);
-//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			createdRegion->addPrism(newPri);
-//			std::cout<<"fin de for"<<std::endl;
 		}
-		std::cout<<"apres region, refonte points "<<counterNbDone<<std::endl;
 		for (unsigned int i = 0; i < reg1->getNumMeshElements();i++){
 			MElement* elem = reg1->getMeshElement(i);
 			for (int j = 0;j < elem->getNumVertices();j++){
 				MVertex* vert = elem->getVertex(j);
 				std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(vert,reg1));
 				if (itMap != VertexGlobalAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
@@ -1646,16 +1205,11 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 				MVertex* vert = elem->getVertex(j);
 				std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(vert,reg2));
 				if (itMap != VertexGlobalAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
 	}
-	std::cout<<"interior faces done"<<std::endl;
 	//maintenant on va traiter les faces du bord
 	for (std::set<GFace*>::iterator itf = ToDuplicateListBoundary.begin();itf != ToDuplicateListBoundary.end();itf++){
 		counterNbDone++;
@@ -1754,25 +1308,17 @@ PView *GMSH_DuplicateBoundariesPlugin::executeFourth(PView *view)
 			if (itMap != VertexGlobalAssociation.end()){
 				v3 = itMap->second;
 			}
-			//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MPrism *newPri = new MPrism(v1,v2,v3,elem->getVertex(0),elem->getVertex(1),elem->getVertex(2));
-			//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			createdRegion->addPrism(newPri);
-			//			std::cout<<"fin de for"<<std::endl;
 		}
-		std::cout<<"apres region, refonte points "<<counterNbDone<<std::endl;
 		for (unsigned int i = 0; i < reg1->getNumMeshElements();i++){
 			MElement* elem = reg1->getMeshElement(i);
 			for (int j = 0;j < elem->getNumVertices();j++){
 				MVertex* vert = elem->getVertex(j);
 				std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(vert,reg1));
 				if (itMap != VertexGlobalAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
@@ -2027,63 +1573,34 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 					if (abs((p2.z()-p1.z()))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 1"<<std::endl;
-//						std::cout<<"on a p1.x() = "<<p1.x()<<" et p2.x() = "<<p2.x()<<" et abs((p2.x()-p1.x()-1.0)) = "<<abs((p2.x()-p1.x()-1.0))<<std::endl;
-//						std::cout<<"on a abs(0.5) = "<<abs(0.5)<<" et abs(-0.5) = "<<abs(-0.5)<<" et abs(1.5) = "<<abs(1.5)<<" et abs(-1.5) = "<<abs(-1.5)<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if(abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 2"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 3"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}
 				}else if (abs((p2.y()-p1.y()-1.0))<0.0001){
 					if (abs((p2.z()-p1.z()))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 4"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 5"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 6"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}
 				}else if (abs((p1.y()-p2.y()-1.0))<0.0001){
 					if (abs((p2.z()-p1.z()))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 7"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 8"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 9"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}
 				}
 			}else if (abs((p1.x()-p2.x()-1.0))<0.0001){
@@ -2117,21 +1634,12 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 					if (abs((p2.z()-p1.z()))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 10"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 11"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 12"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}
 				}else if (abs((p1.y()-p2.y()-1.0))<0.0001){
 					if (abs((p2.z()-p1.z()))<0.0001){
@@ -2145,9 +1653,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 					if (abs((p2.z()-p1.z()-1.0))<0.0001){
 						pairs.push_back(std::pair<GFace*,GFace*>(facesBound[i],facesBound[j]));
 						ToDuplicateListBoundary.insert(facesBound[i]);
-//						std::cout<<"case 13"<<std::endl;
-//						std::cout<<"on a mis dans la liste: x "<<p1.x()<<" y "<<p1.y()<<" z "<<p1.z()<<std::endl;
-//						std::cout<<"on avait pour second: x "<<p2.x()<<" y "<<p2.y()<<" z "<<p2.z()<<std::endl;
 					}else if (abs((p1.z()-p2.z()-1.0))<0.0001){
 						//NOTHING
 					}
@@ -2155,7 +1660,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 			}
 		}
 	}
-//	std::cout<<"on a une taille de facesBound = "<<facesBound.size()<<" et ToDuplicateListBoundary = "<<ToDuplicateListBoundary.size()<<std::endl;
 
 
 
@@ -2212,7 +1716,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 //			VertexGlobalAssociation[vMesh] = vecTmpBis;
 //		}
 //	}
-//	std::cout<<"entree dans regions first pass"<<std::endl;
 	for (GModel::riter itr= m->firstRegion();itr != m->lastRegion();itr++){
 		GRegion* rTmp = (*itr);
 		std::list<GFace*> RegFaces = rTmp->faces();
@@ -2241,27 +1744,17 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 		std::list<GVertex*> vlist;
 
 
-//		std::cout<<"wut 1"<<std::endl;
 		std::list<GFace*> listFacesTmp = rTmp->faces();
 		for (std::list<GFace*>::iterator itTp = listFacesTmp.begin();itTp != listFacesTmp.end();itTp++){
-//			std::cout<<"wut 2"<<std::endl;
 			std::list<GVertex*> vlist2;
-//			std::cout<<"wut 3"<<std::endl;
 			vlist2 = (*itTp)->vertices();
-//			std::cout<<"wut 4"<<std::endl;
 			for (std::list<GVertex*>::iterator itTp2 = vlist2.begin();itTp2 != vlist2.end();itTp2++){
-//				std::cout<<"wut 5"<<std::endl;
 				if(std::find(vlist.begin(), vlist.end(), *itTp2) == vlist.end())
 					vlist.push_back(*itTp2);
-//				std::cout<<"wut 6"<<std::endl;
 			}
-//			std::cout<<"wut 7"<<std::endl;
 		}
-//		std::cout<<"wut 8"<<std::endl;
 
 
-//		std::cout<<"on a une taille vlist de "<<vlist.size()<<std::endl;
-//		std::cout<<"init done entering vertices"<<std::endl;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			//duplication Gvertex
 			GVertex* vTmp = (*itv);
@@ -2269,7 +1762,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 			double ponderatedY = 0.99999999999 * vTmp->y() + 0.00000000001 * yCenterReg;
 			double ponderatedZ = 0.99999999999 * vTmp->z() + 0.00000000001 * zCenterReg;
 			GVertex* newv = m->addVertex(ponderatedX,ponderatedY,ponderatedZ,vTmp->prescribedMeshSizeAtVertex());
-//			std::cout<<"inserted correspondance between : "<<vTmp->tag()<<" and : "<<newv->tag()<<std::endl;
 			GVertexAssociation[vTmp] = newv;
 			GVertexGlobalAssociation[std::make_pair(vTmp,rTmp)] = newv;
 			//creation des Gedge correspondantes
@@ -2284,18 +1776,12 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 		}
 		//maintenant on soccupe de duppliquer les edges de la region
 		std::list<GEdge*> elist = rTmp->edges();
-//		std::cout<<"on a une taille elist de "<<elist.size()<<std::endl;
-//		std::cout<<"vertices done entering edges"<<std::endl;
 
 		std::vector<GFace*> SurroundingsFaces;
 		for (std::list<GEdge*>::iterator ite = elist.begin();ite != elist.end();ite++){
 			//duplication Gedge
 			GEdge* eTmp = (*ite);
-//			std::cout<<"before addline"<<std::endl;
-//			std::cout<<"begin ID : "<<eTmp->getBeginVertex()->tag()<<" and end ID : "<<eTmp->getEndVertex()->tag()<<std::endl;
-//			std::cout<<"corresponding begin ID : "<<GVertexAssociation[eTmp->getBeginVertex()]->tag()<<" and end ID : "<<GVertexAssociation[eTmp->getEndVertex()]->tag()<<std::endl;
 			GEdge* newE = m->addLine(GVertexAssociation[eTmp->getEndVertex()],GVertexAssociation[eTmp->getBeginVertex()]);
-//			std::cout<<"after addline"<<std::endl;
 			GEdgeAssociation[eTmp] = newE;
 			GEdgeGlobalAssociation[std::make_pair(eTmp,rTmp)] = newE;
 			//creation des GFace correspondantes
@@ -2318,7 +1804,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 				VertexGlobalAssociation[std::make_pair(vMesh,rTmp)] = newMv;
 				newE->addMeshVertex(newMv);
 			}
-//			std::cout<<"after newvertices"<<std::endl;
 			for (unsigned int i = 0; i < eTmp->getNumMeshElements();i++){
 				MElement* elem = eTmp->getMeshElement(i);
 				MVertex *firstETmp = VertexAssociation.find(elem->getVertex(0))->second;
@@ -2327,9 +1812,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 				MLine3 *newLine = new MLine3(firstETmp,lastETmp,midETmp);
 				newE->addLine(newLine);
 			}
-//			std::cout<<"after newMlines"<<std::endl;
 		}
-//		std::cout<<"edges done entering faces"<<std::endl;
 		for (std::list<GFace*>::iterator itf = RegFaces.begin();itf != RegFaces.end();itf++){
 			GFace* fTmp = (*itf);
 			std::vector<GEdge*> newEdgesVector;
@@ -2352,7 +1835,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 //			nameSurf += ss.str();
 //			int PhysicalSurfaceTmp = m->setPhysicalName(nameSurf,2);
 //			GFaceAssociation->addPhysicalEntity(PhysicalSurfaceTmp);
-//			std::cout<<"on a associe a la face : "<<fTmp->tag()<<" la face : "<<GFaceAssociation->tag()<<std::endl;
 			//maintenant traitement mesh
 			for (unsigned int i = 0; i < fTmp->mesh_vertices.size();i++){
 				MVertex *vMesh = fTmp->mesh_vertices[i];
@@ -2374,9 +1856,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 			}
 			GFaceGlobalAssociation[std::make_pair(fTmp,rTmp)] = GFaceAssociation;
 		}
-//		std::cout<<"faces done for regions"<<std::endl;
 	}
-//	std::cout<<"Regions done first pass"<<std::endl;
 	int counterNbDone = 10000;
 	//maintenant on va traiter les faces initiales
 	for (std::set<GFace*>::iterator itf = ToDuplicateList.begin();itf != ToDuplicateList.end();itf++){
@@ -2507,12 +1987,9 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 			if (itMap != VertexGlobalAssociation.end()){
 				v6 = itMap->second;
 			}
-//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MPrism *newPri = new MPrism(v1,v3,v2,v4,v6,v5);
-//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			createdRegion->addPrism(newPri);
-//			std::cout<<"fin de for"<<std::endl;
 
 			//second
 			itMap = VertexGlobalAssociation.find(std::make_pair(elem->getVertex(1),reg1));
@@ -2539,9 +2016,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 			if (itMap != VertexGlobalAssociation.end()){
 				v6 = itMap->second;
 			}
-			//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MPrism *newPri2 = new MPrism(v1,v3,v2,v4,v6,v5);
-			//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			createdRegion->addPrism(newPri2);
 			//third
@@ -2569,9 +2044,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 			if (itMap != VertexGlobalAssociation.end()){
 				v6 = itMap->second;
 			}
-			//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MPrism *newPri3 = new MPrism(v1,v3,v2,v4,v6,v5);
-			//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			createdRegion->addPrism(newPri3);
 			//fourth
@@ -2599,24 +2072,17 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 			if (itMap != VertexGlobalAssociation.end()){
 				v6 = itMap->second;
 			}
-			//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MPrism *newPri4 = new MPrism(v1,v3,v2,v4,v6,v5);
-			//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			createdRegion->addPrism(newPri4);
 		}
-//		std::cout<<"apres region, refonte points "<<counterNbDone<<std::endl;
 		for (unsigned int i = 0; i < reg1->getNumMeshElements();i++){
 			MElement* elem = reg1->getMeshElement(i);
 			for (int j = 0;j < elem->getNumVertices();j++){
 				MVertex* vert = elem->getVertex(j);
 				std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(vert,reg1));
 				if (itMap != VertexGlobalAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
@@ -2626,16 +2092,11 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 				MVertex* vert = elem->getVertex(j);
 				std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(vert,reg2));
 				if (itMap != VertexGlobalAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
 	}
-//	std::cout<<"interior faces done"<<std::endl;
 	//maintenant on va traiter les faces du bord
 	for (std::set<GFace*>::iterator itf = ToDuplicateListBoundary.begin();itf != ToDuplicateListBoundary.end();itf++){
 		counterNbDone++;
@@ -2734,12 +2195,9 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 			if (itMap != VertexGlobalAssociation.end()){
 				v3 = itMap->second;
 			}
-			//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MPrism *newPri = new MPrism(v1,v3,v2,elem->getVertex(0),elem->getVertex(5),elem->getVertex(3));
-			//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			createdRegion->addPrism(newPri);
-			//			std::cout<<"fin de for"<<std::endl;
 			//second
 			itMap = VertexGlobalAssociation.find(std::make_pair(elem->getVertex(1),reg1));
 			if (itMap != VertexGlobalAssociation.end()){
@@ -2753,9 +2211,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 			if (itMap != VertexGlobalAssociation.end()){
 				v3 = itMap->second;
 			}
-			//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MPrism *newPri2 = new MPrism(v1,v3,v2,elem->getVertex(1),elem->getVertex(3),elem->getVertex(4));
-			//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			createdRegion->addPrism(newPri2);
 			//third
@@ -2771,9 +2227,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 			if (itMap != VertexGlobalAssociation.end()){
 				v3 = itMap->second;
 			}
-			//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MPrism *newPri3 = new MPrism(v1,v3,v2,elem->getVertex(2),elem->getVertex(4),elem->getVertex(5));
-			//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			createdRegion->addPrism(newPri3);
 			//fourth
@@ -2789,24 +2243,17 @@ PView *GMSH_DuplicateBoundariesPlugin::executeDuplicate(PView *view)
 			if (itMap != VertexGlobalAssociation.end()){
 				v3 = itMap->second;
 			}
-			//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MPrism *newPri4 = new MPrism(v1,v3,v2,elem->getVertex(3),elem->getVertex(5),elem->getVertex(4));
-			//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			createdRegion->addPrism(newPri4);
 		}
-//		std::cout<<"apres region, refonte points "<<counterNbDone<<std::endl;
 		for (unsigned int i = 0; i < reg1->getNumMeshElements();i++){
 			MElement* elem = reg1->getMeshElement(i);
 			for (int j = 0;j < elem->getNumVertices();j++){
 				MVertex* vert = elem->getVertex(j);
 				std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(vert,reg1));
 				if (itMap != VertexGlobalAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
@@ -3004,21 +2451,8 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 	std::vector<std::pair<GFace*,GFace*> > pairs;
 	std::vector<std::pair<GFace*,GFace*> > newPairs;
 	int PhysicalInterface = m->setPhysicalName("Interface",2);
-//	for (GModel::fiter itf= m->firstFace();itf != m->lastFace();itf++){
-//		GFace* ftmp= (*itf);
-//		std::list<GEdge*> edgesFace = ftmp->edges();
-////		std::cout<<"size de edgesFace "<<edgesFace.size()<<std::endl;
-//		for (std::list<GEdge*>::iterator it2=edgesFace.begin();it2!=edgesFace.end();it2++){
-//			GEdge* etmp = (*it2);
-////			std::cout<<"on a la edge "<<etmp->tag()<<std::endl;
-////			std::cout<<"size de face de etmp before : "<<etmp->faces().size()<<std::endl;
-//			etmp->addFace(ftmp);
-////			std::cout<<"size de face de etmp after : "<<etmp->faces().size()<<std::endl;
-//		}
-//	}
 	for (GModel::eiter ite= m->firstEdge();ite != m->lastEdge();ite++){
 		GEdge* eTmp = (*ite);
-//		std::cout<<"on a size de face de etmp de "<<eTmp->faces().size()<<std::endl;
 		if (eTmp->faces().size() == 2){
 			ToDuplicateList.insert(eTmp);
 		}
@@ -3037,7 +2471,6 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 	std::map<std::pair<GVertex*,GFace*>,GVertex* > GVertexGlobalAssociation;
 	std::map<std::pair<GEdge*,GFace*>,GEdge* > GEdgeGlobalAssociation;
 	std::map<std::pair<GFace*,GRegion*>,GFace* > GFaceGlobalAssociation;
-	std::cout<<"entree dans regions first pass"<<std::endl;
 	for (GModel::fiter itr= m->firstFace();itr != m->lastFace();itr++){
 		GFace* rTmp = (*itr);
 		std::list<GEdge*> RegEdges = rTmp->edges();
@@ -3066,33 +2499,17 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 		std::list<GVertex*> vlist;
 
 
-//		std::cout<<"wut 1"<<std::endl;
 		std::list<GEdge*> listedgesTmp = rTmp->edges();
 		std::cout<<"listeEdge size "<<listedgesTmp.size()<<std::endl;
 		for (std::list<GEdge*>::iterator itTp = listedgesTmp.begin();itTp != listedgesTmp.end();itTp++){
-//			std::cout<<"wut 2"<<std::endl;
 			std::list<GVertex*> vlist2;
-//			std::cout<<"wut 3"<<std::endl;
 			if(std::find(vlist.begin(), vlist.end(),(*itTp)->getBeginVertex()) == vlist.end())
 				vlist.push_back((*itTp)->getBeginVertex());
 			if(std::find(vlist.begin(), vlist.end(),(*itTp)->getEndVertex()) == vlist.end())
 				vlist.push_back((*itTp)->getEndVertex());
-//			vlist2 = (*itTp)->vertices();
-//			std::cout<<"vlist2 size "<<vlist2.size()<<std::endl;
-////			std::cout<<"wut 4"<<std::endl;
-//			for (std::list<GVertex*>::iterator itTp2 = vlist2.begin();itTp2 != vlist2.end();itTp2++){
-////				std::cout<<"wut 5"<<std::endl;
-//				if(std::find(vlist.begin(), vlist.end(), *itTp2) == vlist.end())
-//					vlist.push_back(*itTp2);
-////				std::cout<<"wut 6"<<std::endl;
-//			}
-//			std::cout<<"wut 7"<<std::endl;
 		}
-//		std::cout<<"wut 8"<<std::endl;
 
 
-//		std::cout<<"on a une taille vlist de "<<vlist.size()<<std::endl;
-//		std::cout<<"init done entering vertices"<<std::endl;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			//duplication Gvertex
 			GVertex* vTmp = (*itv);
@@ -3100,7 +2517,6 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 			double ponderatedY = 0.99999999999 * vTmp->y() + 0.00000000001 * yCenterReg;
 			double ponderatedZ = 0.99999999999 * vTmp->z() + 0.00000000001 * zCenterReg;
 			GVertex* newv = m->addVertex(ponderatedX,ponderatedY,ponderatedZ,vTmp->prescribedMeshSizeAtVertex());
-//			std::cout<<"inserted correspondance between : "<<vTmp->tag()<<" and : "<<newv->tag()<<std::endl;
 			GVertexAssociation[vTmp] = newv;
 			GVertexGlobalAssociation[std::make_pair(vTmp,rTmp)] = newv;
 			//creation des Gedge correspondantes
@@ -3115,86 +2531,19 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 		}
 		//maintenant on soccupe de duppliquer les edges de la region
 		std::list<GEdge*> elist = rTmp->edges();
-		std::cout<<"on a une taille elist de "<<elist.size()<<std::endl;
-		std::cout<<"vertices done entering edges"<<std::endl;
 
 		std::vector<GFace*> SurroundingsFaces;
-//		for (std::list<GEdge*>::iterator ite = elist.begin();ite != elist.end();ite++){
-//			//duplication Gedge
-//			GEdge* eTmp = (*ite);
-////			std::cout<<"before addline"<<std::endl;
-////			std::cout<<"begin ID : "<<eTmp->getBeginVertex()->tag()<<" and end ID : "<<eTmp->getEndVertex()->tag()<<std::endl;
-////			std::cout<<"corresponding begin ID : "<<GVertexAssociation[eTmp->getBeginVertex()]->tag()<<" and end ID : "<<GVertexAssociation[eTmp->getEndVertex()]->tag()<<std::endl;
-//			GEdge* newE = m->addLine(GVertexAssociation[eTmp->getEndVertex()],GVertexAssociation[eTmp->getBeginVertex()]);
-////			std::cout<<"after addline"<<std::endl;
-//			GEdgeAssociation[eTmp] = newE;
-//			GEdgeGlobalAssociation[std::make_pair(eTmp,rTmp)] = newE;
-//			//creation des GFace correspondantes
-////			GEdge* firstE = SurroudingEdges.find(eTmp->getEndVertex())->second;
-////			GEdge* lastE = SurroudingEdges.find(eTmp->getBeginVertex())->second;
-////			std::vector<GEdge*> VecEdgesTmp;
-////			VecEdgesTmp.push_back(eTmp);
-////			VecEdgesTmp.push_back(firstE);
-////			VecEdgesTmp.push_back(newE);
-////			VecEdgesTmp.push_back(lastE);
-////			std::vector<std::vector<GEdge*> > VecOfVecTmp;
-////			VecOfVecTmp.push_back(VecEdgesTmp);
-////			GFace* newFaceTmp = m->addPlanarFace(VecOfVecTmp);
-////			SurroundingsFaces.push_back(newFaceTmp);
-//			//maintenant traitement mesh
-//			for (int i = 0; i < eTmp->mesh_vertices.size();i++){
-//				MVertex *vMesh = eTmp->mesh_vertices[i];
-//				MVertex *newMv = new MVertex(vMesh->x(), vMesh->y(), vMesh->z(), (GEntity*)newE);
-//				VertexAssociation[vMesh] = newMv;
-//				VertexGlobalAssociation[std::make_pair(vMesh,rTmp)] = newMv;
-//				newE->addMeshVertex(newMv);
-//			}
-////			std::cout<<"after newvertices"<<std::endl;
-//			for (int i = 0; i < eTmp->getNumMeshElements();i++){
-//				MElement* elem = eTmp->getMeshElement(i);
-//				MVertex *firstETmp = VertexAssociation.find(elem->getVertex(0))->second;
-//				MVertex *lastETmp = VertexAssociation.find(elem->getVertex(1))->second;
-//				MVertex *midETmp = VertexAssociation.find(elem->getVertex(2))->second;
-//				MLine3 *newLine = new MLine3(firstETmp,lastETmp,midETmp);
-//				newE->addLine(newLine);
-//			}
-////			std::cout<<"after newMlines"<<std::endl;
-//		}
-		std::cout<<"edges done entering faces"<<std::endl;
-		std::cout<<"RegEdges size : "<<RegEdges.size()<<std::endl;
 		for (std::list<GEdge*>::iterator itf = RegEdges.begin();itf != RegEdges.end();itf++){
 			GEdge* eTmp = (*itf);
-//			std::vector<GEdge*> newEdgesVector;
-//			std::list<GEdge*> elistFace = fTmp->edges();
-//			for (std::list<GEdge*>::iterator ite = elistFace.begin();ite != elistFace.end();ite++){
-//				GEdge* eTmp = (*ite);
-//				GEdge* eToFind = GEdgeAssociation[eTmp];
-//				newEdgesVector.push_back(eToFind);
-//			}
-//			std::vector<std::vector<GEdge*> > VecOfVec;
-//			VecOfVec.push_back(newEdgesVector);
 			//creation de la nouvelle face
-			std::cout<<"before newvertices"<<std::endl;
-			std::cout<<"beginvertex : "<<eTmp->getBeginVertex()->tag()<<std::endl;
-			std::cout<<"endvertex : "<<eTmp->getEndVertex()->tag()<<std::endl;
-			std::cout<<"associated begin "<<GVertexAssociation[eTmp->getBeginVertex()]->tag()<<std::endl;
-			std::cout<<"associated end "<<GVertexAssociation[eTmp->getEndVertex()]->tag()<<std::endl;
 			GEdge* newE = m->addLine(GVertexAssociation[eTmp->getBeginVertex()],GVertexAssociation[eTmp->getEndVertex()]);
-//			std::cout<<"plop1"<<std::endl;
 			for (unsigned int i = 0; i < eTmp->mesh_vertices.size();i++){
-//				std::cout<<"plop2"<<std::endl;
 				MVertex *vMesh = eTmp->mesh_vertices[i];
-//				std::cout<<"plop3"<<std::endl;
 				MVertex *newMv = new MVertex(vMesh->x(), vMesh->y(), vMesh->z(), (GEntity*)newE);
-//				std::cout<<"plop4"<<std::endl;
 				VertexAssociation[vMesh] = newMv;
-//				std::cout<<"plop5"<<std::endl;
 				VertexGlobalAssociation[std::make_pair(vMesh,rTmp)] = newMv;
-//				std::cout<<"plop6"<<std::endl;
 				newE->addMeshVertex(newMv);
-//				std::cout<<"plop7"<<std::endl;
 			}
-			std::cout<<"after newvertices"<<std::endl;
 			for (unsigned int i = 0; i < eTmp->getNumMeshElements();i++){
 				MElement* elem = eTmp->getMeshElement(i);
 				MVertex *firstETmp = VertexAssociation.find(elem->getVertex(0))->second;
@@ -3203,51 +2552,15 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 				MLine3 *newLine = new MLine3(firstETmp,lastETmp,midETmp);
 				newE->addLine(newLine);
 			}
-			std::cout<<"after addline"<<std::endl;
 			GEdgeGlobalAssociation[std::make_pair(eTmp,rTmp)] = newE;
-//			GEdge* GFaceAssociation = m->addPlanarFace(VecOfVec);
-//			int tagTmp = GFaceAssociation->tag();
-//			std::ostringstream ss;
-//			ss << tagTmp;
-////			char *intStr = itoa(tagTmp);
-//			std::string nameSurf = "SURFACE";
-////			nameSurf += std::string(intStr);
-//			nameSurf += ss.str();
-//			int PhysicalSurfaceTmp = m->setPhysicalName(nameSurf,2);
-//			GFaceAssociation->addPhysicalEntity(PhysicalSurfaceTmp);
-//			std::cout<<"on a associe a la face : "<<fTmp->tag()<<" la face : "<<GFaceAssociation->tag()<<std::endl;
-//			//maintenant traitement mesh
-//			for (int i = 0; i < fTmp->mesh_vertices.size();i++){
-//				MVertex *vMesh = fTmp->mesh_vertices[i];
-//				MVertex *newMv = new MVertex(vMesh->x(), vMesh->y(), vMesh->z(), (GEntity*)GFaceAssociation);
-//				VertexAssociation[vMesh] = newMv;
-//				VertexGlobalAssociation[std::make_pair(vMesh,rTmp)] = newMv;
-//				GFaceAssociation->addMeshVertex(newMv);
-//			}
-//			for (int i = 0; i < fTmp->getNumMeshElements();i++){
-//				MElement* elem = fTmp->getMeshElement(i);
-//				MVertex *firstE = VertexAssociation.find(elem->getVertex(0))->second;
-//				MVertex *secondE = VertexAssociation.find(elem->getVertex(1))->second;
-//				MVertex *thirdE = VertexAssociation.find(elem->getVertex(2))->second;
-//				MVertex *fourthE = VertexAssociation.find(elem->getVertex(3))->second;
-//				MVertex *fifthE = VertexAssociation.find(elem->getVertex(4))->second;
-//				MVertex *sisthE = VertexAssociation.find(elem->getVertex(5))->second;
-//				MTriangle6 *newTri = new MTriangle6(firstE,secondE,thirdE,fourthE,fifthE,sisthE);
-//				GFaceAssociation->addTriangle(newTri);
-//			}
-//			GFaceGlobalAssociation[std::make_pair(fTmp,rTmp)] = GFaceAssociation;
 		}
-//		std::cout<<"faces done for regions"<<std::endl;
 	}
-	std::cout<<"Regions done first pass"<<std::endl;
 	int counterNbDone = 10000;
 	//maintenant on va traiter les faces initiales
 	for (std::set<GEdge*>::iterator itf = ToDuplicateList.begin();itf != ToDuplicateList.end();itf++){
 		counterNbDone++;
-		std::cout<<"entree dans toduplicateList numero "<<counterNbDone<<std::endl;
 		GEdge* eTmp = (*itf);
 		std::list<GFace*> listFacesTmpT = eTmp->faces();
-		std::cout<<"on a une taille de list faces de "<<listFacesTmpT.size()<<std::endl;
 		std::list<GFace*>::iterator itTmpFace = listFacesTmpT.begin();
 		GFace* fac1 = (*itTmpFace);
 		itTmpFace++;
@@ -3258,33 +2571,21 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 		vlist.push_back(eTmp->getBeginVertex());
 		vlist.push_back(eTmp->getEndVertex());
 		std::map<GVertex*,GEdge* > SurroudingEdges;
-		std::cout<<"entre dans vlist.begin"<<std::endl;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			GVertex* vTmp = (*itv);
-			std::cout<<"test1"<<std::endl;
-			std::cout<<"on a fac1 "<<fac1->tag()<<" et fac2 "<<fac2->tag()<<" et vTmp "<<vTmp->tag()<<std::endl;
 			GVertex* v1=0;
 			GVertex* v2=0;
 			std::map<std::pair<GVertex*,GFace*>,GVertex* >::iterator itMap = GVertexGlobalAssociation.find(std::make_pair(vTmp,fac1));
-			std::cout<<"test2"<<std::endl;
 			if (itMap != GVertexGlobalAssociation.end()){
 				v1 = itMap->second;
-				std::cout<<"assigned v1"<<std::endl;
 			}
-			std::cout<<"test3"<<std::endl;
 			itMap = GVertexGlobalAssociation.find(std::make_pair(vTmp,fac2));
-			std::cout<<"test4"<<std::endl;
 			if (itMap != GVertexGlobalAssociation.end()){
 				v2 = itMap->second;
-				std::cout<<"assigned v2"<<std::endl;
 			}
-			std::cout<<"test5"<<std::endl;
 			GEdge* newE = m->addLine(v1,v2);
-			std::cout<<"test6"<<std::endl;
 			SurroudingEdges[vTmp] = newE;
-			std::cout<<"test7"<<std::endl;
 		}
-		std::cout<<"vertex traites"<<std::endl;
 		//ici tous les vertex sont traites
 		//on va traiter les edges
 //		std::list<GEdge*> elist = fTmp->edges();
@@ -3302,7 +2603,6 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 		if (itMap != GEdgeGlobalAssociation.end()){
 			e2 = itMap->second;
 		}
-		std::cout<<"creation des GFace correspondantes"<<std::endl;
 		//creation des GFace correspondantes
 		GEdge* firstE = SurroudingEdges.find(eTmp->getBeginVertex())->second;
 		GEdge* lastE = SurroudingEdges.find(eTmp->getEndVertex())->second;
@@ -3336,7 +2636,6 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 		newFaceTmp->addPhysicalEntity(PhysicalInterface);
 //		createdRegion->set(listFaces);
 //		m->add(createdRegion);
-		std::cout<<"eTmp->getNumMeshElements() "<<eTmp->getNumMeshElements()<<std::endl;
 		for (unsigned int i = 0; i < eTmp->getNumMeshElements();i++){
 			MElement* elem = eTmp->getMeshElement(i);
 			MVertex* v1=0;
@@ -3369,13 +2668,9 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 //			if (itMap != VertexGlobalAssociation.end()){
 //				v6 = itMap->second;
 //			}
-//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MQuadrangle *newQua = new MQuadrangle(v1,v2,v3,v4);
-			std::cout<<"addition du quad "<<newQua->getNum()<<" avec les vertices "<<v1->getNum()<<" ; "<<v2->getNum()<<" ; "<<v3->getNum()<<" ; "<<v4->getNum()<<std::endl;
-//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			newFaceTmp->addQuadrangle(newQua);
-//			std::cout<<"fin de for"<<std::endl;
 
 			//second
 			itMap = VertexGlobalAssociation.find(std::make_pair(elem->getVertex(2),fac1));
@@ -3402,10 +2697,7 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 			//			if (itMap != VertexGlobalAssociation.end()){
 			//				v6 = itMap->second;
 			//			}
-			//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MQuadrangle *newQua2 = new MQuadrangle(v1,v2,v3,v4);
-			std::cout<<"addition du quad "<<newQua2->getNum()<<" avec les vertices "<<v1->getNum()<<" ; "<<v2->getNum()<<" ; "<<v3->getNum()<<" ; "<<v4->getNum()<<std::endl;
-			//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			newFaceTmp->addQuadrangle(newQua2);
 
@@ -3413,18 +2705,13 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 
 
 		}
-//		std::cout<<"apres region, refonte points "<<counterNbDone<<std::endl;
 		for (unsigned int i = 0; i < fac1->getNumMeshElements();i++){
 			MElement* elem = fac1->getMeshElement(i);
 			for (int j = 0;j < elem->getNumVertices();j++){
 				MVertex* vert = elem->getVertex(j);
 				std::map<std::pair<MVertex*,GFace*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(vert,fac1));
 				if (itMap != VertexGlobalAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
@@ -3434,16 +2721,11 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2D(PView *view)
 				MVertex* vert = elem->getVertex(j);
 				std::map<std::pair<MVertex*,GFace*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(vert,fac2));
 				if (itMap != VertexGlobalAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
 	}
-	std::cout<<"interior faces done"<<std::endl;
 	//maintenant on va traiter les faces du bord
 //	std::ofstream file("MicrostructurePolycrystal3D.pos");
 //	file << "View \"test\" {\n";
@@ -3652,21 +2934,9 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 	std::vector<std::pair<GFace*,GFace*> > pairs;
 	std::vector<std::pair<GFace*,GFace*> > newPairs;
 	int PhysicalInterface = m->setPhysicalName("Interface",2);
-//	for (GModel::fiter itf= m->firstFace();itf != m->lastFace();itf++){
-//		GFace* ftmp= (*itf);
-//		std::list<GEdge*> edgesFace = ftmp->edges();
-////		std::cout<<"size de edgesFace "<<edgesFace.size()<<std::endl;
-//		for (std::list<GEdge*>::iterator it2=edgesFace.begin();it2!=edgesFace.end();it2++){
-//			GEdge* etmp = (*it2);
-////			std::cout<<"on a la edge "<<etmp->tag()<<std::endl;
-////			std::cout<<"size de face de etmp before : "<<etmp->faces().size()<<std::endl;
-//			etmp->addFace(ftmp);
-////			std::cout<<"size de face de etmp after : "<<etmp->faces().size()<<std::endl;
-//		}
-//	}
+
 	for (GModel::eiter ite= m->firstEdge();ite != m->lastEdge();ite++){
 		GEdge* eTmp = (*ite);
-//		std::cout<<"on a size de face de etmp de "<<eTmp->faces().size()<<std::endl;
 		if (eTmp->faces().size() == 2){
 			ToDuplicateList.insert(eTmp);
 		}
@@ -3688,7 +2958,6 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 	std::map<std::pair<GVertex*,GFace*>,GVertex* > GVertexGlobalAssociation;
 	std::map<std::pair<GEdge*,GFace*>,GEdge* > GEdgeGlobalAssociation;
 	std::map<std::pair<GFace*,GRegion*>,GFace* > GFaceGlobalAssociation;
-//	std::cout<<"entree dans regions first pass"<<std::endl;
 	for (GModel::fiter itr= m->firstFace();itr != m->lastFace();itr++){
 		GFace* rTmp = (*itr);
 		std::list<GEdge*> RegEdges = rTmp->edges();
@@ -3717,33 +2986,16 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 		std::list<GVertex*> vlist;
 
 
-//		std::cout<<"wut 1"<<std::endl;
 		std::list<GEdge*> listedgesTmp = rTmp->edges();
-//		std::cout<<"listeEdge size "<<listedgesTmp.size()<<std::endl;
 		for (std::list<GEdge*>::iterator itTp = listedgesTmp.begin();itTp != listedgesTmp.end();itTp++){
-//			std::cout<<"wut 2"<<std::endl;
 			std::list<GVertex*> vlist2;
-//			std::cout<<"wut 3"<<std::endl;
 			if(std::find(vlist.begin(), vlist.end(),(*itTp)->getBeginVertex()) == vlist.end())
 				vlist.push_back((*itTp)->getBeginVertex());
 			if(std::find(vlist.begin(), vlist.end(),(*itTp)->getEndVertex()) == vlist.end())
 				vlist.push_back((*itTp)->getEndVertex());
-//			vlist2 = (*itTp)->vertices();
-//			std::cout<<"vlist2 size "<<vlist2.size()<<std::endl;
-////			std::cout<<"wut 4"<<std::endl;
-//			for (std::list<GVertex*>::iterator itTp2 = vlist2.begin();itTp2 != vlist2.end();itTp2++){
-////				std::cout<<"wut 5"<<std::endl;
-//				if(std::find(vlist.begin(), vlist.end(), *itTp2) == vlist.end())
-//					vlist.push_back(*itTp2);
-////				std::cout<<"wut 6"<<std::endl;
-//			}
-//			std::cout<<"wut 7"<<std::endl;
 		}
-//		std::cout<<"wut 8"<<std::endl;
 
 
-//		std::cout<<"on a une taille vlist de "<<vlist.size()<<std::endl;
-//		std::cout<<"init done entering vertices"<<std::endl;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			//duplication Gvertex
 			GVertex* vTmp = (*itv);
@@ -3751,7 +3003,6 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 			double ponderatedY = 0.99999999999 * vTmp->y() + 0.00000000001 * yCenterReg;
 			double ponderatedZ = 0.99999999999 * vTmp->z() + 0.00000000001 * zCenterReg;
 			GVertex* newv = m->addVertex(ponderatedX,ponderatedY,ponderatedZ,vTmp->prescribedMeshSizeAtVertex());
-//			std::cout<<"inserted correspondance between : "<<vTmp->tag()<<" and : "<<newv->tag()<<std::endl;
 			GVertexAssociation[vTmp] = newv;
 			GVertexGlobalAssociation[std::make_pair(vTmp,rTmp)] = newv;
 			//creation des Gedge correspondantes
@@ -3766,86 +3017,18 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 		}
 		//maintenant on soccupe de duppliquer les edges de la region
 		std::list<GEdge*> elist = rTmp->edges();
-//		std::cout<<"on a une taille elist de "<<elist.size()<<std::endl;
-//		std::cout<<"vertices done entering edges"<<std::endl;
 
 		std::vector<GFace*> SurroundingsFaces;
-//		for (std::list<GEdge*>::iterator ite = elist.begin();ite != elist.end();ite++){
-//			//duplication Gedge
-//			GEdge* eTmp = (*ite);
-////			std::cout<<"before addline"<<std::endl;
-////			std::cout<<"begin ID : "<<eTmp->getBeginVertex()->tag()<<" and end ID : "<<eTmp->getEndVertex()->tag()<<std::endl;
-////			std::cout<<"corresponding begin ID : "<<GVertexAssociation[eTmp->getBeginVertex()]->tag()<<" and end ID : "<<GVertexAssociation[eTmp->getEndVertex()]->tag()<<std::endl;
-//			GEdge* newE = m->addLine(GVertexAssociation[eTmp->getEndVertex()],GVertexAssociation[eTmp->getBeginVertex()]);
-////			std::cout<<"after addline"<<std::endl;
-//			GEdgeAssociation[eTmp] = newE;
-//			GEdgeGlobalAssociation[std::make_pair(eTmp,rTmp)] = newE;
-//			//creation des GFace correspondantes
-////			GEdge* firstE = SurroudingEdges.find(eTmp->getEndVertex())->second;
-////			GEdge* lastE = SurroudingEdges.find(eTmp->getBeginVertex())->second;
-////			std::vector<GEdge*> VecEdgesTmp;
-////			VecEdgesTmp.push_back(eTmp);
-////			VecEdgesTmp.push_back(firstE);
-////			VecEdgesTmp.push_back(newE);
-////			VecEdgesTmp.push_back(lastE);
-////			std::vector<std::vector<GEdge*> > VecOfVecTmp;
-////			VecOfVecTmp.push_back(VecEdgesTmp);
-////			GFace* newFaceTmp = m->addPlanarFace(VecOfVecTmp);
-////			SurroundingsFaces.push_back(newFaceTmp);
-//			//maintenant traitement mesh
-//			for (int i = 0; i < eTmp->mesh_vertices.size();i++){
-//				MVertex *vMesh = eTmp->mesh_vertices[i];
-//				MVertex *newMv = new MVertex(vMesh->x(), vMesh->y(), vMesh->z(), (GEntity*)newE);
-//				VertexAssociation[vMesh] = newMv;
-//				VertexGlobalAssociation[std::make_pair(vMesh,rTmp)] = newMv;
-//				newE->addMeshVertex(newMv);
-//			}
-////			std::cout<<"after newvertices"<<std::endl;
-//			for (int i = 0; i < eTmp->getNumMeshElements();i++){
-//				MElement* elem = eTmp->getMeshElement(i);
-//				MVertex *firstETmp = VertexAssociation.find(elem->getVertex(0))->second;
-//				MVertex *lastETmp = VertexAssociation.find(elem->getVertex(1))->second;
-//				MVertex *midETmp = VertexAssociation.find(elem->getVertex(2))->second;
-//				MLine3 *newLine = new MLine3(firstETmp,lastETmp,midETmp);
-//				newE->addLine(newLine);
-//			}
-////			std::cout<<"after newMlines"<<std::endl;
-//		}
-//		std::cout<<"edges done entering faces"<<std::endl;
-//		std::cout<<"RegEdges size : "<<RegEdges.size()<<std::endl;
 		for (std::list<GEdge*>::iterator itf = RegEdges.begin();itf != RegEdges.end();itf++){
 			GEdge* eTmp = (*itf);
-//			std::vector<GEdge*> newEdgesVector;
-//			std::list<GEdge*> elistFace = fTmp->edges();
-//			for (std::list<GEdge*>::iterator ite = elistFace.begin();ite != elistFace.end();ite++){
-//				GEdge* eTmp = (*ite);
-//				GEdge* eToFind = GEdgeAssociation[eTmp];
-//				newEdgesVector.push_back(eToFind);
-//			}
-//			std::vector<std::vector<GEdge*> > VecOfVec;
-//			VecOfVec.push_back(newEdgesVector);
-			//creation de la nouvelle face
-//			std::cout<<"before newvertices"<<std::endl;
-//			std::cout<<"beginvertex : "<<eTmp->getBeginVertex()->tag()<<std::endl;
-//			std::cout<<"endvertex : "<<eTmp->getEndVertex()->tag()<<std::endl;
-//			std::cout<<"associated begin "<<GVertexAssociation[eTmp->getBeginVertex()]->tag()<<std::endl;
-//			std::cout<<"associated end "<<GVertexAssociation[eTmp->getEndVertex()]->tag()<<std::endl;
 			GEdge* newE = m->addLine(GVertexAssociation[eTmp->getBeginVertex()],GVertexAssociation[eTmp->getEndVertex()]);
-//			std::cout<<"plop1"<<std::endl;
 			for (unsigned int i = 0; i < eTmp->mesh_vertices.size();i++){
-//				std::cout<<"plop2"<<std::endl;
 				MVertex *vMesh = eTmp->mesh_vertices[i];
-//				std::cout<<"plop3"<<std::endl;
 				MVertex *newMv = new MVertex(vMesh->x(), vMesh->y(), vMesh->z(), (GEntity*)newE);
-//				std::cout<<"plop4"<<std::endl;
 				VertexAssociation[vMesh] = newMv;
-//				std::cout<<"plop5"<<std::endl;
 				VertexGlobalAssociation[std::make_pair(vMesh,rTmp)] = newMv;
-//				std::cout<<"plop6"<<std::endl;
 				newE->addMeshVertex(newMv);
-//				std::cout<<"plop7"<<std::endl;
 			}
-//			std::cout<<"after newvertices"<<std::endl;
 			for (unsigned int i = 0; i < eTmp->getNumMeshElements();i++){
 				MElement* elem = eTmp->getMeshElement(i);
 				MVertex *firstETmp = VertexAssociation.find(elem->getVertex(0))->second;
@@ -3854,51 +3037,15 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 				MLine3 *newLine = new MLine3(firstETmp,lastETmp,midETmp);
 				newE->addLine(newLine);
 			}
-//			std::cout<<"after addline"<<std::endl;
 			GEdgeGlobalAssociation[std::make_pair(eTmp,rTmp)] = newE;
-//			GEdge* GFaceAssociation = m->addPlanarFace(VecOfVec);
-//			int tagTmp = GFaceAssociation->tag();
-//			std::ostringstream ss;
-//			ss << tagTmp;
-////			char *intStr = itoa(tagTmp);
-//			std::string nameSurf = "SURFACE";
-////			nameSurf += std::string(intStr);
-//			nameSurf += ss.str();
-//			int PhysicalSurfaceTmp = m->setPhysicalName(nameSurf,2);
-//			GFaceAssociation->addPhysicalEntity(PhysicalSurfaceTmp);
-//			std::cout<<"on a associe a la face : "<<fTmp->tag()<<" la face : "<<GFaceAssociation->tag()<<std::endl;
-//			//maintenant traitement mesh
-//			for (int i = 0; i < fTmp->mesh_vertices.size();i++){
-//				MVertex *vMesh = fTmp->mesh_vertices[i];
-//				MVertex *newMv = new MVertex(vMesh->x(), vMesh->y(), vMesh->z(), (GEntity*)GFaceAssociation);
-//				VertexAssociation[vMesh] = newMv;
-//				VertexGlobalAssociation[std::make_pair(vMesh,rTmp)] = newMv;
-//				GFaceAssociation->addMeshVertex(newMv);
-//			}
-//			for (int i = 0; i < fTmp->getNumMeshElements();i++){
-//				MElement* elem = fTmp->getMeshElement(i);
-//				MVertex *firstE = VertexAssociation.find(elem->getVertex(0))->second;
-//				MVertex *secondE = VertexAssociation.find(elem->getVertex(1))->second;
-//				MVertex *thirdE = VertexAssociation.find(elem->getVertex(2))->second;
-//				MVertex *fourthE = VertexAssociation.find(elem->getVertex(3))->second;
-//				MVertex *fifthE = VertexAssociation.find(elem->getVertex(4))->second;
-//				MVertex *sisthE = VertexAssociation.find(elem->getVertex(5))->second;
-//				MTriangle6 *newTri = new MTriangle6(firstE,secondE,thirdE,fourthE,fifthE,sisthE);
-//				GFaceAssociation->addTriangle(newTri);
-//			}
-//			GFaceGlobalAssociation[std::make_pair(fTmp,rTmp)] = GFaceAssociation;
 		}
-//		std::cout<<"faces done for regions"<<std::endl;
 	}
-//	std::cout<<"Regions done first pass"<<std::endl;
 	int counterNbDone = 10000;
 	//maintenant on va traiter les faces initiales
 	for (std::set<GEdge*>::iterator itf = ToDuplicateList.begin();itf != ToDuplicateList.end();itf++){
 		counterNbDone++;
-//		std::cout<<"entree dans toduplicateList numero "<<counterNbDone<<std::endl;
 		GEdge* eTmp = (*itf);
 		std::list<GFace*> listFacesTmpT = eTmp->faces();
-//		std::cout<<"on a une taille de list faces de "<<listFacesTmpT.size()<<std::endl;
 		std::list<GFace*>::iterator itTmpFace = listFacesTmpT.begin();
 		GFace* fac1 = (*itTmpFace);
 		itTmpFace++;
@@ -3909,36 +3056,23 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 		vlist.push_back(eTmp->getBeginVertex());
 		vlist.push_back(eTmp->getEndVertex());
 		std::map<GVertex*,GEdge* > SurroudingEdges;
-//		std::cout<<"entre dans vlist.begin"<<std::endl;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			GVertex* vTmp = (*itv);
-//			std::cout<<"test1"<<std::endl;
-//			std::cout<<"on a fac1 "<<fac1->tag()<<" et fac2 "<<fac2->tag()<<" et vTmp "<<vTmp->tag()<<std::endl;
 			GVertex* v1=0;
 			GVertex* v2=0;
 			std::map<std::pair<GVertex*,GFace*>,GVertex* >::iterator itMap = GVertexGlobalAssociation.find(std::make_pair(vTmp,fac1));
-//			std::cout<<"test2"<<std::endl;
 			if (itMap != GVertexGlobalAssociation.end()){
 				v1 = itMap->second;
-//				std::cout<<"assigned v1"<<std::endl;
 			}
-//			std::cout<<"test3"<<std::endl;
 			itMap = GVertexGlobalAssociation.find(std::make_pair(vTmp,fac2));
-//			std::cout<<"test4"<<std::endl;
 			if (itMap != GVertexGlobalAssociation.end()){
 				v2 = itMap->second;
-//				std::cout<<"assigned v2"<<std::endl;
 			}
-//			std::cout<<"test5"<<std::endl;
 			GEdge* newE = m->addLine(v1,v2);
-//			std::cout<<"test6"<<std::endl;
 			SurroudingEdges[vTmp] = newE;
-//			std::cout<<"test7"<<std::endl;
 		}
-//		std::cout<<"vertex traites"<<std::endl;
 		//ici tous les vertex sont traites
 		//on va traiter les edges
-//		std::list<GEdge*> elist = fTmp->edges();
 		std::vector<GEdge*> newEdgesVector;
 		std::vector<GFace*> SurroundingsFaces;
 		//duplication Gedge
@@ -3953,7 +3087,6 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 		if (itMap != GEdgeGlobalAssociation.end()){
 			e2 = itMap->second;
 		}
-//		std::cout<<"creation des GFace correspondantes"<<std::endl;
 		//creation des GFace correspondantes
 		GEdge* firstE = SurroudingEdges.find(eTmp->getBeginVertex())->second;
 		GEdge* lastE = SurroudingEdges.find(eTmp->getEndVertex())->second;
@@ -3987,7 +3120,6 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 		newFaceTmp->addPhysicalEntity(PhysicalInterface);
 //		createdRegion->set(listFaces);
 //		m->add(createdRegion);
-//		std::cout<<"eTmp->getNumMeshElements() "<<eTmp->getNumMeshElements()<<std::endl;
 		for (unsigned int i = 0; i < eTmp->getNumMeshElements();i++){
 			MElement* elem = eTmp->getMeshElement(i);
 			MVertex* v1=0;
@@ -4020,13 +3152,9 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 //			if (itMap != VertexGlobalAssociation.end()){
 //				v6 = itMap->second;
 //			}
-//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MQuadrangle *newQua = new MQuadrangle(v1,v2,v3,v4);
-//			std::cout<<"addition du quad "<<newQua->getNum()<<" avec les vertices "<<v1->getNum()<<" ; "<<v2->getNum()<<" ; "<<v3->getNum()<<" ; "<<v4->getNum()<<std::endl;
-//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			newFaceTmp->addQuadrangle(newQua);
-//			std::cout<<"fin de for"<<std::endl;
 
 			//second
 			itMap = VertexGlobalAssociation.find(std::make_pair(elem->getVertex(2),fac1));
@@ -4053,10 +3181,7 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 			//			if (itMap != VertexGlobalAssociation.end()){
 			//				v6 = itMap->second;
 			//			}
-			//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MQuadrangle *newQua2 = new MQuadrangle(v1,v2,v3,v4);
-//			std::cout<<"addition du quad "<<newQua2->getNum()<<" avec les vertices "<<v1->getNum()<<" ; "<<v2->getNum()<<" ; "<<v3->getNum()<<" ; "<<v4->getNum()<<std::endl;
-			//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			newFaceTmp->addQuadrangle(newQua2);
 
@@ -4064,18 +3189,13 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 
 
 		}
-//		std::cout<<"apres region, refonte points "<<counterNbDone<<std::endl;
 		for (unsigned int i = 0; i < fac1->getNumMeshElements();i++){
 			MElement* elem = fac1->getMeshElement(i);
 			for (int j = 0;j < elem->getNumVertices();j++){
 				MVertex* vert = elem->getVertex(j);
 				std::map<std::pair<MVertex*,GFace*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(vert,fac1));
 				if (itMap != VertexGlobalAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
@@ -4085,16 +3205,11 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 				MVertex* vert = elem->getVertex(j);
 				std::map<std::pair<MVertex*,GFace*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(vert,fac2));
 				if (itMap != VertexGlobalAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
 	}
-//	std::cout<<"interior faces done"<<std::endl;
 
 
 
@@ -4216,18 +3331,13 @@ PView *GMSH_DuplicateBoundariesPlugin::execute2DWithBound(PView *view)
 			MQuadrangle *newQua2 = new MQuadrangle(v1,v2,elem->getVertex(1),elem->getVertex(2));
 			newFaceTmp->addQuadrangle(newQua2);
 		}
-//		std::cout<<"apres region, refonte points "<<counterNbDone<<std::endl;
 		for (unsigned int i = 0; i < fac1->getNumMeshElements();i++){
 			MElement* elem = fac1->getMeshElement(i);
 			for (int j = 0;j < elem->getNumVertices();j++){
 				MVertex* vert = elem->getVertex(j);
 				std::map<std::pair<MVertex*,GFace*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(vert,fac1));
 				if (itMap != VertexGlobalAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
@@ -4497,7 +3607,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeTer(PView *view)
 	std::map<std::pair<GEdge*,GRegion*>,GEdge* > GEdgeGlobalAssociation;
 	std::map<std::pair<GFace*,GRegion*>,GFace* > GFaceGlobalAssociation;
 
-	std::cout<<"entree dans regions first pass"<<std::endl;
 	for (GModel::riter itr= m->firstRegion();itr != m->lastRegion();itr++){
 		GRegion* rTmp = (*itr);
 		std::list<GFace*> RegFaces = rTmp->faces();
@@ -4526,27 +3635,17 @@ PView *GMSH_DuplicateBoundariesPlugin::executeTer(PView *view)
 		std::list<GVertex*> vlist;
 
 
-		std::cout<<"wut 1"<<std::endl;
 		std::list<GFace*> listFacesTmp = rTmp->faces();
 		for (std::list<GFace*>::iterator itTp = listFacesTmp.begin();itTp != listFacesTmp.end();itTp++){
-			std::cout<<"wut 2"<<std::endl;
 			std::list<GVertex*> vlist2;
-			std::cout<<"wut 3"<<std::endl;
 			vlist2 = (*itTp)->vertices();
-			std::cout<<"wut 4"<<std::endl;
 			for (std::list<GVertex*>::iterator itTp2 = vlist2.begin();itTp2 != vlist2.end();itTp2++){
-				std::cout<<"wut 5"<<std::endl;
 				if(std::find(vlist.begin(), vlist.end(), *itTp2) == vlist.end())
 					vlist.push_back(*itTp2);
-				std::cout<<"wut 6"<<std::endl;
 			}
-			std::cout<<"wut 7"<<std::endl;
 		}
-		std::cout<<"wut 8"<<std::endl;
 
 
-		std::cout<<"on a une taille vlist de "<<vlist.size()<<std::endl;
-		std::cout<<"init done entering vertices"<<std::endl;
 		for (std::list<GVertex*>::iterator itv = vlist.begin();itv != vlist.end();itv++){
 			//duplication Gvertex
 			GVertex* vTmp = (*itv);
@@ -4554,7 +3653,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeTer(PView *view)
 			double ponderatedY = 0.99999999999 * vTmp->y() + 0.00000000001 * yCenterReg;
 			double ponderatedZ = 0.99999999999 * vTmp->z() + 0.00000000001 * zCenterReg;
 			GVertex* newv = m->addVertex(ponderatedX,ponderatedY,ponderatedZ,vTmp->prescribedMeshSizeAtVertex());
-			std::cout<<"inserted correspondance between : "<<vTmp->tag()<<" and : "<<newv->tag()<<std::endl;
 			GVertexAssociation[vTmp] = newv;
 			GVertexGlobalAssociation[std::make_pair(vTmp,rTmp)] = newv;
 			//creation des Gedge correspondantes
@@ -4569,18 +3667,12 @@ PView *GMSH_DuplicateBoundariesPlugin::executeTer(PView *view)
 		}
 		//maintenant on soccupe de duppliquer les edges de la region
 		std::list<GEdge*> elist = rTmp->edges();
-		std::cout<<"on a une taille elist de "<<elist.size()<<std::endl;
-		std::cout<<"vertices done entering edges"<<std::endl;
 
 		std::vector<GFace*> SurroundingsFaces;
 		for (std::list<GEdge*>::iterator ite = elist.begin();ite != elist.end();ite++){
 			//duplication Gedge
 			GEdge* eTmp = (*ite);
-			std::cout<<"before addline"<<std::endl;
-			std::cout<<"begin ID : "<<eTmp->getBeginVertex()->tag()<<" and end ID : "<<eTmp->getEndVertex()->tag()<<std::endl;
-			std::cout<<"corresponding begin ID : "<<GVertexAssociation[eTmp->getBeginVertex()]->tag()<<" and end ID : "<<GVertexAssociation[eTmp->getEndVertex()]->tag()<<std::endl;
 			GEdge* newE = m->addLine(GVertexAssociation[eTmp->getEndVertex()],GVertexAssociation[eTmp->getBeginVertex()]);
-			std::cout<<"after addline"<<std::endl;
 			GEdgeAssociation[eTmp] = newE;
 			GEdgeGlobalAssociation[std::make_pair(eTmp,rTmp)] = newE;
 			//creation des GFace correspondantes
@@ -4603,7 +3695,6 @@ PView *GMSH_DuplicateBoundariesPlugin::executeTer(PView *view)
 				VertexGlobalAssociation[std::make_pair(vMesh,rTmp)] = newMv;
 				newE->addMeshVertex(newMv);
 			}
-			std::cout<<"after newvertices"<<std::endl;
 			for (unsigned int i = 0; i < eTmp->getNumMeshElements();i++){
 				MElement* elem = eTmp->getMeshElement(i);
 				MVertex *firstETmp = VertexAssociation.find(elem->getVertex(0))->second;
@@ -4611,9 +3702,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeTer(PView *view)
 				MLine *newLine = new MLine(firstETmp,lastETmp);
 				newE->addLine(newLine);
 			}
-			std::cout<<"after newMlines"<<std::endl;
 		}
-		std::cout<<"edges done entering faces"<<std::endl;
 		for (std::list<GFace*>::iterator itf = RegFaces.begin();itf != RegFaces.end();itf++){
 			GFace* fTmp = (*itf);
 			std::vector<GEdge*> newEdgesVector;
@@ -4645,9 +3734,7 @@ PView *GMSH_DuplicateBoundariesPlugin::executeTer(PView *view)
 			}
 			GFaceGlobalAssociation[std::make_pair(fTmp,rTmp)] = GFaceAssociation;
 		}
-		std::cout<<"faces done for regions"<<std::endl;
 	}
-	std::cout<<"Regions done first pass"<<std::endl;
 	int counterNbDone = 10000;
 	//maintenant on va traiter les faces initiales
 	for (std::set<GFace*>::iterator itf = ToDuplicateList.begin();itf != ToDuplicateList.end();itf++){
@@ -4778,25 +3865,17 @@ PView *GMSH_DuplicateBoundariesPlugin::executeTer(PView *view)
 			if (itMap != VertexGlobalAssociation.end()){
 				v6 = itMap->second;
 			}
-//			std::cout<<"creation de prisme "<<counterNbDone<<std::endl;
 			MPrism *newPri = new MPrism(v1,v2,v3,v4,v5,v6);
-//			std::cout<<"addition de prisme "<<counterNbDone<<std::endl;
 
 			createdRegion->addPrism(newPri);
-//			std::cout<<"fin de for"<<std::endl;
 		}
-		std::cout<<"apres region, refonte points "<<counterNbDone<<std::endl;
 		for (unsigned int i = 0; i < reg1->getNumMeshElements();i++){
 			MElement* elem = reg1->getMeshElement(i);
 			for (int j = 0;j < elem->getNumVertices();j++){
 				MVertex* vert = elem->getVertex(j);
 				std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(vert,reg1));
 				if (itMap != VertexGlobalAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
@@ -4806,16 +3885,11 @@ PView *GMSH_DuplicateBoundariesPlugin::executeTer(PView *view)
 				MVertex* vert = elem->getVertex(j);
 				std::map<std::pair<MVertex*,GRegion*>,MVertex* >::iterator itMap = VertexGlobalAssociation.find(std::make_pair(vert,reg2));
 				if (itMap != VertexGlobalAssociation.end()){
-//					std::cout<<"on va changer un point"<<std::endl;
 					elem->setVertex(j,itMap->second);
-//					std::cout<<"on a introduit "<<itMap->second->getNum()<<std::endl;
-//					std::cout<<"maintenant elem j "<<elem->getVertex(j)->getNum()<<std::endl;
-//					std::cout<<"youpi"<<std::endl;
 				}
 			}
 		}
 	}
-	std::cout<<"interior faces done"<<std::endl;
 
 	for (std::set<GFace*>::iterator itf = ToDuplicateListBoundary.begin();itf != ToDuplicateListBoundary.end();itf++){
 		GFace* fTmp = (*itf);

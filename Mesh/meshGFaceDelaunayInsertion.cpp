@@ -1812,6 +1812,113 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
 #endif
   }
 
+void bowyerWatsonParallelogramsConstrained(GFace *gf,
+		  std::set<MVertex*> constr_vertices,
+		  std::map<MVertex* , MVertex*>* equivalence,
+		  std::map<MVertex*, SPoint2> * parametricCoordinates)
+{
+	std::cout<<"   entered bowyerWatsonParallelogramsConstrained"<<std::endl;
+  std::set<MTri3*,compareTri3Ptr> AllTris;
+  bidimMeshData DATA(equivalence, parametricCoordinates);
+  std::vector<MVertex*> packed;
+  std::vector<SMetric3> metrics;
+
+  //  printf("creating the points\n");
+  std::cout<<"   entering packingOfParallelogramsConstrained"<<std::endl;
+  packingOfParallelogramsConstrained(gf, constr_vertices, packed, metrics);
+  //  printf("points created\n");
+  std::cout<<"out of packingOfParallelogramsConstrained"<<std::endl;
+
+  buildMeshGenerationDataStructures (gf, AllTris, DATA);
+
+  std::cout<<"out of buildMeshGenerationDataStructures"<<std::endl;
+  // delaunise the initial mesh
+  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
+  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+
+  std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
+  std::cout<<"out of sort"<<std::endl;
+
+  //  printf("staring to insert points\n");
+  N_GLOBAL_SEARCH = 0;
+  N_SEARCH = 0;
+  DT_INSERT_VERTEX = 0;
+  // double t1 = Cpu();
+  MTri3 *oneNewTriangle = 0;
+  std::cout<<"entering for packed"<<std::endl;
+  for (unsigned int i=0;i<packed.size();){
+	  std::cout<<"   First stop for"<<std::endl;
+    MTri3 *worst = *AllTris.begin();
+    std::cout<<"   got worst"<<std::endl;
+    if (worst->isDeleted()){
+      delete worst->tri();
+      delete worst;
+      AllTris.erase(AllTris.begin());
+    }
+    else{
+      double newPoint[2] ;
+      packed[i]->getParameter(0,newPoint[0]);
+      packed[i]->getParameter(1,newPoint[1]);
+      delete packed[i];
+      double metric[3];
+      //      buildMetric(gf, newPoint, metrics[i], metric);
+      buildMetric(gf, newPoint, metric);
+
+      bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA , AllTris, 0, oneNewTriangle, &oneNewTriangle);
+      if (!success) oneNewTriangle = 0;
+	//      if (!success)printf("success %d %d\n",success,AllTris.size());
+      i++;
+    }
+    std::cout<<"   out of first if"<<std::endl;
+
+    if(1.0* AllTris.size() > 2.5 * DATA.vSizes.size()){
+      //      int n1 = AllTris.size();
+      std::set<MTri3*,compareTri3Ptr>::iterator itd = AllTris.begin();
+      while(itd != AllTris.end()){
+        if((*itd)->isDeleted()){
+          delete  *itd;
+          AllTris.erase(itd++);
+        }
+        else
+          itd++;
+      }
+      //      Msg::Info("cleaning up the memory %d -> %d", n1, AllTris.size());
+    }
+    std::cout<<"   out of second if"<<std::endl;
+
+
+  }
+  std::cout<<"out of for packed"<<std::endl;
+  //  printf("%d vertices \n",(int)packed.size());
+  //clock_t t2 = clock();
+  //double DT = (double)(t2-t1)/CLOCKS_PER_SEC;
+  //if (packed.size())printf("points inserted DT %12.5E points per minut : %12.5E %d global searchs %d seachs per insertion\n",DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
+  transferDataStructure(gf, AllTris, DATA);
+  std::cout<<"out of transferDataStructure"<<std::endl;
+  std::cout<<"testing all vertices of gf"<<std::endl;
+  for (unsigned int i = 0; i < gf->getNumMeshVertices();i++){
+	  MVertex* vtest = gf->getMeshVertex(i);
+      std::cout<<"going to test out parameterisation of the point after pacjing and everything"<<std::endl;
+      double para0, para1;
+      vtest->getParameter(0,para0);
+      vtest->getParameter(1,para1);
+      std::cout<<"            point tested: para 1 "<<para0<<" and para 2 "<<para1<<std::endl;
+  }
+  backgroundMesh::unset();
+#if defined(HAVE_ANN)
+  {
+    FieldManager *fields = gf->model()->getFields();
+    BoundaryLayerField *blf = 0;
+    if(fields->getBoundaryLayerField() > 0){
+      Field *bl_field = fields->get(fields->getBoundaryLayerField());
+      blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+      if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);
+    }
+  }
+#endif
+  std::cout<<"out of Everything"<<std::endl;
+}
+
 
   static void initialSquare(std::vector<MVertex*> &v,
       MVertex *box[4],
