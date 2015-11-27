@@ -75,7 +75,6 @@ class GFace : public GEntity{
   virtual ~GFace();
 
 
-  std::vector<MVertex*> additionalVertices;
   std::set<MVertex*> constr_vertices;
 
   // delete mesh data
