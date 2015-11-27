@@ -535,7 +535,7 @@ static void Mesh3D(GModel *m)
         Recombinator rec;
         rec.execute(gr);
         Supplementary sup;
-        //        sup.execute(gr);
+        sup.execute(gr);
         PostOp post;
         post.execute(gr,0, true); //0: no pyramid, 1: single-step, 2: two-steps (conforming), true: fill non-conformities with trihedra
         nb_elements_recombination += post.get_nb_elements();

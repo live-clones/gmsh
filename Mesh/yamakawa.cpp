@@ -2302,64 +2302,119 @@ bool Recombinator::valid(Hex &hex,const std::set<MElement*>& parts){
   }
 }
 
-//A face with 4 nodes on the boundary should be close to planar
-//A face with 3 nodes on the boundary should not exist
-bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d){
-    //A face should not have exactly 3 nodes on the same surface
-    //or the face tag is undefined
-  //A better option would be to topologically check that the fase has not  4 nodes
-  //on the surface while the face is not no the surface (face2elems map)
-    MVertex *v[4] = {a, b, c, d};
-    std::map<GFace*, int> nbTagOccurences;
-    int maxOccurences = 0;
-    for (int iV = 0; iV < 4; iV++){
-      if (v[iV]->onWhat()->dim() < 3){
-        std::list<GFace*> faces;
-        if (v[iV]->onWhat()->dim() == 2)
-          faces.push_back((GFace*) v[iV]->onWhat());
-        else
-          faces = v[iV]->onWhat()->faces();
-        //        printf("nbFaces %i\n",faces.size());
-        for (std::list<GFace*>::iterator it=faces.begin(); it != faces.end(); it++){
-          GFace* idFace = (*it);
-          //          printf("Id is %p %i\n",idFace,idFace->getNativeInt());
-          if (nbTagOccurences.find(idFace)==nbTagOccurences.end())
-            nbTagOccurences[idFace] = 1;
-          else
-            nbTagOccurences[idFace]++;
-          maxOccurences = std::max(nbTagOccurences[idFace], maxOccurences);
-        } 
-      }
-    }
-    if (maxOccurences == 3) return false;
+bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d, std::map<MVertex*,std::set<MElement*> > &vertexToElements){
+  std::map<MVertex*,std::set<MElement*> >::iterator itElV[4];
+  MVertex *faceV[4] = {a, b, c, d};
+  for (int iV = 0; iV < 4; iV++){
+    itElV[iV] = vertexToElements.find(faceV[iV]);
+  }
+  size_t tris[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 1, 3}, {1, 2, 3}};
+  size_t other[4] = {3, 1, 2, 0};
+  size_t nbTris[4];
+  std::set<MElement*> buf1, buf2;
+  for (int iTri = 0; iTri < 4; iTri++){
+    //We count the number of elements sharing the considered triangle
+    buf1.clear();
+    std::set_intersection(itElV[tris[iTri][0]]->second.begin(),itElV[tris[iTri][0]]->second.end(),itElV[tris[iTri][1]]->second.begin(),itElV[tris[iTri][1]]->second.end(),std::inserter(buf1,buf1.end()));
+    buf2.clear();
+    std::set_intersection(buf1.begin(),buf1.end(),itElV[tris[iTri][2]]->second.begin(),itElV[tris[iTri][2]]->second.end(),std::inserter(buf2,buf2.end()));
+    buf1.clear();
+    std::set_difference(buf2.begin(),buf2.end(),itElV[other[iTri]]->second.begin(),itElV[other[iTri]]->second.end(),std::inserter(buf1,buf1.end()));
+    nbTris[iTri] = buf1.size();
+  }
 
 
+  bool valid = false;
+  // All sub-faces inside (2 elements)
+  if (nbTris[0]== 2 && nbTris[1] == 2 && nbTris[2] == 0 && nbTris[3] == 0) valid = true;
+  else if (nbTris[0]== 0 && nbTris[1] == 0 && nbTris[2] == 2 && nbTris[3] == 2) valid = true;
+  // All sub-faces on the surface or facing a quad face (1 element)
+  else if (nbTris[0]== 1 && nbTris[1] == 1 && nbTris[2] == 0 && nbTris[3] == 0) valid = true;
+  else if (nbTris[0]== 0 && nbTris[1] == 0 && nbTris[2] == 1 && nbTris[3] == 1) valid = true;
+  // Face is made of triangles on each side but they are nonconforming (OK for recombination, but why do these exist??)
+  else if (nbTris[0]== 1 && nbTris[1] == 1 && nbTris[2] == 1 && nbTris[3] == 1) valid = true;
 
-    //Geometry: A face with 4 nodes on the boundary should be close enough to planar
-    int nbBndNodes = 0;
-    if (a->onWhat()->dim() < 3) nbBndNodes++;
-    if (b->onWhat()->dim() < 3) nbBndNodes++;
-    if (c->onWhat()->dim() < 3) nbBndNodes++;
-    if (d->onWhat()->dim() < 3) nbBndNodes++;
-    if (nbBndNodes == 4){
-      SVector3 vec1 = SVector3(b->x()-a->x(),b->y()-a->y(),b->z()-a->z()).unit();
-      SVector3 vec2 = SVector3(c->x()-a->x(),c->y()-a->y(),c->z()-a->z()).unit();
-      SVector3 vec3 = SVector3(d->x()-a->x(),d->y()-a->y(),d->z()-a->z()).unit();
-      
-      SVector3 crossVec1Vec2 = crossprod(vec1, vec2);
-      double angle = fabs(acos(dot(crossVec1Vec2, vec3))*180/M_PI);
-      double maxAngle = 15;
-      if (fabs(angle-90) > maxAngle) return false;
-    }
-    //A face with 3 nodes on the boundary should not exist
-    //Constraint should be relaxed
-    if (nbBndNodes == 3){
-      return false;
-    }
-  return true;
+  //Geometry: A face with 4 nodes on the boundary should be close enough to planar
+  int nbBndNodes = 0;
+  if (a->onWhat()->dim() < 3) nbBndNodes++;
+  if (b->onWhat()->dim() < 3) nbBndNodes++;
+  if (c->onWhat()->dim() < 3) nbBndNodes++;
+  if (d->onWhat()->dim() < 3) nbBndNodes++;
+  if (nbBndNodes == 4){
+    SVector3 vec1 = SVector3(b->x()-a->x(),b->y()-a->y(),b->z()-a->z()).unit();
+    SVector3 vec2 = SVector3(c->x()-a->x(),c->y()-a->y(),c->z()-a->z()).unit();
+    SVector3 vec3 = SVector3(d->x()-a->x(),d->y()-a->y(),d->z()-a->z()).unit();
+    
+    SVector3 crossVec1Vec2 = crossprod(vec1, vec2);
+    double angle = fabs(acos(dot(crossVec1Vec2, vec3))*180/M_PI);
+    double maxAngle = 15;
+    if (fabs(angle-90) > maxAngle) valid=false;
+  }
+  
+  return valid;
+
+
 }
 
-bool validFaces(Hex &hex){
+
+////A face with 4 nodes on the boundary should be close to planar
+////A face with 3 nodes on the boundary should not exist
+//bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d, std::map<MVertex*,std::set<MElement*> > &vertexToElements){
+//    //A face should not have exactly 3 nodes on the same surface
+//    //or the face tag is undefined
+//  //A better option would be to topologically check that the fase has not  4 nodes
+//  //on the surface while the face is not no the surface (face2elems map)
+//    MVertex *v[4] = {a, b, c, d};
+//    std::map<GFace*, int> nbTagOccurences;
+//    int maxOccurences = 0;
+//    for (int iV = 0; iV < 4; iV++){
+//      if (v[iV]->onWhat()->dim() < 3){
+//        std::list<GFace*> faces;
+//        if (v[iV]->onWhat()->dim() == 2)
+//          faces.push_back((GFace*) v[iV]->onWhat());
+//        else
+//          faces = v[iV]->onWhat()->faces();
+//        //        printf("nbFaces %i\n",faces.size());
+//        for (std::list<GFace*>::iterator it=faces.begin(); it != faces.end(); it++){
+//          GFace* idFace = (*it);
+//          //          printf("Id is %p %i\n",idFace,idFace->getNativeInt());
+//          if (nbTagOccurences.find(idFace)==nbTagOccurences.end())
+//            nbTagOccurences[idFace] = 1;
+//          else
+//            nbTagOccurences[idFace]++;
+//          maxOccurences = std::max(nbTagOccurences[idFace], maxOccurences);
+//        } 
+//      }
+//    }
+//    if (maxOccurences == 3) return false;
+//
+//
+//
+//    //Geometry: A face with 4 nodes on the boundary should be close enough to planar
+//    int nbBndNodes = 0;
+//    if (a->onWhat()->dim() < 3) nbBndNodes++;
+//    if (b->onWhat()->dim() < 3) nbBndNodes++;
+//    if (c->onWhat()->dim() < 3) nbBndNodes++;
+//    if (d->onWhat()->dim() < 3) nbBndNodes++;
+//    if (nbBndNodes == 4){
+//      SVector3 vec1 = SVector3(b->x()-a->x(),b->y()-a->y(),b->z()-a->z()).unit();
+//      SVector3 vec2 = SVector3(c->x()-a->x(),c->y()-a->y(),c->z()-a->z()).unit();
+//      SVector3 vec3 = SVector3(d->x()-a->x(),d->y()-a->y(),d->z()-a->z()).unit();
+//      
+//      SVector3 crossVec1Vec2 = crossprod(vec1, vec2);
+//      double angle = fabs(acos(dot(crossVec1Vec2, vec3))*180/M_PI);
+//      double maxAngle = 15;
+//      if (fabs(angle-90) > maxAngle) return false;
+//    }
+//    //A face with 3 nodes on the boundary should not exist
+//    //Constraint should be relaxed
+//    if (nbBndNodes == 3){
+//      return false;
+//    }
+//  return true;
+//}
+
+bool validFaces(Hex &hex, std::map<MVertex*,std::set<MElement*> > &vertexToElements){
   bool v1, v2, v3, v4, v5, v6;
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
@@ -2373,39 +2428,15 @@ bool validFaces(Hex &hex){
   g = hex.get_g();
   h = hex.get_h();
 
-  v1 = validFace(a,b,c,d);  //SHOULD CHECK GEOMETRY
-  v2 = validFace(e,f,g,h);
-  v3 = validFace(a,b,f,e);
-  v4 = validFace(b,c,g,f);
-  v5 = validFace(d,c,g,h);
-  v6 = validFace(d,a,e,h);
+  v1 = validFace(a,b,c,d,vertexToElements);  //SHOULD CHECK GEOMETRY
+  v2 = validFace(e,f,g,h,vertexToElements);
+  v3 = validFace(a,b,f,e,vertexToElements);
+  v4 = validFace(b,c,g,f,vertexToElements);
+  v5 = validFace(d,c,g,h,vertexToElements);
+  v6 = validFace(d,a,e,h,vertexToElements);
 
   return v1 && v2 && v3 && v4 && v5 && v6;
 }
-
-bool validCondNum(Hex &hex){
-  return true;
-  CondNumBasis basis(MSH_HEX_8);
-  fullMatrix<double> nodesXYZ(8,3);
-  for (int iV = 0; iV < 8; iV++){
-    nodesXYZ(iV,0) = hex.getVertex(iV)->x();
-    nodesXYZ(iV,1) = hex.getVertex(iV)->y();
-    nodesXYZ(iV,2) = hex.getVertex(iV)->z();
-  }
-  fullMatrix<double> normals(8,3);
-  fullVector<double> invCondNum(basis.getNumCondNumNodes());
-  basis.getSignedInvCondNum(nodesXYZ, normals, invCondNum);
-  for (int i=0; i<invCondNum.size(); i++){
-    if (invCondNum(i) * invCondNum(0) <= 0){
-      //      nodesXYZ.print("HEX nodes");
-      //      invCondNum.print("HEX invCondNum");
-      //      Msg::Error("Wrong Hex");
-      return false;
-    }
-  }
-  return true;
-}
-
 
 // renvoie true si le "MQuadrangle::etaShapeMeasure" des 6 faces est plus grand que 0.000001
 bool Recombinator::valid(Hex &hex){
@@ -2434,7 +2465,7 @@ bool Recombinator::valid(Hex &hex){
   eta6 = eta(d,c,g,h);
 
   if(eta1>k && eta2>k && eta3>k && eta4>k && eta5>k && eta6>k){
-    return (validFaces(hex) && validCondNum(hex));
+    return validFaces(hex,vertex_to_elements);
   }
   else{
     return false;
@@ -4093,7 +4124,7 @@ bool Supplementary::valid(Prism prism,const std::set<MElement*>& parts){
 }
 
 
-bool validFaces(Prism &prism){
+bool validFaces(Prism &prism, std::map<MVertex*,std::set<MElement*> > &vertexToElements){
   bool v1, v2, v3;
   MVertex *a,*b,*c;
   MVertex *d, *e,*f;
@@ -4105,50 +4136,13 @@ bool validFaces(Prism &prism){
   e = prism.get_e();
   f = prism.get_f();
 
-  v1 = validFace(a,d,f,c);  //SHOULD CHECK GEOMETRY
-  v2 = validFace(a,d,e,b);
-  v3 = validFace(b,c,e,f);
+  v1 = validFace(a,d,f,c,vertexToElements);  //SHOULD CHECK GEOMETRY
+  v2 = validFace(a,d,e,b,vertexToElements);
+  v3 = validFace(b,c,e,f,vertexToElements);
 
   return v1 && v2 && v3;
 }
 
-
-bool validCondNum(Prism &prism){
-  return true;
-  CondNumBasis basis(MSH_PRI_6);
-  fullMatrix<double> nodesXYZ(6,3);
-  nodesXYZ(0,0) = prism.get_a()->x();
-  nodesXYZ(0,1) = prism.get_a()->y();
-  nodesXYZ(0,2) = prism.get_a()->z();
-  nodesXYZ(1,0) = prism.get_b()->x();
-  nodesXYZ(1,1) = prism.get_b()->y();
-  nodesXYZ(1,2) = prism.get_b()->z();
-  nodesXYZ(2,0) = prism.get_c()->x();
-  nodesXYZ(2,1) = prism.get_c()->y();
-  nodesXYZ(2,2) = prism.get_c()->z();
-  nodesXYZ(3,0) = prism.get_d()->x();
-  nodesXYZ(3,1) = prism.get_d()->y();
-  nodesXYZ(3,2) = prism.get_d()->z();
-  nodesXYZ(4,0) = prism.get_e()->x();
-  nodesXYZ(4,1) = prism.get_e()->y();
-  nodesXYZ(4,2) = prism.get_e()->z();
-  nodesXYZ(5,0) = prism.get_f()->x();
-  nodesXYZ(5,1) = prism.get_f()->y();
-  nodesXYZ(5,2) = prism.get_f()->z();
-
-  fullMatrix<double> normals(6,3);
-  fullVector<double> invCondNum(basis.getNumCondNumNodes());
-  basis.getSignedInvCondNum(nodesXYZ, normals, invCondNum);
-  for (int i=0; i<invCondNum.size(); i++){
-    if (invCondNum(i) * invCondNum(0) <= 0){
-      //      nodesXYZ.print("HEX nodes");
-      //      invCondNum.print("HEX invCondNum");
-      //      Msg::Error("Wrong PRISM");
-      return false;
-    }
-  }
-  return true;
-}
 
 
 bool Supplementary::valid(Prism prism){
@@ -4171,7 +4165,7 @@ bool Supplementary::valid(Prism prism){
   eta3 = eta(b,c,f,e);
 
   if(eta1>k && eta2>k && eta3>k){
-    return (validFaces(prism) && validCondNum(prism));
+    return validFaces(prism, vertex_to_tetrahedra);
   }
   else{
     return 0;
