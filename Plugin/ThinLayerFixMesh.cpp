@@ -9,10 +9,49 @@
 #include "GModel.h"
 #include "robustPredicates.h"
 #include "GRegion.h"
+#if defined(HAVE_MESH)
 #include "meshGFaceDelaunayInsertion.h"
+#endif
+
 //#include "meshGFace.h"
 
+extern "C"
+{
+  GMSH_Plugin *GMSH_RegisterThinLayerFixMeshPlugin()
+  {
+    return new GMSH_ThinLayerFixMeshPlugin();
+  }
+}
 
+StringXNumber ThingLayerFixMeshOptions_Number[] = {
+//  {GMSH_FULLRC, "Dimension", NULL, 1.},
+//  {GMSH_FULLRC, "PhysicalGroup", NULL, 1.},
+//  {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", NULL, 0.},
+};
+
+
+
+//GMSH_ThinLayerFixMeshPlugin::GMSH_ThinLayerFixMeshPlugin(){}
+
+//GMSH_ThinLayerFixMeshPlugin::~GMSH_ThinLayerFixMeshPlugin(){}
+
+std::string GMSH_ThinLayerFixMeshPlugin::getHelp() const
+{
+  return "Fix the mesh in thin parts";
+}
+
+int GMSH_ThinLayerFixMeshPlugin::getNbOptions() const
+{
+  return sizeof(ThingLayerFixMeshOptions_Number) / sizeof(StringXNumber);
+}
+
+StringXNumber *GMSH_ThinLayerFixMeshPlugin::getOption(int iopt)
+{
+  return &ThingLayerFixMeshOptions_Number[iopt];
+}
+
+
+#if defined(HAVE_MESH)
 
 CorrespVerticesFixMesh::CorrespVerticesFixMesh(){
 //	std::cout<<"started init CorrespVerticesFixMesh"<<std::endl;
@@ -115,38 +154,7 @@ int CorrespVerticesFixMesh::getTagMaster(){
 	return tagMaster;
 }
 
-StringXNumber ThingLayerFixMeshOptions_Number[] = {
-//  {GMSH_FULLRC, "Dimension", NULL, 1.},
-//  {GMSH_FULLRC, "PhysicalGroup", NULL, 1.},
-//  {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", NULL, 0.},
-};
 
-extern "C"
-{
-  GMSH_Plugin *GMSH_RegisterThinLayerFixMeshPlugin()
-  {
-    return new GMSH_ThinLayerFixMeshPlugin();
-  }
-}
-
-//GMSH_ThinLayerFixMeshPlugin::GMSH_ThinLayerFixMeshPlugin(){}
-
-//GMSH_ThinLayerFixMeshPlugin::~GMSH_ThinLayerFixMeshPlugin(){}
-
-std::string GMSH_ThinLayerFixMeshPlugin::getHelp() const
-{
-  return "Fix the mesh in thin parts";
-}
-
-int GMSH_ThinLayerFixMeshPlugin::getNbOptions() const
-{
-  return sizeof(ThingLayerFixMeshOptions_Number) / sizeof(StringXNumber);
-}
-
-StringXNumber *GMSH_ThinLayerFixMeshPlugin::getOption(int iopt)
-{
-  return &ThingLayerFixMeshOptions_Number[iopt];
-}
 
 PView *GMSH_ThinLayerFixMeshPlugin::execute(PView *view)
 {
@@ -1160,3 +1168,13 @@ std::map<MTetrahedron*,MTet4*> GMSH_ThinLayerFixMeshPlugin::TetToTet4;
 std::map<MVertex*,std::vector<CorrespVerticesFixMesh*> > GMSH_ThinLayerFixMeshPlugin::VertexToCorresp;
 std::vector<std::vector<CorrespVerticesFixMesh*> > GMSH_ThinLayerFixMeshPlugin::vecOfThinSheets;
 
+
+#else
+
+PView *GMSH_ThinLayerFixMeshPlugin::execute(PView *view)
+{
+  Msg::Error("Plugin(ThinLayerFixMesh requires mesh module");
+  return view;
+}
+
+#endif

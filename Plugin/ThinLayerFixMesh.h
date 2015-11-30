@@ -11,13 +11,17 @@
 #include "Plugin.h"
 #include "MVertex.h"
 #include "MTriangle.h"
+#if defined(HAVE_MESH)
 #include "meshGRegionDelaunayInsertion.h"
+#endif
+
 
 extern "C"
 {
   GMSH_Plugin *GMSH_RegisterThinLayerFixMeshPlugin();
 }
 
+#if defined(HAVE_MESH)
 static int faces[4][3] = {{0,1,2}, {0,2,3}, {0,3,1}, {1,3,2}};
 
 struct faceXtetFM{
@@ -134,6 +138,7 @@ public:
 	bool getIsMaster();
 	int getTagMaster();
 };
+#endif
 
 class GMSH_ThinLayerFixMeshPlugin : public GMSH_PostPlugin
 {
@@ -150,6 +155,7 @@ public:
 	int getNbOptions() const;
 	StringXNumber* getOption(int iopt);
 	PView *execute(PView *);
+#if defined(HAVE_MESH)
 	static void perform();
 	static void checkOppositeTriangles();
 	static void fillvecOfThinSheets();
@@ -170,6 +176,7 @@ public:
 	static const double distP2PMax = 5.0;
 	static void fillVertexToTets();
 	static void fillTetToTet4();
+#endif
 };
 
 
