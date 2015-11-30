@@ -34,7 +34,8 @@ struct contextMeshOptions {
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int fileFormat, nbSmoothing, algo2d, algo3d, algoSubdivide;
-  int algoRecombine, recombineAll, recombine3DAll, flexibleTransfinite;
+  int algoRecombine, recombineAll, recombine3DAll, recombine3DLevel, recombine3DConformity;
+  int flexibleTransfinite;
   //-- for recombination test (amaury) --
     int doRecombinationTest, recombinationTestStart;
     int recombinationTestNoGreedyStrat, recombinationTestNewStrat;

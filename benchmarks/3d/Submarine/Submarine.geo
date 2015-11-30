@@ -5,6 +5,10 @@ Mesh.Algorithm=9;
 Mesh.Algorithm3D=9;
 Mesh.Smoothing=0;
 Mesh.Recombine3DAll=1;
+//0: hex, 1: hex+prisms, 2: hex+prism+pyramids
+Mesh.Recombine3DLevel = 1;
+//0: nonconforming, 1: conformity using trihedra, 2: conformity using pyramids
+Mesh.Recombine3DConformity = 1;
 Mesh.SaveParametric = 1;
 
 MeshAlgorithm Surface {12}  5; //Not in final mesh

@@ -532,12 +532,16 @@ static void Mesh3D(GModel *m)
       if(treat_region_ok && (CTX::instance()->mesh.recombine3DAll ||
                              gr->meshAttributes.recombine3D)){
         double a = Cpu();
-        Recombinator rec;
-        rec.execute(gr);
-        Supplementary sup;
-        sup.execute(gr);
+        if (CTX::instance()->mesh.recombine3DLevel >= 0){
+          Recombinator rec;
+          rec.execute(gr);
+        }
+        if (CTX::instance()->mesh.recombine3DLevel >= 1){
+          Supplementary sup;
+          sup.execute(gr);
+        }
         PostOp post;
-        post.execute(gr,0, true); //0: no pyramid, 1: single-step, 2: two-steps (conforming), true: fill non-conformities with trihedra
+        post.execute(gr,CTX::instance()->mesh.recombine3DLevel, CTX::instance()->mesh.recombine3DConformity); //0: no pyramid, 1: single-step, 2: two-steps (conforming), true: fill non-conformities with trihedra
         nb_elements_recombination += post.get_nb_elements();
         nb_hexa_recombination += post.get_nb_hexahedra();
         vol_element_recombination += post.get_vol_elements();

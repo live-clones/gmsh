@@ -623,9 +623,10 @@ public:
   PostOp();
   ~PostOp();
 
-  void execute(int, bool);
-  //0: no pyramid, 1: single-step, 2: two-steps (conforming), true: fill non-conformities with trihedra
-  void execute(GRegion*,int level, bool addTrihedra);
+  void execute(int, int);
+  //level: 0,1=no pyramid 2=pyramids
+  //conformity= 0=nonconforming, 1=conformity using trihedra, 2=conformity using pyramids
+  void execute(GRegion*,int level, int conformity);
 
   inline int get_nb_hexahedra()const{return nbr8;};
   inline double get_vol_hexahedra()const{return vol8;};

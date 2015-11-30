@@ -4882,7 +4882,7 @@ PostOp::PostOp(){}
 
 PostOp::~PostOp(){}
 
-void PostOp::execute(int level, bool insertTrihedra){
+void PostOp::execute(int level, int conformity){
   GRegion* gr;
   GModel* model = GModel::current();
   GModel::riter it;
@@ -4891,41 +4891,38 @@ void PostOp::execute(int level, bool insertTrihedra){
     {
       gr = *it;
       if(gr->getNumMeshElements()>0){
-        execute(gr,level, insertTrihedra);
+        execute(gr,level, conformity);
       }
     }
 }
 
-void PostOp::execute(GRegion* gr,int level,bool insertTrihedra){
+void PostOp::execute(GRegion* gr,int level, int conformity){
   printf("................PYRAMIDS................\n");
   estimate1 = 0;
   estimate2 = 0;
   iterations = 0;
 
   build_tuples(gr);
-  if (level >= 1){
+  if (level >= 2){
     init_markings(gr);
     build_vertex_to_tetrahedra(gr);
     pyramids1(gr);
     rearrange(gr);
   }
 
-  if(level >= 2){
-    init_markings(gr);
-    build_vertex_to_tetrahedra(gr);
-    build_vertex_to_pyramids(gr);
-    pyramids2(gr);
-    rearrange(gr);
-  }
-
-  if (insertTrihedra){
+  if (conformity == 1){
     init_markings(gr);
     build_vertex_to_tetrahedra(gr);
     build_vertex_to_pyramids(gr);
     trihedra(gr);
     rearrange(gr);
-  }
-    
+  } else if(conformity == 2){
+    init_markings(gr);
+    build_vertex_to_tetrahedra(gr);
+    build_vertex_to_pyramids(gr);
+    pyramids2(gr);
+    rearrange(gr);
+  }    
 
   statistics(gr);
 

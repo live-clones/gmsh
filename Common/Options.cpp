@@ -5743,6 +5743,34 @@ double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
   return CTX::instance()->mesh.recombine3DAll;
 }
 
+double opt_mesh_recombine3d_level(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.recombine3DLevel = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)){
+    FlGui::instance()->options->mesh.butt[22]->value
+      (CTX::instance()->mesh.recombine3DLevel);
+  }
+#endif
+  return CTX::instance()->mesh.recombine3DLevel;
+}
+
+double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->mesh.recombine3DConformity = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)){
+    FlGui::instance()->options->mesh.butt[22]->value
+      (CTX::instance()->mesh.recombine3DConformity);
+  }
+#endif
+  return CTX::instance()->mesh.recombine3DConformity;
+}
+
 double opt_mesh_flexible_transfinite(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
