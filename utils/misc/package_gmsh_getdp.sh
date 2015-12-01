@@ -2,7 +2,7 @@
 
 DATE=`date "+%d/%m/%Y"`
 
-echo "This archive was built on ${DATE} with the latest nightly snapshots of
+echo "This ONELAB archive was built on ${DATE} with the latest nightly snapshots of
 Gmsh (http://gmsh.info) and GetDP (http://getdp.info).
 
 Both Gmsh and GetDP are distributed under the terms of the GNU General Public
