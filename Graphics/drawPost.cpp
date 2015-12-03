@@ -145,7 +145,8 @@ static void drawVectorArray(drawContext *ctx, PView *p, VertexArray *va)
     float *s = va->getVertexArray(3 * i);
     float *v = va->getVertexArray(3 * (i + 1));
     glColor4ubv((GLubyte *)va->getColorArray(4 * i));
-    double l = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    double vv[3] = {v[0], v[1], v[2]};
+    double l = sqrt(vv[0] * vv[0] + vv[1] * vv[1] + vv[2] * vv[2]);
     double lmax = opt->tmpMax;
     if((l || opt->vectorType == 6) && lmax){
       double scale = (opt->arrowSizeMax - opt->arrowSizeMin) / lmax;
@@ -408,7 +409,7 @@ class drawPView {
     // use adaptive data if available
     PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
-   
+
     if(data->getDirty() || !data->getNumTimeSteps()) return;
     if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
     if(!_ctx->isVisible(p))  return;
