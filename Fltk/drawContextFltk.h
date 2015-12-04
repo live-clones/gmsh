@@ -148,7 +148,7 @@ class drawContextFltk : public drawContextGlobal{
   void resetFontTextures()
   {
 #if defined(__APPLE__)
-    gl_texture_pile_height(1); // force font texture recomputation
+    gl_texture_pile_height(gl_texture_pile_height()); // force font texture recomputation
 #endif
   }
   std::string getName(){ return "Fltk"; }
