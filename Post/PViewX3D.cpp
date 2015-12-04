@@ -492,12 +492,12 @@ bool PView::writeX3D(const std::string &fileName )
 	  UnsignedChar2rgba(c0,rgba0) ;
 	  UnsignedChar2rgba(c1,rgba1) ;
 	  UnsignedChar2rgba(c2,rgba2) ;
-	  
+
 	  fprintf(fp,"%g %g %g %g %g %g %g %g %g "
 		  , rgba0[0],rgba0[1],rgba0[2]
 		  , rgba1[0],rgba1[1],rgba1[2]
 		  , rgba2[0],rgba2[1],rgba2[2]);
-	  
+
 	}
 	_count++;
       }
@@ -515,10 +515,9 @@ bool PView::writeX3D(const std::string &fileName )
 
 }
 
-
-
 static void writeX3DScale(FILE *fp, PView *p, double xmin, double ymin,
-			  double width, double height, double tic, int horizontal,double font_size)
+			  double width, double height, double tic,
+                          int horizontal,double font_size)
 {
   // use adaptive data if available
   PViewData *data = p->getData(true);
@@ -581,8 +580,9 @@ static void writeX3DScaleBar(FILE *fp, PView *p, double xmin, double ymin, doubl
 	double rgba[4]= { .5,.5,.5,1. };
 	unsigned int col = opt->getColor(i, opt->nbIso);
 	unsignedInt2RGBA(col,rgba[0],rgba[1],rgba[2],rgba[3]);
-	fprintf(fp,"          <Color color=' %g %g %g  %g %g %g  %g %g %g  %g %g %g '/>\n"
-		, rgba[0],rgba[1],rgba[2], rgba[0],rgba[1],rgba[2], rgba[0],rgba[1],rgba[2], rgba[0],rgba[1],rgba[2] );
+	fprintf(fp,"          <Color color=' %g %g %g  %g %g %g  %g %g %g  %g %g %g '/>\n",
+                rgba[0],rgba[1],rgba[2], rgba[0],rgba[1],rgba[2],
+                rgba[0],rgba[1],rgba[2], rgba[0],rgba[1],rgba[2] );
       }
       else if(opt->intervalsType == PViewOptions::Continuous){
 	double dv = (opt->tmpMax - opt->tmpMin) / (opt->nbIso ? opt->nbIso : 1);
@@ -594,8 +594,9 @@ static void writeX3DScaleBar(FILE *fp, PView *p, double xmin, double ymin, doubl
 	double rgba2[4]= { .5,.5,.5,1. };
 	unsignedInt2RGBA(col1,rgba1[0],rgba1[1],rgba1[2],rgba1[3]);
 	unsignedInt2RGBA(col2,rgba2[0],rgba2[1],rgba2[2],rgba2[3]);
-	fprintf(fp,"          <Color color=' %g %g %g  %g %g %g  %g %g %g  %g %g %g '/>\n"
-		, rgba1[0],rgba1[1],rgba1[2], rgba2[0],rgba2[1],rgba2[2], rgba2[0],rgba2[1],rgba2[2], rgba1[0],rgba1[1],rgba1[2] );
+	fprintf(fp,"          <Color color=' %g %g %g  %g %g %g  %g %g %g  %g %g %g '/>\n",
+                rgba1[0],rgba1[1],rgba1[2], rgba2[0],rgba2[1],rgba2[2], rgba2[0],
+                rgba2[1],rgba2[2], rgba1[0],rgba1[1],rgba1[2] );
       }
       fprintf(fp,"        </IndexedFaceSet> \n");
     }
@@ -604,27 +605,28 @@ static void writeX3DScaleBar(FILE *fp, PView *p, double xmin, double ymin, doubl
       fprintf(fp,"        <IndexedLineSet colorPerVertex='true'  coordIndex='0 1 -1'  > \n");
       fprintf(fp,"          <Coordinate point='");
       if(horizontal){
-	fprintf(fp,"%e %e %e %e %e %e  ",xmin+box/2.+i*box , ymin , 0.,xmin+box/2.+i*box , ymin+height , 0.);
+	fprintf(fp,"%e %e %e %e %e %e  ",xmin+box/2.+i*box , ymin , 0.,
+                xmin+box/2.+i*box , ymin+height , 0.);
       }
       else{
-	fprintf(fp,"%e %e %e %e %e %e  ",xmin , ymin + box / 2. + i * box, 0.,xmin + width , ymin + box / 2. + i * box , 0.);
+	fprintf(fp,"%e %e %e %e %e %e  ",xmin , ymin + box / 2. + i * box, 0.,
+                xmin + width , ymin + box / 2. + i * box , 0.);
       }
       fprintf(fp,"      '/> \n");
       double rgba[4]= { .5,.5,.5,1. };
       unsigned int col = opt->getColor(i, opt->nbIso);
       unsignedInt2RGBA(col,rgba[0],rgba[1],rgba[2],rgba[3]);
-      fprintf(fp,"          <Color color=' %g %g %g  %g %g %g '/>\n", rgba[0],rgba[1],rgba[2], rgba[0],rgba[1],rgba[2] );
+      fprintf(fp,"          <Color color=' %g %g %g  %g %g %g '/>\n",
+              rgba[0],rgba[1],rgba[2], rgba[0],rgba[1],rgba[2] );
       fprintf(fp,"        </IndexedLineSet> \n");
     }
     fprintf(fp,"      </Shape> \n");
   }
 }
 
-
-
-
 static void  writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
-				 double width, double height, double tic, int horizontal,double font_size)
+				 double width, double height, double tic,
+                                 int horizontal,double font_size)
 {
   PViewOptions *opt = p->getOptions();
   if(!opt->nbIso) return;
@@ -662,10 +664,12 @@ static void  writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
       double v = opt->getScaleValue(i, nbv + 1, opt->tmpMin, opt->tmpMax);
       sprintf(label, opt->format.c_str(), v);
       if(horizontal){
-        writeX3DStringCenter( fp,label, xmin + i * vbox, ymin + height + tic, 0.,font_h );
+        writeX3DStringCenter(fp, label, xmin + i * vbox, ymin + height + tic,
+                             0., font_h);
       }
       else{
-        writeX3DStringCenter( fp,label, xmin + width + tic,ymin + i * vbox - font_a / 3., 0.,font_h );
+        writeX3DStringCenter(fp, label, xmin + width + tic,
+                             ymin + i * vbox - font_a / 3., 0., font_h);
       }
     }
   }
@@ -678,17 +682,20 @@ static void  writeX3DScaleValues(FILE *fp, PView *p, double xmin, double ymin,
       double v = opt->getScaleValue(i, nbv, opt->tmpMin, opt->tmpMax);
       sprintf(label, opt->format.c_str(), v);
       if(horizontal){
-        writeX3DStringCenter( fp,label, xmin + box / 2. + i * vbox,ymin + height + tic, 0.,font_h );
+        writeX3DStringCenter(fp, label, xmin + box / 2. + i * vbox,
+                             ymin + height + tic, 0., font_h);
       }
       else{
-        writeX3DStringCenter( fp,label, xmin + width + tic,ymin + box / 2. + i * vbox - font_a / 3., 0.,font_h );
+        writeX3DStringCenter(fp, label, xmin + width + tic,
+                             ymin + box / 2. + i * vbox - font_a / 3., 0., font_h);
       }
     }
   }
 }
 
 static void writeX3DScaleLabel(FILE *fp , PView *p, double xmin, double ymin,
-			       double width, double height, double tic, int horizontal,double font_size)
+			       double width, double height, double tic, int horizontal,
+                               double font_size)
 {
   PViewOptions *opt = p->getOptions();
   PViewData *data;
@@ -720,19 +727,18 @@ static void writeX3DScaleLabel(FILE *fp , PView *p, double xmin, double ymin,
   }
 }
 
-
-
-
-static void writeX3DStringCenter( FILE *fp,char *label,double x, double y, double z,double font_size){
+static void writeX3DStringCenter(FILE *fp, char *label,double x, double y, double z,
+                                 double font_size)
+{
   fprintf(fp,"      <Transform translation='%g %g %g'>  \n",x,y,0.);
   fprintf(fp,"        <Shape> \n");
   fprintf(fp,"          <Text string='\"%s\"'>\n",label);
-  fprintf(fp,"            <FontStyle justify='\"MIDDLE\" \"MIDDLE\"' size=' %d '/>  \n",font_size);
+  fprintf(fp,"            <FontStyle justify='\"MIDDLE\" \"MIDDLE\"' size=' %d '/>  \n",
+          (int)font_size);
   fprintf(fp,"          </Text>\n");
   fprintf(fp,"          <Appearance>\n");
   fprintf(fp,"            <Material diffuseColor='0. 0. 0. '/>\n");
   fprintf(fp,"          </Appearance>\n");
   fprintf(fp,"        </Shape>\n");
   fprintf(fp,"      </Transform> \n");
-
 }

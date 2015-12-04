@@ -351,7 +351,8 @@ void GMSH_ThinLayerFixMeshPlugin::checkOppositeTriangles(){
   }
 }
 
-void GMSH_ThinLayerFixMeshPlugin::fillvecOfThinSheets(){
+void GMSH_ThinLayerFixMeshPlugin::fillvecOfThinSheets()
+{
   for (std::map<MVertex*,std::vector<CorrespVerticesFixMesh*> >::iterator it1 = VertexToCorresp.begin();it1 != VertexToCorresp.end();it1++){
     // MVertex* vertTmp = (*it1).first;
     std::vector<CorrespVerticesFixMesh*> vecCorr = (*it1).second;
@@ -417,7 +418,7 @@ void GMSH_ThinLayerFixMeshPlugin::fillvecOfThinSheets(){
                   MVertex* VToDo = (*CurrentSheet.begin());
                   std::vector<MTetrahedron*> surroundingTet = VertexToTets[VToDo];
                   for (unsigned int j = 0;j < surroundingTet.size();j++){
-                    for (unsigned int k = 0;k < surroundingTet[j]->getNumVertices();k++){
+                    for (int k = 0;k < surroundingTet[j]->getNumVertices();k++){
                       MVertex* ToInsertTmp = surroundingTet[j]->getVertex(k);
                       std::map<MVertex*,std::vector<CorrespVerticesFixMesh*> >::iterator it2 = VertexToCorresp.find(ToInsertTmp);
                       if (ToInsertTmp->onWhat()->tag() == VToDo->onWhat()->tag()){//TODO: OR that onwhat -> dim <, for edges
@@ -925,8 +926,8 @@ bool GMSH_ThinLayerFixMeshPlugin::IsPositivOrientation(SVector3 a, SVector3 b, S
 
 void GMSH_ThinLayerFixMeshPlugin::FindNewPoint(SPoint3* CurrentPoint, int* CurrentTri, MTet4** CurrentTet, SVector3 InteriorNormal){
   double distanceP2P = 0.0;
-  double alphaMax;
-  double betaMax;
+  double alphaMax = 0.0;
+  double betaMax = 0.0;
   SPoint3 ResultPoint;
   int triToGet = -1;
   //std::cout<<"   Entered FindNewPoint"<<std::endl;
