@@ -268,14 +268,13 @@ static double Integration(GEdge *ge, double t1, double t2,
 }
 
 void copyMesh(GEdge *from, GEdge *to, int direction)
-{  
+{
   Range<double> u_bounds = from->parBounds(0);
   double u_min = u_bounds.low();
   double u_max = u_bounds.high();
 
   Range<double> to_u_bounds = to->parBounds(0);
   double to_u_min = to_u_bounds.low();
-  double to_u_max = to_u_bounds.high();
 
   for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
