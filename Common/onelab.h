@@ -1254,11 +1254,11 @@ namespace onelab{
       std::vector<std::string> out;
       std::vector<number> n; get(n);
       for(unsigned int i = 0; i < n.size(); i++) out.push_back(n[i].toChar());
-      std::vector<number> s; get(s);
+      std::vector<string> s; get(s);
       for(unsigned int i = 0; i < s.size(); i++) out.push_back(s[i].toChar());
       std::vector<region> r; get(r);
       for(unsigned int i = 0; i < r.size(); i++) out.push_back(r[i].toChar());
-      std::vector<region> f; get(f);
+      std::vector<function> f; get(f);
       for(unsigned int i = 0; i < f.size(); i++) out.push_back(f[i].toChar());
       return out;
     }
