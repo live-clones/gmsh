@@ -25,9 +25,6 @@ extern "C"
   }
 }
 
-StringXNumber ThingLayerFixMeshOptions_Number[] = {
-};
-
 std::string GMSH_ThinLayerFixMeshPlugin::getHelp() const
 {
   return "Fix the mesh in thin parts";
@@ -35,12 +32,12 @@ std::string GMSH_ThinLayerFixMeshPlugin::getHelp() const
 
 int GMSH_ThinLayerFixMeshPlugin::getNbOptions() const
 {
-  return sizeof(ThingLayerFixMeshOptions_Number) / sizeof(StringXNumber);
+  return 0;
 }
 
 StringXNumber *GMSH_ThinLayerFixMeshPlugin::getOption(int iopt)
 {
-  return &ThingLayerFixMeshOptions_Number[iopt];
+  return 0;
 }
 
 
