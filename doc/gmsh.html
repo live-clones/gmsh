@@ -14,7 +14,6 @@ post processing, post-processor, postprocessor, post-processeur, CAD,
 CAO, OpenGL, GL2PS, Gmesh">
 <meta name="viewport" content="width= device-width">
 <meta name="apple-itunes-app" content="app-id=845930897">
-
 <link href="http://geuz.org/geuz.css" rel="stylesheet" type="text/css">
 <link href="/favicon.ico" rel="shortcut icon" type="image/x-icon">
 <style type="text/css"><!--
@@ -22,21 +21,17 @@ CAO, OpenGL, GL2PS, Gmesh">
   ul.small { margin-top:1ex; margin-bottom:1ex; }
 --></style>
 
-<!-- 
-<script>!function(d,s,id){
-  var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?"http":"https";
-  if(!d.getElementById(id)){ js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";
-  fjs.parentNode.insertBefore(js,fjs);}}(document, "script", "twitter-wjs");</script>
+<!-- script>!function(d,s,id){ var js,fjs=d.getElementsByTagName(s)[0],
+  p=/^http:/.test(d.location)?"http":"https"; if(!d.getElementById(id)){
+  js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";
+  fjs.parentNode.insertBefore(js,fjs);}}(document, "script", "twitter-wjs");
+</script -->
 
-<div id="fb-root"></div>
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) return;
-  js = d.createElement(s); js.id = id;
+<!-- script>(function(d, s, id) { var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return; js = d.createElement(s); js.id = id;
   js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5";
-  fjs.parentNode.insertBefore(js, fjs);
-  }(document, 'script', 'facebook-jssdk'));</script>
--->
+  fjs.parentNode.insertBefore(js, fjs); }(document, 'script', 'facebook-jssdk'));
+</script -->
 
 </head>
 
@@ -67,36 +62,34 @@ CAO, OpenGL, GL2PS, Gmesh">
   | <a href="#Screenshots">Screenshots</a>
   | <a href="#Links">Links</a>
   | <a href="#References">References</a>
-  <!-- Use static links to facebook/twitter for now; might switch to dynamic "follow/like" buttons with user counts later
-  | <div class="fb-like" data-href="https://www.facebook.com/OnelabModels" data-layout="button"
-	 data-action="like" data-show-faces="false" data-share="false"></div>
-  | <div class="fb-like" data-href="https://www.facebook.com/OnelabModels" data-layout="button_count"
-	 data-action="like" data-show-faces="false" data-share="false"></div>
-  | <a href="https://twitter.com/OnelabModels" class="twitter-follow-button" data-show-count="false" data-size="small"
-       data-show-screen-name="false">Follow @OnelabModels</a>
-  -->
-  | <a href="https://www.facebook.com/OnelabModels"><img class="social" src="http://geuz.org/gmsh/gallery/facebook.png" alt="facebook"></a>
-  | <a href="https://www.twitter.com/OnelabModels"><img class="social" src="http://geuz.org/gmsh/gallery/twitter.png" alt="twitter"></a>
+  | <!-- div class="fb-like" data-href="https://www.facebook.com/OnelabModels" 
+         data-layout="button_count" data-action="like" data-show-faces="false" 
+         data-share="false"></div -->
+    <a href="https://www.facebook.com/OnelabModels"><img class="social"
+       src="http://geuz.org/gmsh/gallery/facebook.png" alt="facebook"></a>
+  | <!-- a href="https://twitter.com/OnelabModels" class="twitter-follow-button" 
+         data-show-count="false" data-size="small" data-show-screen-name="false">Follow
+         @OnelabModels</a -->
+    <a href="https://www.twitter.com/OnelabModels"><img class="social"
+       src="http://geuz.org/gmsh/gallery/twitter.png" alt="twitter"></a>
 </div>
 
 <p>
-Gmsh is a 3D finite element grid generator with a build-in CAD engine
-and post-processor. Its design goal is to provide a fast, light and
-user-friendly meshing tool with parametric input and advanced
-visualization capabilities.  Gmsh is built around four modules:
-geometry, mesh, solver and post-processing. The specification of any
-input to these modules is done either interactively using the
-graphical user interface or in ASCII text files using Gmsh's own
-scripting language.
+Gmsh is a free 3D finite element grid generator with a build-in CAD engine and
+post-processor. Its design goal is to provide a fast, light and user-friendly
+meshing tool with parametric input and advanced visualization capabilities.
+Gmsh is built around four modules: geometry, mesh, solver and
+post-processing. The specification of any input to these modules is done either
+interactively using the graphical user interface or in ASCII text files using
+Gmsh's own scripting language.
 </p>
 
 <p>
-See the screencasts for a <a href="screencasts/">quick tour of
-Gmsh's graphical user interface</a>, or the reference manual for a
-more thorough <a href="doc/texinfo/gmsh.html#Overview">overview
-of Gmsh's capabilities</a> and some
-<a href="doc/texinfo/gmsh.html#Frequently-asked-questions">frequently
-asked questions</a>.
+See the screencasts for a <a href="screencasts/">quick tour of Gmsh's graphical
+user interface</a>, or the reference manual for a more thorough
+<a href="doc/texinfo/gmsh.html#Overview">overview of Gmsh's capabilities</a> and
+some <a href="doc/texinfo/gmsh.html#Frequently-asked-questions">frequently asked
+questions</a>.
 </p>
 
 <h2><a name="Download"></a>Download</h2>
@@ -229,28 +222,28 @@ the <a href="doc/LICENSE.txt">GNU General Public License
 linking with external libraries).
 </p>
 <p>
-In short, this means that everyone is free to use Gmsh and to
-redistribute it on a free basis. Gmsh is not in the public domain; it
-is copyrighted and there are restrictions on its distribution (see the
-license and the
-related <a href="http://www.gnu.org/copyleft/gpl-faq.html">frequently
-asked questions</a>).  For example, you cannot integrate this version
-of Gmsh (in full or in parts) in any <em>closed-source</em> software
-you plan to distribute (commercially or not). If you want to integrate
-parts of Gmsh into a closed-source software, or want to sell a
-modified closed-source version of Gmsh, you will need to obtain a
-different license. Please <a href="/">contact us directly</a> for more
-information.
+In short, this means that everyone is free to use Gmsh and to redistribute it on
+a free basis. Gmsh is not in the public domain; it is copyrighted and there are
+restrictions on its distribution (see the license and the
+related <a href="http://www.gnu.org/copyleft/gpl-faq.html">frequently asked
+questions</a>).  For example, you cannot integrate this version of Gmsh (in full
+or in parts) in any <em>closed-source</em> software you plan to distribute
+(commercially or not). If you want to integrate parts of Gmsh into a
+closed-source software, or want to sell a modified closed-source version of
+Gmsh, you will need to obtain a different license. Please <a href="/">contact us
+directly</a> for more information.
 </p>
 
 <h2><a name="Screenshots"></a>Screenshots</h2>
 
 <p>
   <a href="http://geuz.org/gmsh/gallery/screenshot.png">
-    <img class="screenshot" src="http://geuz.org/gmsh/gallery/thumbnail.png" alt="screenshot">
+    <img class="screenshot" src="http://geuz.org/gmsh/gallery/thumbnail.png"
+         alt="screenshot">
   </a>
   <a href="http://geuz.org/gmsh/gallery/screenshot2.png">
-    <img class="screenshot" src="http://geuz.org/gmsh/gallery/thumbnail2.png" alt="screenshot">
+    <img class="screenshot" src="http://geuz.org/gmsh/gallery/thumbnail2.png"
+         alt="screenshot">
   </a>
 </p>
 
@@ -279,7 +272,8 @@ information.
   <li>Gmsh and GetDP are bundled in the
     <a href="http://onelab.info/wiki/Mobile">Onelab/Mobile</a> app for iPhone,
     iPad and Android devices.
-  <li>We are organizing the <a href="http://tetrahedron.montefiore.ulg.ac.be">fifth Tetrahedron</a> workshop in Li&egrave;ge on July 4-5 2015!
+  <li>We are organizing the <a href="http://tetrahedron.montefiore.ulg.ac.be">fifth
+      Tetrahedron</a> workshop in Li&egrave;ge on July 4-5 2015!
 </ul>
 
 <h2><a name="References"></a>References</h2>
