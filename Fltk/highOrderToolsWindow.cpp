@@ -86,17 +86,38 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
   case 0: {                                           // Optimization
     o->choice[0]->activate();
     o->choice[3]->activate();
-    for (int i=1;i<=8;i++) o->value[i]->activate();
-    if (o->choice[3]->value() == 0)
-      for (int i=9;i<=11;i++) o->value[i]->deactivate();
-    else
-      for (int i=9;i<=11;i++) o->value[i]->activate();
+    o->value[1]->activate();
+    o->value[2]->activate();
+    o->value[3]->activate();
+    o->value[4]->activate();
+    o->value[5]->activate();
+    o->value[7]->activate();
+    o->value[8]->activate();
+    if (o->choice[3]->value() == 0) {
+      o->value[9]->deactivate();
+      o->value[10]->deactivate();
+      o->value[11]->deactivate();
+    }
+    else {
+      o->value[9]->activate();
+      o->value[10]->activate();
+      o->value[11]->activate();
+    }
     break;
   }
   case 1: {                                           // Elastic analogy
     o->choice[0]->deactivate();
     o->choice[3]->deactivate();
-    for (int i=1;i<=11;i++) o->value[i]->deactivate();
+    o->value[1]->deactivate();
+    o->value[2]->deactivate();
+    o->value[3]->deactivate();
+    o->value[4]->deactivate();
+    o->value[5]->deactivate();
+    o->value[7]->deactivate();
+    o->value[8]->deactivate();
+    o->value[9]->deactivate();
+    o->value[10]->deactivate();
+    o->value[11]->deactivate();
     break;
   }
   case 2: {                                           // Fast curving
@@ -104,8 +125,14 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
     o->choice[3]->deactivate();
     o->value[1]->deactivate();
     o->value[2]->activate();
-    for (int i=3;i<=11;i++)
-      o->value[i]->deactivate();
+    o->value[3]->deactivate();
+    o->value[4]->deactivate();
+    o->value[5]->deactivate();
+    o->value[7]->deactivate();
+    o->value[8]->deactivate();
+    o->value[9]->deactivate();
+    o->value[10]->deactivate();
+    o->value[11]->deactivate();
     break;
   }
   }
