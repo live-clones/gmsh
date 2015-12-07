@@ -410,7 +410,7 @@ inline void insertIfCurved(MElement *el, std::list<MElement*> &bndEl)
     SPoint3 xyzS(0.,0.,0.);
     for (int iSF = 0; iSF < nV1; ++iSF) xyzS += xyz1[iSF]*f[iSF];                     // Compute location of node in straight element
     const SVector3 vec(xyzS, el->getVertex(iV)->point());
-    const double normalDisp = dot(vec, normal);                                       // Normal component of displacement
+    const double normalDisp = fabs(dot(vec, normal));                                 // Normal component of displacement
     if (normalDisp > normalDispCurved) {
       bndEl.push_back(el);
       break;
