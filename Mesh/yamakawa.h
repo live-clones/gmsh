@@ -619,13 +619,16 @@ private:
   std::map<MVertex*,std::set<MElement*> > vertex_to_pyramids;
   std::multiset<Tuple> tuples;
   std::set<MElement*> triangles;
+
+  int nbFAILVERTEX;
+  int nbFAILVALIDITY;  
 public:
   PostOp();
   ~PostOp();
 
   void execute(int, int);
-  //level: 0,1=no pyramid 2=pyramids
-  //conformity= 0=nonconforming, 1=conformity using trihedra, 2=conformity using pyramids
+  //level: 0: hex, 1: hex+prisms, 2: hex+prism+1-step pyramids, 3: hex+prism+2-steps pyramids
+  //conformity= 0=nonconforming, 1=conformity using trihedra
   void execute(GRegion*,int level, int conformity);
 
   inline int get_nb_hexahedra()const{return nbr8;};
@@ -635,10 +638,10 @@ public:
 
   void init_markings(GRegion*);
   void pyramids1(GRegion*);
-  void pyramids2(GRegion*);
+  void pyramids2(GRegion*, bool allowNonConforming=false);
   void trihedra(GRegion*);
   void pyramids1(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
-  void pyramids2(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
+  void pyramids2(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*, bool allowNonConforming);
   void trihedra(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
   void rearrange(GRegion*);
   void statistics(GRegion*);
@@ -646,6 +649,9 @@ public:
   void modify_surfaces(GRegion*);
   void modify_surfaces(MVertex*,MVertex*,MVertex*,MVertex*);
 
+  //returns the geometrical validity of the pyramid
+  bool valid(MPyramid *pyr);
+  
   bool four(MElement*);
   bool fourTrih(MElement*);
   bool five(MElement*);
@@ -660,6 +666,7 @@ public:
   double workaround(MElement*);
 
   MVertex* find(MVertex*,MVertex*,MVertex*,MVertex*,MElement*);
+  MVertex* findInTriFace(MVertex* in0,MVertex* in1,MVertex* out0,MVertex* out1,MElement* element);
   void find_tetrahedra(MVertex*,MVertex*,std::set<MElement*>&);
   void find_tetrahedra(MVertex*,MVertex*,MVertex*,std::set<MElement*>&);
   void find_pyramids_from_tri(MVertex*,MVertex*,MVertex*,std::set<MElement*>&);

@@ -2357,6 +2357,30 @@ bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d, std::map<MVertex*
 }
 
 
+//Angle between two triangular faces located on the boundary should be high enough
+bool PostOp::valid(MPyramid *pyr){
+  MVertex *V[4] = {pyr->getVertex(0), pyr->getVertex(1), pyr->getVertex(2), pyr->getVertex(3)};
+  MVertex *apex = pyr->getVertex(4);
+  
+  if (apex->onWhat()->dim() < 3){
+    for (int iP=0; iP<4; iP++) { //loop on pairs of triangles
+      int nbBndNodes = 0;
+      if (V[(0+iP)%4]->onWhat()->dim() < 3) nbBndNodes++;
+      if (V[(1+iP)%4]->onWhat()->dim() < 3) nbBndNodes++;
+      if (V[(2+iP)%4]->onWhat()->dim() < 3) nbBndNodes++;
+      if (nbBndNodes == 3){          
+        SVector3 vec1 = SVector3(V[(0+iP)%4]->x()-apex->x(),V[(0+iP)%4]->y()-apex->y(),V[(0+iP)%4]->z()-apex->z()).unit();
+        SVector3 vec2 = SVector3(V[(1+iP)%4]->x()-apex->x(),V[(1+iP)%4]->y()-apex->y(),V[(1+iP)%4]->z()-apex->z()).unit();
+        SVector3 vec3 = SVector3(V[(2+iP)%4]->x()-apex->x(),V[(2+iP)%4]->y()-apex->y(),V[(2+iP)%4]->z()-apex->z()).unit();
+        SVector3 crossVec1Vec2 = crossprod(vec1, vec2);
+        double angle = fabs(acos(dot(crossVec1Vec2, vec3))*180/M_PI);
+        double minAngle = 30;
+        if (fabs(angle-90) < minAngle) return false;
+      }
+    }
+  }
+  return true;
+}
 ////A face with 4 nodes on the boundary should be close to planar
 ////A face with 3 nodes on the boundary should not exist
 //bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d, std::map<MVertex*,std::set<MElement*> > &vertexToElements){
@@ -4902,7 +4926,13 @@ void PostOp::execute(GRegion* gr,int level, int conformity){
   estimate2 = 0;
   iterations = 0;
 
+
+  nbFAILVERTEX=0;
+  nbFAILVALIDITY=0;  
+
+  
   build_tuples(gr);
+
   if (level >= 2){
     init_markings(gr);
     build_vertex_to_tetrahedra(gr);
@@ -4910,19 +4940,31 @@ void PostOp::execute(GRegion* gr,int level, int conformity){
     rearrange(gr);
   }
 
-  if (conformity == 1){
-    init_markings(gr);
-    build_vertex_to_tetrahedra(gr);
-    build_vertex_to_pyramids(gr);
-    trihedra(gr);
-    rearrange(gr);
-  } else if(conformity == 2){
+  printf("nb FAILS VERTEX after pyramids1 %i\n",nbFAILVERTEX);
+  printf("nb FAILS VALIDITY after pyramids1 %i\n",nbFAILVALIDITY);  
+  nbFAILVERTEX=0;
+  nbFAILVALIDITY=0;  
+  
+  if(conformity == 2 || level >= 3){
     init_markings(gr);
     build_vertex_to_tetrahedra(gr);
     build_vertex_to_pyramids(gr);
     pyramids2(gr);
     rearrange(gr);
   }    
+
+
+  printf("nb FAILS VERTEX after pyramids2 %i\n",nbFAILVERTEX);
+  printf("nb FAILS VALIDITY after pyramids2 %i\n",nbFAILVALIDITY);  
+
+  
+  if (conformity == 1){
+    init_markings(gr);
+    build_vertex_to_tetrahedra(gr);
+    build_vertex_to_pyramids(gr);
+    trihedra(gr);
+    rearrange(gr);
+  }
 
   statistics(gr);
 
@@ -5016,7 +5058,7 @@ void PostOp::pyramids1(GRegion* gr){
 }
 
 
-void PostOp::pyramids2(GRegion* gr){
+void PostOp::pyramids2(GRegion* gr, bool allowNonConforming){
   unsigned int i;
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
@@ -5052,12 +5094,12 @@ void PostOp::pyramids2(GRegion* gr){
     g = element->getVertex(6);
     h = element->getVertex(7);
 
-    pyramids2(a,b,c,d,gr);
-    pyramids2(e,f,g,h,gr);
-    pyramids2(a,b,f,e,gr);
-    pyramids2(b,c,g,f,gr);
-    pyramids2(d,c,g,h,gr);
-    pyramids2(d,a,e,h,gr);
+    pyramids2(b,a,d,c,gr, allowNonConforming);
+    pyramids2(e,f,g,h,gr, allowNonConforming);
+    pyramids2(a,b,f,e,gr, allowNonConforming);
+    pyramids2(b,c,g,f,gr, allowNonConforming);
+    pyramids2(c,d,h,g,gr, allowNonConforming);
+    pyramids2(d,a,e,h,gr, allowNonConforming);
   }
 
   for(i=0;i<prisms.size();i++){
@@ -5070,9 +5112,9 @@ void PostOp::pyramids2(GRegion* gr){
     e = element->getVertex(4);
     f = element->getVertex(5);
 
-    pyramids2(a,d,f,c,gr);
-    pyramids2(a,b,e,d,gr);
-    pyramids2(b,c,f,e,gr);
+    pyramids2(a,d,f,c,gr, allowNonConforming);
+    pyramids2(a,b,e,d,gr, allowNonConforming);
+    pyramids2(b,c,f,e,gr, allowNonConforming);
   }
 
   opt1.clear();
@@ -5113,7 +5155,7 @@ void PostOp::pyramids1(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
   std::map<MElement*,bool>::iterator it1;
   std::map<MElement*,bool>::iterator it2;
 
-    bin1a.clear();
+  bin1a.clear();
   bin1b.clear();
   bin2a.clear();
   bin2b.clear();
@@ -5150,11 +5192,15 @@ void PostOp::pyramids1(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
     if(it1->second==0 && it2->second==0){
       vertex = find(a,b,c,d,*it);
       MVertex* vertex1 = find(a,b,c,d,*bin.begin());
-      if(vertex!=0 && vertex == vertex1){//Seb added this 2nd condition. Is it necessary??
-        gr->addPyramid(new MPyramid(a,d,c,b,vertex));
-        it1->second = 1;
-        it2->second = 1;
-      }
+      if (!vertex || !vertex1) Msg::Fatal("Topological error");
+      if(vertex == vertex1){
+        MPyramid *pyr = new MPyramid(a,b,c,d,vertex);
+        if (valid(pyr)){
+          gr->addPyramid(pyr);
+          it1->second = 1;
+          it2->second = 1;
+        }else nbFAILVALIDITY++;
+      }else nbFAILVERTEX++;
     }
   }
 }
@@ -5196,11 +5242,11 @@ void PostOp::trihedra(GRegion* gr){
     g = element->getVertex(6);
     h = element->getVertex(7);
 
-    trihedra(a,b,c,d,gr);
+    trihedra(b,a,d,c,gr);
     trihedra(e,f,g,h,gr);
     trihedra(a,b,f,e,gr);
     trihedra(b,c,g,f,gr);
-    trihedra(d,c,g,h,gr);
+    trihedra(c,d,h,g,gr);
     trihedra(d,a,e,h,gr);
   }
 
@@ -5235,32 +5281,34 @@ void PostOp::trihedra(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
   find_pyramids_from_tri(a,c,d,diag1b);
   find_pyramids_from_tri(b,c,d,diag2a);
   find_pyramids_from_tri(a,b,d,diag2b);
-  if(diag1a.size()==1 && diag1b.size()==1){
+  if(diag1a.size()==1 || diag1b.size()==1){
     MTrihedron *trih = new MTrihedron(b, c, d, a);
-    //    if (diag1a.size() != 1 || diag1b.size() != 1) Msg::Error("Quad face neighbor with %i+%i triangular faces (other diagonal: %i+%i) Trihedron: %i",diag1a.size(),diag1b.size(),diag2a.size(),diag2b.size(),trih->getNum());
+    if (diag1a.size() != 1 || diag1b.size() != 1 || diag2a.size() != 0 || diag2b.size() != 0) Msg::Error("Quad face neighbor with %i+%i triangular faces (other diagonal: %i+%i) Trihedron: %i",diag1a.size(),diag1b.size(),diag2a.size(),diag2b.size(),trih->getNum());
     gr->addTrihedron(trih);
-  }else if(diag2a.size()==1 && diag2b.size()==1){
+  }else if(diag2a.size()==1 || diag2b.size()==1){
     MTrihedron *trih = new MTrihedron(a, b, c, d);
-    //    if (diag2a.size() != 1 || diag2b.size() != 1) Msg::Error("Quad face neighbor with %i+%i triangular faces (other diagonal: %i+%i) Trihedron: %i",diag2a.size(),diag2b.size(),diag1a.size(),diag1b.size(),trih->getNum());
+    if (diag1a.size() != 0 || diag1b.size() != 0 || diag2a.size() != 1 || diag2b.size() != 1) Msg::Error("Quad face neighbor with %i+%i triangular faces (other diagonal: %i+%i) Trihedron: %i",diag2a.size(),diag2b.size(),diag1a.size(),diag1b.size(),trih->getNum());
     gr->addTrihedron(trih);
   }
 }
 
-void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
+void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, bool allowNonConforming){
+
+  
   bool flag;
   double x,y,z;
   MVertex* mid;
-  MVertex *diagA,*diagB;
+  MVertex *diagA,*diagB, *nDiagA, *nDiagB;
   MVertex *N1,*N2;
   MVertex *v1,*v2,*v3,*v4,*v5;
   MTetrahedron* temp;
   MPyramid* temp2;
   std::vector<MElement*> movables;
   std::set<MVertex*> Ns;
-  std::set<MElement*> bin1;
-  std::set<MElement*> bin2;
-  std::set<MElement*> bin3;
-  std::set<MElement*> bin4;
+  std::set<MElement*> bin1a, bin1b;
+  std::set<MElement*> bin2a, bin2b;
+  std::set<MElement*> bin3a, bin3b;
+  std::set<MElement*> bin4a, bin4b;
   std::set<MElement*> tetrahedra;
   std::set<MElement*> pyramids;
   std::set<MElement*>::iterator it;
@@ -5268,166 +5316,282 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 
   flag = 0;
 
-  bin1.clear();
-  bin2.clear();
-  find_tetrahedra(a,c,bin1);
-  find_tetrahedra(b,d,bin2);
-  if(bin1.size()!=0) flag = 1;
+  bin1a.clear();
+  bin1b.clear();
+  bin2a.clear();
+  bin2b.clear();
+  find_tetrahedra(a,c,d,bin1a);
+  find_tetrahedra(a,b,c,bin1b);
+  find_tetrahedra(b,d,a,bin2a);
+  find_tetrahedra(b,c,d,bin2b);
 
-  bin3.clear();
-  bin4.clear();
-  find_pyramids(a,c,bin3);
-  find_pyramids(b,d,bin4);
-  if(bin3.size()!=0) flag = 1;
+  bin3a.clear();
+  bin3b.clear();
+  bin4a.clear();
+  bin4b.clear();
+  find_pyramids_from_tri(a,c,d,bin3a);
+  find_pyramids_from_tri(a,b,c,bin3b);
+  find_pyramids_from_tri(b,d,a,bin4a);
+  find_pyramids_from_tri(b,c,d,bin4b);
 
   tetrahedra.clear();
-  for(it=bin1.begin();it!=bin1.end();it++){
-    tetrahedra.insert(*it);
-  }
-  for(it=bin2.begin();it!=bin2.end();it++){
-    tetrahedra.insert(*it);
-  }
-
   pyramids.clear();
-  for(it=bin3.begin();it!=bin3.end();it++){
-    pyramids.insert(*it);
-  }
-  for(it=bin4.begin();it!=bin4.end();it++){
-    pyramids.insert(*it);
+  if ((bin1a.size() + bin3a.size() == 1) && (bin1b.size() + bin3b.size() ==1)){
+    flag=true;
+    for(it=bin1a.begin();it!=bin1a.end();it++){
+      tetrahedra.insert(*it);
+    }
+    for(it=bin1b.begin();it!=bin1b.end();it++){
+      tetrahedra.insert(*it);
+    }
+    for(it=bin3a.begin();it!=bin3a.end();it++){
+      pyramids.insert(*it);
+    }
+    for(it=bin3b.begin();it!=bin3b.end();it++){
+      pyramids.insert(*it);
+    }
+  }else if ((bin2a.size() + bin4a.size() ==1) && (bin2b.size() + bin4b.size() ==1)){
+    for(it=bin2a.begin();it!=bin2a.end();it++){
+      tetrahedra.insert(*it);
+    }
+    for(it=bin2b.begin();it!=bin2b.end();it++){
+      tetrahedra.insert(*it);
+    }
+    for(it=bin4a.begin();it!=bin4a.end();it++){
+      pyramids.insert(*it);
+    }
+    for(it=bin4b.begin();it!=bin4b.end();it++){
+      pyramids.insert(*it);
+    }
   }
 
-  /*if(pyramids.size()==0 && tetrahedra.size()==1){
-    printf("tetrahedron deleted\n");
-    it2 = markings.find(*tetrahedra.begin());
-    it2->second = 1;
-    return;
-    }*/
 
   if(flag){
-    diagA = a;
-    diagB = c;
+    diagA = c;
+    diagB = a;
+    nDiagA = b;
+    nDiagB = d;
   }
   else{
     diagA = b;
     diagB = d;
+    nDiagA = c;
+    nDiagB = a;
   }
 
   Ns.clear();
   Ns.insert(diagA);
   Ns.insert(diagB);
 
-  x = (diagA->x() + diagB->x())/2.0;
-  y = (diagA->y() + diagB->y())/2.0;
-  z = (diagA->z() + diagB->z())/2.0;
+ // x = (diagA->x() + diagB->x())/2.0;
+ // y = (diagA->y() + diagB->y())/2.0;
+ // z = (diagA->z() + diagB->z())/2.0;
 
   mid = 0;
   movables.clear();
 
+
   if(tetrahedra.size()>0 || pyramids.size()>0){
-    estimate1 = estimate1 + tetrahedra.size() + 2*pyramids.size();
-    estimate2 = estimate2 + 1;
-
-    mid = new MVertex(x,y,z,gr);
-    gr->addMeshVertex(mid);
-
-    temp2 = new MPyramid(a,b,c,d,mid);
-    
-    gr->addPyramid(temp2);
-    markings.insert(std::pair<MElement*,bool>(temp2,false));
-    build_vertex_to_pyramids(temp2);
-
-    for(it=tetrahedra.begin();it!=tetrahedra.end();it++){
-      N1 = other(*it,diagA,diagB);
-      N2 = other(*it,diagA,diagB,N1);
-
-      if(N1!=0 && N2!=0){
-        Ns.insert(N1);
-        Ns.insert(N2);
-
-        temp = new MTetrahedron(N1,N2,diagA,mid);
-        gr->addTetrahedron(temp);
-        markings.insert(std::pair<MElement*,bool>(temp,false));
-        build_vertex_to_tetrahedra(temp);
-        movables.push_back(temp);
-
-        temp = new MTetrahedron(N1,N2,diagB,mid);
-        gr->addTetrahedron(temp);
-        markings.insert(std::pair<MElement*,bool>(temp,false));
-        build_vertex_to_tetrahedra(temp);
-        movables.push_back(temp);
-
-        it2 = markings.find(*it);
-        it2->second = 1;
-        erase_vertex_to_tetrahedra(*it);
-      }
+    //A quad face can share only one of those:
+    // 2 triangles split by the first diagonal
+    // 2 triangles split by the second diagonal
+    // 0 triangle  with all nodes being on the boundary
+    if ((bin1a.size()+bin3a.size()) == 1 && (bin1b.size()+bin3b.size()) == 1){
+      //      MTrihedron *trih = new MTrihedron(b, c, d, a);
+      //      gr->addTrihedron(trih);
+    }else if ((bin2a.size()+bin4a.size()) == 1 && (bin2b.size()+bin4b.size()) == 1){
+      //      MTrihedron *trih = new MTrihedron(a, b, c, d);
+      //      gr->addTrihedron(trih);
     }
+    else if (bin1a.size() != 0 || bin1b.size() != 0 || bin2a.size() != 0 || bin2b.size() != 0
+             || bin3a.size() != 0 || bin3b.size() != 0 || bin4a.size() != 0 || bin4b.size() != 0
+             || a->onWhat()->dim()> 2 || b->onWhat()->dim()> 2 || c->onWhat()->dim()> 2 || d->onWhat()->dim()> 2)
+      Msg::Fatal("Topological issue: inner quad face facing something else than 2 triangles: %i %i %i %i %i %i %i %i dim %i %i %i",bin1a.size(), bin1b.size(), bin2a.size(), bin2b.size(), bin3a.size(), bin3b.size(), bin4a.size(), bin4b.size(), a->onWhat()->dim(), b->onWhat()->dim(), c->onWhat()->dim(), d->onWhat()->dim());
 
+
+    MVertex* otherV[2];
+    int i=0;
+    for(it=tetrahedra.begin();it!=tetrahedra.end();it++){
+      otherV[i++] = findInTriFace(diagA,diagB,nDiagA,nDiagB,*it);
+    }
     for(it=pyramids.begin();it!=pyramids.end();it++){
-      v1 = (*it)->getVertex(0);
-      v2 = (*it)->getVertex(1);
-      v3 = (*it)->getVertex(2);
-      v4 = (*it)->getVertex(3);
-      v5 = (*it)->getVertex(4);
+      otherV[i++] = findInTriFace(diagA,diagB,nDiagA,nDiagB,*it);
+    }
+    if (!otherV[0] || !otherV[1]) Msg::Fatal("Topological error");
 
-      if(v1!=diagA && v1!=diagB){
-        Ns.insert(v1);
-      }
-      if(v2!=diagA && v2!=diagB){
-        Ns.insert(v2);
-      }
-      if(v3!=diagA && v3!=diagB){
-        Ns.insert(v3);
-      }
-      if(v4!=diagA && v4!=diagB){
-        Ns.insert(v4);
-      }
-      if(v5!=diagA && v5!=diagB){
-        Ns.insert(v5);
-      }
+    MPyramid *pyr = new MPyramid(a,b,c,d,otherV[0]);
 
-      temp2 = new MPyramid(v1,v2,v3,v4,mid);
+    if (otherV[0] != otherV[1])nbFAILVERTEX++;
+    else if (!valid(pyr)) nbFAILVALIDITY++;
+    
+    if (otherV[0] == otherV[1] && valid(pyr)){
+      estimate1 = estimate1 + tetrahedra.size() + 2*pyramids.size();
+      estimate2 = estimate2 + 1;
+
+      //x = (diagA->x() + diagB->x() + otherV[0]->x())/3;
+      //y = (diagA->y() + diagB->y() + otherV[0]->y())/3;
+      //z = (diagA->z() + diagB->z() + otherV[0]->z())/3;
+
+      //W create a flat pyramid and let the optimizer fix it
+      x = (diagA->x() + diagB->x())/2;
+      y = (diagA->y() + diagB->y())/2;
+      z = (diagA->z() + diagB->z())/2;
+
+      mid = new MVertex(x,y,z,gr);
+      gr->addMeshVertex(mid);
+      
+      temp2 = new MPyramid(a,b,c,d,mid);
+      
       gr->addPyramid(temp2);
       markings.insert(std::pair<MElement*,bool>(temp2,false));
       build_vertex_to_pyramids(temp2);
+      //      printf("Creating pyramid with vertices %i %i %i %i %i\n", a->getNum(), b->getNum(), c->getNum(), d->getNum(), mid->getNum());
+      
+      
+      for(it=tetrahedra.begin();it!=tetrahedra.end();it++){
 
-      if(different(v1,v2,diagA,diagB)){
-        temp = new MTetrahedron(v1,v2,mid,v5);
-        gr->addTetrahedron(temp);
-        markings.insert(std::pair<MElement*,bool>(temp,false));
-        build_vertex_to_tetrahedra(temp);
-        movables.push_back(temp);
+        MVertex *Nout = findInTriFace(diagA,diagB,nDiagA,nDiagB,*it);
+        MVertex *Nin = other(*it,diagA,diagB,Nout);        
+        //        N1 = other(*it,diagA,diagB);
+
+                    
+        if(Nout!=0 && Nin!=0){
+          Ns.insert(N1);
+          Ns.insert(N2);
+
+          
+          temp = new MTetrahedron(mid,diagB,Nin,Nout);
+          gr->addTetrahedron(temp);
+          markings.insert(std::pair<MElement*,bool>(temp,false));
+          build_vertex_to_tetrahedra(temp);
+          movables.push_back(temp);
+          //          printf("Creating tet with vertices %i %i %i %i\n", N1->getNum(), N2->getNum(), diagA->getNum(), mid->getNum());
+          
+          temp = new MTetrahedron(diagA,mid,Nin,Nout);
+          gr->addTetrahedron(temp);
+          markings.insert(std::pair<MElement*,bool>(temp,false));
+          build_vertex_to_tetrahedra(temp);
+          movables.push_back(temp);
+          //          printf("Creating tet with vertices %i %i %i %i\n", N1->getNum(), N2->getNum(), diagB->getNum(), mid->getNum());
+          
+          it2 = markings.find(*it);
+          it2->second = 1;
+          erase_vertex_to_tetrahedra(*it);
+        }else{
+          Msg::Fatal("Wrong tetrahedron");
+        }
       }
+      
+      for(it=pyramids.begin();it!=pyramids.end();it++){
+        v1 = (*it)->getVertex(0); 
+        v2 = (*it)->getVertex(1);
+        v3 = (*it)->getVertex(2);
+        v4 = (*it)->getVertex(3);
+        v5 = (*it)->getVertex(4); //apex
 
-      if(different(v2,v3,diagA,diagB)){
-        temp = new MTetrahedron(v2,v3,mid,v5);
-        gr->addTetrahedron(temp);
-        markings.insert(std::pair<MElement*,bool>(temp,false));
-        build_vertex_to_tetrahedra(temp);
-        movables.push_back(temp);
+
+
+        //My version (sign-preserving)
+        temp2 = new MPyramid(v1,v2,v3,v4,mid);
+        gr->addPyramid(temp2);
+        markings.insert(std::pair<MElement*,bool>(temp2,false));
+        build_vertex_to_pyramids(temp2);
+
+        MVertex *NoutDiag = findInTriFace(diagA, diagB, nDiagA, nDiagB,*it);
+        MVertex *NoutNDiag = NULL;
+        for (int iV=0; iV<5; iV++){
+          MVertex *v = (*it)->getVertex(iV);
+          if (v!=a && v!=b && v!=c && v!=d && v!= NoutDiag){
+            NoutNDiag = v;
+            break;
+          }
+        }
+        MVertex *NinNDiag = findInTriFace(diagA, diagB, NoutDiag, NoutNDiag, *it);
+        if (v5 == diagA){
+          temp = new MTetrahedron(diagA, mid, NinNDiag, NoutNDiag);
+          gr->addTetrahedron(temp);
+          markings.insert(std::pair<MElement*,bool>(temp,false));
+          build_vertex_to_tetrahedra(temp);
+          movables.push_back(temp);
+          temp = new MTetrahedron(diagA, mid, NoutNDiag, NoutDiag);
+          gr->addTetrahedron(temp);
+          markings.insert(std::pair<MElement*,bool>(temp,false));
+          build_vertex_to_tetrahedra(temp);
+          movables.push_back(temp);
+        }else if (v5 == diagB){
+          temp = new MTetrahedron(mid, diagB, NinNDiag, NoutNDiag);
+          gr->addTetrahedron(temp);
+          markings.insert(std::pair<MElement*,bool>(temp,false));
+          build_vertex_to_tetrahedra(temp);
+          movables.push_back(temp);
+          temp = new MTetrahedron(diagB, mid, NoutNDiag, NoutDiag);
+          gr->addTetrahedron(temp);
+          markings.insert(std::pair<MElement*,bool>(temp,false));
+          build_vertex_to_tetrahedra(temp);
+          movables.push_back(temp);
+        }
+        
+      
+//        if(v1!=diagA && v1!=diagB){
+//          Ns.insert(v1);
+//        }
+//        if(v2!=diagA && v2!=diagB){
+//          Ns.insert(v2);
+//        }
+//        if(v3!=diagA && v3!=diagB){
+//          Ns.insert(v3);
+//        }
+//        if(v4!=diagA && v4!=diagB){
+//          Ns.insert(v4);
+//        }
+//        if(v5!=diagA && v5!=diagB){
+//          Ns.insert(v5);
+//        }
+//      
+//        temp2 = new MPyramid(v1,v2,v3,v4,mid);
+//        gr->addPyramid(temp2);
+//        markings.insert(std::pair<MElement*,bool>(temp2,false));
+//        build_vertex_to_pyramids(temp2);
+//      
+//        if(different(v1,v2,diagA,diagB)){
+//          temp = new MTetrahedron(v1,v2,mid,v5);
+//          gr->addTetrahedron(temp);
+//          markings.insert(std::pair<MElement*,bool>(temp,false));
+//          build_vertex_to_tetrahedra(temp);
+//          movables.push_back(temp);
+//        }
+//      
+//        if(different(v2,v3,diagA,diagB)){
+//          temp = new MTetrahedron(v2,v3,mid,v5);
+//          gr->addTetrahedron(temp);
+//          markings.insert(std::pair<MElement*,bool>(temp,false));
+//          build_vertex_to_tetrahedra(temp);
+//          movables.push_back(temp);
+//        }
+//      
+//        if(different(v3,v4,diagA,diagB)){
+//          temp = new MTetrahedron(v3,v4,mid,v5);
+//          gr->addTetrahedron(temp);
+//          markings.insert(std::pair<MElement*,bool>(temp,false));
+//          build_vertex_to_tetrahedra(temp);
+//          movables.push_back(temp);
+//        }
+//      
+//        if(different(v4,v1,diagA,diagB)){
+//          temp = new MTetrahedron(v4,v1,mid,v5);
+//          gr->addTetrahedron(temp);
+//          markings.insert(std::pair<MElement*,bool>(temp,false));
+//          build_vertex_to_tetrahedra(temp);
+//          movables.push_back(temp);
+//        }
+      
+        it2 = markings.find(*it);
+        it2->second = 1;
+        erase_vertex_to_pyramids(*it);
       }
-
-      if(different(v3,v4,diagA,diagB)){
-        temp = new MTetrahedron(v3,v4,mid,v5);
-        gr->addTetrahedron(temp);
-        markings.insert(std::pair<MElement*,bool>(temp,false));
-        build_vertex_to_tetrahedra(temp);
-        movables.push_back(temp);
-      }
-
-      if(different(v4,v1,diagA,diagB)){
-        temp = new MTetrahedron(v4,v1,mid,v5);
-        gr->addTetrahedron(temp);
-        markings.insert(std::pair<MElement*,bool>(temp,false));
-        build_vertex_to_tetrahedra(temp);
-        movables.push_back(temp);
-      }
-
-      it2 = markings.find(*it);
-      it2->second = 1;
-      erase_vertex_to_pyramids(*it);
+      
+      //  mean(Ns,mid,movables);
     }
-
-    mean(Ns,mid,movables);
   }
 }
 
@@ -5866,6 +6030,24 @@ double PostOp::workaround(MElement* element){
   }
 
   return volume;
+}
+
+//For an element find a vertex which is in a face inluding in but not out
+MVertex* PostOp::findInTriFace(MVertex* in0,MVertex* in1,MVertex* out0,MVertex* out1,MElement* element){
+  for(int iF=0;iF<element->getNumFaces();iF++){
+    const MFace &face = element->getFace(iF);
+    if (face.getNumVertices() != 3) continue;
+    int nbIn = 0;
+    int hasOut = false;
+    for (int iV = 0; iV < 3; iV++){
+      if (face.getVertex(iV) == in0 || face.getVertex(iV) == in1) nbIn++;
+      if (face.getVertex(iV) == out0 || face.getVertex(iV) == out1){ hasOut = true; continue;}
+    }
+    if (nbIn == 2 && !hasOut)
+      for (int iV = 0; iV < 3; iV++)
+        if (face.getVertex(iV) != in0 && face.getVertex(iV) != in1) return face.getVertex(iV);
+  }
+  return NULL;
 }
 
 MVertex* PostOp::find(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* v4,MElement* element){
