@@ -1706,6 +1706,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
     return 0;
   }
 
+  std::map<MVertex*,MVertex*> newVertex;
   std::map<int, std::vector<MElement*> > elements[11];
   for(unsigned int i = 0; i < entities.size(); i++){
     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
@@ -1714,7 +1715,10 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
       for(int k = 0; k < e->getNumVertices(); k++){
         MVertex *v = e->getVertex(k);
         MVertex *v2 = pos.find(v->x(), v->y(), v->z());
-        if(v2) verts.push_back(v2);
+        if(v2) {
+          verts.push_back(v2);
+          newVertex[v] = v2;
+        }
       }
       if((int)verts.size() == e->getNumVertices()){
         MElementFactory factory;
@@ -1739,6 +1743,39 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
     }
   }
 
+  // --- replace vertices in the periodic copies
+  
+  for(unsigned int i = 0; i < entities.size(); i++){
+
+    GEntity* ge = entities[i];
+
+    std::map<MVertex*,MVertex*>& corrVtcs = ge->correspondingVertices;
+    std::map<MVertex*,MVertex*>::iterator cIter;
+    
+    for (cIter=newVertex.begin();cIter!=newVertex.end();++cIter) {
+      MVertex* oldTgt = cIter->first;
+      MVertex* newTgt = cIter->second;
+      std::map<MVertex*,MVertex*>::iterator cvIter = corrVtcs.find(oldTgt);
+      if (cvIter != corrVtcs.end()) {
+        MVertex* src = cvIter->second;
+        corrVtcs.erase(cvIter);
+        corrVtcs[newTgt] = src;
+      }
+    }
+    
+    for (cIter=corrVtcs.begin();cIter!=corrVtcs.end();++cIter) {
+
+      MVertex* oldSrc = cIter->second;
+      std::map<MVertex*,MVertex*>::iterator nIter = newVertex.find(oldSrc);
+
+      if (nIter != newVertex.end()) {
+        MVertex* tgt = cIter->first;
+        MVertex* newSrc = nIter->second;
+        corrVtcs[tgt] = newSrc;
+      }
+    }
+  }
+  
   for(unsigned int i = 0; i < entities.size(); i++)
     entities[i]->deleteMesh();
 
