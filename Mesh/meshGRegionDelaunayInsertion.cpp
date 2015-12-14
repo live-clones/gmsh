@@ -948,13 +948,17 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     //    printf("coucou\n");
 
     // relocate vertices
-    for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it){
-      if (!(*it)->isDeleted()){
-        double qq = (*it)->getQuality();
-        if (qq < qMin)
-          for (int i = 0; i < 4; i++){
-            if (smoothVertex(*it, i, qm)) nbReloc++;
-          }
+    if (!gr->hexahedra.size() && 
+        !gr->prisms.size() && 
+        !gr->pyramids.size()){
+      for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it){
+	if (!(*it)->isDeleted()){
+	  double qq = (*it)->getQuality();
+	  if (qq < qMin)
+	    for (int i = 0; i < 4; i++){
+	      if (smoothVertex(*it, i, qm)) nbReloc++;
+	    }
+	}
       }
     }
 

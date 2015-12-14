@@ -4,6 +4,7 @@
 #include "SPoint3.h"
 #include <math.h>
 #include "robustPredicates.h"
+#include <stdio.h>
 
 #ifndef MAX_NUM_THREADS_
 #define MAX_NUM_THREADS_ 1

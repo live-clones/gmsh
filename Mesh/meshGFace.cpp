@@ -45,7 +45,6 @@
 #include "meshGFaceLloyd.h"
 #include "boundaryLayersData.h"
 #include "filterElements.h"
-#include "meshGFaceQuadDiscrete.h"
 
 // define this to use the old initial delaunay
 #define OLD_CODE_DELAUNAY 1
