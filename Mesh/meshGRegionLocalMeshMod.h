@@ -15,6 +15,8 @@
 
 enum localMeshModAction {GMSH_DOIT, GMSH_EVALONLY};
 
+void LaplaceSmoothing (GRegion *gr);
+
 bool edgeSwap(std::vector<MTet4*> &newTets, MTet4 *tet, 
               int iLocalEdge, const qmTetrahedron::Measures &cr);
 
@@ -36,8 +38,5 @@ bool collapseVertex(std::vector<MTet4*> &newTets, MTet4 *t,
 bool egeSplit(std::vector<MTet4*> &newTets, MTet4 *tet,
               MVertex *newVertex, int iLocalEdge,
               const qmTetrahedron::Measures &cr);
-
-bool sliverRemoval(std::vector<MTet4*> &newTets, MTet4 *t, 
-                   const qmTetrahedron::Measures &cr);
 
 #endif

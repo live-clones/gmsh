@@ -9,7 +9,6 @@
 #include "GmshMessage.h"
 #include "robustPredicates.h"
 #include "OS.h"
-//#include "BackgroundMesh.h"
 #include "meshGRegion.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "meshGRegionDelaunayInsertion.h"
@@ -18,7 +17,7 @@
 #include "MTriangle.h"
 #include "Numeric.h"
 #include "Context.h"
-#include "HilbertCurve.h"
+#include "delaunay3d.h"
 
 int MTet4::radiusNorm = 2;
 static double LIMIT_ = 1;
@@ -45,6 +44,7 @@ static bool isActive(MTet4 *t, double limit_, int &active)
   return false;
 }
 
+
 int MTet4::inCircumSphere(const double *p) const
 {
   double pa[3] = {base->getVertex(0)->x(),
@@ -63,6 +63,7 @@ int MTet4::inCircumSphere(const double *p) const
     robustPredicates::orient3d(pa, pb, pc, pd);
   return (result > 0) ? 1 : 0;
 }
+
 
 static int faces[4][3] = {{0,1,2}, {0,2,3}, {0,3,1}, {1,3,2}};
 
@@ -142,30 +143,6 @@ void connectTets_vector2(std::vector<MTet4*> &t, std::vector<faceXtet> &conn)
   }
 }
 
-
-// template <class ITER>
-// void connectTets_vector(ITER beg, ITER end)
-// {
-//   //  std::set<faceXtet> conn;
-//   std::vector<faceXtet> conn;
-//   while (beg != end){
-//     if (!(*beg)->isDeleted()){
-//       for (int i = 0; i < 4; i++){
-//         faceXtet fxt(*beg, i);
-// 	std::vector<faceXtet>::iterator found  = std::find(conn.begin(), conn.end(), fxt);
-// 	//        std::set<faceXtet>::iterator found = conn.find(fxt);
-//         if (found == conn.end())
-// 	  conn.push_back(fxt);
-// 	// conn.insert(fxt);
-//         else if (found->t1 != *beg){
-//           found->t1->setNeigh(found->i1, *beg);
-//           (*beg)->setNeigh(i, found->t1);
-//         }
-//       }
-//     }
-//     ++beg;
-//   }
-// }
 
 template <class ITER>
 void connectTets(ITER beg, ITER end, std::set<MFace, Less_Face> *allEmbeddedFaces = 0)
@@ -370,40 +347,6 @@ void recurFindCavity(std::vector<faceXtet> & shell,
     }
   }
 }
-
-
-// void nonrecurFindCavity(std::vector<faceXtet> & shell,
-// 			std::vector<MTet4*> & cavity,
-// 			MVertex *v ,
-// 			MTet4 *t,
-// 			std::stack<MTet4*> &_stack)
-// {
-
-//   _stack.push(t);
-//   while(!_stack.empty()){
-//     t = _stack.top();
-//     _stack.pop();
-//     if (!t->isDeleted()){
-//       t->setDeleted(true);
-//       cavity.push_back(t);
-
-//       for (int i = 0; i < 4; i++){
-// 	MTet4 *neigh = t->getNeigh(i) ;
-// 	faceXtet fxt (t, i);
-// 	if (!neigh)
-// 	  shell.push_back(fxt);
-// 	else  if (!neigh->isDeleted()){
-// 	  int circ = neigh->inCircumSphere(v);
-// 	  if (circ && (neigh->onWhat() == t->onWhat()))
-// 	    _stack.push(neigh);
-// 	  else
-// 	    shell.push_back(fxt);
-// 	}
-//       }
-//     }
-//   }
-//   //  printf("cavity size %d\n",cavity.size());
-// }
 
 void printTets (const char *fn, std::list<MTet4*> &cavity, bool force = false )
 {
@@ -626,52 +569,12 @@ static void setLcs(MTetrahedron *t, std::map<MVertex*, double> &vSizes,
   }
 }
 
-// void recover_volumes( GRegion *gr , std::set<MTet4*,compareTet4Ptr> & allTets )
-// {
-//   std::set<MTet4*,compareTet4Ptr>::iterator it = allTets.begin();
-//   for (; it != allTets.end(); ++it){
-//     MTet4 *t = *allTets.begin();
-//     if (!t->isDeleted()){
-//     }
-//   }
-// }
-
-// 4th argument will disappear when the reclassification of vertices will be done
-bool find_triangle_in_model(GModel *model, MTriangle *tri, GFace **gfound, bool force)
-{
-  static compareMTriangleLexicographic cmp;
-
-  GModel::fiter fit = model->firstFace() ;
-  while (fit != model->lastFace()){
-    bool found = std::binary_search((*fit)->triangles.begin(),
-                                    (*fit)->triangles.end(),
-                                    tri, cmp);
-    if(found){
-      *gfound = *fit;
-      return true;
-    }
-    ++fit;
-  }
-  return false;
-}
-
 GRegion *getRegionFromBoundingFaces(GModel *model,
                                     std::set<GFace *> &faces_bound)
 {
   GModel::riter git = model->firstRegion();
-  //  for (std::set<GFace *>::iterator it = faces_bound.begin();
-  //       it != faces_bound.end(); ++it){
-  //    printf(" %d",(*it)->tag());
-  //  }
-  //  printf("\n");
   while (git != model->lastRegion()){
     std::list <GFace *> _faces = (*git)->faces();
-    //    printf("region %d %d faces\n",(*git)->tag(),_faces.size());
-    //    for (std::list<GFace *>::iterator it = _faces.begin(); it != _faces.end(); ++it){
-    //      printf(" %d",(*it)->tag());
-    //    }
-    //  printf("\n");
-
     if(_faces.size() == faces_bound.size()){
       bool ok = true;
       for (std::list<GFace *>::iterator it = _faces.begin(); it != _faces.end(); ++it){
@@ -684,38 +587,6 @@ GRegion *getRegionFromBoundingFaces(GModel *model,
   return 0;
 }
 
-// void recur_classify(MTet4 *t, std::list<MTet4*> &theRegion,
-//                     std::set<GFace*> &faces_bound, GRegion *bidon,
-//                     GModel *model, const fs_cont &search)
-// {
-//   if (!t) Msg::Error("a tet is not connected by a boundary face");
-//   if (t->onWhat()) {
-//     return; // should never return here...
-//   }
-//   theRegion.push_back(t);
-//   t->setOnWhat(bidon);
-
-//   bool FF[4] = {0,0,0,0};
-
-//   for (int i = 0; i < 4; i++){
-//     //      if (!t->getNeigh(i) || !t->getNeigh(i)->onWhat())
-//     {
-//       GFace* gfound = findInFaceSearchStructure (t->tet()->getVertex(faces[i][0]),
-//                                                  t->tet()->getVertex(faces[i][1]),
-//                                                  t->tet()->getVertex(faces[i][2]),
-//                                                  search);
-//       if (gfound){
-//         FF[i] = true;
-//         if (faces_bound.find(gfound) == faces_bound.end())
-//           faces_bound.insert(gfound);
-//       }
-//     }
-//   }
-//   for (int i = 0; i < 4; i++){
-//     if (!FF[i])
-//       recur_classify(t->getNeigh(i), theRegion, faces_bound, bidon, model, search );
-//   }
-// }
 
 void non_recursive_classify(MTet4 *t, std::list<MTet4*> &theRegion,
 			    std::set<GFace*> &faces_bound, GRegion *bidon,
@@ -947,6 +818,12 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 //template <class CONTAINER, class DATA>
 void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
 {
+  // well, this should not be true !!!
+  // if (gr->hexahedra.size() || 
+  //      gr->prisms.size() || 
+  //      gr->pyramids.size())return; 
+  if (!gr->tetrahedra.size())return;
+
 
   typedef std::list<MTet4 *> CONTAINER ;
   CONTAINER allTets;
@@ -1052,18 +929,6 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
       }
     }
     //    printf("coucou\n");
-
-    if (0 && !newTets.size()){
-      int nbSlivers = 0;
-      int nbSliversWeCanDoSomething = 0;
-      for(unsigned int i = 0; i < illegals.size(); i++)
-        if(!(illegals[i]->isDeleted())){
-          if(sliverRemoval(newTets, illegals[i], qm))
-            nbSliversWeCanDoSomething++;
-          nbSlivers++;
-        }
-      Msg::Info("Opti : %d Sliver Removals", nbSliversWeCanDoSomething);
-    }
 
     if (!newTets.size()){
       break;
@@ -1235,6 +1100,7 @@ static void memoryCleanup(MTet4Factory &myFactory, std::set<MTet4*, compareTet4P
 
 void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 {
+
   //printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",
   //       sizeof(MTet4), sizeof(MTetrahedron), sizeof(MVertex));
 
@@ -1245,6 +1111,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   std::set<MTet4*, compareTet4Ptr> &allTets = myFactory.getAllTets();
   int NUM = 0;
 
+	//	printTets ("before.pos", cavity, true);
 
   { // leave this in a block so the map gets deallocated directly
     std::map<MVertex*, double> vSizesMap;
@@ -1332,8 +1199,8 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 
   double t1 = Cpu();
   while(1){
-    //    break;
-    if (ITER > maxVert)break;
+    if (COUNT_MISS_2 > 100000)break;
+    if (ITER >= maxVert)break;
     if(allTets.empty()){
       Msg::Error("No tetrahedra in region %d %d", gr->tag(), allTets.size());
       break;
@@ -1429,12 +1296,30 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 	}
       }
       else{
-	//	printf("coucou 2 % cavity size %d\n",ITER,cavity.size());
-	//	for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
-	//	  MTetrahedron *toto = (*itc)->tet();
-	//	  toto->xyz2uvw(center,uvw);
-	//	  printf("point outside %12.5E %12.5E %12.5E %12.5E\n",uvw[0], uvw[1], uvw[2],1-uvw[0]-uvw[1]-uvw[2]);
-	//	}
+	//	printf("%d %d %d %d\n",worst->tet()->getVertex(0)->getNum()
+	//	       ,worst->tet()->getVertex(1)->getNum()
+	//	       ,worst->tet()->getVertex(2)->getNum()
+	//	       ,worst->tet()->getVertex(3)->getNum());
+	/*	printf("coucou 2 % cavity size %d\n",ITER,cavity.size());
+	for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
+	  MTetrahedron *toto = (*itc)->tet();
+	  //	  toto->xyz2uvw(center,uvw);
+	  double mat[3][3], b[3], det;
+	  toto->getMat(mat);
+	  b[0] = center[0] - toto->getVertex(0)->x();
+	  b[1] = center[1] - toto->getVertex(0)->y();
+	  b[2] = center[2] - toto->getVertex(0)->z();
+	  sys3x3(mat, b, uvw, &det);
+	  printf("det = %g\n",det);
+	  printf("%g %g %g -- \n",toto->getVertex(0)->x(),toto->getVertex(0)->y(),toto->getVertex(0)->z());
+	  printf("%g %g %g -- \n",toto->getVertex(1)->x(),toto->getVertex(1)->y(),toto->getVertex(1)->z());
+	  printf("%g %g %g -- \n",toto->getVertex(2)->x(),toto->getVertex(2)->y(),toto->getVertex(2)->z());
+	  printf("%g %g %g -- \n",toto->getVertex(3)->x(),toto->getVertex(3)->y(),toto->getVertex(3)->z());
+	  printf("tet quality %g\n",toto->gammaShapeMeasure());
+	  printf("point %g %g %g outside %12.5E %12.5E %12.5E %12.5E\n",center[0],center[1],center[2],uvw[0], uvw[1], uvw[2],1-uvw[0]-uvw[1]-uvw[2]);
+	}
+	getchar();
+	*/
         myFactory.changeTetRadius(allTets.begin(), 0.0);
 	COUNT_MISS_2++;
 	for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)  (*itc)->setDeleted(false);
@@ -1708,233 +1593,25 @@ void bowyerWatsonFrontalLayers(GRegion *gr, bool hex)
 
 ///// do a 3D delaunay mesh assuming a set of vertices
 
-static void initialCube (std::vector<MVertex*> &v,
-			 MVertex *box[8],
-			 std::vector<MTet4*> &t){
-  SBoundingBox3d bbox ;
-  for (size_t i=0;i<v.size();i++){
-    MVertex *pv = v[i];
-    bbox += SPoint3(pv->x(),pv->y(),pv->z());
-  }
-  bbox *= 1.3;
-  box[0] = new MVertex (bbox.min().x(),bbox.min().y(),bbox.min().z());
-  box[1] = new MVertex (bbox.max().x(),bbox.min().y(),bbox.min().z());
-  box[2] = new MVertex (bbox.max().x(),bbox.max().y(),bbox.min().z());
-  box[3] = new MVertex (bbox.min().x(),bbox.max().y(),bbox.min().z());
-  box[4] = new MVertex (bbox.min().x(),bbox.min().y(),bbox.max().z());
-  box[5] = new MVertex (bbox.max().x(),bbox.min().y(),bbox.max().z());
-  box[6] = new MVertex (bbox.max().x(),bbox.max().y(),bbox.max().z());
-  box[7] = new MVertex (bbox.min().x(),bbox.max().y(),bbox.max().z());
-  std::vector<MTetrahedron*> t_box;
-  MTetrahedron *t0 = new MTetrahedron (box[2],box[7],box[3],box[1]);
-  MTetrahedron *t1 = new MTetrahedron (box[0],box[7],box[1],box[3]);
-  MTetrahedron *t2 = new MTetrahedron (box[6],box[1],box[7],box[2]);
-  MTetrahedron *t3 = new MTetrahedron (box[0],box[1],box[7],box[4]);
-  MTetrahedron *t4 = new MTetrahedron (box[1],box[4],box[5],box[7]);
-  MTetrahedron *t5 = new MTetrahedron (box[1],box[7],box[5],box[6]);
-  t.push_back(new MTet4(t0,0.0));
-  t.push_back(new MTet4(t1,0.0));
-  t.push_back(new MTet4(t2,0.0));
-  t.push_back(new MTet4(t3,0.0));
-  t.push_back(new MTet4(t4,0.0));
-  t.push_back(new MTet4(t5,0.0));
-  connectTets(t);
-}
+// void insertVerticesInRegion (GRegion *gr)
+// {
+//   // compute edges that should not be
+//   std::set<MEdge,Less_Edge> bnd;
+//   std::list<GFace*> f_list = gr->faces();
+//   for (std::list<GFace*>::iterator it = f_list.begin(); it != f_list.end(); ++it){
+//     GFace *gf = *it;
+//     for (i = 0;i< gf->triangles.size(); i++) {
+//       for (j = 0; j < 3; j++) {
+// 	bnd.insert(gf->triangles[i]->getEdge(j));
+//       }
+//     }
+//   }
+// }
 
-int straddling_segment_intersects_triangle(SPoint3 &p1,SPoint3 &p2,
-					   SPoint3 &q1,SPoint3 &q2,
-					   SPoint3 &q3)
-{
-  double s1 = robustPredicates::orient3d(p1, p2, q2, q3);
-  double s2 = robustPredicates::orient3d(p1, p2, q3, q1);
-  double s3 = robustPredicates::orient3d(p1, p2, q1, q2);
-
-  if (s1*s2 < 0.0 || s2 * s3 < 0.0) return false;
-
-
-  double s4 = robustPredicates::orient3d(q1, q2, q3, p1);
-  double s5 = robustPredicates::orient3d(q3, q2, q1, p2);
-
-  return (s4*s5 >= 0) ;
-}
-
-static MTet4* search4Tet (MTet4 *t, MVertex *v, int _size,int & ITER) {
-  if (t->inCircumSphere(v)) return t;
-  SPoint3 p2 (v->x(),v->y(),v->z());
-  std::set<MTet4*> path;
-  while (1){
-    path.insert(t);
-    SPoint3 p1 = t->tet()->barycenter();
-    int found = -1;
-    MTet4 *neighOK = 0;
-    for (int i = 0; i < 4; i++){
-      MTet4 *neigh = t->getNeigh(i);
-      if (neigh && path.find(neigh) == path.end()){
-	neighOK = neigh;
-	faceXtet fxt (t, i);
-
-	SPoint3 q1(fxt.v[0]->x(),fxt.v[0]->y(),fxt.v[0]->z());
-	SPoint3 q2(fxt.v[1]->x(),fxt.v[1]->y(),fxt.v[1]->z());
-	SPoint3 q3(fxt.v[2]->x(),fxt.v[2]->y(),fxt.v[2]->z());
-
-
-	if ( straddling_segment_intersects_triangle (p1,p2,q1,q2,q3)){
-	  found = i;
-	  break;
-	}
-      }
-    }
-    if (found < 0){
-      if (neighOK)t = neighOK;
-      else return 0;
-    }
-    else{
-      t = t->getNeigh(found);
-    }
-    if (t->inCircumSphere(v)) {
-      return t;
-    }
-    if (ITER++ > .5*_size) {
-      break;
-    }
-  }
-  return 0;
-}
-
-MTet4 * getTetToBreak (MVertex *v, std::vector<MTet4*> &t, int &NB_GLOBAL_SEARCH, int &ITER){
-  // last inserted is used as starting point
-  // we know it is not deleted
-  unsigned int k = t.size() - 1;
-  while(t[k]->isDeleted()){
-    k--;
-  }
-  MTet4 *start = t[k];
-  start = search4Tet (start,v,(int)t.size(),ITER);
-  if (start)return start;
-  //  printf("Global Search has to be done\n");
-  NB_GLOBAL_SEARCH++;
-  for (size_t i = 0;i<t.size();i++){
-    if (!t[i]->isDeleted() && t[i]->inCircumSphere(v))return t[i];
-  }
-  return 0;
-}
-
-bool tetOnBox (MTetrahedron *t, MVertex *box[8]){
-  for (size_t i = 0;i<4;i++)
-    for (size_t j = 0;j<8;j++)
-      if (t->getVertex(i) == box[j])return true;
-  return false;
-}
-
-
-void sanityCheck1(MTet4 *t)
-{
-}
-
-
-
- void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &result, bool removeBox)
-{
-  std::vector<MTet4*> t;
-  t.reserve (v.size()*7);
-  std::vector<faceXtet> conn;
-  std::vector<faceXtet> shell;
-  std::vector<MTet4*> cavity;
-  MVertex *box[8];
-  initialCube (v,box,t);
-
-  int NB_GLOBAL_SEARCH = 0;
-  int AVG_ITER = 0;
-  SortHilbert(v);
+void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &result, bool removeBox) {
   double t1 = Cpu();
-
-  /// double ta=0,tb=0,tc=0,td=0,T;
-
-  for (size_t i=0;i<v.size();i++){
-    MVertex *pv = v[i];
-
-    int NITER = 0;
-    //    T = Cpu();
-    MTet4 * found = getTetToBreak (pv,t,NB_GLOBAL_SEARCH,NITER);
-    //    ta += Cpu()-T;
-    AVG_ITER += NITER;
-    if(!found) {
-      Msg::Error("cannot insert a point in 3D Delaunay");
-      continue;
-    }
-    shell.clear();
-    cavity.clear();
-    //    T = Cpu();
-    recurFindCavity(shell, cavity, pv, found);
-    //    tb += Cpu()-T;
-    double V = 0.0;
-    for (unsigned int k=0;k<cavity.size();k++)V+=fabs(cavity[k]->tet()->getVolume());
-
-    std::vector<MTet4*> extended_cavity;
-    double Vb = 0.0;
-
-    //    T = Cpu();
-    for (unsigned int count = 0; count < shell.size(); count++){
-      const faceXtet &fxt = shell[count];
-      MTetrahedron *tr;
-      MTet4 *t4;
-      MVertex *v0 = fxt.getVertex(0);
-      MVertex *v1 = fxt.getVertex(1);
-      MVertex *v2 = fxt.getVertex(2);
-      MTet4 *otherSide = fxt.t1->getNeigh(fxt.i1);
-      if (count < cavity.size()){
-	t4 = cavity[count];
-	tr = t4->tet() ;
-	tr->setVertex(0,v0);
-	tr->setVertex(1,v1);
-	tr->setVertex(2,v2);
-	tr->setVertex(3,pv);
-      }
-      else{
-	tr = new MTetrahedron(v0,v1,v2,pv);
-	t4 = new MTet4(tr, 0.0);
-	t.push_back(t4);
-      }
-      Vb+= fabs(tr->getVolume());
-      extended_cavity.push_back(t4);
-      if (otherSide)
-	extended_cavity.push_back(otherSide);
-    }
-    //    tc += Cpu()-T;
-
-    if (fabs(Vb-V) > 1.e-8 * (Vb+V))printf("%12.5E %12.5E\n",Vb,V);
-
-    // reuse memory --> reinitialize MTet4s
-    for (unsigned int k=0;k<std::min(cavity.size(),shell.size());k++){
-      cavity[k]->setDeleted(false);
-      for (unsigned int l=0;l<4;l++){
-    	cavity[k]->setNeigh(l,0);
-      }
-    }
-    //    T = Cpu();
-    connectTets_vector2(extended_cavity,conn);
-    //    td += Cpu()-T;
-  }
-
+  delaunayTriangulation (1, 1, v, result);
   double t2 = Cpu();
-  Msg::Info("Delaunay 3D done for %d points : CPU = %g, %d global searches, AVG walk size %g",v.size(), t2-t1,NB_GLOBAL_SEARCH,1.+(double)AVG_ITER/v.size());
-  //  printf("%d tets allocated (to compare with 7 #V = %d)\n",t.size(),7*v.size());
-  //  printf("%g %g %g %g --> %g(%g)\n",ta,tb,tc,td,t2-t1,ta+tb+tc+td);
-
-  //  FILE *f = fopen ("tet.pos","w");
-  //  fprintf(f,"View \"\"{\n");
-  for (size_t i = 0;i<t.size();i++){
-    if (t[i]->isDeleted() || (removeBox && tetOnBox (t[i]->tet(),box))) delete t[i]->tet();
-    else {
-      result.push_back(t[i]->tet());
-      //      t[i]->tet()->writePOS (f, false,false,true,false,false,false);
-    }
-    delete t[i];
-  }
-
-  if (removeBox)for (int i=0;i<8;i++)delete box[i];
-  else for (int i=0;i<8;i++)v.push_back(box[i]);
-
-  //    fprintf(f,"};\n");
-  //    fclose(f);
+  Msg::Info("Tetrahedrization of %d points in %g seconds",v.size(),t2-t1);
 }
+
