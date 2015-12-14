@@ -91,12 +91,17 @@ Curvature& Curvature::getInstance()
    /// -------------------------------------------------------------------------------------------
    // Loop over all faces. Check if the face is a compound. If it is, store all of its discrete
    // faces in _EntityArray
-
+   
    std::list<GFace*> global_face_list;
 
    for(GModel::fiter face_iter = _model->firstFace(); face_iter != _model->lastFace(); ++face_iter)
    {
-     if ( (*face_iter)->geomType() == GEntity::CompoundSurface )
+     if ( (*face_iter)->geomType() != GEntity::CompoundSurface ){
+       if (!(*face_iter)->getCompound()){
+	 global_face_list.push_back(*face_iter);	 
+       }       
+     }
+     else if ( (*face_iter)->geomType() == GEntity::CompoundSurface )
      {
        GFaceCompound* compound = dynamic_cast<GFaceCompound*>(*face_iter);
        std::list<GFace*> tempcompounds = compound->getCompounds();
@@ -117,7 +122,6 @@ Curvature& Curvature::getInstance()
    global_face_list.unique();
    _EntityArray.resize(global_face_list.size());
    std::copy(global_face_list.begin(),global_face_list.end(),_EntityArray.begin());
-
 #endif
  }
 
@@ -426,6 +430,14 @@ void Curvature::computeVertexNormals()
     {
       _VertexNormal[n].normalize();
     }
+}
+
+//========================================================================================================
+
+SVector3 Curvature::vertexNormal (MVertex* A)
+{
+  const int V0 = _VertexToInt[A->getNum()];  //The new number of the vertex
+  return _VertexNormal[V0];
 }
 
 //========================================================================================================
@@ -878,7 +890,7 @@ void Curvature::computeCurvature(GModel* model, typeOfCurvature typ)
   Msg::StatusBar(true, "(C) Done Computing Curvature (%g s)", t1-t0);
 
   //writeToMshFile("curvature.msh");
-  writeToPosFile("curvature.pos");
+  //writeToPosFile("curvature.pos");
   //writeToVtkFile("curvature.vtk");
 
 }
@@ -1039,6 +1051,7 @@ void Curvature::smoothCurvatureField(const int NbIter)
 
 void Curvature::computeCurvature_Rusinkiewicz(int isMax)
 {
+  
   retrieveCompounds();
   initializeMap();
 
@@ -1196,6 +1209,7 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax)
                      _VertexNormal[ivertex], _pdir1[ivertex], _pdir2[ivertex], _curv1[ivertex], _curv2[ivertex]);
   }
 
+
   _VertexCurve.resize( _VertexToInt.size() );
 
   for (unsigned int ivertex = 0; ivertex < _VertexToInt.size(); ++ivertex){
@@ -1216,6 +1230,7 @@ void Curvature::computeCurvature_Rusinkiewicz(int isMax)
 
 // Propagate the value of curvature from nodes close the edges of the geometry onto the edges
   correctOnEdges();
+  //  throw;
 
 } //End of the "computeCurvature_Rusinkiewicz" method
 

@@ -1,5 +1,5 @@
 // Options
-Mesh.SubdivisionAlgorithm = 1;
+//Mesh.SubdivisionAlgorithm = 1;
 Mesh.MshFileVersion = 1;
 
 // Variables
@@ -19,7 +19,9 @@ l1 = newl; Line(l1) = {p1, p2} ;
 l2 = newl; Line(l2) = {p2, p3} ;
 l3 = newl; Line(l3) = {p3, p4} ;
 l4 = newl; Line(l4) = {p4, p1} ;
-l5 = newl; Line(l5) = {p6, p7} ;
+l5 = newl; Line(l5) = {p1, p7} ;
+l6 = newl; Line(l6) = {p1, p6} ;
+l7 = newl; Line(l7) = {p7, p6} ;
 
 // Surface Dalle
 ll1 = newll; Line Loop (ll1) = {l1, l2, l3, l4} ;
@@ -35,7 +37,7 @@ Transfinite Line {l5} = 1 + 1.3 / ch_length ;
 */
 
 Point{p5} In Surface{s1} ;
-Line{l5} In Surface{s1} ;
+Line{l5,l6,l7} In Surface{s1} ;
 
 // Transformation des triangles en quadrangles
-Recombine Surface {s1} ;
+//Recombine Surface {s1} ;

@@ -4,7 +4,10 @@
 # bugs and problems to the public mailing list <gmsh@geuz.org>.
 
 set(SRC
-  Generator.cpp
+   meshGRegionBoundaryRecovery.cpp
+   delaunay3d.cpp
+   delaunay_refinement.cpp
+   Generator.cpp
     meshGEdge.cpp 
       meshGEdgeExtruded.cpp
     meshGFace.cpp 
@@ -12,6 +15,7 @@ set(SRC
       meshGFaceTransfinite.cpp meshGFaceExtruded.cpp 
       meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunayInsertion.cpp 
       meshGFaceLloyd.cpp meshGFaceOptimize.cpp 
+      meshGFaceQuadDiscrete.cpp 
       meshGFaceQuadrilateralize.cpp 
     meshGRegion.cpp 
       meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp 

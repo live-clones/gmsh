@@ -87,8 +87,8 @@ int GmshInitialize(int argc, char **argv)
   PluginManager::instance()->registerDefaultPlugins();
 #endif
 
-  // Initialize robust predicates
-  robustPredicates::exactinit();
+  // Initialize robust predicates (no static filter for now, we do not know the size of the domain)
+  robustPredicates::exactinit(0,1.0,1.0,1.0);
 
   if(dummy) delete dummy;
   return 1;

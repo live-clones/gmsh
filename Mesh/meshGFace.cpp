@@ -45,6 +45,7 @@
 #include "meshGFaceLloyd.h"
 #include "boundaryLayersData.h"
 #include "filterElements.h"
+#include "meshGFaceQuadDiscrete.h"
 
 // define this to use the old initial delaunay
 #define OLD_CODE_DELAUNAY 1
@@ -1525,8 +1526,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       bowyerWatsonParallelogramsConstrained(gf,gf->constr_vertices);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
-            gf->getMeshingAlgo() == ALGO_2D_AUTO)
+            gf->getMeshingAlgo() == ALGO_2D_AUTO){
       bowyerWatson(gf);
+    }
     else {
       bowyerWatson(gf,15000);
       meshGFaceBamg(gf);
@@ -2350,7 +2352,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      !CTX::instance()->mesh.optimizeLloyd && CTX::instance()->mesh.algoRecombine != 2)
-    recombineIntoQuads(gf);
+    recombineIntoQuads(gf,true,false);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
@@ -2375,7 +2377,6 @@ int debugSurface = -1; //-1;
 
 void meshGFace::operator() (GFace *gf, bool print)
 {
-
   gf->model()->setCurrentMeshEntity(gf);
 
   if(debugSurface >= 0 && gf->tag() != debugSurface){
@@ -2383,7 +2384,11 @@ void meshGFace::operator() (GFace *gf, bool print)
     return;
   }
 
-  if(gf->geomType() == GEntity::DiscreteSurface) return;
+  if(gf->geomType() == GEntity::DiscreteSurface) {
+    //    meshGFaceQuadDiscrete (gf);      
+    //    gf->meshStatistics.status = GFace::DONE;
+    return;
+  }
   if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) return;

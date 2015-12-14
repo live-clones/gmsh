@@ -1515,6 +1515,11 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
   else{
 #if defined(HAVE_PETSC)
     lsys = new linearSystemPETSc<double>;
+    lsys->setParameter("petscOptions",
+    "-pc_type ilu -ksp_rtol 1.e-12 -pc_factor_levels 10");
+    
+    //    lsys->setParameter("petscOptions",
+    //    		       "-ksp_type preonly -pc_type lu -pc_factor_mat_solver_package umfpack");
 #elif defined(HAVE_GMM)
     linearSystemGmm<double> *lsysb = new linearSystemGmm<double>;
     lsysb->setGmres(1);

@@ -262,8 +262,9 @@ int RenumberMesh(GModel *const model, meshPartitionOptions &options)
     temp.insert(temp.begin(),(*it)->hexahedra.begin(),(*it)->hexahedra.end());
     RenumberMeshElements(temp, options);
     (*it)->hexahedra.clear();
-    for (unsigned int i = 0; i < temp.size(); i++)
+    for (unsigned int i = 0; i < temp.size(); i++){
       (*it)->hexahedra.push_back((MHexahedron*)temp[i]);
+    }
   }
   return 1;
 }

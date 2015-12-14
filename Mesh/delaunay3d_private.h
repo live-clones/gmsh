@@ -1,0 +1,242 @@
+#ifndef _DELAUNAY3D_H_
+#define _DELAUNAY3D_H_
+#include <vector>
+#include "SPoint3.h"
+#include <math.h>
+#include "robustPredicates.h"
+
+#ifndef MAX_NUM_THREADS_
+#define MAX_NUM_THREADS_ 1
+#endif
+
+typedef unsigned char CHECKTYPE;
+
+
+struct Vertex {
+private :
+  double _x[3];
+  double _lc;
+  unsigned int _num;
+public :
+  inline unsigned int getNum () const {return _num;}
+  inline void setNum (unsigned int n)  {_num=n;}
+  unsigned char _thread;
+  inline double x() const {return _x[0];}
+  inline double y() const {return _x[1];}
+  inline double z() const {return _x[2];}
+  inline double lc() const {return _lc;}
+  inline double &x() {return _x[0];}
+  inline double &y() {return _x[1];}
+  inline double &z() {return _x[2];}
+  inline double &lc() {return _lc;}
+  inline operator double *() { return _x; }
+  Vertex (double X, double Y, double Z, double lc, int num = 0) : _num(num), _thread(0){
+    _x[0]=X; _x[1]=Y;_x[2]=Z; _lc = lc;}
+  Vertex operator + (const Vertex &other){
+    return Vertex (x()+other.x(),y()+other.y(),z()+other.z(),other.lc() + _lc);
+  }
+  Vertex operator * (const double &other){
+    return Vertex (x()*other,y()*other,z()*other,_lc*other);
+  }
+  inline SPoint3 point() const { return SPoint3(x(), y(), z()); }
+};
+
+
+inline double orientationTestFast(double *pa, double *pb, double *pc, double *pd)
+{
+  const double adx = pa[0] - pd[0];
+  const double bdx = pb[0] - pd[0];
+  const double cdx = pc[0] - pd[0];
+  const double ady = pa[1] - pd[1];
+  const double bdy = pb[1] - pd[1];
+  const double cdy = pc[1] - pd[1];
+  const double adz = pa[2] - pd[2];
+  const double bdz = pb[2] - pd[2];
+  const double cdz = pc[2] - pd[2];
+
+  return adx * (bdy * cdz - bdz * cdy)
+       + bdx * (cdy * adz - cdz * ady)
+       + cdx * (ady * bdz - adz * bdy);
+}
+
+inline bool inSphereTest_s (Vertex *va, Vertex *vb, Vertex *vc, Vertex *vd , Vertex *ve){  
+  double val = robustPredicates::insphere ((double*)va,(double*)vb,(double*)vc,(double*)vd,(double*)ve);
+  if (val == 0.0){
+    printf("symbolic perturbation needed vol %22.15E\n",orientationTestFast((double*)va,(double*)vb,(double*)vc,(double*)vd));
+    int count;
+    // symbolic perturbation
+    Vertex *pt[5] = {va,vb,vc,vd,ve};
+    int swaps = 0;
+    int n = 5;
+    do {
+      count = 0;
+      n = n - 1;
+      for (int i = 0; i < n; i++) {
+	if (pt[i] > pt[i+1]) {
+	  Vertex *swappt = pt[i]; pt[i] = pt[i+1]; pt[i+1] = swappt;
+	  count++;
+	}
+      }
+      swaps += count;
+    } while (count > 0);
+    double oriA = robustPredicates::orient3d ((double*)pt[1], (double*)pt[2], (double*)pt[3], (double*)pt[4]);
+    if (oriA != 0.0) {
+      // Flip the sign if there are odd number of swaps.
+      if ((swaps % 2) != 0) oriA = -oriA;
+      val =  oriA;     
+    }  
+    else {
+      double oriB = -robustPredicates::orient3d ((double*)pt[0], (double*)pt[2], (double*)pt[3], (double*)pt[4]);
+      if (oriB == 0.0) {
+	Msg::Fatal("Symbolic perturbation failed in icCircle Predicate");
+      }
+      // Flip the sign if there are odd number of swaps.
+      if ((swaps % 2) != 0) oriB = -oriB;
+      val = oriB;
+    }
+  }
+  return val > 0 ? 1 : 0;
+}
+
+inline double orientationTest (Vertex *va, Vertex *vb, Vertex *vc, Vertex *vd){  
+  return robustPredicates::orient3d ((double*)va,(double*)vb,(double*)vc,(double*)vd);
+}
+
+inline double orientationTestFast (Vertex *va, Vertex *vb, Vertex *vc, Vertex *vd){  
+  return orientationTestFast ((double*)va,(double*)vb,(double*)vc,(double*)vd);
+}
+
+
+struct Edge {
+  Vertex *first,*second;
+  Edge (Vertex *v1, Vertex *v2) : first(v1), second(v2)
+  {
+  }
+  bool operator == (const Edge &e) const{
+    return e.first == first && e.second == second;
+  }
+  bool operator < (const Edge &e) const{
+    if (first < e.first) return true;
+    if (first > e.first) return false;
+    if (second < e.second) return true;
+    return false;
+  }
+};
+
+//typedef std::pair<Vertex*, Vertex*> Edge;
+
+struct Face {
+  Vertex *v[3];
+  Vertex *V[3];
+  Face (Vertex *v1, Vertex *v2, Vertex *v3){
+    V[0] = v[0] = v1;
+    V[1] = v[1] = v2;
+    V[2] = v[2] = v3;
+#define cswap(a,b) do { if(a > b) { Vertex* tmp = a; a = b; b = tmp; } } while(0)
+    cswap(v[0], v[1]);
+    cswap(v[1], v[2]);
+    cswap(v[0], v[1]);
+  }
+  bool operator == (const Face &other) const {
+    return v[0] == other.v[0] && v[1] == other.v[1] && v[2] == other.v[2];
+  }
+  bool operator < (const Face &other) const {
+    if (v[0] < other.v[0])return true;
+    if (v[0] > other.v[0])return false;
+    if (v[1] < other.v[1])return true;
+    if (v[1] > other.v[1])return false;
+    if (v[2] < other.v[2])return true;
+    return false;
+  }
+};
+
+struct Tet {
+  Tet    *T[4];
+  Vertex *V[4];
+  CHECKTYPE _bitset [MAX_NUM_THREADS_];
+  char _modified;
+  Tet ()  : _modified(true){
+    V[0] = V[1] = V[2] = V[3] = NULL;
+    T[0] = T[1] = T[2] = T[3] = NULL;
+    setAllDeleted();    
+  }
+  int setVertices (Vertex *v0, Vertex *v1, Vertex *v2, Vertex *v3){
+    _modified=true;
+    double val = robustPredicates::orient3d((double*)v0,(double*)v1,(double*)v2,(double*)v3);
+    V[0] = v0; V[1] = v1; V[2] = v2; V[3] = v3;
+    if (val > 0){
+      return 1;
+    }
+    else if (val < 0){
+      V[0] = v1; V[1] = v0; V[2] = v2; V[3] = v3;
+      return -1;
+    }
+    else {
+      return 0;
+    }
+  }
+  Tet (Vertex *v0, Vertex *v1, Vertex *v2, Vertex *v3) 
+  {
+    setVertices (v0,v1,v2,v3);
+    T[0] = T[1] = T[2] = T[3] = NULL;
+    setAllDeleted();
+  }
+  void setAllDeleted (){
+    for (int i=0;i<MAX_NUM_THREADS_;i++) _bitset [i] = 0x0;
+  }
+  inline void unset ( int thread, int iPnt ){
+    _bitset[thread]  &= ~(1 << iPnt);
+  }
+  inline void set ( int thread, int iPnt ){
+    _bitset [thread]  |=  (1 << iPnt);
+  }
+  inline CHECKTYPE isSet ( int thread, int iPnt ) const{
+    return _bitset[thread] & (1 << iPnt);
+  }
+  inline Face getFace  (int k) const {
+    const int fac[4][3] = {{0,1,2},{1,3,2},{2,3,0},{1,0,3}};
+    return Face (V[fac[k][0]],V[fac[k][1]],V[fac[k][2]]);
+  }
+  inline Edge getEdge (int k) const {
+    const int edg[6][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
+    return Edge (std::min(V[edg[k][0]],V[edg[k][1]]), 
+		 std::max(V[edg[k][0]],V[edg[k][1]]));
+  }
+  inline bool inSphere (Vertex *vd, int thread) const{
+    return inSphereTest_s (V[0],V[1],V[2],V[3],vd); 
+  }
+  Vertex centroid () const {
+    return (*V[0]+*V[1]+*V[2]+*V[3])*0.25;
+  }
+
+}; 
+
+struct conn {
+  Face f;
+  int  i;
+  Tet *t;
+  conn () : f(0,0,0), i(0), t(0){}  
+  conn (Face _f, int _i, Tet *_t) : f(_f), i(_i), t(_t)  
+  {   }
+  inline bool operator == (const conn & c) const{
+    return f == c.f;
+  }  
+  inline bool operator < (const conn & c) const{
+    return f < c.f;
+  }  
+};
+
+typedef std::vector<Tet*> cavityContainer;
+typedef std::vector<conn>   connContainer;
+
+void SortHilbert (std::vector<Vertex*>& v, std::vector<int> &indices);
+void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet);
+void print (const char *name, std::vector<Tet*> &T);
+void delaunayTrgl (const unsigned int numThreads, 
+		   const unsigned int NPTS_AT_ONCE, 
+		   unsigned int Npts, 
+		   std::vector<Tet*> &T, 
+		   std::vector<Vertex*> assignTo[]);
+
+
+#endif

@@ -1593,21 +1593,6 @@ void bowyerWatsonFrontalLayers(GRegion *gr, bool hex)
 
 ///// do a 3D delaunay mesh assuming a set of vertices
 
-// void insertVerticesInRegion (GRegion *gr)
-// {
-//   // compute edges that should not be
-//   std::set<MEdge,Less_Edge> bnd;
-//   std::list<GFace*> f_list = gr->faces();
-//   for (std::list<GFace*>::iterator it = f_list.begin(); it != f_list.end(); ++it){
-//     GFace *gf = *it;
-//     for (i = 0;i< gf->triangles.size(); i++) {
-//       for (j = 0; j < 3; j++) {
-// 	bnd.insert(gf->triangles[i]->getEdge(j));
-//       }
-//     }
-//   }
-// }
-
 void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &result, bool removeBox) {
   double t1 = Cpu();
   delaunayTriangulation (1, 1, v, result);

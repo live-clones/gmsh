@@ -467,6 +467,242 @@ static void FindConnectedRegions(std::vector<GRegion*> &delaunay,
             nbVolumes,connected.size());
 }
 
+template <class ITERATOR>
+void fillv_(std::multimap<MVertex*, MElement*> &vertexToElement,
+	    ITERATOR it_beg, ITERATOR it_end)
+{
+  for (ITERATOR IT = it_beg; IT != it_end ; ++IT){
+    MElement *el = *IT;
+    for(int j = 0; j < el->getNumVertices(); j++) {
+      MVertex* e = el->getVertex(j);
+      vertexToElement.insert(std::make_pair(e, el));
+    }
+  }
+}
+
+
+int LaplaceSmoothing (GRegion *gr) {
+
+  std::multimap<MVertex*, MElement*> vertexToElement;
+  fillv_(vertexToElement, (gr)->tetrahedra.begin(), (gr)->tetrahedra.end());
+  fillv_(vertexToElement, (gr)->hexahedra.begin(),  (gr)->hexahedra.end());
+  fillv_(vertexToElement, (gr)->prisms.begin(),     (gr)->prisms.end());
+  fillv_(vertexToElement, (gr)->pyramids.begin(),   (gr)->pyramids.end());
+  int N=0;
+  for (unsigned int i=0; i<gr->mesh_vertices.size();i++){
+    MVertex *v = gr->mesh_vertices[i];
+    std::multimap<MVertex*, MElement*>::iterator it = vertexToElement.lower_bound(v);
+    std::multimap<MVertex*, MElement*>::iterator it_low = it;
+    std::multimap<MVertex*, MElement*>::iterator it_up  = vertexToElement.upper_bound(v);
+    double minQual = 1.e22;
+    double volTot = 0.0;
+    double xold=v->x(), yold=v->y(), zold=v->z();
+    SPoint3 pNew (0,0,0);
+    for (; it != it_up; ++it) {
+      minQual= std::min(minQual,it->second->minSICNShapeMeasure());
+      double vol = fabs(it->second->getVolume());
+      SPoint3 cog = it->second->barycenter();
+      pNew += cog * vol;
+      volTot += vol;
+    }
+    pNew *= (1./volTot);
+    v->setXYZ (pNew.x(),pNew.y(),pNew.z());
+    double minQual2 = 1.e22;
+    for (it = it_low; it != it_up; ++it) {
+      minQual2 = std::min(minQual2,it->second->minSICNShapeMeasure());
+      if (minQual2 < minQual){	
+	v->setXYZ (xold,yold,zold);
+	break;
+      }
+    }
+    if (minQual < minQual2) N++;
+  }  
+  return N;
+}
+
+// JFR : use hex-splitting to resolve non conformity
+//     : if howto == 1 ---> split hexes
+//     : if howto == 2 ---> create transition elements
+
+/*
+ v3        v2
+  x--------x
+  |\       |
+  |  \     |
+  |    \   |
+  |      \ |
+  x--------x
+  v0       v1
+ */
+
+void buildUniqueFaces (GRegion *gr, std::set<MFace,Less_Face> &bnd)
+{
+  for (unsigned int i=0;i<gr->getNumMeshElements();i++){
+    MElement *e = gr->getMeshElement(i);
+    for(int j=0;j<e->getNumFaces();j++){
+      MFace f = e->getFace(j);
+      std::set<MFace,Less_Face>::iterator it = bnd.find(f);
+      if (it == bnd.end())bnd.insert(f);
+      else bnd.erase(it);
+    }
+  }
+}
+
+bool MakeMeshConformal   (GModel *gm, int howto) {
+
+  fs_cont search;
+  buildFaceSearchStructure(gm, search);
+  std::set<MFace,Less_Face> bnd;
+  for (GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit){
+    GRegion *gr = *rit;
+    buildUniqueFaces (gr,bnd);
+  }
+  // bnd2 contains non conforming faces
+  
+   std::set<MFace,Less_Face> bnd2;
+  for (std::set<MFace,Less_Face>::iterator itf = bnd.begin(); itf != bnd.end(); ++itf){
+    GFace *gfound = findInFaceSearchStructure (*itf,search);
+    if (!gfound){
+      bnd2.insert(*itf);
+    }
+  }
+  bnd.clear();
+
+  Msg::Info("%d hanging faces",bnd2.size());
+
+  std::set<MFace,Less_Face> ncf;
+  for (std::set<MFace,Less_Face>::iterator itf = bnd2.begin(); itf != bnd2.end(); ++itf){
+    const MFace &f = *itf;
+    if (f.getNumVertices () == 4){ // quad face
+      std::set<MFace,Less_Face>::iterator it1 = bnd2.find (MFace(f.getVertex(0),f.getVertex(1),f.getVertex(2)));
+      std::set<MFace,Less_Face>::iterator it2 = bnd2.find (MFace(f.getVertex(2),f.getVertex(3),f.getVertex(0)));
+      if (it1 != bnd2.end() && it2 != bnd2.end()){
+	ncf.insert(MFace (f.getVertex(1),f.getVertex(2), f.getVertex(3),f.getVertex(0) )); 
+      }
+      else {
+	it1 = bnd2.find (MFace(f.getVertex(0),f.getVertex(1),f.getVertex(3)));
+	it2 = bnd2.find (MFace(f.getVertex(3),f.getVertex(1),f.getVertex(2)));
+	if (it1 != bnd2.end() && it2 != bnd2.end()){
+	  ncf.insert(MFace (f.getVertex(0),f.getVertex(1), f.getVertex(2),f.getVertex(3) )); 
+	}
+	else {
+	  Msg::Error ("MakeMeshConformal: wrong mesh topology");
+	  return false;
+	}
+      }
+    }
+  }
+  bnd2.clear();
+
+  for (GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit){
+    GRegion *gr = *rit;
+    std::vector<MHexahedron*> remainingHexes;
+    for (unsigned int i=0;i<gr->hexahedra.size();i++){
+      MHexahedron *e = gr->hexahedra[i];
+      std::vector<MFace> faces;
+      for(int j=0;j<e->getNumFaces();j++){
+	MFace f = e->getFace(j);
+	std::set<MFace,Less_Face>::iterator it = ncf.find(f);
+	if (it == ncf.end()){
+	  faces.push_back(f);
+	}
+	else {
+	  faces.push_back(MFace(it->getVertex(0),it->getVertex(1),it->getVertex(3)));
+	  faces.push_back(MFace(it->getVertex(1),it->getVertex(2),it->getVertex(3)));	
+	}
+      }
+      // HEX IS ONLY SURROUNED BY COMPATIBLE ELEMENTS
+      if (faces.size() == e->getNumFaces()){
+	remainingHexes.push_back(e);
+      }
+      else {
+	SPoint3 pp = e->barycenter();
+	MVertex *newv = new MVertex (pp.x(),pp.y(),pp.z(),gr);
+	gr->mesh_vertices.push_back(newv);
+	for (unsigned int j=0;j<faces.size();j++){
+	  MFace &f = faces[j];
+	  if (f.getNumVertices() == 4){
+	    gr->pyramids.push_back(new MPyramid (f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3), newv));  
+	  }
+	  else {
+	    gr->tetrahedra.push_back(new MTetrahedron (f.getVertex(0), f.getVertex(1), f.getVertex(2), newv));  
+	  }
+	}
+      }    
+    }
+    gr->hexahedra = remainingHexes;
+    remainingHexes.clear();
+    std::vector<MPrism*> remainingPrisms;
+    for (unsigned int i=0;i<gr->prisms.size();i++){
+      MPrism *e = gr->prisms[i];
+      std::vector<MFace> faces;
+      for(int j=0;j<e->getNumFaces();j++){
+	MFace f = e->getFace(j);
+	std::set<MFace,Less_Face>::iterator it = ncf.find(f);
+	if (it == ncf.end()){
+	  faces.push_back(f);
+	}
+	else {
+	  faces.push_back(MFace(it->getVertex(0),it->getVertex(1),it->getVertex(3)));
+	  faces.push_back(MFace(it->getVertex(1),it->getVertex(2),it->getVertex(3)));	
+	}
+      }
+      // HEX IS ONLY SURROUNED BY COMPATIBLE ELEMENTS
+      if (faces.size() == e->getNumFaces()){
+	remainingPrisms.push_back(e);
+      }
+      else {
+	SPoint3 pp = e->barycenter();
+	MVertex *newv = new MVertex (pp.x(),pp.y(),pp.z(),gr);
+	gr->mesh_vertices.push_back(newv);
+	for (unsigned int j=0;j<faces.size();j++){
+	  MFace &f = faces[j];
+	  if (f.getNumVertices() == 4){
+	    gr->pyramids.push_back(new MPyramid (f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3), newv));  
+	  }
+	  else {
+	    gr->tetrahedra.push_back(new MTetrahedron (f.getVertex(0), f.getVertex(1), f.getVertex(2), newv));  
+	  }
+	}
+      }    
+    }
+    gr->prisms = remainingPrisms;
+  }
+
+  return true;
+}
+
+void TestConformity   (GModel *gm) {
+  fs_cont search;
+  buildFaceSearchStructure(gm, search);
+  int count = 0;
+  for (GModel::riter rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit){
+    GRegion *gr = *rit;
+    std::set<MFace,Less_Face> bnd;
+    double vol = 0.0;
+    for (unsigned int i=0;i<gr->getNumMeshElements();i++){
+      MElement *e = gr->getMeshElement(i);
+      vol += fabs(e->getVolume());
+      for(int j=0;j<e->getNumFaces();j++){
+	MFace f = e->getFace(j);
+	std::set<MFace,Less_Face>::iterator it = bnd.find(f);
+	if (it == bnd.end())bnd.insert(f);
+	else bnd.erase(it);
+      }
+    }
+    printf("vol(%d) = %12.5E\n",gr->tag(),vol);
+    
+    for (std::set<MFace,Less_Face>::iterator itf = bnd.begin(); itf != bnd.end(); ++itf){
+      GFace *gfound = findInFaceSearchStructure (*itf,search);
+      if (!gfound){
+	count ++;
+      }
+    }
+  }
+  if (!count)Msg::Info("Mesh Conformity: OK");
+  else Msg::Error ("Mesh is not conforming (%d hanging faces)!",count);
+}
+
 static void Mesh3D(GModel *m)
 {
   if(TooManyElements(m, 3)) return;
@@ -531,6 +767,10 @@ static void Mesh3D(GModel *m)
       }
       if(treat_region_ok && (CTX::instance()->mesh.recombine3DAll ||
                              gr->meshAttributes.recombine3D)){
+	if (CTX::instance()->mesh.optimize){
+	  optimizeMeshGRegionGmsh opt;
+	  opt(gr);
+	}
         double a = Cpu();
         if (CTX::instance()->mesh.recombine3DLevel >= 0){
           Recombinator rec;
@@ -542,21 +782,24 @@ static void Mesh3D(GModel *m)
         }
         PostOp post;
         post.execute(gr,CTX::instance()->mesh.recombine3DLevel, CTX::instance()->mesh.recombine3DConformity); //0: no pyramid, 1: single-step, 2: two-steps (conforming), true: fill non-conformities with trihedra
+  
+	//	while(LaplaceSmoothing (gr)){
+	//	}
         nb_elements_recombination += post.get_nb_elements();
         nb_hexa_recombination += post.get_nb_hexahedra();
         vol_element_recombination += post.get_vol_elements();
         vol_hexa_recombination += post.get_vol_hexahedra();
         // partial export
-        stringstream ss;
-        ss << "yamakawa_part_";
-        ss << gr->tag();
-        ss << ".msh";
-        export_gregion_mesh(gr, ss.str().c_str());
+	//        stringstream ss;
+	//        ss << "yamakawa_part_";
+	//        ss << gr->tag();
+	//        ss << ".msh";
+	//        export_gregion_mesh(gr, ss.str().c_str());
         time_recombination += (Cpu() - a);
       }
     }
   }
-
+  
   if(CTX::instance()->mesh.recombine3DAll){
     Msg::Info("RECOMBINATION timing:");
     Msg::Info(" --- CUMULATIVE TIME RECOMBINATION : %g s.", time_recombination);
@@ -565,6 +808,8 @@ static void Mesh3D(GModel *m)
               nb_hexa_recombination*100./nb_elements_recombination);
     Msg::Info(".... Percentage of hexahedra (Vol) : %g",
               vol_hexa_recombination*100./vol_element_recombination);
+    //    MakeMeshConformal (m, 1);
+    TestConformity(m);
   }
 
   // Ensure that all volume Jacobians are positive

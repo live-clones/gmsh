@@ -201,5 +201,4 @@ struct edgeXface
   }
 };
 
-
 #endif

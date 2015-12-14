@@ -376,6 +376,18 @@ static REAL o3derrboundA, o3derrboundB, o3derrboundC;
 static REAL iccerrboundA, iccerrboundB, iccerrboundC;
 static REAL isperrboundA, isperrboundB, isperrboundC;
 
+// Options to choose types of geometric computtaions. 
+// Added by H. Si, 2012-08-23.
+static int  _use_inexact_arith; // -X option.
+static int  _use_static_filter; // Default option, disable it by -X1
+
+// Static filters for orient3d() and insphere(). 
+// They are pre-calcualted and set in exactinit().
+// Added by H. Si, 2012-08-23.
+static REAL o3dstaticfilter;
+static REAL ispstaticfilter;
+
+
 /*****************************************************************************/
 /*                                                                           */
 /*  doubleprint()   Print the bit representation of a double.                */
@@ -661,7 +673,7 @@ float uniformfloatrand()
 /*                                                                           */
 /*****************************************************************************/
 
-REAL exactinit()
+REAL exactinit(int filter, REAL maxx, REAL maxy, REAL maxz)
 {
   REAL half;
   REAL check, lastcheck;
@@ -722,6 +734,23 @@ REAL exactinit()
   isperrboundA = (16.0 + 224.0 * epsilon) * epsilon;
   isperrboundB = (5.0 + 72.0 * epsilon) * epsilon;
   isperrboundC = (71.0 + 1408.0 * epsilon) * epsilon * epsilon;
+
+
+  _use_inexact_arith = 0;
+  _use_static_filter = filter;
+
+  // Sort maxx < maxy < maxz. Re-use 'half' for swapping.
+  if (maxx > maxz) {
+    half = maxx; maxx = maxz; maxz = half;
+  }
+  if (maxy > maxz) {
+    half = maxy; maxy = maxz; maxz = half;
+  }
+  else if (maxy < maxx) {
+    half = maxy; maxy = maxx; maxx = half;
+  }
+  o3dstaticfilter = 5.1107127829973299e-15 * maxx * maxy * maxz;
+  ispstaticfilter = 1.2466136531027298e-13 * maxx * maxy * maxz * (maxz * maxz);
 
   return epsilon; /* Added by H. Si 30 Juli, 2004. */
 }
@@ -2318,6 +2347,12 @@ REAL orient3d(REAL *pa, REAL *pb, REAL *pc, REAL *pd)
   det = adz * (bdxcdy - cdxbdy)
       + bdz * (cdxady - adxcdy)
       + cdz * (adxbdy - bdxady);
+
+  if (_use_static_filter) {
+    if (det > o3dstaticfilter) return det;
+    if (det < -o3dstaticfilter) return det;
+  }
+
 
   permanent = (Absolute(bdxcdy) + Absolute(cdxbdy)) * Absolute(adz)
             + (Absolute(cdxady) + Absolute(adxcdy)) * Absolute(bdz)
@@ -4161,6 +4196,7 @@ REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
 }
 #else
 
+
 REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
 {
   REAL aex, bex, cex, dex;
@@ -4222,6 +4258,10 @@ REAL insphere(REAL *pa, REAL *pb, REAL *pc, REAL *pd, REAL *pe)
   dlift = dex * dex + dey * dey + dez * dez;
 
   det = (dlift * abc - clift * dab) + (blift * cda - alift * bcd);
+
+  if (_use_static_filter) {
+    if (fabs(det) > ispstaticfilter) return det;
+  }
 
   aezplus = Absolute(aez);
   bezplus = Absolute(bez);

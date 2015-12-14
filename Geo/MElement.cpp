@@ -1160,9 +1160,10 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
   }
   if(printGamma){
     double gamma = gammaShapeMeasure();
-    for(int i = 0; i < n; i++){
+    for(int i = 0; i < n; i++){      
       if(first) first = false; else fprintf(fp, ",");
-      fprintf(fp, "%g", gamma);
+      //      fprintf(fp, "%g", gamma);  FIXME
+      fprintf(fp, "%d", getVertex(i)->getNum());
     }
   }
   if(printRho){

@@ -475,7 +475,6 @@ extern "C" {
 }
 
 template class linearSystemCSRTaucs<double>;
-template class linearSystemCSRTaucs<std::complex<double> >;
 
 template<>
 int linearSystemCSRTaucs<double>::systemSolve()
@@ -516,6 +515,8 @@ int linearSystemCSRTaucs<double>::systemSolve()
   }
   return 1;
 }
+#if 0
+template class linearSystemCSRTaucs<std::complex<double> >;
 
 template<>
 int linearSystemCSRTaucs<std::complex<double> >::systemSolve()
@@ -556,4 +557,5 @@ int linearSystemCSRTaucs<std::complex<double> >::systemSolve()
   return 1;
 }
 
+#endif
 #endif

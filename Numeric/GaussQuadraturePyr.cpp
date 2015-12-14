@@ -61,7 +61,7 @@ IntPt *getGQPyrPts(int order)
       GQPyr[index][l].pt[2] = 0.5*(1+wp);
 
       wt *= 0.125;
-      GQPyr[index][l++].weight = wt;
+      GQPyr[index][l++].weight = wt *4./3.;
 
     }
 

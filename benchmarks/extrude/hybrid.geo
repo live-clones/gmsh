@@ -22,6 +22,7 @@ Extrude Surface {6, {0,0.0,2}} ;
 
 Extrude Surface {45, {0,2,0.0}}
 {    
+   Recombine;
    Layers {{2,2,2}, {.3,.6,1.}};    
 } ; 
 Coherence; 

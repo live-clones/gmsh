@@ -1795,9 +1795,9 @@ class AttractorField : public Field
   void getCoord(double x, double y, double z, double &cx, double &cy, double &cz,
                 GEntity *ge = NULL)
   {
-    cx = _xField ? (*_xField)(x, y, z, ge) : x;
-    cy = _yField ? (*_yField)(x, y, z, ge) : y;
-    cz = _zField ? (*_zField)(x, y, z, ge) : z;
+    cx = _xField  ? (*_xField)(x, y, z, ge) : x;
+    cy = _yField  ? (*_yField)(x, y, z, ge) : y;
+    cz = _zField  ? (*_zField)(x, y, z, ge) : z;
   }
   std::pair<AttractorInfo,SPoint3> getAttractorInfo() const
   {

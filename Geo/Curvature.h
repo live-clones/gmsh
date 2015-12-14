@@ -216,6 +216,7 @@ public:
 
   void vertexNodalValues(MVertex* A, double& c0, int isAbs=0);
   void vertexNodalValuesAndDirections(MVertex *A, SVector3* dMax, SVector3* dMin, double* cMax, double* cMin, int isAbs=0);
+  SVector3 vertexNormal (MVertex* A) ;
 
   void writeToMshFile( const std::string & filename);
 
@@ -224,9 +225,6 @@ public:
   void writeToVtkFile( const std::string & filename);
 
   void writeDirectionsToPosFile( const std::string & filename);
-
-
-
 };
 
 #endif

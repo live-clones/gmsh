@@ -18,7 +18,7 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 {
   Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
   Tree_Add(model->getGEOInternals()->Surfaces, &s);
-  meshStatistics.status = GFace::DONE;
+  meshStatistics.status = GFace::DONE;  
 }
 
 void discreteFace::setBoundEdges(GModel *gm, std::vector<int> tagEdges)
@@ -150,3 +150,6 @@ void discreteFace::writeGEO(FILE *fp)
   }
   fprintf(fp, "};\n");    
 }
+
+
+
