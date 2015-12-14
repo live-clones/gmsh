@@ -40,8 +40,8 @@ Line Loop(24) = {6,-12,3,10};
 Ruled Surface(25) = {24};
 Surface Loop(1) = {17,-25,-23,-21,19,15};
 Volume(1) = {1};
-Transfinite Line{1:4,6:9} = 10;
-Transfinite Line{10:13} = 10;
+Transfinite Line{1:4,6:9} = 30;
+Transfinite Line{10:13} = 30;
 
 Transfinite Surface {15} = {1,2,3,4};
 

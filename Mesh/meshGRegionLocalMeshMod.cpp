@@ -71,11 +71,6 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
   while (1){
     MVertex *ov1 = t->tet()->getVertex(edges[5 - iLocalEdge][0]);
     MVertex *ov2 = t->tet()->getVertex(edges[5 - iLocalEdge][1]);
-    //    printf("edge %d %d tet %d %d %d %d\n",(*v1)->getNum(),(*v2)->getNum(),
-    //	   t->tet()->getVertex(0)->getNum(),
-    //	   t->tet()->getVertex(1)->getNum(),
-    //	   t->tet()->getVertex(2)->getNum(),
-    //	   t->tet()->getVertex(3)->getNum());
     int K = ov1 == lastinring ? 1 : 0;
     lastinring = ov1 == lastinring ? ov2 : ov1;
     // look in the 2 faces sharing this edge the one that has vertex
