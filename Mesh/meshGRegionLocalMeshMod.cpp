@@ -105,7 +105,10 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
       return false;
     }
     // FIXME when hybrid mesh, this loops for ever
-    if (cavity.size() > 1000) return false;
+    if (cavity.size() > 1000) {
+      printf("cavity size gets laaaarge\n");
+      return false;
+    }
     //    printf("%d %d\n",ITER++, cavity.size());
   }
   computeNeighboringTetsOfACavity (cavity,outside);

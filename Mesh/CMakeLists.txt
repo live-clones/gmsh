@@ -20,6 +20,7 @@ set(SRC
       meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp 
       meshGRegionExtruded.cpp  meshGRegionCarveHole.cpp 
       meshGRegionLocalMeshMod.cpp meshGRegionMMG3D.cpp
+meshGRegionRelocateVertex.cpp
     meshMetric.cpp
     BackgroundMeshTools.cpp 
     BackgroundMesh.cpp 

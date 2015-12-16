@@ -815,7 +815,6 @@ void adaptMeshGRegion::operator () (GRegion *gr)
   }
 }
 
-//template <class CONTAINER, class DATA>
 void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
 {
   // well, this should not be true !!!
@@ -902,16 +901,9 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     //   printf("coucou\n");
     for (CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it){
       if (!(*it)->isDeleted()){
-	for (int i=0;i<4;i++)
-	  for (int j=i+1;j<4;j++)
-	    if ((*it)->tet()->getVertex(i) == (*it)->tet()->getVertex(j))
-	      printf("argh\n");
-
         double qq = (*it)->getQuality();
         if (qq < qMin){
-	  //	  printf("cacze\n");
           for (int i = 0; i < 6; i++){
-	    //	    printf("%d\n",i);
             if (edgeSwap(newTets, *it, i, qm)) {
               nbESwap++;
               break;
