@@ -339,16 +339,16 @@ void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet){
   }
 }
 
-void delaunayCavity (Tet *t, 
+void delaunayCavity (Tet *t,
 		     Tet *prev,
-		     Vertex *v, 
-		     cavityContainer &cavity,    
-		     connContainer &bnd, 
+		     Vertex *v,
+		     cavityContainer &cavity,
+		     connContainer &bnd,
 		     int thread, int iPnt){
 
   t->set(thread, iPnt); // Mark the triangle
   cavity.push_back(t);
-  for (int iNeigh=0; iNeigh<4 ; iNeigh++){  
+  for (int iNeigh=0; iNeigh<4 ; iNeigh++){
     Tet *neigh = t->T[iNeigh];
     if (neigh == NULL){
       bnd.push_back(conn(t->getFace(iNeigh),iNeigh,NULL));
@@ -357,28 +357,28 @@ void delaunayCavity (Tet *t,
     }
     else if (!neigh->inSphere(v,thread)){
       // look if v sees face t->getFace(iNeigh)
-      Face f = t->getFace(iNeigh);      
+      Face f = t->getFace(iNeigh);
       bnd.push_back(conn(f,iNeigh,neigh));
       neigh->set(thread, iPnt);
     }
     else if (!(neigh->isSet(thread, iPnt))) {
-      delaunayCavity (neigh, t, v, cavity,bnd,thread, iPnt); 
+      delaunayCavity (neigh, t, v, cavity,bnd,thread, iPnt);
     }
   }
 }
 
 bool straddling_segment_intersects_triangle(Vertex *p1, Vertex *p2,
-					   Vertex *q1, Vertex *q2, Vertex *q3) 
+					   Vertex *q1, Vertex *q2, Vertex *q3)
 {
   double s1 = orientationTest(p1, p2, q2, q3);
   double s2 = orientationTest(p1, p2, q3, q1);
-  double s3 = orientationTest(p1, p2, q1, q2); 
+  double s3 = orientationTest(p1, p2, q1, q2);
 
   if (s1*s2 < 0.0 || s2 * s3 < 0.0) return false;
 
   double s4 = orientationTest(q1, q2, q3, p1);
   double s5 = orientationTest(q3, q2, q1, p2);
-  
+
   return (s4*s5 >= 0) ;
 }
 
@@ -386,7 +386,7 @@ void print (Vertex *v){
   printf("%3d ",v->getNum());
 }
 
-void print (Tet *t, bool recur = true){  
+void print (Tet *t, bool recur = true){
   if (recur){
     printf("PRINT TET\n");
   }
@@ -405,9 +405,9 @@ void print (Tet *t, bool recur = true){
     print(t->T[0],false);
     print(t->T[1],false);
     print(t->T[2],false);
-    print(t->T[3],false);    
+    print(t->T[3],false);
     printf("}\n");
-  }  
+  }
 }
 
 Tet* walk (Tet *t, Vertex *v, int maxx, double &totSearch, int thread){
@@ -421,9 +421,9 @@ Tet* walk (Tet *t, Vertex *v, int maxx, double &totSearch, int thread){
     int NEIGH = -1;
     for (int iNeigh=0; iNeigh<4; iNeigh++){
       Face f = t->getFace (iNeigh);
-      double val =   robustPredicates::orient3d((double*)f.V[0], 
-						(double*)f.V[1], 
-						(double*)f.V[2], 
+      double val =   robustPredicates::orient3d((double*)f.V[0],
+						(double*)f.V[1],
+						(double*)f.V[2],
 						(double*)v);
       if (val < _min){
 	NEIGH = iNeigh;
@@ -436,7 +436,7 @@ Tet* walk (Tet *t, Vertex *v, int maxx, double &totSearch, int thread){
     else {
       Msg::Fatal("Jump-and-Walk Failed (No neighbor)");
     }
-  }  
+  }
   Msg::Fatal("Jump-and-Walk Failed (No neighbor)");
 }
 
@@ -479,7 +479,7 @@ Tet* walk1 (Tet *t, Vertex *v, int maxx, double &totSearch, int thread){
       printf("strange : no intersection\n");
       for (int iNeigh=0; iNeigh<20 ; iNeigh++){
 	int rr = rand()%4;
-	if (t->T[rr])t =t->T[rr]; 
+	if (t->T[rr])t =t->T[rr];
       }
     }
     STARTER++;
@@ -508,7 +508,7 @@ void print (const char *name, std::vector<Tet*> &T){
 void print (std::vector<Vertex*> &V, std::vector<Tet*> &T){
   std::map<Vertex*,int> nums;
   for (unsigned int i=0;i<V.size();i++){
-    nums[V[i]] = i; 
+    nums[V[i]] = i;
   }
   for (unsigned int i=0;i<T.size();i++){
     printf("%p\n",T[i]);
@@ -537,9 +537,9 @@ xxx10000 ok if all bits on my right are 0
 bool canWeProcessCavity (cavityContainer &cavity, unsigned int myThread, unsigned int iPt) {
   unsigned int cSize = cavity.size();
   for (unsigned int j=0; j<cSize; j++) {
-    Tet *f = cavity[j];    
+    Tet *f = cavity[j];
     for (unsigned int index = 0; index < myThread; index++) {
-      if(f->_bitset [index]) return false; 
+      if(f->_bitset [index]) return false;
     }
     if (iPt){
       if ( f->_bitset[myThread]  & ((1 << iPt)-1)) return false;
@@ -568,10 +568,10 @@ static Tet* stoopidSearch (Tet *t, Vertex *v, int thread){
 }
 
 
-void delaunayTrgl (const unsigned int numThreads, 
-		   const unsigned int NPTS_AT_ONCE, 
-		   unsigned int Npts, 
-		   std::vector<Tet*> &T, 
+void delaunayTrgl (const unsigned int numThreads,
+		   const unsigned int NPTS_AT_ONCE,
+		   unsigned int Npts,
+		   std::vector<Tet*> &T,
 		   std::vector<Vertex*> assignTo[]){
   double totSearchGlob=0;
   double totCavityGlob=0;
@@ -582,7 +582,7 @@ void delaunayTrgl (const unsigned int numThreads,
   int    invalidCavities [numThreads];
   int cashMisses[numThreads];
   for (unsigned int i=0;i<numThreads;i++)cashMisses[i] = 0;
-  
+
   unsigned int maxLocSizeK = 0;
   for (unsigned int i=0;i<numThreads*NPTS_AT_ONCE;i++){
     unsigned int s = assignTo[i].size();
@@ -593,10 +593,10 @@ void delaunayTrgl (const unsigned int numThreads,
   {
     double totSearch=0;
     double totCavity=0;
-    cavityContainer cavity[NPTS_AT_ONCE];
-    connContainer bnd[NPTS_AT_ONCE];
+    std::vector<cavityContainer> cavity(NPTS_AT_ONCE);
+    std::vector<connContainer> bnd(NPTS_AT_ONCE);
     connContainer faceToTet;
-    Tet* Choice[NPTS_AT_ONCE];
+    std::vector<Tet*> Choice(NPTS_AT_ONCE);
     for (unsigned int K=0;K<NPTS_AT_ONCE;K++)Choice[K] = T[0];
 
 #ifdef _OPENMP
@@ -607,15 +607,15 @@ void delaunayTrgl (const unsigned int numThreads,
 
     invalidCavities [myThread] = 0;
     unsigned int locSize=0;
-    unsigned int locSizeK[NPTS_AT_ONCE];
-    Vertex *allocatedVerts [NPTS_AT_ONCE];
+    std::vector<unsigned int> locSizeK(NPTS_AT_ONCE);
+    std::vector<Vertex*> allocatedVerts(NPTS_AT_ONCE);
     for (unsigned int K=0;K<NPTS_AT_ONCE;K++){
       locSizeK[K] = assignTo[K+myThread*NPTS_AT_ONCE].size();
       locSize += locSizeK[K];
 #ifdef _HAVE_NUMA
-      allocatedVerts [K] = (Vertex*)numa_alloc_local (locSizeK[K]*sizeof(Vertex));  
+      allocatedVerts [K] = (Vertex*)numa_alloc_local (locSizeK[K]*sizeof(Vertex));
 #else
-      allocatedVerts [K] = (Vertex*)calloc (locSizeK[K],sizeof(Vertex));  
+      allocatedVerts [K] = (Vertex*)calloc (locSizeK[K],sizeof(Vertex));
 #endif
       for (unsigned int iP=0 ; iP < locSizeK[K] ; iP++){
 	allocatedVerts[K][iP] = *(assignTo[K+myThread*NPTS_AT_ONCE][iP]);
@@ -631,8 +631,8 @@ void delaunayTrgl (const unsigned int numThreads,
 #endif
 
     int newCounter = 0;
-    Vertex *vToAdd[NPTS_AT_ONCE];
-    
+    std::vector<Vertex*> vToAdd(NPTS_AT_ONCE);
+
 #pragma omp barrier
     ////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////// M A I N   L O O P ///////////////////////////////////////
@@ -641,7 +641,7 @@ void delaunayTrgl (const unsigned int numThreads,
     for (unsigned int iPGlob=0 ; iPGlob < maxLocSizeK; iPGlob++){
 #pragma omp barrier
       cavitySize[myThread] = 0;
-      Tet *t [NPTS_AT_ONCE];
+      std::vector<Tet*> t(NPTS_AT_ONCE);
       //	  clock_t c1 = clock();
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	vToAdd[K] = iPGlob <  locSizeK[K] ? &allocatedVerts[K][iPGlob] : NULL;
@@ -657,7 +657,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	  while(1){
 	    t[K] = walk ( Choice[K] , vToAdd[K], Npts, totSearch, myThread);
 	    if (t[K])break;
-	    Tet * newChoice = NULL;	    
+	    Tet * newChoice = NULL;
 	    int ITT=0;
 	    while(1){
 	      newChoice = T[rand() % T.size()];
@@ -673,14 +673,14 @@ void delaunayTrgl (const unsigned int numThreads,
 	  }
 	  if (!t[K]){
 	    Msg::Warning("Jump-and-Walk Failed (non convex domain)");
-	    t[K] = stoopidSearch (Choice[K], vToAdd[K],myThread); 
-	    if (!t[K]){	    
+	    t[K] = stoopidSearch (Choice[K], vToAdd[K],myThread);
+	    if (!t[K]){
 	      Msg::Fatal("A point is outside the triangulation");
 	      throw;
 	    }
-	  }	
+	  }
 	}
-      }	
+      }
       //      clock_t c1 = clock();
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	if(vToAdd[K]){
@@ -692,9 +692,9 @@ void delaunayTrgl (const unsigned int numThreads,
 	  delaunayCavity(t[K], NULL, vToAdd[K], cavityK, bndK, myThread, K);
 	  // verify the cavity
 	  for (unsigned int i=0; i< bndK.size(); i++) {
-	    double val =   robustPredicates::orient3d((double*)bndK[i].f.V[0], 
-						      (double*)bndK[i].f.V[1], 
-						      (double*)bndK[i].f.V[2], 
+	    double val =   robustPredicates::orient3d((double*)bndK[i].f.V[0],
+						      (double*)bndK[i].f.V[1],
+						      (double*)bndK[i].f.V[2],
 						      (double*)vToAdd[K]);
 	    if (val <= 0 ) {
 	      //	      char name[245];
@@ -713,15 +713,15 @@ void delaunayTrgl (const unsigned int numThreads,
 
 #pragma omp barrier
 
-      bool ok[ NPTS_AT_ONCE];
-      for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {      	
+      std::vector<bool> ok(NPTS_AT_ONCE);
+      for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	if (!vToAdd[K])ok[K]=false;
 	else ok[K] = canWeProcessCavity (cavity[K], myThread, K);
       }
 
       //            clock_t ck = clock();
       //      std::set<Tet*> touched;
-      for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {      	
+      for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	if (ok[K]){
 	  cavityContainer &cavityK = cavity[K];
 	  connContainer   &bndK = bnd[K];
@@ -731,7 +731,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	  totCavity+= cSize;
 	  Choice[K] = cavityK[0];
 	  for (unsigned int i=0; i<bSize; i++) {
-	    // reuse memory slots of invalid elements	    
+	    // reuse memory slots of invalid elements
 	    Tet *t;
 	    if (i < cSize) {
 	      t = cavityK[i];
@@ -783,7 +783,7 @@ void delaunayTrgl (const unsigned int numThreads,
       for (int i=0;i<newCounter;i++){
 	allocatedTable[i]->setAllDeleted ();
 	if (allocatedTable[i]->V[0]){
-	  T.push_back(allocatedTable [i]);      
+	  T.push_back(allocatedTable [i]);
 	}
       }
       //      delete [] allocatedTable;
@@ -793,7 +793,7 @@ void delaunayTrgl (const unsigned int numThreads,
   }
 
   printf("%d invalid cavities\n",invalidCavities[0]);
-  
+
 #ifdef _VERBOSE
   double _t2 = walltime(&_t);
   printf("total time for %d points %12.5E seconds\n",Npts,(double)(_t2-_t1));
@@ -864,11 +864,11 @@ static void initialCube (std::vector<Vertex*> &v,
   //  printf("%d faces left\n",ctnr.size());
 }
 
-void delaunayTriangulation (const int numThreads, 
+void delaunayTriangulation (const int numThreads,
 			    const int nptsatonce,
-			    std::vector<Vertex*> &S, 
-			    std::vector<Tet*> &T, 
-			    Vertex *box[8]){  
+			    std::vector<Vertex*> &S,
+			    std::vector<Tet*> &T,
+			    Vertex *box[8]){
   int N = S.size();
 
   std::vector<int> indices;
@@ -879,16 +879,16 @@ void delaunayTriangulation (const int numThreads,
   //    print ("sorted.pos",S);
   //  printf("total time for sorting %d points %12.5E seconds\n",S.size(),(double)(t2-t1));
 
-  if (!T.size()){  
+  if (!T.size()){
     initialCube (S,box,T);
-  }  
+  }
 
-  int nbBlocks  = nptsatonce * numThreads;  
-  //  int blockSize = (nbBlocks * (N / nbBlocks))/nbBlocks;  
-  
-  
+  int nbBlocks  = nptsatonce * numThreads;
+  //  int blockSize = (nbBlocks * (N / nbBlocks))/nbBlocks;
+
+
   std::vector<Vertex*> assignTo0[1];
-  std::vector<Vertex*> assignTo [nbBlocks];
+  std::vector<std::vector<Vertex*> > assignTo(nbBlocks);
 
   for (unsigned int i=1;i<indices.size();i++){
     int start = indices[i-1];
@@ -902,7 +902,7 @@ void delaunayTriangulation (const int numThreads,
       for (int jPt=start;jPt<end;jPt++){
 	assignTo0[0].push_back(S[jPt]);
 	S[jPt]->_thread = numThreads*(jPt-start)/(end-start);
-      }      
+      }
     }
     else {
       for (int jPt=start;jPt<end;jPt++){
@@ -918,9 +918,9 @@ void delaunayTriangulation (const int numThreads,
   S.clear();
   // double _t = 0;
   //  double _t1 = walltime(&_t);
-  delaunayTrgl(1,1, assignTo0[0].size(),T,assignTo0);  
+  delaunayTrgl(1,1, assignTo0[0].size(),T,assignTo0);
   //    print ("initialTetrahedrization.pos",T);
-  delaunayTrgl(numThreads,nptsatonce, N,T,assignTo);  
+  delaunayTrgl(numThreads,nptsatonce, N,T,&assignTo[0]);
   //  _t = 0;
   //  double _t2 = walltime(&_t);
   //  printf("WALL CLOCK TIME %12.5E\n",_t2-_t1);
@@ -928,13 +928,13 @@ void delaunayTriangulation (const int numThreads,
 }
 
 
-void delaunayTriangulation (const int numThreads, 
+void delaunayTriangulation (const int numThreads,
 			    const int nptsatonce,
-			    std::vector<MVertex*> &S, 
+			    std::vector<MVertex*> &S,
 			    std::vector<MTetrahedron*> &T){
   std::vector<MVertex*> _temp;
   std::vector<Vertex*> _vertices;
-  unsigned int N = S.size(); 
+  unsigned int N = S.size();
   _temp.resize(N+1+8);
   double maxx=0, maxy=0,maxz=0;
   for (unsigned int i=0;i<N;i++){
@@ -956,35 +956,35 @@ void delaunayTriangulation (const int numThreads,
     mv->z() += dz;
     Vertex *v = new Vertex (mv->x(),mv->y(),mv->z(),1.e22,i+1);
     _vertices.push_back(v);
-    _temp [v->getNum()] = mv;    
+    _temp [v->getNum()] = mv;
   }
 
   robustPredicates::exactinit(1,maxx,maxy,maxz);
-  
+
   std::vector<Tet*> _tets;
   Vertex *box[8];
   delaunayTriangulation (numThreads, nptsatonce, _vertices, _tets, box);
 
   for (int i=0;i<8;i++){
-    Vertex *v = box[i];    
+    Vertex *v = box[i];
     v->setNum(N+i+1);
     MVertex *mv = new MVertex (v->x(),v->y(),v->z(),NULL,N+i+1);
     //    printf("%d %g %g %g\n",v->getNum(),v->x(),v->y(),v->z());
-    _temp [v->getNum()] = mv;    
-    S.push_back(mv); 
+    _temp [v->getNum()] = mv;
+    S.push_back(mv);
   }
 
   for (unsigned int i=0;i<_tets.size();i++){
     Tet *t =  _tets[i];
     if (t->V[0]){
-      if (_tets[i]->V[0]->getNum() && 
-	  _tets[i]->V[1]->getNum() && 
-	  _tets[i]->V[2]->getNum() && 
+      if (_tets[i]->V[0]->getNum() &&
+	  _tets[i]->V[1]->getNum() &&
+	  _tets[i]->V[2]->getNum() &&
 	  _tets[i]->V[3]->getNum() ) {
 	MVertex *v1 = _temp[_tets[i]->V[0]->getNum()];
 	MVertex *v2 = _temp[_tets[i]->V[1]->getNum()];
 	MVertex *v3 = _temp[_tets[i]->V[2]->getNum()];
-	MVertex *v4 = _temp[_tets[i]->V[3]->getNum()];      
+	MVertex *v4 = _temp[_tets[i]->V[3]->getNum()];
 	MTetrahedron *tr = new MTetrahedron(v1,v2,v3,v4);
 	T.push_back(tr);
       }
@@ -997,5 +997,3 @@ void delaunayTriangulation (const int numThreads,
   for (unsigned int i=0;i<_vertices.size();i++)delete _vertices[i];
   for (unsigned int i=0;i<_tets.size();i++)delete _tets[i];
 }
-
-
