@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <math.h>
 #include "GmshMessage.h"
+#include "OS.h"
 #include "SPoint3.h"
 #include "delaunay3d_private.h"
 #include "delaunay3d.h"
@@ -39,10 +40,10 @@ struct edgeContainer
     std::vector<Edge> &v = _hash[h %_hash.size()];
     AVGSEARCH+=v.size();
     for (unsigned int i=0; i< v.size();i++)if (e == v[i]) {return false;}
-    return true;    
-  } 
+    return true;
+  }
 
-  bool addNewEdge (const Edge &e) 
+  bool addNewEdge (const Edge &e)
   {
     size_t h = (size_t) e.first >> 3;
     std::vector<Edge> &v = _hash[h %_hash.size()];
@@ -59,14 +60,14 @@ struct IPT {
     _x1(x1),_x2(x2),_x3(x3),_x4(x4){};
 };
 
-double adaptiveTrapezoidalRule (SPoint3 p1 , SPoint3 p2 , 
-				double lc1 , double lc2 , 
-				double (*f)(const SPoint3 &p, void *), 
-				void *data, std::vector< IPT > & _result, 
+double adaptiveTrapezoidalRule (SPoint3 p1 , SPoint3 p2 ,
+				double lc1 , double lc2 ,
+				double (*f)(const SPoint3 &p, void *),
+				void *data, std::vector< IPT > & _result,
 				double &dl, double epsilon = 1.e-6)
 {
   std::stack< IPT > _stack;
-  _result.clear(); 
+  _result.clear();
   // local parameters on the edge
   double t1 = 0.0;
   double t2 = 1.0;
@@ -98,7 +99,7 @@ double adaptiveTrapezoidalRule (SPoint3 p1 , SPoint3 p2 ,
     SPoint3 pmid = p1 + dp*t12;
     double fmid = 0.5* (f1+f2);//f(pmid,data);
     double dt = t2-t1;
-    // average should be compared to mid value    
+    // average should be compared to mid value
     double f12 = 0.5* (f1+f2);
     if (fabs (f12 - 0.5*(f1+f2)) > epsilon*dt ) {
       IPT left  (t1,t12,f1,f12);
@@ -109,7 +110,7 @@ double adaptiveTrapezoidalRule (SPoint3 p1 , SPoint3 p2 ,
     else {
       _result.push_back (pp);
       // compute the integral using trapezoidal rule on both sides
-      totalValue += 1./((0.5*f12+0.25*(f1+f2)))*dt;      
+      totalValue += 1./((0.5*f12+0.25*(f1+f2)))*dt;
     }
   }
   // take into account the real length of the edge
@@ -119,16 +120,16 @@ double adaptiveTrapezoidalRule (SPoint3 p1 , SPoint3 p2 ,
 }
 
 
-void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &p, void *), void *data) {  
+void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &p, void *), void *data) {
   std::vector< IPT > _result;
   double dl;
   SPoint3 p1 = e.first->point();
   SPoint3 p2 = e.second->point();
   double dN = adaptiveTrapezoidalRule (p1,p2,e.first->lc(), e.second->lc(), f,data,_result, dl);
-  const int N = (int) (dN+0.1); 
-  double interval = dN/N;  
-  double L = 0.0;  
-  
+  const int N = (int) (dN+0.1);
+  double interval = dN/N;
+  double L = 0.0;
+
   //  printf("edge length %g %d intervals of size %g\n",dl,N,interval);
 
   for (unsigned int i=0; i< _result.size() ; i++) {
@@ -145,8 +146,8 @@ void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &
 	break;
       }
       else {
-	SPoint3 p = p1 * (1.-t) + p2*t; 
-	double lc = e.first->lc() * (1.-t) + e.second->lc()*t; 
+	SPoint3 p = p1 * (1.-t) + p2*t;
+	double lc = e.first->lc() * (1.-t) + e.second->lc()*t;
 	const double dx = 1.e-16 * (double) rand() / RAND_MAX;
 	const double dy = 1.e-16 * (double) rand() / RAND_MAX;
 	const double dz = 1.e-16 * (double) rand() / RAND_MAX;
@@ -155,16 +156,16 @@ void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &
       }
     }
   }
-  
+
   //  printf("%d points added\n",S.size());
 
   //  exit(1);
 }
 
-void saturateEdges ( edgeContainer &ec, 
-		     std::vector<Tet*> &T, 
-		     int nbThreads, 
-		     std::vector<Vertex*> &S, 
+void saturateEdges ( edgeContainer &ec,
+		     std::vector<Tet*> &T,
+		     int nbThreads,
+		     std::vector<Vertex*> &S,
 		     double (*f)(const SPoint3 &p, void *), void *data) {
   AVGSEARCH= 0;
   int counter = 0;
@@ -175,25 +176,25 @@ void saturateEdges ( edgeContainer &ec,
 	Edge ed = T[i]->getEdge(iEdge);
 	bool isNew = ec.addNewEdge(ed);
 	counter++;
-	if (isNew){	  
+	if (isNew){
 	  saturateEdge (ed, S, f, data);
 	}
       }
     }
-  }    
+  }
   //  printf("a total of %d Tets counter %d AVG %d\n",T.size(),counter,AVGSEARCH/counter);
 }
 
 /////////////////////////   F I L T E R I N G ////////////////////////////////////////////////////
 
 class volumePointWithExclusionRegion {
-public : 
+public :
   Vertex *_v;
   volumePointWithExclusionRegion (Vertex *v) : _v(v){
   }
 
   bool inExclusionZone (volumePointWithExclusionRegion *p)
-  {    
+  {
     double d = sqrt ((p->_v->x() - _v->x()) * (p->_v->x() - _v->x())+
 		     (p->_v->y() - _v->y()) * (p->_v->y() - _v->y())+
 		     (p->_v->z() - _v->z()) * (p->_v->z() - _v->z()));
@@ -213,7 +214,7 @@ public :
 struct my_wrapper_3D {
   bool _tooclose;
   volumePointWithExclusionRegion *_p;
-  my_wrapper_3D (volumePointWithExclusionRegion *sp) : 
+  my_wrapper_3D (volumePointWithExclusionRegion *sp) :
     _tooclose (false), _p(sp) {}
 };
 
@@ -231,7 +232,7 @@ bool rtree_callback(volumePointWithExclusionRegion *neighbour,void* point)
 
 class vertexFilter {
   RTree<volumePointWithExclusionRegion*,double,3,double> _rtree;
-public: 
+public:
   void insert (Vertex * v) {
     volumePointWithExclusionRegion *sp = new volumePointWithExclusionRegion (v);
     double _min[3],_max[3];
@@ -249,15 +250,15 @@ public:
   }
 };
 
-void filterVertices (const int numThreads, 
+void filterVertices (const int numThreads,
 		     vertexFilter &_filter,
-		     std::vector<Vertex*> &S, 
+		     std::vector<Vertex*> &S,
 		     std::vector<Vertex*> &add,
-		     double (*f)(const SPoint3 &p, void *), 
+		     double (*f)(const SPoint3 &p, void *),
 		     void *data) {
   //  printf("before : %d points to add\n",add.size());
 
-  std::vector<Vertex*> _add = add;  
+  std::vector<Vertex*> _add = add;
   for (unsigned int i=0;i<S.size();i++){
     SPoint3 p (S[i]->x(),S[i]->y(),S[i]->z());
     double l = f (p, data);
@@ -273,7 +274,7 @@ void filterVertices (const int numThreads,
     }
     else
       delete _add[i];
-  }  
+  }
   //  printf("after filter : %d points to add\n",add.size());
 }
 
@@ -310,8 +311,8 @@ void computeAdjacencies (Tet *t, int iFace, connSet &faceToTet){
 }
 
 
-void edgeBasedRefinement (const int numThreads, 
-			  const int nptsatonce, 
+void edgeBasedRefinement (const int numThreads,
+			  const int nptsatonce,
 			  GRegion *gr) {
 
   // fill up old Datastructures
@@ -388,40 +389,38 @@ void edgeBasedRefinement (const int numThreads,
 
     Msg::Info("----------------------------------- SATUR FILTR SORTH DELNY TIME  TETS");
 
-    clock_t __t__ = clock();
+    double __t__ = Cpu();
     while(1){
       char name[256];
       //      sprintf(name,"beforeRefinement%d.pos",iter);
       //      print (name,_tets);
       //      printf("ITER %3d\n",iter);
       std::vector<Vertex*> add;
-      clock_t t1 = clock();
+      double t1 = Cpu();
       saturateEdges (ec, _tets, numThreads, add, _fx, NULL);
       //      printf("%d points to add\n",add.size());
       //sprintf(name,"Points%d.pos",iter);
       //     _print (name,add);
-      clock_t t2 = clock();
+      double t2 = Cpu();
       filterVertices (numThreads, _filter, _vertices, add, _fx, NULL);
-      clock_t t3 = clock();
+      double t3 = Cpu();
       if (add.empty())break;
       std::vector<int> indices;
       SortHilbert(add, indices);
-      clock_t t4 = clock();
+      double t4 = Cpu();
       //      sprintf(name,"PointsFiltered%d.pos",iter);
       //      _print (name,add);
-      delaunayTrgl (1,1,add.size(), _tets, &add);  
-      clock_t t5 = clock();
+      delaunayTrgl (1,1,add.size(), _tets, &add);
+      double t5 = Cpu();
       Msg::Info("IT %3d %6d points added, timings %5.2f %5.2f %5.2f %5.2f %5.2f %5d",iter,add.size(),
-		(float)(t2-t1)/CLOCKS_PER_SEC,
-		(float)(t3-t2)/CLOCKS_PER_SEC,
-		(float)(t4-t3)/CLOCKS_PER_SEC,
-		(float)(t5-t4)/CLOCKS_PER_SEC,
-		(float)(t5-__t__)/CLOCKS_PER_SEC,
+		(t2-t1),
+		(t3-t2),
+		(t4-t3),
+		(t5-t4),
+		(t5-__t__),
 		_tets.size());
       iter++;
     }
     print ("afterRefinement.pos",_tets);
   }
 }
-
-

@@ -11,8 +11,8 @@
 #include <vector>
 #include <algorithm>
 #include <math.h>
-#include <sys/time.h>
 #include "SBoundingBox3d.h"
+#include "OS.h"
 #include "delaunay3d_private.h"
 #include "delaunay3d.h"
 #include "MVertex.h"
@@ -305,24 +305,7 @@ double walltime( double *t0 )
 #ifdef _OPENMP
   return omp_get_wtime();
 #else
-  double mic, time;
-  double mega = 0.000001;
-  struct timeval tp;
-  struct timezone tzp;
-  static long base_sec = 0;
-  static long base_usec = 0;
-
-  (void) gettimeofday(&tp,&tzp);
-  if (base_sec == 0)
-    {
-      base_sec = tp.tv_sec;
-      base_usec = tp.tv_usec;
-    }
-
-  time = (double) (tp.tv_sec - base_sec);
-  mic = (double) (tp.tv_usec - base_usec);
-  time = (time + mic * mega) - *t0;
-  return(time);
+  return GetTimeInSeconds();
 #endif
 }
 
@@ -642,7 +625,7 @@ void delaunayTrgl (const unsigned int numThreads,
 #pragma omp barrier
       cavitySize[myThread] = 0;
       std::vector<Tet*> t(NPTS_AT_ONCE);
-      //	  clock_t c1 = clock();
+      //	  double c1 = Cpu();
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	vToAdd[K] = iPGlob <  locSizeK[K] ? &allocatedVerts[K][iPGlob] : NULL;
 	if(vToAdd[K]){
@@ -681,7 +664,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	  }
 	}
       }
-      //      clock_t c1 = clock();
+      //      double c1 = Cpu();
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	if(vToAdd[K]){
 	  cavityContainer &cavityK = cavity[K];
@@ -719,7 +702,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	else ok[K] = canWeProcessCavity (cavity[K], myThread, K);
       }
 
-      //            clock_t ck = clock();
+      //            double ck = Cpu();
       //      std::set<Tet*> touched;
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	if (ok[K]){
