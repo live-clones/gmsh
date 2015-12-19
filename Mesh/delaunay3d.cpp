@@ -561,15 +561,14 @@ void delaunayTrgl (const unsigned int numThreads,
   int counter = 0;
   int counterMiss = 0;
 
-  double cavitySize [numThreads];
-  int    invalidCavities [numThreads];
-  int cashMisses[numThreads];
-  for (unsigned int i=0;i<numThreads;i++)cashMisses[i] = 0;
+  std::vector<double> cavitySize (numThreads);
+  std::vector<int> invalidCavities(numThreads);
+  std::vector<int> cashMisses(numThreads, 0);
 
   unsigned int maxLocSizeK = 0;
-  for (unsigned int i=0;i<numThreads*NPTS_AT_ONCE;i++){
+  for (unsigned int i = 0; i < numThreads * NPTS_AT_ONCE; i++){
     unsigned int s = assignTo[i].size();
-    maxLocSizeK = std::max(maxLocSizeK,s);
+    maxLocSizeK = std::max(maxLocSizeK, s);
   }
 
 #pragma omp parallel num_threads(numThreads)
