@@ -322,13 +322,12 @@ void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet){
   }
 }
 
-void delaunayCavity (Tet *t,
-		     Tet *prev,
-		     Vertex *v,
-		     cavityContainer &cavity,
-		     connContainer &bnd,
-		     int thread, int iPnt){
-
+static void delaunayCavity2 (Tet *t, 
+			    Tet *prev,
+			    Vertex *v, 
+			    cavityContainer &cavity,    
+			    connContainer &bnd, 
+			    int thread, int iPnt, int PP){
   t->set(thread, iPnt); // Mark the triangle
   cavity.push_back(t);
   for (int iNeigh=0; iNeigh<4 ; iNeigh++){
@@ -337,15 +336,40 @@ void delaunayCavity (Tet *t,
       bnd.push_back(conn(t->getFace(iNeigh),iNeigh,NULL));
     }
     else if (neigh == prev){
+      if (PP == 40)printf("coucou\n");
     }
     else if (!neigh->inSphere(v,thread)){
-      // look if v sees face t->getFace(iNeigh)
       Face f = t->getFace(iNeigh);
       bnd.push_back(conn(f,iNeigh,neigh));
-      neigh->set(thread, iPnt);
+      //      neigh->set(thread, iPnt);
     }
     else if (!(neigh->isSet(thread, iPnt))) {
-      delaunayCavity (neigh, t, v, cavity,bnd,thread, iPnt);
+      delaunayCavity2 (neigh, t, v, cavity,bnd,thread, iPnt,PP); 
+    }
+  }
+}
+
+static void delaunayCavity (Tet *t, 
+			    Tet *prev,
+			    Vertex *v, 
+			    cavityContainer &cavity,    
+			    connContainer &bnd, 
+			    int thread, int iPnt, int PP){
+
+  t->set(thread, iPnt); // Mark the triangle
+  cavity.push_back(t);
+  for (int iNeigh=0; iNeigh<4 ; iNeigh++){  
+    Tet *neigh = t->T[iNeigh];
+    if (neigh == NULL){
+      bnd.push_back(conn(t->getFace(iNeigh),iNeigh,NULL));
+    }
+    else if (neigh->inSphere(v,thread)){
+      if (!(neigh->isSet(thread, iPnt))) {
+	delaunayCavity (neigh, t, v, cavity,bnd,thread, iPnt,PP); 
+      }
+    }
+    else {
+      bnd.push_back(conn( t->getFace(iNeigh),iNeigh,neigh));
     }
   }
 }
@@ -366,7 +390,7 @@ bool straddling_segment_intersects_triangle(Vertex *p1, Vertex *p2,
 }
 
 void print (Vertex *v){
-  printf("%3d ",v->getNum());
+  printf("%p ",v);
 }
 
 void print (Tet *t, bool recur = true){
@@ -424,64 +448,45 @@ Tet* walk (Tet *t, Vertex *v, int maxx, double &totSearch, int thread){
 }
 
 
-Tet* walk1 (Tet *t, Vertex *v, int maxx, double &totSearch, int thread){
-  int NUMSEARCH = 0;
-  int STARTER = 0;
 
-  maxx = std::max(100,maxx);
-
-  while (1){
-    if (NUMSEARCH++ > 9*maxx) {
-      if (t->T[0] && t->T[0]->T[0]) t = t->T[0]->T[0];
-      else if (t->T[1] && t->T[1]->T[0]) t = t->T[1]->T[0];
-      else if (t->T[2] && t->T[2]->T[0]) t = t->T[2]->T[0];
-      if (NUMSEARCH > 10*maxx) {
-	printf("trying to find a path from %p to %p: datastructure broken (%d searches, maxx %d)\n",v,t,NUMSEARCH,maxx);
-	NUMSEARCH=0;
-	return NULL;
-      }
-    }
-    if (t == NULL) {
-      Msg::Warning("search went through the boundary of the mesh without finding a tet");
-      return NULL; // we should NEVER return here
-    }
-    if (t->inSphere(v,thread)) {totSearch += NUMSEARCH; return t;}
-    Vertex c = t->centroid();
-    Tet *oldt=t;
-    for (int iNeigh=STARTER; iNeigh<(STARTER+4) ; iNeigh++){
-      const int NEIGH = iNeigh %4;
-      Face f = t->getFace (NEIGH);
-      bool inters = straddling_segment_intersects_triangle(&c, v, f.V[0], f.V[1], f.V[2]);
-      if (inters){
-	t = t->T[NEIGH];
-	break;
-      }
-    }
-    if (t==oldt){
-      printf("trying to find a path from %p to %p, ",v,t);
-      printf("strange : no intersection\n");
-      for (int iNeigh=0; iNeigh<20 ; iNeigh++){
-	int rr = rand()%4;
-	if (t->T[rr])t =t->T[rr];
-      }
-    }
-    STARTER++;
-  }
-}
-
-void print (const char *name, std::vector<Tet*> &T){
+void __print (const char *name, connContainer &conn){
   FILE *f = fopen(name,"w");
   fprintf(f,"View \"\"{\n");
+  
+  for (unsigned int i=0;i<conn.size();i++){
+    fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+	    conn[i].f.V[0]->x(),conn[i].f.V[0]->y(),conn[i].f.V[0]->z(),
+	    conn[i].f.V[1]->x(),conn[i].f.V[1]->y(),conn[i].f.V[1]->z(),
+	    conn[i].f.V[2]->x(),conn[i].f.V[2]->y(),conn[i].f.V[2]->z(),1.,1.,1.);
+  }
+  fprintf(f,"};\n");
+  fclose(f);
+}
+
+void __print (const char *name, std::vector<Tet*> &T, Vertex *v){
+  FILE *f = fopen(name,"w");
+  fprintf(f,"View \"\"{\n");
+  if (v)fprintf(f,"SP(%g,%g,%g){%d};\n",v->x(),v->y(),v->z(),v->getNum());
+  
   for (unsigned int i=0;i<T.size();i++){
     if (T[i]->V[0]){
       //      double val = robustPredicates::orient3d((double*)T[i]->V[0],(double*)T[i]->V[1],(double*)T[i]->V[2],(double*)T[i]->V[3]);
-
-      fprintf(f,"SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-	      T[i]->V[0]->x(),T[i]->V[0]->y(),T[i]->V[0]->z(),
-	      T[i]->V[1]->x(),T[i]->V[1]->y(),T[i]->V[1]->z(),
-	      T[i]->V[2]->x(),T[i]->V[2]->y(),T[i]->V[2]->z(),
-	      T[i]->V[3]->x(),T[i]->V[3]->y(),T[i]->V[3]->z(),
-	      T[i]->V[0]->lc(),T[i]->V[1]->lc(),T[i]->V[2]->lc(),T[i]->V[3]->lc());
+      if (!v){
+	fprintf(f,"SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+		T[i]->V[0]->x(),T[i]->V[0]->y(),T[i]->V[0]->z(),
+		T[i]->V[1]->x(),T[i]->V[1]->y(),T[i]->V[1]->z(),
+		T[i]->V[2]->x(),T[i]->V[2]->y(),T[i]->V[2]->z(),
+		T[i]->V[3]->x(),T[i]->V[3]->y(),T[i]->V[3]->z(),
+		T[i]->V[0]->lc(),T[i]->V[1]->lc(),T[i]->V[2]->lc(),T[i]->V[3]->lc());
+      }
+      else{
+	fprintf(f,"SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
+		T[i]->V[0]->x(),T[i]->V[0]->y(),T[i]->V[0]->z(),
+		T[i]->V[1]->x(),T[i]->V[1]->y(),T[i]->V[1]->z(),
+		T[i]->V[2]->x(),T[i]->V[2]->y(),T[i]->V[2]->z(),
+		T[i]->V[3]->x(),T[i]->V[3]->y(),T[i]->V[3]->z(),
+		T[i]->V[0]->getNum(),T[i]->V[1]->getNum(),T[i]->V[2]->getNum(),T[i]->V[3]->getNum());
+      }
     }
   }
   fprintf(f,"};\n");
@@ -550,11 +555,63 @@ static Tet* stoopidSearch (Tet *t, Vertex *v, int thread){
   return NULL;
 }
 
+static void stoopidCavity (Tet *t, Vertex *v, int thread, std::vector<Tet*> &cavity){
+  cavity.clear();
+  std::stack<Tet*> _stack;
+  _stack.push(t);
+  std::set<Tet*> all;
+  while(!_stack.empty()){
+    t = _stack.top();
+    all.insert(t);
+    _stack.pop();
+    if (t->inSphere(v,thread)){cavity.push_back(t);}
+    for (int i=0;i<4;i++){
+      if (t->T[i]){
+	if (all.find(t->T[i]) == all.end()){
+	  all.insert(t->T[i]);
+	  _stack.push(t->T[i]);
+	}
+      }
+    }
+  }
+}
 
-void delaunayTrgl (const unsigned int numThreads,
-		   const unsigned int NPTS_AT_ONCE,
-		   unsigned int Npts,
-		   std::vector<Tet*> &T,
+void checkCavity (std::vector<Tet*> &c, Vertex *v){
+  std::set<Face> ff;
+  for (unsigned int i=0; i<c.size(); i++) {
+    for (int j=0;j<4;j++){
+      std::set<Face>::iterator it = ff.find(c[i]->getFace(j));
+      if (it != ff.end())ff.erase(it);
+      else ff.insert(c[i]->getFace(j));
+    }
+  }
+  printf("%d free faces\n",ff.size());
+
+  std::vector<Tet*> bad;
+  for (unsigned int i=0; i<c.size(); i++) {
+    for (int j=0;j<4;j++){
+      std::set<Face>::iterator it = ff.find(c[i]->getFace(j));
+      if (it != ff.end()){
+	Tet *neigh = c[i]->T[j];
+	if (neigh){
+	  int val = neigh->inSphere(v,0);
+	  if (val){printf("arghhhh %p %p set %d\n",neigh,c[i], neigh->isSet(0,0));
+	    bad.push_back(neigh);
+	    //	    bad.push_back(c[i]);
+	  }
+	}
+	std::vector<Tet*>::iterator it2= std::find(c.begin(),c.end(),neigh);
+	if (it2 != c.end())printf("datastructure broken\n");
+      }
+    }
+  }
+  __print("bad.pos",bad);
+}
+
+void delaunayTrgl (const unsigned int numThreads, 
+		   const unsigned int NPTS_AT_ONCE, 
+		   unsigned int Npts, 
+		   std::vector<Tet*> &T, 
 		   std::vector<Vertex*> assignTo[]){
   double totSearchGlob=0;
   double totCavityGlob=0;
@@ -664,14 +721,35 @@ void delaunayTrgl (const unsigned int numThreads,
 	}
       }
       //      double c1 = Cpu();
+
+      // FIXME TEST
+      //      int NBNULL;
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	if(vToAdd[K]){
 	  cavityContainer &cavityK = cavity[K];
 	  connContainer   &bndK = bnd[K];
 	  for (unsigned int i=0; i<cavityK.size(); i++)cavityK[i]->unset(myThread,K);
-	  for (unsigned int i=0; i<   bndK.size(); i++)if(bndK[i].t)bndK[i].t->unset(myThread,K);
+	  //	  for (unsigned int i=0; i<   bndK.size(); i++)if(bndK[i].t)bndK[i].t->unset(myThread,K);
 	  cavityK.clear(); bndK.clear();
-	  delaunayCavity(t[K], NULL, vToAdd[K], cavityK, bndK, myThread, K);
+	  delaunayCavity(t[K], NULL, vToAdd[K], cavityK, bndK, myThread, K,iPGlob);
+	  for (unsigned int i=0; i<cavityK.size(); i++)cavityK[i]->unset(myThread,K);
+	  //	  for (unsigned int i=0; i<   bndK.size(); i++)if(bndK[i].t)bndK[i].t->unset(myThread,K);
+	  //// FIXME TEST
+	  //	  NBNULL = 0;
+	  //	  for (unsigned int i=0; i<cavityK.size(); i++) {
+	  //	    for (int j=0;j<4;j++)if(!cavityK[i]->T[j])NBNULL++;
+	  //	  }
+	  /*	  if (iPGlob==40){
+	    char name[245];
+	    printf("cavity for point %d size %d shell %d NBNULL %d\n",
+		   iPGlob,cavityK.size(),bndK.size(),NBNULL);
+	    sprintf(name,"Cavity%d.pos",iPGlob);
+	    __print(name,cavityK,vToAdd[K]);
+	    sprintf(name,"Bnd%d.pos",iPGlob);
+	    __print(name,bndK);
+	    checkCavity(cavityK,vToAdd[K]);
+	  }
+	  */
 	  // verify the cavity
 	  for (unsigned int i=0; i< bndK.size(); i++) {
 	    double val =   robustPredicates::orient3d((double*)bndK[i].f.V[0],
@@ -679,10 +757,20 @@ void delaunayTrgl (const unsigned int numThreads,
 						      (double*)bndK[i].f.V[2],
 						      (double*)vToAdd[K]);
 	    if (val <= 0 ) {
-	      //	      char name[245];
-	      //	      sprintf(name,"invalidCavity%d.pos",invalidCavities [myThread]);
-	      //	      print(name,cavityK);
-	      //	      printf("val = %22.15E\n",val);
+	      //	      	      char name[245];
+	      //	      	      sprintf(name,"invalidCavity%d.pos",invalidCavities [myThread]);
+	      //	      	      __print(name,cavityK,vToAdd[K]);
+	      //	      	      printf("val = %22.15E\n",val);
+	      //	      	      std::vector<Tet*> temp;
+	      //	      	      stoopidCavity (t[K], vToAdd[K], myThread, temp);	  
+	      //	      	      sprintf(name,"validCavity%d.pos",invalidCavities [myThread]);
+	      //	      	      __print(name,temp,vToAdd[K]);
+	      //	      	      printf("---> cavity %d vs. %d elements in cavity\n",temp.size(),cavityK.size());
+	      //		      sprintf(name,"Bnd%d.pos",invalidCavities [myThread]);
+	      //		      __print(name,bndK);
+		      //	      for (unsigned int i=0; i<temp.size(); i++) {
+		      //	      		print(temp[i]);
+		      //	      	      }	      
 	      vToAdd[K] = NULL;
 	      invalidCavities [myThread]++;
 	      break;
@@ -712,6 +800,8 @@ void delaunayTrgl (const unsigned int numThreads,
 	  const unsigned int bSize = bndK.size();
 	  totCavity+= cSize;
 	  Choice[K] = cavityK[0];
+	  // FIXME TEST
+	  std::vector<Tet*> _news;
 	  for (unsigned int i=0; i<bSize; i++) {
 	    // reuse memory slots of invalid elements
 	    Tet *t;
@@ -723,17 +813,8 @@ void delaunayTrgl (const unsigned int numThreads,
 	      allocatedTable.push_back(t);
 	      newCounter = allocatedTable.size();
 	    }
-	    //	    if (newCounter >= allocatedSize){
-	    //	      Msg::Fatal("JF : write the reallocation now !");
-	    //	    }
 	    if (i < cSize && t->V[0]->_thread != myThread)cashMisses[myThread]++;
-	    int sign = t->setVertices (bndK[i].f.V[0], bndK[i].f.V[1], bndK[i].f.V[2], vToAdd[K]);
-	    if (sign <= 0){
-	      // A coplanar hull face. We need to test if this hull face is
-	      //   Delaunay or not. We test if the adjacent tet (not faked)
-	      //   of this hull face is Delaunay or not.
-	      Msg::Fatal ("JF: Fix Invalid Cavity %d",sign);
-	    }
+	    t->setVerticesNoTest (bndK[i].f.V[0], bndK[i].f.V[1], bndK[i].f.V[2], vToAdd[K]);
 	    Tet *neigh = bndK[i].t;
 	    t->T[0] = neigh;
 	    t->T[1] = t->T[2] = t->T[3] = NULL;
@@ -747,7 +828,19 @@ void delaunayTrgl (const unsigned int numThreads,
 	    computeAdjacencies (t,1,faceToTet);
 	    computeAdjacencies (t,2,faceToTet);
 	    computeAdjacencies (t,3,faceToTet);
+	    _news.push_back(t);
 	  }
+	  // FIXME TEST
+	  //	  int NBNULL2 = 0;	 
+	  //	  for (unsigned int i=0; i<_news.size(); i++) {
+	  //	    for (int j=0;j<4;j++)if(!_news[i]->T[j])NBNULL2++;
+	  //	  }
+	  //	  if (NBNULL != NBNULL2){
+	  //	    char name[245];
+	  //	    sprintf(name,"invalidConnexion%d.pos",iPGlob);
+	  //	    __print(name,_news,vToAdd[K]);
+	  //	    printf("%d %d\n",NBNULL,NBNULL2);
+	  //	  }
 	  for (unsigned int i=bSize; i<cSize; i++) {
 	    counterMiss++;
 	    cavityK[i]->V[0] = cavityK[i]->V[1] = cavityK[i]->V[2] = cavityK[i]->V[3] = NULL;
@@ -774,7 +867,7 @@ void delaunayTrgl (const unsigned int numThreads,
     #pragma omp barrier
   }
 
-  printf("%d invalid cavities\n",invalidCavities[0]);
+  if (invalidCavities[0])Msg::Warning("%d invalid cavities",invalidCavities[0]);
 
 #ifdef _VERBOSE
   double _t2 = walltime(&_t);
@@ -906,7 +999,7 @@ void delaunayTriangulation (const int numThreads,
   //  _t = 0;
   //  double _t2 = walltime(&_t);
   //  printf("WALL CLOCK TIME %12.5E\n",_t2-_t1);
-  print ("finalTetrahedrization.pos",T);
+  __print ("finalTetrahedrization.pos",T);
 }
 
 
@@ -930,9 +1023,9 @@ void delaunayTriangulation (const int numThreads,
   for (unsigned int i=0;i<N;i++){
     MVertex *mv = S[i];
     // FIXME : should be zero !!!!
-    double dx = d*1.e-16 * (double)rand() / RAND_MAX;
-    double dy = d*1.e-16 * (double)rand() / RAND_MAX;
-    double dz = d*1.e-16 * (double)rand() / RAND_MAX;
+    double dx = d*1.e-14 * (double)rand() / RAND_MAX;
+    double dy = d*1.e-14 * (double)rand() / RAND_MAX;
+    double dz = d*1.e-14 * (double)rand() / RAND_MAX;
     mv->x() += dx;
     mv->y() += dy;
     mv->z() += dz;

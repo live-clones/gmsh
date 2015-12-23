@@ -161,6 +161,11 @@ struct Tet {
     T[0] = T[1] = T[2] = T[3] = NULL;
     setAllDeleted();    
   }
+  int setVerticesNoTest (Vertex *v0, Vertex *v1, Vertex *v2, Vertex *v3){
+    _modified=true;
+    V[0] = v0; V[1] = v1; V[2] = v2; V[3] = v3;
+    return 1;
+  }
   int setVertices (Vertex *v0, Vertex *v1, Vertex *v2, Vertex *v3){
     _modified=true;
     double val = robustPredicates::orient3d((double*)v0,(double*)v1,(double*)v2,(double*)v3);
@@ -169,10 +174,12 @@ struct Tet {
       return 1;
     }
     else if (val < 0){
+      //      throw;
       V[0] = v1; V[1] = v0; V[2] = v2; V[3] = v3;
       return -1;
     }
     else {
+      //      throw;
       return 0;
     }
   }
@@ -232,7 +239,7 @@ typedef std::vector<conn>   connContainer;
 
 void SortHilbert (std::vector<Vertex*>& v, std::vector<int> &indices);
 void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet);
-void print (const char *name, std::vector<Tet*> &T);
+void __print (const char *name, std::vector<Tet*> &T, Vertex *v = 0);
 void delaunayTrgl (const unsigned int numThreads, 
 		   const unsigned int NPTS_AT_ONCE, 
 		   unsigned int Npts, 

@@ -35,14 +35,6 @@ struct edgeContainer
     _hash2.insert(e);
     return true;
   }
-  bool isNewEdge (const Edge &e) {
-    size_t h = (size_t) e.first >> 3;
-    std::vector<Edge> &v = _hash[h %_hash.size()];
-    AVGSEARCH+=v.size();
-    for (unsigned int i=0; i< v.size();i++)if (e == v[i]) {return false;}
-    return true;
-  }
-
   bool addNewEdge (const Edge &e)
   {
     size_t h = (size_t) e.first >> 3;
@@ -148,9 +140,9 @@ void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &
       else {
 	SPoint3 p = p1 * (1.-t) + p2*t;
 	double lc = e.first->lc() * (1.-t) + e.second->lc()*t;
-	const double dx = 1.e-16 * (double) rand() / RAND_MAX;
-	const double dy = 1.e-16 * (double) rand() / RAND_MAX;
-	const double dz = 1.e-16 * (double) rand() / RAND_MAX;
+	const double dx = 1.e-10 * (double) rand() / RAND_MAX;
+	const double dy = 1.e-10 * (double) rand() / RAND_MAX;
+	const double dz = 1.e-10 * (double) rand() / RAND_MAX;
 	S.push_back(new Vertex(p.x()+dx,p.y()+dy,p.z()+dz,lc));
 	L += interval;
       }
@@ -198,16 +190,16 @@ public :
     double d = sqrt ((p->_v->x() - _v->x()) * (p->_v->x() - _v->x())+
 		     (p->_v->y() - _v->y()) * (p->_v->y() - _v->y())+
 		     (p->_v->z() - _v->z()) * (p->_v->z() - _v->z()));
-    return d < .7*p->_v->lc();//_l;
+    return d < .8*p->_v->lc();//_l;
   }
   void minmax (double _min[3], double _max[3]) const
   {
-    _min[0] = _v->x() - 1.1*_v->lc();
-    _min[1] = _v->y() - 1.1*_v->lc();
-    _min[2] = _v->z() - 1.1*_v->lc();
-    _max[0] = _v->x() + 1.1*_v->lc();
-    _max[1] = _v->y() + 1.1*_v->lc();
-    _max[2] = _v->z() + 1.1*_v->lc();
+    _min[0] = _v->x() - 1.01*_v->lc();
+    _min[1] = _v->y() - 1.01*_v->lc();
+    _min[2] = _v->z() - 1.01*_v->lc();
+    _max[0] = _v->x() + 1.01*_v->lc();
+    _max[1] = _v->y() + 1.01*_v->lc();
+    _max[2] = _v->z() + 1.01*_v->lc();
   }
 };
 
@@ -317,13 +309,14 @@ void edgeBasedRefinement (const int numThreads,
 
   // fill up old Datastructures
 
-  std::vector<MTetrahedron*> T = gr->tetrahedra;
   std::vector<Tet*> _tets;
-  _tets.resize(T.size());
   std::vector<Vertex *> _vertices;
   edgeContainer ec;
+  std::map<Vertex*,MVertex*> _ma;
 
   {
+    std::vector<MTetrahedron*> &T = gr->tetrahedra;
+    _tets.resize(T.size());
     std::set<MVertex *> all;
     for (int i=0;i<T.size();i++){
       for (int j=0;j<4;j++){
@@ -338,6 +331,7 @@ void edgeBasedRefinement (const int numThreads,
       mv->setIndex(counter);
       Vertex *v = new Vertex (mv->x(),mv->y(),mv->z(),1.e22, counter);
       _vertices[counter] = v;
+      _ma[v] = mv;
       counter++;
     }
     connSet faceToTet;
@@ -352,9 +346,11 @@ void edgeBasedRefinement (const int numThreads,
       computeAdjacencies (t,2,faceToTet);
       computeAdjacencies (t,3,faceToTet);
       _tets[i] = t;
+      delete T[i];
     }
+    T.clear();
   }
-
+  
   // do not allow to saturate boundary edges
   {
     for (unsigned int i=0;i<_tets.size();i++) {
@@ -377,12 +373,13 @@ void edgeBasedRefinement (const int numThreads,
     for (unsigned int i=0;i<_tets.size();i++) {
       for (int j=0;j<6;j++){
 	Edge e = _tets[i]->getEdge(j);
-	if(e.first->lc() == 1.e22){printf("coucou\n");e.first->lc() = e.second->lc();}
-	else if(e.second->lc() == 1.e22){printf("coucou\n");e.second->lc() = e.first->lc();}
+	if(e.first->lc() == 1.e22){/*printf("coucou\n");*/e.first->lc() = e.second->lc();}
+	else if(e.second->lc() == 1.e22){/*printf("coucou\n");*/e.second->lc() = e.first->lc();}
       }
     }
   }
 
+  std::vector<Vertex*> add_all;
   {
     vertexFilter _filter;
     int iter = 1;
@@ -410,8 +407,9 @@ void edgeBasedRefinement (const int numThreads,
       double t4 = Cpu();
       //      sprintf(name,"PointsFiltered%d.pos",iter);
       //      _print (name,add);
-      delaunayTrgl (1,1,add.size(), _tets, &add);
-      double t5 = Cpu();
+      delaunayTrgl (1,1,add.size(), _tets, &add);  
+      add_all.insert (add_all.end(), add.begin(), add.end());
+      clock_t t5 = clock();
       Msg::Info("IT %3d %6d points added, timings %5.2f %5.2f %5.2f %5.2f %5.2f %5d",iter,add.size(),
 		(t2-t1),
 		(t3-t2),
@@ -421,6 +419,48 @@ void edgeBasedRefinement (const int numThreads,
 		_tets.size());
       iter++;
     }
-    print ("afterRefinement.pos",_tets);
+    //    print ("afterRefinement.pos",_tets);
   }
+
+  std::map<Edge,double> _sizes;
+  for (unsigned int i=0; i<_tets.size();i++){
+    MVertex *mvs[4];
+
+
+    if (_tets[i]->V[0]){      
+      for (int j=0;j<6;j++){
+	Edge e =  _tets[i]->getEdge(j);
+	std::map<Edge,double>::iterator it = _sizes.find(e);
+	if (it == _sizes.end()){
+	  double l = sqrt ((e.first->x() -  e.second->x()) * (e.first->x() -  e.second->x()) +
+			   (e.first->y() -  e.second->y()) * (e.first->y() -  e.second->y()) +
+			   (e.first->z() -  e.second->z()) * (e.first->z() -  e.second->z()));
+	  _sizes[e]= 2* l / (e.first->lc() + e.second->lc());
+	}
+      }
+      for (int j=0;j<4;j++){
+	Vertex *v = _tets[i]->V[j];
+	std::map<Vertex*,MVertex*>::iterator it = _ma.find(v);
+	if (it == _ma.end()){
+	  MVertex *mv = new MVertex (v->x(),v->y(),v->z(),gr);
+	  gr->mesh_vertices.push_back(mv);
+	  _ma[v] = mv;
+	  mvs[j] = mv;
+	}
+	else mvs[j] = it->second;
+      }
+      gr->tetrahedra.push_back(new MTetrahedron(mvs[0],mvs[1],mvs[2],mvs[3]));
+    }
+    delete _tets[i];
+  }
+
+  std::map<Edge,double>::iterator it = _sizes.begin();
+  double sum = 0;
+  for (; it !=_sizes.end();++it){
+    double d = it->second;
+    double tau = d < 1 ? d - 1 : 1./d - 1;
+    sum += tau;
+  }
+  Msg::Info("MESH EFFICIENCY : %22.15E",exp (sum / _sizes.size()));
+
 }

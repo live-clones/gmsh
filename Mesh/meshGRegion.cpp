@@ -628,17 +628,14 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions) {
 
   // restore the initial set of faces
   gr->set(faces);
-
-
-#if 1
+  
   void edgeBasedRefinement (const int numThreads, 
 			    const int nptsatonce, 
 			    GRegion *gr);
+  // just to remove tets that are not to be meshed
   insertVerticesInRegion(gr,0);
   edgeBasedRefinement (1,1,gr);
-#else
-  insertVerticesInRegion(gr,200000000);
-#endif
+  //  RelocateVertices (regions,-1);
 }
 
 

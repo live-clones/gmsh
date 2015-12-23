@@ -34,15 +34,14 @@ static double objective_function (double xi, MVertex *ver,
 
 #define sqrt5 2.236067977499789696
 
-static int Stopping_Rule(double x0, double x1) 
+static int Stopping_Rule(double x0, double x1, double tol) 
 {
-  double tolerance = 1.e-2;
-  return ( fabs( x1 - x0 ) < tolerance ) ? 1 : 0;
+  return ( fabs( x1 - x0 ) < tol) ? 1 : 0;
 }
 
 double Maximize_Quality_Golden_Section( MVertex *ver, 
 					double xTarget, double yTarget, double zTarget,
-					const std::vector<MElement*> &lt )
+					const std::vector<MElement*> &lt , double tol)
 {
   
   static const double lambda = 0.5 * (sqrt5 - 1.0);
@@ -55,18 +54,20 @@ double Maximize_Quality_Golden_Section( MVertex *ver,
   double fx1 = objective_function (x1, ver, xTarget, yTarget, zTarget , lt );
   double fx2 = objective_function (x2, ver, xTarget, yTarget, zTarget , lt );
 
-  while ( ! Stopping_Rule( a, b ) ) {
+  if (tol < 0.0)return fx1 > fx2 ? x1 : x2;
+
+  while ( ! Stopping_Rule( a, b , tol) ) {
     //    printf("GOLDEN : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
     if (fx1 < fx2) {
       a = x1;
-      if ( Stopping_Rule( a, b ) ) break;
+      if ( Stopping_Rule( a, b , tol) ) break;
       x1 = x2;
       fx1 = fx2;
       x2 = b - mu * (b - a);
       fx2 = objective_function (x2, ver, xTarget, yTarget, zTarget , lt );
     } else {
       b = x2;
-      if ( Stopping_Rule( a, b ) ) break;
+      if ( Stopping_Rule( a, b , tol) ) break;
       x2 = x1;
       fx2 = fx1;
       x1 = a + mu * (b - a);
@@ -78,7 +79,7 @@ double Maximize_Quality_Golden_Section( MVertex *ver,
 }
 
 static void _relocateVertex(MVertex *ver,
-			    const std::vector<MElement*> &lt)
+			    const std::vector<MElement*> &lt, double tol)
 {
   if(ver->onWhat()->dim() != 3) return;
   double x = 0, y=0, z=0;
@@ -96,13 +97,13 @@ static void _relocateVertex(MVertex *ver,
     N += lt[i]->getNumVertices();
   }
 
-  double xi = Maximize_Quality_Golden_Section( ver, x/N, y/N, z/N, lt );
+  double xi = Maximize_Quality_Golden_Section( ver, x/N, y/N, z/N, lt , tol);
   ver->x() = (1.-xi) * ver->x() + xi * x/N;
   ver->y() = (1.-xi) * ver->y() + xi * y/N;
   ver->z() = (1.-xi) * ver->z() + xi * z/N;
 }
 
-void RelocateVertices (std::vector<GRegion*> &regions) {
+void RelocateVertices (std::vector<GRegion*> &regions, double tol) {
   for(unsigned int k = 0; k < regions.size(); k++){
     v2t_cont adj;
     buildVertexToElement(regions[k]->tetrahedra, adj);
@@ -111,7 +112,7 @@ void RelocateVertices (std::vector<GRegion*> &regions) {
     buildVertexToElement(regions[k]->hexahedra, adj);
     v2t_cont::iterator it = adj.begin();
     while (it != adj.end()){
-      _relocateVertex( it->first, it->second);
+      _relocateVertex( it->first, it->second, tol);
       ++it;
     }
   }
