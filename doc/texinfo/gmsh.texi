@@ -1200,7 +1200,7 @@ Colors expressions are hybrids between fixed-length braced
 
 @example
 @var{color-expression}:
-  @var{string} |
+  @var{char-expression} |
   @{ @var{expression}, @var{expression}, @var{expression} @} |
   @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @} |
   @var{color-option}

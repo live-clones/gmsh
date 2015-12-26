@@ -5544,10 +5544,13 @@ ColorExpr :
       if(flag) yymsg(0, "Unknown color '%s'", $2);
     }
 */
-  | tSTRING
+  | String__Index
     {
       int flag;
-      $$ = GetColorForString(-1, $1, &flag);
+      if(gmsh_yystringsymbols.count($1))
+        $$ = GetColorForString(-1, gmsh_yystringsymbols[$1].c_str(), &flag);
+      else
+        $$ = GetColorForString(-1, $1, &flag);
       if(flag) yymsg(0, "Unknown color '%s'", $1);
       Free($1);
     }
