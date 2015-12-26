@@ -4011,12 +4011,12 @@ Constraints :
         List_Delete($2);
       }
     }
-  | tMeshAlgorithm tSurface '{' RecursiveListOfDouble '}' FExpr tEND
+  | tMeshAlgorithm tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
     {
       for(int i = 0; i < List_Nbr($4); i++){
 	double d;
 	List_Read($4, i, &d);
-	CTX::instance()->mesh.algo2d_per_face[(int)d] = (int)$6;
+	CTX::instance()->mesh.algo2d_per_face[(int)d] = (int)$7;
       }
     }
   | tRecombine tSurface ListOfDoubleOrAll RecombineAngle tEND
