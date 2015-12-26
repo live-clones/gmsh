@@ -1890,8 +1890,8 @@ void bowyerWatsonParallelogramsConstrained(GFace *gf,
   }
   std::cout<<"out of for packed"<<std::endl;
   //  printf("%d vertices \n",(int)packed.size());
-  //clock_t t2 = clock();
-  //double DT = (double)(t2-t1)/CLOCKS_PER_SEC;
+  //double t2 = Cpu();
+  //double DT = t2-t1;
   //if (packed.size())printf("points inserted DT %12.5E points per minut : %12.5E %d global searchs %d seachs per insertion\n",DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
   transferDataStructure(gf, AllTris, DATA);
   std::cout<<"out of transferDataStructure"<<std::endl;

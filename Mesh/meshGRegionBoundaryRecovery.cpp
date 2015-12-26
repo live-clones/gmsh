@@ -11844,7 +11844,7 @@ int meshGRegionBoundaryRecovery::suppresssteinerpoints()
   return 1;
 }
 
-void meshGRegionBoundaryRecovery::recoverboundary(clock_t&)
+void meshGRegionBoundaryRecovery::recoverboundary()
 {
   arraypool *misseglist, *misshlist;
   arraypool *bdrysteinerptlist;
@@ -14471,18 +14471,18 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
     }
     _vertices.insert(_vertices.begin(), all.begin(), all.end());
   }
-  
+
   initializepools();
-  
+
   std::vector<MTetrahedron*> tets;
-  
+
   delaunayMeshIn3D(_vertices, tets, false);
-  
+
   { //transfernodes();
     point pointloop;
     REAL x, y, z;
     int i;
-    
+
     // Read the points.
     for (i = 0; i < _vertices.size(); i++) {
       makepoint(&pointloop, UNUSEDVERTEX);
@@ -14504,7 +14504,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
 	zmax = (z > zmax) ? z : zmax;
       }
     }
-    
+
     // 'longest' is the largest possible edge length formed by input vertices.
     x = xmax - xmin;
     y = ymax - ymin;
@@ -14514,15 +14514,15 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
       Msg::Warning("Error:  The point set is trivial.\n");
       return;
     }
-    
+
     // Two identical points are distinguished by 'lengthlimit'.
     if (b->minedgelength == 0.0) {
       b->minedgelength = longest * b->epsilon;
     }
   } // transfernodes();
-  
+
   point *idx2verlist;
-  
+
   // Create a map from indices to vertices.
   makeindex2pointmap(idx2verlist);
   // 'idx2verlist' has length 'in->numberofpoints + 1'.
@@ -14535,7 +14535,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
     for (unsigned int i = 0; i < _vertices.size(); i++){
       _vertices[i]->setIndex(i);
     }
-    
+
     tetrahedron *ver2tetarray;
     //point *idx2verlist;
     triface tetloop, checktet, prevchktet;
@@ -14546,9 +14546,9 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
     int bondflag;
     int t1ver;
     int idx, i, j, k;
-    
+
     Msg::Info("Reconstructing mesh ...");
-    
+
     // Allocate an array that maps each vertex to its adjacent tets.
     ver2tetarray = new tetrahedron[_vertices.size() + 1];
     //for (i = 0; i < in->numberofpoints + 1; i++) {
@@ -14556,7 +14556,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
       setpointtype(idx2verlist[i], VOLVERTEX); // initial type.
       ver2tetarray[i] = NULL;
     }
-    
+
     // Create the tetrahedra and connect those that share a common face.
     for (i = 0; i < tets.size(); i++) {
       // Get the four vertices.
@@ -14649,14 +14649,14 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
 	} // if (checktet.tet != NULL)
       } // for (tetloop.ver = 0; ...
     } // i
-    
+
   // Remember a tet of the mesh.
     recenttet = tetloop;
-    
+
     // Create hull tets, create the point-to-tet map, and clean up the
     //   temporary spaces used in each tet.
     hullsize = tetrahedrons->items;
-    
+
     tetrahedrons->traversalinit();
     tetloop.tet = tetrahedrontraverse();
     while (tetloop.tet != (tetrahedron *) NULL) {
@@ -14696,23 +14696,23 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
       }
       tetloop.tet = tetrahedrontraverse();
     }
-    
+
   hullsize = tetrahedrons->items - hullsize;
-  
+
   delete [] ver2tetarray;
   tets.clear(); // Release all memory in this vector.
   }
-  
+
   std::list<GFace*> f_list = _gr->faces();
   std::list<GEdge*> e_list = _gr->edges();
-  
+
   {
     Msg::Info(" --> Creating surface mesh ...");
     face newsh;
     face newseg;
     point p[4];
     int idx, i, j;
-    
+
     for (std::list<GFace*>::iterator it = f_list.begin(); it != f_list.end(); ++it){
       GFace *gf = *it;
       for (i = 0;i< gf->triangles.size(); i++) {
@@ -14740,7 +14740,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
 
     // Connecting triangles, removing redundant segments.
     unifysegments();
-    
+
     Msg::Info(" --> Identifying boundary edges ...");
 
     face* shperverlist;
@@ -14748,10 +14748,10 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
     face searchsh, neighsh;
     face segloop, checkseg;
     point checkpt;
-    
+
     // Construct a map from points to subfaces.
     makepoint2submap(subfaces, idx2shlist, shperverlist);
-    
+
     // Process the set of PSC edges.
     // Remeber that all segments have default marker '-1'.
     for (std::list<GEdge*>::iterator it = e_list.begin(); it != e_list.end();
@@ -14825,38 +14825,37 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
 	setshellmark(newseg, ge->tag());
       } // i
     } // e_list
-    
+
     delete [] shperverlist;
     delete [] idx2shlist;
-    
+
       Msg::Debug("  %ld (%ld) subfaces (segments).", subfaces->items,
 	     subsegs->items);
-    
+
     // The total number of iunput segments.
     insegments = subsegs->items;
-    
+
     if (0) {
       outsurfacemesh("dump");
     }
-    
+
   } // meshsurface()
-  
+
   delete [] idx2verlist;
-  
+
   ////////////////////////////////////////////////////////
   // Boundary recovery.
-  clock_t t_tmp;
-  
-  recoverboundary(t_tmp);
-  
+
+  recoverboundary();
+
   carveholes();
-  
+
   if (subvertstack->objects > 0l) {
     suppresssteinerpoints();
   }
-  
+
   recoverdelaunay();
-  
+
   optimizemesh();
 
   if ((dupverts > 0l) || (unuverts > 0l)) {
@@ -14929,7 +14928,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
   ////////////////////////////////////////////////////////
   // Write mesh into to GRegion.
 
-  Msg::Info(" --> Write to GRegion ..."); 
+  Msg::Info(" --> Write to GRegion ...");
 
   point p[4];
   int i;
@@ -15161,7 +15160,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
     tetloop.tet = tetrahedrontraverse();
   }
 } // mesh output
- Msg::Info("Reconstruct time : %g sec",Cpu()-t_start); 
+ Msg::Info("Reconstruct time : %g sec",Cpu()-t_start);
 }
 
 void terminateBoundaryRecovery(void *, int exitcode)

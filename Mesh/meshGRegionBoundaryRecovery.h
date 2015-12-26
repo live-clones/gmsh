@@ -705,7 +705,7 @@ class meshGRegionBoundaryRecovery {
 
   // Incremental Delaunay construction.
   void initialdelaunay(point pa, point pb, point pc, point pd);
-  void incrementaldelaunay(clock_t&);
+  void incrementaldelaunay();
 
   // Surface meshing.
   void flipshpush(face*);
@@ -736,7 +736,7 @@ class meshGRegionBoundaryRecovery {
   int removevertexbyflips(point steinerpt);
   int suppressbdrysteinerpoint(point steinerpt);
   int suppresssteinerpoints();
-  void recoverboundary(clock_t&);
+  void recoverboundary();
 
   // Mesh reconstruct
   void carveholes();

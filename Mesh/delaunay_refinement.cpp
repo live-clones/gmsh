@@ -350,7 +350,7 @@ void edgeBasedRefinement (const int numThreads,
     }
     T.clear();
   }
-  
+
   // do not allow to saturate boundary edges
   {
     for (unsigned int i=0;i<_tets.size();i++) {
@@ -407,9 +407,9 @@ void edgeBasedRefinement (const int numThreads,
       double t4 = Cpu();
       //      sprintf(name,"PointsFiltered%d.pos",iter);
       //      _print (name,add);
-      delaunayTrgl (1,1,add.size(), _tets, &add);  
+      delaunayTrgl (1,1,add.size(), _tets, &add);
       add_all.insert (add_all.end(), add.begin(), add.end());
-      clock_t t5 = clock();
+      double t5 = Cpu();
       Msg::Info("IT %3d %6d points added, timings %5.2f %5.2f %5.2f %5.2f %5.2f %5d",iter,add.size(),
 		(t2-t1),
 		(t3-t2),
@@ -427,7 +427,7 @@ void edgeBasedRefinement (const int numThreads,
     MVertex *mvs[4];
 
 
-    if (_tets[i]->V[0]){      
+    if (_tets[i]->V[0]){
       for (int j=0;j<6;j++){
 	Edge e =  _tets[i]->getEdge(j);
 	std::map<Edge,double>::iterator it = _sizes.find(e);
