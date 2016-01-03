@@ -281,7 +281,7 @@ Frequently asked questions
 @cindex Download
 
 The source code and various pre-compiled versions of Gmsh (for Windows,
-Mac and Unix) can be downloaded from @uref{http://geuz.org/gmsh/}.
+Mac and Unix) can be downloaded from @uref{http://gmsh.info}.
 Gmsh is also directly available in pre-packaged form in various Linux
 and BSD distributions (Debian, Ubuntu, FreeBSD, ...).
 
@@ -292,7 +292,7 @@ post-processing facilities}. International Journal for Numerical Methods
 in Engineering, Volume 79, Issue 11, pages 1309-1331, 2009''.  A
 preprint of that paper as well as other references and the latest news
 about Gmsh development are available on
-@uref{http://geuz.org/gmsh/}. 
+@uref{http://gmsh.info}. 
 
 @c =========================================================================
 @c Copying Conditions
@@ -453,7 +453,7 @@ External solvers can be interfaced with Gmsh through Unix or TCP/IP
 sockets, which permits to modify solver parameters, launch external
 computations and process the results directly from within Gmsh's
 post-processing module. The default solver interfaced with Gmsh is GetDP
-(@uref{http://geuz.org/getdp/}). Examples on how to interface other
+(@uref{http://getdp.info}). Examples on how to interface other
 solvers are available in the source distribution (in the
 @url{https://geuz.org/svn/gmsh/trunk/utils/solvers/,utils/solvers}
 @footnote{Login and password: @code{gmsh}.} directory).
@@ -553,7 +553,7 @@ the BRep approach for describing geometries can become
 inconvenient/inefficient for large models. For complex models, or if you
 want to use a solid-modeler approach, you should link Gmsh with an
 external CAD kernel and import native files directly. (The binary
-versions available on @uref{http://geuz.org/gmsh/} are linked with the
+versions available on @uref{http://gmsh.info} are linked with the
 free CAD kernel OpenCASCADE, which enables native BREP import as well as
 STEP and IGES import.)
 @item
@@ -632,7 +632,7 @@ next chapter (@pxref{Running Gmsh on your system}) to learn how to
 launch Gmsh on your system, then go experiment with the GUI and the
 tutorial files (@pxref{Tutorial}) provided in the distribution.
 Screencasts that show how to use the GUI are available here:
-@uref{http://geuz.org/gmsh/screencasts/}.
+@uref{http://gmsh.info/screencasts/}.
 
 The aim of the reference manual is to explain everything you need to use
 Gmsh at the second level, i.e., using the built-in scripting language.
@@ -1172,7 +1172,7 @@ ONELAB string value (with one argument, the name of the ONELAB
 variable), or ask the user for a value interactively (with two
 arguments). @code{StrReplace}'s arguments are: input string, old
 substring, new substring.@footnote{For compatibility with GetDP
-(@uref{http://geuz.org/getdp/}), parentheses can be replaced by brackets
+(@uref{http://getdp.info}), parentheses can be replaced by brackets
 @code{[]} in @code{Str} and @code{Sprintf}.}
 
 @code{DefineString} allows to define a ONELAB variable in-line. The
@@ -1351,7 +1351,7 @@ evaluation:
 A built-in function is composed of an identifier followed by a pair of
 parentheses containing an @var{expression-list} (the list of its
 arguments)@footnote{For compatibility with GetDP
-(@uref{http://geuz.org/getdp/}), parentheses can be replaced by brackets
+(@uref{http://getdp.info}), parentheses can be replaced by brackets
 @code{[]}.}. Here is the list of the built-in functions currently
 implemented:
 
@@ -3058,7 +3058,7 @@ The client-server API for the solver interface is defined in the
 and password: @code{gmsh}.} header. See
 @url{https://geuz.org/svn/gmsh/trunk/utils/solvers/c++/solver.cpp,utils/solvers/c++/solver.cpp}
 for a simple example on how to use the ONELAB programming interface. See
-the sources of GetDP (@url{http://geuz.org/getdp} for a more
+the sources of GetDP (@url{http://getdp.info} for a more
 comprehensive example.
 
 @menu
@@ -4542,7 +4542,7 @@ and password: @code{gmsh}.} directory of the Gmsh distribution.
 
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
 system}. Screencasts that show how to use the GUI are available on
-@uref{http://geuz.org/gmsh/screencasts/}.
+@uref{http://gmsh.info/screencasts/}.
 
 @menu
 * t1.geo::
@@ -4794,7 +4794,7 @@ by hand.
 @appendix Compiling the source code
 
 Stable releases and nightly source snapshots are available from
-@url{http://geuz.org/gmsh/src/}. You can also access the subversion
+@url{http://gmsh.info/src/}. You can also access the subversion
 repository directly:
 
 @enumerate
@@ -5168,7 +5168,7 @@ In English people tend to pronounce `Gmsh' as ``gee-mesh''.
 
 @item Where can I find more information?
 
-@url{http://geuz.org/gmsh} is the primary location to obtain information
+@url{http://gmsh.info} is the primary location to obtain information
 about Gmsh. There you will for example find the complete reference
 manual, a bug tracking database and a searchable archive of the Gmsh
 mailing list (@email{gmsh@@geuz.org}).
@@ -5474,7 +5474,7 @@ output file just load the mesh file back using `File->Open'.
 
 Gmsh uses the ONELAB interface (@url{http://www.onelab.info}) to
 interact with external solvers. Have a look at the GetDP finite element
-solver (@url{http://geuz.org/getdp}) to see how this is done.
+solver (@url{http://getdp.info}) to see how this is done.
 
 @item Can I launch Gmsh from my solver (instead of launching my solver from Gmsh) in order to monitor a solution?
 

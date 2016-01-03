@@ -1689,7 +1689,7 @@ if(MAKEINFO)
                      ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(txt DEPENDS ${TEX_DIR}/gmsh.txt)
   add_custom_command(OUTPUT ${TEX_DIR}/gmsh.html DEPENDS ${TEX_SRC}
-    COMMAND ${MAKEINFO} --html --css-ref=http://geuz.org/geuz.css
+    COMMAND ${MAKEINFO} --html --css-ref=http://gmsh.info/gmsh.css
     --no-split --set-customization-variable
     EXTRA_HEAD='<meta name="viewport" content="width=device-width,initial-scale=1.0">'
     ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
