@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -322,11 +327,11 @@ void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet){
   }
 }
 
-static void delaunayCavity2 (Tet *t, 
+static void delaunayCavity2 (Tet *t,
 			    Tet *prev,
-			    Vertex *v, 
-			    cavityContainer &cavity,    
-			    connContainer &bnd, 
+			    Vertex *v,
+			    cavityContainer &cavity,
+			    connContainer &bnd,
 			    int thread, int iPnt, int PP){
   t->set(thread, iPnt); // Mark the triangle
   cavity.push_back(t);
@@ -344,28 +349,28 @@ static void delaunayCavity2 (Tet *t,
       //      neigh->set(thread, iPnt);
     }
     else if (!(neigh->isSet(thread, iPnt))) {
-      delaunayCavity2 (neigh, t, v, cavity,bnd,thread, iPnt,PP); 
+      delaunayCavity2 (neigh, t, v, cavity,bnd,thread, iPnt,PP);
     }
   }
 }
 
-static void delaunayCavity (Tet *t, 
+static void delaunayCavity (Tet *t,
 			    Tet *prev,
-			    Vertex *v, 
-			    cavityContainer &cavity,    
-			    connContainer &bnd, 
+			    Vertex *v,
+			    cavityContainer &cavity,
+			    connContainer &bnd,
 			    int thread, int iPnt, int PP){
 
   t->set(thread, iPnt); // Mark the triangle
   cavity.push_back(t);
-  for (int iNeigh=0; iNeigh<4 ; iNeigh++){  
+  for (int iNeigh=0; iNeigh<4 ; iNeigh++){
     Tet *neigh = t->T[iNeigh];
     if (neigh == NULL){
       bnd.push_back(conn(t->getFace(iNeigh),iNeigh,NULL));
     }
     else if (neigh->inSphere(v,thread)){
       if (!(neigh->isSet(thread, iPnt))) {
-	delaunayCavity (neigh, t, v, cavity,bnd,thread, iPnt,PP); 
+	delaunayCavity (neigh, t, v, cavity,bnd,thread, iPnt,PP);
       }
     }
     else {
@@ -452,7 +457,7 @@ Tet* walk (Tet *t, Vertex *v, int maxx, double &totSearch, int thread){
 void __print (const char *name, connContainer &conn){
   FILE *f = fopen(name,"w");
   fprintf(f,"View \"\"{\n");
-  
+
   for (unsigned int i=0;i<conn.size();i++){
     fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	    conn[i].f.V[0]->x(),conn[i].f.V[0]->y(),conn[i].f.V[0]->z(),
@@ -467,7 +472,7 @@ void __print (const char *name, std::vector<Tet*> &T, Vertex *v){
   FILE *f = fopen(name,"w");
   fprintf(f,"View \"\"{\n");
   if (v)fprintf(f,"SP(%g,%g,%g){%d};\n",v->x(),v->y(),v->z(),v->getNum());
-  
+
   for (unsigned int i=0;i<T.size();i++){
     if (T[i]->V[0]){
       //      double val = robustPredicates::orient3d((double*)T[i]->V[0],(double*)T[i]->V[1],(double*)T[i]->V[2],(double*)T[i]->V[3]);
@@ -608,10 +613,10 @@ void checkCavity (std::vector<Tet*> &c, Vertex *v){
   __print("bad.pos",bad);
 }
 
-void delaunayTrgl (const unsigned int numThreads, 
-		   const unsigned int NPTS_AT_ONCE, 
-		   unsigned int Npts, 
-		   std::vector<Tet*> &T, 
+void delaunayTrgl (const unsigned int numThreads,
+		   const unsigned int NPTS_AT_ONCE,
+		   unsigned int Npts,
+		   std::vector<Tet*> &T,
 		   std::vector<Vertex*> assignTo[]){
   double totSearchGlob=0;
   double totCavityGlob=0;
@@ -762,7 +767,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	      //	      	      __print(name,cavityK,vToAdd[K]);
 	      //	      	      printf("val = %22.15E\n",val);
 	      //	      	      std::vector<Tet*> temp;
-	      //	      	      stoopidCavity (t[K], vToAdd[K], myThread, temp);	  
+	      //	      	      stoopidCavity (t[K], vToAdd[K], myThread, temp);
 	      //	      	      sprintf(name,"validCavity%d.pos",invalidCavities [myThread]);
 	      //	      	      __print(name,temp,vToAdd[K]);
 	      //	      	      printf("---> cavity %d vs. %d elements in cavity\n",temp.size(),cavityK.size());
@@ -770,7 +775,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	      //		      __print(name,bndK);
 		      //	      for (unsigned int i=0; i<temp.size(); i++) {
 		      //	      		print(temp[i]);
-		      //	      	      }	      
+		      //	      	      }
 	      vToAdd[K] = NULL;
 	      invalidCavities [myThread]++;
 	      break;
@@ -831,7 +836,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	    _news.push_back(t);
 	  }
 	  // FIXME TEST
-	  //	  int NBNULL2 = 0;	 
+	  //	  int NBNULL2 = 0;
 	  //	  for (unsigned int i=0; i<_news.size(); i++) {
 	  //	    for (int j=0;j<4;j++)if(!_news[i]->T[j])NBNULL2++;
 	  //	  }

@@ -32,8 +32,8 @@ done
 
 rm -rf gmsh-getdp-source*
 mkdir gmsh-getdp-source
-curl -O http://geuz.org/gmsh/src/gmsh-${GMSH}-source.tgz
-curl -O http://geuz.org/getdp/src/getdp-${GETDP}-source.tgz
+curl -O http://gmsh.info/src/gmsh-${GMSH}-source.tgz
+curl -O http://getdp.info/src/getdp-${GETDP}-source.tgz
 mv gmsh-${GMSH}-source.tgz /tmp
 mv getdp-${GETDP}-source.tgz /tmp
 tar zxvf /tmp/gmsh-${GMSH}-source.tgz -C /tmp
@@ -55,8 +55,8 @@ rm -rf gmsh-getdp-source
 
 rm -rf gmsh-getdp-Windows64*
 mkdir gmsh-getdp-Windows64
-curl -O http://geuz.org/gmsh/bin/Windows/gmsh-${GMSH}-Windows64.zip
-curl -O http://geuz.org/getdp/bin/Windows/getdp-${GETDP}-Windows64c.zip
+curl -O http://gmsh.info/bin/Windows/gmsh-${GMSH}-Windows64.zip
+curl -O http://getdp.info/bin/Windows/getdp-${GETDP}-Windows64c.zip
 mv gmsh-${GMSH}-Windows64.zip /tmp
 mv getdp-${GETDP}-Windows64c.zip /tmp
 unzip -q -o /tmp/gmsh-${GMSH}-Windows64.zip -d /tmp
@@ -80,8 +80,8 @@ rm -rf gmsh-getdp-Windows64
 
 rm -rf gmsh-getdp-Windows32*
 mkdir gmsh-getdp-Windows32
-curl -O http://geuz.org/gmsh/bin/Windows/gmsh-${GMSH}-Windows32.zip
-curl -O http://geuz.org/getdp/bin/Windows/getdp-${GETDP}-Windows32c.zip
+curl -O http://gmsh.info/bin/Windows/gmsh-${GMSH}-Windows32.zip
+curl -O http://getdp.info/bin/Windows/getdp-${GETDP}-Windows32c.zip
 mv gmsh-${GMSH}-Windows32.zip /tmp
 mv getdp-${GETDP}-Windows32c.zip /tmp
 unzip -q -o /tmp/gmsh-${GMSH}-Windows32.zip -d /tmp
@@ -105,8 +105,8 @@ rm -rf gmsh-getdp-Windows32
 
 rm -rf gmsh-getdp-Linux32*
 mkdir gmsh-getdp-Linux32
-curl -O http://geuz.org/gmsh/bin/Linux/gmsh-${GMSH}-Linux32.tgz
-curl -O http://geuz.org/getdp/bin/Linux/getdp-${GETDP}-Linux32c.tgz
+curl -O http://gmsh.info/bin/Linux/gmsh-${GMSH}-Linux32.tgz
+curl -O http://getdp.info/bin/Linux/getdp-${GETDP}-Linux32c.tgz
 mv gmsh-${GMSH}-Linux32.tgz /tmp
 mv getdp-${GETDP}-Linux32c.tgz /tmp
 tar zxvf /tmp/gmsh-${GMSH}-Linux32.tgz -C /tmp
@@ -130,8 +130,8 @@ rm -rf gmsh-getdp-Linux32
 
 rm -rf gmsh-getdp-Linux64*
 mkdir gmsh-getdp-Linux64
-curl -O http://geuz.org/gmsh/bin/Linux/gmsh-${GMSH}-Linux64.tgz
-curl -O http://geuz.org/getdp/bin/Linux/getdp-${GETDP}-Linux64c.tgz
+curl -O http://gmsh.info/bin/Linux/gmsh-${GMSH}-Linux64.tgz
+curl -O http://getdp.info/bin/Linux/getdp-${GETDP}-Linux64c.tgz
 mv gmsh-${GMSH}-Linux64.tgz /tmp
 mv getdp-${GETDP}-Linux64c.tgz /tmp
 tar zxvf /tmp/gmsh-${GMSH}-Linux64.tgz -C /tmp
@@ -155,8 +155,8 @@ rm -rf gmsh-getdp-Linux64
 
 rm -rf gmsh-getdp-MacOSX*
 mkdir gmsh-getdp-MacOSX
-curl -O http://geuz.org/gmsh/bin/MacOSX/gmsh-${GMSH}-MacOSX.dmg
-curl -O http://geuz.org/getdp/bin/MacOSX/getdp-${GETDP}-MacOSX64c.tgz
+curl -O http://gmsh.info/bin/MacOSX/gmsh-${GMSH}-MacOSX.dmg
+curl -O http://getdp.info/bin/MacOSX/getdp-${GETDP}-MacOSX64c.tgz
 mv gmsh-${GMSH}-MacOSX.dmg /tmp
 mv getdp-${GETDP}-MacOSX64c.tgz /tmp
 # open -W /tmp/gmsh-${GMSH}-MacOSX.dmg

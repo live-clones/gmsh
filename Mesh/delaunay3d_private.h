@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@geuz.org>.
+
 #ifndef _DELAUNAY3D_H_
 #define _DELAUNAY3D_H_
 #include <vector>
@@ -60,7 +65,7 @@ inline double orientationTestFast(double *pa, double *pb, double *pc, double *pd
        + cdx * (ady * bdz - adz * bdy);
 }
 
-inline bool inSphereTest_s (Vertex *va, Vertex *vb, Vertex *vc, Vertex *vd , Vertex *ve){  
+inline bool inSphereTest_s (Vertex *va, Vertex *vb, Vertex *vc, Vertex *vd , Vertex *ve){
   double val = robustPredicates::insphere ((double*)va,(double*)vb,(double*)vc,(double*)vd,(double*)ve);
   if (val == 0.0){
     printf("symbolic perturbation needed vol %22.15E\n",orientationTestFast((double*)va,(double*)vb,(double*)vc,(double*)vd));
@@ -84,8 +89,8 @@ inline bool inSphereTest_s (Vertex *va, Vertex *vb, Vertex *vc, Vertex *vd , Ver
     if (oriA != 0.0) {
       // Flip the sign if there are odd number of swaps.
       if ((swaps % 2) != 0) oriA = -oriA;
-      val =  oriA;     
-    }  
+      val =  oriA;
+    }
     else {
       double oriB = -robustPredicates::orient3d ((double*)pt[0], (double*)pt[2], (double*)pt[3], (double*)pt[4]);
       if (oriB == 0.0) {
@@ -99,11 +104,11 @@ inline bool inSphereTest_s (Vertex *va, Vertex *vb, Vertex *vc, Vertex *vd , Ver
   return val > 0 ? 1 : 0;
 }
 
-inline double orientationTest (Vertex *va, Vertex *vb, Vertex *vc, Vertex *vd){  
+inline double orientationTest (Vertex *va, Vertex *vb, Vertex *vc, Vertex *vd){
   return robustPredicates::orient3d ((double*)va,(double*)vb,(double*)vc,(double*)vd);
 }
 
-inline double orientationTestFast (Vertex *va, Vertex *vb, Vertex *vc, Vertex *vd){  
+inline double orientationTestFast (Vertex *va, Vertex *vb, Vertex *vc, Vertex *vd){
   return orientationTestFast ((double*)va,(double*)vb,(double*)vc,(double*)vd);
 }
 
@@ -159,7 +164,7 @@ struct Tet {
   Tet ()  : _modified(true){
     V[0] = V[1] = V[2] = V[3] = NULL;
     T[0] = T[1] = T[2] = T[3] = NULL;
-    setAllDeleted();    
+    setAllDeleted();
   }
   int setVerticesNoTest (Vertex *v0, Vertex *v1, Vertex *v2, Vertex *v3){
     _modified=true;
@@ -183,7 +188,7 @@ struct Tet {
       return 0;
     }
   }
-  Tet (Vertex *v0, Vertex *v1, Vertex *v2, Vertex *v3) 
+  Tet (Vertex *v0, Vertex *v1, Vertex *v2, Vertex *v3)
   {
     setVertices (v0,v1,v2,v3);
     T[0] = T[1] = T[2] = T[3] = NULL;
@@ -207,31 +212,31 @@ struct Tet {
   }
   inline Edge getEdge (int k) const {
     const int edg[6][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
-    return Edge (std::min(V[edg[k][0]],V[edg[k][1]]), 
+    return Edge (std::min(V[edg[k][0]],V[edg[k][1]]),
 		 std::max(V[edg[k][0]],V[edg[k][1]]));
   }
   inline bool inSphere (Vertex *vd, int thread) const{
-    return inSphereTest_s (V[0],V[1],V[2],V[3],vd); 
+    return inSphereTest_s (V[0],V[1],V[2],V[3],vd);
   }
   Vertex centroid () const {
     return (*V[0]+*V[1]+*V[2]+*V[3])*0.25;
   }
 
-}; 
+};
 
 struct conn {
   Face f;
   int  i;
   Tet *t;
-  conn () : f(0,0,0), i(0), t(0){}  
-  conn (Face _f, int _i, Tet *_t) : f(_f), i(_i), t(_t)  
+  conn () : f(0,0,0), i(0), t(0){}
+  conn (Face _f, int _i, Tet *_t) : f(_f), i(_i), t(_t)
   {   }
   inline bool operator == (const conn & c) const{
     return f == c.f;
-  }  
+  }
   inline bool operator < (const conn & c) const{
     return f < c.f;
-  }  
+  }
 };
 
 typedef std::vector<Tet*> cavityContainer;
@@ -240,10 +245,10 @@ typedef std::vector<conn>   connContainer;
 void SortHilbert (std::vector<Vertex*>& v, std::vector<int> &indices);
 void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet);
 void __print (const char *name, std::vector<Tet*> &T, Vertex *v = 0);
-void delaunayTrgl (const unsigned int numThreads, 
-		   const unsigned int NPTS_AT_ONCE, 
-		   unsigned int Npts, 
-		   std::vector<Tet*> &T, 
+void delaunayTrgl (const unsigned int numThreads,
+		   const unsigned int NPTS_AT_ONCE,
+		   unsigned int Npts,
+		   std::vector<Tet*> &T,
 		   std::vector<Vertex*> assignTo[]);
 
 

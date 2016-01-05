@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to the public mailing list <gmsh@geuz.org>.
@@ -6,7 +6,7 @@
 set(CTEST_CMAKE_COMMAND "/usr/bin/cmake")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 
-set(WEB_BIN "geuzaine@geuz.org:/home/www/geuz.org/gmsh/bin/Linux")
+set(WEB_BIN "geuzaine@geuz.org:/home/www/gmsh.info/bin/Linux")
 
 set(WITH_TEST TRUE)      # run the tests?
 set(WITH_COVERAGE FALSE) # check code coverage?
