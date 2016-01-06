@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@geuz.org>.
+// bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <string>
 #include <string.h>
@@ -989,8 +989,8 @@ void GetOptions(int argc, char *argv[])
                 MED_NUM_MINEUR, MED_NUM_RELEASE);
 #endif
         fprintf(stderr, "Packaged by      : %s\n", GMSH_PACKAGER);
-        fprintf(stderr, "Web site         : http://www.geuz.org/gmsh/\n");
-        fprintf(stderr, "Mailing list     : gmsh@geuz.org\n");
+        fprintf(stderr, "Web site         : http://gmsh.info\n");
+        fprintf(stderr, "Mailing list     : gmsh@onelab.info\n");
         Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {

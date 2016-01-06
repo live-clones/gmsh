@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@geuz.org>.
+// bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"
@@ -324,8 +324,8 @@ static int _save_view_med(const char *name){ return genericViewFileDialog
 static int _save_view_txt(const char *name){ return genericViewFileDialog
     (name, "TXT Options", 4); }
 
-//static int _save_view_wrl(const char *name){ return genericViewFileDialog    (name, "X3D Options", 7); } 
-static int _save_view_x3d(const char *name){ return x3dViewFileDialog    (name, "X3D Options", 7); } 
+//static int _save_view_wrl(const char *name){ return genericViewFileDialog    (name, "X3D Options", 7); }
+static int _save_view_x3d(const char *name){ return x3dViewFileDialog    (name, "X3D Options", 7); }
 
 
 static int _save_auto(const char *name)
@@ -551,7 +551,7 @@ void file_watch_cb(Fl_Widget *w, void *data)
 
 static void help_online_cb(Fl_Widget *w, void *data)
 {
-  fl_open_uri("http://geuz.org/gmsh/doc/texinfo/");
+  fl_open_uri("http://gmsh.info/doc/texinfo/");
 }
 
 static void help_basic_cb(Fl_Widget *w, void *data)

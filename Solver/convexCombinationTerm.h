@@ -1,8 +1,7 @@
-
-// Gmsh - Copyright (C) 1997-2009 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to <gmsh@geuz.org>.
+// bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #ifndef _CONVEX_COMBINATION_TERM_H_
 #define _CONVEX_COMBINATION_TERM_H_
@@ -27,8 +26,8 @@ class convexCombinationTerm : public femTerm<double> {
   {
     return se->getMeshElement()->getNumShapeFunctions();
   }
-  virtual int sizeOfC(SElement *se) const 
-  { 
+  virtual int sizeOfC(SElement *se) const
+  {
     return se->getMeshElement()->getNumShapeFunctions();
   }
   Dof getLocalDofR(SElement *se, int iRow) const
@@ -55,7 +54,7 @@ class convexCombinationTerm : public femTerm<double> {
 	  a = SVector3(vk->x()-vj->x(),vk->y()-vj->y(),vk->z()-vj->z());
 	  b = SVector3(vl->x()-vj->x(),vl->y()-vj->y(),vl->z()-vj->z());
 	  double angle = myacos(dot(a,b)/(norm(a)*norm(b)));
-	  tan = sin(angle*0.5)/cos(angle*0.5); 
+	  tan = sin(angle*0.5)/cos(angle*0.5);
 	}
 	double length  = vj->distance(vk);
 	m(j, k) = -tan/length; // mean value convex map

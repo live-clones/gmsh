@@ -1,3 +1,3 @@
 #!/bin/sh
 
-find . -type f ! -exec grep -q 'Copyright' {} \; -print
+find ../.. -not -path "*.svn*" -and -type f ! -exec grep -q 'Copyright' {} \; -print

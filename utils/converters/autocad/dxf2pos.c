@@ -1,13 +1,13 @@
 /* $Id: dxf2pos.c,v 1.2 2007-09-04 13:47:07 remacle Exp $ */
 
-/* 
+/*
    AutoCAD DXF to GMSH .pos Data File Converter
 
    David.Colignon@AdValvas.be
-   
+
    This is a hack from the Autocad DXF to DKB .Data file translator Version 1.0
    written by Aaron A. Collins (8/13/90) ( http://www.sdsc.edu/~mjb/mae152/dxf.spec.txt )
-   and from dxf2geo by Christophe Geuzaine ( http://www.geuz.org/gmsh )
+   and from dxf2geo by Christophe Geuzaine ( http://www.gmsh.info )
 
 */
 
@@ -72,7 +72,7 @@ void RenumPoint(void *a, void *b)
 }
 
 struct Line {
-  int num, a, b ; 
+  int num, a, b ;
 } ;
 
 int fcmpLine (const void *a, const void *b)
@@ -114,7 +114,7 @@ void RenumLine(void *a, void *b)
 }
 
 struct arXfa {
-  int num_ar, num_el[3] ; 
+  int num_ar, num_el[3] ;
 } ;
 
 int fcmparXfa (const void *a, const void *b)
@@ -177,7 +177,7 @@ void WriteFacet_tri(void *a, void *b)
     fprintf(outfile, "%f %f %f \n", tt->z[0], tt->z[1], tt->z[2]);
     fprintf(outfile, "%f %f %f \n", s*(tt->no[0]), s*(tt->no[1]), s*(tt->no[2]));
     fprintf(outfile, "%f %f %f \n", s*(tt->no[0]), s*(tt->no[1]), s*(tt->no[2]));
-    fprintf(outfile, "%f %f %f \n", s*(tt->no[0]), s*(tt->no[1]), s*(tt->no[2]));    
+    fprintf(outfile, "%f %f %f \n", s*(tt->no[0]), s*(tt->no[1]), s*(tt->no[2]));
   }
 }
 
@@ -194,12 +194,12 @@ void WriteFacet_qua(void *a, void *b)
     fprintf(outfile, "%f %f %f %f\n", tt->z[0], tt->z[1], tt->z[2], tt->z[3]);
     fprintf(outfile, "%f %f %f \n", s*(tt->no[0]), s*(tt->no[1]), s*(tt->no[2]));
     fprintf(outfile, "%f %f %f \n", s*(tt->no[0]), s*(tt->no[1]), s*(tt->no[2]));
-    fprintf(outfile, "%f %f %f \n", s*(tt->no[0]), s*(tt->no[1]), s*(tt->no[2]));    
-    fprintf(outfile, "%f %f %f \n", s*(tt->no[0]), s*(tt->no[1]), s*(tt->no[2]));    
+    fprintf(outfile, "%f %f %f \n", s*(tt->no[0]), s*(tt->no[1]), s*(tt->no[2]));
+    fprintf(outfile, "%f %f %f \n", s*(tt->no[0]), s*(tt->no[1]), s*(tt->no[2]));
   }
 }
 
-void orienttri_3 ( int Edgs , int Tgl , int Tgll ) 
+void orienttri_3 ( int Edgs , int Tgl , int Tgll )
 {
   struct Facet tri_0 , *tri_a , *tri_b ;
   int ii , mm  , numa , numb ;
@@ -232,24 +232,24 @@ void orienttri_2 (int N1 )
       Tgl=List_Fa_1[I-1];
       tri_0.num = Tgl ;
       tri_a = (struct Facet*)Tree_PQuery(Facet_T, &tri_0) ;
-      nbar = tri_a->nbar ; 
-      for (IEdgs=1 ; IEdgs <=nbar ; IEdgs++) { 
-	  Edgs = tri_a->ar[IEdgs-1] ; 
+      nbar = tri_a->nbar ;
+      for (IEdgs=1 ; IEdgs <=nbar ; IEdgs++) {
+	  Edgs = tri_a->ar[IEdgs-1] ;
 	  arXfa_0.num_ar = Edgs ;
 	  arXfa_b = (struct arXfa*)Tree_PQuery(arXfa_T, &arXfa_0) ;
-	  for (Mult=1 ; Mult<=3 ; Mult++) { 
+	  for (Mult=1 ; Mult<=3 ; Mult++) {
 	      Tgll = arXfa_b->num_el[Mult-1] ;
 	      if ( (Tgll!=0) && (Test_ori[Tgll-1] == 0) ) {
 		  N2 = N2+1 ;
 		  List_Fa_2[N2-1] = Tgll ;
-		  orienttri_3( Edgs , Tgl , Tgll ) ; 
+		  orienttri_3( Edgs , Tgl , Tgll ) ;
 		  Test_ori[Tgll-1] = 1 ;
 	      }
 	  }
       }
   }
   for ( I=1 ; I<=N2 ; I++ ) {
-      List_Fa_1[I-1] = List_Fa_2[I-1] ; 
+      List_Fa_1[I-1] = List_Fa_2[I-1] ;
   }
   N1 = N2 ;
   if (N1!=0) goto flag1 ;
@@ -265,13 +265,13 @@ void orienttri_1 (void )
   }
   N1 = 1 ;
   List_Fa_1[1-1] = 1 ;
-  Test_ori[1-1] = 1 ; 
+  Test_ori[1-1] = 1 ;
   orienttri_2(N1) ;
   for ( ii=2 ; ii<=nb_tt ; ii++ ) {
     if ( Test_ori[ii-1] == 0 ) {
-      N1 = 1 ; 
+      N1 = 1 ;
       List_Fa_1[1-1] = ii ;
-      Test_ori[ii-1] = 1 ; 
+      Test_ori[ii-1] = 1 ;
       orienttri_2(N1) ;
     }
   }
@@ -279,13 +279,13 @@ void orienttri_1 (void )
 }
 
 void Addobj(void)
-{ 
-  struct Point      p ; 
+{
+  struct Point      p ;
   struct Line       l ;
   struct Facet   t ;
   struct arXfa      arXfa_cur ;
   int   ii , nump[4] , numl[4] , sel[4] ;
-  float det[4] ; 
+  float det[4] ;
 
   if (strstr(curobj, "POINT")){
     p.x = xc[0] ; p.y = yc[0] ; p.z = zc[0] ; AddPoint(&p) ;
@@ -300,12 +300,12 @@ void Addobj(void)
     p.x = xc[1] ; p.y = yc[1] ; p.z = zc[1] ; nump[1] = AddPoint(&p) ;
     l.a = nump[0] ; l.b = nump[1] ; AddLine(&l) ;
 
-  } else if (strstr(curobj, "3DFACE")){ 
+  } else if (strstr(curobj, "3DFACE")){
 
-    det[0] =    (((yc[1]-yc[0])*(zc[2]-zc[0]))-((zc[1]-zc[0])*(yc[2]-yc[0]))) ; 
-    det[1] = -1*(((xc[1]-xc[0])*(zc[2]-zc[0]))-((zc[1]-zc[0])*(xc[2]-xc[0]))) ; 
-    det[2] =    (((xc[1]-xc[0])*(yc[2]-yc[0]))-((yc[1]-yc[0])*(xc[2]-xc[0]))) ; 
-    det[3] = sqrt ( det[0]*det[0]+det[1]*det[1]+det[2]*det[2] ) ; 
+    det[0] =    (((yc[1]-yc[0])*(zc[2]-zc[0]))-((zc[1]-zc[0])*(yc[2]-yc[0]))) ;
+    det[1] = -1*(((xc[1]-xc[0])*(zc[2]-zc[0]))-((zc[1]-zc[0])*(xc[2]-xc[0]))) ;
+    det[2] =    (((xc[1]-xc[0])*(yc[2]-yc[0]))-((yc[1]-yc[0])*(xc[2]-xc[0]))) ;
+    det[3] = sqrt ( det[0]*det[0]+det[1]*det[1]+det[2]*det[2] ) ;
 
    if (xc[3] == xc[2] && yc[3] == yc[2] && zc[3] == zc[2]) {
       if ( det[3] == 0. ) {
@@ -316,12 +316,12 @@ void Addobj(void)
 
       if (xc[3] == xc[0] && yc[3] == yc[0] && zc[3] == zc[0]) {
 	printf("!!! WARNING : Degenerate quadrangular 3DFACE converted in triangle !!!\n") ;
-	xc[3] = xc[2] ; yc[3] = yc[2] ; zc[3] = zc[2] ; 
+	xc[3] = xc[2] ; yc[3] = yc[2] ; zc[3] = zc[2] ;
       }
     }
     for ( ii=0 ; ii<=2 ; ii++ ) {
       p.x = xc[ii] ; p.y = yc[ii] ; p.z = zc[ii] ; nump[ii] = AddPoint(&p) ;
-      t.no[ii] = det[ii]/det[3] ; 
+      t.no[ii] = det[ii]/det[3] ;
     }
     l.a = nump[0] ; l.b = nump[1] ; numl[0] = AddLine(&l) ; sel[0] = sl ;
     arXfa_cur.num_ar = numl[0] ; AddarXfa(&arXfa_cur) ;
@@ -344,17 +344,17 @@ void Addobj(void)
       arXfa_cur.num_ar = numl[3] ; AddarXfa(&arXfa_cur) ;
     }
     for ( ii=0 ; ii<=3 ; ii++ ) {
-      t.ar[ii] = numl[ii] ; 
+      t.ar[ii] = numl[ii] ;
       t.s[ii] = sel[ii] ;
-      t.x[ii] = xc[ii] ; t.y[ii] = yc[ii] ; t.z[ii] = zc[ii] ; 
+      t.x[ii] = xc[ii] ; t.y[ii] = yc[ii] ; t.z[ii] = zc[ii] ;
     }
-    t.ori = 1 ; 
+    t.ori = 1 ;
     AddFacet(&t) ;
   }
 }
 
 int getline(void)
-{ 
+{
   fgets(linbuf, BUFSIZE, infile); /* get a line from .DXF */
   if (feof(infile))
     return(1);
@@ -375,8 +375,8 @@ int main(int argc, char *argv[])
     }
     THETOL = atof(argv[2]) ;
   */
-  printf("\nAutoCAD DXF to Emc2000Flash .Geom Data File Converter\n") ; 
-  printf("by David Colignon ( David.Colignon@AdValvas.be )\n\n") ; 
+  printf("\nAutoCAD DXF to Emc2000Flash .Geom Data File Converter\n") ;
+  printf("by David Colignon ( David.Colignon@AdValvas.be )\n\n") ;
 
   strcpy(inname, argv[1]); /* make copy we can mess with */
   if (!strchr(inname, '.')) /* no dot present in filename? */
@@ -401,8 +401,8 @@ int main(int argc, char *argv[])
   Line_T     = Tree_Create(sizeof(struct Line), fcmpLine) ;
   Facet_T   = Tree_Create(sizeof(struct Facet), fcmpFacet) ;
   arXfa_T    = Tree_Create(sizeof(struct arXfa), fcmparXfa) ;
-  
- find: 
+
+ find:
   while (!feof(infile)){ /* run file up to the "ENTITIES" section */
     if (getline()) goto stopit;
     if (groupcode == 0){ /* file section mark */
@@ -459,12 +459,12 @@ int main(int argc, char *argv[])
     }
   }
 
- stopit: 
+ stopit:
   fclose(infile);
 
   nb_p  = Tree_Nbr(Point_T) ;
   new_num_pt   = (int*) Malloc ( (nb_p+1) * sizeof(int) ) ;
-  baryx /= nb_p ; baryy /= nb_p ; baryz /= nb_p ; 
+  baryx /= nb_p ; baryy /= nb_p ; baryz /= nb_p ;
   nb_l  = Tree_Nbr(Line_T) ;
   new_num_l = (int*) Malloc ( (nb_l+1) * sizeof(int) ) ;
   nb_tt = Tree_Nbr(Facet_T) ;

@@ -314,8 +314,8 @@ extern "C" {
             << "Version " << GMSH_VERSION << " "
             << "(<i>Build date:</i> " << GMSH_DATE << ")"
             << "<p>Copyright (C) 1997-2015 Christophe Geuzaine and Jean-Fran&ccedil;ois Remacle</p>"
-            << "<p><a href=\"http://geuz.org/gmsh/doc/CREDITS.txt\">Credits</a> "
-            << "and <a href=\"http://geuz.org/gmsh/doc/LICENSE.txt\">licensing information</a></p>"
+            << "<p><a href=\"http://gmsh.info/doc/CREDITS.txt\">Credits</a> "
+            << "and <a href=\"http://gmsh.info/doc/LICENSE.txt\">licensing information</a></p>"
             << "<p><i>Build options:</i> " << GMSH_CONFIG_OPTIONS << "</p>"
             << "<p>Visit <a href=\"http://gmsh.info\">http://gmsh.info</a> for more information</p></center>";
     return env->NewStringUTF(sstream.str().c_str());
@@ -328,8 +328,8 @@ extern "C" {
             << "Version " << GETDP_VERSION << " "
             << "(<i>Build date:</i> " << GETDP_DATE << ")"
             << "<p>Copyright (C) 1997-2015 Patrick Dular and Christophe Geuzaine, University of Li&egrave;ge</p>"
-            << "<p><a href=\"http://geuz.org/getdp/doc/CREDITS.txt\">Credits</a> "
-            << "and <a href=\"http://geuz.org/getdp/doc/LICENSE.txt\">licensing information</a></p>"
+            << "<p><a href=\"http://getdp.info/doc/CREDITS.txt\">Credits</a> "
+            << "and <a href=\"http://getdp.info/doc/LICENSE.txt\">licensing information</a></p>"
             << "<p><i>Build options:</i> " << GETDP_CONFIG_OPTIONS << "</p>"
             << "<p>Visit <a href=\"http://getdp.info\">http://getdp.info</a> for more information</p></center>";
     return env->NewStringUTF(sstream.str().c_str());

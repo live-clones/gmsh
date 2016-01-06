@@ -10,7 +10,7 @@ his contribution shall be cited appropriately.
 All code reused from Gmsh is Copyright (C) 1997-2013 C. Geuzaine, 
 J.-F. Remacle 
 
-Gmsh is available at: www.geuz.org/gmsh
+Gmsh is available at: www.gmsh.info
 
 See licensing information below.
 

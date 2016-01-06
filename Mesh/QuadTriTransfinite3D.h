@@ -17,7 +17,7 @@ All reused or original Gmsh code is Copyright (C) 1997-2016 C. Geuzaine, J.-F. R
 Gmsh is available at: www.geuz.org/gmsh
 
 For Gmsh license information, see the LICENSE.txt file for license information. Please report all
-Gmsh bugs and problems to the public mailing list <gmsh@geuz.org>.
+Gmsh bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License, Version 2,

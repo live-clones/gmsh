@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@geuz.org>.
+// bugs and problems to the public mailing list <gmsh@onelab.info>.
 //
 // PViewX3D is a extension for Post-processing outputs :
 // creates a file in X3D format with the same features as

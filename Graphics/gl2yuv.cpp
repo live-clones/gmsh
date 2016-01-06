@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@geuz.org>.
+// bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 /*
  * This code is based on the rgbtoycc.c code from the MPEG-1 Video

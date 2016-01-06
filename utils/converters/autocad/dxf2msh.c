@@ -1,13 +1,13 @@
 /* $Id: dxf2msh.c,v 1.1 2003-05-09 21:58:54 geuzaine Exp $ */
 
-/* 
+/*
    AutoCAD DXF to GMSH .msh Data File Converter
 
    David.Colignon@AdValvas.be
-   
+
    This is a hack from the Autocad DXF to DKB .Data file translator Version 1.0
    written by Aaron A. Collins (8/13/90) ( http://www.sdsc.edu/~mjb/mae152/dxf.spec.txt )
-   and from dxf2geo by Christophe Geuzaine ( http://www.geuz.org/gmsh )
+   and from dxf2geo by Christophe Geuzaine ( http://www.gmsh.info )
 
 */
 
@@ -25,7 +25,7 @@ FILE    *infile, *outfile ;
 char    inname[80], outname[80], curobj[80], linbuf[BUFSIZE];
 int     i, groupcode, num_p=1 , num_l=1 , num_tt=1 ;
 int     cpt_p=1, nb_p, *new_num_pt, cpt_l=1, nb_l, *new_num_l ;
-int     nb_tt, sl , *List_Fa_1, *List_Fa_2 , *Test_ori ; 
+int     nb_tt, sl , *List_Fa_1, *List_Fa_2 , *Test_ori ;
 float   xc[10], yc[10], zc[10], angles[10], baryx=0., baryy=0., baryz=0. ;
 float   THETOL=0.0000000001 ;
 Tree_T  *Point_T , *Line_T , *Facet_T , *arXfa_T ;
@@ -75,12 +75,12 @@ void WritePoint(void *a, void *b)
 {
   struct Point *p ;
   p = (struct Point *) a ;
-  fprintf(outfile, "%d %.6f %.6f %.6f\n", 
+  fprintf(outfile, "%d %.6f %.6f %.6f\n",
 	  new_num_pt[p->num], (p->x)-baryx, (p->y)-baryy, (p->z)-baryz) ;
 }
 
 struct Line {
-  int num, a, b ; 
+  int num, a, b ;
 } ;
 
 int fcmpLine (const void *a, const void *b)
@@ -130,7 +130,7 @@ void WriteLine(void *a, void *b)
 }
 
 struct  arXfa {
-  int num_ar, num_el[3] ; 
+  int num_ar, num_el[3] ;
 } ;
 
 int fcmparXfa (const void *a, const void *b)
@@ -190,12 +190,12 @@ void WriteFacet(void *a, void *b)
   } else {
   fprintf(outfile, "%d 3 99 0 4 %d %d %d %d\n",
 	  t->num+nb_l, new_num_pt[t->p[0]], new_num_pt[t->p[1]], new_num_pt[t->p[2]], new_num_pt[t->p[3]]) ;
- 
+
   }
 }
 
 // **********************************************************************************************
-void orienttri_3 ( int Edgs , int Tgl , int Tgll ) 
+void orienttri_3 ( int Edgs , int Tgl , int Tgll )
 {
   struct Facet tri_0 , *tri_a , *tri_b ;
   int ii , mm  , numa , numb ;
@@ -230,9 +230,9 @@ void orienttri_2 (int N1 )
     Tgl=List_Fa_1[I-1];
     tri_0.num = Tgl ;
     tri_a = (struct Facet*)Tree_PQuery(Facet_T, &tri_0) ;
-    nbar = tri_a->nbar ; 
+    nbar = tri_a->nbar ;
     for (IEdgs=1 ; IEdgs <=nbar ; IEdgs++) { // pour chaque arete de la face
-      Edgs = tri_a->ar[IEdgs-1] ; 
+      Edgs = tri_a->ar[IEdgs-1] ;
       arXfa_0.num_ar = Edgs ;
       arXfa_b = (struct arXfa*)Tree_PQuery(arXfa_T, &arXfa_0) ;
       for (Mult=1 ; Mult<=3 ; Mult++) { // pour 3 faces possibles ayant cette arete
@@ -241,14 +241,14 @@ void orienttri_2 (int N1 )
 	  //printf("Tgll  %d  Test_ori[Tgll-1]  %d\n",Tgll,Test_ori[Tgll-1]);
 	  N2 = N2+1 ;
 	  List_Fa_2[N2-1] = Tgll ;
-	  orienttri_3( Edgs , Tgl , Tgll ) ; 
+	  orienttri_3( Edgs , Tgl , Tgll ) ;
 	  Test_ori[Tgll-1] = 1 ;
 	}
       }
     }
   }
   for ( I=1 ; I<=N2 ; I++ ) {
-    List_Fa_1[I-1] = List_Fa_2[I-1] ; 
+    List_Fa_1[I-1] = List_Fa_2[I-1] ;
   }
   N1 = N2 ;
   //if (N2!=0) printf("Longueur List_Fa2 = %d \n",N2) ;
@@ -265,14 +265,14 @@ void orienttri_1 (void )
   }
   N1 = 1 ;
   List_Fa_1[1-1] = 1 ;
-  Test_ori[1-1] = 1 ; 
+  Test_ori[1-1] = 1 ;
   orienttri_2(N1) ;
   for ( ii=2 ; ii<=nb_tt ; ii++ ) {
     if ( Test_ori[ii-1] == 0 ) {
       //printf("!!! Warning : Facet number %d not previously reached. New independent surface ?\n",ii);
-      N1 = 1 ; 
+      N1 = 1 ;
       List_Fa_1[1-1] = ii ;
-      Test_ori[ii-1] = 1 ; 
+      Test_ori[ii-1] = 1 ;
       orienttri_2(N1) ;
     }
   }
@@ -284,13 +284,13 @@ void orienttri_1 (void )
 
 
 void Addobj(void) /* dump out current object we should have all info on */
-{ 
-  struct Point      p ; 
+{
+  struct Point      p ;
   struct Line       l ;
   struct Facet      t ;
   struct arXfa      arXfa_cur ;
   int   ii , nump[4] , numl[4] , sel[4] ;
-  float det[4] ; 
+  float det[4] ;
 
   if (strstr(curobj, "POINT")){
     p.x = xc[0] ; p.y = yc[0] ; p.z = zc[0] ; AddPoint(&p) ;
@@ -300,17 +300,17 @@ void Addobj(void) /* dump out current object we should have all info on */
     if (xc[0]==xc[1] && yc[0]==yc[1] && zc[0]==zc[1]) {
       printf("!!! Warning : zero-length line in (3D)LINE removed !!!\n") ;
       return;
-    } 
+    }
     p.x = xc[0] ; p.y = yc[0] ; p.z = zc[0] ; nump[0] = AddPoint(&p) ;
     p.x = xc[1] ; p.y = yc[1] ; p.z = zc[1] ; nump[1] = AddPoint(&p) ;
     l.a = nump[0] ; l.b = nump[1] ; AddLine(&l) ;
 
-  } else if (strstr(curobj, "3DFACE")){ 
+  } else if (strstr(curobj, "3DFACE")){
 
-    det[0] =    (((yc[1]-yc[0])*(zc[2]-zc[0]))-((zc[1]-zc[0])*(yc[2]-yc[0]))) ; 
-    det[1] = -1*(((xc[1]-xc[0])*(zc[2]-zc[0]))-((zc[1]-zc[0])*(xc[2]-xc[0]))) ; 
-    det[2] =    (((xc[1]-xc[0])*(yc[2]-yc[0]))-((yc[1]-yc[0])*(xc[2]-xc[0]))) ; 
-    det[3] = sqrt ( det[0]*det[0]+det[1]*det[1]+det[2]*det[2] ) ; 
+    det[0] =    (((yc[1]-yc[0])*(zc[2]-zc[0]))-((zc[1]-zc[0])*(yc[2]-yc[0]))) ;
+    det[1] = -1*(((xc[1]-xc[0])*(zc[2]-zc[0]))-((zc[1]-zc[0])*(xc[2]-xc[0]))) ;
+    det[2] =    (((xc[1]-xc[0])*(yc[2]-yc[0]))-((yc[1]-yc[0])*(xc[2]-xc[0]))) ;
+    det[3] = sqrt ( det[0]*det[0]+det[1]*det[1]+det[2]*det[2] ) ;
    if (xc[3] == xc[2] && yc[3] == yc[2] && zc[3] == zc[2]) {
       if ( det[3] == 0. ) {
 	printf("!!! WARNING : Degenerate triangular 3DFACE (colinear points) removed !!!\n") ;
@@ -320,12 +320,12 @@ void Addobj(void) /* dump out current object we should have all info on */
 
       if (xc[3] == xc[0] && yc[3] == yc[0] && zc[3] == zc[0]) {
 	printf("!!! WARNING : Degenerate quadrangular 3DFACE converted in triangle !!!\n") ;
-	xc[3] = xc[2] ; yc[3] = yc[2] ; zc[3] = zc[2] ; 
+	xc[3] = xc[2] ; yc[3] = yc[2] ; zc[3] = zc[2] ;
       }
     }
      for ( ii=0 ; ii<=2 ; ii++ ) {
       p.x = xc[ii] ; p.y = yc[ii] ; p.z = zc[ii] ; nump[ii] = AddPoint(&p) ;
-      t.no[ii] = det[ii]/det[3] ; 
+      t.no[ii] = det[ii]/det[3] ;
     }
     l.a = nump[0] ; l.b = nump[1] ; numl[0] = AddLine(&l) ; sel[0] = sl ;
     arXfa_cur.num_ar = numl[0] ; AddarXfa(&arXfa_cur) ;
@@ -333,30 +333,30 @@ void Addobj(void) /* dump out current object we should have all info on */
     arXfa_cur.num_ar = numl[1] ; AddarXfa(&arXfa_cur) ;
 
     if (xc[3] == xc[2] && yc[3] == yc[2] && zc[3] == zc[2]){
-      t.nbar = 3 ; 
+      t.nbar = 3 ;
       l.a = nump[2] ; l.b = nump[0] ; numl[2] = AddLine(&l) ; sel[2] = sl ;
       arXfa_cur.num_ar = numl[2] ; AddarXfa(&arXfa_cur) ;
       nump[3] = 0 ; numl[3] = 0 ; sel[3] = 0 ; // fausse 4eme arete
     } else {
       t.nbar = 4 ;
       p.x = xc[3] ; p.y = yc[3] ; p.z = zc[3] ; nump[3] = AddPoint(&p) ;
-      l.a = nump[2] ; l.b = nump[3] ; numl[2] = AddLine(&l) ; sel[2] = sl ; 
+      l.a = nump[2] ; l.b = nump[3] ; numl[2] = AddLine(&l) ; sel[2] = sl ;
       arXfa_cur.num_ar = numl[2] ; AddarXfa(&arXfa_cur) ;
       l.a = nump[3] ; l.b = nump[0] ; numl[3] = AddLine(&l) ; sel[3] = sl ;
       arXfa_cur.num_ar = numl[3] ; AddarXfa(&arXfa_cur) ;
     }
     for ( ii=0 ; ii<=3 ; ii++ ) {
-      t.ar[ii] = numl[ii] ; 
+      t.ar[ii] = numl[ii] ;
       t.s[ii] = sel[ii] ;
       t.p[ii] = nump[ii] ;
     }
-    t.ori = 1 ; 
+    t.ori = 1 ;
     AddFacet(&t) ;
   }
 }
 
 int getline(void) /* read a group code and the next line from infile */
-{ 
+{
   fgets(linbuf, BUFSIZE, infile); /* get a line from .DXF */
   if (feof(infile))
     return(1);
@@ -377,8 +377,8 @@ int main(int argc, char *argv[])
     }
     THETOL = atof(argv[2]) ;
   */
-  printf("\nAutoCAD DXF to Emc2000Flash .Geom Data File Converter\n") ; 
-  printf("by David Colignon ( David.Colignon@AdValvas.be )\n\n") ; 
+  printf("\nAutoCAD DXF to Emc2000Flash .Geom Data File Converter\n") ;
+  printf("by David Colignon ( David.Colignon@AdValvas.be )\n\n") ;
 
   strcpy(inname, argv[1]); /* make copy we can mess with */
   if (!strchr(inname, '.')) /* no dot present in filename? */
@@ -403,8 +403,8 @@ int main(int argc, char *argv[])
   Line_T     = Tree_Create(sizeof(struct Line), fcmpLine) ;
   Facet_T   = Tree_Create(sizeof(struct Facet), fcmpFacet) ;
   arXfa_T    = Tree_Create(sizeof(struct arXfa), fcmparXfa) ;
-  
- find: 
+
+ find:
   while (!feof(infile)){ /* run file up to the "ENTITIES" section */
     if (getline()) goto stopit;
     if (groupcode == 0){ /* file section mark */
@@ -461,12 +461,12 @@ int main(int argc, char *argv[])
     }
   }
 
- stopit: 
+ stopit:
   fclose(infile);
 
   nb_p  = Tree_Nbr(Point_T) ;
   new_num_pt   = (int*) Malloc ( (nb_p+1) * sizeof(int) ) ;
-  baryx /= nb_p ; baryy /= nb_p ; baryz /= nb_p ; 
+  baryx /= nb_p ; baryy /= nb_p ; baryz /= nb_p ;
   nb_l  = Tree_Nbr(Line_T) ;
   new_num_l = (int*) Malloc ( (nb_l+1) * sizeof(int) ) ;
   nb_tt = Tree_Nbr(Facet_T) ;
@@ -504,4 +504,3 @@ int main(int argc, char *argv[])
   Free(new_num_l) ;
   exit(0);
 }
-

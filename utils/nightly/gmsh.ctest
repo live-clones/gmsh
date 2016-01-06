@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
-# bugs and problems to the public mailing list <gmsh@geuz.org>.
+# bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 # this is the common ctest script used by all gmsh nightly (and experimental)
 # builds, on all architectures
@@ -23,7 +23,7 @@ else(WITH_COVERAGE AND CTEST_COVERAGE_COMMAND)
 endif(WITH_COVERAGE AND CTEST_COVERAGE_COMMAND)
 
 set(CTEST_SOURCE_DIRECTORY "$ENV{HOME}/src/gmsh")
-set(CTEST_SVN_REPOS https://geuz.org/svn/gmsh/trunk)
+set(CTEST_SVN_REPOS https://onelab.info/svn/gmsh/trunk)
 
 if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
   set(CTEST_CHECKOUT_COMMAND 

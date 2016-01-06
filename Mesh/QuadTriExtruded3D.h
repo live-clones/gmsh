@@ -20,7 +20,7 @@ J.-F. Remacle Gmsh is available at: www.geuz.org/gmsh
 
 For Gmsh license information, see the LICENSE.txt file for license
 information. Please report all Gmsh bugs and problems to the public mailing list
-<gmsh@geuz.org>.
+<gmsh@onelab.info>.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License, Version 2, as published by the Free

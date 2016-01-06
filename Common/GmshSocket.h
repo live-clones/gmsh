@@ -23,7 +23,7 @@
 // OF THIS SOFTWARE.
 //
 // Please report all bugs and problems to the public mailing list
-// <gmsh@geuz.org>.
+// <gmsh@onelab.info>.
 
 #ifndef _GMSH_SOCKET_H_
 #define _GMSH_SOCKET_H_

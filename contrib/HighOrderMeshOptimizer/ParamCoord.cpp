@@ -23,7 +23,7 @@
 // OF THIS SOFTWARE.
 //
 // Please report all bugs and problems to the public mailing list
-// <gmsh@geuz.org>.
+// <gmsh@onelab.info>.
 //
 // Contributor(s): Thomas Toulorge, Jonathan Lambrechts
 

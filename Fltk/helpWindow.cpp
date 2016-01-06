@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@geuz.org>.
+// bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <sstream>
 #include <algorithm>
@@ -301,11 +301,11 @@ helpWindow::helpWindow()
     sstream << "<center><h3>Gmsh</h3><br>version " << GetGmshVersion()
             << "<p>Copyright (C) 1997-2016"
             << "<br>Christophe Geuzaine and Jean-Francois Remacle"
-            << "<p><a href=\"http://geuz.org/gmsh/doc/CREDITS.txt\">Credits</a> "
-            << "and <a href=\"http://geuz.org/gmsh/doc/LICENSE.txt\">licensing "
+            << "<p><a href=\"http://gmsh.info/doc/CREDITS.txt\">Credits</a> "
+            << "and <a href=\"http://gmsh.info/doc/LICENSE.txt\">licensing "
             << "information</a>"
             << "<p>Please send all questions and bug reports to the public mailing list "
-            << "<a href=\"mailto:gmsh@geuz.org\">gmsh@geuz.org</a></center>"
+            << "<a href=\"mailto:gmsh@onelab.info\">gmsh@onelab.info</a></center>"
             << "<ul>"
             << "<li><i>Build OS:</i> " << GetGmshBuildOS()
             << "<li><i>Build date:</i> " << GetGmshBuildDate()
@@ -332,7 +332,7 @@ helpWindow::helpWindow()
 #endif
             << "<li><i>Packaged by:</i> " << GetGmshPackager()
             << "</ul>"
-            << "<center>Visit <a href=\"http://geuz.org/gmsh/\">http://geuz.org/gmsh/</a> "
+            << "<center>Visit <a href=\"http://gmsh.info\">http://gmsh.info</a> "
             << "for more information</center>";
     o->value(sstream.str().c_str());
     o->link(help_link);

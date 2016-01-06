@@ -1,5 +1,5 @@
 // This file was originally written by Nico Schloemer,
-// Citation: http://geuz.org/pipermail/gmsh/2012/007576.html
+// Citation: http://onelab.info/pipermail/gmsh/2012/007576.html
 
 //set options
 Geometry.Surfaces=1;

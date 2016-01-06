@@ -24,7 +24,7 @@ ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 OF THIS SOFTWARE.
 
 Please report all bugs and problems to the public mailing list
-<gmsh@geuz.org>.
+<gmsh@onelab.info>.
 """
 
 import socket, struct, os, sys, subprocess

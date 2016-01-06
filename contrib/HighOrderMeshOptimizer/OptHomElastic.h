@@ -23,7 +23,7 @@
 // OF THIS SOFTWARE.
 //
 // Please report all bugs and problems to the public mailing list
-// <gmsh@geuz.org>.
+// <gmsh@onelab.info>.
 
 #ifndef _OPT_HOM_ELASTIC_H_
 #define _OPT_HOM_ELASTIC_H_
