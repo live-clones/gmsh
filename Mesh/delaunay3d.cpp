@@ -80,7 +80,6 @@ struct HilbertSortB
     bbox *= 1.01;
     Vertex**pv = &v[0];
     int depth;
-    //    MultiscaleSortHilbert(pv, (int)v.size(), 64, 0.125,&depth);
     indices.clear();
     MultiscaleSortHilbert(pv, (int)v.size(), 64, .125,&depth,indices);
     indices.push_back(v.size());
@@ -323,7 +322,7 @@ static void delaunayCavity2 (Tet *t,
 			    Vertex *v,
 			    cavityContainer &cavity,
 			    connContainer &bnd,
-			    int thread, int iPnt, int PP){
+			    int thread, int iPnt){
   t->set(thread, iPnt); // Mark the triangle
   cavity.push_back(t);
   for (int iNeigh=0; iNeigh<4 ; iNeigh++){
@@ -332,7 +331,6 @@ static void delaunayCavity2 (Tet *t,
       bnd.push_back(conn(t->getFace(iNeigh),iNeigh,NULL));
     }
     else if (neigh == prev){
-      if (PP == 40)printf("coucou\n");
     }
     else if (!neigh->inSphere(v,thread)){
       Face f = t->getFace(iNeigh);
@@ -340,7 +338,7 @@ static void delaunayCavity2 (Tet *t,
       //      neigh->set(thread, iPnt);
     }
     else if (!(neigh->isSet(thread, iPnt))) {
-      delaunayCavity2 (neigh, t, v, cavity,bnd,thread, iPnt,PP);
+      delaunayCavity2 (neigh, t, v, cavity,bnd,thread, iPnt);
     }
   }
 }
@@ -519,6 +517,7 @@ static Tet* randomTet (int thread,  tetContainer &allocator ){
 }
 
 
+//#define _VERBOSE 1
 void delaunayTrgl (const unsigned int numThreads, 
 		   const unsigned int NPTS_AT_ONCE, 
 		   unsigned int Npts, 
@@ -532,7 +531,7 @@ void delaunayTrgl (const unsigned int numThreads,
   //  checkLocalDelaunayness(T, "initial");
 
   std::vector<int> invalidCavities(numThreads);
-  std::vector<int> cashMisses(numThreads, 0);
+  std::vector<int> cacheMisses(numThreads, 0);
 
   unsigned int maxLocSizeK = 0;
   for (unsigned int i = 0; i < numThreads * NPTS_AT_ONCE; i++){
@@ -609,9 +608,11 @@ void delaunayTrgl (const unsigned int numThreads,
 	  cavityContainer &cavityK = cavity[K];
 	  connContainer   &bndK = bnd[K];
 	  for (unsigned int i=0; i<cavityK.size(); i++)cavityK[i]->unset(myThread,K);
+	  //	  for (unsigned int i=0; i<   bndK.size(); i++)if(bndK[i].t)bndK[i].t->unset(myThread,K);
 	  cavityK.clear(); bndK.clear();
 	  delaunayCavity(t[K], NULL, vToAdd[K], cavityK, bndK, myThread, K);
 	  for (unsigned int i=0; i<cavityK.size(); i++)cavityK[i]->unset(myThread,K);
+	  //	  for (unsigned int i=0; i<   bndK.size(); i++)if(bndK[i].t)bndK[i].t->unset(myThread,K);
 	  // verify the cavity
 	  for (unsigned int i=0; i< bndK.size(); i++) {
 	    double val =   robustPredicates::orient3d((double*)bndK[i].f.V[0],
@@ -654,7 +655,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	    else {
 	      t = allocator.newTet(myThread);
 	    }
-	    if (i < cSize && t->V[0]->_thread != myThread)cashMisses[myThread]++;
+	    if (i < cSize && t->V[0]->_thread != myThread)cacheMisses[myThread]++;
 	    t->setVerticesNoTest (bndK[i].f.V[0], bndK[i].f.V[1], bndK[i].f.V[2], vToAdd[K]);
 	    Tet *neigh = bndK[i].t;
 	    t->T[0] = neigh;
@@ -692,13 +693,11 @@ void delaunayTrgl (const unsigned int numThreads,
 
 
 #ifdef _VERBOSE
-  printf("total time for %d points %12.5E seconds\n",Npts,(double)(_t2-_t1));
-  printf("%8d tets generated (%6f/sec)\n",T.size(),(double) T.size()/ ((double)(_t2-_t1)));
   printf("average searches per point  %12.5E\n",totSearchGlob/Npts);
   printf("average size for del cavity %12.5E\n",totCavityGlob/Npts);
   printf("cash misses: ");
   for (int i=0;i<numThreads;i++){
-    printf("%4d ",(int)cashMisses[i]);
+    printf("%4d ",(int)cacheMisses[i]);
   }
   printf("\n");
 
@@ -838,6 +837,7 @@ void delaunayTriangulation (const int numThreads,
 
   robustPredicates::exactinit(1,maxx,maxy,maxz);
 
+  // FIXME numThreads
   tetContainer allocator (1, S.size() * 10);
   Vertex *box[8];
   delaunayTriangulation (numThreads, nptsatonce, _vertices, box, allocator);

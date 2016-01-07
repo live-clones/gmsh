@@ -311,7 +311,7 @@ void edgeBasedRefinement (const int numThreads,
 
   // fill up old Datastructures
 
-  tetContainer allocator (numThreads,1000000);
+  tetContainer allocator (numThreads,3000000);
 
 
   std::vector<Vertex *> _vertices;
@@ -401,6 +401,9 @@ void edgeBasedRefinement (const int numThreads,
       filterVertices (numThreads, _filter, _vertices, add, _fx, NULL);
       double t3 = Cpu();
       if (add.empty())break;
+      // randomize vertices (EXTREMELY IMPORTANT FOR NOT DETERIORATING PERFORMANCE)
+      std::random_shuffle(add.begin(), add.end());
+      // sort them using BRIO
       std::vector<int> indices;
       SortHilbert(add, indices);
       double t4 = Cpu();
@@ -441,7 +444,6 @@ void edgeBasedRefinement (const int numThreads,
     std::map<Edge,double> _sizes;
     for (unsigned int i=0; i< allocator.size(0);i++){
       Tet  *tt = allocator (0,i);
-      MVertex *mvs[4];
       if (tt->V[0]){      
 	for (int j=0;j<6;j++){
 	  Edge e =  tt->getEdge(j);
