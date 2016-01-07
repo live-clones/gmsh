@@ -35,7 +35,7 @@ Ruled Surface(26) = {25};
 Line Loop(27) = {-4,12,-6};
 Ruled Surface(28) = {27};
 Surface Loop(29) = {28,26,16,14,20,24,22,18};
-Volume(30) = {29};
+//Volume(30) = {29};
 
 // try also netgen:
 // Mesh.Algorithm3D = 4;

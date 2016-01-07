@@ -45,6 +45,7 @@ Ruled Surface(26) = {25};
 Line Loop(27) = {-4,12,-6};
 Ruled Surface(28) = {27};
 Surface Loop(29) = {28,26,16,14,20,24,22,18};
+Volume(1111) = {29};
 
 Point(101) = {0,0,0,lcDom};
 Point(102) = {RDom,0,0,lcDom};
@@ -87,10 +88,10 @@ Volume(200) = {129,29};
 
 
 // Wall ID = 2100
-Physical Surface(2100) = {28,26,16,14,20,24,22,18};
+//Physical Surface(2100) = {28,26,16,14,20,24,22,18};
 // Farfield CBC ID = 2222
-Physical Surface(2222) = {128,126,116,114,120,124,122,118};
+//Physical Surface(2222) = {128,126,116,114,120,124,122,118};
 // Interior ID = 1000
-Physical Volume(1000) = {200};
+//Physical Volume(1000) = {200};
 
 

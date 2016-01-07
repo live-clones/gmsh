@@ -14856,7 +14856,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
 
   recoverdelaunay();
 
-  optimizemesh();
+  //  optimizemesh();
 
   if ((dupverts > 0l) || (unuverts > 0l)) {
     // Remove hanging nodes.

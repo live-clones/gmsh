@@ -155,17 +155,19 @@ void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &
 }
 
 void saturateEdges ( edgeContainer &ec,
-		     std::vector<Tet*> &T,
+		     tetContainer &T,
 		     int nbThreads,
 		     std::vector<Vertex*> &S,
 		     double (*f)(const SPoint3 &p, void *), void *data) {
   AVGSEARCH= 0;
   int counter = 0;
-  for (int i=0;i<T.size();i++){
-    if (T[i]->V[0] && T[i]->_modified){
-      T[i]->_modified = false;
+  // FIXME
+  for (int i=0;i<T.size(0);i++){
+    Tet *t = T(0,i);
+    if (t->V[0] && t->_modified){
+      t->_modified = false;
       for (int iEdge=0;iEdge<6;iEdge++){
-	Edge ed = T[i]->getEdge(iEdge);
+	Edge ed = t->getEdge(iEdge);
 	bool isNew = ec.addNewEdge(ed);
 	counter++;
 	if (isNew){
@@ -309,14 +311,15 @@ void edgeBasedRefinement (const int numThreads,
 
   // fill up old Datastructures
 
-  std::vector<Tet*> _tets;
+  tetContainer allocator (numThreads,1000000);
+
+
   std::vector<Vertex *> _vertices;
   edgeContainer ec;
   std::map<Vertex*,MVertex*> _ma;
 
   {
     std::vector<MTetrahedron*> &T = gr->tetrahedra;
-    _tets.resize(T.size());
     std::set<MVertex *> all;
     for (int i=0;i<T.size();i++){
       for (int j=0;j<4;j++){
@@ -335,28 +338,30 @@ void edgeBasedRefinement (const int numThreads,
       counter++;
     }
     connSet faceToTet;
+    // FIXME MULTITHREADING
     for (unsigned int i=0;i<T.size();i++){
-      int i0 = T[i]->getVertex(0)->getIndex();
-      int i1 = T[i]->getVertex(1)->getIndex();
-      int i2 = T[i]->getVertex(2)->getIndex();
-      int i3 = T[i]->getVertex(3)->getIndex();
-      Tet *t = new Tet (_vertices[i0],_vertices[i1],_vertices[i2],_vertices[i3]);
+      MTetrahedron  *tt = T[i];
+      int i0 = tt->getVertex(0)->getIndex();
+      int i1 = tt->getVertex(1)->getIndex();
+      int i2 = tt->getVertex(2)->getIndex();
+      int i3 = tt->getVertex(3)->getIndex();
+      Tet *t = allocator.newTet(0) ; t->setVertices (_vertices[i0],_vertices[i1],_vertices[i2],_vertices[i3]);
       computeAdjacencies (t,0,faceToTet);
       computeAdjacencies (t,1,faceToTet);
       computeAdjacencies (t,2,faceToTet);
       computeAdjacencies (t,3,faceToTet);
-      _tets[i] = t;
-      delete T[i];
+      delete tt;
     }
     T.clear();
   }
 
   // do not allow to saturate boundary edges
   {
-    for (unsigned int i=0;i<_tets.size();i++) {
+    for (unsigned int i=0;i< allocator.size(0);i++) {
+      Tet  *tt = allocator (0,i);
       for (int j=0;j<4;j++){
-	if (!_tets[i]->T[j]){
-	  Face f = _tets[i]->getFace(j);
+	if (!tt->T[j]){
+	  Face f = tt->getFace(j);
 	  for (int k=0;k<3;k++){
 	    Vertex *vi = f.V[k];
 	    Vertex *vj = f.V[(k+1)%3];
@@ -370,9 +375,10 @@ void edgeBasedRefinement (const int numThreads,
 	}
       }
     }
-    for (unsigned int i=0;i<_tets.size();i++) {
+    for (unsigned int i=0;i< allocator.size(0);i++) {
+      Tet  *tt = allocator (0,i);
       for (int j=0;j<6;j++){
-	Edge e = _tets[i]->getEdge(j);
+	Edge e = tt->getEdge(j);
 	if(e.first->lc() == 1.e22){/*printf("coucou\n");*/e.first->lc() = e.second->lc();}
 	else if(e.second->lc() == 1.e22){/*printf("coucou\n");*/e.second->lc() = e.first->lc();}
       }
@@ -388,16 +394,9 @@ void edgeBasedRefinement (const int numThreads,
 
     double __t__ = Cpu();
     while(1){
-      char name[256];
-      //      sprintf(name,"beforeRefinement%d.pos",iter);
-      //      print (name,_tets);
-      //      printf("ITER %3d\n",iter);
       std::vector<Vertex*> add;
       double t1 = Cpu();
-      saturateEdges (ec, _tets, numThreads, add, _fx, NULL);
-      //      printf("%d points to add\n",add.size());
-      //sprintf(name,"Points%d.pos",iter);
-      //     _print (name,add);
+      saturateEdges (ec, allocator, numThreads, add, _fx, NULL);
       double t2 = Cpu();
       filterVertices (numThreads, _filter, _vertices, add, _fx, NULL);
       double t3 = Cpu();
@@ -405,9 +404,7 @@ void edgeBasedRefinement (const int numThreads,
       std::vector<int> indices;
       SortHilbert(add, indices);
       double t4 = Cpu();
-      //      sprintf(name,"PointsFiltered%d.pos",iter);
-      //      _print (name,add);
-      delaunayTrgl (1,1,add.size(), _tets, &add);
+      delaunayTrgl (1,1,add.size(), &add,allocator);  
       add_all.insert (add_all.end(), add.begin(), add.end());
       double t5 = Cpu();
       Msg::Info("IT %3d %6d points added, timings %5.2f %5.2f %5.2f %5.2f %5.2f %5d",iter,add.size(),
@@ -416,30 +413,17 @@ void edgeBasedRefinement (const int numThreads,
 		(t4-t3),
 		(t5-t4),
 		(t5-__t__),
-		_tets.size());
+		allocator.size(0));
       iter++;
     }
-    //    print ("afterRefinement.pos",_tets);
   }
 
-  std::map<Edge,double> _sizes;
-  for (unsigned int i=0; i<_tets.size();i++){
+  for (unsigned int i=0; i< allocator.size(0);i++){
+    Tet  *tt = allocator (0,i);
     MVertex *mvs[4];
-
-
-    if (_tets[i]->V[0]){
-      for (int j=0;j<6;j++){
-	Edge e =  _tets[i]->getEdge(j);
-	std::map<Edge,double>::iterator it = _sizes.find(e);
-	if (it == _sizes.end()){
-	  double l = sqrt ((e.first->x() -  e.second->x()) * (e.first->x() -  e.second->x()) +
-			   (e.first->y() -  e.second->y()) * (e.first->y() -  e.second->y()) +
-			   (e.first->z() -  e.second->z()) * (e.first->z() -  e.second->z()));
-	  _sizes[e]= 2* l / (e.first->lc() + e.second->lc());
-	}
-      }
+    if (tt->V[0]){      
       for (int j=0;j<4;j++){
-	Vertex *v = _tets[i]->V[j];
+	Vertex *v = tt->V[j];
 	std::map<Vertex*,MVertex*>::iterator it = _ma.find(v);
 	if (it == _ma.end()){
 	  MVertex *mv = new MVertex (v->x(),v->y(),v->z(),gr);
@@ -451,16 +435,35 @@ void edgeBasedRefinement (const int numThreads,
       }
       gr->tetrahedra.push_back(new MTetrahedron(mvs[0],mvs[1],mvs[2],mvs[3]));
     }
-    delete _tets[i];
   }
 
-  std::map<Edge,double>::iterator it = _sizes.begin();
-  double sum = 0;
-  for (; it !=_sizes.end();++it){
-    double d = it->second;
-    double tau = d < 1 ? d - 1 : 1./d - 1;
-    sum += tau;
+  if (Msg::GetVerbosity() == 99) {
+    std::map<Edge,double> _sizes;
+    for (unsigned int i=0; i< allocator.size(0);i++){
+      Tet  *tt = allocator (0,i);
+      MVertex *mvs[4];
+      if (tt->V[0]){      
+	for (int j=0;j<6;j++){
+	  Edge e =  tt->getEdge(j);
+	  std::map<Edge,double>::iterator it = _sizes.find(e);
+	  if (it == _sizes.end()){
+	    double l = sqrt ((e.first->x() -  e.second->x()) * (e.first->x() -  e.second->x()) +
+			     (e.first->y() -  e.second->y()) * (e.first->y() -  e.second->y()) +
+			     (e.first->z() -  e.second->z()) * (e.first->z() -  e.second->z()));
+	    _sizes[e]= 2* l / (e.first->lc() + e.second->lc());
+	  }
+	}
+      }
+    }
+    std::map<Edge,double>::iterator it = _sizes.begin();
+    double sum = 0;
+    int nbBad = 0;
+    for (; it !=_sizes.end();++it){
+      double d = it->second;
+      double tau = d < 1 ? d - 1 : 1./d - 1;
+      if (d > 2.)nbBad++;
+      sum += tau;
+    }
+    Msg::Info("MESH EFFICIENCY : %22.15E %6d edges among %d are out of range",exp (sum / _sizes.size()),nbBad,_sizes.size());
   }
-  Msg::Info("MESH EFFICIENCY : %22.15E",exp (sum / _sizes.size()));
-
 }

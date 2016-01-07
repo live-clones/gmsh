@@ -68,7 +68,7 @@ inline double orientationTestFast(double *pa, double *pb, double *pc, double *pd
 inline bool inSphereTest_s (Vertex *va, Vertex *vb, Vertex *vc, Vertex *vd , Vertex *ve){
   double val = robustPredicates::insphere ((double*)va,(double*)vb,(double*)vc,(double*)vd,(double*)ve);
   if (val == 0.0){
-    printf("symbolic perturbation needed vol %22.15E\n",orientationTestFast((double*)va,(double*)vb,(double*)vc,(double*)vd));
+    Msg::Debug("symbolic perturbation needed vol %22.15E",orientationTestFast((double*)va,(double*)vb,(double*)vc,(double*)vd));
     int count;
     // symbolic perturbation
     Vertex *pt[5] = {va,vb,vc,vd,ve};
@@ -210,6 +210,11 @@ struct Tet {
     const int fac[4][3] = {{0,1,2},{1,3,2},{2,3,0},{1,0,3}};
     return Face (V[fac[k][0]],V[fac[k][1]],V[fac[k][2]]);
   }
+  inline Vertex* getOppositeVertex  (int k) const {
+    const int o[4] = {3,0,1,2};
+    return V[o[k]];
+  }
+
   inline Edge getEdge (int k) const {
     const int edg[6][2] = {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
     return Edge (std::min(V[edg[k][0]],V[edg[k][1]]),
@@ -239,17 +244,71 @@ struct conn {
   }
 };
 
+
+// tetrahedra (one per thread)
+struct aBunchOfTets {
+  std::vector<Tet*> _all;
+  unsigned int _current;
+  unsigned int _nbAlloc;
+  unsigned int size () {
+    return _current + (_all.size()-1) * _nbAlloc;
+  }
+  Tet* operator () (unsigned int i){
+    unsigned int _array = i / _nbAlloc;
+    unsigned int _offset = i % _nbAlloc;
+    //    printf("%d %d %d\n",i,_array,_offset);
+    return _all [_array] + _offset;
+  }
+  aBunchOfTets (unsigned int s) : _current(0), _nbAlloc (s) {
+    _all.push_back(new Tet [_nbAlloc]);
+  }
+  ~aBunchOfTets(){
+    for (unsigned int i=0;i<_all.size();i++){
+      delete [] _all[i];
+    }
+  }
+  Tet* newTet() {
+
+    if (_current == _nbAlloc){
+      _all.push_back(new Tet [_nbAlloc]);
+      printf("REALLOCATION %d\n",_all.size());
+      _current = 0;
+    }
+    _current++;
+    return _all[_all.size()-1]+(_current-1);
+  }
+};
+
+// tetAllocator owns the tets that have been allocated by itself
+class tetContainer {
+  std::vector<aBunchOfTets*> _perThread;
+public:
+  unsigned int size(int thread) const {return _perThread[thread]->size();}
+  Tet * operator () (int thread, int j) const {return (*_perThread[thread]) (j);}
+  tetContainer (int nbThreads, int preallocSizePerThread) {
+    // FIXME !!!
+    if (nbThreads != 1) throw;
+    _perThread.push_back(new aBunchOfTets (preallocSizePerThread) );
+  }
+  Tet * newTet(int thread) {
+    return  _perThread[thread]->newTet();
+  }
+  ~tetContainer(){
+    // FIXME !!!
+    delete _perThread[0];
+  }
+};
+
 typedef std::vector<Tet*> cavityContainer;
 typedef std::vector<conn>   connContainer;
 
 void SortHilbert (std::vector<Vertex*>& v, std::vector<int> &indices);
 void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet);
-void __print (const char *name, std::vector<Tet*> &T, Vertex *v = 0);
-void delaunayTrgl (const unsigned int numThreads,
-		   const unsigned int NPTS_AT_ONCE,
-		   unsigned int Npts,
-		   std::vector<Tet*> &T,
-		   std::vector<Vertex*> assignTo[]);
-
+void __print (const char *name, int thread, tetContainer &T, Vertex *v = 0);
+void delaunayTrgl (const unsigned int numThreads, 
+		   const unsigned int NPTS_AT_ONCE, 
+		   unsigned int Npts, 
+		   std::vector<Vertex*> assignTo[],
+		   tetContainer &allocator);
 
 #endif

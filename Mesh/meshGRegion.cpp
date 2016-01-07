@@ -634,7 +634,10 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions) {
 			    GRegion *gr);
   // just to remove tets that are not to be meshed
   insertVerticesInRegion(gr,0);
-  edgeBasedRefinement (1,1,gr);
+  for(unsigned int i = 0; i < regions.size(); i++){
+    Msg::Info("Refining volume %d",regions[i]->tag());
+    edgeBasedRefinement (1,1,regions[i]);
+  }
   //  RelocateVertices (regions,-1);
 }
 

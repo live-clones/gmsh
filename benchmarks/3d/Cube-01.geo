@@ -6,7 +6,7 @@ Mesh.Smoothing=1;
 //Mesh.Voronoi=1;
 
 lc = 0.1;
-Point(1) = {0.0,0.0,0.0,lc/1};         
+Point(1) = {0.0,0.0,0.0,lc/10};         
 Point(2) = {1,0.0,0.0,lc/1};         
 Point(3) = {1,1,0.0,lc};         
 Point(4) = {0,1,0.0,lc};         

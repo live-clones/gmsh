@@ -305,15 +305,6 @@ void SortHilbert (std::vector<Vertex*>& v, std::vector<int> &indices)
   h.Apply(v, indices);
 }
 
-double walltime( double *t0 )
-{
-#ifdef _OPENMP
-  return omp_get_wtime();
-#else
-  return GetTimeInSeconds();
-#endif
-}
-
 void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet){
   conn c (t->getFace(iFace), iFace, t);
   connContainer::iterator it = std::find(faceToTet.begin(),faceToTet.end(),c);
@@ -359,7 +350,7 @@ static void delaunayCavity (Tet *t,
 			    Vertex *v,
 			    cavityContainer &cavity,
 			    connContainer &bnd,
-			    int thread, int iPnt, int PP){
+			    int thread, int iPnt){
 
   t->set(thread, iPnt); // Mark the triangle
   cavity.push_back(t);
@@ -370,55 +361,12 @@ static void delaunayCavity (Tet *t,
     }
     else if (neigh->inSphere(v,thread)){
       if (!(neigh->isSet(thread, iPnt))) {
-	delaunayCavity (neigh, t, v, cavity,bnd,thread, iPnt,PP);
+	delaunayCavity (neigh, t, v, cavity,bnd,thread, iPnt); 
       }
     }
     else {
       bnd.push_back(conn( t->getFace(iNeigh),iNeigh,neigh));
     }
-  }
-}
-
-bool straddling_segment_intersects_triangle(Vertex *p1, Vertex *p2,
-					   Vertex *q1, Vertex *q2, Vertex *q3)
-{
-  double s1 = orientationTest(p1, p2, q2, q3);
-  double s2 = orientationTest(p1, p2, q3, q1);
-  double s3 = orientationTest(p1, p2, q1, q2);
-
-  if (s1*s2 < 0.0 || s2 * s3 < 0.0) return false;
-
-  double s4 = orientationTest(q1, q2, q3, p1);
-  double s5 = orientationTest(q3, q2, q1, p2);
-
-  return (s4*s5 >= 0) ;
-}
-
-void print (Vertex *v){
-  printf("%p ",v);
-}
-
-void print (Tet *t, bool recur = true){
-  if (recur){
-    printf("PRINT TET\n");
-  }
-  if (!t){
-    printf("(NULL)\n");
-    return;
-  }
-  printf("( ");
-  print(t->V[0]);
-  print(t->V[1]);
-  print(t->V[2]);
-  print(t->V[3]);
-  printf(")\n");
-  if (recur){
-    printf("{");
-    print(t->T[0],false);
-    print(t->T[1],false);
-    print(t->T[2],false);
-    print(t->T[3],false);
-    printf("}\n");
   }
 }
 
@@ -468,29 +416,30 @@ void __print (const char *name, connContainer &conn){
   fclose(f);
 }
 
-void __print (const char *name, std::vector<Tet*> &T, Vertex *v){
+void __print (const char *name, int thread, tetContainer &T, Vertex *v){
   FILE *f = fopen(name,"w");
   fprintf(f,"View \"\"{\n");
   if (v)fprintf(f,"SP(%g,%g,%g){%d};\n",v->x(),v->y(),v->z(),v->getNum());
 
-  for (unsigned int i=0;i<T.size();i++){
-    if (T[i]->V[0]){
-      //      double val = robustPredicates::orient3d((double*)T[i]->V[0],(double*)T[i]->V[1],(double*)T[i]->V[2],(double*)T[i]->V[3]);
+  for (unsigned int i=0;i<T.size(thread);i++){
+    Tet *tt = T(thread,i);
+    if (tt->V[0]){
+      //      double val = robustPredicates::orient3d((double*)tt->V[0],(double*)tt->V[1],(double*)tt->V[2],(double*)tt->V[3]);
       if (!v){
 	fprintf(f,"SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-		T[i]->V[0]->x(),T[i]->V[0]->y(),T[i]->V[0]->z(),
-		T[i]->V[1]->x(),T[i]->V[1]->y(),T[i]->V[1]->z(),
-		T[i]->V[2]->x(),T[i]->V[2]->y(),T[i]->V[2]->z(),
-		T[i]->V[3]->x(),T[i]->V[3]->y(),T[i]->V[3]->z(),
-		T[i]->V[0]->lc(),T[i]->V[1]->lc(),T[i]->V[2]->lc(),T[i]->V[3]->lc());
+		tt->V[0]->x(),tt->V[0]->y(),tt->V[0]->z(),
+		tt->V[1]->x(),tt->V[1]->y(),tt->V[1]->z(),
+		tt->V[2]->x(),tt->V[2]->y(),tt->V[2]->z(),
+		tt->V[3]->x(),tt->V[3]->y(),tt->V[3]->z(),
+		tt->V[0]->lc(),tt->V[1]->lc(),tt->V[2]->lc(),tt->V[3]->lc());
       }
       else{
 	fprintf(f,"SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
-		T[i]->V[0]->x(),T[i]->V[0]->y(),T[i]->V[0]->z(),
-		T[i]->V[1]->x(),T[i]->V[1]->y(),T[i]->V[1]->z(),
-		T[i]->V[2]->x(),T[i]->V[2]->y(),T[i]->V[2]->z(),
-		T[i]->V[3]->x(),T[i]->V[3]->y(),T[i]->V[3]->z(),
-		T[i]->V[0]->getNum(),T[i]->V[1]->getNum(),T[i]->V[2]->getNum(),T[i]->V[3]->getNum());
+		tt->V[0]->x(),tt->V[0]->y(),tt->V[0]->z(),
+		tt->V[1]->x(),tt->V[1]->y(),tt->V[1]->z(),
+		tt->V[2]->x(),tt->V[2]->y(),tt->V[2]->z(),
+		tt->V[3]->x(),tt->V[3]->y(),tt->V[3]->z(),
+		tt->V[0]->getNum(),tt->V[1]->getNum(),tt->V[2]->getNum(),tt->V[3]->getNum());
       }
     }
   }
@@ -541,89 +490,47 @@ bool canWeProcessCavity (cavityContainer &cavity, unsigned int myThread, unsigne
   return true;
 }
 
-static Tet* stoopidSearch (Tet *t, Vertex *v, int thread){
-  std::stack<Tet*> _stack;
-  _stack.push(t);
-  std::set<Tet*> all;
-  while(!_stack.empty()){
-    t = _stack.top();
-    all.insert(t);
-    _stack.pop();
-    if (t->inSphere(v,thread))return t;
-    for (int i=0;i<4;i++){
-      if (t->T[i]){
-	if (all.find(t->T[i]) == all.end())
-	  _stack.push(t->T[i]);
-      }
+bool checkLocalDelaunayness(Tet* t){
+  if (t->V[0]){
+    for (int i=0;i<4;i++){    
+      Tet *n = t->T[i];
+      if (n && n->inSphere(t->getOppositeVertex(i),0))return false;
     }
   }
-  return NULL;
+  return true;
 }
 
-static void stoopidCavity (Tet *t, Vertex *v, int thread, std::vector<Tet*> &cavity){
-  cavity.clear();
-  std::stack<Tet*> _stack;
-  _stack.push(t);
-  std::set<Tet*> all;
-  while(!_stack.empty()){
-    t = _stack.top();
-    all.insert(t);
-    _stack.pop();
-    if (t->inSphere(v,thread)){cavity.push_back(t);}
-    for (int i=0;i<4;i++){
-      if (t->T[i]){
-	if (all.find(t->T[i]) == all.end()){
-	  all.insert(t->T[i]);
-	  _stack.push(t->T[i]);
-	}
-      }
-    }
+int checkLocalDelaunayness(tetContainer &c, int thread, char *msg){
+  int nLoc = 0;
+  for (unsigned int i=0; i<c.size(thread); i++) {
+    if (!checkLocalDelaunayness(c(thread,i)))nLoc++;
+  }
+  if (nLoc != 0)Msg::Info ("%s --> %d tets are not locally delaunay",msg,nLoc);
+  return nLoc ;
+}
+
+static Tet* randomTet (int thread,  tetContainer &allocator ){
+  unsigned int N = allocator.size(thread);
+  //  printf("coucou random TET %d %d\n",thread,N);
+  while(1) {
+    Tet *t = allocator(thread,rand()%N);
+    if (t->V[0])return t;
   }
 }
 
-void checkCavity (std::vector<Tet*> &c, Vertex *v){
-  std::set<Face> ff;
-  for (unsigned int i=0; i<c.size(); i++) {
-    for (int j=0;j<4;j++){
-      std::set<Face>::iterator it = ff.find(c[i]->getFace(j));
-      if (it != ff.end())ff.erase(it);
-      else ff.insert(c[i]->getFace(j));
-    }
-  }
-  printf("%d free faces\n",ff.size());
 
-  std::vector<Tet*> bad;
-  for (unsigned int i=0; i<c.size(); i++) {
-    for (int j=0;j<4;j++){
-      std::set<Face>::iterator it = ff.find(c[i]->getFace(j));
-      if (it != ff.end()){
-	Tet *neigh = c[i]->T[j];
-	if (neigh){
-	  int val = neigh->inSphere(v,0);
-	  if (val){printf("arghhhh %p %p set %d\n",neigh,c[i], neigh->isSet(0,0));
-	    bad.push_back(neigh);
-	    //	    bad.push_back(c[i]);
-	  }
-	}
-	std::vector<Tet*>::iterator it2= std::find(c.begin(),c.end(),neigh);
-	if (it2 != c.end())printf("datastructure broken\n");
-      }
-    }
-  }
-  __print("bad.pos",bad);
-}
-
-void delaunayTrgl (const unsigned int numThreads,
-		   const unsigned int NPTS_AT_ONCE,
-		   unsigned int Npts,
-		   std::vector<Tet*> &T,
-		   std::vector<Vertex*> assignTo[]){
+void delaunayTrgl (const unsigned int numThreads, 
+		   const unsigned int NPTS_AT_ONCE, 
+		   unsigned int Npts, 
+		   std::vector<Vertex*> assignTo[],
+		   tetContainer &allocator){
+#ifdef _VERBOSE
   double totSearchGlob=0;
   double totCavityGlob=0;
-  int counter = 0;
-  int counterMiss = 0;
+#endif
 
-  std::vector<double> cavitySize (numThreads);
+  //  checkLocalDelaunayness(T, "initial");
+
   std::vector<int> invalidCavities(numThreads);
   std::vector<int> cashMisses(numThreads, 0);
 
@@ -635,19 +542,21 @@ void delaunayTrgl (const unsigned int numThreads,
 
 #pragma omp parallel num_threads(numThreads)
   {
-    double totSearch=0;
-    double totCavity=0;
-    std::vector<cavityContainer> cavity(NPTS_AT_ONCE);
-    std::vector<connContainer> bnd(NPTS_AT_ONCE);
-    connContainer faceToTet;
-    std::vector<Tet*> Choice(NPTS_AT_ONCE);
-    for (unsigned int K=0;K<NPTS_AT_ONCE;K++)Choice[K] = T[0];
 
 #ifdef _OPENMP
     int  myThread = omp_get_thread_num();
 #else
     int  myThread = 0;
 #endif
+
+    double totSearch=0;
+    double totCavity=0;
+    std::vector<cavityContainer> cavity(NPTS_AT_ONCE);
+    std::vector<connContainer> bnd(NPTS_AT_ONCE);
+    connContainer faceToTet;
+    std::vector<Tet*> Choice(NPTS_AT_ONCE);
+    for (unsigned int K=0;K<NPTS_AT_ONCE;K++)Choice[K] = randomTet (myThread, allocator);
+    
 
     invalidCavities [myThread] = 0;
     unsigned int locSize=0;
@@ -666,15 +575,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	if (numThreads!=1) allocatedVerts[K][iP]._thread = myThread;
       }
     }
-    int allocatedSize = 12*locSize;
-#ifdef _HAVE_NUMA
-    Tet    *allocatedTable = (Tet*) numa_alloc_local (allocatedSize*sizeof(Tet));
-#else
-    //    Tet    *allocatedTable = new Tet[allocatedSize];
-    std::vector<Tet*> allocatedTable;
-#endif
 
-    int newCounter = 0;
     std::vector<Vertex*> vToAdd(NPTS_AT_ONCE);
 
 #pragma omp barrier
@@ -684,77 +585,33 @@ void delaunayTrgl (const unsigned int numThreads,
 
     for (unsigned int iPGlob=0 ; iPGlob < maxLocSizeK; iPGlob++){
 #pragma omp barrier
-      cavitySize[myThread] = 0;
       std::vector<Tet*> t(NPTS_AT_ONCE);
       //	  double c1 = Cpu();
+      // FIND SEEDS
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	vToAdd[K] = iPGlob <  locSizeK[K] ? &allocatedVerts[K][iPGlob] : NULL;
 	if(vToAdd[K]){
-	  if (!Choice[K]->V[0]){
-	    printf("HMMM I KNOW WHAT SHOULD BE DONE\n");
-	    if (Choice[K]->T[0] && Choice[K]->T[0]->V[0])Choice[K] = Choice[K]->T[0];
-	    else if (Choice[K]->T[1] && Choice[K]->T[1]->V[0])Choice[K] = Choice[K]->T[1];
-	    else if (Choice[K]->T[2] && Choice[K]->T[2]->V[0])Choice[K] = Choice[K]->T[2];
-	    else if (Choice[K]->T[3] && Choice[K]->T[3]->V[0])Choice[K] = Choice[K]->T[3];
-	    else printf("I KNOW WHAT SHOULD BE DONE ARGH\n");
-	  }
+	  // In 3D, insertion of a point may lead to deletion of tets !!
+	  if (!Choice[K]->V[0])Choice[K] = randomTet (myThread, allocator);
 	  while(1){
 	    t[K] = walk ( Choice[K] , vToAdd[K], Npts, totSearch, myThread);
 	    if (t[K])break;
-	    Tet * newChoice = NULL;
-	    int ITT=0;
-	    while(1){
-	      newChoice = T[rand() % T.size()];
-	      if (newChoice->V[0])break;
-	      ITT ++;
-	      if (ITT > T.size()) {
-		newChoice == NULL;
-		break;
-	      }
-	    }
-	    if (newChoice == NULL)break;
-	    Choice[K] = newChoice;
-	  }
-	  if (!t[K]){
-	    Msg::Warning("Jump-and-Walk Failed (non convex domain)");
-	    t[K] = stoopidSearch (Choice[K], vToAdd[K],myThread);
-	    if (!t[K]){
-	      Msg::Fatal("A point is outside the triangulation");
-	      throw;
-	    }
+	    // the domain may not be convex. we then start from a random tet and
+	    // walk from there
+	    Choice[K] = randomTet(rand() % numThreads, allocator);
 	  }
 	}
       }
       //      double c1 = Cpu();
-
-      // FIXME TEST
-      //      int NBNULL;
+      // BUILD CAVITIES
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	if(vToAdd[K]){
 	  cavityContainer &cavityK = cavity[K];
 	  connContainer   &bndK = bnd[K];
 	  for (unsigned int i=0; i<cavityK.size(); i++)cavityK[i]->unset(myThread,K);
-	  //	  for (unsigned int i=0; i<   bndK.size(); i++)if(bndK[i].t)bndK[i].t->unset(myThread,K);
 	  cavityK.clear(); bndK.clear();
-	  delaunayCavity(t[K], NULL, vToAdd[K], cavityK, bndK, myThread, K,iPGlob);
+	  delaunayCavity(t[K], NULL, vToAdd[K], cavityK, bndK, myThread, K);
 	  for (unsigned int i=0; i<cavityK.size(); i++)cavityK[i]->unset(myThread,K);
-	  //	  for (unsigned int i=0; i<   bndK.size(); i++)if(bndK[i].t)bndK[i].t->unset(myThread,K);
-	  //// FIXME TEST
-	  //	  NBNULL = 0;
-	  //	  for (unsigned int i=0; i<cavityK.size(); i++) {
-	  //	    for (int j=0;j<4;j++)if(!cavityK[i]->T[j])NBNULL++;
-	  //	  }
-	  /*	  if (iPGlob==40){
-	    char name[245];
-	    printf("cavity for point %d size %d shell %d NBNULL %d\n",
-		   iPGlob,cavityK.size(),bndK.size(),NBNULL);
-	    sprintf(name,"Cavity%d.pos",iPGlob);
-	    __print(name,cavityK,vToAdd[K]);
-	    sprintf(name,"Bnd%d.pos",iPGlob);
-	    __print(name,bndK);
-	    checkCavity(cavityK,vToAdd[K]);
-	  }
-	  */
 	  // verify the cavity
 	  for (unsigned int i=0; i< bndK.size(); i++) {
 	    double val =   robustPredicates::orient3d((double*)bndK[i].f.V[0],
@@ -762,26 +619,11 @@ void delaunayTrgl (const unsigned int numThreads,
 						      (double*)bndK[i].f.V[2],
 						      (double*)vToAdd[K]);
 	    if (val <= 0 ) {
-	      //	      	      char name[245];
-	      //	      	      sprintf(name,"invalidCavity%d.pos",invalidCavities [myThread]);
-	      //	      	      __print(name,cavityK,vToAdd[K]);
-	      //	      	      printf("val = %22.15E\n",val);
-	      //	      	      std::vector<Tet*> temp;
-	      //	      	      stoopidCavity (t[K], vToAdd[K], myThread, temp);
-	      //	      	      sprintf(name,"validCavity%d.pos",invalidCavities [myThread]);
-	      //	      	      __print(name,temp,vToAdd[K]);
-	      //	      	      printf("---> cavity %d vs. %d elements in cavity\n",temp.size(),cavityK.size());
-	      //		      sprintf(name,"Bnd%d.pos",invalidCavities [myThread]);
-	      //		      __print(name,bndK);
-		      //	      for (unsigned int i=0; i<temp.size(); i++) {
-		      //	      		print(temp[i]);
-		      //	      	      }
 	      vToAdd[K] = NULL;
 	      invalidCavities [myThread]++;
 	      break;
 	    }
 	  }
-	  cavitySize[myThread] += (cavityK.size());
 	}
       }
 
@@ -793,9 +635,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	if (!vToAdd[K])ok[K]=false;
 	else ok[K] = canWeProcessCavity (cavity[K], myThread, K);
       }
-
-      //            double ck = Cpu();
-      //      std::set<Tet*> touched;
+      
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	if (ok[K]){
 	  cavityContainer &cavityK = cavity[K];
@@ -805,8 +645,6 @@ void delaunayTrgl (const unsigned int numThreads,
 	  const unsigned int bSize = bndK.size();
 	  totCavity+= cSize;
 	  Choice[K] = cavityK[0];
-	  // FIXME TEST
-	  std::vector<Tet*> _news;
 	  for (unsigned int i=0; i<bSize; i++) {
 	    // reuse memory slots of invalid elements
 	    Tet *t;
@@ -814,9 +652,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	      t = cavityK[i];
 	    }
 	    else {
-	      t = new Tet;
-	      allocatedTable.push_back(t);
-	      newCounter = allocatedTable.size();
+	      t = allocator.newTet(myThread);
 	    }
 	    if (i < cSize && t->V[0]->_thread != myThread)cashMisses[myThread]++;
 	    t->setVerticesNoTest (bndK[i].f.V[0], bndK[i].f.V[1], bndK[i].f.V[2], vToAdd[K]);
@@ -828,60 +664,38 @@ void delaunayTrgl (const unsigned int numThreads,
 	      else if (neigh->getFace(1) == bndK[i].f)neigh->T[1] = t;
 	      else if (neigh->getFace(2) == bndK[i].f)neigh->T[2] = t;
 	      else if (neigh->getFace(3) == bndK[i].f)neigh->T[3] = t;
-	      else {printf("oops 1\n");throw;}
+	      else {Msg::Fatal("Datatrsucture Broken in Triangulation");}
 	    }
 	    computeAdjacencies (t,1,faceToTet);
 	    computeAdjacencies (t,2,faceToTet);
 	    computeAdjacencies (t,3,faceToTet);
-	    _news.push_back(t);
 	  }
-	  // FIXME TEST
-	  //	  int NBNULL2 = 0;
-	  //	  for (unsigned int i=0; i<_news.size(); i++) {
-	  //	    for (int j=0;j<4;j++)if(!_news[i]->T[j])NBNULL2++;
-	  //	  }
-	  //	  if (NBNULL != NBNULL2){
-	  //	    char name[245];
-	  //	    sprintf(name,"invalidConnexion%d.pos",iPGlob);
-	  //	    __print(name,_news,vToAdd[K]);
-	  //	    printf("%d %d\n",NBNULL,NBNULL2);
-	  //	  }
 	  for (unsigned int i=bSize; i<cSize; i++) {
-	    counterMiss++;
 	    cavityK[i]->V[0] = cavityK[i]->V[1] = cavityK[i]->V[2] = cavityK[i]->V[3] = NULL;
 	  }
 	}
-	else {
-	  counter++;
-	}
       }
     }
+#ifdef _VERBOSE
     #pragma omp critical
     {
       totCavityGlob+= totCavity;
       totSearchGlob+= totSearch;
-      for (int i=0;i<newCounter;i++){
-	allocatedTable[i]->setAllDeleted ();
-	if (allocatedTable[i]->V[0]){
-	  T.push_back(allocatedTable [i]);
-	}
-      }
-      //      delete [] allocatedTable;
-      //      printf("new counter = %d\n",newCounter);
     }
+#endif
     #pragma omp barrier
   }
 
   if (invalidCavities[0])Msg::Warning("%d invalid cavities",invalidCavities[0]);
 
+  //checkLocalDelaunayness(T,"final");
+
+
 #ifdef _VERBOSE
-  double _t2 = walltime(&_t);
   printf("total time for %d points %12.5E seconds\n",Npts,(double)(_t2-_t1));
   printf("%8d tets generated (%6f/sec)\n",T.size(),(double) T.size()/ ((double)(_t2-_t1)));
   printf("average searches per point  %12.5E\n",totSearchGlob/Npts);
   printf("average size for del cavity %12.5E\n",totCavityGlob/Npts);
-  printf("counter = %d\n",counter);
-  printf("counterMiss = %d\n",counterMiss);
   printf("cash misses: ");
   for (int i=0;i<numThreads;i++){
     printf("%4d ",(int)cashMisses[i]);
@@ -895,10 +709,10 @@ void delaunayTrgl (const unsigned int numThreads,
 
 static void initialCube (std::vector<Vertex*> &v,
 			 Vertex *box[8],
-			 std::vector<Tet*> &t){
+			 tetContainer & allocator){
   SBoundingBox3d bbox ;
-  bbox += SPoint3(0,0,0);
-  bbox += SPoint3(1,1,1);
+  //  bbox += SPoint3(0,0,0);
+  //  bbox += SPoint3(1,1,1);
   for (size_t i=0;i<v.size();i++){
     Vertex *pv = v[i];
     bbox += SPoint3(pv->x(),pv->y(),pv->z());
@@ -920,18 +734,13 @@ static void initialCube (std::vector<Vertex*> &v,
   Tet *t4 = new Tet (box[1],box[4],box[5],box[7]);
   Tet *t5 = new Tet (box[1],box[7],box[5],box[6]);*/
 
-  Tet *t0 = new Tet (box[7],box[2],box[3],box[1]);
-  Tet *t1 = new Tet (box[7],box[0],box[1],box[3]);
-  Tet *t2 = new Tet (box[1],box[6],box[7],box[2]);
-  Tet *t3 = new Tet (box[1],box[0],box[7],box[4]);
-  Tet *t4 = new Tet (box[4],box[1],box[5],box[7]);
-  Tet *t5 = new Tet (box[7],box[1],box[5],box[6]);
-  t.push_back(t0);
-  t.push_back(t1);
-  t.push_back(t2);
-  t.push_back(t3);
-  t.push_back(t4);
-  t.push_back(t5);
+  Tet *t0 = allocator.newTet(0); t0->setVertices(box[7],box[2],box[3],box[1]);
+  Tet *t1 = allocator.newTet(0); t1->setVertices(box[7],box[0],box[1],box[3]);
+  Tet *t2 = allocator.newTet(0); t2->setVertices(box[1],box[6],box[7],box[2]);
+  Tet *t3 = allocator.newTet(0); t3->setVertices(box[1],box[0],box[7],box[4]);
+  Tet *t4 = allocator.newTet(0); t4->setVertices(box[4],box[1],box[5],box[7]);
+  Tet *t5 = allocator.newTet(0); t5->setVertices(box[7],box[1],box[5],box[6]);
+
   connContainer ctnr;
   for (int i=0;i<4;i++){
     computeAdjacencies (t0,i,ctnr);
@@ -947,20 +756,14 @@ static void initialCube (std::vector<Vertex*> &v,
 void delaunayTriangulation (const int numThreads,
 			    const int nptsatonce,
 			    std::vector<Vertex*> &S,
-			    std::vector<Tet*> &T,
-			    Vertex *box[8]){
+			    Vertex *box[8],
+			    tetContainer & allocator){
   int N = S.size();
 
   std::vector<int> indices;
-  //  double t = 0;
-  //  double t1 = walltime(&t);
   SortHilbert(S, indices);
-  //  double t2 = walltime(&t);
-  //    print ("sorted.pos",S);
-  //  printf("total time for sorting %d points %12.5E seconds\n",S.size(),(double)(t2-t1));
-
-  if (!T.size()){
-    initialCube (S,box,T);
+  if (!allocator.size(0)){
+    initialCube (S,box,allocator);
   }
 
   int nbBlocks  = nptsatonce * numThreads;
@@ -977,8 +780,8 @@ void delaunayTriangulation (const int numThreads,
     //    printf("sizePerBlock[%3d] = %8d\n",i,sizePerBlock);
     int currentBlock = 0;
     int localCounter = 0;
-    // FIXME : something's wring here !!!
-    if (i < -4){
+    // FIXME : something's wrong here !!!
+    if (i < 1){
       for (int jPt=start;jPt<end;jPt++){
 	assignTo0[0].push_back(S[jPt]);
 	S[jPt]->_thread = numThreads*(jPt-start)/(end-start);
@@ -996,15 +799,9 @@ void delaunayTriangulation (const int numThreads,
   }
 
   S.clear();
-  // double _t = 0;
-  //  double _t1 = walltime(&_t);
-  delaunayTrgl(1,1, assignTo0[0].size(),T,assignTo0);
-  //    print ("initialTetrahedrization.pos",T);
-  delaunayTrgl(numThreads,nptsatonce, N,T,&assignTo[0]);
-  //  _t = 0;
-  //  double _t2 = walltime(&_t);
-  //  printf("WALL CLOCK TIME %12.5E\n",_t2-_t1);
-  __print ("finalTetrahedrization.pos",T);
+  delaunayTrgl(1,1, assignTo0[0].size(),assignTo0,allocator);
+  delaunayTrgl(numThreads,nptsatonce, N,&assignTo[0], allocator);
+  __print ("finalTetrahedrization.pos",0, allocator);
 }
 
 
@@ -1041,9 +838,9 @@ void delaunayTriangulation (const int numThreads,
 
   robustPredicates::exactinit(1,maxx,maxy,maxz);
 
-  std::vector<Tet*> _tets;
+  tetContainer allocator (1, S.size() * 10);
   Vertex *box[8];
-  delaunayTriangulation (numThreads, nptsatonce, _vertices, _tets, box);
+  delaunayTriangulation (numThreads, nptsatonce, _vertices, box, allocator);
 
   for (int i=0;i<8;i++){
     Vertex *v = box[i];
@@ -1054,26 +851,27 @@ void delaunayTriangulation (const int numThreads,
     S.push_back(mv);
   }
 
-  for (unsigned int i=0;i<_tets.size();i++){
-    Tet *t =  _tets[i];
-    if (t->V[0]){
-      if (_tets[i]->V[0]->getNum() &&
-	  _tets[i]->V[1]->getNum() &&
-	  _tets[i]->V[2]->getNum() &&
-	  _tets[i]->V[3]->getNum() ) {
-	MVertex *v1 = _temp[_tets[i]->V[0]->getNum()];
-	MVertex *v2 = _temp[_tets[i]->V[1]->getNum()];
-	MVertex *v3 = _temp[_tets[i]->V[2]->getNum()];
-	MVertex *v4 = _temp[_tets[i]->V[3]->getNum()];
-	MTetrahedron *tr = new MTetrahedron(v1,v2,v3,v4);
-	T.push_back(tr);
-      }
-      else {
-	printf("oops\n", _tets[i]->V[0]->getNum(), _tets[i]->V[1]->getNum() , _tets[i]->V[2]->getNum() , _tets[i]->V[3]->getNum());
+  for (int myThread=0; myThread < numThreads; myThread++) {
+    for (unsigned int i=0;i<allocator.size(myThread);i++){
+      Tet *t =  allocator(myThread,i);
+      if (t->V[0]){
+	if (t->V[0]->getNum() &&
+	    t->V[1]->getNum() &&
+	    t->V[2]->getNum() &&
+	    t->V[3]->getNum() ) {
+	  MVertex *v1 = _temp[t->V[0]->getNum()];
+	  MVertex *v2 = _temp[t->V[1]->getNum()];
+	  MVertex *v3 = _temp[t->V[2]->getNum()];
+	  MVertex *v4 = _temp[t->V[3]->getNum()];
+	  MTetrahedron *tr = new MTetrahedron(v1,v2,v3,v4);
+	  T.push_back(tr);
+	}
+	else {
+	  Msg::Fatal("Error in triangulation");
+	}
       }
     }
   }
-  // clean
+
   for (unsigned int i=0;i<_vertices.size();i++)delete _vertices[i];
-  for (unsigned int i=0;i<_tets.size();i++)delete _tets[i];
 }
