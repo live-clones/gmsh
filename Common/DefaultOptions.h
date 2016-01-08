@@ -892,7 +892,7 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "Tangents" , opt_geometry_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" },
-  { F|O, "Tolerance" , opt_geometry_tolerance, 1.e-6 ,
+  { F|O, "Tolerance" , opt_geometry_tolerance, 1.e-8 ,
     "Geometrical tolerance" },
   { F,   "Transform" , opt_geometry_transform , 0. ,
     "Transform model display coordinates (0=no, 1=scale)" },
