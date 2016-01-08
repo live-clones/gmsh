@@ -517,7 +517,7 @@ static Tet* randomTet (int thread,  tetContainer &allocator ){
 }
 
 
-//#define _VERBOSE 1
+#define _VERBOSE 1
 void delaunayTrgl (const unsigned int numThreads, 
 		   const unsigned int NPTS_AT_ONCE, 
 		   unsigned int Npts, 
@@ -528,7 +528,7 @@ void delaunayTrgl (const unsigned int numThreads,
   double totCavityGlob=0;
 #endif
 
-  //  checkLocalDelaunayness(T, "initial");
+  //  checkLocalDelaunayness(allocator, 0, "initial");
 
   std::vector<int> invalidCavities(numThreads);
   std::vector<int> cacheMisses(numThreads, 0);
@@ -552,6 +552,7 @@ void delaunayTrgl (const unsigned int numThreads,
     double totCavity=0;
     std::vector<cavityContainer> cavity(NPTS_AT_ONCE);
     std::vector<connContainer> bnd(NPTS_AT_ONCE);
+    std::vector<bool> ok(NPTS_AT_ONCE);
     connContainer faceToTet;
     std::vector<Tet*> Choice(NPTS_AT_ONCE);
     for (unsigned int K=0;K<NPTS_AT_ONCE;K++)Choice[K] = randomTet (myThread, allocator);
@@ -631,7 +632,6 @@ void delaunayTrgl (const unsigned int numThreads,
 
 #pragma omp barrier
 
-      std::vector<bool> ok(NPTS_AT_ONCE);
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	if (!vToAdd[K])ok[K]=false;
 	else ok[K] = canWeProcessCavity (cavity[K], myThread, K);
@@ -648,13 +648,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	  Choice[K] = cavityK[0];
 	  for (unsigned int i=0; i<bSize; i++) {
 	    // reuse memory slots of invalid elements
-	    Tet *t;
-	    if (i < cSize) {
-	      t = cavityK[i];
-	    }
-	    else {
-	      t = allocator.newTet(myThread);
-	    }
+	    Tet *t = (i < cSize)? cavityK[i] :  allocator.newTet(myThread);
 	    if (i < cSize && t->V[0]->_thread != myThread)cacheMisses[myThread]++;
 	    t->setVerticesNoTest (bndK[i].f.V[0], bndK[i].f.V[1], bndK[i].f.V[2], vToAdd[K]);
 	    Tet *neigh = bndK[i].t;
@@ -672,7 +666,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	    computeAdjacencies (t,3,faceToTet);
 	  }
 	  for (unsigned int i=bSize; i<cSize; i++) {
-	    cavityK[i]->V[0] = cavityK[i]->V[1] = cavityK[i]->V[2] = cavityK[i]->V[3] = NULL;
+	    cavityK[i]->V[0] = NULL;
 	  }
 	}
       }

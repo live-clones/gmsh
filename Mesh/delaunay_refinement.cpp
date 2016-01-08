@@ -140,9 +140,9 @@ void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &
       else {
 	SPoint3 p = p1 * (1.-t) + p2*t;
 	double lc = e.first->lc() * (1.-t) + e.second->lc()*t;
-	const double dx = 1.e-10 * (double) rand() / RAND_MAX;
-	const double dy = 1.e-10 * (double) rand() / RAND_MAX;
-	const double dz = 1.e-10 * (double) rand() / RAND_MAX;
+	const double dx = 1.e-12 * (double) rand() / RAND_MAX;
+	const double dy = 1.e-12 * (double) rand() / RAND_MAX;
+	const double dz = 1.e-12 * (double) rand() / RAND_MAX;
 	S.push_back(new Vertex(p.x()+dx,p.y()+dy,p.z()+dz,lc));
 	L += interval;
       }
