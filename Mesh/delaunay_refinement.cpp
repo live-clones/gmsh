@@ -327,6 +327,16 @@ void edgeBasedRefinement (const int numThreads,
       }
     }
 
+
+    FILE *f = fopen ("pts_init.dat","w");
+    fprintf(f,"%d\n",all.size());
+    for (std::set<MVertex*>::iterator it = all.begin();it !=all.end(); ++it){
+      MVertex *mv = *it;      
+      fprintf(f,"%12.5E %12.5E %12.5E\n",mv->x(),mv->y(),mv->z());
+    }
+    fclose(f);
+
+
     _vertices.resize(all.size());
     int counter=0;
     for (std::set<MVertex*>::iterator it = all.begin();it !=all.end(); ++it){
@@ -393,6 +403,7 @@ void edgeBasedRefinement (const int numThreads,
     Msg::Info("----------------------------------- SATUR FILTR SORTH DELNY TIME  TETS");
 
     double __t__ = Cpu();
+    Tet::in_sphere_counter = 0;
     while(1){
       std::vector<Vertex*> add;
       double t1 = Cpu();
@@ -408,8 +419,16 @@ void edgeBasedRefinement (const int numThreads,
       SortHilbert(add, indices);
       double t4 = Cpu();
       delaunayTrgl (1,1,add.size(), &add,allocator);  
-      add_all.insert (add_all.end(), add.begin(), add.end());
       double t5 = Cpu();
+      add_all.insert (add_all.end(), add.begin(), add.end());
+      //      if (iter == 1){
+      //	FILE *f = fopen ("pts.dat","w");
+      //	fprintf(f,"%d\n",add.size());
+      //	for (unsigned int i=0;i<add.size();i++){
+      //	  fprintf(f,"%12.5E %12.5E %12.5E\n",add[i]->x(),add[i]->y(),add[i]->z());
+      //	}
+      //	fclose(f);
+      //      }
       Msg::Info("IT %3d %6d points added, timings %5.2f %5.2f %5.2f %5.2f %5.2f %5d",iter,add.size(),
 		(t2-t1),
 		(t3-t2),
@@ -417,9 +436,12 @@ void edgeBasedRefinement (const int numThreads,
 		(t5-t4),
 		(t5-__t__),
 		allocator.size(0));
+      printf("%d calls to inSphere\n",Tet::in_sphere_counter);
       iter++;
     }
   }
+
+
 
   for (unsigned int i=0; i< allocator.size(0);i++){
     Tet  *tt = allocator (0,i);

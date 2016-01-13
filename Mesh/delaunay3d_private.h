@@ -36,7 +36,7 @@ public :
   inline double &z() {return _x[2];}
   inline double &lc() {return _lc;}
   inline operator double *() { return _x; }
-  Vertex (double X, double Y, double Z, double lc, int num = 0) : _num(num), _thread(0){
+  Vertex (double X=0, double Y=0, double Z=0, double lc=0, int num = 0) : _num(num), _thread(0){
     _x[0]=X; _x[1]=Y;_x[2]=Z; _lc = lc;}
   Vertex operator + (const Vertex &other){
     return Vertex (x()+other.x(),y()+other.y(),z()+other.z(),other.lc() + _lc);
@@ -68,7 +68,7 @@ inline double orientationTestFast(double *pa, double *pb, double *pc, double *pd
 inline bool inSphereTest_s (Vertex *va, Vertex *vb, Vertex *vc, Vertex *vd , Vertex *ve){
   double val = robustPredicates::insphere ((double*)va,(double*)vb,(double*)vc,(double*)vd,(double*)ve);
   if (val == 0.0){
-    Msg::Debug("symbolic perturbation needed vol %22.15E",orientationTestFast((double*)va,(double*)vb,(double*)vc,(double*)vd));
+    Msg::Info("symbolic perturbation needed vol %22.15E",orientationTestFast((double*)va,(double*)vb,(double*)vc,(double*)vd));
     int count;
     // symbolic perturbation
     Vertex *pt[5] = {va,vb,vc,vd,ve};
@@ -160,7 +160,8 @@ struct Tet {
   Tet    *T[4];
   Vertex *V[4];
   CHECKTYPE _bitset [MAX_NUM_THREADS_];
-  char _modified;
+  bool _modified;
+  static int in_sphere_counter;
   Tet ()  : _modified(true){
     V[0] = V[1] = V[2] = V[3] = NULL;
     T[0] = T[1] = T[2] = T[3] = NULL;
@@ -169,6 +170,7 @@ struct Tet {
   int setVerticesNoTest (Vertex *v0, Vertex *v1, Vertex *v2, Vertex *v3){
     _modified=true;
     V[0] = v0; V[1] = v1; V[2] = v2; V[3] = v3;
+    //    for (int i=0;i<4;i++)_copy[i] = *V[i];
     return 1;
   }
   int setVertices (Vertex *v0, Vertex *v1, Vertex *v2, Vertex *v3){
@@ -176,11 +178,13 @@ struct Tet {
     double val = robustPredicates::orient3d((double*)v0,(double*)v1,(double*)v2,(double*)v3);
     V[0] = v0; V[1] = v1; V[2] = v2; V[3] = v3;
     if (val > 0){
+      //    for (int i=0;i<4;i++)_copy[i] = *V[i];
       return 1;
     }
     else if (val < 0){
       //      throw;
       V[0] = v1; V[1] = v0; V[2] = v2; V[3] = v3;
+      //      for (int i=0;i<4;i++)_copy[i] = *V[i];
       return -1;
     }
     else {
@@ -220,13 +224,10 @@ struct Tet {
     return Edge (std::min(V[edg[k][0]],V[edg[k][1]]),
 		 std::max(V[edg[k][0]],V[edg[k][1]]));
   }
-  inline bool inSphere (Vertex *vd, int thread) const{
+  inline bool inSphere (Vertex *vd, int thread) {
+    in_sphere_counter++;
     return inSphereTest_s (V[0],V[1],V[2],V[3],vd);
   }
-  Vertex centroid () const {
-    return (*V[0]+*V[1]+*V[2]+*V[3])*0.25;
-  }
-
 };
 
 struct conn {
@@ -246,32 +247,32 @@ struct conn {
 
 
 // tetrahedra (one per thread)
-struct aBunchOfTets {
-  std::vector<Tet*> _all;
+template <class T> class aBunchOfStuff {
+public:
+  std::vector<T*> _all;
   unsigned int _current;
   unsigned int _nbAlloc;
   unsigned int size () {
     return _current + (_all.size()-1) * _nbAlloc;
   }
-  Tet* operator () (unsigned int i){
+  T* operator () (unsigned int i){
     unsigned int _array = i / _nbAlloc;
     unsigned int _offset = i % _nbAlloc;
     //    printf("%d %d %d\n",i,_array,_offset);
     return _all [_array] + _offset;
   }
-  aBunchOfTets (unsigned int s) : _current(0), _nbAlloc (s) {
-    _all.push_back(new Tet [_nbAlloc]);
+  aBunchOfStuff (unsigned int s) : _current(0), _nbAlloc (s) {
+    _all.push_back(new T [_nbAlloc]);
   }
-  ~aBunchOfTets(){
+  ~aBunchOfStuff(){
     for (unsigned int i=0;i<_all.size();i++){
       delete [] _all[i];
     }
   }
-  Tet* newTet() {
-
+  T* newStuff() {
     if (_current == _nbAlloc){
-      _all.push_back(new Tet [_nbAlloc]);
-      printf("REALLOCATION %d\n",_all.size());
+      _all.push_back(new T [_nbAlloc]);
+      //      printf("REALLOCATION %d\n",_all.size());
       _current = 0;
     }
     _current++;
@@ -281,21 +282,37 @@ struct aBunchOfTets {
 
 // tetAllocator owns the tets that have been allocated by itself
 class tetContainer {
-  std::vector<aBunchOfTets*> _perThread;
-public:
+  //  std::vector<aBunchOfStuff<Vertex> *> _perThreadV;
+  std::vector<aBunchOfStuff<Tet> *> _perThread;
+ public:
   unsigned int size(int thread) const {return _perThread[thread]->size();}
-  Tet * operator () (int thread, int j) const {return (*_perThread[thread]) (j);}
+  //  unsigned int sizeV(int thread) const {return _perThreadV[thread]->size();}
+  inline Tet    * operator () (int thread, int j) const {return (*_perThread[thread]) (j);}
+  //  Vertex * getVertex(int thread, int j) const {return (*_perThreadV[thread]) (j);}
   tetContainer (int nbThreads, int preallocSizePerThread) {
     // FIXME !!!
     if (nbThreads != 1) throw;
-    _perThread.push_back(new aBunchOfTets (preallocSizePerThread) );
+    _perThread.push_back (new aBunchOfStuff<Tet>    (preallocSizePerThread) );
+    //    _perThreadV.push_back(new aBunchOfStuff<Vertex> (preallocSizePerThread) );
   }
-  Tet * newTet(int thread) {
-    return  _perThread[thread]->newTet();
+  inline Tet * newTet(int thread) {
+    return  _perThread[thread]->newStuff();
   }
+  /*
+  Vertex * newVertex(int thread, double x, double y, double z, double lc, int num) {
+    Vertex *v = _perThreadV[thread]->newStuff();
+    v->x() = x;
+    v->y() = y;
+    v->z() = z;
+    v->lc() = lc;
+    v->setNum(num);
+    return  v;
+  }
+  */
   ~tetContainer(){
     // FIXME !!!
-    delete _perThread[0];
+    delete _perThread [0];
+    //    delete _perThreadV[0];
   }
 };
 

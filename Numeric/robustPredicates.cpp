@@ -2353,7 +2353,7 @@ REAL orient3d(REAL *pa, REAL *pb, REAL *pc, REAL *pd)
     if (det < -o3dstaticfilter) return det;
   }
 
-
+ 
   permanent = (Absolute(bdxcdy) + Absolute(cdxbdy)) * Absolute(adz)
             + (Absolute(cdxady) + Absolute(adxcdy)) * Absolute(bdz)
             + (Absolute(adxbdy) + Absolute(bdxady)) * Absolute(cdz);
@@ -2362,7 +2362,7 @@ REAL orient3d(REAL *pa, REAL *pb, REAL *pc, REAL *pd)
     return det;
   }
 
-  return orient3dadapt(pa, pb, pc, pd, permanent);
+ return orient3dadapt(pa, pb, pc, pd, permanent);
 }
 
 #endif // ifdef INEXACT_GEOM_PRED
