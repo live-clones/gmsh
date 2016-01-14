@@ -1100,6 +1100,30 @@ int GModel::importOCCShape(const void *shape)
   return 1;
 }
 
+GVertex* GModel::getVertexForOCCShape(const void *shape)
+{
+  if(!_occ_internals) return 0;
+  return _occ_internals->getOCCVertexByNativePtr(this, *(TopoDS_Vertex*)shape);
+}
+
+GEdge* GModel::getEdgeForOCCShape(const void *shape)
+{
+  if(!_occ_internals) return 0;
+  return _occ_internals->getOCCEdgeByNativePtr(this, *(TopoDS_Edge*)shape);
+}
+
+GFace* GModel::getFaceForOCCShape(const void *shape)
+{
+  if(!_occ_internals) return 0;
+  return _occ_internals->getOCCFaceByNativePtr(this, *(TopoDS_Face*)shape);
+}
+
+GRegion* GModel::getRegionForOCCShape(const void *shape)
+{
+  if(!_occ_internals) return 0;
+  return _occ_internals->getOCCRegionByNativePtr(this, *(TopoDS_Solid*)shape);
+}
+
 #else
 
 void GModel::_deleteOCCInternals()
@@ -1145,6 +1169,30 @@ int GModel::importOCCShape(const void *shape)
 {
   Msg::Error("Gmsh must be compiled with Open CASCADE support to import "
              "a TopoDS_Shape");
+  return 0;
+}
+
+GVertex* GModel::getVertexForOCCShape(const void *shape)
+{
+  Msg::Error("Gmsh must be compiled with Open CASCADE support to query OCC shape");
+  return 0;
+}
+
+GEdge* GModel::getEdgeForOCCShape(const void *shape)
+{
+  Msg::Error("Gmsh must be compiled with Open CASCADE support to query OCC shape");
+  return 0;
+}
+
+GFace* GModel::getFaceForOCCShape(const void *shape)
+{
+  Msg::Error("Gmsh must be compiled with Open CASCADE support to query OCC shape");
+  return 0;
+}
+
+GRegion* GModel::getRegionForOCCShape(const void *shape)
+{
+  Msg::Error("Gmsh must be compiled with Open CASCADE support to query OCC shape");
   return 0;
 }
 

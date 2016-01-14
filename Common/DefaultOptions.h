@@ -1033,8 +1033,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "NewtonConvergenceTestXYZ" , opt_mesh_newton_convergence_test_xyz , 0. ,
     "Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coordinates (experimental)" },
   { F|O, "Format" , opt_mesh_file_format , FORMAT_AUTO ,
-    "Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 27=stl, 30=mesh, 31=bdf, "
-    "32=cgns, 33=med, 40=ply2)" },
+    "Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 26=pos statistics, 27=stl, "
+    "30=mesh, 31=bdf, 32=cgns, 33=med, 39=inp, 40=ply2)" },
 
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. ,
     "Display mesh hexahedra?" },

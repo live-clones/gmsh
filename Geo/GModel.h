@@ -614,6 +614,10 @@ class GModel
   int writeOCCSTEP(const std::string &name);
   int writeOCCBREP(const std::string &name);
   int importOCCShape(const void *shape);
+  GVertex *getVertexForOCCShape(const void *shape);
+  GEdge *getEdgeForOCCShape(const void *shape);
+  GFace *getFaceForOCCShape(const void *shape);
+  GRegion *getRegionForOCCShape(const void *shape);
 
   // ACIS Model
   int readACISSAT(const std::string &name);
