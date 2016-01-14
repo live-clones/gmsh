@@ -346,7 +346,6 @@ static void delaunayCavity2 (Tet *t,
 }
 
 static void delaunayCavity (Tet *t,
-			    Tet *prev,
 			    Vertex *v,
 			    cavityContainer &cavity,
 			    connContainer &bnd,
@@ -361,7 +360,7 @@ static void delaunayCavity (Tet *t,
     }
     else if (neigh->inSphere(v,thread)){
       if (!(neigh->isSet(thread, iPnt))) {
-	delaunayCavity (neigh, t, v, cavity,bnd,thread, iPnt); 
+	delaunayCavity (neigh, v, cavity,bnd,thread, iPnt); 
       }
     }
     else {
@@ -529,7 +528,7 @@ void delaunayTrgl (const unsigned int numThreads,
   double totCavityGlob=0;
 #endif
 
-  double t1,t2=0,t3=0,t4=0;
+  //  double t1,t2=0,t3=0,t4=0;
 
   //  checkLocalDelaunayness(allocator, 0, "initial");
 
@@ -571,7 +570,8 @@ void delaunayTrgl (const unsigned int numThreads,
 #ifdef _HAVE_NUMA
       allocatedVerts [K] = (Vertex*)numa_alloc_local (locSizeK[K]*sizeof(Vertex));
 #else
-      allocatedVerts [K] = (Vertex*)calloc (locSizeK[K],sizeof(Vertex));
+      //      allocatedVerts [K] = (Vertex*)calloc (locSizeK[K],sizeof(Vertex));
+      allocatedVerts [K] = new Vertex [locSizeK[K]];
 #endif
       for (unsigned int iP=0 ; iP < locSizeK[K] ; iP++){
 	allocatedVerts[K][iP] = *(assignTo[K+myThread*NPTS_AT_ONCE][iP]);
@@ -591,7 +591,7 @@ void delaunayTrgl (const unsigned int numThreads,
       std::vector<Tet*> t(NPTS_AT_ONCE);
       //	  double c1 = Cpu();
       // FIND SEEDS
-      t1 = Cpu();
+      //      t1 = Cpu();
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	vToAdd[K] = iPGlob <  locSizeK[K] ? &allocatedVerts[K][iPGlob] : NULL;
 	if(vToAdd[K]){
@@ -606,10 +606,10 @@ void delaunayTrgl (const unsigned int numThreads,
 	  }
 	}
       }
-      t2+= Cpu() - t1;
+      //      t2+= Cpu() - t1;
       //      double c1 = Cpu();
       // BUILD CAVITIES
-      t1 = Cpu();
+      //      t1 = Cpu();
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	if(vToAdd[K]){
 	  cavityContainer &cavityK = cavity[K];
@@ -618,6 +618,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	  for (unsigned int i=0; i<bndK.size(); i++)if(bndK[i].t)bndK[i].t->unset(myThread,K);
 	  cavityK.clear(); bndK.clear();
 	  delaunayCavity2(t[K], NULL, vToAdd[K], cavityK, bndK, myThread, K);
+	  //delaunayCavity(t[K], vToAdd[K], cavityK, bndK, myThread, K);
 	  // verify the cavity
 	  for (unsigned int i=0; i< bndK.size(); i++) {
 	    const double val =   robustPredicates::orient3d((double*)bndK[i].f.V[0],
@@ -633,7 +634,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	}
       }
 
-      t3 += Cpu() - t1;
+      //      t3 += Cpu() - t1;
 
 #pragma omp barrier
 
@@ -641,7 +642,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	if (!vToAdd[K])ok[K]=false;
 	else ok[K] = canWeProcessCavity (cavity[K], myThread, K);
       }
-      t1 = Cpu();
+      //      t1 = Cpu();
 
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	if (ok[K]){
@@ -676,7 +677,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	  }
 	}
       }
-      t4 += Cpu() - t1;
+      //      t4 += Cpu() - t1;
     }
 #ifdef _VERBOSE
     #pragma omp critical
@@ -698,7 +699,7 @@ void delaunayTrgl (const unsigned int numThreads,
   //checkLocalDelaunayness(T,"final");
 
 
-  printf(" %12.5E %12.5E  %12.5E tot  %12.5E \n",t2,t3,t4,t2+t3+t4);
+  //  printf(" %12.5E %12.5E  %12.5E tot  %12.5E \n",t2,t3,t4,t2+t3+t4);
 
 #ifdef _VERBOSE
   printf("average searches per point  %12.5E\n",totSearchGlob/Npts);

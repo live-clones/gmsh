@@ -1312,7 +1312,7 @@ endif(NOWARN)
 # disable compile optimization on some known problematic files
 check_cxx_compiler_flag("-O0" NOOPT)
 if(NOOPT)
-  file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Mesh/BDS.cpp
+  file(GLOB_RECURSE NOOPT_SRC Mesh/BDS.cpp
                               Parser/Gmsh.tab.cpp contrib/Tetgen*/predicates.cxx)
   foreach(FILE ${NOOPT_SRC})
     get_source_file_property(PROP ${FILE} COMPILE_FLAGS)

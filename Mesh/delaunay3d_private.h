@@ -10,6 +10,9 @@
 #include <math.h>
 #include "robustPredicates.h"
 #include <stdio.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #ifndef MAX_NUM_THREADS_
 #define MAX_NUM_THREADS_ 1
@@ -292,7 +295,16 @@ class tetContainer {
   tetContainer (int nbThreads, int preallocSizePerThread) {
     // FIXME !!!
     if (nbThreads != 1) throw;
-    _perThread.push_back (new aBunchOfStuff<Tet>    (preallocSizePerThread) );
+    _perThread.resize(nbThreads);
+#pragma omp parallel num_threads(nbThreads)
+    {
+#ifdef _OPENMP
+      int  myThread = omp_get_thread_num();
+#else
+      int  myThread = 0;
+#endif
+      _perThread [myThread] = new aBunchOfStuff<Tet>    (preallocSizePerThread) ;
+    }
     //    _perThreadV.push_back(new aBunchOfStuff<Vertex> (preallocSizePerThread) );
   }
   inline Tet * newTet(int thread) {

@@ -311,8 +311,7 @@ void edgeBasedRefinement (const int numThreads,
 
   // fill up old Datastructures
 
-  tetContainer allocator (numThreads,3000000);
-
+  tetContainer allocator (numThreads,1000000);
 
   std::vector<Vertex *> _vertices;
   edgeContainer ec;
@@ -328,13 +327,13 @@ void edgeBasedRefinement (const int numThreads,
     }
 
 
-    FILE *f = fopen ("pts_init.dat","w");
-    fprintf(f,"%d\n",all.size());
-    for (std::set<MVertex*>::iterator it = all.begin();it !=all.end(); ++it){
-      MVertex *mv = *it;      
-      fprintf(f,"%12.5E %12.5E %12.5E\n",mv->x(),mv->y(),mv->z());
-    }
-    fclose(f);
+    //    FILE *f = fopen ("pts_init.dat","w");
+    //    fprintf(f,"%d\n",all.size());
+    //    for (std::set<MVertex*>::iterator it = all.begin();it !=all.end(); ++it){
+    //      MVertex *mv = *it;      
+    //      fprintf(f,"%12.5E %12.5E %12.5E\n",mv->x(),mv->y(),mv->z());
+    //    }
+    //    fclose(f);
 
 
     _vertices.resize(all.size());
@@ -347,22 +346,25 @@ void edgeBasedRefinement (const int numThreads,
       _ma[v] = mv;
       counter++;
     }
-    connSet faceToTet;
-    // FIXME MULTITHREADING
-    for (unsigned int i=0;i<T.size();i++){
-      MTetrahedron  *tt = T[i];
-      int i0 = tt->getVertex(0)->getIndex();
-      int i1 = tt->getVertex(1)->getIndex();
-      int i2 = tt->getVertex(2)->getIndex();
-      int i3 = tt->getVertex(3)->getIndex();
-      Tet *t = allocator.newTet(0) ; t->setVertices (_vertices[i0],_vertices[i1],_vertices[i2],_vertices[i3]);
-      computeAdjacencies (t,0,faceToTet);
-      computeAdjacencies (t,1,faceToTet);
-      computeAdjacencies (t,2,faceToTet);
-      computeAdjacencies (t,3,faceToTet);
-      delete tt;
+
+    {
+      connSet faceToTet;
+      // FIXME MULTITHREADING
+      for (unsigned int i=0;i<T.size();i++){
+	MTetrahedron  *tt = T[i];
+	int i0 = tt->getVertex(0)->getIndex();
+	int i1 = tt->getVertex(1)->getIndex();
+	int i2 = tt->getVertex(2)->getIndex();
+	int i3 = tt->getVertex(3)->getIndex();
+	Tet *t = allocator.newTet(0) ; t->setVertices (_vertices[i0],_vertices[i1],_vertices[i2],_vertices[i3]);
+	computeAdjacencies (t,0,faceToTet);
+	computeAdjacencies (t,1,faceToTet);
+	computeAdjacencies (t,2,faceToTet);
+	computeAdjacencies (t,3,faceToTet);
+	delete tt;
+      }
+      T.clear();
     }
-    T.clear();
   }
 
   // do not allow to saturate boundary edges
@@ -436,7 +438,7 @@ void edgeBasedRefinement (const int numThreads,
 		(t5-t4),
 		(t5-__t__),
 		allocator.size(0));
-      printf("%d calls to inSphere\n",Tet::in_sphere_counter);
+      //      printf("%d calls to inSphere\n",Tet::in_sphere_counter);
       iter++;
     }
   }
