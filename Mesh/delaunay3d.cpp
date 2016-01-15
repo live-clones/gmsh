@@ -30,7 +30,7 @@ const int MEASURE_BARR = 0;
 #include <numa.h>
 #endif
 
-int Tet::in_sphere_counter = 0;
+//int Tet::in_sphere_counter = 0;
 
 
 struct HilbertSortB
