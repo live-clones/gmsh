@@ -809,7 +809,7 @@ void delaunayTriangulation (const int numThreads,
   S.clear();
   delaunayTrgl(1,1, assignTo0[0].size(),assignTo0,allocator);
   delaunayTrgl(numThreads,nptsatonce, N,&assignTo[0], allocator);
-  __print ("finalTetrahedrization.pos",0, allocator);
+  //  __print ("finalTetrahedrization.pos",0, allocator);
 }
 
 

@@ -57,9 +57,9 @@ double adaptiveTrapezoidalRule (SPoint3 p1 , SPoint3 p2 ,
 				double lc1 , double lc2 ,
 				double (*f)(const SPoint3 &p, void *),
 				void *data, std::vector< IPT > & _result,
-				double &dl, double epsilon = 1.e-5)
+				double &dl, std::stack<IPT> &_stack, double epsilon = 1.e-5)
 {
-  std::stack< IPT > _stack;
+  //  _stack.clear();
   _result.clear();
   // local parameters on the edge
   double t1 = 0.0;
@@ -112,12 +112,12 @@ double adaptiveTrapezoidalRule (SPoint3 p1 , SPoint3 p2 ,
 }
 
 
-void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &p, void *), void *data) {
+void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &p, void *), void *data, std::stack<IPT> &temp) {
   std::vector< IPT > _result;
   double dl;
   SPoint3 p1 = e.first->point();
   SPoint3 p2 = e.second->point();
-  const double dN = adaptiveTrapezoidalRule (p1,p2,e.first->lc(), e.second->lc(), f,data,_result, dl);
+  const double dN = adaptiveTrapezoidalRule (p1,p2,e.first->lc(), e.second->lc(), f,data,_result, dl, temp);
   const int N = (int) (dN+0.1);
   const double interval = dN/N;
   double L = 0.0;
@@ -160,6 +160,7 @@ void saturateEdges ( edgeContainer &ec,
 		     int nbThreads,
 		     std::vector<Vertex*> &S,
 		     double (*f)(const SPoint3 &p, void *), void *data) {
+  std::stack<IPT> temp;
   AVGSEARCH= 0;
   // FIXME
   const int N = T.size(0);
@@ -171,7 +172,7 @@ void saturateEdges ( edgeContainer &ec,
 	Edge ed = t->getEdge(iEdge);
 	bool isNew = ec.addNewEdge(ed);
 	if (isNew){
-	  saturateEdge (ed, S, f, data);
+	  saturateEdge (ed, S, f, data, temp);
 	}
       }
     }
