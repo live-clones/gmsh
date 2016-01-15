@@ -17,6 +17,7 @@
 #include "MTriangle.h"
 #include "GRegion.h"
 #include "GFace.h"
+#include "SBoundingBox3d.h"
 
 typedef  std::set< Edge > edgeContainer2;
 
@@ -37,7 +38,7 @@ struct edgeContainer
   }
   bool addNewEdge (const Edge &e)
   {
-    size_t h = (size_t) e.first >> 3;
+    size_t h = ((size_t) e.first >> 3) ;
     std::vector<Edge> &v = _hash[h %_hash.size()];
     AVGSEARCH+=v.size();
     for (unsigned int i=0; i< v.size();i++)if (e == v[i]) {return false;}
@@ -56,7 +57,7 @@ double adaptiveTrapezoidalRule (SPoint3 p1 , SPoint3 p2 ,
 				double lc1 , double lc2 ,
 				double (*f)(const SPoint3 &p, void *),
 				void *data, std::vector< IPT > & _result,
-				double &dl, double epsilon = 1.e-6)
+				double &dl, double epsilon = 1.e-5)
 {
   std::stack< IPT > _stack;
   _result.clear();
@@ -89,7 +90,6 @@ double adaptiveTrapezoidalRule (SPoint3 p1 , SPoint3 p2 ,
     // mid point
     double t12 = 0.5* (t1+t2);
     SPoint3 pmid = p1 + dp*t12;
-    double fmid = 0.5* (f1+f2);//f(pmid,data);
     double dt = t2-t1;
     // average should be compared to mid value
     double f12 = 0.5* (f1+f2);
@@ -117,32 +117,33 @@ void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &
   double dl;
   SPoint3 p1 = e.first->point();
   SPoint3 p2 = e.second->point();
-  double dN = adaptiveTrapezoidalRule (p1,p2,e.first->lc(), e.second->lc(), f,data,_result, dl);
+  const double dN = adaptiveTrapezoidalRule (p1,p2,e.first->lc(), e.second->lc(), f,data,_result, dl);
   const int N = (int) (dN+0.1);
-  double interval = dN/N;
+  const double interval = dN/N;
   double L = 0.0;
 
-  //  printf("edge length %g %d intervals of size %g\n",dl,N,interval);
-
-  for (unsigned int i=0; i< _result.size() ; i++) {
-    double t1 = _result[i]._x1;
-    double t2 = _result[i]._x2;
-    double f1 = _result[i]._x3;
-    double f2 = _result[i]._x4;
-    double dL = 2.*(t2-t1) * dl / (f1+f2);
+  //  printf("edge length %g %d intervals of size %g (%d results)\n",dl,N,interval,_result.size());
+  const unsigned int Nr = _result.size();
+  for (unsigned int i=0; i< Nr ; i++) {
+    const IPT & rr = _result[i];
+    const double t1 = rr._x1;
+    const double t2 = rr._x2;
+    const double f1 = rr._x3;
+    const double f2 = rr._x4;
+    const double dL = 2.*(t2-t1) * dl / (f1+f2);
     //    printf("%g --> %g for %g --> %g\n",L,dL,t1,t2);
     double L0 = L;
     while (1) {
-      double t = t1 + (L+interval-L0)*(t2-t1) / dL;
+      const double t = t1 + (L+interval-L0)*(t2-t1) / dL;
       if (t >= t2) {
 	break;
       }
       else {
 	SPoint3 p = p1 * (1.-t) + p2*t;
 	double lc = e.first->lc() * (1.-t) + e.second->lc()*t;
-	const double dx = 1.e-12 * (double) rand() / RAND_MAX;
-	const double dy = 1.e-12 * (double) rand() / RAND_MAX;
-	const double dz = 1.e-12 * (double) rand() / RAND_MAX;
+	const double dx = 0;//1.e-12 * (double) rand() / RAND_MAX;
+	const double dy = 0;//1.e-12 * (double) rand() / RAND_MAX;
+	const double dz = 0;//1.e-12 * (double) rand() / RAND_MAX;
 	S.push_back(new Vertex(p.x()+dx,p.y()+dy,p.z()+dz,lc));
 	L += interval;
       }
@@ -160,26 +161,26 @@ void saturateEdges ( edgeContainer &ec,
 		     std::vector<Vertex*> &S,
 		     double (*f)(const SPoint3 &p, void *), void *data) {
   AVGSEARCH= 0;
-  int counter = 0;
   // FIXME
-  for (int i=0;i<T.size(0);i++){
+  const int N = T.size(0);
+  for (int i=0;i<N;i++){
     Tet *t = T(0,i);
-    if (t->V[0] && t->_modified){
+   if (t->V[0] && t->_modified){
       t->_modified = false;
       for (int iEdge=0;iEdge<6;iEdge++){
 	Edge ed = t->getEdge(iEdge);
 	bool isNew = ec.addNewEdge(ed);
-	counter++;
 	if (isNew){
 	  saturateEdge (ed, S, f, data);
 	}
       }
     }
   }
-  //  printf("a total of %d Tets counter %d AVG %d\n",T.size(),counter,AVGSEARCH/counter);
 }
 
 /////////////////////////   F I L T E R I N G ////////////////////////////////////////////////////
+
+#define SQR(X) (X)*(X)
 
 class volumePointWithExclusionRegion {
 public :
@@ -187,21 +188,25 @@ public :
   volumePointWithExclusionRegion (Vertex *v) : _v(v){
   }
 
-  bool inExclusionZone (volumePointWithExclusionRegion *p)
+  inline bool inExclusionZone (volumePointWithExclusionRegion *p) const
   {
-    double d = sqrt ((p->_v->x() - _v->x()) * (p->_v->x() - _v->x())+
-		     (p->_v->y() - _v->y()) * (p->_v->y() - _v->y())+
-		     (p->_v->z() - _v->z()) * (p->_v->z() - _v->z()));
-    return d < .8*p->_v->lc();//_l;
+    const double FACTOR = 0.8;
+    const double K = FACTOR*p->_v->lc();
+    const double d =  
+      SQR(p->_v->x() - _v->x())+
+      SQR(p->_v->y() - _v->y())+
+      SQR(p->_v->z() - _v->z());
+    //    printf(" %g %g\n",p-//>_v->lc(),d);
+    return d < SQR(K);
   }
   void minmax (double _min[3], double _max[3]) const
   {
-    _min[0] = _v->x() - 1.01*_v->lc();
-    _min[1] = _v->y() - 1.01*_v->lc();
-    _min[2] = _v->z() - 1.01*_v->lc();
-    _max[0] = _v->x() + 1.01*_v->lc();
-    _max[1] = _v->y() + 1.01*_v->lc();
-    _max[2] = _v->z() + 1.01*_v->lc();
+    _min[0] = _v->x() - _v->lc();
+    _min[1] = _v->y() - _v->lc();
+    _min[2] = _v->z() - _v->lc();
+    _max[0] = _v->x() + _v->lc();
+    _max[1] = _v->y() + _v->lc();
+    _max[2] = _v->z() + _v->lc();
   }
 };
 
@@ -224,6 +229,8 @@ bool rtree_callback(volumePointWithExclusionRegion *neighbour,void* point)
   return true;
 }
 
+
+
 class vertexFilter {
   RTree<volumePointWithExclusionRegion*,double,3,double> _rtree;
 public:
@@ -238,8 +245,8 @@ public:
   {
     my_wrapper_3D w (p);
     double _min[3] = {p->_v->x()-1.e-8, p->_v->y()-1.e-8, p->_v->z()-1.e-8};
-    double _max[3] = {p->_v->x()+1.e-8, p->_v->y()+1.e-8, p->_v->z()+1.e-8};
-    _rtree.Search(_min,_max,rtree_callback,&w);
+    //    double _max[3] = {p->_v->x()+1.e-8, p->_v->y()+1.e-8, p->_v->z()+1.e-8};
+    _rtree.Search(_min,_min,rtree_callback,&w);
     return w._tooclose;
   }
 };
@@ -252,13 +259,15 @@ void filterVertices (const int numThreads,
 		     void *data) {
   //  printf("before : %d points to add\n",add.size());
 
+  //  double t1 = Cpu();
   std::vector<Vertex*> _add = add;
   for (unsigned int i=0;i<S.size();i++){
     SPoint3 p (S[i]->x(),S[i]->y(),S[i]->z());
-    double l = f (p, data);
+    //    double l = f (p, data);
     _filter.insert( S[i] );
   }
   add.clear();
+  //  double t2 = Cpu();
   for (unsigned int i=0;i<_add.size();i++){
     SPoint3 p (_add[i]->x(),_add[i]->y(),_add[i]->z());
     volumePointWithExclusionRegion v (_add[i]);
@@ -269,6 +278,8 @@ void filterVertices (const int numThreads,
     else
       delete _add[i];
   }
+  //  double t3 = Cpu();
+  //  printf("filter ---> %12.5E %12.5E \n",t2-t1,t3-t2);
   //  printf("after filter : %d points to add\n",add.size());
 }
 
@@ -313,6 +324,7 @@ void edgeBasedRefinement (const int numThreads,
 
   tetContainer allocator (numThreads,1000000);
 
+  SBoundingBox3d bb;
   std::vector<Vertex *> _vertices;
   edgeContainer ec;
   std::map<Vertex*,MVertex*> _ma;
@@ -320,8 +332,8 @@ void edgeBasedRefinement (const int numThreads,
   {
     std::vector<MTetrahedron*> &T = gr->tetrahedra;
     std::set<MVertex *> all;
-    for (int i=0;i<T.size();i++){
-      for (int j=0;j<4;j++){
+    for (unsigned int i=0;i<T.size();i++){
+      for (unsigned int j=0;j<4;j++){
 	all.insert(T[i]->getVertex(j));
       }
     }
@@ -343,10 +355,11 @@ void edgeBasedRefinement (const int numThreads,
       mv->setIndex(counter);
       Vertex *v = new Vertex (mv->x(),mv->y(),mv->z(),1.e22, counter);
       _vertices[counter] = v;
+      bb += SPoint3(v->x(),v->y(),v->z());
       _ma[v] = mv;
       counter++;
     }
-
+    bb *= 1.1;
     {
       connSet faceToTet;
       // FIXME MULTITHREADING
@@ -399,13 +412,14 @@ void edgeBasedRefinement (const int numThreads,
 
   std::vector<Vertex*> add_all;
   {
+    //   vertexFilter _filter (bb, 20);
     vertexFilter _filter;
     int iter = 1;
 
     Msg::Info("----------------------------------- SATUR FILTR SORTH DELNY TIME  TETS");
 
     double __t__ = Cpu();
-    Tet::in_sphere_counter = 0;
+    //    Tet::in_sphere_counter = 0;
     while(1){
       std::vector<Vertex*> add;
       double t1 = Cpu();
@@ -423,14 +437,6 @@ void edgeBasedRefinement (const int numThreads,
       delaunayTrgl (1,1,add.size(), &add,allocator);  
       double t5 = Cpu();
       add_all.insert (add_all.end(), add.begin(), add.end());
-      //      if (iter == 1){
-      //	FILE *f = fopen ("pts.dat","w");
-      //	fprintf(f,"%d\n",add.size());
-      //	for (unsigned int i=0;i<add.size();i++){
-      //	  fprintf(f,"%12.5E %12.5E %12.5E\n",add[i]->x(),add[i]->y(),add[i]->z());
-      //	}
-      //	fclose(f);
-      //      }
       Msg::Info("IT %3d %6d points added, timings %5.2f %5.2f %5.2f %5.2f %5.2f %5d",iter,add.size(),
 		(t2-t1),
 		(t3-t2),
@@ -438,7 +444,6 @@ void edgeBasedRefinement (const int numThreads,
 		(t5-t4),
 		(t5-__t__),
 		allocator.size(0));
-      //      printf("%d calls to inSphere\n",Tet::in_sphere_counter);
       iter++;
     }
   }

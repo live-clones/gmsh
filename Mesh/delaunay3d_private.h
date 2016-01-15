@@ -164,7 +164,7 @@ struct Tet {
   Vertex *V[4];
   CHECKTYPE _bitset [MAX_NUM_THREADS_];
   bool _modified;
-  static int in_sphere_counter;
+  //  static int in_sphere_counter;
   Tet ()  : _modified(true){
     V[0] = V[1] = V[2] = V[3] = NULL;
     T[0] = T[1] = T[2] = T[3] = NULL;
@@ -228,7 +228,7 @@ struct Tet {
 		 std::max(V[edg[k][0]],V[edg[k][1]]));
   }
   inline bool inSphere (Vertex *vd, int thread) {
-    in_sphere_counter++;
+    //    in_sphere_counter++;
     return inSphereTest_s (V[0],V[1],V[2],V[3],vd);
   }
 };
@@ -258,9 +258,9 @@ public:
   unsigned int size () {
     return _current + (_all.size()-1) * _nbAlloc;
   }
-  T* operator () (unsigned int i){
-    unsigned int _array = i / _nbAlloc;
-    unsigned int _offset = i % _nbAlloc;
+  inline T* operator () (unsigned int i){
+    const unsigned int _array = i / _nbAlloc;
+    const unsigned int _offset = i % _nbAlloc;
     //    printf("%d %d %d\n",i,_array,_offset);
     return _all [_array] + _offset;
   }
