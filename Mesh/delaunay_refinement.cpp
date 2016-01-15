@@ -131,14 +131,16 @@ void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &
     const double f1 = rr._x3;
     const double f2 = rr._x4;
     const double dL = 2.*(t2-t1) * dl / (f1+f2);
+    
     //    printf("%g --> %g for %g --> %g\n",L,dL,t1,t2);
     double L0 = L;
     while (1) {
       const double t = t1 + (L+interval-L0)*(t2-t1) / dL;
-      if (t >= t2) {
+      if (t >= t2*.999) {
 	break;
       }
       else {
+	//	printf("%g ",t);
 	SPoint3 p = p1 * (1.-t) + p2*t;
 	double lc = e.first->lc() * (1.-t) + e.second->lc()*t;
 	const double dx = 0;//1.e-12 * (double) rand() / RAND_MAX;
@@ -149,7 +151,8 @@ void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &
       }
     }
   }
-
+  //  printf(" press enter\n");
+  //  getchar();
   //  printf("%d points added\n",S.size());
 
   //  exit(1);
@@ -254,21 +257,15 @@ public:
 
 void filterVertices (const int numThreads,
 		     vertexFilter &_filter,
-		     std::vector<Vertex*> &S,
 		     std::vector<Vertex*> &add,
 		     double (*f)(const SPoint3 &p, void *),
 		     void *data) {
-  //  printf("before : %d points to add\n",add.size());
 
-  //  double t1 = Cpu();
+  std::vector<int> indices;
+  SortHilbert(add, indices);
+
   std::vector<Vertex*> _add = add;
-  for (unsigned int i=0;i<S.size();i++){
-    SPoint3 p (S[i]->x(),S[i]->y(),S[i]->z());
-    //    double l = f (p, data);
-    _filter.insert( S[i] );
-  }
   add.clear();
-  //  double t2 = Cpu();
   for (unsigned int i=0;i<_add.size();i++){
     SPoint3 p (_add[i]->x(),_add[i]->y(),_add[i]->z());
     volumePointWithExclusionRegion v (_add[i]);
@@ -279,9 +276,6 @@ void filterVertices (const int numThreads,
     else
       delete _add[i];
   }
-  //  double t3 = Cpu();
-  //  printf("filter ---> %12.5E %12.5E \n",t2-t1,t3-t2);
-  //  printf("after filter : %d points to add\n",add.size());
 }
 
 
@@ -415,6 +409,10 @@ void edgeBasedRefinement (const int numThreads,
   {
     //   vertexFilter _filter (bb, 20);
     vertexFilter _filter;
+    for (unsigned int i=0;i<_vertices.size();i++){
+      _filter.insert( _vertices[i] );
+    }
+
     int iter = 1;
 
     Msg::Info("----------------------------------- SATUR FILTR SORTH DELNY TIME  TETS");
@@ -426,7 +424,7 @@ void edgeBasedRefinement (const int numThreads,
       double t1 = Cpu();
       saturateEdges (ec, allocator, numThreads, add, _fx, NULL);
       double t2 = Cpu();
-      filterVertices (numThreads, _filter, _vertices, add, _fx, NULL);
+      filterVertices (numThreads, _filter, add, _fx, NULL);
       double t3 = Cpu();
       if (add.empty())break;
       // randomize vertices (EXTREMELY IMPORTANT FOR NOT DETERIORATING PERFORMANCE)
