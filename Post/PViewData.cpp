@@ -196,6 +196,17 @@ void PViewData::removeInterpolationScheme(const std::string &name)
   }
 }
 
+void PViewData::removeAllInterpolationSchemes()
+{
+  std::map<std::string, interpolationMatrices>::iterator it = _interpolationSchemes.begin();
+  for(;it!=_interpolationSchemes.end();it++)
+    for(interpolationMatrices::iterator it2 = it->second.begin();
+        it2 != it->second.end(); it2++)
+        for(unsigned int i = 0; i < it2->second.size(); i++)
+          delete it2->second[i];
+  _interpolationSchemes.clear();
+}
+
 void PViewData::addMatrixToInterpolationScheme(const std::string &name, int type,
                                                fullMatrix<double> &mat)
 {

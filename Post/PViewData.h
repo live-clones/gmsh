@@ -228,6 +228,7 @@ class PViewData {
 
   // access to global interpolation schemes
   static void removeInterpolationScheme(const std::string &name);
+  static void removeAllInterpolationSchemes();
   static void addMatrixToInterpolationScheme(const std::string &name, int type,
                                              fullMatrix<double> &mat);
   static int getSizeInterpolationScheme() {return _interpolationSchemes.size();}

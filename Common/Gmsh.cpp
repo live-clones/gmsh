@@ -23,6 +23,7 @@
 #include "robustPredicates.h"
 #if defined(HAVE_POST)
 #include "PView.h"
+#include "PViewData.h"
 #endif
 
 #if defined(HAVE_ONELAB) && !defined(HAVE_ONELAB2)
@@ -230,10 +231,18 @@ int GmshWriteFile(const std::string &fileName)
 int GmshFinalize()
 {
 #if defined(HAVE_POST)
+  // Delete all PViewData stored in static PView list
+  for(unsigned int i = 0; i < PView::list.size(); i++) {
+    delete PView::list[i];
+  }
   PView::list.clear();
+  // Delete static interpolationSchemes
+  PViewData::removeAllInterpolationSchemes();  
 #endif
+  // Delete all Gmodels
+  for(unsigned int i = 0; i < GModel::list.size(); i++)
+    delete GModel::list[i];
   GModel::list.clear();
-  CTX::instance()->files.clear();
   return 1;
 }
 
