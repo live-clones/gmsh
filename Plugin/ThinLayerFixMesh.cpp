@@ -13,10 +13,6 @@
 #include "meshGFaceDelaunayInsertion.h"
 #endif
 
-const double GMSH_ThinLayerFixMeshPlugin::epsilon = 0.00000000001;
-const double GMSH_ThinLayerFixMeshPlugin::angleMax = 0.9;
-const double GMSH_ThinLayerFixMeshPlugin::distP2PMax = 5.0;
-
 extern "C"
 {
   GMSH_Plugin *GMSH_RegisterThinLayerFixMeshPlugin()
@@ -42,6 +38,10 @@ StringXNumber *GMSH_ThinLayerFixMeshPlugin::getOption(int iopt)
 
 
 #if defined(HAVE_MESH)
+
+const double GMSH_ThinLayerFixMeshPlugin::epsilon = 0.00000000001;
+const double GMSH_ThinLayerFixMeshPlugin::angleMax = 0.9;
+const double GMSH_ThinLayerFixMeshPlugin::distP2PMax = 5.0;
 
 CorrespVerticesFixMesh::CorrespVerticesFixMesh(){
   //	std::cout<<"started init CorrespVerticesFixMesh"<<std::endl;
