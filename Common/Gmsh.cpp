@@ -24,6 +24,7 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
+#include "PViewOptions.h"
 #endif
 
 #if defined(HAVE_ONELAB) && !defined(HAVE_ONELAB2)
@@ -231,18 +232,25 @@ int GmshWriteFile(const std::string &fileName)
 int GmshFinalize()
 {
 #if defined(HAVE_POST)
-  // Delete all PViewData stored in static PView list
+  // Delete all PViewData stored in static list of PView class
   for(unsigned int i = 0; i < PView::list.size(); i++) {
     delete PView::list[i];
   }
   PView::list.clear();
-  // Delete static interpolationSchemes
-  PViewData::removeAllInterpolationSchemes();  
+  
+  // Delete static _interpolationSchemes of PViewData class
+  PViewData::removeAllInterpolationSchemes();
+
+  // Delete static _reference of PViewOptions class
+  delete PViewOptions::reference();
 #endif
   // Delete all Gmodels
   for(unsigned int i = 0; i < GModel::list.size(); i++)
     delete GModel::list[i];
   GModel::list.clear();
+  
+  // Delete CTX instance
+  delete CTX::instance();
   return 1;
 }
 
