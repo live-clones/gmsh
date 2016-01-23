@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
   if(CTX::instance()->batch) {
     if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
     GmshBatch();
-    GmshFinalize();
+    //GmshFinalize();
     Msg::Exit(0);
   }
 

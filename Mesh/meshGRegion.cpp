@@ -604,7 +604,7 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions) {
     f = regions[i]->embeddedFaces();
     allFacesSet.insert(f.begin(), f.end());
   }
-  
+
   std::list<GFace*> allFaces;
   allFaces.insert(allFaces.end(), allFacesSet.begin(), allFacesSet.end());
   gr->set(allFaces);
@@ -628,9 +628,9 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions) {
 
   // restore the initial set of faces
   gr->set(faces);
-  
-  void edgeBasedRefinement (const int numThreads, 
-			    const int nptsatonce, 
+
+  void edgeBasedRefinement (const int numThreads,
+			    const int nptsatonce,
 			    GRegion *gr);
   // just to remove tets that are not to be meshed
   insertVerticesInRegion(gr,0);
