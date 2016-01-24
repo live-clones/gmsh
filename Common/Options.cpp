@@ -1433,6 +1433,64 @@ std::string opt_solver_name9(OPT_ARGS_STR)
   return opt_solver_name(9, action, val);
 }
 
+std::string opt_solver_extension(OPT_ARGS_STR)
+{
+  if(num < 0 || num > NUM_SOLVERS - 1) return "";
+  if(action & GMSH_SET)
+    CTX::instance()->solver.extension[num] = val;
+  return CTX::instance()->solver.extension[num];
+}
+
+std::string opt_solver_extension0(OPT_ARGS_STR)
+{
+  return opt_solver_extension(0, action, val);
+}
+
+std::string opt_solver_extension1(OPT_ARGS_STR)
+{
+  return opt_solver_extension(1, action, val);
+}
+
+std::string opt_solver_extension2(OPT_ARGS_STR)
+{
+  return opt_solver_extension(2, action, val);
+}
+
+std::string opt_solver_extension3(OPT_ARGS_STR)
+{
+  return opt_solver_extension(3, action, val);
+}
+
+std::string opt_solver_extension4(OPT_ARGS_STR)
+{
+  return opt_solver_extension(4, action, val);
+}
+
+std::string opt_solver_extension5(OPT_ARGS_STR)
+{
+  return opt_solver_extension(5, action, val);
+}
+
+std::string opt_solver_extension6(OPT_ARGS_STR)
+{
+  return opt_solver_extension(6, action, val);
+}
+
+std::string opt_solver_extension7(OPT_ARGS_STR)
+{
+  return opt_solver_extension(7, action, val);
+}
+
+std::string opt_solver_extension8(OPT_ARGS_STR)
+{
+  return opt_solver_extension(8, action, val);
+}
+
+std::string opt_solver_extension9(OPT_ARGS_STR)
+{
+  return opt_solver_extension(9, action, val);
+}
+
 std::string opt_solver_executable(OPT_ARGS_STR)
 {
   if(num < 0 || num > NUM_SOLVERS - 1) return "";

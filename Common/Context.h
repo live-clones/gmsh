@@ -259,7 +259,8 @@ class CTX {
     int plugins, listen;
     double timeout;
     std::string socketName, pythonInterpreter, octaveInterpreter;
-    std::string name[NUM_SOLVERS], executable[NUM_SOLVERS], remoteLogin[NUM_SOLVERS];
+    std::string name[NUM_SOLVERS], extension[NUM_SOLVERS];
+    std::string executable[NUM_SOLVERS], remoteLogin[NUM_SOLVERS];
     int autoSaveDatabase, autoArchiveOutputFiles, autoMesh, autoMergeFile;
     int autoShowViews, autoShowLastStep, autoCheck, showInvisibleParameters;
   }solver;

@@ -276,6 +276,15 @@ void ParseString(const std::string &str, bool inCurrentModelDir)
   }
 }
 
+static std::string getSolverForExtension(const std::string &ext)
+{
+  for(int i = 0; i < NUM_SOLVERS; i++){
+    if(opt_solver_extension(i, GMSH_GET, "") == ext)
+      return opt_solver_name(i, GMSH_GET, "");
+  }
+  return "";
+}
+
 static int defineSolver(const std::string &name)
 {
   for(int i = 0; i < NUM_SOLVERS; i++){
@@ -343,6 +352,28 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
 #endif
 
   int status = 0;
+#if defined(HAVE_ONELAB)
+  std::string solver = getSolverForExtension(ext);
+  if(solver.size()){
+    int num = defineSolver(solver);
+    GModel::current()->setName(split[1] + ".geo");
+    GModel::current()->setFileName(split[0] + split[1] + ".geo");
+    CTX::instance()->launchSolverAtStartup = num;
+    CTX::instance()->solverToRun = num; // used in ONELAB2
+    return 1;
+
+  }
+  else if(ext == ".py" || ext == ".PY" ||
+          ext == ".m" || ext == ".M" ||
+          ext == ".exe" || ext == ".EXE"){
+    int num = defineSolver(split[1]);
+    opt_solver_executable(num, GMSH_SET, fileName);
+    CTX::instance()->launchSolverAtStartup = num;
+    CTX::instance()->solverToRun = num; // used in ONELAB2
+    return 1;
+  }
+  else
+#endif
   if(ext == ".stl" || ext == ".STL"){
     status = GModel::current()->readSTL(fileName, CTX::instance()->geom.tolerance);
   }
@@ -432,33 +463,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
 #if defined(HAVE_3M)
   else if(ext == ".csv"){
     status = readFile3M(fileName);
-  }
-#endif
-#if defined(HAVE_ONELAB)
-  else if(ext == ".pro" || ext == ".PRO"){
-    int num = defineSolver("GetDP");
-    GModel::current()->setName(split[1] + ".geo");
-    GModel::current()->setFileName(split[0] + split[1] + ".geo");
-    CTX::instance()->launchSolverAtStartup = num;
-    CTX::instance()->solverToRun = num; // used in ONELAB2
-    return 1;
-  }
-  else if(ext == ".vnek" || ext == ".VNEK"){
-    int num = defineSolver("vNek.exe");
-    GModel::current()->setName(split[1] + ".vnek");
-    GModel::current()->setFileName(split[0] + split[1] + ".vnek");
-    CTX::instance()->launchSolverAtStartup = num;
-    CTX::instance()->solverToRun = num; // used in ONELAB2
-    return 1;
-  }
-  else if(ext == ".py" || ext == ".PY" ||
-          ext == ".m" || ext == ".M" ||
-          ext == ".exe" || ext == ".EXE"){
-    int num = defineSolver(split[1]);
-    opt_solver_executable(num, GMSH_SET, fileName);
-    CTX::instance()->launchSolverAtStartup = num;
-    CTX::instance()->solverToRun = num; // used in ONELAB2
-    return 1;
   }
 #endif
   else {
