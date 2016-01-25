@@ -104,6 +104,56 @@ Name of solver 9@*
 Default value: @code{""}@*
 Saved in: @code{General.SessionFileName}
 
+@item Solver.Extension0
+File extension for solver 0@*
+Default value: @code{".pro"}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Extension1
+File extension for solver 1@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Extension2
+File extension for solver 2@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Extension3
+File extension for solver 3@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Extension4
+File extension for solver 4@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Extension5
+File extension for solver 5@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Extension6
+File extension for solver 6@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Extension7
+File extension for solver 7@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Extension8
+File extension for solver 8@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
+@item Solver.Extension9
+File extension for solver 9@*
+Default value: @code{""}@*
+Saved in: @code{General.SessionFileName}
+
 @item Solver.OctaveInterpreter
 Name of the Octave interpreter (used to run .m files)@*
 Default value: @code{"octave"}@*

@@ -187,53 +187,61 @@ void colorbarWindow::redraw_range(int a, int b)
   // print colortable mode and help
   fl_font(FL_HELVETICA, font_height);
   fl_color(fl_contrast(FL_BLACK, color_bg));
-  int xx0 = 6, xx1 = 11 * font_height, yy0 = 10;
+
+  int fh = font_height + 1;
+  int xx0 = 6, xx1 = 11 * fh, yy0 = 10;
   if(help_flag) {
     i = 0;
-    fl_draw("1, 2, ..., Ctrl+1, ...", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Select predefined colormap", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("0, 1, 3, ...", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Select predefined colormap 0...9", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("mouse1", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Draw red or hue channel", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Ctrl+0, Ctrl+1, ...", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Select predefined colormap 10...19", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("mouse2", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Draw green or saturation channel", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("F1, F2, F3, ...", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Select predefined colormap 20...", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("mouse3", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Draw blue or value channel", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("mouse1", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Draw red or hue channel", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("Ctrl+mouse1", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Draw alpha channel", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("mouse2", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Draw green or saturation channel", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("Ctrl+c, Ctrl+v, r", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Copy, paste or reset colormap", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("mouse3", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Draw blue or value channel", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("m", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Toggle RGB/HSV mode", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Ctrl+mouse1", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Draw alpha channel", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("left, right", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Translate abscissa", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Ctrl+c, Ctrl+v, r", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Copy, paste or reset colormap", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("Ctrl+left, Ctrl+right", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Rotate abscissa", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("m", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Toggle RGB/HSV mode", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("i, Ctrl+i", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Invert abscissa or ordinate", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("left, right", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Translate abscissa", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("up, down", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Modify color channel curvature", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("Ctrl+left, Ctrl+right", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Rotate abscissa", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("a, Ctrl+a", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Modify alpha coefficient", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("i, Ctrl+i", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Invert abscissa or ordinate", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("p, Ctrl+p", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Modify alpha channel power law", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("up, down", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Modify color channel curvature", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("b, Ctrl+b", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Modify gamma correction", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("a, Ctrl+a", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Modify alpha coefficient", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("h", xx0, yy0 + (i + 1) * font_height);
-    fl_draw("Show this help message", xx1, yy0 + (i + 1) * font_height);
+    fl_draw("p, Ctrl+p", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Modify alpha channel power law", xx1, yy0 + (i + 1) * fh);
+    i++;
+    fl_draw("b, Ctrl+b", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Modify gamma correction", xx1, yy0 + (i + 1) * fh);
+    i++;
+    fl_draw("h", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Show this help message", xx1, yy0 + (i + 1) * fh);
     i++;
   }
   else if(ct->ipar[COLORTABLE_MODE] == COLORTABLE_RGB)
@@ -363,50 +371,78 @@ int colorbarWindow::handle(int event)
       ColorTable_InitParam(9, ct);
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + '0')) {
+    else if(Fl::test_shortcut(FL_CTRL + '0') ||
+            Fl::test_shortcut(FL_META + '0')) {
       ColorTable_InitParam(10, ct);
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + '1')) {
+    else if(Fl::test_shortcut(FL_CTRL + '1') ||
+            Fl::test_shortcut(FL_META + '1')) {
       ColorTable_InitParam(11, ct);
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + '2')) {
+    else if(Fl::test_shortcut(FL_CTRL + '2') ||
+            Fl::test_shortcut(FL_META + '2')) {
       ColorTable_InitParam(12, ct);
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + '3')) {
+    else if(Fl::test_shortcut(FL_CTRL + '3') ||
+            Fl::test_shortcut(FL_META + '3')) {
       ColorTable_InitParam(13, ct);
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + '4')) {
+    else if(Fl::test_shortcut(FL_CTRL + '4') ||
+            Fl::test_shortcut(FL_META + '4')) {
       ColorTable_InitParam(14, ct);
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + '5')) {
+    else if(Fl::test_shortcut(FL_CTRL + '5') ||
+            Fl::test_shortcut(FL_META + '5')) {
       ColorTable_InitParam(15, ct);
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + '6')) {
+    else if(Fl::test_shortcut(FL_CTRL + '6') ||
+            Fl::test_shortcut(FL_META + '6')) {
       ColorTable_InitParam(16, ct);
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + '7')) {
+    else if(Fl::test_shortcut(FL_CTRL + '7') ||
+            Fl::test_shortcut(FL_META + '7')) {
       ColorTable_InitParam(17, ct);
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + '8')) {
+    else if(Fl::test_shortcut(FL_CTRL + '8') ||
+            Fl::test_shortcut(FL_META + '8')) {
       ColorTable_InitParam(18, ct);
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + '9')) {
+    else if(Fl::test_shortcut(FL_CTRL + '9') ||
+            Fl::test_shortcut(FL_META + '9')) {
       ColorTable_InitParam(19, ct);
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + 'c')) {
+    else if(Fl::test_shortcut(FL_F + 1)) {
+      ColorTable_InitParam(20, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_F + 2)) {
+      ColorTable_InitParam(21, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_F + 3)) {
+      ColorTable_InitParam(22, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_F + 4)) {
+      ColorTable_InitParam(23, ct);
+      compute = 1;
+    }
+    else if(Fl::test_shortcut(FL_CTRL + 'c') ||
+            Fl::test_shortcut(FL_META + 'c')) {
       ColorTable_Copy(ct);
     }
-    else if(Fl::test_shortcut(FL_CTRL + 'v')) {
+    else if(Fl::test_shortcut(FL_CTRL + 'v') ||
+            Fl::test_shortcut(FL_META + 'v')) {
       ColorTable_Paste(ct);
       redraw();
       *viewchanged = true;

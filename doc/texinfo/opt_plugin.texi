@@ -1201,6 +1201,9 @@ Numeric options:
 Default value: @code{-1}
 @end table
 
+@item Plugin(ThinLayerFixMesh)
+Fix the mesh in thin parts
+
 @item Plugin(Transform)
 Plugin(Transform) transforms the homogeneous node coordinates (x,y,z,1) of the elements in the view `View' by the matrix@*
 @*

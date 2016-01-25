@@ -270,7 +270,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ColormapNumber
-Default colormap number@*
+Default colormap number (0: black, 1: vis5d, 2: jet, 3: lucie, 4: rainbow, 5: emc2000, 6: incadescent, 7: hot, 8: pink, 9: grayscale, 10: french, 11: hsv, 12: spectrum, 13: bone, 14: spring, 15: summer, 16: autumm, 17: winter, 18: cool, 19: copper, 20: magma, 21: inferno, 22: plasma, 23: viridis)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -376,6 +376,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.DrawPyramids
 Display post-processing pyramids?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.DrawTrihedra
+Display post-processing trihedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -791,6 +796,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.Color.Pyramids
 Pyramid color@*
+Default value: @code{@{0,0,0@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item View.Color.Trihedra
+Trihedron color@*
 Default value: @code{@{0,0,0@}}@*
 Saved in: @code{General.OptionsFileName}
 

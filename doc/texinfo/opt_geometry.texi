@@ -261,7 +261,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Tolerance
 Geometrical tolerance@*
-Default value: @code{1e-06}@*
+Default value: @code{1e-08}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Transform

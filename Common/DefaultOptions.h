@@ -1432,7 +1432,11 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ColormapInvert" , opt_view_colormap_invert , 0. ,
     "Invert the color values, i.e., replace x with (255-x) in the colormap?" },
   { F|O, "ColormapNumber" , opt_view_colormap_number , 2. ,
-    "Default colormap number" },
+    "Default colormap number (0: black, 1: vis5d, 2: jet, 3: lucie, 4: rainbow, "
+    "5: emc2000, 6: incadescent, 7: hot, 8: pink, 9: grayscale, 10: french, "
+    "11: hsv, 12: spectrum, 13: bone, 14: spring, 15: summer, 16: autumm, "
+    "17: winter, 18: cool, 19: copper, 20: magma, 21: inferno, 22: plasma, "
+    "23: viridis)"},
   { F|O, "ColormapRotation" , opt_view_colormap_rotation , 0. ,
     "Incremental colormap rotation" },
   { F|O, "ColormapSwap" , opt_view_colormap_swap , 0. ,

@@ -215,7 +215,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Format
-Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 27=stl, 30=mesh, 31=bdf, 32=cgns, 33=med, 40=ply2)@*
+Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 26=pos statistics, 27=stl, 30=mesh, 31=bdf, 32=cgns, 33=med, 39=inp, 40=ply2)@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -354,6 +354,11 @@ Weight of pyramidal element for METIS load balancing@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.PartitionTrihedronWeight
+Weight of trihedron element for METIS load balancing@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.PartitionQuadWeight
 Weight of quadrangle for METIS load balancing@*
 Default value: @code{1}@*
@@ -391,6 +396,11 @@ Saved in: @code{-}
 
 @item Mesh.NbPyramids
 Number of pyramids in the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbTrihedra
+Number of trihedra in the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -464,6 +474,11 @@ Display mesh pyramids?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Trihedra
+Display mesh trihedra?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Quadrangles
 Display mesh quadrangles?@*
 Default value: @code{1}@*
@@ -516,6 +531,16 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DAll
 Apply recombination3D algorithm to all volumes, ignoring per-volume spec@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Recombine3DLevel
+3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Recombine3DConformity
+3d recombination conformity type (0: nonconforming, 1: conformity using trihedra, 2: conformity using pyramids)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -737,6 +762,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Color.Pyramids
 Mesh pyramid color (if Mesh.ColorCarousel=0)@*
 Default value: @code{@{217,113,38@}}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Color.Trihedra
+Mesh trihedron color (if Mesh.ColorCarousel=0)@*
+Default value: @code{@{20,255,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Color.Tangents
