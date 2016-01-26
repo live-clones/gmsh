@@ -3510,6 +3510,8 @@ optionWindow::optionWindow(int deltaFontSize)
     {
       Fl_Group *o = new Fl_Group
         (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Map");
+      o->label("@-1gmsh_colormap");
+
       o->hide();
 
       view.colorbar = new colorbarWindow

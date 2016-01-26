@@ -199,6 +199,22 @@ static void gmsh_search(Fl_Color col)
   fl_line_style(FL_SOLID);
 }
 
+static void gmsh_colormap(Fl_Color col)
+{
+  fl_color(FL_RED);
+  fl_begin_polygon();
+  vv(-0.8,-0.8); vv(-0.3,-0.8); vv(-0.3,0.8); vv(-0.8,0.8);
+  fl_end_polygon();
+  fl_color(FL_GREEN);
+  fl_begin_polygon();
+  vv(-0.3,-0.8); vv(0.2,-0.8); vv(0.2,0.8); vv(-0.3,0.8);
+  fl_end_polygon();
+  fl_color(FL_BLUE);
+  fl_begin_polygon();
+  vv(0.2,-0.8); vv(0.7,-0.8); vv(0.7,0.8); vv(0.2,0.8);
+  fl_end_polygon();
+}
+
 #undef vv
 #undef bl
 #undef el
@@ -347,6 +363,7 @@ FlGui::FlGui(int argc, char **argv)
   fl_add_symbol("gmsh_gear", gmsh_gear, 1);
   fl_add_symbol("gmsh_graph", gmsh_graph, 1);
   fl_add_symbol("gmsh_search", gmsh_search, 1);
+  fl_add_symbol("gmsh_colormap", gmsh_colormap, 1);
 
   // load default system icons (for file browser)
   Fl_File_Icon::load_system_icons();
