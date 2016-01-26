@@ -1327,7 +1327,7 @@ optionWindow::optionWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 34 * FL_NORMAL_SIZE + WB;
+  int width = 37 * FL_NORMAL_SIZE + WB;
   int height = 12 * BH + 4 * WB;
   int L = 7 * FL_NORMAL_SIZE;
 
@@ -1822,6 +1822,7 @@ optionWindow::optionWindow(int deltaFontSize)
       while(GeneralOptions_Color[i].str) {
         general.color[i] = new Fl_Button
           (L + 2 * WB, 3 * WB + (6 + i) * BH, IW, BH, GeneralOptions_Color[i].str);
+        general.color[i]->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
         general.color[i]->callback(color_cb, (void *)GeneralOptions_Color[i].function);
         i++;
       }
@@ -2347,7 +2348,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[3]->callback(mesh_options_ok_cb);
 
       mesh.butt[4] = new Fl_Check_Button
-        (L + 2 * WB + IW + WB / 2, 2 * WB + 11 * BH, BW, BH, "Use incomplete elements");
+        (L + 2 * WB + 1.25 * IW, 2 * WB + 11 * BH, BW, BH, "Use incomplete elements");
       mesh.butt[4]->type(FL_TOGGLE_BUTTON);
       mesh.butt[4]->callback(mesh_options_ok_cb);
 

@@ -298,7 +298,7 @@ pluginWindow::pluginWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width0 = 34 * FL_NORMAL_SIZE + WB;
+  int width0 = 37 * FL_NORMAL_SIZE + WB;
   int height0 = 12 * BH + 4 * WB;
   int L1 = 13 * FL_NORMAL_SIZE, L2 = 6 * FL_NORMAL_SIZE;
 

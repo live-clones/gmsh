@@ -260,7 +260,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
   butt[0] = new Fl_Check_Button
     (L + WB, 3 * WB + 6 * BH, width - L - 2 * WB, BH, "Keep whole elements");
   butt[1] = new Fl_Check_Button
-    (L + WB, 3 * WB + 7 * BH, width - L - 2 * WB, BH, "Only draw intersecting volume layer");
+    (L + WB, 3 * WB + 7 * BH, width - L - 2 * WB, BH, "Only draw volume layer");
   butt[2] = new Fl_Check_Button
     (L + WB, 3 * WB + 8 * BH, width - L - 2 * WB, BH, "Cut only volume elements");
   for(int i = 0; i < 3; i++){
