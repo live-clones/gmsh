@@ -688,6 +688,13 @@ int FlGui::testGlobalShortcuts(int event)
       (0, GMSH_SET | GMSH_GUI, opt_general_color_scheme(0, GMSH_GET, 0) + 1);
     status = 2;
   }
+  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'c')) {
+    for(unsigned int i = 0; i < PView::list.size(); i++)
+      if(opt_view_visible(i, GMSH_GET, 0))
+        opt_view_colormap_number
+          (i, GMSH_SET | GMSH_GUI, opt_view_colormap_number(i, GMSH_GET, 0) + 1);
+    status = 2;
+  }
   else if(Fl::test_shortcut(FL_ALT + 'w')) {
     opt_geometry_light
       (0, GMSH_SET | GMSH_GUI, !opt_geometry_light(0, GMSH_GET, 0));

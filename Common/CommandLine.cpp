@@ -232,6 +232,7 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("Alt+z",          "Set Z view"));
   s.push_back(mp("Alt+Shift+a",    "Hide/show small axes"));
   s.push_back(mp("Alt+Shift+b",    "Hide/show mesh volume faces"));
+  s.push_back(mp("Alt+Shift+c",    "Loop through predefined colormaps"));
   s.push_back(mp("Alt+Shift+d",    "Hide/show mesh surface faces"));
   s.push_back(mp("Alt+Shift+l",    "Hide/show mesh lines"));
   s.push_back(mp("Alt+Shift+p",    "Hide/show mesh points"));

@@ -192,14 +192,14 @@ void colorbarWindow::redraw_range(int a, int b)
   int xx0 = 6, xx1 = 11 * fh, yy0 = 10;
   if(help_flag) {
     i = 0;
-    fl_draw("0, 1, 3, ...", xx0, yy0 + (i + 1) * fh);
+    fl_draw("0, 1, 2, 3, ..., 9", xx0, yy0 + (i + 1) * fh);
     fl_draw("Select predefined colormap 0...9", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("Ctrl+0, Ctrl+1, ...", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Ctrl+0, ..., Ctrl+9", xx0, yy0 + (i + 1) * fh);
     fl_draw("Select predefined colormap 10...19", xx1, yy0 + (i + 1) * fh);
     i++;
-    fl_draw("F1, F2, F3, ...", xx0, yy0 + (i + 1) * fh);
-    fl_draw("Select predefined colormap 20...", xx1, yy0 + (i + 1) * fh);
+    fl_draw("F1, ..., F4", xx0, yy0 + (i + 1) * fh);
+    fl_draw("Select predefined colormap 20...23", xx1, yy0 + (i + 1) * fh);
     i++;
     fl_draw("mouse1", xx0, yy0 + (i + 1) * fh);
     fl_draw("Draw red or hue channel", xx1, yy0 + (i + 1) * fh);
@@ -466,7 +466,8 @@ int colorbarWindow::handle(int event)
       ct->ipar[COLORTABLE_SWAP] = !ct->ipar[COLORTABLE_SWAP];
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + 'i')) {
+    else if(Fl::test_shortcut(FL_CTRL + 'i') ||
+            Fl::test_shortcut(FL_META + 'i')) {
       ct->ipar[COLORTABLE_INVERT] = !ct->ipar[COLORTABLE_INVERT];
       compute = 1;
     }
@@ -476,7 +477,8 @@ int colorbarWindow::handle(int event)
         ct->dpar[COLORTABLE_BETA] = 1.0;
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + 'b')) {
+    else if(Fl::test_shortcut(FL_CTRL + 'b') ||
+            Fl::test_shortcut(FL_META + 'b')) {
       ct->dpar[COLORTABLE_BETA] -= 0.05;
       if(ct->dpar[COLORTABLE_BETA] < -1.0)
         ct->dpar[COLORTABLE_BETA] = -1.0;
@@ -488,7 +490,8 @@ int colorbarWindow::handle(int event)
         ct->dpar[COLORTABLE_ALPHA] = 0.0;
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + 'a')) {
+    else if(Fl::test_shortcut(FL_CTRL + 'a') ||
+            Fl::test_shortcut(FL_META + 'a')) {
       ct->dpar[COLORTABLE_ALPHA] += 0.05;
       if(ct->dpar[COLORTABLE_ALPHA] > 1.0)
         ct->dpar[COLORTABLE_ALPHA] = 1.0;
@@ -498,7 +501,8 @@ int colorbarWindow::handle(int event)
       ct->dpar[COLORTABLE_ALPHAPOW] += 0.05;
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + 'p')) {
+    else if(Fl::test_shortcut(FL_CTRL + 'p') ||
+            Fl::test_shortcut(FL_META + 'p')) {
       ct->dpar[COLORTABLE_ALPHAPOW] -= 0.05;
       compute = 1;
     }
@@ -506,7 +510,8 @@ int colorbarWindow::handle(int event)
       ct->dpar[COLORTABLE_BIAS] -= 0.05;
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + FL_Left)) {
+    else if(Fl::test_shortcut(FL_CTRL + FL_Left) ||
+            Fl::test_shortcut(FL_META + FL_Left)) {
       ct->ipar[COLORTABLE_ROTATION] += 5;
       if(ct->ipar[COLORTABLE_ROTATION] > ct->size - 1)
         ct->ipar[COLORTABLE_ROTATION] -= ct->size - 1;
@@ -516,7 +521,8 @@ int colorbarWindow::handle(int event)
       ct->dpar[COLORTABLE_BIAS] += 0.05;
       compute = 1;
     }
-    else if(Fl::test_shortcut(FL_CTRL + FL_Right)) {
+    else if(Fl::test_shortcut(FL_CTRL + FL_Right) ||
+            Fl::test_shortcut(FL_META + FL_Right)) {
       ct->ipar[COLORTABLE_ROTATION] -= 5;
       if(ct->ipar[COLORTABLE_ROTATION] < -(ct->size - 1))
         ct->ipar[COLORTABLE_ROTATION] += ct->size - 1;
@@ -557,7 +563,7 @@ int colorbarWindow::handle(int event)
       move_marker = 1;
 
     // determine which curve to modify
-    if(Fl::event_state(FL_CTRL))
+    if(Fl::event_state(FL_CTRL) || Fl::event_state(FL_META))
       p4 = 1;
     else if(ibut == 1 && !Fl::event_state(FL_SHIFT)
             && !Fl::event_state(FL_ALT))
