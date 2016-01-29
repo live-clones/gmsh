@@ -240,17 +240,12 @@ int GmshFinalize()
   
   // Delete static _interpolationSchemes of PViewData class
   PViewData::removeAllInterpolationSchemes();
-
-  // Delete static _reference of PViewOptions class
-  delete PViewOptions::reference();
 #endif
   // Delete all Gmodels
   for(unsigned int i = 0; i < GModel::list.size(); i++)
     delete GModel::list[i];
   GModel::list.clear();
-  
-  // Delete CTX instance
-  delete CTX::instance();
+
   return 1;
 }
 
