@@ -18,4 +18,4 @@ Line Loop(5) = {2,3,4,1};
 Plane Surface(6) = {5};         
 Extrude Surface { 6, {0,0.0,1} };         
 //Characteristic Length {10} = lc/100;
-Physical Point(1)={1 };
+//Physical Point(1)={1 };

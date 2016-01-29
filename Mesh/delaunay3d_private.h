@@ -338,6 +338,6 @@ void delaunayTrgl (const unsigned int numThreads,
 		   const unsigned int NPTS_AT_ONCE, 
 		   unsigned int Npts, 
 		   std::vector<Vertex*> assignTo[],
-		   tetContainer &allocator);
+		   tetContainer &allocator, double threshold = 0.0);
 
 #endif

@@ -263,8 +263,25 @@ void filterVertices (const int numThreads,
 
   std::vector<int> indices;
   SortHilbert(add, indices);
+  std::vector<Vertex*> _add=add;
+  
+  // std::vector<Vertex*> _add;
+  // Vertex *current = add[0];
+  // printf("before %d\n",add.size());
+  // for (unsigned int i=1;i<add.size();i++){
+  //   const double d = sqrt (SQR(add[i]->x()-current->x())  +
+  // 			   SQR(add[i]->y()-current->y())  +
+  // 			   SQR(add[i]->z()-current->z())  );
+  //   if (0.8*current->lc() > d){
+  //     delete add[i];
+  //   } 
+  //   else {
+  //     current = add[i];
+  //     _add.push_back(add[i]);
+  //   }
+  // }
+  //  printf("after %d\n",_add.size());
 
-  std::vector<Vertex*> _add = add;
   add.clear();
   for (unsigned int i=0;i<_add.size();i++){
     SPoint3 p (_add[i]->x(),_add[i]->y(),_add[i]->z());
@@ -415,7 +432,7 @@ void edgeBasedRefinement (const int numThreads,
 
     int iter = 1;
 
-    Msg::Info("----------------------------------- SATUR FILTR SORTH DELNY TIME  TETS");
+    Msg::Info("------------------------------------- SATUR FILTR SORTH DELNY TIME  TETS");
 
     double __t__ = Cpu();
     //    Tet::in_sphere_counter = 0;
@@ -433,10 +450,10 @@ void edgeBasedRefinement (const int numThreads,
       std::vector<int> indices;
       SortHilbert(add, indices);
       double t4 = Cpu();
-      delaunayTrgl (1,1,add.size(), &add,allocator);  
+      delaunayTrgl (1,1,add.size(), &add,allocator,1.e-24);  
       double t5 = Cpu();
       add_all.insert (add_all.end(), add.begin(), add.end());
-      Msg::Info("IT %3d %6d points added, timings %5.2f %5.2f %5.2f %5.2f %5.2f %5d",iter,add.size(),
+      Msg::Info("IT %3d %8d points added, timings %5.2f %5.2f %5.2f %5.2f %5.2f %5d",iter,add.size(),
 		(t2-t1),
 		(t3-t2),
 		(t4-t3),

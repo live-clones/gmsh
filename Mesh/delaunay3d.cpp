@@ -319,6 +319,231 @@ void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet){
     faceToTet.erase(it);
   }
 }
+/*
+  Fixing a non star shaped cavity (non delaunay triangulations)
+  See P.L. George's paper
+  Improvements on Delaunay-based three-dimensional automatic mesh generator
+  Finite Elements in Analysis and Design 25 (1997) 297-317
+*/
+
+static void starShapeness (Vertex *v, connContainer &bndK,
+			   std::vector<unsigned int> &_negatives,
+			   std::vector<unsigned int> &_nulls, 
+			   double threshold){
+  _negatives.clear();
+  _nulls.clear();
+  for (unsigned int i=0; i< bndK.size(); i++) {
+    // no symbolic perturbation
+    const double val =   robustPredicates::orient3d((double*)bndK[i].f.V[0],
+						    (double*)bndK[i].f.V[1],
+						    (double*)bndK[i].f.V[2],
+						    (double*)v);
+    if (val <= threshold ) {
+      if(val >= 0)_nulls.push_back(i);
+      else _negatives.push_back(i);
+    }
+  }
+}
+
+static Tet* tetContainsV (Vertex *v, cavityContainer &cavity){
+
+  for (unsigned int i=0; i< cavity.size(); i++) {
+    unsigned int count = 0;
+    for (unsigned int j=0;j<4;j++){
+      Face f = cavity[i]->getFace(j);
+      const double val =   robustPredicates::orient3d((double*)f.V[0],
+						      (double*)f.V[1],
+						      (double*)f.V[2],
+						      (double*)v);
+      if (val >= 0 ) {
+	count++;
+      }
+    }
+    if (count == 4)return cavity[i];
+  }
+  //  printf("AIE\n");
+  return NULL;
+}
+
+static void buildDelaunayBall (cavityContainer &cavity, connContainer &faceToTet){
+  faceToTet.clear();
+  for (unsigned int i=0; i< cavity.size(); i++) {
+    Tet *t = cavity[i];
+    for (unsigned int iFace=0; iFace< 4; iFace++) {
+      Tet *neigh = t->T[iFace];
+      conn c (t->getFace(iFace), iFace, neigh);
+      connContainer::iterator it = std::find(faceToTet.begin(),faceToTet.end(),c);
+      if (it == faceToTet.end()){
+	faceToTet.push_back(c);
+      }
+      else {
+	faceToTet.erase(it);
+      }
+    }
+  }
+}
+
+static void findPossibleTets (cavityContainer &cavity,
+			      connContainer &bndK,
+			      std::vector<Tet*> &_possible){
+  _possible.clear();
+  std::vector<Vertex*> _all;
+  for (unsigned int i=0; i< bndK.size(); i++) {
+    for (unsigned int j=0; j< 3; j++) {
+      _all.push_back(bndK[i].f.V[j]);
+    }
+  }
+  //  std::vector<Vertex*>::iterator last = std::unique(_all.begin(), _all.end());
+  for (unsigned int i=0; i< cavity.size(); i++) {
+    Tet *t = cavity[i];
+    for (unsigned int j=0; j< 4; j++) {
+      Vertex *v = t->V[j];
+      if (std::find (_all.begin(),_all.end(), v) == _all.end()){
+	_possible.push_back(t);
+	break;
+      }
+    }    
+  }
+}
+
+static bool removeIsolatedTets(Tet *containsV,
+			       cavityContainer &cavity,
+			       connContainer &bndK, 
+			       int myThread, int K){
+  cavityContainer cc;
+  cc.push_back(containsV);
+  std::stack<Tet*> _stack;
+  _stack.push(containsV);
+
+  while (!_stack.empty()){
+    Tet *t = _stack.top();
+    _stack.pop();
+    for (int i=0;i<4;i++){
+      Tet *neigh = t->T[i];
+      if (neigh && 
+	  (std::find(cc.begin(),cc.end(),neigh) == cc.end()) &&
+	  (std::find(cavity.begin(),cavity.end(),neigh) != cavity.end())){
+	cc.push_back(neigh);
+	_stack.push(neigh);
+      }
+    }
+  }
+  if (cc.size() == cavity.size())return false;
+  //  //  Msg::Info("   cavity updated (%3ld elements) %3ld isolated tet removed",cavity.size(),cavity.size()-cc.size());
+  cavity = cc;
+  return true;
+}
+
+static Tet *tetInsideCavityWithFAce (Face &f, cavityContainer &cavity){
+  //  printf("size of cavity %ld\n",cavity.size());
+  for (unsigned int i=0; i< cavity.size(); i++) {
+    Tet *t = cavity[i];
+    for (unsigned int iFace=0; iFace< 4; iFace++) {
+      if (t->getFace(iFace) == f) return t;
+    }  
+  }
+  return NULL;
+}
+
+
+void __print (const char *name, connContainer &conn, Vertex *v);
+static bool fixDelaunayCavity (double threshold,
+			       Vertex *v,
+			       cavityContainer &cavity,
+			       connContainer &bndK,
+			       int myThread, int K,
+			       std::vector<unsigned int> & _negatives, 
+			       std::vector<unsigned int> & _nulls){
+  
+  static int XXX = 1;
+  starShapeness (v, bndK, _negatives, _nulls, threshold);  
+
+#if 0
+  // test coherence ... 
+  connContainer bndK2;
+  buildDelaunayBall (cavity,bndK2);
+  if (bndK.size() != bndK2.size())printf("BUG1\n");
+  for (unsigned int i=0;i<bndK.size();i++){
+    connContainer::iterator it = std::find(bndK.begin(),bndK.end(),bndK2[i]);
+    if( it == bndK.end())printf("%d BUG2\n",XXX);
+    if(it->t != bndK2[i].t)printf("%d BUG3\n",XXX);
+    if(it->i != bndK2[i].i)printf("%d BUG4\n",XXX);
+  }
+#endif
+  
+
+  if (_negatives.empty() && _nulls.empty())return false;
+
+  // unset all tets of the cavity
+  for (unsigned int i=0; i< cavity.size(); i++)cavity[i]->unset(myThread,K);
+  for (unsigned int i=0; i<bndK.size(); i++)if(bndK[i].t)bndK[i].t->unset(myThread,K);
+
+  Msg::Debug("Fixing cavity %3d (%3ld,%3ld) : %ld negatives and %ld Nulls",XXX,
+	     cavity.size(),bndK.size(), _negatives.size(),_nulls.size());
+  
+  Tet *containsV = tetContainsV (v,cavity);
+
+  if (! containsV) return true;
+
+  while (1) {
+    if (removeIsolatedTets(containsV, cavity,bndK,myThread,K)){
+      buildDelaunayBall (cavity,bndK);
+      starShapeness (v, bndK, _negatives, _nulls, threshold);  
+    }
+
+    for (unsigned int i=0;i<_negatives.size();i++){
+      // FIXME
+      int index = _negatives[i];
+      conn &c = bndK[index];
+      Tet *toRemove = tetInsideCavityWithFAce (c.f, cavity);
+      if (toRemove){
+	std::vector<Tet*>::iterator it = std::find(cavity.begin(), cavity.end(), toRemove);
+	if (it != cavity.end())
+	  cavity.erase(it);
+	else
+	  Msg::Fatal("Datastructure Broken in %s line %5d",__FILE__,__LINE__);
+      }
+    }
+    for (unsigned int i=0;i<_nulls.size();i++){
+      return true;
+      int index = _nulls[i];
+      conn &c = bndK[index];
+      Tet *toAdd = c.t;
+      if (toAdd && std::find(cavity.begin(), cavity.end(), toAdd) == cavity.end())cavity.push_back(toAdd);    
+      else return true;
+    }
+    // rebuild the boundary of the cavity
+    // this step could be done faster by directly 
+    // updating bndK in the steps above    
+    buildDelaunayBall (cavity,bndK);
+    // if isolated points are present in the cavity 
+    // find all tets that contain thos vertices
+    std::vector<Tet*> _possible;
+    if (_nulls.size())findPossibleTets (cavity,bndK,_possible);    
+    if (!_possible.empty()){
+      printf("cavity is dead\n");
+      throw;
+      // FIXME
+      return true;
+      std::random_shuffle(_possible.begin(), _possible.end());
+      Tet *toRemove = _possible[0];
+      std::remove(cavity.begin(), cavity.end(), toRemove);      
+      buildDelaunayBall (cavity,bndK);
+      starShapeness (v, bndK, _negatives, _nulls, threshold);  
+    }
+    else {      
+      starShapeness (v, bndK, _negatives, _nulls, threshold);  
+      //      Msg::Info("   cavity updated (%3ld elements) %3ld negatives",cavity.size(),_negatives.size());
+      if (_negatives.empty() && _nulls.empty()){
+	//	sprintf(name,"final%d.pos",XXX++);
+	//	__print (name, bndK, v);
+	//Msg::Info(" cavity is fixed");
+	//	getchar();
+	return false;
+      }
+    }    
+  }
+}
 
 static void delaunayCavity2 (Tet *t,
 			    Tet *prev,
@@ -375,20 +600,23 @@ Tet* walk (Tet *t, Vertex *v, int maxx, double &totSearch, int thread){
     if (t == NULL) {
       return NULL; // we should NEVER return here
     }
-    if (t->inSphere(v,thread)) {return t;}
+    //    if (t->inSphere(v,thread)) {return t;}
     double _min = 0.0;
     int NEIGH = -1;
+    int count = 0;
     for (int iNeigh=0; iNeigh<4; iNeigh++){
       Face f = t->getFace (iNeigh);
       double val =   robustPredicates::orient3d((double*)f.V[0],
 						(double*)f.V[1],
 						(double*)f.V[2],
 						(double*)v);
+      if (val >=-1.e-12) count++;
       if (val < _min){
 	NEIGH = iNeigh;
 	_min = val;
       }
     }
+    if (count == 4  && t->inSphere(v,thread))return t;
     if (NEIGH >= 0){
       t = t->T[NEIGH];
     }
@@ -400,9 +628,11 @@ Tet* walk (Tet *t, Vertex *v, int maxx, double &totSearch, int thread){
 }
 
 
-void __print (const char *name, connContainer &conn){
+void __print (const char *name, connContainer &conn, Vertex *v){
   FILE *f = fopen(name,"w");
   fprintf(f,"View \"\"{\n");
+
+  if (v)fprintf(f,"SP(%g,%g,%g){%d};\n",v->x(),v->y(),v->z(),v->getNum());
 
   for (unsigned int i=0;i<conn.size();i++){
     fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
@@ -522,7 +752,8 @@ void delaunayTrgl (const unsigned int numThreads,
 		   const unsigned int NPTS_AT_ONCE, 
 		   unsigned int Npts, 
 		   std::vector<Vertex*> assignTo[],
-		   tetContainer &allocator){
+		   tetContainer &allocator, 
+		   double threshold){
 #ifdef _VERBOSE
   double totSearchGlob=0;
   double totCavityGlob=0;
@@ -552,6 +783,7 @@ void delaunayTrgl (const unsigned int numThreads,
 
     double totSearch=0;
     double totCavity=0;
+    std::vector<unsigned int> _negatives, _nulls;
     std::vector<cavityContainer> cavity(NPTS_AT_ONCE);
     std::vector<connContainer> bnd(NPTS_AT_ONCE);
     std::vector<bool> ok(NPTS_AT_ONCE);
@@ -620,16 +852,9 @@ void delaunayTrgl (const unsigned int numThreads,
 	  delaunayCavity2(t[K], NULL, vToAdd[K], cavityK, bndK, myThread, K);
 	  //delaunayCavity(t[K], vToAdd[K], cavityK, bndK, myThread, K);
 	  // verify the cavity
-	  for (unsigned int i=0; i< bndK.size(); i++) {
-	    const double val =   robustPredicates::orient3d((double*)bndK[i].f.V[0],
-							    (double*)bndK[i].f.V[1],
-							    (double*)bndK[i].f.V[2],
-							    (double*)vToAdd[K]);
-	    if (val <= 0 ) {
-	      vToAdd[K] = NULL;
-	      invalidCavities [myThread]++;
-	      break;
-	    }
+	  if (fixDelaunayCavity (threshold, vToAdd[K],  cavityK, bndK, myThread, K, _negatives, _nulls)){
+	    vToAdd[K] = NULL;
+	    invalidCavities [myThread]++;
 	  }
 	}
       }

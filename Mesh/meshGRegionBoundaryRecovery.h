@@ -743,7 +743,7 @@ class meshGRegionBoundaryRecovery {
 
   // Mesh optimize
   long lawsonflip3d(flipconstraints *fc);
-  void recoverdelaunay();
+  bool recoverdelaunay();
   int  gettetrahedron(point, point, point, point, triface *);
   long improvequalitybyflips();
   int  smoothpoint(point smtpt, arraypool*, int ccw, optparameters *opm);
@@ -874,7 +874,7 @@ class meshGRegionBoundaryRecovery {
   void unifysubfaces(face *f1, face *f2);
   void unifysegments();
   void jettisonnodes();
-  void reconstructmesh(GRegion *_gr);
+  bool reconstructmesh(GRegion *_gr);
 };
 
 void terminateBoundaryRecovery(void *, int exitcode);

@@ -12894,7 +12894,7 @@ long meshGRegionBoundaryRecovery::lawsonflip3d(flipconstraints *fc)
   return totalcount + sliver_peels;
 }
 
-void meshGRegionBoundaryRecovery::recoverdelaunay()
+bool meshGRegionBoundaryRecovery::recoverdelaunay()
 {
   arraypool *flipqueue, *nextflipqueue, *swapqueue;
   triface tetloop, neightet, *parytet;
@@ -12941,13 +12941,13 @@ void meshGRegionBoundaryRecovery::recoverdelaunay()
   fc.enqflag = 2;
 
   lawsonflip3d(&fc);
-
+  
   if (b->verbose > 1) {
     printf("    obj (after Lawson) = %.17g\n", tetprism_vol_sum);
   }
-
+  
   if (unflipqueue->objects == 0l) {
-    return; // The mesh is Delaunay.
+    return true; // The mesh is Delaunay.
   }
 
   fc.unflip = 1; // Unflip if the edge is not flipped.
@@ -13042,7 +13042,9 @@ void meshGRegionBoundaryRecovery::recoverdelaunay()
     }
   } // while (flipqueue->objects > 0l)
 
+  bool returnValue = true;
   if (flipqueue->objects > 0l) {
+    returnValue = false;
     if (b->verbose > 1) {
       printf("    %ld non-Delaunay edges remained.\n", flipqueue->objects);
     }
@@ -13055,6 +13057,7 @@ void meshGRegionBoundaryRecovery::recoverdelaunay()
   b->flipstarsize = bakmaxflipstarsize;
   delete flipqueue;
   delete nextflipqueue;
+  return returnValue;
 }
 
 int meshGRegionBoundaryRecovery::gettetrahedron(point pa, point pb, point pc,
@@ -14450,11 +14453,11 @@ void meshGRegionBoundaryRecovery::jettisonnodes()
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
+bool meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
 {
 
+  bool returnValue (true);
   double t_start = Cpu();
-
   std::vector<MVertex*> _vertices;
 
   // Get the set of vertices from GRegion.
@@ -14512,7 +14515,7 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
     longest = sqrt(x * x + y * y + z * z);
     if (longest == 0.0) {
       Msg::Warning("Error:  The point set is trivial.\n");
-      return;
+      return true;
     }
 
     // Two identical points are distinguished by 'lengthlimit'.
@@ -14854,9 +14857,10 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
     suppresssteinerpoints();
   }
 
-  recoverdelaunay();
+  returnValue = recoverdelaunay();
 
-  //  optimizemesh();
+  // let's trry
+  optimizemesh();
 
   if ((dupverts > 0l) || (unuverts > 0l)) {
     // Remove hanging nodes.
@@ -15159,8 +15163,10 @@ void meshGRegionBoundaryRecovery::reconstructmesh(GRegion *_gr)
     _gr->tetrahedra.push_back(t);
     tetloop.tet = tetrahedrontraverse();
   }
-} // mesh output
- Msg::Info("Reconstruct time : %g sec",Cpu()-t_start);
+ } // mesh output
+ if (returnValue)Msg::Info("Reconstruct time : %g sec (mesh is Delaunay)",Cpu()-t_start);
+ else Msg::Info("Reconstruct time : %g sec (mesh is not Delaunay)",Cpu()-t_start);
+ return returnValue;
 }
 
 void terminateBoundaryRecovery(void *, int exitcode)
