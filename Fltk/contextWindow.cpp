@@ -23,6 +23,7 @@ static void elementary_define_parameter_cb(Fl_Widget *w, void *data)
             FlGui::instance()->elementaryContext->input[25]->value(),
             GModel::current()->getFileName());
   FlGui::instance()->resetVisibility();
+  FlGui::instance()->rebuildTree(true);
 }
 
 static void elementary_define_point_cb(Fl_Widget *w, void *data)
