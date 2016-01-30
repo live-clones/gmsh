@@ -27,7 +27,7 @@
 #include "OnelabDatabase.h"
 #endif
 
-void add_infile(std::string text, std::string fileName, bool forceDestroy)
+void add_infile(const std::string &text, const std::string &fileName, bool forceDestroy)
 {
   std::vector<std::string> split = SplitFileName(fileName);
   std::string noExt = split[0] + split[1], ext = split[2];
@@ -147,7 +147,7 @@ void add_infile(std::string text, std::string fileName, bool forceDestroy)
 #endif
 }
 
-void coherence(std::string fileName)
+void coherence(const std::string &fileName)
 {
   add_infile("Coherence;", fileName, true);
 }
@@ -164,29 +164,30 @@ static std::string list2string(List_T *list)
   return sstream.str();
 }
 
-void delet(List_T *list, std::string fileName, std::string what)
+void delet(List_T *list, const std::string &fileName, const std::string &what)
 {
   std::ostringstream sstream;
   sstream << "Delete {\n  " << what << "{" << list2string(list) << "};\n}";
   add_infile(sstream.str(), fileName, true);
 }
 
-void add_charlength(List_T *list, std::string fileName, std::string lc)
+void add_charlength(List_T *list, const std::string &fileName, const std::string &lc)
 {
   std::ostringstream sstream;
   sstream << "Characteristic Length {" << list2string(list) << "} = " << lc << ";";
   add_infile(sstream.str(), fileName);
 }
 
-void add_recosurf(List_T *list, std::string fileName)
+void add_recosurf(List_T *list, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Recombine Surface {" << list2string(list) << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_trsfline(std::vector<int> &l, std::string fileName, std::string type,
-                  std::string typearg, std::string pts)
+void add_trsfline(std::vector<int> &l, const std::string &fileName,
+                  const std::string &type, const std::string &typearg,
+                  const std::string &pts)
 {
   std::ostringstream sstream;
   sstream << "Transfinite Line {";
@@ -200,7 +201,8 @@ void add_trsfline(std::vector<int> &l, std::string fileName, std::string type,
   add_infile(sstream.str(), fileName);
 }
 
-void add_trsfsurf(std::vector<int> &l, std::string fileName, std::string dir)
+void add_trsfsurf(std::vector<int> &l, const std::string &fileName,
+                  const std::string &dir)
 {
   std::ostringstream sstream;
   sstream << "Transfinite Surface {" << l[0] << "}";
@@ -218,7 +220,7 @@ void add_trsfsurf(std::vector<int> &l, std::string fileName, std::string dir)
   add_infile(sstream.str(), fileName);
 }
 
-void add_trsfvol(std::vector<int> &l, std::string fileName)
+void add_trsfvol(std::vector<int> &l, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Transfinite Volume{" << l[0] << "} = {";
@@ -230,7 +232,8 @@ void add_trsfvol(std::vector<int> &l, std::string fileName)
   add_infile(sstream.str(), fileName);
 }
 
-void add_embedded(std::string what, std::vector<int> &l, std::string fileName)
+void add_embedded(const std::string &what, std::vector<int> &l,
+                  const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Point{";
@@ -242,8 +245,9 @@ void add_embedded(std::string what, std::vector<int> &l, std::string fileName)
   add_infile(sstream.str(), fileName, true);
 }
 
-void add_param(std::string par, std::string value, std::string label,
-               std::string path, std::string fileName)
+void add_param(const std::string &par, const std::string &value,
+               const std::string &label, const std::string &path,
+               const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << par << " = DefineNumber[ " << value;
@@ -260,8 +264,8 @@ void add_param(std::string par, std::string value, std::string label,
   add_infile(sstream.str(), fileName);
 }
 
-void add_point(std::string fileName, std::string x, std::string y,
-               std::string z, std::string lc)
+void add_point(const std::string &fileName, const std::string &x, const std::string &y,
+               const std::string &z, const std::string &lc)
 {
   std::ostringstream sstream;
   sstream << "Point(" << NEWPOINT() << ") = {" << x << ", " << y << ", "
@@ -271,8 +275,8 @@ void add_point(std::string fileName, std::string x, std::string y,
   add_infile(sstream.str(), fileName);
 }
 
-void add_field_option(int field_id, std::string option_name,
-                      std::string option_value, std::string fileName)
+void add_field_option(int field_id, const std::string &option_name,
+                      const std::string &option_value, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Field[" << field_id << "]." << option_name << " = "
@@ -280,28 +284,29 @@ void add_field_option(int field_id, std::string option_name,
   add_infile(sstream.str(), fileName);
 }
 
-void add_field(int field_id, std::string type_name, std::string fileName)
+void add_field(int field_id, const std::string &type_name, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Field[" << field_id << "] = " << type_name << ";";
   add_infile(sstream.str(), fileName);
 }
 
-void delete_field(int field_id, std::string fileName)
+void delete_field(int field_id, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Delete Field [" << field_id << "];";
   add_infile(sstream.str(), fileName);
 }
 
-void set_background_field(int field_id, std::string fileName)
+void set_background_field(int field_id, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Background Field = " << field_id << ";";
   add_infile(sstream.str(), fileName);
 }
 
-void add_multline(std::string type, std::vector<int> &p, std::string fileName)
+void add_multline(const std::string &type, std::vector<int> &p,
+                  const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << type << "(" << NEWLINE() << ") = {";
@@ -313,7 +318,7 @@ void add_multline(std::string type, std::vector<int> &p, std::string fileName)
   add_infile(sstream.str(), fileName);
 }
 
-void add_circ(int p1, int p2, int p3, std::string fileName)
+void add_circ(int p1, int p2, int p3, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Circle(" << NEWLINE() << ") = {" << p1 << ", " << p2 << ", "
@@ -321,7 +326,7 @@ void add_circ(int p1, int p2, int p3, std::string fileName)
   add_infile(sstream.str(), fileName);
 }
 
-void add_ell(int p1, int p2, int p3, int p4, std::string fileName)
+void add_ell(int p1, int p2, int p3, int p4, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Ellipse(" << NEWLINE() << ") = {" << p1 << ", " << p2 << ", "
@@ -329,7 +334,7 @@ void add_ell(int p1, int p2, int p3, int p4, std::string fileName)
   add_infile(sstream.str(), fileName);
 }
 
-void add_lineloop(List_T *list, std::string fileName, int *numloop)
+void add_lineloop(List_T *list, const std::string &fileName, int *numloop)
 {
   if(recognize_loop(list, numloop)) return;
   *numloop = NEWLINELOOP();
@@ -338,14 +343,14 @@ void add_lineloop(List_T *list, std::string fileName, int *numloop)
   add_infile(sstream.str(), fileName);
 }
 
-void add_surf(std::string type, List_T *list, std::string fileName)
+void add_surf(const std::string &type, List_T *list, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << type << "(" << NEWSURFACE() << ") = {" << list2string(list) << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_surfloop(List_T *list, std::string fileName, int *numloop)
+void add_surfloop(List_T *list, const std::string &fileName, int *numloop)
 {
   if(recognize_surfloop(list, numloop)) return;
   *numloop = NEWSURFACELOOP();
@@ -354,31 +359,40 @@ void add_surfloop(List_T *list, std::string fileName, int *numloop)
   add_infile(sstream.str(), fileName);
 }
 
-void add_vol(List_T *list, std::string fileName)
+void add_vol(List_T *list, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Volume(" << NEWVOLUME() << ") = {" << list2string(list) << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_physical(std::string type, List_T *list, std::string fileName)
+void add_physical(const std::string &type, List_T *list, const std::string &fileName,
+                  const std::string &name, int forceTag)
 {
   std::ostringstream sstream;
-  sstream << "Physical " << type << "(" << NEWPHYSICAL() << ") = {"
-          << list2string(list) << "};";
+  sstream << "Physical " << type << "(";
+  if(name.size()){
+    sstream << "\"" << name << "\"";
+    if(forceTag)
+      sstream << ", " << forceTag;
+  }
+  else{
+    sstream << (forceTag ? forceTag : NEWPHYSICAL());
+  }
+  sstream << ") = {" << list2string(list) << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_compound(std::string type, List_T *list, std::string fileName)
+void add_compound(const std::string &type, List_T *list, const std::string &fileName)
 {
   std::ostringstream sstream;
   if(SplitFileName(fileName)[2] != ".geo") sstream << "CreateTopology;\n";
   if (type == "Surface"){
-    sstream << "Compound " << type << "(" << NEWSURFACE()+1000 << ") = {"
+    sstream << "Compound " << type << "(" << NEWSURFACE() << ") = {"
 	    << list2string(list) << "};";
   }
   else if (type == "Line"){
-    sstream << "Compound " << type << "(" << NEWLINE()+1000 << ") = {"
+    sstream << "Compound " << type << "(" << NEWLINE() << ") = {"
 	    << list2string(list) << "};";
   }
   else{
@@ -388,8 +402,9 @@ void add_compound(std::string type, List_T *list, std::string fileName)
   add_infile(sstream.str(), fileName);
 }
 
-void translate(int add, List_T *list, std::string fileName, std::string what,
-               std::string tx, std::string ty, std::string tz)
+void translate(int add, List_T *list, const std::string &fileName,
+               const std::string &what, const std::string &tx,
+               const std::string &ty, const std::string &tz)
 {
   std::ostringstream sstream;
   sstream << "Translate {" << tx << ", " << ty << ", " << tz << "} {\n  ";
@@ -400,9 +415,10 @@ void translate(int add, List_T *list, std::string fileName, std::string what,
   add_infile(sstream.str(), fileName);
 }
 
-void rotate(int add, List_T *list, std::string fileName, std::string what,
-            std::string ax, std::string ay, std::string az,
-            std::string px, std::string py, std::string pz, std::string angle)
+void rotate(int add, List_T *list, const std::string &fileName,
+            const std::string &what, const std::string &ax, const std::string &ay,
+            const std::string &az, const std::string &px, const std::string &py,
+            const std::string &pz, const std::string &angle)
 {
   std::ostringstream sstream;
   sstream << "Rotate {{" << ax << ", " << ay << ", " << az << "}, {"
@@ -414,8 +430,9 @@ void rotate(int add, List_T *list, std::string fileName, std::string what,
   add_infile(sstream.str(), fileName);
 }
 
-void dilate(int add, List_T *list, std::string fileName, std::string what,
-            std::string dx, std::string dy, std::string dz, std::string df)
+void dilate(int add, List_T *list, const std::string &fileName,
+            const std::string &what, const std::string &dx, const std::string &dy,
+            const std::string &dz, const std::string &df)
 {
   std::ostringstream sstream;
   sstream << "Dilate {{" << dx << ", " << dy << ", " << dz << "}, " << df << "} {\n  ";
@@ -426,8 +443,9 @@ void dilate(int add, List_T *list, std::string fileName, std::string what,
   add_infile(sstream.str(), fileName);
 }
 
-void symmetry(int add, List_T *list, std::string fileName, std::string what,
-              std::string sa, std::string sb, std::string sc, std::string sd)
+void symmetry(int add, List_T *list, const std::string &fileName,
+              const std::string &what, const std::string &sa, const std::string &sb,
+              const std::string &sc, const std::string &sd)
 {
   std::ostringstream sstream;
   sstream << "Symmetry {" << sa << ", " << sb << ", " << sc << ", " << sd << "} {\n  ";
@@ -438,8 +456,8 @@ void symmetry(int add, List_T *list, std::string fileName, std::string what,
   add_infile(sstream.str(), fileName);
 }
 
-void extrude(List_T *list, std::string fileName, std::string what,
-             std::string tx, std::string ty, std::string tz)
+void extrude(List_T *list, const std::string &fileName, const std::string &what,
+             const std::string &tx, const std::string &ty, const std::string &tz)
 {
   std::ostringstream sstream;
   sstream << "Extrude {" << tx << ", " << ty << ", " << tz << "} {\n  " << what
@@ -447,9 +465,10 @@ void extrude(List_T *list, std::string fileName, std::string what,
   add_infile(sstream.str(), fileName);
 }
 
-void protude(List_T *list, std::string fileName, std::string what,
-             std::string ax, std::string ay, std::string az,
-             std::string px, std::string py, std::string pz, std::string angle)
+void protude(List_T *list, const std::string &fileName, const std::string &what,
+             const std::string &ax, const std::string &ay, const std::string &az,
+             const std::string &px, const std::string &py, const std::string &pz,
+             const std::string &angle)
 {
   std::ostringstream sstream;
   sstream << "Extrude {{" << ax << ", " << ay << ", " << az << "}, {"
@@ -458,7 +477,7 @@ void protude(List_T *list, std::string fileName, std::string what,
   add_infile(sstream.str(), fileName);
 }
 
-void split_edge(int edge_id, List_T *vertices,std::string fileName)
+void split_edge(int edge_id, List_T *vertices, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Split Line(" << edge_id << ") {" << list2string(vertices) << "};";

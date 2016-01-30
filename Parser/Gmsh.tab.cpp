@@ -5996,7 +5996,7 @@ yyreduce:
 	yymsg(0, "Physical point %d already exists", num);
       }
       else if(!p && op > 0){
-	yymsg(0, "Physical point %d does not exists", num);
+	yymsg(0, "Physical point %d does not exist", num);
       }
       else if(op == 0){
 	List_T *temp = ListOfDouble2ListOfInt((yyvsp[-1].l));
@@ -6311,7 +6311,7 @@ yyreduce:
 	yymsg(0, "Physical line %d already exists", num);
       }
       else if(!p && op > 0){
-	yymsg(0, "Physical line %d does not exists", num);
+	yymsg(0, "Physical line %d does not exist", num);
       }
       else if(op == 0){
 	List_T *temp = ListOfDouble2ListOfInt((yyvsp[-1].l));
@@ -6582,7 +6582,7 @@ yyreduce:
 	yymsg(0, "Physical surface %d already exists", num);
       }
       else if(!p && op > 0){
-	yymsg(0, "Physical surface %d does not exists", num);
+	yymsg(0, "Physical surface %d does not exist", num);
       }
       else if(op == 0){
 	List_T *temp = ListOfDouble2ListOfInt((yyvsp[-1].l));
@@ -6681,7 +6681,7 @@ yyreduce:
 	yymsg(0, "Physical volume %d already exists", num);
       }
       else if(!p && op > 0){
-	yymsg(0, "Physical volume %d does not exists", num);
+	yymsg(0, "Physical volume %d does not exist", num);
       }
       else if(op == 0){
 	List_T *temp = ListOfDouble2ListOfInt((yyvsp[-1].l));

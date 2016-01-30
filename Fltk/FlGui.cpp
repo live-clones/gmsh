@@ -456,7 +456,8 @@ FlGui::FlGui(int argc, char **argv)
   highordertools = new highOrderToolsWindow(CTX::instance()->deltaFontSize);
   clipping = new clippingWindow(CTX::instance()->deltaFontSize);
   manip = new manipWindow(CTX::instance()->deltaFontSize);
-  geoContext = new geometryContextWindow(CTX::instance()->deltaFontSize);
+  elementaryContext = new elementaryContextWindow(CTX::instance()->deltaFontSize);
+  physicalContext = new physicalContextWindow(CTX::instance()->deltaFontSize);
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
   help = new helpWindow();
 
@@ -1119,8 +1120,8 @@ void FlGui::storeCurrentWindowsInfo()
   CTX::instance()->clipPosition[1] = clipping->win->y();
   CTX::instance()->manipPosition[0] = manip->win->x();
   CTX::instance()->manipPosition[1] = manip->win->y();
-  CTX::instance()->ctxPosition[0] = geoContext->win->x();
-  CTX::instance()->ctxPosition[1] = meshContext->win->y();
+  CTX::instance()->ctxPosition[0] = elementaryContext->win->x();
+  CTX::instance()->ctxPosition[1] = elementaryContext->win->y();
 #if defined(HAVE_3M)
   storeWindowPosition3M();
 #endif
@@ -1224,8 +1225,10 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->plugins->win->show();
     if(FlGui::instance()->fields->win->shown())
       FlGui::instance()->fields->win->show();
-    if(FlGui::instance()->geoContext->win->shown())
-      FlGui::instance()->geoContext->win->show();
+    if(FlGui::instance()->elementaryContext->win->shown())
+      FlGui::instance()->elementaryContext->win->show();
+    if(FlGui::instance()->physicalContext->win->shown())
+      FlGui::instance()->physicalContext->win->show();
     if(FlGui::instance()->meshContext->win->shown())
       FlGui::instance()->meshContext->win->show();
     if(FlGui::instance()->visibility->win->shown())

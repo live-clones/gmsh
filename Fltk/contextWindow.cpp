@@ -10,41 +10,42 @@
 #include "contextWindow.h"
 #include "paletteWindow.h"
 #include "GModel.h"
+#include "Geo.h"
 #include "GeoStringInterface.h"
 #include "OpenFile.h"
 #include "Context.h"
 
-static void con_geometry_define_parameter_cb(Fl_Widget *w, void *data)
+static void elementary_define_parameter_cb(Fl_Widget *w, void *data)
 {
-  add_param(FlGui::instance()->geoContext->input[0]->value(),
-            FlGui::instance()->geoContext->input[1]->value(),
-            FlGui::instance()->geoContext->input[24]->value(),
-            FlGui::instance()->geoContext->input[25]->value(),
+  add_param(FlGui::instance()->elementaryContext->input[0]->value(),
+            FlGui::instance()->elementaryContext->input[1]->value(),
+            FlGui::instance()->elementaryContext->input[24]->value(),
+            FlGui::instance()->elementaryContext->input[25]->value(),
             GModel::current()->getFileName());
   FlGui::instance()->resetVisibility();
 }
 
-static void con_geometry_define_point_cb(Fl_Widget *w, void *data)
+static void elementary_define_point_cb(Fl_Widget *w, void *data)
 {
   add_point(GModel::current()->getFileName(),
-            FlGui::instance()->geoContext->input[2]->value(),
-            FlGui::instance()->geoContext->input[3]->value(),
-            FlGui::instance()->geoContext->input[4]->value(),
-            FlGui::instance()->geoContext->input[5]->value());
+            FlGui::instance()->elementaryContext->input[2]->value(),
+            FlGui::instance()->elementaryContext->input[3]->value(),
+            FlGui::instance()->elementaryContext->input[4]->value(),
+            FlGui::instance()->elementaryContext->input[5]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
   drawContext::global()->draw();
 }
 
-static void con_geometry_snap_cb(Fl_Widget *w, void *data)
+static void elementary_snap_cb(Fl_Widget *w, void *data)
 {
-  CTX::instance()->geom.snap[0] = FlGui::instance()->geoContext->value[0]->value();
-  CTX::instance()->geom.snap[1] = FlGui::instance()->geoContext->value[1]->value();
-  CTX::instance()->geom.snap[2] = FlGui::instance()->geoContext->value[2]->value();
+  CTX::instance()->geom.snap[0] = FlGui::instance()->elementaryContext->value[0]->value();
+  CTX::instance()->geom.snap[1] = FlGui::instance()->elementaryContext->value[1]->value();
+  CTX::instance()->geom.snap[2] = FlGui::instance()->elementaryContext->value[2]->value();
 }
 
-geometryContextWindow::geometryContextWindow(int deltaFontSize)
+elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
@@ -52,7 +53,7 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
   int height = 4 * WB + 8 * BH;
 
   win = new paletteWindow(width, height, CTX::instance()->nonModalWindows ? true : false,
-                          "Contextual Geometry Definitions");
+                          "Elementary Entity Context");
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
@@ -73,7 +74,7 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
       {
         Fl_Return_Button *o = new Fl_Return_Button
           (width - BB - 2 * WB, 2 * WB + 7 * BH, BB, BH, "Add");
-        o->callback(con_geometry_define_parameter_cb);
+        o->callback(elementary_define_parameter_cb);
       }
       group[0]->end();
     }
@@ -87,7 +88,8 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
       input[3]->value("0");
       input[4] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z coordinate");
       input[4]->value("0");
-      input[5] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Prescribed mesh element size at point");
+      input[5] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH,
+                              "Prescribed mesh element size at point");
       input[5]->value("1.0");
       for(int i = 2; i < 6; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
@@ -98,12 +100,12 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
                                     "Snapping grid spacing");
       for(int i = 0; i < 3; i++) {
         value[i]->align(FL_ALIGN_RIGHT);
-        value[i]->callback(con_geometry_snap_cb);
+        value[i]->callback(elementary_snap_cb);
       }
       {
         Fl_Return_Button *o = new Fl_Return_Button
           (width - BB - 2 * WB, 2 * WB + 7 * BH, BB, BH, "Add");
-        o->callback(con_geometry_define_point_cb);
+        o->callback(elementary_define_point_cb);
       }
       group[1]->end();
     }
@@ -199,12 +201,91 @@ geometryContextWindow::geometryContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE += deltaFontSize;
 }
 
-void geometryContextWindow::show(int pane)
+void elementaryContextWindow::show(int pane)
 {
   for(int i = 0; i < 6; i++)
     group[i]->hide();
   group[pane]->show();
   win->show();
+}
+
+static void physical_name_cb(Fl_Widget *w, void *data)
+{
+  std::string name = FlGui::instance()->physicalContext->input[0]->value();
+  for(GModel::piter it = GModel::current()->firstPhysicalName();
+      it != GModel::current()->lastPhysicalName(); it++){
+    if(it->second == name){
+      FlGui::instance()->physicalContext->input[0]->textcolor(FL_RED);
+      FlGui::instance()->physicalContext->input[0]->redraw();
+      return;
+    }
+  }
+  FlGui::instance()->physicalContext->input[0]->textcolor(FL_FOREGROUND_COLOR);
+  FlGui::instance()->physicalContext->input[0]->redraw();
+}
+
+static void physical_number_cb(Fl_Widget *w, void *data)
+{
+  if(FlGui::instance()->physicalContext->butt[0]->value()){
+    FlGui::instance()->physicalContext->value[0]->value(NEWPHYSICAL());
+    FlGui::instance()->physicalContext->value[0]->deactivate();
+  }
+  else{
+    FlGui::instance()->physicalContext->value[0]->activate();
+    int val = FlGui::instance()->physicalContext->value[0]->value();
+    for(GModel::piter it = GModel::current()->firstPhysicalName();
+        it != GModel::current()->lastPhysicalName(); it++){
+      if(it->first.second == val){
+        FlGui::instance()->physicalContext->value[0]->textcolor(FL_RED);
+        FlGui::instance()->physicalContext->value[0]->redraw();
+        return;
+      }
+    }
+  }
+  FlGui::instance()->physicalContext->value[0]->textcolor(FL_FOREGROUND_COLOR);
+  FlGui::instance()->physicalContext->value[0]->redraw();
+}
+
+physicalContextWindow::physicalContextWindow(int deltaFontSize)
+{
+  FL_NORMAL_SIZE -= deltaFontSize;
+
+  int width = 28 * FL_NORMAL_SIZE;
+  int height = 2 * WB + 3 * BH;
+
+  win = new paletteWindow(width, height, CTX::instance()->nonModalWindows ? true : false,
+                          "Physical Group Context");
+  win->box(GMSH_WINDOW_BOX);
+  {
+    input[0] = new Fl_Input(WB, WB, (2 * width) / 3, BH, "Name");
+    input[0]->value("");
+    input[0]->align(FL_ALIGN_RIGHT);
+    input[0]->callback(physical_name_cb);
+    input[0]->when(FL_WHEN_CHANGED);
+
+    butt[0] = new Fl_Check_Button(WB, WB + BH, width - 2 * WB, BH, "Automatic numbering");
+    butt[0]->value(1);
+    butt[0]->callback(physical_number_cb);
+
+    value[0] = new Fl_Value_Input(WB, WB + 2 * BH, (2 * width) / 3, BH, "Numeric tag");
+    value[0]->value(0);
+    value[0]->deactivate();
+    value[0]->align(FL_ALIGN_RIGHT);
+    value[0]->callback(physical_number_cb);
+    value[0]->when(FL_WHEN_CHANGED);
+  }
+
+  win->position(CTX::instance()->ctxPosition[0], CTX::instance()->ctxPosition[1]);
+  win->end();
+
+  FL_NORMAL_SIZE += deltaFontSize;
+}
+
+void physicalContextWindow::show()
+{
+  physical_name_cb(0, 0);
+  physical_number_cb(0, 0);
+  if(!win->shown()) win->show();
 }
 
 meshContextWindow::meshContextWindow(int deltaFontSize)
@@ -222,14 +303,14 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
   int height = 4 * WB + 4 * BH;
 
   win = new paletteWindow
-    (width, height, CTX::instance()->nonModalWindows, "Contextual Mesh Definitions");
+    (width, height, CTX::instance()->nonModalWindows, "Mesh Context");
   win->box(GMSH_WINDOW_BOX);
   {
     Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
     // 0: Element size at points
     {
       group[0] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Element size at points");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Element size");
       input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Value");
       input[0]->value("0.1");
       input[0]->align(FL_ALIGN_RIGHT);

@@ -10,48 +10,63 @@
 #include <vector>
 #include "ListUtils.h"
 
-void coherence(std::string fileName);
-void delet(List_T *list, std::string fileName, std::string what);
-void add_infile(std::string text, std::string fileName, bool deleted_something=false);
-void add_charlength(List_T *list, std::string fileName, std::string lc);
-void add_recosurf(List_T *list, std::string fileName);
-void add_trsfline(std::vector<int> &l, std::string fileName, std::string type,
-                  std::string typearg, std::string pts);
-void add_trsfsurf(std::vector<int> &l, std::string fileName, std::string dir);
-void add_trsfvol(std::vector<int> &l, std::string fileName);
-void add_embedded(std::string what, std::vector<int> &l, std::string fileName);
-void add_param(std::string par, std::string value, std::string label,
-               std::string path, std::string fileName);
-void add_point(std::string fileName, std::string x, std::string y, std::string z,
-               std::string lc);
-void add_multline(std::string type, std::vector<int> &p, std::string fileName);
-void add_circ(int p1, int p2, int p3, std::string fileName);
-void add_ell(int p1, int p2, int p3, int p4, std::string fileName);
-void add_field_option(int field_id, std::string option_name, std::string option_value,
-                      std::string fileName);
-void add_field(int field_id, std::string type_name, std::string fileName);
-void delete_field(int field_id, std::string fileName);
-void set_background_field(int field_id,std::string fileName);
-void add_lineloop(List_T *list, std::string fileName, int *numloop);
-void add_surf(std::string type, List_T *list, std::string fileName);
-void add_surfloop(List_T *list, std::string fileName, int *numvol);
-void add_vol(List_T *list, std::string fileName);
-void add_physical(std::string type, List_T *list, std::string fileName);
-void add_compound(std::string type, List_T *list, std::string fileName);
-void translate(int add, List_T *list, std::string fileName, std::string what,
-               std::string tx, std::string ty, std::string tz);
-void rotate(int add, List_T *list, std::string fileName, std::string what,
-            std::string ax, std::string ay, std::string az,
-            std::string px, std::string py, std::string pz, std::string angle);
-void dilate(int add, List_T *list, std::string fileName, std::string what,
-            std::string dx, std::string dy, std::string dz, std::string df);
-void symmetry(int add, List_T *list, std::string fileName, std::string what,
-              std::string sa, std::string sb, std::string sc, std::string sd);
-void extrude(List_T *list, std::string fileName, std::string what, std::string tx,
-             std::string ty, std::string tz);
-void protude(List_T *list, std::string fileName, std::string what,
-             std::string ax, std::string ay, std::string az,
-             std::string px, std::string py, std::string pz, std::string angle);
-void split_edge(int edge_id, List_T *vertices, std::string fileName);
+void coherence(const std::string &fileName);
+void delet(List_T *list, const std::string &fileName, const std::string &what);
+void add_infile(const std::string &text, const std::string &fileName,
+                bool deleted_something=false);
+void add_charlength(List_T *list, const std::string &fileName, const std::string &lc);
+void add_recosurf(List_T *list, const std::string &fileName);
+void add_trsfline(std::vector<int> &l, const std::string &fileName,
+                  const std::string &type, const std::string &typearg,
+                  const std::string &pts);
+void add_trsfsurf(std::vector<int> &l, const std::string &fileName,
+                  const std::string &dir);
+void add_trsfvol(std::vector<int> &l, const std::string &fileName);
+void add_embedded(const std::string &what, std::vector<int> &l,
+                  const std::string &fileName);
+void add_param(const std::string &par, const std::string &value,
+               const std::string &label, const std::string &path,
+               const std::string &fileName);
+void add_point(const std::string &fileName, const std::string &x,
+               const std::string &y, const std::string &z, const std::string &lc);
+void add_multline(const std::string &type, std::vector<int> &p,
+                  const std::string &fileName);
+void add_circ(int p1, int p2, int p3, const std::string &fileName);
+void add_ell(int p1, int p2, int p3, int p4, const std::string &fileName);
+void add_field_option(int field_id, const std::string &option_name,
+                      const std::string &option_value, const std::string &fileName);
+void add_field(int field_id, const std::string &type_name,
+               const std::string &fileName);
+void delete_field(int field_id, const std::string &fileName);
+void set_background_field(int field_id,const std::string &fileName);
+void add_lineloop(List_T *list, const std::string &fileName, int *numloop);
+void add_surf(const std::string &type, List_T *list, const std::string &fileName);
+void add_surfloop(List_T *list, const std::string &fileName, int *numvol);
+void add_vol(List_T *list, const std::string &fileName);
+void add_physical(const std::string &type, List_T *list, const std::string &fileName,
+                  const std::string &name, int forceTag);
+void add_compound(const std::string &type, List_T *list, const std::string &fileName);
+void translate(int add, List_T *list, const std::string &fileName,
+               const std::string &what, const std::string &tx, const std::string &ty,
+               const std::string &tz);
+void rotate(int add, List_T *list, const std::string &fileName,
+            const std::string &what, const std::string &ax, const std::string &ay,
+            const std::string &az, const std::string &px, const std::string &py,
+            const std::string &pz,
+            const std::string &angle);
+void dilate(int add, List_T *list, const std::string &fileName,
+            const std::string &what, const std::string &dx, const std::string &dy,
+            const std::string &dz, const std::string &df);
+void symmetry(int add, List_T *list, const std::string &fileName,
+              const std::string &what, const std::string &sa, const std::string &sb,
+              const std::string &sc, const std::string &sd);
+void extrude(List_T *list, const std::string &fileName, const std::string &what,
+             const std::string &tx,
+             const std::string &ty, const std::string &tz);
+void protude(List_T *list, const std::string &fileName, const std::string &what,
+             const std::string &ax, const std::string &ay, const std::string &az,
+             const std::string &px, const std::string &py, const std::string &pz,
+             const std::string &angle);
+void split_edge(int edge_id, List_T *vertices, const std::string &fileName);
 
 #endif

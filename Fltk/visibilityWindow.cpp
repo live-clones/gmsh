@@ -431,12 +431,12 @@ static void visibility_sort_cb(Fl_Widget *w, void *data)
       if(FlGui::instance()->visibility->browser->selected(i + 1)){
         static char tmpstr[256];
         sprintf(tmpstr, "%d", VisibilityList::instance()->getTag(i));
-        FlGui::instance()->geoContext->input[1]->value(tmpstr);
+        FlGui::instance()->elementaryContext->input[1]->value(tmpstr);
         break;
       }
     }
-    FlGui::instance()->geoContext->input[0]->value("NewName");
-    FlGui::instance()->geoContext->show(0);
+    FlGui::instance()->elementaryContext->input[0]->value("NewName");
+    FlGui::instance()->elementaryContext->show(0);
   }
   else { // set new sorting mode
     VisibilityList::instance()->setSortMode(val);

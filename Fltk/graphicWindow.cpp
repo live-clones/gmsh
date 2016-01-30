@@ -600,7 +600,7 @@ static void add_new_point()
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
 
-  FlGui::instance()->geoContext->show(1);
+  FlGui::instance()->elementaryContext->show(1);
 
   while(1) {
     for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
@@ -612,10 +612,10 @@ static void add_new_point()
     char ib = FlGui::instance()->selectEntity(ENT_NONE);
     if(ib == 'e'){
       add_point(GModel::current()->getFileName(),
-                FlGui::instance()->geoContext->input[2]->value(),
-                FlGui::instance()->geoContext->input[3]->value(),
-                FlGui::instance()->geoContext->input[4]->value(),
-                FlGui::instance()->geoContext->input[5]->value());
+                FlGui::instance()->elementaryContext->input[2]->value(),
+                FlGui::instance()->elementaryContext->input[3]->value(),
+                FlGui::instance()->elementaryContext->input[4]->value(),
+                FlGui::instance()->elementaryContext->input[5]->value());
       FlGui::instance()->resetVisibility();
       drawContext::global()->draw();
     }
@@ -1033,7 +1033,7 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
 
   std::string str((const char*)data);
   if(str == "Parameter")
-    FlGui::instance()->geoContext->show(0);
+    FlGui::instance()->elementaryContext->show(0);
   else if(str == "Point")
     add_new_point();
   else if(str == "Line")
@@ -1262,55 +1262,59 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
         switch (action) {
         case 0:
           translate(mode, List1, GModel::current()->getFileName(), what,
-                    FlGui::instance()->geoContext->input[6]->value(),
-                    FlGui::instance()->geoContext->input[7]->value(),
-                    FlGui::instance()->geoContext->input[8]->value());
+                    FlGui::instance()->elementaryContext->input[6]->value(),
+                    FlGui::instance()->elementaryContext->input[7]->value(),
+                    FlGui::instance()->elementaryContext->input[8]->value());
           break;
         case 1:
           rotate(mode, List1, GModel::current()->getFileName(), what,
-                 FlGui::instance()->geoContext->input[12]->value(),
-                 FlGui::instance()->geoContext->input[13]->value(),
-                 FlGui::instance()->geoContext->input[14]->value(),
-                 FlGui::instance()->geoContext->input[9]->value(),
-                 FlGui::instance()->geoContext->input[10]->value(),
-                 FlGui::instance()->geoContext->input[11]->value(),
-                 FlGui::instance()->geoContext->input[15]->value());
+                 FlGui::instance()->elementaryContext->input[12]->value(),
+                 FlGui::instance()->elementaryContext->input[13]->value(),
+                 FlGui::instance()->elementaryContext->input[14]->value(),
+                 FlGui::instance()->elementaryContext->input[9]->value(),
+                 FlGui::instance()->elementaryContext->input[10]->value(),
+                 FlGui::instance()->elementaryContext->input[11]->value(),
+                 FlGui::instance()->elementaryContext->input[15]->value());
           break;
         case 2:
           dilate(mode, List1, GModel::current()->getFileName(), what,
-                 FlGui::instance()->geoContext->input[16]->value(),
-                 FlGui::instance()->geoContext->input[17]->value(),
-                 FlGui::instance()->geoContext->input[18]->value(),
-                 FlGui::instance()->geoContext->input[19]->value());
+                 FlGui::instance()->elementaryContext->input[16]->value(),
+                 FlGui::instance()->elementaryContext->input[17]->value(),
+                 FlGui::instance()->elementaryContext->input[18]->value(),
+                 FlGui::instance()->elementaryContext->input[19]->value());
           break;
         case 3:
           symmetry(mode, List1, GModel::current()->getFileName(), what,
-                   FlGui::instance()->geoContext->input[20]->value(),
-                   FlGui::instance()->geoContext->input[21]->value(),
-                   FlGui::instance()->geoContext->input[22]->value(),
-                   FlGui::instance()->geoContext->input[23]->value());
+                   FlGui::instance()->elementaryContext->input[20]->value(),
+                   FlGui::instance()->elementaryContext->input[21]->value(),
+                   FlGui::instance()->elementaryContext->input[22]->value(),
+                   FlGui::instance()->elementaryContext->input[23]->value());
           break;
         case 4:
           extrude(List1, GModel::current()->getFileName(), what,
-                  FlGui::instance()->geoContext->input[6]->value(),
-                  FlGui::instance()->geoContext->input[7]->value(),
-                  FlGui::instance()->geoContext->input[8]->value());
+                  FlGui::instance()->elementaryContext->input[6]->value(),
+                  FlGui::instance()->elementaryContext->input[7]->value(),
+                  FlGui::instance()->elementaryContext->input[8]->value());
           break;
         case 5:
           protude(List1, GModel::current()->getFileName(), what,
-                  FlGui::instance()->geoContext->input[12]->value(),
-                  FlGui::instance()->geoContext->input[13]->value(),
-                  FlGui::instance()->geoContext->input[14]->value(),
-                  FlGui::instance()->geoContext->input[9]->value(),
-                  FlGui::instance()->geoContext->input[10]->value(),
-                  FlGui::instance()->geoContext->input[11]->value(),
-                  FlGui::instance()->geoContext->input[15]->value());
+                  FlGui::instance()->elementaryContext->input[12]->value(),
+                  FlGui::instance()->elementaryContext->input[13]->value(),
+                  FlGui::instance()->elementaryContext->input[14]->value(),
+                  FlGui::instance()->elementaryContext->input[9]->value(),
+                  FlGui::instance()->elementaryContext->input[10]->value(),
+                  FlGui::instance()->elementaryContext->input[11]->value(),
+                  FlGui::instance()->elementaryContext->input[15]->value());
           break;
         case 6:
           delet(List1, GModel::current()->getFileName(), what);
           break;
         case 7:
-          add_physical(what, List1, GModel::current()->getFileName());
+          add_physical(what, List1, GModel::current()->getFileName(),
+                       FlGui::instance()->physicalContext->input[0]->value(),
+                       FlGui::instance()->physicalContext->butt[0]->value() ? 0 :
+                       FlGui::instance()->physicalContext->value[0]->value());
+          FlGui::instance()->physicalContext->show();
           break;
         case 8:
           add_charlength(List1, GModel::current()->getFileName(),
@@ -1347,70 +1351,70 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
 static void geometry_elementary_add_translate_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->geoContext->show(2);
+  FlGui::instance()->elementaryContext->show(2);
   action_point_line_surface_volume(0, 1, (const char*)data);
 }
 
 static void geometry_elementary_add_rotate_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->geoContext->show(3);
+  FlGui::instance()->elementaryContext->show(3);
   action_point_line_surface_volume(1, 1, (const char*)data);
 }
 
 static void geometry_elementary_add_scale_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->geoContext->show(4);
+  FlGui::instance()->elementaryContext->show(4);
   action_point_line_surface_volume(2, 1, (const char*)data);
 }
 
 static void geometry_elementary_add_symmetry_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->geoContext->show(5);
+  FlGui::instance()->elementaryContext->show(5);
   action_point_line_surface_volume(3, 1, (const char*)data);
 }
 
 static void geometry_elementary_translate_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->geoContext->show(2);
+  FlGui::instance()->elementaryContext->show(2);
   action_point_line_surface_volume(0, 0, (const char*)data);
 }
 
 static void geometry_elementary_rotate_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->geoContext->show(3);
+  FlGui::instance()->elementaryContext->show(3);
   action_point_line_surface_volume(1, 0, (const char*)data);
 }
 
 static void geometry_elementary_scale_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->geoContext->show(4);
+  FlGui::instance()->elementaryContext->show(4);
   action_point_line_surface_volume(2, 0, (const char*)data);
 }
 
 static void geometry_elementary_symmetry_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->geoContext->show(5);
+  FlGui::instance()->elementaryContext->show(5);
   action_point_line_surface_volume(3, 0, (const char*)data);
 }
 
 static void geometry_elementary_extrude_translate_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->geoContext->show(2);
+  FlGui::instance()->elementaryContext->show(2);
   action_point_line_surface_volume(4, 0, (const char*)data);
 }
 
 static void geometry_elementary_extrude_rotate_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->geoContext->show(3);
+  FlGui::instance()->elementaryContext->show(3);
   action_point_line_surface_volume(5, 0, (const char*)data);
 }
 
@@ -1439,7 +1443,7 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
     FlGui::instance()->callForSolverPlugin(0);
   else if(str == "Line")
     FlGui::instance()->callForSolverPlugin(1);
-
+  FlGui::instance()->physicalContext->show();
   action_point_line_surface_volume(7, 0, str.c_str());
 }
 

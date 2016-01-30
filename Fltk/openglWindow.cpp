@@ -636,11 +636,11 @@ int openglWindow::handle(int event)
       }
       char str[32];
       sprintf(str, "%g", _point[0]);
-      FlGui::instance()->geoContext->input[2]->value(str);
+      FlGui::instance()->elementaryContext->input[2]->value(str);
       sprintf(str, "%g", _point[1]);
-      FlGui::instance()->geoContext->input[3]->value(str);
+      FlGui::instance()->elementaryContext->input[3]->value(str);
       sprintf(str, "%g", _point[2]);
-      FlGui::instance()->geoContext->input[4]->value(str);
+      FlGui::instance()->elementaryContext->input[4]->value(str);
       redraw();
     }
     else{ // hover mode

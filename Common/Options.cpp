@@ -4792,7 +4792,7 @@ double opt_geometry_snap0(OPT_ARGS_NUM)
     CTX::instance()->geom.snap[0] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->geoContext->value[0]->value
+    FlGui::instance()->elementaryContext->value[0]->value
       (CTX::instance()->geom.snap[0]);
 #endif
   return CTX::instance()->geom.snap[0];
@@ -4804,7 +4804,7 @@ double opt_geometry_snap1(OPT_ARGS_NUM)
     CTX::instance()->geom.snap[1] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->geoContext->value[1]->value
+    FlGui::instance()->elementaryContext->value[1]->value
       (CTX::instance()->geom.snap[1]);
 #endif
   return CTX::instance()->geom.snap[1];
@@ -4816,7 +4816,7 @@ double opt_geometry_snap2(OPT_ARGS_NUM)
     CTX::instance()->geom.snap[2] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->geoContext->value[2]->value
+    FlGui::instance()->elementaryContext->value[2]->value
       (CTX::instance()->geom.snap[2]);
 #endif
   return CTX::instance()->geom.snap[2];
