@@ -338,7 +338,7 @@ void physicalContextWindow::show(bool remove)
     mode = "Remove";
     butt[0]->deactivate();
     value[0]->activate();
-    color = FL_DARK_GREEN;
+    color = (!CTX::instance()->guiColorScheme ? FL_DARK_GREEN : FL_GREEN);
   }
   else{
     mode = "Add";
@@ -347,7 +347,7 @@ void physicalContextWindow::show(bool remove)
       value[0]->deactivate();
     else
       value[0]->activate();
-    color = FL_DARK_RED;
+    color = (!CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
   }
   physical_cb(0, 0);
   if(!win->shown()) win->show();
