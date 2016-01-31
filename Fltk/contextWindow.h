@@ -8,6 +8,7 @@
 
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Input.H>
+#include <FL/Fl_Input_Choice.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Choice.H>
@@ -27,12 +28,15 @@ class elementaryContextWindow{
 class physicalContextWindow{
  public:
   Fl_Window *win;
-  Fl_Input *input[10];
+  Fl_Input_Choice *input[10];
   Fl_Check_Button *butt[10];
   Fl_Value_Input *value[10];
- public:
+  std::string mode;
+  bool append;
+  Fl_Color color;
+public:
   physicalContextWindow(int deltaFontSize=0);
-  void show();
+  void show(bool remove);
 };
 
 class meshContextWindow{

@@ -367,7 +367,8 @@ void add_vol(List_T *list, const std::string &fileName)
 }
 
 void add_physical(const std::string &type, List_T *list, const std::string &fileName,
-                  const std::string &name, int forceTag)
+                  const std::string &name, int forceTag, bool append,
+                  const std::string &mode)
 {
   std::ostringstream sstream;
   sstream << "Physical " << type << "(";
@@ -379,7 +380,12 @@ void add_physical(const std::string &type, List_T *list, const std::string &file
   else{
     sstream << (forceTag ? forceTag : NEWPHYSICAL());
   }
-  sstream << ") = {" << list2string(list) << "};";
+  sstream << ") ";
+  if(mode == "Remove")
+    sstream << "-";
+  else if(append)
+    sstream << "+";
+  sstream << "= {" << list2string(list) << "};";
   add_infile(sstream.str(), fileName);
 }
 

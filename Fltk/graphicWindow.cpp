@@ -595,6 +595,14 @@ void geometry_reload_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+void geometry_remove_last_command_cb(Fl_Widget *w, void *data)
+{
+  std::string fileName = GModel::current()->getFileName();
+  // TODO!
+  OpenProject(fileName);
+  drawContext::global()->draw();
+}
+
 static void add_new_point()
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
@@ -1310,11 +1318,14 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
           delet(List1, GModel::current()->getFileName(), what);
           break;
         case 7:
+        case 11:
           add_physical(what, List1, GModel::current()->getFileName(),
                        FlGui::instance()->physicalContext->input[0]->value(),
                        FlGui::instance()->physicalContext->butt[0]->value() ? 0 :
-                       FlGui::instance()->physicalContext->value[0]->value());
-          FlGui::instance()->physicalContext->show();
+                       FlGui::instance()->physicalContext->value[0]->value(),
+                       FlGui::instance()->physicalContext->append,
+                       FlGui::instance()->physicalContext->mode);
+          FlGui::instance()->physicalContext->show(action == 7 ? false : true);
           break;
         case 8:
           add_charlength(List1, GModel::current()->getFileName(),
@@ -1443,8 +1454,16 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
     FlGui::instance()->callForSolverPlugin(0);
   else if(str == "Line")
     FlGui::instance()->callForSolverPlugin(1);
-  FlGui::instance()->physicalContext->show();
+  FlGui::instance()->physicalContext->show(false);
   action_point_line_surface_volume(7, 0, str.c_str());
+}
+
+static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string str((const char*)data);
+  FlGui::instance()->physicalContext->show(true);
+  action_point_line_surface_volume(11, 0, str.c_str());
 }
 
 void mesh_save_cb(Fl_Widget *w, void *data)
@@ -3712,10 +3731,22 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_physical_add_cb, (void*)"Surface" } ,
   {"0Modules/Geometry/Physical groups/Add/Volume",
    (Fl_Callback *)geometry_physical_add_cb, (void*)"Volume" } ,
+  {"0Modules/Geometry/Physical groups/Remove/Point",
+   (Fl_Callback *)geometry_physical_remove_cb, (void*)"Point" } ,
+  {"0Modules/Geometry/Physical groups/Remove/Line",
+   (Fl_Callback *)geometry_physical_remove_cb, (void*)"Line" } ,
+  {"0Modules/Geometry/Physical groups/Remove/Surface",
+   (Fl_Callback *)geometry_physical_remove_cb, (void*)"Surface" } ,
+  {"0Modules/Geometry/Physical groups/Remove/Volume",
+   (Fl_Callback *)geometry_physical_remove_cb, (void*)"Volume" } ,
   {"0Modules/Geometry/Coherence",
    (Fl_Callback *)geometry_elementary_coherence_cb} ,
   {"0Modules/Geometry/Reload",
    (Fl_Callback *)geometry_reload_cb} ,
+  /* FIXME: toto
+  {"0Modules/Geometry/Remove last command in file",
+   (Fl_Callback *)geometry_remove_last_command_cb} ,
+  */
   {"0Modules/Geometry/Edit file",
    (Fl_Callback *)geometry_edit_cb} ,
   {"0Modules/Mesh/Define/Size fields",

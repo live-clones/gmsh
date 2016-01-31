@@ -1466,6 +1466,14 @@ Shape :
           List_Add(p->Entities, &j);
         }
       }
+      else if(op == 2){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Suppress(p->Entities, &j, fcmp_int);
+        }
+      }
       else{
 	yymsg(0, "Unsupported operation on physical point %d", num);
       }
@@ -1737,6 +1745,14 @@ Shape :
           List_Add(p->Entities, &j);
         }
       }
+      else if(op == 2){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Suppress(p->Entities, &j, fcmp_int);
+        }
+      }
       else{
 	yymsg(0, "Unsupported operation on physical line %d", num);
       }
@@ -1968,6 +1984,14 @@ Shape :
           List_Add(p->Entities, &j);
         }
       }
+      else if(op == 2){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Suppress(p->Entities, &j, fcmp_int);
+        }
+      }
       else{
 	yymsg(0, "Unsupported operation on physical surface %d", num);
       }
@@ -2053,6 +2077,14 @@ Shape :
           List_Read($7, i, &d);
           int j = (int)d;
           List_Add(p->Entities, &j);
+        }
+      }
+      else if(op == 2){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Suppress(p->Entities, &j, fcmp_int);
         }
       }
       else{

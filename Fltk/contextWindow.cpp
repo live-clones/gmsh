@@ -14,6 +14,7 @@
 #include "GeoStringInterface.h"
 #include "OpenFile.h"
 #include "Context.h"
+#include "MallocUtils.h"
 
 static void elementary_define_parameter_cb(Fl_Widget *w, void *data)
 {
@@ -210,44 +211,74 @@ void elementaryContextWindow::show(int pane)
   win->show();
 }
 
-static void physical_name_cb(Fl_Widget *w, void *data)
+static void physical_cb(Fl_Widget *w, void *data)
 {
-  std::string name = FlGui::instance()->physicalContext->input[0]->value();
-  for(GModel::piter it = GModel::current()->firstPhysicalName();
-      it != GModel::current()->lastPhysicalName(); it++){
-    if(it->second == name){
-      FlGui::instance()->physicalContext->input[0]->textcolor(FL_RED);
-      FlGui::instance()->physicalContext->input[0]->redraw();
-      return;
-    }
-  }
-  FlGui::instance()->physicalContext->input[0]->textcolor(FL_FOREGROUND_COLOR);
-  FlGui::instance()->physicalContext->input[0]->redraw();
-}
+  std::string what;
+  if(!data) what = "";
+  else what = (const char*)data;
 
-static void physical_number_cb(Fl_Widget *w, void *data)
-{
-  if(FlGui::instance()->physicalContext->butt[0]->value()){
-    FlGui::instance()->physicalContext->value[0]->value(NEWPHYSICAL());
-    FlGui::instance()->physicalContext->value[0]->deactivate();
-  }
-  else{
-    FlGui::instance()->physicalContext->value[0]->activate();
-    int val = FlGui::instance()->physicalContext->value[0]->value();
+  std::string name = FlGui::instance()->physicalContext->input[0]->value();
+  int number = FlGui::instance()->physicalContext->value[0]->value();
+
+  std::string existingName = "";
+  int existingNumber = 0;
+  if(what != "Number"){
     for(GModel::piter it = GModel::current()->firstPhysicalName();
         it != GModel::current()->lastPhysicalName(); it++){
-      if(it->first.second == val){
-        FlGui::instance()->physicalContext->value[0]->textcolor(FL_RED);
-        FlGui::instance()->physicalContext->value[0]->redraw();
-        return;
+      if(it->second == name){
+        existingName = name;
+        existingNumber = it->first.second;
+        break;
       }
     }
   }
-  FlGui::instance()->physicalContext->value[0]->textcolor(FL_FOREGROUND_COLOR);
+  if(what != "Name"){
+    std::map<int, std::vector<GEntity*> > groups[4];
+    GModel::current()->getPhysicalGroups(groups);
+    for(int i = 0; i < 4; i++){
+      for(std::map<int, std::vector<GEntity*> >::iterator it = groups[i].begin();
+          it != groups[i].end(); it++){
+        if(it->first == number){
+          existingNumber = number;
+          existingName = GModel::current()->getPhysicalName(i, number);
+          break;
+        }
+      }
+    }
+  }
+
+  if(existingName.size() || existingNumber){
+    FlGui::instance()->physicalContext->input[0]->textcolor
+      (FlGui::instance()->physicalContext->color);
+    FlGui::instance()->physicalContext->value[0]->textcolor
+      (FlGui::instance()->physicalContext->color);
+    if(what != "Name" && !strlen(FlGui::instance()->physicalContext->input[0]->value()))
+      FlGui::instance()->physicalContext->input[0]->value(existingName.c_str());
+    if(what != "Number")
+      FlGui::instance()->physicalContext->value[0]->value(existingNumber);
+    FlGui::instance()->physicalContext->append = true;
+  }
+  else{
+    FlGui::instance()->physicalContext->input[0]->textcolor(FL_FOREGROUND_COLOR);
+    FlGui::instance()->physicalContext->value[0]->textcolor(FL_FOREGROUND_COLOR);
+    if(what != "Number" && FlGui::instance()->physicalContext->mode != "Remove")
+      FlGui::instance()->physicalContext->value[0]->value(NEWPHYSICAL());
+    FlGui::instance()->physicalContext->append = false;
+  }
+
+  if(FlGui::instance()->physicalContext->butt[0]->active()){
+    if(FlGui::instance()->physicalContext->butt[0]->value())
+      FlGui::instance()->physicalContext->value[0]->deactivate();
+    else
+      FlGui::instance()->physicalContext->value[0]->activate();
+  }
+
+  FlGui::instance()->physicalContext->input[0]->redraw();
   FlGui::instance()->physicalContext->value[0]->redraw();
 }
 
 physicalContextWindow::physicalContextWindow(int deltaFontSize)
+  : mode("Add"), append(false), color(FL_RED)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
@@ -258,21 +289,21 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
                           "Physical Group Context");
   win->box(GMSH_WINDOW_BOX);
   {
-    input[0] = new Fl_Input(WB, WB, (2 * width) / 3, BH, "Name");
+    input[0] = new Fl_Input_Choice(WB, WB, (3 * width) / 4, BH, "Name");
     input[0]->value("");
     input[0]->align(FL_ALIGN_RIGHT);
-    input[0]->callback(physical_name_cb);
+    input[0]->callback(physical_cb, (void*)"Name");
     input[0]->when(FL_WHEN_CHANGED);
 
     butt[0] = new Fl_Check_Button(WB, WB + BH, width - 2 * WB, BH, "Automatic numbering");
     butt[0]->value(1);
-    butt[0]->callback(physical_number_cb);
+    butt[0]->callback(physical_cb);
 
-    value[0] = new Fl_Value_Input(WB, WB + 2 * BH, (2 * width) / 3, BH, "Numeric tag");
+    value[0] = new Fl_Value_Input(WB, WB + 2 * BH, (3 * width) / 4, BH, "Number");
     value[0]->value(0);
     value[0]->deactivate();
     value[0]->align(FL_ALIGN_RIGHT);
-    value[0]->callback(physical_number_cb);
+    value[0]->callback(physical_cb, (void*)"Number");
     value[0]->when(FL_WHEN_CHANGED);
   }
 
@@ -282,10 +313,43 @@ physicalContextWindow::physicalContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE += deltaFontSize;
 }
 
-void physicalContextWindow::show()
+void physicalContextWindow::show(bool remove)
 {
-  physical_name_cb(0, 0);
-  physical_number_cb(0, 0);
+  static std::vector<Fl_Menu_Item> menu;
+  static std::vector<char*> names;
+  for(unsigned int i = 0; i < menu.size(); i++)
+    menu[i].text = "";
+  for(unsigned int i = 0; i < names.size(); i++)
+    free(names[i]);
+  names.clear();
+  menu.clear();
+  for(GModel::piter it = GModel::current()->firstPhysicalName();
+      it != GModel::current()->lastPhysicalName(); it++){
+    char *str = strdup(it->second.c_str());
+    Fl_Menu_Item item = {str, 0, 0, 0, 0};
+    names.push_back(str);
+    menu.push_back(item);
+  }
+  Fl_Menu_Item item = {0};
+  menu.push_back(item);
+  input[0]->menubutton()->copy(&menu[0]);
+
+  if(remove){
+    mode = "Remove";
+    butt[0]->deactivate();
+    value[0]->activate();
+    color = FL_DARK_GREEN;
+  }
+  else{
+    mode = "Add";
+    butt[0]->activate();
+    if(butt[0]->value())
+      value[0]->deactivate();
+    else
+      value[0]->activate();
+    color = FL_DARK_RED;
+  }
+  physical_cb(0, 0);
   if(!win->shown()) win->show();
 }
 

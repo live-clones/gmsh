@@ -242,6 +242,21 @@ void *List_PQuery(List_T * liste, void *data,
   return (ptr);
 }
 
+int List_Suppress(List_T *liste, void *data,
+                  int (*fcmp)(const void *a, const void *b))
+{
+  char *ptr;
+  int len;
+
+  ptr = (char*)List_PQuery(liste,data,fcmp) ;
+  if (ptr == NULL) return(0);
+
+  liste->n--;
+  len = liste->n - (((intptr_t)ptr - (intptr_t)liste->array) / liste->size);
+  if (len > 0) memmove(ptr, ptr + liste->size, len * liste->size);
+  return(1);
+}
+
 int List_PSuppress(List_T * liste, int index)
 {
   char *ptr;
@@ -323,4 +338,3 @@ List_T *ListOfDouble2ListOfInt(List_T *dList)
   }
   return iList;
 }
-

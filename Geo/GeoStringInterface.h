@@ -44,7 +44,8 @@ void add_surf(const std::string &type, List_T *list, const std::string &fileName
 void add_surfloop(List_T *list, const std::string &fileName, int *numvol);
 void add_vol(List_T *list, const std::string &fileName);
 void add_physical(const std::string &type, List_T *list, const std::string &fileName,
-                  const std::string &name, int forceTag);
+                  const std::string &name, int forceTag, bool append,
+                  const std::string &mode);
 void add_compound(const std::string &type, List_T *list, const std::string &fileName);
 void translate(int add, List_T *list, const std::string &fileName,
                const std::string &what, const std::string &tx, const std::string &ty,

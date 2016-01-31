@@ -35,6 +35,7 @@ int     List_Search(List_T *liste, void *data, int (*fcmp)(const void *a, const 
 int     List_ISearchSeq(List_T *liste, void * data, int (*fcmp)(const void *a, const void *b));
 void   *List_PQuery(List_T *liste, void *data, int (*fcmp)(const void *a, const void *b));
 int     List_PSuppress(List_T *liste, int index);
+int     List_Suppress(List_T *liste, void *data, int (*fcmp)(const void *a, const void *b));
 void    List_Invert(List_T *a, List_T *b);
 void    List_Reset(List_T *liste);
 void    List_Action(List_T *liste, void (*action)(void *data, void *dummy));
