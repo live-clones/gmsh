@@ -1272,7 +1272,7 @@ void Msg::ImportPhysicalsAsOnelabRegions()
           name = std::string("Physical") +
             ((dim == 3) ? "Volume" : (dim == 2) ? "Surface" :
              (dim == 1) ? "Line" : "Point") + num.str();
-        name.insert(0, "Gmsh parameters/Physical groups/");
+        name.insert(0, "Gmsh/Physical groups/");
         onelab::region p(name, num.str());
         p.setDimension(dim);
         p.setReadOnly(true);

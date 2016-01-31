@@ -325,14 +325,6 @@ static void _rebuild_list_browser()
     if(VisibilityList::instance()->getVisibility(i))
       FlGui::instance()->visibility->browser->select(i + 1);
   }
-
-#if 0
-  // activate/deactivate delete button
-  if(type == VisibilityList::PhysicalEntities)
-    FlGui::instance()->visibility->push[0]->activate();
-  else
-    FlGui::instance()->visibility->push[0]->deactivate();
-#endif
 }
 
 static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
@@ -361,31 +353,6 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
     drawContext::global()->draw();
   }
 }
-
-#if 0
-static void visibility_delete_cb(Fl_Widget *w, void *data)
-{
-  bool all = true;
-  for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++){
-    if(!FlGui::instance()->visibility->browser->selected(i + 1)){
-      all = false;
-      break;
-    }
-  }
-  if(all){
-    GModel::current()->deletePhysicalGroups();
-  }
-  else{
-    for(int i = 0; i < VisibilityList::instance()->getNumEntities(); i++){
-      if(FlGui::instance()->visibility->browser->selected(i + 1)){
-        Vis *v = VisibilityList::instance()->getEntity(i);
-        GModel::current()->deletePhysicalGroup(v->getDim(), v->getTag());
-      }
-    }
-  }
-  visibility_cb(NULL, (void*)"redraw_only");
-}
-#endif
 
 static void visibility_sort_cb(Fl_Widget *w, void *data)
 {
@@ -1237,13 +1204,6 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       (2 * WB, height - 2 * BH - 3 * WB, (width - 3 * WB) / 2, BH);
     browser_type->menu(browser_type_table);
     browser_type->value(2); // physicals
-
-    // "Delete" is out of place in a Visibility window - it's a destructive operation!
-#if 0
-    push[0] = new Fl_Button
-      (width - 2 * CC - 3 * WB, height - 2 * BH - 3 * WB, CC, BH, "Delete");
-    push[0]->callback(visibility_delete_cb);
-#endif
 
     Fl_Return_Button *b1 = new Fl_Return_Button
       (width - 1 * CC - 2 * WB, height - 2 * BH - 3 * WB, CC, BH, "Apply");

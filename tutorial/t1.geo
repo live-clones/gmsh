@@ -69,18 +69,18 @@ Physical Point(1) = {1,2} ;
 
 MY_LINE = 2;
 Physical Line(MY_LINE) = {1,2} ;
-Physical Line("My second line (auto physical id)") = {3} ;
+Physical Line("My second line (automatic physical id)") = {3} ;
 Physical Line("My third line (physical id 5)", 5) = {4} ;
 Physical Surface("My surface") = {6} ;
 
 // All the line elements created during the meshing of lines 1 and 2 will be
 // saved in the output mesh file with the physical id 2. The elements from line
 // 3 will be saved in the output mesh file with an automatic physical id,
-// associated with the label "My second line (auto physical id)". The elements
-// from line 4 will be saved with physical id 5, associated with the label "My
-// third line (physical id 5)". And finally, all the triangular elements
-// resulting from the discretization of surface 6 will be given an automatic
-// physical id associated with the label "My surface").
+// associated with the label "My second line (automatic physical id)". The
+// elements from line 4 will be saved with physical id 5, associated with the
+// label "My third line (physical id 5)". And finally, all the triangular
+// elements resulting from the discretization of surface 6 will be given an
+// automatic physical id associated with the label "My surface").
 
 // Note that if no physical entities are defined, then all the elements in the
 // mesh will be saved "as is", with their default orientation.
