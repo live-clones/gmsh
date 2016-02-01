@@ -2,17 +2,17 @@
 
 DATE=`date "+%d/%m/%Y"`
 
-echo "This ONELAB archive was built on ${DATE} with the latest nightly snapshots of
+echo "This ONELAB bundle was built on ${DATE} with the latest nightly snapshots of
 Gmsh (http://gmsh.info) and GetDP (http://getdp.info).
 
-Both Gmsh and GetDP are distributed under the terms of the GNU General Public
-License. See the LICENSE and CREDITS files for more information. 
+The software is distributed under the terms of the GNU General Public License. 
+See the LICENSE and CREDITS files for more information. 
 
-The Gmsh tutorial and sample GetDP models are provided in the tutorial and
-models directories.
+The `models' directory contains a selection of ready-to-use examples from 
+http://onelab.info. The `tutorial' directory contains the Gmsh tutorial.
 
-See the official websites for up-to-date versions, documentation and additional
-examples." > /tmp/README.txt
+See http://onelab.info, http://gmsh.info and http://getdp.info for additional 
+examples, up-to-date versions and documentation." > /tmp/README.txt
 
 GMSH=svn
 GETDP=svn
