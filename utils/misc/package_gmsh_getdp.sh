@@ -8,8 +8,8 @@ Gmsh (http://gmsh.info) and GetDP (http://getdp.info).
 The software is distributed under the terms of the GNU General Public License. 
 See the LICENSE and CREDITS files for more information. 
 
-The `models' directory contains a selection of ready-to-use examples from 
-http://onelab.info. The `tutorial' directory contains the Gmsh tutorial.
+The 'models' directory contains a selection of ready-to-use examples from 
+http://onelab.info. The 'tutorial' directory contains the Gmsh tutorial.
 
 See http://onelab.info, http://gmsh.info and http://getdp.info for additional 
 examples, up-to-date versions and documentation." > /tmp/README.txt
