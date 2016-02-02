@@ -450,7 +450,7 @@ void edgeBasedRefinement (const int numThreads,
       std::vector<int> indices;
       SortHilbert(add, indices);
       double t4 = Cpu();
-      delaunayTrgl (1,1,add.size(), &add,allocator,1.e-24);  
+      delaunayTrgl (1,1,add.size(), &add,allocator,1.e-28);  
       double t5 = Cpu();
       add_all.insert (add_all.end(), add.begin(), add.end());
       Msg::Info("IT %3d %8d points added, timings %5.2f %5.2f %5.2f %5.2f %5.2f %5d",iter,add.size(),

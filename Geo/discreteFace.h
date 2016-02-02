@@ -9,9 +9,14 @@
 #include "GModel.h"
 #include "GFace.h"
 #include "discreteEdge.h"
+#include "discreteDiskFace.h"
 #include "MEdge.h"
 
 class discreteFace : public GFace {
+  // FIXME we should at the end use a 
+  // mesh() functioon that is specific to 
+  // discreteFace
+  // we should also SAVE those data's
  public:
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}
@@ -29,6 +34,8 @@ class discreteFace : public GFace {
   void setBoundEdges(GModel *gm, std::vector<int> tagEdges);
   void findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_edges);
   void writeGEO(FILE *fp);
+  void createAtlas();
+  std::vector<discreteDiskFace*> _atlas; 
 };
 
 #endif

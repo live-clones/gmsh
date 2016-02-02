@@ -18,6 +18,7 @@
 #include "GEdge.h"
 #include "GEdgeCompound.h"
 #include "robustPredicates.h"
+#include "discreteFace.h"
 #include "GFace.h"
 #include "GModel.h"
 #include "MVertex.h"
@@ -2383,11 +2384,21 @@ void meshGFace::operator() (GFace *gf, bool print)
     return;
   }
 
+  //-----------------------------------------------------------
+  // FIXME PAB & JFR FIRST IMPLEMENTATION OF THE COMPOUND REPLACEMENT
   if(gf->geomType() == GEntity::DiscreteSurface) {
-    //    meshGFaceQuadDiscrete (gf);      
-    //    gf->meshStatistics.status = GFace::DONE;
+    discreteFace *df = dynamic_cast<discreteFace*> (gf);
+    if (df) {
+      df->createAtlas();
+      for (unsigned int i=0;i<df->_atlas.size();i++){
+	(*this)(df->_atlas[i],print);
+      }
+    }
     return;
   }
+  //-----------------------------------------------------------
+  //-----------------------------------------------------------
+
   if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) return;

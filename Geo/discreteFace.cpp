@@ -138,6 +138,19 @@ void discreteFace::secondDer(const SPoint2 &param,
   }
 }
 
+// FIXME PAB ----> really create an atlas !!!!!!!!!!!!!!!
+void discreteFace::createAtlas() {
+  // parametrization is done here !!!
+  discreteDiskFace *df = new discreteDiskFace (this, triangles);
+  df->replaceEdges(l_edges);
+  _atlas.push_back(df);
+}
+
+// delete all discrete disk faces
+//void discreteFace::deleteAtlas() {
+//}
+//---------------------------------------------------------
+
 void discreteFace::writeGEO(FILE *fp)
 {
   fprintf(fp, "Discrete Face(%d) = {",tag());

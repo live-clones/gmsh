@@ -285,13 +285,10 @@ public:
 
 // tetAllocator owns the tets that have been allocated by itself
 class tetContainer {
-  //  std::vector<aBunchOfStuff<Vertex> *> _perThreadV;
   std::vector<aBunchOfStuff<Tet> *> _perThread;
  public:
   unsigned int size(int thread) const {return _perThread[thread]->size();}
-  //  unsigned int sizeV(int thread) const {return _perThreadV[thread]->size();}
   inline Tet    * operator () (int thread, int j) const {return (*_perThread[thread]) (j);}
-  //  Vertex * getVertex(int thread, int j) const {return (*_perThreadV[thread]) (j);}
   tetContainer (int nbThreads, int preallocSizePerThread) {
     // FIXME !!!
     if (nbThreads != 1) throw;
@@ -305,26 +302,12 @@ class tetContainer {
 #endif
       _perThread [myThread] = new aBunchOfStuff<Tet>    (preallocSizePerThread) ;
     }
-    //    _perThreadV.push_back(new aBunchOfStuff<Vertex> (preallocSizePerThread) );
   }
   inline Tet * newTet(int thread) {
     return  _perThread[thread]->newStuff();
   }
-  /*
-  Vertex * newVertex(int thread, double x, double y, double z, double lc, int num) {
-    Vertex *v = _perThreadV[thread]->newStuff();
-    v->x() = x;
-    v->y() = y;
-    v->z() = z;
-    v->lc() = lc;
-    v->setNum(num);
-    return  v;
-  }
-  */
   ~tetContainer(){
-    // FIXME !!!
     delete _perThread [0];
-    //    delete _perThreadV[0];
   }
 };
 
@@ -339,5 +322,6 @@ void delaunayTrgl (const unsigned int numThreads,
 		   unsigned int Npts, 
 		   std::vector<Vertex*> assignTo[],
 		   tetContainer &allocator, double threshold = 0.0);
+bool edgeSwap(Tet *tet, int iLocalEdge,  tetContainer &T, int myThread);
 
 #endif

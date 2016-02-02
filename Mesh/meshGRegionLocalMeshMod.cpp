@@ -115,13 +115,6 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
   return true;
 }
 
-typedef struct {
-  int nbr_triangles ;           /* number of different triangles       */
-  int (*triangles)[3] ;         /* triangles array                     */
-  int nbr_trianguls ;           /* number of different triangulations  */
-  int nbr_triangles_2 ;         /* number of triangles / triangulation */
-  int (*trianguls)[5] ;         /* retriangulations array              */
-} SwapPattern ;
 
 void BuildSwapPattern3(SwapPattern *sc)
 {

@@ -11,8 +11,8 @@ Line(4) = {1, 2};
 Line Loop(5) = {1, 2, 3, 4};
 Plane Surface(10) = {5};
 
-Physical Line("wall")={1,2,3,4};
-Physical Surface("air")={10};
+//Physical Line("wall")={1,2,3,4};
+//Physical Surface("air")={10};
 
 //----------------------
 

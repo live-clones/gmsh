@@ -39,4 +39,19 @@ bool egeSplit(std::vector<MTet4*> &newTets, MTet4 *tet,
               MVertex *newVertex, int iLocalEdge,
               const qmTetrahedron::Measures &cr);
 
+typedef struct {
+  int nbr_triangles ;           /* number of different triangles       */
+  int (*triangles)[3] ;         /* triangles array                     */
+  int nbr_trianguls ;           /* number of different triangulations  */
+  int nbr_triangles_2 ;         /* number of triangles / triangulation */
+  int (*trianguls)[5] ;         /* retriangulations array              */
+} SwapPattern ;
+
+void BuildSwapPattern3(SwapPattern *sc);
+void BuildSwapPattern4(SwapPattern *sc);
+void BuildSwapPattern5(SwapPattern *sc);
+void BuildSwapPattern6(SwapPattern *sc);
+void BuildSwapPattern7(SwapPattern *sc);
+
+
 #endif
