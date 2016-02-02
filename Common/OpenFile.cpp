@@ -361,7 +361,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
     CTX::instance()->launchSolverAtStartup = num;
     CTX::instance()->solverToRun = num; // used in ONELAB2
     return 1;
-
   }
   else if(ext == ".py" || ext == ".PY" ||
           ext == ".m" || ext == ".M" ||
@@ -518,6 +517,8 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
   CTX::instance()->geom.draw = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
 
+  Msg::ImportPhysicalGroupsInOnelab();
+
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   if(FlGui::available()){
     // go directly to the first non-empty step after the one that is requested
@@ -528,8 +529,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
     FlGui::instance()->updateViews(numViewsBefore != (int)PView::list.size(), false);
   }
 #endif
-
-  Msg::ImportPhysicalsAsOnelabRegions();
 
   if(!status) Msg::Error("Error loading '%s'", fileName.c_str());
   Msg::StatusBar(true, "Done reading '%s'", fileName.c_str());

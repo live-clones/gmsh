@@ -1255,30 +1255,54 @@ void Msg::UndefineOnelabParameter(const std::string &name)
 #endif
 }
 
-void Msg::ImportPhysicalsAsOnelabRegions()
+void Msg::ImportPhysicalGroupsInOnelab()
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
     std::map<int, std::vector<GEntity*> > groups[4];
     GModel::current()->getPhysicalGroups(groups);
+    int size = 0;
+    for(int dim = 0; dim <= 3; dim++)
+      size += groups[dim].size();
+    onelab::number n("Gmsh/Number of physical groups", size);
+    n.setReadOnly(true);
+    n.setVisible(false);
+    n.setAttribute("Closed", "1");
+    _onelabClient->set(n);
+
+    onelab::number nd("Gmsh/Model dimension", GModel::current()->getDim());
+    nd.setReadOnly(true);
+    nd.setVisible(false);
+    nd.setAttribute("Closed", "1");
+    _onelabClient->set(nd);
+
+    int index = 1;
     for(int dim = 0; dim <= 3; dim++){
       for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
           it != groups[dim].end(); it++){
-        // create "read-only" onelab region
+        int num = it->first;
         std::string name = GModel::current()->getPhysicalName(dim, it->first);
-        std::ostringstream num;
-        num << it->first;
-        if(name.empty())
-          name = std::string("Physical") +
-            ((dim == 3) ? "Volume" : (dim == 2) ? "Surface" :
-             (dim == 1) ? "Line" : "Point") + num.str();
-        name.insert(0, "Gmsh/Physical groups/");
-        onelab::region p(name, num.str());
-        p.setDimension(dim);
-        p.setReadOnly(true);
-        p.setVisible(false);
-        p.setAttribute("Closed", "1");
-        _onelabClient->set(p);
+        char tmp[256];
+        if(name.empty()){
+          sprintf(tmp, "Physical %s %d", (dim == 3) ? "Volume " : (dim == 2) ? "Surface " :
+                  (dim == 1) ? "Line " : "Point ", num);
+          name = tmp;
+        }
+        sprintf(tmp, "Gmsh/Physical group %d/", index);
+        std::string str = tmp;
+        onelab::number n1(str + "Dimension", dim);
+        n1.setReadOnly(true);
+        n1.setVisible(false);
+        _onelabClient->set(n1);
+        onelab::number n2(str + "Number", num);
+        n2.setReadOnly(true);
+        n2.setVisible(false);
+        _onelabClient->set(n2);
+        onelab::string s(str + "Name", name);
+        s.setReadOnly(true);
+        s.setVisible(false);
+        _onelabClient->set(s);
+        index++;
       }
     }
   }

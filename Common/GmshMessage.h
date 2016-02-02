@@ -146,7 +146,7 @@ class Msg {
                                       std::map<std::string, std::vector<std::string> > &copt);
   static void UndefineOnelabParameter(const std::string &name);
   static void RunOnelabClient(const std::string &name, const std::string &exe="");
-  static void ImportPhysicalsAsOnelabRegions();
+  static void ImportPhysicalGroupsInOnelab();
 };
 
 #endif

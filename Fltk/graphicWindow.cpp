@@ -1326,6 +1326,8 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
                        FlGui::instance()->physicalContext->append,
                        FlGui::instance()->physicalContext->mode);
           FlGui::instance()->physicalContext->show(action == 7 ? false : true);
+          // ask clients to update the tree using the new physical definition
+          onelab_cb(0, (void*)"check");
           break;
         case 8:
           add_charlength(List1, GModel::current()->getFileName(),
