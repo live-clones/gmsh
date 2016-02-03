@@ -349,7 +349,7 @@ void physicalContextWindow::show(bool remove)
       value[0]->activate();
     color = (!CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
   }
-  physical_cb(0, 0);
+  physical_cb(0, (void*)"Name");
   if(!win->shown()) win->show();
 }
 
