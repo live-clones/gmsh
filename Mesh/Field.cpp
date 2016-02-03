@@ -1905,6 +1905,7 @@ class AttractorField : public Field
 	    }
 	    count++;
 	  }
+
 	  else{
 	    for(int i = 0; i < n_nodes_by_edge; i++) {
 	      for(int j = 0; j < n_nodes_by_edge; j++) {
@@ -1930,6 +1931,13 @@ class AttractorField : public Field
       }
 
       int totpoints = px.size();
+      if(!totpoints){ // for backward compatibility
+        totpoints = 1;
+        px.push_back(0.);
+        py.push_back(0.);
+        pz.push_back(0.);
+      }
+
       zeronodes = annAllocPts(totpoints, 3);
       for(int i = 0; i < totpoints; i++){
         zeronodes[i][0] = px[i];
