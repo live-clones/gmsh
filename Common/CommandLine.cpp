@@ -285,9 +285,10 @@ void PrintUsage(const std::string &name)
 
 void GetOptions(int argc, char *argv[])
 {
-  // print messages on terminal
+  // print messages on terminal (use special 99 value so that we can detect if
+  // it was later set to 1 in the option file)
   int terminal = CTX::instance()->terminal;
-  CTX::instance()->terminal = 1;
+  CTX::instance()->terminal = 99;
 
 #if defined(HAVE_PARSER)
   if(argc && argv){
@@ -1137,5 +1138,6 @@ void GetOptions(int argc, char *argv[])
   else
     GModel::current()->setFileName(CTX::instance()->files[0]);
 
-  CTX::instance()->terminal = terminal;
+  if(CTX::instance()->terminal == 99)
+    CTX::instance()->terminal = terminal;
 }
