@@ -29,6 +29,7 @@
 
 void add_infile(const std::string &text, const std::string &fileName, bool forceDestroy)
 {
+  Msg::Debug("Adding `%s' to file `%s'", text.c_str(), fileName.c_str());
   std::vector<std::string> split = SplitFileName(fileName);
   std::string noExt = split[0] + split[1], ext = split[2];
 #if defined(HAVE_COMPRESSED_IO) && defined(HAVE_LIBZ)
@@ -39,7 +40,8 @@ void add_infile(const std::string &text, const std::string &fileName, bool force
   }
 #endif
   // make sure we don't add stuff in a non-geo file
-  if(!CTX::instance()->expertMode) {
+  static bool proceed = false;
+  if(!CTX::instance()->expertMode && !proceed) {
     if(ext.size() && ext != ".geo" && ext != ".GEO" ){
       std::ostringstream sstream;
       sstream <<
@@ -72,6 +74,8 @@ void add_infile(const std::string &text, const std::string &fileName, bool force
         OpenProject(newFileName);
         return;
       }
+      else if(ret == 1)
+        proceed = true;
       else if(ret == 0)
         return;
     }
