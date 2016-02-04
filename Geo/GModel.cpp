@@ -175,6 +175,8 @@ GModel *GModel::findByName(const std::string &name, const std::string &fileName)
 
 void GModel::destroy(bool keepName)
 {
+  Msg::Debug("Destroying model %s", getName().c_str());
+
   if(!keepName){
     _name.clear();
     _fileNames.clear();
@@ -640,7 +642,7 @@ static void addToMap(std::multimap< MFace , MElement *, Less_Face> &faceToElemen
 //      for (std::multiset<size_t>::iterator iElId = facesNeighborsId.begin(); iElId != facesNeighborsId.end(); ++iElId){
 //        maxOccurence = std::max(facesNeighborsId.count(*iElId), maxOccurence);
 //      }
-//      if (maxOccurence != 3) //A trihedron should have 3 and only 3 neighbors      
+//      if (maxOccurence != 3) //A trihedron should have 3 and only 3 neighbors
 //        Msg::Fatal("Nonconforming face for element: %i vertices %i %i %i %i. Number of neighbors: %i",el->getNum(), v0->getNum(), v1->getNum(), v2->getNum(), v3->getNum(),maxOccurence);
 //    }
 //  }
@@ -1744,14 +1746,14 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   }
 
   // --- replace vertices in the periodic copies
-  
+
   for(unsigned int i = 0; i < entities.size(); i++){
 
     GEntity* ge = entities[i];
 
     std::map<MVertex*,MVertex*>& corrVtcs = ge->correspondingVertices;
     std::map<MVertex*,MVertex*>::iterator cIter;
-    
+
     for (cIter=newVertex.begin();cIter!=newVertex.end();++cIter) {
       MVertex* oldTgt = cIter->first;
       MVertex* newTgt = cIter->second;
@@ -1762,7 +1764,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
         corrVtcs[newTgt] = src;
       }
     }
-    
+
     for (cIter=corrVtcs.begin();cIter!=corrVtcs.end();++cIter) {
 
       MVertex* oldSrc = cIter->second;
@@ -1775,7 +1777,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
       }
     }
   }
-  
+
   for(unsigned int i = 0; i < entities.size(); i++)
     entities[i]->deleteMesh();
 
