@@ -41,9 +41,9 @@ Transfinite Line{1:4,6:13} = 5;
 Transfinite Surface {15} = {1,2,3,4};
 Transfinite Surface {17} = {5,6,7,8};
 Transfinite Surface {19} = {1,5,8,4};
-Transfinite Surface {21} = {8,7,3,4};
-Transfinite Surface {23} = {6,7,3,2};
-Transfinite Surface {25} = {5,6,2,1};
+Transfinite Surface {21} = {4,8,7,3};
+Transfinite Surface {23} = {2,6,7,3};
+Transfinite Surface {25} = {1,5,6,2};
 Transfinite Volume{1} = {1,2,3,4,5,6,7,8};
 Recombine Surface{15:25:2};
 
