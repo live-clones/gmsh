@@ -360,6 +360,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
     GModel::current()->setFileName(split[0] + split[1] + ".geo");
     CTX::instance()->launchSolverAtStartup = num;
     CTX::instance()->solverToRun = num; // used in ONELAB2
+    CTX::instance()->geom.draw = 1;
     return 1;
   }
   else if(ext == ".py" || ext == ".PY" ||
@@ -369,6 +370,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
     opt_solver_executable(num, GMSH_SET, fileName);
     CTX::instance()->launchSolverAtStartup = num;
     CTX::instance()->solverToRun = num; // used in ONELAB2
+    CTX::instance()->geom.draw = 1;
     return 1;
   }
   else
