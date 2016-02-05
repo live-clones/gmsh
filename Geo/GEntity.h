@@ -178,6 +178,10 @@ class GEntity {
 
   virtual ~GEntity(){}
 
+
+  // mesh generation of the entity
+  virtual void mesh(bool verbose) {}
+  
   // delete the mesh data
   virtual void deleteMesh(){}
 

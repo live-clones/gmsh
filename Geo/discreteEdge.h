@@ -16,6 +16,8 @@ class discreteEdge : public GEdge {
   std::vector<int> _orientation;
   std::map<MVertex*, MLine*> boundv;
   bool createdTopo;
+  std::vector<MVertex*> discrete_vertices;
+  std::vector<MLine*>  discrete_lines;
  public:
   discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
   virtual ~discreteEdge() {}
@@ -30,13 +32,15 @@ class discreteEdge : public GEdge {
 
   bool getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
   void parametrize(std::map<GFace*, std::map<MVertex*, MVertex*,
-                   std::less<MVertex*> > > &face2Verts,
-                   std::map<GRegion*, std::map<MVertex*, MVertex*,
-                   std::less<MVertex*> > > &region2Vert);
+		   std::less<MVertex*> > > &face2Verts,
+		   std::map<GRegion*, std::map<MVertex*, MVertex*,
+		   std::less<MVertex*> > > &region2Vert);
   void orderMLines();
   void setBoundVertices();
   void createTopo();
+  void createGeometry();
   void computeNormals () const;
+  virtual void mesh(bool) ;
   void writeGEO(FILE *fp);
 };
 

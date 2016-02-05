@@ -35,6 +35,8 @@ class discreteFace : public GFace {
   void findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_edges);
   void writeGEO(FILE *fp);
   void createAtlas();
+  void gatherMeshes();
+  virtual void mesh (bool verbose);
   std::vector<discreteDiskFace*> _atlas; 
 };
 

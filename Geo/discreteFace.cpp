@@ -140,10 +140,32 @@ void discreteFace::secondDer(const SPoint2 &param,
 
 // FIXME PAB ----> really create an atlas !!!!!!!!!!!!!!!
 void discreteFace::createAtlas() {
+  if (!_atlas.empty())return;
   // parametrization is done here !!!
   discreteDiskFace *df = new discreteDiskFace (this, triangles);
   df->replaceEdges(l_edges);
   _atlas.push_back(df);
+}
+
+void discreteFace::gatherMeshes() {
+  for (unsigned int i=0;i<triangles.size();i++)delete triangles[i];
+  for (unsigned int i=0;i<mesh_vertices.size();i++)delete mesh_vertices[i];
+  triangles.clear();
+  mesh_vertices.clear();
+  for (unsigned int i=0;i<_atlas.size();i++){
+    triangles.insert(triangles.begin(), _atlas[i]->triangles.begin(), _atlas[i]->triangles.end());
+    mesh_vertices.insert(mesh_vertices.begin(), _atlas[i]->mesh_vertices.begin(), _atlas[i]->mesh_vertices.end());
+  }
+}
+
+void discreteFace::mesh(bool verbose) {
+#if defined(HAVE_MESH)
+  createAtlas();
+  for (unsigned int i=0;i<_atlas.size();i++)
+    _atlas[i]->mesh(verbose);
+  gatherMeshes();
+#endif
+  meshStatistics.status = GFace::DONE;
 }
 
 // delete all discrete disk faces

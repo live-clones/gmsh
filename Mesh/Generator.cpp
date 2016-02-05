@@ -242,11 +242,11 @@ static void Mesh1D(GModel *m)
 
   int nIter = 0, nTot = m->getNumEdges();
   while(1){
-    meshGEdge mesher;
+    //    meshGEdge mesher;
     int nPending = 0;
     for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
       if ((*it)->meshStatistics.status == GEdge::PENDING){
-        mesher(*it);
+        (*it)->mesh(true);
         nPending++;
       }
       if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 1D...");
@@ -354,8 +354,8 @@ static void Mesh2D(GModel *m)
       for(size_t K = 0 ; K < temp.size() ; K++){
         if (temp[K]->meshStatistics.status == GFace::PENDING){
           backgroundMesh::current()->unset();
-          meshGFace mesher(true);
-          mesher(temp[K]);
+	  //          meshGFace mesher(true);
+          temp[K]->mesh(true);
 #if defined(HAVE_BFGS)
           if(CTX::instance()->mesh.optimizeLloyd){
             if (temp[K]->geomType()==GEntity::CompoundSurface ||
@@ -392,8 +392,8 @@ static void Mesh2D(GModel *m)
           it != cf.end(); ++it){
         if ((*it)->meshStatistics.status == GFace::PENDING){
           backgroundMesh::current()->unset();
-          meshGFace mesher(true);
-          mesher(*it);
+	  //          meshGFace mesher(true);
+          (*it)->mesh(true);
 #if defined(HAVE_BFGS)
           if(CTX::instance()->mesh.optimizeLloyd){
             if ((*it)->geomType()==GEntity::CompoundSurface ||

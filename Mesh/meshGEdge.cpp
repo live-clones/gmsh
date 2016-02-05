@@ -340,7 +340,7 @@ void meshGEdge::operator() (GEdge *ge)
 
   ge->model()->setCurrentMeshEntity(ge);
 
-  if(ge->geomType() == GEntity::DiscreteCurve) return;
+  //  if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
   if(ge->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;

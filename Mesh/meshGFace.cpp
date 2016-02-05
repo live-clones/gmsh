@@ -991,6 +991,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     ++ite;
   }
 
+
   if(boundary.size()){
     Msg::Error("The 1D mesh seems not to be forming a closed loop");
     gf->meshStatistics.status = GFace::FAILED;
@@ -1073,8 +1074,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     count++;
   }
 
-  // here check if some boundary layer nodes should be added
-
   bbox.makeCube();
 
   // use a divide & conquer type algorithm to create a triangulation.
@@ -1118,6 +1117,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       doc.points[points.size() + ip].adjacent = 0;
       doc.points[points.size() + ip].data = pp;
     }
+    
+    
 
     // Use "fast" inhouse recursive algo to generate the triangulation.
     // At this stage the triangulation is not what we need
@@ -1132,6 +1133,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       Msg::Error("%s", err);
     }
     Msg::Debug("Meshing of the convex hull (%d points) done", points.size());
+
 
     for(int i = 0; i < doc.numTriangles; i++) {
       int a = doc.triangles[i].a;
@@ -1465,7 +1467,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // gf->deleteMesh() would also destroy e.g. the data in a compound face, which
   // we should not do)
   gf->GFace::deleteMesh();
-
+  
   Msg::Debug("Starting to add internal points");
   // start mesh generation
   if(!algoDelaunay2D(gf) && !onlyInitialMesh){
@@ -2386,16 +2388,18 @@ void meshGFace::operator() (GFace *gf, bool print)
 
   //-----------------------------------------------------------
   // FIXME PAB & JFR FIRST IMPLEMENTATION OF THE COMPOUND REPLACEMENT
-  if(gf->geomType() == GEntity::DiscreteSurface) {
-    discreteFace *df = dynamic_cast<discreteFace*> (gf);
-    if (df) {
-      df->createAtlas();
-      for (unsigned int i=0;i<df->_atlas.size();i++){
-	(*this)(df->_atlas[i],print);
-      }
-    }
-    return;
-  }
+  //  if(gf->geomType() == GEntity::DiscreteSurface) {
+  //    discreteFace *df = dynamic_cast<discreteFace*> (gf);
+  //    if (df) {
+  //      df->createAtlas();
+  //      for (unsigned int i=0;i<df->_atlas.size();i++){
+  //	(*this)(df->_atlas[i],print);
+  //      }
+  //      df->gatherMeshes();
+  //    }
+  //    gf->meshStatistics.status = GFace::DONE;
+  //    return;
+  //  }
   //-----------------------------------------------------------
   //-----------------------------------------------------------
 

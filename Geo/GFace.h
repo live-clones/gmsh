@@ -296,6 +296,9 @@ class GFace : public GEntity{
   // tells if it's a sphere, and if it is, returns parameters
   virtual bool isSphere(double &radius, SPoint3 &center) const { return false; }
 
+  // new interface for meshing
+  virtual void mesh(bool verbose);
+
   // add layers of quads
   void addLayersOfQuads(int nLayers, GVertex *start, double hmin, double factor);
 
@@ -326,7 +329,7 @@ class GFace : public GEntity{
   int getCurvatureControlParameter () const;
   void setCurvatureControlParameter(int);
   virtual double getMeshSize() const { return meshAttributes.meshSize; }
-
+  
   struct {
     mutable GEntity::MeshGenerationStatus status;
     double worst_element_shape, best_element_shape, average_element_shape;

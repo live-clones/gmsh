@@ -20,6 +20,7 @@
 #include "OS.h"
 
 #if defined(HAVE_MESH)
+#include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFaceLloyd.h"
 #include "BackgroundMeshTools.h"
@@ -1386,6 +1387,14 @@ bool GFace::fillPointCloud(double maxDist,
   }
   return true;
 }
+
+void GFace::mesh(bool verbose) {
+#if defined(HAVE_MESH)
+  meshGFace mesher;
+  mesher (this, verbose);
+#endif
+}
+
 
 void GFace::lloyd(int nbiter, int infn)
 {

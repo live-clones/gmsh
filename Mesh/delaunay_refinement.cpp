@@ -327,6 +327,11 @@ void computeAdjacencies (Tet *t, int iFace, connSet &faceToTet){
   }
 }
 
+bool edgeSwaps(tetContainer &T, int myThread) 
+{
+  // TODO
+}
+
 
 void edgeBasedRefinement (const int numThreads,
 			  const int nptsatonce,

@@ -49,7 +49,7 @@ class discreteDiskFace : public GFace {
   virtual ~discreteDiskFace() {triangles.clear();}
   void getTriangleUV(const double u,const double v,discreteDiskFaceTriangle **mt, double &_u, double &_v) const;
   GPoint point(double par1, double par2) const;
-  SPoint2 parFromPoint(const MVertex* v);
+  SPoint2 parFromVertex(MVertex *v) const;
   SVector3 normal(const SPoint2&) const;
   double curvatureMax(const SPoint2&) const;
   double curvatures(const SPoint2&,SVector3*,SVector3*,double*,double*) const;
@@ -58,6 +58,11 @@ class discreteDiskFace : public GFace {
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const;
   GEntity::GeomType geomType() const { return DiscreteDiskSurface; }
  protected:
+  //------------------------------------------------
+  // a copy of the mesh that should not be destroyed
+  std::vector<MTriangle*> discrete_triangles;
+  std::vector<MVertex*> discrete_vertices;
+  //------------------------------------------------
   double _totLength;
   std::map<double,std::vector<MVertex*> > _loops;
   std::vector<MVertex*> _U0; // dirichlet's bc's

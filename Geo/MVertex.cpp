@@ -11,6 +11,7 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "GFaceCompound.h"
+#include "discreteDiskFace.h"
 #include "GmshMessage.h"
 #include "StringUtils.h"
 
@@ -464,6 +465,13 @@ bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
     param = gfc->parFromVertex(v);
     return true;
   }
+
+  if (gf->geomType() == GEntity::DiscreteDiskSurface ){
+    discreteDiskFace *gfc = (discreteDiskFace*) gf;
+    param = gfc->parFromVertex(v);
+    return true;
+  }
+
 
   if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||
      v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){

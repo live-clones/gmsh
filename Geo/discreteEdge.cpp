@@ -21,7 +21,9 @@
 #include "OS.h"
 #include "Curvature.h"
 #include "GEdgeCompound.h"
-
+#if defined(HAVE_MESH)
+#include "meshGEdge.h"
+#endif
 discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   : GEdge(model, num, _v0, _v1)
 {
@@ -377,30 +379,15 @@ void discreteEdge::computeNormals () const
   for ( ; itn != _normals.end(); ++itn){
     itn->second.normalize();
   }
-
-// //smooth normals
-//   smooth_normals *normals = 0;
-//   normals = new smooth_normals(180.);
-  
-//   for ( itn = _normals.begin();  itn != _normals.end(); ++itn){
-//     MVertex *v = itn->first;
-//     SVector3 n = itn->second;
-//     normals->add(v->x(),v->y(),v->z(),n.x(),n.y(),n.z());
-//   }
-//   for ( itn = _normals.begin();  itn != _normals.end(); ++itn){
-//     double nx,ny,nz;
-//     MVertex *v = itn->first;
-//     normals->get(v->x(),v->y(),v->z(),nx,ny,nz);
-//     itn->second = SVector3(nx,ny,nz);
-//   }
-//   delete normals;
 }
+
+/// WE REWRITE WHAT FOLLOWS : THIS WAS WRONG (PAB -JFR)
 
 bool discreteEdge::getLocalParameter(const double &t, int &iLine,
                                      double &tLoc) const
 {
-  if(_pars.empty()) return false;
-  for (iLine = 0; iLine < (int)lines.size(); iLine++){
+
+  for (iLine = 0; iLine < (int)discrete_lines.size(); iLine++){
     double tmin = _pars[iLine];
     double tmax = _pars[iLine+1];
     if (t >= tmin && t <= tmax){
@@ -422,55 +409,11 @@ GPoint discreteEdge::point(double par) const
   MVertex *vB = lines[iEdge]->getVertex(0);
   MVertex *vE = lines[iEdge]->getVertex(1);
 
-  const bool LINEARMESH = true; //false;
-  
-  if (LINEARMESH){
-    //linear Lagrange mesh
-    x = vB->x() + tLoc * (vE->x()- vB->x());
-    y = vB->y() + tLoc * (vE->y()- vB->y());
-    z = vB->z() + tLoc * (vE->z()- vB->z());
-    return GPoint(x,y,z);
-  }
-  else{
-    //curved PN triangle
-
-    if (_normals.empty() ) computeNormals();
-
-    const SVector3 n1 = _normals[vB];
-    const SVector3 n2 = _normals[vE];
-    
-    SPoint3 v1(vB->x(),vB->y(),vB->z());  
-    SPoint3 v2(vE->x(),vE->y(),vE->z());
-    
-    SVector3 b300,b030,b003;
-    SVector3 b210,b120;
-    double  w12,w21;
-
-    b300 = v1;
-    b030 = v2;
-
-    w12 = dot(v2 - v1, n1);
-    w21 = dot(v1 - v2, n2);
-    b210 = (2*v1 + v2 -w12*n1)*0.333; 
-    b120 = (2*v2 + v1 -w21*n2)*0.333;
-    
-    // tagged PN trinagles (sigma=1)
-    double theta = 0.0;
-    SVector3 d1 = v1+.33*(1-theta)*(v2-v1);
-    SVector3 d2 = v2+.33*(1-theta)*(v1-v2);
-    SVector3 X1 = 1/norm(n1)*n1;
-    SVector3 X2 = 1/norm(n2)*n2;
-    b210 = d1 - dot(X1,d1-v1)*X1;
-    b120 = d2 - dot(X2,d2-v2)*X2;
-
-    double U = tLoc;
-    double W = 1-U;
-    SVector3 point = b300*W*W*W+b030*U*U*U+b210*3.*W*W*U+b120*3.*W*U*U;
-
-    SPoint3 PP(point.x(), point.y(), point.z());
-    return GPoint(PP.x(),PP.y(),PP.z());
-  }
-
+  //linear Lagrange mesh
+  x = vB->x() + tLoc * (vE->x()- vB->x());
+  y = vB->y() + tLoc * (vE->y()- vB->y());
+  z = vB->z() + tLoc * (vE->z()- vB->z());
+  return GPoint(x,y,z);
 }
 
 SVector3 discreteEdge::firstDer(double par) const
@@ -527,8 +470,52 @@ double discreteEdge::curvatures(const double par, SVector3 *dirMax, SVector3 *di
 
 Range<double> discreteEdge::parBounds(int i) const
 {
-  return Range<double>(0, lines.size());
+  return Range<double>(0, 1);
 }
+
+void discreteEdge::createGeometry(){
+  if (discrete_lines.empty()){
+    createTopo();
+    // copy the mesh
+    std::map<MVertex*,MVertex*> v2v;
+    for (unsigned int i = 0; i < mesh_vertices.size(); i++){
+      MVertex *v = new MVertex(mesh_vertices[i]->x(),mesh_vertices[i]->y(),mesh_vertices[i]->z());
+      v2v[mesh_vertices[i]] = v;
+      discrete_vertices.push_back(v);
+    }
+    for (unsigned int i = 0; i < lines.size(); i++){
+      MVertex *v0 = lines[i]->getVertex(0);
+      MVertex *v1 = lines[i]->getVertex(1);
+      discrete_lines.push_back(new MLine(v0,v1));
+    }
+    // compute parameters
+    double L = 0.0;
+    _pars.push_back(L);
+    for (unsigned int i = 0; i < discrete_lines.size(); i++){
+      MVertex *v0 = discrete_lines[i]->getVertex(0);
+      MVertex *v1 = discrete_lines[i]->getVertex(1);
+      L += distance(v0,v1);
+      _pars.push_back(L);
+    }
+    for (unsigned int i = 0; i < _pars.size(); i++){
+      _pars[i] /= L;
+    }
+  }
+}
+
+
+void discreteEdge::mesh(bool verbose){
+#if defined(HAVE_MESH)
+  // copy the mesh into geometrical entities
+  // FIXME
+  return;
+  createGeometry();
+  meshGEdge mesher;
+  mesher(this);
+#endif
+}
+
+
 
 void discreteEdge::writeGEO(FILE *fp)
 {

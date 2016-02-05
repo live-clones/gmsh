@@ -15,6 +15,9 @@
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "closestPoint.h"
+#if defined(HAVE_MESH)
+#include "meshGEdge.h"
+#endif
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0),
@@ -626,4 +629,11 @@ void GEdge::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<doubl
     dpts.push_back(upts[p].p);
     ts.push_back(upts[p].t);
   }
+}
+
+void GEdge::mesh(bool verbose){
+#if defined(HAVE_MESH)
+  meshGEdge mesher;
+  mesher(this);
+#endif
 }

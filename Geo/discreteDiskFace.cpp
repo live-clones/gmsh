@@ -19,7 +19,6 @@
 #include "laplaceTerm.h"
 #include "convexLaplaceTerm.h"
 #include "convexCombinationTerm.h"  // #
-#include "../Numeric/BasisFactory.h" // for derivatives 
 
 // The three things that are mandatory to manipulate octrees (octree in (u;v)).
 static void discreteDiskFaceBB(void *a, double*mmin, double*mmax)
@@ -97,9 +96,29 @@ static bool orderVertices(const double &tot_length, const std::vector<MVertex*> 
 
 /*BUILDER*/
 discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh) : 
-  GFace(GEntity::model(),0), _parent (gf)
+  GFace(gf->model(),123), _parent (gf)
 {
-  triangles = mesh;
+  std::map<MVertex*,MVertex*> v2v;
+  for (unsigned int i=0;i<mesh.size();i++){
+    MVertex *vs[3] = {NULL, NULL, NULL};
+    for (int j=0;j<3;j++){
+      MVertex *v = mesh[i]->getVertex(j);
+      if (v->onWhat() == gf) {
+	std::map<MVertex*,MVertex*> :: iterator it = v2v.find(v);
+	if (it == v2v.end()){
+	  MFaceVertex *vv = new MFaceVertex ( v->x(),  v->y(),  v->z(), this, 0, 0);	
+	  v2v[v] = vv;
+	  discrete_vertices.push_back(vv);
+	  vs[j] = vv;
+	}
+	else vs[j] = it->second;
+      }
+      else vs[j] = v;
+    }
+    discrete_triangles.push_back(new MTriangle (vs[0], vs[1], vs[2]));
+  }
+
+  //  triangles = mesh;
   uv_kdtree = NULL;
   kdtree = NULL;
   // checkOrientation(); // mark, need to check after parametrization ? --> no ! (3D, cf. Seb)
@@ -108,16 +127,17 @@ discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh) :
   orderVertices(_totLength, _U0, _coords);
   parametrize();
   buildOct();
-  putOnView();
+  //  putOnView();
 }
+
 
 void discreteDiskFace::getBoundingEdges()
 {
   // allEdges contains all edges of the boundary
   std::set<MEdge,Less_Edge> allEdges;
 
-  for(unsigned int i = 0; i < getNumMeshElements(); ++i){
-    MElement *e = getMeshElement(i);
+  for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
+    MElement *e = discrete_triangles[i];
     for(int j = 0; j <  e->getNumEdges() ; j++){
       MEdge ed = e->getEdge(j);
       std::set<MEdge,Less_Edge>::iterator it = allEdges.find(ed);
@@ -163,12 +183,12 @@ void discreteDiskFace::getBoundingEdges()
 }
 
 void discreteDiskFace::buildOct() const
-{ // mark ?
+{ 
   SBoundingBox3d bb;
   int count = 0;  
   
-  for(unsigned int i = 0; i < triangles.size(); ++i){
-    MTriangle *t = triangles[i];
+  for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
+    MTriangle *t = discrete_triangles[i];
     //create bounding box
     for(int j = 0; j < 3; j++){
       std::map<MVertex*,SPoint3>::const_iterator itj = coordinates.find(t->getVertex(j));
@@ -196,8 +216,8 @@ void discreteDiskFace::buildOct() const
     
   count = 0;
 
-  for(unsigned int i = 0; i < triangles.size(); ++i){
-    MTriangle *t = triangles[i];
+  for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
+    MTriangle *t = discrete_triangles[i];
     std::map<MVertex*,SPoint3>::const_iterator it0 =
       coordinates.find(t->getVertex(0));
     std::map<MVertex*,SPoint3>::const_iterator it1 =
@@ -242,20 +262,11 @@ void discreteDiskFace::buildOct() const
     _ddft[count].tri = t;
 
     
-    /*
-    SVector3 dXdxi (_ddft[count].v2 - _ddft[count].v1); // constant
-    SVector3 dXdeta(_ddft[count].v3 - _ddft[count].v1); // constant
-    firstElemDerivatives[(MElement*)t] = Pair<SVector3,SVector3>(dXdxi,dXdeta);
-    */
-    
-
     //compute first derivatives for every triangle , to disappear (erase)
     double mat[2][2] = {{_ddft[count].p2.x() - _ddft[count].p1.x(),
 			 _ddft[count].p3.x() - _ddft[count].p1.x()},
 			{_ddft[count].p2.y() - _ddft[count].p1.y(),
 			 _ddft[count].p3.y() - _ddft[count].p1.y()}}; // modified higher
-
-   
 
     double inv[2][2];
     inv2x2(mat, inv);
@@ -264,9 +275,7 @@ void discreteDiskFace::buildOct() const
     SVector3 dXdu(dXdxi * inv[0][0] + dXdeta * inv[1][0]); // to be modified for higher order 
     SVector3 dXdv(dXdxi * inv[0][1] + dXdeta * inv[1][1]); // to be modified for higher order
     firstElemDerivatives[(MElement*)t] = Pair<SVector3,SVector3>(dXdu,dXdv);
-    
 
-    // build ANN kdtree
     nodes[count][0] = (it0->second.x() + it1->second.x() + it2->second.x())/3.0 ;
     nodes[count][1] = (it0->second.y() + it1->second.y() + it2->second.y())/3.0 ;
     nodes[count][2] = 0.0;
@@ -280,26 +289,24 @@ void discreteDiskFace::buildOct() const
   // USELESS, laplacian
   //smooth first derivatives at vertices
   if(adjv.size() == 0){
-  std::vector<MTriangle*> allTri;
-  allTri.insert(allTri.end(), triangles.begin(), triangles.end() );    
-  buildVertexToTriangle(allTri, adjv);
+    std::vector<MTriangle*> allTri;
+    allTri.insert(allTri.end(), discrete_triangles.begin(), discrete_triangles.end() );    
+    buildVertexToTriangle(allTri, adjv);
   }
   for(v2t_cont::iterator it = adjv.begin(); it!= adjv.end(); ++it){
-  MVertex *v = it->first;
-  std::vector<MElement*> vTri = it->second;
-  SVector3 dXdu(0.0), dXdv(0.0);
-  int nbTri = vTri.size();
-  for (int j = 0; j < nbTri; j++){ // elements's contribution for a vertex
-  dXdu += firstElemDerivatives[vTri[j]].first();
-  dXdv += firstElemDerivatives[vTri[j]].second();
-  }
-  dXdu *= 1./nbTri;
-  dXdv *= 1./nbTri;
-  firstDerivatives[v] = Pair<SVector3, SVector3>(dXdu, dXdv);
+    MVertex *v = it->first;
+    std::vector<MElement*> vTri = it->second;
+    SVector3 dXdu(0.0), dXdv(0.0);
+    int nbTri = vTri.size();
+    for (int j = 0; j < nbTri; j++){ // elements's contribution for a vertex
+      dXdu += firstElemDerivatives[vTri[j]].first();
+      dXdv += firstElemDerivatives[vTri[j]].second();
+    }
+    dXdu *= 1./nbTri;
+    dXdv *= 1./nbTri;
+    firstDerivatives[v] = Pair<SVector3, SVector3>(dXdu, dXdv);
   }
   
-
-  //build ANN kdtree
   kdtree = new ANNkd_tree(nodes, count, 3);
 
 }
@@ -326,8 +333,8 @@ bool discreteDiskFace::parametrize() const
     myAssemblerV.fixVertex(v, 0, 1, sin(theta));
   }
  
-  for(size_t i = 0; i < triangles.size(); ++i){
-    MTriangle *t = triangles[i];
+  for(size_t i = 0; i < discrete_triangles.size(); ++i){
+    MTriangle *t = discrete_triangles[i];
 
     myAssemblerU.numberVertex(t->getVertex(0), 0, 1);
     myAssemblerU.numberVertex(t->getVertex(1), 0, 1);
@@ -348,12 +355,9 @@ bool discreteDiskFace::parametrize() const
   
   convexLaplaceTerm mappingU(0, 1, &ONE);  
   convexLaplaceTerm mappingV(0, 1, &ONE);  
-  /*
-  convexCombinationTerm mappingU(0,1,&ONE);
-  convexCombinationTerm mappingV(0,1,&ONE);
-  */
-  for(unsigned int i = 0; i < triangles.size(); ++i){
-    SElement se(triangles[i]);
+
+  for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
+    SElement se(discrete_triangles[i]);
     mappingU.addToMatrix(myAssemblerU, &se);
     mappingV.addToMatrix(myAssemblerV, &se);
   }  
@@ -393,12 +397,12 @@ bool discreteDiskFace::parametrize() const
   
 }
 
-// ------
-
-void discreteDiskFace::getTriangleUV(const double u,const double v,discreteDiskFaceTriangle **mt, double &_u, double &_v)const{ // does it change with higher order ?  no, I don't think 
-
+void discreteDiskFace::getTriangleUV(const double u,const double v,
+				     discreteDiskFaceTriangle **mt, 
+				     double &_u, double &_v)const{ 
   double uv[3] = {u,v,0.};
   *mt = (discreteDiskFaceTriangle*) Octree_Search(uv,oct);
+  if (!(*mt))return;
 
   double M[2][2],X[2],R[2];
   const SPoint3 p0 = (*mt)->p1;
@@ -416,7 +420,6 @@ void discreteDiskFace::getTriangleUV(const double u,const double v,discreteDiskF
 
 }
 
-
 // (u;v) |-> < (x;y;z); GFace; (u;v) >
 GPoint discreteDiskFace::point(const double par1, const double par2) const
 {
@@ -425,47 +428,33 @@ GPoint discreteDiskFace::point(const double par1, const double par2) const
   double par[2] = {par1,par2};
   discreteDiskFaceTriangle* dt;
   getTriangleUV(par1,par2,&dt,U,V);
+  if (!dt) {
+    GPoint gp = GPoint(1.e22,1.e22,1.e22,_parent,par);
+    gp.setNoSuccess();
+    return gp;
+  }
 
-  
   SPoint3 p = dt->v1*(1.-U-V) + dt->v2*U + dt->v3*V;
 
   return GPoint(p.x(),p.y(),p.z(),_parent,par);
 }
 
-// (x;y;z) |-> (u;v)
-SPoint2 discreteDiskFace::parFromPoint(const MVertex* v)
+SPoint2 discreteDiskFace::parFromVertex(MVertex *v) const
 {
-  double xyz[3] = {v->x(),v->y(),v->z()};
-  double uvw[3] = {0.,0.,0.};
-  
-  unsigned int i;
-  for(i = 0; i<triangles.size(); ++i){ // loop on every mesh triangles
-
-    MTriangle* t = _ddft[i].tri;
-    
-    t->xyz2uvw(xyz,uvw); // (x;y;z) |-> (xsi,eta) [ref triangle]
-
-    if (t->isInside(uvw[0],uvw[1],uvw[2])){ // the mesh vertex belongs to this triangle
-
-      discreteDiskFaceTriangle* theTri = &_ddft[i];
- 
-      SPoint3 p = theTri->p1*(1-uvw[0]-uvw[1]) + theTri->p2*uvw[0] + theTri->p3*uvw[1];
-      
-      double U = p.x();
-      double V = p.y();
-
-      break;
-      return SPoint2(U,V);     
-
-    }
-
+  if (v->onWhat()->dim()==2)Msg::Fatal("discreteDiskFace::parFromVertex should not be called with a vertex that is classified on a surface");
+  std::map<MVertex*,SPoint3>::iterator it = coordinates.find(v);
+  if(it != coordinates.end()) return SPoint2(it->second.x(),it->second.y());
+  // The 1D mesh has been re-done
+  if (v->onWhat()->dim()==1){
+    Msg::Fatal("FIXME TO DO %d %s",__LINE__,__FILE__);
+    // get the discrete edge on which v is classified 
+    // get the two ending vertices A and B on both sides of v    A-------v----------B
+    // interpolate between the two uv coordinates of A and B
+  }
+  else if (v->onWhat()->dim()==0){
+    Msg::Fatal("discreteDiskFace::parFromVertex vertex classified on a model vertex that is not part of the face");
   }
 
-  if (i==triangles.size())
-    Msg::Error("discreteDiskFace::parFromPoint << no triangle contains this vertex !");
-  
-  
-  return SPoint2(0.,0.);
 }
 
 SVector3 discreteDiskFace::normal(const SPoint2 &param) const
@@ -485,7 +474,6 @@ double discreteDiskFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVec
     return false;  
 }
 
-
 Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
 {
 
@@ -493,38 +481,32 @@ Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
   discreteDiskFaceTriangle* ddft;
   getTriangleUV(param.x(),param.y(),&ddft,U,V);
 
-
   MTriangle* tri = NULL;
   if (ddft) tri = ddft->tri;
-  else Msg::Error("discreteDiskFace::firstDer << triangle not found");
+  else Msg::Error("discreteDiskFace::firstDer << triangle not found");  
 
-  /*
-  const nodalBasis* base = BasisFactory::getNodalBasis(MSH_TRI_3);
-  double grads[2][3];
-  double mat[2][2];
-  double inv[2][2];
-  base->df(U,V,0.,grads);
-
-  for (int i=0; i<2; i++)
-    for (int j=0; j<2; j++)
-      mat[i][j] = grads[i][j];
-
-  inv2x2(mat,inv);
-
-  SVector3 dXdxi = firstElemDerivatives[tri].first();
-  SVector3 dXdeta = firstElemDerivatives[tri].second();
-
-  SVector3 dXdu = dXdxi*inv[0][0] + dXdeta*inv[1][0];
-  SVector3 dXdv = dXdxi*inv[0][1] + dXdeta*inv[1][1];
-  */
-
+  std::map<MVertex*, Pair<SVector3,SVector3> >::iterator it0 = 
+    firstDerivatives.find(tri->getVertex(0));
+  if (it0 == firstDerivatives.end()) Msg::Fatal ("Vertex %d (0) has no firstDerivatives",
+						 tri->getVertex(0)->getNum());	 
+  std::map<MVertex*, Pair<SVector3,SVector3> >::iterator it1 = 
+    firstDerivatives.find(tri->getVertex(1));
+  if (it1 == firstDerivatives.end()) Msg::Fatal ("Vertex %d (1) has no firstDerivatives",
+						 tri->getVertex(1)->getNum());	 
+  std::map<MVertex*, Pair<SVector3,SVector3> >::iterator it2 = 
+    firstDerivatives.find(tri->getVertex(2));
+  if (it2 == firstDerivatives.end()) Msg::Fatal ("Vertex %d (2) has no firstDerivatives",
+						 tri->getVertex(2)->getNum());	 
   
-  SVector3 dXdu1 = firstDerivatives[tri->getVertex(0)].first();
-  SVector3 dXdu2 = firstDerivatives[tri->getVertex(1)].first();
-  SVector3 dXdu3 = firstDerivatives[tri->getVertex(2)].first();
-  SVector3 dXdv1 = firstDerivatives[tri->getVertex(0)].second();
-  SVector3 dXdv2 = firstDerivatives[tri->getVertex(1)].second();
-  SVector3 dXdv3 = firstDerivatives[tri->getVertex(2)].second();
+
+  SVector3 dXdu1 = it0->second.first();
+  SVector3 dXdu2 = it1->second.first();
+  SVector3 dXdu3 = it2->second.first();
+
+  SVector3 dXdv1 = it0->second.second();
+  SVector3 dXdv2 = it1->second.second();
+  SVector3 dXdv3 = it2->second.second();
+
   SVector3 dXdu = dXdu1*(1.-U-V) + dXdu2*U + dXdu3*V;
   SVector3 dXdv = dXdv1*(1.-U-V) + dXdv2*U + dXdv3*V;
   
@@ -544,8 +526,8 @@ void discreteDiskFace::secondDer(const SPoint2 &param,
 void discreteDiskFace::buildAllNodes() 
 {
   // allNodes contains all mesh-nodes
-  for(unsigned int i = 0; i < getNumMeshElements(); ++i){
-    MElement *e = getMeshElement(i);
+  for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
+    MElement *e = discrete_triangles[i];
     for(int j = 0; j <  e->getNumVertices() ; j++){
       MVertex* ev = e->getVertex(j);
       std::set<MVertex*>::iterator it = allNodes.find(ev); // several times the same nodes !
