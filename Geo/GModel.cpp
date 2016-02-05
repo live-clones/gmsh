@@ -523,7 +523,6 @@ int GModel::getDim() const
   if(getNumFaces() > 0) return 2;
   if(getNumEdges() > 0) return 1;
   if(getNumVertices() > 0) return 0;
-  Msg::Warning("The model is empty, dim = -1");
   return -1;
 }
 
