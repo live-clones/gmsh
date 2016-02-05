@@ -738,7 +738,7 @@ GFace* OCC_Internals::addFaceToModel(GModel *model, TopoDS_Face face)
 
 GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region)
 {
-  GRegion *gr  = getOCCRegionByNativePtr(model, region);
+  GRegion *gr = getOCCRegionByNativePtr(model, region);
   if(gr) return gr;
 
   buildShapeFromLists(region);
