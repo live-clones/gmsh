@@ -966,7 +966,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
     Fl_Input *but = new Fl_Input(1, 1, ww, hh);
     but->value(p.getValue().c_str());
     but->callback(onelab_string_input_cb, (void*)path);
-    but->when(FL_WHEN_ENTER_KEY);
+    but->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
     but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     if(highlight){
       but->color(c);
@@ -1007,7 +1007,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
   but->menubutton()->copy(&menu[0]);
   but->value(p.getValue().c_str());
   but->callback(onelab_string_input_choice_cb, (void*)path);
-  but->input()->when(FL_WHEN_ENTER_KEY);
+  but->input()->when(FL_WHEN_RELEASE | FL_WHEN_ENTER_KEY);
   but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
   if(highlight){
     but->input()->color(c);
