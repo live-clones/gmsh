@@ -6,39 +6,39 @@
 # contributor : Jonathan Lambrechts
 
 set(SRC_MULTI
-  taucs_sn_llt
-  taucs_ccs_base
-  taucs_vec_base
-  taucs_ccs_ops
-  taucs_ccs_io
-  taucs_ccs_factor_llt
-  taucs_ccs_solve_llt
-  taucs_complex
-  taucs_ccs_ooc_llt
-  taucs_ccs_ooc_lu
+  src/taucs_sn_llt.c
+  src/taucs_ccs_base.c
+  src/taucs_vec_base.c
+  src/taucs_ccs_ops.c
+  src/taucs_ccs_io.c
+  src/taucs_ccs_factor_llt.c
+  src/taucs_ccs_solve_llt.c
+  src/taucs_complex.c
+  src/taucs_ccs_ooc_llt.c
+  src/taucs_ccs_ooc_lu.c
 )
 
 set(SRC_DOUBLE
-  taucs_iter
-  taucs_vaidya
-  taucs_recvaidya
-  taucs_gremban
-  taucs_ccs_xxt
-  taucs_ccs_generators
+  src/taucs_iter.c
+  src/taucs_vaidya.c
+  src/taucs_recvaidya.c
+  src/taucs_gremban.c
+  src/taucs_ccs_xxt.c
+  src/taucs_ccs_generators.c
 )
 
 set(SRC_GENERAL
-  taucs_linsolve
-  taucs_ccs_order
-  taucs_memory
-  taucs_logging
-  taucs_timer
-  taucs_ooc_io
-  taucs_malloc
+  src/taucs_linsolve.c
+  src/taucs_ccs_order.c
+  src/taucs_memory.c
+  src/taucs_logging.c
+  src/taucs_timer.c
+  src/taucs_ooc_io.c
+  src/taucs_malloc.c
 )
 
 set(SRC
-  external/src/readhb.c
+  # external/src/readhb.c
   external/src/amdatr.c
   external/src/amdbar.c
   external/src/amdexa.c
@@ -50,45 +50,21 @@ set(SRC
   external/src/colamd.c
 )
 
-function (build_variant SFILE FLAG DNAME)
-  file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/src/${SFILE}.c" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${DNAME}")
-  set(DEST "${CMAKE_CURRENT_BINARY_DIR}/${DNAME}/${SFILE}.c")
-  set_property(SOURCE ${DEST} PROPERTY COMPILE_FLAGS " ${FLAG}")
-  list(APPEND SRC ${DEST})
-  set(SRC ${SRC} PARENT_SCOPE)
-endfunction(build_variant)
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
+append_gmsh_src(contrib/taucs "${SRC};${HDR}")
 
-foreach(SFILE ${SRC_MULTI})
-  build_variant(${SFILE} "-DTAUCS_CORE_DOUBLE" "D")
-  build_variant(${SFILE} "-DTAUCS_CORE_SINGLE" "S")
-  build_variant(${SFILE} "-DTAUCS_CORE_DCOMPLEX" "Z")
-  build_variant(${SFILE} "-DTAUCS_CORE_SCOMPLEX" "C")
-  build_variant(${SFILE} "-DTAUCS_CORE_GENERAL" "G")
-endforeach(SFILE)
+foreach(FILE ${SRC_MULTI})
+  file(COPY ${FILE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/D)
+  file(COPY ${FILE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/S)
+  file(COPY ${FILE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Z)
+  file(COPY ${FILE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/C)
+  file(COPY ${FILE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/G)
+endforeach(FILE)
 
-foreach(SFILE ${SRC_DOUBLE})
-  build_variant(${SFILE} "-DTAUCS_CORE_DOUBLE" "D")
-endforeach(SFILE)
+foreach(FILE ${SRC_DOUBLE})
+  file(COPY ${FILE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/D)
+endforeach(FILE)
 
-foreach(SFILE ${SRC_GENERAL})
-  build_variant(${SFILE} "-DTAUCS_CORE_GENERAL" "G")
-endforeach(SFILE)
-
-include_directories(src config)
-
-set (FLAGS "-std=c99 -fPIC")
-
-if(UNIX)
-  if(APPLE)
-    set(FLAGS "${FLAGS} -DOSTYPE_darwin")
-  else(APPLE)
-    set(FLAGS "${FLAGS} -DOSTYPE_linux")
-  endif(APPLE)
-endif(UNIX)
-
-if(WIN32)
-  set(FLAGS "${FLAGS} -DOSTYPE_win32")
-endif(WIN32)
-
-add_library(taucs STATIC ${SRC})
-set_property(TARGET taucs PROPERTY COMPILE_FLAGS ${FLAGS})
+foreach(FILE ${SRC_GENERAL})
+  file(COPY ${FILE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/G)
+endforeach(FILE)

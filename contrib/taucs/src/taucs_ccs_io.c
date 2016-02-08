@@ -30,7 +30,7 @@
 
 #ifdef TAUCS_CORE_GENERAL
 
-taucs_ccs_matrix* 
+taucs_ccs_matrix*
 taucs_ccs_read_binary(char* filename)
 {
   taucs_ccs_matrix* A = NULL; /* warning*/
@@ -40,7 +40,7 @@ taucs_ccs_read_binary(char* filename)
   int*    colptr;
 
   taucs_printf("taucs_ccs_binary: reading binary matrix %s\n",filename);
-  
+
 #ifdef OSTYPE_win32
   f = open(filename,_O_RDONLY |_O_BINARY);
 #else
@@ -57,7 +57,7 @@ taucs_ccs_read_binary(char* filename)
 
   colptr = (int*) taucs_malloc((ncols+1) * sizeof(int));
   assert(colptr);
-  
+
   bytes_read = read(f,colptr,(ncols+1)*sizeof(int));
 
   taucs_printf("colptr = [");
@@ -107,7 +107,7 @@ taucs_ccs_read_binary(char* filename)
   }
 
   A->flags = flags;
-  
+
   for (j=0; j<=ncols; j++) (A->colptr)[j] = colptr[j];
 
   taucs_free(colptr);
@@ -124,14 +124,15 @@ taucs_ccs_read_binary(char* filename)
 /*********************************************************/
 
 
-taucs_ccs_matrix* 
+taucs_ccs_matrix*
 taucs_ccs_read_hb(char* filename,int flags)
 {
+#if 0 // Gmsh - to remove dependencies
   taucs_ccs_matrix* A = NULL;
   int  nrows,ncols,nnz,j;
   char fname[256];
   char type[3];
-  
+
   for (j=0; j<256; j++) fname[j] = ' ';
   strcpy(fname,filename);
 
@@ -273,6 +274,9 @@ taucs_ccs_read_hb(char* filename,int flags)
   taucs_printf("taucs_ccs_read_hb: done reading\n");
 
   return A;
+#else
+  return 0;
+#endif
 }
 
 
@@ -304,7 +308,7 @@ taucs_ccs_write_ijv(taucs_ccs_matrix* m, char* ijvfilename)
   if (m->flags & TAUCS_SCOMPLEX)
     return taucs_cccs_write_ijv(m,ijvfilename);
 #endif
-  
+
   assert(0);
   /*added omer*/
   return -1;
@@ -315,7 +319,7 @@ taucs_ccs_write_ijv(taucs_ccs_matrix* m, char* ijvfilename)
 
 #ifndef TAUCS_CORE_GENERAL
 int
-taucs_dtl(ccs_write_ijv)(taucs_ccs_matrix* m, 
+taucs_dtl(ccs_write_ijv)(taucs_ccs_matrix* m,
 			 char* ijvfilename)
 {
   int i,ip,j,n;
@@ -330,7 +334,7 @@ taucs_dtl(ccs_write_ijv)(taucs_ccs_matrix* m,
   }
 
   n = m->n;
-  
+
   for (j=0; j<n; j++) {
     for (ip = (m->colptr)[j]; ip < (m->colptr[j+1]); ip++) {
       i   = (m->rowind)[ip];
@@ -347,18 +351,18 @@ taucs_dtl(ccs_write_ijv)(taucs_ccs_matrix* m,
       if (i != j && ((m->flags) & TAUCS_SYMMETRIC))
 	fprintf(f,"%d %d %0.9e\n",j+1,i+1,Aij);
 #endif
-      
+
 #ifdef TAUCS_CORE_DCOMPLEX
       fprintf(f,"%d %d %0.17e+%0.17ei\n",i+1,j+1,taucs_re(Aij),taucs_im(Aij));
       if (i != j && ((m->flags) & TAUCS_SYMMETRIC))
 	fprintf(f,"%d %d %0.17e+%0.17ei\n",j+1,i+1,taucs_re(Aij),taucs_re(Aij));
 #endif
-      
+
 #ifdef TAUCS_CORE_SCOMPLEX
       fprintf(f,"%d %d %0.9e+%0.9ei\n",i+1,j+1,taucs_re(Aij),taucs_im(Aij));
       if (i != j && ((m->flags) & TAUCS_SYMMETRIC))
 	fprintf(f,"%d %d %0.9e+%0.9ei\n",j+1,i+1,taucs_re(Aij),taucs_im(Aij));
-#endif      
+#endif
 
     }
   }
@@ -366,7 +370,7 @@ taucs_dtl(ccs_write_ijv)(taucs_ccs_matrix* m,
   fclose(f);
 
   return 0;
-} 
+}
 
 #endif /*#ifndef TAUCS_CORE_GENERAL*/
 
@@ -376,7 +380,7 @@ taucs_dtl(ccs_write_ijv)(taucs_ccs_matrix* m,
 
 #ifdef TAUCS_CORE_GENERAL
 
-taucs_ccs_matrix* 
+taucs_ccs_matrix*
 taucs_ccs_read_ijv(char* ijvfilename,int flags)
 {
 
@@ -399,7 +403,7 @@ taucs_ccs_read_ijv(char* ijvfilename,int flags)
   if (flags & TAUCS_SCOMPLEX)
     return taucs_cccs_read_ijv(ijvfilename,flags);
 #endif
-  
+
   assert(0);
   /*added omer*/
   return NULL;
@@ -409,13 +413,13 @@ taucs_ccs_read_ijv(char* ijvfilename,int flags)
 
 #ifndef TAUCS_CORE_GENERAL
 
-taucs_ccs_matrix* 
+taucs_ccs_matrix*
 taucs_dtl(ccs_read_ijv)(char* ijvfilename,int flags)
 {
   FILE* f;
   taucs_ccs_matrix*  m;
-  int*    clen; 
-  int*    is; 
+  int*    clen;
+  int*    is;
   int*    js;
   taucs_datatype* vs;
   int ncols, nrows, nnz;
@@ -436,8 +440,8 @@ taucs_dtl(ccs_read_ijv)(char* ijvfilename,int flags)
   vs = (taucs_datatype*) taucs_malloc(n*sizeof(taucs_datatype));
   if (!is || !js || !vs) {
     taucs_printf("symccs_read_ijv: out of memory\n");
-    taucs_free(is); taucs_free(js); taucs_free(vs); 
-    return NULL; 
+    taucs_free(is); taucs_free(js); taucs_free(vs);
+    return NULL;
   }
 
   nnz = 0;
@@ -449,10 +453,10 @@ taucs_dtl(ccs_read_ijv)(char* ijvfilename,int flags)
       is = (int*)    taucs_realloc(is,n*sizeof(int));
       js = (int*)    taucs_realloc(js,n*sizeof(int));
       vs = (taucs_datatype*) taucs_realloc(vs,n*sizeof(taucs_datatype));
-      if (!is || !js || !vs) { 
+      if (!is || !js || !vs) {
 	taucs_printf("taucs_ccs_read_ijv: out of memory\n");
-	taucs_free(is); taucs_free(js); taucs_free(vs); 
-	return NULL; 
+	taucs_free(is); taucs_free(js); taucs_free(vs);
+	return NULL;
       }
     }
 
@@ -481,8 +485,8 @@ taucs_dtl(ccs_read_ijv)(char* ijvfilename,int flags)
 
     is[nnz] = (int)di; js[nnz] = (int)dj; vs[nnz] = dv;/*omer*/
     /* we read the lower part */
-    if ((flags & TAUCS_SYMMETRIC) && is[nnz] < js[nnz]) continue; 
-    if ((flags & TAUCS_HERMITIAN) && is[nnz] < js[nnz]) continue; 
+    if ((flags & TAUCS_SYMMETRIC) && is[nnz] < js[nnz]) continue;
+    if ((flags & TAUCS_HERMITIAN) && is[nnz] < js[nnz]) continue;
     nrows = max(is[nnz],nrows);
     ncols = max(js[nnz],ncols);
     nnz++;
@@ -491,17 +495,17 @@ taucs_dtl(ccs_read_ijv)(char* ijvfilename,int flags)
   fclose ( f );
 
   m = (taucs_ccs_matrix*) taucs_malloc(sizeof(taucs_ccs_matrix));
-  if (!m) { 
+  if (!m) {
     taucs_printf("taucs_ccs_read_ijv: out of memory\n");
-    taucs_free(is); taucs_free(js); taucs_free(vs); 
-    return NULL; 
+    taucs_free(is); taucs_free(js); taucs_free(vs);
+    return NULL;
   }
   m->n      = nrows;
   m->m      = ncols;
   m->flags  = 0;
-  if (flags & TAUCS_SYMMETRIC) 
+  if (flags & TAUCS_SYMMETRIC)
     m->flags  = TAUCS_SYMMETRIC | TAUCS_LOWER;
-  if (flags & TAUCS_HERMITIAN) 
+  if (flags & TAUCS_HERMITIAN)
     m->flags  = TAUCS_HERMITIAN | TAUCS_LOWER;
 
 #ifdef TAUCS_CORE_DOUBLE
@@ -526,10 +530,10 @@ taucs_dtl(ccs_read_ijv)(char* ijvfilename,int flags)
   m->taucs_values = (taucs_datatype*) taucs_malloc(nnz * sizeof(taucs_datatype));
   if (!clen || !(m->colptr) || !(m->rowind) || !(m->rowind)) {
     taucs_printf("taucs_ccs_read_ijv: out of memory: ncols=%d nnz=%d\n",ncols,nnz);
-    taucs_free(clen); taucs_free(m->colptr); taucs_free(m->rowind); 
+    taucs_free(clen); taucs_free(m->colptr); taucs_free(m->rowind);
     taucs_free(m->taucs_values);
-    taucs_free (m); taucs_free(is); taucs_free(js); taucs_free(vs); 
-    return NULL; 
+    taucs_free (m); taucs_free(is); taucs_free(js); taucs_free(vs);
+    return NULL;
   }
 
   for (j=0; j<ncols; j++) clen[j] = 0;
@@ -540,12 +544,12 @@ taucs_dtl(ccs_read_ijv)(char* ijvfilename,int flags)
   }
   /* just check */
   k = 0;
-  for (j=0; j<ncols; j++) 
+  for (j=0; j<ncols; j++)
     k += clen[j];
   assert(k == nnz);
 
   /* now compute column pointers */
-  
+
   k = 0;
   for (j=0; j<ncols; j++) {
     int tmp;
@@ -555,7 +559,7 @@ taucs_dtl(ccs_read_ijv)(char* ijvfilename,int flags)
   }
   clen[ncols] = (m->colptr[ncols]) = k;
   assert(clen[ncols] == nnz);
-  
+
   /* now read matrix into data structure */
 
   for (k=0; k<nnz; k++) {
@@ -567,16 +571,16 @@ taucs_dtl(ccs_read_ijv)(char* ijvfilename,int flags)
     (m->rowind)[ clen[j] ] = i;
     clen[j] ++;
   }
-  
+
   taucs_free(clen);
   taucs_free(vs);
   taucs_free(js);
   taucs_free(is);
-  
+
   taucs_printf("taucs_ccs_read_ijv: read %s, n=%d\n",ijvfilename,m->n);
 
   return m;
-} 
+}
 
 #endif /*#ifndef TAUCS_CORE_GENERAL*/
 
@@ -586,7 +590,7 @@ taucs_dtl(ccs_read_ijv)(char* ijvfilename,int flags)
 
 #ifdef TAUCS_CORE_GENERAL
 
-taucs_ccs_matrix* 
+taucs_ccs_matrix*
 taucs_ccs_read_mtx(char* mtxfilename,int flags)
 {
 
@@ -608,8 +612,8 @@ taucs_ccs_read_mtx(char* mtxfilename,int flags)
 #ifdef TAUCS_SCOMPLEX_IN_BUILD
   if (flags & TAUCS_SCOMPLEX)
     return taucs_cccs_read_mtx(mtxfilename,flags);
-#endif  
-	
+#endif
+
   assert(0);
   /*added omer*/
   return NULL;
@@ -619,13 +623,13 @@ taucs_ccs_read_mtx(char* mtxfilename,int flags)
 
 #ifndef TAUCS_CORE_GENERAL
 
-taucs_ccs_matrix* 
+taucs_ccs_matrix*
 taucs_dtl(ccs_read_mtx)(char* filename,int flags)
 {
   FILE* f;
   taucs_ccs_matrix*  m;
-  int*    clen; 
-  int*    is; 
+  int*    clen;
+  int*    is;
   int*    js;
   taucs_datatype* vs;
   int ncols, nrows, nnz;
@@ -651,8 +655,8 @@ taucs_dtl(ccs_read_mtx)(char* filename,int flags)
   vs = (taucs_datatype*) taucs_malloc(n*sizeof(taucs_datatype));
   if (!is || !js || !vs) {
     taucs_printf("taucs_ccs_read_mtx: out of memory\n");
-    taucs_free(is); taucs_free(js); taucs_free(vs); 
-    return NULL; 
+    taucs_free(is); taucs_free(js); taucs_free(vs);
+    return NULL;
   }
 
   nnz = 0;
@@ -664,10 +668,10 @@ taucs_dtl(ccs_read_mtx)(char* filename,int flags)
       is = (int*)    taucs_realloc(is,n*sizeof(int));
       js = (int*)    taucs_realloc(js,n*sizeof(int));
       vs = (taucs_datatype*) taucs_realloc(vs,n*sizeof(taucs_datatype));
-      if (!is || !js || !vs) { 
+      if (!is || !js || !vs) {
 	taucs_printf("taucs_ccs_read_mtx: out of memory\n");
-	taucs_free(is); taucs_free(js); taucs_free(vs); 
-	return NULL; 
+	taucs_free(is); taucs_free(js); taucs_free(vs);
+	return NULL;
       }
     }
 
@@ -728,14 +732,14 @@ taucs_dtl(ccs_read_mtx)(char* filename,int flags)
   fclose ( f );
 
   m = (taucs_ccs_matrix*) taucs_malloc(sizeof(taucs_ccs_matrix));
-  if (!m) { 
+  if (!m) {
     taucs_printf("taucs_ccs_read_mtx: out of memory\n");
-    taucs_free(is); taucs_free(js); taucs_free(vs); 
-    return NULL; 
+    taucs_free(is); taucs_free(js); taucs_free(vs);
+    return NULL;
   }
   m->n      = nrows;
   m->m      = ncols;
-  if (flags & TAUCS_SYMMETRIC) 
+  if (flags & TAUCS_SYMMETRIC)
     m->flags  = TAUCS_SYMMETRIC | TAUCS_LOWER;
   else
     m->flags  = 0;
@@ -762,10 +766,10 @@ taucs_dtl(ccs_read_mtx)(char* filename,int flags)
   m->taucs_values = (taucs_datatype*) taucs_malloc(nnz * sizeof(taucs_datatype));
   if (!clen || !(m->colptr) || !(m->rowind) || !(m->rowind)) {
     taucs_printf("taucs_ccs_read_mtx: out of memory: ncols=%d nnz=%d\n",ncols,nnz);
-    taucs_free(clen); taucs_free(m->colptr); taucs_free(m->rowind); 
+    taucs_free(clen); taucs_free(m->colptr); taucs_free(m->rowind);
     taucs_free(m->taucs_values);
-    taucs_free (m); taucs_free(is); taucs_free(js); taucs_free(vs); 
-    return NULL; 
+    taucs_free (m); taucs_free(is); taucs_free(js); taucs_free(vs);
+    return NULL;
   }
 
   for (j=0; j<ncols; j++) clen[j] = 0;
@@ -776,12 +780,12 @@ taucs_dtl(ccs_read_mtx)(char* filename,int flags)
   }
   /* just check */
   k = 0;
-  for (j=0; j<ncols; j++) 
+  for (j=0; j<ncols; j++)
     k += clen[j];
   assert(k == nnz);
 
   /* now compute column pointers */
-  
+
   k = 0;
   for (j=0; j<ncols; j++) {
     int tmp;
@@ -791,7 +795,7 @@ taucs_dtl(ccs_read_mtx)(char* filename,int flags)
   }
   clen[ncols] = (m->colptr[ncols]) = k;
   assert(clen[ncols] == nnz);
-  
+
   /* now read matrix into data structure */
 
   for (k=0; k<nnz; k++) {
@@ -803,16 +807,16 @@ taucs_dtl(ccs_read_mtx)(char* filename,int flags)
     (m->rowind)[ clen[j] ] = i;
     clen[j] ++;
   }
-  
+
   taucs_free(clen);
   taucs_free(vs);
   taucs_free(js);
   taucs_free(is);
-  
+
   taucs_printf("taucs_ccs_read_mtx: read %s, n=%d\n",filename,m->n);
 
   return m;
-} 
+}
 
 #endif /* #ifndef TAUCS_CORE_GENERAL */
 
@@ -822,7 +826,7 @@ taucs_dtl(ccs_read_mtx)(char* filename,int flags)
 
 #ifdef TAUCS_CORE_GENERAL
 
-taucs_ccs_matrix* 
+taucs_ccs_matrix*
 taucs_ccs_read_ccs(char* ccsfilename,int flags)
 {
 
@@ -844,8 +848,8 @@ taucs_ccs_read_ccs(char* ccsfilename,int flags)
 #ifdef TAUCS_SCOMPLEX_IN_BUILD
   if (flags & TAUCS_SCOMPLEX)
     return taucs_cccs_read_ccs(ccsfilename,flags);
-#endif  
-	
+#endif
+
   assert(0);
   /*added omer*/
   return NULL;
@@ -855,15 +859,15 @@ taucs_ccs_read_ccs(char* ccsfilename,int flags)
 
 #ifndef TAUCS_CORE_GENERAL
 
-taucs_ccs_matrix* 
+taucs_ccs_matrix*
 taucs_dtl(ccs_read_ccs)(char* filename,int flags)
 {
   FILE* f;
   taucs_ccs_matrix*  m;
 
   /*
-  int*    clen; 
-  int*    is; 
+  int*    clen;
+  int*    is;
   int*    js;
   taucs_datatype* vs;
   int ncols, nrows, nnz;
@@ -894,17 +898,17 @@ taucs_dtl(ccs_read_ccs)(char* filename,int flags)
   for(i=0; i<pointers[N]; ++i)
     fscanf(f,"%d",(m->rowind)+i);
 
-#ifdef TAUCS_CORE_DOUBLE  
+#ifdef TAUCS_CORE_DOUBLE
   for(i=0; i<pointers[N]; ++i)
     fscanf(f,"%lg",(m->taucs_values)+i);
 #endif
-  
-#ifdef TAUCS_CORE_SINGLE  
+
+#ifdef TAUCS_CORE_SINGLE
   for(i=0; i<pointers[N]; ++i)
     fscanf(f,"%g",(m->taucs_values)+i);
 #endif
-  
-#ifdef TAUCS_CORE_DCOMPLEX  
+
+#ifdef TAUCS_CORE_DCOMPLEX
   for(i=0; i<pointers[N]; ++i) {
     taucs_real_datatype dv_r;
     taucs_real_datatype dv_i;
@@ -912,7 +916,7 @@ taucs_dtl(ccs_read_ccs)(char* filename,int flags)
     (m->taucs_values)[i] = taucs_complex_create(dv_r,dv_i);
   }
 #endif
-  
+
 #ifdef TAUCS_CORE_SCOMPLEX
   for(i=0; i<pointers[N]; ++i) {
     taucs_real_datatype dv_r;
@@ -921,7 +925,7 @@ taucs_dtl(ccs_read_ccs)(char* filename,int flags)
     (m->taucs_values)[i] = taucs_complex_create(dv_r,dv_i);
   }
 #endif
-  
+
   if (flags & TAUCS_SYMMETRIC) {
     m->flags  = TAUCS_SYMMETRIC | TAUCS_LOWER;
     for (j=0; j<N; j++) {
@@ -950,11 +954,11 @@ taucs_dtl(ccs_read_ccs)(char* filename,int flags)
 #endif
 
   taucs_free(pointers);
-  
+
   taucs_printf("taucs_ccs_read_ccs: read %s, n=%d\n",filename,m->n);
 
   return m;
-} 
+}
 
 #endif /*#ifndef TAUCS_CORE_GENERAL*/
 
@@ -964,7 +968,7 @@ taucs_dtl(ccs_read_ccs)(char* filename,int flags)
 
 #ifdef TAUCS_CORE_GENERAL
 
-void* 
+void*
 taucs_vec_read_binary(int n, int flags, char* filename)
 {
   void* v = NULL; /* warning */
@@ -973,7 +977,7 @@ taucs_vec_read_binary(int n, int flags, char* filename)
   int f;
 
   taucs_printf("taucs_vec_read_binary: reading binary vector %s\n",filename);
-  
+
 #ifdef OSTYPE_win32
   f = open(filename,_O_RDONLY |_O_BINARY);
 #else
@@ -1016,10 +1020,10 @@ taucs_vec_write_binary(int n, int flags, void* v, char* filename)
   int f;
 
   taucs_printf("taucs_vec_write_binary: writing binary vector %s\n",filename);
-  
+
 #ifdef OSTYPE_win32
   f = open(filename,
-	   _O_WRONLY | _O_CREAT | _O_BINARY, 
+	   _O_WRONLY | _O_CREAT | _O_BINARY,
 	   _S_IREAD | _S_IWRITE | _S_IEXEC);
 #else
   f = open(filename,O_WRONLY | O_CREAT | O_TRUNC, S_IRWXO | S_IRWXG | S_IRWXU);
@@ -1049,4 +1053,3 @@ taucs_vec_write_binary(int n, int flags, void* v, char* filename)
 /*********************************************************/
 /*                                                       */
 /*********************************************************/
-
