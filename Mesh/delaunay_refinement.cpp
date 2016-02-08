@@ -131,7 +131,7 @@ void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &
     const double f1 = rr._x3;
     const double f2 = rr._x4;
     const double dL = 2.*(t2-t1) * dl / (f1+f2);
-    
+
     //    printf("%g --> %g for %g --> %g\n",L,dL,t1,t2);
     double L0 = L;
     while (1) {
@@ -196,7 +196,7 @@ public :
   {
     const double FACTOR = 0.8;
     const double K = FACTOR*p->_v->lc();
-    const double d =  
+    const double d =
       SQR(p->_v->x() - _v->x())+
       SQR(p->_v->y() - _v->y())+
       SQR(p->_v->z() - _v->z());
@@ -264,7 +264,7 @@ void filterVertices (const int numThreads,
   std::vector<int> indices;
   SortHilbert(add, indices);
   std::vector<Vertex*> _add=add;
-  
+
   // std::vector<Vertex*> _add;
   // Vertex *current = add[0];
   // printf("before %d\n",add.size());
@@ -274,7 +274,7 @@ void filterVertices (const int numThreads,
   // 			   SQR(add[i]->z()-current->z())  );
   //   if (0.8*current->lc() > d){
   //     delete add[i];
-  //   } 
+  //   }
   //   else {
   //     current = add[i];
   //     _add.push_back(add[i]);
@@ -327,9 +327,10 @@ void computeAdjacencies (Tet *t, int iFace, connSet &faceToTet){
   }
 }
 
-bool edgeSwaps(tetContainer &T, int myThread) 
+bool edgeSwaps(tetContainer &T, int myThread)
 {
   // TODO
+  return false;
 }
 
 
@@ -359,7 +360,7 @@ void edgeBasedRefinement (const int numThreads,
     //    FILE *f = fopen ("pts_init.dat","w");
     //    fprintf(f,"%d\n",all.size());
     //    for (std::set<MVertex*>::iterator it = all.begin();it !=all.end(); ++it){
-    //      MVertex *mv = *it;      
+    //      MVertex *mv = *it;
     //      fprintf(f,"%12.5E %12.5E %12.5E\n",mv->x(),mv->y(),mv->z());
     //    }
     //    fclose(f);
@@ -455,7 +456,7 @@ void edgeBasedRefinement (const int numThreads,
       std::vector<int> indices;
       SortHilbert(add, indices);
       double t4 = Cpu();
-      delaunayTrgl (1,1,add.size(), &add,allocator,1.e-28);  
+      delaunayTrgl (1,1,add.size(), &add,allocator,1.e-28);
       double t5 = Cpu();
       add_all.insert (add_all.end(), add.begin(), add.end());
       Msg::Info("IT %3d %8d points added, timings %5.2f %5.2f %5.2f %5.2f %5.2f %5d",iter,add.size(),
@@ -474,7 +475,7 @@ void edgeBasedRefinement (const int numThreads,
   for (unsigned int i=0; i< allocator.size(0);i++){
     Tet  *tt = allocator (0,i);
     MVertex *mvs[4];
-    if (tt->V[0]){      
+    if (tt->V[0]){
       for (int j=0;j<4;j++){
 	Vertex *v = tt->V[j];
 	std::map<Vertex*,MVertex*>::iterator it = _ma.find(v);
@@ -494,7 +495,7 @@ void edgeBasedRefinement (const int numThreads,
     std::map<Edge,double> _sizes;
     for (unsigned int i=0; i< allocator.size(0);i++){
       Tet  *tt = allocator (0,i);
-      if (tt->V[0]){      
+      if (tt->V[0]){
 	for (int j=0;j<6;j++){
 	  Edge e =  tt->getEdge(j);
 	  std::map<Edge,double>::iterator it = _sizes.find(e);
