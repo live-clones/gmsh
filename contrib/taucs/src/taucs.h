@@ -82,9 +82,9 @@
 #ifdef OSTYPE_win32
 #ifdef _MSC_VER
 typedef unsigned long ssize_t;
-#endif
 typedef int mode_t;
 typedef int perm_t;
+#endif
 #define random    rand
 #define srandom   srand
 #endif
