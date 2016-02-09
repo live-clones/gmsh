@@ -77,10 +77,12 @@
 #define taucs_blas_name(x) (x)
 #else
 #error "taucs_blas_[no]underscore_test: linking with the BLAS failed both attempts"
-#endif 
+#endif
 
 #ifdef OSTYPE_win32
+#ifdef _MSC_VER
 typedef unsigned long ssize_t;
+#endif
 typedef int mode_t;
 typedef int perm_t;
 #define random    rand
@@ -617,7 +619,7 @@ typedef double taucs_real_datatype; /* omer: this is the datatype of the real an
 #define TAUCS_CORE
 #define TAUCS_CORE_DATATYPE TAUCS_DOUBLE
 typedef taucs_double taucs_datatype;
-typedef double taucs_real_datatype; 
+typedef double taucs_real_datatype;
 /*
 #define TAUCS_CORE_REAL
 #define TAUCS_CORE_DATATYPE TAUCS_DOUBLE
@@ -662,7 +664,7 @@ typedef float taucs_real_datatype; /* omer: this is the datatype of the real and
 
 #ifndef TAUCS_CORE_DATATYPE
 typedef taucs_double taucs_datatype;
-typedef double taucs_real_datatype; 
+typedef double taucs_real_datatype;
 #endif
 
 /*********************************************************/
@@ -671,7 +673,7 @@ typedef double taucs_real_datatype;
 
 double taucs_get_nan(void);
 
-/* 
+/*
    routines for testing memory allocation.
    Mostly useful for testing programs
    that hunt for memory leaks.
@@ -684,8 +686,8 @@ void   taucs_allocation_assert_clean(void);
 void   taucs_allocation_mark_clean(void);
 void   taucs_allocation_induce_failure(int i);
 
-/* 
-   these are meant to allow allocation 
+/*
+   these are meant to allow allocation
    and more importantly, deallocation,
    within the testing programs.
 */
@@ -697,7 +699,7 @@ void* taucs_calloc (size_t nmemb, size_t size);
 void* taucs_realloc(void* ptr, size_t size)   ;
 void  taucs_free   (void* ptr)                ;
 
-#if defined(TAUCS_CORE) 
+#if defined(TAUCS_CORE)
 
 #if defined(TAUCS_MEMORY_TEST_yes)
 
@@ -768,13 +770,13 @@ extern int dreadhb_(char*, int*, int*, int*, int*, int*, taucs_double*);
 extern int sreadhb_(char*, int*, int*, int*, int*, int*, taucs_single*);
 extern int zreadhb_(char*, int*, int*, int*, int*, int*, taucs_dcomplex*);
 
-extern int amdexa_(int*, int*, int*, int*, int*, int*, int*, int*, int*, 
+extern int amdexa_(int*, int*, int*, int*, int*, int*, int*, int*, int*,
 			int*, int*, int*, int*, int*, int*);
-extern int amdtru_(int*, int*, int*, int*, int*, int*, int*, int*, int*, 
+extern int amdtru_(int*, int*, int*, int*, int*, int*, int*, int*, int*,
 			int*, int*, int*, int*, int*, int*);
-extern int amdbar_(int*, int*, int*, int*, int*, int*, int*, int*, int*, 
+extern int amdbar_(int*, int*, int*, int*, int*, int*, int*, int*, int*,
 			int*, int*, int*, int*, int*, int*);
-extern int genmmd_(int*, int*, int*, int*, int*, int*, int*, int*, int*, 
+extern int genmmd_(int*, int*, int*, int*, int*, int*, int*, int*, int*,
 			int*, int*, int*);
 
 /*********************************************************/
@@ -812,17 +814,17 @@ extern int isinf(double);
 #endif
 
 extern int taucs_potrf(char*, int*, taucs_datatype*, int*, int*);
-extern int taucs_trsm(char *, char *, char *, char *, 
-			int*, int*, taucs_datatype*, taucs_datatype*, int *, 
+extern int taucs_trsm(char *, char *, char *, char *,
+			int*, int*, taucs_datatype*, taucs_datatype*, int *,
 			taucs_datatype*, int *);
 extern int taucs_gemm(char *, char *, int*, int*, int *,
-			taucs_datatype*, taucs_datatype*, int *, taucs_datatype*, int *, 
+			taucs_datatype*, taucs_datatype*, int *, taucs_datatype*, int *,
 			taucs_datatype*, taucs_datatype*, int*);
-extern int taucs_herk(char *, char *, 
-		      int *, int *, 
-		      taucs_real_datatype*, 
-		      taucs_datatype*, int *, 
-		      taucs_real_datatype*, 
+extern int taucs_herk(char *, char *,
+		      int *, int *,
+		      taucs_real_datatype*,
+		      taucs_datatype*, int *,
+		      taucs_real_datatype*,
 		      taucs_datatype*, int *);
 
 taucs_double taucs_blas_name(dnrm2)(int*, taucs_double*, int*);
@@ -833,5 +835,3 @@ taucs_single taucs_blas_name(scnrm2)(int*, taucs_scomplex*, int*);
 /*********************************************************/
 /*                                                       */
 /*********************************************************/
-
-
