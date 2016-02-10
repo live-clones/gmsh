@@ -4926,11 +4926,6 @@ void PostOp::execute(GRegion* gr,int level, int conformity){
   estimate2 = 0;
   iterations = 0;
 
-
-  nbFAILVERTEX=0;
-  nbFAILVALIDITY=0;  
-
-  
   build_tuples(gr);
 
   if (level >= 2){
@@ -4940,25 +4935,35 @@ void PostOp::execute(GRegion* gr,int level, int conformity){
     rearrange(gr);
   }
 
-  printf("nb FAILS VERTEX after pyramids1 %i\n",nbFAILVERTEX);
-  printf("nb FAILS VALIDITY after pyramids1 %i\n",nbFAILVALIDITY);  
-  nbFAILVERTEX=0;
-  nbFAILVALIDITY=0;  
-  
-  if(conformity == 2 || level >= 3){
-    init_markings(gr);
+if(conformity == 2 || conformity == 3){
+  init_markings(gr);
+  build_vertex_to_tetrahedra(gr);
+  build_vertex_to_pyramids(gr);
+  pyramids2(gr);
+  rearrange(gr);
+}    
+
+  if (conformity == 3 || conformity == 4){
+    init_markings_hex(gr);
     build_vertex_to_tetrahedra(gr);
     build_vertex_to_pyramids(gr);
-    pyramids2(gr);
+    split_hexahedra(gr);
     rearrange(gr);
-  }    
-
-
-  printf("nb FAILS VERTEX after pyramids2 %i\n",nbFAILVERTEX);
-  printf("nb FAILS VALIDITY after pyramids2 %i\n",nbFAILVALIDITY);  
-
   
-  if (conformity == 1){
+    init_markings_pri(gr);
+    build_vertex_to_tetrahedra(gr);
+    build_vertex_to_pyramids(gr);
+    split_prisms(gr);
+    rearrange(gr);
+    
+    init_markings_pyr(gr);
+    build_vertex_to_tetrahedra(gr);
+    build_vertex_to_pyramids(gr);
+    split_pyramids(gr);
+    rearrange(gr);
+  }
+  
+  if (conformity >= 1){
     init_markings(gr);
     build_vertex_to_tetrahedra(gr);
     build_vertex_to_pyramids(gr);
@@ -4970,6 +4975,43 @@ void PostOp::execute(GRegion* gr,int level, int conformity){
 
   modify_surfaces(gr);
 }
+
+void PostOp::init_markings_hex(GRegion* gr){
+  unsigned int i;
+  MElement* element;
+  markings.clear();
+  for(i=0;i<gr->getNumMeshElements();i++){
+    element = gr->getMeshElement(i);
+    if(eight(element)){
+      markings.insert(std::pair<MElement*,bool>(element,false));
+    }
+  }
+}
+
+void PostOp::init_markings_pri(GRegion* gr){
+  unsigned int i;
+  MElement* element;
+  markings.clear();
+  for(i=0;i<gr->getNumMeshElements();i++){
+    element = gr->getMeshElement(i);
+    if(six(element)){
+      markings.insert(std::pair<MElement*,bool>(element,false));
+    }
+  }
+}
+
+void PostOp::init_markings_pyr(GRegion* gr){
+  unsigned int i;
+  MElement* element;
+  markings.clear();
+  for(i=0;i<gr->getNumMeshElements();i++){
+    element = gr->getMeshElement(i);
+    if(five(element)){
+      markings.insert(std::pair<MElement*,bool>(element,false));
+    }
+  }
+}
+
 
 void PostOp::init_markings(GRegion* gr){
   unsigned int i;
@@ -4984,6 +5026,223 @@ void PostOp::init_markings(GRegion* gr){
     }
   }
 }
+
+void PostOp::split_hexahedra(GRegion* gr){
+  std::vector<MElement*> hexahedra;
+  std::vector<MHexahedron*> opt;
+  std::map<MElement*,bool>::iterator it;
+
+  hexahedra.clear();
+
+  for(size_t i=0;i<gr->getNumMeshElements();i++){
+    MElement *element = gr->getMeshElement(i);
+    if(eight(element)){
+      hexahedra.push_back(element);
+    }
+  }
+
+  for(size_t i=0;i<hexahedra.size();i++){
+    MElement *element = hexahedra[i];
+    MVertex *a = element->getVertex(0);
+    MVertex *b = element->getVertex(1);
+    MVertex *c = element->getVertex(2);
+    MVertex *d = element->getVertex(3);
+    MVertex *e = element->getVertex(4);
+    MVertex *f = element->getVertex(5);
+    MVertex *g = element->getVertex(6);
+    MVertex *h = element->getVertex(7);
+    
+    bool conform=true;
+    conform &= (nonConformDiag(b,a,d,c,gr) == 0);
+    if (conform) conform &= (nonConformDiag(e,f,g,h,gr) == 0);
+    if (conform) conform &= (nonConformDiag(a,b,f,e,gr) == 0);
+    if (conform) conform &= (nonConformDiag(b,c,g,f,gr) == 0);
+    if (conform) conform &= (nonConformDiag(c,d,h,g,gr) == 0);
+    if (conform) conform &= (nonConformDiag(d,a,e,h,gr) == 0);
+    if (!conform){
+      double x = (a->x()+b->x()+c->x()+d->x()+e->x()+f->x()+g->x()+h->x())/8.0;
+      double y = (a->y()+b->y()+c->y()+d->y()+e->y()+f->y()+g->y()+h->y())/8.0;
+      double z = (a->z()+b->z()+c->z()+d->z()+e->z()+f->z()+g->z()+h->z())/8.0;
+      MVertex *mid = new MVertex(x,y,z,gr);
+      gr->addMeshVertex(mid);
+      
+      MPyramid *temp = new MPyramid(a,b,c,d,mid);
+      gr->addPyramid(temp);
+      temp = new MPyramid(h,g,f,e,mid);
+      gr->addPyramid(temp);
+      temp = new MPyramid(e,f,b,a,mid);
+      gr->addPyramid(temp);
+      temp = new MPyramid(f,g,c,b,mid);
+      gr->addPyramid(temp);
+      temp = new MPyramid(g,h,d,c,mid);
+      gr->addPyramid(temp);
+      temp = new MPyramid(h,e,a,d,mid);
+      gr->addPyramid(temp);
+      it = markings.find(element);
+      it->second = true;
+    }
+  }
+
+  opt.clear();
+  opt.resize(gr->hexahedra.size());
+  opt = gr->hexahedra;
+  gr->hexahedra.clear();
+
+  for(size_t i=0;i<opt.size();i++){
+    MElement *element = (MElement*)(opt[i]);
+    it = markings.find(element);
+    if(it->second==0){
+      gr->hexahedra.push_back(opt[i]);
+    }
+  }
+}
+
+void PostOp::split_prisms(GRegion* gr){
+  std::vector<MElement*> prisms;
+  std::vector<MPrism*> opt;
+  std::map<MElement*,bool>::iterator it;
+
+  prisms.clear();
+
+  for(size_t i=0;i<gr->getNumMeshElements();i++){
+    MElement *element = gr->getMeshElement(i);
+    if(six(element)){
+      prisms.push_back(element);
+    }
+  }
+
+  for(size_t i=0;i<prisms.size();i++){
+    MElement *element = prisms[i];
+    MVertex *a = element->getVertex(0);
+    MVertex *b = element->getVertex(1);
+    MVertex *c = element->getVertex(2);
+    MVertex *d = element->getVertex(3);
+    MVertex *e = element->getVertex(4);
+    MVertex *f = element->getVertex(5);
+
+    pyramids1(a,d,f,c,gr);
+    pyramids1(a,b,e,d,gr);
+    pyramids1(b,c,f,e,gr);
+
+    
+    bool conform=true;
+    conform &= (nonConformDiag(a,d,f,c,gr) == 0);
+    if (conform) conform &= (nonConformDiag(a,b,e,d,gr) == 0);
+    if (conform) conform &= (nonConformDiag(b,c,f,e,gr) == 0);
+    if (!conform){
+      double x = (a->x()+b->x()+c->x()+d->x()+e->x()+f->x())/6.0;
+      double y = (a->y()+b->y()+c->y()+d->y()+e->y()+f->y())/6.0;
+      double z = (a->z()+b->z()+c->z()+d->z()+e->z()+f->z())/6.0;
+      MVertex *mid = new MVertex(x,y,z,gr);
+      gr->addMeshVertex(mid);
+      
+      MPyramid *temp = new MPyramid(c,f,d,a,mid);
+      gr->addPyramid(temp);
+      temp = new MPyramid(d,e,b,a,mid);
+      gr->addPyramid(temp);
+      temp = new MPyramid(e,f,c,b,mid);
+      gr->addPyramid(temp);
+      MTetrahedron *temp2 = new MTetrahedron(d,f,e,mid);
+      gr->addTetrahedron(temp2);
+      temp2 = new MTetrahedron(a,b,c,mid);
+      gr->addTetrahedron(temp2);
+      it = markings.find(element);
+      it->second = true;
+    }
+  }
+
+  opt.clear();
+  opt.resize(gr->prisms.size());
+  opt = gr->prisms;
+  gr->prisms.clear();
+
+  for(size_t i=0;i<opt.size();i++){
+    MElement *element = (MElement*)(opt[i]);
+    it = markings.find(element);
+    if(it->second==0){
+      gr->prisms.push_back(opt[i]);
+    }
+  }
+}
+
+void PostOp::split_pyramids(GRegion* gr){
+  std::vector<MElement*> pyramids;
+  std::vector<MPyramid*> opt;
+  std::map<MElement*,bool>::iterator it;
+
+  pyramids.clear();
+
+  for(size_t i=0;i<gr->getNumMeshElements();i++){
+    MElement *element = gr->getMeshElement(i);
+    if(five(element)){
+      pyramids.push_back(element);
+    }
+  }
+
+  for(size_t i=0;i<pyramids.size();i++){
+    MElement *element = pyramids[i];
+    MVertex *a = element->getVertex(0);
+    MVertex *b = element->getVertex(1);
+    MVertex *c = element->getVertex(2);
+    MVertex *d = element->getVertex(3);
+    MVertex *apex = element->getVertex(4);
+    
+    int nDiag = nonConformDiag(a,b,c,d,gr);
+    if (nDiag == 1){
+      MTetrahedron *temp = new MTetrahedron(c,b,a,apex);
+      gr->addTetrahedron(temp);
+      temp = new MTetrahedron(c,a,d,apex);
+      gr->addTetrahedron(temp);
+      it = markings.find(element);
+      it->second = 1;
+    }else if (nDiag == 2){
+      MTetrahedron *temp = new MTetrahedron(b,a,d,apex);
+      gr->addTetrahedron(temp);
+      temp = new MTetrahedron(b,d,c,apex);
+      gr->addTetrahedron(temp);
+      it = markings.find(element);
+      it->second = 1;
+    }
+  }
+
+  opt.clear();
+  opt.resize(gr->pyramids.size());
+  opt = gr->pyramids;
+  gr->pyramids.clear();
+
+  for(size_t i=0;i<opt.size();i++){
+    MElement *element = (MElement*)(opt[i]);
+    it = markings.find(element);
+    if(it->second==0){
+      gr->pyramids.push_back(opt[i]);
+    }
+  }
+}
+
+
+int PostOp::nonConformDiag(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
+  std::set<MElement*> diag1a;
+  std::set<MElement*> diag1b;
+  std::set<MElement*> diag2a;
+  std::set<MElement*> diag2b;
+
+  find_tetrahedra(a,b,c,diag1a);
+  find_tetrahedra(a,c,d,diag1b);
+  find_tetrahedra(b,c,d,diag2a);
+  find_tetrahedra(a,b,d,diag2b);
+  find_pyramids_from_tri(a,b,c,diag1a);
+  find_pyramids_from_tri(a,c,d,diag1b);
+  find_pyramids_from_tri(b,c,d,diag2a);
+  find_pyramids_from_tri(a,b,d,diag2b);
+  if(diag1a.size()==1 || diag1b.size()==1){
+    return 1;
+  }else if(diag2a.size()==1 || diag2b.size()==1){
+    return 2;
+  }
+  return 0;
+}
+
+
 
 void PostOp::pyramids1(GRegion* gr){
   unsigned int i;
@@ -5199,8 +5458,8 @@ void PostOp::pyramids1(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
           gr->addPyramid(pyr);
           it1->second = 1;
           it2->second = 1;
-        }else nbFAILVALIDITY++;
-      }else nbFAILVERTEX++;
+        }
+      }
     }
   }
 }
@@ -5421,9 +5680,6 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, 
 
     MPyramid *pyr = new MPyramid(a,b,c,d,otherV[0]);
 
-    if (otherV[0] != otherV[1])nbFAILVERTEX++;
-    else if (!valid(pyr)) nbFAILVALIDITY++;
-    
     if (otherV[0] == otherV[1] && valid(pyr)){
       estimate1 = estimate1 + tetrahedra.size() + 2*pyramids.size();
       estimate2 = estimate2 + 1;
@@ -5432,7 +5688,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, 
       //y = (diagA->y() + diagB->y() + otherV[0]->y())/3;
       //z = (diagA->z() + diagB->z() + otherV[0]->z())/3;
 
-      //W create a flat pyramid and let the optimizer fix it
+      //We create a flat pyramid and let the optimizer fix it
       x = (diagA->x() + diagB->x())/2;
       y = (diagA->y() + diagB->y())/2;
       z = (diagA->z() + diagB->z())/2;

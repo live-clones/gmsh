@@ -620,15 +620,13 @@ private:
   std::multiset<Tuple> tuples;
   std::set<MElement*> triangles;
 
-  int nbFAILVERTEX;
-  int nbFAILVALIDITY;  
 public:
   PostOp();
   ~PostOp();
 
   void execute(int, int);
-  //level: 0: hex, 1: hex+prisms, 2: hex+prism+1-step pyramids, 3: hex+prism+2-steps pyramids
-  //conformity= 0=nonconforming, 1=conformity using trihedra
+  //level - 0: hex, 1: hex+prisms, 2: hex+prism+pyramids
+  //conformity - 0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexPrismSplit+trihedra, 4:hexPrismSplit+trihedra
   void execute(GRegion*,int level, int conformity);
 
   inline int get_nb_hexahedra()const{return nbr8;};
@@ -637,9 +635,16 @@ public:
   inline double get_vol_elements()const{return vol;};
 
   void init_markings(GRegion*);
+  void init_markings_hex(GRegion*);
+  void init_markings_pri(GRegion*);
+  void init_markings_pyr(GRegion*);
   void pyramids1(GRegion*);
   void pyramids2(GRegion*, bool allowNonConforming=false);
   void trihedra(GRegion*);
+  void split_hexahedra(GRegion*);
+  void split_prisms(GRegion*);
+  void split_pyramids(GRegion*);  
+  int nonConformDiag(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr);
   void pyramids1(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
   void pyramids2(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*, bool allowNonConforming);
   void trihedra(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);

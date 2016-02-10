@@ -1204,7 +1204,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Recombine3DLevel" , opt_mesh_recombine3d_level , 0 ,
     "3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids)" },
   { F|O, "Recombine3DConformity" , opt_mesh_recombine3d_conformity , 0 ,
-    "3d recombination conformity type (0: nonconforming, 1: conformity using trihedra, 2: conformity using pyramids)" },
+    "3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)" },
   { F|O, "DoRecombinationTest" , opt_mesh_do_recombination_test , 0 ,
     "Apply recombination algorithm for test" },
   { F|O, "RecombinationTestHorizStart" , opt_mesh_recombination_test_start , 1 ,

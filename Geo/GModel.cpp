@@ -600,52 +600,15 @@ static void addToMap(std::multimap< MFace , MElement *, Less_Face> &faceToElemen
     MFace outFace = fit->first;
     std::vector<std::pair<MElement *, bool> > &neigh = elToNeighbors[el];
     for (size_t iN = 0; iN < neigh.size(); iN++)
-      if (neigh[iN].first == fit->second)
+      if (neigh[iN].first == fit->second) //Neigbor is already in the map
         return;
     int i0 = -1;
     while (face.getVertex(0) != outFace.getVertex(++i0));
     bool sameOrientation = face.getVertex(1) == outFace.getVertex((i0+1)%face.getNumVertices());
-    //    if (sameOrientation) printf("Non-matching orientation between el %i and el %i for face IN %i %i %i out %i %i %i\n",el->getNum(),fit->second->getNum(),face.getVertex(0)->getNum(),face.getVertex(1)->getNum(),face.getVertex(2)->getNum(),outFace.getVertex(0)->getNum(),outFace.getVertex(1)->getNum(),outFace.getVertex(2)->getNum());
     neigh.push_back(std::make_pair(fit->second, !sameOrientation));
     elToNeighbors[fit->second].push_back(std::make_pair(el, !sameOrientation));
   }
 }
-
-//static void checkConformity(std::multimap< MFace , MElement *, Less_Face> &faceToElement, std::map< MElement *, std::vector < std::pair <MElement *, bool> > > &elToNeighbors, const MFace &face,  MElement *el){
-//  //Check conformity
-//  if (face.getNumVertices() == 4){
-//    MVertex *v0  =  face.getVertex(0);
-//    MVertex *v1  =  face.getVertex(1);
-//    MVertex *v2  =  face.getVertex(2);
-//    MVertex *v3  =  face.getVertex(3);
-//    MFace f[5] = {MFace(v0, v1, v2), MFace(v0, v2, v3), MFace(v0, v1, v3), MFace(v1, v2, v3)};
-//    if (faceToElement.find(f[0])!= faceToElement.end() || faceToElement.find(f[1])!= faceToElement.end() || faceToElement.find(f[2])!= faceToElement.end() || faceToElement.find(f[3])!= faceToElement.end() ){
-//      //Check if the element is a trihedron used to recover conformity:
-//      //A single element contains the two triangles, the quad and no other face
-//      std::multiset<size_t> facesNeighborsId;
-//      int nFaces=0;
-//      for (int iFace = 0; iFace<4; iFace++){
-//        int nbCount = faceToElement.count(f[iFace]);
-//        if (nbCount != 0){
-//          nFaces++;
-//          if (nFaces > 3) Msg::Fatal("Topological fault: A quad face shares more than 3 triangles (element %i)",el->getNum());
-//          std::pair <std::multimap< MFace , MElement *, Less_Face>::iterator, std::multimap< MFace , MElement *, Less_Face>::iterator> faceNeighbors;
-//          faceNeighbors = faceToElement.equal_range(f[iFace]);
-//          for (std::multimap< MFace , MElement *, Less_Face>::iterator itEl=faceNeighbors.first; itEl!=faceNeighbors.second; ++itEl)
-//            facesNeighborsId.insert(itEl->second->getNum());
-//        }
-//      }
-//      //In some cases, there can be 3 triangles matching a quad face and result in a valid trihedron (1 or 4 triangles not allowed)
-//      if ((nFaces != 2 || nFaces != 3) && faceToElement.count(face)!= 2) Msg::Fatal("Nonconforming element which is not a trihedron (element %i  nFaces %i nodes %i %i %i %i)",el->getNum(),nFaces,v0->getNum(),v1->getNum(),v2->getNum(),v3->getNum());
-//      size_t maxOccurence=0;
-//      for (std::multiset<size_t>::iterator iElId = facesNeighborsId.begin(); iElId != facesNeighborsId.end(); ++iElId){
-//        maxOccurence = std::max(facesNeighborsId.count(*iElId), maxOccurence);
-//      }
-//      if (maxOccurence != 3) //A trihedron should have 3 and only 3 neighbors
-//        Msg::Fatal("Nonconforming face for element: %i vertices %i %i %i %i. Number of neighbors: %i",el->getNum(), v0->getNum(), v1->getNum(), v2->getNum(), v3->getNum(),maxOccurence);
-//    }
-//  }
-//}
 
 static void checkConformity(std::multimap< MFace , MElement *, Less_Face> &faceToElement, std::map< MElement *, std::vector < std::pair <MElement *, bool> > > &elToNeighbors, MFace face, MElement *el){
   int connectivity = faceToElement.count(face);
@@ -658,8 +621,8 @@ static void checkConformity(std::multimap< MFace , MElement *, Less_Face> &faceT
       for (int iV = 0; iV < face.getNumVertices(); iV++)
         if (face.getVertex(iV)->onWhat()->dim() == 3 || connectivity != 1){
           for (int jV = 0; jV < face.getNumVertices(); jV++)
-            Msg::Info("Vertex %i",face.getVertex(jV)->getNum());
-          Msg::Fatal("Non conforming element %i (nb connections for a face %i vertex %i)",el->getNum(), connectivity, face.getVertex(iV)->getNum());
+            Msg::Info("Vertex %i dim %i",face.getVertex(jV)->getNum(), face.getVertex(iV)->onWhat()->dim());
+          Msg::Fatal("Non conforming element %i (%i connection(s) for a face located on dim %i (vertex %i))",el->getNum(), connectivity,face.getVertex(iV)->onWhat()->dim(), face.getVertex(iV)->getNum());
         }
     }
   }
