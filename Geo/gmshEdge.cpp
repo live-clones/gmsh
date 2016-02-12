@@ -118,8 +118,13 @@ std::string gmshEdge::getAdditionalInfoString()
 int gmshEdge::minimumMeshSegments () const
 {
   int np;
-  if(geomType() == Line)
+  if(geomType() == Line){
     np = GEdge::minimumMeshSegments();
+    // FIXME FOR QUADS
+    if(List_Nbr(c->Control_Points) > 2){
+      np = 3*(List_Nbr(c->Control_Points))+1;
+    }
+  }
   else if(geomType() == Circle || geomType() == Ellipse)
     np = (int)(fabs(c->Circle.t1 - c->Circle.t2) *
                  (double)CTX::instance()->mesh.minCircPoints / M_PI) - 1;

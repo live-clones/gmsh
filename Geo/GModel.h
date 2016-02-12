@@ -119,6 +119,9 @@ class GModel
   // the fly if needed
   void _storeElementsInEntities(std::map<int, std::vector<MElement*> > &map);
 
+  // Discrete Entities have to have their mesh moved to a geometry container
+  void _createGeometryOfDiscreteEntities();
+
   // loop over all vertices connected to elements and associate
   // geometrical entity
   void _associateEntityWithMeshVertices();

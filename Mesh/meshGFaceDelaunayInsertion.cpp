@@ -1558,7 +1558,7 @@ void buildBackGroundMesh (GFace *gf,
     int CurvControl = CTX::instance()->mesh.lcFromCurvature;
     CTX::instance()->mesh.lcFromCurvature = 0;
     //  Do a background mesh
-    bowyerWatson(gf,4000, equivalence,parametricCoordinates);
+    bowyerWatson(gf,40000, equivalence,parametricCoordinates);
     //  Re-enable curv control if asked
     CTX::instance()->mesh.lcFromCurvature = CurvControl;
     // apply this to the BGM

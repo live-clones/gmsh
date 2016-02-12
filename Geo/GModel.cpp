@@ -1268,6 +1268,19 @@ static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &el
   }
 }
 
+void GModel:: _createGeometryOfDiscreteEntities() {
+  for(eiter it = firstEdge(); it != lastEdge(); ++it){
+    if((*it)->geomType() == GEntity::DiscreteCurve) {
+      discreteEdge *de = dynamic_cast<discreteEdge*> (*it);
+      if (!de)Msg::Fatal("no fun");
+      de->createGeometry();
+    }
+  }
+  for(fiter it = firstFace(); it != lastFace(); ++it){
+  }
+}
+
+
 void GModel::_associateEntityWithMeshVertices()
 {
   // loop on regions, then on faces, edges and vertices and store the

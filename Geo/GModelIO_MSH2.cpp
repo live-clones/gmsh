@@ -689,6 +689,7 @@ int GModel::_readMSH2(const std::string &name)
   for(int i = 0; i < 4; i++)
     _storePhysicalTagsInEntities(i, physicals[i]);
 
+  _createGeometryOfDiscreteEntities() ;
   fclose(fp);
 
   return postpro ? 2 : 1;

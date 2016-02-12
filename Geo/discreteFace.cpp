@@ -139,7 +139,7 @@ void discreteFace::secondDer(const SPoint2 &param,
 }
 
 // FIXME PAB ----> really create an atlas !!!!!!!!!!!!!!!
-void discreteFace::createAtlas() {
+void discreteFace::createGeometry() {
   if (!_atlas.empty())return;
   // parametrization is done here !!!
   discreteDiskFace *df = new discreteDiskFace (this, triangles);
@@ -160,7 +160,8 @@ void discreteFace::gatherMeshes() {
 
 void discreteFace::mesh(bool verbose) {
 #if defined(HAVE_MESH)
-  createAtlas();
+  return;
+  createGeometry();
   for (unsigned int i=0;i<_atlas.size();i++)
     _atlas[i]->mesh(verbose);
   gatherMeshes();

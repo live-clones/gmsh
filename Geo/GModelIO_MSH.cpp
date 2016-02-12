@@ -449,6 +449,7 @@ int GModel::readMSH(const std::string &name)
   else
     _storeVerticesInEntities(_vertexMapCache);
 
+  _createGeometryOfDiscreteEntities() ;
   fclose(fp);
 
   return postpro ? 2 : 1;

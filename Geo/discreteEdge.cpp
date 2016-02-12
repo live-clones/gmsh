@@ -271,6 +271,7 @@ void discreteEdge::parametrize(std::map<GFace*, std::map<MVertex*, MVertex*,
                                std::map<GRegion*, std::map<MVertex*, MVertex*,
                                std::less<MVertex*> > > &region2Vert)
 { 
+  return;
   if (_pars.empty()){
     for (unsigned int i = 0; i < lines.size() + 1; i++){
       _pars.push_back(i);
@@ -391,8 +392,7 @@ bool discreteEdge::getLocalParameter(const double &t, int &iLine,
     double tmin = _pars[iLine];
     double tmax = _pars[iLine+1];
     if (t >= tmin && t <= tmax){
-      tLoc = _orientation[iLine] ? (t-tmin)/(tmax-tmin) :
-        1 - (t-tmin)/(tmax-tmin);
+      tLoc = (t-tmin)/(tmax-tmin);
       return true;
     }
   }
@@ -406,8 +406,8 @@ GPoint discreteEdge::point(double par) const
   if(!getLocalParameter(par, iEdge, tLoc)) return GPoint();
 
   double x, y, z;
-  MVertex *vB = lines[iEdge]->getVertex(0);
-  MVertex *vE = lines[iEdge]->getVertex(1);
+  MVertex *vB = discrete_lines[iEdge]->getVertex(0);
+  MVertex *vE = discrete_lines[iEdge]->getVertex(1);
 
   //linear Lagrange mesh
   x = vB->x() + tLoc * (vE->x()- vB->x());
@@ -422,14 +422,14 @@ SVector3 discreteEdge::firstDer(double par) const
   int iEdge;
   if(!getLocalParameter(par, iEdge, tLoc)) return SVector3();
 
-  MVertex *vB = lines[iEdge]->getVertex(0);
-  MVertex *vE = lines[iEdge]->getVertex(1);
+  MVertex *vB = discrete_lines[iEdge]->getVertex(0);
+  MVertex *vE = discrete_lines[iEdge]->getVertex(1);
 
   double dx, dy, dz;
-  double dt = 1.0;
-  dx = (vE->x() - vB->x()) / dt;
-  dy = (vE->y() - vB->y()) / dt;
-  dz = (vE->z() - vB->z()) / dt;
+  //  double dt = 1.0;
+  dx = (vE->x() - vB->x());// / dt;
+  dy = (vE->y() - vB->y());// / dt;
+  dz = (vE->z() - vB->z());// / dt;
 
   SVector3 der(dx, dy, dz);
   return der;
@@ -470,36 +470,43 @@ double discreteEdge::curvatures(const double par, SVector3 *dirMax, SVector3 *di
 
 Range<double> discreteEdge::parBounds(int i) const
 {
-  return Range<double>(0, 1);
+  return Range<double>(0, (double)discrete_lines.size());
 }
 
 void discreteEdge::createGeometry(){
   if (discrete_lines.empty()){
+    Msg::Info("creating the geometry of discrete curve %d",tag());
     createTopo();
     // copy the mesh
     std::map<MVertex*,MVertex*> v2v;
     for (unsigned int i = 0; i < mesh_vertices.size(); i++){
-      MVertex *v = new MVertex(mesh_vertices[i]->x(),mesh_vertices[i]->y(),mesh_vertices[i]->z());
-      v2v[mesh_vertices[i]] = v;
-      discrete_vertices.push_back(v);
+      MVertex *v   = new MEdgeVertex(mesh_vertices[i]->x(),mesh_vertices[i]->y(),mesh_vertices[i]->z(),this,(double)(i+1));
+      v2v  [mesh_vertices[i]] = v;
     }
+
+    std::vector<MLine*> _temp;
     for (unsigned int i = 0; i < lines.size(); i++){
       MVertex *v0 = lines[i]->getVertex(0);
       MVertex *v1 = lines[i]->getVertex(1);
-      discrete_lines.push_back(new MLine(v0,v1));
+      MVertex *v00 = (v2v.find(v0) == v2v.end()) ? v0 : v2v[v0];
+      MVertex *v01 = (v2v.find(v1) == v2v.end()) ? v1 : v2v[v1];
+      if (_orientation[i] == 1){
+	discrete_lines.push_back(new MLine(v00,v01));
+      }
+      else{
+	discrete_lines.push_back(new MLine(v01,v00));
+      }
     }
-    // compute parameters
-    double L = 0.0;
-    _pars.push_back(L);
-    for (unsigned int i = 0; i < discrete_lines.size(); i++){
-      MVertex *v0 = discrete_lines[i]->getVertex(0);
-      MVertex *v1 = discrete_lines[i]->getVertex(1);
-      L += distance(v0,v1);
-      _pars.push_back(L);
+    
+    
+    // compute parameters and recompute the vertices
+    _pars.push_back(0.0);
+    for (unsigned int i = 1; i < discrete_lines.size(); i++){
+      _pars.push_back((double)i);
+      MVertex *newv = discrete_lines[i]->getVertex(0);
+      discrete_vertices.push_back(newv);      
     }
-    for (unsigned int i = 0; i < _pars.size(); i++){
-      _pars[i] /= L;
-    }
+    _pars.push_back((double)discrete_lines.size());
   }
 }
 
@@ -508,8 +515,8 @@ void discreteEdge::mesh(bool verbose){
 #if defined(HAVE_MESH)
   // copy the mesh into geometrical entities
   // FIXME
-  return;
-  createGeometry();
+  //  return;
+  //  createGeometry();
   meshGEdge mesher;
   mesher(this);
 #endif

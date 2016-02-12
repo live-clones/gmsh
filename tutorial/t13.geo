@@ -39,6 +39,7 @@ Volume(1) = {1};
 
 Physical Surface(1) = {s : s + #ss[]-1};
 Physical Volume(1) = 1;
+Physical Line(1) = {26 ... 37};
 
 // element size imposed by a size field
 Field[1] = MathEval;

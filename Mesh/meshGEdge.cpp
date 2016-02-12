@@ -5,6 +5,7 @@
 
 #include "GmshConfig.h"
 #include "GModel.h"
+#include "discreteEdge.h"
 #include "meshGEdge.h"
 #include "GEdge.h"
 #include "MLine.h"
@@ -72,6 +73,13 @@ static double smoothPrimitive(GEdge *ge, double alpha,
     pt2.p = pt1.p + (pt2.t - pt1.t) * 0.5 * (pt2.lc + pt1.lc);
   }
   return Points[Points.size() - 1].p;
+}
+
+
+static double F_LcB(GEdge *ge, double t)
+{
+  GPoint p = ge->point(t);
+  return BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
 }
 
 static double F_Lc(GEdge *ge, double t)
@@ -297,7 +305,11 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
 
 void deMeshGEdge::operator() (GEdge *ge)
 {
-  if(ge->geomType() == GEntity::DiscreteCurve) return;
+  if(ge->geomType() == GEntity::DiscreteCurve) {
+    // FIXME : NOTHING SPECIAL TO DO
+    return;
+  }
+
   ge->deleteMesh();
   ge->meshStatistics.status = GEdge::PENDING;
   ge->correspondingVertices.clear();
@@ -325,6 +337,65 @@ static int increaseN (int N)
 {
   if (((N+1)/2 - 1) % 2 != 0) return N+2;
   return N;
+}
+
+// ensure not to have points that are too close to each other.
+// can be caused by a coarse 1D mesh or by a noisy curve
+static void filterPoints (GEdge*ge) {
+  if (ge->mesh_vertices.empty())return;
+  if(ge->meshAttributes.method == MESH_TRANSFINITE)return;
+  //if (ge->mesh_vertices.size() <=3)return;
+  bool forceOdd = false;
+  if((ge->meshAttributes.method != MESH_TRANSFINITE ||
+      CTX::instance()->mesh.flexibleTransfinite) &&
+     CTX::instance()->mesh.algoRecombine != 0){
+    if(CTX::instance()->mesh.recombineAll){
+      forceOdd = true;      
+    }
+  }
+
+  MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
+  std::vector<std::pair<double, MVertex*> > lengths;
+  for (unsigned int i=0;i<ge->mesh_vertices.size();i++){
+    MEdgeVertex *v = dynamic_cast<MEdgeVertex*> (ge->mesh_vertices[i]);
+    if (!v)Msg::Fatal("in 1D mesh");
+    double d = distance (v,v0);
+    double t;
+    v->getParameter(0,t);
+    if (i != 0){
+      double t0;
+      v0->getParameter(0,t0);
+      t=0.5*(t+t0);
+    }
+    double lc = F_LcB(ge, t);
+    //    double lc = v->getLc();
+    if (d < lc * .3) {
+      lengths.push_back(std::make_pair(lc/d,v));
+    }
+    else 
+      v0=v;
+  }
+  std::sort(lengths.begin(),lengths.end());
+  int last = lengths.size();
+  if (forceOdd) {
+    while (last %2 != 0)last--;
+  }
+  /*    
+	if (CTX::instance()->mesh.algoRecombine == 2){
+	if (last < 4)last = 0;
+	while (last %4 != 0)last--;
+	}
+	else {
+	while (last %2 != 0)last--;
+	}
+	}
+  */
+
+  for (int i=0;i<last;i++){
+    std::vector<MVertex*>::iterator it = std::find(ge->mesh_vertices.begin(),ge->mesh_vertices.end(),lengths[i].second);
+    ge->mesh_vertices.erase(it);
+    delete lengths[i].second;
+  }
 }
 
 void meshGEdge::operator() (GEdge *ge)
@@ -498,6 +569,10 @@ void meshGEdge::operator() (GEdge *ge)
     }
     mesh_vertices.resize(NUMP - 1);
   }
+
+  //  printf("%ld ----> ", ge->mesh_vertices.size());
+  filterPoints (ge);
+  //  printf("%ld \n", ge->mesh_vertices.size());
 
   for(unsigned int i = 0; i < mesh_vertices.size() + 1; i++){
     MVertex *v0 = (i == 0) ?

@@ -98,6 +98,9 @@ public:
 	    MVertex *v1 = (*ite)->lines[i]->getVertex(0);
 	    MVertex *v2 = (*ite)->lines[i]->getVertex(1);
 	    MVertex *v3 = (*ite)->lines[i+1]->getVertex(1);
+	    v2->x() = 0.5*(v1->x()+v3->x());
+	    v2->y() = 0.5*(v1->y()+v3->y());
+	    v2->z() = 0.5*(v1->z()+v3->z());
 	    temp.push_back(new MLine(v1,v3));
 	    if (v1->onWhat() == *ite) (*ite)->mesh_vertices.push_back(v1);
 	    _middle[MEdge(v1,v3)] = v2;
@@ -108,8 +111,8 @@ public:
 	}
 	++ite;
       }
+      CTX::instance()->mesh.lcFactor *=2.0;
     }
-    backgroundMesh::setSizeFactor(2.0);
   }
   void subdivide ()
   {
@@ -129,7 +132,10 @@ public:
 	m[j] = p1;
 	if (it == _middle.end() && it2 == eds.end()){
 	  GPoint gp = _gf->point((p1+p2)*0.5);
-	  v[j] = new MFaceVertex (gp.x(),gp.y(),gp.z(),_gf,gp.u(),gp.v());
+	  double XX = 0.5*(E.getVertex(0)->x()+E.getVertex(1)->x());
+	  double YY = 0.5*(E.getVertex(0)->y()+E.getVertex(1)->y());
+	  double ZZ = 0.5*(E.getVertex(0)->z()+E.getVertex(1)->z());
+	  v[j] = new MFaceVertex (XX,YY,ZZ,_gf,gp.u(),gp.v());
 	  _gf->mesh_vertices.push_back(v[j]);
 	  eds[E] = v[j];
 	}
@@ -142,7 +148,10 @@ public:
 	}
       }
       GPoint gp    = _gf->point((m[0]+m[1]+m[2])*(1./3.));
-      MFaceVertex *vmid = new MFaceVertex (gp.x(),gp.y(),gp.z(),_gf,gp.u(),gp.v());
+      double XX = (v[0]->x()+v[1]->x()+v[2]->x())*(1./3.);
+      double YY = (v[0]->y()+v[1]->y()+v[2]->y())*(1./3.);
+      double ZZ = (v[0]->z()+v[1]->z()+v[2]->z())*(1./3.);
+      MFaceVertex *vmid = new MFaceVertex (XX,YY,ZZ,_gf,gp.u(),gp.v());
       _gf->mesh_vertices.push_back(vmid);
       qnew.push_back(new MQuadrangle(_gf->triangles[i]->getVertex(0),v[0],vmid,v[2]));
       qnew.push_back(new MQuadrangle(_gf->triangles[i]->getVertex(1),v[1],vmid,v[0]));
@@ -162,7 +171,10 @@ public:
 	m[j] = p1;
 	if (it == _middle.end() && it2 == eds.end()){
 	  GPoint gp = _gf->point((p1+p2)*0.5);
-	  v[j] = new MFaceVertex (gp.x(),gp.y(),gp.z(),_gf,gp.u(),gp.v());
+	  double XX = 0.5*(E.getVertex(0)->x()+E.getVertex(1)->x());
+	  double YY = 0.5*(E.getVertex(0)->y()+E.getVertex(1)->y());
+	  double ZZ = 0.5*(E.getVertex(0)->z()+E.getVertex(1)->z());
+	  v[j] = new MFaceVertex (XX,YY,ZZ,_gf,gp.u(),gp.v());
 	  _gf->mesh_vertices.push_back(v[j]);
 	  eds[E] = v[j];
 	}
@@ -175,7 +187,11 @@ public:
 	}
       }
       GPoint gp    = _gf->point((m[0]+m[1]+m[2]+m[3])*0.25);
-      MVertex *vmid = new MFaceVertex (gp.x(),gp.y(),gp.z(),_gf,gp.u(),gp.v());
+      // FIXME : NOT EXACTLY CORRECT, BUT THAT'S THE PLACE WE WANT THE POINT TO RESIDE 
+      double XX = 0.25*(v[0]->x()+v[1]->x()+v[2]->x()+v[3]->x());
+      double YY = 0.25*(v[0]->y()+v[1]->y()+v[2]->y()+v[3]->y());
+      double ZZ = 0.25*(v[0]->z()+v[1]->z()+v[2]->z()+v[3]->z());
+      MVertex *vmid = new MFaceVertex (XX,YY,ZZ,_gf,gp.u(),gp.v());
       _gf->mesh_vertices.push_back(vmid);
       qnew.push_back(new MQuadrangle(_gf->quadrangles[i]->getVertex(0),v[0],vmid,v[3]));
       qnew.push_back(new MQuadrangle(_gf->quadrangles[i]->getVertex(1),v[1],vmid,v[0]));
@@ -188,17 +204,17 @@ public:
   }
   void finish ()
   {
-    backgroundMesh::setSizeFactor(1.0);
     if((CTX::instance()->mesh.recombineAll || _gf->meshAttributes.recombine) &&
        CTX::instance()->mesh.algoRecombine == 2){
       // recombine the elements on the half mesh
-      recombineIntoQuads(_gf,true,true,.1);
+      CTX::instance()->mesh.lcFactor /=2.0;
+      recombineIntoQuads(_gf,false,true,.1);
       Msg::Info("subdividing");
-      //      _gf->model()->writeMSH("hop1.msh");
+      _gf->model()->writeMSH("hop1.msh");
       subdivide();
-      //      _gf->model()->writeMSH("hop2.msh");
+      _gf->model()->writeMSH("hop2.msh");
       restore();
-      recombineIntoQuads(_gf,true,true,0.1);
+      recombineIntoQuads(_gf,false,true,0.1);
       computeElementShapes(_gf,
 			   _gf->meshStatistics.worst_element_shape,
 			   _gf->meshStatistics.average_element_shape,
@@ -2367,7 +2383,14 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
 void deMeshGFace::operator() (GFace *gf)
 {
-  if(gf->geomType() == GEntity::DiscreteSurface) return;
+  if(gf->geomType() == GEntity::DiscreteSurface) {
+    discreteFace *df = dynamic_cast<discreteFace*> (gf);
+    // copy the mesh and parametrize it to have a "geometry"
+    // of the discrete edge
+    // FIXME
+    return;
+    df->createGeometry();
+  }
   gf->deleteMesh();
   gf->meshStatistics.status = GFace::PENDING;
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
@@ -2386,23 +2409,7 @@ void meshGFace::operator() (GFace *gf, bool print)
     return;
   }
 
-  //-----------------------------------------------------------
-  // FIXME PAB & JFR FIRST IMPLEMENTATION OF THE COMPOUND REPLACEMENT
-  //  if(gf->geomType() == GEntity::DiscreteSurface) {
-  //    discreteFace *df = dynamic_cast<discreteFace*> (gf);
-  //    if (df) {
-  //      df->createAtlas();
-  //      for (unsigned int i=0;i<df->_atlas.size();i++){
-  //	(*this)(df->_atlas[i],print);
-  //      }
-  //      df->gatherMeshes();
-  //    }
-  //    gf->meshStatistics.status = GFace::DONE;
-  //    return;
-  //  }
-  //-----------------------------------------------------------
-  //-----------------------------------------------------------
-
+  //  if(gf->geomType() == GEntity::DiscreteFace) return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) return;

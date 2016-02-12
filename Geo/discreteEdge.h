@@ -42,6 +42,7 @@ class discreteEdge : public GEdge {
   void computeNormals () const;
   virtual void mesh(bool) ;
   void writeGEO(FILE *fp);
+  int minimumDrawSegments() const {return 2*_pars.size();}
 };
 
 #endif
