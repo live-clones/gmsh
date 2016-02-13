@@ -28,14 +28,8 @@
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
 #endif
-#if !defined(HAVE_ONELAB2)
-#include "gmshLocalNetworkClient.h"
-#endif
 
-#if defined(HAVE_ONELAB2)
-#include "OnelabDatabase.h"
-#include "NetworkUtils.h"
-#endif
+#include "gmshLocalNetworkClient.h"
 
 #if defined(HAVE_PETSC)
 #include <petsc.h>
@@ -67,17 +61,10 @@ std::string Msg::_commandLine;
 std::string Msg::_launchDate;
 std::map<std::string, std::vector<double> > Msg::_commandLineNumbers;
 std::map<std::string, std::string> Msg::_commandLineStrings;
-#if !defined(HAVE_ONELAB2)
 GmshClient *Msg::_client = 0;
-#endif
 std::string Msg::_execName;
-#if defined(HAVE_ONELAB2)
-OnelabDatabase *OnelabDatabase::_instance = NULL;
-OnelabDatabase *Msg::_onelabClient = 0;
-#elif defined(HAVE_ONELAB)
-onelab::client *Msg::_onelabClient = 0;
-#endif
 #if defined(HAVE_ONELAB)
+onelab::client *Msg::_onelabClient = 0;
 onelab::server *onelab::server::_server = 0;
 #endif
 
@@ -275,9 +262,7 @@ void Msg::Fatal(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Fatal", str);
-#if !defined(HAVE_ONELAB2)
   if(_client) _client->Error(str);
-#endif
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -325,9 +310,7 @@ void Msg::Error(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Error", str);
-#if !defined(HAVE_ONELAB2)
   if(_client) _client->Error(str);
-#endif
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -367,9 +350,8 @@ void Msg::Warning(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Warning", str);
-#if !defined(HAVE_ONELAB2)
   if(_client) _client->Warning(str);
-#endif
+
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     if(FlGui::instance()->in_main_thread()) FlGui::instance()->check();
@@ -405,9 +387,7 @@ void Msg::Info(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Info", str);
-#if !defined(HAVE_ONELAB2)
   if(_client) _client->Info(str);
-#endif
 
 #if defined(HAVE_FLTK)
 #if defined(_OPENMP)
@@ -447,9 +427,7 @@ void Msg::Direct(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Direct", str);
-#if !defined(HAVE_ONELAB2)
   if(_client) _client->Info(str);
-#endif
 
 #if defined(HAVE_FLTK)
 #if defined(_OPENMP)
@@ -489,9 +467,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   va_end(args);
 
   if(_callback && log) (*_callback)("Info", str);
-#if !defined(HAVE_ONELAB2)
   if(_client && log) _client->Info(str);
-#endif
 
 #if defined(HAVE_FLTK)
 #if defined(_OPENMP)
@@ -544,9 +520,7 @@ void Msg::Debug(const char *fmt, ...)
   va_end(args);
 
   if(_callback) (*_callback)("Debug", str);
-#if !defined(HAVE_ONELAB2)
   if(_client) _client->Info(str);
-#endif
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -579,9 +553,7 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
     va_end(args);
     sprintf(str2, "%3d%%    : %s", _progressMeterCurrent, str);
 
-#if !defined(HAVE_ONELAB2)
     if(_client) _client->Progress(str2);
-#endif
 
 #if defined(HAVE_FLTK)
     if(FlGui::available() && _verbosity > 4){
@@ -753,77 +725,62 @@ int Msg::GetAnswer(const char *question, int defaultval, const char *zero,
 
 bool Msg::UseOnelab()
 {
-#if defined(HAVE_ONELAB2)
-  return true;
-#elif defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB)
   return _onelabClient ? true : false;
 #else
   return false;
 #endif
 }
 
-void Msg::SetOnelabNumber(std::string name, double val, bool visible)
+void Msg::SetOnelabNumber(std::string name, double val, bool visible,
+                          bool persistent, bool readOnly)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::number> numbers;
-#if defined(HAVE_ONELAB2)
-    _onelabClient->get(numbers, name, "Gmsh");
-#else
     _onelabClient->get(numbers, name);
-#endif
     if(numbers.empty()){
       numbers.resize(1);
       numbers[0].setName(name);
     }
     numbers[0].setValue(val);
     numbers[0].setVisible(visible);
-#if defined(HAVE_ONELAB2)
-    _onelabClient->set(numbers[0], "Gmsh");
-#else
+    if(persistent) numbers[0].setAttribute("Persistent", "1");
+    numbers[0].setReadOnly(readOnly);
     _onelabClient->set(numbers[0]);
-#endif
   }
 #endif
 }
 
-void Msg::SetOnelabString(std::string name, std::string val, bool visible)
+void Msg::SetOnelabString(std::string name, std::string val, bool visible,
+                          bool persistent, bool readOnly)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::string> strings;
-#if defined(HAVE_ONELAB2)
-    _onelabClient->get(strings, name, "Gmsh");
-#else
     _onelabClient->get(strings, name);
-#endif
     if(strings.empty()){
       strings.resize(1);
       strings[0].setName(name);
     }
     strings[0].setValue(val);
     strings[0].setVisible(visible);
-#if defined(HAVE_ONELAB2)
-    _onelabClient->set(strings[0], "Gmsh");
-#else
+    if(persistent) strings[0].setAttribute("Persistent", "1");
+    strings[0].setReadOnly(readOnly);
     _onelabClient->set(strings[0]);
-#endif
   }
 #endif
 }
 
-double Msg::GetOnelabNumber(std::string name)
+double Msg::GetOnelabNumber(std::string name, bool warnIfMissing)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::number> numbers;
-#if defined(HAVE_ONELAB2)
-    _onelabClient->get(numbers, name, "Gmsh");
-#else
     _onelabClient->get(numbers, name);
-#endif
     if(numbers.empty()){
-      Msg::Error("Unknown ONELAB number parameter '%s'", name.c_str());
+      if(warnIfMissing)
+        Msg::Error("Unknown ONELAB number parameter '%s'", name.c_str());
       return 0.;
     }
     else
@@ -834,18 +791,15 @@ double Msg::GetOnelabNumber(std::string name)
   return 0.;
 }
 
-std::string Msg::GetOnelabString(std::string name)
+std::string Msg::GetOnelabString(std::string name, bool warnIfMissing)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::string> strings;
-#if defined(HAVE_ONELAB2)
-    _onelabClient->get(strings, name, "Gmsh");
-#else
     _onelabClient->get(strings, name);
-#endif
     if(strings.empty()){
-      Msg::Error("Unknown ONELAB string parameter '%s'", name.c_str());
+      if(warnIfMissing)
+        Msg::Error("Unknown ONELAB string parameter '%s'", name.c_str());
       return "";
     }
     else
@@ -886,52 +840,7 @@ public:
 
 void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
 {
-#if defined(HAVE_ONELAB2)
-  if(sockname.empty()){
-    if(name != "Gmsh"){ // load db from file:
-      FILE *fp = Fopen(name.c_str(), "rb");
-      if(fp){
-        OnelabDatabase::instance()->fromFile(fp);
-        fclose(fp);
-      }
-      else
-        Error("Error loading onelab database '%s'", name.c_str());
-    }
-    _onelabClient = OnelabDatabase::instance();
-  }
-  else{
-    UInt32 address = 0;
-    UInt16 port = 1148;
-    size_t colon = sockname.find(':');
-    if(colon != std::string::npos) {
-      address = ip4_inet_pton(sockname.substr(0,colon).c_str());
-      port = atoi(sockname.substr(colon+1).c_str());
-    }
-    GmshNetworkClient *c = OnelabDatabase::instance()->useAsNetworkClient(address, port, name);
-    if(c == NULL) {
-      Error("Unable to connect ONELAB server (%s)", sockname.c_str());
-      Exit(1);
-    }
-#if defined(HAVE_FLTK)
-    else if(FlGui::available()) // FIXME
-      c->setCallback(FlGui::instance()->onelab);
-    else
-      Warning("FlGUI not available");
-#endif
-    _onelabClient = OnelabDatabase::instance();
-
-    SetOnelabNumber(name + "/UseCommandLine", 1, false);
-    SetOnelabString(name + "/FileExtension", ".geo", false);
-    SetOnelabString(name + "/9CheckCommand", "-", false);
-    SetOnelabString(name + "/9ComputeCommand", "-3", false);
-    std::vector<onelab::string> ps;
-    _onelabClient->get(ps, name + "/Action", "Gmsh");
-    if(ps.size()){
-      Info("Performing ONELAB '%s'", ps[0].getValue().c_str());
-      if(ps[0].getValue() == "initialize") Exit(0);
-    }
-  }
-#elif defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB)
   if(_onelabClient) delete _onelabClient;
   if(sockname.empty()){
     _onelabClient = new localGmsh();
@@ -950,8 +859,8 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     _onelabClient = c;
     _client = c->getGmshClient();
 
-    SetOnelabNumber(name + "/UseCommandLine", 1, false);
-    SetOnelabString(name + "/FileExtension", ".geo", false);
+    SetOnelabNumber(name + "/Use command line", 1, false);
+    SetOnelabString(name + "/File extension", ".geo", false);
     SetOnelabString(name + "/9CheckCommand", "-", false);
     SetOnelabString(name + "/9ComputeCommand", "-3", false);
 
@@ -983,9 +892,6 @@ std::string Msg::GetOnelabAction()
   if(_onelabClient){
     std::vector<onelab::string> ps;
     _onelabClient->get(ps, _onelabClient->getName() + "/Action");
-#ifdef HAVE_ONELAB2
-    _onelabClient->recvfrom();
-#endif
     if(ps.size()) return ps[0].getValue();
   }
   return "";
@@ -1097,11 +1003,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   }
 
   std::vector<onelab::number> ps;
-#if defined(HAVE_ONELAB2)
-  _onelabClient->get(ps, name, "Gmsh");
-#else
   _onelabClient->get(ps, name);
-#endif
   bool noRange = true, noChoices = true, noLoop = true;
   bool noGraph = true, noClosed = true;
   if(ps.size()){
@@ -1181,11 +1083,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(noClosed && fopt.count("Closed"))
     ps[0].setAttribute("Closed", fopt["Closed"][0] ? "1" : "0");
   _setStandardOptions(&ps[0], fopt, copt);
-#if defined(HAVE_ONELAB2)
-  _onelabClient->set(ps[0], "Gmsh");
-#else
   _onelabClient->set(ps[0]);
-#endif
 #endif
 }
 
@@ -1239,11 +1137,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(noMultipleSelection && copt.count("MultipleSelection"))
     ps[0].setAttribute("MultipleSelection", copt["MultipleSelection"][0]);
   _setStandardOptions(&ps[0], fopt, copt);
-#if defined(HAVE_ONELAB2)
-  _onelabClient->set(ps[0], "Gmsh");
-#else
   _onelabClient->set(ps[0]);
-#endif
 #endif
 }
 
@@ -1311,8 +1205,9 @@ void Msg::ImportPhysicalGroupsInOnelab()
 
 void Msg::RunOnelabClient(const std::string &name, const std::string &command)
 {
-#if defined(HAVE_ONELAB) && !defined(HAVE_ONELAB2)
-  onelab::remoteNetworkClient *c = dynamic_cast<onelab::remoteNetworkClient*>(_onelabClient);
+#if defined(HAVE_ONELAB)
+  onelab::remoteNetworkClient *c =
+    dynamic_cast<onelab::remoteNetworkClient*>(_onelabClient);
   if(c){
     c->runSubClient(name, command);
   }
@@ -1325,13 +1220,7 @@ void Msg::RunOnelabClient(const std::string &name, const std::string &command)
 
 void Msg::FinalizeOnelab()
 {
-#if defined(HAVE_ONELAB2)
-  if(_onelabClient) {
-    _onelabClient->finalize();
-    delete _onelabClient;
-    _onelabClient = 0;
-  }
-#elif defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB)
   if(_onelabClient){
     delete _onelabClient;
     _onelabClient = 0;

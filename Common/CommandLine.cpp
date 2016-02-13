@@ -919,22 +919,7 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "listen")) {
         i++;
-#if !defined(HAVE_ONELAB2)
         CTX::instance()->solver.listen = 1;
-#else
-        if(argv[i]) {
-          if(strstr(argv[i], "/") || strstr(argv[i], "\\") || !strstr(argv[i], ":")) // UNIX
-            CTX::instance()->onelab.unixSock = std::string(argv[i]);
-          else if(argv[i][0] == 'u') // UDT
-            CTX::instance()->onelab.udtSock = std::string(argv[i++]);
-          else if(argv[i][0] == 't') // TCP
-            CTX::instance()->onelab.tcpSock = std::string(argv[i++]);
-          else // TCP
-            CTX::instance()->onelab.tcpSock = std::string(argv[i]);
-        }
-        else // TCP
-          CTX::instance()->onelab.tcpSock = "127.0.0.1:1148";
-#endif
       }
       else if(!strcmp(argv[i] + 1, "minterpreter")) {
         i++;

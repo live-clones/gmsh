@@ -27,7 +27,7 @@
 #include "PViewOptions.h"
 #endif
 
-#if defined(HAVE_ONELAB) && !defined(HAVE_ONELAB2)
+#if defined(HAVE_ONELAB)
 #include "gmshLocalNetworkClient.h"
 #endif
 
@@ -45,17 +45,7 @@
 #include "FlGui.h"
 #include "graphicWindow.h"
 #include "drawContext.h"
-#if defined(HAVE_ONELAB2)
-#include "onelab2Group.h"
-#else
 #include "onelabGroup.h"
-#endif
-#endif
-
-#if defined(HAVE_ONELAB2)
-#include "OnelabServer.h"
-#include "OnelabDatabase.h"
-#include "OnelabException.h"
 #endif
 
 int GmshInitialize(int argc, char **argv)
@@ -237,7 +227,7 @@ int GmshFinalize()
     delete PView::list[i];
   }
   PView::list.clear();
-  
+
   // Delete static _interpolationSchemes of PViewData class
   PViewData::removeAllInterpolationSchemes();
 #endif
@@ -256,39 +246,6 @@ int GmshBatch()
             Msg::GetCommSize(), Msg::GetCommSize() > 1 ? "s" : "",
             Msg::GetMaxThreads(), Msg::GetMaxThreads() > 1 ? "s" : "");
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
-#if defined(HAVE_ONELAB2)
-  try {
-    if(CTX::instance()->onelab.unixSock.size() > 0) { // UNIX
-      std::ostringstream tmp;
-      tmp << CTX::instance()->homeDir << CTX::instance()->onelab.unixSock;
-      OnelabServer::instance()->listenOnUnix(tmp.str().c_str());
-    }
-    if(CTX::instance()->onelab.tcpSock.size() > 0) {
-      std::size_t colon = CTX::instance()->onelab.tcpSock.find(":");
-      OnelabServer::instance()->listenOnTcp(
-        ip4_inet_pton(CTX::instance()->onelab.tcpSock.substr(0, colon).c_str()),
-        atoi(CTX::instance()->onelab.tcpSock.substr(colon+1, CTX::instance()->onelab.tcpSock.size()-colon-1).c_str()));
-    }
-#if defined(HAVE_UDT)
-    if(CTX::instance()->onelab.udtSock.size() > 0) {
-      std::size_t colon = CTX::instance()->onelab.tcpSock.find(":");
-      OnelabServer::instance()->listenOnUdt(
-        ip4_inet_pton(CTX::instance()->onelab.tcpSock.substr(0, colon).c_str()),
-        atoi(CTX::instance()->onelab.tcpSock.substr(colon+1, CTX::instance()->onelab.tcpSock.size()-colon-1).c_str()));
-    }
-#endif
-  } catch(NetworkException e) {
-    std::cout << e.what() << std::endl;
-    Msg::Exit(1);
-  }
-  if(CTX::instance()->onelab.unixSock.size() > 0
-    || CTX::instance()->onelab.tcpSock.size() > 0
-    || CTX::instance()->onelab.udtSock.size() > 0) {
-    std::cout << "Press any key to stop the server." << std::endl;
-    std::cin.get();
-    Msg::Exit(0);
-  }
-#endif
 
   OpenProject(GModel::current()->getFileName());
   bool open = false;
@@ -318,9 +275,7 @@ int GmshBatch()
 #endif
 
   if(CTX::instance()->batch == -3){
-#if !defined(HAVE_ONELAB2)
     GmshRemote();
-#endif
   }
   else if(CTX::instance()->batch == -2){
     GModel::current()->checkMeshCoherence(CTX::instance()->geom.tolerance);
@@ -434,13 +389,12 @@ int GmshFLTK(int argc, char **argv)
     else
       Msg::Error("Invalid background mesh (no view)");
   }
-#if !defined(HAVE_ONELAB2)
+
   // listen to external solvers
   if(CTX::instance()->solver.listen){
     gmshLocalNetworkClient *c = new gmshLocalNetworkClient("Listen", "");
     c->run();
   }
-#endif
 
   // launch solver (if requested) and fill onelab tree
   solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);

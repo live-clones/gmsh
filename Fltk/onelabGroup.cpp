@@ -344,16 +344,12 @@ static void setOpenedClosed(Fl_Tree_Item *item, int reason)
 {
   std::vector<onelab::number> numbers;
   std::vector<onelab::string> strings;
-  std::vector<onelab::region> regions;
-  std::vector<onelab::function> functions;
   std::string path = FlGui::instance()->onelab->getPath(item);
   switch(reason){
   case FL_TREE_REASON_OPENED:
     FlGui::instance()->onelab->removeFromManuallyClosed(path);
     setClosed(path, numbers, "0");
     setClosed(path, strings, "0");
-    setClosed(path, regions, "0");
-    setClosed(path, functions, "0");
     for(unsigned int i = 0; i < PView::list.size(); i++){
       if(getViewPath(i) == path) PView::list[i]->getOptions()->closed = 0;
     }
@@ -362,8 +358,6 @@ static void setOpenedClosed(Fl_Tree_Item *item, int reason)
     FlGui::instance()->onelab->insertInManuallyClosed(path);
     setClosed(path, numbers, "1");
     setClosed(path, strings, "1");
-    setClosed(path, regions, "1");
-    setClosed(path, functions, "1");
     for(unsigned int i = 0; i < PView::list.size(); i++){
       if(getViewPath(i) == path) PView::list[i]->getOptions()->closed = 1;
     }
@@ -1016,21 +1010,6 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
   return but;
 }
 
-static void onelab_region_input_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  std::string name((char*)data);
-  std::vector<onelab::region> regions;
-  onelab::server::instance()->get(regions, name);
-  if(regions.size()){
-    inputRegion *o = (inputRegion*)w;
-    onelab::region old = regions[0];
-    regions[0].setValue(o->value());
-    onelab::server::instance()->set(regions[0]);
-    autoCheck(old, regions[0]);
-  }
-}
-
 static void view_group_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -1045,51 +1024,6 @@ static void view_group_cb(Fl_Widget *w, void *data)
       opt_view_visible(i, GMSH_SET | GMSH_GUI, !opt->visible);
   }
   drawContext::global()->draw();
-}
-
-Fl_Widget *onelabGroup::_addParameterWidget(onelab::region &p, int ww, int hh,
-                                            Fl_Tree_Item *n, bool highlight, Fl_Color c)
-{
-  char *path = strdup(getPath(n).c_str());
-  _treeStrings.push_back(path);
-
-  // non-editable value
-  if(p.getReadOnly()){
-    inputRegion *but = new inputRegion(1, 1, ww, hh, true);
-    but->value(p.getValue());
-    but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
-    if(highlight){
-      but->color(c);
-      but->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
-    }
-    return but;
-  }
-
-  inputRegion *but = new inputRegion(1, 1, ww, hh, false);
-  but->value(p.getValue());
-  but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
-  but->callback(onelab_region_input_cb, (void*)path);
-  if(highlight){
-    but->color(c);
-    but->labelcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
-  }
-  return but;
-}
-
-Fl_Widget *onelabGroup::_addParameterWidget(onelab::function &p, int ww, int hh,
-                                            Fl_Tree_Item *n, bool highlight, Fl_Color c)
-{
-  // non-editable value
-  if(1 || p.getReadOnly()){
-    Fl_Output *but = new Fl_Output(1, 1, ww, hh);
-    but->value("TODO function");
-    but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
-    if(highlight){
-      but->color(c);
-      but->textcolor(fl_contrast(FL_FOREGROUND_COLOR, c));
-    }
-    return but;
-  }
 }
 
 void onelabGroup::rebuildTree(bool deleteWidgets)
@@ -1150,26 +1084,6 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
     if(strings[i].getAttribute("Closed") == "1")
       closed.insert(strings[i].getPath());
     _addParameter(strings[i]);
-  }
-
-  std::vector<onelab::region> regions;
-  onelab::server::instance()->get(regions);
-  for(unsigned int i = 0; i < regions.size(); i++){
-    if(!regions[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
-      continue;
-    if(regions[i].getAttribute("Closed") == "1")
-      closed.insert(regions[i].getPath());
-    _addParameter(regions[i]);
-  }
-
-  std::vector<onelab::function> functions;
-  onelab::server::instance()->get(functions);
-  for(unsigned int i = 0; i < functions.size(); i++){
-    if(!functions[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
-      continue;
-    if(functions[i].getAttribute("Closed") == "1")
-      closed.insert(functions[i].getPath());
-    _addParameter(functions[i]);
   }
 
   for(Fl_Tree_Item *n = _tree->first(); n; n = n->next()){

@@ -36,10 +36,6 @@ class onelabGroup : public Fl_Group{
                                  Fl_Tree_Item *n, bool highlight, Fl_Color c);
   Fl_Widget *_addParameterWidget(onelab::string &p, int ww, int hh,
                                  Fl_Tree_Item *n, bool highlight, Fl_Color c);
-  Fl_Widget *_addParameterWidget(onelab::region &p, int ww, int hh,
-                                 Fl_Tree_Item *n, bool highlight, Fl_Color c);
-  Fl_Widget *_addParameterWidget(onelab::function &p, int ww, int hh,
-                                 Fl_Tree_Item *n, bool highlight, Fl_Color c);
   void _addMenu(const std::string &path, Fl_Callback *callback, void *data);
   void _addSolverMenu(int num);
   void _addViewMenu(int num);

@@ -16,10 +16,6 @@
 class GmshClient;
 namespace onelab{ class client; }
 
-#if defined(HAVE_ONELAB2)
-class OnelabDatabase;
-#endif
-
 // the external message handler
 class GmshMessage{
  public:
@@ -50,14 +46,9 @@ class Msg {
   // command-line-specified numbers and strings
   static std::map<std::string, std::vector<double> > _commandLineNumbers;
   static std::map<std::string, std::string> _commandLineStrings;
-#if !defined(HAVE_ONELAB2)
   // communication with Gmsh when run remotely
   static GmshClient *_client;
-#endif
-#if defined(HAVE_ONELAB2)
-  // communication with onelab server (replace _client and old _onelabClient)
-  static OnelabDatabase *_onelabClient;
-#elif defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB)
   // communication with onelab server
   static onelab::client *_onelabClient;
 #endif
@@ -118,22 +109,18 @@ class Msg {
   static void SetExecutableName(const std::string &name) { _execName.assign(name); }
   static std::string GetExecutableName() { return _execName; }
   static void LoadOnelabClient(const std::string &name, const std::string &sockName);
-#if !defined(HAVE_ONELAB2)
   static GmshClient *GetGmshClient(){ return _client; }
-#else
-  static int GetGmshClient(){ return 1; }
-#endif
-#if defined(HAVE_ONELAB2)
-  static OnelabDatabase *GetOnelabClient(){ return _onelabClient; }
-#elif defined(HAVE_ONELAB)
+#if defined(HAVE_ONELAB)
   static onelab::client *GetOnelabClient(){ return _onelabClient; }
 #endif
   static void FinalizeOnelab();
   static bool UseOnelab();
-  static void SetOnelabNumber(std::string name, double val, bool visible=true);
-  static void SetOnelabString(std::string name, std::string val, bool visible=true);
-  static double GetOnelabNumber(std::string name);
-  static std::string GetOnelabString(std::string name);
+  static void SetOnelabNumber(std::string name, double val, bool visible=true,
+                              bool persistent=false, bool readOnly=false);
+  static void SetOnelabString(std::string name, std::string val, bool visible=true,
+                              bool persistent=false, bool readOnly=false);
+  static double GetOnelabNumber(std::string name, bool warnIfMissing=true);
+  static std::string GetOnelabString(std::string name, bool warnIfMissing=true);
   static void SetOnelabAction(const std::string &action);
   static std::string GetOnelabAction();
   static void ExchangeOnelabParameter(const std::string &key,

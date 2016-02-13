@@ -225,12 +225,6 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 	}
         set(p);
       }
-      else if(ptype == "region"){
-        onelab::region p; p.fromChar(message); set(p);
-      }
-      else if(ptype == "function"){
-        onelab::function p; p.fromChar(message); set(p);
-      }
       else
         Msg::Error("Unknown ONELAB parameter type: %s", ptype.c_str());
     }
@@ -249,14 +243,6 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       }
       else if(ptype == "string"){
         std::vector<onelab::string> par; get(par, name);
-        if(par.size() == 1) reply = par[0].toChar();
-      }
-      else if(ptype == "region"){
-        std::vector<onelab::region> par; get(par, name);
-        if(par.size() == 1) reply = par[0].toChar();
-      }
-      else if(ptype == "function"){
-        std::vector<onelab::function> par; get(par, name);
         if(par.size() == 1) reply = par[0].toChar();
       }
       else
@@ -291,16 +277,6 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
         std::vector<onelab::string> strings; get(strings);
         for(std::vector<onelab::string>::iterator it = strings.begin();
             it != strings.end(); it++) replies.push_back((*it).toChar());
-      }
-      else if(ptype == "region"){
-        std::vector<onelab::region> regions; get(regions);
-        for(std::vector<onelab::region>::iterator it = regions.begin();
-            it != regions.end(); it++) replies.push_back((*it).toChar());
-      }
-      else if(ptype == "function"){
-        std::vector<onelab::function> functions; get(functions);
-        for(std::vector<onelab::function>::iterator it = functions.begin();
-            it != functions.end(); it++) replies.push_back((*it).toChar());
       }
       else
         Msg::Error("Unknown ONELAB parameter type in query: %s", ptype.c_str());
@@ -762,22 +738,6 @@ void resetDb(bool runGmshClient)
     if(allStrings[i].getAttribute("Persistent") == "1")
       persistentStrings.push_back(allStrings[i]);
   }
-
-  // TODO FIXME: this will be removed once the new stable version of getdp is
-  // released
-  for(onelab::server::citer it = onelab::server::instance()->firstClient();
-      it != onelab::server::instance()->lastClient(); it++){
-    onelab::client *c = *it;
-    std::vector<onelab::number> ps;
-    c->get(ps, c->getName() + "/UseCommandLine");
-    if(ps.size()) persistentNumbers.push_back(ps[0]);
-    c->get(ps, c->getName() + "/GuessModelName");
-    if(ps.size()) persistentNumbers.push_back(ps[0]);
-    std::vector<onelab::string> ps2;
-    c->get(ps2, c->getName() + "/FileExtension");
-    if(ps2.size()) persistentStrings.push_back(ps2[0]);
-  }
-  // END TODO
 
   // clear the db
   onelab::server::instance()->clear();

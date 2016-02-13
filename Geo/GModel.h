@@ -223,11 +223,7 @@ class GModel
   std::string getName(){ return _name; }
 
   // get/set the model file name
-  void setFileName(std::string fileName)
-  {
-    _fileName = fileName;
-    _fileNames.insert(fileName);
-  }
+  void setFileName(std::string fileName);
   std::string getFileName(){ return _fileName; }
   bool hasFileName(const std::string &name)
   {

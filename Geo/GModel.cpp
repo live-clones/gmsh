@@ -118,6 +118,13 @@ GModel::~GModel()
     delete _factory;
 }
 
+void GModel::setFileName(std::string fileName)
+{
+  _fileName = fileName;
+  _fileNames.insert(fileName);
+  Msg::SetOnelabString("Gmsh/Model name", fileName, false, false, true);
+}
+
 GModel *GModel::current(int index)
 {
   if(list.empty()){

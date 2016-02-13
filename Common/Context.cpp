@@ -45,7 +45,6 @@ CTX::CTX() : gamepad(0)
   bgmFileName = "";
   createAppendMeshStatReport = 0;
   launchSolverAtStartup = -1;
-  solverToRun = -1;
   lc = 1.;
   min[0] = min[1] = min[2] = max[2] = 0.;
   max[0] = max[1] = 1.; // for nice view when adding point in new model
@@ -151,4 +150,3 @@ int CTX::unpackAlpha(unsigned int X)
   else
     return ( ( (X) >> 24 ) & 0xff );
 }
-

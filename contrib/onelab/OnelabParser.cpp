@@ -22,7 +22,6 @@ namespace olkey{
   static std::string olelse(label+"else"), olendif(label+"endif");
   static std::string getValue(label+"get");
   static std::string mathex(label+"eval");
-  static std::string getRegion(label+"region");
 }
 
 // Client member functions defined here because they use parser commands
@@ -899,7 +898,6 @@ void localSolverClient::modify_tags(const std::string lab, const std::string com
     olkey::olendif.assign(olkey::label+"endif");
     olkey::getValue.assign(olkey::label+"get");
     olkey::mathex.assign(olkey::label+"eval");
-    olkey::getRegion.assign(olkey::label+"region");
   }
   if(com.compare(olkey::comment) && com.size()){
     changed=true;
@@ -1151,9 +1149,6 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile) {
   else if ( (pos=line.find(olkey::mathex)) != std::string::npos) {
     // onelab.mathex: nothing to do
   }
-  else if ( (pos=line.find(olkey::getRegion)) != std::string::npos) {
-    // onelab.getRegion: nothing to do
-  }
   else if( (pos=line.find(olkey::label)) != std::string::npos) {
       OLMsg::Error("Unknown ONELAB keyword in <%s>",line.c_str());
   }
@@ -1259,7 +1254,6 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
   std::vector<std::string> arguments;
   std::vector<onelab::number> numbers;
   std::vector<onelab::string> strings;
-  std::vector<onelab::region> regions;
 
   if((pos=line.find_first_not_of(" \t"))==std::string::npos){
     // empty line, we keep them
@@ -1371,61 +1365,6 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
   }
   else if ( (pos=line.find(olkey::getValue)) != std::string::npos) {
     outfile << resolveGetVal(line) << std::endl;
-  }
-  else if ( (pos=line.find(olkey::getRegion)) != std::string::npos) {
-    // onelab.getRegion, possibly several times on the line
-    cursor=0;
-    std::string buff,action;
-    while ( (pos=line.find(olkey::getRegion,cursor)) != std::string::npos){
-      int pos0=pos;
-      cursor = pos+olkey::getRegion.length();
-      int NumArg=enclosed(line.substr(cursor),arguments,pos);
-
-      if(NumArg>0){
-	std::string paramName;
-	paramName.assign("Gmsh parameters/Physical groups/"+arguments[0]);
-	get(regions,paramName);
-	if (regions.size()){
-	  std::set<std::string> region;
-	  region=regions[0].getValue();
-
-	  if(NumArg>1)
-	    action.assign(arguments[1]);
-	  else
-	    action.assign("expand");
-
-	  if(!action.compare("size"))
-	    buff.assign(ftoa(region.size()));
-	  else if(!action.compare("expand")){
-	    std::string pattern;
-	    if(NumArg>=3)
-	      pattern.assign(extractExpandPattern(arguments[2]));
-	    else
-	      pattern.assign("   ");
-
-	    buff.assign(1,pattern[0]);
-	    for(std::set<std::string>::const_iterator it = region.begin();
-		it != region.end(); it++){
-	      if(it != region.begin())
-		buff.append(1,pattern[1]);
-	      buff.append((*it));
-	    }
-	    buff.append(1,pattern[2]);
-	  }
-	  else
-	    OLMsg::Error("Unknown %s action: <%s>",
-		       olkey::getRegion.c_str(), arguments[1].c_str());
-	}
-	else
-	  OLMsg::Error("Unknown region: <%s>",paramName.c_str());
-      }
-      else
-	OLMsg::Error("Misformed <%s> statement: (%s)",
-		   olkey::getRegion.c_str(),line.c_str());
-      line.replace(pos0,cursor+pos-pos0,buff);
-      cursor=pos0+buff.length();
-    }
-    outfile << line << std::endl;
   }
   else if ( (pos=line.find(olkey::label)) != std::string::npos){
     OLMsg::Error("Unidentified onelab command in <%s>",line.c_str());

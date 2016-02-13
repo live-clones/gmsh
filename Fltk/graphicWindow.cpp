@@ -33,11 +33,7 @@ typedef unsigned long intptr_t;
 #include "fieldWindow.h"
 #include "pluginWindow.h"
 #include "helpWindow.h"
-#if defined(HAVE_ONELAB2)
-#include "OnelabWindow.h"
-#else
 #include "gmshLocalNetworkClient.h"
-#endif
 #include "fileDialogs.h"
 #include "extraDialogs.h"
 #include "partitionDialog.h"
@@ -184,7 +180,6 @@ static void file_clear_cb(Fl_Widget *w, void *data)
 
 static void file_remote_cb(Fl_Widget *w, void *data)
 {
-#if not defined(HAVE_ONELAB2)
   onelab::localNetworkClient *c;
   onelab::server::citer it = onelab::server::instance()->findClient("GmshRemote");
   if(it == onelab::server::instance()->lastClient()){
@@ -228,7 +223,6 @@ static void file_remote_cb(Fl_Widget *w, void *data)
       server->SendString(GmshSocket::GMSH_SPEED_TEST, "Speed test");
     }
   }
-#endif
 }
 
 static void file_window_cb(Fl_Widget *w, void *data)
@@ -2020,9 +2014,6 @@ static Fl_Menu_Item bar_table[] = {
     {0},
   {"&Tools", 0, 0, 0, FL_SUBMENU},
     {"&Options",         FL_CTRL+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
-#if defined(HAVE_ONELAB2)
-    {"&Onelab2",         0, (Fl_Callback *)onelab2_cb, 0},
-#endif
     {"Pl&ugins",         FL_CTRL+FL_SHIFT+'u', (Fl_Callback *)plugin_cb, (void*)(-1)},
     {"&Visibility",      FL_CTRL+FL_SHIFT+'v', (Fl_Callback *)visibility_cb, 0},
     {"&Clipping",        FL_CTRL+FL_SHIFT+'c', (Fl_Callback *)clip_cb, 0},

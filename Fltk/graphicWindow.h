@@ -19,11 +19,7 @@
 #endif
 #include <FL/Fl_Menu_Bar.H>
 #include "openglWindow.h"
-#ifdef HAVE_ONELAB2
-#include "onelab2Group.h"
-#else
 #include "onelabGroup.h"
-#endif
 
 class graphicWindow{
  private:

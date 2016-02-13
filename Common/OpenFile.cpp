@@ -43,11 +43,7 @@
 #if defined(HAVE_FLTK)
 #include <FL/fl_ask.H>
 #include "FlGui.h"
-#if defined(HAVE_ONELAB2)
-#include "onelab2Group.h"
-#else
 #include "onelabGroup.h"
-#endif
 #include "graphicWindow.h"
 #include "drawContext.h"
 #endif
@@ -298,14 +294,9 @@ static int defineSolver(const std::string &name)
 int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTitle,
               bool setBoundingBox)
 {
-  if(GModel::current()->getName() == ""){
-    GModel::current()->setFileName(fileName);
-    GModel::current()->setName(SplitFileName(fileName)[1]);
-  }
-
 #if defined(HAVE_FLTK)
   if(FlGui::available() && setWindowTitle)
-    FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
+    FlGui::instance()->setGraphicTitle(fileName);
 #endif
 
   // added 'b' for pure Windows programs, since some of these files
@@ -356,10 +347,13 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
   std::string solver = getSolverForExtension(ext);
   if(solver.size()){
     int num = defineSolver(solver);
-    GModel::current()->setName(split[1] + ".geo");
-    GModel::current()->setFileName(split[0] + split[1] + ".geo");
+    Msg::SetOnelabString(solver + "/Model name", fileName, true, true);
+    if(GModel::current()->getName() == "" ||
+       Msg::GetOnelabString("Gmsh/Model name", false).empty()){
+      GModel::current()->setFileName(split[0] + split[1] + ".geo");
+      GModel::current()->setName(split[1] + ".geo");
+    }
     CTX::instance()->launchSolverAtStartup = num;
-    CTX::instance()->solverToRun = num; // used in ONELAB2
     CTX::instance()->geom.draw = 1;
     return 1;
   }
@@ -369,7 +363,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
     int num = defineSolver(split[1]);
     opt_solver_executable(num, GMSH_SET, fileName);
     CTX::instance()->launchSolverAtStartup = num;
-    CTX::instance()->solverToRun = num; // used in ONELAB2
     CTX::instance()->geom.draw = 1;
     return 1;
   }
@@ -508,10 +501,12 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
 #endif
     else {
       status = GModel::readGEO(fileName);
-#ifdef HAVE_ONELAB2
-      Msg::SetOnelabString("Gmsh/1ModelName", fileName, false);
-#endif
     }
+  }
+
+  if(GModel::current()->getName() == ""){
+    GModel::current()->setFileName(fileName);
+    GModel::current()->setName(SplitFileName(fileName)[1]);
   }
 
   ComputeMaxEntityNum();

@@ -104,8 +104,6 @@ class CTX {
   int createAppendMeshStatReport;
   // should we launch a solver at startup?
   int launchSolverAtStartup ;
-  // solver to use with ONELAB2
-  int solverToRun ;
   // save session/option file on exit?
   int sessionSave, optionsSave;
   // ask confirmation when overwriting files?
@@ -264,11 +262,6 @@ class CTX {
     int autoSaveDatabase, autoArchiveOutputFiles, autoMesh, autoMergeFile;
     int autoShowViews, autoShowLastStep, autoCheck, showInvisibleParameters;
   }solver;
-  // onelab options
-  struct{
-    std::string unixSock, tcpSock, udtSock;
-    bool unixConnected, tcpConnected, udtConnected;
-  }onelab;
   // print options
   struct{
     int fileFormat, epsQuality, epsCompress, epsPS3Shading;

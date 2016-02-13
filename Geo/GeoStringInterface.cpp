@@ -23,9 +23,6 @@
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
 #endif
-#if defined(HAVE_ONELAB2)
-#include "OnelabDatabase.h"
-#endif
 
 void add_infile(const std::string &text, const std::string &fileName, bool forceDestroy)
 {
@@ -145,9 +142,6 @@ void add_infile(const std::string &text, const std::string &fileName, bool force
   // remesh)
 #if defined(HAVE_ONELAB)
   onelab::server::instance()->setChanged(true, "Gmsh");
-#endif
-#if defined(HAVE_ONELAB2)
-  OnelabDatabase::instance()->setChanged(true, "Gmsh");
 #endif
 }
 

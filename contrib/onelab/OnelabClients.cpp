@@ -141,12 +141,6 @@ bool localNetworkSolverClient::receiveMessage(){
       else if(type == "string"){
 	onelab::string p; p.fromChar(message); set(p);
       }
-      else if(type == "region"){
-	onelab::region p; p.fromChar(message); set(p);
-      }
-      else if(type == "function"){
-	onelab::function p; p.fromChar(message); set(p);
-      }
       else
 	OLMsg::Error("FIXME query not done for this parameter type: <%s>",
 		     message.c_str());
@@ -166,14 +160,6 @@ bool localNetworkSolverClient::receiveMessage(){
       }
       else if(type == "string"){
 	std::vector<onelab::string> par; get(par, name);
-	if(par.size() == 1) reply = par[0].toChar();
-      }
-      else if(type == "region"){
-	std::vector<onelab::region> par; get(par, name);
-	if(par.size() == 1) par[0].toChar();
-      }
-      else if(type == "function"){
-	std::vector<onelab::function> par; get(par, name);
 	if(par.size() == 1) reply = par[0].toChar();
       }
       else
@@ -208,16 +194,6 @@ bool localNetworkSolverClient::receiveMessage(){
 	std::vector<onelab::string> strings; get(strings);
 	for(std::vector<onelab::string>::iterator it = strings.begin();
 	    it != strings.end(); it++) replies.push_back((*it).toChar());
-      }
-      else if(type == "region"){
-	std::vector<onelab::region> regions; get(regions);
-	for(std::vector<onelab::region>::iterator it = regions.begin();
-	    it != regions.end(); it++) replies.push_back((*it).toChar());
-      }
-      else if(type == "function"){
-	std::vector<onelab::function> functions; get(functions);
-	for(std::vector<onelab::function>::iterator it = functions.begin();
-	    it != functions.end(); it++) replies.push_back((*it).toChar());
       }
       else
 	OLMsg::Error("Unknown OneLab parameter type in query: %s",
@@ -1515,4 +1491,3 @@ array read_array(std::string fileName, char sep){
   }
   return array;
 }
-

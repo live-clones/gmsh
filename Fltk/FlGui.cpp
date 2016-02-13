@@ -29,12 +29,7 @@ typedef unsigned long intptr_t;
 #include "clippingWindow.h"
 #include "manipWindow.h"
 #include "contextWindow.h"
-#ifdef HAVE_ONELAB2
-#include "onelab2Group.h"
-#include "OnelabWindow.h"
-#else
 #include "onelabGroup.h"
-#endif
 #include "helpWindow.h"
 #include "colorbarWindow.h"
 #include "fileDialogs.h"
@@ -446,9 +441,6 @@ FlGui::FlGui(int argc, char **argv)
 
   // create all other windows
   options = new optionWindow(CTX::instance()->deltaFontSize);
-#if defined(HAVE_ONELAB2)
-  onelab2 = new onelabWindow();
-#endif
   fields = new fieldWindow(CTX::instance()->deltaFontSize);
   plugins = new pluginWindow(CTX::instance()->deltaFontSize);
   stats = new statisticsWindow(CTX::instance()->deltaFontSize);
@@ -481,10 +473,6 @@ FlGui *FlGui::instance(int argc, char **argv)
     _instance = new FlGui(argc, argv);
     // set all options in the new GUI
     InitOptionsGUI(0);
-#ifdef HAVE_ONELAB2
-    // Enable multi-thread support by locking from the main thread
-    Fl::lock();
-#endif
 
     // say welcome!
     Msg::StatusBar(false, "Gmsh %s", GetGmshVersion());
