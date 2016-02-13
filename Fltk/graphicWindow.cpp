@@ -232,7 +232,6 @@ static void file_window_cb(Fl_Widget *w, void *data)
     graphicWindow *g1 = FlGui::instance()->graph.back();
     graphicWindow *g2 = new graphicWindow(false, CTX::instance()->numTiles);
     FlGui::instance()->graph.push_back(g2);
-    FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
     g2->getWindow()->resize(g1->getWindow()->x() + 10,
                             g1->getWindow()->y() + 10,
                             g1->getWindow()->w(),
@@ -494,7 +493,6 @@ static void file_rename_cb(Fl_Widget *w, void *data)
     rename(GModel::current()->getFileName().c_str(), name.c_str());
     GModel::current()->setFileName(name);
     GModel::current()->setName(SplitFileName(name)[1]);
-    FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
     drawContext::global()->draw();
   }
 }
@@ -2465,7 +2463,7 @@ static void model_switch_cb(Fl_Widget* w, void *data)
     GModel::list[i]->setVisibility(0);
   GModel::current()->setVisibility(1);
   CTX::instance()->mesh.changed = ENT_ALL;
-  FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
+  Msg::SetWindowTitle(GModel::current()->getFileName());
   FlGui::instance()->resetVisibility();
   drawContext::global()->draw();
 }
@@ -3105,6 +3103,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   if(CTX::instance()->menuSize[0] < minw) CTX::instance()->menuSize[0] = minw;
   _tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
 
+  _win->copy_label(GModel::current()->getFileName().c_str());
   _win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
   _win->end();
 
@@ -3141,8 +3140,7 @@ graphicWindow::~graphicWindow()
 
 void graphicWindow::setTitle(std::string str)
 {
-  _title = str;
-  _win->label(_title.c_str());
+  _win->copy_label(str.c_str());
 }
 
 void graphicWindow::detachMenu()

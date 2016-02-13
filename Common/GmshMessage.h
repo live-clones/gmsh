@@ -88,6 +88,7 @@ class Msg {
   static void Direct(const char *fmt, ...);
   static void StatusBar(bool log, const char *fmt, ...);
   static void StatusGl(const char *fmt, ...);
+  static void SetWindowTitle(const std::string &title);
   static void Debug(const char *fmt, ...);
   static void ProgressMeter(int n, int N, bool log, const char *fmt, ...);
   static void SetProgressMeterStep(int step){ _progressMeterStep = step; }

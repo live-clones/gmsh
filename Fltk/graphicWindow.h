@@ -23,7 +23,6 @@
 
 class graphicWindow{
  private:
-  std::string _title;
   bool _autoScrollMessages;
 #if defined(__APPLE__)
   Fl_Sys_Menu_Bar *_sysbar;

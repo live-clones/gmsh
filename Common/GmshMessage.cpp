@@ -509,6 +509,15 @@ void Msg::StatusGl(const char *fmt, ...)
 #endif
 }
 
+void Msg::SetWindowTitle(const std::string &title)
+{
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    FlGui::instance()->setGraphicTitle(title);
+  }
+#endif
+}
+
 void Msg::Debug(const char *fmt, ...)
 {
   if(_verbosity < 99) return;

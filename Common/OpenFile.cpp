@@ -291,14 +291,8 @@ static int defineSolver(const std::string &name)
   return NUM_SOLVERS - 1;
 }
 
-int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTitle,
-              bool setBoundingBox)
+int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingBox)
 {
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && setWindowTitle)
-    FlGui::instance()->setGraphicTitle(fileName);
-#endif
-
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
   gmshFILE fp = gmshopen(fileName.c_str(), "rb");
@@ -324,11 +318,11 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setWindowTit
     if(ext != ".geo" && ext != ".GEO" &&
        ext != ".unv" && ext != ".UNV"){
       if(doSystemUncompress(fileName, noExt))
-        return MergeFile(noExt, false, setWindowTitle);
+        return MergeFile(noExt, false);
     }
 #else
     if(doSystemUncompress(fileName, noExt))
-      return MergeFile(noExt, false, setWindowTitle);
+      return MergeFile(noExt, false);
 #endif
   }
 
@@ -581,8 +575,7 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
     GModel *m = new GModel();
     GModel::setCurrent(m);
   }
-  int ret = MergeFile(fileName, warnIfMissing, true,
-                      old->bounds().empty() ? true : false);
+  int ret = MergeFile(fileName, warnIfMissing, old->bounds().empty() ? true : false);
   GModel::setCurrent(old);
   old->setVisibility(1);
 
@@ -645,7 +638,6 @@ void ClearProject()
   GModel::current()->setName("");
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
     FlGui::instance()->resetVisibility();
     FlGui::instance()->updateViews(true, true);
     FlGui::instance()->updateFields();
@@ -655,7 +647,7 @@ void ClearProject()
   Msg::ResetErrorCounter();
 }
 
-void OpenProject(const std::string &fileName, bool setWindowTitle)
+void OpenProject(const std::string &fileName)
 {
   if(CTX::instance()->lock) {
     Msg::Info("I'm busy! Ask me that later...");
@@ -695,7 +687,7 @@ void OpenProject(const std::string &fileName, bool setWindowTitle)
   ResetTemporaryBoundingBox();
 
   // merge the file
-  MergeFile(fileName, false, setWindowTitle);
+  MergeFile(fileName, false);
 
   // fill recent opened file list
   std::vector<std::string> tmp = CTX::instance()->recentFiles;

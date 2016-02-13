@@ -107,13 +107,14 @@ namespace onelabUtils {
 
   void guessModelName(onelab::client *c)
   {
+    std::string geo = GModel::current()->getFileName();
     std::vector<onelab::number> n;
     c->get(n, c->getName() + "/Guess model name");
     if(n.size() && n[0].getValue()){
       std::vector<onelab::string> ps;
       c->get(ps, c->getName() + "/Model name");
       if(ps.empty()){
-        std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+        std::vector<std::string> split = SplitFileName(geo);
         std::string ext = "";
         onelab::server::instance()->get(ps, c->getName() + "/File extension");
         if(ps.size()) ext = ps[0].getValue();
@@ -122,8 +123,13 @@ namespace onelabUtils {
         o.setKind("file");
         o.setAttribute("Persistent", "1");
         c->set(o);
+        geo += std::string(" - ") + name;
+      }
+      else{
+        geo += std::string(" - ") + ps[0].getValue();
       }
     }
+    Msg::SetWindowTitle(geo);
   }
 
   void initializeLoop(const std::string &level)
@@ -349,7 +355,7 @@ namespace onelabUtils {
         // if the model name has changed
         modelName = GModel::current()->getName();
         redraw = true;
-        OpenProject(GModel::current()->getFileName(), false);
+        OpenProject(GModel::current()->getFileName());
       }
     }
     else if(action == "compute"){
@@ -359,7 +365,7 @@ namespace onelabUtils {
         // have been modified or if the model name has changed
         modelName = GModel::current()->getName();
         redraw = true;
-        OpenProject(GModel::current()->getFileName(), false);
+        OpenProject(GModel::current()->getFileName());
         if(getFirstComputationFlag() && !StatFile(mshFileName) && meshAuto != 2){
           Msg::Info("Skipping mesh generation: assuming '%s' is up-to-date "
                     "(use Solver.AutoMesh=2 to force mesh generation)",
