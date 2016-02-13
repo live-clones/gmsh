@@ -7,6 +7,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "discreteFace.h"
+#include "discreteDiskFace.h"
 #include "MTriangle.h"
 #include "MEdge.h"
 #include "Geo.h"
@@ -18,7 +19,7 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 {
   Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
   Tree_Add(model->getGEOInternals()->Surfaces, &s);
-  meshStatistics.status = GFace::DONE;  
+  meshStatistics.status = GFace::DONE;
 }
 
 void discreteFace::setBoundEdges(GModel *gm, std::vector<int> tagEdges)
@@ -128,7 +129,7 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 void discreteFace::secondDer(const SPoint2 &param,
                              SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 {
- 
+
   if (getCompound()){
     return getCompound()->secondDer(param, dudu, dvdv, dudv);
   }
@@ -140,14 +141,17 @@ void discreteFace::secondDer(const SPoint2 &param,
 
 // FIXME PAB ----> really create an atlas !!!!!!!!!!!!!!!
 void discreteFace::createGeometry() {
+#if defined(HAVE_ANN) && defined(HAVE_SOLVER)
   if (!_atlas.empty())return;
   // parametrization is done here !!!
   discreteDiskFace *df = new discreteDiskFace (this, triangles);
   df->replaceEdges(l_edges);
   _atlas.push_back(df);
+#endif
 }
 
 void discreteFace::gatherMeshes() {
+#if defined(HAVE_ANN) && defined(HAVE_SOLVER)
   for (unsigned int i=0;i<triangles.size();i++)delete triangles[i];
   for (unsigned int i=0;i<mesh_vertices.size();i++)delete mesh_vertices[i];
   triangles.clear();
@@ -156,17 +160,18 @@ void discreteFace::gatherMeshes() {
     triangles.insert(triangles.begin(), _atlas[i]->triangles.begin(), _atlas[i]->triangles.end());
     mesh_vertices.insert(mesh_vertices.begin(), _atlas[i]->mesh_vertices.begin(), _atlas[i]->mesh_vertices.end());
   }
+#endif
 }
 
 void discreteFace::mesh(bool verbose) {
-#if defined(HAVE_MESH)
+#if defined(HAVE_ANN) && defined(HAVE_SOLVER) && defined(HAVE_MESH)
   return;
   createGeometry();
   for (unsigned int i=0;i<_atlas.size();i++)
     _atlas[i]->mesh(verbose);
   gatherMeshes();
-#endif
   meshStatistics.status = GFace::DONE;
+#endif
 }
 
 // delete all discrete disk faces
@@ -180,12 +185,9 @@ void discreteFace::writeGEO(FILE *fp)
   int count = 0;
   for (std::list<GEdge*>::iterator it = l_edges.begin();
        it != l_edges.end() ;++it){
-    if (count == 0) fprintf(fp, "%d", (*it)->tag());    
-    else fprintf(fp, ",%d", (*it)->tag());    
+    if (count == 0) fprintf(fp, "%d", (*it)->tag());
+    else fprintf(fp, ",%d", (*it)->tag());
     count ++;
   }
-  fprintf(fp, "};\n");    
+  fprintf(fp, "};\n");
 }
-
-
-

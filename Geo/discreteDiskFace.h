@@ -6,6 +6,9 @@
 #ifndef _DISCRETE_DISK_FACE_H_
 #define _DISCRETE_DISK_FACE_H_
 
+#include "GmshConfig.h"
+
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
 
 #include <list>
 #include <map>
@@ -17,7 +20,7 @@
 #include "linearSystem.h"
 #include "MElementOctree.h"
 #include "meshGFaceOptimize.h"
-#include "../Post/PView.h"
+#include "PView.h"
 
 class ANNkd_tree;
 class Octree;
@@ -54,7 +57,7 @@ class discreteDiskFace : public GFace {
   double curvatureMax(const SPoint2&) const;
   double curvatures(const SPoint2&,SVector3*,SVector3*,double*,double*) const;
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
-  virtual void secondDer(const SPoint2 &param, 
+  virtual void secondDer(const SPoint2 &param,
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const;
   GEntity::GeomType geomType() const { return DiscreteDiskSurface; }
  protected:
@@ -80,13 +83,6 @@ class discreteDiskFace : public GFace {
 
 };
 
-// ----------------
-
-
-
-
-
-
-
+#endif
 
 #endif

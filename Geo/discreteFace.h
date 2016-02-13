@@ -9,12 +9,13 @@
 #include "GModel.h"
 #include "GFace.h"
 #include "discreteEdge.h"
-#include "discreteDiskFace.h"
 #include "MEdge.h"
 
+class discreteDiskFace;
+
 class discreteFace : public GFace {
-  // FIXME we should at the end use a 
-  // mesh() functioon that is specific to 
+  // FIXME we should at the end use a
+  // mesh() functioon that is specific to
   // discreteFace
   // we should also SAVE those data's
  public:
@@ -29,7 +30,7 @@ class discreteFace : public GFace {
   virtual bool haveParametrization() { return getCompound(); }
   GEntity::GeomType geomType() const { return DiscreteSurface; }
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
-  virtual void secondDer(const SPoint2 &param, 
+  virtual void secondDer(const SPoint2 &param,
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const;
   void setBoundEdges(GModel *gm, std::vector<int> tagEdges);
   void findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_edges);
@@ -37,7 +38,7 @@ class discreteFace : public GFace {
   void createGeometry();
   void gatherMeshes();
   virtual void mesh (bool verbose);
-  std::vector<discreteDiskFace*> _atlas; 
+  std::vector<discreteDiskFace*> _atlas;
 };
 
 #endif

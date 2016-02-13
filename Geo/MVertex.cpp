@@ -466,12 +466,13 @@ bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
     return true;
   }
 
+#if defined(HAVE_ANN) && defined(HAVE_SOLVER)
   if (gf->geomType() == GEntity::DiscreteDiskSurface ){
     discreteDiskFace *gfc = (discreteDiskFace*) gf;
     param = gfc->parFromVertex(v);
     return true;
   }
-
+#endif
 
   if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||
      v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){

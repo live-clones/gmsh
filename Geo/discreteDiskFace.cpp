@@ -5,6 +5,9 @@
 
 #include <stdlib.h>
 #include "GmshConfig.h"
+
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
+
 #include "GmshMessage.h"
 #include "Octree.h"
 #include "discreteDiskFace.h"
@@ -15,7 +18,7 @@
 #include "OS.h"
 #include "ANN/ANN.h"
 #include "linearSystemCSR.h"
-#include "dofManager.h" 
+#include "dofManager.h"
 #include "laplaceTerm.h"
 #include "convexLaplaceTerm.h"
 #include "convexCombinationTerm.h"  // #
@@ -65,17 +68,17 @@ static int discreteDiskFaceInEle(void *a, double*c)
   sys2x2(M, R, X);
   if(X[0] > -eps && X[1] > -eps && 1. - X[0] - X[1] > -eps)
     return 1;
-  
+
   return 0;
 }
 
 static bool orderVertices(const double &tot_length, const std::vector<MVertex*> &l, std::vector<double> &coord)
-{ // called once by constructor ; organize the vertices for the linear system expressing the mapping  
-  coord.clear();  
-  coord.push_back(0.);   
-  
+{ // called once by constructor ; organize the vertices for the linear system expressing the mapping
+  coord.clear();
+  coord.push_back(0.);
+
   MVertex* first = l[0];
-  
+
   for(unsigned int i=1; i < l.size(); i++){
 
     MVertex* next = l[i];
@@ -83,7 +86,7 @@ static bool orderVertices(const double &tot_length, const std::vector<MVertex*> 
     const double length = sqrt( (next->x() - first->x()) * (next->x() - first->x()) +
 				(next->y() - first->y()) * (next->y() - first->y()) +
 				(next->z() - first->z()) * (next->z() - first->z()) );
-    
+
     coord.push_back(coord[coord.size()-1] + length / tot_length);
 
     first = next;
@@ -95,7 +98,7 @@ static bool orderVertices(const double &tot_length, const std::vector<MVertex*> 
 }
 
 /*BUILDER*/
-discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh) : 
+discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh) :
   GFace(gf->model(),123), _parent (gf)
 {
   std::map<MVertex*,MVertex*> v2v;
@@ -106,7 +109,7 @@ discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh) :
       if (v->onWhat() == gf) {
 	std::map<MVertex*,MVertex*> :: iterator it = v2v.find(v);
 	if (it == v2v.end()){
-	  MFaceVertex *vv = new MFaceVertex ( v->x(),  v->y(),  v->z(), this, 0, 0);	
+	  MFaceVertex *vv = new MFaceVertex ( v->x(),  v->y(),  v->z(), this, 0, 0);
 	  v2v[v] = vv;
 	  discrete_vertices.push_back(vv);
 	  vs[j] = vv;
@@ -145,20 +148,20 @@ void discreteDiskFace::getBoundingEdges()
       else allEdges.erase(it);
     }
   }
-  
+
   std::map<MVertex*,MVertex*> edges; // useless ?
   std::map<MVertex*,MVertex*> firstNode2Edge;
   for (std::set<MEdge>::iterator ie = allEdges.begin(); ie != allEdges.end() ; ++ie) {
     MEdge ed = *ie;
     MVertex *first = ed.getVertex(0);
     MVertex *last  = ed.getVertex(1);
-   
+
     std::map<MVertex*,MVertex*>::iterator im = firstNode2Edge.find(first);
     if (im != firstNode2Edge.end()) Msg::Fatal("Incorrect topology in discreteDiskFace %d", tag());
 
     firstNode2Edge[first] = last;
   }
-  
+
   while (!firstNode2Edge.empty()) { // quid not empty but in within the map ?
     std::vector<MVertex*> loop;
     double length = 0.;
@@ -166,7 +169,7 @@ void discreteDiskFace::getBoundingEdges()
     while(in != firstNode2Edge.end()) {
       MVertex *first = in->first;
       MVertex *last  = in->second;
-      length += sqrt( (last->x()-first->x()) * (last->x()-first->x()) + 
+      length += sqrt( (last->x()-first->x()) * (last->x()-first->x()) +
 		      (last->y()-first->y()) * (last->y()-first->y()) +
 		      (last->z()-first->z()) * (last->z()-first->z()) );
       loop.push_back(first);
@@ -175,18 +178,18 @@ void discreteDiskFace::getBoundingEdges()
     }
     _loops.insert(std::make_pair(length,loop)); // it shouldn't be possible to have twice the same length ? mark
   }
-  
-  
-  // dirichlet BC    
+
+
+  // dirichlet BC
   _U0  = _loops.rbegin()->second;
   _totLength = _loops.rbegin()->first;
 }
 
 void discreteDiskFace::buildOct() const
-{ 
+{
   SBoundingBox3d bb;
-  int count = 0;  
-  
+  int count = 0;
+
   for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
     MTriangle *t = discrete_triangles[i];
     //create bounding box
@@ -213,7 +216,7 @@ void discreteDiskFace::buildOct() const
   const int maxElePerBucket = 15;
   oct = Octree_Create(maxElePerBucket, origin, ssize, discreteDiskFaceBB,
                       discreteDiskFaceCentroid, discreteDiskFaceInEle);
-    
+
   count = 0;
 
   for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
@@ -227,7 +230,7 @@ void discreteDiskFace::buildOct() const
     _ddft[count].p1 = it0->second;
     _ddft[count].p2 = it1->second;
     _ddft[count].p3 = it2->second;
-    if(geomType() != GEntity::DiscreteDiskSurface){// CAD    
+    if(geomType() != GEntity::DiscreteDiskSurface){// CAD
       if (t->getVertex(0)->onWhat()->dim() == 2){
 	reparamMeshEdgeOnFace(t->getVertex(0), t->getVertex(1), _parent,
 			      _ddft[count].gfp1, _ddft[count].gfp2);
@@ -261,7 +264,7 @@ void discreteDiskFace::buildOct() const
     _ddft[count].gf = _parent;
     _ddft[count].tri = t;
 
-    
+
     //compute first derivatives for every triangle , to disappear (erase)
     double mat[2][2] = {{_ddft[count].p2.x() - _ddft[count].p1.x(),
 			 _ddft[count].p3.x() - _ddft[count].p1.x()},
@@ -272,7 +275,7 @@ void discreteDiskFace::buildOct() const
     inv2x2(mat, inv);
     SVector3 dXdxi (_ddft[count].v2 - _ddft[count].v1); // constant
     SVector3 dXdeta(_ddft[count].v3 - _ddft[count].v1); // constant
-    SVector3 dXdu(dXdxi * inv[0][0] + dXdeta * inv[1][0]); // to be modified for higher order 
+    SVector3 dXdu(dXdxi * inv[0][0] + dXdeta * inv[1][0]); // to be modified for higher order
     SVector3 dXdv(dXdxi * inv[0][1] + dXdeta * inv[1][1]); // to be modified for higher order
     firstElemDerivatives[(MElement*)t] = Pair<SVector3,SVector3>(dXdu,dXdv);
 
@@ -283,14 +286,14 @@ void discreteDiskFace::buildOct() const
     Octree_Insert(&_ddft[count], oct);
     count++;
   }
-  
+
   Octree_Arrange(oct);
 
   // USELESS, laplacian
   //smooth first derivatives at vertices
   if(adjv.size() == 0){
     std::vector<MTriangle*> allTri;
-    allTri.insert(allTri.end(), discrete_triangles.begin(), discrete_triangles.end() );    
+    allTri.insert(allTri.end(), discrete_triangles.begin(), discrete_triangles.end() );
     buildVertexToTriangle(allTri, adjv);
   }
   for(v2t_cont::iterator it = adjv.begin(); it!= adjv.end(); ++it){
@@ -306,7 +309,7 @@ void discreteDiskFace::buildOct() const
     dXdv *= 1./nbTri;
     firstDerivatives[v] = Pair<SVector3, SVector3>(dXdu, dXdv);
   }
-  
+
   kdtree = new ANNkd_tree(nodes, count, 3);
 
 }
@@ -314,25 +317,25 @@ void discreteDiskFace::buildOct() const
 
 bool discreteDiskFace::parametrize() const
 { // mark, to improve
- 
+
   Msg::Info("Parametrizing surface %d with 'harmonic map'", tag());
 
   linearSystem<double> *lsys_u;
   linearSystem<double> *lsys_v;
-  
+
   lsys_u = new linearSystemCSRTaucs<double>; // taucs :-)
   lsys_v = new linearSystemCSRTaucs<double>; // taucs :-)
-  
+
   dofManager<double> myAssemblerU(lsys_u);   // hashing
-  dofManager<double> myAssemblerV(lsys_v);  
-    
-  for(size_t i = 0; i < _U0.size(); i++){ 
+  dofManager<double> myAssemblerV(lsys_v);
+
+  for(size_t i = 0; i < _U0.size(); i++){
     MVertex *v = _U0[i];
     const double theta = 2 * M_PI * _coords[i];
     myAssemblerU.fixVertex(v, 0, 1, cos(theta));
     myAssemblerV.fixVertex(v, 0, 1, sin(theta));
   }
- 
+
   for(size_t i = 0; i < discrete_triangles.size(); ++i){
     MTriangle *t = discrete_triangles[i];
 
@@ -343,8 +346,8 @@ bool discreteDiskFace::parametrize() const
     myAssemblerV.numberVertex(t->getVertex(0), 0, 1);
     myAssemblerV.numberVertex(t->getVertex(1), 0, 1);
     myAssemblerV.numberVertex(t->getVertex(2), 0, 1);
-  }  
-  
+  }
+
 
   Msg::Debug("Creating term %d dofs numbered %d fixed",
              myAssemblerU.sizeOfR() + myAssemblerV.sizeOfR(), myAssemblerU.sizeOfF() + myAssemblerV.sizeOfF());
@@ -352,15 +355,15 @@ bool discreteDiskFace::parametrize() const
   double t1 = Cpu();
 
   simpleFunction<double> ONE(1.0);
-  
-  convexLaplaceTerm mappingU(0, 1, &ONE);  
-  convexLaplaceTerm mappingV(0, 1, &ONE);  
+
+  convexLaplaceTerm mappingU(0, 1, &ONE);
+  convexLaplaceTerm mappingV(0, 1, &ONE);
 
   for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
     SElement se(discrete_triangles[i]);
     mappingU.addToMatrix(myAssemblerU, &se);
     mappingV.addToMatrix(myAssemblerV, &se);
-  }  
+  }
 
 
   //  lsys_v->printMatlab("testv.m");
@@ -394,12 +397,12 @@ bool discreteDiskFace::parametrize() const
   delete lsys_v;
 
   return true;
-  
+
 }
 
 void discreteDiskFace::getTriangleUV(const double u,const double v,
-				     discreteDiskFaceTriangle **mt, 
-				     double &_u, double &_v)const{ 
+				     discreteDiskFaceTriangle **mt,
+				     double &_u, double &_v)const{
   double uv[3] = {u,v,0.};
   *mt = (discreteDiskFaceTriangle*) Octree_Search(uv,oct);
   if (!(*mt))return;
@@ -447,7 +450,7 @@ SPoint2 discreteDiskFace::parFromVertex(MVertex *v) const
   // The 1D mesh has been re-done
   if (v->onWhat()->dim()==1){
     Msg::Fatal("FIXME TO DO %d %s",__LINE__,__FILE__);
-    // get the discrete edge on which v is classified 
+    // get the discrete edge on which v is classified
     // get the two ending vertices A and B on both sides of v    A-------v----------B
     // interpolate between the two uv coordinates of A and B
   }
@@ -471,7 +474,7 @@ double discreteDiskFace::curvatureMax(const SPoint2 &param) const
 double discreteDiskFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
                                 double *curvMax, double *curvMin) const
 {
-    return false;  
+    return false;
 }
 
 Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
@@ -483,21 +486,21 @@ Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
 
   MTriangle* tri = NULL;
   if (ddft) tri = ddft->tri;
-  else Msg::Error("discreteDiskFace::firstDer << triangle not found");  
+  else Msg::Error("discreteDiskFace::firstDer << triangle not found");
 
-  std::map<MVertex*, Pair<SVector3,SVector3> >::iterator it0 = 
+  std::map<MVertex*, Pair<SVector3,SVector3> >::iterator it0 =
     firstDerivatives.find(tri->getVertex(0));
   if (it0 == firstDerivatives.end()) Msg::Fatal ("Vertex %d (0) has no firstDerivatives",
-						 tri->getVertex(0)->getNum());	 
-  std::map<MVertex*, Pair<SVector3,SVector3> >::iterator it1 = 
+						 tri->getVertex(0)->getNum());
+  std::map<MVertex*, Pair<SVector3,SVector3> >::iterator it1 =
     firstDerivatives.find(tri->getVertex(1));
   if (it1 == firstDerivatives.end()) Msg::Fatal ("Vertex %d (1) has no firstDerivatives",
-						 tri->getVertex(1)->getNum());	 
-  std::map<MVertex*, Pair<SVector3,SVector3> >::iterator it2 = 
+						 tri->getVertex(1)->getNum());
+  std::map<MVertex*, Pair<SVector3,SVector3> >::iterator it2 =
     firstDerivatives.find(tri->getVertex(2));
   if (it2 == firstDerivatives.end()) Msg::Fatal ("Vertex %d (2) has no firstDerivatives",
-						 tri->getVertex(2)->getNum());	 
-  
+						 tri->getVertex(2)->getNum());
+
 
   SVector3 dXdu1 = it0->second.first();
   SVector3 dXdu2 = it1->second.first();
@@ -509,9 +512,9 @@ Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
 
   SVector3 dXdu = dXdu1*(1.-U-V) + dXdu2*U + dXdu3*V;
   SVector3 dXdv = dXdv1*(1.-U-V) + dXdv2*U + dXdv3*V;
-  
 
-  return Pair<SVector3, SVector3>(dXdu,dXdv);  
+
+  return Pair<SVector3, SVector3>(dXdu,dXdv);
 
 }
 
@@ -519,11 +522,11 @@ void discreteDiskFace::secondDer(const SPoint2 &param,
                              SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 { // cf Sauvage's thesis
 
-  
+
     return;
 }
 
-void discreteDiskFace::buildAllNodes() 
+void discreteDiskFace::buildAllNodes()
 {
   // allNodes contains all mesh-nodes
   for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
@@ -551,13 +554,14 @@ void discreteDiskFace::putOnView()
   PView* view_u = new PView("u", "NodeData", GModel::current(), u);
   PView* view_v = new PView("u", "NodeData", GModel::current(), v);
   view_u->setChanged(true);
-  view_v->setChanged(true);  
+  view_v->setChanged(true);
   view_u->write("param_u.msh", 5);
   view_v->write("param_v.msh", 5);
   delete view_u;
   delete view_v;
 #else
   Msg::Error("discreteDiskFace: cannot export without post module")
-#endif 
+#endif
 }
- 
+
+#endif
