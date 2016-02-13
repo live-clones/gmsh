@@ -251,6 +251,7 @@ static void file_window_cb(Fl_Widget *w, void *data)
     FlGui::instance()->copyCurrentOpenglWindowToClipboard();
   }
   drawContext::global()->draw();
+  FlGui::instance()->setGraphicTitle(GModel::current()->getFileName());
 }
 
 static int _save_msh(const char *name){ return mshFileDialog(name); }
@@ -3103,7 +3104,6 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   if(CTX::instance()->menuSize[0] < minw) CTX::instance()->menuSize[0] = minw;
   _tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
 
-  _win->copy_label(GModel::current()->getFileName().c_str());
   _win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
   _win->end();
 

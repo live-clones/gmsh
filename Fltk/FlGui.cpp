@@ -423,6 +423,7 @@ FlGui::FlGui(int argc, char **argv)
     g->getWindow()->show();
     graph.push_back(g);
   }
+  setGraphicTitle(GModel::current()->getFileName());
 
   // create fullscreen window
   fullscreen = new openglWindow(100, 100, 100, 100);
