@@ -1227,6 +1227,13 @@ void Msg::RunOnelabClient(const std::string &name, const std::string &command)
 #endif
 }
 
+void Msg::SetOnelabChanged(bool value, const std::string &client)
+{
+#if defined(HAVE_ONELAB)
+  onelab::server::instance()->setChanged(value, client);
+#endif
+}
+
 void Msg::FinalizeOnelab()
 {
 #if defined(HAVE_ONELAB)

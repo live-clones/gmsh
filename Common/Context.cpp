@@ -76,8 +76,8 @@ CTX::CTX() : gamepad(0)
   mesh.switchElementTags = 0;
   terminal = 0;
 
-  // need to initialize these too, since the corresponding opt_XXX
-  // routine uses the current value to set "mesh.changed"
+  // need to initialize these too, since the corresponding opt_XXX routines use
+  // the current value to detect changes
   mesh.changed = 0;
   mesh.qualityInf = mesh.qualitySup = mesh.qualityType = 0;
   mesh.radiusInf = mesh.radiusSup = 0;
@@ -96,6 +96,15 @@ CTX::CTX() : gamepad(0)
   color.mesh.tangents = color.mesh.line = color.mesh.quadrangle = 0;
   for (int i = 0; i < 20; i++)
     color.mesh.carousel[i] = 0;
+  mesh.optimize = mesh.optimizeNetgen = mesh.remove4triangles = 0;
+  mesh.refineSteps = mesh.scalingFactor = mesh.lcFactor = mesh.lcMin = mesh.lcMax = 0;
+  mesh.toleranceEdgeLength = mesh.toleranceInitialDelaunay = 0;
+  mesh.lcFromCurvature = mesh.lcFromPoints = mesh.lcExtendFromBoundary = 0;
+  mesh.lcIntegrationPrecision = mesh.randFactor = 0;
+  mesh.algo2d = mesh.algo3d = mesh.algoRecombine = mesh.recombineAll = 0;
+  mesh.recombine3DAll = mesh.algoSubdivide = mesh.meshOnlyVisible = 0;
+  mesh.minCircPoints = mesh.order = 0;
+  mesh.secondOrderLinear = mesh.secondOrderIncomplete = 0;
 }
 
 CTX::~CTX()
