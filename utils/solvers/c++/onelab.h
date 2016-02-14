@@ -568,7 +568,8 @@ namespace onelab{
       }
       return true;
     }
-    template <class T> T* _getPtr(std::string name, const std::string client, std::set<T*, parameterLessThan> ps)
+    template <class T> T* _getPtr(std::string name, const std::string client,
+                                  std::set<T*, parameterLessThan> ps)
     {
       T tmp(name);
       typename std::set<T*, parameterLessThan>::iterator it = ps.find(&tmp);
@@ -611,9 +612,13 @@ namespace onelab{
     bool get(std::vector<onelab::string> &ps, const std::string &name="",
              const std::string &client=""){ return _get(ps, name, client, _strings); }
     void getPtr(number **ptr, const std::string name, const std::string client="")
-      {*ptr = _getPtr(name, client, _numbers);}
+    {
+      *ptr = _getPtr(name, client, _numbers);
+    }
     void getPtr(string **ptr, const std::string name, const std::string client="")
-      {*ptr = _getPtr(name, client, _strings);}
+    {
+      *ptr = _getPtr(name, client, _strings);
+    }
     void getAllParameters(std::set<parameter*, parameterLessThan> &ps) const
     {
       ps.insert(_numbers.begin(), _numbers.end());

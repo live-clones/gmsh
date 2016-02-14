@@ -150,8 +150,12 @@ static void file_open_merge_cb(Fl_Widget *w, void *data)
   }
   if(n != (int)PView::list.size())
     FlGui::instance()->openModule("Post-processing");
-  if(CTX::instance()->launchSolverAtStartup >= 0)
+  if(CTX::instance()->launchSolverAtStartup >= 0){
     solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
+  }
+  else{
+    onelab_cb(0, (void*)"check");
+  }
 }
 
 static void file_open_recent_cb(Fl_Widget *w, void *data)
@@ -163,8 +167,12 @@ static void file_open_recent_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
   if(n != (int)PView::list.size())
     FlGui::instance()->openModule("Post-processing");
-  if(CTX::instance()->launchSolverAtStartup >= 0)
+  if(CTX::instance()->launchSolverAtStartup >= 0){
     solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
+  }
+  else{
+    onelab_cb(0, (void*)"check");
+  }
 }
 
 static void file_clear_cb(Fl_Widget *w, void *data)
@@ -494,6 +502,7 @@ static void file_rename_cb(Fl_Widget *w, void *data)
     rename(GModel::current()->getFileName().c_str(), name.c_str());
     GModel::current()->setFileName(name);
     GModel::current()->setName(SplitFileName(name)[1]);
+    onelab_cb(0, (void*)"check");
     drawContext::global()->draw();
   }
 }
@@ -573,18 +582,14 @@ void onelab_reload_cb(Fl_Widget *w, void *data)
 
   std::string fileName = GModel::current()->getFileName();
   ClearProject();
-
   GModel::current()->setFileName(fileName);
-  //OpenProject(fileName);
-  onelab_cb(0, (void*)"reset"); // this will call OpenProject
-
+  onelab_cb(0, (void*)"reset"); // will call OpenProject
   drawContext::global()->draw();
 }
 
 void geometry_reload_cb(Fl_Widget *w, void *data)
 {
-  std::string fileName = GModel::current()->getFileName();
-  OpenProject(fileName);
+  onelab_cb(0, (void*)"check"); // will call OpenProject
   drawContext::global()->draw();
 }
 
