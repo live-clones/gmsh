@@ -54,6 +54,7 @@ typedef unsigned long intptr_t;
 #include "Generator.h"
 #include "HighOrder.h"
 #include "OS.h"
+#include "onelabUtils.h"
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
@@ -150,12 +151,10 @@ static void file_open_merge_cb(Fl_Widget *w, void *data)
   }
   if(n != (int)PView::list.size())
     FlGui::instance()->openModule("Post-processing");
-  if(CTX::instance()->launchSolverAtStartup >= 0){
+  if(CTX::instance()->launchSolverAtStartup >= 0)
     solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
-  }
-  else{
+  else if(onelabUtils::haveSolverToRun())
     onelab_cb(0, (void*)"check");
-  }
 }
 
 static void file_open_recent_cb(Fl_Widget *w, void *data)
@@ -167,12 +166,10 @@ static void file_open_recent_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
   if(n != (int)PView::list.size())
     FlGui::instance()->openModule("Post-processing");
-  if(CTX::instance()->launchSolverAtStartup >= 0){
+  if(CTX::instance()->launchSolverAtStartup >= 0)
     solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
-  }
-  else{
+  else if(onelabUtils::haveSolverToRun())
     onelab_cb(0, (void*)"check");
-  }
 }
 
 static void file_clear_cb(Fl_Widget *w, void *data)
@@ -182,7 +179,10 @@ static void file_clear_cb(Fl_Widget *w, void *data)
     return;
   }
   ClearProject();
-  onelab_cb(0, (void*)"reset"); // this will call OpenProject
+  if(onelabUtils::haveSolverToRun())
+    onelab_cb(0, (void*)"reset"); // this will call OpenProject
+  else
+    OpenProject(GModel::current()->getFileName());
   drawContext::global()->draw();
 }
 
@@ -502,7 +502,8 @@ static void file_rename_cb(Fl_Widget *w, void *data)
     rename(GModel::current()->getFileName().c_str(), name.c_str());
     GModel::current()->setFileName(name);
     GModel::current()->setName(SplitFileName(name)[1]);
-    onelab_cb(0, (void*)"check");
+    if(onelabUtils::haveSolverToRun())
+      onelab_cb(0, (void*)"check");
     drawContext::global()->draw();
   }
 }
@@ -589,16 +590,7 @@ void onelab_reload_cb(Fl_Widget *w, void *data)
 
 void geometry_reload_cb(Fl_Widget *w, void *data)
 {
-  bool haveNonGmshClients = false;
-  for(onelab::server::citer it = onelab::server::instance()->firstClient();
-      it != onelab::server::instance()->lastClient(); it++){
-    onelab::client *c = *it;
-    if(c->getName() != "Gmsh"){
-      haveNonGmshClients = true;
-      break;
-    }
-  }
-  if(haveNonGmshClients)
+  if(onelabUtils::haveSolverToRun())
     onelab_cb(0, (void*)"check"); // will call OpenProject
   else
     OpenProject(GModel::current()->getFileName());

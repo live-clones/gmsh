@@ -460,6 +460,20 @@ namespace onelabUtils {
     return val;
   }
 
+  bool haveSolverToRun()
+  {
+    for(onelab::server::citer it = onelab::server::instance()->firstClient();
+	it != onelab::server::instance()->lastClient(); it++){
+      onelab::client *c = *it;
+      if(c->getName() != "Gmsh" &&
+	 c->getName() != "Listen" &&
+	 c->getName() != "GmshRemote" &&
+         c->getName().find("NoAutoRun") == std::string::npos)
+	return true;
+    }
+    return false;
+  }
+
   // update x using y, giving priority to any settings in x that can be set in
   // the GUI. The value of x is only changed if y is read-only.
   std::string updateString(onelab::string &x, onelab::string &y)
