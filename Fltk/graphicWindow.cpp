@@ -589,7 +589,19 @@ void onelab_reload_cb(Fl_Widget *w, void *data)
 
 void geometry_reload_cb(Fl_Widget *w, void *data)
 {
-  onelab_cb(0, (void*)"check"); // will call OpenProject
+  bool haveNonGmshClients = false;
+  for(onelab::server::citer it = onelab::server::instance()->firstClient();
+      it != onelab::server::instance()->lastClient(); it++){
+    onelab::client *c = *it;
+    if(c->getName() != "Gmsh"){
+      haveNonGmshClients = true;
+      break;
+    }
+  }
+  if(haveNonGmshClients)
+    onelab_cb(0, (void*)"check"); // will call OpenProject
+  else
+    OpenProject(GModel::current()->getFileName());
   drawContext::global()->draw();
 }
 
