@@ -546,6 +546,7 @@ double opt_mesh_ignore_part_bound(OPT_ARGS_NUM);
 double opt_solver_listen(OPT_ARGS_NUM);
 double opt_solver_timeout(OPT_ARGS_NUM);
 double opt_solver_plugins(OPT_ARGS_NUM);
+double opt_solver_auto_load_database(OPT_ARGS_NUM);
 double opt_solver_auto_save_database(OPT_ARGS_NUM);
 double opt_solver_auto_archive_output_files(OPT_ARGS_NUM);
 double opt_solver_auto_check(OPT_ARGS_NUM);

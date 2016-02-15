@@ -201,7 +201,8 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "compute" && (CTX::instance()->solver.autoSaveDatabase ||
                              CTX::instance()->solver.autoArchiveOutputFiles)){
-    std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+    std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+    std::string db = split[0] + split[1] + ".db";
     if(CTX::instance()->solver.autoArchiveOutputFiles) archiveOutputFiles(db);
     if(CTX::instance()->solver.autoSaveDatabase) saveDb(db);
   }
@@ -221,6 +222,8 @@ void onelab_option_cb(Fl_Widget *w, void *data)
   double val = ((Fl_Menu_*)w)->mvalue()->value() ? 1. : 0.;
   if(what == "save")
     CTX::instance()->solver.autoSaveDatabase = val;
+  else if(what == "load")
+    CTX::instance()->solver.autoLoadDatabase = val;
   else if(what == "archive")
     CTX::instance()->solver.autoArchiveOutputFiles = val;
   else if(what == "check"){
@@ -464,7 +467,9 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
 
   _gearOptionsStart = _gear->menu()->size();
 
-  _gear->add("Save && load database automatically", 0, onelab_option_cb, (void*)"save",
+  _gear->add("Save database automatically", 0, onelab_option_cb, (void*)"save",
+             FL_MENU_TOGGLE);
+  _gear->add("Load database automatically", 0, onelab_option_cb, (void*)"load",
              FL_MENU_TOGGLE);
   _gear->add("Archive output files automatically", 0, onelab_option_cb, (void*)"archive",
              FL_MENU_TOGGLE);
@@ -1253,7 +1258,8 @@ std::string onelabGroup::getPath(Fl_Tree_Item *item)
 void onelabGroup::updateGearMenu()
 {
   Fl_Menu_Item* menu = (Fl_Menu_Item*)_gear->menu();
-  int values[8] = {CTX::instance()->solver.autoSaveDatabase,
+  int values[9] = {CTX::instance()->solver.autoSaveDatabase,
+                   CTX::instance()->solver.autoLoadDatabase,
                    CTX::instance()->solver.autoArchiveOutputFiles,
                    CTX::instance()->solver.autoCheck,
                    CTX::instance()->solver.autoMesh,
@@ -1261,7 +1267,7 @@ void onelabGroup::updateGearMenu()
                    CTX::instance()->solver.autoShowViews,
                    CTX::instance()->solver.autoShowLastStep,
                    CTX::instance()->solver.showInvisibleParameters};
-  for(int i = 0; i < 8; i++){
+  for(int i = 0; i < 9; i++){
     int idx = _gearOptionsStart - 1 + i;
     if(values[i])
       menu[idx].set();
@@ -1365,8 +1371,9 @@ void solver_cb(Fl_Widget *w, void *data)
     FlGui::instance()->onelab->rebuildSolverList();
   }
 
-  if(CTX::instance()->solver.autoSaveDatabase){
-    std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+  if(CTX::instance()->solver.autoLoadDatabase){
+    std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+    std::string db = split[0] + split[1] + ".db";
     if(!StatFile(db)){
       loadDb(db);
       CTX::instance()->launchSolverAtStartup = -1;

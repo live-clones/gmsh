@@ -1294,8 +1294,10 @@ StringXNumber SolverOptions_Number[] = {
     "Automatically archive output files after each computation" },
   { F|O, "AutoCheck" , opt_solver_auto_check , 1. ,
     "Automatically check model every time a parameter is changed" },
-  { F|O, "AutoSaveDatabase" , opt_solver_auto_save_database , 0. ,
-    "Automatically save database after each computation" },
+  { F|O, "AutoLoadDatabase" , opt_solver_auto_load_database , 0. ,
+    "Automatically load the ONELAB database when launching a solver" },
+  { F|O, "AutoSaveDatabase" , opt_solver_auto_save_database , 1. ,
+    "Automatically save the ONELAB database after each computation" },
   { F|O, "AutoMesh" , opt_solver_auto_mesh , 1. ,
     "Automatically mesh if necesssary (0: never remesh; 1: on startup, use existing "
     "mesh on disk if available; 2: always remesh)" },

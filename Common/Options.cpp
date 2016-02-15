@@ -6585,6 +6585,13 @@ double opt_solver_plugins(OPT_ARGS_NUM)
   return CTX::instance()->solver.plugins;
 }
 
+double opt_solver_auto_load_database(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->solver.autoLoadDatabase = (int)val;
+  return CTX::instance()->solver.autoLoadDatabase;
+}
+
 double opt_solver_auto_save_database(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
