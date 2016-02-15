@@ -781,42 +781,46 @@ void Msg::SetOnelabString(std::string name, std::string val, bool visible,
 #endif
 }
 
-double Msg::GetOnelabNumber(std::string name, bool warnIfMissing)
+double Msg::GetOnelabNumber(std::string name, double defaultValue,
+                            bool errorIfMissing)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::number> numbers;
     _onelabClient->get(numbers, name);
     if(numbers.empty()){
-      if(warnIfMissing)
+      if(errorIfMissing)
         Msg::Error("Unknown ONELAB number parameter '%s'", name.c_str());
-      return 0.;
+      return defaultValue;
     }
     else
       return numbers[0].getValue();
   }
 #endif
-  Msg::Error("GetNumber requires a ONELAB client");
-  return 0.;
+  if(errorIfMissing)
+    Msg::Error("GetNumber requires a ONELAB client");
+  return defaultValue;
 }
 
-std::string Msg::GetOnelabString(std::string name, bool warnIfMissing)
+std::string Msg::GetOnelabString(std::string name, const std::string &defaultValue,
+                                 bool errorIfMissing)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
     std::vector<onelab::string> strings;
     _onelabClient->get(strings, name);
     if(strings.empty()){
-      if(warnIfMissing)
+      if(errorIfMissing)
         Msg::Error("Unknown ONELAB string parameter '%s'", name.c_str());
-      return "";
+      return defaultValue;
     }
     else
       return strings[0].getValue();
   }
 #endif
-  Msg::Error("GetString requires a ONELAB client");
-  return "";
+  if(errorIfMissing)
+    Msg::Error("GetString requires a ONELAB client");
+  return defaultValue;
 }
 
 #if defined(HAVE_ONELAB)

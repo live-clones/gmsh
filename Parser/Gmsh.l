@@ -180,6 +180,7 @@ GetEnv                  return tGetEnv;
 GetString               return tGetString;
 GetNumber               return tGetNumber;
 GetValue                return tGetValue;
+GetStringValue          return tGetStringValue;
 GMSH_MAJOR_VERSION      return tGMSH_MAJOR_VERSION;
 GMSH_MINOR_VERSION      return tGMSH_MINOR_VERSION;
 GMSH_PATCH_VERSION      return tGMSH_PATCH_VERSION;

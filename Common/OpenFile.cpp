@@ -343,7 +343,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
     int num = defineSolver(solver);
     Msg::SetOnelabString(solver + "/Model name", fileName, true, true);
     if(GModel::current()->getName() == "" ||
-       Msg::GetOnelabString("Gmsh/Model name", false).empty()){
+       Msg::GetOnelabString("Gmsh/Model name").empty()){
       GModel::current()->setFileName(split[0] + split[1] + ".geo");
       GModel::current()->setName(split[1] + ".geo");
     }

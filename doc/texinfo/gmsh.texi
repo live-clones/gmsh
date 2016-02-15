@@ -1007,7 +1007,7 @@ parsing of the script file:
   TextAttributes(@var{char-expression}<,@var{char-expression}@dots{}>) |
   Exists(@var{string}) | Exists(@var{string}~@{ @var{expression} @}) |
   FileExists(@var{char-expression}) |
-  GetNumber(@var{char-expression}) |
+  GetNumber(@var{char-expression} <,@{expression}>) |
   GetValue("@var{string}", @var{expression}) |
   DefineNumber(@var{expression}, @var{onelab-options}) |
 @end example
@@ -1048,13 +1048,15 @@ string).  @code{TextAttributes} creates attributes for text
 strings. @code{Exists} checks if a variable with the given name exists
 (i.e., has been defined previously), and @code{FileExists} checks if the
 file with the given name exists. @code{GetNumber} allows to get the
-value of a ONELAB variable (the argument is the name of the
-variable). @code{GetValue} allows to ask the user for a value
-interactively. For example, inserting @code{GetValue("Value of parameter
-alpha?", 5.76)} in an input file will query the user for the value of a
-certain parameter alpha, assuming the default value is 5.76. If the
-option @code{General.NoPopup} is set (@pxref{General options list}), no
-question is asked and the default value is automatically used.
+value of a ONELAB variable (the optional second argument is the default
+value returned if the variable does not exist). @code{GetValue} allows
+to ask the user for a value interactively (the second argument is the
+value returned in non-interactive mode). For example, inserting
+@code{GetValue("Value of parameter alpha?", 5.76)} in an input file will
+query the user for the value of a certain parameter alpha, assuming the
+default value is 5.76. If the option @code{General.NoPopup} is set
+(@pxref{General options list}), no question is asked and the default
+value is automatically used.
 
 @code{DefineNumber} allows to define a ONELAB variable in-line. The
 @var{expression} given as the first argument is the default value; this
@@ -1145,8 +1147,8 @@ Character expressions are defined as:
   Sprintf ( @var{char-expression} ) |
   Sprintf ( @var{char-option} ) |
   GetEnv ( @var{char-expression} ) |
-  GetString ( @var{char-expression} ) |
-  GetString ( @var{char-expression} , @var{char-expression} ) | 
+  GetString ( @var{char-expression} <,@var{char-expression}>) |
+  GetStringValue ( @var{char-expression} , @var{char-expression} ) | 
   StrReplace ( @var{char-expression} , @var{char-expression} , @var{char-expression} ) 
   DefineString(@var{char-expression}, @var{onelab-options})
 @end example
@@ -1168,12 +1170,13 @@ string that can contain floating point formatting characters: @code{%e},
 @code{%g}, etc.) The various @w{@var{char-option}s} are listed in
 @ref{Options}. @code{GetEnvThe} gets the value of an environment
 variable from the operating system. @code{GetString} allows to get a
-ONELAB string value (with one argument, the name of the ONELAB
-variable), or ask the user for a value interactively (with two
-arguments). @code{StrReplace}'s arguments are: input string, old
-substring, new substring.@footnote{For compatibility with GetDP
-(@uref{http://getdp.info}), parentheses can be replaced by brackets
-@code{[]} in @code{Str} and @code{Sprintf}.}
+ONELAB string value (the second optional argument is the default value
+returned if the variable does not exist).  @code{GetStringValue} asks
+the user for a value interactively (the second argument is the value
+used in non-interactive mode). @code{StrReplace}'s arguments are: input
+string, old substring, new substring.@footnote{For compatibility with
+GetDP (@uref{http://getdp.info}), parentheses can be replaced by
+brackets @code{[]} in @code{Str} and @code{Sprintf}.}
 
 @code{DefineString} allows to define a ONELAB variable in-line. The
 @var{char-expression} given as the first argument is the default value; this

@@ -120,8 +120,10 @@ class Msg {
                               bool persistent=false, bool readOnly=false);
   static void SetOnelabString(std::string name, std::string val, bool visible=true,
                               bool persistent=false, bool readOnly=false);
-  static double GetOnelabNumber(std::string name, bool warnIfMissing=true);
-  static std::string GetOnelabString(std::string name, bool warnIfMissing=true);
+  static double GetOnelabNumber(std::string name, double defaultValue=0.,
+                                bool errorIfMissing=false);
+  static std::string GetOnelabString(std::string name, const std::string &defaultValue="",
+                                     bool errorIfMissing=false);
   static void SetOnelabAction(const std::string &action);
   static std::string GetOnelabAction();
   static void ExchangeOnelabParameter(const std::string &key,

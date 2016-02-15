@@ -200,34 +200,35 @@ extern int gmsh_yydebug;
     tShow = 410,
     tHide = 411,
     tGetValue = 412,
-    tGetEnv = 413,
-    tGetString = 414,
-    tGetNumber = 415,
-    tHomology = 416,
-    tCohomology = 417,
-    tBetti = 418,
-    tExists = 419,
-    tFileExists = 420,
-    tGMSH_MAJOR_VERSION = 421,
-    tGMSH_MINOR_VERSION = 422,
-    tGMSH_PATCH_VERSION = 423,
-    tGmshExecutableName = 424,
-    tSetPartition = 425,
-    tNameFromString = 426,
-    tStringFromName = 427,
-    tAFFECTPLUS = 428,
-    tAFFECTMINUS = 429,
-    tAFFECTTIMES = 430,
-    tAFFECTDIVIDE = 431,
-    tOR = 432,
-    tAND = 433,
-    tEQUAL = 434,
-    tNOTEQUAL = 435,
-    tLESSOREQUAL = 436,
-    tGREATEROREQUAL = 437,
-    tPLUSPLUS = 438,
-    tMINUSMINUS = 439,
-    UNARYPREC = 440
+    tGetStringValue = 413,
+    tGetEnv = 414,
+    tGetString = 415,
+    tGetNumber = 416,
+    tHomology = 417,
+    tCohomology = 418,
+    tBetti = 419,
+    tExists = 420,
+    tFileExists = 421,
+    tGMSH_MAJOR_VERSION = 422,
+    tGMSH_MINOR_VERSION = 423,
+    tGMSH_PATCH_VERSION = 424,
+    tGmshExecutableName = 425,
+    tSetPartition = 426,
+    tNameFromString = 427,
+    tStringFromName = 428,
+    tAFFECTPLUS = 429,
+    tAFFECTMINUS = 430,
+    tAFFECTTIMES = 431,
+    tAFFECTDIVIDE = 432,
+    tOR = 433,
+    tAND = 434,
+    tEQUAL = 435,
+    tNOTEQUAL = 436,
+    tLESSOREQUAL = 437,
+    tGREATEROREQUAL = 438,
+    tPLUSPLUS = 439,
+    tMINUSMINUS = 440,
+    UNARYPREC = 441
   };
 #endif
 
@@ -246,7 +247,7 @@ union YYSTYPE
   Shape s;
   List_T *l;
 
-#line 250 "Gmsh.tab.hpp" /* yacc.c:1909  */
+#line 251 "Gmsh.tab.hpp" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

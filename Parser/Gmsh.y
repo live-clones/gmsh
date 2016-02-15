@@ -147,7 +147,8 @@ struct doubleXstring{
 %token tText2D tText3D tInterpolationScheme tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tElseIf tElse tEndIf tExit tAbort
-%token tField tReturn tCall tMacro tShow tHide tGetValue tGetEnv tGetString tGetNumber
+%token tField tReturn tCall tMacro tShow tHide tGetValue tGetStringValue tGetEnv
+%token tGetString tGetNumber
 %token tHomology tCohomology tBetti tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName tSetPartition
@@ -4779,6 +4780,11 @@ FExpr_Single :
       $$ = Msg::GetOnelabNumber($3);
       Free($3);
     }
+  | tGetNumber LP StringExprVar ',' FExpr RP
+    {
+      $$ = Msg::GetOnelabNumber($3, $5);
+      Free($3);
+    }
   | String__Index
     {
       if(!gmsh_yysymbols.count($1)){
@@ -5699,7 +5705,7 @@ StringExpr :
       strcpy($$, env);
       Free($3);
     }
-  | tGetString '(' StringExprVar ',' StringExprVar ')'
+  | tGetStringValue '(' StringExprVar ',' StringExprVar ')'
     {
       std::string s = Msg::GetString($3, $5);
       $$ = (char *)Malloc((s.size() + 1) * sizeof(char));
@@ -5707,12 +5713,20 @@ StringExpr :
       Free($3);
       Free($5);
     }
-  | tGetString '(' StringExprVar ')'
+  | tGetString LP StringExprVar RP
     {
       std::string s = Msg::GetOnelabString($3);
       $$ = (char *)Malloc((s.size() + 1) * sizeof(char));
       strcpy($$, s.c_str());
       Free($3);
+    }
+  | tGetString LP StringExprVar ',' StringExprVar RP
+    {
+      std::string s = Msg::GetOnelabString($3, $5);
+      $$ = (char *)Malloc((s.size() + 1) * sizeof(char));
+      strcpy($$, s.c_str());
+      Free($3);
+      Free($5);
     }
   | tStrCat LP RecursiveListOfStringExprVar RP
     {
