@@ -267,8 +267,7 @@ namespace onelab{
       type = getNextToken(msg, first);
       name = getNextToken(msg, first);
     }
-    static bool fromFile(std::vector<std::string> &msg,
-                         FILE *fp)
+    static bool fromFile(std::vector<std::string> &msg, FILE *fp)
     {
       msg.clear();
       char tmp[1000];
@@ -284,8 +283,7 @@ namespace onelab{
       }
       return true;
     }
-    static bool toFile(const std::vector<std::string> &msg,
-                       FILE *fp,
+    static bool toFile(const std::vector<std::string> &msg, FILE *fp,
                        const std::string &creator)
     {
       time_t now;
@@ -299,6 +297,36 @@ namespace onelab{
         fputc('\n', fp);
       }
       return true;
+    }
+    virtual std::string toJSON() const
+    {
+      std::ostringstream sstream;
+      sstream
+        << "\"type\":\"" << getType() << "\""
+        << ", \"version\":\"" << version() << "\""
+        << ", \"name\":\"" << sanitize(getName()) << "\""
+        << ", \"label\":\"" << sanitize(getLabel()) << "\""
+        << ", \"help\":\"" << sanitize(getHelp()) << "\""
+        << ", \"neverChanged\":" << (getNeverChanged() ? "true" : "false") << "\""
+        << ", \"visible\":" << (getVisible() ? "true" : "false") << "\""
+        << ", \"readOnly\":" << (getReadOnly() ? "true" : "false") << "\"";
+      sstream << ", \"attributes\":{ ";
+      for(std::map<std::string, std::string>::const_iterator it = _attributes.begin();
+          it != _attributes.end(); it++){
+        if(it != _attributes.begin()) sstream << ", ";
+        sstream << "\"" << sanitize(it->first) << "\":\""
+                << sanitize(it->second) << "\"";
+      }
+      sstream << " }";
+      sstream << ", \"clients\":{ ";
+      for(std::map<std::string, bool>::const_iterator it = getClients().begin();
+          it != getClients().end(); it++){
+        if(it != getClients().begin()) sstream << ", ";
+        sstream << "\"" << sanitize(it->first) << "\":"
+                << (it->second ? "true" : "false");
+      }
+      sstream << " }";
+      return sstream.str();
     }
   };
 
@@ -420,6 +448,32 @@ namespace onelab{
       }
       return pos;
     }
+    std::string toJSON() const
+    {
+      std::ostringstream sstream;
+      sstream.precision(16);
+      sstream
+        << "{ " << parameter::toJSON()
+        << ", \"value\":" << _value
+        << ", \"min\":" << _min
+        << ", \"max\":" << _max
+        << ", \"step\":" << _step
+        << ", \"index\":" << _index
+        << ", \"choices\":[ ";
+      for(unsigned int i = 0; i < _choices.size(); i++){
+        if(i) sstream << ", ";
+        sstream << _choices[i];
+      }
+      sstream << " ]";
+      sstream << ", \"valueLabels\":{ ";
+      for(std::map<double, std::string>::const_iterator it = _valueLabels.begin();
+          it != _valueLabels.end(); it++){
+        if(it != _valueLabels.begin()) sstream << ", ";
+        sstream << "\"" << sanitize(it->second) << "\":" << it->first;
+      }
+      sstream << " } }";
+      return sstream.str();
+    }
   };
 
   // The string class. A string has a mutable "kind": we do not derive
@@ -483,6 +537,21 @@ namespace onelab{
       for(unsigned int i = 0; i < _choices.size(); i++)
         _choices[i] = getNextToken(msg, pos);
       return pos;
+    }
+    std::string toJSON() const
+    {
+      std::ostringstream sstream;
+      sstream
+        << "{ " << parameter::toJSON()
+        << ", \"value\":\"" << sanitize(_value) << "\""
+        << ", \"kind\":\"" << sanitize(_kind) <<  "\""
+        << ", \"choices\":[ ";
+      for(unsigned int i = 0; i < _choices.size(); i++){
+        if(i) sstream << ", ";
+        sstream << "\"" << sanitize(_choices[i]) << "\"";
+      }
+      sstream << " ] }";
+      return sstream.str();
     }
   };
 
@@ -695,6 +764,29 @@ namespace onelab{
       }
       return true;
     }
+    void toJSON(std::string &json, const std::string &creator="",
+                const std::string &client="") const
+    {
+      time_t now;
+      time(&now);
+      std::string t(ctime(&now));
+      t.pop_back();
+      json.clear();
+      json += "{ \"onelab\":{\n";
+      json += "  \"creator\":\"" + creator + "\",\n";
+      json += "  \"date\":\"" + t + "\",\n";
+      json += "  \"parameters\":[ \n";
+      std::set<parameter*, parameterLessThan> ps;
+      _getAllParameters(ps);
+      for(std::set<parameter*, parameterLessThan>::const_iterator it = ps.begin();
+          it != ps.end(); it++){
+        if(client.empty() || (*it)->hasClient(client)){
+	  if((*it)->getAttribute("NotInDb") != "True")
+	    json += "    " + (*it)->toJSON() + "\n";
+	}
+      }
+      json += "] }\n";
+    }
   };
 
   // The onelab client: a class that communicates with the onelab server. Each
@@ -846,6 +938,10 @@ namespace onelab{
       if(parameter::fromFile(msg, fp)) return fromChar(msg, client);
       return false;
     }
+    void toJSON(std::string &json, const std::string &client="")
+    {
+      _parameterSpace.toJSON(json, client);
+    }
   };
 
   // A local client, which lives in the same memory space as the server.
@@ -945,8 +1041,7 @@ namespace onelab{
       _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER, msg.size(), &msg[0]);
       return true;
     }
-    template <class T> bool _get(std::vector<T> &ps,
-                                 const std::string &name="")
+    template <class T> bool _get(std::vector<T> &ps, const std::string &name="")
     {
       ps.clear();
       if(!_gmshClient) return false;
