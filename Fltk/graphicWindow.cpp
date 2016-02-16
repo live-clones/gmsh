@@ -147,14 +147,14 @@ static void file_open_merge_cb(Fl_Widget *w, void *data)
       else
         MergeFile(fileChooserGetName(i));
     }
+    if(n != (int)PView::list.size())
+      FlGui::instance()->openModule("Post-processing");
+    if(CTX::instance()->launchSolverAtStartup >= 0)
+      solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
+    else if(onelabUtils::haveSolverToRun())
+      onelab_cb(0, (void*)"check");
     drawContext::global()->draw();
   }
-  if(n != (int)PView::list.size())
-    FlGui::instance()->openModule("Post-processing");
-  if(CTX::instance()->launchSolverAtStartup >= 0)
-    solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
-  else if(onelabUtils::haveSolverToRun())
-    onelab_cb(0, (void*)"check");
 }
 
 static void file_open_recent_cb(Fl_Widget *w, void *data)
