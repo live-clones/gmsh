@@ -770,7 +770,7 @@ namespace onelab{
       time_t now;
       time(&now);
       std::string t(ctime(&now));
-      t.pop_back();
+      t.resize(t.size() - 1);
       json.clear();
       json += "{ \"onelab\":{\n";
       json += "  \"creator\":\"" + creator + "\",\n";
