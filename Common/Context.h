@@ -24,7 +24,6 @@ struct contextMeshOptions {
   int surfacesEdges, surfacesFaces, volumesEdges, volumesFaces, numSubEdges;
   int pointsNum, linesNum, surfacesNum, volumesNum, qualityType, labelType;
   int optimize, optimizeNetgen, optimizeLloyd, smoothCrossField, refineSteps;
-  int remove4triangles;
   double normals, tangents, explode, angleSmoothNormals, allowSwapEdgeAngle;
   double mshFileVersion, mshFilePartitioned, pointSize, lineWidth;
   double qualityInf, qualitySup, radiusInf, radiusSup;
@@ -56,7 +55,6 @@ struct contextMeshOptions {
   int cgnsImportOrder;
   std::map<int,int> algo2d_per_face;
   std::map<int,int> curvature_control_per_face;
-  int bunin;
   int ignorePartBound;
   int NewtonConvergenceTestXYZ;
 };

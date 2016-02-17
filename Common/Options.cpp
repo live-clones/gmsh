@@ -4894,22 +4894,6 @@ double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
   return CTX::instance()->mesh.optimizeNetgen;
 }
 
-double opt_mesh_remove_4_triangles(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.remove4triangles)
-      Msg::SetOnelabChanged();
-    CTX::instance()->mesh.remove4triangles = (int)val;
-  }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->mesh.butt[25]->value
-      (CTX::instance()->mesh.remove4triangles);
-#endif
-  return CTX::instance()->mesh.remove4triangles;
-
-}
-
 double opt_mesh_refine_steps(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -5712,13 +5696,6 @@ double opt_mesh_binary(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->mesh.binary = (int)val;
   return CTX::instance()->mesh.binary;
-}
-
-double opt_mesh_bunin(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.bunin = (int)val;
-  return CTX::instance()->mesh.bunin;
 }
 
 double opt_mesh_lloyd(OPT_ARGS_NUM)

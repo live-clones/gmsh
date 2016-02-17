@@ -512,13 +512,6 @@ void GetOptions(int argc, char *argv[])
         else
           Msg::Fatal("Missing number of lloyd iterations");
       }
-      else if(!strcmp(argv[i] + 1, "bunin")) {
-        i++;
-        if(argv[i])
-          CTX::instance()->mesh.bunin = atoi(argv[i++]);
-        else
-          Msg::Fatal("Missing cavity size in bunin optimization");
-      }
 #if defined(HAVE_MESH)
       else if(!strcmp(argv[i] + 1, "microstructure")) {
         i++;

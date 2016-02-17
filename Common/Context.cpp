@@ -96,7 +96,7 @@ CTX::CTX() : gamepad(0)
   color.mesh.tangents = color.mesh.line = color.mesh.quadrangle = 0;
   for (int i = 0; i < 20; i++)
     color.mesh.carousel[i] = 0;
-  mesh.optimize = mesh.optimizeNetgen = mesh.remove4triangles = 0;
+  mesh.optimize = mesh.optimizeNetgen = 0;
   mesh.refineSteps = mesh.scalingFactor = mesh.lcFactor = mesh.lcMin = mesh.lcMax = 0;
   mesh.toleranceEdgeLength = mesh.toleranceInitialDelaunay = 0;
   mesh.lcFromCurvature = mesh.lcFromPoints = mesh.lcExtendFromBoundary = 0;

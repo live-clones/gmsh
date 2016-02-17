@@ -3388,39 +3388,6 @@ void recurClassify(MTri3 *t, GFace *gf,
 
 #endif
 
-void GModel::detectEdges(double _tresholdAngle)
-{
-#if defined(HAVE_MESH)
-  e2t_cont adj;
-  std::vector<MTriangle*> elements;
-  std::vector<edge_angle> edges_detected, edges_lonly;
-  for(GModel::fiter it = GModel::current()->firstFace();
-      it != GModel::current()->lastFace(); ++it)
-    elements.insert(elements.end(), (*it)->triangles.begin(),
-                    (*it)->triangles.end());
-  buildEdgeToTriangle(elements, adj);
-  buildListOfEdgeAngle(adj, edges_detected, edges_lonly);
-  GEdge *selected = new discreteEdge
-    (this, getMaxElementaryNumber(1) + 1, 0, 0);
-  add(selected);
-
-  for(unsigned int i = 0; i < edges_detected.size(); i++){
-    edge_angle ea = edges_detected[i];
-    if(ea.angle <= _tresholdAngle) break;
-    selected->lines.push_back(new MLine(ea.v1, ea.v2));
-  }
-
-  for(unsigned int i = 0 ; i < edges_lonly.size(); i++){
-    edge_angle ea = edges_lonly[i];
-    selected->lines.push_back(new MLine(ea.v1, ea.v2));
-  }
-  std::set<GFace*> _temp;
-  _temp.insert(faces.begin(),faces.end());
-  classifyFaces(_temp);
-  remove(selected);
-  //  delete selected;
-#endif
-}
 
 void GModel::classifyFaces(std::set<GFace*> &_faces)
 {

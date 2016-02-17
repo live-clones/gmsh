@@ -365,7 +365,7 @@ void qmTriangle::NCJAndGradients(const SPoint3 &p0, const SPoint3 &p1, const SPo
 
 
 double qmQuadrangle::eta(MQuadrangle *el) {
-  double AR = 1;//(minEdge()/maxEdge());
+  double AR = 1;//pow(el->minEdge()/el->maxEdge(),.25);
 
   MVertex *_v[4] = {el->getVertex(0), el->getVertex(1), el->getVertex(2), el->getVertex(3)};
 

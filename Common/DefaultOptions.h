@@ -966,9 +966,6 @@ StringXNumber MeshOptions_Number[] = {
     "Field format for Nastran BDF files (0=free, 1=small, 2=large)" },
   { F|O, "Binary" , opt_mesh_binary , 0. ,
     "Write mesh files in binary format (if possible)" },
-  { F|O, "Bunin" , opt_mesh_bunin , 0. ,
-    "Apply Bunin optimization on quad meshes (the parameter is the maximal size of "
-    "a cavity that may be remeshed)" },
   { F|O, "Lloyd" , opt_mesh_lloyd , 0. ,
     "Apply lloyd optimization on surface meshes" },
   { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
@@ -1220,8 +1217,6 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" },
-  { F|O, "Remove4Triangles" , opt_mesh_remove_4_triangles , 0 ,
-    "Try to remove nodes surrounded by 4 triangles in 2D triangular meshes" },
   { F|O, "ReverseAllNormals" , opt_mesh_reverse_all_normals , 0. ,
     "Reverse all the mesh normals (for display)" },
 

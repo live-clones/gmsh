@@ -62,17 +62,12 @@ void laplaceSmoothing(GFace *gf, int niter=1, bool infinity_norm = false);
 void _relocateVertex(GFace *gf, MVertex *ver,
                      const std::vector<MElement*> &lt);
 
-/*
-void edgeSwappingLawson(GFace *gf);
-*/
-
 enum swapCriterion {SWCR_DEL, SWCR_QUAL, SWCR_NORM, SWCR_CLOSE};
 enum splitCriterion {SPCR_CLOSE, SPCR_QUAL, SPCR_ALLWAYS};
 
 int edgeSwapPass(GFace *gf,
                  std::set<MTri3*, compareTri3Ptr> &allTris,
                  const swapCriterion &cr, bidimMeshData &DATA);
-void removeFourTrianglesNodes(GFace *gf, bool replace_by_quads);
 void removeThreeTrianglesNodes(GFace *gf);
 void buildMeshGenerationDataStructures(GFace *gf,
                                        std::set<MTri3*, compareTri3Ptr> &AllTris,
@@ -82,7 +77,8 @@ void computeEquivalences(GFace *gf,bidimMeshData &DATA);
 void recombineIntoQuads(GFace *gf,
                         bool topologicalOpti   = true,
                         bool nodeRepositioning = true,
-			double minqual = 0.1);
+			double minqual = 0.1,
+			bool verbose = true);
 
 //used for meshGFaceRecombine development
 int recombineWithBlossom(GFace *gf, double dx, double dy,
@@ -159,29 +155,5 @@ struct RecombineTriangle
   }
 };
 
-/***************************************************/
-/******************class Temporary******************/
-/***************************************************/
-
-class Temporary{
- private :
-  static double w1,w2,w3;
-  static std::vector<SVector3> gradients;
-  void read_data(std::string);
-  static SVector3 compute_normal(MElement*);
-  static SVector3 compute_other_vector(MElement*);
-  static SVector3 compute_gradient(MElement*);
- public :
-  Temporary();
-  ~Temporary();
-  void quadrilaterize(std::string,double,double,double);
-  static double compute_total_cost(double,double);
-  static void select_weights(double,double,double);
-  static double compute_alignment(const MEdge&,MElement*,MElement*);
-};
-
-/***************************************************/
-/***************************************************/
-/***************************************************/
 
 #endif

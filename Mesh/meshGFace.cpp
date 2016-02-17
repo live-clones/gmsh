@@ -208,13 +208,12 @@ public:
        CTX::instance()->mesh.algoRecombine == 2){
       // recombine the elements on the half mesh
       CTX::instance()->mesh.lcFactor /=2.0;
-      recombineIntoQuads(_gf,false,true,.1);
-      Msg::Info("subdividing");
-      _gf->model()->writeMSH("hop1.msh");
+      recombineIntoQuads(_gf,true,true,.1,true);
+      //      Msg::Info("subdividing");
       subdivide();
-      _gf->model()->writeMSH("hop2.msh");
+      //      _gf->model()->writeMSH("hop2.msh");
       restore();
-      recombineIntoQuads(_gf,false,true,0.1);
+      recombineIntoQuads(_gf,true,true,1.e-3,false);
       computeElementShapes(_gf,
 			   _gf->meshStatistics.worst_element_shape,
 			   _gf->meshStatistics.average_element_shape,
@@ -1003,7 +1002,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       }
     }
     else
-      Msg::Info("Degenerated mesh on edge %d", (*ite)->tag());
+      Msg::Debug("Degenerated mesh on edge %d", (*ite)->tag());
     ++ite;
   }
 
@@ -1562,21 +1561,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     sprintf(name, "param%d.pos", gf->tag());
     outputScalarField(m->triangles, name,1);
   }
-  if(CTX::instance()->mesh.remove4triangles)
-    removeFourTrianglesNodes(gf,false);
 
-  //Emi print efficiency index
-  /*
-  gf->computeMeshSizeFieldAccuracy(gf->meshStatistics.efficiency_index,
-  				   gf->meshStatistics.longest_edge_length,
-  				   gf->meshStatistics.smallest_edge_length,
-  				   gf->meshStatistics.nbEdge,
-  				   gf->meshStatistics.nbGoodLength);
-  */
-  //printf("----- Efficiency index is tau=%g\n", gf->meshStatistics.efficiency_index);
-
-
-  // delete the mesh
   delete m;
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
