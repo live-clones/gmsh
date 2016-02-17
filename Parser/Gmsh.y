@@ -152,7 +152,7 @@ struct doubleXstring{
 %token tHomology tCohomology tBetti tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName tSetPartition
-%token tNameFromString tStringFromName
+%token tNameToString tStringToName
 
 %type <d> FExpr FExpr_Single
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
@@ -5673,7 +5673,7 @@ StringExpr :
     {
       $$ = $1;
     }
-  | tStringFromName '[' String__Index ']'
+  | tNameToString '[' String__Index ']'
     {
       $$ = $3;
     }
@@ -5926,8 +5926,8 @@ String__Index :
   | StringIndex
     { $$ = $1; }
 
-  // Name from any string
-  | tNameFromString '[' StringExprVar ']'
+  // Create a name from any string
+  | tStringToName '[' StringExprVar ']'
     { $$ = $3; }
  ;
 

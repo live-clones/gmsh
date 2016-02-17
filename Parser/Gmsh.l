@@ -213,7 +213,8 @@ MPI_Rank                return tMPI_Rank;
 MPI_Size                return tMPI_Size;
 Memory                  return tMemory;
 
-NameFromString          return tNameFromString;
+NameToString            return tNameToString;
+N2S                     return tNameToString;
 NewModel                return tNewModel;
 Nurbs			return tNurbs;
 
@@ -262,7 +263,8 @@ Spline                  return tSpline;
 Split                   return tSplit;
 Surface                 return tSurface;
 Str                     return tStr;
-StringFromName          return tStringFromName;
+StringToName            return tStringToName;
+S2N                     return tStringToName;
 Sprintf                 return tSprintf;
 StrCat                  return tStrCat;
 StrReplace              return tStrReplace;
