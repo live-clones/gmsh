@@ -742,7 +742,7 @@ bool Msg::UseOnelab()
 }
 
 void Msg::SetOnelabNumber(std::string name, double val, bool visible,
-                          bool persistent, bool readOnly)
+                          bool persistent, bool readOnly, bool neverChanged)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
@@ -756,13 +756,14 @@ void Msg::SetOnelabNumber(std::string name, double val, bool visible,
     numbers[0].setVisible(visible);
     if(persistent) numbers[0].setAttribute("Persistent", "1");
     numbers[0].setReadOnly(readOnly);
+    numbers[0].setNeverChanged(neverChanged);
     _onelabClient->set(numbers[0]);
   }
 #endif
 }
 
 void Msg::SetOnelabString(std::string name, std::string val, bool visible,
-                          bool persistent, bool readOnly)
+                          bool persistent, bool readOnly, bool neverChanged)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
@@ -776,6 +777,7 @@ void Msg::SetOnelabString(std::string name, std::string val, bool visible,
     strings[0].setVisible(visible);
     if(persistent) strings[0].setAttribute("Persistent", "1");
     strings[0].setReadOnly(readOnly);
+    strings[0].setNeverChanged(neverChanged);
     _onelabClient->set(strings[0]);
   }
 #endif

@@ -117,9 +117,11 @@ class Msg {
   static void FinalizeOnelab();
   static bool UseOnelab();
   static void SetOnelabNumber(std::string name, double val, bool visible=true,
-                              bool persistent=false, bool readOnly=false);
+                              bool persistent=false, bool readOnly=false,
+                              bool neverChanged=false);
   static void SetOnelabString(std::string name, std::string val, bool visible=true,
-                              bool persistent=false, bool readOnly=false);
+                              bool persistent=false, bool readOnly=false,
+                              bool neverChanged=false);
   static double GetOnelabNumber(std::string name, double defaultValue=0.,
                                 bool errorIfMissing=false);
   static std::string GetOnelabString(std::string name, const std::string &defaultValue="",

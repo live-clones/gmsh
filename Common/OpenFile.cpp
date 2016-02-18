@@ -291,7 +291,8 @@ static int defineSolver(const std::string &name)
   return NUM_SOLVERS - 1;
 }
 
-int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingBox)
+int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingBox,
+              bool importPhysicalsInOnelab)
 {
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
@@ -508,7 +509,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
   CTX::instance()->geom.draw = 1;
   CTX::instance()->mesh.changed = ENT_ALL;
 
-  Msg::ImportPhysicalGroupsInOnelab();
+  if(importPhysicalsInOnelab) Msg::ImportPhysicalGroupsInOnelab();
 
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
   if(FlGui::available()){
@@ -575,7 +576,10 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
     GModel *m = new GModel();
     GModel::setCurrent(m);
   }
-  int ret = MergeFile(fileName, warnIfMissing, old->bounds().empty() ? true : false);
+  // FIXME: disabled onelab physical group import for now, as the number of
+  // groups in mesh-bases post-pro files can be different from the # in the
+  // model, which will trigger setChanged(Gmsh), leading undesirable remeshing
+  int ret = MergeFile(fileName, warnIfMissing, old->bounds().empty() ? true : false, false);
   GModel::setCurrent(old);
   old->setVisibility(1);
 

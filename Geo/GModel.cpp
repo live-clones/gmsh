@@ -122,7 +122,7 @@ void GModel::setFileName(std::string fileName)
 {
   _fileName = fileName;
   _fileNames.insert(fileName);
-  Msg::SetOnelabString("Gmsh/Model name", fileName, false, false, true);
+  Msg::SetOnelabString("Gmsh/Model name", fileName, false, false, true, true);
   Msg::SetWindowTitle(fileName);
 }
 

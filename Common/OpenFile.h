@@ -13,7 +13,7 @@ void ParseString(const std::string &str, bool inCurrentModelDir=false);
 void OpenProject(const std::string &filename);
 void OpenProjectMacFinder(const char *fileName);
 int MergeFile(const std::string &fileName, bool warnIfMissing=false,
-              bool setBoundingBox=true);
+              bool setBoundingBox=true, bool importPhysicalsInOnelab=true);
 int MergePostProcessingFile(const std::string &fileName, int showViews=2,
                             bool showLastStep=false, bool warnIfMissing=false);
 void ClearProject();
