@@ -112,7 +112,7 @@ set(GMSH_API
     Numeric/JacobianBasis.h Numeric/MetricBasis.h Numeric/bezierBasis.h Numeric/fullMatrix.h
     Numeric/FuncSpaceData.h
     Numeric/simpleFunction.h Numeric/cartesian.h Numeric/ElementType.h
-    Numeric/BasisFactory.h
+    Numeric/BasisFactory.h Numeric/CondNumBasis.h
   Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h
     Geo/GFace.h Geo/GRegion.h Geo/GEdgeLoop.h Geo/GEdgeCompound.h
     Geo/GFaceCompound.h Geo/GRegionCompound.h Geo/GRbf.h Geo/MVertex.h
