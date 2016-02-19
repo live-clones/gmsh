@@ -2368,14 +2368,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
 void deMeshGFace::operator() (GFace *gf)
 {
-  if(gf->geomType() == GEntity::DiscreteSurface) {
-    discreteFace *df = dynamic_cast<discreteFace*> (gf);
-    // copy the mesh and parametrize it to have a "geometry"
-    // of the discrete edge
-    // FIXME
-    return;
-    df->createGeometry();
-  }
+  if(gf->geomType() == GEntity::DiscreteSurface && !CTX::instance()->meshDiscrete)return;
   gf->deleteMesh();
   gf->meshStatistics.status = GFace::PENDING;
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;
@@ -2383,7 +2376,7 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -1; //-1;
+int debugSurface = -100; //-1;
 
 void meshGFace::operator() (GFace *gf, bool print)
 {

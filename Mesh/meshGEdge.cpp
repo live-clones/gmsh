@@ -305,11 +305,7 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
 
 void deMeshGEdge::operator() (GEdge *ge)
 {
-  if(ge->geomType() == GEntity::DiscreteCurve) {
-    // FIXME : NOTHING SPECIAL TO DO
-    return;
-  }
-
+  if(ge->geomType() == GEntity::DiscreteCurve && !CTX::instance()->meshDiscrete)return;
   ge->deleteMesh();
   ge->meshStatistics.status = GEdge::PENDING;
   ge->correspondingVertices.clear();
@@ -560,6 +556,7 @@ void meshGEdge::operator() (GEdge *ge)
         const double d = norm(der);
         double lc  = d/(P1.lc + dlc / dp * (d - P1.p));
         GPoint V = ge->point(t);
+	//	printf("%d %g\n",NUMP-1,t);
         mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t, lc);
         NUMP++;
       }

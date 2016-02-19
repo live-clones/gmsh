@@ -11,6 +11,7 @@
 #include "GmshMessage.h"
 #include "Octree.h"
 #include "discreteDiskFace.h"
+#include "discreteEdge.h"
 #include "MTriangle.h"
 #include "MEdge.h"
 #include "Geo.h"
@@ -115,6 +116,13 @@ discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh) :
 	  vs[j] = vv;
 	}
 	else vs[j] = it->second;
+      }
+      else if (v->onWhat()->dim() == 1){
+	if (v->onWhat()->geomType() == DiscreteCurve){
+	  discreteEdge *de = dynamic_cast<discreteEdge*> (v->onWhat());
+	  vs[j] = de->getGeometricalVertex(v);
+	}
+	else Msg::Fatal("fatality");
       }
       else vs[j] = v;
     }
@@ -449,10 +457,21 @@ SPoint2 discreteDiskFace::parFromVertex(MVertex *v) const
   if(it != coordinates.end()) return SPoint2(it->second.x(),it->second.y());
   // The 1D mesh has been re-done
   if (v->onWhat()->dim()==1){
+    if (v->onWhat()->geomType() == DiscreteCurve){
+      discreteEdge *de = dynamic_cast<discreteEdge*> (v->onWhat());
+      if (de){
+	MVertex *v1,*v2;
+	double xi;
+	de->interpolateInGeometry (v,&v1,&v2,xi);
+	std::map<MVertex*,SPoint3>::iterator it1 = coordinates.find(v1);
+	std::map<MVertex*,SPoint3>::iterator it2 = coordinates.find(v2);
+	if(it1 == coordinates.end()) Msg::Fatal("FIXME TO DO %d %s",__LINE__,__FILE__);
+	if(it2 == coordinates.end()) Msg::Fatal("FIXME TO DO %d %s",__LINE__,__FILE__);
+	return SPoint2(it1->second.x(),it1->second.y()) * (1.-xi) + 
+	  SPoint2(it2->second.x(),it2->second.y()) * xi; 	
+      }
+    }
     Msg::Fatal("FIXME TO DO %d %s",__LINE__,__FILE__);
-    // get the discrete edge on which v is classified
-    // get the two ending vertices A and B on both sides of v    A-------v----------B
-    // interpolate between the two uv coordinates of A and B
   }
   else if (v->onWhat()->dim()==0){
     Msg::Fatal("discreteDiskFace::parFromVertex vertex classified on a model vertex that is not part of the face");

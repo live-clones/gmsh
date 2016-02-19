@@ -875,9 +875,9 @@ void GetOptions(int argc, char *argv[])
         i++;
         CTX::instance()->mesh.recombinationTestNoGreedyStrat = 1;
       }
-      else if(!strcmp(argv[i] + 1, "newstrat")) {
+      else if(!strcmp(argv[i] + 1, "meshdiscrete")) {
         i++;
-        CTX::instance()->mesh.recombinationTestNewStrat = 1;
+        CTX::instance()->meshDiscrete = 1;
       }
       else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
         i++;

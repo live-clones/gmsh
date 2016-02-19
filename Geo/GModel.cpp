@@ -1271,20 +1271,29 @@ static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &el
     for(int j = 0; j < elements[i]->getNumVertices(); j++){
       if (force || !elements[i]->getVertex(j)->onWhat() ||
           elements[i]->getVertex(j)->onWhat()->dim() > ge->dim())
-        elements[i]->getVertex(j)->setEntity(ge);
+	elements[i]->getVertex(j)->setEntity(ge);
     }
   }
 }
 
 void GModel:: _createGeometryOfDiscreteEntities() {
-  for(eiter it = firstEdge(); it != lastEdge(); ++it){
-    if((*it)->geomType() == GEntity::DiscreteCurve) {
-      discreteEdge *de = dynamic_cast<discreteEdge*> (*it);
-      if (!de)Msg::Fatal("no fun");
-      de->createGeometry();
+  if (CTX::instance()->meshDiscrete){
+    Msg::Info("creating the geometry of discrete curves");
+    for(eiter it = firstEdge(); it != lastEdge(); ++it){
+      if((*it)->geomType() == GEntity::DiscreteCurve) {
+	discreteEdge *de = dynamic_cast<discreteEdge*> (*it);
+	if (!de)Msg::Fatal("no fun");
+	de->createGeometry();
+      }
     }
-  }
-  for(fiter it = firstFace(); it != lastFace(); ++it){
+    Msg::Info("creating the geometry of discrete surfaces");
+    for(fiter it = firstFace(); it != lastFace(); ++it){
+      if((*it)->geomType() == GEntity::DiscreteSurface) {
+	discreteFace *df = dynamic_cast<discreteFace*> (*it);
+	if (!df)Msg::Fatal("no fun");
+	df->createGeometry();
+      }
+    }
   }
 }
 

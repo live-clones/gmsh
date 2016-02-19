@@ -23,6 +23,7 @@
 #include "GEdgeCompound.h"
 #if defined(HAVE_MESH)
 #include "meshGEdge.h"
+#include "Context.h"
 #endif
 discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   : GEdge(model, num, _v0, _v1)
@@ -42,6 +43,7 @@ void discreteEdge::createTopo()
   }
 }
 
+// FULL OF BUGS !!!!!!
 void discreteEdge::orderMLines()
 {
   //printf("ordering line %d\n", tag());
@@ -143,8 +145,6 @@ void discreteEdge::orderMLines()
         mesh_vertices.end()) mesh_vertices.push_back(v1);
     if (std::find(mesh_vertices.begin(), mesh_vertices.end(), v2) ==  
         mesh_vertices.end()) mesh_vertices.push_back(v2);
-    v1->setEntity(this);
-    v2->setEntity(this);
   }
 
   //special case reverse orientation
@@ -413,7 +413,7 @@ GPoint discreteEdge::point(double par) const
   x = vB->x() + tLoc * (vE->x()- vB->x());
   y = vB->y() + tLoc * (vE->y()- vB->y());
   z = vB->z() + tLoc * (vE->z()- vB->z());
-  return GPoint(x,y,z);
+  return GPoint(x,y,z,this,par);
 }
 
 SVector3 discreteEdge::firstDer(double par) const
@@ -475,12 +475,11 @@ Range<double> discreteEdge::parBounds(int i) const
 
 void discreteEdge::createGeometry(){
   if (discrete_lines.empty()){
-    Msg::Info("creating the geometry of discrete curve %d",tag());
     createTopo();
     // copy the mesh
-    std::map<MVertex*,MVertex*> v2v;
     for (unsigned int i = 0; i < mesh_vertices.size(); i++){
-      MVertex *v   = new MEdgeVertex(mesh_vertices[i]->x(),mesh_vertices[i]->y(),mesh_vertices[i]->z(),this,(double)(i+1));
+      MEdgeVertex *v   = new MEdgeVertex(mesh_vertices[i]->x(),mesh_vertices[i]->y(),mesh_vertices[i]->z(),this,(double)(i+1));
+      //      printf("%3d %p\n",tag(),mesh_vertices[i]);
       v2v  [mesh_vertices[i]] = v;
     }
 
@@ -497,8 +496,6 @@ void discreteEdge::createGeometry(){
 	discrete_lines.push_back(new MLine(v01,v00));
       }
     }
-    
-    
     // compute parameters and recompute the vertices
     _pars.push_back(0.0);
     for (unsigned int i = 1; i < discrete_lines.size(); i++){
@@ -510,13 +507,31 @@ void discreteEdge::createGeometry(){
   }
 }
 
+MVertex * discreteEdge::getGeometricalVertex (MVertex *v){
+  std::map<MVertex*,MVertex*>::const_iterator it = v2v.find(v);
+  if (it == v2v.end()){
+    printf("----> %p %d %d %g %g %g %d %d\n",v,v->getNum(),tag(),v->x(),v->y(),v->z(),v->onWhat()->tag(),v->onWhat()->dim());
+    Msg::Fatal("fatality %ld %ld %ld",v2v.size(),mesh_vertices.size(),discrete_vertices.size());
+  }
+  return it->second;
+}
+
+void discreteEdge::interpolateInGeometry (MVertex *v, MVertex **v1, MVertex **v2, double &xi) const {
+  double t;
+  if (v->onWhat() != this)Msg::Fatal("%s %d",__FILE__,__LINE__);
+  v->getParameter (0,t);
+  int i = (int) t;
+  MLine *l = discrete_lines [i];
+  *v1 = l->getVertex(0);
+  *v2 = l->getVertex(1);
+  xi = t - i;
+  //  Msg::Fatal("fatality...");
+}
+
 
 void discreteEdge::mesh(bool verbose){
 #if defined(HAVE_MESH)
-  // copy the mesh into geometrical entities
-  // FIXME
-  //  return;
-  //  createGeometry();
+  if (!CTX::instance()->meshDiscrete) return;
   meshGEdge mesher;
   mesher(this);
 #endif

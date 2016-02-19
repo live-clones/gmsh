@@ -1208,8 +1208,6 @@ StringXNumber MeshOptions_Number[] = {
     "Depth start" },
   { F|O, "RecombinationTestNoGreedyStrat" , opt_mesh_recombination_no_greedy_strat , 0 ,
     "No greedy (global) strategies" },
-  { F|O, "RecombinationTestNewStrat" , opt_mesh_recombination_new_strat , 0 ,
-    "New strategies" },
   { F|O, "RemeshAlgorithm" , opt_mesh_remesh_algo , 0 ,
     "Remeshing algorithm (0=no split, 1=automatic, 2=automatic only with metis)" },
   { F|O, "RemeshParametrization" , opt_mesh_remesh_param , 4 ,

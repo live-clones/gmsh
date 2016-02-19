@@ -165,8 +165,7 @@ void discreteFace::gatherMeshes() {
 
 void discreteFace::mesh(bool verbose) {
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER) && defined(HAVE_MESH)
-  return;
-  createGeometry();
+  if (!CTX::instance()->meshDiscrete) return;
   for (unsigned int i=0;i<_atlas.size();i++)
     _atlas[i]->mesh(verbose);
   gatherMeshes();

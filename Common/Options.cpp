@@ -5885,14 +5885,6 @@ double opt_mesh_recombination_no_greedy_strat(OPT_ARGS_NUM)
   return CTX::instance()->mesh.recombinationTestNoGreedyStrat;
 }
 
-double opt_mesh_recombination_new_strat(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    CTX::instance()->mesh.recombinationTestNewStrat = (int)val;
-  }
-  return CTX::instance()->mesh.recombinationTestNewStrat;
-}
-
 double opt_mesh_remesh_algo(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){

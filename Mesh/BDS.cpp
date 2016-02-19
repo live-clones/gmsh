@@ -46,11 +46,12 @@ void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace
                     pts[0]->iD, pts[1]->iD, pts[2]->iD, pts[3]->iD);
           }
           else{
-            fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-                    pts[0]->X, pts[0]->Y, pts[0]->Z,
-                    pts[1]->X, pts[1]->Y, pts[1]->Z,
-                    pts[2]->X, pts[2]->Y, pts[2]->Z,
-                    pts[0]->iD, pts[1]->iD, pts[2]->iD);
+	    if (pts[0]->iD >= 0 && pts[1]->iD  >= 0 && pts[2]->iD  >= 0)
+	      fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+		      pts[0]->X, pts[0]->Y, pts[0]->Z,
+		      pts[1]->X, pts[1]->Y, pts[1]->Z,
+		      pts[2]->X, pts[2]->Y, pts[2]->Z,
+		      pts[0]->iD, pts[1]->iD, pts[2]->iD);
           }
         }
         else{

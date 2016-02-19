@@ -1,4 +1,5 @@
-Mesh.Algorithm = 6; // test frontal algorithm
+Mesh.RecombinationAlgorithm=2;
+Mesh.Algorithm = 8; // test frontal algorithm
 
 // Einheiten
 mm = 1.e-3;

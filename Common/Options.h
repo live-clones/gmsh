@@ -480,7 +480,6 @@ double opt_mesh_flexible_transfinite(OPT_ARGS_NUM);
 double opt_mesh_do_recombination_test(OPT_ARGS_NUM);
 double opt_mesh_recombination_test_start(OPT_ARGS_NUM);
 double opt_mesh_recombination_no_greedy_strat(OPT_ARGS_NUM);
-double opt_mesh_recombination_new_strat(OPT_ARGS_NUM);
 double opt_mesh_remesh_algo(OPT_ARGS_NUM);
 double opt_mesh_remesh_param(OPT_ARGS_NUM);
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM);

@@ -159,6 +159,7 @@ int GModel::readMSH(const std::string &name)
 
   char str[256] = "";
 
+
   // detect prehistoric MSH files
   if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
   if(!strncmp(&str[1], "NOD", 3) || !strncmp(&str[1], "NOE", 3)){
@@ -353,7 +354,6 @@ int GModel::readMSH(const std::string &name)
         _vertexMapCache.clear();
       }
     }
-
     // $Elements section
     else if(!strncmp(&str[1], "Elements", 8)) {
       if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
@@ -439,7 +439,7 @@ int GModel::readMSH(const std::string &name)
   // entity does not exist, create a new (discrete) one.
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     _storeElementsInEntities(elements[i]);
-
+  
   // associate the correct geometrical entity with each mesh vertex
   _associateEntityWithMeshVertices();
 
@@ -450,6 +450,7 @@ int GModel::readMSH(const std::string &name)
     _storeVerticesInEntities(_vertexMapCache);
 
   _createGeometryOfDiscreteEntities() ;
+
   fclose(fp);
 
   return postpro ? 2 : 1;
