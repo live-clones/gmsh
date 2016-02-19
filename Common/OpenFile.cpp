@@ -338,6 +338,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
 #endif
 
   int status = 0;
+
 #if defined(HAVE_ONELAB)
   std::string solver = getSolverForExtension(ext);
   if(solver.size()){
@@ -361,8 +362,13 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
     CTX::instance()->geom.draw = 1;
     return 1;
   }
-  else
 #endif
+
+  if(GModel::current()->getName() == ""){
+    GModel::current()->setFileName(fileName);
+    GModel::current()->setName(SplitFileName(fileName)[1]);
+  }
+
   if(ext == ".stl" || ext == ".STL"){
     status = GModel::current()->readSTL(fileName, CTX::instance()->geom.tolerance);
   }
@@ -497,11 +503,6 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
     else {
       status = GModel::readGEO(fileName);
     }
-  }
-
-  if(GModel::current()->getName() == ""){
-    GModel::current()->setFileName(fileName);
-    GModel::current()->setName(SplitFileName(fileName)[1]);
   }
 
   ComputeMaxEntityNum();
