@@ -187,7 +187,7 @@ public:
 	}
       }
       GPoint gp    = _gf->point((m[0]+m[1]+m[2]+m[3])*0.25);
-      // FIXME : NOT EXACTLY CORRECT, BUT THAT'S THE PLACE WE WANT THE POINT TO RESIDE 
+      // FIXME : NOT EXACTLY CORRECT, BUT THAT'S THE PLACE WE WANT THE POINT TO RESIDE
       double XX = 0.25*(v[0]->x()+v[1]->x()+v[2]->x()+v[3]->x());
       double YY = 0.25*(v[0]->y()+v[1]->y()+v[2]->y()+v[3]->y());
       double ZZ = 0.25*(v[0]->z()+v[1]->z()+v[2]->z()+v[3]->z());
@@ -1132,8 +1132,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       doc.points[points.size() + ip].adjacent = 0;
       doc.points[points.size() + ip].data = pp;
     }
-    
-    
+
+
 
     // Use "fast" inhouse recursive algo to generate the triangulation.
     // At this stage the triangulation is not what we need
@@ -1482,7 +1482,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // gf->deleteMesh() would also destroy e.g. the data in a compound face, which
   // we should not do)
   gf->GFace::deleteMesh();
-  
+
   Msg::Debug("Starting to add internal points");
   // start mesh generation
   if(!algoDelaunay2D(gf) && !onlyInitialMesh){
@@ -2331,7 +2331,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // BOUNDARY LAYER
   modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
 
-  
+
   if(algoDelaunay2D(gf)){
     if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf, &equivalence, &parametricCoordinates);
@@ -2376,7 +2376,7 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -100; //-1;
+int debugSurface = -1; //-1;
 
 void meshGFace::operator() (GFace *gf, bool print)
 {

@@ -57,6 +57,7 @@ struct contextMeshOptions {
   std::map<int,int> curvature_control_per_face;
   int ignorePartBound;
   int NewtonConvergenceTestXYZ;
+  int preserveNumberingMsh2;
 };
 
 struct contextGeometryOptions {

@@ -1188,6 +1188,8 @@ StringXNumber MeshOptions_Number[] = {
     "RandomFactor * size(triangle)/size(model) approaches machine accuracy)" },
   { F|O, "IgnorePartitionBoundary" , opt_mesh_ignore_part_bound , 0. ,
     "Ignore partitions boundaries (0=no, 1=yes)"},
+  { F|O, "PreserveNumberingMsh2" , opt_mesh_preserve_numbering_msh2 , 0. ,
+    "Preserve element numbering in MSH2 format (will break meshes with multiple physical groups for a single elementary entity)"},
 #if defined(HAVE_BLOSSOM)
   { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 1 ,
 #else

@@ -119,7 +119,7 @@ MElement* MElement::createElement(int tag, const std::vector<MVertex*> &vertices
 
   case TYPE_TRIH:
     return new MTrihedron(vertices, num, part);
-    
+
   case TYPE_HEX:
     if (order == 1)
       return new MHexahedron(vertices, num, part);
@@ -1059,6 +1059,8 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
     }
   }
 
+  if(CTX::instance()->mesh.preserveNumberingMsh2) num = _num;
+
   if(!binary){
     fprintf(fp, "%d %d", num ? num : _num, type);
     if(version < 2.0)
@@ -1160,7 +1162,7 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
   }
   if(printGamma){
     double gamma = gammaShapeMeasure();
-    for(int i = 0; i < n; i++){      
+    for(int i = 0; i < n; i++){
       if(first) first = false; else fprintf(fp, ",");
       //      fprintf(fp, "%g", gamma);  FIXME
       fprintf(fp, "%d", getVertex(i)->getNum());
