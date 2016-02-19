@@ -60,6 +60,9 @@ class discreteDiskFace : public GFace {
   virtual void secondDer(const SPoint2 &param,
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const;
   GEntity::GeomType geomType() const { return DiscreteDiskSurface; }
+  GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
+				const SVector3 &p, const double &d,
+				double uv[2]) const;
  protected:
   //------------------------------------------------
   // a copy of the mesh that should not be destroyed

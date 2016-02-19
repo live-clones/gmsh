@@ -332,7 +332,7 @@ void circumCenterXY(double *p1, double *p2, double *p3, double *res)
 
   d = 2. * (double)(y1 * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2));
   if(d == 0.0) {
-    // Msg::Warning("Colinear points in circum circle computation");
+    //    Msg::Warning("Colinear points in circum circle computation");
     res[0] = res[1] = -99999.;
     return ;
   }

@@ -2331,7 +2331,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // BOUNDARY LAYER
   modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
 
-
+  
   if(algoDelaunay2D(gf)){
     if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf, &equivalence, &parametricCoordinates);

@@ -362,6 +362,14 @@ static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params
     return;
   }
 
+#if defined(HAVE_ANN) && defined(HAVE_SOLVER)
+  if (gf->geomType() == GEntity::DiscreteDiskSurface ){
+    discreteDiskFace *gfc = (discreteDiskFace*) gf;
+    params.push_back(gfc->parFromVertex(v));
+    return ;
+  }
+#endif
+
   if(v->onWhat()->dim() == 0){
     GVertex *gv = (GVertex*)v->onWhat();
     std::list<GEdge*> ed = gv->edges();

@@ -24,6 +24,7 @@
 #include "Field.h"
 #include "GModel.h"
 #include "GFaceCompound.h"
+#include "discreteDiskFace.h"
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
 
@@ -1125,7 +1126,6 @@ void bowyerWatson(GFace *gf, int MAXPNT,
   }
 #endif
   transferDataStructure(gf, AllTris, DATA);
-  //  removeThreeTrianglesNodes(gf);
 }
 
 /*
@@ -1311,6 +1311,18 @@ void optimalPointFrontalB (GFace *gf,
   // P = d * (n1 cos(t) + n2 sin(t)) that is on the surface
   // so we have to find t, starting with t = 0
 
+
+  if (gf->geomType() == GEntity::DiscreteDiskSurface){
+    discreteDiskFace *ddf = dynamic_cast<discreteDiskFace*> (gf);
+    if (ddf){
+      GPoint gp = ddf->intersectionWithCircle(n1,n2,middle,d,newPoint);
+      if (gp.succeeded()){
+	newPoint[0] = gp.u();
+	newPoint[1] = gp.v();
+	return ;
+      }
+    }
+  }
   if (gf->geomType() == GEntity::CompoundSurface){
     GFaceCompound *gfc = dynamic_cast<GFaceCompound*> (gf);
     if (gfc){
