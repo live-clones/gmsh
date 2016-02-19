@@ -28,7 +28,7 @@
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 5
-#define YY_FLEX_SUBMINOR_VERSION 37
+#define YY_FLEX_SUBMINOR_VERSION 35
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -66,6 +66,7 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
+typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -73,6 +74,7 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
+#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -102,8 +104,6 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
-
-#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -375,7 +375,7 @@ static void yy_fatal_error (yyconst char msg[]  );
  */
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
-	gmsh_yyleng = (size_t) (yy_cp - yy_bp); \
+	gmsh_yyleng = (yy_size_t) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
@@ -1140,10 +1140,13 @@ void   skipline(void);
        int c = '*', n;							\
        for ( n = 0; n < (int) max_size &&                               \
 	       (c = fgetc( gmsh_yyin )) != EOF && c != '\n'; ++n )		\
-	 buf[n] = (char) c;						\
-       if ( c == '\n' ){						\
-	 buf[n++] = (char) c;						\
+	 buf[n] = (char) c;                                             \
+       if ( c == '\n' ){                                                \
+	 buf[n++] = (char) c;                                           \
 	 gmsh_yylineno++;							\
+       }                                                                \
+       else if ( c == EOF ){                                            \
+	 buf[n++] = '\0';                                               \
        }								\
        if ( c == EOF && ferror( gmsh_yyin ) )				\
 	 Msg::Fatal("Input in flex scanner failed");			\
@@ -1156,7 +1159,7 @@ void   skipline(void);
 #define YY_NO_UNISTD_H
 #endif
 
-#line 1160 "Gmsh.yy.cpp"
+#line 1163 "Gmsh.yy.cpp"
 
 #define INITIAL 0
 
@@ -1245,7 +1248,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO do { if (fwrite( gmsh_yytext, gmsh_yyleng, 1, gmsh_yyout )) {} } while (0)
+#define ECHO fwrite( gmsh_yytext, gmsh_yyleng, 1, gmsh_yyout )
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -1256,7 +1259,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		size_t n; \
+		yy_size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( gmsh_yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -1338,10 +1341,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 72 "Gmsh.l"
+#line 75 "Gmsh.l"
 
 
-#line 1345 "Gmsh.yy.cpp"
+#line 1348 "Gmsh.yy.cpp"
 
 	if ( !(yy_init) )
 		{
@@ -1427,1051 +1430,1051 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 74 "Gmsh.l"
+#line 77 "Gmsh.l"
 /* none */;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 75 "Gmsh.l"
+#line 78 "Gmsh.l"
 return tEND;
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 76 "Gmsh.l"
+#line 79 "Gmsh.l"
 skipcomments();
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 77 "Gmsh.l"
+#line 80 "Gmsh.l"
 skipline();
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 78 "Gmsh.l"
+#line 81 "Gmsh.l"
 { parsestring('\"'); return tBIGSTR; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 79 "Gmsh.l"
+#line 82 "Gmsh.l"
 { parsestring('\''); return tBIGSTR; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 80 "Gmsh.l"
+#line 83 "Gmsh.l"
 { gmsh_yylval.d = NEWREG(); return tDOUBLE; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 81 "Gmsh.l"
+#line 84 "Gmsh.l"
 { gmsh_yylval.d = NEWPOINT(); return tDOUBLE; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 82 "Gmsh.l"
+#line 85 "Gmsh.l"
 { gmsh_yylval.d = NEWLINE(); return tDOUBLE; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 83 "Gmsh.l"
+#line 86 "Gmsh.l"
 { gmsh_yylval.d = NEWLINE(); return tDOUBLE; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 84 "Gmsh.l"
+#line 87 "Gmsh.l"
 { gmsh_yylval.d = NEWLINELOOP(); return tDOUBLE; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 85 "Gmsh.l"
+#line 88 "Gmsh.l"
 { gmsh_yylval.d = NEWSURFACE(); return tDOUBLE; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 86 "Gmsh.l"
+#line 89 "Gmsh.l"
 { gmsh_yylval.d = NEWSURFACELOOP(); return tDOUBLE; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 87 "Gmsh.l"
+#line 90 "Gmsh.l"
 { gmsh_yylval.d = NEWVOLUME(); return tDOUBLE; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 88 "Gmsh.l"
+#line 91 "Gmsh.l"
 { gmsh_yylval.d = NEWFIELD(); return tDOUBLE; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 89 "Gmsh.l"
+#line 92 "Gmsh.l"
 return tAFFECT;
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 90 "Gmsh.l"
+#line 93 "Gmsh.l"
 return tAFFECTPLUS;
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 91 "Gmsh.l"
+#line 94 "Gmsh.l"
 return tAFFECTMINUS;
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 92 "Gmsh.l"
+#line 95 "Gmsh.l"
 return tAFFECTTIMES;
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 93 "Gmsh.l"
+#line 96 "Gmsh.l"
 return tAFFECTDIVIDE;
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 94 "Gmsh.l"
+#line 97 "Gmsh.l"
 return tDOTS;
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 95 "Gmsh.l"
+#line 98 "Gmsh.l"
 return tDOTS;
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 96 "Gmsh.l"
+#line 99 "Gmsh.l"
 return tOR;
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 97 "Gmsh.l"
+#line 100 "Gmsh.l"
 return tAND;
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 98 "Gmsh.l"
+#line 101 "Gmsh.l"
 return tPLUSPLUS;
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 99 "Gmsh.l"
+#line 102 "Gmsh.l"
 return tMINUSMINUS;
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 100 "Gmsh.l"
+#line 103 "Gmsh.l"
 return tEQUAL;
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 101 "Gmsh.l"
+#line 104 "Gmsh.l"
 return tNOTEQUAL;
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 102 "Gmsh.l"
+#line 105 "Gmsh.l"
 return tLESSOREQUAL;
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 103 "Gmsh.l"
+#line 106 "Gmsh.l"
 return tGREATEROREQUAL;
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 105 "Gmsh.l"
+#line 108 "Gmsh.l"
 return tAbort;
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 106 "Gmsh.l"
+#line 109 "Gmsh.l"
 return tAcos;
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 107 "Gmsh.l"
+#line 110 "Gmsh.l"
 return tAdaptMesh;
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 108 "Gmsh.l"
+#line 111 "Gmsh.l"
 return tAffine;
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 109 "Gmsh.l"
+#line 112 "Gmsh.l"
 return tAcos;
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 110 "Gmsh.l"
+#line 113 "Gmsh.l"
 return tAlias;
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 111 "Gmsh.l"
+#line 114 "Gmsh.l"
 return tAliasWithOptions;
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 112 "Gmsh.l"
+#line 115 "Gmsh.l"
 return tAsin;
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 113 "Gmsh.l"
+#line 116 "Gmsh.l"
 return tAsin;
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 114 "Gmsh.l"
+#line 117 "Gmsh.l"
 return tAtan;
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 115 "Gmsh.l"
+#line 118 "Gmsh.l"
 return tAtan;
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 116 "Gmsh.l"
+#line 119 "Gmsh.l"
 return tAtan2;
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 117 "Gmsh.l"
+#line 120 "Gmsh.l"
 return tAtan2;
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 119 "Gmsh.l"
+#line 122 "Gmsh.l"
 return tBetti;
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 120 "Gmsh.l"
+#line 123 "Gmsh.l"
 return tBezier;
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 121 "Gmsh.l"
+#line 124 "Gmsh.l"
 return tBSpline;
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 122 "Gmsh.l"
+#line 125 "Gmsh.l"
 return tBoundingBox;
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 124 "Gmsh.l"
+#line 127 "Gmsh.l"
 return tCeil;
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 125 "Gmsh.l"
+#line 128 "Gmsh.l"
 return tCircle;
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 126 "Gmsh.l"
+#line 129 "Gmsh.l"
 return tCopyOptions;
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 127 "Gmsh.l"
+#line 130 "Gmsh.l"
 return tCoherence;
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 128 "Gmsh.l"
+#line 131 "Gmsh.l"
 return tCohomology;
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 129 "Gmsh.l"
+#line 132 "Gmsh.l"
 return tCombine;
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 130 "Gmsh.l"
+#line 133 "Gmsh.l"
 return tCosh;
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 131 "Gmsh.l"
+#line 134 "Gmsh.l"
 return tCos;
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 132 "Gmsh.l"
+#line 135 "Gmsh.l"
 return tCharacteristic;
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 133 "Gmsh.l"
+#line 136 "Gmsh.l"
 return tComplex;
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 134 "Gmsh.l"
+#line 137 "Gmsh.l"
 return tColor;
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 135 "Gmsh.l"
+#line 138 "Gmsh.l"
 return tColorTable;
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 136 "Gmsh.l"
+#line 139 "Gmsh.l"
 return tCompound;
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 137 "Gmsh.l"
+#line 140 "Gmsh.l"
 return tCoordinates;
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 138 "Gmsh.l"
+#line 141 "Gmsh.l"
 return tSpline;
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 139 "Gmsh.l"
+#line 142 "Gmsh.l"
 return tCall;
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 140 "Gmsh.l"
+#line 143 "Gmsh.l"
 return tCreateTopology;
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 141 "Gmsh.l"
+#line 144 "Gmsh.l"
 return tCreateTopologyNoHoles;
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 142 "Gmsh.l"
+#line 145 "Gmsh.l"
 return tCpu;
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 143 "Gmsh.l"
+#line 146 "Gmsh.l"
 return tCurrentDirectory;
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 144 "Gmsh.l"
+#line 147 "Gmsh.l"
 return tCurrentDirectory;
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 146 "Gmsh.l"
+#line 149 "Gmsh.l"
 return tDefineConstant;
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 147 "Gmsh.l"
+#line 150 "Gmsh.l"
 return tDefineNumber;
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 148 "Gmsh.l"
+#line 151 "Gmsh.l"
 return tDefineString;
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 149 "Gmsh.l"
+#line 152 "Gmsh.l"
 return tDelete;
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 150 "Gmsh.l"
+#line 153 "Gmsh.l"
 return tDegenerated;
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 151 "Gmsh.l"
+#line 154 "Gmsh.l"
 return tDilate;
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 152 "Gmsh.l"
+#line 155 "Gmsh.l"
 return tDraw;
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 153 "Gmsh.l"
+#line 156 "Gmsh.l"
 return tSetChanged;
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 155 "Gmsh.l"
+#line 158 "Gmsh.l"
 return tExp;
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 156 "Gmsh.l"
+#line 159 "Gmsh.l"
 return tEllipse;
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 157 "Gmsh.l"
+#line 160 "Gmsh.l"
 return tEllipse;
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 158 "Gmsh.l"
+#line 161 "Gmsh.l"
 return tElse;
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 159 "Gmsh.l"
+#line 162 "Gmsh.l"
 return tElseIf;
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 160 "Gmsh.l"
+#line 163 "Gmsh.l"
 return tExtrude;
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 161 "Gmsh.l"
+#line 164 "Gmsh.l"
 return tElliptic;
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 162 "Gmsh.l"
+#line 165 "Gmsh.l"
 return tEndFor;
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 163 "Gmsh.l"
+#line 166 "Gmsh.l"
 return tEndIf;
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 164 "Gmsh.l"
+#line 167 "Gmsh.l"
 return tEuclidian;
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 165 "Gmsh.l"
+#line 168 "Gmsh.l"
 return tError;
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 166 "Gmsh.l"
+#line 169 "Gmsh.l"
 return tExit;
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 167 "Gmsh.l"
+#line 170 "Gmsh.l"
 return tExists;
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 169 "Gmsh.l"
+#line 172 "Gmsh.l"
 return tFabs;
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 170 "Gmsh.l"
+#line 173 "Gmsh.l"
 return tField;
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 171 "Gmsh.l"
+#line 174 "Gmsh.l"
 return tFind;
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 172 "Gmsh.l"
+#line 175 "Gmsh.l"
 return tFileExists;
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 173 "Gmsh.l"
+#line 176 "Gmsh.l"
 return tFixRelativePath;
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 174 "Gmsh.l"
+#line 177 "Gmsh.l"
 return tFloor;
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 175 "Gmsh.l"
+#line 178 "Gmsh.l"
 return tFmod;
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 176 "Gmsh.l"
+#line 179 "Gmsh.l"
 return tFor;
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 177 "Gmsh.l"
+#line 180 "Gmsh.l"
 return tMacro;
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 179 "Gmsh.l"
+#line 182 "Gmsh.l"
 return tGetEnv;
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 180 "Gmsh.l"
+#line 183 "Gmsh.l"
 return tGetString;
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 181 "Gmsh.l"
+#line 184 "Gmsh.l"
 return tGetNumber;
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 182 "Gmsh.l"
+#line 185 "Gmsh.l"
 return tGetValue;
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 183 "Gmsh.l"
+#line 186 "Gmsh.l"
 return tGetStringValue;
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 184 "Gmsh.l"
+#line 187 "Gmsh.l"
 return tGMSH_MAJOR_VERSION;
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 185 "Gmsh.l"
+#line 188 "Gmsh.l"
 return tGMSH_MINOR_VERSION;
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 186 "Gmsh.l"
+#line 189 "Gmsh.l"
 return tGMSH_PATCH_VERSION;
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 187 "Gmsh.l"
+#line 190 "Gmsh.l"
 return tGmshExecutableName;
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 189 "Gmsh.l"
+#line 192 "Gmsh.l"
 return tHide;
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 190 "Gmsh.l"
+#line 193 "Gmsh.l"
 return tHole;
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 191 "Gmsh.l"
+#line 194 "Gmsh.l"
 return tHomology;
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 192 "Gmsh.l"
+#line 195 "Gmsh.l"
 return tHypot;
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 194 "Gmsh.l"
+#line 197 "Gmsh.l"
 return tIn;
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 195 "Gmsh.l"
+#line 198 "Gmsh.l"
 return tIf;
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 196 "Gmsh.l"
+#line 199 "Gmsh.l"
 return tIntersect;
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 197 "Gmsh.l"
+#line 200 "Gmsh.l"
 return tInterpolationScheme;
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 199 "Gmsh.l"
+#line 202 "Gmsh.l"
 return tNurbsKnots;
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 201 "Gmsh.l"
+#line 204 "Gmsh.l"
 return tLength;
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 202 "Gmsh.l"
+#line 205 "Gmsh.l"
 return tLine;
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 203 "Gmsh.l"
+#line 206 "Gmsh.l"
 return tList;
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 204 "Gmsh.l"
+#line 207 "Gmsh.l"
 return tLog;
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 205 "Gmsh.l"
+#line 208 "Gmsh.l"
 return tLog10;
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
-#line 206 "Gmsh.l"
+#line 209 "Gmsh.l"
 return tLayers;
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
-#line 207 "Gmsh.l"
+#line 210 "Gmsh.l"
 return tLevelset;
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 209 "Gmsh.l"
+#line 212 "Gmsh.l"
 return tMacro;
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 210 "Gmsh.l"
+#line 213 "Gmsh.l"
 return tMeshAlgorithm;
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 211 "Gmsh.l"
+#line 214 "Gmsh.l"
 return tModulo;
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 212 "Gmsh.l"
+#line 215 "Gmsh.l"
 return tMPI_Rank;
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 213 "Gmsh.l"
+#line 216 "Gmsh.l"
 return tMPI_Size;
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 214 "Gmsh.l"
+#line 217 "Gmsh.l"
 return tMemory;
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 216 "Gmsh.l"
+#line 219 "Gmsh.l"
 return tNameToString;
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
-#line 217 "Gmsh.l"
+#line 220 "Gmsh.l"
 return tNameToString;
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
-#line 218 "Gmsh.l"
+#line 221 "Gmsh.l"
 return tNewModel;
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 219 "Gmsh.l"
+#line 222 "Gmsh.l"
 return tNurbs;
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
-#line 221 "Gmsh.l"
+#line 224 "Gmsh.l"
 return tOnelabAction;
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
-#line 222 "Gmsh.l"
+#line 225 "Gmsh.l"
 return tOnelabRun;
 	YY_BREAK
 case 136:
 YY_RULE_SETUP
-#line 223 "Gmsh.l"
+#line 226 "Gmsh.l"
 return tNurbsOrder;
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
-#line 225 "Gmsh.l"
+#line 228 "Gmsh.l"
 return tPeriodic;
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
-#line 226 "Gmsh.l"
+#line 229 "Gmsh.l"
 return tPhysical;
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 227 "Gmsh.l"
+#line 230 "Gmsh.l"
 return tPi;
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 228 "Gmsh.l"
+#line 231 "Gmsh.l"
 return tPlane;
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 229 "Gmsh.l"
+#line 232 "Gmsh.l"
 return tPoint;
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 230 "Gmsh.l"
+#line 233 "Gmsh.l"
 return tParametric;
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
-#line 231 "Gmsh.l"
+#line 234 "Gmsh.l"
 return tPolarSphere;
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
-#line 232 "Gmsh.l"
+#line 235 "Gmsh.l"
 return tPrintf;
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
-#line 233 "Gmsh.l"
+#line 236 "Gmsh.l"
 return tPlugin;
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 235 "Gmsh.l"
+#line 238 "Gmsh.l"
 return tQuadTriAddVerts;
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 236 "Gmsh.l"
+#line 239 "Gmsh.l"
 return tQuadTriNoNewVerts;
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 238 "Gmsh.l"
+#line 241 "Gmsh.l"
 return tQuadTriDbl;
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 239 "Gmsh.l"
+#line 242 "Gmsh.l"
 return tQuadTriSngl;
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-#line 241 "Gmsh.l"
+#line 244 "Gmsh.l"
 return tRecombine;
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
-#line 242 "Gmsh.l"
+#line 245 "Gmsh.l"
 return tRecombLaterals;
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-#line 243 "Gmsh.l"
+#line 246 "Gmsh.l"
 return tRecursive;
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 244 "Gmsh.l"
+#line 247 "Gmsh.l"
 return tRotate;
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 245 "Gmsh.l"
+#line 248 "Gmsh.l"
 return tRound;
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 246 "Gmsh.l"
+#line 249 "Gmsh.l"
 return tRuled;
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 247 "Gmsh.l"
+#line 250 "Gmsh.l"
 return tRand;
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
-#line 248 "Gmsh.l"
+#line 251 "Gmsh.l"
 return tRefineMesh;
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-#line 249 "Gmsh.l"
+#line 252 "Gmsh.l"
 return tRelocateMesh;
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-#line 250 "Gmsh.l"
+#line 253 "Gmsh.l"
 return tReturn;
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-#line 251 "Gmsh.l"
+#line 254 "Gmsh.l"
 return tReverse;
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
-#line 253 "Gmsh.l"
+#line 256 "Gmsh.l"
 return tScaleLast;
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
-#line 254 "Gmsh.l"
+#line 257 "Gmsh.l"
 return tSmoother;
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
-#line 255 "Gmsh.l"
+#line 258 "Gmsh.l"
 return tSetNumber;
 	YY_BREAK
 case 164:
 YY_RULE_SETUP
-#line 256 "Gmsh.l"
+#line 259 "Gmsh.l"
 return tSetString;
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
-#line 257 "Gmsh.l"
+#line 260 "Gmsh.l"
 return tSetPartition;
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-#line 258 "Gmsh.l"
+#line 261 "Gmsh.l"
 return tSqrt;
 	YY_BREAK
 case 167:
 YY_RULE_SETUP
-#line 259 "Gmsh.l"
+#line 262 "Gmsh.l"
 return tSin;
 	YY_BREAK
 case 168:
 YY_RULE_SETUP
-#line 260 "Gmsh.l"
+#line 263 "Gmsh.l"
 return tSinh;
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
-#line 261 "Gmsh.l"
+#line 264 "Gmsh.l"
 return tSphere;
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
-#line 262 "Gmsh.l"
+#line 265 "Gmsh.l"
 return tSpline;
 	YY_BREAK
 case 171:
 YY_RULE_SETUP
-#line 263 "Gmsh.l"
+#line 266 "Gmsh.l"
 return tSplit;
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
-#line 264 "Gmsh.l"
+#line 267 "Gmsh.l"
 return tSurface;
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
-#line 265 "Gmsh.l"
+#line 268 "Gmsh.l"
 return tStr;
 	YY_BREAK
 case 174:
 YY_RULE_SETUP
-#line 266 "Gmsh.l"
+#line 269 "Gmsh.l"
 return tStringToName;
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
-#line 267 "Gmsh.l"
+#line 270 "Gmsh.l"
 return tStringToName;
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
-#line 268 "Gmsh.l"
+#line 271 "Gmsh.l"
 return tSprintf;
 	YY_BREAK
 case 177:
 YY_RULE_SETUP
-#line 269 "Gmsh.l"
+#line 272 "Gmsh.l"
 return tStrCat;
 	YY_BREAK
 case 178:
 YY_RULE_SETUP
-#line 270 "Gmsh.l"
+#line 273 "Gmsh.l"
 return tStrReplace;
 	YY_BREAK
 case 179:
 YY_RULE_SETUP
-#line 271 "Gmsh.l"
+#line 274 "Gmsh.l"
 return tStrPrefix;
 	YY_BREAK
 case 180:
 YY_RULE_SETUP
-#line 272 "Gmsh.l"
+#line 275 "Gmsh.l"
 return tStrRelative;
 	YY_BREAK
 case 181:
 YY_RULE_SETUP
-#line 273 "Gmsh.l"
+#line 276 "Gmsh.l"
 return tStrFind;
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
-#line 274 "Gmsh.l"
+#line 277 "Gmsh.l"
 return tStrCmp;
 	YY_BREAK
 case 183:
 YY_RULE_SETUP
-#line 275 "Gmsh.l"
+#line 278 "Gmsh.l"
 return tStrChoice;
 	YY_BREAK
 case 184:
 YY_RULE_SETUP
-#line 276 "Gmsh.l"
+#line 279 "Gmsh.l"
 return tShow;
 	YY_BREAK
 case 185:
 YY_RULE_SETUP
-#line 277 "Gmsh.l"
+#line 280 "Gmsh.l"
 return tSymmetry;
 	YY_BREAK
 case 186:
 YY_RULE_SETUP
-#line 278 "Gmsh.l"
+#line 281 "Gmsh.l"
 return tSyncModel;
 	YY_BREAK
 case 187:
 YY_RULE_SETUP
-#line 280 "Gmsh.l"
+#line 283 "Gmsh.l"
 return tText2D;
 	YY_BREAK
 case 188:
 YY_RULE_SETUP
-#line 281 "Gmsh.l"
+#line 284 "Gmsh.l"
 return tText3D;
 	YY_BREAK
 case 189:
 YY_RULE_SETUP
-#line 282 "Gmsh.l"
+#line 285 "Gmsh.l"
 return tTestLevel;
 	YY_BREAK
 case 190:
 YY_RULE_SETUP
-#line 283 "Gmsh.l"
+#line 286 "Gmsh.l"
 return tTextAttributes;
 	YY_BREAK
 case 191:
 YY_RULE_SETUP
-#line 284 "Gmsh.l"
+#line 287 "Gmsh.l"
 return tTime;
 	YY_BREAK
 case 192:
 YY_RULE_SETUP
-#line 285 "Gmsh.l"
+#line 288 "Gmsh.l"
 return tTransfinite;
 	YY_BREAK
 case 193:
 YY_RULE_SETUP
-#line 286 "Gmsh.l"
+#line 289 "Gmsh.l"
 return tTransfQuadTri;
 	YY_BREAK
 case 194:
 YY_RULE_SETUP
-#line 287 "Gmsh.l"
+#line 290 "Gmsh.l"
 return tTranslate;
 	YY_BREAK
 case 195:
 YY_RULE_SETUP
-#line 288 "Gmsh.l"
+#line 291 "Gmsh.l"
 return tTanh;
 	YY_BREAK
 case 196:
 YY_RULE_SETUP
-#line 289 "Gmsh.l"
+#line 292 "Gmsh.l"
 return tTan;
 	YY_BREAK
 case 197:
 YY_RULE_SETUP
-#line 290 "Gmsh.l"
+#line 293 "Gmsh.l"
 return tToday;
 	YY_BREAK
 case 198:
 YY_RULE_SETUP
-#line 291 "Gmsh.l"
+#line 294 "Gmsh.l"
 return tTotalMemory;
 	YY_BREAK
 case 199:
 YY_RULE_SETUP
-#line 293 "Gmsh.l"
+#line 296 "Gmsh.l"
 return tUndefineConstant;
 	YY_BREAK
 case 200:
 YY_RULE_SETUP
-#line 294 "Gmsh.l"
+#line 297 "Gmsh.l"
 return tUpperCase;
 	YY_BREAK
 case 201:
 YY_RULE_SETUP
-#line 295 "Gmsh.l"
+#line 298 "Gmsh.l"
 return tLowerCase;
 	YY_BREAK
 case 202:
 YY_RULE_SETUP
-#line 296 "Gmsh.l"
+#line 299 "Gmsh.l"
 return tLowerCaseIn;
 	YY_BREAK
 case 203:
 YY_RULE_SETUP
-#line 297 "Gmsh.l"
+#line 300 "Gmsh.l"
 return tUsing;
 	YY_BREAK
 case 204:
 YY_RULE_SETUP
-#line 299 "Gmsh.l"
+#line 302 "Gmsh.l"
 return tVolume;
 	YY_BREAK
 case 205:
-#line 302 "Gmsh.l"
+#line 305 "Gmsh.l"
 case 206:
-#line 303 "Gmsh.l"
+#line 306 "Gmsh.l"
 case 207:
-#line 304 "Gmsh.l"
+#line 307 "Gmsh.l"
 case 208:
 YY_RULE_SETUP
-#line 304 "Gmsh.l"
+#line 307 "Gmsh.l"
 { gmsh_yylval.d = atof((char *)gmsh_yytext); return tDOUBLE; }
 	YY_BREAK
 case 209:
 YY_RULE_SETUP
-#line 306 "Gmsh.l"
+#line 309 "Gmsh.l"
 { gmsh_yylval.c = strsave((char*)gmsh_yytext); return tSTRING; }
 	YY_BREAK
 case 210:
 YY_RULE_SETUP
-#line 308 "Gmsh.l"
+#line 311 "Gmsh.l"
 return gmsh_yytext[0];
 	YY_BREAK
 case 211:
 YY_RULE_SETUP
-#line 310 "Gmsh.l"
+#line 313 "Gmsh.l"
 ECHO;
 	YY_BREAK
-#line 2475 "Gmsh.yy.cpp"
+#line 2478 "Gmsh.yy.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2664,7 +2667,7 @@ static int yy_get_next_buffer (void)
 			{ /* Not enough room in the buffer - grow it. */
 
 			/* just a shorter name for the current buffer */
-			YY_BUFFER_STATE b = YY_CURRENT_BUFFER_LVALUE;
+			YY_BUFFER_STATE b = YY_CURRENT_BUFFER;
 
 			int yy_c_buf_p_offset =
 				(int) ((yy_c_buf_p) - b->yy_ch_buf);
@@ -2797,7 +2800,7 @@ static int yy_get_next_buffer (void)
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 	yy_is_jam = (yy_current_state == 1058);
 
-		return yy_is_jam ? 0 : yy_current_state;
+	return yy_is_jam ? 0 : yy_current_state;
 }
 
     static void yyunput (int c, register char * yy_bp )
@@ -2885,7 +2888,7 @@ static int yy_get_next_buffer (void)
 				case EOB_ACT_END_OF_FILE:
 					{
 					if ( gmsh_yywrap( ) )
-						return EOF;
+						return 0;
 
 					if ( ! (yy_did_buffer_switch_on_eof) )
 						YY_NEW_FILE;
@@ -3021,6 +3024,10 @@ static void gmsh_yy_load_buffer_state  (void)
 	gmsh_yyfree((void *) b  );
 }
 
+#ifndef __cplusplus
+extern int isatty (int );
+#endif /* __cplusplus */
+    
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
  * such as during a gmsh_yyrestart() or at EOF.
@@ -3225,8 +3232,8 @@ YY_BUFFER_STATE gmsh_yy_scan_string (yyconst char * yystr )
 
 /** Setup the input buffer state to scan the given bytes. The next call to gmsh_yylex() will
  * scan from a @e copy of @a bytes.
- * @param yybytes the byte buffer to scan
- * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
+ * @param bytes the byte buffer to scan
+ * @param len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */
@@ -3234,8 +3241,7 @@ YY_BUFFER_STATE gmsh_yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t n;
-	int i;
+	yy_size_t n, i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
@@ -3465,7 +3471,7 @@ void gmsh_yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 310 "Gmsh.l"
+#line 313 "Gmsh.l"
 
 
 
@@ -3499,7 +3505,7 @@ void parsestring(char endchar)
   // etc.) "as is" in the output string: see yyinput() above
   int i = 0;
   while ((c = yyinput()) != endchar) {
-    if(gmsheof(gmsh_yyin)){
+    if(c=='\0'){
       Msg::Error("End of file in string");
       break;
     }

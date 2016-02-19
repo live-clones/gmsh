@@ -44,10 +44,13 @@ void   skipline(void);
        int c = '*', n;							\
        for ( n = 0; n < (int) max_size &&                               \
 	       (c = fgetc( yyin )) != EOF && c != '\n'; ++n )		\
-	 buf[n] = (char) c;						\
-       if ( c == '\n' ){						\
-	 buf[n++] = (char) c;						\
+	 buf[n] = (char) c;                                             \
+       if ( c == '\n' ){                                                \
+	 buf[n++] = (char) c;                                           \
 	 yylineno++;							\
+       }                                                                \
+       else if ( c == EOF ){                                            \
+	 buf[n++] = '\0';                                               \
        }								\
        if ( c == EOF && ferror( yyin ) )				\
 	 Msg::Fatal("Input in flex scanner failed");			\
@@ -339,7 +342,7 @@ void parsestring(char endchar)
   // etc.) "as is" in the output string: see yyinput() above
   int i = 0;
   while ((c = yyinput()) != endchar) {
-    if(gmsheof(yyin)){
+    if(c=='\0'){
       Msg::Error("End of file in string");
       break;
     }
