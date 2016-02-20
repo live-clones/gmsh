@@ -49,9 +49,6 @@ void   skipline(void);
 	 buf[n++] = (char) c;                                           \
 	 yylineno++;							\
        }                                                                \
-       else if ( c == EOF ){                                            \
-	 buf[n++] = '\0';                                               \
-       }								\
        if ( c == EOF && ferror( yyin ) )				\
 	 Msg::Fatal("Input in flex scanner failed");			\
        result = n;							\
@@ -342,7 +339,7 @@ void parsestring(char endchar)
   // etc.) "as is" in the output string: see yyinput() above
   int i = 0;
   while ((c = yyinput()) != endchar) {
-    if(c=='\0'){
+    if(gmsheof(yyin)){ // FIXME: this is not correct
       Msg::Error("End of file in string");
       break;
     }
