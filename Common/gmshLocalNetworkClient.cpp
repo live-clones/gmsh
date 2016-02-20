@@ -757,13 +757,13 @@ void resetDb(bool runGmshClient)
     onelabUtils::runGmshClient("reset", CTX::instance()->solver.autoMesh);
 
   for(unsigned int i = 0; i < persistentNumbers.size(); i++){
-    Msg::Info("Restoring persistent parameter %s",
-              persistentNumbers[i].getName().c_str());
+    Msg::Debug("Restoring persistent parameter %s",
+               persistentNumbers[i].getName().c_str());
     onelab::server::instance()->set(persistentNumbers[i]);
   }
   for(unsigned int i = 0; i < persistentStrings.size(); i++){
-    Msg::Info("Restoring persistent parameter %s",
-              persistentStrings[i].getName().c_str());
+    Msg::Debug("Restoring persistent parameter %s",
+               persistentStrings[i].getName().c_str());
     onelab::server::instance()->set(persistentStrings[i]);
   }
 }
