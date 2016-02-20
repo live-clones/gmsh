@@ -339,7 +339,8 @@ void parsestring(char endchar)
   // etc.) "as is" in the output string: see yyinput() above
   int i = 0;
   while ((c = yyinput()) != endchar) {
-    if(gmsheof(yyin)){ // FIXME: this is not correct
+    // Test on YY_END_OF_BUFFER_CHAR (0), not on gmsheof(yyin) because whole line in buffer
+    if(c=='\0'){
       Msg::Error("End of file in string");
       break;
     }
