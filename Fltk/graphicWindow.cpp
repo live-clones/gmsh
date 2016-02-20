@@ -2757,7 +2757,7 @@ void show_hide_message_cb(Fl_Widget *w, void *data)
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->showHideMessages();
-  FlGui::check();
+  FlGui::instance()->check();
 }
 
 void show_hide_menu_cb(Fl_Widget *w, void *data)
@@ -2765,7 +2765,7 @@ void show_hide_menu_cb(Fl_Widget *w, void *data)
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->showHideMenu();
-  FlGui::check();
+  FlGui::instance()->check();
 }
 
 void attach_detach_menu_cb(Fl_Widget *w, void *data)
@@ -2773,7 +2773,7 @@ void attach_detach_menu_cb(Fl_Widget *w, void *data)
   graphicWindow *g = getGraphicWindow
     (FlGui::instance()->getCurrentOpenglWindow()->parent());
   g->attachDetachMenu();
-  FlGui::check();
+  FlGui::instance()->check();
 }
 
 static void message_menu_scroll_cb(Fl_Widget *w, void *data)

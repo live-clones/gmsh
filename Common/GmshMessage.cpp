@@ -266,7 +266,7 @@ void Msg::Fatal(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(FlGui::instance()->in_main_thread()) FlGui::instance()->check();
+    FlGui::instance()->check();
     std::string tmp = std::string("@C1@.") + "Fatal   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
     if(_firstError.empty()) _firstError = str;
@@ -314,7 +314,7 @@ void Msg::Error(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(FlGui::instance()->in_main_thread()) FlGui::instance()->check();
+    FlGui::instance()->check();
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
       + "Error   : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
@@ -354,7 +354,7 @@ void Msg::Warning(const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(FlGui::instance()->in_main_thread()) FlGui::instance()->check();
+    FlGui::instance()->check();
     std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.")
       + "Warning : " + str;
     FlGui::instance()->addMessage(tmp.c_str());
@@ -395,7 +395,7 @@ void Msg::Info(const char *fmt, ...)
 #endif
   {
     if(FlGui::available()){
-      if(FlGui::instance()->in_main_thread()) FlGui::instance()->check();
+      FlGui::instance()->check();
       std::string tmp = std::string("Info    : ") + str;
       FlGui::instance()->addMessage(tmp.c_str());
     }
@@ -435,7 +435,7 @@ void Msg::Direct(const char *fmt, ...)
 #endif
   {
     if(FlGui::available()){
-      if(FlGui::instance()->in_main_thread()) FlGui::instance()->check();
+      FlGui::instance()->check();
       std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
         + str;
       FlGui::instance()->addMessage(tmp.c_str());
@@ -475,7 +475,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
 #endif
   {
     if(FlGui::available()){
-      if(log && FlGui::instance()->in_main_thread()) FlGui::instance()->check();
+      if(log) FlGui::instance()->check();
       if(!log || _verbosity > 4)
 	FlGui::instance()->setStatus(str);
       if(log){
@@ -566,7 +566,7 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
 
 #if defined(HAVE_FLTK)
     if(FlGui::available() && _verbosity > 4){
-      if(FlGui::instance()->in_main_thread()) FlGui::instance()->check();
+      FlGui::instance()->check();
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
     }
 #endif

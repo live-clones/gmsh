@@ -93,11 +93,9 @@ For num In {1:3}
     If (num == 3)
       // The `Print' command saves the graphical window; the `Sprintf' function
       // permits to create the file names on the fly:
-      /*
-      Print Sprintf("t8-%02g.gif", num2);
-      Print Sprintf("t8-%02g.ppm", num2);
-      Print Sprintf("t8-%02g.jpg", num2);
-      */
+      //Print Sprintf("t8-%02g.gif", num2);
+      //Print Sprintf("t8-%02g.ppm", num2);
+      //Print Sprintf("t8-%02g.jpg", num2);
     EndIf
 
   EndFor

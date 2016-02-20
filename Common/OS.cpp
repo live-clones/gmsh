@@ -583,13 +583,7 @@ int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
     return 1;
   }
   if(!blocking) cmd += " &";
-#if defined(HAVE_FLTK) // FIXME: remove
-  if(FlGui::available()) FlGui::instance()->lock();
-#endif
   Msg::Info("Calling '%s'", cmd.c_str());
-#if defined(HAVE_FLTK) // FIXME: remove
-  if(FlGui::available()) FlGui::instance()->unlock();
-#endif
   if(!system(cmd.c_str())) return 1;
 #endif
   return 0;

@@ -28,13 +28,14 @@ class drawContextFltk : public drawContextGlobal{
         for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++){
           FlGui::instance()->graph[i]->gl[j]->make_current();
           FlGui::instance()->graph[i]->gl[j]->redraw();
-          // FIXME: I don't think this should be done here CG
-          // to initialize the camera distance from model
+          glFlush();
+          // FIXME: I don't think this should be done here
           drawContext *ctx = FlGui::instance()->graph[i]->gl[j]->getDrawContext();
           ctx->camera.update();
         }
       }
     }
+    FlGui::instance()->check();
   }
   void drawCurrentOpenglWindow(bool make_current)
   {
