@@ -3482,7 +3482,8 @@ void skipcomments(void)
 
   while (1) {
     while ((c = yyinput()) != '*'){
-      if(gmsheof(gmsh_yyin)){
+      // Test on YY_END_OF_BUFFER_CHAR (0), not on gmsheof(gmsh_yyin) because whole line in buffer
+      if(c=='\0'){
 	Msg::Error("End of file in commented region");
         return;
       }
@@ -3527,9 +3528,8 @@ char *strsave(char *ptr)
 void skipline()
 {
   int c;
-  while ((c = yyinput()) != '\n'){
-    if(gmsheof(gmsh_yyin)) return;
-  }
+  while ((c = yyinput()) != '\n' && c!='\0') {}
+  // TODO: would be clever to skip the current buffer because whole line already in it
 }
 
 static bool is_alpha(const int c)
@@ -3556,6 +3556,7 @@ void skip_until(const char *skip, const char *until)
   while(1){
     while (1){
       chars[0] = yyinput();
+      // TOFIX: do another test
       if(gmsheof(gmsh_yyin)){
 	Msg::Error("Unexpected end of file");
 	return;
