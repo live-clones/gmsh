@@ -234,9 +234,14 @@ Automatically check model every time a parameter is changed@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Solver.AutoSaveDatabase
-Automatically save database after each computation@*
+@item Solver.AutoLoadDatabase
+Automatically load the ONELAB database when launching a solver@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Solver.AutoSaveDatabase
+Automatically save the ONELAB database after each computation@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.AutoMesh

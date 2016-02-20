@@ -39,11 +39,6 @@ Write mesh files in binary format (if possible)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Bunin
-Apply Bunin optimization on quad meshes (the parameter is the maximal size of a cavity that may be remeshed)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.Lloyd
 Apply lloyd optimization on surface meshes@*
 Default value: @code{0}@*
@@ -519,6 +514,11 @@ Ignore partitions boundaries (0=no, 1=yes)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.PreserveNumberingMsh2
+Preserve element numbering in MSH2 format (will break meshes with multiple physical groups for a single elementary entity)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.RecombinationAlgorithm
 Mesh recombination algorithm (0=standard, 1=blossom)@*
 Default value: @code{1}@*
@@ -540,7 +540,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DConformity
-3d recombination conformity type (0: nonconforming, 1: conformity using trihedra, 2: conformity using pyramids)@*
+3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -559,11 +559,6 @@ No greedy (global) strategies@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.RecombinationTestNewStrat
-New strategies@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.RemeshAlgorithm
 Remeshing algorithm (0=no split, 1=automatic, 2=automatic only with metis)@*
 Default value: @code{0}@*
@@ -577,11 +572,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.RefineSteps
 Number of refinement steps in the MeshAdapt-based 2D algorithms@*
 Default value: @code{10}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Remove4Triangles
-Try to remove nodes surrounded by 4 triangles in 2D triangular meshes@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ReverseAllNormals

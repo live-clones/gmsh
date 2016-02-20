@@ -134,6 +134,8 @@ Set Z view
 Hide/show small axes
 @item Alt+Shift+b
 Hide/show mesh volume faces
+@item Alt+Shift+c
+Loop through predefined colormaps
 @item Alt+Shift+d
 Hide/show mesh surface faces
 @item Alt+Shift+l
