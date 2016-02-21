@@ -132,7 +132,7 @@ class drawContext {
   enum RenderMode {GMSH_RENDER=1, GMSH_SELECT=2, GMSH_FEEDBACK=3};
   int render_mode; // current rendering mode
  public:
-  drawContext(openglWindow *window, drawTransform *transform=0);
+  drawContext(openglWindow *window=0, drawTransform *transform=0);
   ~drawContext();
   bool isHighResolution();
   void copyViewAttributes(drawContext *other)

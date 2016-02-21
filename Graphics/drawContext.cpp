@@ -72,10 +72,9 @@ bool drawContext::isHighResolution()
   // this must be dynamic: the high resolution can change when a window is moved
   // across displays
 #if defined(HAVE_FLTK)
-  return _openglWindow->pixel_w() > _openglWindow->w();
-#else
-  return false;
+  if(_openglWindow) return _openglWindow->pixel_w() > _openglWindow->w();
 #endif
+  return false;
 }
 
 drawContextGlobal *drawContext::global()

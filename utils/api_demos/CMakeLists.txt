@@ -29,8 +29,8 @@ endif(APPLE)
 add_executable(mainVertexArray mainVertexArray.cpp)
 target_link_libraries(mainVertexArray shared)
 
-add_executable(mainAntTweakBar mainAntTweakBar.cpp)
-target_link_libraries(mainAntTweakBar shared AntTweakBar ${glut})
+#add_executable(mainAntTweakBar mainAntTweakBar.cpp)
+#target_link_libraries(mainAntTweakBar shared AntTweakBar ${glut})
 
 add_executable(mainCartesian mainCartesian.cpp)
 target_link_libraries(mainCartesian shared)
