@@ -81,8 +81,6 @@ void recombineIntoQuads(GFace *gf,
 			bool verbose = true);
 
 //used for meshGFaceRecombine development
-int recombineWithBlossom(GFace *gf, double dx, double dy,
-                         int *&, std::map<MElement*,int> &);
 void quadsToTriangles(GFace *gf, double minqual);
 
 struct swapquad{
