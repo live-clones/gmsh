@@ -446,11 +446,11 @@ helpWindow::helpWindow()
     {
       Fl_Group* g = new Fl_Group(0, height - BH - WB, width, BH);
       Fl_Group* g2 = new Fl_Group(0, height - BH - WB, BB, BH);
+      g->resizable(g2);
+      g2->end();
       Fl_Return_Button *o = new Fl_Return_Button
         (width - BB - WB, height - BH - WB, BB, BH, "Update");
       o->callback(help_options_cb);
-      g->resizable(g2);
-      g2->end();
       g->end();
     }
 
