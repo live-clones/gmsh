@@ -434,7 +434,7 @@ helpWindow::helpWindow()
     o->resizable(search);
     o->end();
 
-    browser = new Fl_Browser(0, BH + 2 * WB, width, height - BH - 2 * WB);
+    browser = new Fl_Browser(0, BH + 2 * WB, width, height - 2 * BH - 4 * WB);
     browser->box(GMSH_SIMPLE_TOP_BOX);
     browser->textfont(FL_SCREEN);
     browser->textsize(FL_NORMAL_SIZE - 2);
@@ -442,6 +442,17 @@ helpWindow::helpWindow()
     browser->callback(browser_cb);
     browser->tooltip("Double-click to edit value");
     browser->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
+
+    {
+      Fl_Group* g = new Fl_Group(0, height - BH - WB, width, BH);
+      Fl_Group* g2 = new Fl_Group(0, height - BH - WB, BB, BH);
+      Fl_Return_Button *o = new Fl_Return_Button
+        (width - BB - WB, height - BH - WB, BB, BH, "Update");
+      o->callback(help_options_cb);
+      g->resizable(g2);
+      g2->end();
+      g->end();
+    }
 
     options->resizable(browser);
     options->position(Fl::x() + Fl::w()/2 - width / 2,
