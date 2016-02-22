@@ -33,6 +33,9 @@ typedef unsigned long intptr_t;
 #include "fieldWindow.h"
 #include "pluginWindow.h"
 #include "helpWindow.h"
+#include "openglWindow.h"
+#include "onelabGroup.h"
+#include "messageBrowser.h"
 #include "gmshLocalNetworkClient.h"
 #include "fileDialogs.h"
 #include "extraDialogs.h"
@@ -2776,7 +2779,7 @@ void attach_detach_menu_cb(Fl_Widget *w, void *data)
   FlGui::instance()->check();
 }
 
-static void message_menu_scroll_cb(Fl_Widget *w, void *data)
+static void message_menu_autoscroll_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g = (graphicWindow*)data;
   g->setAutoScroll(!g->getAutoScroll());
@@ -2795,39 +2798,18 @@ static void message_menu_save_cb(Fl_Widget *w, void *data)
     g->saveMessages(fileChooserGetName(1).c_str());
 }
 
-#if 0
-static void message_menu_increase_font_cb(Fl_Widget *w, void *data)
-{
-  graphicWindow *g = (graphicWindow*)data;
-  g->changeMessageFontSize(1);
-}
-
-static void message_menu_decrease_font_cb(Fl_Widget *w, void *data)
-{
-  graphicWindow *g = (graphicWindow*)data;
-  g->changeMessageFontSize(-1);
-}
-#endif
-
 static void message_browser_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g = (graphicWindow*)data;
+  g->copySelectedMessagesToClipboard();
+}
 
-  if(Fl::event_button() == 3 || Fl::event_state(FL_CTRL) || Fl::event_clicks()){
-    Fl_Menu_Item rclick_menu[] = {
-      { g->getAutoScroll() ? "Disable Auto-Scrolling" : "Enable Auto-Scrolling", 0,
-        message_menu_scroll_cb, g },
-      { "Clear Messages",   0, message_menu_clear_cb, g },
-      { "Save Messages...", 0, message_menu_save_cb, g },
-      //{ "Increase font size", 0, message_menu_increase_font_cb, g },
-      //{ "Decrease font size", 0, message_menu_decrease_font_cb, g },
-      { 0 }
-    };
-    const Fl_Menu_Item *m = rclick_menu->popup(Fl::event_x(), Fl::event_y(), 0, 0, 0);
-    if(m) m->do_callback(0, m->user_data());
-  }
-  else
-    g->copySelectedMessagesToClipboard();
+static void message_menu_search_cb(Fl_Widget *w, void *data)
+{
+  graphicWindow *g = (graphicWindow*)data;
+  g->getMessageBrowser()->clear();
+  for(int i = 0; i < g->getMessages().size(); i++)
+    g->getMessageBrowser()->add(g->getMessages()[i].c_str());
 }
 
 static void tile_cb(Fl_Widget *w, void *data)
@@ -2895,7 +2877,7 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   int sh = 2 * FL_NORMAL_SIZE - 3; // status bar height
   int sw = FL_NORMAL_SIZE + 2; // status button width
 
-  int mheight = main ? 10 /* dummy, nonzero! */ : 0;
+  int mheight = main ? 2 * BH /* nonzero! */ : 0;
   int glheight = CTX::instance()->glSize[1] - mheight;
   int height = mh + glheight + mheight + sh;
   // make sure height < screen height
@@ -2949,6 +2931,85 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
     }
 #endif
   }
+
+  // tiled windows (tree menu, opengl, messages)
+  _tile = new Fl_Tile(0, mh, glwidth + twidth, glheight + mheight);
+
+  int w2 = glwidth / 2, h2 = glheight / 2;
+  if(numTiles == 2){
+    gl.push_back(new openglWindow(twidth, mh, w2, glheight));
+    gl.back()->end();
+    gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, glheight));
+    gl.back()->end();
+  }
+  else if(numTiles == 3){
+    gl.push_back(new openglWindow(twidth, mh, w2, glheight));
+    gl.back()->end();
+    gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, h2));
+    gl.back()->end();
+    gl.push_back(new openglWindow(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
+    gl.back()->end();
+  }
+  else if(numTiles == 4){
+    gl.push_back(new openglWindow(twidth, mh, w2, h2));
+    gl.back()->end();
+    gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, h2));
+    gl.back()->end();
+    gl.push_back(new openglWindow(twidth, mh + h2, w2, glheight - h2));
+    gl.back()->end();
+    gl.push_back(new openglWindow(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
+    gl.back()->end();
+  }
+  else{
+    gl.push_back(new openglWindow(twidth, mh, glwidth, glheight));
+    gl.back()->end();
+  }
+
+  int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
+  if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
+  if(CTX::instance()->stereo) {
+    mode |= FL_DOUBLE;
+    mode |= FL_STEREO;
+  }
+  for(unsigned int i = 0; i < gl.size(); i++) gl[i]->mode(mode);
+
+  if(main){
+    _browser = new messageBrowser(twidth, mh + glheight, glwidth, mheight);
+    int s = CTX::instance()->msgFontSize;
+#if defined(WIN32) // screen font on Windows is really small
+    _browser->textsize(s <= 0 ? FL_NORMAL_SIZE : s);
+#else
+    _browser->textsize(s <= 0 ? FL_NORMAL_SIZE - 2 : s);
+#endif
+    _browser->callback(message_browser_cb, this);
+    _browser->search_callback(message_menu_search_cb, this);
+    _browser->autoscroll_callback(message_menu_autoscroll_cb, this);
+    _browser->save_callback(message_menu_save_cb, this);
+    _browser->clear_callback(message_menu_clear_cb, this);
+  }
+  else{
+    _browser = 0;
+  }
+
+  if(main && !detachedMenu){
+    _onelab = new onelabGroup(0, mh, twidth, height - mh - sh);
+    _onelab->enableTreeWidgetResize(false);
+  }
+  else{
+    _onelab = 0;
+  }
+
+  _tile->callback(tile_cb);
+  _tile->end();
+
+  // resize the tiles to match the prescribed sizes
+  _tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
+
+  // if the tree widget is too small it will not be rebuilt correctly (probably
+  // a bug)... so impose minimum width
+  int minw = 3 * BB/2 + 4 * WB;
+  if(CTX::instance()->menuSize[0] < minw) CTX::instance()->menuSize[0] = minw;
+  _tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
 
   // bottom button bar
   _bottom = new Fl_Box(0, mh + glheight + mheight, width, sh);
@@ -3033,86 +3094,6 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _minWidth = x;
   _minHeight = 100;
   _win->size_range(_minWidth, _minHeight);
-
-  // tiled windows (tree menu, opengl, messages)
-  _tile = new Fl_Tile(0, mh, glwidth + twidth, glheight + mheight);
-
-  int w2 = glwidth / 2, h2 = glheight / 2;
-  if(numTiles == 2){
-    gl.push_back(new openglWindow(twidth, mh, w2, glheight));
-    gl.back()->end();
-    gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, glheight));
-    gl.back()->end();
-  }
-  else if(numTiles == 3){
-    gl.push_back(new openglWindow(twidth, mh, w2, glheight));
-    gl.back()->end();
-    gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, h2));
-    gl.back()->end();
-    gl.push_back(new openglWindow(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
-    gl.back()->end();
-  }
-  else if(numTiles == 4){
-    gl.push_back(new openglWindow(twidth, mh, w2, h2));
-    gl.back()->end();
-    gl.push_back(new openglWindow(twidth + w2, mh, glwidth - w2, h2));
-    gl.back()->end();
-    gl.push_back(new openglWindow(twidth, mh + h2, w2, glheight - h2));
-    gl.back()->end();
-    gl.push_back(new openglWindow(twidth + w2, mh + h2, glwidth - w2, glheight - h2));
-    gl.back()->end();
-  }
-  else{
-    gl.push_back(new openglWindow(twidth, mh, glwidth, glheight));
-    gl.back()->end();
-  }
-
-  int mode = FL_RGB | FL_DEPTH | (CTX::instance()->db ? FL_DOUBLE : FL_SINGLE);
-  if(CTX::instance()->antialiasing) mode |= FL_MULTISAMPLE;
-  if(CTX::instance()->stereo) {
-    mode |= FL_DOUBLE;
-    mode |= FL_STEREO;
-  }
-  for(unsigned int i = 0; i < gl.size(); i++) gl[i]->mode(mode);
-
-  if(main){
-    _browser = new Fl_Browser(twidth, mh + glheight, glwidth, mheight);
-    _browser->box(GMSH_SIMPLE_TOP_BOX);
-    _browser->textfont(FL_SCREEN);
-    int s = CTX::instance()->msgFontSize;
-#if defined(WIN32) // screen font on Windows is really small
-    _browser->textsize(s <= 0 ? FL_NORMAL_SIZE : s);
-#else
-    _browser->textsize(s <= 0 ? FL_NORMAL_SIZE - 2 : s);
-#endif
-    _browser->type(FL_MULTI_BROWSER);
-    _browser->callback(message_browser_cb, this);
-    _browser->scrollbar_size(std::max(10, FL_NORMAL_SIZE - 2)); // thinner scrollbars
-  }
-  else{
-    _browser = 0;
-  }
-
-  if(main && !detachedMenu){
-    _onelab = new onelabGroup(0, mh, twidth, height - mh - sh);
-    _onelab->enableTreeWidgetResize(false);
-  }
-  else{
-    _onelab = 0;
-  }
-
-  _tile->callback(tile_cb);
-  _tile->end();
-
-  // resize the tiles to match the prescribed sizes
-  _tile->position(0, mh + glheight, 0, mh + CTX::instance()->glSize[1]);
-
-  // if the tree widget is too small it will not be rebuilt correctly (probably
-  // a bug)... so impose minimum width
-  int minw = 3 * BB/2 + 4 * WB;
-  if(CTX::instance()->menuSize[0] < minw) CTX::instance()->menuSize[0] = minw;
-  _tile->position(twidth, 0, CTX::instance()->menuSize[0], 0);
-
   _win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
   _win->end();
 
@@ -3482,13 +3463,15 @@ int graphicWindow::getMessageHeight()
 void graphicWindow::addMessage(const char *msg)
 {
   if(!_browser) return;
-  _browser->add(msg, 0);
+  _messages.push_back(msg);
+  _browser->add(msg);
   if(_autoScrollMessages && _win->shown() && _browser->h() >= FL_NORMAL_SIZE)
     _browser->bottomline(_browser->size());
 }
 
 void graphicWindow::clearMessages()
 {
+  _messages.clear();
   if(!_browser) return;
   _browser->clear();
 }

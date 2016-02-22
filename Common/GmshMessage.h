@@ -121,7 +121,7 @@ class Msg {
                               bool neverChanged=false);
   static void SetOnelabString(std::string name, std::string val, bool visible=true,
                               bool persistent=false, bool readOnly=false,
-                              bool neverChanged=false);
+                              bool neverChanged=false, const std::string &kind="");
   static double GetOnelabNumber(std::string name, double defaultValue=0.,
                                 bool errorIfMissing=false);
   static std::string GetOnelabString(std::string name, const std::string &defaultValue="",

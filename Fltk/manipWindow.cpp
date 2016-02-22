@@ -9,6 +9,7 @@
 #include "manipWindow.h"
 #include "paletteWindow.h"
 #include "graphicWindow.h"
+#include "openglWindow.h"
 #include "Options.h"
 #include "Context.h"
 

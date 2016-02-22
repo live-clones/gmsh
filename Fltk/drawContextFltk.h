@@ -12,6 +12,7 @@
 #include "drawContext.h"
 #include "graphicWindow.h"
 #include "optionWindow.h"
+#include "openglWindow.h"
 #include "Context.h"
 
 class drawContextFltk : public drawContextGlobal{

@@ -18,8 +18,10 @@
 #include <FL/Fl_Sys_Menu_Bar.H>
 #endif
 #include <FL/Fl_Menu_Bar.H>
-#include "openglWindow.h"
-#include "onelabGroup.h"
+
+class openglWindow;
+class onelabGroup;
+class messageBrowser;
 
 class graphicWindow{
  private:
@@ -30,13 +32,14 @@ class graphicWindow{
   Fl_Menu_Bar *_bar;
   Fl_Tile *_tile;
   Fl_Window *_win, *_menuwin;
-  Fl_Browser *_browser;
+  messageBrowser *_browser;
   onelabGroup *_onelab;
   Fl_Box *_bottom;
   Fl_Button *_butt[14];
   Fl_Progress *_label;
   int _minWidth, _minHeight;
- public:
+  std::vector<std::string> _messages;
+public:
   std::vector<openglWindow*> gl;
  public:
   graphicWindow(bool main=true, int numTiles=1, bool detachedMenu=false);
@@ -46,6 +49,8 @@ class graphicWindow{
   onelabGroup *getMenu(){ return _onelab; }
   Fl_Progress *getProgress(){ return _label; }
   Fl_Button *getSelectionButton(){ return _butt[9]; }
+  messageBrowser *getMessageBrowser(){ return _browser; }
+  std::vector<std::string> &getMessages(){ return _messages; }
   int getMinWidth(){ return _minWidth; }
   int getMinHeight(){ return _minHeight; }
   void setAutoScroll(bool val){ _autoScrollMessages = val; }

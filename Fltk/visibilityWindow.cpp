@@ -24,6 +24,7 @@ typedef unsigned long intptr_t;
 #include "paletteWindow.h"
 #include "contextWindow.h"
 #include "graphicWindow.h"
+#include "openglWindow.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"

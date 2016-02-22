@@ -20,6 +20,7 @@
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
 #include "graphicWindow.h"
+#include "openglWindow.h"
 #include "gl2ps.h"
 #include "gl2gif.h"
 #include "gl2jpeg.h"
