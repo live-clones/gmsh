@@ -7,6 +7,7 @@
 #define _MESSAGE_BROWSER_H_
 
 #include "FlGui.h"
+#include <algorithm>
 
 class messageBrowser : public Fl_Group{
  private:
