@@ -2944,6 +2944,16 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 #endif
   }
 
+  // minimum width should be exactly the width of the status bar buttons (see
+  // below)
+  _minWidth = 10 + 11 * sw + 1.75 * FL_NORMAL_SIZE;
+  _minHeight = 100;
+  _win->size_range(_minWidth, _minHeight);
+
+  // a dummy resizable box that won't eat events
+  dummyBox *resbox = new dummyBox(_minWidth, mh, width - _minWidth, glheight);
+  _win->resizable(resbox);
+
   // tiled windows (tree menu, opengl, messages)
   _tile = new Fl_Tile(0, mh, glwidth + twidth, glheight + mheight);
 
@@ -3098,14 +3108,6 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
   _label->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _label->color(FL_BACKGROUND_COLOR, FL_DARK2);
 
-  // dummy resizable box
-  dummyBox *resbox = new dummyBox(x, mh, width - x, glheight);
-  _win->resizable(resbox);
-
-  // set mininum window size
-  _minWidth = x;
-  _minHeight = 100;
-  _win->size_range(_minWidth, _minHeight);
   _win->position(CTX::instance()->glPosition[0], CTX::instance()->glPosition[1]);
   _win->end();
 
