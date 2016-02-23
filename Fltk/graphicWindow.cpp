@@ -68,8 +68,8 @@ static void file_new_cb(Fl_Widget *w, void *data)
   if(fileChooser(FILE_CHOOSER_CREATE, "New", "")) {
     std::string name = fileChooserGetName(1);
     if(!StatFile(name)){
-      if(fl_choice("File '%s' already exists.\n\nDo you want to erase it?",
-                   "Cancel", "Erase", 0, name.c_str()))
+      if(fl_choice("File '%s' already exists.\n\nDo you want to delete it?",
+                   "Cancel", "Delete", 0, name.c_str()))
         UnlinkFile(name);
       else
         goto test;
@@ -508,6 +508,16 @@ static void file_rename_cb(Fl_Widget *w, void *data)
     if(onelabUtils::haveSolverToRun())
       onelab_cb(0, (void*)"check");
     drawContext::global()->draw();
+  }
+}
+
+static void file_delete_cb(Fl_Widget *w, void *data)
+{
+  if(fl_choice("Do you really want to delete file '%s'?",
+               "Cancel", "Delete", 0, GModel::current()->getFileName().c_str())){
+    UnlinkFile(GModel::current()->getFileName());
+    Msg::Info("Deleted `%s'", GModel::current()->getFileName().c_str());
+    file_clear_cb(0, 0);
   }
 }
 
@@ -2021,6 +2031,7 @@ static Fl_Menu_Item bar_table[] = {
     {"Sa&ve Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
     {"Save Model Options", FL_CTRL+'j', (Fl_Callback *)file_options_save_cb, (void*)"file"},
     {"Save Options As Default", FL_CTRL+FL_SHIFT+'j', (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
+    {"Delete",      0, (Fl_Callback *)file_delete_cb, 0, FL_MENU_DIVIDER},
     {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
   {"&Tools", 0, 0, 0, FL_SUBMENU},
@@ -2093,7 +2104,8 @@ static Fl_Menu_Item sysbar_table[] = {
     {"Save As...", FL_META+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Save Mesh",  FL_META+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
     {"Save Model Options", FL_META+'j', (Fl_Callback *)file_options_save_cb, (void*)"file"},
-    {"Save Options As Default", FL_META+FL_SHIFT+'j', (Fl_Callback *)file_options_save_cb, (void*)"default"},
+    {"Save Options As Default", FL_META+FL_SHIFT+'j', (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
+    {"Delete",     0, (Fl_Callback *)file_delete_cb, 0},
     {0},
   {"Tools", 0, 0, 0, FL_SUBMENU},
     {"Options",         FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},
