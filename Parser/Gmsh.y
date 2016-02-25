@@ -58,7 +58,7 @@ std::string gmsh_yyname;
 int gmsh_yyerrorstate = 0;
 int gmsh_yyviewindex = 0;
 std::map<std::string, gmsh_yysymbol> gmsh_yysymbols;
-std::map<std::string, std::string> gmsh_yystringsymbols;
+std::map<std::string, std::vector<std::string> > gmsh_yystringsymbols;
 
 // Static parser variables (accessible only in this file)
 #if defined(HAVE_POST)
@@ -711,7 +711,9 @@ Affectation :
             }
           }
         }
-        else{ // list of expressions
+        else{
+          // list of expressions; this is not recommended (should use [] or ()
+          // notation instead)
           switch($2){
           case 0: // affect
             s.value.clear(); // fall-through
@@ -740,36 +742,24 @@ Affectation :
       Free($1);
       List_Delete($3);
     }
-  | tSTRING LP RP NumericAffectation ListOfDouble tEND
+  | String__Index NumericIncrement tEND
     {
-      gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-      s.list = true;
-      double d;
-      switch($4){
-      case 0: // affect
-        s.value.clear(); // fall-through
-      case 1: // append
-        for(int i = 0; i < List_Nbr($5); i++){
-          List_Read($5, i, &d);
-          s.value.push_back(d);
-        }
-        break;
-      case 2: // remove
-        for(int i = 0; i < List_Nbr($5); i++){
-          List_Read($5, i, &d);
-          std::vector<double>::iterator it = std::find(s.value.begin(),
-                                                       s.value.end(), d);
-          if(it != s.value.end()) s.value.erase(it);
-        }
-        break;
-      default:
-        yymsg(0, "Operators *= and /= not available for lists");
-        break;
+      if(!gmsh_yysymbols.count($1))
+	yymsg(0, "Unknown variable '%s'", $1);
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if(!s.list && s.value.empty())
+          yymsg(0, "Uninitialized variable '%s'", $1);
+        else if(!s.list)
+          s.value[0] += $2;
+        else
+          yymsg(0, "Variable '%s' is a list", $1);
       }
       Free($1);
-      List_Delete($5);
     }
-  | StringIndex LP RP NumericAffectation ListOfDouble tEND
+
+  // lists of numbers with bracket notation
+  | tSTRING '[' ']' NumericAffectation ListOfDouble tEND
     {
       gmsh_yysymbol &s(gmsh_yysymbols[$1]);
       s.list = true;
@@ -803,19 +793,19 @@ Affectation :
       assignVariable($1, (int)$3, $5, $6);
       Free($1);
     }
-  | tSTRING '(' FExpr ')' NumericAffectation FExpr tEND
-    {
-      assignVariable($1, (int)$3, $5, $6);
-      Free($1);
-    }
   | StringIndex '[' FExpr ']' NumericAffectation FExpr tEND
     {
       assignVariable($1, (int)$3, $5, $6);
       Free($1);
     }
-  | StringIndex '(' FExpr ')' NumericAffectation FExpr tEND
+  | tSTRING '[' FExpr ']' NumericIncrement tEND
     {
-      assignVariable($1, (int)$3, $5, $6);
+      incrementVariable($1, $3, $5);
+      Free($1);
+    }
+  | StringIndex '[' FExpr ']' NumericIncrement tEND
+    {
+      incrementVariable($1, $3, $5);
       Free($1);
     }
   | tSTRING LP '{' RecursiveListOfDouble '}' RP NumericAffectation ListOfDouble tEND
@@ -832,32 +822,78 @@ Affectation :
       List_Delete($4);
       List_Delete($8);
     }
-  | String__Index NumericIncrement tEND
+
+  // lists of numbers with parentheses notation
+
+  | tSTRING '(' ')' NumericAffectation ListOfDouble tEND
     {
-      if(!gmsh_yysymbols.count($1))
-	yymsg(0, "Unknown variable '%s'", $1);
-      else{
-        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-        if(!s.list && s.value.empty())
-          yymsg(0, "Uninitialized variable '%s'", $1);
-        else if(!s.list)
-          s.value[0] += $2;
-        else
-          yymsg(0, "Variable '%s' is a list", $1);
+      gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+      s.list = true;
+      double d;
+      switch($4){
+      case 0: // affect
+        s.value.clear(); // fall-through
+      case 1: // append
+        for(int i = 0; i < List_Nbr($5); i++){
+          List_Read($5, i, &d);
+          s.value.push_back(d);
+        }
+        break;
+      case 2: // remove
+        for(int i = 0; i < List_Nbr($5); i++){
+          List_Read($5, i, &d);
+          std::vector<double>::iterator it = std::find(s.value.begin(),
+                                                       s.value.end(), d);
+          if(it != s.value.end()) s.value.erase(it);
+        }
+        break;
+      default:
+        yymsg(0, "Operators *= and /= not available for lists");
+        break;
       }
       Free($1);
+      List_Delete($5);
     }
-  | tSTRING '[' FExpr ']' NumericIncrement tEND
+  | StringIndex '(' ')' NumericAffectation ListOfDouble tEND
     {
-      incrementVariable($1, $3, $5);
+      gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+      s.list = true;
+      double d;
+      switch($4){
+      case 0: // affect
+        s.value.clear(); // fall-through
+      case 1: // append
+        for(int i = 0; i < List_Nbr($5); i++){
+          List_Read($5, i, &d);
+          s.value.push_back(d);
+        }
+        break;
+      case 2: // remove
+        for(int i = 0; i < List_Nbr($5); i++){
+          List_Read($5, i, &d);
+          std::vector<double>::iterator it = std::find(s.value.begin(),
+                                                       s.value.end(), d);
+          if(it != s.value.end()) s.value.erase(it);
+        }
+        break;
+      default:
+        yymsg(0, "Operators *= and /= not available for lists");
+        break;
+      }
+      Free($1);
+      List_Delete($5);
+    }
+  | tSTRING '(' FExpr ')' NumericAffectation FExpr tEND
+    {
+      assignVariable($1, (int)$3, $5, $6);
+      Free($1);
+    }
+  | StringIndex '(' FExpr ')' NumericAffectation FExpr tEND
+    {
+      assignVariable($1, (int)$3, $5, $6);
       Free($1);
     }
   | tSTRING '(' FExpr ')' NumericIncrement tEND
-    {
-      incrementVariable($1, $3, $5);
-      Free($1);
-    }
-  | StringIndex '[' FExpr ']' NumericIncrement tEND
     {
       incrementVariable($1, $3, $5);
       Free($1);
@@ -867,11 +903,154 @@ Affectation :
       incrementVariable($1, $3, $5);
       Free($1);
     }
+
+  // strings
+
   | String__Index tAFFECT StringExpr tEND
     {
-      gmsh_yystringsymbols[$1] = std::string($3);
+      gmsh_yystringsymbols[$1] = std::vector<std::string>(1, $3);
       Free($1);
       Free($3);
+    }
+
+  // lists of strings with bracket notation
+
+  | tSTRING '[' ']' tAFFECT tStr LP RP tEND
+    {
+      gmsh_yystringsymbols[$1] = std::vector<std::string>();
+      Free($1);
+    }
+
+  | StringIndex '[' ']' tAFFECT tStr LP RP tEND
+    {
+      gmsh_yystringsymbols[$1] = std::vector<std::string>();
+      Free($1);
+    }
+
+  | tSTRING '[' ']' tAFFECT tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      std::vector<std::string> s;
+      for(int i = 0; i < List_Nbr($7); i++){
+        char **c = (char**)List_Pointer($7, i);
+        s.push_back(*c);
+        Free(*c);
+      }
+      gmsh_yystringsymbols[$1] = s;
+      Free($1);
+      List_Delete($7);
+    }
+
+  | StringIndex '[' ']' tAFFECT tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      std::vector<std::string> s;
+      for(int i = 0; i < List_Nbr($7); i++){
+        char **c = (char**)List_Pointer($7, i);
+        s.push_back(*c);
+        Free(*c);
+      }
+      gmsh_yystringsymbols[$1] = s;
+      Free($1);
+      List_Delete($7);
+    }
+
+  | tSTRING '[' ']' tAFFECTPLUS tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      if(gmsh_yystringsymbols.count($1)){
+        for(int i = 0; i < List_Nbr($7); i++){
+          char **c = (char**)List_Pointer($7, i);
+          gmsh_yystringsymbols[$1].push_back(*c);
+          Free(*c);
+        }
+      }
+      else
+        yymsg(0, "Uninitialized variable '%s'", $1);
+      Free($1);
+      List_Delete($7);
+    }
+
+  | StringIndex '[' ']' tAFFECTPLUS tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      if(gmsh_yystringsymbols.count($1)){
+        for(int i = 0; i < List_Nbr($7); i++){
+          char **c = (char**)List_Pointer($7, i);
+          gmsh_yystringsymbols[$1].push_back(*c);
+          Free(*c);
+        }
+      }
+      else
+        yymsg(0, "Uninitialized variable '%s'", $1);
+      Free($1);
+      List_Delete($7);
+    }
+
+  // lists of strings with parentheses notation
+
+  | tSTRING '(' ')' tAFFECT tStr LP RP tEND
+    {
+      gmsh_yystringsymbols[$1] = std::vector<std::string>();
+      Free($1);
+    }
+
+  | StringIndex '(' ')' tAFFECT tStr LP RP tEND
+    {
+      gmsh_yystringsymbols[$1] = std::vector<std::string>();
+      Free($1);
+    }
+
+  | tSTRING '(' ')' tAFFECT tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      std::vector<std::string> s;
+      for(int i = 0; i < List_Nbr($7); i++){
+        char **c = (char**)List_Pointer($7, i);
+        s.push_back(*c);
+        Free(*c);
+      }
+      gmsh_yystringsymbols[$1] = s;
+      Free($1);
+      List_Delete($7);
+    }
+
+  | StringIndex '(' ')' tAFFECT tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      std::vector<std::string> s;
+      for(int i = 0; i < List_Nbr($7); i++){
+        char **c = (char**)List_Pointer($7, i);
+        s.push_back(*c);
+        Free(*c);
+      }
+      gmsh_yystringsymbols[$1] = s;
+      Free($1);
+      List_Delete($7);
+    }
+
+  | tSTRING '(' ')' tAFFECTPLUS tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      if(gmsh_yystringsymbols.count($1)){
+        for(int i = 0; i < List_Nbr($7); i++){
+          char **c = (char**)List_Pointer($7, i);
+          gmsh_yystringsymbols[$1].push_back(*c);
+          Free(*c);
+        }
+      }
+      else
+        yymsg(0, "Uninitialized variable '%s'", $1);
+      Free($1);
+      List_Delete($7);
+    }
+
+  | StringIndex '(' ')' tAFFECTPLUS tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      if(gmsh_yystringsymbols.count($1)){
+        for(int i = 0; i < List_Nbr($7); i++){
+          char **c = (char**)List_Pointer($7, i);
+          gmsh_yystringsymbols[$1].push_back(*c);
+          Free(*c);
+        }
+      }
+      else
+        yymsg(0, "Uninitialized variable '%s'", $1);
+      Free($1);
+      List_Delete($7);
     }
 
   // Option Strings
@@ -1185,7 +1364,7 @@ DefineConstants :
     {
       std::string key($3), val($5);
       if(!gmsh_yystringsymbols.count(key)){
-        gmsh_yystringsymbols[key] = val;
+        gmsh_yystringsymbols[key] = std::vector<std::string>(1, val);
       }
       Free($3);
       Free($5);
@@ -1197,7 +1376,7 @@ DefineConstants :
       std::string key($3), val($6);
       if(!gmsh_yysymbols.count(key)){
         Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
-        gmsh_yystringsymbols[key] = val;
+        gmsh_yystringsymbols[key] = std::vector<std::string>(1, val);
       }
       Free($3);
       Free($6);
@@ -4887,13 +5066,16 @@ FExpr_Single :
     }
   | '#' String__Index LP RP
     {
-      if(!gmsh_yysymbols.count($2)){
-	yymsg(0, "Unknown variable '%s'", $2);
-	$$ = 0.;
-      }
-      else{
+      if(gmsh_yysymbols.count($2)){
         gmsh_yysymbol &s(gmsh_yysymbols[$2]);
 	$$ = s.value.size();
+      }
+      else if(gmsh_yystringsymbols.count($2)){
+	$$ = gmsh_yystringsymbols[$2].size();
+      }
+      else{
+        yymsg(0, "Unknown variable '%s'", $2);
+	$$ = 0.;
       }
       Free($2);
     }
@@ -5584,9 +5766,16 @@ ColorExpr :
 */
   | String__Index
     {
-      int flag;
-      if(gmsh_yystringsymbols.count($1))
-        $$ = GetColorForString(-1, gmsh_yystringsymbols[$1].c_str(), &flag);
+      int flag = 0;
+      if(gmsh_yystringsymbols.count($1)){
+        if(gmsh_yystringsymbols[$1].size()){
+          $$ = GetColorForString(-1, gmsh_yystringsymbols[$1][0].c_str(), &flag);
+        }
+        else{
+          yymsg(0, "Unknown color '%s'", $1);
+          $$ = 0;
+        }
+      }
       else
         $$ = GetColorForString(-1, $1, &flag);
       if(flag) yymsg(0, "Unknown color '%s'", $1);
@@ -5639,16 +5828,39 @@ StringExprVar :
     }
   | String__Index
     {
-      if(!gmsh_yystringsymbols.count($1)){
-	yymsg(0, "Unknown string variable '%s'", $1);
-	$$ = $1;
-      }
-      else{
-	std::string val = gmsh_yystringsymbols[$1];
-	$$ = (char *)Malloc((val.size() + 1) * sizeof(char));
-	strcpy($$, val.c_str());
-	Free($1);
-      }
+      std::string val;
+      if(!gmsh_yystringsymbols.count($1))
+        yymsg(0, "Unknown string variable '%s'", $1);
+      else if(gmsh_yystringsymbols[$1].size() == 1)
+        val = gmsh_yystringsymbols[$1][0];
+      else
+        yymsg(0, "Expected single valued string variable '%s'", $1);
+      $$ = (char *)Malloc((val.size() + 1) * sizeof(char));
+      strcpy($$, val.c_str());
+      Free($1);
+    }
+  | tSTRING '[' FExpr ']'
+    {
+      std::string val;
+      int j = (int)$3;
+      if(!gmsh_yystringsymbols.count($1))
+        yymsg(0, "Unknown string variable '%s'", $1);
+      else if(j >= 0 && j < gmsh_yystringsymbols[$1].size())
+        val = gmsh_yystringsymbols[$1][j];
+      else
+        yymsg(0, "Index %d out of range", j);
+      $$ = (char *)Malloc((val.size() + 1) * sizeof(char));
+      strcpy($$, val.c_str());
+      Free($1);
+    }
+  | StringIndex '[' FExpr ']'
+    {      //FIXME
+    }
+  | tSTRING '(' FExpr ')'
+    {      //FIXME
+    }
+  | StringIndex '(' FExpr ')'
+    {      //FIXME
     }
   | tSTRING '.' tSTRING
     {
@@ -6108,9 +6320,19 @@ void PrintParserSymbols(bool help, std::vector<std::string> &vec)
     vec.push_back("// Strings");
     vec.push_back("//");
   }
-  for(std::map<std::string, std::string>::iterator it = gmsh_yystringsymbols.begin();
-      it != gmsh_yystringsymbols.end(); it++){
-    vec.push_back(it->first + " = \"" + it->second + "\";");
+  for(std::map<std::string, std::vector<std::string> >::iterator it =
+        gmsh_yystringsymbols.begin(); it != gmsh_yystringsymbols.end(); it++){
+    if(it->second.size() == 1)
+      vec.push_back(it->first + " = \"" + it->second[0] + "\";");
+    else{
+      std::string s = it->first + "[] = Str(";
+      for(unsigned int i = 0; i < it->second.size(); i++){
+        if(i) s += ", ";
+        s += std::string("\"") + it->second[i] + "\"";
+      }
+      s += ");";
+      vec.push_back(s);
+    }
   }
 }
 

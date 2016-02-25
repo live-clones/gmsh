@@ -681,11 +681,13 @@ void OpenProject(const std::string &fileName)
   gmsh_yysymbols.clear();
   gmsh_yystringsymbols.clear();
   std::map<std::string, std::vector<double> > cln(Msg::GetCommandLineNumbers());
-  for(std::map<std::string, std::vector<double> >::iterator it = cln.begin(); it != cln.end(); it++)
+  for(std::map<std::string, std::vector<double> >::iterator it = cln.begin();
+      it != cln.end(); it++)
     gmsh_yysymbols[it->first].value = it->second;
   std::map<std::string, std::string> cls(Msg::GetCommandLineStrings());
-  for(std::map<std::string, std::string>::iterator it = cls.begin(); it != cls.end(); it++)
-    gmsh_yystringsymbols[it->first] = it->second;
+  for(std::map<std::string, std::string>::iterator it = cls.begin();
+      it != cls.end(); it++)
+    gmsh_yystringsymbols[it->first] = std::vector<std::string>(1, it->second);
   FunctionManager::Instance()->clear();
 #endif
 

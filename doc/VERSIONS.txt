@@ -1,5 +1,6 @@
 2.12.0: improved interactive definition of physical groups and handling of
-solvers; improved full quad algorithm; fixed various bugs.
+ONELAB clients; improved full quad algorithm; added support for list of strings;
+fixed various bugs.
 
 2.11.0 (November 7, 2015): new Else/ElseIf commands; new OptimizeMesh command;
 Plugin(ModifyComponents) replaces Plugin(ModifyComponent); new VTK and X3D

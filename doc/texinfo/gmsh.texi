@@ -1032,20 +1032,20 @@ x_2 = 2;
 x_3 = 3;
 @end example
 
-The brackets @code{[]} permit to extract one item from a list. The
-@code{#} permits to get the size of a list. The operators
-@var{operator-unary-left}, @var{operator-unary-right},
-@var{operator-binary}, @var{operator-ternary-left} and
-@var{operator-ternary-right} are defined in @ref{Operators}. For the
-definition of @w{@var{built-in-function}s}, see @ref{Built-in
-functions}. The various @w{@var{real-option}s} are listed in
-@ref{Options}.  @code{Find} searches for occurrences of the first
-expression in the second (both of which can be lists).  @code{StrFind}
-searches the first @var{char-expression} for any occurrence of the
-second @var{char-expression}. @code{StrCmp} compares the two strings
-(returns an integer greater than, equal to, or less than 0, according as
-the first string is greater than, equal to, or less than the second
-string).  @code{TextAttributes} creates attributes for text
+The brackets @code{[]} permit to extract one item from a list
+(parentheses can also be used instead of brackets). The @code{#} permits
+to get the size of a list. The operators @var{operator-unary-left},
+@var{operator-unary-right}, @var{operator-binary},
+@var{operator-ternary-left} and @var{operator-ternary-right} are defined
+in @ref{Operators}. For the definition of @w{@var{built-in-function}s},
+see @ref{Built-in functions}. The various @w{@var{real-option}s} are
+listed in @ref{Options}.  @code{Find} searches for occurrences of the
+first expression in the second (both of which can be lists).
+@code{StrFind} searches the first @var{char-expression} for any
+occurrence of the second @var{char-expression}. @code{StrCmp} compares
+the two strings (returns an integer greater than, equal to, or less than
+0, according as the first string is greater than, equal to, or less than
+the second string).  @code{TextAttributes} creates attributes for text
 strings. @code{Exists} checks if a variable with the given name exists
 (i.e., has been defined previously), and @code{FileExists} checks if the
 file with the given name exists.  @code{StringToName} creates a name
@@ -1083,10 +1083,8 @@ List of expressions are also widely used, and are defined as:
   @var{expression} : @var{expression} |
   @var{expression} : @var{expression} : @var{expression} |
   @var{string} [ ] | 
-  @var{string} ( ) |
   List [ @var{string} ] |
   @var{string} [ @{ @var{expression-list} @} ] | 
-  @var{string} ( @{ @var{expression-list} @} ) |
   Point @{ @var{expression} @} |
   @var{transform} |
   @var{extrude}
@@ -1103,9 +1101,10 @@ containing the range of numbers comprised between two
 also permits to create a list containing the range of numbers comprised
 between two @w{@var{expression}s}, but with a positive or negative
 incrementation step equal to the third @var{expression}. The fourth,
-fifth and sixth cases permit to reference an expression list.  The
-seventh and eight cases permit to reference an expression sublist (whose
-elements are those corresponding to the indices provided by the
+fifth and sixth cases permit to reference an expression list
+(parentheses can also be used instead of brackets).  The seventh and
+eight cases permit to reference an expression sublist (whose elements
+are those corresponding to the indices provided by the
 @var{expression-list}).  The next two cases permit to retrieve the
 indices of entities created through geometrical transformations and
 extrusions (see @ref{Transformations}, and @ref{Extrusions}). The last
@@ -1137,6 +1136,7 @@ Character expressions are defined as:
 @example
 @var{char-expression}:
   "@var{string}" |
+  @var{string} | @var{string}[ @var{expression} ] |
   Today | OnelabAction | GmshExecutableName | 
   CurrentDirectory | CurrentDir
   StrPrefix ( @var{char-expression} ) |
@@ -1177,10 +1177,9 @@ ONELAB string value (the second optional argument is the default value
 returned if the variable does not exist).  @code{GetStringValue} asks
 the user for a value interactively (the second argument is the value
 used in non-interactive mode). @code{StrReplace}'s arguments are: input
-string, old substring, new substring.@footnote{For compatibility with
-GetDP (@uref{http://getdp.info}), parentheses can be replaced by
-brackets @code{[]} in @code{Str} and @code{Sprintf}.}
-@code{NameToString} converts a variable name into a string.
+string, old substring, new substring (brackets can be used instead of
+parentheses in @code{Str} and @code{Sprintf}). @code{NameToString}
+converts a variable name into a string.
 
 @code{DefineString} allows to define a ONELAB variable in-line. The
 @var{char-expression} given as the first argument is the default value; this
@@ -1191,6 +1190,14 @@ information.
 Character expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8.geo}, for an interesting usage of
 @w{@var{char-expression}s} in an animation script.
+
+List of character expressions are defined as:
+
+@example
+@var{char-expression-list}: 
+  @var{char-expression} <,@dots{}>
+@end example
+
 
 @c .........................................................................
 @c Color expressions
@@ -1356,11 +1363,10 @@ evaluation:
 @findex @var{build-in-function}
 
 A built-in function is composed of an identifier followed by a pair of
-parentheses containing an @var{expression-list} (the list of its
-arguments)@footnote{For compatibility with GetDP
-(@uref{http://getdp.info}), parentheses can be replaced by brackets
-@code{[]}.}. Here is the list of the built-in functions currently
-implemented:
+parentheses containing an @var{expression-list}, the list of its
+arguments. This list of arguments can also be provided in between
+brackets, instead of parentheses. Here is the list of the built-in
+functions currently implemented:
 
 @noindent
 @var{build-in-function}:
@@ -1636,20 +1642,19 @@ compatibility purposes, the behavior of @code{newl}, @code{news},
 Creates a new expression list identifier @code{@var{string}} with an
 empty list.
 
-@item @var{string} = @{ @var{expression-list} @};
+@item @var{string}[] = @{ @var{expression-list} @};
 Creates a new expression list identifier @code{@var{string}} with the
 list @var{expression-list}, or affects @var{expression-list} to an
-existing expression list identifier. The following syntax is also
-allowed: @code{@var{string}[] = @{ @var{expression-list} @};}
+existing expression list identifier. Parentheses are also allowed
+instead of square brackets; although not recommended, brackets and
+parentheses can also be completely ommitted.
 
 @item @var{string} [ @{ @var{expression-list} @} ] = @{ @var{expression-list} @};
 Affects each item in the right hand side @var{expression-list} to the
 elements (indexed by the left hand side @var{expression-list}) of an
-existing expression list identifier. The two @w{@var{expression-list}s} must
-contain the same number of items. 
-
-@item @var{string} ( @{ @var{expression-list} @} ) = @{ @var{expression-list} @};
-Same as above.
+existing expression list identifier. The two @w{@var{expression-list}s}
+must contain the same number of items. Parentheses can also be used
+instead of brackets.
 
 @item @var{string} += @var{expression};
 Adds and affects @var{expression} to an existing expression identifier.
@@ -1671,24 +1676,37 @@ a new expression list with @var{expression-list}.
 Removes the items in @var{expression-list} from the existing expression list.
 
 @item @var{string} [ @{ @var{expression-list} @} ] += @{ @var{expression-list} @};
-Adds and affects, item per item, the right hand side @var{expression-list}
-to an existing expression list identifier.
+Adds and affects, item per item, the right hand side
+@var{expression-list} to an existing expression list
+identifier. Parentheses can also be used instead of brackets.
 
 @item @var{string} [ @{ @var{expression-list} @} ] -= @{ @var{expression-list} @};
 Subtracts and affects, item per item, the right hand side
 @var{expression-list} to an existing expression list identifier.
+Parentheses can also be used instead of brackets.
 
 @item @var{string} [ @{ @var{expression-list} @} ] *= @{ @var{expression-list} @};
 Multiplies and affects, item per item, the right hand side
-@var{expression-list} to an existing expression list identifier.
+@var{expression-list} to an existing expression list
+identifier. Parentheses can also be used instead of brackets.
 
 @item @var{string} [ @{ @var{expression-list} @} ] /= @{ @var{expression-list} @};
 Divides and affects, item per item, the right hand side
-@var{expression-list} to an existing expression list identifier.
+@var{expression-list} to an existing expression list
+identifier. Parentheses can also be used instead of brackets.
 
 @item @var{string} = @var{char-expression};
 Creates a new character expression identifier @code{@var{string}} with a
 given @var{char-expression}.
+
+@item @var{string}[] = Str( @var{char-expression-list} ) ;
+Creates a new character expression list identifier @code{@var{string}}
+with a given @var{char-expression-list}. Parentheses can also be used
+instead of brackets.
+
+@item @var{string}[] += Str( @var{char-expression-list} ) ;
+Appends a character expression list to an existing list. Parentheses can
+also be used instead of brackets.
 
 @item DefineConstant[ @var{string} = @var{expression}|@var{char-expression} <, ...>];
 Creates a new expression identifier @var{string}, with value
@@ -4139,8 +4157,9 @@ Pyramid:                     Pyramid13:                   Pyramid14:
 
 @subsection High order elements
 
-The node ordering of a higher order (possibly curved) element is compatible with the numbering
-of low order element (it is a generalization). We number nodes in the following order:
+The node ordering of a higher order (possibly curved) element is
+compatible with the numbering of low order element (it is a
+generalization). We number nodes in the following order:
 @itemize --
 @item the element principal or corner vertices;
 @item the internal nodes for each edge;

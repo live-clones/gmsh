@@ -549,7 +549,7 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "setstring")) {
         i++;
 	if (i + 1 < argc && argv[i][0] != '-' && argv[i + 1][0] != '-') {
-          gmsh_yystringsymbols[argv[i]] = argv[i + 1];
+          gmsh_yystringsymbols[argv[i]] = std::vector<std::string>(1, argv[i + 1]);
           Msg::GetCommandLineStrings()[argv[i]] = argv[i + 1];
           i += 2;
 	}
