@@ -222,8 +222,9 @@ static void Mesh0D(GModel *m)
     GVertex *gv = *it;
     if (gv->meshMaster() != gv){
       if (gv->correspondingVertices.empty()){
-        GVertex *master = dynamic_cast<GVertex*> (gv->meshMaster());
-        if(master)gv->correspondingVertices[gv->mesh_vertices[0]] = (master->mesh_vertices[0]);
+        GVertex *master = dynamic_cast<GVertex*>(gv->meshMaster());
+        if(master)
+          gv->correspondingVertices[gv->mesh_vertices[0]] = master->mesh_vertices[0];
       }
     }
   }
@@ -295,7 +296,8 @@ static void PrintMesh2dStatistics(GModel *m)
     if((*it)->geomType() != GEntity::DiscreteSurface){
       worst = std::min((*it)->meshStatistics.worst_element_shape, worst);
       best = std::max((*it)->meshStatistics.best_element_shape, best);
-      avg += (*it)->meshStatistics.average_element_shape * (*it)->meshStatistics.nbTriangle;
+      avg += (*it)->meshStatistics.average_element_shape *
+        (*it)->meshStatistics.nbTriangle;
       e_avg += (*it)->meshStatistics.efficiency_index;
       e_long = std::max((*it)->meshStatistics.longest_edge_length, e_long);
       e_short = std::min((*it)->meshStatistics.smallest_edge_length, e_short);
@@ -309,9 +311,11 @@ static void PrintMesh2dStatistics(GModel *m)
     }
   }
 
-  Msg::Info("*** Efficiency index for surface mesh tau=%g ", 100*exp(e_avg/(double)nTotE));
+  Msg::Info("*** Efficiency index for surface mesh tau=%g ",
+            100*exp(e_avg/(double)nTotE));
 
-  fprintf(statreport,"\t%16s\t%d\t\t%d\t\t", m->getName().c_str(), numFaces, nUnmeshed);
+  fprintf(statreport,"\t%16s\t%d\t\t%d\t\t", m->getName().c_str(), numFaces,
+          nUnmeshed);
   fprintf(statreport,"%d\t\t%8.7f\t%8.7f\t%8.7f\t%d\t\t%8.7f\t",
           nTotT, avg / (double)nTotT, best, worst, nTotGoodQuality,
           (double)nTotGoodQuality / nTotT);
@@ -330,9 +334,9 @@ static void Mesh2D(GModel *m)
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     (*it)->meshStatistics.status = GFace::PENDING;
 
-  // boundary layers are special: their generation (including vertices
-  // and curve meshes) is global as it depends on a smooth normal
-  // field generated from the surface mesh of the source surfaces
+  // boundary layers are special: their generation (including vertices and curve
+  // meshes) is global as it depends on a smooth normal field generated from the
+  // surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)){
     std::set<GFace*, GEntityLessThan> cf, f;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
@@ -354,7 +358,7 @@ static void Mesh2D(GModel *m)
       for(size_t K = 0 ; K < temp.size() ; K++){
         if (temp[K]->meshStatistics.status == GFace::PENDING){
           backgroundMesh::current()->unset();
-	  //          meshGFace mesher(true);
+	  // meshGFace mesher(true);
           temp[K]->mesh(true);
 #if defined(HAVE_BFGS)
           if(CTX::instance()->mesh.optimizeLloyd){
@@ -480,9 +484,8 @@ void fillv_(std::multimap<MVertex*, MElement*> &vertexToElement,
   }
 }
 
-
-int LaplaceSmoothing (GRegion *gr) {
-
+int LaplaceSmoothing (GRegion *gr)
+{
   std::multimap<MVertex*, MElement*> vertexToElement;
   fillv_(vertexToElement, (gr)->tetrahedra.begin(), (gr)->tetrahedra.end());
   fillv_(vertexToElement, (gr)->hexahedra.begin(),  (gr)->hexahedra.end());
@@ -510,13 +513,13 @@ int LaplaceSmoothing (GRegion *gr) {
     double minQual2 = 1.e22;
     for (it = it_low; it != it_up; ++it) {
       minQual2 = std::min(minQual2,it->second->minSICNShapeMeasure());
-      if (minQual2 < minQual){	
+      if (minQual2 < minQual){
 	v->setXYZ (xold,yold,zold);
 	break;
       }
     }
     if (minQual < minQual2) N++;
-  }  
+  }
   return N;
 }
 
@@ -548,8 +551,8 @@ void buildUniqueFaces (GRegion *gr, std::set<MFace,Less_Face> &bnd)
   }
 }
 
-bool MakeMeshConformal   (GModel *gm, int howto) {
-
+bool MakeMeshConformal(GModel *gm, int howto)
+{
   fs_cont search;
   buildFaceSearchStructure(gm, search);
   std::set<MFace,Less_Face> bnd;
@@ -558,7 +561,7 @@ bool MakeMeshConformal   (GModel *gm, int howto) {
     buildUniqueFaces (gr,bnd);
   }
   // bnd2 contains non conforming faces
-  
+
    std::set<MFace,Less_Face> bnd2;
   for (std::set<MFace,Less_Face>::iterator itf = bnd.begin(); itf != bnd.end(); ++itf){
     GFace *gfound = findInFaceSearchStructure (*itf,search);
@@ -573,20 +576,24 @@ bool MakeMeshConformal   (GModel *gm, int howto) {
   std::set<MFace,Less_Face> ncf;
   for (std::set<MFace,Less_Face>::iterator itf = bnd2.begin(); itf != bnd2.end(); ++itf){
     const MFace &f = *itf;
-    if (f.getNumVertices () == 4){ // quad face
-      std::set<MFace,Less_Face>::iterator it1 = bnd2.find (MFace(f.getVertex(0),f.getVertex(1),f.getVertex(2)));
-      std::set<MFace,Less_Face>::iterator it2 = bnd2.find (MFace(f.getVertex(2),f.getVertex(3),f.getVertex(0)));
+    if (f.getNumVertices() == 4){ // quad face
+      std::set<MFace,Less_Face>::iterator it1 =
+        bnd2.find (MFace(f.getVertex(0),f.getVertex(1),f.getVertex(2)));
+      std::set<MFace,Less_Face>::iterator it2 =
+        bnd2.find (MFace(f.getVertex(2),f.getVertex(3),f.getVertex(0)));
       if (it1 != bnd2.end() && it2 != bnd2.end()){
-	ncf.insert(MFace (f.getVertex(1),f.getVertex(2), f.getVertex(3),f.getVertex(0) )); 
+	ncf.insert(MFace(f.getVertex(1), f.getVertex(2),
+                         f.getVertex(3),f.getVertex(0)));
       }
       else {
 	it1 = bnd2.find (MFace(f.getVertex(0),f.getVertex(1),f.getVertex(3)));
 	it2 = bnd2.find (MFace(f.getVertex(3),f.getVertex(1),f.getVertex(2)));
 	if (it1 != bnd2.end() && it2 != bnd2.end()){
-	  ncf.insert(MFace (f.getVertex(0),f.getVertex(1), f.getVertex(2),f.getVertex(3) )); 
+	  ncf.insert(MFace(f.getVertex(0), f.getVertex(1),
+                           f.getVertex(2), f.getVertex(3)));
 	}
 	else {
-	  Msg::Error ("MakeMeshConformal: wrong mesh topology");
+	  Msg::Error("MakeMeshConformal: wrong mesh topology");
 	  return false;
 	}
       }
@@ -608,7 +615,7 @@ bool MakeMeshConformal   (GModel *gm, int howto) {
 	}
 	else {
 	  faces.push_back(MFace(it->getVertex(0),it->getVertex(1),it->getVertex(3)));
-	  faces.push_back(MFace(it->getVertex(1),it->getVertex(2),it->getVertex(3)));	
+	  faces.push_back(MFace(it->getVertex(1),it->getVertex(2),it->getVertex(3)));
 	}
       }
       // HEX IS ONLY SURROUNED BY COMPATIBLE ELEMENTS
@@ -622,13 +629,15 @@ bool MakeMeshConformal   (GModel *gm, int howto) {
 	for (unsigned int j=0;j<faces.size();j++){
 	  MFace &f = faces[j];
 	  if (f.getNumVertices() == 4){
-	    gr->pyramids.push_back(new MPyramid (f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3), newv));  
+	    gr->pyramids.push_back(new MPyramid(f.getVertex(0), f.getVertex(1),
+                                                f.getVertex(2), f.getVertex(3), newv));
 	  }
 	  else {
-	    gr->tetrahedra.push_back(new MTetrahedron (f.getVertex(0), f.getVertex(1), f.getVertex(2), newv));  
+	    gr->tetrahedra.push_back(new MTetrahedron(f.getVertex(0), f.getVertex(1),
+                                                      f.getVertex(2), newv));
 	  }
 	}
-      }    
+      }
     }
     gr->hexahedra = remainingHexes;
     remainingHexes.clear();
@@ -644,7 +653,7 @@ bool MakeMeshConformal   (GModel *gm, int howto) {
 	}
 	else {
 	  faces.push_back(MFace(it->getVertex(0),it->getVertex(1),it->getVertex(3)));
-	  faces.push_back(MFace(it->getVertex(1),it->getVertex(2),it->getVertex(3)));	
+	  faces.push_back(MFace(it->getVertex(1),it->getVertex(2),it->getVertex(3)));
 	}
       }
       // HEX IS ONLY SURROUNED BY COMPATIBLE ELEMENTS
@@ -658,13 +667,15 @@ bool MakeMeshConformal   (GModel *gm, int howto) {
 	for (unsigned int j=0;j<faces.size();j++){
 	  MFace &f = faces[j];
 	  if (f.getNumVertices() == 4){
-	    gr->pyramids.push_back(new MPyramid (f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3), newv));  
+	    gr->pyramids.push_back(new MPyramid(f.getVertex(0), f.getVertex(1),
+                                                f.getVertex(2), f.getVertex(3), newv));
 	  }
 	  else {
-	    gr->tetrahedra.push_back(new MTetrahedron (f.getVertex(0), f.getVertex(1), f.getVertex(2), newv));  
+	    gr->tetrahedra.push_back(new MTetrahedron(f.getVertex(0), f.getVertex(1),
+                                                      f.getVertex(2), newv));
 	  }
 	}
-      }    
+      }
     }
     gr->prisms = remainingPrisms;
   }
@@ -672,7 +683,8 @@ bool MakeMeshConformal   (GModel *gm, int howto) {
   return true;
 }
 
-void TestConformity   (GModel *gm) {
+void TestConformity(GModel *gm)
+{
   fs_cont search;
   buildFaceSearchStructure(gm, search);
   int count = 0;
@@ -691,7 +703,7 @@ void TestConformity   (GModel *gm) {
       }
     }
     printf("vol(%d) = %12.5E\n",gr->tag(),vol);
-    
+
     for (std::set<MFace,Less_Face>::iterator itf = bnd.begin(); itf != bnd.end(); ++itf){
       GFace *gfound = findInFaceSearchStructure (*itf,search);
       if (!gfound){
@@ -781,10 +793,12 @@ static void Mesh3D(GModel *m)
           sup.execute(gr);
         }
         PostOp post;
-        post.execute(gr,CTX::instance()->mesh.recombine3DLevel, CTX::instance()->mesh.recombine3DConformity); //0: no pyramid, 1: single-step, 2: two-steps (conforming), true: fill non-conformities with trihedra
-  
-	//	while(LaplaceSmoothing (gr)){
-	//	}
+        post.execute(gr,CTX::instance()->mesh.recombine3DLevel,
+                     CTX::instance()->mesh.recombine3DConformity);
+        // 0: no pyramid, 1: single-step, 2: two-steps (conforming),
+        // true: fill non-conformities with trihedra
+	// while(LaplaceSmoothing (gr)){
+	// }
         nb_elements_recombination += post.get_nb_elements();
         nb_hexa_recombination += post.get_nb_hexahedra();
         vol_element_recombination += post.get_vol_elements();
@@ -799,7 +813,7 @@ static void Mesh3D(GModel *m)
       }
     }
   }
-  
+
   if(CTX::instance()->mesh.recombine3DAll){
     Msg::Info("RECOMBINATION timing:");
     Msg::Info(" --- CUMULATIVE TIME RECOMBINATION : %g s.", time_recombination);

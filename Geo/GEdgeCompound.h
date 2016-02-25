@@ -20,7 +20,6 @@ class GEdgeCompound : public GEdge {
  public:
   void parametrize();
   bool getLocalParameter(const double &t, int &iEdge, double & tLoc) const;
-  void getCompoundParameter(GEdge *ge, const double &tLoc, double &t) const;
   GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound);
   GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound,
                 std::vector<int> &orientation); // confidence in the input

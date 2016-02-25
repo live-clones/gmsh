@@ -631,7 +631,8 @@ void GEdge::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<doubl
   }
 }
 
-void GEdge::mesh(bool verbose){
+void GEdge::mesh(bool verbose)
+{
 #if defined(HAVE_MESH)
   meshGEdge mesher;
   mesher(this);

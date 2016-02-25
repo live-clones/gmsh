@@ -399,15 +399,19 @@ int Mesh2DWithBoundaryLayers(GModel *m)
 
   if(sourceEdges.empty() && sourceFaces.empty()) return 0;
 
-  // from Trevor Strickler -- Just in case ReplaceDuplicates() erases the ExtrudeParams::mesh.scaleLast
-  // flag, should check all bounding regions of this curve to see if scaleLast is set.
-  // if so, reset it in the extrudeParams (maybe this could be done in the TreeUtils....
-  // but I do not want to change the code too much and create a bug.
-  // The developers should decide that.
-  if( ExtrudeParams::calcLayerScaleFactor[0]  || ExtrudeParams::calcLayerScaleFactor[1] ){
-    unsigned int num_changed = FixErasedExtrScaleFlags(m, faceSkipScaleCalc, edgeSkipScaleCalc);
-    if( num_changed )
-      Msg::Warning("%d entities were changed from ScaleLast = false to ScaleLast = true", num_changed);
+  // from Trevor Strickler -- Just in case ReplaceDuplicates() erases the
+  // ExtrudeParams::mesh.scaleLast flag, should check all bounding regions of
+  // this curve to see if scaleLast is set.  if so, reset it in the
+  // extrudeParams (maybe this could be done in the TreeUtils....  but I do not
+  // want to change the code too much and create a bug.  The developers should
+  // decide that.
+  if(ExtrudeParams::calcLayerScaleFactor[0] ||
+     ExtrudeParams::calcLayerScaleFactor[1]){
+    unsigned int num_changed = FixErasedExtrScaleFlags(m, faceSkipScaleCalc,
+                                                       edgeSkipScaleCalc);
+    if(num_changed)
+      Msg::Warning("%d entities were changed from ScaleLast = false to ScaleLast = true",
+                   num_changed);
   }
   // compute mesh dependencies in source faces (so we can e.g. create
   // a boundary layer on an extruded mesh)
@@ -430,10 +434,13 @@ int Mesh2DWithBoundaryLayers(GModel *m)
       otherFaces.insert(*it);
 
   // mesh source surfaces (and dependencies)
-  for(int i = 0; i < 10; i++) // FIXME: should check PENDING status instead!
-    std::for_each(sourceFacesDependencies.begin(), sourceFacesDependencies.end(),
-                  meshGFace());
-  std::for_each(sourceFaces.begin(), sourceFaces.end(), meshGFace());
+  for(int i = 0; i < 10; i++){ // FIXME: should check PENDING status instead!
+    for(std::set<GFace*>::iterator it = sourceFacesDependencies.begin();
+        it != sourceFacesDependencies.end(); it++)
+      (*it)->mesh(false);
+  }
+  for(std::set<GFace*>::iterator it = sourceFaces.begin(); it != sourceFaces.end(); it++)
+    (*it)->mesh(false);
 
   // make sure the source surfaces for the boundary layers are
   // oriented correctly (normally we do this only after the 3D mesh is
@@ -479,7 +486,8 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   // remesh non-source edges (since they might have been modified by
   // the change in boundary layer points)
   std::for_each(otherFaces.begin(), otherFaces.end(), deMeshGFace());
-  std::for_each(otherEdges.begin(), otherEdges.end(), meshGEdge());
+  for(std::set<GEdge*>::iterator it = otherEdges.begin(); it != otherEdges.end(); it++)
+    (*it)->mesh(false);
 
   // mesh the curves bounding the boundary layers by extrusion using
   // the smooth normal field
@@ -501,7 +509,8 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   }
 
   // mesh non-source surfaces
-  std::for_each(otherFaces.begin(), otherFaces.end(), meshGFace());
+  for(std::set<GFace*>::iterator it = otherFaces.begin(); it != otherFaces.end(); it++)
+    (*it)->mesh(false);
 
   // mesh the surfaces bounding the boundary layers by extrusion using
   // the smooth normal field
@@ -517,4 +526,3 @@ int Mesh2DWithBoundaryLayers(GModel *m)
 
   return 1;
 }
-

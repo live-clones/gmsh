@@ -305,7 +305,8 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
 
 void deMeshGEdge::operator() (GEdge *ge)
 {
-  if(ge->geomType() == GEntity::DiscreteCurve && !CTX::instance()->meshDiscrete)return;
+  if(ge->geomType() == GEntity::DiscreteCurve && !CTX::instance()->meshDiscrete)
+    return;
   ge->deleteMesh();
   ge->meshStatistics.status = GEdge::PENDING;
   ge->correspondingVertices.clear();
@@ -346,7 +347,7 @@ static void filterPoints (GEdge*ge) {
       CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine != 0){
     if(CTX::instance()->mesh.recombineAll){
-      forceOdd = true;      
+      forceOdd = true;
     }
   }
 
@@ -368,7 +369,7 @@ static void filterPoints (GEdge*ge) {
     if (d < lc * .3) {
       lengths.push_back(std::make_pair(lc/d,v));
     }
-    else 
+    else
       v0=v;
   }
   std::sort(lengths.begin(),lengths.end());
@@ -376,7 +377,7 @@ static void filterPoints (GEdge*ge) {
   if (forceOdd) {
     while (last %2 != 0)last--;
   }
-  /*    
+  /*
 	if (CTX::instance()->mesh.algoRecombine == 2){
 	if (last < 4)last = 0;
 	while (last %4 != 0)last--;

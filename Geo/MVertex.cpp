@@ -467,8 +467,7 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
 bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
                              bool onSurface)
 {
-
-  if (gf->geomType() == GEntity::CompoundSurface ){
+  if(gf->geomType() == GEntity::CompoundSurface){
     GFaceCompound *gfc = (GFaceCompound*) gf;
     param = gfc->parFromVertex(v);
     return true;

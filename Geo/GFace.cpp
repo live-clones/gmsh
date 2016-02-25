@@ -1388,13 +1388,13 @@ bool GFace::fillPointCloud(double maxDist,
   return true;
 }
 
-void GFace::mesh(bool verbose) {
+void GFace::mesh(bool verbose)
+{
 #if defined(HAVE_MESH)
   meshGFace mesher;
-  mesher (this, verbose);
+  mesher(this, verbose);
 #endif
 }
-
 
 void GFace::lloyd(int nbiter, int infn)
 {

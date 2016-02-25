@@ -1276,9 +1276,10 @@ static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &el
   }
 }
 
-void GModel:: _createGeometryOfDiscreteEntities() {
-  if (CTX::instance()->meshDiscrete){
-    Msg::Info("creating the geometry of discrete curves");
+void GModel::_createGeometryOfDiscreteEntities(bool force)
+{
+  if (force || CTX::instance()->meshDiscrete){
+    Msg::Info("Creating the geometry of discrete curves");
     for(eiter it = firstEdge(); it != lastEdge(); ++it){
       if((*it)->geomType() == GEntity::DiscreteCurve) {
 	discreteEdge *de = dynamic_cast<discreteEdge*> (*it);
@@ -1286,7 +1287,10 @@ void GModel:: _createGeometryOfDiscreteEntities() {
 	de->createGeometry();
       }
     }
-    Msg::Info("creating the geometry of discrete surfaces");
+  }
+
+  if (CTX::instance()->meshDiscrete){
+    Msg::Info("Creating the geometry of discrete surfaces");
     for(fiter it = firstFace(); it != lastFace(); ++it){
       if((*it)->geomType() == GEntity::DiscreteSurface) {
 	discreteFace *df = dynamic_cast<discreteFace*> (*it);
@@ -2078,7 +2082,13 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
   //create old format (necessary e.g. for old-style extruded boundary layers)
   exportDiscreteGEOInternals();
 
+  // FIXME: this whole thing will disappear, but for now we need this to make
+  // old compounds work:
+  if(!CTX::instance()->meshDiscrete)
+    _createGeometryOfDiscreteEntities(true);
+
   double t2 = Cpu();
+
   Msg::StatusBar(true, "Done creating topology from mesh (%g s)", t2 - t1);
 }
 

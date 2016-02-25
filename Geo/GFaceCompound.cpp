@@ -956,7 +956,7 @@ bool GFaceCompound::parametrize() const
     _rbf = new GRbf(sizeBox, variableEps, radFunInd, _normals, allNodes, _ordered);
 
     linearSystemPETSc<double> sys;
-	  printf("system 0 = %p\n", &sys);
+
     #if 1
     _rbf->RbfLapSurface_local_CPM_sparse(_ordered, false, _rbf->getXYZ(), _rbf->getN(), sys);
     _rbf->solveHarmonicMap_sparse(sys, _rbf->getXYZ().size1()* 3,_ordered, _coords, coordinates);
@@ -1432,62 +1432,81 @@ SPoint2 GFaceCompound::getCoordinates(MVertex *v) const
 	gec->getLocalParameter(tGlob,iEdge,tLoc);
 	std::vector<GEdge*> gev = gec->getCompounds();
 	GEdge *ge = gev[iEdge];
+        std::map<MVertex*,SPoint3>::iterator itL;
+        std::map<MVertex*,SPoint3>::iterator itR;
 
-	// left and right vertex of the Edge
-	MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
-	MVertex *v1 = ge->getEndVertex()->mesh_vertices[0];
-	std::map<MVertex*,SPoint3>::iterator itL = coordinates.find(v0);
-	std::map<MVertex*,SPoint3>::iterator itR = coordinates.find(v1);
-
-	// for the Edge, find the left and right vertices of the initial
-	// 1D mesh and interpolate to find (u,v)
-	//MVertex *vL = v0;
-	MVertex *vR = v1;
-	double tB = ge->parBounds(0).low();
-	double tE = ge->parBounds(0).high();
-	int j = 0;
-	tL=tB;
-	bool found = false;
-	while(j < (int)ge->mesh_vertices.size()){
-	  vR = ge->mesh_vertices[j];
-          if(vR->getPolynomialOrder() > 1){ j++; continue; }
-	  vR->getParameter(0,tR);
-	  if(!vR->getParameter(0,tR)) {
-	    Msg::Error("Vertex vr %p not an MEdgeVertex", vR);
-	    return SPoint2();
-	  }
-	  if(tLoc > tL && tLoc < tR){
-	    found = true;
-	    itR = coordinates.find(vR);
-	    if(itR == coordinates.end()){
-	      Msg::Error("Vertex %p (%g %g %g) not found", vR, vR->x(), vR->y(), vR->z());
-              return SPoint2(0,0);
-	    }
-	    break;
-	  }
-	  else{
-	    itL = coordinates.find(vR);
-	    //vL = vR;
-	    tL = tR;
-	  }
-	  j++;
-	}
-	if(!found) {
-	  vR = v1;
-	  tR = tE;
-	}
-
-	// linear interpolation between tL and tR
-	double uloc, vloc;
-	uloc = itL->second.x() + (tLoc-tL)/(tR-tL) * (itR->second.x()-itL->second.x());
-	vloc = itL->second.y() + (tLoc-tL)/(tR-tL) * (itR->second.y()-itL->second.y());
-	return SPoint2(uloc,vloc);
+        if(ge->geomType() == GEntity::DiscreteCurve){
+          discreteEdge *de = dynamic_cast<discreteEdge*>(ge);
+          int i = (int)tLoc;
+          MLine *l = de->lines[i];
+          MVertex *vL = l->getVertex(0);
+          MVertex *vR = l->getVertex(1);
+          itL = coordinates.find(vL);
+          if(itL == coordinates.end()){
+            Msg::Error("Vertex %p (%g %g %g) not found", vL, vL->x(), vL->y(), vL->z());
+            return SPoint2(0, 0);
+          }
+          itR = coordinates.find(vR);
+          if(itR == coordinates.end()){
+            Msg::Error("Vertex %p (%g %g %g) not found", vR, vR->x(), vR->y(), vR->z());
+            return SPoint2(0, 0);
+          }
+          double xi, uloc, vloc;
+          xi = tLoc - i;
+          uloc = (1 - xi) * itL->second.x() + xi * itR->second.x();
+          vloc = (1 - xi) * itL->second.y() + xi * itR->second.y();
+          return SPoint2(uloc,vloc);
+        }
+        else{
+          // left and right vertex of the Edge
+          MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
+          MVertex *v1 = ge->getEndVertex()->mesh_vertices[0];
+          itL = coordinates.find(v0);
+          itR = coordinates.find(v1);
+          // for the Edge, find the left and right vertices of the initial
+          // 1D mesh and interpolate to find (u,v)
+          //MVertex *vL = v0;
+          MVertex *vR = v1;
+          double tB = ge->parBounds(0).low();
+          double tE = ge->parBounds(0).high();
+          int j = 0;
+          tL=tB;
+          bool found = false;
+          while(j < (int)ge->mesh_vertices.size()){
+            vR = ge->mesh_vertices[j];
+            if(vR->getPolynomialOrder() > 1){ j++; continue; }
+            vR->getParameter(0, tR);
+            if(!vR->getParameter(0, tR)) {
+              Msg::Error("Vertex vr %p not an MEdgeVertex", vR);
+              return SPoint2();
+            }
+            if(tLoc > tL && tLoc < tR){
+              found = true;
+              itR = coordinates.find(vR);
+              if(itR == coordinates.end()){
+                Msg::Error("Vertex %p (%g %g %g) not found", vR, vR->x(), vR->y(), vR->z());
+                return SPoint2(0, 0);
+              }
+              break;
+            }
+            else{
+              itL = coordinates.find(vR);
+              //vL = vR;
+              tL = tR;
+            }
+            j++;
+          }
+          if(!found) {
+            vR = v1;
+            tR = tE;
+          }
+          // linear interpolation between tL and tR
+          double uloc, vloc;
+          uloc = itL->second.x() + (tLoc-tL)/(tR-tL) * (itR->second.x()-itL->second.x());
+          vloc = itL->second.y() + (tLoc-tL)/(tR-tL) * (itR->second.y()-itL->second.y());
+          return SPoint2(uloc,vloc);
+        }
       }
-
-    // }
-    // else if(v->onWhat()->dim() == 2){
-    //   Msg::Debug("Get coordinates of Compound Face cannot find vertex");
-    // }
 
   }
 
@@ -1517,7 +1536,7 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
     lsys = new linearSystemPETSc<double>;
     lsys->setParameter("petscOptions",
     "-pc_type ilu -ksp_rtol 1.e-12 -pc_factor_levels 10");
-    
+
     //    lsys->setParameter("petscOptions",
     //    		       "-ksp_type preonly -pc_type lu -pc_factor_mat_solver_package umfpack");
 #elif defined(HAVE_GMM)
@@ -1585,7 +1604,6 @@ void GFaceCompound::parametrize(iterationStep step, typeOfMapping tom) const
     }
   }
   else if (_type == ALREADYFIXED){
-    printf("already fixed boundaries \n");
     for(unsigned int i = 0; i < _ordered.size(); i++){
       MVertex *v = _ordered[i];
       SPoint3 uv = coordinates[v];
@@ -2006,7 +2024,7 @@ SPoint2 GFaceCompound::parFromVertex(MVertex *v) const
     v->getParameter(1, V);
   }
   if (v->onWhat()->dim()==1 ||
-     (v->onWhat()->dim()==2 && 
+     (v->onWhat()->dim()==2 &&
       U == -1 && V==-1)){ //if MFaceVertex created on edge in bunin
     SPoint2 sp = getCoordinates(v);
     U = sp.x();
@@ -2035,7 +2053,6 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
 
   //create new octree with new mesh elements
   if(!octNew){
-    //printf("create new octree \n");
     std::vector<MElement *> myElems;
     for (unsigned int i = 0; i < triangles.size(); i++) myElems.push_back(triangles[i]);
     for (unsigned int i = 0; i < quadrangles.size(); i++) myElems.push_back(quadrangles[i]);
@@ -2067,11 +2084,9 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
       }
     }
 
-    //printf("size octrre new = %d \n", myParamElems.size());
     octNew = new MElementOctree(myParamElems);
 
     //build kdtree boundary nodes in parametric space
-    //printf("build bc kdtree \n");
     int nbBCNodes  = myBCNodes.size();
     ANNpointArray uv_nodes = annAllocPts(nbBCNodes, 3);
     std::set<SPoint2>::iterator itp = myBCNodes.begin();
@@ -2107,7 +2122,6 @@ GPoint GFaceCompound::pointInRemeshedOctree(double par1, double par2) const
   }
   //if element not found in new octree find closest point
   else{
-    //printf("not found in new octree \n");
     GPoint gp(50,50,50);
     double pt[3] = {par1,par2,0.0};
     ANNidx index[2];
@@ -2163,15 +2177,12 @@ GPoint GFaceCompound::point(double par1, double par2) const
   GFaceCompoundTriangle *lt;
   getTriangle(par1, par2, &lt, U,V);
   if(!lt){
-    //printf("POINT (%g %g) NOT FOUND --> find closest \n", par1,par2);
     if (meshStatistics.status == GFace::DONE && triangles.size()+quadrangles.size() != 0) {
-      //printf("look in remeshed octree \n");
       GPoint gp = pointInRemeshedOctree(par1,par2);
       gp.setNoSuccess();
       return gp;
     }
     else{
-      //printf("look in kdtree \n");
       double pt[3] = {par1,par2, 0.0};
       ANNidx index[2];
       ANNdist dist[2];
@@ -2199,7 +2210,6 @@ GPoint GFaceCompound::point(double par1, double par2) const
       sys2x2(M, R, X);
       U = X[0];
       V = X[1];
-      //printf("found closest point (%g %g) U V =%g %g \n", u,v, U,V);
     }
   }
 
@@ -2277,8 +2287,6 @@ Pair<SVector3,SVector3> GFaceCompound::firstDer(const SPoint2 &param) const
   MTriangle *tri=NULL;
   if (lt) tri = lt->tri;
   else {
-    //printf("FIRSTDER POINT NOT FOUND --> kdtree \n");
-    //printf("uv=%g %g \n", param.x(), param.y());
     double pt[3] = {param.x(), param.y(), 0.0};
     ANNidx index[2];
     ANNdist dist[2];

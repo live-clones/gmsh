@@ -254,27 +254,6 @@ bool GEdgeCompound::getLocalParameter(const double &t,
   return false;
 }
 
-void GEdgeCompound::getCompoundParameter(GEdge *ge,
-                                         const double &tLoc,
-                                         double &t) const
-{
-  if(_pars.empty()){
-    Msg::Error("Edge compound has no parametrization");
-    return;
-  }
-  for (int iEdge = 0; iEdge < (int)_compound.size(); iEdge++){
-    if (ge == _compound[iEdge]){
-      double tmin = _pars[iEdge];
-      double tmax = _pars[iEdge+1];
-      Range<double> b = _compound[iEdge]->parBounds(0);
-      t = _orientation[iEdge] ?
-        tmin + (tLoc - b.low())/(b.high()-b.low()) * (tmax-tmin):
-        tmax - (tLoc - b.low())/(b.high()-b.low()) * (tmax-tmin);
-      return;
-    }
-  }
-}
-
 void GEdgeCompound::parametrize()
 {
   _pars.clear();
