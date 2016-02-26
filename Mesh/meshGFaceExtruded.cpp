@@ -300,4 +300,3 @@ int MeshExtrudedSurface(GFace *gf,
   gf->meshStatistics.status = GFace::DONE;
   return 1;
 }
-

@@ -273,7 +273,6 @@ void discreteEdge::parametrize(std::map<GFace*, std::map<MVertex*, MVertex*,
                                std::map<GRegion*, std::map<MVertex*, MVertex*,
                                std::less<MVertex*> > > &region2Vert)
 {
-  return;
   if (_pars.empty()){
     for (unsigned int i = 0; i < lines.size() + 1; i++){
       _pars.push_back(i);
