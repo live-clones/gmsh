@@ -21,10 +21,12 @@
 #include "OS.h"
 #include "Curvature.h"
 #include "GEdgeCompound.h"
+
 #if defined(HAVE_MESH)
 #include "meshGEdge.h"
 #include "Context.h"
 #endif
+
 discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   : GEdge(model, num, _v0, _v1)
 {
@@ -387,7 +389,6 @@ void discreteEdge::computeNormals () const
 bool discreteEdge::getLocalParameter(const double &t, int &iLine,
                                      double &tLoc) const
 {
-
   for (iLine = 0; iLine < (int)discrete_lines.size(); iLine++){
     double tmin = _pars[iLine];
     double tmax = _pars[iLine+1];
@@ -453,7 +454,6 @@ double discreteEdge::curvature(double par) const
   double cv = (1-tLoc)*c0 + tLoc*c1;
 
   return cv;
-
 }
 
 double discreteEdge::curvatures(const double par, SVector3 *dirMax, SVector3 *dirMin,
@@ -473,15 +473,16 @@ Range<double> discreteEdge::parBounds(int i) const
   return Range<double>(0, (double)discrete_lines.size());
 }
 
-void discreteEdge::createGeometry(){
+void discreteEdge::createGeometry()
+{
   if (discrete_lines.empty()){
 
     createTopo();
     // copy the mesh
     for (unsigned int i = 0; i < mesh_vertices.size(); i++){
-      MEdgeVertex *v   = new MEdgeVertex(mesh_vertices[i]->x(),mesh_vertices[i]->y(),mesh_vertices[i]->z(),this,(double)(i+1));
-      //      printf("%3d %p\n",tag(),mesh_vertices[i]);
-      v2v  [mesh_vertices[i]] = v;
+      MEdgeVertex *v = new MEdgeVertex(mesh_vertices[i]->x(), mesh_vertices[i]->y(),
+                                       mesh_vertices[i]->z(), this, (double)(i+1));
+      v2v[mesh_vertices[i]] = v;
     }
 
     std::vector<MLine*> _temp;
@@ -511,16 +512,19 @@ void discreteEdge::createGeometry(){
   }
 }
 
-MVertex * discreteEdge::getGeometricalVertex (MVertex *v){
+MVertex * discreteEdge::getGeometricalVertex (MVertex *v)
+{
   std::map<MVertex*,MVertex*>::const_iterator it = v2v.find(v);
   if (it == v2v.end()){
-    printf("----> %p %d %d %g %g %g %d %d\n",v,v->getNum(),tag(),v->x(),v->y(),v->z(),v->onWhat()->tag(),v->onWhat()->dim());
-    Msg::Fatal("fatality %ld %ld %ld",v2v.size(),mesh_vertices.size(),discrete_vertices.size());
+    Msg::Error("fatality %ld %ld %ld", v2v.size(), mesh_vertices.size(),
+               discrete_vertices.size());
   }
   return it->second;
 }
 
-void discreteEdge::interpolateInGeometry (MVertex *v, MVertex **v1, MVertex **v2, double &xi) const {
+void discreteEdge::interpolateInGeometry(MVertex *v, MVertex **v1,
+                                         MVertex **v2, double &xi) const
+{
   double t;
   if (v->onWhat() != this)Msg::Fatal("%s %d",__FILE__,__LINE__);
   v->getParameter (0,t);
@@ -529,9 +533,7 @@ void discreteEdge::interpolateInGeometry (MVertex *v, MVertex **v1, MVertex **v2
   *v1 = l->getVertex(0);
   *v2 = l->getVertex(1);
   xi = t - i;
-  //  Msg::Fatal("fatality...");
 }
-
 
 void discreteEdge::mesh(bool verbose){
 #if defined(HAVE_MESH)
@@ -540,8 +542,6 @@ void discreteEdge::mesh(bool verbose){
   mesher(this);
 #endif
 }
-
-
 
 void discreteEdge::writeGEO(FILE *fp)
 {

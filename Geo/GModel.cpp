@@ -1244,7 +1244,8 @@ void GModel::_storeElementsInEntities(std::map< int, std::vector<MElement* > >& 
         else _addElements(f->polygons, it->second);
       }
       break;
-    case TYPE_TET: case TYPE_HEX: case TYPE_PYR: case TYPE_TRIH: case TYPE_PRI: case TYPE_POLYH:
+    case TYPE_TET: case TYPE_HEX: case TYPE_PYR:
+    case TYPE_TRIH: case TYPE_PRI: case TYPE_POLYH:
       {
         GRegion *r = getRegionByTag(it->first);
         if(!r){
@@ -1283,8 +1284,7 @@ void GModel::_createGeometryOfDiscreteEntities(bool force)
     for(eiter it = firstEdge(); it != lastEdge(); ++it){
       if((*it)->geomType() == GEntity::DiscreteCurve) {
 	discreteEdge *de = dynamic_cast<discreteEdge*> (*it);
-	if (!de)Msg::Fatal("no fun");
-	de->createGeometry();
+	if(de) de->createGeometry();
       }
     }
   }
@@ -1294,8 +1294,7 @@ void GModel::_createGeometryOfDiscreteEntities(bool force)
     for(fiter it = firstFace(); it != lastFace(); ++it){
       if((*it)->geomType() == GEntity::DiscreteSurface) {
 	discreteFace *df = dynamic_cast<discreteFace*> (*it);
-	if (!df)Msg::Fatal("no fun");
-	df->createGeometry();
+	if(df) df->createGeometry();
       }
     }
   }
