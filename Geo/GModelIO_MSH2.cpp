@@ -296,7 +296,7 @@ int GModel::_readMSH2(const std::string &name)
           }
           if (iClasDim == 0){
             GVertex *gv = getVertexByTag(iClasTag);
-            if (gv) gv->deleteMesh();
+            if (gv) gv->mesh_vertices.clear();
             newVertex = new MVertex(xyz[0], xyz[1], xyz[2], gv, num);
           }
           else if (iClasDim == 1){
@@ -789,10 +789,8 @@ static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
 
 static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
 {
-
   int n = 0;
-  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it)
-  {
+  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
     if(!CTX::instance()->mesh.saveTri){
       for(unsigned int i = 0; i < (*it)->points.size(); i++)
@@ -800,8 +798,7 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
           n += (saveAll ? 1 : (*it)->physicals.size());
     }
   }
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
-  {
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
     if(!CTX::instance()->mesh.saveTri){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++)
@@ -809,18 +806,15 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
           n += (saveAll ? 1 : (*it)->physicals.size());
     }
   }
-  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-  {
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
     if(CTX::instance()->mesh.saveTri){
-      for(unsigned int i = 0; i < (*it)->polygons.size(); i++)
-      {
+      for(unsigned int i = 0; i < (*it)->polygons.size(); i++){
         int nbC = (*it)->polygons[i]->getNumChildren()-1;
         n += (saveAll ? nbC : nbC * (*it)->physicals.size());
       }
     }
-    else
-    {
+    else{
       for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
         if((*it)->triangles[i]->ownsParent())
           n += (saveAll ? 1 : (*it)->physicals.size());
@@ -829,18 +823,15 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
           n += (saveAll ? 1 : (*it)->physicals.size());
     }
   }
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
-  {
+  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
     n += getNumElementsMSH(*it, saveAll, saveSinglePartition);
     if(CTX::instance()->mesh.saveTri){
-      for(unsigned int i = 0; i < (*it)->polyhedra.size(); i++)
-      {
+      for(unsigned int i = 0; i < (*it)->polyhedra.size(); i++){
         int nbC = (*it)->polyhedra[i]->getNumChildren()-1;
         n += (saveAll ? nbC : nbC * (*it)->physicals.size());
       }
     }
-    else
-    {
+    else{
       for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
         if((*it)->tetrahedra[i]->ownsParent())
           n += (saveAll ? 1 : (*it)->physicals.size());
@@ -857,7 +848,6 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
                        int elementStartNum, int saveSinglePartition, bool multipleView)
 {
-
   FILE *fp;
   if(multipleView)
     fp = Fopen(name.c_str(), binary ? "ab" : "a");
