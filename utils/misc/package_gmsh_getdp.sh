@@ -2,16 +2,17 @@
 
 DATE=`date "+%d/%m/%Y"`
 
-echo "This ONELAB bundle was built on ${DATE} with the latest nightly snapshots of
-Gmsh (http://gmsh.info) and GetDP (http://getdp.info).
+echo "This ONELAB bundle was built on ${DATE} with the latest nightly snapshots
+of Gmsh (http://gmsh.info) and GetDP (http://getdp.info).
 
 The software is distributed under the terms of the GNU General Public License. 
 See the LICENSE and CREDITS files for more information. 
 
-The 'models' directory contains a selection of ready-to-use examples from 
-http://onelab.info. The 'tutorial' directory contains the Gmsh tutorial.
+The 'models' directory contains a selection of ready-to-use examples from
+http://onelab.info. The 'template' directory contains GetDP templates. The
+'tutorial' directory contains the Gmsh tutorial.
 
-See http://onelab.info, http://gmsh.info and http://getdp.info for additional 
+See http://onelab.info, http://gmsh.info and http://getdp.info for additional
 examples, up-to-date versions and documentation." > /tmp/README.txt
 
 GMSH=svn
@@ -71,6 +72,7 @@ cat /tmp/getdp-*${GETDP}-Windows/LICENSE.txt >> gmsh-getdp-Windows64/LICENSE.txt
 mv /tmp/gmsh-*${GMSH}-Windows/CREDITS.txt gmsh-getdp-Windows64/CREDITS.txt
 echo "\n\n" >> gmsh-getdp-Windows64/CREDITS.txt
 cat /tmp/getdp-*${GETDP}-Windows/CREDITS.txt >> gmsh-getdp-Windows64/CREDITS.txt
+mv /tmp/getdp-*${GETDP}-Windows/templates gmsh-getdp-Windows64
 mv /tmp/gmsh-*${GMSH}-Windows/tutorial gmsh-getdp-Windows64
 cp -R /tmp/models gmsh-getdp-Windows64
 rm -rf /tmp/gmsh-*
@@ -96,6 +98,7 @@ cat /tmp/getdp-*${GETDP}-Windows/LICENSE.txt >> gmsh-getdp-Windows32/LICENSE.txt
 mv /tmp/gmsh-*${GMSH}-Windows/CREDITS.txt gmsh-getdp-Windows32/CREDITS.txt
 echo "\n\n" >> gmsh-getdp-Windows32/CREDITS.txt
 cat /tmp/getdp-*${GETDP}-Windows/CREDITS.txt >> gmsh-getdp-Windows32/CREDITS.txt
+mv /tmp/getdp-*${GETDP}-Windows/templates gmsh-getdp-Windows32
 mv /tmp/gmsh-*${GMSH}-Windows/tutorial gmsh-getdp-Windows32
 cp -R /tmp/models gmsh-getdp-Windows32
 rm -rf /tmp/gmsh-*
@@ -121,6 +124,7 @@ cat /tmp/getdp-*${GETDP}-Linux/share/doc/getdp/LICENSE.txt >> gmsh-getdp-Linux32
 mv /tmp/gmsh-*${GMSH}-Linux/share/doc/gmsh/CREDITS.txt gmsh-getdp-Linux32/CREDITS.txt
 echo "\n\n" >> gmsh-getdp-Linux32/CREDITS.txt
 cat /tmp/getdp-*${GETDP}-Linux/share/doc/getdp/CREDITS.txt >> gmsh-getdp-Linux32/CREDITS.txt
+mv /tmp/getdp-*${GETDP}-Linux/share/doc/getdp/templates gmsh-getdp-Linux32
 mv /tmp/gmsh-*${GMSH}-Linux/share/doc/gmsh/tutorial gmsh-getdp-Linux32
 cp -R /tmp/models gmsh-getdp-Linux32
 rm -rf /tmp/gmsh-*
@@ -146,6 +150,7 @@ cat /tmp/getdp-*${GETDP}-Linux/share/doc/getdp/LICENSE.txt >> gmsh-getdp-Linux64
 mv /tmp/gmsh-*${GMSH}-Linux/share/doc/gmsh/CREDITS.txt gmsh-getdp-Linux64/CREDITS.txt
 echo "\n\n" >> gmsh-getdp-Linux64/CREDITS.txt
 cat /tmp/getdp-*${GETDP}-Linux/share/doc/getdp/CREDITS.txt >> gmsh-getdp-Linux64/CREDITS.txt
+mv /tmp/getdp-*${GETDP}-Linux/share/doc/getdp/templates gmsh-getdp-Linux64
 mv /tmp/gmsh-*${GMSH}-Linux/share/doc/gmsh/tutorial gmsh-getdp-Linux64
 cp -R /tmp/models gmsh-getdp-Linux64
 rm -rf /tmp/gmsh-*
@@ -172,6 +177,7 @@ cat /tmp/getdp-*${GETDP}-MacOSX/share/doc/getdp/LICENSE.txt >> gmsh-getdp-MacOSX
 cp gmsh_mount/CREDITS.txt gmsh-getdp-MacOSX/CREDITS.txt
 echo "\n\n" >> gmsh-getdp-MacOSX/CREDITS.txt
 cat /tmp/getdp-*${GETDP}-MacOSX/share/doc/getdp/CREDITS.txt >> gmsh-getdp-MacOSX/CREDITS.txt
+mv /tmp/getdp-*${GETDP}-MacOSX/doc/getdp/templates gmsh-getdp-MacOSX
 cp -R gmsh_mount/tutorial gmsh-getdp-MacOSX
 cp -R /tmp/models gmsh-getdp-MacOSX
 umount gmsh_mount
