@@ -817,8 +817,9 @@ void solver_batch_cb(void *data)
   }
 
   // load db
-  if(CTX::instance()->solver.autoSaveDatabase){
-    std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+  if(CTX::instance()->solver.autoLoadDatabase){
+    std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+    std::string db = split[0] + split[1] + ".db";
     if(!StatFile(db)) loadDb(db);
   }
 
@@ -846,7 +847,8 @@ void solver_batch_cb(void *data)
 
   if(CTX::instance()->solver.autoSaveDatabase ||
      CTX::instance()->solver.autoArchiveOutputFiles){
-    std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
+    std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+    std::string db = split[0] + split[1] + ".db";
     if(CTX::instance()->solver.autoArchiveOutputFiles) archiveOutputFiles(db);
     if(CTX::instance()->solver.autoSaveDatabase) saveDb(db);
   }
