@@ -85,41 +85,34 @@ void onelab_cb(Fl_Widget *w, void *data)
   }
 
   if(action == "save"){
-    std::vector<std::string> db = onelab::server::instance()->toChar();
-    Msg::Direct("ONELAB database:");
-    for(unsigned int i = 0; i < db.size(); i++){
-      for(unsigned int j = 0; j < db[i].size(); j++)
-        if(db[i][j] == onelab::parameter::charSep()) db[i][j] = '|';
-      Msg::Direct("%s", db[i].c_str());
-    }
-
     std::string fileName = "onelab.db";
-    // add user defined tag, if any
+
+    // special handling for metamodels: add user defined tag, if any
     std::vector<onelab::string> ps;
     onelab::server::instance()->get(ps,"0Metamodel/9Tag");
     if(ps.size() && ps[0].getValue().size()){
       fileName.assign("onelab_" + ps[0].getValue() + ".db");
     }
 
-    // save db in "restore" mode"
-    double restoreMode=0;
+    // special handling for metamodels: save db in "restore" mode"
+    double restoreMode = 0.;
     std::vector<onelab::number> pn;
     onelab::server::instance()->get(pn,"0Metamodel/9Use restored solution");
     if(pn.size()){
-      restoreMode=pn[0].getValue();
+      restoreMode = pn[0].getValue();
       pn[0].setValue(2); // special value
       onelab::server::instance()->set(pn[0]);
     }
 
-    std::string s;
-    s.assign(SplitFileName(GModel::current()->getFileName())[0] + fileName);
-    if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", s.c_str())){
+    std::string db;
+    db.assign(SplitFileName(GModel::current()->getFileName())[0] + fileName);
+    if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", db.c_str())){
       if(!restoreMode)
 	archiveSolutionFiles(fileChooserGetName(1));
       saveDb(fileChooserGetName(1));
     }
 
-    // switch back to normal "run" mode"
+    // special handling for metamodels: switch back to normal "run" mode"
     onelab::server::instance()->get(pn,"0Metamodel/9Use restored solution");
     if(pn.size()){
       pn[0].setValue(0);
