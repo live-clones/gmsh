@@ -911,8 +911,8 @@ std::string Msg::GetOnelabAction()
     _onelabClient->get(ps, _onelabClient->getName() + "/Action");
     if(ps.size()) return ps[0].getValue();
   }
-  return "";
 #endif
+  return "";
 }
 
 void Msg::LoadOnelabClient(const std::string &clientName, const std::string &sockName)
