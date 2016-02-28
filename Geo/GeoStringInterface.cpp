@@ -55,7 +55,7 @@ void add_infile(const std::string &text, const std::string &fileName, bool force
         if(CTX::instance()->confirmOverwrite) {
           if(!StatFile(newFileName)){
             std::ostringstream sstream;
-            sstream << "File '" << fileName << "' already exists.\n\n"
+            sstream << "File '" << newFileName << "' already exists.\n\n"
               "Do you want to replace it?";
             if(!Msg::GetAnswer(sstream.str().c_str(), 0, "Cancel", "Replace"))
               return;
