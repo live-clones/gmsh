@@ -547,8 +547,9 @@ void onelabGroup::_addParameter(T &p)
   if(!_enableTreeWidgetResize) grp->resizable(0);
   _treeWidgets.push_back(grp);
   widget->copy_label(p.getShortName().c_str());
-  std::string help = p.getLabel().size() ? p.getLabel() : p.getShortName();
-  if(p.getHelp().size()) help += ":\n" + p.getHelp();
+  std::string help = p.getHelp();
+  if(help.empty()) help = p.getLabel();
+  if(help.empty()) help = p.getShortName();
   widget->copy_tooltip(help.c_str());
   n->widget(grp);
   _tree->end();
