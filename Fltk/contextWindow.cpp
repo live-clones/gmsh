@@ -90,6 +90,10 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[3]->value("0");
       input[4] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z coordinate");
       input[4]->value("0");
+      for(int i = 0; i < 3; i++)
+        _butt[i] = new Fl_Check_Button
+          (width - 2 * WB - IW, 2 * WB + (i+1) * BH, IW, BH, "Freeze");
+
       input[5] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH,
                               "Prescribed mesh element size at point");
       input[5]->value("1.0");
@@ -201,6 +205,23 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
   win->end();
 
   FL_NORMAL_SIZE += deltaFontSize;
+}
+
+bool elementaryContextWindow::frozenPointCoord(int coord)
+{
+  if(coord < 0 || coord > 2) return false;
+  return _butt[coord]->value() ? true : false;
+}
+
+void elementaryContextWindow::updatePoint(double pt[3])
+{
+  for(int i = 0; i < 3; i++){
+    if(!frozenPointCoord(i)){
+      char str[32];
+      sprintf(str, "%g", pt[i]);
+      input[2 + i]->value(str);
+    }
+  }
 }
 
 void elementaryContextWindow::show(int pane)

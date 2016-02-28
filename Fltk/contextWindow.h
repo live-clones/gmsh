@@ -20,9 +20,12 @@ class elementaryContextWindow{
   Fl_Input *input[30];
   Fl_Value_Input *value[10];
   Fl_Group *group[10];
+  Fl_Check_Button *_butt[3];
  public:
   elementaryContextWindow(int deltaFontSize=0);
   void show(int pane);
+  void updatePoint(double pt[3]);
+  bool frozenPointCoord(int coord);
 };
 
 class physicalContextWindow{

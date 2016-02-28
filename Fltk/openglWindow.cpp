@@ -625,22 +625,18 @@ int openglWindow::handle(int event)
                      CTX::instance()->cg[2] - p[2]}, t;
       prosca(r, d, &t);
       for(int i = 0; i < 3; i++){
-        _point[i] = p[i] + t * d[i];
-        if(CTX::instance()->geom.snap[i]){
-          double d = _point[i] / CTX::instance()->geom.snap[i];
-          double f = floor(d);
-          double c = ceil(d);
-          double n = (d - f < c - d) ? f : c;
-          _point[i] = n * CTX::instance()->geom.snap[i];
+        if(!FlGui::instance()->elementaryContext->frozenPointCoord(i)){
+          _point[i] = p[i] + t * d[i];
+          if(CTX::instance()->geom.snap[i]){
+            double d = _point[i] / CTX::instance()->geom.snap[i];
+            double f = floor(d);
+            double c = ceil(d);
+            double n = (d - f < c - d) ? f : c;
+            _point[i] = n * CTX::instance()->geom.snap[i];
+          }
         }
       }
-      char str[32];
-      sprintf(str, "%g", _point[0]);
-      FlGui::instance()->elementaryContext->input[2]->value(str);
-      sprintf(str, "%g", _point[1]);
-      FlGui::instance()->elementaryContext->input[3]->value(str);
-      sprintf(str, "%g", _point[2]);
-      FlGui::instance()->elementaryContext->input[4]->value(str);
+      FlGui::instance()->elementaryContext->updatePoint(_point);
       redraw();
     }
     else{ // hover mode
