@@ -1,7 +1,7 @@
 Merge "aorta2.stl";
 CreateTopology;
 
-Merge "aortaRADIUS2.bgm";
+//Merge "aortaRADIUS2.bgm";
 
 Line Loop(60) = {1}; Plane Surface(61) = {60};
 Line Loop(62) = {2}; Plane Surface(63) = {62};
@@ -13,4 +13,3 @@ Mesh.Algorithm3D = 4;
 
 Surface Loop(100) = {1, 61:69:2};
 Volume(100) = 100;
-
