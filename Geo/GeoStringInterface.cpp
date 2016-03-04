@@ -101,6 +101,7 @@ void add_infile(const std::string &text, const std::string &fileName, bool force
     GModel::current()->destroy();
   }
   GModel::current()->importGEOInternals();
+  GModel::current()->setName(split[1]);
   CTX::instance()->mesh.changed = ENT_ALL;
 
   // here we have to be explicit otherwise we append compressed stuff to ascii
