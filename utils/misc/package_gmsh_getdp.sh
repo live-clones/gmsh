@@ -177,7 +177,7 @@ cat /tmp/getdp-*${GETDP}-MacOSX/share/doc/getdp/LICENSE.txt >> gmsh-getdp-MacOSX
 cp gmsh_mount/CREDITS.txt gmsh-getdp-MacOSX/CREDITS.txt
 echo "\n\n" >> gmsh-getdp-MacOSX/CREDITS.txt
 cat /tmp/getdp-*${GETDP}-MacOSX/share/doc/getdp/CREDITS.txt >> gmsh-getdp-MacOSX/CREDITS.txt
-mv /tmp/getdp-*${GETDP}-MacOSX/doc/getdp/templates gmsh-getdp-MacOSX
+mv /tmp/getdp-*${GETDP}-MacOSX/share/doc/getdp/templates gmsh-getdp-MacOSX
 cp -R gmsh_mount/tutorial gmsh-getdp-MacOSX
 cp -R /tmp/models gmsh-getdp-MacOSX
 umount gmsh_mount
