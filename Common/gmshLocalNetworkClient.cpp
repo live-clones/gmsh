@@ -470,7 +470,7 @@ bool gmshLocalNetworkClient::run()
         break;
       }
       else{
-        int ret = s->NonBlockingWait(0.001, -1.);
+        int ret = s->NonBlockingWait(0.0001, -1.);
         if(ret == 0){ // we have data from this particular client
           haveData = true;
           break;
