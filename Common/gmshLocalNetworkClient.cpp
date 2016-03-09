@@ -625,7 +625,7 @@ void saveDb(const std::string &fileName)
   else
     Msg::Error("Could not save database '%s'", fileName.c_str());
 
-  // test
+#if 0
   fp = Fopen((fileName + ".json").c_str(), "wb");
   if(fp){
     std::string json;
@@ -633,6 +633,7 @@ void saveDb(const std::string &fileName)
     fwrite(json.c_str(), sizeof(char), json.size(), fp);
     fclose(fp);
   }
+#endif
 }
 
 void archiveOutputFiles(const std::string &fileName)

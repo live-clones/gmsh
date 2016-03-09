@@ -103,6 +103,7 @@ string	{alpha}({alpha}|{digit})*
 ">="                    return tGREATEROREQUAL;
 
 Abort                   return tAbort;
+AbsolutePath            return tAbsolutePath;
 Acos                    return tAcos;
 AdaptMesh               return tAdaptMesh;
 Affine                  return tAffine;
@@ -149,6 +150,7 @@ DefineString            return tDefineString;
 Delete                  return tDelete;
 Degenerated             return tDegenerated;
 Dilate                  return tDilate;
+DirName                 return tDirName;
 Draw                    return tDraw;
 SetChanged              return tSetChanged;
 

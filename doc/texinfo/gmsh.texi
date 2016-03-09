@@ -1145,6 +1145,8 @@ Character expressions are defined as:
   Str ( @var{char-expression} <,@dots{}> ) |
   StrChoice ( @var{expression}, @var{char-expression}, @var{char-expression}) |
   UpperCase ( @var{char-expression} ) |
+  AbsolutePath ( @var{char-expression} ) |
+  DirName ( @var{char-expression} ) |
   Sprintf ( @var{char-expression} , @var{expression-list} ) |
   Sprintf ( @var{char-expression} ) |
   Sprintf ( @var{char-option} ) |
@@ -1167,19 +1169,21 @@ extension) or the relative path of a file name. @code{StrCat} and
 a newline character after each string except the last).
 @code{StrChoice} returns the first or second @var{char-expression}
 depending on the value of @var{expression}. @code{UpperCase} converts
-the @var{char-expression} to upper case. @code{Sprintf} is equivalent to
-the @code{sprintf} C function (where @var{char-expression} is a format
-string that can contain floating point formatting characters: @code{%e},
-@code{%g}, etc.) The various @w{@var{char-option}s} are listed in
-@ref{Options}. @code{GetEnvThe} gets the value of an environment
-variable from the operating system. @code{GetString} allows to get a
-ONELAB string value (the second optional argument is the default value
-returned if the variable does not exist).  @code{GetStringValue} asks
-the user for a value interactively (the second argument is the value
-used in non-interactive mode). @code{StrReplace}'s arguments are: input
-string, old substring, new substring (brackets can be used instead of
-parentheses in @code{Str} and @code{Sprintf}). @code{NameToString}
-converts a variable name into a string.
+the @var{char-expression} to upper case. @code{AbsolutePath} returns the
+absolute path of a file. @code{DirName} returns the directory of a file.
+@code{Sprintf} is equivalent to the @code{sprintf} C function (where
+@var{char-expression} is a format string that can contain floating point
+formatting characters: @code{%e}, @code{%g}, etc.) The various
+@w{@var{char-option}s} are listed in @ref{Options}. @code{GetEnvThe}
+gets the value of an environment variable from the operating
+system. @code{GetString} allows to get a ONELAB string value (the second
+optional argument is the default value returned if the variable does not
+exist).  @code{GetStringValue} asks the user for a value interactively
+(the second argument is the value used in non-interactive
+mode). @code{StrReplace}'s arguments are: input string, old substring,
+new substring (brackets can be used instead of parentheses in @code{Str}
+and @code{Sprintf}). @code{NameToString} converts a variable name into a
+string.
 
 @code{DefineString} allows to define a ONELAB variable in-line. The
 @var{char-expression} given as the first argument is the default value; this

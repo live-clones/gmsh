@@ -307,9 +307,9 @@ namespace onelab{
         << ", \"name\":\"" << sanitize(getName()) << "\""
         << ", \"label\":\"" << sanitize(getLabel()) << "\""
         << ", \"help\":\"" << sanitize(getHelp()) << "\""
-        << ", \"neverChanged\":" << (getNeverChanged() ? "true" : "false") << "\""
-        << ", \"visible\":" << (getVisible() ? "true" : "false") << "\""
-        << ", \"readOnly\":" << (getReadOnly() ? "true" : "false") << "\"";
+        << ", \"neverChanged\":" << (getNeverChanged() ? "true" : "false")
+        << ", \"visible\":" << (getVisible() ? "true" : "false")
+        << ", \"readOnly\":" << (getReadOnly() ? "true" : "false");
       sstream << ", \"attributes\":{ ";
       for(std::map<std::string, std::string>::const_iterator it = _attributes.begin();
           it != _attributes.end(); it++){

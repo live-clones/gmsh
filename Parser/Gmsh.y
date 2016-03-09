@@ -124,6 +124,7 @@ struct doubleXstring{
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil tRound
 %token tFmod tModulo tHypot tList
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
+%token tAbsolutePath tDirName
 %token tFind tStrFind tStrCmp tStrChoice tUpperCase tLowerCase tLowerCaseIn
 %token tTextAttributes
 %token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tCurrentDirectory
@@ -6114,6 +6115,20 @@ StringExpr :
       std::string tmp = SplitFileName(GetAbsolutePath(gmsh_yyname))[0];
       $$ = (char*)Malloc((tmp.size() + 1) * sizeof(char));
       strcpy($$, tmp.c_str());
+    }
+  | tDirName LP StringExprVar RP
+    {
+      std::string tmp = SplitFileName($3)[0];
+      $$ = (char*)Malloc((tmp.size() + 1) * sizeof(char));
+      strcpy($$, tmp.c_str());
+      Free($3);
+    }
+  | tAbsolutePath LP StringExprVar RP
+    {
+      std::string tmp = GetAbsolutePath($3);
+      $$ = (char*)Malloc((tmp.size() + 1) * sizeof(char));
+      strcpy($$, tmp.c_str());
+      Free($3);
     }
   | tDefineString LP StringExpr
     { floatOptions.clear(); charOptions.clear(); }

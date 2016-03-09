@@ -33,6 +33,7 @@
 #include "SmoothData.h"
 #include "Context.h"
 #include "OS.h"
+#include "StringUtils.h"
 #include "GEdgeLoop.h"
 #include "MVertexRTree.h"
 #include "OpenFile.h"
@@ -123,6 +124,9 @@ void GModel::setFileName(std::string fileName)
   _fileName = fileName;
   _fileNames.insert(fileName);
   Msg::SetOnelabString("Gmsh/Model name", fileName, false, false, true, true);
+  Msg::SetOnelabString
+    ("Gmsh/Model absolute path", SplitFileName(GetAbsolutePath(fileName))[0],
+     false, false, true, true);
   Msg::SetWindowTitle(fileName);
 }
 
