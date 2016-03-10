@@ -363,11 +363,7 @@ class adaptivePyramid {
   }
   inline double V() const
   {
-    return (p[0]->val +
-            p[1]->val +
-            p[2]->val +
-            p[3]->val +
-            p[4]->val) / 5.;
+    return (p[0]->val + p[1]->val + p[2]->val + p[3]->val + p[4]->val) / 5.;
   }
   // barycentric coordinates ?
   inline static void GSF(double u, double v, double w, fullVector<double> &sf)
@@ -398,7 +394,8 @@ class PValues{
  public:
   short int sizev; //acceptable values: 1 (scalar), 3 (vector), 9 (tensor)
   double *v;
-  PValues(const PValues& obj) {
+  PValues(const PValues& obj)
+  {
     sizev = obj.sizev;
     v = new double[sizev];
     for(int i=0;i<sizev;i++) {
@@ -435,13 +432,16 @@ class PValues{
     v[3] = vyx; v[4] = vyy; v[5] = vyz;
     v[6] = vzx; v[7] = vzy; v[8] = vzz;
   }
-  ~PValues() {
+  ~PValues()
+  {
     delete[] v;
   }
-  void operator = (const PValues& obj) {
+  void operator = (const PValues& obj)
+  {
     // Assume PValues object has already been generated
     // and v allocated when the operator = is called
-    if(sizev != obj.sizev) Msg::Error("In PValues overlodaing operator: size mistmatch %d %d",sizev);
+    if(sizev != obj.sizev)
+      Msg::Error("In PValues overlodaing operator: size mistmatch %d %d",sizev);
     for(int i=0;i<sizev;i++) {
       v[i] = obj.v[i];
     }
@@ -450,44 +450,42 @@ class PValues{
 
 class globalVTKData {
  public:
-
   static std::vector<vectInt> vtkGlobalConnectivity; // conectivity (vector of vector)
   static std::vector<int> vtkGlobalCellType; // topology
   static std::vector<PCoords> vtkGlobalCoords; // coordinates
   static std::vector<PValues> vtkGlobalValues; // nodal values (either scalar or vector)
-
   globalVTKData();
-
-  static void clearGlobalConnectivity() {
-    for(std::vector<vectInt>::iterator it = vtkGlobalConnectivity.begin();it != vtkGlobalConnectivity.end(); ++it) {
+  static void clearGlobalConnectivity()
+  {
+    for(std::vector<vectInt>::iterator it = vtkGlobalConnectivity.begin();
+        it != vtkGlobalConnectivity.end(); ++it) {
       it->clear();
     }
     vtkGlobalConnectivity.clear();
   }
-
-  static void clearGlobalCellType() {
+  static void clearGlobalCellType()
+  {
     vtkGlobalCellType.clear();
   }
-
-  static void clearGlobalCoords() {
+  static void clearGlobalCoords()
+  {
     vtkGlobalCoords.clear();
   }
-
-  static void clearGlobalValues() {
+  static void clearGlobalValues()
+  {
     vtkGlobalValues.clear();
   }
-
-  static void clearGlobalData() {
+  static void clearGlobalData()
+  {
     clearGlobalConnectivity();
     clearGlobalCellType();
     clearGlobalCoords();
     clearGlobalValues();
   }
-
-  ~globalVTKData() {
+  ~globalVTKData()
+  {
     clearGlobalData();
   }
-
 };
 
 class VTKData {
@@ -535,11 +533,12 @@ class VTKData {
 
 
 public:
-  VTKData(std::string fieldName="unknown", int numComp = -1, int step = -1, int level = -1, double tol=0.0,
-          std::string filename="unknown", int useDefaultName = 1, int npart = -1, bool isBinary = true) {
-
-    vtkIsBinary = isBinary;                    // choice: true, false
-    vtkFormat = std::string("vtu");      // choice: vtk (VTK legacy), vtu (XML appended)
+  VTKData(std::string fieldName="unknown", int numComp = -1, int step = -1,
+          int level = -1, double tol=0.0, std::string filename="unknown",
+          int useDefaultName = 1, int npart = -1, bool isBinary = true)
+  {
+    vtkIsBinary = isBinary; // choice: true, false
+    vtkFormat = std::string("vtu"); // choice: vtk (VTK legacy), vtu (XML appended)
 
     vtkFieldName = fieldName;
     vtkFileName = filename;
@@ -561,10 +560,10 @@ public:
     vtkCountCellOffset = 0; //used only for ascii output
     vtkCountCellType = 0;
   }
-
   void clearLocalData()
   {
-    for(std::vector<vectInt>::iterator it = vtkLocalConnectivity.begin();it != vtkLocalConnectivity.end(); ++it) {
+    for(std::vector<vectInt>::iterator it = vtkLocalConnectivity.begin();
+        it != vtkLocalConnectivity.end(); ++it) {
       it->clear();
     }
     vtkLocalConnectivity.clear();
@@ -572,24 +571,22 @@ public:
     vtkLocalCoords.clear();
     vtkLocalValues.clear();
   }
-
   ~VTKData()
   {
     clearLocalData();
   }
-
-  void incrementTotNod(int increment) {vtkCountTotNod+=increment;}
-  void incrementTotElm(int increment) {vtkCountTotElm+=increment;}
-  void incrementTotElmLev0(int increment) {vtkCountTotElmLev0+=increment;}
-
+  void incrementTotNod(int increment) { vtkCountTotNod+=increment; }
+  void incrementTotElm(int increment) { vtkCountTotElm+=increment; }
+  void incrementTotElmLev0(int increment) { vtkCountTotElmLev0+=increment; }
   bool isLittleEndian();
   void SwapArrayByteOrder(void* array, int nbytes, int nItems); // used only for VTK
   int getPVCellType(int numEdges);
-//   void writeParaViewData();
+  // void writeParaViewData();
   void writeVTKElmData();
   void initVTKFile();
   void finalizeVTKFile();
-  void setFileDistribution() {
+  void setFileDistribution()
+  {
     int tmpmod = vtkTotNumElmLev0 % vtkNpart;
     minElmPerPart = (vtkTotNumElmLev0-tmpmod)/vtkNpart;
     numPartMinElm = vtkNpart - tmpmod;
@@ -598,7 +595,6 @@ public:
     else maxElmPerPart = minElmPerPart+1;
     numPartMaxElm = tmpmod;
     assert(vtkTotNumElmLev0 == minElmPerPart*numPartMinElm+maxElmPerPart*numPartMaxElm);
-
   }
 };
 
@@ -661,17 +657,19 @@ class adaptiveData {
   adaptiveElements<adaptivePrism> *_prisms;
   adaptiveElements<adaptivePyramid> *_pyramids;
 
-  // When set to true, this builds a global VTK data structure (connectivity, coords, etc) for the adaptive views.
-  // This can be very memory consuming for high adaptation levels. Use with caution.
-  // Usefull  when GMSH is used as an external library to provide for instance a GMSH reader in a ParaView plugin.
-  // By default, set to false in the constructor.
+  // When set to true, this builds a global VTK data structure (connectivity,
+  // coords, etc) for the adaptive views.  This can be very memory consuming for
+  // high adaptation levels. Use with caution.  Useful when GMSH is used as an
+  // external library to provide for instance a GMSH reader in a ParaView
+  // plugin.  By default, set to false in the constructor.
   bool buildStaticData;
 
-  // This variable helps limit memory consumption (no global data structure) when GMSH is requested to
-  // write the data structure of adapted view under pvtu format
-  // In this case, one adapted element is considered at a time so that it can generate
-  // billions of adapted elements on a single core, as long as disk space allows it.
-  // This variable is set to true by default in the constructor.
+  // This variable helps limit memory consumption (no global data structure)
+  // when GMSH is requested to write the data structure of adapted view under
+  // pvtu format In this case, one adapted element is considered at a time so
+  // that it can generate billions of adapted elements on a single core, as long
+  // as disk space allows it.  This variable is set to true by default in the
+  // constructor.
   bool writeVTK;
 
  public:
@@ -681,11 +679,12 @@ class adaptiveData {
   PViewData *getData(){ return (PViewData*)_outData; }
   void changeResolution(int step, int level, double tol, GMSH_PostPlugin *plug=0);
   int countTotElmLev0(int step, PViewData *in);
-  void changeResolutionForVTK(int step, int level, double tol, int npart = 1, bool isBinary = true,
-                              const std::string &guifileName = "unknown", int useDefaultName = 1);
+  void changeResolutionForVTK(int step, int level, double tol, int npart = 1,
+                              bool isBinary = true,
+                              const std::string &guifileName = "unknown",
+                              int useDefaultName = 1);
   void upBuildStaticData(bool newValue) { buildStaticData = newValue; }
   void upWriteVTK(bool newValue) { writeVTK = newValue; }
-
 };
 
 #endif

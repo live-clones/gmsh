@@ -2374,10 +2374,10 @@ void adaptiveElements<T>::buildMapping(nodMap<T> &myNodMap, double tol, int &num
         } //for
       } //if
     }//for
-    
-    if(myNodMap.mapping.size() == 0) { 
+
+    if(myNodMap.mapping.size() == 0) {
       Msg::Error("Node mapping in buildMapping has zero size");
-    }   
+    }
 
     // Count number of unique nodes from the mapping
     // Use an ordered set for efficiency
