@@ -39,6 +39,8 @@ Enable FLTK graphical user interface (requires mesh/post) (default: ON)
 Enable Fourier geometrical models (experimental) (default: OFF)
 @item ENABLE_GMM
 Enable GMM linear solvers (simple alternative to PETSc) (default: ON)
+@item ENABLE_GMP
+Enable GMP for Kbipack (advanced) (default: ON)
 @item ENABLE_GRAPHICS
 Enable building graphics lib even without GUI (advanced) (default: OFF)
 @item ENABLE_KBIPACK
@@ -73,8 +75,6 @@ Enable petsc4py wrappers for petsc matrices (default: ON)
 Enable Open CASCADE geometrical models (default: ON)
 @item ENABLE_ONELAB
 Enable ONELAB solver interface (default: ON)
-@item ENABLE_ONELAB2
-Enable experimental ONELAB-Cloud solver interface (default: OFF)
 @item ENABLE_ONELAB_METAMODEL
 Enable ONELAB metamodels (experimental) (default: ON)
 @item ENABLE_OPENMP
@@ -97,8 +97,8 @@ Enable post-processing module (required by GUI) (default: ON)
 Enable Poppler for displaying PDF documents (experimental) (default: OFF)
 @item ENABLE_QT
 Enable dummy QT graphical interface proof-of-concept (experimental) (default: OFF)
-@item ENABLE_RTREE
-Enable RTREE (used for quad/hex mesh generation) (default: ON)
+@item ENABLE_REVOROPT
+Enable Revoropt (used for CVT remeshing) (default: OFF)
 @item ENABLE_SALOME
 Enable Salome routines for CAD healing (default: ON)
 @item ENABLE_SGEOM
@@ -108,7 +108,7 @@ Enable SLEPc eigensolvers (required for conformal compounds) (default: ON)
 @item ENABLE_SOLVER
 Enable built-in finite element solvers (required for compounds) (default: ON)
 @item ENABLE_TAUCS
-Enable Taucs linear solver (alternative to PETSc) (default: ON)
+Enable Taucs linear solver (default: ON)
 @item ENABLE_TCMALLOC
 Enable libtcmalloc, a fast malloc implementation but that does not release memory (default: OFF)
 @item ENABLE_TETGEN
@@ -121,3 +121,5 @@ Enable Voro3D (for hex meshing, experimental) (default: ON)
 Enable generation of Java wrappers (experimental) (default: OFF)
 @item ENABLE_WRAP_PYTHON
 Enable generation of Python wrappers (default: OFF)
+@item ENABLE_ZIPPER
+Enable Zip file compression/decompression (default: OFF)
