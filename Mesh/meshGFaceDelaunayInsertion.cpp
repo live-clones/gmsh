@@ -1312,6 +1312,7 @@ void optimalPointFrontalB (GFace *gf,
   // so we have to find t, starting with t = 0
 
 
+#if defined(HAVE_ANN) && defined(HAVE_SOLVER)
   if (gf->geomType() == GEntity::DiscreteDiskSurface){
     discreteDiskFace *ddf = dynamic_cast<discreteDiskFace*> (gf);
     if (ddf){
@@ -1323,6 +1324,8 @@ void optimalPointFrontalB (GFace *gf,
       }
     }
   }
+#endif
+
   if (gf->geomType() == GEntity::CompoundSurface){
     GFaceCompound *gfc = dynamic_cast<GFaceCompound*> (gf);
     if (gfc){
