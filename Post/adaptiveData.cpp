@@ -399,6 +399,7 @@ void adaptiveQuadrangle::recurError(adaptiveQuadrangle *q, double AVG, double to
     q->visible = true;
   else {
     double vr;
+    double vd = (q->p[0]->val + q->p[2]->val) / 2.;
     if(!q->e[0]->e[0]) {
       double v1 = q->e[0]->V();
       double v2 = q->e[1]->V();
@@ -406,7 +407,8 @@ void adaptiveQuadrangle::recurError(adaptiveQuadrangle *q, double AVG, double to
       double v4 = q->e[3]->V();
       vr = (v1 + v2 + v3 + v4) / 4.;
       double v = q->V();
-      if(fabs(v - vr) > AVG * tol){
+      if(fabs(v - vr) > AVG * tol ||
+         fabs(vd - vr) > AVG * tol){
         q->visible = false;
         recurError(q->e[0], AVG, tol);
         recurError(q->e[1], AVG, tol);
@@ -442,7 +444,8 @@ void adaptiveQuadrangle::recurError(adaptiveQuadrangle *q, double AVG, double to
          fabs(q->e[1]->V() - vr2) > AVG * tol ||
          fabs(q->e[2]->V() - vr3) > AVG * tol ||
          fabs(q->e[3]->V() - vr4) > AVG * tol ||
-         fabs(q->V() - vr) > AVG * tol){
+         fabs(q->V() - vr) > AVG * tol ||
+         fabs(vd - vr) > AVG * tol){
         q->visible = false;
         recurError(q->e[0], AVG, tol);
         recurError(q->e[1], AVG, tol);
@@ -736,8 +739,11 @@ void adaptiveHexahedron::recurError(adaptiveHexahedron *h, double AVG, double to
     const double v8 = h->e[7]->V();
     const double vr = (v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8) * .125;
     const double v = h->V();
+    // we use diagonal 1-7 because it's the one used for drawing
+    const double vd = (h->p[1]->val + h->p[7]->val) / 2.;
     if(!h->e[0]->e[0]) {
-      if(fabs(v - vr) > AVG * tol) {
+      if(fabs(v - vr) > AVG * tol ||
+         fabs(vd - vr) > AVG * tol) {
         h->visible = false;
         recurError(h->e[0], AVG, tol);
         recurError(h->e[1], AVG, tol);
@@ -772,7 +778,8 @@ void adaptiveHexahedron::recurError(adaptiveHexahedron *h, double AVG, double to
          fabs(h->e[5]->V() - vri[5]) > AVG * tol ||
          fabs(h->e[6]->V() - vri[6]) > AVG * tol ||
          fabs(h->e[7]->V() - vri[7]) > AVG * tol ||
-         fabs(v - vr) > AVG * tol) {
+         fabs(v - vr) > AVG * tol ||
+         fabs(vd - vr) > AVG * tol) {
         h->visible = false;
         recurError(h->e[0], AVG, tol);
         recurError(h->e[1], AVG, tol);
