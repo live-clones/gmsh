@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include "GmshConfig.h"
 #include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "robustPredicates.h"
@@ -15,6 +16,16 @@
 #include "MTriangle.h"
 #include "MTetrahedron.h"
 #include "OS.h"
+
+#if defined(HAVE_TETGEN)
+
+bool meshGRegionBoundaryRecovery(GRegion *gr)
+{
+  Msg::Error("Should not call meshGRegionBoundaryRecovery with Tetgen");
+  return false;
+}
+
+#else
 
 #define REAL double
 
@@ -857,3 +868,5 @@ bool tetgenmesh::reconstructmesh(void *p)
  return returnValue;
 
 }
+
+#endif
