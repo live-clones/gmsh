@@ -592,9 +592,12 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
 }
 
 // uncomment this to test the new code
-//#define NEW_CODE
+#if !defined(HAVE_TETGEN)
+#define NEW_CODE
+#endif
 
-static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions) {
+static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
+{
   GRegion *gr = regions[0];
   std::list<GFace*> faces = gr->faces();
   std::set<GFace*> allFacesSet;
@@ -610,9 +613,7 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions) {
   gr->set(allFaces);
 
   try{
-    meshGRegionBoundaryRecovery *init = new meshGRegionBoundaryRecovery();
-    init->reconstructmesh(gr);
-    delete init;
+    meshGRegionBoundaryRecovery(gr);
   }
   catch(int err){
     Msg::Error("Could not recover boundary: error %d", err);
