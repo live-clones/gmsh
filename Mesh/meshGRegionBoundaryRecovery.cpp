@@ -33,27 +33,6 @@ bool meshGRegionBoundaryRecovery(GRegion *gr)
 class tetgenio{
 public:
 
-  typedef struct {
-    int *vertexlist;
-    int numberofvertices;
-  } polygon;
-
-  // A "facet" describes a polygonal region possibly with holes, edges, and
-  //   points floating in it.  Each facet consists of a list of polygons and
-  //   a list of hole points (which lie strictly inside holes).
-  typedef struct {
-    polygon *polygonlist;
-    int numberofpolygons;
-    REAL *holelist;
-    int numberofholes;
-  } facet;
-
-  typedef struct{
-    REAL uv[2];
-    int tag;
-    int type;
-  } pointparam;
-
   int firstnumber;
   int numberofpointattributes;
 
@@ -68,7 +47,6 @@ public:
   int numberofpoints;
   int *pointlist;
   int *pointattributelist;
-  pointparam *pointparamlist;
 
   int numberofpointmakers;
   int *pointmarkerlist;
@@ -79,10 +57,6 @@ public:
   int numberofedges;
   int *edgelist;
   int *edgemarkerlist;
-
-  int numberoffacets;
-  facet *facetlist;
-  int *facetmarkerlist;
 
   int numberofholes;
   REAL *holelist;
@@ -104,7 +78,6 @@ public:
     numberofpoints = 0;
     pointlist = 0;
     pointattributelist = 0;
-    pointparamlist = 0;
     numberofpointmakers = 0;
     pointmarkerlist = 0;
     numberofpointmtrs = 0;
@@ -112,9 +85,6 @@ public:
     numberofedges = 0;
     edgelist = 0;
     edgemarkerlist = 0;
-    numberoffacets = 0;
-    facetlist = 0;
-    facetmarkerlist = 0;
     numberofholes = 0;
     holelist = 0;
     numberofregions = 0;
@@ -149,7 +119,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   in = new tetgenio();
   b = new tetgenbehavior();
-  char *opt = "pY";
+  char opt[] = "pY";
   b->parse_commandline(opt);
 
   bool returnValue (true);
@@ -537,7 +507,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     insegments = subsegs->items;
 
     if (0) {
-      //outsurfacemesh("dump");
+      outsurfacemesh("dump");
     }
 
   } // meshsurface()
@@ -624,7 +594,9 @@ bool tetgenmesh::reconstructmesh(void *p)
   }
 
   // Debug
-  //outmesh2medit("dump");
+  if (0) {
+    //outmesh2medit("dump");
+  }
   ////////////////////////////////////////////////////////
 
 {
@@ -867,6 +839,215 @@ bool tetgenmesh::reconstructmesh(void *p)
  else Msg::Info("Reconstruct time : %g sec (mesh is not Delaunay)",Cpu()-t_start);
  return returnValue;
 
+}
+
+// Dump the input surface mesh.
+// 'mfilename' is a filename without suffix.
+void tetgenmesh::outsurfacemesh(const char* mfilename)
+{
+  FILE *outfile = NULL;
+  char sfilename[256];
+  int firstindex;
+
+  point pointloop;
+  int pointnumber;
+  strcpy(sfilename, mfilename);
+  strcat(sfilename, ".node");
+  outfile = fopen(sfilename, "w");
+  if (!b->quiet) {
+    printf("Writing %s.\n", sfilename);
+  }
+  fprintf(outfile, "%ld  3  0  0\n", points->items);
+  // Determine the first index (0 or 1).
+  firstindex = b->zeroindex ? 0 : in->firstnumber;
+  points->traversalinit();
+  pointloop = pointtraverse();
+  pointnumber = firstindex; // in->firstnumber;
+  while (pointloop != (point) NULL) {
+    // Point number, x, y and z coordinates.
+    fprintf(outfile, "%4d    %.17g  %.17g  %.17g", pointnumber,
+            pointloop[0], pointloop[1], pointloop[2]);
+    fprintf(outfile, "\n");
+    pointloop = pointtraverse();
+    pointnumber++;
+  }
+  fclose(outfile);
+
+  face faceloop;
+  point torg, tdest, tapex;
+  strcpy(sfilename, mfilename);
+  strcat(sfilename, ".smesh");
+  outfile = fopen(sfilename, "w");
+  if (!b->quiet) {
+    printf("Writing %s.\n", sfilename);
+  }
+  int shift = 0; // Default no shiftment.
+  if ((in->firstnumber == 1) && (firstindex == 0)) {
+    shift = 1; // Shift the output indices by 1.
+  }
+  fprintf(outfile, "0 3 0 0\n");
+  fprintf(outfile, "%ld  1\n", subfaces->items);
+  subfaces->traversalinit();
+  faceloop.sh = shellfacetraverse(subfaces);
+  while (faceloop.sh != (shellface *) NULL) {
+    torg = sorg(faceloop);
+    tdest = sdest(faceloop);
+    tapex = sapex(faceloop);
+    fprintf(outfile, "3   %4d  %4d  %4d  %d\n",
+            pointmark(torg) - shift, pointmark(tdest) - shift,
+            pointmark(tapex) - shift, shellmark(faceloop));
+    faceloop.sh = shellfacetraverse(subfaces);
+  }
+  fprintf(outfile, "0\n");
+  fprintf(outfile, "0\n");
+  fclose(outfile);
+
+  face edgeloop;
+  int edgenumber;
+  strcpy(sfilename, mfilename);
+  strcat(sfilename, ".edge");
+  outfile = fopen(sfilename, "w");
+  if (!b->quiet) {
+    printf("Writing %s.\n", sfilename);
+  }
+  fprintf(outfile, "%ld  1\n", subsegs->items);
+  subsegs->traversalinit();
+  edgeloop.sh = shellfacetraverse(subsegs);
+  edgenumber = firstindex; // in->firstnumber;
+  while (edgeloop.sh != (shellface *) NULL) {
+    torg = sorg(edgeloop);
+    tdest = sdest(edgeloop);
+    fprintf(outfile, "%5d   %4d  %4d  %d\n", edgenumber,
+            pointmark(torg) - shift, pointmark(tdest) - shift,
+            shellmark(edgeloop));
+    edgenumber++;
+    edgeloop.sh = shellfacetraverse(subsegs);
+  }
+  fclose(outfile);
+}
+
+void tetgenmesh::outmesh2medit(const char* mfilename)
+{
+  FILE *outfile;
+  char mefilename[256];
+  tetrahedron* tetptr;
+  triface tface, tsymface;
+  face segloop, checkmark;
+  point ptloop, p1, p2, p3, p4;
+  long ntets, faces;
+  int shift = 0;
+  int marker;
+
+  if (mfilename != (char *) NULL && mfilename[0] != '\0') {
+    strcpy(mefilename, mfilename);
+  } else {
+    strcpy(mefilename, "unnamed");
+  }
+  strcat(mefilename, ".mesh");
+
+  if (!b->quiet) {
+    printf("Writing %s.\n", mefilename);
+  }
+  outfile = fopen(mefilename, "w");
+  if (outfile == (FILE *) NULL) {
+    printf("File I/O Error:  Cannot create file %s.\n", mefilename);
+    return;
+  }
+
+  fprintf(outfile, "MeshVersionFormatted 1\n");
+  fprintf(outfile, "\n");
+  fprintf(outfile, "Dimension\n");
+  fprintf(outfile, "3\n");
+  fprintf(outfile, "\n");
+
+  fprintf(outfile, "\n# Set of mesh vertices\n");
+  fprintf(outfile, "Vertices\n");
+  fprintf(outfile, "%ld\n", points->items);
+
+  points->traversalinit();
+  ptloop = pointtraverse();
+  //pointnumber = 1;
+  while (ptloop != (point) NULL) {
+    // Point coordinates.
+    fprintf(outfile, "%.17g  %.17g  %.17g", ptloop[0], ptloop[1], ptloop[2]);
+    fprintf(outfile, "    0\n");
+    //setpointmark(ptloop, pointnumber);
+    ptloop = pointtraverse();
+    //pointnumber++;
+  }
+
+  // Medit need start number form 1.
+  if (in->firstnumber == 1) {
+    shift = 0;
+  } else {
+    shift = 1;
+  }
+
+  // Compute the number of faces.
+  ntets = tetrahedrons->items - hullsize;
+  faces = (ntets * 4l + hullsize) / 2l;
+
+  /*
+  fprintf(outfile, "\n# Set of Triangles\n");
+  fprintf(outfile, "Triangles\n");
+  fprintf(outfile, "%ld\n", faces);
+
+  tetrahedrons->traversalinit();
+  tface.tet = tetrahedrontraverse();
+  while (tface.tet != (tetrahedron *) NULL) {
+    for (tface.ver = 0; tface.ver < 4; tface.ver ++) {
+      fsym(tface, tsymface);
+      if (ishulltet(tsymface) ||
+          (elemindex(tface.tet) < elemindex(tsymface.tet))) {
+        p1 = org (tface);
+        p2 = dest(tface);
+        p3 = apex(tface);
+        fprintf(outfile, "%5d  %5d  %5d",
+          pointmark(p1)+shift, pointmark(p2)+shift, pointmark(p3)+shift);
+        // Check if it is a subface.
+        tspivot(tface, checkmark);
+        if (checkmark.sh == NULL) {
+          marker = 0;  // It is an inner face. It's marker is 0.
+        } else {
+          marker = 1; // The default marker for subface is 1.
+        }
+        fprintf(outfile, "    %d\n", marker);
+      }
+    }
+    tface.tet = tetrahedrontraverse();
+  }
+  */
+
+  fprintf(outfile, "\n# Set of Tetrahedra\n");
+  fprintf(outfile, "Tetrahedra\n");
+  fprintf(outfile, "%ld\n", ntets);
+
+  tetrahedrons->traversalinit();
+  tetptr = tetrahedrontraverse();
+  while (tetptr != (tetrahedron *) NULL) {
+    if (!b->reversetetori) {
+      p1 = (point) tetptr[4];
+      p2 = (point) tetptr[5];
+    } else {
+      p1 = (point) tetptr[5];
+      p2 = (point) tetptr[4];
+    }
+    p3 = (point) tetptr[6];
+    p4 = (point) tetptr[7];
+    fprintf(outfile, "%5d  %5d  %5d  %5d",
+            pointmark(p1)+shift, pointmark(p2)+shift,
+            pointmark(p3)+shift, pointmark(p4)+shift);
+    if (numelemattrib > 0) {
+      fprintf(outfile, "  %.17g", elemattribute(tetptr, 0));
+    } else {
+      fprintf(outfile, "  0");
+    }
+    fprintf(outfile, "\n");
+    tetptr = tetrahedrontraverse();
+  }
+
+  fprintf(outfile, "\nEnd\n");
+  fclose(outfile);
 }
 
 #endif
