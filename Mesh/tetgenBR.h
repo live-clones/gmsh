@@ -1445,6 +1445,39 @@ public:
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
+// selfint_event, a structure to report self-intersections.
+//
+//   - e_type,  report the type of self-intersections, 
+//     it may be one of:
+//     0, reserved.
+//     1, two edges intersect,
+//     2, an edge and a triangle intersect,
+//     3, two triangles intersect,
+//     4, two edges are overlapping,
+//     5, an edge and a triangle are overlapping,
+//     6, two triangles are overlapping,
+//     7, a vertex lies in an edge,
+//     8, a vertex lies in a facet,         
+
+class selfint_event {
+public:
+  int e_type;
+  int f_marker1; // Tag of the 1st facet.
+  int s_marker1; // Tag of the 1st segment.
+  int f_vertices1[3];
+  int f_marker2; // Tag of the 2nd facet.
+  int s_marker2; // Tag of the 2nd segment.
+  int f_vertices2[3];
+  REAL int_point[3];
+  selfint_event() {
+    e_type = 0;
+    f_marker1 = f_marker2 = 0; 
+    s_marker1 = s_marker2 = 0;
+  }
+};
+
+static selfint_event sevent;
+
 inline void terminatetetgen(tetgenmesh *m, int x)
 {
 #ifdef TETLIBRARY

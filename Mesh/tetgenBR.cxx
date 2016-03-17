@@ -4046,6 +4046,17 @@ void tetgenmesh::report_overlapping_facets(face *f1, face *f2, REAL dihedang)
 	       pointmark(pa), pointmark(pb), pointmark(pd), shellmark(*f2));
   }
 
+  // Return the information
+  sevent.e_type = 6;
+  sevent.f_marker1 = shellmark(*f1);
+  sevent.f_vertices1[0] = pointmark(pa);
+  sevent.f_vertices1[1] = pointmark(pb);
+  sevent.f_vertices1[2] = pointmark(pc);
+  sevent.f_marker2 = shellmark(*f2);
+  sevent.f_vertices2[0] = pointmark(pa);
+  sevent.f_vertices2[1] = pointmark(pb);
+  sevent.f_vertices2[2] = pointmark(pd);
+
   terminatetetgen(this, 3);
 }
 
@@ -4106,6 +4117,17 @@ int tetgenmesh::report_selfint_edge(point e1, point e2, face *iedge,
                parentsh.sh ? shellmark(parentsh) : 0);
         printf("  Segment 2: [%d, %d] #%d (%d)\n", pointmark(forg),
                pointmark(fdest), geomtag, facemark);
+        sevent.e_type = 4;
+        sevent.f_marker1 = (parentsh.sh ? shellmark(parentsh) : 0);
+        sevent.s_marker1 = shellmark(colseg);
+        sevent.f_vertices1[0] = pointmark( sorg(colseg));
+        sevent.f_vertices1[1] = pointmark(sdest(colseg));
+        sevent.f_vertices1[2] = 0;
+        sevent.f_marker2 = facemark;
+        sevent.s_marker2 = geomtag;
+        sevent.f_vertices2[0] = pointmark(forg);
+        sevent.f_vertices2[1] = pointmark(fdest);
+        sevent.f_vertices2[2] = 0;
       } else {
         // Two identical segments. Why report it?
         terminatetetgen(this, 2); 
@@ -4116,6 +4138,17 @@ int tetgenmesh::report_selfint_edge(point e1, point e2, face *iedge,
              pointmark(sdest(colseg)), shellmark(colseg));
       printf("  Facet:   [%d,%d,%d] #%d\n", pointmark(forg), 
              pointmark(fdest), pointmark(fapex), geomtag);
+      sevent.e_type = 5;
+      sevent.f_marker1 = 0;
+      sevent.s_marker1 = shellmark(colseg);
+      sevent.f_vertices1[0] = pointmark( sorg(colseg));
+      sevent.f_vertices1[1] = pointmark(sdest(colseg));
+      sevent.f_vertices1[2] = 0;
+      sevent.f_marker2 = geomtag;
+      sevent.s_marker2 = 0;
+      sevent.f_vertices2[0] = pointmark(forg);
+      sevent.f_vertices2[1] = pointmark(fdest);
+      sevent.f_vertices2[2] = pointmark(fapex);
     }
   } else if (dir == SHAREFACE) {
     // Two triangles (subfaces) are coincide.
@@ -4129,6 +4162,17 @@ int tetgenmesh::report_selfint_edge(point e1, point e2, face *iedge,
 		printf("  Facet 2:  [%d,%d,%d] #%d\n", pointmark(sorg(colface)), 
              pointmark(sdest(colface)), pointmark(sapex(colface)), 
 			 shellmark(colface));
+        sevent.e_type = 6;
+        sevent.f_marker1 = geomtag;
+        sevent.s_marker1 = 0;
+        sevent.f_vertices1[0] = pointmark(forg);
+        sevent.f_vertices1[1] = pointmark(fdest);
+        sevent.f_vertices1[2] = pointmark(fapex);
+        sevent.f_marker2 = shellmark(colface);
+        sevent.s_marker2 = 0;
+        sevent.f_vertices2[0] = pointmark(sorg(colface));
+        sevent.f_vertices2[1] = pointmark(sdest(colface));
+        sevent.f_vertices2[2] = pointmark(sapex(colface));
 	  } else {
 	    // Two identical subfaces. Why report it?
         terminatetetgen(this, 2); 
@@ -4145,11 +4189,39 @@ int tetgenmesh::report_selfint_edge(point e1, point e2, face *iedge,
         printf("  Vertex:  [%d] (%g,%g,%g).\n",pointmark(pp),pp[0],pp[1],pp[2]);
         printf("  Segment: [%d, %d] #%d (%d)\n", pointmark(forg), 
                pointmark(fdest), geomtag, facemark);
+        sevent.e_type = 7;
+        sevent.f_marker1 = 0;
+        sevent.s_marker1 = 0;
+        sevent.f_vertices1[0] = pointmark(pp);
+        sevent.f_vertices1[1] = 0;
+        sevent.f_vertices1[2] = 0;
+        sevent.f_marker2 = facemark;
+        sevent.s_marker2 = geomtag;
+        sevent.f_vertices2[0] = pointmark(forg);
+        sevent.f_vertices2[1] = pointmark(fdest);
+        sevent.f_vertices2[2] = 0;
+        sevent.int_point[0] = pp[0];
+        sevent.int_point[1] = pp[1];
+        sevent.int_point[2] = pp[2];
       } else if (etype == 2) {
         printf("PLC Error:  A vertex lies in a facet.\n");
         printf("  Vertex: [%d] (%g,%g,%g).\n",pointmark(pp),pp[0],pp[1],pp[2]);
         printf("  Facet:  [%d,%d,%d] #%d\n", pointmark(forg), pointmark(fdest),
                pointmark(fapex), geomtag);
+        sevent.e_type = 8;
+        sevent.f_marker1 = 0;
+        sevent.s_marker1 = 0;
+        sevent.f_vertices1[0] = pointmark(pp);
+        sevent.f_vertices1[1] = 0;
+        sevent.f_vertices1[2] = 0;
+        sevent.f_marker2 = geomtag;
+        sevent.s_marker2 = 0;
+        sevent.f_vertices2[0] = pointmark(forg);
+        sevent.f_vertices2[1] = pointmark(fdest);
+        sevent.f_vertices2[2] = pointmark(fapex);
+        sevent.int_point[0] = pp[0];
+        sevent.int_point[1] = pp[1];
+        sevent.int_point[2] = pp[2];
       }
     } else if (pointtype(pp) == FREESEGVERTEX) {
       face parentseg, parentsh;
@@ -4166,6 +4238,20 @@ int tetgenmesh::report_selfint_edge(point e1, point e2, face *iedge,
           printf("  Segment 2: [%d, %d], #%d (%d)\n", pointmark(p1), 
                  pointmark(p2), shellmark(parentseg),
                  parentsh.sh ? shellmark(parentsh) : 0);
+          sevent.e_type = 1;
+          sevent.f_marker1 = facemark;
+          sevent.s_marker1 = geomtag;
+          sevent.f_vertices1[0] = pointmark(forg);
+          sevent.f_vertices1[1] = pointmark(fdest);
+          sevent.f_vertices1[2] = 0;
+          sevent.f_marker2 = (parentsh.sh ? shellmark(parentsh) : 0);
+          sevent.s_marker2 = shellmark(parentseg);
+          sevent.f_vertices2[0] = pointmark(p1);
+          sevent.f_vertices2[1] = pointmark(p2);
+          sevent.f_vertices2[2] = 0;
+          sevent.int_point[0] = pp[0];
+          sevent.int_point[1] = pp[1];
+          sevent.int_point[2] = pp[2];
         } else if (etype == 2) {
           printf("PLC Error:  A segment and a facet intersect at point");
           printf(" (%g,%g,%g).\n", pp[0], pp[1], pp[2]);
@@ -4174,6 +4260,20 @@ int tetgenmesh::report_selfint_edge(point e1, point e2, face *iedge,
                  parentsh.sh ? shellmark(parentsh) : 0);
           printf("  Facet:   [%d,%d,%d] #%d\n", pointmark(forg), 
                  pointmark(fdest), pointmark(fapex), geomtag);
+          sevent.e_type = 2;
+          sevent.f_marker1 = (parentsh.sh ? shellmark(parentsh) : 0);
+          sevent.s_marker1 = shellmark(parentseg);
+          sevent.f_vertices1[0] = pointmark(p1);
+          sevent.f_vertices1[1] = pointmark(p2);
+          sevent.f_vertices1[2] = 0;
+          sevent.f_marker2 = geomtag;
+          sevent.s_marker2 = 0;
+          sevent.f_vertices2[0] = pointmark(forg);
+          sevent.f_vertices2[1] = pointmark(fdest);
+          sevent.f_vertices2[2] = pointmark(fapex);
+          sevent.int_point[0] = pp[0];
+          sevent.int_point[1] = pp[1];
+          sevent.int_point[2] = pp[2];
         }
       } else {
         terminatetetgen(this, 2); // Report a bug.
@@ -4192,6 +4292,20 @@ int tetgenmesh::report_selfint_edge(point e1, point e2, face *iedge,
                  pointmark(fdest), geomtag, facemark);
           printf("  Facet   : [%d, %d, %d]  #%d.\n", pointmark(p1),
                  pointmark(p2), pointmark(p3), shellmark(parentsh));
+          sevent.e_type = 2;
+          sevent.f_marker1 = facemark;
+          sevent.s_marker1 = geomtag;
+          sevent.f_vertices1[0] = pointmark(forg);
+          sevent.f_vertices1[1] = pointmark(fdest);
+          sevent.f_vertices1[2] = 0;
+          sevent.f_marker2 = shellmark(parentsh);
+          sevent.s_marker2 = 0;
+          sevent.f_vertices2[0] = pointmark(p1);
+          sevent.f_vertices2[1] = pointmark(p2);
+          sevent.f_vertices2[2] = pointmark(p3);
+          sevent.int_point[0] = pp[0];
+          sevent.int_point[1] = pp[1];
+          sevent.int_point[2] = pp[2];
         } else if (etype == 2) {
           printf("PLC Error:  Two facets intersect at point (%g,%g,%g).\n",
                  pp[0], pp[1], pp[2]);
@@ -4199,6 +4313,20 @@ int tetgenmesh::report_selfint_edge(point e1, point e2, face *iedge,
                  pointmark(fdest), pointmark(fapex), geomtag);
           printf("  Facet 2: [%d, %d, %d] #%d.\n", pointmark(p1),
                  pointmark(p2), pointmark(p3), shellmark(parentsh));
+          sevent.e_type = 3;
+          sevent.f_marker1 = geomtag;
+          sevent.s_marker1 = 0;
+          sevent.f_vertices1[0] = pointmark(forg);
+          sevent.f_vertices1[1] = pointmark(fdest);
+          sevent.f_vertices1[2] = pointmark(fapex);
+          sevent.f_marker2 = shellmark(parentsh);
+          sevent.s_marker2 = 0;
+          sevent.f_vertices2[0] = pointmark(p1);
+          sevent.f_vertices2[1] = pointmark(p2);
+          sevent.f_vertices2[2] = pointmark(p3);
+          sevent.int_point[0] = pp[0];
+          sevent.int_point[1] = pp[1];
+          sevent.int_point[2] = pp[2];
         }
       } else {
         terminatetetgen(this, 2); // Report a bug.
@@ -4231,6 +4359,20 @@ int tetgenmesh::report_selfint_edge(point e1, point e2, face *iedge,
         printf("  Segment 2: [%d, %d] #%d (%d)\n", pointmark(p1), 
                pointmark(p2), shellmark(checkseg),
                parentsh.sh ? shellmark(parentsh) : 0);
+        sevent.e_type = 1;
+        sevent.f_marker1 = facemark;
+        sevent.s_marker1 = geomtag;
+        sevent.f_vertices1[0] = pointmark(forg);
+        sevent.f_vertices1[1] = pointmark(fdest);
+        sevent.f_vertices1[2] = 0;
+        sevent.f_marker2 = (parentsh.sh ? shellmark(parentsh) : 0);
+        sevent.s_marker2 = shellmark(checkseg);
+        sevent.f_vertices2[0] = pointmark(p1);
+        sevent.f_vertices2[1] = pointmark(p2);
+        sevent.f_vertices2[2] = 0;
+        sevent.int_point[0] = P[0];
+        sevent.int_point[1] = P[1];
+        sevent.int_point[2] = P[2];
       } else if (etype == 2) {
         printf("PLC Error:  A segment and a facet intersect at point");
         printf(" (%g,%g,%g).\n", P[0], P[1], P[2]);
@@ -4239,6 +4381,20 @@ int tetgenmesh::report_selfint_edge(point e1, point e2, face *iedge,
                parentsh.sh ? shellmark(parentsh) : 0);
         printf("  Facet:   [%d, %d, %d] #%d.\n", pointmark(forg), 
                pointmark(fdest), pointmark(fapex), geomtag);
+        sevent.e_type = 2;
+        sevent.f_marker1 = (parentsh.sh ? shellmark(parentsh) : 0);
+        sevent.s_marker1 = shellmark(checkseg);
+        sevent.f_vertices1[0] = pointmark(p1);
+        sevent.f_vertices1[1] = pointmark(p2);
+        sevent.f_vertices1[2] = 0;
+        sevent.f_marker2 = geomtag;
+        sevent.s_marker2 = 0;
+        sevent.f_vertices2[0] = pointmark(forg);
+        sevent.f_vertices2[1] = pointmark(fdest);
+        sevent.f_vertices2[2] = pointmark(fapex);
+        sevent.int_point[0] = P[0];
+        sevent.int_point[1] = P[1];
+        sevent.int_point[2] = P[2];
       }
       terminatetetgen(this, 3);
     }
@@ -4258,6 +4414,20 @@ int tetgenmesh::report_selfint_edge(point e1, point e2, face *iedge,
                pointmark(fdest), geomtag, facemark);
         printf("  Facet:   [%d, %d, %d] #%d.\n", pointmark(p1),
                pointmark(p2), pointmark(p3), shellmark(checksh));
+        sevent.e_type = 2;
+        sevent.f_marker1 = facemark;
+        sevent.s_marker1 = geomtag;
+        sevent.f_vertices1[0] = pointmark(forg);
+        sevent.f_vertices1[1] = pointmark(fdest);
+        sevent.f_vertices1[2] = 0;
+        sevent.f_marker2 = shellmark(checksh);
+        sevent.s_marker2 = 0;
+        sevent.f_vertices2[0] = pointmark(p1);
+        sevent.f_vertices2[1] = pointmark(p2);
+        sevent.f_vertices2[2] = pointmark(p3);
+        sevent.int_point[0] = ip[0];
+        sevent.int_point[1] = ip[1];
+        sevent.int_point[2] = ip[2];
       } else if (etype == 2) {
         printf("PLC Error:  Two facets intersect at point (%g,%g,%g).\n",
                ip[0], ip[1], ip[2]);
@@ -4265,6 +4435,20 @@ int tetgenmesh::report_selfint_edge(point e1, point e2, face *iedge,
                pointmark(fdest), pointmark(fapex), geomtag);
         printf("  Facet 2: [%d, %d, %d] #%d.\n", pointmark(p1),
                pointmark(p2), pointmark(p3), shellmark(checksh));
+        sevent.e_type = 3;
+        sevent.f_marker1 = geomtag;
+        sevent.s_marker1 = 0;
+        sevent.f_vertices1[0] = pointmark(forg);
+        sevent.f_vertices1[1] = pointmark(fdest);
+        sevent.f_vertices1[2] = pointmark(fapex);
+        sevent.f_marker2 = shellmark(checksh);
+        sevent.s_marker2 = 0;
+        sevent.f_vertices2[0] = pointmark(p1);
+        sevent.f_vertices2[1] = pointmark(p2);
+        sevent.f_vertices2[2] = pointmark(p3);
+        sevent.int_point[0] = ip[0];
+        sevent.int_point[1] = ip[1];
+        sevent.int_point[2] = ip[2];
       }
       terminatetetgen(this, 3);
     }
@@ -4331,6 +4515,20 @@ int tetgenmesh::report_selfint_face(point p1, point p2, point p3, face* sface,
                shellmark(iface), facemark);
         printf("  Facet:   [%d,%d,%d] #%d\n", pointmark(p1), 
                pointmark(p2), pointmark(p3), geomtag);
+        sevent.e_type = 2;
+        sevent.f_marker1 = facemark;
+        sevent.s_marker1 = shellmark(iface);
+        sevent.f_vertices1[0] = pointmark(e1);
+        sevent.f_vertices1[1] = pointmark(e2);
+        sevent.f_vertices1[2] = 0;
+        sevent.f_marker2 = geomtag;
+        sevent.s_marker2 = 0;
+        sevent.f_vertices2[0] = pointmark(p1);
+        sevent.f_vertices2[1] = pointmark(p2);
+        sevent.f_vertices2[2] = pointmark(p3);
+        sevent.int_point[0] = ip[0];
+        sevent.int_point[1] = ip[1];
+        sevent.int_point[2] = ip[2];
       } else {
         printf("PLC Error:  Two facets intersect at point");
         printf(" (%g,%g,%g).\n", ip[0], ip[1], ip[2]);
@@ -4338,6 +4536,20 @@ int tetgenmesh::report_selfint_face(point p1, point p2, point p3, face* sface,
                pointmark(sorg(iface)), shellmark(iface));
         printf("  Facet 2: [%d,%d,%d] #%d\n", pointmark(p1), 
                pointmark(p2), pointmark(p3), geomtag);
+        sevent.e_type = 3;
+        sevent.f_marker1 = shellmark(iface);
+        sevent.s_marker1 = 0;
+        sevent.f_vertices1[0] = pointmark(e1);
+        sevent.f_vertices1[1] = pointmark(e2);
+        sevent.f_vertices1[2] = pointmark(sorg(iface));
+        sevent.f_marker2 = geomtag;
+        sevent.s_marker2 = 0;
+        sevent.f_vertices2[0] = pointmark(p1);
+        sevent.f_vertices2[1] = pointmark(p2);
+        sevent.f_vertices2[2] = pointmark(p3);
+        sevent.int_point[0] = ip[0];
+        sevent.int_point[1] = ip[1];
+        sevent.int_point[2] = ip[2];
       }
     } else if (types[0] == (int) ACROSSVERT) {
       // A vertex of the triangle and the edge intersect.
@@ -4358,12 +4570,40 @@ int tetgenmesh::report_selfint_face(point p1, point p2, point p3, face* sface,
           printf("  Vertex:  #%d\n", pointmark(crosspt));
           printf("  Segment: [%d,%d] #%d (%d)\n", pointmark(e1), pointmark(e2),
                  shellmark(iface), facemark);
+          sevent.e_type = 7;
+          sevent.f_marker1 = 0;
+          sevent.s_marker1 = 0;
+          sevent.f_vertices1[0] = pointmark(crosspt);
+          sevent.f_vertices1[1] = 0;
+          sevent.f_vertices1[2] = 0;
+          sevent.f_marker2 = facemark;
+          sevent.s_marker2 = shellmark(iface);
+          sevent.f_vertices2[0] = pointmark(e1);
+          sevent.f_vertices2[1] = pointmark(e2);
+          sevent.f_vertices2[2] = 0;
+          sevent.int_point[0] = crosspt[0];
+          sevent.int_point[1] = crosspt[1];
+          sevent.int_point[2] = crosspt[2];
         } else {
           printf("PLC Error:  A vertex and a facet intersect at (%g,%g,%g)\n",
                  crosspt[0], crosspt[1], crosspt[2]);
           printf("  Vertex:  #%d\n", pointmark(crosspt));
           printf("  Facet:   [%d,%d,%d] #%d\n", pointmark(p1), 
                  pointmark(p2), pointmark(p3), geomtag);
+          sevent.e_type = 8;
+          sevent.f_marker1 = 0;
+          sevent.s_marker1 = 0;
+          sevent.f_vertices1[0] = pointmark(crosspt);
+          sevent.f_vertices1[1] = 0;
+          sevent.f_vertices1[2] = 0;
+          sevent.f_marker2 = geomtag;
+          sevent.s_marker2 = 0;
+          sevent.f_vertices2[0] = pointmark(p1);
+          sevent.f_vertices2[1] = pointmark(p2);
+          sevent.f_vertices2[2] = pointmark(p3);
+          sevent.int_point[0] = crosspt[0];
+          sevent.int_point[1] = crosspt[1];
+          sevent.int_point[2] = crosspt[2];
         }
       } else {
         // It is a Steiner point. To be processed.
@@ -4386,6 +4626,20 @@ int tetgenmesh::report_selfint_face(point p1, point p2, point p3, face* sface,
         printf("  Vertex:  #%d\n", pointmark(touchpt));
         printf("  Facet:   [%d,%d,%d] #%d\n", pointmark(p1), 
                pointmark(p2), pointmark(p3), geomtag);
+        sevent.e_type = 8;
+        sevent.f_marker1 = 0;
+        sevent.s_marker1 = 0;
+        sevent.f_vertices1[0] = pointmark(touchpt);
+        sevent.f_vertices1[1] = 0;
+        sevent.f_vertices1[2] = 0;
+        sevent.f_marker2 = geomtag;
+        sevent.s_marker2 = 0;
+        sevent.f_vertices2[0] = pointmark(p1);
+        sevent.f_vertices2[1] = pointmark(p2);
+        sevent.f_vertices2[2] = pointmark(p3);
+        sevent.int_point[0] = touchpt[0];
+        sevent.int_point[1] = touchpt[1];
+        sevent.int_point[2] = touchpt[2];
       } else {
         // It is a Steiner point. To be processed.
         terminatetetgen(this, 2);
@@ -4402,6 +4656,17 @@ int tetgenmesh::report_selfint_face(point p1, point p2, point p3, face* sface,
              pointmark(e2), pointmark(e3), facemark);
       printf("  Facet 2:   [%d,%d,%d] #%d\n", pointmark(p1), 
              pointmark(p2), pointmark(p3), geomtag);
+      sevent.e_type = 6;
+      sevent.f_marker1 = facemark;
+      sevent.s_marker1 = 0;
+      sevent.f_vertices1[0] = pointmark(e1);
+      sevent.f_vertices1[1] = pointmark(e2);
+      sevent.f_vertices1[2] = pointmark(e3);
+      sevent.f_marker2 = geomtag;
+      sevent.s_marker2 = 0;
+      sevent.f_vertices2[0] = pointmark(p1);
+      sevent.f_vertices2[1] = pointmark(p2);
+      sevent.f_vertices2[2] = pointmark(p3);
     } else {
       terminatetetgen(this, 2);
     }
