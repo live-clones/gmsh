@@ -241,6 +241,7 @@
 
 // 3D meshing algorithms (numbers should not be changed)
 #define ALGO_3D_DELAUNAY       1
+#define ALGO_3D_DELAUNAY_NEW   2
 #define ALGO_3D_FRONTAL        4
 #define ALGO_3D_FRONTAL_DEL    5
 #define ALGO_3D_FRONTAL_HEX    6

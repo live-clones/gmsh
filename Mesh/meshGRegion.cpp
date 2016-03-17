@@ -38,7 +38,6 @@
 #include "discreteFace.h"
 #include "filterElements.h"
 
-
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
 #endif
@@ -421,31 +420,6 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   }
 }
 
-#endif
-
-static void addOrRemove(const MFace &f,
-			MElement *e,
-			std::map<MFace,MElement*,Less_Face> & bfaces,
-			splitQuadRecovery &sqr)
-{
-  {
-    std::map<MFace, MVertex*, Less_Face>::const_iterator it = sqr._invmap.find(f);
-    if (it != sqr._invmap.end()){
-      addOrRemove (MFace(it->second, f.getVertex(0),f.getVertex(1)),e,bfaces,sqr);
-      addOrRemove (MFace(it->second, f.getVertex(1),f.getVertex(2)),e,bfaces,sqr);
-      addOrRemove (MFace(it->second, f.getVertex(2),f.getVertex(3)),e,bfaces,sqr);
-      addOrRemove (MFace(it->second, f.getVertex(3),f.getVertex(0)),e,bfaces,sqr);
-      return;
-    }
-  }
-
-  std::map<MFace,MElement*,Less_Face>::iterator it = bfaces.find(f);
-  if (it == bfaces.end())bfaces.insert(std::make_pair(f,e));
-  else bfaces.erase(it);
-}
-
-
-#if defined(HAVE_TETGEN)
 bool CreateAnEmptyVolumeMesh(GRegion *gr)
 {
   printf("creating an empty volume mesh\n");
@@ -470,23 +444,9 @@ bool CreateAnEmptyVolumeMesh(GRegion *gr)
   return true;
 }
 
-#else
-
-bool CreateAnEmptyVolumeMesh(GRegion *gr)
-{
-  Msg::Error("You should compile with TETGEN in order to create an empty volume mesh");
-  return false;
-}
-
-#endif
-
 void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
 {
   if(regions.empty()) return;
-
-#if !defined(HAVE_TETGEN)
-  Msg::Error("Tetgen is not compiled in this version of Gmsh");
-#else
 
   for(unsigned int i = 0; i < regions.size(); i++)
     Msg::Info("Meshing volume %d (Delaunay)", regions[i]->tag());
@@ -588,12 +548,16 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
  if (sqr.buildPyramids (gr->model())){
    RelocateVertices (regions);
  }
-#endif
 }
 
-// uncomment this to test the new code
-#if !defined(HAVE_TETGEN)
-#define NEW_CODE
+#else
+
+bool CreateAnEmptyVolumeMesh(GRegion *gr)
+{
+  Msg::Error("You should compile with TETGEN in order to create an empty volume mesh");
+  return false;
+}
+
 #endif
 
 static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
@@ -647,11 +611,16 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 {
   if(regions.empty()) return;
 
-#if !defined(NEW_CODE) && defined(HAVE_TETGEN)
-  MeshDelaunayVolumeTetgen(regions);
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_DELAUNAY_NEW){
+    MeshDelaunayVolumeNewCode(regions);
+  }
+  else{
+#if defined(HAVE_TETGEN)
+    MeshDelaunayVolumeTetgen(regions);
 #else
-  MeshDelaunayVolumeNewCode(regions);
+    Msg::Error("Old Delaunay algorithm requires Tetgen");
 #endif
+  }
   return;
 }
 
@@ -987,7 +956,7 @@ void meshGRegion::operator() (GRegion *gr)
   }
   else if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL){
 #if !defined(HAVE_NETGEN)
-    Msg::Error("Netgen is not compiled in this version of Gmsh");
+    Msg::Error("Frontal algorithm requires Netgen");
 #else
     Msg::Info("Meshing volume %d (Frontal)", gr->tag());
     // orient the triangles of with respect to this region
@@ -1015,7 +984,7 @@ void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
 
 #if !defined(HAVE_NETGEN)
-  Msg::Error("Netgen is not compiled in this version of Gmsh");
+  Msg::Error("Netgen optimizer is not compiled in this version of Gmsh");
 #else
   Msg::Info("Optimizing volume %d", gr->tag());
   // import mesh into netgen, including volume tets

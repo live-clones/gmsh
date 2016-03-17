@@ -17,15 +17,8 @@
 #include "MTetrahedron.h"
 #include "OS.h"
 
-#if defined(HAVE_TETGEN)
-
-bool meshGRegionBoundaryRecovery(GRegion *gr)
+namespace tetgenBR
 {
-  Msg::Error("Should not call meshGRegionBoundaryRecovery with Tetgen");
-  return false;
-}
-
-#else
 
 #define REAL double
 
@@ -94,24 +87,12 @@ public:
 };
 
 // redefinition of predicates using our own
-#define exactinit robustPredicates::exactinit
-#define incircle robustPredicates::incircle
-#define insphere robustPredicates::insphere
-#define orient2d robustPredicates::orient2d
 #define orient3d robustPredicates::orient3d
-double orient4d(double*, double *, double *, double *, double *,
-                double, double, double, double, double){ return 0.;}
+static double orient4d(double*, double *, double *, double *, double *,
+                double, double, double, double, double){ return 0.; }
 
 #include "tetgenBR.h"
 #include "tetgenBR.cxx"
-
-bool meshGRegionBoundaryRecovery(GRegion *gr)
-{
-  tetgenmesh *m = new tetgenmesh();
-  bool ret = m->reconstructmesh((void*)gr);
-  delete m;
-  return ret;
-}
 
 bool tetgenmesh::reconstructmesh(void *p)
 {
@@ -1050,4 +1031,12 @@ void tetgenmesh::outmesh2medit(const char* mfilename)
   fclose(outfile);
 }
 
-#endif
+} // end namespace
+
+bool meshGRegionBoundaryRecovery(GRegion *gr)
+{
+  tetgenBR::tetgenmesh *m = new tetgenBR::tetgenmesh();
+  bool ret = m->reconstructmesh((void*)gr);
+  delete m;
+  return ret;
+}
