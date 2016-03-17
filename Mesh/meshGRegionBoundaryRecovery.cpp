@@ -105,7 +105,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     std::list<GFace*> f = _gr->faces();
     for (std::list<GFace*>::iterator it = f.begin(); it != f.end(); ++it) {
       GFace *gf = *it;
-      for (unsigned int i = 0;i< gf->triangles.size(); i++){
+      for (unsigned int i = 0; i < gf->triangles.size(); i++){
         all.insert(gf->triangles[i]->getVertex(0));
         all.insert(gf->triangles[i]->getVertex(1));
         all.insert(gf->triangles[i]->getVertex(2));
@@ -212,7 +212,8 @@ bool tetgenmesh::reconstructmesh(void *p)
       if (ori > 0.0) {
 	// Swap the first two vertices.
 	q[0] = p[0]; p[0] = p[1]; p[1] = q[0];
-      } else if (ori == 0.0) {
+      }
+      else if (ori == 0.0) {
 	if (!b->quiet) {
 	  printf("Warning:  Tet #%d is degenerate.\n", i + in->firstnumber);
 	}
@@ -405,7 +406,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 	for (j = 0; j < 2; j++) {
 	  p[j] = idx2verlist[ge->lines[i]->getVertex(j)->getIndex()];
 	  setpointtype(p[j], RIDGEVERTEX);
-      }
+        }
 	if (p[0] == p[1]) {
 	  // This is a potential problem in surface mesh.
 	  continue; // Skip this edge.
@@ -419,7 +420,8 @@ bool tetgenmesh::reconstructmesh(void *p)
 	  if (checkpt == p[1]) {
 	    searchsh = shperverlist[j];
 	    break; // Found.
-	  } else {
+	  }
+          else {
 	    checkpt = sapex(shperverlist[j]);
 	    if (checkpt == p[1]) {
 	      senext2(shperverlist[j], searchsh);
@@ -431,20 +433,22 @@ bool tetgenmesh::reconstructmesh(void *p)
 	if (searchsh.sh != NULL) {
 	  // Check if this edge is already a segment of the mesh.
 	  sspivot(searchsh, checkseg);
-        if (checkseg.sh != NULL) {
-          // This segment already exist.
-          newseg = checkseg;
-        } else {
-          // Create a new segment at this edge.
-          makeshellface(subsegs, &newseg);
-          setshvertices(newseg, p[0], p[1], NULL);
-          ssbond(searchsh, newseg);
-          spivot(searchsh, neighsh);
-          if (neighsh.sh != NULL) {
-            ssbond(neighsh, newseg);
+          if (checkseg.sh != NULL) {
+            // This segment already exist.
+            newseg = checkseg;
           }
-        }
-	} else {
+          else {
+            // Create a new segment at this edge.
+            makeshellface(subsegs, &newseg);
+            setshvertices(newseg, p[0], p[1], NULL);
+            ssbond(searchsh, newseg);
+            spivot(searchsh, neighsh);
+            if (neighsh.sh != NULL) {
+              ssbond(neighsh, newseg);
+            }
+          }
+	}
+        else {
 	  // It is a dangling segment (not belong to any facets).
 	  // Check if segment [p[0],p[1]] already exists.
 	  // TODO: Change the brute-force search. Slow!
@@ -473,8 +477,8 @@ bool tetgenmesh::reconstructmesh(void *p)
     delete [] shperverlist;
     delete [] idx2shlist;
 
-      Msg::Debug("  %ld (%ld) subfaces (segments).", subfaces->items,
-	     subsegs->items);
+    Msg::Debug("  %ld (%ld) subfaces (segments).", subfaces->items,
+               subsegs->items);
 
     // The total number of iunput segments.
     insegments = subsegs->items;
@@ -612,7 +616,7 @@ bool tetgenmesh::reconstructmesh(void *p)
           }
           if (ge != NULL) {
             MEdgeVertex *v = new MEdgeVertex(pointloop[0], pointloop[1],
-                                         pointloop[2], ge, 0);
+                                             pointloop[2], ge, 0);
             double uu = 0;
             if (reparamMeshVertexOnEdge(v, ge, uu)) {
               v->setParameter(0, uu);
@@ -635,7 +639,7 @@ bool tetgenmesh::reconstructmesh(void *p)
               }
               if (gf != NULL) {
                 MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1],
-                                       pointloop[2], gf, 0, 0);
+                                                 pointloop[2], gf, 0, 0);
                 SPoint2 param;
                 if (reparamMeshVertexOnFace(v, gf, param)) {
                   v->setParameter(0, param.x());
@@ -661,7 +665,8 @@ bool tetgenmesh::reconstructmesh(void *p)
             _gr->mesh_vertices.push_back(v);
             _vertices.push_back(v);
           }
-        } else if (pointtype(pointloop) == FREEFACETVERTEX) {
+        }
+        else if (pointtype(pointloop) == FREEFACETVERTEX) {
           sdecode(point2sh(pointloop), parentsh);
           assert(parentsh.sh != NULL);
           l_faces.insert(shellmark(parentsh));
@@ -677,7 +682,7 @@ bool tetgenmesh::reconstructmesh(void *p)
           }
           if (gf != NULL) {
             MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1],
-                                         pointloop[2], gf, 0, 0);
+                                             pointloop[2], gf, 0, 0);
             SPoint2 param;
             if (reparamMeshVertexOnFace(v, gf, param)) {
               v->setParameter(0, param.x());
@@ -686,14 +691,16 @@ bool tetgenmesh::reconstructmesh(void *p)
             v->setIndex(pointmark(pointloop));
             _gr->mesh_vertices.push_back(v);
             _vertices.push_back(v);
-          } else {
+          }
+          else {
             // Create a mesh vertex.
             MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
             v->setIndex(pointmark(pointloop));
             _gr->mesh_vertices.push_back(v);
             _vertices.push_back(v);
           }
-        } else {
+        }
+        else {
           MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
           v->setIndex(pointmark(pointloop));
           _gr->mesh_vertices.push_back(v);
@@ -709,7 +716,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     // There are Steiner points on segments!
     face segloop;
     // Re-create the segment mesh in the corresponding GEdges.
-    for (std::set<int>::iterator it=l_edges.begin(); it!=l_edges.end(); ++it) {
+    for (std::set<int>::iterator it = l_edges.begin(); it!=l_edges.end(); ++it) {
       // Find the GFace with tag = *it.
       GEdge *ge = NULL;
       int etag = *it;
@@ -748,7 +755,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     // There are Steiner points on facets!
     face subloop;
     // Re-create the surface mesh in the corresponding GFaces.
-    for (std::set<int>::iterator it=l_faces.begin(); it!=l_faces.end(); ++it) {
+    for (std::set<int>::iterator it = l_faces.begin(); it != l_faces.end(); ++it) {
       // Find the GFace with tag = *it.
       GFace *gf = NULL;
       int ftag = *it;
@@ -761,7 +768,7 @@ bool tetgenmesh::reconstructmesh(void *p)
       }
       assert(gf != NULL);
       // Delete the old triangles.
-      Msg::Info("Steiner points exist on GFace %d",gf->tag());
+      Msg::Info("Steiner points exist on GFace %d", gf->tag());
       for(i = 0; i < gf->triangles.size(); i++)
         delete gf->triangles[i];
       //for(i = 0; i < gf->quadrangles.size(); i++)

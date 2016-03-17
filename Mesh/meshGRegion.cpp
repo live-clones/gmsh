@@ -144,7 +144,8 @@ void getBoundingInfoAndSplitQuads(GRegion *gr,
   for (unsigned int i=0;i<gr->getNumMeshElements();i++){
     MElement *e = gr->getMeshElement(i);
     for (int j = 0; j < e->getNumFaces(); j++){
-      std::map<MFace, GEntity*, Less_Face>::iterator it = allBoundingFaces_temp.find(e->getFace(j));
+      std::map<MFace, GEntity*, Less_Face>::iterator it =
+        allBoundingFaces_temp.find(e->getFace(j));
       if (it == allBoundingFaces_temp.end()) allBoundingFaces_temp[e->getFace(j)] = gr;
       else allBoundingFaces_temp.erase(it);
     }
@@ -160,9 +161,10 @@ void getBoundingInfoAndSplitQuads(GRegion *gr,
       MVertex *v1 = f.getVertex(1);
       MVertex *v2 = f.getVertex(2);
       MVertex *v3 = f.getVertex(3);
-      MVertex *newv = new MVertex ((v0->x() + v1->x() + v2->x() + v3->x())*0.25,
-				   (v0->y() + v1->y() + v2->y() + v3->y())*0.25,
-				   (v0->z() + v1->z() + v2->z() + v3->z())*0.25,itx->second);
+      MVertex *newv = new MVertex((v0->x() + v1->x() + v2->x() + v3->x())*0.25,
+                                  (v0->y() + v1->y() + v2->y() + v3->y())*0.25,
+                                  (v0->z() + v1->z() + v2->z() + v3->z())*0.25,
+                                  itx->second);
       sqr.add(f,newv,itx->second);
       sqr._invmap[f] = newv;
       allBoundingFaces[MFace(v0,v1,newv)] = itx->second;
@@ -519,7 +521,7 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
   }
 
 
-   // sort triangles in all model faces in order to be able to search in vectors
+  // sort triangles in all model faces in order to be able to search in vectors
   std::list<GFace*>::iterator itf =  allFaces.begin();
   while(itf != allFaces.end()){
     compareMTriangleLexicographic cmp;
@@ -539,15 +541,16 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
     refineMeshMMG(gr);
   }
   else{
-      int nbvertices_filler = (old_algo_hexa()) ? Filler::get_nbr_new_vertices() : Filler3D::get_nbr_new_vertices();
-      if(!nbvertices_filler && !LpSmoother::get_nbr_interior_vertices()){
-        insertVerticesInRegion(gr,2000000000,true);
-      }
+    int nbvertices_filler = (old_algo_hexa()) ?
+      Filler::get_nbr_new_vertices() : Filler3D::get_nbr_new_vertices();
+    if(!nbvertices_filler && !LpSmoother::get_nbr_interior_vertices()){
+      insertVerticesInRegion(gr,2000000000,true);
     }
+  }
 
- if (sqr.buildPyramids (gr->model())){
-   RelocateVertices (regions);
- }
+  if (sqr.buildPyramids (gr->model())){
+    RelocateVertices (regions);
+  }
 }
 
 #else
@@ -580,7 +583,12 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
     meshGRegionBoundaryRecovery(gr);
   }
   catch(int err){
-    Msg::Error("Could not recover boundary: error %d", err);
+    if(err == 3){
+      Msg::Warning("Self-intersecting surface mesh: TODO!");
+    }
+    else{
+      Msg::Error("Could not recover boundary: error %d", err);
+    }
   }
 
   // sort triangles in all model faces in order to be able to search in vectors
@@ -594,18 +602,22 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   // restore the initial set of faces
   gr->set(faces);
 
-  void edgeBasedRefinement (const int numThreads,
-			    const int nptsatonce,
-			    GRegion *gr);
+  // now do insertion of points
+#if 0
+  insertVerticesInRegion(gr, 2000000000, true);
+#else
+  void edgeBasedRefinement(const int numThreads,
+                           const int nptsatonce,
+                           GRegion *gr);
   // just to remove tets that are not to be meshed
-  insertVerticesInRegion(gr,0);
+  insertVerticesInRegion(gr, 0);
   for(unsigned int i = 0; i < regions.size(); i++){
     Msg::Info("Refining volume %d",regions[i]->tag());
-    edgeBasedRefinement (1,1,regions[i]);
+    edgeBasedRefinement(1, 1, regions[i]);
   }
-  //  RelocateVertices (regions,-1);
+  // RelocateVertices (regions,-1);
+#endif
 }
-
 
 void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 {
@@ -726,7 +738,7 @@ void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
   for(int i = nbpts; i < nbv; i++){
     double tmp[3];
     Ng_GetPoint(ngmesh, i + 1, tmp);
-    MVertex *v = new MVertex (tmp[0], tmp[1], tmp[2], gr);
+    MVertex *v = new MVertex(tmp[0], tmp[1], tmp[2], gr);
     numberedV.push_back(v);
     gr->mesh_vertices.push_back(v);
   }

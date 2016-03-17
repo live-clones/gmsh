@@ -324,7 +324,7 @@ void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet){
 /***********************************************************************
   Local mesh modifications
 
-  edgeSwap , faceSwap , 
+  edgeSwap , faceSwap ,
 
 ************************************************************************/
 
@@ -355,9 +355,9 @@ static void computeNeighboringTetsOfACavity(const std::vector<Tet*> &cavity,
   }
 }
 
-static bool buildEdgeCavity(Tet *t, int iLocalEdge, 
+static bool buildEdgeCavity(Tet *t, int iLocalEdge,
 			    Vertex **v1, Vertex **v2,
-			    std::vector<Tet*> &cavity, 
+			    std::vector<Tet*> &cavity,
 			    std::vector<Tet*> &outside,
 			    std::vector<Vertex*> &ring)
 {
@@ -366,7 +366,7 @@ static bool buildEdgeCavity(Tet *t, int iLocalEdge,
 
   *v1 = t->V[edges[iLocalEdge][0]];
   *v2 = t->V[edges[iLocalEdge][1]];
-  
+
   // the 5 - i th edge contains the other 2 points of the tet
   Vertex *lastinring = t->V[edges[5 - iLocalEdge][0]];
   ring.push_back(lastinring);
@@ -443,12 +443,12 @@ bool edgeSwap(Tet *tet, int iLocalEdge,  tetContainer &T, int myThread)
     Vertex *vx2 = cavity[i]->V[2];
     Vertex *vx3 = cavity[i]->V[3];
     double volume = robustPredicates::orient3d((double*)vx0, (double*)vx1, (double*)vx2, (double*)vx3);
-    const double a  = 
+    const double a  =
       SQR (vx0->x() - vx1->x()) + SQR (vx0->y() - vx1->y()) + SQR (vx0->z() - vx1->z()) +
-      SQR (vx0->x() - vx2->x()) + SQR (vx0->y() - vx2->y()) + SQR (vx0->z() - vx2->z()) + 
-      SQR (vx0->x() - vx3->x()) + SQR (vx0->y() - vx3->y()) + SQR (vx0->z() - vx3->z()) + 
-      SQR (vx1->x() - vx2->x()) + SQR (vx1->y() - vx2->y()) + SQR (vx1->z() - vx2->z()) + 
-      SQR (vx1->x() - vx3->x()) + SQR (vx1->y() - vx3->y()) + SQR (vx1->z() - vx3->z()) + 
+      SQR (vx0->x() - vx2->x()) + SQR (vx0->y() - vx2->y()) + SQR (vx0->z() - vx2->z()) +
+      SQR (vx0->x() - vx3->x()) + SQR (vx0->y() - vx3->y()) + SQR (vx0->z() - vx3->z()) +
+      SQR (vx1->x() - vx2->x()) + SQR (vx1->y() - vx2->y()) + SQR (vx1->z() - vx2->z()) +
+      SQR (vx1->x() - vx3->x()) + SQR (vx1->y() - vx3->y()) + SQR (vx1->z() - vx3->z()) +
       SQR (vx2->x() - vx3->x()) + SQR (vx2->y() - vx3->y()) + SQR (vx2->z() - vx3->z()) ;
     tetQualityRef = std::min(tetQualityRef, volume / a);
   }
@@ -462,16 +462,16 @@ bool edgeSwap(Tet *tet, int iLocalEdge,  tetContainer &T, int myThread)
     int p3 = sp.triangles[i][2];
     const double volume1 = robustPredicates::orient3d((double*)ring[p1], (double*)ring[p2], (double*)ring[p3], (double*) v1);
     const double volume2 = robustPredicates::orient3d((double*)ring[p1], (double*)ring[p2], (double*)ring[p3], (double*) v2);
-    const double a12 = SQR (ring[p1]->x() - ring[p2]->x())+SQR (ring[p1]->y() - ring[p2]->y())+SQR (ring[p1]->z() - ring[p2]->z()); 
-    const double a13 = SQR (ring[p1]->x() - ring[p3]->x())+SQR (ring[p1]->y() - ring[p3]->y())+SQR (ring[p1]->z() - ring[p3]->z()); 
-    const double a23 = SQR (ring[p2]->x() - ring[p3]->x())+SQR (ring[p2]->y() - ring[p3]->y())+SQR (ring[p2]->z() - ring[p3]->z()); 
-    const double a123 = a12 + a13 + a23; 
-    const double v11 = SQR (ring[p1]->x() - v1->x())+SQR (ring[p1]->y() - v1->y())+SQR (ring[p1]->z() - v1->z()); 
-    const double v12 = SQR (ring[p2]->x() - v1->x())+SQR (ring[p2]->y() - v1->y())+SQR (ring[p2]->z() - v1->z()); 
-    const double v13 = SQR (ring[p3]->x() - v1->x())+SQR (ring[p3]->y() - v1->y())+SQR (ring[p3]->z() - v1->z()); 
-    const double v21 = SQR (ring[p1]->x() - v2->x())+SQR (ring[p1]->y() - v2->y())+SQR (ring[p1]->z() - v2->z()); 
-    const double v22 = SQR (ring[p2]->x() - v2->x())+SQR (ring[p2]->y() - v2->y())+SQR (ring[p2]->z() - v2->z()); 
-    const double v23 = SQR (ring[p3]->x() - v2->x())+SQR (ring[p3]->y() - v2->y())+SQR (ring[p3]->z() - v2->z()); 
+    const double a12 = SQR (ring[p1]->x() - ring[p2]->x())+SQR (ring[p1]->y() - ring[p2]->y())+SQR (ring[p1]->z() - ring[p2]->z());
+    const double a13 = SQR (ring[p1]->x() - ring[p3]->x())+SQR (ring[p1]->y() - ring[p3]->y())+SQR (ring[p1]->z() - ring[p3]->z());
+    const double a23 = SQR (ring[p2]->x() - ring[p3]->x())+SQR (ring[p2]->y() - ring[p3]->y())+SQR (ring[p2]->z() - ring[p3]->z());
+    const double a123 = a12 + a13 + a23;
+    const double v11 = SQR (ring[p1]->x() - v1->x())+SQR (ring[p1]->y() - v1->y())+SQR (ring[p1]->z() - v1->z());
+    const double v12 = SQR (ring[p2]->x() - v1->x())+SQR (ring[p2]->y() - v1->y())+SQR (ring[p2]->z() - v1->z());
+    const double v13 = SQR (ring[p3]->x() - v1->x())+SQR (ring[p3]->y() - v1->y())+SQR (ring[p3]->z() - v1->z());
+    const double v21 = SQR (ring[p1]->x() - v2->x())+SQR (ring[p1]->y() - v2->y())+SQR (ring[p1]->z() - v2->z());
+    const double v22 = SQR (ring[p2]->x() - v2->x())+SQR (ring[p2]->y() - v2->y())+SQR (ring[p2]->z() - v2->z());
+    const double v23 = SQR (ring[p3]->x() - v2->x())+SQR (ring[p3]->y() - v2->y())+SQR (ring[p3]->z() - v2->z());
     tetQuality1[i] = volume1 / (a123 + v11 + v12 + v13);
     tetQuality2[i] = volume2 / (a123 + v21 + v22 + v23);
   }
@@ -499,7 +499,7 @@ bool edgeSwap(Tet *tet, int iLocalEdge,  tetContainer &T, int myThread)
   }
 
   if (best <= tetQualityRef) return false;
-  
+
   unsigned int counter = 0;
   for (int j = 0; j < sp.nbr_triangles_2; j++){
     int iT = sp.trianguls[iBest][j];
@@ -524,17 +524,17 @@ bool edgeSwap(Tet *tet, int iLocalEdge,  tetContainer &T, int myThread)
   }
 
   for(unsigned int i = counter; i < cavity.size(); i++) cavity[i]->V[0] = NULL;
-  
+
   connContainer ctnr;
-  for(unsigned int i = 0; i < outside.size(); i++) 
+  for(unsigned int i = 0; i < outside.size(); i++)
     for (int j=0;j<4;j++)
-      computeAdjacencies (outside[i],j,ctnr);      
-  
+      computeAdjacencies (outside[i],j,ctnr);
+
   return true;
 }
 
 static void edgeSwapPass (tetContainer &T) {
-  
+
 }
 
 
@@ -601,14 +601,14 @@ static void buildDelaunayBall (cavityContainer &cavity, connContainer &faceToTet
 
 static bool updateCavity(Tet *containsV,
 			 cavityContainer &cavity,
-			 connContainer &bndK, 
+			 connContainer &bndK,
 			 int myThread, int K){
   bndK.clear();
   cavityContainer cc;
   cc.push_back(containsV);
   std::stack<Tet*> _stack;
   _stack.push(containsV);
-  
+
   while (!_stack.empty()){
     Tet *t = _stack.top();
     _stack.pop();
@@ -636,7 +636,7 @@ static bool updateCavity(Tet *containsV,
 
 static bool removeIsolatedTets(Tet *containsV,
 			       cavityContainer &cavity,
-			       connContainer &bndK, 
+			       connContainer &bndK,
 			       int myThread, int K){
   cavityContainer cc;
   cc.push_back(containsV);
@@ -648,7 +648,7 @@ static bool removeIsolatedTets(Tet *containsV,
     _stack.pop();
     for (int i=0;i<4;i++){
       Tet *neigh = t->T[i];
-      if (neigh && 
+      if (neigh &&
 	  (std::find(cc.begin(),cc.end(),neigh) == cc.end()) &&
 	  (std::find(cavity.begin(),cavity.end(),neigh) != cavity.end())){
 	cc.push_back(neigh);
@@ -670,7 +670,7 @@ static Tet *tetInsideCavityWithFAce (Face &f, cavityContainer &cavity){
       if (t->getFace(iFace) == f) {
 	return t;
       }
-    }  
+    }
   }
   return NULL;
 }
@@ -682,8 +682,8 @@ static bool fixDelaunayCavity (double threshold,
 			       connContainer &bndK,
 			       int myThread, int K,
 			       std::vector<unsigned int> & _negatives){
-  
-  starShapeness (v, bndK, _negatives, threshold);  
+
+  starShapeness (v, bndK, _negatives, threshold);
 
   if (_negatives.empty())return false;
 
@@ -693,7 +693,7 @@ static bool fixDelaunayCavity (double threshold,
 
   Msg::Debug("Fixing cavity (%3ld,%3ld) : %ld negatives",
 	     cavity.size(),bndK.size(), _negatives.size());
-  
+
   Tet *containsV = tetContainsV (v,cavity);
 
   if (! containsV) return true;
@@ -712,7 +712,7 @@ static bool fixDelaunayCavity (double threshold,
     }
     removeIsolatedTets(containsV, cavity,bndK,myThread,K);
     buildDelaunayBall (cavity,bndK);
-    starShapeness (v, bndK, _negatives, threshold);  
+    starShapeness (v, bndK, _negatives, threshold);
   }
   return false;
 }
@@ -868,7 +868,7 @@ bool canWeProcessCavity (cavityContainer &cavity, unsigned int myThread, unsigne
 
 bool checkLocalDelaunayness(Tet* t){
   if (t->V[0]){
-    for (int i=0;i<4;i++){    
+    for (int i=0;i<4;i++){
       Tet *n = t->T[i];
       if (n && n->inSphere(t->getOppositeVertex(i),0))return false;
     }
@@ -896,11 +896,11 @@ static Tet* randomTet (int thread,  tetContainer &allocator ){
 
 
 //#define _VERBOSE 1
-void delaunayTrgl (const unsigned int numThreads, 
-		   const unsigned int NPTS_AT_ONCE, 
-		   unsigned int Npts, 
+void delaunayTrgl (const unsigned int numThreads,
+		   const unsigned int NPTS_AT_ONCE,
+		   unsigned int Npts,
 		   std::vector<Vertex*> assignTo[],
-		   tetContainer &allocator, 
+		   tetContainer &allocator,
 		   double threshold){
 #ifdef _VERBOSE
   double totSearchGlob=0;
@@ -938,7 +938,7 @@ void delaunayTrgl (const unsigned int numThreads,
     connContainer faceToTet;
     std::vector<Tet*> Choice(NPTS_AT_ONCE);
     for (unsigned int K=0;K<NPTS_AT_ONCE;K++)Choice[K] = randomTet (myThread, allocator);
-    
+
 
     invalidCavities [myThread] = 0;
     unsigned int locSize=0;
