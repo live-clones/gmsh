@@ -15,6 +15,7 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MTetrahedron.h"
+#include "Context.h"
 #include "OS.h"
 
 namespace tetgenBR
@@ -22,43 +23,31 @@ namespace tetgenBR
 
 #define REAL double
 
-// dummy tetgenio class (not used)
+// dummy tetgenio class
 class tetgenio{
 public:
-
   int firstnumber;
   int numberofpointattributes;
-
   int numberoftetrahedronattributes;
-
   int numberofsegmentconstraints;
   REAL *segmentconstraintlist;
-
   int numberoffacetconstraints;
   REAL *facetconstraintlist;
-
   int numberofpoints;
   int *pointlist;
   int *pointattributelist;
-
   int numberofpointmakers;
   int *pointmarkerlist;
-
   int numberofpointmtrs;
   int *pointmtrlist;
-
   int numberofedges;
   int *edgelist;
   int *edgemarkerlist;
-
   int numberofholes;
   REAL *holelist;
-
   int numberofregions;
   REAL *regionlist;
-
   int mesh_dim;
-
   tetgenio()
   {
     firstnumber = 0;
@@ -88,6 +77,7 @@ public:
 
 // redefinition of predicates using our own
 #define orient3d robustPredicates::orient3d
+#define insphere robustPredicates::insphere
 static double orient4d(double*, double *, double *, double *, double *,
                 double, double, double, double, double){ return 0.; }
 
@@ -100,10 +90,12 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   in = new tetgenio();
   b = new tetgenbehavior();
-  char opt[] = "pY";
-  b->parse_commandline(opt);
+  char opts[128];
+  sprintf(opts, "Ype%sT%g",
+          (Msg::GetVerbosity() < 3) ? "Q" : (Msg::GetVerbosity() > 6) ? "V" : "",
+          CTX::instance()->mesh.toleranceInitialDelaunay);
+  b->parse_commandline(opts);
 
-  bool returnValue (true);
   double t_start = Cpu();
   std::vector<MVertex*> _vertices;
 
@@ -816,10 +808,9 @@ bool tetgenmesh::reconstructmesh(void *p)
     tetloop.tet = tetrahedrontraverse();
   }
  } // mesh output
- if (returnValue)Msg::Info("Reconstruct time : %g sec (mesh is Delaunay)",Cpu()-t_start);
- else Msg::Info("Reconstruct time : %g sec (mesh is not Delaunay)",Cpu()-t_start);
- return returnValue;
 
+ Msg::Info("Reconstruct time : %g sec", Cpu() - t_start);
+ return true;
 }
 
 // Dump the input surface mesh.
