@@ -17,6 +17,7 @@
 #include "MTetrahedron.h"
 #include "Context.h"
 #include "OS.h"
+#include <string.h>
 
 namespace tetgenBR
 {
