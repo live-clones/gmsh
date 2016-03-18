@@ -27,6 +27,9 @@ Eiser (PGF output), Alexis Salzman (compressed IO). See comments in the sources
 for more information. If we forgot to list your contributions please send us an
 email!
 
+The TetGen/BR code (Mesh/tetgenBR.*) is copyright (c) 2016 Hang Si, Weierstrass
+Institute for Applied Analysis and Stochatics.
+
 The AVL tree code (Common/avl.*) and the YUV image code (Graphics/gl2yuv.*) are
 copyright (C) 1988-1993, 1995 The Regents of the University of
 California. Permission to use, copy, modify, and distribute this software and
