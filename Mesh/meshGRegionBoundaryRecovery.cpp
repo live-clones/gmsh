@@ -130,7 +130,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   Msg::Debug("Points have been tetrahedralized");
 
-  { //transfernodes();
+  {
     point pointloop;
     REAL x, y, z;
     int i;
@@ -147,7 +147,8 @@ bool tetgenmesh::reconstructmesh(void *p)
 	xmin = xmax = x;
 	ymin = ymax = y;
 	zmin = zmax = z;
-      } else {
+      }
+      else {
 	xmin = (x < xmin) ? x : xmin;
 	xmax = (x > xmax) ? x : xmax;
 	ymin = (y < ymin) ? y : ymin;
@@ -163,7 +164,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     z = zmax - zmin;
     longest = sqrt(x * x + y * y + z * z);
     if (longest == 0.0) {
-      Msg::Warning("Error:  The point set is trivial.\n");
+      Msg::Warning("The point set is trivial");
       return true;
     }
 
@@ -171,7 +172,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     if (minedgelength == 0.0) {
       minedgelength = longest * b->epsilon;
     }
-  } // transfernodes();
+  }
 
   point *idx2verlist;
 
@@ -182,7 +183,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     idx2verlist[0] = dummypoint; // Let 0th-entry be dummypoint.
   }
 
-  if (1) {
+  {
     // Index the vertices.
     for (unsigned int i = 0; i < _vertices.size(); i++){
       _vertices[i]->setIndex(i);
@@ -282,7 +283,8 @@ bool tetgenmesh::reconstructmesh(void *p)
 		    bondflag++;
 		  }
 		}
-	      } else {
+	      }
+              else {
 		bondflag++;
 	      }
 	      enextself(checktet);
@@ -293,7 +295,8 @@ bool tetgenmesh::reconstructmesh(void *p)
 	      // All three faces at d in 'checktet' have been connected.
 	      // It can be removed from the link.
 	      prevchktet.tet[8 + prevchktet.ver] = tptr;
-	    } else {
+	    }
+            else {
 	      // Bakup the previous tet in the link.
 	      prevchktet = checktet;
 	    }
@@ -303,7 +306,7 @@ bool tetgenmesh::reconstructmesh(void *p)
       } // for (tetloop.ver = 0; ...
     } // i
 
-  // Remember a tet of the mesh.
+    // Remember a tet of the mesh.
     recenttet = tetloop;
 
     // Create hull tets, create the point-to-tet map, and clean up the
@@ -350,17 +353,17 @@ bool tetgenmesh::reconstructmesh(void *p)
       tetloop.tet = tetrahedrontraverse();
     }
 
-  hullsize = tetrahedrons->items - hullsize;
+    hullsize = tetrahedrons->items - hullsize;
 
-  delete [] ver2tetarray;
-  tets.clear(); // Release all memory in this vector.
+    delete [] ver2tetarray;
+    tets.clear(); // Release all memory in this vector.
   }
 
   std::list<GFace*> f_list = _gr->faces();
   std::list<GEdge*> e_list = _gr->edges();
 
   {
-    Msg::Info(" --> Creating surface mesh ...");
+    Msg::Info("--> Creating surface mesh...");
     face newsh;
     face newseg;
     point p[4];
@@ -394,7 +397,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     // Connecting triangles, removing redundant segments.
     unifysegments();
 
-    Msg::Info(" --> Identifying boundary edges ...");
+    Msg::Info("--> Identifying boundary edges...");
 
     face* shperverlist;
     int* idx2shlist;
@@ -495,11 +498,10 @@ bool tetgenmesh::reconstructmesh(void *p)
       outmesh2medit("dump2");
     }
 
-  } // meshsurface()
+  }
 
   delete [] idx2verlist;
 
-  ////////////////////////////////////////////////////////
   // Boundary recovery.
 
   clock_t t;
@@ -526,14 +528,9 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   Msg::Debug("Statistics:\n");
   Msg::Debug("  Input points: %ld", _vertices.size());
-  //if (b->refine) {
-  //  printf("  Input tetrahedra: %d\n", in->numberoftetrahedra);
-  //}
   if (b->plc) {
     Msg::Debug("  Input facets: %ld", f_list.size());
     Msg::Debug("  Input segments: %ld", e_list.size());
-    //printf("  Input holes: %d\n", in->numberofholes);
-    //printf("  Input regions: %d\n", in->numberofregions);
   }
 
   tetnumber = tetrahedrons->items - hullsize;
@@ -541,7 +538,8 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   if (b->weighted) { // -w option
     Msg::Debug(" Mesh points: %ld", points->items - nonregularcount);
-  } else {
+  }
+  else {
     Msg::Debug(" Mesh points: %ld", points->items);
   }
   Msg::Debug("  Mesh tetrahedra: %ld", tetnumber);
@@ -569,7 +567,8 @@ bool tetgenmesh::reconstructmesh(void *p)
     if (st_segref_count > 0l) {
       Msg::Debug("  Steiner points on segments:  %ld", st_segref_count);
     }
-  } else {
+  }
+  else {
     Msg::Debug("  Convex hull faces: %ld", hullsize);
     if (meshhulledges > 0l) {
       Msg::Debug("  Convex hull edges: %ld", meshhulledges);
@@ -583,252 +582,250 @@ bool tetgenmesh::reconstructmesh(void *p)
   if (0) {
     outmesh2medit("dump");
   }
-  ////////////////////////////////////////////////////////
 
-{
-  ////////////////////////////////////////////////////////
-  // Write mesh into to GRegion.
+  {
+    // Write mesh into to GRegion.
 
-  Msg::Info(" --> Write to GRegion ...");
+    Msg::Info("--> Write to GRegion...");
 
-  point p[4];
-  int i;
+    point p[4];
+    int i;
 
-  // In some hard cases, the surface mesh may be modified.
-  // Find the list of GFaces, GEdges that have been modified.
-  std::set<int> l_faces, l_edges;
+    // In some hard cases, the surface mesh may be modified.
+    // Find the list of GFaces, GEdges that have been modified.
+    std::set<int> l_faces, l_edges;
 
-  if (points->items > _vertices.size()) {
-    face parentseg, parentsh, spinsh;
-    point pointloop;
-    // Create newly added mesh vertices.
-    // The new vertices must be added at the end of the point list.
-    points->traversalinit();
-    pointloop = pointtraverse();
-    while (pointloop != (point) NULL) {
-      if (issteinerpoint(pointloop)) {
-        // Check if this Steiner point locates on boundary.
-        if (pointtype(pointloop) == FREESEGVERTEX) {
-          sdecode(point2sh(pointloop), parentseg);
-          assert(parentseg.sh != NULL);
-          l_edges.insert(shellmark(parentseg));
-          // Get the GEdge containing this vertex.
-          GEdge *ge = NULL;
-          GFace *gf = NULL;
-          int etag = shellmark(parentseg);
-          for (std::list<GEdge*>::iterator it = e_list.begin();
-               it != e_list.end(); ++it) {
-            if ((*it)->tag() == etag) {
-              ge = *it;
-              break;
-            }
-          }
-          if (ge != NULL) {
-            MEdgeVertex *v = new MEdgeVertex(pointloop[0], pointloop[1],
-                                             pointloop[2], ge, 0);
-            double uu = 0;
-            if (reparamMeshVertexOnEdge(v, ge, uu)) {
-              v->setParameter(0, uu);
-            }
-            v->setIndex(pointmark(pointloop));
-            _gr->mesh_vertices.push_back(v);
-            _vertices.push_back(v);
-          }
-          spivot(parentseg, parentsh);
-          if (parentsh.sh != NULL) {
-            if (ge == NULL) {
-              // We treat this vertex a facet vertex.
-              int ftag = shellmark(parentsh);
-              for (std::list<GFace*>::iterator it = f_list.begin();
-                   it != f_list.end(); ++it) {
-                if ((*it)->tag() == ftag) {
-                  gf = *it;
-                  break;
-                }
-              }
-              if (gf != NULL) {
-                MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1],
-                                                 pointloop[2], gf, 0, 0);
-                SPoint2 param;
-                if (reparamMeshVertexOnFace(v, gf, param)) {
-                  v->setParameter(0, param.x());
-                  v->setParameter(1, param.y());
-                }
-                v->setIndex(pointmark(pointloop));
-                _gr->mesh_vertices.push_back(v);
-                _vertices.push_back(v);
+    if (points->items > _vertices.size()) {
+      face parentseg, parentsh, spinsh;
+      point pointloop;
+      // Create newly added mesh vertices.
+      // The new vertices must be added at the end of the point list.
+      points->traversalinit();
+      pointloop = pointtraverse();
+      while (pointloop != (point) NULL) {
+        if (issteinerpoint(pointloop)) {
+          // Check if this Steiner point locates on boundary.
+          if (pointtype(pointloop) == FREESEGVERTEX) {
+            sdecode(point2sh(pointloop), parentseg);
+            assert(parentseg.sh != NULL);
+            l_edges.insert(shellmark(parentseg));
+            // Get the GEdge containing this vertex.
+            GEdge *ge = NULL;
+            GFace *gf = NULL;
+            int etag = shellmark(parentseg);
+            for (std::list<GEdge*>::iterator it = e_list.begin();
+                 it != e_list.end(); ++it) {
+              if ((*it)->tag() == etag) {
+                ge = *it;
+                break;
               }
             }
-            // Record all the GFaces' tag at this segment.
-            spinsh = parentsh;
-            while (1) {
-              l_faces.insert(shellmark(spinsh));
-              spivotself(spinsh);
-              if (spinsh.sh == parentsh.sh) break;
+            if (ge != NULL) {
+              MEdgeVertex *v = new MEdgeVertex(pointloop[0], pointloop[1],
+                                               pointloop[2], ge, 0);
+              double uu = 0;
+              if (reparamMeshVertexOnEdge(v, ge, uu)) {
+                v->setParameter(0, uu);
+              }
+              v->setIndex(pointmark(pointloop));
+              _gr->mesh_vertices.push_back(v);
+              _vertices.push_back(v);
+            }
+            spivot(parentseg, parentsh);
+            if (parentsh.sh != NULL) {
+              if (ge == NULL) {
+                // We treat this vertex a facet vertex.
+                int ftag = shellmark(parentsh);
+                for (std::list<GFace*>::iterator it = f_list.begin();
+                     it != f_list.end(); ++it) {
+                  if ((*it)->tag() == ftag) {
+                    gf = *it;
+                    break;
+                  }
+                }
+                if (gf != NULL) {
+                  MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1],
+                                                   pointloop[2], gf, 0, 0);
+                  SPoint2 param;
+                  if (reparamMeshVertexOnFace(v, gf, param)) {
+                    v->setParameter(0, param.x());
+                    v->setParameter(1, param.y());
+                  }
+                  v->setIndex(pointmark(pointloop));
+                  _gr->mesh_vertices.push_back(v);
+                  _vertices.push_back(v);
+                }
+              }
+              // Record all the GFaces' tag at this segment.
+              spinsh = parentsh;
+              while (1) {
+                l_faces.insert(shellmark(spinsh));
+                spivotself(spinsh);
+                if (spinsh.sh == parentsh.sh) break;
+              }
+            }
+            if ((ge == NULL) && (gf == NULL)) {
+              // Create an interior mesh vertex.
+              MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
+              v->setIndex(pointmark(pointloop));
+              _gr->mesh_vertices.push_back(v);
+              _vertices.push_back(v);
             }
           }
-          if ((ge == NULL) && (gf == NULL)) {
-            // Create an interior mesh vertex.
-            MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
-            v->setIndex(pointmark(pointloop));
-            _gr->mesh_vertices.push_back(v);
-            _vertices.push_back(v);
-          }
-        }
-        else if (pointtype(pointloop) == FREEFACETVERTEX) {
-          sdecode(point2sh(pointloop), parentsh);
-          assert(parentsh.sh != NULL);
-          l_faces.insert(shellmark(parentsh));
-          // Get the GFace containing this vertex.
-          GFace *gf = NULL;
-          int ftag = shellmark(parentsh);
-          for (std::list<GFace*>::iterator it = f_list.begin();
-               it != f_list.end(); ++it) {
-            if ((*it)->tag() == ftag) {
-              gf = *it;
-              break;
+          else if (pointtype(pointloop) == FREEFACETVERTEX) {
+            sdecode(point2sh(pointloop), parentsh);
+            assert(parentsh.sh != NULL);
+            l_faces.insert(shellmark(parentsh));
+            // Get the GFace containing this vertex.
+            GFace *gf = NULL;
+            int ftag = shellmark(parentsh);
+            for (std::list<GFace*>::iterator it = f_list.begin();
+                 it != f_list.end(); ++it) {
+              if ((*it)->tag() == ftag) {
+                gf = *it;
+                break;
+              }
             }
-          }
-          if (gf != NULL) {
-            MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1],
-                                             pointloop[2], gf, 0, 0);
-            SPoint2 param;
-            if (reparamMeshVertexOnFace(v, gf, param)) {
-              v->setParameter(0, param.x());
-              v->setParameter(1, param.y());
+            if (gf != NULL) {
+              MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1],
+                                               pointloop[2], gf, 0, 0);
+              SPoint2 param;
+              if (reparamMeshVertexOnFace(v, gf, param)) {
+                v->setParameter(0, param.x());
+                v->setParameter(1, param.y());
+              }
+              v->setIndex(pointmark(pointloop));
+              _gr->mesh_vertices.push_back(v);
+              _vertices.push_back(v);
             }
-            v->setIndex(pointmark(pointloop));
-            _gr->mesh_vertices.push_back(v);
-            _vertices.push_back(v);
+            else {
+              // Create a mesh vertex.
+              MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
+              v->setIndex(pointmark(pointloop));
+              _gr->mesh_vertices.push_back(v);
+              _vertices.push_back(v);
+            }
           }
           else {
-            // Create a mesh vertex.
             MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
             v->setIndex(pointmark(pointloop));
             _gr->mesh_vertices.push_back(v);
             _vertices.push_back(v);
           }
         }
-        else {
-          MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
-          v->setIndex(pointmark(pointloop));
-          _gr->mesh_vertices.push_back(v);
-          _vertices.push_back(v);
-        }
+        pointloop = pointtraverse();
       }
-      pointloop = pointtraverse();
+      assert(_vertices.size() == points->items);
     }
-    assert(_vertices.size() == points->items);
-  }
 
-  if (l_edges.size() > 0) {
-    // There are Steiner points on segments!
-    face segloop;
-    // Re-create the segment mesh in the corresponding GEdges.
-    for (std::set<int>::iterator it = l_edges.begin(); it!=l_edges.end(); ++it) {
-      // Find the GFace with tag = *it.
-      GEdge *ge = NULL;
-      int etag = *it;
-      for (std::list<GEdge*>::iterator eit = e_list.begin();
-           eit != e_list.end(); ++eit) {
-        if ((*eit)->tag() == etag) {
-          ge = (*eit);
-          break;
+    if (l_edges.size() > 0) {
+      // There are Steiner points on segments!
+      face segloop;
+      // Re-create the segment mesh in the corresponding GEdges.
+      for (std::set<int>::iterator it = l_edges.begin(); it!=l_edges.end(); ++it) {
+        // Find the GFace with tag = *it.
+        GEdge *ge = NULL;
+        int etag = *it;
+        for (std::list<GEdge*>::iterator eit = e_list.begin();
+             eit != e_list.end(); ++eit) {
+          if ((*eit)->tag() == etag) {
+            ge = (*eit);
+            break;
+          }
         }
-      }
-      assert(ge != NULL);
-      // Delete the old triangles.
-      for(i = 0; i < ge->lines.size(); i++)
-        delete ge->lines[i];
-      ge->lines.clear();
-      ge->deleteVertexArrays();
-      // Create the new triangles.
-      segloop.shver = 0;
-      subsegs->traversalinit();
-      segloop.sh = shellfacetraverse(subsegs);
-      while (segloop.sh != NULL) {
-        if (shellmark(segloop) == etag) {
-          p[0] = sorg(segloop);
-          p[1] = sdest(segloop);
-          MVertex *v1 = _vertices[pointmark(p[0])];
-          MVertex *v2 = _vertices[pointmark(p[1])];
-          MLine *t = new MLine(v1, v2);
-          ge->lines.push_back(t);
-        }
+        assert(ge != NULL);
+        // Delete the old triangles.
+        for(i = 0; i < ge->lines.size(); i++)
+          delete ge->lines[i];
+        ge->lines.clear();
+        ge->deleteVertexArrays();
+        // Create the new triangles.
+        segloop.shver = 0;
+        subsegs->traversalinit();
         segloop.sh = shellfacetraverse(subsegs);
-      }
-    } // it
-  }
+        while (segloop.sh != NULL) {
+          if (shellmark(segloop) == etag) {
+            p[0] = sorg(segloop);
+            p[1] = sdest(segloop);
+            MVertex *v1 = _vertices[pointmark(p[0])];
+            MVertex *v2 = _vertices[pointmark(p[1])];
+            MLine *t = new MLine(v1, v2);
+            ge->lines.push_back(t);
+          }
+          segloop.sh = shellfacetraverse(subsegs);
+        }
+      } // it
+    }
 
-  if (l_faces.size() > 0) {
-    // There are Steiner points on facets!
-    face subloop;
-    // Re-create the surface mesh in the corresponding GFaces.
-    for (std::set<int>::iterator it = l_faces.begin(); it != l_faces.end(); ++it) {
-      // Find the GFace with tag = *it.
-      GFace *gf = NULL;
-      int ftag = *it;
-      for (std::list<GFace*>::iterator fit = f_list.begin();
-           fit != f_list.end(); ++fit) {
-        if ((*fit)->tag() == ftag) {
-          gf = (*fit);
-          break;
+    if (l_faces.size() > 0) {
+      // There are Steiner points on facets!
+      face subloop;
+      // Re-create the surface mesh in the corresponding GFaces.
+      for (std::set<int>::iterator it = l_faces.begin(); it != l_faces.end(); ++it) {
+        // Find the GFace with tag = *it.
+        GFace *gf = NULL;
+        int ftag = *it;
+        for (std::list<GFace*>::iterator fit = f_list.begin();
+             fit != f_list.end(); ++fit) {
+          if ((*fit)->tag() == ftag) {
+            gf = (*fit);
+            break;
+          }
         }
-      }
-      assert(gf != NULL);
-      // Delete the old triangles.
-      Msg::Info("Steiner points exist on GFace %d", gf->tag());
-      for(i = 0; i < gf->triangles.size(); i++)
-        delete gf->triangles[i];
-      //for(i = 0; i < gf->quadrangles.size(); i++)
-      //  delete gf->quadrangles[i];
-      gf->triangles.clear();
-      //gf->quadrangles.clear();
-      gf->deleteVertexArrays();
-      // Create the new triangles.
-      subloop.shver = 0;
-      subfaces->traversalinit();
-      subloop.sh = shellfacetraverse(subfaces);
-      while (subloop.sh != NULL) {
-        if (shellmark(subloop) == ftag) {
-          p[0] = sorg(subloop);
-          p[1] = sdest(subloop);
-          p[2] = sapex(subloop);
-          MVertex *v1 = _vertices[pointmark(p[0])];
-          MVertex *v2 = _vertices[pointmark(p[1])];
-          MVertex *v3 = _vertices[pointmark(p[2])];
-          MTriangle *t = new MTriangle(v1, v2, v3);
-          gf->triangles.push_back(t);
-        }
+        assert(gf != NULL);
+        // Delete the old triangles.
+        Msg::Info("Steiner points exist on GFace %d", gf->tag());
+        for(i = 0; i < gf->triangles.size(); i++)
+          delete gf->triangles[i];
+        //for(i = 0; i < gf->quadrangles.size(); i++)
+        //  delete gf->quadrangles[i];
+        gf->triangles.clear();
+        //gf->quadrangles.clear();
+        gf->deleteVertexArrays();
+        // Create the new triangles.
+        subloop.shver = 0;
+        subfaces->traversalinit();
         subloop.sh = shellfacetraverse(subfaces);
-      }
-    } // it
-  }
+        while (subloop.sh != NULL) {
+          if (shellmark(subloop) == ftag) {
+            p[0] = sorg(subloop);
+            p[1] = sdest(subloop);
+            p[2] = sapex(subloop);
+            MVertex *v1 = _vertices[pointmark(p[0])];
+            MVertex *v2 = _vertices[pointmark(p[1])];
+            MVertex *v3 = _vertices[pointmark(p[2])];
+            MTriangle *t = new MTriangle(v1, v2, v3);
+            gf->triangles.push_back(t);
+          }
+          subloop.sh = shellfacetraverse(subfaces);
+        }
+      } // it
+    }
 
-  triface tetloop;
+    triface tetloop;
 
-  tetloop.ver = 11;
-  tetrahedrons->traversalinit();
-  tetloop.tet = tetrahedrontraverse();
-
-  while (tetloop.tet != (tetrahedron *) NULL) {
-    p[0] = org(tetloop);
-    p[1] = dest(tetloop);
-    p[2] = apex(tetloop);
-    p[3] = oppo(tetloop);
-
-    MVertex *v1 = _vertices[pointmark(p[0])];
-    MVertex *v2 = _vertices[pointmark(p[1])];
-    MVertex *v3 = _vertices[pointmark(p[2])];
-    MVertex *v4 = _vertices[pointmark(p[3])];
-    MTetrahedron *t = new  MTetrahedron(v1, v2, v3, v4);
-    _gr->tetrahedra.push_back(t);
+    tetloop.ver = 11;
+    tetrahedrons->traversalinit();
     tetloop.tet = tetrahedrontraverse();
-  }
- } // mesh output
 
- Msg::Info("Reconstruct time : %g sec", Cpu() - t_start);
- return true;
+    while (tetloop.tet != (tetrahedron *) NULL) {
+      p[0] = org(tetloop);
+      p[1] = dest(tetloop);
+      p[2] = apex(tetloop);
+      p[3] = oppo(tetloop);
+
+      MVertex *v1 = _vertices[pointmark(p[0])];
+      MVertex *v2 = _vertices[pointmark(p[1])];
+      MVertex *v3 = _vertices[pointmark(p[2])];
+      MVertex *v4 = _vertices[pointmark(p[3])];
+      MTetrahedron *t = new  MTetrahedron(v1, v2, v3, v4);
+      _gr->tetrahedra.push_back(t);
+      tetloop.tet = tetrahedrontraverse();
+    }
+  } // mesh output
+
+  Msg::Info("Reconstruct time : %g sec", Cpu() - t_start);
+  return true;
 }
 
 // Dump the input surface mesh.
