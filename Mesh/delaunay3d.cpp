@@ -1225,7 +1225,7 @@ void delaunayTriangulation (const int numThreads,
 
   Vertex *box[8];
   delaunayTriangulation (numThreads, nptsatonce, _vertices, box, allocator);
-  __print ("finalTetrahedrization.pos",0, allocator);
+  //__print ("finalTetrahedrization.pos",0, allocator);
 
   MVertex *VV[8];
   for (int i=0;i<8;i++){
