@@ -40,19 +40,15 @@ Line Loop(24) = {6,-12,3,10};
 Ruled Surface(25) = {24};
 Surface Loop(1) = {17,-25,-23,-21,19,15};
 Volume(1) = {1};
-//Transfinite Line{1:4,6:9} = 20;
-//Transfinite Line{10:13} = 20;
+Transfinite Line{1:4,6:9} = 20;
+Transfinite Line{10:13} = 20;
 
-//Transfinite Surface {15} = {1,2,3,4};
+Transfinite Surface {15} = {1,2,3,4};
+Transfinite Surface {17} = {5,6,7,8};
+Transfinite Surface {19} = {1,5,8,4};
+Transfinite Surface {21} = {8,7,3,4};
+Transfinite Surface {23} = {6,7,3,2};
+Transfinite Surface {25} = {5,6,2,1};
 
-
-//Transfinite Surface {17} = {5,6,7,8};
-//Transfinite Surface {19} = {1,5,8,4};
-//Transfinite Surface {21} = {8,7,3,4};
-//Transfinite Surface {23} = {6,7,3,2};
-//Transfinite Surface {25} = {5,6,2,1};
-
-
-//Transfinite Volume{1} = {1,2,3,4,5,6,7,8};
+Transfinite Volume{1} = {1,2,3,4,5,6,7,8};
 Recombine Surface{15:25:2};
-
