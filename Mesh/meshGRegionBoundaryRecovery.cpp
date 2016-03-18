@@ -512,7 +512,8 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   if ((dupverts > 0l) || (unuverts > 0l)) {
     // Remove hanging nodes.
-    //    jettisonnodes();
+    // cannot call this here due to 8 additional exterior vertices we inserted
+    // jettisonnodes();
   }
 
   long tetnumber, facenumber;

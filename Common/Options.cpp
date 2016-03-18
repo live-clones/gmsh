@@ -4894,6 +4894,13 @@ double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
   return CTX::instance()->mesh.optimizeNetgen;
 }
 
+double opt_mesh_old_refinement(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.oldRefinement = (int)val;
+  return CTX::instance()->mesh.oldRefinement;
+}
+
 double opt_mesh_refine_steps(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){

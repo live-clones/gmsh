@@ -32,7 +32,7 @@ struct contextMeshOptions {
   double anisoMax, smoothRatio;
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
-  int fileFormat, nbSmoothing, algo2d, algo3d, algoSubdivide;
+  int fileFormat, nbSmoothing, algo2d, algo3d, algoSubdivide, oldRefinement;
   int algoRecombine, recombineAll, recombine3DAll, recombine3DLevel, recombine3DConformity;
   int flexibleTransfinite;
   //-- for recombination test (amaury) --

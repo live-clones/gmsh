@@ -589,7 +589,7 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
      fprintf(fp, "};\n");
      fclose(fp);
    }
-   
+
 
   }
   catch(int err){
@@ -613,20 +613,21 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   gr->set(faces);
 
   // now do insertion of points
-#if 1
-  insertVerticesInRegion(gr, 2000000000, true);
-#else
-  void edgeBasedRefinement(const int numThreads,
-                           const int nptsatonce,
-                           GRegion *gr);
-  // just to remove tets that are not to be meshed
-  insertVerticesInRegion(gr, 0);
-  for(unsigned int i = 0; i < regions.size(); i++){
-    Msg::Info("Refining volume %d",regions[i]->tag());
-    edgeBasedRefinement(1, 1, regions[i]);
+  if(CTX::instance()->mesh.oldRefinement){
+    insertVerticesInRegion(gr, 2000000000, true);
   }
-  // RelocateVertices (regions,-1);
-#endif
+  else{
+    void edgeBasedRefinement(const int numThreads,
+                             const int nptsatonce,
+                             GRegion *gr);
+    // just to remove tets that are not to be meshed
+    insertVerticesInRegion(gr, 0);
+    for(unsigned int i = 0; i < regions.size(); i++){
+      Msg::Info("Refining volume %d",regions[i]->tag());
+      edgeBasedRefinement(1, 1, regions[i]);
+    }
+    // RelocateVertices (regions,-1);
+  }
 }
 
 void MeshDelaunayVolume(std::vector<GRegion*> &regions)
