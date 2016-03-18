@@ -965,38 +965,6 @@ void tetgenmesh::outmesh2medit(const char* mfilename)
 
   // Compute the number of faces.
   ntets = tetrahedrons->items - hullsize;
-  faces = (ntets * 4l + hullsize) / 2l;
-
-  /*
-  fprintf(outfile, "\n# Set of Triangles\n");
-  fprintf(outfile, "Triangles\n");
-  fprintf(outfile, "%ld\n", faces);
-
-  tetrahedrons->traversalinit();
-  tface.tet = tetrahedrontraverse();
-  while (tface.tet != (tetrahedron *) NULL) {
-    for (tface.ver = 0; tface.ver < 4; tface.ver ++) {
-      fsym(tface, tsymface);
-      if (ishulltet(tsymface) ||
-          (elemindex(tface.tet) < elemindex(tsymface.tet))) {
-        p1 = org (tface);
-        p2 = dest(tface);
-        p3 = apex(tface);
-        fprintf(outfile, "%5d  %5d  %5d",
-          pointmark(p1)+shift, pointmark(p2)+shift, pointmark(p3)+shift);
-        // Check if it is a subface.
-        tspivot(tface, checkmark);
-        if (checkmark.sh == NULL) {
-          marker = 0;  // It is an inner face. It's marker is 0.
-        } else {
-          marker = 1; // The default marker for subface is 1.
-        }
-        fprintf(outfile, "    %d\n", marker);
-      }
-    }
-    tface.tet = tetrahedrontraverse();
-  }
-  */
 
   fprintf(outfile, "\n# Set of Tetrahedra\n");
   fprintf(outfile, "Tetrahedra\n");
@@ -1024,6 +992,27 @@ void tetgenmesh::outmesh2medit(const char* mfilename)
     }
     fprintf(outfile, "\n");
     tetptr = tetrahedrontraverse();
+  }
+
+  //faces = (ntets * 4l + hullsize) / 2l;
+  faces = subfaces->items;
+  face sface;
+
+  fprintf(outfile, "\n# Set of Triangles\n");
+  fprintf(outfile, "Triangles\n");
+  fprintf(outfile, "%ld\n", faces);
+
+  subfaces->traversalinit();
+  sface.sh = shellfacetraverse(subfaces);
+  while (sface.sh != NULL) {
+    p1 =  sorg(sface);
+    p2 = sdest(sface);
+    p3 = sapex(sface);
+    fprintf(outfile, "%5d  %5d  %5d",
+      pointmark(p1)+shift, pointmark(p2)+shift, pointmark(p3)+shift);
+    marker = shellmark(sface);
+    fprintf(outfile, "    %d\n", marker);
+    sface.sh = shellfacetraverse(subfaces);
   }
 
   fprintf(outfile, "\nEnd\n");
