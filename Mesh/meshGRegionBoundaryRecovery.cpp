@@ -18,6 +18,11 @@
 #include "MTetrahedron.h"
 #include "Context.h"
 #include "OS.h"
+#if !defined(HAVE_NO_STDINT_H)
+#include <stdint.h>
+#elif defined(HAVE_NO_INTPTR_T)
+typedef unsigned long uintptr_t;
+#endif
 
 namespace tetgenBR
 {
@@ -83,6 +88,7 @@ static double orient4d(double*, double *, double *, double *, double *,
                        double, double, double, double, double){ return 0.; }
 static int clock(){ return 0; }
 #define clock_t int
+#define uintptr_t long
 #include "tetgenBR.h"
 #include "tetgenBR.cxx"
 
