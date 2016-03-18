@@ -1225,14 +1225,15 @@ void delaunayTriangulation (const int numThreads,
 
   Vertex *box[8];
   delaunayTriangulation (numThreads, nptsatonce, _vertices, box, allocator);
+  __print ("finalTetrahedrization.pos",0, allocator);
 
+  MVertex *VV[8];
   for (int i=0;i<8;i++){
     Vertex *v = box[i];
     v->setNum(N+i+1);
-    MVertex *mv = new MVertex (v->x(),v->y(),v->z(),NULL,N+i+1);
-    //    printf("%d %g %g %g\n",v->getNum(),v->x(),v->y(),v->z());
-    _temp [v->getNum()] = mv;
-    S.push_back(mv);
+    VV[i]= new MVertex (v->x(),v->y(),v->z(),NULL,N+(i+1));
+    _temp [v->getNum()] = VV[i];
+    S.push_back(VV[i]);
   }
 
   for (int myThread=0; myThread < numThreads; myThread++) {

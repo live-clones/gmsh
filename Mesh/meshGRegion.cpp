@@ -581,6 +581,16 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
 
   try{
     meshGRegionBoundaryRecovery(gr);
+   FILE *fp = Fopen("debug.pos", "w");
+   if(fp){
+     fprintf(fp, "View \"debug\" {\n");
+     for(unsigned int i = 0; i < gr->tetrahedra.size(); i++)
+       gr->tetrahedra[i]->writePOS(fp, 1., gr->tag(),false,false,false,1,1);
+     fprintf(fp, "};\n");
+     fclose(fp);
+   }
+   
+
   }
   catch(int err){
     if(err == 3){

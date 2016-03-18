@@ -486,7 +486,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     insegments = subsegs->items;
 
     if (0) {
-      outsurfacemesh("dump");
+      outmesh2medit("dump2");
     }
 
   } // meshsurface()
@@ -512,7 +512,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   if ((dupverts > 0l) || (unuverts > 0l)) {
     // Remove hanging nodes.
-    jettisonnodes();
+    //    jettisonnodes();
   }
 
   long tetnumber, facenumber;
@@ -574,7 +574,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   // Debug
   if (0) {
-    //outmesh2medit("dump");
+    outmesh2medit("dump");
   }
   ////////////////////////////////////////////////////////
 
@@ -803,11 +803,13 @@ bool tetgenmesh::reconstructmesh(void *p)
   tetloop.ver = 11;
   tetrahedrons->traversalinit();
   tetloop.tet = tetrahedrontraverse();
+
   while (tetloop.tet != (tetrahedron *) NULL) {
     p[0] = org(tetloop);
     p[1] = dest(tetloop);
     p[2] = apex(tetloop);
     p[3] = oppo(tetloop);
+
     MVertex *v1 = _vertices[pointmark(p[0])];
     MVertex *v2 = _vertices[pointmark(p[1])];
     MVertex *v3 = _vertices[pointmark(p[2])];

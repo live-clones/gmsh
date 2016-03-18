@@ -102,6 +102,7 @@ static bool orderVertices(const double &tot_length, const std::vector<MVertex*> 
 discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh) :
   GFace(gf->model(),123), _parent (gf)
 {
+  if (mesh.empty())return;
   std::map<MVertex*,MVertex*> v2v;
   for (unsigned int i=0;i<mesh.size();i++){
     MVertex *vs[3] = {NULL, NULL, NULL};

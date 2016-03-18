@@ -602,7 +602,7 @@ void non_recursive_classify(MTet4 *t, std::list<MTet4*> &theRegion,
     t = _stackounette.top();
     _stackounette.pop();
     if (!t) {
-      //      Msg::Fatal("a tet is not connected by a boundary face");
+      Msg::Error("a tet is not connected by a boundary face");
       touchesOutsideBox = true;
     }
     else if (!t->onWhat()) {
@@ -1145,7 +1145,6 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
     buildFaceSearchStructure(gr->model(), search);
     for(MTet4Factory::iterator it = allTets.begin(); it != allTets.end(); ++it){
       if(!(*it)->onWhat()){
-	//	printf("I'm in coucou\n");
 	std::list<MTet4*> theRegion;
 	std::set<GFace *> faces_bound;
 	GRegion *bidon = (GRegion*)123;
@@ -1161,9 +1160,13 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 	  for(std::list<MTet4*>::iterator it2 = theRegion.begin();
 	      it2 != theRegion.end(); ++it2) (*it2)->setOnWhat(myGRegion);
 	}
-	else // the tets are in the void
+	else {
+	  // the tets are in the void
+	  Msg::Info("Found void region");
 	  for(std::list<MTet4*>::iterator it2 = theRegion.begin();
 	      it2 != theRegion.end(); ++it2)(*it2)->setDeleted(true);
+	  
+	}
       }
     }
     search.clear();
