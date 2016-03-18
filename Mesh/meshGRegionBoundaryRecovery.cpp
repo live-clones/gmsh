@@ -80,7 +80,8 @@ public:
 #define orient3d robustPredicates::orient3d
 #define insphere robustPredicates::insphere
 static double orient4d(double*, double *, double *, double *, double *,
-                double, double, double, double, double){ return 0.; }
+                       double, double, double, double, double){ return 0.; }
+static int clock(){ return 0; }
 #define clock_t int
 #include "tetgenBR.h"
 #include "tetgenBR.cxx"

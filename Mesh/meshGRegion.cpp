@@ -603,7 +603,7 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   gr->set(faces);
 
   // now do insertion of points
-#if 0
+#if 1
   insertVerticesInRegion(gr, 2000000000, true);
 #else
   void edgeBasedRefinement(const int numThreads,
