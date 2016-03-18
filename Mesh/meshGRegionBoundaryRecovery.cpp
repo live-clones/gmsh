@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 #include "GmshConfig.h"
 #include "meshGRegionBoundaryRecovery.h"
@@ -17,7 +18,6 @@
 #include "MTetrahedron.h"
 #include "Context.h"
 #include "OS.h"
-#include <string.h>
 
 namespace tetgenBR
 {
@@ -81,7 +81,7 @@ public:
 #define insphere robustPredicates::insphere
 static double orient4d(double*, double *, double *, double *, double *,
                 double, double, double, double, double){ return 0.; }
-
+#define clock_t int
 #include "tetgenBR.h"
 #include "tetgenBR.cxx"
 
