@@ -23,27 +23,27 @@ Bechet (solver), Gilles Marckmann (camera and stero mode), Ashish Negi
 (Salome/Netgen CAD healing), Trevor Strickler (structured/unstructured coupling
 with pyramids), Amaury Johnen (Bezier), Benjamin Ruard (Java wrappers), Maxime
 Graulich (iOS/Android port), Francois Henrotte (onelab metamodels), Sebastian
-Eiser (PGF output), Alexis Salzman (compressed IO). See comments in the sources
-for more information. If we forgot to list your contributions please send us an
-email!
+Eiser (PGF output), Alexis Salzman (compressed IO), Hang Si (TetGen/BR boundary
+recovery code). See comments in the sources for more information. If we forgot
+to list your contributions please send us an email!
 
-The TetGen/BR code (Mesh/tetgenBR.*) is copyright (c) 2016 Hang Si, Weierstrass
+The TetGen/BR code (Mesh/tetgenBR.{cpp,h}) is copyright (c) 2016 Hang Si, Weierstrass
 Institute for Applied Analysis and Stochatics.
 
-The AVL tree code (Common/avl.*) and the YUV image code (Graphics/gl2yuv.*) are
-copyright (C) 1988-1993, 1995 The Regents of the University of
-California. Permission to use, copy, modify, and distribute this software and
-its documentation for any purpose and without fee is hereby granted, provided
-that the above copyright notice appear in all copies and that both that
-copyright notice and this permission notice appear in supporting documentation,
-and that the name of the University of California not be used in advertising or
-publicity pertaining to distribution of the software without specific, written
-prior permission. The University of California makes no representations about
-the suitability of this software for any purpose. It is provided "as is" without
-express or implied warranty.
+The AVL tree code (Common/avl.{cpp,h}) and the YUV image code
+(Graphics/gl2yuv.{cpp,h}) are copyright (C) 1988-1993, 1995 The Regents of the
+University of California. Permission to use, copy, modify, and distribute this
+software and its documentation for any purpose and without fee is hereby
+granted, provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in supporting
+documentation, and that the name of the University of California not be used in
+advertising or publicity pertaining to distribution of the software without
+specific, written prior permission. The University of California makes no
+representations about the suitability of this software for any purpose. It is
+provided "as is" without express or implied warranty.
 
-The trackball code (Graphics/Trackball.*) is copyright (C) 1993, 1994, Silicon
-Graphics, Inc. ALL RIGHTS RESERVED. Permission to use, copy, modify, and
+The trackball code (Graphics/Trackball.{cpp.h}) is copyright (C) 1993, 1994,
+Silicon Graphics, Inc. ALL RIGHTS RESERVED. Permission to use, copy, modify, and
 distribute this software for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that both the
 copyright notice and this permission notice appear in supporting documentation,
@@ -93,7 +93,7 @@ configuration options.
 This version of Gmsh may contain code (in the contrib/Netgen subdirectory)
 copyright (C) 1994-2004 Joachim Sch"oberl: check the configuration options.
 
-This version of Gmsh may contain code (in the contrib/Tetgen subdirectory)
+This version of Gmsh may contain code (in the contrib/Tetgen1.5 subdirectory)
 copyright (C) 2002-2007 Hang Si: check the configuration options.
 
 This version of Gmsh may contain code (in the contrib/Salome subdirectory)
