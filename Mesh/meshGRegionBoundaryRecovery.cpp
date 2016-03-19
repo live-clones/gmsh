@@ -99,9 +99,7 @@ bool tetgenmesh::reconstructmesh(void *p)
   in = new tetgenio();
   b = new tetgenbehavior();
   char opts[128];
-  sprintf(opts, "Ype%sT%g",
-          (Msg::GetVerbosity() < 3) ? "Q" : (Msg::GetVerbosity() > 6) ? "V" : "",
-          CTX::instance()->mesh.toleranceInitialDelaunay);
+  sprintf(opts, "YpeQT%g", CTX::instance()->mesh.toleranceInitialDelaunay);
   b->parse_commandline(opts);
 
   double t_start = Cpu();
@@ -363,7 +361,7 @@ bool tetgenmesh::reconstructmesh(void *p)
   std::list<GEdge*> e_list = _gr->edges();
 
   {
-    Msg::Info("--> Creating surface mesh...");
+    Msg::Info("Creating surface mesh...");
     face newsh;
     face newseg;
     point p[4];
@@ -397,7 +395,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     // Connecting triangles, removing redundant segments.
     unifysegments();
 
-    Msg::Info("--> Identifying boundary edges...");
+    Msg::Info("Identifying boundary edges...");
 
     face* shperverlist;
     int* idx2shlist;
@@ -586,7 +584,7 @@ bool tetgenmesh::reconstructmesh(void *p)
   {
     // Write mesh into to GRegion.
 
-    Msg::Info("--> Write to GRegion...");
+    Msg::Info("Writing to GRegion...");
 
     point p[4];
     int i;
