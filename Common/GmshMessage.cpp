@@ -1239,10 +1239,12 @@ void Msg::ImportPhysicalGroupsInOnelab()
       _onelabClient->clear(tmp);
     }
 
+#if defined(HAVE_FLTK)
     if(FlGui::available()){
       FlGui::instance()->resetVisibility();
       FlGui::instance()->rebuildTree(true);
     }
+#endif
   }
 #endif
 }
