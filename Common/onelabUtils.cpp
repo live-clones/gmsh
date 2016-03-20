@@ -374,6 +374,7 @@ namespace onelabUtils {
           if(changed > 1 || StatFile(mshFileName) ||
              (!StatFile(mshFileName) &&
               GModel::current()->getMeshStatus() < GModel::current()->getDim())){
+            GModel::current()->deleteMesh();
             GModel::current()->mesh(3);
           }
           CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
@@ -385,6 +386,7 @@ namespace onelabUtils {
           redraw = true;
           if(changed > 1 ||
              GModel::current()->getMeshStatus() < GModel::current()->getDim()){
+            GModel::current()->deleteMesh();
             GModel::current()->mesh(3);
           }
           CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
