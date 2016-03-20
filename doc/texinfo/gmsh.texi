@@ -2768,7 +2768,7 @@ extruded and has the following syntax:
 @group
   Layers @{ @var{expression} @} | 
   Layers @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} | 
-  Recombine; @dots{}
+  Recombine < @var{expression} >; @dots{}
   QuadTriNoNewVerts <RecombLaterals>; | 
   QuadTriAddVerts <RecombLaterals>; ...
 @end group

@@ -3895,6 +3895,10 @@ ExtrudeParameter :
     {
       extr.mesh.Recombine = true;
     }
+  | tRecombine FExpr tEND
+    {
+      extr.mesh.Recombine = $2 ? true : false;
+    }
   | tQuadTriSngl tEND
     {
       yymsg(0, "Keyword 'QuadTriSngl' deprecated. Use 'QuadTriNoNewVerts' instead.");
