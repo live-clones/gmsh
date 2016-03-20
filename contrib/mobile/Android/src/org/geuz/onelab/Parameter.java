@@ -91,7 +91,7 @@ public class Parameter {
         setName(infos[pos++]);// name
         setLabel(infos[pos++]);// label
         pos++;// help
-        pos++;// never change
+        pos++;// changedValue
         if(Integer.parseInt(infos[pos++]) != 1)return -1;// visible
         this.setReadOnly((infos[pos++].equals("1")));// read only
         int nAttributes = Integer.parseInt(infos[pos++]);// number of attributes
