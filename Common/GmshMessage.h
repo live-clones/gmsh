@@ -118,10 +118,10 @@ class Msg {
   static bool UseOnelab();
   static void SetOnelabNumber(std::string name, double val, bool visible=true,
                               bool persistent=false, bool readOnly=false,
-                              bool neverChanged=false);
+                              int changedValue=3);
   static void SetOnelabString(std::string name, std::string val, bool visible=true,
                               bool persistent=false, bool readOnly=false,
-                              bool neverChanged=false, const std::string &kind="");
+                              int changedValue=3, const std::string &kind="");
   static double GetOnelabNumber(std::string name, double defaultValue=0.,
                                 bool errorIfMissing=false);
   static std::string GetOnelabString(std::string name, const std::string &defaultValue="",
@@ -138,7 +138,7 @@ class Msg {
                                       std::map<std::string, std::vector<std::string> > &copt);
   static void UndefineOnelabParameter(const std::string &name);
   static void RunOnelabClient(const std::string &name, const std::string &exe="");
-  static void SetOnelabChanged(bool value=true, const std::string &client="Gmsh");
+  static void SetOnelabChanged(int value, const std::string &client="Gmsh");
   static void ImportPhysicalGroupsInOnelab();
 };
 

@@ -344,11 +344,12 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
   if(solver.size()){
     int num = defineSolver(solver);
     Msg::SetOnelabString(solver + "/Model name", fileName, true, true,
-                         false, false, "file");
+                         false, 3, "file");
     if(GModel::current()->getName() == "" ||
        Msg::GetOnelabString("Gmsh/Model name").empty()){
       GModel::current()->setFileName(split[0] + split[1] + ".geo");
       GModel::current()->setName(split[1] + ".geo");
+      Msg::SetOnelabChanged(3);
     }
     CTX::instance()->launchSolverAtStartup = num;
     CTX::instance()->geom.draw = 1;
@@ -579,7 +580,7 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
     GModel::setCurrent(m);
   }
   // FIXME: disabled onelab physical group import for now, as the number of
-  // groups in mesh-bases post-pro files can be different from the # in the
+  // groups in mesh-based post-pro files can be different from the # in the
   // model, which will trigger setChanged(Gmsh), leading undesirable remeshing
   int ret = MergeFile(fileName, warnIfMissing, old->bounds().empty() ? true : false, false);
   GModel::setCurrent(old);

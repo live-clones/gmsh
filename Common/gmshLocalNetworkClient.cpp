@@ -399,7 +399,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       }
       else if(command == "set"){
 	std::string changed = onelab::parameter::getNextToken(message, first);
-	onelab::server::instance()->setChanged(changed=="true"?true:false,name);
+	onelab::server::instance()->setChanged(changed == "true" ? 31 : 0, name);
       }
     }
     break;
@@ -767,6 +767,9 @@ void resetDb(bool runGmshClient)
                persistentStrings[i].getName().c_str());
     onelab::server::instance()->set(persistentStrings[i]);
   }
+
+  // mark all parameters as changed
+  onelab::server::instance()->setChanged(3);
 }
 
 void solver_batch_cb(void *data)
@@ -842,7 +845,7 @@ void solver_batch_cb(void *data)
       o.setValue("compute");
       onelab::server::instance()->set(o);
       c->run();
-      onelab::server::instance()->setChanged(false, c->getName());
+      onelab::server::instance()->setChanged(0, c->getName());
     }
   } while(incrementLoops());
 

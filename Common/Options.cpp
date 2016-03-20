@@ -4868,7 +4868,7 @@ double opt_mesh_optimize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.optimize)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.optimize = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4883,7 +4883,7 @@ double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.optimizeNetgen)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.optimizeNetgen = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -4905,7 +4905,7 @@ double opt_mesh_refine_steps(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.refineSteps)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.refineSteps = (int)val;
   }
   return CTX::instance()->mesh.refineSteps;
@@ -4973,7 +4973,7 @@ double opt_mesh_scaling_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.scalingFactor)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.scalingFactor = val;
   }
   return CTX::instance()->mesh.scalingFactor;
@@ -4984,7 +4984,7 @@ double opt_mesh_lc_factor(OPT_ARGS_NUM)
   if(action & GMSH_SET){
     if(val > 0){
       if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.lcFactor)
-        Msg::SetOnelabChanged();
+        Msg::SetOnelabChanged(2);
       CTX::instance()->mesh.lcFactor = val;
     }
   }
@@ -5000,7 +5000,7 @@ double opt_mesh_lc_min(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.lcMin)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.lcMin = val;
   }
 #if defined(HAVE_FLTK)
@@ -5015,7 +5015,7 @@ double opt_mesh_lc_max(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.lcMax)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.lcMax = val;
   }
 #if defined(HAVE_FLTK)
@@ -5030,7 +5030,7 @@ double opt_mesh_tolerance_edge_length(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.toleranceEdgeLength)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.toleranceEdgeLength = val;
   }
   return CTX::instance()->mesh.toleranceEdgeLength;
@@ -5040,7 +5040,7 @@ double opt_mesh_tolerance_initial_delaunay(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.toleranceInitialDelaunay)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.toleranceInitialDelaunay = val;
   }
   return CTX::instance()->mesh.toleranceInitialDelaunay;
@@ -5050,7 +5050,7 @@ double opt_mesh_lc_from_curvature(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.lcFromCurvature)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.lcFromCurvature = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5065,7 +5065,7 @@ double opt_mesh_lc_from_points(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.lcFromPoints)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.lcFromPoints = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5080,7 +5080,7 @@ double opt_mesh_lc_extend_from_boundary(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.lcExtendFromBoundary)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.lcExtendFromBoundary = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5095,7 +5095,7 @@ double opt_mesh_lc_integration_precision(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.lcIntegrationPrecision)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.lcIntegrationPrecision = val;
   }
   return CTX::instance()->mesh.lcIntegrationPrecision;
@@ -5105,7 +5105,7 @@ double opt_mesh_rand_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.randFactor)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.randFactor = val;
   }
   return CTX::instance()->mesh.randFactor;
@@ -5751,7 +5751,7 @@ double opt_mesh_algo2d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.algo2d)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algo2d = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5786,7 +5786,7 @@ double opt_mesh_algo_recombine(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.algoRecombine)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algoRecombine = (int)val;
     if(CTX::instance()->mesh.algoRecombine < 0 &&
        CTX::instance()->mesh.algoRecombine > 1)
@@ -5805,7 +5805,7 @@ double opt_mesh_recombine_all(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.recombineAll)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.recombineAll = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5820,7 +5820,7 @@ double opt_mesh_recombine3d_all(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.recombine3DAll)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.recombine3DAll = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5930,7 +5930,7 @@ double opt_mesh_algo_subdivide(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.algoSubdivide)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algoSubdivide = (int)val;
     if(CTX::instance()->mesh.algoSubdivide < 0 &&
        CTX::instance()->mesh.algoSubdivide > 2)
@@ -5949,7 +5949,7 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.algo3d)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algo3d = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -5984,7 +5984,7 @@ double opt_mesh_mesh_only_visible(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.meshOnlyVisible)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.meshOnlyVisible = (int)val;
   }
   return CTX::instance()->mesh.meshOnlyVisible;
@@ -5994,7 +5994,7 @@ double opt_mesh_min_circ_points(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.minCircPoints)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.minCircPoints = (int)val;
   }
   return CTX::instance()->mesh.minCircPoints;
@@ -6018,7 +6018,7 @@ double opt_mesh_order(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.order)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.order = (int)val;
   }
 #if defined(HAVE_FLTK)
@@ -6093,7 +6093,7 @@ double opt_mesh_second_order_linear(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.secondOrderLinear)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.secondOrderLinear = (int)val;
   }
   return CTX::instance()->mesh.secondOrderLinear;
@@ -6103,7 +6103,7 @@ double opt_mesh_second_order_incomplete(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.secondOrderIncomplete)
-      Msg::SetOnelabChanged();
+      Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.secondOrderIncomplete = (int)val;
   }
 #if defined(HAVE_FLTK)

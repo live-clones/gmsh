@@ -742,7 +742,7 @@ bool Msg::UseOnelab()
 }
 
 void Msg::SetOnelabNumber(std::string name, double val, bool visible,
-                          bool persistent, bool readOnly, bool neverChanged)
+                          bool persistent, bool readOnly, int changedValue)
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
@@ -756,14 +756,14 @@ void Msg::SetOnelabNumber(std::string name, double val, bool visible,
     numbers[0].setVisible(visible);
     if(persistent) numbers[0].setAttribute("Persistent", "1");
     numbers[0].setReadOnly(readOnly);
-    numbers[0].setNeverChanged(neverChanged);
+    numbers[0].setChangedValue(changedValue);
     _onelabClient->set(numbers[0]);
   }
 #endif
 }
 
 void Msg::SetOnelabString(std::string name, std::string val, bool visible,
-                          bool persistent, bool readOnly, bool neverChanged,
+                          bool persistent, bool readOnly, int changedValue,
                           const std::string &kind)
 {
 #if defined(HAVE_ONELAB)
@@ -778,7 +778,7 @@ void Msg::SetOnelabString(std::string name, std::string val, bool visible,
     strings[0].setVisible(visible);
     if(persistent) strings[0].setAttribute("Persistent", "1");
     strings[0].setReadOnly(readOnly);
-    strings[0].setNeverChanged(neverChanged);
+    strings[0].setChangedValue(changedValue);
     if(kind.size()) strings[0].setKind(kind);
     _onelabClient->set(strings[0]);
   }
@@ -897,7 +897,7 @@ void Msg::SetOnelabAction(const std::string &action)
   if(_onelabClient){
     onelab::string o(_onelabClient->getName() + "/Action", action);
     o.setVisible(false);
-    o.setNeverChanged(true);
+    o.setChangedValue(0);
     _onelabClient->set(o);
   }
 #endif
@@ -970,6 +970,7 @@ static void _setStandardOptions(onelab::parameter *p,
   if(fopt.count("Visible")) p->setVisible(fopt["Visible"][0] ? true : false);
   if(fopt.count("ReadOnly")) p->setReadOnly(fopt["ReadOnly"][0] ? true : false);
   if(fopt.count("NeverChanged")) p->setNeverChanged(fopt["NeverChanged"][0] ? true : false);
+  if(fopt.count("ChangedValue")) p->setChangedValue(fopt["ChangedValue"][0]);
   if(fopt.count("ReadOnlyRange"))
     p->setAttribute("ReadOnlyRange", fopt["ReadOnlyRange"][0] ? "1" : "0");
   if(fopt.count("AutoCheck"))
@@ -1177,12 +1178,14 @@ void Msg::ImportPhysicalGroupsInOnelab()
       size += groups[dim].size();
     onelab::number n("Gmsh/Number of physical groups", size);
     n.setReadOnly(true);
+    n.setChangedValue(1);
     n.setVisible(false);
     n.setAttribute("Closed", "1");
     _onelabClient->set(n);
 
     onelab::number nd("Gmsh/Model dimension", GModel::current()->getDim());
     nd.setReadOnly(true);
+    nd.setChangedValue(1);
     nd.setVisible(false);
     nd.setAttribute("Closed", "1");
     _onelabClient->set(nd);
@@ -1203,14 +1206,17 @@ void Msg::ImportPhysicalGroupsInOnelab()
         std::string str = tmp;
         onelab::number n1(str + "Dimension", dim);
         n1.setReadOnly(true);
+        n1.setChangedValue(1);
         n1.setVisible(false);
         _onelabClient->set(n1);
         onelab::number n2(str + "Number", num);
         n2.setReadOnly(true);
+        n2.setChangedValue(1);
         n2.setVisible(false);
         _onelabClient->set(n2);
         onelab::string s(str + "Name", name);
         s.setReadOnly(true);
+        s.setChangedValue(1);
         s.setVisible(false);
         _onelabClient->set(s);
         index++;
@@ -1235,7 +1241,7 @@ void Msg::RunOnelabClient(const std::string &name, const std::string &command)
 #endif
 }
 
-void Msg::SetOnelabChanged(bool value, const std::string &client)
+void Msg::SetOnelabChanged(int value, const std::string &client)
 {
 #if defined(HAVE_ONELAB)
   onelab::server::instance()->setChanged(value, client);

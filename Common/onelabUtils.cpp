@@ -337,9 +337,13 @@ namespace onelabUtils {
     onelab::client *c = *it;
     std::string mshFileName = onelabUtils::getMshFileName(c);
 
-    Msg::SetOnelabAction(action);
+    int changed = onelab::server::instance()->getChanged("Gmsh");
+    // if = 0: do nothing
+    //    = 1: only save mesh (e.g. if physiscals changed)
+    //    = 2: mesh and save mesh (e.g. if char length changed)
+    //    > 2: reload geometry, mesh and save mesh (other things have changed)
 
-    static std::string modelName = GModel::current()->getName();
+    Msg::SetOnelabAction(action);
 
     if(action == "initialize"){
       // nothing to do
@@ -349,30 +353,29 @@ namespace onelabUtils {
       // nothing more to do: "check" will be called right afterwards
     }
     else if(action == "check"){
-      if(onelab::server::instance()->getChanged("Gmsh") ||
-         modelName != GModel::current()->getName()){
-        // reload geometry if Gmsh parameters have been modified or
-        // if the model name has changed
-        modelName = GModel::current()->getName();
+      if(changed > 2){
         redraw = true;
         OpenProject(GModel::current()->getFileName());
+        onelab::server::instance()->thresholdChanged(2, "Gmsh");
       }
     }
     else if(action == "compute"){
-      if(onelab::server::instance()->getChanged("Gmsh") ||
-         modelName != GModel::current()->getName()){
-        // reload the geometry, mesh it and save the mesh if Gmsh parameters
-        // have been modified or if the model name has changed
-        modelName = GModel::current()->getName();
+      if(changed){
         redraw = true;
-        OpenProject(GModel::current()->getFileName());
+        if(changed > 2){
+          OpenProject(GModel::current()->getFileName());
+        }
         if(getFirstComputationFlag() && !StatFile(mshFileName) && meshAuto != 2){
           Msg::Info("Skipping mesh generation: assuming '%s' is up-to-date "
                     "(use Solver.AutoMesh=2 to force mesh generation)",
                     mshFileName.c_str());
         }
         else if(!GModel::current()->empty() && meshAuto){
-          GModel::current()->mesh(3);
+          if(changed > 1 || StatFile(mshFileName) ||
+             (!StatFile(mshFileName) &&
+              GModel::current()->getMeshStatus() < GModel::current()->getDim())){
+            GModel::current()->mesh(3);
+          }
           CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
         }
       }
@@ -380,12 +383,15 @@ namespace onelabUtils {
         // mesh+save if the mesh file does not exist
         if(meshAuto){
           redraw = true;
-          GModel::current()->mesh(3);
+          if(changed > 1 ||
+             GModel::current()->getMeshStatus() < GModel::current()->getDim()){
+            GModel::current()->mesh(3);
+          }
           CreateOutputFile(mshFileName, CTX::instance()->mesh.fileFormat);
         }
       }
       setFirstComputationFlag(false);
-      onelab::server::instance()->setChanged(false, "Gmsh");
+      onelab::server::instance()->setChanged(0, "Gmsh");
     }
 
     Msg::SetOnelabAction("");

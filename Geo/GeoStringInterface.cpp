@@ -139,11 +139,20 @@ void add_infile(const std::string &text, const std::string &fileName, bool force
   Msg::Error("GEO file creation not available without Gmsh parser");
 #endif
 
-  // mark all Gmsh data as changed in onelab (will force e.g. a reload and a
-  // remesh)
-#if defined(HAVE_ONELAB)
-  onelab::server::instance()->setChanged(true, "Gmsh");
-#endif
+  // mark Gmsh data as changed in onelab
+  if(text.find("Physical") != std::string::npos){
+    // re-import the physical groups in onelab, and only ask to re-save the mesh
+    Msg::ImportPhysicalGroupsInOnelab();
+    Msg::SetOnelabChanged(1);
+  }
+  else if(text.find("Characteristic") != std::string::npos){
+    // only ask to remesh and re-save
+    Msg::SetOnelabChanged(2);
+  }
+  else{
+    // ask to reload the geometry, remesh and re-save
+    Msg::SetOnelabChanged(3);
+  }
 }
 
 void coherence(const std::string &fileName)
