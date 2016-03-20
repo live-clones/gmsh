@@ -618,11 +618,11 @@ namespace onelab{
       typename std::set<T*, parameterLessThan>::iterator it = ps.find((T*)&p);
       if(it != ps.end()){
         (*it)->update(p);
-        if(client.size()) (*it)->addClient(client, true);
+        if(client.size()) (*it)->addClient(client, parameter::defaultChangedValue());
       }
       else{
         T* newp = new T(p);
-        if(client.size()) newp->addClient(client, true);
+        if(client.size()) newp->addClient(client, parameter::defaultChangedValue());
         ps.insert(newp);
       }
       return true;
@@ -645,7 +645,7 @@ namespace onelab{
         T tmp(name);
         typename std::set<T*, parameterLessThan>::iterator it = ps.find(&tmp);
         if(it != ps.end()){
-          if(client.size()) (*it)->addClient(client, true);
+          if(client.size()) (*it)->addClient(client, parameter::defaultChangedValue());
           p.push_back(**it);
         }
       }
@@ -657,7 +657,7 @@ namespace onelab{
       T tmp(name);
       typename std::set<T*, parameterLessThan>::iterator it = ps.find(&tmp);
       if(it != ps.end()){
-        if(client.size()) (*it)->addClient(client, true);
+        if(client.size()) (*it)->addClient(client, parameter::defaultChangedValue());
         return *it;
       }
       return NULL;

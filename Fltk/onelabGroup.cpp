@@ -177,8 +177,7 @@ void onelab_cb(Fl_Widget *w, void *data)
       if(action == "compute"){
         // after computing with this solver, mark the parameters as unchanged
         // for this solver
-        onelab::server::instance()->setChanged(false, c->getName());
-
+        onelab::server::instance()->setChanged(0, c->getName());
         FlGui::instance()->onelab->checkForErrors(c->getName());
       }
       if(FlGui::instance()->onelab->stop()) break;

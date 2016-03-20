@@ -39,7 +39,7 @@
 
 -(void)editValue
 {
-  if(onelab_cb("check") == 1){
+  if(onelab_cb("check") > 0){
     [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
   }

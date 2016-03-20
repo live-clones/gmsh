@@ -76,7 +76,7 @@ void drawContext::load(std::string filename)
   onelab_cb("check");
 
   // mark all parameters as changed to force complete first run
-  onelab::server::instance()->setChanged(true);
+  onelab::server::instance()->setChanged(3);
 }
 
 void drawContext::eventHandler(int event, float x, float y)

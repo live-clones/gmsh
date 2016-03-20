@@ -103,7 +103,7 @@
     double value = [[alertView textFieldAtIndex:0].text doubleValue];
     number[0].setValue(value);
     onelab::server::instance()->set(number[0]);
-    if(onelab_cb("check") == 1){
+    if(onelab_cb("check") > 0){
       [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
       [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
     }
