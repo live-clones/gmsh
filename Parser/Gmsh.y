@@ -1683,6 +1683,9 @@ Shape :
           int j = (int)d;
           List_Suppress(p->Entities, &j, fcmp_int);
         }
+        if(!List_Nbr(p->Entities)){
+          DeletePhysicalPoint(num);
+        }
       }
       else{
 	yymsg(0, "Unsupported operation on physical point %d", num);
@@ -1962,6 +1965,9 @@ Shape :
           int j = (int)d;
           List_Suppress(p->Entities, &j, fcmp_int);
         }
+        if(!List_Nbr(p->Entities)){
+          DeletePhysicalLine(num);
+        }
       }
       else{
 	yymsg(0, "Unsupported operation on physical line %d", num);
@@ -2201,6 +2207,9 @@ Shape :
           int j = (int)d;
           List_Suppress(p->Entities, &j, fcmp_int);
         }
+        if(!List_Nbr(p->Entities)){
+          DeletePhysicalSurface(num);
+        }
       }
       else{
 	yymsg(0, "Unsupported operation on physical surface %d", num);
@@ -2295,6 +2304,9 @@ Shape :
           List_Read($7, i, &d);
           int j = (int)d;
           List_Suppress(p->Entities, &j, fcmp_int);
+        }
+        if(!List_Nbr(p->Entities)){
+          DeletePhysicalVolume(num);
         }
       }
       else{

@@ -1171,6 +1171,11 @@ void Msg::ImportPhysicalGroupsInOnelab()
 {
 #if defined(HAVE_ONELAB)
   if(_onelabClient){
+    std::vector<onelab::number> oldn;
+    _onelabClient->get(oldn, "Gmsh/Number of physical groups");
+    int oldsize = 0;
+    if(oldn.size()) oldsize = (int)oldn[0].getValue();
+
     std::map<int, std::vector<GEntity*> > groups[4];
     GModel::current()->getPhysicalGroups(groups);
     int size = 0;
@@ -1221,6 +1226,22 @@ void Msg::ImportPhysicalGroupsInOnelab()
         _onelabClient->set(s);
         index++;
       }
+    }
+
+    // remove old ones
+    for(int index = size + 1; index < oldsize + 1; index++){
+      char tmp[256];
+      sprintf(tmp, "Gmsh/Physical group %d/Dimension", index);
+      _onelabClient->clear(tmp);
+      sprintf(tmp, "Gmsh/Physical group %d/Number", index);
+      _onelabClient->clear(tmp);
+      sprintf(tmp, "Gmsh/Physical group %d/Name", index);
+      _onelabClient->clear(tmp);
+    }
+
+    if(FlGui::available()){
+      FlGui::instance()->resetVisibility();
+      FlGui::instance()->rebuildTree(true);
     }
   }
 #endif

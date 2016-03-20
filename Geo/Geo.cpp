@@ -1325,6 +1325,50 @@ static void DeleteVolume(int iv)
   Free_Volume(&v, NULL);
 }
 
+void DeletePhysicalPoint(int num)
+{
+  PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_POINT);
+  if(p){
+    List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
+                  comparePhysicalGroup);
+    Free_PhysicalGroup(&p, NULL);
+  }
+  GModel::current()->deletePhysicalGroup(0, num);
+}
+
+void DeletePhysicalLine(int num)
+{
+  PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_LINE);
+  if(p){
+    List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
+                  comparePhysicalGroup);
+    Free_PhysicalGroup(&p, NULL);
+  }
+  GModel::current()->deletePhysicalGroup(1, num);
+}
+
+void DeletePhysicalSurface(int num)
+{
+  PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE);
+  if(p){
+    List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
+                  comparePhysicalGroup);
+    Free_PhysicalGroup(&p, NULL);
+  }
+  GModel::current()->deletePhysicalGroup(2, num);
+}
+
+void DeletePhysicalVolume(int num)
+{
+  PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_VOLUME);
+  if(p){
+    List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
+                  comparePhysicalGroup);
+    Free_PhysicalGroup(&p, NULL);
+  }
+  GModel::current()->deletePhysicalGroup(30, num);
+}
+
 void DeleteShape(int Type, int Num)
 {
   switch (Type) {
