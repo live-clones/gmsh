@@ -50,7 +50,7 @@ def path(dirname, inp):
 class _parameter() :
   _membersbase = [
     ('name', 'string'), ('label', 'string', ''), ('help', 'string', ''),
-    ('neverChanged', 'int', 0), ('visible', 'int', 1), ('readOnly', 'int', 0), 
+    ('changedValue', 'int', 31), ('visible', 'int', 1), ('readOnly', 'int', 0), 
     ('attributes', ('dict', 'string', 'string'), {}),
     ('clients', ('dict', 'string', 'int'), {})
   ]
