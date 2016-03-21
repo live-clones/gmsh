@@ -155,6 +155,10 @@ class STensor43 {
   void print(const char *) const;
   const double* data() const {return _val;}
   double* data() {return _val;}
+
+  void axpy(const double a, const STensor43& other){
+    for (int i = 0; i < 81; i++) _val[i] += a*other._val[i];
+  }
 };
 
 // tensor product
