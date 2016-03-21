@@ -16,7 +16,7 @@
 #include "OS.h"
 
 discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
-{
+{  
   Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
   Tree_Add(model->getGEOInternals()->Surfaces, &s);
   meshStatistics.status = GFace::DONE;
@@ -72,79 +72,52 @@ GPoint discreteFace::point(double par1, double par2) const
 
 SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 {
-  if (getCompound()){
-    return getCompound()->parFromPoint(p);
-  }
-  else{
-    Msg::Error("Cannot compute parametric coordinates on discrete face");
-    return SPoint2();
-  }
+  return SPoint2();
 }
 
 SVector3 discreteFace::normal(const SPoint2 &param) const
 {
-  if (getCompound()){
-    return getCompound()->normal(param);
-  }
-  else{
-    Msg::Error("Cannot evaluate normal on discrete face");
     return SVector3();
-  }
 }
 
 double discreteFace::curvatureMax(const SPoint2 &param) const
 {
-  if (getCompound()){
-    return getCompound()->curvatureMax(param);
-  }
-  else{
-    Msg::Error("Cannot evaluate curvature on discrete face");
+
     return false;
-  }
 }
 
 double discreteFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
                                 double *curvMax, double *curvMin) const
 {
-  if (getCompound()){
-    return getCompound()->curvatures(param, dirMax, dirMin, curvMax, curvMin);
-  }
-  else{
-    Msg::Error("Cannot evaluate curvatures and curvature directions on discrete face");
-    return false;
-  }
+    return false;  
 }
 
 Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 {
-  if (getCompound()){
-    return getCompound()->firstDer(param);
-  }
-  else{
-    Msg::Error("Cannot evaluate derivative on discrete face");
-    return Pair<SVector3, SVector3>();
-  }
+  return Pair<SVector3, SVector3>();  
 }
 
 void discreteFace::secondDer(const SPoint2 &param,
                              SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 {
+  /*<<<<<<< .mine
+=======
   if (getCompound()){
     return getCompound()->secondDer(param, dudu, dvdv, dudv);
   }
   else{
     Msg::Error("Cannot evaluate second derivative on discrete face");
+    >>>>>>> .r22873*/
     return;
-  }
 }
 
 // FIXME PAB ----> really create an atlas !!!!!!!!!!!!!!!
 void discreteFace::createGeometry()
 {
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER)
-  if (!_atlas.empty())return;
+  if (!_atlas.empty())return;  
   // parametrization is done here !!!
-  discreteDiskFace *df = new discreteDiskFace (this, triangles);
+  discreteDiskFace *df = new discreteDiskFace (this, triangles,2);
   df->replaceEdges(l_edges);
   _atlas.push_back(df);
 #endif

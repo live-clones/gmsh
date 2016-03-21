@@ -21,6 +21,7 @@
 #include "MElementOctree.h"
 #include "meshGFaceOptimize.h"
 #include "PView.h"
+#include "robustPredicates.h"
 
 class ANNkd_tree;
 class Octree;
@@ -29,9 +30,9 @@ class GRbf;
 
 class  discreteDiskFaceTriangle {
  public:
-  SPoint3 p1, p2, p3; // vertices in (u;v)
-  SPoint2 gfp1, gfp2, gfp3; // CAD model
-  SPoint3 v1, v2, v3; // vertices in (x;y;z)
+  SPoint3* p; // vertices in (u;v)
+  SPoint2* gfp; // CAD model
+  SPoint3* v;// vertices in (x;y;z)
   GFace *gf; // GFace tag
   MTriangle *tri; // mesh triangle in (x;y;z)
  discreteDiskFaceTriangle() : gf(0), tri(0) {}
@@ -41,14 +42,14 @@ class  discreteDiskFaceTriangle {
 
 class discreteDiskFace : public GFace {
   GFace *_parent;
-  //  bool checkOrientation(int iter, bool moveBoundaries=false) const; // mark todo
   void buildOct() const;
   bool parametrize() const;
   void buildAllNodes() ;
   void getBoundingEdges();
   void putOnView();
+  
  public:
-  discreteDiskFace(GFace *parent, std::vector<MTriangle*> &mesh);
+  discreteDiskFace(GFace *parent, std::vector<MTriangle*> &mesh, int p);// MTriangle -> MTriangle 6
   virtual ~discreteDiskFace() {triangles.clear();}
   void getTriangleUV(const double u,const double v,discreteDiskFaceTriangle **mt, double &_u, double &_v) const;
   GPoint point(double par1, double par2) const;
@@ -63,12 +64,31 @@ class discreteDiskFace : public GFace {
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
 				const SVector3 &p, const double &d,
 				double uv[2]) const;
+  void checkOrientationUV();
  protected:
   //------------------------------------------------
   // a copy of the mesh that should not be destroyed
-  std::vector<MTriangle*> discrete_triangles;
+  std::vector<MTriangle*> discrete_triangles; // MTriangleN AND MTriangle6 are children of MTriangle
   std::vector<MVertex*> discrete_vertices;
   //------------------------------------------------
+  int nodeLocalNum(MElement* e, MVertex* v) const{
+    for(unsigned int i=0; i<e->getNumVertices(); i++)
+      if (v == e->getVertex(i))
+	return i;
+  };
+  int edgeLocalNum(MElement* e, MEdge ed) const{
+    for(unsigned int i=0; i<e->getNumEdges(); i++)
+      if (ed == e->getEdge(i))
+	return i;
+  };
+  void init_ddft(discreteDiskFaceTriangle* ddft) const{
+    ddft->p = new SPoint3[_N];
+    ddft->gfp = new SPoint2[_N];
+    ddft->v = new SPoint3[_N];
+  };
+  //------------------------------------------------
+  int _order;
+  int _N;
   double _totLength;
   std::map<double,std::vector<MVertex*> > _loops;
   std::vector<MVertex*> _U0; // dirichlet's bc's
@@ -77,13 +97,14 @@ class discreteDiskFace : public GFace {
   mutable std::map<SPoint3,SPoint3 > _coordPoints; // ?
   mutable v2t_cont adjv; // ? v2t_cont ? ?????
   mutable std::map<MVertex*, Pair<SVector3,SVector3> > firstDerivatives;
-  mutable std::map<MElement*, Pair<SVector3,SVector3> > firstElemDerivatives;
+  mutable std::map<MElement*, std::vector<Pair<SVector3,SVector3> > > firstElemDerivatives;//dXdU
   mutable discreteDiskFaceTriangle *_ddft;
   mutable ANNkd_tree *uv_kdtree;
   mutable ANNkd_tree *kdtree;
   mutable Octree *oct;
   mutable std::vector<double> _coords;
-
+  const nodalBasis* mynodalbasis;
+  const bezierBasis* mybezierbasis;
 };
 
 #endif
