@@ -361,7 +361,6 @@ int GModel::readMSH(const std::string &name)
       if(sscanf(str, "%d", &numElements) != 1){ fclose(fp); return 0; }
       Msg::Info("%d elements", numElements);
       Msg::ResetProgressMeter();
-      _elementMapCache.clear();
       for(int i = 0; i < numElements; i++) {
         int num, type, entity, numData;
         if(!binary){
@@ -396,20 +395,6 @@ int GModel::readMSH(const std::string &name)
             if(swap) SwapBytes((char*)&data[0], sizeof(int), numData);
           }
         }
-        if(type==MSH_PNT_SUB || type==MSH_LIN_SUB ||
-           type==MSH_TRI_SUB || type==MSH_TET_SUB){
-          if (_elementMapCache.size()==0){
-            for(int j=0; j<11; j++){
-              std::map<int, std::vector<MElement*> >::const_iterator it;
-              for (it = elements[j].begin(); it != elements[j].end(); ++it){
-                for(int k=0; k<it->second.size(); k++){
-                  MElement* e = it->second[k];
-                  _elementMapCache[e->getNum()] = e;
-                }
-              }
-            }
-          }
-        }
         MElementFactory f;
         MElement *element = f.create(num, type, data, this);
         if(!element){ fclose(fp); return 0; }
@@ -426,8 +411,6 @@ int GModel::readMSH(const std::string &name)
         case TYPE_POLYG: elements[9][entity].push_back(element); break;
         case TYPE_POLYH: elements[10][entity].push_back(element); break;
         }
-        if (_elementMapCache.size())
-          _elementMapCache[num] = element;
         if(numElements > 100000)
           Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
       }
