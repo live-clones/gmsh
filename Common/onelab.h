@@ -35,6 +35,7 @@
 #include <set>
 #include <map>
 #include <iostream>
+#include <algorithm>
 #include <sstream>
 #include "GmshSocket.h"
 
