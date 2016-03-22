@@ -21,11 +21,7 @@
 #if !defined(HAVE_NO_STDINT_H)
 #include <stdint.h>
 #elif defined(HAVE_NO_INTPTR_T)
-#if defined(_WIN64)
-typedef unsigned __int64 uintptr_t;
-#else
-typedef unsigned long uintptr_t;
-#endif
+typedef unsigned long intptr_t;
 #endif
 
 namespace tetgenBR
@@ -92,7 +88,6 @@ static double orient4d(double*, double *, double *, double *, double *,
                        double, double, double, double, double){ return 0.; }
 static int clock(){ return 0; }
 #define clock_t int
-#define uintptr_t long
 #include "tetgenBR.h"
 #include "tetgenBR.cxx"
 
@@ -135,10 +130,9 @@ bool tetgenmesh::reconstructmesh(void *p)
   {
     point pointloop;
     REAL x, y, z;
-    int i;
 
     // Read the points.
-    for (i = 0; i < _vertices.size(); i++) {
+    for (unsigned int i = 0; i < _vertices.size(); i++) {
       makepoint(&pointloop, UNUSEDVERTEX);
       // Read the point coordinates.
       x = pointloop[0] = _vertices[i]->x();
@@ -200,22 +194,22 @@ bool tetgenmesh::reconstructmesh(void *p)
     REAL ori; //, attrib, volume;
     int bondflag;
     int t1ver;
-    int idx, i, j, k;
+    int idx, k;
 
     Msg::Info("Reconstructing mesh ...");
 
     // Allocate an array that maps each vertex to its adjacent tets.
     ver2tetarray = new tetrahedron[_vertices.size() + 1];
     //for (i = 0; i < in->numberofpoints + 1; i++) {
-    for (i = in->firstnumber; i < _vertices.size() + in->firstnumber; i++) {
+    for (unsigned int i = in->firstnumber; i < _vertices.size() + in->firstnumber; i++) {
       setpointtype(idx2verlist[i], VOLVERTEX); // initial type.
       ver2tetarray[i] = NULL;
     }
 
     // Create the tetrahedra and connect those that share a common face.
-    for (i = 0; i < tets.size(); i++) {
+    for (unsigned int i = 0; i < tets.size(); i++) {
       // Get the four vertices.
-      for (j = 0; j < 4; j++) {
+      for (int j = 0; j < 4; j++) {
 	p[j] = idx2verlist[tets[i]->getVertex(j)->getIndex()];
       }
       // Check the orientation.
@@ -254,7 +248,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 	    q[2] = apex(checktet); // c'
 	    // Check the three faces at 'd' in 'checktet'.
 	    bondflag = 0;
-	    for (j = 0; j < 3; j++) {
+	    for (int j = 0; j < 3; j++) {
 	      // Go to the face [b',a',d], or [c',b',d], or [a',c',d].
 	      esym(checktet, face2);
 	      if (face2.tet[face2.ver & 3] == NULL) {
@@ -329,7 +323,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 	  setvertices(hulltet, p[1], p[0], p[2], dummypoint);
 	  bond(tetloop, hulltet);
 	  // Try connecting this to others that share common hull edges.
-	  for (j = 0; j < 3; j++) {
+	  for (int j = 0; j < 3; j++) {
 	    fsym(hulltet, face2);
 	    while (1) {
 	      if (face2.tet == NULL) break;
@@ -369,12 +363,12 @@ bool tetgenmesh::reconstructmesh(void *p)
     face newsh;
     face newseg;
     point p[4];
-    int idx, i, j;
+    int idx;
 
     for (std::list<GFace*>::iterator it = f_list.begin(); it != f_list.end(); ++it){
       GFace *gf = *it;
-      for (i = 0;i< gf->triangles.size(); i++) {
-	for (j = 0; j < 3; j++) {
+      for (unsigned int i = 0; i < gf->triangles.size(); i++) {
+	for (int j = 0; j < 3; j++) {
 	  p[j] = idx2verlist[gf->triangles[i]->getVertex(j)->getIndex()];
 	  if (pointtype(p[j]) == VOLVERTEX) {
 	    setpointtype(p[j], FACETVERTEX);
@@ -385,7 +379,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 	setshvertices(newsh, p[0], p[1], p[2]);
 	setshellmark(newsh, gf->tag()); // the GFace's tag.
 	recentsh = newsh;
-	for (j = 0; j < 3; j++) {
+	for (int j = 0; j < 3; j++) {
 	  makeshellface(subsegs, &newseg);
 	  setshvertices(newseg, sorg(newsh), sdest(newsh), NULL);
 	  // Set the default segment marker '-1'.
@@ -415,8 +409,8 @@ bool tetgenmesh::reconstructmesh(void *p)
     for (std::list<GEdge*>::iterator it = e_list.begin(); it != e_list.end();
 	 ++it) {
       GEdge *ge = *it;
-      for (i = 0; i < ge->lines.size(); i++) {
-	for (j = 0; j < 2; j++) {
+      for (unsigned int i = 0; i < ge->lines.size(); i++) {
+	for (int j = 0; j < 2; j++) {
 	  p[j] = idx2verlist[ge->lines[i]->getVertex(j)->getIndex()];
 	  setpointtype(p[j], RIDGEVERTEX);
         }
@@ -428,7 +422,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 	newseg.sh = NULL;
 	searchsh.sh = NULL;
 	idx = pointmark(p[0]) - in->firstnumber;
-	for (j = idx2shlist[idx]; j < idx2shlist[idx + 1]; j++) {
+	for (int j = idx2shlist[idx]; j < idx2shlist[idx + 1]; j++) {
 	  checkpt = sdest(shperverlist[j]);
 	  if (checkpt == p[1]) {
 	    searchsh = shperverlist[j];
@@ -591,13 +585,12 @@ bool tetgenmesh::reconstructmesh(void *p)
     Msg::Info("Writing to GRegion...");
 
     point p[4];
-    int i;
 
     // In some hard cases, the surface mesh may be modified.
     // Find the list of GFaces, GEdges that have been modified.
     std::set<int> l_faces, l_edges;
 
-    if (points->items > _vertices.size()) {
+    if (points->items > (int)_vertices.size()) {
       face parentseg, parentsh, spinsh;
       point pointloop;
       // Create newly added mesh vertices.
@@ -717,7 +710,7 @@ bool tetgenmesh::reconstructmesh(void *p)
         }
         pointloop = pointtraverse();
       }
-      assert(_vertices.size() == points->items);
+      assert((int)_vertices.size() == points->items);
     }
 
     if (l_edges.size() > 0) {
@@ -737,7 +730,7 @@ bool tetgenmesh::reconstructmesh(void *p)
         }
         assert(ge != NULL);
         // Delete the old triangles.
-        for(i = 0; i < ge->lines.size(); i++)
+        for(unsigned int i = 0; i < ge->lines.size(); i++)
           delete ge->lines[i];
         ge->lines.clear();
         ge->deleteVertexArrays();
@@ -777,7 +770,7 @@ bool tetgenmesh::reconstructmesh(void *p)
         assert(gf != NULL);
         // Delete the old triangles.
         Msg::Info("Steiner points exist on GFace %d", gf->tag());
-        for(i = 0; i < gf->triangles.size(); i++)
+        for(unsigned int i = 0; i < gf->triangles.size(); i++)
           delete gf->triangles[i];
         //for(i = 0; i < gf->quadrangles.size(); i++)
         //  delete gf->quadrangles[i];
