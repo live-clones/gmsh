@@ -73,7 +73,7 @@ static MElement *createElementMSH2(GModel *m, int num, int typeMSH, int physical
   }
 
   MElementFactory factory;
-  MElement *e = factory.create(typeMSH, v, num, part, owner, parent, d1, d2);
+  MElement *e = factory.create(typeMSH, v, num, part, owner, 0, parent, d1, d2);
 
   if(!e){
     Msg::Error("Unknown type of element %d", typeMSH);

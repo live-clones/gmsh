@@ -1268,6 +1268,14 @@ void GModel::_storeElementsInEntities(std::map< int, std::vector<MElement* > >& 
   }
 }
 
+void GModel::_storeParentsInSubElements(std::map<int, std::vector<MElement*> > &map)
+{
+  std::map<int, std::vector<MElement*> >::const_iterator it;
+  for(it = map.begin(); it != map.end(); ++it)
+    for (int i=0; i<it->second.size(); ++i)
+      it->second[i]->updateParent(this);
+}
+
 template<class T>
 static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &elements,
                                                 bool force=false)

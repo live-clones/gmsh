@@ -174,6 +174,7 @@ class MElement
   // get and set parent and children for hierarchial grids
   virtual MElement *getParent() const { return NULL; }
   virtual void setParent(MElement *p, bool owner = false) {}
+  virtual void updateParent(GModel *gm) {} // used only for reading msh files
   virtual int getNumChildren() const { return 0; }
   virtual MElement *getChild(int i) const { return NULL; }
   virtual bool ownsParent() const { return false; }
@@ -402,8 +403,8 @@ class MElement
 
 class MElementFactory{
  public:
-  MElement *create(int type, std::vector<MVertex*> &v, int num=0, int part=0,
-                   bool owner=false, MElement *parent=0, MElement *d1=0, MElement *d2=0);
+  MElement *create(int type, std::vector< MVertex* > &v, int num=0, int part=0,
+                   bool owner=false, int parent=0, MElement *parent_ptr=NULL, MElement *d1 = 0, MElement *d2 = 0);
   MElement *create(int num, int type, const std::vector<int> &data, GModel *model);
 };
 

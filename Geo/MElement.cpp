@@ -1627,7 +1627,7 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
   }
 
   MElementFactory f;
-  MElement *newEl = f.create(eType, vmv, getNum(), _partition, ownsParent(), parent);
+  MElement *newEl = f.create(eType, vmv, getNum(), _partition, ownsParent(), 0, parent);
 
   for(int i = 0; i < 2; i++) {
     MElement *dom = getDomain(i);
@@ -1646,7 +1646,8 @@ MElement *MElement::copy(std::map<int, MVertex*> &vertexMap,
 }
 
 MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
-                                  int num, int part, bool owner, MElement *parent,
+                                  int num, int part, bool owner,
+                                  int parent, MElement* parent_ptr,
                                   MElement *d1, MElement *d2)
 {
   switch (type) {
@@ -1662,7 +1663,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_LIN_10:  return new MLineN(v, num, part);
   case MSH_LIN_11:  return new MLineN(v, num, part);
   case MSH_LIN_B:   return new MLineBorder(v, num, part, d1, d2);
-  case MSH_LIN_C:   return new MLineChild(v, num, part, owner, parent);
+  case MSH_LIN_C:   return new MLineChild(v, num, part, owner, parent_ptr);
   case MSH_TRI_3:   return new MTriangle(v, num, part);
   case MSH_TRI_6:   return new MTriangle6(v, num, part);
   case MSH_TRI_10:  return new MTriangleN(v, 3, num, part);
@@ -1701,7 +1702,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_QUA_32:  return new MQuadrangleN(v, 8, num, part);
   case MSH_QUA_36I: return new MQuadrangleN(v, 9, num, part);
   case MSH_QUA_40:  return new MQuadrangleN(v,10, num, part);
-  case MSH_POLYG_:  return new MPolygon(v, num, part, owner, parent);
+  case MSH_POLYG_:  return new MPolygon(v, num, part, owner, parent_ptr);
   case MSH_POLYG_B: return new MPolygonBorder(v, num, part, d1, d2);
   case MSH_TET_4:   return new MTetrahedron(v, num, part);
   case MSH_TET_10:  return new MTetrahedron10(v, num, part);
@@ -1742,7 +1743,7 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_TET_46:  return new MTetrahedronN(v, 8, num, part);
   case MSH_TET_52:  return new MTetrahedronN(v, 9, num, part);
   case MSH_TET_58:  return new MTetrahedronN(v, 10, num, part);
-  case MSH_POLYH_:  return new MPolyhedron(v, num, part, owner, parent);
+  case MSH_POLYH_:  return new MPolyhedron(v, num, part, owner, parent_ptr);
   case MSH_HEX_32:  return new MHexahedronN(v, 3, num, part);
   case MSH_HEX_64:  return new MHexahedronN(v, 3, num, part);
   case MSH_HEX_125: return new MHexahedronN(v, 4, num, part);
@@ -1751,10 +1752,14 @@ MElement *MElementFactory::create(int type, std::vector<MVertex*> &v,
   case MSH_HEX_512: return new MHexahedronN(v, 7, num, part);
   case MSH_HEX_729: return new MHexahedronN(v, 8, num, part);
   case MSH_HEX_1000:return new MHexahedronN(v, 9, num, part);
-  case MSH_PNT_SUB: return new MSubPoint(v, num, part, owner, parent);
-  case MSH_LIN_SUB: return new MSubLine(v, num, part, owner, parent);
-  case MSH_TRI_SUB: return new MSubTriangle(v, num, part, owner, parent);
-  case MSH_TET_SUB: return new MSubTetrahedron(v, num, part, owner, parent);
+  case MSH_PNT_SUB: return (parent_ptr) ? new MSubPoint(v, num, part, owner, parent_ptr)
+                                        : new MSubPoint(v, num, part, owner, parent);
+  case MSH_LIN_SUB: return (parent_ptr) ? new MSubLine(v, num, part, owner, parent_ptr)
+                                        : new MSubLine(v, num, part, owner, parent);
+  case MSH_TRI_SUB: return (parent_ptr) ? new MSubTriangle(v, num, part, owner, parent_ptr)
+                                        : new MSubTriangle(v, num, part, owner, parent);
+  case MSH_TET_SUB: return (parent_ptr) ? new MSubTetrahedron(v, num, part, owner, parent_ptr)
+                                        : new MSubTetrahedron(v, num, part, owner, parent);
   case MSH_PYR_5:   return new MPyramid(v, num, part);
   case MSH_PYR_13:  return new MPyramidN(v, 2, num, part);
   case MSH_PYR_14:  return new MPyramidN(v, 2, num, part);
@@ -1805,10 +1810,10 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &dat
   int part = 0;
   int startPartitions = startVertices + numVertices;
 
-  MElement *parent = 0;
+ int parent = 0;
   if((type == MSH_PNT_SUB || type == MSH_LIN_SUB ||
       type == MSH_TRI_SUB || type == MSH_TET_SUB)){
-    parent = model->getMeshElementByTag(data[startPartitions]);
+    parent = data[startPartitions];
     startPartitions += 1;
   }
 

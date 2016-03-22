@@ -119,6 +119,9 @@ class GModel
   // the fly if needed
   void _storeElementsInEntities(std::map<int, std::vector<MElement*> > &map);
 
+  // store the parent's pointer back into MSubElements (replacing numeric id)
+  void _storeParentsInSubElements(std::map< int, std::vector<MElement* > >& map);
+  
   // Discrete Entities have to have their mesh moved to a geometry container
   void _createGeometryOfDiscreteEntities(bool force=false);
 

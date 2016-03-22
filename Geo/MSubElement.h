@@ -19,15 +19,25 @@
 // A sub tetrahedron, contained in another element
 class MSubTetrahedron : public MTetrahedron
 {
+  friend class MElementFactory;
+  friend class GModel;
  protected:
   bool _owner;
-  MElement* _orig;
-  std::vector<MElement*> _parents;
+  union
+  {
+    MElement* _orig; // pointer to parent
+    int _orig_N ; // element number of parent  (only used while reading file...)
+  };
+  std::vector<MElement*> _parents; // not used in msh 3 file format
   mutable MElement* _base;
 
   int _pOrder;
   int _npts;
   IntPt *_pts;
+
+  MSubTetrahedron(std::vector<MVertex*> v, int num, int part, bool owner, int orig)
+    : MTetrahedron(v, num, part), _owner(owner), _orig_N(orig), _base(0), _pOrder(-1), _npts(0), _pts(0) {}
+  virtual void updateParent(GModel *gm); // NEVER ever use this ! (except for reading msh files !)
 
  public:
   MSubTetrahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, int num=0, int part=0,
@@ -77,16 +87,25 @@ class MSubTetrahedron : public MTetrahedron
 // A sub triangle, contained in another element
 class MSubTriangle : public MTriangle
 {
+  friend class MElementFactory;
+  friend class GModel;
  protected:
   bool _owner;
-  MElement* _orig;
-  std::vector<MElement*> _parents;
+  union
+  {
+    MElement* _orig; // pointer to parent
+    int _orig_N ; // element number of parent  (only used while reading file...)
+  };
+  std::vector<MElement*> _parents; // not used in msh 3 file format
   mutable MElement* _base;
 
   int _pOrder;
   int _npts;
   IntPt *_pts;
-
+  
+  MSubTriangle(std::vector<MVertex*> v, int num, int part, bool owner, int orig)
+    : MTriangle(v, num, part), _owner(owner), _orig_N(orig), _base(0), _pOrder(-1), _npts(0), _pts(0) {}
+  virtual void updateParent(GModel *gm); // NEVER ever use this ! (except for reading msh files !)
  public:
   MSubTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num=0, int part=0,
                bool owner=false, MElement* orig=NULL)
@@ -135,16 +154,25 @@ class MSubTriangle : public MTriangle
 // A sub line, contained in another element
 class MSubLine : public MLine
 {
+  friend class MElementFactory;
+  friend class GModel;
  protected:
   bool _owner;
-  MElement* _orig;
-  std::vector<MElement*> _parents;
+  union
+  {
+    MElement* _orig; // pointer to parent
+    int _orig_N ; // element number of parent  (only used while reading file...)
+  };
+  std::vector<MElement*> _parents; // not used in msh 3 file format
   mutable MElement* _base;
 
   int _pOrder;
   int _npts;
   IntPt *_pts;
-
+  
+  MSubLine(std::vector<MVertex*> v, int num, int part, bool owner, int orig)
+    : MLine(v, num, part), _owner(owner), _orig_N(orig), _base(0), _pOrder(-1), _npts(0), _pts(0) {}
+  virtual void updateParent(GModel *gm); // NEVER ever use this ! (except for reading msh files !)
  public:
   MSubLine(MVertex *v0, MVertex *v1, int num=0, int part=0,
            bool owner=false, MElement* orig=NULL)
@@ -193,16 +221,25 @@ class MSubLine : public MLine
 // A sub point, contained in another element
 class MSubPoint : public MPoint
 {
+  friend class MElementFactory;
+  friend class GModel;
  protected:
   bool _owner;
-  MElement* _orig;
-  std::vector<MElement*> _parents;
+  union
+  {
+    MElement* _orig; // pointer to parent
+    int _orig_N ; // element number of parent  (only used while reading file...)
+  };
+  std::vector<MElement*> _parents; // not used in msh 3 file format
   mutable MElement* _base;
 
   int _pOrder;
   int _npts;
   IntPt *_pts;
-
+  
+  MSubPoint(std::vector<MVertex*> v, int num, int part, bool owner, int orig)
+    : MPoint(v, num, part), _owner(owner), _orig_N(orig), _base(0), _pOrder(-1), _npts(0), _pts(0) {}
+  virtual void updateParent(GModel *gm); // NEVER ever use this ! (except for reading msh files !)
  public:
   MSubPoint(MVertex *v0, int num=0, int part=0,
             bool owner=false, MElement* orig=NULL)

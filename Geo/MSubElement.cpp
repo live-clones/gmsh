@@ -8,6 +8,7 @@
 
 #include "MSubElement.h"
 #include "Numeric.h"
+#include "GModel.h"
 
 // MSubTetrahedron
 
@@ -15,6 +16,11 @@ MSubTetrahedron::~MSubTetrahedron()
 {
   if(_pts) delete [] _pts;
   if(_base) delete _base;
+}
+
+void MSubTetrahedron::updateParent(GModel *gm)
+{
+  _orig=gm->getMeshElementByTag(_orig_N);
 }
 
 const nodalBasis* MSubTetrahedron::getFunctionSpace(int order, bool serendip) const
@@ -208,6 +214,12 @@ MSubTriangle::~MSubTriangle()
   if(_pts) delete [] _pts;
   if(_base) delete _base;
 }
+
+void MSubTriangle::updateParent(GModel *gm)
+{
+  _orig=gm->getMeshElementByTag(_orig_N);
+}
+
 
 const nodalBasis* MSubTriangle::getFunctionSpace(int order, bool serendip) const
 {
@@ -447,6 +459,11 @@ MSubLine::~MSubLine()
   if(_base) delete _base;
 }
 
+void MSubLine::updateParent(GModel *gm)
+{
+  _orig=gm->getMeshElementByTag(_orig_N);
+}
+
 const nodalBasis* MSubLine::getFunctionSpace(int order, bool serendip) const
 {
   if(_orig) return _orig->getFunctionSpace(order, serendip);
@@ -674,6 +691,11 @@ MSubPoint::~MSubPoint()
 {
   if(_pts) delete [] _pts;
   if(_base) delete _base;
+}
+
+void MSubPoint::updateParent(GModel *gm)
+{
+  _orig=gm->getMeshElementByTag(_orig_N);
 }
 
 const nodalBasis* MSubPoint::getFunctionSpace(int order, bool serendip) const
