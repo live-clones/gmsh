@@ -21,7 +21,11 @@
 #if !defined(HAVE_NO_STDINT_H)
 #include <stdint.h>
 #elif defined(HAVE_NO_INTPTR_T)
+#if defined(_WIN64)
+typedef unsigned __int64 uintptr_t;
+#else
 typedef unsigned long uintptr_t;
+#endif
 #endif
 
 namespace tetgenBR
