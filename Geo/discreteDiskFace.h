@@ -30,8 +30,8 @@ class GRbf;
 
 class  discreteDiskFaceTriangle {
  public:
-  SPoint3 p[6]; // vertices in (u;v)
-  SPoint2 gfp[6]; // CAD model
+  SPoint3 p[6]; // vertices in (u;v) #improveme std::vector instead
+  //SPoint2 gfp[6]; // CAD model
   GFace *gf; // GFace tag
   MTriangle *tri; // mesh triangle in (x;y;z)
  discreteDiskFaceTriangle() : gf(0), tri(0) {}

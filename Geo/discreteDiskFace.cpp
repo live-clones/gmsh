@@ -30,13 +30,11 @@
 static void discreteDiskFaceBB(void *a, double*mmin, double*mmax)
 { // called once  by buildOct()
   discreteDiskFaceTriangle *t = (discreteDiskFaceTriangle *)a;
-
   
   mmin[0] = std::min(std::min(t->p[0].x(), t->p[1].x()), t->p[2].x());
   mmin[1] = std::min(std::min(t->p[0].y(), t->p[1].y()), t->p[2].y());
   mmax[0] = std::max(std::max(t->p[0].x(), t->p[1].x()), t->p[2].x());
   mmax[1] = std::max(std::max(t->p[0].y(), t->p[1].y()), t->p[2].y());
-
  
   if (t->tri->getPolynomialOrder() == 2){    
     for (int i=3; i<6; i++){
@@ -84,12 +82,18 @@ static int discreteDiskFaceInEle(void *a, double*c)// # mark
     sys2x2(M, R, X);
   }
   else{
-  
-    double uv[3] = {c[0],c[1],0.};
-    double Xi[3];
-    t->tri->xyz2uvw(uv,Xi);
-    X[0] = Xi[0];
-    X[1] = Xi[1];
+
+    std::vector<MVertex*> vs;
+    for (int ivs=0; ivs<t->tri->getNumVertices(); ivs++){
+      MVertex v  (t->p[ivs].x(),t->p[ivs].y(),0);
+      vs.push_back(&v);
+    }
+
+    MTriangle6 t6 (vs);
+    double xyz[3] = {c[0],c[1],0};
+
+    t6.xyz2uvw(xyz,X); 
+    
   }
   
   if(X[0] > -eps && X[1] > -eps && 1. - X[0] - X[1] > -eps)
@@ -230,7 +234,7 @@ void discreteDiskFace::getBoundingEdges()
   std::map<MElement*,std::vector<MElement*> > neighbors;
   for (unsigned int i=0; i<discrete_triangles.size(); ++i){
     MElement* e = discrete_triangles[i];
-    for(int j=0; j<e->getNumEdges(); j++){ // #fixme: efficiency could be improved by setting neighbors mutually
+    for(int j=0; j<e->getNumEdges(); j++){ // #improveme: efficiency could be improved by setting neighbors mutually
       std::vector<MElement*> my_mt = ed2tri[e->getEdge(j)];
       if (my_mt.size() > 1){// my_mt.size() = {1;2}
 	MElement* neighTri  = my_mt[0] == e ? my_mt[1] : my_mt[0];
@@ -345,8 +349,6 @@ void discreteDiskFace::getBoundingEdges()
       for(unsigned int i=0; i<=myV.size()-1; i++){ 
 
 	MVertex* current = myV[i];
-	
-	std::cout << "(" << current->x() << ";" << current->y() << ")" << std::endl;
 
 	loop.push_back(current);
 
@@ -382,9 +384,13 @@ void discreteDiskFace::buildOct() const
   for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
     MTriangle *t = discrete_triangles[i];
     discreteDiskFaceTriangle* my_ddft = &_ddft[i];
-    for(int io=0; io<_N; io++)my_ddft->p[io] = coordinates[t->getVertex(io)];    
+    
+    for(int io=0; io<_N; io++) 
+      my_ddft->p[io] = coordinates[t->getVertex(io)];    
+    
     my_ddft->gf = _parent;
     my_ddft->tri = t;    
+
     Octree_Insert(my_ddft, oct);
   }
   Octree_Arrange(oct);
@@ -404,9 +410,7 @@ bool discreteDiskFace::parametrize() const
 
   dofManager<double> myAssemblerU(lsys_u);   // hashing
   dofManager<double> myAssemblerV(lsys_v);
-
-  // FIXME problem here : boundary conditions are wrong for 2nd order nodes
-
+  
   for(size_t i = 0; i < _U0.size(); i++){
     MVertex *v = _U0[i];
     const double theta = 2 * M_PI * _coords[i];
@@ -458,7 +462,7 @@ bool discreteDiskFace::parametrize() const
       p[1] = value_V;
       coordinates[v] = p;
     }
-    else{ // #useful ?
+    else{ 
       itf->second[0]= value_U;
       itf->second[1]= value_V;
     }
@@ -513,6 +517,7 @@ void discreteDiskFace::getTriangleUV(const double u,const double v,
     t.xyz2uvw(xyz,uv);
     _u = uv[0];// xi
     _v = uv[1];// eta    
+
   }  
 }
 
@@ -636,11 +641,12 @@ Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
   double df[_N][3]; 
   mynodalbasis->df(U,V,0.,df); 
  
-  double dxdxi[3][2] = {{0,0},{0,0},{0,0}};
+  double dxdxi[3][2] = {{0.,0.},{0.,0.},{0.,0.}};
 
-  double dudxi[2][2] = {{0,0},{0,0}};
+  double dudxi[2][2] = {{0.,0.},{0.,0.}};
 
   for (int io=0; io<_N; io++){
+
     double X = tri->getVertex(io)->x();
     double Y = tri->getVertex(io)->y();
     double Z = tri->getVertex(io)->z();
@@ -662,8 +668,8 @@ Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
 
     dudxi[1][0] += V*df[io][0];
     dudxi[1][1] += V*df[io][1];
-  }
-  
+
+  }  
 
   double dxidu[2][2];
   inv2x2(dudxi,dxidu);
@@ -672,7 +678,7 @@ Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
 
   for (int i=0;i<3;i++){
     for (int j=0;j<2;j++){
-      dxdu[i][j]=0.0;
+      dxdu[i][j]=0.;
       for (int k=0;k<2;k++){
 	dxdu[i][j] += dxdxi[i][k]*dxidu[k][j];
       }
