@@ -7,7 +7,8 @@
 //   Jonathan Lambrechts
 //
 
-#include <stdlib.h>
+#include <cstdlib>
+#include <limits>
 #include <list>
 #include <math.h>
 #include <fstream>
@@ -32,6 +33,13 @@
 #include "OctreePost.h"
 #include "PViewDataList.h"
 #include "MVertex.h"
+#endif
+
+#if defined(WIN32) && !defined(__CYGWIN__)
+#include <windows.h>
+#include <io.h>
+#else
+#include <unistd.h>
 #endif
 
 #if defined(HAVE_ANN)
@@ -1074,17 +1082,11 @@ class MathEvalField : public Field
   std::string f;
 
  public:
-  void myAction()
-  {
-    printf("doing sthg\n");
-  }
   MathEvalField()
   {
     options["F"] = new FieldOptionString
       (f, "Mathematical function to evaluate.", &update_needed);
     f = "F2 + Sin(z)";
-    callbacks["test"] = new FieldCallbackGeneric<MathEvalField>
-      (this, &MathEvalField::myAction, "description blabla");
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
@@ -1170,6 +1172,235 @@ class MathEvalFieldAniso : public Field
     return "Evaluate a metric expression. The expressions can contain "
       "x, y, z for spatial coordinates, F0, F1, ... for field values, and "
       "and mathematical functions.";
+  }
+};
+
+
+#if defined(WIN32) && !defined(__CYGWIN__)
+//windows implementation from https://msdn.microsoft.com/en-us/library/windows/desktop/ms682499(v=vs.85).aspx
+class Popen2 {
+  HANDLE _hIn, _hOut;
+ public:
+  Popen2(){
+    _hIn = NULL;
+    _hOut = NULL;
+  }
+  void stop(){
+    if (_hIn) {
+      CloseHandle(_hIn);
+      CloseHandle(_hOut);
+      _hIn = _hOut = NULL;
+    }
+  }
+  bool started() const { return _hIn; }
+  bool start(const char *command) {
+    stop();
+    HANDLE hChildStd_OUT_Wr, hChildStd_IN_Rd;
+    PROCESS_INFORMATION piProcInfo;
+    SECURITY_ATTRIBUTES saAttr;
+    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES); 
+    saAttr.bInheritHandle = TRUE; 
+    saAttr.lpSecurityDescriptor = NULL; 
+    if (!CreatePipe(&_hIn, &hChildStd_OUT_Wr, &saAttr, 0)) 
+      Msg::Error("StdoutRd CreatePipe"); 
+    if (!CreatePipe(&hChildStd_IN_Rd, &_hOut, &saAttr, 0)) 
+      Msg::Error("Stdin CreatePipe");
+    if (!CreatePipe(&_hIn, &hChildStd_OUT_Wr, &saAttr, 0)) 
+      Msg::Error("StdoutRd CreatePipe"); 
+    if (!SetHandleInformation(_hIn, HANDLE_FLAG_INHERIT, 0))
+      Msg::Error("Stdout SetHandleInformation");
+    STARTUPINFO siStartInfo;
+    BOOL bSuccess = FALSE; 
+    ZeroMemory( &piProcInfo, sizeof(PROCESS_INFORMATION) );
+    ZeroMemory( &siStartInfo, sizeof(STARTUPINFO) );
+    siStartInfo.cb = sizeof(STARTUPINFO); 
+    siStartInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+    siStartInfo.hStdOutput = hChildStd_OUT_Wr;
+    siStartInfo.hStdInput = hChildStd_IN_Rd;
+    siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
+    bSuccess = CreateProcess(NULL, (char*)command, NULL, NULL,
+        TRUE, 0, NULL, NULL, &siStartInfo, &piProcInfo);
+    if (!bSuccess){
+      Msg::Error("Child process creation failed %i", GetLastError());
+      _hIn = _hOut = NULL;
+      return false;
+    }
+	CloseHandle(piProcInfo.hProcess);
+	CloseHandle(piProcInfo.hThread);
+    return true;
+  }
+  bool read(void *data, size_t size) {
+    if (!_hIn) return false;
+    DWORD  nSuccess = 0;
+    ReadFile(_hIn, data, size, &nSuccess, NULL);
+    return nSuccess == size;
+  }
+  bool write(void *data, size_t size) {
+    if (!_hOut) return false;
+    DWORD  nSuccess = 0;
+    WriteFile(_hOut, data, size, &nSuccess, NULL);
+    return nSuccess == size;
+  }
+  ~Popen2() {
+    stop();
+  }
+};
+
+#else //unix
+
+class Popen2 {
+  int _fdIn, _fdOut;
+ public:
+  Popen2(){
+    _fdIn = _fdOut = -1;
+  }
+  void stop(){
+    if (_fdIn != -1) {
+      ::close(_fdIn);
+      ::close(_fdOut);
+      _fdIn = _fdOut = -1;
+    }
+  }
+  bool started() const {return _fdIn;}
+  bool start(const char *command) {
+    stop();
+    int p_stdin[2], p_stdout[2];
+    if (pipe(p_stdin) != 0 || pipe(p_stdout) != 0)
+      return false;
+    int pid = fork();
+    if (pid < 0)
+      return false;
+    else if (pid == 0) {
+      close(p_stdin[1]);
+      dup2(p_stdin[0], 0);
+      close(p_stdout[0]);
+      dup2(p_stdout[1], 1);
+      execl("/bin/sh", "sh", "-c", command, NULL);
+      perror("execl");
+      exit(0);
+    }
+    _fdOut = p_stdin[1];
+    _fdIn = p_stdout[0];
+    return true;
+  }
+  bool read(void *data, size_t size) {
+    return ::read(_fdIn, data, size)== (ssize_t)size;
+  }
+  bool write(void *data, size_t size) {
+    return ::write(_fdOut, data, size)== (ssize_t)size;
+  }
+  ~Popen2() {
+    stop();
+  }
+};
+#endif
+
+class ExternalProcessField : public Field
+{
+  std::string _cmdLine;
+  Popen2 _pipes;
+  void closePipes() {
+    if (_pipes.started()) {
+      double xyz[3] = { 
+        std::numeric_limits<double>::quiet_NaN(),
+        std::numeric_limits<double>::quiet_NaN(),
+        std::numeric_limits<double>::quiet_NaN() };
+      _pipes.write((void*)xyz, 3 * sizeof(double));
+      _pipes.stop();
+    }
+  }
+ public:
+  ExternalProcessField()
+  {
+    options["CommandLine"] = new FieldOptionString
+      (_cmdLine, "Command line to launch.", &update_needed);
+    _cmdLine ="";
+  }
+  ~ExternalProcessField() {
+    closePipes();
+  }
+  double operator() (double x, double y, double z, GEntity *ge=0)
+  {
+    double xyz[3] = {x, y, z};
+    double f;
+    if(update_needed) {
+      closePipes();
+      _pipes.start(_cmdLine.c_str());
+      update_needed = false;
+    }
+    if (!_pipes.write((void*)xyz, 3*sizeof(double))
+     || !_pipes.read((void*)&f, sizeof(double))){
+		f = 1e22;// std::numeric_limits<double>::max();
+    }
+    return f;
+  }
+  const char *getName()
+  {
+    return "ExternalProcess";
+  }
+  std::string getDescription()
+  {
+    return "**This Field is experimental**\n"
+      "Call an external process that received coordinates triple (x,y,z) "
+      "as binary double precision numbers on stdin and is supposed to write the "
+      "field value on stdout as a binary double precision number.\n"
+      "NaN,NaN,NaN is sent as coordinate to indicate the end of the process.\n"
+      "\n"
+      "Example of client (python2):\n"
+      "import os\n"
+      "import struct\n"
+      "import math\n"
+      "import sys\n"
+      "if sys.platform == \"win32\" :\n"
+      "import msvcrt\n"
+      "msvcrt.setmode(0, os.O_BINARY)\n"
+      "msvcrt.setmode(1, os.O_BINARY)\n"
+      "while(True):\n"
+      "____xyz = struct.unpack(\"ddd\", os.read(0,24))\n"
+      "____if math.isnan(xyz[0]):\n"
+      "_________break\n"
+      "____f = 0.001 + xyz[1]*0.009\n"
+      "____os.write(1,struct.pack(\"d\",f))\n"
+      "\n"
+      "Example of client (python3):\n"
+      "import struct\n"
+      "import sys\n"
+      "import math\n"
+      "while(True):\n"
+      "____xyz = struct.unpack(\"ddd\", sys.stdin.buffer.read(24))\n"
+      "____if math.isnan(xyz[0]):\n"
+      "________break\n"
+      "____f = 0.001 + xyz[1]*0.009\n"
+      "____sys.stdout.buffer.write(struct.pack(\"d\",f))\n"
+      "____sys.stdout.flush()\n"
+      "\n"
+      "Example of client (c, unix):\n"
+      "#include <unistd.h>\n"
+      "int main(int argc, char **argv) {\n"
+      "__double xyz[3];\n"
+      "__while(read(STDIN_FILENO, &xyz, 3*sizeof(double)) == 3*sizeof(double)) {\n"
+      "____if (xyz[0] != xyz[0]) break; //nan\n"
+      "____double f = 0.001 + 0.009 * xyz[1];\n"
+      "____write(STDOUT_FILENO, &f, sizeof(double));\n"
+      "__}\n"
+      "__return 0;\n"
+      "}\n"
+      "\n"
+      "Example of client (c, windows):\n"
+      "#include <stdio.h>\n"
+      "#include <io.h>\n"
+      "#include <fcntl.h>\n"
+      "int main(int argc, char **argv) {\n"
+      "__double xyz[3];\n"
+      "__setmode(fileno(stdin),O_BINARY);\n"
+      "__setmode(fileno(stdout),O_BINARY);\n"
+      "__while(read(fileno(stdin), &xyz, 3*sizeof(double)) == 3*sizeof(double)) {\n"
+      "____if (xyz[0] != xyz[0])\n"
+      "______break;\n"
+      "____double f = f = 0.01 + 0.09 * xyz[1];\n"
+      "____write(fileno(stdout), &f, sizeof(double));\n"
+      "__}\n"
+      "}\n";
   }
 };
 
@@ -2333,6 +2564,7 @@ FieldManager::FieldManager()
   map_type_name["Mean"] = new FieldFactoryT<MeanField>();
   map_type_name["Curvature"] = new FieldFactoryT<CurvatureField>();
   map_type_name["Param"] = new FieldFactoryT<ParametricField>();
+  map_type_name["ExternalProcess"] = new FieldFactoryT<ExternalProcessField>();
   map_type_name["MathEval"] = new FieldFactoryT<MathEvalField>();
   map_type_name["MathEvalAniso"] = new FieldFactoryT<MathEvalFieldAniso>();
 #if defined(HAVE_ANN)
@@ -2348,6 +2580,8 @@ FieldManager::~FieldManager()
 {
   for(std::map<std::string, FieldFactory*>::iterator it = map_type_name.begin();
       it != map_type_name.end(); it++)
+    delete it->second;
+  for (FieldManager::iterator it = begin(); it != end(); it++)
     delete it->second;
 }
 

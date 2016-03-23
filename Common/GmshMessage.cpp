@@ -155,6 +155,8 @@ void Msg::Init(int argc, char **argv)
 
 void Msg::Exit(int level)
 {
+  if (GModel::current())
+    delete GModel::current();
   // delete the temp file
   if(!_commRank) UnlinkFile(CTX::instance()->homeDir + CTX::instance()->tmpFileName);
 
