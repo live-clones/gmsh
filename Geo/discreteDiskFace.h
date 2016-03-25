@@ -96,7 +96,7 @@ class discreteDiskFace : public GFace {
   mutable discreteDiskFaceTriangle *_ddft;
   mutable Octree *oct;
   mutable std::vector<double> _coords;
-  const nodalBasis* mynodalbasis;
+  //  const nodalBasis* mynodalbasis;
 };
 
 #endif

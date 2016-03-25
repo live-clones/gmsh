@@ -1,3 +1,4 @@
+
 // Gmsh - Copyright (C) 1997-2015 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
@@ -25,6 +26,118 @@
 #include "convexLaplaceTerm.h"
 #include "convexCombinationTerm.h"  // #
 #include "BasisFactory.h"
+
+static inline void functionShapes(int p, double Xi[2], double* phi)
+{
+
+  switch(p){
+
+  case 1:
+    phi[0] = 1. - Xi[0] - Xi[1];
+    phi[1] = Xi[0];
+    phi[2] = Xi[1];
+    break;
+
+  case 2:
+    phi[0] = 1. - 3.*(Xi[0]+Xi[1]) + 2.*(Xi[0]+Xi[1])*(Xi[0]+Xi[1]);
+    phi[1] = Xi[0]*(2.*Xi[0]-1);
+    phi[2] = Xi[1]*(2.*Xi[1]-1);
+    phi[3] = 4.*Xi[0]*(1.-Xi[0]-Xi[1]);
+    phi[4] = 4.*Xi[0]*Xi[1];
+    phi[5] = 4.*Xi[1]*(1.-Xi[0]-Xi[1]);
+    break;
+
+  default:
+    Msg::Error("(discreteDiskFace) static inline functionShapes, only first and second order available; order %d requested.",p);
+    break;
+  }
+
+}
+
+
+static inline void derivativeShapes(int p, double Xi[2], double phi[6][2])
+{
+
+  switch(p){
+
+  case 1:
+    phi[0][0] = -1. ; phi[0][1] = -1.;
+    phi[1][0] = 1.  ; phi[1][1] = 0.;
+    phi[2][0] = 0.  ; phi[2][1] = 1.;
+
+    break;
+
+  case 2:
+    phi[0][0] = -3. + 4.*(Xi[0]+Xi[1])   ; phi[0][1] = -3. + 4.*(Xi[0]+Xi[1]);
+    phi[1][0] = 4.*Xi[0] - 1.            ; phi[1][1] = 0.;
+    phi[2][0] = 0.                       ; phi[2][1] = 4.*Xi[1] - 1.;
+    phi[3][0] = 4. - 8.*Xi[0] - 4.*Xi[1] ; phi[3][1] = -4.*Xi[0];
+    phi[4][0] = 4.*Xi[1]                 ; phi[4][1] = 4.*Xi[0];
+    phi[5][0] = -4.*Xi[1]                ; phi[5][1] = 4. - 4.*Xi[0] - 8.*Xi[1];
+    break;
+
+  default:
+    Msg::Error("(discreteDiskFace) static inline derivativeShapes, only first and second order available; order %d requested.",p);
+    break;
+  }
+
+}
+
+static inline void uv2xi(discreteDiskFaceTriangle* my_ddft, double U[2], double Xi[2]){
+
+  double M[2][2], R[2];    
+  const SPoint3 p0 = my_ddft->p[0];
+  const SPoint3 p1 = my_ddft->p[1];
+  const SPoint3 p2 = my_ddft->p[2];
+  M[0][0] = p1.x() - p0.x();
+  M[0][1] = p2.x() - p0.x();
+  M[1][0] = p1.y() - p0.y();
+  M[1][1] = p2.y() - p0.y();
+  R[0] = (U[0] - p0.x());
+  R[1] = (U[1] - p0.y());
+  sys2x2(M, R, Xi);
+
+  if (my_ddft->tri->getPolynomialOrder() == 2){
+
+    int iter = 1, maxiter = 20;
+    double error = 1., tol = 1.e-6;
+    while (error > tol && iter < maxiter){// Newton-Raphson
+
+      double fs[6];// phi_i
+      functionShapes(2,Xi,fs);
+      double ds[6][2];// dPhi_i/dXi_j
+      derivativeShapes(2,Xi,ds);
+
+      double un[2] = {0.,0.};
+      double jac[2][2] = {{0.,0.},{0.,0.}}; // d(u,v)/d(xi,eta)
+      for (int i=0; i<6; i++){
+	double ui[2] = {my_ddft->p[i].x(),my_ddft->p[i].y()};
+	for(int k=0; k<2; k++){
+	  un[k] += ui[k] * fs[i];
+	  for (int j=0; j<2; j++)
+	    jac[k][j] += ui[k] * ds[i][j];
+	}
+      }
+
+      double inv[2][2];
+      inv2x2(jac,inv);
+      double xin[2] = {Xi[0],Xi[1]};
+      error = 0.;
+      for (int i=0; i<2; i++){
+	for (int j=0; j<2; j++)
+	  xin[i] += inv[i][j] * (U[j] - un[j]);
+	error += (xin[i] - Xi[i])*(xin[i] - Xi[i]);
+      }
+
+      error = sqrt(error);
+      Xi[0] = xin[0];
+      Xi[1] = xin[1];
+      iter++;
+
+    } // end Newton-Raphson
+  }// end order 2
+}
+
 
 // The three things that are mandatory to manipulate octrees (octree in (u;v)).
 static void discreteDiskFaceBB(void *a, double*mmin, double*mmax)
@@ -63,9 +176,11 @@ static int discreteDiskFaceInEle(void *a, double*c)// # mark
 { // called once  by buildOct()
 
   discreteDiskFaceTriangle *t = (discreteDiskFaceTriangle *)a;
-
-  double X[2];
-  const double eps = 1.e-8;
+  double Xi[2];
+  double U[2] = {c[0],c[1]};
+  uv2xi(t,U,Xi);
+  double eps = 1e-8;
+  /*
   
   if (t->tri->getPolynomialOrder() == 1){
 
@@ -95,8 +210,8 @@ static int discreteDiskFaceInEle(void *a, double*c)// # mark
     t6.xyz2uvw(xyz,X); 
     
   }
-  
-  if(X[0] > -eps && X[1] > -eps && 1. - X[0] - X[1] > -eps)
+  */
+  if(Xi[0] > -eps && Xi[1] > -eps && 1. - Xi[0] - Xi[1] > -eps)
     return 1;
 
   return 0;
@@ -146,7 +261,7 @@ discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh, int
     tagElementOrder = -1;
     Msg::Error("discreteDiskFace:: only p=1 or p=2 allowed");
   }
-  mynodalbasis = BasisFactory::getNodalBasis(tagElementOrder);
+  //mynodalbasis = BasisFactory::getNodalBasis(tagElementOrder);
 
   std::map<MVertex*,MVertex*> v2v;// mesh vertex |-> face vertex 
   std::map<MEdge,MVertex*,Less_Edge> ed2nodes; // edge to interior node(s) 
@@ -477,11 +592,18 @@ bool discreteDiskFace::parametrize() const
 
 void discreteDiskFace::getTriangleUV(const double u,const double v,
 				     discreteDiskFaceTriangle **mt,
-				     double &_u, double &_v)const{
+				     double &_xi, double &_eta)const{
   double uv[3] = {u,v,0.};
   *mt = (discreteDiskFaceTriangle*) Octree_Search(uv,oct);
   if (!(*mt)) return;
+  
+  double Xi[2];
+  double U[2] = {u,v};
+  uv2xi(*mt,U,Xi);
+  _xi = Xi[0];
+  _eta = Xi[1];
 
+  /*
   if (_order == 1){
     double M[2][2],X[2],R[2];
     const SPoint3 p0 = (*mt)->p[0];
@@ -518,7 +640,8 @@ void discreteDiskFace::getTriangleUV(const double u,const double v,
     _u = uv[0];// xi
     _v = uv[1];// eta    
 
-  }  
+  } 
+  */ 
 }
 
 void discreteDiskFace::checkOrientationUV(){
@@ -549,19 +672,21 @@ void discreteDiskFace::checkOrientationUV(){
 // (u;v) |-> < (x;y;z); GFace; (u;v) >
 GPoint discreteDiskFace::point(const double par1, const double par2) const
 {
-  double U,V;
+  double xi,eta;
   double par[2] = {par1,par2};
   discreteDiskFaceTriangle* dt;
-  getTriangleUV(par1,par2,&dt,U,V);// return Xi,Eta
+  getTriangleUV(par1,par2,&dt,xi,eta);// return Xi,Eta
+  double Xi[2] = {xi,eta};
   if (!dt) {
     GPoint gp = GPoint(1.e22,1.e22,1.e22,_parent,par);
     gp.setNoSuccess();
     return gp;
   }
-
+  
   //polynomialBasis myPolynomial = polynomialBasis(dt->tri->getTypeForMSH());
   double eval[_N]; 
-  mynodalbasis->f(U,V,0.,eval);//#mark
+  //mynodalbasis->f(U,V,0.,eval);//#mark
+  functionShapes(_order,Xi,eval);
   double X=0,Y=0,Z=0;
   for(int io=0; io<_N; io++){
     X += dt->tri->getVertex(io)->x()*eval[io];
@@ -626,9 +751,9 @@ double discreteDiskFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVec
 
 Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
 {
-  double U,V;
+  double xi,eta;
   discreteDiskFaceTriangle* ddft;
-  getTriangleUV(param.x(),param.y(),&ddft,U,V);
+  getTriangleUV(param.x(),param.y(),&ddft,xi,eta);
 
   MTriangle* tri = NULL;
   if (ddft) tri = ddft->tri;
@@ -637,10 +762,10 @@ Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
     return Pair<SVector3, SVector3>(SVector3(1,0,0), SVector3(0,1,0));
   }
   
-
-  double df[_N][3]; 
-  mynodalbasis->df(U,V,0.,df); 
- 
+  double Xi[2] = {xi,eta};
+  double df[_N][2]; 
+  //mynodalbasis->df(U,V,0.,df); 
+  derivativeShapes(_order,Xi,df);
   double dxdxi[3][2] = {{0.,0.},{0.,0.},{0.,0.}};
 
   double dudxi[2][2] = {{0.,0.},{0.,0.}};
@@ -883,8 +1008,6 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
   Msg::Debug("ARGG no success intersection circle");
   return pp;
 }
-
-
 
 
 #endif
