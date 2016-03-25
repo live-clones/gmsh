@@ -325,6 +325,75 @@ type: float@*
 default value: @code{0}
 @end table
 
+@item ExternalProcess
+**This Field is experimental**@*
+Call an external process that received coordinates triple (x,y,z) as binary double precision numbers on stdin and is supposed to write the field value on stdout as a binary double precision number.@*
+NaN,NaN,NaN is sent as coordinate to indicate the end of the process.@*
+@*
+Example of client (python2):@*
+import os@*
+import struct@*
+import math@*
+import sys@*
+if sys.platform == "win32" :@*
+import msvcrt@*
+msvcrt.setmode(0, os.O_BINARY)@*
+msvcrt.setmode(1, os.O_BINARY)@*
+while(True):@*
+____xyz = struct.unpack("ddd", os.read(0,24))@*
+____if math.isnan(xyz[0]):@*
+_________break@*
+____f = 0.001 + xyz[1]*0.009@*
+____os.write(1,struct.pack("d",f))@*
+@*
+Example of client (python3):@*
+import struct@*
+import sys@*
+import math@*
+while(True):@*
+____xyz = struct.unpack("ddd", sys.stdin.buffer.read(24))@*
+____if math.isnan(xyz[0]):@*
+________break@*
+____f = 0.001 + xyz[1]*0.009@*
+____sys.stdout.buffer.write(struct.pack("d",f))@*
+____sys.stdout.flush()@*
+@*
+Example of client (c, unix):@*
+#include <unistd.h>@*
+int main(int argc, char **argv) @{@*
+__double xyz[3];@*
+__while(read(STDIN_FILENO, &xyz, 3*sizeof(double)) == 3*sizeof(double)) @{@*
+____if (xyz[0] != xyz[0]) break; //nan@*
+____double f = 0.001 + 0.009 * xyz[1];@*
+____write(STDOUT_FILENO, &f, sizeof(double));@*
+__@}@*
+__return 0;@*
+@}@*
+@*
+Example of client (c, windows):@*
+#include <stdio.h>@*
+#include <io.h>@*
+#include <fcntl.h>@*
+int main(int argc, char **argv) @{@*
+__double xyz[3];@*
+__setmode(fileno(stdin),O_BINARY);@*
+__setmode(fileno(stdout),O_BINARY);@*
+__while(read(fileno(stdin), &xyz, 3*sizeof(double)) == 3*sizeof(double)) @{@*
+____if (xyz[0] != xyz[0])@*
+______break;@*
+____double f = f = 0.01 + 0.09 * xyz[1];@*
+____write(fileno(stdout), &f, sizeof(double));@*
+__@}@*
+@}@*
+@*
+Options:@*
+@table @code
+@item CommandLine
+Command line to launch.@*
+type: string@*
+default value: @code{""}
+@end table
+
 @item Frustum
 This field is an extended cylinder with inner (i) and outer (o) radiuseson both endpoints (1 and 2). Length scale is bilinearly interpolated betweenthese locations (inner and outer radiuses, endpoints 1 and 2)The field values for a point P are given by :  u = P1P.P1P2/||P1P2||   r = || P1P - u*P1P2 ||   Ri = (1-u)*R1i + u*R2i   Ro = (1-u)*R1o + u*R2o   v = (r-Ri)/(Ro-Ri)  lc = (1-v)*( (1-u)*v1i + u*v2i ) + v*( (1-u)*v1o + u*v2o )    where (u,v) in [0,1]x[0,1]@*
 Options:@*
@@ -384,7 +453,7 @@ default value: @code{1}
 @item Z2
 Z coordinate of endpoint 2@*
 type: float@*
-default value: @code{2.26338226046034e+146}
+default value: @code{2.53244204493764e-86}
 @end table
 
 @item Gradient
@@ -465,12 +534,6 @@ Options:@*
 Mathematical function to evaluate.@*
 type: string@*
 default value: @code{"F2 + Sin(z)"}
-@end table
-
-Actions:@*
-@table @code
-@item test
-description blabla@*
 @end table
 
 @item MathEvalAniso
