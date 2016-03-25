@@ -326,13 +326,13 @@ namespace onelabUtils {
   {
     bool redraw = false;
 
+    onelab::server::citer it = onelab::server::instance()->findClient("Gmsh");
+    if(it == onelab::server::instance()->lastClient()) return redraw;
+
     // do nothing in case of a python metamodel
     std::vector<onelab::number> pn;
     onelab::server::instance()->get(pn, "IsPyMetamodel");
     if(pn.size() && pn[0].getValue()) return redraw;
-
-    onelab::server::citer it = onelab::server::instance()->findClient("Gmsh");
-    if(it == onelab::server::instance()->lastClient()) return redraw;
 
     onelab::client *c = *it;
     std::string mshFileName = onelabUtils::getMshFileName(c);
@@ -342,6 +342,11 @@ namespace onelabUtils {
     //    = 1: only save mesh (e.g. if physiscals changed)
     //    = 2: mesh and save mesh (e.g. if char length changed)
     //    > 2: reload geometry, mesh and save mesh (other things have changed)
+
+    if(meshAuto < 0){ // the geometry creates the mesh
+      meshAuto = 0;
+      if(changed) changed = 3;
+    }
 
     Msg::SetOnelabAction(action);
 

@@ -1292,7 +1292,8 @@ StringXNumber SolverOptions_Number[] = {
     "Automatically save the ONELAB database after each computation" },
   { F|O, "AutoMesh" , opt_solver_auto_mesh , 1. ,
     "Automatically mesh if necesssary (0: never remesh; 1: on startup, use existing "
-    "mesh on disk if available; 2: always remesh)" },
+    "mesh on disk if available; 2: always remesh; -1: the geometry script creates "
+    "the mesh)" },
   { F|O, "AutoMergeFile" , opt_solver_auto_merge_file , 1. ,
     "Automatically merge result files" },
   { F|O, "AutoShowViews" , opt_solver_auto_show_views , 2. ,
