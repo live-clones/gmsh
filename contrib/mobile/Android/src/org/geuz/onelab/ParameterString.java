@@ -99,7 +99,15 @@ public class ParameterString extends Parameter{
         int pos = super.fromString(s);
         if(pos <= 0) return -1; // error
         String[] infos = s.split(Character.toString((char)0x03));
-        String value = infos[pos++];
+        int nValues = Integer.parseInt(infos[pos++]);
+        String value = "";
+        if(nValues > 0){
+            String values[] = new String[nValues];
+            for(int i = 0; i < nValues; i++){
+                values[i] = infos[pos++];
+            }
+            value = values[0];
+        }
         setKind(infos[pos++]); // generic file
         if(_kind.equals("file"))
             return -1;

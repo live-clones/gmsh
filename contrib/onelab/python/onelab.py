@@ -28,7 +28,7 @@ Please report all bugs and problems to the public mailing list
 """
 
 import socket, struct, os, sys, subprocess, time
-_VERSION = '1.1'
+_VERSION = '1.2'
 
 def path(dirname, inp):
   # dirname is a directory, can be empty
@@ -47,6 +47,13 @@ def path(dirname, inp):
   else:
     return inp
 
+# TODO: in ONELAB 1.2, the values for both string and numbers can be lists;
+# stringFakeList and floatFakeList should be changed to actual lists, and the
+# API should be expanded to handle these lists. Unfortunately current Python
+# ONELAB models usually directly use "value=val" assignments when creating
+# parameters; brutally changing value to a list would mean changing all the
+# existing models.
+
 class _parameter() :
   _membersbase = [
     ('name', 'string'), ('label', 'string', ''), ('help', 'string', ''),
@@ -56,11 +63,11 @@ class _parameter() :
   ]
   _members = {
     'string' : _membersbase + [
-      ('value', 'string',''), ('kind', 'string', 'generic'), 
+      ('value', 'stringFakeList', ''), ('kind', 'string', 'generic'), 
       ('choices', ('list', 'string'), [])
     ],
     'number' : _membersbase + [
-      ('value', 'float',0),
+      ('value', 'floatFakeList', 0.),
       ('min', 'float', -sys.float_info.max), ('max', 'float', sys.float_info.max),
       ('step', 'float', 0.), ('index', 'int', -1), ('choices', ('list', 'float'), []),
       ('labels', ('dict', 'float', 'string'), {})
@@ -74,13 +81,19 @@ class _parameter() :
 
   def tochar(self) :
     def tocharitem(l, t, v) :
-      if t=='string' : l.append(v)
+      if t == 'string' : l.append(v)
+      elif t == 'stringFakeList' :
+        l.append('1')
+        l.append(v)
       elif t =='int': l.append(str(v))
-      elif t=='float' : l.append('%.16g' % v)
-      elif t[0]=='list' : 
+      elif t == 'float' : l.append('%.16g' % v)
+      elif t == 'floatFakeList' :
+        l.append('1')
+        l.append('%.16g' % v)
+      elif t[0] == 'list' : 
         l.append(str(len(v)))
         for i in v : tocharitem(l, t[1], i)
-      elif t[0]=='dict' :
+      elif t[0] == 'dict' :
         l.append(str(len(v)))
         for i, j in v.items() :
           tocharitem(l, t[1], i)
@@ -92,11 +105,22 @@ class _parameter() :
 
   def fromchar(self, msg) :
     def fromcharitem(l, t) :
-      if t=='string' : return l.pop()
+      if t == 'string' : return l.pop()
+      elif t == 'stringFakeList' :
+        val = ''
+        for i in range(int(l.pop())):
+          val = l.pop()
+        return val
       elif t =='int': return int(l.pop())
-      elif t=='float' : return float(l.pop())
-      elif t[0]=='list' : return [fromcharitem(l, t[1]) for i in range(int(l.pop()))]
-      elif t[0]=='dict' : return dict([(fromcharitem(l, t[1]),fromcharitem(l, t[2])) for i in range(int(l.pop()))])
+      elif t == 'float' : return float(l.pop())
+      elif t == 'floatFakeList' :
+        val = 0.
+        for i in range(int(l.pop())):
+          val = float(l.pop())
+        return val
+      elif t[0] == 'list' : return [fromcharitem(l, t[1]) for i in range(int(l.pop()))]
+      elif t[0] == 'dict' : return dict([(fromcharitem(l, t[1]),fromcharitem(l, t[2]))
+                                       for i in range(int(l.pop()))])
     l = msg.split('\0')
     l.reverse()
     if l.pop() != _VERSION :

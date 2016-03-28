@@ -1376,6 +1376,8 @@ DefineConstants :
     { floatOptions.clear(); charOptions.clear(); }
     FloatParameterOptions '}'
     {
+      if(List_Nbr($6) != 1)
+	yymsg(1, "List notation should be used to define list '%s[]'", $3);
       std::string key($3);
       std::vector<double> val;
       for(int i = 0; i < List_Nbr($6); i++){
@@ -1389,6 +1391,42 @@ DefineConstants :
       }
       Free($3);
       Free($6);
+    }
+  | DefineConstants Comma String__Index '[' ']' tAFFECT '{' ListOfDouble
+    { floatOptions.clear(); charOptions.clear(); }
+    FloatParameterOptions '}'
+    {
+      std::string key($3);
+      std::vector<double> val;
+      for(int i = 0; i < List_Nbr($8); i++){
+        double d;
+        List_Read($8, i, &d);
+        val.push_back(d);
+      }
+      if(!gmsh_yysymbols.count(key)){
+        Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
+        gmsh_yysymbols[key].value = val;
+      }
+      Free($3);
+      Free($8);
+    }
+  | DefineConstants Comma String__Index '(' ')' tAFFECT '{' ListOfDouble
+    { floatOptions.clear(); charOptions.clear(); }
+    FloatParameterOptions '}'
+    {
+      std::string key($3);
+      std::vector<double> val;
+      for(int i = 0; i < List_Nbr($8); i++){
+        double d;
+        List_Read($8, i, &d);
+        val.push_back(d);
+      }
+      if(!gmsh_yysymbols.count(key)){
+        Msg::ExchangeOnelabParameter(key, val, floatOptions, charOptions);
+        gmsh_yysymbols[key].value = val;
+      }
+      Free($3);
+      Free($8);
     }
   | DefineConstants Comma String__Index tAFFECT StringExpr
     {
@@ -5730,6 +5768,22 @@ FExpr_Multi :
       }
       Free($3);
     }
+  | tList '[' FExpr_Multi ']'
+    {
+      $$ = $3;
+    }
+  | tList '(' FExpr_Multi ')'
+    {
+      $$ = $3;
+    }
+  | tList '[' '{' RecursiveListOfDouble '}' ']'
+    {
+      $$ = $4;
+    }
+  | tList '(' '{' RecursiveListOfDouble '}' ')'
+    {
+      $$ = $4;
+    }
   | tSTRING LP '{' RecursiveListOfDouble '}' RP
     {
       $$ = List_Create(2, 1, sizeof(double));
@@ -5900,13 +5954,46 @@ StringExprVar :
       Free($1);
     }
   | StringIndex '[' FExpr ']'
-    {      //FIXME
+    {
+      std::string val;
+      int j = (int)$3;
+      if(!gmsh_yystringsymbols.count($1))
+        yymsg(0, "Unknown string variable '%s'", $1);
+      else if(j >= 0 && j < gmsh_yystringsymbols[$1].size())
+        val = gmsh_yystringsymbols[$1][j];
+      else
+        yymsg(0, "Index %d out of range", j);
+      $$ = (char *)Malloc((val.size() + 1) * sizeof(char));
+      strcpy($$, val.c_str());
+      Free($1);
     }
   | tSTRING '(' FExpr ')'
-    {      //FIXME
+    {
+      std::string val;
+      int j = (int)$3;
+      if(!gmsh_yystringsymbols.count($1))
+        yymsg(0, "Unknown string variable '%s'", $1);
+      else if(j >= 0 && j < gmsh_yystringsymbols[$1].size())
+        val = gmsh_yystringsymbols[$1][j];
+      else
+        yymsg(0, "Index %d out of range", j);
+      $$ = (char *)Malloc((val.size() + 1) * sizeof(char));
+      strcpy($$, val.c_str());
+      Free($1);
     }
   | StringIndex '(' FExpr ')'
-    {      //FIXME
+    {
+      std::string val;
+      int j = (int)$3;
+      if(!gmsh_yystringsymbols.count($1))
+        yymsg(0, "Unknown string variable '%s'", $1);
+      else if(j >= 0 && j < gmsh_yystringsymbols[$1].size())
+        val = gmsh_yystringsymbols[$1][j];
+      else
+        yymsg(0, "Index %d out of range", j);
+      $$ = (char *)Malloc((val.size() + 1) * sizeof(char));
+      strcpy($$, val.c_str());
+      Free($1);
     }
   | tSTRING '.' tSTRING
     {

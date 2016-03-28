@@ -1084,6 +1084,8 @@ List of expressions are also widely used, and are defined as:
   @var{expression} : @var{expression} : @var{expression} |
   @var{string} [ ] | 
   List [ @var{string} ] |
+  List [ @var{expression-list-item} ] |
+  List [ @{ @var{expression-list} @} ] |
   @var{string} [ @{ @var{expression-list} @} ] | 
   Point @{ @var{expression} @} |
   @var{transform} |

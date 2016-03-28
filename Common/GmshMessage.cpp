@@ -1005,11 +1005,6 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
 #if defined(HAVE_ONELAB)
   if(!_onelabClient) return;
 
-  if(val.empty()){
-    Msg::Error("No value to exchange with ONELAB");
-    return;
-  }
-
   std::string name;
   if(copt.count("Name"))
     name = copt["Name"][0];
@@ -1028,9 +1023,9 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   bool noGraph = true, noClosed = true;
   if(ps.size()){
     if(fopt.count("ReadOnly") && fopt["ReadOnly"][0])
-      ps[0].setValue(val[0]); // use local value
+      ps[0].setValues(val); // use local value
     else
-      val[0] = ps[0].getValue(); // use value from server
+      val = ps[0].getValues(); // use value from server
     // keep track of these attributes, which can be changed server-side (unless
     // they are not visible or, for the range/choices, when explicitely setting
     // these attributes as ReadOnly)
@@ -1049,7 +1044,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   else{
     ps.resize(1);
     ps[0].setName(name);
-    ps[0].setValue(val[0]);
+    ps[0].setValues(val);
   }
   // send updated parameter to server
   if(noRange && fopt.count("Range") && fopt["Range"].size() == 2){
@@ -1067,7 +1062,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(noRange && fopt.count("Step")) ps[0].setStep(fopt["Step"][0]);
   // if no range/min/max/step info is provided, try to compute a reasonnable
   // range and step (this makes the gui much nicer to use)
-  if(noRange && !fopt.count("Range") && !fopt.count("Step") &&
+  if(val.size() && noRange && !fopt.count("Range") && !fopt.count("Step") &&
      !fopt.count("Min") && !fopt.count("Max")){
     bool isInteger = (floor(val[0]) == val[0]);
     double fact = isInteger ? 5. : 20.;

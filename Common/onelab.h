@@ -189,7 +189,7 @@ namespace onelab{
     const std::map<std::string, int> &getClients() const { return _clients; }
     static char charSep() { return '\0'; }
     static double maxNumber() { return 1e200; }
-    static std::string version() { return "1.1"; }
+    static std::string version() { return "1.2"; }
     static int defaultChangedValue() { return 31; }
     static std::string getNextToken(const std::string &msg,
                                     std::string::size_type &first,
@@ -316,24 +316,23 @@ namespace onelab{
     virtual std::string toJSON() const
     {
       std::ostringstream sstream;
-      sstream
-        << "\"type\":\"" << getType() << "\""
-        << ", \"version\":\"" << version() << "\""
-        << ", \"name\":\"" << sanitize(getName()) << "\""
-        << ", \"label\":\"" << sanitize(getLabel()) << "\""
-        << ", \"help\":\"" << sanitize(getHelp()) << "\""
-        << ", \"changedValue\":" << getChangedValue() << "\""
-        << ", \"visible\":" << (getVisible() ? "true" : "false")
-        << ", \"readOnly\":" << (getReadOnly() ? "true" : "false");
-      sstream << ", \"attributes\":{ ";
+      sstream << "\"type\":\"" << getType() << "\""
+              << ", \"version\":\"" << version() << "\""
+              << ", \"name\":\"" << sanitize(getName()) << "\""
+              << ", \"label\":\"" << sanitize(getLabel()) << "\""
+              << ", \"help\":\"" << sanitize(getHelp()) << "\""
+              << ", \"changedValue\":" << getChangedValue() << "\""
+              << ", \"visible\":" << (getVisible() ? "true" : "false")
+              << ", \"readOnly\":" << (getReadOnly() ? "true" : "false")
+              << ", \"attributes\":{ ";
       for(std::map<std::string, std::string>::const_iterator it = _attributes.begin();
           it != _attributes.end(); it++){
         if(it != _attributes.begin()) sstream << ", ";
         sstream << "\"" << sanitize(it->first) << "\":\""
                 << sanitize(it->second) << "\"";
       }
-      sstream << " }";
-      sstream << ", \"clients\":{ ";
+      sstream << " }"
+              << ", \"clients\":{ ";
       for(std::map<std::string, int>::const_iterator it = getClients().begin();
           it != getClients().end(); it++){
         if(it != getClients().begin()) sstream << ", ";
@@ -358,18 +357,23 @@ namespace onelab{
   // functions, etc.) are supposed to be exchanged as strings.
   class number : public parameter{
   private:
-    double _value, _min, _max, _step;
-    // when in a loop, indicates current index in the vector _choices;
-    // is -1 when not in a loop
+    std::vector<double> _values, _choices;
+    double _min, _max, _step;
+    // when in a loop, indicates current index in the vector _choices; is -1
+    // when not in a loop
     int _index;
-    std::vector<double> _choices;
     std::map<double, std::string> _valueLabels;
   public:
     number(const std::string &name="", double value=0.,
            const std::string &label="", const std::string &help="")
-      : parameter(name, label, help), _value(value),
-      _min(-maxNumber()), _max(maxNumber()), _step(0.), _index(-1) {}
-    void setValue(double value){ _value = value; }
+      : parameter(name, label, help), _values(std::vector<double>(1, value)),
+        _min(-maxNumber()), _max(maxNumber()), _step(0.), _index(-1){}
+    number(const std::string &name, const std::vector<double> &values,
+           const std::string &label="", const std::string &help="")
+      : parameter(name, label, help), _values(values),
+        _min(-maxNumber()), _max(maxNumber()), _step(0.), _index(-1){}
+    void setValue(double value){ _values.resize(1); _values[0] = value; }
+    void setValues(const std::vector<double> &values){ _values = values; }
     void setMin(double min){ _min = min; }
     void setMax(double max){ _max = max; }
     void setStep(double step){ _step = step; }
@@ -390,7 +394,9 @@ namespace onelab{
       _valueLabels[value] = label;
     }
     std::string getType() const { return "number"; }
-    double getValue() const { return _value; }
+    double getValue() const { if(_values.empty()) return 0.; return _values[0]; }
+    const std::vector<double> &getValues() const { return _values; }
+    unsigned int getNumValues() const { return _values.size(); }
     double getMin() const { return _min; }
     double getMax() const { return _max; }
     double getStep() const { return _step; }
@@ -414,8 +420,8 @@ namespace onelab{
       setVisible(p.getVisible());
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
-      if(p.getValue() != getValue()){
-        setValue(p.getValue());
+      if(p.getValue() != getValue()){ // FIXME change this
+        setValues(p.getValues());
         setChanged(getChangedValue());
       }
       setMin(p.getMin());
@@ -430,8 +436,13 @@ namespace onelab{
     {
       std::ostringstream sstream;
       sstream.precision(16);
-      sstream << parameter::toChar() << _value << charSep()
-              << _min << charSep() << _max << charSep() << _step << charSep()
+      sstream << parameter::toChar()
+              << _values.size() << charSep();
+      for(unsigned int i = 0; i < _values.size(); i++)
+        sstream << _values[i] << charSep();
+      sstream << _min << charSep()
+              << _max << charSep()
+              << _step << charSep()
 	      << _index << charSep()
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
@@ -439,8 +450,8 @@ namespace onelab{
       sstream << _valueLabels.size() << charSep();
       for(std::map<double, std::string>::const_iterator it = _valueLabels.begin();
           it != _valueLabels.end(); it++){
-        sstream << it->first << charSep();
-        sstream << sanitize(it->second) << charSep();
+        sstream << it->first << charSep()
+                << sanitize(it->second) << charSep();
       }
       return sstream.str();
     }
@@ -448,7 +459,9 @@ namespace onelab{
     {
       std::string::size_type pos = parameter::fromChar(msg);
       if(!pos) return 0;
-      setValue(atof(getNextToken(msg, pos).c_str()));
+      _values.resize(atoi(getNextToken(msg, pos).c_str()));
+      for(unsigned int i = 0; i < _values.size(); i++)
+        _values[i] = atof(getNextToken(msg, pos).c_str());
       setMin(atof(getNextToken(msg, pos).c_str()));
       setMax(atof(getNextToken(msg, pos).c_str()));
       setStep(atof(getNextToken(msg, pos).c_str()));
@@ -467,20 +480,24 @@ namespace onelab{
     {
       std::ostringstream sstream;
       sstream.precision(16);
-      sstream
-        << "{ " << parameter::toJSON()
-        << ", \"value\":" << _value
-        << ", \"min\":" << _min
-        << ", \"max\":" << _max
-        << ", \"step\":" << _step
-        << ", \"index\":" << _index
-        << ", \"choices\":[ ";
+      sstream << "{ " << parameter::toJSON()
+              << ", \"values\":[";
+      for(unsigned int i = 0; i < _values.size(); i++){
+        if(i) sstream << ", ";
+        sstream << _values[i];
+      }
+      sstream << " ]"
+              << ", \"min\":" << _min
+              << ", \"max\":" << _max
+              << ", \"step\":" << _step
+              << ", \"index\":" << _index
+              << ", \"choices\":[ ";
       for(unsigned int i = 0; i < _choices.size(); i++){
         if(i) sstream << ", ";
         sstream << _choices[i];
       }
-      sstream << " ]";
-      sstream << ", \"valueLabels\":{ ";
+      sstream << " ]"
+              << ", \"valueLabels\":{ ";
       for(std::map<double, std::string>::const_iterator it = _valueLabels.begin();
           it != _valueLabels.end(); it++){
         if(it != _valueLabels.begin()) sstream << ", ";
@@ -491,26 +508,33 @@ namespace onelab{
     }
   };
 
-  // The string class. A string has a mutable "kind": we do not derive
-  // specialized classes, because the kind should be changeable at runtime
-  // (e.g. from a client-dependent mathematical expression to a table of
-  // values). Kinds currently recognized by Gmsh are: "file". Possible
-  // kinds could be "complex", "matrix m n", "hostname", client-dependent
-  // mathematical expression, onelab mathematical expression (through mathex?),
-  // ...
+  // The string class. A string has a mutable "kind", that can be changed at
+  // runtime. Kinds leading to specific behavior in Gmsh are: "file".
   class string : public parameter{
   private:
-    std::string _value, _kind;
-    std::vector<std::string> _choices;
+    std::vector<std::string> _values, _choices;
+    std::string _kind;
   public:
     string(const std::string &name="", const std::string &value="",
            const std::string &label="", const std::string &help="")
-      : parameter(name, label, help), _value(value), _kind("generic") {}
-    void setValue(const std::string &value){ _value = value; }
+      : parameter(name, label, help), _values(std::vector<std::string>(1, value)),
+        _kind("generic") {}
+    string(const std::string &name, const std::vector<std::string> &values,
+           const std::string &label="", const std::string &help="")
+      : parameter(name, label, help), _values(values),
+        _kind("generic") {}
+    void setValue(const std::string &value){ _values.resize(1); _values[0] = value; }
+    void setValues(const std::vector<std::string> &values){ _values = values; }
     void setKind(const std::string &kind){ _kind = kind; }
     void setChoices(const std::vector<std::string> &choices){ _choices = choices; }
     std::string getType() const { return "string"; }
-    const std::string &getValue() const { return _value; }
+    const std::string &getValue() const
+    {
+      static std::string n("");
+      if(_values.empty()) return n; return _values[0];
+    }
+    const std::vector<std::string> &getValues() const { return _values; }
+    unsigned int getNumValues() const { return _values.size(); }
     const std::string &getKind() const { return _kind; }
     const std::vector<std::string> &getChoices() const { return _choices; }
     void update(const string &p)
@@ -521,8 +545,8 @@ namespace onelab{
       setVisible(p.getVisible());
       setReadOnly(p.getReadOnly());
       setAttributes(p.getAttributes());
-      if(p.getValue() != getValue()){
-        setValue(p.getValue());
+      if(p.getValue() != getValue()){ // FIXME: change this
+        setValues(p.getValues());
         setChanged(getChangedValue());
       }
       if(p.getKind() != getKind()){
@@ -535,8 +559,11 @@ namespace onelab{
     std::string toChar() const
     {
       std::ostringstream sstream;
-      sstream << parameter::toChar() << sanitize(_value) << charSep()
-              << sanitize(_kind) << charSep()
+      sstream << parameter::toChar()
+              << _values.size() << charSep();
+      for(unsigned int i = 0; i < _values.size(); i++)
+        sstream << sanitize(_values[i]) << charSep();
+      sstream << sanitize(_kind) << charSep()
               << _choices.size() << charSep();
       for(unsigned int i = 0; i < _choices.size(); i++)
         sstream << sanitize(_choices[i]) << charSep();
@@ -546,7 +573,9 @@ namespace onelab{
     {
       std::string::size_type pos = parameter::fromChar(msg);
       if(!pos) return 0;
-      setValue(getNextToken(msg, pos));
+      _values.resize(atoi(getNextToken(msg, pos).c_str()));
+      for(unsigned int i = 0; i < _values.size(); i++)
+        _values[i] = getNextToken(msg, pos);
       setKind(getNextToken(msg, pos));
       _choices.resize(atoi(getNextToken(msg, pos).c_str()));
       for(unsigned int i = 0; i < _choices.size(); i++)
@@ -556,11 +585,15 @@ namespace onelab{
     std::string toJSON() const
     {
       std::ostringstream sstream;
-      sstream
-        << "{ " << parameter::toJSON()
-        << ", \"value\":\"" << sanitize(_value) << "\""
-        << ", \"kind\":\"" << sanitize(_kind) <<  "\""
-        << ", \"choices\":[ ";
+      sstream << "{ " << parameter::toJSON()
+              << ", \"values\":[ " ;
+      for(unsigned int i = 0; i < _values.size(); i++){
+        if(i) sstream << ", ";
+        sstream << "\"" << sanitize(_values[i]) << "\"";
+      }
+      sstream << " ] "
+              << ", \"kind\":\"" << sanitize(_kind) <<  "\""
+              << ", \"choices\":[ ";
       for(unsigned int i = 0; i < _choices.size(); i++){
         if(i) sstream << ", ";
         sstream << "\"" << sanitize(_choices[i]) << "\"";

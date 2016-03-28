@@ -140,28 +140,37 @@ public class ParameterNumber extends Parameter {
         int pos = super.fromString(s);
         if(pos <= 0) return -1; // error
         String[] infos = s.split(Character.toString((char)0x03));
-        String tmpVal = infos[pos++];
-        if(tmpVal.equals("Inf")) // TODO set value to max ???
-            _value = 1;
-        else
-            _value = Double.parseDouble(tmpVal);
+        int nValues = Integer.parseInt(infos[pos++]);
+        _value = 0;
+        if(nValues > 0){
+            double values[] = new double[nValues];
+            for(int i = 0; i < nValues; i++){
+                String tmpVal = infos[pos++];
+                if(tmpVal.equals("Inf"))
+                    values[i] = 0;
+                else
+                    values[i] = Double.parseDouble(tmpVal);
+            }
+            // FIXME: generalize to handle list of values
+            _value = values[0];
+        }
         this.setMin(Double.parseDouble(infos[pos++]));
         this.setMax(Double.parseDouble(infos[pos++]));
         this.setStep(Double.parseDouble(infos[pos++]));
         pos++;// index
-        int nChoix = Integer.parseInt(infos[pos++]); // choices' size
-        double choices[] = new double[nChoix];
-        for(int i = 0; i < nChoix; i++)
+        int nChoices = Integer.parseInt(infos[pos++]); // choices' size
+        double choices[] = new double[nChoices];
+        for(int i = 0; i < nChoices; i++)
             choices[i] = Double.parseDouble(infos[pos++]); // choice
         int nLabels = Integer.parseInt(infos[pos++]); // labels' size
-        if(nChoix == 2 && choices[0] == 0 && choices[1] == 1 && nLabels == 0) {
+        if(nChoices == 2 && choices[0] == 0 && choices[1] == 1 && nLabels == 0) {
             _checkbox = new CheckBox(_context);
             this.update();
             return pos;
         }
-        if(_choices != null)_choices.clear();
+        if(_choices != null) _choices.clear();
         if(_values != null) _values.clear();
-        for(int i = 0; i < nLabels && nChoix == nLabels; i++){
+        for(int i = 0; i < nLabels && nChoices == nLabels; i++){
             double val = Double.parseDouble(infos[pos++]); // choice
             this.addChoice(val, infos[pos++]); // label
         }

@@ -811,6 +811,12 @@ int onelab_cb(std::string action)
     action = "check";
   }
 
+  { // don't show model checking menu
+    onelab::number o("GetDP/}ModelCheck", 0.);
+    o.setVisible(false);
+    onelab::server::instance()->set(o);
+  }
+
   Msg::ResetErrorCounter();
 
   if(action == "compute"){
