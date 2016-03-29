@@ -201,6 +201,10 @@ include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckCXXCompilerFlag)
 
+if(ENABLE_WRAP_PYTHON AND NOT ENABLE_BUILD_SHARED)
+  set(ENABLE_BUILD_DYNAMIC ON)
+endif(ENABLE_WRAP_PYTHON AND NOT ENABLE_BUILD_SHARED)
+
 if(MSVC)
   # remove annoying warning about bool/int cast performance
   set(GMSH_CONFIG_PRAGMAS "#pragma warning(disable:4800 4244 4267)")
