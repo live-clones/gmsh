@@ -144,7 +144,7 @@ int GModel::importGEOInternals()
   if(Tree_Nbr(_geo_internals->Curves)) {
     List_T *curves = Tree2List(_geo_internals->Curves);
 
-    // generate all curves except compounds 
+    // generate all curves except compounds
 
     for(int i = 0; i < List_Nbr(curves); i++){
       Curve *c;
@@ -153,7 +153,7 @@ int GModel::importGEOInternals()
         GEdge *e = getEdgeByTag(c->Num);
         if(!e && c->Typ == MSH_SEGM_COMPOUND){
           Msg::Debug("Postpone creation of compound edge %d"
-                     "until all others have been created",c->Num);
+                     "until all others have been created", c->Num);
           // std::vector<GEdge*> comp;
           // for(unsigned int j = 0; j < c->compound.size(); j++){
           //   GEdge *ge = getEdgeByTag(c->compound[j]);
@@ -189,7 +189,7 @@ int GModel::importGEOInternals()
         }
       }
     }
-    
+
     // now generate the compound curves
 
     for(int i = 0; i < List_Nbr(curves); i++){
@@ -314,7 +314,8 @@ int GModel::importGEOInternals()
         add(f);
       }
       else{
-        if(s->Typ == MSH_SURF_PLAN) f->computeMeanPlane(); // recompute in case geom has changed
+        if(s->Typ == MSH_SURF_PLAN)
+          f->computeMeanPlane(); // recompute in case geom has changed
         f->resetMeshAttributes();
       }
       if(!s->Visible) f->setVisibility(0);
@@ -387,38 +388,42 @@ int GModel::importGEOInternals()
     int iTarget = peIter->first;
     GEO_Internals::MasterEdge& me = peIter->second;
     int iSource = me.tag;
-    GEdge* target = getEdgeByTag(iTarget);
+    GEdge* target = getEdgeByTag(abs(iTarget));
     GEdge* source = getEdgeByTag(abs(iSource));
-    if (!target)
+    if(!target)
       Msg::Error("Unknown target line for periodic connection from %d to %d",
                  iTarget, iSource);
-    if (!source)
+    if(!source)
       Msg::Error("Unknown source line for periodic connection from %d to %d",
                  iTarget, iSource);
-    if (me.affineTransform.size()==16)
-      target->setMeshMaster(source,me.affineTransform);
-    else
-      target->setMeshMaster(source,me.tag > 0 ? 1 : -1);
+    if(target && source){
+      if(me.affineTransform.size() == 16)
+        target->setMeshMaster(source, me.affineTransform);
+      else
+        target->setMeshMaster(source, me.tag > 0 ? 1 : -1);
+    }
   }
 
   std::map<int,GEO_Internals::MasterFace>::iterator pfIter =
     _geo_internals->periodicFaces.begin();
-  for (;pfIter!=_geo_internals->periodicFaces.end();++pfIter) {
+  for (; pfIter != _geo_internals->periodicFaces.end(); ++pfIter) {
     int iTarget = pfIter->first;
     GEO_Internals::MasterFace& mf = pfIter->second;
     int iSource = mf.tag;
     GFace* target = getFaceByTag(iTarget);
     GFace* source = getFaceByTag(iSource);
-    if (!target)
+    if(!target)
       Msg::Error("Unknown target surface for periodic connection from %d to %d",
                  iTarget, iSource);
-    if (!source)
+    if(!source)
       Msg::Error("Unknown source surface for periodic connection from %d to %d",
                  iTarget, iSource);
-    if (mf.affineTransform.size()==16)
-      target->setMeshMaster(source,mf.affineTransform);
-    else
-      target->setMeshMaster(source,mf.edgeCounterparts);
+    if(target && source){
+      if(mf.affineTransform.size() == 16)
+        target->setMeshMaster(source,mf.affineTransform);
+      else
+        target->setMeshMaster(source,mf.edgeCounterparts);
+    }
   }
 
   Msg::Debug("Gmsh model (GModel) imported:");

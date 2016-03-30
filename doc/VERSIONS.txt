@@ -1,5 +1,6 @@
-2.13.0: new ONELAB 1.2 protocol with suppport for lists; new boundary recovery
-code; better adaptive visualization of quads and hexahedra; minor fixes.
+2.13.0: new ONELAB 1.2 protocol with native support for lists; new 3D boundary
+recovery code; better adaptive visualization of quads and hexahedra; minor
+fixes.
 
 2.12.0 (March 5, 2016): improved interactive definition of physical groups and
 handling of ONELAB clients; improved full quad algorithm; added support for list
