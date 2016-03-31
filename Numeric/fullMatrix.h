@@ -392,6 +392,9 @@ class fullVector
   {
     if(fread (_data, sizeof(scalar), _r, f) != (size_t)_r) return;
   }
+
+  bool getOwnData() const {return _own_data;};
+  void setOwnData(bool ownData) {_own_data = ownData;};
 };
 
 // An abstract interface for dense matrix of scalar
@@ -836,7 +839,7 @@ class fullMatrix
      _data[cind+i] = x(i);
   }
 
-  bool getOwnData() {return _own_data;};
+  bool getOwnData() const {return _own_data;};
   void setOwnData(bool ownData) {_own_data = ownData;};
 };
 #endif

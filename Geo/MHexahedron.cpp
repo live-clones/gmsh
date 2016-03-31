@@ -181,9 +181,7 @@ int MHexahedronN::getNumEdgesRep(bool curved)
 const JacobianBasis* MHexahedron::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-
-  int tag = ElementType::getTag(TYPE_HEX, order);
-  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
+  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
 }
 
 void _myGetFaceRep(MHexahedron *hex, int num, double *x, double *y, double *z,

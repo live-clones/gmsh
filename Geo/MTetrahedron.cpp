@@ -103,9 +103,7 @@ void MTetrahedron::xyz2uvw(double xyz[3], double uvw[3]) const
 const JacobianBasis* MTetrahedron::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-
-  int tag = ElementType::getTag(TYPE_TET, order);
-  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
+  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
 }
 
 int MTetrahedron10::getNumEdgesRep(bool curved){

@@ -4,9 +4,10 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <algorithm>
+#include <vector>
+#include "bezierBasis.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
-#include <vector>
 #include "polynomialBasis.h"
 #include "pyramidalBasis.h"
 #include "pointsGenerators.h"
@@ -668,3 +669,286 @@ void bezierBasis::_constructPyr()
   }
   return;
 }
+
+bezierBasisRaiser* bezierBasis::getRaiser() const
+{
+  if (!_raiser) {
+    const_cast<bezierBasis*>(this)->_raiser = new bezierBasisRaiser(this);
+  }
+  return _raiser;
+}
+
+void bezierBasisRaiser::_fillRaiserData()
+{
+  if (_bfs->getType() == TYPE_PYR) {
+    _fillRaiserDataPyr();
+    return;
+  }
+
+  const fullMatrix<double> &expD = _bfs->_exponents;
+  fullMatrix<int> exp(expD.size1(), expD.size2());
+  for (int i = 0; i < expD.size1(); ++i) {
+    for (int j = 0; j < expD.size2(); ++j) {
+      exp(i, j) = static_cast<int>(expD(i, j) + .5);
+    }
+  }
+
+  int order = _bfs->getOrder();
+  int ncoeff = exp.size1();
+  int dim = _bfs->getDim();
+  int dimSimplex = _bfs->getDimSimplex();
+
+  for (int i = 0; i < ncoeff; i++) {
+    int hash = 0;
+    for (int l = 0; l < dim; l++) {
+      hash += exp(i, l) * pow_int(order+1, l);
+    }
+    _raiser1[hash].push_back(_Data(1, i));
+  }
+
+  for (int i = 0; i < ncoeff; i++) {
+    for (int j = 0; j < ncoeff; j++) {
+      double num = 1, den = 1;
+      {
+        int compl1 = order;
+        int compl2 = order;
+        int compltot = 2*order;
+        for (int l = 0; l < dimSimplex; l++) {
+          num *= nChoosek(compl1, exp(i, l))
+               * nChoosek(compl2, exp(j, l));
+          den *= nChoosek(compltot, exp(i, l) + exp(j, l));
+          compl1 -= exp(i, l);
+          compl2 -= exp(j, l);
+          compltot -= exp(i, l) + exp(j, l);
+        }
+        for (int l = dimSimplex; l < dim; l++) {
+          num *= nChoosek(order, exp(i, l))
+               * nChoosek(order, exp(j, l));
+          den *= nChoosek(2*order, exp(i, l) + exp(j, l));
+        }
+      }
+
+      int hash = 0;
+      for (int l = 0; l < dim; l++) {
+        hash += (exp(i, l)+exp(j, l)) * pow_int(2*order+1, l);
+      }
+      _raiser2[hash].push_back(_Data(num/den, i, j));
+    }
+  }
+
+  for (int i = 0; i < ncoeff; i++) {
+    for (int j = 0; j < ncoeff; j++) {
+      for (int k = 0; k < ncoeff; ++k) {
+        double num = 1, den = 1;
+        {
+          int compl1 = order;
+          int compl2 = order;
+          int compl3 = order;
+          int compltot = 3*order;
+          for (int l = 0; l < dimSimplex; l++) {
+            num *= nChoosek(compl1, exp(i, l))
+                 * nChoosek(compl2, exp(j, l))
+                 * nChoosek(compl3, exp(k, l));
+            den *= nChoosek(compltot, exp(i, l) + exp(j, l) + exp(k, l));
+            compl1 -= exp(i, l);
+            compl2 -= exp(j, l);
+            compl3 -= exp(k, l);
+            compltot -= exp(i, l) + exp(j, l) + exp(k, l);
+          }
+          for (int l = dimSimplex; l < dim; l++) {
+            num *= nChoosek(order, exp(i, l))
+                 * nChoosek(order, exp(j, l))
+                 * nChoosek(order, exp(k, l));
+            den *= nChoosek(3*order, exp(i, l) + exp(j, l) + exp(k, l));
+          }
+        }
+
+        int hash = 0;
+        for (int l = 0; l < dim; l++) {
+          hash += (exp(i, l)+exp(j, l)+exp(k, l)) * pow_int(3*order+1, l);
+        }
+        _raiser3[hash].push_back(_Data(num/den, i, j, k));
+      }
+    }
+  }
+}
+
+void bezierBasisRaiser::_fillRaiserDataPyr()
+{
+  FuncSpaceData fsdata = _bfs->getFuncSpaceData();
+  if (fsdata.elementType() != TYPE_PYR) {
+    _fillRaiserData();
+    return;
+  }
+  if (fsdata.isPyramidalSpace()) {
+    Msg::Error("Bezier raiser not implemented for pyramidal space");
+    return;
+  }
+
+  const fullMatrix<double> &expD = _bfs->_exponents;
+  fullMatrix<int> exp(expD.size1(), expD.size2());
+  for (int i = 0; i < expD.size1(); ++i) {
+    for (int j = 0; j < expD.size2(); ++j) {
+      exp(i, j) = static_cast<int>(expD(i, j) + .5);
+    }
+  }
+
+  int ncoeff = exp.size1();
+  int order[3] = {fsdata.nij(), fsdata.nij(), fsdata.nk()};
+
+  for (int i = 0; i < ncoeff; i++) {
+    int hash = 0;
+    for (int l = 0; l < 3; l++) {
+      hash += exp(i, l) * pow_int(order[l]+1, l);
+    }
+    _raiser1[hash].push_back(_Data(1, i));
+  }
+
+  for (int i = 0; i < ncoeff; i++) {
+    for (int j = 0; j < ncoeff; j++) {
+      double num = 1, den = 1;
+      for (int l = 0; l < 3; l++) {
+        num *= nChoosek(order[l], exp(i, l))
+             * nChoosek(order[l], exp(j, l));
+        den *= nChoosek(2*order[l], exp(i, l) + exp(j, l));
+      }
+
+      int hash = 0;
+      for (int l = 0; l < 3; l++) {
+        hash += (exp(i, l)+exp(j, l)) * pow_int(2*order[l]+1, l);
+      }
+      _raiser2[hash].push_back(_Data(num/den, i, j));
+    }
+  }
+
+  for (int i = 0; i < ncoeff; i++) {
+    for (int j = 0; j < ncoeff; j++) {
+      for (int k = 0; k < ncoeff; ++k) {
+        double num = 1, den = 1;
+        for (int l = 0; l < 3; l++) {
+          num *= nChoosek(order[l], exp(i, l))
+               * nChoosek(order[l], exp(j, l))
+               * nChoosek(order[l], exp(k, l));
+          den *= nChoosek(3*order[l], exp(i, l) + exp(j, l) + exp(k, l));
+        }
+
+        int hash = 0;
+        for (int l = 0; l < 3; l++) {
+          hash += (exp(i, l)+exp(j, l)+exp(k, l)) * pow_int(3*order[l]+1, l);
+        }
+        _raiser3[hash].push_back(_Data(num/den, i, j, k));
+      }
+    }
+  }
+}
+
+void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
+                                     const fullVector<double> &coeffB,
+                                     fullVector<double> &coeffSquare)
+{
+  coeffSquare.resize(_raiser2.size(), true);
+  std::map<int, std::vector<_Data> >::const_iterator it;
+
+  int ind = 0;
+  for (it = _raiser2.begin(); it != _raiser2.end(); ++it, ++ind) {
+    for (unsigned int l = 0; l < it->second.size(); ++l) {
+      const int i = it->second[l].i;
+      const int j = it->second[l].j;
+      coeffSquare(ind) += it->second[l].val * coeffA(i) * coeffB(j);
+    }
+  }
+}
+
+void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
+                                     const fullVector<double> &coeffB,
+                                     const fullVector<double> &coeffC,
+                                     fullVector<double> &coeffCubic)
+{
+  coeffCubic.resize(_raiser3.size(), true);
+  std::map<int, std::vector<_Data> >::const_iterator it;
+
+  int ind = 0;
+  for (it = _raiser3.begin(); it != _raiser3.end(); ++it, ++ind) {
+    for (unsigned int l = 0; l < it->second.size(); ++l) {
+      const int i = it->second[l].i;
+      const int j = it->second[l].j;
+      const int k = it->second[l].k;
+      coeffCubic(ind) += it->second[l].val * coeffA(i) * coeffB(j) * coeffC(k);
+    }
+  }
+}
+
+void bezierBasisRaiser::computeCoeff(const fullMatrix<double> &coeffA,
+                                     const fullMatrix<double> &coeffB,
+                                     fullMatrix<double> &coeffSquare)
+{
+  coeffSquare.resize(_raiser2.size(), coeffA.size2(), true);
+  std::map<int, std::vector<_Data> >::const_iterator it;
+
+  int ind = 0;
+  for (it = _raiser2.begin(); it != _raiser2.end(); ++it, ++ind) {
+    for (unsigned int l = 0; l < it->second.size(); ++l) {
+      const int i = it->second[l].i;
+      const int j = it->second[l].j;
+      for (int ind2 = 0; ind2 < coeffA.size2(); ++ind2) {
+        coeffSquare(ind, ind2) += it->second[l].val * coeffA(i, ind2)
+                                                    * coeffB(j, ind2);
+      }
+    }
+  }
+}
+
+void bezierBasisRaiser::computeCoeff(const fullMatrix<double> &coeffA,
+                                     const fullMatrix<double> &coeffB,
+                                     const fullMatrix<double> &coeffC,
+                                     fullMatrix<double> &coeffCubic)
+{
+  coeffCubic.resize(_raiser3.size(), coeffA.size2(), true);
+  std::map<int, std::vector<_Data> >::const_iterator it;
+
+  int ind = 0;
+  for (it = _raiser3.begin(); it != _raiser3.end(); ++it, ++ind) {
+    for (unsigned int l = 0; l < it->second.size(); ++l) {
+      const int i = it->second[l].i;
+      const int j = it->second[l].j;
+      const int k = it->second[l].k;
+      for (int ind2 = 0; ind2 < coeffA.size2(); ++ind2) {
+        coeffCubic(ind, ind2) += it->second[l].val * coeffA(i, ind2)
+                                                   * coeffB(j, ind2)
+                                                   * coeffC(k, ind2);
+      }
+    }
+  }
+}
+
+void bezierBasisRaiser::reorder(const fullVector<double> &orig,
+                                fullVector<double> &reordered)
+{
+  reordered.resize(_raiser1.size(), false);
+  std::map<int, std::vector<_Data> >::const_iterator it;
+
+  int ind = 0;
+  for (it = _raiser1.begin(); it != _raiser1.end(); ++it, ++ind) {
+    for (unsigned int l = 0; l < it->second.size(); ++l) {
+      reordered(ind) = orig(it->second[l].i);
+    }
+  }
+}
+
+void bezierBasisRaiser::reorder(const fullMatrix<double> &orig,
+                                fullMatrix<double> &reordered)
+{
+  reordered.resize(_raiser1.size(), orig.size2());
+  std::map<int, std::vector<_Data> >::const_iterator it;
+
+  int ind = 0;
+  for (it = _raiser1.begin(); it != _raiser1.end(); ++it, ++ind) {
+    for (unsigned int l = 0; l < it->second.size(); ++l) {
+      const int i = it->second[l].i;
+      for (int ind2 = 0; ind2 < orig.size2(); ++ind2) {
+        reordered(ind, ind2) = orig(i, ind2);
+      }
+    }
+  }
+}
+

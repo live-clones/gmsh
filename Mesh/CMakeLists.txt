@@ -30,7 +30,7 @@ meshGRegionRelocateVertex.cpp
     BackgroundMeshManager.cpp 
     pointInsertionRTreeTools.cpp 
     pointInsertion.cpp 
-    qualityMeasures.cpp 
+    qualityMeasures.cpp qualityMeasuresJacobian.cpp
     BoundaryLayers.cpp 
     BDS.cpp 
     HighOrder.cpp 

@@ -8,7 +8,8 @@
 
 #include "fullMatrix.h"
 #include "FuncSpaceData.h"
-#include "bezierBasis.h"
+
+class bezierBasis;
 
 class GradientBasis {
 public:
@@ -23,11 +24,14 @@ public:
 
   int getNumSamplingPoints() const {return gradShapeMatX.size1();}
   int getNumMapNodes() const {return gradShapeMatX.size2();}
+  const bezierBasis* getBezier() const;
 
   void getGradientsFromNodes(const fullMatrix<double> &nodes,
                              fullMatrix<double> *dxyzdX,
                              fullMatrix<double> *dxyzdY,
                              fullMatrix<double> *dxyzdZ) const;
+  void getAllGradientsFromNodes(const fullMatrix<double> &nodes,
+                                fullMatrix<double> &dxyzdXYZ) const;
   void getIdealGradientsFromNodes(const fullMatrix<double> &nodes,
                                   fullMatrix<double> *dxyzdX,
                                   fullMatrix<double> *dxyzdY,
@@ -51,13 +55,13 @@ public:
                                   fullVector<double> &gSVecY,
                                   fullVector<double> &gSVecZ);
   static void mapFromIdealElement(int type, double jac[3][3]);
+
+  void lag2Bez(const fullMatrix<double> &lag, fullMatrix<double> &bez) const;
 };
 
 class JacobianBasis {
 private:
   const GradientBasis *_gradBasis;
-  const bezierBasis *_bezier;
-
   const FuncSpaceData _data;
   const int _dim;
 
@@ -65,7 +69,7 @@ private:
   fullVector<double> primGradShapeBaryX, primGradShapeBaryY, primGradShapeBaryZ;
   fullVector<double> primIdealGradShapeBaryX, primIdealGradShapeBaryY,
                      primIdealGradShapeBaryZ;
-  fullMatrix<double> matrixPrimJac2Jac;                                           // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
+  fullMatrix<double> matrixPrimJac2Jac; // Lifts Lagrange basis of primary Jac. to Lagrange basis of Jac.
 
   int numJacNodes, numPrimJacNodes;
   int numMapNodes, numPrimMapNodes;
@@ -177,16 +181,13 @@ public:
                        nodesXYZ, false, true, jacobian);
   }
 
-  inline void lag2Bez(const fullVector<double> &jac, fullVector<double> &bez) const {
-    getBezier()->matrixLag2Bez.mult(jac,bez);
-  }
-  inline void lag2Bez(const fullMatrix<double> &jac, fullMatrix<double> &bez) const {
-    getBezier()->matrixLag2Bez.mult(jac,bez);
-  }
+  void lag2Bez(const fullVector<double> &lag, fullVector<double> &bez) const;
+  void lag2Bez(const fullMatrix<double> &lag, fullMatrix<double> &bez) const;
   inline void primJac2Jac(const fullVector<double> &primJac, fullVector<double> &jac) const {
     matrixPrimJac2Jac.mult(primJac,jac);
   }
 
+  // Research purpose (to be removed ?)
   void interpolate(const fullVector<double> &jacobian,
                    const fullMatrix<double> &uvw,
                    fullMatrix<double> &result, bool areBezier = false) const;

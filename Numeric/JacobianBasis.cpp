@@ -6,6 +6,7 @@
 #include "JacobianBasis.h"
 #include "pointsGenerators.h"
 #include "nodalBasis.h"
+#include "bezierBasis.h"
 #include "BasisFactory.h"
 #include "Numeric.h"
 #include <cmath>
@@ -150,11 +151,11 @@ inline void calcJDJ3D(double dxdX, double dxdY, double dxdZ,
                                     dzdX, dzdY, dzdZ);
 }
 
-}
+} //namespace
 
 GradientBasis::GradientBasis(FuncSpaceData data)
-    : _data(data) {
-
+    : _data(data)
+{
   fullMatrix<double> samplingPoints;
   gmshGeneratePoints(data, samplingPoints);
   const int numSampPnts = samplingPoints.size1();
@@ -183,6 +184,11 @@ GradientBasis::GradientBasis(FuncSpaceData data)
                       gradShapeIdealMatY, gradShapeIdealMatZ);
 }
 
+const bezierBasis* GradientBasis::getBezier() const
+{
+  return BasisFactory::getBezierBasis(_data);
+}
+
 void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
                                           fullMatrix<double> *dxyzdX,
                                           fullMatrix<double> *dxyzdY,
@@ -191,6 +197,20 @@ void GradientBasis::getGradientsFromNodes(const fullMatrix<double> &nodes,
   if (dxyzdX) gradShapeMatX.mult(nodes, *dxyzdX);
   if (dxyzdY) gradShapeMatY.mult(nodes, *dxyzdY);
   if (dxyzdZ) gradShapeMatZ.mult(nodes, *dxyzdZ);
+}
+
+void GradientBasis::getAllGradientsFromNodes(const fullMatrix<double> &nodes,
+                                             fullMatrix<double> &dxyzdXYZ) const
+{
+  fullMatrix<double> prox;
+  prox.setAsProxy(dxyzdXYZ, 0, 3);
+  gradShapeMatX.mult(nodes, prox);
+
+  prox.setAsProxy(dxyzdXYZ, 3, 3);
+  gradShapeMatY.mult(nodes, prox);
+
+  prox.setAsProxy(dxyzdXYZ, 6, 3);
+  gradShapeMatZ.mult(nodes, prox);
 }
 
 void GradientBasis::getIdealGradientsFromNodes(const fullMatrix<double> &nodes,
@@ -225,8 +245,14 @@ void GradientBasis::mapFromIdealElement(int type, double jac[3][3])
   mapFromIdealElement(type, dxyzdX, dxyzdY, dxyzdZ);
 }
 
+void GradientBasis::lag2Bez(const fullMatrix<double> &lag,
+                            fullMatrix<double> &bez) const
+{
+  getBezier()->matrixLag2Bez.mult(lag,bez);
+}
+
 JacobianBasis::JacobianBasis(FuncSpaceData data)
-    : _bezier(NULL), _data(data), _dim(data.dimension())
+    : _data(data), _dim(data.dimension())
 {
   const int parentType = data.elementType();
   const int primJacobianOrder = jacobianOrder(parentType, 1);
@@ -311,10 +337,7 @@ JacobianBasis::JacobianBasis(FuncSpaceData data)
 
 const bezierBasis* JacobianBasis::getBezier() const
 {
-  if (!_bezier) {
-    const_cast<JacobianBasis*>(this)->_bezier = BasisFactory::getBezierBasis(_data);
-  }
-  return _bezier;
+  return BasisFactory::getBezierBasis(_data);
 }
 
 // Computes (unit) normals to straight line element at barycenter (with norm of gradient as return value)
@@ -444,11 +467,11 @@ void JacobianBasis::getJacobianGeneral(int nJacNodes,
     case 2 : {
       fullMatrix<double> normal(1,3);
       const double invScale = getPrimNormal2D(nodesXYZ, normal, idealNorm);
-      if (invScale == 0) {
-        for (int i = 0; i < nJacNodes; i++) jacobian(i) = 0;
-        return;
-      }
       if (scaling) {
+        if (invScale == 0) {
+          for (int i = 0; i < nJacNodes; i++) jacobian(i) = 0;
+          return;
+        }
         const double scale = 1./invScale;
         normal(0,0) *= scale; normal(0,1) *= scale; normal(0,2) *= scale;               // Faster to scale normal than afterwards
       }
@@ -749,6 +772,18 @@ void JacobianBasis::getMetricMinAndGradients(const fullMatrix<double> &nodesXYZ,
       gradLambdaJ(l, i + 1 * numMapNodes) = aetaxi * dPhidX + aetaeta * dPhidY;
     }
   }
+}
+
+void JacobianBasis::lag2Bez(const fullVector<double> &lag,
+                                   fullVector<double> &bez) const
+{
+  getBezier()->matrixLag2Bez.mult(lag, bez);
+}
+
+void JacobianBasis::lag2Bez(const fullMatrix<double> &lag,
+                                   fullMatrix<double> &bez) const
+{
+  getBezier()->matrixLag2Bez.mult(lag, bez);
 }
 
 // Research purpose (to be removed ?)

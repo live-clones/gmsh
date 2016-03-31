@@ -117,9 +117,7 @@ void MTriangle::xyz2uvw(double xyz[3], double uvw[3]) const
 const JacobianBasis* MTriangle::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-
-  int tag = ElementType::getTag(TYPE_TRI, order);
-  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
+  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
 }
 
 int MTriangleN::getNumEdgesRep(bool curved) {

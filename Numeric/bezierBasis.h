@@ -9,19 +9,21 @@
 #include <map>
 #include <vector>
 #include "fullMatrix.h"
-#include "ElementType.h"
 #include "FuncSpaceData.h"
 
 class MElement;
+class bezierBasisRaiser;
 
 class bezierBasis {
  private :
-  // the 'numLagCoeff' first exponents are related to 'Lagrangian' values
+  // the 'numLagCoeff' first exponents are related to 'real' values
   int _numLagCoeff;
   int _numDivisions, _dimSimplex;
   const FuncSpaceData _data;
+  bezierBasisRaiser *_raiser;
 
   friend class MetricBasis;
+  friend class bezierBasisRaiser;
   fullMatrix<double> _exponents;
 
  public :
@@ -30,7 +32,7 @@ class bezierBasis {
   fullMatrix<double> subDivisor;
 
   // Constructors
-  inline bezierBasis(FuncSpaceData data) : _data(data) {
+  inline bezierBasis(FuncSpaceData data) : _data(data), _raiser(NULL) {
     if (_data.elementType() == TYPE_PYR)
       _constructPyr();
     else
@@ -39,11 +41,14 @@ class bezierBasis {
 
   // get methods
   inline int getDim() const {return _exponents.size2();}
+  inline int getType() const {return _data.elementType();}
   inline int getOrder() const {return _data.spaceOrder();}
   inline int getDimSimplex() const {return _dimSimplex;}
   inline int getNumLagCoeff() const {return _numLagCoeff;}
   inline int getNumDivision() const {return _numDivisions;}
   inline int getNumSubNodes() const {return subDivisor.size1();}
+  inline FuncSpaceData getFuncSpaceData() const {return _data;}
+  bezierBasisRaiser* getRaiser() const;
 
   // generate Bezier points
   void generateBezierPoints(fullMatrix<double>&) const;
@@ -80,6 +85,59 @@ class bezierBasis {
   void _constructPyr();
   void _FEpoints2BezPoints(fullMatrix<double>&) const;
 };
+
+class bezierBasisRaiser {
+  // Let f, g, h be three function whose Bezier coefficients are given.
+  // This class allows to compute the Bezier coefficients of f*g and f*g*h.
+private :
+  class _Data;
+  std::map<int, std::vector<_Data> > _raiser1, _raiser2, _raiser3;
+  const bezierBasis *_bfs;
+
+  class _Data {
+    friend class bezierBasisRaiser;
+  private:
+    const int i, j, k;
+    const double val;
+  public:
+    _Data(double val, int i, int j = -1, int k = -1) :
+      i(i), j(j), k(k), val(val) {}
+  };
+
+public:
+  bezierBasisRaiser(const bezierBasis *bezier) : _bfs(bezier) {
+    _fillRaiserData();
+  };
+
+  // Warning: Those method return a vector or a matrix of Bezier coefficients
+  // that are not stocked in the same order than what is expected as input.
+  void computeCoeff(const fullVector<double> &coeffA,
+                    const fullVector<double> &coeffB,
+                    fullVector<double> &coeffSquare);
+  void computeCoeff(const fullMatrix<double> &coeffA,
+                    const fullMatrix<double> &coeffB,
+                    fullMatrix<double> &coeffSquare);
+  void computeCoeff(const fullVector<double> &coeffA,
+                    const fullVector<double> &coeffB,
+                    const fullVector<double> &coeffC,
+                    fullVector<double> &coeffCubic);
+  void computeCoeff(const fullMatrix<double> &coeffA,
+                    const fullMatrix<double> &coeffB,
+                    const fullMatrix<double> &coeffC,
+                    fullMatrix<double> &coeffCubic);
+
+  // Method returning a vector/matrix whose coeff are in the order defined in
+  // this class:
+  void reorder(const fullVector<double> &orig,
+               fullVector<double> &reordered);
+  void reorder(const fullMatrix<double> &orig,
+               fullMatrix<double> &reordered);
+
+private:
+  void _fillRaiserData();
+  void _fillRaiserDataPyr();
+};
+
 
 #endif
 

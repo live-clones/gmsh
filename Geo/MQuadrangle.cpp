@@ -19,9 +19,7 @@
 const JacobianBasis* MQuadrangle::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-
-  int tag = ElementType::getTag(TYPE_QUA, order);
-  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
+  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
 }
 
 int MQuadrangleN::getNumEdgesRep(bool curved)

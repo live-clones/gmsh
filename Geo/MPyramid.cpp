@@ -36,9 +36,7 @@ void MPyramid::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 const JacobianBasis* MPyramid::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-
-  int tag = ElementType::getTag(TYPE_PYR, order);
-  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
+  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
 }
 
 MPyramidN::~MPyramidN() {}

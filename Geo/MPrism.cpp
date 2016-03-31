@@ -39,9 +39,7 @@ void MPrism::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 const JacobianBasis* MPrism::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-
-  int tag = ElementType::getTag(TYPE_PRI, order);
-  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
+  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
 }
 
 double MPrism::getInnerRadius()

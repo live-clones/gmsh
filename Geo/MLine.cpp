@@ -11,13 +11,12 @@
 #include "Context.h"
 #include "qualityMeasures.h"
 #include "decasteljau.h"
+#include "bezierBasis.h"
 
 const JacobianBasis* MLine::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-
-  int tag = ElementType::getTag(TYPE_LIN, order);
-  return tag ? BasisFactory::getJacobianBasis(tag) : NULL;
+  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
 }
 
 void MLine::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
