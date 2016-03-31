@@ -202,12 +202,12 @@ double MElement::rhoShapeMeasure()
 
 double MElement::metricShapeMeasure()
 {
-  return MetricBasis::minRCorner(this);
+  return MetricBasis::getMinRCorner(this);
 }
 
 double MElement::metricShapeMeasure2()
 {
-  return MetricBasis::boundMinR(this);
+  return MetricBasis::getMinR(this);
 }
 
 double MElement::maxDistToStraight() const

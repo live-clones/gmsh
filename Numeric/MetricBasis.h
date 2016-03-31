@@ -6,11 +6,13 @@
 #ifndef _METRIC_BASIS_H_
 #define _METRIC_BASIS_H_
 
-#include "JacobianBasis.h"
-#include "fullMatrix.h"
 #include <fstream>
 #include <cmath>
+#include "fullMatrix.h"
 class MElement;
+class bezierBasis;
+class JacobianBasis;
+class GradientBasis;
 
 class MetricBasis {
   friend class MetricCoefficient;
@@ -58,29 +60,46 @@ private:
 public:
   MetricBasis(int elementTag);
 
+  // Get & Set methods
   static void setTol(double tol) {_tol = tol;}
-
   const JacobianBasis* getJacobianForMetric() const {return _jacobian;}
   const bezierBasis* getBezier() const {return _bezier;}
-  int getNumMetricNodes() const {return _gradients->getNumSamplingPoints();}
+  //int getNumMetricNodes() const {return _gradients->getNumSamplingPoints();}
 
-  static double boundMinR(MElement *el);
-  static double minSampledR(MElement *el, int order);
-  double getBoundMinR(MElement*) const;
-  double getMinSampledR(MElement*, int order) const;
+  // Compute min(R) with given tolerance
+  static double getMinR(MElement *el);
+  double computeMinR(MElement*) const;
 
-  static double minRCorner(MElement *el);
+  // Sample R and return min
+  static double getMinSampledR(MElement *el, int order);
+  double computeMinSampledR(MElement*, int order) const;
 
+  // Compute R on corners and return min
+  static double getMinRCorner(MElement *el);
+
+  // TEST : sample min(r_min) and max(r_max) and return ratio of the two
+  static double getMinSampledGlobalRatio(MElement *el, int order);
+  double computeMinSampledGlobalRatio(MElement*, int order) const;
+
+  // TEST : sample R and return max
+  static double getMaxSampledR(MElement *el, int order);
+  double computeMaxSampledR(MElement*, int order) const;
+
+
+  //
   template<bool ideal>
   void getMetricCoeff(const fullMatrix<double> &nodes,
                             fullMatrix<double> &coeff) const {
     _fillCoeff<ideal>(_dim, _gradients, nodes, coeff);
   }
+//  void lag2Bez(const fullMatrix<double> &metCoeffLag,
+//                     fullMatrix<double> &metCoeffBez) const {
+//    _bezier->matrixLag2Bez.mult(metCoeffLag, metCoeffBez);
+//  }
   void lag2Bez(const fullMatrix<double> &metCoeffLag,
-                     fullMatrix<double> &metCoeffBez) const {
-    _bezier->matrixLag2Bez.mult(metCoeffLag, metCoeffBez);
-  }
+               fullMatrix<double> &metCoeffBez) const;
 
+  // Metric order
   static int metricOrder(int tag);
 
 public:
@@ -107,13 +126,13 @@ private:
   void _fillInequalitiesPyr(int order);
   void _lightenInequalities(int&, int&, int&); //TODO change
 
-  void _computeRmin(const fullMatrix<double>&, const fullVector<double>&,
+  void _computeBoundsRmin(const fullMatrix<double>&, const fullVector<double>&,
                     double &RminLag, double &RminBez) const;
-  void _computeRmax(const fullMatrix<double>&, const fullVector<double>&,
+  void _computeBoundsRmax(const fullMatrix<double>&, const fullVector<double>&,
                     double &RmaxLag) const;
   void _getMetricData(const MElement*, MetricData*&) const;
 
-  double _subdivideForRmin(MetricData*, double RminLag, double tol, MElement *el=NULL) const;
+  double _subdivideForRmin(MetricData*, double &RminLag, double tol, MElement *el=NULL) const;
   template<bool ideal>
   static void _fillCoeff(int dim, const GradientBasis*,
                   const fullMatrix<double> &nodes, fullMatrix<double> &coeff);
@@ -121,10 +140,9 @@ private:
                                 const fullMatrix<double> &coeff, int num);
 
   void _minMaxA(const fullMatrix<double>&, double &min, double &max) const;
-  void _minA(const fullMatrix<double>&, double &min) const;
-  void _minK(const fullMatrix<double>&, const fullVector<double>&, double &min) const;
-  void _computeTermBeta(double &a, double &K, double &dRda,
-                        double &term1, double &phip) const;
+  void _minAfast(const fullMatrix<double>&, double &min) const;
+  void _minKfast(const fullMatrix<double>&, const fullVector<double>&, double &min) const;
+  void _minKsharp(const fullMatrix<double>&, const fullVector<double>&, double &min) const;
   void _maxAstKpos(const fullMatrix<double>&, const fullVector<double>&,
                  double minK, double beta, double &maxa) const;
   void _maxAstKneg(const fullMatrix<double>&, const fullVector<double>&,
@@ -133,11 +151,49 @@ private:
                  double mina, double beta, double &maxK) const;
   void _maxKstAsharp(const fullMatrix<double>&, const fullVector<double>&,
                  double mina, double beta, double &maxK) const;
+  void _computeBoundBeta(const fullMatrix<double>&,
+                         const fullVector<double>&,
+                         double &beta, bool lowerBound) const;
+  void _computeBoundingCurve(const fullMatrix<double>&,
+                             const fullVector<double>&,
+                             double &beta, double c, bool lowerBound) const;
+  void _computeLowerBoundC(const fullMatrix<double>&,
+                           const fullVector<double>&,
+                           double beta, double &c) const;
+
+  static bool _moveInsideDomain(double &a, double &K, bool bottomleftCorner);
+  static void _computePseudoDerivatives(double a, double K,
+                                        double &dRda, double &dRdK);
+  static void _computeDerivatives(double a, double K,
+                                  double &dRda, double &dRdK,
+                                  double &dRdaa, double &dRdaK, double &dRdKK);
+  static double _computeMinRAlongCurve(double beta, double c,
+                                       double mina, double maxa);
+  static bool _intersectionCurveLeftCorner(double beta, double c,
+                                           double &mina, double &minK);
+  static double _computeAbscissaMinR(double aStart, double K);
 
   static double _R3Dsafe(double a, double K);
   static double _R3Dsafe(double q, double p, double J);
   static double _R2Dsafe(double a);
   static double _R2Dsafe(double q, double p);
+  static inline double _w(double a, double K) {
+    return .5 * (K + (3-a*a)*a);
+  }
+  static inline double _wSafe(double a, double K) {
+    const double w = _w(a, K);
+    if (w > 1) {
+      if (w < 1+_tol/10) return 1;
+      else Msg::Error("outside the domain w(%g, %g) = %g", a, K, w);
+    }
+    else if (w < -1) {
+      if (w > -1-_tol/10) return -1;
+      else Msg::Error("outside the domain w(%g, %g) = %g", a, K, w);
+    }
+    return w;
+  }
+
+  static double _toleranceOnR(double R);
 
 private:
   class gterIneq {

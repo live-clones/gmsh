@@ -562,3 +562,7 @@ int ElementType::getTag(int parentTag, int order, bool serendip)
   default : Msg::Warning("unknown element type %i, returning 0", parentTag); return 0;
   }
 }
+
+int ElementType::getPrimaryTag(int tag) {
+  return getTag(ParentTypeFromTag(tag), 1);
+}

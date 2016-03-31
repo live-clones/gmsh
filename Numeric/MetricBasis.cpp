@@ -6,22 +6,40 @@
 #include "MElement.h"
 #include "AnalyseCurvedMesh.h"
 #include "MetricBasis.h"
+#include "bezierBasis.h"
+#include "JacobianBasis.h"
 #include "BasisFactory.h"
 #include "pointsGenerators.h"
+#include "MHexahedron.h"
 #include "OS.h"
 #include <queue>
 #include <sstream>
 #include <limits>
+#include <iomanip>
+#include <cmath>
 
 double MetricBasis::_tol = 1e-3;
+
+//TODO Renommer fonctions plus explicitement (minmaxA,...) et rendre statique certaines fonctions
 
 namespace {
   double cubicCardanoRoot(double p, double q)
   {
+    // solve the equation t^3 + p*t + q = 0
     double A = q*q/4 + p*p*p/27;
     if (A > 0) {
       double sq = std::sqrt(A);
-      return std::pow(-q/2+sq, 1/3.) + std::pow(-q/2-sq, 1/3.);
+      double t1 = -q/2+sq, t2 = -q/2-sq;;
+
+      if (t1 < 0)
+        t1 = -std::pow(-t1, 1/3.);
+      else
+        t1 = std::pow(t1, 1/3.);
+      if (t2 < 0)
+        t2 = -std::pow(-t2, 1/3.);
+      else
+        t2 = std::pow(t2, 1/3.);
+      return t1 + t2;
     }
     else {
       double module = std::sqrt(-p*p*p/27);
@@ -58,6 +76,7 @@ MetricBasis::MetricBasis(int tag) :
   _jacobian(NULL), _type(ElementType::ParentTypeFromTag(tag)),
   _dim(ElementType::DimensionFromTag(tag))
 {
+  //Msg::Fatal("Verifie si cette fonction est ok 1");
   const bool serendip = false;
   const int metOrder = metricOrder(tag);
   const int jacOrder = 3*metOrder/2;
@@ -69,7 +88,6 @@ MetricBasis::MetricBasis(int tag) :
   else
     metricSpace = new FuncSpaceData(true, tag, false, metOrder+2,
                                     metOrder, &serendip);
-
   _gradients = BasisFactory::getGradientBasis(*metricSpace);
   _bezier = BasisFactory::getBezierBasis(*metricSpace);
   delete metricSpace;
@@ -80,10 +98,15 @@ MetricBasis::MetricBasis(int tag) :
     jacSpace = new FuncSpaceData(true, tag, jacOrder, &serendip);
   }
   else if (_type == TYPE_PYR) {
+    // The square of the jacobian must be in the same space than the cube of
+    // the metric, so +3
     jacSpace = new FuncSpaceData(true, tag, false, jacOrder+3,
                                  jacOrder, &serendip);
   }
-  else if (_type != TYPE_TRI && _type != TYPE_QUA)
+  else if (_type == TYPE_TRI || _type == TYPE_QUA) {
+    // jacobian not needed
+  }
+  else
     Msg::Fatal("metric not implemented for element tag %d", tag);
 
   if (jacSpace) {
@@ -94,14 +117,220 @@ MetricBasis::MetricBasis(int tag) :
   _fillInequalities(metOrder);
 }
 
-double MetricBasis::boundMinR(MElement *el)
+double MetricBasis::getMinR(MElement *el)
 {
+  /*static int a = 0;
+  if (++a == 1) {
+    double pinf = 1/.0;
+    double minf = -1/.0;
+    double mynan = .0/.0;
+    Msg::Info("pinf=%g minf=%g mynan=%g", pinf, minf, mynan);
+    Msg::Info(". == . => %d %d %d", pinf == pinf, minf == minf, mynan == mynan);
+    Msg::Info("./. => %g %g %g", pinf/pinf, minf/minf, mynan/mynan);
+    Msg::Info("1. < . => %d %d %d", 1. < pinf, 1. < minf, 1. < mynan);
+    Msg::Info("1. > . => %d %d %d", 1. > pinf, 1. > minf, 1. > mynan);
+    Msg::Info("max => %g %g %g", std::max(1., pinf), std::max(1., minf), std::max(1., mynan));
+    Msg::Info("min => %g %g %g", std::min(1., pinf), std::min(1., minf), std::min(1., mynan));
+    Msg::Info("inv => %g %g %g", 1./pinf, 1./minf, 1./mynan);
+    Msg::Info("pinf>. => %d %d %d", pinf > pinf, pinf > minf, pinf > mynan);
+    Msg::Info(" ");
+    double giant = std::numeric_limits<double>::max();
+    double infinity = std::numeric_limits<double>::infinity();
+    Msg::Info("giant=%g, giant*10=%g infinity=%g", giant, giant*10, infinity);
+    Msg::Info("a=pinf, (a - 1) / (a + 1) => %g/%g => %g", pinf - 1, pinf + 1, (pinf - 1) / (pinf + 1));
+    Msg::Info("a=giant, (a - 1) / (a + 1) => %g/%g => %g", giant - 1, giant + 1, (giant - 1) / (giant + 1));
+    Msg::Info("giant*10 == infinity => %d", giant*10 == std::numeric_limits<double>::infinity());
+    Msg::Info("sqrt(pinf) => %g", std::sqrt(pinf));
+    Msg::Info("!(mynan >= 1) => %d, (mynan < 1) => %d", !(mynan >= 1), mynan < 1);
+  }*/
+
   MetricBasis *metric = (MetricBasis*)BasisFactory::getMetricBasis(el->getTypeForMSH());
-  return metric->getBoundMinR(el);
+  double m = metric->computeMinR(el);
+  //Msg::Info("returning %g", m);
+  return m;
 }
 
-double MetricBasis::minRCorner(MElement *el)
+double MetricBasis::computeMinR(MElement *el) const
 {
+  int nSampPnts = _gradients->getNumSamplingPoints();
+  int nMapping = _gradients->getNumMapNodes();
+
+  // Nodes
+  fullMatrix<double> nodes(nMapping, 3);
+  el->getNodesCoord(nodes);
+
+  // Jacobian coefficients
+  fullVector<double> *jac = NULL;
+  if (_jacobian) {
+    fullVector<double> jacLag(_jacobian->getNumJacNodes());
+    jac = new fullVector<double>(_jacobian->getNumJacNodes());
+    _jacobian->getSignedIdealJacobian(nodes, jacLag);
+    _jacobian->lag2Bez(jacLag, *jac);
+  }
+
+  // Metric coefficients
+  fullMatrix<double> metCoeffLag;
+  _fillCoeff<true>(el->getDim(), _gradients, nodes, metCoeffLag);
+  fullMatrix<double> *metCoeff;
+  metCoeff = new fullMatrix<double>(nSampPnts, metCoeffLag.size2());
+  _bezier->matrixLag2Bez.mult(metCoeffLag, *metCoeff);
+
+  /*static double inf = std::numeric_limits<double>::infinity();
+  double minq = inf, maxq = -inf;
+  for (int k = 0; k < nSampPnts; ++k) {
+    minq = std::min(minq, (*metCoeff)(k, 0));
+    maxq = std::max(maxq, (*metCoeff)(k, 0));
+  }
+  double minp = 0, maxp = 0;
+  for (int i = 1; i < 7; ++i) {
+    double min = inf, max = -inf;
+    for (int k = 0; k < nSampPnts; ++k) {
+      min = std::min(min, (*metCoeff)(k, i));
+      max = std::max(max, (*metCoeff)(k, i));
+    }
+    if (min < 0 && max < 0) {
+      double tmp = min;
+      min = -max;
+      max = -tmp;
+    }
+    minp += min*min;
+    maxp += max*max;
+  }
+  minp = std::sqrt(minp);
+  maxp = std::sqrt(maxp);
+  double mina = minq/maxp;
+  double maxa = maxq/minp;
+  if (maxa-mina < _tol) {
+    return getMinSampledR(el, 0);
+  }*/
+
+  // Compute min(R, _tol)
+  double RminLag, RminBez;
+  //Msg::Info("element %d", el->getNum());
+  _computeBoundsRmin(*metCoeff, *jac, RminLag, RminBez);
+
+  //statsForMatlab(el, 20, NULL);
+
+  //Msg::Info("%.10g %.10g", RminBez, RminLag);
+
+  if (RminLag-RminBez < _tol) {
+    delete jac;
+    delete metCoeff;
+    return RminBez;
+  }
+  else {
+    //Msg::Info("Subdivision (%g vs %g)", RminLag, RminBez);
+    MetricData *md2 = new MetricData(metCoeff, jac, RminBez, 0, 0);
+    double minBez = _subdivideForRmin(md2, RminLag, _tol, el);
+    //Msg::Info("bez lag %.10g %.10g", minBez, RminLag);
+    return minBez;
+  }
+}
+
+double MetricBasis::getMinSampledR(MElement *el, int order)
+{
+  MetricBasis *metric = (MetricBasis*)BasisFactory::getMetricBasis(el->getTypeForMSH());
+  return metric->computeMinSampledR(el, order);
+}
+
+double MetricBasis::computeMinSampledR(MElement *el, int deg) const
+{
+  //Msg::Fatal("Verifie si cette fonction est ok b");
+  fullMatrix<double> samplingPoints;
+  bool serendip = false;
+  gmshGeneratePoints(FuncSpaceData(el, deg, &serendip), samplingPoints);
+
+  MetricData *md;
+  _getMetricData(el, md);
+
+  fullMatrix<double> R;
+  interpolate(el, md, samplingPoints, R);
+
+  if (R.size1() < 1) {
+    delete md;
+    return -1;
+  }
+
+  double min = R(0, 1);
+  for (int i = 1; i < R.size1(); ++i)
+    min = std::min(min, R(i, 1));
+
+  delete md;
+  return min;
+}
+
+double MetricBasis::getMaxSampledR(MElement *el, int order)
+{
+  MetricBasis *metric = (MetricBasis*)BasisFactory::getMetricBasis(el->getTypeForMSH());
+  return metric->computeMaxSampledR(el, order);
+}
+
+double MetricBasis::computeMaxSampledR(MElement *el, int deg) const
+{
+  fullMatrix<double> samplingPoints;
+  bool serendip = false;
+  gmshGeneratePoints(FuncSpaceData(el, deg, &serendip), samplingPoints);
+
+  MetricData *md;
+  _getMetricData(el, md);
+
+  fullMatrix<double> R;
+  interpolate(el, md, samplingPoints, R);
+
+  if (R.size1() < 1) {
+    delete md;
+    return -1;
+  }
+
+  double max = R(0, 1);
+  for (int i = 1; i < R.size1(); ++i)
+    max = std::max(max, R(i, 1));
+
+  delete md;
+  return max;
+}
+
+void MetricBasis::lag2Bez(const fullMatrix<double> &metCoeffLag,
+             fullMatrix<double> &metCoeffBez) const
+{
+  _bezier->matrixLag2Bez.mult(metCoeffLag, metCoeffBez);
+}
+
+double MetricBasis::getMinSampledGlobalRatio(MElement *el, int order)
+{
+  MetricBasis *metric = (MetricBasis*)BasisFactory::getMetricBasis(el->getTypeForMSH());
+  return metric->computeMinSampledGlobalRatio(el, order);
+}
+
+double MetricBasis::computeMinSampledGlobalRatio(MElement *el, int deg) const
+{
+  Msg::Fatal("Verifie si cette fonction est ok d");
+  fullMatrix<double> samplingPoints;
+  bool serendip = false;
+  gmshGeneratePoints(FuncSpaceData(el, deg, &serendip), samplingPoints);
+
+  MetricData *md;
+  _getMetricData(el, md);
+
+  fullMatrix<double> R;
+  interpolate(el, md, samplingPoints, R);
+
+  double min = R(0, 2);
+  double max = R(0, 3);
+  for (int i = 1; i < R.size1(); ++i) {
+    min = std::min(min, R(i, 2));
+    max = std::max(max, R(i, 3));
+  }
+
+  //Msg::Info("%g %g", min, max);
+
+  delete md;
+  return std::sqrt(min/max);
+}
+
+double MetricBasis::getMinRCorner(MElement *el)
+{
+  Msg::Fatal("Verifie si cette fonction est ok e");
   int tag = el->getTypeForMSH();
   int order = 1;
   if (el->getType() == TYPE_TRI || el->getType() == TYPE_TET) order = 0;
@@ -139,80 +368,9 @@ double MetricBasis::minRCorner(MElement *el)
   return _computeMinlagR(jacLag, metCoeffLag, nSampPnts);
 }
 
-double MetricBasis::minSampledR(MElement *el, int order)
-{
-  MetricBasis *metric = (MetricBasis*)BasisFactory::getMetricBasis(el->getTypeForMSH());
-  return metric->getMinSampledR(el, order);
-}
-
-double MetricBasis::getMinSampledR(MElement *el, int deg) const
-{
-  fullMatrix<double> samplingPoints;
-  bool serendip = false;
-  gmshGeneratePoints(FuncSpaceData(el, deg, &serendip), samplingPoints);
-
-  MetricData *md;
-  _getMetricData(el, md);
-
-  fullMatrix<double> R;
-  interpolate(el, md, samplingPoints, R);
-
-  if (R.size1() < 1) {
-    delete md;
-    return -1;
-  }
-
-  double min = R(0, 1);
-  for (int i = 1; i < R.size1(); ++i)
-    min = std::min(min, R(i, 1));
-
-  delete md;
-  return min;
-}
-
-double MetricBasis::getBoundMinR(MElement *el) const
-{
-  int nSampPnts = _gradients->getNumSamplingPoints();
-  int nMapping = _gradients->getNumMapNodes();
-
-  // Nodes
-  fullMatrix<double> nodes(nMapping, 3);
-  el->getNodesCoord(nodes);
-
-  // Jacobian coefficients
-  fullVector<double> *jac = NULL;
-  if (_jacobian) {
-    fullVector<double> jacLag(_jacobian->getNumJacNodes());
-    jac = new fullVector<double>(_jacobian->getNumJacNodes());
-    _jacobian->getSignedIdealJacobian(nodes, jacLag);
-    _jacobian->lag2Bez(jacLag, *jac);
-  }
-
-  // Metric coefficients
-  fullMatrix<double> metCoeffLag;
-  _fillCoeff<true>(el->getDim(), _gradients, nodes, metCoeffLag);
-  fullMatrix<double> *metCoeff;
-  metCoeff = new fullMatrix<double>(nSampPnts, metCoeffLag.size2());
-  _bezier->matrixLag2Bez.mult(metCoeffLag, *metCoeff);
-
-  // Compute min(R, _tol)
-  double RminLag, RminBez;
-  _computeRmin(*metCoeff, *jac, RminLag, RminBez);
-
-  if (RminLag-RminBez < MetricBasis::_tol) {
-    delete jac;
-    delete metCoeff;
-    return RminBez;
-  }
-  else {
-    MetricData *md2 = new MetricData(metCoeff, jac, RminBez, 0, 0);
-    double tt = _subdivideForRmin(md2, RminLag, MetricBasis::_tol);
-    return tt;
-  }
-}
-
 void MetricBasis::_fillInequalities(int metricOrder)
 {
+  //Msg::Fatal("Verifie si cette fonction est ok");
   if (_type == TYPE_PYR) {
     _fillInequalitiesPyr(metricOrder);
     return;
@@ -301,10 +459,7 @@ void MetricBasis::_fillInequalities(int metricOrder)
         for (int l = 0; l < dim; l++) {
           hash += (exp(i, l)+exp(j, l)+exp(k, l)) * pow_int(3*metricOrder+1, l);
         }
-        if (j == k && j != i)
-          _ineqP3[hash].push_back(IneqData(num/den, k, j, i));
-        else
-          _ineqP3[hash].push_back(IneqData(num/den, i, j, k));
+        _ineqP3[hash].push_back(IneqData(num/den, i, j, k));
       }
     }
   }
@@ -361,6 +516,7 @@ void MetricBasis::_fillInequalities(int metricOrder)
 
 void MetricBasis::_fillInequalitiesPyr(int metricOrder)
 {
+  //Msg::Fatal("Verifie si cette fonction est ok");
   fullMatrix<int> exp(_bezier->_exponents.size1(), _bezier->_exponents.size2());
   for (int i = 0; i < _bezier->_exponents.size1(); ++i) {
     for (int j = 0; j < _bezier->_exponents.size2(); ++j) {
@@ -424,10 +580,7 @@ void MetricBasis::_fillInequalitiesPyr(int metricOrder)
         for (int l = 0; l < 3; l++) {
           hash += (exp(i, l)+exp(j, l)+exp(k, l)) * pow_int(3*metricOrder+1, l);
         }
-        if (j == k && j != i)
-          _ineqP3[hash].push_back(IneqData(num/den, k, j, i));
-        else
-          _ineqP3[hash].push_back(IneqData(num/den, i, j, k));
+        _ineqP3[hash].push_back(IneqData(num/den, i, j, k));
       }
     }
   }
@@ -471,6 +624,7 @@ void MetricBasis::_fillInequalitiesPyr(int metricOrder)
 
 void MetricBasis::_lightenInequalities(int &countj, int &countp, int &counta)
 {
+  //Msg::Fatal("Verifie si cette fonction est ok");
   double tol = .0;
   std::map<int, std::vector<IneqData> >::iterator it, itbeg[3], itend[3];
 
@@ -506,7 +660,71 @@ void MetricBasis::_lightenInequalities(int &countj, int &countp, int &counta)
 
 bool MetricBasis::validateBezierForMetricAndJacobian()
 {
+  Msg::Fatal("Verifie si cette fonction est ok f");
   Msg::Info("Testing Bezier interpolation and subdivision "
+      "for jacobien and metric on all element types...");
+  int numError = 0;
+
+  // Parameters
+  const int numElem = 10000000; ////////
+
+  MElement **elements;
+  elements = new MElement*[numElem];
+
+  for (int tag = 1; tag <= MSH_NUM_TYPE; ++tag) {
+    if (tag != 9) continue;   ////////
+    const int numPrimNode = 3; ////////
+
+    const int order = ElementType::OrderFromTag(tag);
+    const int dim = ElementType::DimensionFromTag(tag);
+    const int primTag = ElementType::getPrimaryTag(tag);
+
+    Msg::Info("... testing element tag %d", tag);
+
+    // Get reference nodes
+    const nodalBasis *mapBasis = BasisFactory::getNodalBasis(tag);
+    fullMatrix<double> nodes;
+    mapBasis->getReferenceNodes(nodes);
+
+    // Create 'numElem' elements more and more randomized
+    for (int iel = 0; iel < numElem; ++iel) {
+      const double range = static_cast<double>(iel) / (numElem-1) / order;
+      const double rangePrim = static_cast<double>(iel/2000) / ((numElem/2000)-1) / order; ////////
+      const double rangeSub = static_cast<double>(iel%2000) / 1999 / order;                ////////
+      if (!(iel%200)) Msg::Info("%g %g", rangePrim, rangeSub);
+      std::vector<MVertex*> vertices(nodes.size1());
+      for (int i = 0; i < numPrimNode; ++i) {
+        vertices[i] = new MVertex(nodes(i, 0) + symRand(rangePrim),
+                                  nodes(i, 1) + symRand(rangePrim),
+                                  nodes(i, 2) + symRand(rangePrim));
+      }
+      MElement *primEl = MElement::createElement(primTag, vertices);
+
+      for (int i = numPrimNode; i < nodes.size1(); ++i) {
+        SPoint3 p;
+        primEl->pnt(nodes(i, 0), nodes(i, 1), nodes(i, 2), p);
+        vertices[i] = new MVertex(p.x() + symRand(rangeSub),
+                                  p.y() + symRand(rangeSub),
+                                  p.z() + symRand(rangeSub));
+      }
+      MElement *el = MElement::createElement(tag, vertices);
+      if (!el) {
+        Msg::Error("MElement was unable to create element for tag %d", tag);
+        ++numError;
+      }
+
+      elements[iel] = el;
+    }
+    GMSH_AnalyseCurvedMeshPlugin plugin = GMSH_AnalyseCurvedMeshPlugin();
+    plugin.test(elements, numElem, dim);
+  }
+
+
+  //=================
+  return 987;
+  //=================
+
+  /*Msg::Info("Testing Bezier interpolation and subdivision "
       "for jacobien and metric on all element types...");
   int numError = 0;
 
@@ -566,7 +784,7 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
                                   dim > 2 ? nodes(i, 2) + symRand(range) : 0);
       }
       MElement *el = MElement::createElement(tag, vertices);
-      if (el != NULL) {
+      if (!el) {
         Msg::Error("MElement was unable to create element for tag %d", tag);
         ++numError;
       }
@@ -578,7 +796,7 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
 
   if (numError) Msg::Error("Validation of Bezier terminated with %d errors!", numError);
   else Msg::Info("Validation of Bezier terminated without errors");
-  return numError;
+  return numError;*/
 }
 
 int MetricBasis::validateBezierForMetricAndJacobian(MElement *el,
@@ -587,6 +805,7 @@ int MetricBasis::validateBezierForMetricAndJacobian(MElement *el,
                                                     double toleranceTensor,
                                                     double tolerance)
 {
+  Msg::Fatal("Verifie si cette fonction est ok g");
   const int tag = el->getTypeForMSH();
   const MetricBasis *metricBasis = BasisFactory::getMetricBasis(tag);
 
@@ -638,12 +857,13 @@ void MetricBasis::interpolate(const MElement *el,
                               const fullMatrix<double> &nodes,
                               fullMatrix<double> &R) const
 {
+  //Msg::Fatal("Verifie si cette fonction est ok h");
   fullMatrix<double> &metcoeffs = *md->_metcoeffs, *metric = new fullMatrix<double>;
   fullVector<double> &jaccoeffs = *md->_jaccoeffs, *jac = new fullVector<double>;
 
   _bezier->interpolate(metcoeffs, nodes, *metric);
 
-  R.resize(nodes.size1(), 2);
+  R.resize(nodes.size1(), 4);
 
   switch (metcoeffs.size2()) {
   case 1:
@@ -652,6 +872,8 @@ void MetricBasis::interpolate(const MElement *el,
     break;
 
   case 3:
+    ((MetricBasis*)this)->file << "q p myR eigR" << std::endl;
+    ((MetricBasis*)this)->file << _bezier->getNumLagCoeff() << std::endl;
     for (int i = 0; i < R.size1(); ++i) {
       // Compute from q, p
       double p = pow((*metric)(i, 1), 2);
@@ -667,10 +889,18 @@ void MetricBasis::interpolate(const MElement *el,
       fullMatrix<double> vecLeft(2, 2), vecRight(2, 2);
       metricTensor.eig(valReal, valImag, vecLeft, vecRight, true);
       R(i, 1) = std::sqrt(valReal(0) / valReal(1));
+      R(i, 2) = valReal(0);
+      R(i, 3) = valReal(1);
+      ((MetricBasis*)this)->file << (*metric)(i, 0) << " ";
+      ((MetricBasis*)this)->file << p << " ";
+      ((MetricBasis*)this)->file << R(i, 0) << " ";
+      ((MetricBasis*)this)->file << R(i, 1) << std::endl;
       }
     break;
 
   case 7:
+    ((MetricBasis*)this)->file << "a K myR eigR" << std::endl;
+    ((MetricBasis*)this)->file << _bezier->getNumLagCoeff() << std::endl;
     _jacobian->getBezier()->interpolate(jaccoeffs, nodes, *jac);
     for (int i = 0; i < R.size1(); ++i) {
       // Compute from q, p, J
@@ -692,6 +922,12 @@ void MetricBasis::interpolate(const MElement *el,
       fullMatrix<double> vecLeft(3, 3), vecRight(3, 3);
       metricTensor.eig(valReal, valImag, vecLeft, vecRight, true);
       R(i, 1) = std::sqrt(valReal(0) / valReal(2));
+      R(i, 2) = valReal(0);
+      R(i, 3) = valReal(2);
+      ((MetricBasis*)this)->file << (*metric)(i, 0)/p << " ";
+      ((MetricBasis*)this)->file << (*jac)(i)*(*jac)(i)/p/p/p << " ";
+      ((MetricBasis*)this)->file << R(i, 0) << " ";
+      ((MetricBasis*)this)->file << R(i, 1) << std::endl;
     }
     break;
 
@@ -710,6 +946,7 @@ void MetricBasis::interpolateAfterNSubdivisions(
     fullMatrix<double> &uvw,
     fullMatrix<double> &metric) const
 {
+  Msg::Fatal("Verifie si cette fonction est ok i");
   // Interpolate metric after 'numSub' random subdivision at
   //   'numPnt' random points.
   // Return: isub, the subdomain tag of each subdivision,
@@ -798,6 +1035,8 @@ void MetricBasis::interpolateAfterNSubdivisions(
 
 void MetricBasis::statsForMatlab(MElement *el, int deg, MetricData *md) const
 {
+  //return;
+  //Msg::Fatal("Verifie si cette fonction est ok h");
   fullMatrix<double> samplingPoints;
   bool serendip = false;
   gmshGeneratePoints(FuncSpaceData(el, deg, &serendip), samplingPoints);
@@ -805,7 +1044,7 @@ void MetricBasis::statsForMatlab(MElement *el, int deg, MetricData *md) const
   if (!md) _getMetricData(el, md);
 
   static unsigned int aa = 0;
-  if (md->_num < 100 && ++aa < 200) {
+  if (md->_num < 100000 && ++aa < 1000) {
     std::stringstream name;
     name << "metricStat_" << el->getNum() << "_";
     name << (md->_num % 10);
@@ -817,42 +1056,47 @@ void MetricBasis::statsForMatlab(MElement *el, int deg, MetricData *md) const
     ((MetricBasis*)this)->file.open(name.str().c_str(), std::fstream::out);
 
     {
-      int dim = el->getDim();
+      ((MetricBasis*)this)->file << "mina minKfast minKsharp cmin beta_m beta_M beta c_m" << std::endl;
+      double mina, maxa, minKs, minKf, c, beta_m, beta_M, beta, c_m;
+
       fullMatrix<double> *coeff = md->_metcoeffs;
       fullVector<double> *jac = md->_jaccoeffs;
-
-      double mina, maxa, minK;
       _minMaxA(*coeff, mina, maxa);
 
-      double dRda, term1, phip, beta;
-      double maxaPos, maxaNeg;
-      double maxKfast, maxKsharp;
-      if (dim == 3) {
-        _minK(*coeff, *jac, minK);
-        double tmpa = mina, tmpK = minK;
-        _computeTermBeta(tmpa, tmpK, dRda, term1, phip);
-        beta = -3 * mina*mina * term1 / dRda / 6;
-
-        _maxAstKneg(*coeff, *jac, minK, beta, maxaPos);
-        _maxAstKpos(*coeff, *jac, minK, beta, maxaNeg);
-
-        _maxKstAfast(*coeff, *jac, mina, beta, maxKfast);
-        _maxKstAsharp(*coeff, *jac, mina, beta, maxKsharp);
+      if (el->getDim() == 3) {
+        _minKfast(*coeff, *jac, minKf);
+        _minKsharp(*coeff, *jac, minKs);
+        double minK = minKf;
+        _moveInsideDomain(mina, minK, true);
+        double p_dRda, p_dRdK;
+        _computePseudoDerivatives(mina, minK, p_dRda, p_dRdK);
+        double slope = -p_dRda/p_dRdK;
+        c = .5*(3*minK/mina - slope);
+        _computeBoundingCurve(*coeff, *jac, beta_m, c, true);
+        _computeBoundingCurve(*coeff, *jac, beta_M, c, false);
+        beta = -p_dRda/(p_dRdK*3*mina*mina);
+        if (beta < 0)
+          _computeLowerBoundC(*coeff, *jac, beta, c_m);
+        else
+          c_m = -1;
       }
       else {
-        minK = dRda = term1 = phip = beta = maxaPos = maxaNeg = maxKfast = maxKsharp = -1;
+        minKs = minKf = c = beta_m = beta_M = beta = c_m = -1;
       }
 
-      ((MetricBasis*)this)->file << mina << " " << maxa << " " << minK << " ";
-      ((MetricBasis*)this)->file << dRda << " " << term1 << " " << phip << " ";
-      ((MetricBasis*)this)->file << beta << " ";
-      ((MetricBasis*)this)->file << maxaPos << " " << maxaNeg << " ";
-      ((MetricBasis*)this)->file << maxKfast << " " << maxKsharp << std::endl;
+      ((MetricBasis*)this)->file << std::setprecision(15);
+      ((MetricBasis*)this)->file << mina << " " << minKf << " " << minKs << " ";
+      ((MetricBasis*)this)->file << c << " " << beta_m << " " << beta_M << " ";
+      ((MetricBasis*)this)->file << beta << " " << c_m << std::endl;
+      ((MetricBasis*)this)->file << std::setprecision(8);
     }
   }
 
   fullMatrix<double> R;
   interpolate(el, md, samplingPoints, R);
+  ((MetricBasis*)this)->file.close();
+
+  return;
 
   if (R.size1() < 1) {
     ((MetricBasis*)this)->file << -1 << " ";
@@ -893,139 +1137,124 @@ int MetricBasis::metricOrder(int tag)
   }
 }
 
-void MetricBasis::_computeRmin(
+void MetricBasis::_computeBoundsRmin(
     const fullMatrix<double> &coeff, const fullVector<double> &jac,
-    double &RminLag, double &RminBez) const
+    double &sqrtRminLag, double &sqrtRminBez) const
 {
-  RminLag = _computeMinlagR(jac, coeff, _bezier->getNumLagCoeff());
-  if (RminLag == 0) {
-    RminBez = 0;
+  sqrtRminLag = _computeMinlagR(jac, coeff, _bezier->getNumLagCoeff());
+  if (sqrtRminLag <= _tol) {
+    sqrtRminBez = .0;
     return;
   }
 
   if (coeff.size2() == 3) { // 2d element
     double mina, dummy;
     _minMaxA(coeff, mina, dummy);
-    RminBez = std::sqrt(_R2Dsafe(mina));
+    sqrtRminBez = std::sqrt(_R2Dsafe(mina));
     return;
   }
 
-  double minK;
-  _minK(coeff, jac, minK);
-  if (minK < 1e-10) {
-    RminBez = 0;
-    return;
-  }
-
-  double mina, dummy;
+  double minK, mina, dummy;
+  _minKfast(coeff, jac, minK);
   _minMaxA(coeff, mina, dummy);
 
-  double term1, dRda, phip;
-  _computeTermBeta(mina, minK, dRda, term1, phip);
+  _moveInsideDomain(mina, minK, true);
 
-  if (dRda < 0) {
-    // TODO : better am ?
-    double amApprox, da;
+  double p_dRda, p_dRdK;
+  _computePseudoDerivatives(mina, minK, p_dRda, p_dRdK);
+
+  if (p_dRda < 0) {
+    //Msg::Info("case 1 & 2");
+    // cases 1 & 2 => compute a lower bounding curve K = beta * a^3 + c * a
+    // with c such that the curve that pass through (minK, mina) has the
+    // slope equal to -dRda/dRdK
+    double slope = -p_dRda/p_dRdK;
+    double c = .5*(3*minK/mina - slope);
+    double beta;
+    _computeBoundingCurve(coeff, jac, beta, c, true);
     {
-      const double p = -3;
-      double q = -minK - 2;
-      const double a1 = cubicCardanoRoot(p, q);
-      const double phim = std::acos(-1/a1) - M_PI/3;
-      q = -minK + 2*std::cos(3*phim);
-      amApprox = cubicCardanoRoot(p, q);
-      if (minK < 10)
-        da = -.3;
-      else if (minK < 20)
-        da = -.25;
-      else if (minK < 35)
-        da = -.2;
-      else if (minK < 70)
-        da = -.15;
-      else if (minK < 175)
-        da = -.1;
-      else
-        da = -.05;
+      double beta = (minK/mina-c)/mina/mina;
+      if (std::abs(p_dRda + p_dRdK * (3*beta*mina*mina+c)) > 1e-12) {
+        Msg::Error("Derivative along curve not zero %g", p_dRda + p_dRdK * (3*beta*mina*mina+c));
+      }
     }
 
-    double beta = -3 * mina*mina * term1 / dRda / 6;
-    double maxa;
-    if (beta*minK-mina*mina*mina < 0)
-      _maxAstKneg(coeff, jac, minK, beta, maxa);
+    double a_int = mina, K_int = minK;
+    bool onVertical = _intersectionCurveLeftCorner(beta, c, a_int, K_int);
+    if (onVertical) {
+      // then the minimum is on the curve, we prefer to return this
+      sqrtRminBez = std::sqrt(_R3Dsafe(mina, minK));
+      //Msg::Info("onvertical");
+      return;
+    }
+    /*if (a_int - mina < ???) {
+      sqrtRminBez = std::sqrt(_R3Dsafe(a_int, minK));
+      return;
+    }*/
+
+    bool haveToCompute_a0;
+    if (_moveInsideDomain(a_int, K_int, true)) {
+      haveToCompute_a0 = true;
+    }
     else {
-      _maxAstKpos(coeff, jac, minK, beta, maxa);
-      if (maxa < amApprox && beta*minK-maxa*maxa*maxa < 0)
-        _maxAstKneg(coeff, jac, minK, beta, maxa);
+      double p_dRda, p_dRdK;
+      _computePseudoDerivatives(a_int, K_int, p_dRda, p_dRdK);
+      if (p_dRda + p_dRdK * (3*beta*a_int*a_int+c) < -1e-5) {
+        Msg::Error("Derivative along curve not positive or zero %g", p_dRda + p_dRdK * (3*beta*a_int*a_int+c));
+        Msg::Info("(%g, %g) vs (%g, %g), diff (%g, %g)", mina, minK, a_int, K_int, a_int-mina, K_int-minK);
+        double beta2 = (minK/mina-c)/mina/mina;
+        Msg::Info("beta %g - %g = %g", beta, beta2, beta-beta2);
+      }
+      haveToCompute_a0 = p_dRda > 0;
     }
 
-    maxa = std::max(mina, maxa);
-    if (amApprox*amApprox*amApprox+da < maxa*maxa*maxa) {
-      // compute better am
-      //
-      double am0 = std::pow(amApprox*amApprox*amApprox+da, 1/3.);
-      double am1 = std::pow(amApprox*amApprox*amApprox+da+.05, 1/3.);
-      //double am0S = am0, am1S = am1;
-      double am = (am0 + am1)/2;
-      double R0 = _R3Dsafe(am0, minK);
-      double R1 = _R3Dsafe(am1, minK);
-      double Rnew = _R3Dsafe(am, minK);
-
-      int cnt = 0;
-      while (std::abs(R0-Rnew) > _tol*.01 || std::abs(R1-Rnew) > _tol*.01) {
-        ++cnt;
-        if (R0 > R1) {
-          am0 = am;
-          R0 = Rnew;
-        }
-        else {
-          am1 = am;
-          R1 = Rnew;
-        }
-        am = (am0 + am1)/2;
-        Rnew = _R3Dsafe(am, minK);
-      }
-
-      if (am < maxa) {
-        RminBez = _R3Dsafe(am, minK);
-        RminBez = std::sqrt(RminBez);
-        return;
-      }
+    if (haveToCompute_a0) {
+      double a0 = _computeAbscissaMinR(mina, minK);
+      sqrtRminBez = std::sqrt(_R3Dsafe(a0, minK));
     }
-
-    RminBez = _R3Dsafe(maxa, minK);
-    RminBez = std::sqrt(RminBez);
+    else {
+      sqrtRminBez = std::sqrt(_R3Dsafe(a_int, K_int));
+    }
     return;
   }
-  else if (term1 < 0) {
-    double maxK;
-    double beta = -3 * mina*mina * term1 / dRda / 6;
-    if (beta*minK-mina*mina*mina > 0) Msg::Fatal("Arf pas prevu");
-    //_maxKstAsharp(coeff, jac, mina, beta, maxK);
-    _maxKstAfast(coeff, jac, mina, beta, maxK);
-    const double x = .5*(maxK-mina*mina*mina+3*mina);
-    const double phimin = std::acos(-1/mina) - M_PI/3;
-    double myphi;
-    if (std::abs(x) > 1) {
-      myphi = phimin;
+  else if (p_dRdK < 0) {
+    //Msg::Info("case 4 & 5");
+    double slope = -p_dRda/p_dRdK;
+    double c = .5*(3*minK/mina - slope);
+    double beta;
+    _computeBoundingCurve(coeff, jac, beta, c, false);
+    double a_int = mina, K_int = minK;
+
+    if (_intersectionCurveLeftCorner(beta, c, a_int, K_int)) {
+      /*if (std::abs(a_int - mina) < _tol / 100 &&
+          std::abs(K_int - minK) < _tol / 100) {
+        sqrtRminBez = std::sqrt(_R3Dsafe(mina, minK));
+        return;
+      }*/
+      // We compute K0 and return _R3Dsafe(mina, min(K0,K_int))
+      double K0 = 2*std::cos(3*std::acos(-1/mina)-M_PI) + (mina*mina-3) * mina;
+      sqrtRminBez = std::sqrt(_R3Dsafe(mina, std::min(K0, K_int)));
     }
     else {
-      const double phimaxK = std::acos(x)/3;
-      myphi = std::max(phimin, phimaxK);
+      if (_moveInsideDomain(a_int, K_int, false))
+        sqrtRminBez = std::sqrt(_R3Dsafe(a_int, K_int));
+      else
+        sqrtRminBez = std::sqrt(_computeMinRAlongCurve(beta, c, a_int, -1));
     }
-    RminBez = (mina+2*std::cos(myphi+2*M_PI/3))/(mina+2*std::cos(myphi));
-    RminBez = std::sqrt(RminBez);
     return;
   }
   else {
-    RminBez = (mina+2*std::cos(phip+M_PI/3))/(mina+2*std::cos(phip-M_PI/3));
-    RminBez = std::sqrt(RminBez);
+    //Msg::Info("case 3");
+    sqrtRminBez = std::sqrt(_R3Dsafe(mina, minK));
     return;
   }
 }
 
-void MetricBasis::_computeRmax(
+void MetricBasis::_computeBoundsRmax(
     const fullMatrix<double> &coeff, const fullVector<double> &jac,
     double &RmaxLag) const
 {
+  Msg::Fatal("Verifie si cette fonction est ok k");
   RmaxLag = 0.;
 
   for (int i = 0; i < _bezier->getNumLagCoeff(); ++i) {
@@ -1046,8 +1275,9 @@ void MetricBasis::_computeRmax(
   }
 }
 
-double MetricBasis::_subdivideForRmin(MetricData *md, double RminLag, double tol, MElement *el) const
+double MetricBasis::_subdivideForRmin(MetricData *md, double &RminLag, double tol, MElement *el) const
 {
+  //Msg::Fatal("Verifie si cette fonction est ok l");
   std::priority_queue<MetricData*, std::vector<MetricData*>, lessMinB> subdomains;
   const bool for3d = md->_jaccoeffs;
   const int numCoeff = md->_metcoeffs->size2();
@@ -1058,6 +1288,7 @@ double MetricBasis::_subdivideForRmin(MetricData *md, double RminLag, double tol
 
   std::vector<fullVector<double>*> trash;
 
+  int k = 0;
   while (RminLag - subdomains.top()->_RminBez > tol && subdomains.size() < 25000) {
     fullMatrix<double> *subcoeffs, *coeff;
     fullVector<double> *subjac, *jac = NULL;
@@ -1082,16 +1313,21 @@ double MetricBasis::_subdivideForRmin(MetricData *md, double RminLag, double tol
         jac->setAsProxy(*subjac, i * numJacPnts, numJacPnts);
       }
       double minLag, minBez;
-      _computeRmin(*coeff, *jac, minLag, minBez);
+      _computeBoundsRmin(*coeff, *jac, minLag, minBez);
       RminLag = std::min(RminLag, minLag);
       int newNum = num + (i+1) * pow_int(10, depth);
+      if (depth > 8) newNum = 999999999;
       MetricData *metData = new MetricData(coeff, jac, minBez, depth+1, newNum);
+      //statsForMatlab(el, 15, metData);
       //if (el) statsForMatlab(el, 20, metData);
       subdomains.push(metData);
     }
     if (for3d) trash.push_back(subjac);
     delete subcoeffs;
+    ++k;
   }
+
+  //Msg::Info("num subdiv %d", k);
 
   double ans = subdomains.top()->_RminBez;
   while (subdomains.size()) {
@@ -1138,6 +1374,7 @@ template<bool ideal>
 void MetricBasis::_fillCoeff(int dim, const GradientBasis *gradients,
     const fullMatrix<double> &nodes, fullMatrix<double> &coeff)
 {
+  //Msg::Fatal("Verifie si cette fonction est ok o");
   const int nSampPnts = gradients->getNumSamplingPoints();
 
   switch (dim) {
@@ -1159,14 +1396,10 @@ void MetricBasis::_fillCoeff(int dim, const GradientBasis *gradients,
       for (int i = 0; i < nSampPnts; i++) {
         const double &dxdX = dxydX(i,0), &dydX = dxydX(i,1);
         const double &dxdY = dxydY(i,0), &dydY = dxydY(i,1);
-        double dzdX, dzdY;
+        double dzdX = 0, dzdY = 0;
         if (nodes.size2() > 2) {
           dzdX = dxydX(i,2);
           dzdY = dxydY(i,2);
-        }
-        else {
-          dzdX = 0;
-          dzdY = 0;
         }
         const double dvxdX = dxdX*dxdX + dydX*dydX + dzdX*dzdX;
         const double dvxdY = dxdY*dxdY + dydY*dydY + dzdY*dzdY;
@@ -1218,46 +1451,43 @@ double MetricBasis::_computeMinlagR(const fullVector<double> &jac,
     for (int i = 0; i < num; ++i) {
       if (jac(i) <= 0.) return 0;
 
-      const double q = coeff(i, 0);
+      const double &q = coeff(i, 0);
       double p = 0;
       for (int k = 1; k < 7; ++k) {
         p += pow_int(coeff(i, k), 2);
       }
       p = std::sqrt(p);
-      const double a = q/p;
-      if (a > 1e4) { // TODO: from _tol ?
-        Rmin = std::min(Rmin, std::sqrt((a - std::sqrt(3.)) / (a + std::sqrt(3.))));
-      }
-      else {
-        const double tmpR = _R3Dsafe(a, jac(i)/p/p*jac(i)/p);
-        Rmin = std::min(Rmin, std::sqrt(tmpR));
-      }
+
+      Rmin = std::min(Rmin, _R3Dsafe(q, p, jac(i)));
     }
-    return Rmin;
+    break;
 
   case 3:
     for (int i = 0; i < num; ++i) {
       const double &q = coeff(i, 0);
-      const double p = pow_int(coeff(i, 1), 2) + pow_int(coeff(i, 2), 2);
-      const double tmpR = _R2Dsafe(q, std::sqrt(p));
-      Rmin = std::min(Rmin, std::sqrt(tmpR));
+      double p = pow_int(coeff(i, 1), 2) + pow_int(coeff(i, 2), 2);
+      p = std::sqrt(p);
+
+      Rmin = std::min(Rmin, _R2Dsafe(q, p));
     }
-    return Rmin;
+    break;
 
   default:
     Msg::Error("coeff have not right number of column");
     return -1;
   }
+
+  return std::sqrt(Rmin);
 }
 
-void MetricBasis::_minMaxA(
-    const fullMatrix<double> &coeff, double &min, double &max) const
+void MetricBasis::_minMaxA(const fullMatrix<double> &coeff,
+                           double &mina, double &max) const
 {
-  min = std::numeric_limits<double>::max();
-  min = 1e10;
-  //max = 1; // max is not used actually
-  double minLowBound = -min;
+  // TODO calculer le max ?
+  double upperBound = std::numeric_limits<double>::infinity();
+  double lowerBound = -upperBound;
   std::map<int, std::vector<IneqData> >::const_iterator it = _ineqA.begin();
+
   while (it != _ineqA.end()) {
     double num = 0;
     double den = 0;
@@ -1271,36 +1501,34 @@ void MetricBasis::_minMaxA(
       den += it->second[k].val * tmp;
       num += it->second[k].val * coeff(i, 0) * coeff(j, 0);
     }
-    double val = num/den;
-    if (num < 0) {
-      if (den > 0) {
-        _minA(coeff, min);
+
+    // mina has to satisfy: mina^2 * den <= num
+    if (den == 0) {
+      if (num >= 0) {} // ok, nothing to do
+      else {// impossible to satisfy.
+        _minAfast(coeff, mina);
         return;
       }
-      minLowBound = std::max(val, minLowBound);
     }
-    else if (den > 0) {
-      min = std::min(val, min);
-      //max = std::max(val, max);
-    }
+    else if (den > 0)
+      upperBound = std::min(upperBound, num/den);
+    else
+      lowerBound = std::max(lowerBound, num/den);
+
     ++it;
   }
 
-  if (min < minLowBound) {
-    _minA(coeff, min);
-    return;
-  }
-
-  min = min > 1 ? std::sqrt(min) : 1;
-  //max = std::sqrt(max);
+  if (lowerBound > upperBound)
+    _minAfast(coeff, mina);
+  else
+    mina = upperBound > 1 ? std::sqrt(upperBound) : 1;
 }
 
-void MetricBasis::_minA(const fullMatrix<double> &coeff, double &mina) const
+void MetricBasis::_minAfast(const fullMatrix<double> &coeff, double &mina) const
 {
   double minq = coeff(0, 0);
-  for (int i = 1; i < coeff.size1(); ++i) {
-   if (minq > coeff(i, 0)) minq = coeff(i, 0);
-  }
+  for (int i = 1; i < coeff.size1(); ++i)
+    minq = std::min(minq, coeff(i, 0));
 
   double maxp = 0;
   for (int i = 0; i < coeff.size1(); ++i) {
@@ -1311,65 +1539,146 @@ void MetricBasis::_minA(const fullMatrix<double> &coeff, double &mina) const
     maxp = std::max(maxp, tmp);
   }
 
-  mina = minq/maxp;
-  if (mina < 1) mina = 1;
+  mina = std::max(1., minq/maxp); // accept +inf as answer
 }
 
-void MetricBasis::_minK(const fullMatrix<double> &coeff,
-    const fullVector<double> &jac, double &min) const
+void MetricBasis::_minKfast(const fullMatrix<double> &coeff,
+    const fullVector<double> &jac, double &minK) const
 {
-  fullVector<double> r(coeff.size1());
+  fullVector<double> P(coeff.size1());
   for (int i = 0; i < coeff.size1(); ++i) {
-    r(i) = 0;
+    P(i) = 0;
     for (int l = 1; l < 7; ++l) {
-      r(i) += coeff(i, l) * coeff(i, l);
+      P(i) += coeff(i, l) * coeff(i, l);
     }
-    r(i) = std::sqrt(r(i));
+    P(i) = std::sqrt(P(i));
   }
 
-  min = 1e10;
+  double upperBound = std::numeric_limits<double>::infinity();
+  double lowerBound = -upperBound;
+
   std::map<int, std::vector<IneqData> >::const_iterator itJ, itP;
   itJ = _ineqJ2.begin();
   itP = _ineqP3.begin();
 
-  if (_ineqP3.size() != _ineqJ2.size()) Msg::Fatal("sizes P3 %d, J2 %d", _ineqP3.size(), _ineqJ2.size());
-  //Msg::Warning("sizes %d %d", _ineqJ2.size(), _ineqP3.size());
-  int count = 0;
-  while (itJ != _ineqJ2.end() && itP != _ineqP3.end()) {
-    if (count >= (int)_ineqJ2.size()) Msg::Fatal("aaargh");
-    if (itJ->first != itP->first) Msg::Fatal("not same hash %d %d", itJ->first, itP->first);
-
+  // _ineqJ2 and _ineqP3 have the same size
+  while (itJ != _ineqJ2.end()) {
+    //if (itJ->first != itP->first) Msg::Fatal("not same hash %d %d", itJ->first, itP->first);
     double num = 0;
-    //Msg::Info("sizej %d", itJ->second.size());
-    for (unsigned int l = 0; l < itJ->second.size(); ++l) {
-      const int i = itJ->second[l].i;
-      const int j = itJ->second[l].j;
-      num += itJ->second[l].val * jac(i) * jac(j);
+    for (unsigned int k = 0; k < itJ->second.size(); ++k) {
+      const int i = itJ->second[k].i;
+      const int j = itJ->second[k].j;
+      num += itJ->second[k].val * jac(i) * jac(j);
     }
 
     double den = 0;
-    //Msg::Info("sizep %d", itP->second.size());
     for (unsigned int l = 0; l < itP->second.size(); ++l) {
       const int i = itP->second[l].i;
       const int j = itP->second[l].j;
       const int k = itP->second[l].k;
-      //Msg::Info("i%d j%d k%d", i, j, k);
-      if (l>=itP->second.size()) Msg::Error("l %d/%d", l, itP->second.size());
-      if (i>=r.size() || j>=r.size()||k>=r.size() ) Msg::Fatal("i%d j%d k%d /%d (%dl%d)", i, j, k, r.size(), count, l);
-      den += itP->second[l].val * r(i) * r(j) * r(k);
+      den += itP->second[l].val * P(i) * P(j) * P(k);
     }
-    //Msg::Info("%g/%g = %g", num, den, num/den);
-    min = std::min(min, num/den);
+
+    // minK has to satisfy: minK * den <= num
+    if (den == 0) {
+      if (num >= 0) {
+        ++itJ;
+        ++itP;
+        continue;
+      }
+      // otherwise, it's impossible to satisfy.
+      minK = 0;//TODO c'est mieux de retourner _minKfast(coeff, jac, minK); ?
+      return;
+    }
+    else if (den > 0)
+      upperBound = std::min(upperBound, num/den);
+    else
+      lowerBound = std::max(lowerBound, num/den);
+
     ++itJ;
     ++itP;
-    ++count;
   }
-  min = std::max(min, 0.);
+
+  if (lowerBound > upperBound)
+    minK = 0;//TODO c'est mieux de retourner _minKfast(coeff, jac, minK); ?
+  else
+    minK = std::max(.0, upperBound);
+}
+
+void MetricBasis::_minKsharp(const fullMatrix<double> &coeff,
+    const fullVector<double> &jac, double &minK) const
+{
+  fullVector<double> P(coeff.size1());
+  fullMatrix<double> Q(coeff.size1(), coeff.size1());
+  for (int i = 0; i < coeff.size1(); ++i) {
+    P(i) = 0;
+    for (int l = 1; l < 7; ++l) {
+      P(i) += coeff(i, l) * coeff(i, l);
+    }
+    P(i) = std::sqrt(P(i));
+    // fill only the half
+    for (int j = i; j < coeff.size1(); ++j) {
+      Q(i, j) = 0;
+      for (int l = 1; l < 7; ++l) {
+        Q(i, j) += coeff(i, l) * coeff(j, l);
+      }
+    }
+  }
+
+  double upperBound = std::numeric_limits<double>::infinity();
+  double lowerBound = -upperBound;
+
+  std::map<int, std::vector<IneqData> >::const_iterator itJ, itP;
+  itJ = _ineqJ2.begin();
+  itP = _ineqP3.begin();
+
+  // _ineqJ2 and _ineqP3 have the same size
+  while (itJ != _ineqJ2.end()) {
+    double num = 0;
+    for (unsigned int k = 0; k < itJ->second.size(); ++k) {
+      const int i = itJ->second[k].i;
+      const int j = itJ->second[k].j;
+      num += itJ->second[k].val * jac(i) * jac(j);
+    }
+
+    double den = 0;
+    for (unsigned int l = 0; l < itP->second.size(); ++l) {
+      const int i = itP->second[l].i;
+      const int j = itP->second[l].j;
+      const int k = itP->second[l].k;
+      den += itP->second[l].val * 1/3*(Q(i,j)*P(k)+Q(i,k)*P(j)+Q(j,k)*P(i));
+    }
+
+    // minK has to satisfy: minK * den <= num
+    if (den == 0) {
+      if (num >= 0) {
+        ++itJ;
+        ++itP;
+        continue;
+      }
+      // otherwise, it's impossible to satisfy.
+      minK = 0;//TODO c'est mieux de retourner _minKfast(coeff, jac, minK); ?
+      return;
+    }
+    else if (den > 0)
+      upperBound = std::min(upperBound, num/den);
+    else
+      lowerBound = std::max(lowerBound, num/den);
+
+    ++itJ;
+    ++itP;
+  }
+
+  if (lowerBound > upperBound)
+     minK = 0;//TODO c'est mieux de retourner _minKfast(coeff, jac, minK); ?
+  else
+    minK = std::max(.0, upperBound);
 }
 
 void MetricBasis::_maxAstKpos(const fullMatrix<double> &coeff,
     const fullVector<double> &jac, double minK, double beta, double &maxa) const
 {
+  Msg::Fatal("Verifie si cette fonction est ok");
   fullVector<double> P(coeff.size1());
   for (int i = 0; i < coeff.size1(); ++i) {
     P(i) = 0;
@@ -1411,6 +1720,7 @@ void MetricBasis::_maxAstKpos(const fullMatrix<double> &coeff,
 void MetricBasis::_maxAstKneg(const fullMatrix<double> &coeff,
     const fullVector<double> &jac, double minK, double beta, double &maxa) const
 {
+  Msg::Fatal("Verifie si cette fonction est ok");
   fullVector<double> P(coeff.size1());
   fullMatrix<double> Q(coeff.size1(), coeff.size1());
   for (int i = 0; i < coeff.size1(); ++i) {
@@ -1462,6 +1772,7 @@ void MetricBasis::_maxAstKneg(const fullMatrix<double> &coeff,
 void MetricBasis::_maxKstAfast(const fullMatrix<double> &coeff,
     const fullVector<double> &jac, double mina, double beta, double &maxK) const
 {
+  Msg::Fatal("Verifie si cette fonction est ok");
   fullVector<double> r(coeff.size1());
   for (int i = 0; i < coeff.size1(); ++i) {
     r(i) = 0;
@@ -1503,6 +1814,7 @@ void MetricBasis::_maxKstAfast(const fullMatrix<double> &coeff,
 void MetricBasis::_maxKstAsharp(const fullMatrix<double> &coeff,
     const fullVector<double> &jac, double mina, double beta, double &maxK) const
 {
+  Msg::Fatal("Verifie si cette fonction est ok");
   fullVector<double> P(coeff.size1());
   fullMatrix<double> Q(coeff.size1(), coeff.size1());
   for (int i = 0; i < coeff.size1(); ++i) {
@@ -1511,7 +1823,8 @@ void MetricBasis::_maxKstAsharp(const fullMatrix<double> &coeff,
       P(i) += coeff(i, l) * coeff(i, l);
     }
     P(i) = std::sqrt(P(i));
-    for (int j = 0; j < coeff.size1(); ++j) {
+    // fill only the half
+    for (int j = i; j < coeff.size1(); ++j) {
       Q(i, j) = 0;
       for (int l = 1; l < 7; ++l) {
         Q(i, j) += coeff(i, l) * coeff(j, l);
@@ -1538,10 +1851,10 @@ void MetricBasis::_maxKstAsharp(const fullMatrix<double> &coeff,
       const int j = itP->second[l].j;
       const int k = itP->second[l].k;
       num += itP->second[l].val * coeff(i, 0) * coeff(j, 0) * coeff(k, 0);
-      if (j == k)
+      if (j == k) // TODO verif ok
         den += itP->second[l].val * Q(i,i) * P(i);
       else
-        den += itP->second[l].val * 1/3*(Q(i,j)*P(k)+Q(i,k)*P(j)+Q(k,j)*P(i));
+        den += itP->second[l].val * 1/3*(Q(i,j)*P(k)+Q(i,k)*P(j)+Q(j,k)*P(i));
     }
     min = std::min(min, num/den);
     ++itJ;
@@ -1551,88 +1864,564 @@ void MetricBasis::_maxKstAsharp(const fullMatrix<double> &coeff,
   maxK = 1/beta*(mina*mina*mina-min);
 }
 
-void MetricBasis::_computeTermBeta(double &a, double &K,
-                                   double &dRda, double &term1,
-                                   double &phip) const
+void MetricBasis::_computeBoundBeta(const fullMatrix<double> &coeff,
+                                    const fullVector<double> &jac,
+                                    double &beta, bool compLowBound) const
 {
-  double x0 = .5 * (K - a*a*a + 3*a);
-  double sin, sqrt;
-  if (x0 > 1) {
-    const double p = -3;
-    double q = -K + 2;
-    a = cubicCardanoRoot(p, q);
+  // compute a lower/upper bound for function beta = K/a^3
 
-    x0 = 1;
-    phip = M_PI / 3;
-    term1 = 1 + .5 * a;
-    sin = std::sqrt(3.) / 2;
-    sqrt = 0;
+  double upperBound = std::numeric_limits<double>::infinity();
+  double lowerBound = -upperBound;
+
+  // value in case of a failure
+  if (compLowBound) beta = 0;
+  else              beta = 1;
+
+  std::map<int, std::vector<IneqData> >::const_iterator itJ, itP;
+  itJ = _ineqJ2.begin();
+  itP = _ineqP3.begin();
+
+  // _ineqJ2 and _ineqP3 have the same size
+  while (itJ != _ineqJ2.end()) {
+    double num = 0;
+    for (unsigned int k = 0; k < itJ->second.size(); ++k) {
+      const int i = itJ->second[k].i;
+      const int j = itJ->second[k].j;
+      num += itJ->second[k].val * jac(i) * jac(j);
+    }
+
+    double den = 0;
+    for (unsigned int l = 0; l < itP->second.size(); ++l) {
+      const int i = itP->second[l].i;
+      const int j = itP->second[l].j;
+      const int k = itP->second[l].k;
+      den += itP->second[l].val * coeff(i, 0) * coeff(j, 0) * coeff(k, 0);
+    }
+
+    // beta has to satisfy beta * den <= num if compLowBound = true
+    //                  or beta * den >= num if compLowBound = false
+    if (den == 0) {
+      if (compLowBound) {
+        if (num >= 0) {
+          ++itJ;
+          ++itP;
+          continue;
+        }
+        else return;
+        //TODO c'est mieux de retourner min(J^2)/max(q^3) ??
+      }
+      else {
+        if (num <= 0) {
+          ++itJ;
+          ++itP;
+          continue;
+        }
+        else return;
+        //TODO c'est mieux de retourner max(J^2)/min(q^3) ??
+      }
+    }
+    if (den > 0) {
+      if (compLowBound)
+        upperBound = std::min(upperBound, num/den);
+      else
+        lowerBound = std::max(lowerBound, num/den);
+    }
+    else {
+      if (compLowBound)
+        lowerBound = std::max(lowerBound, num/den);
+      else
+        upperBound = std::min(upperBound, num/den);
+    }
+
+    ++itJ;
+    ++itP;
   }
-  else if (x0 < -1) {
-    K = -2 + a*a*a - 3*a;
 
-    x0 = -1;
-    phip = 2 * M_PI / 3;
-    term1 = 1 - .5 * a;
-    sin = std::sqrt(3.) / 2;
-    sqrt = 0;
+  if (lowerBound <= upperBound) {
+    if (compLowBound)
+      beta = std::max(.0, upperBound);
+    else
+      beta = std::min(1., lowerBound);
+  }
+   //TODO sinon, c'est mieux de retourner m..(J^2)/m..(q^3) ??
+}
+
+void MetricBasis::_computeBoundingCurve(const fullMatrix<double> &coeff,
+                                        const fullVector<double> &jac,
+                                        double &beta, double c,
+                                        bool compLowBound) const
+{
+  // compute a lower/upper bounding curve K = beta * a^3 + c * a
+  // with c fixed.
+
+  //Msg::Info("BEGINNING %g %g", std::numeric_limits<double>::min(), std::numeric_limits<double>::denorm_min());
+
+  fullMatrix<double> Q(coeff.size1(), coeff.size1()); // (half filled!)
+  for (int i = 0; i < coeff.size1(); ++i) {
+    for (int j = i; j < coeff.size1(); ++j) {
+      Q(i, j) = 0;
+      for (int l = 1; l < 7; ++l)
+        Q(i, j) += coeff(i, l) * coeff(j, l);
+    }
+  }
+
+  double upperBound = std::numeric_limits<double>::infinity();
+  double lowerBound = -upperBound;
+
+  // values in case of a failure
+  if (compLowBound) beta = upperBound;
+  else              beta = lowerBound;
+
+  std::map<int, std::vector<IneqData> >::const_iterator itJ, itP;
+  itJ = _ineqJ2.begin();
+  itP = _ineqP3.begin();
+
+  // _ineqJ2 and _ineqP3 have the same size
+  int kk = 0;
+  while (itJ != _ineqJ2.end()) {// && kk++ < 2) {// FIXME making tests
+    long double J2 = 0;
+    for (unsigned int k = 0; k < itJ->second.size(); ++k) {
+      const int i = itJ->second[k].i;
+      const int j = itJ->second[k].j;
+      J2 += itJ->second[k].val * jac(i) * jac(j);
+      //Msg::Info("(%d, %d) = (%g | %g, %g) -> J2:%Lg", i, j, itJ->second[k].val, jac(i), jac(j), J2);
+    }
+
+    long double q3 = 0, qp2 = 0;
+    for (unsigned int l = 0; l < itP->second.size(); ++l) {
+      const int i = itP->second[l].i;
+      const int j = itP->second[l].j;
+      const int k = itP->second[l].k;
+      q3 += itP->second[l].val * coeff(i, 0) * coeff(j, 0) * coeff(k, 0);
+      qp2 += itP->second[l].val * 1/3*(coeff(i, 0) * Q(j, k) +
+                                       coeff(j, 0) * Q(i, k) +
+                                       coeff(k, 0) * Q(i, j));
+      //Msg::Info("%d %d %d => %Lg %Lg", i, j, k, q3, qp2);
+      //Msg::Info("(%d %d %d) -> q3:%Lg qp2:%Lg", i, j, k, q3, qp2);
+    }
+
+    //Msg::Info("a%Lg K%Lg  %Lg %Lg", std::sqrt(q3/qp2), std::sqrt(J2*J2*q3/qp2/qp2/qp2), std::sqrt(q3/qp2), std::sqrt(J2*J2*q3/qp2/qp2/qp2));
+
+    const long double num = J2 - ((long double)c)*qp2;
+    const long double den = q3;
+    // beta has to satisfy beta * den <= num if compLowBound = true
+    //                  or beta * den >= num if compLowBound = false
+
+    if (den == 0) {
+      if (compLowBound) {
+        if (num >= 0) {} // ok, nothing to do
+        else return;
+        //TODO c'est mieux de retourner min(..)/max(..) ??
+      }
+      else {
+        if (num <= 0) {} // ok, nothing to do
+        else return;
+        //TODO c'est mieux de retourner max(..)/min(..) ??
+      }
+    }
+    else if (den > 0) {
+      if (compLowBound)
+        upperBound = std::min(upperBound, (double)(num/den));
+      else
+        lowerBound = std::max(lowerBound, (double)(num/den));
+    }
+    else {
+      if (compLowBound)
+        lowerBound = std::max(lowerBound, (double)(num/den));
+      else
+        upperBound = std::min(upperBound, (double)(num/den));
+    }
+
+    //Msg::Info("in [%.15g, %.15g]", lowerBound, upperBound);
+
+    ++itJ;
+    ++itP;
+  }
+
+  if (lowerBound <= upperBound) {
+    if (compLowBound)
+      beta = upperBound;
+    else
+      beta = lowerBound;
+  }
+
+  //Msg::Info("ENDING");
+  //TODO sinon, c'est mieux de retourner m..(..)/m..(..) ??
+}
+
+void MetricBasis::_computeLowerBoundC(const fullMatrix<double> &coeff,
+                                      const fullVector<double> &jac,
+                                      double beta, double &c) const
+{
+  // compute a lower/upper bound of function C = K-beta*a^3
+
+  double upperBound = std::numeric_limits<double>::infinity();
+  double lowerBound = -upperBound;
+
+  // value in case of a failure
+  c = 0;
+
+  fullVector<double> P(coeff.size1());
+  for (int i = 0; i < coeff.size1(); ++i) {
+    P(i) = 0;
+    for (int l = 1; l < 7; ++l) {
+      P(i) += coeff(i, l) * coeff(i, l);
+    }
+    P(i) = std::sqrt(P(i));
+  }
+
+  std::map<int, std::vector<IneqData> >::const_iterator itJ, itP;
+  itJ = _ineqJ2.begin();
+  itP = _ineqP3.begin();
+
+  // _ineqJ2 and _ineqP3 have the same size
+  while (itJ != _ineqJ2.end()) {
+    double num = 0, den = 0;
+    for (unsigned int l = 0; l < itP->second.size(); ++l) {
+      const int i = itP->second[l].i;
+      const int j = itP->second[l].j;
+      const int k = itP->second[l].k;
+      num -= itP->second[l].val * coeff(i, 0) * coeff(j, 0) * coeff(k, 0);
+      den += itP->second[l].val * P(i) * P(j) * P(k);
+    }
+
+    num = num * beta;
+    for (unsigned int l = 0; l < itJ->second.size(); ++l) {
+      const int i = itJ->second[l].i;
+      const int j = itJ->second[l].j;
+      num += itJ->second[l].val * jac(i) * jac(j);
+    }
+
+    // c has to satisfy c * den <= num
+    if (den == 0) {
+      if (num >= 0) {
+        ++itJ;
+        ++itP;
+        continue;
+      }
+      else return;
+      //TODO c'est mieux de retourner min(J^2-beta q^3)/max(p^3) ?
+    }
+    if (den > 0)
+      upperBound = std::min(upperBound, num/den);
+    else {
+      lowerBound = std::max(lowerBound, num/den);
+    }
+
+    ++itJ;
+    ++itP;
+  }
+
+  if (lowerBound <= upperBound) {
+    c = upperBound;
+  }
+  //TODO sinon, c'est mieux de retourner min(J^2-beta q^3)/max(p^3) ?
+}
+
+void MetricBasis::_computePseudoDerivatives(double a, double K,
+                                            double &dRda, double &dRdK)
+{
+  // Return derivative without positive (but non-constant) coefficients
+  // Useful when only the sign of dRda and dRdK or the ratio dRda/dRdK
+  // are needed.
+
+  double w = _wSafe(a, K);
+  if (std::abs(w) > 1) {
+    Msg::Error("Cannot compute pseudo derivatives of R "
+               "outside the domain (w = %g)", w);
+    return;
+  }
+
+  const double phip = (std::acos(w) + M_PI) / 3;
+  const double C = 1 + a * std::cos(phip);
+
+  dRdK = C / 3;
+  dRda = 2 * std::sqrt(1-w*w) * std::sin(phip) + (1-a*a) * C;
+}
+
+void MetricBasis::_computeDerivatives(double a, double K,
+                                      double &dRda, double &dRdK,
+                                      double &dRdaa, double &dRdaK, double &dRdKK)
+{
+  const double w = _wSafe(a, K);
+  if (std::abs(w) > 1) {
+    Msg::Error("Cannot compute derivatives of R outside the domain");
+    return;
+  }
+
+  const double phi = (std::acos(w)) / 3;
+  const double phip = phi + M_PI / 3;
+  const double S = 1./std::sqrt(1-w*w);
+  const double A = (1-a*a)*S;
+  const double sin = std::sin(phi);
+  const double sinp = std::sin(phip);
+  const double cosp = std::cos(phip);
+  const double C = 1 + a*cosp;
+  const double D = 1./(a+2*std::cos(phi));
+  static const double sq3 = std::sqrt(3);
+  const double coeff = sq3*D*D/18;
+
+  dRdK = coeff*6    * (C*S);
+  dRda = coeff*18   * (2*sinp + A*C);
+  dRdKK = coeff*S*S * (a*sinp - 4*C*sin*D + 3*w*C*S);
+  dRdaK = coeff*S*3 * (a*A*sinp + 3*w*A*C*S + 2*cosp - 4*C*(1+A*sin)*D);
+  dRdaa = coeff*9   * (3*w*A*A*C*S - 4*a*C*S + a*A*A*sinp - 4*(1+A*sin)*D*(2*sinp + A*C));
+}
+
+bool MetricBasis::_moveInsideDomain(double &a, double &K, bool bottomleftCorner)
+{
+  // Note: For N-R (when moving 'a'), we compute the root of
+  // f(a) = .5 * (K - a^3 + 3*a) - 'w' where 'w' is -1 or 1.
+
+  double w = _w(a, K);
+  if (w > 1.) {
+    if (bottomleftCorner) {
+      // make sure to compute the right root (a>1) and
+      // avoid slopes that are too small:
+      a = std::max(a, 1.1);
+
+      const double tolerance = _tol/100;
+      // Note: N-R approaches the root from the right, we
+      while (w > 1 || w < 1-tolerance) {
+        double df = w - 1;
+        double slope = 1.5*(1-a*a);
+        a -= df/slope;
+        w = _w(a, K);
+      }
+    }
+    else {
+      K -= 2*w - 2;
+    }
+    return true;
+  }
+  else if (w < -1.) {
+    if (bottomleftCorner) {
+      K -= 2*w + 2;
+    }
+    else {
+      a = std::max(a, 2.);
+
+      const double tolerance = _tol/100;
+      while (std::abs(w+1) > tolerance) {
+        double df = w + 1;
+        double slope = 1.5*(1-a*a);
+        a -= df/slope;
+        w = _w(a, K);
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+double MetricBasis::_computeMinRAlongCurve(double beta, double c,
+                                           double mina, double maxa)
+{
+  // Compute the minimum of R on the curve K = beta * a^3 + c
+  // where beta can be zero.
+  // 'mina' and 'maxa' stand for the limits of the curve. There must be at
+  // least 1 limit. To indicate that 'mina' or 'maxa' is not a limit, it is
+  // set to a negative value.
+
+  bool towardsPositivea;
+  double a, K, R;
+  if (mina < 0) {
+    a = maxa;
+    K = (beta*a*a + c)*a;
+    R = _R3Dsafe(a, K);
+    towardsPositivea = false;
+  }
+  else if (maxa < 0) {
+    a = mina;
+    K = (beta*a*a + c)*a;
+    R = _R3Dsafe(a, K);
+    towardsPositivea = true;
   }
   else {
-    phip = (std::acos(x0) + M_PI) / 3;
-    term1 = 1 + a * std::cos(phip);
-    sin = std::sin(phip);
-    sqrt = std::sqrt(1-x0*x0);
+    // choose the more promising limit as starting point
+    double K1 = beta*mina*mina*mina + c;
+    double K2 = beta*maxa*maxa*maxa + c;
+    double R1 = _R3Dsafe(mina, K1);
+    double R2 = _R3Dsafe(maxa, K2);
+    if (R1 < R2) {
+      a = mina;
+      K = K1;
+      R = R1;
+      towardsPositivea = true;
+    }
+    else {
+      a = maxa;
+      K = K2;
+      R = R2;
+      towardsPositivea = false;
+    }
   }
-  dRda = sin * sqrt + .5 * term1 * (1-a*a);
+
+  double da = 1, dK, dKK;
+  double dRda, dRdK, dRdaa, dRdaK, dRdKK;
+  double dRdC, dRdCC;
+
+  _computeDerivatives(a, K, dRda, dRdK, dRdaa, dRdaK, dRdKK);
+  dK = 3*beta*a*a+c;
+  dKK = 6*beta*a;
+  dRdC = dRda*da + dRdK*dK;
+  dRdCC = dRdaa*da*da + 2*dRdaK*da*dK + dRdKK*dK*dK + dRdK*dKK;
+
+  if ((towardsPositivea  && dRdC > 0) || (!towardsPositivea && dRdC < 0)) {
+    Msg::Warning("Already the minimum");
+    return R;
+  }
+
+  while (.25*dRdC*dRdC/dRdCC > .01*_toleranceOnR(R)) {
+    a = a - dRdC / dRdCC;
+    K = (beta*a*a + c)*a;
+    R = _R3Dsafe(a, K);
+
+    _computeDerivatives(a, K, dRda, dRdK, dRdaa, dRdaK, dRdKK);
+    dK = 3*beta*a*a+c;
+    dKK = 6*beta*a;
+    dRdC = dRda*da + dRdK*dK;
+    dRdCC = dRdaa*da*da + 2*dRdaK*da*dK + dRdKK*dK*dK + dRdK*dKK;
+  }
+
+  /*Msg::Warning("Checking Newton Raphson solution... (%g, %g)", a, K);
+  double min = 1;
+  for (double aa = std::max(1., .5*a); aa < 2*a; aa += .001*a) {
+    double KK = (beta*aa*aa + c)*aa;
+    double w = _wSafe(aa, KK);
+    if (std::abs(w) <= 1) min = std::min(min, _R3Dsafe(aa, KK));
+  }
+  if (std::abs(min-R) < .01*_toleranceOnR(R))
+    Msg::Info("... aaand, it is good!");
+  else
+    Msg::Error("... and, it's a fail! %g vs %g (tol %g => %g)", R, min, _toleranceOnR(R), R-.01*_toleranceOnR(R));*/
+
+  return R;
+}
+
+bool MetricBasis::_intersectionCurveLeftCorner(double beta, double c,
+                                               double &a, double &K)
+{
+  // on input, a and K are the bottom left corner
+  // on output, a and K are the intersection
+  //            return true if the intersection is on the vertical
+  // We assume the intersection exists
+  // (i.e. the bounding curve is sufficiently sharp)
+  if (3*beta*a*a + c < 0) {
+    Msg::Error("The slope is negative, cannot compute the intersection");
+    return -1;
+  }
+
+  const double minK = K;
+  const double mina = a; //TODO remove (not needed)
+
+  K = (beta*a*a + c)*a;
+  if (K >= minK) return true;
+
+  // Find the root by Newton-Raphson
+  double dK = K-minK;
+
+  static double precision = std::numeric_limits<double>::epsilon() * 1e3;
+  while (std::abs(dK) >  minK * precision) { //TODO meilleur approx
+    const double slope = 3*beta*a*a + c;
+    a -= dK / slope;
+    dK = (beta*a*a + c)*a-minK;
+  }
+  K = minK;
+  //Msg::Info("in %d it (%g, %g) -> (%g, %g) => diff(%g, %g)", k, mina, minK, a, K, a-mina, K-minK);
+  return false;
+}
+
+double MetricBasis::_computeAbscissaMinR(double aStart, double K)
+{
+  double dRda, dRdK, dRdaa, dRdaK, dRdKK;
+  _computeDerivatives(aStart, K, dRda, dRdK, dRdaa, dRdaK, dRdKK);
+  double a = aStart;
+  while (dRda > MetricBasis::_tol*1e-3) {
+    double da = - dRda / dRdaa;
+    a += da;
+    _computeDerivatives(a, K, dRda, dRdK, dRdaa, dRdaK, dRdKK);
+  }
+  return a;
 }
 
 double MetricBasis::_R3Dsafe(double q, double p, double J)
 {
-  if (q > 1e5*p) {
-    const double m = p*std::sqrt(3.)/q;
-    return (1-m) / (1+m);
+  if (q >= p && p >= 0 && J == J &&
+      p < std::numeric_limits<double>::infinity()) {
+    if (q == 0) return 0;
+    if (p == 0) return 1;
+    if (q == std::numeric_limits<double>::infinity()) {
+      Msg::Warning("q had infinite value in computation of 3D metric");
+      return 1;
+    }
+    const double a = q/p;
+    const double K = J*J/p/p/p;
+    return _R3Dsafe(a, K);
   }
-  const double a = q/p;
-  const double K = J*J/p/p/p;
-  return _R3Dsafe(a, K);
+  else {
+    Msg::Error("Wrong argument for 3d metric (%g, %g, %g)", q, p, J);
+    return -1;
+  }
 }
 
 double MetricBasis::_R3Dsafe(double a, double K)
 {
-  const double x = .5 * (K + (3 - a*a)*a);
-  if (x > 1+1e-7 || x < -1-1e-7) {
-    Msg::Warning("x = %g (a,K) = (%g,%g)", x, a, K);
-  }
+  if (a >= 1 && K >= 0) {
+    // TODO speedup in function of _tol ?
+    // if (2/a < _tol) return 1.;
+    // if (8/K < _tol*_tol*_tol) return 1.;
 
-  double ans;
-  if (x >= 1)       ans = (a - 1) / (a + 2);
-  else if (x <= -1) ans = (a - 2) / (a + 1);
+    if (a == std::numeric_limits<double>::infinity())
+      return 1;
+
+    const double w = _wSafe(a, K);
+    if (std::abs(w) > 1-_tol/10) {
+      if (w > 0) return (a - 1) / (a + 2);
+      else        return (a - 2) / (a + 1);
+    }
+
+    const double phi = std::acos(w) / 3;
+    const double R = (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
+    return std::max(.0, std::min(1., R));
+  }
   else {
-    const double phi = std::acos(x) / 3;
-    ans = (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
+    Msg::Error("Wrong argument for 3d metric (%g, %g)", a, K);
+    return -1;
   }
-
-  if (ans < 0 || ans > 1) {
-    if (ans < 0) return 0;
-    else return 1;
-  }
-  return ans;
 }
 
 double MetricBasis::_R2Dsafe(double q, double p)
 {
-  if (q < 0 || p < 0 || p > q)
-    Msg::Error("wrong argument for 2d metric (%g, %g)", q, p);
-  return (q-p) / (q+p);
+  if (q >= p && p >= 0 && p < std::numeric_limits<double>::infinity()) {
+    if (q == 0) return 0;
+    if (q == std::numeric_limits<double>::infinity()) {
+      Msg::Warning("q had infinite value in computation of 2D metric");
+      return 1;
+    }
+    return (q-p) / (q+p);
+  }
+  else {
+    Msg::Error("Wrong argument for 2d metric (%g, %g)", q, p);
+    return -1;
+  }
 }
 
 double MetricBasis::_R2Dsafe(double a)
 {
-  if (a < 1
-#if !defined(_MSC_VER)
-      || !std::isfinite(a)
-#endif
-      )
-    Msg::Error("wrong argument for 2d metric (%g)", a);
-  return (a - 1) / (a + 1);
+  if (a >= 1) {
+    if (a == std::numeric_limits<double>::infinity())
+      return 1;
+    return (a - 1) / (a + 1);
+  }
+  else {
+    Msg::Error("Wrong argument for 2d metric (%g)", a);
+    return -1;
+  }
+}
+
+double MetricBasis::_toleranceOnR(double R)
+{
+  const double sqRmax = std::max(.0, std::sqrt(R) - _tol);
+  return R - sqRmax*sqRmax;
 }
