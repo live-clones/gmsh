@@ -66,99 +66,25 @@ GEdge *GeoFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
 
 GFace *GeoFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> > edges)
 {
-
-  //create line loops
-  int nLoops = edges.size();
-  std::vector<EdgeLoop *> vecLoops;
-  for (int i=0; i< nLoops; i++){
-    int ne=(int)edges[i].size();
-    List_T *temp = List_Create(ne, ne, sizeof(int));
-    for(int j = 0; j < ne; j++){
-      GEdge *ge = edges[i][j];
-      int numEdge = ge->tag();
-      //create curve if it does not exist
-      Curve *c = FindCurve(numEdge);
-      if(!c){
-	GVertex *gvb = ge->getBeginVertex();
-	GVertex *gve = ge->getEndVertex();
-	Vertex *vertb = FindPoint(abs(gvb->tag()));
-	Vertex *verte = FindPoint(abs(gve->tag()));
-	if (!vertb){
-	  vertb = Create_Vertex(gvb->tag(), gvb->x(), gvb->y(), gvb->z(),
-				gvb->prescribedMeshSizeAtVertex(), 1.0);
-	  Tree_Add(gm->getGEOInternals()->Points, &vertb);
-	  vertb->Typ = MSH_POINT;
-	  vertb->Num = gvb->tag();
-	 }
-	if (!verte){
-	  verte = Create_Vertex(gve->tag(), gve->x(), gve->y(), gve->z(),
-				gve->prescribedMeshSizeAtVertex(), 1.0);
-	  Tree_Add(gm->getGEOInternals()->Points, &verte);
-	  verte->Typ = MSH_POINT;
-	  verte->Num = gve->tag();
-	}
-
-	if (ge->geomType() == GEntity::Line){
-	  c = Create_Curve(numEdge, MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
-	}
-	else if (ge->geomType() == GEntity::DiscreteCurve){
-	  c = Create_Curve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
-	}
-	else if(ge->geomType() == GEntity::CompoundCurve){
-	  c = Create_Curve(numEdge, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
-	  std::vector<GEdge*> gec = ((GEdgeCompound*)ge)->getCompounds();
-	  for(unsigned int i = 0; i < gec.size(); i++)
-	    c->compound.push_back(gec[i]->tag());
-	}
-	else{
-	  c = Create_Curve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
-	}
-
-	c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
-	List_Add(c->Control_Points, &vertb);
-	List_Add(c->Control_Points, &verte);
-	c->beg = vertb;
-	c->end = verte;
-	End_Curve(c);
-
-	Tree_Add(gm->getGEOInternals()->Curves, &c);
-	CreateReversedCurve(c);
-      }
-      List_Add(temp, &numEdge);
+  std::vector<std::vector<GEdgeSigned> > orientedEdges;
+  orientedEdges.reserve(edges.size());
+  for (size_t i=0; i< edges.size(); i++){
+    std::vector<GEdge *> loop = edges[i];
+    orientedEdges.push_back(std::vector<GEdgeSigned>());
+    std::vector<GEdgeSigned> &orientedLoop = orientedEdges.back();
+    orientedLoop.reserve(loop.size());
+    for (size_t j=0; j< loop.size(); j++){
+      GEdge *edge = loop[j];
+      orientedLoop.push_back(GEdgeSigned(1, edge));
     }
-
-    int numl = gm->getMaxElementaryNumber(1) + i;
-    while (FindEdgeLoop(numl)){
-      numl++;
-      if (!FindEdgeLoop(numl)) break;
-    }
-    sortEdgesInLoop(numl, temp, true);
-    EdgeLoop *l = Create_EdgeLoop(numl, temp);
-    vecLoops.push_back(l);
-    Tree_Add(gm->getGEOInternals()->EdgeLoops, &l);
-    l->Num = numl;
-    List_Delete(temp);
   }
 
-  //create surface
-  int numf  = gm->getMaxElementaryNumber(2)+1;
-  Surface *s = Create_Surface(numf, MSH_SURF_PLAN);
-  List_T *temp = List_Create(nLoops, nLoops, sizeof(int));
-  for (int i = 0; i < nLoops; i++){
-    int numl = vecLoops[i]->Num;
-    List_Add(temp, &numl);
-  }
+  return _addPlanarFace(gm, orientedEdges, true);
+}
 
-  setSurfaceGeneratrices(s, temp);
-  List_Delete(temp);
-  End_Surface(s);
-  Tree_Add(gm->getGEOInternals()->Surfaces, &s);
-
-  //gmsh surface
-  GFace *gf = new gmshFace(gm,s);
-  gm->add(gf);
-
-  return gf;
+GFace *GeoFactory::addPlanarFace(GModel *gm, const std::vector<std::vector<GEdgeSigned> > &edges)
+{
+  return _addPlanarFace(gm, edges, false);
 }
 
 GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > faces)
@@ -433,6 +359,105 @@ void GeoFactory::healGeometry(GModel *gm, double tolerance)
   gm->destroy();
   gm->importGEOInternals();
   GModel::setCurrent(current);
+}
+
+GFace *GeoFactory::_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdgeSigned> > &edges, bool orientEdges)
+{
+
+  //create line loops
+  int nLoops = edges.size();
+  std::vector<EdgeLoop *> vecLoops;
+  for (int i=0; i< nLoops; i++){
+    int ne=(int)edges[i].size();
+    List_T *temp = List_Create(ne, ne, sizeof(int));
+    for(int j = 0; j < ne; j++){
+      const GEdgeSigned &signedEdge = edges[i][j];
+      GEdge *ge = signedEdge.ge;
+      int numEdge = ge->tag();
+      //create curve if it does not exist
+      Curve *c = FindCurve(numEdge);
+      if(!c){
+	GVertex *gvb = ge->getBeginVertex();
+	GVertex *gve = ge->getEndVertex();
+	Vertex *vertb = FindPoint(abs(gvb->tag()));
+	Vertex *verte = FindPoint(abs(gve->tag()));
+	if (!vertb){
+	  vertb = Create_Vertex(gvb->tag(), gvb->x(), gvb->y(), gvb->z(),
+				gvb->prescribedMeshSizeAtVertex(), 1.0);
+	  Tree_Add(gm->getGEOInternals()->Points, &vertb);
+	  vertb->Typ = MSH_POINT;
+	  vertb->Num = gvb->tag();
+	 }
+	if (!verte){
+	  verte = Create_Vertex(gve->tag(), gve->x(), gve->y(), gve->z(),
+				gve->prescribedMeshSizeAtVertex(), 1.0);
+	  Tree_Add(gm->getGEOInternals()->Points, &verte);
+	  verte->Typ = MSH_POINT;
+	  verte->Num = gve->tag();
+	}
+
+	if (ge->geomType() == GEntity::Line){
+	  c = Create_Curve(numEdge, MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
+	}
+	else if (ge->geomType() == GEntity::DiscreteCurve){
+	  c = Create_Curve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
+	}
+	else if(ge->geomType() == GEntity::CompoundCurve){
+	  c = Create_Curve(numEdge, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
+	  std::vector<GEdge*> gec = ((GEdgeCompound*)ge)->getCompounds();
+	  for(unsigned int i = 0; i < gec.size(); i++)
+	    c->compound.push_back(gec[i]->tag());
+	}
+	else{
+	  c = Create_Curve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
+	}
+
+	c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
+	List_Add(c->Control_Points, &vertb);
+	List_Add(c->Control_Points, &verte);
+	c->beg = vertb;
+	c->end = verte;
+	End_Curve(c);
+
+	Tree_Add(gm->getGEOInternals()->Curves, &c);
+	CreateReversedCurve(c);
+      }
+      int signedNumEdge = numEdge*signedEdge.getSign();
+      List_Add(temp, &signedNumEdge);
+    }
+
+    int numl = gm->getMaxElementaryNumber(1) + i;
+    while (FindEdgeLoop(numl)){
+      numl++;
+      if (!FindEdgeLoop(numl)) break;
+    }
+    sortEdgesInLoop(numl, temp, orientEdges);
+    EdgeLoop *l = Create_EdgeLoop(numl, temp);
+    vecLoops.push_back(l);
+    Tree_Add(gm->getGEOInternals()->EdgeLoops, &l);
+    l->Num = numl;
+    List_Delete(temp);
+  }
+
+  //create surface
+  int numf  = gm->getMaxElementaryNumber(2)+1;
+  Surface *s = Create_Surface(numf, MSH_SURF_PLAN);
+  List_T *temp = List_Create(nLoops, nLoops, sizeof(int));
+  for (int i = 0; i < nLoops; i++){
+    int numl = vecLoops[i]->Num;
+    List_Add(temp, &numl);
+  }
+
+  setSurfaceGeneratrices(s, temp);
+  List_Delete(temp);
+  End_Surface(s);
+  Tree_Add(gm->getGEOInternals()->Surfaces, &s);
+
+  //gmsh surface
+  GFace *gf = new gmshFace(gm,s);
+  gm->add(gf);
+
+  return gf;
 }
 
 #if defined(HAVE_OCC)
@@ -1418,6 +1443,12 @@ GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
   return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(aResult));
 }
 
+GFace *OCCFactory::addPlanarFace(GModel *gm, const std::vector<std::vector<GEdgeSigned> > &edges)
+{
+  Msg::Error("addPlanarFace with oriented edges not implemented yet for OCCFactory");
+  return 0;
+}
+
 GEntity *OCCFactory::addPipe(GModel *gm, GEntity *base, std::vector<GEdge *> wire)
 {
   BRepBuilderAPI_MakeWire wire_maker;
@@ -1494,6 +1525,12 @@ GEdge* SGEOMFactory::addLine(GModel *gm,GVertex *v1, GVertex *v2)
 GFace* SGEOMFactory::addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges)
 {
   Msg::Error("addPlanarFace not implemented yet for SGEOMFactory");
+  return 0;
+}
+
+GFace* SGEOMFactory::addPlanarFace(GModel *gm, const std::vector<std::vector<GEdgeSigned> > &edges)
+{
+  Msg::Error("addPlanarFace with oriented edges not implemented yet for SGEOMFactory");
   return 0;
 }
 

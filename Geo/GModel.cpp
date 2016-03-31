@@ -2946,6 +2946,13 @@ GFace* GModel::addPlanarFace (std::vector<std::vector<GEdge *> > edges)
   return 0;
 }
 
+GFace* GModel::addPlanarFace (std::vector<std::vector<GEdgeSigned> > edges)
+{
+  if(_factory)
+    return _factory->addPlanarFace(this, edges);
+  return 0;
+}
+
 GRegion* GModel::addVolume (std::vector<std::vector<GFace *> > faces)
 {
   if(_factory)

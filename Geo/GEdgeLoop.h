@@ -22,7 +22,7 @@ struct GEdgeSigned
     return (_sign != 1) ? ge->getBeginVertex() : ge->getEndVertex();
   }
   void print() const;
-  int getSign(){ return _sign; }
+  int getSign() const { return _sign; }
 };
 
 class GEdgeLoop

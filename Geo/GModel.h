@@ -121,7 +121,7 @@ class GModel
 
   // store the parent's pointer back into MSubElements (replacing numeric id)
   void _storeParentsInSubElements(std::map< int, std::vector<MElement* > >& map);
-  
+
   // Discrete Entities have to have their mesh moved to a geometry container
   void _createGeometryOfDiscreteEntities(bool force=false);
 
@@ -523,6 +523,7 @@ class GModel
   std::vector<GFace *> addRuledFaces(std::vector<std::vector<GEdge *> > edges);
   GFace *addFace(std::vector<GEdge *> edges, std::vector< std::vector<double > > points);
   GFace *addPlanarFace(std::vector<std::vector<GEdge *> > edges);
+  GFace *addPlanarFace (std::vector<std::vector<GEdgeSigned> > edges);
   GFace *add2Drect(double x0, double y0, double dx, double dy);
   GFace *add2Dellips(double xc, double yc, double rx, double ry);
 

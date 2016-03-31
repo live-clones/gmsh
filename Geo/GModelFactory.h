@@ -13,6 +13,7 @@
 class GEntity;
 class GVertex;
 class GEdge;
+class GEdgeSigned;
 class GFace;
 class GRegion;
 class GModel;
@@ -31,6 +32,7 @@ class GModelFactory {
                              double lc) = 0;
   virtual GEdge *addLine(GModel *, GVertex *v1, GVertex *v2) = 0;
   virtual GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges) = 0;
+  virtual GFace *addPlanarFace(GModel *gm, const std::vector<std::vector<GEdgeSigned> > &edges) = 0;
   virtual GRegion*addVolume(GModel *gm, std::vector<std::vector<GFace *> > faces) = 0;
   virtual GEdge *addCircleArc(GModel *gm, GVertex *start, GVertex *center, GVertex *end)
   {
@@ -219,12 +221,16 @@ class GeoFactory : public GModelFactory {
   GVertex *addVertex(GModel *gm,double x, double y, double z, double lc);
   GEdge *addLine(GModel *gm,GVertex *v1, GVertex *v2);
   GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges);
+  GFace *addPlanarFace(GModel *gm, const std::vector<std::vector<GEdgeSigned> > &edges);
   GRegion *addVolume(GModel *gm, std::vector<std::vector<GFace *> > faces);
   GEdge *addCircleArc(GModel *gm,GVertex *begin, GVertex *center, GVertex *end);
   std::vector<GFace *> addRuledFaces(GModel *gm, std::vector<std::vector<GEdge *> > edges);
   std::vector<GEntity*> extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers,
                                              double hLayers, int dir, int view);
   void healGeometry(GModel *gm, double tolerance = -1.);
+
+private:
+  GFace *_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdgeSigned> > &edges, bool orientEdges);
 };
 
 #if defined(HAVE_OCC)
@@ -258,6 +264,7 @@ class OCCFactory : public GModelFactory {
   GFace *addFace(GModel *gm, std::vector<GEdge *> edges,
                  std::vector< std::vector<double > > points);
   GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges);
+  GFace *addPlanarFace(GModel *gm, const std::vector<std::vector<GEdgeSigned> > &edges);
   GFace *add2Drect(GModel *gm,double x0, double y0, double dx, double dy);
   GFace *add2Dellips(GModel *gm,double xc, double yc, double rx, double ry);
   GRegion *addVolume(GModel *gm, std::vector<std::vector<GFace *> > faces);
@@ -293,6 +300,7 @@ class SGEOMFactory : public GModelFactory {
   GVertex *addVertex(GModel *gm,double x, double y, double z, double lc);
   GEdge *addLine(GModel *gm,GVertex *v1, GVertex *v2);
   GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges);
+  GFace *addPlanarFace(GModel *gm, const std::vector<std::vector<GEdgeSigned> > &edges);
   GRegion *addVolume(GModel *gm, std::vector<std::vector<GFace *> > faces);
   void healGeometry(GModel *gm, double tolerance = -1.);
 };
