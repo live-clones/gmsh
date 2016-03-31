@@ -10,6 +10,7 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "BasisFactory.h"
+#include "JacobianBasis.h"
 #include "GModel.h"
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"

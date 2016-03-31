@@ -13,6 +13,7 @@
 #include "MHexahedron.h"
 #include "Numeric.h"
 #include "polynomialBasis.h"
+#include "JacobianBasis.h"
 #include "GmshMessage.h"
 #include <limits>
 #include <string.h>

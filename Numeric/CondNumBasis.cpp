@@ -312,7 +312,7 @@ inline void calcGradInvCondNum3D(double dxdX, double dxdY, double dxdZ,
 
 
 CondNumBasis::CondNumBasis(int tag, int cnOrder) :
-    _tag(tag), _dim(ElementType::DimensionFromTag(tag)),
+    _dim(ElementType::DimensionFromTag(tag)),
     _condNumOrder(cnOrder >= 0 ? cnOrder : condNumOrder(tag))
 {
   if ( ElementType::ParentTypeFromTag(tag) == TYPE_TRIH){

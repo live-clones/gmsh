@@ -7,9 +7,11 @@
 #include "GmshDefines.h"
 #include "polynomialBasis.h"
 #include "pyramidalBasis.h"
+#include "bezierBasis.h"
 #include "miniBasis.h"
 #include "MetricBasis.h"
 #include "CondNumBasis.h"
+#include "JacobianBasis.h"
 #include <map>
 #include <cstddef>
 
@@ -82,6 +84,25 @@ const JacobianBasis* BasisFactory::getJacobianBasis(FuncSpaceData fsd)
   return J;
 }
 
+const JacobianBasis* BasisFactory::getJacobianBasis(int tag, int order)
+{
+  const int type = ElementType::ParentTypeFromTag(tag);
+  if (type != TYPE_PYR)
+    return getJacobianBasis(FuncSpaceData(true, tag, order));
+  else
+    return getJacobianBasis(FuncSpaceData(true, tag, false, order+1, order));
+}
+
+const JacobianBasis* BasisFactory::getJacobianBasis(int tag)
+{
+  const int order = JacobianBasis::jacobianOrder(tag);
+  const int type = ElementType::ParentTypeFromTag(tag);
+  if (type != TYPE_PYR)
+    return getJacobianBasis(FuncSpaceData(true, tag, order));
+  else
+    return getJacobianBasis(FuncSpaceData(true, tag, false, order+2, order));
+}
+
 const MetricBasis* BasisFactory::getMetricBasis(int tag)
 {
   std::map<int, MetricBasis*>::const_iterator it = ms.find(tag);
@@ -112,6 +133,16 @@ const GradientBasis* BasisFactory::getGradientBasis(FuncSpaceData data)
   return G;
 }
 
+const GradientBasis* BasisFactory::getGradientBasis(int tag, int order)
+{
+  return getGradientBasis(FuncSpaceData(true, tag, order));
+}
+
+const GradientBasis* BasisFactory::getGradientBasis(int tag)
+{
+  return getGradientBasis(FuncSpaceData(tag));
+}
+
 const bezierBasis* BasisFactory::getBezierBasis(FuncSpaceData fsd)
 {
   FuncSpaceData data = fsd.getForPrimaryElement();
@@ -122,6 +153,17 @@ const bezierBasis* BasisFactory::getBezierBasis(FuncSpaceData fsd)
   bezierBasis* B = new bezierBasis(data);
   bs.insert(std::make_pair(data, B));
   return B;
+}
+
+const bezierBasis* BasisFactory::getBezierBasis(int parentTag, int order)
+{
+  int primaryTag = ElementType::getTag(parentTag, 1);
+  return getBezierBasis(FuncSpaceData(true, primaryTag, order));
+}
+
+const bezierBasis* BasisFactory::getBezierBasis(int tag)
+{
+  return getBezierBasis(FuncSpaceData(tag));
 }
 
 void BasisFactory::clearAll()

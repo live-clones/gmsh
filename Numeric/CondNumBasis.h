@@ -8,15 +8,14 @@
 
 #include <map>
 #include <vector>
-#include "JacobianBasis.h"
 #include "fullMatrix.h"
-
+#include "JacobianBasis.h"
 
 class CondNumBasis {
  private:
   const GradientBasis *_gradBasis;
 
-  const int _tag, _dim, _condNumOrder;
+  const int _dim, _condNumOrder;
 
   fullVector<double> primGradShapeBarycenterX, primGradShapeBarycenterY,
                      primGradShapeBarycenterZ;

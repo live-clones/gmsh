@@ -11,16 +11,18 @@
 #include <string>
 
 #include "GmshMessage.h"
+#include "ElementType.h"
 #include "MVertex.h"
 #include "MEdge.h"
 #include "MFace.h"
+#include "FuncSpaceData.h"
 #include "nodalBasis.h"
 #include "polynomialBasis.h"
-#include "JacobianBasis.h"
 #include "MetricBasis.h"
 #include "GaussIntegration.h"
 
 class GModel;
+class JacobianBasis;
 
 // A mesh element.
 class MElement

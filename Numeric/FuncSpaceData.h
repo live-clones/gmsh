@@ -35,7 +35,6 @@ private:
   // otherwise,
   //   the space is {X^i Y^j Z^k | i,j <= '_nij', k <= '_nk'}, (hex-like space)
   // where X = xi/(1-zeta), Y = eta/(1-zeta) and Z = (1-zeta).
-  // Note that (x, y, z) are here the reference coordinates.
 
 public:
 

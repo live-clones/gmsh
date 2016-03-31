@@ -35,6 +35,7 @@
 #include "ParamCoord.h"
 #include "OptHomMesh.h"
 #include "BasisFactory.h"
+#include "JacobianBasis.h"
 #include "OptHomIntegralBoundaryDist.h"
 
 Mesh::Mesh(const std::map<MElement*,GEntity*> &element2entity,
