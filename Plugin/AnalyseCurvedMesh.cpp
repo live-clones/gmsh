@@ -12,47 +12,12 @@
 #include "PView.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "bezierBasis.h"
 #include "MetricBasis.h"
 #include <sstream>
+#include <fstream>
+#include "qualityMeasuresJacobian.h"
 
-namespace {
-
-class BezierJacobian;
-struct lessMinVal {
-  bool operator()(BezierJacobian*, BezierJacobian*) const;
-};
-struct lessMax {
-  bool operator()(BezierJacobian*, BezierJacobian*) const;
-};
-
-class BezierJacobian
-{
-private:
-  fullVector<double> _jacBez;
-  double _minL, _maxL, _minB, _maxB; //Extremum of Jac at corners and of bezier values
-  int _depthSub;
-  const bezierBasis *_bfs;
-
-public:
-  BezierJacobian(fullVector<double>&, const bezierBasis*, int depth);
-  void subDivisions(fullVector<double> &vect) const
-    {_bfs->subDivisor.mult(_jacBez, vect);}
-
-  bool boundsOk(double tol, double minL, double maxL) {
-    return (minL <= 0 || _minB > 0) &&
-           minL - _minB <= tol &&
-           _maxB - maxL <= tol;
-  }
-
-  inline int depth() const {return _depthSub;}
-  inline double minL() const {return _minL;}
-  inline double maxL() const {return _maxL;}
-  inline double minB() const {return _minB;}
-  inline double maxB() const {return _maxB;}
-};
-
-} // namespace
+class bezierBasis;
 
 StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "Show: 0:J, 1:R, 2:J&&R", NULL, 1},
@@ -61,6 +26,7 @@ StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "Dimension of elements", NULL, -1},
   {GMSH_FULLRC, "Recompute bounds", NULL, 0},
   {GMSH_FULLRC, "Tolerance", NULL, 1e-3}
+  // tolerance: To be removed when MetricBasis => qualityMeasuresJacobian
 };
 extern "C"
 {
@@ -80,7 +46,7 @@ StringXNumber *GMSH_AnalyseCurvedMeshPlugin::getOption(int iopt)
 std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
 {
   return "Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. "
-    "It computes, min(J) where J is the scaled Jacobian determinant and, if "
+    "It computes, min(J) where J is the Jacobian determinant and, if "
     "asked, min(R) where R is the ratio between the smaller and the greater "
     "of the eigenvalues of the metric. It creates a PView and hides "
     "elements for which min({J, R}) < 'Hidding threshold'.\n"
@@ -91,11 +57,11 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
     "Parameters:\n"
     "\n"
     "- Show [...] = {0, 1, 2}: If 0, computes Jacobian and shows min(J). If 1, "
-    "computes Jacobian and metric and shows min(R). If 2, behaves like it is 1 "
-    "but draw the two min(J) and min(R) PView\n"
+    "computes Jacobian and metric and shows min(R). If 2, behaves as if it is "
+    "1 but shows both min(J) and min(R).\n"
     "\n"
     "- Draw PView = {0, 1}: Creates a PView of min({J, R}) if it does not "
-    "exist already. If 'Recompute' = 1, a new PView is redrawed.\n"
+    "already exists. If 'Recompute' = 1, a new PView is redrawed.\n"
     "\n"
     "- Hidding threshold = [0,1]: Hides all element for which min(R) or min(J) "
     "is strictly greater than the threshold. If = 1, no effect, if = 0 hide "
@@ -172,12 +138,14 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
         for (unsigned int i = 0; i < _data.size(); ++i) {
           MElement *const el = _data[i].element();
           if (el->getDim() == dim) {
-            dataPV[el->getNum()].push_back(_data[i].minJ());
+            double q = 0;
+            if (_data[i].minJ() > 0) q = _data[i].minJ()/_data[i].maxJ();
+            dataPV[el->getNum()].push_back(q);
           }
         }
         if (dataPV.size()) {
           std::stringstream name;
-          name << "min J " << dim << "D";
+          name << "minJ/maxJ " << dim << "D";
           new PView(name.str().c_str(), "ElementData", _m, dataPV);
         }
       }
@@ -194,6 +162,18 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
           name << "min R " << dim << "D";
           new PView(name.str().c_str(), "ElementData", _m, dataPV);
         }
+
+        /*std::map<int, std::vector<double> > dataPV2;
+        for (unsigned int i = 0; i < _data.size(); ++i) {
+          MElement *const el = _data[i].element();
+          if (el->getDim() == dim)
+            dataPV2[el->getNum()].push_back(_data[i].minR()/_data[i].minRR());
+        }
+        if (dataPV.size()) {
+          std::stringstream name;
+          name << "min RR " << dim << "D";
+          new PView(name.str().c_str(), "ElementData", _m, dataPV2);
+        }*/
       }
     }
   }
@@ -263,99 +243,10 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
 
 void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el, int numEl)
 {
-  if (numEl < 1)
-    return;
-
-  const JacobianBasis *jfs = el[0]->getJacobianFuncSpace();
-  if (!jfs) {
-    Msg::Error("Jacobian function space not implemented for type of element %d", el[0]->getNum());
-    return;
-  }
-  const bezierBasis *bfs = jfs->getBezier();
-
-  _data.reserve(_data.size() + numEl);
-
-  const int numSamplingPt = jfs->getNumJacNodes();
-  const int numMapNodes = jfs->getNumMapNodes();
-  fullVector<double> jacobian(numSamplingPt);
-  fullVector<double> jacBez(numSamplingPt);
-  fullVector<double> subJacBez(bfs->getNumSubNodes());
-
   for (int k = 0; k < numEl; ++k) {
-    fullMatrix<double> nodesXYZ(numMapNodes,3);
-    el[k]->getNodesCoord(nodesXYZ);
-    jfs->getScaledJacobian(nodesXYZ,jacobian);
-    jfs->lag2Bez(jacobian, jacBez);
-
-    BezierJacobian *bj = new BezierJacobian(jacBez, bfs, 0);
-    std::vector<BezierJacobian*> heap;
-    heap.push_back(bj);
-
-    double minL = bj->minL(), maxL = bj->maxL();
-    int currentDepth = 0;
-
-    while (!heap[0]->boundsOk(_tol, minL, maxL)) {
-      bj = heap[0];
-      pop_heap(heap.begin(), heap.end(), lessMinVal());
-      heap.pop_back();
-
-      bj->subDivisions(subJacBez);
-      currentDepth = bj->depth() + 1;
-      if (currentDepth > 20) {
-        static int a = 0;
-        if (++a == 1)
-          Msg::Error("depth is too damn high ! elem type %d",
-                     el[k]->getTypeForMSH());
-      }
-
-      for (int i = 0; i < bfs->getNumDivision(); i++) {
-        jacBez.setAsProxy(subJacBez, i * numSamplingPt, numSamplingPt);
-        BezierJacobian *newbj = new BezierJacobian(jacBez, bfs, currentDepth);
-        minL = std::min(minL, newbj->minL());
-        maxL = std::max(maxL, newbj->maxL());
-
-        heap.push_back(newbj);
-        push_heap(heap.begin(), heap.end(), lessMinVal());
-      }
-      delete bj;
-    }
-
-    make_heap(heap.begin(), heap.end(), lessMax());
-
-    while (!heap[0]->boundsOk(_tol, minL, maxL)) {
-      bj = heap[0];
-      pop_heap(heap.begin(), heap.end(), lessMax());
-      heap.pop_back();
-
-      bj->subDivisions(subJacBez);
-      currentDepth = bj->depth() + 1;
-      if (currentDepth > 20) {
-        static int a = 0;
-        if (++a == 1)
-          Msg::Error("depth is too damn high ! elem type %d",
-                     el[k]->getTypeForMSH());
-      }
-
-      for (int i = 0; i < bfs->getNumDivision(); i++) {
-        jacBez.setAsProxy(subJacBez, i * numSamplingPt, numSamplingPt);
-        BezierJacobian *newbj = new BezierJacobian(jacBez, bfs, currentDepth);
-        minL = std::min(minL, newbj->minL());
-        maxL = std::max(maxL, newbj->maxL());
-
-        heap.push_back(newbj);
-        push_heap(heap.begin(), heap.end(), lessMax());
-      }
-      delete bj;
-    }
-
-    double minB = minL;
-    double maxB = maxL;
-    for (unsigned int i = 0; i < heap.size(); ++i) {
-      minB = std::min(minB, heap[i]->minB());
-      maxB = std::max(maxB, heap[i]->maxB());
-      delete heap[i];
-    }
-    _data.push_back(CurvedMeshPluginData(el[k], minB, maxB));
+    double min, max;
+    jacobianBasedQuality::minMaxJacobianDeterminant(el[k], min, max);
+    _data.push_back(data_elementMinMax(el[k], min, max));
   }
 }
 
@@ -370,13 +261,20 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinR(int dim)
 
   for (unsigned int i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
+    //if (el->getNum() != 10535) continue;
+    /*if (el->getNum() != 2712 &&
+        el->getNum() != 3378 &&
+        el->getNum() != 3997 &&
+        el->getNum() != 4314) continue;*/
     if (el->getDim() == dim) {
       if (_data[i].minJ() <= 0)
         _data[i].setMinR(0);
-      else if (_data[i].maxJ() - _data[i].minJ() < _tol * 1e-2)
-        _data[i].setMinR(MetricBasis::minSampledR(el, 0));
-      else
-        _data[i].setMinR(MetricBasis::boundMinR(el));
+      else {
+        _data[i].setMinR(MetricBasis::getMinR(el));
+        //_data[i].setMinR(jacobianBasedQuality::minScaledJacobian(el));
+        //_data[i].setMinR(MetricBasis::getMinSampledR(el, 10));
+      }
+      //_data[i].setMinRR(MetricBasis::getMaxSampledR(el, 10));
     }
     if (i >= nextCheck) {
       nextCheck += _data.size() / 100;
@@ -386,11 +284,38 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinR(int dim)
           (curTime - time > 15. && curPercentage < 5)) {
         percentage = curPercentage;
         time = curTime;
-        Msg::StatusBar(true, "%d%% (remaining time ~%g secondes)",
-            percentage, (time-initial) / (i+1) * (_data.size() - i-1));
+        const double remaining = (time-initial) / (i+1) * (_data.size() - i-1);
+        if (remaining < 300)
+          Msg::StatusBar(true, "%d%% (remaining time ~%g seconds)",
+              percentage, remaining);
+        else if (remaining < 60*60*2)
+          Msg::StatusBar(true, "%d%% (remaining time ~%g minutes)",
+              percentage, remaining/60);
+        else
+          Msg::StatusBar(true, "%d%% (remaining time ~%g hours)",
+              percentage, remaining/3600);
       }
     }
   }
+
+  /*std::fstream file;
+  file.open("comparisonMyMetric_and_Jacobian_vs_minr_maxr.txt", std::fstream::out);
+  file << _data.size() << std::endl;
+
+  int n = 0, next = _data.size()/100;
+  double tm = Cpu();
+  for (unsigned int i = 0; i < _data.size(); ++i) {
+    if (++n > next) {
+      Msg::Info("%d%% %g seconds", n*100/_data.size(), Cpu()-tm);
+      next += _data.size()/100;
+    }
+    MElement *const el = _data[i].element();
+    file << _data[i].minJ() << " ";
+    file << _data[i].maxJ() << " ";
+    file << _data[i].minR() << " ";
+    file << MetricBasis::minSampledGlobalRatio(el, 7) << std::endl;
+  }
+  file.close();*/
 
   _computedR[dim-1] = true;
 }
@@ -452,7 +377,9 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
   avgminJ = avgratJ = 0;
 
   for (unsigned int i = 0; i < _data.size(); ++i) {
-    if (_data[i].maxJ() - _data[i].minJ() > _tol * 1e-2) {
+    double q = 0;
+    if ( _data[i].minJ() > 0) q = _data[i].minJ() / _data[i].maxJ();
+    if (q < 1-1e-3) {
       infminJ = std::min(infminJ, _data[i].minJ());
       supminJ = std::max(supminJ, _data[i].minJ());
       avgminJ += _data[i].minJ();
@@ -471,33 +398,26 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
       infratJ, supratJ, avgratJ, count);
 }
 
-BezierJacobian::BezierJacobian(fullVector<double> &v,
-    const bezierBasis *bfs, int depth)
+// For testing
+void GMSH_AnalyseCurvedMeshPlugin::computeMinR(MElement *const *el,
+                                               int numEl,
+                                               double *minR,
+                                               bool *straight)
 {
-  _jacBez = v;
-  _depthSub = depth;
-  _bfs = bfs;
+  _computedJ[el[0]->getDim()-1] = false;
+  _computedR[el[0]->getDim()-1] = false;
+  _data.clear();
 
-  _minL = _maxL = v(0);
-  int i = 1;
-  for (; i < bfs->getNumLagCoeff(); i++) {
-    if (_minL > v(i)) _minL = v(i);
-    if (_maxL < v(i)) _maxL = v(i);
+  _computeMinMaxJandValidity(el, numEl);
+  _computeMinR(el[0]->getDim());
+  if (minR) {
+    for (unsigned int i = 0; i < _data.size(); ++i) {
+      minR[i] = _data[i].minR();
+    }
   }
-  _minB = _minL;
-  _maxB = _maxL;
-  for (; i < v.size(); i++) {
-    if (_minB > v(i)) _minB = v(i);
-    if (_maxB < v(i)) _maxB = v(i);
+  if (straight) {
+    for (unsigned int i = 0; i < _data.size(); ++i) {
+      straight[i] = 0;
+    }
   }
-}
-
-bool lessMinVal::operator()(BezierJacobian *bj1, BezierJacobian *bj2) const
-{
-  return bj1->minB() > bj2->minB();
-}
-
-bool lessMax::operator()(BezierJacobian *bj1, BezierJacobian *bj2) const
-{
-  return bj1->maxB() < bj2->maxB();
 }
