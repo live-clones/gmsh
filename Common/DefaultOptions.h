@@ -946,9 +946,15 @@ StringXNumber GeometryOptions_Number[] = {
 
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_AUTO ,
-    "2D mesh algorithm (1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=bamg, 8=delquad)" },
-  { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
-    "3D mesh algorithm (1=Delaunay, 2=New Delaunay, 4=Frontal, 5=Frontal Delaunay, 6=Frontal Hex, 7=MMG3D, 9=R-tree)" },
+    "2D mesh algorithm (1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=BAMG, 8=DelQuad)" },
+  { F|O, "Algorithm3D" , opt_mesh_algo3d ,
+#if defined(HAVE_TETGEN)
+    ALGO_3D_DELAUNAY ,
+#else
+    ALGO_3D_DELAUNAY_NEW ,
+#endif
+    "3D mesh algorithm (1=Delaunay, 2=New Delaunay, 4=Frontal, 5=Frontal Delaunay, "
+    "6=Frontal Hex, 7=MMG3D, 9=R-tree)" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
     "Threshold angle below which normals are not smoothed" },
   { F|O, "AnisoMax" , opt_mesh_aniso_max, 1.e33,
@@ -1044,7 +1050,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
     "Allow transfinite contraints to be modified for Blossom or by global mesh size factor" },
   { F|O, "NewtonConvergenceTestXYZ" , opt_mesh_newton_convergence_test_xyz , 0. ,
-    "Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coordinates (experimental)" },
+    "Force inverse surface mapping algorithm (Newton-Raphson) to converge in real "
+    "coordinates (experimental)" },
   { F|O, "Format" , opt_mesh_file_format , FORMAT_AUTO ,
     "Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 26=pos statistics, 27=stl, "
     "30=mesh, 31=bdf, 32=cgns, 33=med, 39=inp, 40=ply2)" },
@@ -1186,7 +1193,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "IgnorePartitionBoundary" , opt_mesh_ignore_part_bound , 0. ,
     "Ignore partitions boundaries (0=no, 1=yes)"},
   { F|O, "PreserveNumberingMsh2" , opt_mesh_preserve_numbering_msh2 , 0. ,
-    "Preserve element numbering in MSH2 format (will break meshes with multiple physical groups for a single elementary entity)"},
+    "Preserve element numbering in MSH2 format (will break meshes with multiple "
+    "physical groups for a single elementary entity)"},
 #if defined(HAVE_BLOSSOM)
   { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 1 ,
 #else
@@ -1200,7 +1208,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Recombine3DLevel" , opt_mesh_recombine3d_level , 0 ,
     "3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids)" },
   { F|O, "Recombine3DConformity" , opt_mesh_recombine3d_conformity , 0 ,
-    "3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)" },
+    "3d recombination conformity type (0: nonconforming, 1: trihedra, "
+    "2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)" },
   { F|O, "DoRecombinationTest" , opt_mesh_do_recombination_test , 0 ,
     "Apply recombination algorithm for test" },
   { F|O, "RecombinationTestHorizStart" , opt_mesh_recombination_test_start , 1 ,
@@ -1210,8 +1219,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "RemeshAlgorithm" , opt_mesh_remesh_algo , 0 ,
     "Remeshing algorithm (0=no split, 1=automatic, 2=automatic only with metis)" },
   { F|O, "RemeshParametrization" , opt_mesh_remesh_param , 4 ,
-    "Remeshing using discrete parametrization (0=harmonic_circle, 1=conformal_spectral, 2=rbf, 3=harmonic_plane, 4=convex_circle, 5=convex_plane, 6=harmonic square, 7=conformal_fe" },
-
+    "Remeshing using discrete parametrization (0=harmonic_circle, 1=conformal_spectral, "
+    "2=rbf, 3=harmonic_plane, 4=convex_circle, 5=convex_plane, 6=harmonic square, "
+    "7=conformal_fe" },
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" },
   { F|O, "ReverseAllNormals" , opt_mesh_reverse_all_normals , 0. ,
@@ -1670,7 +1680,8 @@ StringXNumber PrintOptions_Number[] = {
     "Composite all window tiles in the same output image (for bitmap output only)" },
 
   { F|O, "PgfTwoDim" , opt_print_pgf_two_dim , 1. ,
-    "Output PGF format for two dimensions. Mostly irrelevant if `PgfExportAxis=0`. Default `1` (yes)." },
+    "Output PGF format for two dimensions. Mostly irrelevant if `PgfExportAxis=0`. "
+    "Default `1` (yes)." },
 
   { F|O, "PgfExportAxis" , opt_print_pgf_export_axis , 0. ,
     "Include axis in export pgf code (not in the png). Default `0` (no)." },
