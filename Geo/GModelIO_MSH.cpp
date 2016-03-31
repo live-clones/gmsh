@@ -159,7 +159,6 @@ int GModel::readMSH(const std::string &name)
 
   char str[256] = "";
 
-
   // detect prehistoric MSH files
   if(!fgets(str, sizeof(str), fp)){ fclose(fp); return 0; }
   if(!strncmp(&str[1], "NOD", 3) || !strncmp(&str[1], "NOE", 3)){

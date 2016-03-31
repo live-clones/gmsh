@@ -8,8 +8,9 @@
 
 #include "GEdge.h"
 
-struct GEdgeSigned
+class GEdgeSigned
 {
+ public:
   int _sign;
   GEdge *ge;
   GEdgeSigned(int i, GEdge *g) : _sign(i), ge(g) {}
