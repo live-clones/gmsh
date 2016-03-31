@@ -312,7 +312,7 @@ inline void calcGradInvCondNum3D(double dxdX, double dxdY, double dxdZ,
 
 
 CondNumBasis::CondNumBasis(int tag, int cnOrder) :
-    _dim(ElementType::DimensionFromTag(tag)),
+    _tag(tag), _dim(ElementType::DimensionFromTag(tag)),
     _condNumOrder(cnOrder >= 0 ? cnOrder : condNumOrder(tag))
 {
   if ( ElementType::ParentTypeFromTag(tag) == TYPE_TRIH){
@@ -433,10 +433,10 @@ inline void CondNumBasis::getInvCondNumGeneral(int nCondNumNodes,
     }
 
     case 3 : {
-      /*  FIXME Amaury if (ElementType::ParentTypeFromTag(_tag) == TYPE_TRIH){
+      if (ElementType::ParentTypeFromTag(_tag) == TYPE_TRIH){
         for (int i = 0; i < nCondNumNodes; i++) condNum(i) = 1.;
         break;
-        }*/
+      }
       fullMatrix<double> dxyzdX(nCondNumNodes, 3), dxyzdY(nCondNumNodes, 3), dxyzdZ(nCondNumNodes, 3);
       gSMatX.mult(nodesXYZ, dxyzdX);
       gSMatY.mult(nodesXYZ, dxyzdY);
@@ -448,7 +448,7 @@ inline void CondNumBasis::getInvCondNumGeneral(int nCondNumNodes,
         condNum(i) = calcInvCondNum3D<sign>(dxdX, dxdY, dxdZ,
                                             dydX, dydY, dydZ,
                                             dzdX, dzdY, dzdZ);
-     }
+      }
       break;
     }
   }
@@ -530,7 +530,7 @@ inline void CondNumBasis::getInvCondNumAndGradientsGeneral(int nCondNumNodes,
     }
 
     case 3 : {
-      /* FIXME Amaury if (ElementType::ParentTypeFromTag(_tag) == TYPE_TRIH){
+      if (ElementType::ParentTypeFromTag(_tag) == TYPE_TRIH){
         for (int i = 0; i < nCondNumNodes; i++) {
           for (int j = 0; j < _nMapNodes; j++) {
             IDI(i,j) = 0.;
@@ -540,7 +540,7 @@ inline void CondNumBasis::getInvCondNumAndGradientsGeneral(int nCondNumNodes,
           IDI(i,3*_nMapNodes) = 1.;
         }
         break;
-        }*/
+      }
       fullMatrix<double> dxyzdX(nCondNumNodes,3), dxyzdY(nCondNumNodes,3), dxyzdZ(nCondNumNodes,3);
       gSMatX.mult(nodesXYZ, dxyzdX);
       gSMatY.mult(nodesXYZ, dxyzdY);

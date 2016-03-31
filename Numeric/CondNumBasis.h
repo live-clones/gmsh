@@ -15,7 +15,7 @@ class CondNumBasis {
  private:
   const GradientBasis *_gradBasis;
 
-  const int _dim, _condNumOrder;
+  const int _tag, _dim, _condNumOrder;
 
   fullVector<double> primGradShapeBarycenterX, primGradShapeBarycenterY,
                      primGradShapeBarycenterZ;
