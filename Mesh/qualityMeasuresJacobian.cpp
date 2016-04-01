@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
+#include <limits>
 #include "qualityMeasuresJacobian.h"
 #include "MElement.h"
 #include "BasisFactory.h"
