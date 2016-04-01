@@ -91,7 +91,7 @@ class SVector3 {
   }
   const double* data() const {return P.data();}
   double* data() {return P.data();}
-  double axpy(const double a, const SVector3& y){
+  void axpy(const double a, const SVector3& y){
     for (int i=0; i<3; i++){
       P[i] += (a*y[i]);
     }
