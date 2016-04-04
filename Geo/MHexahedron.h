@@ -372,6 +372,12 @@ class MHexahedron27 : public MHexahedron {
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
 
+  virtual MVertex *getVertexINP(int num)
+  {
+    static const int map[27] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 13, 9, 16, 18, 19,
+                                17, 10, 12, 14, 15, 26, 20, 25, 21, 23, 24, 22};
+    return getVertex(map[num]);
+  }
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[27] = {6, 8, 26, 24, 0, 2, 20, 18, 7, 15, 3, 17, 5, 25,
@@ -419,6 +425,7 @@ class MHexahedron27 : public MHexahedron {
   virtual int getTypeForVTK() const { return 29; }
   virtual const char *getStringForPOS() const { return "SH2"; }
   virtual const char *getStringForDIFF() const { return "ElmB27n3D"; }
+  virtual const char *getStringForINP() const { return "C3D27"; }
   virtual void reverse()
   {
     MVertex *tmp;
