@@ -353,8 +353,7 @@ namespace onelab{
   };
 
   // The number class. Numbers are stored internally as double precision real
-  // numbers. All more complicated types (complex numbers, vectors, expressions,
-  // functions, etc.) are supposed to be exchanged as strings.
+  // numbers.
   class number : public parameter{
   private:
     std::vector<double> _values, _choices;

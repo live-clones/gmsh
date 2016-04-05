@@ -23,6 +23,7 @@ double MetricBasis::_tol = 1e-3;
 //TODO Renommer fonctions plus explicitement (minmaxA,...) et rendre statique certaines fonctions
 
 namespace {
+  /*
   double cubicCardanoRoot(double p, double q)
   {
     // solve the equation t^3 + p*t + q = 0
@@ -47,7 +48,7 @@ namespace {
       return 2 * std::pow(module, 1/3.) * std::cos(ang/3);
     }
   }
-
+  */
   int nChoosek(int n, int k)
   {
     if (n < k || k < 0) {
@@ -688,7 +689,7 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
 
     // Create 'numElem' elements more and more randomized
     for (int iel = 0; iel < numElem; ++iel) {
-      const double range = static_cast<double>(iel) / (numElem-1) / order;
+      //const double range = static_cast<double>(iel) / (numElem-1) / order;
       const double rangePrim = static_cast<double>(iel/2000) / ((numElem/2000)-1) / order; ////////
       const double rangeSub = static_cast<double>(iel%2000) / 1999 / order;                ////////
       if (!(iel%200)) Msg::Info("%g %g", rangePrim, rangeSub);
@@ -1977,7 +1978,7 @@ void MetricBasis::_computeBoundingCurve(const fullMatrix<double> &coeff,
   itP = _ineqP3.begin();
 
   // _ineqJ2 and _ineqP3 have the same size
-  int kk = 0;
+  //int kk = 0;
   while (itJ != _ineqJ2.end()) {// && kk++ < 2) {// FIXME making tests
     long double J2 = 0;
     for (unsigned int k = 0; k < itJ->second.size(); ++k) {
@@ -2313,7 +2314,7 @@ bool MetricBasis::_intersectionCurveLeftCorner(double beta, double c,
   }
 
   const double minK = K;
-  const double mina = a; //TODO remove (not needed)
+  //const double mina = a; //TODO remove (not needed)
 
   K = (beta*a*a + c)*a;
   if (K >= minK) return true;
