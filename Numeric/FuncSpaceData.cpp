@@ -6,6 +6,22 @@
 #include "FuncSpaceData.h"
 #include "MElement.h"
 
+FuncSpaceData::FuncSpaceData(const FuncSpaceData &fsd,
+                             int order,
+                             const bool *serendip) :
+  _tag(fsd._tag), _spaceOrder(order),
+  _serendipity(serendip ? *serendip : fsd._serendipity),
+  _nij(0), _nk(_spaceOrder), _pyramidalSpace(fsd._pyramidalSpace)
+{}
+
+FuncSpaceData::FuncSpaceData(const FuncSpaceData &fsd,
+                             int nij, int nk,
+                             const bool *serendip) :
+  _tag(fsd._tag), _spaceOrder(fsd._pyramidalSpace ? nij+nk : std::max(nij, nk)),
+  _serendipity(serendip ? *serendip : fsd._serendipity),
+  _nij(nij), _nk(nk), _pyramidalSpace(fsd._pyramidalSpace)
+{}
+
 FuncSpaceData::FuncSpaceData(const MElement *el, const bool *serendip) :
   _tag(el->getTypeForMSH()), _spaceOrder(el->getPolynomialOrder()),
   _serendipity(serendip ? *serendip : el->getIsOnlySerendipity()),

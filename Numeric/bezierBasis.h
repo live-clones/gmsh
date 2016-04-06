@@ -99,7 +99,7 @@ private :
     _Data(double vv, int ii, int jj = -1, int kk = -1) :
       i(ii), j(jj), k(kk), val(vv) {}
   };
-  std::map<int, std::vector<_Data> > _raiser1, _raiser2, _raiser3;
+  std::vector<std::vector<_Data> > _Raiser2, _Raiser3;
   const bezierBasis *_bfs;
 
 public:
@@ -107,8 +107,6 @@ public:
     _fillRaiserData();
   };
 
-  // Warning: Those method return a vector or a matrix of Bezier coefficients
-  // that are not stocked in the same order than what is expected as input.
   void computeCoeff(const fullVector<double> &coeffA,
                     const fullVector<double> &coeffB,
                     fullVector<double> &coeffSquare);
@@ -123,13 +121,6 @@ public:
                     const fullMatrix<double> &coeffB,
                     const fullMatrix<double> &coeffC,
                     fullMatrix<double> &coeffCubic);
-
-  // Method returning a vector/matrix whose coeff are in the order defined in
-  // this class:
-  void reorder(const fullVector<double> &orig,
-               fullVector<double> &reordered);
-  void reorder(const fullMatrix<double> &orig,
-               fullMatrix<double> &reordered);
 
 private:
   void _fillRaiserData();

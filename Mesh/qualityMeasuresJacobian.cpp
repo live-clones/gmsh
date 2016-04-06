@@ -36,7 +36,7 @@ _CoeffDataJac::_CoeffDataJac(fullVector<double> &v,
   // copy data that are not used outside of this object.
   // It remains to swap ownership:
   v.setOwnData(false);
-  ((fullVector<double>)_coeffs).setOwnData(true);
+  const_cast<fullVector<double>&>(_coeffs).setOwnData(true);
 
   _minL = _maxL = v(0);
   int i = 1;
@@ -94,10 +94,8 @@ _CoeffDataScaledJac::_CoeffDataScaledJac(fullVector<double> &det,
   // It remains to swap ownerships:
   det.setOwnData(false);
   mat.setOwnData(false);
-  const fullVector<double> *p1 = &_coeffsJacDet;
-  const fullMatrix<double> *p2 = &_coeffsJacMat;
-  ((fullVector<double>*)p1)->setOwnData(true);
-  ((fullMatrix<double>*)p2)->setOwnData(true);
+  const_cast<fullVector<double>&>(_coeffsJacDet).setOwnData(true);
+  const_cast<fullMatrix<double>&>(_coeffsJacMat).setOwnData(true);
 
   _computeAtCorner(_minL, _maxL);
   _minB = _computeLowerBound();
@@ -123,9 +121,6 @@ void _CoeffDataScaledJac::_computeAtCorner(double &min, double &max) const
 
 double _CoeffDataScaledJac::_computeLowerBound() const
 {
-  fullVector<double> coeffNumerator;
-  _bfsDet->getRaiser()->reorder(_coeffsJacDet, coeffNumerator);
-
   fullVector<double> coeffDenominator;
   {
     fullVector<double> v[3];
@@ -145,7 +140,7 @@ double _CoeffDataScaledJac::_computeLowerBound() const
     }
   }
 
-  return _computeBoundRational(coeffNumerator, coeffDenominator, true);
+  return _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
 }
 
 bool _CoeffDataScaledJac::boundsOk(double minL, double maxL) const
@@ -288,8 +283,6 @@ void minScaledJacobian(MElement *el, double &min)
     min = std::min(min, domains[i]->minB());
     delete domains[i];
   }
-
-  Msg::Info("=====================================================min %g", min);
 }
 
 double minScaledJacobian(MElement *el)

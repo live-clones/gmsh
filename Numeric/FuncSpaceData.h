@@ -42,6 +42,14 @@ public:
     : _tag(-1), _spaceOrder(-1), _serendipity(false), _nij(-1), _nk(-1),
       _pyramidalSpace(false) {}
 
+  // Constructors of the function space of a different order
+  FuncSpaceData(const FuncSpaceData &fsd,
+                int order,
+                const bool *serendip = NULL);
+  FuncSpaceData(const FuncSpaceData &fsd,
+                int nij, int nk,
+                const bool *serendip = NULL);
+
   // Constructors using MElement*
   FuncSpaceData(const MElement *el, const bool *serendip = NULL);
   FuncSpaceData(const MElement *el, int order, const bool *serendip = NULL);
@@ -49,13 +57,12 @@ public:
                 bool pyr, int nij, int nk,
                 const bool *serendip = NULL);
 
-  // Constructors using element tag
+  // Constructor using element tag
   FuncSpaceData(int tag, const bool *serendip = NULL);
 
   // constructors using element tag or element type
   FuncSpaceData(bool isTag, int tagOrType, int order,
                 const bool *serendip = NULL, bool elemIsSerendip = false);
-
   FuncSpaceData(bool isTag, int tagOrType, bool pyr, int nij, int nk,
                 const bool *serendip = NULL, bool elemIsSerendip = false);
 
