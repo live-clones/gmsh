@@ -10,13 +10,12 @@
 smooth_data* ExtrudeParams::normals[2] = {0, 0};
 std::vector<SPoint3> ExtrudeParams::normalsCoherence;
 
-// Added by Trevor Strickler to scale last layer size locally
-// If one section of the boundary layer index = 0 or 1  is not supposed to be
-// scaled...that section's normals will have scaleFactor = 1.0 (exactly  1.0 to all sig figs)
-// ...however, if that non-scaled
-// section borders a scaled section, the boundary normals will extrude consistently (an
-// average of scaled and non-scaled heights).
-bool ExtrudeParams::calcLayerScaleFactor[2] = {0,0};  // Added by Trevor Strickler
+// Scale last layer size locally If one section of the boundary layer index = 0
+// or 1 is not supposed to be scaled...that section's normals will have
+// scaleFactor = 1.0 (exactly 1.0 to all sig figs) ...however, if that
+// non-scaled section borders a scaled section, the boundary normals will
+// extrude consistently (an average of scaled and non-scaled heights).
+bool ExtrudeParams::calcLayerScaleFactor[2] = {0, 0};
 
 static void Projette(double p[3], double mat[3][3])
 {
@@ -35,7 +34,8 @@ ExtrudeParams::ExtrudeParams(int ModeEx)
   mesh.ExtrudeMesh = false;
   mesh.Recombine = false;
   mesh.QuadToTri = NO_QUADTRI;
-  //added by Trevor Strickler 07/07/2013 (determines if a layer is scaled by source grid size (1) or not (0))...only meant for boundary layers
+  // determines if a layer is scaled by source grid size (1) or not (0)...only
+  // meant for boundary layers
   mesh.ScaleLast = false;
   mesh.ViewIndex = -1;
   mesh.BoundaryLayerIndex = 0;
@@ -63,9 +63,9 @@ void ExtrudeParams::Extrude(int iLayer, int iElemLayer,
                             double &x, double &y, double &z)
 {
   double t = u(iLayer, iElemLayer);
-  // Trevor Strickler (this definitely relies on fixing lateral boundary
-  // extruded surfaces if mesh.ScaleLast is changed by ReplaceDuplicates.  This
-  // is done in BoundaryLayers.cpp right now.
+  // This definitely relies on fixing lateral boundary extruded surfaces if
+  // mesh.ScaleLast is changed by ReplaceDuplicates.  This is done in
+  // BoundaryLayers.cpp right now.
   if(geo.Type == BOUNDARY_LAYER && iLayer == mesh.NbLayer-1 &&
      mesh.BoundaryLayerIndex >= 0 && mesh.BoundaryLayerIndex <= 1 &&
      calcLayerScaleFactor[mesh.BoundaryLayerIndex] &&

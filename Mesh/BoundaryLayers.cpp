@@ -13,7 +13,6 @@
 #include "meshGFace.h"
 #include "GmshMessage.h"
 #include "Field.h"
-// added by Trevor Strickler
 #include "GFaceCompound.h"
 
 #if defined(HAVE_POST)
@@ -24,7 +23,6 @@
 class OctreePost{ int dummy; };
 #endif
 
-// by Trevor Strickler
 static double GetAveEdgeLength(std::vector<MVertex*> &elem_verts)
 {
   double ave = 0.0;
@@ -38,10 +36,10 @@ static double GetAveEdgeLength(std::vector<MVertex*> &elem_verts)
   return ave;
 }
 
-// Trevor Strickler modified this function
 template<class T>
 static void addExtrudeNormals(std::vector<T*> &elements, int invert,
-                              OctreePost *octree, bool gouraud, int index, bool skipScaleCalc)
+                              OctreePost *octree, bool gouraud, int index,
+                              bool skipScaleCalc)
 {
   if(index < 0 || index > 1){
     Msg::Error("Boundary layer index should be 0 or 1");
@@ -49,26 +47,28 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
   }
 
   if(octree && !gouraud){ // get extrusion direction from post-processing view
-    // Trevor Strickler modified this section heavily
     std::set<MVertex*> verts;
     for(unsigned int i = 0; i < elements.size(); i++){
-      if( !ExtrudeParams::calcLayerScaleFactor[index] )  // Trevor Strickler
+      if(!ExtrudeParams::calcLayerScaleFactor[index]){
 	for(int j = 0; j < elements[i]->getNumVertices(); j++)
           verts.insert(elements[i]->getVertex(j));
-      else{	// Trevor Strickler
+      }
+      else{
 	std::vector<MVertex*> elem_verts;
 	double aveLength = 0.0;
 	elements[i]->getVertices(elem_verts);
-	if( skipScaleCalc )
+	if(skipScaleCalc)
 	  aveLength = 1.0;
 	else
 	  aveLength = GetAveEdgeLength(elem_verts);
 	for(unsigned int j = 0; j < elem_verts.size(); j++){
 	  verts.insert(elem_verts[j]);
-	  // Added by Trevor Strickler: if scaleLastLayer selection, but not doing gouraud, then still scale the last layer...
-	  // This might create weird behavior for the unprepared....
-	  if( aveLength != 0.0 )
-	    ExtrudeParams::normals[index]->add_scale(elem_verts[j]->x(), elem_verts[j]->y(), elem_verts[j]->z(), aveLength);
+	  // if scaleLastLayer selection, but not doing gouraud, then still
+	  // scale the last layer...  This might create weird behavior for the
+	  // unprepared...
+	  if(aveLength != 0.0)
+	    ExtrudeParams::normals[index]->add_scale
+              (elem_verts[j]->x(), elem_verts[j]->y(), elem_verts[j]->z(), aveLength);
 	}
       }
     }
@@ -91,23 +91,26 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
         n = crossprod(ele->getEdge(0).tangent(), SVector3(0., 0., 1.));
       if(invert) n *= -1.;
       double nn[3] = {n[0], n[1], n[2]};
-      if( !ExtrudeParams::calcLayerScaleFactor[index] )  // Trevor Strickler
+      if(!ExtrudeParams::calcLayerScaleFactor[index]){
 	for(int k = 0; k < ele->getNumVertices(); k++){
           MVertex *v = ele->getVertex(k);
           ExtrudeParams::normals[index]->add(v->x(), v->y(), v->z(), 3, nn);
         }
-      else{  // Trevor Strickler
+      }
+      else{
 	std::vector<MVertex*> elem_verts;
 	double aveLength = 0.0;
 	elements[i]->getVertices(elem_verts);
-	if( skipScaleCalc )
+	if(skipScaleCalc)
 	  aveLength = 1.0;
 	else
 	  aveLength = GetAveEdgeLength(elem_verts);
 	for(unsigned int j = 0; j < elem_verts.size(); j++){
-	  ExtrudeParams::normals[index]->add(elem_verts[j]->x(), elem_verts[j]->y(), elem_verts[j]->z(), 3, nn);
-	  if( aveLength != 0.0 )
-	    ExtrudeParams::normals[index]->add_scale(elem_verts[j]->x(), elem_verts[j]->y(), elem_verts[j]->z(), aveLength);
+	  ExtrudeParams::normals[index]->add
+            (elem_verts[j]->x(), elem_verts[j]->y(), elem_verts[j]->z(), 3, nn);
+	  if(aveLength != 0.0)
+	    ExtrudeParams::normals[index]->add_scale
+              (elem_verts[j]->x(), elem_verts[j]->y(), elem_verts[j]->z(), aveLength);
 	}
       }
     }
@@ -116,15 +119,16 @@ static void addExtrudeNormals(std::vector<T*> &elements, int invert,
 
 typedef std::set<std::pair<bool, std::pair<int, int> > > infoset;
 
-// Trevor Strickler Modified this function
-//skipScaleCalcMap maps an entity tag to a flag telling whether to skip the
-// scale calc when extruding only that entity.  The flag is false when an extrusion
-// is not scaleLast when in a boundary layer that has at least one scaleLast region.
-// Effectively, this makes the vertices on the boundary between a scaled and not
-// scaled region 'average' between being scaled and not scaled.
+// skipScaleCalcMap maps an entity tag to a flag telling whether to skip the
+// scale calc when extruding only that entity.  The flag is false when an
+// extrusion is not scaleLast when in a boundary layer that has at least one
+// scaleLast region.  Effectively, this makes the vertices on the boundary
+// between a scaled and not scaled region 'average' between being scaled and not
+// scaled.
 template<class T>
 static void addExtrudeNormals(std::set<T*> &entities,
-                              std::map<int, infoset> &infos, std::map<int, bool> &skipScaleCalcMap)
+                              std::map<int, infoset> &infos,
+                              std::map<int, bool> &skipScaleCalcMap)
 {
   bool normalize = true, special3dbox = false, extrudeField=false;
   std::vector<OctreePost*> octrees;
@@ -147,9 +151,8 @@ static void addExtrudeNormals(std::set<T*> &entities,
           octrees.push_back(octree);
         }
         else if(view == -3){
-          // Force extrusion normals along x,y,z axes for single
-          // normals or at 45 degrees for multiple normals (allows to
-          // build nice 3D "boxes")
+          // Force extrusion normals along x,y,z axes for single normals or at
+          // 45 degrees for multiple normals (allows to build nice 3D "boxes")
           special3dbox = true;
         }
         else if(view == -5){
@@ -160,16 +163,18 @@ static void addExtrudeNormals(std::set<T*> &entities,
           Msg::Error("Unknown View[%d]: using normals instead", view);
       }
 #endif
-      // Trevor Strickler
       bool skipScaleCalc = true;
       std::map<int, bool>::iterator itskip = skipScaleCalcMap.find(ge->tag());
-      if( itskip != skipScaleCalcMap.end() )
+      if(itskip != skipScaleCalcMap.end())
 	skipScaleCalc = skipScaleCalcMap[ge->tag()];
       if(ge->dim() == 1)
-	addExtrudeNormals(((GEdge*)ge)->lines, invert, octree, gouraud, index, skipScaleCalc );
+	addExtrudeNormals(((GEdge*)ge)->lines, invert, octree,
+                          gouraud, index, skipScaleCalc);
       else if(ge->dim() == 2){
-        addExtrudeNormals(((GFace*)ge)->triangles, invert, octree, gouraud, index, skipScaleCalc );
-        addExtrudeNormals(((GFace*)ge)->quadrangles, invert, octree, gouraud, index, skipScaleCalc );
+        addExtrudeNormals(((GFace*)ge)->triangles, invert, octree,
+                          gouraud, index, skipScaleCalc );
+        addExtrudeNormals(((GFace*)ge)->quadrangles, invert, octree,
+                          gouraud, index, skipScaleCalc );
       }
       if(!gouraud) normalize = false;
     }
@@ -185,8 +190,8 @@ static void addExtrudeNormals(std::set<T*> &entities,
     ExtrudeParams::normals[1]->add(p.x(), p.y(), p.z(), 3, n0);
   }
 
-  // normalize extrusion directions if not using explicit vector
-  // post-processing views
+  // normalize extrusion directions if not using explicit vector post-processing
+  // views
   if(normalize){
     for(int i = 0; i < 2; i++){
       ExtrudeParams::normals[i]->normalize();
@@ -246,24 +251,23 @@ static void checkDepends(GModel *m, GFace *f, std::set<GFace*> &dep)
     checkDepends(m, from, dep);
   }
 
-  // Added by Trevor Strickler for compound face extrusion
-  if( f->geomType() == GEntity::CompoundSurface ){
+  if(f->geomType() == GEntity::CompoundSurface){
     std::list<GFace*> compounds = ((GFaceCompound*)(f))->getCompounds();
     std::list<GFace*>::iterator itgf = compounds.begin();
     for( ; itgf != compounds.end(); itgf++ ){
-      if( !(*itgf) ){
-        Msg::Error("Unknown compound face in boundary layer source face %d.",  f->tag() );
+      if(!(*itgf)){
+        Msg::Error("Unknown compound face in boundary layer source face %d",
+                   f->tag());
         return;
       }
-      dep.insert( *itgf );
+      dep.insert(*itgf);
       checkDepends(m, *itgf, dep);
     }
   }
-
 }
 
-// Trevor Strickler
-static unsigned int FixErasedExtrScaleFlags(GModel *m, std::map<int, bool> &faceSkipScaleCalc,
+static unsigned int FixErasedExtrScaleFlags(GModel *m,
+                                            std::map<int, bool> &faceSkipScaleCalc,
                                             std::map<int, bool> &edgeSkipScaleCalc)
 {
   unsigned int num_changed = 0;
@@ -287,21 +291,21 @@ static unsigned int FixErasedExtrScaleFlags(GModel *m, std::map<int, bool> &face
       }
     }
   }
-  // fix all extruded curves bordering ScaleLast faces...the previous loop should
-  // have fixed any replaced extruded faces.  if a face is not bordering a region,
-  // then it would not have been replaced except by a pointless degenerate extrusion
-  // right on it...which makes no sense anyway.
-  // So... just loop through faces.
+  // fix all extruded curves bordering ScaleLast faces...the previous loop
+  // should have fixed any replaced extruded faces.  if a face is not bordering
+  // a region, then it would not have been replaced except by a pointless
+  // degenerate extrusion right on it...which makes no sense anyway.  So... just
+  // loop through faces.
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     ExtrudeParams *f_ep = (*it)->meshAttributes.extrude;
     if(!f_ep || !f_ep->mesh.ExtrudeMesh || !f_ep->mesh.ScaleLast )
       continue;
     std::list<GEdge *> f_edges = (*it)->edges();
     std::list<GEdge *>::iterator itedge;
-    for( itedge = f_edges.begin(); itedge != f_edges.end(); itedge++ ){
-      if( m->getEdgeByTag( std::abs(f_ep->geo.Source) ) != (*itedge) ){
+    for(itedge = f_edges.begin(); itedge != f_edges.end(); itedge++){
+      if(m->getEdgeByTag( std::abs(f_ep->geo.Source) ) != (*itedge)){
 	ExtrudeParams *e_ep = (*itedge)->meshAttributes.extrude;
-	if( e_ep && e_ep->mesh.ExtrudeMesh && !e_ep->mesh.ScaleLast ){
+	if(e_ep && e_ep->mesh.ExtrudeMesh && !e_ep->mesh.ScaleLast){
 	  num_changed++;
 	  e_ep->mesh.ScaleLast = true;
 	  edgeSkipScaleCalc[(*itedge)->tag()] = false;
@@ -339,14 +343,14 @@ int Mesh2DWithBoundaryLayers(GModel *m)
            (ep->mesh.BoundaryLayerIndex, ep->mesh.ViewIndex));
         sourceEdgeInfo[from->tag()].insert(tags);
         sourceEdges.insert(from);
-	// Trevor Strickler
-        // Added by Trevor Strickler to scale last layer size locally
-	// Do not worry if one section of the boundary layer index = 0 or 1  is not supposed to be
-	// scaled...that section's normals will have scaleFactor = 1.0 (exactly  1.0 to all sig figs)
-	// ...however, if that non-scaled
-	// section borders a scaled section, the boundary normals will extrude scaled.
-	if( !ep->mesh.ScaleLast )
+        // Added to scale last layer size locally: Do not worry if one section
+	// of the boundary layer index = 0 or 1 is not supposed to be
+	// scaled...that section's normals will have scaleFactor = 1.0 (exactly
+	// 1.0 to all sig figs) ...however, if that non-scaled section borders a
+	// scaled section, the boundary normals will extrude scaled.
+	if(!ep->mesh.ScaleLast){
 	  edgeSkipScaleCalc[from->tag()] = true;
+        }
         else{
 	  edgeSkipScaleCalc[from->tag()] = false;
 	  ExtrudeParams::calcLayerScaleFactor[ep->mesh.BoundaryLayerIndex] = true;
@@ -372,25 +376,24 @@ int Mesh2DWithBoundaryLayers(GModel *m)
            (ep->mesh.BoundaryLayerIndex, ep->mesh.ViewIndex));
         sourceFaceInfo[from->tag()].insert(tags);
         sourceFaces.insert(from);
-        // Trevor Strickler
-	// Added by Trevor Strickler to scale last layer size locally
-	// Do not worry if one section of the boundary layer index = 0 or 1  is not supposed to be
-	// scaled...that section's normals will have scaleFactor = 1.0 (exactly  1.0 to all sig figs)
-	// ...however, if that non-scaled
-	// section borders a scaled section, the boundary normals will extrude scaled
-	if( !ep->mesh.ScaleLast )
+	// Added to scale last layer size locally: Do not worry if one section
+	// of the boundary layer index = 0 or 1 is not supposed to be
+	// scaled...that section's normals will have scaleFactor = 1.0 (exactly
+	// 1.0 to all sig figs) ...however, if that non-scaled section borders a
+	// scaled section, the boundary normals will extrude scaled
+	if(!ep->mesh.ScaleLast){
 	  faceSkipScaleCalc[from->tag()] = true;
+        }
         else{
 	  faceSkipScaleCalc[from->tag()] = false;
 	  ExtrudeParams::calcLayerScaleFactor[ep->mesh.BoundaryLayerIndex] = true;
 	}
         std::list<GEdge*> e = from->edges();
         sourceEdges.insert(e.begin(), e.end());
-        // by Trevor Strickler
-	for( std::list<GEdge*>::iterator ite = e.begin(); ite != e.end(); ite++ ){
-	  if( edgeSkipScaleCalc.find( (*ite)->tag() ) == edgeSkipScaleCalc.end() )
+	for(std::list<GEdge*>::iterator ite = e.begin(); ite != e.end(); ite++){
+	  if(edgeSkipScaleCalc.find( (*ite)->tag() ) == edgeSkipScaleCalc.end())
 	    edgeSkipScaleCalc[ (*ite)->tag() ] = true;  // a default
-	  if( ep->mesh.ScaleLast )
+	  if(ep->mesh.ScaleLast)
 	    edgeSkipScaleCalc[(*ite)->tag()] = false;
 	}
       }
@@ -399,12 +402,11 @@ int Mesh2DWithBoundaryLayers(GModel *m)
 
   if(sourceEdges.empty() && sourceFaces.empty()) return 0;
 
-  // from Trevor Strickler -- Just in case ReplaceDuplicates() erases the
-  // ExtrudeParams::mesh.scaleLast flag, should check all bounding regions of
-  // this curve to see if scaleLast is set.  if so, reset it in the
-  // extrudeParams (maybe this could be done in the TreeUtils....  but I do not
-  // want to change the code too much and create a bug.  The developers should
-  // decide that.
+  // Just in case ReplaceDuplicates() erases the ExtrudeParams::mesh.scaleLast
+  // flag, should check all bounding regions of this curve to see if scaleLast
+  // is set.  if so, reset it in the extrudeParams (maybe this could be done in
+  // the TreeUtils....  but I do not want to change the code too much and create
+  // a bug.  The developers should decide that.
   if(ExtrudeParams::calcLayerScaleFactor[0] ||
      ExtrudeParams::calcLayerScaleFactor[1]){
     unsigned int num_changed = FixErasedExtrScaleFlags(m, faceSkipScaleCalc,
@@ -413,8 +415,8 @@ int Mesh2DWithBoundaryLayers(GModel *m)
       Msg::Warning("%d entities were changed from ScaleLast = false to ScaleLast = true",
                    num_changed);
   }
-  // compute mesh dependencies in source faces (so we can e.g. create
-  // a boundary layer on an extruded mesh)
+  // compute mesh dependencies in source faces (so we can e.g. create a boundary
+  // layer on an extruded mesh)
   std::set<GFace*> sourceFacesDependencies;
   for(std::set<GFace*>::iterator it = sourceFaces.begin(); it != sourceFaces.end(); it++)
     checkDepends(m, *it, sourceFacesDependencies);
@@ -442,10 +444,9 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   for(std::set<GFace*>::iterator it = sourceFaces.begin(); it != sourceFaces.end(); it++)
     (*it)->mesh(false);
 
-  // make sure the source surfaces for the boundary layers are
-  // oriented correctly (normally we do this only after the 3D mesh is
-  // done; but here it's critical since we use the normals for the
-  // extrusion)
+  // make sure the source surfaces for the boundary layers are oriented
+  // correctly (normally we do this only after the 3D mesh is done; but here
+  // it's critical since we use the normals for the extrusion)
   std::for_each(sourceFaces.begin(), sourceFaces.end(), orientMeshGFace());
 
   // compute a normal field for all the source edges or faces
@@ -458,8 +459,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   else
     addExtrudeNormals(sourceFaces, sourceFaceInfo, faceSkipScaleCalc);
 
-  // set the position of boundary layer points using the smooth normal
-  // field
+  // set the position of boundary layer points using the smooth normal field
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
     GEdge *ge = *it;
     if(ge->geomType() == GEntity::BoundaryLayerCurve){
@@ -483,14 +483,14 @@ int Mesh2DWithBoundaryLayers(GModel *m)
     }
   }
 
-  // remesh non-source edges (since they might have been modified by
-  // the change in boundary layer points)
+  // remesh non-source edges (since they might have been modified by the change
+  // in boundary layer points)
   std::for_each(otherFaces.begin(), otherFaces.end(), deMeshGFace());
   for(std::set<GEdge*>::iterator it = otherEdges.begin(); it != otherEdges.end(); it++)
     (*it)->mesh(false);
 
-  // mesh the curves bounding the boundary layers by extrusion using
-  // the smooth normal field
+  // mesh the curves bounding the boundary layers by extrusion using the smooth
+  // normal field
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
     GEdge *ge = *it;
     if(ge->geomType() == GEntity::BoundaryLayerCurve){
@@ -512,8 +512,8 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   for(std::set<GFace*>::iterator it = otherFaces.begin(); it != otherFaces.end(); it++)
     (*it)->mesh(false);
 
-  // mesh the surfaces bounding the boundary layers by extrusion using
-  // the smooth normal field
+  // mesh the surfaces bounding the boundary layers by extrusion using the
+  // smooth normal field
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++){
     GFace *gf = *it;
     if(gf->geomType() == GEntity::BoundaryLayerSurface){
