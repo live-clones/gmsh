@@ -68,6 +68,15 @@ void thermicSolver::setThermicDomain(int phys, double k)
   thermicFields.push_back(field);
 }
 
+void thermicSolver::changeLMTau(int tag, double tau)
+{
+  for(unsigned int i = 0; i < LagrangeMultiplierFields.size(); i++){
+    if(LagrangeMultiplierFields[i]._tag == tag){
+      LagrangeMultiplierFields[i]._tau = tau;
+    }
+  }
+}
+
 void thermicSolver::setLagrangeMultipliers(int phys, double tau, int tag, simpleFunction<double> *f)
 {
   LagrangeMultiplierFieldT field;
@@ -85,6 +94,16 @@ void thermicSolver::setEdgeTemp(int edge, simpleFunction<double> *f)
   diri._f = f;
   diri._tag = edge;
   diri.onWhat = BoundaryConditionT::ON_EDGE;
+  allDirichlet.push_back(diri);
+}
+
+void thermicSolver::setFaceTemp(int face, simpleFunction<double> *f)
+{
+  dirichletBCT diri;
+  diri.g = new groupOfElements (2, face);
+  diri._f = f;
+  diri._tag = face;
+  diri.onWhat = BoundaryConditionT::ON_FACE;
   allDirichlet.push_back(diri);
 }
 
@@ -201,7 +220,7 @@ double thermicSolver::computeLagNorm(int tag, simpleFunction<double> *sol) {
     for(groupOfElements::elementContainer::const_iterator it = LagrangeMultiplierFields[i].g->begin();
         it != LagrangeMultiplierFields[i].g->end(); ++it){
       MElement *e = *it;
-printf("element (%g,%g) (%g,%g)\n",e->getVertex(0)->x(),e->getVertex(0)->y(),e->getVertex(1)->x(),e->getVertex(1)->y());
+//printf("element (%g,%g) (%g,%g)\n",e->getVertex(0)->x(),e->getVertex(0)->y(),e->getVertex(1)->x(),e->getVertex(1)->y());
       int npts;
       IntPt *GP;
       double jac[3][3];
@@ -220,7 +239,7 @@ printf("element (%g,%g) (%g,%g)\n",e->getVertex(0)->x(),e->getVertex(0)->y(),e->
         double diff = (*sol)(p.x(), p.y(), p.z()) - FEMVALUE;
         val += diff * diff * detJ * weight;
         val2 += (*sol)(p.x(), p.y(), p.z()) * (*sol)(p.x(), p.y(), p.z()) * detJ * weight;
-printf("(%g %g) : u,v=(%g,%g) detJ=%g we=%g FV=%g sol=%g diff=%g\n",p.x(),p.y(),u,v,detJ,weight,FEMVALUE,(*sol)(p.x(), p.y(), p.z()),diff);
+//printf("(%g %g) : u,v=(%g,%g) detJ=%g we=%g FV=%g sol=%g diff=%g\n",p.x(),p.y(),u,v,detJ,weight,FEMVALUE,(*sol)(p.x(), p.y(), p.z()),diff);
       }
     }
   }
@@ -298,6 +317,45 @@ PView* thermicSolver::buildLagrangeMultiplierView (const std::string postFileNam
   return pv;
 }
 
+PView* thermicSolver::buildErrorEstimateView(const std::string errorFileName,
+                                             simpleFunction<double> *sol)
+{
+  std::cout <<  "build Error View"<< std::endl;
+  std::map<int, std::vector<double> > data;
+
+  SolverField<double> solField(pAssembler, LagSpace);
+  for (unsigned int i = 0; i < thermicFields.size(); ++i){
+    for (groupOfElements::elementContainer::const_iterator it = thermicFields[i].g->begin(); it != thermicFields[i].g->end(); ++it){
+      MElement *e = *it;
+      int npts;
+      IntPt *GP;
+      double jac[3][3];
+      int integrationOrder = 2 * (e->getPolynomialOrder()+5);
+      e->getIntegrationPoints(integrationOrder, &npts, &GP);
+      double val = 0.0;
+      for (int j = 0; j < npts; j++){
+        double u = GP[j].pt[0];
+        double v = GP[j].pt[1];
+        double w = GP[j].pt[2];
+        double weight = GP[j].weight;
+        double detJ = fabs(e->getJacobian (u, v, w, jac));
+        SPoint3 p;
+        e->pnt(u, v, w, p);
+	double FEMVALUE;
+	solField.f(e, u, v, w, FEMVALUE);
+        double diff = (*sol)(p.x(), p.y(), p.z()) - FEMVALUE;
+        val += diff * diff * detJ * weight;
+      }
+      std::vector<double> vec;
+      vec.push_back(sqrt(val));
+      data[e->getNum()] = vec;
+    }
+  }
+
+  PView *pv = new PView (errorFileName, "ElementData", pModel, data, 0.0, 1);
+  return pv;
+}
+
 #else
 PView* thermicSolver::buildTemperatureView(const std::string postFileName)
 {
@@ -306,6 +364,12 @@ PView* thermicSolver::buildTemperatureView(const std::string postFileName)
 }
 
 PView* thermicSolver::buildLagrangeMultiplierView (const std::string postFileName)
+{
+  Msg::Error("Post-pro module not available");
+  return 0;
+}
+
+PView* thermicSolver::buildErrorEstimateView(const std::string errorFileName)
 {
   Msg::Error("Post-pro module not available");
   return 0;

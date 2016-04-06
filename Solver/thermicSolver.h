@@ -85,14 +85,16 @@ class thermicSolver
   void cutMesh(gLevelset *ls);
   void setThermicDomain(int phys, double k);
   void setLagrangeMultipliers(int phys, double tau, int tag, simpleFunction<double> *f);
+  void changeLMTau(int tag, double tau);
   void setEdgeTemp(int edge, simpleFunction<double> *f);
+  void setFaceTemp(int face, simpleFunction<double> *f);
   void solve();
   virtual PView *buildTemperatureView(const std::string postFileName);
-  virtual PView *buildLagrangeMultiplierView(const std::string posFileName);
+  virtual PView *buildLagrangeMultiplierView(const std::string postFileName);
   double computeL2Norm(simpleFunction<double> *f);
   double computeLagNorm(int tag, simpleFunction<double> *f);
-  // std::pair<PView *, PView*> buildErrorEstimateView
-  //   (const std::string &errorFileName, double, int);
+  PView* buildErrorEstimateView(const std::string errorFileName,
+                                simpleFunction<double> *sol);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, const elasticityData &ref, double, int);
 };

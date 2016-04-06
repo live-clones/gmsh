@@ -16,6 +16,7 @@ template <class scalar> class simpleFunction;
 class GModel;
 class PView;
 class groupOfElements;
+class gLevelset;
 
 struct LagrangeMultiplierField {
   int _tag;
@@ -95,6 +96,10 @@ class elasticitySolver
   void readInputFile(const std::string &meshFileName);
   void read(const std::string s) {readInputFile(s.c_str());}
   virtual void setMesh(const std::string &meshFileName);
+  void cutMesh(gLevelset *ls);
+  void setElasticDomain(int phys, double E, double nu);
+  void setLagrangeMultipliers(int phys, double tau, SVector3 d, int tag, simpleFunction<double> *f);
+  void setEdgeDisp(int edge, int comp, simpleFunction<double> *f);
   void solve();
   void postSolve();
   void exportKb();
@@ -107,6 +112,8 @@ class elasticitySolver
   virtual PView *buildElasticEnergyView(const std::string postFileName);
   virtual PView *buildVonMisesView(const std::string postFileName);
   virtual PView *buildVolumeView(const std::string postFileName);
+  double computeDisplacementError(int comp, simpleFunction<double> *f);
+  double computeLagNorm(int tag, simpleFunction<double> *f);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, double, int);
   // std::pair<PView *, PView*> buildErrorEstimateView
