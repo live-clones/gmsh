@@ -9265,6 +9265,34 @@ double opt_print_parameter_steps(OPT_ARGS_NUM)
   return CTX::instance()->print.parameterSteps;
 }
 
+double opt_print_x3d_compatibility(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.x3dCompatibility = (int)val;
+  return CTX::instance()->print.x3dCompatibility;
+}
+
+double opt_print_x3d_transparency(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.x3dTransparency = val;
+  return CTX::instance()->print.x3dTransparency;
+}
+
+double opt_print_x3d_remove_inner_borders(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.x3dRemoveInnerBorders = (int)val;
+  return CTX::instance()->print.x3dRemoveInnerBorders;
+}
+
+double opt_print_x3d_precision(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.x3dPrecision = val;
+  return CTX::instance()->print.x3dPrecision;
+}
+
 // Color option routines
 
 #if defined(HAVE_FLTK)

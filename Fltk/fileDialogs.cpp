@@ -1414,8 +1414,9 @@ int posFileDialog(const char *name)
   return 0;
 }
 
-static void _saveAdaptedViews(const std::string &name, int useDefaultName, int which, bool isBinary, 
-                              int adaptLev, double adaptErr, int npart, bool canAppend)
+static void _saveAdaptedViews(const std::string &name, int useDefaultName, int which,
+                              bool isBinary, int adaptLev, double adaptErr, int npart,
+                              bool canAppend)
 {
   if(PView::list.empty()){
     Msg::Error("No views to save");
@@ -1426,7 +1427,8 @@ static void _saveAdaptedViews(const std::string &name, int useDefaultName, int w
       Msg::Info("No or invalid current view: saving View[0]");
       iview = 0;
     }
-    PView::list[iview]->writeAdapt(name, useDefaultName, isBinary, adaptLev, adaptErr, npart);
+    PView::list[iview]->writeAdapt(name, useDefaultName, isBinary, adaptLev,
+                                   adaptErr, npart);
   }
   else if(which == 1){
     int numVisible = 0;
@@ -1446,7 +1448,7 @@ static void _saveAdaptedViews(const std::string &name, int useDefaultName, int w
               os << "_" << i;
               fileName += os.str();
             }
-            PView::list[i]->writeAdapt(fileName, useDefaultName, isBinary, adaptLev, adaptErr, 
+            PView::list[i]->writeAdapt(fileName, useDefaultName, isBinary, adaptLev, adaptErr,
                                        npart, first ? false : canAppend);
             first = false;
           }
@@ -1461,7 +1463,7 @@ static void _saveAdaptedViews(const std::string &name, int useDefaultName, int w
         os << "_" << i;
         fileName += os.str();
       }
-      PView::list[i]->writeAdapt(fileName, useDefaultName, isBinary, adaptLev, adaptErr, 
+      PView::list[i]->writeAdapt(fileName, useDefaultName, isBinary, adaptLev, adaptErr,
                                  npart, i ? canAppend : false);
     }
   }
@@ -1477,7 +1479,7 @@ int pvtuAdaptFileDialog(const char *name)
     Fl_Check_Button *defautName;
   };
   static _pvtuAdaptFileDialog *dialog = NULL;
-  
+
   static Fl_Menu_Item viewmenu[] = {
     {"Current", 0, 0, 0},
     {"Visible", 0, 0, 0},
@@ -1489,58 +1491,61 @@ int pvtuAdaptFileDialog(const char *name)
     {"ASCII", 0, 0, 0},
     {0}
   };
-  
+
   int BBB = BB + 9; // labels too long
-  
+
   if(!dialog){
     dialog = new _pvtuAdaptFileDialog;
-    int h = 3 * WB + 3 * BH, w = 2 * BBB + 3 * WB, y = WB;
-    dialog->window = new Fl_Double_Window(2*w, 2.5*h, "Adaptive View Options"); //FIXME: dimensions of the window
+    int h = 7 * BH + 3 * WB, w = w = 2 * BBB + 3 * WB, y = WB;
+    dialog->window = new Fl_Double_Window(w, h, "Adaptive View Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
-    dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "View(s)"); y += BH;
+    dialog->c[0] = new Fl_Choice(WB, y, BB, BH, "View(s)"); y += BH;
     dialog->c[0]->menu(viewmenu);
     dialog->c[0]->align(FL_ALIGN_RIGHT);
-    dialog->c[1] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format"); y += BH;
+    dialog->c[1] = new Fl_Choice(WB, y, BB, BH, "Format"); y += BH;
     dialog->c[1]->menu(formatmenu);
     dialog->c[1]->align(FL_ALIGN_RIGHT);
-    
-    dialog->vi[0] = new Fl_Value_Input(WB, y, BBB + BBB / 2, BH, "Adaptive recursion level"); y += BH;
+
+    dialog->vi[0] = new Fl_Value_Input
+      (WB, y, BB, BH, "Recursion level"); y += BH;
     dialog->vi[0]->align(FL_ALIGN_RIGHT);
     dialog->vi[0]->minimum(0);
     dialog->vi[0]->maximum(6);
     dialog->vi[0]->step(1);
     dialog->vi[0]->value(1);
     dialog->vi[0]->when(FL_WHEN_RELEASE);
-   
-    dialog->vi[1] = new Fl_Value_Input(WB, y, BBB + BBB / 2, BH, "Target error"); y += BH;
+
+    dialog->vi[1] = new Fl_Value_Input
+      (WB, y, BB, BH, "Target error"); y += BH;
     dialog->vi[1]->align(FL_ALIGN_RIGHT);
     dialog->vi[1]->minimum(-1.e-4);
     dialog->vi[1]->maximum(0.1);
     dialog->vi[1]->step(1.e-4);
     dialog->vi[1]->value(-1.e-4);
     dialog->vi[1]->when(FL_WHEN_RELEASE);
-    
-    dialog->vi[2] = new Fl_Value_Input(WB, y, BBB + BBB / 2, BH, "Number of viz parts"); y += BH;
+
+    dialog->vi[2] = new Fl_Value_Input
+      (WB, y, BB, BH, "Number of parts"); y += BH;
     dialog->vi[2]->align(FL_ALIGN_RIGHT);
     dialog->vi[2]->minimum(1);
     dialog->vi[2]->maximum(262144);
     dialog->vi[2]->step(1);
     dialog->vi[2]->value(4);
     dialog->vi[2]->when(FL_WHEN_RELEASE);
-    
-    dialog->defautName = new Fl_Check_Button(WB, y, BBB + BBB / 2, BH, "Use default filename (recommended)"); y += BH;
+
+    dialog->defautName = new Fl_Check_Button
+      (WB, y, w - 2 * WB, BH, "Use default filename"); y += BH;
     dialog->defautName->value(1);
-    
-    
+
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
     dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
-  
+
   dialog->window->show();
-  
+
   while(dialog->window->shown()){
     Fl::wait();
     for (;;) {
@@ -1552,18 +1557,20 @@ int pvtuAdaptFileDialog(const char *name)
           case 0: isBinary = true; break;
           case 1: isBinary = false; break;
         }
-        
-        // Only one view can currently be saved at a time in a pvtu file set, with a repetition of the topology structure.
-        // Views/Fields can then be appended in ParaView using the AppendAttributes filter
-        // bool canAppend = (format == 2) ? true : false;
-        
+
+        // Only one view can currently be saved at a time in a pvtu file set,
+        // with a repetition of the topology structure.  Views/Fields can then
+        // be appended in ParaView using the AppendAttributes filter bool
+        // canAppend = (format == 2) ? true : false;
+
         int adaptLev = dialog->vi[0]->value();
         double adaptErr = dialog->vi[1]->value();
         int npart = dialog->vi[2]->value();
         int useDefaultName = dialog->defautName->value();
         bool canAppend = false; // Not yet implemented for VTK format here due to a tradeoff
                                 // to limit memory consumption for high levels of adaptation
-        _saveAdaptedViews(name, useDefaultName, dialog->c[0]->value(), isBinary, adaptLev, adaptErr, npart, canAppend);
+        _saveAdaptedViews(name, useDefaultName, dialog->c[0]->value(), isBinary,
+                          adaptLev, adaptErr, npart, canAppend);
         dialog->window->hide();
         return 1;
       }
@@ -1576,15 +1583,13 @@ int pvtuAdaptFileDialog(const char *name)
   return 0;
 }
 
-
 int x3dViewFileDialog(const char *name, const char *title, int format)
 {
   struct _viewFileDialog{
     Fl_Window *window;
-    Fl_Choice *c[1];
-    Fl_Choice *d[1];
+    Fl_Choice *c;
     Fl_Value_Input *input[2];
-    Fl_Check_Button *e;
+    Fl_Check_Button *e[2];
     Fl_Button *ok, *cancel;
   };
   static _viewFileDialog *dialog = NULL;
@@ -1595,61 +1600,57 @@ int x3dViewFileDialog(const char *name, const char *title, int format)
     {"All", 0, 0, 0},
     {0}
   };
-  static Fl_Menu_Item viewmenu2[] = {
-    {"Keep", 0, 0, 0},
-    {"Remove", 0, 0, 0},
-    {0}
-  };
 
   int BBB = BB + 9; // labels too long
 
   if(!dialog){
     dialog = new _viewFileDialog;
-    int h = 7 * WB + 6 * BH, w = 2 * BBB +  BBB  / 3  +  12 * WB , y = WB;
+    int h = 6 * BH + 3 * WB, w = 2 * BBB +  3 * WB , y = WB;
     dialog->window = new Fl_Double_Window(w, h);
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
-    dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "View(s)"); y += BH+WB;
-    dialog->c[0]->menu(viewmenu);
-    dialog->c[0]->align(FL_ALIGN_RIGHT);
-    dialog->d[0] = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Inner Borders"); y += BH+WB;
-    dialog->d[0]->menu(viewmenu2);
-    dialog->d[0]->align(FL_ALIGN_RIGHT);
-    dialog->input[0] = new Fl_Value_Input( WB, y, BBB + BBB / 2, BH, "Log10( Precision )");y += BH+WB;  
+    dialog->c = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "View(s)"); y += BH;
+    dialog->c->menu(viewmenu);
+    dialog->c->align(FL_ALIGN_RIGHT);
+    dialog->e[0] = new Fl_Check_Button(WB, y, w - 2 * WB, BH, "Remove inner borders"); y += BH;
+    dialog->e[0]->type(FL_TOGGLE_BUTTON);
+    dialog->input[0] = new Fl_Value_Input(WB, y, BB, BH, "Log10(Precision)"); y += BH;
+    dialog->input[0]->align(FL_ALIGN_RIGHT);
     dialog->input[0]->minimum(-16);
     dialog->input[0]->maximum(16);
     dialog->input[0]->step(.25);
-    dialog->input[1] = new Fl_Value_Input( WB, y, BBB + BBB / 2, BH, "Transparency");y += BH+WB;  
+    dialog->input[1] = new Fl_Value_Input(WB, y, BB, BH, "Transparency"); y += BH;
+    dialog->input[1]->align(FL_ALIGN_RIGHT);
     dialog->input[1]->minimum(0.);
     dialog->input[1]->maximum(1.);
     dialog->input[1]->step(0.05);
-    dialog->e = new Fl_Check_Button (WB, y, w - 2 * WB , BH, "High compatibility (no scale bar)"); y += BH;
-    dialog->ok     = new Fl_Return_Button( WB          , y , BBB, BH, "OK");
-    dialog->cancel = new Fl_Button       ( 2 * WB + BBB, y , BBB, BH, "Cancel");
+    dialog->e[1] = new Fl_Check_Button(WB, y, w - 2 * WB, BH, "High compatibility (no scale)"); y += BH;
+    dialog->e[1]->type(FL_TOGGLE_BUTTON);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
     dialog->window->end();
     dialog->window->hotspot(dialog->window);
   }
 
   dialog->window->label(title);
   dialog->window->show();
-  dialog->input[0]->value( PView::getPrecisionValue() );
-  dialog->input[0]->align(FL_ALIGN_RIGHT);
-  dialog->input[1]->value( PView::getTransparencyValue() );
-  dialog->input[1]->align(FL_ALIGN_RIGHT);
-  dialog->e->type(FL_TOGGLE_BUTTON); 
-  dialog->e->value(PView::getX3dCompatibility() );
+
+  dialog->input[0]->value(log10(opt_print_x3d_precision(0, GMSH_GET, 0)));
+  dialog->input[1]->value(opt_print_x3d_transparency(0, GMSH_GET, 0));
+  dialog->e[0]->value(opt_print_x3d_remove_inner_borders(0, GMSH_GET, 0));
+  dialog->e[1]->value(opt_print_x3d_compatibility(0, GMSH_GET, 0));
+
   while(dialog->window->shown()){
     Fl::wait();
     for (;;) {
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-	dialog->d[0]->value()==1 ? PView::setInnerBorder(true) :   PView::setInnerBorder(false) ;
-	dialog->e->value()==1 ? PView::setX3dCompatibility(true) :   PView::setX3dCompatibility(false) ;
-	PView::setTransparencyValue( dialog->input[1]->value() );
-	PView::setPrecisionValue( dialog->input[0]->value() );
-
-        _saveViews(name, dialog->c[0]->value(),format, false);
+        opt_print_x3d_precision(0, GMSH_SET|GMSH_GUI, pow(10., dialog->input[0]->value()));
+        opt_print_x3d_transparency(0, GMSH_SET|GMSH_GUI, dialog->input[1]->value());
+        opt_print_x3d_remove_inner_borders(0, GMSH_SET|GMSH_GUI, dialog->e[0]->value());
+        opt_print_x3d_compatibility(0, GMSH_SET|GMSH_GUI, dialog->e[1]->value());
+        _saveViews(name, dialog->c->value(), format, false);
         dialog->window->hide();
         return 1;
       }
@@ -1660,11 +1661,7 @@ int x3dViewFileDialog(const char *name, const char *title, int format)
     }
   }
   return 0;
- 
 }
-
-
-
 
 int genericViewFileDialog(const char *name, const char *title, int format)
 {

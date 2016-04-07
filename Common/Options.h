@@ -732,6 +732,10 @@ double opt_print_parameter(OPT_ARGS_NUM);
 double opt_print_parameter_first(OPT_ARGS_NUM);
 double opt_print_parameter_last(OPT_ARGS_NUM);
 double opt_print_parameter_steps(OPT_ARGS_NUM);
+double opt_print_x3d_compatibility(OPT_ARGS_NUM);
+double opt_print_x3d_transparency(OPT_ARGS_NUM);
+double opt_print_x3d_remove_inner_borders(OPT_ARGS_NUM);
+double opt_print_x3d_precision(OPT_ARGS_NUM);
 
 // COLORS
 

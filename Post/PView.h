@@ -23,10 +23,6 @@ namespace onelab{ class localNetworkClient; }
 class PView{
  private:
   static int _globalTag;
-  //  transparency in x3d output
-  static double _transparency;
-  // merge partitionned model in delete duplicate as common border (for x3d export)
-  static bool _removeInnerBorders ;
   // unique tag of the view (>= 0)
   int _tag;
   // index of the view in the current view list
@@ -65,19 +61,8 @@ class PView{
   // default destructor
   ~PView();
 
-  //  precision for inner border deletion in x3d output
-  static double _precision;
-  static bool _x3dCompatibility;
-  // get/set global tag
-  static double getX3dCompatibility()         { return _x3dCompatibility  ;  }
-  static void   setX3dCompatibility ( bool br){        _x3dCompatibility  = br; }
-  static double getTransparencyValue()          { return _transparency ;  }
-  static void   setTransparencyValue( double tr){        _transparency = tr; }
-  static double getPrecisionValue()              { return  log10( _precision ) ;  }
-      static void   setPrecisionValue( double pr){                _precision=pow( 10., pr) ; }
-  static bool getInnerBorder()        { return _removeInnerBorders; }
-  static void setInnerBorder(bool tag){        _removeInnerBorders = tag; }
-  static int  getGlobalTag(){ return _globalTag; }
+  // set/get global tag
+  static int getGlobalTag(){ return _globalTag; }
   static void setGlobalTag(int tag){ _globalTag = tag; }
 
   // delete the vertex arrays, used to draw the view efficiently
@@ -90,8 +75,6 @@ class PView{
   // get/set the view data
   PViewData *getData(bool useAdaptiveIfAvailable=false);
   void setData(PViewData *val){ _data = val; }
-  // current drawContext
-  //  drawContext *_ctx;
 
   // get the view tag (unique and immutable)
   int getTag(){ return _tag; }
@@ -160,9 +143,6 @@ class PView{
 
   // smoothed normals
   smooth_normals *normals;
-
-
-
 };
 
 // this is the maximum number of nodes of elements we actually *draw*
@@ -173,6 +153,5 @@ void changeCoordinates(PView *p, int ient, int iele,
                        double **xyz, double **val);
 bool isElementVisible(PViewOptions *opt, int dim, int numNodes,
                       double **xyz);
-
 
 #endif

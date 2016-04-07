@@ -1755,6 +1755,15 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "Text" , opt_print_text , 1. ,
     "Print text strings?" },
 
+  { F|O, "X3dCompatibility" , opt_print_x3d_compatibility, 0. ,
+    "Produce highliy compatible X3D output (no scale bar)" },
+  { F|O, "X3dPrecision" , opt_print_x3d_precision , 1.e-9 ,
+    "Precision of X3D output" },
+  { F|O, "X3dRemoveInnerBorders" , opt_print_x3d_remove_inner_borders , 0. ,
+    "Remove inner borders in X3D output" },
+  { F|O, "X3dTransparency" , opt_print_x3d_transparency , 0. ,
+    "Transparency for X3D output" },
+
   { F|O, "Width" , opt_print_width , -1. ,
     "Width of printed image; use (possibly scaled) current width if < 0)" },
 

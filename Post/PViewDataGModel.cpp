@@ -142,15 +142,15 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
                    interpolationScheme.c_str());
       for(interpolationMatrices::iterator it = m.begin(); it != m.end(); it++){
         if(it->second.size() == 2){
-          // use provided interpolation matrices for field interpolation
-          // and use geometrical interpolation matrices from the mesh if
-          // the mesh is curved
+          // use provided interpolation matrices for field interpolation and use
+          // geometrical interpolation matrices from the mesh if the mesh is
+          // curved
           MElement *e = _getOneElementOfGivenType(model, it->first);
           if(e && e->getPolynomialOrder() > 1 && e->getFunctionSpace()){
-            if (it->first == TYPE_PYR) { // KH 18/9/2014 very nasty fix since pyramids /= polynomial
+            if (it->first == TYPE_PYR) { // nasty fix since pyramids /= polynomial
               const pyramidalBasis  *fs = (pyramidalBasis*) e->getFunctionSpace();
               setInterpolationMatrices(it->first, *(it->second[0]), *(it->second[1]),
-                                     fs->coefficients, fs->monomials);
+                                       fs->coefficients, fs->monomials);
             }
             else {
               const polynomialBasis *fs = (polynomialBasis*) e->getFunctionSpace();
@@ -174,40 +174,41 @@ bool PViewDataGModel::finalize(bool computeMinMax, const std::string &interpolat
       }
     }
 
-    // if we don't have interpolation matrices for a given element
-    // type, assume isoparametric elements (except for ElementData,
-    // for which we know the interpolation: it's constant)
+    // if we don't have interpolation matrices for a given element type, assume
+    // isoparametric elements (except for ElementData, for which we know the
+    // interpolation: it's constant)
     int types[] = {TYPE_PNT, TYPE_LIN, TYPE_TRI, TYPE_QUA, TYPE_TET, TYPE_HEX,
                    TYPE_PRI,TYPE_PYR, TYPE_POLYG, TYPE_POLYH};
     for(unsigned int i = 0; i < sizeof(types) / sizeof(types[0]); i++){
       if(!haveInterpolationMatrices(types[i])){
         MElement *e = _getOneElementOfGivenType(model, types[i]);
         if(e){
-
-          const polynomialBasis *fs = dynamic_cast<const polynomialBasis*> (e->getFunctionSpace());
+          const polynomialBasis *fs =
+            dynamic_cast<const polynomialBasis*>(e->getFunctionSpace());
           if(fs){
             if(e->getPolynomialOrder() > 1){
               if(_type == ElementData){
                 // data is constant per element: force the interpolation matrix
                 fullMatrix<double> coef(1, 1);
-                  coef(0, 0) = 1.;
-                  fullMatrix<double> mono(1, 3);
-                  mono(0, 0) = 0.;
-                  mono(0, 1) = 0.;
-                  mono(0, 2) = 0.;
-                  setInterpolationMatrices(types[i], coef, mono,
-                                           fs->coefficients, fs->monomials);
-                }
+                coef(0, 0) = 1.;
+                fullMatrix<double> mono(1, 3);
+                mono(0, 0) = 0.;
+                mono(0, 1) = 0.;
+                mono(0, 2) = 0.;
+                setInterpolationMatrices(types[i], coef, mono,
+                                         fs->coefficients, fs->monomials);
+              }
               else
                 setInterpolationMatrices(types[i],
                                          fs->coefficients, fs->monomials,
                                          fs->coefficients, fs->monomials);
-              }
+            }
             else
               setInterpolationMatrices(types[i], fs->coefficients, fs->monomials);
           }
           else {
-            const pyramidalBasis *fs = dynamic_cast<const pyramidalBasis*> (e->getFunctionSpace());
+            const pyramidalBasis *fs =
+              dynamic_cast<const pyramidalBasis*>(e->getFunctionSpace());
             if(fs){
               if(e->getPolynomialOrder() > 1){
                 if(_type == ElementData){

@@ -278,6 +278,8 @@ class CTX {
     double parameter, parameterFirst, parameterLast, parameterSteps;
     int pgfTwoDim, pgfExportAxis, pgfHorizBar;
     std::string parameterCommand;
+    int x3dCompatibility, x3dRemoveInnerBorders;
+    double x3dPrecision, x3dTransparency;
   } print;
   // color options
   struct{

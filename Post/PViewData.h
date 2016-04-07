@@ -231,9 +231,9 @@ class PViewData {
   static void removeAllInterpolationSchemes();
   static void addMatrixToInterpolationScheme(const std::string &name, int type,
                                              fullMatrix<double> &mat);
-  static int getSizeInterpolationScheme() {return _interpolationSchemes.size();}
-  std::string getInterpolationSchemeName() {return _interpolationSchemeName;}
-  void setInterpolationSchemeName(std::string name) {_interpolationSchemeName = name;}
+  static int getSizeInterpolationScheme() { return _interpolationSchemes.size(); }
+  std::string getInterpolationSchemeName() { return _interpolationSchemeName; }
+  void setInterpolationSchemeName(std::string name) { _interpolationSchemeName = name; }
 
   // smooth the data in the view (makes it C0)
   virtual void smooth();
