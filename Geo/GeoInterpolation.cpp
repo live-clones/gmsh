@@ -634,6 +634,7 @@ static void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
 bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius)
 {
   if(s->Typ != MSH_SURF_REGL && s->Typ != MSH_SURF_TRIC) return false;
+  if(!List_Nbr(s->Generatrices)) return false;
 
   bool isSphere = true;
   Vertex *O = 0;
@@ -680,6 +681,11 @@ bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius)
 static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
 {
   Curve *C[4] = {0, 0, 0, 0};
+
+  if(!List_Nbr(s->Generatrices)){
+    Msg::Error("No curves on boundary of ruled surface");
+    return Vertex(0., 0., 0.);
+  }
 
   for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++)
     List_Read(s->Generatrices, i, &C[i]);
