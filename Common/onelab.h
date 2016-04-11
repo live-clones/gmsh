@@ -381,6 +381,7 @@ namespace onelab{
     void setChoiceLabels(const std::vector<std::string> &labels)
     {
       if(labels.size() != _choices.size()) return;
+      if(_valueLabels.size()) _valueLabels.clear();
       for(unsigned int i = 0; i < _choices.size(); i++)
         _valueLabels[_choices[i]] = labels[i];
     }
