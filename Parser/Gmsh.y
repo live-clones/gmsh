@@ -98,6 +98,7 @@ void addPeriodicEdge(int, int, const std::vector<double>&);
 void addPeriodicFace(int, int, const std::map<int,int>&);
 void addPeriodicFace(int, int, const std::vector<double>&);
 void computeAffineTransformation(SPoint3&, SPoint3&, double, SPoint3&, std::vector<double>&);
+char  *strsave(char *ptr);
 
 struct doubleXstring{
   double d;
@@ -1471,6 +1472,30 @@ Enumeration :
     {
       doubleXstring v = {$3, $5};
       List_Add($$, &v);
+    }
+  | FExpr_Multi tAFFECT String__Index '(' ')'
+    {
+      $$ = List_Create(20,20,sizeof(doubleXstring));
+      int n = List_Nbr($1);
+      if(!gmsh_yystringsymbols.count($3)){
+	yymsg(0, "Unknown string variable '%s'", $3);
+      }
+      else{
+        std::vector<std::string> &s(gmsh_yystringsymbols[$3]);
+        int m = s.size();
+        if(n == m){
+          for(int i = 0; i < n; i++){
+            double d;
+            List_Read($1, i, &d);
+            doubleXstring v = {d, strsave((char*)s[i].c_str())};
+            List_Add($$, &v);
+          }
+        }
+        else{
+          yymsg(0, "Size mismatch in enumeration: %d != %d", n, m);
+        }
+      }
+      List_Delete($1);
     }
   ;
 
