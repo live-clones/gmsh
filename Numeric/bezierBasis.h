@@ -6,7 +6,6 @@
 #ifndef _BEZIER_BASIS_H_
 #define _BEZIER_BASIS_H_
 
-#include <map>
 #include <vector>
 #include "fullMatrix.h"
 #include "FuncSpaceData.h"
@@ -32,12 +31,8 @@ class bezierBasis {
   fullMatrix<double> subDivisor;
 
   // Constructors
-  inline bezierBasis(FuncSpaceData data) : _data(data), _raiser(NULL) {
-    if (_data.elementType() == TYPE_PYR)
-      _constructPyr();
-    else
-      _construct();
-  }
+  bezierBasis(FuncSpaceData data);
+  ~bezierBasis();
 
   // get methods
   inline int getDim() const {return _exponents.size2();}
@@ -99,7 +94,7 @@ private :
     _Data(double vv, int ii, int jj = -1, int kk = -1) :
       i(ii), j(jj), k(kk), val(vv) {}
   };
-  std::vector<std::vector<_Data> > _Raiser2, _Raiser3;
+  std::vector<std::vector<_Data> > _raiser2, _raiser3;
   const bezierBasis *_bfs;
 
 public:

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
+#include <map>
 #include <algorithm>
-#include <vector>
 #include "bezierBasis.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
@@ -455,6 +455,19 @@ void double2int(const fullMatrix<double> &matDouble, fullMatrix<int> &matInt)
 
 }
 
+bezierBasis::bezierBasis(FuncSpaceData data) : _data(data), _raiser(NULL)
+{
+  if (_data.elementType() == TYPE_PYR)
+    _constructPyr();
+  else
+    _construct();
+}
+
+bezierBasis::~bezierBasis()
+{
+  delete _raiser;
+}
+
 void bezierBasis::generateBezierPoints(fullMatrix<double> &points) const
 {
   gmshGenerateMonomials(_data, points);
@@ -706,6 +719,10 @@ void bezierBasisRaiser::_fillRaiserData()
   int dim = _bfs->getDim();
   int dimSimplex = _bfs->getDimSimplex();
 
+  // Speedup: Since the coefficients (num/den) are invariant from a permutation
+  // of the indices (i, j) or (i, j, k), we fill only the raiser data for
+  // i <= j <= k (and adapt the value to take into account the multiplicity).
+
   // Construction of raiser 2
   fullMatrix<int> exp2;
   {
@@ -713,7 +730,7 @@ void bezierBasisRaiser::_fillRaiserData()
     FuncSpaceData dataRaiser2(_bfs->_data, 2*order);
     gmshGenerateMonomials(dataRaiser2, expD2);
     double2int(expD2, exp2);
-    _Raiser2.resize(exp2.size1());
+    _raiser2.resize(exp2.size1());
   }
 
   std::map<int, int> hashToInd2;
@@ -726,32 +743,35 @@ void bezierBasisRaiser::_fillRaiserData()
   }
 
   for (int i = 0; i < ncoeff; i++) {
-    for (int j = 0; j < ncoeff; j++) {
+    for (int j = i; j < ncoeff; j++) {
       double num = 1, den = 1;
       {
         int compl1 = order;
         int compl2 = order;
         int compltot = 2*order;
         for (int l = 0; l < dimSimplex; l++) {
-          num *= nChoosek(compl1, exp(i, l))
-               * nChoosek(compl2, exp(j, l));
+          num *= nChoosek(compl1, exp(i, l)) *
+                 nChoosek(compl2, exp(j, l));
           den *= nChoosek(compltot, exp(i, l) + exp(j, l));
           compl1 -= exp(i, l);
           compl2 -= exp(j, l);
           compltot -= exp(i, l) + exp(j, l);
         }
         for (int l = dimSimplex; l < dim; l++) {
-          num *= nChoosek(order, exp(i, l))
-               * nChoosek(order, exp(j, l));
+          num *= nChoosek(order, exp(i, l)) *
+                 nChoosek(order, exp(j, l));
           den *= nChoosek(2*order, exp(i, l) + exp(j, l));
         }
       }
+
+      // taking into account the multiplicity (reminder: i <= j)
+      if (i < j) num *= 2;
 
       int hash = 0;
       for (int l = 0; l < dim; l++) {
         hash += (exp(i, l)+exp(j, l)) * pow_int(2*order+1, l);
       }
-      _Raiser2[hashToInd2[hash]].push_back(_Data(num/den, i, j));
+      _raiser2[hashToInd2[hash]].push_back(_Data(num/den, i, j));
     }
   }
 
@@ -762,7 +782,7 @@ void bezierBasisRaiser::_fillRaiserData()
     FuncSpaceData dataRaiser3(_bfs->_data, 3*order);
     gmshGenerateMonomials(dataRaiser3, expD3);
     double2int(expD3, exp3);
-    _Raiser3.resize(exp3.size1());
+    _raiser3.resize(exp3.size1());
   }
 
   std::map<int, int> hashToInd3;
@@ -775,8 +795,8 @@ void bezierBasisRaiser::_fillRaiserData()
   }
 
   for (int i = 0; i < ncoeff; i++) {
-    for (int j = 0; j < ncoeff; j++) {
-      for (int k = 0; k < ncoeff; ++k) {
+    for (int j = i; j < ncoeff; j++) {
+      for (int k = j; k < ncoeff; ++k) {
         double num = 1, den = 1;
         {
           int compl1 = order;
@@ -784,9 +804,9 @@ void bezierBasisRaiser::_fillRaiserData()
           int compl3 = order;
           int compltot = 3*order;
           for (int l = 0; l < dimSimplex; l++) {
-            num *= nChoosek(compl1, exp(i, l))
-                 * nChoosek(compl2, exp(j, l))
-                 * nChoosek(compl3, exp(k, l));
+            num *= nChoosek(compl1, exp(i, l)) *
+                   nChoosek(compl2, exp(j, l)) *
+                   nChoosek(compl3, exp(k, l));
             den *= nChoosek(compltot, exp(i, l) + exp(j, l) + exp(k, l));
             compl1 -= exp(i, l);
             compl2 -= exp(j, l);
@@ -794,18 +814,22 @@ void bezierBasisRaiser::_fillRaiserData()
             compltot -= exp(i, l) + exp(j, l) + exp(k, l);
           }
           for (int l = dimSimplex; l < dim; l++) {
-            num *= nChoosek(order, exp(i, l))
-                 * nChoosek(order, exp(j, l))
-                 * nChoosek(order, exp(k, l));
+            num *= nChoosek(order, exp(i, l)) *
+                   nChoosek(order, exp(j, l)) *
+                   nChoosek(order, exp(k, l));
             den *= nChoosek(3*order, exp(i, l) + exp(j, l) + exp(k, l));
           }
         }
+
+        // taking into account the multiplicity (Reminder: i <= j <= k)
+        if (i < j && j < k) num *= 6;
+        else if (i < j || j < k) num *= 3;
 
         int hash = 0;
         for (int l = 0; l < dim; l++) {
           hash += (exp(i, l)+exp(j, l)+exp(k, l)) * pow_int(3*order+1, l);
         }
-        _Raiser3[hashToInd3[hash]].push_back(_Data(num/den, i, j, k));
+        _raiser3[hashToInd3[hash]].push_back(_Data(num/den, i, j, k));
       }
     }
   }
@@ -831,6 +855,10 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   int ncoeff = exp.size1();
   int order[3] = {fsdata.nij(), fsdata.nij(), fsdata.nk()};
 
+  // Speedup: Since the coefficients (num/den) are invariant from a permutation
+  // of the indices (i, j) or (i, j, k), we fill only the raiser data for
+  // i <= j <= k (and adapt the value to take into account the multiplicity).
+
   // Construction of raiser 2
   fullMatrix<int> exp2;
   {
@@ -838,7 +866,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
     FuncSpaceData dataRaiser2(_bfs->_data, 2*order[0], 2*order[2]);
     gmshGenerateMonomials(dataRaiser2, expD2);
     double2int(expD2, exp2);
-    _Raiser2.resize(exp2.size1());
+    _raiser2.resize(exp2.size1());
   }
 
   std::map<int, int> hashToInd2;
@@ -851,7 +879,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   }
 
   for (int i = 0; i < ncoeff; i++) {
-    for (int j = 0; j < ncoeff; j++) {
+    for (int j = i; j < ncoeff; j++) {
       double num = 1, den = 1;
       for (int l = 0; l < 3; l++) {
         num *= nChoosek(order[l], exp(i, l))
@@ -859,12 +887,14 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
         den *= nChoosek(2*order[l], exp(i, l) + exp(j, l));
       }
 
+      // taking into account the multiplicity (reminder: i <= j)
+      if (i < j) num *= 2;
+
       int hash = 0;
       for (int l = 0; l < 3; l++) {
         hash += (exp(i, l)+exp(j, l)) * pow_int(2*order[l]+1, l);
       }
-      //_raiser2[hash].push_back(_Data(num/den, i, j));
-      _Raiser2[hashToInd2[hash]].push_back(_Data(num/den, i, j));
+      _raiser2[hashToInd2[hash]].push_back(_Data(num/den, i, j));
     }
   }
 
@@ -875,7 +905,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
     FuncSpaceData dataRaiser3(_bfs->_data, 3*order[0], 3*order[2]);
     gmshGenerateMonomials(dataRaiser3, expD3);
     double2int(expD3, exp3);
-    _Raiser3.resize(exp3.size1());
+    _raiser3.resize(exp3.size1());
   }
 
   std::map<int, int> hashToInd3;
@@ -888,8 +918,8 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   }
 
   for (int i = 0; i < ncoeff; i++) {
-    for (int j = 0; j < ncoeff; j++) {
-      for (int k = 0; k < ncoeff; ++k) {
+    for (int j = i; j < ncoeff; j++) {
+      for (int k = j; k < ncoeff; ++k) {
         double num = 1, den = 1;
         for (int l = 0; l < 3; l++) {
           num *= nChoosek(order[l], exp(i, l))
@@ -898,12 +928,15 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
           den *= nChoosek(3*order[l], exp(i, l) + exp(j, l) + exp(k, l));
         }
 
+        // taking into account the multiplicity (Reminder: i <= j <= k)
+        if (i < j && j < k) num *= 6;
+        else if (i < j || j < k) num *= 3;
+
         int hash = 0;
         for (int l = 0; l < 3; l++) {
           hash += (exp(i, l)+exp(j, l)+exp(k, l)) * pow_int(3*order[l]+1, l);
         }
-        //_raiser3[hash].push_back(_Data(num/den, i, j, k));
-        _Raiser3[hashToInd3[hash]].push_back(_Data(num/den, i, j, k));
+        _raiser3[hashToInd3[hash]].push_back(_Data(num/den, i, j, k));
       }
     }
   }
@@ -913,13 +946,23 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
                                      const fullVector<double> &coeffB,
                                      fullVector<double> &coeffSquare)
 {
-  coeffSquare.resize(_Raiser2.size(), true);
+  coeffSquare.resize(_raiser2.size(), true);
 
-  for (unsigned int ind = 0; ind < _Raiser2.size(); ++ind) {
-    for (unsigned int l = 0; l < _Raiser2[ind].size(); ++l) {
-      const int i = _Raiser2[ind][l].i;
-      const int j = _Raiser2[ind][l].j;
-      coeffSquare(ind) += _Raiser2[ind][l].val * coeffA(i) * coeffB(j);
+  if (&coeffA == &coeffB) {
+    for (unsigned int ind = 0; ind < _raiser2.size(); ++ind) {
+      for (unsigned int l = 0; l < _raiser2[ind].size(); ++l) {
+        _Data &d = _raiser2[ind][l];
+        coeffSquare(ind) += d.val * coeffA(d.i) * coeffB(d.j);
+      }
+    }
+  }
+  else {
+    for (unsigned int ind = 0; ind < _raiser2.size(); ++ind) {
+      for (unsigned int l = 0; l < _raiser2[ind].size(); ++l) {
+        _Data &d = _raiser2[ind][l];
+        coeffSquare(ind) += d.val/2 * (coeffA(d.i) * coeffB(d.j) +
+                                       coeffA(d.j) * coeffB(d.i));
+      }
     }
   }
 }
@@ -929,31 +972,61 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
                                      const fullVector<double> &coeffC,
                                      fullVector<double> &coeffCubic)
 {
-  coeffCubic.resize(_Raiser3.size(), true);
+  coeffCubic.resize(_raiser3.size(), true);
 
-  for (unsigned int ind = 0; ind < _Raiser3.size(); ++ind) {
-    for (unsigned int l = 0; l < _Raiser3[ind].size(); ++l) {
-      const int i = _Raiser3[ind][l].i;
-      const int j = _Raiser3[ind][l].j;
-      const int k = _Raiser3[ind][l].k;
-      coeffCubic(ind) += _Raiser3[ind][l].val * coeffA(i) * coeffB(j) * coeffC(k);
+  if (&coeffA == &coeffB && &coeffB == &coeffC) {
+    for (unsigned int ind = 0; ind < _raiser3.size(); ++ind) {
+      for (unsigned int l = 0; l < _raiser3[ind].size(); ++l) {
+        _Data &d = _raiser3[ind][l];
+        coeffCubic(ind) += d.val * coeffA(d.i) * coeffB(d.j) * coeffC(d.k);
+      }
     }
   }
+  else if (&coeffA != &coeffB && &coeffB != &coeffC) {
+    for (unsigned int ind = 0; ind < _raiser3.size(); ++ind) {
+      for (unsigned int l = 0; l < _raiser3[ind].size(); ++l) {
+        _Data &d = _raiser3[ind][l];
+        coeffCubic(ind) += d.val/6 * (coeffA(d.i) * coeffB(d.j) * coeffC(d.k) +
+                                      coeffA(d.i) * coeffB(d.k) * coeffC(d.j) +
+                                      coeffA(d.j) * coeffB(d.i) * coeffC(d.k) +
+                                      coeffA(d.j) * coeffB(d.k) * coeffC(d.i) +
+                                      coeffA(d.k) * coeffB(d.i) * coeffC(d.j) +
+                                      coeffA(d.k) * coeffB(d.j) * coeffC(d.i));
+      }
+    }
+  }
+  else
+    Msg::Error("bezierBasisRaiser::computeCoeff not implemented for A == B != C "
+               "or A != B == C");
 }
 
 void bezierBasisRaiser::computeCoeff(const fullMatrix<double> &coeffA,
                                      const fullMatrix<double> &coeffB,
                                      fullMatrix<double> &coeffSquare)
 {
-  coeffSquare.resize(_Raiser2.size(), coeffA.size2(), true);
+  coeffSquare.resize(_raiser2.size(), coeffA.size2(), true);
 
-  for (unsigned int ind = 0; ind < _Raiser2.size(); ++ind) {
-    for (unsigned int l = 0; l < _Raiser2[ind].size(); ++l) {
-      const int i = _Raiser2[ind][l].i;
-      const int j = _Raiser2[ind][l].j;
-      for (int ind2 = 0; ind2 < coeffA.size2(); ++ind2) {
-        coeffSquare(ind, ind2) += _Raiser2[ind][l].val * coeffA(i, ind2)
-                                                       * coeffB(j, ind2);
+  if (&coeffA == &coeffB) {
+    for (unsigned int ind = 0; ind < _raiser2.size(); ++ind) {
+      for (unsigned int l = 0; l < _raiser2[ind].size(); ++l) {
+        _Data &d = _raiser2[ind][l];
+        for (int ind2 = 0; ind2 < coeffA.size2(); ++ind2) {
+          coeffSquare(ind, ind2) += d.val * coeffA(d.i, ind2)
+                                          * coeffB(d.j, ind2);
+        }
+      }
+    }
+  }
+  else {
+    for (unsigned int ind = 0; ind < _raiser2.size(); ++ind) {
+      for (unsigned int l = 0; l < _raiser2[ind].size(); ++l) {
+        _Data &d = _raiser2[ind][l];
+        double val = d.val/2;
+        for (int ind2 = 0; ind2 < coeffA.size2(); ++ind2) {
+          coeffSquare(ind, ind2) += val *
+                                    (coeffA(d.i, ind2) * coeffB(d.j, ind2) +
+                                     coeffA(d.j, ind2) * coeffB(d.i, ind2));
+        }
       }
     }
   }
@@ -964,17 +1037,36 @@ void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
                                      const fullMatrix<double> &coeffC,
                                      fullMatrix<double> &coeffCubic)
 {
-  coeffCubic.resize(_Raiser3.size(), coeffB.size2(), true);
+  coeffCubic.resize(_raiser3.size(), coeffB.size2(), true);
 
-  for (unsigned int ind = 0; ind < _Raiser3.size(); ++ind) {
-    for (unsigned int l = 0; l < _Raiser3[ind].size(); ++l) {
-      const int i = _Raiser3[ind][l].i;
-      const int j = _Raiser3[ind][l].j;
-      const int k = _Raiser3[ind][l].k;
-      for (int ind2 = 0; ind2 < coeffB.size2(); ++ind2) {
-        coeffCubic(ind, ind2) += _Raiser3[ind][l].val * coeffA(i)
-                                                      * coeffB(j, ind2)
-                                                      * coeffC(k, ind2);
+  if (&coeffB == &coeffC) {
+    for (unsigned int ind = 0; ind < _raiser3.size(); ++ind) {
+      for (unsigned int l = 0; l < _raiser3[ind].size(); ++l) {
+        _Data &d = _raiser3[ind][l];
+        double val = d.val/3;
+        for (int ind2 = 0; ind2 < coeffB.size2(); ++ind2) {
+          coeffCubic(ind, ind2) += val *
+                (coeffA(d.i) * coeffB(d.j, ind2) * coeffC(d.k, ind2) +
+                 coeffA(d.j) * coeffB(d.i, ind2) * coeffC(d.k, ind2) +
+                 coeffA(d.k) * coeffB(d.i, ind2) * coeffC(d.j, ind2));
+        }
+      }
+    }
+  }
+  else {
+    for (unsigned int ind = 0; ind < _raiser3.size(); ++ind) {
+      for (unsigned int l = 0; l < _raiser3[ind].size(); ++l) {
+        _Data &d = _raiser3[ind][l];
+        double val = d.val/6;
+        for (int ind2 = 0; ind2 < coeffB.size2(); ++ind2) {
+          coeffCubic(ind, ind2) += val *
+                (coeffA(d.i) * coeffB(d.j, ind2) * coeffC(d.k, ind2) +
+                 coeffA(d.i) * coeffB(d.k, ind2) * coeffC(d.j, ind2) +
+                 coeffA(d.j) * coeffB(d.i, ind2) * coeffC(d.k, ind2) +
+                 coeffA(d.j) * coeffB(d.k, ind2) * coeffC(d.i, ind2) +
+                 coeffA(d.k) * coeffB(d.i, ind2) * coeffC(d.j, ind2) +
+                 coeffA(d.k) * coeffB(d.j, ind2) * coeffC(d.i, ind2));
+        }
       }
     }
   }
