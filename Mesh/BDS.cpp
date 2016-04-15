@@ -17,6 +17,38 @@
 
 void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace *gf)
 {
+
+  if (gf){
+    FILE* view_c = Fopen("param_c.pos","w");
+    fprintf(view_c,"View \"paramC\"{\n");
+    std::set<MEdge,Less_Edge> all;
+    std::list<BDS_Face*>::iterator tit = t.begin();
+    std::list<BDS_Face*>::iterator tite = t.end();
+    while(tit != tite) {
+      BDS_Point *pts[4];
+      if (!(*tit)->deleted){
+	(*tit)->getNodes(pts);
+	for (int j=0;j<3;j++){
+	  SPoint2 p1(pts[j]->u,pts[j]->v);
+	  SPoint2 p2(pts[(j+1)%3]->u,pts[(j+1)%3]->v);
+	  SPoint2 prev = p1;
+	  for (int k=1;k<30;k++){
+	    double t = (double)k/29;
+	    SPoint2 p = p1*(1.-t) + p2*t;
+	    GPoint pa = gf->point(p.x(),p.y());
+	    GPoint pb = gf->point(prev.x(),prev.y());
+	    fprintf(view_c,"SL(%g,%g,%g,%g,%g,%g){1,1,1};\n",pa.x(),pa.y(),pa.z(),pb.x(),pb.y(),pb.z());	    
+	    prev = p;
+	  }
+	}
+      }
+      ++tit;
+    }
+    fprintf(view_c,"};\n");
+    fclose(view_c);
+  }
+
+
   FILE *f = Fopen(iii, "w");
   if(!f){
     Msg::Error("Could not open file '%s'", iii);

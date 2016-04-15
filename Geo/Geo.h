@@ -299,6 +299,7 @@ class GEO_Internals{
   List_T *PhysicalGroups;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
+  std::multimap<int, std::vector<int> > meshCompounds;
 
   struct MasterEdge {
     int tag; // signed
@@ -320,6 +321,13 @@ class GEO_Internals{
   ~GEO_Internals(){ free_all(); }
   void destroy(){ free_all(); alloc_all(); }
   void reset_physicals();
+  void addCompoundMesh ( int dim, List_T *_list){
+    std::vector<int> compound;
+    for(int i = 0; i < List_Nbr(_list); i++)
+      compound.push_back((int)*(double*)List_Pointer(_list, i));
+    meshCompounds.insert(std::make_pair(dim,compound));
+  }
+
 };
 
 class Shape{

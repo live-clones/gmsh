@@ -83,7 +83,7 @@ static inline void derivativeShapes(int p, double Xi[2], double phi[6][2])
 
 }
 
-static inline void uv2xi(discreteDiskFaceTriangle* my_ddft, double U[2], double Xi[2]){
+static inline bool uv2xi(discreteDiskFaceTriangle* my_ddft, double U[2], double Xi[2]){
 
   double M[2][2], R[2];
   const SPoint3 p0 = my_ddft->p[0];
@@ -135,7 +135,14 @@ static inline void uv2xi(discreteDiskFaceTriangle* my_ddft, double U[2], double 
       iter++;
 
     } // end Newton-Raphson
+    if (iter == maxiter){
+      return false;
+    }
+    else{
+      return true;
+    }
   }// end order 2
+  return true;
 }
 
 
@@ -178,40 +185,10 @@ static int discreteDiskFaceInEle(void *a, double*c)// # mark
   discreteDiskFaceTriangle *t = (discreteDiskFaceTriangle *)a;
   double Xi[2];
   double U[2] = {c[0],c[1]};
-  uv2xi(t,U,Xi);
+  bool ok = uv2xi(t,U,Xi);
   double eps = 1e-8;
-  /*
 
-  if (t->tri->getPolynomialOrder() == 1){
-
-    double M[2][2], R[2];
-    const SPoint3 p0 = t->p[0];
-    const SPoint3 p1 = t->p[1];
-    const SPoint3 p2 = t->p[2];
-    M[0][0] = p1.x() - p0.x();
-    M[0][1] = p2.x() - p0.x();
-    M[1][0] = p1.y() - p0.y();
-    M[1][1] = p2.y() - p0.y();
-    R[0] = (c[0] - p0.x());
-    R[1] = (c[1] - p0.y());
-    sys2x2(M, R, X);
-  }
-  else{
-
-    std::vector<MVertex*> vs;
-    for (int ivs=0; ivs<t->tri->getNumVertices(); ivs++){
-      MVertex v  (t->p[ivs].x(),t->p[ivs].y(),0);
-      vs.push_back(&v);
-    }
-
-    MTriangle6 t6 (vs);
-    double xyz[3] = {c[0],c[1],0};
-
-    t6.xyz2uvw(xyz,X);
-
-  }
-  */
-  if(Xi[0] > -eps && Xi[1] > -eps && 1. - Xi[0] - Xi[1] > -eps)
+  if(ok && Xi[0] > -eps && Xi[1] > -eps && 1. - Xi[0] - Xi[1] > -eps)
     return 1;
 
   return 0;
@@ -244,7 +221,7 @@ static bool orderVertices(const double &tot_length, const std::vector<MVertex*> 
 
 /*BUILDER*/
 discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh, int p) :
-  GFace(gf->model(),123), _parent (gf)
+  GFace(gf->model(),123), _parent (gf),_ddft(NULL), oct(NULL)
 {
   _order = p;
   _N = (p+1)*(p+2)/2;
@@ -312,21 +289,26 @@ discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh, int
       discrete_triangles.push_back(new MTriangle6 (vs));
   }// end loop over triangles
 
-  std::cout << "buildAllNodes" << std::endl;
   buildAllNodes();
-  std::cout << "getBoundingEdges" << std::endl;
   getBoundingEdges();
-  std::cout << "orderVertices" << std::endl;
   orderVertices(_totLength, _U0, _coords);
-  std::cout << "parametrize" << std::endl;
-  parametrize();
-  std::cout << "buildOct" << std::endl;
+  
+  parametrize(false);
   buildOct();
-  std::cout << "checkOrientation" << std::endl;
-  checkOrientationUV();
-  std::cout << "putOnView" << std::endl;
+
+  if (!checkOrientationUV()){
+    parametrize(true);
+    buildOct();
+  }
+  
   putOnView();
-  std::cout << "discreteDiskFace: The parametrization of triangulation " << gf->tag() << " is ending." << std::endl;
+}
+
+discreteDiskFace::~discreteDiskFace() 
+{
+  triangles.clear();
+  if (_ddft)delete[] _ddft;
+  if (oct)Octree_Delete(oct);
 }
 
 
@@ -486,8 +468,10 @@ void discreteDiskFace::getBoundingEdges()
   _totLength = _loops.rbegin()->first;
 }
 
+
 void discreteDiskFace::buildOct() const
 {
+  if (oct)Octree_Delete(oct);
 
   double origin[3] = {-1.01,-1.01,-1.0};
   double ssize[3] = {2.02,2.02,2.0};
@@ -512,10 +496,13 @@ void discreteDiskFace::buildOct() const
 }
 
 
-bool discreteDiskFace::parametrize() const
+bool discreteDiskFace::parametrize(bool one2one) const
 { // mark, to improve
 
-  Msg::Info("Parametrizing surface %d with 'one-to-one map'", tag());
+  if (one2one)
+    Msg::Info("Parametrizing surface %d with 'one-to-one map'", tag());
+  else
+    Msg::Info("Parametrizing surface %d with 'harmonic map'", tag());
 
   linearSystem<double> *lsys_u;
   linearSystem<double> *lsys_v;
@@ -549,14 +536,28 @@ bool discreteDiskFace::parametrize() const
 
   simpleFunction<double> ONE(1.0);
 
-  convexLaplaceTerm mappingU(0, 1, &ONE);
-  convexLaplaceTerm mappingV(0, 1, &ONE);
-
-  for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
-    SElement se(discrete_triangles[i]);
-    mappingU.addToMatrix(myAssemblerU, &se);
-    mappingV.addToMatrix(myAssemblerV, &se);
+  
+  if (one2one){
+    convexLaplaceTerm mappingU(0, 1, &ONE);
+    convexLaplaceTerm mappingV(0, 1, &ONE);
+    
+    for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
+      SElement se(discrete_triangles[i]);
+      mappingU.addToMatrix(myAssemblerU, &se);
+      mappingV.addToMatrix(myAssemblerV, &se);
+    }
   }
+  else{
+    laplaceTerm mappingU(0, 1, &ONE);
+    laplaceTerm mappingV(0, 1, &ONE);
+    
+    for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
+      SElement se(discrete_triangles[i]);
+      mappingU.addToMatrix(myAssemblerU, &se);
+      mappingV.addToMatrix(myAssemblerV, &se);
+    }
+  }
+
 
 
   double t2 = Cpu();
@@ -602,49 +603,9 @@ void discreteDiskFace::getTriangleUV(const double u,const double v,
   uv2xi(*mt,U,Xi);
   _xi = Xi[0];
   _eta = Xi[1];
-
-  /*
-  if (_order == 1){
-    double M[2][2],X[2],R[2];
-    const SPoint3 p0 = (*mt)->p[0];
-    const SPoint3 p1 = (*mt)->p[1];
-    const SPoint3 p2 = (*mt)->p[2];
-    M[0][0] = p1.x() - p0.x();
-    M[0][1] = p2.x() - p0.x();
-    M[1][0] = p1.y() - p0.y();
-    M[1][1] = p2.y() - p0.y();
-    R[0] = (u - p0.x());
-    R[1] = (v - p0.y());
-    sys2x2(M, R, X);
-    _u = X[0];// xi
-    _v = X[1];// eta
-  }
-  else{// newton raphson
-    std::vector<MVertex*> vs;
-    MVertex v0  ((*mt)->p[0].x(),(*mt)->p[0].y(),0);
-    MVertex v1  ((*mt)->p[1].x(),(*mt)->p[1].y(),0);
-    MVertex v2  ((*mt)->p[2].x(),(*mt)->p[2].y(),0);
-    MVertex v3  ((*mt)->p[3].x(),(*mt)->p[3].y(),0);
-    MVertex v4  ((*mt)->p[4].x(),(*mt)->p[4].y(),0);
-    MVertex v5  ((*mt)->p[5].x(),(*mt)->p[5].y(),0);
-    vs.push_back(&v0);
-    vs.push_back(&v1);
-    vs.push_back(&v2);
-    vs.push_back(&v3);
-    vs.push_back(&v4);
-    vs.push_back(&v5);
-    MTriangle6 t (vs);
-    double xyz[3] = {u,v,0};
-    double uv[2];
-    t.xyz2uvw(xyz,uv);
-    _u = uv[0];// xi
-    _v = uv[1];// eta
-
-  }
-  */
 }
 
-void discreteDiskFace::checkOrientationUV(){
+bool discreteDiskFace::checkOrientationUV(){
 
   double initial, current; // initial and current orientation
   discreteDiskFaceTriangle *ct;
@@ -663,10 +624,10 @@ void discreteDiskFace::checkOrientationUV(){
     if(initial*current < 0.) break;
   }
   if(i < discrete_triangles.size())
-    Msg::Error("discreteDiskFace: The parametrization is not one-to-one :-(");
+    return false;
+  //    Msg::Error("discreteDiskFace: The parametrization is not one-to-one :-(");
   else
-    std::cout << "discreteDiskFace: The parametrization is one-to-one :-)" << std::endl;
-
+    return true;
 }
 
 // (u;v) |-> < (x;y;z); GFace; (u;v) >
@@ -838,6 +799,7 @@ void discreteDiskFace::buildAllNodes()
 
 void discreteDiskFace::putOnView()
 {
+
   FILE* view_u = Fopen("param_u.pos","w");
   FILE* view_v = Fopen("param_v.pos","w");
   FILE* UVxyz = Fopen("UVxyz.pos","w");

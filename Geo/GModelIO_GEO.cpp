@@ -426,6 +426,28 @@ int GModel::importGEOInternals()
     }
   }
 
+  for (std::multimap<int,std::vector<int> >::iterator it = _geo_internals->meshCompounds.begin() ; it != _geo_internals->meshCompounds.end() ; ++it){
+    int dim = it->first;
+    std::vector<int> compound = it->second;
+    std::vector<GEntity*> ents;
+    for (unsigned int i=0;i<compound.size();i++){
+      int tag = compound[i];
+      GEntity *ent = NULL;
+      switch(dim) {
+      case 1: ent = getEdgeByTag(tag); break;
+      case 2: ent = getFaceByTag(tag); break;
+      case 3: ent = getRegionByTag(tag); break;
+      default : Msg::Error("compound mesh with dimension %d",dim);
+      }
+      if(ent)ents.push_back(ent);
+    }
+    for (unsigned int i=0;i<ents.size();i++){
+      ents[i]->_compound = ents;
+    }
+    
+  }
+
+
   Msg::Debug("Gmsh model (GModel) imported:");
   Msg::Debug("%d Vertices", vertices.size());
   Msg::Debug("%d Edges", edges.size());

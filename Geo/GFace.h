@@ -151,16 +151,6 @@ class GFace : public GEntity{
   virtual surface_params getSurfaceParams() const;
 
   // compute the genus G of the surface
-  // we have the poincare constant CHI = #V-#E+#F
-  // where #V #E and #F are the number of vertices, edges
-  // and faces of the surface
-  // Then, CHI = 2 G + 2 - B
-  // where B is the number of boundaries (edge loops) of the
-  // surface. This topological constant can be computed using both the
-  // geometry and the mesh. Both approaches should give the same result ;-)
-  // by default, genus is ZERO
-  int poincareMesh();
-  int genusMesh() { return (poincareMesh() + edgeLoops.size() - 2) / 2; }
   virtual int genusGeom() const;
   virtual bool checkTopology() const { return true; }
 

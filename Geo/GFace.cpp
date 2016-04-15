@@ -1310,18 +1310,6 @@ double GFace::length(const SPoint2 &pt1, const SPoint2 &pt2, int nbQuadPoints)
   return L;
 }
 
-int GFace::poincareMesh()
-{
-  std::set<MEdge, Less_Edge> es;
-  std::set<MVertex*> vs;
-  for(unsigned int i = 0; i < getNumMeshElements(); i++){
-    MElement *e = getMeshElement(i);
-    for(int j = 0; j < e->getNumVertices(); j++) vs.insert(e->getVertex(j));
-    for(int j = 0; j < e->getNumEdges(); j++) es.insert(e->getEdge(j));
-  }
-  return vs.size() - es.size() + getNumMeshElements();
-}
-
 int GFace::genusGeom() const
 {
   int nSeams = 0;
@@ -1391,8 +1379,23 @@ bool GFace::fillPointCloud(double maxDist,
 void GFace::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
+
   meshGFace mesher;
   mesher(this, verbose);
+
+  /*
+  if (!_compound.empty()){ // Some faces are meshed together 
+    if (_compound[0] == this){ //  I'm the one that makes the compound job
+      bool ok = true;
+      for (unsigned int i=0;i<_compound.size();i++)
+	ok &= (_compound[i]->meshStatistics.status == GFace::PENDING);            
+      if (!ok)meshStatistics.status = GFace::PENDING;
+      else {
+	return;
+      }
+    }
+  }
+  */  
 #endif
 }
 

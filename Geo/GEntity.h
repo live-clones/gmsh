@@ -45,7 +45,7 @@ class GEntity {
   char _allElementsVisible;
 
   // the color of the entity (ignored if set to transparent blue)
-  unsigned int _color;
+  unsigned int _color;  
 
  protected:
   SOrientedBoundingBox *_obb;
@@ -53,6 +53,9 @@ class GEntity {
  public: // these will become protected at some point
   // the mesh vertices uniquely owned by the entity
   std::vector<MVertex*> mesh_vertices;
+
+  // a list of geometrical entities that form a compound mesh
+  std::vector<GEntity *> _compound;
 
   // corresponding principal vertices
   std::map<GVertex*,GVertex*> vertexCounterparts;

@@ -1978,7 +1978,13 @@ Shape :
       $$.Type = MSH_SEGM_LOOP;
       $$.Num = num;
     }
-  | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
+
+   | tCompound tLine ListOfDouble tEND
+   {
+     GModel::current()->getGEOInternals()->addCompoundMesh ( 1 , $3 );      
+   }
+
+   | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       if(FindCurve(num)){
@@ -2185,6 +2191,10 @@ Shape :
       $$.Type = MSH_SURF_LOOP;
       $$.Num = num;
     }
+  | tCompound tSurface ListOfDouble tEND
+    {
+      GModel::current()->getGEOInternals()->addCompoundMesh ( 2 , $3 );      
+    }
   | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
@@ -2319,6 +2329,10 @@ Shape :
       List_Delete($6);
       $$.Type = MSH_VOLUME;
       $$.Num = num;
+    }
+  | tCompound tVolume ListOfDouble tEND
+    {
+      GModel::current()->getGEOInternals()->addCompoundMesh ( 3 , $3 );      
     }
   | tCompound tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {

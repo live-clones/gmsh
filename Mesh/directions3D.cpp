@@ -14,13 +14,9 @@
 #include "directions3D.h"
 #include "OS.h"
 #include "GFaceCompound.h"
-
-#if defined(HAVE_PETSC)
+#include "linearSystemCSR.h"
 #include "dofManager.h"
 #include "laplaceTerm.h"
-#include "linearSystemPETSc.h"
-#include "linearSystemFull.h"
-#endif
 
 /****************class Frame_field****************/
 
@@ -1209,10 +1205,9 @@ void Size_field::init_region(GRegion* gr){
 }
 
 void Size_field::solve(GRegion* gr){
-#if defined(HAVE_PETSC)
-  linearSystem<double>* system = 0;
-  system = new linearSystemPETSc<double>;
-
+  linearSystemCSRTaucs<double>* system = 0;
+  system = new linearSystemCSRTaucs<double>;
+  
   size_t i;
   int count;
   int count2;
@@ -1275,7 +1270,6 @@ void Size_field::solve(GRegion* gr){
   }
 
   delete system;
-#endif
 }
 
 double Size_field::search(double x,double y,double z){

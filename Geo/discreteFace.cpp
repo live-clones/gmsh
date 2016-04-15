@@ -100,15 +100,7 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 void discreteFace::secondDer(const SPoint2 &param,
                              SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
 {
-  /*<<<<<<< .mine
-=======
-  if (getCompound()){
-    return getCompound()->secondDer(param, dudu, dvdv, dudv);
-  }
-  else{
-    Msg::Error("Cannot evaluate second derivative on discrete face");
-    >>>>>>> .r22873*/
-    return;
+  return;
 }
 
 // FIXME PAB ----> really create an atlas !!!!!!!!!!!!!!!

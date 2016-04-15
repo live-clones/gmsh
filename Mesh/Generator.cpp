@@ -794,15 +794,15 @@ static void Mesh3D(GModel *m)
         }
         PostOp post;
         post.execute(gr,CTX::instance()->mesh.recombine3DLevel,
-                     CTX::instance()->mesh.recombine3DConformity);
+		     CTX::instance()->mesh.recombine3DConformity);
         // 0: no pyramid, 1: single-step, 2: two-steps (conforming),
         // true: fill non-conformities with trihedra
         // while(LaplaceSmoothing (gr)){
         // }
-        nb_elements_recombination += post.get_nb_elements();
-        nb_hexa_recombination += post.get_nb_hexahedra();
-        vol_element_recombination += post.get_vol_elements();
-        vol_hexa_recombination += post.get_vol_hexahedra();
+	nb_elements_recombination += post.get_nb_elements();
+	nb_hexa_recombination += post.get_nb_hexahedra();
+	vol_element_recombination += post.get_vol_elements();
+	vol_hexa_recombination += post.get_vol_hexahedra();
         // partial export
         //        stringstream ss;
         //        ss << "yamakawa_part_";

@@ -42,14 +42,15 @@ class  discreteDiskFaceTriangle {
 class discreteDiskFace : public GFace {
   GFace *_parent;
   void buildOct() const;
-  bool parametrize() const;
+  bool parametrize(bool one2one = false) const;
   void buildAllNodes() ;
   void getBoundingEdges();
   void putOnView();
+  bool checkOrientationUV();
   
  public:
   discreteDiskFace(GFace *parent, std::vector<MTriangle*> &mesh, int p=1);// MTriangle -> MTriangle 6
-  virtual ~discreteDiskFace() {triangles.clear();}
+  virtual ~discreteDiskFace();
   void getTriangleUV(const double u,const double v,discreteDiskFaceTriangle **mt, double &_u, double &_v) const;
   GPoint point(double par1, double par2) const;
   SPoint2 parFromVertex(MVertex *v) const;
@@ -63,7 +64,6 @@ class discreteDiskFace : public GFace {
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
 				const SVector3 &p, const double &d,
 				double uv[2]) const;
-  void checkOrientationUV();
  protected:
   //------------------------------------------------
   // a copy of the mesh that should not be destroyed
