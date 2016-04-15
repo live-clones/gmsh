@@ -25,6 +25,7 @@
 #include "Numeric.h"
 #include "CondNumBasis.h"
 #include "Context.h"
+#include "qualityMeasuresJacobian.h"
 
 #define SQU(a)      ((a)*(a))
 
@@ -231,6 +232,11 @@ double MElement::maxDistToStraight() const
     if (dx > maxdx) maxdx = dx;
   }
   return maxdx;
+}
+
+double MElement::minAnisotropyMeasure()
+{
+  return jacobianBasedQuality::minAnisotropyMeasure(this);
 }
 
 void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge) const
@@ -667,7 +673,7 @@ void MElement::getSignedJacobian(fullVector<double> &jacobian, int o) const
 
 void MElement::getNodesCoord(fullMatrix<double> &nodesXYZ) const
 {
-  const int numNodes = getNumShapeFunctions();
+  const int numNodes = getNumVertices();
   for (int i = 0; i < numNodes; i++) {
     const MVertex *v = getShapeFunctionNode(i);
     nodesXYZ(i,0) = v->x();

@@ -144,10 +144,10 @@ bool rtree_callback(Node* neighbour,void* w)
 
   if(neighbour!=parent){
     distance = infinity_distance(individual->get_point(),neighbour->get_point(),m);
-	if(distance<k1*h){
-	  wrapper->set_ok(0);
-	  return false;
-	}
+    if(distance<k1*h){
+      wrapper->set_ok(0);
+      return false;
+    }
   }
 
   return true;
@@ -312,9 +312,9 @@ void Filler::treat_model()
   for(it=model->firstRegion();it!=model->lastRegion();it++)
   {
     gr = *it;
-	if(gr->getNumMeshElements()>0){
-	  treat_region(gr);
-	}
+    if(gr->getNumMeshElements()>0){
+      treat_region(gr);
+    }
   }
 }
 
@@ -371,15 +371,15 @@ void Filler::treat_region(GRegion* gr)
   faces = gr->faces();
   for(it2=faces.begin();it2!=faces.end();it2++){
     gf = *it2;
-	limit = code(gf->tag());
-	for(i=0;i<gf->getNumMeshElements();i++){
-	  element = gf->getMeshElement(i);
+    limit = code(gf->tag());
+    for(i=0;i<gf->getNumMeshElements();i++){
+      element = gf->getMeshElement(i);
       for(j=0;j<element->getNumVertices();j++){
-	    vertex = element->getVertex(j);
-		temp.insert(vertex);
-		limits.insert(std::pair<MVertex*,int>(vertex,limit));
-	  }
-	}
+        vertex = element->getVertex(j);
+        temp.insert(vertex);
+        limits.insert(std::pair<MVertex*,int>(vertex,limit));
+      }
+    }
   }
 
   /*for(i=0;i<gr->getNumMeshElements();i++){
@@ -392,20 +392,20 @@ void Filler::treat_region(GRegion* gr)
 
   for(it=temp.begin();it!=temp.end();it++){
     if((*it)->onWhat()->dim()==0){
-	  boundary_vertices.push_back(*it);
-	}
+      boundary_vertices.push_back(*it);
+    }
   }
 
   for(it=temp.begin();it!=temp.end();it++){
     if((*it)->onWhat()->dim()==1){
-	  boundary_vertices.push_back(*it);
-	}
+      boundary_vertices.push_back(*it);
+    }
   }
 
   for(it=temp.begin();it!=temp.end();it++){
     if((*it)->onWhat()->dim()==2){
-	  boundary_vertices.push_back(*it);
-	}
+      boundary_vertices.push_back(*it);
+    }
   }
 
   /*for(it=temp.begin();it!=temp.end();it++){
@@ -423,72 +423,72 @@ void Filler::treat_region(GRegion* gr)
 
     node = new Node(SPoint3(x,y,z));
     compute_parameters(node,gr);
-	node->set_layer(0);
+    node->set_layer(0);
 
-	it3 = limits.find(boundary_vertices[i]);
-	node->set_limit(it3->second);
+    it3 = limits.find(boundary_vertices[i]);
+    node->set_limit(it3->second);
 
-	rtree.Insert(node->min,node->max,node);
-	fifo.push(node);
+    rtree.Insert(node->min,node->max,node);
+    fifo.push(node);
     //print_node(node,file);
   }
 
   count = 1;
   while(!fifo.empty()){
     parent = fifo.front();
-	fifo.pop();
-	garbage.push_back(parent);
+    fifo.pop();
+    garbage.push_back(parent);
 
-	if(parent->get_limit()!=-1 && parent->get_layer()>=parent->get_limit()){
-	  continue;
-	}
+    if(parent->get_limit()!=-1 && parent->get_layer()>=parent->get_limit()){
+      continue;
+    }
 
-	spawns.clear();
-	spawns.resize(6);
+    spawns.clear();
+    spawns.resize(6);
 
-	for(i=0;i<6;i++){
-	  spawns[i] = new Node();
-	}
+    for(i=0;i<6;i++){
+      spawns[i] = new Node();
+    }
 
-	create_spawns(gr,octree,parent,spawns);
+    create_spawns(gr,octree,parent,spawns);
 
-	for(i=0;i<6;i++){
-	  ok2 = 0;
-	  individual = spawns[i];
-	  point = individual->get_point();
-	  x = point.x();
-	  y = point.y();
-	  z = point.z();
+    for(i=0;i<6;i++){
+      ok2 = 0;
+      individual = spawns[i];
+      point = individual->get_point();
+      x = point.x();
+      y = point.y();
+      z = point.z();
 
-	  if(inside_domain(octree,x,y,z)){
-		compute_parameters(individual,gr);
-		individual->set_layer(parent->get_layer()+1);
-		individual->set_limit(parent->get_limit());
+      if(inside_domain(octree,x,y,z)){
+        compute_parameters(individual,gr);
+        individual->set_layer(parent->get_layer()+1);
+        individual->set_limit(parent->get_limit());
 
-		if(far_from_boundary(octree,individual)){
-		  wrapper.set_ok(1);
-		  wrapper.set_individual(individual);
-		  wrapper.set_parent(parent);
-		  rtree.Search(individual->min,individual->max,rtree_callback,&wrapper);
+        if(far_from_boundary(octree,individual)){
+          wrapper.set_ok(1);
+          wrapper.set_individual(individual);
+          wrapper.set_parent(parent);
+          rtree.Search(individual->min,individual->max,rtree_callback,&wrapper);
 
-		  if(wrapper.get_ok()){
-		    fifo.push(individual);
-		    rtree.Insert(individual->min,individual->max,individual);
-			vertex = new MVertex(x,y,z,gr,0);
-			new_vertices.push_back(vertex);
-			ok2 = 1;
-			//print_segment(individual->get_point(),parent->get_point(),file);
-		  }
-	    }
-	  }
+          if(wrapper.get_ok()){
+            fifo.push(individual);
+            rtree.Insert(individual->min,individual->max,individual);
+            vertex = new MVertex(x,y,z,gr,0);
+            new_vertices.push_back(vertex);
+            ok2 = 1;
+            //print_segment(individual->get_point(),parent->get_point(),file);
+          }
+        }
+      }
 
-	  if(!ok2) delete individual;
-	}
+      if(!ok2) delete individual;
+    }
 
-	if(count%100==0){
-	  printf("%d\n",count);
-	}
-	count++;
+    if(count%100==0){
+      printf("%d\n",count);
+    }
+    count++;
   }
 
   //file << "};\n";
@@ -589,9 +589,9 @@ double Filler::get_size(double x,double y,double z,GEntity* ge)
   manager = ge->model()->getFields();
   if(manager->getBackgroundField()>0){
     field = manager->get(manager->getBackgroundField());
-	if(field){
-	  h = (*field)(x,y,z,ge);
-	}
+    if(field){
+      h = (*field)(x,y,z,ge);
+    }
   }
 
   return h;
@@ -754,11 +754,11 @@ int Filler::code(int tag){
 
   if(s.length()>=5){
     if(s.at(0)=='1' && s.at(1)=='1' && s.at(2)=='1' && s.at(3)=='1' && s.at(4)=='1'){
-	  limit = 0;
-	}
-	else if(s.at(0)=='2' && s.at(1)=='2' && s.at(2)=='2' && s.at(3)=='2' && s.at(4)=='2'){
-	  limit = 1;
-	}
+      limit = 0;
+    }
+    else if(s.at(0)=='2' && s.at(1)=='2' && s.at(2)=='2' && s.at(3)=='2' && s.at(4)=='2'){
+      limit = 1;
+    }
   }
 
   return limit;
