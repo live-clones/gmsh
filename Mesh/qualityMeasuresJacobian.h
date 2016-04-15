@@ -9,14 +9,17 @@
 #include <vector>
 #include "fullMatrix.h"
 
+class GradientBasis;
 class bezierBasis;
 class MElement;
 
 namespace jacobianBasedQuality {
 
 void minMaxJacobianDeterminant(MElement *el, double &min, double &max);
-void minScaledJacobian(MElement *el, double &min);
 double minScaledJacobian(MElement *el);
+double minAnisotropyMeasure(MElement *el, int n = 5);
+double minSampledAnisotropyMeasure(MElement *el, int order,
+                                   bool writeInFile = false);
 
 class _CoeffData
 {
@@ -84,6 +87,71 @@ private:
   double _computeLowerBound() const;
 };
 
+class _CoeffDataAnisotropy: public _CoeffData
+{
+private:
+  const fullVector<double> _coeffsJacDet;
+  const fullMatrix<double> _coeffsMetric;
+  const bezierBasis *_bfsDet, *_bfsMet;
+  MElement *_elForDebug;
+  int _numForDebug;
+  static bool hasError;
+  static std::fstream file;
+
+public:
+  static std::vector<double> mytimes;
+  static std::vector<int> mynumbers;
+  _CoeffDataAnisotropy(fullVector<double> &det,
+                       fullMatrix<double> &metric,
+                       const bezierBasis *bfsDet,
+                       const bezierBasis *bfsMet,
+                       int depth, MElement *, int num = 0);
+  ~_CoeffDataAnisotropy() {}
+
+  bool boundsOk(double minL, double maxL) const;
+  void getSubCoeff(std::vector<_CoeffData*>&) const;
+
+  static int metricOrder(MElement *el);
+  static void fillMetricCoeff(const GradientBasis*,
+                              const fullMatrix<double> &nodes,
+                              fullMatrix<double> &coeff,
+                              int dim, bool ideal);
+
+  static bool noMoreComputationPlease() {return hasError;}
+  static void youReceivedAnError() {hasError = true;}
+
+private:
+  void _computeAtCorner(double &min, double &max) const;
+  double _computeLowerBound() const;
+
+  double _computeLowerBoundA() const;
+  double _computeLowerBoundK() const;
+  void _computeBoundingCurve(double &beta, double gamma, bool lowerBound) const;
+
+  static bool _moveInsideDomain(double &a, double &K, bool bottomleftCorner);
+  static bool _computePseudoDerivatives(double a, double K,
+                                        double &dRda, double &dRdK);
+  static bool _computeDerivatives(double a, double K,
+                                  double &dRda, double &dRdK,
+                                  double &dRdaa, double &dRdaK, double &dRdKK);
+  static bool _intersectionCurveLeftCorner(double beta, double gamma,
+                                           double &mina, double &minK);
+  static double _computeAbscissaMinR(double aStart, double K);
+
+  static double _R2Dsafe(double q, double p);
+  static double _R2Dsafe(double a);
+  static double _R3Dsafe(double q, double p, double J);
+  static double _R3Dsafe(double a, double K);
+  static double _wSafe(double a, double K);
+  static inline double _w(double a, double K) {
+    return .5 * (K + (3-a*a)*a);
+  }
+
+public:
+  void interpolateForMatlab(const fullMatrix<double> &nodes) const;
+  void statsForMatlab(MElement *el, int) const;
+};
+
 //inline bool isValid(MElement *el) {
 //  double min, max;
 //  minMaxJacobianDeterminant(el, min, max);
@@ -93,6 +161,9 @@ private:
 double _computeBoundRational(const fullVector<double> &numerator,
                              const fullVector<double> &denominator,
                              bool lower, bool positiveDenom = true);
+
+void _subdivideDomains(std::vector<_CoeffData*> &domains);
+
 }
 
 #endif

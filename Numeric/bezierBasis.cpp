@@ -959,20 +959,20 @@ void bezierBasisRaiser::computeCoeff(const fullMatrix<double> &coeffA,
   }
 }
 
-void bezierBasisRaiser::computeCoeff(const fullMatrix<double> &coeffA,
+void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
                                      const fullMatrix<double> &coeffB,
                                      const fullMatrix<double> &coeffC,
                                      fullMatrix<double> &coeffCubic)
 {
-  coeffCubic.resize(_Raiser3.size(), coeffA.size2(), true);
+  coeffCubic.resize(_Raiser3.size(), coeffB.size2(), true);
 
   for (unsigned int ind = 0; ind < _Raiser3.size(); ++ind) {
     for (unsigned int l = 0; l < _Raiser3[ind].size(); ++l) {
       const int i = _Raiser3[ind][l].i;
       const int j = _Raiser3[ind][l].j;
       const int k = _Raiser3[ind][l].k;
-      for (int ind2 = 0; ind2 < coeffA.size2(); ++ind2) {
-        coeffCubic(ind, ind2) += _Raiser3[ind][l].val * coeffA(i, ind2)
+      for (int ind2 = 0; ind2 < coeffB.size2(); ++ind2) {
+        coeffCubic(ind, ind2) += _Raiser3[ind][l].val * coeffA(i)
                                                       * coeffB(j, ind2)
                                                       * coeffC(k, ind2);
       }

@@ -117,7 +117,7 @@ public:
                     const fullVector<double> &coeffB,
                     const fullVector<double> &coeffC,
                     fullVector<double> &coeffCubic);
-  void computeCoeff(const fullMatrix<double> &coeffA,
+  void computeCoeff(const fullVector<double> &coeffA,
                     const fullMatrix<double> &coeffB,
                     const fullMatrix<double> &coeffC,
                     fullMatrix<double> &coeffCubic);

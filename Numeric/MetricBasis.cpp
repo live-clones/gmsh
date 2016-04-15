@@ -1676,7 +1676,7 @@ void MetricBasis::_minKsharp(const fullMatrix<double> &coeff,
     minK = std::max(.0, upperBound);
 }
 
-void MetricBasis::_maxAstKpos(const fullMatrix<double> &coeff,
+/*void MetricBasis::_maxAstKpos(const fullMatrix<double> &coeff,
     const fullVector<double> &jac, double minK, double beta, double &maxa) const
 {
   Msg::Fatal("Verifie si cette fonction est ok");
@@ -1945,7 +1945,7 @@ void MetricBasis::_computeBoundBeta(const fullMatrix<double> &coeff,
       beta = std::min(1., lowerBound);
   }
    //TODO sinon, c'est mieux de retourner m..(J^2)/m..(q^3) ??
-}
+}*/
 
 void MetricBasis::_computeBoundingCurve(const fullMatrix<double> &coeff,
                                         const fullVector<double> &jac,
@@ -2323,7 +2323,8 @@ bool MetricBasis::_intersectionCurveLeftCorner(double beta, double c,
   double dK = K-minK;
 
   static double precision = std::numeric_limits<double>::epsilon() * 1e3;
-  while (std::abs(dK) >  minK * precision) { //TODO meilleur approx
+  int n = 0;
+  while (std::abs(dK) > minK * precision && ++n < 100) { //TODO meilleur approx
     const double slope = 3*beta*a*a + c;
     a -= dK / slope;
     dK = (beta*a*a + c)*a-minK;
