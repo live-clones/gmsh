@@ -11,8 +11,8 @@
 #include "meshGFaceOptimize.h"
 
 static double objective_function (double xi, MVertex *ver, 
-				  double xTarget, double yTarget, double zTarget,
-				  const std::vector<MElement*> &lt){
+                                  double xTarget, double yTarget, double zTarget,
+                                  const std::vector<MElement*> &lt){
   double x = ver->x();
   double y = ver->y();
   double z = ver->z();
@@ -25,6 +25,7 @@ static double objective_function (double xi, MVertex *ver,
       minQual = std::min((lt[i]->minSICNShapeMeasure()), minQual);
     else
       minQual = std::min(fabs(lt[i]->minSICNShapeMeasure()), minQual);
+//    minQual = std::min(lt[i]->minAnisotropyMeasure(), minQual);
   }
   ver->x() = x;
   ver->y() = y;
@@ -33,8 +34,8 @@ static double objective_function (double xi, MVertex *ver,
 }
 
 static double objective_function (double xi, MVertex *ver, GFace *gf,
-				  SPoint2 &p1, SPoint2 &p2,
-				  const std::vector<MElement*> &lt){
+                                  SPoint2 &p1, SPoint2 &p2,
+                                  const std::vector<MElement*> &lt){
   double x = ver->x();
   double y = ver->y();
   double z = ver->z();
@@ -67,8 +68,8 @@ static int Stopping_Rule(double x0, double x1, double tol)
 }
 
 double Maximize_Quality_Golden_Section( MVertex *ver, 
-					double xTarget, double yTarget, double zTarget,
-					const std::vector<MElement*> &lt , double tol)
+                                        double xTarget, double yTarget, double zTarget,
+                                        const std::vector<MElement*> &lt , double tol)
 {
   
   static const double lambda = 0.5 * (sqrt5 - 1.0);
@@ -107,9 +108,9 @@ double Maximize_Quality_Golden_Section( MVertex *ver,
 
 
 double Maximize_Quality_Golden_Section( MVertex *ver, GFace *gf, 
-					SPoint2 &p1, SPoint2 &p2,
-					const std::vector<MElement*> &lt , 
-					double tol, double &worst)
+                                        SPoint2 &p1, SPoint2 &p2,
+                                        const std::vector<MElement*> &lt ,
+                                        double tol, double &worst)
 {
   
   static const double lambda = 0.5 * (sqrt5 - 1.0);
@@ -154,7 +155,7 @@ double Maximize_Quality_Golden_Section( MVertex *ver, GFace *gf,
 }
 
 static void _relocateVertex(MVertex *ver,
-			    const std::vector<MElement*> &lt, double tol)
+                            const std::vector<MElement*> &lt, double tol)
 {
   if(ver->onWhat()->dim() != 3) return;
   double x = 0, y=0, z=0;
@@ -179,7 +180,7 @@ static void _relocateVertex(MVertex *ver,
 }
 
 static double _relocateVertex(GFace* gf, MVertex *ver,
-			      const std::vector<MElement*> &lt, double tol) {
+                              const std::vector<MElement*> &lt, double tol) {
   if(ver->onWhat()->dim() != 2) return 2.0;
   
   SPoint2 p1(0,0);
@@ -195,9 +196,9 @@ static double _relocateVertex(GFace* gf, MVertex *ver,
       reparamMeshVertexOnFace(v, gf, pp);
       counter++;
       if (v->onWhat()->dim() == 1) {
-	GEdge *ge = dynamic_cast<GEdge*> (v->onWhat());
-	// do not take any chance
-	if (ge->isSeam(gf))return 2.0;
+        GEdge *ge = dynamic_cast<GEdge*> (v->onWhat());
+        // do not take any chance
+        if (ge->isSeam(gf))return 2.0;
       }
       p1 += pp;
     }

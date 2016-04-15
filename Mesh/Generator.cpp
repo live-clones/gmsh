@@ -779,10 +779,10 @@ static void Mesh3D(GModel *m)
       }
       if(treat_region_ok && (CTX::instance()->mesh.recombine3DAll ||
                              gr->meshAttributes.recombine3D)){
-	if (CTX::instance()->mesh.optimize){
-	  optimizeMeshGRegionGmsh opt;
-	  opt(gr);
-	}
+        if (CTX::instance()->mesh.optimize){
+          optimizeMeshGRegionGmsh opt;
+          opt(gr);
+        }
         double a = Cpu();
         if (CTX::instance()->mesh.recombine3DLevel >= 0){
           Recombinator rec;
@@ -797,18 +797,18 @@ static void Mesh3D(GModel *m)
                      CTX::instance()->mesh.recombine3DConformity);
         // 0: no pyramid, 1: single-step, 2: two-steps (conforming),
         // true: fill non-conformities with trihedra
-	// while(LaplaceSmoothing (gr)){
-	// }
+        // while(LaplaceSmoothing (gr)){
+        // }
         nb_elements_recombination += post.get_nb_elements();
         nb_hexa_recombination += post.get_nb_hexahedra();
         vol_element_recombination += post.get_vol_elements();
         vol_hexa_recombination += post.get_vol_hexahedra();
         // partial export
-	//        stringstream ss;
-	//        ss << "yamakawa_part_";
-	//        ss << gr->tag();
-	//        ss << ".msh";
-	//        export_gregion_mesh(gr, ss.str().c_str());
+        //        stringstream ss;
+        //        ss << "yamakawa_part_";
+        //        ss << gr->tag();
+        //        ss << ".msh";
+        //        export_gregion_mesh(gr, ss.str().c_str());
         time_recombination += (Cpu() - a);
       }
     }

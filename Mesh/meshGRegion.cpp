@@ -70,48 +70,48 @@ class splitQuadRecovery {
       for (std::multimap<GEntity*, std::pair<MVertex*,MFace> >::iterator it2 =
              _data.lower_bound(*it); it2 != _data.upper_bound(*it) ; ++it2){
         const MFace &f = it2->second.second;
-	MVertex *v = it2->second.first;
-	v->onWhat()->mesh_vertices.erase(std::find(v->onWhat()->mesh_vertices.begin(),
-						   v->onWhat()->mesh_vertices.end(), v));
-	std::set<MFace, Less_Face>::iterator itf0 = allFaces.find(MFace(f.getVertex(0),
-									f.getVertex(1),v));
-	std::set<MFace, Less_Face>::iterator itf1 = allFaces.find(MFace(f.getVertex(1),
-									f.getVertex(2),v));
-	std::set<MFace, Less_Face>::iterator itf2 = allFaces.find(MFace(f.getVertex(2),
-									f.getVertex(3),v));
-	std::set<MFace, Less_Face>::iterator itf3 = allFaces.find(MFace(f.getVertex(3),
-									f.getVertex(0),v));
-	if (itf0 != allFaces.end() && itf1 != allFaces.end() &&
-	    itf2 != allFaces.end() && itf3 != allFaces.end()){
-	  (*it)->quadrangles.push_back(new MQuadrangle(f.getVertex(0), f.getVertex(1),
-						       f.getVertex(2), f.getVertex(3)));
-	  allFaces.erase(*itf0);
-	  allFaces.erase(*itf1);
-	  allFaces.erase(*itf2);
-	  allFaces.erase(*itf3);
-	  // printf("some pyramids should be created %d regions\n", (*it)->numRegions());
-	  for (int iReg = 0; iReg < (*it)->numRegions(); iReg++){
-	    if (iReg == 1) {
-	      Msg::Error("Cannot build pyramids on non manifold faces");
-	      v = new MVertex(v->x(), v->y(), v->z(), (*it)->getRegion(iReg));
-	    }
-	    else
-	      v->setEntity ((*it)->getRegion(iReg));
-	    // A quad face connected to an hex or a primsm --> leave the quad face as is
-	    if (_toDelete.find(f) == _toDelete.end()){
-	      (*it)->getRegion(iReg)->pyramids.push_back
-		(new MPyramid(f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3), v));
-	      (*it)->getRegion(iReg)->mesh_vertices.push_back(v);
-	      NBPY++;
-	    }
-	    else {
-	      delete v;
-	    }
-	  }
-	}
+        MVertex *v = it2->second.first;
+        v->onWhat()->mesh_vertices.erase(std::find(v->onWhat()->mesh_vertices.begin(),
+                                                   v->onWhat()->mesh_vertices.end(), v));
+        std::set<MFace, Less_Face>::iterator itf0 = allFaces.find(MFace(f.getVertex(0),
+                                                                        f.getVertex(1),v));
+        std::set<MFace, Less_Face>::iterator itf1 = allFaces.find(MFace(f.getVertex(1),
+                                                                        f.getVertex(2),v));
+        std::set<MFace, Less_Face>::iterator itf2 = allFaces.find(MFace(f.getVertex(2),
+                                                                        f.getVertex(3),v));
+        std::set<MFace, Less_Face>::iterator itf3 = allFaces.find(MFace(f.getVertex(3),
+                                                                        f.getVertex(0),v));
+        if (itf0 != allFaces.end() && itf1 != allFaces.end() &&
+            itf2 != allFaces.end() && itf3 != allFaces.end()){
+          (*it)->quadrangles.push_back(new MQuadrangle(f.getVertex(0), f.getVertex(1),
+                                                       f.getVertex(2), f.getVertex(3)));
+          allFaces.erase(*itf0);
+          allFaces.erase(*itf1);
+          allFaces.erase(*itf2);
+          allFaces.erase(*itf3);
+          // printf("some pyramids should be created %d regions\n", (*it)->numRegions());
+          for (int iReg = 0; iReg < (*it)->numRegions(); iReg++){
+            if (iReg == 1) {
+              Msg::Error("Cannot build pyramids on non manifold faces");
+              v = new MVertex(v->x(), v->y(), v->z(), (*it)->getRegion(iReg));
+            }
+            else
+              v->setEntity ((*it)->getRegion(iReg));
+            // A quad face connected to an hex or a primsm --> leave the quad face as is
+            if (_toDelete.find(f) == _toDelete.end()){
+              (*it)->getRegion(iReg)->pyramids.push_back
+                (new MPyramid(f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3), v));
+              (*it)->getRegion(iReg)->mesh_vertices.push_back(v);
+              NBPY++;
+            }
+            else {
+              delete v;
+            }
+          }
+        }
       }
       for (std::set<MFace, Less_Face>::iterator itf = allFaces.begin();
-	   itf != allFaces.end(); ++itf){
+           itf != allFaces.end(); ++itf){
         (*it)->triangles.push_back
           (new MTriangle(itf->getVertex(0), itf->getVertex(1), itf->getVertex(2)));
       }
@@ -334,76 +334,76 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 
       double guess[2] = {0, 0};
       if (needParam) {
-	int Count = 0;
-	for(int j = 0; j < 3; j++){
-	  if(!v[j]->onWhat()){
-	    Msg::Error("Uncategorized vertex %d", v[j]->getNum());
-	  }
-	  else if(v[j]->onWhat()->dim() == 2){
-	    double uu,vv;
-	    v[j]->getParameter(0, uu);
-	    v[j]->getParameter(1, vv);
-	    guess[0] += uu;
-	    guess[1] += vv;
-	    Count++;
-	  }
-	  else if(v[j]->onWhat()->dim() == 1){
-	    GEdge *ge = (GEdge*)v[j]->onWhat();
-	    double UU;
-	    v[j]->getParameter(0, UU);
-	    SPoint2 param;
-	    param = ge->reparamOnFace(gf, UU, 1);
-	    guess[0] += param.x();
-	    guess[1] += param.y();
-	    Count++;
-	  }
-	  else if(v[j]->onWhat()->dim() == 0){
-	    SPoint2 param;
-	    GVertex *gv = (GVertex*)v[j]->onWhat();
-	    param = gv->reparamOnFace(gf,1);
-	    guess[0] += param.x();
-	    guess[1] += param.y();
-	    Count++;
-	  }
-	}
-	if(Count != 0){
-	  guess[0] /= Count;
-	  guess[1] /= Count;
-	}
+        int Count = 0;
+        for(int j = 0; j < 3; j++){
+          if(!v[j]->onWhat()){
+            Msg::Error("Uncategorized vertex %d", v[j]->getNum());
+          }
+          else if(v[j]->onWhat()->dim() == 2){
+            double uu,vv;
+            v[j]->getParameter(0, uu);
+            v[j]->getParameter(1, vv);
+            guess[0] += uu;
+            guess[1] += vv;
+            Count++;
+          }
+          else if(v[j]->onWhat()->dim() == 1){
+            GEdge *ge = (GEdge*)v[j]->onWhat();
+            double UU;
+            v[j]->getParameter(0, UU);
+            SPoint2 param;
+            param = ge->reparamOnFace(gf, UU, 1);
+            guess[0] += param.x();
+            guess[1] += param.y();
+            Count++;
+          }
+          else if(v[j]->onWhat()->dim() == 0){
+            SPoint2 param;
+            GVertex *gv = (GVertex*)v[j]->onWhat();
+            param = gv->reparamOnFace(gf,1);
+            guess[0] += param.x();
+            guess[1] += param.y();
+            Count++;
+          }
+        }
+        if(Count != 0){
+          guess[0] /= Count;
+          guess[1] /= Count;
+        }
       }
 
       for(int j = 0; j < 3; j++){
-	if (out.trifacelist[i * 3 + j] - 1 >= initialSize){
-	  printf("aaaaaaaaaaaaaaargh\n");
-	  //	if(v[j]->onWhat()->dim() == 3){
-	  v[j]->onWhat()->mesh_vertices.erase
-	    (std::find(v[j]->onWhat()->mesh_vertices.begin(),
-		       v[j]->onWhat()->mesh_vertices.end(),
-		       v[j]));
-	  MVertex *v1b;
-	  if(needParam){
-	    // parametric coordinates should be set for the vertex !  (this is
-	    // not 100 % safe yet, so we reserve that operation for high order
-	    // meshes)
-	    GPoint gp = gf->closestPoint(SPoint3(v[j]->x(), v[j]->y(), v[j]->z()), guess);
-	    if(gp.g()){
-	      v1b = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
-	    }
-	    else{
-	      v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
-	      Msg::Warning("The point was not projected back to the surface (%g %g %g)",
-			   v[j]->x(), v[j]->y(), v[j]->z());
-	    }
-	  }
-	  else{
-	    v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
-	  }
+        if (out.trifacelist[i * 3 + j] - 1 >= initialSize){
+          printf("aaaaaaaaaaaaaaargh\n");
+          //        if(v[j]->onWhat()->dim() == 3){
+          v[j]->onWhat()->mesh_vertices.erase
+            (std::find(v[j]->onWhat()->mesh_vertices.begin(),
+                       v[j]->onWhat()->mesh_vertices.end(),
+                       v[j]));
+          MVertex *v1b;
+          if(needParam){
+            // parametric coordinates should be set for the vertex !  (this is
+            // not 100 % safe yet, so we reserve that operation for high order
+            // meshes)
+            GPoint gp = gf->closestPoint(SPoint3(v[j]->x(), v[j]->y(), v[j]->z()), guess);
+            if(gp.g()){
+              v1b = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+            }
+            else{
+              v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
+              Msg::Warning("The point was not projected back to the surface (%g %g %g)",
+                           v[j]->x(), v[j]->y(), v[j]->z());
+            }
+          }
+          else{
+            v1b = new MVertex(v[j]->x(), v[j]->y(), v[j]->z(), gf);
+          }
 
-	  gf->mesh_vertices.push_back(v1b);
-	  numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
-	  delete v[j];
-	  v[j] = v1b;
-	}
+          gf->mesh_vertices.push_back(v1b);
+          numberedV[out.trifacelist[i * 3 + j] - 1] = v1b;
+          delete v[j];
+          v[j] = v1b;
+        }
       }
       //      printf("new triangle %d %d %d\n",v[0]->onWhat()->dim(), v[1]->onWhat()->dim(), v[2]->onWhat()->dim());
       MTriangle *t = new MTriangle(v[0], v[1], v[2]);
@@ -432,7 +432,7 @@ bool CreateAnEmptyVolumeMesh(GRegion *gr)
   buildTetgenStructure(gr, in, numberedV, sqr);
   printf("tetgen structure created\n");
   sprintf(opts, "-Ype%sT%g",
-	  (Msg::GetVerbosity() < 3) ? "Q" : (Msg::GetVerbosity() > 6) ? "V" : "",
+          (Msg::GetVerbosity() < 3) ? "Q" : (Msg::GetVerbosity() > 6) ? "V" : "",
           CTX::instance()->mesh.toleranceInitialDelaunay);
   try{
     tetrahedralize(opts, &in, &out);
@@ -952,8 +952,8 @@ void meshGRegion::operator() (GRegion *gr)
   if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL){
     for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
       if((*it)->quadrangles.size()){
-	Msg::Error("Cannot use frontal 3D algorithm with quadrangles on boundary");
-	return;
+        Msg::Error("Cannot use frontal 3D algorithm with quadrangles on boundary");
+        return;
       }
     }
   }
