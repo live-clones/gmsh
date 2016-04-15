@@ -112,7 +112,6 @@ public:
                                                 double toleranceTensor,
                                                 double tolerance);
   void statsForMatlab(MElement *el, int deg, MetricData *md) const;
-  //void interpolate(const MElement*, const MetricData*, const double *uvw, double *minmaxQ) const;
   void interpolate(const MElement*, const MetricData*,
                    const fullMatrix<double> &nodes, fullMatrix<double> &R) const;
   void interpolateAfterNSubdivisions(const MElement *el,
@@ -143,17 +142,6 @@ private:
   void _minAfast(const fullMatrix<double>&, double &min) const;
   void _minKfast(const fullMatrix<double>&, const fullVector<double>&, double &min) const;
   void _minKsharp(const fullMatrix<double>&, const fullVector<double>&, double &min) const;
-  /*void _maxAstKpos(const fullMatrix<double>&, const fullVector<double>&,
-                 double minK, double beta, double &maxa) const;
-  void _maxAstKneg(const fullMatrix<double>&, const fullVector<double>&,
-                 double minK, double beta, double &maxa) const;
-  void _maxKstAfast(const fullMatrix<double>&, const fullVector<double>&,
-                 double mina, double beta, double &maxK) const;
-  void _maxKstAsharp(const fullMatrix<double>&, const fullVector<double>&,
-                 double mina, double beta, double &maxK) const;
-  void _computeBoundBeta(const fullMatrix<double>&,
-                         const fullVector<double>&,
-                         double &beta, bool lowerBound) const;*/
   void _computeBoundingCurve(const fullMatrix<double>&,
                              const fullVector<double>&,
                              double &beta, double c, bool lowerBound) const;

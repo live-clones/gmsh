@@ -18,8 +18,8 @@ namespace jacobianBasedQuality {
 void minMaxJacobianDeterminant(MElement *el, double &min, double &max);
 double minScaledJacobian(MElement *el);
 double minAnisotropyMeasure(MElement *el, int n = 5);
-double minSampledAnisotropyMeasure(MElement *el, int order,
-                                   bool writeInFile = false);
+//double minSampledAnisotropyMeasure(MElement *el, int order,//fordebug
+//                                   bool writeInFile = false);
 
 class _CoeffData
 {
@@ -33,7 +33,6 @@ public:
                          _depth(depth) {}
   virtual ~_CoeffData() {}
 
-  //inline int depth() const {return _depthSub;}
   inline double minL() const {return _minL;}
   inline double maxL() const {return _maxL;}
   inline double minB() const {return _minB;}
@@ -95,12 +94,12 @@ private:
   const bezierBasis *_bfsDet, *_bfsMet;
   MElement *_elForDebug;
   int _numForDebug;
-  static bool hasError;
-  static std::fstream file;
+  static bool hasError;//fordebug
+  static std::fstream file;//fordebug
 
 public:
-  static std::vector<double> mytimes;
-  static std::vector<int> mynumbers;
+  static std::vector<double> mytimes;//fordebug
+  static std::vector<int> mynumbers;//fordebug
   _CoeffDataAnisotropy(fullVector<double> &det,
                        fullMatrix<double> &metric,
                        const bezierBasis *bfsDet,
@@ -117,8 +116,8 @@ public:
                               fullMatrix<double> &coeff,
                               int dim, bool ideal);
 
-  static bool noMoreComputationPlease() {return hasError;}
-  static void youReceivedAnError() {hasError = true;}
+  static bool noMoreComputationPlease() {return hasError;}//fordebug
+  static void youReceivedAnError() {hasError = true;}//fordebug
 
 private:
   void _computeAtCorner(double &min, double &max) const;
@@ -148,8 +147,8 @@ private:
   }
 
 public:
-  void interpolateForMatlab(const fullMatrix<double> &nodes) const;
-  void statsForMatlab(MElement *el, int) const;
+  void interpolateForMatlab(const fullMatrix<double> &nodes) const;//fordebug
+  void statsForMatlab(MElement *el, int) const;//fordebug
 };
 
 //inline bool isValid(MElement *el) {

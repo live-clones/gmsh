@@ -118,11 +118,7 @@ double minAnisotropyMeasure(MElement *el, int n)
 {
   if (_CoeffDataAnisotropy::noMoreComputationPlease()) return -9;
 
-//  double minSampled = minSampledAnisotropyMeasure(el, n);
-
-//  double values[3];
-//  Msg::Info("R %g", el->getEigenvaluesMetric(-1,-1,-1,values));
-//  Msg::Info("R %g", el->getEigenvaluesMetric(-1,1,1,values));
+//  double minSampled = minSampledAnisotropyMeasure(el, n); //fordebug
 
   fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
   el->getNodesCoord(nodesXYZ);
@@ -183,22 +179,17 @@ double minAnisotropyMeasure(MElement *el, int n)
     }
   }
 
-  //
-//  TMBEG(0, _CoeffDataAnisotropy)
   std::vector<_CoeffData*> domains;
   domains.push_back(
       new _CoeffDataAnisotropy(coeffJacDetBez, coeffMetricBez,
                                jacBasis ? jacBasis->getBezier() : NULL,
                                gradBasis->getBezier(), 0, el)
   );
-//  TMEND(0)
 
-  static int i = 0;
-  ++i;
   _subdivideDomains(domains);
-  if (domains.size()/7+1 > 20) {
-    Msg::Info("%d: %d", el->getNum(), domains.size()/7+1);
-  }
+//  if (domains.size()/7+1 > 20) {//fordebug
+//    Msg::Info("%d: %d", el->getNum(), domains.size()/7+1);
+//  }
 
   double min = domains[0]->minB();
   delete domains[0];
@@ -207,30 +198,30 @@ double minAnisotropyMeasure(MElement *el, int n)
     delete domains[i];
   }
 
-//  if (min - minSampled > 1e-13) {
+//  if (min - minSampled > 1e-13) {//fordebug
 //    Msg::Error("no, works no el %d (%g vs %g, diff %g)", el->getNum(), min, minSampled, min-minSampled);
 //  }
 
   return min;
 }
 
-double minSampledAnisotropyMeasure(MElement *el, int deg, bool writeInFile)
-{
-  fullMatrix<double> samplingPoints;
-  bool serendip = false;
-  gmshGeneratePoints(FuncSpaceData(el, deg, &serendip), samplingPoints);
-
-  double values[3];
-  double min = std::numeric_limits<double>::infinity();
-  for (int i = 0; i < samplingPoints.size1(); ++i) {
-    min = std::min(min, el->getEigenvaluesMetric(samplingPoints(i, 0),
-                                                 samplingPoints(i, 1),
-                                                 samplingPoints(i, 2),
-                                                 values));
-  }
-
-  return min;
-}
+//double minSampledAnisotropyMeasure(MElement *el, int deg, bool writeInFile)//fordebug
+//{
+//  fullMatrix<double> samplingPoints;
+//  bool serendip = false;
+//  gmshGeneratePoints(FuncSpaceData(el, deg, &serendip), samplingPoints);
+//
+//  double values[3];
+//  double min = std::numeric_limits<double>::infinity();
+//  for (int i = 0; i < samplingPoints.size1(); ++i) {
+//    min = std::min(min, el->getEigenvaluesMetric(samplingPoints(i, 0),
+//                                                 samplingPoints(i, 1),
+//                                                 samplingPoints(i, 2),
+//                                                 values));
+//  }
+//
+//  return min;
+//}
 
 // Virtual class _CoeffData
 bool _lessMinB::operator()(_CoeffData *cd1, _CoeffData *cd2) const
@@ -406,7 +397,6 @@ _CoeffDataAnisotropy::_CoeffDataAnisotropy(fullVector<double> &det,
   _coeffsMetric(metric.getDataPtr(), metric.size1(), metric.size2()),
   _bfsDet(bfsDet), _bfsMet(bfsMet), _elForDebug(el), _numForDebug(num)
 {
-//  Msg::Info("new");
   if (!det.getOwnData() || !metric.getOwnData()) {
     Msg::Fatal("Cannot create an instance of _CoeffDataScaledJac from a "
                "fullVector or a fullMatrix that does not own its data.");
@@ -419,14 +409,12 @@ _CoeffDataAnisotropy::_CoeffDataAnisotropy(fullVector<double> &det,
   const_cast<fullVector<double>&>(_coeffsJacDet).setOwnData(true);
   const_cast<fullMatrix<double>&>(_coeffsMetric).setOwnData(true);
 
-  _computeAtCorner(_minL, _maxL);;
+  _computeAtCorner(_minL, _maxL);
 
-//  TMBEG(0, _computeLowerBound)
   if (_minL < 1e-3) _minB = 0;
   else _minB = _computeLowerBound();
-//  TMEND(0)
   // computation of _maxB not implemented for now
-  //statsForMatlab(_elForDebug, _numForDebug);
+  //statsForMatlab(_elForDebug, _numForDebug);//fordebug
 }
 
 void _CoeffDataAnisotropy::_computeAtCorner(double &min, double &max) const
@@ -442,14 +430,10 @@ void _CoeffDataAnisotropy::_computeAtCorner(double &min, double &max) const
     }
     p = std::sqrt(p);
     double qualSqrd;
-//      Msg::Info("qpJ: (%g, %g, %g) => aK: (%g, %g)", q, p, _coeffsJacDet(i), q/p, _coeffsJacDet(i)*_coeffsJacDet(i)/p/p/p);
     if (_coeffsMetric.size2() == 3)
       qualSqrd = _R2Dsafe(q, p);
-    else {
+    else
       qualSqrd = _R3Dsafe(q, p, _coeffsJacDet(i));
-//      Msg::Info("qpJ:  (%g, %g, %g) => aK: (%g, %g) => R = %g", q, p, _coeffsJacDet(i), q/p, _coeffsJacDet(i)*_coeffsJacDet(i)/p/p/p, std::sqrt(_R3Dsafe(q, p, _coeffsJacDet(i))));
-//      Msg::Info("(q^2, p^2) = (%g, %g)", q*q, p*p);
-    }
     min = std::min(min, qualSqrd);
     max = std::max(max, qualSqrd);
   }
@@ -466,21 +450,13 @@ double _CoeffDataAnisotropy::_computeLowerBound() const
   }
 
   // 3D element
-//  TMBEG(0, _computeLowerBoundA)
   double mina = _computeLowerBoundA();
-//  TMEND(0)
-//  TMBEG(1, _computeLowerBoundK)
   double minK = _computeLowerBoundK();
-//  TMEND(1)
 
-//  TMBEG(2, _moveInsideDomain)
   _moveInsideDomain(mina, minK, true);
-//  TMEND(2)
 
   double p_dRda, p_dRdK;
-//  TMBEG(3, _computePseudoDerivatives)
   _computePseudoDerivatives(mina, minK, p_dRda, p_dRdK);
-//  TMEND(3)
 
   if (p_dRda < 0) {
     // cases 1 & 2 => compute a lower bounding curve K = beta * a^3 + c * a
@@ -490,10 +466,8 @@ double _CoeffDataAnisotropy::_computeLowerBound() const
     double gamma = .5*(3*minK/mina - slope);
     double beta;
 
-//    TMBEG(4, 12_computeBoundingCurve)
     _computeBoundingCurve(beta, gamma, true);
-//    TMEND(4)
-    /*{
+    /*{//fordebug
       double beta = (minK/mina-c)/mina/mina;
       if (std::abs(p_dRda + p_dRdK * (3*beta*mina*mina+c)) > 1e-12) {
         Msg::Error("Derivative along curve not zero %g", p_dRda + p_dRdK * (3*beta*mina*mina+c));
@@ -515,7 +489,7 @@ double _CoeffDataAnisotropy::_computeLowerBound() const
     else {
       double p_dRda, p_dRdK;
       _computePseudoDerivatives(a_int, K_int, p_dRda, p_dRdK);
-      /*if (p_dRda + p_dRdK * (3*beta*a_int*a_int+c) < -1e-5) {
+      /*if (p_dRda + p_dRdK * (3*beta*a_int*a_int+c) < -1e-5) {//fordebug
         Msg::Error("Derivative along curve not positive or zero %g", p_dRda + p_dRdK * (3*beta*a_int*a_int+c));
         Msg::Info("(%g, %g) vs (%g, %g), diff (%g, %g)", mina, minK, a_int, K_int, a_int-mina, K_int-minK);
         double beta2 = (minK/mina-c)/mina/mina;
@@ -539,9 +513,7 @@ double _CoeffDataAnisotropy::_computeLowerBound() const
     double slope = -p_dRda/p_dRdK;
     double gamma = .5*(3*minK/mina - slope);
     double beta;
-//    TMBEG(5, 45_computeBoundingCurve)
     _computeBoundingCurve(beta, gamma, false);
-//    TMEND(5)
 
     double a_int = mina, K_int = minK;
     if (_intersectionCurveLeftCorner(beta, gamma, a_int, K_int)) {
@@ -621,55 +593,37 @@ double _CoeffDataAnisotropy::_computeLowerBoundK() const
 void _CoeffDataAnisotropy::_computeBoundingCurve(double &beta, double gamma,
                                                  bool compLowBound) const
 {
-  // compute a lower/upper bounding curve K = beta * a^3 + c * a
-  // with c fixed.
+  // compute a lower/upper bounding curve K = beta * a^3 + gamma * a
+  // with gamma fixed.
 
-//  TMBEG(1, num)
-//  TMBEG(11, J2)
   fullVector<double> J2;
   _bfsDet->getRaiser()->computeCoeff(_coeffsJacDet, _coeffsJacDet, J2);
-//  TMEND(11)
 
-//  TMBEG(12, q)
   fullVector<double> q(_coeffsMetric.size1());
   for (int i = 0; i < q.size(); ++i) {
     q(i) = _coeffsMetric(i, 0);
   }
-//  TMEND(12)
 
-//  TMBEG(13, qp2)
   fullVector<double> qp2;
   {
-//    TMBEG(131, qp2A)
     fullMatrix<double> terms_p, terms_qp2;
     terms_p.setAsProxy(_coeffsMetric, 1, _coeffsMetric.size2()-1);
     _bfsMet->getRaiser()->computeCoeff(q, terms_p, terms_p, terms_qp2);
-//    TMEND(131)
-//    TMBEG(132, qp2B)
     qp2.resize(terms_qp2.size1(), true);
     for (int i = 0; i < terms_qp2.size1(); ++i) {
       for (int j = 0; j < terms_qp2.size2(); ++j) {
         qp2(i) += terms_qp2(i, j);
       }
     }
-//    TMEND(132)
   }
-//  TMEND(13)
 
-//  TMBEG(14, J2-gqp2)
   fullVector<double> &coeffNumerator = J2;
   coeffNumerator.axpy(qp2, -gamma);
-//  TMEND(14)
-//  TMEND(1)
 
-//  TMBEG(2, den)
   fullVector<double> coeffDenominator;
   _bfsMet->getRaiser()->computeCoeff(q, q, q, coeffDenominator);
-//  TMEND(2)
 
-//  TMBEG(3, _computeBoundRationalBoundingCurve)
   beta = _computeBoundRational(coeffNumerator, coeffDenominator, compLowBound);
-//  TMEND(3)
 }
 
 void _CoeffDataAnisotropy::fillMetricCoeff(const GradientBasis *gradients,
@@ -901,7 +855,6 @@ bool _CoeffDataAnisotropy::_intersectionCurveLeftCorner(double beta, double gamm
 
 double _CoeffDataAnisotropy::_computeAbscissaMinR(double aStart, double K)
 {
-//  Msg::Info("In _computeAbscissaMinR... (%g, %g)", aStart, K);
   double a = aStart;
   double a3 = (3-a*a)*a;
   double da3 = std::numeric_limits<double>::infinity();
@@ -915,7 +868,6 @@ double _CoeffDataAnisotropy::_computeAbscissaMinR(double aStart, double K)
     da3 -= a3;
     // Make sure we are not going outside the domain:
     while (std::abs(_w(a+da, K)) > 1) da /= 2;
-//    Msg::Info("%g + %g = %g", a, da, a + da);
     a += da;
   }
   return a;
@@ -1013,10 +965,6 @@ double _CoeffDataAnisotropy::_R3Dsafe(double a, double K)
     }
 
     const double w = _wSafe(a, K);
-//    if (std::abs(w) > 1-1e-5) {
-//      if (w > 0) return (a - 1) / (a + 2);
-//      else       return (a - 2) / (a + 1);
-//    }
 
     const double phi = std::acos(w) / 3;
     const double R = (a + 2*std::cos(phi + 2*M_PI/3)) / (a + 2*std::cos(phi));
