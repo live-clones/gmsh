@@ -601,14 +601,25 @@ bool GModel::setAllVolumesPositive()
   return ok;
 }
 
-static void addToMap(std::multimap< MFace , MElement *, Less_Face> &faceToElement, std::map< MElement *, std::vector < std::pair <MElement *, bool> > > &elToNeighbors, const MFace &face,  MElement *el){
+static void addToMap
+  (std::multimap< MFace , MElement *, Less_Face> &faceToElement,
+   std::map< MElement *, std::vector < std::pair <MElement *, bool> > > &elToNeighbors,
+   const MFace &face,  MElement *el)
+{
   std::map< MFace , MElement *, Less_Face>::iterator fit = faceToElement.find(face);
   if (fit == faceToElement.end()){
     faceToElement.insert(std::pair< MFace , MElement *>(face, el));
-  } else { //We found the neighbor face outFace
+  }
+  else { //We found the neighbor face outFace
     faceToElement.insert(std::pair< MFace , MElement *>(face, el));
-    if (faceToElement.count(face) > 2)
-      Msg::Fatal("Topological fault: Face sharing two other faces. Element %i. Number of nodes %i. Count of faces: %i Three first nodes %i %i %i",el->getNum(),face.getNumVertices(),faceToElement.count(face),face.getVertex(0)->getNum(),face.getVertex(1)->getNum(),face.getVertex(2)->getNum());
+    if (faceToElement.count(face) > 2){
+      Msg::Error("Topological fault: Face sharing two other faces. Element %i. "
+                 "Number of nodes %i. Count of faces: %i Three first nodes %i %i %i",
+                 el->getNum(),face.getNumVertices(),faceToElement.count(face),
+                 face.getVertex(0)->getNum(),face.getVertex(1)->getNum(),
+                 face.getVertex(2)->getNum());
+      return;
+    }
     MFace outFace = fit->first;
     std::vector<std::pair<MElement *, bool> > &neigh = elToNeighbors[el];
     for (size_t iN = 0; iN < neigh.size(); iN++)
@@ -616,25 +627,36 @@ static void addToMap(std::multimap< MFace , MElement *, Less_Face> &faceToElemen
         return;
     int i0 = -1;
     while (face.getVertex(0) != outFace.getVertex(++i0));
-    bool sameOrientation = face.getVertex(1) == outFace.getVertex((i0+1)%face.getNumVertices());
+    bool sameOrientation =
+      face.getVertex(1) == outFace.getVertex((i0+1)%face.getNumVertices());
     neigh.push_back(std::make_pair(fit->second, !sameOrientation));
     elToNeighbors[fit->second].push_back(std::make_pair(el, !sameOrientation));
   }
 }
 
-static void checkConformity(std::multimap< MFace , MElement *, Less_Face> &faceToElement, std::map< MElement *, std::vector < std::pair <MElement *, bool> > > &elToNeighbors, MFace face, MElement *el){
+static void checkConformity
+  (std::multimap< MFace , MElement *, Less_Face> &faceToElement,
+   std::map< MElement *, std::vector < std::pair <MElement *, bool> > > &elToNeighbors,
+   MFace face, MElement *el)
+{
   int connectivity = faceToElement.count(face);
   if (ElementType::ParentTypeFromTag(el->getType()) == TYPE_TRIH){
     //Each face of a trihedron should exist twice (no face on the boundary)
-    if (connectivity != 2) Msg::Fatal("Non conforming trihedron %i (nb connections for a face %i)",el->getNum(), faceToElement.count(face));
-  }else{
+    if (connectivity != 2)
+      Msg::Error("Non conforming trihedron %i (nb connections for a face %i)",
+                 el->getNum(), faceToElement.count(face));
+  }
+  else{
     //A face can exist  twice (inside) or once (boundary)
     if (connectivity != 2){
       for (int iV = 0; iV < face.getNumVertices(); iV++)
         if (face.getVertex(iV)->onWhat()->dim() == 3 || connectivity != 1){
           for (int jV = 0; jV < face.getNumVertices(); jV++)
-            Msg::Info("Vertex %i dim %i",face.getVertex(jV)->getNum(), face.getVertex(iV)->onWhat()->dim());
-          Msg::Fatal("Non conforming element %i (%i connection(s) for a face located on dim %i (vertex %i))",el->getNum(), connectivity,face.getVertex(iV)->onWhat()->dim(), face.getVertex(iV)->getNum());
+            Msg::Info("Vertex %i dim %i",face.getVertex(jV)->getNum(),
+                      face.getVertex(iV)->onWhat()->dim());
+          Msg::Error("Non conforming element %i (%i connection(s) for a face "
+                     "located on dim %i (vertex %i))",el->getNum(), connectivity,
+                     face.getVertex(iV)->onWhat()->dim(), face.getVertex(iV)->getNum());
         }
     }
   }
@@ -673,14 +695,16 @@ void GModel::setAllVolumesPositiveTopology()
     el = queue[i].first;
     if (!queue[i].second){
       el->reverse();
-      //      Msg::Info("Reverted element %i of type %i", el->getNum(), el->getType());
+      // Msg::Info("Reverted element %i of type %i", el->getNum(), el->getType());
     }
     const std::vector < std::pair <MElement *, bool> > &neigh = elToNeighbors[el];
     for (size_t iN = 0; iN < neigh.size(); iN++)
       if (queued.count(neigh[iN].first) == 0){
         queue.push_back(std::make_pair(neigh[iN].first, neigh[iN].second == queue[i].second));
-        //        if (!(neigh[iN].second == queue[i].second))
-        //          Msg::Info("Queuing  element %i (%i) from el %i (%i)", neigh[iN].first->getNum(), neigh[iN].second, el->getNum(),queue[i].second);
+        // if (!(neigh[iN].second == queue[i].second))
+        //  Msg::Info("Queuing  element %i (%i) from el %i (%i)",
+        //             neigh[iN].first->getNum(), neigh[iN].second, el->getNum(),
+        //             queue[i].second);
         queued.insert(neigh[iN].first);
       }
   }
@@ -1841,7 +1865,8 @@ static void recurConnectMElementsByMFaceOld(const MFace &f,
        it != e2f.upper_bound(f); ++it){
     group.insert(it->second);
     for (int i = 0; i < it->second->getNumFaces(); ++i){
-      recurConnectMElementsByMFace(it->second->getFace(i), e2f, group, touched, recur_level+1);
+      recurConnectMElementsByMFace(it->second->getFace(i), e2f, group, touched,
+                                   recur_level+1);
     }
   }
 }

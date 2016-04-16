@@ -819,8 +819,7 @@ struct MakeGraphFromEntity
   static void eval(const GEntity *const entity, FaceMap &faceMap,
                    GrVertexMap &grVertMap, Graph &graph)
   {
-    unsigned numElem[5];
-    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
+    unsigned numElem[6] = {0, 0, 0, 0, 0, 0};
     entity->getNumMeshElements(numElem);
     // Loop over all types of elements
     int nType = entity->getNumElementTypes();
@@ -894,8 +893,7 @@ struct MatchBoElemToGrVertex
                    const GrVertexMap &grVertMap, const Graph &graph,
                    std::vector<BoElemGr> &boElemGrVec)
   {
-    unsigned numElem[5];
-    numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
+    unsigned numElem[6] = {0, 0, 0, 0, 0, 0};
     entity->getNumMeshElements(numElem);
     // Loop over all types of elements
     int nType = entity->getNumElementTypes();
@@ -1192,7 +1190,7 @@ static void addGhostCells(GEntity *ge,
 
 int CreatePartitionBoundaries(GModel *model, bool createGhostCells, bool createAllDims)
 {
-  unsigned numElem[5];
+  unsigned numElem[6];
   const int meshDim = model->getNumMeshElements(numElem);
   std::set<partitionFace*, Less_partitionFace> pfaces;
   std::set<partitionEdge*, Less_partitionEdge> pedges;
