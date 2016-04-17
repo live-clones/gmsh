@@ -3,6 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
+#include "GmshConfig.h"
+
+#if defined(HAVE_MESH)
+
 #include "AnalyseCurvedMesh.h"
 #include "OS.h"
 #include "Context.h"
@@ -28,6 +32,7 @@ StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "Tolerance", NULL, 1e-3}
   // tolerance: To be removed when MetricBasis => qualityMeasuresJacobian
 };
+
 extern "C"
 {
   GMSH_Plugin *GMSH_RegisterAnalyseCurvedMeshPlugin()
@@ -35,14 +40,17 @@ extern "C"
     return new GMSH_AnalyseCurvedMeshPlugin();
   }
 }
+
 int GMSH_AnalyseCurvedMeshPlugin::getNbOptions() const
 {
   return sizeof(CurvedMeshOptions_Number) / sizeof(StringXNumber);
 }
+
 StringXNumber *GMSH_AnalyseCurvedMeshPlugin::getOption(int iopt)
 {
   return &CurvedMeshOptions_Number[iopt];
 }
+
 std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
 {
   return "Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. "
@@ -78,7 +86,6 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
     "the validity of the mesh.";
 }
 
-// Execution
 PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
 {
   _m = GModel::current();
@@ -421,3 +428,5 @@ void GMSH_AnalyseCurvedMeshPlugin::computeMinR(MElement *const *el,
     }
   }
 }
+
+#endif

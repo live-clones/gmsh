@@ -188,8 +188,6 @@ void PluginManager::registerDefaultPlugins()
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("MathEval", GMSH_RegisterMathEvalPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
-                      ("AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));
-    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CurvedBndDist", GMSH_RegisterCurvedBndDistPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("ModifyComponents", GMSH_RegisterModifyComponentsPlugin()));
@@ -265,6 +263,10 @@ void PluginManager::registerDefaultPlugins()
                       ("ThinLayerFixMesh", GMSH_RegisterThinLayerFixMeshPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("MeshSubEntities", GMSH_RegisterMeshSubEntitiesPlugin()));
+#if defined(HAVE_MESH)
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));
+#endif
 #if defined(HAVE_REVOROPT)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("CVTRemesh", GMSH_RegisterCVTRemeshPlugin()));
