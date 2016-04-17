@@ -28,10 +28,10 @@
 //  Module : GEOM
 //  $Header: /cvs/netgen/netgen/libsrc/occ/Partition_Spliter.cxx,v 1.7 2008/03/31 14:20:28 wabro Exp $
 
-#if !defined(HAVE_NO_OCC_CONFIG_H)
+#include <Standard_Version.hxx>
+#if !defined(HAVE_NO_OCC_CONFIG_H) && (OCC_VERSION_MAJOR < 7)
 #include <config.h>
 #endif
-#include <Standard_Version.hxx>
 
 //using namespace std;
 #include <climits>

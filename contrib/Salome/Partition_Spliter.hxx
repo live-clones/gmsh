@@ -28,7 +28,8 @@
 #ifndef _TopTools_DataMapOfShapeShape_HeaderFile
 #include <TopTools_DataMapOfShapeShape.hxx>
 #endif
-#ifndef _Handle_BRepAlgo_AsDes_HeaderFile
+#include <Standard_Version.hxx>
+#if !defined(_Handle_BRepAlgo_AsDes_HeaderFile) && (OCC_VERSION_MAJOR < 7)
 #include <Handle_BRepAlgo_AsDes.hxx>
 #endif
 #ifndef _BRepAlgo_Image_HeaderFile
@@ -45,7 +46,6 @@
 #endif
 class BRepAlgo_AsDes;
 class TopoDS_Shape;
-class TopTools_ListOfShape;
 class TopoDS_Edge;
 
 
@@ -129,7 +129,7 @@ private:
    TopTools_DataMapOfShapeShape myFaceShapeMap;
    TopTools_DataMapOfShapeShape myInternalFaces;
    TopTools_DataMapOfShapeShape myIntNotClFaces;
-   Handle_BRepAlgo_AsDes myAsDes;
+   Handle(BRepAlgo_AsDes) myAsDes;
    BRepAlgo_Image myImagesFaces;
    BRepAlgo_Image myImagesEdges;
    BRepAlgo_Image myImageShape;

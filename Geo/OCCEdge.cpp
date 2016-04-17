@@ -24,6 +24,7 @@
 #include <Geom_Circle.hxx>
 #include <Geom_Line.hxx>
 #include <Geom_Conic.hxx>
+#include <Geom_BSplineCurve.hxx>
 #if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 6)
 #include <BOPTools_Tools.hxx>
 #else

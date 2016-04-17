@@ -9,7 +9,8 @@
 //  File   : Partition_Loop3d.cxx
 //  Module : GEOM
 
-#if !defined(HAVE_NO_OCC_CONFIG_H)
+#include <Standard_Version.hxx>
+#if !defined(HAVE_NO_OCC_CONFIG_H) && (OCC_VERSION_MAJOR < 7)
 #include <config.h>
 #endif
 

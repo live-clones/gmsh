@@ -581,10 +581,10 @@ GEdge *OCCFactory::addCircleArc(GModel *gm, const arcCreationMethod &method,
   if (method == GModelFactory::THREE_POINTS){
     GC_MakeArcOfCircle arc(aP1, aP2, aP3);
     if (occv1 && occv2)
-      occEdge = BRepBuilderAPI_MakeEdge(arc,occv1->getShape(),
+      occEdge = BRepBuilderAPI_MakeEdge(arc.Value(),occv1->getShape(),
                                         occv2->getShape()).Edge();
     else
-      occEdge = BRepBuilderAPI_MakeEdge(arc).Edge();
+      occEdge = BRepBuilderAPI_MakeEdge(arc.Value()).Edge();
   }
   else if (method == GModelFactory::CENTER_START_END){
     Standard_Real Radius = aP1.Distance(aP2);

@@ -38,7 +38,6 @@
 #endif
 class TopoDS_Face;
 class TopoDS_Edge;
-class TopTools_ListOfShape;
 
 
 #ifndef _Standard_HeaderFile

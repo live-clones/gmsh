@@ -27,8 +27,8 @@
 #include <gp_Pln.hxx>
 #include <BRepMesh_FastDiscret.hxx>
 
-#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)
-#  if (OCC_VERSION_MINOR < 8)
+#if ((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)) || (OCC_VERSION_MAJOR >= 7)
+#  if ((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 8))
 #  include <BOPInt_Context.hxx>
 #  else
 #  include <IntTools_Context.hxx>
@@ -417,8 +417,17 @@ bool OCCFace::buildSTLTriangulation(bool force)
 
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
+
+#if (OCC_VERSION_MAJOR >= 7)
+  BRepMesh_FastDiscret::Parameters parameters;
+  parameters.Deflection = 0.1;
+  parameters.Angle = 0.5;
+  parameters.Relative = Standard_True;
+  BRepMesh_FastDiscret aMesher(aBox, parameters);
+#else
   BRepMesh_FastDiscret aMesher(0.1, 0.5, aBox, Standard_False, Standard_False,
                                Standard_True, Standard_False);
+#endif
 #if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
   aMesher.Add(s);
 #else
@@ -559,7 +568,7 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 	      continue;
 	    }
 	    else{
-#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)
+#if ((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)) || (OCC_VERSION_MAJOR >= 7)
 	      aTx = BOPTools_AlgoTools2D::IntermediatePoint(aT1, aT2);
 #else
 	      aTx = BOPTools_Tools2D::IntermediatePoint(aT1, aT2);
@@ -575,14 +584,14 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 	    }
 	  }
 	}
-#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)
+#if ((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)) || (OCC_VERSION_MAJOR >= 7)
 	BOPTools_AlgoTools2D::BuildPCurveForEdgeOnFace(aER, copy_of_s_forward);
 #else
 	BOPTools_Tools2D::BuildPCurveForEdgeOnFace(aER, copy_of_s_forward);
 #endif
 	// orient image
 	Standard_Boolean bIsToReverse =
-#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)
+#if ((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)) || (OCC_VERSION_MAJOR >= 7)
           BOPTools_AlgoTools::IsSplitToReverse(aER, aE, myContext);
 #else
           BOPTools_Tools3D::IsSplitToReverse1(aER, aE, myContext);

@@ -24,9 +24,10 @@
 #ifndef _Standard_Real_HeaderFile
 #include <Standard_Real.hxx>
 #endif
+#ifndef _TopTools_MapOfOrientedShape_HeaderFile
+#include <TopTools_MapOfOrientedShape.hxx>
+#endif
 class TopoDS_Shape;
-class TopTools_ListOfShape;
-class TopTools_MapOfOrientedShape;
 class TopoDS_Edge;
 class TopoDS_Face;
 class gp_Vec;

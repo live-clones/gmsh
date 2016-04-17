@@ -13,7 +13,8 @@
 #include <iostream>
 using std::iostream;
 
-#if !defined(HAVE_NO_OCC_CONFIG_H)
+#include <Standard_Version.hxx>
+#if !defined(HAVE_NO_OCC_CONFIG_H) && (OCC_VERSION_MAJOR < 7)
 #include <config.h>
 #endif
 

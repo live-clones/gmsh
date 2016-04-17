@@ -24,7 +24,6 @@
 #endif
 class TopoDS_Face;
 class TopoDS_Edge;
-class TopTools_ListOfShape;
 class BRepAlgo_Image;
 
 
