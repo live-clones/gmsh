@@ -382,7 +382,6 @@ double surfaceFaceUV(MElement *t,GFace *gf, bool maximal = true)
   }
 }
 
-
 int _removeThreeTrianglesNodes(GFace *gf)
 {
   v2t_cont adj;
@@ -545,9 +544,8 @@ static bool _tryToCollapseThatVertex (GFace *gf,
                                       MVertex *v1,
                                       MVertex *v2)
 {
-
   std::vector<MElement*> e = e1;
-  e.insert(e.end(), e2.begin(), e2.end());  
+  e.insert(e.end(), e2.begin(), e2.end());
 
   double uu1,vv1;
   v1->getParameter(0,uu1);
@@ -555,7 +553,7 @@ static bool _tryToCollapseThatVertex (GFace *gf,
   double x1 = v1->x();
   double y1 = v1->y();
   double z1 = v1->z();
-  
+
   double uu2,vv2;
   v2->getParameter(0,uu2);
   v2->getParameter(1,vv2);
@@ -566,7 +564,7 @@ static bool _tryToCollapseThatVertex (GFace *gf,
   // new position of v1 && v2
   GPoint pp = gf->point(0.5*(uu1+uu2),0.5*(vv1+vv2));
     //GPoint pp = gf->point(uu1,vv1);
-  
+
   //  double surface_old = 0;
   //  double surface_new = 0;
   double worst_quality_old = 1.0;
@@ -582,7 +580,7 @@ static bool _tryToCollapseThatVertex (GFace *gf,
       v1->x() = pp.x();v1->y() = pp.y();v1->z() = pp.z();
       v1->setParameter(0,pp.u());v1->setParameter(1,pp.v());
       v2->x() = pp.x();v2->y() = pp.y();v2->z() = pp.z();
-      v2->setParameter(0,pp.u());v2->setParameter(1,pp.v());      
+      v2->setParameter(0,pp.u());v2->setParameter(1,pp.v());
       //      surface_new += surfaceFaceUV(e[j],gf,false);
       worst_quality_new = std::min(worst_quality_new,e[j]-> etaShapeMeasure());
       v1->x() = x1;v1->y() = y1;v1->z() = z1;
@@ -594,7 +592,7 @@ static bool _tryToCollapseThatVertex (GFace *gf,
 
   //  printf("%d %g %g %g %g\n", count, surface_old, surface_new, worst_quality_old , worst_quality_new);
 
-  if (worst_quality_new >  worst_quality_old ) {    
+  if (worst_quality_new >  worst_quality_old ) {
     v1->x() = pp.x();v1->y() = pp.y();v1->z() = pp.z();
     v1->setParameter(0,pp.u());v1->setParameter(1,pp.v());
     for (unsigned int j=0;j<e.size();++j){
@@ -607,15 +605,15 @@ static bool _tryToCollapseThatVertex (GFace *gf,
       }
     }
     return true;
-  }  
+  }
   return false;
 }
 
-static bool _isItAGoodIdeaToMoveThatVertex (GFace *gf,
-                                            const std::vector<MElement*> &e1,
-                                            MVertex *v1,
-                                            const SPoint2 &before,
-                                            const SPoint2 &after)
+static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf,
+                                           const std::vector<MElement*> &e1,
+                                           MVertex *v1,
+                                           const SPoint2 &before,
+                                           const SPoint2 &after)
 {
   double surface_old = 0;
   double surface_new = 0;
@@ -649,8 +647,6 @@ static bool _isItAGoodIdeaToMoveThatVertex (GFace *gf,
   }
   return true;
 }
-
-
 
 static int _removeDiamonds(GFace *gf)
 {
@@ -784,19 +780,19 @@ void _relocateVertex(GFace *gf, MVertex *ver,
   double metric[3];
   SPoint2 after(0,0);
   double COUNT = 0.0;
-  //  printf("weights :");
+  // printf("weights :");
   for(std::map<MVertex*,SPoint2>::iterator it = pts.begin(); it != pts.end() ; ++it) {
     SPoint2  adj = it->second;
-    SVector3 d (adj.x()-before.x(),adj.y()-before.y(),0.0);
+    SVector3 d(adj.x() - before.x(), adj.y() - before.y(), 0.0);
     d.normalize();
-    buildMetric (gf,adj,metric);
+    buildMetric(gf, adj, metric);
     const double F = sqrt(metric[0]*d.x()*d.x() +
                           2*metric[1]*d.x()*d.y() +
                           metric[2]*d.y()*d.y());
-    //    printf("%g ",F);
+    // printf("%g ",F);
     after += adj*F;
     COUNT += F;
-    //    //    double RATIO = lt[i]->getVolume()/pow(metric[0]*metric[2]-metric[1]*metric[1],0.5);
+    // double RATIO = lt[i]->getVolume()/pow(metric[0]*metric[2]-metric[1]*metric[1],0.5);
   }
   //  printf("\n");
   after *= (1.0/COUNT);
@@ -821,7 +817,6 @@ void _relocateVertex(GFace *gf, MVertex *ver,
   }
 }
 
-
 void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 {
   if (!niter)return;
@@ -837,7 +832,8 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
   }
 }
 
-bool edgeSwapDelProj (MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4){
+bool edgeSwapDelProj (MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4)
+{
   MTriangle t1(v1,v2,v3);
   MTriangle t2(v2,v1,v4);
 
@@ -849,7 +845,6 @@ bool edgeSwapDelProj (MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4){
   }
   return false;
 }
-
 
 bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
               std::vector<MTri3*> &newTris, const swapCriterion &cr, bidimMeshData & data)
@@ -902,8 +897,10 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
       int index2 = data.getIndex(v2);
       int index3 = data.getIndex(v3);
       int index4 = data.getIndex(v4);
-      double edgeCenter[2] ={(data.Us[index1] + data.Us[index2] + data.Us[index3] + data.Us[index4]) * .25,
-                             (data.Vs[index1] + data.Vs[index2] + data.Vs[index3] + data.Vs[index4]) * .25};
+      double edgeCenter[2] ={(data.Us[index1] + data.Us[index2] +
+                              data.Us[index3] + data.Us[index4]) * .25,
+                             (data.Vs[index1] + data.Vs[index2] +
+                              data.Vs[index3] + data.Vs[index4]) * .25};
       double uv4[2] ={data.Us[index4], data.Vs[index4]};
       double metric[3];
       buildMetric(gf, edgeCenter, metric);
@@ -949,11 +946,15 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   int i21 = data.getIndex(t2b->getVertex(1));
   int i22 = data.getIndex(t2b->getVertex(2));
 
-  double lc1 = 0.3333333333 * (data.vSizes[i10] + data.vSizes[i11] + data.vSizes[i12]);
-  double lcBGM1 = 0.3333333333 * (data.vSizesBGM[i10] + data.vSizesBGM[i11] + data.vSizesBGM[i12]);
+  double lc1 = 0.3333333333 * (data.vSizes[i10] + data.vSizes[i11] +
+                               data.vSizes[i12]);
+  double lcBGM1 = 0.3333333333 * (data.vSizesBGM[i10] + data.vSizesBGM[i11] +
+                                  data.vSizesBGM[i12]);
 
-  double lc2 = 0.3333333333 * (data.vSizes[i20] + data.vSizes[i21] + data.vSizes[i22]);
-  double lcBGM2 = 0.3333333333 * (data.vSizesBGM[i20] + data.vSizesBGM[i21] + data.vSizesBGM[i22]);
+  double lc2 = 0.3333333333 * (data.vSizes[i20] + data.vSizes[i21] +
+                               data.vSizes[i22]);
+  double lcBGM2 = 0.3333333333 * (data.vSizesBGM[i20] + data.vSizesBGM[i21] +
+                                  data.vSizesBGM[i22]);
 
   MTri3 *t1b3 = new MTri3(t1b, Extend1dMeshIn2dSurfaces() ?
                           std::min(lc1, lcBGM1) : lcBGM1, 0, &data, gf);
@@ -1150,8 +1151,9 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
           int i1 = elist[1+3*k], i2 = elist[1+3*k+1], an=elist[1+3*k+2];
           // FIXME !
           if (an == 100000 /*|| an == 1000*/){
-            //            toProcess.push_back(std::make_pair(n2t[i1],n2t[i2]));
-            //            Msg::Warning("Extra edge found in blossom algorithm, optimization will be required");
+            // toProcess.push_back(std::make_pair(n2t[i1],n2t[i2]));
+            // Msg::Warning("Extra edge found in blossom algorithm, optimization "
+            //              "will be required");
           }
           else{
             MElement *t1 = n2t[i1];
@@ -1241,7 +1243,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
   gf->triangles = triangles2;
 
   if(CTX::instance()->mesh.algoRecombine != 1){
-    quadsToTriangles(gf, minqual); 
+    quadsToTriangles(gf, minqual);
   }
 
   return success;
@@ -1261,8 +1263,8 @@ static double printStats(GFace *gf,const char *message)
     Qmin = std::min(Q,Qmin);
   }
   Msg::Info("%s: %5d quads %5d triangles %1d invalid quads %2d quads with Q < 0.1 "
-            "Avg Q = %5.3f Min Q %5.3f", message, gf->quadrangles.size(), gf->triangles.size(),
-            nbInv, nbBad, Qav/gf->quadrangles.size(), Qmin);
+            "Avg Q = %5.3f Min Q %5.3f", message, gf->quadrangles.size(),
+            gf->triangles.size(), nbInv, nbBad, Qav/gf->quadrangles.size(), Qmin);
   return Qmin;
 }
 
@@ -1368,4 +1370,3 @@ void quadsToTriangles(GFace *gf, double minqual)
   }
   gf->quadrangles = qds;
 }
-
