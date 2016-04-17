@@ -21,7 +21,7 @@
 #include "meshGFaceOptimize.h"
 
 void subdivide_pyramid(MElement* element,
-		       GRegion* gr, 
+		       GRegion* gr,
 		       faceContainer &faceVertices,
 		       std::vector<MHexahedron*> &dwarfs88);
 
@@ -475,6 +475,7 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas
   // Check all 3D elements for negative volume and reverse if needed
   m->setAllVolumesPositive();
 
+  CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   Msg::StatusBar(true, "Done refining mesh (%g s)", t2 - t1);
 }
@@ -712,7 +713,7 @@ static double schneiders_z(int i){
     0.000000,
     -0.500000,
     1.000000,
-    0.000000, 
+    0.000000,
     -1.000000,
     0.051666,
     -0.058015,
@@ -935,7 +936,7 @@ static int schneiders_connect(int i,int j){
 
 
 void subdivide_pyramid(MElement* element,
-		       GRegion* gr, 
+		       GRegion* gr,
 		       faceContainer &faceVertices,
 		       std::vector<MHexahedron*> &dwarfs88)
 {
@@ -947,9 +948,9 @@ void subdivide_pyramid(MElement* element,
 
   dwarfs88.resize(88);
   v.resize(105);
-  
+
   for (int i=0;i<105;i++)v[i] = NULL;
-  
+
   v[29] = element->getVertex(0);
   v[27] = element->getVertex(1);
   v[3] = element->getVertex(2);
@@ -979,7 +980,7 @@ void subdivide_pyramid(MElement* element,
     gr->addMeshVertex(v[25]);
     faceVertices[MFace(v[29],v[27],v[102])].push_back(v[25]);
   }
-  
+
   fIter = faceVertices.find(MFace(v[27],v[3],v[102]));
   if (fIter != faceVertices.end())
     v[95] = fIter->second[0];
@@ -1009,7 +1010,7 @@ void subdivide_pyramid(MElement* element,
     gr->addMeshVertex(v[99]);
     faceVertices[MFace(v[5],v[29],v[102])].push_back(v[99]);
   }
-  
+
   for(i=0;i<105;i++){
     if (!v[i]){
       element->pnt(schneiders_z(i),schneiders_x(i),schneiders_y(i)/1.414213,point);
@@ -1027,11 +1028,10 @@ void subdivide_pyramid(MElement* element,
     index6 = schneiders_connect(5,i);
     index7 = schneiders_connect(6,i);
     index8 = schneiders_connect(7,i);
-    
+
     dwarfs88[i]=(new MHexahedron(v[index1],v[index2],
 				v[index3],v[index4],
 				v[index5],v[index6],
 				v[index7],v[index8]));
   }
 }
-

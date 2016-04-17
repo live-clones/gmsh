@@ -1775,14 +1775,18 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
   CTX::instance()->lock = 1;
   OptimizeMesh(GModel::current());
   CTX::instance()->lock = 0;
-  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
 }
 
 static void mesh_refine_cb(Fl_Widget *w, void *data)
 {
   RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
-  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  drawContext::global()->draw();
+}
+
+static void mesh_smooth_cb(Fl_Widget *w, void *data)
+{
+  SmoothMesh(GModel::current());
   drawContext::global()->draw();
 }
 
@@ -1795,7 +1799,6 @@ static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
   CTX::instance()->lock = 1;
   OptimizeMeshNetgen(GModel::current());
   CTX::instance()->lock = 0;
-  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
 }
 
@@ -3795,6 +3798,8 @@ static menuItem static_modules[] = {
   {"0Modules/Mesh/Partition",
    (Fl_Callback *)mesh_partition_cb} ,
 #endif
+  {"0Modules/Mesh/Smooth 2D",
+   (Fl_Callback *)mesh_smooth_cb} ,
   {"0Modules/Mesh/Reclassify 2D",
    (Fl_Callback *)mesh_classify_cb} ,
 #if defined(HAVE_FOURIER_MODEL)

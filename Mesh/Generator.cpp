@@ -367,7 +367,7 @@ static void Mesh2D(GModel *m)
                 temp[K]->geomType()==GEntity::RuledSurface) {
               if (temp[K]->meshAttributes.method != MESH_TRANSFINITE &&
                   !temp[K]->meshAttributes.extrude) {
-                smoothing smm(CTX::instance()->mesh.optimizeLloyd,6);
+                smoothing smm(CTX::instance()->mesh.optimizeLloyd, 6);
                 //m->writeMSH("beforeLLoyd.msh");
                 smm.optimize_face(temp[K]);
                 int rec = ((CTX::instance()->mesh.recombineAll ||
@@ -405,7 +405,7 @@ static void Mesh2D(GModel *m)
                 (*it)->geomType()==GEntity::RuledSurface) {
               if ((*it)->meshAttributes.method != MESH_TRANSFINITE &&
                   !(*it)->meshAttributes.extrude) {
-                smoothing smm(CTX::instance()->mesh.optimizeLloyd,6);
+                smoothing smm(CTX::instance()->mesh.optimizeLloyd, 6);
                 //m->writeMSH("beforeLLoyd.msh");
                 smm.optimize_face(*it);
                 int rec = ((CTX::instance()->mesh.recombineAll ||
@@ -484,7 +484,7 @@ void fillv_(std::multimap<MVertex*, MElement*> &vertexToElement,
   }
 }
 
-int LaplaceSmoothing (GRegion *gr)
+int LaplaceSmoothing(GRegion *gr)
 {
   std::multimap<MVertex*, MElement*> vertexToElement;
   fillv_(vertexToElement, (gr)->tetrahedra.begin(), (gr)->tetrahedra.end());
@@ -826,9 +826,10 @@ static void Mesh3D(GModel *m)
     TestConformity(m);
   }
 
-  // Ensure that all volume Jacobians are positive
+  // ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
+  CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
   Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
@@ -840,7 +841,6 @@ void OptimizeMeshNetgen(GModel *m)
   double t1 = Cpu();
 
   std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
-
   // Ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
@@ -854,12 +854,27 @@ void OptimizeMesh(GModel *m)
   double t1 = Cpu();
 
   std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionGmsh());
-
   // Ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
+  CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   Msg::StatusBar(true, "Done optimizing 3D mesh (%g s)", t2 - t1);
+}
+
+void SmoothMesh(GModel *m)
+{
+  Msg::StatusBar(true, "Smoothing 2D mesh...");
+  double t1 = Cpu();
+
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+    GFace *gf = *it;
+    laplaceSmoothing(gf);
+  }
+
+  CTX::instance()->mesh.changed = ENT_ALL;
+  double t2 = Cpu();
+  Msg::StatusBar(true, "Done smoothing 2D mesh (%g s)", t2 - t1);
 }
 
 void AdaptMesh(GModel *m)
@@ -870,6 +885,7 @@ void AdaptMesh(GModel *m)
   for(int i = 0; i < 10; i++)
     std::for_each(m->firstRegion(), m->lastRegion(), adaptMeshGRegion());
 
+  CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   Msg::StatusBar(true, "Done adaptating 3D mesh (%g s)", t2 - t1);
 }
@@ -885,7 +901,6 @@ void RecombineMesh(GModel *m)
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;
-
   double t2 = Cpu();
   Msg::StatusBar(true, "Done recombining 2D mesh (%g s)", t2 - t1);
 }

@@ -13,6 +13,7 @@ void AdaptMesh(GModel *m);
 void GenerateMesh(GModel *m, int dimension);
 void OptimizeMesh(GModel *m);
 void OptimizeMeshNetgen(GModel *m);
+void SmoothMesh(GModel *m);
 void RefineMesh(GModel *m, bool linear, bool splitIntoQuads=false,
                 bool splitIntoHexas=false);
 void RecombineMesh(GModel *m);
