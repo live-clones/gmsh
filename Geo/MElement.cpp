@@ -236,7 +236,11 @@ double MElement::maxDistToStraight() const
 
 double MElement::minAnisotropyMeasure()
 {
+#if defined(HAVE_MESH)
   return jacobianBasedQuality::minAnisotropyMeasure(this);
+#else
+  return 0.;
+#endif
 }
 
 void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge) const

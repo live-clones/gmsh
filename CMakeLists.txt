@@ -1421,6 +1421,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
       list(APPEND LINK_LIBRARIES ${RT_LIB})
     endif(RT_LIB)
   endif(HAVE_OCC)
+  if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+    add_definitions(-fPIC)
+  endif(CMAKE_C_COMPILER_ID MATCHES "GNU")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 # we could specify include dirs more selectively, but this is simpler

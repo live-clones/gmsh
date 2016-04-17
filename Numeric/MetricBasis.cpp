@@ -716,8 +716,10 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
 
       elements[iel] = el;
     }
+#if defined(HAVE_PLUGINS)
     GMSH_AnalyseCurvedMeshPlugin plugin = GMSH_AnalyseCurvedMeshPlugin();
     plugin.test(elements, numElem, dim);
+#endif
   }
 
 
