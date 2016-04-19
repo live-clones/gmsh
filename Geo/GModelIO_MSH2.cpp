@@ -31,6 +31,8 @@
 
 extern void writeMSHPeriodicNodes (FILE *fp, std::vector<GEntity*> &entities);
 
+extern void readMSHPeriodicNodes(FILE *fp, GModel *gm);
+
 static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
                         std::vector<MVertex*> &vertices)
 {
@@ -690,6 +692,29 @@ int GModel::_readMSH2(const std::string &name)
     _storePhysicalTagsInEntities(i, physicals[i]);
 
   _createGeometryOfDiscreteEntities() ;
+
+
+  // copying periodic information from the mesh
+
+  rewind(fp);
+
+  while(1) {
+
+    while(str[0] != '$'){
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
+        break;
+    }
+    
+    if(!strncmp(&str[1], "Periodic",8)) {
+      readMSHPeriodicNodes(fp,this);
+      break;
+    }
+    do {
+      if(!fgets(str, sizeof(str), fp) || feof(fp))
+        break;
+    } while(str[0] != '$');
+  }
+  
   fclose(fp);
 
   return postpro ? 2 : 1;

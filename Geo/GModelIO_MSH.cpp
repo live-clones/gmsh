@@ -126,7 +126,7 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm)
       fgetpos(fp, &pos);
       if(fscanf(fp, "%s", token) != 1) return;
       if(strcmp(token, "Affine") == 0) {
-        std::vector<double> tfo;
+        std::vector<double> tfo(16);
         for(int i = 0; i < 16; i++){
           if(fscanf(fp, "%lf", &tfo[i]) != 1) return;
         }
