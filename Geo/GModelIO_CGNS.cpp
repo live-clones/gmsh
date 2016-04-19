@@ -838,11 +838,11 @@ public: // transformation operations
         double ca = cos(ra[i]);
         double sa = sin(ra[i]);
         
-        // rotation with -alpha
+        // rotation with alpha
         
         rotation(ii,ii) = ca;
-        rotation(ii,jj) = -sa;
-        rotation(jj,ii) = sa;
+        rotation(ii,jj) = sa;
+        rotation(jj,ii) = -sa;
         rotation(jj,jj) = ca;
         
         compoundRotation.gemm(rotation,tmp,1,0);
