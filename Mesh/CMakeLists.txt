@@ -9,6 +9,7 @@ set(SRC
    delaunay_refinement.cpp
    Generator.cpp
     meshGEdge.cpp 
+   meshGEntity.cpp
       meshGEdgeExtruded.cpp
     meshGFace.cpp 
     meshGFaceElliptic.cpp

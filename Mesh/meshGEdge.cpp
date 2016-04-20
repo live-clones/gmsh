@@ -303,6 +303,40 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
   }
 }
 
+bool correctPeriodicity(MVertex*,MVertex*,const std::vector<double>&);
+bool correctVertexPeriodicity(GEntity*);
+
+
+bool correctPeriodicity(GEdge* tgt) {
+
+  if (correctVertexPeriodicity(tgt)) {
+    
+    bool check = true;
+    
+    GEdge* src = dynamic_cast<GEdge*> (tgt->meshMaster());
+
+    if (!src) throw;
+    
+    const std::vector<double>& tfo = src->affineTransform;    
+
+    std::vector<MLine*>::iterator sIter = src->lines.begin();
+    std::vector<MLine*>::iterator tIter = tgt->lines.begin();
+    
+    for (;sIter!=src->lines.end();++sIter,++tIter) {
+
+      MLine* src = *sIter;
+      MLine* tgt = *sIter;
+
+      for (int iVtx=2;iVtx<tgt->getNumVertices();iVtx++) {
+        check = check && 
+          correctPeriodicity(tgt->getVertex(iVtx),src->getVertex(iVtx),tfo);
+      }
+    }
+  }
+  return false;
+}
+
+
 void deMeshGEdge::operator() (GEdge *ge)
 {
   if(ge->geomType() == GEntity::DiscreteCurve && !CTX::instance()->meshDiscrete)

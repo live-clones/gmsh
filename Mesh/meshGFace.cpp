@@ -25,6 +25,7 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "MElementCut.h"
 #include "CenterlineField.h"
 #include "meshGFaceElliptic.h"
 #include "Context.h"
@@ -377,6 +378,60 @@ static void copyMesh(GFace *source, GFace *target)
     }
     target->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
   }
+}
+
+
+bool correctPeriodicity(MVertex*,MVertex*,const std::vector<double>&);
+bool correctVertexPeriodicity(GEntity*);
+
+template<class MElementType>
+bool correctPeriodicity(std::vector<MElementType*>& tgtList,
+                        std::vector<MElementType*>& srcList,
+                        const std::vector<double>& tfo,
+                        std::set<MVertex*>& corrected) {
+
+  bool check = true;
+
+  typename std::vector<MElementType*>::iterator sIter = srcList.begin();
+  typename std::vector<MElementType*>::iterator tIter = tgtList.begin();
+  
+  for (;sIter!=srcList.end();++sIter,++tIter) {
+    
+    MElementType* src = *sIter;
+    MElementType* tgt = *sIter;
+    
+    for (int iVtx=0;iVtx<tgt->getNumVertices();iVtx++) {
+
+      MVertex* tgtVtx = tgt->getVertex(iVtx);
+      MVertex* srcVtx = src->getVertex(iVtx);
+
+      if (corrected.find(tgtVtx) != corrected.end()) {
+
+        check = check && correctPeriodicity(tgtVtx,srcVtx,tfo);
+        if (check) corrected.insert(tgtVtx);
+      }
+    }
+  }
+  return check;
+}
+
+bool correctPeriodicity(GFace* tgt) {
+
+  if (!correctVertexPeriodicity(tgt)) return false;
+    
+    
+  GFace* src = dynamic_cast<GFace*> (tgt->meshMaster());
+  if (!src) throw;
+  
+  const std::vector<double>& tfo = src->affineTransform;    
+
+  std::set<MVertex*> corr(tgt->mesh_vertices.begin(),tgt->mesh_vertices.end());
+  
+  if (!correctPeriodicity(tgt->triangles  ,src->triangles  ,tfo,corr)) return false;
+  if (!correctPeriodicity(tgt->quadrangles,src->quadrangles,tfo,corr)) return false;
+  if (!correctPeriodicity(tgt->polygons   ,src->polygons   ,tfo,corr)) return false;
+  
+  return true;
 }
 
 void fourthPoint(double *p1, double *p2, double *p3, double *p4)
