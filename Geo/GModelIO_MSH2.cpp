@@ -704,7 +704,9 @@ int GModel::_readMSH2(const std::string &name)
       if(!fgets(str, sizeof(str), fp) || feof(fp))
         break;
     }
-    
+    if(feof(fp))
+      break;
+
     if(!strncmp(&str[1], "Periodic",8)) {
       readMSHPeriodicNodes(fp,this);
       break;
@@ -714,7 +716,7 @@ int GModel::_readMSH2(const std::string &name)
         break;
     } while(str[0] != '$');
   }
-  
+
   fclose(fp);
 
   return postpro ? 2 : 1;
