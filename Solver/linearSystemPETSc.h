@@ -121,7 +121,7 @@ class linearSystemPETSc : public linearSystem<scalar> {
   //std::vector<int> getColumnsIndices();
   #ifndef SWIG
   linearSystemPETSc(MPI_Comm com);
-  MPI_Comm& getComm() {return _comm;}
+  MPI_Comm getComm() const {return _comm;}
   #endif
   linearSystemPETSc();
 };
