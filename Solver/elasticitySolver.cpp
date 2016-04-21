@@ -25,7 +25,6 @@
 #include "PViewData.h"
 #endif
 
-
 /*
 static void printLinearSystem(linearSystem<double> *lsys, int size)
 {
@@ -52,25 +51,41 @@ static void printLinearSystem(linearSystem<double> *lsys, int size)
 }
 */
 
-void elasticitySolver::setMesh(const std::string &meshFileName)
+elasticitySolver::elasticitySolver(GModel *model, int tag)
+{
+  pModel = model;
+  _dim = pModel->getNumRegions() ? 3 : 2;
+  _tag = tag;
+  pAssembler = NULL;
+  if (_dim==3) LagSpace=new VectorLagrangeFunctionSpace(_tag);
+  if (_dim==2) LagSpace=new VectorLagrangeFunctionSpace(_tag,
+                VectorLagrangeFunctionSpace::VECTOR_X,
+                VectorLagrangeFunctionSpace::VECTOR_Y);
+}
+
+void elasticitySolver::setMesh(const std::string &meshFileName, int dim)
 {
   pModel = new GModel();
   pModel->readMSH(meshFileName.c_str());
   _dim = pModel->getNumRegions() ? 3 : 2;
 
   if (LagSpace) delete LagSpace;
-  if (_dim==3) LagSpace = new VectorLagrangeFunctionSpace(_tag);
-  if (_dim==2) LagSpace = new VectorLagrangeFunctionSpace
+  if (dim == 3 || _dim==3) LagSpace = new VectorLagrangeFunctionSpace(_tag);
+  else if (dim == 2 || _dim==2) LagSpace = new VectorLagrangeFunctionSpace
                  (_tag,VectorLagrangeFunctionSpace::VECTOR_X,
                   VectorLagrangeFunctionSpace::VECTOR_Y);
 
-  if (LagrangeMultiplierSpace) delete LagrangeMultiplierSpace;
-  LagrangeMultiplierSpace = new ScalarLagrangeFunctionSpaceOfElement(_tag+1);
+  for (unsigned int i = 0; i < LagrangeMultiplierSpaces.size(); i++)
+    if (LagrangeMultiplierSpaces[i]) delete LagrangeMultiplierSpaces[i];
+  LagrangeMultiplierSpaces.clear();
 }
 
 void elasticitySolver::exportKb()
 {
   std::string sysname = "A";
+  if(!pAssembler ||
+     !pAssembler->getLinearSystem(sysname) ||
+     !pAssembler->getLinearSystem(sysname)->isAllocated()) return;
   double valeur;
   FILE *f = Fopen("K.txt", "w");
   if(f){
@@ -95,8 +110,11 @@ void elasticitySolver::exportKb()
 
 void elasticitySolver::solve()
 {
-  //linearSystemFull<double> *lsys = new linearSystemFull<double>;
+  std::string sysname = "A";
+  if(pAssembler && pAssembler->getLinearSystem(sysname))
+    delete pAssembler->getLinearSystem(sysname);
 
+  //linearSystemFull<double> *lsys = new linearSystemFull<double>;
 #if defined(HAVE_TAUCS)
   linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
 #elif defined(HAVE_PETSC)
@@ -176,11 +194,12 @@ void elasticitySolver::readInputFile(const std::string &fn)
         fclose(f);
         return;
       }
-      field._tag = _tag;
-      field._d = SVector3(d1, d2, d3);
+      SVector3 sv(d1, d2, d3);
+      field._d = sv.unit();
       field._f = new simpleFunction<double>(val);
       field.g = new groupOfElements (_dim - 1, physical);
       LagrangeMultiplierFields.push_back(field);
+      LagrangeMultiplierSpaces.push_back(new ScalarLagrangeFunctionSpaceOfElement(field._tag));
     }
     else if (!strcmp(what, "Void")){
       elasticField field;
@@ -368,9 +387,20 @@ void elasticitySolver::setLagrangeMultipliers(int phys, double tau, SVector3 d,
   field._tau = tau;
   field._tag = tag;
   field._f = f;
-  field._d = d;
-  field.g = new groupOfElements (_dim - 1, phys);
+  field._d = d.unit();
+  field.g = new groupOfElements (_dim - 1, phys); // LM applied on entity of dimension = dim-1!
   LagrangeMultiplierFields.push_back(field);
+  LagrangeMultiplierSpaces.push_back(new ScalarLagrangeFunctionSpaceOfElement(tag));
+}
+
+void elasticitySolver::changeLMTau(int tag, double tau)
+{
+  for(unsigned int i = 0; i < LagrangeMultiplierFields.size(); i++){
+    if(LagrangeMultiplierFields[i]._tag == tag){
+      LagrangeMultiplierFields[i]._tau = tau;
+    }
+  }
+  
 }
 
 void elasticitySolver::setEdgeDisp(int edge, int comp, simpleFunction<double> *f)
@@ -445,19 +475,6 @@ void elasticitySolver::addElasticDomain(std::string phys, double e, double nu)
   addElasticDomain(entityId, e, nu);
 }
 
-elasticitySolver::elasticitySolver(GModel *model, int tag)
-{
-  pModel = model;
-  _dim = pModel->getNumRegions() ? 3 : 2;
-  _tag = tag;
-  pAssembler = NULL;
-  if (_dim==3) LagSpace=new VectorLagrangeFunctionSpace(_tag);
-  if (_dim==2) LagSpace=new VectorLagrangeFunctionSpace(_tag,
-                VectorLagrangeFunctionSpace::VECTOR_X,
-                VectorLagrangeFunctionSpace::VECTOR_Y);
-  LagrangeMultiplierSpace = new ScalarLagrangeFunctionSpaceOfElement(_tag+1);
-}
-
 void elasticitySolver::assemble(linearSystem<double> *lsys)
 {
   if (pAssembler) delete pAssembler;
@@ -475,7 +492,10 @@ void elasticitySolver::assemble(linearSystem<double> *lsys)
   }
   // LagrangeMultipliers
   for (unsigned int i = 0; i < LagrangeMultiplierFields.size(); ++i){
-    NumberDofs(*LagrangeMultiplierSpace, LagrangeMultiplierFields[i].g->begin(),
+    unsigned int j = 0;
+    for ( ; j < LagrangeMultiplierSpaces.size(); j++)
+      if (LagrangeMultiplierSpaces[j]->getId() == LagrangeMultiplierFields[i]._tag) break;
+    NumberDofs(*(LagrangeMultiplierSpaces[j]), LagrangeMultiplierFields[i].g->begin(),
                LagrangeMultiplierFields[i].g->end(), *pAssembler);
   }
   // Elastic Fields
@@ -502,27 +522,31 @@ void elasticitySolver::assemble(linearSystem<double> *lsys)
   GaussQuadrature Integ_LagrangeMult(GaussQuadrature::ValVal);
   GaussQuadrature Integ_Laplace(GaussQuadrature::GradGrad);
   for (unsigned int i = 0; i < LagrangeMultiplierFields.size(); i++){
+    unsigned int j = 0;
+    for ( ; j < LagrangeMultiplierSpaces.size(); j++)
+      if (LagrangeMultiplierSpaces[j]->getId() == LagrangeMultiplierFields[i]._tag) break;
     printf("Lagrange Mult Lag\n");
-    LagrangeMultiplierTerm<SVector3> LagTerm(*LagSpace, *LagrangeMultiplierSpace,
+    LagrangeMultiplierTerm<SVector3> LagTerm(*LagSpace, *(LagrangeMultiplierSpaces[j]),
                                              LagrangeMultiplierFields[i]._d);
-    Assemble(LagTerm, *LagSpace, *LagrangeMultiplierSpace,
+    Assemble(LagTerm, *LagSpace, *(LagrangeMultiplierSpaces[j]),
              LagrangeMultiplierFields[i].g->begin(),
              LagrangeMultiplierFields[i].g->end(), Integ_LagrangeMult, *pAssembler);
 
     printf("Lagrange Mult Lap\n");
-    LaplaceTerm<double,double> LapTerm(*LagrangeMultiplierSpace,
-                                       LagrangeMultiplierFields[i]._tau);
-    Assemble(LapTerm, *LagrangeMultiplierSpace, LagrangeMultiplierFields[i].g->begin(),
+    LaplaceTerm<double,double> LapTerm(*(LagrangeMultiplierSpaces[j]),
+                                       -LagrangeMultiplierFields[i]._tau);
+    Assemble(LapTerm, *(LagrangeMultiplierSpaces[j]), LagrangeMultiplierFields[i].g->begin(),
              LagrangeMultiplierFields[i].g->end(), Integ_Laplace, *pAssembler);
 
     printf("Lagrange Mult Load\n");
-    LoadTermOnBorder<double> Lterm(*LagrangeMultiplierSpace, LagrangeMultiplierFields[i]._f);
-    Assemble(Lterm, *LagrangeMultiplierSpace, LagrangeMultiplierFields[i].g->begin(),
+    LoadTermOnBorder<double> Lterm(*(LagrangeMultiplierSpaces[j]), LagrangeMultiplierFields[i]._f);
+    Assemble(Lterm, *(LagrangeMultiplierSpaces[j]), LagrangeMultiplierFields[i].g->begin(),
              LagrangeMultiplierFields[i].g->end(), Integ_Boundary, *pAssembler);
   }
   // Assemble elastic term for
   GaussQuadrature Integ_Bulk(GaussQuadrature::GradGrad);
   for (unsigned int i = 0; i < elasticFields.size(); i++){
+    printf("Elastic\n");
     IsotropicElasticTerm Eterm(*LagSpace,elasticFields[i]._E,elasticFields[i]._nu);
     Assemble(Eterm, *LagSpace, elasticFields[i].g->begin(), elasticFields[i].g->end(),
              Integ_Bulk, *pAssembler);
@@ -637,7 +661,8 @@ void elasticitySolver::computeEffectiveStrain(std::vector<double> strain)
     strain[i] = st[i] / volTot;
 }
 
-double elasticitySolver::computeDisplacementError(int comp, simpleFunction<double> *sol) {
+double elasticitySolver::computeDisplacementError(simpleFunction<double> *f0, simpleFunction<double> *f1,
+                                                  simpleFunction<double> *f2) {
   std::cout <<  "compute displacement error"<< std::endl;
   double err = 0.;
   std::set<MVertex*> v;
@@ -664,8 +689,10 @@ double elasticitySolver::computeDisplacementError(int comp, simpleFunction<doubl
     SVector3 val;
     MPoint p(*it);
     Field.f(&p, 0, 0, 0, val);
-    double diff = (*sol)((*it)->x(), (*it)->y(), (*it)->z()) - val(comp);
-    err += diff * diff;
+    SVector3 sol((*f0)((*it)->x(), (*it)->y(), (*it)->z()), (*f1)((*it)->x(), (*it)->y(), (*it)->z()),
+                 (*f2)((*it)->x(), (*it)->y(), (*it)->z()));
+    double diff = normSq(sol - val);
+    err += diff;
   }
   for (std::map<MVertex*,MElement*>::iterator it = vCut.begin(); it != vCut.end(); ++it){
     SVector3 val;
@@ -673,11 +700,46 @@ double elasticitySolver::computeDisplacementError(int comp, simpleFunction<doubl
     double xyz[3] = {it->first->x(), it->first->y(), it->first->z()};
     it->second->xyz2uvw(xyz, uvw);
     Field.f(it->second, uvw[0], uvw[1], uvw[2], val);
-    double diff = (*sol)(xyz[0], xyz[1], xyz[2]) - val(comp);
-    err += diff * diff;
+    SVector3 sol((*f0)(xyz[0], xyz[1], xyz[2]), (*f1)(xyz[0], xyz[1], xyz[2]),
+                 (*f2)(xyz[0], xyz[1], xyz[2]));
+    double diff = normSq(sol - val);
+    err += diff;
   }
-printf("Displacement Error (comp=%d) = %g\n",comp,sqrt(err));
+printf("Displacement Error = %g\n",sqrt(err));
   return sqrt(err);
+}
+
+double elasticitySolver::computeL2Norm(simpleFunction<double> *f0, simpleFunction<double> *f1,
+                                       simpleFunction<double> *f2) {
+  double val = 0.0;
+  SolverField<SVector3> solField(pAssembler, LagSpace);
+  for (unsigned int i = 0; i < elasticFields.size(); ++i){
+    for (groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end(); ++it){
+      MElement *e = *it;
+      int npts;
+      IntPt *GP;
+      double jac[3][3];
+      int integrationOrder = 2 * (e->getPolynomialOrder()+5);
+      e->getIntegrationPoints(integrationOrder, &npts, &GP);
+      for (int j = 0; j < npts; j++){
+        double u = GP[j].pt[0];
+        double v = GP[j].pt[1];
+        double w = GP[j].pt[2];
+        double weight = GP[j].weight;
+        double detJ = fabs(e->getJacobian (u, v, w, jac));
+        SPoint3 p;
+        e->pnt(u, v, w, p);
+	SVector3 FEMVALUE;
+	solField.f(e, u, v, w, FEMVALUE);
+        SVector3 sol((*f0)(p.x(), p.y(), p.z()), (*f1)(p.x(), p.y(), p.z()),
+                     (*f2)(p.x(), p.y(), p.z()));
+        double diff = normSq(sol - FEMVALUE);
+        val += diff * detJ * weight;
+      }
+    }
+  }
+printf("L2Norm = %g\n",sqrt(val));
+  return sqrt(val);
 }
 
 double elasticitySolver::computeLagNorm(int tag, simpleFunction<double> *sol) {
@@ -685,6 +747,47 @@ double elasticitySolver::computeLagNorm(int tag, simpleFunction<double> *sol) {
 }
 
 #if defined(HAVE_POST)
+
+PView *elasticitySolver::buildErrorView(const std::string postFileName, simpleFunction<double> *f0,
+                                        simpleFunction<double> *f1, simpleFunction<double> *f2)
+{
+  std::cout <<  "build Error View"<< std::endl;
+  std::map<int, std::vector<double> > data;
+  
+  SolverField<SVector3> solField(pAssembler, LagSpace);
+  for (unsigned int i = 0; i < elasticFields.size(); ++i){
+    for (groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end(); ++it){
+      MElement *e = *it;
+      int npts;
+      IntPt *GP;
+      double jac[3][3];
+      int integrationOrder = 2 * (e->getPolynomialOrder()+5);
+      e->getIntegrationPoints(integrationOrder, &npts, &GP);
+      double val = 0.0;
+      for (int j = 0; j < npts; j++){
+        double u = GP[j].pt[0];
+        double v = GP[j].pt[1];
+        double w = GP[j].pt[2];
+        double weight = GP[j].weight;
+        double detJ = fabs(e->getJacobian (u, v, w, jac));
+        SPoint3 p;
+        e->pnt(u, v, w, p);
+	SVector3 FEMVALUE;
+	solField.f(e, u, v, w, FEMVALUE);
+        SVector3 sol((*f0)(p.x(), p.y(), p.z()), (*f1)(p.x(), p.y(), p.z()),
+                     (*f2)(p.x(), p.y(), p.z()));
+        double diff = normSq(sol - FEMVALUE);
+        val += diff * detJ * weight;
+      }
+      std::vector<double> vec;
+      vec.push_back(sqrt(val));
+      data[e->getNum()] = vec;
+    }
+  }
+
+  PView *pv = new PView (postFileName, "ElementData", pModel, data, 0.0, 1);
+  return pv;
+}
 
 PView* elasticitySolver::buildDisplacementView (const std::string postFileName)
 {
@@ -862,10 +965,14 @@ PView* elasticitySolver::buildStrainView (const std::string postFileName)
   return pv;
 }
 
-PView* elasticitySolver::buildLagrangeMultiplierView (const std::string postFileName)
+PView* elasticitySolver::buildLagrangeMultiplierView (const std::string postFileName, int tag)
 {
   std::cout <<  "build Lagrange Multiplier View"<< std::endl;
-  if(!LagrangeMultiplierSpace) return new PView();
+  unsigned int t = 0;
+  if(tag != -1)
+    for ( ; t < LagrangeMultiplierSpaces.size(); t++)
+      if (LagrangeMultiplierSpaces[t]->getId() == tag) break;
+  if(t == LagrangeMultiplierSpaces.size()) return new PView();
   std::set<MVertex*> v;
   for (unsigned int i = 0; i < LagrangeMultiplierFields.size(); ++i){
     for(groupOfElements::elementContainer::const_iterator it =
@@ -876,7 +983,7 @@ PView* elasticitySolver::buildLagrangeMultiplierView (const std::string postFile
     }
   }
   std::map<int, std::vector<double> > data;
-  SolverField<double> Field(pAssembler, LagrangeMultiplierSpace);
+  SolverField<double> Field(pAssembler, LagrangeMultiplierSpaces[t]);
   for(std::set<MVertex*>::iterator it = v.begin(); it != v.end(); ++it){
     double val;
     MPoint p(*it);
@@ -985,6 +1092,13 @@ PView *elasticitySolver::buildVonMisesView(const std::string postFileName)
 }
 
 #else
+
+PView* elasticitySolver::buildErrorView(int comp, simpleFunction<double> *sol,
+                                        const std::string postFileName)
+{
+  Msg::Error("Post-pro module not available");
+  return 0;
+}
 
 PView* elasticitySolver::buildDisplacementView(const std::string postFileName)
 {

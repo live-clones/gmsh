@@ -94,7 +94,7 @@ void IsotropicElasticTerm::get(MElement *ele, int npts, IntPt *GP, fullMatrix<do
       }
       BTH.setAll(0.);
       BTH.gemm(BT, H);
-      m.gemm(BTH, B, weight * detJ, 1.);
+      m.gemm(BTH, B, weight * detJ, 1.); //m = m + w*detJ*BT*H*B
     }
   }
   else

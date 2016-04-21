@@ -78,11 +78,14 @@ class FunctionSpaceBase
 template<class T>
 class FunctionSpace : public FunctionSpaceBase
 {
+ protected:
+  int _iField; // field number (used to build dof keys)
  public:
   typedef typename TensorialTraits<T>::ValType ValType;
   typedef typename TensorialTraits<T>::GradType GradType;
   typedef typename TensorialTraits<T>::HessType HessType;
   typedef typename TensorialTraits<T>::ThirdDevType ThirdDevType;
+  virtual int getId(void) const {return _iField;}
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals) = 0;
   virtual void fuvw(MElement *ele, double u, double v, double w, std::vector<ValType> &vals) {} // should return to pure virtual once all is done.
   virtual void gradf(MElement *ele, double u, double v, double w, std::vector<GradType> &grads) = 0;
@@ -103,9 +106,6 @@ class ScalarLagrangeFunctionSpaceOfElement : public FunctionSpace<double>
   typedef TensorialTraits<double>::GradType GradType;
   typedef TensorialTraits<double>::HessType HessType;
 
- protected:
-  int _iField; // field number (used to build dof keys)
-
  private:
   virtual void getKeys(MVertex *ver, std::vector<Dof> &keys)
   {
@@ -113,8 +113,7 @@ class ScalarLagrangeFunctionSpaceOfElement : public FunctionSpace<double>
   }
 
  public:
-  ScalarLagrangeFunctionSpaceOfElement(int i = 0) : _iField(i) {}
-  virtual int getId(void) const {return _iField;}
+  ScalarLagrangeFunctionSpaceOfElement(int i = 0) { _iField = i; }
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
   {
     if(ele->getParent()) {
@@ -207,17 +206,13 @@ class ScalarLagrangeFunctionSpace : public FunctionSpace<double>
   typedef TensorialTraits<double>::GradType GradType;
   typedef TensorialTraits<double>::HessType HessType;
 
- protected:
-  int _iField; // field number (used to build dof keys)
-
  private:
   virtual void getKeys(MVertex *ver, std::vector<Dof> &keys)
   {
     keys.push_back(Dof(ver->getNum(), _iField));
   }
  public:
-  ScalarLagrangeFunctionSpace(int i = 0) : _iField(i) {}
-  virtual int getId(void) const {return _iField;}
+  ScalarLagrangeFunctionSpace(int i = 0) { _iField = i; }
   virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
   {
     if(ele->getParent()) ele = ele->getParent();

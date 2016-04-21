@@ -63,7 +63,7 @@ class elasticitySolver
   int _dim, _tag;
   dofManager<double> *pAssembler;
   FunctionSpace<SVector3> *LagSpace;
-  FunctionSpace<double> *LagrangeMultiplierSpace;
+  std::vector<FunctionSpace<double> *> LagrangeMultiplierSpaces;
 
   // young modulus and poisson coefficient per physical
   std::vector<elasticField> elasticFields; 
@@ -75,7 +75,7 @@ class elasticitySolver
   std::vector<dirichletBC> allDirichlet;
 
  public:
-  elasticitySolver(int tag) : _tag(tag), pAssembler(0), LagSpace(0), LagrangeMultiplierSpace(0) {}
+  elasticitySolver(int tag) : _tag(tag), pAssembler(0), LagSpace(0) {}
 
   elasticitySolver(GModel *model, int tag);
 
@@ -89,16 +89,19 @@ class elasticitySolver
   virtual ~elasticitySolver()
   {
     if (LagSpace) delete LagSpace;
-    if (LagrangeMultiplierSpace) delete LagrangeMultiplierSpace;
+    for (unsigned int i = 0; i < LagrangeMultiplierSpaces.size(); i++)
+      if (LagrangeMultiplierSpaces[i]) delete LagrangeMultiplierSpaces[i];
+    LagrangeMultiplierSpaces.clear();
     if (pAssembler) delete pAssembler;
   }
   void assemble (linearSystem<double> *lsys);
   void readInputFile(const std::string &meshFileName);
   void read(const std::string s) {readInputFile(s.c_str());}
-  virtual void setMesh(const std::string &meshFileName);
+  virtual void setMesh(const std::string &meshFileName, int dim = 0);
   void cutMesh(gLevelset *ls);
   void setElasticDomain(int phys, double E, double nu);
   void setLagrangeMultipliers(int phys, double tau, SVector3 d, int tag, simpleFunction<double> *f);
+  void changeLMTau(int tag, double tau);
   void setEdgeDisp(int edge, int comp, simpleFunction<double> *f);
   void solve();
   void postSolve();
@@ -108,11 +111,15 @@ class elasticitySolver
   virtual PView *buildDisplacementView(const std::string postFileName);
   virtual PView *buildStrainView(const std::string postFileName);
   virtual PView *buildStressesView(const std::string postFileName);
-  virtual PView *buildLagrangeMultiplierView(const std::string posFileName);
+  virtual PView *buildLagrangeMultiplierView(const std::string posFileName, int tag = -1);
   virtual PView *buildElasticEnergyView(const std::string postFileName);
   virtual PView *buildVonMisesView(const std::string postFileName);
   virtual PView *buildVolumeView(const std::string postFileName);
-  double computeDisplacementError(int comp, simpleFunction<double> *f);
+  virtual PView *buildErrorView(const std::string postFileName, simpleFunction<double> *f0,
+                                simpleFunction<double> *f1, simpleFunction<double> *f2);
+  double computeDisplacementError(simpleFunction<double> *f0, simpleFunction<double> *f1,
+                                  simpleFunction<double> *f2);
+  double computeL2Norm(simpleFunction<double> *f0, simpleFunction<double> *f1, simpleFunction<double> *f2);
   double computeLagNorm(int tag, simpleFunction<double> *f);
   // std::pair<PView *, PView*> buildErrorEstimateView
   //   (const std::string &errorFileName, double, int);
