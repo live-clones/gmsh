@@ -784,6 +784,9 @@ static void Mesh3D(GModel *m)
           opt(gr);
         }
         double a = Cpu();
+
+	CTX::instance()->mesh.recombine3DLevel = 2;
+
         if (CTX::instance()->mesh.recombine3DLevel >= 0){
           Recombinator rec;
           rec.execute(gr);
@@ -793,8 +796,8 @@ static void Mesh3D(GModel *m)
           sup.execute(gr);
         }
         PostOp post;
-        post.execute(gr,CTX::instance()->mesh.recombine3DLevel,
-		     CTX::instance()->mesh.recombine3DConformity);
+	post.execute(gr,CTX::instance()->mesh.recombine3DLevel,3);
+	//			     CTX::instance()->mesh.recombine3DConformity);
         // 0: no pyramid, 1: single-step, 2: two-steps (conforming),
         // true: fill non-conformities with trihedra
         // while(LaplaceSmoothing (gr)){

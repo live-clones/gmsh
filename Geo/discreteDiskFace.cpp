@@ -226,20 +226,6 @@ discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh, int
   _order = p;
   _N = (p+1)*(p+2)/2;
 
-  int tagElementOrder;
-  switch (_order){
-  case 1:
-    tagElementOrder = MSH_TRI_3;
-    break;
-  case 2:
-    tagElementOrder = MSH_TRI_6;
-    break;
-  default:
-    tagElementOrder = -1;
-    Msg::Error("discreteDiskFace:: only p=1 or p=2 allowed");
-  }
-  //mynodalbasis = BasisFactory::getNodalBasis(tagElementOrder);
-
   std::map<MVertex*,MVertex*> v2v;// mesh vertex |-> face vertex
   std::map<MEdge,MVertex*,Less_Edge> ed2nodes; // edge to interior node(s)
   for (unsigned int i=0;i<mesh.size();i++){ // triangle by triangle
@@ -248,10 +234,10 @@ discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh, int
     for (unsigned int j=0; j<3; j++){ // loop over vertices AND edges of the current triangle
 
       MVertex *v = mesh[i]->getVertex(j);// firstly, edge vertices
-      if (v->onWhat() == gf) {
+      if (v->onWhat()->dim() == 2) {
 	std::map<MVertex*,MVertex*> :: iterator it = v2v.find(v);
 	if (it == v2v.end()){
-	  MFaceVertex *vv = new MFaceVertex ( v->x(),  v->y(),  v->z(), this, 0, 0);
+	  MFaceVertex *vv = new MFaceVertex ( v->x(),  v->y(),  v->z(), v->onWhat(), 0, 0);
 	  v2v[v] = vv;
 	  discrete_vertices.push_back(vv);
 	  vs.push_back(vv);
@@ -263,7 +249,7 @@ discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh, int
 	  discreteEdge *de = dynamic_cast<discreteEdge*> (v->onWhat());
 	  vs.push_back(de->getGeometricalVertex(v));
 	}
-	else Msg::Fatal("fatality");
+	else vs.push_back(v);
       }
       else vs.push_back(v);
     }
@@ -310,8 +296,6 @@ discreteDiskFace::~discreteDiskFace()
   if (_ddft)delete[] _ddft;
   if (oct)Octree_Delete(oct);
 }
-
-
 
 void discreteDiskFace::getBoundingEdges()
 {
@@ -383,7 +367,7 @@ void discreteDiskFace::getBoundingEdges()
 	    if (!(current->getVertex(k!=2 ?k+1 : 0 ) == neigs[i]->getVertex(j!=0 ? j-1 : 2) ||
 		  current->getVertex(k!=0 ?k-1 : 2 ) == neigs[i]->getVertex(j!=2 ? j+1 : 0))){
 	      neigs[i]->reverse();
-	      std::cout << "discreteDiskFace: triangle " << neigs[i]->getNum() << " has been reoriented." << std::endl;
+	      //	      std::cout << "discreteDiskFace: triangle " << neigs[i]->getNum() << " has been reoriented." << std::endl;
 	    }
 	    break;
 	  }

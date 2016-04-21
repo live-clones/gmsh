@@ -18,6 +18,7 @@
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "OS.h"
+#include "discreteFace.h"
 
 #if defined(HAVE_MESH)
 #include "meshGFace.h"
@@ -1376,26 +1377,65 @@ bool GFace::fillPointCloud(double maxDist,
   return true;
 }
 
+
+#if defined(HAVE_MESH)
+static void meshCompound (GFace* gf, bool verbose) {
+
+  discreteFace *df = new discreteFace (gf->model(), gf->tag() + 100000);
+  
+  std::set<int> ec;
+  for (unsigned int i=0;i<gf->_compound.size();i++){
+    GFace *c = (GFace*)gf->_compound[i];
+    std::list<GEdge*> edges = c->edges();
+    for (std::list<GEdge*> :: iterator it = edges.begin() ; it != edges.end(); ++it){
+      std::set<int>::iterator found = ec.find((*it)->tag());
+      if (found == ec.end())ec.insert((*it)->tag());
+      else ec.erase(found);
+    }
+    df->triangles.insert(df->triangles.begin(), c->triangles.begin(),c->triangles.end());
+    df->mesh_vertices.insert(df->mesh_vertices.begin(), c->mesh_vertices.begin(),c->mesh_vertices.end());
+    c->triangles.clear();
+    c->mesh_vertices.clear();
+  }
+  std::vector<int> cedges;
+  cedges.insert(cedges.begin(), ec.begin(), ec.end());
+  df->setBoundEdges(gf->model(), cedges);
+  df->createGeometry();
+  df->mesh(verbose);
+  gf->triangles = df->triangles;
+  for (unsigned int i=0;i<df->mesh_vertices.size();i++){
+    MVertex *v = df->mesh_vertices[i];
+    v->setEntity(gf);
+    gf->mesh_vertices.push_back(v);
+  }
+  df->triangles.clear();
+  df->mesh_vertices.clear();
+
+  delete df;
+}
+#endif
+
 void GFace::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
 
   meshGFace mesher;
   mesher(this, verbose);
-
-  /*
   if (!_compound.empty()){ // Some faces are meshed together 
     if (_compound[0] == this){ //  I'm the one that makes the compound job
       bool ok = true;
-      for (unsigned int i=0;i<_compound.size();i++)
-	ok &= (_compound[i]->meshStatistics.status == GFace::PENDING);            
+      for (unsigned int i=0;i<_compound.size();i++){
+	GFace *gf = (GFace*)_compound[i];
+	ok &= (gf->meshStatistics.status == GFace::DONE);            
+      }
       if (!ok)meshStatistics.status = GFace::PENDING;
       else {
+	meshCompound(this, verbose);
 	return;
       }
     }
   }
-  */  
+    
 #endif
 }
 
