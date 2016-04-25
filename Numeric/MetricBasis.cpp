@@ -724,7 +724,7 @@ bool MetricBasis::validateBezierForMetricAndJacobian()
 
 
   //=================
-  return 987;
+  return true; //987;
   //=================
 
   /*Msg::Info("Testing Bezier interpolation and subdivision "
@@ -2041,7 +2041,7 @@ bool MetricBasis::_intersectionCurveLeftCorner(double beta, double c,
   // (i.e. the bounding curve is sufficiently sharp)
   if (3*beta*a*a + c < 0) {
     Msg::Error("The slope is negative, cannot compute the intersection");
-    return -1;
+    return false;
   }
 
   const double minK = K;

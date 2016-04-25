@@ -1496,7 +1496,7 @@ int pvtuAdaptFileDialog(const char *name)
 
   if(!dialog){
     dialog = new _pvtuAdaptFileDialog;
-    int h = 7 * BH + 3 * WB, w = w = 2 * BBB + 3 * WB, y = WB;
+    int h = 7 * BH + 3 * WB, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "Adaptive View Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();

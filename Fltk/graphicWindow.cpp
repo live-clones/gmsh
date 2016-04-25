@@ -2824,7 +2824,7 @@ static void message_menu_search_cb(Fl_Widget *w, void *data)
 {
   graphicWindow *g = (graphicWindow*)data;
   g->getMessageBrowser()->clear();
-  for(int i = 0; i < g->getMessages().size(); i++)
+  for(int i = 0; i < (int)g->getMessages().size(); i++)
     g->getMessageBrowser()->add(g->getMessages()[i].c_str());
 }
 

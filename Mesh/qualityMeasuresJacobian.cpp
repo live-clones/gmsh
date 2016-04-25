@@ -833,7 +833,7 @@ bool _CoeffDataAnisotropy::_intersectionCurveLeftCorner(double beta, double gamm
     double KMaximum = (beta * aMaximum*aMaximum + gamma) * aMaximum;
     if (aMaximum < a || KMaximum < K) {
       Msg::Error("Sorry but, there is no intersection");
-      return -1;
+      return false;
     }
   }
 

@@ -320,7 +320,7 @@ void Filler::treat_model()
 
 void Filler::treat_region(GRegion* gr)
 {
-  
+
   int NumSmooth = CTX::instance()->mesh.smoothCrossField;
   std::cout << "NumSmooth = " << NumSmooth << std::endl ;
   if(NumSmooth && (gr->dim() == 3)){
@@ -406,14 +406,14 @@ void Filler::treat_region(GRegion* gr)
     x = boundary_vertices[i]->x();
     y = boundary_vertices[i]->y();
     z = boundary_vertices[i]->z();
-    
+
     node = new Node(SPoint3(x,y,z));
     compute_parameters(node,gr);
     node->set_layer(0);
-    
+
     it3 = limits.find(boundary_vertices[i]);
     node->set_limit(it3->second);
-    
+
     rtree.Insert(node->min,node->max,node);
     fifo.push(node);
   }
@@ -423,20 +423,20 @@ void Filler::treat_region(GRegion* gr)
     parent = fifo.front();
     fifo.pop();
     garbage.push_back(parent);
-    
+
     if(parent->get_limit()!=-1 && parent->get_layer()>=parent->get_limit()){
       continue;
     }
-    
+
     spawns.clear();
     spawns.resize(6);
-    
+
     for(i=0;i<6;i++){
       spawns[i] = new Node();
     }
-    
+
     create_spawns(gr,octree,parent,spawns);
-    
+
     for(i=0;i<6;i++){
       ok2 = 0;
       individual = spawns[i];
@@ -444,18 +444,18 @@ void Filler::treat_region(GRegion* gr)
       x = point.x();
       y = point.y();
       z = point.z();
-      
+
       if(inside_domain(octree,x,y,z)){
 	compute_parameters(individual,gr);
 	individual->set_layer(parent->get_layer()+1);
 	individual->set_limit(parent->get_limit());
-	
+
 	if(far_from_boundary(octree,individual)){
 	  wrapper.set_ok(1);
 	  wrapper.set_individual(individual);
 	  wrapper.set_parent(parent);
 	  rtree.Search(individual->min,individual->max,rtree_callback,&wrapper);
-	  
+
 	  if(wrapper.get_ok()){
 	    fifo.push(individual);
 	    rtree.Insert(individual->min,individual->max,individual);
@@ -466,22 +466,22 @@ void Filler::treat_region(GRegion* gr)
 	  }
 	}
       }
-      
+
       if(!ok2) delete individual;
     }
-    
+
     if(count%100==0){
       printf("%d\n",count);
     }
     count++;
   }
-  
-  
+
+
   int option = CTX::instance()->mesh.algo3d;
   CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;
-  
+
   deleter(gr);
-  printf("%d vertices to add\n",new_vertices.size());
+  printf("%d vertices to add\n", (int)new_vertices.size());
   std::vector<GRegion*> regions;
   regions.push_back(gr);
   meshGRegion mesher(regions); //?
@@ -822,4 +822,3 @@ void Filler::print_node(Node* node,std::ofstream& file)
 /*********static declarations*********/
 
 std::vector<MVertex*> Filler::new_vertices;
-

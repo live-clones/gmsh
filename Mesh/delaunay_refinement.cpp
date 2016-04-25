@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@onelab.info>.
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -112,7 +117,10 @@ double adaptiveTrapezoidalRule (SPoint3 p1 , SPoint3 p2 ,
 }
 
 
-void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &p, void *), void *data, std::stack<IPT> &temp) {
+void saturateEdge (Edge &e, std::vector<Vertex*> &S,
+                   double (*f)(const SPoint3 &p, void *),
+                   void *data, std::stack<IPT> &temp)
+{
   std::vector< IPT > _result;
   double dl;
   SPoint3 p1 = e.first->point();
@@ -158,11 +166,12 @@ void saturateEdge (Edge &e, std::vector<Vertex*> &S, double (*f)(const SPoint3 &
   //  exit(1);
 }
 
-void saturateEdges ( edgeContainer &ec,
-		     tetContainer &T,
-		     int nbThreads,
-		     std::vector<Vertex*> &S,
-		     double (*f)(const SPoint3 &p, void *), void *data) {
+void saturateEdges(edgeContainer &ec,
+                   tetContainer &T,
+                   int nbThreads,
+                   std::vector<Vertex*> &S,
+                   double (*f)(const SPoint3 &p, void *), void *data)
+{
   std::stack<IPT> temp;
   AVGSEARCH= 0;
   // FIXME
@@ -189,8 +198,7 @@ void saturateEdges ( edgeContainer &ec,
 class volumePointWithExclusionRegion {
 public :
   Vertex *_v;
-  volumePointWithExclusionRegion (Vertex *v) : _v(v){
-  }
+  volumePointWithExclusionRegion (Vertex *v) : _v(v) {}
 
   inline bool inExclusionZone (volumePointWithExclusionRegion *p) const
   {
@@ -221,7 +229,6 @@ struct my_wrapper_3D {
     _tooclose (false), _p(sp) {}
 };
 
-
 bool rtree_callback(volumePointWithExclusionRegion *neighbour,void* point)
 {
   my_wrapper_3D *w = static_cast<my_wrapper_3D*>(point);
@@ -232,8 +239,6 @@ bool rtree_callback(volumePointWithExclusionRegion *neighbour,void* point)
   }
   return true;
 }
-
-
 
 class vertexFilter {
   RTree<volumePointWithExclusionRegion*,double,3,double> _rtree;
@@ -259,8 +264,8 @@ void filterVertices (const int numThreads,
 		     vertexFilter &_filter,
 		     std::vector<Vertex*> &add,
 		     double (*f)(const SPoint3 &p, void *),
-		     void *data) {
-
+		     void *data)
+{
   std::vector<int> indices;
   SortHilbert(add, indices);
   std::vector<Vertex*> _add=add;
@@ -295,13 +300,14 @@ void filterVertices (const int numThreads,
   }
 }
 
-
-double _fx (const SPoint3 &p, void *){
+double _fx (const SPoint3 &p, void *)
+{
   return fabs(0.0125 + .02*p.x());
 }
 
-
-static void _print (const char *name, std::vector<Vertex*> &T){
+/*
+static void _print (const char *name, std::vector<Vertex*> &T)
+{
   FILE *f = fopen(name,"w");
   fprintf(f,"View \"\"{\n");
   for (unsigned int i=0;i<T.size();i++){
@@ -311,10 +317,12 @@ static void _print (const char *name, std::vector<Vertex*> &T){
   fprintf(f,"};\n");
   fclose(f);
 }
+*/
 
 typedef std::set<conn>   connSet;
 
-void computeAdjacencies (Tet *t, int iFace, connSet &faceToTet){
+void computeAdjacencies (Tet *t, int iFace, connSet &faceToTet)
+{
   conn c (t->getFace(iFace), iFace, t);
   connSet::iterator it = faceToTet.find(c);
   if (it == faceToTet.end()){
@@ -336,8 +344,8 @@ bool edgeSwaps(tetContainer &T, int myThread)
 
 void edgeBasedRefinement (const int numThreads,
 			  const int nptsatonce,
-			  GRegion *gr) {
-
+			  GRegion *gr)
+{
   // fill up old Datastructures
 
   tetContainer allocator (numThreads,1000000);

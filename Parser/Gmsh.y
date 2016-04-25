@@ -1981,7 +1981,7 @@ Shape :
 
    | tCompound tLine ListOfDouble tEND
    {
-     GModel::current()->getGEOInternals()->addCompoundMesh ( 1 , $3 );      
+     GModel::current()->getGEOInternals()->addCompoundMesh ( 1 , $3 );
    }
 
    | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
@@ -2193,7 +2193,7 @@ Shape :
     }
   | tCompound tSurface ListOfDouble tEND
     {
-      GModel::current()->getGEOInternals()->addCompoundMesh ( 2 , $3 );      
+      GModel::current()->getGEOInternals()->addCompoundMesh ( 2 , $3 );
     }
   | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
@@ -2332,7 +2332,7 @@ Shape :
     }
   | tCompound tVolume ListOfDouble tEND
     {
-      GModel::current()->getGEOInternals()->addCompoundMesh ( 3 , $3 );      
+      GModel::current()->getGEOInternals()->addCompoundMesh ( 3 , $3 );
     }
   | tCompound tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
@@ -5984,7 +5984,7 @@ StringExprVar :
       int j = (int)$3;
       if(!gmsh_yystringsymbols.count($1))
         yymsg(0, "Unknown string variable '%s'", $1);
-      else if(j >= 0 && j < gmsh_yystringsymbols[$1].size())
+      else if(j >= 0 && j < (int)gmsh_yystringsymbols[$1].size())
         val = gmsh_yystringsymbols[$1][j];
       else
         yymsg(0, "Index %d out of range", j);
@@ -5998,7 +5998,7 @@ StringExprVar :
       int j = (int)$3;
       if(!gmsh_yystringsymbols.count($1))
         yymsg(0, "Unknown string variable '%s'", $1);
-      else if(j >= 0 && j < gmsh_yystringsymbols[$1].size())
+      else if(j >= 0 && j < (int)gmsh_yystringsymbols[$1].size())
         val = gmsh_yystringsymbols[$1][j];
       else
         yymsg(0, "Index %d out of range", j);
@@ -6012,7 +6012,7 @@ StringExprVar :
       int j = (int)$3;
       if(!gmsh_yystringsymbols.count($1))
         yymsg(0, "Unknown string variable '%s'", $1);
-      else if(j >= 0 && j < gmsh_yystringsymbols[$1].size())
+      else if(j >= 0 && j < (int)gmsh_yystringsymbols[$1].size())
         val = gmsh_yystringsymbols[$1][j];
       else
         yymsg(0, "Index %d out of range", j);
@@ -6026,7 +6026,7 @@ StringExprVar :
       int j = (int)$3;
       if(!gmsh_yystringsymbols.count($1))
         yymsg(0, "Unknown string variable '%s'", $1);
-      else if(j >= 0 && j < gmsh_yystringsymbols[$1].size())
+      else if(j >= 0 && j < (int)gmsh_yystringsymbols[$1].size())
         val = gmsh_yystringsymbols[$1][j];
       else
         yymsg(0, "Index %d out of range", j);

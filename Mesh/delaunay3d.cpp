@@ -25,8 +25,6 @@
 #include "MTetrahedron.h"
 #include "meshGRegionLocalMeshMod.h"
 
-const int MEASURE_BARR = 0;
-
 #ifdef _HAVE_NUMA
 #include <numa.h>
 #endif
@@ -36,8 +34,8 @@ const int MEASURE_BARR = 0;
 
 struct HilbertSortB
 {
-// The code for generating table transgc
-// from: http://graphics.stanford.edu/~seander/bithacks.html.
+  // The code for generating table transgc from:
+  // http://graphics.stanford.edu/~seander/bithacks.html.
   int transgc[8][3][8];
   int tsb1mod3[8];
   int maxDepth;
@@ -58,7 +56,8 @@ struct HilbertSortB
     ComputeGrayCode(3);
   }
   void MultiscaleSortHilbert(Vertex** vertices, int arraysize,
-			     int threshold, double ratio, int *depth, std::vector<int> &indices)
+			     int threshold, double ratio, int *depth,
+                             std::vector<int> &indices)
   {
     int middle;
 
@@ -308,7 +307,8 @@ void SortHilbert (std::vector<Vertex*>& v, std::vector<int> &indices)
   h.Apply(v, indices);
 }
 
-void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet){
+void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet)
+{
   conn c (t->getFace(iFace), iFace, t);
   connContainer::iterator it = std::find(faceToTet.begin(),faceToTet.end(),c);
   if (it == faceToTet.end()){
@@ -328,8 +328,6 @@ void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet){
 
 ************************************************************************/
 
-
-
 /***********************************************************************
   Compute all tets surrounding an edge
 ************************************************************************/
@@ -337,8 +335,8 @@ void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet){
 static int edges[6][2] =    {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
 static int efaces[6][2] =   {{0,2},{0,1},{1,2},{0,3},{2,3},{1,3}};
 static int faces[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
-static int vnofaces[4] = {3,1,2,0};
-static int vFac[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
+//static int vnofaces[4] = {3,1,2,0};
+//static int vFac[4][3] = {{0,1,2},{0,2,3},{0,1,3},{1,2,3}};
 
 static void computeNeighboringTetsOfACavity(const std::vector<Tet*> &cavity,
 					    std::vector<Tet*> &outside)
@@ -533,10 +531,11 @@ bool edgeSwap(Tet *tet, int iLocalEdge,  tetContainer &T, int myThread)
   return true;
 }
 
-static void edgeSwapPass (tetContainer &T) {
-
+/*
+static void edgeSwapPass (tetContainer &T)
+{
 }
-
+*/
 
 /*
   Fixing a non star shaped cavity (non delaunay triangulations)
@@ -547,7 +546,8 @@ static void edgeSwapPass (tetContainer &T) {
 
 static void starShapeness (Vertex *v, connContainer &bndK,
 			   std::vector<unsigned int> &_negatives,
-			   double threshold){
+			   double threshold)
+{
   _negatives.clear();
   for (unsigned int i=0; i< bndK.size(); i++) {
     // no symbolic perturbation
@@ -561,8 +561,8 @@ static void starShapeness (Vertex *v, connContainer &bndK,
   }
 }
 
-static Tet* tetContainsV (Vertex *v, cavityContainer &cavity){
-
+static Tet* tetContainsV (Vertex *v, cavityContainer &cavity)
+{
   for (unsigned int i=0; i< cavity.size(); i++) {
     unsigned int count = 0;
     for (unsigned int j=0;j<4;j++){
@@ -581,7 +581,8 @@ static Tet* tetContainsV (Vertex *v, cavityContainer &cavity){
   return NULL;
 }
 
-static void buildDelaunayBall (cavityContainer &cavity, connContainer &faceToTet){
+static void buildDelaunayBall (cavityContainer &cavity, connContainer &faceToTet)
+{
   faceToTet.clear();
   for (unsigned int i=0; i< cavity.size(); i++) {
     Tet *t = cavity[i];
@@ -599,10 +600,12 @@ static void buildDelaunayBall (cavityContainer &cavity, connContainer &faceToTet
   }
 }
 
+/*
 static bool updateCavity(Tet *containsV,
 			 cavityContainer &cavity,
 			 connContainer &bndK,
-			 int myThread, int K){
+			 int myThread, int K)
+{
   bndK.clear();
   cavityContainer cc;
   cc.push_back(containsV);
@@ -632,12 +635,13 @@ static bool updateCavity(Tet *containsV,
   cavity = cc;
   return true;
 }
-
+*/
 
 static bool removeIsolatedTets(Tet *containsV,
 			       cavityContainer &cavity,
 			       connContainer &bndK,
-			       int myThread, int K){
+			       int myThread, int K)
+{
   cavityContainer cc;
   cc.push_back(containsV);
   std::stack<Tet*> _stack;
@@ -662,7 +666,8 @@ static bool removeIsolatedTets(Tet *containsV,
   return true;
 }
 
-static Tet *tetInsideCavityWithFAce (Face &f, cavityContainer &cavity){
+static Tet *tetInsideCavityWithFAce (Face &f, cavityContainer &cavity)
+{
   //  printf("size of cavity %ld\n",cavity.size());
   for (unsigned int i=0; i< cavity.size(); i++) {
     Tet *t = cavity[i];
@@ -675,14 +680,13 @@ static Tet *tetInsideCavityWithFAce (Face &f, cavityContainer &cavity){
   return NULL;
 }
 
-
 static bool fixDelaunayCavity (double threshold,
 			       Vertex *v,
 			       cavityContainer &cavity,
 			       connContainer &bndK,
 			       int myThread, int K,
-			       std::vector<unsigned int> & _negatives){
-
+			       std::vector<unsigned int> & _negatives)
+{
   starShapeness (v, bndK, _negatives, threshold);
 
   if (_negatives.empty())return false;
@@ -722,7 +726,8 @@ static void delaunayCavity2 (Tet *t,
 			    Vertex *v,
 			    cavityContainer &cavity,
 			    connContainer &bnd,
-			    int thread, int iPnt){
+			    int thread, int iPnt)
+{
   t->set(thread, iPnt); // Mark the triangle
   cavity.push_back(t);
   for (int iNeigh=0; iNeigh<4 ; iNeigh++){
@@ -742,7 +747,8 @@ static void delaunayCavity2 (Tet *t,
   }
 }
 
-Tet* walk (Tet *t, Vertex *v, int maxx, double &totSearch, int thread){
+Tet* walk (Tet *t, Vertex *v, int maxx, double &totSearch, int thread)
+{
   while (1){
     totSearch++;
     if (t == NULL) {
@@ -775,8 +781,8 @@ Tet* walk (Tet *t, Vertex *v, int maxx, double &totSearch, int thread){
   Msg::Fatal("Jump-and-Walk Failed (No neighbor)");
 }
 
-
-void __print (const char *name, connContainer &conn, Vertex *v){
+void __print (const char *name, connContainer &conn, Vertex *v)
+{
   FILE *f = fopen(name,"w");
   fprintf(f,"View \"\"{\n");
 
@@ -823,7 +829,8 @@ void __print (const char *name, int thread, tetContainer &T, Vertex *v){
   fclose(f);
 }
 
-void print (std::vector<Vertex*> &V, std::vector<Tet*> &T){
+void print (std::vector<Vertex*> &V, std::vector<Tet*> &T)
+{
   std::map<Vertex*,int> nums;
   for (unsigned int i=0;i<V.size();i++){
     nums[V[i]] = i;
@@ -835,8 +842,8 @@ void print (std::vector<Vertex*> &V, std::vector<Tet*> &T){
   }
 }
 
-
-void print (const char *name, std::vector<Vertex*> &T){
+void print (const char *name, std::vector<Vertex*> &T)
+{
   FILE *f = fopen(name,"w");
   fprintf(f,"View \"\"{\n");
   for (unsigned int i=0;i<T.size()-1;i++){
@@ -852,7 +859,8 @@ void print (const char *name, std::vector<Vertex*> &T){
 xxx10000 ok if all bits on my right are 0
 */
 
-bool canWeProcessCavity (cavityContainer &cavity, unsigned int myThread, unsigned int iPt) {
+bool canWeProcessCavity (cavityContainer &cavity, unsigned int myThread, unsigned int iPt)
+{
   unsigned int cSize = cavity.size();
   for (unsigned int j=0; j<cSize; j++) {
     Tet *f = cavity[j];
@@ -866,7 +874,8 @@ bool canWeProcessCavity (cavityContainer &cavity, unsigned int myThread, unsigne
   return true;
 }
 
-bool checkLocalDelaunayness(Tet* t){
+bool checkLocalDelaunayness(Tet* t)
+{
   if (t->V[0]){
     for (int i=0;i<4;i++){
       Tet *n = t->T[i];
@@ -876,7 +885,8 @@ bool checkLocalDelaunayness(Tet* t){
   return true;
 }
 
-int checkLocalDelaunayness(tetContainer &c, int thread, char *msg){
+int checkLocalDelaunayness(tetContainer &c, int thread, char *msg)
+{
   int nLoc = 0;
   for (unsigned int i=0; i<c.size(thread); i++) {
     if (!checkLocalDelaunayness(c(thread,i)))nLoc++;
@@ -885,7 +895,8 @@ int checkLocalDelaunayness(tetContainer &c, int thread, char *msg){
   return nLoc ;
 }
 
-static Tet* randomTet (int thread,  tetContainer &allocator ){
+static Tet* randomTet (int thread,  tetContainer &allocator)
+{
   unsigned int N = allocator.size(thread);
   //  printf("coucou random TET %d %d\n",thread,N);
   while(1) {
@@ -901,7 +912,8 @@ void delaunayTrgl (const unsigned int numThreads,
 		   unsigned int Npts,
 		   std::vector<Vertex*> assignTo[],
 		   tetContainer &allocator,
-		   double threshold){
+		   double threshold)
+{
 #ifdef _VERBOSE
   double totSearchGlob=0;
   double totCavityGlob=0;
@@ -1086,10 +1098,10 @@ void delaunayTrgl (const unsigned int numThreads,
 
 }
 
-
 static void initialCube (std::vector<Vertex*> &v,
 			 Vertex *box[8],
-			 tetContainer & allocator){
+			 tetContainer & allocator)
+{
   SBoundingBox3d bbox ;
   //  bbox += SPoint3(0,0,0);
   //  bbox += SPoint3(1,1,1);
@@ -1137,7 +1149,8 @@ void delaunayTriangulation (const int numThreads,
 			    const int nptsatonce,
 			    std::vector<Vertex*> &S,
 			    Vertex *box[8],
-			    tetContainer & allocator){
+			    tetContainer & allocator)
+{
   int N = S.size();
 
   std::vector<int> indices;
@@ -1188,7 +1201,8 @@ void delaunayTriangulation (const int numThreads,
 void delaunayTriangulation (const int numThreads,
 			    const int nptsatonce,
 			    std::vector<MVertex*> &S,
-			    std::vector<MTetrahedron*> &T){
+			    std::vector<MTetrahedron*> &T)
+{
   std::vector<MVertex*> _temp;
   std::vector<Vertex*> _vertices;
   unsigned int N = S.size();

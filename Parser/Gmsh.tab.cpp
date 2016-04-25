@@ -7117,7 +7117,7 @@ yyreduce:
   case 179:
 #line 1983 "Gmsh.y" /* yacc.c:1646  */
     {
-     GModel::current()->getGEOInternals()->addCompoundMesh ( 1 , (yyvsp[-1].l) );      
+     GModel::current()->getGEOInternals()->addCompoundMesh ( 1 , (yyvsp[-1].l) );
    }
 #line 7123 "Gmsh.tab.cpp" /* yacc.c:1646  */
     break;
@@ -7369,7 +7369,7 @@ yyreduce:
   case 190:
 #line 2195 "Gmsh.y" /* yacc.c:1646  */
     {
-      GModel::current()->getGEOInternals()->addCompoundMesh ( 2 , (yyvsp[-1].l) );      
+      GModel::current()->getGEOInternals()->addCompoundMesh ( 2 , (yyvsp[-1].l) );
     }
 #line 7375 "Gmsh.tab.cpp" /* yacc.c:1646  */
     break;
@@ -7527,7 +7527,7 @@ yyreduce:
   case 196:
 #line 2334 "Gmsh.y" /* yacc.c:1646  */
     {
-      GModel::current()->getGEOInternals()->addCompoundMesh ( 3 , (yyvsp[-1].l) );      
+      GModel::current()->getGEOInternals()->addCompoundMesh ( 3 , (yyvsp[-1].l) );
     }
 #line 7533 "Gmsh.tab.cpp" /* yacc.c:1646  */
     break;
@@ -12355,7 +12355,7 @@ yyreduce:
       int j = (int)(yyvsp[-1].d);
       if(!gmsh_yystringsymbols.count((yyvsp[-3].c)))
         yymsg(0, "Unknown string variable '%s'", (yyvsp[-3].c));
-      else if(j >= 0 && j < gmsh_yystringsymbols[(yyvsp[-3].c)].size())
+      else if(j >= 0 && j < (int)gmsh_yystringsymbols[(yyvsp[-3].c)].size())
         val = gmsh_yystringsymbols[(yyvsp[-3].c)][j];
       else
         yymsg(0, "Index %d out of range", j);
@@ -12373,7 +12373,7 @@ yyreduce:
       int j = (int)(yyvsp[-1].d);
       if(!gmsh_yystringsymbols.count((yyvsp[-3].c)))
         yymsg(0, "Unknown string variable '%s'", (yyvsp[-3].c));
-      else if(j >= 0 && j < gmsh_yystringsymbols[(yyvsp[-3].c)].size())
+      else if(j >= 0 && j < (int)gmsh_yystringsymbols[(yyvsp[-3].c)].size())
         val = gmsh_yystringsymbols[(yyvsp[-3].c)][j];
       else
         yymsg(0, "Index %d out of range", j);
@@ -12391,7 +12391,7 @@ yyreduce:
       int j = (int)(yyvsp[-1].d);
       if(!gmsh_yystringsymbols.count((yyvsp[-3].c)))
         yymsg(0, "Unknown string variable '%s'", (yyvsp[-3].c));
-      else if(j >= 0 && j < gmsh_yystringsymbols[(yyvsp[-3].c)].size())
+      else if(j >= 0 && j < (int)gmsh_yystringsymbols[(yyvsp[-3].c)].size())
         val = gmsh_yystringsymbols[(yyvsp[-3].c)][j];
       else
         yymsg(0, "Index %d out of range", j);
@@ -12409,7 +12409,7 @@ yyreduce:
       int j = (int)(yyvsp[-1].d);
       if(!gmsh_yystringsymbols.count((yyvsp[-3].c)))
         yymsg(0, "Unknown string variable '%s'", (yyvsp[-3].c));
-      else if(j >= 0 && j < gmsh_yystringsymbols[(yyvsp[-3].c)].size())
+      else if(j >= 0 && j < (int)gmsh_yystringsymbols[(yyvsp[-3].c)].size())
         val = gmsh_yystringsymbols[(yyvsp[-3].c)][j];
       else
         yymsg(0, "Index %d out of range", j);

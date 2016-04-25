@@ -5,6 +5,7 @@
 
 #ifndef _DELAUNAY3D_H_
 #define _DELAUNAY3D_H_
+
 class MVertex;
 class MTetrahedron;
 void delaunayTriangulation (const int numThreads,

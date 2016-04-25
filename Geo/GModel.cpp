@@ -1296,7 +1296,7 @@ void GModel::_storeParentsInSubElements(std::map<int, std::vector<MElement*> > &
 {
   std::map<int, std::vector<MElement*> >::const_iterator it;
   for(it = map.begin(); it != map.end(); ++it)
-    for (int i=0; i<it->second.size(); ++i)
+    for (unsigned int i = 0; i < it->second.size(); ++i)
       it->second[i]->updateParent(this);
 }
 

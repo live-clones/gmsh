@@ -980,7 +980,7 @@ void GMSH_ThinLayerFixMeshPlugin::FindNewPoint(SPoint3* CurrentPoint, int* Curre
     //proche d'un point
     //std::cout<<"      Close to point"<<std::endl;
     double DistMinTmp = 10000000.0;
-    int indexMinTmp;
+    int indexMinTmp = 0;
     for (unsigned int i = 0;i < 4;i++){
       double distanceTmp = sqrt(((*CurrentTet)->tet()->getVertex(i)->x() - ResultPoint.x()) * ((*CurrentTet)->tet()->getVertex(i)->x() - ResultPoint.x()) + ((*CurrentTet)->tet()->getVertex(i)->y() - ResultPoint.y()) * ((*CurrentTet)->tet()->getVertex(i)->y() - ResultPoint.y()) + ((*CurrentTet)->tet()->getVertex(i)->z() - ResultPoint.z()) * ((*CurrentTet)->tet()->getVertex(i)->z() - ResultPoint.z()));
       if (distanceTmp < DistMinTmp){
