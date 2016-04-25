@@ -21,6 +21,7 @@
 #include "Context.h"
 #include "fullMatrix.h"
 #include "BasisFactory.h"
+#include "MVertexRTree.h"
 
 
 // --------- Functions that help optimizing placement of points on geometry -----------
@@ -1307,6 +1308,73 @@ static void updateHighOrderVertices(GEntity *e,
   e->deleteVertexArrays();
 }
 
+static void updatePeriodicEdgesAndFaces(GModel *m)
+{
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
+    GEdge *slave = *it;
+    GEdge *master = dynamic_cast<GEdge*>(slave->meshMaster());
+    if (master == slave) continue;
+
+    std::map<MVertex*,MVertex*> &v2v = slave->correspondingVertices;
+    v2v.clear();
+
+    MVertexRTree rtree = MVertexRTree(1e-8 * CTX::instance()->lc);
+    for (unsigned int i = 0; i < slave->getNumMeshVertices(); ++i)
+      rtree.insert(slave->getMeshVertex(i));
+
+    std::vector<double> tfo = slave->affineTransform;
+
+    for (unsigned int i = 0; i < master->getNumMeshVertices(); ++i) {
+      MVertex *vs = master->getMeshVertex(i);
+      double ps[4] = {vs->x(), vs->y(), vs->z(), 1.};
+      double res[4] = {0., 0., 0., 0.};
+      int idx = 0;
+      for(int i = 0; i < 4; i++)
+        for(int j = 0; j < 4; j++)
+          res[i] +=  tfo[idx++] * ps[j];
+
+      SPoint3 p3 (res[0], res[1], res[2]);
+      double u = slave->parFromPoint(p3);
+      GPoint gp = slave->point(u);
+      MVertex *vt = rtree.find(gp.x(), gp.y(), gp.z());
+      if (!vt) Msg::Error("Couldn't find a vertex for updating periodicity");
+      else v2v[vt] = vs;
+    }
+  }
+
+  for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
+    GFace *slave = *it;
+    GFace *master = dynamic_cast<GFace*>(slave->meshMaster());
+    if (master == slave) continue;
+
+    std::map<MVertex*,MVertex*> &v2v = slave->correspondingVertices;
+    v2v.clear();
+
+    MVertexRTree rtree = MVertexRTree(1e-8 * CTX::instance()->lc);
+    for (unsigned int i = 0; i < slave->getNumMeshVertices(); ++i)
+      rtree.insert(slave->getMeshVertex(i));
+
+    std::vector<double> tfo = slave->affineTransform;
+
+    for (unsigned int i = 0; i < master->getNumMeshVertices(); ++i) {
+      MVertex *vs = master->getMeshVertex(i);
+      double ps[4] = {vs->x(), vs->y(), vs->z(), 1.};
+      double res[4] = {0., 0., 0., 0.};
+      int idx = 0;
+      for(int i = 0; i < 4; i++)
+        for(int j = 0; j < 4; j++)
+          res[i] +=  tfo[idx++] * ps[j];
+
+      SPoint3 p3 (res[0], res[1], res[2]);
+      SPoint2 p2 = slave->parFromPoint(p3);
+      GPoint gp = slave->point(p2);
+      MVertex *vt = rtree.find(gp.x(), gp.y(), gp.z());
+      if (!vt) Msg::Error("Couldn't find a vertex for updating periodicity");
+      else v2v[vt] = vs;
+    }
+  }
+}
+
 void SetOrder1(GModel *m,  bool onlyVisible)
 {
   m->destroyMeshCaches();
@@ -1334,6 +1402,8 @@ void SetOrder1(GModel *m,  bool onlyVisible)
     updateHighOrderVertices(*it, newHOVert, onlyVisible);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     updateHighOrderVertices(*it, newHOVert, onlyVisible);
+
+  updatePeriodicEdgesAndFaces(m);
 }
 
 void checkHighOrderTriangles(const char* cc, GModel *m,
@@ -1500,6 +1570,8 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     updateHighOrderVertices(*it, newHOVert[*it], onlyVisible);
 
+  updatePeriodicEdgesAndFaces(m);
+
   double t2 = Cpu();
 
   std::vector<MElement*> bad;
@@ -1559,6 +1631,8 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
     (*it)->mesh_vertices.clear();
     (*it)->mesh_vertices.insert((*it)->mesh_vertices.begin(), newV.begin(), newV.end());
   }
+
+  updatePeriodicEdgesAndFaces(m);
 }
 
 void SetHighOrderInComplete (GModel *m, bool onlyVisible)
@@ -1609,4 +1683,6 @@ void SetHighOrderInComplete (GModel *m, bool onlyVisible)
     }
     (*it)->mesh_vertices = newV;
   }
+
+  updatePeriodicEdgesAndFaces(m);
 }

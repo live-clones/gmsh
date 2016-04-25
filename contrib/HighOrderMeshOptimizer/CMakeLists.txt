@@ -13,6 +13,7 @@ set(SRC
   SuperEl.cpp 
   OptHomElastic.cpp
   OptHomFastCurving.cpp
+  OptHomPeriodicity.cpp
   CADDistances.cpp
 )
 

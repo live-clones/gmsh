@@ -34,6 +34,7 @@
 #include "GmshConfig.h"
 #include "OptHOM.h"
 #include "OptHomRun.h"
+#include "OptHomPeriodicity.h"
 #include "GModel.h"
 #include "Gmsh.h"
 #include "MTriangle.h"
@@ -118,12 +119,12 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
     for (GModel::fiter itf = gm->firstFace(); itf != gm->lastFace(); ++itf){
       std::vector<MTriangle*> &tris = (*itf)->triangles;
       for (size_t i=0;i<tris.size();i++){
-	MTriangle *t = tris[i];
-	fprintf(f,"%d ", count++);
-	for (int j=0;j<t->getNumVertices();j++){
-	  fprintf(f,"%d ", t->getVertex(j)->getIndex());
-	}
-	fprintf(f,"\n");
+        MTriangle *t = tris[i];
+        fprintf(f,"%d ", count++);
+        for (int j=0;j<t->getNumVertices();j++){
+          fprintf(f,"%d ", t->getVertex(j)->getIndex());
+        }
+        fprintf(f,"\n");
       }
     }
     int ne = 0;
@@ -136,12 +137,12 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
     for (GModel::eiter ite = gm->firstEdge(); ite != gm->lastEdge(); ++ite){
       std::vector<MLine*> &l = (*ite)->lines;
       for (size_t i=0;i<l.size();i++){
-	MLine *t = l[i];
-	fprintf(f,"%d ", count++);
-	for (int j=0;j<t->getNumVertices();j++){
-	  fprintf(f,"%d ", t->getVertex(j)->getIndex());
-	}
-	fprintf(f,"%d \n",(*ite)->tag());
+        MLine *t = l[i];
+        fprintf(f,"%d ", count++);
+        for (int j=0;j<t->getNumVertices();j++){
+          fprintf(f,"%d ", t->getVertex(j)->getIndex());
+        }
+        fprintf(f,"%d \n",(*ite)->tag());
       }
     }
   }
@@ -437,6 +438,7 @@ static void optimizeConnectedBlobs(const vertElVecMap &vertex2elements,
   std::vector<elSetVertSetPair> toOptimize =
                           getConnectedBlobs(vertex2elements, badasses, p.nbLayers,
                                     p.distanceFactor, weakMerge, p.optPrimSurfMesh);
+  p.numBlobs = static_cast<int>(toOptimize.size());
 
   //#pragma omp parallel for schedule(dynamic, 1)
   for (int i = 0; i < toOptimize.size(); ++i) {
@@ -507,6 +509,7 @@ static void optimizeOneByOne
 
   const int initNumBadElts = badElts.size();
   Msg::Info("%d badasses, starting to iterate...", initNumBadElts);
+  p.numBlobs = initNumBadElts;
 
   elElSetMap element2elements;                                          // Element to element connectivity, built progressively
 
@@ -603,10 +606,10 @@ double ComputeDistanceToGeometry (GEntity *ge , int distanceDefinition, double t
     if (ge->dim() == el->getDim()){
       const double DISTE =computeBndDist(el,distanceDefinition, tolerance);
       if (DISTE != 0.0){
-	NUM++;
-	//	if(distanceDefinition == 1)printf("%d %12.5E\n",iEl,DISTE);
-	maxd = std::max(maxd,DISTE);
-	sum += DISTE;
+        NUM++;
+        //        if(distanceDefinition == 1)printf("%d %12.5E\n",iEl,DISTE);
+        maxd = std::max(maxd,DISTE);
+        sum += DISTE;
       }
     }
   }
@@ -630,7 +633,6 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
 
   std::map<MVertex*, std::vector<MElement *> > vertex2elements;
   std::map<MElement*,GEntity*> element2entity;
-  elSet badasses;
   double maxdist = 0.;                                                  // TODO: To be cleaned?
 
   std::map<MElement*,double> distances;
@@ -643,33 +645,37 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
               entity->tag());
     calcVertex2Elements(p.dim,entity,vertex2elements);
     if (p.optPrimSurfMesh) calcElement2Entity(entity,element2entity);
-    for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) {       // Detect bad elements
-      double jmin, jmax;
-      MElement *el = entity->getMeshElement(iEl);
-      if (el->getDim() == p.dim) {
-	// FIXME TEST
-	//        badasses.insert(el);
+  }
+
+  OptHomPeriodicity periodicity = OptHomPeriodicity(entities);
+  do {
+    // Detect bad elements
+    elSet badasses;
+    for (int iEnt = 0; iEnt < entities.size(); ++iEnt) {
+      GEntity* &entity = entities[iEnt];
+      if (entity->dim() != p.dim || (p.onlyVisible && !entity->getVisibility())) continue;
+      for (int iEl = 0; iEl < entity->getNumMeshElements();iEl++) {
+        MElement *el = entity->getMeshElement(iEl);
         if (p.optCAD) {
-	  //          const double DISTE =computeBndDist(el,2,fabs(p.discrTolerance));
-	  const double DISTE =distances[el];
-	  //	  if (DISTE > 0)printf("El %d dist %12.5E vs %12.5E\n",iEl,DISTE,p.optCADDistMax);
+          const double DISTE =distances[el];
           maxdist = std::max(DISTE, maxdist);
           if (DISTE > p.optCADDistMax) badasses.insert(el);
         }
+        double jmin, jmax;
         el->scaledJacRange(jmin, jmax, p.optPrimSurfMesh ? entity : 0);
         if (p.BARRIER_MIN_METRIC > 0) jmax = jmin;
         if (jmin < p.BARRIER_MIN || jmax > p.BARRIER_MAX) badasses.insert(el);
       }
     }
-  }
-  printf("maxdist = %g badasses size = %lu\n", maxdist, badasses.size());
-
-  if (p.strategy == 0)
-    optimizeConnectedBlobs(vertex2elements, element2entity, badasses, p, samples, false);
-  else if (p.strategy == 2)
-    optimizeConnectedBlobs(vertex2elements, element2entity, badasses, p, samples, true);
-  else
-    optimizeOneByOne(vertex2elements, element2entity, badasses, p, samples);
+    printf("maxdist = %g badasses size = %lu\n", maxdist, badasses.size());
+    if (p.strategy == 0)
+      optimizeConnectedBlobs(vertex2elements, element2entity, badasses, p, samples, false);
+    else if (p.strategy == 2)
+      optimizeConnectedBlobs(vertex2elements, element2entity, badasses, p, samples, true);
+    else
+      optimizeOneByOne(vertex2elements, element2entity, badasses, p, samples);
+    if (p.numBlobs) periodicity.fixPeriodicity();
+  } while (p.numBlobs);
 
   if (p.SUCCESS == 1)
     Msg::Info("Optimization succeeded");

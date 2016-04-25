@@ -59,7 +59,8 @@ struct OptHomParameters {
   double discrTolerance;
 
   // OUTPUT ------>
-  int SUCCESS ; // 0 --> success , 1 --> Not converged
+  int SUCCESS; // 0 --> success , 1 --> Not converged
+  int numBlobs;
   double minJac, maxJac; // after optimization, range of jacobians
   double CPU; // Time for optimization
 
