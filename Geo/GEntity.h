@@ -332,7 +332,7 @@ class GEntity {
   void setAllElementsVisible(bool val){ _allElementsVisible = val ? 1 : 0; }
 
   // get the number of mesh vertices in the entity
-  unsigned int getNumMeshVertices() { return (int)mesh_vertices.size(); }
+  unsigned int getNumMeshVertices() { return mesh_vertices.size(); }
 
   // get the mesh vertex at the given index
   MVertex *getMeshVertex(unsigned int index) { return mesh_vertices[index]; }

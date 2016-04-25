@@ -477,7 +477,7 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
   double uMin = uu.low();
   double uMax = uu.high();
 
-  SVector3 Q(X, Y, Z), P;
+  const SVector3 Q(X, Y, Z);
 
   double init[NumInitGuess];
 
@@ -490,6 +490,7 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
     //err2 = 1.0;
     iter = 1;
 
+    SVector3 P = position(u);
     SVector3 dPQ = P - Q;
     err = dPQ.norm();
 
@@ -512,12 +513,12 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
 
   if(relax > 1.e-2) {
     //    Msg::Info("point %g %g %g on edge %d : Relaxation factor = %g",
-    //              Q.x(), Q.y(), Q.z(), 0.75 * relax);
-    return XYZToU(Q.x(), Q.y(), Q.z(), u, 0.75 * relax);
+    //              X, Y, Z, 0.75 * relax);
+    return XYZToU(X, Y, Z, u, 0.75 * relax);
   }
 
   //  Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",
-  //             Q.x(), Q.y(), Q.z(), tag());
+  //             X, Y, Z, tag());
   return false;
 }
 
