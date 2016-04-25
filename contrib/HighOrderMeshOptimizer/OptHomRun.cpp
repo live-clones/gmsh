@@ -675,7 +675,7 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
     else
       optimizeOneByOne(vertex2elements, element2entity, badasses, p, samples);
     if (p.numBlobs) periodicity.fixPeriodicity();
-  } while (p.numBlobs);
+  } while (p.SUCCESS == 1 && p.numBlobs);
 
   if (p.SUCCESS == 1)
     Msg::Info("Optimization succeeded");
