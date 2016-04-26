@@ -581,6 +581,49 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
   return 0;
 }
 
+template <class GEType>
+static void copy_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor)
+{
+
+  typename std::multimap<GEType*,GEType*> eMap; // (eCor.begin(),eCor.end());
+  typename std::vector<Pair<GEType*,GEType*> >::iterator eIter = eCor.begin();
+  for (;eIter!=eCor.end();++eIter) {
+    eMap.insert(std::make_pair(eIter->second(),eIter->first()));
+  }
+  
+  typename std::multimap<GEType*,GEType*>::iterator srcIter = eMap.begin();
+
+  for (;srcIter!=eMap.end();++srcIter) {
+    GEType* oldTgt = srcIter->first;
+    GEType* oldSrc = dynamic_cast<GEType*> (oldTgt->meshMaster());
+
+    if (oldSrc != NULL && oldSrc != oldTgt) {
+      
+      std::cout << "Copying connection from " << oldTgt->tag() << " - " << oldSrc->tag() << std::endl;
+
+      GEType* newTgt = srcIter->second;
+      typename std::map<GEType*,GEType*>::iterator tgtIter = eMap.find(oldSrc);
+      if (tgtIter == eMap.end()) {
+        std::cout << "Checking corresponding edge for " << newTgt << std::endl;
+        std::cout << "Tag " << newTgt->tag() << std::endl;
+        throw;
+      }
+      GEType* newSrc = tgtIter->second;
+
+      std::cout << "replacing by " << newTgt->tag() << " - " << newSrc->tag() << std::endl;
+
+      std::cout << "Transformation has " << oldTgt->affineTransform.size() << " components " << std::endl;
+
+      std::vector<double>::iterator tIter = oldTgt->affineTransform.begin();
+      for (;tIter!=oldTgt->affineTransform.end();++tIter) std::cout << " " << *tIter;
+      std::cout << std::endl;
+
+      newTgt->setMeshMaster(newSrc,oldTgt->affineTransform);
+    }
+  }
+}
+
+
 static void copy_vertices (GVertex *to, GVertex *from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
   to->deleteMesh();
   if (from) {
@@ -740,6 +783,11 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
   std::vector<Pair<GRegion*, GRegion*> > *coresp_r = matchRegions (geom, mesh, coresp_f, ok);
 
   std::map<MVertex*,MVertex*> _mesh_to_geom;
+
+  copy_periodicity(*coresp_v);
+  copy_periodicity(*coresp_e);
+  copy_periodicity(*coresp_f);
+  
   copy_vertices(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
   copy_elements(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
 
