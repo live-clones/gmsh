@@ -3,14 +3,15 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-#ifndef _DELAUNAY3D_H_
-#define _DELAUNAY3D_H_
+#ifndef _DELAUNAY3D_PRIVATE_H_
+#define _DELAUNAY3D_PRIVATE_H_
+
 #include <vector>
 #include "SPoint3.h"
 #include <math.h>
 #include "robustPredicates.h"
 #include <stdio.h>
-#ifdef _OPENMP
+#if defined(_OPENMP)
 #include <omp.h>
 #endif
 
@@ -293,9 +294,11 @@ class tetContainer {
     // FIXME !!!
     if (nbThreads != 1) throw;
     _perThread.resize(nbThreads);
+#if defined(_OPENMP)
 #pragma omp parallel num_threads(nbThreads)
+#endif
     {
-#ifdef _OPENMP
+#if defined(_OPENMP)
       int  myThread = omp_get_thread_num();
 #else
       int  myThread = 0;
@@ -317,9 +320,9 @@ typedef std::vector<conn>   connContainer;
 void SortHilbert (std::vector<Vertex*>& v, std::vector<int> &indices);
 void computeAdjacencies (Tet *t, int iFace, connContainer &faceToTet);
 void __print (const char *name, int thread, tetContainer &T, Vertex *v = 0);
-void delaunayTrgl (const unsigned int numThreads, 
-		   const unsigned int NPTS_AT_ONCE, 
-		   unsigned int Npts, 
+void delaunayTrgl (const unsigned int numThreads,
+		   const unsigned int NPTS_AT_ONCE,
+		   unsigned int Npts,
 		   std::vector<Vertex*> assignTo[],
 		   tetContainer &allocator, double threshold = 0.0);
 bool edgeSwap(Tet *tet, int iLocalEdge,  tetContainer &T, int myThread);

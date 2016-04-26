@@ -619,7 +619,7 @@ bool MakeMeshConformal(GModel *gm, int howto)
 	}
       }
       // HEX IS ONLY SURROUNED BY COMPATIBLE ELEMENTS
-      if (faces.size() == e->getNumFaces()){
+      if ((int)faces.size() == e->getNumFaces()){
 	remainingHexes.push_back(e);
       }
       else {

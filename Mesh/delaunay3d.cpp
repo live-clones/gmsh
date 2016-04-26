@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-#ifdef _OPENMP
+#if defined(_OPENMP)
 #include <omp.h>
 #endif
 
@@ -25,7 +25,7 @@
 #include "MTetrahedron.h"
 #include "meshGRegionLocalMeshMod.h"
 
-#ifdef _HAVE_NUMA
+#if defined(_HAVE_NUMA)
 #include <numa.h>
 #endif
 
@@ -914,7 +914,7 @@ void delaunayTrgl (const unsigned int numThreads,
 		   tetContainer &allocator,
 		   double threshold)
 {
-#ifdef _VERBOSE
+#if defined(_VERBOSE)
   double totSearchGlob=0;
   double totCavityGlob=0;
 #endif
@@ -932,10 +932,12 @@ void delaunayTrgl (const unsigned int numThreads,
     maxLocSizeK = std::max(maxLocSizeK, s);
   }
 
+#if defined(_OPENMP)
 #pragma omp parallel num_threads(numThreads)
+#endif
   {
 
-#ifdef _OPENMP
+#if defined(_OPENMP)
     int  myThread = omp_get_thread_num();
 #else
     int  myThread = 0;
@@ -959,7 +961,7 @@ void delaunayTrgl (const unsigned int numThreads,
     for (unsigned int K=0;K<NPTS_AT_ONCE;K++){
       locSizeK[K] = assignTo[K+myThread*NPTS_AT_ONCE].size();
       locSize += locSizeK[K];
-#ifdef _HAVE_NUMA
+#if defined(_HAVE_NUMA)
       allocatedVerts [K] = (Vertex*)numa_alloc_local (locSizeK[K]*sizeof(Vertex));
 #else
       //      allocatedVerts [K] = (Vertex*)calloc (locSizeK[K],sizeof(Vertex));
@@ -973,13 +975,18 @@ void delaunayTrgl (const unsigned int numThreads,
 
     std::vector<Vertex*> vToAdd(NPTS_AT_ONCE);
 
+#if defined(_OPENMP)
 #pragma omp barrier
+#endif
+
     ////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////// M A I N   L O O P ///////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////
 
     for (unsigned int iPGlob=0 ; iPGlob < maxLocSizeK; iPGlob++){
+#if defined(_OPENMP)
 #pragma omp barrier
+#endif
       std::vector<Tet*> t(NPTS_AT_ONCE);
       //	  double c1 = Cpu();
       // FIND SEEDS
@@ -1020,8 +1027,9 @@ void delaunayTrgl (const unsigned int numThreads,
 
       //      t3 += Cpu() - t1;
 
+#if defined(_OPENMP)
 #pragma omp barrier
-
+#endif
       for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
 	if (!vToAdd[K])ok[K]=false;
 	else ok[K] = canWeProcessCavity (cavity[K], myThread, K);
@@ -1063,14 +1071,18 @@ void delaunayTrgl (const unsigned int numThreads,
       }
       //      t4 += Cpu() - t1;
     }
-#ifdef _VERBOSE
+#if defined(_VERBOSE)
+#if defined(_OPENMP)
     #pragma omp critical
+#endif
     {
       totCavityGlob+= totCavity;
       totSearchGlob+= totSearch;
     }
 #endif
+#if defined(_OPENMP)
     #pragma omp barrier
+#endif
     // clear last cavity
     for (unsigned int K=0; K< NPTS_AT_ONCE; K++) {
       for (unsigned int i=0; i<cavity[K].size(); i++)cavity[K][i]->unset(myThread,K);
@@ -1085,7 +1097,7 @@ void delaunayTrgl (const unsigned int numThreads,
 
   //  printf(" %12.5E %12.5E  %12.5E tot  %12.5E \n",t2,t3,t4,t2+t3+t4);
 
-#ifdef _VERBOSE
+#if defined(_VERBOSE)
   printf("average searches per point  %12.5E\n",totSearchGlob/Npts);
   printf("average size for del cavity %12.5E\n",totCavityGlob/Npts);
   printf("cache misses: ");
