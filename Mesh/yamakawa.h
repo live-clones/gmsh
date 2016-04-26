@@ -664,6 +664,7 @@ public:
   bool eight(MElement*);
 
   bool equal(MVertex*,MVertex*,MVertex*,MVertex*);
+  bool equal(MVertex*,MVertex*,MVertex*,MVertex*,MVertex*,MVertex*,MVertex*,MVertex*);
   bool different(MVertex*,MVertex*,MVertex*,MVertex*);
   MVertex* other(MElement*,MVertex*,MVertex*);
   MVertex* other(MElement*,MVertex*,MVertex*,MVertex*);
@@ -675,6 +676,7 @@ public:
   void find_tetrahedra(MVertex*,MVertex*,std::set<MElement*>&);
   void find_tetrahedra(MVertex*,MVertex*,MVertex*,std::set<MElement*>&);
   void find_pyramids_from_tri(MVertex*,MVertex*,MVertex*,std::set<MElement*>&);
+  void find_pyramids_from_quad(MVertex*,MVertex*,MVertex*,MVertex*,std::set<MElement*>&);
   void find_pyramids(MVertex*,MVertex*,std::set<MElement*>&);
 
   void intersection(const std::set<MElement*>&,const std::set<MElement*>&,std::set<MElement*>&);

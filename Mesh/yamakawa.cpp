@@ -1394,8 +1394,8 @@ void Recombinator::pattern1(GRegion* gr){
 
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);
-    //for(index=0;index<4;index++){
-    max_scaled_jacobian(element,index);
+    for(index=0;index<4;index++){
+    //max_scaled_jacobian(element,index);
 
     a = element->getVertex(index);
     b = element->getVertex((index+1)%4);
@@ -1445,7 +1445,7 @@ void Recombinator::pattern1(GRegion* gr){
         }
       }
     }
-    //}
+    }
   }
 }
 
@@ -1734,6 +1734,9 @@ void Recombinator::merge(GRegion* gr){
     it2 = markings.find(element);
     if(it2->second==0){
       gr->tetrahedra.push_back(opt[i]);
+    }
+    else {
+      delete opt[i];
     }
   }
 
@@ -3819,6 +3822,9 @@ void Supplementary::merge(GRegion* gr){
     if(it2->second==0){
       gr->tetrahedra.push_back(opt[i]);
     }
+    else {
+      delete opt[i];
+    }
   }
 
   printf("prisms average quality (0->1) : %f\n",quality/count);
@@ -4162,7 +4168,7 @@ bool validFaces(Prism &prism, std::map<MVertex*,std::set<MElement*> > &vertexToE
 
   v1 = validFace(a,d,f,c,vertexToElements);  //SHOULD CHECK GEOMETRY
   v2 = validFace(a,d,e,b,vertexToElements);
-  v3 = validFace(b,c,e,f,vertexToElements);
+  v3 = validFace(b,c,f,e,vertexToElements);
 
   return v1 && v2 && v3;
 }
@@ -5094,6 +5100,9 @@ void PostOp::split_hexahedra(GRegion* gr){
     if(it->second==0){
       gr->hexahedra.push_back(opt[i]);
     }
+    else {
+      delete opt[i];
+    }
   }
 }
 
@@ -5162,6 +5171,9 @@ void PostOp::split_prisms(GRegion* gr){
     if(it->second==0){
       gr->prisms.push_back(opt[i]);
     }
+    else {
+      delete opt[i];
+    }
   }
 }
 
@@ -5181,6 +5193,9 @@ void PostOp::split_pyramids(GRegion* gr){
 
   for(size_t i=0;i<pyramids.size();i++){
     MElement *element = pyramids[i];
+    it = markings.find(element);
+    if (it->second == 1) continue;
+
     MVertex *a = element->getVertex(0);
     MVertex *b = element->getVertex(1);
     MVertex *c = element->getVertex(2);
@@ -5195,12 +5210,130 @@ void PostOp::split_pyramids(GRegion* gr){
       gr->addTetrahedron(temp);
       it = markings.find(element);
       it->second = 1;
-    }else if (nDiag == 2){
+    }
+    else if (nDiag == 2){
       MTetrahedron *temp = new MTetrahedron(b,a,d,apex);
       gr->addTetrahedron(temp);
       temp = new MTetrahedron(b,d,c,apex);
       gr->addTetrahedron(temp);
       it = markings.find(element);
+      it->second = 1;
+    }
+    std::set<MElement*> otherPyr;
+    find_pyramids_from_quad(a,b,c,d,otherPyr);
+    if (otherPyr.size() == 2) {
+      std::set<MElement*>::iterator myit = otherPyr.begin();
+      MElement *other = *myit;
+      if (other == element) {
+        other = *(++myit);
+      }
+      // TODO test also quality of tet after split of other pyr ?
+      MTetrahedron *tempA1 = new MTetrahedron(a,b,c,apex);
+      MTetrahedron *tempA2 = new MTetrahedron(a,c,d,apex);
+      MTetrahedron *tempB1 = new MTetrahedron(a,b,d,apex);
+      MTetrahedron *tempB2 = new MTetrahedron(b,c,d,apex);
+      MVertex *a2 = other->getVertex(0);
+      MVertex *b2 = other->getVertex(1);
+      MVertex *c2 = other->getVertex(2);
+      MVertex *d2 = other->getVertex(3);
+      MVertex *apex2 = other->getVertex(4);
+      MTetrahedron *tempA3, *tempA4, *tempB3, *tempB4;
+      if (a2 == a || a2 == c) {
+        tempA3 = new MTetrahedron(a2,b2,c2,apex2);
+        tempA4 = new MTetrahedron(a2,c2,d2,apex2);
+        tempB3 = new MTetrahedron(a2,b2,d2,apex2);
+        tempB4 = new MTetrahedron(b2,c2,d2,apex2);
+      }
+      else {
+        tempB3 = new MTetrahedron(a2,b2,c2,apex2);
+        tempB4 = new MTetrahedron(a2,c2,d2,apex2);
+        tempA3 = new MTetrahedron(a2,b2,d2,apex2);
+        tempA4 = new MTetrahedron(b2,c2,d2,apex2);
+      }
+      MTetrahedron *tempC1 = new MTetrahedron(a,b,apex2,apex);
+      MTetrahedron *tempC2 = new MTetrahedron(b,c,apex2,apex);
+      MTetrahedron *tempC3 = new MTetrahedron(c,d,apex2,apex);
+      MTetrahedron *tempC4 = new MTetrahedron(d,a,apex2,apex);
+      if (tempA1->getVolumeSign() < 0 ||
+          tempA2->getVolumeSign() < 0 ||
+          tempA3->getVolumeSign() < 0 ||
+          tempA4->getVolumeSign() < 0 ||
+          tempB1->getVolumeSign() < 0 ||
+          tempB2->getVolumeSign() < 0 ||
+          tempB3->getVolumeSign() < 0 ||
+          tempB4->getVolumeSign() < 0 ||
+          tempC1->getVolumeSign() < 0 ||
+          tempC2->getVolumeSign() < 0 ||
+          tempC3->getVolumeSign() < 0 ||
+          tempC4->getVolumeSign() < 0) {
+        Msg::Error("%d %d %d %d %d %d %d %d %d %d %d %d",
+            tempA1->getVolumeSign(),
+            tempA2->getVolumeSign(),
+            tempA3->getVolumeSign(),
+            tempA4->getVolumeSign(),
+            tempB1->getVolumeSign(),
+            tempB2->getVolumeSign(),
+            tempB3->getVolumeSign(),
+            tempB4->getVolumeSign(),
+            tempC1->getVolumeSign(),
+            tempC2->getVolumeSign(),
+            tempC3->getVolumeSign(),
+            tempC4->getVolumeSign());
+      }
+      double qA = tempA1->minAnisotropyMeasure() + tempA2->minAnisotropyMeasure() +
+                  tempA3->minAnisotropyMeasure() + tempA4->minAnisotropyMeasure();
+      double qB = tempB1->minAnisotropyMeasure() + tempB2->minAnisotropyMeasure() +
+                  tempB3->minAnisotropyMeasure() + tempB4->minAnisotropyMeasure();
+      double qC = tempC1->minAnisotropyMeasure() + tempC2->minAnisotropyMeasure() +
+                  tempC3->minAnisotropyMeasure() + tempC4->minAnisotropyMeasure();
+      if (qA > qB && qA > qC) {
+        Msg::Info("A");
+        gr->addTetrahedron(tempA1);
+        gr->addTetrahedron(tempA2);
+        gr->addTetrahedron(tempA3);
+        gr->addTetrahedron(tempA4);
+        delete tempB1;
+        delete tempB2;
+        delete tempB3;
+        delete tempB4;
+        delete tempC1;
+        delete tempC2;
+        delete tempC3;
+        delete tempC4;
+      }
+      else if (qB > qC) {
+        Msg::Info("B");
+        gr->addTetrahedron(tempB1);
+        gr->addTetrahedron(tempB2);
+        gr->addTetrahedron(tempB3);
+        gr->addTetrahedron(tempB4);
+        delete tempA1;
+        delete tempA2;
+        delete tempA3;
+        delete tempA4;
+        delete tempC1;
+        delete tempC2;
+        delete tempC3;
+        delete tempC4;
+      }
+      else {
+        Msg::Info("C");
+        gr->addTetrahedron(tempC1);
+        gr->addTetrahedron(tempC2);
+        gr->addTetrahedron(tempC3);
+        gr->addTetrahedron(tempC4);
+        delete tempA1;
+        delete tempA2;
+        delete tempA3;
+        delete tempA4;
+        delete tempB1;
+        delete tempB2;
+        delete tempB3;
+        delete tempB4;
+      }
+      it = markings.find(element);
+      it->second = 1;
+      it = markings.find(other);
       it->second = 1;
     }
   }
@@ -5215,6 +5348,9 @@ void PostOp::split_pyramids(GRegion* gr){
     it = markings.find(element);
     if(it->second==0){
       gr->pyramids.push_back(opt[i]);
+    }
+    else {
+      delete opt[i];
     }
   }
 }
@@ -5313,6 +5449,9 @@ void PostOp::pyramids1(GRegion* gr){
     if(it->second==0){
       gr->tetrahedra.push_back(opt[i]);
     }
+    else {
+      delete opt[i];
+    }
   }
 }
 
@@ -5387,6 +5526,9 @@ void PostOp::pyramids2(GRegion* gr, bool allowNonConforming){
     if(it->second==0){
       gr->tetrahedra.push_back(opt1[i]);
     }
+    else {
+      delete opt1[i];
+    }
   }
 
   opt2.clear();
@@ -5399,6 +5541,9 @@ void PostOp::pyramids2(GRegion* gr, bool allowNonConforming){
     it = markings.find(element);
     if(it->second==0){
       gr->pyramids.push_back(opt2[i]);
+    }
+    else {
+      delete opt2[i];
     }
   }
 }
@@ -6147,6 +6292,39 @@ bool PostOp::equal(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* v4){
     return 0;
   }
 }
+bool PostOp::equal(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* v4,
+                   MVertex* va,MVertex* vb,MVertex* vc,MVertex* vd){
+//  return (v1==vd && v2==vc && v3==vb && v4==va) ||
+//         (v1==vc && v2==vb && v3==va && v4==vd) ||
+//         (v1==vb && v2==va && v3==vd && v4==vc) ||
+//         (v1==va && v2==vd && v3==vc && v4==vb) || // should be enough
+//         (v1==vd && v2==vc && v3==va && v4==vb) ||
+//         (v1==vc && v2==vb && v3==vd && v4==va) ||
+//         (v1==vb && v2==va && v3==vc && v4==vd) ||
+//         (v1==va && v2==vd && v3==vb && v4==vc) ||
+//         (v1==vd && v2==vb && v3==vc && v4==va) ||
+//         (v1==vc && v2==va && v3==vb && v4==vd) ||
+//         (v1==vb && v2==vd && v3==va && v4==vc) ||
+//         (v1==va && v2==vc && v3==vd && v4==vb) ||
+//         (v1==vd && v2==vb && v3==va && v4==vc) ||
+//         (v1==vc && v2==va && v3==vd && v4==vb) ||
+//         (v1==vb && v2==vd && v3==vc && v4==va) ||
+//         (v1==va && v2==vc && v3==vb && v4==vd) ||
+//         (v1==vd && v2==va && v3==vb && v4==vc) ||
+//         (v1==vc && v2==vd && v3==va && v4==vb) ||
+//         (v1==vb && v2==vc && v3==vd && v4==va) ||
+//         (v1==va && v2==vb && v3==vc && v4==vd) ||
+//         (v1==vd && v2==va && v3==vc && v4==vb) ||
+//         (v1==vc && v2==vd && v3==vb && v4==va) ||
+//         (v1==vb && v2==vc && v3==va && v4==vd) ||
+//         (v1==va && v2==vb && v3==vd && v4==vc);
+  // assuming that at least (v1,v2,v3,v4) are all different vertices
+  //                     or (va,vb,vc,vd) are all different vertices
+  return (v1 == va || v1 == vb || v1 == vc || v1 == vd) &&
+         (v2 == va || v2 == vb || v2 == vc || v2 == vd) &&
+         (v3 == va || v3 == vb || v3 == vc || v3 == vd) &&
+         (v4 == va || v4 == vb || v4 == vc || v4 == vd);
+}
 
 bool PostOp::different(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* v4){
   if(v1!=v3 && v1!=v4 && v2!=v3 && v2!=v4){
@@ -6396,6 +6574,39 @@ void PostOp::find_pyramids_from_tri(MVertex* v1,MVertex* v2,MVertex* v3,std::set
               equal(v1,v2,(*it)->getVertex(3),(*it)->getVertex(0)));
     }
     if(flag){
+      final.insert(*it);
+    }
+  }
+}
+void PostOp::find_pyramids_from_quad(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* v4,std::set<MElement*>& final){
+  std::set<MElement*>::iterator it;
+  std::map<MVertex*,std::set<MElement*> >::iterator it1;
+  std::map<MVertex*,std::set<MElement*> >::iterator it2;
+  std::map<MVertex*,std::set<MElement*> >::iterator it3;
+  std::map<MVertex*,std::set<MElement*> >::iterator it4;
+  std::set<MElement*> temp1, temp2, temp3;
+
+  it1 = vertex_to_pyramids.find(v1);
+  it2 = vertex_to_pyramids.find(v2);
+  it3 = vertex_to_pyramids.find(v3);
+  it4 = vertex_to_pyramids.find(v4);
+
+  temp1.clear();
+  temp2.clear();
+  temp3.clear();
+
+  if(it1!=vertex_to_pyramids.end() && it2!=vertex_to_pyramids.end() &&
+      it3!=vertex_to_pyramids.end() && it4!=vertex_to_pyramids.end()){
+    intersection(it1->second,it2->second,temp1);
+    intersection(temp1,it3->second,temp2);
+    intersection(temp2,it4->second,temp3);
+  }
+  //Now temp3 contains pyramids containing the 4 vertices
+  //We check that the 4 vertices are in the base
+  // TODO: not necessary?
+  for(it=temp2.begin();it!=temp2.end();it++){
+    if (equal(v1,v2,v3,v4,(*it)->getVertex(0),(*it)->getVertex(1),
+                          (*it)->getVertex(2),(*it)->getVertex(3))) {
       final.insert(*it);
     }
   }
