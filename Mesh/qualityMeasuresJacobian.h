@@ -133,8 +133,8 @@ private:
   static bool _computeDerivatives(double a, double K,
                                   double &dRda, double &dRdK,
                                   double &dRdaa, double &dRdaK, double &dRdKK);
-  static bool _intersectionCurveLeftCorner(double beta, double gamma,
-                                           double &mina, double &minK);
+  static int _intersectionCurveLeftCorner(double beta, double gamma,
+                                          double &mina, double &minK);
   static double _computeAbscissaMinR(double aStart, double K);
 
   static double _R2Dsafe(double q, double p);

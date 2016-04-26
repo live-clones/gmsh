@@ -37,6 +37,8 @@ void minMaxJacobianDeterminant(MElement *el, double &min, double &max)
   const JacobianBasis *jfs = el->getJacobianFuncSpace();
   if (!jfs) {
     Msg::Error("Jacobian function space not implemented for type of element %d", el->getTypeForMSH());
+    min = 99;
+    max = -99;
     return;
   }
 
@@ -116,7 +118,7 @@ double minScaledJacobian(MElement *el)
 
 double minAnisotropyMeasure(MElement *el, int n)
 {
-  if (_CoeffDataAnisotropy::noMoreComputationPlease()) return -9;
+  if (_CoeffDataAnisotropy::noMoreComputationPlease()) return -9; //fordebug
 
 //  double minSampled = minSampledAnisotropyMeasure(el, n); //fordebug
 
@@ -129,9 +131,14 @@ double minAnisotropyMeasure(MElement *el, int n)
   const GradientBasis *gradBasis;
   const JacobianBasis *jacBasis = NULL;
 
+  const int metricOrder = _CoeffDataAnisotropy::metricOrder(el);
+  if (metricOrder == -1) {
+    Msg::Error("Anisotropy measure not implemented for type of element %d", el->getType());
+    return -1;
+  }
+
   // Metric Coefficients
   fullMatrix<double> coeffMetricBez;
-  const int metricOrder = _CoeffDataAnisotropy::metricOrder(el);
   {
     FuncSpaceData *metricSpace = NULL;
     if (type != TYPE_PYR)
@@ -187,9 +194,9 @@ double minAnisotropyMeasure(MElement *el, int n)
   );
 
   _subdivideDomains(domains);
-//  if (domains.size()/7+1 > 20) {//fordebug
-//    Msg::Info("%d: %d", el->getNum(), domains.size()/7+1);
-//  }
+  if (domains.size()/7+1 > 10) {//fordebug
+    Msg::Info("too much subdivision: %d (el %d)", domains.size()/7+1, el->getNum());
+  }
 
   double min = domains[0]->minB();
   delete domains[0];
@@ -465,7 +472,6 @@ double _CoeffDataAnisotropy::_computeLowerBound() const
     double slope = -p_dRda/p_dRdK;
     double gamma = .5*(3*minK/mina - slope);
     double beta;
-
     _computeBoundingCurve(beta, gamma, true);
     /*{//fordebug
       double beta = (minK/mina-c)/mina/mina;
@@ -475,15 +481,18 @@ double _CoeffDataAnisotropy::_computeLowerBound() const
     }*/
 
     double a_int = mina, K_int = minK;
-    if (_intersectionCurveLeftCorner(beta, gamma, a_int, K_int)) {
+    int where = _intersectionCurveLeftCorner(beta, gamma, a_int, K_int);
+    if (where == 1) {
       // the minimum is on the curve, long to compute, we return this for now:
       return std::sqrt(_R3Dsafe(mina, minK));
     }
+    //Msg::Info("int (%g, %g) (beta %g, gamma %g)", a_int, K_int, beta, gamma);//fordebug
 
-    // Let a0 be the point at which R(a, minK) takes its minimum. If a_int < a0,
-    // the minimum is at (a_int, minK), otherwise it is at (a0, minK).
+    // Let a0 be the point at which R(a, minK) takes its minimum. If there is
+    // an intersection and if a_int < a0, the minimum is at (a_int, minK),
+    // otherwise it is at (a0, minK).
     bool minIsAta0;
-    if (_moveInsideDomain(a_int, K_int, false)) {
+    if (where == -1 || _moveInsideDomain(a_int, K_int, false)) {
       minIsAta0 = true;
     }
     else {
@@ -516,23 +525,20 @@ double _CoeffDataAnisotropy::_computeLowerBound() const
     _computeBoundingCurve(beta, gamma, false);
 
     double a_int = mina, K_int = minK;
-    if (_intersectionCurveLeftCorner(beta, gamma, a_int, K_int)) {
-      // Let K0 be the point at which R(mina, K) takes its minimum.
-      // If K_int < K0, the minimum is at (mina, K_int),
-      // otherwise it is at (mina, K0).
-      double K0 = 2*std::cos(3*std::acos(-1/mina)-M_PI) + (mina*mina-3) * mina;
-      return std::sqrt(_R3Dsafe(mina, std::min(K0, K_int)));
-    }
-    else {
+    int where = _intersectionCurveLeftCorner(beta, gamma, a_int, K_int);
+    if (where == 0) {
       // the minimum is on the curve, long to compute, we return this for now:
       return std::sqrt(_R3Dsafe(mina, minK));
-      /*if (_moveInsideDomain(a_int, K_int, false))
-        return std::sqrt(_R3Dsafe(a_int, K_int));
-      else
-        // the minimum is on the curve, long to compute, we return this for now:
-        return std::sqrt(_R3Dsafe(mina, minK));
-        //return std::sqrt(_computeMinRAlongCurve(beta, c, a_int, -1));*/
     }
+
+    // Let K0 be the point at which R(mina, K) takes its minimum. If there is
+    // an intersection and if K_int < K0, the minimum is at (mina, K_int),
+    // otherwise it is at (mina, K0).
+    double K0 = 2*std::cos(3*std::acos(-1/mina)-M_PI) + (mina*mina-3) * mina;
+    if (where == -1)
+      return std::sqrt(_R3Dsafe(mina, K0));
+    else
+      return std::sqrt(_R3Dsafe(mina, std::min(K0, K_int)));
   }
   else {
     return std::sqrt(_R3Dsafe(mina, minK));
@@ -712,6 +718,11 @@ bool _CoeffDataAnisotropy::_moveInsideDomain(double &a,
   // NB: When moving 'a', we use N-R to compute the root of
   // f(a) = .5 * (K - a^3 + 3*a) - 'w' where 'w' is -1 or 1.
 
+  if (bottomleftCorner) {
+    K = std::max(K, .0);
+    a = std::max(a, 1.);
+  }
+
   double w = _w(a, K);
   if (std::abs(w) <= 1) return false;
 
@@ -807,13 +818,15 @@ bool _CoeffDataAnisotropy::_computeDerivatives(double a, double K,
   return true;
 }
 
-bool _CoeffDataAnisotropy::_intersectionCurveLeftCorner(double beta, double gamma,
-                                                        double &a, double &K)
+int _CoeffDataAnisotropy::_intersectionCurveLeftCorner(double beta, double gamma,
+                                                       double &a, double &K)
 {
   // curve K = beta * a^3 + c * a
   // on input, a and K are the bottom left corner
   // on output, a and K are the intersection
-  //            return true if the intersection is on the vertical
+  //            return 0 if the intersection is on the horizontal
+  //                   1 if the intersection is on the vertical
+  //                  -1 if there is no intersection
 
 //  if (beta < 0) {
 //    Msg::Warning("Negative curvature, there are 2 or 0 intersections... Is it "
@@ -823,7 +836,7 @@ bool _CoeffDataAnisotropy::_intersectionCurveLeftCorner(double beta, double gamm
 
   const double minK = K;
   K = (beta*a*a + gamma)*a;
-  if (K >= minK) return true;
+  if (K >= minK) return 1;
 
   // Find the root by Newton-Raphson.
   // When beta < 0, check if the intersection exists:
@@ -831,8 +844,9 @@ bool _CoeffDataAnisotropy::_intersectionCurveLeftCorner(double beta, double gamm
   if (beta < 0) {
     double aMaximum = std::sqrt(-gamma/3/beta);
     double KMaximum = (beta * aMaximum*aMaximum + gamma) * aMaximum;
-    if (aMaximum < a || KMaximum < K) {
-      Msg::Error("Sorry but, there is no intersection");
+//    Msg::Info("max (%g, %g)", aMaximum, KMaximum); //fordebug
+    if (gamma < 0 || aMaximum < a || KMaximum < K) {
+//      Msg::Warning("Sorry but there is no intersection");
       return false;
     }
   }
@@ -850,11 +864,15 @@ bool _CoeffDataAnisotropy::_intersectionCurveLeftCorner(double beta, double gamm
     a3 = (3-a*a)*a;
     da3 -= a3;
   }
-  return false;
+  return 0;
 }
 
 double _CoeffDataAnisotropy::_computeAbscissaMinR(double aStart, double K)
 {
+  // If K == 0, then R == 0. Note, there are less numerical problems when
+  // computing R(2, 0) than R(1, 0), so return 2:
+  if (K == 0) return 2;
+
   double a = aStart;
   double a3 = (3-a*a)*a;
   double da3 = std::numeric_limits<double>::infinity();
@@ -971,7 +989,7 @@ double _CoeffDataAnisotropy::_R3Dsafe(double a, double K)
     return std::max(.0, std::min(1., R));
   }
   else {
-    Msg::Fatal("Wrong argument for 3d Raniso (%g, %g)", a, K);
+    Msg::Error("Wrong argument for 3d Raniso (%g, %g)", a, K);
     _CoeffDataAnisotropy::youReceivedAnError();
     return -1;
   }
@@ -986,14 +1004,14 @@ double _CoeffDataAnisotropy::_wSafe(double a, double K) {
     }
     const double w = _w(a, K);
     if (w > 1) {
-      if (w < 1+1e-5) return 1;
+      if (w < 1+1e-5 || w < 1+K*1e-14) return 1;
       else {
         Msg::Error("outside the domain w(%g, %g) = %g", a, K, w);
         hasError = true;
       }
     }
     else if (w < -1) {
-      if (w > -1-1e-5) return -1;
+      if (w > -1-1e-5 || w > -1-K*1e-14) return -1;
       else {
         Msg::Error("outside the domain w(%g, %g) = %g", a, K, w);
         hasError = true;
@@ -1025,8 +1043,8 @@ int _CoeffDataAnisotropy::metricOrder(MElement *el)
     case TYPE_HEX : return 2*order;
 
     default :
-      Msg::Error("Unknown element type %d, returning order 0", el->getType());
-      return 0;
+      Msg::Error("Unknown element type %d, returning -1", el->getType());
+      return -1;
   }
 }
 
@@ -1165,7 +1183,8 @@ void _subdivideDomainsMinOrMax(std::vector<_CoeffData*> &domains,
 {
   std::vector<_CoeffData*> subs;
   make_heap(domains.begin(), domains.end(), Comp());
-  while (!domains[0]->boundsOk(minL, maxL)) {
+  int k = 0;
+  while (!domains[0]->boundsOk(minL, maxL) && ++k < 100) {
     _CoeffData *cd = domains[0];
     pop_heap(domains.begin(), domains.end(), Comp());
     domains.pop_back();
@@ -1179,6 +1198,7 @@ void _subdivideDomainsMinOrMax(std::vector<_CoeffData*> &domains,
       push_heap(domains.begin(), domains.end(), Comp());
     }
   }
+  if (k == 100) Msg::Warning("Max subdivision (100)");
 }
 
 void _subdivideDomains(std::vector<_CoeffData*> &domains)
