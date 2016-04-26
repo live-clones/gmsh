@@ -599,25 +599,14 @@ static void copy_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor)
 
     if (oldSrc != NULL && oldSrc != oldTgt) {
       
-      std::cout << "Copying connection from " << oldTgt->tag() << " - " << oldSrc->tag() << std::endl;
-
       GEType* newTgt = srcIter->second;
       typename std::map<GEType*,GEType*>::iterator tgtIter = eMap.find(oldSrc);
       if (tgtIter == eMap.end()) {
-        std::cout << "Checking corresponding edge for " << newTgt << std::endl;
-        std::cout << "Tag " << newTgt->tag() << std::endl;
-        throw;
+        Msg::Error("Could not find matched entity for %d", 
+                   "which has a matched periodic counterpart %d",
+                   oldSrc->tag(),oldTgt->tag());
       }
       GEType* newSrc = tgtIter->second;
-
-      std::cout << "replacing by " << newTgt->tag() << " - " << newSrc->tag() << std::endl;
-
-      std::cout << "Transformation has " << oldTgt->affineTransform.size() << " components " << std::endl;
-
-      std::vector<double>::iterator tIter = oldTgt->affineTransform.begin();
-      for (;tIter!=oldTgt->affineTransform.end();++tIter) std::cout << " " << *tIter;
-      std::cout << std::endl;
-
       newTgt->setMeshMaster(newSrc,oldTgt->affineTransform);
     }
   }
