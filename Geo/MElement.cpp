@@ -243,6 +243,23 @@ double MElement::minAnisotropyMeasure()
 #endif
 }
 
+double MElement::specialQuality()
+{
+#if defined(HAVE_MESH)
+  double minJ, maxJ;
+  jacobianBasedQuality::minMaxJacobianDeterminant(this, minJ, maxJ);
+  if (minJ < 0 && maxJ >= 0) { // accept -inf as a answer
+    return minJ/maxJ;
+  }
+  if (minJ < 0 && maxJ < 0) {
+    return -std::numeric_limits<double>::infinity();
+  }
+  return jacobianBasedQuality::minAnisotropyMeasure(this);
+#else
+  return 0.;
+#endif
+}
+
 void MElement::scaledJacRange(double &jmin, double &jmax, GEntity *ge) const
 {
   jmin = jmax = 1.0;
