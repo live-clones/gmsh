@@ -817,16 +817,35 @@ void _relocateVertex(GFace *gf, MVertex *ver,
   }
 }
 
+void getAllBoundaryLayerVertices (GFace *gf, std::set<MVertex*> &vs){
+  vs.clear();
+  BoundaryLayerColumns* _columns = gf->getColumns();
+  if (!_columns)return;
+  for ( std::map<MElement*,std::vector<MElement*> >::iterator it = _columns->_elemColumns.begin();
+	it != _columns->_elemColumns.end();it++){
+    std::vector<MElement *> e = it->second;
+    for (unsigned int i=0;i<e.size();i++){
+      for (int j=0;j<e[i]->getNumVertices();j++){
+	vs.insert(e[i]->getVertex(j));
+      }
+    }
+  }
+}
+
 void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 {
   if (!niter)return;
+  std::set<MVertex*> vs;
+  getAllBoundaryLayerVertices (gf, vs);
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
   for(int i = 0; i < niter; i++){
     v2t_cont::iterator it = adj.begin();
     while (it != adj.end()){
-      _relocateVertex(gf, it->first, it->second);
+      if (vs.find(it->first) == vs.end()){
+	_relocateVertex(gf, it->first, it->second);
+      }
       ++it;
     }
   }

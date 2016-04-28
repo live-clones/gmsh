@@ -220,7 +220,7 @@ static bool orderVertices(const double &tot_length, const std::vector<MVertex*> 
 }
 
 /*BUILDER*/
-discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh, int p) :
+discreteDiskFace::discreteDiskFace(GFace *gf,  std::vector<MTriangle*> &mesh, int p, std::vector<GFace*> *CAD) :
   GFace(gf->model(),123), _parent (gf),_ddft(NULL), oct(NULL)
 {
   _order = p;
@@ -237,7 +237,14 @@ discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh, int
       if (v->onWhat()->dim() == 2) {
 	std::map<MVertex*,MVertex*> :: iterator it = v2v.find(v);
 	if (it == v2v.end()){
-	  MFaceVertex *vv = new MFaceVertex ( v->x(),  v->y(),  v->z(), v->onWhat(), 0, 0);
+	  MFaceVertex *vv;
+	  if (!CAD) vv  = new MFaceVertex ( v->x(),  v->y(),  v->z(), v->onWhat(), 0, 0);
+	  else{
+	    GFace *cad = (*CAD)[i];
+	    if(cad != v->onWhat())Msg::Fatal("Line %d FILE %s : erroneous cad list",__LINE__,__FILE__);
+	    double pu,pv; v->getParameter(0,pu);v->getParameter(1,pv);
+	    vv  = new MFaceVertex ( v->x(),  v->y(),  v->z(), v->onWhat(), pu, pv);
+	  }
 	  v2v[v] = vv;
 	  discrete_vertices.push_back(vv);
 	  vs.push_back(vv);
@@ -280,11 +287,11 @@ discreteDiskFace::discreteDiskFace(GFace *gf, std::vector<MTriangle*> &mesh, int
   orderVertices(_totLength, _U0, _coords);
   
   parametrize(false);
-  buildOct();
+  buildOct(CAD);
 
   if (!checkOrientationUV()){
     parametrize(true);
-    buildOct();
+    buildOct(CAD);
   }
   
   putOnView();
@@ -453,7 +460,7 @@ void discreteDiskFace::getBoundingEdges()
 }
 
 
-void discreteDiskFace::buildOct() const
+void discreteDiskFace::buildOct(std::vector<GFace*> *CAD) const
 {
   if (oct)Octree_Delete(oct);
 
@@ -464,6 +471,9 @@ void discreteDiskFace::buildOct() const
                       discreteDiskFaceCentroid, discreteDiskFaceInEle);
 
   _ddft = new discreteDiskFaceTriangle[discrete_triangles.size()];
+
+  //  if (CAD) printf("------------->  %ld %ld\n",CAD->size(),discrete_triangles.size());
+
   for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
     MTriangle *t = discrete_triangles[i];
     discreteDiskFaceTriangle* my_ddft = &_ddft[i];
@@ -471,7 +481,7 @@ void discreteDiskFace::buildOct() const
     for(int io=0; io<_N; io++)
       my_ddft->p[io] = coordinates[t->getVertex(io)];
 
-    my_ddft->gf = _parent;
+    my_ddft->gf = CAD ? (*CAD)[i] : _parent;
     my_ddft->tri = t;
 
     Octree_Insert(my_ddft, oct);
@@ -588,6 +598,7 @@ void discreteDiskFace::getTriangleUV(const double u,const double v,
   _xi = Xi[0];
   _eta = Xi[1];
 }
+
 
 bool discreteDiskFace::checkOrientationUV(){
 
@@ -814,11 +825,11 @@ void discreteDiskFace::putOnView()
       for (int j=0; j<_N-1; j++){
 	fprintf(view_u,"%g,",my_ddft->p[j].x());
 	fprintf(view_v,"%g,",my_ddft->p[j].y());
-	fprintf(UVxyz,"%g,",sqrt(my_ddft->tri->getVertex(j)->x()*my_ddft->tri->getVertex(j)->x()+my_ddft->tri->getVertex(j)->z()*my_ddft->tri->getVertex(j)->z()+my_ddft->tri->getVertex(j)->y()*my_ddft->tri->getVertex(j)->y()));
+	fprintf(UVxyz,"%d,",my_ddft->gf->tag());
       }
       fprintf(view_u,"%g};\n",my_ddft->p[_N-1].x());
       fprintf(view_v,"%g};\n",my_ddft->p[_N-1].y());
-      fprintf(UVxyz,"%g};\n",sqrt(my_ddft->tri->getVertex(_N-1)->x()*my_ddft->tri->getVertex(_N-1)->x()+my_ddft->tri->getVertex(_N-1)->z()*my_ddft->tri->getVertex(_N-1)->z()+my_ddft->tri->getVertex(_N-1)->y()*my_ddft->tri->getVertex(_N-1)->y()));
+      fprintf(UVxyz,"%d};\n",my_ddft->gf->tag());
     }
     fprintf(view_u,"};\n");
     fprintf(view_v,"};\n");
@@ -827,28 +838,6 @@ void discreteDiskFace::putOnView()
     fclose(view_v);
     fclose(UVxyz);
   }
-
-  /*
-#ifdef HAVE_POST
-  std::map<int, std::vector<double> > u;
-  std::map<int, std::vector<double> > v;
-  for(std::set<MVertex*>::iterator iv = allNodes.begin(); iv!=allNodes.end(); ++iv){
-    MVertex *p = *iv;
-    u[p->getNum()].push_back(coordinates[p].x());
-    v[p->getNum()].push_back(coordinates[p].y());
-  }
-  PView* view_u = new PView("u", "NodeData", GModel::current(), u);
-  PView* view_v = new PView("v", "NodeData", GModel::current(), v);
-  view_u->setChanged(true);
-  view_v->setChanged(true);
-  view_u->write("param_u.msh", 5);
-  view_v->write("param_v.msh", 5);
-  delete view_u;
-  delete view_v;
-#else
-  Msg::Error("discreteDiskFace: cannot export without post module")
-#endif
-  */
 }
 
 // useful for mesh generators ----------------------------------------

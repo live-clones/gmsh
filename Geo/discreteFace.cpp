@@ -109,7 +109,8 @@ void discreteFace::createGeometry()
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER)
   if (!_atlas.empty())return;  
   // parametrization is done here !!!
-  discreteDiskFace *df = new discreteDiskFace (this, triangles,2);
+  // if (_CAD != empty) --> _triangles[i] is classified on _CAD[i]
+  discreteDiskFace *df = new discreteDiskFace (this, triangles,1,(_CAD.empty() ? NULL : &_CAD));
   df->replaceEdges(l_edges);
   _atlas.push_back(df);
 #endif
@@ -123,10 +124,35 @@ void discreteFace::gatherMeshes()
   triangles.clear();
   mesh_vertices.clear();
   for (unsigned int i=0;i<_atlas.size();i++){
-    triangles.insert(triangles.begin(), _atlas[i]->triangles.begin(),
-                     _atlas[i]->triangles.end());
-    mesh_vertices.insert(mesh_vertices.begin(), _atlas[i]->mesh_vertices.begin(),
-                         _atlas[i]->mesh_vertices.end());
+    for (unsigned int j=0;j<_atlas[i]->triangles.size(); j++){
+      MTriangle *t = _atlas[i]->triangles[j];
+      SPoint2 p0,p1,p2;
+      reparamMeshVertexOnFace(t->getVertex(0),_atlas[i], p0);
+      reparamMeshVertexOnFace(t->getVertex(1),_atlas[i], p1);
+      reparamMeshVertexOnFace(t->getVertex(2),_atlas[i], p2);
+      SPoint2 pc = (p0+p1+p2)*(1./3.0);
+      discreteDiskFaceTriangle *mt=NULL;
+      double xi, eta;
+      _atlas[i]->getTriangleUV(pc.x(),pc.y(), &mt, xi,eta);
+      if (mt && mt->gf)mt->gf->triangles.push_back(t);
+      else Msg::Warning ("FILE %s LINE %d Triangle has no classification",__FILE__,__LINE__);
+    }
+    _atlas[i]->triangles.clear();
+
+    for (unsigned int j=0;j<_atlas[i]->mesh_vertices.size(); j++){
+      MVertex *v = _atlas[i]->mesh_vertices[j];
+      double pu,pv; v->getParameter(0,pu);v->getParameter(1,pv);
+      discreteDiskFaceTriangle *mt;
+      double xi, eta;
+      _atlas[i]->getTriangleUV(pu,pv, &mt, xi,eta);
+      if(mt && mt->gf){
+	v->setEntity(mt->gf);
+	// here we should recompute on the CAD if necessary
+	mt->gf->mesh_vertices.push_back(v);
+      }
+      else Msg::Warning ("FILE %s LINE %d Vertex has no classification",__FILE__,__LINE__);
+    }
+    _atlas[i]->mesh_vertices.clear();
   }
 #endif
 }
@@ -135,8 +161,9 @@ void discreteFace::mesh(bool verbose)
 {
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER) && defined(HAVE_MESH)
   if (!CTX::instance()->meshDiscrete) return;
-  for (unsigned int i=0;i<_atlas.size();i++)
+  for (unsigned int i=0;i<_atlas.size();i++){
     _atlas[i]->mesh(verbose);
+  }
   gatherMeshes();
   meshStatistics.status = GFace::DONE;
 #endif

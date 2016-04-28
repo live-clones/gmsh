@@ -39,6 +39,7 @@ class discreteFace : public GFace {
   void gatherMeshes();
   virtual void mesh (bool verbose);
   std::vector<discreteDiskFace*> _atlas;
+  std::vector<GFace*> _CAD;
 };
 
 #endif

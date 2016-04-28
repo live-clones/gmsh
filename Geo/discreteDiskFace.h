@@ -41,7 +41,7 @@ class  discreteDiskFaceTriangle {
 
 class discreteDiskFace : public GFace {
   GFace *_parent;
-  void buildOct() const;
+  void buildOct(std::vector<GFace*> *CAD = NULL) const;
   bool parametrize(bool one2one = false) const;
   void buildAllNodes() ;
   void getBoundingEdges();
@@ -49,7 +49,7 @@ class discreteDiskFace : public GFace {
   bool checkOrientationUV();
   
  public:
-  discreteDiskFace(GFace *parent, std::vector<MTriangle*> &mesh, int p=1);// MTriangle -> MTriangle 6
+  discreteDiskFace(GFace *parent, std::vector<MTriangle*> &mesh, int p=1, std::vector<GFace*> *CAD = NULL);// MTriangle -> MTriangle 6
   virtual ~discreteDiskFace();
   void getTriangleUV(const double u,const double v,discreteDiskFaceTriangle **mt, double &_u, double &_v) const;
   GPoint point(double par1, double par2) const;

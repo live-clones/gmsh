@@ -217,14 +217,21 @@ static double _relocateVertex(GFace* gf, MVertex *ver,
 }
 
 
+void getAllBoundaryLayerVertices (GFace *gf, std::set<MVertex*> &vs);
+
 void RelocateVertices (GFace* gf, int niter, double tol) {
+  std::set<MVertex*> vs;
+  getAllBoundaryLayerVertices (gf, vs);
+
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
   for (int i=0;i<niter;i++){
     v2t_cont::iterator it = adj.begin();
     while (it != adj.end()){
-      _relocateVertex( gf, it->first, it->second, tol);
+      if (vs.find(it->first) == vs.end()){
+	_relocateVertex( gf, it->first, it->second, tol);
+      }
       ++it;
     }  
   }

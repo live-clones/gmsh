@@ -22,180 +22,12 @@
 
 #include "MVertex.h"
 #include "MElement.h"
-//#include "directions3D.h"
 #include "BackgroundMesh.h"
 #include "intersectCurveSurface.h"
 
 #include "pointInsertionRTreeTools.h"
 
 using namespace std;
-
-//static const double FACTOR = .71;
-//static const int NUMDIR = 3;
-//static const double DIRS [NUMDIR] = {0.0, M_PI/20.,-M_PI/20.};
-//PE MODIF
-//static const int NUMDIR = 1;
-//static const double DIRS [NUMDIR] = {0.0};
-// END PE MODIF
-
-
-
-/// a rectangle in the tangent plane is transformed
-/// into a parallelogram. We define an exclusion zone
-/// that is centered around a vertex and that is used
-/// in a r-tree structure for generating points with the
-/// right spacing in the tangent plane
-
-
-//struct surfacePointWithExclusionRegion {
-//  MVertex *_v;
-//  SPoint2 _center;
-//  SPoint2 _p[4][NUMDIR];
-//  SPoint2 _q[4];
-//  SMetric3 _meshMetric;
-//  double _distanceSummed;
-//  /*
-//         + p3
-//    p4   |
-//    +----c-----+ p2
-//         |
-//         + p1
-//
-//*/
-//
-//  surfacePointWithExclusionRegion (MVertex *v, SPoint2 p[4][NUMDIR], SPoint2 &_mp, SMetric3 & meshMetric, surfacePointWithExclusionRegion *father = 0){
-//    _v = v;
-//    _meshMetric = meshMetric;
-//    _center = _mp;
-//    for (int i=0;i<4;i++)_q[i] = _center + (p[i][0]+p[(i+1)%4][0]-_center*2)*FACTOR;
-//    for (int i=0;i<4;i++)for (int j=0;j<NUMDIR;j++)_p[i][j] = p[i][j];
-//
-//    if (!father){
-//      fullMatrix<double> V(3,3);
-//      fullVector<double> S(3);
-//      meshMetric.eig(V,S);
-//      double l = std::max(std::max(S(0),S(1)),S(2));
-//      _distanceSummed = sqrt(1/(l*l));
-//    }
-//    else {
-//      _distanceSummed = father->_distanceSummed + distance (father->_v,_v);
-//    }
-//  }
-//  bool inExclusionZone (const SPoint2 &p){
-//    double mat[2][2];
-//    double b[2] , uv[2];
-//    mat[0][0]= _q[1].x()-_q[0].x();
-//    mat[0][1]= _q[2].x()-_q[0].x();
-//    mat[1][0]= _q[1].y()-_q[0].y();
-//    mat[1][1]= _q[2].y()-_q[0].y();
-//    b[0] = p.x() - _q[0].x();
-//    b[1] = p.y() - _q[0].y();
-//    sys2x2(mat, b, uv);
-//    //    printf("inversion 1 : %g %g \n",uv[0],uv[1]);
-//    if (uv[0] >= 0 && uv[1] >= 0 && 1.-uv[0] - uv[1] >= 0)return true;
-//    mat[0][0]= _q[3].x()-_q[2].x();
-//    mat[0][1]= _q[0].x()-_q[2].x();
-//    mat[1][0]= _q[3].y()-_q[2].y();
-//    mat[1][1]= _q[0].y()-_q[2].y();
-//    b[0] = p.x() - _q[2].x();
-//    b[1] = p.y() - _q[2].y();
-//    sys2x2(mat, b, uv);
-//    //    printf("inversion 2 : %g %g \n",uv[0],uv[1]);
-//    if (uv[0] >= 0 && uv[1] >= 0 && 1.-uv[0] - uv[1] >= 0)return true;
-//    return false;
-//  }
-//  void minmax  (double _min[2], double _max[2]) const{
-//    _min[0] = std::min(std::min(std::min(_q[0].x(),_q[1].x()),_q[2].x()),_q[3].x());
-//    _min[1] = std::min(std::min(std::min(_q[0].y(),_q[1].y()),_q[2].y()),_q[3].y());
-//    _max[0] = std::max(std::max(std::max(_q[0].x(),_q[1].x()),_q[2].x()),_q[3].x());
-//    _max[1] = std::max(std::max(std::max(_q[0].y(),_q[1].y()),_q[2].y()),_q[3].y());
-//  }
-//  void print (FILE *f, int i){
-//    fprintf(f,"SP(%g,%g,%g){%d};\n",_center.x(),_center.y(),0.0,i);
-//    fprintf(f,"SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
-//	    _q[0].x(),_q[0].y(),0.0,
-//	    _q[1].x(),_q[1].y(),0.0,
-//	    _q[2].x(),_q[2].y(),0.0,
-//	    _q[3].x(),_q[3].y(),0.0,i,i,i,i);
-//
-//  }
-//};
-//
-//struct my_wrapper {
-//  bool _tooclose;
-//  SPoint2 _p;
-//  my_wrapper (SPoint2 sp) : _tooclose (false), _p(sp) {}
-//};
-//
-//struct smoothness_point_pair{
-//  double rank;
-//  surfacePointWithExclusionRegion* ptr;
-//};
-//
-//class compareSurfacePointWithExclusionRegionPtr_Smoothness
-//{
-//  public:
-//    inline bool operator () (const smoothness_point_pair &a, const smoothness_point_pair &b)  const
-//    {
-//      if (a.rank == b.rank){
-//        if(a.ptr->_distanceSummed > b.ptr->_distanceSummed) return false;
-//        if(a.ptr->_distanceSummed < b.ptr->_distanceSummed) return true;
-//        return a.ptr<b.ptr;
-//      }
-//      // else
-//      return (a.rank < b.rank);
-//    }
-//};
-//
-//
-//class compareSurfacePointWithExclusionRegionPtr
-//{
-// public:
-//  inline bool operator () (const surfacePointWithExclusionRegion *a, const surfacePointWithExclusionRegion *b)  const
-//  {
-//    if(a->_distanceSummed > b->_distanceSummed) return false;
-//    if(a->_distanceSummed < b->_distanceSummed) return true;
-//    return a<b;
-//  }
-//};
-//
-//
-//
-//
-//bool rtree_callback(surfacePointWithExclusionRegion *neighbour,void* point){
-//  my_wrapper *w = static_cast<my_wrapper*>(point);
-//
-//  if (neighbour->inExclusionZone(w->_p)){
-//    w->_tooclose = true;
-//    return false;
-//  }
-//
-//  return true;
-//}
-//
-//bool inExclusionZone (SPoint2 &p,
-//		      RTree<surfacePointWithExclusionRegion*,double,2,double> &rtree,
-//		      std::vector<surfacePointWithExclusionRegion*> & all ){
-//  // should assert that the point is inside the domain
-//  if (!backgroundMesh::current()->inDomain(p.x(),p.y(),0)) return true;
-//
-//  my_wrapper w (p);
-//  double _min[2] = {p.x()-1.e-1, p.y()-1.e-1},_max[2] = {p.x()+1.e-1,p.y()+1.e-1};
-//  rtree.Search(_min,_max,rtree_callback,&w);
-//
-//  return w._tooclose;
-//
-//  for (unsigned int i=0;i<all.size();++i){
-//    if (all[i]->inExclusionZone(p)){
-//      //      printf("%g %g is in exclusion zone of %g %g\n",p.x(),p.y(),all[i]._center.x(),all[i]._center.y());
-//      return true;
-//    }
-//  }
-//  return false;
-//}
-
-
-
 
 // assume a point on the surface, compute the 4 possible neighbors.
 //
@@ -219,15 +51,11 @@ bool compute4neighbors (GFace *gf,   // the surface
 			SPoint2 newP[4][NUMDIR], // look into other directions
 			SMetric3 &metricField, FILE *crossf = 0) // the mesh metric
 {
-
-  //Range<double> rangeU = gf->parBounds(0);
-  //Range<double> rangeV = gf->parBounds(1);
-
   // we assume that v is on surface gf
-
+  
   // get the parameter of the point on the surface
   reparamMeshVertexOnFace(v_center, gf, midpoint);
-
+  
   double L = backgroundMesh::current()->operator()(midpoint[0],midpoint[1],0.0);
   //  printf("L = %12.5E\n",L);
   metricField = SMetric3(1./(L*L));
@@ -322,23 +150,6 @@ bool compute4neighbors (GFace *gf,   // the surface
       size_param_1 = size_param_2 = std::min (size_param_1,size_param_2);
     }
 
-    //    printf("%12.5E %12.5E\n", size_param_1, size_param_2);
-
-
-    //    if (v_center->onWhat() != gf && gf->tag() == 3)
-    //      printf("M = (%g %g %g) L = %g %g LP = %g %g\n",metricField(0,0),metricField(1,1),metricField(0,1),l1,l2,size_param_1,size_param_2);
-    //if (l1 == 0.0 || l2 == 0.0) printf("bouuuuuuuuuuuuh %g %g %g %g --- %g %g %g %g %g %g\n",l1,l2,t1.norm(),t2.norm(),s1.x(),s1.y(),s1.z(),s2.x(),s2.y(),s2.z());
-
-    /*    printf("%12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %12.5E %g %g %g %g %g %g %g %g %g %g %g\n",
-	   M*covar1[0]*covar1[0]+
-	   2*E*covar1[1]*covar1[0]+
-	   N*covar1[1]*covar1[1],
-	   M*covar2[0]*covar2[0]+
-	   2*E*covar2[1]*covar2[0]+
-	   N*covar2[1]*covar2[1]
-	   ,covar1[0],covar1[1],covar2[0],covar2[1],l1,l2,size_1,size_2,size_param_1,size_param_2,M,N,E,s1.x(),s1.y(),s2.x(),s2.y());*/
-
-    // this is the rectangle in the parameter plane.
     const double EPS = 1.e-7;
     double r1 = EPS*(double)rand() / RAND_MAX;
     double r2 = EPS*(double)rand() / RAND_MAX;
@@ -360,19 +171,14 @@ bool compute4neighbors (GFace *gf,   // the surface
     // a nonlinear problem in order to find a better approximation in the real
     // surface
     double ERR[4];
-    for (int i=0;i<4;i++){                                              //
-      //      if (newPoint[i][0] < rangeU.low())newPoint[i][0] = rangeU.low();
-      //      if (newPoint[i][0] > rangeU.high())newPoint[i][0] = rangeU.high();
-      //      if (newPoint[i][1] < rangeV.low())newPoint[i][1] = rangeV.low();
-      //      if (newPoint[i][1] > rangeV.high())newPoint[i][1] = rangeV.high();
+    for (int i=0;i<4;i++){
       GPoint pp = gf->point(SPoint2(newPoint[i][0], newPoint[i][1]));
       double D = sqrt ((pp.x() - v_center->x())*(pp.x() - v_center->x()) +
 		       (pp.y() - v_center->y())*(pp.y() - v_center->y()) +
 		       (pp.z() - v_center->z())*(pp.z() - v_center->z()) );
       ERR[i] = 100*fabs(D-L)/(D+L);
-      //      printf("L = %12.5E D = %12.5E ERR = %12.5E\n",L,D,100*fabs(D-L)/(D+L));
     }
-
+    
     if (1 && goNonLinear){
       surfaceFunctorGFace ss (gf);                                        //
       SVector3 dirs[4] = {t1*(-1.0),t2*(-1.0),t1*(1.0),t2*(1.0)};                     //
@@ -966,30 +772,21 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
 
   //  printf("initially : %d vertices in the domain\n",vertices.size());
 
-
+  
   while(!fifo.empty()){
-    //surfacePointWithExclusionRegion & parent = fifo.top();
-    //    surfacePointWithExclusionRegion * parent = fifo.front();
     surfacePointWithExclusionRegion * parent = *fifo.begin();
-    //    fifo.pop();
     fifo.erase(fifo.begin());
     for (int dir=0;dir<NUMDIR;dir++){
-      //      printf("dir = %d\n",dir);
       int countOK = 0;
       for (int i=0;i<4;i++){
-        //	printf("i = %d %12.5E %12.5E \n",i,parent._p[i][dir].x(),parent._p[i][dir].y());
-
-        //	if (!w._tooclose){
         if (!inExclusionZone (parent->_p[i][dir], rtree, vertices) ){
           countOK++;
           GPoint gp = gf->point(parent->_p[i][dir]);
           MFaceVertex *v = new MFaceVertex(gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
-          //	  	printf(" %g %g %g %g\n",parent._center.x(),parent._center.y(),gp.u(),gp.v());
           SPoint2 midpoint;
           compute4neighbors (gf, v, midpoint, goNonLinear, newp, metricField,crossf);
           surfacePointWithExclusionRegion *sp =
             new surfacePointWithExclusionRegion (v, newp, midpoint, metricField, parent);
-          //	  fifo.push(sp);
           fifo.insert(sp);
           vertices.push_back(sp);
           double _min[2],_max[2];
@@ -999,41 +796,31 @@ void packingOfParallelograms(GFace* gf,  std::vector<MVertex*> &packed, std::vec
       }
       if (countOK)break;
       }
-      //    printf("%d\n",vertices.size());
-    }
-    if (crossf){
-      fprintf(crossf,"};\n");
-      fclose (crossf);
-    }
-    //  printf("done\n");
-
+  }
+  if (crossf){
+    fprintf(crossf,"};\n");
+    fclose (crossf);
+  }
     // add the vertices as additional vertices in the
     // surface mesh
-    char ccc[256]; sprintf(ccc,"points%d.pos",gf->tag());
-    FILE *f = Fopen(ccc,"w");
-    if(f) fprintf(f,"View \"\"{\n");
-    for (unsigned int i=0;i<vertices.size();i++){
-      //    if(vertices[i]->_v->onWhat() != gf)
-      if(f) vertices[i]->print(f,i);
-      if(vertices[i]->_v->onWhat() == gf) {
-        packed.push_back(vertices[i]->_v);
-        metrics.push_back(vertices[i]->_meshMetric);
-        SPoint2 midpoint;
-        reparamMeshVertexOnFace(vertices[i]->_v, gf, midpoint);
-        //      fprintf(f,"TP(%22.15E,%22.15E,%g){%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E};\n",vertices[i]->_v->x(),vertices[i]->_v->y(),vertices[i]->_v->z(),
-        //	      vertices[i]->_meshMetric(0,0),vertices[i]->_meshMetric(0,1),vertices[i]->_meshMetric(0,2),
-        //	      vertices[i]->_meshMetric(1,0),vertices[i]->_meshMetric(1,1),vertices[i]->_meshMetric(1,2),
-        //	      vertices[i]->_meshMetric(2,0),vertices[i]->_meshMetric(2,1),vertices[i]->_meshMetric(2,2));
-        //fprintf(f,"SP(%22.15E,%22.15E,%g){1};\n",midpoint.x(),midpoint.y(),0.0);
-      }
-      delete  vertices[i];
+  char ccc[256]; sprintf(ccc,"points%d.pos",gf->tag());
+  FILE *f = Fopen(ccc,"w");
+  if(f) fprintf(f,"View \"\"{\n");
+  for (unsigned int i=0;i<vertices.size();i++){
+    //    if(vertices[i]->_v->onWhat() != gf)
+    if(f) vertices[i]->print(f,i);
+    if(vertices[i]->_v->onWhat() == gf) {
+      packed.push_back(vertices[i]->_v);
+      metrics.push_back(vertices[i]->_meshMetric);
+      SPoint2 midpoint;
+      reparamMeshVertexOnFace(vertices[i]->_v, gf, midpoint);
     }
-    if(f){
-      fprintf(f,"};");
-      fclose(f);
-    }
-    //  printf("packed.size = %d\n",packed.size());
-    //  delete rtree;
+    delete  vertices[i];
+  }
+  if(f){
+    fprintf(f,"};");
+    fclose(f);
+  }
 }
 
 

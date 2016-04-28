@@ -289,9 +289,6 @@ class GFace : public GEntity{
   // new interface for meshing
   virtual void mesh(bool verbose);
 
-  // add layers of quads
-  void addLayersOfQuads(int nLayers, GVertex *start, double hmin, double factor);
-
   struct {
     // do we recombine the triangles of the mesh?
     int recombine;
