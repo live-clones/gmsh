@@ -23,7 +23,6 @@
 #include "BasisFactory.h"
 #include "MVertexRTree.h"
 
-
 // --------- Functions that help optimizing placement of points on geometry -----------
 
 // The aim here is to build a polynomial representation that consist
@@ -1324,21 +1323,22 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
     std::vector<double> tfo = slave->affineTransform;
 
-    for (unsigned int i = 0; i < master->getNumMeshVertices(); ++i) {
-      MVertex *vs = master->getMeshVertex(i);
-      double ps[4] = {vs->x(), vs->y(), vs->z(), 1.};
-      double res[4] = {0., 0., 0., 0.};
-      int idx = 0;
-      for(int i = 0; i < 4; i++)
-        for(int j = 0; j < 4; j++)
-          res[i] +=  tfo[idx++] * ps[j];
-
-      SPoint3 p3 (res[0], res[1], res[2]);
-      double u = slave->parFromPoint(p3);
-      GPoint gp = slave->point(u);
-      MVertex *vt = rtree.find(gp.x(), gp.y(), gp.z());
-      if (!vt) Msg::Error("Couldn't find a vertex for updating periodicity");
-      else v2v[vt] = vs;
+    if(tfo.size() >= 16){
+      for (unsigned int i = 0; i < master->getNumMeshVertices(); ++i) {
+        MVertex *vs = master->getMeshVertex(i);
+        double ps[4] = {vs->x(), vs->y(), vs->z(), 1.};
+        double res[4] = {0., 0., 0., 0.};
+        int idx = 0;
+        for(int i = 0; i < 4; i++)
+          for(int j = 0; j < 4; j++)
+            res[i] +=  tfo[idx++] * ps[j];
+        SPoint3 p3 (res[0], res[1], res[2]);
+        double u = slave->parFromPoint(p3);
+        GPoint gp = slave->point(u);
+        MVertex *vt = rtree.find(gp.x(), gp.y(), gp.z());
+        if (!vt) Msg::Error("Couldn't find a vertex for updating periodicity");
+        else v2v[vt] = vs;
+      }
     }
   }
 
@@ -1355,22 +1355,22 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
       rtree.insert(slave->getMeshVertex(i));
 
     std::vector<double> tfo = slave->affineTransform;
-
-    for (unsigned int i = 0; i < master->getNumMeshVertices(); ++i) {
-      MVertex *vs = master->getMeshVertex(i);
-      double ps[4] = {vs->x(), vs->y(), vs->z(), 1.};
-      double res[4] = {0., 0., 0., 0.};
-      int idx = 0;
-      for(int i = 0; i < 4; i++)
-        for(int j = 0; j < 4; j++)
-          res[i] +=  tfo[idx++] * ps[j];
-
-      SPoint3 p3 (res[0], res[1], res[2]);
-      SPoint2 p2 = slave->parFromPoint(p3);
-      GPoint gp = slave->point(p2);
-      MVertex *vt = rtree.find(gp.x(), gp.y(), gp.z());
-      if (!vt) Msg::Error("Couldn't find a vertex for updating periodicity");
-      else v2v[vt] = vs;
+    if(tfo.size() >= 16){
+      for (unsigned int i = 0; i < master->getNumMeshVertices(); ++i) {
+        MVertex *vs = master->getMeshVertex(i);
+        double ps[4] = {vs->x(), vs->y(), vs->z(), 1.};
+        double res[4] = {0., 0., 0., 0.};
+        int idx = 0;
+        for(int i = 0; i < 4; i++)
+          for(int j = 0; j < 4; j++)
+            res[i] +=  tfo[idx++] * ps[j];
+        SPoint3 p3 (res[0], res[1], res[2]);
+        SPoint2 p2 = slave->parFromPoint(p3);
+        GPoint gp = slave->point(p2);
+        MVertex *vt = rtree.find(gp.x(), gp.y(), gp.z());
+        if (!vt) Msg::Error("Couldn't find a vertex for updating periodicity");
+        else v2v[vt] = vs;
+      }
     }
   }
 }
