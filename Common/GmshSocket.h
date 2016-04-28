@@ -47,6 +47,7 @@
 #include <sys/un.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 #if defined(HAVE_NO_SOCKLEN_T)
 typedef int socklen_t;
@@ -278,6 +279,8 @@ class GmshClient : public GmshSocket {
       // TCP/IP socket
       _sock = socket(AF_INET, SOCK_STREAM, 0);
       if(_sock < 0) return -1;
+      int one = 1;
+      setsockopt(_sock, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
       // try to connect socket to host:port
       const char *port = strstr(sockname, ":");
       int portno = atoi(port + 1);
@@ -368,6 +371,9 @@ class GmshServer : public GmshSocket{
       _portno = atoi(port + 1);
       // create a socket
       tmpsock = socket(AF_INET, SOCK_STREAM, 0);
+      int one = 1;
+      setsockopt(tmpsock, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
+
 #if !defined(WIN32) || defined(__CYGWIN__)
       if(tmpsock < 0)
 #else
@@ -435,9 +441,10 @@ class GmshServer : public GmshSocket{
       struct sockaddr_in from_in;
       socklen_t len = sizeof(from_in);
       _sock = accept(tmpsock, (struct sockaddr *)&from_in, &len);
+      int one = 1;
+      setsockopt(_sock, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
     }
     CloseSocket(tmpsock);
-
     if(_sock < 0)
       throw "Socket accept failed";
     return _sock;
