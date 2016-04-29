@@ -1,4 +1,5 @@
-2.13.0: new ONELAB 1.2 protocol with native support for lists; new 3D boundary
+2.13.0: new ONELAB 1.2 protocol with native support for lists and TCP/IP
+communication speedup on Linux and Windows; new experimental 3D boundary
 recovery code; better adaptive visualization of quads and hexahedra; fixed
 several regressions introduced in 2.12.
 
