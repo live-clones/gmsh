@@ -1271,6 +1271,12 @@ void Msg::SetOnelabChanged(int value, const std::string &client)
 void Msg::FinalizeOnelab()
 {
 #if defined(HAVE_ONELAB)
+  // kill any running clients
+  for(onelab::server::citer it = onelab::server::instance()->firstClient();
+      it != onelab::server::instance()->lastClient(); it++){
+    (*it)->kill();
+  }
+  // delete local client
   if(_onelabClient){
     delete _onelabClient;
     _onelabClient = 0;

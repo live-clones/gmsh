@@ -720,14 +720,24 @@ namespace onelab{
         if(!done) done = _clear(name, client, _strings);
       }
     }
-    bool set(const number &p,
-             const std::string &client=""){ return _set(p, client, _numbers); }
-    bool set(const string &p,
-             const std::string &client=""){ return _set(p, client, _strings); }
+    bool set(const number &p, const std::string &client="")
+    {
+      return _set(p, client, _numbers);
+    }
+    bool set(const string &p, const std::string &client="")
+    {
+      return _set(p, client, _strings);
+    }
     bool get(std::vector<number> &ps, const std::string &name="",
-             const std::string &client=""){ return _get(ps, name, client, _numbers); }
+             const std::string &client="")
+    {
+      return _get(ps, name, client, _numbers);
+    }
     bool get(std::vector<onelab::string> &ps, const std::string &name="",
-             const std::string &client=""){ return _get(ps, name, client, _strings); }
+             const std::string &client="")
+    {
+      return _get(ps, name, client, _strings);
+    }
     void getPtr(number **ptr, const std::string name, const std::string client="")
     {
       *ptr = _getPtr(name, client, _numbers);
@@ -1228,10 +1238,14 @@ namespace onelab{
     }
     virtual bool set(const number &p){ return _set(p); }
     virtual bool set(const string &p){ return _set(p); }
-    virtual bool get(std::vector<number> &ps,
-                     const std::string &name=""){ return _get(ps, name); }
-    virtual bool get(std::vector<onelab::string> &ps,
-                     const std::string &name=""){ return _get(ps, name); }
+    virtual bool get(std::vector<number> &ps, const std::string &name="")
+    {
+      return _get(ps, name);
+    }
+    virtual bool get(std::vector<onelab::string> &ps, const std::string &name="")
+    {
+      return _get(ps, name);
+    }
     void sendInfo(const std::string &msg)
     {
       if(_gmshClient) _gmshClient->Info(msg.c_str());
