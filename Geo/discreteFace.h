@@ -10,17 +10,27 @@
 #include "GFace.h"
 #include "discreteEdge.h"
 #include "MEdge.h"
+#include "meshPartitionObjects.h"
+#include "meshPartitionOptions.h"
+#include "meshPartition.h"
+#include "MTriangle.h"
+#include "MEdge.h"
+#include <stdlib.h>
 
 class discreteDiskFace;
+class triangulation;
+
 
 class discreteFace : public GFace {
   // FIXME we should at the end use a
-  // mesh() functioon that is specific to
+  // mesh() function that is specific to
   // discreteFace
   // we should also SAVE those data's
  public:
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}
+  void checkAndFixOrientation();
+  void split(triangulation*,std::vector<triangulation*>&,int);
   GPoint point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;
   SVector3 normal(const SPoint2 &param) const;
