@@ -2,14 +2,14 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
-	
+
 #ifndef _DISCRETE_DISK_FACE_H_
 #define _DISCRETE_DISK_FACE_H_
-	
+
 #include "GmshConfig.h"
-	
+
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
-	
+
 #include <list>
 #include <map>
 #include "GModel.h"
@@ -23,27 +23,25 @@
 #include "PView.h"
 #include "robustPredicates.h"
 
-/*inline utilities*/
-inline int nodeLocalNum(MElement* e, MVertex* v) {// const
+inline int nodeLocalNum(MElement* e, MVertex* v)
+{
   for(int i=0; i<e->getNumVertices(); i++)
     if (v == e->getVertex(i))
       return i;
   return -1;
 }
-inline int edgeLocalNum(MElement* e, MEdge ed) {// const
+
+inline int edgeLocalNum(MElement* e, MEdge ed)
+{
   for(int i=0; i<e->getNumEdges(); i++)
     if (ed == e->getEdge(i))
       return i;
   return -1;
 }
 
-	
-
-/*various classes*/
 class ANNkd_tree;
 class Octree;
 class GRbf;
-	
 
 class triangulation {
 
@@ -52,18 +50,20 @@ class triangulation {
   // attributes
   std::vector<MElement*> tri;// triangles
   std::set<MVertex*> vert;// nodes
-  std::map<MEdge,std::vector<int>,Less_Edge> ed2tri; // edge to 1 or 2 triangle(s), their num into the vector of MElement*
+  // edge to 1 or 2 triangle(s), their num into the vector of MElement*
+  std::map<MEdge,std::vector<int>,Less_Edge> ed2tri;
   std::map<double,std::vector<MVertex*> > bord; //border(s)
   std::set<MEdge,Less_Edge> borderEdg; // border edges
   GFace *gf;
   int idNum; // number of identification, for hashing purposes
-  
-  //methods
-  int genus(){
+
+  int genus()
+  {
     return ( -vert.size() + ed2tri.size() - tri.size() + 2 - bord.size() )/2;
   }
 
-  void assignVert(){ 
+  void assignVert()
+  {
     for(unsigned int i = 0; i < tri.size(); ++i){
       MElement* t = tri[i];
       for(int j = 0; j < t->getNumVertices()  ; j++){
@@ -74,7 +74,8 @@ class triangulation {
     }
   }
 
-  void assignEd2tri(){
+  void assignEd2tri()
+  {
     for(unsigned int i = 0; i < tri.size(); ++i){
       MElement *t = tri[i];
       for(int j = 0; j <  3 ; j++){
@@ -84,7 +85,8 @@ class triangulation {
     }
   }
 
-  void assignBord(){
+  void assignBord()
+  {
     for(unsigned int i = 0; i < tri.size(); ++i){
       MElement *t = tri[i];
       for(int j = 0; j <  t->getNumEdges() ; j++){
@@ -109,75 +111,73 @@ class triangulation {
       vecver.erase(vecver.begin());
 
       std::map<MVertex*,std::vector<MVertex*> >::iterator im = firstNode2Edge.find(first);
-      if (im != firstNode2Edge.end()) Msg::Fatal("Incorrect topology in discreteDiskFace %d", gf->tag());
+      if (im != firstNode2Edge.end())
+        Msg::Error("Incorrect topology in discreteDiskFace %d", gf->tag());
       firstNode2Edge[first] = vecver;
       firstNode2Edge[first].push_back(last);
     }
 
-    while (!firstNode2Edge.empty()) { 
+    while (!firstNode2Edge.empty()) {
       std::vector<MVertex*> loop;
       double length = 0.;
 
-      std::map<MVertex*,std::vector<MVertex*> >::iterator in = firstNode2Edge.begin();      	
+      std::map<MVertex*,std::vector<MVertex*> >::iterator in = firstNode2Edge.begin();
       MVertex* previous = in->first;
       while(in != firstNode2Edge.end()) { // it didn't find it
-	
-
 	std::vector<MVertex*> myV = in->second;
 	for(unsigned int i=0; i<myV.size(); i++){
-
 	  loop.push_back(previous);
-
-	  MVertex* current = myV[i];	  
-	    
+	  MVertex* current = myV[i];
 	  length += sqrt( (current->x()-previous->x()) * (current->x()-previous->x()) +
 			  (current->y()-previous->y()) * (current->y()-previous->y()) +
 			  (current->z()-previous->z()) * (current->z()-previous->z()) );
-	  
+
 	  previous = current;
 	}
 	firstNode2Edge.erase(in);
 	in = firstNode2Edge.find(previous);
       }// end while in
-      bord.insert(std::make_pair(length,loop)); // it shouldn't be possible to have twice the same length ? actually, it is possible, but quite seldom #fixme ----> multimap ?
+      bord.insert(std::make_pair(length,loop));
+      // it shouldn't be possible to have twice the same length ? actually, it
+      // is possible, but quite seldom #fixme ----> multimap ?
     } // end while firstNode2Edge
   }// end method
 
-  void assign(){
+  void assign()
+  {
     assignVert();
     assignEd2tri();
     assignBord();
   }
 
-  //builder
- triangulation() : gf(0) {}
- triangulation(std::vector<MElement*> input, GFace* gface) : tri(input), gf(gface) {assign();}
+  triangulation() : gf(0) {}
+  triangulation(std::vector<MElement*> input, GFace* gface)
+    : tri(input), gf(gface) { assign(); }
 };
 
-// --------------------
-// triangles in the physical space xyz, with their parametric coordinates	
+// triangles in the physical space xyz, with their parametric coordinates
 class  discreteDiskFaceTriangle {
  public:
   std::vector<SPoint3> p; // vertices in (u;v) #improveme std::vector instead
   //SPoint2 gfp[6]; // CAD model
   GFace *gf; // GFace tag
   MElement *tri; // mesh triangle in (x;y;z)
- discreteDiskFaceTriangle() : gf(0), tri(0) {}
+  discreteDiskFaceTriangle() : gf(0), tri(0) {}
 };
-	
-// --------------------
-	
+
 class discreteDiskFace : public GFace {
   GFace *_parent;
   void buildOct(std::vector<GFace*> *CAD = NULL) const;
   bool parametrize(bool one2one = false) const;
   void putOnView();
   bool checkOrientationUV();
-  
+
  public:
-  discreteDiskFace(GFace *parent, triangulation* diskTriangulation, int p=1, std::vector<GFace*> *CAD = NULL);// BUILDER
+  discreteDiskFace(GFace *parent, triangulation* diskTriangulation,
+                   int p=1, std::vector<GFace*> *CAD = NULL);
   virtual ~discreteDiskFace();
-  void getTriangleUV(const double u,const double v,discreteDiskFaceTriangle **mt, double &_u, double &_v) const;
+  void getTriangleUV(const double u,const double v,discreteDiskFaceTriangle **mt,
+                     double &_u, double &_v) const;
   GPoint point(double par1, double par2) const;
   SPoint2 parFromVertex(MVertex *v) const;
   SVector3 normal(const SPoint2&) const;
@@ -191,15 +191,12 @@ class discreteDiskFace : public GFace {
 				const SVector3 &p, const double &d,
 				double uv[2]) const;
  protected:
-  //------------------------------------------------
   // a copy of the mesh that should not be destroyed
   triangulation* initialTriangulation;
   triangulation* geoTriangulation;// parametrized triangulation
-  std::vector<MElement*> discrete_triangles; 
+  std::vector<MElement*> discrete_triangles;
   std::vector<MVertex*> discrete_vertices;
-  //------------------------------------------------
 
-  //-----------------------------------------------  
   int _order;
   int _N;// number of dof's for a triangle
   double _totLength;
@@ -211,10 +208,10 @@ class discreteDiskFace : public GFace {
   mutable v2t_cont adjv;
   mutable std::map<MVertex*, Pair<SVector3,SVector3> > firstDerivatives;
   mutable discreteDiskFaceTriangle *_ddft;
-  mutable Octree *oct =  NULL;
+  mutable Octree *oct;
   mutable std::vector<double> _coords;
 };
-	
+
 #endif
-	
+
 #endif
