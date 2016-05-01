@@ -522,7 +522,8 @@ int GModel::writeMED(const std::string &name, bool saveAll, double scalingFactor
     return 0;
   }
 
-  char *meshName = (char*)getName().c_str();
+  std::string strMeshName = getName();
+  char *meshName = (char*)strMeshName.c_str();
 
   // Gmsh always writes 3D unstructured meshes
 #if (MED_MAJOR_NUM == 3)
