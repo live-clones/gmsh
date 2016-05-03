@@ -641,23 +641,23 @@ void discreteDiskFace::putOnView()
 
   char mybuffer [64];
 
-  snprintf(mybuffer,sizeof(mybuffer),"param_u_part%d_order%d.pos",
+  sprintf(mybuffer, "param_u_part%d_order%d.pos",
            initialTriangulation->idNum,_order);
   FILE* view_u = Fopen(mybuffer,"w");
 
-  snprintf(mybuffer,sizeof(mybuffer),"param_v_part%d_order%d.pos",
+  sprintf(mybuffer, "param_v_part%d_order%d.pos",
            initialTriangulation->idNum,_order);
   FILE* view_v = Fopen(mybuffer,"w");
 
-  snprintf(mybuffer,sizeof(mybuffer),"UVx_part%d_order%d.pos",
+  sprintf(mybuffer, "UVx_part%d_order%d.pos",
            initialTriangulation->idNum,_order);
   FILE* UVx = Fopen(mybuffer,"w");
 
-  snprintf(mybuffer,sizeof(mybuffer),"UVy_part%d_order%d.pos",
+  sprintf(mybuffer, "UVy_part%d_order%d.pos",
            initialTriangulation->idNum,_order);
   FILE* UVy = Fopen(mybuffer,"w");
 
-  snprintf(mybuffer,sizeof(mybuffer),"UVz_part%d_order%d.pos",
+  sprintf(mybuffer, "UVz_part%d_order%d.pos",
            initialTriangulation->idNum,_order);
   FILE* UVz = Fopen(mybuffer,"w");
 
