@@ -5824,8 +5824,10 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, 
     if (!otherV[0] || !otherV[1]) Msg::Fatal("Topological error");
 
     MPyramid *pyr = new MPyramid(a,b,c,d,otherV[0]);
+    bool pyrOk = valid(pyr);
+    delete pyr;
 
-    if (otherV[0] == otherV[1] && valid(pyr)){
+    if (otherV[0] == otherV[1] && pyrOk){
       estimate1 = estimate1 + tetrahedra.size() + 2*pyramids.size();
       estimate2 = estimate2 + 1;
 
@@ -5834,9 +5836,12 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, 
       //z = (diagA->z() + diagB->z() + otherV[0]->z())/3;
 
       //We create a flat pyramid and let the optimizer fix it
-      x = (diagA->x() + diagB->x())/2;
-      y = (diagA->y() + diagB->y())/2;
-      z = (diagA->z() + diagB->z())/2;
+      x = (a->x() + b->x() + c->x() + d->x())/4;
+      y = (a->y() + b->y() + c->y() + d->y())/4;
+      z = (a->z() + b->z() + c->z() + d->z())/4;
+      x = (x + otherV[0]->x())/2;
+      y = (y + otherV[0]->y())/2;
+      z = (z + otherV[0]->z())/2;
 
       mid = new MVertex(x,y,z,gr);
       gr->addMeshVertex(mid);
