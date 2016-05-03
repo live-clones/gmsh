@@ -255,6 +255,12 @@ class MElement
   // volume (return false if element has zero volume)
   virtual bool setVolumePositive();
 
+  // compute the extrema of the Jacobian determinant
+  // return  1 if the element is valid,
+  //         0 if the element is invalid,
+  //        -1 if the element is reversed
+  int getValidity();
+
   // return an information string for the element
   virtual std::string getInfoString();
 

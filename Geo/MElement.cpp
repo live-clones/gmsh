@@ -249,15 +249,12 @@ double MElement::specialQuality()
 #if defined(HAVE_MESH)
   double minJ, maxJ;
   jacobianBasedQuality::minMaxJacobianDeterminant(this, minJ, maxJ);
-  if (minJ < 0 && maxJ >= 0) { // accept -inf as a answer
-    return minJ/maxJ;
-  }
-  if (minJ < 0 && maxJ < 0) {
-    return -std::numeric_limits<double>::infinity();
-  }
+  if (minJ == 0.) return 0;
+  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
+  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
   return jacobianBasedQuality::minAnisotropyMeasure(this);
 #else
-  return 0.;
+  return 0;
 #endif
 }
 
@@ -525,6 +522,22 @@ bool MElement::setVolumePositive()
   if(s < 0) reverse();
   if(!s) return false;
   return true;
+}
+
+int MElement::getValidity()
+{
+#if defined(HAVE_MESH)
+  double jmin, jmax;
+  jacobianBasedQuality::minMaxJacobianDeterminant(this, jmin, jmax);
+  if (jmin > .0 && jmax > .0) return 1; // valid
+  if (jmax >= .0) return 0; // invalid
+  // Here, jmin < 0 and jmax < 0. The element validity is quite indeterminate.
+  // It can be valid but with a wrong numbering of the nodes,
+  // or it can be invalid, i.e. with nodes that are incorrectly located.
+  return -1;
+#else
+  return 0;
+#endif
 }
 
 std::string MElement::getInfoString()
