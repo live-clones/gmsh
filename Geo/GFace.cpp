@@ -1500,6 +1500,8 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo)
   std::list<GEdge*>::iterator eIter;
   std::list<GVertex*>::iterator vIter;
 
+  Msg::Info("Setting mesh master using transformation ");
+
   // list all vertices and construct vertex to edge correspondence for local edge
 
   std::set<GVertex*> l_vertices;
@@ -1645,10 +1647,16 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo)
       return;
     }
     GEdge* masterEdge = mv2eIter->second;
-    localEdge->setMeshMaster(masterEdge,tfo);
+    
+    if (masterEdge->meshMaster() != localEdge && 
+        masterEdge->meshMaster() != masterEdge) {
+      localEdge->setMeshMaster(masterEdge,tfo);
+      Msg::Info("Setting edge master %d - %d",
+                localEdge->tag(),
+                masterEdge->tag());
+    }
     gEdgeCounterparts[localEdge] = std::make_pair(masterEdge,sign);
   }
-
   // complete the information at the edge level
 
   edgeCounterparts   = gEdgeCounterparts;
@@ -1785,11 +1793,11 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
   std::vector<double> tfo(16);
 
   if (translation) {
-    Msg::Info("Periodic mesh translation found: dx = (%g,%g,%g)",
-              DX.x(), DX.y(), DX.z());
+    Msg::Info("Periodic mesh translation found between %d and %d: dx = (%g,%g,%g)",
+              tag(),master->tag(),DX.x(), DX.y(), DX.z());
 
     for (size_t i=0;i<16;i++) tfo[i] = 0;
-    for (size_t i=0;i<3;i++)  tfo[i*4+i] = 1;
+    for (size_t i=0;i<4;i++)  tfo[i*4+i] = 1;
     tfo[3]  = DX.x();
     tfo[7]  = DX.y();
     tfo[11] = DX.z();
@@ -1881,7 +1889,8 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
 
       for (int i=0;i<3;i++) tfo[i*4+3] =  origin[i];
       for (int i=0;i<3;i++) for (int j=0;j<3;j++) tfo[i*4+3] -= tfo[i*4+j] * origin[j];
-      for (int i=0;i<4;i++) tfo[12+i] = 0;
+      for (int i=0;i<3;i++) tfo[12+i] = 0;
+      tfo[15] = 1;
 
     }
     else {
