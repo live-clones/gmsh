@@ -36,6 +36,7 @@ set(SRC
   FaultZone.cpp
   MeshSubEntities.cpp
   CVTRemesh.cpp
+  ShowNeighborElements.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

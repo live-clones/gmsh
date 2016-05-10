@@ -65,6 +65,7 @@
 #include "FaultZone.h"
 #include "MeshSubEntities.h"
 #include "CVTRemesh.h"
+#include "ShowNeighborElements.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -261,6 +262,8 @@ void PluginManager::registerDefaultPlugins()
                       ("DuplicateBoundaries", GMSH_RegisterDuplicateBoundariesPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("ThinLayerFixMesh", GMSH_RegisterThinLayerFixMeshPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("ShowNeighborElements", GMSH_RegisterShowNeighborElementsPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("MeshSubEntities", GMSH_RegisterMeshSubEntitiesPlugin()));
 #if defined(HAVE_MESH)
