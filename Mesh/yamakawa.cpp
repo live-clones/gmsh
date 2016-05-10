@@ -25,6 +25,7 @@
 #include "MHexahedron.h"
 
 #include "CondNumBasis.h"
+#include "qualityMeasuresJacobian.h"
 
 
 
@@ -1330,6 +1331,8 @@ void Recombinator::execute(GRegion* gr){
   build_vertex_to_vertices(gr);
   build_vertex_to_elements(gr);
 
+  //file.open("qualHex.txt", std::fstream::out); //fordebug
+
   potential.clear();
   Msg::Info("Hex-merging pattern nb. 1...");
   pattern1(gr);
@@ -1337,6 +1340,8 @@ void Recombinator::execute(GRegion* gr){
   pattern2(gr);
   Msg::Info("Hex-merging pattern nb. 3...");
   pattern3(gr);
+
+  //file.close(); //fordebug
 
   std::sort(potential.begin(),potential.end(),compare_hex_ptr_by_quality);
 
@@ -1647,7 +1652,7 @@ void Recombinator::merge(GRegion* gr){
   for(i=0;i<potential.size();i++){
     hex = potential[i];
 
-    threshold = 0.25;
+    threshold = 0.6;
     if(hex->get_quality()<threshold){
       break;
     }
@@ -3413,8 +3418,19 @@ double Recombinator::scaled_jacobian(MVertex* a,MVertex* b,MVertex* c,MVertex* d
   l3 = vec3.norm();
 
   val = dot(vec1,crossprod(vec2,vec3));
-  return fabs(val)/(l1*l2*l3);
+  return val/(l1*l2*l3);
 }
+
+/*double Recombinator::scaled_jacobian_face(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
+  double j1, j2, j3, j4;
+
+  j1 = std::abs(scaled_jacobian(a,b,d,c));
+  j2 = std::abs(scaled_jacobian(b,c,a,d));
+  j3 = std::abs(scaled_jacobian(c,d,b,a));
+  j4 = std::abs(scaled_jacobian(d,a,c,b));
+
+  return 1-2*(j1+j2+j3+j4)/4;
+}*/
 
 double Recombinator::max_scaled_jacobian(MElement* element,int& index){
   double val;
@@ -3453,7 +3469,7 @@ double Recombinator::max_scaled_jacobian(MElement* element,int& index){
 
 double Recombinator::min_scaled_jacobian(Hex &hex){
   int i;
-  double min;
+  double min, max;
   double j1,j2,j3,j4,j5,j6,j7,j8;
   MVertex *a,*b,*c,*d;
   MVertex *e,*f,*g,*h;
@@ -3469,13 +3485,13 @@ double Recombinator::min_scaled_jacobian(Hex &hex){
   h = hex.get_h();
 
   j1 = scaled_jacobian(a,b,d,e);
-  j2 = scaled_jacobian(b,a,c,f);
-  j3 = scaled_jacobian(c,b,d,g);
+  j2 = scaled_jacobian(b,c,a,f);
+  j3 = scaled_jacobian(c,d,b,g);
   j4 = scaled_jacobian(d,a,c,h);
-  j5 = scaled_jacobian(e,a,f,h);
-  j6 = scaled_jacobian(f,b,e,g);
-  j7 = scaled_jacobian(g,c,f,h);
-  j8 = scaled_jacobian(h,d,e,g);
+  j5 = scaled_jacobian(e,h,f,a);
+  j6 = scaled_jacobian(f,e,g,b);
+  j7 = scaled_jacobian(g,f,h,c);
+  j8 = scaled_jacobian(h,g,e,d);
 
   jacobians.push_back(j1);
   jacobians.push_back(j2);
@@ -3487,11 +3503,48 @@ double Recombinator::min_scaled_jacobian(Hex &hex){
   jacobians.push_back(j8);
 
   min = 1000000000.0;
+  max = -1000000000.0;
   for(i=0;i<8;i++){
-    if(jacobians[i]<=min){
-      min = jacobians[i];
-    }
+    min = std::min(min, jacobians[i]);
+    max = std::max(max, jacobians[i]);
   }
+  if (max < 0) min = -max;
+
+  /*MHexahedron *h1 = new MHexahedron(a, b, c, d, e, f, g, h);
+  MHexahedron *h2 = new MHexahedron(e, f, g, h, a, b, c, d);
+  double min1 = jacobianBasedQuality::minScaledJacobian(h1);
+  double min2 = jacobianBasedQuality::minScaledJacobian(h2);
+  for(i=0;i<8;i++){
+    file << jacobians[i] << " ";
+  }
+  file << min << " " << min1 << " " << min2 << std::endl;
+  //file << min << " " << min1 << " " << min2 << std::endl;
+  delete h1;
+  delete h2;
+
+  double Min = std::max(min1,min2);*/ //fordebug
+
+  //return min > Min+.2 ? min : 0;
+
+  /*j1 = scaled_jacobian_face(a,b,c,d);
+  j2 = scaled_jacobian_face(e,f,g,h);
+  j3 = scaled_jacobian_face(a,b,f,e);
+  j4 = scaled_jacobian_face(b,c,g,f);
+  j5 = scaled_jacobian_face(c,d,h,g);
+  j6 = scaled_jacobian_face(d,a,e,h);
+
+  //Msg::Info("%g | %g %g %g %g %g %g", min, j1, j2, j3, j4, j5, j6);
+
+  jacobians.clear();
+  jacobians.push_back(j1);
+  jacobians.push_back(j2);
+  jacobians.push_back(j3);
+  jacobians.push_back(j4);
+  jacobians.push_back(j5);
+  jacobians.push_back(j6);
+  for(i=0;i<6;i++){
+    min = std::min(min, jacobians[i]);
+  }*/ // trying to have plane faces
 
   return min;
 }
@@ -3594,9 +3647,14 @@ void Supplementary::execute(GRegion* gr){
   build_vertex_to_tetrahedra(gr);
   printf("connectivity\n");
 
+
+  //file.open("qualPri.txt", std::fstream::out); //fordebug
+
   potential.clear();
   pattern(gr);
   printf("pattern\n");
+
+  //file.close(); //fordebug
 
   hash_tableA.clear();
   hash_tableB.clear();
@@ -3746,7 +3804,7 @@ void Supplementary::merge(GRegion* gr){
   for(i=0;i<potential.size();i++){
     prism = potential[i];
 
-    threshold = 0.15;
+    threshold = 0.6;
     if(prism.get_quality()<threshold){
       break;
     }
@@ -4850,24 +4908,27 @@ void Supplementary::build_hash_tableC(Diagonal diagonal){
 
 double Supplementary::scaled_jacobian(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
   double val;
-  double l1,l2,l3;
-  SVector3 vec1,vec2,vec3;
+  double l1,l2,l3,l4;
+  SVector3 vec1,vec2,vec3,vec4;
+  static double coeff = 2/std::sqrt(3);
 
   vec1 = SVector3(b->x()-a->x(),b->y()-a->y(),b->z()-a->z());
   vec2 = SVector3(c->x()-a->x(),c->y()-a->y(),c->z()-a->z());
   vec3 = SVector3(d->x()-a->x(),d->y()-a->y(),d->z()-a->z());
+  vec4 = SVector3(b->x()-c->x(),b->y()-c->y(),b->z()-c->z());
 
   l1 = vec1.norm();
   l2 = vec2.norm();
   l3 = vec3.norm();
+  l4 = vec4.norm();
 
   val = dot(vec1,crossprod(vec2,vec3));
-  return fabs(val)/(l1*l2*l3);
+  return val * (1/(l1*l2*l3) + 1/(l1*l4*l3) + 1/(l2*l4*l3)) / 3 * coeff;
 }
 
 double Supplementary::min_scaled_jacobian(Prism prism){
   int i;
-  double min;
+  double min, max;
   double j1,j2,j3,j4,j5,j6;
   MVertex *a,*b,*c;
   MVertex *d,*e,*f;
@@ -4881,11 +4942,11 @@ double Supplementary::min_scaled_jacobian(Prism prism){
   f = prism.get_f();
 
   j1 = scaled_jacobian(a,b,c,d);
-  j2 = scaled_jacobian(b,a,c,e);
+  j2 = scaled_jacobian(b,c,a,e);
   j3 = scaled_jacobian(c,a,b,f);
-  j4 = scaled_jacobian(d,a,e,f);
-  j5 = scaled_jacobian(e,b,d,f);
-  j6 = scaled_jacobian(f,c,d,e);
+  j4 = scaled_jacobian(d,f,e,a);
+  j5 = scaled_jacobian(e,d,f,b);
+  j6 = scaled_jacobian(f,e,d,c);
 
   jacobians.push_back(j1);
   jacobians.push_back(j2);
@@ -4895,11 +4956,23 @@ double Supplementary::min_scaled_jacobian(Prism prism){
   jacobians.push_back(j6);
 
   min = 1000000000.0;
+  max = -1000000000.0;
   for(i=0;i<6;i++){
-    if(jacobians[i]<=min){
-      min = jacobians[i];
-    }
+    min = std::min(min, jacobians[i]);
+    max = std::max(max, jacobians[i]);
   }
+  if (max < 0) min = -max;
+
+  /*MPrism *p1 = new MPrism(a, b, c, d, e, f);
+  MPrism *p2 = new MPrism(d, e, f, a, b, c);
+  double min1 = jacobianBasedQuality::minScaledJacobian(p1);
+  double min2 = jacobianBasedQuality::minScaledJacobian(p2);
+  for(i=0;i<6;i++){
+    file << jacobians[i] << " ";
+  }
+  file << min << " " << min1 << " " << min2 << std::endl;
+  delete p1;
+  delete p2;*/ //fordebug
 
   return min;
 }

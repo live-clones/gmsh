@@ -272,6 +272,8 @@ protected:
   std::multiset<Diagonal> hash_tableC;
   std::multiset<Tuple> tuples;
   std::set<MElement*> triangles;
+  //std::fstream file; //fordebug
+
 public:
   Recombinator();
   ~Recombinator();
@@ -368,6 +370,7 @@ public:
   void print_segment(SPoint3,SPoint3,std::ofstream&);
 
   double scaled_jacobian(MVertex*,MVertex*,MVertex*,MVertex*);
+  //double scaled_jacobian_face(MVertex*,MVertex*,MVertex*,MVertex*);
   double max_scaled_jacobian(MElement*,int&);
   double min_scaled_jacobian(Hex&);
 };
@@ -545,6 +548,8 @@ private:
   std::multiset<Diagonal> hash_tableC;
   std::multiset<Tuple> tuples;
   std::set<MElement*> triangles;
+  //std::fstream file; //fordebug
+
 public:
   Supplementary();
   ~Supplementary();
