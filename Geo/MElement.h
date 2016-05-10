@@ -216,8 +216,9 @@ class MElement
     signedInvCondNumRange(sICNMin, sICNMax);
     return sICNMin;
   }
-  double minAnisotropyMeasure();
+  double minAnisotropyMeasure(bool knownValid = false);
   double specialQuality();
+  double specialQuality2();
   virtual double angleShapeMeasure() { return 1.0; }
   virtual void scaledJacRange(double &jmin, double &jmax, GEntity *ge = 0) const;
   virtual void idealJacRange(double &jmin, double &jmax, GEntity *ge = 0);
@@ -268,7 +269,7 @@ class MElement
   virtual const nodalBasis* getFunctionSpace(int order=-1, bool serendip=false) const;
 
   // get the function space for the jacobian of the element
-  virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const { return 0; }
+  virtual const JacobianBasis* getJacobianFuncSpace(int order=-1) const;
 
   // return parametric coordinates (u,v,w) of a vertex
   virtual void getNode(int num, double &u, double &v, double &w) const;

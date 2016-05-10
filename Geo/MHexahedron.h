@@ -59,7 +59,6 @@ class MHexahedron : public MElement {
   virtual MVertex *getVertex(int num){ return _v[num]; }
   virtual const MVertex *getVertex(int num) const { return _v[num]; }
   virtual void setVertex(int num,  MVertex *v){ _v[num] = v; }
-  virtual const JacobianBasis* getJacobianFuncSpace(int o=-1) const;
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[8] = {2, 3, 7, 6, 0, 1, 5, 4};

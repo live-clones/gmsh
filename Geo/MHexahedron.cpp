@@ -178,12 +178,6 @@ int MHexahedronN::getNumEdgesRep(bool curved)
   return curved ? 12 * CTX::instance()->mesh.numSubEdges : 12;
 }
 
-const JacobianBasis* MHexahedron::getJacobianFuncSpace(int order) const
-{
-  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
-}
-
 void _myGetFaceRep(MHexahedron *hex, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
 {

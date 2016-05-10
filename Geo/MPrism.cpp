@@ -36,12 +36,6 @@ void MPrism::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQPriPts(pOrder);
 }
 
-const JacobianBasis* MPrism::getJacobianFuncSpace(int order) const
-{
-  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
-}
-
 double MPrism::getInnerRadius()
 {
   double dist[3], k = 0.;

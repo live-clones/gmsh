@@ -114,12 +114,6 @@ void MTriangle::xyz2uvw(double xyz[3], double uvw[3]) const
   uvw[2] = 0.;
 }
 
-const JacobianBasis* MTriangle::getJacobianFuncSpace(int order) const
-{
-  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
-}
-
 int MTriangleN::getNumEdgesRep(bool curved) {
   return curved ? 3 * CTX::instance()->mesh.numSubEdges : 3;
 }

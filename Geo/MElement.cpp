@@ -235,10 +235,10 @@ double MElement::maxDistToStraight() const
   return maxdx;
 }
 
-double MElement::minAnisotropyMeasure()
+double MElement::minAnisotropyMeasure(bool knownValid)
 {
 #if defined(HAVE_MESH)
-  return jacobianBasedQuality::minAnisotropyMeasure(this);
+  return jacobianBasedQuality::minAnisotropyMeasure(this, knownValid);
 #else
   return 0.;
 #endif
@@ -252,7 +252,21 @@ double MElement::specialQuality()
   if (minJ == 0.) return 0;
   if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
   if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
-  return jacobianBasedQuality::minAnisotropyMeasure(this);
+  return jacobianBasedQuality::minAnisotropyMeasure(this, true);
+#else
+  return 0;
+#endif
+}
+
+double MElement::specialQuality2()
+{
+#if defined(HAVE_MESH)
+  double minJ, maxJ;
+  jacobianBasedQuality::minMaxJacobianDeterminant(this, minJ, maxJ);
+  if (minJ == 0.) return 0;
+  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
+  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
+  return jacobianBasedQuality::minScaledJacobian(this, true);
 #else
   return 0;
 #endif
@@ -529,9 +543,9 @@ int MElement::getValidity()
 #if defined(HAVE_MESH)
   double jmin, jmax;
   jacobianBasedQuality::minMaxJacobianDeterminant(this, jmin, jmax);
-  if (jmin > .0 && jmax > .0) return 1; // valid
+  if (jmin > .0) return 1; // valid
   if (jmax >= .0) return 0; // invalid
-  // Here, jmin < 0 and jmax < 0. The element validity is quite indeterminate.
+  // Here, jmax < 0 (and jmin < 0). The element validity is quite indeterminate.
   // It can be valid but with a wrong numbering of the nodes,
   // or it can be invalid, i.e. with nodes that are incorrectly located.
   return -1;
@@ -552,6 +566,12 @@ const nodalBasis* MElement::getFunctionSpace(int order, bool serendip) const
   if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
   int tag = ElementType::getTag(getType(), order, serendip);
   return tag ? BasisFactory::getNodalBasis(tag) : NULL;
+}
+
+const JacobianBasis* MElement::getJacobianFuncSpace(int order) const
+{
+  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
+  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
 }
 
 static double _computeDeterminantAndRegularize(const MElement *ele, double jac[3][3])

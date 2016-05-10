@@ -53,9 +53,8 @@ public:
   // Constructors using MElement*
   FuncSpaceData(const MElement *el, const bool *serendip = NULL);
   FuncSpaceData(const MElement *el, int order, const bool *serendip = NULL);
-  FuncSpaceData(const MElement *el,
-                bool pyr, int nij, int nk,
-                const bool *serendip = NULL);
+  FuncSpaceData(const MElement *el, bool pyr, int nij, int nk,
+                                    const bool *serendip = NULL);
 
   // Constructor using element tag
   FuncSpaceData(int tag, const bool *serendip = NULL);

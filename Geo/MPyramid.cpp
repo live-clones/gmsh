@@ -33,12 +33,6 @@ void MPyramid::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQPyrPts(pOrder);
 }
 
-const JacobianBasis* MPyramid::getJacobianFuncSpace(int order) const
-{
-  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
-}
-
 MPyramidN::~MPyramidN() {}
 
 int MPyramidN::getNumEdgesRep(bool curved)

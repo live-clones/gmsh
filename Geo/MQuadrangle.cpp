@@ -16,12 +16,6 @@
 
 #define SQU(a)      ((a)*(a))
 
-const JacobianBasis* MQuadrangle::getJacobianFuncSpace(int order) const
-{
-  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
-}
-
 int MQuadrangleN::getNumEdgesRep(bool curved)
 {
   return curved ? 4 * CTX::instance()->mesh.numSubEdges : 4;

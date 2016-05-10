@@ -100,12 +100,6 @@ void MTetrahedron::xyz2uvw(double xyz[3], double uvw[3]) const
   sys3x3(mat, b, uvw, &det);
 }
 
-const JacobianBasis* MTetrahedron::getJacobianFuncSpace(int order) const
-{
-  if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
-}
-
 int MTetrahedron10::getNumEdgesRep(bool curved){
   return curved ? 6 * CTX::instance()->mesh.numSubEdges : 6;
 }
