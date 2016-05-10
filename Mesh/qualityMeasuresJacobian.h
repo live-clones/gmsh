@@ -16,8 +16,13 @@ class MElement;
 namespace jacobianBasedQuality {
 
 void minMaxJacobianDeterminant(MElement *el, double &min, double &max);
-double minScaledJacobian(MElement *el);
-double minAnisotropyMeasure(MElement *el, int n = 5);
+double minScaledJacobian(MElement *el,
+                         bool knownValid = false,
+                         bool reversedOk = false);
+double minAnisotropyMeasure(MElement *el,
+                            bool knownValid = false,
+                            bool reversedOk = false,
+                            int n = 5); //n is fordebug
 //double minSampledAnisotropyMeasure(MElement *el, int order,//fordebug
 //                                   bool writeInFile = false);
 
@@ -40,6 +45,7 @@ public:
 
   virtual bool boundsOk(double minL, double maxL) const = 0;
   virtual void getSubCoeff(std::vector<_CoeffData*>&) const = 0;
+  virtual int getNumMeasure() const {return 0;}//fordebug
 };
 
 struct _lessMinB {
@@ -61,6 +67,7 @@ public:
 
   bool boundsOk(double minL, double maxL) const;
   void getSubCoeff(std::vector<_CoeffData*>&) const;
+  int getNumMeasure() const {return 1;}//fordebug
 };
 
 class _CoeffDataScaledJac: public _CoeffData
@@ -69,21 +76,29 @@ private:
   const fullVector<double> _coeffsJacDet;
   const fullMatrix<double> _coeffsJacMat;
   const bezierBasis *_bfsDet, *_bfsMat;
+  int _type;
+  static double cTri;
+  static double cTet;
+  static double cPyr;
 
 public:
   _CoeffDataScaledJac(fullVector<double> &det,
                      fullMatrix<double> &mat,
                      const bezierBasis *bfsDet,
                      const bezierBasis *bfsMat,
-                     int depth);
+                     int depth, int type);
   ~_CoeffDataScaledJac() {}
 
   bool boundsOk(double minL, double maxL) const;
   void getSubCoeff(std::vector<_CoeffData*>&) const;
+  int getNumMeasure() const {return 2;}//fordebug
 
 private:
   void _computeAtCorner(double &min, double &max) const;
   double _computeLowerBound() const;
+  void _getCoeffLengthVectors(fullMatrix<double> &, bool corners = false) const;
+  void _getCoeffScaledJacobian(const fullMatrix<double> &coeffLengthVectors,
+                               fullMatrix<double> &coeffScaledJacobian) const;
 };
 
 class _CoeffDataAnisotropy: public _CoeffData
@@ -100,15 +115,19 @@ private:
 public:
   static std::vector<double> mytimes;//fordebug
   static std::vector<int> mynumbers;//fordebug
+  static MElement *currentElement;//fordebug
+  static _CoeffDataAnisotropy *current;//fordebug
   _CoeffDataAnisotropy(fullVector<double> &det,
                        fullMatrix<double> &metric,
                        const bezierBasis *bfsDet,
                        const bezierBasis *bfsMet,
-                       int depth, MElement *, int num = 0);
+                       int depth, MElement *,
+                       int num = 0);
   ~_CoeffDataAnisotropy() {}
 
   bool boundsOk(double minL, double maxL) const;
   void getSubCoeff(std::vector<_CoeffData*>&) const;
+  int getNumMeasure() const {return 3;}//fordebug
 
   static int metricOrder(MElement *el);
   static void fillMetricCoeff(const GradientBasis*,
@@ -117,7 +136,11 @@ public:
                               int dim, bool ideal);
 
   static bool noMoreComputationPlease() {return hasError;}//fordebug
-  static void youReceivedAnError() {hasError = true;}//fordebug
+  static void youReceivedAnError()
+  {
+    current->statsForMatlab(currentElement, 20);
+    hasError = true;
+  }//fordebug
 
 private:
   void _computeAtCorner(double &min, double &max) const;
