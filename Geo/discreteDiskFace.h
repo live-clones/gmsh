@@ -57,8 +57,10 @@ class triangulation {
   GFace *gf;
   int idNum; // number of identification, for hashing purposes
 
-  int genus()
-  {
+  std::list<GEdge*> my_GEdges;
+  
+  //methods
+  int genus(){
     return ( -vert.size() + ed2tri.size() - tri.size() + 2 - bord.size() )/2;
   }
 

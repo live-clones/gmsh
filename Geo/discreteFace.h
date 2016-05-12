@@ -15,6 +15,7 @@
 #include "meshPartition.h"
 #include "MTriangle.h"
 #include "MEdge.h"
+#include "MLine.h"
 #include <stdlib.h>
 
 class discreteDiskFace;

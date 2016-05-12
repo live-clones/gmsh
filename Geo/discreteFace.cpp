@@ -105,12 +105,11 @@ void discreteFace::secondDer(const SPoint2 &param,
   return;
 }
 
-// FIXME PAB ----> really create an atlas !!!!!!!!!!!!!!!
 void discreteFace::createGeometry()
 {
   checkAndFixOrientation();
 
-  int order = 1;
+  int order = 2;
   int nPart = 2;
   std::vector<triangulation*> part;
   part.resize(nPart);
@@ -122,7 +121,11 @@ void discreteFace::createGeometry()
   std::stack<triangulation*>  toSplit;
   std::vector<triangulation*> toParam;
   std::vector<MElement*> tem(triangles.begin(),triangles.end());
-  toSplit.push(new triangulation(tem,this));
+
+  triangulation* init = new triangulation(tem,this);
+  init->my_GEdges = l_edges;
+
+  toSplit.push(init);  
   if((toSplit.top())->genus()!=0){
     
     while( !toSplit.empty()){
@@ -139,6 +142,7 @@ void discreteFace::createGeometry()
 	else{
 	  toParam.push_back(part[i]);
 	  part[i]->idNum=id++;
+	  // discreteEdges
 	}
       }// end for i      
     }
@@ -148,10 +152,11 @@ void discreteFace::createGeometry()
     toParam.push_back(toSplit.top());
     toSplit.top()->idNum=id++;
   }
-
-  for(unsigned int i=0; i<toParam.size(); i++){
+  
+  for(unsigned int i=0; i<toParam.size(); i++){     
+    std::vector<MElement*> mytri = toParam[i]->tri;
     discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));
-    df->replaceEdges(l_edges);// #FIXME
+    df->replaceEdges(toParam[i]->my_GEdges);
     _atlas.push_back(df);
   }  
 #endif
@@ -215,7 +220,7 @@ void discreteFace::checkAndFixOrientation(){
   
   // first of all, all the triangles have to be oriented in the same way
   std::map<MEdge,std::vector<MElement*>,Less_Edge> ed2tri; // edge to 1 or 2 triangle(s)
-
+ 
   for(unsigned int i = 0; i < triangles.size(); ++i){
     MElement *e = triangles[i];
     for(int j = 0; j <  e->getNumEdges() ; j++){
@@ -281,7 +286,7 @@ void discreteFace::checkAndFixOrientation(){
 	    if (!(current->getVertex(k!=2 ?k+1 : 0 ) == neigs[i]->getVertex(j!=0 ? j-1 : 2) ||
 		  current->getVertex(k!=0 ?k-1 : 2 ) == neigs[i]->getVertex(j!=2 ? j+1 : 0))){
 	      neigs[i]->reverse();
-	      Msg::Info("discreteDiskFace: triangle %d has been reoriented.",neigs[i]->getNum());
+	      Msg::Info("discreteFace: triangle %d has been reoriented.",neigs[i]->getNum());
 	    }
 	    break;
 	  }
@@ -315,8 +320,8 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
       
       MEdge ed = current->getEdge(j);
       int nEd = trian->ed2tri[ed].size();
-      
-      if (nEd > 1){
+
+      if (nEd > 1){	
 	std::vector<int> local = trian->ed2tri[ed];
 	nbh[idx[i]+temp] = local[0] == i ? local[1] : local[0];
 	temp++;
@@ -333,17 +338,138 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
   std::vector<int> part;
   part.resize(nVertex);
   int zero = 0;
-  METIS_PartGraphRecursive(&nVertex,&idx[0],&nbh[0],NULL,NULL,&zero,&zero,&nPartitions,&zero,&edgeCut,&part[0]);
-  // CONNEC
+  METIS_PartGraphRecursive(&nVertex,&(idx[0]),&(nbh[0]),NULL,NULL,&zero,&zero,&nPartitions,&zero,&edgeCut,&(part[0]));
+
   std::vector<std::vector<MElement*> > elem;
   elem.resize(nPartitions);
 
   for(int i=0; i<nVertex; i++)
     elem[part[i]].push_back(trian->tri[i]);
-
+  
   for(int i=0; i<nPartitions; i++)
     partition[i] = new triangulation(elem[i],this);
   
+  
+
+  for(int i=0; i<nPartitions; i++){// setting GEdge's
+
+    //"update" old GEdge's
+    std::list<GEdge*> upGed = partition[i]->my_GEdges;// old GEdge's list
+    for(std::list<GEdge*>::iterator cGedg=trian->my_GEdges.begin(); cGedg!=trian->my_GEdges.end(); cGedg++){// GEdge by GEdge
+      std::set<MVertex*> first, last;
+      double lc = 0.;
+      std::vector<MLine*> upMli;     
+      for(unsigned int k=0; k<(*cGedg)->lines.size(); k++){// MLine by MLine (for a GEdge)
+	MLine* cMli = (*cGedg)->lines[k];
+	std::set<MVertex*>::iterator mvit0 = partition[i]->vert.find(cMli->getVertex(0));
+	std::set<MVertex*>::iterator mvit1 = partition[i]->vert.find(cMli->getVertex(1));
+	if(mvit0 != partition[i]->vert.end() && mvit1 != partition[i]->vert.end()){// check if the MLine belong to this part
+
+	  if( first.find(cMli->getVertex(1)) != first.end() )
+	    first.erase(cMli->getVertex(1));
+	  else
+	    last.insert(cMli->getVertex(1));
+	  
+	  if( last.find(cMli->getVertex(0)) != last.end() )
+	    last.erase(cMli->getVertex(0));
+	  else
+	    first.insert(cMli->getVertex(0));
+	  
+	  upMli.push_back(cMli);
+	  lc += cMli->getLength();
+
+	}
+      }// end for k  
+      GVertex *v0, *v1;
+      if(first.empty()){
+	v0 = this->model()->addVertex(upMli[0]->getVertex(0)->x(),upMli[0]->getVertex(0)->y(),upMli[0]->getVertex(0)->z(),1.);//#fixme
+	v1 = v0;
+      }
+      else{
+	v0 = this->model()->addVertex((*(first.begin()))->x(),(*(first.begin()))->y(),(*(first.begin()))->z(),1.);//#fixme
+	v1 = this->model()->addVertex((*(last.begin()))->x(),(*(last.begin()))->y(),(*(last.begin()))->z(),1.);
+      }
+      upGed.push_back(this->model()->addLine(v0,v1));
+      upGed.back()->lines = upMli;
+    }// end for j
+    
+    
+    // create new GEdge's
+    std::set<MEdge,Less_Edge> bordi = partition[i]->borderEdg;// edges defining the border(s) of the i-th new triangulation
+    for(int ii=i+1; ii<nPartitions; ii++){// compare to the ii-th ones, with ii > i since ii < i have already been compared
+      std::map<MVertex*,MLine*> v02edg;//first vertex of the MLine
+      std::set<MVertex*> first, last;
+      for(std::set<MEdge,Less_Edge>::iterator ie = bordi.begin();
+	  ie != bordi.end(); ++ie){// MEdge by MEdge of the i-th triangulation border(s) 
+
+	std::set<MEdge,Less_Edge> bii = partition[ii]->borderEdg;// edges defining the border(s) of the ii-th new triangulation
+	if(bii.find(*ie)!=bii.end()){// if the border edge is common to both triangulations . . .
+	  
+	  v02edg[ie->getVertex(0)] = new MLine(ie->getVertex(0),ie->getVertex(1));// . . . a new MLine is created
+
+	  // identifying first and last vertices of GEdge's, if any
+	  if( first.find(ie->getVertex(1)) != first.end() )
+	    first.erase(ie->getVertex(1));
+	  else
+	    last.insert(ie->getVertex(1));	  
+	  if( last.find(ie->getVertex(0)) != last.end() )
+	    last.erase(ie->getVertex(0));
+	  else
+	    first.insert(ie->getVertex(0));	  	  
+	}
+
+      }//end for ie
+
+
+      while(!v02edg.empty()){// creation of the GEdge's from new MLine's
+	
+	GVertex *v0, *v1;
+	
+	while(!first.empty()){// starting with nonloop GEdge's
+	  
+	  std::vector<MLine*> myLines;// MLine's of the current nonloop GEdge
+	  std::set<MVertex*>::iterator itf = first.begin();
+	  MVertex* cv0 = *itf;// starting with a first vertex
+	  while(last.find(cv0) != last.end()){// until reaching the corresponding last vertex
+	    myLines.push_back(v02edg[cv0]);// push the correspong MLine
+	    v02edg.erase(cv0);// and erasing it from the "list"
+	    cv0 = myLines.back()->getVertex(1);// next vertex
+	  }
+	  
+	  v0 = this->model()->addVertex((*itf)->x(),myLines[0]->getVertex(0)->y(),myLines[0]->getVertex(0)->z(),1.);
+	  v1 = this->model()->addVertex(cv0->x(),cv0->y(),cv0->z(),1.);
+	  
+	  GEdge* toadd = this->model()->addLine(v0,v1);// new GEdge
+	  toadd->lines = myLines;// associated MLine's
+	  
+	  partition[i]->my_GEdges.push_back(toadd);
+	  partition[ii]->my_GEdges.push_back(toadd);
+	  
+	  first.erase(itf);// next first vertex of a nonloop GEdge
+	}//end while first.empty()
+	
+	std::vector<MLine*> my_MLines;// remaining MLines for 'loop'GEdge's
+	MVertex* cv0 = v02edg.begin()->first;
+	while(v02edg.find(cv0) != v02edg.end()){// a loop GEdge	  
+	  my_MLines.push_back(v02edg[cv0]);// current MLine of the loop
+	  v02edg.erase(cv0);// update the container
+	  cv0 = my_MLines.back()->getVertex(1);// next MLine of the loop	  	  
+	}
+
+	v0 =  this->model()->addVertex(cv0->x(),cv0->y(),cv0->z(),1.);
+	v1 = v0;
+
+	GEdge* to_add = this->model()->addLine(v0,v1);
+	to_add->lines = my_MLines;
+
+	partition[i]->my_GEdges.push_back(to_add);
+	partition[ii]->my_GEdges.push_back(to_add);
+	
+      }// end while v02edg.empty()
+      
+    }//end for ii
+    
+  }// end for i
 
   return;
 }

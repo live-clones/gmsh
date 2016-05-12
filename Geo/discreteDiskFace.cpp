@@ -203,13 +203,14 @@ static bool orderVertices(const double &tot_length, const std::vector<MVertex*> 
 				(next->z() - first->z()) * (next->z() - first->z()) );
 
     coord.push_back(coord[coord.size()-1] + length / tot_length);
-
+    
     first = next;
 
   }
   return true;
 }
 
+/*BUILDER*/
 discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
                                    int p, std::vector<GFace*> *CAD) :
   GFace(gf->model(),123), _parent (gf), _ddft(NULL), oct(NULL)
@@ -280,9 +281,8 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
   geoTriangulation = new triangulation(discrete_triangles,gf);
 
   allNodes = geoTriangulation->vert;
-  _U0 = geoTriangulation->bord.rbegin()->second;
   _totLength = geoTriangulation->bord.rbegin()->first;
-
+  _U0 = geoTriangulation->bord.rbegin()->second;
 
   orderVertices(_totLength, _U0, _coords);
 
@@ -290,14 +290,14 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
   buildOct(CAD);
 
   if (!checkOrientationUV()){
-    Msg::Info("discreteDIskFace:: parametrization is not one-to-one; fixing "
+    Msg::Info("discreteDiskFace:: parametrization is not one-to-one; fixing "
               "the discrete system.");
     parametrize(true);
     buildOct(CAD);
   }
-
   putOnView();
 }
+/*end BUILDER*/
 
 discreteDiskFace::~discreteDiskFace()
 {
@@ -356,8 +356,14 @@ bool discreteDiskFace::parametrize(bool one2one) const
   for(size_t i = 0; i < _U0.size(); i++){
     MVertex *v = _U0[i];
     const double theta = 2 * M_PI * _coords[i];
-    myAssemblerU.fixVertex(v, 0, 1, cos(theta));
-    myAssemblerV.fixVertex(v, 0, 1, sin(theta));
+    if(i%_order==0){
+      myAssemblerU.fixVertex(v, 0, 1, cos(theta));
+      myAssemblerV.fixVertex(v, 0, 1, sin(theta));
+    }
+    else{//#TEST
+      myAssemblerU.fixVertex(v, 0, 1,1./_order*((_order-(i%_order))*cos(2*M_PI*_coords[i-(i%_order)])+(i%_order)*cos(2*M_PI*_coords[i+(_order-(i%_order))])));
+      myAssemblerV.fixVertex(v, 0, 1,1./_order*((_order-(i%_order))*sin(2*M_PI*_coords[i-(i%_order)])+(i%_order)*sin(2*M_PI*_coords[i+(_order-(i%_order))])));
+    }
   }
 
   for(size_t i = 0; i < discrete_triangles.size(); ++i){
