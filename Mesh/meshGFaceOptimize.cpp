@@ -1381,7 +1381,10 @@ void quadsToTriangles(GFace *gf, double minqual)
         gf->triangles.push_back(t22);
         delete t11; delete t12;
       }
-      delete q;
+      delete q; // FIXME this makes gmsh to crash when creating BL with triangles
+      // quads created in meshGFace.cpp > modifyInitialMeshForTakingIntoAccountBoundaryLayers(..)
+      // quads deleted here
+      // quads used in getAllBoundaryLayerVertices(..) => crash
     }
     else {
       qds.push_back(q);
