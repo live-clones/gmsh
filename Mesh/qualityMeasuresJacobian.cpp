@@ -143,7 +143,7 @@ double minScaledJacobian(MElement *el, bool knownValid, bool reversedOk)
 
     coeffMatBez.resize(gradBasis->getNumSamplingPoints(), 9);
     gradBasis->lag2Bez(coeffMatLag, coeffMatBez);
-    if (el->getDim() == 2) coeffMatBez.resize(coeffMatBez.size1(), 6);
+    if (el->getDim() == 2) coeffMatBez.resize(coeffMatBez.size1(), 6, false);
   }
 
   std::vector<_CoeffData*> domains;
@@ -518,7 +518,7 @@ double _CoeffDataScaledJac::_computeLowerBound() const
 void _CoeffDataScaledJac::_getCoeffLengthVectors(fullMatrix<double> &coeff,
                                                  bool corners) const
 {
-  int sz1 = corners ? _bfsDet->getNumLagCoeff() : _coeffsJacMat.size2();
+  int sz1 = corners ? _bfsDet->getNumLagCoeff() : _coeffsJacMat.size1();
 
   switch (_type) {
     case TYPE_QUA: coeff.resize(sz1, 2); break;
@@ -578,101 +578,6 @@ void _CoeffDataScaledJac::_getCoeffLengthVectors(fullMatrix<double> &coeff,
   }
 }
 
-
-/*
-
-void _CoeffDataScaledJac::_getCoeffScaledJacobian(const fullMatrix<double> &v,
-                                                  fullMatrix<double> &coeff) const
-{
-  int sz1 = v.size1();
-
-  switch (_type) {
-    case TYPE_PRI: coeff.resize(sz1, 3); break;
-    case TYPE_TET: coeff.resize(sz1, 4); break;
-    case TYPE_PYR: coeff.resize(sz1, 8); break;
-    default:
-      Msg::Error("Unkown type for scaled jac computation");
-      coeff.resize(0, 0);
-      return;
-  }
-
-  switch(_type) {
-  case TYPE_QUA:
-    coeff.resize(sz1, 1);
-    for (int i = 0; i < sz1; i++) {
-      coeff(i, 0) = _coeffsJacDet(i)/v(0,i)/v(1,i);
-    }
-    break;
-  case TYPE_TRI:
-    coeff.resize(sz1, 3);
-    for (int i = 0; i < sz1; i++) {
-      coeff(i, 0) = 1/v(0,i)/v(1,i);
-      coeff(i, 1) = 1/v(0,i)/v(2,i);
-      coeff(i, 2) = 1/v(1,i)/v(2,i);
-    }
-    break;
-  case TYPE_HEX:
-    coeff.resize(sz1, 1);
-    for (int i = 0; i < sz1; i++) {
-      coeff(i, 0) = _coeffsJacDet(i)/v(0,i)/v(1,i)/v(2,i);
-    }
-    break;
-    case TYPE_PRI:
-    coeff.resize(sz1, 1);
-    for (int i = 0; i < sz1; i++) {
-      coeff(i, 0) =  (i)/v(0,i)/v(1,i)/v(2,i);
-      coeff(i, 1) = _coeffsJacDet(i)/v(0,i)/v(1,i)/v(2,i);
-      coeff(i, 2) = _coeffsJacDet(i)/v(0,i)/v(1,i)/v(2,i);
-    }
-    break;
-  }
-
-  min = std::numeric_limits<double>::infinity();
-  max = -min;
-
-  fullMatrix<double> v;
-  _getCoeffLengthVectors(v, true);
-
-  for (int i = 0; i < _bfsDet->getNumLagCoeff(); i++) {
-    double sJ;
-    switch(_type) {
-    case TYPE_QUA:
-      sJ =  _coeffsJacDet(i)/v(0,i)/v(1,i);
-      break;
-    case TYPE_HEX:
-      sJ = _coeffsJacDet(i)/v(0,i)/v(1,i)/v(2,i);
-      break;
-    case TYPE_TRI:
-      sJ = _coeffsJacDet(i) * (1/v(0,i)/v(1,i) +
-                               1/v(0,i)/v(2,i) +
-                               1/v(1,i)/v(2,i)) / 3;
-      break;
-    case TYPE_TET:
-      sJ = _coeffsJacDet(i) * (1/v(0,i)/v(1,i)/v(2,i) +
-                               1/v(0,i)/v(3,i)/v(4,i) +
-                               1/v(1,i)/v(3,i)/v(5,i) +
-                               1/v(2,i)/v(4,i)/v(5,i)) / 4;
-      break;
-    case TYPE_PRI:
-      sJ = _coeffsJacDet(i) * (1/v(0,i)/v(1,i)/v(2,i) +
-                               1/v(0,i)/v(3,i)/v(2,i) +
-                               1/v(1,i)/v(3,i)/v(2,i)) / 3;
-      break;
-    case TYPE_PYR:
-      sJ = _coeffsJacDet(i) * (1/v(0,i)/v(1,i)/v(2,i) + 1/v(4,i)/v(5,i)/v(2,i) +
-                               1/v(0,i)/v(1,i)/v(4,i) + 1/v(2,i)/v(3,i)/v(4,i) +
-                               1/v(0,i)/v(1,i)/v(5,i) + 1/v(2,i)/v(3,i)/v(5,i) +
-                               1/v(0,i)/v(1,i)/v(3,i) + 1/v(4,i)/v(5,i)/v(3,i)  ) / 8;
-      break;
-    default:
-      Msg::Error("Unkown type for scaled jac computation");
-      return;
-    }
-    min = std::min(min, sJ);
-    max = std::max(max, sJ);
-  }
-}
-*/
 bool _CoeffDataScaledJac::boundsOk(double minL, double maxL) const
 {
   static double tol = 1e-3;
@@ -743,7 +648,7 @@ void _CoeffDataAnisotropy::_computeAtCorner(double &min, double &max) const
   min = std::numeric_limits<double>::infinity();
   max = -min;
 
-  for (int i = 0; i < _bfsDet->getNumLagCoeff(); i++) {
+  for (int i = 0; i < _bfsMet->getNumLagCoeff(); i++) {
     const double &q = _coeffsMetric(i, 0);
     double p = 0;
     for (int k = 1; k < _coeffsMetric.size2(); ++k) {
