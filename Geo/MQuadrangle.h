@@ -137,6 +137,11 @@ class MQuadrangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
   }
+  // reorient the quadrangle to conform with other face
+  // orientation computed with MFace based on this face with respect to other 
+  // in computeCorrespondence
+  virtual void reorient(int rotation, bool swap);
+  
   virtual bool isInside(double u, double v, double w) const
   {
     double tol = _isInsideTolerance;
@@ -242,6 +247,12 @@ class MQuadrangle8 : public MQuadrangle {
     tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
     tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
   }
+
+  // reorient the quadrangle to conform with other face
+  // orientation computed with MFace based on this face with respect to other 
+  // in computeCorrespondence
+  virtual void reorient(int rotation, bool swap);
+  
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 4 ? MQuadrangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
@@ -324,6 +335,12 @@ class MQuadrangle9 : public MQuadrangle {
     tmp = _vs[0]; _vs[0] = _vs[3]; _vs[3] = tmp;
     tmp = _vs[1]; _vs[1] = _vs[2]; _vs[2] = tmp;
   }
+
+  // reorient the quadrangle to conform with other face
+  // orientation computed with MFace based on this face with respect to other 
+  // in computeCorrespondence
+  virtual void reorient(int rotation, bool swap);
+  
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 4 ? MQuadrangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
@@ -442,6 +459,12 @@ class MQuadrangleN : public MQuadrangle {
     inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
     _vs = inv;
   }
+  
+  // reorient the quadrangle to conform with other face
+  // orientation computed with MFace based on this face with respect to other 
+  // in computeCorrespondence
+  virtual void reorient(int rotation, bool swap);
+  
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 4 ? MQuadrangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);

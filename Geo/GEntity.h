@@ -349,9 +349,17 @@ class GEntity {
   GFace   *cast2Face();
   GRegion *cast2Region();
 
-  // periodic data
+  // update all vertex lists, including periodic connections 
+  void updateVertices(const std::map<MVertex*,MVertex*>&);
+  
+  // transformation from master
   std::vector<double> affineTransform;
+  
+  // corresponding principal vertices
   std::map<MVertex*,MVertex*> correspondingVertices;
+
+  // corresponding high order control points
+  std::map<MVertex*,MVertex*> correspondingHOPoints;
 
 };
 

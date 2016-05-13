@@ -27,6 +27,7 @@
 #include "MPoint.h"
 #include "MHexahedron.h"
 #include "MTetrahedron.h"
+#include "OS.h"
 
 GeomMeshMatcher *GeomMeshMatcher::_gmm_instance = 0;
 
@@ -582,9 +583,10 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
 }
 
 template <class GEType>
-static void copy_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor)
+static void copy_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor,
+                              std::map<MVertex*,MVertex*>& mesh_to_geom)
 {
-
+    
   typename std::multimap<GEType*,GEType*> eMap; // (eCor.begin(),eCor.end());
   typename std::vector<Pair<GEType*,GEType*> >::iterator eIter = eCor.begin();
   for (;eIter!=eCor.end();++eIter) {
@@ -608,6 +610,30 @@ static void copy_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor)
       }
       GEType* newSrc = tgtIter->second;
       newTgt->setMeshMaster(newSrc,oldTgt->affineTransform);
+      
+      std::map<MVertex*,MVertex*>& oldV2v = oldTgt->correspondingVertices;
+      std::map<MVertex*,MVertex*>& newV2v = newTgt->correspondingVertices;
+
+      std::map<MVertex*,MVertex*>::iterator vIter = oldV2v.begin();
+      for (;vIter!=oldV2v.end();++vIter) {
+
+        MVertex* oldTgtV = vIter->first;
+        MVertex* oldSrcV = vIter->second;
+        
+        std::map<MVertex*,MVertex*>::iterator newTvIter = mesh_to_geom.find(oldTgtV);
+        std::map<MVertex*,MVertex*>::iterator newSvIter = mesh_to_geom.find(oldSrcV);
+        
+        if (newTvIter == mesh_to_geom.end()) {
+          Msg::Error("Could not find copy of target vertex %d in entity %d of dim",
+                     oldTgtV->getIndex(),oldTgt->tag(),oldTgt->dim());
+        }
+        
+        if (newSvIter == mesh_to_geom.end()) {
+          Msg::Error("Could not find copy of source vertex %d in entity %d of dim",
+                     oldSrcV->getIndex(),oldSrc->tag(),oldSrc->dim());
+        }
+        newV2v[newTvIter->second] = newSvIter->second;
+      }
     }
   }
 }
@@ -653,11 +679,13 @@ static void copy_vertices (GEdge* to, GEdge* from, std::map<MVertex*,MVertex*> &
     double t;
     GPoint gp = to->closestPoint(SPoint3(v_from->x(),v_from->y(),v_from->z()), t );
     MEdgeVertex *v_to = new MEdgeVertex (gp.x(),gp.y(),gp.z(), to, gp.u() );
+    
     to->mesh_vertices.push_back(v_to);
     _mesh_to_geom[v_from] = v_to;
   }
   //  printf("Ending Edge %d %d vertices to match\n",from->tag(),from->mesh_vertices.size());
 }
+
 static void copy_vertices (GFace *geom, GFace *mesh, std::map<MVertex*,MVertex*> &_mesh_to_geom){
   //  printf("Starting Face %d, with %d vertices\n", geom->tag(),  mesh->mesh_vertices.size());
   for (unsigned int i=0;i<mesh->mesh_vertices.size();i++){
@@ -683,8 +711,8 @@ static void copy_vertices (GFace *geom, GFace *mesh, std::map<MVertex*,MVertex*>
 
 template <class ELEMENT>
 static void copy_elements (std::vector<ELEMENT*> &to,
-			   std::vector<ELEMENT*> &from,
-			   std::map<MVertex*,MVertex*> &_mesh_to_geom){
+                           std::vector<ELEMENT*> &from,
+                           std::map<MVertex*,MVertex*> &_mesh_to_geom){
   MElementFactory toto;
   to.clear();
   for (unsigned int i=0;i < from.size();i++){
@@ -693,7 +721,7 @@ static void copy_elements (std::vector<ELEMENT*> &to,
     for(int j=0;j<e->getNumVertices();j++) {
       nodes.push_back(_mesh_to_geom[e->getVertex(j)]);
       if (_mesh_to_geom[e->getVertex(j)] == 0) {
-	printf("Error vertex %i\n", e->getVertex(j)->getNum());
+        printf("Error vertex %i\n", e->getVertex(j)->getNum());
       }
     }
     to.push_back( (ELEMENT*)(toto.create(e->getTypeForMSH(), nodes) ));
@@ -761,6 +789,10 @@ void copy_elements (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_me
 
 int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
 {
+  
+  Msg::StatusBar(true,"Matching discrete mesh to actual CAD ...");  
+  double t1 = Cpu();
+
   mesh->createTopologyFromMesh();
   GModel::setCurrent(geom);
 
@@ -772,18 +804,20 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
   std::vector<Pair<GRegion*, GRegion*> > *coresp_r = matchRegions (geom, mesh, coresp_f, ok);
 
   std::map<MVertex*,MVertex*> _mesh_to_geom;
-
-  copy_periodicity(*coresp_v);
-  copy_periodicity(*coresp_e);
-  copy_periodicity(*coresp_f);
   
-  copy_vertices(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
-  copy_elements(geom, mesh, _mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
-
+  copy_vertices(geom,mesh,_mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
+  copy_elements(geom,mesh,_mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
+  
+  copy_periodicity(*coresp_v,_mesh_to_geom);
+  copy_periodicity(*coresp_e,_mesh_to_geom);
+  copy_periodicity(*coresp_f,_mesh_to_geom);
+  
   delete coresp_v;
   delete coresp_e;
   delete coresp_f;
   delete coresp_r;
+
+  Msg::StatusBar(true,"Done matching discrete mesh to actual CAD",Cpu()-t1);
 
   return 1;
 }

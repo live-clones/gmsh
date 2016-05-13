@@ -1975,6 +1975,174 @@ static int connectedSurfaceBoundaries(std::set<MEdge, Less_Edge> &edges,
   return boundaries.size();
 }
 
+void GModel::alignPeriodicBoundaries() 
+{
+  Msg::Info("Aligning periodic boundaries");
+
+  // realigning edges 
+
+  for (eiter it = firstEdge();it!=lastEdge();++it) {
+    
+    GEdge* tgt = *it;
+    GEdge* src = dynamic_cast<GEdge*>(tgt->meshMaster());
+    
+    if (src != NULL && src != tgt) {
+      
+      Msg::Info("Aligning periodic edge connection %d-%d",
+                tgt->tag(),src->tag());
+
+      // compose a search list on master edge 
+
+      std::map<MEdge,MLine*,Less_Edge> srcLines;
+      for (unsigned int i=0;i<src->getNumMeshElements();i++)  {
+        MLine* srcLine = dynamic_cast<MLine*>(src->getMeshElement(i));
+        if (!srcLine) Msg::Error("Master element %d is not an edge ",
+                                 src->getMeshElement(i)->getNum());
+        srcLines[MEdge(srcLine->getVertex(0),
+                       srcLine->getVertex(1))] = srcLine;
+      }
+      
+      // run through slave edge elements 
+      // - check whether we find a counterpart (if not, flag error)
+      // - check orientation and reorient if necessary
+
+      for (unsigned int i = 0; i < tgt->getNumMeshElements(); ++i) {
+        
+        MLine* tgtLine = dynamic_cast<MLine*> (tgt->getMeshElement(i));
+        
+        if (!tgtLine) Msg::Error("Slave element %d is not an edge ",
+                            tgt->getMeshElement(i)->getNum());
+        
+        
+        MVertex* tgtVtcs[2];
+        for (int iVtx=0;iVtx<2;iVtx++) {
+          MVertex* tgtVtx = tgtLine->getVertex(iVtx);
+          std::map<MVertex*,MVertex*>& v2v = tgtVtx->onWhat()->correspondingVertices;
+          std::map<MVertex*,MVertex*>::iterator srcIter = v2v.find(tgtVtx);  
+          if (srcIter == v2v.end()) {
+            Msg::Error("Cannot find periodic counterpart of vertex %d"
+                       " of edge %d on edge %d",tgtVtx->getNum(),
+                       tgt->tag(),src->tag());
+          }
+          else tgtVtcs[iVtx] = srcIter->second;
+        }
+        
+        MEdge tgtEdge(tgtVtcs[0],tgtVtcs[1]);
+
+        std::map<MEdge,MLine*,Less_Edge>::iterator sIter = srcLines.find(tgtEdge);
+
+        if (sIter == srcLines.end()) {
+          Msg::Error("Can't find periodic counterpart of edge %d-%d on edge %d"
+                     ", connected to edge %d-%d on %d",
+                     tgtLine->getVertex(0)->getNum(),
+                     tgtLine->getVertex(1)->getNum(),
+                     tgt->tag(),
+                     tgtVtcs[0]->getNum(),
+                     tgtVtcs[1]->getNum(),
+                     src->tag());
+        }
+        else {
+          MLine* srcLine = sIter->second;
+          MEdge  srcEdge(srcLine->getVertex(0),
+                         srcLine->getVertex(1)); 
+          if (tgtEdge.computeCorrespondence(srcEdge)==-1) tgtLine->reverse();
+        }
+      }
+    }
+  }
+
+  // run through all model faces 
+  
+  for(GModel::fiter it = firstFace(); it != lastFace(); ++it) {
+    
+    GFace *tgt = *it;
+    GFace *src = dynamic_cast<GFace*>(tgt->meshMaster());
+    if (src != NULL && src != tgt) {
+      
+      Msg::Info("Aligning periodic face connection %d - %d",tgt->tag(),src->tag());
+      
+      std::map<MFace,MElement*,Less_Face> srcElmts;
+    
+      for (unsigned int i=0;i<src->getNumMeshElements();++i) {
+        MElement* srcElmt = src->getMeshElement(i);
+        int nbVtcs = 0;
+        if (dynamic_cast<MTriangle*>   (srcElmt)) nbVtcs = 3;
+        if (dynamic_cast<MQuadrangle*> (srcElmt)) nbVtcs = 4;
+        std::vector<MVertex*> vtcs;
+        for (int iVtx=0;iVtx<nbVtcs;iVtx++) {
+          vtcs.push_back(srcElmt->getVertex(iVtx));
+        }
+        srcElmts[MFace(vtcs)] = srcElmt;
+      }
+    
+      for (unsigned int i=0;i<tgt->getNumMeshElements();++i) {
+      
+        MElement*    tgtElmt = tgt->getMeshElement(i);
+        MTriangle*   tgtTri = dynamic_cast<MTriangle*>(tgtElmt);
+        MQuadrangle* tgtQua = dynamic_cast<MQuadrangle*>(tgtElmt);
+        
+        int nbVtcs = 0;
+        if (tgtTri) nbVtcs = 3;
+        if (tgtQua) nbVtcs = 4;
+        
+        std::vector<MVertex*> vtcs;
+        for (int iVtx=0;iVtx<nbVtcs;iVtx++) {
+          MVertex* vtx = tgtElmt->getVertex(iVtx);
+          GEntity* ge = vtx->onWhat();
+          if (ge->meshMaster() == ge) throw;
+          std::map<MVertex*,MVertex*>& v2v = ge->correspondingVertices;
+          std::map<MVertex*,MVertex*>::iterator vIter = v2v.find(vtx);
+          if (vIter==v2v.end()) {
+            Msg::Error("Could not find copy of %d in %d",
+                       vtx->getNum(),src->tag(),tgt->tag());
+          }
+          vtcs.push_back(vIter->second);
+        }
+        
+        MFace tgtFace(vtcs);
+
+        std::map<MFace,MElement*>::iterator mIter = srcElmts.find(tgtFace);
+        if (mIter == srcElmts.end()) {
+          std::ostringstream faceDef;
+          for (int iVtx=0;iVtx<nbVtcs;iVtx++) {
+            faceDef << vtcs[iVtx]->getNum() << " ";
+          }
+          Msg::Error("Cannot find periodic counterpart of face %s in face %d "
+                     "connected to %d",faceDef.str().c_str(),
+                     tgt->tag(),src->tag());
+        
+        }
+        else {
+          
+          const MFace& srcFace = mIter->first;
+          MElement* srcElmt = mIter->second;
+          std::vector<MVertex*> srcVtcs;
+
+          if (tgtTri && !dynamic_cast<MTriangle*>(srcElmt)) throw;
+          if (tgtQua && !dynamic_cast<MQuadrangle*>(srcElmt)) throw;
+          
+          int rotation = 0;
+          bool swap = false;
+
+          if (!tgtFace.computeCorrespondence(srcFace,rotation,swap)) {
+            Msg::Error("Non-corresponding face %d-%d-%d (slave) %d-%d-%d (master)",
+                       tgtElmt->getVertex(0)->getNum(),
+                       tgtElmt->getVertex(1)->getNum(),
+                       tgtElmt->getVertex(2)->getNum(),
+                       srcElmt->getVertex(0)->getNum(),
+                       srcElmt->getVertex(1)->getNum(),
+                       srcElmt->getVertex(2)->getNum());
+          }
+          
+          if (tgtTri) tgtTri->reorient(rotation,swap);
+          if (tgtQua) tgtQua->reorient(rotation,swap);
+        }
+      }
+    }
+  }
+  Msg::Info("Done aligning periodic boundaries");
+}
+
 void GModel::makeDiscreteRegionsSimplyConnected()
 {
   Msg::Debug("Making discrete regions simply connected...");
@@ -2444,16 +2612,19 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
   Msg::Debug("Creating topology for %d edges...", discEdges.size());
 
   // for each discreteEdge, create topology
-  std::map<GFace*, std::map<MVertex*, MVertex*, std::less<MVertex*> > > face2Vert;
-  std::map<GRegion*, std::map<MVertex*, MVertex*, std::less<MVertex*> > > region2Vert;
-  face2Vert.clear();
-  region2Vert.clear();
+  //KH std::map<GFace*, std::map<MVertex*, MVertex*, std::less<MVertex*> > > face2Vert;
+  //KH std::map<GRegion*, std::map<MVertex*, MVertex*, std::less<MVertex*> > > region2Vert;
+  //KH face2Vert.clear();
+  //KH region2Vert.clear();
+
+  std::map<MVertex*,MVertex*> old2new;
   for (std::vector<discreteEdge*>::iterator it = discEdges.begin();
        it != discEdges.end(); it++){
     (*it)->createTopo();
-    (*it)->parametrize(face2Vert, region2Vert);
+    //KH (*it)->parametrize(face2Vert, region2Vert,old2new);
+    (*it)->parametrize(old2new);
   }
-
+  
   // fill edgeLoops of Faces or correct sign of l_edges
   // for (std::vector<discreteFace*>::iterator itF = discFaces.begin();
   //       itF != discFaces.end(); itF++){
@@ -2467,10 +2638,17 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
   // we need to recreate all mesh elements because some mesh vertices
   // might have been changed during the parametrization process
   // (MVertices became MEdgeVertices)
-  for (std::map<GFace*, std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator
-         iFace = face2Vert.begin(); iFace != face2Vert.end(); iFace++){
-    std::map<MVertex*, MVertex*, std::less<MVertex*> > old2new = iFace->second;
-    GFace *gf = iFace->first;
+
+  //KH for (std::map<GFace*, std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator
+  //KH        iFace = face2Vert.begin(); iFace != face2Vert.end(); iFace++){
+  //KH   std::map<MVertex*, MVertex*, std::less<MVertex*> > old2new = iFace->second;
+  //KH    GFace *gf = iFace->first;
+  
+  std::set<GFace*,GEntityLessThan>::iterator fIter = faces.begin();
+  for (;fIter!=faces.end();++fIter) {
+
+    GFace* gf = *fIter;
+    
     std::vector<MTriangle*> newTriangles;
     std::vector<MQuadrangle*> newQuadrangles;
     for (unsigned int i = 0; i < gf->getNumMeshElements(); ++i){
@@ -2478,10 +2656,10 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
       std::vector<MVertex *> v;
       e->getVertices(v);
       for (unsigned int j = 0; j < v.size(); j++){
-        std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator
-          itmap = old2new.find(v[j]);
-        if (itmap != old2new.end())
-          v[j] = itmap->second;
+        // std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator
+        //   itmap = old2new.find(v[j]);
+        std::map<MVertex*,MVertex*>::iterator itmap = old2new.find(v[j]);
+        if (itmap != old2new.end()) v[j] = itmap->second;
       }
       MElementFactory factory;
       MElement *e2 = factory.create(e->getTypeForMSH(), v, e->getNum(),
@@ -2498,10 +2676,15 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
     gf->quadrangles = newQuadrangles;
   }
 
-  for (std::map<GRegion*, std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator
-         iRegion = region2Vert.begin(); iRegion != region2Vert.end(); iRegion++){
-    std::map<MVertex*, MVertex*, std::less<MVertex*> > old2new = iRegion->second;
-    GRegion *gr = iRegion->first;
+  // for (std::map<GRegion*, std::map<MVertex*, MVertex*, std::less<MVertex*> > >::iterator
+  //        iRegion = region2Vert.begin(); iRegion != region2Vert.end(); iRegion++){
+  //   std::map<MVertex*, MVertex*, std::less<MVertex*> > old2new = iRegion->second;
+  //   GRegion *gr = iRegion->first;
+  for (std::set<GRegion*,GEntityLessThan>::iterator rIter = regions.begin();
+       rIter!=regions.end();++rIter) {
+
+    GRegion* gr = *rIter;
+
     std::vector<MTetrahedron*> newTetrahedra;
     std::vector<MHexahedron*> newHexahedra;
     std::vector<MPrism*> newPrisms;
@@ -2512,10 +2695,13 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
       std::vector<MVertex *> v;
       e->getVertices(v);
       for (unsigned int j = 0; j < v.size(); j++){
-        std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator
-          itmap = old2new.find(v[j]);
-        if (itmap != old2new.end())
-          v[j] = itmap->second;
+        // std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator
+        //   itmap = old2new.find(v[j]);
+        // if (itmap != old2new.end())
+        //   v[j] = itmap->second;
+        std::map<MVertex*,MVertex*>::iterator itmap = old2new.find(v[j]);
+        if (itmap != old2new.end()) v[j] = itmap->second;
+
       }
       MElementFactory factory;
       MElement *e2 = factory.create(e->getTypeForMSH(), v, e->getNum(),
@@ -2540,7 +2726,18 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
     gr->pyramids = newPyramids;
     gr->trihedra = newTrihedra;
   }
+  
+  // -- now correct periodicity information 
 
+  std::set<GFace*,GEntityLessThan>::iterator gfIter = faces.begin();
+  for (;gfIter!=faces.end();++gfIter) (*gfIter)->updateVertices(old2new);
+  
+  std::set<GEdge*,GEntityLessThan>::iterator geIter = edges.begin();
+  for (;geIter!=edges.end();++geIter) (*geIter)->updateVertices(old2new);
+  
+  std::set<GVertex*,GEntityLessThan>::iterator gvIter = vertices.begin();
+  for (;gvIter!=vertices.end();++gvIter) (*gvIter)->updateVertices(old2new);
+  
   Msg::Debug("Done creating topology for edges");
 }
 

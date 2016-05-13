@@ -14,6 +14,8 @@
 #include "qualityMeasures.h"
 #endif
 
+#include <cstring>
+
 #define SQU(a)      ((a)*(a))
 
 int MQuadrangleN::getNumEdgesRep(bool curved)
@@ -324,4 +326,78 @@ double MQuadrangle::getInnerRadius()
                    ((halfs-a)*(halfs-b)*(halfs-c)*(halfs-d))
                   );
 #endif // HAVE_LAPACK
+}
+
+
+void MQuadrangle::reorient(int rot, bool swap) {
+  MVertex* tmp[4];
+  if (swap) for (int i=0;i<4;i++) tmp[i] = _v[(8-i-rot)%4];
+  else      for (int i=0;i<4;i++) tmp[i] = _v[(4+i-rot)%4];
+  std::memcpy(_v,tmp,4*sizeof(MVertex*));
+}
+
+void MQuadrangle8::reorient(int rot, bool swap) { 
+  
+  if (rot == 0 && !swap) return;
+  
+  MQuadrangle::reorient(rot,swap);
+  MVertex* tmp[4];
+  if (swap) for (int i=0;i<4;i++) tmp[i] = _vs[(8-i-rot)%4];
+  else      for (int i=0;i<4;i++) tmp[i] = _vs[(4+i-rot)%4];
+  std::memcpy(_vs,tmp,4*sizeof(MVertex*));
+}
+
+void MQuadrangle9::reorient(int rot, bool swap) { 
+
+  if (rot == 0 && !swap) return;
+  
+  MQuadrangle::reorient(rot,swap);
+  MVertex* tmp[4];
+  if (swap) for (int i=0;i<4;i++) tmp[i] = _vs[(9-i-rot)%4]; // edge swapped
+  else      for (int i=0;i<4;i++) tmp[i] = _vs[(4+i-rot)%4];
+  std::memcpy(_vs,tmp,4*sizeof(MVertex*));
+}
+
+void MQuadrangleN::reorient(int rot, bool swap) {
+
+  if (rot == 0 && !swap) return;
+
+  MQuadrangle::reorient(rot,swap);
+  int order  = getPolynomialOrder();
+  int nbEdgePts = order - 1;
+  unsigned int idx = 0;
+
+  std::vector<MVertex*> tmp;
+
+  if (swap) {
+    for (int iEdge=0;iEdge<4;iEdge++) {
+      int edgeIdx = ((9-iEdge-rot)%4)*nbEdgePts;
+      for (int i=nbEdgePts-1;i>=0;i--) tmp.push_back(_vs[edgeIdx+i]);
+    }
+  }
+  else {
+    for (int iEdge=0;iEdge<4;iEdge++) {
+      int edgeIdx = ((4+iEdge-rot)%4)*nbEdgePts;
+      for (int i=0;i<nbEdgePts;i++)    tmp.push_back(_vs[edgeIdx+i]);
+    }
+  }
+  
+  idx += 4*nbEdgePts;
+
+  if (_vs.size() >= idx) {
+    nbEdgePts = order - 3;
+    if (order > 2) {
+      if (swap) for (int i=0;i<4;i++) tmp.push_back(_vs[idx + (8-i-rot)%4]);
+      else      for (int i=0;i<4;i++) tmp.push_back(_vs[idx + (4+i-rot)%4]);
+      idx += 4;
+      if (order > 3) {
+        if (swap) for (int i=0;i<4;i++) tmp.push_back(_vs[idx + (9-i-rot)%4]);
+        else      for (int i=0;i<4;i++) tmp.push_back(_vs[idx + (4+i-rot)%4]);
+        idx += 4;
+        if (order > 4) Msg::Error("Reorientation of quad not supported above order 4");
+      } 
+    }
+    tmp.push_back(_vs[idx]);
+  }
+  _vs = tmp;
 }

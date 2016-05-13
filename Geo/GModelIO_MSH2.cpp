@@ -719,6 +719,8 @@ int GModel::_readMSH2(const std::string &name)
 
   fclose(fp);
 
+  alignPeriodicBoundaries();
+
   return postpro ? 2 : 1;
 }
 

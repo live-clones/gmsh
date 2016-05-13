@@ -1575,27 +1575,26 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo)
   for (mvIter=m_vertices.begin();mvIter!=m_vertices.end();++mvIter) {
 
     GVertex* m_vertex = *mvIter;
-
-    double xyzOri[4] = {m_vertex->x(),
-                        m_vertex->y(),
-                        m_vertex->z(),1};
+    
+    SPoint3 xyzOri((*mvIter)->x(),(*mvIter)->y(),(*mvIter)->z());
     SPoint3 xyzTfo(0,0,0);
 
-    for (size_t i=0,ij=0;i<3;i++) {
-      for (size_t j=0;j<4;j++,ij++) {
-        xyzTfo[i] += tfo[ij] * xyzOri[j];
-      }
+    int idx = 0;
+    for (int i=0;i<3;i++) {
+      for (int j=0;j<3;j++) xyzTfo[i] += xyzOri[j] * tfo[idx++];
+      xyzTfo[i] += tfo[idx++];
     }
-
+    
     GVertex* l_vertex = NULL;
 
     std::set<GVertex*>::iterator lvIter = l_vertices.begin();
     for (;lvIter!=l_vertices.end();++lvIter) {
 
       SPoint3 xyz((*lvIter)->x(),(*lvIter)->y(),(*lvIter)->z());
-      SVector3 dist = xyz - xyzTfo;
+      SVector3 distTfo = xyz - xyzTfo;
+      SVector3 distOri = xyz - xyzOri;
 
-      if (dist.norm() < CTX::instance()->geom.tolerance) {
+      if (distTfo.norm() < CTX::instance()->geom.tolerance * distOri.norm()) {
         l_vertex = *lvIter;
         break;
       }

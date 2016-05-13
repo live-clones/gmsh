@@ -316,39 +316,84 @@ void discreteEdge::parametrize(std::map<GFace*, std::map<MVertex*, MVertex*,
    for(std::list<GFace*>::iterator iFace = l_faces.begin();
        iFace != l_faces.end(); ++iFace){
 
-     // for each face find correspondane face2Vertex
-     std::map<GFace*, std::map<MVertex*, MVertex*,
-       std::less<MVertex*> > >::iterator itmap = face2Vert.find(*iFace);
-     if (itmap == face2Vert.end()) {
-       face2Vert.insert(std::make_pair(*iFace, old2new));
-     }
-     else{
-       std::map<MVertex*, MVertex*, std::less<MVertex*> > mapVert = itmap->second;
-       for (std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator it =
-              old2new.begin(); it != old2new.end(); it++)
-         mapVert.insert(*it);
-       itmap->second = mapVert;
-     }
+
+     face2Vert[*iFace].insert(old2new.begin(),old2new.end());
+
+     // // for each face find correspondane face2Vertex
+     // std::map<GFace*, std::map<MVertex*, MVertex*,
+     //   std::less<MVertex*> > >::iterator itmap = face2Vert.find(*iFace);
+     // if (itmap == face2Vert.end()) {
+     //   face2Vert.insert(std::make_pair(*iFace, old2new));
+     // }
+     // else{
+     //   std::map<MVertex*, MVertex*, std::less<MVertex*> > mapVert = itmap->second;
+     //   for (std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator it =
+     //          old2new.begin(); it != old2new.end(); it++)
+     //     mapVert.insert(*it);
+     //   itmap->second = mapVert;
+     // }
 
      // do the same for regions
      for ( int j = 0; j < (*iFace)->numRegions(); j++){
        GRegion *r = (*iFace)->getRegion(j);
-       std::map<GRegion*,  std::map<MVertex*, MVertex*,
-         std::less<MVertex*> > >::iterator itmap = region2Vert.find(r);
-       if (itmap == region2Vert.end()) {
-	 region2Vert.insert(std::make_pair(r, old2new));
-       }
-       else{
-	 std::map<MVertex*, MVertex*, std::less<MVertex*> > mapVert = itmap->second;
-	 for (std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator it =
-                old2new.begin(); it != old2new.end(); it++)
-	   mapVert.insert(*it);
-	 itmap->second = mapVert;
-       }
-     }
+       region2Vert[r].insert(old2new.begin(),old2new.end());
 
+       //     std::map<GRegion*,  std::map<MVertex*, MVertex*,
+       //       std::less<MVertex*> > >::iterator itmap = region2Vert.find(r);
+       //     if (itmap == region2Vert.end()) {
+       // region2Vert.insert(std::make_pair(r, old2new));
+       //     }
+       //     else{
+       // std::map<MVertex*, MVertex*, std::less<MVertex*> > mapVert = itmap->second;
+       // for (std::map<MVertex*, MVertex*, std::less<MVertex*> >::iterator it =
+       //              old2new.begin(); it != old2new.end(); it++)
+       //   mapVert.insert(*it);
+       // itmap->second = mapVert;
+       //     }
+     }
    }
 }
+
+
+
+void discreteEdge::parametrize(std::map<MVertex*, MVertex*>& old2new)
+{
+  if (_pars.empty()){
+    for (unsigned int i = 0; i < lines.size() + 1; i++){
+      _pars.push_back(i);
+    }
+  }
+  
+  std::vector<MVertex* > newVertices;
+  std::vector<MLine*> newLines;
+
+  MVertex *vL = getBeginVertex()->mesh_vertices[0];
+  int i = 0;
+  for(i = 0; i < (int)lines.size() - 1; i++){
+    MVertex *vR;
+    if (_orientation[i] == 1 ) vR = lines[i]->getVertex(1);
+    else vR = lines[i]->getVertex(0);
+    int param = i+1;
+    MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this,
+                                    param, -1., vR->getNum());
+    old2new.insert(std::make_pair(vR,vNEW));
+    newVertices.push_back(vNEW);
+    newLines.push_back(new MLine(vL, vNEW));
+    _orientation[i] = 1;
+    vL = vNEW;
+  }
+  MVertex *vR = getEndVertex()->mesh_vertices[0];
+  newLines.push_back(new MLine(vL, vR));
+  _orientation[i] = 1;
+
+  deleteVertexArrays();
+  model()->destroyMeshCaches();
+
+  mesh_vertices = newVertices;
+  lines.clear();
+  lines = newLines;  
+}
+
 
 void discreteEdge::computeNormals () const
 {

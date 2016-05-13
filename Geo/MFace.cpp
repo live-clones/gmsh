@@ -92,7 +92,9 @@ SVector3 MFace::normal() const
   return SVector3(n[0], n[1], n[2]);
 }
 
-bool MFace::computeCorrespondence(const MFace &other, int &rotation, bool &swap) const
+bool MFace::computeCorrespondence(const MFace &other, 
+                                  int &rotation, 
+                                  bool &swap) const
 {
   rotation = 0;
   swap = false;

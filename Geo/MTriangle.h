@@ -124,6 +124,12 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
+  
+  // reorient the triangle to conform with other face
+  // orientation computed with MFace based on this face with respect to other 
+  // in computeCorrespondence
+  virtual void reorient(int rotation, bool swap);
+  
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     w = 0.;
@@ -235,6 +241,10 @@ class MTriangle6 : public MTriangle {
   {
     num < 3 ? MTriangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
+  // reorient the triangle to conform with other face
+  // orientation computed with MFace based on this face with respect to other 
+  // in computeCorrespondence
+  virtual void reorient(int rotation, bool swap);
 };
 
 /*
@@ -342,6 +352,10 @@ class MTriangleN : public MTriangle {
   {
     num < 3 ? MTriangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
+  // reorient the triangle to conform with other face
+  // orientation computed with MFace based on this face with respect to other 
+  // in computeCorrespondence
+  virtual void reorient(int rotation, bool swap);
 };
 
 template <class T>

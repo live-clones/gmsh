@@ -23,6 +23,8 @@
 #include "BasisFactory.h"
 #include "MVertexRTree.h"
 
+#include <sstream>
+
 // --------- Functions that help optimizing placement of points on geometry -----------
 
 // The aim here is to build a polynomial representation that consist
@@ -1292,7 +1294,8 @@ static void setFirstOrder(GEntity *e, std::vector<T*> &elements, bool onlyVisibl
 }
 
 static void updateHighOrderVertices(GEntity *e,
-                                    const std::vector<MVertex*> &newHOVert, bool onlyVisible)
+                                    const std::vector<MVertex*> &newHOVert, 
+                                    bool onlyVisible)
 {
   if (onlyVisible && !e->getVisibility())return;
   std::vector<MVertex*> v1;
@@ -1309,70 +1312,132 @@ static void updateHighOrderVertices(GEntity *e,
 
 static void updatePeriodicEdgesAndFaces(GModel *m)
 {
+
+  // Edges 
+  
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
-    GEdge *slave = *it;
-    GEdge *master = dynamic_cast<GEdge*>(slave->meshMaster());
-    if (master == slave) continue;
-
-    std::map<MVertex*,MVertex*> &v2v = slave->correspondingVertices;
-    v2v.clear();
-
-    MVertexRTree rtree = MVertexRTree(1e-8 * CTX::instance()->lc);
-    for (unsigned int i = 0; i < slave->getNumMeshVertices(); ++i)
-      rtree.insert(slave->getMeshVertex(i));
-
-    std::vector<double> tfo = slave->affineTransform;
-
-    if(tfo.size() >= 16){
-      for (unsigned int i = 0; i < master->getNumMeshVertices(); ++i) {
-        MVertex *vs = master->getMeshVertex(i);
-        double ps[4] = {vs->x(), vs->y(), vs->z(), 1.};
-        double res[4] = {0., 0., 0., 0.};
-        int idx = 0;
-        for(int i = 0; i < 4; i++)
-          for(int j = 0; j < 4; j++)
-            res[i] +=  tfo[idx++] * ps[j];
-        SPoint3 p3 (res[0], res[1], res[2]);
-        double u = slave->parFromPoint(p3);
-        GPoint gp = slave->point(u);
-        MVertex *vt = rtree.find(gp.x(), gp.y(), gp.z());
-        if (!vt) Msg::Error("Couldn't find a vertex for updating periodicity");
-        else v2v[vt] = vs;
+    
+    GEdge *tgt = *it;
+    GEdge *src = dynamic_cast<GEdge*>(tgt->meshMaster());
+    
+    if (src != NULL && src != tgt) {
+      
+      std::map<MVertex*,MVertex*> &p2p = tgt->correspondingHOPoints;
+      p2p.clear();
+      
+      Msg::Info("Constructing high order periodicity for edge connection %d - %d",
+                tgt->tag(),src->tag());
+      
+      std::map<MEdge,MLine*,Less_Edge> srcEdges;
+      for (unsigned int i=0;i<src->getNumMeshElements();i++)  {
+        MLine* srcLine = dynamic_cast<MLine*>(src->getMeshElement(i));
+        if (!srcLine) Msg::Error("Master element %d is not an edge ",
+                                 src->getMeshElement(i)->getNum());
+        srcEdges[MEdge(srcLine->getVertex(0),
+                       srcLine->getVertex(1))] = srcLine;
+      }
+      
+      for (unsigned int i = 0; i < tgt->getNumMeshElements(); ++i) {
+        
+        MLine* tgtLine = dynamic_cast<MLine*> (tgt->getMeshElement(i));
+        MVertex* vtcs[2];
+        
+        if (!tgtLine) Msg::Error("Slave element %d is not an edge ",
+                            tgt->getMeshElement(i)->getNum());
+        
+        for (int iVtx=0;iVtx<2;iVtx++) {
+          MVertex* vtx = tgtLine->getVertex(iVtx);
+          std::map<MVertex*,MVertex*>& v2v = 
+            vtx->onWhat()->correspondingVertices;
+          std::map<MVertex*,MVertex*>::iterator tIter = v2v.find(vtx);  
+          if (tIter == v2v.end()) {
+            Msg::Error("Cannot find periodic counterpart of vertex %d"
+                       " of edge %d on edge %d",
+                       vtx->getNum(),tgt->tag(),src->tag());
+          }
+          else vtcs[iVtx] = tIter->second;
+        }
+        
+        std::map<MEdge,MLine*,Less_Edge>::iterator srcIter = srcEdges.find(MEdge(vtcs[0],vtcs[1]));
+        if (srcIter==srcEdges.end()) {
+          Msg::Error("Can't find periodic counterpart of edge %d-%d on edge %d"
+                     ", connected to edge %d-%d on %d",
+                     tgtLine->getVertex(0)->getNum(),
+                     tgtLine->getVertex(1)->getNum(),
+                     tgt->tag(),
+                     vtcs[0]->getNum(),
+                     vtcs[1]->getNum(),
+                     src->tag());
+        }
+        else {
+          MLine* srcLine = srcIter->second;
+          if (tgtLine->getNumVertices() != srcLine->getNumVertices()) throw;
+          for (int i=2;i<tgtLine->getNumVertices();i++) p2p[tgtLine->getVertex(i)] = srcLine->getVertex(i);
+        }
       }
     }
   }
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
-    GFace *slave = *it;
-    GFace *master = dynamic_cast<GFace*>(slave->meshMaster());
-    if (master == slave) continue;
+    GFace *tgt = *it;
+    GFace *src = dynamic_cast<GFace*>(tgt->meshMaster());
+    if (src != NULL && src != tgt) {
 
-    std::map<MVertex*,MVertex*> &v2v = slave->correspondingVertices;
-    v2v.clear();
-
-    MVertexRTree rtree = MVertexRTree(1e-8 * CTX::instance()->lc);
-    for (unsigned int i = 0; i < slave->getNumMeshVertices(); ++i)
-      rtree.insert(slave->getMeshVertex(i));
-
-    std::vector<double> tfo = slave->affineTransform;
-    if(tfo.size() >= 16){
-      for (unsigned int i = 0; i < master->getNumMeshVertices(); ++i) {
-        MVertex *vs = master->getMeshVertex(i);
-        double ps[4] = {vs->x(), vs->y(), vs->z(), 1.};
-        double res[4] = {0., 0., 0., 0.};
-        int idx = 0;
-        for(int i = 0; i < 4; i++)
-          for(int j = 0; j < 4; j++)
-            res[i] +=  tfo[idx++] * ps[j];
-        SPoint3 p3 (res[0], res[1], res[2]);
-        SPoint2 p2 = slave->parFromPoint(p3);
-        GPoint gp = slave->point(p2);
-        MVertex *vt = rtree.find(gp.x(), gp.y(), gp.z());
-        if (!vt) Msg::Error("Couldn't find a vertex for updating periodicity");
-        else v2v[vt] = vs;
+      Msg::Info("Constructing high order periodicity for face connection %d - %d",
+                tgt->tag(),src->tag());
+      
+      std::map<MVertex*,MVertex*> &p2p = tgt->correspondingHOPoints;
+      p2p.clear();
+      
+      std::map<MFace,MElement*,Less_Face> srcFaces;
+    
+      for (unsigned int i=0;i<src->getNumMeshElements();++i) {
+        MElement* srcElmt  = src->getMeshElement(i);
+        int nbVtcs = 0;
+        if (dynamic_cast<MTriangle*>   (srcElmt)) nbVtcs = 3;
+        if (dynamic_cast<MQuadrangle*> (srcElmt)) nbVtcs = 4;
+        std::vector<MVertex*> vtcs;
+        for (int iVtx=0;iVtx<nbVtcs;iVtx++) {
+          vtcs.push_back(srcElmt->getVertex(iVtx));
+        }
+        srcFaces[MFace(vtcs)] = srcElmt;
+      }
+    
+      for (unsigned int i=0;i<tgt->getNumMeshElements();++i) {
+      
+        MElement* tgtElmt = tgt->getMeshElement(i);
+        Msg::Info("Checking element %d in face %d",i,tgt->tag());
+        
+        int nbVtcs = 0;
+        if (dynamic_cast<MTriangle*>   (tgtElmt)) nbVtcs = 3;
+        if (dynamic_cast<MQuadrangle*> (tgtElmt)) nbVtcs = 4;
+        std::vector<MVertex*> vtcs;
+        for (int iVtx=0;iVtx<nbVtcs;iVtx++) {
+          MVertex* vtx = tgtElmt->getVertex(iVtx);
+          GEntity* ge = vtx->onWhat();
+          if (ge->meshMaster() == ge) throw;
+          std::map<MVertex*,MVertex*>& v2v = ge->correspondingVertices;
+          vtcs.push_back(v2v[vtx]);
+        }
+        
+        std::map<MFace,MElement*>::iterator srcIter = srcFaces.find(MFace(vtcs));
+        if (srcIter == srcFaces.end()) {
+          std::ostringstream faceDef;
+          for (int iVtx=0;iVtx<nbVtcs;iVtx++) faceDef << vtcs[iVtx]->getNum() << " ";
+          Msg::Error("Cannot find periodic counterpart of face %s in face %d "
+                     "connected to %d",faceDef.str().c_str(),
+                     tgt->tag(),src->tag());
+        }
+        else {
+          MElement* srcElmt = srcIter->second;
+          for (int i=nbVtcs;i<srcElmt->getNumVertices();i++) {
+            p2p[tgtElmt->getVertex(i)] = srcElmt->getVertex(i);
+          }
+        }
       }
     }
   }
+  Msg::Info("Finalized high order topology of periodic connections");
 }
 
 void SetOrder1(GModel *m,  bool onlyVisible)

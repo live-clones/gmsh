@@ -13,6 +13,8 @@
 #include "qualityMeasures.h"
 #endif
 
+#include <cstring>
+
 #define SQU(a)      ((a)*(a))
 
 SPoint3 MTriangle::circumcenter()
@@ -260,3 +262,68 @@ void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *npts = getNGQTPts(pOrder);
   *pts = getGQTPts(pOrder);
 }
+
+void MTriangle::reorient(int rot,bool swap) {
+  
+  if (rot == 0 && !swap) return;
+  
+  MVertex* tmp[3];
+  std::memcpy(tmp,_v,3*sizeof(MVertex*));
+  if (swap) for (int i=0;i<3;i++) _v[i] = tmp[(6-i-rot)%3];
+  else      for (int i=0;i<3;i++) _v[i] = tmp[(3+i-rot)%3];
+}
+
+void MTriangle6::reorient(int rot, bool swap) {
+
+  if (rot == 0 && !swap) return;
+
+  MTriangle::reorient(rot,swap);
+  MVertex* tmp[3];
+  std::memcpy(tmp,_vs,3*sizeof(MVertex*));
+  if (swap) for (int i=0;i<3;i++) _vs[i] = tmp[(7-i-rot)%3];
+  else      for (int i=0;i<3;i++) _vs[i] = tmp[(3+i-rot)%3];
+}
+
+void MTriangleN::reorient(int rot, bool swap) {
+  
+  if (rot == 0 && !swap) return;
+
+  MTriangle::reorient(rot,swap);
+  
+  std::vector<MVertex*> tmp;
+  int order  = getPolynomialOrder();
+  int nbEdge =  order - 1;
+  unsigned int idx = 0; 
+  
+  
+  if (swap) {
+    for (int iEdge=0;iEdge<3;iEdge++) {
+      int edgeIdx = ((7-iEdge-rot)%3)*nbEdge;
+      for (int i=nbEdge-1;i>=0;i--) tmp.push_back(_vs[edgeIdx + i]);
+    }
+  }
+  else {
+    for (int iEdge=0;iEdge<3;iEdge++) {
+      int edgeIdx = ((3+iEdge-rot)%3)*nbEdge;
+      for (int i=0;i<nbEdge;i++) tmp.push_back(_vs[edgeIdx + i]);
+    }
+  }
+
+  idx += 3*nbEdge;
+  
+  if (_vs.size() > idx ) {
+    if (order == 3) tmp.push_back(_vs[idx]);
+    if (order == 4) {
+      if (swap) for(int i=0;i<3;i++) tmp.push_back(_vs[idx+(6-rot-i)%3]);
+      else      for(int i=0;i<3;i++) tmp.push_back(_vs[idx+(3+i-rot)%3]);
+    }
+    if (order >=5) 
+      Msg::Error("Reorientation of a triangle not supported above order 4");
+  }
+  _vs = tmp;
+}
+
+
+
+  
+

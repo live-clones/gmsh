@@ -429,6 +429,9 @@ class GModel
   void createTopologyFromFaces(std::vector<discreteFace*> &pFaces, int ignoreHoles=0);
   void makeDiscreteRegionsSimplyConnected();
   void makeDiscreteFacesSimplyConnected();
+  
+  // align periodic boundaries
+  void alignPeriodicBoundaries();
 
   // a container for smooth normals
   smooth_normals *normals;
