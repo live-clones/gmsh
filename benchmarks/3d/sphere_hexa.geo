@@ -15,7 +15,7 @@ Line(3) = {4,5};
 Line(4) = {5,2};
 Line Loop(5) = {4,1,2,3};
 Plane Surface(6) = {5};
-Extrude Surface {6, {0.0,0.0,2*r1}};
+Extrude {0.0,0.0,2*r1} { Surface{6}; }
 
 // exterior shell
 Point(102) = {r2,r2,-r2,l};
