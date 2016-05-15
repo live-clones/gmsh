@@ -1647,8 +1647,8 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo)
     }
     GEdge* masterEdge = mv2eIter->second;
     
-    if (masterEdge->meshMaster() != localEdge && 
-        masterEdge->meshMaster() != masterEdge) {
+    if (masterEdge->meshMaster() != localEdge &&
+        localEdge->meshMaster() != masterEdge) {
       localEdge->setMeshMaster(masterEdge,tfo);
       Msg::Info("Setting edge master %d - %d",
                 localEdge->tag(),
