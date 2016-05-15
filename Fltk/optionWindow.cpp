@@ -2391,19 +2391,13 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[3]->type(FL_TOGGLE_BUTTON);
       mesh.butt[3]->callback(mesh_options_ok_cb);
 
-      // mesh.butt[25] = new Fl_Check_Button
-      //   (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Try to remove 4 triangles nodes (experimental)");
-      // mesh.butt[25]->type(FL_TOGGLE_BUTTON);
-      // mesh.butt[25]->callback(mesh_options_ok_cb);
-
       mesh.butt[22] = new Fl_Check_Button
-         (L + 2 * WB, 2 * WB + 8 * BH, BW, BH, "Recombine tets into hex-dom mesh (experimental)");
+         (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Recombine tets into hex-dom mesh (experimental)");
       mesh.butt[22]->type(FL_TOGGLE_BUTTON);
       mesh.butt[22]->callback(mesh_options_ok_cb);
 
-
       mesh.value[27] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 9 * BH, IW/2, BH, "LLoyd smoothing steps (experimental)");
+        (L + 2 * WB, 2 * WB + 8 * BH, IW/2, BH, "LLoyd smoothing steps (experimental)");
       mesh.value[27]->minimum(0);
       mesh.value[27]->maximum(100);
       mesh.value[27]->step(1);
