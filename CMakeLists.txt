@@ -738,7 +738,8 @@ if(HAVE_MESH OR HAVE_SOLVER)
     # Gmsh currently uses Metis 4 - we should switch to Metis 5 and use the
     # system lib if available
     add_subdirectory(contrib/Metis)
-    include_directories(contrib/Metis)
+    # make sure to include path before any (system) Metis 5 directories
+    include_directories(BEFORE contrib/Metis)
     set_config_option(HAVE_METIS "Metis")
     message(STATUS "Note: By including Metis you have to comply with Metis' "
             "special licensing requirements stated in contrib/Metis/README.txt.")
