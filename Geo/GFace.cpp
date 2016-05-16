@@ -1594,7 +1594,8 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo)
       SVector3 distTfo = xyz - xyzTfo;
       SVector3 distOri = xyz - xyzOri;
 
-      if (distTfo.norm() < CTX::instance()->geom.tolerance * distOri.norm()) {
+      if (distTfo.norm() < CTX::instance()->geom.tolerance) {
+
         l_vertex = *lvIter;
         break;
       }
@@ -1647,8 +1648,7 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo)
     }
     GEdge* masterEdge = mv2eIter->second;
     
-    if (masterEdge->meshMaster() != localEdge &&
-        localEdge->meshMaster() != masterEdge) {
+    if (masterEdge->meshMaster() != localEdge) {
       localEdge->setMeshMaster(masterEdge,tfo);
       Msg::Info("Setting edge master %d - %d",
                 localEdge->tag(),
