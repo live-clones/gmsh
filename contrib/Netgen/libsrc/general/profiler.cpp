@@ -6,6 +6,7 @@
 
 
 #include <myadt.hpp>
+#include <cstdlib>
 
 namespace netgen
 {
@@ -28,6 +29,7 @@ namespace netgen
 
     total_timer = CreateTimer ("total CPU time");
     StartTimer (total_timer);
+    envNGPROFILE = getenv ("NGPROFILE");
   }
 
   NgProfiler :: ~NgProfiler()
@@ -43,7 +45,7 @@ namespace netgen
     // which leads to an "order of destruction"-problem,
     // thus we use the C-variant:
 
-    if (getenv ("NGPROFILE"))
+    if (envNGPROFILE)
       {
 	char filename[100];
 #ifdef PARALLEL

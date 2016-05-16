@@ -30,7 +30,9 @@ class NgProfiler
   static string names[SIZE];
   static int usedcounter[SIZE];
 
+  bool envNGPROFILE;
   int total_timer;
+  
 public: 
   NgProfiler();
   ~NgProfiler();
