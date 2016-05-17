@@ -14,15 +14,18 @@
 #include "OS.h"
 #include <stack>
 #include <queue>
+
+#if defined(HAVE_METIS)
 extern "C" {
 #include <metis.h>
 }
+#endif
 
 discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
-{  
+{
   Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
-  Tree_Add(model->getGEOInternals()->Surfaces, &s);  
-  meshStatistics.status = GFace::DONE;   
+  Tree_Add(model->getGEOInternals()->Surfaces, &s);
+  meshStatistics.status = GFace::DONE;
 }
 
 void discreteFace::setBoundEdges(GModel *gm, std::vector<int> tagEdges)
@@ -91,12 +94,12 @@ double discreteFace::curvatureMax(const SPoint2 &param) const
 double discreteFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
                                 double *curvMax, double *curvMin) const
 {
-  return false;  
+  return false;
 }
 
 Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 {
-  return Pair<SVector3, SVector3>();  
+  return Pair<SVector3, SVector3>();
 }
 
 void discreteFace::secondDer(const SPoint2 &param,
@@ -115,7 +118,7 @@ void discreteFace::createGeometry()
   part.resize(nPart);
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER)
 
-  if (!_atlas.empty())return;  
+  if (!_atlas.empty())return;
 
   int id=1;
   std::stack<triangulation*>  toSplit;
@@ -125,14 +128,14 @@ void discreteFace::createGeometry()
   triangulation* init = new triangulation(tem,this);
   init->my_GEdges = l_edges;
 
-  toSplit.push(init);  
+  toSplit.push(init);
   if((toSplit.top())->genus()!=0){
-    
+
     while( !toSplit.empty()){
 
       triangulation* tosplit = toSplit.top();
       toSplit.pop();
-      
+
       split(tosplit,part,nPart);
       delete tosplit; // #mark
 
@@ -144,7 +147,7 @@ void discreteFace::createGeometry()
 	  part[i]->idNum=id++;
 	  // discreteEdges
 	}
-      }// end for i      
+      }// end for i
     }
 
   }// end if it is not disk-like
@@ -152,13 +155,13 @@ void discreteFace::createGeometry()
     toParam.push_back(toSplit.top());
     toSplit.top()->idNum=id++;
   }
-  
-  for(unsigned int i=0; i<toParam.size(); i++){     
+
+  for(unsigned int i=0; i<toParam.size(); i++){
     std::vector<MElement*> mytri = toParam[i]->tri;
     discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));
     df->replaceEdges(toParam[i]->my_GEdges);
     _atlas.push_back(df);
-  }  
+  }
 #endif
 }
 
@@ -217,10 +220,10 @@ void discreteFace::mesh(bool verbose)
 
 
 void discreteFace::checkAndFixOrientation(){
-  
+
   // first of all, all the triangles have to be oriented in the same way
   std::map<MEdge,std::vector<MElement*>,Less_Edge> ed2tri; // edge to 1 or 2 triangle(s)
- 
+
   for(unsigned int i = 0; i < triangles.size(); ++i){
     MElement *e = triangles[i];
     for(int j = 0; j <  e->getNumEdges() ; j++){
@@ -300,28 +303,28 @@ void discreteFace::checkAndFixOrientation(){
 
 void discreteFace::split(triangulation* trian,std::vector<triangulation*> &partition,int nPartitions)
 {
-  
+#if defined(HAVE_METIS)
   int nVertex = trian->tri.size(); // number of elements
   int nEdge = trian->ed2tri.size() - trian->borderEdg.size();// number of edges, (without the boundary ones)
 
   std::vector<int> idx;
   idx.resize(nVertex+1);
-  
+
   std::vector<int> nbh;
   nbh.resize(2*nEdge);
 
-  idx[0]=0;  
+  idx[0]=0;
   for(int i=0; i<nVertex; i++){// triangle by triangle
 
     MElement* current = trian->tri[i];
 
     int temp = 0;
     for(int j=0; j<3; j++){ // edge by edge
-      
+
       MEdge ed = current->getEdge(j);
       int nEd = trian->ed2tri[ed].size();
 
-      if (nEd > 1){	
+      if (nEd > 1){
 	std::vector<int> local = trian->ed2tri[ed];
 	nbh[idx[i]+temp] = local[0] == i ? local[1] : local[0];
 	temp++;
@@ -345,11 +348,11 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
 
   for(int i=0; i<nVertex; i++)
     elem[part[i]].push_back(trian->tri[i]);
-  
+
   for(int i=0; i<nPartitions; i++)
     partition[i] = new triangulation(elem[i],this);
-  
-  
+
+
 
   for(int i=0; i<nPartitions; i++){// setting GEdge's
 
@@ -358,7 +361,7 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
     for(std::list<GEdge*>::iterator cGedg=trian->my_GEdges.begin(); cGedg!=trian->my_GEdges.end(); cGedg++){// GEdge by GEdge
       std::set<MVertex*> first, last;
       double lc = 0.;
-      std::vector<MLine*> upMli;     
+      std::vector<MLine*> upMli;
       for(unsigned int k=0; k<(*cGedg)->lines.size(); k++){// MLine by MLine (for a GEdge)
 	MLine* cMli = (*cGedg)->lines[k];
 	std::set<MVertex*>::iterator mvit0 = partition[i]->vert.find(cMli->getVertex(0));
@@ -369,17 +372,17 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
 	    first.erase(cMli->getVertex(1));
 	  else
 	    last.insert(cMli->getVertex(1));
-	  
+
 	  if( last.find(cMli->getVertex(0)) != last.end() )
 	    last.erase(cMli->getVertex(0));
 	  else
 	    first.insert(cMli->getVertex(0));
-	  
+
 	  upMli.push_back(cMli);
 	  lc += cMli->getLength();
 
 	}
-      }// end for k  
+      }// end for k
       GVertex *v0, *v1;
       if(first.empty()){
 	v0 = this->model()->addVertex(upMli[0]->getVertex(0)->x(),upMli[0]->getVertex(0)->y(),upMli[0]->getVertex(0)->z(),1.);//#fixme
@@ -392,41 +395,41 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
       upGed.push_back(this->model()->addLine(v0,v1));
       upGed.back()->lines = upMli;
     }// end for j
-    
-    
+
+
     // create new GEdge's
     std::set<MEdge,Less_Edge> bordi = partition[i]->borderEdg;// edges defining the border(s) of the i-th new triangulation
     for(int ii=i+1; ii<nPartitions; ii++){// compare to the ii-th ones, with ii > i since ii < i have already been compared
       std::map<MVertex*,MLine*> v02edg;//first vertex of the MLine
       std::set<MVertex*> first, last;
       for(std::set<MEdge,Less_Edge>::iterator ie = bordi.begin();
-	  ie != bordi.end(); ++ie){// MEdge by MEdge of the i-th triangulation border(s) 
+	  ie != bordi.end(); ++ie){// MEdge by MEdge of the i-th triangulation border(s)
 
 	std::set<MEdge,Less_Edge> bii = partition[ii]->borderEdg;// edges defining the border(s) of the ii-th new triangulation
 	if(bii.find(*ie)!=bii.end()){// if the border edge is common to both triangulations . . .
-	  
+
 	  v02edg[ie->getVertex(0)] = new MLine(ie->getVertex(0),ie->getVertex(1));// . . . a new MLine is created
 
 	  // identifying first and last vertices of GEdge's, if any
 	  if( first.find(ie->getVertex(1)) != first.end() )
 	    first.erase(ie->getVertex(1));
 	  else
-	    last.insert(ie->getVertex(1));	  
+	    last.insert(ie->getVertex(1));
 	  if( last.find(ie->getVertex(0)) != last.end() )
 	    last.erase(ie->getVertex(0));
 	  else
-	    first.insert(ie->getVertex(0));	  	  
+	    first.insert(ie->getVertex(0));
 	}
 
       }//end for ie
 
 
       while(!v02edg.empty()){// creation of the GEdge's from new MLine's
-	
+
 	GVertex *v0, *v1;
-	
+
 	while(!first.empty()){// starting with nonloop GEdge's
-	  
+
 	  std::vector<MLine*> myLines;// MLine's of the current nonloop GEdge
 	  std::set<MVertex*>::iterator itf = first.begin();
 	  MVertex* cv0 = *itf;// starting with a first vertex
@@ -435,25 +438,25 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
 	    v02edg.erase(cv0);// and erasing it from the "list"
 	    cv0 = myLines.back()->getVertex(1);// next vertex
 	  }
-	  
+
 	  v0 = this->model()->addVertex((*itf)->x(),myLines[0]->getVertex(0)->y(),myLines[0]->getVertex(0)->z(),1.);
 	  v1 = this->model()->addVertex(cv0->x(),cv0->y(),cv0->z(),1.);
-	  
+
 	  GEdge* toadd = this->model()->addLine(v0,v1);// new GEdge
 	  toadd->lines = myLines;// associated MLine's
-	  
+
 	  partition[i]->my_GEdges.push_back(toadd);
 	  partition[ii]->my_GEdges.push_back(toadd);
-	  
+
 	  first.erase(itf);// next first vertex of a nonloop GEdge
 	}//end while first.empty()
-	
+
 	std::vector<MLine*> my_MLines;// remaining MLines for 'loop'GEdge's
 	MVertex* cv0 = v02edg.begin()->first;
-	while(v02edg.find(cv0) != v02edg.end()){// a loop GEdge	  
+	while(v02edg.find(cv0) != v02edg.end()){// a loop GEdge
 	  my_MLines.push_back(v02edg[cv0]);// current MLine of the loop
 	  v02edg.erase(cv0);// update the container
-	  cv0 = my_MLines.back()->getVertex(1);// next MLine of the loop	  	  
+	  cv0 = my_MLines.back()->getVertex(1);// next MLine of the loop
 	}
 
 	v0 =  this->model()->addVertex(cv0->x(),cv0->y(),cv0->z(),1.);
@@ -464,14 +467,14 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
 
 	partition[i]->my_GEdges.push_back(to_add);
 	partition[ii]->my_GEdges.push_back(to_add);
-	
+
       }// end while v02edg.empty()
-      
+
     }//end for ii
-    
+
   }// end for i
 
-  return;
+#endif
 }
 
 
