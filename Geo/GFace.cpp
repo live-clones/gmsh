@@ -1495,7 +1495,7 @@ void GFace::relocateMeshVertices()
   }
 }
 
-void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo)
+void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
 {
   std::list<GEdge*>::iterator eIter;
   std::list<GVertex*>::iterator vIter;
@@ -1591,18 +1591,16 @@ void GFace::setMeshMaster(GFace* master,const std::vector<double>& tfo)
     for (;lvIter!=l_vertices.end();++lvIter) {
 
       SPoint3 xyz((*lvIter)->x(),(*lvIter)->y(),(*lvIter)->z());
-      SVector3 distTfo = xyz - xyzTfo;
-      SVector3 distOri = xyz - xyzOri;
+      SVector3 dist = xyz - xyzTfo;
 
-      if (distTfo.norm() < CTX::instance()->geom.tolerance) {
-
+      if (dist.norm() < CTX::instance()->geom.tolerance * CTX::instance()->lc) {
         l_vertex = *lvIter;
         break;
       }
     }
 
     if (l_vertex==NULL) {
-      Msg::Error("Was not able to find corresponding node for %d "
+      Msg::Error("Was not able to find corresponding node %d "
                  "for periodic connection of surface %d to %d "
                  "using the specified transformation",
                  m_vertex->tag(),master->tag(),tag());
