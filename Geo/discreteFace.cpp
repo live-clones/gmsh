@@ -301,6 +301,105 @@ void discreteFace::checkAndFixOrientation(){
   } // end while
 }
 
+// should be put in discreteEdge
+void splitDiscreteEdge ( discreteEdge *de , MVertex *v , discreteEdge *replacements[2]) { 
+  if (v->onWhat() != de) {
+    Msg::Fatal ("cannot split a discreteEdge on a point that is NOT classified on it");
+  }
+
+  MVertex *vstart = de->getBeginVertex()->mesh_vertices[0];
+  MVertex *vend   = de->getEndVertex()->mesh_vertices[0];
+
+  // We create a new Model vertex and we classify
+  discreteVertex *newV = new discreteVertex (de->model(),NEWPOINT());
+  newV->mesh_vertices.push_back (v);
+  v->setEntity (newV);
+  de->model()->add(newV);
+  
+  // We create 2 new Model edges and we classify vertices
+  // The creation of discrete edge geometries have already been done (or not)
+  // FIXME !!!!!
+  discreteEdge *newE[2];
+  newE[0] = new discreteEdge (de->model(),NEWLINE(),de->getBeginVertex(),newV);
+  newE[1] = new discreteEdge (de->model(),NEWLINE(),newV, de->getEndVertex());
+  de->model()->add(newE[0]);
+  de->model()->add(newE[1]);
+  
+  int current = 0;
+  
+  for (unsigned int i=0;i<de->lines.size();i++){
+    MLine *l = de->lines[i];
+    newE[current]->lines.push_back(l);
+    if (l->getVertex(0) != vstart && l->getVertex(0) != v) {
+      l->getVertex(0)->setEntity(newE[current]);
+      newE[current]->mesh_vertices.push_back(l->getVertex(0));
+    }
+    if (l->getVertex(1) == vend) current ++;
+  }
+  de->mesh_vertices.clear();
+  de->lines.clear();  
+
+  // We replace de by its 2 parts in every face that is adjacent to de
+  std::list<GFace*> faces = de->faces();
+  for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it){
+    GFace *gf = *it;
+    if (gf->geomType() == GEntity::DiscreteSurface){
+      discreteFace *df = static_cast<discreteFace*> (gf);
+      if (df){	
+	std::vector<int> tagEdges;
+	std::list<GEdge*> edges = df->edges();
+	for (std::list<GEdge*>::iterator it2 = edges.begin(); it2 != edges.end(); ++it2){
+	  if (*it2 == de){
+	    tagEdges.push_back (newE[0]->tag());
+	    tagEdges.push_back (newE[1]->tag());
+	  }
+	  else tagEdges.push_back (de->tag());
+	}
+	
+	df->setBoundEdges (df->model(), tagEdges);
+      }
+      else {
+	Msg::Fatal("this only applies to discrete geometries");
+      }
+    }    
+  }
+}
+
+void addInternalBoundaries ( discreteFace *df) {
+  // create new discreteEdges that split the domain
+
+}
+
+/*
+void splitDiscreteFace ( discreteFace *df , std::vector<triangulation*> &partition, std::vector<discreteEdge*> &internalBoundaries) { 
+  std::map<MEdge, GEdge*> _dictionnary;
+
+  std::vector<discreteEdge*> allBoundaries = internalBoundaries;
+  std::list<GEdge*> edges = df->edges();
+  allBoundaries.insert(allBoundaries.begin(), edges.begin(), edges.end());
+  
+  for (unsigned int i=0;i<allBoundaries.size();i++){
+    for (unsigned int j=0;i<allBoundaries[i]->lines.size();j++){
+      MLine *l = allBoundaries[i]->lines[j];
+      MEdge e (l->getVertex(0),l->getVertex(1));
+      _dictionnary[e] = allBoundaries[i];
+    }
+  }
+  for (unsigned int i=0;i<partition.size();i++){
+    std::set<int> tags;
+    for (int j=0;j<partition[i]->tri.size();j++){
+      for (int k=0;k<3;k++){
+	MEdge e = partition[i]->tri[j]->getEdge(k);
+	std::map<MEdge, GEdge*> :: iterator it =  _dictionnary.find(e);
+	if (it !=  _dictionnary.end()){
+	  tags.insert(it->second->tag());
+	}
+      }
+    }
+  }
+}
+
+*/
 void discreteFace::split(triangulation* trian,std::vector<triangulation*> &partition,int nPartitions)
 {
 #if defined(HAVE_METIS)
@@ -351,7 +450,6 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
 
   for(int i=0; i<nPartitions; i++)
     partition[i] = new triangulation(elem[i],this);
-
 
 
   for(int i=0; i<nPartitions; i++){// setting GEdge's

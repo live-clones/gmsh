@@ -5014,14 +5014,14 @@ void PostOp::execute(GRegion* gr,int level, int conformity){
     rearrange(gr);
   }
 
-if(conformity == 2 || conformity == 3){
-  init_markings(gr);
-  build_vertex_to_tetrahedra(gr);
-  build_vertex_to_pyramids(gr);
-  pyramids2(gr);
-  rearrange(gr);
-}    
-
+  if(conformity == 2 || conformity == 3){
+    init_markings(gr);
+    build_vertex_to_tetrahedra(gr);
+    build_vertex_to_pyramids(gr);
+    pyramids2(gr);
+    rearrange(gr);
+  }    
+  
   if (conformity == 3 || conformity == 4){
     init_markings_hex(gr);
     build_vertex_to_tetrahedra(gr);
@@ -5693,9 +5693,6 @@ void PostOp::trihedra(GRegion* gr){
   std::vector<MTetrahedron*> opt1;
   std::vector<MPyramid*> opt2;
   std::map<MElement*,bool>::iterator it;
-
-  hexahedra.clear();
-  prisms.clear();
 
   for(i=0;i<gr->getNumMeshElements();i++){
     element = gr->getMeshElement(i);

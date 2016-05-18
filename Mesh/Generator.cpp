@@ -35,6 +35,7 @@
 #include "Options.h"
 #include "simple3D.h"
 #include "yamakawa.h"
+#include "meshGRegionRelocateVertex.h"
 
 #include "pointInsertion.h"
 
@@ -785,7 +786,7 @@ static void Mesh3D(GModel *m)
         }
         double a = Cpu();
 
-	CTX::instance()->mesh.recombine3DLevel = 2;
+	//	CTX::instance()->mesh.recombine3DLevel = 2;
 
         if (CTX::instance()->mesh.recombine3DLevel >= 0){
           Recombinator rec;
@@ -796,10 +797,12 @@ static void Mesh3D(GModel *m)
           sup.execute(gr);
         }
         PostOp post;
-	post.execute(gr,CTX::instance()->mesh.recombine3DLevel,3);
+	printf("-----------> %d %d\n",CTX::instance()->mesh.recombine3DLevel,CTX::instance()->mesh.recombine3DConformity);
+	post.execute(gr,CTX::instance()->mesh.recombine3DLevel,CTX::instance()->mesh.recombine3DConformity);
 	//			     CTX::instance()->mesh.recombine3DConformity);
         // 0: no pyramid, 1: single-step, 2: two-steps (conforming),
         // true: fill non-conformities with trihedra
+	RelocateVertices(gr);
         // while(LaplaceSmoothing (gr)){
         // }
 	nb_elements_recombination += post.get_nb_elements();

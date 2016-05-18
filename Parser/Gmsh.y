@@ -4627,6 +4627,7 @@ Constraints :
               "slave (%d) edges", List_Nbr($10), List_Nbr($5));
       }
       else{
+	Msg::Warning("This syntax is deprecated\n Use \"Periodic Surface { List } = { List } Translate { dx , dy , dz } ;\"");
         int j_master = (int)$8;
         int j_slave = (int)$3;
         std::map<int,int> edgeCounterParts;

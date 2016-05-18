@@ -9,6 +9,7 @@
 #include "MHexahedron.h"
 #include "Context.h"
 #include "meshGFaceOptimize.h"
+#include "meshGRegionRelocateVertex.h"
 
 static double objective_function (double xi, MVertex *ver, 
                                   double xTarget, double yTarget, double zTarget,
@@ -238,18 +239,22 @@ void RelocateVertices (GFace* gf, int niter, double tol) {
 }
 
 
+void RelocateVertices (GRegion* region, double tol) {
+  v2t_cont adj;
+  buildVertexToElement(region->tetrahedra, adj);
+  buildVertexToElement(region->pyramids, adj);
+  buildVertexToElement(region->prisms, adj);
+  buildVertexToElement(region->hexahedra, adj);
+  v2t_cont::iterator it = adj.begin();
+  while (it != adj.end()){
+    _relocateVertex( it->first, it->second, tol);
+    ++it;
+  }
+}
+
 void RelocateVertices (std::vector<GRegion*> &regions, double tol) {
   for(unsigned int k = 0; k < regions.size(); k++){
-    v2t_cont adj;
-    buildVertexToElement(regions[k]->tetrahedra, adj);
-    buildVertexToElement(regions[k]->pyramids, adj);
-    buildVertexToElement(regions[k]->prisms, adj);
-    buildVertexToElement(regions[k]->hexahedra, adj);
-    v2t_cont::iterator it = adj.begin();
-    while (it != adj.end()){
-      _relocateVertex( it->first, it->second, tol);
-      ++it;
-    }
+    RelocateVertices (regions[k], tol);
   }
 }
 
