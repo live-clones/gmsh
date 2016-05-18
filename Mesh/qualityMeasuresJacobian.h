@@ -23,6 +23,9 @@ double minAnisotropyMeasure(MElement *el,
                             bool knownValid = false,
                             bool reversedOk = false,
                             int n = 5); //n is fordebug
+double minIsotropyMeasure(MElement *el,
+                          bool knownValid = false,
+                          bool reversedOk = false);
 //double minSampledAnisotropyMeasure(MElement *el, int order,//fordebug
 //                                   bool writeInFile = false);
 
@@ -174,11 +177,29 @@ public:
   void statsForMatlab(MElement *el, int) const;//fordebug
 };
 
-//inline bool isValid(MElement *el) {
-//  double min, max;
-//  minMaxJacobianDeterminant(el, min, max);
-//  return min > 0;
-//}
+class _CoeffDataIsotropy: public _CoeffData
+{
+private:
+  const fullVector<double> _coeffsJacDet;
+  const fullMatrix<double> _coeffsJacMat;
+  const bezierBasis *_bfsDet, *_bfsMat;
+
+public:
+  _CoeffDataIsotropy(fullVector<double> &det,
+                     fullMatrix<double> &metric,
+                     const bezierBasis *bfsDet,
+                     const bezierBasis *bfsMet,
+                     int depth);
+  ~_CoeffDataIsotropy() {}
+
+  bool boundsOk(double minL, double maxL) const;
+  void getSubCoeff(std::vector<_CoeffData*>&) const;
+  int getNumMeasure() const {return 4;}//fordebug
+
+private:
+  void _computeAtCorner(double &min, double &max) const;
+  double _computeLowerBound() const;
+};
 
 double _computeBoundRational(const fullVector<double> &numerator,
                              const fullVector<double> &denominator,
