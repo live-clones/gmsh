@@ -19,33 +19,32 @@ class data_elementMinMax
 {
 private:
   MElement *_el;
-  double _minJ, _maxJ, _minR, _minRR;
+  double _minJ, _maxJ, _minS, _minI;
 public:
   data_elementMinMax(MElement *e,
                      double minJ = 2,
                      double maxJ = 0,
-                     double minR = -1,
-                     double minRR = -1)
-    : _el(e), _minJ(minJ), _maxJ(maxJ), _minR(minR), _minRR(minRR) {}
-  void setMinR(double r) { _minR = r; }
-  void setMinRR(double r) { _minRR = r; }
+                     double minS = -1,
+                     double minI = -1)
+    : _el(e), _minJ(minJ), _maxJ(maxJ), _minS(minS), _minI(minI) {}
+  void setMinS(double r) { _minS = r; }
+  void setMinI(double r) { _minI = r; }
   MElement* element() { return _el; }
   double minJ() { return _minJ; }
   double maxJ() { return _maxJ; }
-  double minR() { return _minR; }
-  double minRR() { return _minRR; }
+  double minS() { return _minS; }
+  double minI() { return _minI; }
 };
 
 class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
 {
 private :
   GModel *_m;
-  double _threshold, _tol;
-  int _computeMetric;
+  double _threshold;
 
   // for 1d, 2d, 3d
-  bool _computedR[3], _computedJ[3], _PViewJ[3], _PViewR[3];
-  bool _msgHide;
+  bool _computedJ[3], _computedS[3], _computedI[3];
+  bool _PViewJ[3], _PViewS[3], _PViewI[3];
 
   std::vector<data_elementMinMax> _data;
 
@@ -53,15 +52,15 @@ public :
   GMSH_AnalyseCurvedMeshPlugin()
   {
     _m = NULL;
-    _threshold = _tol = -1;
-    _computeMetric = -1;
+    _threshold = -1;
     for (int i = 0; i < 3; ++i) {
-      _computedR[i] = false;
       _computedJ[i] = false;
+      _computedS[i] = false;
+      _computedI[i] = false;
       _PViewJ[i] = false;
-      _PViewR[i] = false;
+      _PViewS[i] = false;
+      _PViewI[i] = false;
     }
-    _msgHide = true;
   }
   std::string getName() const { return "AnalyseCurvedMesh"; }
   std::string getShortHelp() const
@@ -71,9 +70,8 @@ public :
   std::string getHelp() const;
   std::string getAuthor() const { return "Amaury Johnen"; }
   int getNbOptions() const;
-  StringXNumber *getOption(int);
-  PView *execute(PView *);
-  void setTol(double tol) { _tol = tol; }
+  StringXNumber* getOption(int);
+  PView* execute(PView *);
 
   // For testing
   void computeMinJ(MElement *const *el, int numEl, double *minJ, bool *straight)
@@ -88,7 +86,7 @@ public :
     }
     if (straight) {
       for (unsigned int i = 0; i < _data.size(); ++i) {
-        straight[i] = _data[i].maxJ() - _data[i].minJ() < _tol * 1e-1;
+        straight[i] = _data[i].maxJ() - _data[i].minJ() < 1e-5;
       }
     }
     _data = save;
@@ -96,24 +94,25 @@ public :
   void computeMinR(MElement *const *el, int numEl, double *minR, bool *straight);
   void test(MElement *const *el, int numEl, int dim)
   {
-    _tol = 1e-3;
     std::vector<data_elementMinMax> save(_data);
     _data.clear();
     _computeMinMaxJandValidity(el, numEl);
 
     Msg::Info("aaa");
     Msg::Info("aaa");
-    _computeMinR(dim);
+    _computeMinIsotropy(dim);
     _data = save;
   }
 
 private :
   void _computeMinMaxJandValidity(int dim);
   void _computeMinMaxJandValidity(MElement *const *, int numEl);
-  void _computeMinR(int dim);
-  bool _hideWithThreshold(int askedDim);
-  void _printStatMetric();
+  void _computeMinScaledJac(int dim);
+  void _computeMinIsotropy(int dim);
+  int _hideWithThreshold(int askedDim, int whichMeasure);
   void _printStatJacobian();
+  void _printStatScaledJac();
+  void _printStatIsotropy();
 };
 
 #endif
