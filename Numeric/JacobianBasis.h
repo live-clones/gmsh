@@ -36,6 +36,8 @@ public:
                                   fullMatrix<double> *dxyzdX,
                                   fullMatrix<double> *dxyzdY,
                                   fullMatrix<double> *dxyzdZ) const;
+  void getAllIdealGradientsFromNodes(const fullMatrix<double> &nodes,
+                                     fullMatrix<double> &dxyzdXYZ) const;
   void mapFromIdealElement(fullMatrix<double> &dxyzdX,
                            fullMatrix<double> &dxyzdY,
                            fullMatrix<double> &dxyzdZ) const {

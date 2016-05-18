@@ -41,7 +41,7 @@ void calcMapFromIdealElement(int type, T &gSMatX, T &gSMatY, T &gSMatZ)
       break;
     }
     case TYPE_PYR: {                                          // Pyramid -> height sqrt(2.)/2
-      static const double cPyr = 1./sqrt(2.);
+      static const double cPyr = sqrt(2.);
       gSMatZ.scale(cPyr);
       break;
     }
@@ -211,6 +211,21 @@ void GradientBasis::getAllGradientsFromNodes(const fullMatrix<double> &nodes,
 
   prox.setAsProxy(dxyzdXYZ, 6, 3);
   gradShapeMatZ.mult(nodes, prox);
+}
+
+void GradientBasis::
+    getAllIdealGradientsFromNodes(const fullMatrix<double> &nodes,
+                                  fullMatrix<double> &dxyzdXYZ) const
+{
+  fullMatrix<double> prox;
+  prox.setAsProxy(dxyzdXYZ, 0, 3);
+  gradShapeIdealMatX.mult(nodes, prox);
+
+  prox.setAsProxy(dxyzdXYZ, 3, 3);
+  gradShapeIdealMatY.mult(nodes, prox);
+
+  prox.setAsProxy(dxyzdXYZ, 6, 3);
+  gradShapeIdealMatZ.mult(nodes, prox);
 }
 
 void GradientBasis::getIdealGradientsFromNodes(const fullMatrix<double> &nodes,
