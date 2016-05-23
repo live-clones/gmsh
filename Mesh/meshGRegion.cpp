@@ -545,7 +545,7 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
   else{
     int nbvertices_filler = (old_algo_hexa()) ?
       Filler::get_nbr_new_vertices() : Filler3D::get_nbr_new_vertices();
-    if(!nbvertices_filler && !LpSmoother::get_nbr_interior_vertices()){      
+    if(!nbvertices_filler && !LpSmoother::get_nbr_interior_vertices()){
       insertVerticesInRegion(gr,2000000000,true);
     }
   }
@@ -615,7 +615,7 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   gr->set(faces);
 
   // now do insertion of points
-  if(!CTX::instance()->mesh.oldRefinement){
+  if(CTX::instance()->mesh.oldRefinement){
     insertVerticesInRegion(gr, 2000000000, true);
   }
   else{
