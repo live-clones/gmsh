@@ -7,6 +7,11 @@
 #include "discreteRegion.h"
 #include "MVertex.h"
 #include "Geo.h"
+#include "Context.h"
+
+#if defined(HAVE_MESH)
+#include "meshGRegionDelaunayInsertion.h"
+#endif
 
 discreteRegion::discreteRegion(GModel *model, int num) : GRegion(model, num)
 {
@@ -53,3 +58,16 @@ void discreteRegion::findFaces(std::map<MFace, std::vector<int>, Less_Face> &map
   }
 }
 
+void discreteRegion::remesh()
+{
+#if defined(HAVE_MESH)
+  if(CTX::instance()->mesh.oldRefinement){
+    insertVerticesInRegion(this, 2000000000, true);
+  }
+  else{
+    insertVerticesInRegion(this, 0);
+    void edgeBasedRefinement(const int numThreads, const int nptsatonce, GRegion *gr);
+    edgeBasedRefinement(1, 1, this);
+  }
+#endif
+}

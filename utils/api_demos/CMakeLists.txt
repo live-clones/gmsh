@@ -56,3 +56,6 @@ target_link_libraries(mainSimple shared)
 add_executable(mainGeoFactory mainGeoFactory.cpp)
 target_link_libraries(mainGeoFactory shared)
 
+add_executable(mainRemesh mainRemesh.cpp)
+target_link_libraries(mainRemesh shared)
+

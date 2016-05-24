@@ -1382,7 +1382,7 @@ bool GFace::fillPointCloud(double maxDist,
 static void meshCompound (GFace* gf, bool verbose) {
 
   discreteFace *df = new discreteFace (gf->model(), gf->tag() + 100000);
-  
+
   std::set<int> ec;
   for (unsigned int i=0;i<gf->_compound.size();i++){
     GFace *c = (GFace*)gf->_compound[i];
@@ -1410,15 +1410,14 @@ static void meshCompound (GFace* gf, bool verbose) {
 void GFace::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
-
   meshGFace mesher;
   mesher(this, verbose);
-  if (!_compound.empty()){ // Some faces are meshed together 
+  if (!_compound.empty()){ // Some faces are meshed together
     if (_compound[0] == this){ //  I'm the one that makes the compound job
       bool ok = true;
       for (unsigned int i=0;i<_compound.size();i++){
 	GFace *gf = (GFace*)_compound[i];
-	ok &= (gf->meshStatistics.status == GFace::DONE);            
+	ok &= (gf->meshStatistics.status == GFace::DONE);
       }
       if (!ok)meshStatistics.status = GFace::PENDING;
       else {
@@ -1427,7 +1426,6 @@ void GFace::mesh(bool verbose)
       }
     }
   }
-    
 #endif
 }
 
@@ -1575,7 +1573,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
   for (mvIter=m_vertices.begin();mvIter!=m_vertices.end();++mvIter) {
 
     GVertex* m_vertex = *mvIter;
-    
+
     SPoint3 xyzOri((*mvIter)->x(),(*mvIter)->y(),(*mvIter)->z());
     SPoint3 xyzTfo(0,0,0);
 
@@ -1584,7 +1582,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
       for (int j=0;j<3;j++) xyzTfo[i] += xyzOri[j] * tfo[idx++];
       xyzTfo[i] += tfo[idx++];
     }
-    
+
     GVertex* l_vertex = NULL;
 
     std::set<GVertex*>::iterator lvIter = l_vertices.begin();
@@ -1645,7 +1643,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
       return;
     }
     GEdge* masterEdge = mv2eIter->second;
-    
+
     if (masterEdge->meshMaster() != localEdge) {
       localEdge->setMeshMaster(masterEdge,tfo);
       Msg::Info("Setting edge master %d - %d",

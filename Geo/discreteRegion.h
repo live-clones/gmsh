@@ -17,6 +17,7 @@ class discreteRegion : public GRegion {
   virtual GeomType geomType() const { return DiscreteVolume; }
   void setBoundFaces(std::set<int> tagFaces);
   void findFaces(std::map<MFace, std::vector<int>, Less_Face> &map_faces);
+  virtual void remesh();
 };
 
 #endif
