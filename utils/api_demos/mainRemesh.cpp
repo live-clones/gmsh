@@ -17,7 +17,19 @@ int main(int argc, char **argv)
   GmshSetOption("Mesh", "Optimize", 0.); // not yet: need boundary!
 
   GModel *m = new GModel();
+
   m->readMSH("cube.msh");
+
+  // discreteRegion *gr = new discreteRegion(m);
+  // MVertex *v0 = new MVertex(x, y, z, gr, tag);
+  // MVertex *v1 = new MVertex(x, y, z, gr, tag);
+  // ...
+  // gr->mesh_vertices.push_back(v0);
+  // ...
+  // MTetrahedron *t = new MTetrahedron(v0, v1, v2, v3, tag);
+  // gr->tetrahedra.push_back(t);
+
+  //MVertex *v2 = gr->mesh_vertices[2];
 
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
     discreteRegion *r = dynamic_cast<discreteRegion*>(*it);
