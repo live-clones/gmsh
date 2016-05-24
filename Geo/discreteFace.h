@@ -31,8 +31,9 @@ class discreteFace : public GFace {
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}
   void checkAndFixOrientation();
+  void setupDiscreteVertex(GVertex*,MVertex*,std::set<MVertex*>*);
+  void setupDiscreteEdge(discreteEdge*,std::vector<MLine*>,std::set<MVertex*>*);
   void splitDiscreteEdge(GEdge*,GVertex*,discreteEdge*[2]);
-  void splitDiscreteFace(discreteFace*,std::vector<triangulation*>&,std::vector<GEdge*>&){};
   void split(triangulation*,std::vector<triangulation*>&,int);
   GPoint point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;
