@@ -175,11 +175,11 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   if((opt->showTime == 1 && nt > 1) || opt->showTime == 2){
     char tmp[256];
     sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
-    sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
+    sprintf(label, "%s - Time: %s", data->getName().c_str(), tmp);
   }
   else if((opt->showTime == 3 && nt > 1) || opt->showTime == 4){
-    sprintf(label, "%s (%d/%d)", data->getName().c_str(), opt->timeStep,
-            data->getNumTimeSteps() - 1);
+    sprintf(label, "%s - Step %d in [0,%d]", data->getName().c_str(), opt->timeStep,
+            data->getNumTimeSteps()-1);
   }
   else
     sprintf(label, "%s", data->getName().c_str());
