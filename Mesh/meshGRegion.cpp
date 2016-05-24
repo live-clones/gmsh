@@ -997,11 +997,11 @@ void meshGRegion::operator() (GRegion *gr)
 
 }
 
-void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
+void optimizeMeshGRegionNetgen::operator() (GRegion *gr, bool always)
 {
   gr->model()->setCurrentMeshEntity(gr);
 
-  if(gr->geomType() == GEntity::DiscreteVolume) return;
+  if(!always && gr->geomType() == GEntity::DiscreteVolume) return;
 
   // don't optimize transfinite or extruded meshes
   if(gr->meshAttributes.method == MESH_TRANSFINITE) return;
@@ -1026,11 +1026,11 @@ void optimizeMeshGRegionNetgen::operator() (GRegion *gr)
 #endif
 }
 
-void optimizeMeshGRegionGmsh::operator() (GRegion *gr)
+void optimizeMeshGRegionGmsh::operator() (GRegion *gr, bool always)
 {
   gr->model()->setCurrentMeshEntity(gr);
 
-  if(gr->geomType() == GEntity::DiscreteVolume) return;
+  if(!always && gr->geomType() == GEntity::DiscreteVolume) return;
 
   // don't optimize extruded meshes
   if(gr->meshAttributes.method == MESH_TRANSFINITE) return;

@@ -7,10 +7,14 @@
 int main(int argc, char **argv)
 {
   GmshInitialize(argc, argv);
+  GmshSetOption("General", "Terminal", 1.);
+  GmshSetOption("General", "Verbosity", 4.);
   GmshSetOption("Mesh", "CharacteristicLengthExtendFromBoundary", 1.);
   GmshSetOption("Mesh", "OldRefinement", 1.);
   GmshSetOption("Mesh", "CharacteristicLengthMin", 0.1);
   GmshSetOption("Mesh", "CharacteristicLengthMax", 0.1);
+
+  GmshSetOption("Mesh", "Optimize", 0.); // not yet: need boundary!
 
   GModel *m = new GModel();
   m->readMSH("cube.msh");

@@ -35,13 +35,13 @@ class meshGRegionExtruded {
 // Optimize the mesh of the region using gmsh's algo
 class optimizeMeshGRegionGmsh {
  public :
-  void operator () (GRegion *);
+  void operator () (GRegion *, bool always=false);
 };
 
 // Optimize the mesh of the region using netgen's algo
 class optimizeMeshGRegionNetgen {
  public :
-  void operator () (GRegion *);
+  void operator () (GRegion *, bool always=false);
 };
 
 // destroy the mesh of the region
