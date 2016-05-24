@@ -2768,7 +2768,7 @@ optionWindow::optionWindow(int deltaFontSize)
       post.value[1]->callback(post_options_ok_cb);
 
       post.butt[0] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Cycle through views instead of time steps");
+        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Cycle through views instead of steps");
       post.butt[0]->type(FL_TOGGLE_BUTTON);
       post.butt[0]->callback(post_options_ok_cb);
 
@@ -2831,7 +2831,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.value[50]->maximum(0);
       view.value[50]->step(1);
       view.label[0] = new Fl_Box
-        (L + 2 * WB + IW, 2 * WB + 3 * BH, width / 2, BH, "Time step");
+        (L + 2 * WB + IW, 2 * WB + 3 * BH, width / 2, BH, "Step");
       view.label[0]->box(FL_NO_BOX);
       view.label[0]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
@@ -2882,7 +2882,7 @@ optionWindow::optionWindow(int deltaFontSize)
       static Fl_Menu_Item menu_range[] = {
         {"Default", 0, 0, 0},
         {"Custom", 0, 0, 0},
-        {"Per time step", 0, 0, 0},
+        {"Per step", 0, 0, 0},
         {0}
       };
       view.choice[7] = new Fl_Choice
