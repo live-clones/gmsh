@@ -772,10 +772,10 @@ public class EssaiGmsh_v1 {
         WrapGmsh.List_Add(lst3, tag);
 
         // add all tags defines in the first physical in the GModel
-        WrapGmsh.add_physical(str, lst1, m.getFileName());
+        WrapGmsh.add_physical(str, lst1, m.getFileName(), "", 0, false, "");
 
-        WrapGmsh.add_physical(str, lst2, m.getFileName());
-        WrapGmsh.add_physical(str, lst3, m.getFileName());
+        WrapGmsh.add_physical(str, lst2, m.getFileName(), "", 0, false, "");
+        WrapGmsh.add_physical(str, lst3, m.getFileName(), "", 0, false, "");
 
         // delete what is in the List
         WrapGmsh.List_Reset(lst1);
@@ -804,7 +804,7 @@ public class EssaiGmsh_v1 {
         tag = v26.tag();
         WrapGmsh.List_Add(lst4, tag);
 
-        WrapGmsh.add_physical(str, lst4, m.getFileName());
+        WrapGmsh.add_physical(str, lst4, m.getFileName(), "", 0, false, "");
         WrapGmsh.List_Reset(lst4);
 
         // //LINE
@@ -966,9 +966,9 @@ public class EssaiGmsh_v1 {
         WrapGmsh.List_Add(lst2, tag);
         WrapGmsh.List_Add(lst3, tag);
 
-        WrapGmsh.add_physical(str1, lst1, m.getFileName());
-        WrapGmsh.add_physical(str1, lst2, m.getFileName());
-        WrapGmsh.add_physical(str1, lst3, m.getFileName());
+        WrapGmsh.add_physical(str1, lst1, m.getFileName(), "", 0, false, "");
+        WrapGmsh.add_physical(str1, lst2, m.getFileName(), "", 0, false, "");
+        WrapGmsh.add_physical(str1, lst3, m.getFileName(), "", 0, false, "");
         WrapGmsh.List_Reset(lst1);
         WrapGmsh.List_Reset(lst2);
         WrapGmsh.List_Reset(lst3);
@@ -1012,7 +1012,7 @@ public class EssaiGmsh_v1 {
         tag = e42.tag();
         WrapGmsh.List_Add(lst4, tag);
 
-        WrapGmsh.add_physical(str1, lst4, m.getFileName());
+        WrapGmsh.add_physical(str1, lst4, m.getFileName(), "", 0, false, "");
         WrapGmsh.List_Reset(lst4);
 
         // //FACE
@@ -1328,9 +1328,9 @@ public class EssaiGmsh_v1 {
         WrapGmsh.List_Add(lst2, tag);
         WrapGmsh.List_Add(lst3, tag);
 
-        WrapGmsh.add_physical(str2, lst1, m.getFileName());
-        WrapGmsh.add_physical(str2, lst2, m.getFileName());
-        WrapGmsh.add_physical(str2, lst3, m.getFileName());
+        WrapGmsh.add_physical(str2, lst1, m.getFileName(), "", 0, false, "");
+        WrapGmsh.add_physical(str2, lst2, m.getFileName(), "", 0, false, "");
+        WrapGmsh.add_physical(str2, lst3, m.getFileName(), "", 0, false, "");
         WrapGmsh.List_Reset(lst1);
         WrapGmsh.List_Reset(lst2);
         WrapGmsh.List_Reset(lst3);
@@ -1362,7 +1362,7 @@ public class EssaiGmsh_v1 {
         tag = f26.tag();
         WrapGmsh.List_Add(lst4, tag);
 
-        WrapGmsh.add_physical(str2, lst4, m.getFileName());
+        WrapGmsh.add_physical(str2, lst4, m.getFileName(), "", 0, false, "");
         WrapGmsh.List_Reset(lst4);
 
         // //VOLUME
@@ -1423,9 +1423,9 @@ public class EssaiGmsh_v1 {
         WrapGmsh.List_Add(lst2, tag);
         WrapGmsh.List_Add(lst3, tag);
 
-        WrapGmsh.add_physical(str3, lst1, m.getFileName());
-        WrapGmsh.add_physical(str3, lst2, m.getFileName());
-        WrapGmsh.add_physical(str3, lst3, m.getFileName());
+        WrapGmsh.add_physical(str3, lst1, m.getFileName(), "", 0, false, "");
+        WrapGmsh.add_physical(str3, lst2, m.getFileName(), "", 0, false, "");
+        WrapGmsh.add_physical(str3, lst3, m.getFileName(), "", 0, false, "");
         WrapGmsh.List_Reset(lst1);
         WrapGmsh.List_Reset(lst2);
         WrapGmsh.List_Reset(lst3);
@@ -1435,7 +1435,7 @@ public class EssaiGmsh_v1 {
         tag = r2.tag();
         WrapGmsh.List_Add(lst4, tag);
 
-        WrapGmsh.add_physical(str3, lst4, m.getFileName());
+        WrapGmsh.add_physical(str3, lst4, m.getFileName(), "", 0, false, "");
         WrapGmsh.List_Reset(lst4);
 
 	//free memory
@@ -1608,5 +1608,3 @@ public class EssaiGmsh_v1 {
         return m;
     }
 }
-
-
