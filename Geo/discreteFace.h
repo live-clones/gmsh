@@ -34,6 +34,7 @@ class discreteFace : public GFace {
   void setupDiscreteVertex(GVertex*,MVertex*,std::set<MVertex*>*);
   void setupDiscreteEdge(discreteEdge*,std::vector<MLine*>,std::set<MVertex*>*);
   void splitDiscreteEdge(GEdge*,GVertex*,discreteEdge*[2]);
+  void updateTopology(std::vector<triangulation*>&);
   void split(triangulation*,std::vector<triangulation*>&,int);
   GPoint point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;

@@ -126,15 +126,14 @@ void discreteFace::createGeometry()
   std::vector<MElement*> tem(triangles.begin(),triangles.end());
 
   triangulation* init = new triangulation(tem,this);  
-  init->my_GEdges = l_edges;
-
+  
   toSplit.push(init);
   //int mygen, compteur=1;//#debug
-  Msg::Info("First Genus Value:");
-  
+  //Msg::Info("First Genus Value:");
   //mygen=1; //#debug
-  if((toSplit.top())->genus()!=0){// (mygen!=0){//#debug
-   
+  //if(mygen!=0){// #debug
+  if((toSplit.top())->genus()!=0){
+    
     while( !toSplit.empty()){
       std::vector<triangulation*> part;
       triangulation* tosplit = toSplit.top();
@@ -142,12 +141,13 @@ void discreteFace::createGeometry()
 
       split(tosplit,part,nPart);
       delete tosplit; // #mark
-
+      
       for(unsigned int i=0; i<part.size(); i++){
 	//Msg::Info("Partition %d Genus:",compteur);//#debug
 	//std::cin>>mygen;//#debug
-	if(part[i]->genus()!=0)// (mygen!=0)//#debug
-	  toSplit.push(part[i]);
+	//if (mygen!=0)//#debug
+	if(part[i]->genus()!=0)
+	  toSplit.push(part[i]);	
 	else{
 	  toParam.push_back(part[i]);
 	  part[i]->idNum=id++;
@@ -161,10 +161,12 @@ void discreteFace::createGeometry()
     toSplit.top()->idNum=id++;
   }
 
+    updateTopology(toParam);
+
   for(unsigned int i=0; i<toParam.size(); i++){
     std::vector<MElement*> mytri = toParam[i]->tri;
     discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));
-    df->replaceEdges(toParam[i]->my_GEdges);
+    df->replaceEdges(toParam[i]->my_GEdges);    
     _atlas.push_back(df);
   }
 #endif
@@ -218,9 +220,9 @@ void discreteFace::mesh(bool verbose)
 {
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER) && defined(HAVE_MESH)
   if (!CTX::instance()->meshDiscrete) return;
-  for (unsigned int i=0;i<_atlas.size();i++){
+  for (unsigned int i=0;i<_atlas.size();i++)
     _atlas[i]->mesh(verbose);
-  }
+  
   gatherMeshes();
   meshStatistics.status = GFace::DONE;
 #endif
@@ -334,9 +336,7 @@ void discreteFace::splitDiscreteEdge ( GEdge *de , GVertex *gv, discreteEdge* ne
   
   newE[0] = new discreteEdge (de->model(),NEWLINE(),de->getBeginVertex(),gv);
   newE[1] = new discreteEdge (de->model(),NEWLINE(),gv, de->getEndVertex());
-  //de->model()->add(newE[0]);
-  //de->model()->add(newE[1]);
-  
+
   int current = 0;
   std::vector<MLine*> mlines;
   // assumption: the MLine's are sorted
@@ -348,8 +348,7 @@ void discreteFace::splitDiscreteEdge ( GEdge *de , GVertex *gv, discreteEdge* ne
       mlines.clear();// 
       current++;
     }
-  }
-  //for(int ie=0; ie<2; ie++)  newE[ie]->createGeometry();  
+  }  
   de->mesh_vertices.clear();
   de->lines.clear();
   
@@ -373,7 +372,7 @@ void discreteFace::splitDiscreteEdge ( GEdge *de , GVertex *gv, discreteEdge* ne
 	df->l_edges.clear();
 	df->setBoundEdges (df->model(), tagEdges);
       }
-      else Msg::Fatal("discreteFace::splitDiscreteEdge \t This only applies to discrete geometries"); 
+      else Msg::Fatal("discreteFace::splitDiscreteEdge, This only applies to discrete geometries"); 
     }    
   }  
   de->model()->remove(de);  
@@ -471,11 +470,20 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
   for(int i=0; i<nPartitions; i++)// new triangulation of the connected parts
     partition.push_back(new triangulation(elem[i],this));
 
+
+
+#endif
+}
+
+
+void discreteFace::updateTopology(std::vector<triangulation*>&partition){
   //------------------------------------------------------//
   //---- setting topology, i.e. GEdge's and GVertex's ----//
   //------------------------------------------------------//
+  int nPartitions = partition.size();
   std::set<MVertex*> todelete; // vertices that do not belong to the GFace anymore
-  std::set<GEdge*> gGEdges(trian->my_GEdges.begin(),trian->my_GEdges.end());// current GEdges of the initial (old) triangulation
+  std::set<GEdge*> gGEdges(l_edges.begin(),l_edges.end());// initial GEdges of the GFace (to be updated)
+
   for(int i=0; i<nPartitions; i++){// each part is going ot be compared with the other ones      
     std::set<MEdge,Less_Edge> bordi = partition[i]->borderEdg;// edges defining the border(s) of the i-th new triangulation
     for(int ii=i+1; ii<nPartitions; ii++){// compare to the ii-th partitions, with ii > i since ii < i have already been compared
@@ -512,45 +520,43 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
 	std::vector<MVertex*> mvt; 
 	mvt.resize(2);
 	mvt[0] = *itf;
-	mvt[1] = cv0;	  
-	for(int imvt=0; imvt<2; imvt++){// creation of the GVertex, for new nonloop GEdge's	  
+	mvt[1] = cv0;
+
+	// creation of the GVertex, for new nonloop GEdge's	  
+	for(int imvt=0; imvt<2; imvt++){
 	  std::set<GEdge*>::iterator oe=gGEdges.begin();// find the old GEdge that has the current new GVertex
-	  while(mvt[imvt]->onWhat() != *oe && mvt[imvt]->onWhat() != (*oe)->getBeginVertex() && mvt[imvt]->onWhat() != (*oe)->getEndVertex() && oe !=gGEdges.end())
+	  while(oe !=gGEdges.end() && mvt[imvt]->onWhat() != *oe && mvt[imvt]->onWhat() != (*oe)->getBeginVertex() && mvt[imvt]->onWhat() != (*oe)->getEndVertex())
 	    ++oe;	  
-	  if (oe == gGEdges.end()) Msg::Error("discreteFace::split \t This Vertex %d is not on a GEdge !",mvt[imvt]->getNum());	    
-	  GEdge* onit = *oe;// the new GVertex can already exist; if it is the case, there is no need to create a new one
-	  if(mvt[imvt] == onit->getBeginVertex()->mesh_vertices[0])
-	    v[imvt] = onit->getBeginVertex();
-	  else if (mvt[imvt] == onit->getEndVertex()->mesh_vertices[0])
-	    v[imvt] = onit->getEndVertex();
-	  else{
+	  
+	  if (oe == gGEdges.end()){// not on an existing GEdge: new internal GVertex
 	    v[imvt] = new discreteVertex (this->model(),NEWPOINT());
-	    setupDiscreteVertex(v[imvt],mvt[imvt],NULL);
-	    printf("dv %d on GEdge (%d,%d)\n",v[imvt]->mesh_vertices[0]->getNum(),onit->getBeginVertex()->mesh_vertices[0]->getNum(),onit->getEndVertex()->mesh_vertices[0]->getNum());
-	    discreteEdge* de[2];	    	   
-	    gGEdges.erase(onit);// updating the GEdge's of the initial triangulation	  
-	    splitDiscreteEdge(onit,v[imvt],de);	    
-	    gGEdges.insert(de[0]);
-	    gGEdges.insert(de[1]);
-	  }// end else    
+	    setupDiscreteVertex(v[imvt],mvt[imvt],&todelete);
+	  }
+	  else{// on an existing GEdge
+	    GEdge* onit = *oe;// the new GVertex can already exist; if it is the case, there is no need to create a new one
+	    if(mvt[imvt] == onit->getBeginVertex()->mesh_vertices[0])
+	      v[imvt] = onit->getBeginVertex();
+	    else if (mvt[imvt] == onit->getEndVertex()->mesh_vertices[0])
+	      v[imvt] = onit->getEndVertex();
+	    else{
+	      v[imvt] = new discreteVertex (this->model(),NEWPOINT());	   
+	      setupDiscreteVertex(v[imvt],mvt[imvt],NULL);
+	      discreteEdge* de[2];
+	      splitDiscreteEdge(onit,v[imvt],de);
+	      gGEdges.insert(de[0]);
+	      gGEdges.insert(de[1]);
+	    }// end if-elseif-else
+	  }// end else oe==end()   
 	}// end imvt
 	// the new GEdge can be created with its GVertex
 	discreteEdge* internalE = new discreteEdge (this->model(),NEWLINE(),v[0],v[1]);
-	setupDiscreteEdge(internalE,myLines,&todelete);		
+	setupDiscreteEdge(internalE,myLines,&todelete);	
 	partition[i]->my_GEdges.push_back(internalE);
 	partition[ii]->my_GEdges.push_back(internalE);	
 
 	first.erase(itf);// next first vertex of a nonloop GEdge
       }//end while first.empty()
-      // adding old-updated GEdge's to the corresponding partitions
-      for(std::set<GEdge*>::iterator le=gGEdges.begin(); le!=gGEdges.end(); ++le){
-	GEdge* ile = *le;
-	MEdge edTest = ile->lines.front()->getEdge(0);
-	if(bordi.find(edTest)!=bordi.end())
-	  partition[i]->my_GEdges.push_back(ile);	      	  
-	else
-	  partition[ii]->my_GEdges.push_back(ile);	     
-      }
+      
       // remaining MLines for 'loop'GEdge's
       while(!v02edg.empty()){
 	discreteVertex* v;	  
@@ -571,6 +577,20 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
     }//end for ii    
   }// end for i
   
+  
+  // adding old-updated bounding GEdge's to the corresponding partitions
+  for(std::set<GEdge*>::iterator le=gGEdges.begin(); le!=gGEdges.end(); ++le){
+    GEdge* ile = *le;
+    MEdge edTest = ile->lines.front()->getEdge(0);    
+    for(int i=0; i<nPartitions; i++){
+      std::set<MEdge,Less_Edge> bordi = partition[i]->borderEdg;
+      if(bordi.find(edTest)!=bordi.end()){
+	partition[i]->my_GEdges.push_back(ile);
+	break;
+      }
+    }
+  }
+  
   // update GFace mesh_vertices
   std::vector<MVertex*> newMV;
   for(unsigned int imv=0; imv<this->mesh_vertices.size(); imv++){
@@ -580,10 +600,7 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
   }
   this->mesh_vertices.clear();
   this->mesh_vertices = newMV;
-
-#endif
 }
-
 
 // delete all discrete disk faces
 //void discreteFace::deleteAtlas() {
