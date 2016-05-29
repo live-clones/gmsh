@@ -24,12 +24,12 @@
 class bezierBasis;
 
 StringXNumber CurvedMeshOptions_Number[] = {
-  {GMSH_FULLRC, "Jacobian", NULL, 1},
+  {GMSH_FULLRC, "Jacobian determinant", NULL, 1},
   {GMSH_FULLRC, "Scaled Jacobian", NULL, 0},
   {GMSH_FULLRC, "Isotropy", NULL, 1},
-  {GMSH_FULLRC, "Hidding threshold", NULL, 1},
+  {GMSH_FULLRC, "Hidding threshold", NULL, 10},
   {GMSH_FULLRC, "Draw PView", NULL, 0},
-  {GMSH_FULLRC, "Recompute bounds", NULL, 0},
+  {GMSH_FULLRC, "Recompute", NULL, 0},
   {GMSH_FULLRC, "Dimension of elements", NULL, -1}
 };
 
@@ -54,36 +54,39 @@ StringXNumber *GMSH_AnalyseCurvedMeshPlugin::getOption(int iopt)
 std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
 {
   return "Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. "
-    "It computes, min(J) where J is the Jacobian determinant and, if "
-    "asked, min(R) where R is the ratio between the smaller and the greater "
-    "of the eigenvalues of the metric. It creates a PView and hides "
-    "elements for which min({J, R}) < 'Hidding threshold'.\n"
+    "According to what is asked, it computes the minimum of the Jacobian "
+    "determinant (J), of the scaled Jacobian and/or of the isotropy measure. "
+    "Statistics are printed and if asked a Pview is created for each measure. "
+    "The plugin hides elements for which the measure mu > 'Hidding threshold', "
+    "where mu is the isotropy measure if asked otherwise the scaled Jacobian if "
+    "asked otherwise the Jacobian determinant.\n"
     "\n"
-    "J is faster to compute but gives informations only on validity while R "
-    "gives also informations on quality.\n"
+    "J is faster to compute but gives informations only on validity while the "
+    "other measure gives also informations on quality.\n"
+    "Warning: the scaled Jacobian is experimental for triangles, tetrahedra, "
+    "prisms and pyramids. Computation may take a lot of time for those "
+    "elements!\n"
     "\n"
     "Parameters:\n"
     "\n"
-    "- Show [...] = {0, 1, 2}: If 0, computes Jacobian and shows min(J). If 1, "
-    "computes Jacobian and metric and shows min(R). If 2, behaves as if it is "
-    "1 but shows both min(J) and min(R).\n"
+    "- Jacobian determinant = {0, 1}\n"
+    "- Scaled Jacobian = {0, 1}\n"
+    "- Isotropy = {0, 1}\n"
     "\n"
-    "- Draw PView = {0, 1}: Creates a PView of min({J, R}) if it does not "
-    "already exists. If 'Recompute' = 1, a new PView is redrawed.\n"
+    "- Hidding threshold = [0,1]: Hides all element for which min(mu) is "
+    "strictly greater than the threshold, where mu is the last measure set to "
+    "1. For quality measures, if >= 1, no effect, if = 0 hide all elements "
+    "except invalid.\n"
     "\n"
-    "- Hidding threshold = [0,1]: Hides all element for which min(R) or min(J) "
-    "is strictly greater than the threshold. If = 1, no effect, if = 0 hide "
-    "all elements except invalid.\n"
-    "\n"
-    "- Dimension = {-1, 1, 2, 3, 4}: If = -1, analyse element of the greater "
-    "dimension. If = 4, analyse 2D and 3D elements\n"
+    "- Draw PView = {0, 1}: Creates a PView of min(J)/max(J), min(scaled Jac) "
+    "and/or min(isotropy) according to what is asked. If 'Recompute' = 1, a "
+    "new PView is redrawed.\n"
     "\n"
     "- Recompute = {0,1}: If the mesh has changed, set to 1 to recompute the "
     "bounds.\n"
     "\n"
-    "- Tolerance = ]0, 1[: Tolerance on the computation of min({R, J}). "
-    "It should be at most 0.01 but it can be set to 1 or greater to just check "
-    "the validity of the mesh.";
+    "- Dimension = {-1, 1, 2, 3, 4}: If = -1, analyse element of the greater "
+    "dimension. If = 4, analyse 2D and 3D elements.";
 }
 
 PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
@@ -161,11 +164,8 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
         std::map<int, std::vector<double> > dataPV;
         for (unsigned int i = 0; i < _data.size(); ++i) {
           MElement *const el = _data[i].element();
-          if (el->getDim() == dim) {
-            double q = 0;
-            if (_data[i].minJ() > 0) q = _data[i].minJ()/_data[i].maxJ();
-            dataPV[el->getNum()].push_back(q);
-          }
+          if (el->getDim() == dim)
+            dataPV[el->getNum()].push_back(_data[i].minJ()/_data[i].maxJ());
         }
         if (dataPV.size()) {
           std::stringstream name;
@@ -425,13 +425,14 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
   avgratJ /= count;
   avgratJc /= countc;
 
-  Msg::Info("Minimum of Jacobian       : in [%g, %g], avg=%g",
-      infminJ, supminJ, avgminJ);
-  Msg::Info("Ratio minJ/maxJ           : in [%g, %g], avg=%g",
-      infratJ, supratJ, avgratJ);
-  Msg::Info("                            avg=%g"
-            " (on the %d non-constant elements)",
-            avgratJc, count);
+  Msg::Info("Jacobian determinant: in [%.3g, %.3g] (avg=%.3g)",
+            infminJ, supminJ, avgminJ);
+  Msg::Info("Ratio minJ/maxJ     : in [%.3g, %.3g] (avg=%.3g)",
+            infratJ, supratJ, avgratJ);
+  if (countc < count)
+    Msg::Info("                      (avg=%.3g"
+              " on the %d non-constant elements)",
+              avgratJc, countc);
 }
 
 void GMSH_AnalyseCurvedMeshPlugin::_printStatScaledJac()
@@ -450,7 +451,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatScaledJac()
   }
   avgminS /= _data.size();
 
-  Msg::Info("Minimum of scaled Jacobian       : in [%g, %g], avg=%g",
+  Msg::Info("Scaled Jacobian     : in [%.3g, %.3g] (avg=%.3g)",
       infminS, supminS, avgminS);
 }
 
@@ -470,7 +471,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatIsotropy()
   }
   avgminI /= _data.size();
 
-  Msg::Info("Minimum of isotropy       : in [%g, %g], avg=%g",
+  Msg::Info("Isotropy            : in [%.3g, %.3g] (avg=%.3g)",
       infminI, supminI, avgminI);
 }
 
