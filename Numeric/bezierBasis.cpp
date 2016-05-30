@@ -702,6 +702,22 @@ bezierBasisRaiser* bezierBasis::getRaiser() const
   return _raiser;
 }
 
+//const bezierBasis* bezierBasisRaiser::getRaisedBezierBasis(int raised) const
+//{
+//  if (raised != 2 && raised != 3) {
+//    Msg::Error("Why would you want other than 2 or 3?");
+//    return NULL;
+//  }
+//  if (_bfs->_data.elementType() != TYPE_PYR)
+//    return BasisFactory::getBezierBasis(
+//        FuncSpaceData(_bfs->_data, _bfs->_data.spaceOrder()*raised));
+//  else
+//    return BasisFactory::getBezierBasis(
+//        FuncSpaceData(_bfs->_data,
+//                      _bfs->_data.nij()*raised,
+//                      _bfs->_data.nk()*raised));
+//}
+
 void bezierBasisRaiser::_fillRaiserData()
 {
   if (_bfs->getType() == TYPE_PYR) {
@@ -854,6 +870,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   }
   int ncoeff = exp.size1();
   int order[3] = {fsdata.nij(), fsdata.nij(), fsdata.nk()};
+  int orderHash = std::max(order[0], order[1]);
 
   // Speedup: Since the coefficients (num/den) are invariant from a permutation
   // of the indices (i, j) or (i, j, k), we fill only the raiser data for
@@ -873,7 +890,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   for (int i = 0; i < exp2.size1(); ++i) {
     int hash = 0;
     for (int l = 0; l < 3; l++) {
-      hash += exp2(i, l) * pow_int(2*order[l]+1, l);
+      hash += exp2(i, l) * pow_int(2*orderHash+1, l);
     }
     hashToInd2[hash] = i;
   }
@@ -892,7 +909,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
 
       int hash = 0;
       for (int l = 0; l < 3; l++) {
-        hash += (exp(i, l)+exp(j, l)) * pow_int(2*order[l]+1, l);
+        hash += (exp(i, l)+exp(j, l)) * pow_int(2*orderHash+1, l);
       }
       _raiser2[hashToInd2[hash]].push_back(_Data(num/den, i, j));
     }
@@ -912,7 +929,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   for (int i = 0; i < exp3.size1(); ++i) {
     int hash = 0;
     for (int l = 0; l < 3; l++) {
-      hash += exp3(i, l) * pow_int(3*order[l]+1, l);
+      hash += exp3(i, l) * pow_int(3*orderHash+1, l);
     }
     hashToInd3[hash] = i;
   }
@@ -934,7 +951,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
 
         int hash = 0;
         for (int l = 0; l < 3; l++) {
-          hash += (exp(i, l)+exp(j, l)+exp(k, l)) * pow_int(3*order[l]+1, l);
+          hash += (exp(i, l)+exp(j, l)+exp(k, l)) * pow_int(3*orderHash+1, l);
         }
         _raiser3[hashToInd3[hash]].push_back(_Data(num/den, i, j, k));
       }

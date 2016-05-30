@@ -73,10 +73,11 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
     "- Scaled Jacobian = {0, 1}\n"
     "- Isotropy = {0, 1}\n"
     "\n"
-    "- Hidding threshold = [0,1]: Hides all element for which min(mu) is "
-    "strictly greater than the threshold, where mu is the last measure set to "
-    "1. For quality measures, if >= 1, no effect, if = 0 hide all elements "
-    "except invalid.\n"
+    "- Hidding threshold = [0, 1]: Does nothing if Isotropy == 0 and Scaled "
+    "Jacobian == 0. Otherwise, hides all element for which min(mu) is "
+    "strictly greater than the threshold, where mu is the isotropy if Isotropy "
+    "== 1, otherwise it is the Scaled Jacobian. If threshold == 1, no effect, "
+    "if == 0 hide all elements except invalid.\n"
     "\n"
     "- Draw PView = {0, 1}: Creates a PView of min(J)/max(J), min(scaled Jac) "
     "and/or min(isotropy) according to what is asked. If 'Recompute' = 1, a "
@@ -85,8 +86,8 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
     "- Recompute = {0,1}: If the mesh has changed, set to 1 to recompute the "
     "bounds.\n"
     "\n"
-    "- Dimension = {-1, 1, 2, 3, 4}: If = -1, analyse element of the greater "
-    "dimension. If = 4, analyse 2D and 3D elements.";
+    "- Dimension = {-1, 1, 2, 3, 4}: If == -1, analyse element of the greater "
+    "dimension. If == 4, analyse 2D and 3D elements.";
 }
 
 PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
@@ -361,6 +362,9 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIsotropy(int dim)
 
 int GMSH_AnalyseCurvedMeshPlugin::_hideWithThreshold(int askedDim, int whichMeasure)
 {
+  // only hide for wuality measures
+  if (_threshold > 1 || whichMeasure == 0) return 0;
+
   int nHidden = 0;
 
   for (unsigned int i = 0; i < _data.size(); ++i) {
