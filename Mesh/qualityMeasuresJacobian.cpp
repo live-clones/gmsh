@@ -157,7 +157,8 @@ double minScaledJacobian(MElement *el, bool knownValid, bool reversedOk)
 //  Msg::Info("element %d, type %d, numSub %d", el->getNum(), el->getType(),
 //      domains.size()/7);
   if (domains.size()/7 > 500) {//fordebug
-    Msg::Info("S too much subdivision: %d (el %d, type %d)", domains.size()/7, el->getNum(), el->getType());
+    Msg::Info("S too much subdivision: %d (el %d, type %d, tag %d)",
+        domains.size()/7, el->getNum(), el->getType(), el->getTypeForMSH());
   }
 
   double min = domains[0]->minB();
@@ -323,7 +324,7 @@ double minIsotropyMeasure(MElement *el,
     jacDetSpace = FuncSpaceData(el, false, jacOrder, jacOrder-3, &serendipFalse);
     break;
   default:
-    Msg::Error("Scaled Jacobian not implemented for type of element %d", el->getType());
+    Msg::Error("Isotropy not implemented for type of element %d", el->getType());
     return -1;
   }
   gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
@@ -358,7 +359,8 @@ double minIsotropyMeasure(MElement *el,
 
   _subdivideDomains(domains);
   if (domains.size()/7 > 500) {//fordebug
-    Msg::Info("I too much subdivision: %d (el %d, type %d)", domains.size()/7, el->getNum(), el->getType());
+    Msg::Info("I too much subdivision: %d (el %d, type %d, tag %d)",
+               domains.size()/7, el->getNum(), el->getType(), el->getTypeForMSH());
   }
 
 
@@ -852,8 +854,9 @@ double _CoeffDataIsotropy::_computeLowerBound() const
   // 3D element NEW
   fullVector<double> coeffDenominator;
   {
-    fullVector<double> P(_coeffsJacMat.size1());
+    // P: coefficients of function that bound from above the Frobenius norm of J
     // element of P are automatically set to 0
+    fullVector<double> P(_coeffsJacMat.size1());
     for (int i = 0; i < _coeffsJacMat.size1(); ++i) {
       for (int k = 0; k < _coeffsJacMat.size2(); ++k) {
         P(i) += _coeffsJacMat(i, k) * _coeffsJacMat(i, k);
