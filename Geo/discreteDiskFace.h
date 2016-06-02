@@ -171,8 +171,9 @@ class discreteDiskFace : public GFace {
   GFace *_parent;
   void buildOct(std::vector<GFace*> *CAD = NULL) const;
   bool parametrize(bool one2one = false) const;
-  void putOnView();
+  void putOnView(bool,bool);
   bool checkOrientationUV();
+  void printParamMesh();
 
  public:
   discreteDiskFace(GFace *parent, triangulation* diskTriangulation,

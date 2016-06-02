@@ -229,6 +229,7 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
     for (unsigned int j=0; j<3; j++){ // loop over vertices AND edges of the current triangle
 
       MVertex *v = mesh[i]->getVertex(j);// firstly, edge vertices
+      
       if (v->onWhat()->dim() == 2) {
 	std::map<MVertex*,MVertex*> :: iterator it = v2v.find(v);
 	if (it == v2v.end()){
@@ -255,6 +256,7 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
 	else vs.push_back(v);
       }
       else vs.push_back(v);
+      
     }
     if (_order == 2) {// then, interior nodes :-)
       for (unsigned int ie=0; ie<3; ie++){ // firstly, edge interior nodes :-)
@@ -277,9 +279,9 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
     else if (_order==2)
       discrete_triangles[i] = new MTriangle6 (vs);
   }// end loop over triangles
-
+  
   geoTriangulation = new triangulation(discrete_triangles,gf);
-
+  
   allNodes = geoTriangulation->vert;
   _totLength = geoTriangulation->bord.rbegin()->first;
   _U0 = geoTriangulation->bord.rbegin()->second;
@@ -288,14 +290,16 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
 
   parametrize(false);
   buildOct(CAD);
-
+  
   if (!checkOrientationUV()){
     Msg::Info("discreteDiskFace:: parametrization is not one-to-one; fixing "
               "the discrete system.");
     parametrize(true);
     buildOct(CAD);
   }
-  putOnView();
+  
+  putOnView(true,false);
+  printParamMesh();
 }
 /*end BUILDER*/
 
@@ -357,8 +361,8 @@ bool discreteDiskFace::parametrize(bool one2one) const
     MVertex *v = _U0[i];
     const double theta = 2 * M_PI * _coords[i];
     if(i%_order==0){
-      myAssemblerU.fixVertex(v, 0, 1, cos(theta));
-      myAssemblerV.fixVertex(v, 0, 1, sin(theta));
+      myAssemblerU.fixVertex(v, 0, 1,cos(theta));
+      myAssemblerV.fixVertex(v, 0, 1,sin(theta));
     }
     else{//#TEST
       myAssemblerU.fixVertex(v, 0, 1,1./_order*((_order-(i%_order))*cos(2*M_PI*_coords[i-(i%_order)])+(i%_order)*cos(2*M_PI*_coords[i+(_order-(i%_order))])));
@@ -498,7 +502,7 @@ GPoint discreteDiskFace::point(const double par1, const double par2) const
 {
   double xi,eta;
   double par[2] = {par1,par2};
-  discreteDiskFaceTriangle* dt;
+  discreteDiskFaceTriangle* dt = NULL;
   getTriangleUV(par1,par2,&dt,xi,eta);// return Xi,Eta
   double Xi[2] = {xi,eta};
   if (!dt) {
@@ -575,7 +579,7 @@ double discreteDiskFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVec
 Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
 {
   double xi,eta;
-  discreteDiskFaceTriangle* ddft;
+  discreteDiskFaceTriangle* ddft = NULL;
   getTriangleUV(param.x(),param.y(),&ddft,xi,eta);
 
   MElement* tri = NULL;
@@ -642,92 +646,138 @@ void discreteDiskFace::secondDer(const SPoint2 &param,
   return;
 }
 
-void discreteDiskFace::putOnView()
+void discreteDiskFace::putOnView(bool Xu, bool Ux)
 {
 
   char mybuffer [64];
+  
+  FILE *view_u, *view_v, *UVx, *UVy, *UVz;
 
-  sprintf(mybuffer, "param_u_part%d_order%d.pos",
-           initialTriangulation->idNum,_order);
-  FILE* view_u = Fopen(mybuffer,"w");
+  
 
-  sprintf(mybuffer, "param_v_part%d_order%d.pos",
-           initialTriangulation->idNum,_order);
-  FILE* view_v = Fopen(mybuffer,"w");
+  if(Xu){
+   
+    sprintf(mybuffer, "param_u_part%d_order%d.pos",
+	    initialTriangulation->idNum,_order);
+    view_u = Fopen(mybuffer,"w");
 
-  sprintf(mybuffer, "UVx_part%d_order%d.pos",
-           initialTriangulation->idNum,_order);
-  FILE* UVx = Fopen(mybuffer,"w");
+    sprintf(mybuffer, "param_v_part%d_order%d.pos",
+	    initialTriangulation->idNum,_order);
+    view_v = Fopen(mybuffer,"w");
+  }
+  if(Ux){
 
-  sprintf(mybuffer, "UVy_part%d_order%d.pos",
-           initialTriangulation->idNum,_order);
-  FILE* UVy = Fopen(mybuffer,"w");
+    sprintf(mybuffer, "UVx_part%d_order%d.pos",
+	    initialTriangulation->idNum,_order);
+  
+    UVx = Fopen(mybuffer,"w");
 
-  sprintf(mybuffer, "UVz_part%d_order%d.pos",
-           initialTriangulation->idNum,_order);
-  FILE* UVz = Fopen(mybuffer,"w");
+    sprintf(mybuffer, "UVy_part%d_order%d.pos",
+	    initialTriangulation->idNum,_order);
+    UVy = Fopen(mybuffer,"w");
 
-  if(view_u && view_v && UVx && UVy && UVz){
-    fprintf(view_u,"View \"paramU\"{\n");
-    fprintf(view_v,"View \"paramV\"{\n");
-    fprintf(UVx,"View \"Ux\"{\n");
-    fprintf(UVy,"View \"Uy\"{\n");
-    fprintf(UVz,"View \"Uz\"{\n");
+    sprintf(mybuffer, "UVz_part%d_order%d.pos",
+	    initialTriangulation->idNum,_order);
+    UVz = Fopen(mybuffer,"w");
+  }
+  
+  if((Xu && view_u && view_v) || (Ux && UVx && UVy && UVz)){
+    if(Xu){
+      fprintf(view_u,"View \"u(X)\"{\n");
+      fprintf(view_v,"View \"v(X)\"{\n");
+    }
+    if(Ux){
+      fprintf(UVx,"View \"x(U)\"{\n");
+      fprintf(UVy,"View \"y(U)\"{\n");
+      fprintf(UVz,"View \"z(U)\"{\n");
+    }
     for (unsigned int i=0; i<discrete_triangles.size(); i++){
       discreteDiskFaceTriangle* my_ddft = &_ddft[i];
       if (_order == 1){
-	fprintf(view_u,"ST(");
-	fprintf(view_v,"ST(");
-	fprintf(UVx,"ST(");
-	fprintf(UVy,"ST(");
-	fprintf(UVz,"ST(");
+	if(Xu){
+	  fprintf(view_u,"ST(");
+	  fprintf(view_v,"ST(");
+	}
+	if(Ux){
+	  fprintf(UVx,"ST(");
+	  fprintf(UVy,"ST(");
+	  fprintf(UVz,"ST(");
+	}
       }
       else{
-	fprintf(view_u,"ST%d(",_order);
-	fprintf(view_v,"ST%d(",_order);
-	fprintf(UVx,"ST%d(",_order);
-	fprintf(UVy,"ST%d(",_order);
-	fprintf(UVz,"ST%d(",_order);
+	if(Xu){
+	  fprintf(view_u,"ST%d(",_order);
+	  fprintf(view_v,"ST%d(",_order);
+	}
+	if(Ux){
+	  fprintf(UVx,"ST%d(",_order);
+	  fprintf(UVy,"ST%d(",_order);
+	  fprintf(UVz,"ST%d(",_order);
+	}
       }
       for (int j=0; j<_N-1; j++){
-	fprintf(view_u,"%g,%g,%g,",my_ddft->tri->getVertex(j)->x(),
-                my_ddft->tri->getVertex(j)->y(),my_ddft->tri->getVertex(j)->z());
-	fprintf(view_v,"%g,%g,%g,",my_ddft->tri->getVertex(j)->x(),
-                my_ddft->tri->getVertex(j)->y(),my_ddft->tri->getVertex(j)->z());
-	fprintf(UVx,"%g,%g,%g,",my_ddft->p[j].x(),my_ddft->p[j].y(),0.);
-	fprintf(UVy,"%g,%g,%g,",my_ddft->p[j].x(),my_ddft->p[j].y(),0.);
-	fprintf(UVz,"%g,%g,%g,",my_ddft->p[j].x(),my_ddft->p[j].y(),0.);
+	if(Xu){
+	  fprintf(view_u,"%g,%g,%g,",my_ddft->tri->getVertex(j)->x(),
+		  my_ddft->tri->getVertex(j)->y(),my_ddft->tri->getVertex(j)->z());
+	  fprintf(view_v,"%g,%g,%g,",my_ddft->tri->getVertex(j)->x(),
+		  my_ddft->tri->getVertex(j)->y(),my_ddft->tri->getVertex(j)->z());
+	}
+	if(Ux){
+	  fprintf(UVx,"%g,%g,%g,",my_ddft->p[j].x(),my_ddft->p[j].y(),0.);
+	  fprintf(UVy,"%g,%g,%g,",my_ddft->p[j].x(),my_ddft->p[j].y(),0.);
+	  fprintf(UVz,"%g,%g,%g,",my_ddft->p[j].x(),my_ddft->p[j].y(),0.);
+	}
       }
-      fprintf(view_u,"%g,%g,%g){",my_ddft->tri->getVertex(_N-1)->x(),
-              my_ddft->tri->getVertex(_N-1)->y(),my_ddft->tri->getVertex(_N-1)->z());
-      fprintf(view_v,"%g,%g,%g){",my_ddft->tri->getVertex(_N-1)->x(),
-              my_ddft->tri->getVertex(_N-1)->y(),my_ddft->tri->getVertex(_N-1)->z());
-      fprintf(UVx,"%g,%g,%g){",my_ddft->p[_N-1].x(),my_ddft->p[_N-1].y(),0.);
-      fprintf(UVy,"%g,%g,%g){",my_ddft->p[_N-1].x(),my_ddft->p[_N-1].y(),0.);
-      fprintf(UVz,"%g,%g,%g){",my_ddft->p[_N-1].x(),my_ddft->p[_N-1].y(),0.);
+      if(Xu){
+	fprintf(view_u,"%g,%g,%g){",my_ddft->tri->getVertex(_N-1)->x(),
+		my_ddft->tri->getVertex(_N-1)->y(),my_ddft->tri->getVertex(_N-1)->z());
+	fprintf(view_v,"%g,%g,%g){",my_ddft->tri->getVertex(_N-1)->x(),
+		my_ddft->tri->getVertex(_N-1)->y(),my_ddft->tri->getVertex(_N-1)->z());
+      }
+      if(Ux){
+	fprintf(UVx,"%g,%g,%g){",my_ddft->p[_N-1].x(),my_ddft->p[_N-1].y(),0.);
+	fprintf(UVy,"%g,%g,%g){",my_ddft->p[_N-1].x(),my_ddft->p[_N-1].y(),0.);
+	fprintf(UVz,"%g,%g,%g){",my_ddft->p[_N-1].x(),my_ddft->p[_N-1].y(),0.);
+      }
       for (int j=0; j<_N-1; j++){
-	fprintf(view_u,"%g,",my_ddft->p[j].x());
-	fprintf(view_v,"%g,",my_ddft->p[j].y());
-	fprintf(UVx,"%g,",my_ddft->tri->getVertex(j)->x());
-	fprintf(UVy,"%g,",my_ddft->tri->getVertex(j)->y());
-	fprintf(UVz,"%g,",my_ddft->tri->getVertex(j)->z());
+	if(Xu){
+	  fprintf(view_u,"%g,",my_ddft->p[j].x());
+	  fprintf(view_v,"%g,",my_ddft->p[j].y());
+	}
+	if(Ux){
+	  fprintf(UVx,"%g,",my_ddft->tri->getVertex(j)->x());
+	  fprintf(UVy,"%g,",my_ddft->tri->getVertex(j)->y());
+	  fprintf(UVz,"%g,",my_ddft->tri->getVertex(j)->z());
+	}
       }
-      fprintf(view_u,"%g};\n",my_ddft->p[_N-1].x());
-      fprintf(view_v,"%g};\n",my_ddft->p[_N-1].y());
-      fprintf(UVx,"%g};\n",my_ddft->tri->getVertex(_N-1)->x());
-      fprintf(UVy,"%g};\n",my_ddft->tri->getVertex(_N-1)->y());
-      fprintf(UVz,"%g};\n",my_ddft->tri->getVertex(_N-1)->z());
+      if(Xu){
+	fprintf(view_u,"%g};\n",my_ddft->p[_N-1].x());
+	fprintf(view_v,"%g};\n",my_ddft->p[_N-1].y());
+      }
+      if(Ux){
+	fprintf(UVx,"%g};\n",my_ddft->tri->getVertex(_N-1)->x());
+	fprintf(UVy,"%g};\n",my_ddft->tri->getVertex(_N-1)->y());
+	fprintf(UVz,"%g};\n",my_ddft->tri->getVertex(_N-1)->z());
+      }
     }
-    fprintf(view_u,"};\n");
-    fprintf(view_v,"};\n");
-    fprintf(UVx,"};\n");
-    fprintf(UVy,"};\n");
-    fprintf(UVz,"};\n");
-    fclose(view_u);
-    fclose(view_v);
-    fclose(UVx);
-    fclose(UVy);
-    fclose(UVz);
+    if(Xu){
+      fprintf(view_u,"};\n");
+      fprintf(view_v,"};\n");
+    }
+    if(Ux){
+      fprintf(UVx,"};\n");
+      fprintf(UVy,"};\n");
+      fprintf(UVz,"};\n");
+    }
+    if(Xu){
+      fclose(view_u);
+      fclose(view_v);
+    }
+    if(Ux){
+      fclose(UVx);
+      fclose(UVy);
+      fclose(UVz);
+    }
   }
   /*
     #ifdef HAVE_POST
@@ -761,7 +811,7 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
   SVector3 n = crossprod(n1,n2);
   n.normalize();
   for (int i=-1;i<(int)discrete_triangles.size();i++){
-    discreteDiskFaceTriangle *ct;
+    discreteDiskFaceTriangle *ct = NULL;
     double U,V;
     if (i == -1) getTriangleUV(uv[0],uv[1], &ct, U,V);
     else ct = &_ddft[i];
@@ -857,6 +907,33 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
   pp.setNoSuccess();
   Msg::Debug("ARGG no success intersection circle");
   return pp;
+}
+
+void discreteDiskFace::printParamMesh()
+{
+  std::map<MVertex*,int> mv2int;
+  FILE* pmesh = Fopen("param_mesh.msh","w");
+  int count = 1;
+  fprintf(pmesh,"$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n%u\n",(unsigned int)allNodes.size());
+  for(std::set<MVertex*>::iterator it = allNodes.begin(); it!=allNodes.end(); ++it){
+    fprintf(pmesh,"%d %f %f 0\n",count,(coordinates[(*it)]).x(),(coordinates[(*it)]).y());
+    mv2int[*it] = count;
+    count++;
+  }
+  fprintf(pmesh,"$EndNodes\n$Elements\n%u\n",(unsigned int)discrete_triangles.size());
+  for(unsigned int i=0; i<discrete_triangles.size(); i++){
+    MElement* tri = discrete_triangles[i];
+    int p;
+    _order == 1 ? p=2 : p=9;
+      fprintf(pmesh,"%d %d 2 0 0",i+1,p);
+    for(int j=0; j<_N; j++){
+      MVertex* mv = tri->getVertex(j);
+      fprintf(pmesh," %d",mv2int[mv]);
+    }
+    fprintf(pmesh,"\n");
+  }
+  fprintf(pmesh,"$EndElements\n");
+  fclose(pmesh);
 }
 
 #endif

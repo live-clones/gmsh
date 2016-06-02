@@ -114,8 +114,7 @@ void discreteFace::createGeometry()
 
   int order = 1;
   int nPart = 2;
-  //std::vector<triangulation*> part;
-  //part.resize(nPart);
+
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER)
 
   if (!_atlas.empty())return;
