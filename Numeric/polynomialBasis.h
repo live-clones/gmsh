@@ -13,7 +13,6 @@
 #include "nodalBasis.h"
 #include <iostream>
 
-#define SQU(a)  ((a)*(a))
 
 inline double pow_int(const double &a, const int &n)
 {

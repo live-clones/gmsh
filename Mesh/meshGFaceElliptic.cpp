@@ -273,10 +273,10 @@ static void transfiniteSmoother(GFace* gf,
       for (int j = jStart; j<N-1; j++){
   	int jm1 = (j==0) ? N-2: j-1;
   	int jp1 = (isPeriodic ) ? (j+1)%(N-1) : j+1;
-  	double alpha = 0.25 * (SQU(uv(i,jp1).x() - uv(i,jm1).x()) +
-  			       SQU(uv(i,jp1).y() - uv(i,jm1).y())) ;
-  	double gamma = 0.25 * (SQU(uv(i+1,j).x() - uv(i-1,j).x()) +
-  			       SQU(uv(i+1,j).y() - uv(i-1,j).y()));
+  	double alpha = 0.25 * (gmsh_SQU(uv(i,jp1).x() - uv(i,jm1).x()) +
+  			       gmsh_SQU(uv(i,jp1).y() - uv(i,jm1).y())) ;
+  	double gamma = 0.25 * (gmsh_SQU(uv(i+1,j).x() - uv(i-1,j).x()) +
+  			       gmsh_SQU(uv(i+1,j).y() - uv(i-1,j).y()));
   	double beta = 0.0625 *
   	  ((uv(i+1,j).x() - uv(i-1,j).x()) * (uv(i,jp1).x() - uv(i,jm1).x()) +
   	   (uv(i+1,j).y() - uv(i-1,j).y()) * (uv(i,jp1).y() - uv(i,jm1).y()));

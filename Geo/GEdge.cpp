@@ -270,7 +270,7 @@ std::string GEdge::getAdditionalInfoString()
     sstream << " transfinite (" << meshAttributes.nbPointsTransfinite;
     int type = meshAttributes.typeTransfinite;
     if(std::abs(type) == 1)
-      sstream << ", progression " << sign(type) * meshAttributes.coeffTransfinite;
+      sstream << ", progression " << gmsh_sign(type) * meshAttributes.coeffTransfinite;
     else if(std::abs(type) == 2)
       sstream << ", bump " << meshAttributes.coeffTransfinite;
     sstream << ")";

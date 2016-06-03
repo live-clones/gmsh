@@ -32,7 +32,7 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
     GFace *f = m->getFaceByTag(abs(is));
     if(f){
       l_faces.push_back(f);
-      l_dirs.push_back(sign(is));
+      l_dirs.push_back(gmsh_sign(is));
       f->addRegion(this);
     }
     else

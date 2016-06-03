@@ -13,9 +13,23 @@
 #include "SPoint3.h"
 #include "SVector3.h"
 
-#define myhypot(a,b) (sqrt((a)*(a)+(b)*(b)))
-#define sign(x)      (((x)>=0)?1:-1)
-#define SQU(a)      ((a)*(a))
+//#define myhypot(a,b) (sqrt((a)*(a)+(b)*(b)))
+
+template <class T> inline double myhypot(const T &a, const T& b)
+{
+  return sqrt((a)*(a)+(b)*(b));
+}
+
+
+template <class T> inline int gmsh_sign(const T &x)
+{
+  return (x<0)?-1:1;
+}
+
+template <class T> inline T gmsh_SQU(const T &x)
+{
+  return (x*x);
+}
 
 struct mean_plane
 {
@@ -34,6 +48,7 @@ inline double crossProd(double a[3], double b[3], int i)
   int i2 = (i+2) % 3;
   return a[i1]*b[i2] - a[i2]*b[i1];
 }
+
 inline double scalProd(double a[3], double b[3])
 {
   return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];

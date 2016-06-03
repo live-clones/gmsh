@@ -79,7 +79,7 @@ void MPyramidN::getEdgeRep(bool curved, int num,
 
 int MPyramidN::getNumFacesRep(bool curved)
 {
-  return curved ? 6 * SQU(CTX::instance()->mesh.numSubEdges) : 6;
+  return curved ? 6 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) : 6;
 }
 
 static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *z,

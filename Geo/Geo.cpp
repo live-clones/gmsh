@@ -4673,7 +4673,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
          (i != 0 && iLoop < 0)){  // hole
         for(int j = 0; j < List_Nbr(el->Curves); j++) {
           List_Read(el->Curves, j, &ic);
-          ic *= sign(iLoop);
+          ic *= gmsh_sign(iLoop);
           if(i != 0) ic *= -1; // hole
           if(!(c = FindCurve(ic)))
             fromModel.push_back(ic);
@@ -4684,7 +4684,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
       else{
         for(int j = List_Nbr(el->Curves)-1; j >= 0; j--) {
           List_Read(el->Curves, j, &ic);
-          ic *= sign(iLoop);
+          ic *= gmsh_sign(iLoop);
           if(i != 0) ic *= -1; // hole
           if(!(c = FindCurve(ic)))
             fromModel.push_back(ic);
@@ -4730,7 +4730,7 @@ void setVolumeSurfaces(Volume *v, List_T *loops)
           // create "negative" surfaces. So we just store the signs in
           // another list
           List_Add(v->Surfaces, &s);
-          int tmp = sign(is) * sign(il);
+          int tmp = gmsh_sign(is) * gmsh_sign(il);
           if(i > 0) tmp *= -1; // this is a hole
           List_Add(v->SurfacesOrientations, &tmp);
         }

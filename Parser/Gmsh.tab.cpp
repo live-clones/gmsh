@@ -9826,23 +9826,23 @@ yyreduce:
           double d;
           List_Read((yyvsp[-4].l), i, &d);
           int j = (int)fabs(d);
-          for(int sign = -1; sign <= 1; sign += 2){
-            Curve *c = FindCurve(sign * j);
+          for(int sig = -1; sig <= 1; sig += 2){
+            Curve *c = FindCurve(sig * j);
             if(c){
               c->Method = MESH_TRANSFINITE;
               c->nbPointsTransfinite = ((yyvsp[-2].d) > 2) ? (int)(yyvsp[-2].d) : 2;
-              c->typeTransfinite = type * sign(d);
+              c->typeTransfinite = type * gmsh_sign(d);
               c->coeffTransfinite = coef;
             }
             else{
-              GEdge *ge = GModel::current()->getEdgeByTag(sign * j);
+              GEdge *ge = GModel::current()->getEdgeByTag(sig * j);
               if(ge){
                 ge->meshAttributes.method = MESH_TRANSFINITE;
                 ge->meshAttributes.nbPointsTransfinite = ((yyvsp[-2].d) > 2) ? (int)(yyvsp[-2].d) : 2;
-                ge->meshAttributes.typeTransfinite = type * sign(d);
+                ge->meshAttributes.typeTransfinite = type * gmsh_sign(d);
                 ge->meshAttributes.coeffTransfinite = coef;
               }
-              else if(sign > 0)
+              else if(sig > 0)
                 yymsg(0, "Unknown line %d", j);
             }
           }

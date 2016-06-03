@@ -430,7 +430,7 @@ void GMSH_FaultZoneMesher::ComputeHeavisideFunction(){
           lsn = dot(vectsNor[j], vectsNor[i])*heav[i];
           assert(fabs(lsn) > tolerance || heav[i] == 0);
         }
-        heav[j] = sign(lsn);
+        heav[j] = gmsh_sign(lsn);
       }
 
       if (heav[i] != 0){
@@ -508,7 +508,7 @@ std::vector < int > GMSH_FaultZoneMesher::HeavisideFunc(MVertex* mVert, SPoint3&
       assert(dot(vectPoint, vectTan) > 0);
       lsn = 0;
     }
-    heav.push_back(sign(lsn));
+    heav.push_back(gmsh_sign(lsn));
   }
   else if (_nodesByJunctionNode.find( mVert ) != _nodesByJunctionNode.end()){
     // if it is a junction node
@@ -518,7 +518,7 @@ std::vector < int > GMSH_FaultZoneMesher::HeavisideFunc(MVertex* mVert, SPoint3&
       SVector3 vectNorm = _vectNormByFissure[fissures[i]];
       double lsn = dot(vectPoint, vectNorm);
       if (fabs(lsn) > tolerance) // tolerance seems to be ok
-        heav.push_back(sign(lsn));
+        heav.push_back(gmsh_sign(lsn));
       else
         heav.push_back(0);
     }

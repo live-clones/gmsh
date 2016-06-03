@@ -9,7 +9,6 @@
 #include "Numeric.h"
 #include "GmshMessage.h"
 
-#define SQU(a)  ((a)*(a))
 
 class element{
 protected:
@@ -92,9 +91,9 @@ public:
         prodve(a, b, c);
         jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2];
       }
-      return sqrt(SQU(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
-                  SQU(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
-                  SQU(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
+      return sqrt(gmsh_SQU(jac[0][0] * jac[1][1] - jac[0][1] * jac[1][0]) +
+                  gmsh_SQU(jac[0][2] * jac[1][0] - jac[0][0] * jac[1][2]) +
+                  gmsh_SQU(jac[0][1] * jac[1][2] - jac[0][2] * jac[1][1]));
     case 1:
       for(int i = 0; i < getNumNodes(); i++) {
         getGradShapeFunction(i, u, v, w, s);
@@ -114,7 +113,7 @@ public:
         jac[1][0] = b[0]; jac[1][1] = b[1]; jac[1][2] = b[2];
         jac[2][0] = c[0]; jac[2][1] = c[1]; jac[2][2] = c[2];
       }
-      return sqrt(SQU(jac[0][0])+SQU(jac[0][1])+SQU(jac[0][2]));
+      return sqrt(gmsh_SQU(jac[0][0])+gmsh_SQU(jac[0][1])+gmsh_SQU(jac[0][2]));
     default:
       jac[0][0] = jac[1][1] = jac[2][2] = 1.;
       return 1.;
@@ -246,7 +245,7 @@ public:
       double wn = uvw[2] +
         inv[0][2] * (xyz[0] - xn) + inv[1][2] * (xyz[1] - yn) + inv[2][2] * (xyz[2] - zn) ;
 
-      error = sqrt(SQU(un - uvw[0]) + SQU(vn - uvw[1]) + SQU(wn - uvw[2]));
+      error = sqrt(gmsh_SQU(un - uvw[0]) + gmsh_SQU(vn - uvw[1]) + gmsh_SQU(wn - uvw[2]));
       uvw[0] = un;
       uvw[1] = vn;
       uvw[2] = wn;
@@ -261,7 +260,7 @@ public:
     for(int i = 0; i < getNumEdges(); i++){
       int n1, n2;
       getEdge(i, n1, n2);
-      double d = sqrt(SQU(_x[n1]-_x[n2]) + SQU(_y[n1]-_y[n2]) + SQU(_z[n1]-_z[n2]));
+      double d = sqrt(gmsh_SQU(_x[n1]-_x[n2]) + gmsh_SQU(_y[n1]-_y[n2]) + gmsh_SQU(_z[n1]-_z[n2]));
       if(d > max) max = d;
     }
     return max;
@@ -936,16 +935,16 @@ public:
       switch(num) {
       case 0  : s[0] = 0.25 * ( -(1.-v) + v*w/(1.-w) ) ;
                 s[1] = 0.25 * ( -(1.-u) + u*w/(1.-w) ) ;
-                s[2] = 0.25 * ( -1.     + u*v/(1.-w) + u*v*w/SQU(1.-w) ) ; break ;
+                s[2] = 0.25 * ( -1.     + u*v/(1.-w) + u*v*w/gmsh_SQU(1.-w) ) ; break ;
       case 1  : s[0] = 0.25 * (  (1.-v) - v*w/(1.-w) ) ;
                 s[1] = 0.25 * ( -(1.+u) - u*w/(1.-w) ) ;
-                s[2] = 0.25 * ( -1.     - u*v/(1.-w) - u*v*w/SQU(1.-w) ) ; break ;
+                s[2] = 0.25 * ( -1.     - u*v/(1.-w) - u*v*w/gmsh_SQU(1.-w) ) ; break ;
       case 2  : s[0] = 0.25 * (  (1.+v) + v*w/(1.-w) ) ;
                 s[1] = 0.25 * (  (1.+u) + u*w/(1.-w) ) ;
-                s[2] = 0.25 * ( -1.     + u*v/(1.-w) + u*v*w/SQU(1.-w) ) ; break ;
+                s[2] = 0.25 * ( -1.     + u*v/(1.-w) + u*v*w/gmsh_SQU(1.-w) ) ; break ;
       case 3  : s[0] = 0.25 * ( -(1.+v) - v*w/(1.-w) ) ;
                 s[1] = 0.25 * (  (1.-u) - u*w/(1.-w) ) ;
-                s[2] = 0.25 * ( -1.     - u*v/(1.-w) - u*v*w/SQU(1.-w) ) ; break ;
+                s[2] = 0.25 * ( -1.     - u*v/(1.-w) - u*v*w/gmsh_SQU(1.-w) ) ; break ;
       case 4  : s[0] = 0. ;
                 s[1] = 0. ;
                 s[2] = 1. ; break ;

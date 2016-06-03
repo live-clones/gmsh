@@ -375,7 +375,7 @@ int GModel::importGEOInternals()
         case MSH_PHYSICAL_SURFACE: ge = getFaceByTag(tag); break;
         case MSH_PHYSICAL_VOLUME:  ge = getRegionByTag(tag); break;
       }
-      int pnum = CTX::instance()->geom.orientedPhysicals ? (sign(num) * p->Num) : p->Num;
+      int pnum = CTX::instance()->geom.orientedPhysicals ? (gmsh_sign(num) * p->Num) : p->Num;
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
           ge->physicals.end())
         ge->physicals.push_back(pnum);

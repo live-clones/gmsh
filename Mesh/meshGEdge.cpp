@@ -176,7 +176,7 @@ static double F_Transfinite(GEdge *ge, double t_)
 
     case 1: // Geometric progression ar^i; Sum of n terms = length = a (r^n-1)/(r-1)
       {
-        double r = (sign(type) >= 0) ? coef : 1. / coef;
+        double r = (gmsh_sign(type) >= 0) ? coef : 1. / coef;
         double a = length * (r - 1.) / (pow(r, nbpt - 1.) - 1.);
         int i = (int)(log(t * length / a * (r - 1.) + 1.) / log(r));
         val = d / (a * pow(r, (double)i));

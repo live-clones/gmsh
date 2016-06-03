@@ -36,15 +36,15 @@ double myacos(double a)
 }
 double norm2(double a[3][3]) {
   double norm2sq =
-    SQU(a[0][0])+
-    SQU(a[0][1])+
-    SQU(a[0][2])+
-    SQU(a[1][0])+
-    SQU(a[1][1])+
-    SQU(a[1][2])+
-    SQU(a[2][0])+
-    SQU(a[2][1])+
-    SQU(a[2][2]);
+    gmsh_SQU(a[0][0])+
+    gmsh_SQU(a[0][1])+
+    gmsh_SQU(a[0][2])+
+    gmsh_SQU(a[1][0])+
+    gmsh_SQU(a[1][1])+
+    gmsh_SQU(a[1][2])+
+    gmsh_SQU(a[2][0])+
+    gmsh_SQU(a[2][1])+
+    gmsh_SQU(a[2][2]);
   return sqrt(norm2sq);
 }
 
@@ -102,7 +102,7 @@ int sys2x2(double mat[2][2], double b[2], double res[2])
   double det, ud, norm;
   int i;
 
-  norm = SQU(mat[0][0]) + SQU(mat[1][1]) + SQU(mat[0][1]) + SQU(mat[1][0]);
+  norm = gmsh_SQU(mat[0][0]) + gmsh_SQU(mat[1][1]) + gmsh_SQU(mat[0][1]) + gmsh_SQU(mat[1][0]);
   det = mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
 
   // TOLERANCE ! WARNING WARNING
@@ -183,9 +183,9 @@ int sys3x3_with_tol(double mat[3][3], double b[3], double res[3], double *det)
 
   out = sys3x3(mat, b, res, det);
   norm =
-    SQU(mat[0][0]) + SQU(mat[0][1]) + SQU(mat[0][2]) +
-    SQU(mat[1][0]) + SQU(mat[1][1]) + SQU(mat[1][2]) +
-    SQU(mat[2][0]) + SQU(mat[2][1]) + SQU(mat[2][2]);
+    gmsh_SQU(mat[0][0]) + gmsh_SQU(mat[0][1]) + gmsh_SQU(mat[0][2]) +
+    gmsh_SQU(mat[1][0]) + gmsh_SQU(mat[1][1]) + gmsh_SQU(mat[1][2]) +
+    gmsh_SQU(mat[2][0]) + gmsh_SQU(mat[2][1]) + gmsh_SQU(mat[2][2]);
 
   // TOLERANCE ! WARNING WARNING
   if(norm == 0.0 || fabs(*det) / norm < 1.e-12) {
