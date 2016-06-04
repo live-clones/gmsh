@@ -296,9 +296,10 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
               "the discrete system.");
     parametrize(true);
     buildOct(CAD);
+    if(!checkOrientationUV()) Msg::Fatal("discreteDiskFace:: failing to fix the discrete system");
   }
   
-  putOnView(true,false);
+  putOnView(true,true);
   printParamMesh();
 }
 /*end BUILDER*/
@@ -363,11 +364,11 @@ bool discreteDiskFace::parametrize(bool one2one) const
     if(i%_order==0){
       myAssemblerU.fixVertex(v, 0, 1,cos(theta));
       myAssemblerV.fixVertex(v, 0, 1,sin(theta));
-    }
+      }
     else{//#TEST
       myAssemblerU.fixVertex(v, 0, 1,1./_order*((_order-(i%_order))*cos(2*M_PI*_coords[i-(i%_order)])+(i%_order)*cos(2*M_PI*_coords[i+(_order-(i%_order))])));
       myAssemblerV.fixVertex(v, 0, 1,1./_order*((_order-(i%_order))*sin(2*M_PI*_coords[i-(i%_order)])+(i%_order)*sin(2*M_PI*_coords[i+(_order-(i%_order))])));
-    }
+      }
   }
 
   for(size_t i = 0; i < discrete_triangles.size(); ++i){
@@ -442,11 +443,18 @@ void discreteDiskFace::getTriangleUV(const double u,const double v,
 				     double &_xi, double &_eta)const{
   double uv[3] = {u,v,0.};
   *mt = (discreteDiskFaceTriangle*) Octree_Search(uv,oct);
-  if (!(*mt)) return;
+  if (!(*mt)){ 
+    //Msg::Error("discreteDiskFace::getTriangleUV(), the octree does not have a triangle containing (u;v)=(%f;%f)",u,v);
+    return;
+  }
 
   double Xi[2];
   double U[2] = {u,v};
-  uv2xi(*mt,U,Xi);
+  bool pass = uv2xi(*mt,U,Xi);
+  if (!pass){
+    Msg::Error("discreteDiskFace::getTriangleUV(), didn't find the reference coordinate (xi;eta) for (u;v)=(%f;%f)",u,v);
+    return;
+  }
   _xi = Xi[0];
   _eta = Xi[1];
 }
@@ -912,7 +920,9 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
 void discreteDiskFace::printParamMesh()
 {
   std::map<MVertex*,int> mv2int;
-  FILE* pmesh = Fopen("param_mesh.msh","w");
+  char buffer[16];
+  sprintf(buffer,"param_mesh%d.msh",initialTriangulation->idNum);
+  FILE* pmesh = Fopen(buffer,"w");
   int count = 1;
   fprintf(pmesh,"$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n%u\n",(unsigned int)allNodes.size());
   for(std::set<MVertex*>::iterator it = allNodes.begin(); it!=allNodes.end(); ++it){
