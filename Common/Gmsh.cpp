@@ -320,7 +320,7 @@ int GmshBatch()
 
   // launch solver (if requested)
 #if defined(HAVE_ONELAB)
-  solver_batch_cb((void*)CTX::instance()->launchSolverAtStartup);
+  solver_batch_cb((void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
 #endif
 
   time_t now;
@@ -397,7 +397,7 @@ int GmshFLTK(int argc, char **argv)
   }
 
   // launch solver (if requested) and fill onelab tree
-  solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
+  solver_cb(0, (void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
 
   // loop
   return FlGui::instance()->run();

@@ -39,7 +39,7 @@ solverButton::solverButton(int x, int y, int w, int h, int num, Fl_Color col)
   _butt[0]->box(FL_FLAT_BOX);
   _butt[0]->color(col);
   _butt[0]->selection_color(col);
-  _butt[0]->callback(solver_cb, (void *)num);
+  _butt[0]->callback(solver_cb, (void *)(intptr_t)num);
   _butt[0]->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
 
   std::string name = opt_solver_name(num, GMSH_GET, "");
@@ -56,7 +56,7 @@ solverButton::solverButton(int x, int y, int w, int h, int num, Fl_Color col)
   _butt[1]->selection_color(col);
   _popup = new Fl_Menu_Button(x + w - popw, y, popw, h);
   _popup->type(Fl_Menu_Button::POPUP123);
-  _popup->add("Remove", 0, (Fl_Callback *)solver_remove_cb, (void *)num, 0);
+  _popup->add("Remove", 0, (Fl_Callback *)solver_remove_cb, (void *)(intptr_t)num, 0);
 
   end(); // close the group
   resizable(_butt[0]);

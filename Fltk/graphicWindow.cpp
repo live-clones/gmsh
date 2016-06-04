@@ -153,7 +153,7 @@ static void file_open_merge_cb(Fl_Widget *w, void *data)
     if(n != (int)PView::list.size())
       FlGui::instance()->openModule("Post-processing");
     if(CTX::instance()->launchSolverAtStartup >= 0)
-      solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
+      solver_cb(0, (void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
     else if(onelabUtils::haveSolverToRun())
       onelab_cb(0, (void*)"check");
     drawContext::global()->draw();
@@ -170,7 +170,7 @@ static void file_open_recent_cb(Fl_Widget *w, void *data)
   if(n != (int)PView::list.size())
     FlGui::instance()->openModule("Post-processing");
   if(CTX::instance()->launchSolverAtStartup >= 0)
-    solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
+    solver_cb(0, (void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
   else if(onelabUtils::haveSolverToRun())
     onelab_cb(0, (void*)"check");
 }
@@ -2510,7 +2510,7 @@ void status_options_cb(Fl_Widget *w, void *data)
       char tmp[256];
       sprintf(tmp, "Model [%d] <<%s>> ", i, GModel::list[i]->getName().c_str());
       char *str = strdup(tmp);
-      Fl_Menu_Item menuItem = {str, 0, model_switch_cb, (void*)i, FL_MENU_RADIO};
+      Fl_Menu_Item menuItem = {str, 0, model_switch_cb, (void*)(intptr_t)i, FL_MENU_RADIO};
       if(GModel::list[i] == GModel::current()){
         selected = i;
         menuItem.flags |= FL_MENU_VALUE;

@@ -1268,10 +1268,10 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       input[i]->value("*");
 
       Fl_Button *o1 = new Fl_Button(width / 2 + WB / 2, yy, CC, BH, "Show");
-      o1->callback(visibility_number_cb, (void *)(100+i));
+      o1->callback(visibility_number_cb, (void *)(100+(intptr_t)i));
 
       Fl_Button *o2 = new Fl_Button(width / 2 + WB / 2 + CC + WB, yy, CC, BH, "Hide");
-      o2->callback(visibility_number_cb, (void *)i);
+      o2->callback(visibility_number_cb, (void *)(intptr_t)i);
       yy += BH;
     }
 

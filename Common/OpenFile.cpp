@@ -745,7 +745,7 @@ void OpenProjectMacFinder(const char *fileName)
     OpenProject(fileName);
     drawContext::global()->draw();
     if(CTX::instance()->launchSolverAtStartup >= 0)
-      solver_cb(0, (void*)CTX::instance()->launchSolverAtStartup);
+      solver_cb(0, (void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
   }
 #endif
 }

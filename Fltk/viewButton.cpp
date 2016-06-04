@@ -267,7 +267,7 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   _toggle = new Fl_Check_Button(x, y, w - popw, h);
   _toggle->box(FL_FLAT_BOX);
   _toggle->color(col);
-  _toggle->callback(view_toggle_cb, (void *)num);
+  _toggle->callback(view_toggle_cb, (void *)(intptr_t)num);
   _toggle->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
   _toggle->value(opt->visible);
   char tmp[256];
@@ -286,21 +286,21 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   _popup->type(Fl_Menu_Button::POPUP123);
 
   _popup->add("Options", 'o',
-              (Fl_Callback *) view_options_cb, (void *)num, 0);
+              (Fl_Callback *) view_options_cb, (void *)(intptr_t)num, 0);
   _popup->add("_Plugins", 'p',
-              (Fl_Callback *) plugin_cb, (void *)num, 0);
+              (Fl_Callback *) plugin_cb, (void *)(intptr_t)num, 0);
 
   _popup->add("Reload", 'r',
-              (Fl_Callback *) view_reload_cb, (void *)num, 0);
+              (Fl_Callback *) view_reload_cb, (void *)(intptr_t)num, 0);
   _popup->add("Reload Views/All", 0,
-              (Fl_Callback *) view_reload_all_cb, (void *)num, 0);
+              (Fl_Callback *) view_reload_all_cb, (void *)(intptr_t)num, 0);
   _popup->add("Reload Views/Visible", 0,
-              (Fl_Callback *) view_reload_visible_cb, (void *)num, 0);
+              (Fl_Callback *) view_reload_visible_cb, (void *)(intptr_t)num, 0);
   _popup->add("_Create Alias", 0,
-              (Fl_Callback *) view_alias_with_options_cb, (void *)num, 0);
+              (Fl_Callback *) view_alias_with_options_cb, (void *)(intptr_t)num, 0);
 
   _popup->add("Remove", FL_Delete,
-              (Fl_Callback *) view_remove_cb, (void *)num, 0);
+              (Fl_Callback *) view_remove_cb, (void *)(intptr_t)num, 0);
   _popup->add("_Remove Views/All", 0,
               (Fl_Callback *) view_remove_all_cb, (void *)-1, 0);
   _popup->add("Remove Views/Visible", 0,
@@ -308,11 +308,11 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   _popup->add("Remove Views/Invisible", 0,
               (Fl_Callback *) view_remove_all_cb, (void *)-3, 0);
   _popup->add("Remove Views/Other", 0,
-              (Fl_Callback *) view_remove_other_cb, (void *)num, 0);
+              (Fl_Callback *) view_remove_other_cb, (void *)(intptr_t)num, 0);
   _popup->add("Remove Views/Empty", 0,
               (Fl_Callback *) view_remove_all_cb, (void *)-4, 0);
   _popup->add("Remove Views/With Same Name", 0,
-              (Fl_Callback *) view_remove_all_cb, (void *)num, 0);
+              (Fl_Callback *) view_remove_all_cb, (void *)(intptr_t)num, 0);
 
   _popup->add("Sort By Name", 0,
               (Fl_Callback *) view_sort_cb, (void *)0, 0);
@@ -323,26 +323,26 @@ viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)
   _popup->add("Set Visibility/Invert", 0,
               (Fl_Callback *) view_all_visible_cb, (void *)-3, 0);
   _popup->add("Set Visibility/Same Name On", 0,
-              (Fl_Callback *) view_all_visible_cb, (void *)num, 0);
+              (Fl_Callback *) view_all_visible_cb, (void *)(intptr_t)num, 0);
 
   _popup->add("Combine Elements/From All Views", 0,
-              (Fl_Callback *) view_combine_space_all_cb, (void *)num, 0);
+              (Fl_Callback *) view_combine_space_all_cb, (void *)(intptr_t)num, 0);
   _popup->add("Combine Elements/From Visible Views", 0,
-              (Fl_Callback *) view_combine_space_visible_cb, (void *)num, 0);
+              (Fl_Callback *) view_combine_space_visible_cb, (void *)(intptr_t)num, 0);
   _popup->add("Combine Elements/From All Views With Same Name", 0,
-              (Fl_Callback *) view_combine_space_by_name_cb, (void *)num, 0);
+              (Fl_Callback *) view_combine_space_by_name_cb, (void *)(intptr_t)num, 0);
 
   _popup->add("_Combine Time Steps/From All Views", 0,
-              (Fl_Callback *) view_combine_time_all_cb, (void *)num, 0);
+              (Fl_Callback *) view_combine_time_all_cb, (void *)(intptr_t)num, 0);
   _popup->add("Combine Time Steps/From Visible Views", 0,
-              (Fl_Callback *) view_combine_time_visible_cb, (void *)num, 0);
+              (Fl_Callback *) view_combine_time_visible_cb, (void *)(intptr_t)num, 0);
   _popup->add("Combine Time Steps/From All Views With Same Name", 0,
-              (Fl_Callback *) view_combine_time_by_name_cb, (void *)num, 0);
+              (Fl_Callback *) view_combine_time_by_name_cb, (void *)(intptr_t)num, 0);
 
   _popup->add("Apply As Background Mesh", 0,
-              (Fl_Callback *) view_applybgmesh_cb, (void *)num, 0);
+              (Fl_Callback *) view_applybgmesh_cb, (void *)(intptr_t)num, 0);
   _popup->add("Save As...", 0,
-              (Fl_Callback *) view_save_cb, (void *)num, 0);
+              (Fl_Callback *) view_save_cb, (void *)(intptr_t)num, 0);
 
   end(); // close the group
   resizable(_toggle);
