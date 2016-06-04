@@ -4,11 +4,6 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include "GmshConfig.h"
-#if !defined(HAVE_NO_STDINT_H)
-#include <stdint.h>
-#elif defined(HAVE_NO_INTPTR_T)
-typedef unsigned long intptr_t;
-#endif
 #include <string.h>
 #include <FL/Fl.H>
 #include <algorithm>
@@ -25,8 +20,10 @@ static  void gamepadWindow_handler(void *data)
   if(CTX::instance()->gamepad && CTX::instance()->gamepad->active){
     gamepadWindow* gmpd_win = (gamepadWindow*)data;
     GamePad* pad  = CTX::instance()->gamepad;
-    for (int i=0; i<std::min(13,GP_BUTTONS);i++) gmpd_win->gamepad.butt[i]->value(pad->button[i]);
-    for (int i=0; i<std::min(9,GP_AXES);i++)     gmpd_win->gamepad.axe[i]->value( pad->axe[i]   );
+    for (int i=0; i<std::min(13,GP_BUTTONS);i++)
+      gmpd_win->gamepad.butt[i]->value(pad->button[i]);
+    for (int i=0; i<std::min(9,GP_AXES);i++)
+      gmpd_win->gamepad.axe[i]->value( pad->axe[i]   );
     Fl::add_timeout(gmpd_win->frequency, gamepadWindow_handler, data);
     gmpd_win->gamepad.mapping[16]->value(pad->axe_map[1]);
   }
@@ -36,8 +33,10 @@ static void gamepad_update_cb(Fl_Widget *w)
 {
   gamepadWindow* gmpd_win =  FlGui::instance()->options->gmpdoption;
   GamePad* pad = CTX::instance()->gamepad;
-  for (int i=0; i<std::min(8,GP_BUTTONS) ;i++) pad->button_map[i] = gmpd_win->gamepad.mapping[i]->value();
-  for (int i=0; i<std::min(7,GP_AXES);i++)     pad->axe_map[i] = gmpd_win->gamepad.mapping[10+i]->value();
+  for (int i=0; i<std::min(8,GP_BUTTONS) ;i++)
+    pad->button_map[i] = gmpd_win->gamepad.mapping[i]->value();
+  for (int i=0; i<std::min(7,GP_AXES);i++)
+    pad->axe_map[i] = gmpd_win->gamepad.mapping[10+i]->value();
 }
 
 gamepadWindow::gamepadWindow()

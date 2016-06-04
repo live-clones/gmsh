@@ -10,7 +10,6 @@
 #elif defined(HAVE_NO_INTPTR_T)
 typedef unsigned long intptr_t;
 #endif
-
 #include <ctype.h>
 #include "GmshMessage.h"
 #include "onelab.h"

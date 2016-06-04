@@ -6,6 +6,11 @@
 #include <sstream>
 #include <string.h>
 #include "GmshConfig.h"
+#if !defined(HAVE_NO_STDINT_H)
+#include <stdint.h>
+#elif defined(HAVE_NO_INTPTR_T)
+typedef unsigned long intptr_t;
+#endif
 #include "GmshMessage.h"
 #include "GmshIO.h"
 #include "Options.h"
