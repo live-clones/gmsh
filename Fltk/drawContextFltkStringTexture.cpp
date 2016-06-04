@@ -145,7 +145,7 @@ void drawContextFltkStringTexture::drawString(const char *str)
   glGetFloatv(GL_CURRENT_RASTER_POSITION, pos);
   glGetFloatv(GL_CURRENT_COLOR, color);
   queueString::element elem = {str, pos[0], pos[1], pos[2], color[0], color[1], color[2], color[3],
-    _currentFontSize, _currentFontId, getStringWidth(str) + 1, getStringHeight()};
+    _currentFontSize, _currentFontId, (int)getStringWidth(str) + 1, getStringHeight()};
   _queue->append(elem);
 }
 

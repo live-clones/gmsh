@@ -2244,7 +2244,7 @@ static void gl2psParseFeedbackBuffer(GLint used)
   GLushort pattern = 0;
   GLboolean boundary;
   GLint i, sizeoffloat, count, v, vtot, offset = 0, factor = 0, auxindex = 0;
-  GLfloat lwidth = 1.0F, psize = 1.0F, ofactor, ounits;
+  GLfloat lwidth = 1.0F, psize = 1.0F, ofactor=1.0F, ounits=1.0F;
   GLfloat *current;
   GL2PSvertex vertices[3];
   GL2PSprimitive *prim;

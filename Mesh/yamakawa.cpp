@@ -1456,7 +1456,7 @@ void Recombinator::pattern1(GRegion* gr){
 
 void Recombinator::pattern2(GRegion* gr){
   size_t i;
-  int index1,index2,index3,index4;
+  int index1=0,index2=0,index3=0,index4=0;
   double quality;
   MElement* element;
   MVertex *a,*b,*c,*d;
@@ -1510,7 +1510,7 @@ void Recombinator::pattern2(GRegion* gr){
 
 void Recombinator::pattern3(GRegion* gr){
   size_t i;
-  int index1,index2,index3,index4;
+  int index1=0,index2=0,index3=0,index4=0;
   bool c1,c2,c3,c4,c5;
   bool c6,c7,c8,c9,c10;
   double quality;
@@ -6937,7 +6937,7 @@ void Recombinator_Graph::pattern1(GRegion* gr){
 void Recombinator_Graph::pattern2(GRegion* gr){
   int size_init = hex_to_tet.size();
   size_t i;
-  int index1,index2,index3,index4;
+  int index1=0,index2=0,index3=0,index4=0;
   double quality;
   MElement* element;
   MVertex *a,*b,*c,*d;
@@ -6989,7 +6989,7 @@ void Recombinator_Graph::pattern2(GRegion* gr){
 void Recombinator_Graph::pattern3(GRegion* gr){
   int size_init = hex_to_tet.size();
   size_t i;
-  int index1,index2,index3,index4;
+  int index1=0,index2=0,index3=0,index4=0;
   bool c1,c2,c3,c4,c5;
   bool c6,c7,c8,c9,c10;
   double quality;

@@ -12476,7 +12476,7 @@ int tetgenmesh::add_steinerpt_in_segment(face* misseg, int searchlevel)
   enum interresult dir;
   REAL P[3], Q[3], tp, tq;
   REAL len, smlen = 0, split = 0, split_q = 0;
-  int success;
+  int success=0;
   int i;
 
   startpt = sorg(*misseg);
@@ -12625,7 +12625,10 @@ int tetgenmesh::add_steinerpt_in_segment(face* misseg, int searchlevel)
     st_volref_count++;
   }
   if (steinerleft > 0) steinerleft--;
-
+  if (!success){
+    // error
+  }
+    
   return 1;
 }
 

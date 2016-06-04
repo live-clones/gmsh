@@ -651,7 +651,7 @@ void discreteDiskFace::putOnView(bool Xu, bool Ux)
 
   char mybuffer [64];
   
-  FILE *view_u, *view_v, *UVx, *UVy, *UVz;
+  FILE *view_u=NULL, *view_v=NULL, *UVx=NULL, *UVy=NULL, *UVz=NULL;
 
   
 

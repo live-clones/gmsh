@@ -1277,7 +1277,10 @@ namespace onelab{
     void runNonBlockingSubClient(const std::string &name, const std::string &command)
     {
       if(!_gmshClient){
-        system(command.c_str());
+        int res=system(command.c_str());
+        if (res)
+        {// error
+        }
         return;
       }
       std::string msg = name + parameter::charSep() + command;
