@@ -239,7 +239,9 @@ namespace gmm {
    g++ can issue a warning at each usage of a function declared with this special attribute 
    (also works with typedefs and variable declarations)
 */
-# define IS_DEPRECATED __attribute__ ((__deprecated__))
+//# define IS_DEPRECATED __attribute__ ((__deprecated__))
+// annoying : just including .h files e.g. gmm_precond_ildlt.h generates lots of useless warnings with new 4.6+ gcc.
+# define IS_DEPRECATED
 /*
    the specified function is inlined at any optimization level 
 */

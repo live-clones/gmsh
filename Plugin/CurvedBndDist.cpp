@@ -28,6 +28,8 @@ std::string GMSH_CurvedBndDistPlugin::getHelp() const
   return "Plugin(CurvedBndDist) ...";
 }
 
+#if defined(HAVE_OPTHOM)
+
 static void addLine(PViewDataList *data, const SVector3 &p0, const SVector3 &p1, double v0, double v1)
 {
   data->NbSL ++;
@@ -69,7 +71,6 @@ static void addVP(PViewDataList *data, const SVector3 p0, SVector3 v)
 }
 */
 
-#if defined(HAVE_OPTHOM)
 
 #include <limits>
 static void drawElementDist(PViewDataList *data, GEdge *edge,

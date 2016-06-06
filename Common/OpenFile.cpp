@@ -277,6 +277,7 @@ void ParseString(const std::string &str, bool inCurrentModelDir)
   }
 }
 
+#if defined(HAVE_ONELAB)
 static std::string getSolverForExtension(const std::string &ext)
 {
   for(int i = 0; i < NUM_SOLVERS; i++){
@@ -285,6 +286,7 @@ static std::string getSolverForExtension(const std::string &ext)
   }
   return "";
 }
+
 
 static int defineSolver(const std::string &name)
 {
@@ -295,6 +297,7 @@ static int defineSolver(const std::string &name)
   opt_solver_name(NUM_SOLVERS - 1, GMSH_SET|GMSH_GUI, name);
   return NUM_SOLVERS - 1;
 }
+#endif
 
 int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingBox,
               bool importPhysicalsInOnelab)
