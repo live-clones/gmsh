@@ -96,7 +96,8 @@ static void eigen(std::vector<double> &inList, int inNb,
 
       double GradVel[3][3];
 
-      if(nbComp == 9){ 
+      if(nbComp == 9)
+      { 
         // val is the velocity gradient tensor: we assume that it is
         // constant per element
         double *v = &inList[i + 3 * nbNod + nbNod * nbComp * j + nbComp * 0];
@@ -169,7 +170,11 @@ static void eigen(std::vector<double> &inList, int inNb,
           }
         }
       }
-        
+      else
+        for(int k = 0; k < 3; k++)
+          for(int l = 0; l < 3; l++)
+            GradVel[k][l] = 0.0;
+
       // compute the sym and antisymetric parts
       double sym[3][3];
       double asym[3][3];

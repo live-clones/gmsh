@@ -1527,6 +1527,7 @@ void HSV_to_RGB(double H, double S, double V,
     case 3: *R = p1;  *G = p2;  *B = V;   break;
     case 4: *R = p3;  *G = p1;  *B = V;   break;
     case 5: *R = V;   *G = p1;  *B = p2;  break;
+    default : *R = V;   *G = V;  *B = V;  break;
     }
   }
 }
