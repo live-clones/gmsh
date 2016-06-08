@@ -28,7 +28,7 @@
 //
 //===========================================================================
 
-/** @file gmm_except.h 
+/** @file gmm_except.h
     @author Yves Renard <Yves.Renard@insa-lyon.fr>
     @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
     @date September 01, 2002.
@@ -53,7 +53,7 @@ namespace gmm {
 
 #ifdef GETFEM_HAVE_PRETTY_FUNCTION
 #  define GMM_PRETTY_FUNCTION __PRETTY_FUNCTION__
-#else 
+#else
 #  define GMM_PRETTY_FUNCTION ""
 #endif
 
@@ -72,11 +72,11 @@ namespace gmm {
     std::stringstream msg;
     msg << "Error in " << file << ", line " << line << " " << func
 	<< ": \n" << errormsg << ends;
-    throw gmm::gmm_error(msg.str());	
+    throw gmm::gmm_error(msg.str());
   }
 # define GMM_THROW_(type, errormsg) {					\
     std::stringstream msg;						\
-    msg << "Error in "__FILE__ << ", line "				\
+    msg << "Error in " << __FILE__ << ", line "				\
 	<< __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
 	<< errormsg << ends;						\
     throw (type)(msg.str());						\
@@ -87,17 +87,17 @@ namespace gmm {
     std::stringstream msg;
     msg << "Error in " << file << ", line " << line << " " << func
 	<< ": \n" << errormsg << ends;
-    ::abort();	
+    ::abort();
   }
 # define GMM_THROW_(type, errormsg) {					\
     std::stringstream msg;						\
-    msg << "Error in "__FILE__ << ", line "				\
+    msg << "Error in " << __FILE__ << ", line "				\
 	<< __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
 	<< errormsg   << ends;						\
     ::abort();								\
   }
 #endif
-  
+
 # define GMM_ASSERT1(test, errormsg)		        		\
   { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
 
@@ -148,7 +148,7 @@ namespace gmm {
 
 #define GMM_WARNING_MSG(level_, thestr)  {			       \
       std::stringstream msg;                                           \
-      msg << "Level " << level_ << " Warning in "__FILE__ << ", line " \
+      msg << "Level " << level_ << " Warning in " << __FILE__ << ", line " \
           << __LINE__ << ": " << thestr << ends;		       \
        std::cerr << msg.str() << std::endl;                            \
     }
@@ -164,21 +164,21 @@ namespace gmm {
 
 #if GMM_WARNING_LEVEL > 1
 # define GMM_WARNING2(thestr)                                           \
-  { if (2 <= gmm::warning_level::level()) GMM_WARNING_MSG(2, thestr) } 
+  { if (2 <= gmm::warning_level::level()) GMM_WARNING_MSG(2, thestr) }
 #else
 # define GMM_WARNING1(thestr) {}
 #endif
 
 #if GMM_WARNING_LEVEL > 2
 # define GMM_WARNING3(thestr)                                           \
-  { if (3 <= gmm::warning_level::level()) GMM_WARNING_MSG(3, thestr) } 
+  { if (3 <= gmm::warning_level::level()) GMM_WARNING_MSG(3, thestr) }
 #else
 # define GMM_WARNING1(thestr) {}
 #endif
 
 #if GMM_WARNING_LEVEL > 3
 # define GMM_WARNING4(thestr)                                           \
-  { if (4 <= gmm::warning_level::level()) GMM_WARNING_MSG(4, thestr) } 
+  { if (4 <= gmm::warning_level::level()) GMM_WARNING_MSG(4, thestr) }
 #else
 # define GMM_WARNING1(thestr) {}
 #endif
@@ -210,12 +210,12 @@ namespace gmm {
 #define GMM_TRACE_MSG(level_, thestr)  {			       \
     GMM_TRACE_MSG_MPI {						       \
       std::stringstream msg;                                           \
-      msg << "Trace " << level_ << " in "__FILE__ << ", line "         \
+      msg << "Trace " << level_ << " in " << __FILE__ << ", line "      \
           << __LINE__ << ": " << thestr				       \
           << ends;						       \
       std::cout << msg.str() << std::endl;			       \
     }                                                                  \
-  }        
+  }
 
 #define GMM_TRACE0(thestr) GMM_TRACE_MSG(0, thestr)
 
@@ -225,35 +225,35 @@ namespace gmm {
 #else
 # define GMM_TRACE1(thestr) {}
 #endif
-  
+
 #if GMM_TRACES_LEVEL > 1
 # define GMM_TRACE2(thestr)						\
-  { if (2 <= gmm::traces_level::level()) GMM_TRACE_MSG(2, thestr) } 
+  { if (2 <= gmm::traces_level::level()) GMM_TRACE_MSG(2, thestr) }
 #else
 # define GMM_TRACE2(thestr) {}
 #endif
-  
+
 #if GMM_TRACES_LEVEL > 2
 # define GMM_TRACE3(thestr)						\
-  { if (3 <= gmm::traces_level::level()) GMM_TRACE_MSG(3, thestr) } 
+  { if (3 <= gmm::traces_level::level()) GMM_TRACE_MSG(3, thestr) }
 #else
 # define GMM_TRACE3(thestr) {}
 #endif
-  
+
 #if GMM_TRACES_LEVEL > 3
 # define GMM_TRACE4(thestr)						\
-  { if (4 <= gmm::traces_level::level()) GMM_TRACE_MSG(4, thestr) } 
+  { if (4 <= gmm::traces_level::level()) GMM_TRACE_MSG(4, thestr) }
 #else
 # define GMM_TRACE4(thestr) {}
 #endif
-  
-  
+
+
   /* ********************************************************************* */
   /*    Definitions for compatibility with old versions.        	   */
-  /* ********************************************************************* */ 
-  
+  /* ********************************************************************* */
+
   using std::invalid_argument;
-  
+
   struct dimension_error : public std::logic_error
   { dimension_error(const std::string& w): std::logic_error(w) {} };
   struct file_not_found_error : public std::logic_error
@@ -313,12 +313,12 @@ namespace gmm {
     cerr << "============================================\n";	\
     exit(1);							\
   }
-  //   catch(ios_base::failure) { 
+  //   catch(ios_base::failure) {
   //     cerr << "============================================\n";
   //     cerr << "| A ios_base::failure has been detected !!!|\n";
   //     cerr << "============================================\n";
   //     exit(1);
-  //   } 
+  //   }
 
 #if defined(__GNUC__) && (__GNUC__ > 3)
 # define GMM_SET_EXCEPTION_DEBUG				\

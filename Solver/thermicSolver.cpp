@@ -325,7 +325,8 @@ PView* thermicSolver::buildErrorEstimateView(const std::string errorFileName,
 
   SolverField<double> solField(pAssembler, LagSpace);
   for (unsigned int i = 0; i < thermicFields.size(); ++i){
-    for (groupOfElements::elementContainer::const_iterator it = thermicFields[i].g->begin(); it != thermicFields[i].g->end(); ++it){
+    for (groupOfElements::elementContainer::const_iterator it =
+           thermicFields[i].g->begin(); it != thermicFields[i].g->end(); ++it){
       MElement *e = *it;
       int npts;
       IntPt *GP;
@@ -369,14 +370,10 @@ PView* thermicSolver::buildLagrangeMultiplierView (const std::string postFileNam
   return 0;
 }
 
-PView* thermicSolver::buildErrorEstimateView(const std::string errorFileName)
+PView* thermicSolver::buildErrorEstimateView(const std::string errorFileName,
+                                             simpleFunction<double> *sol)
 {
   Msg::Error("Post-pro module not available");
   return 0;
 }
 #endif
-
-
-
-
-
