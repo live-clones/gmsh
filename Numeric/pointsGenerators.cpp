@@ -867,6 +867,130 @@ fullMatrix<double> gmshGenerateMonomialsPyramid(int order, bool forSerendipPoint
   return monomials;
 }
 
+fullMatrix<double> gmshGenerateMonomialsPyramidSerendipity(int order)
+{
+  int nbMonomials = order ? 5 + (order-1)*8 : 1;
+
+  fullMatrix<double> monomials(nbMonomials, 3);
+
+  monomials(0, 0) = 0;
+  monomials(0, 1) = 0;
+  monomials(0, 2) = 0;
+
+  if (order > 0) {
+    monomials(1, 0) = 0;
+    monomials(1, 1) = 0;
+    monomials(1, 2) = 1;
+
+    monomials(2, 0) = 1;
+    monomials(2, 1) = 0;
+    monomials(2, 2) = 1;
+
+    monomials(3, 0) = 0;
+    monomials(3, 1) = 1;
+    monomials(3, 2) = 1;
+
+    monomials(4, 0) = 1;
+    monomials(4, 1) = 1;
+    monomials(4, 2) = 1;
+
+    // monomials of tetrahedra plus a bit more
+    if (order > 1) {
+      int idx = 5;
+      for (int i = 2; i <= order; ++i, ++idx) {
+        monomials(idx, 0) = 0;
+        monomials(idx, 1) = 0;
+        monomials(idx, 2) = i;
+      }
+      for (int i = 2; i <= order; ++i, ++idx) {
+        monomials(idx, 0) = i;
+        monomials(idx, 1) = 0;
+        monomials(idx, 2) = i;
+      }
+      for (int i = 2; i <= order; ++i, ++idx) {
+        monomials(idx, 0) = 0;
+        monomials(idx, 1) = i;
+        monomials(idx, 2) = i;
+      }
+      for (int i = 1; i < order; ++i, ++idx) {
+        monomials(idx, 0) = i;
+        monomials(idx, 1) = 0;
+        monomials(idx, 2) = order;
+      }
+      for (int i = 1; i < order; ++i, ++idx) {
+        monomials(idx, 0) = 0;
+        monomials(idx, 1) = i;
+        monomials(idx, 2) = order;
+      }
+      for (int i = 1; i < order; ++i, ++idx) {
+        monomials(idx, 0) = i;
+        monomials(idx, 1) = order-i;
+        monomials(idx, 2) = order;
+      }
+      for (int i = 2; i <= order; ++i, ++idx) {
+        monomials(idx, 0) = i;
+        monomials(idx, 1) = 1;
+        monomials(idx, 2) = i;
+      }
+      for (int i = 2; i <= order; ++i, ++idx) {
+        monomials(idx, 0) = 1;
+        monomials(idx, 1) = i;
+        monomials(idx, 2) = i;
+      }
+    }
+  }
+  monomials.print("monomials");
+  return monomials;
+
+//    // monomials of plus a bit more
+//    if (order > 1) {
+//      int idx = 5;
+//      for (int i = 2; i <= order; ++i, ++idx) {
+//        monomials(idx, 0) = 0;
+//        monomials(idx, 1) = 0;
+//        monomials(idx, 2) = i;
+//      }
+//      for (int i = 2; i <= order; ++i, ++idx) {
+//        monomials(idx, 0) = 1;
+//        monomials(idx, 1) = 0;
+//        monomials(idx, 2) = i;
+//      }
+//      for (int i = 2; i <= order; ++i, ++idx) {
+//        monomials(idx, 0) = 0;
+//        monomials(idx, 1) = 1;
+//        monomials(idx, 2) = i;
+//      }
+//      for (int i = 2; i <= order; ++i, ++idx) {
+//        monomials(idx, 0) = 1;
+//        monomials(idx, 1) = 1;
+//        monomials(idx, 2) = i;
+//      }
+//      for (int i = 2; i <= order; ++i, ++idx) {
+//        monomials(idx, 0) = i;
+//        monomials(idx, 1) = 0;
+//        monomials(idx, 2) = order;
+//      }
+//      for (int i = 2; i <= order; ++i, ++idx) {
+//        monomials(idx, 0) = i;
+//        monomials(idx, 1) = 1;
+//        monomials(idx, 2) = order;
+//      }
+//      for (int i = 2; i <= order; ++i, ++idx) {
+//        monomials(idx, 0) = 0;
+//        monomials(idx, 1) = i;
+//        monomials(idx, 2) = order;
+//      }
+//      for (int i = 2; i <= order; ++i, ++idx) {
+//        monomials(idx, 0) = 1;
+//        monomials(idx, 1) = i;
+//        monomials(idx, 2) = order;
+//      }
+//    }
+//  }
+//  monomials.print("monomials");
+//  return monomials;
+}
+
 fullMatrix<double> gmshGenerateMonomialsPyramidGeneral(
     bool pyr, int nij, int nk, bool forSerendipPoints)
 {

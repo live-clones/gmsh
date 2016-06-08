@@ -51,6 +51,7 @@ fullMatrix<double> gmshGenerateMonomialsPrismSerendipity(int order);
 
 // Generate monomials of pyramidal nodal space {X^i Y^j Z^k | i,j <= k, k <= 'order'},
 fullMatrix<double> gmshGenerateMonomialsPyramid(int order, bool forSerendipPoints = false);
+fullMatrix<double> gmshGenerateMonomialsPyramidSerendipity(int order);
 // If 'serendip' == true, generate monomials of serendipity pyramid at order 'nk',
 // else if 'pyr' == true, generate monomials of space {X^i Y^j Z^k | i,j <= k+'nij', k <= 'nk'},
 // else if 'pyr' == false, generate monomials of space {X^i Y^j Z^k | i,j <= 'nij', k <= 'nk'}
