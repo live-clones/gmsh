@@ -248,6 +248,7 @@ class Volume {
   List_T *SurfacesOrientations;
   List_T *SurfacesByTag;
   List_T *EmbeddedSurfaces;
+  List_T *EmbeddedCurves;
   DrawingColor Color;
   std::vector<int> compound;
   void SetVisible(int value, bool recursive)
@@ -451,6 +452,7 @@ void setVolumeSurfaces(Volume *v, List_T *loops);
 void setSurfaceEmbeddedPoints(Surface *s, List_T *points);
 void setSurfaceEmbeddedCurves(Surface *s, List_T *curves);
 void setVolumeEmbeddedSurfaces(Volume *v, List_T *surfaces);
+void setVolumeEmbeddedCurves(Volume *v, List_T *curves);
 int select_contour(int type, int num, List_T * List);
 
 #endif

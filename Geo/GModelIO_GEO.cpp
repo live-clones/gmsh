@@ -336,18 +336,7 @@ int GModel::importGEOInternals()
           if(gr) comp.push_back(gr);
         }
         r = new GRegionCompound(this, v->Num, comp);
-        if(v->EmbeddedSurfaces){
-          for(int i = 0; i < List_Nbr(v->EmbeddedSurfaces); i++){
-            Surface *s;
-            List_Read(v->EmbeddedSurfaces, i, &s);
-            GFace *gf = getFaceByTag(abs(s->Num));
-            if(gf)
-              r->addEmbeddedFace(gf);
-            else
-              Msg::Error("Unknown surface %d", s->Num);
-          }
-        }
-        add(r);
+	add(r);
       }
       else if(!r){
         r = new gmshRegion(this, v);
@@ -355,6 +344,30 @@ int GModel::importGEOInternals()
       }
       else{
         r->resetMeshAttributes();
+      }
+
+      if(v->EmbeddedSurfaces){
+	for(int i = 0; i < List_Nbr(v->EmbeddedSurfaces); i++){
+	  Surface *s;
+	  List_Read(v->EmbeddedSurfaces, i, &s);
+	  GFace *gf = getFaceByTag(abs(s->Num));
+	  if(gf)
+	    r->addEmbeddedFace(gf);
+	  else
+	    Msg::Error("Unknown surface %d", s->Num);
+	}
+      }
+      if(v->EmbeddedCurves){
+	for(int i = 0; i < List_Nbr(v->EmbeddedCurves); i++){
+	  Curve *c;
+	  List_Read(v->EmbeddedCurves, i, &c);
+	  GEdge *ge = getEdgeByTag(abs(c->Num));
+	  //	  printf("ADDING EMBBEDED EDGE --------------> %d\n",c->Num);
+	  if(ge)
+	    r->addEmbeddedEdge(ge);
+	  else
+	    Msg::Error("Unknown curve %d", c->Num);
+	}
       }
       if(!v->Visible) r->setVisibility(0);
       if(v->Color.type) r->setColor(v->Color.mesh);

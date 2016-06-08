@@ -4703,7 +4703,32 @@ Constraints :
     }
   | tLine '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {
-      Msg::Error("Line in Volume not implemented yet");
+      Volume *v = FindVolume((int)$8);
+      if(v){
+	setVolumeEmbeddedCurves(v, $3);
+      }
+      else{
+        GRegion *gr = GModel::current()->getRegionByTag((int)$8);
+        if(gr){
+          for(int i = 0; i < List_Nbr($3); i++){
+            double d;
+            List_Read($3, i, &d);
+            int iLine = (int)d;
+            GEdge *ge = GModel::current()->getEdgeByTag(iLine);
+            if(!ge){ // sync model in case the embedded face is a .geo face
+              GModel::current()->importGEOInternals();
+              ge = GModel::current()->getEdgeByTag(iLine);
+            }
+            if(ge)
+              gr->addEmbeddedEdge(ge);
+            else
+              yymsg(0, "Unknown Curve %d", iLine);
+          }
+        }
+        else
+          yymsg(0, "Unknown volume %d", (int)$8);
+      }
+//      Msg::Error("Line in Volume not implemented yet");
     }
   | tSurface '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {

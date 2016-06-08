@@ -196,6 +196,21 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
 {
   std::set<MVertex*> allBoundingVertices;
   std::map<MFace,GEntity*,Less_Face> allBoundingFaces;
+  std::map<MEdge,GEntity*,Less_Edge> allBoundingEdges;
+
+  // embedded edges
+  {
+    std::list<GEdge*> embe = gr->embeddedEdges();
+    for (std::list<GEdge*>::iterator it = embe.begin(); it != embe.end(); ++it){
+      for (unsigned int i=0;i<(*it)->lines.size();i++){
+	MEdge me ((*it)->lines[i]->getVertex(0),(*it)->lines[i]->getVertex(1));
+	allBoundingEdges[me] = *it;
+	allBoundingVertices.insert((*it)->lines[i]->getVertex(0));
+	allBoundingVertices.insert((*it)->lines[i]->getVertex(1));
+      }
+    }
+  }
+
   getBoundingInfoAndSplitQuads(gr, allBoundingFaces, allBoundingVertices, sqr);
 
   //// TEST
@@ -247,6 +262,21 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
     in.pointlist[(I - 1) * 3 + 1] = v->y();
     in.pointlist[(I - 1) * 3 + 2] = v->z();
     I++;
+  }
+
+
+  in.numberofedges = allBoundingEdges.size();
+  in.edgelist = new int[2*in.numberofedges];
+  in.edgemarkerlist = new int[in.numberofedges];
+
+  I = 0;
+  std::map<MEdge,GEntity*,Less_Edge>::iterator ite = allBoundingEdges.begin();
+  for (; ite != allBoundingEdges.end();++ite){
+    const MEdge &ed = ite->first;
+    in.edgelist[2*I]   = ed.getVertex(0)->getIndex();
+    in.edgelist[2*I+1] = ed.getVertex(1)->getIndex();
+    in.edgemarkerlist[I] = ite->second->tag();
+    ++I;
   }
 
   in.numberoffacets = allBoundingFaces.size();

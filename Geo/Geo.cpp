@@ -693,6 +693,7 @@ Volume *Create_Volume(int Num, int Typ)
   pV->SurfacesByTag = List_Create(1, 2, sizeof(int));
   pV->Extrude = NULL;
   pV->EmbeddedSurfaces = NULL;
+  pV->EmbeddedCurves = NULL;
   return pV;
 }
 
@@ -4638,6 +4639,23 @@ void setVolumeEmbeddedSurfaces(Volume *v, List_T *surfaces)
       Msg::Error("Unknown surface %d", (int)iSurface);
   }
 }
+
+void setVolumeEmbeddedCurves(Volume *v, List_T *curves)
+{
+ if (!v->EmbeddedCurves)
+    v->EmbeddedCurves = List_Create(4, 4, sizeof(Curve *));
+  int nb = List_Nbr(curves);
+  for(int i = 0; i < nb; i++) {
+    double iCurve;
+    List_Read(curves, i, &iCurve);
+    Curve *c = FindCurve((int)iCurve);
+    if(c)
+      List_Add(v->EmbeddedCurves, &c);
+    else
+      Msg::Error("Unknown curve %d", (int)iCurve);
+  }
+}
+
 
 void setSurfaceGeneratrices(Surface *s, List_T *loops)
 {

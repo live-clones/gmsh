@@ -18,9 +18,22 @@
 #include "Numeric.h"
 #include "Context.h"
 #include "delaunay3d.h"
+#include "MEdge.h"
+#include "MLine.h"
 
 int MTet4::radiusNorm = 2;
 static double LIMIT_ = 1;
+
+static void createAllEmbeddedEdges (GRegion *gr, std::set<MEdge, Less_Edge> &allEmbeddedEdges)
+{
+  std::list<GEdge*> e = gr->embeddedEdges();
+  //  printf("=================> %d embedded GEdges\n",e.size());
+  for (std::list<GEdge*>::iterator it = e.begin() ; it != e.end(); ++it){
+    for (unsigned int i = 0; i < (*it)->lines.size(); i++){
+      allEmbeddedEdges.insert (MEdge((*it)->lines[i]->getVertex(0),(*it)->lines[i]->getVertex(1)));
+    }
+  }
+}
 
 static void createAllEmbeddedFaces (GRegion *gr, std::set<MFace, Less_Face> &allEmbeddedFaces)
 {
@@ -644,6 +657,8 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 
   std::set<MFace, Less_Face> allEmbeddedFaces;
   createAllEmbeddedFaces (gr, allEmbeddedFaces);
+  std::set<MEdge, Less_Edge> allEmbeddedEdges;
+  createAllEmbeddedEdges (gr, allEmbeddedEdges);
   connectTets(allTets.begin(),allTets.end(),&allEmbeddedFaces);
 
   double t1 = Cpu();
@@ -724,10 +739,13 @@ void adaptMeshGRegion::operator () (GRegion *gr)
         double qq = (*it)->getQuality();
         if (qq < qMin)
           for (int i = 0; i < 6; i++){
-            if (edgeSwap(newTets, *it, i, qm)) {
-              nbESwap++;
-              break;
-            }
+	    MEdge ed = (*it)->tet()->getEdge(i);
+	    if (allEmbeddedEdges.find(ed) == allEmbeddedEdges.end()){
+	      if (edgeSwap(newTets, *it, i, qm)) {
+		nbESwap++;
+		break;
+	      }
+	    }
           }
           if (!(*it)->isDeleted()){
             if (qq < sliverLimit) illegals.push_back(*it);
@@ -836,6 +854,8 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   std::set<MFace, Less_Face> allEmbeddedFaces;
   createAllEmbeddedFaces (gr, allEmbeddedFaces);
   connectTets(allTets.begin(),allTets.end(),&allEmbeddedFaces);
+  std::set<MEdge, Less_Edge> allEmbeddedEdges;
+  createAllEmbeddedEdges (gr, allEmbeddedEdges);
 
   double t1 = Cpu();
   std::vector<MTet4*> illegals;
@@ -903,11 +923,14 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
       if (!(*it)->isDeleted()){
         double qq = (*it)->getQuality();
         if (qq < qMin){
-          for (int i = 0; i < 6; i++){
-            if (edgeSwap(newTets, *it, i, qm)) {
-              nbESwap++;
-              break;
-            }
+          for (int i = 0; i < 6; i++){	    
+	    MEdge ed = (*it)->tet()->getEdge(i);
+	    if (allEmbeddedEdges.find(ed) == allEmbeddedEdges.end()){
+	      if (edgeSwap(newTets, *it, i, qm)) {
+		nbESwap++;
+		break;
+	      }
+	    }
           }
 	}
         if (!(*it)->isDeleted()){
@@ -1093,6 +1116,28 @@ static void memoryCleanup(MTet4Factory &myFactory, std::set<MTet4*, compareTet4P
   //  Msg::Info("cleaning up the memory %d -> %d", n1, allTets.size());
 }
 
+int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity, 
+					std::list<faceXtet> &shell,   
+					std::set<MEdge, Less_Edge> &allEmbeddedEdges){
+ 
+  //  printf("coucou\n");
+  std::set<MEdge,Less_Edge> ed;
+  for (std::list<faceXtet>::iterator it = shell.begin(); it != shell.end();it++){
+    ed.insert(MEdge(it->v[0],it->v[1]));
+    ed.insert(MEdge(it->v[1],it->v[2]));
+    ed.insert(MEdge(it->v[2],it->v[0]));
+  }
+
+  for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
+    for (int j=0;j<6;j++){
+      MEdge e = (*itc)->tet()->getEdge(j);
+      if (ed.find(e) == ed.end() && allEmbeddedEdges.find(e) != allEmbeddedEdges.end()){
+	return 0;
+      }
+    }
+  }
+  return 1;
+} 
 
 void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 {
@@ -1108,10 +1153,29 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   int NUM = 0;
 
 	//	printTets ("before.pos", cavity, true);
+  std::set<MEdge, Less_Edge> allEmbeddedEdges;
+  createAllEmbeddedEdges (gr, allEmbeddedEdges);
 
   { // leave this in a block so the map gets deallocated directly
     std::map<MVertex*, double> vSizesMap;
     std::set<MVertex*> bndVertices;
+
+    std::set<MEdge, Less_Edge>::iterator it = allEmbeddedEdges.begin();
+    while (it != allEmbeddedEdges.end()){
+      MVertex *vi = it->getVertex(0);
+      MVertex *vj = it->getVertex(1);
+      double dx = vi->x()-vj->x();
+      double dy = vi->y()-vj->y();
+      double dz = vi->z()-vj->z();
+      double l = sqrt(dx * dx + dy * dy + dz * dz);
+      std::map<MVertex*,double>::iterator iti = vSizesMap.find(vi);
+      std::map<MVertex*,double>::iterator itj = vSizesMap.find(vj);
+      // smallest tet edge
+      if (iti == vSizesMap.end() || iti->second > l) vSizesMap[vi] = l;
+      if (itj == vSizesMap.end() || itj->second > l) vSizesMap[vj] = l;      
+      ++it;
+    }
+
     for(GModel::fiter it = gr->model()->firstFace(); it != gr->model()->lastFace(); ++it){
       GFace *gf = *it;
       for(unsigned int i = 0; i < gf->triangles.size(); i++){
@@ -1189,6 +1253,8 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   connectTets(allTets.begin(), allTets.end(),&allEmbeddedFaces);
   Msg::Debug("All %d tets were connected", allTets.size());
 
+  //  printf("===========================>   %d embedded edges \n",allEmbeddedEdges.size());
+
   // here the classification should be done
 
   int ITER = 0, REALCOUNT = 0;
@@ -1197,6 +1263,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   int COUNT_MISS_2 = 0;
 
   double t1 = Cpu();
+  // MAIN LOOP IN DELAUNAY INSERTION STARTS HERE 
   while(1){
     if (COUNT_MISS_2 > 100000)break;
     if (ITER >= maxVert)break;
@@ -1253,6 +1320,10 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 	}
       }
       /// END TETS
+
+      if (FOUND && !allEmbeddedEdges.empty()){
+        FOUND = isCavityCompatibleWithEmbeddedEdges(cavity, shell, allEmbeddedEdges); 
+      }
 
       if(FOUND){
         MVertex *v = new MVertex(center[0], center[1], center[2], worst->onWhat());
