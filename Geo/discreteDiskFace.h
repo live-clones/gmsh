@@ -58,10 +58,11 @@ class triangulation {
   int idNum; // number of identification, for hashing purposes
 
   std::list<GEdge*> my_GEdges;
-  
+
   //methods
-  int genus(){
-    return ( -vert.size() + ed2tri.size() - tri.size() + 2 - bord.size() )/2;
+  int genus()
+  {
+    return ( ed2tri.size() - vert.size() - tri.size() + 2 - bord.size() )/2;
   }
 
   void assignVert()
