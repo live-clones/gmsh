@@ -47,10 +47,10 @@ struct HilbertSortB
 	    double BoundingBoxYmin, double BoundingBoxYmax,
 	    double BoundingBoxZmin, double BoundingBoxZmax);
   void Sort(Vert** vertices, int arraysize, int e, int d,
-	   double BoundingBoxXmin, double BoundingBoxXmax,
+            double BoundingBoxXmin, double BoundingBoxXmax,
             double BoundingBoxYmin, double BoundingBoxYmax,
-	   double BoundingBoxZmin, double BoundingBoxZmax, int depth);
-  HilbertSortB (int m = 0, int l=2) : maxDepth(m),Limit(l)
+            double BoundingBoxZmin, double BoundingBoxZmax, int depth);
+  HilbertSortB (int m = 0, int l=2) : maxDepth(m), Limit(l)
   {
     ComputeGrayCode(3);
   }
@@ -58,34 +58,32 @@ struct HilbertSortB
 			     int threshold, double ratio, int *depth,
                              std::vector<int> &indices)
   {
-    int middle;
-
-    middle = 0;
+    int middle = 0;
     if (arraysize >= threshold) {
       (*depth)++;
       middle = (int)(arraysize * ratio);
       MultiscaleSortHilbert(vertices, middle, threshold, ratio, depth, indices);
     }
     indices.push_back(middle);
-    //    printf("chunk starts at %d and size %d\n",middle, arraysize - middle);
-    Sort (&(vertices[middle]),arraysize - middle,0,0,
-	  bbox.min().x(),bbox.max().x(),
-	  bbox.min().y(),bbox.max().y(),
-	  bbox.min().z(),bbox.max().z(),0);
+    // printf("chunk starts at %d and size %d\n",middle, arraysize - middle);
+    Sort(&(vertices[middle]),arraysize - middle,0,0,
+         bbox.min().x(),bbox.max().x(),
+         bbox.min().y(),bbox.max().y(),
+         bbox.min().z(),bbox.max().z(),0);
   }
-  void Apply (std::vector<Vert*> &v, std::vector<int> &indices)
+  void Apply(std::vector<Vert*> &v, std::vector<int> &indices)
   {
-    for (size_t i=0;i<v.size();i++){
+    for (size_t i = 0; i < v.size(); i++){
       Vert *pv = v[i];
-      bbox += SPoint3(pv->x(),pv->y(),pv->z());
+      bbox += SPoint3(pv->x(), pv->y(), pv->z());
     }
     bbox *= 1.01;
-    Vert**pv = &v[0];
+    Vert **pv = &v[0];
     int depth;
     indices.clear();
-    MultiscaleSortHilbert(pv, (int)v.size(), 64, .125,&depth,indices);
+    MultiscaleSortHilbert(pv, (int)v.size(), 64, .125, &depth, indices);
     indices.push_back(v.size());
-    //    printf("depth = %d\n",depth);
+    // printf("depth = %d\n",depth);
   }
 };
 
@@ -133,7 +131,6 @@ void HilbertSortB::ComputeGrayCode(int n)
     tsb1mod3[i] = c % n;
   }
 }
-
 
 int HilbertSortB::Split(Vert** vertices,
 		       int arraysize,int GrayCode0,int GrayCode1,
@@ -186,7 +183,8 @@ int HilbertSortB::Split(Vert** vertices,
       vertices[j] = swapvert;
       // Continue patitioning the array;
     } while (true);
-  } else {
+  }
+  else {
     do {
       for (; i < arraysize; i++) {
         if (vertices[i]->point()[axis] <= split) break;
