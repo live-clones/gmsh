@@ -4,7 +4,12 @@
 #include <petscksp.h>
 #include "linearSystemPETSc.h"
 
-static void  _try(int ierr)
+#if ((PETSC_VERSION_RELEASE == 0) || ((PETSC_VERSION_MAJOR == 3) && (PETSC_VERSION_MINOR >= 7)))
+#define PetscOptionsGetInt(A, B, C, D) PetscOptionsGetInt(NULL, A, B, C, D);
+#define PetscOptionsInsertString(A) PetscOptionsInsertString(NULL, A)
+#endif
+
+static void _try(int ierr)
 {
   CHKERRABORT(PETSC_COMM_WORLD, ierr);
 }
