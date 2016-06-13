@@ -73,6 +73,8 @@ struct HilbertSortB
   }
   void Apply(std::vector<Vert*> &v, std::vector<int> &indices)
   {
+    indices.clear();
+    if(v.empty()) return;
     for (size_t i = 0; i < v.size(); i++){
       Vert *pv = v[i];
       bbox += SPoint3(pv->x(), pv->y(), pv->z());
