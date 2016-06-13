@@ -14,7 +14,6 @@
 #include <signal.h>
 #include <time.h>
 #include <math.h>
-#include "FlGui.h"
 #include "GmshConfig.h"
 #include "StringUtils.h"
 #include "Context.h"
