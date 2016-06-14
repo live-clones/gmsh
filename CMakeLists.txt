@@ -1270,7 +1270,9 @@ endif(LINUX_JOYSTICK_H)
 if(MSVC)
   add_definitions(-D_USE_MATH_DEFINES -DNOMINMAX
                   -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_DEPRECATE)
-  set(GMSH_SRC ${GMSH_SRC};Fltk/Win32Icon.rc)
+  if(HAVE_FLTK)
+    set(GMSH_SRC ${GMSH_SRC};Fltk/Win32Icon.rc)
+  endif(HAVE_FLTK)
 endif(MSVC)
 
 if(WIN32 OR CYGWIN)

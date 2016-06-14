@@ -20,7 +20,6 @@ typedef unsigned long intptr_t;
 #include "Context.h"
 #include "OpenFile.h"
 #include "CommandLine.h"
-#include "ReadImg.h"
 #include "OS.h"
 #include "StringUtils.h"
 #include "GeomMeshMatcher.h"
@@ -43,6 +42,10 @@ typedef unsigned long intptr_t;
 #include "PView.h"
 #include "PViewData.h"
 #include "PViewOptions.h"
+#endif
+
+#if defined(HAVE_GRAPHICS)
+#include "ReadImg.h"
 #endif
 
 #if defined(HAVE_FLTK)
