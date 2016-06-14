@@ -818,12 +818,13 @@ void _relocateVertex(GFace *gf, MVertex *ver,
 }
 
 void getAllBoundaryLayerVertices (GFace *gf, std::set<MVertex*> &vs){
+  //  return;
   vs.clear();
   BoundaryLayerColumns* _columns = gf->getColumns();
   if (!_columns)return;
   for ( std::map<MElement*,std::vector<MElement*> >::iterator it = _columns->_elemColumns.begin();
 	it != _columns->_elemColumns.end();it++){
-    std::vector<MElement *> e = it->second;
+    std::vector<MElement *> &e = it->second;
     for (unsigned int i=0;i<e.size();i++){
       for (int j=0;j<e[i]->getNumVertices();j++){
 	vs.insert(e[i]->getVertex(j));
@@ -1354,6 +1355,7 @@ void quadsToTriangles(GFace *gf, double minqual)
 {
 
   std::vector<MQuadrangle*> qds;
+  std::map<MElement*, std::pair<MElement*,MElement*> > change;
   for (unsigned int i = 0; i < gf->quadrangles.size(); i++){
     MQuadrangle *q = gf->quadrangles[i];
     if (q->gammaShapeMeasure() < minqual){
@@ -1374,21 +1376,43 @@ void quadsToTriangles(GFace *gf, double minqual)
       if (option == 1 || (option == 0 && qual1 > qual2)){
         gf->triangles.push_back(t11);
         gf->triangles.push_back(t12);
+	change[q] = std::make_pair(t11,t12);
         delete t21; delete t22;
       }
       else {
         gf->triangles.push_back(t21);
         gf->triangles.push_back(t22);
+	change[q] = std::make_pair(t21,t22);
         delete t11; delete t12;
       }
       delete q; // FIXME this makes gmsh to crash when creating BL with triangles
-      // quads created in meshGFace.cpp > modifyInitialMeshForTakingIntoAccountBoundaryLayers(..)
-      // quads deleted here
-      // quads used in getAllBoundaryLayerVertices(..) => crash
+      // FIXED (JF)
     }
     else {
       qds.push_back(q);
     }
   }
   gf->quadrangles = qds;
+
+  BoundaryLayerColumns* _columns = gf->getColumns();
+  if (!_columns)return;
+  for ( std::map<MElement*,std::vector<MElement*> >::iterator it = _columns->_elemColumns.begin();
+	it != _columns->_elemColumns.end();it++){
+    std::vector<MElement *> &e = it->second;
+    std::vector<MElement *> eOld = e;
+    e.clear();    
+    for (unsigned int i=0;i<eOld.size();i++){
+      MElement *ee = eOld[i];
+      std::map<MElement*, std::pair<MElement*,MElement*> >::iterator it2 = change.find(ee);
+      if (it2 == change.end()){
+	e.push_back(ee);
+      }
+      else {
+	e.push_back(it2->second.first);
+	e.push_back(it2->second.second);
+      }
+    }
+  }
+
+
 }
