@@ -2249,70 +2249,105 @@ void BoundaryLayerField::removeAttractors()
   update_needed = true;
 }
 
+void BoundaryLayerField::setupFor1d(int iE) {
+
+  if (faces_id_saved.empty() &&
+      edges_id_saved.empty() &&
+      faces_id_saved.empty() ){     
+    faces_id_saved = faces_id;
+    edges_id_saved = edges_id;
+    nodes_id_saved = nodes_id;
+  }
+
+  nodes_id.clear();
+  edges_id.clear();
+  faces_id.clear();
+
+  bool found = std::find(edges_id_saved.begin(), edges_id_saved.end(), iE) !=
+    edges_id_saved.end();
+  
+  if (!found) {
+    GEdge *ge = GModel::current()->getEdgeByTag(iE);
+    GVertex *gv0 = ge->getBeginVertex();
+    found = std::find(nodes_id_saved.begin(), nodes_id_saved.end(), gv0->tag()) !=
+      nodes_id_saved.end();
+    if (found)nodes_id.push_back(gv0->tag());
+    GVertex *gv1 = ge->getEndVertex();
+    found = std::find(nodes_id_saved.begin(), nodes_id_saved.end(), gv1->tag()) !=
+      nodes_id_saved.end();
+    if (found)nodes_id.push_back(gv1->tag());
+  }
+  //  printf("edge %d %d nodes added\n",iE,nodes_id.size());
+  //  getchar();
+  removeAttractors();
+}
+
+
 void BoundaryLayerField::setupFor2d(int iF)
 {
-  if (1 || faces_id.size()){
-    /* preprocess data in the following way
-       remove GFaces from the attarctors (only used in 2D)
-       for edges and vertices
-     */
-    if ( !faces_id_saved.size()){
-      faces_id_saved = faces_id;
-      edges_id_saved = edges_id;
-      nodes_id_saved = nodes_id;
-    }
-    nodes_id.clear();
-    edges_id.clear();
-    faces_id.clear();
+  /* preprocess data in the following way
+     remove GFaces from the attarctors (only used in 2D)
+     for edges and vertices
+  */
+  if (faces_id_saved.empty() &&
+      edges_id_saved.empty() &&
+      faces_id_saved.empty() ){     
+    faces_id_saved = faces_id;
+    edges_id_saved = edges_id;
+    nodes_id_saved = nodes_id;
+  }
 
-    //    printf("have %d %d\n",faces_id_saved.size(),edges_id_saved.size());
-
-    ///  FIXME :
-    /// NOT REALLY A NICE WAY TO DO IT (VERY AD HOC)
-    /// THIS COULD BE PART OF THE INPUT
-    /// OR (better) CHANGE THE PHILOSOPHY
-
-    GFace *gf = GModel::current()->getFaceByTag(iF);
-    std::list<GEdge*> ed = gf->edges();
-    //    printf("face %d has %d edges\n",iF,ed.size());
-    for (std::list<GEdge*>::iterator it = ed.begin();
+  nodes_id.clear();
+  edges_id.clear();
+  faces_id.clear();
+  
+  //    printf("have %d %d\n",faces_id_saved.size(),edges_id_saved.size());
+  
+  ///  FIXME :
+  /// NOT REALLY A NICE WAY TO DO IT (VERY AD HOC)
+  /// THIS COULD BE PART OF THE INPUT
+  /// OR (better) CHANGE THE PHILOSOPHY
+  
+  GFace *gf = GModel::current()->getFaceByTag(iF);
+  std::list<GEdge*> ed = gf->edges();
+  //    printf("face %d has %d edges\n",iF,ed.size());
+  for (std::list<GEdge*>::iterator it = ed.begin();
 	 it != ed.end() ; ++it){
-      bool isIn = false;
-      int iE = (*it)->tag();
-      bool found = std::find(edges_id_saved.begin(), edges_id_saved.end(), iE) !=
-        edges_id_saved.end();
-      //      printf("edges %d found %d\n",iE,found);
-      // this edge is a BL Edge
-      if (found){
-	std::list<GFace*> fc = (*it)->faces();
-	// one only face --> 2D --> BL
-	if (fc.size() == 1) isIn = true;
+    bool isIn = false;
+    int iE = (*it)->tag();
+    bool found = std::find(edges_id_saved.begin(), edges_id_saved.end(), iE) !=
+      edges_id_saved.end();
+    //      printf("edges %d found %d\n",iE,found);
+    // this edge is a BL Edge
+    if (found){
+      std::list<GFace*> fc = (*it)->faces();
+      // one only face --> 2D --> BL
+      if (fc.size() == 1) isIn = true;
+      else {
+	// more than one face and
+	std::list<GFace*>::iterator itf = fc.begin();
+	bool found_this = std::find(faces_id_saved.begin(), faces_id_saved.end(), iF) !=
+	  faces_id_saved.end();
+	if (!found_this)isIn = true;
 	else {
-	  // more than one face and
-	  std::list<GFace*>::iterator itf = fc.begin();
-	  bool found_this = std::find(faces_id_saved.begin(), faces_id_saved.end(), iF) !=
-            faces_id_saved.end();
-	  if (!found_this)isIn = true;
-	  else {
-	    bool foundAll = true;
-	    for ( ; itf != fc.end() ; ++itf){
-	      int iF2 = (*itf)->tag();
-	      foundAll &= std::find(faces_id_saved.begin(), faces_id_saved.end(), iF2) !=
-                faces_id_saved.end();
-	    }
-	    if(foundAll) isIn = true;
+	  bool foundAll = true;
+	  for ( ; itf != fc.end() ; ++itf){
+	    int iF2 = (*itf)->tag();
+	    foundAll &= std::find(faces_id_saved.begin(), faces_id_saved.end(), iF2) !=
+	      faces_id_saved.end();
 	  }
+	  if(foundAll) isIn = true;
 	}
       }
-      if (isIn){
-	edges_id.push_back(iE);
-	nodes_id.push_back ((*it)->getBeginVertex()->tag());
-	nodes_id.push_back ((*it)->getEndVertex()->tag());
-      }
     }
-    // printf("face %d %d BL Edges\n", iF, (int)edges_id.size());
-    removeAttractors();
+    if (isIn){
+      edges_id.push_back(iE);
+      nodes_id.push_back ((*it)->getBeginVertex()->tag());
+      nodes_id.push_back ((*it)->getEndVertex()->tag());
+    }
   }
+    // printf("face %d %d BL Edges\n", iF, (int)edges_id.size());
+  removeAttractors();
 }
 
 void BoundaryLayerField::setupFor3d()
@@ -2339,21 +2374,27 @@ double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge
     update_needed = false;
   }
 
+
   double dist = 1.e22;
-  //AttractorField *cc;
+  if (_att_fields.empty())return dist;
+  //  AttractorField *cc;
   for (std::list<AttractorField*>::iterator it = _att_fields.begin();
        it != _att_fields.end(); ++it){
     double cdist = (*(*it)) (x, y, z);
     if (cdist < dist){
-      //cc = *it;
+      //      cc = *it;
       dist = cdist;
     }
   }
+
+  if (dist > thickness*ratio) return 1.e22;
   current_distance = dist;
   //  const double dist = (*field) (x, y, z);
   //  current_distance = dist;
-  const double lc = dist*(ratio-1) + hwall_t;
-  //    double lc = hwall * pow (ratio, dist / hwall);
+  double lc = dist*(ratio-1) + hwall_n;
+
+  //  double lc =  hwall_n;
+  //  double lc = hwall_n * pow (ratio, dist / hwall_t);  
   return std::min (hfar,lc);
 }
 

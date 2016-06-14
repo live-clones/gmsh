@@ -78,12 +78,34 @@ static double smoothPrimitive(GEdge *ge, double alpha,
 
 static double F_LcB(GEdge *ge, double t)
 {
+  BoundaryLayerField *blf = 0;
+#if defined(HAVE_ANN)
+  FieldManager *fields = ge->model()->getFields();
+  Field *bl_field = fields->get(fields->getBoundaryLayerField());
+  blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+#endif
+
   GPoint p = ge->point(t);
-  return BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
+  double lc = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
+
+  if (blf){
+    double lc2 = (*blf)( p.x(), p.y(), p.z() , ge);    
+    //    printf("p %g %g lc %g\n",p.x(),p.y(),lc2);
+    lc = std::min(lc, lc2);
+  }
+
+  return lc;
 }
 
 static double F_Lc(GEdge *ge, double t)
 {
+  BoundaryLayerField *blf = 0;
+#if defined(HAVE_ANN)
+  FieldManager *fields = ge->model()->getFields();
+  Field *bl_field = fields->get(fields->getBoundaryLayerField());
+  blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+#endif
+  
   GPoint p = ge->point(t);
   double lc_here;
 
@@ -97,6 +119,12 @@ static double F_Lc(GEdge *ge, double t)
     lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
   else
     lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
+
+  if (blf){
+    double lc2 = (*blf)( p.x(), p.y(), p.z() , ge);    
+    //    printf("p %g %g lc %g\n",p.x(),p.y(),lc2);
+    lc_here = std::min(lc_here, lc2);
+  }
 
   SVector3 der = ge->firstDer(t);
   const double d = norm(der);
@@ -114,6 +142,8 @@ static double F_Lc_aniso(GEdge *ge, double t)
 #else
   bool blf = false;
 #endif
+
+  printf("coucou\n");
 
 
   GPoint p = ge->point(t);
@@ -397,11 +427,12 @@ static void filterPoints (GEdge*ge) {
 
 void meshGEdge::operator() (GEdge *ge)
 {
+  BoundaryLayerField *blf = 0;
 #if defined(HAVE_ANN)
   FieldManager *fields = ge->model()->getFields();
-  BoundaryLayerField *blf = 0;
   Field *bl_field = fields->get(fields->getBoundaryLayerField());
   blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+  if (blf)blf->setupFor1d(ge->tag());
 #else
   bool blf = false;
 #endif
@@ -476,7 +507,7 @@ void meshGEdge::operator() (GEdge *ge)
       N /= CTX::instance()->mesh.lcFactor;
   }
   else{
-    if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG || blf){
+    if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG/* || blf*/){
       a = Integration(ge, t_begin, t_end, F_Lc_aniso, Points,
                       CTX::instance()->mesh.lcIntegrationPrecision);
     }
@@ -491,7 +522,7 @@ void meshGEdge::operator() (GEdge *ge)
       SVector3 der = ge->firstDer(pt.t);
       pt.xp = der.norm();
     }
-    a = smoothPrimitive(ge, sqrt(CTX::instance()->mesh.smoothRatio), Points);
+    //    a = smoothPrimitive(ge, sqrt(CTX::instance()->mesh.smoothRatio), Points);
     N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.99));
   }
 
@@ -517,7 +548,8 @@ void meshGEdge::operator() (GEdge *ge)
     }
   }
 
-  // printFandPrimitive(ge->tag(),Points);
+
+  //printFandPrimitive(ge->tag(),Points);
 
   // if the curve is periodic and if the begin vertex is identical to
   // the end vertex and if this vertex has only one model curve

@@ -182,6 +182,7 @@ class BoundaryLayerField : public Field {
     return std::find(nodes_id.begin(),nodes_id.end(),iV) != nodes_id.end();
   }
   void computeFor1dMesh(double x, double y, double z, SMetric3 &metr);
+  void setupFor1d(int iE);
   void setupFor2d(int iF);
   void setupFor3d();
   void removeAttractors();
