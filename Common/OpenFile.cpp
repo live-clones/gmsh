@@ -44,16 +44,13 @@ typedef unsigned long intptr_t;
 #include "PViewOptions.h"
 #endif
 
-#if defined(HAVE_GRAPHICS)
-#include "ReadImg.h"
-#endif
-
 #if defined(HAVE_FLTK)
 #include <FL/fl_ask.H>
 #include "FlGui.h"
 #include "onelabGroup.h"
 #include "graphicWindow.h"
 #include "drawContext.h"
+#include "ReadImg.h"
 #endif
 
 #if defined(HAVE_3M)
