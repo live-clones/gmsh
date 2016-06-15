@@ -54,6 +54,19 @@ class Rec2DTwoTri2Quad;
 class Rec2DCollapse;
 class Rec2DData;
 class Rec2DDataChange;
+
+template<typename T>
+class Rec2DContainer {
+private:
+  std::vector<T> _vec;
+  std::set<T> _set;
+
+public:
+  int add(T);
+  int rmv(T);
+  T getRandom();
+};
+
 namespace Rec2DAlgo {
   bool setParam(int horizon, int code);
   void clear();
@@ -121,6 +134,7 @@ class Recombine2D {
 
 #ifdef REC2D_RECO_BLOS
     bool _recombineWithBlossom;
+    int _blossomTime;
     bool _saveBlossomMesh;
     int *elist;
     std::map<MElement*, int> t2n;
@@ -139,6 +153,8 @@ class Recombine2D {
     // Recombination methods
     bool recombine();
     bool recombineNewAlgo(int horiz = -1, int code = -1);
+    bool recombineSimpleAlgo(int horiz = -1);
+    bool recombineComplete(int horiz = -1);
     double recombine(int depth);
     void recombineSameAsBlossom(); // just to check blossomQual
     void recombineSameAsHeuristic();
@@ -171,6 +187,7 @@ class Recombine2D {
     static inline Rec2DQualCrit getQualCrit() {return _cur->_qualCriterion;}
     static inline void setNewTreeNode(Rec2DNode *rn) {_cur->_curNode = rn;}
     static inline double getTimeLastRun() {return _cur->_lastRunTime;}
+    static inline double getTimeBlossom() {return _cur->_blossomTime;}
 
     // What is asked ?
     static inline bool dynamicTree() {return _cur->_strategy == 6;}
@@ -292,6 +309,10 @@ class Rec2DData {
     std::vector<Rec2DAction*> _OActions;
     std::set<Rec2DAction*, gterRec2DAction> _sortedOActions; // if blossom !
 
+    // Addition for simple algo
+    Rec2DContainer<Rec2DElement*> _el_1Actions;
+    Rec2DContainer<Rec2DElement*> _el_2Actions;
+    Rec2DContainer<Rec2DElement*> _el_3Actions;
 
     // Store changes (so can revert)
     std::vector<Rec2DDataChange*> _changes;
@@ -336,6 +357,7 @@ class Rec2DData {
     static inline int getBlosQual() {return _cur->_0blossomQuality;}
 #endif
     static inline unsigned int getNumElements() {return _cur->_elements.size();}
+    static void elementChgAction(Rec2DElement*, int from, int to);
 
     // Add/Remove Entities
     static void add(const Rec2DEdge*);
@@ -365,12 +387,19 @@ class Rec2DData {
     }
     static inline bool hasAction() {return _cur->_actions.size();}
     static inline int getNumAction() {return _cur->_actions.size();}
+    static inline Rec2DAction* getAction(int i) {
+      return const_cast<Rec2DAction*>(_cur->_actions[i]->action);
+    }
     //
     static Rec2DAction* getBestAction();
     static Rec2DAction* getRandomAction();
     //inline void sortActions() {sort(_actions.begin(), _actions.end(), gterAction());}
     //
     static void checkObsolete();
+
+    // Operators on Elements
+    static Rec2DElement* getBestLessAction();
+    static Rec2DElement* getRandomLessAction();
 
     // Operators on One & Zero Actions
     static void addHasZeroAction(const Rec2DElement*);
@@ -1101,10 +1130,11 @@ namespace Rec2DAlgo {
   class Node;
 
   bool paramOK();
+  bool paramOKSimpleAlgo();
   bool setParam(int horizon, int code);
   void getParam(int &horizon, int &code);
   void computeAllParam(std::vector<int> &, bool restricted = true);
-  void execute();
+  void execute(bool complete = false);
   void clear();
 
   namespace data {
@@ -1142,7 +1172,7 @@ namespace Rec2DAlgo {
   }
 
   namespace func {
-    bool lookAhead(); // false if no lookahead tree
+    bool lookAhead(bool complete); // false if no lookahead tree
     void chooseBestSequence();
 
     // functions search
@@ -1156,6 +1186,9 @@ namespace Rec2DAlgo {
     void searchForTAll(std::vector<Rec2DElement*>&);
     void searchForTFirst(std::vector<Rec2DElement*>&);
     void searchForTLast(std::vector<Rec2DElement*>&);
+
+    void searchForLessAction(std::vector<Rec2DElement*>&);
+    void searchForTreeLessAction(std::vector<Rec2DElement*>&);
 
     Rec2DElement* random(std::vector<Rec2DElement*> &v);
     Rec2DElement* best(std::vector<Rec2DElement*>&);
@@ -1228,7 +1261,8 @@ namespace Rec2DAlgo {
 
     void branch_root();
     void branch(int depth);
-    void goAhead(int depth);
+    void branchComplete(int depth);
+    void goAhead(int depth, bool complete = false);
   };
 }
 

@@ -185,6 +185,48 @@ namespace std // specialization of std::swap(..) for Rec2DData::Action class
   }
 }
 
+
+/**  Rec2DContainer  **/
+/**********************/
+template <typename T>
+int Rec2DContainer<T>::add(T t)
+{
+  typename std::set<T>::iterator it = _set.find(t);
+  if (it == _set.end()) {
+    _set.insert(t);
+    _vec.push_back(t);
+    return 1;
+  }
+  return 0;
+}
+
+template <typename T>
+int Rec2DContainer<T>::rmv(T t)
+{
+  typename std::set<T>::iterator it = _set.find(t);
+  if (it != _set.end()) {
+    _set.erase(it);
+    return 1;
+  }
+  return 0;
+}
+
+template <typename T>
+T Rec2DContainer<T>::getRandom()
+{
+  while (_set.size()) {
+    int index = rand() % _vec.size();
+    T t = _vec[index];
+    if (_set.find(t) == _set.end()) {
+      _vec[index] = _vec.back();
+      _vec.pop_back();
+    }
+    else return t;
+  }
+  _vec.clear();
+  return NULL;
+}
+
 /**  Recombine2D  **/
 /*******************/
 Recombine2D::Recombine2D(GFace *gf, bool col)
@@ -214,6 +256,8 @@ Recombine2D::Recombine2D(GFace *gf, bool col)
 
   Recombine2D::_cur = this;
   construct();
+
+  srand(time(NULL));
 }
 
 Recombine2D::~Recombine2D()
@@ -239,7 +283,11 @@ bool Recombine2D::construct()
   orientMeshGFace orienter;
   orienter(_gf);
   Rec2DVertex::initStaticTable();
+  Msg::Info("Before backgroundMesh");
+  Msg::Info(" ");
   backgroundMesh::set(_gf); // this doesn't work after call 'recombineWithBlossom()'
+  Msg::Info("After backgroundMesh");
+  Msg::Info(" ");
   _bgm = backgroundMesh::current();
   _data = new Rec2DData();
 
@@ -255,7 +303,16 @@ bool Recombine2D::construct()
   {
     std::list<GEdge*> listge = _gf->edges();
     std::list<GEdge*>::iterator itge = listge.begin();
+    int iii = 0;
     for (; itge != listge.end(); ++itge) {
+      Msg::Info("%d", ++iii);
+      *itge;
+      (*itge)->getBeginVertex();
+      (*itge)->getBeginVertex()->getMeshElement(0);
+      (*itge)->getBeginVertex()->getMeshElement(0)->getVertex(0);
+      mapCornerVert[(*itge)->getBeginVertex()->getMeshElement(0)->getVertex(0)];
+      mapCornerVert[(*itge)->getBeginVertex()->getMeshElement(0)->getVertex(0)]
+        ._gEdges;
       mapCornerVert[(*itge)->getBeginVertex()->getMeshElement(0)->getVertex(0)]
         ._gEdges.push_back(*itge);
       mapCornerVert[(*itge)->getEndVertex()->getMeshElement(0)->getVertex(0)]
@@ -383,7 +440,14 @@ bool Recombine2D::construct()
   Rec2DData::checkObsolete();
   _data->printState();
 
-  if (_recombineWithBlossom) recombineWithBlossom(_gf, .0, .16, elist, t2n);
+  Msg::Info("Before recombining with Blossom");
+  Msg::Info(" ");
+  
+  if (_recombineWithBlossom) {
+    _blossomTime = Cpu();
+    //recombineWithBlossom(_gf, .0, .16, elist, t2n);// no more in the code (see Amaury)
+    _blossomTime = Cpu()-_blossomTime;
+  }
   _gf->quadrangles.clear();
   //
   return true;
@@ -451,6 +515,62 @@ bool Recombine2D::recombineNewAlgo(int horiz, int code)
 
   double globtime = Cpu();
   Rec2DAlgo::execute();
+  _lastRunTime = Cpu() - globtime;
+
+  I(( "... done recombining, in %f seconds", _lastRunTime ));
+  return true;
+}
+
+bool Recombine2D::recombineSimpleAlgo(int horiz)
+{
+  if (!_iamCurrent()) {
+    Msg::Warning("[Recombine2D] If I can't construct myself, I can't recombine :)");
+    return false;
+  }
+  if (!Rec2DData::hasInstance()) {
+    Msg::Error("[Recombine2D] Data instance dosen't exist. Have you called construct() ?");
+    return false;
+  }
+
+  if (horiz < 0) {
+    if (!Rec2DAlgo::paramOKSimpleAlgo()) return false;
+  }
+  else {
+    if (!Rec2DAlgo::setParam(horiz, 0)) return false;
+  }
+
+  I(("Recombining... Simple, horizon = %d", horiz));
+
+  double globtime = Cpu();
+  Rec2DAlgo::execute();
+  _lastRunTime = Cpu() - globtime;
+
+  I(( "... done recombining, in %f seconds", _lastRunTime ));
+  return true;
+}
+
+bool Recombine2D::recombineComplete(int horiz)
+{
+  if (!_iamCurrent()) {
+    Msg::Warning("[Recombine2D] If I can't construct myself, I can't recombine :)");
+    return false;
+  }
+  if (!Rec2DData::hasInstance()) {
+    Msg::Error("[Recombine2D] Data instance dosen't exist. Have you called construct() ?");
+    return false;
+  }
+
+  if (horiz < 0) {
+    if (!Rec2DAlgo::paramOKSimpleAlgo()) return false;
+  }
+  else {
+    if (!Rec2DAlgo::setParam(horiz, 0)) return false;
+  }
+
+  I(("Recombining... Complete, horizon = %d", horiz));
+
+  double globtime = Cpu();
+  Rec2DAlgo::execute(true);
   _lastRunTime = Cpu() - globtime;
 
   I(( "... done recombining, in %f seconds", _lastRunTime ));
@@ -551,7 +671,7 @@ void Recombine2D::recombineSameAsHeuristic()
 {
   double globtime = Cpu();
   _noProblemIfObsolete = true;
-  recombineHeuristic(_gf, .0, 1.1, elist, t2n);
+  //recombineHeuristic(_gf, .0, 1.1, elist, t2n);// no more in the code (see Amaury)
   _lastRunTime = Cpu() - globtime;
   _data->_quad = _gf->quadrangles;
   drawStateOrigin();
@@ -866,7 +986,7 @@ end2 :
 void Recombine2D::compareWithBlossom()
 {
   Msg::Error("..............begin..............");
-  recombineWithBlossom(_gf, .0, 1.1, elist, t2n);
+  //recombineWithBlossom(_gf, .0, 1.1, elist, t2n);// no more in the code (see Amaury)
   _data->_quad = _gf->quadrangles;
   Recombine2D::drawStateOrigin();
   __wait(3);
@@ -970,7 +1090,7 @@ void Recombine2D::colorFromBlossom(const Rec2DElement *tri1,
   if (k < _cur->elist[0] && (_cur->elist[1+3*k+1] == i1 ||
                              _cur->elist[1+3*k+1] == i2   )) {
     unsigned int col = CTX::instance()->packColor(200, 120, 225, 255);
-    quad->getMElement()->setCol(col);
+    //quad->getMElement()->setCol(col);// no more in the code (see Amaury)
   }
 #endif
 }
@@ -990,7 +1110,7 @@ void Recombine2D::colorFromBlossom(const Rec2DElement *tri1,
   if (k < _cur->elist[0] &&
       (_cur->elist[1+3*k+1] == i1 || _cur->elist[1+3*k+1] == i2)) {
     unsigned int col = CTX::instance()->packColor(200, 120, 225, 255);
-    ((MElement*)quad)->setCol(col);
+    //((MElement*)quad)->setCol(col);// no more in the code (see Amaury)
   }
 }
 
@@ -1107,6 +1227,41 @@ double Rec2DData::getValVert(Rec2DQualCrit crit)
       Msg::Error("[Rec2DData:getValVert] Unknown quality criterion");
   }
   return -1.;
+}
+
+void Rec2DData::elementChgAction(Rec2DElement *re, int from, int to)
+{
+  if (from == to) return;
+
+  if (to < 0 || to > 3) Msg::Error("[Rec2DData::elementChgAction] Wrong argument");
+
+  switch (from) {
+  case 0: break;
+  case 1:
+    _cur->_el_1Actions.rmv(re);
+    break;
+  case 2:
+    _cur->_el_2Actions.rmv(re);
+    break;
+  case 3:
+    _cur->_el_3Actions.rmv(re);
+    break;
+  default:
+    Msg::Error("[Rec2DData::elementChgAction] Wrong argument");
+    return;
+  }
+
+  switch (to) {
+  case 1:
+    _cur->_el_1Actions.add(re);
+    break;
+  case 2:
+    _cur->_el_2Actions.add(re);
+    break;
+  case 3:
+    _cur->_el_3Actions.add(re);
+    break;
+  }
 }
 
 void Rec2DData::add(const Rec2DEdge *re)
@@ -1285,6 +1440,23 @@ void Rec2DData::checkObsolete()
 
   for (unsigned int i = 0; i < obsoletes.size(); ++i)
     delete obsoletes[i];
+}
+
+Rec2DElement* Rec2DData::getBestLessAction()
+{
+  Msg::Fatal("[Rec2DData::getBestAction] Need definition");
+  return NULL;
+}
+
+Rec2DElement* Rec2DData::getRandomLessAction()
+{
+  Rec2DElement *re;
+  re = _cur->_el_1Actions.getRandom();
+  if (re) return re;
+  re = _cur->_el_2Actions.getRandom();
+  if (re) return re;
+  re = _cur->_el_3Actions.getRandom();
+  return re;
 }
 
 void Rec2DData::addHasZeroAction(const Rec2DElement *rel)
@@ -2625,7 +2797,7 @@ void Rec2DTwoTri2Quad::apply(Rec2DDataChange *rdc,
   rdc->hide(_edges[4]);
   Rec2DElement *rel = new Rec2DElement((MQuadrangle*)NULL, (const Rec2DEdge**)_edges);
   rdc->append(rel);
-  rdc->add((int)_rt->total_gain); // _reward if blossom
+  //rdc->add((int)_rt->total_gain); // _reward if blossom// no more in the code (see Amaury)
   if (color) Recombine2D::colorFromBlossom(_triangles[0], _triangles[1], rel);
   static int a = 0;
   if (++a == 1) Msg::Warning("FIXME reward is int for blossom");
@@ -2883,8 +3055,8 @@ void Rec2DTwoTri2Quad::color(int a, int b, int c) const
 {
 #ifdef REC2D_DRAW
   unsigned int col = CTX::instance()->packColor(a, b, c, 255);
-  _triangles[0]->getMElement()->setCol(col);
-  _triangles[1]->getMElement()->setCol(col);
+  //_triangles[0]->getMElement()->setCol(col);// no more in the code (see Amaury)
+  //_triangles[1]->getMElement()->setCol(col);// no more in the code (see Amaury)
 #endif
 }
 
@@ -2910,7 +3082,8 @@ void Rec2DTwoTri2Quad::getIncompatible(std::vector<Rec2DAction*> &vect)
 void Rec2DTwoTri2Quad::_computeGlobQual()
 {
   if (Recombine2D::blossomQual()) {
-    _globQualIfExecuted = Rec2DData::getGlobalQuality() + (int)_rt->total_gain;
+    _globQualIfExecuted = -99;
+    //_globQualIfExecuted = Rec2DData::getGlobalQuality() + (int)_rt->total_gain;// no more in the code (see Amaury)
     return;
   }
   if (Recombine2D::verticesQual()) {
@@ -2952,7 +3125,8 @@ void Rec2DTwoTri2Quad::_computeReward()
 
   switch (crit) {
     case BlossomQuality :
-      _reward = (int)_rt->total_gain;
+      _reward = -99;
+      //_reward = (int)_rt->total_gain;// no more in the code (see Amaury)
       return;
 
     case VertQuality :
@@ -4042,7 +4216,7 @@ bool Rec2DVertex::setBoundaryParity(int p0, int p1)
     }
   }
   if (num != 2)
-    Msg::Error("[Rec2DVertex] What's happening ? Am I on boundary or not ? TELL ME !");
+    Msg::Error("[Rec2DVertex] What's happening ? Am I on boundary or not ? TELL ME ! (%d)", num);
   if (nextRV)
     return nextRV->_recursiveBoundParity(this, p1, p0); // alternate parity
   Msg::Error("[Rec2DVertex] Have I really to say that I didn't find neighbouring vertex ?");
@@ -4632,10 +4806,16 @@ void Rec2DElement::add(const Rec2DAction *ra)
       case 0 :
         Rec2DData::addHasOneAction(this, (Rec2DAction*)ra);
         Rec2DData::rmvHasZeroAction(this);
+        Rec2DData::elementChgAction(this, 0, 1);
         break;
       case 1 :
         Rec2DData::rmvHasOneAction(this, _actions[0]);
-      default :;
+        Rec2DData::elementChgAction(this, 1, 2);
+        break;
+      case 2 :
+        break;
+      default :
+        Msg::Error("Should not have more than 3 actions");
     }
   }
   _actions.push_back((Rec2DAction*)ra);
@@ -4651,9 +4831,14 @@ void Rec2DElement::rmv(const Rec2DAction *ra)
           case 1 :
             Rec2DData::rmvHasOneAction(this, (Rec2DAction*)ra);
             Rec2DData::addHasZeroAction(this);
+            Rec2DData::elementChgAction(this, 1, 0);
             break;
           case 2 :
             Rec2DData::addHasOneAction(this, _actions[i == 0 ? 1 : 0]);
+            Rec2DData::elementChgAction(this, 2, 1);
+            break;
+          case 3 :
+            Rec2DData::elementChgAction(this, 3, 2);
           default :;
         }
       }
@@ -5017,7 +5202,7 @@ MQuadrangle* Rec2DElement::_createQuad() const
 /**  Rec2DAlgo  **/
 /*****************/
 namespace Rec2DAlgo {
-void execute()
+void execute(bool complete)
 {
   using namespace data;
 
@@ -5034,7 +5219,7 @@ void execute()
   __draw(.0);
 #endif
 
-  while (func::lookAhead()) {
+  while (func::lookAhead(complete)) {
     func::chooseBestSequence();
 
 #ifdef DRAW_WHEN_SELECTED
@@ -5081,6 +5266,21 @@ bool paramOK()
   return ans;
 }
 
+bool paramOKSimpleAlgo()
+{
+  using namespace data;
+  bool ans = true;
+  if (root_std_srch != 0) {
+    Msg::Error("Wrong root std search: %d (not 0)", root_std_srch);
+    ans = false;
+  }
+  if (plus_std_srch != 0) {
+    Msg::Error("Wrong plus std search: %d (not 0)", plus_std_srch);
+    ans = false;
+  }
+  return ans;
+}
+
 bool setParam(int horiz, int code)
 {
   using namespace data;
@@ -5103,7 +5303,7 @@ bool setParam(int horiz, int code)
   plus_std_srch =  (code_tree>>3) % 7;
   try_clique = code_tree>>3 > 6;
 
-  return paramOK();
+  return (root_std_srch == 0 && plus_std_srch == 0) || paramOK();
 }
 
 void getParam(int &horiz, int &code)
@@ -5167,9 +5367,9 @@ namespace data {
 namespace func {
   using namespace data;
 
-  bool lookAhead()
+  bool lookAhead(bool complete)
   {
-    current->goAhead(0);
+    current->goAhead(0, complete);
     return current->numChildren();
   }
 
@@ -5236,16 +5436,15 @@ namespace func {
   void searchForRootStd(std::vector<Rec2DElement*> &triangles)
   {
     switch (root_std_srch) {
+    case 0: // Simple algo
+      searchForLessAction(triangles);
+      return;
     case 1:
-    {
       searchForAll(triangles, root_take_best);
       return;
-    }
     case 2:
-    {
       searchForQAll(triangles, root_take_best);
       return;
-    }
     case 3:
       searchForQFirst(triangles);
       return;
@@ -5260,6 +5459,9 @@ namespace func {
   void searchForPlusStd(std::vector<Rec2DElement*> &triangles, int depth)
   {
     switch (plus_std_srch) {
+    case 0: // Simple algo
+      searchForTreeLessAction(triangles);
+      return;
     case 1:
     {
       searchForAll(triangles, plus_take_best);
@@ -5288,6 +5490,38 @@ namespace func {
     default:
       Msg::Error("Wrong plus standard search");
     }
+  }
+
+  void searchForLessAction(std::vector<Rec2DElement*> &triangles)
+  {
+    Rec2DElement *re;
+    re = Rec2DData::getRandomLessAction();
+    if (re) triangles.push_back(re);
+  }
+
+  void searchForTreeLessAction(std::vector<Rec2DElement*> &triangles)
+  {
+    searchForTAll(triangles);
+    if (triangles.empty()) return;
+
+    int minAction = 3;
+    std::vector<Rec2DElement*> candidates;
+    for (unsigned int i = 0; i < triangles.size(); ++i) {
+      if (triangles[i]->getNumActions() < minAction) {
+        minAction = triangles[i]->getNumActions();
+        candidates.clear();
+        candidates.push_back(triangles[i]);
+      }
+      else if (triangles[i]->getNumActions() == minAction) {
+        candidates.push_back(triangles[i]);
+      }
+    }
+    if (minAction < 1) {
+      Msg::Fatal("[searchForTreeLessAction] min action is %d", minAction);
+    }
+
+    triangles.clear();
+    triangles.push_back(candidates[rand() % candidates.size()]);
   }
 
   void searchForAll(std::vector<Rec2DElement*> &triangles, bool takeBest)
@@ -5579,7 +5813,7 @@ namespace func {
         aOK = true;
         other = b;
       }
-      if (set[i]->first == b) {
+      else if (set[i]->first == b) {
         bOK = true;
         other = a;
       }
@@ -5748,14 +5982,15 @@ void Node::updateNActions(Node *node)
   }
 }
 
-void Node::goAhead(int depth)
+void Node::goAhead(int depth, bool complete)
 {
   if (depth > data::horizon - 1 || depth < 0) {
     Msg::Fatal("the fuck..");
   }
 
   if (depth == 0) {
-    branch_root();
+    if (complete) branchComplete(depth);
+    else branch_root();
     return;
   }
 
@@ -5768,7 +6003,8 @@ void Node::goAhead(int depth)
   }
 
   // 2) branch on children
-  branch(depth);
+  if (complete) branchComplete(depth);
+  else branch(depth);
 
   // 3) revert changes
   if (!Rec2DData::revertDataChange(_dataChange))
@@ -5800,6 +6036,7 @@ void Node::branch_root()
           delete _children[i]; //is it sufficient ?
         _children.clear();
       }
+      break;
 
     case 1:
       if (root_one_srch) searchForOne(candidateTriangle, root_take_best);
@@ -5811,7 +6048,6 @@ void Node::branch_root()
 
     case 3:
       searchForAll(candidateTriangle, root_take_best);
-
       break;
 
     case 4:
@@ -5835,7 +6071,7 @@ void Node::branch_root()
 
   // 2b) Find maximum clique if asked
   if (try_clique) {
-    int num = actions.size();
+    unsigned int num = actions.size();
     findMaximalClique(actions);
     static int more = 0, same = 0;
     if (actions.size() > num) ++more;
@@ -5902,6 +6138,7 @@ void Node::branch(int depth)
           delete _children[i]; //is it sufficient ?
         _children.clear();
       }
+      break;
 
     case 1:
       if (plus_one_srch) searchForOne(candidateTriangle, plus_take_best);
@@ -5937,7 +6174,7 @@ void Node::branch(int depth)
 
   // 2b) Find maximum clique if asked
   if (try_clique) {
-    int num = actions.size();
+    unsigned int num = actions.size();
     findMaximalClique(actions);
     static int more = 0, same = 0;
     if (actions.size() > num) ++more;
@@ -5973,6 +6210,34 @@ void Node::branch(int depth)
       Msg::Info(oss.str().c_str(), _children[i], _children[i]->getReward(), _children[i]->getQual());
     }
   }*/
+
+  if (sequence.back() != this) Msg::Fatal("Aaargh 3");
+  sequence.pop_back();
+}
+
+void Node::branchComplete(int depth)
+{
+  if (depth > data::horizon || depth < 0) {
+    Msg::Fatal("the fuck !");
+  }
+  using namespace data;
+  using namespace func;
+  sequence.push_back(this);
+
+  for (unsigned int i = 0; i < _children.size(); ++i)
+    delete _children[i]; //is it sufficient ?
+  _children.clear();
+
+  // Branch on all actions
+  for (int i = 0; i < Rec2DData::getNumAction(); ++i)
+    _children.push_back(new Node(Rec2DData::getAction(i)));
+
+  if (depth + 1 < horizon &&
+      (depth > 0 || (depth == 0 && _children.size() > 1))) {
+    for (unsigned int i = 0; i < _children.size(); ++i) {
+      _children[i]->goAhead(depth + 1, true);
+    }
+  }
 
   if (sequence.back() != this) Msg::Fatal("Aaargh 3");
   sequence.pop_back();
