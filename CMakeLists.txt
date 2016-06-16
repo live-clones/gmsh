@@ -48,6 +48,7 @@ opt(COMPRESSED_IO "Enable compressed (gzip) input/output using zlib" OFF)
 opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT})
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
 opt(FOURIER_MODEL "Enable Fourier geometrical models (experimental)" OFF)
+opt(GETDP "Enable GetDP solver (as a directly linked library)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GMP "Enable GMP for Kbipack (advanced)" ON)
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
@@ -1067,6 +1068,16 @@ if(HAVE_SOLVER)
       endif(PETSC_LIBS AND PETSC_INC)
     endif(PETSC_VARIABLES)
   endif(ENABLE_PETSC)
+
+  if(ENABLE_GETDP)
+    find_library(GETDP_LIB GetDP)
+    find_path(GETDP_INC "GetDP.h" PATH_SUFFIXES getdp)
+    if(GETDP_LIB AND GETDP_INC)
+      set_config_option(HAVE_GETDP "GetDP")
+      list(APPEND EXTERNAL_LIBRARIES ${GETDP_LIB})
+      list(APPEND EXTERNAL_INCLUDES ${GETDP_INC})
+    endif(GETDP_LIB AND GETDP_INC)
+  endif(ENABLE_GETDP)
 endif(HAVE_SOLVER)
 
 if(ENABLE_OCC)
@@ -1538,6 +1549,13 @@ elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS
     "/STACK:16777216 /SAFESEH:NO")
 endif(WIN32 AND NOT MSVC OR CYGWIN)
+
+# code signing
+if(APPLE AND PACKAGER STREQUAL "geuzaine")
+  set(CODESIGN codesign --force --verify --verbose --sign
+      "Developer ID Application: Christophe Geuzaine")
+  # add_custom_command(TARGET gmsh POST_BUILD COMMAND ${CODESIGN} gmsh)
+endif(APPLE AND PACKAGER STREQUAL "geuzaine")
 
 # parser target
 find_program(BISON bison)
