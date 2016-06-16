@@ -30,6 +30,8 @@ IntPt GQQ4[4] = {
   { {xq4[3],yq4[3],0},pq4[3] },
 };
 
+// WARNING: It seems that there is a problem with the values with 7 integration points ! Geuzaine (16/06/2016)
+
 const double pq7[7] = {1.142857142857,0.595238095238,0.595238095238,
                        0.416666666666,0.416666666666,0.416666666666,0.416666666666};
 const double xq7[7] = {0.0,-0.683130051064,0.683130051064,0.890654421782,
