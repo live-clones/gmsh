@@ -75,7 +75,8 @@ class MPyramid : public MElement {
     return MEdge(_v[edges_pyramid(num, 0)], _v[edges_pyramid(num, 1)]);
   }
   virtual int getNumEdgesRep(bool curved){ return 8; }
-  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
+                          SVector3 *n)
   {
     static const int f[8] = {0, 1, 1, 2, 0, 3, 2, 3};
     MEdge e(getEdge(num));
@@ -97,7 +98,8 @@ class MPyramid : public MElement {
       return MFace(_v[0], _v[3], _v[2], _v[1]);
   }
   virtual int getNumFacesRep(bool curved){ return 6; }
-  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
+                          SVector3 *n)
   {
     static const int f[6][3] = {
       {0, 1, 4},
@@ -230,7 +232,6 @@ class MPyramidN : public MPyramid {
     for (unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
     getFunctionSpace(order);
   }
-
   MPyramidN(const std::vector<MVertex*> &v, char order, int num=0, int part=0)
     : MPyramid(v[0], v[1], v[2], v[3], v[4], num, part), _order(order)
   {
@@ -238,13 +239,14 @@ class MPyramidN : public MPyramid {
     for (unsigned int i = 0; i < _vs.size(); i++) _vs[i]->setPolynomialOrder(_order);
     getFunctionSpace(order);
   }
-
   ~MPyramidN();
-
   virtual int getPolynomialOrder() const { return _order; }
   virtual int getNumVertices() const { return 5 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
-  virtual const MVertex *getVertex(int num) const{ return num < 5 ? _v[num] : _vs[num - 5]; }
+  virtual const MVertex *getVertex(int num) const
+  {
+    return num < 5 ? _v[num] : _vs[num - 5];
+  }
   virtual int getNumEdgeVertices() const { return 8 * (_order - 1); }
   virtual int getNumFaceVertices() const
   {
@@ -319,20 +321,22 @@ class MPyramidN : public MPyramid {
   }
   virtual void reverse()
   {
-/*    MVertex *tmp;
+    /*
+    MVertex *tmp;
     tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
     std::vector<MVertex*> inv(_vs.size());
     std::vector<int> reverseIndices = _getReverseIndices(_order);
     for (unsigned int i = 0; i< _vs.size(); i++)
       inv[i] = _vs[reverseIndices[i + 4] - 4];
-    _vs = inv;*/
-
+    _vs = inv;
+    */
     Msg::Error("Reverse not implemented yet for MPyramidN");
-
   }
-  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
+                          SVector3 *n);
   virtual int getNumEdgesRep(bool curved);
-  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
+                          SVector3 *n);
   virtual int getNumFacesRep(bool curved);
   virtual void getNode(int num, double &u, double &v, double &w) const
   {

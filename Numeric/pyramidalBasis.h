@@ -7,11 +7,8 @@
 #define PYRAMIDALBASIS_H
 
 #include "fullMatrix.h"
-
 #include "nodalBasis.h"
 #include "BergotBasis.h"
-
-
 
 class pyramidalBasis: public nodalBasis
 {
@@ -21,7 +18,7 @@ class pyramidalBasis: public nodalBasis
   fullMatrix<double> bergotCoefficients;
 
  public:
-  
+
   fullMatrix<double> coefficients;
   fullMatrix<double> monomials;
 
@@ -36,7 +33,5 @@ class pyramidalBasis: public nodalBasis
 
   virtual int getNumShapeFunctions() const;
 };
-
-
 
 #endif

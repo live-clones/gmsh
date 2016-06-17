@@ -37,13 +37,16 @@ MPyramidN::~MPyramidN() {}
 
 int MPyramidN::getNumEdgesRep(bool curved)
 {
-  return curved ? 8 * CTX::instance()->mesh.numSubEdges : 8;
+  // FIXME: remove !getIsAssimilatedSerendipity() when serendip are implemented
+  return (curved && !getIsAssimilatedSerendipity()) ?
+    8 * CTX::instance()->mesh.numSubEdges : 8;
 }
 
 void MPyramidN::getEdgeRep(bool curved, int num,
                            double *x, double *y, double *z, SVector3 *n)
 {
-  if (curved) {
+  // FIXME: remove !getIsAssimilatedSerendipity() when serendip are implemented
+  if (curved && !getIsAssimilatedSerendipity()) {
     int numSubEdges = CTX::instance()->mesh.numSubEdges;
     static double pp[5][3] = {{-1,-1,0},{1,-1,0},{1,1,0},{-1,1,0},{0,0,1}};
     static int ed [8][2] = {{0,1},{0,3},{0,4},{1,2},{1,4},{2,3},{2,4},{3,4}};
@@ -79,7 +82,9 @@ void MPyramidN::getEdgeRep(bool curved, int num,
 
 int MPyramidN::getNumFacesRep(bool curved)
 {
-  return curved ? 6 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) : 6;
+  // FIXME: remove !getIsAssimilatedSerendipity() when serendip are implemented
+  return (curved && !getIsAssimilatedSerendipity()) ?
+    6 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) : 6;
 }
 
 static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *z,
@@ -321,6 +326,8 @@ static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *
 void MPyramidN::getFaceRep(bool curved, int num,
                            double *x, double *y, double *z, SVector3 *n)
 {
-  if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+  // FIXME: remove !getIsAssimilatedSerendipity() when serendip are implemented
+  if (curved && !getIsAssimilatedSerendipity())
+    _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MPyramid::getFaceRep(false, num, x, y, z, n);
 }
