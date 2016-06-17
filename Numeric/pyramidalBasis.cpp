@@ -8,10 +8,10 @@
 #include "pyramidalBasis.h"
 #include "pointsGenerators.h"
 
-pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
+pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag), bergot(0)
 {
   if (serendip) {
-    Msg::Error("Serendipity Pyramid not implemented");
+    Msg::Warning("Serendipity pyramid not implemented yet");
     return;
   }
 
@@ -56,21 +56,16 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag)
   delete[] fval;
 }
 
-
-
 pyramidalBasis::~pyramidalBasis()
 {
-  delete bergot;
+  if(bergot) delete bergot;
 }
-
-
 
 int pyramidalBasis::getNumShapeFunctions() const { return points.size1(); }
 
-
-
 void pyramidalBasis::f(double u, double v, double w, double *val) const
 {
+  if(!bergot) return;
 
   const int N = bergot->size();
 
@@ -83,13 +78,11 @@ void pyramidalBasis::f(double u, double v, double w, double *val) const
   }
 
   delete[] fval;
-
 }
-
-
 
 void pyramidalBasis::f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const
 {
+  if(!bergot) return;
 
   const int N = bergot->size(), NPts = coord.size1();
 
@@ -105,13 +98,11 @@ void pyramidalBasis::f(const fullMatrix<double> &coord, fullMatrix<double> &sf) 
   }
 
   delete[] fval;
-
 }
-
-
 
 void pyramidalBasis::df(double u, double v, double w, double grads[][3]) const
 {
+  if(!bergot) return;
 
   const int N = bergot->size();
 
@@ -128,13 +119,11 @@ void pyramidalBasis::df(double u, double v, double w, double grads[][3]) const
   }
 
   delete[] dfval;
-
 }
-
-
 
 void pyramidalBasis::df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const
 {
+  if(!bergot) return;
 
   const int N = bergot->size(), NPts = coord.size1();
 
@@ -151,5 +140,4 @@ void pyramidalBasis::df(const fullMatrix<double> &coord, fullMatrix<double> &dfm
   }
 
   delete[] dfv;
-
 }

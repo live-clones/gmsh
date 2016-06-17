@@ -166,7 +166,7 @@ static void addSmoothNormals(GEntity *e, std::vector<T*> &elements)
   for(unsigned int i = 0; i < elements.size(); i++){
     MElement *ele = elements[i];
     const bool curved = (ele->getPolynomialOrder() > 1) &&
-                        (ele->maxDistToStraight() > curvedRepTol*ele->getInnerRadius());
+      (ele->maxDistToStraight() > curvedRepTol*ele->getInnerRadius());
     SPoint3 pc(0., 0., 0.);
     if(CTX::instance()->mesh.explode != 1.) pc = ele->barycenter();
     for(int j = 0; j < ele->getNumFacesRep(curved); j++){
@@ -198,7 +198,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T*> &elements,
     unsigned int col[4] = {c, c, c, c};
 
     const bool curved = (ele->getPolynomialOrder() > 1) &&
-                        (ele->maxDistToStraight() > curvedRepTol*ele->getInnerRadius());
+      (ele->maxDistToStraight() > curvedRepTol*ele->getInnerRadius());
 
     SPoint3 pc(0., 0., 0.);
     if(CTX::instance()->mesh.explode != 1.) pc = ele->barycenter();
@@ -355,7 +355,8 @@ class initMeshGRegion {
       for(unsigned int i = 0; i < r->polyhedra.size(); i++)
         numLP += 2 * r->polyhedra[i]->getNumEdges();
       num += (12 * r->tetrahedra.size() + 24 * r->hexahedra.size() +
-              18 * r->prisms.size() + 16 * r->pyramids.size() + 10 * r->trihedra.size() + numLP) / 4;
+              18 * r->prisms.size() + 16 * r->pyramids.size() +
+              10 * r->trihedra.size() + numLP) / 4;
       num = _estimateIfClipped(num);
       if(CTX::instance()->mesh.explode != 1.) num *= 4;
       if(_curved) num *= 2;
@@ -370,7 +371,8 @@ class initMeshGRegion {
       for(unsigned int i = 0; i < r->polyhedra.size(); i++)
         numFP += r->polyhedra[i]->getNumFaces();
       num += (4 * r->tetrahedra.size() + 12 * r->hexahedra.size() +
-              8 * r->prisms.size() + 6 * r->pyramids.size() + 4 * r->trihedra.size() + numFP) / 2;
+              8 * r->prisms.size() + 6 * r->pyramids.size() +
+              4 * r->trihedra.size() + numFP) / 2;
       num = _estimateIfClipped(num);
       if(CTX::instance()->mesh.explode != 1.) num *= 2;
       if(_curved) num *= 4;
