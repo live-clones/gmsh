@@ -2358,13 +2358,13 @@ bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d, std::map<MVertex*
     SVector3 vec1 = SVector3(b->x()-a->x(),b->y()-a->y(),b->z()-a->z()).unit();
     SVector3 vec2 = SVector3(c->x()-a->x(),c->y()-a->y(),c->z()-a->z()).unit();
     SVector3 vec3 = SVector3(d->x()-a->x(),d->y()-a->y(),d->z()-a->z()).unit();
-    
+
     SVector3 crossVec1Vec2 = crossprod(vec1, vec2);
     double angle = fabs(acos(dot(crossVec1Vec2, vec3))*180/M_PI);
     double maxAngle = 15;
     if (fabs(angle-90) > maxAngle) valid=false;
   }
-  
+
   return valid;
 
 
@@ -2375,14 +2375,14 @@ bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d, std::map<MVertex*
 bool PostOp::valid(MPyramid *pyr){
   MVertex *V[4] = {pyr->getVertex(0), pyr->getVertex(1), pyr->getVertex(2), pyr->getVertex(3)};
   MVertex *apex = pyr->getVertex(4);
-  
+
   if (apex->onWhat()->dim() < 3){
     for (int iP=0; iP<4; iP++) { //loop on pairs of triangles
       int nbBndNodes = 0;
       if (V[(0+iP)%4]->onWhat()->dim() < 3) nbBndNodes++;
       if (V[(1+iP)%4]->onWhat()->dim() < 3) nbBndNodes++;
       if (V[(2+iP)%4]->onWhat()->dim() < 3) nbBndNodes++;
-      if (nbBndNodes == 3){          
+      if (nbBndNodes == 3){
         SVector3 vec1 = SVector3(V[(0+iP)%4]->x()-apex->x(),V[(0+iP)%4]->y()-apex->y(),V[(0+iP)%4]->z()-apex->z()).unit();
         SVector3 vec2 = SVector3(V[(1+iP)%4]->x()-apex->x(),V[(1+iP)%4]->y()-apex->y(),V[(1+iP)%4]->z()-apex->z()).unit();
         SVector3 vec3 = SVector3(V[(2+iP)%4]->x()-apex->x(),V[(2+iP)%4]->y()-apex->y(),V[(2+iP)%4]->z()-apex->z()).unit();
@@ -2421,7 +2421,7 @@ bool PostOp::valid(MPyramid *pyr){
 //          else
 //            nbTagOccurences[idFace]++;
 //          maxOccurences = std::max(nbTagOccurences[idFace], maxOccurences);
-//        } 
+//        }
 //      }
 //    }
 //    if (maxOccurences == 3) return false;
@@ -2438,7 +2438,7 @@ bool PostOp::valid(MPyramid *pyr){
 //      SVector3 vec1 = SVector3(b->x()-a->x(),b->y()-a->y(),b->z()-a->z()).unit();
 //      SVector3 vec2 = SVector3(c->x()-a->x(),c->y()-a->y(),c->z()-a->z()).unit();
 //      SVector3 vec3 = SVector3(d->x()-a->x(),d->y()-a->y(),d->z()-a->z()).unit();
-//      
+//
 //      SVector3 crossVec1Vec2 = crossprod(vec1, vec2);
 //      double angle = fabs(acos(dot(crossVec1Vec2, vec3))*180/M_PI);
 //      double maxAngle = 15;
@@ -5047,7 +5047,7 @@ void PostOp::executeNew(GRegion* gr)
       std::set<MElement*>::iterator it = potential.begin();
       while (it != potential.end()) {
         if (tetrahedra.find(*it) == tetrahedra.end())
-          it = potential.erase(it);
+          potential.erase(it++);
         else
           ++it;
       }
@@ -5143,7 +5143,7 @@ void PostOp::writeMSH(const char *filename, std::vector<MElement*> &elements)
   fprintf(f, "$EndMeshFormat\n");
 
   fprintf(f, "$Nodes\n");
-  fprintf(f, "%d\n", vertices.size());
+  fprintf(f, "%d\n", (int)vertices.size());
   std::set<MVertex*>::iterator it;
   int n = 0;
   for (it = vertices.begin(); it != vertices.end(); ++it) {
@@ -5153,7 +5153,7 @@ void PostOp::writeMSH(const char *filename, std::vector<MElement*> &elements)
   fprintf(f, "$EndNodes\n");
 
   fprintf(f, "$Elements\n");
-  fprintf(f, "%d\n", elements.size());
+  fprintf(f, "%d\n", (int)elements.size());
   for (int i = 0; i < elements.size(); ++i) {
     fprintf(f, "%d %d 0", elements[i]->getNum(), elements[i]->getTypeForMSH());
     for (int k = 0; k < elements[i]->getNumVertices(); ++k)
@@ -5278,28 +5278,28 @@ void PostOp::execute(GRegion* gr,int level, int conformity){
     build_vertex_to_pyramids(gr);
     pyramids2(gr);
     rearrange(gr);
-  }    
-  
+  }
+
   if (conformity == 3 || conformity == 4){
     init_markings_hex(gr);
     build_vertex_to_tetrahedra(gr);
     build_vertex_to_pyramids(gr);
     split_hexahedra(gr);
     rearrange(gr);
-  
+
     init_markings_pri(gr);
     build_vertex_to_tetrahedra(gr);
     build_vertex_to_pyramids(gr);
     split_prisms(gr);
     rearrange(gr);
-    
+
     init_markings_pyr(gr);
     build_vertex_to_tetrahedra(gr);
     build_vertex_to_pyramids(gr);
     split_pyramids(gr);
     rearrange(gr);
   }
-  
+
   if (conformity >= 1){
     init_markings(gr);
     build_vertex_to_tetrahedra(gr);
@@ -5388,7 +5388,7 @@ void PostOp::split_hexahedra(GRegion* gr){
     MVertex *f = element->getVertex(5);
     MVertex *g = element->getVertex(6);
     MVertex *h = element->getVertex(7);
-    
+
     bool conform=true;
     conform &= (nonConformDiag(b,a,d,c,gr) == 0);
     if (conform) conform &= (nonConformDiag(e,f,g,h,gr) == 0);
@@ -5402,7 +5402,7 @@ void PostOp::split_hexahedra(GRegion* gr){
       double z = (a->z()+b->z()+c->z()+d->z()+e->z()+f->z()+g->z()+h->z())/8.0;
       MVertex *mid = new MVertex(x,y,z,gr);
       gr->addMeshVertex(mid);
-      
+
       MPyramid *temp = new MPyramid(a,b,c,d,mid);
       gr->addPyramid(temp);
       temp = new MPyramid(h,g,f,e,mid);
@@ -5464,7 +5464,7 @@ void PostOp::split_prisms(GRegion* gr){
     pyramids1(a,b,e,d,gr);
     pyramids1(b,c,f,e,gr);
 
-    
+
     bool conform=true;
     conform &= (nonConformDiag(a,d,f,c,gr) == 0);
     if (conform) conform &= (nonConformDiag(a,b,e,d,gr) == 0);
@@ -5475,7 +5475,7 @@ void PostOp::split_prisms(GRegion* gr){
       double z = (a->z()+b->z()+c->z()+d->z()+e->z()+f->z())/6.0;
       MVertex *mid = new MVertex(x,y,z,gr);
       gr->addMeshVertex(mid);
-      
+
       MPyramid *temp = new MPyramid(c,f,d,a,mid);
       gr->addPyramid(temp);
       temp = new MPyramid(d,e,b,a,mid);
@@ -5532,7 +5532,7 @@ void PostOp::split_pyramids(GRegion* gr){
     MVertex *c = element->getVertex(2);
     MVertex *d = element->getVertex(3);
     MVertex *apex = element->getVertex(4);
-    
+
     int nDiag = nonConformDiag(a,b,c,d,gr);
     if (nDiag == 1){
       MTetrahedron *temp = new MTetrahedron(c,b,a,apex);
@@ -5813,7 +5813,7 @@ void PostOp::pyramids2(GRegion* gr, bool allowNonConforming){
 
   for(i=0;i<hexahedra.size();i++){
     element = hexahedra[i];
-  
+
     a = element->getVertex(0);
     b = element->getVertex(1);
     c = element->getVertex(2);
@@ -5919,7 +5919,7 @@ void PostOp::pyramids1(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
   }
 
   if(bin.size()==2){ //2 tetrahedra on face
-    it = bin.begin(); 
+    it = bin.begin();
     it1 = markings.find(*it); //1st tetrahedra
     it++;
     it2 = markings.find(*it); //2nd tetrahedra
@@ -5964,7 +5964,7 @@ void PostOp::trihedra(GRegion* gr){
 
   for(i=0;i<hexahedra.size();i++){
     element = hexahedra[i];
-  
+
     a = element->getVertex(0);
     b = element->getVertex(1);
     c = element->getVertex(2);
@@ -6026,7 +6026,7 @@ void PostOp::trihedra(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr){
 
 void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, bool allowNonConforming){
 
-  
+
   bool flag;
   double x,y,z;
   MVertex* mid;
@@ -6173,41 +6173,41 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, 
 
       mid = new MVertex(x,y,z,gr);
       gr->addMeshVertex(mid);
-      
+
       temp2 = new MPyramid(a,b,c,d,mid);
-      
+
       gr->addPyramid(temp2);
       markings.insert(std::pair<MElement*,bool>(temp2,false));
       build_vertex_to_pyramids(temp2);
       //      printf("Creating pyramid with vertices %i %i %i %i %i\n", a->getNum(), b->getNum(), c->getNum(), d->getNum(), mid->getNum());
-      
-      
+
+
       for(it=tetrahedra.begin();it!=tetrahedra.end();it++){
 
         MVertex *Nout = findInTriFace(diagA,diagB,nDiagA,nDiagB,*it);
-        MVertex *Nin = other(*it,diagA,diagB,Nout);        
+        MVertex *Nin = other(*it,diagA,diagB,Nout);
         //        N1 = other(*it,diagA,diagB);
 
-                    
+
         if(Nout!=0 && Nin!=0){
           Ns.insert(N1);
           Ns.insert(N2);
 
-          
+
           temp = new MTetrahedron(mid,diagB,Nin,Nout);
           gr->addTetrahedron(temp);
           markings.insert(std::pair<MElement*,bool>(temp,false));
           build_vertex_to_tetrahedra(temp);
           movables.push_back(temp);
           //          printf("Creating tet with vertices %i %i %i %i\n", N1->getNum(), N2->getNum(), diagA->getNum(), mid->getNum());
-          
+
           temp = new MTetrahedron(diagA,mid,Nin,Nout);
           gr->addTetrahedron(temp);
           markings.insert(std::pair<MElement*,bool>(temp,false));
           build_vertex_to_tetrahedra(temp);
           movables.push_back(temp);
           //          printf("Creating tet with vertices %i %i %i %i\n", N1->getNum(), N2->getNum(), diagB->getNum(), mid->getNum());
-          
+
           it2 = markings.find(*it);
           it2->second = 1;
           erase_vertex_to_tetrahedra(*it);
@@ -6215,9 +6215,9 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, 
           Msg::Fatal("Wrong tetrahedron");
         }
       }
-      
+
       for(it=pyramids.begin();it!=pyramids.end();it++){
-        v1 = (*it)->getVertex(0); 
+        v1 = (*it)->getVertex(0);
         v2 = (*it)->getVertex(1);
         v3 = (*it)->getVertex(2);
         v4 = (*it)->getVertex(3);
@@ -6264,8 +6264,8 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, 
           build_vertex_to_tetrahedra(temp);
           movables.push_back(temp);
         }
-        
-      
+
+
 //        if(v1!=diagA && v1!=diagB){
 //          Ns.insert(v1);
 //        }
@@ -6281,12 +6281,12 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, 
 //        if(v5!=diagA && v5!=diagB){
 //          Ns.insert(v5);
 //        }
-//      
+//
 //        temp2 = new MPyramid(v1,v2,v3,v4,mid);
 //        gr->addPyramid(temp2);
 //        markings.insert(std::pair<MElement*,bool>(temp2,false));
 //        build_vertex_to_pyramids(temp2);
-//      
+//
 //        if(different(v1,v2,diagA,diagB)){
 //          temp = new MTetrahedron(v1,v2,mid,v5);
 //          gr->addTetrahedron(temp);
@@ -6294,7 +6294,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, 
 //          build_vertex_to_tetrahedra(temp);
 //          movables.push_back(temp);
 //        }
-//      
+//
 //        if(different(v2,v3,diagA,diagB)){
 //          temp = new MTetrahedron(v2,v3,mid,v5);
 //          gr->addTetrahedron(temp);
@@ -6302,7 +6302,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, 
 //          build_vertex_to_tetrahedra(temp);
 //          movables.push_back(temp);
 //        }
-//      
+//
 //        if(different(v3,v4,diagA,diagB)){
 //          temp = new MTetrahedron(v3,v4,mid,v5);
 //          gr->addTetrahedron(temp);
@@ -6310,7 +6310,7 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, 
 //          build_vertex_to_tetrahedra(temp);
 //          movables.push_back(temp);
 //        }
-//      
+//
 //        if(different(v4,v1,diagA,diagB)){
 //          temp = new MTetrahedron(v4,v1,mid,v5);
 //          gr->addTetrahedron(temp);
@@ -6318,12 +6318,12 @@ void PostOp::pyramids2(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr, 
 //          build_vertex_to_tetrahedra(temp);
 //          movables.push_back(temp);
 //        }
-      
+
         it2 = markings.find(*it);
         it2->second = 1;
         erase_vertex_to_pyramids(*it);
       }
-      
+
       //  mean(Ns,mid,movables);
     }
   }
@@ -6861,7 +6861,7 @@ void PostOp::find_tetrahedra(MVertex* v1,MVertex* v2,MVertex* v3,std::set<MEleme
   if(it1!=vertex_to_tetrahedra.end() && it2!=vertex_to_tetrahedra.end()  && it3!=vertex_to_tetrahedra.end()){
     intersection(it1->second,it2->second,buf);
     intersection(buf,it3->second,final);
-    
+
   }
 }
 
@@ -6893,7 +6893,7 @@ void PostOp::find_pyramids_from_tri(MVertex* v1,MVertex* v2,MVertex* v3,std::set
               equal(v2,v3,(*it)->getVertex(1),(*it)->getVertex(2)) ||
               equal(v2,v3,(*it)->getVertex(2),(*it)->getVertex(3)) ||
               equal(v2,v3,(*it)->getVertex(3),(*it)->getVertex(0)));
-    }      
+    }
     if (v2 == (*it)->getVertex(4)){
       flag = (equal(v1,v3,(*it)->getVertex(0),(*it)->getVertex(1)) ||
               equal(v1,v3,(*it)->getVertex(1),(*it)->getVertex(2)) ||
@@ -9039,4 +9039,3 @@ bool Recombinator_Graph::is_blossom_pair(PETriangle *t1, PETriangle *t2)
   }
   return false;
 }
-
