@@ -201,6 +201,7 @@ public:
 class Facet{
 private:
   MVertex *a,*b,*c;
+  int num[3];
   unsigned long long hash;
 public:
   Facet();
@@ -622,6 +623,7 @@ private:
   std::map<MElement*,bool> markings;
   std::map<MVertex*,std::set<MElement*> > vertex_to_tetrahedra;
   std::map<MVertex*,std::set<MElement*> > vertex_to_pyramids;
+  std::map<MVertex*,std::set<MElement*> > vertex_to_hexPrism;
   std::multiset<Tuple> tuples;
   std::set<MElement*> triangles;
 
@@ -633,6 +635,7 @@ public:
   //level - 0: hex, 1: hex+prisms, 2: hex+prism+pyramids
   //conformity - 0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexPrismSplit+trihedra, 4:hexPrismSplit+trihedra
   void execute(GRegion*,int level, int conformity);
+  void executeNew(GRegion*);
 
   inline int get_nb_hexahedra()const{return nbr8;};
   inline double get_vol_hexahedra()const{return vol8;};
@@ -693,6 +696,16 @@ public:
   void build_vertex_to_pyramids(GRegion*);
   void build_vertex_to_pyramids(MElement*);
   void erase_vertex_to_pyramids(MElement*);
+
+  void build_vertex_to_hexPrism(GRegion*);
+  void build_vertex_to_hexPrism(MElement*);
+  void erase_vertex_to_hexPrism(MElement*);
+
+  void removeElseAdd(std::set<Facet>&, MVertex*, MVertex*, MVertex*);
+  void writeMSH(const char *filename, std::vector<MElement*>&);
+  MFace find_quadFace(MVertex*, MVertex*, MVertex*);
+  MVertex* otherVertexQuadFace(MFace&, MVertex*, MVertex*, MVertex*);
+  void matchQuadFace(MFace&, MVertex*, MVertex*, MVertex*);
 };
 
 #endif

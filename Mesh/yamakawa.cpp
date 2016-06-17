@@ -23,6 +23,7 @@
 #include "MPrism.h"
 #include "MTetrahedron.h"
 #include "MHexahedron.h"
+#include "GmshDefines.h"
 
 #include "CondNumBasis.h"
 #include "qualityMeasuresJacobian.h"
@@ -1120,7 +1121,12 @@ bool Facet::same_vertices(Facet facet){
 }
 
 void Facet::compute_hash(){
-  hash = a->getNum() + b->getNum() + c->getNum();
+//  hash = a->getNum() + b->getNum() + c->getNum();
+  num[0] = a->getNum();
+  num[1] = b->getNum();
+  num[2] = c->getNum();
+  std::sort(num, num+3);
+  hash = num[2] + 1e4*num[1] + 1e8*num[0];
 }
 
 unsigned long long Facet::get_hash() const{
@@ -4999,6 +5005,258 @@ void PostOp::execute(int level, int conformity){
     }
 }
 
+void PostOp::executeNew(GRegion* gr)
+{
+  printf("..............PYRAMIDS NEW................\n");
+  build_vertex_to_tetrahedra(gr);
+  build_vertex_to_hexPrism(gr);
+
+  std::set<MElement*> tetrahedra;
+  tetrahedra.insert(&(gr->tetrahedra[0]), &(gr->tetrahedra[0])+gr->tetrahedra.size());
+
+  std::set<Facet> boundaryTriangles;
+  std::set<Facet> pendingTriangles;
+  std::vector<MElement*> mesh;
+
+  int n = 0;
+
+  while (tetrahedra.size()) {
+    MElement *t = *tetrahedra.begin();
+
+    MVertex *a = t->getVertex(0);
+    MVertex *b = t->getVertex(1);
+    MVertex *c = t->getVertex(2);
+    MVertex *d = t->getVertex(3);
+
+    boundaryTriangles.clear();
+    pendingTriangles.clear();
+    pendingTriangles.insert(Facet(a, b, c));
+    pendingTriangles.insert(Facet(a, c, d));
+    pendingTriangles.insert(Facet(a, d, b));
+    pendingTriangles.insert(Facet(b, d, c));
+
+    mesh.clear();
+    tetrahedra.erase(t);
+
+    while (pendingTriangles.size()) {
+      Facet f = *pendingTriangles.begin();
+
+      std::set<MElement*> potential;
+      find_tetrahedra(f.get_a(), f.get_b(), f.get_c(), potential);
+
+      std::set<MElement*>::iterator it = potential.begin();
+      while (it != potential.end()) {
+        if (tetrahedra.find(*it) == tetrahedra.end())
+          it = potential.erase(it);
+        else
+          ++it;
+      }
+
+      if (potential.size() > 1) {
+        Msg::Error("I didn't expect that. Aaaah, don't know what I should do");
+      }
+      else if (potential.size() == 1) {
+        MElement *t = *potential.begin();
+
+        MVertex *a = t->getVertex(0);
+        MVertex *b = t->getVertex(1);
+        MVertex *c = t->getVertex(2);
+        MVertex *d = t->getVertex(3);
+
+        removeElseAdd(pendingTriangles, a, b, c);
+        removeElseAdd(pendingTriangles, a, c, d);
+        removeElseAdd(pendingTriangles, a, d, b);
+        removeElseAdd(pendingTriangles, b, d, c);
+
+        tetrahedra.erase(t);
+      }
+      else {
+        boundaryTriangles.insert(f);
+        pendingTriangles.erase(f);
+        mesh.push_back(new MTriangle(f.get_a(), f.get_b(), f.get_c()));
+      }
+    }
+
+    std::ostringstream oss;
+    oss << "boundary-" << ++n << ".msh";
+    writeMSH(oss.str().c_str(), mesh);
+
+    //////////////////////////
+    mesh.clear();
+    pendingTriangles = boundaryTriangles;
+
+    while (pendingTriangles.size()) {
+      Facet f = *pendingTriangles.begin();
+      MFace quad = find_quadFace(f.get_a(), f.get_b(), f.get_c());
+      if (!quad.getNumVertices()) {
+        mesh.push_back(new MTriangle(f.get_a(), f.get_b(), f.get_c()));
+        pendingTriangles.erase(f);
+      }
+      else {
+        //TODO erase other pending triangle
+        mesh.push_back(new MQuadrangle(quad.getVertex(0),
+                                       quad.getVertex(1),
+                                       quad.getVertex(2),
+                                       quad.getVertex(3) ));
+        Facet f = Facet(quad.getVertex(0), quad.getVertex(1), quad.getVertex(2));
+        pendingTriangles.erase(f);
+        f = Facet(quad.getVertex(1), quad.getVertex(2), quad.getVertex(3));
+        pendingTriangles.erase(f);
+        f = Facet(quad.getVertex(2), quad.getVertex(3), quad.getVertex(0));
+        pendingTriangles.erase(f);
+        f = Facet(quad.getVertex(3), quad.getVertex(0), quad.getVertex(1));
+        pendingTriangles.erase(f);
+      }
+    }
+
+    std::ostringstream oss2;
+    oss2<< "boundaryQ-" << n << ".msh";
+    writeMSH(oss2.str().c_str(), mesh);
+
+    // make pyramids
+  }
+}
+
+void PostOp::removeElseAdd(std::set<Facet> &set, MVertex *a, MVertex *b, MVertex *c)
+{
+  Facet f = Facet(a, b, c);
+  if (set.find(f) != set.end()) {
+    set.erase(f);
+  }
+  else {
+    set.insert(f);
+  }
+}
+
+void PostOp::writeMSH(const char *filename, std::vector<MElement*> &elements)
+{
+  std::set<MVertex*> vertices;
+  for (unsigned i = 0; i < elements.size(); ++i) {
+    for (int k = 0; k < elements[i]->getNumVertices(); ++k)
+      vertices.insert(elements[i]->getVertex(k));
+  }
+
+  FILE *f = fopen(filename, "w");
+
+  fprintf(f, "$MeshFormat\n");
+  fprintf(f, "2.2 0 8\n");
+  fprintf(f, "$EndMeshFormat\n");
+
+  fprintf(f, "$Nodes\n");
+  fprintf(f, "%d\n", vertices.size());
+  std::set<MVertex*>::iterator it;
+  int n = 0;
+  for (it = vertices.begin(); it != vertices.end(); ++it) {
+    fprintf(f, "%d %22.15E %22.15E %22.15E\n", ++n, (*it)->x(), (*it)->y(), (*it)->z());
+    (*it)->setIndex(n);
+  }
+  fprintf(f, "$EndNodes\n");
+
+  fprintf(f, "$Elements\n");
+  fprintf(f, "%d\n", elements.size());
+  for (int i = 0; i < elements.size(); ++i) {
+    fprintf(f, "%d %d 0", elements[i]->getNum(), elements[i]->getTypeForMSH());
+    for (int k = 0; k < elements[i]->getNumVertices(); ++k)
+      fprintf(f, " %d", elements[i]->getVertex(k)->getIndex());
+    fprintf(f, "\n");
+  }
+  fprintf(f, "$EndElements\n");
+
+  fclose(f);
+}
+
+MFace PostOp::find_quadFace(MVertex* v1,MVertex* v2,MVertex* v3)
+{
+  std::map<MVertex*,std::set<MElement*> >::iterator it1;
+  std::map<MVertex*,std::set<MElement*> >::iterator it2;
+  std::map<MVertex*,std::set<MElement*> >::iterator it3;
+
+  it1 = vertex_to_hexPrism.find(v1);
+  it2 = vertex_to_hexPrism.find(v2);
+  it3 = vertex_to_hexPrism.find(v3);
+
+  std::set<MElement*> buf, final;
+
+  if(it1!=vertex_to_tetrahedra.end() && it2!=vertex_to_tetrahedra.end()  && it3!=vertex_to_tetrahedra.end()){
+    intersection(it1->second,it2->second,buf);
+    intersection(buf,it3->second,final);
+  }
+
+  if (final.size() > 1) Msg::Error("This shouldn't happen ...");
+
+  std::set<MElement*>::iterator it;
+  for (it = final.begin(); it != final.end(); ++it) {
+    MElement *el = *it;
+    if (el->getType() == TYPE_PRI) {
+      for (int i = 2; i < 5; ++i) {
+        MFace f = el->getFace(i);
+        matchQuadFace(f, v1, v2, v3);
+        if (f.getNumVertices()) {
+          return f;
+        }
+      }
+    }
+    else if (el->getType() == TYPE_HEX) {
+      for (int i = 0; i < 6; ++i) {
+        MFace f = el->getFace(i);
+        matchQuadFace(f, v1, v2, v3);
+        if (f.getNumVertices()) {
+          return f;
+        }
+      }
+    }
+  }
+  return MFace();
+}
+
+MVertex* PostOp::otherVertexQuadFace(MFace &f, MVertex* v1,MVertex* v2,MVertex* v3)
+{
+  int n = 0;
+  MVertex *v;
+  for (int i = 0; i < 4; ++i) {
+    if (f.getVertex(i) != v1 &&
+        f.getVertex(i) != v2 &&
+        f.getVertex(i) != v3) {
+      ++n;
+      v = f.getVertex(i);
+    }
+  }
+  if (n == 1) return v;
+  return NULL;
+}
+
+void PostOp::matchQuadFace(MFace &f, MVertex* v1,MVertex* v2,MVertex* v3)
+{
+  MVertex* vertices[3] = {v1, v2, v3};
+  int n = 0, ind = -1;
+  MVertex *v;
+  for (int i = 0; i < 4; ++i) {
+    if (f.getVertex(i) != v1 &&
+        f.getVertex(i) != v2 &&
+        f.getVertex(i) != v3) {
+      ++n;
+      v = f.getVertex(i);
+      ind = i;
+    }
+  }
+  if (n != 1) {
+    f = MFace();
+    return;
+  }
+
+  for (int i = 0; i < 3; ++i) {
+    if (f.getVertex(ind+1%4) == vertices[i]) {
+      if (f.getVertex(ind+2%4) == vertices[i+1%3]) {
+        return;
+      }
+      else {
+        f = MFace(f.getVertex(3), f.getVertex(2), f.getVertex(1), f.getVertex(0));
+      }
+    }
+  }
+}
+
+
 void PostOp::execute(GRegion* gr,int level, int conformity){
   printf("................PYRAMIDS................\n");
   estimate1 = 0;
@@ -6857,6 +7115,56 @@ void PostOp::erase_vertex_to_pyramids(MElement* element){
   }
 }
 
+
+void PostOp::build_vertex_to_hexPrism(GRegion* gr){
+  unsigned int i;
+  MElement* element;
+
+  vertex_to_hexPrism.clear();
+
+  for(i=0;i<gr->getNumMeshElements();i++){
+    element = gr->getMeshElement(i);
+    if(six(element) || eight(element)){
+      build_vertex_to_hexPrism(element);
+    }
+  }
+}
+
+void PostOp::build_vertex_to_hexPrism(MElement* element){
+  int i;
+  MVertex* vertex;
+  std::set<MElement*> bin;
+  std::map<MVertex*,std::set<MElement*> >::iterator it;
+
+  for(i=0;i<element->getNumVertices();i++){
+    vertex = element->getVertex(i);
+
+    it = vertex_to_hexPrism.find(vertex);
+    if(it!=vertex_to_hexPrism.end()){
+      it->second.insert(element);
+    }
+    else{
+      bin.clear();
+      bin.insert(element);
+      vertex_to_hexPrism.insert(std::pair<MVertex*,std::set<MElement*> >(vertex,bin));
+    }
+  }
+}
+
+void PostOp::erase_vertex_to_hexPrism(MElement* element){
+  int i;
+  MVertex* vertex;
+  std::map<MVertex*,std::set<MElement*> >::iterator it;
+
+  for(i=0;i<element->getNumVertices();i++){
+    vertex = element->getVertex(i);
+
+    it = vertex_to_hexPrism.find(vertex);
+    if(it!=vertex_to_hexPrism.end()){
+      it->second.erase(element);
+    }
+  }
+}
 
 void Recombinator_Graph::pattern1(GRegion* gr){
   int size_init = hex_to_tet.size();
