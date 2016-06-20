@@ -2017,7 +2017,8 @@ void GModel::alignPeriodicBoundaries()
         MVertex* tgtVtcs[2];
         for (int iVtx=0;iVtx<2;iVtx++) {
           MVertex* tgtVtx = tgtLine->getVertex(iVtx);
-          std::map<MVertex*,MVertex*>& v2v = tgtVtx->onWhat()->correspondingVertices;
+          // std::map<MVertex*,MVertex*>& v2v = tgtVtx->onWhat()->correspondingVertices;
+          std::map<MVertex*,MVertex*>& v2v = tgt->correspondingVertices;
           std::map<MVertex*,MVertex*>::iterator srcIter = v2v.find(tgtVtx);
           if (srcIter == v2v.end()) {
             Msg::Error("Cannot find periodic counterpart of vertex %d"
@@ -2089,8 +2090,13 @@ void GModel::alignPeriodicBoundaries()
         for (int iVtx=0;iVtx<nbVtcs;iVtx++) {
           MVertex* vtx = tgtElmt->getVertex(iVtx);
           GEntity* ge = vtx->onWhat();
-          if (ge->meshMaster() == ge) throw;
-          std::map<MVertex*,MVertex*>& v2v = ge->correspondingVertices;
+          if (ge->meshMaster() == ge) {
+            std::cout << "Point classified on " << ge->dim() << " " << ge->tag() << std::endl;
+            throw;
+          }
+          // std::map<MVertex*,MVertex*>& v2v = ge->correspondingVertices;
+          std::map<MVertex*,MVertex*>& v2v = tgt->correspondingVertices;
+          
           std::map<MVertex*,MVertex*>::iterator vIter = v2v.find(vtx);
           if (vIter==v2v.end()) {
             Msg::Error("Could not find copy of %d in %d",

@@ -276,7 +276,10 @@ static void copyMesh(GFace *source, GFace *target)
                      target->tag(),source->tag(),gvt->tag());
     }
 
-    vs2vt[gvs->mesh_vertices[0]] = gvt->mesh_vertices[0];
+    MVertex* vs = gvs->mesh_vertices[0];
+    MVertex* vt = gvt->mesh_vertices[0];
+    vs2vt[vs] = vt;
+    target->correspondingVertices[vt] = vs;
   }
 
   // add corresponding edge nodes assuming edges were correctly meshed already
@@ -319,7 +322,10 @@ static void copyMesh(GFace *source, GFace *target)
     int is = orientation == 1 ? 0 : get->mesh_vertices.size()-1;
 
     for (unsigned it=0;it<get->mesh_vertices.size();it++,is+=orientation) {
-      vs2vt[ges->mesh_vertices[is]] = get->mesh_vertices[it];
+      MVertex* vs = ges->mesh_vertices[is];
+      MVertex* vt = get->mesh_vertices[it];
+      vs2vt[vs] = vt; 
+      target->correspondingVertices[vt] = vs;
     }
   }
 

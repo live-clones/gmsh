@@ -314,6 +314,17 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
   Range<double> to_u_bounds = to->parBounds(0);
   double to_u_min = to_u_bounds.low();
 
+  // include begin and end point to avoid conflicts when realigning
+  
+  MVertex* vt0 = to->getBeginVertex()->mesh_vertices[0];
+  MVertex* vt1 = to->getEndVertex()->mesh_vertices[0];
+  
+  MVertex* vs0 = from->getBeginVertex()->mesh_vertices[0];
+  MVertex* vs1 = from->getEndVertex()->mesh_vertices[0];
+  
+  to->correspondingVertices[vt0] = direction > 0 ? vs0 : vs1;
+  to->correspondingVertices[vt1] = direction > 0 ? vs1 : vs0;
+  
   for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
     MVertex *v = from->mesh_vertices[index];
