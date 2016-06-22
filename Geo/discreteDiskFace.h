@@ -48,6 +48,8 @@ class triangulation {
  public:
 
   // attributes
+  double area;
+  bool seamPoint;
   std::vector<MElement*> tri;// triangles
   std::set<MVertex*> vert;// nodes
   // edge to 1 or 2 triangle(s), their num into the vector of MElement*
@@ -59,7 +61,14 @@ class triangulation {
 
   std::list<GEdge*> my_GEdges;
 
-  //methods
+  //---- methods
+
+  double aspectRatio()
+  { 
+    double L = bord.rbegin()->first;
+    return L*L / (area*M_PI);
+  }
+
   int genus()
   {
     return ( ed2tri.size() - vert.size() - tri.size() + 2 - bord.size() )/2;
@@ -69,11 +78,16 @@ class triangulation {
   {
     for(unsigned int i = 0; i < tri.size(); ++i){
       MElement* t = tri[i];
+      SPoint3 P[3];
       for(int j = 0; j < t->getNumVertices()  ; j++){
 	MVertex* tv = t->getVertex(j);
+	if(j<3)
+	  P[j].setPosition(tv->x(),tv->y(),tv->z());
 	std::set<MVertex*>::iterator it = vert.find(tv);
 	if (it == vert.end()) vert.insert (tv);
       }
+      SVector3 N(crossprod(P[1]-P[0],P[2]-P[0]));
+      area += N.norm();
     }
   }
 
@@ -114,13 +128,16 @@ class triangulation {
       vecver.erase(vecver.begin());
 
       std::map<MVertex*,std::vector<MVertex*> >::iterator im = firstNode2Edge.find(first);
-      if (im != firstNode2Edge.end())
-        Msg::Error("Incorrect topology in discreteDiskFace %d", gf->tag());
+      if (im != firstNode2Edge.end()){
+        Msg::Info("Supposed seam point for discreteFace %d", gf->tag());
+	seamPoint = true;
+	break;
+      }
       firstNode2Edge[first] = vecver;
       firstNode2Edge[first].push_back(last);
     }
 
-    while (!firstNode2Edge.empty()) {
+    while (!firstNode2Edge.empty()&&!seamPoint) {
       std::vector<MVertex*> loop;
       double length = 0.;
 
@@ -148,6 +165,8 @@ class triangulation {
 
   void assign()
   {
+    area = 0.;
+    seamPoint = false;
     assignVert();
     assignEd2tri();
     assignBord();
@@ -194,11 +213,14 @@ class discreteDiskFace : public GFace {
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
 				const SVector3 &p, const double &d,
 				double uv[2]) const;
+
+  
+  std::vector<MElement*> discrete_triangles;
  protected:
-  // a copy of the mesh that should not be destroyed
+  // a copy of the mesh that should not be destroyed  
   triangulation* initialTriangulation;
   triangulation* geoTriangulation;// parametrized triangulation
-  std::vector<MElement*> discrete_triangles;
+  
   std::vector<MVertex*> discrete_vertices;
 
   int _order;

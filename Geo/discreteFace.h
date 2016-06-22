@@ -36,6 +36,8 @@ class discreteFace : public GFace {
   void splitDiscreteEdge(GEdge*,GVertex*,discreteEdge*[2]);
   void updateTopology(std::vector<triangulation*>&);
   void split(triangulation*,std::vector<triangulation*>&,int);
+  void fillHoles(triangulation*);
+  void addTriangle(triangulation*,MTriangle*);
   GPoint point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;
   SVector3 normal(const SPoint2 &param) const;
@@ -53,6 +55,8 @@ class discreteFace : public GFace {
   void createGeometry();
   void gatherMeshes();
   virtual void mesh (bool verbose);
+  void printAtlasMesh(std::vector<MElement*>, int);
+  void printAtlasMesh(discreteDiskFace*, int);
   std::vector<discreteDiskFace*> _atlas;
   std::vector<GFace*> _CAD;
 };

@@ -220,16 +220,12 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
   _order = p;
   _N = (p+1)*(p+2)/2;
   discrete_triangles.resize(mesh.size());
-
   std::map<MVertex*,MVertex*> v2v;// mesh vertex |-> face vertex
   std::map<MEdge,MVertex*,Less_Edge> ed2nodes; // edge to interior node(s)
   for (unsigned int i=0;i<mesh.size();i++){ // triangle by triangle
-
     std::vector<MVertex*> vs; // MTriangle vertices
     for (unsigned int j=0; j<3; j++){ // loop over vertices AND edges of the current triangle
-
       MVertex *v = mesh[i]->getVertex(j);// firstly, edge vertices
-      
       if (v->onWhat()->dim() == 2) {
 	std::map<MVertex*,MVertex*> :: iterator it = v2v.find(v);
 	if (it == v2v.end()){
@@ -255,8 +251,7 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
 	}
 	else vs.push_back(v);
       }
-      else vs.push_back(v);
-      
+      else vs.push_back(v);          
     }
     if (_order == 2) {// then, interior nodes :-)
       for (unsigned int ie=0; ie<3; ie++){ // firstly, edge interior nodes :-)
@@ -269,25 +264,20 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
 	  discrete_vertices.push_back(mv);
 	  ed2nodes[me]=mv;
 	}
-	else{
-	  vs.push_back(it->second);
-	}
+	else vs.push_back(it->second);	
       }
     }// end order == 2
     if (_order==1)
       discrete_triangles[i] = new MTriangle (vs);
     else if (_order==2)
       discrete_triangles[i] = new MTriangle6 (vs);
+        
   }// end loop over triangles
-  
   geoTriangulation = new triangulation(discrete_triangles,gf);
-  
   allNodes = geoTriangulation->vert;
   _totLength = geoTriangulation->bord.rbegin()->first;
   _U0 = geoTriangulation->bord.rbegin()->second;
-
   orderVertices(_totLength, _U0, _coords);
-
   parametrize(false);
   buildOct(CAD);
   
@@ -295,12 +285,12 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
     Msg::Info("discreteDiskFace:: parametrization is not one-to-one; fixing "
               "the discrete system.");
     parametrize(true);
-    buildOct(CAD);
-    if(!checkOrientationUV()) Msg::Fatal("discreteDiskFace:: failing to fix the discrete system");
+    buildOct(CAD);    
   }
   
-  putOnView(true,true);
+  putOnView(true,false);
   printParamMesh();
+  if(!checkOrientationUV()) Msg::Fatal("discreteDiskFace:: failing to fix the discrete system");
 }
 /*end BUILDER*/
 
@@ -364,11 +354,11 @@ bool discreteDiskFace::parametrize(bool one2one) const
     if(i%_order==0){
       myAssemblerU.fixVertex(v, 0, 1,cos(theta));
       myAssemblerV.fixVertex(v, 0, 1,sin(theta));
-      }
+    }
     else{//#TEST
       myAssemblerU.fixVertex(v, 0, 1,1./_order*((_order-(i%_order))*cos(2*M_PI*_coords[i-(i%_order)])+(i%_order)*cos(2*M_PI*_coords[i+(_order-(i%_order))])));
       myAssemblerV.fixVertex(v, 0, 1,1./_order*((_order-(i%_order))*sin(2*M_PI*_coords[i-(i%_order)])+(i%_order)*sin(2*M_PI*_coords[i+(_order-(i%_order))])));
-      }
+    }
   }
 
   for(size_t i = 0; i < discrete_triangles.size(); ++i){
@@ -413,7 +403,6 @@ bool discreteDiskFace::parametrize(bool one2one) const
   lsys_u->systemSolve();
   lsys_v->systemSolve();
   Msg::Debug("Systems solved");
-
   for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     double value_U, value_V;
@@ -443,10 +432,7 @@ void discreteDiskFace::getTriangleUV(const double u,const double v,
 				     double &_xi, double &_eta)const{
   double uv[3] = {u,v,0.};
   *mt = (discreteDiskFaceTriangle*) Octree_Search(uv,oct);
-  if (!(*mt)){ 
-    //Msg::Error("discreteDiskFace::getTriangleUV(), the octree does not have a triangle containing (u;v)=(%f;%f)",u,v);
-    return;
-  }
+  if (!(*mt)) return;
 
   double Xi[2];
   double U[2] = {u,v};
@@ -478,6 +464,7 @@ bool discreteDiskFace::checkOrientationUV()
       p3[0] = ct->p[2].x(); p3[1] = ct->p[2].y();
       current = robustPredicates::orient2d(p1, p2, p3);
       if(initial*current < 0.) {
+	Msg::Error("Triangle UV %d has not the correct orientation",i+1);
 	return false;
 	break;
       }
@@ -787,27 +774,6 @@ void discreteDiskFace::putOnView(bool Xu, bool Ux)
       fclose(UVz);
     }
   }
-  /*
-    #ifdef HAVE_POST
-    std::map<int, std::vector<double> > u;
-    std::map<int, std::vector<double> > v;
-    for(std::set<MVertex*>::iterator iv = allNodes.begin(); iv!=allNodes.end(); ++iv){
-    MVertex *p = *iv;
-    u[p->getNum()].push_back(coordinates[p].x());
-    v[p->getNum()].push_back(coordinates[p].y());
-    }
-    PView* view_u = new PView("u", "NodeData", GModel::current(), u);
-    PView* view_v = new PView("v", "NodeData", GModel::current(), v);
-    view_u->setChanged(true);
-    view_v->setChanged(true);
-    view_u->write("param_u.msh", 5);
-    view_v->write("param_v.msh", 5);
-    delete view_u;
-    delete view_v;
-    #else
-    Msg::Error("discreteDiskFace: cannot export without post module")
-    #endif
-  */
 }
 
 // useful for mesh generators

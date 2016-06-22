@@ -20,6 +20,8 @@ extern "C" {
 }
 #endif
 
+int cp=0;
+
 discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 {
   Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
@@ -110,9 +112,9 @@ void discreteFace::secondDer(const SPoint2 &param,
 void discreteFace::createGeometry()
 {
   checkAndFixOrientation();
-
   int order = 1;
   int nPart = 2;
+  double eta = .125;
 
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
 
@@ -124,13 +126,8 @@ void discreteFace::createGeometry()
   std::vector<MElement*> tem(triangles.begin(),triangles.end());
 
   triangulation* init = new triangulation(tem,this);
-
   toSplit.push(init);
-  //int mygen, compteur=1;//#debug
-  //Msg::Info("First Genus Value:");
-  //mygen=1; //#debug
-  //if(mygen!=0){// #debug
-  if((toSplit.top())->genus()!=0){
+  if((toSplit.top())->genus()!=0 || (toSplit.top())->aspectRatio() < eta || (toSplit.top())->seamPoint){
 
     while( !toSplit.empty()){
       std::vector<triangulation*> part;
@@ -138,19 +135,15 @@ void discreteFace::createGeometry()
       toSplit.pop();
 
       split(tosplit,part,nPart);
-      delete tosplit; // #mark
+      delete tosplit;
 
       for(unsigned int i=0; i<part.size(); i++){
-	//Msg::Info("Partition %d Genus:",compteur);//#debug
-	//std::cin>>mygen;//#debug
-	//if (mygen!=0)//#debug
-	if(part[i]->genus()!=0)
+	if(part[i]->genus()!=0 || part[i]->aspectRatio() < eta || part[i]->seamPoint)
 	  toSplit.push(part[i]);
 	else{
 	  toParam.push_back(part[i]);
 	  part[i]->idNum=id++;
 	}
-	//compteur++; //#debug
       }// end for i
     }// !.empty()
   }// end if it is not disk-like
@@ -158,12 +151,11 @@ void discreteFace::createGeometry()
     toParam.push_back(toSplit.top());
     toSplit.top()->idNum=id++;
   }
-
-    updateTopology(toParam);
-
+  updateTopology(toParam);
   for(unsigned int i=0; i<toParam.size(); i++){
+    fillHoles(toParam[i]);
     std::vector<MElement*> mytri = toParam[i]->tri;
-    discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));
+    discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));    
     df->replaceEdges(toParam[i]->my_GEdges);
     _atlas.push_back(df);
   }
@@ -181,7 +173,7 @@ void discreteFace::gatherMeshes()
     for (unsigned int j=0;j<_atlas[i]->triangles.size(); j++){
       MTriangle *t = _atlas[i]->triangles[j];
       SPoint2 p0,p1,p2;
-      reparamMeshVertexOnFace(t->getVertex(0),_atlas[i], p0);
+      reparamMeshVertexOnFace(t->getVertex(0),_atlas[i], p0);      
       reparamMeshVertexOnFace(t->getVertex(1),_atlas[i], p1);
       reparamMeshVertexOnFace(t->getVertex(2),_atlas[i], p2);
       SPoint2 pc = (p0+p1+p2)*(1./3.0);
@@ -189,8 +181,7 @@ void discreteFace::gatherMeshes()
       double xi, eta;
       _atlas[i]->getTriangleUV(pc.x(),pc.y(), &mt, xi,eta);
       if (mt && mt->gf)mt->gf->triangles.push_back(t);
-      else Msg::Warning ("FILE %s LINE %d Triangle has no classification",__FILE__,__LINE__);
-
+      else Msg::Warning ("FILE %s LINE %d Triangle from atlas part %u has no classification for (u;v)=(%f;%f)",__FILE__,__LINE__,i+1,pc.x(),pc.y());
 
 
     }
@@ -218,12 +209,94 @@ void discreteFace::mesh(bool verbose)
 {
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER) && defined(HAVE_MESH)
   if (!CTX::instance()->meshDiscrete) return;
-  for (unsigned int i=0;i<_atlas.size();i++)
+  for (unsigned int i=0;i<_atlas.size();i++){
+    Msg::Info("Discrete Face %d is going to be meshed",i);
+    printAtlasMesh(_atlas[i]->discrete_triangles,i);
     _atlas[i]->mesh(verbose);
-
+    //printAtlasMesh(_atlas[i],i);
+  }
+  
   gatherMeshes();
   meshStatistics.status = GFace::DONE;
 #endif
+}
+
+void discreteFace::printAtlasMesh(std::vector<MElement*> elm, int I)
+{
+
+  std::map<MVertex*,int> mv2int;
+  char buffer[16];
+  sprintf(buffer,"atlas_mesh%d.msh",I);
+  FILE* pmesh = Fopen(buffer,"w");
+
+  std::set<MVertex*> meshvertices;
+  
+  for(unsigned int i=0; i<elm.size(); ++i){
+    MElement* tri = elm[i];
+    for(unsigned int j=0; j<3; j++)
+      if (meshvertices.find(tri->getVertex(j))==meshvertices.end()) meshvertices.insert(tri->getVertex(j));
+  }
+
+  fprintf(pmesh,"$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n%u\n",(unsigned int)meshvertices.size());
+  int count = 1;
+  for(std::set<MVertex*>::iterator it = meshvertices.begin(); it!=meshvertices.end(); ++it){
+    fprintf(pmesh,"%d %f %f %f\n",count,(*it)->x(),(*it)->y(),(*it)->z());
+    mv2int[*it] = count;
+    count++;
+  }
+  fprintf(pmesh,"$EndNodes\n$Elements\n%u\n",elm.size());
+  for(unsigned int i=0; i<elm.size(); i++){
+    MElement* tri = elm[i];
+    fprintf(pmesh,"%d 2 2 0 0",i+1);
+    for(int j=0; j<3; j++){
+      MVertex* mv = tri->getVertex(j);
+      fprintf(pmesh," %d",mv2int[mv]);
+    }
+    fprintf(pmesh,"\n");
+  }
+  fprintf(pmesh,"$EndElements\n");
+  fclose(pmesh);
+
+}
+
+
+
+void discreteFace::printAtlasMesh(discreteDiskFace* ddf, int I)
+{
+
+  std::map<MVertex*,int> mv2int;
+  char buffer[16];
+  sprintf(buffer,"atlas_mesh%d.msh",I);
+  FILE* pmesh = Fopen(buffer,"w");
+
+  std::set<MVertex*> meshvertices;
+  
+  for(unsigned int i=0; i<ddf->triangles.size(); ++i){
+    MTriangle* tri = ddf->triangles[i];
+    for(unsigned int j=0; j<3; j++)
+      if (meshvertices.find(tri->getVertex(j))==meshvertices.end()) meshvertices.insert(tri->getVertex(j));
+  }
+
+  fprintf(pmesh,"$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n%u\n",(unsigned int)meshvertices.size());
+  int count = 1;
+  for(std::set<MVertex*>::iterator it = meshvertices.begin(); it!=meshvertices.end(); ++it){
+    fprintf(pmesh,"%d %f %f %f\n",count,(*it)->x(),(*it)->y(),(*it)->z());
+    mv2int[*it] = count;
+    count++;
+  }
+  fprintf(pmesh,"$EndNodes\n$Elements\n%u\n",ddf->triangles.size());
+  for(unsigned int i=0; i<ddf->triangles.size(); i++){
+    MTriangle* tri = ddf->triangles[i];
+    fprintf(pmesh,"%d 2 2 0 0",i+1);
+    for(int j=0; j<3; j++){
+      MVertex* mv = tri->getVertex(j);
+      fprintf(pmesh," %d",mv2int[mv]);
+    }
+    fprintf(pmesh,"\n");
+  }
+  fprintf(pmesh,"$EndElements\n");
+  fclose(pmesh);
+
 }
 
 
@@ -296,7 +369,7 @@ void discreteFace::checkAndFixOrientation(){
 	    if (!(current->getVertex(k!=2 ?k+1 : 0 ) == neigs[i]->getVertex(j!=0 ? j-1 : 2) ||
 		  current->getVertex(k!=0 ?k-1 : 2 ) == neigs[i]->getVertex(j!=2 ? j+1 : 0))){
 	      neigs[i]->reverse();
-	      Msg::Info("discreteFace: triangle %d has been reoriented.",neigs[i]->getNum());
+	      //Msg::Info("discreteFace: triangle %d has been reoriented.",neigs[i]->getNum());
 	    }
 	    break;
 	  }
@@ -323,7 +396,7 @@ void discreteFace::setupDiscreteEdge(discreteEdge*de,std::vector<MLine*>mlines,s
     de->mesh_vertices.push_back(mlines[i]->getVertex(0));
     if(trash) trash->insert(mlines[i]->getVertex(0));
   }
-  de->createGeometry();
+  de->createGeometry();  
 }
 
 
@@ -380,7 +453,10 @@ void discreteFace::splitDiscreteEdge ( GEdge *de , GVertex *gv, discreteEdge* ne
 void discreteFace::split(triangulation* trian,std::vector<triangulation*> &partition,int nPartitions)
 {
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN) && defined(HAVE_METIS)
-
+  /*
+  if(trian->aspectRatio() < 4.)
+    printf("it is splitted because of aspect ratio");
+  */
   int nVertex = trian->tri.size(); // number of elements
   int nEdge = trian->ed2tri.size() - trian->borderEdg.size();// number of edges, (without the boundary ones)
 
@@ -422,8 +498,9 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
     elem[part[i]].push_back(trian->tri[i]);
     el2part[trian->tri[i]] = part[i];
   }
+  
   //check connectivity
-  for(int p=0; p<nPartitions; p++){// part by part
+  for(int p=0; p<nPartitions; p++){// part by part 
     std::set<MElement*> celem(elem[p].begin(),elem[p].end());// current elements of the p-th part
     std::queue<MElement*> my_todo; // todo list, for adjacency check - in order to check the connectivity of the part
     std::map<MElement*,bool> check_todo; // help to complete todo list
@@ -449,7 +526,7 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
       }// end for j
     }// end while
     if(!celem.empty()){// if the set is empty, it means that the part was connected
-      Msg::Info("discreteFace::split(), a partition is not connected: it is going to be fixed.");
+      Msg::Info("discreteFace::split(), a partition (%d) is not connected: it is going to be fixed.",p);
       std::vector<MElement*> relem(celem.begin(),celem.end());// new part
       for(unsigned int ie=0; ie<relem.size(); ie++)// updating the id part of the element belonging to the new part
 	el2part[relem[ie]] = nPartitions;
@@ -463,8 +540,6 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
       elem[p] = upe;
     }
   }// end for p
-
-
   for(int i=0; i<nPartitions; i++)// new triangulation of the connected parts
     partition.push_back(new triangulation(elem[i],this));
 
@@ -602,6 +677,43 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
   this->mesh_vertices = newMV;
 #endif
 }
+
+
+void discreteFace::fillHoles(triangulation* trian)
+{
+
+  std::map<double,std::vector<MVertex*> > bords = trian->bord;  
+  std::map<double,std::vector<MVertex*> >::reverse_iterator it = bords.rbegin();
+  ++it;
+  for(; it!=bords.rend(); ++it){
+    double x[3] = {0.,0.,0.};
+    std::vector<MVertex*> mv = it->second;
+    for(unsigned int j=0; j<mv.size(); j++){
+      x[0] += mv[j]->x(); 
+      x[1] += mv[j]->y();
+      x[2] += mv[j]->z();
+    }
+    x[0] /= mv.size(); x[1] /= mv.size(); x[2] /= mv.size();
+    MVertex* center = new MVertex(x[0],x[1],x[2]);
+    this->mesh_vertices.push_back(center);
+    center->setEntity(this);
+    trian->vert.insert(center);
+    for(unsigned int j=1; j<mv.size(); j++)
+      addTriangle(trian,new MTriangle(mv[j],mv[j-1],center));    
+    addTriangle(trian,new MTriangle(mv[0],mv[mv.size()-1],center));
+  }
+
+}
+
+void discreteFace::addTriangle(triangulation* trian, MTriangle* t)
+{// #mark quid borders ?
+  for(int i=0; i<3; i++){
+    MEdge ed = t->getEdge(i);
+    trian->ed2tri[ed].push_back(trian->tri.size());
+  }
+  trian->tri.push_back(t);
+}
+
 
 // delete all discrete disk faces
 //void discreteFace::deleteAtlas() {
