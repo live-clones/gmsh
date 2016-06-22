@@ -27,7 +27,7 @@ StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "Jacobian determinant", NULL, 1},
   {GMSH_FULLRC, "Scaled Jacobian", NULL, 0},
   {GMSH_FULLRC, "Isotropy", NULL, 1},
-  {GMSH_FULLRC, "Hidding threshold", NULL, 10},
+  {GMSH_FULLRC, "Hidding threshold", NULL, 9},
   {GMSH_FULLRC, "Draw PView", NULL, 0},
   {GMSH_FULLRC, "Recompute", NULL, 0},
   {GMSH_FULLRC, "Dimension of elements", NULL, -1}
@@ -133,21 +133,24 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
         double time = Cpu();
         Msg::StatusBar(true, "Computing Jacobian for %dD elements...", dim);
         _computeMinMaxJandValidity(dim);
-        Msg::StatusBar(true, "Done in %g seconds", Cpu()-time);
+        Msg::StatusBar(true, "Done computing Jacobian for %dD elements (%g s)",
+                       dim, Cpu()-time);
         printStatJ = true;
       }
       if (computeScaledJac && !_computedS[dim-1]) {
         double time = Cpu();
         Msg::StatusBar(true, "Computing scaled Jacobian for %dD elements...", dim);
         _computeMinScaledJac(dim);
-        Msg::StatusBar(true, "Done in %g seconds", Cpu()-time);
+        Msg::StatusBar(true, "Done computing scaled Jacobian for %dD elements (%g s)",
+                       dim, Cpu()-time);
         printStatS = true;
       }
       if (computeIsotropy && !_computedI[dim-1]) {
         double time = Cpu();
         Msg::StatusBar(true, "Computing isotropy for %dD elements...", dim);
         _computeMinIsotropy(dim);
-        Msg::StatusBar(true, "Done in %g seconds", Cpu()-time);
+        Msg::StatusBar(true, "Done computing isotropy for %dD elements (%g s)",
+                       dim, Cpu()-time);
         printStatI = true;
       }
     }
@@ -222,47 +225,79 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
 {
   if (_computedJ[dim-1]) return;
 
+  std::set<GEntity*, GEntityLessThan> entities;
   switch (dim) {
-    case 3 :
-      for (GModel::riter it = _m->firstRegion(); it != _m->lastRegion(); it++) {
-        GRegion *r = *it;
-        unsigned int numType[6] = {0, 0, 0, 0, 0, 0};
-        r->getNumMeshElements(numType);
-
-        for(int type = 0; type < 5; type++) {
-          MElement *const *el = r->getStartElementType(type);
-          _computeMinMaxJandValidity(el, numType[type]);
-        }
-      }
+    case 3:
+      for (GModel::riter it = _m->firstRegion(); it != _m->lastRegion(); it++)
+        entities.insert(*it);
       break;
-
-    case 2 :
-      for (GModel::fiter it = _m->firstFace(); it != _m->lastFace(); it++) {
-        GFace *f = *it;
-        unsigned int numType[3] = {0, 0, 0};
-        f->getNumMeshElements(numType);
-
-        for (int type = 0; type < 3; type++) {
-          MElement *const *el = f->getStartElementType(type);
-          _computeMinMaxJandValidity(el, numType[type]);
-        }
-      }
+    case 2:
+      for (GModel::fiter it = _m->firstFace(); it != _m->lastFace(); it++)
+        entities.insert(*it);
       break;
-
-    case 1 :
-      for (GModel::eiter it = _m->firstEdge(); it != _m->lastEdge(); it++) {
-        GEdge *e = *it;
-        unsigned int numElement = e->getNumMeshElements();
-        MElement *const *el = e->getStartElementType(0);
-        _computeMinMaxJandValidity(el, numElement);
-      }
+    case 1:
+      for (GModel::eiter it = _m->firstEdge(); it != _m->lastEdge(); it++)
+        entities.insert(*it);
       break;
-
-    default :
+    default:
       Msg::Fatal("This should not happen.");
       return;
   }
 
+  std::set<GEntity*, GEntityLessThan>::iterator it;
+  for (it = entities.begin(); it != entities.end(); ++it) {
+    GEntity *entity = *it;
+    unsigned num = entity->getNumMeshElements();
+    switch (dim) {
+      case 3:
+        Msg::StatusBar(true, "Volume %d: checking the Jacobian of %d elements",
+            entity->tag(), num);
+        break;
+      case 2:
+        Msg::StatusBar(true, "Surface %d: checking the Jacobian of %d elements",
+            entity->tag(), num);
+        break;
+      case 1:
+        Msg::StatusBar(true, "Line %d: checking the Jacobian of %d elements",
+            entity->tag(), num);
+        break;
+      default: break;
+    }
+
+    double initial, time = initial = Cpu();
+    unsigned int percentage = 0, nextCheck = 0;
+
+    for (unsigned i = 0; i < num; ++i) {
+      MElement *el = entity->getMeshElement(i);
+      double min, max;
+      jacobianBasedQuality::minMaxJacobianDeterminant(el, min, max);
+      _data.push_back(data_elementMinMax(el, min, max));
+      if (min < 0 && max < 0) {
+        Msg::Warning("Element %d is completely inverted", el->getNum());
+      }
+
+      if (i >= nextCheck) {
+        nextCheck += _data.size() / 100;
+        double curTime = Cpu();
+        unsigned int curPercentage = i*100/_data.size();
+        if ((curTime - time > 10. && curPercentage > percentage + 4) ||
+            (curTime - time > 15. && curPercentage < 5)) {
+          percentage = curPercentage;
+          time = curTime;
+          const double remaining = (time-initial) / (i+1) * (_data.size() - i-1);
+          if (remaining < 60*2)
+            Msg::StatusBar(true, "%d%% (remaining time ~%g seconds)",
+                percentage, remaining);
+          else if (remaining < 60*60*2)
+            Msg::StatusBar(true, "%d%% (remaining time ~%g minutes)",
+                percentage, remaining/60);
+          else
+            Msg::StatusBar(true, "%d%% (remaining time ~%g hours)",
+                percentage, remaining/3600);
+        }
+      }
+    }
+  }
   _computedJ[dim-1] = true;
 }
 
@@ -294,6 +329,12 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinScaledJac(int dim)
     else {
       _data[i].setMinS(jacobianBasedQuality::minScaledJacobian(el, true));
     }
+//    Msg::Info("Scaled Jac");
+//    Msg::Info("==========");
+//    for (int k = 1; k < 30; ++k) {
+//      Msg::Info("%.10g", jacobianBasedQuality::minSampledScaledJacobian(el, k));
+//    }
+//    Msg::Info(" ");
     if (i >= nextCheck) {
       nextCheck += _data.size() / 100;
       double curTime = Cpu();
@@ -335,6 +376,12 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIsotropy(int dim)
     else {
       _data[i].setMinI(jacobianBasedQuality::minIsotropyMeasure(el, true));
     }
+//    Msg::Info("Isotropy");
+//    Msg::Info("========");
+//    for (int k = 1; k < 30; ++k) {
+//      Msg::Info("%.10g", jacobianBasedQuality::minSampledIsotropyMeasure(el, k));
+//    }
+//    Msg::Info(" ");
     if (i >= nextCheck) {
       nextCheck += _data.size() / 100;
       double curTime = Cpu();
@@ -362,7 +409,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIsotropy(int dim)
 
 int GMSH_AnalyseCurvedMeshPlugin::_hideWithThreshold(int askedDim, int whichMeasure)
 {
-  // only hide for wuality measures
+  // only hide for quality measures
   if (_threshold > 1 || whichMeasure == 0) return 0;
 
   int nHidden = 0;
@@ -429,12 +476,12 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
   avgratJ /= count;
   avgratJc /= countc;
 
-  Msg::Info("Jacobian determinant: in [%.3g, %.3g] (avg=%.3g)",
-            infminJ, supminJ, avgminJ);
-  Msg::Info("Ratio minJ/maxJ     : in [%.3g, %.3g] (avg=%.3g)",
-            infratJ, supratJ, avgratJ);
-  if (countc < count)
-    Msg::Info("                      (avg=%.3g"
+  Msg::Info("Min Jac. det. (minJ): %.3g, %.3g, %.3g (= min, avg, max)",
+            infminJ, avgminJ, supminJ);
+  Msg::Info("Ratio minJ/maxJ     : %.3f, %.3f, %.3f (= worst, avg, best)",
+            infratJ, avgratJ, supratJ);
+  if (countc && countc < count)
+    Msg::Info("                      (avg=%3.3g"
               " on the %d non-constant elements)",
               avgratJc, countc);
 }
@@ -455,8 +502,8 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatScaledJac()
   }
   avgminS /= _data.size();
 
-  Msg::Info("Scaled Jacobian     : in [%.3g, %.3g] (avg=%.3g)",
-      infminS, supminS, avgminS);
+  Msg::Info("Scaled Jacobian     : %.3f, %.3f, %.3f (= worst, avg, best)",
+      infminS, avgminS, supminS);
 }
 
 void GMSH_AnalyseCurvedMeshPlugin::_printStatIsotropy()
@@ -475,8 +522,8 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatIsotropy()
   }
   avgminI /= _data.size();
 
-  Msg::Info("Isotropy            : in [%.3g, %.3g] (avg=%.3g)",
-      infminI, supminI, avgminI);
+  Msg::Info("Isotropy            : %.3f, %.3f, %.3f (= worst, avg, best)",
+      infminI, avgminI, supminI);
 }
 
 // For testing

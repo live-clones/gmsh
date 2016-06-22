@@ -28,6 +28,10 @@ double minIsotropyMeasure(MElement *el,
                           bool reversedOk = false);
 //double minSampledAnisotropyMeasure(MElement *el, int order,//fordebug
 //                                   bool writeInFile = false);
+double minSampledIsotropyMeasure(MElement *el, int order,//fordebug
+                                 bool writeInFile = false);
+double minSampledScaledJacobian(MElement *el, int order,//fordebug
+                                bool writeInFile = false);
 
 class _CoeffData
 {
@@ -45,6 +49,7 @@ public:
   inline double maxL() const {return _maxL;}
   inline double minB() const {return _minB;}
   inline double maxB() const {return _maxB;}
+  inline int depth() const {return _depth;}
 
   virtual bool boundsOk(double minL, double maxL) const = 0;
   virtual void getSubCoeff(std::vector<_CoeffData*>&) const = 0;
