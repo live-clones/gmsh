@@ -181,6 +181,20 @@ class MPrism : public MElement {
     };
     return f[face][vert];
   }
+  static int faceClosureEdge2edge(const int face, const int edge)
+  {
+    // Warning: numbering of element edge starts here at 1.
+    // - 0 means no edge (triangular face)
+    // - negative means going backward
+    static const int f[5][4] = {
+        {2, -4, -1,  0},
+        {7,  9, -8,  0},
+        {1,  5, -7, -3},
+        {3,  8, -6, -2},
+        {4,  6, -9, -5}
+    };
+    return f[face][edge];
+  }
 };
 
 /*

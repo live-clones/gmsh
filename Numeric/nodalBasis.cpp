@@ -9,6 +9,7 @@
 #include "nodalBasis.h"
 #include "BasisFactory.h"
 #include "pointsGenerators.h"
+#include "MPrism.h"
 
 namespace ClosureGen {
   inline double pow2(double x)
@@ -409,20 +410,119 @@ namespace ClosureGen {
     }
   }
 
+  void fillInteriorFaceNodes(nodalBasis::closure &closure, int idx, int order,
+                             int isTriangle, int start)
+  {
+    int nNodes = isTriangle ? (order-2)*(order-1)/2 : (order-1)*(order-1);
+    for (int i = 0; i < nNodes; ++i, ++idx, ++start) {
+      closure[idx] = start;
+    }
+  }
+
+  void reorderFaceClosure(int iSign, int iRotate, nodalBasis::closure &closure,
+                          int idx, int order, int isTriangle)
+  {
+    if (order <= 0) return;
+    nodalBasis::closure old = closure;
+    int start = idx;
+
+    const int nCorner = isTriangle ? 3 : 4;
+    for (int i = 0; i < nCorner; ++i, ++idx) {
+      closure[idx] = old[start + (nCorner + i * iSign + iRotate) % nCorner];
+    }
+
+    const int &nEdge = nCorner;
+    for (int i = 0; i < nEdge; ++i) {
+      int iOldEdge = (nEdge + i * iSign + iRotate + (iSign==-1? -1 : 0)) % nEdge;
+      int startOldEdge = start + nCorner + iOldEdge * (order-1);
+      if (iSign > 0) {
+        for (int j = startOldEdge; j < startOldEdge+order-1; ++j, ++idx)
+          closure[idx] = old[j];
+      }
+      else if (iSign < 0) {
+        for (int j = startOldEdge+order-2; j >= startOldEdge; --j, ++idx)
+          closure[idx] = old[j];
+      }
+    }
+    if (isTriangle && order > 3)
+      reorderFaceClosure(iSign, iRotate, closure, idx, order-3, isTriangle);
+    else if (!isTriangle && order > 2)
+      reorderFaceClosure(iSign, iRotate, closure, idx, order-2, isTriangle);
+  }
+
   void getFaceClosurePrism(int iFace, int iSign, int iRotate,
                            nodalBasis::closure &closure, int order)
   {
-    //if (order > 2)
-    //  Msg::Error("FaceClosure not implemented for prisms of order %d",order);
-    bool isTriangle = iFace<2;
-    int nNodes = isTriangle ? (order+1)*(order+2)/2 : (order+1)*(order+1);
+//    printf("HHHHHHHHHHHere %d %d %d %d\n", iFace, iSign, iRotate, order);
     closure.clear();
+    bool isTriangle = iFace<2;
     if (isTriangle && iRotate > 2) return;
+    closure.type = ElementType::getTag(isTriangle ? TYPE_TRI : TYPE_QUA, order);
+
+    int nNodes = isTriangle ? (order+1)*(order+2)/2 : (order+1)*(order+1);
     closure.resize(nNodes);
-    if (order==0) {
+    if (order == 0) {
       closure[0] = 0;
       return;
     }
+
+    int *edge2nodes[9];
+    int n = 6;
+    for (int i = 0; i < 9; ++i) {
+      edge2nodes[i] = new int[order-1];
+      for (int k = 0; k < order-1; ++k, ++n)
+        edge2nodes[i][k] = n;
+    }
+
+    const int nCorner = isTriangle ? 3 : 4;
+    for (int i = 0; i < nCorner; ++i) {
+      closure[i] = MPrism::faces_prism(iFace, i);
+    }
+
+    if (order > 1) {
+      int idx = nCorner;
+      const int &nEdge = nCorner;
+      for (int i = 0; i < nEdge; ++i) {
+        int edge = MPrism::faceClosureEdge2edge(iFace, i);
+        if (edge > 0) {
+          edge = edge-1;
+          for (int k = 0; k < order-1; ++k, ++idx) {
+            closure[idx] = edge2nodes[edge][k];
+          }
+        }
+        else if (edge < 0) {
+          edge = -edge-1;
+          for (int k = order-2; k >= 0; --k, ++idx) {
+            closure[idx] = edge2nodes[edge][k];
+          }
+        }
+      }
+      for (int i = 0; i < 9; ++i) delete edge2nodes[i];
+
+      // Numbering of nodes inside the face start at
+      int start = 6 + 9*(order-1) + std::min(iFace, 2) * (order-2)*(order-1)/2 +
+                  std::max(iFace-2, 0) * (order-1)*(order-1);
+      fillInteriorFaceNodes(closure, idx, order, isTriangle, start);
+    }
+//    printf("Closure 1\n");
+//    for (unsigned i = 0; i < closure.size(); ++i) {
+//      printf("%d ", closure[i]);
+//    }
+//    printf("\n");
+    reorderFaceClosure(iSign, iRotate, closure, 0, order, isTriangle);
+
+    return;
+
+    printf("Reoriented\n");
+    for (unsigned i = 0; i < closure.size(); ++i) {
+      printf("%d ", closure[i]);
+    }
+    printf("\n");
+    closure.clear();
+    closure.resize(nNodes);
+
+    //if (order > 2)
+    //  Msg::Error("FaceClosure not implemented for prisms of order %d",order);
     int order1node[5][4] = {{0, 2, 1, -1}, {3, 4, 5, -1}, {0, 1, 4, 3}, {0, 3, 5, 2},
                             {1, 2, 5, 4}};
     int order2node[5][5] = {{7, 9, 6, -1, -1}, {12, 14, 13, -1, -1}, {6, 10, 12, 8, 15},
@@ -431,6 +531,7 @@ namespace ClosureGen {
     //                         {8, 13, 11, 7}, {9, 11, 14, 10}};
     int nVertex = isTriangle ? 3 : 4;
     closure.type = ElementType::getTag(isTriangle ? TYPE_TRI : TYPE_QUA, order);
+
     for (int i = 0; i < nVertex; ++i){
       int k = (nVertex + (iSign * i) + iRotate) % nVertex;  //- iSign * iRotate
       closure[i] = order1node[iFace][k];
@@ -444,12 +545,18 @@ namespace ClosureGen {
       if (!isTriangle)
         closure[nNodes-1] = order2node[iFace][4]; // center
     }
+
+    printf("Closure 2\n");
+    for (unsigned i = 0; i < closure.size(); ++i) {
+      printf("%d ", closure[i]);
+    }
+    printf("\n");
   }
 
   void generateFaceClosurePrism(nodalBasis::clCont &closure, int order)
   {
-    if (order > 2)
-      Msg::Error("FaceClosure not implemented for prisms of order %d",order);
+//    if (order > 2) //fordebug
+//      Msg::Fatal("FaceClosure not implemented for prisms of order %d",order);
     closure.clear();
     for (int iRotate = 0; iRotate < 4; iRotate++){
       for (int iSign = 1; iSign >= -1; iSign -= 2){
