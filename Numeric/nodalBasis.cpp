@@ -413,6 +413,13 @@ namespace ClosureGen {
   void fillInteriorFaceNodes(nodalBasis::closure &closure, int idx, int order,
                              int isTriangle, int start)
   {
+    // Numbering of nodes in Gmsh is as the following: The first nodes are the
+    // corners. Then follow the nodes on the edges, with an edge being
+    // completely filled before the following is filled. After come the nodes
+    // on faces, with the same strategy. (Eventually, there are the volume
+    // nodes.) Moreover, the numbering of the face interior nodes is coherent
+    // with the numbering of the equivalent 2D element. This explains why this
+    // function is so simple.
     int nNodes = isTriangle ? (order-2)*(order-1)/2 : (order-1)*(order-1);
     for (int i = 0; i < nNodes; ++i, ++idx, ++start) {
       closure[idx] = start;
@@ -453,7 +460,6 @@ namespace ClosureGen {
   void getFaceClosurePrism(int iFace, int iSign, int iRotate,
                            nodalBasis::closure &closure, int order)
   {
-//    printf("HHHHHHHHHHHere %d %d %d %d\n", iFace, iSign, iRotate, order);
     closure.clear();
     bool isTriangle = iFace<2;
     if (isTriangle && iRotate > 2) return;
@@ -466,6 +472,7 @@ namespace ClosureGen {
       return;
     }
 
+    // map edge number to the nodes number
     int *edge2nodes[9];
     int n = 6;
     for (int i = 0; i < 9; ++i) {
@@ -474,14 +481,18 @@ namespace ClosureGen {
         edge2nodes[i][k] = n;
     }
 
+    // fill corner node number
     const int nCorner = isTriangle ? 3 : 4;
     for (int i = 0; i < nCorner; ++i) {
       closure[i] = MPrism::faces_prism(iFace, i);
     }
 
+    // fill high-order nodes number
     if (order > 1) {
       int idx = nCorner;
       const int &nEdge = nCorner;
+
+      // fill edge nodes number
       for (int i = 0; i < nEdge; ++i) {
         int edge = MPrism::faceClosureEdge2edge(iFace, i);
         if (edge > 0) {
@@ -502,61 +513,16 @@ namespace ClosureGen {
       // Numbering of nodes inside the face start at
       int start = 6 + 9*(order-1) + std::min(iFace, 2) * (order-2)*(order-1)/2 +
                   std::max(iFace-2, 0) * (order-1)*(order-1);
+
+      // fill interior nodes number
       fillInteriorFaceNodes(closure, idx, order, isTriangle, start);
     }
-//    printf("Closure 1\n");
-//    for (unsigned i = 0; i < closure.size(); ++i) {
-//      printf("%d ", closure[i]);
-//    }
-//    printf("\n");
+
     reorderFaceClosure(iSign, iRotate, closure, 0, order, isTriangle);
-
-    return;
-
-    printf("Reoriented\n");
-    for (unsigned i = 0; i < closure.size(); ++i) {
-      printf("%d ", closure[i]);
-    }
-    printf("\n");
-    closure.clear();
-    closure.resize(nNodes);
-
-    //if (order > 2)
-    //  Msg::Error("FaceClosure not implemented for prisms of order %d",order);
-    int order1node[5][4] = {{0, 2, 1, -1}, {3, 4, 5, -1}, {0, 1, 4, 3}, {0, 3, 5, 2},
-                            {1, 2, 5, 4}};
-    int order2node[5][5] = {{7, 9, 6, -1, -1}, {12, 14, 13, -1, -1}, {6, 10, 12, 8, 15},
-                            {8, 13, 11, 7, 16}, {9, 11, 14, 10, 17}};
-    // int order2node[5][4] = {{7, 9, 6, -1}, {12, 14, 13, -1}, {6, 10, 12, 8},
-    //                         {8, 13, 11, 7}, {9, 11, 14, 10}};
-    int nVertex = isTriangle ? 3 : 4;
-    closure.type = ElementType::getTag(isTriangle ? TYPE_TRI : TYPE_QUA, order);
-
-    for (int i = 0; i < nVertex; ++i){
-      int k = (nVertex + (iSign * i) + iRotate) % nVertex;  //- iSign * iRotate
-      closure[i] = order1node[iFace][k];
-    }
-    if (order==2) {
-      for (int i = 0; i < nVertex; ++i){
-        int k = (nVertex + (iSign==-1?-1:0) + (iSign * i) + iRotate) % nVertex;
-                  //- iSign * iRotate
-        closure[nVertex+i] = order2node[iFace][k];
-      }
-      if (!isTriangle)
-        closure[nNodes-1] = order2node[iFace][4]; // center
-    }
-
-    printf("Closure 2\n");
-    for (unsigned i = 0; i < closure.size(); ++i) {
-      printf("%d ", closure[i]);
-    }
-    printf("\n");
   }
 
   void generateFaceClosurePrism(nodalBasis::clCont &closure, int order)
   {
-//    if (order > 2) //fordebug
-//      Msg::Fatal("FaceClosure not implemented for prisms of order %d",order);
     closure.clear();
     for (int iRotate = 0; iRotate < 4; iRotate++){
       for (int iSign = 1; iSign >= -1; iSign -= 2){
