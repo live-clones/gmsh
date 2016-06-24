@@ -143,7 +143,7 @@ static double F_Lc_aniso(GEdge *ge, double t)
   bool blf = false;
 #endif
 
-  printf("coucou\n");
+  //printf("coucou\n");
 
 
   GPoint p = ge->point(t);
