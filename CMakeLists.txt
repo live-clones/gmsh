@@ -1554,7 +1554,7 @@ endif(WIN32 AND NOT MSVC OR CYGWIN)
 if(APPLE AND PACKAGER STREQUAL "geuzaine")
   set(CODESIGN codesign --force --verify --verbose --sign
       "Developer ID Application: Christophe Geuzaine")
-  # add_custom_command(TARGET gmsh POST_BUILD COMMAND ${CODESIGN} gmsh)
+  add_custom_command(TARGET gmsh POST_BUILD COMMAND ${CODESIGN} gmsh)
 endif(APPLE AND PACKAGER STREQUAL "geuzaine")
 
 # parser target
