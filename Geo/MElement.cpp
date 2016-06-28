@@ -235,10 +235,19 @@ double MElement::maxDistToStraight() const
   return maxdx;
 }
 
-double MElement::minAnisotropyMeasure(bool knownValid)
+double MElement::minAnisotropyMeasure(bool knownValid, bool reversedOK)
 {
 #if defined(HAVE_MESH)
-  return jacobianBasedQuality::minAnisotropyMeasure(this, knownValid);
+  return jacobianBasedQuality::minAnisotropyMeasure(this, knownValid, reversedOK);
+#else
+  return 0.;
+#endif
+}
+
+double MElement::minScaledJacobian(bool knownValid, bool reversedOK)
+{
+#if defined(HAVE_MESH)
+  return jacobianBasedQuality::minScaledJacobian(this, knownValid, reversedOK);
 #else
   return 0.;
 #endif
@@ -249,10 +258,10 @@ double MElement::specialQuality()
 #if defined(HAVE_MESH)
   double minJ, maxJ;
   jacobianBasedQuality::minMaxJacobianDeterminant(this, minJ, maxJ);
-  if (minJ == 0.) return 0;
-  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
-  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
-  return jacobianBasedQuality::minAnisotropyMeasure(this, true);
+  if (minJ <= 0.) return minJ;
+//  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
+//  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
+  return jacobianBasedQuality::minIsotropyMeasure(this, true);
 #else
   return 0;
 #endif
@@ -263,9 +272,9 @@ double MElement::specialQuality2()
 #if defined(HAVE_MESH)
   double minJ, maxJ;
   jacobianBasedQuality::minMaxJacobianDeterminant(this, minJ, maxJ);
-  if (minJ == 0.) return 0;
-  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
-  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
+  if (minJ <= 0.) return minJ;
+//  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
+//  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
   return jacobianBasedQuality::minScaledJacobian(this, true);
 #else
   return 0;
