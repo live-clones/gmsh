@@ -476,12 +476,12 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
   avgratJ /= count;
   avgratJc /= countc;
 
-  Msg::Info("Min Jac. det. (minJ): %.3g, %.3g, %.3g (= min, avg, max)",
+  Msg::Info("Min Jac. det. (minJ): %6.3g, %6.3g, %6.3g (= min, avg, max)",
             infminJ, avgminJ, supminJ);
-  Msg::Info("Ratio minJ/maxJ     : %.3f, %.3f, %.3f (= worst, avg, best)",
+  Msg::Info("Ratio minJ/maxJ     : %6.3f, %6.3f, %6.3f (= worst, avg, best)",
             infratJ, avgratJ, supratJ);
   if (countc && countc < count)
-    Msg::Info("                      (avg=%3.3g"
+    Msg::Info("                      (avg = %.3f"
               " on the %d non-constant elements)",
               avgratJc, countc);
 }
@@ -502,7 +502,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatScaledJac()
   }
   avgminS /= _data.size();
 
-  Msg::Info("Scaled Jacobian     : %.3f, %.3f, %.3f (= worst, avg, best)",
+  Msg::Info("Scaled Jacobian     : %6.3f, %6.3f, %6.3f (= worst, avg, best)",
       infminS, avgminS, supminS);
 }
 
@@ -522,7 +522,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatIsotropy()
   }
   avgminI /= _data.size();
 
-  Msg::Info("Isotropy            : %.3f, %.3f, %.3f (= worst, avg, best)",
+  Msg::Info("Isotropy            : %6.3f, %6.3f, %6.3f (= worst, avg, best)",
       infminI, avgminI, supminI);
 }
 
