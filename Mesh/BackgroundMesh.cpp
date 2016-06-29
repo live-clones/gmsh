@@ -556,6 +556,7 @@ double backgroundMesh::operator() (double u, double v, double w) const
   if (!e) {
 #if defined(HAVE_ANN)
     //printf("BGM octree not found --> find in kdtree \n");
+    if(uv_kdtree->nPoints() < 2) return -1000.;
     double pt[3] = {u, v, 0.0};
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3  p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
@@ -584,15 +585,18 @@ double backgroundMesh::getAngle(double u, double v, double w) const
   // generate a spurious mesh and solve a PDE
   if (!_octree){
 #if defined(HAVE_ANN)
-    double pt[3] = {u,v,0.0};
-    angle_kdtree->annkSearch(pt, _NBANN, index, dist);
-    double SINE = 0.0 , COSINE = 0.0;
-    for (int i=0;i<_NBANN;i++){
-      SINE += _sin[index[i]];
-      COSINE += _cos[index[i]];
-      //      printf("%2d %2d %12.5E %12.5E\n",i,index[i],_sin[index[i]],_cos[index[i]]);
+    double angle = 0.;
+    if(angle_kdtree->nPoints() >= _NBANN){
+      double pt[3] = {u,v,0.0};
+      angle_kdtree->annkSearch(pt, _NBANN, index, dist);
+      double SINE = 0.0 , COSINE = 0.0;
+      for (int i=0;i<_NBANN;i++){
+        SINE += _sin[index[i]];
+        COSINE += _cos[index[i]];
+        //      printf("%2d %2d %12.5E %12.5E\n",i,index[i],_sin[index[i]],_cos[index[i]]);
+      }
+      angle = atan2(SINE,COSINE)/4.0;
     }
-    double angle = atan2(SINE,COSINE)/4.0;
     crossField2d::normalizeAngle (angle);
     return angle;
 #endif
@@ -614,6 +618,7 @@ double backgroundMesh::getAngle(double u, double v, double w) const
   if (!e) {
 #if defined(HAVE_ANN)
     //printf("BGM octree not found --> find in kdtree \n");
+    if(uv_kdtree->nPoints() < 2) return -1000.0;
     double pt[3] = {u,v,0.0};
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3  p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
