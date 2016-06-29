@@ -12,7 +12,6 @@
 #include "linearSystem.h"
 #include "sparsityPattern.h"
 
-
 typedef int INDEX_TYPE ;
 typedef struct {
   int nmax;
@@ -52,9 +51,8 @@ class linearSystemCSR : public linearSystem<scalar> {
     _sparsity.insertEntry (i,j);
   }
   virtual void preAllocateEntries ();
-  virtual void addToMatrix(int il, int ic, const scalar &val) 
+  virtual void addToMatrix(int il, int ic, const scalar &val)
   {
-    
     if (!_entriesPreAllocated)
       preAllocateEntries();
     INDEX_TYPE  *jptr  = (INDEX_TYPE*) _jptr->array;
@@ -125,18 +123,22 @@ class linearSystemCSR : public linearSystem<scalar> {
   }
   virtual void addToRightHandSide(int row, const scalar &val)
   {
+    if (!_b) return;
     if(val != scalar()) (*_b)[row] += val;
   }
   virtual void addToSolution(int row, const scalar &val)
   {
+    if (!_x) return;
     if(val != scalar()) (*_x)[row] += val;
   }
   virtual void getFromRightHandSide(int row, scalar &val) const
   {
+    if (!_b) return;
     val = (*_b)[row];
   }
   virtual void getFromSolution(int row, scalar &val) const
   {
+    if (!_x) return;
     val = (*_x)[row];
   }
   virtual void zeroMatrix()
@@ -156,9 +158,9 @@ class linearSystemCSR : public linearSystem<scalar> {
     if (!_x) return;
     for(unsigned int i = 0; i < _x->size(); i++) (*_x)[i] = scalar();
   }
-
   virtual double normInfRightHandSide() const
   {
+    if (!_b) return 0.;
     double nor = 0.;
     double temp;
     for(unsigned int i = 0; i < _b->size(); i++){
