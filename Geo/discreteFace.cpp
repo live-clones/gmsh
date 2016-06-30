@@ -244,7 +244,7 @@ void discreteFace::printAtlasMesh(std::vector<MElement*> elm, int I)
     mv2int[*it] = count;
     count++;
   }
-  fprintf(pmesh,"$EndNodes\n$Elements\n%u\n",elm.size());
+  fprintf(pmesh,"$EndNodes\n$Elements\n%u\n",(unsigned int)elm.size());
   for(unsigned int i=0; i<elm.size(); i++){
     MElement* tri = elm[i];
     fprintf(pmesh,"%d 2 2 0 0",i+1);
@@ -284,7 +284,7 @@ void discreteFace::printAtlasMesh(discreteDiskFace* ddf, int I)
     mv2int[*it] = count;
     count++;
   }
-  fprintf(pmesh,"$EndNodes\n$Elements\n%u\n",ddf->triangles.size());
+  fprintf(pmesh,"$EndNodes\n$Elements\n%u\n",(unsigned int)ddf->triangles.size());
   for(unsigned int i=0; i<ddf->triangles.size(); i++){
     MTriangle* tri = ddf->triangles[i];
     fprintf(pmesh,"%d 2 2 0 0",i+1);
@@ -396,7 +396,9 @@ void discreteFace::setupDiscreteEdge(discreteEdge*de,std::vector<MLine*>mlines,s
     de->mesh_vertices.push_back(mlines[i]->getVertex(0));
     if(trash) trash->insert(mlines[i]->getVertex(0));
   }
-  de->createGeometry();  
+  de->createGeometry();
+  if(de->getBeginVertex()->mesh_vertices[0]!=de->lines[0]->getVertex(0))// small hack ... #mark
+    de->reverse();
 }
 
 
@@ -453,10 +455,7 @@ void discreteFace::splitDiscreteEdge ( GEdge *de , GVertex *gv, discreteEdge* ne
 void discreteFace::split(triangulation* trian,std::vector<triangulation*> &partition,int nPartitions)
 {
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN) && defined(HAVE_METIS)
-  /*
-  if(trian->aspectRatio() < 4.)
-    printf("it is splitted because of aspect ratio");
-  */
+  
   int nVertex = trian->tri.size(); // number of elements
   int nEdge = trian->ed2tri.size() - trian->borderEdg.size();// number of edges, (without the boundary ones)
 
@@ -618,6 +617,7 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
 	      setupDiscreteVertex(v[imvt],mvt[imvt],NULL);
 	      discreteEdge* de[2];
 	      splitDiscreteEdge(onit,v[imvt],de);
+	      gGEdges.erase(onit);
 	      gGEdges.insert(de[0]);
 	      gGEdges.insert(de[1]);
 	    }// end if-elseif-else
