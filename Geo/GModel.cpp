@@ -2107,19 +2107,17 @@ void GModel::alignPeriodicBoundaries()
           
           std::map<MVertex*,MVertex*>::iterator vIter = v2v.find(vtx);
           if (vIter==v2v.end()) {
-            vIter = geV2v.find(vtx);
             Msg::Info("Could not find copy of vertex %d in face %d"
                       ", looking in entity %d of dimension %d",
-                      vtx->getNum(),src->tag(),tgt->tag(),ge->tag(),
-                      ge->dim());
+                      vtx->getNum(),tgt->tag(),ge->tag(), ge->dim());
+            vIter = geV2v.find(vtx);
             if (vIter == geV2v.end()) {
               Msg::Error("Could not find copy of vertex %d in %d nor in %d",
-                         vtx->getNum(),src->tag(),tgt->tag(),ge->tag());
-              
+                         vtx->getNum(),tgt->tag(),ge->tag());
             }
             else vtcs.push_back(vIter->second);
           }
-          vtcs.push_back(vIter->second);
+          else vtcs.push_back(vIter->second);
         }
 
         MFace tgtFace(vtcs);
