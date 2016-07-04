@@ -106,6 +106,7 @@ CTX::CTX() : gamepad(0)
   mesh.recombine3DAll = mesh.algoSubdivide = mesh.meshOnlyVisible = 0;
   mesh.minCircPoints = mesh.order = 0;
   mesh.secondOrderLinear = mesh.secondOrderIncomplete = 0;
+  mesh.preserveNumberingMsh2 = 1;
 }
 
 CTX::~CTX()
