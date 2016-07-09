@@ -155,7 +155,7 @@ void discreteFace::createGeometry()
   for(unsigned int i=0; i<toParam.size(); i++){
     fillHoles(toParam[i]);
     std::vector<MElement*> mytri = toParam[i]->tri;
-    discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));    
+    discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));
     df->replaceEdges(toParam[i]->my_GEdges);
     _atlas.push_back(df);
   }
@@ -173,7 +173,7 @@ void discreteFace::gatherMeshes()
     for (unsigned int j=0;j<_atlas[i]->triangles.size(); j++){
       MTriangle *t = _atlas[i]->triangles[j];
       SPoint2 p0,p1,p2;
-      reparamMeshVertexOnFace(t->getVertex(0),_atlas[i], p0);      
+      reparamMeshVertexOnFace(t->getVertex(0),_atlas[i], p0);
       reparamMeshVertexOnFace(t->getVertex(1),_atlas[i], p1);
       reparamMeshVertexOnFace(t->getVertex(2),_atlas[i], p2);
       SPoint2 pc = (p0+p1+p2)*(1./3.0);
@@ -215,7 +215,7 @@ void discreteFace::mesh(bool verbose)
     _atlas[i]->mesh(verbose);
     //printAtlasMesh(_atlas[i],i);
   }
-  
+
   gatherMeshes();
   meshStatistics.status = GFace::DONE;
 #endif
@@ -230,7 +230,7 @@ void discreteFace::printAtlasMesh(std::vector<MElement*> elm, int I)
   FILE* pmesh = Fopen(buffer,"w");
 
   std::set<MVertex*> meshvertices;
-  
+
   for(unsigned int i=0; i<elm.size(); ++i){
     MElement* tri = elm[i];
     for(unsigned int j=0; j<3; j++)
@@ -263,14 +263,14 @@ void discreteFace::printAtlasMesh(std::vector<MElement*> elm, int I)
 
 void discreteFace::printAtlasMesh(discreteDiskFace* ddf, int I)
 {
-
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
   std::map<MVertex*,int> mv2int;
   char buffer[16];
   sprintf(buffer,"atlas_mesh%d.msh",I);
   FILE* pmesh = Fopen(buffer,"w");
 
   std::set<MVertex*> meshvertices;
-  
+
   for(unsigned int i=0; i<ddf->triangles.size(); ++i){
     MTriangle* tri = ddf->triangles[i];
     for(unsigned int j=0; j<3; j++)
@@ -296,7 +296,7 @@ void discreteFace::printAtlasMesh(discreteDiskFace* ddf, int I)
   }
   fprintf(pmesh,"$EndElements\n");
   fclose(pmesh);
-
+#endif
 }
 
 
@@ -455,7 +455,7 @@ void discreteFace::splitDiscreteEdge ( GEdge *de , GVertex *gv, discreteEdge* ne
 void discreteFace::split(triangulation* trian,std::vector<triangulation*> &partition,int nPartitions)
 {
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN) && defined(HAVE_METIS)
-  
+
   int nVertex = trian->tri.size(); // number of elements
   int nEdge = trian->ed2tri.size() - trian->borderEdg.size();// number of edges, (without the boundary ones)
 
@@ -497,9 +497,9 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
     elem[part[i]].push_back(trian->tri[i]);
     el2part[trian->tri[i]] = part[i];
   }
-  
+
   //check connectivity
-  for(int p=0; p<nPartitions; p++){// part by part 
+  for(int p=0; p<nPartitions; p++){// part by part
     std::set<MElement*> celem(elem[p].begin(),elem[p].end());// current elements of the p-th part
     std::queue<MElement*> my_todo; // todo list, for adjacency check - in order to check the connectivity of the part
     std::map<MElement*,bool> check_todo; // help to complete todo list
@@ -681,15 +681,15 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
 
 void discreteFace::fillHoles(triangulation* trian)
 {
-
-  std::map<double,std::vector<MVertex*> > bords = trian->bord;  
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
+  std::map<double,std::vector<MVertex*> > bords = trian->bord;
   std::map<double,std::vector<MVertex*> >::reverse_iterator it = bords.rbegin();
   ++it;
   for(; it!=bords.rend(); ++it){
     double x[3] = {0.,0.,0.};
     std::vector<MVertex*> mv = it->second;
     for(unsigned int j=0; j<mv.size(); j++){
-      x[0] += mv[j]->x(); 
+      x[0] += mv[j]->x();
       x[1] += mv[j]->y();
       x[2] += mv[j]->z();
     }
@@ -699,19 +699,22 @@ void discreteFace::fillHoles(triangulation* trian)
     center->setEntity(this);
     trian->vert.insert(center);
     for(unsigned int j=1; j<mv.size(); j++)
-      addTriangle(trian,new MTriangle(mv[j],mv[j-1],center));    
+      addTriangle(trian,new MTriangle(mv[j],mv[j-1],center));
     addTriangle(trian,new MTriangle(mv[0],mv[mv.size()-1],center));
   }
-
+#endif
 }
 
 void discreteFace::addTriangle(triangulation* trian, MTriangle* t)
-{// #mark quid borders ?
+{
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
+  // #mark quid borders ?
   for(int i=0; i<3; i++){
     MEdge ed = t->getEdge(i);
     trian->ed2tri[ed].push_back(trian->tri.size());
   }
   trian->tri.push_back(t);
+#endif
 }
 
 
