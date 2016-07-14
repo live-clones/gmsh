@@ -811,10 +811,12 @@ int onelab_cb(std::string action)
     action = "check";
   }
 
-  { // don't show model checking menu
-    onelab::number o("GetDP/}ModelCheck", 0.);
-    o.setVisible(false);
-    onelab::server::instance()->set(o);
+  // hide the model checking menu
+  std::vector<onelab::number> pn;
+  onelab::server::instance()->get(pn, "GetDP/}ModelCheck");
+  if(pn.size()){
+    pn[0].setVisible(false);
+    onelab::server::instance()->set(pn[0]);
   }
 
   Msg::ResetErrorCounter();
