@@ -2207,7 +2207,7 @@ Shape :
           s->compound.push_back((int)*(double*)List_Pointer($7, i));
 	}
         // Added by Trevor Strickler
-	setSurfaceGeneratrices(s, (List_T*) 0 );
+	setSurfaceGeneratrices(s, (List_T*) 0);
 	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
       }
       List_Delete($7);

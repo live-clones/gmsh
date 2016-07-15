@@ -44,7 +44,7 @@ class GFace : public GEntity{
   mean_plane meanPlane;
   std::list<GEdge *> embedded_edges;
   std::list<GVertex *> embedded_vertices;
-  GFaceCompound *compound; // this model edge belongs to a compound
+  GFaceCompound *compound; // this model face belongs to a compound
 
   // replace edges (for gluing) for specific modelers, we have to
   // re-create internal data
@@ -316,7 +316,7 @@ class GFace : public GEntity{
   int getCurvatureControlParameter () const;
   void setCurvatureControlParameter(int);
   virtual double getMeshSize() const { return meshAttributes.meshSize; }
-  
+
   struct {
     mutable GEntity::MeshGenerationStatus status;
     double worst_element_shape, best_element_shape, average_element_shape;

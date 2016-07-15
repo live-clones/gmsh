@@ -479,12 +479,14 @@ void End_Curve(Curve *c)
           break;
         }
       }
-      if (tmp.size() == nbCurrent) Msg::Error("Could not order compound edge %d to find begin and end vertex", c->Num);
+      if (tmp.size() == nbCurrent)
+        Msg::Error("Could not order compound edge %d to find begin and end vertex",
+                   c->Num);
     }
     c->beg = vtcs.first;
     c->end = vtcs.second;
     c->compound.clear();
-    c->compound.insert(c->compound.end(),ordered.begin(),ordered.end());
+    c->compound.insert(c->compound.end(), ordered.begin(), ordered.end());
   }
 }
 
@@ -1657,7 +1659,8 @@ Curve *CreateReversedCurve(Curve *c)
   }
 
   if(c->Typ == MSH_SEGM_COMPOUND) {
-    newc->compound.insert(newc->compound.end(),c->compound.rbegin(),c->compound.rend());
+    newc->compound.insert(newc->compound.end(), c->compound.rbegin(),
+                          c->compound.rend());
   }
 
   if(c->Typ == MSH_SEGM_CIRC)
@@ -2324,29 +2327,30 @@ static List_T *GetCompoundUniqueEdges(Surface *ps)
 
   std::map<int, unsigned int> count_map;
 
-  for( int i = 0; i < num_surfs; i++ ){
+  for(int i = 0; i < num_surfs; i++){
     Surface *s = FindSurface(std::abs(comp_surfs[i]));
     if(!s){
-      Msg::Error("Unknown surface %d", std::abs(comp_surfs[i]) );
+      // don't complain: some compound surfaces are not in old GEO database
+      //Msg::Warning("Unknown surface %d", std::abs(comp_surfs[i]) );
       List_Delete(bnd_c);
       return 0;
     }
     int num_in_surf = List_Nbr(s->Generatrices);
-    for( int m = 0; m < num_in_surf; m++ ){
+    for(int m = 0; m < num_in_surf; m++){
       Curve *c=0;
       List_Read(s->Generatrices, m, &c);
       if(!c){
-        Msg::Error("Unknown curve");
+        Msg::Warning("Unknown curve");
         List_Delete(bnd_c);
         return 0;
       }
       if(!FindCurve(-c->Num)) {
-        Msg::Error("Unknown curve %d", -c->Num );
+        Msg::Warning("Unknown curve %d", -c->Num);
         List_Delete(bnd_c);
         return 0;
       }
       int abs_Num = std::abs(c->Num) ;
-      if( count_map.find( abs_Num ) == count_map.end() )
+      if(count_map.find( abs_Num ) == count_map.end())
         count_map[ abs_Num ] = 1;
       else
         count_map[ abs_Num ]++;
@@ -4668,7 +4672,8 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
   if(s->Typ == MSH_SURF_COMPOUND){
     s->Generatrices = GetOrderedUniqueEdges(s);
     if(!List_Nbr(s->Generatrices)){
-      Msg::Warning("Could not make generatrices list for compound surface %d", s->Num);
+      // don't complain: compounds can be not in old GEO database
+      //Msg::Warning("Could not make generatrices list for compound surface %d", s->Num);
       return;
     }
   }
