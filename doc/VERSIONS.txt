@@ -1,3 +1,5 @@
+2.13.1: small bug fixes.
+
 2.13.0: new ONELAB 1.2 protocol with native support for lists; new experimental
 3D boundary recovery code and 3D refinement algorithm; better adaptive
 visualization of quads and hexahedra; fixed several regressions introduced in
