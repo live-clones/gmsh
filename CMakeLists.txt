@@ -1823,8 +1823,7 @@ if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
   if(PACKAGER STREQUAL "geuzaine")
     set(CODESIGN "codesign --force --verify --verbose --sign
         \"Developer ID Application: Christophe Geuzaine\"")
-    set(APPVER ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION})
-    set(APPDIR _CPack_Packages/Darwin/Bundle/gmsh-${APPVER}-MacOSX/Gmsh.app)
+    set(APPDIR _CPack_Packages/Darwin/Bundle/gmsh-${GMSH_VERSION}-MacOSX/Gmsh.app)
     install(CODE
             "execute_process(COMMAND ${CODESIGN} ${APPDIR}/Contents/MacOS/onelab.py)
              execute_process(COMMAND ${CODESIGN} ${APPDIR}/Contents/MacOS/gmsh)
