@@ -1551,11 +1551,11 @@ elseif(MSVC)
 endif(WIN32 AND NOT MSVC OR CYGWIN)
 
 # code signing
-if(APPLE AND PACKAGER STREQUAL "geuzaine")
-  set(CODESIGN codesign --force --verify --verbose --sign
-      "Developer ID Application: Christophe Geuzaine")
-  add_custom_command(TARGET gmsh POST_BUILD COMMAND ${CODESIGN} gmsh)
-endif(APPLE AND PACKAGER STREQUAL "geuzaine")
+#if(APPLE AND PACKAGER STREQUAL "geuzaine")
+#  set(CODESIGN codesign --force --verify --verbose --sign
+#      "Developer ID Application: Christophe Geuzaine")
+#  add_custom_command(TARGET gmsh POST_BUILD COMMAND ${CODESIGN} gmsh)
+#endif(APPLE AND PACKAGER STREQUAL "geuzaine")
 
 # parser target
 find_program(BISON bison)
