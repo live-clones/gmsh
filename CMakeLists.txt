@@ -1550,13 +1550,6 @@ elseif(MSVC)
     "/STACK:16777216 /SAFESEH:NO")
 endif(WIN32 AND NOT MSVC OR CYGWIN)
 
-# code signing
-#if(APPLE AND PACKAGER STREQUAL "geuzaine")
-#  set(CODESIGN codesign --force --verify --verbose --sign
-#      "Developer ID Application: Christophe Geuzaine")
-#  add_custom_command(TARGET gmsh POST_BUILD COMMAND ${CODESIGN} gmsh)
-#endif(APPLE AND PACKAGER STREQUAL "geuzaine")
-
 # parser target
 find_program(BISON bison)
 find_program(FLEX flex)
@@ -1827,6 +1820,16 @@ if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
           RENAME GmshSol.icns)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsPos.icns DESTINATION .
           RENAME GmshPos.icns)
+  if(PACKAGER STREQUAL "geuzaine")
+    set(CODESIGN "codesign --force --verify --verbose --sign
+        \"Developer ID Application: Christophe Geuzaine\"")
+    set(APPVER ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION})
+    set(APPDIR _CPack_Packages/Darwin/Bundle/gmsh-${APPVER}-MacOSX/Gmsh.app)
+    install(CODE
+            "execute_process(COMMAND ${CODESIGN} ${APPDIR}/Contents/MacOS/onelab.py)
+             execute_process(COMMAND ${CODESIGN} ${APPDIR}/Contents/MacOS/gmsh)
+             execute_process(COMMAND ${CODESIGN} ${APPDIR})")
+  endif(PACKAGER STREQUAL "geuzaine")
   set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
 elseif(WIN32 OR CYGWIN)
   set(CPACK_GENERATOR ZIP)
@@ -1848,7 +1851,7 @@ endif(ENABLE_WRAP_JAVA)
 include(CPack)
 
 if(NOT DISABLE_GMSH_TESTS)
-  #disabling tests is usefull when including this CMakeLists in an external project
+  # disabling tests is useful when including this CMakeLists in an external project
   include(CTest)
   file(GLOB_RECURSE TESTFILES
        tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo)
