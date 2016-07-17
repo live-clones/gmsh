@@ -1988,9 +1988,6 @@ void GModel::alignPeriodicBoundaries()
 
     if (src != NULL && src != tgt) {
 
-      Msg::Info("Aligning periodic edge connection %d-%d",
-                tgt->tag(),src->tag());
-
       // compose a search list on master edge
 
       std::map<MEdge,MLine*,Less_Edge> srcLines;
@@ -2022,9 +2019,9 @@ void GModel::alignPeriodicBoundaries()
           std::map<MVertex*,MVertex*>& v2v = tgt->correspondingVertices;
           std::map<MVertex*,MVertex*>::iterator srcIter = v2v.find(tgtVtx);
           if (srcIter == v2v.end()) {
-            Msg::Info("Cannot find periodic counterpart of vertex %d on edge %d"
-                         ", looking on entity %d of dimension %d",
-                         tgtVtx->getNum(),tgt->tag(),ge->tag(),ge->dim());
+            // Msg::Info("Cannot find periodic counterpart of vertex %d on edge %d"
+            //              ", looking on entity %d of dimension %d",
+            //              tgtVtx->getNum(),tgt->tag(),ge->tag(),ge->dim());
             srcIter = geV2v.find(tgtVtx);
             if (srcIter == geV2v.end()) {
               Msg::Error("Cannot find periodic counterpart of vertex %d on edge %d"
@@ -2067,8 +2064,6 @@ void GModel::alignPeriodicBoundaries()
     GFace *src = dynamic_cast<GFace*>(tgt->meshMaster());
     if (src != NULL && src != tgt) {
 
-      Msg::Info("Aligning periodic face connection %d - %d",tgt->tag(),src->tag());
-
       std::map<MFace,MElement*,Less_Face> srcElmts;
 
       for (unsigned int i=0;i<src->getNumMeshElements();++i) {
@@ -2097,10 +2092,6 @@ void GModel::alignPeriodicBoundaries()
         for (int iVtx=0;iVtx<nbVtcs;iVtx++) {
           MVertex* vtx = tgtElmt->getVertex(iVtx);
           GEntity* ge = vtx->onWhat();
-          if (ge->meshMaster() == ge) {
-            std::cout << "Point classified on " << ge->dim() << " " << ge->tag() << std::endl;
-            throw;
-          }
           
           std::map<MVertex*,MVertex*>& geV2v = ge->correspondingVertices;
           std::map<MVertex*,MVertex*>& v2v = tgt->correspondingVertices;

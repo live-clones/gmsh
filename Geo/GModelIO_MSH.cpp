@@ -113,38 +113,47 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm)
   if(fscanf(fp, "%d", &count) != 1) return;
   for(int i = 0; i < count; i++){
     int dim, slave, master;
+
     if(fscanf(fp, "%d %d %d", &dim, &slave, &master) != 3) continue;
+
     GEntity *s = 0, *m = 0;
     switch(dim){
     case 0 : s = gm->getVertexByTag(slave); m = gm->getVertexByTag(master); break;
     case 1 : s = gm->getEdgeByTag(slave);   m = gm->getEdgeByTag(master);   break;
     case 2 : s = gm->getFaceByTag(slave);   m = gm->getFaceByTag(master);   break;
     }
-    if (s && m){
-      char token[6];
-      fpos_t pos;
-      fgetpos(fp, &pos);
-      if(fscanf(fp, "%s", token) != 1) return;
-      if(strcmp(token, "Affine") == 0) {
-        std::vector<double> tfo(16);
-        for(int i = 0; i < 16; i++){
-          if(fscanf(fp, "%lf", &tfo[i]) != 1) return;
-        }
-        s->setMeshMaster(m, tfo);
+
+    // we need to continue parsing, otherwise we end up reading on the wrong position
+
+    bool completePer = s && m;
+    
+    char token[6];
+    fpos_t pos;
+    fgetpos(fp, &pos);
+    if(fscanf(fp, "%s", token) != 1) return;
+    if(strcmp(token, "Affine") == 0) {
+      std::vector<double> tfo(16);
+      for(int i = 0; i < 16; i++){
+        if(fscanf(fp, "%lf", &tfo[i]) != 1) return;
       }
-      else {
-        fsetpos(fp, &pos);
-        s->setMeshMaster(m);
-      }
-      int numv;
-      if(fscanf(fp, "%d", &numv) != 1) numv = 0;
-      for(int j = 0; j < numv; j++){
-        int v1, v2;
-        if(fscanf(fp, "%d %d", &v1, &v2) != 2) continue;
-        MVertex *mv1 = gm->getMeshVertexByTag(v1);
-        MVertex *mv2 = gm->getMeshVertexByTag(v2);
-        s->correspondingVertices[mv1] = mv2;
-      }
+      if (completePer) s->setMeshMaster(m, tfo);
+    }
+    else {
+      fsetpos(fp, &pos);
+      s->setMeshMaster(m);
+    }
+    int numv;
+    if(fscanf(fp, "%d", &numv) != 1) numv = 0;
+    for(int j = 0; j < numv; j++){
+      int v1, v2;
+      if(fscanf(fp, "%d %d", &v1, &v2) != 2) continue;
+      MVertex *mv1 = gm->getMeshVertexByTag(v1);
+      MVertex *mv2 = gm->getMeshVertexByTag(v2);
+      if (completePer) s->correspondingVertices[mv1] = mv2;
+    }
+    if (!completePer) {
+      if (!s) Msg::Warning("Could not find periodic slave entity %d of dimension %d",slave,dim);
+      if (!m) Msg::Warning("Could not find periodic master entity %d of dimension %d",master,dim);
     }
   }
 }
