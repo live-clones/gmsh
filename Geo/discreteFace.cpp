@@ -114,7 +114,7 @@ void discreteFace::createGeometry()
   checkAndFixOrientation();
   int order = 1;
   int nPart = 2;
-  double eta = .125;
+  double eta = 2*3.14/7;
 
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
 
@@ -125,7 +125,7 @@ void discreteFace::createGeometry()
   std::vector<triangulation*> toParam;
   std::vector<MElement*> tem(triangles.begin(),triangles.end());
 
-  triangulation* init = new triangulation(tem,this);
+  triangulation* init = new triangulation(-1, tem,this);
   toSplit.push(init);
   if((toSplit.top())->genus()!=0 || (toSplit.top())->aspectRatio() < eta || (toSplit.top())->seamPoint){
 
@@ -152,10 +152,19 @@ void discreteFace::createGeometry()
     toSplit.top()->idNum=id++;
   }
   updateTopology(toParam);
+
   for(unsigned int i=0; i<toParam.size(); i++){
+    printf("MAP(%d) : aspect ratio = %12.5E\n",i,toParam[i]->aspectRatio());
+    char name[256];
+    sprintf(name,"map%d.pos",i);
+    toParam[i]->print(name,i);
     fillHoles(toParam[i]);
+    sprintf(name,"mapFilled%d.pos",i);
+    toParam[i]->print(name,i);
+  }
+  for(unsigned int i=0; i<toParam.size(); i++){
     std::vector<MElement*> mytri = toParam[i]->tri;
-    discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));
+    discreteDiskFace *df = new discreteDiskFace (i,this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));    
     df->replaceEdges(toParam[i]->my_GEdges);
     _atlas.push_back(df);
   }
@@ -225,7 +234,7 @@ void discreteFace::printAtlasMesh(std::vector<MElement*> elm, int I)
 {
 
   std::map<MVertex*,int> mv2int;
-  char buffer[16];
+  char buffer[256];
   sprintf(buffer,"atlas_mesh%d.msh",I);
   FILE* pmesh = Fopen(buffer,"w");
 
@@ -540,7 +549,7 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
     }
   }// end for p
   for(int i=0; i<nPartitions; i++)// new triangulation of the connected parts
-    partition.push_back(new triangulation(elem[i],this));
+    partition.push_back(new triangulation(i, elem[i],this));
 
 
 

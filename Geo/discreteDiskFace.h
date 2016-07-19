@@ -48,6 +48,7 @@ class triangulation {
  public:
 
   // attributes
+  double maxD;
   double area;
   bool seamPoint;
   std::vector<MElement*> tri;// triangles
@@ -63,10 +64,12 @@ class triangulation {
 
   //---- methods
 
+  double geodesicDistance ();
+
   double aspectRatio()
   { 
     double L = bord.rbegin()->first;
-    return L*L / (area*M_PI);
+    return L / maxD;
   }
 
   int genus()
@@ -170,11 +173,22 @@ class triangulation {
     assignVert();
     assignEd2tri();
     assignBord();
+    maxD = geodesicDistance();
   }
 
+  void print (char *name, int elementary) const {
+    FILE *f = fopen (name,"w");
+    fprintf(f,"View \"\"{\n");
+    for (unsigned int i=0;i<tri.size();i++){
+      tri[i]->writePOS(f,true,false,false,false,false,false, 1.0, elementary);
+    }
+    fprintf(f,"};\n");
+    fclose(f);
+  }
+  
   triangulation() : gf(0) {}
-  triangulation(std::vector<MElement*> input, GFace* gface)
-    : tri(input), gf(gface) { assign(); }
+  triangulation(int id, std::vector<MElement*> input, GFace* gface)
+    : idNum(id), tri(input), gf(gface) { assign(); }
 };
 
 // triangles in the physical space xyz, with their parametric coordinates
@@ -196,7 +210,7 @@ class discreteDiskFace : public GFace {
   void printParamMesh();
 
  public:
-  discreteDiskFace(GFace *parent, triangulation* diskTriangulation,
+  discreteDiskFace(int id, GFace *parent, triangulation* diskTriangulation,
                    int p=1, std::vector<GFace*> *CAD = NULL);
   virtual ~discreteDiskFace();
   void getTriangleUV(const double u,const double v,discreteDiskFaceTriangle **mt,

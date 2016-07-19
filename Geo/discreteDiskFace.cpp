@@ -211,9 +211,9 @@ static bool orderVertices(const double &tot_length, const std::vector<MVertex*> 
 }
 
 /*BUILDER*/
-discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
+discreteDiskFace::discreteDiskFace(int id, GFace *gf, triangulation* diskTriangulation,
                                    int p, std::vector<GFace*> *CAD) :
-  GFace(gf->model(),123), _parent (gf), _ddft(NULL), oct(NULL)
+  GFace(gf->model(),id), _parent (gf), _ddft(NULL), oct(NULL)
 {
   initialTriangulation = diskTriangulation;
   std::vector<MElement*> mesh = diskTriangulation->tri;
@@ -273,7 +273,7 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
       discrete_triangles[i] = new MTriangle6 (vs);
         
   }// end loop over triangles
-  geoTriangulation = new triangulation(discrete_triangles,gf);
+  geoTriangulation = new triangulation(id,discrete_triangles,gf);
   allNodes = geoTriangulation->vert;
   _totLength = geoTriangulation->bord.rbegin()->first;
   _U0 = geoTriangulation->bord.rbegin()->second;
@@ -361,6 +361,7 @@ bool discreteDiskFace::parametrize(bool one2one) const
     }
   }
 
+  
   for(size_t i = 0; i < discrete_triangles.size(); ++i){
     MElement *t = discrete_triangles[i];
     for(int j=0; j<t->getNumVertices(); j++){
@@ -420,10 +421,12 @@ bool discreteDiskFace::parametrize(bool one2one) const
       itf->second[1]= value_V;
     }
   }
+  Msg::Debug("Systems saved");
 
   delete lsys_u;
   delete lsys_v;
 
+  Msg::Debug("Systems deleted");
   return true;
 }
 
@@ -464,7 +467,7 @@ bool discreteDiskFace::checkOrientationUV()
       p3[0] = ct->p[2].x(); p3[1] = ct->p[2].y();
       current = robustPredicates::orient2d(p1, p2, p3);
       if(initial*current < 0.) {
-	Msg::Error("Triangle UV %d has not the correct orientation",i+1);
+	Msg::Error("Map %d of the atlas : Triangle UV %d has not the correct orientation (area %22.15E)",tag(),i+1,current);
 	return false;
 	break;
       }
@@ -886,9 +889,9 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
 void discreteDiskFace::printParamMesh()
 {
   std::map<MVertex*,int> mv2int;
-  char buffer[16];
-  sprintf(buffer,"param_mesh%d.msh",initialTriangulation->idNum);
-  FILE* pmesh = Fopen(buffer,"w");
+  char buffer[256];
+  sprintf(buffer,"param_mesh%d.msh",tag());
+  FILE* pmesh = fopen(buffer,"w");
   int count = 1;
   fprintf(pmesh,"$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n%u\n",(unsigned int)allNodes.size());
   for(std::set<MVertex*>::iterator it = allNodes.begin(); it!=allNodes.end(); ++it){
@@ -911,5 +914,190 @@ void discreteDiskFace::printParamMesh()
   fprintf(pmesh,"$EndElements\n");
   fclose(pmesh);
 }
+
+// computes some kind of maximal distance in a mesh
+
+static void addTo (std::map<MVertex*, std::vector<MElement*> > &v2t, MVertex *v, MElement *t){
+  std::map<MVertex*, std::vector<MElement*> > :: iterator it = v2t.find(v);
+  if (it == v2t.end()){
+    std::vector<MElement*> tt; tt.push_back(t);
+    v2t[v] = tt;
+  }
+  else it->second.push_back(t);
+}
+static void update(std::map<MVertex*,double> &Close, MVertex *v2, double d){
+  std::map<MVertex*,double>::iterator it = Close.find(v2);
+  if (it == Close.end())Close[v2] = d;
+  else if (it->second > d) it->second=d;
+  //  printf("DISTANCE COMPUTED %lf\n",d);
+  
+}
+
+static MEdge getEdge (MElement *t, MVertex *v){
+  for (int i=0;i<3;i++)
+    if (t->getVertex(i) == v) return t->getEdge((i+1)%3);
+}
+
+static double computeDistanceLinePoint (MVertex *v1, MVertex *v2, MVertex *v){
+
+  SVector3 U  = v2->point() - v1->point(); 
+  SVector3 BA = v2->point() - v->point();
+
+  SVector3 xx = crossprod(U,BA);
+  return xx.norm() / U.norm();
+
+}
+
+static double computeDistance (MVertex *v1, double d1, MVertex *v2, double d2, MVertex *v){
+
+
+  //       o------------a
+  //
+  //
+  //    x
+  //
+  
+  // x^2 + y^2 = d_1^2
+  // (x-a)^2 + y^2 = d_2^2
+  // 2ax - a^2 = d_1^2 - d_2^2 
+
+  //  printf("%p %p %p\n",v1,v2,v);
+  
+  return std::min(d2+v2->distance(v),d1+v1->distance(v));
+
+  
+  
+  
+  double a = v2->distance(v1);
+
+  // center (seed) to compute the distance (put it down)
+  double x0 = 0.5*(d1*d1-d2*d2+a*a)/a;
+  double y0 = -sqrt ( d1*d1 - x0*x0);
+  //  printf("a %g x0 %g %g d %g %g\n",a,x0,y0,d1,d2);
+  
+  // compute coordinates of v in the same system
+  d1 = v1->distance(v);
+  d2 = v2->distance(v);
+  double xv = 0.5*(d1*d1-d2*d2+a*a)/a;
+  double yv = +sqrt ( d1*d1 - x0*x0);
+  return sqrt ((x0-xv)*(x0-xv)+(y0-yv)*(y0-yv));
+}
+
+std::map<MVertex*,double>::iterator closest (std::map<MVertex*,double> &Close){
+
+  std::map<MVertex*,double>::iterator itClose;
+  double c = 1.e22;
+  for (std::map<MVertex*,double>::iterator it = Close.begin(); it != Close.end(); ++it){
+    if (it->second < c){
+      c = it->second;
+      itClose = it;
+    }
+  }
+  return itClose;
+}
+
+
+
+double triangulation::geodesicDistance () {
+  if (bord.empty())return 1.e22;
+  std::map<MVertex*, std::vector<MElement*> > v2t;
+  for (size_t i=0;i<tri.size();++i){
+    addTo (v2t, tri[i]->getVertex(0),tri[i]);
+    addTo (v2t, tri[i]->getVertex(1),tri[i]);
+    addTo (v2t, tri[i]->getVertex(2),tri[i]);
+  }
+
+  //  printf("computing geodesic distance with %d triangles and %d vertcie\n",
+  //	 tri.size(),v2t.size());
+  
+  std::map<MVertex*,double> Fixed;
+  std::map<MVertex*,double> Close;
+  
+  unsigned int N = bord.rbegin()->second.size() ;
+  for (unsigned int i = 0; i< N ; i++)
+    Fixed[bord.rbegin()->second[i]]=0.0;
+
+  //  printf("starting with %d vertices on the boundary\n",Fixed.size());
+  
+  for (size_t i=0;i<tri.size();++i){
+    MVertex *v0 = tri[i]->getVertex(0);
+    MVertex *v1 = tri[i]->getVertex(1);
+    MVertex *v2 = tri[i]->getVertex(2);
+
+    std::map<MVertex*,double>::iterator it0 = Fixed.find(v0);
+    std::map<MVertex*,double>::iterator it1 = Fixed.find(v1);
+    std::map<MVertex*,double>::iterator it2 = Fixed.find(v2);
+
+    if (it0 != Fixed.end() && it1 != Fixed.end() && it2 == Fixed.end()){
+      //double d = computeDistanceLinePoint (v0,v1,v2);
+      double d = computeDistance (v0,0.0,v1,0.0,v2);
+      update(Close,v2,d);
+    }
+    else if (it0 != Fixed.end() && it2 != Fixed.end() && it1 == Fixed.end()){
+      //double d = computeDistanceLinePoint (v0,v2,v1);
+      double d = computeDistance (v0,0.0,v2,0.0,v1);
+      update(Close,v1,d);
+    }
+    else if (it2 != Fixed.end() && it1 != Fixed.end() && it0 == Fixed.end()){
+      //double d = computeDistanceLinePoint (v2,v1,v0);
+      double d = computeDistance (v2,0.0,v1,0.0,v0);
+      update(Close,v0,d);
+    }            
+  }  
+
+  //  printf("starting with %d vertices on the closed set\n",Close.size());
+  double CLOSEST = 0.0;
+  while(1){
+    if (Close.empty())break;
+    std::map<MVertex*,double>::iterator it = closest (Close);
+    CLOSEST = it->second;
+    //    printf ("CLOSEST = %lf\n",it->second);
+    Fixed[it->first]=it->second;
+    Close.erase(it);
+    std::vector<MElement*> &ts = v2t[it->first];
+    //    printf("%d elements around\n",ts.size());
+
+    for (unsigned int i=0;i<ts.size();i++){
+      MEdge ed = getEdge (ts[i],it->first);
+      std::map<MVertex*,double>::iterator it0 = Fixed.find(ed.getVertex(0));
+      std::map<MVertex*,double>::iterator it1 = Fixed.find(ed.getVertex(1));
+      //      printf("coucou %p %p\n",ed.getVertex(0),ed.getVertex(1));
+      if (it0 != Fixed.end() && it1 == Fixed.end()){
+	double d = computeDistance (it->first,it->second,it0->first,it0->second,ed.getVertex(1));
+	//	printf("neigh %d fixed 0 --> d = %g\n",i,d);
+	update(Close, ed.getVertex(1), d);
+      }
+      else if (it1 != Fixed.end() && it0 == Fixed.end()){
+	double d = computeDistance (it->first,it->second,it1->first,it1->second,ed.getVertex(0));
+	//	printf("neigh %d fixed 1 --> d = %g\n",i,d);
+	update(Close, ed.getVertex(0), d);
+      }            
+    }
+    //    printf("%d %d\n",Fixed.size(),v2t.size());
+    if (Fixed.size() == v2t.size())break;
+  }
+
+  char name[256];
+  sprintf(name,"geodesicDistance%d.pos",idNum);
+  FILE *f = fopen(name,"w");
+  fprintf(f,"View \"\"{\n");
+  for (unsigned int i=0;i<tri.size();i++){
+    double d0 = Fixed[tri[i]->getVertex(0)];
+    double d1 = Fixed[tri[i]->getVertex(1)];
+    double d2 = Fixed[tri[i]->getVertex(2)];
+    fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+	    tri[i]->getVertex(0)->x(),tri[i]->getVertex(0)->y(),tri[i]->getVertex(0)->z(),
+	    tri[i]->getVertex(1)->x(),tri[i]->getVertex(1)->y(),tri[i]->getVertex(1)->z(),
+	    tri[i]->getVertex(2)->x(),tri[i]->getVertex(2)->y(),tri[i]->getVertex(2)->z(),d0,d1,d2);
+    
+  }
+  fprintf(f,"};\n");
+  fclose(f);
+
+  
+  return CLOSEST;
+  
+}
+
 
 #endif
