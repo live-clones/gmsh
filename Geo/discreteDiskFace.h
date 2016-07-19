@@ -23,6 +23,20 @@
 #include "PView.h"
 #include "robustPredicates.h"
 
+inline double tri3Darea(MVertex* mv0, MVertex* mv1, MVertex* mv2)
+{
+
+  SVector3 v1(mv1->x()-mv0->x(),mv1->y()-mv0->y(),mv1->z()-mv0->z());
+  SVector3 v2(mv2->x()-mv0->x(),mv2->y()-mv0->y(),mv2->z()-mv0->z());
+  
+  SVector3 n(v1.y()*v2.z()-v2.y()*v1.z(),v2.x()*v1.z()-v1.x()*v2.z(),v1.x()*v2.y()-v2.x()*v1.y());
+
+  
+  return .5*n.norm();
+
+}
+
+
 inline int nodeLocalNum(MElement* e, MVertex* v)
 {
   for(int i=0; i<e->getNumVertices(); i++)
@@ -39,6 +53,15 @@ inline int edgeLocalNum(MElement* e, MEdge ed)
   return -1;
 }
 
+inline MEdge maxEdge(MElement* e)
+{
+  MEdge maxEd = e->getEdge(0);
+  for(int i=0; i<e->getNumEdges(); i++)
+    if (maxEd.length() < e->getEdge(i).length())
+      maxEd = e->getEdge(i);
+  return maxEd;
+}
+
 class ANNkd_tree;
 class Octree;
 class GRbf;
@@ -48,22 +71,23 @@ class triangulation {
  public:
 
   // attributes
+  int idNum; // number of identification, for hashing purposes
+  std::vector<MElement*> tri;// trianglse
+  GFace* gf;
+
   double maxD;
   double area;
   bool seamPoint;
-  std::vector<MElement*> tri;// triangles
   std::set<MVertex*> vert;// nodes
   // edge to 1 or 2 triangle(s), their num into the vector of MElement*
   std::map<MEdge,std::vector<int>,Less_Edge> ed2tri;
   std::map<double,std::vector<MVertex*> > bord; //border(s)
   std::set<MEdge,Less_Edge> borderEdg; // border edges
-  GFace *gf;
-  int idNum; // number of identification, for hashing purposes
-
+ 
   std::list<GEdge*> my_GEdges;
+  std::set<int> fillingHoles;
 
   //---- methods
-
   double geodesicDistance ();
 
   double aspectRatio()

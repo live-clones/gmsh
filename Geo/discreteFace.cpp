@@ -20,7 +20,6 @@ extern "C" {
 }
 #endif
 
-int cp=0;
 
 discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 {
@@ -216,6 +215,7 @@ void discreteFace::gatherMeshes()
 
 void discreteFace::mesh(bool verbose)
 {
+  
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER) && defined(HAVE_MESH)
   if (!CTX::instance()->meshDiscrete) return;
   for (unsigned int i=0;i<_atlas.size();i++){
@@ -707,20 +707,312 @@ void discreteFace::fillHoles(triangulation* trian)
     this->mesh_vertices.push_back(center);
     center->setEntity(this);
     trian->vert.insert(center);
-    for(unsigned int j=1; j<mv.size(); j++)
+    for(unsigned int j=1; j<mv.size(); j++){
+      if(std::abs(tri3Darea(mv[j],mv[j-1],center))<1e-15){
+	MVertex temp(center->x()+mv[j]->x()/mv.size(),center->y()+mv[j-1]->y()/mv.size(),(1+1./mv.size())*center->z());
+	*center = temp;
+	center->setEntity(this);
+      }
       addTriangle(trian,new MTriangle(mv[j],mv[j-1],center));
+    }
+    if(std::abs(tri3Darea(mv[0],mv[mv.size()-1],center))<1e-15){
+      MVertex temp(center->x()+mv[0]->x()/mv.size(),center->y()+mv[mv.size()-1]->y()/mv.size(),(1+1./mv.size())*center->z());
+      *center = temp;
+      center->setEntity(this);
+    }
     addTriangle(trian,new MTriangle(mv[0],mv[mv.size()-1],center));
   }
 #endif
 }
 
+void discreteFace::bisectionEdg(triangulation* trian)
+{
+  std::map<MEdge,double,Less_Edge> ed2angle;
+  std::map<double,std::vector<MEdge> > ed2refine;
+  /*
+    checkEdges
+    for each ed in ed2refine
+    ...while ed exists
+    ......terminal from lepp(ed)
+    ......refine terminal
+    ......update ed2refine
+  */
+  int count = 1;
+  checkEdgesBis(trian,ed2refine,ed2angle);
+  while(!ed2refine.empty()){
+    //for(it = ed2refine.rbegin(); it != ed2refine.rend(); ++it){
+    std::map<double,std::vector<MEdge> >::reverse_iterator it = ed2refine.rbegin();
+    double key = it->first;
+    std::vector<MEdge> & ved = it->second;
+    while(!ved.empty()){
+      //for(unsigned int i=0; i<ved.size(); i++){
+      MEdge ed = ved[0];
+      while(ed2angle.find(ed) != ed2angle.end()){
+	MEdge terminal = lepp(trian,ed);
+	ed2angle.erase(terminal);
+	std::vector<MEdge> ed2update;
+	refineTriangles(trian,terminal,ed2update);
+	updateEd2refineBis(trian,ed2angle,ed2update,ed2refine);
+	printAtlasMesh(trian->tri,-count++);	
+      }// end while exists
+      ed2refine[key].erase(ved.begin());
+      ved = ed2refine[key];
+    }// end for unsigned
+    ed2refine.erase(key);
+  }// end for it  
+  
+}
+
+bool discreteFace::checkEdges(triangulation* trian,std::map<double,std::vector<MEdge> >& ed2refine,std::map<MEdge,double,Less_Edge>& ed2angle)
+{
+  
+  for(unsigned int i=0; i<trian->tri.size(); i++){
+    MElement* t = trian->tri[i];
+    std::vector<MEdge> eds;
+    eds.push_back(t->getEdge(0));eds.push_back(t->getEdge(1));eds.push_back(t->getEdge(2));
+    for(int j=0; j<3; j++){
+      if(trian->ed2tri[eds[j]].size()>1){
+      MEdge ed1 = eds[j+1>2?j-2:j+1];      
+      MEdge ed2 = eds[j+2>2?j-1:j+2];
+      SVector3 v1(ed1.getVertex(0)->x()-ed1.getVertex(1)->x(),
+		  ed1.getVertex(0)->y()-ed1.getVertex(1)->y(),
+		  ed1.getVertex(0)->z()-ed1.getVertex(1)->z()); 
+      SVector3 v2(ed2.getVertex(1)->x()-ed2.getVertex(0)->x(),
+		  ed2.getVertex(1)->y()-ed2.getVertex(0)->y(),
+		  ed2.getVertex(1)->z()-ed2.getVertex(0)->z());
+      double dotp = dot(v1,v2);
+      double lp = ed1.length()*ed2.length();
+      std::map<MEdge,double,Less_Edge>::iterator check = ed2angle.find(eds[j]);
+      if(check!=ed2angle.end()){
+	ed2angle[eds[j]] += std::acos(dotp/lp);
+	if(ed2angle[eds[j]]>M_PI)
+	  ed2refine[eds[j].length()].push_back(eds[j]);
+	else
+	  ed2angle.erase(eds[j]);
+      }
+      else
+	  ed2angle[eds[j]] = std::acos(dotp/lp);
+      }//end if size()>1
+    }// end for j
+  }//end for tri  
+  return !(ed2refine.empty());
+}
+
+
+bool discreteFace::checkEdgesBis(triangulation* trian,std::map<double,std::vector<MEdge> >& ed2refine,std::map<MEdge,double,Less_Edge>& ed2angle)
+{
+  
+  for(unsigned int i=0; i<trian->tri.size(); i++){
+    MElement* t = trian->tri[i];
+    std::vector<MEdge> eds;
+    eds.push_back(t->getEdge(0));eds.push_back(t->getEdge(1));eds.push_back(t->getEdge(2));
+    for(int j=0; j<3; j++){
+      MEdge ed1 = eds[j+1>2?j-2:j+1];      
+      MEdge ed2 = eds[j+2>2?j-1:j+2];
+      SVector3 v1(ed1.getVertex(0)->x()-ed1.getVertex(1)->x(),
+		  ed1.getVertex(0)->y()-ed1.getVertex(1)->y(),
+		  ed1.getVertex(0)->z()-ed1.getVertex(1)->z()); 
+      SVector3 v2(ed2.getVertex(1)->x()-ed2.getVertex(0)->x(),
+		  ed2.getVertex(1)->y()-ed2.getVertex(0)->y(),
+		  ed2.getVertex(1)->z()-ed2.getVertex(0)->z());
+      double dotp = dot(v1,v2);
+      double lp = ed1.length()*ed2.length();
+      std::map<MEdge,double,Less_Edge>::iterator check = ed2angle.find(eds[j]);
+      if(check==ed2angle.end()){
+	ed2angle[eds[j]] = std::acos(dotp/lp);
+	if(ed2angle[eds[j]]>M_PI/2.)
+	  ed2refine[eds[j].length()].push_back(eds[j]);
+	else
+	  ed2angle.erase(eds[j]);
+      }
+    }// end for j
+  }//end for tri  
+  return !(ed2refine.empty());
+}
+
+
+MEdge discreteFace::lepp(triangulation* trian,MEdge ed){  
+  std::vector<int> intri = trian->ed2tri[ed];
+  bool isTerminal = false;
+  while(intri.size()>1 && !isTerminal){
+    MEdge ed0 = maxEdge(trian->tri[intri[0]]);	
+    MEdge ed1 = maxEdge(trian->tri[intri[1]]);
+    if(ed != ed0){
+      ed = ed0;
+      intri = trian->ed2tri[ed];
+    }
+    else if(ed != ed1){
+      ed = ed1;
+      intri = trian->ed2tri[ed];
+    }
+    else isTerminal = true;
+  }// end while 
+  return ed;
+}
+
+void discreteFace::refineTriangles(triangulation* trian,MEdge ed,std::vector<MEdge>&ed2update){  
+
+  SPoint3 mid = ed.barycenter();
+  MVertex* mv = new MVertex(mid.x(),mid.y(),mid.z());  
+  trian->vert.insert(mv);
+
+  std::vector<int> t = trian->ed2tri[ed];
+
+  MTriangle *t00, *t01;
+  int ie;
+
+  ie = edgeLocalNum(trian->tri[t[0]],ed);
+  t00 = new MTriangle(trian->tri[t[0]]->getEdge(ie+1 > 2 ? ie-2 : ie+1).getVertex(0),trian->tri[t[0]]->getEdge(ie+1 > 2 ? ie-2 : ie+1).getVertex(1),mv);
+  t01 = new MTriangle(trian->tri[t[0]]->getEdge(ie+2 > 2 ? ie-1 : ie+2).getVertex(0),trian->tri[t[0]]->getEdge(ie+2 > 2 ? ie-1 : ie+2).getVertex(1),mv);
+
+  trian->tri[t[0]] = t00;
+  trian->ed2tri[t00->getEdge(2)] = trian->ed2tri[ed]; 
+  trian->ed2tri[t00->getEdge(1)].push_back(t[0]);
+  trian->ed2tri[t00->getEdge(1)].push_back(trian->tri.size());
+
+  std::vector<int> oldtri = trian->ed2tri[ed];
+  oldtri[0] == t[0] ? oldtri[0] = trian->tri.size() : oldtri[1] = trian->tri.size();
+  trian->ed2tri[t01->getEdge(1)] = oldtri;
+  oldtri = trian->ed2tri[t01->getEdge(0)];
+  oldtri[0] == t[0]  ? oldtri[0] = trian->tri.size() : oldtri[1] = trian->tri.size();
+  trian->ed2tri[t01->getEdge(0)] = oldtri;
+  trian->tri.push_back(t01);  
+
+  ed2update.push_back(t00->getEdge(0));
+  ed2update.push_back(t01->getEdge(0));
+
+  if(t.size()>1){
+
+    ed2update.push_back(t01->getEdge(1));
+    ed2update.push_back(t00->getEdge(2));
+    MTriangle  *t10, *t11;
+
+    this->mesh_vertices.push_back(mv);
+    mv->setEntity(this);
+
+    ie = edgeLocalNum(trian->tri[t[1]],ed);
+    t11 = new MTriangle(trian->tri[t[1]]->getEdge(ie+1 > 2 ? ie-2 : ie+1).getVertex(0),trian->tri[t[1]]->getEdge(ie+1 > 2 ? ie-2 : ie+1).getVertex(1),mv);
+    t10 = new MTriangle(trian->tri[t[1]]->getEdge(ie+2 > 2 ? ie-1 : ie+2).getVertex(0),trian->tri[t[1]]->getEdge(ie+2 > 2 ? ie-1 : ie+2).getVertex(1),mv);
+
+    trian->tri[t[1]] = t10;
+    trian->ed2tri[t10->getEdge(1)] = trian->ed2tri[ed];
+    trian->ed2tri[t10->getEdge(2)].push_back(t[1]);
+    trian->ed2tri[t10->getEdge(2)].push_back(trian->tri.size());
+
+    oldtri = trian->ed2tri[t11->getEdge(2)];
+    oldtri[0] == t[1] ? oldtri[0] = trian->tri.size() : oldtri[1] = trian->tri.size();
+    trian->ed2tri[t11->getEdge(2)] = oldtri;
+    oldtri = trian->ed2tri[t11->getEdge(0)];
+    oldtri[0] == t[1]  ? oldtri[0] = trian->tri.size() : oldtri[1] = trian->tri.size();
+    trian->ed2tri[t11->getEdge(0)] = oldtri;
+    trian->tri.push_back(t11);  
+    
+    ed2update.push_back(t10->getEdge(0));
+    ed2update.push_back(t11->getEdge(0));
+
+  }
+  else{
+    std::list<GEdge*> gGEdges = trian->my_GEdges;
+    std::list<GEdge*>::iterator oe = gGEdges.begin();
+    while(oe != gGEdges.end() && ed.getVertex(0)->onWhat() != *oe && ed.getVertex(0)->onWhat() != (*oe)->getBeginVertex())
+	    ++oe;
+    GEdge* ged = *oe;
+    std::vector<MLine*> mlines = ged->lines;
+    std::vector<MLine*> conca;
+    for (unsigned int i=0; i<mlines.size(); i++){
+      if ((mlines[i]->getVertex(0)==ed.getVertex(0)&&mlines[i]->getVertex(1)==ed.getVertex(1))||
+	  (mlines[i]->getVertex(1)==ed.getVertex(0)&&mlines[i]->getVertex(0)==ed.getVertex(1))){
+	conca.push_back(new MLine(mlines[i]->getVertex(0),mv));
+	conca.push_back(new MLine(mv,mlines[i]->getVertex(1)));// delete MLine ?
+      }
+      else conca.push_back(mlines[i]);      
+    }
+    discreteEdge* de = new discreteEdge(this->model(),NEWLINE(),ged->getBeginVertex(),ged->getEndVertex());
+    setupDiscreteEdge(de,conca,NULL);
+    trian->my_GEdges.remove(ged);
+    ged->lines.clear();
+    ged->mesh_vertices.clear();
+    trian->my_GEdges.push_back(de);
+    trian->borderEdg.erase(ed);
+    trian->borderEdg.insert(t00->getEdge(2));
+    trian->borderEdg.insert(t01->getEdge(1));
+  }    
+}
+
+void discreteFace::updateEd2refine(triangulation* trian,std::map<MEdge,double,Less_Edge>&ed2angle,std::vector<MEdge>&ed2update,std::map<double,std::vector<MEdge> >&ed2refine){
+
+  for(unsigned int i=0; i<ed2update.size(); i++){
+    MEdge current = ed2update[i];   
+    std::vector<int> intri = trian->ed2tri[current];
+    if(intri.size()>1 && ed2angle.find(current) == ed2angle.end() ){
+      ed2angle[current] = 0.;	
+      for(unsigned int j=0; j<intri.size(); j++){
+	MElement* tri = trian->tri[intri[j]];
+	int num = edgeLocalNum(tri,current);
+	MEdge ed1 = tri->getEdge(num+1>2?num-2:num+1);      
+	MEdge ed2 = tri->getEdge(num+2>2?num-1:num+2);
+	SVector3 v1(ed1.getVertex(0)->x()-ed1.getVertex(1)->x(),
+		    ed1.getVertex(0)->y()-ed1.getVertex(1)->y(),
+		    ed1.getVertex(0)->z()-ed1.getVertex(1)->z()); 
+	SVector3 v2(ed2.getVertex(1)->x()-ed2.getVertex(0)->x(),
+		    ed2.getVertex(1)->y()-ed2.getVertex(0)->y(),
+		    ed2.getVertex(1)->z()-ed2.getVertex(0)->z());
+	double dotp = dot(v1,v2);
+	double lp = ed1.length()*ed2.length();
+	if(ed2angle[current]==0.)
+	  ed2angle[current] = std::acos(dotp/lp);
+	else{
+	  ed2angle[current] += std::acos(dotp/lp);
+	  if(ed2angle[current] > M_PI)
+	    ed2refine[current.length()].push_back(current);
+	  else
+	    ed2angle.erase(current);	  
+	}
+      }//end for j
+    }
+  }// end for i
+
+}
+
+
+void discreteFace::updateEd2refineBis(triangulation* trian,std::map<MEdge,double,Less_Edge>&ed2angle,std::vector<MEdge>&ed2update,std::map<double,std::vector<MEdge> >&ed2refine){
+
+  for(unsigned int i=0; i<ed2update.size(); i++){
+    MEdge current = ed2update[i];   
+    std::vector<int> intri = trian->ed2tri[current];
+    for(unsigned int j=0; j<intri.size(); j++){
+      if(ed2angle.find(current) == ed2angle.end() ){	
+	MElement* tri = trian->tri[intri[j]];
+	int num = edgeLocalNum(tri,current);
+	MEdge ed1 = tri->getEdge(num+1>2?num-2:num+1);      
+	MEdge ed2 = tri->getEdge(num+2>2?num-1:num+2);
+	SVector3 v1(ed1.getVertex(0)->x()-ed1.getVertex(1)->x(),
+		    ed1.getVertex(0)->y()-ed1.getVertex(1)->y(),
+		    ed1.getVertex(0)->z()-ed1.getVertex(1)->z()); 
+	SVector3 v2(ed2.getVertex(1)->x()-ed2.getVertex(0)->x(),
+		    ed2.getVertex(1)->y()-ed2.getVertex(0)->y(),
+		    ed2.getVertex(1)->z()-ed2.getVertex(0)->z());
+	double dotp = dot(v1,v2);
+	double lp = ed1.length()*ed2.length();
+	ed2angle[current] = std::acos(dotp/lp);
+	if (ed2angle[current]>M_PI/2.)
+	  ed2refine[current.length()].push_back(current);
+	else
+	  ed2angle.erase(current);
+      }//end for j
+    }    
+  }// end for i
+
+}
+
 void discreteFace::addTriangle(triangulation* trian, MTriangle* t)
 {
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
-  // #mark quid borders ?
   for(int i=0; i<3; i++){
     MEdge ed = t->getEdge(i);
-    trian->ed2tri[ed].push_back(trian->tri.size());
+    int n = trian->tri.size();
+    trian->fillingHoles.insert(n);
+    trian->ed2tri[ed].push_back(n);
   }
   trian->tri.push_back(t);
 #endif

@@ -274,12 +274,14 @@ discreteDiskFace::discreteDiskFace(int id, GFace *gf, triangulation* diskTriangu
         
   }// end loop over triangles
   geoTriangulation = new triangulation(id,discrete_triangles,gf);
+  geoTriangulation->fillingHoles = diskTriangulation->fillingHoles;
   allNodes = geoTriangulation->vert;
   _totLength = geoTriangulation->bord.rbegin()->first;
   _U0 = geoTriangulation->bord.rbegin()->second;
   orderVertices(_totLength, _U0, _coords);
   parametrize(false);
   buildOct(CAD);
+  
   
   if (!checkOrientationUV()){
     Msg::Info("discreteDiskFace:: parametrization is not one-to-one; fixing "
@@ -312,21 +314,21 @@ void discreteDiskFace::buildOct(std::vector<GFace*> *CAD) const
   oct = Octree_Create(maxElePerBucket, origin, ssize, discreteDiskFaceBB,
 		      discreteDiskFaceCentroid, discreteDiskFaceInEle);
 
-  _ddft = new discreteDiskFaceTriangle[discrete_triangles.size()];
-
-  //  if (CAD) printf("------------->  %ld %ld\n",CAD->size(),discrete_triangles.size());
-
+  _ddft = new discreteDiskFaceTriangle[discrete_triangles.size()-geoTriangulation->fillingHoles.size()];
+  int c = 0;
   for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
-    MElement *t = discrete_triangles[i];
-    discreteDiskFaceTriangle* my_ddft = &_ddft[i];
-    my_ddft->p.resize(_N);
-    for(int io=0; io<_N; io++)
-      my_ddft->p[io] = coordinates[t->getVertex(io)];
+    if(geoTriangulation->fillingHoles.find(i)==geoTriangulation->fillingHoles.end()){
+      MElement *t = discrete_triangles[i];
+      discreteDiskFaceTriangle* my_ddft = &_ddft[c++];
+      my_ddft->p.resize(_N);
+      for(int io=0; io<_N; io++)
+	my_ddft->p[io] = coordinates[t->getVertex(io)];
 
-    my_ddft->gf = CAD ? (*CAD)[i] : _parent;
-    my_ddft->tri = t;
+      my_ddft->gf = CAD ? (*CAD)[i] : _parent;
+      my_ddft->tri = t;
 
-    Octree_Insert(my_ddft, oct);
+      Octree_Insert(my_ddft, oct);
+    }
   }
   Octree_Arrange(oct);
 }
@@ -460,7 +462,7 @@ bool discreteDiskFace::checkOrientationUV()
     double p3[2] = {ct->p[2].x(), ct->p[2].y()};
     initial = robustPredicates::orient2d(p1, p2, p3);
     unsigned int i=1;
-    for (; i<discrete_triangles.size(); i++){
+    for (; i<discrete_triangles.size()-geoTriangulation->fillingHoles.size(); i++){
       ct = &_ddft[i];
       p1[0] = ct->p[0].x(); p1[1] = ct->p[0].y();
       p2[0] = ct->p[1].x(); p2[1] = ct->p[1].y();
@@ -478,7 +480,7 @@ bool discreteDiskFace::checkOrientationUV()
     double min, max;
     std::vector<MVertex*> localVertices;
     localVertices.resize(_N);
-    for(unsigned int i=0; i<discrete_triangles.size(); i++){
+    for(unsigned int i=0; i<discrete_triangles.size()-geoTriangulation->fillingHoles.size(); i++){
       ct = &_ddft[i];
       for(int j=0; j<_N; j++)
 	localVertices[j] = new MVertex(ct->p[j].x(),ct->p[j].y(),0.);
@@ -689,7 +691,7 @@ void discreteDiskFace::putOnView(bool Xu, bool Ux)
       fprintf(UVy,"View \"y(U)\"{\n");
       fprintf(UVz,"View \"z(U)\"{\n");
     }
-    for (unsigned int i=0; i<discrete_triangles.size(); i++){
+    for (unsigned int i=0; i<discrete_triangles.size()-geoTriangulation->fillingHoles.size(); i++){
       discreteDiskFaceTriangle* my_ddft = &_ddft[i];
       if (_order == 1){
 	if(Xu){
@@ -787,7 +789,7 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
 {
   SVector3 n = crossprod(n1,n2);
   n.normalize();
-  for (int i=-1;i<(int)discrete_triangles.size();i++){
+  for (int i=-1;i<(int)(discrete_triangles.size()-geoTriangulation->fillingHoles.size());i++){
     discreteDiskFaceTriangle *ct = NULL;
     double U,V;
     if (i == -1) getTriangleUV(uv[0],uv[1], &ct, U,V);
@@ -938,6 +940,7 @@ static MEdge getEdge (MElement *t, MVertex *v){
     if (t->getVertex(i) == v) return t->getEdge((i+1)%3);
 }
 
+/* warning
 static double computeDistanceLinePoint (MVertex *v1, MVertex *v2, MVertex *v){
 
   SVector3 U  = v2->point() - v1->point(); 
@@ -947,7 +950,7 @@ static double computeDistanceLinePoint (MVertex *v1, MVertex *v2, MVertex *v){
   return xx.norm() / U.norm();
 
 }
-
+*/
 static double computeDistance (MVertex *v1, double d1, MVertex *v2, double d2, MVertex *v){
 
 
