@@ -153,12 +153,12 @@ void discreteFace::createGeometry()
   updateTopology(toParam);
 
   for(unsigned int i=0; i<toParam.size(); i++){
-    printf("MAP(%d) : aspect ratio = %12.5E\n",i,toParam[i]->aspectRatio());
+    //printf("MAP(%d) : aspect ratio = %12.5E\n",i,toParam[i]->aspectRatio());
     char name[256];
-    sprintf(name,"map%d.pos",i);
+    //sprintf(name,"map%d.pos",i);
     toParam[i]->print(name,i);
     fillHoles(toParam[i]);
-    sprintf(name,"mapFilled%d.pos",i);
+    //sprintf(name,"mapFilled%d.pos",i);
     toParam[i]->print(name,i);
   }
   for(unsigned int i=0; i<toParam.size(); i++){
@@ -695,32 +695,54 @@ void discreteFace::fillHoles(triangulation* trian)
   std::map<double,std::vector<MVertex*> >::reverse_iterator it = bords.rbegin();
   ++it;
   for(; it!=bords.rend(); ++it){
-    double x[3] = {0.,0.,0.};
+    SPoint3 x(0.,0.,0.);
     std::vector<MVertex*> mv = it->second;
     for(unsigned int j=0; j<mv.size(); j++){
-      x[0] += mv[j]->x();
-      x[1] += mv[j]->y();
-      x[2] += mv[j]->z();
-    }
-    x[0] /= mv.size(); x[1] /= mv.size(); x[2] /= mv.size();
-    MVertex* center = new MVertex(x[0],x[1],x[2]);
-    this->mesh_vertices.push_back(center);
-    center->setEntity(this);
-    trian->vert.insert(center);
-    for(unsigned int j=1; j<mv.size(); j++){
-      if(std::abs(tri3Darea(mv[j],mv[j-1],center))<1e-15){
-	MVertex temp(center->x()+mv[j]->x()/mv.size(),center->y()+mv[j-1]->y()/mv.size(),(1+1./mv.size())*center->z());
-	*center = temp;
-	center->setEntity(this);
+      SPoint3 v0, v1;
+      if(j==0){
+	SPoint3 v(mv[mv.size()-1]->x(),mv[mv.size()-1]->y(),mv[mv.size()-1]->z());
+	v0 = v;
+	SPoint3 v_(mv[j+1]->x(),mv[j+1]->y(),mv[j+1]->z());
+	v1 = v_;
       }
-      addTriangle(trian,new MTriangle(mv[j],mv[j-1],center));
+      else if (j==mv.size()-1){
+	SPoint3 v(mv[j-1]->x(),mv[j-1]->y(),mv[j-1]->z());
+	v0 = v;
+	SPoint3 v_(mv[0]->x(),mv[0]->y(),mv[0]->z());	
+	v1 = v_;
+      }
+      else{
+	SPoint3 v(mv[j-1]->x(),mv[j-1]->y(),mv[j-1]->z());
+	v0 = v;
+	SPoint3 v_(mv[j+1]->x(),mv[j+1]->y(),mv[j+1]->z());
+	v1 = v_;
+      }
+      SPoint3 vpp(mv[j]->x(),mv[j]->y(),mv[j]->z());
+      SVector3 v00(vpp,v0);
+      SVector3 v11(v1,vpp);
+      x += vpp*(norm(v00)+norm(v11));
     }
-    if(std::abs(tri3Darea(mv[0],mv[mv.size()-1],center))<1e-15){
-      MVertex temp(center->x()+mv[0]->x()/mv.size(),center->y()+mv[mv.size()-1]->y()/mv.size(),(1+1./mv.size())*center->z());
-      *center = temp;
-      center->setEntity(this);
+    x *= .5/it->first;
+    MVertex* center = new MVertex(x.x(),x.y(),x.z());
+    this->mesh_vertices.push_back(center);
+    trian->vert.insert(center);
+    SVector3 nmean(0.,0.,0.);
+    for(unsigned int j=1; j<mv.size(); j++){
+      addTriangle(trian,new MTriangle(mv[j],mv[j-1],center));
+      SVector3 temp0(center->x()-mv[j]->x(),center->y()-mv[j]->y(),center->z()-mv[j]->z());
+      SVector3 temp1(center->x()-mv[j-1]->x(),center->y()-mv[j-1]->y(),center->z()-mv[j-1]->z());
+      SVector3 temp(crossprod(temp0,temp1));
+      nmean += temp;
     }
     addTriangle(trian,new MTriangle(mv[0],mv[mv.size()-1],center));
+    SVector3 temp0(center->x()-mv[0]->x(),center->y()-mv[0]->y(),center->z()-mv[0]->z());
+    SVector3 temp1(center->x()-mv[mv.size()-1]->x(),center->y()-mv[mv.size()-1]->y(),center->z()-mv[mv.size()-1]->z());
+    SVector3 temp(crossprod(temp0,temp1));
+    nmean += temp;
+    nmean *= 1./(norm(nmean)*mv.size());
+    MVertex update(center->x()+nmean.x(),center->y()+nmean.y(),center->z()+nmean.z());
+    *center = update;
+    center->setEntity(this);
   }
 #endif
 }
