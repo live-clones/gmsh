@@ -687,7 +687,7 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
 #endif
 
 
-void meshOptimizer(GModel *gm, MeshOptParameters &par)
+void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par)
 {
 #if defined(HAVE_BFGS)
   if (par.nCurses)
@@ -708,9 +708,6 @@ void meshOptimizer(GModel *gm, MeshOptParameters &par)
     mvbold(false);
   }
   if (par.verbose > 0) Msg::StatusBar(true, "Optimizing mesh...");
-
-  std::vector<GEntity*> entities;
-  gm->getEntities(entities);
 
   vertElVecMap vertex2elements;
   elEntMap element2entity, bndEl2Ent;

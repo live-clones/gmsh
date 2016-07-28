@@ -790,7 +790,7 @@ int HOPatchDefParameters::inPatch(const SPoint3 &badBary,
 }
 
 
-void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
+void HighOrderMeshOptimizerNew(std::vector<GEntity*> &entities, OptHomParameters &p)
 {
   Msg::StatusBar(true, "Optimizing high order mesh...");
 
@@ -849,11 +849,19 @@ void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
     par.pass.push_back(maxCADDistPass);
   }
 
-  meshOptimizer(gm, par);
+  meshOptimizer(entities, par);
 
   p.CPU = par.CPU;
   p.minJac = minMaxJacBarFunc.getMin();
   p.maxJac = minMaxJacBarFunc.getMax();
 
   Msg::StatusBar(true, "Done optimizing high order mesh (%g s)", p.CPU);
+}
+
+
+void HighOrderMeshOptimizerNew(GModel *gm, OptHomParameters &p)
+{
+  std::vector<GEntity*> entities;
+  gm->getEntities(entities);
+  HighOrderMeshOptimizerNew(entities, p);
 }

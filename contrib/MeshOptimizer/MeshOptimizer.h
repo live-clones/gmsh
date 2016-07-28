@@ -31,11 +31,11 @@
 #define _MESHOPTIMIZER_H_
 
 
-class GModel;
+class GEntity;
 class MeshOptParameters;
 
 
-void meshOptimizer(GModel *gm, MeshOptParameters &par);
+void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par);
 
 
 #endif

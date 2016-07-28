@@ -4,6 +4,7 @@
 #include "GEntity.h"
 #include "GFace.h"
 #include "GRegion.h"
+#include "GModel.h"
 #include "MElement.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -117,7 +118,7 @@ int QualPatchDefParameters::inPatch(const SPoint3 &badBary, double limDist,
 }
 
 
-void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
+void MeshQualityOptimizer(std::vector<GEntity*> &entities, MeshQualOptParameters &p)
 {
   Msg::StatusBar(true, "Optimizing mesh quality...");
 
@@ -160,7 +161,7 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
     par.pass.push_back(minInvCondNumPass);
   }
 
-  meshOptimizer(gm, par);
+  meshOptimizer(entities, par);
 
   p.CPU = par.CPU;
   if (p.onlyValidity) {
@@ -171,4 +172,12 @@ void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
     p.minInvCondNum = minInvCondNumBarFunc.getMin();
     p.maxInvCondNum = minInvCondNumBarFunc.getMax();
   }
+}
+
+
+void MeshQualityOptimizer(GModel *gm, MeshQualOptParameters &p)
+{
+  std::vector<GEntity*> entities;
+  gm->getEntities(entities);
+  MeshQualityOptimizer(entities, p);
 }
