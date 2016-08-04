@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 //
-// Contributed by Matti Pellikka <matti.pellikka@microsoft.com>.
+// Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
 
 #ifndef _HOMOLOGY_H_
 #define _HOMOLOGY_H_

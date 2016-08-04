@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 //
-// Contributed by Matti Pellikka <matti.pellikka@microsoft.com>.
+// Contributed by Matti Pellikka <matti.pellikka@gmail.com>.
 
 #include "Homology.h"
 
