@@ -22,20 +22,7 @@
 #include "meshGFaceOptimize.h"
 #include "PView.h"
 #include "robustPredicates.h"
-
-inline double tri3Darea(MVertex* mv0, MVertex* mv1, MVertex* mv2)
-{
-
-  SVector3 v1(mv1->x()-mv0->x(),mv1->y()-mv0->y(),mv1->z()-mv0->z());
-  SVector3 v2(mv2->x()-mv0->x(),mv2->y()-mv0->y(),mv2->z()-mv0->z());
-  
-  SVector3 n(v1.y()*v2.z()-v2.y()*v1.z(),v2.x()*v1.z()-v1.x()*v2.z(),v1.x()*v2.y()-v2.x()*v1.y());
-
-  
-  return .5*n.norm();
-
-}
-
+#include "MLine.h"
 
 inline int nodeLocalNum(MElement* e, MVertex* v)
 {
@@ -231,6 +218,7 @@ class discreteDiskFace : public GFace {
   bool parametrize(bool one2one = false) const;
   void putOnView(bool,bool);
   bool checkOrientationUV();
+  void optimize();
   void printParamMesh();
 
  public:
@@ -274,6 +262,7 @@ class discreteDiskFace : public GFace {
   mutable discreteDiskFaceTriangle *_ddft;
   mutable Octree *oct;
   mutable std::vector<double> _coords;
+  
 };
 
 #endif

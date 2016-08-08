@@ -111,7 +111,7 @@ void discreteFace::secondDer(const SPoint2 &param,
 void discreteFace::createGeometry()
 {
   checkAndFixOrientation();
-  int order = 1;
+  int order = 2;
   int nPart = 2;
   double eta = 2*3.14/7;
 
@@ -154,12 +154,12 @@ void discreteFace::createGeometry()
 
   for(unsigned int i=0; i<toParam.size(); i++){
     //printf("MAP(%d) : aspect ratio = %12.5E\n",i,toParam[i]->aspectRatio());
-    char name[256];
+    //char name[256];
     //sprintf(name,"map%d.pos",i);
-    toParam[i]->print(name,i);
+    //toParam[i]->print(name,i);
     fillHoles(toParam[i]);
     //sprintf(name,"mapFilled%d.pos",i);
-    toParam[i]->print(name,i);
+    //toParam[i]->print(name,i);
   }
   for(unsigned int i=0; i<toParam.size(); i++){
     std::vector<MElement*> mytri = toParam[i]->tri;
@@ -167,6 +167,7 @@ void discreteFace::createGeometry()
     df->replaceEdges(toParam[i]->my_GEdges);
     _atlas.push_back(df);
   }
+
 #endif
 }
 
@@ -215,7 +216,6 @@ void discreteFace::gatherMeshes()
 
 void discreteFace::mesh(bool verbose)
 {
-  
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER) && defined(HAVE_MESH)
   if (!CTX::instance()->meshDiscrete) return;
   for (unsigned int i=0;i<_atlas.size();i++){

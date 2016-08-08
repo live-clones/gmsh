@@ -26,6 +26,8 @@
 #include "convexCombinationTerm.h"  // #FIXME
 
 #include "qualityMeasuresJacobian.h" // #temporary?
+#include "OptHomRun.h"
+#include "MeshQualityOptimizer.h"
 
 static inline void functionShapes(int p, double Xi[2], double* phi)
 {
@@ -286,13 +288,17 @@ discreteDiskFace::discreteDiskFace(int id, GFace *gf, triangulation* diskTriangu
   if (!checkOrientationUV()){
     Msg::Info("discreteDiskFace:: parametrization is not one-to-one; fixing "
               "the discrete system.");
-    parametrize(true);
+
+    //parametrize(true);
+    //buildOct(CAD); 
+    optimize();
     buildOct(CAD);    
-  }
-  
+    
+    }
   putOnView(true,false);
   printParamMesh();
   if(!checkOrientationUV()) Msg::Fatal("discreteDiskFace:: failing to fix the discrete system");
+  else Msg::Info("Parameterization done :-)");
 }
 /*end BUILDER*/
 
@@ -495,6 +501,87 @@ bool discreteDiskFace::checkOrientationUV()
     }
     return true;
   }
+}
+
+
+void discreteDiskFace::optimize(){
+
+  // parameters for mesh optimization
+  // -- high order
+  OptHomParameters optParams;
+  optParams.dim = 2;
+  optParams.optPassMax = 10;
+  optParams.TMAX = 300;
+  optParams.fixBndNodes = true;
+  optParams.strategy = 1;
+  // -- linear
+  MeshQualOptParameters opt;
+  opt.dim = 2;
+  opt.fixBndNodes = true;
+
+  //creating the "geometry" of the parametrization, and its corresponding mesh
+  // -- generation of parametric nodes
+  std::map<SPoint3,MVertex*> sp2mv;
+  std::vector<MElement*> paramTriangles;
+  for(std::map<MVertex*,SPoint3>::iterator it=coordinates.begin(); it!= coordinates.end(); ++it)
+    sp2mv[it->second] = new MVertex(it->second.x(),it->second.y(),0.);
+  // -- generation of parametric triangles    
+  paramTriangles.resize(discrete_triangles.size() - geoTriangulation->fillingHoles.size());
+  for(unsigned int i=0; i<discrete_triangles.size() -geoTriangulation->fillingHoles.size(); i++){
+    discreteDiskFaceTriangle* ct = &_ddft[i];
+    std::vector<MVertex*> mv;
+    mv.resize(ct->tri->getNumVertices());
+    for (int j=0; j<ct->tri->getNumVertices(); j++)
+      mv[j] = sp2mv[ct->p[j]];    
+    if(_order==1)
+      paramTriangles[i] = new MTriangle(mv);
+    else
+      paramTriangles[i] = new MTriangle6(mv);
+  }
+  // -- generation of the parametric topology #mark what about the GFace for the GModel ?
+  std::map<int,std::vector<MElement*> > e2e;
+  e2e[0] = paramTriangles;
+  std::vector<int> v;
+  v.push_back(0);
+  std::map<int,std::vector<int> > e2p;
+  e2p[0] = v;
+  GModel* paramDisk = GModel::createGModel(e2e,e2p);
+  discreteVertex dv(paramDisk,NEWPOINT());
+  dv.mesh_vertices.push_back(sp2mv[coordinates[_U0[0]]]);
+  sp2mv[coordinates[_U0[0]]]->setEntity(&dv);
+  paramDisk->add(&dv);
+  discreteEdge de(paramDisk,NEWLINE(),&dv,&dv);
+  paramDisk->add(&de);
+  for(unsigned int i=1; i<_U0.size(); i++){
+    sp2mv[coordinates[_U0[i]]]->setEntity(&de);
+    de.mesh_vertices.push_back(sp2mv[coordinates[_U0[i]]]);
+    de.lines.push_back(new MLine(sp2mv[coordinates[_U0[i-1]]],sp2mv[coordinates[_U0[i]]]));
+  }
+  de.createGeometry();
+
+  
+  // optimization
+  if(_order >1)
+    HighOrderMeshOptimizer(paramDisk, optParams);
+  else
+    MeshQualityOptimizer(paramDisk,opt);
+
+  // update the parametrization
+  paramTriangles = e2e[0];
+  for(unsigned int i=0; i< paramTriangles.size(); i++){
+    discreteDiskFaceTriangle* ct = &_ddft[i];
+    MElement* tri = paramTriangles[i];
+    for(int j=0; j<ct->tri->getNumVertices(); j++){
+      MVertex* mv = tri->getVertex(j);
+      SPoint3 p(mv->x(), mv->y(), 0);
+      coordinates[ct->tri->getVertex(j)] = p;
+      ct->p[j] = p;
+    }
+  }
+
+  // cleaning
+  delete paramDisk;
+  
 }
 
 // (u;v) |-> < (x;y;z); GFace; (u;v) >
@@ -1010,7 +1097,7 @@ double triangulation::geodesicDistance () {
     addTo (v2t, tri[i]->getVertex(2),tri[i]);
   }
 
-  //  printf("computing geodesic distance with %d triangles and %d vertcie\n",
+  //  printf("computing geodesic distance with %d triangles and %d vertices\n",
   //	 tri.size(),v2t.size());
   
   std::map<MVertex*,double> Fixed;
