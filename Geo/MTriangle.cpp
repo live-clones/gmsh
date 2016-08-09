@@ -269,19 +269,23 @@ void MTriangle::reorient(int rot,bool swap) {
   
   MVertex* tmp[3];
   std::memcpy(tmp,_v,3*sizeof(MVertex*));
-  if (swap) for (int i=0;i<3;i++) _v[i] = tmp[(6-i-rot)%3];
+  if (swap) for (int i=0;i<3;i++) _v[i] = tmp[(3-i+rot)%3];
   else      for (int i=0;i<3;i++) _v[i] = tmp[(3+i-rot)%3];
 }
 
-void MTriangle6::reorient(int rot, bool swap) {
+#include "HighOrder.h"
 
+void MTriangle6::reorient(int rot, bool swap) {
+  
+  Msg::Info("Reorienting triangle 6 with rot %d and swap %d",
+            rot,swap ? 1:0);
   if (rot == 0 && !swap) return;
 
   MTriangle::reorient(rot,swap);
   MVertex* tmp[3];
   std::memcpy(tmp,_vs,3*sizeof(MVertex*));
-  if (swap) for (int i=0;i<3;i++) _vs[i] = tmp[(7-i-rot)%3];
-  else      for (int i=0;i<3;i++) _vs[i] = tmp[(3+i-rot)%3];
+  if (swap) for (int i=0;i<3;i++) _vs[i] = tmp[(5+rot-i)%3];
+  else      for (int i=0;i<3;i++) _vs[i] = tmp[(3-rot+i)%3];
 }
 
 void MTriangleN::reorient(int rot, bool swap) {

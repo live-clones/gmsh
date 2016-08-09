@@ -331,7 +331,7 @@ double MQuadrangle::getInnerRadius()
 
 void MQuadrangle::reorient(int rot, bool swap) {
   MVertex* tmp[4];
-  if (swap) for (int i=0;i<4;i++) tmp[i] = _v[(8-i-rot)%4];
+  if (swap) for (int i=0;i<4;i++) tmp[i] = _v[(4-i+rot)%4];
   else      for (int i=0;i<4;i++) tmp[i] = _v[(4+i-rot)%4];
   std::memcpy(_v,tmp,4*sizeof(MVertex*));
 }
@@ -342,7 +342,7 @@ void MQuadrangle8::reorient(int rot, bool swap) {
   
   MQuadrangle::reorient(rot,swap);
   MVertex* tmp[4];
-  if (swap) for (int i=0;i<4;i++) tmp[i] = _vs[(8-i-rot)%4];
+  if (swap) for (int i=0;i<4;i++) tmp[i] = _vs[(7-i+rot)%4];
   else      for (int i=0;i<4;i++) tmp[i] = _vs[(4+i-rot)%4];
   std::memcpy(_vs,tmp,4*sizeof(MVertex*));
 }
