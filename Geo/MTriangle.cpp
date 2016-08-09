@@ -302,7 +302,7 @@ void MTriangleN::reorient(int rot, bool swap) {
   
   if (swap) {
     for (int iEdge=0;iEdge<3;iEdge++) {
-      int edgeIdx = ((7-iEdge-rot)%3)*nbEdge;
+      int edgeIdx = ((5-iEdge+rot)%3)*nbEdge;
       for (int i=nbEdge-1;i>=0;i--) tmp.push_back(_vs[edgeIdx + i]);
     }
   }
@@ -318,7 +318,7 @@ void MTriangleN::reorient(int rot, bool swap) {
   if (_vs.size() > idx ) {
     if (order == 3) tmp.push_back(_vs[idx]);
     if (order == 4) {
-      if (swap) for(int i=0;i<3;i++) tmp.push_back(_vs[idx+(6-rot-i)%3]);
+      if (swap) for(int i=0;i<3;i++) tmp.push_back(_vs[idx+(3+rot-i)%3]);
       else      for(int i=0;i<3;i++) tmp.push_back(_vs[idx+(3+i-rot)%3]);
     }
     if (order >=5) 
