@@ -707,7 +707,7 @@ int GModel::_readMSH2(const std::string &name)
     if(feof(fp))
       break;
 
-    if(!strncmp(&str[1], "Periodic",8)) {
+    if(!strncmp(&str[1], "Periodic",8) && strlen(&str[1]) == 8) {
       readMSHPeriodicNodes(fp,this);
       break;
     }

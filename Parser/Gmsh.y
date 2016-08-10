@@ -6610,9 +6610,11 @@ void addPeriodicFace(int iTarget, int iSource,
   else{
     GFace *target = GModel::current()->getFaceByTag(abs(iTarget));
     GFace *source = GModel::current()->getFaceByTag(abs(iSource));
-    if (!target)  Msg::Error("Could not find edge %d for periodic copy from %d",
-                             iTarget,iSource);
-    target->setMeshMaster(source, affineTransform);
+    if (!target || !master) {
+			Msg::Error("Could not find edge slave %d or master %d for periodic copy",
+								 iTarget,iSource);
+		}
+		else target->setMeshMaster(source, affineTransform);
   }
 }
 
@@ -6626,7 +6628,7 @@ void addPeriodicFace(int iTarget, int iSource,
   for (; sIter != edgeCounterparts.end(); ++sIter) {
     Msg::Info("%d - %d", sIter->first, sIter->second);
   }
-
+	
   if (target) {
     GEO_Internals::MasterFace& mf =
       GModel::current()->getGEOInternals()->periodicFaces[iTarget];
@@ -6637,10 +6639,11 @@ void addPeriodicFace(int iTarget, int iSource,
   else{
     GFace *target = GModel::current()->getFaceByTag(abs(iTarget));
     GFace *source = GModel::current()->getFaceByTag(abs(iSource));
-    if (!target || !source)
-      Msg::Error("Could not find surface %d or %d for periodic copy",
+    if (!target || !source) {
+      Msg::Error("Could not find surface slave %d or master %d for periodic copy",
                  iTarget,iSource);
-    target->setMeshMaster(source, edgeCounterparts);
+		}
+		else target->setMeshMaster(source, edgeCounterparts);
   }
 }
 
