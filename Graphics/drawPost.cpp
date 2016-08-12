@@ -301,7 +301,7 @@ static void drawGlyphs(drawContext *ctx, PView *p)
   Msg::Debug("drawing extra glyphs (this is slow...)");
 
   // speedup drawing of textured fonts on cocoa mac version
-#if defined(HAVE_FLTK) && defined(__APPLE__) && defined(HAVE_64BIT_SIZE_T)
+#if defined(HAVE_FLTK) && defined(__APPLE__)
   if(opt->intervalsType == PViewOptions::Numeric){
     int numStrings = 0;
     for(int ent = 0; ent < data->getNumEntities(opt->timeStep); ent++)

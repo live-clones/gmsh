@@ -277,7 +277,7 @@ void drawContext::draw3d()
     CTX::instance()->polygonOffset = 0;
 
   // speedup drawing of textured fonts on cocoa mac version
-#if defined(HAVE_FLTK) && defined(__APPLE__) && defined(HAVE_64BIT_SIZE_T)
+#if defined(HAVE_FLTK) && defined(__APPLE__)
   int numStrings = GModel::current()->getNumVertices();
   if(CTX::instance()->mesh.pointsNum)
     numStrings = std::max(numStrings, GModel::current()->getNumMeshVertices());
