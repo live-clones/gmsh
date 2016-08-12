@@ -5,37 +5,40 @@
 
 @ftable @code
 @item Plugin(AnalyseCurvedMesh)
-Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. It computes, min(J) where J is the scaled Jacobian determinant and, if asked, min(R) where R is the ratio between the smaller and the greater of the eigenvalues of the metric. It creates a PView and hides elements for which min(@{J, R@}) < 'Hidding threshold'.@*
+Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. According to what is asked, it computes the minimum of the Jacobian determinant (J), of the scaled Jacobian and/or of the isotropy measure. Statistics are printed and if asked a Pview is created for each measure. The plugin hides elements for which the measure mu > 'Hidding threshold', where mu is the isotropy measure if asked otherwise the scaled Jacobian if asked otherwise the Jacobian determinant.@*
 @*
-J is faster to compute but gives informations only on validity while R gives also informations on quality.@*
+J is faster to compute but gives informations only on validity while the other measure gives also informations on quality.@*
+Warning: the scaled Jacobian is experimental for triangles, tetrahedra, prisms and pyramids. Computation may take a lot of time for those elements!@*
 @*
 Parameters:@*
 @*
-- Show [...] = @{0, 1, 2@}: If 0, computes Jacobian and shows min(J). If 1, computes Jacobian and metric and shows min(R). If 2, behaves like it is 1 but draw the two min(J) and min(R) PView@*
+- Jacobian determinant = @{0, 1@}@*
+- Scaled Jacobian = @{0, 1@}@*
+- Isotropy = @{0, 1@}@*
 @*
-- Draw PView = @{0, 1@}: Creates a PView of min(@{J, R@}) if it does not exist already. If 'Recompute' = 1, a new PView is redrawed.@*
+- Hidding threshold = [0, 1]: Does nothing if Isotropy == 0 and Scaled Jacobian == 0. Otherwise, hides all element for which min(mu) is strictly greater than the threshold, where mu is the isotropy if Isotropy == 1, otherwise it is the Scaled Jacobian. If threshold == 1, no effect, if == 0 hide all elements except invalid.@*
 @*
-- Hidding threshold = [0,1]: Hides all element for which min(R) or min(J) is strictly greater than the threshold. If = 1, no effect, if = 0 hide all elements except invalid.@*
-@*
-- Dimension = @{-1, 1, 2, 3, 4@}: If = -1, analyse element of the greater dimension. If = 4, analyse 2D and 3D elements@*
+- Draw PView = @{0, 1@}: Creates a PView of min(J)/max(J), min(scaled Jac) and/or min(isotropy) according to what is asked. If 'Recompute' = 1, a new PView is redrawed.@*
 @*
 - Recompute = @{0,1@}: If the mesh has changed, set to 1 to recompute the bounds.@*
 @*
-- Tolerance = ]0, 1[: Tolerance on the computation of min(@{R, J@}). It should be at most 0.01 but it can be set to 1 or greater to just check the validity of the mesh.
+- Dimension = @{-1, 1, 2, 3, 4@}: If == -1, analyse element of the greater dimension. If == 4, analyse 2D and 3D elements.
 Numeric options:
 @table @code
-@item Show: 0:J, 1:R, 2:J&&R
+@item Jacobian determinant
 Default value: @code{1}
-@item Draw PView
+@item Scaled Jacobian
+Default value: @code{0}
+@item Isotropy
 Default value: @code{1}
 @item Hidding threshold
-Default value: @code{10}
+Default value: @code{9}
+@item Draw PView
+Default value: @code{0}
+@item Recompute
+Default value: @code{0}
 @item Dimension of elements
 Default value: @code{-1}
-@item Recompute bounds
-Default value: @code{0}
-@item Tolerance
-Default value: @code{0.001}
 @end table
 
 @item Plugin(Annotate)
@@ -1063,6 +1066,24 @@ Default value: @code{-1}
 Default value: @code{-1}
 @item ViewZ
 Default value: @code{-1}
+@end table
+
+@item Plugin(ShowNeighborElements)
+Plugin(ShowNeighborElements) allows to set visible some given elements  and a layer of elements around them, the other being set invisible.
+Numeric options:
+@table @code
+@item NumLayers
+Default value: @code{1}
+@item Element1
+Default value: @code{0}
+@item Element2
+Default value: @code{0}
+@item Element3
+Default value: @code{0}
+@item Element4
+Default value: @code{0}
+@item Element5
+Default value: @code{0}
 @end table
 
 @item Plugin(SimplePartition)

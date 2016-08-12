@@ -3090,10 +3090,12 @@ optionWindow::optionWindow(int deltaFontSize)
 
       static Fl_Menu_Item time_display[] = {
         {"None", 0, 0, 0},
-        {"Value if multi-step", 0, 0, 0},
-        {"Value", 0, 0, 0},
-        {"Step if multi-step", 0, 0, 0},
-        {"Step", 0, 0, 0},
+        {"Time series", 0, 0, 0},
+        {"Harmonic data", 0, 0, 0},
+        {"Automatic", 0, 0, 0},
+        {"Multi-step data", 0, 0, 0},
+        {"Real eigenvalues", 0, 0, 0},
+        {"Complex eigenvalues", 0, 0, 0},
         {0}
       };
       view.choice[12] = new Fl_Choice

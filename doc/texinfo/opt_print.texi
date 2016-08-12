@@ -184,6 +184,26 @@ Print text strings?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Print.X3dCompatibility
+Produce highliy compatible X3D output (no scale bar)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.X3dPrecision
+Precision of X3D output@*
+Default value: @code{1e-09}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.X3dRemoveInnerBorders
+Remove inner borders in X3D output@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.X3dTransparency
+Transparency for X3D output@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Print.Width
 Width of printed image; use (possibly scaled) current width if < 0)@*
 Default value: @code{-1}@*

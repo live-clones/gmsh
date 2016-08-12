@@ -650,7 +650,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.ShowTime
-Time display mode (0=hidden, 1=time value if multi-step, 2=time value always, 3=time step if multi-step, 4=time step always)@*
+Time display mode (0=none, 1=time series, 2=harmonic data, 3=automatic, 4=multi-step data, 5=real eigenvalues, 6=complex eigenvalues)@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
