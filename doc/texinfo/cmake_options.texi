@@ -37,6 +37,8 @@ Enable discrete integration (needed for levelsets) (default: ON)
 Enable FLTK graphical user interface (requires mesh/post) (default: ON)
 @item ENABLE_FOURIER_MODEL
 Enable Fourier geometrical models (experimental) (default: OFF)
+@item ENABLE_GETDP
+Enable GetDP solver (as a directly linked library) (default: ON)
 @item ENABLE_GMM
 Enable GMM linear solvers (simple alternative to PETSc) (default: ON)
 @item ENABLE_GMP
@@ -113,8 +115,6 @@ Enable Taucs linear solver (default: ON)
 Enable libtcmalloc, a fast malloc implementation but that does not release memory (default: OFF)
 @item ENABLE_TETGEN
 Enable Tetgen 3D initial mesh generator (default: ON)
-@item ENABLE_TETGEN_OLD
-Enable older version of Tetgen (default: OFF)
 @item ENABLE_VORO3D
 Enable Voro3D (for hex meshing, experimental) (default: ON)
 @item ENABLE_WRAP_JAVA

@@ -324,7 +324,7 @@ static void copyMesh(GFace *source, GFace *target)
     for (unsigned it=0;it<get->mesh_vertices.size();it++,is+=orientation) {
       MVertex* vs = ges->mesh_vertices[is];
       MVertex* vt = get->mesh_vertices[it];
-      vs2vt[vs] = vt; 
+      vs2vt[vs] = vt;
       target->correspondingVertices[vt] = vs;
     }
   }
@@ -2375,7 +2375,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
 void deMeshGFace::operator() (GFace *gf)
 {
-  if(gf->geomType() == GEntity::DiscreteSurface && !CTX::instance()->meshDiscrete)return;
+  if(gf->geomType() == GEntity::DiscreteSurface && !CTX::instance()->meshDiscrete)
+    return;
   gf->deleteMesh();
   gf->meshStatistics.status = GFace::PENDING;
   gf->meshStatistics.nbTriangle = gf->meshStatistics.nbEdge = 0;

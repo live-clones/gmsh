@@ -1281,7 +1281,7 @@ static void setHighOrder(GRegion *gr, std::vector<MVertex*> &newHOVert,
 template<class T>
 static void setFirstOrder(GEntity *e, std::vector<T*> &elements, bool onlyVisible)
 {
-  if (onlyVisible && !e->getVisibility())return;
+  if (onlyVisible && !e->getVisibility()) return;
   std::vector<T*> elements1;
   for(unsigned int i = 0; i < elements.size(); i++){
     T *ele = elements[i];
@@ -1300,7 +1300,7 @@ static void updateHighOrderVertices(GEntity *e,
                                     const std::vector<MVertex*> &newHOVert,
                                     bool onlyVisible)
 {
-  if (onlyVisible && !e->getVisibility())return;
+  if (onlyVisible && !e->getVisibility()) return;
   std::vector<MVertex*> v1;
   for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
     if(e->mesh_vertices[i]->getPolynomialOrder() > 1)
