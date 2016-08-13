@@ -27,6 +27,11 @@
 #include "PView.h"
 #include "PViewData.h"
 
+#if defined(HAVE_FLTK)
+#include <FL/Fl.H>
+#include <FL/gl.h>
+#endif
+
 // from GModelVertexArrays
 extern unsigned int getColorByEntity(GEntity *e);
 extern bool isElementVisible(MElement *ele);
@@ -685,7 +690,11 @@ void drawContext::drawMesh()
 
   for(unsigned int i = 0; i < GModel::list.size(); i++){
     GModel *m = GModel::list[i];
-    m->fillVertexArrays();
+    bool changed = m->fillVertexArrays();
+#if defined(HAVE_FLTK) && defined(__APPLE__)
+    // FIXME: resetting texture pile fixes bug with recent MacOS versions
+    if(changed) gl_texture_pile_height(gl_texture_pile_height());
+#endif
     if(m->getVisibility() && isVisible(m)){
       int status = m->getMeshStatus();
       if(status >= 0)

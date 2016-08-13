@@ -577,7 +577,13 @@ void drawContext::drawPost()
 
   if(!CTX::instance()->post.draw) return;
 
-  for(unsigned int i = 0; i < PView::list.size(); i++)
-    PView::list[i]->fillVertexArrays();
-    std::for_each(PView::list.begin(), PView::list.end(), drawPView(this));
+  for(unsigned int i = 0; i < PView::list.size(); i++){
+    bool changed = PView::list[i]->fillVertexArrays();
+#if defined(HAVE_FLTK) && defined(__APPLE__)
+    // FIXME: resetting texture pile fixes bug with recent MacOS versions
+    if(changed) gl_texture_pile_height(gl_texture_pile_height());
+#endif
+  }
+
+  std::for_each(PView::list.begin(), PView::list.end(), drawPView(this));
 }

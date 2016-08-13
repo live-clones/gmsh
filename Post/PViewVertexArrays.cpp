@@ -1388,14 +1388,16 @@ class initPView {
     return heuristic + 1000;
   }
  public:
-  void operator () (PView *p)
+  bool operator () (PView *p)
   {
     // use adaptive data if available
     PViewData *data = p->getData(true);
     PViewOptions *opt = p->getOptions();
 
-    if(data->getDirty() || !data->getNumTimeSteps() || !p->getChanged()) return;
-    if(!opt->visible || opt->type != PViewOptions::Plot3D) return;
+    if(data->getDirty() || !data->getNumTimeSteps() || !p->getChanged())
+      return false;
+    if(!opt->visible || opt->type != PViewOptions::Plot3D)
+      return false;
 
     p->deleteVertexArrays();
 
@@ -1405,7 +1407,7 @@ class initPView {
       PrintOptions(0, GMSH_FULLRC, 0, 0, fileName.c_str());
       std::string options = ConvertFileToString(fileName);
       data->fillRemoteVertexArrays(options);
-      return;
+      return false;
     }
 
     if(opt->useGenRaise) opt->createGeneralRaise();
@@ -1432,6 +1434,7 @@ class initPView {
     p->va_ellipses = new VertexArray(4, _estimateNumEllipses(p));
 
     if(p->normals) delete p->normals;
+
     p->normals = new smooth_normals(opt->angleSmoothNormals);
 
     if(opt->smoothNormals) addElementsInArrays(p, true);
@@ -1451,13 +1454,14 @@ class initPView {
                p->va_vectors->getMemoryInMb() + p->va_ellipses->getMemoryInMb());
 
     p->setChanged(false);
+    return true;
   }
 };
 
-void PView::fillVertexArrays()
+bool PView::fillVertexArrays()
 {
   initPView init;
-  init(this);
+  return init(this);
 }
 
 void PView::fillVertexArray(onelab::localNetworkClient *remote, int length,

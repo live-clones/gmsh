@@ -135,7 +135,7 @@ class PView{
   VertexArray *va_points, *va_lines, *va_triangles, *va_vectors, *va_ellipses;
 
   // fill the vertex arrays, given the current option and data
-  void fillVertexArrays();
+  bool fillVertexArrays();
 
   // fill a vertex array using a raw stream of bytes
   static void fillVertexArray(onelab::localNetworkClient *remote, int length,

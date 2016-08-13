@@ -413,9 +413,9 @@ class initMeshGRegion {
   }
 };
 
-void GModel::fillVertexArrays()
+bool GModel::fillVertexArrays()
 {
-  if(!getVisibility() || !CTX::instance()->mesh.changed) return;
+  if(!getVisibility() || !CTX::instance()->mesh.changed) return false;
 
   Msg::Debug("Mesh has changed: reinitializing vertex arrays");
 
@@ -434,4 +434,5 @@ void GModel::fillVertexArrays()
 
   if(status >= 3 && CTX::instance()->mesh.changed & ENT_VOLUME)
     std::for_each(firstRegion(), lastRegion(), initMeshGRegion());
+  return true;
 }

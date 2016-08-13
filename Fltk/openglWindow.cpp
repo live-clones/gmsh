@@ -153,7 +153,9 @@ void openglWindow::draw()
 
   Msg::Debug("openglWindow::draw()");
 
-  if(!context_valid()) _ctx->invalidateQuadricsAndDisplayLists();
+  if(!context_valid()){
+    _ctx->invalidateQuadricsAndDisplayLists();
+  }
 
   _ctx->viewport[0] = 0;
   _ctx->viewport[1] = 0;

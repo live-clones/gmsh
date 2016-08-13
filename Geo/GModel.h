@@ -429,7 +429,7 @@ class GModel
   void createTopologyFromFaces(std::vector<discreteFace*> &pFaces, int ignoreHoles=0);
   void makeDiscreteRegionsSimplyConnected();
   void makeDiscreteFacesSimplyConnected();
-  
+
   // align periodic boundaries
   void alignPeriodicBoundaries();
 
@@ -489,7 +489,7 @@ class GModel
   void createPartitionBoundaries(int createGhostCells, int createAllDims = 0);
 
   // fill the vertex arrays, given the current option and data
-  void fillVertexArrays();
+  bool fillVertexArrays();
 
   // reclassify a mesh i.e. use an angle threshold to tag edges faces and regions
   void classifyFaces(std::set<GFace*> &_faces);
