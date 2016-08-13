@@ -285,6 +285,8 @@ void drawContext::draw3d()
      CTX::instance()->mesh.volumesNum)
     numStrings = std::max(numStrings, GModel::current()->getNumMeshElements());
   numStrings *= 2;
+  // FIXME: restting to 1 each time to workaround bug on recent MacOS versions
+  gl_texture_pile_height(1);
   if(gl_texture_pile_height() < numStrings)
     gl_texture_pile_height(numStrings);
 #endif
