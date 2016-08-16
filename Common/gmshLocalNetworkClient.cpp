@@ -244,11 +244,39 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       }
       else if(ptype == "number"){
         std::vector<onelab::number> par; get(par, name);
-        if(par.size() == 1) reply = par[0].toChar();
+        if(par.empty()){ // try to see if it's not a Gmsh option
+          std::string::size_type dot = name.find('.');
+          if(dot != std::string::npos){
+            double val;
+            if(GmshGetOption(name.substr(0, dot), name.substr(dot + 1), val)){
+              par.resize(1);
+              par[0].setName(name);
+              par[0].setValue(val);
+              reply = par[0].toChar();
+            }
+          }
+        }
+        else{
+          reply = par[0].toChar();
+        }
       }
       else if(ptype == "string"){
         std::vector<onelab::string> par; get(par, name);
-        if(par.size() == 1) reply = par[0].toChar();
+        if(par.empty()){ // try to see if it's not a Gmsh option
+          std::string::size_type dot = name.find('.');
+          if(dot != std::string::npos){
+            std::string val;
+            if(GmshGetOption(name.substr(0, dot), name.substr(dot + 1), val)){
+              par.resize(1);
+              par[0].setName(name);
+              par[0].setValue(val);
+              reply = par[0].toChar();
+            }
+          }
+        }
+        else{
+          reply = par[0].toChar();
+        }
       }
       else
         Msg::Error("Unknown ONELAB parameter type in query: %s", ptype.c_str());
