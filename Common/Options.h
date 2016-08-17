@@ -849,11 +849,11 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename,
 void PrintOptionsDoc();
 
 bool StringOption(int action, const char *category, int num,
-                  const char *name, std::string &val);
+                  const char *name, std::string &val, bool warnIfUnknown=true);
 bool NumberOption(int action, const char *category, int num,
-                  const char *name, double &val);
+                  const char *name, double &val, bool warnIfUnknown=true);
 bool ColorOption(int action, const char *category, int num,
-                 const char *name, unsigned int &val);
+                 const char *name, unsigned int &val, bool warnIfUnknown=true);
 
 GmshColorTable *GetColorTable(int num);
 int GetColorForString(int alpha, const char *string, int *FlagError);

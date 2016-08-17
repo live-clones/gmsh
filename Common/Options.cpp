@@ -59,7 +59,7 @@
 // General routines for string options
 
 bool StringOption(int action, const char *category, int num,
-                  const char *name, std::string &val)
+                  const char *name, std::string &val, bool warnIfUnknown)
 {
   StringXString *s = 0;
   if(!strcmp(category, "General"))
@@ -77,14 +77,16 @@ bool StringOption(int action, const char *category, int num,
   else if(!strcmp(category, "Print"))
     s = PrintOptions_String;
   else{
-    Msg::Error("Unknown string option category '%s'", category);
+    if(warnIfUnknown)
+      Msg::Error("Unknown string option category '%s'", category);
     return false;
   }
 
   int i = 0;
   while(s[i].str && strcmp(s[i].str, name)) i++;
   if(!s[i].str){
-    Msg::Error("Unknown string option '%s.%s'", category, name);
+    if(warnIfUnknown)
+      Msg::Error("Unknown string option '%s.%s'", category, name);
     return false;
   }
 
@@ -179,7 +181,7 @@ static void PrintStringOptionsDoc(StringXString s[], const char *prefix, FILE *f
 // General routines for numeric options
 
 bool NumberOption(int action, const char *category, int num,
-                  const char *name, double &val)
+                  const char *name, double &val, bool warnIfUnknown)
 {
   StringXNumber *s = 0;
   if(!strcmp(category, "General"))
@@ -197,14 +199,16 @@ bool NumberOption(int action, const char *category, int num,
   else if(!strcmp(category, "Print"))
     s = PrintOptions_Number;
   else{
-    Msg::Error("Unknown number option category '%s'", category);
+    if(warnIfUnknown)
+      Msg::Error("Unknown number option category '%s'", category);
     return false;
   }
 
   int i = 0;
   while(s[i].str && strcmp(s[i].str, name)) i++;
   if(!s[i].str){
-    Msg::Error("Unknown number option '%s.%s'", category, name);
+    if(warnIfUnknown)
+      Msg::Error("Unknown number option '%s.%s'", category, name);
     return false;
   }
 
@@ -275,7 +279,7 @@ static void PrintNumberOptionsDoc(StringXNumber s[], const char *prefix, FILE * 
 // General routines for color options
 
 bool ColorOption(int action, const char *category, int num,
-                 const char *name, unsigned int &val)
+                 const char *name, unsigned int &val, bool warnIfUnknown)
 {
   StringXColor *s = 0;
   if(!strcmp(category, "General"))
@@ -293,14 +297,16 @@ bool ColorOption(int action, const char *category, int num,
   else if(!strcmp(category, "Print"))
     s = PrintOptions_Color;
   else{
-    Msg::Error("Unknown color option category '%s'", category);
+    if(warnIfUnknown)
+      Msg::Error("Unknown color option category '%s'", category);
     return false;
   }
 
   int i = 0;
   while(s[i].str && strcmp(s[i].str, name)) i++;
   if(!s[i].str){
-    Msg::Error("Unknown color option '%s.%s'", category, name);
+    if(warnIfUnknown)
+      Msg::Error("Unknown color option '%s.%s'", category, name);
     return false;
   }
 
