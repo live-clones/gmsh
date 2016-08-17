@@ -112,6 +112,10 @@ Mesh::Mesh(const std::map<MElement*,GEntity*> &element2entity,
     double dumJac[3][3];
     for (int iEl = 0; iEl < nEl(); iEl++)
       _invStraightJac[iEl] = 1. / fabs(_el[iEl]->getPrimaryJacobian(0.,0.,0.,dumJac));
+
+    // initialize _scaledNormEl with empty fullMatrix for use in function
+    // Mesh::scaledJacAndGradients(..)
+    _scaledNormEl.resize(nEl());
   }
 
 }
