@@ -213,9 +213,9 @@ static bool orderVertices(const double &tot_length, const std::vector<MVertex*> 
 }
 
 /*BUILDER*/
-discreteDiskFace::discreteDiskFace(int id, GFace *gf, triangulation* diskTriangulation,
+discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
                                    int p, std::vector<GFace*> *CAD) :
-  GFace(gf->model(),id), _parent (gf), _ddft(NULL), oct(NULL)
+  GFace(gf->model(),diskTriangulation->idNum), _parent (gf), _ddft(NULL), oct(NULL)
 {
   initialTriangulation = diskTriangulation;
   std::vector<MElement*> mesh = diskTriangulation->tri;
@@ -275,7 +275,7 @@ discreteDiskFace::discreteDiskFace(int id, GFace *gf, triangulation* diskTriangu
       discrete_triangles[i] = new MTriangle6 (vs);
         
   }// end loop over triangles
-  geoTriangulation = new triangulation(id,discrete_triangles,gf);
+  geoTriangulation = new triangulation(tag(),discrete_triangles,gf);
   geoTriangulation->fillingHoles = diskTriangulation->fillingHoles;
   allNodes = geoTriangulation->vert;
   _totLength = geoTriangulation->bord.rbegin()->first;
@@ -288,17 +288,13 @@ discreteDiskFace::discreteDiskFace(int id, GFace *gf, triangulation* diskTriangu
   if (!checkOrientationUV()){
     Msg::Info("discreteDiskFace:: parametrization is not one-to-one; fixing "
               "the discrete system.");
-
-    //parametrize(true);
-    //buildOct(CAD); 
-    optimize();
-    buildOct(CAD);    
-    
-    }
+    parametrize(true);
+    buildOct(CAD);        
+  }
   putOnView(true,false);
   printParamMesh();
   if(!checkOrientationUV()) Msg::Fatal("discreteDiskFace:: failing to fix the discrete system");
-  else Msg::Info("Parameterization done :-)");
+  //  else Msg::Info("Parameterization done :-)");
 }
 /*end BUILDER*/
 
@@ -320,10 +316,10 @@ void discreteDiskFace::buildOct(std::vector<GFace*> *CAD) const
   oct = Octree_Create(maxElePerBucket, origin, ssize, discreteDiskFaceBB,
 		      discreteDiskFaceCentroid, discreteDiskFaceInEle);
 
-  _ddft = new discreteDiskFaceTriangle[discrete_triangles.size()-geoTriangulation->fillingHoles.size()];
+  _ddft = new discreteDiskFaceTriangle[discrete_triangles.size()/*-geoTriangulation->fillingHoles.size()*/];
   int c = 0;
   for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
-    if(geoTriangulation->fillingHoles.find(i)==geoTriangulation->fillingHoles.end()){
+    //    if(geoTriangulation->fillingHoles.find(i)==geoTriangulation->fillingHoles.end()){
       MElement *t = discrete_triangles[i];
       discreteDiskFaceTriangle* my_ddft = &_ddft[c++];
       my_ddft->p.resize(_N);
@@ -334,7 +330,7 @@ void discreteDiskFace::buildOct(std::vector<GFace*> *CAD) const
       my_ddft->tri = t;
 
       Octree_Insert(my_ddft, oct);
-    }
+      //    }
   }
   Octree_Arrange(oct);
 }
@@ -466,19 +462,20 @@ bool discreteDiskFace::checkOrientationUV()
     double p1[2] = {ct->p[0].x(), ct->p[0].y()};
     double p2[2] = {ct->p[1].x(), ct->p[1].y()};
     double p3[2] = {ct->p[2].x(), ct->p[2].y()};
-    initial = robustPredicates::orient2d(p1, p2, p3);
-    unsigned int i=1;
-    for (; i<discrete_triangles.size()-geoTriangulation->fillingHoles.size(); i++){
+    unsigned int nbP = 0;
+    unsigned int nbM = 0;
+    for (unsigned int i=0; i<discrete_triangles.size(); i++){
       ct = &_ddft[i];
       p1[0] = ct->p[0].x(); p1[1] = ct->p[0].y();
       p2[0] = ct->p[1].x(); p2[1] = ct->p[1].y();
       p3[0] = ct->p[2].x(); p3[1] = ct->p[2].y();
       current = robustPredicates::orient2d(p1, p2, p3);
-      if(initial*current < 0.) {
-	Msg::Error("Map %d of the atlas : Triangle UV %d has not the correct orientation (area %22.15E)",tag(),i+1,current);
-	return false;
-	break;
-      }
+      if(current < 0.) nbM++;
+      else nbP++;
+    }
+    if (nbP*nbM){
+      Msg::Error("Map %d of the atlas : Triangles have different orientations (%d + / %d -)",tag(),nbP,nbM);
+      return false;
     }
     return true;
   }

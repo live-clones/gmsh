@@ -151,7 +151,7 @@ void Mesh::calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2enti
     if (scal < 0.) factor = -factor;
   }
   elNorm.scale(factor);   // Re-scaling normal here is faster than an extra scaling operation on the Jacobian
-
+  //  elNorm.setAll(1);
 }
 
 int Mesh::getFreeVertexStartIndex(MVertex* vert)

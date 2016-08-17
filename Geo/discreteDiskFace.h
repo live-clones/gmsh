@@ -80,7 +80,9 @@ class triangulation {
   double aspectRatio()
   { 
     double L = bord.rbegin()->first;
-    return L / maxD;
+    if (L == 0.0)return 1.e22;
+    //    printf("%12.5E %12.5E\n",L,maxD);
+    return maxD / L;
   }
 
   int genus()
@@ -222,7 +224,7 @@ class discreteDiskFace : public GFace {
   void printParamMesh();
 
  public:
-  discreteDiskFace(int id, GFace *parent, triangulation* diskTriangulation,
+  discreteDiskFace(GFace *parent, triangulation* diskTriangulation,
                    int p=1, std::vector<GFace*> *CAD = NULL);
   virtual ~discreteDiskFace();
   void getTriangleUV(const double u,const double v,discreteDiskFaceTriangle **mt,

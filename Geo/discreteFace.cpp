@@ -111,10 +111,11 @@ void discreteFace::secondDer(const SPoint2 &param,
 void discreteFace::createGeometry()
 {
   checkAndFixOrientation();
-  int order = 2;
+  int order = 1;
   int nPart = 2;
-  double eta = 2*3.14/7;
+  double eta = 5/(2.*3.14);
 
+  
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
 
   if (!_atlas.empty())return;
@@ -126,22 +127,25 @@ void discreteFace::createGeometry()
 
   triangulation* init = new triangulation(-1, tem,this);
   toSplit.push(init);
-  if((toSplit.top())->genus()!=0 || (toSplit.top())->aspectRatio() < eta || (toSplit.top())->seamPoint){
+  if((toSplit.top())->genus()!=0 || (toSplit.top())->aspectRatio() > eta || (toSplit.top())->seamPoint){
 
+    
     while( !toSplit.empty()){
       std::vector<triangulation*> part;
       triangulation* tosplit = toSplit.top();
       toSplit.pop();
-
+      //      printf("genus %d ar %12.5E\n",tosplit->genus(), tosplit->aspectRatio());
+      //      getchar();
       split(tosplit,part,nPart);
       delete tosplit;
 
       for(unsigned int i=0; i<part.size(); i++){
-	if(part[i]->genus()!=0 || part[i]->aspectRatio() < eta || part[i]->seamPoint)
+	if(part[i]->genus()!=0 || part[i]->aspectRatio() > eta || part[i]->seamPoint)
 	  toSplit.push(part[i]);
 	else{
 	  toParam.push_back(part[i]);
 	  part[i]->idNum=id++;
+	  //	  printf("part %d is OK\n",  part[i]->idNum);
 	}
       }// end for i
     }// !.empty()
@@ -153,17 +157,17 @@ void discreteFace::createGeometry()
   updateTopology(toParam);
 
   for(unsigned int i=0; i<toParam.size(); i++){
-    //printf("MAP(%d) : aspect ratio = %12.5E\n",i,toParam[i]->aspectRatio());
-    //char name[256];
-    //sprintf(name,"map%d.pos",i);
-    //toParam[i]->print(name,i);
+    printf("MAP(%d) : aspect ratio = %12.5E\n",toParam[i]->idNum,toParam[i]->aspectRatio());
+    char name[256];
+    sprintf(name,"map%d.pos",i);
+    toParam[i]->print(name,i);
     fillHoles(toParam[i]);
-    //sprintf(name,"mapFilled%d.pos",i);
-    //toParam[i]->print(name,i);
+    sprintf(name,"mapFilled%d.pos",i);
+    toParam[i]->print(name, toParam[i]->idNum);
   }
   for(unsigned int i=0; i<toParam.size(); i++){
     std::vector<MElement*> mytri = toParam[i]->tri;
-    discreteDiskFace *df = new discreteDiskFace (i,this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));    
+    discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));    
     df->replaceEdges(toParam[i]->my_GEdges);
     _atlas.push_back(df);
   }
