@@ -63,9 +63,10 @@ struct MeshQualOptParameters {
       minTargetIdealJac(0.1), minTargetInvCondNum(0.1), weight(1.),
       nbLayers (6) , dim(3) , maxOptIter(300), maxBarrierUpdates(50),
       onlyVisible(true), distanceFactor(12), fixBndNodes(false), strategy(0),
-    maxPatchAdapt(3), maxLayersAdaptFact(2), distanceAdaptFact(2.), nCurses(1), logFileName(""), CPU(0.),
+      maxPatchAdapt(3), maxLayersAdaptFact(2), distanceAdaptFact(2.), nCurses(1), logFileName(""),
+      SUCCESS(-1),
       minIdealJac(0.), maxIdealJac(0.), minInvCondNum(0.), maxInvCondNum(0.),
-      SUCCESS(-1)
+      CPU(0.)
   {
   }
 };

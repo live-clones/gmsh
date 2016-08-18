@@ -462,7 +462,7 @@ bool discreteDiskFace::checkOrientationUV()
   discreteDiskFaceTriangle *ct;
 
   if(_order==1){
-    double initial, current; // initial and current orientation
+    double current; // initial and current orientation
     ct = &_ddft[0];
     double p1[2] = {ct->p[0].x(), ct->p[0].y()};
     double p2[2] = {ct->p[1].x(), ct->p[1].y()};
@@ -1010,7 +1010,8 @@ void discreteDiskFace::printParamMesh()
 
 // computes some kind of maximal distance in a mesh
 
-static void addTo (std::map<MVertex*, std::vector<MElement*> > &v2t, MVertex *v, MElement *t){
+static void addTo (std::map<MVertex*, std::vector<MElement*> > &v2t, MVertex *v, MElement *t)
+{
   std::map<MVertex*, std::vector<MElement*> > :: iterator it = v2t.find(v);
   if (it == v2t.end()){
     std::vector<MElement*> tt; tt.push_back(t);
@@ -1018,7 +1019,9 @@ static void addTo (std::map<MVertex*, std::vector<MElement*> > &v2t, MVertex *v,
   }
   else it->second.push_back(t);
 }
-static void update(std::map<MVertex*,double> &Close, MVertex *v2, double d){
+
+static void update(std::map<MVertex*,double> &Close, MVertex *v2, double d)
+{
   std::map<MVertex*,double>::iterator it = Close.find(v2);
   if (it == Close.end())Close[v2] = d;
   else if (it->second > d) it->second=d;
@@ -1026,9 +1029,11 @@ static void update(std::map<MVertex*,double> &Close, MVertex *v2, double d){
 
 }
 
-static MEdge getEdge (MElement *t, MVertex *v){
+static MEdge getEdge (MElement *t, MVertex *v)
+{
   for (int i=0;i<3;i++)
     if (t->getVertex(i) == v) return t->getEdge((i+1)%3);
+  return MEdge();
 }
 
 /* warning
@@ -1042,9 +1047,8 @@ static double computeDistanceLinePoint (MVertex *v1, MVertex *v2, MVertex *v){
 
 }
 */
-static double computeDistance (MVertex *v1, double d1, MVertex *v2, double d2, MVertex *v){
-
-
+static double computeDistance (MVertex *v1, double d1, MVertex *v2, double d2, MVertex *v)
+{
   //       o------------a
   //
   //
@@ -1077,8 +1081,8 @@ static double computeDistance (MVertex *v1, double d1, MVertex *v2, double d2, M
   return sqrt ((x0-xv)*(x0-xv)+(y0-yv)*(y0-yv));
 }
 
-std::map<MVertex*,double>::iterator closest (std::map<MVertex*,double> &Close){
-
+std::map<MVertex*,double>::iterator closest (std::map<MVertex*,double> &Close)
+{
   std::map<MVertex*,double>::iterator itClose;
   double c = 1.e22;
   for (std::map<MVertex*,double>::iterator it = Close.begin(); it != Close.end(); ++it){
@@ -1090,9 +1094,8 @@ std::map<MVertex*,double>::iterator closest (std::map<MVertex*,double> &Close){
   return itClose;
 }
 
-
-
-double triangulation::geodesicDistance () {
+double triangulation::geodesicDistance ()
+{
   if (bord.empty())return 1.e22;
   std::map<MVertex*, std::vector<MElement*> > v2t;
   for (size_t i=0;i<tri.size();++i){
@@ -1191,8 +1194,6 @@ double triangulation::geodesicDistance () {
   */
 
   return CLOSEST;
-
 }
-
 
 #endif
