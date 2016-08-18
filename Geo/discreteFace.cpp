@@ -20,7 +20,6 @@ extern "C" {
 }
 #endif
 
-
 discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 {
   Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
@@ -111,12 +110,11 @@ void discreteFace::secondDer(const SPoint2 &param,
 void discreteFace::createGeometry()
 {
   checkAndFixOrientation();
+
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
   int order = 1;
   int nPart = 2;
   double eta = 5/(2.*3.14);
-
-
-#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
 
   if (!_atlas.empty())return;
 
@@ -127,8 +125,8 @@ void discreteFace::createGeometry()
 
   triangulation* init = new triangulation(-1, tem,this);
   toSplit.push(init);
-  if((toSplit.top())->genus()!=0 || (toSplit.top())->aspectRatio() > eta || (toSplit.top())->seamPoint){
-
+  if((toSplit.top())->genus()!=0 || (toSplit.top())->aspectRatio() > eta ||
+     (toSplit.top())->seamPoint){
 
     while( !toSplit.empty()){
       std::vector<triangulation*> part;
@@ -276,8 +274,6 @@ void discreteFace::printAtlasMesh(std::vector<MElement*> elm, int I)
 
 }
 
-
-
 void discreteFace::printAtlasMesh(discreteDiskFace* ddf, int I)
 {
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
@@ -316,9 +312,8 @@ void discreteFace::printAtlasMesh(discreteDiskFace* ddf, int I)
 #endif
 }
 
-
-void discreteFace::checkAndFixOrientation(){
-
+void discreteFace::checkAndFixOrientation()
+{
   // first of all, all the triangles have to be oriented in the same way
   std::map<MEdge,std::vector<MElement*>,Less_Edge> ed2tri; // edge to 1 or 2 triangle(s)
 
@@ -405,7 +400,9 @@ void discreteFace::setupDiscreteVertex(GVertex*dv,MVertex*mv,std::set<MVertex*>*
   if (trash) trash->insert(mv);
 }
 
-void discreteFace::setupDiscreteEdge(discreteEdge*de,std::vector<MLine*>mlines,std::set<MVertex*>*trash){
+void discreteFace::setupDiscreteEdge(discreteEdge*de,std::vector<MLine*>mlines,
+                                     std::set<MVertex*>*trash)
+{
   this->model()->add(de);// new GEdge
   de->lines = mlines;// associated MLine's
   for(unsigned int i=1; i<mlines.size(); i++){//not the first vertex of the GEdge (neither the last one)
@@ -418,10 +415,9 @@ void discreteFace::setupDiscreteEdge(discreteEdge*de,std::vector<MLine*>mlines,s
     de->reverse();
 }
 
-
 // split old GEdge's
-void discreteFace::splitDiscreteEdge ( GEdge *de , GVertex *gv, discreteEdge* newE[2]){
-
+void discreteFace::splitDiscreteEdge(GEdge *de , GVertex *gv, discreteEdge* newE[2])
+{
   MVertex *vend = de->getEndVertex()->mesh_vertices[0];
 
   newE[0] = new discreteEdge (de->model(),NEWLINE(),de->getBeginVertex(),gv);
@@ -469,7 +465,8 @@ void discreteFace::splitDiscreteEdge ( GEdge *de , GVertex *gv, discreteEdge* ne
 }
 
 
-void discreteFace::split(triangulation* trian,std::vector<triangulation*> &partition,int nPartitions)
+void discreteFace::split(triangulation* trian,std::vector<triangulation*> &partition,
+                         int nPartitions)
 {
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN) && defined(HAVE_METIS)
 
@@ -559,11 +556,8 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
   for(int i=0; i<nPartitions; i++)// new triangulation of the connected parts
     partition.push_back(new triangulation(i, elem[i],this));
 
-
-
 #endif
 }
-
 
 void discreteFace::updateTopology(std::vector<triangulation*>&partition)
 {
@@ -696,7 +690,6 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
 #endif
 }
 
-
 void discreteFace::fillHoles(triangulation* trian)
 {
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
@@ -758,6 +751,7 @@ void discreteFace::fillHoles(triangulation* trian)
 
 void discreteFace::bisectionEdg(triangulation* trian)
 {
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
   std::map<MEdge,double,Less_Edge> ed2angle;
   std::map<double,std::vector<MEdge> > ed2refine;
   /*
@@ -791,12 +785,14 @@ void discreteFace::bisectionEdg(triangulation* trian)
     }// end for unsigned
     ed2refine.erase(key);
   }// end for it
-
+#endif
 }
 
-bool discreteFace::checkEdges(triangulation* trian,std::map<double,std::vector<MEdge> >& ed2refine,std::map<MEdge,double,Less_Edge>& ed2angle)
+bool discreteFace::checkEdges(triangulation* trian,
+                              std::map<double,std::vector<MEdge> >& ed2refine,
+                              std::map<MEdge,double,Less_Edge>& ed2angle)
 {
-
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
   for(unsigned int i=0; i<trian->tri.size(); i++){
     MElement* t = trian->tri[i];
     std::vector<MEdge> eds;
@@ -827,12 +823,17 @@ bool discreteFace::checkEdges(triangulation* trian,std::map<double,std::vector<M
     }// end for j
   }//end for tri
   return !(ed2refine.empty());
+#else
+  return false;
+#endif
 }
 
 
-bool discreteFace::checkEdgesBis(triangulation* trian,std::map<double,std::vector<MEdge> >& ed2refine,std::map<MEdge,double,Less_Edge>& ed2angle)
+bool discreteFace::checkEdgesBis(triangulation* trian,
+                                 std::map<double,std::vector<MEdge> >& ed2refine,
+                                 std::map<MEdge,double,Less_Edge>& ed2angle)
 {
-
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
   for(unsigned int i=0; i<trian->tri.size(); i++){
     MElement* t = trian->tri[i];
     std::vector<MEdge> eds;
@@ -859,10 +860,14 @@ bool discreteFace::checkEdgesBis(triangulation* trian,std::map<double,std::vecto
     }// end for j
   }//end for tri
   return !(ed2refine.empty());
+#else
+  return false;
+#endif
 }
 
-
-MEdge discreteFace::lepp(triangulation* trian,MEdge ed){
+MEdge discreteFace::lepp(triangulation* trian,MEdge ed)
+{
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
   std::vector<int> intri = trian->ed2tri[ed];
   bool isTerminal = false;
   while(intri.size()>1 && !isTerminal){
@@ -879,10 +884,15 @@ MEdge discreteFace::lepp(triangulation* trian,MEdge ed){
     else isTerminal = true;
   }// end while
   return ed;
+#else
+  return MEdge();
+#endif
 }
 
-void discreteFace::refineTriangles(triangulation* trian,MEdge ed,std::vector<MEdge>&ed2update){
-
+void discreteFace::refineTriangles(triangulation* trian,MEdge ed,
+                                   std::vector<MEdge>&ed2update)
+{
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
   SPoint3 mid = ed.barycenter();
   MVertex* mv = new MVertex(mid.x(),mid.y(),mid.z());
   trian->vert.insert(mv);
@@ -968,10 +978,15 @@ void discreteFace::refineTriangles(triangulation* trian,MEdge ed,std::vector<MEd
     trian->borderEdg.insert(t00->getEdge(2));
     trian->borderEdg.insert(t01->getEdge(1));
   }
+#endif
 }
 
-void discreteFace::updateEd2refine(triangulation* trian,std::map<MEdge,double,Less_Edge>&ed2angle,std::vector<MEdge>&ed2update,std::map<double,std::vector<MEdge> >&ed2refine){
-
+void discreteFace::updateEd2refine(triangulation* trian,
+                                   std::map<MEdge,double,Less_Edge>&ed2angle,
+                                   std::vector<MEdge>&ed2update,
+                                   std::map<double,std::vector<MEdge> >&ed2refine)
+{
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
   for(unsigned int i=0; i<ed2update.size(); i++){
     MEdge current = ed2update[i];
     std::vector<int> intri = trian->ed2tri[current];
@@ -1002,12 +1017,15 @@ void discreteFace::updateEd2refine(triangulation* trian,std::map<MEdge,double,Le
       }//end for j
     }
   }// end for i
-
+#endif
 }
 
-
-void discreteFace::updateEd2refineBis(triangulation* trian,std::map<MEdge,double,Less_Edge>&ed2angle,std::vector<MEdge>&ed2update,std::map<double,std::vector<MEdge> >&ed2refine){
-
+void discreteFace::updateEd2refineBis(triangulation* trian,
+                                      std::map<MEdge,double,Less_Edge>&ed2angle,
+                                      std::vector<MEdge>&ed2update,
+                                      std::map<double,std::vector<MEdge> >&ed2refine)
+{
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
   for(unsigned int i=0; i<ed2update.size(); i++){
     MEdge current = ed2update[i];
     std::vector<int> intri = trian->ed2tri[current];
@@ -1033,7 +1051,7 @@ void discreteFace::updateEd2refineBis(triangulation* trian,std::map<MEdge,double
       }//end for j
     }
   }// end for i
-
+#endif
 }
 
 void discreteFace::addTriangle(triangulation* trian, MTriangle* t)
@@ -1048,12 +1066,6 @@ void discreteFace::addTriangle(triangulation* trian, MTriangle* t)
   trian->tri.push_back(t);
 #endif
 }
-
-
-// delete all discrete disk faces
-//void discreteFace::deleteAtlas() {
-//}
-//---------------------------------------------------------
 
 void discreteFace::writeGEO(FILE *fp)
 {

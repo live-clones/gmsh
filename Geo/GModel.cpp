@@ -1977,7 +1977,7 @@ static int connectedSurfaceBoundaries(std::set<MEdge, Less_Edge> &edges,
 
 void GModel::alignPeriodicBoundaries()
 {
-  Msg::Info("Aligning periodic boundaries");
+  Msg::Debug("Aligning periodic boundaries");
 
   // realigning edges
 
@@ -2092,10 +2092,10 @@ void GModel::alignPeriodicBoundaries()
         for (int iVtx=0;iVtx<nbVtcs;iVtx++) {
           MVertex* vtx = tgtElmt->getVertex(iVtx);
           GEntity* ge = vtx->onWhat();
-          
+
           std::map<MVertex*,MVertex*>& geV2v = ge->correspondingVertices;
           std::map<MVertex*,MVertex*>& v2v = tgt->correspondingVertices;
-          
+
           std::map<MVertex*,MVertex*>::iterator vIter = v2v.find(vtx);
           if (vIter==v2v.end()) {
             Msg::Info("Could not find copy of vertex %d in face %d"
@@ -2152,7 +2152,7 @@ void GModel::alignPeriodicBoundaries()
       }
     }
   }
-  Msg::Info("Done aligning periodic boundaries");
+  Msg::Debug("Done aligning periodic boundaries");
 }
 
 void GModel::makeDiscreteRegionsSimplyConnected()
@@ -2756,7 +2756,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
 void makeSimplyConnected(std::map<int, std::vector<MElement*> > elements[11])
 {
   //only for tetras and triangles
-  Msg::Info("Make simply connected regions and surfaces.");
+  Msg::Info("Make simply connected regions and surfaces");
   std::vector<int> regs;
   for(std::map<int, std::vector<MElement*> >::iterator it = elements[4].begin();
       it != elements[4].end(); it++)
@@ -2778,7 +2778,7 @@ void makeSimplyConnected(std::map<int, std::vector<MElement*> > elements[11])
       allElements.push_back(elements[4][ri][j]);
     std::vector<std::vector<MElement*> > conRegions;
     int nbConRegions = connectedVolumes(allElements, conRegions);
-    Msg::Info("%d connected regions (reg=%d)\n", nbConRegions, ri);
+    Msg::Info("%d connected regions (reg=%d)", nbConRegions, ri);
     unsigned int maxNumEl = 1;
     for(int j = 0; j < nbConRegions; j++)
       if(conRegions[j].size() > maxNumEl)
@@ -2857,7 +2857,7 @@ void makeSimplyConnected(std::map<int, std::vector<MElement*> > elements[11])
       allElements.push_back(elements[2][fi][j]);
     std::vector<std::vector<MElement*> > conSurfaces;
     int nbConSurfaces = connectedSurfaces(allElements, conSurfaces);
-    Msg::Info("%d connected surfaces (reg=%d)\n", nbConSurfaces, fi);
+    Msg::Info("%d connected surfaces (reg=%d)", nbConSurfaces, fi);
     unsigned int maxNumEl = 1;
     for(int j = 0; j < nbConSurfaces; j++)
       if(conSurfaces[j].size() > maxNumEl)
@@ -3950,14 +3950,14 @@ void GModel::computeHomology()
       }
       else if(type == "Homology" && !homology->isHomologyComputed(dim)) {
         homology->findHomologyBasis(dim);
-        Msg::Info("Homology space basis chains to save: %s.", dims.c_str());
+        Msg::Info("Homology space basis chains to save: %s", dims.c_str());
         for(unsigned int i = 0; i < dim.size(); i++) {
           homology->addChainsToModel(dim.at(i));
         }
       }
       else if(type == "Cohomology" && !homology->isCohomologyComputed(dim)) {
         homology->findCohomologyBasis(dim);
-        Msg::Info("Cohomology space basis cochains to save: %s.", dims.c_str());
+        Msg::Info("Cohomology space basis cochains to save: %s", dims.c_str());
         for(unsigned int i = 0; i < dim.size(); i++) {
           homology->addCochainsToModel(dim.at(i));
         }

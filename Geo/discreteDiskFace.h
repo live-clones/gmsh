@@ -8,7 +8,7 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN) && defined(HAVE_OPTHOM)
 
 #include <list>
 #include <map>
@@ -70,7 +70,7 @@ class triangulation {
   std::map<MEdge,std::vector<int>,Less_Edge> ed2tri;
   std::map<double,std::vector<MVertex*> > bord; //border(s)
   std::set<MEdge,Less_Edge> borderEdg; // border edges
- 
+
   std::list<GEdge*> my_GEdges;
   std::set<int> fillingHoles;
 
@@ -78,7 +78,7 @@ class triangulation {
   double geodesicDistance ();
 
   double aspectRatio()
-  { 
+  {
     double L = bord.rbegin()->first;
     if (L == 0.0)return 1.e22;
     //    printf("%12.5E %12.5E\n",L,maxD);
@@ -198,7 +198,7 @@ class triangulation {
     fprintf(f,"};\n");
     fclose(f);
   }
-  
+
   triangulation() : gf(0) {}
   triangulation(int id, std::vector<MElement*> input, GFace* gface)
     : idNum(id), tri(input), gf(gface) { assign(); }
@@ -242,13 +242,13 @@ class discreteDiskFace : public GFace {
 				const SVector3 &p, const double &d,
 				double uv[2]) const;
 
-  
+
   std::vector<MElement*> discrete_triangles;
  protected:
-  // a copy of the mesh that should not be destroyed  
+  // a copy of the mesh that should not be destroyed
   triangulation* initialTriangulation;
   triangulation* geoTriangulation;// parametrized triangulation
-  
+
   std::vector<MVertex*> discrete_vertices;
 
   int _order;
@@ -264,7 +264,7 @@ class discreteDiskFace : public GFace {
   mutable discreteDiskFaceTriangle *_ddft;
   mutable Octree *oct;
   mutable std::vector<double> _coords;
-  
+
 };
 
 #endif

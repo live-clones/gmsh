@@ -128,12 +128,12 @@ bool PView::readMSH(const std::string &fileName, int fileIndex)
       }
       if(format){
         binary = true;
-        Msg::Info("View data is in binary format");
+        Msg::Debug("View data is in binary format");
         int one;
         if(fread(&one, sizeof(int), 1, fp) != 1){ fclose(fp); return 0; }
         if(one != 1){
           swap = true;
-          Msg::Info("Swapping bytes from binary file");
+          Msg::Debug("Swapping bytes from binary file");
         }
       }
     }
@@ -141,7 +141,7 @@ bool PView::readMSH(const std::string &fileName, int fileIndex)
       std::string name;
       if(!fgets(str, sizeof(str), fp)){ fclose(fp); return false; }
       name = ExtractDoubleQuotedString(str, sizeof(str));
-      Msg::Info("Reading interpolation scheme '%s'", name.c_str());
+      Msg::Debug("Reading interpolation scheme '%s'", name.c_str());
       PViewData::removeInterpolationScheme(name);
       int numTypes;
       if(fscanf(fp, "%d", &numTypes) != 1){ fclose(fp); return false; }

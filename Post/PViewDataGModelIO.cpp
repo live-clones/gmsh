@@ -58,8 +58,8 @@ bool PViewDataGModel::readMSH(const std::string &viewName, const std::string &fi
                               int step, double time, int partition, int numComp,
                               int numEnt, const std::string &interpolationScheme)
 {
-  Msg::Info("Reading view `%s' step %d (time %g) partition %d: %d records",
-            viewName.c_str(), step, time, partition, numEnt);
+  Msg::Debug("Reading view `%s' step %d (time %g) partition %d: %d records",
+             viewName.c_str(), step, time, partition, numEnt);
 
   while(step >= (int)_steps.size())
     _steps.push_back(new stepData<double>(GModel::current(), numComp));
