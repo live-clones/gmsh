@@ -1025,8 +1025,9 @@ static void view_group_cb(Fl_Widget *w, void *data)
 
 void onelabGroup::rebuildTree(bool deleteWidgets)
 {
-  FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
+  setButtonVisibility();
 
+  FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
   _computeWidths();
 
   std::set<std::string> closed = _getClosedGmshMenus();
@@ -1165,7 +1166,14 @@ void onelabGroup::setButtonVisibility()
 {
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
-  bool showRun = onelab::server::instance()->getNumClients() > 1 || numbers.size();
+  bool visible = false;
+  for(unsigned int i = 0; i < numbers.size(); i++){
+    if(numbers[i].getVisible()){
+      visible = true;
+      break;
+    }
+  }
+  bool showRun = (onelab::server::instance()->getNumClients() > 1) || visible;
   if(CTX::instance()->solver.autoCheck){
     _butt[0]->hide();
     if(showRun)
@@ -1296,7 +1304,6 @@ void onelabGroup::rebuildSolverList()
     }
   }
 
-  setButtonVisibility();
   rebuildTree(true);
 }
 
