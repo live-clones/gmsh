@@ -886,7 +886,8 @@ void Msg::InitializeOnelab(const std::string &name, const std::string &sockname)
     std::vector<onelab::string> ps;
     _onelabClient->get(ps, name + "/Action");
     if(ps.size()){
-      Info("Performing ONELAB '%s'", ps[0].getValue().c_str());
+      //removed message, as terminal is set to 1 when we get here
+      //Info("Performing ONELAB '%s'", ps[0].getValue().c_str());
       if(ps[0].getValue() == "initialize") Exit(0);
     }
   }
