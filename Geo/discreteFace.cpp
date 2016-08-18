@@ -115,7 +115,7 @@ void discreteFace::createGeometry()
   int nPart = 2;
   double eta = 5/(2.*3.14);
 
-  
+
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
 
   if (!_atlas.empty())return;
@@ -129,7 +129,7 @@ void discreteFace::createGeometry()
   toSplit.push(init);
   if((toSplit.top())->genus()!=0 || (toSplit.top())->aspectRatio() > eta || (toSplit.top())->seamPoint){
 
-    
+
     while( !toSplit.empty()){
       std::vector<triangulation*> part;
       triangulation* tosplit = toSplit.top();
@@ -154,11 +154,11 @@ void discreteFace::createGeometry()
     toParam.push_back(toSplit.top());
     toSplit.top()->idNum=id++;
   }
-  clock_t t1 = clock();
+  double t1 = Cpu();
   printf("split done\n");
   updateTopology(toParam);
-  clock_t t2 = clock();
-  printf("topology done in %8.3f sec\n",(double)(t2-t1)/CLOCKS_PER_SEC);
+  double t2 = Cpu();
+  printf("topology done in %8.3f sec\n",t2-t1);
 
   for(unsigned int i=0; i<toParam.size(); i++){
     printf("MAP(%d) : aspect ratio = %12.5E\n",toParam[i]->idNum,toParam[i]->aspectRatio());
@@ -171,7 +171,7 @@ void discreteFace::createGeometry()
   }
   for(unsigned int i=0; i<toParam.size(); i++){
     std::vector<MElement*> mytri = toParam[i]->tri;
-    discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));    
+    discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));
     df->replaceEdges(toParam[i]->my_GEdges);
     _atlas.push_back(df);
   }
@@ -717,7 +717,7 @@ void discreteFace::fillHoles(triangulation* trian)
       else if (j==mv.size()-1){
 	SPoint3 v(mv[j-1]->x(),mv[j-1]->y(),mv[j-1]->z());
 	v0 = v;
-	SPoint3 v_(mv[0]->x(),mv[0]->y(),mv[0]->z());	
+	SPoint3 v_(mv[0]->x(),mv[0]->y(),mv[0]->z());
 	v1 = v_;
       }
       else{
@@ -784,30 +784,30 @@ void discreteFace::bisectionEdg(triangulation* trian)
 	std::vector<MEdge> ed2update;
 	refineTriangles(trian,terminal,ed2update);
 	updateEd2refineBis(trian,ed2angle,ed2update,ed2refine);
-	printAtlasMesh(trian->tri,-count++);	
+	printAtlasMesh(trian->tri,-count++);
       }// end while exists
       ed2refine[key].erase(ved.begin());
       ved = ed2refine[key];
     }// end for unsigned
     ed2refine.erase(key);
-  }// end for it  
-  
+  }// end for it
+
 }
 
 bool discreteFace::checkEdges(triangulation* trian,std::map<double,std::vector<MEdge> >& ed2refine,std::map<MEdge,double,Less_Edge>& ed2angle)
 {
-  
+
   for(unsigned int i=0; i<trian->tri.size(); i++){
     MElement* t = trian->tri[i];
     std::vector<MEdge> eds;
     eds.push_back(t->getEdge(0));eds.push_back(t->getEdge(1));eds.push_back(t->getEdge(2));
     for(int j=0; j<3; j++){
       if(trian->ed2tri[eds[j]].size()>1){
-      MEdge ed1 = eds[j+1>2?j-2:j+1];      
+      MEdge ed1 = eds[j+1>2?j-2:j+1];
       MEdge ed2 = eds[j+2>2?j-1:j+2];
       SVector3 v1(ed1.getVertex(0)->x()-ed1.getVertex(1)->x(),
 		  ed1.getVertex(0)->y()-ed1.getVertex(1)->y(),
-		  ed1.getVertex(0)->z()-ed1.getVertex(1)->z()); 
+		  ed1.getVertex(0)->z()-ed1.getVertex(1)->z());
       SVector3 v2(ed2.getVertex(1)->x()-ed2.getVertex(0)->x(),
 		  ed2.getVertex(1)->y()-ed2.getVertex(0)->y(),
 		  ed2.getVertex(1)->z()-ed2.getVertex(0)->z());
@@ -825,24 +825,24 @@ bool discreteFace::checkEdges(triangulation* trian,std::map<double,std::vector<M
 	  ed2angle[eds[j]] = std::acos(dotp/lp);
       }//end if size()>1
     }// end for j
-  }//end for tri  
+  }//end for tri
   return !(ed2refine.empty());
 }
 
 
 bool discreteFace::checkEdgesBis(triangulation* trian,std::map<double,std::vector<MEdge> >& ed2refine,std::map<MEdge,double,Less_Edge>& ed2angle)
 {
-  
+
   for(unsigned int i=0; i<trian->tri.size(); i++){
     MElement* t = trian->tri[i];
     std::vector<MEdge> eds;
     eds.push_back(t->getEdge(0));eds.push_back(t->getEdge(1));eds.push_back(t->getEdge(2));
     for(int j=0; j<3; j++){
-      MEdge ed1 = eds[j+1>2?j-2:j+1];      
+      MEdge ed1 = eds[j+1>2?j-2:j+1];
       MEdge ed2 = eds[j+2>2?j-1:j+2];
       SVector3 v1(ed1.getVertex(0)->x()-ed1.getVertex(1)->x(),
 		  ed1.getVertex(0)->y()-ed1.getVertex(1)->y(),
-		  ed1.getVertex(0)->z()-ed1.getVertex(1)->z()); 
+		  ed1.getVertex(0)->z()-ed1.getVertex(1)->z());
       SVector3 v2(ed2.getVertex(1)->x()-ed2.getVertex(0)->x(),
 		  ed2.getVertex(1)->y()-ed2.getVertex(0)->y(),
 		  ed2.getVertex(1)->z()-ed2.getVertex(0)->z());
@@ -857,16 +857,16 @@ bool discreteFace::checkEdgesBis(triangulation* trian,std::map<double,std::vecto
 	  ed2angle.erase(eds[j]);
       }
     }// end for j
-  }//end for tri  
+  }//end for tri
   return !(ed2refine.empty());
 }
 
 
-MEdge discreteFace::lepp(triangulation* trian,MEdge ed){  
+MEdge discreteFace::lepp(triangulation* trian,MEdge ed){
   std::vector<int> intri = trian->ed2tri[ed];
   bool isTerminal = false;
   while(intri.size()>1 && !isTerminal){
-    MEdge ed0 = maxEdge(trian->tri[intri[0]]);	
+    MEdge ed0 = maxEdge(trian->tri[intri[0]]);
     MEdge ed1 = maxEdge(trian->tri[intri[1]]);
     if(ed != ed0){
       ed = ed0;
@@ -877,14 +877,14 @@ MEdge discreteFace::lepp(triangulation* trian,MEdge ed){
       intri = trian->ed2tri[ed];
     }
     else isTerminal = true;
-  }// end while 
+  }// end while
   return ed;
 }
 
-void discreteFace::refineTriangles(triangulation* trian,MEdge ed,std::vector<MEdge>&ed2update){  
+void discreteFace::refineTriangles(triangulation* trian,MEdge ed,std::vector<MEdge>&ed2update){
 
   SPoint3 mid = ed.barycenter();
-  MVertex* mv = new MVertex(mid.x(),mid.y(),mid.z());  
+  MVertex* mv = new MVertex(mid.x(),mid.y(),mid.z());
   trian->vert.insert(mv);
 
   std::vector<int> t = trian->ed2tri[ed];
@@ -897,7 +897,7 @@ void discreteFace::refineTriangles(triangulation* trian,MEdge ed,std::vector<MEd
   t01 = new MTriangle(trian->tri[t[0]]->getEdge(ie+2 > 2 ? ie-1 : ie+2).getVertex(0),trian->tri[t[0]]->getEdge(ie+2 > 2 ? ie-1 : ie+2).getVertex(1),mv);
 
   trian->tri[t[0]] = t00;
-  trian->ed2tri[t00->getEdge(2)] = trian->ed2tri[ed]; 
+  trian->ed2tri[t00->getEdge(2)] = trian->ed2tri[ed];
   trian->ed2tri[t00->getEdge(1)].push_back(t[0]);
   trian->ed2tri[t00->getEdge(1)].push_back(trian->tri.size());
 
@@ -907,7 +907,7 @@ void discreteFace::refineTriangles(triangulation* trian,MEdge ed,std::vector<MEd
   oldtri = trian->ed2tri[t01->getEdge(0)];
   oldtri[0] == t[0]  ? oldtri[0] = trian->tri.size() : oldtri[1] = trian->tri.size();
   trian->ed2tri[t01->getEdge(0)] = oldtri;
-  trian->tri.push_back(t01);  
+  trian->tri.push_back(t01);
 
   ed2update.push_back(t00->getEdge(0));
   ed2update.push_back(t01->getEdge(0));
@@ -936,8 +936,8 @@ void discreteFace::refineTriangles(triangulation* trian,MEdge ed,std::vector<MEd
     oldtri = trian->ed2tri[t11->getEdge(0)];
     oldtri[0] == t[1]  ? oldtri[0] = trian->tri.size() : oldtri[1] = trian->tri.size();
     trian->ed2tri[t11->getEdge(0)] = oldtri;
-    trian->tri.push_back(t11);  
-    
+    trian->tri.push_back(t11);
+
     ed2update.push_back(t10->getEdge(0));
     ed2update.push_back(t11->getEdge(0));
 
@@ -956,7 +956,7 @@ void discreteFace::refineTriangles(triangulation* trian,MEdge ed,std::vector<MEd
 	conca.push_back(new MLine(mlines[i]->getVertex(0),mv));
 	conca.push_back(new MLine(mv,mlines[i]->getVertex(1)));// delete MLine ?
       }
-      else conca.push_back(mlines[i]);      
+      else conca.push_back(mlines[i]);
     }
     discreteEdge* de = new discreteEdge(this->model(),NEWLINE(),ged->getBeginVertex(),ged->getEndVertex());
     setupDiscreteEdge(de,conca,NULL);
@@ -967,24 +967,24 @@ void discreteFace::refineTriangles(triangulation* trian,MEdge ed,std::vector<MEd
     trian->borderEdg.erase(ed);
     trian->borderEdg.insert(t00->getEdge(2));
     trian->borderEdg.insert(t01->getEdge(1));
-  }    
+  }
 }
 
 void discreteFace::updateEd2refine(triangulation* trian,std::map<MEdge,double,Less_Edge>&ed2angle,std::vector<MEdge>&ed2update,std::map<double,std::vector<MEdge> >&ed2refine){
 
   for(unsigned int i=0; i<ed2update.size(); i++){
-    MEdge current = ed2update[i];   
+    MEdge current = ed2update[i];
     std::vector<int> intri = trian->ed2tri[current];
     if(intri.size()>1 && ed2angle.find(current) == ed2angle.end() ){
-      ed2angle[current] = 0.;	
+      ed2angle[current] = 0.;
       for(unsigned int j=0; j<intri.size(); j++){
 	MElement* tri = trian->tri[intri[j]];
 	int num = edgeLocalNum(tri,current);
-	MEdge ed1 = tri->getEdge(num+1>2?num-2:num+1);      
+	MEdge ed1 = tri->getEdge(num+1>2?num-2:num+1);
 	MEdge ed2 = tri->getEdge(num+2>2?num-1:num+2);
 	SVector3 v1(ed1.getVertex(0)->x()-ed1.getVertex(1)->x(),
 		    ed1.getVertex(0)->y()-ed1.getVertex(1)->y(),
-		    ed1.getVertex(0)->z()-ed1.getVertex(1)->z()); 
+		    ed1.getVertex(0)->z()-ed1.getVertex(1)->z());
 	SVector3 v2(ed2.getVertex(1)->x()-ed2.getVertex(0)->x(),
 		    ed2.getVertex(1)->y()-ed2.getVertex(0)->y(),
 		    ed2.getVertex(1)->z()-ed2.getVertex(0)->z());
@@ -997,7 +997,7 @@ void discreteFace::updateEd2refine(triangulation* trian,std::map<MEdge,double,Le
 	  if(ed2angle[current] > M_PI)
 	    ed2refine[current.length()].push_back(current);
 	  else
-	    ed2angle.erase(current);	  
+	    ed2angle.erase(current);
 	}
       }//end for j
     }
@@ -1009,17 +1009,17 @@ void discreteFace::updateEd2refine(triangulation* trian,std::map<MEdge,double,Le
 void discreteFace::updateEd2refineBis(triangulation* trian,std::map<MEdge,double,Less_Edge>&ed2angle,std::vector<MEdge>&ed2update,std::map<double,std::vector<MEdge> >&ed2refine){
 
   for(unsigned int i=0; i<ed2update.size(); i++){
-    MEdge current = ed2update[i];   
+    MEdge current = ed2update[i];
     std::vector<int> intri = trian->ed2tri[current];
     for(unsigned int j=0; j<intri.size(); j++){
-      if(ed2angle.find(current) == ed2angle.end() ){	
+      if(ed2angle.find(current) == ed2angle.end() ){
 	MElement* tri = trian->tri[intri[j]];
 	int num = edgeLocalNum(tri,current);
-	MEdge ed1 = tri->getEdge(num+1>2?num-2:num+1);      
+	MEdge ed1 = tri->getEdge(num+1>2?num-2:num+1);
 	MEdge ed2 = tri->getEdge(num+2>2?num-1:num+2);
 	SVector3 v1(ed1.getVertex(0)->x()-ed1.getVertex(1)->x(),
 		    ed1.getVertex(0)->y()-ed1.getVertex(1)->y(),
-		    ed1.getVertex(0)->z()-ed1.getVertex(1)->z()); 
+		    ed1.getVertex(0)->z()-ed1.getVertex(1)->z());
 	SVector3 v2(ed2.getVertex(1)->x()-ed2.getVertex(0)->x(),
 		    ed2.getVertex(1)->y()-ed2.getVertex(0)->y(),
 		    ed2.getVertex(1)->z()-ed2.getVertex(0)->z());
@@ -1031,7 +1031,7 @@ void discreteFace::updateEd2refineBis(triangulation* trian,std::map<MEdge,double
 	else
 	  ed2angle.erase(current);
       }//end for j
-    }    
+    }
   }// end for i
 
 }
