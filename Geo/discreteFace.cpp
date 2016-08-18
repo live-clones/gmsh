@@ -154,7 +154,11 @@ void discreteFace::createGeometry()
     toParam.push_back(toSplit.top());
     toSplit.top()->idNum=id++;
   }
+  clock_t t1 = clock();
+  printf("split done\n");
   updateTopology(toParam);
+  clock_t t2 = clock();
+  printf("topology done in %8.3f sec\n",(double)(t2-t1)/CLOCKS_PER_SEC);
 
   for(unsigned int i=0; i<toParam.size(); i++){
     printf("MAP(%d) : aspect ratio = %12.5E\n",toParam[i]->idNum,toParam[i]->aspectRatio());
@@ -572,12 +576,12 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
   std::set<GEdge*> gGEdges(l_edges.begin(),l_edges.end());// initial GEdges of the GFace (to be updated)
 
   for(int i=0; i<nPartitions; i++){// each part is going ot be compared with the other ones
-    std::set<MEdge,Less_Edge> bordi = partition[i]->borderEdg;// edges defining the border(s) of the i-th new triangulation
+    const std::set<MEdge,Less_Edge> &bordi = partition[i]->borderEdg;// edges defining the border(s) of the i-th new triangulation
     for(int ii=i+1; ii<nPartitions; ii++){// compare to the ii-th partitions, with ii > i since ii < i have already been compared
       std::map<MVertex*,MLine*> v02edg;//first vertex of the MLine
       std::set<MVertex*> first, last;
+      const std::set<MEdge,Less_Edge> &bii = partition[ii]->borderEdg;// edges defining the border(s) of the ii-th new triangulation
       for(std::set<MEdge,Less_Edge>::iterator ie = bordi.begin(); ie != bordi.end(); ++ie){// MEdge by MEdge of the i-th triangulation border(s)
-	std::set<MEdge,Less_Edge> bii = partition[ii]->borderEdg;// edges defining the border(s) of the ii-th new triangulation
 	if(bii.find(*ie)!=bii.end()){// if the border edge is common to both triangulations, then it is a future GEdge - composed of MLine's
 	  v02edg[ie->getVertex(0)] = new MLine(ie->getVertex(0),ie->getVertex(1));// a new MLine is created
 
@@ -638,6 +642,7 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
 	}// end imvt
 	// the new GEdge can be created with its GVertex
 	discreteEdge* internalE = new discreteEdge (this->model(),NEWLINE(),v[0],v[1]);
+	//	printf("creating new discrete edge %d with %d lines (%p %p)\n", internalE->tag(), myLines.size(),v[0],v[1]);
 	setupDiscreteEdge(internalE,myLines,&todelete);
 	partition[i]->my_GEdges.push_back(internalE);
 	partition[ii]->my_GEdges.push_back(internalE);
