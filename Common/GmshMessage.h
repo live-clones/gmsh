@@ -29,8 +29,8 @@ class Msg {
  private:
   // current cpu number and total number of cpus
   static int _commRank, _commSize;
-  // verbosity level (0: silent except fatal errors, 1: +errors, 2:
-  // +warnings, 3: +direct, 4: +info except status bar, 5: normal, 99: debug)
+  // verbosity level (0: silent except fatal errors, 1: +errors, 2: +warnings,
+  // 3: +direct, 4: +info, 5 (=normal): +statusbar, 99: debug)
   static int _verbosity;
   // step (in %) of the progress meter and current progress %
   static int _progressMeterStep, _progressMeterCurrent;
