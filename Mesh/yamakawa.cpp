@@ -5154,7 +5154,7 @@ void PostOp::writeMSH(const char *filename, std::vector<MElement*> &elements)
 
   fprintf(f, "$Elements\n");
   fprintf(f, "%d\n", (int)elements.size());
-  for (int i = 0; i < elements.size(); ++i) {
+  for (unsigned int i = 0; i < elements.size(); ++i) {
     fprintf(f, "%d %d 0", elements[i]->getNum(), elements[i]->getTypeForMSH());
     for (int k = 0; k < elements[i]->getNumVertices(); ++k)
       fprintf(f, " %d", elements[i]->getVertex(k)->getIndex());
@@ -5212,7 +5212,7 @@ MFace PostOp::find_quadFace(MVertex* v1,MVertex* v2,MVertex* v3)
 MVertex* PostOp::otherVertexQuadFace(MFace &f, MVertex* v1,MVertex* v2,MVertex* v3)
 {
   int n = 0;
-  MVertex *v;
+  MVertex *v = 0;
   for (int i = 0; i < 4; ++i) {
     if (f.getVertex(i) != v1 &&
         f.getVertex(i) != v2 &&

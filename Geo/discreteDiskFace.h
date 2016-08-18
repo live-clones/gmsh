@@ -8,7 +8,7 @@
 
 #include "GmshConfig.h"
 
-#if defined(HAVE_SOLVER) && defined(HAVE_ANN) && defined(HAVE_OPTHOM)
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
 
 #include <list>
 #include <map>
