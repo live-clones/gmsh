@@ -37,7 +37,8 @@ double _CoeffDataScaledJac::cTri = 2/std::sqrt(3);
 double _CoeffDataScaledJac::cTet = std::sqrt(2);
 double _CoeffDataScaledJac::cPyr = std::sqrt(2)*4;
 
-void minMaxJacobianDeterminant(MElement *el, double &min, double &max)
+void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
+                               const fullMatrix<double> *normals)
 {
   _CoeffDataAnisotropy::currentElement = el;
   const JacobianBasis *jfs = el->getJacobianFuncSpace();
@@ -53,7 +54,7 @@ void minMaxJacobianDeterminant(MElement *el, double &min, double &max)
 
   fullVector<double> coeffLag(jfs->getNumJacNodes());
   fullVector<double> coeffBez(jfs->getNumJacNodes());
-  jfs->getSignedJacobian(nodesXYZ, coeffLag);
+  jfs->getSignedJacobian(nodesXYZ, coeffLag, normals);
   jfs->lag2Bez(coeffLag, coeffBez);
 
   std::vector<_CoeffData*> domains;

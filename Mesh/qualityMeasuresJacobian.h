@@ -15,7 +15,8 @@ class MElement;
 
 namespace jacobianBasedQuality {
 
-void minMaxJacobianDeterminant(MElement *el, double &min, double &max);
+void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
+                               const fullMatrix<double> *normals = NULL);
 double minScaledJacobian(MElement *el,
                          bool knownValid = false,
                          bool reversedOk = false);
