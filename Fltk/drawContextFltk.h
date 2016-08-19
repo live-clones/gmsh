@@ -6,6 +6,12 @@
 #ifndef _DRAW_CONTEXT_FLTK_H_
 #define _DRAW_CONTEXT_FLTK_H_
 
+#include "GmshConfig.h"
+#if !defined(HAVE_NO_STDINT_H)
+#include <stdint.h>
+#elif defined(HAVE_NO_INTPTR_T)
+typedef unsigned long intptr_t;
+#endif
 #include <FL/x.H>
 #include <FL/gl.h>
 #include "FlGui.h"
