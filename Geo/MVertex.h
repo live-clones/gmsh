@@ -98,6 +98,7 @@ class MVertex{
   void writeUNV(FILE *fp, double scalingFactor=1.0);
   void writeVTK(FILE *fp, bool binary=false, double scalingFactor=1.0,
                 bool bigEndian=false);
+  void writeTOCHNOG(FILE *fp, int dim, double scalingFactor=1.0);
   void writeMESH(FILE *fp, double scalingFactor=1.0);
   void writeBDF(FILE *fp, int format=0, double scalingFactor=1.0);
   void writeINP(FILE *fp, double scalingFactor=1.0);

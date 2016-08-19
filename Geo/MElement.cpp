@@ -1321,6 +1321,19 @@ void MElement::writeVRML(FILE *fp)
   fprintf(fp, "-1,\n");
 }
 
+void MElement::writeTOCHNOG(FILE *fp, int num)
+{
+  const char *str = getStringForTOCHNOG();
+  if(!str) return;
+
+  int n = getNumVertices();
+  fprintf(fp, "element %d %s ", num, str);
+  for(int i = 0; i < n; i++) {
+    fprintf(fp, " %d", getVertexTOCHNOG(i)->getIndex());
+  }
+  fprintf(fp, "\n");
+}
+
 void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
 {
   if(!getTypeForVTK()) return;

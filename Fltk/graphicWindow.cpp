@@ -276,6 +276,8 @@ static int _save_unv(const char *name){ return unvinpFileDialog
     (name, "UNV Options", FORMAT_UNV); }
 static int _save_vtk(const char *name){ return genericMeshFileDialog
     (name, "VTK Options", FORMAT_VTK, true, false); }
+static int _save_tochnog(const char *name){ return genericMeshFileDialog
+    (name, "Tochnog Options", FORMAT_TOCHNOG, true, false); }
 static int _save_diff(const char *name){ return genericMeshFileDialog
     (name, "Diffpack Options", FORMAT_DIFF, true, false); }
 static int _save_inp(const char *name){ return unvinpFileDialog
@@ -348,6 +350,7 @@ static int _save_auto(const char *name)
   case FORMAT_CGNS : return _save_cgns(name);
   case FORMAT_UNV  : return _save_unv(name);
   case FORMAT_VTK  : return _save_vtk(name);
+  case FORMAT_TOCHNOG: return _save_tochnog(name);
   case FORMAT_MED  : return _save_med(name);
   case FORMAT_RMED : return _save_view_med(name);
   case FORMAT_MESH : return _save_mesh(name);
@@ -414,6 +417,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
     {"Mesh - STL Surface" TT "*.stl", _save_stl},
     {"Mesh - VRML Surface" TT "*.wrl", _save_vrml},
     {"Mesh - VTK" TT "*.vtk", _save_vtk},
+    {"Mesh - Tochnog" TT "*.dat", _save_tochnog},
     {"Mesh - PLY2 Surface" TT "*.ply2", _save_ply2},
     {"Mesh - SU2" TT "*.su2", _save_su2},
     {"Post-processing - Gmsh POS" TT "*.pos", _save_view_pos},

@@ -242,6 +242,25 @@ void MVertex::writeVTK(FILE *fp, bool binary, double scalingFactor, bool bigEndi
   }
 }
 
+void MVertex::writeTOCHNOG(FILE *fp, int dim, double scalingFactor)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+  if(dim == 2) {
+    fprintf(fp, "node %d %.16g %.16g\n", _index,
+            x() * scalingFactor, y() * scalingFactor);
+  }
+  else if (dim == 3) {
+    fprintf(fp, "node %d %.16g %.16g %.16g\n", _index,
+            x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
+  }
+  else if (dim == 1) {
+    fprintf(fp, "node %d %.16g\n", _index, x() * scalingFactor);
+  }
+  else {
+    fprintf(fp, "ERROR -- unsupported dimension: %d\n", dim);
+  }
+}
+
 void MVertex::writeMESH(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved

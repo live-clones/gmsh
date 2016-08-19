@@ -24,8 +24,9 @@ Bechet (solver), Gilles Marckmann (camera and stero mode), Ashish Negi
 with pyramids), Amaury Johnen (Bezier), Benjamin Ruard (Java wrappers), Maxime
 Graulich (iOS/Android port), Francois Henrotte (onelab metamodels), Sebastian
 Eiser (PGF output), Alexis Salzman (compressed IO), Hang Si (TetGen/BR boundary
-recovery code). See comments in the sources for more information. If we forgot
-to list your contributions please send us an email!
+recovery code), Fernando Lorenzo (Tochnog support). See comments in the sources
+for more information. If we forgot to list your contributions please send us an
+email!
 
 The TetGen/BR code (Mesh/tetgenBR.{cpp,h}) is copyright (c) 2016 Hang Si, Weierstrass
 Institute for Applied Analysis and Stochatics.

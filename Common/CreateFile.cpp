@@ -40,6 +40,7 @@ int GetFileFormatFromExtension(const std::string &ext)
   else if(ext == ".opt")  return FORMAT_OPT;
   else if(ext == ".unv")  return FORMAT_UNV;
   else if(ext == ".vtk")  return FORMAT_VTK;
+  else if(ext == ".dat")  return FORMAT_TOCHNOG;
   else if(ext == ".txt")  return FORMAT_TXT;
   else if(ext == ".stl")  return FORMAT_STL;
   else if(ext == ".cgns") return FORMAT_CGNS;
@@ -99,6 +100,7 @@ std::string GetDefaultFileName(int format)
   case FORMAT_OPT:  name += ".opt"; break;
   case FORMAT_UNV:  name += ".unv"; break;
   case FORMAT_VTK:  name += ".vtk"; break;
+  case FORMAT_TOCHNOG: name += ".dat"; break;
   case FORMAT_STL:  name += ".stl"; break;
   case FORMAT_CGNS: name += ".cgns"; break;
   case FORMAT_MED:  name += ".med"; break;
@@ -294,6 +296,11 @@ void CreateOutputFile(const std::string &fileName, int format,
     GModel::current()->writeUNV
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveGroupsOfNodes,
        CTX::instance()->mesh.scalingFactor);
+    break;
+
+  case FORMAT_TOCHNOG:
+    GModel::current()->writeTOCHNOG
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_VTK:

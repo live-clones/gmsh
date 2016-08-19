@@ -702,6 +702,10 @@ class GModel
                bool saveAll=false, double scalingFactor=1.0,
                bool bigEndian=false);
 
+  // Tochnog format
+  int writeTOCHNOG(const std::string &name,  bool saveGroupsOfNodes=false,
+                   bool saveAll=false, double scalingFactor=1.0);
+
   // DIFFPACK format
   int readDIFF(const std::string &name);
   int writeDIFF(const std::string &name, bool binary=false,

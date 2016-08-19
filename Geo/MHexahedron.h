@@ -119,6 +119,7 @@ class MHexahedron : public MElement {
   virtual const char *getStringForBDF() const { return "CHEXA"; }
   virtual const char *getStringForDIFF() const { return "ElmB8n3D"; }
   virtual const char *getStringForINP() const { return "C3D8"; }
+   virtual const char *getStringForTOCHNOG() const { return "-hex8"; }
   virtual void reverse()
   {
     MVertex *tmp;
@@ -425,6 +426,7 @@ class MHexahedron27 : public MHexahedron {
   virtual const char *getStringForPOS() const { return "SH2"; }
   virtual const char *getStringForDIFF() const { return "ElmB27n3D"; }
   virtual const char *getStringForINP() const { return "C3D27"; }
+  virtual const char *getStringForTOCHNOG() const { return "-hex27"; }
   virtual void reverse()
   {
     MVertex *tmp;

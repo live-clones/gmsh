@@ -70,6 +70,7 @@ class MLine : public MElement {
   virtual const char *getStringForPOS() const { return "SL"; }
   virtual const char *getStringForBDF() const { return "CBAR"; }
   virtual const char *getStringForINP() const { return "T3D2"/*"C1D2"*/; }
+  virtual const char *getStringForTOCHNOG() const { return "-bar2"; }
   virtual void reverse()
   {
     MVertex *tmp = _v[0]; _v[0] = _v[1]; _v[1] = tmp;
@@ -145,6 +146,7 @@ class MLine3 : public MLine {
   virtual int getTypeForVTK() const { return 21; }
   virtual const char *getStringForPOS() const { return "SL2"; }
   virtual const char *getStringForINP() const { return "T3D3"/*"C1D3"*/; }
+  virtual const char *getStringForTOCHNOG() const { return "-bar3"; }
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 2 ? MLine::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
