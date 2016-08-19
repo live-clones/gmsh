@@ -128,7 +128,7 @@ void Mesh::calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2enti
   SVector3 geoNorm(0.,0.,0.);
   std::map<MElement*,GEntity*>::const_iterator itEl2ent = element2entity.find(_el[iEl]);
   GEntity *ge = (itEl2ent == element2entity.end()) ? 0 : itEl2ent->second;
-  const bool hasGeoNorm = ge && (ge->dim() == 2) && ge->haveParametrization();
+  bool hasGeoNorm = ge && (ge->dim() == 2) && ge->haveParametrization();
   for (int i=0; i<jac->getNumPrimMapNodes(); i++) {
     const int &iV = _el2V[iEl][i];
     primNodesXYZ(i,0) = _xyz[iV].x();
@@ -144,6 +144,17 @@ void Mesh::calcScaledNormalEl2D(const std::map<MElement*,GEntity*> &element2enti
   if (hasGeoNorm && (geoNorm.normSq() == 0.)) {
     SPoint2 param = ((GFace*)ge)->parFromPoint(_el[iEl]->barycenter(true),false);
     geoNorm = ((GFace*)ge)->normal(param);
+  }
+  if (!hasGeoNorm && ge && ge->geomType() == GEntity::DiscreteSurface) {
+    SBoundingBox3d bb = ge->bounds();
+    // If we don't have the CAD, check if the mesh is 2D:
+    if (!bb.empty() && bb.max().z() - bb.min().z() == .0) {
+      hasGeoNorm = true;
+      geoNorm = SVector3(0, 0, 1);
+    }
+  }
+  else if (!ge) {
+    Msg::Warning("don't have the entity");
   }
 
   fullMatrix<double> &elNorm = _scaledNormEl[iEl];

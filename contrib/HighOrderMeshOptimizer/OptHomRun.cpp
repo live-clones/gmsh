@@ -644,7 +644,12 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
     Msg::Info("Computing connectivity and bad elements for entity %d...",
               entity->tag());
     calcVertex2Elements(p.dim,entity,vertex2elements);
+
     if (p.optPrimSurfMesh) calcElement2Entity(entity,element2entity);
+    // Otherwise, still compute element2entity: Hack for using the geometry
+    // normal in the computation of the Jacobian when optimizing surface meshes.
+    // Warning: Accurate for planar surface but not really for curved surface...
+    else calcElement2Entity(entity,element2entity);
   }
 
   OptHomPeriodicity periodicity = OptHomPeriodicity(entities);

@@ -275,7 +275,6 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
             normals->set(0, 0, 0);
             normals->set(0, 1, 0);
             normals->set(0, 2, 1);
-            Msg::Error("Discrete face is 2D!");
           }
         }
         break;
