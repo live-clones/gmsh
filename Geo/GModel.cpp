@@ -1776,15 +1776,11 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
     }
   }
 
-  // --- replace vertices in the periodic copies
-
+  // replace vertices in the periodic copies
   for(unsigned int i = 0; i < entities.size(); i++){
-
     GEntity* ge = entities[i];
-
     std::map<MVertex*,MVertex*>& corrVtcs = ge->correspondingVertices;
     std::map<MVertex*,MVertex*>::iterator cIter;
-
     for (cIter=newVertex.begin();cIter!=newVertex.end();++cIter) {
       MVertex* oldTgt = cIter->first;
       MVertex* newTgt = cIter->second;
@@ -1795,12 +1791,9 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
         corrVtcs[newTgt] = src;
       }
     }
-
     for (cIter=corrVtcs.begin();cIter!=corrVtcs.end();++cIter) {
-
       MVertex* oldSrc = cIter->second;
       std::map<MVertex*,MVertex*>::iterator nIter = newVertex.find(oldSrc);
-
       if (nIter != newVertex.end()) {
         MVertex* tgt = cIter->first;
         MVertex* newSrc = nIter->second;

@@ -1,12 +1,12 @@
-2.13.2: small improvements (scale labels, periodic and high-order meshes) and
-bug fixes.
+2.13.2 (August 18, 2016)): small improvements (scale labels, periodic and
+high-order meshes) and bug fixes.
 
-2.13.1: small bug fixes.
+2.13.1 (July 15, 2016): small bug fixes.
 
-2.13.0: new ONELAB 1.2 protocol with native support for lists; new experimental
-3D boundary recovery code and 3D refinement algorithm; better adaptive
-visualization of quads and hexahedra; fixed several regressions introduced in
-2.12.
+2.13.0 (July 11, 2016): new ONELAB 1.2 protocol with native support for lists;
+new experimental 3D boundary recovery code and 3D refinement algorithm; better
+adaptive visualization of quads and hexahedra; fixed several regressions
+introduced in 2.12.
 
 2.12.0 (March 5, 2016): improved interactive definition of physical groups and
 handling of ONELAB clients; improved full quad algorithm; added support for list
