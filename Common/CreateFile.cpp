@@ -32,7 +32,7 @@
 
 int GetFileFormatFromExtension(const std::string &ext)
 {
-  if     (ext == ".geo")  return FORMAT_GEO;
+  if     (ext == ".geo_unrolled")  return FORMAT_GEO;
   else if(ext == ".msh")  return FORMAT_MSH;
   else if(ext == ".x3d")  return FORMAT_X3D;
   else if(ext == ".pos")  return FORMAT_POS;

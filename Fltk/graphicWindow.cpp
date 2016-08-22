@@ -393,7 +393,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
   static patXfunc formats[] = {
     {"Guess From Extension" TT "*.*", _save_auto},
     {"Geometry - Gmsh Options" TT "*.opt", _save_options},
-    {"Geometry - Gmsh Unrolled GEO" TT "*.geo", _save_geo},
+    {"Geometry - Gmsh Unrolled GEO" TT "*.geo_unrolled", _save_geo},
 #if defined(HAVE_OCC)
     {"Geometry - OpenCASCADE STEP" TT "*.step", _save_step},
     {"Geometry - OpenCASCADE BRep" TT "*.brep", _save_brep},
