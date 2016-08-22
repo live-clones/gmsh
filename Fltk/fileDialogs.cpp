@@ -99,8 +99,10 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message,
   std::string thepath;
   if(fname)
     thepath = std::string(fname);
-  else
-    thepath = GModel::current()->getFileName();
+  else{
+    std::vector<std::string> tmp = SplitFileName(GModel::current()->getFileName());
+    thepath = tmp[0] + tmp[1]; // i.e., without the extension!
+  }
   std::vector<std::string> split = SplitFileName(thepath);
   if(split[0].empty()) thepath = std::string("./") + thepath;
 
