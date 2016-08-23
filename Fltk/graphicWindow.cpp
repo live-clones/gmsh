@@ -15,6 +15,7 @@ typedef unsigned long intptr_t;
 #include <stdio.h>
 #include <time.h>
 #include <fstream>
+#include <string>
 #include <FL/Fl_Box.H>
 #include <FL/fl_ask.H>
 #include <FL/filename.H>
@@ -620,12 +621,13 @@ void geometry_remove_last_command_cb(Fl_Widget *w, void *data)
 {
   std::string fileName = GModel::current()->getFileName();
   // FIXME: make this work with compressed files
-  std::ifstream t(fileName);
+  std::ifstream t;
+  t.open(fileName.c_str(), std::ifstream::in);
   std::stringstream buffer;
   buffer << t.rdbuf();
   std::string s(buffer.str());
-  int found = s.rfind("//+");
-  if(found != std::string::npos){
+  int found = (int)s.rfind("//+");
+  if(found != (int)std::string::npos){
     s.erase(found);
   }
   else{
