@@ -618,7 +618,27 @@ void geometry_reload_cb(Fl_Widget *w, void *data)
 void geometry_remove_last_command_cb(Fl_Widget *w, void *data)
 {
   std::string fileName = GModel::current()->getFileName();
-  // TODO!
+  // FIXME: make this work with compressed files
+  std::ifstream t(fileName);
+  std::stringstream buffer;
+  buffer << t.rdbuf();
+  std::string s(buffer.str());
+  int found = s.rfind("//+");
+  if(found != std::string::npos){
+    s.erase(found);
+  }
+  else{
+    Msg::Warning("Could not find last command in script `%s'", fileName.c_str());
+    return;
+  }
+  FILE *fp = Fopen(fileName.c_str(), "w");
+  if(fp){
+    fprintf(fp, "%s", s.c_str());
+    fclose(fp);
+  }
+  else{
+    Msg::Error("Could not open file `%s'", fileName.c_str());
+  }
   OpenProject(fileName);
   drawContext::global()->draw();
 }
@@ -3746,13 +3766,11 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_physical_remove_cb, (void*)"Volume" } ,
   {"0Modules/Geometry/Coherence",
    (Fl_Callback *)geometry_elementary_coherence_cb} ,
-  {"0Modules/Geometry/Reload",
+  {"0Modules/Geometry/Reload script",
    (Fl_Callback *)geometry_reload_cb} ,
-  /* FIXME: toto
-  {"0Modules/Geometry/Remove last command in file",
+  {"0Modules/Geometry/Remove last script command",
    (Fl_Callback *)geometry_remove_last_command_cb} ,
-  */
-  {"0Modules/Geometry/Edit file",
+  {"0Modules/Geometry/Edit script",
    (Fl_Callback *)geometry_edit_cb} ,
   {"0Modules/Mesh/Define/Size fields",
    (Fl_Callback *)field_cb},

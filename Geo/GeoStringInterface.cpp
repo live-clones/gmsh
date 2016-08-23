@@ -113,7 +113,7 @@ void add_infile(const std::string &text, const std::string &fileName, bool force
       Msg::Error("Unable to open file '%s'", fileName.c_str());
       return;
     }
-    gmshprintf(fp, "%s\n", text.c_str());
+    gmshprintf(fp, "//+\n%s\n", text.c_str());
     gmshclose(fp);
   }
   else{
@@ -122,7 +122,7 @@ void add_infile(const std::string &text, const std::string &fileName, bool force
       Msg::Error("Unable to open file '%s'", fileName.c_str());
       return;
     }
-    fprintf(fp, "%s\n", text.c_str());
+    fprintf(fp, "//+\n%s\n", text.c_str());
     fclose(fp);
   }
 #else
@@ -131,7 +131,7 @@ void add_infile(const std::string &text, const std::string &fileName, bool force
     Msg::Error("Unable to open file '%s'", fileName.c_str());
     return;
   }
-  fprintf(fp, "%s\n", text.c_str());
+  fprintf(fp, "//+\n%s\n", text.c_str());
   fclose(fp);
 #endif
 
