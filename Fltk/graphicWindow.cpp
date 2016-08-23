@@ -14,6 +14,7 @@ typedef unsigned long intptr_t;
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <fstream>
 #include <FL/Fl_Box.H>
 #include <FL/fl_ask.H>
 #include <FL/filename.H>
