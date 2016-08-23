@@ -917,6 +917,47 @@ static void multiple_selection_menu_cb(Fl_Widget *w, void *data)
   but->do_callback();
 }
 
+static void multiple_selection_menu_all_cb(Fl_Widget *w, void *data)
+{
+  Fl_Input_Choice *but = (Fl_Input_Choice*)data;
+  Fl_Menu_Button *menu = but->menubutton();
+  std::string val;
+  for (int i = 0; i < menu->size() - 1; i++) {
+    int mode = menu->mode(i);
+    if(mode & FL_MENU_TOGGLE){
+      if(mode & FL_MENU_DIVIDER)
+        menu->mode(i, FL_MENU_TOGGLE | FL_MENU_VALUE | FL_MENU_DIVIDER);
+      else
+        menu->mode(i, FL_MENU_TOGGLE | FL_MENU_VALUE);
+      const Fl_Menu_Item &item = menu->menu()[i];
+      if(item.label()){
+        if(val.size()) val += ", ";
+        val += item.label();
+      }
+    }
+  }
+  but->value(val.c_str());
+  but->do_callback();
+}
+
+static void multiple_selection_menu_none_cb(Fl_Widget *w, void *data)
+{
+  Fl_Input_Choice *but = (Fl_Input_Choice*)data;
+  Fl_Menu_Button *menu = but->menubutton();
+  std::string val;
+  for (int i = 0; i < menu->size() - 1; i++) {
+    int mode = menu->mode(i);
+    if(mode & FL_MENU_TOGGLE){
+      if(mode & FL_MENU_DIVIDER)
+        menu->mode(i, FL_MENU_TOGGLE | FL_MENU_DIVIDER);
+      else
+        menu->mode(i, FL_MENU_TOGGLE);
+    }
+  }
+  but->value("");
+  but->do_callback();
+}
+
 Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
                                             Fl_Tree_Item *n, bool highlight, Fl_Color c)
 {
@@ -975,13 +1016,19 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
   for(unsigned int j = 0; j < p.getChoices().size(); j++){
     char *str = strdup(p.getChoices()[j].c_str());
     _treeStrings.push_back(str);
-    bool divider = (p.getKind() == "file" &&
+    bool divider = ((p.getKind() == "file" || multipleSelection.size()) &&
                     j == p.getChoices().size() - 1);
     int choice = multipleSelection.size() ? FL_MENU_TOGGLE : 0;
     if(multipleSelection.size() > j && multipleSelection[j] == '1')
       choice |= FL_MENU_VALUE;
-    Fl_Menu_Item it = {str, 0, 0, 0, divider ? FL_MENU_DIVIDER : choice};
+    Fl_Menu_Item it = {str, 0, 0, 0, choice | (divider ? FL_MENU_DIVIDER : 0)};
     menu.push_back(it);
+  }
+  if(multipleSelection.size()){
+    Fl_Menu_Item it = {"Select All", 0, multiple_selection_menu_all_cb, but};
+    menu.push_back(it);
+    Fl_Menu_Item it2 = {"Select None", 0, multiple_selection_menu_none_cb, but};
+    menu.push_back(it2);
   }
   if(p.getKind() == "file"){
     Fl_Menu_Item it = {"Choose...", 0, onelab_input_choice_file_chooser_cb, (void*)n};
