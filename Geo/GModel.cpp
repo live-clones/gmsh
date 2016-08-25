@@ -123,7 +123,9 @@ void GModel::setFileName(std::string fileName)
 {
   _fileName = fileName;
   _fileNames.insert(fileName);
-  Msg::SetOnelabString("Gmsh/Model name", fileName, false, false, true, 0);
+
+  Msg::SetOnelabString("Gmsh/Model name", fileName,
+                       Msg::GetNumOnelabClients() > 1, false, true, 0);
   Msg::SetOnelabString
     ("Gmsh/Model absolute path", SplitFileName(GetAbsolutePath(fileName))[0],
      false, false, true, 0);

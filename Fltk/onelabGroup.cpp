@@ -982,7 +982,7 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
   }
 
   // non-editable value
-  if(p.getReadOnly()){
+  if(p.getReadOnly() && p.getKind() != "file"){
     Fl_Output *but = new Fl_Output(1, 1, ww, hh);
     but->value(p.getValue().c_str());
     but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
@@ -1031,12 +1031,14 @@ Fl_Widget *onelabGroup::_addParameterWidget(onelab::string &p, int ww, int hh,
     menu.push_back(it2);
   }
   if(p.getKind() == "file"){
-    Fl_Menu_Item it = {"Choose...", 0, onelab_input_choice_file_chooser_cb, (void*)n};
-    menu.push_back(it);
-    Fl_Menu_Item it2 = {"Edit...", 0, onelab_input_choice_file_edit_cb, (void*)n};
+    if(!p.getReadOnly()){
+      Fl_Menu_Item it = {"Choose File...", 0, onelab_input_choice_file_chooser_cb, (void*)n};
+      menu.push_back(it);
+    }
+    Fl_Menu_Item it2 = {"Edit Selected File...", 0, onelab_input_choice_file_edit_cb, (void*)n};
     menu.push_back(it2);
     if(GuessFileFormatFromFileName(p.getValue()) >= 0){
-      Fl_Menu_Item it3 = {"Merge...", 0, onelab_input_choice_file_merge_cb, (void*)n};
+      Fl_Menu_Item it3 = {"Merge Selected File...", 0, onelab_input_choice_file_merge_cb, (void*)n};
       menu.push_back(it3);
     }
   }

@@ -110,6 +110,7 @@ class Msg {
   static void SetExecutableName(const std::string &name) { _execName.assign(name); }
   static std::string GetExecutableName() { return _execName; }
   static void LoadOnelabClient(const std::string &name, const std::string &sockName);
+  static int GetNumOnelabClients();
   static GmshClient *GetGmshClient(){ return _client; }
 #if defined(HAVE_ONELAB)
   static onelab::client *GetOnelabClient(){ return _onelabClient; }
@@ -126,6 +127,9 @@ class Msg {
                                 bool errorIfMissing=false);
   static std::string GetOnelabString(std::string name, const std::string &defaultValue="",
                                      bool errorIfMissing=false);
+  static void AddOnelabStringChoice(std::string name, std::string kind,
+                                    std::string value, bool updateValue=true,
+                                    bool readOnly=false, bool visible=true);
   static void SetOnelabAction(const std::string &action);
   static std::string GetOnelabAction();
   static void ExchangeOnelabParameter(const std::string &key,

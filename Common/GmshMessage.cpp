@@ -787,6 +787,44 @@ void Msg::SetOnelabString(std::string name, std::string val, bool visible,
 #endif
 }
 
+void Msg::AddOnelabStringChoice(std::string name, std::string kind,
+                                std::string value, bool updateValue,
+                                bool readOnly, bool visible)
+{
+#if defined(HAVE_ONELAB)
+  if(_onelabClient){
+    std::vector<std::string> choices;
+    std::vector<onelab::string> ps;
+    _onelabClient->get(ps, name);
+    if(ps.size()){
+      choices = ps[0].getChoices();
+      if(std::find(choices.begin(), choices.end(), value) == choices.end())
+        choices.push_back(value);
+      if(updateValue)
+        ps[0].setValue(value);
+    }
+    else{
+      ps.resize(1);
+      ps[0].setName(name);
+      ps[0].setKind(kind);
+      ps[0].setValue(value);
+      choices.push_back(value);
+    }
+    ps[0].setChoices(choices);
+    if(readOnly){
+      ps[0].setReadOnly(true);
+      ps[0].setAttribute("AutoCheck", "0");
+    }
+    else{
+      ps[0].setReadOnly(false);
+      ps[0].setAttribute("AutoCheck", "1");
+    }
+    ps[0].setVisible(visible);
+    _onelabClient->set(ps[0]);
+  }
+#endif
+}
+
 double Msg::GetOnelabNumber(std::string name, double defaultValue,
                             bool errorIfMissing)
 {
@@ -950,6 +988,13 @@ void Msg::LoadOnelabClient(const std::string &clientName, const std::string &soc
     delete client;
   }
   exit(1);
+#endif
+}
+
+int Msg::GetNumOnelabClients()
+{
+#if defined(HAVE_ONELAB)
+  return onelab::server::instance()->getNumClients();
 #endif
 }
 

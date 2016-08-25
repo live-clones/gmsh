@@ -192,6 +192,9 @@ int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
     return 0;
   }
 
+  Msg::AddOnelabStringChoice("Gmsh/}Input files", "file", fileName, true, true,
+                             Msg::GetNumOnelabClients() > 1);
+
   //#if defined(HAVE_FLTK) && defined(HAVE_POST)
   // int numViewsBefore = PView::list.size();
   //#endif
@@ -316,6 +319,9 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
   gmshclose(fp);
 
   Msg::StatusBar(true, "Reading '%s'...", fileName.c_str());
+
+  Msg::AddOnelabStringChoice("Gmsh/}Input files", "file", fileName, true, true,
+                             Msg::GetNumOnelabClients() > 1);
 
   std::vector<std::string> split = SplitFileName(fileName);
   std::string noExt = split[0] + split[1], ext = split[2];
