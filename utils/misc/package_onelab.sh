@@ -5,6 +5,9 @@ DATE=`date "+%d/%m/%Y"`
 echo "This ONELAB bundle was built on ${DATE} with the latest nightly snapshots
 of Gmsh (http://gmsh.info) and GetDP (http://getdp.info).
 
+Launch Gmsh and open a GetDP .pro file (e.g. models/magnetometer/magnetometer.pro)
+with the File/Open menu, then click on \"Run\".
+
 The software is distributed under the terms of the GNU General Public License. 
 See the LICENSE and CREDITS files for more information. 
 
