@@ -25,22 +25,15 @@ static void solver_rename_cb(Fl_Widget *w, void *data)
   }
 
   int num = (intptr_t)data;
-
   std::string name = opt_solver_name(num, GMSH_GET, "");
-  onelab::server::citer it = onelab::server::instance()->findClient(name);
-  if(it != onelab::server::instance()->lastClient()){
-    delete *it;
-  }
-
-  const char *n = fl_input("Solver name:", "");
+  const char *n = fl_input("Solver name:", name.c_str());
   if(n){
-    opt_solver_name(num, GMSH_SET, name);
     std::string exe = opt_solver_executable(num, GMSH_GET, "");
     std::string host = opt_solver_remote_login(num, GMSH_GET, "");
+    // this will remove the old client if the new name is different
     FlGui::instance()->onelab->addSolver(n, exe, host, num);
+    onelab_cb(0, (void*)"reset");
   }
-  FlGui::instance()->onelab->rebuildSolverList();
-  onelab_cb(0, (void*)"reset");
 }
 
 
@@ -52,18 +45,9 @@ static void solver_change_exe_cb(Fl_Widget *w, void *data)
   }
 
   int num = (intptr_t)data;
-
   std::string name = opt_solver_name(num, GMSH_GET, "");
-  onelab::server::citer it = onelab::server::instance()->findClient(name);
-  if(it != onelab::server::instance()->lastClient()){
-    delete *it;
-  }
-
   std::string exe = opt_solver_executable(num, GMSH_GET, "");
-  std::string host = opt_solver_remote_login(num, GMSH_GET, "");
-
-  const char *old = 0;
-  if(exe.size()) old = exe.c_str();
+  const char *old = exe.size() ? exe.c_str() : 0;
   std::string title = "Choose location of " + name + " executable";
   std::string pattern = "*";
 #if defined(WIN32)
@@ -71,13 +55,14 @@ static void solver_change_exe_cb(Fl_Widget *w, void *data)
 #endif
   if(fileChooser(FILE_CHOOSER_SINGLE, title.c_str(), pattern.c_str(), old))
     exe = fileChooserGetName(1);
-
   if(exe.size()){
-    opt_solver_executable(num, GMSH_SET, exe);
+    // remove old client if it's already loaded
+    onelab::server::citer it = onelab::server::instance()->findClient(name);
+    if(it != onelab::server::instance()->lastClient()) delete *it;
+    std::string host = opt_solver_remote_login(num, GMSH_GET, "");
     FlGui::instance()->onelab->addSolver(name, exe, host, num);
+    onelab_cb(0, (void*)"reset");
   }
-  FlGui::instance()->onelab->rebuildSolverList();
-  onelab_cb(0, (void*)"reset");
 }
 
 static void solver_remove_cb(Fl_Widget *w, void *data)
