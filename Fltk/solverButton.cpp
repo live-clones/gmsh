@@ -40,6 +40,7 @@ static void solver_rename_cb(Fl_Widget *w, void *data)
     FlGui::instance()->onelab->addSolver(n, exe, host, num);
   }
   FlGui::instance()->onelab->rebuildSolverList();
+  onelab_cb(0, (void*)"reset");
 }
 
 
@@ -76,6 +77,7 @@ static void solver_change_exe_cb(Fl_Widget *w, void *data)
     FlGui::instance()->onelab->addSolver(name, exe, host, num);
   }
   FlGui::instance()->onelab->rebuildSolverList();
+  onelab_cb(0, (void*)"reset");
 }
 
 static void solver_remove_cb(Fl_Widget *w, void *data)
