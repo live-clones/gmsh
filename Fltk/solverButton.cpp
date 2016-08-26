@@ -53,15 +53,16 @@ static void solver_change_exe_cb(Fl_Widget *w, void *data)
 #if defined(WIN32)
   pattern += ".exe";
 #endif
-  if(fileChooser(FILE_CHOOSER_SINGLE, title.c_str(), pattern.c_str(), old))
+  if(fileChooser(FILE_CHOOSER_SINGLE, title.c_str(), pattern.c_str(), old)){
     exe = fileChooserGetName(1);
-  if(exe.size()){
-    // remove old client if it's already loaded
-    onelab::server::citer it = onelab::server::instance()->findClient(name);
-    if(it != onelab::server::instance()->lastClient()) delete *it;
-    std::string host = opt_solver_remote_login(num, GMSH_GET, "");
-    FlGui::instance()->onelab->addSolver(name, exe, host, num);
-    onelab_cb(0, (void*)"reset");
+    if(exe.size()){
+      // remove old client if it's already loaded
+      onelab::server::citer it = onelab::server::instance()->findClient(name);
+      if(it != onelab::server::instance()->lastClient()) delete *it;
+      std::string host = opt_solver_remote_login(num, GMSH_GET, "");
+      FlGui::instance()->onelab->addSolver(name, exe, host, num);
+      onelab_cb(0, (void*)"reset");
+    }
   }
 }
 
