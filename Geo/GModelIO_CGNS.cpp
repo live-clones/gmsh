@@ -941,7 +941,8 @@ int GModel::readCGNS(const std::string &name)
   int maxVertex = 0;
   int vnum = 1;
 
-
+  int* sizeIJK = new int[nZones*3];
+  
   for (int index_zone = 1; index_zone <= nZones; index_zone++) {
     Msg::Debug("Reading zone to compute MG level %i.", index_zone);
 
@@ -951,7 +952,7 @@ int GModel::readCGNS(const std::string &name)
       Msg::Debug("Unstructured zone detected, skipping.");
       continue;
     }
-    cgsize_t irmin[3];
+    // cgsize_t irmin[3];
     cgsize_t irmax[3];
     cgsize_t zoneSizes[9];
     char zoneName[35];
@@ -959,14 +960,24 @@ int GModel::readCGNS(const std::string &name)
     Msg::Debug("Zone name : %s.", zoneName);
 
     // Index bounds
-    irmin[0] = 1; irmax[0] = zoneSizes[0];
-    irmin[1] = 1; irmax[1] = zoneSizes[1];
-    irmin[2] = 1; irmax[2] = zoneSizes[2];
+    // irmin[0] = 1; 
+    irmax[0] = zoneSizes[0];
+    // irmin[1] = 1; 
+    irmax[1] = zoneSizes[1];
+    //irmin[2] = 1; 
+    irmax[2] = zoneSizes[2];
 
     // Compute max multigrid level
     double ielem = irmax[0] - 1;
     double jelem = irmax[1] - 1;
     double kelem = irmax[2] - 1;
+
+    int * ijk = sizeIJK + (index_zone-1)*3;
+	
+    ijk[0] = ielem;
+    ijk[1] = jelem;
+    ijk[2] = kelem;
+    
     // printf("Elems %g %g %g\n", ielem, jelem, kelem);
     int order = 1;
     while(fmod(ielem / 2.0, 1.0) == 0.0 && 
@@ -980,396 +991,399 @@ int GModel::readCGNS(const std::string &name)
     max_order = min(order, max_order);
   }
 
-  Msg::Debug("Maximum import order : %i", max_order);
 
   opt_mesh_cgns_import_order(0, GMSH_SET, max_order);;
 
   int order = CTX::instance()->mesh.cgnsImportOrder;
   if (CTX::instance()->batch == 0 &&  FlGui::instance()->available() && CTX::instance()->expertMode) {
     order = cgnsImport();
-  } else {
-    order = 1;
+    CTX::instance()->mesh.order = order;
+  } 
+  else order = CTX::instance()->mesh.order;
+
+
+  // check for the order
+  
+  bool checkAllDim = true;
+  for (int index_zone=1;index_zone<=nZones;index_zone++) {
+    int* ijk = sizeIJK + (index_zone-1)*3;
+    bool checkDim = true;
+    for (int i=0;i<3;i++) checkDim = checkDim && (ijk[i] % order == 0);
+    if (!checkDim) {
+      Msg::Error("Zone %d in CGNS file has size %dx%dx%d"
+                 "and can therefore not be coarsened to order %d",
+                 index_zone,ijk[0],ijk[1],ijk[2],order);
+    }
+    checkAllDim = checkAllDim && checkDim;
   }
-
-  // for entity numbering
-  int elementary_region = getNumRegions();
-  int elementary_face = getNumFaces();
-  // int elementary_edge = getNumEdges();
-  // int elementary_vertex = getNumVertices();
-
-  CGNSPeriodicSet periodicConnections;
-
-  // Read the zones
-  for (int index_zone = 1; index_zone <= nZones; index_zone++) {
-    Msg::Debug("Reading zone %i.", index_zone);
-
-    int offset = vnum;
-
-    ZoneType_t zoneType;
-    cg_zone_type(index_file, index_base, index_zone, &zoneType);
-    if ( zoneType == Unstructured ) {
-      Msg::Debug("Unstructured zone detected, skipping.");
-      continue;
-    }
-
-    cgsize_t irmin[3];
-    cgsize_t irmax[3];
-    cgsize_t zoneSizes[9];
-    char zoneName[35];
-    cg_zone_read(index_file, index_base, index_zone, zoneName, zoneSizes);
-    Msg::Debug("Zone name : %s.", zoneName);
-
-    // Index bounds
-    irmin[0] = 1; irmax[0] = zoneSizes[0];
-    irmin[1] = 1; irmax[1] = zoneSizes[1];
-    irmin[2] = 1; irmax[2] = zoneSizes[2];
-
-    // Compute max multigrid level
-    // double ielem = irmax[0] - 1;
-    // double jelem = irmax[1] - 1;
-    // double kelem = irmax[2] - 1;
-
-    int nnodesZone;
-    int nelements;
-    int nBoundaryVertices;
-    nnodesZone        = zoneSizes[0]*zoneSizes[1]*zoneSizes[2];
-    nelements         = zoneSizes[3]*zoneSizes[4]*zoneSizes[5];
-    nBoundaryVertices = zoneSizes[6]*zoneSizes[7]*zoneSizes[8];
-    Msg::Debug("%i nodes, %i elements, and %i vertices on the zone boundary.", 
-               nnodesZone, nelements, nBoundaryVertices);
-
-    // Reading the coordinates
-    int nCoords;
-    cg_ncoords(index_file, index_base, index_zone, &nCoords);
-
-    DataType_t dataType;
-    char coordName[35];
-    void* coord;
-    double nodes[nnodesZone][nCoords];
-
-    for ( int iCoord = 0; iCoord < nCoords; iCoord++ ) {
-      if ( cg_coord_info(index_file, index_base, index_zone, 
-                         iCoord+1, &dataType, coordName) ) {
-        Msg::Error("Could not read coordinate %i.", iCoord+1);
-        cg_close (index_file);
-        return 0;
-      }
-      
-      Msg::Debug("Reading coordinate %i : %s.", iCoord+1, coordName);
-      
-      switch(dataType) {
-      case RealSingle:
-        Msg::Debug("        [Type is float]");
-        coord = new float[nnodesZone];
-        if ( cg_coord_read(index_file, index_base, index_zone, 
-                           coordName, dataType, irmin, irmax, coord)) {
-          Msg::Error("Could not read coordinate %i.", iCoord+1);
-          cg_close(index_file);
-          return 0;
-        }
-        for (int iNode = 0; iNode < nnodesZone; iNode++) {
-          nodes[iNode][iCoord] = (double)((float*)coord)[iNode];
-        }
-        delete [] (float*)coord;
-        break;
-      case RealDouble:
-        Msg::Debug("        [Type is double]");
-        coord = new double[nnodesZone];
-        if ( cg_coord_read(index_file, index_base, index_zone, 
-                           coordName, dataType, irmin, irmax, coord)) {
-          Msg::Error("Could not read coordinate %i.", iCoord+1);
-          cg_close(index_file);
-          return 0;
-        }
-        for (int iNode = 0; iNode < nnodesZone; iNode++) {
-          nodes[iNode][iCoord] = ((double*) coord)[iNode];
-        }
-        delete [] (double*)coord;
-        break;
-      default:
-        Msg::Error("Wrong data type for reading coordinates in CGNS file");
-        break;
-      }
-    }
-
-    for (int iNode = 0; iNode < nnodesZone; iNode++) {
-      MVertex* mv = new MVertex(nodes[iNode][0], nodes[iNode][1], 
-                                nodes[iNode][2], 0, vnum);
-      minVertex = std::min(minVertex, vnum);
-      maxVertex = std::max(maxVertex, vnum);
-      vertexMap[vnum] = mv;
-      vnum ++;
-    }
-
-    // Creating elements
-    int num = 1;
-
-    int type_hex = 5;
-    int type_quad = 3;
-    int type_line = 1;
-    // int type_pnt = 15;
-    if (order == 2) {
-      type_hex = 12;
-      type_line = 8;
-      type_quad = 10;
-    }
-    else if (order == 4){
-      type_hex = 93;
-      type_line = 27;
-      type_quad = 37;
-    }
-    //else if (order == 8)
-    //  type = 97;
-
-    int num_elements = 0;
-    elementary_region ++;
-    int partition = 0;
-    for (int i = 0; i < zoneSizes[3]; i+=order) {
-      for (int j = 0; j < zoneSizes[4]; j+=order) {
-        for (int k = 0; k < zoneSizes[5]; k+=order) {
-          std::vector<MVertex*> vertices;
-          std::vector<int> ind_i, ind_j, ind_k;
-          
-          getIndices(i, j, k, ind_i, ind_j, ind_k, order);
-          
-          for (size_t v = 0; v < ind_i.size(); v++) {
-            vertices.push_back(vertexMap[offset+to1D(ind_i[v],ind_j[v],ind_k[v],
-                                                     irmax[0],irmax[1],irmax[2])]);
-          }
-          createElementMSH(this, num, type_hex, elementary_region,
-                           partition, vertices, elements);
-          num_elements++;
-          num++;
-        }
-      }
-    }
-
-    // Create surface mesh, remove internal connections and encode periodicity 
-
+  
+  if (checkAllDim) {
     
-    std::map<int, std::vector<int*> > forbidden;
+    // determine the element types
+    int type_hex =  ElementType::getTag(TYPE_HEX,order);
+    int type_quad = ElementType::getTag(TYPE_QUA,order);
+    
+    // for entity numbering
+    int elementary_region = getNumRegions();
+    int elementary_face = getNumFaces();
+    // int elementary_edge = getNumEdges();
+    // int elementary_vertex = getNumVertices();
 
-    int nconnectivity;
-    cg_n1to1(index_file, index_base, index_zone, &nconnectivity);
-    Msg::Debug("Found %i connectivity zones.", nconnectivity);
-    for (int index_section = 1; index_section <= nconnectivity; index_section++) {
-      
-      char ConnectionName[30];
-      char DonorName[30];
-      cgsize_t range[6];
-      cgsize_t donor_range[6];
-      int transform[3];
-      cg_1to1_read(index_file, index_base, index_zone,index_section,
-		   ConnectionName, DonorName, range, donor_range, transform);
-      
-      // --- face indices in the block and in the global geometry
-      
-      int face      = computeCGNSFace(range);
-      int faceIndex = elementary_face + face +  1;
+    CGNSPeriodicSet periodicConnections;
 
-      // --- encode periodic boundary transformation  / connection information
+    // Read the zones
+    for (int index_zone = 1; index_zone <= nZones ; index_zone++) {
+      Msg::Debug("Reading zone %i.", index_zone);
       
-      float RotationCenter[3];
-      float RotationAngle[3];
-      float Translation[3];
-
-      if (cg_1to1_periodic_read(index_file, 
-                                index_base, 
-                                index_zone, 
-                                index_section,
-                                RotationCenter, 
-                                RotationAngle, 
-                                Translation) != CG_NODE_NOT_FOUND) {
-
-        CGNSPeriodic pnew(zoneName,range,
-                          DonorName,donor_range,transform,order,faceIndex,
-                          RotationCenter,RotationAngle,Translation);
+      int offset = vnum;
+      
+      ZoneType_t zoneType;
+      cg_zone_type(index_file, index_base, index_zone, &zoneType);
+      if ( zoneType == Unstructured ) {
+        Msg::Debug("Unstructured zone detected, skipping.");
+        continue;
+      }
+      
+      cgsize_t irmin[3];
+      cgsize_t irmax[3];
+      cgsize_t zoneSizes[9];
+      char zoneName[35];
+      cg_zone_read(index_file, index_base, index_zone, zoneName, zoneSizes);
+      Msg::Debug("Zone name : %s.", zoneName);
+      
+      // Index bounds
+      irmin[0] = 1; irmax[0] = zoneSizes[0];
+      irmin[1] = 1; irmax[1] = zoneSizes[1];
+      irmin[2] = 1; irmax[2] = zoneSizes[2];
+      
+      // Compute max multigrid level
+      // double ielem = irmax[0] - 1;
+      // double jelem = irmax[1] - 1;
+      // double kelem = irmax[2] - 1;
+    
+      int nnodesZone;
+      int nelements;
+      int nBoundaryVertices;
+      nnodesZone        = zoneSizes[0]*zoneSizes[1]*zoneSizes[2];
+      nelements         = zoneSizes[3]*zoneSizes[4]*zoneSizes[5];
+      nBoundaryVertices = zoneSizes[6]*zoneSizes[7]*zoneSizes[8];
+      Msg::Debug("%i nodes, %i elements, and %i vertices on the zone boundary.", 
+                 nnodesZone, nelements, nBoundaryVertices);
+      
+      // Reading the coordinates
+      int nCoords;
+      cg_ncoords(index_file, index_base, index_zone, &nCoords);
+      
+      DataType_t dataType;
+      char coordName[35];
+      void* coord;
+      double nodes[nnodesZone][nCoords];
+      
+      for ( int iCoord = 0; iCoord < nCoords; iCoord++ ) {
+        if ( cg_coord_info(index_file, index_base, index_zone, 
+                           iCoord+1, &dataType, coordName) ) {
+          Msg::Error("Could not read coordinate %i.", iCoord+1);
+          cg_close (index_file);
+          return 0;
+        }
         
-        CGNSPeriodic pinv(pnew.getInverse());
-        CGNSPeriodicSet::iterator pIter = periodicConnections.find(pinv);
-
-        // create a new connection if inverse not found
-        if (pIter == periodicConnections.end()) {          
-          for (size_t ip=0;ip<pnew.getNbPoints();ip++) {
-            int i,j,k;
-            pnew.getTargetIJK(ip,i,j,k);
-            pnew.insertTargetVertex(ip,vertexMap[offset+to1D(i,j,k,
-                                                             irmax[0],
-                                                             irmax[1],
-                                                             irmax[2])]);
-          } 
-          periodicConnections.insert(pnew);
-        }
-        // if inverse is found, we need to complete
-        else { 
-          pIter->sourceFaceId = faceIndex;
-          for (size_t ip=0;ip<pIter->getNbPoints();ip++) {
-            int i,j,k;
-            pIter->getSourceIJK(ip,i,j,k);
-            pIter->insertSourceVertex(ip,vertexMap[offset+to1D(i,j,k,
-                                                               irmax[0],
-                                                               irmax[1],
-                                                               irmax[2])]);
+        Msg::Debug("Reading coordinate %i : %s.", iCoord+1, coordName);
+      
+        switch(dataType) {
+        case RealSingle:
+          Msg::Debug("        [Type is float]");
+          coord = new float[nnodesZone];
+          if ( cg_coord_read(index_file, index_base, index_zone, 
+                             coordName, dataType, irmin, irmax, coord)) {
+            Msg::Error("Could not read coordinate %i.", iCoord+1);
+            cg_close(index_file);
+            return 0;
           }
+          for (int iNode = 0; iNode < nnodesZone; iNode++) {
+            nodes[iNode][iCoord] = (double)((float*)coord)[iNode];
+          }
+          delete [] (float*)coord;
+          break;
+        case RealDouble:
+          Msg::Debug("        [Type is double]");
+          coord = new double[nnodesZone];
+          if ( cg_coord_read(index_file, index_base, index_zone, 
+                             coordName, dataType, irmin, irmax, coord)) {
+            Msg::Error("Could not read coordinate %i.", iCoord+1);
+            cg_close(index_file);
+            return 0;
+          }
+          for (int iNode = 0; iNode < nnodesZone; iNode++) {
+            nodes[iNode][iCoord] = ((double*) coord)[iNode];
+          }
+          delete [] (double*)coord;
+          break;
+        default:
+          Msg::Error("Wrong data type for reading coordinates in CGNS file");
+          break;
         }
       }
       
-      // --- ignore internal connections
-
-      else {
-        int* range_int = new int[6];
-        for (int r = 0; r < 6; r++) range_int[r] = (int)range[r];
-        forbidden[face].push_back(range_int);
-      } 
-    }
-
-    for(int face = 0; face < 6; face++) {
-      int imin, imax, jmin, jmax, kmin, kmax;
-      int igrow = order;
-      int jgrow = order;
-      int kgrow = order;
-      int move[3][4];
-      switch(face) {
-      case 0:
-       	imin = 0; imax = zoneSizes[3];
-        jmin = 0; jmax = zoneSizes[4];
-        kmin = 0; kmax = 1; kgrow = 0;
-        move[0][0] = 0; move[0][1] = 0;     move[0][2] = igrow; move[0][3] = igrow;
-        move[1][0] = 0; move[1][1] = jgrow; move[1][2] = jgrow; move[1][3] = 0;
-        move[2][0] = 0; move[2][1] = 0;     move[2][2] = 0;     move[2][3] = 0;
-        break;
-      case 1:
-        imin = 0; imax = zoneSizes[3];
-        jmin = 0; jmax = zoneSizes[4];
-        kmin = zoneSizes[2]-1; kmax = zoneSizes[2]; kgrow = 0;
-        move[0][0] = 0; move[0][1] = igrow; move[0][2] = igrow; move[0][3] = 0;
-        move[1][0] = 0; move[1][1] = 0;     move[1][2] = jgrow; move[1][3] = jgrow;
-        move[2][0] = 0; move[2][1] = 0;     move[2][2] = 0;     move[2][3] = 0;
-        break;
-      case 2:
-        imin = 0; imax = zoneSizes[3];
-        jmin = 0; jmax = 1; jgrow = 0;
-        kmin = 0; kmax = zoneSizes[5];
-        move[0][0] = 0; move[0][1] = igrow; move[0][2] = igrow; move[0][3] = 0;
-        move[1][0] = 0; move[1][1] = 0;     move[1][2] = 0; move[1][3] = 0;
-        move[2][0] = 0; move[2][1] = 0;     move[2][2] = kgrow;     move[2][3] = kgrow;
-        break;
-      case 3:
-        imin = 0; imax = zoneSizes[3];
-        jmin = zoneSizes[1]-1; jmax = zoneSizes[1]; jgrow = 0;
-        kmin = 0; kmax = zoneSizes[5];
-        move[0][0] = 0; move[0][1] = 0; move[0][2] = igrow; move[0][3] = igrow;
-        move[1][0] = 0; move[1][1] = 0;     move[1][2] = 0; move[1][3] = 0;
-        move[2][0] = 0; move[2][1] = kgrow;     move[2][2] = kgrow;     move[2][3] = 0;
-        break;
-      case 4:
-        imin = 0; imax = 1; igrow = 0;
-        jmin = 0; jmax = zoneSizes[4];
-        kmin = 0; kmax = zoneSizes[5];
-        move[0][0] = 0; move[0][1] = 0; move[0][2] = 0; move[0][3] = 0;
-        move[1][0] = 0; move[1][1] = 0; move[1][2] = jgrow; move[1][3] = jgrow;
-        move[2][0] = 0; move[2][1] = kgrow;     move[2][2] = kgrow;     move[2][3] = 0;
-        break;
-      case 5:
-        imin = zoneSizes[0]-1; imax = zoneSizes[0]; igrow = 0;
-        jmin = 0; jmax = zoneSizes[4];
-        kmin = 0; kmax = zoneSizes[5];
-        move[0][0] = 0; move[0][1] = 0; move[0][2] = 0; move[0][3] = 0;
-        move[1][0] = 0; move[1][1] = jgrow; move[1][2] = jgrow; move[1][3] = 0;
-        move[2][0] = 0; move[2][1] = 0;     move[2][2] = kgrow;     move[2][3] = kgrow;
-        break;
+      for (int iNode = 0; iNode < nnodesZone; iNode++) {
+        MVertex* mv = new MVertex(nodes[iNode][0], nodes[iNode][1], 
+                                  nodes[iNode][2], 0, vnum);
+        minVertex = std::min(minVertex, vnum);
+        maxVertex = std::max(maxVertex, vnum);
+        vertexMap[vnum] = mv;
+        vnum ++;
       }
       
-      GRegion* gr = getRegionByTag(elementary_region);
-      elementary_face++;
       
-      num = 1;
-      for (int i = imin; i < imax; i += order) {
-        for (int j = jmin; j < jmax;  j += order) {
-          //printf("Creating surface element\n");
-          for (int k = kmin; k < kmax; k += order) {
-            
-            bool ok = true;
-            for (size_t ff=0; ff < forbidden[face].size(); ff++) {
-              int* lim = forbidden[face][ff];
-              
-              if ((i >= fmin(lim[0], lim[3])-1 && i < fmax(lim[0], lim[3])-1) || (igrow == 0) ) {
-                if ((j >= fmin(lim[1], lim[4])-1 && j < fmax(lim[1],lim[4])-1) || (jgrow == 0) ) {
-                  if ((k >= fmin(lim[2], lim[5])-1 && k < fmax(lim[2], lim[5])-1) || (kgrow == 0) ) {
-                    ok = false;
-                  }
-                }
-              }
-              //if (!ok) continue;
-              
-            }
-            if (!ok) continue;
-            
+      int num = 1;
+      int num_elements = 0;
+      elementary_region ++;
+      int partition = 0;
+      for (int i = 0; i < zoneSizes[3]; i+=order) {
+        for (int j = 0; j < zoneSizes[4]; j+=order) {
+          for (int k = 0; k < zoneSizes[5]; k+=order) {
             std::vector<MVertex*> vertices;
             std::vector<int> ind_i, ind_j, ind_k;
             
-            getIndicesQuad(i+move[0][0],i+move[0][1], i+move[0][2], i+move[0][3],
-                           j+move[1][0],j+move[1][1], j+move[1][2], j+move[1][3],
-                           k+move[2][0],k+move[2][1], k+move[2][2], k+move[2][3],
-                           ind_i, ind_j, ind_k, order, face);
+            getIndices(i, j, k, ind_i, ind_j, ind_k, order);
             
             for (size_t v = 0; v < ind_i.size(); v++) {
-              vertices.push_back(vertexMap[offset+to1D(ind_i[v], ind_j[v], ind_k[v],
-                                                       irmax[0], irmax[1], irmax[2])]);
+              vertices.push_back(vertexMap[offset+to1D(ind_i[v],ind_j[v],ind_k[v],
+                                                       irmax[0],irmax[1],irmax[2])]);
             }
-            
-            createElementMSH(this, num, type_quad, elementary_face,
+            createElementMSH(this, num, type_hex, elementary_region,
                              partition, vertices, elements);
             num_elements++;
             num++;
           }
         }
       }
-      GFace* gf = getFaceByTag(elementary_face);
-      if (gf) gf->addRegion(gr);
       
-      for (size_t ff = 0; ff < forbidden[face].size(); ff++)
-        delete[] forbidden[face][ff];
+      // Create surface mesh, remove internal connections and encode periodicity 
+
+      
+      std::map<int, std::vector<int*> > forbidden;
+
+      int nconnectivity;
+      cg_n1to1(index_file, index_base, index_zone, &nconnectivity);
+      Msg::Debug("Found %i connectivity zones.", nconnectivity);
+      for (int index_section = 1; index_section <= nconnectivity; index_section++) {
+        
+        char ConnectionName[30];
+        char DonorName[30];
+        cgsize_t range[6];
+        cgsize_t donor_range[6];
+        int transform[3];
+        cg_1to1_read(index_file, index_base, index_zone,index_section,
+                     ConnectionName, DonorName, range, donor_range, transform);
+        
+        // --- face indices in the block and in the global geometry
+        
+        int face      = computeCGNSFace(range);
+        int faceIndex = elementary_face + face +  1;
+        
+        // --- encode periodic boundary transformation  / connection information
+        
+        float RotationCenter[3];
+        float RotationAngle[3];
+        float Translation[3];
+        
+        if (cg_1to1_periodic_read(index_file, 
+                                  index_base, 
+                                  index_zone, 
+                                  index_section,
+                                  RotationCenter, 
+                                  RotationAngle, 
+                                  Translation) != CG_NODE_NOT_FOUND) {
+          
+          CGNSPeriodic pnew(zoneName,range,
+                            DonorName,donor_range,transform,order,faceIndex,
+                            RotationCenter,RotationAngle,Translation);
+          
+          CGNSPeriodic pinv(pnew.getInverse());
+          CGNSPeriodicSet::iterator pIter = periodicConnections.find(pinv);
+          
+          // create a new connection if inverse not found
+          if (pIter == periodicConnections.end()) {          
+            for (size_t ip=0;ip<pnew.getNbPoints();ip++) {
+              int i(0),j(0),k(0);
+              pnew.getTargetIJK(ip,i,j,k);
+              pnew.insertTargetVertex(ip,vertexMap[offset+to1D(i,j,k,
+                                                               irmax[0],
+                                                               irmax[1],
+                                                               irmax[2])]);
+            } 
+            periodicConnections.insert(pnew);
+          }
+          // if inverse is found, we need to complete
+          else { 
+            pIter->sourceFaceId = faceIndex;
+            for (size_t ip=0;ip<pIter->getNbPoints();ip++) {
+              int i(0),j(0),k(0);
+              pIter->getSourceIJK(ip,i,j,k);
+              pIter->insertSourceVertex(ip,vertexMap[offset+to1D(i,j,k,
+                                                                 irmax[0],
+                                                                 irmax[1],
+                                                                 irmax[2])]);
+            }
+          }
+        }
+        
+        // --- ignore internal connections
+        
+        else {
+          int* range_int = new int[6];
+          for (int r = 0; r < 6; r++) range_int[r] = (int)range[r];
+          forbidden[face].push_back(range_int);
+        } 
+      }
+      
+      for(int face = 0; face < 6; face++) {
+        int imin(0), imax(0), jmin(0), jmax(0), kmin(0), kmax(0);
+        int igrow = order;
+        int jgrow = order;
+        int kgrow = order;
+        int move[3][4] = {{0,0,0,0},{0,0,0,0},{0,0,0,0}};
+        switch(face) {
+        case 0:
+          imin = 0; imax = zoneSizes[3];
+          jmin = 0; jmax = zoneSizes[4];
+          kmin = 0; kmax = 1; kgrow = 0;
+          move[0][0] = 0; move[0][1] = 0;     move[0][2] = igrow; move[0][3] = igrow;
+          move[1][0] = 0; move[1][1] = jgrow; move[1][2] = jgrow; move[1][3] = 0;
+          move[2][0] = 0; move[2][1] = 0;     move[2][2] = 0;     move[2][3] = 0;
+          break;
+        case 1:
+          imin = 0; imax = zoneSizes[3];
+          jmin = 0; jmax = zoneSizes[4];
+          kmin = zoneSizes[2]-1; kmax = zoneSizes[2]; kgrow = 0;
+          move[0][0] = 0; move[0][1] = igrow; move[0][2] = igrow; move[0][3] = 0;
+          move[1][0] = 0; move[1][1] = 0;     move[1][2] = jgrow; move[1][3] = jgrow;
+          move[2][0] = 0; move[2][1] = 0;     move[2][2] = 0;     move[2][3] = 0;
+          break;
+        case 2:
+          imin = 0; imax = zoneSizes[3];
+          jmin = 0; jmax = 1; jgrow = 0;
+          kmin = 0; kmax = zoneSizes[5];
+          move[0][0] = 0; move[0][1] = igrow; move[0][2] = igrow; move[0][3] = 0;
+          move[1][0] = 0; move[1][1] = 0;     move[1][2] = 0; move[1][3] = 0;
+          move[2][0] = 0; move[2][1] = 0;     move[2][2] = kgrow;     move[2][3] = kgrow;
+          break;
+        case 3:
+          imin = 0; imax = zoneSizes[3];
+          jmin = zoneSizes[1]-1; jmax = zoneSizes[1]; jgrow = 0;
+          kmin = 0; kmax = zoneSizes[5];
+          move[0][0] = 0; move[0][1] = 0; move[0][2] = igrow; move[0][3] = igrow;
+          move[1][0] = 0; move[1][1] = 0;     move[1][2] = 0; move[1][3] = 0;
+          move[2][0] = 0; move[2][1] = kgrow;     move[2][2] = kgrow;     move[2][3] = 0;
+          break;
+        case 4:
+          imin = 0; imax = 1; igrow = 0;
+          jmin = 0; jmax = zoneSizes[4];
+          kmin = 0; kmax = zoneSizes[5];
+          move[0][0] = 0; move[0][1] = 0; move[0][2] = 0; move[0][3] = 0;
+          move[1][0] = 0; move[1][1] = 0; move[1][2] = jgrow; move[1][3] = jgrow;
+          move[2][0] = 0; move[2][1] = kgrow;     move[2][2] = kgrow;     move[2][3] = 0;
+          break;
+        case 5:
+          imin = zoneSizes[0]-1; imax = zoneSizes[0]; igrow = 0;
+          jmin = 0; jmax = zoneSizes[4];
+          kmin = 0; kmax = zoneSizes[5];
+          move[0][0] = 0; move[0][1] = 0; move[0][2] = 0; move[0][3] = 0;
+          move[1][0] = 0; move[1][1] = jgrow; move[1][2] = jgrow; move[1][3] = 0;
+          move[2][0] = 0; move[2][1] = 0;     move[2][2] = kgrow;     move[2][3] = kgrow;
+          break;
+        }
+        
+        GRegion* gr = getRegionByTag(elementary_region);
+        elementary_face++;
+      
+        num = 1;
+        for (int i = imin; i < imax; i += order) {
+          for (int j = jmin; j < jmax;  j += order) {
+            for (int k = kmin; k < kmax; k += order) {              
+              bool ok = true;
+              for (size_t ff=0; ff < forbidden[face].size(); ff++) {
+                int* lim = forbidden[face][ff];
+                
+                if ((i >= fmin(lim[0], lim[3])-1 && i < fmax(lim[0], lim[3])-1) || (igrow == 0) ) {
+                  if ((j >= fmin(lim[1], lim[4])-1 && j < fmax(lim[1],lim[4])-1) || (jgrow == 0) ) {
+                    if ((k >= fmin(lim[2], lim[5])-1 && k < fmax(lim[2], lim[5])-1) || (kgrow == 0) ) {
+                      ok = false;
+                    }
+                  }
+                }
+                //if (!ok) continue;
+                
+              }
+              if (!ok) continue;
+              
+              std::vector<MVertex*> vertices;
+              std::vector<int> ind_i, ind_j, ind_k;
+            
+              getIndicesQuad(i+move[0][0],i+move[0][1], i+move[0][2], i+move[0][3],
+                             j+move[1][0],j+move[1][1], j+move[1][2], j+move[1][3],
+                             k+move[2][0],k+move[2][1], k+move[2][2], k+move[2][3],
+                             ind_i, ind_j, ind_k, order, face);
+              
+              for (size_t v = 0; v < ind_i.size(); v++) {
+                vertices.push_back(vertexMap[offset+to1D(ind_i[v], ind_j[v], ind_k[v],
+                                                         irmax[0], irmax[1], irmax[2])]);
+              }
+              
+              createElementMSH(this, num, type_quad, elementary_face,
+                               partition, vertices, elements);
+              num_elements++;
+              num++;
+            }
+          }
+        }
+        GFace* gf = getFaceByTag(elementary_face);
+        if (gf) gf->addRegion(gr);
+        
+        for (size_t ff = 0; ff < forbidden[face].size(); ff++)
+          delete[] forbidden[face][ff];
+      }
     }
-  }
-
-  // store the elements in their associated elementary entity. If the
-  // entity does not exist, create a new (discrete) one.
-  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
-    _storeElementsInEntities(elements[i]);
-
-  // associate the correct geometrical entity with each mesh vertex
-  _associateEntityWithMeshVertices();
-  // store the vertices in their associated geometrical entity
-  _storeVerticesInEntities(vertexMap);
-  
-  // --- now encode the periodic boundaries 
-  
-  CGNSPeriodicSet::iterator pIter = periodicConnections.begin();
-  
-  for (;pIter!=periodicConnections.end();++pIter) {
     
-    GFace* target = getFaceByTag(pIter->targetFaceId);
-    GFace* source = getFaceByTag(pIter->sourceFaceId);
-    
-    target->setMeshMaster(source,pIter->tfo);
+    // store the elements in their associated elementary entity. If the
+    // entity does not exist, create a new (discrete) one.
+    for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
+      _storeElementsInEntities(elements[i]);
 
-    std::vector<MVertex*>::const_iterator tIter = pIter->targetVertices.begin();
-    std::vector<MVertex*>::const_iterator sIter = pIter->sourceVertices.begin();
+    // associate the correct geometrical entity with each mesh vertex
+    _associateEntityWithMeshVertices();
+    // store the vertices in their associated geometrical entity
+    _storeVerticesInEntities(vertexMap);
     
-    for (;tIter!=pIter->targetVertices.end();++tIter,++sIter) {
-      target->correspondingVertices[*tIter] = *sIter;
+    // --- now encode the periodic boundaries 
+  
+    CGNSPeriodicSet::iterator pIter = periodicConnections.begin();
+    
+    for (;pIter!=periodicConnections.end();++pIter) {
+      
+      GFace* target = getFaceByTag(pIter->targetFaceId);
+      GFace* source = getFaceByTag(pIter->sourceFaceId);
+      
+      target->setMeshMaster(source,pIter->tfo);
+      
+      std::vector<MVertex*>::const_iterator tIter = pIter->targetVertices.begin();
+      std::vector<MVertex*>::const_iterator sIter = pIter->sourceVertices.begin();
+    
+      for (;tIter!=pIter->targetVertices.end();++tIter,++sIter) {
+        target->correspondingVertices[*tIter] = *sIter;
+      }
     }
-  }
-  
-  removeDuplicateMeshVertices(1e-8);
-  //createTopologyFromMesh();
+    
+    removeDuplicateMeshVertices(1e-8);
+    //createTopologyFromMesh();
 
-  if ( cg_close (index_file) ) {
-    Msg::Error("Couldnt close the file !");
-    return 0;
+    if ( cg_close (index_file) ) {
+      Msg::Error("Couldnt close the file !");
+      return 0;
+    }
+    return 1;
   }
-  return 1;
+  return 0;
 }
 
 /*******************************************************************************
@@ -1408,8 +1422,8 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
   std::vector<DummyPartitionEntity> partitions;
                                         // Dummy entities that store the
                                         // elements in each partition
-  int numZone;
-  int meshDim;
+  int numZone(0);
+  int meshDim(0);
 
   Msg::Warning("CGNS I/O is at an \"alpha\" software stage");
 
