@@ -126,6 +126,7 @@ class MLine3 : public MLine {
   virtual int getNumVertices() const { return 3; }
   virtual MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
   virtual const MVertex *getVertex(int num) const{ return num < 2 ? _v[num] : _vs[num - 2]; }
+  virtual void setVertex(int num,  MVertex *v){ if(num < 2) _v[num] = v; else _vs[num - 2] = v; }
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[3] = {0, 2, 1};
@@ -183,6 +184,7 @@ class MLineN : public MLine {
   virtual int getNumVertices() const { return _vs.size() + 2; }
   virtual MVertex *getVertex(int num){ return num < 2 ? _v[num] : _vs[num - 2]; }
   virtual const MVertex *getVertex(int num) const{ return num < 2 ? _v[num] : _vs[num - 2]; }
+  virtual void setVertex(int num,  MVertex *v){ if(num < 2) _v[num] = v; else _vs[num - 2] = v; }
   virtual int getNumEdgeVertices() const { return _vs.size(); }
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);

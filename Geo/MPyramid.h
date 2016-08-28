@@ -243,10 +243,8 @@ class MPyramidN : public MPyramid {
   virtual int getPolynomialOrder() const { return _order; }
   virtual int getNumVertices() const { return 5 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 5 ? _v[num] : _vs[num - 5]; }
-  virtual const MVertex *getVertex(int num) const
-  {
-    return num < 5 ? _v[num] : _vs[num - 5];
-  }
+  virtual const MVertex *getVertex(int num) const { return num < 5 ? _v[num] : _vs[num - 5]; }
+  virtual void setVertex(int num,  MVertex *v){ if(num < 5) _v[num] = v; else _vs[num - 5] = v; }
   virtual int getNumEdgeVertices() const { return 8 * (_order - 1); }
   virtual int getNumFaceVertices() const
   {

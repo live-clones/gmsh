@@ -125,12 +125,12 @@ class MTriangle : public MElement {
   {
     MVertex *tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
   }
-  
+
   // reorient the triangle to conform with other face
-  // orientation computed with MFace based on this face with respect to other 
+  // orientation computed with MFace based on this face with respect to other
   // in computeCorrespondence
   virtual void reorient(int rotation, bool swap);
-  
+
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     w = 0.;
@@ -200,6 +200,7 @@ class MTriangle6 : public MTriangle {
   virtual int getNumVertices() const { return 6; }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual const MVertex *getVertex(int num) const { return num < 3 ? _v[num] : _vs[num - 3]; }
+  virtual void setVertex(int num,  MVertex *v){ if(num < 3) _v[num] = v; else _vs[num - 3] = v; }
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[6] = {0, 3, 1, 4, 2, 5};
@@ -244,7 +245,7 @@ class MTriangle6 : public MTriangle {
     num < 3 ? MTriangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
   // reorient the triangle to conform with other face
-  // orientation computed with MFace based on this face with respect to other 
+  // orientation computed with MFace based on this face with respect to other
   // in computeCorrespondence
   virtual void reorient(int rotation, bool swap);
 };
@@ -287,6 +288,7 @@ class MTriangleN : public MTriangle {
   virtual int getNumVertices() const { return 3 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 3 ? _v[num] : _vs[num - 3]; }
   virtual const MVertex *getVertex(int num) const { return num < 3 ? _v[num] : _vs[num - 3]; }
+  virtual void setVertex(int num,  MVertex *v){ if(num < 3) _v[num] = v; else _vs[num - 3] = v; }
   virtual int getNumFaceVertices() const
   {
     if (getIsAssimilatedSerendipity())
@@ -355,7 +357,7 @@ class MTriangleN : public MTriangle {
     num < 3 ? MTriangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
   // reorient the triangle to conform with other face
-  // orientation computed with MFace based on this face with respect to other 
+  // orientation computed with MFace based on this face with respect to other
   // in computeCorrespondence
   virtual void reorient(int rotation, bool swap);
 };

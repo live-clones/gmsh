@@ -243,6 +243,7 @@ class MHexahedron20 : public MHexahedron {
   virtual int getNumVertices() const { return 20; }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
+  virtual void setVertex(int num,  MVertex *v){ if(num < 8) _v[num] = v; else _vs[num - 8] = v; }
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[20] = {0, 8, 1, 11, 2, 13, 3, 9, 10, 12,
@@ -371,7 +372,7 @@ class MHexahedron27 : public MHexahedron {
   virtual int getNumVertices() const { return 27; }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
-
+  virtual void setVertex(int num,  MVertex *v){ if(num < 8) _v[num] = v; else _vs[num - 8] = v; }
   virtual MVertex *getVertexINP(int num)
   {
     static const int map[27] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 11, 13, 9, 16, 18, 19,
@@ -502,7 +503,7 @@ class MHexahedronN : public MHexahedron {
   virtual int getNumVertices() const { return 8 + _vs.size(); }
   virtual MVertex *getVertex(int num){ return num < 8 ? _v[num] : _vs[num - 8]; }
   virtual const MVertex *getVertex(int num) const { return num < 8 ? _v[num] : _vs[num - 8]; }
-
+  virtual void setVertex(int num,  MVertex *v){ if(num < 8) _v[num] = v; else _vs[num - 8] = v; }
   virtual int getNumEdgeVertices() const { return 12 * (_order - 1); }
   virtual int getNumFaceVertices() const
   {

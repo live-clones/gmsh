@@ -139,10 +139,10 @@ class MQuadrangle : public MElement {
     MVertex *tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
   }
   // reorient the quadrangle to conform with other face
-  // orientation computed with MFace based on this face with respect to other 
+  // orientation computed with MFace based on this face with respect to other
   // in computeCorrespondence
   virtual void reorient(int rotation, bool swap);
-  
+
   virtual bool isInside(double u, double v, double w) const
   {
     double tol = _isInsideTolerance;
@@ -205,6 +205,7 @@ class MQuadrangle8 : public MQuadrangle {
   virtual int getNumVertices() const { return 8; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual const MVertex *getVertex(int num) const { return num < 4 ? _v[num] : _vs[num - 4]; }
+  virtual void setVertex(int num,  MVertex *v){ if(num < 4) _v[num] = v; else _vs[num - 4] = v; }
   virtual MVertex *getVertexUNV(int num)
   {
     static const int map[8] = {0, 4, 1, 5, 2, 6, 3, 7};
@@ -250,10 +251,10 @@ class MQuadrangle8 : public MQuadrangle {
   }
 
   // reorient the quadrangle to conform with other face
-  // orientation computed with MFace based on this face with respect to other 
+  // orientation computed with MFace based on this face with respect to other
   // in computeCorrespondence
   virtual void reorient(int rotation, bool swap);
-  
+
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 4 ? MQuadrangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
@@ -298,6 +299,7 @@ class MQuadrangle9 : public MQuadrangle {
   virtual int getNumVertices() const { return 9; }
   virtual MVertex *getVertex(int num){ return num < 4 ? _v[num] : _vs[num - 4]; }
   virtual const MVertex *getVertex(int num) const { return num < 4 ? _v[num] : _vs[num - 4]; }
+  virtual void setVertex(int num,  MVertex *v){ if(num < 4) _v[num] = v; else _vs[num - 4] = v; }
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[9] = {0, 2, 8, 6, 1, 5, 7, 3, 4};
@@ -339,10 +341,10 @@ class MQuadrangle9 : public MQuadrangle {
   }
 
   // reorient the quadrangle to conform with other face
-  // orientation computed with MFace based on this face with respect to other 
+  // orientation computed with MFace based on this face with respect to other
   // in computeCorrespondence
   virtual void reorient(int rotation, bool swap);
-  
+
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 4 ? MQuadrangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
@@ -461,12 +463,12 @@ class MQuadrangleN : public MQuadrangle {
     inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
     _vs = inv;
   }
-  
+
   // reorient the quadrangle to conform with other face
-  // orientation computed with MFace based on this face with respect to other 
+  // orientation computed with MFace based on this face with respect to other
   // in computeCorrespondence
   virtual void reorient(int rotation, bool swap);
-  
+
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 4 ? MQuadrangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
