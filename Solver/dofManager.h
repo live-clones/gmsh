@@ -188,7 +188,7 @@ class dofManager : public dofManagerBase{
     }
     return false;
   }
-  
+
   inline bool isFixed(long int ent, int type) const
   {
     return isFixed(Dof(ent, type));
@@ -249,7 +249,7 @@ class dofManager : public dofManagerBase{
     }
     return false;
   }
-  
+
   virtual inline void getFixedDofValue(Dof key, dataVec& val) const{
 	typename std::map<Dof, dataVec>::const_iterator it = fixed.find(key);
 	if (it != fixed.end()) {
@@ -259,7 +259,7 @@ class dofManager : public dofManagerBase{
 	  Msg::Error("getFixedDof: Dof is not fixed");
 	  return;
 	}
-    
+
   };
 
   virtual inline void getDofValue(Dof key,  dataVec &val) const
@@ -355,6 +355,14 @@ class dofManager : public dofManagerBase{
     if (itR == unknown.end())
     {
       insertInSparsityPatternLinConst(R, C);
+    }
+  }
+
+  virtual inline void sparsityDof(const std::vector<Dof> &keys){
+    for (int itR=0; itR< keys.size(); itR++){
+      for (int itC=0; itC<keys.size(); itC++){
+        insertInSparsityPattern(keys[itR],keys[itC]);
+      }
     }
   }
 
@@ -563,7 +571,7 @@ class dofManager : public dofManagerBase{
     constraints[key] = affineconstraint;
     // constraints.insert(std::make_pair(key, affineconstraint));
   }
-  
+
   virtual inline bool getLinearConstraint (Dof key, DofAffineConstraint<dataVec> &affineconstraint)
   {
     typename std::map<Dof, DofAffineConstraint< dataVec > >::const_iterator it=constraints.find(key);
@@ -574,7 +582,7 @@ class dofManager : public dofManagerBase{
     }
     return false;
   }
-  
+
   virtual inline void assembleLinConst(const Dof &R, const Dof &C, const dataMat &value)
   {
     std::map<Dof, int>::iterator itR = unknown.find(R);
@@ -623,7 +631,7 @@ class dofManager : public dofManagerBase{
     }
     else return it->second;
   }
-  
+
 	virtual void clearAllLineConstraints() {
     constraints.clear();
 	}
