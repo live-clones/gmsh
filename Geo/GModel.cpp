@@ -1721,25 +1721,23 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
 
   std::vector<GEntity*> entities;
   getEntities(entities);
-  std::map<int, MVertex*> vertices;
+
   MVertexRTree pos(eps);
-  std::map<MVertex*,MVertex*> newVertex;
+  std::map<int, MVertex*> vertices;
+  std::map<MVertex*,MVertex*> duplicates;
   for(unsigned int i = 0; i < entities.size(); i++){
     GEntity* ge = entities[i];
     for(unsigned int j = 0; j < ge->mesh_vertices.size(); j++){
       MVertex *v = ge->mesh_vertices[j];
       MVertex *v2 = pos.insert(v);
-      if(v2){
-        newVertex[v] = v2; // v should be removed
-        vertices[v2->getNum()] = v2;
-      }
-      else{
+      if(v2)
+        duplicates[v] = v2; // v should be removed
+      else
         vertices[v->getNum()] = v;
-      }
     }
   }
 
-  int num = (int)newVertex.size();
+  int num = (int)duplicates.size();
   Msg::Info("Found %d duplicate vertices ", num);
 
   if(!num){
@@ -1755,15 +1753,15 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
     for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumVertices(); k++){
-        std::map<MVertex*, MVertex*>::iterator it = newVertex.find(e->getVertex(k));
-        if(it != newVertex.end())
+        std::map<MVertex*, MVertex*>::iterator it = duplicates.find(e->getVertex(k));
+        if(it != duplicates.end())
           e->setVertex(k, it->second);
       }
     }
     // replace vertices in periodic copies
     std::map<MVertex*,MVertex*>& corrVtcs = ge->correspondingVertices;
     std::map<MVertex*,MVertex*>::iterator cIter;
-    for (cIter = newVertex.begin(); cIter != newVertex.end(); ++cIter) {
+    for (cIter = duplicates.begin(); cIter != duplicates.end(); ++cIter) {
       MVertex* oldTgt = cIter->first;
       MVertex* newTgt = cIter->second;
       std::map<MVertex*, MVertex*>::iterator cvIter = corrVtcs.find(oldTgt);
@@ -1775,8 +1773,8 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
     }
     for (cIter = corrVtcs.begin(); cIter != corrVtcs.end(); ++cIter) {
       MVertex* oldSrc = cIter->second;
-      std::map<MVertex*,MVertex*>::iterator nIter = newVertex.find(oldSrc);
-      if (nIter != newVertex.end()) {
+      std::map<MVertex*,MVertex*>::iterator nIter = duplicates.find(oldSrc);
+      if (nIter != duplicates.end()) {
         MVertex* tgt = cIter->first;
         MVertex* newSrc = nIter->second;
         corrVtcs[tgt] = newSrc;
@@ -1788,10 +1786,10 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices);
 
-  // delete unused vertices
+  // delete duplicates
   std::vector<MVertex*> to_delete;
-  for(std::map<MVertex *, MVertex*>::iterator it = newVertex.begin();
-      it != newVertex.end(); it++)
+  for(std::map<MVertex *, MVertex*>::iterator it = duplicates.begin();
+      it != duplicates.end(); it++)
     to_delete.push_back(it->first);
   for(unsigned int i = 0; i < to_delete.size(); i++)
     delete to_delete[i];
