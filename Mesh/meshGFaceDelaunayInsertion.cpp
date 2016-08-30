@@ -1379,13 +1379,13 @@ void bowyerWatsonFrontal(GFace *gf,
   int ITERATION = 0;
   while (1){
     ++ITERATION;
-    if(ITERATION % 10== 0 && CTX::instance()->mesh.saveAll){
+    /* if(ITERATION % 10== 0 && CTX::instance()->mesh.saveAll){
       char name[245];
       sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
       _printTris (name, AllTris.begin(), AllTris.end(), &DATA);
       sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
       _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
-    }
+      }*/
     /* if(ITER % 100== 0){
           char name[245];
           sprintf(name,"delfr2d%d-ITER%d.pos",gf->tag(),ITER);
