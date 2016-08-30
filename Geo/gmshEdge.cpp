@@ -122,12 +122,12 @@ int gmshEdge::minimumMeshSegments () const
     np = GEdge::minimumMeshSegments();
     // FIXME FOR QUADS
     if(List_Nbr(c->Control_Points) > 2){
-      np = 3*(List_Nbr(c->Control_Points))+1;
+      np = 3 * (List_Nbr(c->Control_Points)) + 1;
     }
   }
   else if(geomType() == Circle || geomType() == Ellipse)
     np = (int)(fabs(c->Circle.t1 - c->Circle.t2) *
-                 (double)CTX::instance()->mesh.minCircPoints / M_PI) - 1;
+               (double)CTX::instance()->mesh.minCircPoints / (2 * M_PI)) - 1;
   else
     np = CTX::instance()->mesh.minCurvPoints - 1;
   return std::max(np, meshAttributes.minimumMeshSegments);
