@@ -430,7 +430,7 @@ class fullMatrix
     if (init0)
       setAll(scalar(0.));
   }
-  fullMatrix(int r, int c, double *data)
+  fullMatrix(int r, int c, scalar *data)
     : _r(r), _c(c), _data(data), _own_data(false)
   {
     setAll(scalar(0.));
@@ -526,7 +526,7 @@ class fullMatrix
     _own_data = false;
     _data = original._data + c_start * _r;
   }
-  void setAsProxy(double *data, int r, int c)
+  void setAsProxy(scalar *data, int r, int c)
   {
     if(_data && _own_data)
       delete [] _data;
@@ -774,22 +774,7 @@ class fullMatrix
 #endif
   ;
 
-  void print(const std::string name = "", const std::string format = "%12.5E ") const
-  {
-    int ni = size1();
-    int nj = size2();
-    printf("double %s [ %d ][ %d ]= { \n", name.c_str(),ni,nj);
-    for(int I = 0; I < ni; I++){
-      printf("{  ");
-      for(int J = 0; J < nj; J++){
-        printf(format.c_str(), (*this)(I, J));
-	if (J!=nj-1)printf(",");
-      }
-      if (I!=ni-1)printf("},\n");
-      else printf("}\n");
-    }
-    printf("};\n");
-  }
+  void print(const std::string name = "", const std::string format = "") const;
 
   void binarySave (FILE *f) const
   {

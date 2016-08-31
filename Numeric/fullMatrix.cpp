@@ -67,6 +67,16 @@ void fullVector<std::complex<double> >::setAll(const fullVector<std::complex<dou
 }
 
 template<>
+void fullMatrix<int>::setAll(const fullMatrix<int> &m)
+{
+  if (_r != m._r || _c != m._c )
+    Msg::Fatal("fullMatrix size does not match");
+  int N = _r * _c;
+  for (int i = 0; i < N; ++i)
+    _data[i] = m._data[i];
+}
+
+template<>
 void fullMatrix<double>::setAll(const fullMatrix<double> &m)
 {
   if (_r != m._r || _c != m._c )
@@ -212,6 +222,13 @@ void fullMatrix<double>::multWithATranspose(const fullVector<double> &x, double 
   F77NAME(dgemv)("T", &M, &N, &alpha, _data, &LDA, x._data, &INCX,
                  &beta, y._data, &INCY);
 
+}
+
+
+template<>
+void fullMatrix<int>::scale(const double s)
+{
+  for(int i = 0; i < _r * _c; ++i) _data[i] *= s;
 }
 #endif
 
@@ -585,3 +602,41 @@ bool fullMatrix<double>::invert(fullMatrix<double> &result) const
 }
 
 #endif
+
+template<>
+void fullMatrix<double>::print(const std::string name, const std::string format) const
+{
+  std::string rformat = (format == "") ? "%12.5E " : format;
+  int ni = size1();
+  int nj = size2();
+  printf("double %s [ %d ][ %d ]= { \n", name.c_str(),ni,nj);
+  for(int I = 0; I < ni; I++){
+    printf("{  ");
+    for(int J = 0; J < nj; J++){
+      printf(rformat.c_str(), (*this)(I, J));
+      if (J!=nj-1)printf(",");
+    }
+    if (I!=ni-1)printf("},\n");
+    else printf("}\n");
+  }
+  printf("};\n");
+}
+
+template<>
+void fullMatrix<int>::print(const std::string name, const std::string format) const
+{
+  std::string rformat = (format == "") ? "%12d " : format;
+  int ni = size1();
+  int nj = size2();
+  printf("int %s [ %d ][ %d ]= { \n", name.c_str(),ni,nj);
+  for(int I = 0; I < ni; I++){
+    printf("{  ");
+    for(int J = 0; J < nj; J++){
+      printf(rformat.c_str(), (*this)(I, J));
+      if (J!=nj-1)printf(",");
+    }
+    if (I!=ni-1)printf("},\n");
+    else printf("}\n");
+  }
+  printf("};\n");
+}

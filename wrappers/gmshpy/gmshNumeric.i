@@ -28,10 +28,26 @@
 %include "JacobianBasis.h"
 %ignore fullMatrix<double>::operator()(int, int);
 %ignore fullVector<double>::operator()(int);
+%ignore fullMatrix<int>::operator()(int, int);
+%ignore fullMatrix<int>::eig;
+%ignore fullMatrix<int>::luSubstitute;
+%ignore fullMatrix<int>::invert;
+%ignore fullMatrix<int>::invertInPlace;
+%ignore fullMatrix<int>::axpy;
+%ignore fullMatrix<int>::gemm;
+%ignore fullMatrix<int>::mult;
+%ignore fullMatrix<int>::luSolve;
+%ignore fullMatrix<int>::luFactor;
+%ignore fullMatrix<int>::svd;
+%ignore fullMatrix<int>::multAddy;
+%ignore fullMatrix<int>::multWithATranspose;
+%ignore fullMatrix<int>::multOnBlock;
+%ignore fullMatrix<int>::determinant;
 %include "fullMatrix.h"
 %include "simpleFunction.h"
 %template(fullMatrixDouble) fullMatrix<double>;
 %template(fullVectorDouble) fullVector<double>;
+%template(fullMatrixInt) fullMatrix<int>;
 %template(simpleFunctionDouble) simpleFunction<double>;
 %include "simpleFunctionPython.h"
 %include "nodalBasis.h"
