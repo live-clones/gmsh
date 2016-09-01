@@ -417,6 +417,7 @@ bool drawContext::generateTextureForImage(const std::string &name, int page,
         return false;
       }
       Fl_RGB_Image *img2 = (Fl_RGB_Image*)img->copy(2048, 2048);
+      glPixelStorei(GL_UNPACK_ROW_LENGTH, img2->w());
       glGenTextures(1, &imageTexture);
       glBindTexture(GL_TEXTURE_2D, imageTexture);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
