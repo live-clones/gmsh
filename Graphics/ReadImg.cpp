@@ -20,7 +20,7 @@
 // from an image, we create a post-procession view
 
 static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
-                               int resizex=0, int resizey=0) 
+                               int resizex=0, int resizey=0)
 {
   img_init.desaturate(); // convert to grayscale
 
@@ -36,7 +36,7 @@ static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
   int width = img->w();
   int dim = img->d();
 
-  if(dim != 1) {
+  if(dim != 1 && dim != 2) {
     Msg::Error("Unable to obtain one-channel image");
     return 0;
   }
@@ -52,12 +52,12 @@ static PViewDataList *Img2Data(Fl_RGB_Image &img_init, int quads=1,
     for(int j = 0; j < width - 1; j++) {
       double x = j;
       double x1 = j + 1;
-      double val1 = (double)a[j]/255.;
-      double val2 = (double)a1[j]/255.;
-      double val3 = (double)a1[j + 1]/255.;
-      double val4 = (double)a[j + 1]/255.;
+      double val1 = (double)a[j * dim]/255.;
+      double val2 = (double)a1[j * dim]/255.;
+      double val3 = (double)a1[(j + 1) * dim]/255.;
+      double val4 = (double)a[(j + 1) * dim]/255.;
       if(quads){ // generate quads
-        d->SQ.push_back(x); d->SQ.push_back(x); 
+        d->SQ.push_back(x); d->SQ.push_back(x);
         d->SQ.push_back(x1); d->SQ.push_back(x1);
         d->SQ.push_back(y); d->SQ.push_back(y1);
         d->SQ.push_back(y1); d->SQ.push_back(y);
@@ -112,25 +112,25 @@ static int EndPos(const char *name, PViewData *d)
   }
 }
 
-int read_pnm(std::string fileName) 
+int read_pnm(std::string fileName)
 {
   Fl_PNM_Image img(fileName.c_str());
   return EndPos(fileName.c_str(), Img2Data(img));
 }
 
-int read_jpeg(std::string fileName) 
+int read_jpeg(std::string fileName)
 {
   Fl_JPEG_Image img(fileName.c_str());
   return EndPos(fileName.c_str(), Img2Data(img));
 }
 
-int read_png(std::string fileName) 
+int read_png(std::string fileName)
 {
   Fl_PNG_Image img(fileName.c_str());
   return EndPos(fileName.c_str(), Img2Data(img));
 }
 
-int read_bmp(std::string fileName) 
+int read_bmp(std::string fileName)
 {
   Fl_BMP_Image img(fileName.c_str());
   return EndPos(fileName.c_str(), Img2Data(img));
