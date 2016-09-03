@@ -149,6 +149,56 @@ class onelabGmshServer : public GmshServer{
   }
 };
 
+static std::string tryToGetGmshNumberOption(const std::string &name)
+{
+  std::string reply;
+  std::string::size_type dot = name.find('.');
+  if(dot != std::string::npos){
+    double val;
+    if(GmshGetOption(name.substr(0, dot), name.substr(dot + 1), val)){
+      onelab::number par(name, val);
+      reply = par.toChar();
+    }
+  }
+  return reply;
+}
+
+static std::string tryToGetGmshStringOption(const std::string &name)
+{
+  std::string reply;
+  std::string::size_type dot = name.find('.');
+  if(dot != std::string::npos){
+    std::string val;
+    if(GmshGetOption(name.substr(0, dot), name.substr(dot + 1), val)){
+      onelab::string par(name, val);
+      reply = par.toChar();
+    }
+  }
+  return reply;
+}
+
+static bool tryToSetGmshNumberOption(onelab::number &p)
+{
+  std::string name = p.getName();
+  std::string::size_type dot = name.find('.');
+  if(dot != std::string::npos){
+    double val = p.getValue();
+    return GmshSetOption(name.substr(0, dot), name.substr(dot + 1), val);
+  }
+  return false;
+}
+
+static bool tryToSetGmshStringOption(onelab::string &p)
+{
+  std::string name = p.getName();
+  std::string::size_type dot = name.find('.');
+  if(dot != std::string::npos){
+    std::string val = p.getValue();
+    return GmshSetOption(name.substr(0, dot), name.substr(dot + 1), val);
+  }
+  return false;
+}
+
 bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
 {
   // receive a message on the associated GmshServer; 'master' is only used when
@@ -205,30 +255,34 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       }
       else if(ptype == "number"){
         onelab::number p; p.fromChar(message);
-        if(type == GmshSocket::GMSH_PARAMETER_UPDATE){
-          std::vector<onelab::number> par; get(par, name);
-          if(par.size()) {
-            onelab::number y = p; p = par[0]; onelabUtils::updateNumber(p, y);
+        if(!tryToSetGmshNumberOption(p)){
+          if(type == GmshSocket::GMSH_PARAMETER_UPDATE){
+            std::vector<onelab::number> par; get(par, name);
+            if(par.size()) {
+              onelab::number y = p; p = par[0]; onelabUtils::updateNumber(p, y);
+            }
           }
-        }
-        set(p);
-        if(p.getName() == getName() + "/Progress"){
+          set(p);
+          if(p.getName() == getName() + "/Progress"){
 #if defined(HAVE_FLTK)
-          if(FlGui::available())
-            FlGui::instance()->setProgress(p.getLabel().c_str(), p.getValue(),
-                                           p.getMin(), p.getMax());
+            if(FlGui::available())
+              FlGui::instance()->setProgress(p.getLabel().c_str(), p.getValue(),
+                                             p.getMin(), p.getMax());
 #endif
+          }
         }
       }
       else if(ptype == "string"){
         onelab::string p; p.fromChar(message);
-        if(type == GmshSocket::GMSH_PARAMETER_UPDATE){
-          std::vector<onelab::string> par; get(par, name);
-          if(par.size()){
-            onelab::string y = p; p = par[0]; onelabUtils::updateString(p,y);
+        if(!tryToSetGmshStringOption(p)){
+          if(type == GmshSocket::GMSH_PARAMETER_UPDATE){
+            std::vector<onelab::string> par; get(par, name);
+            if(par.size()){
+              onelab::string y = p; p = par[0]; onelabUtils::updateString(p,y);
+            }
           }
-	}
-        set(p);
+          set(p);
+        }
       }
       else
         Msg::Error("Unknown ONELAB parameter type: %s", ptype.c_str());
@@ -244,39 +298,17 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       }
       else if(ptype == "number"){
         std::vector<onelab::number> par; get(par, name);
-        if(par.empty()){ // try to see if it's not a Gmsh option
-          std::string::size_type dot = name.find('.');
-          if(dot != std::string::npos){
-            double val;
-            if(GmshGetOption(name.substr(0, dot), name.substr(dot + 1), val)){
-              par.resize(1);
-              par[0].setName(name);
-              par[0].setValue(val);
-              reply = par[0].toChar();
-            }
-          }
-        }
-        else{
+        if(par.empty())
+          reply = tryToGetGmshNumberOption(name);
+        else
           reply = par[0].toChar();
-        }
       }
       else if(ptype == "string"){
         std::vector<onelab::string> par; get(par, name);
-        if(par.empty()){ // try to see if it's not a Gmsh option
-          std::string::size_type dot = name.find('.');
-          if(dot != std::string::npos){
-            std::string val;
-            if(GmshGetOption(name.substr(0, dot), name.substr(dot + 1), val)){
-              par.resize(1);
-              par[0].setName(name);
-              par[0].setValue(val);
-              reply = par[0].toChar();
-            }
-          }
-        }
-        else{
+        if(par.empty())
+          reply = tryToGetGmshStringOption(name);
+        else
           reply = par[0].toChar();
-        }
       }
       else
         Msg::Error("Unknown ONELAB parameter type in query: %s", ptype.c_str());
