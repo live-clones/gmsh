@@ -1760,24 +1760,26 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
     }
     // replace vertices in periodic copies
     std::map<MVertex*,MVertex*>& corrVtcs = ge->correspondingVertices;
-    std::map<MVertex*,MVertex*>::iterator cIter;
-    for (cIter = duplicates.begin(); cIter != duplicates.end(); ++cIter) {
-      MVertex* oldTgt = cIter->first;
-      MVertex* newTgt = cIter->second;
-      std::map<MVertex*, MVertex*>::iterator cvIter = corrVtcs.find(oldTgt);
-      if (cvIter != corrVtcs.end()) {
-        MVertex* src = cvIter->second;
-        corrVtcs.erase(cvIter);
-        corrVtcs[newTgt] = src;
+    if(corrVtcs.size()){
+      std::map<MVertex*,MVertex*>::iterator cIter;
+      for (cIter = duplicates.begin(); cIter != duplicates.end(); ++cIter) {
+        MVertex* oldTgt = cIter->first;
+        MVertex* newTgt = cIter->second;
+        std::map<MVertex*, MVertex*>::iterator cvIter = corrVtcs.find(oldTgt);
+        if (cvIter != corrVtcs.end()) {
+          MVertex* src = cvIter->second;
+          corrVtcs.erase(cvIter);
+          corrVtcs[newTgt] = src;
+        }
       }
-    }
-    for (cIter = corrVtcs.begin(); cIter != corrVtcs.end(); ++cIter) {
-      MVertex* oldSrc = cIter->second;
-      std::map<MVertex*,MVertex*>::iterator nIter = duplicates.find(oldSrc);
-      if (nIter != duplicates.end()) {
-        MVertex* tgt = cIter->first;
-        MVertex* newSrc = nIter->second;
-        corrVtcs[tgt] = newSrc;
+      for (cIter = corrVtcs.begin(); cIter != corrVtcs.end(); ++cIter) {
+        MVertex* oldSrc = cIter->second;
+        std::map<MVertex*,MVertex*>::iterator nIter = duplicates.find(oldSrc);
+        if (nIter != duplicates.end()) {
+          MVertex* tgt = cIter->first;
+          MVertex* newSrc = nIter->second;
+          corrVtcs[tgt] = newSrc;
+        }
       }
     }
   }
