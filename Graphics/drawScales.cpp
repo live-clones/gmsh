@@ -180,7 +180,7 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   if(choice == 3){ // automatic
     if(n == 1) choice = 0; // nothing
     else if(n == 2) choice = 2; // harmonic
-    else choice = 4; // multi-step data
+    else choice = 5; // multi-step data
   }
   switch(choice){
   case 1: // time series
@@ -198,18 +198,18 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   case 3: // automatic
     // never here
     break;
-  case 4: // multi-step data
-    if(n == 1)
-      sprintf(label, "%s - step %d", data->getName().c_str(), opt->timeStep);
-    else
-      sprintf(label, "%s - step %d in [0,%d]", data->getName().c_str(),
-              opt->timeStep, data->getNumTimeSteps() - 1);
+  case 4: // step data
+    sprintf(label, "%s - step %d", data->getName().c_str(), opt->timeStep);
     break;
-  case 5: // real eigenvalues
+  case 5: // multi-step data
+    sprintf(label, "%s - step %d in [0,%d]", data->getName().c_str(),
+            opt->timeStep, data->getNumTimeSteps() - 1);
+    break;
+  case 6: // real eigenvalues
     sprintf(label, "%s - eigenvalue %s", data->getName().c_str(),
             time);
     break;
-  case 6: // complex eigenvalues
+  case 7: // complex eigenvalues
     sprintf(label, "%s - eigenvalue %s (%s part)", data->getName().c_str(),
             time, ((opt->timeStep - n0) % 2) ? "imaginary" : "real");
     break;

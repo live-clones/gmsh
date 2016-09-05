@@ -3093,6 +3093,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Time series", 0, 0, 0},
         {"Harmonic data", 0, 0, 0},
         {"Automatic", 0, 0, 0},
+        {"Step data", 0, 0, 0},
         {"Multi-step data", 0, 0, 0},
         {"Real eigenvalues", 0, 0, 0},
         {"Complex eigenvalues", 0, 0, 0},

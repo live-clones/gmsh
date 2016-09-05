@@ -1610,8 +1610,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ShowScale" , opt_view_show_scale , 1. ,
     "Show value scale?" },
   { F|O, "ShowTime" , opt_view_show_time , 3. ,
-    "Time display mode (0=none, 1=time series, 2=harmonic data, "
-    "3=automatic, 4=multi-step data, 5=real eigenvalues, 6=complex eigenvalues)" },
+    "Time display mode (0=none, 1=time series, 2=harmonic data, 3=automatic, "
+    "4=step data, 5=multi-step data, 6=real eigenvalues, 7=complex eigenvalues)" },
   { F|O, "SmoothNormals" , opt_view_smooth_normals , 0. ,
     "Smooth the normals?" },
   { F|O, "Stipple" , opt_view_use_stipple , 0. ,

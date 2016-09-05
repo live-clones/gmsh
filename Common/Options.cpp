@@ -8094,7 +8094,7 @@ double opt_view_show_time(OPT_ARGS_NUM)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
     opt->showTime = (int)val;
-    if(opt->showTime < 0 || opt->showTime > 6)
+    if(opt->showTime < 0 || opt->showTime > 7)
       opt->showTime = 0;
   }
 #if defined(HAVE_FLTK)
