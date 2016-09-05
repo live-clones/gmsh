@@ -184,11 +184,7 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   }
   switch(choice){
   case 1: // time series
-    if(n == 1)
-      sprintf(label, "%s - time %s", data->getName().c_str(), time);
-    else
-      sprintf(label, "%s - time %s (step %d in [0,%d])", data->getName().c_str(),
-              time, opt->timeStep, data->getNumTimeSteps() - 1);
+    sprintf(label, "%s - time %s", data->getName().c_str(), time);
     break;
   case 2: // harmonic data
     if(n <= 2)
