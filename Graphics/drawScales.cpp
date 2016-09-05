@@ -195,10 +195,9 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
       sprintf(label, "%s - %s part", data->getName().c_str(),
               ((opt->timeStep - n0) % 2) ? "imaginary" : "real");
     else
-      sprintf(label, "%s - harmonic %s (%s part, step %d in [0,%d])",
+      sprintf(label, "%s - harmonic %s (%s part)",
               data->getName().c_str(), time,
-              ((opt->timeStep - n0) % 2) ? "imaginary" : "real",
-              opt->timeStep, data->getNumTimeSteps() - 1);
+              ((opt->timeStep - n0) % 2) ? "imaginary" : "real");
     break;
   case 3: // automatic
     // never here
@@ -211,22 +210,12 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
               opt->timeStep, data->getNumTimeSteps() - 1);
     break;
   case 5: // real eigenvalues
-    if(n == 1)
-      sprintf(label, "%s - eigenvalue %s", data->getName().c_str(),
-              time);
-    else
-      sprintf(label, "%s - eigenvalue %s (step %d in [0,%d])", data->getName().c_str(),
-              time, opt->timeStep, data->getNumTimeSteps() - 1);
+    sprintf(label, "%s - eigenvalue %s", data->getName().c_str(),
+            time);
     break;
   case 6: // complex eigenvalues
-    if(n == 1)
-      sprintf(label, "%s - eigenvalue %s (%s part)", data->getName().c_str(),
-              time, ((opt->timeStep - n0) % 2) ? "imaginary" : "real");
-    else
-      sprintf(label, "%s - eigenvalue %s (%s part, step %d in [0,%d])",
-              data->getName().c_str(), time,
-              ((opt->timeStep - n0) % 2) ? "imaginary" : "real",
-              opt->timeStep, data->getNumTimeSteps() - 1);
+    sprintf(label, "%s - eigenvalue %s (%s part)", data->getName().c_str(),
+            time, ((opt->timeStep - n0) % 2) ? "imaginary" : "real");
     break;
   default:
     sprintf(label, "%s", data->getName().c_str());
