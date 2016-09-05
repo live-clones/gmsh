@@ -1309,7 +1309,8 @@ StringXNumber SolverOptions_Number[] = {
   { F|O, "AutoShowViews" , opt_solver_auto_show_views , 2. ,
     "Automcatically show newly merged results (0: none; 1: all; 2: last one)" },
   { F|O, "AutoShowLastStep" , opt_solver_auto_show_last_step , 1. ,
-    "Automatically show the last time step in newly merged results" },
+    "Automatically show the last step in newly merged results, if there are "
+    "more than 2 steps" },
 
   { F|O, "Plugins" , opt_solver_plugins , 0. ,
     "Enable default solver plugins?" },

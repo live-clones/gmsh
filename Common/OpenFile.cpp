@@ -616,12 +616,13 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
     }
   }
 
-  // if we added steps, go to the last one
+  // if we added steps, and we have more than 2 (to avoid always showing the
+  // imaginary part for complex fields), go to the last one
   if(showLastStep){
     steps.resize(PView::list.size(), 0);
     for(unsigned int i = 0; i < PView::list.size(); i++){
       int step = (int)opt_view_nb_timestep(i, GMSH_GET, 0);
-      if(step > steps[i])
+      if(step > steps[i] && steps[i] > 1)
         opt_view_timestep(i, GMSH_SET|GMSH_GUI, step - 1);
     }
   }
