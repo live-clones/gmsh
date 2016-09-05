@@ -172,57 +172,61 @@ static void drawScaleLabel(drawContext *ctx, PView *p, double xmin, double ymin,
   char label[1024];
 
   int nt = data->getNumTimeSteps();
+  int n0 = data->getFirstNonEmptyTimeStep();
+  int n = (nt - n0 > 0) ? nt - n0 : 1;
   char time[256];
   sprintf(time, opt->format.c_str(), data->getTime(opt->timeStep));
   int choice = opt->showTime;
   if(choice == 3){ // automatic
-    if(nt == 1) choice = 0; // nothing
-    else if(nt == 2) choice = 2; // harmonic
+    if(n == 1) choice = 0; // nothing
+    else if(n == 2) choice = 2; // harmonic
     else choice = 4; // multi-step data
   }
   switch(choice){
   case 1: // time series
-    if(nt == 1)
+    if(n == 1)
       sprintf(label, "%s - time %s", data->getName().c_str(), time);
     else
-      sprintf(label, "%s - time %s (%d/%d)", data->getName().c_str(),
-              time, opt->timeStep + 1, data->getNumTimeSteps());
+      sprintf(label, "%s - time %s (step %d in [0,%d])", data->getName().c_str(),
+              time, opt->timeStep, data->getNumTimeSteps() - 1);
     break;
   case 2: // harmonic data
-    if(nt <= 2)
+    if(n <= 2)
       sprintf(label, "%s - %s part", data->getName().c_str(),
-              (opt->timeStep % 2) ? "imaginary" : "real");
+              ((opt->timeStep - n0) % 2) ? "imaginary" : "real");
     else
-      sprintf(label, "%s - harmonic %s (%d/%d, %s part)", data->getName().c_str(),
-              time, opt->timeStep / 2 + 1, data->getNumTimeSteps() / 2,
-              (opt->timeStep % 2) ? "imaginary" : "real");
+      sprintf(label, "%s - harmonic %s (%s part, step %d in [0,%d])",
+              data->getName().c_str(), time,
+              ((opt->timeStep - n0) % 2) ? "imaginary" : "real",
+              opt->timeStep, data->getNumTimeSteps() - 1);
     break;
   case 3: // automatic
     // never here
     break;
   case 4: // multi-step data
-    if(nt == 1)
+    if(n == 1)
       sprintf(label, "%s - step %d", data->getName().c_str(), opt->timeStep);
     else
-      sprintf(label, "%s - step %d (%d/%d)", data->getName().c_str(),
-              opt->timeStep, opt->timeStep + 1, data->getNumTimeSteps());
+      sprintf(label, "%s - step %d in [0,%d]", data->getName().c_str(),
+              opt->timeStep, data->getNumTimeSteps() - 1);
     break;
   case 5: // real eigenvalues
-    if(nt == 1)
+    if(n == 1)
       sprintf(label, "%s - eigenvalue %s", data->getName().c_str(),
               time);
     else
-      sprintf(label, "%s - eigenvalue %s (%d/%d)", data->getName().c_str(),
-              time, opt->timeStep + 1, data->getNumTimeSteps());
+      sprintf(label, "%s - eigenvalue %s (step %d in [0,%d])", data->getName().c_str(),
+              time, opt->timeStep, data->getNumTimeSteps() - 1);
     break;
   case 6: // complex eigenvalues
-    if(nt == 1)
+    if(n == 1)
       sprintf(label, "%s - eigenvalue %s (%s part)", data->getName().c_str(),
-              time, (opt->timeStep % 2) ? "imaginary" : "real");
+              time, ((opt->timeStep - n0) % 2) ? "imaginary" : "real");
     else
-      sprintf(label, "%s - eigenvalue %s (%d/%d, %s part)", data->getName().c_str(),
-              time, opt->timeStep / 2 + 1, data->getNumTimeSteps() / 2,
-              (opt->timeStep % 2) ? "imaginary" : "real");
+      sprintf(label, "%s - eigenvalue %s (%s part, step %d in [0,%d])",
+              data->getName().c_str(), time,
+              ((opt->timeStep - n0) % 2) ? "imaginary" : "real",
+              opt->timeStep, data->getNumTimeSteps() - 1);
     break;
   default:
     sprintf(label, "%s", data->getName().c_str());
