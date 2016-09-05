@@ -2482,7 +2482,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.choice[7]->callback(mesh_options_ok_cb);
 
       mesh.value[12] = new Fl_Value_Input
-        (L + 2 * width / 3 - 2 * WB, 2 * WB + 7 * BH, width / 8, BH, "Sampling");
+        (L + width - (int)(0.85*IW) - 2 * WB, 2 * WB + 7 * BH, IW / 3, BH, "Sampling");
       mesh.value[12]->minimum(1);
       mesh.value[12]->maximum(100);
       mesh.value[12]->step(1);
@@ -3099,7 +3099,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {0}
       };
       view.choice[12] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Time display mode");
+        (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Time display");
       view.choice[12]->menu(time_display);
       view.choice[12]->align(FL_ALIGN_RIGHT);
       view.choice[12]->callback(view_options_ok_cb);
@@ -3139,7 +3139,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.menu[1]->callback(view_options_ok_cb);
 
       view.value[6] = new Fl_Value_Input
-        (L + width / 2, 2 * WB + 6 * BH, width / 4 - 2 * WB, BH, "Sampling");
+        (L + 3 * WB + IW, 2 * WB + 6 * BH, IW / 3, BH, "Sampling");
       view.value[6]->minimum(1);
       view.value[6]->maximum(100);
       view.value[6]->step(1);
@@ -3350,7 +3350,7 @@ optionWindow::optionWindow(int deltaFontSize)
       view.choice[6]->callback(view_options_ok_cb);
 
       view.butt[26] = new Fl_Check_Button
-        (L + width - (int)(1.15*BB) - 2 * WB, 2 * WB + 4 * BH, (int)(1.15*BB), BH,
+        (L + width - (int)(0.85*IW) - 2 * WB, 2 * WB + 4 * BH, (int)(0.85*IW), BH,
          "Stipple in 2D");
       view.butt[26]->type(FL_TOGGLE_BUTTON);
       view.butt[26]->callback(view_options_ok_cb);
@@ -3428,7 +3428,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {0}
       };
       view.choice[15] = new Fl_Choice
-        (L + width - (int)(1.15*BB) - 2 * WB, 2 * WB + 10 * BH, (int)(1.15*BB), BH);
+        (L + width - (int)(0.85*IW) - 2 * WB, 2 * WB + 10 * BH, (int)(0.85*IW), BH);
       view.choice[15]->menu(menu_glyph_center);
       view.choice[15]->callback(view_options_ok_cb);
 
