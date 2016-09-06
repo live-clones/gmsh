@@ -443,9 +443,7 @@ void meshGEdge::operator() (GEdge *ge)
   FieldManager *fields = ge->model()->getFields();
   Field *bl_field = fields->get(fields->getBoundaryLayerField());
   blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-  if (blf)blf->setupFor1d(ge->tag());
-#else
-  bool blf = false;
+  if (blf) blf->setupFor1d(ge->tag());
 #endif
 
   ge->model()->setCurrentMeshEntity(ge);
