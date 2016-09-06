@@ -51,6 +51,8 @@ int Msg::_verbosity = 5;
 int Msg::_progressMeterStep = 20;
 int Msg::_progressMeterCurrent = 0;
 std::map<std::string, double> Msg::_timers;
+bool Msg::_infoCpu = false;
+double Msg::_startTime = 0.;
 int Msg::_warningCount = 0;
 int Msg::_errorCount = 0;
 int Msg::_atLeastOneErrorInRun = 0;
@@ -106,6 +108,7 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
 
 void Msg::Init(int argc, char **argv)
 {
+  _startTime = TimeOfDay();
 #if defined(HAVE_MPI)
   int flag;
   MPI_Initialized(&flag);
@@ -252,6 +255,52 @@ static int streamIsVT100(FILE* stream)
   return 1;
 }
 
+std::string Msg::PrintResources(bool printDate, bool printWallTime,
+                                bool printCpu, bool printMem)
+{
+  long mem = GetMemoryUsage();
+
+  std::string pdate = "";
+  if(printDate){
+    time_t now;
+    time(&now);
+    pdate = ctime(&now);
+    pdate.resize(pdate.size() - 1);
+    if(printWallTime || printCpu || (printMem && mem))
+      pdate += ", ";
+  }
+
+  std::string pwall = "";
+  if(printWallTime){
+    char tmp[128];
+    sprintf(tmp, "Wall = %gs", TimeOfDay() - _startTime);
+    pwall = tmp;
+    if(printCpu || (printMem && mem))
+      pwall += ", ";
+  }
+
+  std::string pcpu = "";
+  if(printCpu){
+    char tmp[128];
+    sprintf(tmp, "CPU = %gs", Cpu());
+    pcpu = tmp;
+    if(printMem && mem)
+      pcpu += ", ";
+  }
+
+  std::string pmem = "";
+  if(mem && printMem){
+    char tmp[128];
+    sprintf(tmp, "Mem = %gMb", (double)mem / 1024. / 1024.);
+    pmem = tmp;
+  }
+
+  std::string str;
+  if(pdate.size() || pwall.size() || pcpu.size() || pmem.size())
+    str += " (" + pdate +  pwall +  pcpu +  pmem + ")";
+  return str;
+}
+
 void Msg::Fatal(const char *fmt, ...)
 {
   _errorCount++;
@@ -388,6 +437,11 @@ void Msg::Info(const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
+  if(_infoCpu){
+    std::string res = PrintResources(false, true, true, true);
+    strcat(str, res.c_str());
+  }
+
   if(_callback) (*_callback)("Info", str);
   if(_client) _client->Info(str);
 
@@ -467,6 +521,11 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+
+  if(_infoCpu){
+    std::string res = PrintResources(false, true, true, true);
+    strcat(str, res.c_str());
+  }
 
   if(_callback && log) (*_callback)("Info", str);
   if(_client && log) _client->Info(str);

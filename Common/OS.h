@@ -17,6 +17,7 @@ void SleepInSeconds(double s);
 void CheckResources();
 double Cpu();
 double TotalRam();
+double TimeOfDay();
 long GetMemoryUsage();
 int GetProcessId();
 std::string GetExecutableFileName();

@@ -149,6 +149,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-setstring name value", "Set constant string name=value"));
   s.push_back(mp("-option file",       "Parse option file at startup"));
   s.push_back(mp("-convert files",     "Convert files into latest binary formats, then exit"));
+  s.push_back(mp("-cpu",               "Report CPU times for all operations"));
   s.push_back(mp("-version",           "Show version number"));
   s.push_back(mp("-info",              "Show detailed version information"));
   s.push_back(mp("-help",              "Show command line usage"));
@@ -362,6 +363,10 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "4")) {
         CTX::instance()->batch = 4;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "cpu")) {
+        Msg::SetInfoCpu(true);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "refine")) {

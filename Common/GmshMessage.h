@@ -36,6 +36,10 @@ class Msg {
   static int _progressMeterStep, _progressMeterCurrent;
   // timers
   static std::map<std::string, double> _timers;
+  // report cpu time for each info message?
+  static bool _infoCpu;
+  // starting time (gettimeofday at startup)
+  static double _startTime;
   // counters
   static int _warningCount, _errorCount, _atLeastOneErrorInRun;
   static std::string _firstWarning, _firstError;
@@ -80,6 +84,8 @@ class Msg {
   {
     return _commandLineStrings;
   }
+  static std::string PrintResources(bool printDate, bool printWallTime,
+                                    bool printCpu, bool printMem);
   static void Fatal(const char *fmt, ...);
   static void Error(const char *fmt, ...);
   static void Warning(const char *fmt, ...);
@@ -94,6 +100,7 @@ class Msg {
   static void SetProgressMeterStep(int step){ _progressMeterStep = step; }
   static int GetProgressMeterStep(){ return _progressMeterStep; }
   static void ResetProgressMeter(){ if(!_commRank) _progressMeterCurrent = 0; }
+  static void SetInfoCpu(bool val){ _infoCpu = val; }
   static double &Timer(std::string str){ return _timers[str]; }
   static void PrintTimers();
   static void ResetErrorCounter();

@@ -365,6 +365,19 @@ double TotalRam()
   return ram;
 }
 
+double TimeOfDay()
+{
+#if defined(WIN32) && !defined(__CYGWIN__)
+  struct _timeb  localTime;
+  _ftime(&localTime);
+  return localTime.time + 1.e-3 * localTime.millitm;
+#else
+  struct timeval t;
+  gettimeofday(&t, NULL);
+  return t.tv_sec + 1.e-6 * t.tv_usec;
+#endif
+}
+
 long GetMemoryUsage()
 {
   long mem = 0;
