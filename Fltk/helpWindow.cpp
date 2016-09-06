@@ -18,9 +18,12 @@
 #include "StringUtils.h"
 #include "OS.h"
 #include "Options.h"
-#include "Parser.h"
 #include "Context.h"
 #include "drawContext.h"
+
+#if defined(HAVE_PARSER)
+#include "Parser.h"
+#endif
 
 #if defined(HAVE_PETSC)
 #include "petsc.h"
@@ -257,7 +260,9 @@ void help_options_cb(Fl_Widget *w, void *data)
   std::transform(search.begin(), search.end(), search.begin(), ::tolower);
 
   PrintOptions(0, GMSH_FULLRC, diff, help, 0, &s0);
+#if defined(HAVE_PARSER)
   PrintParserSymbols(help, s0);
+#endif
 
   int top = FlGui::instance()->help->browser->topline();
   FlGui::instance()->help->browser->clear();
