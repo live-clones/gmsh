@@ -1294,6 +1294,7 @@ endif(WIN32 OR CYGWIN)
 check_cxx_compiler_flag("-Wall" WALL)
 check_cxx_compiler_flag("-Wint-to-void-pointer-cast" WCAST)
 check_cxx_compiler_flag("-Wdeprecated-declarations" WDEPREC)
+check_cxx_compiler_flag("-Wmisleading-indentation" WIND)
 if(WALL AND NOT MSVC)
   file(GLOB_RECURSE WALL_SRC Common/*.cpp Fltk/*.cpp FunctionSpace/*.cpp
        Geo/*.cpp Graphics/*.cpp Mesh/*.cpp Numeric/*.cpp Parser/*.cpp
@@ -1306,6 +1307,9 @@ if(WALL AND NOT MSVC)
     # FIXME: remove this when we have fixed the deprecated GLU code for OpenGL3
     set(WF "${WF} -Wno-deprecated-declarations")
   endif(WDEPREC)
+  if(WIND)
+    set(WF "${WF} -Wno-misleading-indentation")
+  endif(WIND)
   foreach(FILE ${WALL_SRC})
     get_source_file_property(PROP ${FILE} COMPILE_FLAGS)
     if(PROP)
