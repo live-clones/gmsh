@@ -50,6 +50,20 @@ void OCCRegion::setup()
     }
   }
 
+  for (exp3.Init(s, TopAbs_EDGE); exp3.More(); exp3.Next()){
+    TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
+    GEdge *e = model()->getOCCInternals()->getOCCEdgeByNativePtr(model(), edge);
+    if (!e){
+      Msg::Error("Unknown edge in face %d", tag());
+    }
+    else if (edge.Orientation() == TopAbs_INTERNAL){
+      Msg::Info("Adding embedded edge %d", e->tag());
+      embedded_edges.push_back(e);
+      OCCEdge *occe = (OCCEdge*)e;
+      //occe->setTrimmed(this);
+    }
+  }
+
   Msg::Debug("OCC Region %d with %d faces", tag(), l_faces.size());
 }
 
