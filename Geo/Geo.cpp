@@ -304,9 +304,20 @@ void End_Curve(Curve *c)
     norme(dir32);
     double n[3];
     prodve(dir12, dir32, n);
-    norme(n);
+    
+    bool isValid = true;
+    if (norm3(n) < 1.e-15) {
+      isValid = false;
+    }
+    else {
+      norme(n);
+      if ((fabs(n[0]) < 1.e-5 && fabs(n[1]) < 1.e-5 && fabs(n[2]) < 1.e-5)) {
+        isValid = false;
+      }
+    }
+
     // use provided plane if unable to compute it from input points...
-    if(fabs(n[0]) < 1.e-5 && fabs(n[1]) < 1.e-5 && fabs(n[2]) < 1.e-5) {
+    if(!isValid) {
       n[0] = c->Circle.n[0];
       n[1] = c->Circle.n[1];
       n[2] = c->Circle.n[2];
