@@ -49,6 +49,7 @@
 #include <fcntl.h>
 #include <iostream>
 #include <fstream>
+#include <sys/timeb.h>
 #endif
 
 #include "GmshMessage.h"

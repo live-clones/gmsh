@@ -59,7 +59,7 @@ void OCCRegion::setup()
     else if (edge.Orientation() == TopAbs_INTERNAL){
       Msg::Info("Adding embedded edge %d", e->tag());
       embedded_edges.push_back(e);
-      OCCEdge *occe = (OCCEdge*)e;
+      //OCCEdge *occe = (OCCEdge*)e;
       //occe->setTrimmed(this);
     }
   }
