@@ -270,6 +270,17 @@ macro(set_config_option VARNAME STRING)
   message(STATUS "Found " ${STRING})
 endmacro(set_config_option)
 
+macro(set_compile_flags LISTNAME FLAGS)
+  foreach(FILE ${${LISTNAME}})
+    get_source_file_property(PROP ${FILE} COMPILE_FLAGS)
+    if(PROP)
+      set_source_files_properties(${FILE} PROPERTIES COMPILE_FLAGS "${PROP} ${FLAGS}")
+    else(PROP)
+      set_source_files_properties(${FILE} PROPERTIES COMPILE_FLAGS "${FLAGS}")
+    endif(PROP)
+  endforeach(FILE)
+endmacro(set_compile_flags)
+
 # check if the machine is 64 bits (this is more reliable than using
 # CMAKE_SIZEOF_VOID_P, which does not seem to work e.g. on some Suse
 # machines)
@@ -1292,32 +1303,25 @@ endif(WIN32 OR CYGWIN)
 
 # force full warnings to encourage everybody to write clean(er) code
 check_cxx_compiler_flag("-Wall" WALL)
-check_cxx_compiler_flag("-Wint-to-void-pointer-cast" WCAST)
-check_cxx_compiler_flag("-Wdeprecated-declarations" WDEPREC)
-check_cxx_compiler_flag("-Wmisleading-indentation" WIND)
 if(WALL AND NOT MSVC)
   file(GLOB_RECURSE WALL_SRC Common/*.cpp Fltk/*.cpp FunctionSpace/*.cpp
        Geo/*.cpp Graphics/*.cpp Mesh/*.cpp Numeric/*.cpp Parser/*.cpp
        Plugin/*.cpp Post/*.cpp Qt/*.cpp Solver/*.cpp)
   set(WF "-Wall")
+  check_cxx_compiler_flag("-Wint-to-void-pointer-cast" WCAST)
   if(WCAST)
     set(WF "${WF} -Wno-int-to-void-pointer-cast")
   endif(WCAST)
+  check_cxx_compiler_flag("-Wdeprecated-declarations" WDEPREC)
   if(WDEPREC)
     # FIXME: remove this when we have fixed the deprecated GLU code for OpenGL3
     set(WF "${WF} -Wno-deprecated-declarations")
   endif(WDEPREC)
+  check_cxx_compiler_flag("-Wmisleading-indentation" WIND)
   if(WIND)
     set(WF "${WF} -Wno-misleading-indentation")
   endif(WIND)
-  foreach(FILE ${WALL_SRC})
-    get_source_file_property(PROP ${FILE} COMPILE_FLAGS)
-    if(PROP)
-      set_source_files_properties(${FILE} PROPERTIES COMPILE_FLAGS "${PROP} ${WF}")
-    else(PROP)
-      set_source_files_properties(${FILE} PROPERTIES COMPILE_FLAGS "${WF}")
-    endif(PROP)
-  endforeach(FILE)        
+  set_compile_flags(WALL_SRC ${WF})
 endif(WALL AND NOT MSVC)
 
 # don't issue warnings for contributed libraries
@@ -1325,14 +1329,7 @@ check_cxx_compiler_flag("-w" NOWARN)
 if(NOWARN)
   file(GLOB_RECURSE NOWARN_SRC contrib/*.cpp contrib/*.cc contrib/*.cxx contrib/*.c
       ${CMAKE_CURRENT_BINARY_DIR}/contrib/taucs/*.c)
-  foreach(FILE ${NOWARN_SRC})
-    get_source_file_property(PROP ${FILE} COMPILE_FLAGS)
-    if(PROP)
-      set_source_files_properties(${FILE} PROPERTIES COMPILE_FLAGS "${PROP} -w")
-    else(PROP)
-      set_source_files_properties(${FILE} PROPERTIES COMPILE_FLAGS "-w")
-    endif(PROP)
-  endforeach(FILE)
+  set_compile_flags(NOWARN_SRC "-w")
 endif(NOWARN)
 
 # disable compile optimization on some known problematic files
@@ -1340,14 +1337,7 @@ check_cxx_compiler_flag("-O0" NOOPT)
 if(NOOPT)
   file(GLOB_RECURSE NOOPT_SRC Mesh/BDS.cpp Parser/Gmsh.tab.cpp
        contrib/Tetgen1.5/predicates.cxx)
-  foreach(FILE ${NOOPT_SRC})
-    get_source_file_property(PROP ${FILE} COMPILE_FLAGS)
-    if(PROP)
-      set_source_files_properties(${FILE} PROPERTIES COMPILE_FLAGS "${PROP} -O0")
-    else(PROP)
-      set_source_files_properties(${FILE} PROPERTIES COMPILE_FLAGS "-O0")
-    endif(PROP)
-  endforeach(FILE)
+  set_compile_flags(NOOPT_SRC "-O0")
 endif(NOOPT)
 
 #enable Revoropt and set compile flags for the corresponding plugin
