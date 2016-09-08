@@ -31,19 +31,13 @@ class discreteFace : public GFace {
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}
   void checkAndFixOrientation();
+  void checkConnectivity(std::vector<std::vector<MElement*> >&);
   void setupDiscreteVertex(GVertex*,MVertex*,std::set<MVertex*>*);
   void setupDiscreteEdge(discreteEdge*,std::vector<MLine*>,std::set<MVertex*>*);
   void splitDiscreteEdge(GEdge*,GVertex*,discreteEdge*[2]);
   void updateTopology(std::vector<triangulation*>&);
   void split(triangulation*,std::vector<triangulation*>&,int);
   void fillHoles(triangulation*);
-  void bisectionEdg(triangulation*);
-  bool checkEdges(triangulation*,std::map<double,std::vector<MEdge> >&,std::map<MEdge,double,Less_Edge>&);
-  bool checkEdgesBis(triangulation*,std::map<double,std::vector<MEdge> >&,std::map<MEdge,double,Less_Edge>&);
-  MEdge lepp(triangulation*,MEdge);
-  void refineTriangles(triangulation*,MEdge,std::vector<MEdge>&);
-  void updateEd2refine(triangulation*,std::map<MEdge,double,Less_Edge>&,std::vector<MEdge>&,std::map<double,std::vector<MEdge> >&);
-   void updateEd2refineBis(triangulation*,std::map<MEdge,double,Less_Edge>&,std::vector<MEdge>&,std::map<double,std::vector<MEdge> >&);
   void addTriangle(triangulation*,MTriangle*);
   GPoint point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;

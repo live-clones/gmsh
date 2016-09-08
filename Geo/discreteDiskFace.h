@@ -23,6 +23,8 @@
 #include "PView.h"
 #include "robustPredicates.h"
 #include "MLine.h"
+#include "linearSystemCSR.h"
+#include "dofManager.h"
 
 inline int nodeLocalNum(MElement* e, MVertex* v)
 {
@@ -145,7 +147,7 @@ class triangulation {
 
       std::map<MVertex*,std::vector<MVertex*> >::iterator im = firstNode2Edge.find(first);
       if (im != firstNode2Edge.end()){
-        Msg::Info("Supposed seam point for discreteFace %d", gf->tag());
+        Msg::Info("Assumed seam point for discreteFace %d", gf->tag());
 	seamPoint = true;
 	break;
       }
@@ -198,7 +200,7 @@ class triangulation {
     fprintf(f,"};\n");
     fclose(f);
   }
-
+  
   triangulation() : gf(0) {}
   triangulation(int id, std::vector<MElement*> input, GFace* gface)
     : idNum(id), tri(input), gf(gface) { assign(); }
@@ -217,11 +219,11 @@ class  discreteDiskFaceTriangle {
 class discreteDiskFace : public GFace {
   GFace *_parent;
   void buildOct(std::vector<GFace*> *CAD = NULL) const;
-  bool parametrize(bool one2one = false) const;
+  bool parametrize();// const;
+  void checklsys(linearSystemCSRTaucs<double>*,dofManager<double>*,int);
   void putOnView(bool,bool);
   bool checkOrientationUV();
   void optimize();
-  void printParamMesh();
 
  public:
   discreteDiskFace(GFace *parent, triangulation* diskTriangulation,
@@ -241,14 +243,19 @@ class discreteDiskFace : public GFace {
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
 				const SVector3 &p, const double &d,
 				double uv[2]) const;
+  void printAtlasMesh () ;
+  void printParamMesh () ;
+  
 
 
   std::vector<MElement*> discrete_triangles;
+
+
+
  protected:
   // a copy of the mesh that should not be destroyed
   triangulation* initialTriangulation;
   triangulation* geoTriangulation;// parametrized triangulation
-
   std::vector<MVertex*> discrete_vertices;
 
   int _order;
