@@ -36,6 +36,14 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   CreateReversedCurve(c);
 }
 
+// topology is already set
+void discreteEdge::setTopo(std::vector<MLine*> mlines)
+{
+  createdTopo = true;
+  lines = mlines;
+  _orientation = std::vector<int>(lines.size(),1);
+}
+
 void discreteEdge::createTopo()
 {
   if(!createdTopo){
@@ -48,16 +56,14 @@ void discreteEdge::createTopo()
 // FULL OF BUGS !!!!!!
 void discreteEdge::orderMLines()
 {
-  //printf("ordering line %d\n", tag());
+  //printf("ordering line %d (%d,%d)\n", tag(),getBeginVertex()->mesh_vertices[0]->getNum(),getEndVertex()->mesh_vertices[0]->getNum());
   //if(lines.size() <= 1) return;
 
   std::vector<MLine*> _m;
   std::list<MLine*> segments;
 
   // store all lines in a list : segments
-  for (unsigned int i = 0; i < lines.size(); i++){
-    segments.push_back(lines[i]);
-  }
+  for (unsigned int i = 0; i < lines.size(); i++) segments.push_back(lines[i]);
 
   // find a lonly MLine
   for (std::list<MLine*>::iterator it = segments.begin();
@@ -71,7 +77,6 @@ void discreteEdge::orderMLines()
     if (it2 == boundv.end()) boundv.insert(std::make_pair(vR,*it));
     else boundv.erase(it2);
   }
-
   // find the first MLine and erase it from the list segments
   MLine *firstLine;
   if (boundv.size() == 2){   // non periodic
@@ -92,14 +97,13 @@ void discreteEdge::orderMLines()
     Msg::Error("EdgeCompound %d is wrong (it has %d end points)",
                tag(), boundv.size());
   }
-
   // loop over all segments to order segments and store it in the list _m
   _m.push_back(firstLine);
   _orientation.push_back(1);
   MVertex *first = _m[0]->getVertex(0);
   MVertex *last = _m[0]->getVertex(1);
   while (first != last){
-    if (segments.empty())break;
+    if (segments.empty()) break;
     bool found = false;
     for (std::list<MLine*>::iterator it = segments.begin();
          it != segments.end(); ++it){
@@ -137,18 +141,19 @@ void discreteEdge::orderMLines()
 
   //lines is now a list of ordered MLines
   lines = _m;
-
+  
   //mesh_vertices
   mesh_vertices.clear();
-  for (unsigned int i = 0; i < lines.size(); ++i){
-    MVertex *v1 = lines[i]->getVertex(0);
-    MVertex *v2 = lines[i]->getVertex(1);
+  for (unsigned int i = 0; i < lines.size()-1; ++i){
+     MVertex *v1 = lines[i]->getVertex(0);
+     MVertex *v2 = lines[i]->getVertex(1);
     if (std::find(mesh_vertices.begin(), mesh_vertices.end(), v1) ==
         mesh_vertices.end()) mesh_vertices.push_back(v1);
     if (std::find(mesh_vertices.begin(), mesh_vertices.end(), v2) ==
         mesh_vertices.end()) mesh_vertices.push_back(v2);
   }
 
+  
   //special case reverse orientation
   if (lines.size() < 2) return;
   if (_orientation[0] && lines[0]->getVertex(1) != lines[1]->getVertex(1)
@@ -287,9 +292,7 @@ void discreteEdge::parametrize(std::map<GFace*, std::map<MVertex*, MVertex*,
   MVertex *vL = getBeginVertex()->mesh_vertices[0];
   int i = 0;
   for(i = 0; i < (int)lines.size() - 1; i++){
-    MVertex *vR;
-    if (_orientation[i] == 1 ) vR = lines[i]->getVertex(1);
-    else vR = lines[i]->getVertex(0);
+    MVertex *vR = lines[i]->getVertex(_orientation[i]);
     int param = i+1;
     MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this,
                                     param, -1., vR->getNum());
@@ -450,6 +453,7 @@ GPoint discreteEdge::point(double par) const
   int iEdge;
   if(!getLocalParameter(par, iEdge, tLoc)) return GPoint();
 
+  
   double x, y, z;
   MVertex *vB = discrete_lines[iEdge]->getVertex(0);
   MVertex *vE = discrete_lines[iEdge]->getVertex(1);
@@ -463,6 +467,7 @@ GPoint discreteEdge::point(double par) const
 
 SVector3 discreteEdge::firstDer(double par) const
 {
+  
   double tLoc;
   int iEdge;
   if(!getLocalParameter(par, iEdge, tLoc)) return SVector3();
@@ -522,6 +527,7 @@ void discreteEdge::createGeometry()
   if (discrete_lines.empty()){
 
     createTopo();
+
     // copy the mesh
     for (unsigned int i = 0; i < mesh_vertices.size(); i++){
       MEdgeVertex *v = new MEdgeVertex(mesh_vertices[i]->x(), mesh_vertices[i]->y(),
@@ -582,6 +588,16 @@ void discreteEdge::interpolateInGeometry(MVertex *v, MVertex **v1,
 void discreteEdge::mesh(bool verbose){
 #if defined(HAVE_MESH)
   if (!CTX::instance()->meshDiscrete) return;
+  /*
+  if(tag()==47 || tag() == 50 || tag() == 51 || tag() == 53 || tag() == 56){
+    for(unsigned int i =0; i<mesh_vertices.size(); i++){
+      double p;
+      mesh_vertices[i]->getParameter(0,p);
+      printf("%f\t",p);
+    }
+    printf("\n\n");
+  }
+  */
   meshGEdge mesher;
   mesher(this);
 #endif
