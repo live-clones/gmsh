@@ -31,7 +31,7 @@ class discreteFace : public GFace {
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}
   void checkAndFixOrientation();
-  void checkConnectivity(std::vector<std::vector<MElement*> >&);
+  //void checkConnectivity(std::vector<std::vector<MElement*> >&); undefined
   void setupDiscreteVertex(GVertex*,MVertex*,std::set<MVertex*>*);
   void setupDiscreteEdge(discreteEdge*,std::vector<MLine*>,std::set<MVertex*>*);
   void splitDiscreteEdge(GEdge*,GVertex*,discreteEdge*[2]);
