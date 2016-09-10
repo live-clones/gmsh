@@ -5239,8 +5239,10 @@ FExpr_Single :
           yymsg(0, "Uninitialized variable '%s'", $1);
           $$ = 0.;
         }
-        else
-          $$ = (s.value[0] += $2);
+        else{
+          $$ = s.value[0];
+          s.value[0] += $2;
+        }
       }
       Free($1);
     }
@@ -5257,8 +5259,10 @@ FExpr_Single :
           yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
           $$ = 0.;
         }
-        else
-          $$ = (s.value[index] += $5);
+        else{
+          $$ = s.value[index];
+          s.value[index] += $5;
+        }
       }
       Free($1);
     }
@@ -5275,8 +5279,10 @@ FExpr_Single :
           yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
           $$ = 0.;
         }
-        else
-          $$ = (s.value[index] += $5);
+        else{
+          $$ = s.value[index];
+          s.value[index] += $5;
+        }
       }
       Free($1);
     }
@@ -5293,8 +5299,10 @@ FExpr_Single :
           yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
           $$ = 0.;
         }
-        else
-          $$ = (s.value[index] += $5);
+        else{
+          $$ = s.value[index];
+          s.value[index] += $5;
+        }
       }
       Free($1);
     }
@@ -5311,8 +5319,10 @@ FExpr_Single :
           yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
           $$ = 0.;
         }
-        else
-          $$ = (s.value[index] += $5);
+        else{
+          $$ = s.value[index];
+          s.value[index] += $5;
+        }
       }
       Free($1);
     }
@@ -6610,11 +6620,11 @@ void addPeriodicFace(int iTarget, int iSource,
   else{
     GFace *target = GModel::current()->getFaceByTag(abs(iTarget));
     GFace *source = GModel::current()->getFaceByTag(abs(iSource));
-    if (!target || !master) {
-			Msg::Error("Could not find edge slave %d or master %d for periodic copy",
-								 iTarget,iSource);
-		}
-		else target->setMeshMaster(source, affineTransform);
+    if (!target || !source) {
+      Msg::Error("Could not find edge slave %d or master %d for periodic copy",
+                 iTarget, iSource);
+    }
+    else target->setMeshMaster(source, affineTransform);
   }
 }
 
@@ -6628,7 +6638,7 @@ void addPeriodicFace(int iTarget, int iSource,
   for (; sIter != edgeCounterparts.end(); ++sIter) {
     Msg::Info("%d - %d", sIter->first, sIter->second);
   }
-	
+
   if (target) {
     GEO_Internals::MasterFace& mf =
       GModel::current()->getGEOInternals()->periodicFaces[iTarget];
