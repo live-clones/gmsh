@@ -453,7 +453,7 @@ default value: @code{1}
 @item Z2
 Z coordinate of endpoint 2@*
 type: float@*
-default value: @code{2.53244204493764e-86}
+default value: @code{1.086144306514449e-153}
 @end table
 
 @item Gradient

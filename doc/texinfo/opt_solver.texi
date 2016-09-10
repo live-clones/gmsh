@@ -260,7 +260,7 @@ Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.AutoShowLastStep
-Automatically show the last time step in newly merged results@*
+Automatically show the last step in newly merged results, if there are more than 2 steps@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

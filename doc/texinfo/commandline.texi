@@ -144,6 +144,8 @@ Set constant string name=value
 Parse option file at startup
 @item -convert files
 Convert files into latest binary formats, then exit
+@item -cpu
+Report CPU times for all operations
 @item -version
 Show version number
 @item -info
