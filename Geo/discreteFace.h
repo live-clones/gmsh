@@ -56,8 +56,8 @@ class discreteFace : public GFace {
   void createGeometry();
   void gatherMeshes();
   virtual void mesh (bool verbose);
-  void printAtlasMesh(std::vector<MElement*>, int);
-  void printAtlasMesh(discreteDiskFace*, int);
+  //void printAtlasMesh(std::vector<MElement*>, int);
+  //void printAtlasMesh(discreteDiskFace*, int);
   std::vector<discreteDiskFace*> _atlas;
   std::vector<GFace*> _CAD;
 };
