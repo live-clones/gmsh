@@ -245,6 +245,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     }
     break;
   case GmshSocket::GMSH_PARAMETER:
+  case GmshSocket::GMSH_PARAMETER_WITHOUT_CHOICES:
   case GmshSocket::GMSH_PARAMETER_UPDATE:
     {
       std::string version, ptype, name;
@@ -256,6 +257,14 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       else if(ptype == "number"){
         onelab::number p; p.fromChar(message);
         if(!tryToSetGmshNumberOption(p)){
+          if(type == GmshSocket::GMSH_PARAMETER_WITHOUT_CHOICES){
+            // append value to any choices already on the server
+            std::vector<onelab::number> par; get(par, name);
+            std::vector<double> c;
+            if(par.size()) c = par[0].getChoices();
+            c.push_back(p.getValue());
+            p.setChoices(c);
+          }
           if(type == GmshSocket::GMSH_PARAMETER_UPDATE){
             std::vector<onelab::number> par; get(par, name);
             if(par.size()) {
@@ -275,7 +284,15 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       else if(ptype == "string"){
         onelab::string p; p.fromChar(message);
         if(!tryToSetGmshStringOption(p)){
-          if(type == GmshSocket::GMSH_PARAMETER_UPDATE){
+          if(type == GmshSocket::GMSH_PARAMETER_WITHOUT_CHOICES){
+            // append value to any choices already on the server
+            std::vector<onelab::string> par; get(par, name);
+            std::vector<std::string> c;
+            if(par.size()) c = par[0].getChoices();
+            c.push_back(p.getValue());
+            p.setChoices(c);
+          }
+          else if(type == GmshSocket::GMSH_PARAMETER_UPDATE){
             std::vector<onelab::string> par; get(par, name);
             if(par.size()){
               onelab::string y = p; p = par[0]; onelabUtils::updateString(p,y);
@@ -289,6 +306,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     }
     break;
   case GmshSocket::GMSH_PARAMETER_QUERY:
+  case GmshSocket::GMSH_PARAMETER_QUERY_WITHOUT_CHOICES:
     {
       std::string version, ptype, name, reply;
       onelab::parameter::getInfoFromChar(message, version, ptype, name);
@@ -297,14 +315,22 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
                    onelab::parameter::version().c_str(), version.c_str());
       }
       else if(ptype == "number"){
-        std::vector<onelab::number> par; get(par, name);
+        std::vector<onelab::number> par;
+        if(type == GmshSocket::GMSH_PARAMETER_QUERY_WITHOUT_CHOICES)
+          getWithoutChoices(par, name);
+        else
+          get(par, name);
         if(par.empty())
           reply = tryToGetGmshNumberOption(name);
         else
           reply = par[0].toChar();
       }
       else if(ptype == "string"){
-        std::vector<onelab::string> par; get(par, name);
+        std::vector<onelab::string> par;
+        if(type == GmshSocket::GMSH_PARAMETER_QUERY_WITHOUT_CHOICES)
+          getWithoutChoices(par, name);
+        else
+          get(par, name);
         if(par.empty())
           reply = tryToGetGmshStringOption(name);
         else
@@ -470,6 +496,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
     break;
   default:
     Msg::Warning("Received unknown message type (%d)", type);
+    return false;
     break;
   }
 

@@ -198,7 +198,7 @@ namespace onelab{
     const std::map<std::string, int> &getClients() const { return _clients; }
     static char charSep() { return '\0'; }
     static double maxNumber() { return 1e200; }
-    static std::string version() { return "1.2"; }
+    static std::string version() { return "1.3"; }
     static int defaultChangedValue() { return 31; }
     static std::string getNextToken(const std::string &msg,
                                     std::string::size_type &first,
@@ -742,7 +742,7 @@ namespace onelab{
     {
       return _get(ps, name, client, _numbers);
     }
-    bool get(std::vector<onelab::string> &ps, const std::string &name="",
+    bool get(std::vector<string> &ps, const std::string &name="",
              const std::string &client="")
     {
       return _get(ps, name, client, _strings);
@@ -831,10 +831,10 @@ namespace onelab{
         onelab::parameter::getInfoFromChar(msg[i], version, type, name);
         if(onelab::parameter::version() != version) return false;
         if(type == "number"){
-          onelab::number p; p.fromChar(msg[i]); set(p, client);
+          number p; p.fromChar(msg[i]); set(p, client);
         }
         else if(type == "string"){
-          onelab::string p; p.fromChar(msg[i]); set(p, client);
+          string p; p.fromChar(msg[i]); set(p, client);
         }
         else
           return false;
@@ -900,7 +900,11 @@ namespace onelab{
     virtual bool set(const number &p) = 0;
     virtual bool set(const string &p) = 0;
     virtual bool get(std::vector<number> &ps, const std::string &name="") = 0;
-    virtual bool get(std::vector<onelab::string> &ps, const std::string &name="") = 0;
+    virtual bool get(std::vector<string> &ps, const std::string &name="") = 0;
+    virtual bool setAndAppendChoices(const number &p) = 0;
+    virtual bool setAndAppendChoices(const string &p) = 0;
+    virtual bool getWithoutChoices(std::vector<number> &ps, const std::string &name="") = 0;
+    virtual bool getWithoutChoices(std::vector<string> &ps, const std::string &name="") = 0;
     std::vector<std::string> toChar()
     {
       std::vector<std::string> out;
@@ -917,10 +921,10 @@ namespace onelab{
         onelab::parameter::getInfoFromChar(msg[i], version, type, name);
         if(onelab::parameter::version() != version) return false;
         if(type == "number"){
-          onelab::number p; p.fromChar(msg[i]); set(p);
+          number p; p.fromChar(msg[i]); set(p);
         }
         else if(type == "string"){
-          onelab::string p; p.fromChar(msg[i]); set(p);
+          string p; p.fromChar(msg[i]); set(p);
         }
         else
           return false;
@@ -938,6 +942,7 @@ namespace onelab{
       return false;
     }
   };
+
   // The onelab server: a singleton that stores the parameter space and
   // interacts with onelab clients.
   class server{
@@ -1057,8 +1062,46 @@ namespace onelab{
     virtual bool set(const string &p){ return _set(p); }
     virtual bool get(std::vector<number> &ps,
                      const std::string &name=""){ return _get(ps, name); }
-    virtual bool get(std::vector<onelab::string> &ps,
+    virtual bool get(std::vector<string> &ps,
                      const std::string &name=""){ return _get(ps, name); }
+    virtual bool setAndAppendChoices(const number &p)
+    {
+      std::vector<number> ps;
+      _get(ps, _name);
+      std::vector<double> choices;
+      if(ps.size()) choices = ps[0].getChoices();
+      choices.insert(choices.end(), p.getChoices().begin(), p.getChoices().end());
+      number p2(p);
+      p2.setChoices(choices);
+      return _set(p2);
+    }
+    virtual bool setAndAppendChoices(const string &p)
+    {
+      std::vector<string> ps;
+      _get(ps, _name);
+      std::vector<std::string> choices;
+      if(ps.size()) choices = ps[0].getChoices();
+      choices.insert(choices.end(), p.getChoices().begin(), p.getChoices().end());
+      string p2(p);
+      p2.setChoices(choices);
+      return _set(p2);
+    }
+    virtual bool getWithoutChoices(std::vector<number> &ps,
+                                   const std::string &name="")
+    {
+      bool ret = _get(ps, name);
+      for(unsigned int i = 0; i < ps.size(); i++)
+        ps[i].setChoices(std::vector<double>());
+      return ret;
+    }
+    virtual bool getWithoutChoices(std::vector<string> &ps,
+                                   const std::string &name="")
+    {
+      bool ret = _get(ps, name);
+      for(unsigned int i = 0; i < ps.size(); i++)
+        ps[i].setChoices(std::vector<std::string>());
+      return ret;
+    }
   };
 
   // The local part of a network client.
@@ -1115,21 +1158,26 @@ namespace onelab{
     GmshClient *_gmshClient;
     // number of subclients
     int _numSubClients;
-    template <class T> bool _set(const T &p)
+    template <class T> bool _set(const T &p, bool withChoices=true)
     {
       if(!_gmshClient) return false;
       std::string msg = p.toChar();
-      _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER, msg.size(), &msg[0]);
+      _gmshClient->SendMessage(withChoices ? GmshSocket::GMSH_PARAMETER :
+                               GmshSocket::GMSH_PARAMETER_WITHOUT_CHOICES,
+                               msg.size(), &msg[0]);
       return true;
     }
-    template <class T> bool _get(std::vector<T> &ps, const std::string &name="")
+    template <class T> bool _get(std::vector<T> &ps, const std::string &name="",
+                                 bool withChoices=true)
     {
       ps.clear();
       if(!_gmshClient) return false;
       T p(name);
       std::string msg = p.toChar();
-      if (name.size())
-	_gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY, msg.size(), &msg[0]);
+      if(name.size())
+	_gmshClient->SendMessage(withChoices ? GmshSocket::GMSH_PARAMETER_QUERY :
+                                 GmshSocket::GMSH_PARAMETER_QUERY_WITHOUT_CHOICES,
+                                 msg.size(), &msg[0]);
       else // get all parameters
 	_gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_QUERY_ALL, msg.size(), &msg[0]);
 
@@ -1251,9 +1299,19 @@ namespace onelab{
     {
       return _get(ps, name);
     }
-    virtual bool get(std::vector<onelab::string> &ps, const std::string &name="")
+    virtual bool get(std::vector<string> &ps, const std::string &name="")
     {
       return _get(ps, name);
+    }
+    virtual bool setAndAppendChoices(const number &p){ return _set(p, false); }
+    virtual bool setAndAppendChoices(const string &p){ return _set(p, false); }
+    virtual bool getWithoutChoices(std::vector<number> &ps, const std::string &name="")
+    {
+      return _get(ps, name, false);
+    }
+    virtual bool getWithoutChoices(std::vector<string> &ps, const std::string &name="")
+    {
+      return _get(ps, name, false);
     }
     void sendInfo(const std::string &msg)
     {
