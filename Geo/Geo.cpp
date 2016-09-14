@@ -304,7 +304,7 @@ void End_Curve(Curve *c)
     norme(dir32);
     double n[3];
     prodve(dir12, dir32, n);
-    
+
     bool isValid = true;
     if (norm3(n) < 1.e-15) {
       isValid = false;
@@ -707,6 +707,7 @@ Volume *Create_Volume(int Num, int Typ)
   pV->Extrude = NULL;
   pV->EmbeddedSurfaces = NULL;
   pV->EmbeddedCurves = NULL;
+  pV->EmbeddedPoints = NULL;
   return pV;
 }
 
@@ -718,6 +719,9 @@ static void Free_Volume(void *a, void *b)
     List_Delete(pV->Surfaces);
     List_Delete(pV->SurfacesOrientations);
     List_Delete(pV->SurfacesByTag);
+    List_Delete(pV->EmbeddedSurfaces);
+    List_Delete(pV->EmbeddedCurves);
+    List_Delete(pV->EmbeddedPoints);
     delete pV;
     pV = NULL;
   }
@@ -4668,6 +4672,22 @@ void setVolumeEmbeddedCurves(Volume *v, List_T *curves)
       List_Add(v->EmbeddedCurves, &c);
     else
       Msg::Error("Unknown curve %d", (int)iCurve);
+  }
+}
+
+void setVolumeEmbeddedPoints(Volume *v, List_T *points)
+{
+ if (!v->EmbeddedPoints)
+    v->EmbeddedPoints = List_Create(4, 4, sizeof(Vertex *));
+  int nb = List_Nbr(points);
+  for(int i = 0; i < nb; i++) {
+    double iPoint;
+    List_Read(points, i, &iPoint);
+    Vertex *c = FindPoint((int)iPoint);
+    if(c)
+      List_Add(v->EmbeddedPoints, &c);
+    else
+      Msg::Error("Unknown point %d", (int)iPoint);
   }
 }
 

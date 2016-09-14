@@ -20,6 +20,7 @@
 #include "GEdge.h"
 #include "gmshRegion.h"
 #include "MLine.h"
+#include "MPoint.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
@@ -202,11 +203,21 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
   {
     std::list<GEdge*> embe = gr->embeddedEdges();
     for (std::list<GEdge*>::iterator it = embe.begin(); it != embe.end(); ++it){
-      for (unsigned int i=0;i<(*it)->lines.size();i++){
+      for (unsigned int i = 0; i < (*it)->lines.size(); i++){
 	MEdge me ((*it)->lines[i]->getVertex(0),(*it)->lines[i]->getVertex(1));
 	allBoundingEdges[me] = *it;
 	allBoundingVertices.insert((*it)->lines[i]->getVertex(0));
 	allBoundingVertices.insert((*it)->lines[i]->getVertex(1));
+      }
+    }
+  }
+
+  // embedded vertices
+  {
+    std::list<GVertex*> embv = gr->embeddedVertices();
+    for (std::list<GVertex*>::iterator it = embv.begin(); it != embv.end(); ++it){
+      for (unsigned int i = 0; i < (*it)->points.size(); i++){
+	allBoundingVertices.insert((*it)->points[i]->getVertex(0));
       }
     }
   }
@@ -606,10 +617,29 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
     f = regions[i]->embeddedFaces();
     allFacesSet.insert(f.begin(), f.end());
   }
-
   std::list<GFace*> allFaces;
   allFaces.insert(allFaces.end(), allFacesSet.begin(), allFacesSet.end());
   gr->set(allFaces);
+
+  std::set<GEdge*> allEmbEdgesSet;
+  for(unsigned int i = 0; i < regions.size(); i++){
+    std::list<GEdge*> e = regions[i]->embeddedEdges();
+    allEmbEdgesSet.insert(e.begin(), e.end());
+  }
+  std::list<GEdge*> allEmbEdges;
+  allEmbEdges.insert(allEmbEdges.end(), allEmbEdgesSet.begin(), allEmbEdgesSet.end());
+  std::list<GEdge*> oldEmbEdges = gr->embeddedEdges();
+  gr->embeddedEdges() = allEmbEdges;
+
+  std::set<GVertex*> allEmbVerticesSet;
+  for(unsigned int i = 0; i < regions.size(); i++){
+    std::list<GVertex*> e = regions[i]->embeddedVertices();
+    allEmbVerticesSet.insert(e.begin(), e.end());
+  }
+  std::list<GVertex*> allEmbVertices;
+  allEmbVertices.insert(allEmbVertices.end(), allEmbVerticesSet.begin(), allEmbVerticesSet.end());
+  std::list<GVertex*> oldEmbVertices = gr->embeddedVertices();
+  gr->embeddedVertices() = allEmbVertices;
 
   try{
     meshGRegionBoundaryRecovery(gr);
@@ -641,8 +671,10 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
     ++itf;
   }
 
-  // restore the initial set of faces
+  // restore the initial set of faces and embedded edges/vertices
   gr->set(faces);
+  gr->embeddedEdges() = oldEmbEdges;
+  gr->embeddedVertices() = oldEmbVertices;
 
   // now do insertion of points
   if(CTX::instance()->mesh.oldRefinement){

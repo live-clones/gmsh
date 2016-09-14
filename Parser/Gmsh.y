@@ -4699,7 +4699,31 @@ Constraints :
     }
   | tPoint '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {
-      Msg::Error("Point in Volume not implemented yet");
+      Volume *v = FindVolume((int)$8);
+      if(v){
+	setVolumeEmbeddedPoints(v, $3);
+      }
+      else{
+        GRegion *gr = GModel::current()->getRegionByTag((int)$8);
+        if(gr){
+          for(int i = 0; i < List_Nbr($3); i++){
+            double d;
+            List_Read($3, i, &d);
+            int iPoint = (int)d;
+            GVertex *gv = GModel::current()->getVertexByTag(iPoint);
+            if(!gv){ // sync model in case the embedded face is a .geo face
+              GModel::current()->importGEOInternals();
+              gv = GModel::current()->getVertexByTag(iPoint);
+            }
+            if(gv)
+              gr->addEmbeddedVertex(gv);
+            else
+              yymsg(0, "Unknown Point %d", iPoint);
+          }
+        }
+        else
+          yymsg(0, "Unknown volume %d", (int)$8);
+      }
     }
   | tLine '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {
@@ -4728,7 +4752,6 @@ Constraints :
         else
           yymsg(0, "Unknown volume %d", (int)$8);
       }
-//      Msg::Error("Line in Volume not implemented yet");
     }
   | tSurface '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {

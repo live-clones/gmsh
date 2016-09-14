@@ -14,6 +14,7 @@
 #include "GFace.h"
 #include "MVertex.h"
 #include "MLine.h"
+#include "MPoint.h"
 #include "MTriangle.h"
 #include "MTetrahedron.h"
 #include "Context.h"
@@ -114,6 +115,21 @@ bool tetgenmesh::reconstructmesh(void *p)
         all.insert(gf->triangles[i]->getVertex(0));
         all.insert(gf->triangles[i]->getVertex(1));
         all.insert(gf->triangles[i]->getVertex(2));
+      }
+    }
+    std::list<GEdge*> e = _gr->embeddedEdges();
+    for (std::list<GEdge*>::iterator it = e.begin(); it != e.end(); ++it) {
+      GEdge *ge = *it;
+      for (unsigned int i = 0; i < ge->lines.size(); i++){
+        all.insert(ge->lines[i]->getVertex(0));
+        all.insert(ge->lines[i]->getVertex(1));
+      }
+    }
+    std::list<GVertex*> v = _gr->embeddedVertices();
+    for (std::list<GVertex*>::iterator it = v.begin(); it != v.end(); ++it) {
+      GVertex *gv = *it;
+      for (unsigned int i = 0; i < gv->points.size(); i++){
+        all.insert(gv->points[i]->getVertex(0));
       }
     }
     _vertices.insert(_vertices.begin(), all.begin(), all.end());
@@ -356,7 +372,7 @@ bool tetgenmesh::reconstructmesh(void *p)
   }
 
   std::list<GFace*> f_list = _gr->faces();
-  std::list<GEdge*> e_list = _gr->edges();
+  std::list<GEdge*> e_list = _gr->embeddedEdges();
 
   {
     Msg::Info("Creating surface mesh...");

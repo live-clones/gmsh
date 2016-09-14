@@ -362,12 +362,22 @@ int GModel::importGEOInternals()
 	  Curve *c;
 	  List_Read(v->EmbeddedCurves, i, &c);
 	  GEdge *ge = getEdgeByTag(abs(c->Num));
-	  //	  printf("ADDING EMBBEDED EDGE --------------> %d\n",c->Num);
 	  if(ge)
 	    r->addEmbeddedEdge(ge);
 	  else
 	    Msg::Error("Unknown curve %d", c->Num);
 	}
+      }
+      if(v->EmbeddedPoints){
+        for(int i = 0; i < List_Nbr(v->EmbeddedPoints); i++){
+          Vertex *c;
+          List_Read(v->EmbeddedPoints, i, &c);
+          GVertex *gv = getVertexByTag(c->Num);
+          if(gv)
+            r->addEmbeddedVertex(gv);
+          else
+            Msg::Error("Unknown point %d", c->Num);
+        }
       }
       if(!v->Visible) r->setVisibility(0);
       if(v->Color.type) r->setColor(v->Color.mesh);
@@ -457,7 +467,7 @@ int GModel::importGEOInternals()
     for (unsigned int i=0;i<ents.size();i++){
       ents[i]->_compound = ents;
     }
-    
+
   }
 
 

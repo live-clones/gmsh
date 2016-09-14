@@ -28,6 +28,7 @@ class BoundaryLayerColumns;
 class GRegion : public GEntity {
  protected:
   std::list<GFace*> l_faces;
+  std::list<GVertex *> embedded_vertices;
   std::list<GFace *> embedded_faces;
   std::list<GEdge *> embedded_edges;
   std::list<int> l_dirs;
@@ -51,19 +52,23 @@ class GRegion : public GEntity {
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
 
-  // add embedded vertices/edges
-  void addEmbeddedFace(GFace *f){ embedded_faces.push_back(f); }
+  // add embedded vertices/edges/faces
+  void addEmbeddedVertex(GVertex *v){ embedded_vertices.push_back(v); }
   void addEmbeddedEdge(GEdge *e){ embedded_edges.push_back(e); }
+  void addEmbeddedFace(GFace *f){ embedded_faces.push_back(f); }
 
   // get/set faces that bound the region
   virtual std::list<GFace*> faces() const{ return l_faces; }
   virtual std::list<int> faceOrientations() const{ return l_dirs; }
   inline void set(const std::list<GFace*> f) { l_faces = f; }
 
-  // faces that are embedded in the region
-  virtual std::list<GFace*> embeddedFaces() const { return embedded_faces; }
+  // vertices that are embedded in the region
+  virtual std::list<GVertex*> &embeddedVertices() { return embedded_vertices; }
   // edges that are embedded in the region
   virtual std::list<GEdge*> embeddedEdges() const { return embedded_edges; }
+  virtual std::list<GEdge*> &embeddedEdges() { return embedded_edges; }
+  // faces that are embedded in the region
+  virtual std::list<GFace*> embeddedFaces() const { return embedded_faces; }
 
   // edges that bound the region
   virtual std::list<GEdge*> edges() const;
