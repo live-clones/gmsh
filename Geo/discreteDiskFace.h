@@ -26,6 +26,7 @@
 #include "linearSystemCSR.h"
 #include "dofManager.h"
 
+
 inline int nodeLocalNum(MElement* e, MVertex* v)
 {
   for(int i=0; i<e->getNumVertices(); i++)
@@ -219,7 +220,7 @@ class  discreteDiskFaceTriangle {
 class discreteDiskFace : public GFace {
   GFace *_parent;
   void buildOct(std::vector<GFace*> *CAD = NULL) const;
-  bool parametrize();// const;
+  bool parametrize(bool);// const;
   void checklsys(linearSystemCSRTaucs<double>*,dofManager<double>*,int);
   void putOnView(bool,bool);
   bool checkOrientationUV();

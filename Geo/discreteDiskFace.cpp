@@ -284,12 +284,15 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
   _totLength = geoTriangulation->bord.rbegin()->first;
   _U0 = geoTriangulation->bord.rbegin()->second;
   orderVertices(_totLength, _U0, _coords);
-  parametrize();
+  parametrize(false);
   buildOct(CAD);
   printParamMesh();
-  if (_order > 1 && !checkOrientationUV()){
-    Msg::Info("discreteDiskFace:: parametrization is not one-to-one; the parametric mesh is going to be corrected.");
-    optimize();
+  if (!checkOrientationUV()){
+    Msg::Info("discreteDiskFace:: parametrization is not one-to-one; it is going to be corrected.");
+    if(_order==1)
+      parametrize(true);
+    else
+      optimize();
     buildOct(CAD);
     printParamMesh();
   }
@@ -336,7 +339,7 @@ void discreteDiskFace::buildOct(std::vector<GFace*> *CAD) const
   Octree_Arrange(oct);
 }
 
-bool discreteDiskFace::parametrize()// const
+bool discreteDiskFace::parametrize(bool one2one)// const
 { // #improveme
 
 
@@ -349,7 +352,7 @@ bool discreteDiskFace::parametrize()// const
   dofManager<double> myAssemblerU(lsys_u);   // hashing
   dofManager<double> myAssemblerV(lsys_v);
 
-  if(_order>1){
+  if(!one2one){
     for(size_t i = 0; i < _U0.size(); i++){
       MVertex *v = _U0[i];
       const double theta = 2 * M_PI * _coords[i];
@@ -389,7 +392,8 @@ bool discreteDiskFace::parametrize()// const
   }
 
 
-  if(_order==1){
+  if(one2one){
+    Msg::Info("discreteDiskFace::parametrize \t Modifying discrete system");
     checklsys(lsys_u,&myAssemblerU,1);
     checklsys(lsys_v,&myAssemblerV,0);
   }
