@@ -1055,6 +1055,7 @@ int Msg::GetNumOnelabClients()
 #if defined(HAVE_ONELAB)
   return onelab::server::instance()->getNumClients();
 #endif
+  return 0;
 }
 
 #if defined(HAVE_ONELAB)
