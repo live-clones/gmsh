@@ -112,7 +112,7 @@ void discreteFace::secondDer(const SPoint2 &param,
 void discreteFace::createGeometry()
 {
   checkAndFixOrientation();
-  
+
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
   int order = 1;
   int nPart = 2;
@@ -120,11 +120,11 @@ void discreteFace::createGeometry()
   if (!_atlas.empty())return;
 
   double dtSplit = 0.0;
-  
+
   int id=1;
   std::stack<triangulation*>  toSplit;
   std::vector<triangulation*> toParam;
-  
+
   std::vector<MElement*> tem(triangles.begin(),triangles.end());
   triangulation* init = new triangulation(-1, tem,this);
   toSplit.push(init);
@@ -135,10 +135,10 @@ void discreteFace::createGeometry()
       triangulation* tosplit = toSplit.top();
       toSplit.pop();
 
-      clock_t ts0 = clock();
+      double ts0 = Cpu();
       split(tosplit,part,nPart);
-      clock_t ts1 = clock();
-      dtSplit += (double)(ts1-ts0)/CLOCKS_PER_SEC;
+      double ts1 = Cpu();
+      dtSplit += ts1-ts0;
       delete tosplit;
 
       for(unsigned int i=0; i<part.size(); i++){
@@ -156,7 +156,7 @@ void discreteFace::createGeometry()
     toSplit.top()->idNum=id++;
   }
   updateTopology(toParam);
-  
+
   for(unsigned int i=0; i<toParam.size(); i++){
     /*
     char name[256];
@@ -168,7 +168,7 @@ void discreteFace::createGeometry()
     //toParam[i]->print(name, toParam[i]->idNum);
   }
 
-  for(unsigned int i=0; i<toParam.size(); i++){    
+  for(unsigned int i=0; i<toParam.size(); i++){
     discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));
     df->printAtlasMesh();
     df->replaceEdges(toParam[i]->my_GEdges);
@@ -234,7 +234,7 @@ void discreteFace::mesh(bool verbose)
     sprintf(filename,name,i);t0
     _atlas[i]->printPhysicalMesh(filename);*/
   }
-  
+
   gatherMeshes();
   meshStatistics.status = GFace::DONE;
 #endif
@@ -346,7 +346,7 @@ void discreteFace::setupDiscreteEdge(discreteEdge*de,std::vector<MLine*>mlines,
   de->createGeometry();
   de->getBeginVertex()->addEdge(de);
   de->getEndVertex()->addEdge(de);
-  
+
 }
 
 // split old GEdge's
@@ -356,7 +356,7 @@ void discreteFace::splitDiscreteEdge(GEdge *de , GVertex *gv, discreteEdge* newE
 
   newE[0] = new discreteEdge (de->model(),model()->getMaxElementaryNumber(1) + 1,de->getBeginVertex(),gv);
   newE[1] = new discreteEdge (de->model(),model()->getMaxElementaryNumber(1) + 1,gv, de->getEndVertex());
-  
+
   int current = 0;
   std::vector<MLine*> mlines;
   // assumption: the MLine's are sorted
@@ -546,7 +546,7 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
 	for(int imvt=0; imvt<2; imvt++){
 	  std::set<GEdge*>::iterator oe=gGEdges.begin();// find the old GEdge that has the current new GVertex
 	  while(oe !=gGEdges.end() && mvt[imvt]->onWhat() != *oe && mvt[imvt]->onWhat() != (*oe)->getBeginVertex() && mvt[imvt]->onWhat() != (*oe)->getEndVertex())
-	    ++oe;	    
+	    ++oe;
 
 
 	  if (oe == gGEdges.end()){// not on an existing GEdge: new internal GVertex
@@ -556,9 +556,9 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
 	  else{// on an existing GEdge
 	    GEdge* onit = *oe;// the new GVertex can already exist; if it is the case, there is no need to create a new one
 	    if(mvt[imvt] == onit->getBeginVertex()->mesh_vertices[0])
-	      v[imvt] = onit->getBeginVertex();	    
+	      v[imvt] = onit->getBeginVertex();
 	    else if (mvt[imvt] == onit->getEndVertex()->mesh_vertices[0])
-	      v[imvt] = onit->getEndVertex();	      
+	      v[imvt] = onit->getEndVertex();
 	    else{
 	      v[imvt] = new discreteVertex (this->model(),model()->getMaxElementaryNumber(0) + 1);
 	      setupDiscreteVertex(v[imvt],mvt[imvt],NULL);
@@ -590,14 +590,14 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
 	}
 	v = new discreteVertex (this->model(),model()->getMaxElementaryNumber(0) + 1);
 	setupDiscreteVertex(v,cv0,&todelete);
-	discreteEdge* gloop = new discreteEdge (this->model(),model()->getMaxElementaryNumber(1) + 1,v,v);	
+	discreteEdge* gloop = new discreteEdge (this->model(),model()->getMaxElementaryNumber(1) + 1,v,v);
 	setupDiscreteEdge(gloop,my_MLines,&todelete);
 	gGEdges.insert(gloop);
       }// end while v02edg.empty()
     }//end for ii
   }// end for i
-  
-  
+
+
   // adding old-updated bounding GEdge's to the corresponding partitions
   for(std::set<GEdge*>::iterator le=gGEdges.begin(); le!=gGEdges.end(); ++le){
     GEdge* ile = *le;
