@@ -25,7 +25,8 @@ static double objective_function (double xi, MVertex *ver,
     if (lt[i]->getNumVertices () == 4)
       minQual = std::min((lt[i]->minSICNShapeMeasure()), minQual);
     else
-      minQual = std::min(fabs(lt[i]->minSICNShapeMeasure()), minQual);
+      //  minQual = std::min((lt[i]->specialQuality()), minQual);
+      minQual = std::min(fabs(lt[i]->minSICNShapeMeasure())*.2, minQual);
 //    minQual = std::min(lt[i]->minAnisotropyMeasure(), minQual);
   }
   ver->x() = x;
@@ -70,7 +71,7 @@ static int Stopping_Rule(double x0, double x1, double tol)
 
 double Maximize_Quality_Golden_Section( MVertex *ver, 
                                         double xTarget, double yTarget, double zTarget,
-                                        const std::vector<MElement*> &lt , double tol)
+                                        const std::vector<MElement*> &lt , double tol, double &q)
 {
   
   static const double lambda = 0.5 * (sqrt5 - 1.0);
@@ -104,6 +105,7 @@ double Maximize_Quality_Golden_Section( MVertex *ver,
     }
   }
   //  printf("finally : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
+  q = std::min(fx1,fx2);
   return a;
 }
 
@@ -155,8 +157,8 @@ double Maximize_Quality_Golden_Section( MVertex *ver, GFace *gf,
   return a;
 }
 
-static void _relocateVertex(MVertex *ver,
-                            const std::vector<MElement*> &lt, double tol)
+void _relocateVertexGolden(MVertex *ver,
+			   const std::vector<MElement*> &lt, double relax , double tol)
 {
   if(ver->onWhat()->dim() != 3) return;
   double x = 0, y=0, z=0;
@@ -174,14 +176,16 @@ static void _relocateVertex(MVertex *ver,
     N += lt[i]->getNumVertices();
   }
 
-  double xi = Maximize_Quality_Golden_Section( ver, x/N, y/N, z/N, lt , tol);
+  double q;
+  double xi = relax * Maximize_Quality_Golden_Section( ver, x/N, y/N, z/N, lt , tol, q);
   ver->x() = (1.-xi) * ver->x() + xi * x/N;
   ver->y() = (1.-xi) * ver->y() + xi * y/N;
   ver->z() = (1.-xi) * ver->z() + xi * z/N;
 }
 
 static double _relocateVertex(GFace* gf, MVertex *ver,
-                              const std::vector<MElement*> &lt, double tol) {
+		       const std::vector<MElement*> &lt,
+		       double tol) {
   if(ver->onWhat()->dim() != 2) return 2.0;
   
   SPoint2 p1(0,0);
@@ -239,22 +243,25 @@ void RelocateVertices (GFace* gf, int niter, double tol) {
 }
 
 
-void RelocateVertices (GRegion* region, double tol) {
+void RelocateVertices (GRegion* region, int niter, double tol) {
   v2t_cont adj;
   buildVertexToElement(region->tetrahedra, adj);
   buildVertexToElement(region->pyramids, adj);
   buildVertexToElement(region->prisms, adj);
   buildVertexToElement(region->hexahedra, adj);
-  v2t_cont::iterator it = adj.begin();
-  while (it != adj.end()){
-    _relocateVertex( it->first, it->second, tol);
-    ++it;
+  for (int i=0;i<niter+2;i++){
+    v2t_cont::iterator it = adj.begin();
+    double relax = std::min((double)(i+1)/niter, 1.0);
+    while (it != adj.end()){
+      _relocateVertexGolden( it->first, it->second, relax, tol);
+      ++it;
+    }
   }
 }
 
-void RelocateVertices (std::vector<GRegion*> &regions, double tol) {
+void RelocateVertices (std::vector<GRegion*> &regions, int niter, double tol) {
   for(unsigned int k = 0; k < regions.size(); k++){
-    RelocateVertices (regions[k], tol);
+    RelocateVertices (regions[k], niter, tol);
   }
 }
 

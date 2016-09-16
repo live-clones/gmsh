@@ -84,6 +84,7 @@ class triangulation {
   {
     double L = bord.rbegin()->first;
     if (L == 0.0)return 1.e22;
+    if (maxD < 0) maxD = geodesicDistance();
     //    printf("%12.5E %12.5E\n",L,maxD);
     return maxD / L;
   }
@@ -136,7 +137,7 @@ class triangulation {
     std::map<MVertex*,std::vector<MVertex*> > firstNode2Edge;
     for (std::set<MEdge>::iterator ie = borderEdg.begin(); ie != borderEdg.end() ; ++ie) {
       MEdge ed = *ie;
-      std::vector<int> nT = ed2tri[ed];
+      const std::vector<int> &nT = ed2tri[ed];
       MElement* t = tri[nT[0]];
 
       std::vector<MVertex*> vecver;
@@ -163,7 +164,7 @@ class triangulation {
       std::map<MVertex*,std::vector<MVertex*> >::iterator in = firstNode2Edge.begin();
       MVertex* previous = in->first;
       while(in != firstNode2Edge.end()) { // it didn't find it
-	std::vector<MVertex*> myV = in->second;
+	const std::vector<MVertex*> &myV = in->second;
 	for(unsigned int i=0; i<myV.size(); i++){
 	  loop.push_back(previous);
 	  MVertex* current = myV[i];
@@ -189,7 +190,7 @@ class triangulation {
     assignVert();
     assignEd2tri();
     assignBord();
-    maxD = geodesicDistance();
+    maxD = -1.e22;
   }
 
   void print (char *name, int elementary) const {
@@ -203,8 +204,8 @@ class triangulation {
   }
   
   triangulation() : gf(0) {}
-  triangulation(int id, std::vector<MElement*> input, GFace* gface)
-    : idNum(id), tri(input), gf(gface) { assign(); }
+  triangulation(int id, const  std::vector<MElement*> &input, GFace* gface)
+    : idNum(id), tri(input), gf(gface){ assign(); }
 };
 
 // triangles in the physical space xyz, with their parametric coordinates
@@ -247,12 +248,7 @@ class discreteDiskFace : public GFace {
   void printAtlasMesh () ;
   void printParamMesh () ;
   
-
-
   std::vector<MElement*> discrete_triangles;
-
-
-
  protected:
   // a copy of the mesh that should not be destroyed
   triangulation* initialTriangulation;

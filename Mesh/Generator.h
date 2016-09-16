@@ -7,6 +7,8 @@
 #define _GENERATOR_H_
 
 class GModel;
+class GRegion;
+#include "fullMatrix.h"
 
 void GetStatistics(double stat[50], double quality[4][100]=0);
 void AdaptMesh(GModel *m);
@@ -17,5 +19,7 @@ void SmoothMesh(GModel *m);
 void RefineMesh(GModel *m, bool linear, bool splitIntoQuads=false,
                 bool splitIntoHexas=false);
 void RecombineMesh(GModel *m);
+GRegion * createTetrahedralMesh ( GModel *gm, fullMatrix<double> & pts, fullMatrix<int> &triangles ) ;
+  //GRegion * createTetrahedralMesh ( GModel *gm, unsigned int nbPts , double *pts, unsigned int nbTriangles, int *triangles );
 
 #endif

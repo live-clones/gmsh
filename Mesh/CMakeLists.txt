@@ -17,6 +17,7 @@ set(SRC
       meshGFaceLloyd.cpp meshGFaceOptimize.cpp 
      meshGFaceQuadrilateralize.cpp 
     meshGRegion.cpp 
+    meshDiscreteRegion.cpp 
       meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp 
       meshGRegionExtruded.cpp  meshGRegionCarveHole.cpp 
       meshGRegionLocalMeshMod.cpp meshGRegionMMG3D.cpp

@@ -1281,7 +1281,7 @@ double optimalPointFrontal (GFace *gf,
    and the edge length
 */
 
-void optimalPointFrontalB (GFace *gf,
+bool optimalPointFrontalB (GFace *gf,
 			   MTri3* worst,
 			   int active_edge,
 			   bidimMeshData & data,
@@ -1320,8 +1320,9 @@ void optimalPointFrontalB (GFace *gf,
       if (gp.succeeded()){
 	newPoint[0] = gp.u();
 	newPoint[1] = gp.v();
-	return ;
+	return true;
       }
+      return false;
     }
   }
 #endif
@@ -1333,7 +1334,7 @@ void optimalPointFrontalB (GFace *gf,
       if (gp.succeeded()){
 	newPoint[0] = gp.u();
 	newPoint[1] = gp.v();
-	return ;
+	return true;
       }
     }
   }
@@ -1348,8 +1349,10 @@ void optimalPointFrontalB (GFace *gf,
   }
   else {
     Msg::Debug("--- Non optimal point found -----------");
+    return false;
     //    Msg::Info("--- Non optimal point found -----------");
   }
+  return true;
 }
 
 void bowyerWatsonFrontal(GFace *gf,
@@ -1406,8 +1409,8 @@ void bowyerWatsonFrontal(GFace *gf,
                    gf->mesh_vertices.size(), worst->getRadius());
       double newPoint[2], metric[3];
       //optimalPointFrontal (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
-      optimalPointFrontalB (gf,worst,active_edge,DATA,newPoint,metric);
-      insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris, &ActiveTris, worst);
+      if (optimalPointFrontalB (gf,worst,active_edge,DATA,newPoint,metric))
+	insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris, &ActiveTris, worst);
     }
 
     /*   if(ITER % 1== 0){

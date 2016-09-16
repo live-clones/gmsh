@@ -3,7 +3,10 @@
 #include <vector>
 class GRegion;
 class GFace;
-void RelocateVertices (GRegion* region, double tol = 1.e-2);
-void RelocateVertices (std::vector<GRegion*> &regions, double tol = 1.e-2);
+class MElement;
+void RelocateVertices (GRegion* region, int niter, double tol = 1.e-2);
+void RelocateVertices (std::vector<GRegion*> &regions, int niter, double tol = 1.e-2);
 void RelocateVertices (GFace*, int niter, double tol = 1.e-3);
+void _relocateVertexGolden(MVertex *ver, const std::vector<MElement*> &lt,  double relax, double tol= 1.e-2);
+
 #endif

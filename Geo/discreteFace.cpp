@@ -111,16 +111,16 @@ void discreteFace::secondDer(const SPoint2 &param,
 
 void discreteFace::createGeometry()
 {
-
   checkAndFixOrientation();
   
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
   int order = 1;
   int nPart = 2;
   double eta = 5/(2.*3.14);
-
   if (!_atlas.empty())return;
 
+  double dtSplit = 0.0;
+  
   int id=1;
   std::stack<triangulation*>  toSplit;
   std::vector<triangulation*> toParam;
@@ -134,7 +134,11 @@ void discreteFace::createGeometry()
       std::vector<triangulation*> part;
       triangulation* tosplit = toSplit.top();
       toSplit.pop();
+
+      clock_t ts0 = clock();
       split(tosplit,part,nPart);
+      clock_t ts1 = clock();
+      dtSplit += (double)(ts1-ts0)/CLOCKS_PER_SEC;
       delete tosplit;
 
       for(unsigned int i=0; i<part.size(); i++){
@@ -165,7 +169,6 @@ void discreteFace::createGeometry()
   }
 
   for(unsigned int i=0; i<toParam.size(); i++){    
-    std::vector<MElement*> mytri = toParam[i]->tri;
     discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));
     df->printAtlasMesh();
     df->replaceEdges(toParam[i]->my_GEdges);
@@ -228,7 +231,7 @@ void discreteFace::mesh(bool verbose)
     _atlas[i]->mesh(verbose);/*
     const char *name = "atlas%d";
     char filename[256];
-    sprintf(filename,name,i);
+    sprintf(filename,name,i);t0
     _atlas[i]->printPhysicalMesh(filename);*/
   }
   
@@ -461,7 +464,7 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
       for(int j=0; j<3; j++){// adjacency from edges
 	MEdge ed = current->getEdge(j);
 	if(trian->ed2tri[ed].size()>1){
-	  std::vector<int> oldnums = trian->ed2tri[ed];
+	  const std::vector<int> &oldnums = trian->ed2tri[ed];
 	  int on = trian->tri[oldnums[0]] == current ? oldnums[1] : oldnums[0];
 	  if(check_todo.find(trian->tri[on])==check_todo.end() && el2part[trian->tri[on]]==p){
 	    my_todo.push(trian->tri[on]);

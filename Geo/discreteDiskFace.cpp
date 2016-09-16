@@ -1122,8 +1122,8 @@ static double computeDistanceLinePoint (MVertex *v1, MVertex *v2, MVertex *v){
 
 }
 */
-static double computeDistance (MVertex *v1, double d1, MVertex *v2, double d2, MVertex *v)
-{
+inline double computeDistance (MVertex *v1, double d1, MVertex *v2, double d2, MVertex *v){
+  
   //       o------------a
   //
   //

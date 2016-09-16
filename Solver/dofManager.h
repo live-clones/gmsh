@@ -357,7 +357,7 @@ class dofManager : public dofManagerBase{
       insertInSparsityPatternLinConst(R, C);
     }
   }
-
+  
   virtual inline void sparsityDof(const std::vector<Dof> &keys){
     for (unsigned int itR=0; itR< keys.size(); itR++){
       for (unsigned int itC=0; itC<keys.size(); itC++){

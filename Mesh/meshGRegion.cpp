@@ -57,6 +57,41 @@ class splitQuadRecovery {
   {
     _data.insert(std::make_pair(ge, std::make_pair(v,f)));
   }
+  void relocateVertices(GRegion *region, int niter) {
+    if(empty()) return ;
+    v2t_cont adj;
+    buildVertexToElement(region->tetrahedra, adj);
+    buildVertexToElement(region->pyramids, adj);
+    buildVertexToElement(region->prisms, adj);
+    buildVertexToElement(region->hexahedra, adj);
+
+    double minQual     = 1;
+    double minQualOpti = 1;
+    
+    std::list<GFace*> faces = region->faces();
+    
+    for (int iter=0; iter < niter+2;iter++){
+      for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it){
+	for (std::multimap<GEntity*, std::pair<MVertex*,MFace> >::iterator it2 =
+	       _data.lower_bound(*it); it2 != _data.upper_bound(*it) ; ++it2){
+	  const MFace &f = it2->second.second;
+	  MVertex *v = it2->second.first;
+	  MPyramid p (f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3), v);
+	  minQual = std::min(minQual, fabs(p.minSICNShapeMeasure()));
+	  std::vector<MElement*> e = adj[v];
+	  e.push_back(&p);	
+	  v->setEntity (region);
+	  double relax = std::min((double)(iter+1)/niter, 1.0);
+	  //	  printf("%g (%d) --> ",e.size(),p.minSICNShapeMeasure());
+	  _relocateVertexGolden( v, e, relax);
+	  minQualOpti = std::min(minQualOpti, fabs(p.minSICNShapeMeasure()));
+	  //	  printf("%g \n",p.minSICNShapeMeasure());
+	  v->setEntity (*it);
+	}
+      }	
+    }
+    printf("relocation improves %g --> %g\n", minQual, minQualOpti);
+  }
   int buildPyramids(GModel *gm)
   {
     if(empty()) return 0;
@@ -226,9 +261,9 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
 
   //// TEST
   {
-    std::vector<MVertex*>ALL;
-    std::vector<MTetrahedron*> MESH;
-    ALL.insert(ALL.begin(),allBoundingVertices.begin(),allBoundingVertices.end());
+    //    std::vector<MVertex*>ALL;
+    //    std::vector<MTetrahedron*> MESH;
+    //    ALL.insert(ALL.begin(),allBoundingVertices.begin(),allBoundingVertices.end());
     //    delaunayMeshIn3D (ALL,MESH);
     //    exit(1);
   }
@@ -561,6 +596,7 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
       return;
     }
     TransferTetgenMesh(gr, in, out, numberedV);
+    sqr.relocateVertices(gr,3);
   }
 
 
@@ -575,6 +611,7 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
   // restore the initial set of faces
   gr->set(faces);
 
+  
   // now do insertion of points
   if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)
     bowyerWatsonFrontalLayers(gr, false);
@@ -590,10 +627,12 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
       insertVerticesInRegion(gr,2000000000,true);
     }
   }
-
+  // crete an initial mesh 
+  printf("coucou1\n");
   if (sqr.buildPyramids (gr->model())){
-    RelocateVertices (regions);
+    RelocateVertices (regions, 3);
   }
+  printf("coucou2\n");
 }
 
 #else

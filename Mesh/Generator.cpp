@@ -802,7 +802,7 @@ static void Mesh3D(GModel *m)
 	//			     CTX::instance()->mesh.recombine3DConformity);
         // 0: no pyramid, 1: single-step, 2: two-steps (conforming),
         // true: fill non-conformities with trihedra
-	RelocateVertices(gr);
+	RelocateVertices(gr, CTX::instance()->mesh.nbSmoothing);
         // while(LaplaceSmoothing (gr)){
         // }
 	nb_elements_recombination += post.get_nb_elements();
