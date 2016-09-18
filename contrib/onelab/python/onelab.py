@@ -28,7 +28,7 @@ Please report all bugs and problems to the public mailing list
 """
 
 import socket, struct, os, sys, subprocess, time
-_VERSION = '1.2'
+_VERSION = '1.3'
 
 def path(dirname, inp):
   # dirname is a directory, can be empty
