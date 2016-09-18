@@ -1806,10 +1806,10 @@ if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/Info.plist "${F1}")
   set(CPACK_BUNDLE_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
   set(CPACK_BUNDLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
-  if(PACKAGER STREQUAL "geuzaine FIXME")
+  if(PACKAGER STREQUAL "geuzaine")
     # codesigning requires CMake >= 3.2
     set(CPACK_BUNDLE_APPLE_CERT_APP "Developer ID Application: Christophe Geuzaine")
-  endif(PACKAGER STREQUAL "geuzaine FIXME")
+  endif(PACKAGER STREQUAL "geuzaine")
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsGeo.icns DESTINATION .
           RENAME GmshGeo.icns)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsMsh.icns DESTINATION .
