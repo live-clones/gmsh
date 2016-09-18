@@ -200,7 +200,8 @@ if [ $# -lt 1 ] || [ $1 == "mac" ]; then
   umount gmsh_mount
   rm -rf /tmp/gmsh-*
   rm -rf /tmp/getdp-*
-  # cannot use zip file: it destroys the signature for onelab.py
+  # if we use a zip file we need to move onelab.py from MacOS/ to Resources/, as zip
+  # does not preserve extended file attributes; dmg does
   hdiutil create -srcfolder onelab-MacOSX onelab-MacOSX.dmg
   codesign -v --sign "Developer ID Application: Christophe Geuzaine" onelab-MacOSX.dmg
   rm -rf onelab-MacOSX
