@@ -1814,16 +1814,13 @@ if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
           RENAME GmshSol.icns)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsPos.icns DESTINATION .
           RENAME GmshPos.icns)
+  set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
   if(PACKAGER STREQUAL "geuzaine FIXME")
-    set(CODESIGN "codesign --force --verify --verbose --sign
+    set(CODESIGN "codesign --verbose --deep --sign
         \"Developer ID Application: Christophe Geuzaine\"")
     set(APPDIR _CPack_Packages/Darwin/Bundle/gmsh-${GMSH_VERSION}-MacOSX/Gmsh.app)
-    install(CODE
-            "execute_process(COMMAND ${CODESIGN} ${APPDIR}/Contents/MacOS/onelab.py)
-             execute_process(COMMAND ${CODESIGN} ${APPDIR}/Contents/MacOS/gmsh)
-             execute_process(COMMAND ${CODESIGN} ${APPDIR})")
+    install(CODE "execute_process(COMMAND ${CODESIGN} ${APPDIR})")
   endif(PACKAGER STREQUAL "geuzaine FIXME")
-  set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
 elseif(WIN32 OR CYGWIN)
   set(CPACK_GENERATOR ZIP)
 else(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
