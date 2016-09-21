@@ -187,7 +187,7 @@ if [ $# -lt 1 ] || [ $1 == "mac" ]; then
   cp -R gmsh_mount/Gmsh.app onelab-MacOSX
   mv /tmp/getdp-*${GETDP}-MacOSX/bin/getdp onelab-MacOSX/Gmsh.app/Contents/MacOS/
   security unlock-keychain ${HOME}/Library/Keychains/login.keychain
-  codesign -v --deep --sign "Developer ID Application: Christophe Geuzaine" onelab-MacOSX/Gmsh.app
+  codesign -v --force --deep --sign "Developer ID Application: Christophe Geuzaine" onelab-MacOSX/Gmsh.app
   cp gmsh_mount/LICENSE.txt onelab-MacOSX/LICENSE.txt
   echo "\n\n" >> onelab-MacOSX/LICENSE.txt
   cat /tmp/getdp-*${GETDP}-MacOSX/share/doc/getdp/LICENSE.txt >> onelab-MacOSX/LICENSE.txt
