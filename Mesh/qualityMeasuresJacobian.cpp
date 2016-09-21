@@ -35,7 +35,7 @@ std::vector<double> _CoeffDataAnisotropy::mytimes;
 std::vector<int> _CoeffDataAnisotropy::mynumbers;
 double _CoeffDataScaledJac::cTri = 2/std::sqrt(3);
 double _CoeffDataScaledJac::cTet = std::sqrt(2);
-double _CoeffDataScaledJac::cPyr = std::sqrt(2)*4;
+double _CoeffDataScaledJac::cPyr = std::sqrt(2);
 
 void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
                                const fullMatrix<double> *normals)
@@ -688,8 +688,8 @@ void _CoeffDataScaledJac::_computeAtCorner(double &min, double &max) const
                                       1/v(i,0)/v(i,1)/v(i,5) +
                                       1/v(i,2)/v(i,3)/v(i,4) +
                                       1/v(i,2)/v(i,3)/v(i,5) +
-                                      1/v(i,2)/v(i,4)/v(i,5) +
-                                      1/v(i,3)/v(i,4)/v(i,5)  ) / 8;
+                                      1/v(i,4)/v(i,5)/v(i,2) +
+                                      1/v(i,4)/v(i,5)/v(i,3)  ) / 8;
       break;
     default:
       Msg::Error("Unkown type for scaled jac computation");
@@ -786,23 +786,35 @@ double _CoeffDataScaledJac::_computeLowerBound() const
   }
 
   case TYPE_PYR:
-    raiser->computeCoeff(prox[0], prox[1], prox[2], coeffDenominator);
-    result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-    raiser->computeCoeff(prox[0], prox[1], prox[3], coeffDenominator);
-    result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-    raiser->computeCoeff(prox[0], prox[1], prox[4], coeffDenominator);
-    result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-    raiser->computeCoeff(prox[0], prox[1], prox[5], coeffDenominator);
-    result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-    raiser->computeCoeff(prox[2], prox[4], prox[5], coeffDenominator);
-    result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-    raiser->computeCoeff(prox[2], prox[3], prox[4], coeffDenominator);
-    result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-    raiser->computeCoeff(prox[2], prox[3], prox[5], coeffDenominator);
-    result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-    raiser->computeCoeff(prox[3], prox[4], prox[5], coeffDenominator);
-    result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
+  {
+    fullVector<double> thirdTerm, coeffNum1, tmp;
+    thirdTerm = prox[2];
+    thirdTerm.axpy(prox[3]);
+    thirdTerm.axpy(prox[4]);
+    thirdTerm.axpy(prox[5]);
+    raiser->computeCoeff(prox[0], prox[1], thirdTerm, coeffNum1);
+    thirdTerm = prox[4];
+    thirdTerm.axpy(prox[5]);
+    raiser->computeCoeff(prox[2], prox[3], thirdTerm, tmp);
+    coeffNum1.axpy(tmp);
+    thirdTerm = prox[2];
+    thirdTerm.axpy(prox[3]);
+    raiser->computeCoeff(prox[4], prox[5], thirdTerm, tmp);
+    coeffNum1.axpy(tmp);
+
+    fullVector<double> coeffDen1, coeffDen2;
+    raiser->computeCoeff(prox[0], prox[1], prox[2], coeffDen1);
+    raiser->computeCoeff(prox[3], prox[4], prox[5], coeffDen2);
+
+    fullVector<double> &coeffNumerator = tmp;
+    bezierBasisRaiser *raiserBis;
+    raiserBis = raiser->getRaisedBezierBasis(3)->getRaiser();
+    raiserBis->computeCoeff(coeffNum1, _coeffsJacDet, coeffNumerator);
+    raiserBis->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
+
+    result = _computeBoundRational(coeffNumerator, coeffDenominator, true);
     return cPyr*result/8;
+  }
 
   default:
     Msg::Info("Unknown type for scaled Jacobian (%d)", _type);
