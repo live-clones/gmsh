@@ -102,6 +102,8 @@ public:
     _fillRaiserData();
   };
 
+  const bezierBasis* getRaisedBezierBasis(int multipliedBy2or3);
+
 //  const bezierBasis* getRaisedBezierBasis(int raised) const;
 
   void computeCoeff(const fullVector<double> &coeffA,

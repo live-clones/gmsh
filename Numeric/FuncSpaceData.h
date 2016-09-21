@@ -42,7 +42,7 @@ public:
     : _tag(-1), _spaceOrder(-1), _serendipity(false), _nij(-1), _nk(-1),
       _pyramidalSpace(false) {}
 
-  // Constructors of the function space of a different order
+  // Constructors for the function space of a different order
   FuncSpaceData(const FuncSpaceData &fsd,
                 int order,
                 const bool *serendip = NULL);

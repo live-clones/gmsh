@@ -663,10 +663,18 @@ void _CoeffDataScaledJac::_computeAtCorner(double &min, double &max) const
                                       1/v(i,1)/v(i,2)) / 3;
       break;
     case TYPE_TET:
-      sJ = cTet * _coeffsJacDet(i) * (1/v(i,0)/v(i,1)/v(i,2) +
-                                      1/v(i,0)/v(i,3)/v(i,4) +
-                                      1/v(i,1)/v(i,3)/v(i,5) +
-                                      1/v(i,2)/v(i,4)/v(i,5)) / 4;
+      sJ = cTet * _coeffsJacDet(i) * (1/v(i,0)/v(i,5)/v(i,1) +
+                                      1/v(i,0)/v(i,5)/v(i,2) +
+                                      1/v(i,0)/v(i,5)/v(i,3) +
+                                      1/v(i,0)/v(i,5)/v(i,4) +
+                                      1/v(i,1)/v(i,4)/v(i,0) +
+                                      1/v(i,1)/v(i,4)/v(i,2) +
+                                      1/v(i,1)/v(i,4)/v(i,3) +
+                                      1/v(i,1)/v(i,4)/v(i,5) +
+                                      1/v(i,2)/v(i,3)/v(i,0) +
+                                      1/v(i,2)/v(i,3)/v(i,1) +
+                                      1/v(i,2)/v(i,3)/v(i,4) +
+                                      1/v(i,2)/v(i,3)/v(i,5)) / 12;
       break;
     case TYPE_PRI:
       sJ = cTri * _coeffsJacDet(i) * (1/v(i,0)/v(i,1)/v(i,2) +
@@ -743,15 +751,39 @@ double _CoeffDataScaledJac::_computeLowerBound() const
     return cTri*result/3;
 
   case TYPE_TET:
-    raiser->computeCoeff(prox[0], prox[1], prox[2], coeffDenominator);
-    result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-    raiser->computeCoeff(prox[0], prox[3], prox[4], coeffDenominator);
-    result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-    raiser->computeCoeff(prox[1], prox[3], prox[5], coeffDenominator);
-    result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-    raiser->computeCoeff(prox[2], prox[4], prox[5], coeffDenominator);
-    result += _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
-    return cTet*result/4;
+  {
+    fullVector<double> thirdTerm, coeffNum1, tmp;
+    thirdTerm = prox[1];
+    thirdTerm.axpy(prox[2]);
+    thirdTerm.axpy(prox[3]);
+    thirdTerm.axpy(prox[4]);
+    raiser->computeCoeff(prox[0], prox[5], thirdTerm, coeffNum1);
+    thirdTerm = prox[0];
+    thirdTerm.axpy(prox[2]);
+    thirdTerm.axpy(prox[3]);
+    thirdTerm.axpy(prox[5]);
+    raiser->computeCoeff(prox[1], prox[4], thirdTerm, tmp);
+    coeffNum1.axpy(tmp);
+    thirdTerm = prox[0];
+    thirdTerm.axpy(prox[1]);
+    thirdTerm.axpy(prox[4]);
+    thirdTerm.axpy(prox[5]);
+    raiser->computeCoeff(prox[2], prox[3], thirdTerm, tmp);
+    coeffNum1.axpy(tmp);
+
+    fullVector<double> coeffDen1, coeffDen2;
+    raiser->computeCoeff(prox[0], prox[1], prox[2], coeffDen1);
+    raiser->computeCoeff(prox[3], prox[4], prox[5], coeffDen2);
+
+    fullVector<double> &coeffNumerator = tmp;
+    bezierBasisRaiser *raiserBis;
+    raiserBis = raiser->getRaisedBezierBasis(3)->getRaiser();
+    raiserBis->computeCoeff(coeffNum1, _coeffsJacDet, coeffNumerator);
+    raiserBis->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
+
+    result = _computeBoundRational(coeffNumerator, coeffDenominator, true);
+    return cTet*result/12;
+  }
 
   case TYPE_PYR:
     raiser->computeCoeff(prox[0], prox[1], prox[2], coeffDenominator);
