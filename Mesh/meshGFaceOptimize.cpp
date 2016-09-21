@@ -1297,7 +1297,7 @@ void recombineIntoQuads(GFace *gf,
   double t1 = Cpu();
 
   bool haveParam = true;
-  bool saveAll = CTX::instance()->mesh.saveAll;
+  bool saveAll = false; //CTX::instance()->mesh.saveAll;
   if(gf->geomType() == GEntity::DiscreteSurface && !gf->getCompound())
     haveParam = false;
 
@@ -1400,7 +1400,7 @@ void quadsToTriangles(GFace *gf, double minqual)
 	it != _columns->_elemColumns.end();it++){
     std::vector<MElement *> &e = it->second;
     std::vector<MElement *> eOld = e;
-    e.clear();    
+    e.clear();
     for (unsigned int i=0;i<eOld.size();i++){
       MElement *ee = eOld[i];
       std::map<MElement*, std::pair<MElement*,MElement*> >::iterator it2 = change.find(ee);
