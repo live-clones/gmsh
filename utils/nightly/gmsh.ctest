@@ -92,11 +92,12 @@ macro(upload_package WEB ARCH EXTRA EXT1 EXT2)
     if(FILE)
       if(APPLE) # re-sign package on ace36 (MacOSX 10.7 is too old to produce v2 sigs)
         message("Re-signing MacOS build on ace36")
+        get_filename_component(BASENAME ${FILE} NAME)
         execute_process(COMMAND scp -C ${FILE} ace@ace36.montefiore.ulg.ac.be:/tmp
                         TIMEOUT 60)
-        execute_process(COMMAND ssh ace@ace36.montefiore.ulg.ac.be /Users/ace/re-sign.sh /tmp/${FILE}
+        execute_process(COMMAND ssh ace@ace36.montefiore.ulg.ac.be /Users/ace/re-sign.sh /tmp/${BASENAME}
                         TIMEOUT 60)
-        execute_process(COMMAND scp -C ace@ace36.montefiore.ulg.ac.be:/tmp/${FILE} ${FILE}
+        execute_process(COMMAND scp -C ace@ace36.montefiore.ulg.ac.be:/tmp/${BASENAME} ${FILE}
                         TIMEOUT 60)
         message("Done re-signing MacOS build on ace36")
       endif(APPLE)
