@@ -90,6 +90,16 @@ macro(upload_package WEB ARCH EXTRA EXT1 EXT2)
     message("Build succeeded: uploading package to web site")
     file(GLOB FILE ${CTEST_BINARY_DIRECTORY}/gmsh-*${EXT1})
     if(FILE)
+      if(APPLE) # re-sign package on ace36 (MacOSX 10.7 is too old to produce v2 sigs)
+        message("Re-signing MacOS build on ace36")
+        execute_process(COMMAND scp -C ${FILE} ace@ace36.montefiore.ulg.ac.be:/tmp
+                        TIMEOUT 60)
+        execute_process(COMMAND ssh ace@ace36.montefiore.ulg.ac.be /Users/ace/re-sign.sh /tmp/${FILE}
+                        TIMEOUT 60)
+        execute_process(COMMAND scp -C ace@ace36.montefiore.ulg.ac.be:/tmp/${FILE} ${FILE}
+                        TIMEOUT 60)
+        message("Done re-signing MacOS build on ace36")
+      endif(APPLE)
       if(${FILE} MATCHES "-svn")
         execute_process(COMMAND scp -C ${FILE} ${WEB}/gmsh-svn-${ARCH}${EXTRA}${EXT2}
                         TIMEOUT 60)
