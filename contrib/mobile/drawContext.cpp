@@ -60,12 +60,6 @@ void drawContext::load(std::string filename)
   // reset onelab database
   onelab::server::instance()->clear();
 
-  // hide the model checking menu
-  onelab::number n("GetDP/}ModelCheck", 0.);
-  n.setVisible(false);
-  n.setNeverChanged(true);
-  onelab::server::instance()->set(n);
-
   // restore default options
   GmshRestoreDefaultOptions();
 

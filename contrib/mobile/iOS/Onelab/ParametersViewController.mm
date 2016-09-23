@@ -216,6 +216,8 @@ NSString *GetSectionTitle(NSString *name)
   // check for new/updated parameters (number)
   for(int i = 0; i < number.size(); i++) {
     if(!number[i].getVisible()) continue; // do not add invisible parameter
+    if(number[i].getName() == "GetDP/}ModelCheck") continue; // don't show model checking
+
     NSString *name = [Utils getStringFromCString:number[i].getName().c_str()];
     NSString *sectiontitle = GetSectionTitle(name);
     Boolean found = false;
