@@ -23,6 +23,9 @@ class nodalBasis {
   void getReferenceNodes(fullMatrix<double> &nodes) const {
     nodes = points;
   }
+  const fullMatrix<double>& getReferenceNodes() const {
+    return points;
+  }
   void getReferenceNodesForBezier(fullMatrix<double> &nodes) const;
 
   // Basis functions & gradients evaluation

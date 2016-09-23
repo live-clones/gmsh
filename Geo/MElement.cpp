@@ -846,6 +846,31 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3]) const
   // routines are implemented for simplices, where the basis functions
   // are linear)
   uvw[0] = uvw[1] = uvw[2] = 0.;
+
+  // For high order elements, start from the nearer point
+  if (getPolynomialOrder() > 2) {
+    int numNearer = 0;
+    const MVertex *v = getShapeFunctionNode(0);
+    double distNearer = (v->x()-xyz[0])*(v->x()-xyz[0]) +
+                        (v->y()-xyz[1])*(v->y()-xyz[1]) +
+                        (v->z()-xyz[2])*(v->z()-xyz[2]);
+    for (int i = 1; i < getNumShapeFunctions(); i++) {
+      const MVertex *v = getShapeFunctionNode(i);
+      double dist = (v->x()-xyz[0])*(v->x()-xyz[0]) +
+                    (v->y()-xyz[1])*(v->y()-xyz[1]) +
+                    (v->z()-xyz[2])*(v->z()-xyz[2]);
+      if (dist < distNearer) {
+        numNearer = i;
+        distNearer = dist;
+      }
+    }
+    const nodalBasis *nb = getFunctionSpace();
+    fullMatrix<double> refpnts = nb->getReferenceNodes();
+    uvw[0] = refpnts(numNearer, 0);
+    uvw[1] = refpnts(numNearer, 1);
+    uvw[2] = refpnts(numNearer, 2);
+  }
+
   int iter = 1, maxiter = 20;
   double error = 1., tol = 1.e-6;
 
