@@ -491,19 +491,54 @@ void drawContext::drawScale()
     glDisableClientState(GL_VERTEX_ARRAY);
 
     char label[1024];
+
     int nt = data->getNumTimeSteps();
-    if((opt->showTime == 1 && nt > 1) || opt->showTime == 2){
-      char tmp[256];
-      sprintf(tmp, opt->format.c_str(), data->getTime(opt->timeStep));
-      sprintf(label, "%s (%s)", data->getName().c_str(), tmp);
+    int n0 = data->getFirstNonEmptyTimeStep();
+    int n = (nt - n0 > 0) ? nt - n0 : 1;
+    char time[256];
+    sprintf(time, opt->format.c_str(), data->getTime(opt->timeStep));
+    int choice = opt->showTime;
+    if(choice == 3){ // automatic
+      if(n == 1) choice = 0; // nothing
+      else if(n == 2) choice = 2; // harmonic
+      else choice = 5; // multi-step data
     }
-    else if((opt->showTime == 3 && nt > 1) || opt->showTime == 4){
-      sprintf(label, "%s (%d/%d)", data->getName().c_str(), opt->timeStep,
-              data->getNumTimeSteps() - 1);
-    }
-    else{
+    switch(choice){
+    case 1: // time series
+      sprintf(label, "%s - time %s", data->getName().c_str(), time);
+      break;
+    case 2: // harmonic data
+      if(n <= 2)
+        sprintf(label, "%s - %s part", data->getName().c_str(),
+                ((opt->timeStep - n0) % 2) ? "imaginary" : "real");
+      else
+        sprintf(label, "%s - harmonic %s (%s part)",
+                data->getName().c_str(), time,
+                ((opt->timeStep - n0) % 2) ? "imaginary" : "real");
+      break;
+    case 3: // automatic
+      // never here
+      break;
+    case 4: // step data
+      sprintf(label, "%s - step %d", data->getName().c_str(), opt->timeStep);
+      break;
+    case 5: // multi-step data
+      sprintf(label, "%s - step %d in [0,%d]", data->getName().c_str(),
+              opt->timeStep, data->getNumTimeSteps() - 1);
+      break;
+    case 6: // real eigenvalues
+      sprintf(label, "%s - eigenvalue %s", data->getName().c_str(),
+              time);
+      break;
+    case 7: // complex eigenvalues
+      sprintf(label, "%s - eigenvalue %s (%s part)", data->getName().c_str(),
+              time, ((opt->timeStep - n0) % 2) ? "imaginary" : "real");
+      break;
+    default:
       sprintf(label, "%s", data->getName().c_str());
+      break;
     }
+
     drawString lbl(label, 20 * _fontFactor);
     lbl.draw(xmin + width / 2, ymin + 2.8 * dh, 0.,
              _width/(_right-_left), _height/(_top-_bottom));
