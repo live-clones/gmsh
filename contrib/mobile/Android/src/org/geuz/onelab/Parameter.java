@@ -89,10 +89,12 @@ public class Parameter {
         pos++;// version
         pos++;// type
         setName(infos[pos++]);// name
+        if(_name.equals("GetDP/}ModelCheck")) // don't show model checking
+            return -1;
         setLabel(infos[pos++]);// label
         pos++;// help
         pos++;// changedValue
-        if(Integer.parseInt(infos[pos++]) != 1)return -1;// visible
+        if(Integer.parseInt(infos[pos++]) != 1) return -1;// visible
         this.setReadOnly((infos[pos++].equals("1")));// read only
         int nAttributes = Integer.parseInt(infos[pos++]);// number of attributes
         pos+=(nAttributes*2);// key+value
