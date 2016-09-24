@@ -78,7 +78,7 @@
                                 delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil
                        otherButtonTitles:nil];
   std::vector<std::string> choices = string[0].getChoices();
-  for(int i=0;i<choices.size();i++)
+  for(int i = 0; i < choices.size(); i++)
     [popupSelectValue addButtonWithTitle:[Utils getStringFromCString:choices[i].c_str()]];
   [popupSelectValue addButtonWithTitle:@"Cancel"];
   [popupSelectValue setCancelButtonIndex:popupSelectValue.numberOfButtons - 1];
@@ -90,11 +90,12 @@
   std::vector<onelab::string> string;
   onelab::server::instance()->get(string, [name UTF8String]);
   if(string.size() < 1) return;
-  if(buttonIndex > string[0].getChoices().size() - 1) return; // cancel
-  std::string selected = string[0].getChoices()[buttonIndex];
-  string[0].setValue(selected);
-  onelab::server::instance()->set(string[0]);
-  [super editValue];
+  if(buttonIndex < string[0].getChoices().size()){
+    std::string selected = string[0].getChoices()[buttonIndex];
+    string[0].setValue(selected);
+    onelab::server::instance()->set(string[0]);
+    [super editValue];
+  }
 }
 
 -(void)refresh
