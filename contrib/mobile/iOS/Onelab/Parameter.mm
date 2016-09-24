@@ -45,8 +45,6 @@
   }
 }
 
--(bool) isReadOnly {return NO;}
-
 +(double)getHeight
 {
   return 60.0f;
@@ -58,7 +56,6 @@
 {
   self = [super init];
   if(self){
-    label.alpha = (string.getReadOnly())? 0.439216f : 1.0f;
     [label setText:[Utils getStringFromCString:string.getShortName().c_str()]];
     name = [Utils getStringFromCString:string.getName().c_str()];
     button = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -102,7 +99,10 @@
 {
   std::vector<onelab::string> string;
   onelab::server::instance()->get(string, [name UTF8String]);
+  if(string.size() < 1) return;
   [button setTitle:[Utils getStringFromCString:string[0].getValue().c_str()] forState:UIControlStateNormal];
+  [button setEnabled:(string[0].getReadOnly() ? FALSE : TRUE)];
+  [label setEnabled:(string[0].getReadOnly() ? FALSE : TRUE)];
 }
 
 -(void)setFrame:(CGRect)frame
@@ -113,14 +113,6 @@
 -(UIButton *)getUIView
 {
   return button;
-}
-
--(bool)isReadOnly
-{
-  std::vector<onelab::string> string;
-  onelab::server::instance()->get(string, [name UTF8String]);
-  if(string.size() < 1) return YES;
-  return string[0].getReadOnly();
 }
 
 +(double)getHeight
@@ -134,7 +126,6 @@
 {
   self = [super init];
   if(self) {
-    label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
     [label setText:[Utils getStringFromCString:number.getShortName().c_str()]];
     name = [Utils getStringFromCString:number.getName().c_str()];
     button = [UIButton buttonWithType:UIButtonTypeSystem];
@@ -194,8 +185,11 @@
 {
   std::vector<onelab::number> number;
   onelab::server::instance()->get(number, [name UTF8String]);
+  if(number.size() < 1) return;
   [button setTitle:[Utils getStringFromCString:number[0].getValueLabel(number[0].getValue()).c_str()]
           forState:UIControlStateNormal];
+  [button setEnabled:(number[0].getReadOnly() ? FALSE : TRUE)];
+  [label setEnabled:(number[0].getReadOnly() ? FALSE : TRUE)];
 }
 
 -(void)setFrame:(CGRect)frame
@@ -206,14 +200,6 @@
 -(UIButton *)getUIView
 {
   return button;
-}
-
--(bool)isReadOnly
-{
-  std::vector<onelab::number> number;
-  onelab::server::instance()->get(number, [name UTF8String]);
-  if(number.size() < 1) return YES;
-  return number[0].getReadOnly();
 }
 
 +(double)getHeight
@@ -227,7 +213,6 @@
 {
   self = [super init];
   if(self) {
-    label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
     [label setText:[Utils getStringFromCString:number.getShortName().c_str()]];
     name = [Utils getStringFromCString:number.getName().c_str()];
     checkbox = [[UISwitch alloc] init];
@@ -241,7 +226,10 @@
 {
   std::vector<onelab::number> number;
   onelab::server::instance()->get(number, [name UTF8String]);
+  if(number.size() < 1) return;
   [checkbox setSelected:(number[0].getValue() == 1)];
+  [checkbox setEnabled:(number[0].getReadOnly() ? FALSE : TRUE)];
+  [label setEnabled:(number[0].getReadOnly() ? FALSE : TRUE)];
 }
 
 -(void) valueChange:(UISwitch *)sender
@@ -264,14 +252,6 @@
   return checkbox;
 }
 
--(bool)isReadOnly
-{
-  std::vector<onelab::number> number;
-  onelab::server::instance()->get(number, [name UTF8String]);
-  if(number.size() < 1) return YES;
-  return number[0].getReadOnly();
-}
-
 +(double)getHeight
 {
   return 40.0f;
@@ -284,7 +264,6 @@
   self = [super init];
   if(self) {
     name = [Utils getStringFromCString:number.getName().c_str()];
-    label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
     stepper = [[UIStepper alloc] init];
     [stepper setValue:number.getValue()];
     [stepper setStepValue:1];
@@ -317,6 +296,8 @@
   [stepper setValue:number[0].getValue()];
   [label setText:[NSString stringWithFormat:@"%@ %d", [Utils getStringFromCString:number[0].getShortName().c_str()],
                            (int)number[0].getValue()]];
+  [stepper setEnabled:(number[0].getReadOnly() ? FALSE : TRUE)];
+  [label setEnabled:(number[0].getReadOnly() ? FALSE : TRUE)];
 }
 
 -(void)setFrame:(CGRect)frame
@@ -340,7 +321,6 @@
 {
   self = [super init];
   if(self) {
-    label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
     name = [Utils getStringFromCString:number.getName().c_str()];
     slider = [[UISlider alloc] init];
     [slider setMaximumValue:number.getMax()];
@@ -365,6 +345,8 @@
   [slider setValue:number[0].getValue()];
   [label setText:[NSString stringWithFormat:@"%@ %g", [Utils getStringFromCString:number[0].getShortName().c_str()],
                            number[0].getValue()]];
+  [slider setEnabled:(number[0].getReadOnly() ? FALSE : TRUE)];
+  [label setEnabled:(number[0].getReadOnly() ? FALSE : TRUE)];
 }
 
 -(void)sliderValueChanged:(UISlider *)sender
@@ -389,14 +371,6 @@
   return slider;
 }
 
--(bool)isReadOnly
-{
-  std::vector<onelab::number> number;
-  onelab::server::instance()->get(number, [name UTF8String]);
-  if(number.size() < 1) return YES;
-  return number[0].getReadOnly();
-}
-
 +(double)getHeight
 {
   return 65.0f;
@@ -408,7 +382,6 @@
 {
   self = [super init];
   if(self) {
-    label.alpha = (number.getReadOnly())? 0.439216f : 1.0f;
     [label setText:[Utils getStringFromCString:number.getShortName().c_str()]];
     name = [Utils getStringFromCString:number.getName().c_str()];
     textbox = [[UITextField alloc] init];
@@ -432,6 +405,8 @@
   onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() < 1) return;
   [textbox setText:[NSString stringWithFormat:@"%g", number[0].getValue()]];
+  [textbox setEnabled:(number[0].getReadOnly() ? FALSE : TRUE)];
+  [label setEnabled:(number[0].getReadOnly() ? FALSE : TRUE)];
   [textbox reloadInputViews];
 }
 
@@ -465,14 +440,6 @@
 -(UITextField *)getTextbox
 {
   return textbox;
-}
-
--(bool)isReadOnly
-{
-  std::vector<onelab::number> number;
-  onelab::server::instance()->get(number, [name UTF8String]);
-  if(number.size() < 1) return YES;
-  return number[0].getReadOnly();
 }
 
 +(double)getHeight

@@ -14,7 +14,6 @@
 -(void)setLabelFrame:(CGRect)frame;
 -(NSString *)getName;
 -(UILabel *)getLabel;
--(bool)isReadOnly;
 +(double)getHeight;
 -(void)refresh;
 @end

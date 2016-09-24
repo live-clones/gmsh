@@ -133,8 +133,7 @@
   }
   else if(p.getMin() >= p.getMax() ||
           p.getMin() == -onelab::number::maxNumber() ||
-          p.getMax() == onelab::number::maxNumber() ||
-          p.getReadOnly()) { // text box
+          p.getMax() == onelab::number::maxNumber()) { // text box
     ParameterNumberTextbox *param = [[ParameterNumberTextbox alloc] initWithNumber:p];
     [section addObject:param];
   }
@@ -378,7 +377,6 @@ NSString *GetSectionTitle(NSString *name)
     cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
   }
   [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
-  [cell setUserInteractionEnabled:!([tmp isReadOnly])];
   [tmp setLabelFrame:CGRectMake(20, 5, tableView.frame.size.width - 40, cell.frame.size.height/2)];
   [cell addSubview:[tmp getLabel]];
   if([tmp isKindOfClass:[ParameterStringList class]]) {
