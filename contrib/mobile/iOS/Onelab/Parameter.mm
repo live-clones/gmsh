@@ -61,6 +61,8 @@
     button = [UIButton buttonWithType:UIButtonTypeSystem];
     [button addTarget:self action:@selector(selectValue) forControlEvents:UIControlEventTouchDown];
     [button setTitle:[Utils getStringFromCString:string.getValue().c_str()] forState:UIControlStateNormal];
+    [button setEnabled:(string.getReadOnly() ? FALSE : TRUE)];
+    [label setEnabled:(string.getReadOnly() ? FALSE : TRUE)];
   }
   return self;
 }
@@ -132,6 +134,8 @@
     [button addTarget:self action:@selector(selectValue) forControlEvents:UIControlEventTouchDown];
     [button setTitle:[Utils getStringFromCString:number.getValueLabel(number.getValue()).c_str()]
             forState:UIControlStateNormal];
+    [button setEnabled:(number.getReadOnly() ? FALSE : TRUE)];
+    [label setEnabled:(number.getReadOnly() ? FALSE : TRUE)];
   }
   return self;
 }
@@ -218,6 +222,8 @@
     checkbox = [[UISwitch alloc] init];
     [checkbox setOn:(number.getValue() == 1)];
     [checkbox addTarget:self action:@selector(valueChange:) forControlEvents:UIControlEventValueChanged];
+    [checkbox setEnabled:(number.getReadOnly() ? FALSE : TRUE)];
+    [label setEnabled:(number.getReadOnly() ? FALSE : TRUE)];
   }
   return self;
 }
@@ -272,6 +278,8 @@
     [stepper addTarget:self action:@selector(stepperValueChanged:) forControlEvents:UIControlEventValueChanged];
     [label setText:[NSString stringWithFormat:@"%@ %d", [Utils getStringFromCString:number.getShortName().c_str()],
                              (int)number.getValue()]];
+    [stepper setEnabled:(number.getReadOnly() ? FALSE : TRUE)];
+    [label setEnabled:(number.getReadOnly() ? FALSE : TRUE)];
   }
   return self;
 }
@@ -331,6 +339,8 @@
     [slider addTarget:self action:@selector(sliderValueChanged:) forControlEvents:UIControlEventTouchUpInside];
     [label setText:[NSString stringWithFormat:@"%@ %g", [Utils getStringFromCString:number.getShortName().c_str()],
                              number.getValue()]];
+    [slider setEnabled:(number.getReadOnly() ? FALSE : TRUE)];
+    [label setEnabled:(number.getReadOnly() ? FALSE : TRUE)];
   }
   return self;
 }
@@ -395,6 +405,8 @@
                                    nil];
     [numberToolbar sizeToFit];
     textbox.inputAccessoryView = numberToolbar;
+    [textbox setEnabled:(number.getReadOnly() ? FALSE : TRUE)];
+    [label setEnabled:(number.getReadOnly() ? FALSE : TRUE)];
   }
   return self;
 }
