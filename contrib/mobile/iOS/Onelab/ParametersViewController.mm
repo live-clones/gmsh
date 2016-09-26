@@ -52,7 +52,7 @@
                                       target:self action:@selector(backButtonPressed:)];
   }
   self.navigationItem.rightBarButtonItem =
-    [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStyleBordered
+    [[UIBarButtonItem alloc] initWithTitle:@"Reset" style:UIBarButtonItemStylePlain
                                     target:self action:@selector(resetParameters:)];
 }
 

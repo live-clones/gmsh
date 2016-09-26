@@ -72,7 +72,7 @@ size_t write$UNIX2003(int fildes, const void *buf, size_t nbytes)
 
 int read$UNIX2003(int handle, void *buffer, int nbyte)
 {
-    return read(handle, buffer, nbyte);
+    return (int)read(handle, buffer, nbyte);
 }
 
 int close$UNIX2003(int handle)

@@ -243,7 +243,7 @@
 
 -(BOOL)textFieldShouldEndEditing:(UITextField *)textField
 {
-  NSInteger val = [textField.text integerValue];
+  int val = (int)[textField.text integerValue];
   val = (val > 0)? val : 1;
   val = (val < 1000)? val : 1000;
   [textField setText:[NSString stringWithFormat:@"%d",val]];
