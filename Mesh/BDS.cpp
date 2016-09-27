@@ -1200,7 +1200,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
 
   for(int i = 0; i < kk; ++i) {
     BDS_Edge *e = find_edge(ept[0][i], ept[1][i]);
-    if(e)
+    if(e && !e->g)
       e->g = egs[i];
   }
 
