@@ -76,14 +76,14 @@ public class ModelList extends Activity {
                     CharSequence[] actions;
                     if(m.getUrl() != null) {
                         actions = new CharSequence[3];
-                        actions[0] = "Open model";
-                        actions[1] = "Remove model";
-                        actions[2] = "View model website";
+                        actions[0] = "Open";
+                        actions[1] = "Remove";
+                        actions[2] = "Visit model website";
                     }
                     else {
                         actions = new CharSequence[2];
-                        actions[0] = "Open model";
-                        actions[1] = "Remove model";
+                        actions[0] = "Open";
+                        actions[1] = "Remove";
                     }
                     AlertDialog.Builder builder = new AlertDialog.Builder(parent.getContext());
                     builder.setTitle(m.getName());
