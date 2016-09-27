@@ -71,7 +71,8 @@ static int Stopping_Rule(double x0, double x1, double tol)
 
 double Maximize_Quality_Golden_Section( MVertex *ver, 
                                         double xTarget, double yTarget, double zTarget,
-                                        const std::vector<MElement*> &lt , double tol, double &q)
+                                        const std::vector<MElement*> &lt ,
+					double tol, double &q)
 {
   
   static const double lambda = 0.5 * (sqrt5 - 1.0);

@@ -596,7 +596,6 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
       return;
     }
     TransferTetgenMesh(gr, in, out, numberedV);
-    sqr.relocateVertices(gr,3);
   }
 
 
@@ -610,6 +609,8 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
 
   // restore the initial set of faces
   gr->set(faces);
+  insertVerticesInRegion(gr,0,true);
+  sqr.relocateVertices(gr,3);
 
   
   // now do insertion of points
@@ -624,7 +625,7 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
     int nbvertices_filler = (old_algo_hexa()) ?
       Filler::get_nbr_new_vertices() : Filler3D::get_nbr_new_vertices();
     if(!nbvertices_filler && !LpSmoother::get_nbr_interior_vertices()){
-      insertVerticesInRegion(gr,2000000000,true);
+      insertVerticesInRegion(gr,2000000000,false);
     }
   }
   // crete an initial mesh 
