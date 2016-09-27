@@ -129,9 +129,9 @@
   if(indexPath == nil) return;
   UIActionSheet *actionSheet;
   if([[models objectAtIndex:indexPath.row] getUrl])
-    actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open model", @"Remove model", @"View model website", nil];
+    actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open", @"Remove", @"Clear results", @"Email model files", @"Visit model website", nil];
   else
-    actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open model", @"Remove model", nil];
+    actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open", @"Remove", @"Clear results", @"Email model files", nil];
   actionSheet.tag = indexPath.row;
   [actionSheet showInView:self.view];
 }
@@ -139,8 +139,35 @@
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
   switch (buttonIndex) {
-  case 2:
+  case 4:
     [[UIApplication sharedApplication] openURL:[[models objectAtIndex:actionSheet.tag] getUrl]];
+    break;
+  case 3:
+		{
+			NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
+			NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
+			NSArray *modelFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:modelPath error:NULL];
+			// TODO: would probably be better to email a zip archive? (this ignores subdirectories)
+			[self attachFilesToEmail:modelFiles filePath:modelPath];
+		}
+		break;
+  case 2:
+    {
+      NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
+      NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
+      NSArray *modelFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:modelPath error:NULL];
+      for (NSString *obj in modelFiles){
+        NSString *extension = [obj pathExtension];
+        if([extension isEqualToString:@"msh"] ||
+           [extension isEqualToString:@"pre"] ||
+           [extension isEqualToString:@"res"] ||
+           [extension isEqualToString:@"pos"]){
+          NSString *file = [[modelPath stringByAppendingString:@"/"] stringByAppendingString:obj];
+          NSLog(@"Removing file %@", file);
+          [[NSFileManager defaultManager] removeItemAtPath:file error:nil];
+        }
+			}
+    }
     break;
   case 1:
     {
@@ -155,6 +182,66 @@
     break;
   }
 }
+
+- (void)attachFilesToEmail:(NSArray*)files filePath:(NSString*)path
+{
+	if([MFMailComposeViewController canSendMail] == NO) return;
+	
+	MFMailComposeViewController *mc = [[MFMailComposeViewController alloc] init];
+	mc.mailComposeDelegate = self;
+	[mc setSubject:@"My ONELAB model"];
+	
+	// Add attachments
+	for (NSString *file in files){
+		NSString *extension = [file pathExtension];
+		NSString *filePath = [[path stringByAppendingString:@"/"] stringByAppendingString:file];
+		NSData *fileData = [NSData dataWithContentsOfFile:filePath];
+		if(fileData){
+			NSString *mimeType;
+			if ([extension isEqualToString:@"jpg"]) {
+				mimeType = @"image/jpeg";
+			}
+			else if([extension isEqualToString:@"png"]) {
+				mimeType = @"image/png";
+			}
+			else if([extension isEqualToString:@"doc"]) {
+				mimeType = @"application/msword";
+			}
+			else if([extension isEqualToString:@"ppt"]) {
+				mimeType = @"application/vnd.ms-powerpoint";
+			}
+			else if([extension isEqualToString:@"html"]) {
+				mimeType = @"text/html";
+			}
+			else if([extension isEqualToString:@"pdf"]) {
+				mimeType = @"application/pdf";
+			}
+			else{
+				mimeType = @"text/plain";
+			}
+
+			[mc addAttachmentData:fileData mimeType:@"" fileName:file];
+		}
+	}
+	
+	// Present mail view controller on screen
+	[self presentViewController:mc animated:YES completion:NULL];
+	
+}
+
+- (void) mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
+{
+	switch (result){
+	case MFMailComposeResultCancelled: NSLog(@"Mail cancelled"); break;
+	case MFMailComposeResultSaved: NSLog(@"Mail saved"); break;
+	case MFMailComposeResultSent: NSLog(@"Mail sent"); break;
+	case MFMailComposeResultFailed: NSLog(@"Mail sent failure: %@", [error localizedDescription]); break;
+  default: break;
+	}
+	// Close the Mail Interface
+	[self dismissViewControllerAnimated:YES completion:NULL];
+}
+
 
 - (BOOL) parseInfosFile:(NSString *)file
 {

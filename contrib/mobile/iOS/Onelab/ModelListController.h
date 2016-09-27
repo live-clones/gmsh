@@ -1,8 +1,8 @@
 #import <UIKit/UIKit.h>
-
+#import <MessageUI/MessageUI.h>
 #import "EAGLView.h"
 
-@interface ModelListController : UITableViewController <NSXMLParserDelegate, UIActionSheetDelegate>
+@interface ModelListController : UITableViewController <NSXMLParserDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate>
 {
     @private
     NSMutableArray *models;
