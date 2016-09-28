@@ -45,6 +45,13 @@
                                            GETDP_CONFIG_OPTIONS]
                          baseURL:[[NSBundle mainBundle] bundleURL]];
 
+ /* This is how we could load a file, edit it and get the modified text back:
+  NSData *fileData = [NSData dataWithContentsOfFile:@"my/path/to/magnet.pro"];
+  NSString* aStr = [[NSString alloc] initWithData:fileData encoding:NSUTF8StringEncoding];
+  [self.aboutView loadHTMLString:[NSString stringWithFormat:@"<html><body><pre contenteditable=\"true\">%@</pre></body></html>", aStr] baseURL:[[NSBundle mainBundle] bundleURL]];
+  NSString *text = [self.aboutView stringByEvaluatingJavaScriptFromString:
+                    @"document.body.innerText"];
+   */
 }
 
 - (void)didReceiveMemoryWarning
