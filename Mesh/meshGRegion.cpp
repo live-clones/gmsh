@@ -67,9 +67,9 @@ class splitQuadRecovery {
 
     double minQual     = 1;
     double minQualOpti = 1;
-    
+
     std::list<GFace*> faces = region->faces();
-    
+
     for (int iter=0; iter < niter+2;iter++){
       for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it){
 	for (std::multimap<GEntity*, std::pair<MVertex*,MFace> >::iterator it2 =
@@ -79,7 +79,7 @@ class splitQuadRecovery {
 	  MPyramid p (f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3), v);
 	  minQual = std::min(minQual, fabs(p.minSICNShapeMeasure()));
 	  std::vector<MElement*> e = adj[v];
-	  e.push_back(&p);	
+	  e.push_back(&p);
 	  v->setEntity (region);
 	  double relax = std::min((double)(iter+1)/niter, 1.0);
 	  //	  printf("%g (%d) --> ",e.size(),p.minSICNShapeMeasure());
@@ -88,7 +88,7 @@ class splitQuadRecovery {
 	  //	  printf("%g \n",p.minSICNShapeMeasure());
 	  v->setEntity (*it);
 	}
-      }	
+      }
     }
     printf("relocation improves %g --> %g\n", minQual, minQualOpti);
   }
@@ -609,10 +609,11 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
 
   // restore the initial set of faces
   gr->set(faces);
-  insertVerticesInRegion(gr,0,true);
-  sqr.relocateVertices(gr,3);
 
-  
+  // FIXME: this screws up refinement of standard meshes
+  //insertVerticesInRegion(gr,0,true);
+  //sqr.relocateVertices(gr,3);
+
   // now do insertion of points
   if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)
     bowyerWatsonFrontalLayers(gr, false);
@@ -625,15 +626,13 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
     int nbvertices_filler = (old_algo_hexa()) ?
       Filler::get_nbr_new_vertices() : Filler3D::get_nbr_new_vertices();
     if(!nbvertices_filler && !LpSmoother::get_nbr_interior_vertices()){
-      insertVerticesInRegion(gr,2000000000,false);
+      insertVerticesInRegion(gr,2000000000,true);
     }
   }
-  // crete an initial mesh 
-  printf("coucou1\n");
+  // crete an initial mesh
   if (sqr.buildPyramids (gr->model())){
-    RelocateVertices (regions, 3);
+    RelocateVertices(regions, 3);
   }
-  printf("coucou2\n");
 }
 
 #else
