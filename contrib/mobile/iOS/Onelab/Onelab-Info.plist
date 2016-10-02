@@ -54,6 +54,7 @@
     <array>
       <string>opengles-1</string>
     </array>
+    <key>ITSAppUsesNonExemptEncryption</key><false/>
     <key>UISupportedInterfaceOrientations</key>
     <array>
       <string>UIInterfaceOrientationPortrait</string>

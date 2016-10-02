@@ -39,6 +39,7 @@
   if(self.fileToEdit){
     NSData *fileData = [NSData dataWithContentsOfFile:self.fileToEdit];
     NSString* aStr = [[NSString alloc] initWithData:fileData encoding:NSUTF8StringEncoding];
+    if(!aStr) aStr = [[NSString alloc] initWithData:fileData encoding:NSASCIIStringEncoding];
     [self.aboutView loadHTMLString:[NSString stringWithFormat:@"<html><body><pre contenteditable=\"true\">%@</pre></body></html>", aStr] baseURL:[[NSBundle mainBundle] bundleURL]];
     UIBarButtonItem *save = [[UIBarButtonItem alloc] initWithTitle:@"Save" style:UIBarButtonItemStylePlain target:self action:@selector(saveFile)];
     [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects: save, nil]];
