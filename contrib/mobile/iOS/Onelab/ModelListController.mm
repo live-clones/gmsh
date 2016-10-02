@@ -1,5 +1,6 @@
 #import "AppDelegate.h"
 #import "ModelListController.h"
+#import "AboutViewController.h"
 
 #import "Utils.h"
 #import "Model.h"
@@ -37,6 +38,7 @@
 
 -(void)showAbout
 {
+	currentFileToEdit = nil;
   [self performSegueWithIdentifier:@"showAboutSegue" sender:self];
 }
 
@@ -115,10 +117,9 @@
                     animations:^{ appDelegate.window.rootViewController = appDelegate.splitViewController; }
     completion:nil];
   }
-  else
-    {
-      [self performSegueWithIdentifier:@"showModelSegue" sender:self];
-    }
+  else{
+		[self performSegueWithIdentifier:@"showModelSegue" sender:self];
+	}
 }
 
 -(void)handleLongPress:(UILongPressGestureRecognizer *)sender
@@ -127,60 +128,92 @@
   if(sender.state == UIGestureRecognizerStateCancelled) return;
   NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:p];
   if(indexPath == nil) return;
-  UIActionSheet *actionSheet;
-  if([[models objectAtIndex:indexPath.row] getUrl])
-    actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open", @"Remove", @"Clear results", @"Email model files", @"Visit model website", nil];
+	if([[models objectAtIndex:indexPath.row] getUrl])
+    self.longPressActionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open", @"Remove", @"Clear results", @"Edit model files", @"Email model files", @"Visit model website", nil];
   else
-    actionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open", @"Remove", @"Clear results", @"Email model files", nil];
-  actionSheet.tag = indexPath.row;
-  [actionSheet showInView:self.view];
+		self.longPressActionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open", @"Remove", @"Clear results", @"Edit model files", @"Email model files", nil];
+  self.longPressActionSheet.tag = indexPath.row;
+  [self.longPressActionSheet showInView:self.view];
 }
 
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-  switch (buttonIndex) {
-  case 4:
-    [[UIApplication sharedApplication] openURL:[[models objectAtIndex:actionSheet.tag] getUrl]];
-    break;
-  case 3:
-		{
-			NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
-			NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
-			NSArray *modelFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:modelPath error:NULL];
-			// TODO: would probably be better to email a zip archive? (this ignores subdirectories)
-			[self attachFilesToEmail:modelFiles filePath:modelPath];
-		}
-		break;
-  case 2:
-    {
-      NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
-      NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
-      NSArray *modelFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:modelPath error:NULL];
-      for (NSString *obj in modelFiles){
-        NSString *extension = [obj pathExtension];
-        if([extension isEqualToString:@"msh"] ||
-           [extension isEqualToString:@"pre"] ||
-           [extension isEqualToString:@"res"] ||
-           [extension isEqualToString:@"pos"]){
-          NSString *file = [[modelPath stringByAppendingString:@"/"] stringByAppendingString:obj];
-          NSLog(@"Removing file %@", file);
-          [[NSFileManager defaultManager] removeItemAtPath:file error:nil];
-        }
+	if(actionSheet == self.longPressActionSheet){
+    switch (buttonIndex) {
+		case 5:
+      [[UIApplication sharedApplication] openURL:[[models objectAtIndex:actionSheet.tag] getUrl]];
+      break;
+		case 4:
+			{
+				NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
+				NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
+				NSArray *modelFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:modelPath error:NULL];
+				// TODO: would probably be better to email a zip archive? (this ignores subdirectories)
+				[self attachFilesToEmail:modelFiles filePath:modelPath];
 			}
+			break;
+		case 3:
+			{
+				NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
+				NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
+				NSArray *modelFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:modelPath error:NULL];
+				self.editFilesActionSheet = [[UIActionSheet alloc] initWithTitle:@"Model files" delegate:self
+																											 cancelButtonTitle: nil
+																									destructiveButtonTitle: nil
+																											 otherButtonTitles: nil];
+				for(NSString *file in modelFiles)  {
+					NSString *extension = [file pathExtension];
+					if([extension isEqualToString:@"txt"] ||
+						 [extension isEqualToString:@"geo"] ||
+						 [extension isEqualToString:@"pro"] ||
+						 [extension isEqualToString:@"dat"]){
+						[self.editFilesActionSheet addButtonWithTitle:file];
+					}
+				}
+				[self.editFilesActionSheet addButtonWithTitle:@"Cancel"];
+				self.editFilesActionSheet.cancelButtonIndex = [modelFiles count];
+				self.editFilesActionSheet.tag = actionSheet.tag;
+				[self.editFilesActionSheet showInView:self.view];
+			}
+		  break;
+    case 2:
+      {
+				NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
+				NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
+				NSArray *modelFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:modelPath error:NULL];
+				for (NSString *obj in modelFiles){
+					NSString *extension = [obj pathExtension];
+					if([extension isEqualToString:@"msh"] ||
+						 [extension isEqualToString:@"pre"] ||
+						 [extension isEqualToString:@"res"] ||
+						 [extension isEqualToString:@"pos"]){
+						NSString *file = [[modelPath stringByAppendingString:@"/"] stringByAppendingString:obj];
+						NSLog(@"Removing file %@", file);
+						[[NSFileManager defaultManager] removeItemAtPath:file error:nil];
+					}
+				}
+			}
+      break;
+    case 1:
+			{
+				NSString *file = [[models objectAtIndex:actionSheet.tag] getFile];
+				NSString *path = [file stringByDeletingLastPathComponent];
+				[[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+				[self refreshList];
+			}
+      break;
+		case 0:
+			[self tableView:self.tableView didSelectRowAtIndexPath:[NSIndexPath indexPathForRow:actionSheet.tag inSection:0]];
+      break;
     }
-    break;
-  case 1:
-    {
-      NSString *file = [[models objectAtIndex:actionSheet.tag] getFile];
-      NSString *path = [file stringByDeletingLastPathComponent];
-      [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
-      [self refreshList];
-    }
-    break;
-  case 0:
-    [self tableView:self.tableView didSelectRowAtIndexPath:[NSIndexPath indexPathForRow:actionSheet.tag inSection:0]];
-    break;
-  }
+	}
+	else{
+		NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
+		NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
+		currentFileToEdit = [[modelPath stringByAppendingString:@"/"]
+												 stringByAppendingString:[actionSheet buttonTitleAtIndex:buttonIndex]];
+		[self performSegueWithIdentifier:@"showAboutSegue" sender:self];
+	}
 }
 
 - (void)attachFilesToEmail:(NSArray*)files filePath:(NSString*)path
@@ -314,5 +347,9 @@
     ModelViewController *modelViewController = [segue destinationViewController];
     modelViewController.initialModel = selectedModel;
   }
+	else if ([[segue identifier] isEqualToString:@"showAboutSegue"]) {
+		AboutViewController *aboutViewController = [segue destinationViewController];
+		aboutViewController.fileToEdit = currentFileToEdit;
+	}
 }
 @end
