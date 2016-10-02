@@ -9,10 +9,13 @@
 -(void)viewDidLoad
 {
   UIRefreshControl *refreshControl = [[UIRefreshControl alloc] init];
-  [refreshControl addTarget:self action:@selector(refreshList) forControlEvents:UIControlEventValueChanged];
+  [refreshControl addTarget:self action:@selector(refreshList)
+           forControlEvents:UIControlEventValueChanged];
   self.refreshControl = refreshControl;
 
-  UILongPressGestureRecognizer *lpgr = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
+  UILongPressGestureRecognizer *lpgr =
+    [[UILongPressGestureRecognizer alloc] initWithTarget:self
+                                                  action:@selector(handleLongPress:)];
   lpgr.minimumPressDuration = 1.0;
   [self.tableView addGestureRecognizer:lpgr];
 
@@ -32,7 +35,11 @@
   }
   [models sortUsingSelector:@selector(compare:)];
 
-  UIBarButtonItem *about = [[UIBarButtonItem alloc] initWithTitle:@"About" style:UIBarButtonItemStylePlain target:self action:@selector(showAbout)];
+  UIBarButtonItem *about =
+    [[UIBarButtonItem alloc] initWithTitle:@"About"
+                                     style:UIBarButtonItemStylePlain
+                                    target:self
+                                    action:@selector(showAbout)];
   [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects: about, nil]];
 }
 
@@ -86,7 +93,8 @@
   Model *m = [models objectAtIndex:indexPath.row];
   cell = [tableView dequeueReusableCellWithIdentifier:[m getName]];
   if(cell != nil) return cell;
-  cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:[m getName]];
+  cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle
+                                reuseIdentifier:[m getName]];
   [cell.textLabel setText:[m getName]];
   if([m getSummary] != nil) [cell.detailTextLabel setText:[m getSummary]];
   if([m getPreview] != nil) cell.imageView.image = [m getPreview];
@@ -114,7 +122,9 @@
     [UIView transitionWithView:appDelegate.window
                       duration:0.5
                        options:UIViewAnimationOptionTransitionFlipFromLeft
-                    animations:^{ appDelegate.window.rootViewController = appDelegate.splitViewController; }
+                    animations:^{
+        appDelegate.window.rootViewController = appDelegate.splitViewController;
+      }
     completion:nil];
   }
   else{
@@ -129,14 +139,28 @@
   NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:p];
   if(indexPath == nil) return;
   if([[models objectAtIndex:indexPath.row] getUrl])
-    self.longPressActionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open", @"Remove", @"Clear results", @"Edit model files", @"Email model files", @"Visit model website", nil];
+    self.longPressActionSheet =
+      [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName]
+                                  delegate:self
+                         cancelButtonTitle:@"Cancel"
+                    destructiveButtonTitle:nil
+                         otherButtonTitles: @"Open", @"Remove", @"Clear results",
+                             @"Edit model files", @"Email model files",
+                             @"Visit model website", nil];
   else
-    self.longPressActionSheet = [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName] delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles: @"Open", @"Remove", @"Clear results", @"Edit model files", @"Email model files", nil];
+    self.longPressActionSheet =
+      [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName]
+                                  delegate:self
+                         cancelButtonTitle:@"Cancel"
+                    destructiveButtonTitle:nil
+                         otherButtonTitles: @"Open", @"Remove", @"Clear results",
+                             @"Edit model files", @"Email model files",
+                             nil];
   self.longPressActionSheet.tag = indexPath.row;
   [self.longPressActionSheet showInView:self.view];
 }
 
--(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+-(void)actionSheet:(UIActionSheet *)actionSheet didDismissWithButtonIndex:(NSInteger)buttonIndex
 {
   if(actionSheet == self.longPressActionSheet){
     switch (buttonIndex) {
@@ -147,7 +171,8 @@
       {
         NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
         NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
-        NSArray *modelFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:modelPath error:NULL];
+        NSArray *modelFiles = [[NSFileManager defaultManager]
+                                contentsOfDirectoryAtPath:modelPath error:NULL];
         // TODO: would probably be better to email a zip archive? (this ignores subdirectories)
         [self attachFilesToEmail:modelFiles filePath:modelPath];
       }
@@ -156,8 +181,10 @@
       {
         NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
         NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
-        NSArray *modelFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:modelPath error:NULL];
-        self.editFilesActionSheet = [[UIActionSheet alloc] initWithTitle:@"Model files" delegate:self
+        NSArray *modelFiles = [[NSFileManager defaultManager]
+                                contentsOfDirectoryAtPath:modelPath error:NULL];
+        self.editFilesActionSheet = [[UIActionSheet alloc] initWithTitle:@"Model files"
+                                                                delegate:self
                                                        cancelButtonTitle: nil
                                                   destructiveButtonTitle: nil
                                                        otherButtonTitles: nil];
@@ -170,16 +197,18 @@
             [self.editFilesActionSheet addButtonWithTitle:file];
           }
         }
-        self.editFilesActionSheet.cancelButtonIndex = [self.editFilesActionSheet addButtonWithTitle:@"Cancel"];
-				self.editFilesActionSheet.tag = actionSheet.tag;
+        self.editFilesActionSheet.cancelButtonIndex =
+          [self.editFilesActionSheet addButtonWithTitle:@"Cancel"];
+        self.editFilesActionSheet.tag = self.longPressActionSheet.tag;
         [self.editFilesActionSheet showInView:self.view];
-      }
+			}
       break;
     case 2:
       {
         NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
         NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
-        NSArray *modelFiles = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:modelPath error:NULL];
+        NSArray *modelFiles = [[NSFileManager defaultManager]
+                                contentsOfDirectoryAtPath:modelPath error:NULL];
         for (NSString *obj in modelFiles){
           NSString *extension = [obj pathExtension];
           if([extension isEqualToString:@"msh"] ||
@@ -202,7 +231,8 @@
       }
       break;
     case 0:
-      [self tableView:self.tableView didSelectRowAtIndexPath:[NSIndexPath indexPathForRow:actionSheet.tag inSection:0]];
+      [self tableView:self.tableView
+            didSelectRowAtIndexPath:[NSIndexPath indexPathForRow:actionSheet.tag inSection:0]];
       break;
     }
   }
@@ -263,13 +293,15 @@
 
 }
 
-- (void) mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
+- (void) mailComposeController:(MFMailComposeViewController *)controller
+           didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
 {
   switch (result){
   case MFMailComposeResultCancelled: NSLog(@"Mail cancelled"); break;
   case MFMailComposeResultSaved: NSLog(@"Mail saved"); break;
   case MFMailComposeResultSent: NSLog(@"Mail sent"); break;
-  case MFMailComposeResultFailed: NSLog(@"Mail sent failure: %@", [error localizedDescription]); break;
+  case MFMailComposeResultFailed: NSLog(@"Mail sent failure: %@",
+                                        [error localizedDescription]); break;
   default: break;
   }
   // Close the Mail Interface
@@ -290,7 +322,9 @@
   return [parser parse];
 }
 
--(void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName attributes:(NSDictionary *)attributeDict
+-(void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName
+ namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName
+   attributes:(NSDictionary *)attributeDict
 {
   currentElement = elementName;
   //[currentElementValue release];
@@ -305,7 +339,8 @@
     [currentElementValue appendString:string];
 }
 
--(void)parser:(NSXMLParser *)parser didEndElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName
+-(void)parser:(NSXMLParser *)parser didEndElement:(NSString *)elementName
+ namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName
 {
   if([elementName isEqual:@"title"]) {
     for(Model *mp in models) {
