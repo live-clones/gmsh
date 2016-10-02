@@ -10,7 +10,7 @@
     NSMutableString *currentElementValue;
     NSString *currentDir;
     NSString *selectedModel;
-	  NSString *currentFileToEdit;
+    NSString *currentFileToEdit;
 }
 @property (nonatomic, retain) EAGLView *glView;
 @property (nonatomic, retain) UIActionSheet *longPressActionSheet;

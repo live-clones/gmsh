@@ -187,7 +187,7 @@
   [_progressIndicator stopAnimating];
   [_progressIndicator setHidden:YES];
   if(_errors.count > 0) {
-    _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Gmsh/GetDP error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles:@"Show more", nil];
+    _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles:@"Show more", nil];
     [_errorAlert show];
   }
 }
@@ -328,9 +328,9 @@
   }
   else [_errors removeLastObject];
   if(_errors.count > 1)
-    _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Gmsh/GetDP error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles:@"Show more", nil];
+    _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles:@"Show more", nil];
   else
-    _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Gmsh/GetDP error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles: nil];
+    _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles: nil];
   [_errorAlert show];
 }
 
