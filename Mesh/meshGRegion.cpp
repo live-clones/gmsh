@@ -90,7 +90,7 @@ class splitQuadRecovery {
 	}
       }
     }
-    printf("relocation improves %g --> %g\n", minQual, minQualOpti);
+    //printf("relocation improves %g --> %g\n", minQual, minQualOpti);
   }
   int buildPyramids(GModel *gm)
   {
@@ -276,7 +276,7 @@ void buildTetgenStructure(GRegion *gr, tetgenio &in, std::vector<MVertex*> &numb
   in.pointlist = new REAL[in.numberofpoints * 3];
   in.pointmarkerlist = NULL;
 
-  printf("nbvertices_filler =%d\n",nbvertices_filler);
+  //printf("nbvertices_filler =%d\n",nbvertices_filler);
 
   std::set<MVertex*>::iterator itv = allBoundingVertices.begin();
   int I = 1;
@@ -501,13 +501,13 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 
 bool CreateAnEmptyVolumeMesh(GRegion *gr)
 {
-  printf("creating an empty volume mesh\n");
+  //printf("creating an empty volume mesh\n");
   splitQuadRecovery sqr;
   tetgenio in, out;
   std::vector<MVertex*> numberedV;
   char opts[128];
   buildTetgenStructure(gr, in, numberedV, sqr);
-  printf("tetgen structure created\n");
+  //printf("tetgen structure created\n");
   sprintf(opts, "-Ype%sT%g",
           (Msg::GetVerbosity() < 3) ? "Q" : (Msg::GetVerbosity() > 6) ? "V" : "",
           CTX::instance()->mesh.toleranceInitialDelaunay);
@@ -518,7 +518,7 @@ bool CreateAnEmptyVolumeMesh(GRegion *gr)
     Msg::Error("Self intersecting surface mesh");
     return false;
   }
-  printf("creating an empty volume mesh done\n");
+  //printf("creating an empty volume mesh done\n");
   TransferTetgenMesh(gr, in, out, numberedV);
   return true;
 }
@@ -922,7 +922,7 @@ int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
     return 0;
   }
   else{
-    printf("non robust stuff\n");
+    //printf("non robust stuff\n");
     // the intersection is not robust, try another triangle
     return -10000;
   }
