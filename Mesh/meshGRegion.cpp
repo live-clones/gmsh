@@ -452,7 +452,6 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
 
       for(int j = 0; j < 3; j++){
         if (out.trifacelist[i * 3 + j] - 1 >= initialSize){
-          printf("aaaaaaaaaaaaaaargh\n");
           //        if(v[j]->onWhat()->dim() == 3){
           v[j]->onWhat()->mesh_vertices.erase
             (std::find(v[j]->onWhat()->mesh_vertices.begin(),
