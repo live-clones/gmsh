@@ -1789,7 +1789,7 @@ set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "~$"
     "/bin/" "/lib/" "/nightly/" "GPATH" "GRTAGS" "GSYMS" "GTAGS" "/HTML/"
     "/projects/"
     "/FunctionSpace/" "/Mesh/meshRecombine*" "/utils/solvers/legacy/"
-    "/contrib/3M/")
+    "/contrib/3M/" "/contrib/Parasolid/")
 
 if(UNIX)
   # make sure we remove previous installs before doing the next one (on Mac for
