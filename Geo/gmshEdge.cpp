@@ -126,8 +126,8 @@ int gmshEdge::minimumMeshSegments () const
     }
   }
   else if(geomType() == Circle || geomType() == Ellipse)
-    np = (int)(fabs(c->Circle.t1 - c->Circle.t2) *
-               (double)CTX::instance()->mesh.minCircPoints / (2 * M_PI)) - 1;
+    np = (int)(0.99 + fabs(c->Circle.t1 - c->Circle.t2) *
+               ((double)CTX::instance()->mesh.minCircPoints - 1.0) / (2 * M_PI));
   else
     np = CTX::instance()->mesh.minCurvPoints - 1;
   return std::max(np, meshAttributes.minimumMeshSegments);

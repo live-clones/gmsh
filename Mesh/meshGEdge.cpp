@@ -379,7 +379,7 @@ static int increaseN (int N)
 
 // ensure not to have points that are too close to each other.
 // can be caused by a coarse 1D mesh or by a noisy curve
-static void filterPoints (GEdge*ge) {
+static void filterPoints (GEdge*ge, int nMinimumPoints) {
   if (ge->mesh_vertices.empty())return;
   if(ge->meshAttributes.method == MESH_TRANSFINITE)return;
   //if (ge->mesh_vertices.size() <=3)return;
@@ -429,10 +429,13 @@ static void filterPoints (GEdge*ge) {
 	}
   */
 
-  for (int i=0;i<last;i++){
-    std::vector<MVertex*>::iterator it = std::find(ge->mesh_vertices.begin(),ge->mesh_vertices.end(),lengths[i].second);
-    ge->mesh_vertices.erase(it);
-    delete lengths[i].second;
+  bool filteringObservesMinimumN = ((ge->mesh_vertices.size() - last) >= nMinimumPoints);
+  if (filteringObservesMinimumN){
+    for (int i=0;i<last;i++){
+      std::vector<MVertex*>::iterator it = std::find(ge->mesh_vertices.begin(),ge->mesh_vertices.end(),lengths[i].second);
+      ge->mesh_vertices.erase(it);
+      delete lengths[i].second;
+    }
   }
 }
 
@@ -499,6 +502,7 @@ void meshGEdge::operator() (GEdge *ge)
   // Integrate detJ/lc du
   double a;
   int N;
+  int filterMinimumN = 1;
   if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.){
     Msg::Warning("Curve %d has a zero length", ge->tag());
     a = 0.;
@@ -532,7 +536,8 @@ void meshGEdge::operator() (GEdge *ge)
       pt.xp = der.norm();
     }
     //    a = smoothPrimitive(ge, sqrt(CTX::instance()->mesh.smoothRatio), Points);
-    N = std::max(ge->minimumMeshSegments() + 1, (int)(a + 1.99));
+    filterMinimumN = ge->minimumMeshSegments() + 1;
+    N = std::max(filterMinimumN, (int)(a + 1.99));
   }
 
   // force odd number of points if blossom is used for recombination
@@ -610,7 +615,7 @@ void meshGEdge::operator() (GEdge *ge)
   }
 
   //  printf("%ld ----> ", ge->mesh_vertices.size());
-  filterPoints (ge);
+  filterPoints (ge, filterMinimumN - 2);
   //  printf("%ld \n", ge->mesh_vertices.size());
 
   for(unsigned int i = 0; i < mesh_vertices.size() + 1; i++){
