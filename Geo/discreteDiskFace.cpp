@@ -223,7 +223,7 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
   initialTriangulation = diskTriangulation;
   std::vector<MElement*> mesh = diskTriangulation->tri;
   _order = p;
-  _N = (p+1)*(p+2)/2;
+  _n = (p+1)*(p+2)/2;
   discrete_triangles.resize(mesh.size());
   std::map<MVertex*,MVertex*> v2v;// mesh vertex |-> face vertex
   std::map<MEdge,MVertex*,Less_Edge> ed2nodes; // edge to interior node(s)
@@ -326,8 +326,8 @@ void discreteDiskFace::buildOct(std::vector<GFace*> *CAD) const
     //    if(geoTriangulation->fillingHoles.find(i)==geoTriangulation->fillingHoles.end()){
     MElement *t = discrete_triangles[i];
     discreteDiskFaceTriangle* my_ddft = &_ddft[c++];
-    my_ddft->p.resize(_N);
-    for(int io=0; io<_N; io++)
+    my_ddft->p.resize(_n);
+    for(int io=0; io<_n; io++)
       my_ddft->p[io] = coordinates[t->getVertex(io)];
 
     my_ddft->gf = CAD ? (*CAD)[i] : _parent;
@@ -563,14 +563,14 @@ bool discreteDiskFace::checkOrientationUV()
 #if defined(HAVE_MESH)
     double min, max;
     std::vector<MVertex*> localVertices;
-    localVertices.resize(_N);
+    localVertices.resize(_n);
     for(unsigned int i=0; i<discrete_triangles.size()-geoTriangulation->fillingHoles.size(); i++){
       ct = &_ddft[i];
-      for(int j=0; j<_N; j++)
+      for(int j=0; j<_n; j++)
 	localVertices[j] = new MVertex(ct->p[j].x(),ct->p[j].y(),0.);
       MTriangle6 mt6(localVertices);
       jacobianBasedQuality::minMaxJacobianDeterminant(&mt6,min,max);
-      for(int j=0; j<_N; j++)
+      for(int j=0; j<_n; j++)
 	delete localVertices[j];
       if (min < 0){
 	return false;
@@ -706,10 +706,10 @@ GPoint discreteDiskFace::point(const double par1, const double par2) const
     return gp;
   }
 
-  std::vector<double> eval(_N);
+  std::vector<double> eval(_n);
   functionShapes(_order,Xi,&eval[0]);
   double X=0,Y=0,Z=0;
-  for(int io=0; io<_N; io++){
+  for(int io=0; io<_n; io++){
     X += dt->tri->getVertex(io)->x()*eval[io];
     Y += dt->tri->getVertex(io)->y()*eval[io];
     Z += dt->tri->getVertex(io)->z()*eval[io];
@@ -791,7 +791,7 @@ Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
 
   double dudxi[2][2] = {{0.,0.},{0.,0.}};
 
-  for (int io=0; io<_N; io++){
+  for (int io=0; io<_n; io++){
 
     double X = tri->getVertex(io)->x();
     double Y = tri->getVertex(io)->y();
@@ -910,7 +910,7 @@ void discreteDiskFace::putOnView(bool Xu, bool Ux)
 	  fprintf(UVz,"ST%d(",_order);
 	}
       }
-      for (int j=0; j<_N-1; j++){
+      for (int j=0; j<_n-1; j++){
 	if(Xu){
 	  fprintf(view_u,"%g,%g,%g,",my_ddft->tri->getVertex(j)->x(),
 		  my_ddft->tri->getVertex(j)->y(),my_ddft->tri->getVertex(j)->z());
@@ -924,17 +924,17 @@ void discreteDiskFace::putOnView(bool Xu, bool Ux)
 	}
       }
       if(Xu){
-	fprintf(view_u,"%g,%g,%g){",my_ddft->tri->getVertex(_N-1)->x(),
-		my_ddft->tri->getVertex(_N-1)->y(),my_ddft->tri->getVertex(_N-1)->z());
-	fprintf(view_v,"%g,%g,%g){",my_ddft->tri->getVertex(_N-1)->x(),
-		my_ddft->tri->getVertex(_N-1)->y(),my_ddft->tri->getVertex(_N-1)->z());
+	fprintf(view_u,"%g,%g,%g){",my_ddft->tri->getVertex(_n-1)->x(),
+		my_ddft->tri->getVertex(_n-1)->y(),my_ddft->tri->getVertex(_n-1)->z());
+	fprintf(view_v,"%g,%g,%g){",my_ddft->tri->getVertex(_n-1)->x(),
+		my_ddft->tri->getVertex(_n-1)->y(),my_ddft->tri->getVertex(_n-1)->z());
       }
       if(Ux){
-	fprintf(UVx,"%g,%g,%g){",my_ddft->p[_N-1].x(),my_ddft->p[_N-1].y(),0.);
-	fprintf(UVy,"%g,%g,%g){",my_ddft->p[_N-1].x(),my_ddft->p[_N-1].y(),0.);
-	fprintf(UVz,"%g,%g,%g){",my_ddft->p[_N-1].x(),my_ddft->p[_N-1].y(),0.);
+	fprintf(UVx,"%g,%g,%g){",my_ddft->p[_n-1].x(),my_ddft->p[_n-1].y(),0.);
+	fprintf(UVy,"%g,%g,%g){",my_ddft->p[_n-1].x(),my_ddft->p[_n-1].y(),0.);
+	fprintf(UVz,"%g,%g,%g){",my_ddft->p[_n-1].x(),my_ddft->p[_n-1].y(),0.);
       }
-      for (int j=0; j<_N-1; j++){
+      for (int j=0; j<_n-1; j++){
 	if(Xu){
 	  fprintf(view_u,"%g,",my_ddft->p[j].x());
 	  fprintf(view_v,"%g,",my_ddft->p[j].y());
@@ -946,13 +946,13 @@ void discreteDiskFace::putOnView(bool Xu, bool Ux)
 	}
       }
       if(Xu){
-	fprintf(view_u,"%g};\n",my_ddft->p[_N-1].x());
-	fprintf(view_v,"%g};\n",my_ddft->p[_N-1].y());
+	fprintf(view_u,"%g};\n",my_ddft->p[_n-1].x());
+	fprintf(view_v,"%g};\n",my_ddft->p[_n-1].y());
       }
       if(Ux){
-	fprintf(UVx,"%g};\n",my_ddft->tri->getVertex(_N-1)->x());
-	fprintf(UVy,"%g};\n",my_ddft->tri->getVertex(_N-1)->y());
-	fprintf(UVz,"%g};\n",my_ddft->tri->getVertex(_N-1)->z());
+	fprintf(UVx,"%g};\n",my_ddft->tri->getVertex(_n-1)->x());
+	fprintf(UVy,"%g};\n",my_ddft->tri->getVertex(_n-1)->y());
+	fprintf(UVz,"%g};\n",my_ddft->tri->getVertex(_n-1)->z());
       }
     }
     if(Xu){
@@ -1328,7 +1328,7 @@ void discreteDiskFace::printParamMesh()
     int p;
     _order == 1 ? p=2 : p=9;
     fprintf(pmesh,"%d %d 2 0 0",i+1,p);
-    for(int j=0; j<_N; j++){
+    for(int j=0; j<_n; j++){
       MVertex* mv = tri->getVertex(j);
       fprintf(pmesh," %d",mv2int[mv]);
     }

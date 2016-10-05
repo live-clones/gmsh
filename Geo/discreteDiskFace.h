@@ -256,7 +256,7 @@ class discreteDiskFace : public GFace {
   std::vector<MVertex*> discrete_vertices;
 
   int _order;
-  int _N;// number of dof's for a triangle
+  int _n;// number of dof's for a triangle
   double _totLength;
   std::map<double,std::vector<MVertex*> > _loops;
   std::vector<MVertex*> _U0; // dirichlet's bc's
