@@ -41,11 +41,24 @@
                                     target:self
                                     action:@selector(showAbout)];
   [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects: about, nil]];
+
+  UIBarButtonItem *help =
+    [[UIBarButtonItem alloc] initWithTitle:@"Help"
+                                     style:UIBarButtonItemStylePlain
+                                    target:self
+                                    action:@selector(showHelp)];
+  [self.navigationItem setLeftBarButtonItems:[NSArray arrayWithObjects: help, nil]];
 }
 
 -(void)showAbout
 {
-  currentFileToEdit = nil;
+  currentFileToEdit = @"About";
+  [self performSegueWithIdentifier:@"showAboutSegue" sender:self];
+}
+
+-(void)showHelp
+{
+  currentFileToEdit = @"Help";
   [self performSegueWithIdentifier:@"showAboutSegue" sender:self];
 }
 
