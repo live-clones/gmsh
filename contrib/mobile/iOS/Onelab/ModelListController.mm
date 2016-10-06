@@ -151,74 +151,35 @@
   if(sender.state == UIGestureRecognizerStateCancelled) return;
   NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:p];
   if(indexPath == nil) return;
-  if([[models objectAtIndex:indexPath.row] getUrl])
-    self.longPressActionSheet =
-      [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName]
-                                  delegate:self
-                         cancelButtonTitle:@"Cancel"
-                    destructiveButtonTitle:nil
-                         otherButtonTitles: @"Open", @"Remove", @"Clear results",
-                             @"Edit model files", @"Email model files",
-                             @"Visit model website", nil];
-  else
-    self.longPressActionSheet =
-      [[UIActionSheet alloc] initWithTitle:[[models objectAtIndex:indexPath.row] getName]
-                                  delegate:self
-                         cancelButtonTitle:@"Cancel"
-                    destructiveButtonTitle:nil
-                         otherButtonTitles: @"Open", @"Remove", @"Clear results",
-                             @"Edit model files", @"Email model files",
-                             nil];
-  self.longPressActionSheet.tag = indexPath.row;
-  [self.longPressActionSheet showInView:self.view];
-}
+  UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
 
--(void)actionSheet:(UIActionSheet *)actionSheet didDismissWithButtonIndex:(NSInteger)buttonIndex
-{
-  if(actionSheet == self.longPressActionSheet){
-    switch (buttonIndex) {
-    case 5:
-      [[UIApplication sharedApplication] openURL:[[models objectAtIndex:actionSheet.tag] getUrl]];
-      break;
-    case 4:
-      {
-        NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
-        NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
-        NSArray *modelFiles = [[NSFileManager defaultManager]
-                                contentsOfDirectoryAtPath:modelPath error:NULL];
-        // TODO: would probably be better to email a zip archive? (this ignores subdirectories)
-        [self attachFilesToEmail:modelFiles filePath:modelPath];
-      }
-      break;
-    case 3:
-      {
-        NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
-        NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
-        NSArray *modelFiles = [[NSFileManager defaultManager]
-                                contentsOfDirectoryAtPath:modelPath error:NULL];
-        self.editFilesActionSheet = [[UIActionSheet alloc] initWithTitle:@"Model files"
-                                                                delegate:self
-                                                       cancelButtonTitle: nil
-                                                  destructiveButtonTitle: nil
-                                                       otherButtonTitles: nil];
-        for(NSString *file in modelFiles)  {
-          NSString *extension = [file pathExtension];
-          if([extension isEqualToString:@"txt"] ||
-             [extension isEqualToString:@"geo"] ||
-             [extension isEqualToString:@"pro"] ||
-             [extension isEqualToString:@"dat"]){
-            [self.editFilesActionSheet addButtonWithTitle:file];
-          }
-        }
-        self.editFilesActionSheet.cancelButtonIndex =
-          [self.editFilesActionSheet addButtonWithTitle:@"Cancel"];
-        self.editFilesActionSheet.tag = self.longPressActionSheet.tag;
-        [self.editFilesActionSheet showInView:self.view];
-			}
-      break;
-    case 2:
-      {
-        NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
+  UIAlertController *actionSheet =
+    [UIAlertController alertControllerWithTitle:[[models objectAtIndex:indexPath.row] getName]
+                                        message:nil
+                                 preferredStyle:UIAlertControllerStyleActionSheet];
+
+  [actionSheet addAction:[UIAlertAction actionWithTitle:@"Cancel"
+                                                  style:UIAlertActionStyleCancel
+                                                handler:^(UIAlertAction *action) {
+      }]];
+  [actionSheet addAction:[UIAlertAction actionWithTitle:@"Open"
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(UIAlertAction *action) {
+        [self tableView:self.tableView
+              didSelectRowAtIndexPath:[NSIndexPath indexPathForRow:indexPath.row inSection:0]];
+      }]];
+  [actionSheet addAction:[UIAlertAction actionWithTitle:@"Remove"
+                                                  style:UIAlertActionStyleDestructive
+                                                handler:^(UIAlertAction *action) {
+        NSString *file = [[models objectAtIndex:indexPath.row] getFile];
+        NSString *path = [file stringByDeletingLastPathComponent];
+        [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+        [self refreshList];
+      }]];
+  [actionSheet addAction:[UIAlertAction actionWithTitle:@"Clear results"
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(UIAlertAction *action) {
+        NSString *modelFile = [[models objectAtIndex:indexPath.row] getFile];
         NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
         NSArray *modelFiles = [[NSFileManager defaultManager]
                                 contentsOfDirectoryAtPath:modelPath error:NULL];
@@ -233,31 +194,64 @@
             [[NSFileManager defaultManager] removeItemAtPath:file error:nil];
           }
         }
-      }
-      break;
-    case 1:
-      {
-        NSString *file = [[models objectAtIndex:actionSheet.tag] getFile];
-        NSString *path = [file stringByDeletingLastPathComponent];
-        [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
-        [self refreshList];
-      }
-      break;
-    case 0:
-      [self tableView:self.tableView
-            didSelectRowAtIndexPath:[NSIndexPath indexPathForRow:actionSheet.tag inSection:0]];
-      break;
-    }
+      }]];
+  [actionSheet addAction:[UIAlertAction actionWithTitle:@"Edit model files"
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(UIAlertAction *action) {
+        NSString *modelFile = [[models objectAtIndex:indexPath.row] getFile];
+        NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
+        NSArray *modelFiles = [[NSFileManager defaultManager]
+                                contentsOfDirectoryAtPath:modelPath error:NULL];
+        UIAlertController *actionSheet2 =
+          [UIAlertController alertControllerWithTitle:@"Edit files"
+                                              message:nil
+                                       preferredStyle:UIAlertControllerStyleActionSheet];
+        [actionSheet2 addAction:[UIAlertAction actionWithTitle:@"Cancel"
+                                                         style:UIAlertActionStyleCancel
+                                                       handler:^(UIAlertAction *action) {
+            }]];
+        for(NSString *file in modelFiles)  {
+          NSString *extension = [file pathExtension];
+          if([extension isEqualToString:@"txt"] ||
+             [extension isEqualToString:@"geo"] ||
+             [extension isEqualToString:@"pro"] ||
+             [extension isEqualToString:@"dat"]){
+            [actionSheet2 addAction: [UIAlertAction actionWithTitle:file
+                                                              style:UIAlertActionStyleDefault
+                                                            handler:^(UIAlertAction *action) {
+                  NSString *modelFile = [[models objectAtIndex:indexPath.row] getFile];
+                  NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
+                  currentFileToEdit = [[modelPath stringByAppendingString:@"/"] stringByAppendingString:file];
+                  [self performSegueWithIdentifier:@"showAboutSegue" sender:self];
+                }]];
+          }
+        }
+        actionSheet2.popoverPresentationController.sourceView = cell;
+        actionSheet2.popoverPresentationController.sourceRect = cell.bounds;
+        [self presentViewController:actionSheet2 animated:YES completion:nil];
+      }]];
+  [actionSheet addAction:[UIAlertAction actionWithTitle:@"Email model files"
+                                                  style:UIAlertActionStyleDefault
+                                                handler:^(UIAlertAction *action) {
+        NSString *modelFile = [[models objectAtIndex:indexPath.row] getFile];
+        NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
+        NSArray *modelFiles = [[NSFileManager defaultManager]
+                                contentsOfDirectoryAtPath:modelPath error:NULL];
+        // TODO: would probably be better to email a zip archive? (this ignores subdirectories)
+        [self attachFilesToEmail:modelFiles filePath:modelPath];
+      }]];
+  if([[models objectAtIndex:indexPath.row] getUrl]){
+    [actionSheet addAction:[UIAlertAction actionWithTitle:@"Visit model website"
+                                                    style:UIAlertActionStyleDefault
+                                                  handler:^(UIAlertAction *action) {
+          [[UIApplication sharedApplication] openURL:[[models objectAtIndex:indexPath.row] getUrl]];
+        }]];
   }
-  else{
-    if(buttonIndex != actionSheet.cancelButtonIndex){
-      NSString *modelFile = [[models objectAtIndex:actionSheet.tag] getFile];
-      NSString *modelPath = [modelFile stringByDeletingLastPathComponent];
-      NSString *file = [actionSheet buttonTitleAtIndex:buttonIndex];
-      currentFileToEdit = [[modelPath stringByAppendingString:@"/"] stringByAppendingString:file];
-      [self performSegueWithIdentifier:@"showAboutSegue" sender:self];
-    }
-  }
+
+  actionSheet.popoverPresentationController.sourceView = cell;
+  actionSheet.popoverPresentationController.sourceRect = cell.bounds;
+
+  [self presentViewController:actionSheet animated:YES completion:nil];
 }
 
 - (void)attachFilesToEmail:(NSArray*)files filePath:(NSString*)path
