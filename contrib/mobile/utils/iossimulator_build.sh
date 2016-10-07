@@ -10,6 +10,10 @@ gmsh_svn="${HOME}/src/gmsh/"
 getdp_svn="${HOME}/src/getdp/"
 frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_iossimulator/"
 
+if [ -f ${getdp_svn}/benchmarks/cleanup.sh ]; then
+  cd ${getdp_svn}/benchmarks && ./cleanup.sh
+fi
+
 petsc_framework="$frameworks_dir/petsc.framework"
 slepc_framework="$frameworks_dir/slepc.framework"
 gmsh_framework="$frameworks_dir/Gmsh.framework"

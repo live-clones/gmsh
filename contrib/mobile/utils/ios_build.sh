@@ -6,6 +6,10 @@ if [ $# -eq 1 ] ; then
   echo "Rebranding Onelab app as ${appname}"
 fi
 
+if [ -f ${getdp_svn}/benchmarks/cleanup.sh ]; then
+  cd ${getdp_svn}/benchmarks && ./cleanup.sh
+fi
+
 gmsh_svn="${HOME}/src/gmsh/"
 getdp_svn="${HOME}/src/getdp/"
 frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_ios/"
