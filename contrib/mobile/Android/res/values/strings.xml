@@ -3,8 +3,6 @@
   <string name="title_activity_main">Onelab</string>
   <string name="title_activity_about">About</string>
   <string name="title_activity_options">Parameters</string>
-  <string name="title_share">Share screenshot with &#8230;</string>
-  <string name="menu_share">Share screenshot</string>
   <string name="menu_parameters">Parameters</string>
   <string name="menu_run">Run</string>
   <string name="menu_stop">Stop</string>

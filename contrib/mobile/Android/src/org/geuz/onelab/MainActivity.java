@@ -105,8 +105,6 @@ public class MainActivity extends Activity{
     }
     _runStopMenuItem = menu.add((_compute)?R.string.menu_stop:R.string.menu_run);
     _runStopMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-    MenuItem shareMenuItem = menu.add(R.string.menu_share);
-    shareMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
     return true;
   }
 
@@ -134,31 +132,6 @@ public class MainActivity extends Activity{
     else if(item.getTitle().equals(getString(R.string.menu_stop))){
       _runStopMenuItem.setEnabled(false);
       _gmsh.onelabCB("stop");
-    }
-    else if(item.getTitle().equals(getString(R.string.menu_share))) {
-      if(this._compute) {
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        _errorDialog = dialogBuilder.setTitle("Cannot show the model list")
-          .setMessage("The computation has to complete before you can take a screenshot")
-          .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-              public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-              }
-            })
-          .show();
-      }
-      else {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd-HH_mm_ss");
-        File file = new File(this.getExternalFilesDir(null),
-                             "onelab-screenshot-"+dateFormat.format(new Date())+".png");
-        file.setReadable(true, false);
-        _modelFragment.takeScreenshot(file);
-        Intent shareIntent = new Intent();
-        shareIntent.setAction(Intent.ACTION_SEND);
-        shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
-        shareIntent.setType("image/jpeg");
-        startActivity(Intent.createChooser(shareIntent, getString(R.string.title_share)));
-      }
     }
     else if(item.getItemId() == android.R.id.home) {
       if(this._compute) {

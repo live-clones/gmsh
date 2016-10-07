@@ -2,8 +2,10 @@ package org.geuz.onelab;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -27,6 +29,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 import android.util.Log;
+import android.os.Environment;
 
 public class ModelList extends Activity {
   private ModelArrayAdapter _modelArrayAdapter;
@@ -38,6 +41,18 @@ public class ModelList extends Activity {
         deleteRecursive(child);
     }
     fileOrDirectory.delete();
+  }
+
+  private void copyFile(File src, File dst) throws IOException {
+    FileInputStream in = new FileInputStream(src);
+    FileOutputStream out = new FileOutputStream(dst);
+    byte[] buf = new byte[1024];
+    int len;
+    while ((len = in.read(buf)) > 0) {
+      out.write(buf, 0, len);
+    }
+    in.close();
+    out.close();
   }
 
   @Override
@@ -74,17 +89,21 @@ public class ModelList extends Activity {
           final Model m = _modelArrayAdapter.getModel(position);
           CharSequence[] actions;
           if(m.getUrl() != null) {
-            actions = new CharSequence[4];
+            actions = new CharSequence[6];
             actions[0] = "Open";
             actions[1] = "Remove";
-            actions[2] = "Edit model files";
-            actions[3] = "Visit model website";
+            actions[2] = "Clear results";
+            actions[3] = "Edit model files";
+            actions[4] = "Email model files";
+            actions[5] = "Visit model website";
           }
           else {
-            actions = new CharSequence[3];
+            actions = new CharSequence[5];
             actions[0] = "Open";
             actions[1] = "Remove";
-            actions[2] = "Edit model files";
+            actions[2] = "Clear results";
+            actions[3] = "Edit model files";
+            actions[4] = "Email model files";
           }
           final AdapterView<?> p = parent;
           AlertDialog.Builder builder = new AlertDialog.Builder(p.getContext());
@@ -112,26 +131,86 @@ public class ModelList extends Activity {
                   }
                   break;
                 case 2:
-                  {/*
+                  {
+                    File folder = m.getFile().getParentFile();
+                    File[] files = folder.listFiles();
+                    for (int i = 0; i < files.length; i++) {
+                      if (files[i].isFile()) {
+                        String filenameArray[] = files[i].getName().split("\\.");
+                        String extension = filenameArray[filenameArray.length-1];
+                        if(extension.equalsIgnoreCase("msh")  ||
+                           extension.equalsIgnoreCase("pre")  ||
+                           extension.equalsIgnoreCase("res")  ||
+                           extension.equalsIgnoreCase("pos")){
+                          deleteRecursive(files[i]);
+                        }
+                      }
+                    }
+                  }
+                  break;
+                case 3:
+                  {
                     AlertDialog.Builder builder = new AlertDialog.Builder(p.getContext());
                     builder.setTitle("Edit model files");
-                    CharSequence[] act;
-                    act = new CharSequence[1];
-                    act[0] = "Test";
-                    builder.setItems(act, new DialogInterface.OnClickListener() {
+                    File folder = m.getFile().getParentFile();
+                    File[] files = folder.listFiles();
+                    ArrayList<String> selection = new ArrayList<String>();
+                    for (int i = 0; i < files.length; i++) {
+                      if (files[i].isFile()) {
+                        String filenameArray[] = files[i].getName().split("\\.");
+                        String extension = filenameArray[filenameArray.length-1];
+                        if(extension.equalsIgnoreCase("txt")  ||
+                           extension.equalsIgnoreCase("geo")  ||
+                           extension.equalsIgnoreCase("pro")  ||
+                           extension.equalsIgnoreCase("dat")){
+                          selection.add(files[i].getName());
+                        }
+                      }
+                    }
+                    final String[] names = new String[selection.size()];
+                    for (int i = 0; i < selection.size(); i++)
+                      names[i] = selection.get(i);
+                    builder.setItems(names, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int position) {
-                        // Intent intent = new Intent(ModelList.this, AboutActivity.class);
-                        // intent.putExtra("file", m.getFile().toString());
-                        // intent.putExtra("name", m.getName());
-                        // startActivity(intent);
+                          Intent intent = new Intent(ModelList.this, AboutActivity.class);
+                          File folder = m.getFile().getParentFile();
+                          String file = folder + "/" + names[position];
+                          intent.putExtra("file", file);
+                          intent.putExtra("name", names[position]);
+                          startActivity(intent);
                         }
                       });
                     AlertDialog alert = builder.create();
                     alert.show();
-                   */
                   }
                   break;
-                case 3:
+                case 4:
+                  {
+                    Intent emailIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+                    emailIntent.setType("vnd.android.cursor.dir/email");
+                    File folder = m.getFile().getParentFile();
+                    File[] files = folder.listFiles();
+                    emailIntent.putExtra(Intent.EXTRA_SUBJECT, folder+"/"+files[0].getName());
+                    ArrayList<Uri> copies = new ArrayList<Uri>();
+                    for (int i = 0; i < files.length; i++) {
+                      if (files[i].isFile()) {
+                        // need to copy as we cannot attach files directly from
+                        // the app data dir
+                        File copy = new File(Environment.getExternalStorageDirectory().getAbsolutePath(),
+                                             files[i].getName());
+                        try{
+                          copyFile(files[i], copy);
+                        }
+                        catch (IOException e) {
+                        }
+                        copies.add(Uri.fromFile(copy));
+                      }
+                    }
+                    emailIntent.putExtra(Intent.EXTRA_STREAM, copies);
+                    startActivity(Intent.createChooser(emailIntent , "Share model files..."));
+                  }
+                  break;
+                case 5:
                   {
                     Intent browserIntent = new Intent(Intent.ACTION_VIEW, m.getUrl());
                     startActivity(browserIntent);
@@ -154,9 +233,10 @@ public class ModelList extends Activity {
   @Override
   public boolean onCreateOptionsMenu(Menu menu)
   {
+    MenuItem help = menu.add("Help");
+    help.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
     MenuItem about = menu.add("About");
-    about.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
-
+    about.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
     return super.onCreateOptionsMenu(menu);
   }
 
@@ -165,6 +245,12 @@ public class ModelList extends Activity {
   {
     if(item.getTitle().equals("About")) {
       Intent intent = new Intent(ModelList.this, AboutActivity.class);
+      startActivity(intent);
+    }
+    else if(item.getTitle().equals("Help")) {
+      Intent intent = new Intent(ModelList.this, AboutActivity.class);
+      intent.putExtra("file", "Help");
+      intent.putExtra("name", "Help");
       startActivity(intent);
     }
     return super.onMenuItemSelected(featureId, item);
@@ -194,7 +280,7 @@ public class ModelList extends Activity {
   {
     File document = this.getFilesDir();
     File files[] = document.listFiles();
-    for(int i=0; i<files.length; i++) {
+    for(int i = 0; i < files.length; i++) {
       if(files[i].isDirectory()) { // models are in directory
         File xmlInfos = new File(files[i], "infos.xml");
         if(!xmlInfos.isFile()) continue;
