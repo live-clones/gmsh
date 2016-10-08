@@ -3,8 +3,9 @@
 #include "SplitViewController.h"
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>{
-    @public
-    bool compute;
+  @public
+  bool compute;
+  NSMutableArray *errors;
 }
 
 @property (strong, nonatomic) UIWindow *window;
@@ -12,4 +13,3 @@
 @property (strong, nonatomic) SplitViewController *splitViewController; // iPad
 
 @end
-

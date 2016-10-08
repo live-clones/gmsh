@@ -7,14 +7,13 @@
 
 @interface ModelViewController : UIViewController <UISplitViewControllerDelegate, UIAlertViewDelegate>
 {
-    @private
-    double scaleFactor;
-	UIBarButtonItem *_runStopButton, *_playButton, *_stopButton;
-	UIAlertView *_loadingAlert;
-	UIErrorAlertView *_errorAlert;
-	NSMutableArray *_errors;
-	UIBackgroundTaskIdentifier _computeBackgroundTaskIdentifier;
-	NSTimer *_animation;
+  @private
+  double scaleFactor;
+  UIBarButtonItem *_runStopButton, *_playButton, *_stopButton;
+  UIAlertView *_loadingAlert;
+  UIErrorAlertView *_errorAlert;
+  UIBackgroundTaskIdentifier _computeBackgroundTaskIdentifier;
+  NSTimer *_animation;
 }
 
 - (IBAction)pinch:(UIPinchGestureRecognizer *)sender;

@@ -76,6 +76,12 @@
     //[_loadingAlert release];
     _loadingAlert = nil;
   }
+
+  AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+  if(appDelegate->errors.count > 0){
+    _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Error" message:[appDelegate->errors firstObject] delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:nil, nil];
+    [_errorAlert show];
+  }
 }
 
 - (void)viewDidLoad
@@ -85,20 +91,18 @@
   [self configureView];
   [_singleTap requireGestureRecognizerToFail:_doubleTap];
   scaleFactor = 1.;
-  _errors = [[NSMutableArray alloc] init];
   setObjCBridge((__bridge void*) self);
   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(requestRender) name:@"requestRender" object:nil];
 
   _runStopButton = [[UIBarButtonItem alloc] initWithTitle:@"Run" style:UIBarButtonItemStylePlain target:self action:@selector(compute)];
-  //UIBarButtonItem *share = [[UIBarButtonItem alloc] initWithTitle:@"Share" style:UIBarButtonItemStyleBordered target:self action:@selector(share)];
   if([[UIDevice currentDevice].model isEqualToString:@"iPad"] ||
      [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
     UIBarButtonItem *model = [[UIBarButtonItem alloc] initWithTitle:@"Model list" style:UIBarButtonItemStylePlain target:self action:@selector(showModelsList)];
-    [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, model, /*share,*/ nil]];
+    [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, model, nil]];
   }
   else {
     UIBarButtonItem *settings = [[UIBarButtonItem alloc] initWithTitle:@"Parameters" style:UIBarButtonItemStylePlain target:self action:@selector(showSettings)];
-    [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, settings, /*share,*/ nil]];
+    [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects:_runStopButton, settings, nil]];
   }
 
   UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
@@ -131,16 +135,8 @@
   [[UIApplication sharedApplication] endBackgroundTask: _computeBackgroundTaskIdentifier];
 }
 
--(void)share
-{
-  NSArray *dataToShare = @[[self.glView getGLScreenshot]];
-  UIActivityViewController *activityVC = [[UIActivityViewController alloc] initWithActivityItems:dataToShare applicationActivities:nil];
-  [self presentViewController:activityVC animated:YES completion:nil];
-}
-
 - (void)compute
 {
-  [_errors removeAllObjects];
   [_runStopButton setAction:@selector(stop)];
   [_runStopButton setTitle:@"Stop"];
   [_progressLabel setText:@""];
@@ -186,8 +182,9 @@
   [_progressLabel setHidden:YES];
   [_progressIndicator stopAnimating];
   [_progressIndicator setHidden:YES];
-  if(_errors.count > 0) {
-    _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles:@"Show more", nil];
+  AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+  if(appDelegate->errors.count > 0){
+    _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Error" message:[appDelegate->errors firstObject] delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:nil, nil];
     [_errorAlert show];
   }
 }
@@ -317,31 +314,22 @@
 
 -(void)addError:(std::string)msg
 {
-  [_errors addObject:[Utils getStringFromCString:msg.c_str()]];
+  AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+  [appDelegate->errors addObject:[Utils getStringFromCString:msg.c_str()]];
 }
 
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
 {
-  if(buttonIndex == 0) {
-    [_errors removeAllObjects];
-    return;
-  }
-  else [_errors removeLastObject];
-  if(_errors.count > 1)
-    _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles:@"Show more", nil];
-  else
-    _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Error" message:[_errors lastObject] delegate:self cancelButtonTitle:@"Hide" otherButtonTitles: nil];
-  [_errorAlert show];
+  AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+  [appDelegate->errors removeAllObjects];
 }
 
 #pragma mark - Split view
-
 
 -(BOOL)splitViewController:(UISplitViewController *)svc shouldHideViewController:(UIViewController *)vc inOrientation:(UIInterfaceOrientation)orientation
 {
 	return NO;
 }
-
 
 void messageFromCpp (void *self, std::string level, std::string msg)
 {

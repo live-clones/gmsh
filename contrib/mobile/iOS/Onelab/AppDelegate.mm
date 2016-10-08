@@ -14,7 +14,7 @@
     self.splitViewController = [storyboard instantiateViewControllerWithIdentifier:@"SplitViewController"];
   }
   compute = false;
-
+  errors = [[NSMutableArray alloc] init];
   // Copy resource files if the version of the app has changed
   NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
   NSString *prefsv = [prefs stringForKey:@"OnelabModelsVersion"];
