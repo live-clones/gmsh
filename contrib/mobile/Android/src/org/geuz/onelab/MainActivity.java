@@ -162,15 +162,6 @@ public class MainActivity extends Activity{
     }
   }
 
-  public String getRealPathFromURI(Uri contentUri)
-  {
-    String[] proj = { MediaStore.Images.Media.DATA };
-    Cursor cursor = managedQuery(contentUri, proj, null, null, null);
-    int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-    cursor.moveToFirst();
-    return cursor.getString(column_index);
-  }
-
   private class Run extends AsyncTask<Void, Void, Integer[]> {
     @Override
     protected void onPreExecute()
@@ -202,10 +193,13 @@ public class MainActivity extends Activity{
 
   private void showError(String msg)
   {
+    // show only first error
     if(_errorDialog != null && _errorDialog.isShowing()) return;
+    // remove doc path from message
+    String str = msg.replace(this.getFilesDir().getAbsolutePath() + File.separator, "");
     AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
     _errorDialog = dialogBuilder.setTitle("Error")
-      .setMessage(msg)
+      .setMessage(str)
       .setPositiveButton("Dismiss", new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             dialog.dismiss();
