@@ -76,12 +76,6 @@
     //[_loadingAlert release];
     _loadingAlert = nil;
   }
-
-  AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
-  if(appDelegate->errors.count > 0){
-    _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Error" message:[appDelegate->errors firstObject] delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:nil, nil];
-    [_errorAlert show];
-  }
 }
 
 - (void)viewDidLoad
@@ -182,11 +176,6 @@
   [_progressLabel setHidden:YES];
   [_progressIndicator stopAnimating];
   [_progressIndicator setHidden:YES];
-  AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
-  if(appDelegate->errors.count > 0){
-    _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Error" message:[appDelegate->errors firstObject] delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:nil, nil];
-    [_errorAlert show];
-  }
 }
 
 - (void)stop
@@ -310,26 +299,6 @@
   return YES;
 }
 
-#pragma mark - Alert view
-
--(void)addError:(std::string)msg
-{
-  AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
-  NSString *str = [Utils getStringFromCString:msg.c_str()];
-  // remove document path from error message
-  NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-  NSString *docPath = [[paths objectAtIndex:0] stringByAppendingString:@"/"];
-  str = [str stringByReplacingOccurrencesOfString:docPath
-                                       withString:@""];
-  [appDelegate->errors addObject:str];
-}
-
--(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-  AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
-  [appDelegate->errors removeAllObjects];
-}
-
 #pragma mark - Split view
 
 -(BOOL)splitViewController:(UISplitViewController *)svc shouldHideViewController:(UIViewController *)vc inOrientation:(UIInterfaceOrientation)orientation
@@ -347,13 +316,28 @@ void messageFromCpp (void *self, std::string level, std::string msg)
     [(__bridge id) self performSelectorOnMainThread:@selector(setProgress:)
                                          withObject:[Utils getStringFromCString:msg.c_str()] waitUntilDone:YES];
   }
-  else if(level == "Error")
-    [(__bridge id)self addError:msg];
+  else if(level == "Error"){
+    [(__bridge id) self performSelectorOnMainThread:@selector(showError:)
+                                         withObject:[Utils getStringFromCString:msg.c_str()] waitUntilDone:YES];
+  }
 }
 
 -(void)setProgress:(NSString *)progress
 {
   [_progressLabel setText:progress];
+}
+
+-(void)showError:(NSString *)msg
+{
+  // only show first error
+  if(_errorAlert != nil && _errorAlert.visible) return;
+  // remove document path from error message
+  NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+  NSString *docPath = [[paths objectAtIndex:0] stringByAppendingString:@"/"];
+  NSString *str = [msg stringByReplacingOccurrencesOfString:docPath withString:@""];
+  _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Error" message:str delegate:self
+                                      cancelButtonTitle:@"Dismiss" otherButtonTitles:nil, nil];
+  [_errorAlert show];
 }
 
 -(void)handleProgressIndicatorTap:(id)sender

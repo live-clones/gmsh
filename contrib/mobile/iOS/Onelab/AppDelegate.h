@@ -5,7 +5,6 @@
 @interface AppDelegate : UIResponder <UIApplicationDelegate>{
   @public
   bool compute;
-  NSMutableArray *errors;
 }
 
 @property (strong, nonatomic) UIWindow *window;
