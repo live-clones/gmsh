@@ -264,17 +264,4 @@ public class ModelFragment extends Fragment{
   {
     _glView.requestRender();
   }
-  public void takeScreenshot(File out)
-  {
-    Bitmap screenshot = _glView.getScreenshot();
-    try {
-      FileOutputStream f = new FileOutputStream(out);
-      screenshot.compress(Bitmap.CompressFormat.PNG, 85, f);
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    }
-    finally {
-      _glView.setDrawingCacheEnabled(false);
-    }
-  }
 }

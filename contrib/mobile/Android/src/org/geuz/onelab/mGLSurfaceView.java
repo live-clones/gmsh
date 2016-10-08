@@ -97,11 +97,4 @@ class mGLSurfaceView extends GLSurfaceView {
     scaleFactor = 1f;
     _renderer.scaleModel(scaleFactor);
   }
-  public Bitmap getScreenshot()
-  {
-    _renderer.needScreenshot();
-    this.requestRender();
-    while(_renderer.getScreenshot() == null);
-    return _renderer.getScreenshot();
-  }
 }
