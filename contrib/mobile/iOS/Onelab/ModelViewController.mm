@@ -315,7 +315,13 @@
 -(void)addError:(std::string)msg
 {
   AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
-  [appDelegate->errors addObject:[Utils getStringFromCString:msg.c_str()]];
+  NSString *str = [Utils getStringFromCString:msg.c_str()];
+  // remove document path from error message
+  NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+  NSString *docPath = [[paths objectAtIndex:0] stringByAppendingString:@"/"];
+  str = [str stringByReplacingOccurrencesOfString:docPath
+                                       withString:@""];
+  [appDelegate->errors addObject:str];
 }
 
 -(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
