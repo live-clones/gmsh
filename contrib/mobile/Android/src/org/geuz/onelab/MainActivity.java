@@ -38,7 +38,6 @@ public class MainActivity extends Activity{
   private MenuItem _runStopMenuItem, _switchFragmentMenuItem;
   private ModelFragment _modelFragment;
   private OptionsFragment _optionsFragment;
-  private ArrayList<String> _errors = new ArrayList<String>();
   private Dialog _errorDialog;
 
   public MainActivity() { }
@@ -136,7 +135,7 @@ public class MainActivity extends Activity{
     else if(item.getItemId() == android.R.id.home) {
       if(this._compute) {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        _errorDialog = dialogBuilder.setTitle("Cannot show the model list")
+        dialogBuilder.setTitle("Cannot show the model list")
           .setMessage("The computation has to complete before you can select another model")
           .setPositiveButton("OK", new DialogInterface.OnClickListener() {
               public void onClick(DialogInterface dialog, int which) {
@@ -201,29 +200,18 @@ public class MainActivity extends Activity{
     }
   }
 
-  private void showError()
+  private void showError(String msg)
   {
-    if(_errors.size() > 0){
-      if(_errorDialog != null && _errorDialog.isShowing()) _errorDialog.dismiss();
-      AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-      dialogBuilder.setTitle("Error")
-        .setMessage(_errors.get(_errors.size()-1))
-        .setNegativeButton("Hide", new DialogInterface.OnClickListener() {
-		        public void onClick(DialogInterface dialog, int which) {
-              _errors.clear();
-              _errorDialog.dismiss();
-		        }
-          });
-      if(_errors.size()>1)
-        dialogBuilder.setPositiveButton("Show more", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-              _errors.remove(_errors.size()-1);
-              _errorDialog.dismiss();
-              showError();
-            }
-          });
-      _errorDialog = dialogBuilder.show();
-    }
+    if(_errorDialog != null && _errorDialog.isShowing()) return;
+    AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+    _errorDialog = dialogBuilder.setTitle("Error")
+      .setMessage(msg)
+      .setPositiveButton("Dismiss", new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int which) {
+            dialog.dismiss();
+          }
+        })
+      .show();
   }
   @Override
   protected void onPause()
@@ -329,16 +317,14 @@ public class MainActivity extends Activity{
       public void handleMessage(android.os.Message msg) {
     		switch (msg.what) {
         case 0: // we get a message from gmsh library
-          String message =(String) msg.obj;
-          _errors.add(message);
-          showError();
+          showError((String)msg.obj);
           break;
         case 1: // request render from gmsh library
           if(_modelFragment != null) _modelFragment.requestRender();
           if(_optionsFragment != null) _optionsFragment.refresh();
           break;
         case 2: // we get a message for loading
-          if(_modelFragment != null) _modelFragment.showProgress((String) msg.obj);
+          if(_modelFragment != null) _modelFragment.showProgress((String)msg.obj);
           break;
         case 3: // we get a progress for loading
           //loading.setProgress(msg.arg1);
