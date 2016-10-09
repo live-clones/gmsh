@@ -1,6 +1,6 @@
-2.13.3: new Tochnog file format export; added ability to remove last command in
-scripts generated interactively; ONELAB 1.3 with usability and performance
-improvements; faster "Coherence Mesh".
+2.14.0 (October 9, 2016): new Tochnog file format export; added ability to
+remove last command in scripts generated interactively; ONELAB 1.3 with
+usability and performance improvements; faster "Coherence Mesh".
 
 2.13.2 (August 18, 2016)): small improvements (scale labels, periodic and
 high-order meshes) and bug fixes.
