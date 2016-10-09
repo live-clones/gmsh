@@ -72,29 +72,38 @@
   std::vector<onelab::string> string;
   onelab::server::instance()->get(string, [name UTF8String]);
   if(string.size() < 1) return;
-  UIActionSheet *popupSelectValue =
-    [[UIActionSheet alloc] initWithTitle:[Utils getStringFromCString:string[0].getLabel().c_str()]
-                                delegate:self cancelButtonTitle:nil destructiveButtonTitle:nil
-                       otherButtonTitles:nil];
+  UIAlertController *alertController =
+    [UIAlertController alertControllerWithTitle:nil message:nil
+                                 preferredStyle:UIAlertControllerStyleActionSheet];
+  [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel"
+                                                      style:UIAlertActionStyleCancel
+                                                    handler:^(UIAlertAction *action) {
+      }]];
   std::vector<std::string> choices = string[0].getChoices();
-  for(int i = 0; i < choices.size(); i++)
-    [popupSelectValue addButtonWithTitle:[Utils getStringFromCString:choices[i].c_str()]];
-  [popupSelectValue addButtonWithTitle:@"Cancel"];
-  [popupSelectValue setCancelButtonIndex:popupSelectValue.numberOfButtons - 1];
-  [popupSelectValue showInView:button];
+  for(unsigned int i = 0; i < choices.size(); i++){
+    NSString *t = [Utils getStringFromCString:choices[i].c_str()];
+    [alertController addAction:[UIAlertAction actionWithTitle:t
+                                                        style:UIAlertActionStyleDefault
+                                                      handler:^(UIAlertAction *action) {
+          [self updateString:string[0] withValue:choices[i]];
+          [button setTitle:[Utils getStringFromCString:choices[i].c_str()]
+                  forState:UIControlStateNormal];
+        }]];
+  }
+  [alertController setModalPresentationStyle:UIModalPresentationPopover];
+  UIPopoverPresentationController *popPresenter = [alertController popoverPresentationController];
+  popPresenter.sourceView = button;
+  popPresenter.sourceRect = button.bounds;
+  // FIXME: is traverseResponderChainForUIViewController a good idea?
+  [[Utils traverseResponderChainForUIViewController:button] presentViewController:alertController
+                                                                         animated:YES completion:nil];
 }
 
--(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
+-(void) updateString: (onelab::string)s withValue:(std::string)v
 {
-  std::vector<onelab::string> string;
-  onelab::server::instance()->get(string, [name UTF8String]);
-  if(string.size() < 1) return;
-  if(buttonIndex < string[0].getChoices().size()){
-    std::string selected = string[0].getChoices()[buttonIndex];
-    string[0].setValue(selected);
-    onelab::server::instance()->set(string[0]);
-    [super editValue];
-  }
+	s.setValue(v);
+	onelab::server::instance()->set(s);
+	[super editValue];
 }
 
 -(void)refresh
@@ -145,30 +154,25 @@
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers, [name UTF8String]);
   if(numbers.size() < 1) return;
-  UIAlertController *alertController;
-  UIAlertAction *destroyAction;
-  alertController = [UIAlertController alertControllerWithTitle:nil message:nil
-                                                 preferredStyle:UIAlertControllerStyleActionSheet];
+  UIAlertController *alertController =
+    [UIAlertController alertControllerWithTitle:nil message:nil
+                                 preferredStyle:UIAlertControllerStyleActionSheet];
+  [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel"
+                                                      style:UIAlertActionStyleCancel
+                                                    handler:^(UIAlertAction *action) {
+      }]];
   std::vector<double> choices = numbers[0].getChoices();
-  for(unsigned int i = 0; i < choices.size(); i++)
-    [alertController
-      addAction:[UIAlertAction
-                  actionWithTitle:[Utils getStringFromCString:numbers[0].getValueLabel(choices[i]).c_str()]
-                            style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+  for(unsigned int i = 0; i < choices.size(); i++){
+    NSString *t = [Utils getStringFromCString:numbers[0].getValueLabel(choices[i]).c_str()];
+    [alertController addAction:[UIAlertAction actionWithTitle:t
+                                                        style:UIAlertActionStyleDefault
+                                                      handler:^(UIAlertAction *action) {
           [self updateNumber:numbers[0] withValue:choices[i]];
           [button setTitle:[Utils getStringFromCString:numbers[0].getValueLabel(i).c_str()]
                   forState:UIControlStateNormal];
-	}]];
-
-  destroyAction = [UIAlertAction actionWithTitle:@"Cancel"
-                                           style:UIAlertActionStyleDestructive
-                                         handler:^(UIAlertAction *action) {
-      // do nothing
-    }];
-
-  [alertController addAction:destroyAction];
+        }]];
+  }
   [alertController setModalPresentationStyle:UIModalPresentationPopover];
-
   UIPopoverPresentationController *popPresenter = [alertController popoverPresentationController];
   popPresenter.sourceView = button;
   popPresenter.sourceRect = button.bounds;
@@ -181,7 +185,6 @@
 {
   n.setValue(v);
   onelab::server::instance()->set(n);
-
   [super editValue];
 }
 
