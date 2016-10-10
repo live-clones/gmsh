@@ -203,7 +203,7 @@
         NSArray *modelFiles = [[NSFileManager defaultManager]
                                 contentsOfDirectoryAtPath:modelPath error:NULL];
         UIAlertController *actionSheet2 =
-          [UIAlertController alertControllerWithTitle:@"Edit files"
+          [UIAlertController alertControllerWithTitle:@"Edit model files"
                                               message:nil
                                        preferredStyle:UIAlertControllerStyleActionSheet];
         [actionSheet2 addAction:[UIAlertAction actionWithTitle:@"Cancel"
