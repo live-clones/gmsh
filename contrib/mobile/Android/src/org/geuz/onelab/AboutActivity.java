@@ -126,6 +126,7 @@ public class AboutActivity extends Activity{
     }
     else if(item.getTitle().equals(getString(R.string.menu_save))){
       _webview.loadUrl("javascript:( function () { window.HTMLOUT.myJsCallback(document.body.innerText); } ) ()");
+      // FIXME: should reload the page to correctly re-highlight
     }
     return super.onMenuItemSelected(featureId, item);
   }
