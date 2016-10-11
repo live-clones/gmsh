@@ -36,6 +36,10 @@
   self.aboutView.delegate = self;
   self.aboutView.dataDetectorTypes = UIDataDetectorTypeNone;
   [self loadContent];
+  if(![self.fileToEdit isEqual:@"About"] && ![self.fileToEdit isEqual:@"Help"]){
+    UIBarButtonItem *save = [[UIBarButtonItem alloc] initWithTitle:@"Save" style:UIBarButtonItemStylePlain target:self action:@selector(saveFile)];
+    [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects: save, nil]];
+  }
 }
 
 -(void)loadContent
@@ -75,14 +79,13 @@
     // custom microlight.js for basic syntax highlighting
     const char *js = "!function(a,b){\"function\"==typeof define&&define.amd?define([\"exports\"],b):b(\"undefined\"!=typeof exports?exports:a.microlight={})}(this,function(a){var k,l,m,b=window,c=document,d=\"appendChild\",e=\"test\",g=\"opacity:.\",n=function(a){for(l=c.getElementsByClassName(a||\"microlight\"),k=0;m=l[k++];){var n,o,r,s,t,f=m.textContent,h=0,i=f[0],j=1,p=m.innerHTML=\"\",q=0,u=/(\\d*\\, \\d*\\, \\d*)(, ([.\\d]*))?/g.exec(b.getComputedStyle(m).color);for(\"px rgba(\"+u[1]+\",\",u[3]||1;o=n,n=q<7&&\"\\\\\"==n?1:j;){if(j=i,i=f[++h],s=p.length>1,!j||q>8&&\"\\n\"==j||[/\\S/[e](j),1,1,!/[$\\w]/[e](j),(\"/\"==n||\"\\n\"==n)&&s,\'\"\'==n&&s,\"\'\"==n&&s,f[h-4]+o+n==\"-->\",o+n==\"*/\"][q])for(p&&(m[d](t=c.createElement(\"span\")).setAttribute(\"style\",[\"\",\"font-weight:bold;color:#00c;\",g+6,\"color: #a08;\"+g+8,\"font-style:italic;color: #b00;\"+g+8][q?q<3?2:q>6?4:q>3?3:+/^(If|Else|ElseIf|EndIf|Include|For|EndFor|Include|Macro|Return)$/[e](p):0]),t[d](c.createTextNode(p))),r=q&&q<7?q:r,p=\"\",q=11;![1,/[\\/{}[(\\-+*=<>:;|\\\\.,?!&@~]/[e](j),/[\\])]/[e](j),/[$\\w]/[e](j),\"/\"==j&&r<2&&\"<\"!=n,\'\"\'==j,\"\'\"==j,j+i+f[h+1]+f[h+2]==\"<!--\",j+i==\"/*\",j+i==\"//\",j+i==\"//\"][--q];);p+=j}}};a.reset=n,\"complete\"==c.readyState?n():b.addEventListener(\"load\",function(){n()},0)});";
     [self.aboutView loadHTMLString:[NSString stringWithFormat:@"<html><head><script>%s</script></head><body><pre contenteditable=\"true\" class=microlight>%@</pre></body></html>", js, aStr] baseURL:[[NSBundle mainBundle] bundleURL]];
-    UIBarButtonItem *save = [[UIBarButtonItem alloc] initWithTitle:@"Save" style:UIBarButtonItemStylePlain target:self action:@selector(saveFile)];
-    [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects: save, nil]];
   }
 }
 
 
 -(void)saveFile
 {
+  //CGPoint offset = self.aboutView.scrollView.contentOffset;
   NSString *text = [self.aboutView stringByEvaluatingJavaScriptFromString:
                           @"document.body.innerText"];
   NSLog(@"Saving file %@", self.fileToEdit);
@@ -90,6 +93,8 @@
   [text writeToFile:self.fileToEdit atomically:YES
            encoding:NSUTF8StringEncoding error:&error];
   [self loadContent];
+  // trying to restore position, but this is not correct
+  //[self.aboutView.scrollView setContentOffset:offset animated:NO];
 }
 
 - (void)didReceiveMemoryWarning
