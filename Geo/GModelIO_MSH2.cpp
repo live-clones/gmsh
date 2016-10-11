@@ -689,13 +689,13 @@ int GModel::_readMSH2(const std::string &name)
     _storeVerticesInEntities(vertexMap);
 
   // if no topology is given, create one  
-  createTopologyFromMeshNew (this);
+  //  createTopologyFromMeshNew (this);
 
   // store the physical tags
   for(int i = 0; i < 4; i++)
     _storePhysicalTagsInEntities(i, physicals[i]);
 
-  _createGeometryOfDiscreteEntities() ;
+  //_createGeometryOfDiscreteEntities() ;
 
 
   // copying periodic information from the mesh

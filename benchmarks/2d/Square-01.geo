@@ -12,3 +12,5 @@ Line Loop(5) = {1,2,3,4};
 Plane Surface(6) = {5};
 //Recombine Surface {6};
 //Recombine Surface {6};
+//+
+Physical Surface(7) = {6};

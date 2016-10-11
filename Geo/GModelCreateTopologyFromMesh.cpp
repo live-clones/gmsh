@@ -147,8 +147,23 @@ void createTopologyFromMesh2D ( GModel *gm ) {
     for (int i = 0; i < (*it)->lines.size(); i++)_existingEdges[(*it)->lines[i]->getEdge(0)] = *it;
   }    
 
-  //  printf("%d mesh edges aere already classified\n",_existingEdges.size());
+  printf("%d mesh edges are already classified\n",_existingEdges.size());
 
+  std::map<MEdge,int,Less_Edge> _bnd;
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
+    for (int i=0;i<(*it)->getNumMeshElements();i++){
+      MElement *e = (*it)->getMeshElement(i);
+      for (int j=0;j<e->getNumEdges();j++){
+	MEdge ed = e->getEdge(j);
+	std::map<MEdge,int,Less_Edge>::iterator it2 = _bnd.find(ed);	
+	if (it2 == _bnd.end())_bnd[ed] = 1;
+	else it2->second++;
+      }
+    }
+  }
+
+  discreteFace OUT (gm, 1000010200);
+  
   // create inverse dictionary for all other edges
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
     for (int i=0;i<(*it)->getNumMeshElements();i++){
@@ -158,14 +173,18 @@ void createTopologyFromMesh2D ( GModel *gm ) {
 	GEdge *ge = _existingEdges[ed];
 	if (ge)
 	  _topology[*it].insert(ge);
-	else 
+	else {
 	  _temp[ed].insert(*it);
+	  if (_bnd[ed] == 1)_temp[ed].insert(&OUT);
+	}
       }      
     }    
   }
 
+  printf("%d internal edges\n",_temp.size());
+  
   // create unique instances
-  for (std::map<MEdge, myBundle<GFace*>, Less_Face >::iterator it = _temp.begin(); it != _temp.end() ; it++){
+  for (std::map<MEdge, myBundle<GFace*>, Less_Edge >::iterator it = _temp.begin(); it != _temp.end() ; it++){
     _bundles.insert (it->second);
   }
 
@@ -176,11 +195,11 @@ void createTopologyFromMesh2D ( GModel *gm ) {
     for (; it != _bundles.end(); ++it) {
       //      it->print();
       if (it->stuff.size() > 1){
-	printf("creation of a new discrete edge !\n");
+	printf("creation of a new discrete edge (%d neighbors)!\n",it->stuff.size());
 	discreteEdge *de = new discreteEdge (  gm , NEWREG(), NULL, NULL);    
 	_f2e [*it] = de;
 	for (std::set<GFace*>::iterator it2 = it->stuff.begin(); it2 != it->stuff.end();++it2)
-	  _topology[*it2].insert(de);
+	  if ((*it2) != &OUT)_topology[*it2].insert(de);
       }
     }
   }
@@ -204,10 +223,12 @@ void createTopologyFromMesh2D ( GModel *gm ) {
   {
     std::map<GFace*, std::set<GEdge*> >::iterator it =  _topology.begin();
     for ( ; it != _topology.end() ; ++it){
-      std::list<GEdge*> l ; l.insert (l.begin(), it->second.begin(), it->second.end());
-      it->first->set(l);
-      //      printf("Face %d has %d edges\n",it->first->tag(), l.size());
-      for (std::list<GEdge*>::iterator it2 =  l.begin() ; it2 != l.end() ; ++it2)(*it2)->addFace(it->first);      
+      if (it->first){
+	std::list<GEdge*> l ; l.insert (l.begin(), it->second.begin(), it->second.end());
+	it->first->set(l);
+	//      printf("Face %d has %d edges\n",it->first->tag(), l.size());
+	for (std::list<GEdge*>::iterator it2 =  l.begin() ; it2 != l.end() ; ++it2)(*it2)->addFace(it->first);
+      }
     }
   }
 
