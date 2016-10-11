@@ -35,11 +35,16 @@
   // Do any additional setup after loading the view.
   self.aboutView.delegate = self;
   self.aboutView.dataDetectorTypes = UIDataDetectorTypeNone;
+  [self loadContent];
+}
+
+-(void)loadContent
+{
   UIColor *tintColor = self.view.tintColor;
   CGFloat red, green, blue, alpha;
   [tintColor getRed: &red green: &green blue: &blue alpha: &alpha];
   int r = (int)(red*255), g = (int)(green*255), b = (int)(blue*255);
-  
+
   NSString *css = [NSString stringWithFormat:@"body { background-color: #FFFFFF; color: #252525; margin: 35px 10px 35px 10px; padding: 0; font-family: helvetica-neue,sans-serif; font-size: 1em; }  b { font-weight: normal; color: rgb(%d,%d,%d); } a { color: rgb(%d,%d,%d); }", r, g, b, r, g, b];
 
   if([self.fileToEdit isEqual:@"About"]){
@@ -73,8 +78,8 @@
     UIBarButtonItem *save = [[UIBarButtonItem alloc] initWithTitle:@"Save" style:UIBarButtonItemStylePlain target:self action:@selector(saveFile)];
     [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects: save, nil]];
   }
-
 }
+
 
 -(void)saveFile
 {
@@ -84,6 +89,7 @@
   NSError *error;
   [text writeToFile:self.fileToEdit atomically:YES
            encoding:NSUTF8StringEncoding error:&error];
+  [self loadContent];
 }
 
 - (void)didReceiveMemoryWarning
