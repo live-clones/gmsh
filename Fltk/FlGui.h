@@ -90,7 +90,7 @@ class FlGui{
   // wait (at most time seconds) for any events, then process them
   static void wait(double time);
   // is a file opened through the Mac Finder?
- static void setOpenedThroughMacFinder(const std::string &name);
+  static void setOpenedThroughMacFinder(const std::string &name);
   static std::string getOpenedThroughMacFinder();
   // test application-level keyboard shortcuts
   int testGlobalShortcuts(int event);

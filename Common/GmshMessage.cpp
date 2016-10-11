@@ -78,13 +78,13 @@ onelab::server *onelab::server::_server = 0;
 #if defined(HAVE_NO_VSNPRINTF)
 static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 {
-	if (strlen(fmt) > size - 1) { // just copy the format
-		strncpy(str, fmt, size - 1);
-		str[size - 1] = '\0';
-		return size;
-	}
-	return vsprintf(str, fmt, ap);
-	}
+  if (strlen(fmt) > size - 1) { // just copy the format
+    strncpy(str, fmt, size - 1);
+    str[size - 1] = '\0';
+    return size;
+  }
+  return vsprintf(str, fmt, ap);
+}
 #endif
 #endif
 
@@ -1175,10 +1175,9 @@ void Msg::LoadOnelabClient(const std::string &clientName, const std::string &soc
 }
 
 GmshClient *Msg::GetGmshClient()
-{ 
-	return _client;
+{
+  return _client;
 }
-
 
 int Msg::GetNumOnelabClients()
 {
