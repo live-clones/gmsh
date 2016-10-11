@@ -28,7 +28,7 @@ class simpleFunctionPython : public simpleFunction<double> {
     double r = 0;
     if (result) {
       int ok = PyArg_Parse(result, "d", &r);
-      if (not ok)
+      if (ok == 0)
         Msg::Error("The python function did not return a double.");
       Py_DECREF(result);
     }
