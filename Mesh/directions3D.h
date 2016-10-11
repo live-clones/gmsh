@@ -36,6 +36,8 @@ class Frame_field{
   static ANNkd_tree* annTree;
 #endif
   Frame_field();
+  static std::map<MVertex*, std::set<MVertex*> > vertex_to_vertices;
+  static std::map<MVertex*, std::set<MElement*> > vertex_to_elements;
  public:
   static void init_region(GRegion*);
   static void init_face(GFace*);
@@ -44,8 +46,6 @@ class Frame_field{
   static void print_field1();
   static void print_field2(GRegion*);
   static void print_segment(SPoint3,SPoint3,double,double,std::ofstream&);
-  static std::map<MVertex*,std::set<MVertex*> > vertex_to_vertices;
-  static std::map<MVertex*,std::set<MElement*> > vertex_to_elements;
   static int build_vertex_to_vertices(GEntity* gr, int onWhat, bool initialize=true);
   static int build_vertex_to_elements(GEntity* gr, bool initialize=true);
   static void build_listVertices(GEntity* gr, int dim, bool initialize=true);

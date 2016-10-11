@@ -148,7 +148,7 @@ class MPrism : public MElement {
   }
   virtual bool isInside(double u, double v, double w) const
   {
-    double tol = _isInsideTolerance;
+    double tol = getTolerance();
     if(w > (1. + tol) || w < -(1. + tol) || u < (-tol)
        || v < (-tol) || u > ((1. + tol) - v))
       return false;

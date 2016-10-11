@@ -146,8 +146,9 @@ class MFaceVertex : public MVertex{
 };
 
 class MVertexLessThanLexicographic{
- public:
   static double tolerance;
+public:
+  static double getTolerance();
   bool operator()(const MVertex *v1, const MVertex *v2) const;
 };
 

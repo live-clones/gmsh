@@ -64,7 +64,6 @@ void printProgressFunc(const alglib::real_1d_array &x, double Obj, void *MOInst)
 
 }
 
-
 MeshOpt::MeshOpt(const std::map<MElement*,GEntity*> &element2entity,
                  const std::map<MElement*, GEntity*> &bndEl2Ent,
                  const std::set<MElement*> &els, std::set<MVertex*> &toFix,

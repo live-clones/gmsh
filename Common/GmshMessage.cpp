@@ -70,20 +70,22 @@ onelab::client *Msg::_onelabClient = 0;
 onelab::server *onelab::server::_server = 0;
 #endif
 
+
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1310) //NET 2003
+#define vsnprintf _vsnprintf
+#else
 #if defined(HAVE_NO_VSNPRINTF)
 static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 {
-  if(strlen(fmt) > size - 1){ // just copy the format
-    strncpy(str, fmt, size - 1);
-    str[size - 1] = '\0';
-    return size;
-  }
-  return vsprintf(str, fmt, ap);
-}
+	if (strlen(fmt) > size - 1) { // just copy the format
+		strncpy(str, fmt, size - 1);
+		str[size - 1] = '\0';
+		return size;
+	}
+	return vsprintf(str, fmt, ap);
+	}
 #endif
-
-#if defined(_MSC_VER) && (_MSC_VER == 1310) //NET 2003
-#define vsnprintf _vsnprintf
 #endif
 
 static void addGmshPathToEnvironmentVar(const std::string &name)
@@ -155,6 +157,128 @@ void Msg::Init(int argc, char **argv)
 
   InitializeOnelab("Gmsh");
 }
+
+int Msg::GetCommRank()
+{
+  return _commRank;
+}
+
+int Msg::GetCommSize()
+{
+  return _commSize;
+}
+
+void Msg::SetCommRank(int val)
+{
+  _commRank = val;
+}
+
+void Msg::SetCommSize(int val)
+{
+  _commSize = val;
+}
+
+void Msg::SetCallback(GmshMessage *callback)
+{
+  _callback = callback;
+}
+
+GmshMessage *Msg::GetCallback()
+{
+  return _callback;
+}
+
+void Msg::SetVerbosity(int val)
+{
+  _verbosity = val;
+}
+
+int Msg::GetVerbosity()
+{
+  return _verbosity;
+}
+
+std::string Msg::GetLaunchDate()
+{
+  return _launchDate;
+}
+
+std::string Msg::GetCommandLineArgs()
+{
+  return _commandLine;
+}
+
+std::map<std::string, std::vector<double> > &Msg::GetCommandLineNumbers()
+{
+  return _commandLineNumbers;
+}
+
+std::map<std::string, std::string> &Msg::GetCommandLineStrings()
+{
+  return _commandLineStrings;
+}
+
+void Msg::SetProgressMeterStep(int step)
+{
+  _progressMeterStep = step;
+}
+
+int Msg::GetProgressMeterStep()
+{
+  return _progressMeterStep;
+}
+
+void Msg::ResetProgressMeter()
+{
+  if (!_commRank) _progressMeterCurrent = 0;
+}
+
+void Msg::SetInfoCpu(bool val)
+{
+  _infoCpu = val;
+}
+
+double &Msg::Timer(std::string str)
+{
+  return _timers[str];
+}
+
+int Msg::GetWarningCount()
+{
+  return _warningCount;
+}
+
+int Msg::GetErrorCount()
+{
+  return _errorCount;
+}
+
+std::string Msg::GetFirstWarning()
+{
+  return _firstWarning;
+}
+
+std::string Msg::GetFirstError()
+{
+  return _firstError;
+}
+
+void Msg::SetExecutableName(const std::string &name)
+{
+  _execName.assign(name);
+}
+
+std::string Msg::GetExecutableName()
+{
+  return _execName;
+}
+
+#if defined(HAVE_ONELAB)
+onelab::client *Msg::GetOnelabClient()
+{
+  return _onelabClient;
+}
+#endif
 
 void Msg::Exit(int level)
 {
@@ -1049,6 +1173,12 @@ void Msg::LoadOnelabClient(const std::string &clientName, const std::string &soc
   exit(1);
 #endif
 }
+
+GmshClient *Msg::GetGmshClient()
+{ 
+	return _client;
+}
+
 
 int Msg::GetNumOnelabClients()
 {

@@ -190,7 +190,7 @@ double GmshGetNumberOption(const std::string &category, const std::string &name,
   return value;
 }
 
-int GmshGetColorOption(const std::string &category, const std::string &name,
+unsigned int GmshGetColorOption(const std::string &category, const std::string &name,
                        int index)
 {
   unsigned int value;

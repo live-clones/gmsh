@@ -71,7 +71,9 @@ class GMSH_Plugin
 
   // dynamic pointer to a drawing function
   static void setDrawFunction(void (*fct)(void *));
+#ifndef SWIG
   static void (*draw)(void*);
+#endif
 };
 
 // The base class for post-processing plugins. The user can either

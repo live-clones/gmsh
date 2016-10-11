@@ -165,9 +165,10 @@ class GModel
   GModel(std::string name="");
   virtual ~GModel();
 
-
+#ifndef SWIG
   // the static list of all loaded models
   static std::vector<GModel*> list;
+#endif
 
   // return the current model, and sets the current model index if
   // index >= 0

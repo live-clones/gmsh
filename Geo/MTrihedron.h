@@ -131,7 +131,7 @@ class MTrihedron : public MElement {
   }
   virtual bool isInside(double u, double v, double w) const
   {
-    double tol = _isInsideTolerance;
+    double tol = getTolerance();
     if(u < -(1. + tol) || v < -(1. + tol) || u > (1. + tol) || v > (1. + tol) ||
        fabs(w) > tol)
       return false;

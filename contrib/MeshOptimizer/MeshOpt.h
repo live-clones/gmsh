@@ -34,8 +34,11 @@
 #include <fstream>
 #include <string>
 #include <math.h>
+#include <map>
+#include <set>
 #include "MeshOptObjectiveFunction.h"
 #include "MeshOptPatch.h"
+#include "GmshConfig.h"
 
 #if defined(HAVE_BFGS)
 

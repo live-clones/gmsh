@@ -53,8 +53,8 @@ class MElement
                                  int num=0, int part=0);
 
   // set/get the tolerance for isInside() test
-  static void setTolerance(const double tol){ _isInsideTolerance = tol; }
-  static double getTolerance() { return _isInsideTolerance; }
+  static void setTolerance(const double tol);
+  static double getTolerance();
 
   // return the tag of the element
   virtual int getNum() const { return _num; }

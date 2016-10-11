@@ -143,7 +143,7 @@ class MPyramid : public MElement {
   }
   virtual bool isInside(double u, double v, double w) const
   {
-    double tol = _isInsideTolerance;
+    double tol = getTolerance();
     if(u < (w - (1. + tol)) || u > ((1. + tol) - w) || v < (w - (1. + tol)) ||
        v > ((1. + tol) - w) || w < (-tol) || w > (1. + tol))
       return false;

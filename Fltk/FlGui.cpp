@@ -60,6 +60,16 @@ void FlGui::wait(){ Fl::wait(); }
 // wait (at most time seconds) for any events, then process them
 void FlGui::wait(double time){ Fl::wait(time); }
 
+void FlGui::setOpenedThroughMacFinder(const std::string &name)
+{
+  _openedThroughMacFinder = name;
+}
+
+std::string FlGui::getOpenedThroughMacFinder()
+{
+  return _openedThroughMacFinder;
+}
+
 static int globalShortcut(int event)
 {
   if(!FlGui::available()) return 0;
@@ -448,6 +458,12 @@ FlGui::FlGui(int argc, char **argv)
 
 FlGui *FlGui::_instance = 0;
 std::string FlGui::_openedThroughMacFinder = "";
+
+bool FlGui::available()
+{
+  return (_instance != 0);
+}
+
 
 FlGui *FlGui::instance(int argc, char **argv)
 {

@@ -103,7 +103,8 @@ struct MeshOptPass {                                    // Parameters controllin
 };
 
 
-struct MeshOptParameters {                              // Parameters controlling the strategy
+class MeshOptParameters {                              // Parameters controlling the strategy
+ public:
   int dim ;                                             // Which dimension to optimize
   bool onlyVisible ;                                    // Apply optimization to visible entities ONLY
   bool fixBndNodes;                                     // If points can move on boundaries

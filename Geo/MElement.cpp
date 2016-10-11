@@ -138,6 +138,16 @@ MElement* MElement::createElement(int tag, const std::vector<MVertex*> &vertices
   return NULL;
 }
 
+void MElement::setTolerance(const double tol)
+{
+  _isInsideTolerance = tol;
+}
+
+double MElement::getTolerance()
+{
+  return _isInsideTolerance;
+}
+
 void MElement::_getEdgeRep(MVertex *v0, MVertex *v1,
                            double *x, double *y, double *z, SVector3 *n,
                            int faceIndex)

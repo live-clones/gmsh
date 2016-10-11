@@ -62,8 +62,8 @@ class PView{
   ~PView();
 
   // set/get global tag
-  static int getGlobalTag(){ return _globalTag; }
-  static void setGlobalTag(int tag){ _globalTag = tag; }
+  static int getGlobalTag();
+  static void setGlobalTag(int tag);
 
   // delete the vertex arrays, used to draw the view efficiently
   void deleteVertexArrays();
@@ -98,8 +98,10 @@ class PView{
   // get (approx.) memory used by the view, in Mb
   double getMemoryInMb();
 
+#ifndef SWIG
   // the static list of all loaded views
   static std::vector<PView*> list;
+#endif
 
   // combine view
   static void combine(bool time, int how, bool remove);

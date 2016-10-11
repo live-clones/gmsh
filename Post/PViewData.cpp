@@ -213,6 +213,12 @@ void PViewData::addMatrixToInterpolationScheme(const std::string &name, int type
   _interpolationSchemes[name][type].push_back(new fullMatrix<double>(mat));
 }
 
+int PViewData::getSizeInterpolationScheme()
+{
+  return _interpolationSchemes.size();
+}
+
+
 void PViewData::smooth()
 {
   Msg::Error("Smoothing is not implemented for this type of data");

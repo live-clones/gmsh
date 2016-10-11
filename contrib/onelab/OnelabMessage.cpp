@@ -33,7 +33,9 @@ bool OLMsg::hasGmsh=false;
 std::set<std::string, fullNameLessThan> OLMsg::_fullNameDict;
 void (*OLMsg::gui_wait_fct)(double time) = 0;
 
-
+#if defined(_MSC_VER) && (_MSC_VER >= 1310) //NET 2003
+#define vsnprintf _vsnprintf
+#else
 #if defined(HAVE_NO_VSNPRINTF)
 static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 {
@@ -45,10 +47,9 @@ static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
   return vsprintf(str, fmt, ap);
 }
 #endif
-
-#if defined(_MSC_VER) && (_MSC_VER == 1310) //NET 2003
-#define vsnprintf _vsnprintf
 #endif
+
+
 
 void OLMsg::Init(int argc, char **argv)
 {

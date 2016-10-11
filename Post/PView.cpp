@@ -174,6 +174,16 @@ PView::~PView()
   delete _data;
 }
 
+int PView::getGlobalTag()
+{
+  return _globalTag;
+}
+
+void PView::setGlobalTag(int tag)
+{
+  _globalTag = tag;
+}
+
 void PView::deleteVertexArrays()
 {
   if(va_points) delete va_points; va_points = 0;

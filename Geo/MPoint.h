@@ -67,7 +67,7 @@ class MPoint : public MElement {
   }
   virtual bool isInside(double u, double v, double w) const
   {
-    double tol = _isInsideTolerance;
+    double tol = getTolerance();
     if(fabs(u) > tol || fabs(v) > tol || fabs(w) > tol)
       return false;
     return true;

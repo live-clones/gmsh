@@ -9,7 +9,7 @@
 
 bool MEdge::isInside(MVertex *v) const
 {
-  double tol = MVertexLessThanLexicographic::tolerance;
+  double tol = MVertexLessThanLexicographic::getTolerance();
   MVertex *v0 = _v[0];
   MVertex *v1 = _v[1];
   MVertexLessThanLexicographic lt;

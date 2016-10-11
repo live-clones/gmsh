@@ -358,6 +358,11 @@ bool MVertexLessThanNum::operator()(const MVertex *v1, const MVertex *v2) const
 
 double MVertexLessThanLexicographic::tolerance = 1.e-6;
 
+double MVertexLessThanLexicographic::getTolerance()
+{
+  return tolerance;
+}
+
 bool MVertexLessThanLexicographic::operator()(const MVertex *v1, const MVertex *v2) const
 {
   // you should not use this unless you know what you are doing; to create

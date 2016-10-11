@@ -62,28 +62,22 @@ class Msg {
   Msg() {}
   static void Init(int argc, char **argv);
   static void Exit(int level);
-  static int GetCommRank(){ return _commRank; }
-  static int GetCommSize(){ return _commSize; }
-  static void SetCommRank(int val){ _commRank = val; }
-  static void SetCommSize(int val){ _commSize = val; }
-  static void SetCallback(GmshMessage *callback){ _callback = callback; }
-  static GmshMessage *GetCallback(){ return _callback; }
+  static int GetCommRank();
+  static int GetCommSize();
+  static void SetCommRank(int val);
+  static void SetCommSize(int val);
+  static void SetCallback(GmshMessage *callback);
+  static GmshMessage *GetCallback();
   static void Barrier();
   static int GetNumThreads();
   static int GetMaxThreads();
   static int GetThreadNum();
-  static void SetVerbosity(int val){ _verbosity = val; }
-  static int GetVerbosity(){ return _verbosity; }
-  static std::string GetLaunchDate(){ return _launchDate; }
-  static std::string GetCommandLineArgs(){ return _commandLine; }
-  static std::map<std::string, std::vector<double> > &GetCommandLineNumbers()
-  {
-    return _commandLineNumbers;
-  }
-  static std::map<std::string, std::string> &GetCommandLineStrings()
-  {
-    return _commandLineStrings;
-  }
+  static void SetVerbosity(int val);
+  static int GetVerbosity();
+  static std::string GetLaunchDate();
+  static std::string GetCommandLineArgs();
+  static std::map<std::string, std::vector<double> > &GetCommandLineNumbers();
+  static std::map<std::string, std::string> &GetCommandLineStrings();
   static std::string PrintResources(bool printDate, bool printWallTime,
                                     bool printCpu, bool printMem);
   static void Fatal(const char *fmt, ...);
@@ -97,30 +91,30 @@ class Msg {
   static void SetWindowTitle(const std::string &title);
   static void Debug(const char *fmt, ...);
   static void ProgressMeter(int n, int N, bool log, const char *fmt, ...);
-  static void SetProgressMeterStep(int step){ _progressMeterStep = step; }
-  static int GetProgressMeterStep(){ return _progressMeterStep; }
-  static void ResetProgressMeter(){ if(!_commRank) _progressMeterCurrent = 0; }
-  static void SetInfoCpu(bool val){ _infoCpu = val; }
-  static double &Timer(std::string str){ return _timers[str]; }
+  static void SetProgressMeterStep(int step);
+  static int GetProgressMeterStep();
+  static void ResetProgressMeter();
+  static void SetInfoCpu(bool val);
+  static double &Timer(std::string str);
   static void PrintTimers();
   static void ResetErrorCounter();
   static void PrintErrorCounter(const char *title);
-  static int GetWarningCount(){ return _warningCount; }
-  static int GetErrorCount(){ return _errorCount; }
-  static std::string GetFirstWarning(){ return _firstWarning; }
-  static std::string GetFirstError(){ return _firstError; }
+  static int GetWarningCount();
+  static int GetErrorCount();
+  static std::string GetFirstWarning();
+  static std::string GetFirstError();
   static double GetValue(const char *text, double defaultval);
   static std::string GetString(const char *text, std::string defaultval);
   static int GetAnswer(const char *question, int defaultval, const char *zero,
                        const char *one, const char *two=0);
   static void InitializeOnelab(const std::string &name, const std::string &sockname="");
-  static void SetExecutableName(const std::string &name) { _execName.assign(name); }
-  static std::string GetExecutableName() { return _execName; }
+  static void SetExecutableName(const std::string &name);
+  static std::string GetExecutableName();
   static void LoadOnelabClient(const std::string &name, const std::string &sockName);
   static int GetNumOnelabClients();
-  static GmshClient *GetGmshClient(){ return _client; }
+  static GmshClient *GetGmshClient();
 #if defined(HAVE_ONELAB)
-  static onelab::client *GetOnelabClient(){ return _onelabClient; }
+  static onelab::client *GetOnelabClient();
 #endif
   static void FinalizeOnelab();
   static bool UseOnelab();

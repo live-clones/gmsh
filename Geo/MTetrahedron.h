@@ -146,7 +146,7 @@ class MTetrahedron : public MElement {
   }
   virtual bool isInside(double u, double v, double w) const
   {
-    double tol = _isInsideTolerance;
+    double tol = getTolerance();
     if(u < (-tol) || v < (-tol) || w < (-tol) || u > ((1. + tol) - v - w))
       return false;
     return true;

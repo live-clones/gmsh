@@ -77,7 +77,7 @@ class MLine : public MElement {
   }
   virtual bool isInside(double u, double v, double w) const
   {
-    double tol = _isInsideTolerance;
+    double tol = getTolerance();
     if(u < -(1. + tol) || u > (1. + tol) || fabs(v) > tol || fabs(w) > tol)
       return false;
     return true;
