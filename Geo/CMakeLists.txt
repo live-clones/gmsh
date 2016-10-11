@@ -21,6 +21,7 @@ set(SRC
   ACISEdge.cpp
   ACISFace.cpp
   GModel.cpp
+  GModelCreateTopologyFromMesh.cpp
     GModelVertexArrays.cpp
     GModelFactory.cpp
     GModelIO_GEO.cpp GModelIO_ACIS.cpp GModelIO_OCC.cpp GModelIO_TOCHNOG.cpp

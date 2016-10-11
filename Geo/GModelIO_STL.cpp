@@ -12,6 +12,7 @@
 #include "MVertexRTree.h"
 #include "discreteFace.h"
 #include "StringUtils.h"
+#include "GModelCreateTopologyFromMesh.h"
 
 int GModel::readSTL(const std::string &name, double tolerance)
 {
@@ -175,6 +176,11 @@ int GModel::readSTL(const std::string &name, double tolerance)
 
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices); // will delete unused vertices
+
+  // if no topology is given, create one
+  createTopologyFromMeshNew (this);
+
+  _createGeometryOfDiscreteEntities() ;
 
   fclose(fp);
   return 1;

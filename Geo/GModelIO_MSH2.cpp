@@ -26,6 +26,7 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "OS.h"
+#include "GModelCreateTopologyFromMesh.h"
 
 #define FAST_ELEMENTS 1
 
@@ -686,6 +687,9 @@ int GModel::_readMSH2(const std::string &name)
     _storeVerticesInEntities(vertexVector);
   else
     _storeVerticesInEntities(vertexMap);
+
+  // if no topology is given, create one  
+  createTopologyFromMeshNew (this);
 
   // store the physical tags
   for(int i = 0; i < 4; i++)

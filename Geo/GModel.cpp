@@ -42,6 +42,7 @@
 #include "meshGEdge.h"
 #include "meshGFace.h"
 #include "meshGRegion.h"
+#include "GModelCreateTopologyFromMesh.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -2251,15 +2252,26 @@ void GModel::makeDiscreteFacesSimplyConnected()
   Msg::Debug("Done making discrete faces simply connected");
 }
 
+
 void GModel::createTopologyFromMesh(int ignoreHoles)
 {
   Msg::StatusBar(true, "Creating topology from mesh...");
   double t1 = Cpu();
-
   removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
   makeDiscreteRegionsSimplyConnected();
   makeDiscreteFacesSimplyConnected();
 
+  // // TEST !!!!!!!!
+  // if (1)
+  // {
+  //   createTopologyFromMeshNew (this);
+  //   double t2 = Cpu();
+  //   Msg::StatusBar(true, "Done creating topology from mesh (%g s)", t2 - t1);
+  //   return;
+  // }
+  
+
+  
   // create topology for all discrete regions
   std::vector<discreteRegion*> discRegions;
   for(riter it = firstRegion(); it != lastRegion(); it++)

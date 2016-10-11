@@ -48,6 +48,8 @@ class GEdge : public GEntity{
   virtual void deleteMesh();
 
   // get the start/end vertices of the edge
+  void setBeginVertex(GVertex *gv) { v0=gv; }
+  void setEndVertex(GVertex *gv)  { v1=gv; }
   virtual GVertex *getBeginVertex() const { return v0; }
   virtual GVertex *getEndVertex() const { return v1; }
 

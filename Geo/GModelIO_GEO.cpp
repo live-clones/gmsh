@@ -42,7 +42,6 @@ int GModel::readGEO(const std::string &name)
 {
   ParseFile(name, true);
   int imported = GModel::current()->importGEOInternals();
-
   return imported;
 }
 

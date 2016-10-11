@@ -915,6 +915,7 @@ void RecombineMesh(GModel *m)
 
 void GenerateMesh(GModel *m, int ask)
 {
+
   // ProfilerStart("gmsh.prof");
   if(CTX::instance()->lock) {
     Msg::Info("I'm busy! Ask me that later...");

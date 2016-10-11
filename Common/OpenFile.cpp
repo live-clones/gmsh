@@ -520,7 +520,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
       status = GModel::readGEO(fileName);
     }
   }
-
+  
   ComputeMaxEntityNum();
   if(setBoundingBox) SetBoundingBox();
   CTX::instance()->geom.draw = 1;
