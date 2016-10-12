@@ -165,10 +165,9 @@ class GModel
   GModel(std::string name="");
   virtual ~GModel();
 
-#ifndef SWIG
+
   // the static list of all loaded models
   static std::vector<GModel*> list;
-#endif
 
   // return the current model, and sets the current model index if
   // index >= 0
@@ -425,6 +424,7 @@ class GModel
   int removeDuplicateMeshVertices(double tolerance);
 
   // create topology from mesh
+  void createTopologyFromMeshNew();
   void createTopologyFromMesh(int ignoreHoles=0);
   void createTopologyFromRegions(std::vector<discreteRegion*> &discRegions);
   void createTopologyFromFaces(std::vector<discreteFace*> &pFaces, int ignoreHoles=0);

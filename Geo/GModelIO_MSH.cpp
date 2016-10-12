@@ -23,7 +23,6 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "discreteRegion.h"
-#include "GModelCreateTopologyFromMesh.h"
 
 static int readMSHPhysicals(FILE *fp, GEntity *ge)
 {
@@ -180,7 +179,6 @@ int GModel::readMSH(const std::string &name)
 
   double version = 0.;
   bool binary = false, swap = false, postpro = false;
-  bool topology = false;
   int minVertex = 0;
   std::map<int, std::vector<MElement*> > elements[11];
 
@@ -236,7 +234,6 @@ int GModel::readMSH(const std::string &name)
     // $Entities section
     else if(!strncmp(&str[1], "Entities", 8)) {
       readMSHEntities(fp, this);
-      topology = true;
     }
 
     // $Nodes section
@@ -462,9 +459,6 @@ int GModel::readMSH(const std::string &name)
     _storeVerticesInEntities(_vertexVectorCache);
   else
     _storeVerticesInEntities(_vertexMapCache);
-
-  // if no topology is given, create one
-  if (!topology)createTopologyFromMeshNew (this);
   
   _createGeometryOfDiscreteEntities() ;
 

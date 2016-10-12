@@ -1318,6 +1318,10 @@ static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &el
 
 void GModel::_createGeometryOfDiscreteEntities(bool force)
 {
+  if (CTX::instance()->meshDiscrete){
+    createTopologyFromMeshNew ();    
+  }
+    
   if (force || CTX::instance()->meshDiscrete){
     Msg::Info("Creating the geometry of discrete curves");
     for(eiter it = firstEdge(); it != lastEdge(); ++it){
@@ -2251,7 +2255,6 @@ void GModel::makeDiscreteFacesSimplyConnected()
 
   Msg::Debug("Done making discrete faces simply connected");
 }
-
 
 void GModel::createTopologyFromMesh(int ignoreHoles)
 {
