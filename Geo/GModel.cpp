@@ -845,10 +845,10 @@ int GModel::refineMesh(int linear)
 {
 #if defined(HAVE_MESH)
   RefineMesh(this, linear);
-  return true;
+  return 1;
 #else
   Msg::Error("Mesh module not compiled");
-  return false;
+  return 0;
 #endif
 }
 
@@ -859,10 +859,21 @@ int GModel::optimizeMesh(const std::string &how)
     OptimizeMeshNetgen(this);
   else
     OptimizeMesh(this);
-  return true;
+  return 1;
 #else
   Msg::Error("Mesh module not compiled");
-  return false;
+  return 0;
+#endif
+}
+
+int GModel::partitionMesh(int numPart)
+{
+#if defined(HAVE_MESH) && (defined(HAVE_METIS) || defined(HAVE_CHACO))
+  opt_mesh_partition_num(0, GMSH_SET, numPart);
+  PartitionMesh(this, CTX::instance()->partitionOptions);
+#else
+  Msg::Error("Mesh module not compiled");
+  return 0;
 #endif
 }
 
@@ -1319,9 +1330,9 @@ static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &el
 void GModel::_createGeometryOfDiscreteEntities(bool force)
 {
   if (CTX::instance()->meshDiscrete){
-    createTopologyFromMeshNew ();    
+    createTopologyFromMeshNew ();
   }
-    
+
   if (force || CTX::instance()->meshDiscrete){
     Msg::Info("Creating the geometry of discrete curves");
     for(eiter it = firstEdge(); it != lastEdge(); ++it){
@@ -2272,9 +2283,9 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
   //   Msg::StatusBar(true, "Done creating topology from mesh (%g s)", t2 - t1);
   //   return;
   // }
-  
 
-  
+
+
   // create topology for all discrete regions
   std::vector<discreteRegion*> discRegions;
   for(riter it = firstRegion(); it != lastRegion(); it++)

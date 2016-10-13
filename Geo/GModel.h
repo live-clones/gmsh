@@ -486,6 +486,9 @@ class GModel
   // optimize the mesh
   int optimizeMesh(const std::string &how);
 
+  // partition the mesh
+  int partitionMesh(int num);
+
   // create partition boundaries
   void createPartitionBoundaries(int createGhostCells, int createAllDims = 0);
 

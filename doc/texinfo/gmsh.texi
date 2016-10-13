@@ -2959,6 +2959,9 @@ meshes e.g. for sensitivity analyzes.
 @item SetOrder @var{expression};
 Changes the order of the elements in the current mesh.
 
+@item PartitionMesh @var{expression};
+Partitions the mesh into @var{expression}, using current partitioning options.
+
 @item Point | Line @{ @var{expression-list} @} In Surface @{ @var{expression} @};
 Embed the point(s) or line(s) in the given surface. The surface mesh
 will conform to the mesh of the point(s) or lines(s). 

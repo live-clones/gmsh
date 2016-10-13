@@ -3257,6 +3257,9 @@ Command :
                   CTX::instance()->mesh.meshOnlyVisible);
 #endif
       }
+      else if(!strcmp($1, "PartitionMesh")){
+        GModel::current()->partitionMesh($2);
+      }
       else
 	yymsg(0, "Unknown command '%s'", $1);
       Free($1);
