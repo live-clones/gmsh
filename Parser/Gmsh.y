@@ -3158,6 +3158,9 @@ Command :
       }
       else if(!strcmp($1, "Merge") || !strcmp($1, "MergeWithBoundingBox")){
 	// MergeWithBoundingBox is deprecated
+        // sync model with new DB here, so that if we e.g. import a STEP file,
+        // we have the correct entity tags and the numberings don't clash
+	GModel::current()->importGEOInternals();
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
 	MergeFile(tmp, true);
       }
