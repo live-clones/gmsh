@@ -1275,11 +1275,41 @@ static void DeletePoint(int ip)
     for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
       if(!compareVertex(List_Pointer(c->Control_Points, j), &v)){
         List_Delete(Curves);
+        // cannot delete: it's a control point of a curve
         return;
       }
     }
   }
   List_Delete(Curves);
+
+  List_T *Surfs = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
+  for(int i = 0; i < List_Nbr(Surfs); i++) {
+    Surface *s;
+    List_Read(Surfs, i, &s);
+    for(int j = 0; j < List_Nbr(s->EmbeddedPoints); j++) {
+      if(!compareVertex(List_Pointer(s->EmbeddedPoints, j), &v)){
+        List_Delete(Surfs);
+        // cannot delete: it's embedded in a surface
+        return;
+      }
+    }
+  }
+  List_Delete(Surfs);
+
+  List_T *Vols = Tree2List(GModel::current()->getGEOInternals()->Volumes);
+  for(int i = 0; i < List_Nbr(Vols); i++) {
+    Volume *v;
+    List_Read(Vols, i, &v);
+    for(int j = 0; j < List_Nbr(v->EmbeddedPoints); j++) {
+      if(!compareAbsCurve(List_Pointer(v->EmbeddedPoints, j), &v)){
+        List_Delete(Vols);
+        // cannot delete: it's embedded in a volume
+        return;
+      }
+    }
+  }
+  List_Delete(Vols);
+
   if(v->Num == GModel::current()->getGEOInternals()->MaxPointNum)
     GModel::current()->getGEOInternals()->MaxPointNum--;
   Tree_Suppress(GModel::current()->getGEOInternals()->Points, &v);
@@ -1298,11 +1328,34 @@ static void DeleteCurve(int ip)
     for(int j = 0; j < List_Nbr(s->Generatrices); j++) {
       if(!compareAbsCurve(List_Pointer(s->Generatrices, j), &c)){
         List_Delete(Surfs);
+        // cannot delete: it's on the boundary of a surface
+        return;
+      }
+    }
+    for(int j = 0; j < List_Nbr(s->EmbeddedCurves); j++) {
+      if(!compareAbsCurve(List_Pointer(s->EmbeddedCurves, j), &c)){
+        List_Delete(Surfs);
+        // cannot delete: it's embedded in a surface
         return;
       }
     }
   }
   List_Delete(Surfs);
+
+  List_T *Vols = Tree2List(GModel::current()->getGEOInternals()->Volumes);
+  for(int i = 0; i < List_Nbr(Vols); i++) {
+    Volume *v;
+    List_Read(Vols, i, &v);
+    for(int j = 0; j < List_Nbr(v->EmbeddedCurves); j++) {
+      if(!compareAbsCurve(List_Pointer(v->EmbeddedCurves, j), &c)){
+        List_Delete(Vols);
+        // cannot delete: it's embedded in a volume
+        return;
+      }
+    }
+  }
+  List_Delete(Vols);
+
   if(c->Num == GModel::current()->getGEOInternals()->MaxLineNum)
     GModel::current()->getGEOInternals()->MaxLineNum--;
   Tree_Suppress(GModel::current()->getGEOInternals()->Curves, &c);
@@ -1321,6 +1374,14 @@ static void DeleteSurface(int is)
     for(int j = 0; j < List_Nbr(v->Surfaces); j++) {
       if(!compareSurface(List_Pointer(v->Surfaces, j), &s)){
         List_Delete(Vols);
+        // cannot delete: it's on the boundary of a volume
+        return;
+      }
+    }
+    for(int j = 0; j < List_Nbr(v->EmbeddedSurfaces); j++) {
+      if(!compareSurface(List_Pointer(v->EmbeddedSurfaces, j), &s)){
+        List_Delete(Vols);
+        // cannot delete: it's embedded in a volume
         return;
       }
     }
