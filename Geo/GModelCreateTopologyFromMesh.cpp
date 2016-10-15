@@ -231,7 +231,7 @@ std::vector<GEdge*> ensureSimplyConnectedEdge ( GEdge *ge ) {
   std::vector<GEdge*> _all;
   std::set<MLine*> _lines;
   std::map<MVertex*, std::pair<MLine*,MLine*> > _conn;
-  
+
   _all.push_back(ge);
 
   for (int i = 0; i < ge->lines.size(); i++){
@@ -263,9 +263,9 @@ std::vector<GEdge*> ensureSimplyConnectedEdge ( GEdge *ge ) {
 	else if (it->second.second == l && _lines.find (it->second.first) != _lines.end()){
 	  _stack.push (it->second.first);
 	}
-      }      
+      }
     }
-    _parts.push_back(_part);    
+    _parts.push_back(_part);
   }
 
   if (_parts.size() == 1)return _all;
@@ -377,7 +377,7 @@ void createTopologyFromMesh2D ( GModel *gm , int & num) {
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
     _parts[*it] = ensureSimplyConnectedEdge (*it);
   }
-  
+
   // create Face 2 Edge topology
   {
     std::map<GFace*, std::set<GEdge*> >::iterator it =  _topology.begin();
@@ -459,13 +459,13 @@ public:
 
   typename std::vector<std::pair<MYFACE, T> >::iterator begin(int i) {return _data[i].begin();}
   typename std::vector<std::pair<MYFACE, T> >::iterator end  (int i) {return _data[i].end();}
-  
-  bool addNoTest (const MYFACE &t, const T& toAdd)  {
+
+  void addNoTest (const MYFACE &t, const T& toAdd)  {
     size_t h = ((size_t) t.getSortedVertex(0) >> 8) ;
     size_t POS = h % _data.size();
     _data[POS].push_back(std::make_pair(t,toAdd));
   }
-  
+
   T & find (const MYFACE &t, bool &found) {
     size_t h = ((size_t) t.getSortedVertex(0) >> 8) ;
     size_t POS = h % _data.size();
@@ -475,9 +475,9 @@ public:
 	found = true;
 	return v[i].second;
       }
-    }      
+    }
     found = false;
-  }  
+  }
 
 };
 
@@ -485,7 +485,7 @@ public:
 inline MYFACE builder (MElement *e, int num){
 #ifdef _USE_MFACE__
   return e->getFace(num);
-#else  
+#else
   if (e->getType() == TYPE_TET){
     return topoFace (e->getVertex (MTetrahedron::faces_tetra(num, 0)),
 		     e->getVertex (MTetrahedron::faces_tetra(num, 1)),
@@ -550,7 +550,7 @@ void createTopologyFromMesh3D ( GModel *gm , int &num ) {
 	  else {
 	    myPair.first = *it ;
 	  }
-	}      
+	}
       }
     }
   }
@@ -587,7 +587,7 @@ void createTopologyFromMesh3D ( GModel *gm , int &num ) {
     std::vector<std::pair< MYFACE, std::pair<GRegion*,GRegion*> > > :: iterator it = _temp.begin(K);
     for (; it != _temp.end(K); ++it) {
       if (it->second.first != it->second.second){
-	MYFACE f = it->first;      
+	MYFACE f = it->first;
 	GFace *gf = _r2f [it->second];
 	if (f.getNumVertices () == 3){
 	  MTriangle *t = new MTriangle (f.getVertex(0),f.getVertex(1),f.getVertex(2));
@@ -595,12 +595,12 @@ void createTopologyFromMesh3D ( GModel *gm , int &num ) {
 	}
 	else if (f.getNumVertices () == 4){
 	  MQuadrangle *q = new MQuadrangle (f.getVertex(0),f.getVertex(1),f.getVertex(2),f.getVertex(3));
-	  gf->quadrangles.push_back(q);	 
+	  gf->quadrangles.push_back(q);
 	}
       }
     }
   }
-    
+
   // create Regions 2 Faces topology
   {
     std::map<GRegion*, std::set<GFace*> >::iterator it =  _topology.begin();
@@ -611,7 +611,7 @@ void createTopologyFromMesh3D ( GModel *gm , int &num ) {
       for (std::list<GFace*>::iterator it2 =  l.begin() ; it2 != l.end() ; ++it2)(*it2)->addRegion(it->first);
     }
   }
-  
+
   // NICE :-)
 }
 
@@ -619,7 +619,7 @@ void GModel::createTopologyFromMeshNew ( ) {
   const int dim = getDim ();
 
   double t1 = Cpu();
-  
+
   if (topoExists (this)) {
     return;
   }
@@ -648,5 +648,5 @@ void GModel::createTopologyFromMeshNew ( ) {
   //  printf("%d vertices\n", getNumVertices());
 
   double t2 = Cpu();
-  Msg::Info("createTopologyFromMeshNew done in %3.f sec.)",t2-t1);  
+  Msg::Info("createTopologyFromMeshNew done in %3.f sec.)",t2-t1);
 }
