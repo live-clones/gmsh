@@ -13,6 +13,9 @@ frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_android"
 if [ -f ${getdp_svn}/benchmarks/cleanup.sh ]; then
   cd ${getdp_svn}/benchmarks && ./cleanup.sh
 fi
+if [ -f ${getdp_svn}/benchmarks_private/cleanup.sh ]; then
+  cd ${getdp_svn}/benchmarks_private && ./cleanup.sh
+fi
 
 petsc_lib="$frameworks_dir/petsc"
 slepc_lib="$frameworks_dir/slepc"
