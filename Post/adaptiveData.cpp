@@ -8,6 +8,7 @@
 #include <set>
 #include <algorithm>
 #include "adaptiveData.h"
+#include "PViewDataGModel.h"
 #include "Plugin.h"
 #include "OS.h"
 #include "GmshDefines.h"
@@ -2193,7 +2194,8 @@ template <class T>
 void adaptiveElements<T>::adaptForVTK(double tol,
                                       int numComp,
                                       std::vector<PCoords> &coords,
-                                      std::vector<PValues> &values)
+                                      std::vector<PValues> &values,
+                                      double &minVal, double &maxVal)
 {
   int numVertices = T::allVertices.size();
 
@@ -2238,8 +2240,6 @@ void adaptiveElements<T>::adaptForVTK(double tol,
 
   _interpolVal->mult(val, res);
 
-  double minVal = VAL_INF;
-  double maxVal = -VAL_INF;
   for(int i = 0; i < numVertices; i++){
     minVal = std::min(minVal, res(i));
     maxVal = std::max(maxVal, res(i));
@@ -2450,7 +2450,13 @@ void adaptiveElements<T>::addInViewForVTK(int step,
   // New variables for high order visualiztion through vtk files
   int numNodInsert;
   nodMap<T> myNodMap;
-
+  
+  double minVal;
+  double maxVal;
+  PViewDataGModel* tmpPViewDataGModel = dynamic_cast<PViewDataGModel*>(in);
+  minVal = tmpPViewDataGModel->getMin(step);
+  maxVal = tmpPViewDataGModel->getMax(step);
+  
   for(int ent = 0; ent < in->getNumEntities(step); ent++){
     for(int ele = 0; ele < in->getNumElements(step, ent); ele++){
       if(in->skipElement(step, ent, ele) ||
@@ -2501,7 +2507,7 @@ void adaptiveElements<T>::addInViewForVTK(int step,
           break;
       }
 
-      adaptForVTK(myVTKData.vtkTol, numComp, coords, values);//, out->Min, out->Max, plug);
+      adaptForVTK(myVTKData.vtkTol, numComp, coords, values, minVal, maxVal);// ,plug);
 
       // Inside initial element, after adapt() has been called
 

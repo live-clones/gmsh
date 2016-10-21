@@ -628,7 +628,8 @@ class adaptiveElements {
 
   // Clone of adapt for VTK output files
   void adaptForVTK(double tol, int numComp,
-                   std::vector<PCoords> &coords, std::vector<PValues> &values);
+                   std::vector<PCoords> &coords, std::vector<PValues> &values,
+                   double &minVal, double &maxVal);
 
   // Clone of addInView for VTK output files
   void addInViewForVTK(int step, PViewData *in, VTKData &myVTKData,
