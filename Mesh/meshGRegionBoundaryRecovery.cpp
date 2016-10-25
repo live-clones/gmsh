@@ -89,7 +89,9 @@ static double orient4d(double*, double *, double *, double *, double *,
                        double, double, double, double, double){ return 0.; }
 static int clock(){ return 0; }
 #define clock_t int
+#if !defined(TETLIBRARY)
 #define TETLIBRARY
+#endif
 #include "tetgenBR.h"
 #include "tetgenBR.cxx"
 
