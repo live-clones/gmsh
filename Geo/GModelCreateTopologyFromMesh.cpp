@@ -312,7 +312,7 @@ void createTopologyFromMesh2D ( GModel *gm , int & num) {
     }
   }
 
-  discreteFace OUT (gm, -1000010200);
+  discreteFace *OUT = NULL;
 
   // create inverse dictionary for all other edges
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
@@ -325,7 +325,7 @@ void createTopologyFromMesh2D ( GModel *gm , int & num) {
 	  _topology[*it].insert(ge);
 	else {
 	  _temp[ed].insert(*it);
-	  if (_bnd[ed] == 1)_temp[ed].insert(&OUT);
+	  if (_bnd[ed] == 1)_temp[ed].insert(OUT);
 	}
       }
     }
@@ -351,7 +351,7 @@ void createTopologyFromMesh2D ( GModel *gm , int & num) {
 	_f2e [*it] = de;
 	gm->add (de);
 	for (std::set<GFace*>::iterator it2 = it->stuff.begin(); it2 != it->stuff.end();++it2){
-	  if ((*it2) != &OUT)_topology[*it2].insert(de);
+	  if ((*it2) != OUT)_topology[*it2].insert(de);
 	  //	  else printf("on the boundary\n");
 	}
       }

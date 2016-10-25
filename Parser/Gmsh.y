@@ -53,7 +53,12 @@
 #include "drawContext.h"
 #endif
 
-// Global parser variables
+#if defined(HAVE_POPPLER)
+#include "gmshPopplerWrapper.h"
+#endif
+
+  
+  // Global parser variables
 std::string gmsh_yyname;
 int gmsh_yyerrorstate = 0;
 int gmsh_yyviewindex = 0;
@@ -149,7 +154,7 @@ struct doubleXstring{
 %token tText2D tText3D tInterpolationScheme tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tElseIf tElse tEndIf tExit tAbort
-%token tField tReturn tCall tMacro tShow tHide tGetValue tGetStringValue tGetEnv
+%token tField tReturn tCall tSlide tMacro tShow tHide tGetValue tGetStringValue tGetEnv
 %token tGetString tGetNumber
 %token tHomology tCohomology tBetti tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
@@ -221,6 +226,7 @@ GeoFormatItem :
   | Constraints { return 1; }
   | Coherence   { return 1; }
   | Loop        { return 1; }
+  | Slide       { return 1; }
   | Command     { return 1; }
   | LevelSet    { return 1; }
   | Homology    { return 1; }
@@ -3419,6 +3425,22 @@ Command :
     }
 ;
 
+// S L I D E 
+
+Slide :
+     tSlide '(' '{' RecursiveListOfDouble '}' ',' StringExpr ',' StringExpr ')'  tEND
+     {
+#if defined(HAVE_POPPLER)
+       std::vector<int> is;
+       for(int i = 0; i < List_Nbr($4); i++){
+	 double d;
+	 List_Read($4, i, &d);
+	 is.push_back ((int) d);
+       }
+       gmshPopplerWrapper::instance()->setMacroForPages(is, $7, $9 );
+#endif       
+     }
+     
 // L O O P
 
 Loop :

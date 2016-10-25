@@ -321,6 +321,8 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
       }
       else if (fan){
 
+	printf("fan \n");
+	
 	int fanSize = FANSIZE__;
 	// if the angle is greater than PI, than reverse the sense
 	double alpha1 = atan2(N1[SIDE].y(),N1[SIDE].x());
@@ -448,7 +450,7 @@ static void getEdgesData(GFace *gf,
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*> embedded_edges = gf->embeddedEdges();
   edges.insert(edges.begin(), embedded_edges.begin(),embedded_edges.end());
-
+  
   // iterate on model edges
   std::list<GEdge*>::iterator ite = edges.begin();
   while(ite != edges.end()){
@@ -517,7 +519,6 @@ static void addColumnAtTheEndOfTheBL(GEdge *ge,
                                      BoundaryLayerColumns* _columns,
                                      BoundaryLayerField *blf)
 {
-  //  printf("coucou %d\n",ge->tag());
   if (!blf->isEdgeBL(ge->tag())){
     GVertex *g0 = ge->getBeginVertex();
     GVertex *g1 = ge->getEndVertex();
@@ -543,6 +544,8 @@ static void addColumnAtTheEndOfTheBL(GEdge *ge,
 
 bool buildAdditionalPoints2D(GFace *gf)
 {
+  //  printf("coucou1\n");
+
   BoundaryLayerColumns *_columns = gf->getColumns();
 
   _columns->_normals.clear();
@@ -654,7 +657,7 @@ bool buildAdditionalPoints2D(GFace *gf)
 	  AMIN = temp;
 	}
 	_columns->addFan (*it,e1,e1,true);
-	//       	printf("%g %g --> %g %g\n",N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
+	//	printf("%g %g --> %g %g\n",N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
 	for (int i=-1; i<=fanSize; i++){
 	  double t = (double)(i+1)/ (fanSize+1);
 	  double alpha = t * AMAX + (1.-t)* AMIN;

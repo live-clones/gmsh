@@ -866,13 +866,15 @@ int FlGui::testArrowShortcuts()
     return 1;
   }
 #if defined(HAVE_POPPLER)
-  else if(Fl::test_shortcut(FL_ALT + FL_Up)) {
+  else if(Fl::test_shortcut('u')) {
     gmshPopplerWrapper::setCurrentPageDown();
+    drawContext::global()->draw();
     drawContext::global()->draw();
     return 1;
   }
-  else if(Fl::test_shortcut(FL_ALT + FL_Down)) {
+  else if(Fl::test_shortcut('d')) {
     gmshPopplerWrapper::setCurrentPageUp();
+    drawContext::global()->draw();
     drawContext::global()->draw();
     return 1;
   }

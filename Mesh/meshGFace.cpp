@@ -633,12 +633,16 @@ void BDS2GMSH(BDS_Mesh *m, GFace *gf,
   }
 }
 
-static void addOrRemove(MVertex *v1, MVertex *v2, std::set<MEdge,Less_Edge> & bedges)
+static void addOrRemove(MVertex *v1, MVertex *v2, std::set<MEdge,Less_Edge> & bedges, std::set<MEdge,Less_Edge> &removed)
 {
   MEdge e(v1,v2);
+  if (removed.find(e) != removed.end())return;
   std::set<MEdge,Less_Edge>::iterator it = bedges.find(e);
   if (it == bedges.end())bedges.insert(e);
-  else bedges.erase(it);
+  else {
+    bedges.erase(it);
+    removed.insert(e);
+  }
 }
 
 static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
@@ -647,6 +651,7 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   BoundaryLayerColumns* _columns = gf->getColumns();
 
   std::set<MEdge,Less_Edge> bedges;
+  std::set<MEdge,Less_Edge> removed;
 
   std::vector<MQuadrangle*> blQuads;
   std::vector<MTriangle*> blTris;
@@ -662,7 +667,7 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
       MVertex *v1 = (*ite)->lines[i]->getVertex(0);
       MVertex *v2 = (*ite)->lines[i]->getVertex(1);
       MEdge dv(v1,v2);
-      addOrRemove(v1,v2,bedges);
+      addOrRemove(v1,v2,bedges, removed);
       for (unsigned int SIDE = 0 ; SIDE < _columns->_normals.count(dv); SIDE ++){
         std::vector<MElement*> myCol;
         edgeColumn ec =  _columns->getColumns(v1, v2, SIDE);
@@ -760,17 +765,17 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   //  filterOverlappingElements (blTris,blQuads,_columns->_elemColumns,_columns->_toFirst);
 
   for (unsigned int i = 0; i < blQuads.size();i++){
-    addOrRemove(blQuads[i]->getVertex(0),blQuads[i]->getVertex(1),bedges);
-    addOrRemove(blQuads[i]->getVertex(1),blQuads[i]->getVertex(2),bedges);
-    addOrRemove(blQuads[i]->getVertex(2),blQuads[i]->getVertex(3),bedges);
-    addOrRemove(blQuads[i]->getVertex(3),blQuads[i]->getVertex(0),bedges);
+    addOrRemove(blQuads[i]->getVertex(0),blQuads[i]->getVertex(1),bedges, removed);
+    addOrRemove(blQuads[i]->getVertex(1),blQuads[i]->getVertex(2),bedges, removed);
+    addOrRemove(blQuads[i]->getVertex(2),blQuads[i]->getVertex(3),bedges, removed);
+    addOrRemove(blQuads[i]->getVertex(3),blQuads[i]->getVertex(0),bedges, removed);
     for (int j = 0; j < 4; j++)
       if(blQuads[i]->getVertex(j)->onWhat() == gf)verts.insert(blQuads[i]->getVertex(j));
   }
   for (unsigned int i = 0; i < blTris.size(); i++){
-    addOrRemove(blTris[i]->getVertex(0),blTris[i]->getVertex(1),bedges);
-    addOrRemove(blTris[i]->getVertex(1),blTris[i]->getVertex(2),bedges);
-    addOrRemove(blTris[i]->getVertex(2),blTris[i]->getVertex(0),bedges);
+    addOrRemove(blTris[i]->getVertex(0),blTris[i]->getVertex(1),bedges, removed);
+    addOrRemove(blTris[i]->getVertex(1),blTris[i]->getVertex(2),bedges, removed);
+    addOrRemove(blTris[i]->getVertex(2),blTris[i]->getVertex(0),bedges, removed);
     for (int j = 0; j < 3; j++)
       if(blTris[i]->getVertex(j)->onWhat() == gf)verts.insert(blTris[i]->getVertex(j));
   }
@@ -2042,10 +2047,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       pos[v0] = SPoint3(v0->x(),v0->y(),v0->z());
       v0->setXYZ(p0->u,p0->v,0.0);
     }
-    printf("coucou3\n");
     std::vector<MTriangle*> result;
     delaunayMeshIn2D(v, result, 0);
-    printf("coucou4\n");
     //    delaunayMeshIn2D(v, result, 0, & medgesToRecover);
 
     for(unsigned int i = 0; i < v.size()-4; i++) {
@@ -2053,7 +2056,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       SPoint3 pp = pos[v0];
       v0->setXYZ(pp.x(),pp.y(),pp.z());
     }
-    printf("coucou5\n");
 
     // add the four corners
     for(int ip = 0; ip < 4; ip++){
@@ -2064,7 +2066,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       BDS_GeomEntity *g = m->get_geom(gf->tag(), 2);
       pp->g = g;
     }
-    printf("coucou6\n");
     // add the triangles
     for(unsigned int i = 0; i < result.size(); i++) {
       MVertex *v0 = result[i]->getVertex(0);
@@ -2075,7 +2076,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       BDS_Point *p2  = recoverMapInv[v2];
       m->add_triangle(p0->iD, p1->iD, p2->iD);
     }
-    printf("coucou7\n");
   }
 #endif
 

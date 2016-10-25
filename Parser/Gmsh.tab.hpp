@@ -192,39 +192,40 @@
      tField = 408,
      tReturn = 409,
      tCall = 410,
-     tMacro = 411,
-     tShow = 412,
-     tHide = 413,
-     tGetValue = 414,
-     tGetStringValue = 415,
-     tGetEnv = 416,
-     tGetString = 417,
-     tGetNumber = 418,
-     tHomology = 419,
-     tCohomology = 420,
-     tBetti = 421,
-     tExists = 422,
-     tFileExists = 423,
-     tGMSH_MAJOR_VERSION = 424,
-     tGMSH_MINOR_VERSION = 425,
-     tGMSH_PATCH_VERSION = 426,
-     tGmshExecutableName = 427,
-     tSetPartition = 428,
-     tNameToString = 429,
-     tStringToName = 430,
-     tAFFECTDIVIDE = 431,
-     tAFFECTTIMES = 432,
-     tAFFECTMINUS = 433,
-     tAFFECTPLUS = 434,
-     tOR = 435,
-     tAND = 436,
-     tNOTEQUAL = 437,
-     tEQUAL = 438,
-     tGREATEROREQUAL = 439,
-     tLESSOREQUAL = 440,
-     UNARYPREC = 441,
-     tMINUSMINUS = 442,
-     tPLUSPLUS = 443
+     tSlide = 411,
+     tMacro = 412,
+     tShow = 413,
+     tHide = 414,
+     tGetValue = 415,
+     tGetStringValue = 416,
+     tGetEnv = 417,
+     tGetString = 418,
+     tGetNumber = 419,
+     tHomology = 420,
+     tCohomology = 421,
+     tBetti = 422,
+     tExists = 423,
+     tFileExists = 424,
+     tGMSH_MAJOR_VERSION = 425,
+     tGMSH_MINOR_VERSION = 426,
+     tGMSH_PATCH_VERSION = 427,
+     tGmshExecutableName = 428,
+     tSetPartition = 429,
+     tNameToString = 430,
+     tStringToName = 431,
+     tAFFECTDIVIDE = 432,
+     tAFFECTTIMES = 433,
+     tAFFECTMINUS = 434,
+     tAFFECTPLUS = 435,
+     tOR = 436,
+     tAND = 437,
+     tNOTEQUAL = 438,
+     tEQUAL = 439,
+     tGREATEROREQUAL = 440,
+     tLESSOREQUAL = 441,
+     UNARYPREC = 442,
+     tMINUSMINUS = 443,
+     tPLUSPLUS = 444
    };
 #endif
 /* Tokens.  */
@@ -381,46 +382,47 @@
 #define tField 408
 #define tReturn 409
 #define tCall 410
-#define tMacro 411
-#define tShow 412
-#define tHide 413
-#define tGetValue 414
-#define tGetStringValue 415
-#define tGetEnv 416
-#define tGetString 417
-#define tGetNumber 418
-#define tHomology 419
-#define tCohomology 420
-#define tBetti 421
-#define tExists 422
-#define tFileExists 423
-#define tGMSH_MAJOR_VERSION 424
-#define tGMSH_MINOR_VERSION 425
-#define tGMSH_PATCH_VERSION 426
-#define tGmshExecutableName 427
-#define tSetPartition 428
-#define tNameToString 429
-#define tStringToName 430
-#define tAFFECTDIVIDE 431
-#define tAFFECTTIMES 432
-#define tAFFECTMINUS 433
-#define tAFFECTPLUS 434
-#define tOR 435
-#define tAND 436
-#define tNOTEQUAL 437
-#define tEQUAL 438
-#define tGREATEROREQUAL 439
-#define tLESSOREQUAL 440
-#define UNARYPREC 441
-#define tMINUSMINUS 442
-#define tPLUSPLUS 443
+#define tSlide 411
+#define tMacro 412
+#define tShow 413
+#define tHide 414
+#define tGetValue 415
+#define tGetStringValue 416
+#define tGetEnv 417
+#define tGetString 418
+#define tGetNumber 419
+#define tHomology 420
+#define tCohomology 421
+#define tBetti 422
+#define tExists 423
+#define tFileExists 424
+#define tGMSH_MAJOR_VERSION 425
+#define tGMSH_MINOR_VERSION 426
+#define tGMSH_PATCH_VERSION 427
+#define tGmshExecutableName 428
+#define tSetPartition 429
+#define tNameToString 430
+#define tStringToName 431
+#define tAFFECTDIVIDE 432
+#define tAFFECTTIMES 433
+#define tAFFECTMINUS 434
+#define tAFFECTPLUS 435
+#define tOR 436
+#define tAND 437
+#define tNOTEQUAL 438
+#define tEQUAL 439
+#define tGREATEROREQUAL 440
+#define tLESSOREQUAL 441
+#define UNARYPREC 442
+#define tMINUSMINUS 443
+#define tPLUSPLUS 444
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 110 "Gmsh.y"
+#line 115 "Gmsh.y"
 {
   char *c;
   int i;
@@ -431,7 +433,7 @@ typedef union YYSTYPE
   List_T *l;
 }
 /* Line 1529 of yacc.c.  */
-#line 435 "Gmsh.tab.hpp"
+#line 437 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

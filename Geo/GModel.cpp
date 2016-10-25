@@ -2277,14 +2277,14 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
   makeDiscreteFacesSimplyConnected();
 
   // // TEST !!!!!!!!
-  // if (1)
-  // {
-  //   createTopologyFromMeshNew (this);
-  //   double t2 = Cpu();
-  //   Msg::StatusBar(true, "Done creating topology from mesh (%g s)", t2 - t1);
-  //   return;
-  // }
-
+  if (1)
+    {
+      createTopologyFromMeshNew ();
+      double t2 = Cpu();
+      Msg::StatusBar(true, "Done creating topology from mesh (%g s)", t2 - t1);
+     return;
+    }
+  
 
 
   // create topology for all discrete regions

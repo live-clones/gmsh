@@ -449,6 +449,9 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas, faceContainer &faceVerti
 
 void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas)
 {
+  //  splitIntoQuads = true;
+  //  splitIntoHexas = true;
+  
   Msg::StatusBar(true, "Refining mesh...");
   double t1 = Cpu();
 

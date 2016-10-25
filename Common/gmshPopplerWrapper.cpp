@@ -8,10 +8,16 @@
 #if defined(HAVE_POPPLER)
 
 #include "GmshMessage.h"
+#include "FunctionManager.h"
 #include <poppler/cpp/poppler-image.h>
 #include <poppler/cpp/poppler-page-renderer.h>
+#if defined(HAVE_FLTK)
+#include <FL/Fl_JPEG_Image.H>
+#endif
+
 
 gmshPopplerWrapper *gmshPopplerWrapper::_instance = 0;
+std::map <int, std::pair<GModel*, std::string>  > gmshPopplerWrapper::_macros;
 poppler::document  *gmshPopplerWrapper::_currentDoc = 0;
 #if defined(HAVE_OPENGL)
 std::map<int, GLuint> gmshPopplerWrapper::_pages2textures;
@@ -52,6 +58,7 @@ int gmshPopplerWrapper::getNumPages()
 GLuint gmshPopplerWrapper::getTextureForPage(double xres,
 					     double yres)
 {
+
   int iPage = _currentPage;
   int numPages = getNumPages();
   if(iPage < 0) iPage = 0;
@@ -59,22 +66,31 @@ GLuint gmshPopplerWrapper::getTextureForPage(double xres,
   std::map<int,GLuint>::iterator it = _pages2textures.find(iPage);
   if (it != _pages2textures.end()) return it->second;
   if (!_currentDoc) return 0;
-
+ 
   poppler::page *page = _currentDoc->create_page(iPage);
   poppler::page_renderer pr;
   pr.set_render_hint(poppler::page_renderer::text_antialiasing, true);
   pr.set_render_hint(poppler::page_renderer::antialiasing, true);
   poppler::image im = pr.render_page(page, xres, yres, -1, -1, -1);
-  _w = im.width();
-  _h = im.height();
+  im.save("hop.jpeg", "jpeg");
+  Fl_RGB_Image *img = new Fl_JPEG_Image("hop.jpeg");
+  //  Fl_RGB_Image *img2 = (Fl_RGB_Image*)img->copy(2048, 2048);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, img->w());
   GLuint texture;
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
-  _pages2textures[iPage] = texture;
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, im.width(), im.height(), 0,
-	       GL_RGBA, GL_UNSIGNED_BYTE, im.const_data());
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->w(), img->h(), 0,
+	       (img->d() == 4) ? GL_RGBA : GL_RGB,
+	       GL_UNSIGNED_BYTE, img->array);
+
+  _w = img->w();
+  _h = img->h();
+
+  delete img;
+  //  delete img2;
+  _pages2textures[iPage] = texture;
   return texture;
 }
 #endif

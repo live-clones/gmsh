@@ -2310,6 +2310,11 @@ void BoundaryLayerField::setupFor2d(int iF)
   
   GFace *gf = GModel::current()->getFaceByTag(iF);
   std::list<GEdge*> ed = gf->edges();
+  std::list<GEdge*> embedded_edges = gf->embeddedEdges();
+  ed.insert(ed.begin(), embedded_edges.begin(),embedded_edges.end());
+
+  
+
   //    printf("face %d has %d edges\n",iF,ed.size());
   for (std::list<GEdge*>::iterator it = ed.begin();
 	 it != ed.end() ; ++it){

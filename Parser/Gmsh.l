@@ -277,6 +277,7 @@ StrCmp                  return tStrCmp;
 StrChoice               return tStrChoice;
 Show                    return tShow;
 Symmetry                return tSymmetry;
+Slide                   return tSlide;
 SyncModel               return tSyncModel;
 
 T2                      return tText2D;
