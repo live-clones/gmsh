@@ -447,9 +447,9 @@ static void optimizeConnectedBlobs(const vertElVecMap &vertex2elements,
               toOptimize.size(), toOptimize[i].first.size());
     fflush(stdout);
     OptHOM temp(element2entity, toOptimize[i].first, toOptimize[i].second, p.fixBndNodes);
-    std::ostringstream ossI1;
-    ossI1 << "initial_blob-" << i << ".msh";
-    temp.mesh.writeMSH(ossI1.str().c_str());
+    //std::ostringstream ossI1;
+    //ossI1 << "initial_blob-" << i << ".msh";
+    //temp.mesh.writeMSH(ossI1.str().c_str());
     int success = -1;
     if (temp.mesh.nPC() == 0)
       Msg::Info("Blob %i has no degree of freedom, skipping", i+1);
@@ -470,9 +470,9 @@ static void optimizeConnectedBlobs(const vertElVecMap &vertex2elements,
     p.maxJac = std::max(p.maxJac,maxJac);
     temp.mesh.updateGEntityPositions();
     //if (success <= 0) {
-      std::ostringstream ossI2;
-      ossI2 << "final_ITER_" << i << ".msh";
-      temp.mesh.writeMSH(ossI2.str().c_str());
+      //std::ostringstream ossI2;
+      //ossI2 << "final_ITER_" << i << ".msh";
+      //temp.mesh.writeMSH(ossI2.str().c_str());
     //}
     //#pragma omp critical
     p.SUCCESS = std::min(p.SUCCESS, success);
@@ -540,9 +540,9 @@ static void optimizeOneByOne
                 toOptimize.size());
       fflush(stdout);
       OptHOM *opt = new OptHOM(element2entity, toOptimize, toFix, p.fixBndNodes);
-      std::ostringstream ossI1;
-      ossI1 << "initial_blob-" << iBadEl << ".msh";
-      opt->mesh.writeMSH(ossI1.str().c_str());
+      //std::ostringstream ossI1;
+      //ossI1 << "initial_blob-" << iBadEl << ".msh";
+      //opt->mesh.writeMSH(ossI1.str().c_str());
       success = opt->optimize(p.weight, p.optCADWeight, p.BARRIER_MIN, p.BARRIER_MAX,
                               false, samples, p.itMax, p.optPassMax, p.optCAD, p.optCADDistMax,
                               p.discrTolerance);
