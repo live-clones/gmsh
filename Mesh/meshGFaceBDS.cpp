@@ -755,7 +755,7 @@ void allowAppearanceofEdge (BDS_Point *p1, BDS_Point *p2)
 }
 
 void invalidEdgesPeriodic(BDS_Mesh &m, std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap,
-                          std::set<BDS_Edge*> &toSplit)
+                          std::set<BDS_Edge*, EdgeLessThan> &toSplit)
 {
   // first look for degenerated vertices
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
@@ -817,7 +817,7 @@ void invalidEdgesPeriodic(BDS_Mesh &m, std::map<BDS_Point*, MVertex*,PointLessTh
 int solveInvalidPeriodic(GFace *gf, BDS_Mesh &m,
                          std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap)
 {
-  std::set<BDS_Edge*> toSplit;
+  std::set<BDS_Edge*, EdgeLessThan> toSplit;
   invalidEdgesPeriodic(m, recoverMap, toSplit);
   std::set<BDS_Edge*>::iterator ite = toSplit.begin();
 
