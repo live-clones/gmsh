@@ -51,8 +51,8 @@ class GModel
   int _writeMSH2(const std::string &name, double version=2.2, bool binary=false,
                  bool saveAll=false, bool saveParametric=false,
                  double scalingFactor=1.0, int elementStartNum=0,
-                 int saveSinglePartition=0,
-                 bool multipleView=false);
+                 int saveSinglePartition=0, bool multipleView=false,
+                 bool renumberVertices=true);
   int _writePartitionedMSH2(const std::string &baseName, bool binary=false,
                             bool saveAll=false, bool saveParametric=false,
                             double scalingFactor=1.0);

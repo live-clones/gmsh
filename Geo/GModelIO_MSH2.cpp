@@ -875,7 +875,8 @@ static int getNumElementsMSH(GModel *m, bool saveAll, int saveSinglePartition)
 
 int GModel::_writeMSH2(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
-                       int elementStartNum, int saveSinglePartition, bool multipleView)
+                       int elementStartNum, int saveSinglePartition, bool multipleView,
+                       bool renumberVertices)
 {
   FILE *fp;
   if(multipleView)
@@ -898,7 +899,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
 
   // get the number of vertices and index the vertices in a continuous
   // sequence
-  int numVertices = indexMeshVertices(saveAll, saveSinglePartition);
+  int numVertices = indexMeshVertices(saveAll, saveSinglePartition, renumberVertices);
 
   // get the number of elements we need to save
   int numElements = getNumElementsMSH(this, saveAll, saveSinglePartition);
@@ -1103,7 +1104,7 @@ int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
     numElements = getNumElementsMSH(this, saveAll, partition);
     Msg::Info("Writing partition %d in file '%s'", partition, sstream.str().c_str());
     _writeMSH2(sstream.str(), 2.2, binary, saveAll, saveParametric,
-               scalingFactor, startNum, partition);
+               scalingFactor, startNum, partition, false, false); // NO RENUMBERING!
     startNum += numElements; // update for next iteration in the loop
   }
 

@@ -445,7 +445,7 @@ int GModel::readMSH(const std::string &name)
   }
 
 
-  
+
   // store the elements in their associated elementary entity. If the
   // entity does not exist, create a new (discrete) one.
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
@@ -459,7 +459,7 @@ int GModel::readMSH(const std::string &name)
     _storeVerticesInEntities(_vertexVectorCache);
   else
     _storeVerticesInEntities(_vertexMapCache);
-  
+
   _createGeometryOfDiscreteEntities() ;
 
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
@@ -564,7 +564,7 @@ static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge, std::vector<T
   }
 }
 
-#warning periodic nodes are not correct in case the nodes are renumbered
+//#warning periodic nodes are not correct in case the nodes are renumbered
 
 void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities)
 {
@@ -591,7 +591,7 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities)
            it != g_slave->correspondingVertices.end(); it++){
         MVertex *v1 = it->first;
         MVertex *v2 = it->second;
-        fprintf(fp, "%d %d\n", v1->getNum(), v2->getNum());
+        fprintf(fp, "%d %d\n", v1->getIndex(), v2->getIndex());
       }
     }
   }

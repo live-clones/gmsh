@@ -1169,8 +1169,12 @@ int GModel::indexMeshVertices(bool all, int singlePartition, bool renumber)
         else
           v->setIndex(v->getNum());
       }
-      else if(v->getIndex() == -2)
-        index++;
+      else if(v->getIndex() == -2){
+        if(renumber)
+          index++;
+        else
+          v->setIndex(v->getNum());
+      }
     }
   }
 
@@ -2284,7 +2288,7 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
       Msg::StatusBar(true, "Done creating topology from mesh (%g s)", t2 - t1);
      return;
     }
-  
+
 
 
   // create topology for all discrete regions
