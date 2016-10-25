@@ -130,7 +130,6 @@ void OCCFace::setup()
   //          (*it)->isSeam(this));
   // }
 
-  /*
   for(exp2.Init(s, TopAbs_VERTEX); exp2.More(); exp2.Next()){
     TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
     GVertex *v = model()->getOCCInternals()->getOCCVertexByNativePtr(model(), vertex);
@@ -142,7 +141,6 @@ void OCCFace::setup()
       embedded_vertices.push_back(v);
     }
   }
-  */
 }
 
 SBoundingBox3d OCCFace::bounds() const
