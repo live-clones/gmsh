@@ -54,13 +54,25 @@ void OCCRegion::setup()
     TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
     GEdge *e = model()->getOCCInternals()->getOCCEdgeByNativePtr(model(), edge);
     if (!e){
-      Msg::Error("Unknown edge in face %d", tag());
+      Msg::Error("Unknown edge in region %d", tag());
     }
     else if (edge.Orientation() == TopAbs_INTERNAL){
       Msg::Info("Adding embedded edge %d", e->tag());
       embedded_edges.push_back(e);
       //OCCEdge *occe = (OCCEdge*)e;
       //occe->setTrimmed(this);
+    }
+  }
+
+  for (exp3.Init(s, TopAbs_VERTEX); exp3.More(); exp3.Next()){
+    TopoDS_Vertex vertex = TopoDS::Vertex(exp3.Current());
+    GVertex *v = model()->getOCCInternals()->getOCCVertexByNativePtr(model(), vertex);
+    if (!v){
+      Msg::Error("Unknown vertex in region %d", tag());
+    }
+    else if (vertex.Orientation() == TopAbs_INTERNAL){
+      Msg::Info("Adding embedded vertex %d", v->tag());
+      embedded_vertices.push_back(v);
     }
   }
 
