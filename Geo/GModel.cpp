@@ -2281,7 +2281,7 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
   makeDiscreteFacesSimplyConnected();
 
   // // TEST !!!!!!!!
-  if (1)
+  if (0)
     {
       createTopologyFromMeshNew ();
       double t2 = Cpu();
