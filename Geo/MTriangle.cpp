@@ -277,8 +277,6 @@ void MTriangle::reorient(int rot,bool swap) {
 
 void MTriangle6::reorient(int rot, bool swap) {
   
-  Msg::Info("Reorienting triangle 6 with rot %d and swap %d",
-            rot,swap ? 1:0);
   if (rot == 0 && !swap) return;
 
   MTriangle::reorient(rot,swap);

@@ -899,6 +899,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
 
   // get the number of vertices and index the vertices in a continuous
   // sequence
+  
   int numVertices = indexMeshVertices(saveAll, saveSinglePartition, renumberVertices);
 
   // get the number of elements we need to save

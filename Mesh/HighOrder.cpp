@@ -1325,6 +1325,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
     if (src != NULL && src != tgt) {
 
+      std::map<MVertex*,MVertex*> &v2v = tgt->correspondingVertices;
       std::map<MVertex*,MVertex*> &p2p = tgt->correspondingHOPoints;
       p2p.clear();
 
@@ -1350,8 +1351,6 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
         for (int iVtx=0;iVtx<2;iVtx++) {
           MVertex* vtx = tgtLine->getVertex(iVtx);
-          std::map<MVertex*,MVertex*>& v2v =
-            vtx->onWhat()->correspondingVertices;
           std::map<MVertex*,MVertex*>::iterator tIter = v2v.find(vtx);
           if (tIter == v2v.end()) {
             Msg::Error("Cannot find periodic counterpart of vertex %d"
@@ -1389,6 +1388,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
       Msg::Info("Constructing high order periodicity for face connection %d - %d",
                 tgt->tag(),src->tag());
 
+      std::map<MVertex*,MVertex*> &v2v = tgt->correspondingVertices;
       std::map<MVertex*,MVertex*> &p2p = tgt->correspondingHOPoints;
       p2p.clear();
 
@@ -1417,10 +1417,18 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         std::vector<MVertex*> vtcs;
         for (int iVtx=0;iVtx<nbVtcs;iVtx++) {
           MVertex* vtx = tgtElmt->getVertex(iVtx);
-          GEntity* ge = vtx->onWhat();
-          if (ge->meshMaster() == ge) throw;
-          std::map<MVertex*,MVertex*>& v2v = ge->correspondingVertices;
-          vtcs.push_back(v2v[vtx]);
+
+          std::map<MVertex*,MVertex*>::iterator tIter = v2v.find(vtx);
+          if (tIter == v2v.end()) {
+            Msg::Error("Cannot find periodic counterpart of vertex %d"
+                       " of surface %d on surface %d",
+                       vtx->getNum(),tgt->tag(),src->tag());
+          }
+          else vtcs.push_back(tIter->second);
+          // GEntity* ge = vtx->onWhat();
+          // if (ge->meshMaster() == ge) throw;
+          // std::map<MVertex*,MVertex*>& v2v = ge->correspondingVertices;
+          //vtcs.push_back(v2v[vtx]);
         }
 
         std::map<MFace,MElement*>::iterator srcIter = srcFaces.find(MFace(vtcs));
