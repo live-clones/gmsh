@@ -47,10 +47,6 @@ class MElement
   MElement(int num=0, int part=0);
   virtual ~MElement(){}
 
-  // Create an element from tag
-  static MElement* createElement(int tag, const std::vector<MVertex*>&,
-                                 int num=0, int part=0);
-
   // set/get the tolerance for isInside() test
   static void setTolerance(const double tol);
   static double getTolerance();

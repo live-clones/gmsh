@@ -117,6 +117,7 @@ namespace {
       for (int i = 0; i < numEdges; ++i) {
         edges[i]->print();
       }
+      delete[] v;
       return false;
     }
     for (int i = 2; i < numEdges; ++i) {
@@ -129,6 +130,7 @@ namespace {
         for (int i = 0; i < numEdges; ++i) {
           edges[i]->print();
         }
+        delete[] v;
         return false;
       }
     }
@@ -138,6 +140,7 @@ namespace {
       for (int i = 0; i < numEdges; ++i) {
         edges[i]->print();
       }
+      delete[] v;
       return false;
     }
      delete[] v;
@@ -4443,6 +4446,8 @@ double Rec2DVertex::/*vertQual_*/getGainMerge(const Rec2DVertex *rv,
     sumQualEdge -= Recombine2D::getWeightEdgeBase() * edges[i]->getQual();
   }
 
+  delete[] numAngle;
+  delete[] qualAngle;
   return Rec2DVertex::getQual(sumQualAngle/sumAngle,
                               sumQualEdge/sumEdge, numElem)
          - getQual() - rv->getQual()                        ;
@@ -4484,6 +4489,8 @@ double Rec2DVertex::/*vertEdgeQual_*/getGainMerge(const Rec2DVertex *rv) const
 
   int numElem = _elements.size() + rv->_elements.size() - 4;
   ans += getQualDegree(numElem) + sumQualAngle / sumAngle;
+  delete[] qualAngle;
+  delete[] angleWeight;
   return ans;
 }
 
