@@ -16,7 +16,6 @@
 #include "PView.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "MetricBasis.h"
 #include <sstream>
 #include <fstream>
 #include "qualityMeasuresJacobian.h"

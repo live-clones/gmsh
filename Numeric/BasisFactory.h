@@ -8,7 +8,6 @@
 
 #include <map>
 class nodalBasis;
-class MetricBasis;
 class GradientBasis;
 class bezierBasis;
 class CondNumBasis;
@@ -19,7 +18,6 @@ class BasisFactory
 {
  private:
   static std::map<int, nodalBasis*> fs;
-  static std::map<int, MetricBasis*> ms;
   static std::map<int, CondNumBasis*> cs;
   static std::map<FuncSpaceData, JacobianBasis*> js;
   static std::map<FuncSpaceData, bezierBasis*> bs;
@@ -37,9 +35,6 @@ class BasisFactory
   static const JacobianBasis* getJacobianBasis(FuncSpaceData);
   static const JacobianBasis* getJacobianBasis(int tag, int order);
   static const JacobianBasis* getJacobianBasis(int tag);
-
-  // Metric
-  static const MetricBasis* getMetricBasis(int tag);
 
   // Condition number
   static const CondNumBasis* getCondNumBasis(int tag, int cnOrder = -1);

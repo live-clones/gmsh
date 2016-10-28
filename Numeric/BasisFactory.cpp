@@ -9,14 +9,12 @@
 #include "pyramidalBasis.h"
 #include "bezierBasis.h"
 #include "miniBasis.h"
-#include "MetricBasis.h"
 #include "CondNumBasis.h"
 #include "JacobianBasis.h"
 #include <map>
 #include <cstddef>
 
 std::map<int, nodalBasis*> BasisFactory::fs;
-std::map<int, MetricBasis*> BasisFactory::ms;
 std::map<int, CondNumBasis*> BasisFactory::cs;
 std::map<FuncSpaceData, JacobianBasis*> BasisFactory::js;
 std::map<FuncSpaceData, bezierBasis*> BasisFactory::bs;
@@ -103,16 +101,6 @@ const JacobianBasis* BasisFactory::getJacobianBasis(int tag)
     return getJacobianBasis(FuncSpaceData(true, tag, false, order+2, order));
 }
 
-const MetricBasis* BasisFactory::getMetricBasis(int tag)
-{
-  std::map<int, MetricBasis*>::const_iterator it = ms.find(tag);
-  if (it != ms.end()) return it->second;
-
-  MetricBasis* M = new MetricBasis(tag);
-  ms.insert(std::make_pair(tag, M));
-  return M;
-}
-
 const CondNumBasis* BasisFactory::getCondNumBasis(int tag, int cnOrder)
 {
   std::map<int, CondNumBasis*>::const_iterator it = cs.find(tag);
@@ -174,13 +162,6 @@ void BasisFactory::clearAll()
     itF++;
   }
   fs.clear();
-
-  std::map<int, MetricBasis*>::iterator itM = ms.begin();
-  while (itM != ms.end()) {
-    delete itM->second;
-    itM++;
-  }
-  ms.clear();
 
   std::map<FuncSpaceData, JacobianBasis*>::iterator itJ = js.begin();
   while (itJ != js.end()) {

@@ -18,7 +18,6 @@ set(SRC
 	legendrePolynomials.cpp
     bezierBasis.cpp
     JacobianBasis.cpp
-    MetricBasis.cpp
     CondNumBasis.cpp
     pointsGenerators.cpp
   ElementType.cpp

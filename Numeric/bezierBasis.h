@@ -21,7 +21,6 @@ class bezierBasis {
   const FuncSpaceData _data;
   bezierBasisRaiser *_raiser;
 
-  friend class MetricBasis;
   friend class bezierBasisRaiser;
   fullMatrix<double> _exponents;
 

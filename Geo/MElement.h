@@ -18,7 +18,6 @@
 #include "FuncSpaceData.h"
 #include "nodalBasis.h"
 #include "polynomialBasis.h"
-#include "MetricBasis.h"
 #include "GaussIntegration.h"
 
 class GModel;
@@ -227,8 +226,6 @@ class MElement
   virtual void scaledJacRange(double &jmin, double &jmax, GEntity *ge = 0) const;
   virtual void idealJacRange(double &jmin, double &jmax, GEntity *ge = 0);
   virtual void signedInvCondNumRange(double &iCNMin, double &iCNMax, GEntity *ge = 0);
-  virtual double metricShapeMeasure();
-  virtual double metricShapeMeasure2();
 
   // get the radius of the inscribed circle/sphere if it exists,
   // otherwise get the minimum radius of all the circles/spheres
