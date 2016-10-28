@@ -218,7 +218,7 @@ class MElement
     signedInvCondNumRange(sICNMin, sICNMax);
     return sICNMin;
   }
-  double minAnisotropyMeasure(bool knownValid = false, bool reversedOk = false);
+  double minIsotropyMeasure(bool knownValid = false, bool reversedOk = false);
   double minScaledJacobian(bool knownValid = false, bool reversedOk = false);
   double specialQuality();
   double specialQuality2();

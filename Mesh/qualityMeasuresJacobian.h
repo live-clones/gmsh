@@ -20,10 +20,6 @@ void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
 double minScaledJacobian(MElement *el,
                          bool knownValid = false,
                          bool reversedOk = false);
-double minAnisotropyMeasure(MElement *el,
-                            bool knownValid = false,
-                            bool reversedOk = false,
-                            int n = 5); //n is fordebug
 double minIsotropyMeasure(MElement *el,
                           bool knownValid = false,
                           bool reversedOk = false);
@@ -108,79 +104,6 @@ private:
   void _getCoeffLengthVectors(fullMatrix<double> &, bool corners = false) const;
   void _getCoeffScaledJacobian(const fullMatrix<double> &coeffLengthVectors,
                                fullMatrix<double> &coeffScaledJacobian) const;
-};
-
-class _CoeffDataAnisotropy: public _CoeffData
-{
-private:
-  const fullVector<double> _coeffsJacDet;
-  const fullMatrix<double> _coeffsMetric;
-  const bezierBasis *_bfsDet, *_bfsMet;
-  MElement *_elForDebug;
-  int _numForDebug;
-  static bool hasError;//fordebug
-  static std::fstream file;//fordebug
-
-public:
-  static std::vector<double> mytimes;//fordebug
-  static std::vector<int> mynumbers;//fordebug
-  static MElement *currentElement;//fordebug
-  static _CoeffDataAnisotropy *current;//fordebug
-  _CoeffDataAnisotropy(fullVector<double> &det,
-                       fullMatrix<double> &metric,
-                       const bezierBasis *bfsDet,
-                       const bezierBasis *bfsMet,
-                       int depth, MElement *,
-                       int num = 0);
-  ~_CoeffDataAnisotropy() {}
-
-  bool boundsOk(double minL, double maxL) const;
-  void getSubCoeff(std::vector<_CoeffData*>&) const;
-  int getNumMeasure() const {return 3;}//fordebug
-
-  static int metricOrder(MElement *el);
-  static void fillMetricCoeff(const GradientBasis*,
-                              const fullMatrix<double> &nodes,
-                              fullMatrix<double> &coeff,
-                              int dim, bool ideal);
-
-  static bool noMoreComputationPlease() {return hasError;}//fordebug
-  static void youReceivedAnError()
-  {
-    current->statsForMatlab(currentElement, 20);
-    hasError = true;
-  }//fordebug
-
-private:
-  void _computeAtCorner(double &min, double &max) const;
-  double _computeLowerBound() const;
-
-  double _computeLowerBoundA() const;
-  double _computeLowerBoundK() const;
-  void _computeBoundingCurve(double &beta, double gamma, bool lowerBound) const;
-
-  static bool _moveInsideDomain(double &a, double &K, bool bottomleftCorner);
-  static bool _computePseudoDerivatives(double a, double K,
-                                        double &dRda, double &dRdK);
-  static bool _computeDerivatives(double a, double K,
-                                  double &dRda, double &dRdK,
-                                  double &dRdaa, double &dRdaK, double &dRdKK);
-  static int _intersectionCurveLeftCorner(double beta, double gamma,
-                                          double &mina, double &minK);
-  static double _computeAbscissaMinR(double aStart, double K);
-
-  static double _R2Dsafe(double q, double p);
-  static double _R2Dsafe(double a);
-  static double _R3Dsafe(double q, double p, double J);
-  static double _R3Dsafe(double a, double K);
-  static double _wSafe(double a, double K);
-  static inline double _w(double a, double K) {
-    return .5 * (K + (3-a*a)*a);
-  }
-
-public:
-  void interpolateForMatlab(const fullMatrix<double> &nodes) const;//fordebug
-  void statsForMatlab(MElement *el, int) const;//fordebug
 };
 
 class _CoeffDataIsotropy: public _CoeffData

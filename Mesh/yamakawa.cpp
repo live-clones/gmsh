@@ -5611,12 +5611,12 @@ void PostOp::split_pyramids(GRegion* gr){
             tempC3->getVolumeSign(),
             tempC4->getVolumeSign());
       }
-      double qA = tempA1->minAnisotropyMeasure() + tempA2->minAnisotropyMeasure() +
-                  tempA3->minAnisotropyMeasure() + tempA4->minAnisotropyMeasure();
-      double qB = tempB1->minAnisotropyMeasure() + tempB2->minAnisotropyMeasure() +
-                  tempB3->minAnisotropyMeasure() + tempB4->minAnisotropyMeasure();
-      double qC = tempC1->minAnisotropyMeasure() + tempC2->minAnisotropyMeasure() +
-                  tempC3->minAnisotropyMeasure() + tempC4->minAnisotropyMeasure();
+      double qA = tempA1->minIsotropyMeasure() + tempA2->minIsotropyMeasure() +
+                  tempA3->minIsotropyMeasure() + tempA4->minIsotropyMeasure();
+      double qB = tempB1->minIsotropyMeasure() + tempB2->minIsotropyMeasure() +
+                  tempB3->minIsotropyMeasure() + tempB4->minIsotropyMeasure();
+      double qC = tempC1->minIsotropyMeasure() + tempC2->minIsotropyMeasure() +
+                  tempC3->minIsotropyMeasure() + tempC4->minIsotropyMeasure();
       if (qA > qB && qA > qC) {
         Msg::Info("A");
         gr->addTetrahedron(tempA1);

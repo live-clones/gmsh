@@ -235,10 +235,10 @@ double MElement::maxDistToStraight() const
   return maxdx;
 }
 
-double MElement::minAnisotropyMeasure(bool knownValid, bool reversedOK)
+double MElement::minIsotropyMeasure(bool knownValid, bool reversedOK)
 {
 #if defined(HAVE_MESH)
-  return jacobianBasedQuality::minAnisotropyMeasure(this, knownValid, reversedOK);
+  return jacobianBasedQuality::minIsotropyMeasure(this, knownValid, reversedOK);
 #else
   return 0.;
 #endif
