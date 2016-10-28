@@ -152,8 +152,12 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm)
       if (completePer) s->correspondingVertices[mv1] = mv2;
     }
     if (!completePer) {
-      if (!s) Msg::Warning("Could not find periodic slave entity %d of dimension %d",slave,dim);
-      if (!m) Msg::Warning("Could not find periodic master entity %d of dimension %d",master,dim);
+      if (!s)
+        Msg::Info("Could not find periodic slave entity %d of dimension %d",
+                     slave, dim);
+      if (!m)
+        Msg::Info("Could not find periodic master entity %d of dimension %d",
+                  master, dim);
     }
   }
 }
