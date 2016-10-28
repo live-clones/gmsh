@@ -192,7 +192,7 @@ void OptHomPeriodicity::_copyBackMasterVertices()
         }
         break;
       }
-    case 3:
+    case 1:
       {
         GEdge *master = dynamic_cast<GEdge*>(it->first);
         GEdge *slave = dynamic_cast<GEdge*>(it->second);
