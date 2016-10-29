@@ -401,7 +401,7 @@ public:
   MVertex *v[4];
   MVertex *getVertex (int i) const {return v[i];}
   MVertex *getSortedVertex (int i) const {return v[i];}
-  int getNumVertices() const {return v[4]? 4:3;}
+  int getNumVertices() const {return v[3]? 4:3;}
   inline bool operator == (const topoFace &f) const {
     if (v[0] != f.v[0])return false;
     if (v[1] != f.v[1])return false;
