@@ -6,8 +6,9 @@
 ########   edit src/system/err.c to remove the exception throwing code
 ########   edit android_real/lib/petsc/conf/petscvariables:
 ########         remove the dylib stuff
-########         edit SL_LINKER_FUNCTION
-########         add "-Wl,--unresolved-symbols=ignore-all" to the linker flags to
+########         edit SL_LINKER_FUNCTION: SL_LINKER_FUNCTION = -shared
+########         edit SONAME_FUNCTION: SONAME_FUNCTION=$(1).$(2).so
+########         add "-Wl,--unresolved-symbols=ignore-all" to the PCC_LINKER_FLAGS to
 ########           fix undefined ref to 'main'
 
 if __name__ == '__main__':
@@ -53,6 +54,7 @@ if __name__ == '__main__':
     '--with-fc=0',
     '--with-lapack-lib=' + externallibs + 'libf2clapack.so',
     '--with-mpi=0',
+    '--download-suitesparse=yes',
     '--with-shared-libraries=1',
     '--with-x=0',
     '-I' + ndkroot + 'sources/cxx-stl/gnu-libstdc++/4.6/include/',

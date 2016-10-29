@@ -5,8 +5,9 @@ if __name__ == '__main__':
   sys.path.insert(0, os.path.abspath('config'))
   import configure
   configure_options = [
-    '--CFLAGS=-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=7.0 -arch armv7 -arch armv7s -arch arm64 -fembed-bitcode -DPETSC_BLASLAPACK_UNDERSCORE',
-    '--CXXFLAGS=-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=7.0 -arch armv7 -arch armv7s -arch arm64 -fembed-bitcode -DPETSC_BLASLAPACK_UNDERSCORE',
+    '--CFLAGS=-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=8.0 -arch armv7 -arch armv7s -arch arm64 -fembed-bitcode -DPETSC_BLASLAPACK_UNDERSCORE',
+    '--CXXFLAGS=-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=8.0 -arch armv7 -arch armv7s -arch arm64 -fembed-bitcode -DPETSC_BLASLAPACK_UNDERSCORE',
+    '--download-suitesparse=yes',
     '--known-bits-per-byte=8',
     '--known-endian=little',
     '--known-level1-dcache-assoc=1',
