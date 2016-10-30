@@ -1,4 +1,4 @@
-2.14.1 (October 29, 2016): fixed regression in periodic meshes; small bug fixes
+2.14.1 (October 30, 2016): fixed regression in periodic meshes; small bug fixes
 and code cleanups.
 
 2.14.0 (October 9, 2016): new Tochnog file format export; added ability to
