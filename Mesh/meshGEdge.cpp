@@ -89,7 +89,7 @@ static double F_LcB(GEdge *ge, double t)
   double lc = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
 
   if (blf){
-    double lc2 = (*blf)( p.x(), p.y(), p.z() , ge);    
+    double lc2 = (*blf)( p.x(), p.y(), p.z() , ge);
     //    printf("p %g %g lc %g\n",p.x(),p.y(),lc2);
     lc = std::min(lc, lc2);
   }
@@ -105,7 +105,7 @@ static double F_Lc(GEdge *ge, double t)
   Field *bl_field = fields->get(fields->getBoundaryLayerField());
   blf = dynamic_cast<BoundaryLayerField*> (bl_field);
 #endif
-  
+
   GPoint p = ge->point(t);
   double lc_here;
 
@@ -121,7 +121,7 @@ static double F_Lc(GEdge *ge, double t)
     lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
 
   if (blf){
-    double lc2 = (*blf)( p.x(), p.y(), p.z() , ge);    
+    double lc2 = (*blf)( p.x(), p.y(), p.z() , ge);
     //    printf("p %g %g lc %g\n",p.x(),p.y(),lc2);
     lc_here = std::min(lc_here, lc2);
   }
@@ -315,16 +315,16 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
   double to_u_min = to_u_bounds.low();
 
   // include begin and end point to avoid conflicts when realigning
-  
+
   MVertex* vt0 = to->getBeginVertex()->mesh_vertices[0];
   MVertex* vt1 = to->getEndVertex()->mesh_vertices[0];
-  
+
   MVertex* vs0 = from->getBeginVertex()->mesh_vertices[0];
   MVertex* vs1 = from->getEndVertex()->mesh_vertices[0];
-  
+
   to->correspondingVertices[vt0] = direction > 0 ? vs0 : vs1;
   to->correspondingVertices[vt1] = direction > 0 ? vs1 : vs0;
-  
+
   for(unsigned int i = 0; i < from->mesh_vertices.size(); i++){
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
     MVertex *v = from->mesh_vertices[index];
@@ -379,7 +379,8 @@ static int increaseN (int N)
 
 // ensure not to have points that are too close to each other.
 // can be caused by a coarse 1D mesh or by a noisy curve
-static void filterPoints (GEdge*ge, int nMinimumPoints) {
+static void filterPoints (GEdge*ge, int nMinimumPoints)
+{
   if (ge->mesh_vertices.empty())return;
   if(ge->meshAttributes.method == MESH_TRANSFINITE)return;
   //if (ge->mesh_vertices.size() <=3)return;
@@ -396,7 +397,10 @@ static void filterPoints (GEdge*ge, int nMinimumPoints) {
   std::vector<std::pair<double, MVertex*> > lengths;
   for (unsigned int i=0;i<ge->mesh_vertices.size();i++){
     MEdgeVertex *v = dynamic_cast<MEdgeVertex*> (ge->mesh_vertices[i]);
-    if (!v)Msg::Fatal("in 1D mesh");
+    if (!v){
+      Msg::Error("in 1D mesh filterPoints");
+      return;
+    }
     double d = distance (v,v0);
     double t;
     v->getParameter(0,t);
@@ -406,7 +410,7 @@ static void filterPoints (GEdge*ge, int nMinimumPoints) {
       t=0.5*(t+t0);
     }
     double lc = F_LcB(ge, t);
-    //    double lc = v->getLc();
+    // double lc = v->getLc();
     if (d < lc * .3) {
       lengths.push_back(std::make_pair(lc/d,v));
     }
@@ -419,20 +423,22 @@ static void filterPoints (GEdge*ge, int nMinimumPoints) {
     while (last %2 != 0)last--;
   }
   /*
-	if (CTX::instance()->mesh.algoRecombine == 2){
-	if (last < 4)last = 0;
-	while (last %4 != 0)last--;
-	}
-	else {
-	while (last %2 != 0)last--;
-	}
-	}
+    if (CTX::instance()->mesh.algoRecombine == 2){
+    if (last < 4)last = 0;
+      while (last %4 != 0)last--;
+      }
+    else {
+      while (last %2 != 0)last--;
+      }
+    }
   */
 
-  bool filteringObservesMinimumN = ((ge->mesh_vertices.size() - last) >= nMinimumPoints);
+  bool filteringObservesMinimumN = (((int)ge->mesh_vertices.size() - last) >= nMinimumPoints);
   if (filteringObservesMinimumN){
-    for (int i=0;i<last;i++){
-      std::vector<MVertex*>::iterator it = std::find(ge->mesh_vertices.begin(),ge->mesh_vertices.end(),lengths[i].second);
+    for (int i = 0; i < last; i++){
+      std::vector<MVertex*>::iterator it = std::find(ge->mesh_vertices.begin(),
+                                                     ge->mesh_vertices.end(),
+                                                     lengths[i].second);
       ge->mesh_vertices.erase(it);
       delete lengths[i].second;
     }

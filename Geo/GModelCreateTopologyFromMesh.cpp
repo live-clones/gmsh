@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@onelab.info>.
+
 #include <stack>
 #include <set>
 #include <map>
@@ -78,7 +83,7 @@ void createTopologyFromMesh1D ( GModel *gm , int &num) {
 
 
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
-    for (int i=0;i<(*it)->lines.size();i++){
+    for (unsigned int i=0;i<(*it)->lines.size();i++){
       MLine *e = (*it)->lines[i];
       for (int j=0;j<2;j++){
 	MVertex* v = e->getVertex(j);
@@ -234,7 +239,7 @@ std::vector<GEdge*> ensureSimplyConnectedEdge ( GEdge *ge ) {
 
   _all.push_back(ge);
 
-  for (int i = 0; i < ge->lines.size(); i++){
+  for (unsigned int i = 0; i < ge->lines.size(); i++){
     _lines.insert(ge->lines[i]);
     for (int j=0;j<2;j++){
       std::map<MVertex*, std::pair<MLine*,MLine*> >::iterator it = _conn.find(ge->lines[i]->getVertex(j));
@@ -294,7 +299,7 @@ void createTopologyFromMesh2D ( GModel *gm , int & num) {
 
   // create an inverse dictionnary for existing edges
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
-    for (int i = 0; i < (*it)->lines.size(); i++)_existingEdges[(*it)->lines[i]->getEdge(0)] = *it;
+    for (unsigned int i = 0; i < (*it)->lines.size(); i++)_existingEdges[(*it)->lines[i]->getEdge(0)] = *it;
   }
 
   //  printf("%d mesh edges are already classified\n",_existingEdges.size());
@@ -477,6 +482,8 @@ public:
       }
     }
     found = false;
+    // bad design of this routine
+    return v[0].second;
   }
 
 };
@@ -497,6 +504,9 @@ inline MYFACE builder (MElement *e, int num){
 		     e->getVertex (2));
   }
   Msg::Fatal("JF : finish the code of createtopologyfrommesh");
+  return topoFace (e->getVertex (0),
+                   e->getVertex (1),
+                   e->getVertex (2));
 #endif
 }
 
