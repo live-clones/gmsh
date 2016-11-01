@@ -158,7 +158,7 @@ void ensureManifoldFace ( GFace *gf) {
 
   std::set<MElement*> _allFaces;
 
-  for (int i=0;i<gf->getNumMeshElements();i++){
+  for (unsigned int i=0;i<gf->getNumMeshElements();i++){
     MElement *e = gf->getMeshElement(i);
     _allFaces.insert(e);
     for (int j=0;j<e->getNumEdges();j++){
@@ -306,7 +306,7 @@ void createTopologyFromMesh2D ( GModel *gm , int & num) {
 
   std::map<MEdge,int,Less_Edge> _bnd;
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
-    for (int i=0;i<(*it)->getNumMeshElements();i++){
+    for (unsigned int i=0;i<(*it)->getNumMeshElements();i++){
       MElement *e = (*it)->getMeshElement(i);
       for (int j=0;j<e->getNumEdges();j++){
 	MEdge ed = e->getEdge(j);
@@ -321,7 +321,7 @@ void createTopologyFromMesh2D ( GModel *gm , int & num) {
 
   // create inverse dictionary for all other edges
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
-    for (int i=0;i<(*it)->getNumMeshElements();i++){
+    for (unsigned int i=0;i<(*it)->getNumMeshElements();i++){
       MElement *e = (*it)->getMeshElement(i);
       for (int j=0;j<e->getNumEdges();j++){
 	MEdge ed = e->getEdge(j);
@@ -541,7 +541,7 @@ void createTopologyFromMesh3D ( GModel *gm , int &num ) {
   // --------------------------------------------------------------------------------------------------
 
   for(GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); it++) {
-    for (int i=0;i<(*it)->getNumMeshElements();i++){
+    for (unsigned int i=0;i<(*it)->getNumMeshElements();i++){
       MElement *e = (*it)->getMeshElement(i);
       for (int j=0;j<e->getNumFaces();j++){
 	MYFACE f = builder(e,j);
