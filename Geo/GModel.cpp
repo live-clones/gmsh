@@ -1170,10 +1170,7 @@ int GModel::indexMeshVertices(bool all, int singlePartition, bool renumber)
           v->setIndex(v->getNum());
       }
       else if(v->getIndex() == -2){
-        if(renumber)
-          index++;
-        else
-          v->setIndex(v->getNum());
+        index++;
       }
     }
   }

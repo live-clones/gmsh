@@ -29,7 +29,7 @@
 
 #define FAST_ELEMENTS 1
 
-extern void writeMSHPeriodicNodes (FILE *fp, std::vector<GEntity*> &entities);
+extern void writeMSHPeriodicNodes (FILE *fp, std::vector<GEntity*> &entities, bool renumber);
 
 extern void readMSHPeriodicNodes(FILE *fp, GModel *gm);
 
@@ -899,7 +899,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
 
   // get the number of vertices and index the vertices in a continuous
   // sequence
-  
+
   int numVertices = indexMeshVertices(saveAll, saveSinglePartition, renumberVertices);
 
   // get the number of elements we need to save
@@ -1082,7 +1082,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
     fprintf(fp, "$ENDELM\n");
   }
 
-  writeMSHPeriodicNodes (fp,entities);
+  writeMSHPeriodicNodes (fp, entities, renumberVertices);
 
   fclose(fp);
 

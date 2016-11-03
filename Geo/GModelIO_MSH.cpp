@@ -568,9 +568,7 @@ static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge, std::vector<T
   }
 }
 
-//#warning periodic nodes are not correct in case the nodes are renumbered
-
-void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities)
+void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities, bool renumber)
 {
   int count = 0;
   for (unsigned int i = 0; i < entities.size(); i++)
@@ -595,7 +593,10 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities)
            it != g_slave->correspondingVertices.end(); it++){
         MVertex *v1 = it->first;
         MVertex *v2 = it->second;
-        fprintf(fp, "%d %d\n", v1->getIndex(), v2->getIndex());
+        if(renumber)
+          fprintf(fp, "%d %d\n", v1->getIndex(), v2->getIndex());
+        else
+          fprintf(fp, "%d %d\n", v1->getNum(), v2->getNum());
       }
     }
   }
@@ -710,7 +711,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   fprintf(fp, "$EndElements\n");
 
   //save periodic nodes
-  writeMSHPeriodicNodes(fp, entities);
+  writeMSHPeriodicNodes(fp, entities, renumber);
 
   fclose(fp);
 
