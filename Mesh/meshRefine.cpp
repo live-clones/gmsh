@@ -451,7 +451,7 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas
 {
     splitIntoQuads = true;
     splitIntoHexas = true;
-  
+
   Msg::StatusBar(true, "Refining mesh...");
   double t1 = Cpu();
 
@@ -468,9 +468,7 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads, bool splitIntoHexas
     Subdivide(*it);
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     Subdivide(*it, splitIntoQuads, splitIntoHexas, faceVertices);
-    if (splitIntoQuads){
-      recombineIntoQuads(*it,true,true);
-    }
+    //if(splitIntoQuads) recombineIntoQuads(*it, true, true);
   }
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     Subdivide(*it, splitIntoHexas, faceVertices);
