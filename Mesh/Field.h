@@ -139,12 +139,12 @@ class AttractorField;
 class BoundaryLayerField : public Field {
  private:
   std::list<AttractorField *> _att_fields;
-  std::list<int> nodes_id, edges_id, faces_id;
-  std::list<int> faces_id_saved, edges_id_saved, nodes_id_saved, fans_id, fan_nodes_id;
+  std::list<int> nodes_id, edges_id;
+  std::list<int> edges_id_saved, nodes_id_saved, fan_nodes_id;
   void operator() (AttractorField *cc, double dist, double x, double y, double z,
                    SMetric3 &metr, GEntity *ge);
  public:
-  double hwall_n,hwall_t,ratio,hfar,thickness,fan_angle;
+  double hwall_n,/*hwall_t,*/ratio,hfar,thickness,fan_angle;
   double current_distance, tgt_aniso_ratio;
   SPoint3 _closest_point;
   int iRecombine, iIntersect;
@@ -156,10 +156,6 @@ class BoundaryLayerField : public Field {
   ~BoundaryLayerField() {removeAttractors();}
   virtual double operator() (double x, double y, double z, GEntity *ge=0);
   virtual void operator() (double x, double y, double z, SMetric3 &metr, GEntity *ge=0);
-  bool isFaceBL (int iF) const
-  {
-    return std::find(faces_id.begin(),faces_id.end(),iF) != faces_id.end();
-  }
   bool isEdgeBL (int iE) const
   {
     return std::find(edges_id.begin(),edges_id.end(),iE) != edges_id.end();
@@ -169,22 +165,17 @@ class BoundaryLayerField : public Field {
     return std::find(edges_id_saved.begin(),edges_id_saved.end(),iE)
       != edges_id_saved.end();
   }
-  bool isFan (int iE) const
-  {
-    return std::find(fans_id.begin(),fans_id.end(),iE) != fans_id.end();
-  }
   bool isFanNode (int iV) const
   {
     return std::find(fan_nodes_id.begin(),fan_nodes_id.end(),iV) != fan_nodes_id.end();
   }
-  bool isVertexBL (int iV) const
+  bool isEndNode (int iV) const
   {
     return std::find(nodes_id.begin(),nodes_id.end(),iV) != nodes_id.end();
   }
   void computeFor1dMesh(double x, double y, double z, SMetric3 &metr);
   void setupFor1d(int iE);
   void setupFor2d(int iF);
-  void setupFor3d();
   void removeAttractors();
 };
 

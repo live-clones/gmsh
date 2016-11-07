@@ -10,19 +10,12 @@
 #include <vector>
 
 class MElement;
-class MPrism;
-class MHexahedron;
 class MTriangle;
 class MQuadrangle;
+class MLine;
 
-void filterOverlappingElements(std::vector<MElement*> &,
-                               std::map<MElement*,std::vector<MElement*> > &_elemColumns,
-                               std::map<MElement*,MElement*> &_toFirst);
-void filterOverlappingElements(std::vector<MPrism*> &blPrisms,
-                               std::vector<MHexahedron*>&blHexes,
-                               std::map<MElement*,std::vector<MElement*> > &_elemColumns,
-                               std::map<MElement*,MElement*> &_toFirst);
-void filterOverlappingElements(std::vector<MTriangle*> &blTris,
+void filterOverlappingElements(std::vector<MLine*> &_lines,
+			       std::vector<MTriangle*> &blTris,
                                std::vector<MQuadrangle*>&blQuads,
                                std::map<MElement*,std::vector<MElement*> > &_elemColumns,
                                std::map<MElement*,MElement*> &_toFirst);

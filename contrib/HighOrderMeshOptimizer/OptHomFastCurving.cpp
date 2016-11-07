@@ -308,9 +308,10 @@ bool getTopPrimVertices(std::map<MVertex*, std::vector<MElement *> > &vertex2ele
   topPrimVert = std::vector<MVertex*>(nbVert);
   for(int i = 0; i < nbVert; i++) {
     if (blc && (blc->size() > 1)) {                                                             // Is there BL data?
-      const BoundaryLayerData &c = blc->getColumn(baseVert[i], baseBnd);
-      if (c._column.size() == 0) return false;                                                  // Give up element if column not found
-      topPrimVert[i] = *(c._column.end()-2);
+      return false;
+      //      const BoundaryLayerData &c = blc->getColumn(baseVert[i], baseBnd);
+      //      if (c._column.size() == 0) return false;                                                  // Give up element if column not found
+      //      topPrimVert[i] = *(c._column.end()-2);
     }
     else {                                                                                      // No BL data, look for columns of vertices
       std::map<MVertex*, SVector3>::const_iterator itNorm = normVert.find(baseVert[i]);
@@ -553,12 +554,12 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p)
             if (blf->isEdgeBL((*itEd)->tag()))                                                  // Already skip model edge if no BL there
               entities.insert(std::pair<GEntity*,GEntity*>(entity, *itEd));
         }
-        else if (p.dim == 3) {                                                                  // "Domain" region?
-          std::list<GFace*> faces = entity->faces();
-          for (std::list<GFace*>::iterator itF = faces.begin(); itF != faces.end(); itF++)      // Loop over model boundary faces
-            if (blf->isFaceBL((*itF)->tag()))                                                   // Already skip model face if no BL there
-              entities.insert(std::pair<GEntity*,GEntity*>(entity, *itF));
-        }
+      //        else if (p.dim == 3) {                                                                  // "Domain" region?
+      //          std::list<GFace*> faces = entity->faces();
+      //          for (std::list<GFace*>::iterator itF = faces.begin(); itF != faces.end(); itF++)      // Loop over model boundary faces
+      //            if (blf->isFaceBL((*itF)->tag()))                                                   // Already skip model face if no BL there
+      //              entities.insert(std::pair<GEntity*,GEntity*>(entity, *itF));
+      //        }
     }
   }
   else {                                                                                        // No BL field

@@ -662,8 +662,12 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   FILE *ff2 = Fopen ("tato.pos","w");
   if(ff2) fprintf(ff2,"View \" \"{\n");
   std::set<MVertex*> verts;
+
+  std::vector<MLine*> _lines;
+
   while(ite != edges.end()){
     for(unsigned int i = 0; i< (*ite)->lines.size(); i++){
+      _lines.push_back((*ite)->lines[i]);
       MVertex *v1 = (*ite)->lines[i]->getVertex(0);
       MVertex *v2 = (*ite)->lines[i]->getVertex(1);
       MEdge dv(v1,v2);
@@ -691,6 +695,7 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
           //avoid convergent errors
           if (dv2.length() < 0.03 * dv.length())break;
           MQuadrangle *qq = new MQuadrangle(v11,v21,v22,v12);
+	  qq->setPartition (l+1);
           myCol.push_back(qq);
           blQuads.push_back(qq);
           if(ff2)
@@ -732,6 +737,7 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
         }
         if (v11 != v12){
           MQuadrangle *qq = new MQuadrangle(v11,v12,v22,v21);
+	  qq->setPartition (l+1);
           myCol.push_back(qq);
           blQuads.push_back(qq);
           if(ff2)
@@ -743,6 +749,7 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
         }
         else {
           MTriangle *qq = new MTriangle(v,v22,v21);
+	  qq->setPartition (l+1);
           myCol.push_back(qq);
           blTris.push_back(qq);
           if(ff2)
@@ -762,7 +769,7 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
     fclose(ff2);
   }
 
-  //  filterOverlappingElements (blTris,blQuads,_columns->_elemColumns,_columns->_toFirst);
+  filterOverlappingElements (_lines, blTris,blQuads,_columns->_elemColumns,_columns->_toFirst);
 
   for (unsigned int i = 0; i < blQuads.size();i++){
     addOrRemove(blQuads[i]->getVertex(0),blQuads[i]->getVertex(1),bedges, removed);
@@ -803,7 +810,7 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   deMeshGFace kil_;
   kil_(gf);
   meshGenerator(gf, 0, 0, true , false, &hop);
-
+  
   gf->quadrangles = blQuads;
   gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
@@ -1543,8 +1550,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // BDS mesh is passed in order not to recompute local coordinates of
   // vertices
   if(algoDelaunay2D(gf) && !onlyInitialMesh){
-    if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
+    if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL){
       bowyerWatsonFrontal(gf);
+    }
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD){
       bowyerWatsonFrontalLayers(gf,true);
     }

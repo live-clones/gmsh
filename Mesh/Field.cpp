@@ -2199,7 +2199,7 @@ std::string BoundaryLayerField::getDescription()
 BoundaryLayerField::BoundaryLayerField()
 {
   hwall_n = .1;
-  hwall_t = .5;
+  //  hwall_t = .5;
   hfar = 1;
   ratio = 1.1;
   thickness = 1.e-2;
@@ -2207,20 +2207,15 @@ BoundaryLayerField::BoundaryLayerField()
   tgt_aniso_ratio = 1.e10;
   iRecombine = 0;
   iIntersect = 0;
-  options["NodesList"] = new FieldOptionList
-    (nodes_id, "Indices of nodes in the geometric model", &update_needed);
   options["EdgesList"] = new FieldOptionList
     (edges_id, "Indices of curves in the geometric model for which a boundary "
      "layer is needed", &update_needed);
-  options["FacesList"] = new FieldOptionList
-    (faces_id, "Indices of faces in the geometric model for which a boundary "
-     "layer is needed", &update_needed);
-  options["FansList"] = new FieldOptionList
-    (fans_id, "Indices of edges in the geometric model for which a fan "
-     "is created", &update_needed);
   options["FanNodesList"] = new FieldOptionList
     (fan_nodes_id, "Indices of vertices in the geometric model for which a fan "
      "is created", &update_needed);
+  options["NodesList"] = new FieldOptionList
+    (nodes_id, "Indices of vertices in the geometric model for which a BL "
+     "ends", &update_needed);
   options["Quads"] = new FieldOptionInt
     (iRecombine, "Generate recombined elements in the boundary layer");
   options["IntersectMetrics"] = new FieldOptionInt
@@ -2231,8 +2226,8 @@ BoundaryLayerField::BoundaryLayerField()
   //    (fan_angle, "Threshold angle for creating a mesh fan in the boundary layer");
   options["AnisoMax"] = new FieldOptionDouble
     (tgt_aniso_ratio, "Threshold angle for creating a mesh fan in the boundary layer");
-  options["hwall_t"] = new FieldOptionDouble
-    (hwall_t, "Mesh Size Tangent to the Wall");
+  //  options["hwall_t"] = new FieldOptionDouble
+  //    (hwall_t, "Mesh Size Tangent to the Wall");
   options["ratio"] = new FieldOptionDouble
     (ratio, "Size Ratio Between Two Successive Layers");
   options["hfar"] = new FieldOptionDouble
@@ -2250,18 +2245,13 @@ void BoundaryLayerField::removeAttractors()
 }
 
 void BoundaryLayerField::setupFor1d(int iE) {
-
-  if (faces_id_saved.empty() &&
-      edges_id_saved.empty() &&
-      faces_id_saved.empty() ){     
-    faces_id_saved = faces_id;
+  if (edges_id_saved.empty() ){     
     edges_id_saved = edges_id;
     nodes_id_saved = nodes_id;
   }
 
   nodes_id.clear();
   edges_id.clear();
-  faces_id.clear();
 
   bool found = std::find(edges_id_saved.begin(), edges_id_saved.end(), iE) !=
     edges_id_saved.end();
@@ -2289,17 +2279,13 @@ void BoundaryLayerField::setupFor2d(int iF)
      remove GFaces from the attarctors (only used in 2D)
      for edges and vertices
   */
-  if (faces_id_saved.empty() &&
-      edges_id_saved.empty() &&
-      faces_id_saved.empty() ){     
-    faces_id_saved = faces_id;
+  if (edges_id_saved.empty()){     
     edges_id_saved = edges_id;
     nodes_id_saved = nodes_id;
   }
 
   nodes_id.clear();
   edges_id.clear();
-  faces_id.clear();
   
   //    printf("have %d %d\n",faces_id_saved.size(),edges_id_saved.size());
   
@@ -2313,9 +2299,7 @@ void BoundaryLayerField::setupFor2d(int iF)
   std::list<GEdge*> embedded_edges = gf->embeddedEdges();
   ed.insert(ed.begin(), embedded_edges.begin(),embedded_edges.end());
 
-  
-
-  //    printf("face %d has %d edges\n",iF,ed.size());
+    //    printf("face %d has %d edges\n",iF,ed.size());
   for (std::list<GEdge*>::iterator it = ed.begin();
 	 it != ed.end() ; ++it){
     bool isIn = false;
@@ -2327,22 +2311,9 @@ void BoundaryLayerField::setupFor2d(int iF)
     if (found){
       std::list<GFace*> fc = (*it)->faces();
       // one only face --> 2D --> BL
-      if (fc.size() == 1) isIn = true;
+      if (fc.size() <= 1) isIn = true;
       else {
-	// more than one face and
-	std::list<GFace*>::iterator itf = fc.begin();
-	bool found_this = std::find(faces_id_saved.begin(), faces_id_saved.end(), iF) !=
-	  faces_id_saved.end();
-	if (!found_this)isIn = true;
-	else {
-	  bool foundAll = true;
-	  for ( ; itf != fc.end() ; ++itf){
-	    int iF2 = (*itf)->tag();
-	    foundAll &= std::find(faces_id_saved.begin(), faces_id_saved.end(), iF2) !=
-	      faces_id_saved.end();
-	  }
-	  if(foundAll) isIn = true;
-	}
+	Msg::Error ("Only 2D Boundary Layers are supported (edge %d is adjacet to %d faces\n",iE,fc.size());
       }
     }
     if (isIn){
@@ -2352,12 +2323,6 @@ void BoundaryLayerField::setupFor2d(int iF)
     }
   }
     // printf("face %d %d BL Edges\n", iF, (int)edges_id.size());
-  removeAttractors();
-}
-
-void BoundaryLayerField::setupFor3d()
-{
-  faces_id = faces_id_saved;
   removeAttractors();
 }
 
@@ -2371,10 +2336,6 @@ double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge
     for(std::list<int>::iterator it = edges_id.begin();
 	it != edges_id.end(); ++it) {
       _att_fields.push_back(new AttractorField(1,*it,300000));
-    }
-    for(std::list<int>::iterator it = faces_id.begin();
-	it != faces_id.end(); ++it) {
-      _att_fields.push_back(new AttractorField(2,*it,1200));
     }
     update_needed = false;
   }
@@ -2442,6 +2403,9 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
                                      double x, double y, double z,
                                      SMetric3 &metr, GEntity *ge)
 {
+
+  //  printf("WHAT THE FUCK\n");
+  
   // dist = hwall -> lc = hwall * ratio
   // dist = hwall (1+ratio) -> lc = hwall ratio ^ 2
   // dist = hwall (1+ratio+ratio^2) -> lc = hwall ratio ^ 3
@@ -2454,8 +2418,8 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
 
   const double ll1   = dist*(ratio-1) + hwall_n;
   double lc_n  = std::min(ll1,hfar);
-  const double ll2   = dist*(ratio-1) + hwall_t;
-  double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, std::min(ll2,hfar));
+  //  const double ll2   = dist*(ratio-1) + hwall_t;
+  double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, hfar/*std::min(ll2,hfar)*/);
 
   lc_n = std::max(lc_n, CTX::instance()->mesh.lcMin);
   lc_n = std::min(lc_n, CTX::instance()->mesh.lcMax);
@@ -2534,10 +2498,6 @@ void BoundaryLayerField::operator() (double x, double y, double z,
     for(std::list<int>::iterator it = edges_id.begin();
 	it != edges_id.end(); ++it) {
       _att_fields.push_back(new AttractorField(1,*it,10000));
-    }
-    for(std::list<int>::iterator it = faces_id.begin();
-	it != faces_id.end(); ++it) {
-      _att_fields.push_back(new AttractorField(2,*it,1200));
     }
     update_needed = false;
   }

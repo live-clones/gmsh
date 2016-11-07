@@ -8,6 +8,7 @@
 
 #include "SVector3.h"
 #include "STensor3.h"
+#include "MElement.h"
 #include "MEdge.h"
 #include "MFace.h"
 #include <map>
@@ -24,18 +25,13 @@ struct BoundaryLayerData
 {
   SVector3 _n;
   std::vector<MVertex*> _column;
-  std::vector<SMetric3> _metrics;
-  std::vector<GFace*> _joint;
+  //  std::vector<SMetric3> _metrics;
+  //  std::vector<GFace*> _joint;
   BoundaryLayerData(){}
   BoundaryLayerData(const SVector3 & dir,
-                    std::vector<MVertex*> column,
-                    std::vector<SMetric3> metrics)
-    : _n(dir), _column(column), _metrics(metrics){}
-  BoundaryLayerData(const SVector3 & dir,
-                    std::vector<MVertex*> column,
-                    std::vector<SMetric3> metrics,
-                    std::vector<GFace*> joint)
-  : _n(dir), _column(column), _metrics(metrics),_joint(joint){}
+                    std::vector<MVertex*> column/*,
+						  std::vector<SMetric3> metrics*/)
+  : _n(dir), _column(column) /*,_metrics(metrics)*/{}
 };
 
 struct BoundaryLayerFan
@@ -51,20 +47,6 @@ struct edgeColumn {
     : _c1(c1), _c2(c2){}
 };
 
-struct faceColumn {
-  const BoundaryLayerData &_c1, &_c2, &_c3, &_c4;
-  faceColumn(const BoundaryLayerData &c1,
-	     const BoundaryLayerData &c2,
-	     const BoundaryLayerData &c3)
-  : _c1(c1), _c2(c2), _c3(c3), _c4(c3){}
-  faceColumn(const BoundaryLayerData &c1,
-	     const BoundaryLayerData &c2,
-	     const BoundaryLayerData &c4,
-	     const BoundaryLayerData &c3)
-  : _c1(c1), _c2(c2), _c3(c3), _c4(c4){}
-};
-
-
 class BoundaryLayerColumns
 {
   std::map<MVertex*, BoundaryLayerFan> _fans;
@@ -79,26 +61,30 @@ public:
   typedef std::multimap<MVertex*,BoundaryLayerData>::iterator iter;
   typedef std::map<MVertex*, BoundaryLayerFan>::iterator iterf;
   std::multimap<MVertex*, MVertex*> _non_manifold_edges;
-  std::multimap<MVertex*,MTriangle*> _non_manifold_faces;
   std::multimap<MEdge, SVector3, Less_Edge> _normals;
-  std::multimap<MFace, SVector3, Less_Face> _normals3D;
+  void clearData () {
+    _toFirst.clear();
+    _elemColumns.clear();
+    _inverse_classification.clear();
+    _data.clear();
+    _normals.clear();
+    _non_manifold_edges.clear();
+    _elemColumns.clear();
+    _fans.clear();
+  }
+
   iter begin() { return _data.begin(); }
   iter end() { return _data.end(); }
   iterf beginf() { return _fans.begin(); }
   iterf endf() { return _fans.end(); }
   BoundaryLayerColumns (){}
   inline void addColumn(const SVector3 &dir, MVertex* v,
-                        std::vector<MVertex*> _column,
-                        std::vector<SMetric3> _metrics)
+                        std::vector<MVertex*> _column//,
+			//                        std::vector<SMetric3> _metrics,
+			//                        std::vector<GFace*> _joint
+			)
   {
-    _data.insert (std::make_pair(v,BoundaryLayerData(dir, _column,_metrics)));
-  }
-  inline void addColumn(const SVector3 &dir, MVertex* v,
-                        std::vector<MVertex*> _column,
-                        std::vector<SMetric3> _metrics,
-                        std::vector<GFace*> _joint)
-  {
-    _data.insert (std::make_pair(v,BoundaryLayerData(dir, _column,_metrics,_joint)));
+    _data.insert (std::make_pair(v,BoundaryLayerData(dir, _column/*,_metrics,_joint*/)));
   }
   inline void addFan(MVertex *v, MEdge e1, MEdge e2, bool s)
   {
@@ -113,7 +99,7 @@ public:
      return 0;
   }
 
-  const BoundaryLayerData &getColumn(MVertex *v, MFace f) const;
+  //  const BoundaryLayerData &getColumn(MVertex *v, MFace f) const;
 
   inline const BoundaryLayerData &getColumn(MVertex *v, MEdge e) const
   {
@@ -132,7 +118,7 @@ public:
     return error;
   }
   edgeColumn getColumns(MVertex *v1, MVertex *v2 , int side);
-  faceColumn getColumns(GFace *gf, MVertex *v1, MVertex *v2 , MVertex* v3, int side);
+  //  faceColumn getColumns(GFace *gf, MVertex *v1, MVertex *v2 , MVertex* v3, int side);
   inline int getNbColumns(MVertex *v) const { return _data.count(v); }
   inline const BoundaryLayerData &getColumn(MVertex *v, int iColumn) const
   {

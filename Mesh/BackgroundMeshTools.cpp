@@ -66,6 +66,7 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
       GEdge *ged = (GEdge *)ge;
       Crv = ged->curvature(U);
       Crv = std::max(Crv, max_surf_curvature(ged, U));
+      //      printf("%g %d\n",Crv, CTX::instance()->mesh.minCircPoints);
       // Crv = max_surf_curvature(ged, U);
     }
     break;

@@ -8,14 +8,12 @@
 #include <set>
 #include "GmshDefines.h"
 #include "filterElements.h"
-#include "fullMatrix.h"
-#include "GaussIntegration.h"
 #include "MElement.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
-#include "MPrism.h"
-#include "MHexahedron.h"
+#include "MLine.h"
 #include "rtree.h"
+#include "robustPredicates.h"
 
 void MElementBB(void *a, double *min, double *max);
 int MElementInEle(void *a, double *x);
@@ -32,14 +30,92 @@ struct MElement_Wrapper
   }
 };
 
-static bool inBB (double *mi, double *ma, double *x){
-  if (x[0] < mi[0])return false;
-  if (x[1] < mi[1])return false;
-  if (x[2] < mi[2])return false;
-  if (x[0] > ma[0])return false;
-  if (x[1] > ma[1])return false;
-  if (x[2] > ma[2])return false;
-  return true;
+
+/** OVERLAP TEST IN 2D 
+    only use predicate orient2D :-)
+
+2 cases 
+
+1--> 
+
+    *---------*
+    |         |
+    |     *--------*
+    |     |   |    |
+    *---------*
+          |   |    |
+          *--------*
+
+2--> 
+
+**/
+
+inline double orientationTest (double a[2], double b[2], double c[2]){  
+  double s = -robustPredicates::orient2d(a,b,c);
+  return s > 0 ? 1.0 : s < 0 ? -1.0 : 0.0;
+}
+
+inline double orientationTest (MVertex *va, MVertex *vb, MVertex *vc){  
+  double a[2] = {va->x(),va->y()};
+  double b[2] = {vb->x(),vb->y()};
+  double c[2] = {vc->x(),vc->y()};
+  return orientationTest (a,b,c);
+}
+
+inline double orientationTest (SVector3 &va, SVector3 &vb, SVector3 &vc){  
+  double a[2] = {va.x(),va.y()};
+  double b[2] = {vb.x(),vb.y()};
+  double c[2] = {vc.x(),vc.y()};
+  return orientationTest (a,b,c);
+}
+
+
+bool intersectEdge2d(const MEdge &ed1, const MEdge &ed2) {
+
+  /*  SVector3 a1(ed1.getVertex(0)->x(), ed1.getVertex(0)->y(), 0);
+  SVector3 a2(ed1.getVertex(1)->x(), ed1.getVertex(1)->y(), 0);
+
+  SVector3 b1(ed2.getVertex(0)->x(), ed2.getVertex(0)->y(), 0);
+  SVector3 b2(ed2.getVertex(1)->x(), ed2.getVertex(1)->y(), 0);
+
+  SVector3 a = (a1+a2)*0.5;
+  SVector3 b = (b1+b2)*0.5;
+
+  SVector3 a1l = a + (a2-a1)*0.55;
+  SVector3 a2l = a - (a2-a1)*0.55;
+  
+  SVector3 b1l = b + (b2-b1)*0.55;
+  SVector3 b2l = b - (b2-b1)*0.55;
+
+  if (orientationTest (a1l, a2l, b1l) * orientationTest (a1l, a2l, b2l) <= 0 &&  
+      orientationTest (b1l, b2l, a1l) * orientationTest (b1l, b2l, a2l) <= 0 )
+    return true;
+  */
+    if (ed1.getVertex(0) == ed2.getVertex(0) ||
+        ed1.getVertex(0) == ed2.getVertex(1) ||
+        ed1.getVertex(1) == ed2.getVertex(0) ||
+        ed1.getVertex(1) == ed2.getVertex(1) ) return false;
+
+  if ((orientationTest (ed1.getVertex(0),ed1.getVertex(1),ed2.getVertex(0)) * 
+       orientationTest (ed1.getVertex(0),ed1.getVertex(1),ed2.getVertex(1)) <= 0) &&  
+      (orientationTest (ed2.getVertex(0),ed2.getVertex(1),ed1.getVertex(0)) * 
+       orientationTest (ed2.getVertex(0),ed2.getVertex(1),ed1.getVertex(1)) <= 0))
+       return true;
+  return false;
+}
+
+bool overlap2D (MElement *e1, MElement *e2) {
+  for (int i=0;i<e1->getNumEdges();i++){
+    MEdge ed1 = e1->getEdge (i);
+    for (int j=0;j<e2->getNumEdges();j++){
+      MEdge ed2 = e2->getEdge (j);
+      if (intersectEdge2d(ed1,ed2)){
+	//	printf("apero time \n");
+	return true;
+      }
+    }
+  }
+  return false;
 }
 
 bool rtree_callback(MElement *e1,void* pe2)
@@ -50,71 +126,17 @@ bool rtree_callback(MElement *e1,void* pe2)
   if (std::binary_search(wrapper->_notOverlap.begin(),wrapper->_notOverlap.end(),e1))
     return true;
 
-  for (int i=0;i<e1->getNumVertices();i++){
-    for (int j=0;j<e2->getNumVertices();j++){
-      if(e1->getVertex(i) == e2->getVertex(j))return true;
-    }
+  //    for (int i=0;i<e1->getNumVertices();i++){
+  //      for (int j=0;j<e2->getNumVertices();j++){
+  //        if(e1->getVertex(i) == e2->getVertex(j))return true;
+  //      }
+  //    }
+
+  if (e1->getDim() <= 2 && e2->getDim() <= 2) {
+    wrapper->_overlap = overlap2D (e1,e2);
+    return !wrapper->_overlap;
   }
-
-  double min2[3],max2[3];
-  MElementBB(e2,min2,max2);
-
-  for (int i=0;i<e1->getNumVertices();i++){
-    SPoint3 xyz (e1->getVertex(i)->x(),e1->getVertex(i)->y(),e1->getVertex(i)->z());
-    if (inBB (min2,max2,xyz)){
-      if (MElementInEle(e2,xyz)){
-	wrapper->_overlap = true;
-	return false;
-      }
-    }
-  }
-
-  double min1[3],max1[3];
-  MElementBB(e1,min1,max1);
-  for (int i=0;i<e2->getNumVertices();i++){
-    SPoint3 xyz (e2->getVertex(i)->x(),e2->getVertex(i)->y(),e2->getVertex(i)->z());
-    if (inBB(min1,max1,xyz)){
-      if (MElementInEle(e1,xyz)){
-	wrapper->_overlap = true;
-	return false;
-      }
-    }
-  }
-
-  //  return false;
-
-  fullMatrix<double> pts1,pts2;
-  fullVector<double> weights;
-
-  gaussIntegration::get (e1->getType(),1,pts1,weights);
-  gaussIntegration::get (e2->getType(),1,pts2,weights);
-
-  for (int i=0;i<pts1.size1();i++){
-    double u = pts1(i,0);
-    double v = pts1(i,1);
-    double w = pts1(i,2);
-    SPoint3 xyz;
-    e1->pnt(u,v,w,xyz);
-    if (inBB(min2,max2,xyz)){
-      if (MElementInEle(e2,xyz)){
-	wrapper->_overlap = true;
-	return false;
-      }
-    }
-  }
-  for (int i=0;i<pts2.size1();i++){
-    double u = pts2(i,0);
-    double v = pts2(i,1);
-    double w = pts2(i,2);
-    SPoint3 xyz;
-    e2->pnt(u,v,w,xyz);
-    if (inBB(min1,max1,xyz)){
-      if (MElementInEle(e1,xyz)){
-	wrapper->_overlap = true;
-	return false;
-      }
-    }
-  }
+  Msg::Error("overlapping of elements in 3D not done yet");
   return true;
 }
 
@@ -133,75 +155,47 @@ void filterColumns(std::vector<MElement*> &elem,
   for (std::map<MElement*,std::vector<MElement*> >::iterator it = _elemColumns.begin();
        it !=_elemColumns.end() ; ++it){
     const std::vector<MElement*> &c = it->second;
-    unsigned int MAX = c.size() - 1;
+    unsigned int MAX = c.size();
+    //    printf("size of column %d\n",c.size());
     for (unsigned int i=0;i<c.size(); i++){
       if (!std::binary_search(elem.begin(),elem.end(),c[i])){
 	MAX = i - 1;
 	break;
       }
     }
+    if (!MAX)MAX=1; 
     //    printf("MAX = %d c = %d\n",MAX,c.size());
     for (unsigned int i=0;i<MAX;i++){
       toKeep.push_back(c[i]);
     }
-    for (unsigned int i=MAX;i<c.size();i++){
+    //    for (unsigned int i=MAX;i<c.size();i++){
       /// FIXME !!!
       //      delete c[i];
-    }
+    //    }
   }
-  printf("%d --> %d\n", (int)elem.size(), (int)toKeep.size());
+  //  printf("%d --> %d\n", (int)elem.size(), (int)toKeep.size());
   elem = toKeep;
 }
 
 
-void filterOverlappingElements (std::vector<MTriangle*> &blTris,
-				std::vector<MQuadrangle*>&blQuads,
-				std::map<MElement*,std::vector<MElement*> > &_elemColumns,
-				std::map<MElement*,MElement*> &_toFirst)
-{
-  std::vector<MElement*> vvv;
-  vvv.insert(vvv.begin(),blTris.begin(),blTris.end());
-  vvv.insert(vvv.begin(),blQuads.begin(),blQuads.end());
-  Less_Partition lp;
-  std::sort(vvv.begin(),vvv.end(), lp);
-  filterOverlappingElements (vvv,_elemColumns,_toFirst);
-  filterColumns (vvv,_elemColumns);
-  blTris.clear();
-  blQuads.clear();
-  for (unsigned int i=0;i<vvv.size();i++){
-    if (vvv[i]->getType() == TYPE_TRI)blTris.push_back((MTriangle*)vvv[i]);
-    else if (vvv[i]->getType() == TYPE_QUA)blQuads.push_back((MQuadrangle*)vvv[i]);
-  }
-}
-
-void filterOverlappingElements (std::vector<MPrism*> &blPrisms,
-				std::vector<MHexahedron*>&blHexes,
-				std::map<MElement*,std::vector<MElement*> > &_elemColumns,
-				std::map<MElement*,MElement*> &_toFirst)
-{
-  printf("filtering !!\n");
-  std::vector<MElement*> vvv;
-  vvv.insert(vvv.begin(),blPrisms.begin(),blPrisms.end());
-  vvv.insert(vvv.begin(),blHexes.begin(),blHexes.end());
-  Less_Partition lp;
-  std::sort(vvv.begin(),vvv.end(), lp);
-  filterOverlappingElements (vvv,_elemColumns,_toFirst);
-  filterColumns (vvv,_elemColumns);
-  blPrisms.clear();
-  blHexes.clear();
-  for (unsigned int i=0;i<vvv.size();i++){
-    if (vvv[i]->getType() == TYPE_PRI)blPrisms.push_back((MPrism*)vvv[i]);
-    else if (vvv[i]->getType() == TYPE_HEX)blHexes.push_back((MHexahedron*)vvv[i]);
-  }
-}
 
 
-void filterOverlappingElements (std::vector<MElement*> &els,
-				std::map<MElement*,std::vector<MElement*> > &_elemColumns,
-				std::map<MElement*,MElement*> &_toFirst )
+static void filterOverlappingElements (std::vector<MLine*> &lines,
+				       std::vector<MElement*> &els,
+				       std::map<MElement*,std::vector<MElement*> > &_elemColumns,
+				       std::map<MElement*,MElement*> &_toFirst )
 {
   std::vector<MElement*> newEls;
   RTree<MElement*,double,3,double> rtree;
+
+  for (unsigned int i=0;i<lines.size();i++){
+    MElement *e = lines[i];
+    double _min[3],_max[3];
+    MElementBB(e,_min,_max);
+    rtree.Insert(_min,_max,e);
+  }
+
+
   for (unsigned int i=0;i<els.size();i++){
     MElement *e = els[i];
     double _min[3],_max[3];
@@ -210,7 +204,7 @@ void filterOverlappingElements (std::vector<MElement*> &els,
     MElement_Wrapper w(e,_elemColumns[first]);
     rtree.Search(_min,_max,rtree_callback,&w);
     if (w._overlap){
-      delete e;
+      //     delete e;
     }
     else {
       rtree.Insert(_min,_max,e);
@@ -220,3 +214,28 @@ void filterOverlappingElements (std::vector<MElement*> &els,
   els = newEls;
 }
 
+// WE SHOULD ADD THE BOUNDARY OF THE DOMAIN IN ORDER TO AVOID
+// ELEMENTS THAT ARE OUTSIDE THE DOMAIN --> FIXME
+
+void filterOverlappingElements (std::vector<MLine*> &bdry,
+				std::vector<MTriangle*> &blTris,
+				std::vector<MQuadrangle*>&blQuads,
+				std::map<MElement*,std::vector<MElement*> > &_elemColumns,
+				std::map<MElement*,MElement*> &_toFirst)
+{
+  std::vector<MElement*> vvv;
+  vvv.insert(vvv.begin(),blTris.begin(),blTris.end());
+  vvv.insert(vvv.begin(),blQuads.begin(),blQuads.end());
+  Less_Partition lp;
+  std::sort(vvv.begin(),vvv.end(), lp);
+  filterOverlappingElements (bdry,vvv,_elemColumns,_toFirst);
+  filterColumns (vvv,_elemColumns);
+  blTris.clear();
+  blQuads.clear();
+  for (unsigned int i=0;i<vvv.size();i++){
+    if (vvv[i]->getType() == TYPE_TRI)blTris.push_back((MTriangle*)vvv[i]);
+    else if (vvv[i]->getType() == TYPE_QUA)blQuads.push_back((MQuadrangle*)vvv[i]);
+  }
+
+  
+}

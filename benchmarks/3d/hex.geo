@@ -4,7 +4,7 @@ lc = 0.3;
 // example of a purely hexahedral mesh using only transfinite
 // mesh constraints
 z=1;
-deform=0.0;
+deform=0;
 
 Point(1) = {-2-deform,0,0,lc};
 Point(2) = {-1,0,0,lc};
@@ -40,8 +40,8 @@ Line Loop(24) = {6,-12,3,10};
 Ruled Surface(25) = {24};
 Surface Loop(1) = {17,-25,-23,-21,19,15};
 Volume(1) = {1};
-Transfinite Line{1:4,6:9} = 20;
-Transfinite Line{10:13} = 20;
+Transfinite Line{1:4,6:9} = 2;
+Transfinite Line{10:13} = 2;
 
 Transfinite Surface {15} = {1,2,3,4};
 Transfinite Surface {17} = {5,6,7,8};
