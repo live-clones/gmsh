@@ -450,8 +450,12 @@ static void filterPoints (GEdge*ge, int nMinimumPoints)
 static void createPoints ( GVertex *gv, GEdge *ge, BoundaryLayerField *blf ,
 			   std::vector<MVertex*>& v, const SVector3 &dir){
   double L = blf->hwall_n;  
+
+  double LEdge = distance (ge->getBeginVertex()->mesh_vertices[0],
+			   ge->getEndVertex()->mesh_vertices[0]);
+
   while (1){
-    if (L > blf->thickness) break;
+    if (L > blf->thickness || L > LEdge * .4) break;
     SPoint3 p (gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
     v.push_back(new MEdgeVertex (p.x(), p.y(), p.z(), ge,  ge->parFromPoint(p), blf->hfar));    
     int ith = v.size() ;
