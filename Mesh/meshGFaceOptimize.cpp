@@ -818,7 +818,7 @@ void _relocateVertex(GFace *gf, MVertex *ver,
 }
 
 void getAllBoundaryLayerVertices (GFace *gf, std::set<MVertex*> &vs){
-  //  return;
+  //return;
   vs.clear();
   BoundaryLayerColumns* _columns = gf->getColumns();
   if (!_columns)return;

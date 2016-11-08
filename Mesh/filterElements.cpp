@@ -52,7 +52,7 @@ struct MElement_Wrapper
 
 inline double orientationTest (double a[2], double b[2], double c[2]){  
   double s = -robustPredicates::orient2d(a,b,c);
-  return s > 0 ? 1.0 : s < 0 ? -1.0 : 0.0;
+  return s >= 0 ? 1.0 : s <= 0 ? -1.0 : 0.0;
 }
 
 inline double orientationTest (MVertex *va, MVertex *vb, MVertex *vc){  
@@ -72,6 +72,29 @@ inline double orientationTest (SVector3 &va, SVector3 &vb, SVector3 &vc){
 
 bool intersectEdge2d(const MEdge &ed1, const MEdge &ed2) {
 
+  double xmax1 = std::max(ed1.getVertex(0)->x(),ed1.getVertex(1)->x());
+  double xmax2 = std::max(ed2.getVertex(0)->x(),ed2.getVertex(1)->x());
+  double ymax1 = std::max(ed1.getVertex(0)->y(),ed1.getVertex(1)->y());
+  double ymax2 = std::max(ed2.getVertex(0)->y(),ed2.getVertex(1)->y());
+  double xmin1 = std::min(ed1.getVertex(0)->x(),ed1.getVertex(1)->x());
+  double xmin2 = std::min(ed2.getVertex(0)->x(),ed2.getVertex(1)->x());
+  double ymin1 = std::min(ed1.getVertex(0)->y(),ed1.getVertex(1)->y());
+  double ymin2 = std::min(ed2.getVertex(0)->y(),ed2.getVertex(1)->y());
+
+  if (xmax1 < xmin2) return false;
+  if (xmax2 < xmin1) return false;
+  if (ymax1 < ymin2) return false;
+  if (ymax2 < ymin1) return false;
+
+  if (xmin1 > xmax2) return false;
+  if (xmin2 > xmax1) return false;
+  if (ymin1 > ymax2) return false;
+  if (ymin2 > ymax1) return false;
+  
+	//	       ed2.getVertex(0)->x(),ed2.getVertex(0)->y(),ed2.getVertex(1)->x(),ed2.getVertex(1)->y()
+
+
+  
   /*  SVector3 a1(ed1.getVertex(0)->x(), ed1.getVertex(0)->y(), 0);
   SVector3 a2(ed1.getVertex(1)->x(), ed1.getVertex(1)->y(), 0);
 
@@ -110,7 +133,12 @@ bool overlap2D (MElement *e1, MElement *e2) {
     for (int j=0;j<e2->getNumEdges();j++){
       MEdge ed2 = e2->getEdge (j);
       if (intersectEdge2d(ed1,ed2)){
-	//	printf("apero time \n");
+	//	printf("apero time nnodes %d %d partitions %d %d  : %g %g -- %g %g vs %g %g -- %g %g\n",
+	//	       e1->getNumVertices(),e2->getNumVertices(),
+	//	       e1->getPartition(),e2->getPartition(),
+	//	       ed1.getVertex(0)->x(),ed1.getVertex(0)->y(),ed1.getVertex(1)->x(),ed1.getVertex(1)->y(),
+	//	       ed2.getVertex(0)->x(),ed2.getVertex(0)->y(),ed2.getVertex(1)->x(),ed2.getVertex(1)->y()
+	//		       );
 	return true;
       }
     }
@@ -159,13 +187,15 @@ void filterColumns(std::vector<MElement*> &elem,
     //    printf("size of column %d\n",c.size());
     for (unsigned int i=0;i<c.size(); i++){
       if (!std::binary_search(elem.begin(),elem.end(),c[i])){
-	MAX = i - 1;
+	MAX = i ;
 	break;
       }
     }
     if (!MAX)MAX=1; 
-    //    printf("MAX = %d c = %d\n",MAX,c.size());
+    //    if (MAX != c.size())    printf("MAX = %d c = %d\n",MAX,c.size());
     for (unsigned int i=0;i<MAX;i++){
+      if (orientationTest (c[i]->getVertex(0),c[i]->getVertex(1),c[i]->getVertex(2))<0)  
+	c[i]->reverse();
       toKeep.push_back(c[i]);
     }
     //    for (unsigned int i=MAX;i<c.size();i++){

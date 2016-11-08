@@ -384,25 +384,38 @@ static void addColumnAtTheEndOfTheBL(GEdge *ge,
   if (!blf->isEdgeBL(ge->tag())){
     GVertex *g0 = ge->getBeginVertex();
     GVertex *g1 = ge->getEndVertex();
-    //      printf("coucou 2 %d %d vs %d\n",g0->tag(),g1->tag(),gv->tag());
     MVertex * v0 = g0->mesh_vertices[0];
     MVertex * v1 = g1->mesh_vertices[0];
     std::vector<MVertex*> invert;
-    //    std::vector<SMetric3> _metrics;
-    for(unsigned int i = 0; i < ge->mesh_vertices.size() ; i++){
+    for(unsigned int i = 0; i < ge->mesh_vertices.size() ; i++)
       invert.push_back(ge->mesh_vertices[ge->mesh_vertices.size() - i - 1]);
-      //      _metrics.push_back(SMetric3(1.0));
-    }
     SVector3 t (v1->x()-v0->x(), v1->y()-v0->y(),v1->z()-v0->z());
     t.normalize();
-    if (g0 == gv){
-      _columns->addColumn(t, v0, ge->mesh_vertices/*,_metrics*/);
-    }
-    else if (g1 == gv){
-      _columns->addColumn(t*-1.0, v1,invert/*,_metrics*/);
-    }
+    if (g0 == gv)
+      _columns->addColumn(t, v0, ge->mesh_vertices);
+    else if (g1 == gv)
+      _columns->addColumn(t*-1.0, v1,invert);
   }
 }
+
+void getLocalInfoAtNode (MVertex *v, BoundaryLayerField *blf, double &hwall) {  
+  hwall = blf->hwall_n;
+  if (v->onWhat()->dim() == 0){
+    hwall= blf->hwall (v->onWhat()->tag());    
+  } 
+  else if (v->onWhat()->dim() == 1){
+    GEdge *ge = (GEdge*)v->onWhat();
+    Range<double> bounds = ge->parBounds(0);
+    double t_begin = bounds.low();
+    double t_end = bounds.high();
+    double t;
+    v->getParameter(0,t);
+    double hwall_beg = blf->hwall (ge->getBeginVertex()->tag());    
+    double hwall_end = blf->hwall (ge->getEndVertex()->tag());    
+    hwall = hwall_beg + (t-t_begin)/(t_end-t_begin) * (hwall_end - hwall_beg);
+  } 
+}
+
 
 bool buildAdditionalPoints2D(GFace *gf)
 {
@@ -548,9 +561,11 @@ bool buildAdditionalPoints2D(GFace *gf)
       }
       else {
 	MVertex *first = *it;
+	double hwall;
+	getLocalInfoAtNode (first, blf, hwall);  
 	std::vector<MVertex*> _column;
 	SPoint2 par = gf->parFromPoint(SPoint3(first->x(),first->y(),first->z()));
-	double L = blf->hwall_n ;
+	double L = hwall;
 	while(1){
 	  //	  printf("L = %g\n",L);
 	  if (L > blf->thickness) break;
@@ -561,7 +576,7 @@ bool buildAdditionalPoints2D(GFace *gf)
 	  _current->bl_data = new MVertexBoundaryLayerData;
 	  _column.push_back(_current);
 	  int ith = _column.size() ;
-	  L+= blf->hwall_n * pow (blf->ratio, ith);
+	  L+= hwall * pow (blf->ratio, ith);
 	}
 	_columns->addColumn(n,*it, _column /*,_metrics*/);
       }

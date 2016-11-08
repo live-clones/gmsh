@@ -236,6 +236,7 @@ void fieldWindow::saveFieldOptions()
   std::ostringstream sstream;
   int i;
   char a;
+  double d;
   sstream.precision(16);
   for(std::map<std::string, FieldOption*>::iterator it = f->options.begin();
       it != f->options.end(); it++){
@@ -261,6 +262,22 @@ void fieldWindow::saveFieldOptions()
         std::istringstream istream(((Fl_Input*)*input)->value());
         while(istream >> i){
           sstream << i;
+          if(istream >> a){
+            if(a != ',')
+              Msg::Error("Unexpected character \'%c\' while parsing option "
+                         "'%s' of field \'%d\'", a, it->first.c_str(), f->id);
+            sstream << ", ";
+          }
+        }
+        sstream << "}";
+      }
+      break;
+    case FIELD_OPTION_LIST_DOUBLE:
+      {
+        sstream << "{";
+        std::istringstream istream(((Fl_Input*)*input)->value());
+        while(istream >> d){
+          sstream << d;
           if(istream >> a){
             if(a != ',')
               Msg::Error("Unexpected character \'%c\' while parsing option "
@@ -300,6 +317,7 @@ void fieldWindow::loadFieldOptions()
     FieldOption *option = it->second;
     std::ostringstream vstr;
     std::list<int>::const_iterator list_it;
+    std::list<double>::const_iterator listdouble_it;
     switch(option->getType()){
     case FIELD_OPTION_STRING:
     case FIELD_OPTION_PATH:
@@ -319,6 +337,17 @@ void fieldWindow::loadFieldOptions()
         if(list_it!=option->list().begin())
           vstr << ", ";
         vstr << *list_it;
+      }
+      ((Fl_Input*)(*input))->value(vstr.str().c_str());
+      break;
+    case FIELD_OPTION_LIST_DOUBLE:
+      vstr.str("");
+      vstr.precision(16);
+      for(listdouble_it = option->listdouble().begin(); listdouble_it != option->listdouble().end();
+          listdouble_it++){
+        if(listdouble_it!=option->listdouble().begin())
+          vstr << ", ";
+        vstr << *listdouble_it;
       }
       ((Fl_Input*)(*input))->value(vstr.str().c_str());
       break;
@@ -389,6 +418,7 @@ void fieldWindow::editField(Field *f)
       input->align(FL_ALIGN_RIGHT);
       break;
     case FIELD_OPTION_LIST:
+    case FIELD_OPTION_LIST_DOUBLE:
     default:
       input = new Fl_Input(xx, yy, IW, BH, it->first.c_str());
       input->align(FL_ALIGN_RIGHT);

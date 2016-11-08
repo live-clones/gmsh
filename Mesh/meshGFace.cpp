@@ -690,20 +690,16 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
             v11 = c1._column[l-1];
             v12 = c2._column[l-1];
           }
-          MEdge dv2 (v21,v22);
-
-          //avoid convergent errors
-          if (dv2.length() < 0.03 * dv.length())break;
           MQuadrangle *qq = new MQuadrangle(v11,v21,v22,v12);
 	  qq->setPartition (l+1);
           myCol.push_back(qq);
           blQuads.push_back(qq);
           if(ff2)
-            fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
+            fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
                     v11->x(),v11->y(),v11->z(),
                     v12->x(),v12->y(),v12->z(),
                     v22->x(),v22->y(),v22->z(),
-                    v21->x(),v21->y(),v21->z());
+                    v21->x(),v21->y(),v21->z(),l+1,l+1,l+1,l+1);
         }
         // int M = std::max(c1._column.size(),c2._column.size());
         for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
@@ -718,11 +714,12 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
     MVertex *v = itf->first;
     int nbCol = _columns->getNbColumns(v);
 
-    std::vector<MElement*> myCol;
     for (int i=0;i<nbCol-1;i++){
       const BoundaryLayerData & c1 = _columns->getColumn(v,i);
       const BoundaryLayerData & c2 = _columns->getColumn(v,i+1);
       int N = std::min(c1._column.size(),c2._column.size());
+      //      printf("%d %d\n",c1._column.size(),c2._column.size());
+      std::vector<MElement*> myCol;
       for (int l=0;l < N ;++l){
         MVertex *v11,*v12,*v21,*v22;
         v21 = c1._column[l];
@@ -741,11 +738,11 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
           myCol.push_back(qq);
           blQuads.push_back(qq);
           if(ff2)
-            fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
+            fprintf(ff2,"SQ (%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
                     v11->x(),v11->y(),v11->z(),
                     v12->x(),v12->y(),v12->z(),
                     v22->x(),v22->y(),v22->z(),
-                    v21->x(),v21->y(),v21->z());
+                    v21->x(),v21->y(),v21->z(),l+1,l+1,l+1,l+1);
         }
         else {
           MTriangle *qq = new MTriangle(v,v22,v21);
@@ -753,15 +750,15 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
           myCol.push_back(qq);
           blTris.push_back(qq);
           if(ff2)
-            fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1,1};\n",
+            fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
                     v->x(),v->y(),v->z(),
                     v22->x(),v22->y(),v22->z(),
-                    v21->x(),v21->y(),v21->z());
+                    v21->x(),v21->y(),v21->z(),l+1,l+1,l+1);
         }
       }
+      for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
+      _columns->_elemColumns[myCol[0]] = myCol;
     }
-    for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
-    _columns->_elemColumns[myCol[0]] = myCol;
   }
 
   if(ff2){

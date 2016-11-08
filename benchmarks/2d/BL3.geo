@@ -1,6 +1,6 @@
-Mesh.CharacteristicLengthExtendFromBoundary = 0;
-Mesh.CharacteristicLengthMin = 0.1;
-Mesh.CharacteristicLengthMax = 0.1;
+//Mesh.CharacteristicLengthExtendFromBoundary = 0;
+//Mesh.CharacteristicLengthMin = 0.1;
+//Mesh.CharacteristicLengthMax = 0.1;
 //+
 Point(1) = {-1.7, -0.3, 0, .1};
 //+
@@ -60,7 +60,7 @@ Field[1].hwall_n = 0.001;
 //+
 Field[1].ratio = 1.4;
 //+
-Field[1].thickness = 0.38;
+Field[1].thickness = .15;
 BoundaryLayer Field = 1;
 //+
 Line Loop(7) = {1, 2, 3, 4};

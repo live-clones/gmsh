@@ -2222,12 +2222,10 @@ BoundaryLayerField::BoundaryLayerField()
     (iIntersect, "Intersect metrics of all faces");
   options["hwall_n"] = new FieldOptionDouble
     (hwall_n, "Mesh Size Normal to the The Wall");
-  //  options["fan_angle"] = new FieldOptionDouble
-  //    (fan_angle, "Threshold angle for creating a mesh fan in the boundary layer");
+  options["hwall_n_nodes"] = new FieldOptionListDouble
+    (hwall_n_nodes, "Mesh Size Normal to the The Wall at nodes (overwrite hwall_n when defined)");
   options["AnisoMax"] = new FieldOptionDouble
     (tgt_aniso_ratio, "Threshold angle for creating a mesh fan in the boundary layer");
-  //  options["hwall_t"] = new FieldOptionDouble
-  //    (hwall_t, "Mesh Size Tangent to the Wall");
   options["ratio"] = new FieldOptionDouble
     (ratio, "Size Ratio Between Two Successive Layers");
   options["hfar"] = new FieldOptionDouble

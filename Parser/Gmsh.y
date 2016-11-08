@@ -1291,14 +1291,26 @@ Affectation :
       if(field){
 	FieldOption *option = field->options[$6];
 	if(option){
-	  std::list<int> vl = option->list();
-	  vl.clear();
-	  for(int i = 0; i < List_Nbr($9); i++){
-	    double id;
-	    List_Read($9, i, &id);
-	    vl.push_back((int)id);
+	  if (option->getType() == FIELD_OPTION_LIST) {
+	    std::list<int> vl = option->list();
+	    vl.clear();
+	    for(int i = 0; i < List_Nbr($9); i++){
+	      double id;
+	      List_Read($9, i, &id);
+	      vl.push_back((int)id);
+	    }
+	    option->list(vl);
 	  }
-          option->list(vl);
+	  else {
+	    std::list<double> vl = option->listdouble();
+	    vl.clear();
+	    for(int i = 0; i < List_Nbr($9); i++){
+	      double id;
+	      List_Read($9, i, &id);
+	      vl.push_back(id);
+	    }
+	    option->listdouble(vl);
+	  }
 	}
 	else
 	  yymsg(0, "Unknown option '%s' in field %i of type '%s'",

@@ -31,7 +31,8 @@ typedef enum {
   FIELD_OPTION_STRING,
   FIELD_OPTION_PATH,
   FIELD_OPTION_BOOL,
-  FIELD_OPTION_LIST
+  FIELD_OPTION_LIST,
+  FIELD_OPTION_LIST_DOUBLE
 } FieldOptionType;
 
 class FieldCallback {
@@ -64,13 +65,16 @@ class FieldOption {
     case FIELD_OPTION_PATH: return "path"; break;
     case FIELD_OPTION_STRING: return "string"; break;
     case FIELD_OPTION_LIST: return "list"; break;
+    case FIELD_OPTION_LIST_DOUBLE: return "list_double"; break;
     default: return "unknown";
     }
   }
   virtual void numericalValue(double val) { throw(1); }
   virtual double numericalValue() const { throw(1); }
-  virtual const std::list<int> &list() const { throw(1); }
-  virtual void list(std::list<int> value) { throw(1); }
+  virtual const std::list<int> &list() const { printf("coucou4\n");throw(1); }
+  virtual const std::list<double> &listdouble() const { printf("coucou3\n");throw(1); }
+  virtual void list(std::list<int> value) { printf("coucou1\n");throw(1); }
+  virtual void listdouble(std::list<double> value) { printf("coucou2\n");throw(1); }
   virtual std::string string() const { throw(1); }
   virtual void string(const std::string value) { throw(1); }
 };
@@ -139,6 +143,7 @@ class AttractorField;
 class BoundaryLayerField : public Field {
  private:
   std::list<AttractorField *> _att_fields;
+  std::list<double> hwall_n_nodes;
   std::list<int> nodes_id, edges_id;
   std::list<int> edges_id_saved, nodes_id_saved, fan_nodes_id;
   void operator() (AttractorField *cc, double dist, double x, double y, double z,
@@ -173,6 +178,15 @@ class BoundaryLayerField : public Field {
   {
     return std::find(nodes_id.begin(),nodes_id.end(),iV) != nodes_id.end();
   }
+  double hwall (int iV){
+    for (std::list<double>::iterator it = hwall_n_nodes.begin(); it != hwall_n_nodes.end(); ++it){
+      int i = (int) *it; ++it;
+      double h = *it;
+      if (i == iV)return h;
+    }
+    return hwall_n;
+  }
+  
   void computeFor1dMesh(double x, double y, double z, SMetric3 &metr);
   void setupFor1d(int iE);
   void setupFor2d(int iF);
@@ -279,6 +293,31 @@ class FieldOptionList : public FieldOption
     v_str = sstream.str();
   }
 };
+
+class FieldOptionListDouble : public FieldOption
+{
+ public:
+  std::list<double> &val;
+  FieldOptionType getType(){ return FIELD_OPTION_LIST_DOUBLE; }
+  FieldOptionListDouble(std::list<double> &_val, std::string _help, bool *_status=0)
+    : FieldOption(_help, _status), val(_val) {}
+  void listdouble(std::list<double> value){ modified(); val = value; }
+  const std::list<double>& listdouble() const { return val; }
+  void getTextRepresentation(std::string & v_str)
+  {
+    std::ostringstream sstream;
+    sstream.precision(16);
+    sstream << "{";
+    for(std::list<double>::iterator it = val.begin(); it != val.end(); it++) {
+      if(it != val.begin())
+        sstream << ", ";
+      sstream << *it;
+    }
+    sstream << "}";
+    v_str = sstream.str();
+  }
+};
+
 
 class FieldOptionPath : public FieldOptionString
 {

@@ -1115,7 +1115,7 @@ void bowyerWatson(GFace *gf, int MAXPNT,
   //  printf("%12.5E %12.5E %12.5E %12.5E %12.5E\n",DT1,DT2,DT3,__DT1,__DT2);
   //  printf("%12.5E \n",__DT2);
 #if defined(HAVE_ANN)
-  {
+  if (!CTX::instance()->mesh.recombineAll){
     FieldManager *fields = gf->model()->getFields();
     BoundaryLayerField *blf = 0;
     if(fields->getBoundaryLayerField() > 0){
@@ -1435,7 +1435,7 @@ void bowyerWatsonFrontal(GFace *gf,
 
   // in case of boundary layer meshing
 #if defined(HAVE_ANN)
-  {
+  if (!CTX::instance()->mesh.recombineAll){
     FieldManager *fields = gf->model()->getFields();
     BoundaryLayerField *blf = 0;
     if(fields->getBoundaryLayerField() > 0){
@@ -1724,27 +1724,27 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
 
     backgroundMesh::unset();
 #if defined(HAVE_ANN)
-    {
-      FieldManager *fields = gf->model()->getFields();
-      BoundaryLayerField *blf = 0;
-      if(fields->getBoundaryLayerField() > 0){
-        Field *bl_field = fields->get(fields->getBoundaryLayerField());
-        blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-        if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);
-      }
+  if (!CTX::instance()->mesh.recombineAll){
+    FieldManager *fields = gf->model()->getFields();
+    BoundaryLayerField *blf = 0;
+    if(fields->getBoundaryLayerField() > 0){
+      Field *bl_field = fields->get(fields->getBoundaryLayerField());
+      blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+      if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);
     }
-#endif
   }
+#endif
+}
 
-  void bowyerWatsonParallelograms(GFace *gf,
-      std::map<MVertex* , MVertex*>* equivalence,
-      std::map<MVertex*, SPoint2> * parametricCoordinates)
-  {
-    std::set<MTri3*,compareTri3Ptr> AllTris;
-    bidimMeshData DATA(equivalence, parametricCoordinates);
-    std::vector<MVertex*> packed;
-    std::vector<SMetric3> metrics;
-
+void bowyerWatsonParallelograms(GFace *gf,
+				std::map<MVertex* , MVertex*>* equivalence,
+				std::map<MVertex*, SPoint2> * parametricCoordinates)
+{
+  std::set<MTri3*,compareTri3Ptr> AllTris;
+  bidimMeshData DATA(equivalence, parametricCoordinates);
+  std::vector<MVertex*> packed;
+  std::vector<SMetric3> metrics;
+  
     //  printf("creating the points\n");
     // PEB MODIF
     if (old_algo_hexa())
@@ -1818,7 +1818,7 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
     transferDataStructure(gf, AllTris, DATA);
     backgroundMesh::unset();
 #if defined(HAVE_ANN)
-    {
+  if (!CTX::instance()->mesh.recombineAll){
       FieldManager *fields = gf->model()->getFields();
       BoundaryLayerField *blf = 0;
       if(fields->getBoundaryLayerField() > 0){
@@ -1924,7 +1924,7 @@ void bowyerWatsonParallelogramsConstrained(GFace *gf,
   }
   backgroundMesh::unset();
 #if defined(HAVE_ANN)
-  {
+  if (!CTX::instance()->mesh.recombineAll){
     FieldManager *fields = gf->model()->getFields();
     BoundaryLayerField *blf = 0;
     if(fields->getBoundaryLayerField() > 0){
