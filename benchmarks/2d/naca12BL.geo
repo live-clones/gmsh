@@ -230,7 +230,6 @@ Plane Surface(11) = {9,10};
 
 Field[1] = BoundaryLayer;
 Field[1].EdgesList = {1, 2};
-Field[1].hwall_t = 0.0005*SC;
 Field[1].hwall_n = 0.0001*SC;
 Field[1].ratio = 2.4;
 Field[1].thickness = 0.02*SC;
