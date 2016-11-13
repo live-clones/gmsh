@@ -5530,21 +5530,6 @@ double opt_mesh_label_sampling(OPT_ARGS_NUM)
   return CTX::instance()->mesh.labelSampling;
 }
 
-double opt_mesh_reverse_all_normals(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    if(CTX::instance()->mesh.reverseAllNormals != val)
-      CTX::instance()->mesh.changed |= (ENT_SURFACE | ENT_VOLUME);
-    CTX::instance()->mesh.reverseAllNormals = (int)val;
-  }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->mesh.butt[0]->value
-      (CTX::instance()->mesh.reverseAllNormals);
-#endif
-  return CTX::instance()->mesh.reverseAllNormals;
-}
-
 double opt_mesh_smooth_normals(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

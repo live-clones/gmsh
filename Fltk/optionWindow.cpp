@@ -475,7 +475,6 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   optionWindow *o = FlGui::instance()->options;
   o->activate((const char*)data);
 
-  opt_mesh_reverse_all_normals(0, GMSH_SET, o->mesh.butt[0]->value());
   opt_mesh_lc_from_curvature(0, GMSH_SET, o->mesh.butt[1]->value());
   opt_mesh_lc_from_points(0, GMSH_SET, o->mesh.butt[5]->value());
   opt_mesh_lc_extend_from_boundary(0, GMSH_SET, o->mesh.butt[16]->value());
@@ -2644,19 +2643,13 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[18]->type(FL_TOGGLE_BUTTON);
       mesh.butt[18]->callback(mesh_options_ok_cb);
 
-      mesh.butt[0] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Reverse all normals");
-      mesh.butt[0]->tooltip("(Alt+Shift+w)");
-      mesh.butt[0]->type(FL_TOGGLE_BUTTON);
-      mesh.butt[0]->callback(mesh_options_ok_cb);
-
       mesh.butt[19] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 5 * BH, BW, BH, "Smooth normals");
+        (L + 2 * WB, 2 * WB + 4 * BH, BW, BH, "Smooth normals");
       mesh.butt[19]->type(FL_TOGGLE_BUTTON);
       mesh.butt[19]->callback(mesh_options_ok_cb);
 
       mesh.value[18] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Smoothing threshold angle");
+        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Smoothing threshold angle");
       mesh.value[18]->minimum(0.);
       mesh.value[18]->maximum(180.);
       mesh.value[18]->step(1.);
@@ -2672,17 +2665,17 @@ optionWindow::optionWindow(int deltaFontSize)
         {0}
       };
       mesh.choice[4] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 7 * BH, IW, BH, "Coloring mode");
+        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Coloring mode");
       mesh.choice[4]->menu(menu_mesh_color);
       mesh.choice[4]->align(FL_ALIGN_RIGHT);
       mesh.choice[4]->callback(mesh_options_ok_cb);
 
       Fl_Scroll *s = new Fl_Scroll
-        (L + 2 * WB, 3 * WB + 8 * BH, IW + 20, height - 5 * WB - 8 * BH);
+        (L + 2 * WB, 3 * WB + 7 * BH, IW + 20, height - 5 * WB - 7 * BH);
       int i = 0;
       while(MeshOptions_Color[i].str) {
         mesh.color[i] = new Fl_Button
-          (L + 2 * WB, 3 * WB + (8 + i) * BH, IW, BH, MeshOptions_Color[i].str);
+          (L + 2 * WB, 3 * WB + (7 + i) * BH, IW, BH, MeshOptions_Color[i].str);
         mesh.color[i]->callback(color_cb, (void *)MeshOptions_Color[i].function);
         i++;
       }
@@ -3986,14 +3979,12 @@ void optionWindow::activate(const char *what)
       mesh.butt[18]->activate();
       mesh.butt[19]->activate();
       mesh.choice[10]->activate();
-      mesh.butt[0]->activate();
       mesh.value[18]->activate();
     }
     else{
       mesh.butt[18]->deactivate();
       mesh.butt[19]->deactivate();
       mesh.choice[10]->deactivate();
-      mesh.butt[0]->deactivate();
       mesh.value[18]->deactivate();
     }
   }

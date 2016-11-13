@@ -53,6 +53,8 @@ class drawGVertex {
       glPushName(v->tag());
     }
 
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+
     double ps = CTX::instance()->geom.pointSize;
     double sps = CTX::instance()->geom.selectedPointSize;
     if(_ctx->isHighResolution()){
@@ -122,7 +124,7 @@ class drawGEdge {
     if(e->geomType() == GEntity::DiscreteCurve) return;
     if(e->geomType() == GEntity::PartitionCurve) return;
     if(e->geomType() == GEntity::BoundaryLayerCurve) return;
-    //    if(e->geomType() == GEntity::CompoundCurve) return;
+    // if(e->geomType() == GEntity::CompoundCurve) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    e->model() == GModel::current());
@@ -130,6 +132,8 @@ class drawGEdge {
       glPushName(1);
       glPushName(e->tag());
     }
+
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
     if(e->getSelection()) {
       glLineWidth((float)CTX::instance()->geom.selectedLineWidth);
@@ -232,8 +236,9 @@ class drawGFace {
       glNormalPointer(GL_BYTE, 0, va->getNormalArray());
       glEnableClientState(GL_NORMAL_ARRAY);
     }
-    else
+    else{
       glDisableClientState(GL_NORMAL_ARRAY);
+    }
     if(forceColor){
       glDisableClientState(GL_COLOR_ARRAY);
       glColor4ubv((GLubyte *) & color);
@@ -242,11 +247,19 @@ class drawGFace {
       glColorPointer(4, GL_UNSIGNED_BYTE, 0, va->getColorArray());
       glEnableClientState(GL_COLOR_ARRAY);
     }
-    if(CTX::instance()->polygonOffset) glEnable(GL_POLYGON_OFFSET_FILL);
-    if(CTX::instance()->geom.surfaceType > 1)
+    if(CTX::instance()->polygonOffset)
+      glEnable(GL_POLYGON_OFFSET_FILL);
+    if(CTX::instance()->geom.surfaceType > 1){
+      if(CTX::instance()->geom.lightTwoSide)
+        glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+      else
+        glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    else
+    }
+    else{
+      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
     glDrawArrays(GL_TRIANGLES, 0, va->getNumVertices());
     glDisable(GL_POLYGON_OFFSET_FILL);
     glDisable(GL_LIGHTING);
@@ -449,6 +462,11 @@ class drawGFace {
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.surface);
     }
 
+    if(CTX::instance()->geom.lightTwoSide)
+      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    else
+      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+
     if(f->geomType() == GEntity::CompoundSurface)
       _drawCompoundGFace(f);
     else if(f->geomType() == GEntity::Plane)
@@ -478,6 +496,11 @@ class drawGRegion {
       glPushName(3);
       glPushName(r->tag());
     }
+
+    if(CTX::instance()->geom.lightTwoSide)
+      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    else
+      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
     if(r->getSelection())
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.selection);
@@ -509,11 +532,6 @@ class drawGRegion {
 void drawContext::drawGeom()
 {
   if(!CTX::instance()->geom.draw) return;
-
-  if(CTX::instance()->geom.lightTwoSide)
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-  else
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
   for(int i = 0; i < 6; i++)
     if(CTX::instance()->geom.clip & (1 << i))

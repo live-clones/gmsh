@@ -720,12 +720,13 @@ void drawContext::initRenderModel()
 
   glShadeModel(GL_SMOOTH);
 
-  // Normalize the normals automatically. We could use the more efficient
-  // glEnable(GL_RESCALE_NORMAL) instead (since we initially specify unit
-  // normals), but GL_RESCALE_NORMAL does only work with isotropic scalings (and
-  // we allow anistotropic scalings in myZoom). Note that GL_RESCALE_NORMAL is
-  // only available in GL_VERSION_1_2.
-  glEnable(GL_NORMALIZE);
+  // Normalize the normals automatically. Using glEnable(GL_RESCALE_NORMAL)
+  // instead of glEnable(GL_NORMALIZE) (since we initially specify unit normals)
+  // is more efficient, but will only work with isotropic scalings (and we allow
+  // anistotropic scalings in myZoom...). Note that GL_RESCALE_NORMAL is only
+  // available in GL_VERSION_1_2.
+  //glEnable(GL_NORMALIZE);
+  glEnable(GL_RESCALE_NORMAL);
 
   // lighting is enabled/disabled for each particular primitive later
   glDisable(GL_LIGHTING);

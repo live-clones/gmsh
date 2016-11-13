@@ -50,7 +50,7 @@ struct contextMeshOptions {
   int hoOptimize, hoNLayers, hoOptPrimSurfMesh;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat, saveParametric;
-  int smoothNormals, reverseAllNormals, zoneDefinition, clip;
+  int smoothNormals, zoneDefinition, clip;
   int saveElementTagType;
   int switchElementTags;
   int multiplePasses;

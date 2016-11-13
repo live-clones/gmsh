@@ -693,11 +693,6 @@ int FlGui::testGlobalShortcuts(int event)
           (i, GMSH_SET | GMSH_GUI, !opt_view_light(i, GMSH_GET, 0));
     status = 2;
   }
-  else if(Fl::test_shortcut(FL_ALT + FL_SHIFT + 'w')) {
-    opt_mesh_reverse_all_normals
-      (0, GMSH_SET | GMSH_GUI, !opt_mesh_reverse_all_normals(0, GMSH_GET, 0));
-    status = 2;
-  }
   else if(Fl::test_shortcut(FL_ALT + 'x') ||
           Fl::test_shortcut(FL_ALT + FL_SHIFT + 'x')) {
     status_xyz1p_cb(0, (void *)"x");

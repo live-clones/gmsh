@@ -427,11 +427,6 @@ class drawPView {
     gl2psLineWidth((float)(opt->lineWidth *
                            CTX::instance()->print.epsLineWidthFactor));
 
-    if(opt->lightTwoSide)
-      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-    else
-      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
-
     if(opt->axes && opt->type == PViewOptions::Plot3D){
       glColor4ubv((GLubyte *) & opt->color.axes);
       glLineWidth((float)CTX::instance()->lineWidth);
@@ -491,8 +486,14 @@ class drawPView {
     }
 
     // draw all the vertex arrays
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+
     drawArrays(_ctx, p, p->va_points, GL_POINTS, false);
     drawArrays(_ctx, p, p->va_lines, GL_LINES, opt->light && opt->lightLines);
+
+    if(opt->lightTwoSide)
+      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
     drawArrays(_ctx, p, p->va_triangles, GL_TRIANGLES, opt->light);
 
     // draw the "pseudo" vertex arrays for vectors

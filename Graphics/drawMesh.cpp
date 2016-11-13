@@ -420,6 +420,8 @@ class drawMeshGVertex {
       glPushName(v->tag());
     }
 
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+
     if(CTX::instance()->mesh.points || CTX::instance()->mesh.pointsNum)
       drawVerticesPerEntity(_ctx, v);
 
@@ -453,6 +455,8 @@ class drawMeshGEdge {
       glPushName(1);
       glPushName(e->tag());
     }
+
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
     if(CTX::instance()->mesh.lines)
       drawArrays(_ctx, e, e->va_lines, GL_LINES, false);
@@ -501,9 +505,15 @@ class drawMeshGFace {
       glPushName(f->tag());
     }
 
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+
     drawArrays(_ctx, f, f->va_lines, GL_LINES,
                CTX::instance()->mesh.light && CTX::instance()->mesh.lightLines,
                CTX::instance()->mesh.surfacesFaces, CTX::instance()->color.mesh.line);
+
+    if(CTX::instance()->mesh.lightTwoSide)
+      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
     drawArrays(_ctx, f, f->va_triangles, GL_TRIANGLES, CTX::instance()->mesh.light);
 
     if(CTX::instance()->mesh.surfacesNum) {
@@ -569,9 +579,15 @@ class drawMeshGRegion {
       glPushName(r->tag());
     }
 
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+
     drawArrays(_ctx, r, r->va_lines, GL_LINES, CTX::instance()->mesh.light &&
                (CTX::instance()->mesh.lightLines > 1), CTX::instance()->mesh.volumesFaces,
                CTX::instance()->color.mesh.line);
+
+    if(CTX::instance()->mesh.lightTwoSide)
+      glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
     drawArrays(_ctx, r, r->va_triangles, GL_TRIANGLES, CTX::instance()->mesh.light);
 
     if(CTX::instance()->mesh.volumesNum) {
@@ -674,11 +690,6 @@ void drawContext::drawMesh()
   glLineWidth((float)CTX::instance()->mesh.lineWidth);
   gl2psLineWidth((float)(CTX::instance()->mesh.lineWidth *
                          CTX::instance()->print.epsLineWidthFactor));
-
-  if(CTX::instance()->mesh.lightTwoSide)
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-  else
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
   if(!CTX::instance()->clipWholeElements){
     for(int i = 0; i < 6; i++)

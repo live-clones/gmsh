@@ -240,7 +240,6 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("Alt+Shift+s",    "Hide/show mesh surface edges"));
   s.push_back(mp("Alt+Shift+t",    "Same as Alt+t, but with numeric mode included"));
   s.push_back(mp("Alt+Shift+v",    "Hide/show mesh volume edges"));
-  s.push_back(mp("Alt+Shift+w",    "Reverse all mesh normals"));
   s.push_back(mp("Alt+Shift+x",    "Set -X view"));
   s.push_back(mp("Alt+Shift+y",    "Set -Y view"));
   s.push_back(mp("Alt+Shift+z",    "Set -Z view"));
