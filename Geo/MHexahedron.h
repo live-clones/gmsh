@@ -70,12 +70,7 @@ class MHexahedron : public MElement {
     return MEdge(_v[edges_hexa(num, 0)], _v[edges_hexa(num, 1)]);
   }
   virtual int getNumEdgesRep(bool curved){ return 12; }
-  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int f[12] = {0, 0, 1, 0, 1, 0, 3, 2, 1, 2, 3, 4};
-    MEdge e(getEdge(num));
-    _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, f[num]);
-  }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(2);
@@ -93,19 +88,7 @@ class MHexahedron : public MElement {
   virtual double angleShapeMeasure();
   virtual void getFaceInfo (const MFace & face, int &ithFace, int &sign, int &rot)const;
   virtual int getNumFacesRep(bool curved){ return 12; }
-  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int f[12][3] = {
-      {0, 3, 2}, {0, 2, 1},
-      {0, 1, 5}, {0, 5, 4},
-      {0, 4, 7}, {0, 7, 3},
-      {1, 2, 6}, {1, 6, 5},
-      {2, 3, 7}, {2, 7, 6},
-      {4, 5, 6}, {4, 6, 7}
-    };
-    _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-                x, y, z, n);
-  }
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(4);

@@ -83,11 +83,7 @@ class MQuadrangle : public MElement {
     Msg::Error("Could not get edge information for quadranglee %d", getNum());
   }
   virtual int getNumEdgesRep(bool curved){ return 4; }
-  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    MEdge e(getEdge(num));
-    _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, 0);
-  }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(2);
@@ -96,14 +92,7 @@ class MQuadrangle : public MElement {
   virtual int getNumFaces(){ return 1; }
   virtual MFace getFace(int num){ return MFace(_v[0], _v[1], _v[2], _v[3]); }
   virtual int getNumFacesRep(bool curved){ return 2; }
-  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int f[2][3] = {
-      {0, 1, 2}, {0, 2, 3}
-    };
-    _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-                x, y, z, n);
-  }
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(4);

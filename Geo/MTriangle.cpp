@@ -42,15 +42,7 @@ void MTriangle::getEdgeRep(bool curved, int num, double *x, double *y, double *z
 void MTriangle::getFaceRep(bool curved, int num, double *x, double *y, double *z,
                            SVector3 *n)
 {
-  // don't use MElement::_getFaceRep: it's slow due to the creation of MFaces
-  x[0] = _v[0]->x(); x[1] = _v[1]->x(); x[2] = _v[2]->x();
-  y[0] = _v[0]->y(); y[1] = _v[1]->y(); y[2] = _v[2]->y();
-  z[0] = _v[0]->z(); z[1] = _v[1]->z(); z[2] = _v[2]->z();
-  SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
-  SVector3 t2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
-  SVector3 normal = crossprod(t1, t2);
-  normal.normalize();
-  for(int i = 0; i < 3; i++) n[i] = normal;
+  _getFaceRep(_v[0], _v[1], _v[2], x, y, z, n);
 }
 
 SPoint3 MTriangle::circumcenter()

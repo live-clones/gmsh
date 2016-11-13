@@ -42,18 +42,10 @@ void MTetrahedron::getEdgeRep(bool curved, int num, double *x, double *y, double
 void MTetrahedron::getFaceRep(bool curved, int num, double *x, double *y, double *z,
                               SVector3 *n)
 {
-  // don't use MElement::_getFaceRep: it's slow due to the creation of MFaces
   MVertex *v0 = _v[faces_tetra(num, 0)];
   MVertex *v1 = _v[faces_tetra(num, 1)];
   MVertex *v2 = _v[faces_tetra(num, 2)];
-  x[0] = v0->x(); x[1] = v1->x(); x[2] = v2->x();
-  y[0] = v0->y(); y[1] = v1->y(); y[2] = v2->y();
-  z[0] = v0->z(); z[1] = v1->z(); z[2] = v2->z();
-  SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
-  SVector3 t2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
-  SVector3 normal = crossprod(t1, t2);
-  normal.normalize();
-  for(int i = 0; i < 3; i++) n[i] = normal;
+  _getFaceRep(v0, v1, v2, x, y, z, n);
 }
 
 SPoint3 MTetrahedron::circumcenter()

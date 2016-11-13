@@ -14,6 +14,42 @@
 #include "qualityMeasures.h"
 #endif
 
+void MHexahedron::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
+                             SVector3 *n)
+{
+  // don't use MElement::_getEdgeRep: it's slow due to the creation of MFaces
+  MVertex *v0 = _v[edges_hexa(num, 0)];
+  MVertex *v1 = _v[edges_hexa(num, 1)];
+  x[0] = v0->x(); y[0] = v0->y(); z[0] = v0->z();
+  x[1] = v1->x(); y[1] = v1->y(); z[1] = v1->z();
+  if(CTX::instance()->mesh.lightLines > 1){
+    static const int vv[12] = {2, 2, 3, 3, 2, 0, 1, 0, 6, 5, 4, 4};
+    MVertex *v2 = _v[vv[num]];
+    SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+    SVector3 t2(v2->x() - x[0], v2->y() - y[0], v2->z() - z[0]);
+    SVector3 normal = crossprod(t1, t2);
+    normal.normalize();
+    n[0] = n[1] = normal;
+  }
+  else{
+    n[0] = n[1] = SVector3(0., 0., 1.);
+  }
+}
+
+void MHexahedron::getFaceRep(bool curved, int num, double *x, double *y, double *z,
+                             SVector3 *n)
+{
+  static const int f[12][3] = {
+    {0, 3, 2}, {0, 2, 1},
+    {0, 1, 5}, {0, 5, 4},
+    {0, 4, 7}, {0, 7, 3},
+    {1, 2, 6}, {1, 6, 5},
+    {2, 3, 7}, {2, 7, 6},
+    {4, 5, 6}, {4, 6, 7}
+  };
+  _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
+}
+
 int MHexahedron::getVolumeSign()
 {
   double mat[3][3];

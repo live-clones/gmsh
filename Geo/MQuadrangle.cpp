@@ -18,6 +18,37 @@
 
 #define SQU(a)      ((a)*(a))
 
+void MQuadrangle::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
+                             SVector3 *n)
+{
+  // don't use MElement::_getEdgeRep: it's slow due to the creation of MFace
+  MVertex *v0 = _v[edges_quad(num, 0)];
+  MVertex *v1 = _v[edges_quad(num, 1)];
+  x[0] = v0->x(); y[0] = v0->y(); z[0] = v0->z();
+  x[1] = v1->x(); y[1] = v1->y(); z[1] = v1->z();
+  if(CTX::instance()->mesh.lightLines > 1){
+    static const int vv[4] = {2, 3, 0, 1};
+    MVertex *v2 = _v[vv[num]];
+    SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+    SVector3 t2(v2->x() - x[0], v2->y() - y[0], v2->z() - z[0]);
+    SVector3 normal = crossprod(t1, t2);
+    normal.normalize();
+    n[0] = n[1] = normal;
+  }
+  else{
+    n[0] = n[1] = SVector3(0., 0., 1.);
+  }
+}
+
+void MQuadrangle::getFaceRep(bool curved, int num, double *x, double *y, double *z,
+                             SVector3 *n)
+{
+  static const int f[2][3] = {
+    {0, 1, 2}, {0, 2, 3}
+  };
+  _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
+}
+
 int MQuadrangleN::getNumEdgesRep(bool curved)
 {
   return curved ? 4 * CTX::instance()->mesh.numSubEdges : 4;
@@ -336,10 +367,10 @@ void MQuadrangle::reorient(int rot, bool swap) {
   std::memcpy(_v,tmp,4*sizeof(MVertex*));
 }
 
-void MQuadrangle8::reorient(int rot, bool swap) { 
-  
+void MQuadrangle8::reorient(int rot, bool swap) {
+
   if (rot == 0 && !swap) return;
-  
+
   MQuadrangle::reorient(rot,swap);
   MVertex* tmp[4];
   if (swap) for (int i=0;i<4;i++) tmp[i] = _vs[(7-i+rot)%4];
@@ -347,10 +378,10 @@ void MQuadrangle8::reorient(int rot, bool swap) {
   std::memcpy(_vs,tmp,4*sizeof(MVertex*));
 }
 
-void MQuadrangle9::reorient(int rot, bool swap) { 
+void MQuadrangle9::reorient(int rot, bool swap) {
 
   if (rot == 0 && !swap) return;
-  
+
   MQuadrangle::reorient(rot,swap);
   MVertex* tmp[4];
   if (swap) for (int i=0;i<4;i++) tmp[i] = _vs[(7-i+rot)%4]; // edge swapped
@@ -381,7 +412,7 @@ void MQuadrangleN::reorient(int rot, bool swap) {
       for (int i=0;i<nbEdgePts;i++)    tmp.push_back(_vs[edgeIdx+i]);
     }
   }
-  
+
   idx += 4*nbEdgePts;
 
   if (_vs.size() >= idx) {
@@ -395,7 +426,7 @@ void MQuadrangleN::reorient(int rot, bool swap) {
         else      for (int i=0;i<4;i++) tmp.push_back(_vs[idx + (4+i-rot)%4]);
         idx += 4;
         if (order > 4) Msg::Error("Reorientation of quad not supported above order 4");
-      } 
+      }
     }
     tmp.push_back(_vs[idx]);
   }
