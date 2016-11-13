@@ -12,6 +12,14 @@
 #include "qualityMeasures.h"
 #endif
 
+void MPrism::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
+                        SVector3 *n)
+{
+  static const int f[9] = {0, 1, 2, 0, 2, 3, 1, 1, 1};
+  MEdge e(getEdge(num));
+  _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, f[num]);
+}
+
 int MPrism::getVolumeSign()
 {
   double mat[3][3];

@@ -72,12 +72,7 @@ class MPrism : public MElement {
     return MEdge(_v[edges_prism(num, 0)], _v[edges_prism(num, 1)]);
   }
   virtual int getNumEdgesRep(bool curved){ return 9; }
-  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int f[9] = {0, 1, 2, 0, 2, 3, 1, 1, 1};
-    MEdge e(getEdge(num));
-    _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, f[num]);
-  }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(2);
@@ -107,8 +102,7 @@ class MPrism : public MElement {
       {0, 3, 5}, {0, 5, 2},
       {1, 2, 5}, {1, 5, 4}
     };
-    _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
-                x, y, z, n);
+    _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {

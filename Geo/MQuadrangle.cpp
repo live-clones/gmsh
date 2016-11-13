@@ -40,15 +40,6 @@ void MQuadrangle::getEdgeRep(bool curved, int num, double *x, double *y, double 
   }
 }
 
-void MQuadrangle::getFaceRep(bool curved, int num, double *x, double *y, double *z,
-                             SVector3 *n)
-{
-  static const int f[2][3] = {
-    {0, 1, 2}, {0, 2, 3}
-  };
-  _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
-}
-
 int MQuadrangleN::getNumEdgesRep(bool curved)
 {
   return curved ? 4 * CTX::instance()->mesh.numSubEdges : 4;

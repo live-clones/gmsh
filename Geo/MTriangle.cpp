@@ -39,12 +39,6 @@ void MTriangle::getEdgeRep(bool curved, int num, double *x, double *y, double *z
   }
 }
 
-void MTriangle::getFaceRep(bool curved, int num, double *x, double *y, double *z,
-                           SVector3 *n)
-{
-  _getFaceRep(_v[0], _v[1], _v[2], x, y, z, n);
-}
-
 SPoint3 MTriangle::circumcenter()
 {
   double p1[3] = {_v[0]->x(), _v[0]->y(), _v[0]->z()};

@@ -39,15 +39,6 @@ void MTetrahedron::getEdgeRep(bool curved, int num, double *x, double *y, double
   }
 }
 
-void MTetrahedron::getFaceRep(bool curved, int num, double *x, double *y, double *z,
-                              SVector3 *n)
-{
-  MVertex *v0 = _v[faces_tetra(num, 0)];
-  MVertex *v1 = _v[faces_tetra(num, 1)];
-  MVertex *v2 = _v[faces_tetra(num, 2)];
-  _getFaceRep(v0, v1, v2, x, y, z, n);
-}
-
 SPoint3 MTetrahedron::circumcenter()
 {
 #if defined(HAVE_MESH)

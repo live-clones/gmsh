@@ -83,7 +83,11 @@ class MTetrahedron : public MElement {
   }
   virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
   virtual int getNumFacesRep(bool curved){ return 4; }
-  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+  {
+    _getFaceRep(_v[faces_tetra(num, 0)], _v[faces_tetra(num, 1)], _v[faces_tetra(num, 2)],
+                x, y, z, n);
+  }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);

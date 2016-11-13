@@ -99,7 +99,10 @@ class MTriangle : public MElement {
     return MFace(_v[0], _v[1], _v[2]);
   }
   virtual int getNumFacesRep(bool curved){ return 1; }
-  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+  {
+    _getFaceRep(_v[0], _v[1], _v[2], x, y, z, n);
+  }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);
