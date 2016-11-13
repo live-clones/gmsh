@@ -2,6 +2,7 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
+
 #include <limits>
 #include "MHexahedron.h"
 #include "Numeric.h"

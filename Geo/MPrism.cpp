@@ -15,9 +15,16 @@
 void MPrism::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                         SVector3 *n)
 {
-  static const int f[9] = {0, 1, 2, 0, 2, 3, 1, 1, 1};
-  MEdge e(getEdge(num));
-  _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, f[num]);
+  MVertex *v0 = _v[edges_prism(num, 0)];
+  MVertex *v1 = _v[edges_prism(num, 1)];
+  x[0] = v0->x(); y[0] = v0->y(); z[0] = v0->z();
+  x[1] = v1->x(); y[1] = v1->y(); z[1] = v1->z();
+  // just one of the potential normals - did not bother computing the normal of
+  // one of the faces - don't use MElement::_getEdgeRep as it uses MFace, which
+  // is slow
+  double nn[3];
+  normal2points(x[0], y[0], z[0], x[1], y[1], z[1], nn);
+  n[0] = n[1] = SVector3(nn[0], nn[1], nn[2]);
 }
 
 int MPrism::getVolumeSign()
