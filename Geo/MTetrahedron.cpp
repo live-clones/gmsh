@@ -25,26 +25,35 @@ void MTetrahedron::getEdgeRep(bool curved, int num, double *x, double *y, double
   MVertex *v1 = getVertex(edges_tetra(num, 1));
   x[0] = v0->x(); y[0] = v0->y(); z[0] = v0->z();
   x[1] = v1->x(); y[1] = v1->y(); z[1] = v1->z();
-#if 0 // compute normals so that we can light the edges
-  static const int vv[6] = {2, 0, 1, 1, 0, 2};
-  MVertex *v2 = getVertex(vv[num]);
-  double nn[3];
-  normal3points(v0->x(), v0->y(), v0->z(),
-                v1->x(), v1->y(), v1->z(),
-                v2->x(), v2->y(), v2->z(), nn);
-  n[0] = n[1] = SVector3(nn[0], nn[1], nn[2]);
-#else
-  n[0] = n[1] = SVector3();
-#endif
+  if(CTX::instance()->mesh.lightLines > 1){
+    static const int vv[6] = {2, 0, 1, 1, 0, 2};
+    MVertex *v2 = getVertex(vv[num]);
+    SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+    SVector3 t2(v2->x() - x[0], v2->y() - y[0], v2->z() - z[0]);
+    SVector3 normal = crossprod(t1, t2);
+    normal.normalize();
+    n[0] = n[1] = normal;
+  }
+  else{
+    n[0] = n[1] = SVector3(0., 0., 1.);
+  }
 }
 
 void MTetrahedron::getFaceRep(bool curved, int num, double *x, double *y, double *z,
                               SVector3 *n)
 {
-  // don't use general MElement::_getFaceRep: it's slow due to the creation of
-  // MFaces
-  MFace f(getFace(num));
-  _getFaceRep(f.getVertex(0), f.getVertex(1), f.getVertex(2), x, y, z, n);
+  // don't use MElement::_getFaceRep: it's slow due to the creation of MFaces
+  MVertex *v0 = getVertex(faces_tetra(num, 0));
+  MVertex *v1 = getVertex(faces_tetra(num, 1));
+  MVertex *v2 = getVertex(faces_tetra(num, 2));
+  x[0] = v0->x(); x[1] = v1->x(); x[2] = v2->x();
+  y[0] = v0->y(); y[1] = v1->y(); y[2] = v2->y();
+  z[0] = v0->z(); z[1] = v1->z(); z[2] = v2->z();
+  SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+  SVector3 t2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
+  SVector3 normal = crossprod(t1, t2);
+  normal.normalize();
+  for(int i = 0; i < 3; i++) n[i] = normal;
 }
 
 SPoint3 MTetrahedron::circumcenter()

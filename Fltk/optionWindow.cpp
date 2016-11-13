@@ -504,7 +504,9 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_light(0, GMSH_SET, o->mesh.butt[17]->value());
   opt_mesh_light_two_side(0, GMSH_SET, o->mesh.butt[18]->value());
   opt_mesh_smooth_normals(0, GMSH_SET, o->mesh.butt[19]->value());
-  opt_mesh_light_lines(0, GMSH_SET, o->mesh.butt[20]->value());
+  opt_mesh_recombine_all(0, GMSH_SET, o->mesh.butt[21]->value());
+  opt_mesh_recombine3d_all(0, GMSH_SET, o->mesh.butt[22]->value());
+
   opt_mesh_nb_smoothing(0, GMSH_SET, o->mesh.value[0]->value());
   opt_mesh_lloyd(0, GMSH_SET, o->mesh.value[27]->value());
   opt_mesh_lc_factor(0, GMSH_SET, o->mesh.value[2]->value());
@@ -523,7 +525,6 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_label_sampling(0, GMSH_SET, o->mesh.value[12]->value());
   opt_mesh_angle_smooth_normals(0, GMSH_SET, o->mesh.value[18]->value());
 
-  opt_mesh_recombine3d_all(0, GMSH_SET, o->mesh.butt[22]->value());
   opt_mesh_point_type(0, GMSH_SET, o->mesh.choice[0]->value());
   opt_mesh_algo2d(0, GMSH_SET,
                   (o->mesh.choice[2]->value() == 1) ? ALGO_2D_MESHADAPT :
@@ -541,14 +542,13 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   (o->mesh.choice[3]->value() == 6) ? ALGO_3D_RTREE :
                   ALGO_3D_DELAUNAY);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
-  opt_mesh_recombine_all(0, GMSH_SET, o->mesh.butt[21]->value());
-
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
   opt_mesh_remesh_algo(0, GMSH_SET, o->mesh.choice[8]->value());
   opt_mesh_remesh_param(0, GMSH_SET, o->mesh.choice[9]->value());
   opt_mesh_color_carousel(0, GMSH_SET, o->mesh.choice[4]->value());
   opt_mesh_quality_type(0, GMSH_SET, o->mesh.choice[6]->value());
   opt_mesh_label_type(0, GMSH_SET, o->mesh.choice[7]->value());
+  opt_mesh_light_lines(0, GMSH_SET, o->mesh.choice[10]->value());
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
@@ -2627,10 +2627,17 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[17]->type(FL_TOGGLE_BUTTON);
       mesh.butt[17]->callback(mesh_options_ok_cb, (void*)"mesh_light");
 
-      mesh.butt[20] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Enable lighting of lines");
-      mesh.butt[20]->type(FL_TOGGLE_BUTTON);
-      mesh.butt[20]->callback(mesh_options_ok_cb);
+      static Fl_Menu_Item menu_mesh_light_lines[] = {
+        {"No", 0, 0, 0},
+        {"Surface", 0, 0, 0},
+        {"Volume and surface", 0, 0, 0},
+        {0}
+      };
+      mesh.choice[10] = new Fl_Choice
+        (L + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Edge lighting");
+      mesh.choice[10]->menu(menu_mesh_light_lines);
+      mesh.choice[10]->align(FL_ALIGN_RIGHT);
+      mesh.choice[10]->callback(mesh_options_ok_cb);
 
       mesh.butt[18] = new Fl_Check_Button
         (L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Use two-side lighting");
@@ -3978,14 +3985,14 @@ void optionWindow::activate(const char *what)
     if(mesh.butt[17]->value()){
       mesh.butt[18]->activate();
       mesh.butt[19]->activate();
-      mesh.butt[20]->activate();
+      mesh.choice[10]->activate();
       mesh.butt[0]->activate();
       mesh.value[18]->activate();
     }
     else{
       mesh.butt[18]->deactivate();
       mesh.butt[19]->deactivate();
-      mesh.butt[20]->deactivate();
+      mesh.choice[10]->deactivate();
       mesh.butt[0]->deactivate();
       mesh.value[18]->deactivate();
     }

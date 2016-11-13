@@ -5605,11 +5605,17 @@ double opt_mesh_light(OPT_ARGS_NUM)
 
 double opt_mesh_light_lines(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
+    if(CTX::instance()->mesh.lightLines != (int)val)
+      CTX::instance()->mesh.changed |= ENT_SURFACE|ENT_VOLUME;
     CTX::instance()->mesh.lightLines = (int)val;
+    if(CTX::instance()->mesh.lightLines < 0 ||
+       CTX::instance()->mesh.lightLines > 2)
+      CTX::instance()->mesh.lightLines = 1;
+  }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->mesh.butt[20]->value
+    FlGui::instance()->options->mesh.choice[10]->value
       (CTX::instance()->mesh.lightLines);
 #endif
   return CTX::instance()->mesh.lightLines;

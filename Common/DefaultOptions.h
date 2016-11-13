@@ -1082,7 +1082,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Light" , opt_mesh_light , 1. ,
     "Enable lighting for the mesh" },
   { F|O, "LightLines" , opt_mesh_light_lines , 1. ,
-    "Enable lighting for mesh lines (element edges)" },
+    "Enable lighting for mesh edges (0=no, 1=surfaces, 2=surfaces+volumes" },
   { F|O, "LightTwoSide" , opt_mesh_light_two_side , 1. ,
     "Light both sides of surfaces (leads to slower rendering)" },
   { F|O, "Lines" , opt_mesh_lines , 0. ,

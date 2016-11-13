@@ -90,7 +90,9 @@ void VertexArray::add(double *x, double *y, double *z, SVector3 *n, unsigned cha
     return;
   }
 
-#if 0 // removed this for now
+  // enabling this will reduce memory and rendering time; but will increase the
+  // time it takes to create the vertex array
+#if 0
   if(unique){
     Barycenter pc(0.0F, 0.0F, 0.0F);
     for(int i = 0; i < npe; i++)

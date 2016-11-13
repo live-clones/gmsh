@@ -570,7 +570,7 @@ class drawMeshGRegion {
     }
 
     drawArrays(_ctx, r, r->va_lines, GL_LINES, CTX::instance()->mesh.light &&
-               CTX::instance()->mesh.lightLines, CTX::instance()->mesh.volumesFaces,
+               (CTX::instance()->mesh.lightLines > 1), CTX::instance()->mesh.volumesFaces,
                CTX::instance()->color.mesh.line);
     drawArrays(_ctx, r, r->va_triangles, GL_TRIANGLES, CTX::instance()->mesh.light);
 

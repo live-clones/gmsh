@@ -20,7 +20,8 @@ class GamePad;
 
 struct contextMeshOptions {
   int draw, changed, light, lightTwoSide, lightLines, pointType;
-  int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms, pyramids, trihedra;
+  int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;
+  int pyramids, trihedra;
   int surfacesEdges, surfacesFaces, volumesEdges, volumesFaces, numSubEdges;
   int pointsNum, linesNum, surfacesNum, volumesNum, qualityType, labelType;
   int optimize, optimizeNetgen, optimizeLloyd, smoothCrossField, refineSteps;
@@ -33,13 +34,14 @@ struct contextMeshOptions {
   int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int fileFormat, nbSmoothing, algo2d, algo3d, algoSubdivide, oldRefinement;
-  int algoRecombine, recombineAll, recombine3DAll, recombine3DLevel, recombine3DConformity;
+  int algoRecombine, recombineAll, recombine3DAll, recombine3DLevel;
+  int recombine3DConformity;
   int flexibleTransfinite;
   //-- for recombination test (amaury) --
-    int doRecombinationTest, recombinationTestStart;
-    int recombinationTestNoGreedyStrat, recombinationTestNewStrat;
-    int nProc, nbProc;
-    std::string recTestName;
+  int doRecombinationTest, recombinationTestStart;
+  int recombinationTestNoGreedyStrat, recombinationTestNewStrat;
+  int nProc, nbProc;
+  std::string recTestName;
   //-------------------------------------
   int remeshParam, remeshAlgo;
   int order, secondOrderLinear, secondOrderIncomplete;
