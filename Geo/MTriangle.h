@@ -87,11 +87,7 @@ class MTriangle : public MElement {
     Msg::Error("Could not get edge information for triangle %d", getNum());
   }
   virtual int getNumEdgesRep(bool curved){ return 3; }
-  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    MEdge e(getEdge(num));
-    _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, 0);
-  }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(2);
@@ -103,10 +99,7 @@ class MTriangle : public MElement {
     return MFace(_v[0], _v[1], _v[2]);
   }
   virtual int getNumFacesRep(bool curved){ return 1; }
-  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    _getFaceRep(_v[0], _v[1], _v[2], x, y, z, n);
-  }
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);

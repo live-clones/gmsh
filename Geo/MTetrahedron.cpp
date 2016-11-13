@@ -21,13 +21,13 @@ void MTetrahedron::getEdgeRep(bool curved, int num, double *x, double *y, double
                               SVector3 *n)
 {
   // don't use MElement::_getEdgeRep: it's slow due to the creation of MFaces
-  MVertex *v0 = getVertex(edges_tetra(num, 0));
-  MVertex *v1 = getVertex(edges_tetra(num, 1));
+  MVertex *v0 = _v[edges_tetra(num, 0)];
+  MVertex *v1 = _v[edges_tetra(num, 1)];
   x[0] = v0->x(); y[0] = v0->y(); z[0] = v0->z();
   x[1] = v1->x(); y[1] = v1->y(); z[1] = v1->z();
   if(CTX::instance()->mesh.lightLines > 1){
     static const int vv[6] = {2, 0, 1, 1, 0, 2};
-    MVertex *v2 = getVertex(vv[num]);
+    MVertex *v2 = _v[vv[num]];
     SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
     SVector3 t2(v2->x() - x[0], v2->y() - y[0], v2->z() - z[0]);
     SVector3 normal = crossprod(t1, t2);
@@ -43,9 +43,9 @@ void MTetrahedron::getFaceRep(bool curved, int num, double *x, double *y, double
                               SVector3 *n)
 {
   // don't use MElement::_getFaceRep: it's slow due to the creation of MFaces
-  MVertex *v0 = getVertex(faces_tetra(num, 0));
-  MVertex *v1 = getVertex(faces_tetra(num, 1));
-  MVertex *v2 = getVertex(faces_tetra(num, 2));
+  MVertex *v0 = _v[faces_tetra(num, 0)];
+  MVertex *v1 = _v[faces_tetra(num, 1)];
+  MVertex *v2 = _v[faces_tetra(num, 2)];
   x[0] = v0->x(); x[1] = v1->x(); x[2] = v2->x();
   y[0] = v0->y(); y[1] = v1->y(); y[2] = v2->y();
   z[0] = v0->z(); z[1] = v1->z(); z[2] = v2->z();

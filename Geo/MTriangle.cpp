@@ -17,6 +17,42 @@
 
 #define SQU(a)      ((a)*(a))
 
+void MTriangle::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
+                           SVector3 *n)
+{
+  // don't use MElement::_getEdgeRep: it's slow due to the creation of MFace
+  MVertex *v0 = _v[edges_tri(num, 0)];
+  MVertex *v1 = _v[edges_tri(num, 1)];
+  x[0] = v0->x(); y[0] = v0->y(); z[0] = v0->z();
+  x[1] = v1->x(); y[1] = v1->y(); z[1] = v1->z();
+  if(CTX::instance()->mesh.lightLines > 1){
+    static const int vv[3] = {2, 0, 1};
+    MVertex *v2 = _v[vv[num]];
+    SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+    SVector3 t2(v2->x() - x[0], v2->y() - y[0], v2->z() - z[0]);
+    SVector3 normal = crossprod(t1, t2);
+    normal.normalize();
+    n[0] = n[1] = normal;
+  }
+  else{
+    n[0] = n[1] = SVector3(0., 0., 1.);
+  }
+}
+
+void MTriangle::getFaceRep(bool curved, int num, double *x, double *y, double *z,
+                           SVector3 *n)
+{
+  // don't use MElement::_getFaceRep: it's slow due to the creation of MFaces
+  x[0] = _v[0]->x(); x[1] = _v[1]->x(); x[2] = _v[2]->x();
+  y[0] = _v[0]->y(); y[1] = _v[1]->y(); y[2] = _v[2]->y();
+  z[0] = _v[0]->z(); z[1] = _v[1]->z(); z[2] = _v[2]->z();
+  SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+  SVector3 t2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
+  SVector3 normal = crossprod(t1, t2);
+  normal.normalize();
+  for(int i = 0; i < 3; i++) n[i] = normal;
+}
+
 SPoint3 MTriangle::circumcenter()
 {
   double p1[3] = {_v[0]->x(), _v[0]->y(), _v[0]->z()};
@@ -250,6 +286,7 @@ void MTriangleN::getFaceRep(bool curved, int num,
   if (curved) _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MTriangle::getFaceRep(false, num, x, y, z, n);
 }
+
 void MTriangle6::getFaceRep(bool curved, int num,
                             double *x, double *y, double *z, SVector3 *n)
 {
@@ -263,10 +300,10 @@ void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQTPts(pOrder);
 }
 
-void MTriangle::reorient(int rot,bool swap) {
-  
+void MTriangle::reorient(int rot,bool swap)
+{
   if (rot == 0 && !swap) return;
-  
+
   MVertex* tmp[3];
   std::memcpy(tmp,_v,3*sizeof(MVertex*));
   if (swap) for (int i=0;i<3;i++) _v[i] = tmp[(3-i+rot)%3];
@@ -275,8 +312,8 @@ void MTriangle::reorient(int rot,bool swap) {
 
 #include "HighOrder.h"
 
-void MTriangle6::reorient(int rot, bool swap) {
-  
+void MTriangle6::reorient(int rot, bool swap)
+{
   if (rot == 0 && !swap) return;
 
   MTriangle::reorient(rot,swap);
@@ -286,18 +323,17 @@ void MTriangle6::reorient(int rot, bool swap) {
   else      for (int i=0;i<3;i++) _vs[i] = tmp[(3-rot+i)%3];
 }
 
-void MTriangleN::reorient(int rot, bool swap) {
-  
+void MTriangleN::reorient(int rot, bool swap)
+{
   if (rot == 0 && !swap) return;
 
   MTriangle::reorient(rot,swap);
-  
+
   std::vector<MVertex*> tmp;
   int order  = getPolynomialOrder();
   int nbEdge =  order - 1;
-  unsigned int idx = 0; 
-  
-  
+  unsigned int idx = 0;
+
   if (swap) {
     for (int iEdge=0;iEdge<3;iEdge++) {
       int edgeIdx = ((5-iEdge+rot)%3)*nbEdge;
@@ -312,20 +348,15 @@ void MTriangleN::reorient(int rot, bool swap) {
   }
 
   idx += 3*nbEdge;
-  
+
   if (_vs.size() > idx ) {
     if (order == 3) tmp.push_back(_vs[idx]);
     if (order == 4) {
       if (swap) for(int i=0;i<3;i++) tmp.push_back(_vs[idx+(3+rot-i)%3]);
       else      for(int i=0;i<3;i++) tmp.push_back(_vs[idx+(3+i-rot)%3]);
     }
-    if (order >=5) 
+    if (order >=5)
       Msg::Error("Reorientation of a triangle not supported above order 4");
   }
   _vs = tmp;
 }
-
-
-
-  
-
