@@ -1,3 +1,6 @@
+2.14.2: fixed regression in multi-file partitioned grid export; fixed regression
+for Mesh.SubdivisionAlgorithm=1; simplified 2D boundary layer field.
+
 2.14.1 (October 30, 2016): fixed regression in periodic meshes; small bug fixes
 and code cleanups.
 

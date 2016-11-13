@@ -68,12 +68,7 @@ class MTetrahedron : public MElement {
     return MEdge(_v[edges_tetra(num, 0)], _v[edges_tetra(num, 1)]);
   }
   virtual int getNumEdgesRep(bool curved){ return 6; }
-  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int f[6] = {0, 0, 0, 1, 2, 3};
-    MEdge e(getEdge(num));
-    _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, f[num]);
-  }
+  virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(2);
@@ -88,11 +83,7 @@ class MTetrahedron : public MElement {
   }
   virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
   virtual int getNumFacesRep(bool curved){ return 4; }
-  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    MFace f(getFace(num));
-    _getFaceRep(f.getVertex(0), f.getVertex(1), f.getVertex(2), x, y, z, n);
-  }
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(3);

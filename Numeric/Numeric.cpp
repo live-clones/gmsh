@@ -34,7 +34,9 @@ double myacos(double a)
   else
     return acos(a);
 }
-double norm2(double a[3][3]) {
+
+double norm2(double a[3][3])
+{
   double norm2sq =
     gmsh_SQU(a[0][0])+
     gmsh_SQU(a[0][1])+
@@ -95,7 +97,6 @@ void normal2points(double x0, double y0, double z0,
   prodve(t, ex, n);
   norme(n);
 }
-
 
 int sys2x2(double mat[2][2], double b[2], double res[2])
 {
@@ -448,19 +449,18 @@ double computeInnerRadiusForQuad(double *x, double *y, int i)
 char float2char(float f)
 {
   // float normalized in [-1, 1], char in [-127, 127]
-  f *= 127.;
-  if(f > 127.) return 127;
-  else if(f < -127.) return -127;
-  else return (char)f;
+  float c = f * 127.;
+  if(c > 127.) return 127;
+  else if(c < -127.) return -127;
+  else return (int)c;
 }
 
 float char2float(char c)
 {
   float f = c;
-  f /= 127.;
-  if(f > 1.) return 1.;
-  else if(f < -1) return -1.;
-  else return f;
+  if(f > 127.) return 1.;
+  else if(f < -127) return -1.;
+  else return f / 127.;
 }
 
 void gradSimplex(double *x, double *y, double *z, double *v, double *grad)

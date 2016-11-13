@@ -1858,7 +1858,8 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &dat
   return element;
 }
 
-double MElement::skewness() {
+double MElement::skewness()
+{
   double minsk = 1.0;
   for (int i=0;i<getNumFaces();i++){
     MFace f = getFace(i);

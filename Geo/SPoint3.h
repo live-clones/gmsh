@@ -18,7 +18,12 @@ class SPoint3 {
   SPoint3(const SPoint3 &pt) { P[0] = pt.P[0]; P[1] = pt.P[1]; P[2] = pt.P[2]; }
   virtual ~SPoint3() {}
   void setPosition(double xx, double yy, double zz);
-  void setPosition(const SPoint3 &pt,const SPoint3 &dir,const double dist_) {P[0]=pt.P[0]; P[1]=pt.P[1]; P[2]=pt.P[2]; SPoint3 a(dir); a*=dist_; P[0]+=a[0]; P[1]+=a[1]; P[2]+=a[2];}
+  void setPosition(const SPoint3 &pt,const SPoint3 &dir,const double dist_)
+  {
+    P[0]=pt.P[0]; P[1]=pt.P[1]; P[2]=pt.P[2];
+    SPoint3 a(dir); a*=dist_;
+    P[0]+=a[0]; P[1]+=a[1]; P[2]+=a[2];
+  }
   void getPosition(double *xx, double *yy, double *zz) const;
   void position(double *) const;
   inline double x(void) const;

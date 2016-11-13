@@ -60,6 +60,7 @@ inline void prodve(double a[3], double b[3], double c[3])
   c[1] = -a[0] * b[2] + a[2] * b[0];
   c[0] = a[1] * b[2] - a[2] * b[1];
 }
+
 inline void prosca(double a[3], double b[3], double *c)
 {
   *c = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];

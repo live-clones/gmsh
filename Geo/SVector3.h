@@ -33,7 +33,8 @@ class SVector3 {
   // Beware that " w = v.normalize() " produces the vector
   // w = (v.norm(), v.norm(), v.norm()), which is NOT a unit vector!
   // Use " w = v.unit() " to affect to "w" the unit vector parallel to "v".
-  double normalize(){
+  double normalize()
+  {
     double n = norm(); if(n){ P[0] /= n; P[1] /= n; P[2] /= n; }
     return n;
   }
@@ -71,11 +72,14 @@ class SVector3 {
   }
   operator double *() { return P; }
   void print(std::string name="") const
-  { printf("Vector \'%s\':  %f  %f  %f\n",name.c_str(),P[0],P[1],P[2]); }
-
-  // Needed to allow the initialization of a SPoint3 from a SPoint3, a distance and a direction
-  SPoint3 point() const{return P;}
-  int getMaxValue(double& val) const{
+  {
+    Msg::Info("Vector \'%s\':  %f  %f  %f", name.c_str(), P[0], P[1], P[2]);
+  }
+  // Needed to allow the initialization of a SPoint3 from a SPoint3, a distance
+  // and a direction
+  SPoint3 point() const{ return P; }
+  int getMaxValue(double& val) const
+  {
     if ((P[0] >=P[1]) && (P[0]>=P[2])){
       val = P[0];
       return 0;
@@ -166,8 +170,7 @@ inline void buildOrthoBasis_naive(SVector3 &dir, SVector3 &dir1, SVector3 &dir2)
      dir2 = SVector3(0.0, 0.0, 1.0);
    }
    else{
-       Msg::Error("Problem with computing orthoBasis");
-       Msg::Exit(1);
+     Msg::Error("Problem with computing orthoBasis");
    }
    // printf("XYZ =%g %g %g r=%g dir0 = %g %g %g dir1 = %g %g %g dir2 =%g %g %g\n",
    // 	  x,y,z,d, dir[0], dir[1], dir[2], dir1[0], dir1[1], dir1[2],  dir2[0], dir2[1], dir2[2] );

@@ -1198,22 +1198,22 @@ class Popen2 {
     HANDLE hChildStd_OUT_Wr, hChildStd_IN_Rd;
     PROCESS_INFORMATION piProcInfo;
     SECURITY_ATTRIBUTES saAttr;
-    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES); 
-    saAttr.bInheritHandle = TRUE; 
-    saAttr.lpSecurityDescriptor = NULL; 
-    if (!CreatePipe(&_hIn, &hChildStd_OUT_Wr, &saAttr, 0)) 
-      Msg::Error("StdoutRd CreatePipe"); 
-    if (!CreatePipe(&hChildStd_IN_Rd, &_hOut, &saAttr, 0)) 
+    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+    saAttr.bInheritHandle = TRUE;
+    saAttr.lpSecurityDescriptor = NULL;
+    if (!CreatePipe(&_hIn, &hChildStd_OUT_Wr, &saAttr, 0))
+      Msg::Error("StdoutRd CreatePipe");
+    if (!CreatePipe(&hChildStd_IN_Rd, &_hOut, &saAttr, 0))
       Msg::Error("Stdin CreatePipe");
-    if (!CreatePipe(&_hIn, &hChildStd_OUT_Wr, &saAttr, 0)) 
-      Msg::Error("StdoutRd CreatePipe"); 
+    if (!CreatePipe(&_hIn, &hChildStd_OUT_Wr, &saAttr, 0))
+      Msg::Error("StdoutRd CreatePipe");
     if (!SetHandleInformation(_hIn, HANDLE_FLAG_INHERIT, 0))
       Msg::Error("Stdout SetHandleInformation");
     STARTUPINFO siStartInfo;
-    BOOL bSuccess = FALSE; 
+    BOOL bSuccess = FALSE;
     ZeroMemory( &piProcInfo, sizeof(PROCESS_INFORMATION) );
     ZeroMemory( &siStartInfo, sizeof(STARTUPINFO) );
-    siStartInfo.cb = sizeof(STARTUPINFO); 
+    siStartInfo.cb = sizeof(STARTUPINFO);
     siStartInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
     siStartInfo.hStdOutput = hChildStd_OUT_Wr;
     siStartInfo.hStdInput = hChildStd_IN_Rd;
@@ -1301,7 +1301,7 @@ class ExternalProcessField : public Field
   Popen2 _pipes;
   void closePipes() {
     if (_pipes.started()) {
-      double xyz[3] = { 
+      double xyz[3] = {
         std::numeric_limits<double>::quiet_NaN(),
         std::numeric_limits<double>::quiet_NaN(),
         std::numeric_limits<double>::quiet_NaN() };
@@ -2243,7 +2243,7 @@ void BoundaryLayerField::removeAttractors()
 }
 
 void BoundaryLayerField::setupFor1d(int iE) {
-  if (edges_id_saved.empty() ){     
+  if (edges_id_saved.empty() ){
     edges_id_saved = edges_id;
     nodes_id_saved = nodes_id;
   }
@@ -2253,7 +2253,7 @@ void BoundaryLayerField::setupFor1d(int iE) {
 
   bool found = std::find(edges_id_saved.begin(), edges_id_saved.end(), iE) !=
     edges_id_saved.end();
-  
+
   if (!found) {
     GEdge *ge = GModel::current()->getEdgeByTag(iE);
     GVertex *gv0 = ge->getBeginVertex();
@@ -2277,21 +2277,21 @@ void BoundaryLayerField::setupFor2d(int iF)
      remove GFaces from the attarctors (only used in 2D)
      for edges and vertices
   */
-  if (edges_id_saved.empty()){     
+  if (edges_id_saved.empty()){
     edges_id_saved = edges_id;
     nodes_id_saved = nodes_id;
   }
 
   nodes_id.clear();
   edges_id.clear();
-  
+
   //    printf("have %d %d\n",faces_id_saved.size(),edges_id_saved.size());
-  
+
   ///  FIXME :
   /// NOT REALLY A NICE WAY TO DO IT (VERY AD HOC)
   /// THIS COULD BE PART OF THE INPUT
   /// OR (better) CHANGE THE PHILOSOPHY
-  
+
   GFace *gf = GModel::current()->getFaceByTag(iF);
   std::list<GEdge*> ed = gf->edges();
   std::list<GEdge*> embedded_edges = gf->embeddedEdges();
@@ -2311,7 +2311,8 @@ void BoundaryLayerField::setupFor2d(int iF)
       // one only face --> 2D --> BL
       if (fc.size() <= 1) isIn = true;
       else {
-	Msg::Error ("Only 2D Boundary Layers are supported (edge %d is adjacet to %d faces\n",iE,fc.size());
+	Msg::Error ("Only 2D Boundary Layers are supported (edge %d is adjacet to %d faces",
+                    iE, fc.size());
       }
     }
     if (isIn){
@@ -2358,7 +2359,7 @@ double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge
   double lc = dist*(ratio-1) + hwall_n;
 
   //  double lc =  hwall_n;
-  //  double lc = hwall_n * pow (ratio, dist / hwall_t);  
+  //  double lc = hwall_n * pow (ratio, dist / hwall_t);
   return std::min (hfar,lc);
 }
 
@@ -2403,7 +2404,7 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
 {
 
   //  printf("WHAT THE FUCK\n");
-  
+
   // dist = hwall -> lc = hwall * ratio
   // dist = hwall (1+ratio) -> lc = hwall ratio ^ 2
   // dist = hwall (1+ratio+ratio^2) -> lc = hwall ratio ^ 3
