@@ -2199,7 +2199,6 @@ std::string BoundaryLayerField::getDescription()
 BoundaryLayerField::BoundaryLayerField()
 {
   hwall_n = .1;
-  //  hwall_t = .5;
   hfar = 1;
   ratio = 1.1;
   thickness = 1.e-2;
@@ -2242,7 +2241,8 @@ void BoundaryLayerField::removeAttractors()
   update_needed = true;
 }
 
-void BoundaryLayerField::setupFor1d(int iE) {
+void BoundaryLayerField::setupFor1d(int iE)
+{
   if (edges_id_saved.empty() ){
     edges_id_saved = edges_id;
     nodes_id_saved = nodes_id;
@@ -2270,13 +2270,9 @@ void BoundaryLayerField::setupFor1d(int iE) {
   removeAttractors();
 }
 
-
 void BoundaryLayerField::setupFor2d(int iF)
 {
-  /* preprocess data in the following way
-     remove GFaces from the attarctors (only used in 2D)
-     for edges and vertices
-  */
+  // remove GFaces from the attractors (only used in 2D) for edges and vertices
   if (edges_id_saved.empty()){
     edges_id_saved = edges_id;
     nodes_id_saved = nodes_id;
@@ -2285,31 +2281,36 @@ void BoundaryLayerField::setupFor2d(int iF)
   nodes_id.clear();
   edges_id.clear();
 
-  //    printf("have %d %d\n",faces_id_saved.size(),edges_id_saved.size());
-
-  ///  FIXME :
-  /// NOT REALLY A NICE WAY TO DO IT (VERY AD HOC)
-  /// THIS COULD BE PART OF THE INPUT
-  /// OR (better) CHANGE THE PHILOSOPHY
+  // FIXME :
+  // NOT REALLY A NICE WAY TO DO IT (VERY AD HOC)
+  // THIS COULD BE PART OF THE INPUT
+  // OR (better) CHANGE THE PHILOSOPHY
 
   GFace *gf = GModel::current()->getFaceByTag(iF);
   std::list<GEdge*> ed = gf->edges();
   std::list<GEdge*> embedded_edges = gf->embeddedEdges();
-  ed.insert(ed.begin(), embedded_edges.begin(),embedded_edges.end());
+  ed.insert(ed.begin(), embedded_edges.begin(), embedded_edges.end());
 
-    //    printf("face %d has %d edges\n",iF,ed.size());
-  for (std::list<GEdge*>::iterator it = ed.begin();
-	 it != ed.end() ; ++it){
+  for (std::list<GEdge*>::iterator it = ed.begin(); it != ed.end() ; ++it){
     bool isIn = false;
     int iE = (*it)->tag();
     bool found = std::find(edges_id_saved.begin(), edges_id_saved.end(), iE) !=
       edges_id_saved.end();
-    //      printf("edges %d found %d\n",iE,found);
     // this edge is a BL Edge
     if (found){
       std::list<GFace*> fc = (*it)->faces();
-      // one only face --> 2D --> BL
-      if (fc.size() <= 1) isIn = true;
+      int numf = 0;
+      for(std::list<GFace*>::iterator it = fc.begin(); it != fc.end(); it++){
+        if((*it)->meshAttributes.extrude &&
+           (*it)->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY){
+          // ok
+        }
+        else{
+          numf++;
+        }
+      }
+      // one only face, or other faces are extruded --> 2D --> BL
+      if (numf <= 1) isIn = true;
       else {
 	Msg::Error ("Only 2D Boundary Layers are supported (edge %d is adjacet to %d faces",
                     iE, fc.size());
@@ -2321,7 +2322,7 @@ void BoundaryLayerField::setupFor2d(int iF)
       nodes_id.push_back ((*it)->getEndVertex()->tag());
     }
   }
-    // printf("face %d %d BL Edges\n", iF, (int)edges_id.size());
+
   removeAttractors();
 }
 
@@ -2339,28 +2340,24 @@ double BoundaryLayerField::operator() (double x, double y, double z, GEntity *ge
     update_needed = false;
   }
 
-
   double dist = 1.e22;
   if (_att_fields.empty())return dist;
-  //  AttractorField *cc;
   for (std::list<AttractorField*>::iterator it = _att_fields.begin();
        it != _att_fields.end(); ++it){
     double cdist = (*(*it)) (x, y, z);
     if (cdist < dist){
-      //      cc = *it;
       dist = cdist;
     }
   }
 
   if (dist > thickness*ratio) return 1.e22;
   current_distance = dist;
-  //  const double dist = (*field) (x, y, z);
-  //  current_distance = dist;
+  // const double dist = (*field) (x, y, z);
+  // current_distance = dist;
   double lc = dist*(ratio-1) + hwall_n;
 
-  //  double lc =  hwall_n;
-  //  double lc = hwall_n * pow (ratio, dist / hwall_t);
-  return std::min (hfar,lc);
+  // double lc =  hwall_n;
+  return std::min(hfar, lc);
 }
 
 // assume that the closest point is one of the model vertices
@@ -2402,9 +2399,6 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
                                      double x, double y, double z,
                                      SMetric3 &metr, GEntity *ge)
 {
-
-  //  printf("WHAT THE FUCK\n");
-
   // dist = hwall -> lc = hwall * ratio
   // dist = hwall (1+ratio) -> lc = hwall ratio ^ 2
   // dist = hwall (1+ratio+ratio^2) -> lc = hwall ratio ^ 3
@@ -2415,10 +2409,9 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
   // (dist/hwall)*(ratio-1) + 1 = ratio^{m}
   // lc =  dist*(ratio-1) + hwall
 
-  const double ll1   = dist*(ratio-1) + hwall_n;
-  double lc_n  = std::min(ll1,hfar);
-  //  const double ll2   = dist*(ratio-1) + hwall_t;
-  double lc_t  = std::min(lc_n*CTX::instance()->mesh.anisoMax, hfar/*std::min(ll2,hfar)*/);
+  const double ll1 = dist*(ratio-1) + hwall_n;
+  double lc_n = std::min(ll1,hfar);
+  double lc_t = std::min(lc_n*CTX::instance()->mesh.anisoMax, hfar);
 
   lc_n = std::max(lc_n, CTX::instance()->mesh.lcMin);
   lc_n = std::min(lc_n, CTX::instance()->mesh.lcMax);

@@ -149,7 +149,7 @@ class BoundaryLayerField : public Field {
   void operator() (AttractorField *cc, double dist, double x, double y, double z,
                    SMetric3 &metr, GEntity *ge);
  public:
-  double hwall_n,/*hwall_t,*/ratio,hfar,thickness,fan_angle;
+  double hwall_n,ratio,hfar,thickness,fan_angle;
   double current_distance, tgt_aniso_ratio;
   SPoint3 _closest_point;
   int iRecombine, iIntersect;
@@ -186,7 +186,7 @@ class BoundaryLayerField : public Field {
     }
     return hwall_n;
   }
-  
+
   void computeFor1dMesh(double x, double y, double z, SMetric3 &metr);
   void setupFor1d(int iE);
   void setupFor2d(int iF);
