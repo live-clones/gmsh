@@ -725,8 +725,11 @@ void drawContext::initRenderModel()
   // is more efficient, but will only work with isotropic scalings (and we allow
   // anistotropic scalings in myZoom...). Note that GL_RESCALE_NORMAL is only
   // available in GL_VERSION_1_2.
-  //glEnable(GL_NORMALIZE);
+#if defined(WIN32)
+  glEnable(GL_NORMALIZE);
+#else
   glEnable(GL_RESCALE_NORMAL);
+#endif
 
   // lighting is enabled/disabled for each particular primitive later
   glDisable(GL_LIGHTING);
