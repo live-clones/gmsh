@@ -1115,7 +1115,7 @@ void bowyerWatson(GFace *gf, int MAXPNT,
   //  printf("%12.5E %12.5E %12.5E %12.5E %12.5E\n",DT1,DT2,DT3,__DT1,__DT2);
   //  printf("%12.5E \n",__DT2);
 #if defined(HAVE_ANN)
-  if (!CTX::instance()->mesh.recombineAll){
+  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
     FieldManager *fields = gf->model()->getFields();
     BoundaryLayerField *blf = 0;
     if(fields->getBoundaryLayerField() > 0){
@@ -1435,7 +1435,7 @@ void bowyerWatsonFrontal(GFace *gf,
 
   // in case of boundary layer meshing
 #if defined(HAVE_ANN)
-  if (!CTX::instance()->mesh.recombineAll){
+  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
     FieldManager *fields = gf->model()->getFields();
     BoundaryLayerField *blf = 0;
     if(fields->getBoundaryLayerField() > 0){
@@ -1724,7 +1724,7 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
 
     backgroundMesh::unset();
 #if defined(HAVE_ANN)
-  if (!CTX::instance()->mesh.recombineAll){
+  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
     FieldManager *fields = gf->model()->getFields();
     BoundaryLayerField *blf = 0;
     if(fields->getBoundaryLayerField() > 0){
@@ -1744,7 +1744,7 @@ void bowyerWatsonParallelograms(GFace *gf,
   bidimMeshData DATA(equivalence, parametricCoordinates);
   std::vector<MVertex*> packed;
   std::vector<SMetric3> metrics;
-  
+
     //  printf("creating the points\n");
     // PEB MODIF
     if (old_algo_hexa())
@@ -1818,7 +1818,7 @@ void bowyerWatsonParallelograms(GFace *gf,
     transferDataStructure(gf, AllTris, DATA);
     backgroundMesh::unset();
 #if defined(HAVE_ANN)
-  if (!CTX::instance()->mesh.recombineAll){
+  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
       FieldManager *fields = gf->model()->getFields();
       BoundaryLayerField *blf = 0;
       if(fields->getBoundaryLayerField() > 0){
@@ -1924,7 +1924,7 @@ void bowyerWatsonParallelogramsConstrained(GFace *gf,
   }
   backgroundMesh::unset();
 #if defined(HAVE_ANN)
-  if (!CTX::instance()->mesh.recombineAll){
+  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
     FieldManager *fields = gf->model()->getFields();
     BoundaryLayerField *blf = 0;
     if(fields->getBoundaryLayerField() > 0){
