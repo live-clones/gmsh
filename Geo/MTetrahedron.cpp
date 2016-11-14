@@ -121,11 +121,13 @@ void MTetrahedron::xyz2uvw(double xyz[3], double uvw[3]) const
   sys3x3(mat, b, uvw, &det);
 }
 
-int MTetrahedron10::getNumEdgesRep(bool curved){
+int MTetrahedron10::getNumEdgesRep(bool curved)
+{
   return curved ? 6 * CTX::instance()->mesh.numSubEdges : 6;
 }
 
-int MTetrahedronN::getNumEdgesRep(bool curved){
+int MTetrahedronN::getNumEdgesRep(bool curved)
+{
   return curved ? 6 * CTX::instance()->mesh.numSubEdges : 6;
 }
 
@@ -175,11 +177,13 @@ void MTetrahedronN::getEdgeRep(bool curved, int num,
   else MTetrahedron::getEdgeRep(false, num, x, y, z, n);
 }
 
-int MTetrahedronN::getNumFacesRep(bool curved) {
+int MTetrahedronN::getNumFacesRep(bool curved)
+{
   return curved ? 4 * SQU(CTX::instance()->mesh.numSubEdges) : 4;
 }
 
-int MTetrahedron10::getNumFacesRep(bool curved) {
+int MTetrahedron10::getNumFacesRep(bool curved)
+{
   return curved ? 4 * SQU(CTX::instance()->mesh.numSubEdges) : 4;
 }
 

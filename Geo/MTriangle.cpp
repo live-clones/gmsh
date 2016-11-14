@@ -21,6 +21,8 @@ void MTriangle::getEdgeRep(bool curved, int num, double *x, double *y, double *z
                            SVector3 *n)
 {
   // don't use MElement::_getEdgeRep: it's slow due to the creation of MFace
+  // could speed this up by computing and storing the normal only if num==0; we
+  // always call getEdgeRep in sequence
   MVertex *v0 = _v[edges_tri(num, 0)];
   MVertex *v1 = _v[edges_tri(num, 1)];
   x[0] = v0->x(); y[0] = v0->y(); z[0] = v0->z();
