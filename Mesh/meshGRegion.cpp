@@ -530,7 +530,7 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
   for(unsigned int i = 0; i < regions.size(); i++)
     Msg::Info("Meshing volume %d (Delaunay)", regions[i]->tag());
 
-  // put all the faces in the same model
+  // put all the faces in the region
   GRegion *gr = regions[0];
   std::list<GFace*> faces = gr->faces();
 
@@ -546,6 +546,28 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
     allFaces.push_back(*it);
   }
   gr->set(allFaces);
+
+  // put all embedded edges in the same region
+  std::set<GEdge*> allEmbEdgesSet;
+  for(unsigned int i = 0; i < regions.size(); i++){
+    std::list<GEdge*> e = regions[i]->embeddedEdges();
+    allEmbEdgesSet.insert(e.begin(), e.end());
+  }
+  std::list<GEdge*> allEmbEdges;
+  allEmbEdges.insert(allEmbEdges.end(), allEmbEdgesSet.begin(), allEmbEdgesSet.end());
+  std::list<GEdge*> oldEmbEdges = gr->embeddedEdges();
+  gr->embeddedEdges() = allEmbEdges;
+
+  // put all embedded vertices in the same region
+  std::set<GVertex*> allEmbVerticesSet;
+  for(unsigned int i = 0; i < regions.size(); i++){
+    std::list<GVertex*> e = regions[i]->embeddedVertices();
+    allEmbVerticesSet.insert(e.begin(), e.end());
+  }
+  std::list<GVertex*> allEmbVertices;
+  allEmbVertices.insert(allEmbVertices.end(), allEmbVerticesSet.begin(), allEmbVerticesSet.end());
+  std::list<GVertex*> oldEmbVertices = gr->embeddedVertices();
+  gr->embeddedVertices() = allEmbVertices;
 
   // mesh with tetgen, possibly changing the mesh on boundaries (leave
   // this in block, so in/out are destroyed before we refine the mesh)
@@ -606,8 +628,10 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
     ++itf;
   }
 
-  // restore the initial set of faces
+  // restore the initial set of faces and embedded edges/vertices
   gr->set(faces);
+  gr->embeddedEdges() = oldEmbEdges;
+  gr->embeddedVertices() = oldEmbVertices;
 
   // FIXME: this screws up refinement of standard meshes
   //insertVerticesInRegion(gr,0,true);
