@@ -26,7 +26,7 @@ void MQuadrangle::getEdgeRep(bool curved, int num, double *x, double *y, double 
   MVertex *v1 = _v[edges_quad(num, 1)];
   x[0] = v0->x(); y[0] = v0->y(); z[0] = v0->z();
   x[1] = v1->x(); y[1] = v1->y(); z[1] = v1->z();
-  if(CTX::instance()->mesh.lightLines > 1){
+  if(CTX::instance()->mesh.lightLines){
     static const int vv[4] = {2, 3, 0, 1};
     MVertex *v2 = _v[vv[num]];
     SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
