@@ -110,7 +110,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   // Get the set of vertices from GRegion.
   {
-    std::set<MVertex*> all;
+    std::set<MVertex*, MVertexLessThanNum> all;
     std::list<GFace*> f = _gr->faces();
     for (std::list<GFace*>::iterator it = f.begin(); it != f.end(); ++it) {
       GFace *gf = *it;
