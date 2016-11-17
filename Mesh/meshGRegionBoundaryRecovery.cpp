@@ -135,6 +135,8 @@ bool tetgenmesh::reconstructmesh(void *p)
         all.insert(gv->points[i]->getVertex(0));
       }
     }
+    all.insert(_gr->mesh_vertices.begin(), _gr->mesh_vertices.end());
+
     _vertices.insert(_vertices.begin(), all.begin(), all.end());
   }
 

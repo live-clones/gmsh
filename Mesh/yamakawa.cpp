@@ -29,6 +29,19 @@
 #include "qualityMeasuresJacobian.h"
 
 
+std::ostream& operator<<(std::ostream& os, const Hex& hex)
+{
+  os << " vertices "
+    << " A " << hex.get_a()->getNum()
+    << " B " << hex.get_b()->getNum()
+    << " C " << hex.get_c()->getNum()
+    << " D " << hex.get_d()->getNum()
+    << " E " << hex.get_e()->getNum()
+    << " F " << hex.get_f()->getNum()
+    << " G " << hex.get_g()->getNum()
+    << " H " << hex.get_h()->getNum();
+  return os;
+}
 
 void export_gregion_mesh(GRegion *gr, string filename)
 {
@@ -843,139 +856,6 @@ bool compare_hex_ptr_by_quality (Hex *a,Hex *b)
   return (a->get_quality()>(b->get_quality()));
 }
 
-/*****************************************/
-/****************class Hex****************/
-/*****************************************/
-
-Hex::Hex():hash(0.),a(NULL),b(NULL),c(NULL),d(NULL),e(NULL),f(NULL),g(NULL),h(NULL){}
-
-Hex::Hex(MVertex* a2,MVertex* b2,MVertex* c2,MVertex* d2,MVertex* e2,MVertex* f2,MVertex* g2,MVertex* h2){
-  a = a2;
-  b = b2;
-  c = c2;
-  d = d2;
-  e = e2;
-  f = f2;
-  g = g2;
-  h = h2;
-  set_hash();
-}
-
-void Hex::set_hash(){
-  hash = (a->getNum() + b->getNum() + c->getNum() + d->getNum() + e->getNum() + f->getNum() + g->getNum() + h->getNum());
-}
-
-unsigned long long Hex::get_hash(){
-  if ((hash==0.)&&(a)) set_hash();
-  return hash;
-}
-
-bool Hex::hasVertex(const MVertex *v){
-  for (int i=0;i<8;i++)
-    if (getVertex(i)==v) return true;
-  return false;
-}
-
-
-bool Hex::same_vertices(Hex *h){
-  for (int i=0;i<8;i++)
-    if (!(h->hasVertex(getVertex(i))))
-      return false;
-  return true;
-}
-
-Hex::~Hex(){}
-
-double Hex::get_quality(){
-  return quality;
-}
-
-void Hex::set_quality(double new_quality){
-  quality = new_quality;
-}
-
-MVertex* Hex::get_a(){
-  return a;
-}
-
-MVertex* Hex::get_b(){
-  return b;
-}
-
-MVertex* Hex::get_c(){
-  return c;
-}
-
-MVertex* Hex::get_d(){
-  return d;
-}
-
-MVertex* Hex::get_e(){
-  return e;
-}
-
-MVertex* Hex::get_f(){
-  return f;
-}
-
-MVertex* Hex::get_g(){
-  return g;
-}
-
-MVertex* Hex::get_h(){
-  return h;
-}
-
-MVertex* Hex::getVertex(int n){
-  MVertex *v;
-  switch (n){
-  case 0:
-    v = get_a();
-    break;
-  case 1:
-    v = get_b();
-    break;
-  case 2:
-    v = get_c();
-    break;
-  case 3:
-    v = get_d();
-    break;
-  case 4:
-    v = get_e();
-    break;
-  case 5:
-    v = get_f();
-    break;
-  case 6:
-    v = get_g();
-    break;
-  case 7:
-    v = get_h();
-    break;
-  default:
-    cout << "Hex: unknown vertex number " << n << endl;
-    throw;
-  }
-  return v;
-}
-
-
-void Hex::set_vertices(MVertex* a2,MVertex* b2,MVertex* c2,MVertex* d2,MVertex* e2,MVertex* f2,MVertex* g2,MVertex* h2){
-  a = a2;
-  b = b2;
-  c = c2;
-  d = d2;
-  e = e2;
-  f = f2;
-  g = g2;
-  h = h2;
-}
-
-bool Hex::operator<(Hex& hex){
-  return quality>hex.get_quality();
-}
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1076,231 +956,6 @@ PEQuadrangle::PEQuadrangle(const vector<const MVertex*> &_v):PEEntity(_v){
 size_t PEQuadrangle::get_max_nb_vertices()const{return 4;};
 
 
-/*******************************************/
-/****************class Facet****************/
-/*******************************************/
-
-Facet::Facet(){}
-
-Facet::Facet(MVertex* a2,MVertex* b2,MVertex* c2){
-  a = a2;
-  b = b2;
-  c = c2;
-  compute_hash();
-}
-
-Facet::~Facet(){}
-
-MVertex* Facet::get_a(){
-  return a;
-}
-
-MVertex* Facet::get_b(){
-  return b;
-}
-
-MVertex* Facet::get_c(){
-  return c;
-}
-
-void Facet::set_vertices(MVertex* a2,MVertex* b2,MVertex* c2){
-  a = a2;
-  b = b2;
-  c = c2;
-  compute_hash();
-}
-
-bool Facet::same_vertices(Facet facet){
-  bool c1,c2,c3;
-
-  c1 = (a==facet.get_a()) || (a==facet.get_b()) || (a==facet.get_c());
-  c2 = (b==facet.get_a()) || (b==facet.get_b()) || (b==facet.get_c());
-  c3 = (c==facet.get_a()) || (c==facet.get_b()) || (c==facet.get_c());
-
-  return c1 && c2 && c3;
-}
-
-void Facet::compute_hash(){
-//  hash = a->getNum() + b->getNum() + c->getNum();
-  num[0] = a->getNum();
-  num[1] = b->getNum();
-  num[2] = c->getNum();
-  std::sort(num, num+3);
-  hash = num[2] + 1e4*num[1] + 1e8*num[0];
-}
-
-unsigned long long Facet::get_hash() const{
-  return hash;
-}
-
-bool Facet::operator<(const Facet& facet) const{
-  return hash<facet.get_hash();
-}
-
-/**********************************************/
-/****************class Diagonal****************/
-/**********************************************/
-
-Diagonal::Diagonal(){}
-
-Diagonal::Diagonal(MVertex* a2,MVertex* b2){
-  a = a2;
-  b = b2;
-  compute_hash();
-}
-
-Diagonal::~Diagonal(){}
-
-MVertex* Diagonal::get_a(){
-  return a;
-}
-
-MVertex* Diagonal::get_b(){
-  return b;
-}
-
-void Diagonal::set_vertices(MVertex* a2,MVertex* b2){
-  a = a2;
-  b = b2;
-  compute_hash();
-}
-
-bool Diagonal::same_vertices(Diagonal diagonal){
-  bool c1,c2;
-
-  c1 = (a==diagonal.get_a()) || (a==diagonal.get_b());
-  c2 = (b==diagonal.get_a()) || (b==diagonal.get_b());
-
-  return c1 && c2;
-}
-
-void Diagonal::compute_hash(){
-  hash = a->getNum() + b->getNum();
-}
-
-unsigned long long Diagonal::get_hash() const{
-  return hash;
-}
-
-bool Diagonal::operator<(const Diagonal& diagonal) const{
-  return hash<diagonal.get_hash();
-}
-
-/**********************************************/
-/******************class Tuple*****************/
-/**********************************************/
-
-Tuple::Tuple(){}
-
-Tuple::Tuple(MVertex* a,MVertex* b,MVertex* c,MElement* element2,GFace* gf2){
-  if(a<=b && a<=c){
-    v1 = a;
-  }
-  else if(b<=a && b<=c){
-    v1 = b;
-  }
-  else{
-    v1 = c;
-  }
-
-  if(a>=b && a>=c){
-    v3 = a;
-  }
-  else if(b>=a && b>=c){
-    v3 = b;
-  }
-  else{
-    v3 = c;
-  }
-
-  if(a!=v1 && a!=v3){
-    v2 = a;
-  }
-  else if(b!=v1 && b!=v3){
-    v2 = b;
-  }
-  else{
-    v2 = c;
-  }
-
-  element = element2;
-  gf = gf2;
-  hash = a->getNum() + b->getNum() + c->getNum();
-}
-
-Tuple::Tuple(MVertex* a,MVertex* b,MVertex* c){
-  if(a<=b && a<=c){
-    v1 = a;
-  }
-  else if(b<=a && b<=c){
-    v1 = b;
-  }
-  else{
-    v1 = c;
-  }
-
-  if(a>=b && a>=c){
-    v3 = a;
-  }
-  else if(b>=a && b>=c){
-    v3 = b;
-  }
-  else{
-    v3 = c;
-  }
-
-  if(a!=v1 && a!=v3){
-    v2 = a;
-  }
-  else if(b!=v1 && b!=v3){
-    v2 = b;
-  }
-  else{
-    v2 = c;
-  }
-
-  hash = a->getNum() + b->getNum() + c->getNum();
-}
-
-Tuple::~Tuple(){}
-
-MVertex* Tuple::get_v1(){
-  return v1;
-}
-
-MVertex* Tuple::get_v2(){
-  return v2;
-}
-
-MVertex* Tuple::get_v3(){
-  return v3;
-}
-
-MElement* Tuple::get_element() const{
-  return element;
-}
-
-GFace* Tuple::get_gf() const{
-  return gf;
-}
-
-bool Tuple::same_vertices(Tuple tuple){
-  if(v1==tuple.get_v1() && v2==tuple.get_v2() && v3==tuple.get_v3()){
-    return 1;
-  }
-  else{
-    return 0;
-  }
-}
-
-unsigned long long Tuple::get_hash() const{
-  return hash;
-}
-
-bool Tuple::operator<(const Tuple& tuple) const{
-  return hash<tuple.get_hash();
-}
-
 /**************************************************/
 /****************class Recombinator****************/
 /**************************************************/
@@ -1352,13 +1007,13 @@ void Recombinator::execute(GRegion* gr){
   std::sort(potential.begin(),potential.end(),compare_hex_ptr_by_quality);
 
 
-  //  /// SORTIE TOUS HEX POT
-  //  cout << "__________________________ START POT HEX LISTING ____________________ " << endl;
-  //  for (std::vector<Hex*>::iterator it = potential.begin();it!=potential.end();it++){
-  //    cout << "--- pot hex : " << *it << "   " << (*it)->get_quality() << endl;
-  //  }
-  //  cout << "__________________________ END POT HEX LISTING ____________________ " << endl;
-  //  /// END
+  ///// SORTIE TOUS HEX POT
+  //cout << "__________________________ START POT HEX LISTING ____________________ " << endl;
+  //for (std::vector<Hex*>::iterator it = potential.begin();it!=potential.end();it++){
+  //  cout << "--- Potential hex : " << *(*it) << "   " << (*it)->get_quality() << endl;
+  //}
+  //cout << "__________________________ END POT HEX LISTING ____________________ " << endl;
+  ///// END
 
   hash_tableA.clear();
   hash_tableB.clear();
@@ -1385,77 +1040,61 @@ void Recombinator::init_markings(GRegion* gr){
   }
 }
 
-void Recombinator::pattern1(GRegion* gr){
-  size_t i;
-  int index;
-  double quality;
-  MElement* element;
-  MVertex *a,*b,*c,*d;
-  MVertex *p,*q,*r,*s;
-  std::vector<MVertex*> already;
-  std::set<MVertex*> bin1;
-  std::set<MVertex*> bin2;
-  std::set<MVertex*> bin3;
-  std::set<MVertex*> bin4;
-  std::set<MVertex*>::iterator it1;
-  std::set<MVertex*>::iterator it2;
-  std::set<MVertex*>::iterator it3;
-  std::set<MVertex*>::iterator it4;
-  Hex *hex;
+void Recombinator::pattern1(GRegion* gr) {
 
-  for(i=0;i<gr->getNumMeshElements();i++){
-    element = gr->getMeshElement(i);
-    for(index=0;index<4;index++){
-    //max_scaled_jacobian(element,index);
+  for (unsigned int i = 0; i < gr->getNumMeshElements(); i++) {
+    MElement* element = gr->getMeshElement(i);
 
-    a = element->getVertex(index);
-    b = element->getVertex((index+1)%4);
-    c = element->getVertex((index+2)%4);
-    d = element->getVertex((index+3)%4);
+    for (int index = 0; index < 4; index++) {
+      //max_scaled_jacobian(element,index);
+      MVertex *a = element->getVertex(index);
+      MVertex *b = element->getVertex((index + 1) % 4);
+      MVertex *c = element->getVertex((index + 2) % 4);
+      MVertex *d = element->getVertex((index + 3) % 4);
 
-    already.clear();
-    already.push_back(a);
-    already.push_back(b);
-    already.push_back(c);
-    already.push_back(d);
-    bin1.clear();
-    bin2.clear();
-    bin3.clear();
-    find(b,d,already,bin1);
-    find(b,c,already,bin2);
-    find(c,d,already,bin3);
+      std::vector<MVertex*> already(4);
+      already[0]= a; 
+      already[1]= b;
+      already[2]= c;
+      already[3]= d;
 
-    for(it1=bin1.begin();it1!=bin1.end();it1++){
-      p = *it1;
-      for(it2=bin2.begin();it2!=bin2.end();it2++){
-        q = *it2;
-        for(it3=bin3.begin();it3!=bin3.end();it3++){
-          r = *it3;
-          if(p!=q && p!=r && q!=r){
-            already.clear();
-            already.push_back(a);
-            already.push_back(b);
-            already.push_back(c);
-            already.push_back(d);
-            already.push_back(p);
-            already.push_back(q);
-            already.push_back(r);
-            bin4.clear();
-            find(p,q,r,already,bin4);
-            for(it4=bin4.begin();it4!=bin4.end();it4++){
-              s = *it4;
-              hex = new Hex(a,b,q,c,d,p,s,r);
-              quality = min_scaled_jacobian(*hex);
-              hex->set_quality(quality);
-              if(valid(*hex)){
-                potential.push_back(hex);
+      std::set<MVertex*> bin1;
+      std::set<MVertex*> bin2;
+      std::set<MVertex*> bin3;
+
+      find(b, d, already, bin1); // candidates for F - p
+      find(b, c, already, bin2); // candidates for C - q
+      find(c, d, already, bin3); // candidates for H - r
+
+      already.resize(7);
+      for (std::set<MVertex*>::iterator it1 = bin1.begin(); it1 != bin1.end(); it1++) {
+        MVertex* p = *it1;
+        already[4] = p;
+        for (std::set<MVertex*>::iterator it2 = bin2.begin(); it2 != bin2.end(); it2++) {
+          MVertex* q = *it2;
+          already[5] = q;
+          for (std::set<MVertex*>::iterator it3 = bin3.begin(); it3 != bin3.end(); it3++) {
+            MVertex* r = *it3;
+            already[6] = r;
+            if (p != q && p != r && q != r) {              
+              std::set<MVertex*> bin4;  // candidates for G - s vertices linked to p,q and r
+              find(p, q, r, already, bin4);
+              
+              for (std::set<MVertex*>::iterator it4 = bin4.begin(); it4 != bin4.end(); it4++) {
+                MVertex* s = *it4;
+                Hex* hex = new Hex(a, b, q, c, d, p, s, r);
+                double quality = min_scaled_jacobian(*hex);
+                hex->set_quality(quality);
+                if (valid(*hex)) {
+                  potential.push_back(hex);
+                } else {
+                  delete hex;
+                }
               }
-              else delete hex;
             }
           }
         }
       }
-    }
     }
   }
 }
@@ -2316,8 +1955,8 @@ bool Recombinator::valid(Hex &hex,const std::set<MElement*>& parts){
   }
 }
 
-bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d, std::map<MVertex*,std::set<MElement*> > &vertexToElements){
-  std::map<MVertex*,std::set<MElement*> >::iterator itElV[4];
+bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d, const std::map<MVertex*,std::set<MElement*> > &vertexToElements){
+  std::map<MVertex*,std::set<MElement*> >::const_iterator itElV[4];
   MVertex *faceV[4] = {a, b, c, d};
   for (int iV = 0; iV < 4; iV++){
     itElV[iV] = vertexToElements.find(faceV[iV]);
@@ -2325,18 +1964,20 @@ bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d, std::map<MVertex*
   size_t tris[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 1, 3}, {1, 2, 3}};
   size_t other[4] = {3, 1, 2, 0};
   size_t nbTris[4];
-  std::set<MElement*> buf1, buf2;
+
   for (int iTri = 0; iTri < 4; iTri++){
     //We count the number of elements sharing the considered triangle
+    std::set<MElement*> buf1;
+    std::set_intersection(itElV[tris[iTri][0]]->second.begin(),itElV[tris[iTri][0]]->second.end(),
+      itElV[tris[iTri][1]]->second.begin(),itElV[tris[iTri][1]]->second.end(),std::inserter(buf1,buf1.end()));
+    std::set<MElement*> buf2;
+    std::set_intersection(buf1.begin(),buf1.end(),
+      itElV[tris[iTri][2]]->second.begin(),itElV[tris[iTri][2]]->second.end(),std::inserter(buf2,buf2.end()));
     buf1.clear();
-    std::set_intersection(itElV[tris[iTri][0]]->second.begin(),itElV[tris[iTri][0]]->second.end(),itElV[tris[iTri][1]]->second.begin(),itElV[tris[iTri][1]]->second.end(),std::inserter(buf1,buf1.end()));
-    buf2.clear();
-    std::set_intersection(buf1.begin(),buf1.end(),itElV[tris[iTri][2]]->second.begin(),itElV[tris[iTri][2]]->second.end(),std::inserter(buf2,buf2.end()));
-    buf1.clear();
-    std::set_difference(buf2.begin(),buf2.end(),itElV[other[iTri]]->second.begin(),itElV[other[iTri]]->second.end(),std::inserter(buf1,buf1.end()));
+    std::set_difference(buf2.begin(),buf2.end(),
+      itElV[other[iTri]]->second.begin(),itElV[other[iTri]]->second.end(),std::inserter(buf1,buf1.end()));
     nbTris[iTri] = buf1.size();
   }
-
 
   bool valid = false;
   // All sub-faces inside (2 elements)
@@ -2355,9 +1996,9 @@ bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d, std::map<MVertex*
   if (c->onWhat()->dim() < 3) nbBndNodes++;
   if (d->onWhat()->dim() < 3) nbBndNodes++;
   if (nbBndNodes == 4){
-    SVector3 vec1 = SVector3(b->x()-a->x(),b->y()-a->y(),b->z()-a->z()).unit();
-    SVector3 vec2 = SVector3(c->x()-a->x(),c->y()-a->y(),c->z()-a->z()).unit();
-    SVector3 vec3 = SVector3(d->x()-a->x(),d->y()-a->y(),d->z()-a->z()).unit();
+    SVector3 vec1 = SVector3(a->point(), b->point()).unit();
+    SVector3 vec2 = SVector3(a->point(), c->point()).unit();
+    SVector3 vec3 = SVector3(a->point(), d->point()).unit();
 
     SVector3 crossVec1Vec2 = crossprod(vec1, vec2);
     double angle = fabs(acos(dot(crossVec1Vec2, vec3))*180/M_PI);
@@ -2366,8 +2007,6 @@ bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d, std::map<MVertex*
   }
 
   return valid;
-
-
 }
 
 
@@ -2452,56 +2091,45 @@ bool PostOp::valid(MPyramid *pyr){
 //  return true;
 //}
 
-bool validFaces(Hex &hex, std::map<MVertex*,std::set<MElement*> > &vertexToElements){
-  bool v1, v2, v3, v4, v5, v6;
-  MVertex *a,*b,*c,*d;
-  MVertex *e,*f,*g,*h;
+bool validFaces(const Hex &hex, const std::map<MVertex*,std::set<MElement*> > &vertexToElements) {
+  MVertex *a = hex.get_a();
+  MVertex *b = hex.get_b();
+  MVertex *c = hex.get_c();
+  MVertex *d = hex.get_d();
+  MVertex *e = hex.get_e();
+  MVertex *f = hex.get_f();
+  MVertex *g = hex.get_g();
+  MVertex *h = hex.get_h();
 
-  a = hex.get_a();
-  b = hex.get_b();
-  c = hex.get_c();
-  d = hex.get_d();
-  e = hex.get_e();
-  f = hex.get_f();
-  g = hex.get_g();
-  h = hex.get_h();
-
-  v1 = validFace(a,b,c,d,vertexToElements);  //SHOULD CHECK GEOMETRY
-  v2 = validFace(e,f,g,h,vertexToElements);
-  v3 = validFace(a,b,f,e,vertexToElements);
-  v4 = validFace(b,c,g,f,vertexToElements);
-  v5 = validFace(d,c,g,h,vertexToElements);
-  v6 = validFace(d,a,e,h,vertexToElements);
+  bool v1 = validFace(a,b,c,d,vertexToElements);  //SHOULD CHECK GEOMETRY
+  bool v2 = validFace(e,f,g,h,vertexToElements);
+  bool v3 = validFace(a,b,f,e,vertexToElements);
+  bool v4 = validFace(b,c,g,f,vertexToElements);
+  bool v5 = validFace(d,c,g,h,vertexToElements);
+  bool v6 = validFace(d,a,e,h,vertexToElements);
 
   return v1 && v2 && v3 && v4 && v5 && v6;
 }
 
 // renvoie true si le "MQuadrangle::etaShapeMeasure" des 6 faces est plus grand que 0.000001
-bool Recombinator::valid(Hex &hex){
-  double k;
-  double eta1,eta2,eta3;
-  double eta4,eta5,eta6;
-  MVertex *a,*b,*c,*d;
-  MVertex *e,*f,*g,*h;
+bool Recombinator::valid(Hex &hex) const{
+  MVertex *a = hex.get_a();
+  MVertex *b = hex.get_b();
+  MVertex *c = hex.get_c();
+  MVertex *d = hex.get_d();
+  MVertex *e = hex.get_e();
+  MVertex *f = hex.get_f();
+  MVertex *g = hex.get_g();
+  MVertex *h = hex.get_h();
 
-  k = 0.000001;
+  double eta1 = eta(a,b,c,d);
+  double eta2 = eta(e,f,g,h);
+  double eta3 = eta(a,b,f,e);
+  double eta4 = eta(b,c,g,f);
+  double eta5 = eta(d,a,e,h);
+  double eta6 = eta(d,c,g,h);
 
-  a = hex.get_a();
-  b = hex.get_b();
-  c = hex.get_c();
-  d = hex.get_d();
-  e = hex.get_e();
-  f = hex.get_f();
-  g = hex.get_g();
-  h = hex.get_h();
-
-  eta1 = eta(a,b,c,d);
-  eta2 = eta(e,f,g,h);
-  eta3 = eta(a,b,f,e);
-  eta4 = eta(b,c,g,f);
-  eta5 = eta(d,a,e,h);
-  eta6 = eta(d,c,g,h);
-
+  double k = 0.000001; // This test seems wrong, I'd guess it returns wrong if one angle is 90 deg. Jeanne
   if(eta1>k && eta2>k && eta3>k && eta4>k && eta5>k && eta6>k){
     return validFaces(hex,vertex_to_elements);
   }
@@ -2510,14 +2138,9 @@ bool Recombinator::valid(Hex &hex){
   }
 }
 
-double Recombinator::eta(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
-  double val;
-  MQuadrangle* quad;
-
-  quad = new MQuadrangle(a,b,c,d);
-  val = quad->etaShapeMeasure();
-  delete quad;
-  return val;
+double Recombinator::eta(MVertex* a,MVertex* b,MVertex* c,MVertex* d) const{
+  MQuadrangle quad(a,b,c,d);
+  return quad.etaShapeMeasure();  
 }
 
 bool Recombinator::linked(MVertex* v1,MVertex* v2){
@@ -2538,45 +2161,33 @@ bool Recombinator::linked(MVertex* v1,MVertex* v2){
   return flag;
 }
 
-void Recombinator::find(MVertex* v1,MVertex* v2,const std::vector<MVertex*>& already,std::set<MVertex*>& final){
-  std::map<MVertex*,std::set<MVertex*> >::iterator it1;
-  std::map<MVertex*,std::set<MVertex*> >::iterator it2;
-
-  it1 = vertex_to_vertices.find(v1);
-  it2 = vertex_to_vertices.find(v2);
+void Recombinator::find(MVertex* v1,MVertex* v2,const std::vector<MVertex*>& already,std::set<MVertex*>& final) const{
+  std::map<MVertex*, std::set<MVertex*> >::const_iterator it1 = vertex_to_vertices.find(v1);
+  std::map<MVertex*, std::set<MVertex*> >::const_iterator it2 = vertex_to_vertices.find(v2);
 
   intersection(it1->second,it2->second,already,final);
 }
 
-void Recombinator::find(MVertex* v1,MVertex* v2,MVertex* v3,const std::vector<MVertex*>& already,std::set<MVertex*>& final){
-  std::map<MVertex*,std::set<MVertex*> >::iterator it1;
-  std::map<MVertex*,std::set<MVertex*> >::iterator it2;
-  std::map<MVertex*,std::set<MVertex*> >::iterator it3;
-
-  it1 = vertex_to_vertices.find(v1);
-  it2 = vertex_to_vertices.find(v2);
-  it3 = vertex_to_vertices.find(v3);
+void Recombinator::find(MVertex* v1,MVertex* v2,MVertex* v3, const std::vector<MVertex*>& already,std::set<MVertex*>& final) const {   
+  std::map<MVertex*, std::set<MVertex*> >::const_iterator it1 = vertex_to_vertices.find(v1);
+  std::map<MVertex*, std::set<MVertex*> >::const_iterator it2 = vertex_to_vertices.find(v2);
+  std::map<MVertex*, std::set<MVertex*> >::const_iterator it3 = vertex_to_vertices.find(v3);
 
   intersection(it1->second,it2->second,it3->second,already,final);
 }
 
-void Recombinator::find(MVertex* v1,MVertex* v2,std::set<MElement*>& final){
-  std::map<MVertex*,std::set<MElement*> >::iterator it1;
-  std::map<MVertex*,std::set<MElement*> >::iterator it2;
-
-  it1 = vertex_to_elements.find(v1);
-  it2 = vertex_to_elements.find(v2);
+void Recombinator::find(MVertex* v1,MVertex* v2,std::set<MElement*>& final) const {
+  std::map<MVertex*, std::set<MElement*> >::const_iterator it1 = vertex_to_elements.find(v1);
+  std::map<MVertex*, std::set<MElement*> >::const_iterator it2 = vertex_to_elements.find(v2);
 
   intersection(it1->second,it2->second,final);
 }
 
-void Recombinator::find(MVertex* vertex,Hex hex,std::set<MElement*>& final){
+void Recombinator::find(MVertex* vertex,Hex hex,std::set<MElement*>& final) const {
   bool flag1,flag2,flag3,flag4;
   MVertex *a,*b,*c,*d;
-  std::map<MVertex*,std::set<MElement*> >::iterator it;
+  std::map<MVertex*,std::set<MElement*> >::const_iterator it = vertex_to_elements.find(vertex);
   std::set<MElement*>::iterator it2;
-
-  it = vertex_to_elements.find(vertex);
 
   for(it2=(it->second).begin();it2!=(it->second).end();it2++){
     a = (*it2)->getVertex(0);
@@ -2595,27 +2206,20 @@ void Recombinator::find(MVertex* vertex,Hex hex,std::set<MElement*>& final){
   }
 }
 
-MVertex* Recombinator::find(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* already,const std::set<MElement*>& bin){
-  bool flag1,flag2,flag3,flag4;
-  MElement* element;
-  MVertex *a,*b,*c,*d;
-  MVertex* pointer;
-  std::set<MElement*>::const_iterator it;
+MVertex* Recombinator::find(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* already,const std::set<MElement*>& bin) const{
+  MVertex* pointer = NULL;
+  for(std::set<MElement*>::const_iterator it=bin.begin();it!=bin.end();it++){
+    MElement *element = *it;
 
-  pointer = 0;
+    MVertex *a = element->getVertex(0);
+    MVertex *b = element->getVertex(1);
+    MVertex *c = element->getVertex(2);
+    MVertex *d = element->getVertex(3);
 
-  for(it=bin.begin();it!=bin.end();it++){
-    element = *it;
-
-    a = element->getVertex(0);
-    b = element->getVertex(1);
-    c = element->getVertex(2);
-    d = element->getVertex(3);
-
-    flag1 = inclusion(v1,a,b,c,d);
-    flag2 = inclusion(v2,a,b,c,d);
-    flag3 = inclusion(v3,a,b,c,d);
-    flag4 = inclusion(already,a,b,c,d);
+    bool flag1 = inclusion(v1,a,b,c,d);
+    bool flag2 = inclusion(v2,a,b,c,d);
+    bool flag3 = inclusion(v3,a,b,c,d);
+    bool flag4 = inclusion(already,a,b,c,d);
 
     if(flag1 && flag2 && flag3 && !flag4){
       if(a!=v1 && a!=v2 && a!=v3){
@@ -2633,29 +2237,27 @@ MVertex* Recombinator::find(MVertex* v1,MVertex* v2,MVertex* v3,MVertex* already
       break;
     }
   }
-
   return pointer;
 }
 
+// Compute the intersection of bin1 and bin2
+// And add to final the elements that are not in the already vector
 void Recombinator::intersection(const std::set<MVertex*>& bin1,const std::set<MVertex*>& bin2,
-                                const std::vector<MVertex*>& already,std::set<MVertex*>& final){
-  size_t i;
-  bool ok;
+                                const std::vector<MVertex*>& already,std::set<MVertex*>& final) const{
   std::set<MVertex*> temp;
-  std::set<MVertex*>::iterator it;
 
+  // Compute the intersection of the two input sets
   std::set_intersection(bin1.begin(),bin1.end(),bin2.begin(),bin2.end(),std::inserter(temp,temp.end()));
+  
+  for(std::set<MVertex*>::iterator it=temp.begin();it!=temp.end();it++){
+    bool ok = true;
 
-  for(it=temp.begin();it!=temp.end();it++){
-    ok = 1;
-
-    for(i=0;i<already.size();i++){
+    for(int i=0;i<already.size();i++){
       if((*it)==already[i]){
         ok = 0;
         break;
       }
     }
-
     if(ok){
       final.insert(*it);
     }
@@ -2663,7 +2265,7 @@ void Recombinator::intersection(const std::set<MVertex*>& bin1,const std::set<MV
 }
 
 void Recombinator::intersection(const std::set<MVertex*>& bin1,const std::set<MVertex*>& bin2,const std::set<MVertex*>& bin3,
-                                const std::vector<MVertex*>& already,std::set<MVertex*>& final){
+                                const std::vector<MVertex*>& already,std::set<MVertex*>& final) const {
   size_t i;
   bool ok;
   std::set<MVertex*> temp;
@@ -2689,39 +2291,35 @@ void Recombinator::intersection(const std::set<MVertex*>& bin1,const std::set<MV
   }
 }
 
-void Recombinator::intersection(const std::set<MElement*>& bin1,const std::set<MElement*>& bin2,std::set<MElement*>& final){
+void Recombinator::intersection(const std::set<MElement*>& bin1,const std::set<MElement*>& bin2,std::set<MElement*>& final) const {
   std::set_intersection(bin1.begin(),bin1.end(),bin2.begin(),bin2.end(),std::inserter(final,final.end()));
 }
 
-// return true if vertex belong to hex
-bool Recombinator::inclusion(MVertex* vertex,Hex hex){
-  bool flag;
+// return true if vertex belongs to hex - test on the pointer equality only
+bool Recombinator::inclusion(MVertex* vertex,Hex hex) const {
+  bool included = false;
 
-  flag = 0;
+  if(vertex==hex.get_a()) included = true;
+  else if(vertex==hex.get_b()) included = true;
+  else if(vertex==hex.get_c()) included = true;
+  else if(vertex==hex.get_d()) included = true;
+  else if(vertex==hex.get_e()) included = true;
+  else if(vertex==hex.get_f()) included = true;
+  else if(vertex==hex.get_g()) included = true;
+  else if(vertex==hex.get_h()) included = true;
 
-  if(vertex==hex.get_a()) flag = 1;
-  else if(vertex==hex.get_b()) flag = 1;
-  else if(vertex==hex.get_c()) flag = 1;
-  else if(vertex==hex.get_d()) flag = 1;
-  else if(vertex==hex.get_e()) flag = 1;
-  else if(vertex==hex.get_f()) flag = 1;
-  else if(vertex==hex.get_g()) flag = 1;
-  else if(vertex==hex.get_h()) flag = 1;
-
-  return flag;
+  return included;
 }
 
 // pfffffff... renvoie true si vertex se trouve dans [a,b,c]
 // en gros, return (abcd.find(vertex)!=abcd.end());
-bool Recombinator::inclusion(MVertex* vertex,MVertex* a,MVertex* b,MVertex* c,MVertex* d){
-  bool flag;
+bool Recombinator::inclusion(MVertex* vertex,MVertex* a,MVertex* b,MVertex* c,MVertex* d) const {
+  bool flag = false;
 
-  flag = 0;
-
-  if(vertex==a) flag = 1;
-  else if(vertex==b) flag = 1;
-  else if(vertex==c) flag = 1;
-  else if(vertex==d) flag = 1;
+  if(vertex==a) flag = true;
+  else if(vertex==b) flag = true;
+  else if(vertex==c) flag = true;
+  else if(vertex==d) flag = true;
 
   return flag;
 }
@@ -2729,34 +2327,24 @@ bool Recombinator::inclusion(MVertex* vertex,MVertex* a,MVertex* b,MVertex* c,MV
 
 // return true if all three vertices v1,v2 and v3 belong to one tet
 // on pourrait plutot faire: est-ce que la face (v1v2v3) fait partie d'un tet, avec l'info hashée de tet to triangle ???
-bool Recombinator::inclusion(MVertex* v1,MVertex* v2,MVertex* v3,const std::set<MElement*>& bin){
-  bool ok;
-  bool flag1,flag2,flag3;
-  MVertex *a,*b,*c,*d;
-  MElement* element;
-  std::set<MElement*>::const_iterator it;
+bool Recombinator::inclusion(MVertex* v1,MVertex* v2,MVertex* v3,const std::set<MElement*>& bin) const {
+  for(std::set<MElement*>::const_iterator it=bin.begin();it!=bin.end();it++){
+    MElement *element = *it;
 
-  ok = 0;
+    MVertex *a = element->getVertex(0);
+    MVertex *b = element->getVertex(1);
+    MVertex *c = element->getVertex(2);
+    MVertex *d = element->getVertex(3);
 
-  for(it=bin.begin();it!=bin.end();it++){
-    element = *it;
-
-    a = element->getVertex(0);
-    b = element->getVertex(1);
-    c = element->getVertex(2);
-    d = element->getVertex(3);
-
-    flag1 = inclusion(v1,a,b,c,d);
-    flag2 = inclusion(v2,a,b,c,d);
-    flag3 = inclusion(v3,a,b,c,d);
+    bool flag1 = inclusion(v1,a,b,c,d);
+    bool flag2 = inclusion(v2,a,b,c,d);
+    bool flag3 = inclusion(v3,a,b,c,d);
 
     if(flag1 && flag2 && flag3){
-      ok = 1;
-      break;
+      return true;
     }
   }
-
-  return ok;
+  return false;
 }
 
 // return true si la facet existe dans la table A
@@ -3003,7 +2591,8 @@ bool Recombinator::faces_statuquo(Hex &hex){
   return c1 && c2 && c3 && c4 && c5 && c6;
 }
 
-// return false si, parmis les deux paires de facets de la face, il existe un couple de facet qui soinent toutes les deux des tuples, mais correspondant à des geometric faces différentes. Bref, une arrête géométrique confondue avec une diagonale de la face.
+// return false si, parmis les deux paires de facets de la face, il existe un couple de facet
+// qui soinent toutes les deux des tuples, mais correspondant à des geometric faces différentes. Bref, une arrête géométrique confondue avec une diagonale de la face.
 bool Recombinator::faces_statuquo(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
   bool ok;
   bool flag1,flag2;
@@ -3410,21 +2999,17 @@ void Recombinator::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
        << "{10, 20};\n";
 }
 
-double Recombinator::scaled_jacobian(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
-  double val;
-  double l1,l2,l3;
-  SVector3 vec1,vec2,vec3;
+double Recombinator::scaled_jacobian(MVertex* a,MVertex* b,MVertex* c,MVertex* d){  
+  SVector3 ab(a->point(), b->point());
+  SVector3 ac(a->point(), c->point());
+  SVector3 ad(a->point(), d->point());
 
-  vec1 = SVector3(b->x()-a->x(),b->y()-a->y(),b->z()-a->z());
-  vec2 = SVector3(c->x()-a->x(),c->y()-a->y(),c->z()-a->z());
-  vec3 = SVector3(d->x()-a->x(),d->y()-a->y(),d->z()-a->z());
+  double l_ab = ab.norm();
+  double l_ac = ac.norm();
+  double l_ad = ad.norm();
 
-  l1 = vec1.norm();
-  l2 = vec2.norm();
-  l3 = vec3.norm();
-
-  val = dot(vec1,crossprod(vec2,vec3));
-  return val/(l1*l2*l3);
+  double val = dot(ab,crossprod(ac,ad));
+  return val/(l_ab*l_ac*l_ad);
 }
 
 /*double Recombinator::scaled_jacobian_face(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
@@ -3475,30 +3060,25 @@ double Recombinator::max_scaled_jacobian(MElement* element,int& index){
 
 double Recombinator::min_scaled_jacobian(Hex &hex){
   int i;
-  double min, max;
-  double j1,j2,j3,j4,j5,j6,j7,j8;
-  MVertex *a,*b,*c,*d;
-  MVertex *e,*f,*g,*h;
+  MVertex *a = hex.get_a();
+  MVertex *b = hex.get_b();
+  MVertex *c = hex.get_c();
+  MVertex *d = hex.get_d();
+  MVertex *e = hex.get_e();
+  MVertex *f = hex.get_f();
+  MVertex *g = hex.get_g();
+  MVertex *h = hex.get_h();
+
+  double j1 = scaled_jacobian(a,b,d,e);
+  double j2 = scaled_jacobian(b,c,a,f);
+  double j3 = scaled_jacobian(c,d,b,g);
+  double j4 = scaled_jacobian(d,a,c,h);
+  double j5 = scaled_jacobian(e,h,f,a);
+  double j6 = scaled_jacobian(f,e,g,b);
+  double j7 = scaled_jacobian(g,f,h,c);
+  double j8 = scaled_jacobian(h,g,e,d);
+
   std::vector<double> jacobians;
-
-  a = hex.get_a();
-  b = hex.get_b();
-  c = hex.get_c();
-  d = hex.get_d();
-  e = hex.get_e();
-  f = hex.get_f();
-  g = hex.get_g();
-  h = hex.get_h();
-
-  j1 = scaled_jacobian(a,b,d,e);
-  j2 = scaled_jacobian(b,c,a,f);
-  j3 = scaled_jacobian(c,d,b,g);
-  j4 = scaled_jacobian(d,a,c,h);
-  j5 = scaled_jacobian(e,h,f,a);
-  j6 = scaled_jacobian(f,e,g,b);
-  j7 = scaled_jacobian(g,f,h,c);
-  j8 = scaled_jacobian(h,g,e,d);
-
   jacobians.push_back(j1);
   jacobians.push_back(j2);
   jacobians.push_back(j3);
@@ -3508,13 +3088,13 @@ double Recombinator::min_scaled_jacobian(Hex &hex){
   jacobians.push_back(j7);
   jacobians.push_back(j8);
 
-  min = 1000000000.0;
-  max = -1000000000.0;
-  for(i=0;i<8;i++){
+  double min = DBL_MAX;
+  double max = DBL_MIN;
+  for(unsigned int i=0; i<8; i++){
     min = std::min(min, jacobians[i]);
     max = std::max(max, jacobians[i]);
   }
-  if (max < 0) min = -max;
+  if (max < 0) min = -max; // Why ? Why is there no test on min < -max ?? Jeanne 
 
   /*MHexahedron *h1 = new MHexahedron(a, b, c, d, e, f, g, h);
   MHexahedron *h2 = new MHexahedron(e, f, g, h, a, b, c, d);
@@ -8898,7 +8478,6 @@ void Recombinator_Graph::add_graph_entry(Hex* hex, Hex* other_hex)
 
 void Recombinator_Graph::compute_hex_ranks()
 {
-
   create_faces_connectivity();
 
   PETriangle* face;
@@ -8915,7 +8494,7 @@ void Recombinator_Graph::compute_hex_ranks()
     //cout << " --- hex " << hex << " has " << boundary_count << " tri faces on boundaries, " << hex_to_faces[hex].size() << " total tri faces " << endl;
     map<Hex*,vector<double> >::iterator itfind = hex_ranks.find(hex);
     if (itfind==hex_ranks.end())
-      hex_ranks.insert(make_pair(hex,vector<double>(1)));
+      hex_ranks.insert(make_pair(hex,vector<double>(2)));
     hex_ranks[hex][0] = boundary_count;
     hex_ranks[hex][1] = hex->get_quality();
   }

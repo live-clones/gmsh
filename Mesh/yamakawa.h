@@ -170,68 +170,164 @@ protected:
 
 
 
-class Hex{
+class Hex {
 private:
   double quality;
   unsigned long long hash;
-  MVertex *a,*b,*c,*d,*e,*f,*g,*h;
-  void set_hash();
+  MVertex* vertices_[8];
+  //MVertex *a,*b,*c,*d,*e,*f,*g,*h;
+private:
+  void set_hash(){
+    hash = 0.;
+    for (int i = 0; i < 8; ++i) {
+      hash += vertices_[i]->getNum();
+    }    
+  }
+
 public:
-  Hex();
-  Hex(MVertex*,MVertex*,MVertex*,MVertex*,MVertex*,MVertex*,MVertex*,MVertex*);
-  ~Hex();
-  double get_quality();
-  void set_quality(double);
-  MVertex* get_a();
-  MVertex* get_b();
-  MVertex* get_c();
-  MVertex* get_d();
-  MVertex* get_e();
-  MVertex* get_f();
-  MVertex* get_g();
-  MVertex* get_h();
-  MVertex* getVertex(int n);
-  bool hasVertex(const MVertex *v);
-  bool same_vertices(Hex *h);
-  void set_vertices(MVertex*,MVertex*,MVertex*,MVertex*,MVertex*,MVertex*,MVertex*,MVertex*);
-  unsigned long long get_hash();
-  bool operator<( Hex&) ;
+  Hex() : quality(0.), hash(0.), vertices_{NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL} {};
+
+  Hex(MVertex* a2, MVertex* b2, MVertex* c2, MVertex* d2, MVertex* e2, MVertex* f2, MVertex* g2, MVertex* h2) :
+    quality(0.), vertices_{a2,b2,c2, d2, e2, f2, g2, h2}
+  {
+    set_hash();
+  }
+  ~Hex() {};
+  double get_quality() const { return quality; }
+  void set_quality(double new_quality) { quality = new_quality; }
+  MVertex* get_a() const { return vertices_[0]; }
+  MVertex* get_b() const { return vertices_[1]; }
+  MVertex* get_c() const { return vertices_[2]; }
+  MVertex* get_d() const { return vertices_[3]; }
+  MVertex* get_e() const { return vertices_[4]; }
+  MVertex* get_f() const { return vertices_[5]; }
+  MVertex* get_g() const { return vertices_[6]; }
+  MVertex* get_h() const { return vertices_[7]; }
+  MVertex* getVertex(unsigned int n) const {
+    if (n < 8) {
+      return vertices_[n];
+    }
+    else {
+      cout << "Hex: unknown vertex number " << n << endl;
+      throw;
+      return NULL;
+    }
+  }
+
+  bool hasVertex(const MVertex *v) const {
+    for (int i = 0; i < 8; i++) {
+      if (getVertex(i) == v) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool same_vertices(Hex *h) const {
+    for (int i = 0; i < 8; i++) {
+      if (!(h->hasVertex(getVertex(i)))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void set_vertices(MVertex* a2, MVertex* b2, MVertex* c2, MVertex* d2, MVertex* e2, MVertex* f2, MVertex* g2, MVertex* h2) {
+    vertices_[0] = a2;
+    vertices_[1] = b2;
+    vertices_[2] = c2;
+    vertices_[3] = d2;
+    vertices_[4] = e2;
+    vertices_[5] = f2;
+    vertices_[6] = g2;
+    vertices_[7] = h2;
+  }
+
+  unsigned long long get_hash() {
+    if (hash == 0. && vertices_[0]!=NULL) {
+      set_hash();
+    }
+    return hash;
+  }
+  bool operator<(const Hex& hex) const {
+    return quality > hex.get_quality(); // Why > ??? Shouldn't it be < ?? Jeanne.
+  }
+
 };
 
-class Facet{
+class Facet {
 private:
-  MVertex *a,*b,*c;
+  MVertex *a, *b, *c;
   int num[3];
   unsigned long long hash;
 public:
-  Facet();
-  Facet(MVertex*,MVertex*,MVertex*);
-  ~Facet();
-  MVertex* get_a();
-  MVertex* get_b();
-  MVertex* get_c();
-  void set_vertices(MVertex*,MVertex*,MVertex*);
-  bool same_vertices(Facet);
-  void compute_hash();
-  unsigned long long get_hash() const;
-  bool operator<(const Facet&) const;
+  Facet() : a(NULL), b(NULL), c(NULL), num{ -1, -1, -1 }, hash(0.){}
+  Facet(MVertex* a2, MVertex* b2, MVertex* c2) :
+    a(a2), b(b2), c(c2), num {-1,-1,-1}, hash(0.){
+    compute_hash();
+  }
+  ~Facet() {};
+  MVertex* get_a() const { return a; }
+  MVertex* get_b() const { return b; }
+  MVertex* get_c() const { return c; }
+  void set_vertices(MVertex*a2, MVertex*b2, MVertex*c2) {
+    a = a2;
+    b = b2;
+    c = c2;
+    compute_hash();
+  }
+  bool same_vertices(const Facet& facet) const {    
+    bool c1 = (a == facet.get_a()) || (a == facet.get_b()) || (a == facet.get_c());
+    bool c2 = (b == facet.get_a()) || (b == facet.get_b()) || (b == facet.get_c());
+    bool c3 = (c == facet.get_a()) || (c == facet.get_b()) || (c == facet.get_c());
+    return c1 && c2 && c3;
+  }
+  void compute_hash() {
+    num[0] = a->getNum();
+    num[1] = b->getNum();
+    num[2] = c->getNum();
+    std::sort(num, num + 3);
+    hash = num[2] + 1e4*num[1] + 1e8*num[0];
+  }
+  unsigned long long get_hash() const { return hash; }
+  bool operator<(const Facet& rhs) const {
+    return hash<rhs.get_hash();
+  }
 };
 
 class Diagonal{
 private:
   MVertex *a,*b;
   unsigned long long hash;
+private:
+  void compute_hash() {
+    hash = a->getNum() + b->getNum();
+  }
+
 public:
-  Diagonal();
-  Diagonal(MVertex*,MVertex*);
-  ~Diagonal();
-  MVertex* get_a();
-  MVertex* get_b();
-  void set_vertices(MVertex*,MVertex*);
-  bool same_vertices(Diagonal);
-  void compute_hash();
-  unsigned long long get_hash() const;
-  bool operator<(const Diagonal&) const;
+  Diagonal() :a(NULL), b(NULL), hash() {};
+  Diagonal(MVertex*a2, MVertex*b2) :a(a2), b(b2){
+    compute_hash();
+  }
+  ~Diagonal() {};
+  MVertex* get_a() const {return a;}
+  MVertex* get_b() const {return b;}
+  void set_vertices(MVertex*a2, MVertex*b2) {
+    a = a2;
+    b = b2;
+    compute_hash();
+  }
+  bool same_vertices(Diagonal diagonal) const {
+    bool c1 = (a == diagonal.get_a()) || (a == diagonal.get_b());
+    bool c2 = (b == diagonal.get_a()) || (b == diagonal.get_b());
+    return c1 && c2;
+  }
+  unsigned long long get_hash() const {
+    return hash;
+  }
+  bool operator<(const Diagonal& rhs) const {
+    return hash<rhs.get_hash();
+  }
 };
 
 class Tuple{
@@ -241,19 +337,43 @@ private:
   GFace* gf;
   unsigned long long hash;
 public:
-  Tuple();
-  Tuple(MVertex*,MVertex*,MVertex*,MElement*,GFace*);
-  Tuple(MVertex*,MVertex*,MVertex*);
-  ~Tuple();
-  MVertex* get_v1();
-  MVertex* get_v2();
-  MVertex* get_v3();
-  MElement* get_element() const;
-  GFace* get_gf() const;
-  bool same_vertices(Tuple);
-  unsigned long long get_hash() const;
-  bool operator<(const Tuple&) const;
+  Tuple() : v1(NULL), v2(NULL), v3(NULL), element(NULL), gf(NULL), hash(0.) {}
+  Tuple(MVertex* a, MVertex* b, MVertex* c, MElement* element2, GFace* gf2)
+    : Tuple(a,b,c)
+  {    
+    element = element2;
+    gf = gf2;  
+  }
+  Tuple(MVertex* a, MVertex* b, MVertex* c)
+    :element(NULL), gf(NULL) 
+  {
+    MVertex* tmp[3] = { a,b,c };
+    std::sort(tmp, tmp + 3);
+    v1 = tmp[0];
+    v2 = tmp[1];
+    v2 = tmp[2];
+    hash = a->getNum() + b->getNum() + c->getNum();
+  }
+  ~Tuple() {};
+  MVertex* get_v1() const {return v1;}
+  MVertex* get_v2() const {return v2;}
+  MVertex* get_v3() const {return v3;}
+  MElement* get_element() const { return element; }
+  GFace* get_gf() const { return gf; }
+  bool same_vertices(const Tuple& rhs) const {
+    if (v1 == rhs.get_v1() && v2 == rhs.get_v2() && v3 == rhs.get_v3()) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  unsigned long long get_hash() const { return hash; }
+  bool operator<(const Tuple& rhs) const {
+    return hash< rhs.get_hash();
+  }
 };
+
+
 
 //inline std::ostream& operator<<(std::ostream& s, const PETriangle& t){
 //  const MVertex *v;
@@ -310,26 +430,26 @@ public:
   // ce test permet probablement de virer les hex "avec des trous" (avec 8 noeuds ok, mais un tet manquant, ce qui peut occasionner un hex à 14 faces, par exemple, si l'on compte les faces à partir des tets inclus)
   bool valid(Hex&,const std::set<MElement*>&);
   // renvoie true si le "MQuadrangle::etaShapeMeasure" des 6 faces est plus grand que 0.000001
-  bool valid(Hex&);
-  double eta(MVertex*,MVertex*,MVertex*,MVertex*);
+  bool valid(Hex&) const;
+  double eta(MVertex*,MVertex*,MVertex*,MVertex*) const;
   bool linked(MVertex*,MVertex*);
 
-  void find(MVertex*,MVertex*,const std::vector<MVertex*>&,std::set<MVertex*>&);
-  void find(MVertex*,MVertex*,MVertex*,const std::vector<MVertex*>&,std::set<MVertex*>&);
-  void find(MVertex*,MVertex*,std::set<MElement*>&);
-  void find(MVertex*,Hex,std::set<MElement*>&);
-  MVertex* find(MVertex*,MVertex*,MVertex*,MVertex*,const std::set<MElement*>&);
+  void find(MVertex*,MVertex*,const std::vector<MVertex*>&,std::set<MVertex*>&) const;
+  void find(MVertex*,MVertex*,MVertex*,const std::vector<MVertex*>&,std::set<MVertex*>&) const;
+  void find(MVertex*,MVertex*,std::set<MElement*>&) const;
+  void find(MVertex*,Hex,std::set<MElement*>&) const;
+  MVertex* find(MVertex*,MVertex*,MVertex*,MVertex*,const std::set<MElement*>&) const;
 
-  void intersection(const std::set<MVertex*>&,const std::set<MVertex*>&,const std::vector<MVertex*>&,std::set<MVertex*>&);
-  void intersection(const std::set<MVertex*>&,const std::set<MVertex*>&,const std::set<MVertex*>&,const std::vector<MVertex*>&,std::set<MVertex*>&);
-  void intersection(const std::set<MElement*>&,const std::set<MElement*>&,std::set<MElement*>&);
+  void intersection(const std::set<MVertex*>&,const std::set<MVertex*>&,const std::vector<MVertex*>&,std::set<MVertex*>&) const;
+  void intersection(const std::set<MVertex*>&,const std::set<MVertex*>&,const std::set<MVertex*>&,const std::vector<MVertex*>&,std::set<MVertex*>&) const;
+  void intersection(const std::set<MElement*>&,const std::set<MElement*>&,std::set<MElement*>&) const;
 
   // return true if vertex belong to hex
-  bool inclusion(MVertex*,Hex);
+  bool inclusion(MVertex*,Hex) const;
   // renvoie true si vertex se trouve dans [a,b,c]
-  bool inclusion(MVertex*,MVertex*,MVertex*,MVertex*,MVertex*);
+  bool inclusion(MVertex*,MVertex*,MVertex*,MVertex*,MVertex*) const ;
   // return true if all three vertices v1,v2 and v3 belong to one tet
-  bool inclusion(MVertex*,MVertex*,MVertex*,const std::set<MElement*>&);
+  bool inclusion(MVertex*,MVertex*,MVertex*,const std::set<MElement*>&) const;
   // return true si la facet existe dans la table A
   bool inclusion(Facet);
   // return true si la diagonal existe dans la table B
