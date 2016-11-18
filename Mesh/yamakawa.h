@@ -175,7 +175,6 @@ private:
   double quality;
   unsigned long long hash;
   MVertex* vertices_[8];
-  //MVertex *a,*b,*c,*d,*e,*f,*g,*h;
 private:
   void set_hash(){
     hash = 0.;
@@ -185,11 +184,27 @@ private:
   }
 
 public:
-  Hex() : quality(0.), hash(0.), vertices_{NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL} {};
+  Hex() : quality(0.), hash(0.) {
+    vertices_[0] = NULL;
+    vertices_[1] = NULL;
+    vertices_[2] = NULL;
+    vertices_[3] = NULL;
+    vertices_[4] = NULL;
+    vertices_[5] = NULL;
+    vertices_[6] = NULL;
+    vertices_[7] = NULL;   
+  }
 
   Hex(MVertex* a2, MVertex* b2, MVertex* c2, MVertex* d2, MVertex* e2, MVertex* f2, MVertex* g2, MVertex* h2) :
-    quality(0.), vertices_{a2,b2,c2, d2, e2, f2, g2, h2}
-  {
+    quality(0.) {
+    vertices_[0] = a2; 
+    vertices_[1] = b2;
+    vertices_[2] = c2;
+    vertices_[3] = d2;
+    vertices_[4] = e2;
+    vertices_[5] = f2;
+    vertices_[6] = g2;
+    vertices_[7] = h2;
     set_hash();
   }
   ~Hex() {};
@@ -261,9 +276,16 @@ private:
   int num[3];
   unsigned long long hash;
 public:
-  Facet() : a(NULL), b(NULL), c(NULL), num{ -1, -1, -1 }, hash(0.){}
+  Facet() : a(NULL), b(NULL), c(NULL), hash(0.){
+    num[0] = -1;
+    num[1] = -1;
+    num[2] = -1;
+  }
   Facet(MVertex* a2, MVertex* b2, MVertex* c2) :
-    a(a2), b(b2), c(c2), num {-1,-1,-1}, hash(0.){
+    a(a2), b(b2), c(c2), hash(0.){
+    num[0] = -1;
+    num[1] = -1;
+    num[2] = -1;
     compute_hash();
   }
   ~Facet() {};
@@ -339,8 +361,13 @@ private:
 public:
   Tuple() : v1(NULL), v2(NULL), v3(NULL), element(NULL), gf(NULL), hash(0.) {}
   Tuple(MVertex* a, MVertex* b, MVertex* c, MElement* element2, GFace* gf2)
-    : Tuple(a,b,c)
   {    
+    MVertex* tmp[3] = { a,b,c };
+    std::sort(tmp, tmp + 3);
+    v1 = tmp[0];
+    v2 = tmp[1];
+    v2 = tmp[2];
+    hash = a->getNum() + b->getNum() + c->getNum();
     element = element2;
     gf = gf2;  
   }
