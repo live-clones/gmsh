@@ -63,6 +63,7 @@ private:
   float _left, _right, _top, _bottom, _far; // value of "border"
   float _fontFactor;
   bool _retina; // retina display
+  double _pixel_equiv_x, _pixel_equiv_y;
 
   void OrthofFromGModel(void);
   void drawPView(PView *p);
@@ -83,6 +84,14 @@ public:
   int fix2dCoordinates(double *x, double *y);
   void drawView();
   void drawAxes();
+  void drawAxes(int mode, double tics[3], std::string format[3],
+                std::string label[3], double bb[6], int mikado,
+                double value_bb[6]);
+  int drawTics(drawContext *ctx, int comp, double n, std::string &format,
+               std::string &label, double p1[3], double p2[3],
+               double perp[3], int mikado, double pixelfact,
+               double value_p1[3], double value_p2[3]);
+  void drawSmallAxes();
   void drawGeom();
   void drawMesh();
   void drawPost();

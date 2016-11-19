@@ -42,6 +42,7 @@ drawContext::drawContext(float fontFactor, bool retina)
   setQuaternion(0., 0., 0., 1.);
   _fontFactor = fontFactor;
   _retina = retina;
+  _pixel_equiv_x = _pixel_equiv_y = 0.;
 }
 
 static void checkGlError(const char* op)
@@ -195,6 +196,10 @@ void drawContext::OrthofFromGModel()
   vymin -= yborder;
   vymax += yborder;
 
+  // store what one pixel represents in world coordinates
+  _pixel_equiv_x = (vxmax - vxmin) / (double)_width;
+  _pixel_equiv_y = (vymax - vymin) / (double)_height;
+
   // set up the near and far clipping planes so that the box is large enough to
   // manipulate the model and zoom, but not too big (otherwise the z-buffer
   // resolution e.g. with Mesa can become insufficient)
@@ -236,9 +241,10 @@ void drawContext::initView(int w, int h)
 void drawArray(VertexArray *va, GLint type, bool useColorArray, bool useNormalArray)
 {
   if(!va) return;
-  glEnable(GL_BLEND);
   glEnable(GL_RESCALE_NORMAL);
-  glShadeModel(GL_SMOOTH);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glShadeModel(GL_SMOOTH);
   glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
   glEnableClientState(GL_VERTEX_ARRAY);
   if(useNormalArray){
@@ -253,8 +259,8 @@ void drawArray(VertexArray *va, GLint type, bool useColorArray, bool useNormalAr
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_NORMAL_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
-  glDisable(GL_RESCALE_NORMAL);
-  glDisable(GL_BLEND);
+	glDisable(GL_BLEND);
+	glDisable(GL_RESCALE_NORMAL);
 }
 
 void drawVector(double x, double y, double z, double dx, double dy, double dz)
@@ -539,9 +545,11 @@ void drawContext::drawScale()
       break;
     }
 
-    drawString lbl(label, 20 * _fontFactor);
-    lbl.draw(xmin + width / 2, ymin + 2.8 * dh, 0.,
-             _width/(_right-_left), _height/(_top-_bottom));
+    if(strlen(label)){
+      drawString lbl(label, 20 * _fontFactor);
+      lbl.draw(xmin + width / 2, ymin + 2.8 * dh, 0.,
+               _width/(_right-_left), _height/(_top-_bottom));
+    }
 
     drawString val(data->getName().c_str(), 15 * _fontFactor);
     for(int i = 0; i < 3; i++) {
@@ -569,6 +577,289 @@ void drawContext::drawPost()
 void drawContext::drawAxes()
 {
   glLineWidth(1.);
+  bool geometryExists = false;
+  for(unsigned int i = 0; i < GModel::list.size(); i++){
+    if(!GModel::list[i]->empty()){
+      geometryExists = true;
+      break;
+    }
+  }
+  if(!CTX::instance()->axesAutoPosition){
+    drawAxes(CTX::instance()->axes, CTX::instance()->axesTics,
+             CTX::instance()->axesFormat, CTX::instance()->axesLabel,
+             CTX::instance()->axesPosition, CTX::instance()->axesMikado,
+             CTX::instance()->axesForceValue ? CTX::instance()->axesValue :
+             CTX::instance()->axesPosition);
+  }
+  else if(geometryExists){
+    double bb[6] =
+      {CTX::instance()->min[0], CTX::instance()->max[0], CTX::instance()->min[1],
+       CTX::instance()->max[1], CTX::instance()->min[2], CTX::instance()->max[2]};
+    drawAxes(CTX::instance()->axes, CTX::instance()->axesTics,
+             CTX::instance()->axesFormat, CTX::instance()->axesLabel,
+             bb, CTX::instance()->axesMikado, CTX::instance()->axesForceValue ?
+             CTX::instance()->axesValue : bb);
+  }
+}
+
+static void drawAxis(float xmin, float ymin, float zmin,
+                     float xmax, float ymax, float zmax,
+                     int ntics, int mikado)
+{
+  GLfloat axes[] = {
+    xmin, ymin, zmin,
+    xmax, ymax, zmax
+  };
+  GLfloat colors[] = {
+    0, 0, 0, 1,
+    0, 0, 0, 1,
+  };
+  glVertexPointer(3, GL_FLOAT, 0, axes);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glColorPointer(4, GL_FLOAT, 0, colors);
+  glEnableClientState(GL_COLOR_ARRAY);
+  glDrawArrays(GL_LINES, 0, 2);
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
+}
+
+static void drawGridStipple(int n1, int n2, double p1[3], double p2[3], double p3[3])
+{
+  double t1[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
+  double t2[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
+  double l1 = norme(t1);
+  double l2 = norme(t2);
+
+  std::vector<GLfloat> v, c;
+  for(int i = 1; i < n1 - 1; i++){
+    double d = (double)i / (double)(n1 - 1) * l1;
+    v.push_back(p1[0] + t1[0] * d);
+    v.push_back(p1[1] + t1[1] * d);
+    v.push_back(p1[2] + t1[2] * d);
+    v.push_back(p1[0] + t1[0] * d + t2[0] * l2);
+    v.push_back(p1[1] + t1[1] * d + t2[1] * l2);
+    v.push_back(p1[2] + t1[2] * d + t2[2] * l2);
+  }
+  for(int i = 1; i < n2 - 1; i++){
+    double d = (double)i/(double)(n2 - 1) * l2;
+    v.push_back(p1[0] + t2[0] * d);
+    v.push_back(p1[1] + t2[1] * d);
+    v.push_back(p1[2] + t2[2] * d);
+    v.push_back(p1[0] + t2[0] * d + t1[0] * l1);
+    v.push_back(p1[1] + t2[1] * d + t1[1] * l1);
+    v.push_back(p1[2] + t2[2] * d + t1[2] * l1);
+  }
+  for(unsigned int i = 0; i < v.size(); i++){
+    c.push_back(0);
+    c.push_back(0);
+    c.push_back(0);
+    c.push_back(0.2);
+  }
+
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glVertexPointer(3, GL_FLOAT, 0, &v[0]);
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glColorPointer(4, GL_FLOAT, 0, &c[0]);
+  glEnableClientState(GL_COLOR_ARRAY);
+  glDrawArrays(GL_LINES, 0, v.size() / 3);
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
+  glDisable(GL_BLEND);
+}
+
+int drawContext::drawTics(drawContext *ctx, int comp, double n, std::string &format,
+                          std::string &label, double p1[3], double p2[3],
+                          double perp[3], int mikado, double pixelfact,
+                          double value_p1[3], double value_p2[3])
+{
+  // draws n tic marks (in direction perp) and labels along the line p1->p2
+
+  double t[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
+  double l = norme(t);
+  double value_t[3] = {value_p2[0] - value_p1[0], value_p2[1] - value_p1[1],
+                       value_p2[2] - value_p1[2]};
+  double value_l = norme(value_t);
+  double w = 10 * pixelfact; // tic marks are 10 pixels long
+  double w2 = w * 4.5; // distance to labels
+
+  // draw label at the end of the axis
+  if(label.size()){
+    drawString lbl(label, 15 * _fontFactor);
+    lbl.draw(p2[0] + t[0] * w2, p2[1] + t[1] * w2, p2[2] + t[2] * w2,
+             _width/(_right-_left)*_scale[0], _height/(_top-_bottom)*_scale[0]);
+  }
+
+  // return number of tics in special cases
+  if(n < 2.) return 0;
+  if(format.empty()) return n;
+
+  // select perp direction automatically if it is not provided
+  double lp = norme(perp);
+  if(!lp){
+    switch(comp){
+    case 0: perp[1] = -1.; break;
+    case 1: perp[0] = -1.; break;
+    case 2: perp[0] = 1.; break;
+    default: break;
+    }
+  }
+
+  char tmp[256];
+
+	// reduce number of vertical tics if not zoomed enough
+	double ww = _width/(_right-_left)*_scale[0];
+	double hh = _height/(_top-_bottom)*_scale[0];
+	if(hh < 10 && comp == 1){
+		n = 2;
+	}
+	
+  // draw n tics
+  double step = l / (double)(n - 1);
+  double value_step = value_l / (double)(n - 1);
+
+  for(int i = 0; i < n; i++){
+    double d = i * step;
+    double p[3] = {p1[0] + t[0] * d, p1[1] + t[1] * d, p1[2] + t[2] * d};
+    double q[3] = {p[0] + perp[0] * w, p[1] + perp[1] * w, p[2] + perp[2] * w};
+    double r[3] = {p[0] + perp[0] * w2, p[1] + perp[1] * w2, p[2] + perp[2] * w2};
+
+    double value_d = i * value_step;
+    double value_p[3] = {value_p1[0] + value_t[0] * value_d,
+                         value_p1[1] + value_t[1] * value_d,
+                         value_p1[2] + value_t[2] * value_d};
+
+    GLfloat lines[] = {
+      (float)p[0], (float)p[1], (float)p[2],
+      (float)q[0], (float)q[1], (float)q[2]
+    };
+    GLfloat colors[] = {
+      0, 0, 0, 1,
+      0, 0, 0, 1,
+    };
+    glVertexPointer(3, GL_FLOAT, 0, lines);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glColorPointer(4, GL_FLOAT, 0, colors);
+    glEnableClientState(GL_COLOR_ARRAY);
+    glDrawArrays(GL_LINES, 0, 2);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+
+    // draw tic labels
+    if(comp < 0) // display the length value (ruler-mode, starting at 0)
+      sprintf(tmp, format.c_str(), value_d);
+    else // display the coordinate value
+      sprintf(tmp, format.c_str(), value_p[comp]);
+
+    if(strlen(tmp)){
+      drawString lbl(tmp, 15 * _fontFactor);
+      lbl.draw(r[0], r[1], r[2], ww, hh);
+    }
+  }
+  return n;
+}
+
+void drawContext::drawAxes(int mode, double tics[3], std::string format[3],
+                           std::string label[3], double bb[6], int mikado,
+                           double value_bb[6])
+{
+  // mode 0: nothing
+  //      1: axes
+  //      2: box
+  //      3: full grid
+  //      4: open grid
+  //      5: ruler
+
+  if((mode < 1) || (bb[0] == bb[1] && bb[2] == bb[3] && bb[4] == bb[5]))
+    return;
+
+  double xmin = bb[0], xmax = bb[1];
+  double ymin = bb[2], ymax = bb[3];
+  double zmin = bb[4], zmax = bb[5];
+  double orig[3] = {xmin, ymin, zmin};
+
+  double value_xmin = value_bb[0], value_xmax = value_bb[1];
+  double value_ymin = value_bb[2], value_ymax = value_bb[3];
+  double value_zmin = value_bb[4], value_zmax = value_bb[5];
+  double value_orig[3] = {value_xmin, value_ymin, value_zmin};
+
+  double pixelfact = _pixel_equiv_x / _scale[0];
+
+  if(mode == 5){ // draw ruler from xyz_min to xyz_max
+    double end[3] = {xmax, ymax, zmax};
+    double dir[3] = {xmax - xmin, ymax - ymin, zmax - zmin};
+    double perp[3];
+    if((fabs(dir[0]) >= fabs(dir[1]) && fabs(dir[0]) >= fabs(dir[2])) ||
+       (fabs(dir[1]) >= fabs(dir[0]) && fabs(dir[1]) >= fabs(dir[2]))){
+      perp[0] = dir[1]; perp[1] = -dir[0]; perp[2] = 0.;
+    }
+    else{
+      perp[0] = 0.; perp[1] = dir[2]; perp[2] = -dir[1];
+    }
+    double value_end[3] = {value_xmax, value_ymax, value_zmax};
+    drawTics(this, -1, tics[0], format[0], label[0], orig, end, perp, mikado,
+             pixelfact, value_orig, value_end);
+    drawAxis(xmin, ymin, zmin, xmax, ymax, zmax, tics[0], mikado);
+    return;
+  }
+  double xx[3] = {xmax, ymin, zmin};
+  double yy[3] = {xmin, ymax, zmin};
+  double zz[3] = {xmin, ymin, zmax};
+  double value_xx[3] = {value_xmax, value_ymin, value_zmin};
+  double value_yy[3] = {value_xmin, value_ymax, value_zmin};
+  double value_zz[3] = {value_xmin, value_ymin, value_zmax};
+  double dxm[3] = {0., (ymin != ymax) ? -1. : 0., (zmin != zmax) ? -1. : 0.};
+  double dym[3] = {(xmin != xmax) ? -1. : 0., 0., (zmin != zmax) ? -1. : 0.};
+  double dzm[3] = {(xmin != xmax) ? -1. : 0., (ymin != ymax) ? -1. : 0., 0.};
+
+  int nx = (xmin != xmax) ? drawTics(this, 0, tics[0], format[0], label[0], orig, xx, dxm,
+                                     mikado, pixelfact, value_orig, value_xx) : 0;
+  int ny = (ymin != ymax) ? drawTics(this, 1, tics[1], format[1], label[1], orig, yy, dym,
+                                     mikado, pixelfact, value_orig, value_yy) : 0;
+  int nz = (zmin != zmax) ? drawTics(this, 2, tics[2], format[2], label[2], orig, zz, dzm,
+                                     mikado, pixelfact, value_orig, value_zz) : 0;
+
+  drawAxis(xmin, ymin, zmin, xmax, ymin, zmin, nx, mikado);
+  drawAxis(xmin, ymin, zmin, xmin, ymax, zmin, ny, mikado);
+  drawAxis(xmin, ymin, zmin, xmin, ymin, zmax, nz, mikado);
+
+  // open box
+  if(mode > 1){
+    drawAxis(xmin, ymax, zmin, xmax, ymax, zmin, nx, mikado);
+    drawAxis(xmax, ymin, zmin, xmax, ymax, zmin, ny, mikado);
+    drawAxis(xmax, ymin, zmin, xmax, ymin, zmax, nz, mikado);
+    drawAxis(xmin, ymin, zmax, xmax, ymin, zmax, nx, mikado);
+    drawAxis(xmin, ymin, zmax, xmin, ymax, zmax, ny, mikado);
+    drawAxis(xmin, ymax, zmin, xmin, ymax, zmax, nz, mikado);
+  }
+
+  // closed box
+  if(mode == 2 || mode == 3){
+    drawAxis(xmin, ymax, zmax, xmax, ymax, zmax, nx, mikado);
+    drawAxis(xmax, ymin, zmax, xmax, ymax, zmax, ny, mikado);
+    drawAxis(xmax, ymax, zmin, xmax, ymax, zmax, nz, mikado);
+  }
+
+  if(mode > 2){
+    drawGridStipple(nx, ny, orig, xx, yy);
+    drawGridStipple(ny, nz, orig, yy, zz);
+    drawGridStipple(nx, nz, orig, xx, zz);
+  }
+
+  if(mode == 3){
+    double orig2[3] = {xmax, ymax, zmax};
+    double xy[3] = {xmax, ymax, zmin};
+    double yz[3] = {xmin, ymax, zmax};
+    double xz[3] = {xmax, ymin, zmax};
+    if(zmin != zmax) drawGridStipple(nx, ny, orig2, yz, xz);
+    if(xmin != xmax) drawGridStipple(ny, nz, orig2, xz, xy);
+    if(ymin != ymax) drawGridStipple(nx, nz, orig2, yz, xy);
+  }
+}
+
+void drawContext::drawSmallAxes()
+{
+  glLineWidth(1.);
   glPushMatrix();
   glLoadIdentity();
 
@@ -593,12 +884,12 @@ void drawContext::drawAxes()
     x0 + zx, y0 + zy
   };
   GLfloat colors[] = {
-    0., 0, 0, 1.,
-    0., 0, 0, 1.,
-    0, 0, 0., 1.,
-    0, 0, 0., 1.,
-    0, 0., 0, 1.,
-    0, 0., 0, 1.,
+    0, 0, 0, 1,
+    0, 0, 0, 1,
+    0, 0, 0, 1,
+    0, 0, 0, 1,
+    0, 0, 0, 1,
+    0, 0, 0, 1,
   };
   glVertexPointer(2, GL_FLOAT, 0, axes);
   glEnableClientState(GL_VERTEX_ARRAY);
@@ -807,9 +1098,10 @@ void drawContext::drawView()
   drawMesh(); checkGlError("Draw mesh");
   drawGeom(); checkGlError("Draw geometry");
   drawPost(); checkGlError("Draw post-pro");
+  drawAxes(); checkGlError("Draw axes");
   glDisable(GL_DEPTH_TEST);
   drawScale(); checkGlError("Draw scales");
-  drawAxes(); checkGlError("Draw axes");
+  drawSmallAxes(); checkGlError("Draw small axes");
   drawText2d(); checkGlError("Draw text2d");
   drawGraph2d(); checkGlError("Draw graph2d");
 }
