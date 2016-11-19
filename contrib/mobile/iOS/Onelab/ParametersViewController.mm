@@ -274,9 +274,9 @@ NSString *GetSectionTitle(NSString *name)
   }
 
   // check for hidden/deleted parameters
-  for(int iSection = 0; iSection < [_sectionstitle count]; iSection++) {
+  for(int iSection = [_sectionstitle count] - 1; iSection >= 0; iSection--) {
     NSMutableArray *section = [_sections objectAtIndex:iSection];
-    for(int iparameter = 0; iparameter < [section count]; iparameter++) {
+    for(int iparameter = [section count] - 1; iparameter >= 0; iparameter--) {
       Parameter * p = [section objectAtIndex: iparameter];
       std::vector<onelab::number> number;
       onelab::server::instance()->get(number, [[p getName] UTF8String]);
