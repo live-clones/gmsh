@@ -707,13 +707,13 @@ int drawContext::drawTics(drawContext *ctx, int comp, double n, std::string &for
 
   char tmp[256];
 
-	// reduce number of vertical tics if not zoomed enough
-	double ww = _width/(_right-_left)*_scale[0];
-	double hh = _height/(_top-_bottom)*_scale[0];
-	if(hh < 10 && comp == 1){
-		n = 2;
-	}
-	
+  // reduce number of vertical tics if not zoomed enough
+  double ww = _width/(_right-_left)*_scale[0];
+  double hh = _height/(_top-_bottom)*_scale[0];
+  if(hh < 10 && comp == 1){
+    n = 2;
+  }
+
   // draw n tics
   double step = l / (double)(n - 1);
   double value_step = value_l / (double)(n - 1);
@@ -728,6 +728,17 @@ int drawContext::drawTics(drawContext *ctx, int comp, double n, std::string &for
     double value_p[3] = {value_p1[0] + value_t[0] * value_d,
                          value_p1[1] + value_t[1] * value_d,
                          value_p1[2] + value_t[2] * value_d};
+
+    // draw tic labels
+    if(comp < 0) // display the length value (ruler-mode, starting at 0)
+      sprintf(tmp, format.c_str(), value_d);
+    else // display the coordinate value
+      sprintf(tmp, format.c_str(), value_p[comp]);
+
+    if(strlen(tmp)){
+      drawString lbl(tmp, 15 * _fontFactor);
+      lbl.draw(r[0], r[1], r[2], ww, hh);
+    }
 
     GLfloat lines[] = {
       (float)p[0], (float)p[1], (float)p[2],
@@ -744,17 +755,6 @@ int drawContext::drawTics(drawContext *ctx, int comp, double n, std::string &for
     glDrawArrays(GL_LINES, 0, 2);
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);
-
-    // draw tic labels
-    if(comp < 0) // display the length value (ruler-mode, starting at 0)
-      sprintf(tmp, format.c_str(), value_d);
-    else // display the coordinate value
-      sprintf(tmp, format.c_str(), value_p[comp]);
-
-    if(strlen(tmp)){
-      drawString lbl(tmp, 15 * _fontFactor);
-      lbl.draw(r[0], r[1], r[2], ww, hh);
-    }
   }
   return n;
 }
