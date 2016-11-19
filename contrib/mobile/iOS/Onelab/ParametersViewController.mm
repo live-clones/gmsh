@@ -158,7 +158,7 @@
   [self.tableView endUpdates];
 }
 
-- (void)removeParemeterNumberAtIndex:(NSIndexPath*)index
+- (void)removeParameterAtIndex:(NSIndexPath*)index
 {
   [self.tableView beginUpdates];
   [self.tableView deleteRowsAtIndexPaths: [NSArray arrayWithObject:index]
@@ -231,8 +231,16 @@ NSString *GetSectionTitle(NSString *name)
             break;
           }
         }
-        if(!found) // the parameter is not in the section, add it
+        if(!found){ // the parameter is not in the section, add it
+          // FIXME: we should insert it at the right position
+          // int index = 0;
+          // while(index < [section count]) {
+          //  if([[[section objectAtIndex: index] getName] compare:name] == NSOrderedAscending) break;
+          //  index++;
+          // }
+          // + do the necessary reloads of indexPaths in the updates
           [self addParameterNumber:number[i] atIndexPath:[NSIndexPath indexPathForRow:[section count] inSection:iSection]];
+        }
         found = true; break;
       }
     }
@@ -262,8 +270,10 @@ NSString *GetSectionTitle(NSString *name)
             break;
           }
         }
-        if(!found) // the parameter is not in the section, add it
+        if(!found){ // the parameter is not in the section, add it
+          // FIXME: we should insert it at the right position
           [self addParameterString:string[i] atIndexPath:[NSIndexPath indexPathForRow:[section count] inSection:iSection]];
+        }
         found = true; break;
       }
     }
@@ -286,7 +296,7 @@ NSString *GetSectionTitle(NSString *name)
          (number.size() > 0 && !number[0].getVisible()) ||
          (string.size() > 0 && !string[0].getVisible())){
         [section removeObjectAtIndex:iparameter];
-        [self removeParemeterNumberAtIndex:[NSIndexPath indexPathForRow:iparameter inSection:iSection]];
+        [self removeParameterAtIndex:[NSIndexPath indexPathForRow:iparameter inSection:iSection]];
       }
     }
   }
