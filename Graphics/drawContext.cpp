@@ -295,11 +295,12 @@ void drawContext::draw3d()
   initRenderModel();
 
   if(!CTX::instance()->camera) initPosition();
+  drawAxes();
   drawGeom();
   drawBackgroundImage(true);
   drawMesh();
   drawPost();
-  drawAxes();
+  //drawAxes();
   drawGraph2d(true);
 }
 
