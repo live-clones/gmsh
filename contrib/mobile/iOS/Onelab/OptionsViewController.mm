@@ -29,20 +29,27 @@
 {
   [super viewDidLoad];
 
-  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshOptions:) name:@"refreshParameters" object:nil];
-  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshOptions:) name:@"resetParameters" object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshOptions:)
+                                               name:@"refreshParameters" object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshOptions:)
+                                               name:@"resetParameters" object:nil];
 
   self.navigationItem.title = @"Display";
 
   [self.navigationController setToolbarHidden:NO];
-  control = [[UISegmentedControl alloc] initWithItems:[[NSArray alloc] initWithObjects:@"Model", @"Display", nil]];
+  control = [[UISegmentedControl alloc] initWithItems:
+                     [[NSArray alloc] initWithObjects:@"Model", @"Display", nil]];
   UIBarButtonItem *controlBtn = [[UIBarButtonItem alloc] initWithCustomView:control];
-  UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
+  UIBarButtonItem *flexibleSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:
+                                              UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
   self.toolbarItems = [[NSArray alloc] initWithObjects:flexibleSpace, controlBtn, flexibleSpace, nil];
-  [control addTarget:self action:@selector(indexDidChangeForSegmentedControl:) forControlEvents:UIControlEventValueChanged];
+  [control addTarget:self action:@selector(indexDidChangeForSegmentedControl:)
+    forControlEvents:UIControlEventValueChanged];
   if(![[UIDevice currentDevice].model isEqualToString:@"iPad"]
      && ![[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"])
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain target:self action:@selector(backButtonPressed:)];
+    self.navigationItem.leftBarButtonItem =
+      [[UIBarButtonItem alloc] initWithTitle:@"Back" style:UIBarButtonItemStylePlain
+                                      target:self action:@selector(backButtonPressed:)];
   else
     self.navigationItem.hidesBackButton = true;
 }
@@ -55,7 +62,8 @@
 -(void)backButtonPressed:(id)sender
 {
   for(UIViewController *v in [self.navigationController viewControllers])
-    if([v isKindOfClass:[ModelViewController class]]) [self.navigationController popToViewController:v animated:YES];
+    if([v isKindOfClass:[ModelViewController class]])
+      [self.navigationController popToViewController:v animated:YES];
 }
 
 - (void)indexDidChangeForSegmentedControl:(id)sender
@@ -76,23 +84,7 @@
 
 - (void)refreshOptions
 {
-  NSInteger nrow = [self.tableView numberOfRowsInSection:1];
-  if(PView::list.size() == 0) {
-    NSMutableArray *array = [[NSMutableArray alloc] init];
-    for(NSInteger i = 0; i<nrow; i++)
-      [array addObject:[NSIndexPath indexPathForRow:i inSection:1]];
-    [self.tableView beginUpdates];
-    [self.tableView deleteRowsAtIndexPaths:[NSArray arrayWithArray:array] withRowAnimation:UITableViewRowAnimationAutomatic];
-    [self.tableView endUpdates];
-  }
-  else if(nrow < PView::list.size()) {
-    NSMutableArray *array = [[NSMutableArray alloc] init];
-    for(NSInteger i = nrow; i<PView::list.size(); i++)
-      [array addObject:[NSIndexPath indexPathForRow:i-nrow inSection:1]];
-    [self.tableView beginUpdates];
-    [self.tableView insertRowsAtIndexPaths:[NSArray arrayWithArray:array] withRowAnimation:UITableViewRowAnimationAutomatic];
-    [self.tableView endUpdates];
-  }
+  [self.tableView reloadData];
 }
 
 #pragma mark - Table view data source
@@ -131,38 +123,49 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
   UITableViewCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-  if(cell == nil)
-    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"postproCell"];
+  if(cell == nil){
+    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
+                                  reuseIdentifier:@"postproCell"];
+  }
   else {
     cell = nil;
-    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"postproCell"];
+    cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
+                                  reuseIdentifier:@"postproCell"];
   }
-  [cell setFrame:CGRectMake(cell.frame.origin.x, cell.frame.origin.x, tableView.frame.size.width, cell.frame.size.height)];
+  [cell setFrame:CGRectMake(cell.frame.origin.x, cell.frame.origin.x,
+                            tableView.frame.size.width, cell.frame.size.height)];
   switch (indexPath.section) {
   case 0:
     {
       [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
       UISwitch *showHideOptions = [[UISwitch alloc] initWithFrame: CGRectMake(15, 6.5, 100, 30)];
-      UILabel *lblOptions = [[UILabel alloc] initWithFrame:CGRectMake(25 + (showHideOptions.frame.size.width), 8, (tableView.frame.size.width - (showHideOptions.frame.size.width) - 50), 30)];
+      UILabel *lblOptions =
+        [[UILabel alloc] initWithFrame:CGRectMake
+                         (25 + (showHideOptions.frame.size.width), 8,
+                          (tableView.frame.size.width - (showHideOptions.frame.size.width) - 50), 30)];
       if(indexPath.row == 0) {
         [lblOptions setText:@"Show geometry points"];
         [showHideOptions setOn:(CTX::instance()->geom.points)];
-        [showHideOptions addTarget:self action:@selector(setShowGeomPoints:) forControlEvents:UIControlEventValueChanged];
+        [showHideOptions addTarget:self action:@selector(setShowGeomPoints:)
+                  forControlEvents:UIControlEventValueChanged];
       }
       else if(indexPath.row == 1) {
         [lblOptions setText:@"Show geometry lines"];
         [showHideOptions setOn:(CTX::instance()->geom.lines)];
-        [showHideOptions addTarget:self action:@selector(setShowGeomLines:) forControlEvents:UIControlEventValueChanged];
+        [showHideOptions addTarget:self action:@selector(setShowGeomLines:)
+                  forControlEvents:UIControlEventValueChanged];
       }
       else if(indexPath.row == 2) {
         [lblOptions setText:@"Show mesh surface edges"];
         [showHideOptions setOn:(CTX::instance()->mesh.surfacesEdges)];
-        [showHideOptions addTarget:self action:@selector(setShowMeshSurfacesEdges:) forControlEvents:UIControlEventValueChanged];
+        [showHideOptions addTarget:self action:@selector(setShowMeshSurfacesEdges:)
+                  forControlEvents:UIControlEventValueChanged];
       }
       else if(indexPath.row == 3) {
         [lblOptions setText:@"Show mesh volumes edges"];
         [showHideOptions setOn:CTX::instance()->mesh.volumesEdges];
-        [showHideOptions addTarget:self action:@selector(setShowMeshVolumesEdges:) forControlEvents:UIControlEventValueChanged];
+        [showHideOptions addTarget:self action:@selector(setShowMeshVolumesEdges:)
+                  forControlEvents:UIControlEventValueChanged];
       }
       [cell addSubview:showHideOptions];
       [cell addSubview:lblOptions];
@@ -183,7 +186,9 @@
       int i = PView::list.size() - 1 - indexPath.row;
       cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
       UISwitch *showHide = [[UISwitch alloc] initWithFrame: CGRectMake(15, 6.5, 100, 30)];
-      UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(25 + (showHide.frame.size.width), 8, (tableView.frame.size.width - showHide.frame.size.width - 50), 30)];
+      UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake
+                                      (25 + (showHide.frame.size.width), 8,
+                                       (tableView.frame.size.width - showHide.frame.size.width - 50), 30)];
       [showHide setOn:(PView::list[i]->getOptions()->visible == 1)];
       [showHide setTag:i];
       [showHide addTarget:self action:@selector(PViewVisible:) forControlEvents:UIControlEventValueChanged];
@@ -206,7 +211,8 @@
     storyboard = [UIStoryboard storyboardWithName:@"iPadStoryboard" bundle:nil];
   else
     storyboard = [UIStoryboard storyboardWithName:@"iPhoneiPodStoryboard" bundle:nil];
-  PostProcessingViewController *postPro = [storyboard instantiateViewControllerWithIdentifier:@"PostProcessingViewController"];
+  PostProcessingViewController *postPro =
+    [storyboard instantiateViewControllerWithIdentifier:@"PostProcessingViewController"];
   [postPro setPView:PView::list[[tableView numberOfRowsInSection:1]-1- indexPath.row]];
   [self.navigationController pushViewController:postPro animated:YES];
 }
@@ -216,23 +222,27 @@
   CTX::instance()->geom.points = sender.on;
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
+
 - (void)setShowGeomLines:(UISwitch*)sender
 {
   CTX::instance()->geom.lines = sender.on;
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
+
 - (void)setShowMeshVolumesEdges:(UISwitch*)sender
 {
   CTX::instance()->mesh.volumesEdges = sender.on;
   CTX::instance()->mesh.changed = ENT_VOLUME;
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
+
 - (void)setShowMeshSurfacesEdges:(UISwitch*)sender
 {
   CTX::instance()->mesh.surfacesEdges = sender.on;
   CTX::instance()->mesh.changed = ENT_SURFACE;
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
+
 -(IBAction)PViewVisible:(id)sender
 {
   PView::list[((UISwitch*)sender).tag]->getOptions()->visible = (((UISwitch*)sender).on)? 1 : 0;
@@ -252,6 +262,7 @@
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
   return YES;
 }
+
 -(BOOL)textFieldShouldReturn:(UITextField *)textField
 {
   [textField endEditing:YES];
