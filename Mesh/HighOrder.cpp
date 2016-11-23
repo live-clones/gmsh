@@ -260,10 +260,15 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
   if (!gotVertOnGeo)
     interpVerticesInExistingEdge(ge, ele, veEdge, nPts);
   newHOVert.insert(newHOVert.end(), veEdge.begin(), veEdge.end());
-  if(increasing) // Add newly created vertices to list
-    edgeVertices[p].insert(edgeVertices[p].end(), veEdge.begin(), veEdge.end());
-  else
-    edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(), veEdge.rend());
+  if (edgeVertices.count(p) == 0) {
+    if (increasing) // Add newly created vertices to list
+      edgeVertices[p].insert(edgeVertices[p].end(), veEdge.begin(), veEdge.end());
+    else
+      edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(), veEdge.rend());
+  }
+  else {  // Vertices already exist
+    Msg::Error("Edges from different entities share vertices: create a finer mesh");
+  }
   ve.insert(ve.end(), veEdge.begin(), veEdge.end());
 }
 
