@@ -60,7 +60,7 @@ void OCCFace::setup()
   l_edges.clear();
   l_dirs.clear();
   TopExp_Explorer exp2, exp3;
-  for(exp2.Init(s, TopAbs_WIRE); exp2.More(); exp2.Next()){
+  for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_WIRE); exp2.More(); exp2.Next()){
     TopoDS_Wire wire = TopoDS::Wire(exp2.Current());
     Msg::Debug("OCC Face %d - New Wire", tag());
     std::list<GEdge*> l_wire;
