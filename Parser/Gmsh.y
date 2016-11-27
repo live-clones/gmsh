@@ -57,7 +57,7 @@
 #include "gmshPopplerWrapper.h"
 #endif
 
-  
+
   // Global parser variables
 std::string gmsh_yyname;
 int gmsh_yyerrorstate = 0;
@@ -130,7 +130,7 @@ struct doubleXstring{
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil tRound
 %token tFmod tModulo tHypot tList
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
-%token tAbsolutePath tDirName
+%token tAbsolutePath tDirName tStrSub tStrLen
 %token tFind tStrFind tStrCmp tStrChoice tUpperCase tLowerCase tLowerCaseIn
 %token tTextAttributes
 %token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tCurrentDirectory
@@ -3437,7 +3437,7 @@ Command :
     }
 ;
 
-// S L I D E 
+// S L I D E
 
 Slide :
      tSlide '(' '{' RecursiveListOfDouble '}' ',' StringExpr ',' StringExpr ')'  tEND
@@ -3450,9 +3450,9 @@ Slide :
 	 is.push_back ((int) d);
        }
        gmshPopplerWrapper::instance()->setMacroForPages(is, $7, $9 );
-#endif       
+#endif
      }
-     
+
 // L O O P
 
 Loop :
@@ -5438,7 +5438,7 @@ FExpr_Single :
       $$ = matches;
       Free($3); Free($5);
     }
-  | tStrFind '(' StringExprVar ',' StringExprVar ')'
+  | tStrFind LP StringExprVar ',' StringExprVar RP
     {
       std::string s($3), substr($5);
       if(s.find(substr) != std::string::npos)
@@ -5447,7 +5447,12 @@ FExpr_Single :
         $$ = 0.;
       Free($3); Free($5);
     }
-  | tStrCmp '(' StringExprVar ',' StringExprVar ')'
+  | tStrLen LP StringExprVar RP
+    {
+      $$ = strlen($3);
+      Free($3);
+    }
+  | tStrCmp LP StringExprVar ',' StringExprVar RP
     {
       $$ = strcmp($3, $5);
       Free($3); Free($5);
@@ -6309,7 +6314,7 @@ StringExpr :
       }
       $$ = $3;
     }
-  | tStrChoice LP FExpr ',' StringExpr ',' StringExpr RP
+  | tStrChoice LP FExpr ',' StringExprVar ',' StringExprVar RP
     {
       if($3){
         $$ = $5;
@@ -6319,6 +6324,22 @@ StringExpr :
         $$ = $7;
         Free($5);
       }
+    }
+  | tStrSub LP StringExprVar ',' FExpr ',' FExpr RP
+    {
+      std::string in = $3;
+      std::string out = in.substr((int)$5, (int)$7);
+      $$ = (char *)Malloc((out.size() + 1) * sizeof(char));
+      strcpy($$, out.c_str());
+      Free($3);
+    }
+  | tStrSub LP StringExprVar ',' FExpr RP
+    {
+      std::string in = $3;
+      std::string out = in.substr((int)$5, std::string::npos);
+      $$ = (char *)Malloc((out.size() + 1) * sizeof(char));
+      strcpy($$, out.c_str());
+      Free($3);
     }
   | tSprintf LP StringExprVar RP
     {

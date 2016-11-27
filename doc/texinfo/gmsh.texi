@@ -1004,6 +1004,7 @@ parsing of the script file:
   Find(@var{expression-list-item}, @var{expression-list-item}) |
   StrFind(@var{char-expression}, @var{char-expression}) |
   StrCmp(@var{char-expression}, @var{char-expression}) |
+  StrLen(@var{char-expression}) |
   TextAttributes(@var{char-expression}<,@var{char-expression}@dots{}>) |
   Exists(@var{string}) | Exists(@var{string}~@{ @var{expression} @}) |
   FileExists(@var{char-expression}) |
@@ -1045,7 +1046,8 @@ first expression in the second (both of which can be lists).
 occurrence of the second @var{char-expression}. @code{StrCmp} compares
 the two strings (returns an integer greater than, equal to, or less than
 0, according as the first string is greater than, equal to, or less than
-the second string).  @code{TextAttributes} creates attributes for text
+the second string). @code{StrCmp} returns the length of the
+string. @code{TextAttributes} creates attributes for text
 strings. @code{Exists} checks if a variable with the given name exists
 (i.e., has been defined previously), and @code{FileExists} checks if the
 file with the given name exists.  @code{StringToName} creates a name
@@ -1145,7 +1147,9 @@ Character expressions are defined as:
   StrRelative ( @var{char-expression} ) |
   StrCat ( @var{char-expression} <,@dots{}> ) |
   Str ( @var{char-expression} <,@dots{}> ) |
-  StrChoice ( @var{expression}, @var{char-expression}, @var{char-expression}) |
+  StrChoice ( @var{expression}, @var{char-expression}, @var{char-expression} ) |
+  StrSub( @var{char-expression}, @var{expression}, @var{expression} ) |
+  StrSub( @var{char-expression}, @var{expression} ) |
   UpperCase ( @var{char-expression} ) |
   AbsolutePath ( @var{char-expression} ) |
   DirName ( @var{char-expression} ) |
@@ -1170,12 +1174,17 @@ extension) or the relative path of a file name. @code{StrCat} and
 @code{Str} permit to concatenate character expressions (@code{Str} adds
 a newline character after each string except the last).
 @code{StrChoice} returns the first or second @var{char-expression}
-depending on the value of @var{expression}. @code{UpperCase} converts
-the @var{char-expression} to upper case. @code{AbsolutePath} returns the
-absolute path of a file. @code{DirName} returns the directory of a file.
-@code{Sprintf} is equivalent to the @code{sprintf} C function (where
-@var{char-expression} is a format string that can contain floating point
-formatting characters: @code{%e}, @code{%g}, etc.) The various
+depending on the value of @var{expression}.  @code{StrSub} returns the
+portion of the string that starts at the character position given by the
+first @var{expression} and spans the number of characters given by the
+second @var{expression} or until the end of the string (whichever comes
+first; or always if the second @var{expression} is not
+provided). @code{UpperCase} converts the @var{char-expression} to upper
+case. @code{AbsolutePath} returns the absolute path of a
+file. @code{DirName} returns the directory of a file.  @code{Sprintf} is
+equivalent to the @code{sprintf} C function (where @var{char-expression}
+is a format string that can contain floating point formatting
+characters: @code{%e}, @code{%g}, etc.) The various
 @w{@var{char-option}s} are listed in @ref{Options}. @code{GetEnvThe}
 gets the value of an environment variable from the operating
 system. @code{GetString} allows to get a ONELAB string value (the second

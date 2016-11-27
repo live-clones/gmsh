@@ -275,6 +275,8 @@ StrRelative             return tStrRelative;
 StrFind                 return tStrFind;
 StrCmp                  return tStrCmp;
 StrChoice               return tStrChoice;
+StrLen                  return tStrLen;
+StrSub                  return tStrSub;
 Show                    return tShow;
 Symmetry                return tSymmetry;
 Slide                   return tSlide;
