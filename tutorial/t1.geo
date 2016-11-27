@@ -44,17 +44,17 @@ Line(4) = {4,1} ;
 // to be defined. A line loop is a list of connected lines, a sign being
 // associated with each line (depending on the orientation of the line):
 
-Line Loop(5) = {4,1,-2,3} ;
+Line Loop(1) = {4,1,-2,3} ;
 
 // We can then define the surface as a list of line loops (only one here, since
 // there are no holes--see `t4.geo'):
 
-Plane Surface(6) = {5} ;
+Plane Surface(1) = {1} ;
 
 // At this level, Gmsh knows everything to display the rectangular surface 6 and
 // to mesh it. An optional step is needed if we want to associate specific
 // region numbers to the various elements in the mesh (e.g. to the line segments
-// discretizing lines 1 to 4 or to the triangles discretizing surface 6). This
+// discretizing lines 1 to 4 or to the triangles discretizing surface 1). This
 // is achieved by the definition of `physical entities'. Physical entities will
 // group elements belonging to several elementary entities by giving them a
 // common number (a region number).
@@ -71,7 +71,7 @@ MY_LINE = 2;
 Physical Line(MY_LINE) = {1,2} ;
 Physical Line("My second line (automatic physical id)") = {3} ;
 Physical Line("My third line (physical id 5)", 5) = {4} ;
-Physical Surface("My surface") = {6} ;
+Physical Surface("My surface") = {1} ;
 
 // All the line elements created during the meshing of lines 1 and 2 will be
 // saved in the output mesh file with the physical id 2. The elements from line

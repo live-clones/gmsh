@@ -19,7 +19,7 @@ Include "t1.geo";
 h = 0.1;
 
 Extrude {0,0,h} {
-  Surface{6}; Layers{ {8,2}, {0.5,1} };
+  Surface{1}; Layers{ {8,2}, {0.5,1} };
 }
 
 // The extrusion can also be performed with a rotation instead of a translation,

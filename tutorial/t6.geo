@@ -10,7 +10,7 @@
 Include "t1.geo";
 
 // Delete the left line and create replace it with 3 new ones
-Delete{ Surface{6}; Line{4}; }
+Delete{ Surface{1}; Line{4}; }
 
 p1 = newp; Point(p1) = {-0.05, 0.05, 0, lc};
 p2 = newp; Point(p2) = {-0.05, 0.1, 0, lc};
@@ -20,8 +20,8 @@ l2 = newl; Line(l2) = {p1, p2};
 l3 = newl; Line(l3) = {p2, 4};
 
 // Create surface
-Line Loop(1) = {2, -1, l1, l2, l3, -3};
-Plane Surface(1) = {-1};
+Line Loop(2) = {2, -1, l1, l2, l3, -3};
+Plane Surface(1) = {-2};
 
 // Put 20 points with a refinement toward the extremities on curve 2
 Transfinite Line{2} = 20 Using Bump 0.05;

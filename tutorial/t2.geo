@@ -45,7 +45,7 @@ Plane Surface(11) = {10};
 // entities. For example, we can translate copies of the two surfaces 6 and 11
 // to the right with the following command:
 
-my_new_surfs[] = Translate {0.12, 0, 0} { Duplicata{ Surface{6, 11}; } };
+my_new_surfs[] = Translate {0.12, 0, 0} { Duplicata{ Surface{1, 11}; } };
 
 // my_new_surfs[] (note the square brackets) denotes a list, which in this case
 // contains the ids of the two new surfaces (check `Tools->Message console' to
