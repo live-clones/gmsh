@@ -107,7 +107,7 @@ static double F_Lc(GEdge *ge, double t)
   Field *bl_field = fields->get(fields->getBoundaryLayerField());
   blf = dynamic_cast<BoundaryLayerField*> (bl_field);
 #endif
-  */  
+  */
   GPoint p = ge->point(t);
   double lc_here;
 
@@ -381,10 +381,10 @@ static int increaseN (int N)
 
 // ensure not to have points that are too close to each other.
 // can be caused by a coarse 1D mesh or by a noisy curve
-static void filterPoints (GEdge*ge, int nMinimumPoints)
+static void filterPoints(GEdge*ge, int nMinimumPoints)
 {
-  if (ge->mesh_vertices.empty())return;
-  if(ge->meshAttributes.method == MESH_TRANSFINITE)return;
+  if(ge->mesh_vertices.empty()) return;
+  if(ge->meshAttributes.method == MESH_TRANSFINITE) return;
   //if (ge->mesh_vertices.size() <=3)return;
   bool forceOdd = false;
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
@@ -449,7 +449,7 @@ static void filterPoints (GEdge*ge, int nMinimumPoints)
 
 static void createPoints ( GVertex *gv, GEdge *ge, BoundaryLayerField *blf ,
 			   std::vector<MVertex*>& v, const SVector3 &dir){
-  double L = blf->hwall_n;  
+  double L = blf->hwall_n;
 
   double LEdge = distance (ge->getBeginVertex()->mesh_vertices[0],
 			   ge->getEndVertex()->mesh_vertices[0]);
@@ -457,14 +457,14 @@ static void createPoints ( GVertex *gv, GEdge *ge, BoundaryLayerField *blf ,
   while (1){
     if (L > blf->thickness || L > LEdge * .4) break;
     SPoint3 p (gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
-    v.push_back(new MEdgeVertex (p.x(), p.y(), p.z(), ge,  ge->parFromPoint(p), blf->hfar));    
+    v.push_back(new MEdgeVertex (p.x(), p.y(), p.z(), ge,  ge->parFromPoint(p), blf->hfar));
     int ith = v.size() ;
     L+= blf->hwall_n * pow (blf->ratio, ith);
     //    printf("parameter %g length %g\n",ge->parFromPoint(p),L);
   }
 }
 
-void addBoundaryLayerPoints (GEdge *ge, 
+void addBoundaryLayerPoints (GEdge *ge,
 			     double &t_begin, // may change the left  parameter of the interval
 			     double &t_end,   // may change the right parameter of the interval
 			     std::vector<MVertex*> &_addBegin, // additional points @ left
@@ -492,15 +492,15 @@ void addBoundaryLayerPoints (GEdge *ge,
     }
     createPoints (gvb, ge, blf, _addBegin, dir);
     if (!_addBegin.empty())_addBegin[_addBegin.size()-1]->getParameter(0,t_begin);
-  }    
+  }
   if (blf->isEndNode(gve->tag())){
     if (ge->geomType() != GEntity::Line){
       Msg::Error ("Boundary layer end point %d should lie on a straight line", gve->tag());
       return;
     }
-    createPoints (gve, ge, blf, _addEnd, dir * -1.0);    
+    createPoints (gve, ge, blf, _addEnd, dir * -1.0);
     if (!_addEnd.empty())_addEnd[_addEnd.size()-1]->getParameter(0,t_end);
-  }        
+  }
 
   //  printf("Edge %d § %d %d points added (%g %g)-\n", ge->tag(), _addBegin.size(),_addEnd.size(),t_begin,t_end);
 }
@@ -516,7 +516,7 @@ void meshGEdge::operator() (GEdge *ge)
   if (blf) blf->setupFor1d(ge->tag());
 #endif
   */
-  
+
   ge->model()->setCurrentMeshEntity(ge);
 
   //  if(ge->geomType() == GEntity::DiscreteCurve) return;
@@ -553,7 +553,7 @@ void meshGEdge::operator() (GEdge *ge)
   // if a BL is ending at one of the ends, then create specific points
   std::vector<MVertex*> _addBegin, _addEnd;
   addBoundaryLayerPoints (ge, t_begin, t_end, _addBegin, _addEnd);
-  
+
   // first compute the length of the curve by integrating one
   double length;
   std::vector<IntPoint> Points;
@@ -675,7 +675,7 @@ void meshGEdge::operator() (GEdge *ge)
         const double d = norm(der);
         double lc  = d/(P1.lc + dlc / dp * (d - P1.p));
         GPoint V = ge->point(t);
-	//	printf("%d %g\n",NUMP-1,t);
+	// printf("%d %g\n",NUMP-1,t);
         mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t, lc);
         NUMP++;
       }
@@ -696,7 +696,7 @@ void meshGEdge::operator() (GEdge *ge)
     //    vv.insert(vv.end(), _addEnd.rend(), _addEnd.rbegin());
     mesh_vertices = vv;
   }
-  
+
   //  printf("%ld ----> ", ge->mesh_vertices.size());
   if (_addBegin.empty() && _addEnd.empty())
     filterPoints (ge, filterMinimumN - 2);
