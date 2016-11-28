@@ -86,7 +86,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LightTwoSide
 Light both sides of surfaces (leads to slower rendering)@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Lines

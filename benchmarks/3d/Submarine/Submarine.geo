@@ -11,9 +11,9 @@ Mesh.Recombine3DLevel = 2;
 Mesh.Recombine3DConformity = 4;
 Mesh.SaveParametric = 1;
 
-MeshAlgorithm Surface {12}  5; //Not in final mesh
-MeshAlgorithm Surface {10}  5;
-MeshAlgorithm Surface {11}  5; 
+MeshAlgorithm Surface {12} = 5; //Not in final mesh
+MeshAlgorithm Surface {10} = 5;
+MeshAlgorithm Surface {11} = 5;
 
 //Mesh.Algorithm=5;
 //Mesh.Algorithm3D=5;
@@ -43,4 +43,3 @@ Physical Surface(2) = submarineSurf[];
 Physical Surface(3) = {14,15};
 Physical Volume(4) = {1};
 Physical Line(5) = {30, 31};
-

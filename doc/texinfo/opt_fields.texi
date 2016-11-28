@@ -121,16 +121,8 @@ default value: @code{10000000000}
 Indices of curves in the geometric model for which a boundary layer is needed@*
 type: list@*
 default value: @code{@{@}}
-@item FacesList
-Indices of faces in the geometric model for which a boundary layer is needed@*
-type: list@*
-default value: @code{@{@}}
 @item FanNodesList
 Indices of vertices in the geometric model for which a fan is created@*
-type: list@*
-default value: @code{@{@}}
-@item FansList
-Indices of edges in the geometric model for which a fan is created@*
 type: list@*
 default value: @code{@{@}}
 @item IntersectMetrics
@@ -138,7 +130,7 @@ Intersect metrics of all faces@*
 type: integer@*
 default value: @code{0}
 @item NodesList
-Indices of nodes in the geometric model@*
+Indices of vertices in the geometric model for which a BL ends@*
 type: list@*
 default value: @code{@{@}}
 @item Quads
@@ -153,10 +145,10 @@ default value: @code{1}
 Mesh Size Normal to the The Wall@*
 type: float@*
 default value: @code{0.1}
-@item hwall_t
-Mesh Size Tangent to the Wall@*
-type: float@*
-default value: @code{0.5}
+@item hwall_n_nodes
+Mesh Size Normal to the The Wall at nodes (overwrite hwall_n when defined)@*
+type: list_double@*
+default value: @code{@{@}}
 @item ratio
 Size Ratio Between Two Successive Layers@*
 type: float@*
@@ -453,7 +445,7 @@ default value: @code{1}
 @item Z2
 Z coordinate of endpoint 2@*
 type: float@*
-default value: @code{1.086144306514449e-153}
+default value: @code{2.53244204493764e-86}
 @end table
 
 @item Gradient

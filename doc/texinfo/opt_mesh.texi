@@ -270,13 +270,13 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LightLines
-Enable lighting for mesh lines (element edges)@*
-Default value: @code{1}@*
+Enable lighting for mesh edges (0=no, 1=surfaces, 2=surfaces+volumes@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LightTwoSide
 Light both sides of surfaces (leads to slower rendering)@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Lines
@@ -577,11 +577,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.RefineSteps
 Number of refinement steps in the MeshAdapt-based 2D algorithms@*
 Default value: @code{10}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ReverseAllNormals
-Reverse all the mesh normals (for display)@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveAll
