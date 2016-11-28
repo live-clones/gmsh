@@ -130,14 +130,16 @@ int med2mshNodeIndex(med_geometrie_element med, int k)
     return map[k];
   }
   case MED_HEXA20: {
-    static const int map[20] = {0, 3, 2, 1, 4, 7, 6, 5, 11, 8, 16,
-                                10, 19, 9, 18, 17, 15, 12, 14, 13};
+    static const int map[20] = {0, 3, 2, 1, 4, 7, 6, 5,
+                                9, 13, 11, 8, 17, 19, 18, 16, 10, 15, 14, 12};
     return map[k];
   }
 #if (MED_MAJOR_NUM == 3)
   case MED_HEXA27: {
-    Msg::Error("FIXME HEX27 not yet implemented for MED3");
-    return k;
+    static const int map[27] = {0, 3, 2, 1, 4, 7, 6, 5,
+                                9, 13, 11, 8, 17, 19, 18, 16, 10, 15, 14, 12,
+                                20, 22, 24, 23, 21, 25, 26};
+    return map[k];
   }
 #endif
   case MED_PENTA6: {
