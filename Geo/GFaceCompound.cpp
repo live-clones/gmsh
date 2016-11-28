@@ -2780,6 +2780,7 @@ void GFaceCompound::coherencePatches() const
 
 void GFaceCompound::coherenceNormals()
 {
+  if(!getNumMeshElements()) return;
   Msg::Info("Re-orient all %d face normals coherently", getNumMeshElements());
 
   std::map<MEdge, std::set<MElement*>, Less_Edge > edge2elems;
