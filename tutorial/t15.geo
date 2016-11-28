@@ -18,18 +18,18 @@ Point(5) = {0.02, 0.02, 0, lc};
 
 // One can force this point to be included ("embedded") in the 2D mesh, using
 // the "Point In Surface" command:
-Point{5} In Surface{6};
+Point{5} In Surface{1};
 
 // In the same way, one can force a curve to be embedded in the 2D mesh using
 // the "Line in Surface" command:
 Point(6) = {0.02, 0.12, 0, lc};
 Point(7) = {0.04, 0.18, 0, lc};
 Line(5) = {6, 7};
-Line{5} In Surface{6};
+Line{5} In Surface{1};
 
 // One can also embed points and lines in a volume using the "Line/Point In
 // Volume" commands:
-Extrude {0, 0, 0.1}{ Surface {6}; }
+Extrude {0, 0, 0.1}{ Surface {1}; }
 
 p = newp;
 Point(p) = {0.07, 0.15, 0.025, lc};
