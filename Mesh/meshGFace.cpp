@@ -807,7 +807,7 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   deMeshGFace kil_;
   kil_(gf);
   meshGenerator(gf, 0, 0, true , false, &hop);
-  
+
   gf->quadrangles = blQuads;
   gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
@@ -2597,8 +2597,8 @@ void partitionAndRemesh(GFaceCompound *gf)
   Msg::Info("*** Starting meshing 1D edges ...:");
   for (int i = 0; i < NE; i++){
     GEdge *gec = gf->model()->getEdgeByTag(nume + NE + i);
-     meshGEdge mge;
-     mge(gec);
+    meshGEdge mge;
+    mge(gec);
   }
   double t2 = Cpu();
   Msg::Info("*** Meshing 1D edges done (%gs)", t2-t1);

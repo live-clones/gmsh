@@ -51,8 +51,11 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound,
     return;
   }
 
-  for (unsigned int i = 0; i < _compound.size(); i++)
+  for (unsigned int i = 0; i < _compound.size(); i++){
     _compound[i]->setCompound(this);
+    discreteEdge *de = dynamic_cast<discreteEdge*> (_compound[i]);
+    if(de) de->createGeometry();
+  }
 
   for(std::vector<GEdge*>::iterator it = _compound.begin(); it != _compound.end(); ++it){
     if(!(*it)){
@@ -82,8 +85,11 @@ GEdgeCompound::GEdgeCompound(GModel *m, int tag, std::vector<GEdge*> &compound)
     return;
   }
 
-  for (unsigned int i = 0; i < _compound.size(); i++)
+  for (unsigned int i = 0; i < _compound.size(); i++){
     _compound[i]->setCompound(this);
+    discreteEdge *de = dynamic_cast<discreteEdge*> (_compound[i]);
+    if(de) de->createGeometry();
+  }
   parametrize();
 }
 
