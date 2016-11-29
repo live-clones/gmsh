@@ -265,7 +265,7 @@ void linearSystemPETSc<scalar>::getFromMatrix(int row, int col, scalar &val) con
 }
 
 template <class scalar>
-void linearSystemPETSc<scalar>::addToRightHandSide(int row, const scalar &val)
+void linearSystemPETSc<scalar>::addToRightHandSide(int row, const scalar &val, int ith)
 {
   PetscInt i = row;
   PetscScalar s = val;
