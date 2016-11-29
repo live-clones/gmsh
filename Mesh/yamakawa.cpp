@@ -30,8 +30,7 @@
 
 #include <cassert>
 
-
-#ifdef EXTERNAL_MIN_WEIGHTED_SET_SEARCH 
+#ifdef EXTERNAL_MIN_WEIGHTED_SET_SEARCH
 #include "mwis.hpp"
 #endif
 
@@ -41,13 +40,13 @@ namespace {
 
   typedef std::map<MVertex*, std::set<MElement*> > Vertex2Elements;
 
-  // Hex facet to hex vertex mapping 
-  // Previously explicitely built each time 
-  //   a, b, c, d 
-  //   e, f, g, h 
-  //   a, b, f, e 
-  //   b, c, g, f 
-  //   d, c, g, h 
+  // Hex facet to hex vertex mapping
+  // Previously explicitely built each time
+  //   a, b, c, d
+  //   e, f, g, h
+  //   a, b, f, e
+  //   b, c, g, f
+  //   d, c, g, h
   //   d, a, e, h
   // WARNING: Looks like it is not the same used in other places in gmsh
   static unsigned int hex_facet_to_vertex[6][4] = {
@@ -56,7 +55,7 @@ namespace {
   // Not ordered
   static unsigned int hex_edge_to_vertex[12][2] = {
     {0,1}, {0,3}, {0,4}, {1,2}, {1,5}, {2,3}, {2,6}, {3,7}, {4,5}, {4,7}, {5,6}, {6,7} };
-  
+
   // Possible triangles in a quad facet - 2 pairs of conformal triangles
   static unsigned int quad_facet_triangulation[4][3] = {
     { 0, 1, 2 },{ 0, 2, 3 },{ 0, 1, 3 },{ 1, 2, 3 } };
@@ -86,8 +85,8 @@ namespace {
       || tet->getVertex(3) == v;
   }
 
-  // Check the given 3 vertices are vertices of one of the tets given in 
-  // the input set 
+  // Check the given 3 vertices are vertices of one of the tets given in
+  // the input set
   bool inclusion(MVertex* v1, MVertex* v2, MVertex* v3, const std::set<MElement*>& tets) {
     for (std::set<MElement*>::const_iterator it = tets.begin(); it != tets.end(); it++) {
       if (tet_contains_vertex(*it, v1) && tet_contains_vertex(*it, v2)
@@ -99,7 +98,7 @@ namespace {
   }
 
   // Return true if the 4 tet vertices are points of one
-  // of the 6 hex facets 
+  // of the 6 hex facets
   bool is_combinatorially_sliver(MElement* tet, const Hex& hex) {
     for (unsigned int f = 0; f < 6; ++f) {
       bool tet_in_facet = true;
@@ -155,12 +154,12 @@ namespace {
     return val;
   }
 
-  // Compute the longest edge of the tetrahedra 
+  // Compute the longest edge of the tetrahedra
   // and get the indices (0 to 3) of its 2 extremities
   double diagonal(MElement* tet, int& index1, int& index2) {
     double max;
     double l1, l2, l3, l4, l5, l6;
-    
+
     MVertex* a = tet->getVertex(0);
     MVertex* b = tet->getVertex(1);
     MVertex* c = tet->getVertex(2);
@@ -218,7 +217,7 @@ namespace {
     return fabs(val) / (l1*l2);
   }
 
-  // TODO remove this stupid 
+  // TODO remove this stupid
   void two_others(int index1, int index2, int& index3, int& index4) {
     index3 = -1;
     index4 = -1;
@@ -231,17 +230,17 @@ namespace {
   }
 
 
-  // Check that all the cube facets corresponds to facets 
-  // of the tests contitutive of that hex.  
-  // Apparently it might not always be the case, when a tet 
-  // is missing (e.g. 14 triangles define the external facets of the hex) 
+  // Check that all the cube facets corresponds to facets
+  // of the tests contitutive of that hex.
+  // Apparently it might not always be the case, when a tet
+  // is missing (e.g. 14 triangles define the external facets of the hex)
   // but when the number of points is correct
   // For each facet of the hex
-  // Check that we can find the facets corresponding to one 
+  // Check that we can find the facets corresponding to one
   // triangulation of the quad in the input tets
-  // TODO - Strange - Check that this test is really useful - 
+  // TODO - Strange - Check that this test is really useful -
   //      It does look more like a bug to me. JP
-  bool valid(const Hex &hex, const std::set<MElement*>& tets) {    
+  bool valid(const Hex &hex, const std::set<MElement*>& tets) {
     for (unsigned int f = 0; f < 6; f++) {
       std::vector<bool> triangle_found(4);
       for (unsigned int triangle = 0; triangle < 4; triangle++) {
@@ -293,7 +292,7 @@ namespace {
     if (fabs(angle - 90) > max_angle) {
       return false;
     } else {
-      return true;  
+      return true;
     }
   }
 
@@ -305,22 +304,22 @@ namespace {
     return tets.size();
   }
 
-  // Check that the given facet of the input hex 
+  // Check that the given facet of the input hex
   // can be combinatorially built from two tet facets
-  // i.e. we check that for either of the subdivision of the facet into 
+  // i.e. we check that for either of the subdivision of the facet into
   // two triangles we can find at least one tet that have this triangle as a facet
-  // The two triangles of the subdivided quad facet must be adjacent to 
+  // The two triangles of the subdivided quad facet must be adjacent to
   // the same number of tets -- a face partly on the boundary and party inside is invalid.
-  bool validFace(const Hex& hex, unsigned int facet_id, TetMeshConnectivity& tet_mesh) {   
+  bool validFace(const Hex& hex, unsigned int facet_id, TetMeshConnectivity& tet_mesh) {
     int nb_tets_adjacent[4] = { 0,0,0,0 };
     // Possible de ne pas faire tous les calculs, mais bon
     for (unsigned int t = 0; t < 4; ++t) {
       unsigned int nb = nb_tets_sharing_vertices(
         hex.getVertex(hex_facet_triangulation(facet_id, t, 0)),
         hex.getVertex(hex_facet_triangulation(facet_id, t, 1)),
-        hex.getVertex(hex_facet_triangulation(facet_id, t, 2)),        
+        hex.getVertex(hex_facet_triangulation(facet_id, t, 2)),
         tet_mesh);
-      nb_tets_adjacent[t] = nb;      
+      nb_tets_adjacent[t] = nb;
     }
     bool valid_facet = (nb_tets_adjacent[0] > 0 && nb_tets_adjacent[1] == nb_tets_adjacent[0])
       || (nb_tets_adjacent[2] > 0 && nb_tets_adjacent[3] == nb_tets_adjacent[2]);
@@ -329,13 +328,13 @@ namespace {
   }
 
   // Check that the 6 facets of the hexahedra are valid
-  // A facet is valid if 
+  // A facet is valid if
   // TODO Change the code to have const TetMeshConnectivity&  -- pb is [] operator on the maps
   bool validFaces(const Hex &hex, TetMeshConnectivity& tet_mesh) {
     for (unsigned int f = 0; f < 6; ++f) {
       bool valid_facet = validFace(hex, f, tet_mesh);
       if (!valid_facet) {
-        return false; 
+        return false;
       }
     }
     return true;
@@ -352,9 +351,9 @@ namespace {
   bool valid(const Hex &hex, TetMeshConnectivity& tet_mesh, double min_eta = 0.000001) {
    for (unsigned int f = 0; f < 6; ++f) {
       double eta_value = eta(
-        hex.vertex_in_facet(f, 0), 
+        hex.vertex_in_facet(f, 0),
         hex.vertex_in_facet(f, 1),
-        hex.vertex_in_facet(f, 2), 
+        hex.vertex_in_facet(f, 2),
         hex.vertex_in_facet(f, 3));
       if (eta_value < min_eta) {
         return false;
@@ -371,15 +370,15 @@ namespace {
       && hex.contains((tet)->getVertex(3));
   }
 
-  
+
   // For all tets around the input vertex
   // Check if its 4 vertices are vertices of the input hex
   // Insert the tet in the final set if they are
   void find(MVertex* vertex, const Hex& hex, std::set<MElement*>& result, TetMeshConnectivity& tet_mesh) {
     TetMeshConnectivity::TetSet tets_around_v = tet_mesh.tets_around_vertex(vertex);
     for (TetMeshConnectivity::TetSet::const_iterator tet = tets_around_v.begin();
-      tet != tets_around_v.end(); ++tet) 
-    {      
+      tet != tets_around_v.end(); ++tet)
+    {
       if (hex_contains_tet( hex, *tet)) {
         result.insert(*tet);
       }
@@ -391,7 +390,7 @@ namespace {
       find(hex.getVertex(v), hex, result, tet_mesh);
     }
   }
-  
+
   MVertex* last_tet_vertex(MElement* tet, MVertex* v1, MVertex* v2, MVertex* v3) {
     for (unsigned int i = 0; i < 4; ++i) {
       MVertex* v = tet->getVertex(i);
@@ -405,7 +404,7 @@ namespace {
   // Among the input tetrahedra find the first tet that contains v1, v2, and v3 BUT not v4
   // and return the vertex of tet that is neither v1, v2, or v3
   // Dis-donc c'est vraiment tordu !!
-  // Tout ca pour avoir le voisin d'un tet la face opposée à v4 et prendre le point 
+  // Tout ca pour avoir le voisin d'un tet la face opposée à v4 et prendre le point
   // opposé dans le tet voisin.
   MVertex* find(MVertex* v1, MVertex* v2, MVertex* v3, MVertex* v4, const std::set<MElement*>& tets) {
     for (std::set<MElement*>::const_iterator it = tets.begin(); it != tets.end(); it++) {
@@ -452,12 +451,12 @@ namespace {
     }
   }
 
-  
+
 
   // Compute the intersection of bin1 and bin2
   // And add to final the elements that are not in the already vector
   // void Recombinator::intersection(const std::set<MVertex*>& bin1, const std::set<MVertex*>& bin2,
- 
+
 
   std::ostream& operator<<(std::ostream& os, const Hex& hex){
     os << " vertices "
@@ -599,13 +598,13 @@ Recombinator::~Recombinator() {
 
 void Recombinator::execute() {
   GModel* model = GModel::current();
-  // Backup the current mesh 
+  // Backup the current mesh
   model->writeMSH("beforeyamakawa.msh");
 
-  for (GModel::riter region_itr = model->firstRegion(); 
+  for (GModel::riter region_itr = model->firstRegion();
     region_itr != model->lastRegion(); region_itr++) {
     GRegion* region = *region_itr;
-    
+
     if (region->getNumMeshElements() > 0) {
       execute(region);
     }
@@ -660,9 +659,9 @@ void remove_values_from_set(std::set<T>& input_set, const std::vector<T>& values
 
 // Compute the potential tets following the first pattern
 // given in their paper by Yamakawa and Shimada
-// Very very expensve - complexity is a nightmare - 
-// TODO - rewrite the vertex_to_vertices computation and access 
-// Sot that we only have big, easy to manipulate vectors and 
+// Very very expensve - complexity is a nightmare -
+// TODO - rewrite the vertex_to_vertices computation and access
+// Sot that we only have big, easy to manipulate vectors and
 // store only the neighbos whose index is superior JP
 // TODO - Do not add potential hexes with a very bad quality
 // TODO - Change the storage for the potential hexes - We need a big vector
@@ -671,7 +670,7 @@ void Recombinator::pattern1() {
   Msg::Info("Hex-merging pattern nb. 1...");
   for (unsigned int i = 0; i < current_region->getNumMeshElements(); i++) {
     MElement* tet = current_region->getMeshElement(i);
-    
+
     for (int index = 0; index < 4; index++) {
       //max_scaled_jacobian(element,index);
       MVertex *a = tet->getVertex(index);
@@ -692,7 +691,7 @@ void Recombinator::pattern1() {
       tet_mesh.vertices_around_vertices(b, d, bin1); // candidates for F - p
       tet_mesh.vertices_around_vertices(b, c, bin2); // candidates for C - q
       tet_mesh.vertices_around_vertices(c, d, bin3); // candidates for H - r
-      
+
       // Neither smart nor efficient I know
       remove_values_from_set(bin1, added);
       remove_values_from_set(bin2, added);
@@ -718,7 +717,7 @@ void Recombinator::pattern1() {
                 Hex* hex = new Hex(a, b, q, c, d, p, s, r);
                 double quality = min_scaled_jacobian(*hex);
                 hex->set_quality(quality);
-                                
+
                 add_or_free_potential_hex(hex);
               }
             }
@@ -767,12 +766,12 @@ void Recombinator::pattern2() {
           // 2 possible hexes
           Hex* hex = new Hex(a, s, b, c, d, r, q, p);
           double quality = min_scaled_jacobian(*hex);
-          hex->set_quality(quality);        
+          hex->set_quality(quality);
           add_or_free_potential_hex(hex);
 
           Hex* hex2 = new Hex(a, c, d, s, b, p, q, r);
           quality = min_scaled_jacobian(*hex2);
-          hex2->set_quality(quality);          
+          hex2->set_quality(quality);
           add_or_free_potential_hex(hex2);
         }
       }
@@ -849,7 +848,7 @@ void Recombinator::pattern3() {
           if (c1 && c2 && c3 && c4 && c5 && c6 && c7 && c8 && c9 && c10) {
             Hex* hex = new Hex(p, c, r, b, q, d, s, a);
             double quality = min_scaled_jacobian(*hex);
-            hex->set_quality(quality);            
+            hex->set_quality(quality);
             add_or_free_potential_hex(hex);
           }
         } // copy paste alert
@@ -890,7 +889,7 @@ void Recombinator::pattern3() {
           if (c1 && c2 && c3 && c4 && c5 && c6 && c7 && c8 && c9 && c10) {
             Hex* hex = new Hex(p, b, r, a, q, c, s, d);
             double quality = min_scaled_jacobian(*hex);
-            hex->set_quality(quality);            
+            hex->set_quality(quality);
             add_or_free_potential_hex(hex);
           }
         }
@@ -991,7 +990,7 @@ void Recombinator::merge() {
 
   int nb_final_hex = 0;
   double total_quality = 0.0;
-  
+
   std::sort(potential.begin(), potential.end(), compare_hex_ptr_by_quality);
   for (unsigned int i = 0; i < potential.size(); i++) {
     const Hex& hex = *potential[i];
@@ -1000,7 +999,7 @@ void Recombinator::merge() {
       break;
     }
     bool hex_added = add_hex_to_region_if_valid(hex);
-  
+
     // Compute tet quality statistics
     if (hex_added) {
       total_quality += hex.get_quality();
@@ -1045,7 +1044,7 @@ void Recombinator::print_statistics() {
 }
 
 // Get all the triangle facets defining the boundary of the input region
-// Each Tuple stores its 3 vertices, the triangle, and the GFace 
+// Each Tuple stores its 3 vertices, the triangle, and the GFace
 // to which it belongs
 void Recombinator::build_tuples() {
   tuples.clear();
@@ -1126,7 +1125,7 @@ void Recombinator::delete_quad_triangles_in_boundary() const {
 
 
 // For the two possible triangulations
-// of these 4 points - check if they are part of the input 
+// of these 4 points - check if they are part of the input
 // boundary of the region
 // If they are, create the corrsponding quad in the GFace mesh.
 // TODO - check and get out fast if the vertices are not on the boundary of the region
@@ -1139,7 +1138,7 @@ void Recombinator::create_quads_on_boundary(MVertex* a, MVertex* b, MVertex* c, 
 
   bool tuple0_found = find_value_in_multiset(tuples, tuple0, stored_tuple0);
   bool tuple1_found = find_value_in_multiset(tuples, tuple1, stored_tuple1);
-  
+
   bool quad_added = false;
   if (tuple0_found && tuple1_found) {
     triangles.insert(stored_tuple0.get_element());
@@ -1182,21 +1181,21 @@ void Recombinator::create_quads_on_boundary(MVertex* a, MVertex* b, MVertex* c, 
 // Tet is not compatible with previsouly built tets
 // No need to check the slivers, they belong potentially to several hex.
 bool Recombinator::is_potential_hex_conform(const Hex & hex) {
-  return conformityA(hex) && conformityB(hex) 
-    && conformityC(hex) && faces_statuquo(hex);    
+  return conformityA(hex) && conformityB(hex)
+    && conformityC(hex) && faces_statuquo(hex);
 }
 
 
 // Return true if all the facets of the potential hex are conformA
 // A facet is conformA if all or none of the 4 possible triangles are in TableA
 bool Recombinator::conformityA(const Hex &hex) {
-  for (unsigned int f = 0; f < 6; ++f) {    
+  for (unsigned int f = 0; f < 6; ++f) {
     std::vector<bool> triangle_inA(4, false);
     for (unsigned int t = 0; t < 4; ++t) {
       Facet hex_facet_triangle(hex.getVertex(hex_facet_triangulation(f, t, 0)),
         hex.getVertex(hex_facet_triangulation(f, t, 1)),
         hex.getVertex(hex_facet_triangulation(f, t, 2)));
-     
+
       triangle_inA[t] = find_value_in_multiset(hash_tableA, hex_facet_triangle);
     }
     unsigned int nb_triangles_inA = std::count(triangle_inA.begin(), triangle_inA.end(), true);
@@ -1225,7 +1224,7 @@ bool Recombinator::conformityB(const Hex &hex) {
     Diagonal d1(hex.vertex_in_facet(facet, 1), hex.vertex_in_facet(facet, 3));
     bool is_already_diagonal0 = find_value_in_multiset(hash_tableB, d0);
     bool is_already_diagonal1 = find_value_in_multiset(hash_tableB, d1);
-   
+
     if (is_already_diagonal0 != is_already_diagonal1) {
       return false;
     }
@@ -1289,7 +1288,7 @@ bool Recombinator::faces_statuquo(MVertex* a, MVertex* b, MVertex* c, MVertex* d
       it2++;
     }
     // Normalement soit on a trouvé les 2 soit on en trouve aucune
-   
+
     assert((gf1 == NULL && gf2 == NULL) || (gf1 != NULL && gf2 != NULL));
 
     if (gf1 != NULL && gf2 != NULL) {
@@ -1332,7 +1331,7 @@ bool Recombinator::faces_statuquo(MVertex* a, MVertex* b, MVertex* c, MVertex* d
       else return true;
     }
   }
-  // The facet are not on the boundary 
+  // The facet are not on the boundary
   return true;
 }
 
@@ -1476,7 +1475,7 @@ double Recombinator::min_scaled_jacobian(Hex &hex) {
     min = std::min(min, jacobians[i]);
     max = std::max(max, jacobians[i]);
   }
-  if (max < 0) min = -max; // Why ? Why is there no test on min < -max ?? Jeanne 
+  if (max < 0) min = -max; // Why ? Why is there no test on min < -max ?? Jeanne
 
   /*MHexahedron *h1 = new MHexahedron(a, b, c, d, e, f, g, h);
   MHexahedron *h2 = new MHexahedron(e, f, g, h, a, b, c, d);
@@ -5478,21 +5477,21 @@ cliques_compatibility_graph<T>::cliques_compatibility_graph(
   const map<T, std::vector<double> > &_hex_ranks,
   unsigned int _max_nb_cliques,
   unsigned int _nb_hex_potentiels,
-  clique_stop_criteria<T> *csc, 
+  clique_stop_criteria<T> *csc,
   ptrfunction_export fct
- ): 
-  found_the_ultimate_max_clique(false), 
-  export_clique_graph(fct), 
+ ):
+  found_the_ultimate_max_clique(false),
+  export_clique_graph(fct),
   debug(false),
-  max_nb_cliques(_max_nb_cliques), 
+  max_nb_cliques(_max_nb_cliques),
   nb_hex_potentiels(_nb_hex_potentiels),
-  max_clique_size(0), 
+  max_clique_size(0),
   position(0),
   total_nodes_number(0),
-  total_nb_of_cliques_searched(0), 
+  total_nb_of_cliques_searched(0),
   max_nb_of_stored_cliques(10),
-  criteria(csc), 
-  cancel_search(false), 
+  criteria(csc),
+  cancel_search(false),
   hex_ranks(_hex_ranks),
   G(_g)
 {
@@ -5538,7 +5537,7 @@ template<class T>
 void cliques_compatibility_graph<T>::store_clique(int n)
 {
   total_nb_of_cliques_searched++;
-  
+
   // Should the search for other cliques be stopped?
   // --- Criteria on the number of cliques
   if ((max_nb_cliques != 0) && (total_nb_of_cliques_searched >= max_nb_cliques)) {
@@ -5631,8 +5630,8 @@ void cliques_compatibility_graph<T>::find_cliques(graph_data &subgraph, int n)
   }
 
   T u = NULL;             // Let's face it, this is a pointer.
-  hash_key u_key = 0;          
-  // Choose the pivot: the node of the subgraph that 
+  hash_key u_key = 0;
+  // Choose the pivot: the node of the subgraph that
   // has a maximum number of neighbors in the candidate set.
   // Maximize the number of black nodes.
   choose_u(subgraph, u, u_key);
@@ -5685,15 +5684,15 @@ void cliques_compatibility_graph<T>::erase_entry(graph_data &subgraph, T &u, has
   }
 }
 
-// On veut choisir le sommet u qui maximise la taille de 
+// On veut choisir le sommet u qui maximise la taille de
 // l'intersection entre subgraph et les voisins de u dans le graphe
-// Does not implement exactly what's is the paper [Tomita et al. 2006] where u 
+// Does not implement exactly what's is the paper [Tomita et al. 2006] where u
 // is chosen to maximize the intersection of its neighbors in the CAND subset. JP.
-// WHY is it not done like that here? 
+// WHY is it not done like that here?
 template<class T>
 void cliques_compatibility_graph<T>::choose_u(const graph_data &subgraph, T &u, hash_key &u_key)
 {
-  double valuemax = -DBL_MAX;  
+  double valuemax = -DBL_MAX;
   for (typename graph_data::const_iterator it = subgraph.begin(); it != subgraph.end(); it++) {
     double value = function_to_maximize_for_u(it->second, it->first, subgraph);
     if (value > valuemax) {
@@ -5706,7 +5705,7 @@ void cliques_compatibility_graph<T>::choose_u(const graph_data &subgraph, T &u, 
 
 template<class T>
 void cliques_compatibility_graph<T>::split_set_BW(
-  const T &u, 
+  const T &u,
   const hash_key &u_key,
   const graph_data &subgraph,
   graph_data &white,
@@ -5793,7 +5792,7 @@ template<class T>
 cliques_losses_graph<T>::cliques_losses_graph (
   graph &_g,
   const map<T, std::vector<double> > &_hex_ranks,
-  unsigned int _max_nb_cliques, 
+  unsigned int _max_nb_cliques,
   unsigned int _nb_hex_potentiels,
   clique_stop_criteria<T> *csc,
   ptrfunction_export fct
@@ -5906,14 +5905,14 @@ PEQuadrangle::PEQuadrangle(const vector<MVertex*> &_v) :PEEntity(_v) {
 
 size_t PEQuadrangle::get_max_nb_vertices()const { return 4; };
 
-// Check the validity of the hex 
+// Check the validity of the hex
 // and add it to the potential hex.
-// TODO -- WE NEED ASSERTIONS in release mode and a command line to print stuff 
-// TODO -- Implement clear validity checks - topological validity and geometrical validity 
+// TODO -- WE NEED ASSERTIONS in release mode and a command line to print stuff
+// TODO -- Implement clear validity checks - topological validity and geometrical validity
 
 // WARNING this function seems to be a mess -- I expect it to do not work as expected. JP.
 // Stuff are commented, the test to check if a potential exist seems does not work
-// and is bypassed. 
+// and is bypassed.
 void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex) {
   const bool very_verbose = false;
   const bool bypass = true;
@@ -5961,15 +5960,15 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex) {
     return;
   }
 
-  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  
-  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  
-  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  
-  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  
-  // le test suivant déconne, cf. cube à 125 hex... sais pas pourquoi, mais ça élimine des hex potentiels 
+  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!
+  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!
+  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!
+  // TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!  TODO !!!!
+  // le test suivant déconne, cf. cube à 125 hex... sais pas pourquoi, mais ça élimine des hex potentiels
   // tout à fait valides (et nécessaires à la solution optimale)!!!
-  // dans le cas cube125: ce test fait passer le #hex potentiels recensés par les patterns de recombinaison 
+  // dans le cas cube125: ce test fait passer le #hex potentiels recensés par les patterns de recombinaison
   // d'environ 1000 à 2434 ??? !!!, ça double aussi le nbre d'hex dans le graphe des pertes
-  // en fait, si les noeuds par exemple a b c d deviennent b c d a, on a une rotation et un hex tout pourri... 
+  // en fait, si les noeuds par exemple a b c d deviennent b c d a, on a une rotation et un hex tout pourri...
   // mais qui a même hash et mêmes noeuds ?!?!
   // now, check if the hex already exists...
   if (!bypass) {
@@ -6005,7 +6004,7 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex) {
       count++;
 
   if (count != 12) {
-    if (very_verbose) cout << "------------- WARNING !!!!! fill_tet_to_hex_table:: hex  has " 
+    if (very_verbose) cout << "------------- WARNING !!!!! fill_tet_to_hex_table:: hex  has "
       << count << " faces ... discard the hex." << endl;
     delete hex;
     return;
@@ -6023,7 +6022,7 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex) {
 
   // We are keeping the tet. Store it and map it to the
   // constituve tets
-  
+
   // The hex addition was in the loop on its constitutive tet. oups.
   // might be a source of the above problem... but I am quite unsure. JP.
   created_potential_hex.insert(make_pair(hex->get_hash(), hex));
@@ -6056,7 +6055,7 @@ void Recombinator_Graph::buildGraphOnly(unsigned int max_nb_cliques, string file
 
 
 void Recombinator_Graph::buildGraphOnly(GRegion* gr, unsigned int max_nb_cliques, string filename) {
-  
+
   set_current_region(gr);
   tet_mesh.initialize(current_region);
 
@@ -6067,7 +6066,7 @@ void Recombinator_Graph::buildGraphOnly(GRegion* gr, unsigned int max_nb_cliques
   build_tuples();
 
   compute_potential_hexes();
-  
+
   create_losses_graph(gr);
   compute_hex_ranks();
   found_the_ultimate_max_clique = false;
@@ -6233,7 +6232,7 @@ void Recombinator_Graph::createBlossomInfo(GRegion *gr) {
 
 
 void Recombinator_Graph::execute_blossom(GRegion* gr, unsigned int max_nb_cliques, string filename) {
-  
+
   throw;
 
   initialize_structures(gr);
@@ -6280,7 +6279,7 @@ void Recombinator_Graph::execute_blossom(GRegion* gr, unsigned int max_nb_clique
   merge_clique(gr, cl, clique_number);
 
   improve_final_mesh();
-  
+
   print_statistics();
 
   return;
@@ -6334,13 +6333,14 @@ Recombinator_Graph::Recombinator_Graph(unsigned int _n, string filename) :max_nb
 
 void Recombinator_Graph::execute(GRegion* gr) {
   printf("................HEXAHEDRA...GRAPH RECOMBINATOR................\n");
-  
+
   initialize_structures(gr);
   compute_potential_hexes();
 
   create_losses_graph(gr);
 
-  for (MTetrahedron *tet : gr->tetrahedra) {
+  for (unsigned int i = 0; i < gr->tetrahedra.size(); i++) {
+    MTetrahedron *tet = gr->tetrahedra[i];
     if (tet_to_hex.find(tet) == tet_to_hex.end()) {
       std::cout << "Cannot recombine: " << tet->getNum() << "\n";
     }
@@ -6461,7 +6461,7 @@ void Recombinator_Graph::merge_clique(GRegion* gr, cliques_losses_graph<Hex*> &c
     hash_tableA.clear();
     hash_tableB.clear();
     hash_tableC.clear();
-    
+
     for (; ithex != ithexen; ithex++) { // brutal post-check: random pickup of hexahedra in clique
       Hex *current_hex = *ithex;
       if (merge_hex(gr, current_hex)) {
@@ -6485,7 +6485,7 @@ bool Recombinator_Graph::merge_hex(GRegion *gr, Hex *hex) {
     itfind_tet_region = std::find(gr->tetrahedra.begin(),
       gr->tetrahedra.end(),
       (MTetrahedron*)(*it_tet_to_remove));
-    
+
     if (itfind_tet_region != gr->tetrahedra.end()) {
       gr->tetrahedra.erase(itfind_tet_region);
       delete *it_tet_to_remove;
@@ -6500,15 +6500,13 @@ bool Recombinator_Graph::merge_hex(GRegion *gr, Hex *hex) {
   return true;
 }
 
-
-
 // Why derive then ?? this is quite stupid
 void Recombinator_Graph::merge(GRegion* gr) {
   throw;
 }
 
-
-void Recombinator_Graph::export_tets(set<MElement*> &tetset, Hex* hex, string s) {
+void Recombinator_Graph::export_tets(set<MElement*> &tetset, Hex* hex, string s)
+{
   stringstream ss;
   ss << s.c_str();
   ss << "hexptr_";
@@ -6737,7 +6735,7 @@ bool Recombinator_Graph::is_not_good_enough(Hex* hex) {
 }
 
 
-// Add entries in the incompatibility_graph for all hexes sharing a non-sliver tetrahedra 
+// Add entries in the incompatibility_graph for all hexes sharing a non-sliver tetrahedra
 // For the entry to be added the hex also have to be good_enough
 void Recombinator_Graph::create_indirect_neighbors_graph()
 {
@@ -6751,21 +6749,21 @@ void Recombinator_Graph::create_indirect_neighbors_graph()
         // Slivers may be shared by several hex and do not define an incompatibility relationship
         continue;
       }
-      if (is_not_good_enough(hex)) { 
+      if (is_not_good_enough(hex)) {
         continue;
       }
       graph::iterator itfind_graph = find_hex_in_graph(hex);
       if (itfind_graph == incompatibility_graph.end()) {
-        // Add the hex to the graph 
+        // Add the hex to the graph
         itfind_graph = incompatibility_graph.insert(make_pair(hex->get_hash(), make_pair(hex, graph_data())));
         set_of_all_hex_in_graph.insert(hex);
       }
-      // Link the hex as incompatible to all the good enough hex 
+      // Link the hex as incompatible to all the good enough hex
       // that share the current tet
-      for (std::set<Hex*>::iterator it_hex2 = it_tet->second.begin(); 
+      for (std::set<Hex*>::iterator it_hex2 = it_tet->second.begin();
         it_hex2 != it_tet->second.end(); it_hex2++) {
         Hex* hex2 = *it_hex2;
-        if (hex != hex2 && !is_not_good_enough(hex2)) { 
+        if (hex != hex2 && !is_not_good_enough(hex2)) {
           // Add the pair hex-hex2 to the graph
           itfind_graph->second.second.insert(make_pair(hex2->get_hash(), hex2));
         }
@@ -6775,10 +6773,10 @@ void Recombinator_Graph::create_indirect_neighbors_graph()
 }
 
 
-std::multimap<unsigned long long, Hex* >::const_iterator  
+std::multimap<unsigned long long, Hex* >::const_iterator
   Recombinator_Graph::find_the_created_potential_hex(Hex *hex, const std::multimap<unsigned long long, Hex*> &list)
 {
-  std::pair<graph_data::const_iterator, graph_data::const_iterator> range = 
+  std::pair<graph_data::const_iterator, graph_data::const_iterator> range =
     list.equal_range(hex->get_hash());
   for (graph_data::const_iterator it = range.first; it != range.second; it++) {
     Hex *candidate = it->second;
@@ -6790,8 +6788,8 @@ std::multimap<unsigned long long, Hex* >::const_iterator
 }
 
 
-std::multimap<unsigned long long, pair<PETriangle*, int> >::iterator 
-  Recombinator_Graph::find_the_triangle(PETriangle *t, std::multimap<unsigned long long, pair<PETriangle*, int> > &list) 
+std::multimap<unsigned long long, pair<PETriangle*, int> >::iterator
+  Recombinator_Graph::find_the_triangle(PETriangle *t, std::multimap<unsigned long long, pair<PETriangle*, int> > &list)
 {
   std::pair<std::multimap<unsigned long long, pair<PETriangle*, int> >::iterator, std::multimap<unsigned long long, pair<PETriangle*, int> >::iterator> range = list.equal_range(t->get_hash());
   for (std::multimap<unsigned long long, pair<PETriangle*, int> >::iterator it = range.first; it != range.second; it++) {
@@ -6874,7 +6872,7 @@ void print_stats_graph(const Recombinator_Graph::graph& in) {
   cout << "Number of hexes: " << nb_entries << endl;
   double average_connectivity = total / ((double)(nb_entries));
   cout << "#hex potentiels recensés dans le graphe des pertes: " << nb_entries
-    << "   #connectivité moyenne: " << average_connectivity << endl;  
+    << "   #connectivité moyenne: " << average_connectivity << endl;
 }
 
 
@@ -6884,7 +6882,7 @@ void Recombinator_Graph::create_losses_graph(GRegion *gr)
   create_indirect_neighbors_graph();
   create_direct_neighbors_incompatibility_graph();
 
-  print_stats_graph(incompatibility_graph);  
+  print_stats_graph(incompatibility_graph);
 };
 
 
@@ -6900,7 +6898,7 @@ void Recombinator_Graph::create_direct_neighbors_incompatibility_graph()
       // Why is it even there in the first place? JP
       continue;
     }
-  
+
     // Find or create the hex data in the incompatibility graph
     graph::iterator itfind_graph = find_hex_in_graph(hex);
     if (itfind_graph == incompatibility_graph.end()) {
@@ -6932,12 +6930,12 @@ void Recombinator_Graph::create_direct_neighbors_incompatibility_graph()
         else {
           visited_hex.push_back(other_hex);
         }
-                                  
+
         evaluate_hex_couple(hex, other_hex);
       }
     }
     //Check compatibility with the hex that share a edges (2 vertices) with hex
-    // change following... 
+    // change following...
 
     const std::set<PELine*>& hex_edges = hex_to_edges[hex];
     for (std::set<PELine*>::const_iterator it_line = hex_edges.begin(); it_line != hex_edges.end(); it_line++) {
@@ -7062,7 +7060,7 @@ void Recombinator_Graph::add_edges(Hex *hex)
     for (unsigned int v = 0; v < 4; ++v) {
       facet_vertices[v] = hex->vertex_in_facet(f, v);
     }
-    fill_edges_table(facet_vertices, hex);    
+    fill_edges_table(facet_vertices, hex);
   }
 }
 
@@ -7072,7 +7070,7 @@ void Recombinator_Graph::fill_edges_table(const std::vector<MVertex*>& quad_vert
 {
   for (unsigned int i =0; i<4; ++i ){
     for (unsigned int j= i+1; j<4; ++j) {
-      
+
       std::vector<MVertex*> edge;
       edge.push_back(quad_vertices[i]);
       edge.push_back(quad_vertices[j]);
@@ -7153,7 +7151,7 @@ void Recombinator_Graph::add_graph_entry(Hex* hex, Hex* other_hex)
 void Recombinator_Graph::compute_hex_ranks()
 {
   create_faces_connectivity();
-  
+
   for (std::map<Hex*, set<PETriangle*> >::iterator it = hex_to_faces.begin(); it != hex_to_faces.end(); it++) {
     Hex* hex = it->first;
     // Count the number of facets on boundary for the hex
@@ -7166,7 +7164,7 @@ void Recombinator_Graph::compute_hex_ranks()
     vector<double> hex_rank(2);
     hex_rank[0] = boundary_count;
     hex_rank[1] = hex->get_quality();
-    hex_ranks.insert(make_pair(hex, hex_rank));    
+    hex_ranks.insert(make_pair(hex, hex_rank));
   }
 }
 
@@ -7213,7 +7211,7 @@ void Recombinator_Graph::compute_hex_ranks_blossom()
       hex_ranks.insert(make_pair(hex, vector<double>(1)));
     hex_ranks[hex][0] = nb_faces_on_boundary;
     hex_ranks[hex][1] = hex->get_quality();
-    
+
     int count_blossom = 0;
     for (unsigned int f = 0; f < 6; ++f) {
       bool face_in_blossom_info = find_face_in_blossom_info(
