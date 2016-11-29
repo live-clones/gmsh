@@ -58,7 +58,7 @@ class linearSystemGmm : public linearSystem<scalar> {
     val = (*_a)(row, col);
   }
 
-  virtual void addToRightHandSide(int row, const scalar &val)
+  virtual void addToRightHandSide(int row, const scalar &val, int ith = 0)
   {
     if(val != 0.0) (*_b)[row] += val;
   }
@@ -133,7 +133,7 @@ class linearSystemGmm : public linearSystem<scalar> {
   virtual void allocate(int nbRows) {}
   virtual void addToMatrix(int row, int col, const scalar &val) {}
   virtual void getFromMatrix(int row, int col, scalar &val) const {}
-  virtual void addToRightHandSide(int row, const scalar &val) {}
+  virtual void addToRightHandSide(int row, const scalar &val, int ith = 0) {}
   virtual void getFromRightHandSide(int row, scalar &val) const {}
   virtual void addToSolution(int row, const scalar &val) {}
   virtual void getFromSolution(int row, scalar &val) const {}

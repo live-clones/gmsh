@@ -60,7 +60,7 @@ Field[1].hwall_n = 0.001;
 //+
 Field[1].ratio = 1.4;
 //+
-Field[1].thickness = .15;
+Field[1].thickness = .35;
 BoundaryLayer Field = 1;
 //+
 Line Loop(7) = {1, 2, 3, 4};

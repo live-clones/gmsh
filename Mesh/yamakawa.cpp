@@ -422,7 +422,7 @@ namespace {
 
   template <class T>
   bool find_value_in_multiset(const std::multiset<T>& set, const T& value, T& value_in_set) {
-    std::multiset<T>::const_iterator it = set.find(value);
+    typename std::multiset<T>::const_iterator it = set.find(value);
     for (; it != set.end() && it->get_hash() == value.get_hash(); ++it) {
       if (value.same_vertices(*it)) {
         value_in_set = *it;
@@ -435,7 +435,7 @@ namespace {
   // Check if one value exist in a multiset hash table of Recombinator
   template <class T>
   bool find_value_in_multiset(const std::multiset<T>& set, const T& value) {
-    std::multiset<T>::const_iterator it = set.find(value);
+    typename std::multiset<T>::const_iterator it = set.find(value);
     for (; it != set.end() && it->get_hash() == value.get_hash(); ++it) {
       if (value.same_vertices(*it)) {
         return true;
@@ -5785,7 +5785,7 @@ bool cliques_losses_graph<T>::compatibility(
   const T &u, const hash_key &u_key,
   const T &v, const hash_key &v_key)
 {
-  return !cliques_compatibility_graph::compatibility(u, u_key, v, v_key);
+  return !cliques_compatibility_graph<T>::compatibility(u, u_key, v, v_key);
 }
 
 

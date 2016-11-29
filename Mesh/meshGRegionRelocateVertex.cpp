@@ -212,8 +212,10 @@ static double _relocateVertex(GFace* gf, MVertex *ver,
   p1 *= 1./(double)counter;
   double worst;
   double xi = Maximize_Quality_Golden_Section( ver, gf, p1, p2, lt , tol, worst);
+  //  if (xi != 0)printf("xi = %g\n",xi);
   SPoint2 p = p1*(1-xi) + p2*xi;
   GPoint pp = gf->point(p);
+  if (!pp.succeeded())return 2.0;
   ver->x() = pp.x();
   ver->y() = pp.y();
   ver->z() = pp.z();

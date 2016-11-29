@@ -745,11 +745,9 @@ bool insertVertexB (std::list<edgeXface> &shell,
     double d3 = distance(it->v[0],it->v[1]);
 
     // avoid angles that are too obtuse
-    double cosv = ((d1*d1+d2*d2-d3*d3)/(2.*d1*d2));
-
-    if ((d1 < LL * .25 || d2 < LL * .25 || cosv < -.9999) && !force) {
+    if ((d1 < LL * .5 || d2 < LL * .5 ||  ((d1*d1+d2*d2-d3*d3)/(2.*d1*d2)) < -.9999) && !force) {
       onePointIsTooClose = true;
-      //      printf("%12.5E %12.5E %12.5E %12.5E \n",d1,d2,LL,cosv);
+      //      printf("%12.5E %12.5E %12.5E \n",d1,d2,LL);
     }
 
     newTris[k++] = t4;
@@ -1290,38 +1288,39 @@ bool optimalPointFrontalB (GFace *gf,
 {
   // as a starting point, let us use the "fast algo"
   double d = optimalPointFrontal (gf,worst,active_edge,data,newPoint,metric);
-  int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;
+  int ip1 = (active_edge + 2)%3;
   int ip2 = active_edge;
+  int ip3 = (active_edge + 1)%3;
   MVertex *v1 = worst->tri()->getVertex(ip1);
   MVertex *v2 = worst->tri()->getVertex(ip2);
-  MTriangle *t = worst->tri();
-  double p1[3] = {t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z()};
-  double p2[3] = {t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z()};
-  double p3[3] = {t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z()};
-  double c[3];
-  circumCenterXYZ(p1, p2, p3, c);
+  MVertex *v3 = worst->tri()->getVertex(ip3);
   SVector3 middle ((v1->x()+v2->x())*.5,(v1->y()+v2->y())*.5,(v1->z()+v2->z())*.5);
-  SVector3 center(c[0],c[1],c[2]);
-  SVector3 v1v2 (v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
-  SVector3 n1 = center - middle;
-  SVector3 n2 = crossprod(v1v2,n1);
+  SVector3 v1v2  (v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
+  SVector3 tmp  (v3->x()-middle.x(),v3->y()-middle.y(),v3->z()-middle.z());
+
+  SVector3 n1 = crossprod(v1v2,tmp);
+  SVector3 n2 = crossprod(n1,v1v2); // n2 is exterior
   n1.normalize();
   n2.normalize();
-  // we look for a point that is
-  // P = d * (n1 cos(t) + n2 sin(t)) that is on the surface
-  // so we have to find t, starting with t = 0
 
 
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER)
   if (gf->geomType() == GEntity::DiscreteDiskSurface){
     discreteDiskFace *ddf = dynamic_cast<discreteDiskFace*> (gf);
     if (ddf){
+      // not optimal @ all !!!
       GPoint gp = ddf->intersectionWithCircle(n1,n2,middle,d,newPoint);
       if (gp.succeeded()){
 	newPoint[0] = gp.u();
 	newPoint[1] = gp.v();
 	return true;
       }
+      //      gp = ddf->intersectionWithCircle(n2,n1,middle,d,newPoint);
+      //      if (gp.succeeded()){
+      //	newPoint[0] = gp.u();
+      //	newPoint[1] = gp.v();
+      //	return true;
+      //      }
       return false;
     }
   }
@@ -1359,6 +1358,7 @@ void bowyerWatsonFrontal(GFace *gf,
 			 std::map<MVertex* , MVertex*>* equivalence,
 			 std::map<MVertex*, SPoint2> * parametricCoordinates)
 {
+	
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::set<MTri3*,compareTri3Ptr> ActiveTris;
   bidimMeshData DATA(equivalence,parametricCoordinates);
@@ -1382,21 +1382,13 @@ void bowyerWatsonFrontal(GFace *gf,
   int ITERATION = 0;
   while (1){
     ++ITERATION;
-    /* if(ITERATION % 10== 0 && CTX::instance()->mesh.saveAll){
-      char name[245];
-      sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
-      _printTris (name, AllTris.begin(), AllTris.end(), &DATA);
-      sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
-      _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
-      }*/
-    /* if(ITER % 100== 0){
-          char name[245];
-          sprintf(name,"delfr2d%d-ITER%d.pos",gf->tag(),ITER);
-          _printTris (name, AllTris, Us,Vs,true);
-	  //          sprintf(name,"delfr2dA%d-ITER%d.pos",gf->tag(),ITER);
-	  //          _printTris (name, ActiveTris, Us,Vs,false);
-        }
-    */
+     if(ITERATION % 10== 0 && CTX::instance()->mesh.saveAll){
+       char name[245];
+       sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
+       _printTris (name, AllTris.begin(), AllTris.end(), NULL);
+       sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
+       _printTris (name, ActiveTris.begin(), ActiveTris.end(), NULL);
+     }
     //    printf("active_tris.size = %d\n",ActiveTris.size());
     if (!ActiveTris.size())break;
     MTri3 *worst = (*ActiveTris.begin());
@@ -1420,8 +1412,6 @@ void bowyerWatsonFrontal(GFace *gf,
      }
     */
   }
-
-
   nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
   /*
   char name[245];
@@ -1447,6 +1437,8 @@ void bowyerWatsonFrontal(GFace *gf,
     }
   }
 #endif
+  //  getchar();
+
 }
 
 void optimalPointFrontalQuad (GFace *gf,

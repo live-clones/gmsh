@@ -50,7 +50,7 @@ class linearSystemFull : public linearSystem<scalar> {
   {
     val = (*_a)(row, col);
   }
-  virtual void addToRightHandSide(int row, const scalar &val)
+  virtual void addToRightHandSide(int row, const scalar &val, int ith=0)
   {
     if(val != 0.0) (*_b)(row) += val;
   }

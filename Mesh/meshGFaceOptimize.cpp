@@ -836,6 +836,11 @@ void getAllBoundaryLayerVertices (GFace *gf, std::set<MVertex*> &vs){
 void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 {
   if (!niter)return;
+  RelocateVertices (gf, niter);
+  return;
+
+
+  printf("argh\n");
   std::set<MVertex*> vs;
   getAllBoundaryLayerVertices (gf, vs);
   v2t_cont adj;
@@ -872,6 +877,12 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   MTri3 *t2 = t1->getNeigh(iLocalEdge);
   if(!t2) return false;
 
+  double triQualityRef  = 0;
+  if (cr == SWCR_QUAL){
+    triQualityRef=std::min(qmTriangle::gamma(t1->tri()), qmTriangle::gamma(t2->tri()));
+    if (triQualityRef > 0.5)return false;
+  }    
+  
   MVertex *v1 = t1->tri()->getVertex(iLocalEdge == 0 ? 2 : iLocalEdge - 1);
   MVertex *v2 = t1->tri()->getVertex((iLocalEdge) % 3);
   MVertex *v3 = t1->tri()->getVertex((iLocalEdge + 1) % 3);
@@ -882,12 +893,14 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
 
 
   for(int i = 0; i < 3; i++)
-    if(t2->tri()->getVertex(i) != v1 && t2->tri()->getVertex(i) != v2)
+    if(t2->tri()->getVertex(i) != v1 && t2->tri()->getVertex(i) != v2){     
       v4 = t2->tri()->getVertex(i);
+      break;
+    }
 
-  swapquad sq (v1, v2, v3, v4);
-  if(configs.find(sq) != configs.end()) return false;
-  configs.insert(sq);
+  //  swapquad sq (v1, v2, v3, v4);
+  //  if(configs.find(sq) != configs.end()) return false;
+  //  configs.insert(sq);
 
   if (edgeSwapDelProj(v3,v4,v2,v1))return false;
 
@@ -895,15 +908,15 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   MTriangle *t1b = new MTriangle(v2, v3, v4);
   MTriangle *t2b = new MTriangle(v4, v3, v1);
 
+  
   switch(cr){
   case SWCR_QUAL:
     {
-      const double triQualityRef = std::min(qmTriangle::gamma(t1->tri()),
-                                            qmTriangle::gamma(t2->tri()));
       const double triQuality = std::min(qmTriangle::gamma(t1b),
                                          qmTriangle::gamma(t2b));
+      
       if (!edgeSwapDelProj(v1,v2,v3,v4)){
-        if(triQuality < triQualityRef){
+        if(triQuality < triQualityRef/* && triQuality < .001*/){
           delete t1b;
           delete t2b;
           return false;
@@ -999,7 +1012,7 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
 
   int nbSwapTot = 0;
   std::set<swapquad> configs;
-  for(int iter = 0; iter < 1200; iter++){
+  for(int iter = 0; iter < 3; iter++){
     int nbSwap = 0;
     std::vector<MTri3*> newTris;
     for(CONTAINER::iterator it = allTris.begin(); it != allTris.end(); ++it){
@@ -1011,17 +1024,12 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
           }
         }
       }
-      else{
-        delete *it;
-        CONTAINER::iterator itb = it;
-        ++it;
-        allTris.erase(itb);
-        if(it == allTris.end()) break;
-      }
     }
+    
     allTris.insert(newTris.begin(), newTris.end());
     nbSwapTot += nbSwap;
     if(nbSwap == 0) break;
+    //    printf("%d swaps %d new tris\n",nbSwap, newTris.size());
   }
   return nbSwapTot;
 }

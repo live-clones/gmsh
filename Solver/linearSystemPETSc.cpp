@@ -77,7 +77,7 @@ void linearSystemPETSc<fullMatrix<double> >::addToMatrix(int row, int col,
 
 template<>
 void linearSystemPETSc<fullMatrix<double> >::addToRightHandSide(int row,
-                                                      const fullMatrix<double> &val)
+								const fullMatrix<double> &val, int ith)
 {
   if (!_entriesPreAllocated)
     preAllocateEntries();

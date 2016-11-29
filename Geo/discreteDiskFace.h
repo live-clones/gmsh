@@ -221,9 +221,8 @@ class  discreteDiskFaceTriangle {
 class discreteDiskFace : public GFace {
   GFace *_parent;
   void buildOct(std::vector<GFace*> *CAD = NULL) const;
-  bool parametrize(bool);// const;
-  void checklsys(linearSystemCSRTaucs<double>*,dofManager<double>*,int);
-  void putOnView(bool,bool);
+  bool parametrize();// const;
+  void checklsys(linearSystemCSR<double>*,dofManager<double>*,int);
   bool checkOrientationUV();
   void optimize();
 
@@ -245,8 +244,12 @@ class discreteDiskFace : public GFace {
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
 				const SVector3 &p, const double &d,
 				double uv[2]) const;
+  GPoint intersectionWithCircle2(const SVector3 &n1, const SVector3 &n2,
+				 const SVector3 &p, const double &d,
+				 double uv[2]) const;
   void printAtlasMesh () ;
   void printParamMesh () ;
+  void putOnView(int iFace, int iMap, bool,bool);
   
   std::vector<MElement*> discrete_triangles;
  protected:

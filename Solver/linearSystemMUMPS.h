@@ -38,7 +38,7 @@ class linearSystemMUMPS : public linearSystem<scalar> {
 
   virtual void addToMatrix(int row, int col, const double &val) {}
   virtual void getFromMatrix(int row, int col, double &val) const {}
-  virtual void addToRightHandSide(int row, const scalar &val) {}
+  virtual void addToRightHandSide(int row, const scalar &val, int ith = 0) {}
   virtual void getFromRightHandSide(int row, scalar &val) const {}
   virtual void getFromSolution(int row, scalar &val) const {}
   virtual void addToSolution(int row, const scalar &val) {}
@@ -80,7 +80,7 @@ class linearSystemMUMPS<double> : public linearSystem<double> {
 
   virtual void addToMatrix(int row, int col, const double &val);
   virtual void getFromMatrix(int row, int col, double &val) const;
-  virtual void addToRightHandSide(int row, const double &val);
+  virtual void addToRightHandSide(int row, const double &val, int ith = 0);
   virtual void getFromRightHandSide(int row, double &val) const;
   virtual void getFromSolution(int row, double &val) const;
   virtual void addToSolution(int row, const double &val);

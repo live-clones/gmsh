@@ -35,6 +35,8 @@ class linearSystemCSR : public linearSystem<scalar> {
   std::vector<scalar> *_b, *_x;
   sparsityPattern _sparsity; // only used for pre-allocation, does not store the sparsity once allocated
  public:
+  int getNNZ() {return CSRList_Nbr(linearSystemCSR<scalar>::_a);}
+  int getNbUnk() {return linearSystemCSR<scalar>::_b->size();}
   linearSystemCSR()
     : sorted(false), _entriesPreAllocated(false), _a(0), _b(0), _x(0) {}
   virtual bool isAllocated() const { return _a != 0; }
@@ -121,7 +123,7 @@ class linearSystemCSR : public linearSystem<scalar> {
   {
     Msg::Error("getFromMatrix not implemented for CSR");
   }
-  virtual void addToRightHandSide(int row, const scalar &val)
+  virtual void addToRightHandSide(int row, const scalar &val, int ith = 0)
   {
     if (!_b) return;
     if(val != scalar()) (*_b)[row] += val;
@@ -194,17 +196,18 @@ class linearSystemCSRGmm : public linearSystemCSR<scalar> {
 
 template <class scalar>
 class linearSystemCSRTaucs : public linearSystemCSR<scalar> {
+  bool _symmetric;
  public:
-  linearSystemCSRTaucs(){}
+  linearSystemCSRTaucs(bool s = true) : _symmetric(s){}
   virtual ~linearSystemCSRTaucs(){}
   virtual void addToMatrix(int il, int ic, const scalar &val)
   {
-    if (il <= ic) {
+    if (!_symmetric || il <= ic) {
       linearSystemCSR<scalar>::addToMatrix(il, ic, val);
     }
   }
   virtual void insertInSparsityPattern(int il, int ic) {
-    if (il <= ic)
+    if (!_symmetric || il <= ic)
       linearSystemCSR<scalar>::insertInSparsityPattern(il,ic);
   }
   virtual int systemSolve()
@@ -215,8 +218,6 @@ class linearSystemCSRTaucs : public linearSystemCSR<scalar> {
   }
 #endif
   ;
- int getNNZ() {return CSRList_Nbr(linearSystemCSR<scalar>::_a);}
- int getNbUnk() {return linearSystemCSR<scalar>::_b->size();}
 };
 
 #endif

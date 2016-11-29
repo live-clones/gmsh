@@ -53,8 +53,8 @@ bool linearSystemMUMPS<double>::isAllocated() const
 void linearSystemMUMPS<double>::allocate(int nbRows)
 {
   _n = nbRows;
-  _b.reserve(_n);
-  _x.reserve(_n);
+  _b.resize(_n);
+  _x.resize(_n);
   _a.reserve(10*_n);
   _irn.reserve(10*_n);
   _jcn.reserve(10*_n);
@@ -107,7 +107,7 @@ int linearSystemMUMPS<double>::systemSolve()
 
   id.comm_fortran = USE_COMM_WORLD;
 
-  Msg::Info("MUMPS initialization");
+  Msg::Debug("MUMPS initialization");
   id.job=-1;
   dmumps_c(&id);
   mumpserror(id.info[0], id.info[1]);
@@ -130,15 +130,15 @@ int linearSystemMUMPS<double>::systemSolve()
   id.icntl[5-1]=0;
   id.icntl[18-1]=0;
 
-  Msg::Info("MUMPS analysis, LU factorization, and back substitution");
+  Msg::Debug("MUMPS analysis, LU factorization, and back substitution");
   id.job = 6;
   dmumps_c(&id);
   mumpserror(id.info[0], id.info[1]);
 
-  Msg::Info("MUMPS destroy");
+  Msg::Debug("MUMPS destroy");
   id.job=-2;
   dmumps_c(&id);
-  Msg::Info("MUMPS end");
+  Msg::Debug("MUMPS end");
   mumpserror(id.info[0], id.info[1]);
 
   _x.clear();
@@ -216,8 +216,9 @@ void linearSystemMUMPS<double>::getFromMatrix(int row, int col, double &val) con
   else val = _a[it->second];
 }
 
-void linearSystemMUMPS<double>::addToRightHandSide(int row, const double &val)
+void linearSystemMUMPS<double>::addToRightHandSide(int row, const double &val, int ith)
 {
+  //  printf("adding %g to %d\n",val,row);
   if((int)_b.size() <= row) {
     _b.resize(row+1);
     _b[row] = val;
@@ -230,11 +231,12 @@ void linearSystemMUMPS<double>::addToRightHandSide(int row, const double &val)
 void linearSystemMUMPS<double>::getFromRightHandSide(int row, double &val) const
 {
   if((int)_b.size() <= row) val = 0.;
-  else val = _b[row];
+  val = _b[row];
 }
 
 void linearSystemMUMPS<double>::getFromSolution(int row, double &val) const
 {
+  //  printf("x[%d] = %g\n",row,_x[row]);
   if((int)_x.size() <= row) val = 0.;
   else val = _x[row];
 }

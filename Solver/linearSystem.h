@@ -41,7 +41,7 @@ class linearSystem : public linearSystemBase {
   virtual ~linearSystem (){}
   virtual void addToMatrix(int _row, int _col, const scalar &val) = 0;
   virtual void getFromMatrix(int _row, int _col, scalar &val) const = 0;
-  virtual void addToRightHandSide(int _row, const scalar &val) = 0;
+  virtual void addToRightHandSide(int _row, const scalar &val, int ith = 0) = 0;
   virtual void getFromRightHandSide(int _row, scalar &val) const = 0;
   virtual void getFromSolution(int _row, scalar &val) const = 0;
   virtual void addToSolution(int _row, const scalar &val) = 0;

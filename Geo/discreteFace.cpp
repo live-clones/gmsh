@@ -170,7 +170,8 @@ void discreteFace::createGeometry()
 
   for(unsigned int i=0; i<toParam.size(); i++){
     discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));
-    df->printAtlasMesh();
+    //    df->printAtlasMesh();
+    //    df->putOnView(tag(), i, true,true);
     df->replaceEdges(toParam[i]->my_GEdges);
     _atlas.push_back(df);
   }
@@ -195,11 +196,14 @@ void discreteFace::gatherMeshes()
       SPoint2 pc = (p0+p1+p2)*(1./3.0);
       discreteDiskFaceTriangle *mt=NULL;
       double xi, eta;
+      // FIXME THAT SUCKS !!!!!
       _atlas[i]->getTriangleUV(pc.x(),pc.y(), &mt, xi,eta);
       if (mt && mt->gf)mt->gf->triangles.push_back(t);
-      else Msg::Warning ("FILE %s LINE %d Triangle from atlas part %u has no classification for (u;v)=(%f;%f)",__FILE__,__LINE__,i+1,pc.x(),pc.y());
-
-
+      else {
+	if (_CAD.empty())triangles.push_back(t);
+	else
+	  Msg::Warning ("FILE %s LINE %d Triangle from atlas part %u has no classification for (u;v)=(%f;%f)",__FILE__,__LINE__,i+1,pc.x(),pc.y());
+      }
     }
     _atlas[i]->triangles.clear();
 
@@ -226,13 +230,22 @@ void discreteFace::mesh(bool verbose)
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER) && defined(HAVE_MESH)
   if (!CTX::instance()->meshDiscrete) return;
 
+  Msg::Info("Discrete Face %d is going to be meshed",tag());
   for (unsigned int i=0;i<_atlas.size();i++){
-    Msg::Info("Discrete Face %d is going to be meshed",i);
-    _atlas[i]->mesh(verbose);/*
-    const char *name = "atlas%d";
-    char filename[256];
-    sprintf(filename,name,i);t0
-    _atlas[i]->printPhysicalMesh(filename);*/
+    //    {
+      //      void openProblemsON(void);
+      //      if (tag() == 3) openProblemsON();
+      //    }
+    _atlas[i]->mesh(verbose);
+    //    {
+    //      void openProblemsOFF(void);
+    //      if (tag()==3) openProblemsOFF();
+    //    }
+    /*
+      const char *name = "atlas%d";
+      char filename[256];
+      sprintf(filename,name,i);t0
+      _atlas[i]->printPhysicalMesh(filename);*/
   }
 
   gatherMeshes();

@@ -490,6 +490,9 @@ int linearSystemCSRTaucs<double>::systemSolve()
   }
   sorted = true;
 
+  //  taucs_logfile("stderr");
+
+  
   taucs_ccs_matrix myVeryCuteTaucsMatrix;
   myVeryCuteTaucsMatrix.n = myVeryCuteTaucsMatrix.m = _b->size();
   //myVeryCuteTaucsMatrix.rowind = (INDEX_TYPE*)_ptr->array;
@@ -497,9 +500,13 @@ int linearSystemCSRTaucs<double>::systemSolve()
   myVeryCuteTaucsMatrix.rowind = (INDEX_TYPE*)_ai->array;
   myVeryCuteTaucsMatrix.colptr = (INDEX_TYPE*)_jptr->array;
   myVeryCuteTaucsMatrix.values.d = (double*)_a->array;
-  myVeryCuteTaucsMatrix.flags = TAUCS_SYMMETRIC | TAUCS_LOWER | TAUCS_DOUBLE;
+  if (_symmetric)
+    myVeryCuteTaucsMatrix.flags = TAUCS_SYMMETRIC | TAUCS_LOWER | TAUCS_DOUBLE;
+  else 
+    myVeryCuteTaucsMatrix.flags = TAUCS_DOUBLE ;
 
-  char* options[] = { (char*)"taucs.factor.LLT=true", NULL };
+  char* options[] = { _symmetric ? (char*)"taucs.factor.LLT=true" : (char*)"taucs.factor.LLT=true",NULL };
+  //  char* options[] = {  NULL };
   double t1 = Cpu();
   int result = taucs_linsolve(&myVeryCuteTaucsMatrix,
                               NULL,

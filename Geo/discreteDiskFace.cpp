@@ -27,6 +27,11 @@
 #include "qualityMeasuresJacobian.h"
 #endif
 
+#if defined(HAVE_MUMPS)
+#include "linearSystemMUMPS.h"
+#endif
+
+
 #if defined(HAVE_OPTHOM)
 #include "OptHomRun.h"
 #include "MeshQualityOptimizer.h"
@@ -182,7 +187,7 @@ static int discreteDiskFaceInEle(void *a, double*c)// # mark
   double Xi[2];
   double U[2] = {c[0],c[1]};
   bool ok = uv2xi(t,U,Xi);
-  double eps = 1e-8;
+  double eps = 1e-6;
 
   if(ok && Xi[0] > -eps && Xi[1] > -eps && 1. - Xi[0] - Xi[1] > -eps)
     return 1;
@@ -284,21 +289,10 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
   _totLength = geoTriangulation->bord.rbegin()->first;
   _U0 = geoTriangulation->bord.rbegin()->second;
   orderVertices(_totLength, _U0, _coords);
-  parametrize(false);
+  parametrize();
   buildOct(CAD);
   printParamMesh();
-  if (!checkOrientationUV()){
-    Msg::Info("discreteDiskFace:: parametrization is not one-to-one; it is going to be corrected.");
-    if(_order==1)
-      parametrize(true);
-    else
-      optimize();
-    buildOct(CAD);
-    printParamMesh();
-  }
-  putOnView(true,false);
-  if(!checkOrientationUV()) Msg::Fatal("discreteDiskFace:: failing to compute a one-to-one mapping");
-  else Msg::Info("Parameterization done :-)");
+  Msg::Info("Parameterization done (GFace %d)",gf->tag());
 }
 /*end BUILDER*/
 
@@ -339,31 +333,73 @@ void discreteDiskFace::buildOct(std::vector<GFace*> *CAD) const
   Octree_Arrange(oct);
 }
 
-bool discreteDiskFace::parametrize(bool one2one)// const
-{ // #improveme
-
-
-  linearSystemCSRTaucs<double> *lsys_u;
-  linearSystemCSRTaucs<double> *lsys_v;
-
-  lsys_u = new linearSystemCSRTaucs<double>; // taucs :-)
-  lsys_v = new linearSystemCSRTaucs<double>; // taucs :-)
-
-  dofManager<double> myAssemblerU(lsys_u);   // hashing
-  dofManager<double> myAssemblerV(lsys_v);
-
-  if(!one2one){
+/*
+void discreteDiskFace::OneToOneParametrization () {
+  v2t_cont adj;
+  buildVertexToTriangle(discrete_triangles, adj);
+  int count=0;
+  {
+    v2t_cont :: iterator it = adj.begin();
+    while (it != adj.end()) {
+      it->first->setIndex(count++);
+      ++it;
+    }
+  }  
+  double *rhs = new double [2*count];
+  double *x   = new double [2*count];
+  {
     for(size_t i = 0; i < _U0.size(); i++){
       MVertex *v = _U0[i];
       const double theta = 2 * M_PI * _coords[i];
-      if(i%_order==0){
-	myAssemblerU.fixVertex(v, 0, 1,cos(theta));
-	myAssemblerV.fixVertex(v, 0, 1,sin(theta));
-      }
-      else{//#TEST
-	myAssemblerU.fixVertex(v, 0, 1,1./_order*((_order-(i%_order))*cos(2*M_PI*_coords[i-(i%_order)])+(i%_order)*cos(2*M_PI*_coords[i+(_order-(i%_order))])));
-	myAssemblerV.fixVertex(v, 0, 1,1./_order*((_order-(i%_order))*sin(2*M_PI*_coords[i-(i%_order)])+(i%_order)*sin(2*M_PI*_coords[i+(_order-(i%_order))])));
-      }
+      myAssemblerU.fixVertex(v, 0, 1,cos(theta));
+      myAssemblerV.fixVertex(v, 0, 1,sin(theta));
+    }  
+  }
+
+  {
+    v2t_cont :: iterator it = adj.begin();
+    while (it != adj.end()) {
+      it->first->setIndex(i++);
+      ++it;
+    }
+  }  
+
+  std::vector<int> ij;
+  std::vector<double> val;
+  
+}
+*/
+
+bool discreteDiskFace::parametrize()// const
+{ // #improveme
+
+  linearSystem<double> * lsys_u, *lsys_v;
+  
+
+#ifdef HAVE_MUMPS
+  lsys_u = new linearSystemMUMPS<double>;
+  lsys_v = new linearSystemMUMPS<double>;
+#else
+  linearSystemCSRGmm<double> * lsys_u1 = new linearSystemCSRGmm<double>;
+  linearSystemCSRGmm<double> * lsys_v1 = new linearSystemCSRGmm<double>;
+  lsys_u1->setGmres(1);
+  lsys_v1->setGmres(1);
+  lsys_u=lsys_u1;
+  lsys_v=lsys_v1;
+#endif
+  dofManager<double> myAssemblerU(lsys_u);   // hashing
+  dofManager<double> myAssemblerV(lsys_v);
+  
+  for(size_t i = 0; i < _U0.size(); i++){
+    MVertex *v = _U0[i];
+    const double theta = 2 * M_PI * _coords[i];
+    if(i%_order==0){
+      myAssemblerU.fixVertex(v, 0, 1,cos(theta));
+      myAssemblerV.fixVertex(v, 0, 1,sin(theta));
+    }
+    else{//#TEST
+      myAssemblerU.fixVertex(v, 0, 1,1./_order*((_order-(i%_order))*cos(2*M_PI*_coords[i-(i%_order)])+(i%_order)*cos(2*M_PI*_coords[i+(_order-(i%_order))])));
+      myAssemblerV.fixVertex(v, 0, 1,1./_order*((_order-(i%_order))*sin(2*M_PI*_coords[i-(i%_order)])+(i%_order)*sin(2*M_PI*_coords[i+(_order-(i%_order))])));
     }
   }
 
@@ -382,8 +418,8 @@ bool discreteDiskFace::parametrize(bool one2one)// const
   double t1 = Cpu();
 
   simpleFunction<double> ONE(1.0);
-  laplaceTerm mappingU(0, 1, &ONE);
-  laplaceTerm mappingV(0, 1, &ONE);
+  convexCombinationTerm mappingU(0, 1, &ONE);
+  convexCombinationTerm mappingV(0, 1, &ONE);
 
   for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
     SElement se(discrete_triangles[i]);
@@ -391,13 +427,6 @@ bool discreteDiskFace::parametrize(bool one2one)// const
     mappingV.addToMatrix(myAssemblerV, &se);
   }
 
-
-  if(one2one){
-    Msg::Info("discreteDiskFace::parametrize \t Modifying discrete system");
-    checklsys(lsys_u,&myAssemblerU,1);
-    checklsys(lsys_v,&myAssemblerV,0);
-  }
-     
   double t2 = Cpu();
   Msg::Debug("Assembly done in %8.3f seconds", t2 - t1);
   lsys_u->systemSolve();
@@ -429,97 +458,30 @@ bool discreteDiskFace::parametrize(bool one2one)// const
   return true;
 }
 
-void discreteDiskFace::checklsys(linearSystemCSRTaucs<double>* lsys,dofManager<double>* myAssembler,int U)
-{
-     
-  INDEX_TYPE *ai;
-  INDEX_TYPE *jptr;
-  double *a;
-  //double b;
-  lsys->getMatrix(jptr,ai,a);
-  int NbUnk = lsys->getNbUnk();
-  //  int NNZ = lsys->getNNZ();
-  double tr = 0.;
-  //printf("------------------------%d\n######################%d\n______________________\n",NNZ,NbUnk);
-  for(int i=0; i<NbUnk; i++){
-    tr += a[jptr[i]];
-    /*lsys->getFromRightHandSide(i,b);
-    printf("%d: %d->%d\n",i,jptr[i],jptr[i+1]);
-    for(int j=jptr[i]; j<jptr[i+1]; j++)
-      printf("%d: %f \t",ai[j],a[j]);
-      printf("=%f \n",b);*/
-  }
-  tr /= NbUnk;
-
-  double alpha = .1;
-  for(int i=0; i<NbUnk; i++)
-    for(int j=jptr[i]+1; j<jptr[i+1]; j++)
-      if(a[j] > -alpha*tr){
-	double delta = a[j] + alpha*tr;
-	a[jptr[i]] += delta;
-	a[jptr[ai[j]]] += delta;
-	a[j] -= delta;
-      }
-  /*
-  printf("\n");
-  for(int i=0; i<NbUnk; i++){
-    lsys->getFromRightHandSide(i,b);
-    printf("%d: %d->%d\n",i,jptr[i],jptr[i+1]);
-    for(int j=jptr[i]; j<jptr[i+1]; j++)
-      printf("%d: %f \t",ai[j],a[j]);
-    printf("=%f \n",b);
-  }
-  */
-  std::map<int,int> dirichlet;
-  for(unsigned int i=0; i<_U0.size(); i++)
-    dirichlet[myAssembler->getDofNumber(Dof(_U0[i]->getNum(),10000))] = i;
-
-
-  for(int i=0; i<NbUnk; i++){
-    if(dirichlet.find(i)!=dirichlet.end()){
-      lsys->addToMatrix(i,i,-a[jptr[i]]+1);
-      double theta = 2 * M_PI *  _coords[dirichlet[i]];
-      double val = U*cos(theta) + (1-U)*sin(theta);
-      lsys->addToRightHandSide(i,val);
-      for(int j=jptr[i]+1; j<jptr[i+1]; j++){
-	if(dirichlet.find(ai[j])==dirichlet.end())
-	   lsys->addToRightHandSide(ai[j],-a[j]*val);
-	a[j] = 0;
-      }
-    }
-    else{
-      for(int j=jptr[i]+1; j<jptr[i+1]; j++){
-	if(dirichlet.find(ai[j])!=dirichlet.end()){
-	  double theta = 2 * M_PI *  _coords[dirichlet[ai[j]]];
-	  double val = U*cos(theta) + (1-U)*sin(theta);
-	  lsys->addToRightHandSide(i,-a[j]*val);
-	  a[j] = 0;
-	}
-      }
-    }//end else
-  }//end for i
-  /*
-  lsys->getMatrix(jptr,ai,a);
-  NbUnk = lsys->getNbUnk();
-  NNZ = lsys->getNNZ();
-  printf("--#--#--#--\n");
-  for(int i=0; i<NbUnk; i++){
-    lsys->getFromRightHandSide(i,b);
-    printf("%d: %d->%d\n",i,jptr[i],jptr[i+1]);
-    for(int j=jptr[i]; j<jptr[i+1]; j++)
-      printf("%d: %f \t",ai[j],a[j]);
-    printf("=%f \n",b);
-  }
- */
-  
-}
+//void discreteDiskFace::checklsys(linearSystemCSR<double>* lsys,dofManager<double>* myAssembler,int U)
+//{
+//}
 
 void discreteDiskFace::getTriangleUV(const double u,const double v,
 				     discreteDiskFaceTriangle **mt,
 				     double &_xi, double &_eta)const{
   double uv[3] = {u,v,0.};
   *mt = (discreteDiskFaceTriangle*) Octree_Search(uv,oct);
-  if (!(*mt)) return;
+  if (!(*mt)) {
+    for (unsigned int i=0; i<discrete_triangles.size()-geoTriangulation->fillingHoles.size(); i++){
+      discreteDiskFaceTriangle *ct = &_ddft[i];
+      double Xi[2];
+      int xxx = discreteDiskFaceInEle(ct, Xi);
+      if (xxx) {
+	*mt = ct;
+	_xi = Xi[0];
+	_eta = Xi[1];
+	return;
+      }
+    }
+    Msg::Debug("discreteDiskFace::getTriangleUV(), didn't find the reference coordinate (xi;eta) for (u;v)=(%f;%f) among %d triangles",u,v,discrete_triangles.size()-geoTriangulation->fillingHoles.size());
+    return;
+  }
 
   double Xi[2];
   double U[2] = {u,v};
@@ -841,7 +803,7 @@ void discreteDiskFace::secondDer(const SPoint2 &param,
   return;
 }
 
-void discreteDiskFace::putOnView(bool Xu, bool Ux)
+void discreteDiskFace::putOnView(int iFace, int iMap, bool Xu, bool Ux)
 {// #improveme  using built-in methods
 
   char mybuffer [64];
@@ -851,28 +813,27 @@ void discreteDiskFace::putOnView(bool Xu, bool Ux)
 
 
   if(Xu){
-
-    sprintf(mybuffer, "param_u_part%d_order%d.pos",
-	    initialTriangulation->idNum,_order);
+    sprintf(mybuffer, "param_u_gface%d_part%d_order%d.pos",
+	    iFace, iMap,_order);
     view_u = Fopen(mybuffer,"w");
 
-    sprintf(mybuffer, "param_v_part%d_order%d.pos",
-	    initialTriangulation->idNum,_order);
+    sprintf(mybuffer, "param_v_gface%d_part%d_order%d.pos",
+	    iFace, iMap,_order);
     view_v = Fopen(mybuffer,"w");
   }
   if(Ux){
 
-    sprintf(mybuffer, "UVx_part%d_order%d.pos",
-	    initialTriangulation->idNum,_order);
+    sprintf(mybuffer, "UVx_gface%d_part%d_order%d.pos",
+	    iFace, iMap,_order);
 
     UVx = Fopen(mybuffer,"w");
 
-    sprintf(mybuffer, "UVy_part%d_order%d.pos",
-	    initialTriangulation->idNum,_order);
+    sprintf(mybuffer, "UVy_gface%d_part%d_order%d.pos",
+	    iFace, iMap,_order);
     UVy = Fopen(mybuffer,"w");
 
-    sprintf(mybuffer, "UVz_part%d_order%d.pos",
-	    initialTriangulation->idNum,_order);
+    sprintf(mybuffer, "UVz_gface%d_part%d_order%d.pos",
+	    iFace, iMap,_order);
     UVz = Fopen(mybuffer,"w");
   }
 
@@ -978,10 +939,132 @@ void discreteDiskFace::putOnView(bool Xu, bool Ux)
 
 // useful for mesh generators
 // Intersection of a circle and a plane
+//FILE *allProblems = NULL;
+//void openProblemsON(void){
+//  allProblems = fopen ("op.pos","w");
+//}
+//void openProblemsOFF(void){
+//  fclose(allProblems);
+//  allProblems = NULL;
+//}
+
 GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
+						const SVector3 &p, const double &R,
+						double uv[2]) const
+{
+  SVector3 n = crossprod(n1,n2);
+  n.normalize();
+  //  printf("n %g %g %g\n",n.x(), n.y(), n.z());
+  const int N = (int)(discrete_triangles.size()-geoTriangulation->fillingHoles.size());
+  for (int i=-1;i<N;i++){
+    discreteDiskFaceTriangle *ct = NULL;
+    double U,V;
+    if (i == -1) getTriangleUV(uv[0],uv[1], &ct, U,V);
+    else ct = &_ddft[i];
+    if (!ct) continue;
+    SVector3 v0(ct->tri->getVertex(0)->x(),ct->tri->getVertex(0)->y(),
+                ct->tri->getVertex(0)->z());
+    SVector3 v1(ct->tri->getVertex(1)->x(),ct->tri->getVertex(1)->y(),
+                ct->tri->getVertex(1)->z());
+    SVector3 v2(ct->tri->getVertex(2)->x(),ct->tri->getVertex(2)->y(),
+                ct->tri->getVertex(2)->z());
+    SVector3 t1  = v1 - v0;
+    SVector3 t2  = v2 - v0;
+    SVector3 t = crossprod(t1,t2);
+    t.normalize();
+    SVector3 d = crossprod(n,t);
+    if (d.norm() < 1.e-12) continue;
+    d.normalize();
+    double rhs[2] = {dot(n,p), dot(v0,t)};
+    double r[2];
+    double m[2][2];
+    SVector3 x0(0,0,0);
+    m[0][0] = n.y();
+    m[0][1] = n.z();
+    m[1][0] = t.y();
+    m[1][1] = t.z();      
+    if (fabs(det2x2(m)) > 1.e-8){
+      sys2x2(m,rhs,r);
+      x0 = SVector3(0,r[0],r[1]);
+    }
+    else {
+      m[0][0] = n.x();
+      m[0][1] = n.z();
+      m[1][0] = t.x();
+      m[1][1] = t.z();      
+      if (fabs(det2x2(m)) > 1.e-8){
+	sys2x2(m,rhs,r);	
+	x0 = SVector3(r[0],0,r[1]);
+      }
+      else {
+	m[0][0] = n.x();
+	m[0][1] = n.y();
+	m[1][0] = t.x();
+	m[1][1] = t.y();      
+	if (sys2x2(m,rhs,r))	{	  
+	  x0 = SVector3(r[0],r[1],0);
+	}
+	else{
+	  printf("mauvaise pioche\n");
+	  continue;
+	}
+      }
+    }    
+    
+    const double a = 1.0;
+    const double b = -2*dot(d,p-x0);
+    const double c = dot(p-x0,p-x0) - R*R;
+    const double delta = b*b-4*a*c;
+    if (delta >= 0){
+      double sign = (dot(n2,d) > 0)? 1.0:-1.0;
+      const double ta = (-b + sign*sqrt(delta)) / (2.*a);
+      const double tb = (-b - sign*sqrt(delta)) / (2.*a);
+      SVector3 s[2] = {x0 + d * ta, x0 + d * tb};
+      for (int IT=0;IT<2;IT++){
+	double mat[2][2], b[2],uv[2];
+	mat[0][0] = dot(t1,t1);
+	mat[1][1] = dot(t2,t2);
+	mat[0][1] = mat[1][0] = dot(t1,t2);
+	b[0] = dot(s[IT]-v0,t1) ;
+	b[1] = dot(s[IT]-v0,t2) ;
+	sys2x2(mat,b,uv);
+	// check now if the point is inside the triangle
+	if (uv[0] >= -1.e-6 && uv[1] >= -1.e-6 &&
+	    1.-uv[0]-uv[1] >= -1.e-6 ) {
+	  SVector3 pp =
+	    ct->p[0] * ( 1.-uv[0]-uv[1] ) +
+	    ct->p[1] * uv[0] +
+	    ct->p[2] * uv[1] ;
+	  return GPoint(s[IT].x(),s[IT].y(),s[IT].z(),this,pp);
+	}
+      }
+    }
+  }
+  GPoint pp(0);
+  pp.setNoSuccess();
+  Msg::Debug("ARGG no success intersection circle");
+  //  Msg::Info("ARGG no success intersection circle");
+  //  printf("Point(1) = {%g,%g,%g};\n",p.x(),p.y(),p.z());
+  //  printf("Point(2) = {%g,%g,%g};\n",p.x()+d*n1.x(),p.y()+d*n1.y(),p.z()+d*n1.z());
+  //  printf("Point(3) = {%g,%g,%g};\n",p.x()+d*n2.x(),p.y()+d*n2.y(),p.z()+d*n2.z());
+  
+  //  //  printf("Circle(4) = {2,1,3};\n");
+  //  printf("{%g,%g,%g};\n",n1.x(),n1.y(),n1.z());
+  //  printf("{%g,%g,%g};\n",n2.x(),n2.y(),n2.z());
+  //  printf("coucou --> \n");
+  //  if (allProblems){
+  //    fprintf(allProblems,"VP(%g,%g,%g){%g,%g,%g};\n",p.x(),p.y(),p.z(),R*n2.x(),R*n2.y(),R*n2.z());
+  //  }
+  //  getchar();
+  return pp;
+}
+
+
+GPoint discreteDiskFace::intersectionWithCircle2(const SVector3 &n1, const SVector3 &n2,
 						const SVector3 &p, const double &d,
 						double uv[2]) const
 {
+  // n2 is exterior
   SVector3 n = crossprod(n1,n2);
   n.normalize();
   for (int i=-1;i<(int)(discrete_triangles.size()-geoTriangulation->fillingHoles.size());i++){
@@ -1039,47 +1122,46 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
     const double c = dot(q-p,q-p) - d*d;
     const double delta = b*b-4*a*c;
     if (delta >= 0){
-      const double ta = (-b + sqrt(delta)) / (2.*a);
-      const double tb = (-b - sqrt(delta)) / (2.*a);
-      SVector3 s1 = q + m * ta;
-      SVector3 s2 = q + m * tb;
-      SVector3 s;
-      if (dot(s1-p,n1) > 0){
-	s = s1;
-      }
-      else if (dot(s2-p,n1) > 0){
-	s = s2;
-      }
-      else continue;
-
-      // we have now to look if the point is inside the triangle
-      // s = v1 + u t1 + v t2
-      // we know the system has a solution because s is in the plane
-      // defined by v1 and v2 we solve then
-      // (s - v1) . t1 = u t1^2    + v t2 . t1
-      // (s - v1) . t2 = u t1 . t2 + v t2^2
-
-      double mat[2][2], b[2],uv[2];
-      mat[0][0] = dot(t1,t1);
-      mat[1][1] = dot(t2,t2);
-      mat[0][1] = mat[1][0] = dot(t1,t2);
-      b[0] = dot(s-v0,t1) ;
-      b[1] = dot(s-v0,t2) ;
-      sys2x2(mat,b,uv);
-      // check now if the point is inside the triangle
-      if (uv[0] >= -1.e-6 && uv[1] >= -1.e-6 &&
-	  1.-uv[0]-uv[1] >= -1.e-6 ) {
-	SVector3 pp =
-	  ct->p[0] * ( 1.-uv[0]-uv[1] ) +
-	  ct->p[1] * uv[0] +
-	  ct->p[2] * uv[1] ;
-	return GPoint(s.x(),s.y(),s.z(),this,pp);
+      double sign = (dot(n2,m) > 0)? 1.0:-1.0;
+      const double ta = (-b + sign*sqrt(delta)) / (2.*a);
+      const double tb = (-b - sign*sqrt(delta)) / (2.*a);
+      SVector3 s[2] =  {q + m * ta, q + m * tb};
+      for (int IT=0;IT<2;IT++){	
+	double mat[2][2], b[2],uv[2];
+	mat[0][0] = dot(t1,t1);
+	mat[1][1] = dot(t2,t2);
+	mat[0][1] = mat[1][0] = dot(t1,t2);
+	b[0] = dot(s[IT]-v0,t1) ;
+	b[1] = dot(s[IT]-v0,t2) ;
+	sys2x2(mat,b,uv);
+	// check now if the point is inside the triangle
+	if (uv[0] >= -1.e-6 && uv[1] >= -1.e-6 &&
+	    1.-uv[0]-uv[1] >= -1.e-6 ) {
+	  SVector3 pp =
+	    ct->p[0] * ( 1.-uv[0]-uv[1] ) +
+	    ct->p[1] * uv[0] +
+	    ct->p[2] * uv[1] ;
+	  return GPoint(s[IT].x(),s[IT].y(),s[IT].z(),this,pp);
+	}
       }
     }
   }
   GPoint pp(0);
   pp.setNoSuccess();
-  Msg::Debug("ARGG no success intersection circle");
+  //  Msg::Debug("ARGG no success intersection circle");
+    Msg::Info("ARGG no success intersection circle");
+  //  printf("Point(1) = {%g,%g,%g};\n",p.x(),p.y(),p.z());
+  //  printf("Point(2) = {%g,%g,%g};\n",p.x()+d*n1.x(),p.y()+d*n1.y(),p.z()+d*n1.z());
+  //  printf("Point(3) = {%g,%g,%g};\n",p.x()+d*n2.x(),p.y()+d*n2.y(),p.z()+d*n2.z());
+  
+  //  //  printf("Circle(4) = {2,1,3};\n");
+  //  printf("{%g,%g,%g};\n",n1.x(),n1.y(),n1.z());
+  //  printf("{%g,%g,%g};\n",n2.x(),n2.y(),n2.z());
+  //  printf("coucou --> \n");
+    //  if (allProblems){
+    //    fprintf(allProblems,"VP(%g,%g,%g){%g,%g,%g};\n",p.x(),p.y(),p.z(),d*n2.x(),d*n2.y(),d*n2.z());
+    //  }
+  //  getchar();
   return pp;
 }
 
