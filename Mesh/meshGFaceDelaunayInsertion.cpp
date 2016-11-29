@@ -747,7 +747,7 @@ bool insertVertexB (std::list<edgeXface> &shell,
     // avoid angles that are too obtuse
     double cosv = ((d1*d1+d2*d2-d3*d3)/(2.*d1*d2));
 
-    if ((d1 < LL * .25 || d2 < LL * .25 || cosv < -.9999) && !force) {
+    if ((d1 < LL * .35 || d2 < LL * .35 || cosv < -.9999) && !force) {
       onePointIsTooClose = true;
       //      printf("%12.5E %12.5E %12.5E %12.5E \n",d1,d2,LL,cosv);
     }
@@ -1330,7 +1330,7 @@ bool optimalPointFrontalB (GFace *gf,
   if (gf->geomType() == GEntity::CompoundSurface){
     GFaceCompound *gfc = dynamic_cast<GFaceCompound*> (gf);
     if (gfc){
-      GPoint gp = gfc->intersectionWithCircle(n1,n2,middle,d,newPoint);
+      GPoint gp = gfc->intersectionWithCircle(n2,n1,middle,d,newPoint);
       if (gp.succeeded()){
 	newPoint[0] = gp.u();
 	newPoint[1] = gp.v();
@@ -1340,7 +1340,7 @@ bool optimalPointFrontalB (GFace *gf,
   }
 
   double uvt[3] = {newPoint[0],newPoint[1],0.0};
-  curveFunctorCircle cc (n1,n2,middle,d);
+  curveFunctorCircle cc (n2,n1,middle,d);
   surfaceFunctorGFace ss (gf);
 
   if (intersectCurveSurface (cc,ss,uvt,d*1.e-8)){
@@ -1350,6 +1350,7 @@ bool optimalPointFrontalB (GFace *gf,
   else {
     Msg::Debug("--- Non optimal point found -----------");
     return false;
+    return true;
     //    Msg::Info("--- Non optimal point found -----------");
   }
   return true;

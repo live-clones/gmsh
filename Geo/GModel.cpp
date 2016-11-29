@@ -1333,6 +1333,7 @@ void GModel::_createGeometryOfDiscreteEntities(bool force)
 {
   if (CTX::instance()->meshDiscrete){
     createTopologyFromMeshNew ();
+    exportDiscreteGEOInternals();
   }
 
   if (force || CTX::instance()->meshDiscrete){
@@ -2277,13 +2278,15 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
   makeDiscreteRegionsSimplyConnected();
   makeDiscreteFacesSimplyConnected();
 
-  // TEST !!!!!!!!
-  if (0){
-    createTopologyFromMeshNew ();
-    double t2 = Cpu();
-    Msg::StatusBar(true, "Done creating topology from mesh (%g s)", t2 - t1);
-    return;
-  }
+  // // TEST !!!!!!!!
+  if (1)
+    {
+      createTopologyFromMeshNew ();
+      exportDiscreteGEOInternals();
+      double t2 = Cpu();
+      Msg::StatusBar(true, "Done creating topology from mesh (%g s)", t2 - t1);
+     return;
+    }
 
   // create topology for all discrete regions
   std::vector<discreteRegion*> discRegions;

@@ -603,7 +603,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
       if((v = FindPoint(iPnt)))
         List_Add(pC->Control_Points, &v);
       else{
-        Msg::Error("Unknown control point %d in Curve %d", iPnt, pC->Num);
+        Msg::Error("Unknown control point %d in Curve %d (a)", iPnt, pC->Num);
       }
     }
     if(p1 < 0) {
@@ -619,14 +619,14 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
         pC->beg = v;
       }
       else {
-        Msg::Error("Unknown control point %d in Curve %d", p1, pC->Num);
+        Msg::Error("Unknown control point %d in Curve %d (b)", p1, pC->Num);
       }
       if((v = FindPoint(p2))) {
         Msg::Info("Curve %d first control point %d ", pC->Num, v->Num);
         pC->end = v;
       }
       else {
-        Msg::Error("Unknown control point %d in Curve %d", p2, pC->Num);
+        Msg::Error("Unknown control point %d in Curve %d  (c)", p2, pC->Num);
       }
     }
     End_Curve(pC);
