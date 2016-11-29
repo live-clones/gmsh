@@ -28,6 +28,9 @@
 #include "CondNumBasis.h"
 #include "qualityMeasuresJacobian.h"
 
+#if 0
+#include "mwis.hpp"
+#endif
 
 std::ostream& operator<<(std::ostream& os, const Hex& hex)
 {
@@ -7488,6 +7491,14 @@ void Recombinator_Graph::execute(GRegion* gr){
 
 
   create_losses_graph(gr);
+
+  for (MTetrahedron *tet : gr->tetrahedra) {
+    if (tet_to_hex.find(tet) == tet_to_hex.end()) {
+      std::cout << "Cannot recombine: " << tet->getNum() << "\n";
+    }
+  }
+
+#if 0
   compute_hex_ranks();
 
 
@@ -7511,12 +7522,68 @@ void Recombinator_Graph::execute(GRegion* gr){
   export_the_clique_graphviz_format(cl,clique_number,graphfilename);
 
   merge_clique(gr,cl,clique_number);
+#else
+  struct vertex {
+    Hex *hex;
+    double quality;
+  };
+
+  typedef boost::adjacency_list<
+    boost::vecS,
+    boost::vecS,
+    boost::undirectedS, vertex> graph_type;
+
+  typedef boost::graph_traits<graph_type>::vertex_descriptor vertex_id;
+
+  graph_type graph;
+
+  std::map<std::set<MElement*>, vertex_id> vertex_map;
+
+  for (auto pair : incompatibility_graph) {
+    Hex *hex = pair.second.first;
+    const std::set<MElement*> &key = hex_to_tet[hex];
+    auto it = vertex_map.find(key);
+    if (it == vertex_map.end()) {
+      vertex_id vid = add_vertex(graph);
+      graph[vid].hex = hex;
+      graph[vid].quality = hex->get_quality();
+
+      vertex_map[key] = vid;
+    }
+  }
+
+  for (auto pair : incompatibility_graph) {
+    Hex *hex = pair.second.first;
+    vertex_id vid = vertex_map[hex_to_tet[hex]];
+    for (auto incompatible_pair : pair.second.second) {
+      Hex *other_hex = incompatible_pair.second;
+      vertex_id other_vid = vertex_map[hex_to_tet[other_hex]];
+
+      if (!edge(vid, other_vid, graph).second) {
+        add_edge(vid, other_vid, graph);
+      }
+    }
+  }
+
+  auto weight_map = get(&vertex::quality, graph);
+
+  std::vector<vertex_id> vertices;
+  maximum_weight_independent_set(
+    graph, weight_map, std::back_inserter(vertices));
+
+  hash_tableA.clear();
+  hash_tableB.clear();
+  hash_tableC.clear();
+
+  for (vertex_id v : vertices) {
+    Hex *hex = graph[v].hex;
+    merge_hex(gr, hex);
+  }
+#endif
 
   rearrange(gr);
   statistics(gr);
   modify_surfaces(gr);
-
-
 
   return;
 
