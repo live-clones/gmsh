@@ -1056,7 +1056,7 @@ void Recombinator::pattern1(GRegion* gr) {
       MVertex *d = element->getVertex((index + 3) % 4);
 
       std::vector<MVertex*> already(4);
-      already[0]= a; 
+      already[0]= a;
       already[1]= b;
       already[2]= c;
       already[3]= d;
@@ -1079,10 +1079,10 @@ void Recombinator::pattern1(GRegion* gr) {
           for (std::set<MVertex*>::iterator it3 = bin3.begin(); it3 != bin3.end(); it3++) {
             MVertex* r = *it3;
             already[6] = r;
-            if (p != q && p != r && q != r) {              
+            if (p != q && p != r && q != r) {
               std::set<MVertex*> bin4;  // candidates for G - s vertices linked to p,q and r
               find(p, q, r, already, bin4);
-              
+
               for (std::set<MVertex*>::iterator it4 = bin4.begin(); it4 != bin4.end(); it4++) {
                 MVertex* s = *it4;
                 Hex* hex = new Hex(a, b, q, c, d, p, s, r);
@@ -2143,7 +2143,7 @@ bool Recombinator::valid(Hex &hex) const{
 
 double Recombinator::eta(MVertex* a,MVertex* b,MVertex* c,MVertex* d) const{
   MQuadrangle quad(a,b,c,d);
-  return quad.etaShapeMeasure();  
+  return quad.etaShapeMeasure();
 }
 
 bool Recombinator::linked(MVertex* v1,MVertex* v2){
@@ -2171,7 +2171,7 @@ void Recombinator::find(MVertex* v1,MVertex* v2,const std::vector<MVertex*>& alr
   intersection(it1->second,it2->second,already,final);
 }
 
-void Recombinator::find(MVertex* v1,MVertex* v2,MVertex* v3, const std::vector<MVertex*>& already,std::set<MVertex*>& final) const {   
+void Recombinator::find(MVertex* v1,MVertex* v2,MVertex* v3, const std::vector<MVertex*>& already,std::set<MVertex*>& final) const {
   std::map<MVertex*, std::set<MVertex*> >::const_iterator it1 = vertex_to_vertices.find(v1);
   std::map<MVertex*, std::set<MVertex*> >::const_iterator it2 = vertex_to_vertices.find(v2);
   std::map<MVertex*, std::set<MVertex*> >::const_iterator it3 = vertex_to_vertices.find(v3);
@@ -2251,7 +2251,7 @@ void Recombinator::intersection(const std::set<MVertex*>& bin1,const std::set<MV
 
   // Compute the intersection of the two input sets
   std::set_intersection(bin1.begin(),bin1.end(),bin2.begin(),bin2.end(),std::inserter(temp,temp.end()));
-  
+
   for(std::set<MVertex*>::iterator it=temp.begin();it!=temp.end();it++){
     bool ok = true;
 
@@ -3002,7 +3002,7 @@ void Recombinator::print_segment(SPoint3 p1,SPoint3 p2,std::ofstream& file){
        << "{10, 20};\n";
 }
 
-double Recombinator::scaled_jacobian(MVertex* a,MVertex* b,MVertex* c,MVertex* d){  
+double Recombinator::scaled_jacobian(MVertex* a,MVertex* b,MVertex* c,MVertex* d){
   SVector3 ab(a->point(), b->point());
   SVector3 ac(a->point(), c->point());
   SVector3 ad(a->point(), d->point());
@@ -3097,7 +3097,7 @@ double Recombinator::min_scaled_jacobian(Hex &hex){
     min = std::min(min, jacobians[i]);
     max = std::max(max, jacobians[i]);
   }
-  if (max < 0) min = -max; // Why ? Why is there no test on min < -max ?? Jeanne 
+  if (max < 0) min = -max; // Why ? Why is there no test on min < -max ?? Jeanne
 
   /*MHexahedron *h1 = new MHexahedron(a, b, c, d, e, f, g, h);
   MHexahedron *h2 = new MHexahedron(e, f, g, h, a, b, c, d);
@@ -7498,7 +7498,7 @@ void Recombinator_Graph::execute(GRegion* gr){
     }
   }
 
-#if 0
+#if 1
   compute_hex_ranks();
 
 
