@@ -332,8 +332,7 @@ struct state {
 
   std::vector<std::vector<vertex>> cliques;
   std::vector<size_t> clique_sizes;
-  std::set<vertex> invalid;
-  std::set<vertex> selectable;
+   std::set<vertex> selectable;
   std::vector<bool> assigned;
 
   std::vector<std::vector<size_t>> clique_map_storage;
@@ -411,7 +410,7 @@ public:
       auto edges = out_edges(_vertex, state.graph);
       for (auto eit = edges.first; eit != edges.second; eit++) {
         const vertex &other = target(*eit, state.graph);
-        if (state.invalid.find(other) == state.invalid.end()) {
+        if (state.selectable.find(other) != state.selectable.end()) {
           removed.push_back(other);
         }
       }
@@ -422,7 +421,7 @@ public:
     }
     else {
       for (vertex v : state.cliques[_id]) {
-        if (state.invalid.find(v) == state.invalid.end())
+        if (state.selectable.find(v) != state.selectable.end())
           removed.push_back(v);
       }
 
@@ -487,7 +486,6 @@ public:
     state.solution_value = _new_weight;
 
     for (vertex v : _invalidated) {
-      state.invalid.insert(v);
       state.selectable.erase(v);
     }
 
@@ -507,7 +505,6 @@ public:
     state.solution_value = _old_weight;
 
     for (vertex v : _invalidated) {
-      state.invalid.erase(v);
       state.selectable.insert(v);
     }
 
@@ -586,7 +583,7 @@ public:
     std::vector<vertex> vertices;
     size_t id = *clique_it;
     for (vertex v : state.cliques[id]) {
-      if (state.invalid.find(v) == state.invalid.end()) {
+      if (state.selectable.find(v) != state.selectable.end()) {
         vertices.push_back(v);
       }
     }
@@ -623,7 +620,7 @@ public:
     else {
       vertex v = *std::find_if(
         state.cliques[id].begin(), state.cliques[id].end(), [&](vertex v) {
-          return state.invalid.find(v) == state.invalid.end();
+          return state.selectable.find(v) != state.selectable.end();
         });
 
       return std::make_tuple(id < 1361 ? 0 : 1,
@@ -638,7 +635,7 @@ public:
     auto es = out_edges(v, state.graph);
     for (auto eit = es.first; eit != es.second; eit++) {
       vertex u = target(*eit, state.graph);
-      if (state.invalid.find(u) != state.invalid.end())
+      if (state.selectable.find(u) == state.selectable.end())
         result += get(state.weight_map, u);
     }
 
