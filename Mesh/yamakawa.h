@@ -13,6 +13,7 @@
 #include "MVertex.h"
 #include <set>
 #include <map>
+#include <iterator>
 
 //#include <tr1/unordered_set>
 //#include <tr1/unordered_map>
@@ -23,158 +24,12 @@ using namespace std;
 extern void export_gregion_mesh(GRegion *gr, string filename);
 
 
-class PEEntity{
-protected:
-  vector<const MVertex *> vertices;
-  size_t hash;
-  void compute_hash();
-public:
-  PEEntity(const vector<const MVertex*> &_v);
-  //PEEntity(size_t l);
-  virtual ~PEEntity();
-  virtual size_t get_max_nb_vertices() const=0;
-  const MVertex* getVertex(size_t n) const;
-  bool hasVertex(const MVertex *v)const;
-  size_t get_hash() const;
-  bool same_vertices(const PEEntity *t)const;
-  bool operator<(const PEEntity&) const;
-  //bool operator==(const PEEntity&) const;
-  //bool operator==(const size_t&) const;
-};
-
-class PELine : public PEEntity{
-public:
-  PELine(const vector<const MVertex*> &_v);
-  virtual ~PELine();
-  size_t get_max_nb_vertices() const;
-};
-
-class PETriangle : public PEEntity{
-public:
-  PETriangle(const vector<const MVertex*> &_v);
-  //PETriangle(size_t l);
-  virtual ~PETriangle();
-  size_t get_max_nb_vertices() const;
-};
-
-class PEQuadrangle : public PEEntity{
-public:
-  PEQuadrangle(const vector<const MVertex*> &_v);
-  //PEQuadrangle(size_t l);
-  virtual ~PEQuadrangle();
-  size_t get_max_nb_vertices() const;
-};
-
-
-template<class T>
-class clique_stop_criteria{
-public:
-  //typedef tr1::unordered_set<T> graph_data_no_hash;
-  typedef std::set<T> graph_data_no_hash;
-  clique_stop_criteria(map<T, std::set<MElement*> > &_m, int _i);
-  ~clique_stop_criteria();
-  bool stop(const graph_data_no_hash &clique)const;
-  void export_corresponding_mesh(const graph_data_no_hash &clique)const;
-
-private:
-  const map<T, std::set<MElement*> > &hex_to_tet;
-  const unsigned int total_number_tet;
-};
-
-
-template<class T>
-class cliques_compatibility_graph{
-public:
-  typedef unsigned long long hash_key;
-
-  //    typedef  set<T> graph_data;
-  //    typedef  map<T, graph_data > graph;
-  //    typedef multimap<int,T> ranking_data;
-  //typedef tr1::unordered_set<T> graph_data_no_hash;
-  typedef std::set<T> graph_data_no_hash;
-  //    typedef tr1::unordered_multimap<hash_key, T> graph_data;
-  //    typedef tr1::unordered_multimap<hash_key, pair<T, graph_data > > graph;
-  //    typedef tr1::unordered_map<int,T> ranking_data;
-  typedef std::multimap<hash_key, T> graph_data;
-  typedef std::multimap<hash_key, pair<T, graph_data > > graph;
-  typedef std::map<int,T> ranking_data;
-
-  typedef void (*ptrfunction_export)(cliques_compatibility_graph<T>&, int, string);
-
-  cliques_compatibility_graph(graph &_g, const map<T, std::vector<double> > &_hex_ranks, unsigned int _max_nb_cliques, unsigned int _nb_hex_potentiels, clique_stop_criteria<T> *csc, ptrfunction_export fct);
-  ~cliques_compatibility_graph();
-  void find_cliques();
-  void export_cliques();
-
-  virtual typename graph::const_iterator begin_graph(){return G.begin();};
-  virtual typename graph::const_iterator end_graph(){return G.end();};
-
-  bool found_the_ultimate_max_clique;
-
-  multimap<int, set<T> > allQ;// all cliques
-
-protected:
-  void erase_entry(graph_data &s, T &u, hash_key &key);
-  void find_cliques(graph_data &s,int n);
-  void split_set_BW(const T &u, const hash_key &u_key,const graph_data &s, graph_data &white, graph_data &black);
-  void fill_black_set(const T &u, const hash_key &u_key, const graph_data &s, graph_data &black);
-  void choose_u(const graph_data &s, T &u, hash_key &u_key);
-  // the maximum score (int) will be chosen...
-  double function_to_maximize_for_u(const T &u, const hash_key &u_key, const graph_data &s);
-  void store_clique(int n);
-  // returns true if two nodes are connected in the compatibility graph
-  virtual bool compatibility(const T &u, const hash_key &u_key, const T &v, const hash_key &v_key);
-
-  ptrfunction_export export_clique_graph;
-
-  const bool debug;
-  unsigned int max_nb_cliques;
-  unsigned int nb_hex_potentiels;
-  unsigned int max_clique_size;
-  unsigned int position;
-  unsigned int total_nodes_number;
-  unsigned int total_nb_of_cliques_searched;
-  unsigned int max_nb_of_stored_cliques;// to reduce memory footprint (set to zero if no limit)
-
-  clique_stop_criteria<T>* criteria;
-
-  bool cancel_search;
-  const map<T, std::vector<double> > &hex_ranks;
-  graph &G;
-  graph_data_no_hash Q;// the current clique
-};
-
-
-
-template<class T>
-class cliques_losses_graph : public cliques_compatibility_graph<T> {
-  //    typedef  set<T> graph_data;
-  //    typedef  map<T, graph_data > graph;
-  //    typedef tr1::unordered_set<T> graph_data;
-  //    typedef tr1::unordered_map<T, graph_data > graph;
-public:
-  typedef unsigned long long hash_key;
-  typedef multimap<hash_key, T> graph_data;
-  typedef multimap<hash_key, pair<T, graph_data > > graph;
-  //    typedef tr1::unordered_multimap<hash_key, T> graph_data;
-  typedef void (*ptrfunction_export)(cliques_compatibility_graph<T>&, int, string);
-
-  cliques_losses_graph(graph &_g, const map<T, std::vector<double> > &_hex_ranks, unsigned int _max_nb_cliques, unsigned int _nb_hex_potentiels, clique_stop_criteria<T> *csc, ptrfunction_export fct);
-  ~cliques_losses_graph();
-
-protected:
-  // returns false if two nodes are connected in the losses graph (i.e. true if connected in compatibility graph)
-  virtual bool compatibility(const T &u, const hash_key &u_key, const T &v, const hash_key &v_key);
-  graph &G;
-};
-
-
-
 class Hex {
 private:
   double quality;
   unsigned long long hash;
-  MVertex* vertices_[8];
+  std::vector<MVertex*> vertices_; 
+
 private:
   void set_hash(){
     hash = 0.;
@@ -184,52 +39,49 @@ private:
   }
 
 public:
-  Hex() : quality(0.), hash(0.) {
-    vertices_[0] = NULL;
-    vertices_[1] = NULL;
-    vertices_[2] = NULL;
-    vertices_[3] = NULL;
-    vertices_[4] = NULL;
-    vertices_[5] = NULL;
-    vertices_[6] = NULL;
-    vertices_[7] = NULL;   
-  }
+  Hex() : quality(0.), hash(0.) {}
 
-  Hex(MVertex* a2, MVertex* b2, MVertex* c2, MVertex* d2, MVertex* e2, MVertex* f2, MVertex* g2, MVertex* h2) :
-    quality(0.) {
-    vertices_[0] = a2; 
-    vertices_[1] = b2;
-    vertices_[2] = c2;
-    vertices_[3] = d2;
-    vertices_[4] = e2;
-    vertices_[5] = f2;
-    vertices_[6] = g2;
-    vertices_[7] = h2;
+  Hex(const std::vector<MVertex*>& vertices):
+    quality(0.), hash(0), vertices_(vertices)
+  {
     set_hash();
   }
+  Hex(MVertex* a2, MVertex* b2, MVertex* c2, MVertex* d2, MVertex* e2, MVertex* f2, MVertex* g2, MVertex* h2) :
+    quality(0.) 
+  {
+    vertices_.push_back(a2); 
+    vertices_.push_back(b2);
+    vertices_.push_back(c2);
+    vertices_.push_back(d2);
+    vertices_.push_back(e2);
+    vertices_.push_back(f2);
+    vertices_.push_back(g2);
+    vertices_.push_back(h2);
+    set_hash();
+  }
+  
   ~Hex() {};
+
   double get_quality() const { return quality; }
   void set_quality(double new_quality) { quality = new_quality; }
-  MVertex* get_a() const { return vertices_[0]; }
-  MVertex* get_b() const { return vertices_[1]; }
-  MVertex* get_c() const { return vertices_[2]; }
-  MVertex* get_d() const { return vertices_[3]; }
-  MVertex* get_e() const { return vertices_[4]; }
-  MVertex* get_f() const { return vertices_[5]; }
-  MVertex* get_g() const { return vertices_[6]; }
-  MVertex* get_h() const { return vertices_[7]; }
-  MVertex* getVertex(unsigned int n) const {
-    if (n < 8) {
-      return vertices_[n];
+   
+  MVertex* getVertex(unsigned int i) const {
+    if (i < 8) {
+      return vertices_[i];
     }
     else {
-      cout << "Hex: unknown vertex number " << n << endl;
+      cout << "Hex: unknown vertex number " << i << endl;
       throw;
       return NULL;
     }
   }
+  const std::vector<MVertex*>& vertices() const {
+    return vertices_;
+  }
 
-  bool hasVertex(const MVertex *v) const {
+  MVertex* vertex_in_facet(unsigned int facet, unsigned int v_in_facet) const;
+
+  bool hasVertex(MVertex *v) const {
     for (int i = 0; i < 8; i++) {
       if (getVertex(i) == v) {
         return true;
@@ -247,15 +99,17 @@ public:
     return true;
   }
 
-  void set_vertices(MVertex* a2, MVertex* b2, MVertex* c2, MVertex* d2, MVertex* e2, MVertex* f2, MVertex* g2, MVertex* h2) {
-    vertices_[0] = a2;
-    vertices_[1] = b2;
-    vertices_[2] = c2;
-    vertices_[3] = d2;
-    vertices_[4] = e2;
-    vertices_[5] = f2;
-    vertices_[6] = g2;
-    vertices_[7] = h2;
+  int vertex_index(MVertex* v) const {
+    for (unsigned int i = 0; i < 8; ++i) {
+      if (vertices_[i] == v) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  bool contains(MVertex* v) const {
+    return vertex_index(v) != -1;
   }
 
   unsigned long long get_hash() {
@@ -267,7 +121,6 @@ public:
   bool operator<(const Hex& hex) const {
     return quality > hex.get_quality(); // Why > ??? Shouldn't it be < ?? Jeanne.
   }
-
 };
 
 class Facet {
@@ -401,191 +254,448 @@ public:
 };
 
 
+// Class in charge of answering connectivity requests on 
+// the input tetraedral mesh
+class TetMeshConnectivity {
+public:
+  typedef std::set<MVertex*> VertexSet;
+  typedef std::set<MElement*> TetSet;
 
-//inline std::ostream& operator<<(std::ostream& s, const PETriangle& t){
-//  const MVertex *v;
-//  for (int i=0;i<3;i++){
-//    v = t.getVertex(i);
-//    s << "(" << v->x() << "," << v->y() << "," << v->z() << ")";
-//  }
-//  return s;
-//};
+  TetMeshConnectivity() {};
+  ~TetMeshConnectivity() {};
+
+  void initialize(GRegion* region) {
+    Msg::Info("Initialize Connectivity Information...");
+    clear();
+    initialize_vertex_to_vertices(region);
+    initialize_vertex_to_elements(region);
+  }
+
+  void clear() {
+    vertex_to_vertices_.clear();
+    vertex_to_elements_.clear();
+  }
+
+  VertexSet& vertices_around_vertex(MVertex* v) {
+    return vertex_to_vertices_[v];
+  }
+  TetSet& tets_around_vertex(MVertex* v) {
+    return vertex_to_elements_[v];
+  }
+
+  bool are_vertex_neighbors(MVertex* v0, MVertex* v1) {
+    return vertices_around_vertex(v0).count(v1) > 0;
+  }
+
+  void vertices_around_vertices(MVertex* v0, MVertex* v1, VertexSet& result) {
+    const VertexSet& neighbors0 = vertices_around_vertex(v0);
+    const VertexSet& neighbors1 = vertices_around_vertex(v1);
+    std::set_intersection(neighbors0.begin(), neighbors0.end(),
+      neighbors1.begin(), neighbors1.end(), std::inserter(result, result.end()));
+
+  }
+  void vertices_around_vertices(MVertex* v0, MVertex* v1, MVertex* v2, VertexSet& result) {
+    VertexSet tmp;
+    vertices_around_vertices(v0, v1, tmp);
+    const VertexSet& neighbors2 = vertices_around_vertex(v2);
+    std::set_intersection(neighbors2.begin(), neighbors2.end(),
+      tmp.begin(), tmp.end(), std::inserter(result, result.end()));
+  }
+
+  void tets_around_vertices(MVertex* v0, MVertex* v1, TetSet& result) {
+    const TetSet& elements0 = tets_around_vertex(v0);
+    const TetSet& elements1 = tets_around_vertex(v1);
+    std::set_intersection(elements0.begin(), elements0.end(),
+      elements1.begin(), elements1.end(), std::inserter(result, result.end()));
+  }
+
+  void tets_around_vertices(MVertex* v0, MVertex* v1, MVertex* v2, TetSet& result) {
+    TetSet tmp;
+    tets_around_vertices(v0, v1, tmp);
+    const TetSet& elements2 = tets_around_vertex(v2);
+    std::set_intersection(tmp.begin(), tmp.end(), 
+      elements2.begin(), elements2.end(), std::inserter(result, result.end()));
+  }
+
+private:
+  // TODO Change this costly  implementation
+  // Replace maps by vectors and store adjacent vertices whose
+  // index is bigger
+  void initialize_vertex_to_vertices(GRegion* region) {
+    int nbtets = region->getNumMeshElements();
+    for (unsigned int i = 0; i < nbtets; i++) {
+      MElement* tet = region->getMeshElement(i);
+      for (int j = 0; j < 4; j++) {
+        MVertex* a = tet->getVertex(j);
+        MVertex* b = tet->getVertex((j + 1) % 4);
+        MVertex* c = tet->getVertex((j + 2) % 4);
+        MVertex* d = tet->getVertex((j + 3) % 4);
+
+        std::map<MVertex*, std::set<MVertex*> >::iterator it = vertex_to_vertices_.find(a);
+        if (it != vertex_to_vertices_.end()) {
+          it->second.insert(b);
+          it->second.insert(c);
+          it->second.insert(d);
+        }
+        else {
+          std::set<MVertex*> bin;
+          bin.insert(b);
+          bin.insert(c);
+          bin.insert(d);
+          vertex_to_vertices_.insert(std::pair<MVertex*, std::set<MVertex*> >(a, bin));
+        }
+      }
+    }
+  }
+  void initialize_vertex_to_elements(GRegion* region) {
+    int nbtets = region->getNumMeshElements();
+
+    for (unsigned int i = 0; i < nbtets; i++) {
+      MElement* tet = region->getMeshElement(i);
+      for (unsigned int j = 0; j < 4; j++) {
+        MVertex* getVertex = tet->getVertex(j);
+
+        std::map<MVertex*, std::set<MElement*> >::iterator it = vertex_to_elements_.find(getVertex);
+        if (it != vertex_to_elements_.end()) {
+          it->second.insert(tet);
+        }
+        else {
+          std::set<MElement*> bin;
+          bin.insert(tet);
+          vertex_to_elements_.insert(std::pair<MVertex*, std::set<MElement*> >(getVertex, bin));
+        }
+      }
+    }
+  }
+
+private:
+  std::map<MVertex*, std::set<MVertex*> > vertex_to_vertices_;
+  std::map<MVertex*, std::set<MElement*> > vertex_to_elements_;
+};
+
+
 
 class Recombinator{
-protected:
-  std::vector<Hex*> potential;
-  std::map<MElement*,bool> markings;
-  std::multiset<Facet> hash_tableA;
-  std::multiset<Diagonal> hash_tableB;
-  std::multiset<Diagonal> hash_tableC;
-  std::multiset<Tuple> tuples;
-  std::set<MElement*> triangles;
-  //std::fstream file; //fordebug
-
 public:
-  Recombinator();
-  ~Recombinator();
+  typedef std::set<MVertex*>::iterator vertex_set_itr;
+  typedef std::set<MElement*>::iterator element_set_itr;
 
-  std::map<MVertex*,std::set<MVertex*> > vertex_to_vertices;
-  std::map<MVertex*,std::set<MElement*> > vertex_to_elements;
+  typedef std::map<MVertex*, std::set<MVertex*> > Vertex2Vertices;
+  typedef std::map<MVertex*, std::set<MElement*> > Vertex2Elements;
+
+  Recombinator() :current_region(NULL), hex_threshold_quality(0.6) {};
+  virtual ~Recombinator();
 
   virtual void execute();
   virtual void execute(GRegion*);
 
-  void init_markings(GRegion*);
-  virtual void pattern1(GRegion*);
-  virtual void pattern2(GRegion*);
-  virtual void pattern3(GRegion*);
-  virtual void merge(GRegion*);
-  void improved_merge(GRegion*);
-  void rearrange(GRegion*);
-  void statistics(GRegion*);
-  // tuples are triangles on geometrical faces (region boundaries...)
-  void build_tuples(GRegion*);
-  void modify_surfaces(GRegion*);
-  void modify_surfaces(MVertex*,MVertex*,MVertex*,MVertex*);
+protected:
+  // ---- Initialization of the structures
+  virtual void initialize_structures(GRegion* region) {
+    set_current_region(region);
+    tet_mesh.initialize(current_region);
+    build_tuples();
+    init_markings();
+    // What happens when the mesh of the region is not only constituted of tets? JP
+  }
+  void init_markings();
+  void build_tuples();
+  void set_current_region(GRegion* region) {
+    current_region = region;
+  }
 
-  bool sliver(MElement*,Hex&);
-  double diagonal(MElement*,int&,int&);
-  double distance(MVertex*,MVertex*);
-  double distance(MVertex*,MVertex*,MVertex*);
-  double scalar(MVertex*,MVertex*,MVertex*,MVertex*);
-  void two_others(int,int,int&,int&);
-  // soit une face du cube: abcd
-  // en principe, on doit avoir soit les facets (abc) et (acd), soit les facets (abd) et(bcd) qui sont inclues dans un des tets qui forment l'hex.
-  // si c'est le cas pour toutes les 6 faces de l'hex, return true.
-  // ce test permet probablement de virer les hex "avec des trous" (avec 8 noeuds ok, mais un tet manquant, ce qui peut occasionner un hex à 14 faces, par exemple, si l'on compte les faces à partir des tets inclus)
-  bool valid(Hex&,const std::set<MElement*>&);
-  // renvoie true si le "MQuadrangle::etaShapeMeasure" des 6 faces est plus grand que 0.000001
-  bool valid(Hex&) const;
-  double eta(MVertex*,MVertex*,MVertex*,MVertex*) const;
-  bool linked(MVertex*,MVertex*);
+  // ---- Create the final mesh -------
+  virtual void merge();
+  void delete_marked_tets_in_region() const;
+  // Check if the hex is valid and compatible with the
+  // previously built hexes and add it to the region
+  bool add_hex_to_region_if_valid(const Hex& hex);
+  
+  // ---- Computation of potential hexes
+  virtual void clear_potential_hex_info() {
+    potential.clear();
+  }
+  void compute_potential_hexes() {
+    clear_potential_hex_info();
+    pattern1();
+    pattern2();
+    pattern3();
+    Msg::Info("Number of potential hexes %d", potential.size());
+  }
+  void pattern1();
+  void pattern2();
+  void pattern3();
+  virtual void add_or_free_potential_hex(Hex* candidate);
 
-  void find(MVertex*,MVertex*,const std::vector<MVertex*>&,std::set<MVertex*>&) const;
-  void find(MVertex*,MVertex*,MVertex*,const std::vector<MVertex*>&,std::set<MVertex*>&) const;
-  void find(MVertex*,MVertex*,std::set<MElement*>&) const;
-  void find(MVertex*,Hex,std::set<MElement*>&) const;
-  MVertex* find(MVertex*,MVertex*,MVertex*,MVertex*,const std::set<MElement*>&) const;
-
-  void intersection(const std::set<MVertex*>&,const std::set<MVertex*>&,const std::vector<MVertex*>&,std::set<MVertex*>&) const;
-  void intersection(const std::set<MVertex*>&,const std::set<MVertex*>&,const std::set<MVertex*>&,const std::vector<MVertex*>&,std::set<MVertex*>&) const;
-  void intersection(const std::set<MElement*>&,const std::set<MElement*>&,std::set<MElement*>&) const;
-
-  // return true if vertex belong to hex
-  bool inclusion(MVertex*,Hex) const;
-  // renvoie true si vertex se trouve dans [a,b,c]
-  bool inclusion(MVertex*,MVertex*,MVertex*,MVertex*,MVertex*) const ;
-  // return true if all three vertices v1,v2 and v3 belong to one tet
-  bool inclusion(MVertex*,MVertex*,MVertex*,const std::set<MElement*>&) const;
-  // return true si la facet existe dans la table A
-  bool inclusion(Facet);
-  // return true si la diagonal existe dans la table B
-  bool inclusion(Diagonal);
-  // return true si la diagonal existe dans la table C !!!!!!!!!   Sinon, c'est exactement la même fonction !!!!! avec un nom différent !
-  bool duplicate(Diagonal);
-
-  // return true si un hex est "conforme A"
-  // est "conforme A" un hex dont les 6 faces sont "conforme A"
-  bool conformityA(Hex&);
-  // est "conforme A" une face si ses 4 facets existent dans tableA, ou bien si aucune des ses facets ne se trouve dans table A
-  bool conformityA(MVertex*,MVertex*,MVertex*,MVertex*);
-  // return false si:
-  //- une des 12 arrêtes de l'hex se trouve dans tableB !!! (pas C !!!), càd si une arrete a été utilisée comme diagonale d'un autre hex
-  //- (ou bien) si, pour chaque face de l'hex, on a une diagonale dans tableB et pas l'autre
-  bool conformityB(Hex&);
-  // return false si une des 12 diagonales du cube se trouve dans tableC, càd a été utilisée comme arrête
-  bool conformityC(Hex&);
-
-  // return true si les 6 faces de l'hex sont "faces_statuquo"
-  bool faces_statuquo(Hex&);
-  // return false si, parmis les deux paires de facets de la face, il existe un couple de facet qui soient toutes les deux des tuples, mais correspondant à des geometric faces différentes. Bref, une arrête géométrique confondue avec une diagonale de la face.
-  bool faces_statuquo(MVertex*,MVertex*,MVertex*,MVertex*);
-
-  void build_vertex_to_vertices(GRegion*);
-  void build_vertex_to_elements(GRegion*);
-  void build_hash_tableA(Hex);
-  void build_hash_tableA(MVertex*,MVertex*,MVertex*,MVertex*);
-  void build_hash_tableA(Facet);
-  void build_hash_tableB(Hex);
-  void build_hash_tableB(MVertex*,MVertex*,MVertex*,MVertex*);
-  void build_hash_tableB(Diagonal);
-  void build_hash_tableC(Hex);
-  void build_hash_tableC(Diagonal);
-
-  void print_vertex_to_vertices(GRegion*);
-  void print_vertex_to_elements(GRegion*);
+  // ----- Helpers to debug -------
+  void print_all_potential_hex() const;
   void print_hash_tableA();
-  void print_segment(SPoint3,SPoint3,std::ofstream&);
+  void print_segment(const SPoint3&, const SPoint3&, std::ofstream&);
 
-  double scaled_jacobian(MVertex*,MVertex*,MVertex*,MVertex*);
-  //double scaled_jacobian_face(MVertex*,MVertex*,MVertex*,MVertex*);
-  double max_scaled_jacobian(MElement*,int&);
-  double min_scaled_jacobian(Hex&);
+  // -----  Conformity stuff -------
+  bool is_potential_hex_conform(const Hex& hex);
+  bool conformityA(const Hex&);
+  bool conformityB(const Hex&);
+  bool conformityC(const Hex&);
+
+  bool faces_statuquo(const Hex&);
+  bool faces_statuquo(MVertex*, MVertex*, MVertex*, MVertex*);
+
+  bool are_all_tets_free(const std::set<MElement*>& tets) const;  
+
+  void mark_tets(const std::set<MElement*>& tets);
+  void clear_hash_tables() {
+    hash_tableA.clear();
+    hash_tableB.clear();
+    hash_tableC.clear();
+  }
+  void build_hash_tableA(const Hex& hex);
+  void build_hash_tableB(const Hex& hex);
+  void build_hash_tableC(const Hex& hex);
+
+  // -----  Post-processing -------
+  void improve_final_mesh() {
+    set_region_elements_positive();
+    create_quads_on_boundary();
+  }
+  // Reverse of of built elements with a negative volume
+  void set_region_elements_positive();
+  void create_quads_on_boundary();
+  void create_quads_on_boundary(MVertex*, MVertex*, MVertex*, MVertex*);
+  void delete_quad_triangles_in_boundary() const;
+
+  // ---- Functions that should not be part of the class
+  double scaled_jacobian(MVertex*, MVertex*, MVertex*, MVertex*);
+  double max_scaled_jacobian(MElement*, int&);
+  double min_scaled_jacobian(Hex&);  
+  void print_statistics();
+
+protected:
+  // Object in charge of answering connectivity request
+  // in the initial region tetrahedral mesh
+  TetMeshConnectivity tet_mesh;
+
+  GRegion* current_region;
+  double hex_threshold_quality;
+
+  std::vector<Hex*> potential;
+  std::map<MElement*,bool> markings;
+  // Already chosen facet triangles (4 per hex facet)
+  std::multiset<Facet> hash_tableA;
+  // Already chosen hex facet diagonals
+  std::multiset<Diagonal> hash_tableB;
+  // Already chosen hex edges
+  std::multiset<Diagonal> hash_tableC;
+
+  std::multiset<Tuple> tuples;
+  std::set<MElement*> triangles;  
 };
+
+
+class PEEntity {
+protected:
+  vector<MVertex*> vertices;
+  size_t hash;
+  void compute_hash();
+public:
+  PEEntity(const vector<MVertex*> &_v);
+  virtual ~PEEntity();
+  virtual size_t get_max_nb_vertices() const = 0;
+  MVertex* getVertex(size_t n) const;
+  bool hasVertex(MVertex *v)const;
+  size_t get_hash() const;
+  bool same_vertices(const PEEntity *t)const;
+  bool operator<(const PEEntity&) const;
+};
+
+class PELine : public PEEntity {
+public:
+  PELine(const vector<MVertex*> &_v);
+  virtual ~PELine();
+  size_t get_max_nb_vertices() const;
+};
+
+class PETriangle : public PEEntity {
+public:
+  PETriangle(const vector<MVertex*> &_v);
+  //PETriangle(size_t l);
+  virtual ~PETriangle();
+  size_t get_max_nb_vertices() const;
+};
+
+class PEQuadrangle : public PEEntity {
+public:
+  PEQuadrangle(const vector<MVertex*> &_v);
+  //PEQuadrangle(size_t l);
+  virtual ~PEQuadrangle();
+  size_t get_max_nb_vertices() const;
+};
+
+// Why are the following classes templates??? 
+// Used with only one class only, implemented in the cpp file (bad idea) and does not seem robust. JP.
+
+// Very very complicated way to answer one question
+// Do we have all the tets of the input mesh for a given combination of hex? 
+// Slivers are tricky since they can be in shared by 2 hex.
+template<class T>
+class clique_stop_criteria {
+public:
+  typedef std::set<T> graph_data_no_hash;
+  clique_stop_criteria(map<T, std::set<MElement*> > &_m, int _i);
+  ~clique_stop_criteria();
+  bool stop(const graph_data_no_hash &clique)const;
+  void export_corresponding_mesh(const graph_data_no_hash &clique)const;
+
+private:
+  const map<T, std::set<MElement*> > &hex_to_tet;
+  const unsigned int total_number_tet;
+};
+
+// Why is this class template? 
+// This complicates everything and is useless as the class 
+// cannot be used outside the .cpp file where it is implemented.
+template<class T>
+class cliques_compatibility_graph {
+public:
+  typedef unsigned long long hash_key;
+  typedef std::set<T> graph_data_no_hash;
+  typedef std::multimap<hash_key, T> graph_data;
+  typedef std::multimap<hash_key, pair<T, graph_data > > graph;
+  typedef std::map<int, T> ranking_data;
+
+  typedef void(*ptrfunction_export)(cliques_compatibility_graph<T>&, int, string);
+
+  cliques_compatibility_graph(
+    graph &_g, 
+    const map<T, std::vector<double> > &_hex_ranks,
+    unsigned int _max_nb_cliques, 
+    unsigned int _nb_hex_potentiels,
+    clique_stop_criteria<T> *csc,
+    ptrfunction_export fct);
+  virtual ~cliques_compatibility_graph();
+  void find_cliques();
+  void export_cliques();
+
+  virtual typename graph::const_iterator begin_graph() { return G.begin(); };
+  virtual typename graph::const_iterator end_graph() { return G.end(); };
+
+public:
+  bool found_the_ultimate_max_clique;
+  // The stored maximal cliques. 
+  // The maximum number of stored cliques can be limited with the 
+  // max_nb_of_stored_cliques attribute
+  // Cliques are ordered by their size (number of nodes in the clique)
+  multimap<int, set<T> > allQ;
+
+protected:
+  void erase_entry(graph_data &subgraph, T &u, hash_key &key);
+  void find_cliques(graph_data &subgraph, int n);
+  void split_set_BW(const T &u, const hash_key &u_key, const graph_data &subgraph, graph_data &white, graph_data &black);
+  void fill_black_set(const T &u, const hash_key &u_key, const graph_data &subgraph, graph_data &black);
+  void choose_u(const graph_data &subgraph, T &u, hash_key &u_key);
+  // the maximum score (int) will be chosen...
+  double function_to_maximize_for_u(const T &u, const hash_key &u_key, const graph_data &subgraph);
+  void store_clique(int n);
+  // returns true if two nodes are connected in the compatibility graph
+  virtual bool compatibility(const T &u, const hash_key &u_key, const T &v, const hash_key &v_key);
+
+  ptrfunction_export export_clique_graph;
+
+protected:
+  const bool debug;
+  unsigned int max_nb_cliques;
+  unsigned int nb_hex_potentiels;
+  unsigned int max_clique_size;
+  unsigned int position;
+  unsigned int total_nodes_number;
+  unsigned int total_nb_of_cliques_searched;
+  unsigned int max_nb_of_stored_cliques;// to reduce memory footprint (set to zero if no limit)
+  clique_stop_criteria<T>* criteria;
+  bool cancel_search;
+  const map<T, std::vector<double> > &hex_ranks;
+  graph &G;
+  graph_data_no_hash Q;// the current clique
+};
+
+
+template<class T>
+class cliques_losses_graph : public cliques_compatibility_graph<T> {
+public:
+  typedef unsigned long long hash_key;
+  typedef multimap<hash_key, T> graph_data;
+  typedef multimap<hash_key, pair<T, graph_data > > graph;
+  typedef void(*ptrfunction_export)(cliques_compatibility_graph<T>&, int, string);
+
+  cliques_losses_graph(
+    graph &_g, 
+    const map<T, std::vector<double> > &_hex_ranks, 
+    unsigned int _max_nb_cliques,
+    unsigned int _nb_hex_potentiels, 
+    clique_stop_criteria<T> *csc, 
+    ptrfunction_export fct);
+  virtual ~cliques_losses_graph();
+
+protected:
+  // Returns true if the two nodes are compatible 
+  // (connected in compatiblity graph - not connected in losses graph)
+  virtual bool compatibility(const T &u, const hash_key &u_key, const T &v, const hash_key &v_key);
+  // AAAAaaaaahhhhhh exact same type and name for an attribute the 
+  // class from which this one derives.......
+  // graph &G;
+};
+
 
 class Recombinator_Graph : public Recombinator{
 public:
   typedef size_t my_hash_key;
   typedef multimap<my_hash_key,PETriangle*> trimap;
   typedef map<PETriangle*, PETriangle*> tripair;
-
+  typedef multimap<my_hash_key, PELine*> linemap;
 
   //typedef tr1::unordered_multimap<my_hash_key,PETriangle*> trimap;
   typedef trimap::iterator iter;
   typedef trimap::const_iterator citer;
 
-  typedef multimap<my_hash_key,PELine*> linemap;
-  //typedef tr1::unordered_multimap<my_hash_key,PELine*> linemap;
+  typedef unsigned long long hash_key;
 
+  typedef multimap<hash_key, Hex*> graph_data;
+  typedef multimap<hash_key, pair<Hex*, graph_data > > graph;
 
-  bool found_the_ultimate_max_clique;
-
-  set<Hex*>& getHexInGraph(){return set_of_all_hex_in_graph;};
 
 protected:
-  bool debug,debug_graph;
+  bool debug;
+  bool debug_graph;
+  
+  int max_nb_cliques;
+  string graphfilename;
+
+  // Topological information to navigate in the input tet mesh
+  // to navigate between the potential hexes and the input tet mesh
   std::map<Hex*, std::set<MElement*> > hex_to_tet;
+  std::map<MElement*, std::set<Hex*> >tet_to_hex;
   std::map<Hex*, std::set<PELine*> > hex_to_edges;
   std::map<PELine*, std::set<Hex*> > edges_to_hex;
   std::map<Hex*, std::set<PETriangle*> > hex_to_faces;
   std::map<PETriangle*, std::set<Hex*> > faces_to_hex;
-  std::map<PETriangle*, unsigned int > faces_connectivity;// # of adjacent tets (1 or 2)
-  std::map<MElement*, std::set<Hex*> >tet_to_hex;
+  // Number of tets containing a tet - Is the facet on the boundary (1 tet) or not (2 tets)?
+  std::map<PETriangle*, unsigned int > faces_connectivity;
+
   std::map<Hex*, std::vector<double> > hex_ranks;
 
-
-  typedef unsigned long long hash_key;
-  //    typedef tr1::unordered_multimap<hash_key, Hex*> graph_data;
-  //    typedef tr1::unordered_multimap<hash_key, pair<Hex*, graph_data > > graph;
-  typedef multimap<hash_key, Hex*> graph_data;
-  typedef multimap<hash_key, pair<Hex*, graph_data > > graph;
-
   graph incompatibility_graph;
-  set<Hex*> set_of_all_hex_in_graph;
+  std::set<Hex*> set_of_all_hex_in_graph;
 
-  std::multimap<unsigned long long, Hex*>created_potential_hex;
+  std::multimap<unsigned long long, Hex*> created_potential_hex;
 
-  void create_faces_connectivity();
-  void add_face_connectivity(MElement *tet, int i, int j, int k);
-
-  void add_edges(Hex *hex);
-  void fill_edges_table(const MVertex *a, const MVertex *b, const MVertex *c, const MVertex *d, Hex *hex);
-  void add_face(const MVertex *a,const MVertex* b,const MVertex *c,Hex *hex);
-  void add_face(const MVertex *a,const MVertex* b,const MVertex *c,std::multimap<unsigned long long, pair<PETriangle*,int> > &f);
-  std::multimap<double,Hex*> degree;// degree = the final ranking of hexahedra
-  std::multimap<int,Hex*> idegree;// idegree = number of connected hex in indirect neighbors graph
-  std::multimap<int,Hex*> ndegree;// ndegree = number of direct neighbors !!! not chosen yet !!!
-  std::map<Hex*,int> reverse_idegree;
-  std::map<Hex*,int> reverse_ndegree;
+  std::multimap<double, Hex*> degree;// degree = the final ranking of hexahedra
+  std::multimap<int, Hex*> idegree;// idegree = number of connected hex in indirect neighbors graph
+  std::multimap<int, Hex*> ndegree;// ndegree = number of direct neighbors !!! not chosen yet !!!
+  std::map<Hex*, int> reverse_idegree;
+  std::map<Hex*, int> reverse_ndegree;
   // each tet has at least one neighbor, at most four. For all not chosen hex, check this data to find how many direct neighbors...
   //    std::map<MElement*,set<PETriangle*> > tet_to_triangle;
-  std::map<PETriangle*,set<MElement*> > triangle_to_tet;
-  std::map<MElement*,int> tet_degree;
-
-  bool find_face_in_blossom_info(MVertex *a, MVertex *b, MVertex *c, MVertex *d);
-  void compute_hex_ranks_blossom();
-  PETriangle* get_triangle(MVertex*a, MVertex* b, MVertex *c);
-  bool is_blossom_pair(PETriangle *t1, PETriangle *t2);
+  std::map<PETriangle*, set<MElement*> > triangle_to_tet;
+  std::map<MElement*, int> tet_degree;
 
   tripair blossom_info;
   trimap triangular_faces;
@@ -595,15 +705,30 @@ protected:
 
   vector<Hex*> chosen_hex;
   vector<MElement*> chosen_tet;
+  bool post_check_validation(Hex* current_hex);
+
+
+protected:
+  void create_faces_connectivity();
+  void add_face_connectivity(MElement *tet, int i, int j, int k);
+
+  void add_edges(Hex *hex);
+  void fill_edges_table(const std::vector<MVertex*>&, Hex *hex);
+  void add_face(MVertex *a,MVertex* b,MVertex *c,Hex *hex);
+  void add_face(MVertex *a,MVertex* b,MVertex *c,std::multimap<unsigned long long, pair<PETriangle*,int> > &f);
+  
+  bool find_face_in_blossom_info(MVertex *a, MVertex *b, MVertex *c, MVertex *d);
+  void compute_hex_ranks_blossom();
+  PETriangle* get_triangle(MVertex*a, MVertex* b, MVertex *c);
+  bool is_blossom_pair(PETriangle *t1, PETriangle *t2);
 
   citer find_the_triangle(PETriangle *t, const trimap &list);
   linemap::const_iterator  find_the_line(PELine *t, const linemap &list);
-  std::multimap<unsigned long long, pair<PETriangle*,int> >::iterator  find_the_triangle(PETriangle *t, std::multimap<unsigned long long, pair<PETriangle*, int> > &list);
-  std::multimap<unsigned long long, Hex* >::const_iterator  find_the_created_potential_hex(Hex *t, const std::multimap<unsigned long long, Hex*>  &list);
+  std::multimap<unsigned long long, pair<PETriangle*,int> >::iterator
+    find_the_triangle(PETriangle *t, std::multimap<unsigned long long, pair<PETriangle*, int> > &list);
+  std::multimap<unsigned long long, Hex* >::const_iterator  
+    find_the_created_potential_hex(Hex *t, const std::multimap<unsigned long long, Hex*>  &list);
 
-  int nbhex_in_losses_graph;
-  double average_connectivity;
-  bool post_check_validation(Hex* current_hex);
 
   PETriangle* get_triangle(MElement *element, int i, int j, int k);
 
@@ -638,10 +763,32 @@ protected:
 
   void fill_tet_to_hex_table(Hex *hex);
 
-  virtual void pattern1(GRegion*);
-  virtual void pattern2(GRegion*);
-  virtual void pattern3(GRegion*);
+  // Reimplementation
+  virtual void add_or_free_potential_hex(Hex* candidate) {
+    fill_tet_to_hex_table(candidate);
+  }
 
+  virtual void clear_potential_hex_info() {
+    hex_to_tet.clear();
+    tet_to_hex.clear();
+    created_potential_hex.clear();
+  }
+  virtual void initialize_structures(GRegion* region) {
+    set_current_region(region);
+    tet_mesh.initialize(current_region);
+    build_tuples();
+  }
+
+  void clear_and_build_hash_tables(const Hex& hex) {
+    hash_tableA.clear();
+    hash_tableB.clear();
+    hash_tableC.clear();
+    build_hash_tableA(hex);
+    build_hash_tableB(hex);
+    build_hash_tableC(hex);
+  }
+
+  // Throw an assertion 
   void merge(GRegion*);
 
   // ------- exports --------
@@ -655,20 +802,22 @@ protected:
   void export_direct_neighbor_table(int max);
   void export_hex_init_degree(GRegion *gr, const std::map<Hex*,int> &init_degree, const vector<Hex*> &chosen_hex);
 
-  int max_nb_cliques;
-  string graphfilename;
-
 public:
   Recombinator_Graph(unsigned int max_nb_cliques, string filename=string());
-  ~Recombinator_Graph();
-  virtual void execute();
+  virtual ~Recombinator_Graph();
   virtual void execute(GRegion*);
+
   virtual void buildGraphOnly(unsigned int max_nb_cliques, string filename=string());
   virtual void buildGraphOnly(GRegion*, unsigned int max_nb_cliques, string filename=string());
   virtual void execute_blossom(unsigned int max_nb_cliques, string filename=string());
+  // What is this function supposed to do? 
+  // Right now it throws at the first line. JP
   virtual void execute_blossom(GRegion*, unsigned int max_nb_cliques, string filename=string());
   virtual void createBlossomInfo();
   void createBlossomInfo(GRegion *gr);
+
+  const std::set<Hex*>& getHexInGraph() const { return set_of_all_hex_in_graph; };
+  bool found_the_ultimate_max_clique;
 };
 
 class Prism{
@@ -676,6 +825,9 @@ private:
   double quality;
   MVertex *a,*b,*c,*d,*e,*f;
 public:
+  typedef std::set<MVertex*>::iterator vertex_set_itr;
+  typedef std::set<MElement*>::iterator element_set_itr;
+
   Prism();
   Prism(MVertex*,MVertex*,MVertex*,MVertex*,MVertex*,MVertex*);
   ~Prism();
@@ -691,6 +843,8 @@ public:
   bool operator<(const Prism&) const;
 };
 
+
+// Une ENORME partie de ce code est du copie-colle depuis Recombinator
 class Supplementary{
 private:
   std::vector<Prism> potential;
@@ -705,6 +859,12 @@ private:
   //std::fstream file; //fordebug
 
 public:
+  typedef std::set<MVertex*>::iterator vertex_set_itr;
+  typedef std::set<MElement*>::iterator element_set_itr;
+
+  typedef std::map<MVertex*, std::set<MVertex*> > Vertex2Vertices;
+  typedef std::map<MVertex*, std::set<MElement*> > Vertex2Elements;
+
   Supplementary();
   ~Supplementary();
 
@@ -717,8 +877,8 @@ public:
   void rearrange(GRegion*);
   void statistics(GRegion*);
   void build_tuples(GRegion*);
-  void modify_surfaces(GRegion*);
-  void modify_surfaces(MVertex*,MVertex*,MVertex*,MVertex*);
+  void create_quads_on_boundary(GRegion*);
+  void create_quads_on_boundary(MVertex*,MVertex*,MVertex*,MVertex*);
 
   bool four(MElement*);
   bool five(MElement*);
@@ -753,6 +913,7 @@ public:
 
   void build_vertex_to_vertices(GRegion*);
   void build_vertex_to_tetrahedra(GRegion*);
+
   void build_hash_tableA(Prism);
   void build_hash_tableA(MVertex*,MVertex*,MVertex*,MVertex*);
   void build_hash_tableA(Facet);
@@ -781,6 +942,12 @@ private:
   std::set<MElement*> triangles;
 
 public:
+  typedef std::set<MVertex*>::iterator vertex_set_itr;
+  typedef std::set<MElement*>::iterator element_set_itr;
+
+  typedef std::map<MVertex*, std::set<MVertex*> > Vertex2Vertices;
+  typedef std::map<MVertex*, std::set<MElement*> > Vertex2Elements;
+
   PostOp();
   ~PostOp();
 
@@ -812,8 +979,8 @@ public:
   void rearrange(GRegion*);
   void statistics(GRegion*);
   void build_tuples(GRegion*);
-  void modify_surfaces(GRegion*);
-  void modify_surfaces(MVertex*,MVertex*,MVertex*,MVertex*);
+  void create_quads_on_boundary(GRegion*);
+  void create_quads_on_boundary(MVertex*,MVertex*,MVertex*,MVertex*);
 
   //returns the geometrical validity of the pyramid
   bool valid(MPyramid *pyr);
