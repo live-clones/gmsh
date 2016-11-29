@@ -7654,8 +7654,10 @@ bool Recombinator_Graph::merge_hex(GRegion *gr, Hex *hex) {
                                   gr->tetrahedra.end(),
                                   (MTetrahedron*)(*it_tet_to_remove));
 
-    if (itfind_tet_region != gr->tetrahedra.end())
+    if (itfind_tet_region != gr->tetrahedra.end()) {
       gr->tetrahedra.erase(itfind_tet_region);
+      delete *it_tet_to_remove;
+    }
   }
 
 
