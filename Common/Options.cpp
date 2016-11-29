@@ -2255,6 +2255,14 @@ double opt_general_system_menu_bar(OPT_ARGS_NUM)
   return CTX::instance()->systemMenuBar;
 }
 
+double opt_general_meshdiscrete(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    CTX::instance()->meshDiscrete = (int)val;
+  }
+  return CTX::instance()->meshDiscrete;
+}
+
 double opt_general_message_size(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
