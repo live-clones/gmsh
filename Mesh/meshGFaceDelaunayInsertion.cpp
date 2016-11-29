@@ -1290,21 +1290,17 @@ bool optimalPointFrontalB (GFace *gf,
 {
   // as a starting point, let us use the "fast algo"
   double d = optimalPointFrontal (gf,worst,active_edge,data,newPoint,metric);
-  int ip1 = active_edge - 1 < 0 ? 2 : active_edge - 1;
+  int ip1 = (active_edge+2)%3;
   int ip2 = active_edge;
+  int ip3 = (active_edge+1)%3;
   MVertex *v1 = worst->tri()->getVertex(ip1);
   MVertex *v2 = worst->tri()->getVertex(ip2);
-  MTriangle *t = worst->tri();
-  double p1[3] = {t->getVertex(0)->x(), t->getVertex(0)->y(), t->getVertex(0)->z()};
-  double p2[3] = {t->getVertex(1)->x(), t->getVertex(1)->y(), t->getVertex(1)->z()};
-  double p3[3] = {t->getVertex(2)->x(), t->getVertex(2)->y(), t->getVertex(2)->z()};
-  double c[3];
-  circumCenterXYZ(p1, p2, p3, c);
+  MVertex *v3 = worst->tri()->getVertex(ip3);
   SVector3 middle ((v1->x()+v2->x())*.5,(v1->y()+v2->y())*.5,(v1->z()+v2->z())*.5);
-  SVector3 center(c[0],c[1],c[2]);
   SVector3 v1v2 (v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
-  SVector3 n1 = center - middle;
-  SVector3 n2 = crossprod(v1v2,n1);
+  SVector3 tmp (v3->x()-middle.x(),v3->y()-middle.y(),v3->z()-middle.z());
+  SVector3 n1 = crossprod(v1v2,tmp);
+  SVector3 n2 = crossprod(n1,v1v2);
   n1.normalize();
   n2.normalize();
   // we look for a point that is
