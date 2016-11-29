@@ -630,6 +630,12 @@ protected:
 
   void merge_clique(GRegion* gr, cliques_losses_graph<Hex*> &cl,int clique_number=0);
 
+  /*
+   * Tries to merge tetrahedra into one hexahedron. Returns false if the hex
+   * that would be created does not pass some conformity checks.
+   */
+  bool merge_hex(GRegion *gr, Hex *hex);
+
   void fill_tet_to_hex_table(Hex *hex);
 
   virtual void pattern1(GRegion*);

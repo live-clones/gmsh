@@ -7587,51 +7587,10 @@ void Recombinator_Graph::merge_clique(GRegion* gr, cliques_losses_graph<Hex*> &c
     for (;ithex!=ithexen;ithex++){ // brutal post-check: random pickup of hexahedra in clique
       Hex *current_hex = *ithex;
 
-
-      //        cout << " clique merge: treating hex " << current_hex << " made of ";
-      //        for (int i=0;i<8;i++)
-      //          cout << "  " << current_hex->getVertex(i)->getNum();
-      //        cout << endl;
-
-
-
-      //    for (;it_rank!=it_ranken;it_rank++) // smarter post-check: sorting hexahedra first...
-      //      Hex *current_hex = it_rank->second;
-
-      //      export_single_hex_all(current_hex,"");
-
-      if (!post_check_validation(current_hex))
-        continue;
-
-      // inserting the hex
-      quality = quality + current_hex->get_quality();
-      MHexahedron *h=new MHexahedron(current_hex->get_a(), current_hex->get_b(),current_hex->get_c(),current_hex->get_d(),current_hex->get_e(),current_hex->get_f(),current_hex->get_g(),current_hex->get_h());
-      gr->addHexahedron(h);
-      count++;
-      //      hex_to_export.insert(current_hex);
-      //      cout << " inserting " << current_hex << " made of ";
-      //      for (int i=0;i<8;i++)
-      //        cout << "  " << current_hex->getVertex(i)->getNum();
-      //      cout << endl;
-
-
-      // removing tets
-      //      if (debug) cout << "  removing tets" << endl;
-      std::set<MElement*>::iterator it_tet_to_remove = hex_to_tet[current_hex].begin();
-      std::vector<MTetrahedron*>::iterator itfind_tet_region;
-      for (;it_tet_to_remove!=hex_to_tet[current_hex].end();it_tet_to_remove++){
-        itfind_tet_region = std::find(gr->tetrahedra.begin(),gr->tetrahedra.end(),(MTetrahedron*)(*it_tet_to_remove));
-        if (itfind_tet_region!=gr->tetrahedra.end())
-          gr->tetrahedra.erase(itfind_tet_region);
-        //        else
-        //          cout << " WARNING: MTetrahedron* " << (MTetrahedron*)(*it_tet_to_remove) << " not found !!! " << endl;
+      if (merge_hex(gr, current_hex)) {
+        quality = quality + current_hex->get_quality();
+        count++;
       }
-
-
-      build_hash_tableA(*current_hex);
-      build_hash_tableB(*current_hex);
-      build_hash_tableC(*current_hex);
-
     }
 
 
@@ -7674,7 +7633,38 @@ void Recombinator_Graph::merge_clique(GRegion* gr, cliques_losses_graph<Hex*> &c
   //  }
 }
 
+bool Recombinator_Graph::merge_hex(GRegion *gr, Hex *hex) {
+  if (!post_check_validation(hex))
+    return false;
 
+  MHexahedron *h = new MHexahedron(hex->get_a(),
+                                   hex->get_b(),
+                                   hex->get_c(),
+                                   hex->get_d(),
+                                   hex->get_e(),
+                                   hex->get_f(),
+                                   hex->get_g(),
+                                   hex->get_h());
+  gr->addHexahedron(h);
+
+  std::set<MElement*>::iterator it_tet_to_remove = hex_to_tet[hex].begin();
+  std::vector<MTetrahedron*>::iterator itfind_tet_region;
+  for (; it_tet_to_remove != hex_to_tet[hex].end(); it_tet_to_remove++) {
+    itfind_tet_region = std::find(gr->tetrahedra.begin(),
+                                  gr->tetrahedra.end(),
+                                  (MTetrahedron*)(*it_tet_to_remove));
+
+    if (itfind_tet_region != gr->tetrahedra.end())
+      gr->tetrahedra.erase(itfind_tet_region);
+  }
+
+
+  build_hash_tableA(*hex);
+  build_hash_tableB(*hex);
+  build_hash_tableC(*hex);
+
+  return true;
+}
 
 void Recombinator_Graph::merge(GRegion* gr){
   throw;
