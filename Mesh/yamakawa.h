@@ -28,14 +28,14 @@ class Hex {
 private:
   double quality;
   unsigned long long hash;
-  std::vector<MVertex*> vertices_; 
+  std::vector<MVertex*> vertices_;
 
 private:
   void set_hash(){
     hash = 0.;
     for (int i = 0; i < 8; ++i) {
       hash += vertices_[i]->getNum();
-    }    
+    }
   }
 
 public:
@@ -47,9 +47,9 @@ public:
     set_hash();
   }
   Hex(MVertex* a2, MVertex* b2, MVertex* c2, MVertex* d2, MVertex* e2, MVertex* f2, MVertex* g2, MVertex* h2) :
-    quality(0.) 
+    quality(0.)
   {
-    vertices_.push_back(a2); 
+    vertices_.push_back(a2);
     vertices_.push_back(b2);
     vertices_.push_back(c2);
     vertices_.push_back(d2);
@@ -59,12 +59,12 @@ public:
     vertices_.push_back(h2);
     set_hash();
   }
-  
+
   ~Hex() {};
 
   double get_quality() const { return quality; }
   void set_quality(double new_quality) { quality = new_quality; }
-   
+
   MVertex* getVertex(unsigned int i) const {
     if (i < 8) {
       return vertices_[i];
@@ -151,7 +151,7 @@ public:
     c = c2;
     compute_hash();
   }
-  bool same_vertices(const Facet& facet) const {    
+  bool same_vertices(const Facet& facet) const {
     bool c1 = (a == facet.get_a()) || (a == facet.get_b()) || (a == facet.get_c());
     bool c2 = (b == facet.get_a()) || (b == facet.get_b()) || (b == facet.get_c());
     bool c3 = (c == facet.get_a()) || (c == facet.get_b()) || (c == facet.get_c());
@@ -214,7 +214,7 @@ private:
 public:
   Tuple() : v1(NULL), v2(NULL), v3(NULL), element(NULL), gf(NULL), hash(0.) {}
   Tuple(MVertex* a, MVertex* b, MVertex* c, MElement* element2, GFace* gf2)
-  {    
+  {
     MVertex* tmp[3] = { a,b,c };
     std::sort(tmp, tmp + 3);
     v1 = tmp[0];
@@ -222,10 +222,10 @@ public:
     v2 = tmp[2];
     hash = a->getNum() + b->getNum() + c->getNum();
     element = element2;
-    gf = gf2;  
+    gf = gf2;
   }
   Tuple(MVertex* a, MVertex* b, MVertex* c)
-    :element(NULL), gf(NULL) 
+    :element(NULL), gf(NULL)
   {
     MVertex* tmp[3] = { a,b,c };
     std::sort(tmp, tmp + 3);
@@ -254,7 +254,7 @@ public:
 };
 
 
-// Class in charge of answering connectivity requests on 
+// Class in charge of answering connectivity requests on
 // the input tetraedral mesh
 class TetMeshConnectivity {
 public:
@@ -313,7 +313,7 @@ public:
     TetSet tmp;
     tets_around_vertices(v0, v1, tmp);
     const TetSet& elements2 = tets_around_vertex(v2);
-    std::set_intersection(tmp.begin(), tmp.end(), 
+    std::set_intersection(tmp.begin(), tmp.end(),
       elements2.begin(), elements2.end(), std::inserter(result, result.end()));
   }
 
@@ -410,7 +410,7 @@ protected:
   // Check if the hex is valid and compatible with the
   // previously built hexes and add it to the region
   bool add_hex_to_region_if_valid(const Hex& hex);
-  
+
   // ---- Computation of potential hexes
   virtual void clear_potential_hex_info() {
     potential.clear();
@@ -441,7 +441,7 @@ protected:
   bool faces_statuquo(const Hex&);
   bool faces_statuquo(MVertex*, MVertex*, MVertex*, MVertex*);
 
-  bool are_all_tets_free(const std::set<MElement*>& tets) const;  
+  bool are_all_tets_free(const std::set<MElement*>& tets) const;
 
   void mark_tets(const std::set<MElement*>& tets);
   void clear_hash_tables() {
@@ -467,7 +467,7 @@ protected:
   // ---- Functions that should not be part of the class
   double scaled_jacobian(MVertex*, MVertex*, MVertex*, MVertex*);
   double max_scaled_jacobian(MElement*, int&);
-  double min_scaled_jacobian(Hex&);  
+  double min_scaled_jacobian(Hex&);
   void print_statistics();
 
 protected:
@@ -488,7 +488,7 @@ protected:
   std::multiset<Diagonal> hash_tableC;
 
   std::multiset<Tuple> tuples;
-  std::set<MElement*> triangles;  
+  std::set<MElement*> triangles;
 };
 
 
@@ -531,11 +531,11 @@ public:
   size_t get_max_nb_vertices() const;
 };
 
-// Why are the following classes templates??? 
-// Used with only one class only, implemented in the cpp file (bad idea) and does not seem robust. JP.
+// Why are the following classes templates???
+// Used with only with Hex*, implemented in the cpp file (bad idea) and does not seem robust. JP.
 
 // Very very complicated way to answer one question
-// Do we have all the tets of the input mesh for a given combination of hex? 
+// Do we have all the tets of the input mesh for a given combination of hex?
 // Slivers are tricky since they can be in shared by 2 hex.
 template<class T>
 class clique_stop_criteria {
@@ -551,9 +551,10 @@ private:
   const unsigned int total_number_tet;
 };
 
-// Why is this class template? 
-// This complicates everything and is useless as the class 
+// Why is this class template?
+// This complicates everything and is useless as the class
 // cannot be used outside the .cpp file where it is implemented.
+// TODO - Rewrite this without multimaps or unnecessary abstractions.
 template<class T>
 class cliques_compatibility_graph {
 public:
@@ -566,9 +567,9 @@ public:
   typedef void(*ptrfunction_export)(cliques_compatibility_graph<T>&, int, string);
 
   cliques_compatibility_graph(
-    graph &_g, 
+    graph &_g,
     const map<T, std::vector<double> > &_hex_ranks,
-    unsigned int _max_nb_cliques, 
+    unsigned int _max_nb_cliques,
     unsigned int _nb_hex_potentiels,
     clique_stop_criteria<T> *csc,
     ptrfunction_export fct);
@@ -581,10 +582,10 @@ public:
 
 public:
   bool found_the_ultimate_max_clique;
-  // The stored maximal cliques. 
-  // The maximum number of stored cliques can be limited with the 
+  // The stored maximal cliques.
+  // The maximum number of stored cliques can be limited with the
   // max_nb_of_stored_cliques attribute
-  // Cliques are ordered by their size (number of nodes in the clique)
+  // Cliques are ordered by size (number of nodes in the clique)
   multimap<int, set<T> > allQ;
 
 protected:
@@ -593,10 +594,9 @@ protected:
   void split_set_BW(const T &u, const hash_key &u_key, const graph_data &subgraph, graph_data &white, graph_data &black);
   void fill_black_set(const T &u, const hash_key &u_key, const graph_data &subgraph, graph_data &black);
   void choose_u(const graph_data &subgraph, T &u, hash_key &u_key);
-  // the maximum score (int) will be chosen...
   double function_to_maximize_for_u(const T &u, const hash_key &u_key, const graph_data &subgraph);
   void store_clique(int n);
-  // returns true if two nodes are connected in the compatibility graph
+  // Returns true if two nodes are connected in the graph
   virtual bool compatibility(const T &u, const hash_key &u_key, const T &v, const hash_key &v_key);
 
   ptrfunction_export export_clique_graph;
@@ -612,12 +612,13 @@ protected:
   unsigned int max_nb_of_stored_cliques;// to reduce memory footprint (set to zero if no limit)
   clique_stop_criteria<T>* criteria;
   bool cancel_search;
+  // Not used in anyway
   const map<T, std::vector<double> > &hex_ranks;
   graph &G;
   graph_data_no_hash Q;// the current clique
 };
 
-
+// Non necessary derivation
 template<class T>
 class cliques_losses_graph : public cliques_compatibility_graph<T> {
 public:
@@ -627,21 +628,18 @@ public:
   typedef void(*ptrfunction_export)(cliques_compatibility_graph<T>&, int, string);
 
   cliques_losses_graph(
-    graph &_g, 
-    const map<T, std::vector<double> > &_hex_ranks, 
+    graph &_g,
+    const map<T, std::vector<double> > &_hex_ranks,
     unsigned int _max_nb_cliques,
-    unsigned int _nb_hex_potentiels, 
-    clique_stop_criteria<T> *csc, 
+    unsigned int _nb_hex_potentiels,
+    clique_stop_criteria<T> *csc,
     ptrfunction_export fct);
   virtual ~cliques_losses_graph();
 
 protected:
-  // Returns true if the two nodes are compatible 
+  // Returns true if the two nodes are compatible
   // (connected in compatiblity graph - not connected in losses graph)
   virtual bool compatibility(const T &u, const hash_key &u_key, const T &v, const hash_key &v_key);
-  // AAAAaaaaahhhhhh exact same type and name for an attribute the 
-  // class from which this one derives.......
-  // graph &G;
 };
 
 
@@ -661,11 +659,10 @@ public:
   typedef multimap<hash_key, Hex*> graph_data;
   typedef multimap<hash_key, pair<Hex*, graph_data > > graph;
 
-
 protected:
   bool debug;
   bool debug_graph;
-  
+
   int max_nb_cliques;
   string graphfilename;
 
@@ -687,9 +684,9 @@ protected:
 
   std::multimap<unsigned long long, Hex*> created_potential_hex;
 
-  std::multimap<double, Hex*> degree;// degree = the final ranking of hexahedra
-  std::multimap<int, Hex*> idegree;// idegree = number of connected hex in indirect neighbors graph
-  std::multimap<int, Hex*> ndegree;// ndegree = number of direct neighbors !!! not chosen yet !!!
+  std::multimap<double, Hex*> degree;  // degree = the final ranking of hexahedra
+  std::multimap<int, Hex*> idegree;    // idegree = number of connected hex in indirect neighbors graph
+  std::multimap<int, Hex*> ndegree;    // ndegree = number of direct neighbors !!! not chosen yet !!!
   std::map<Hex*, int> reverse_idegree;
   std::map<Hex*, int> reverse_ndegree;
   // each tet has at least one neighbor, at most four. For all not chosen hex, check this data to find how many direct neighbors...
@@ -716,7 +713,9 @@ protected:
   void fill_edges_table(const std::vector<MVertex*>&, Hex *hex);
   void add_face(MVertex *a,MVertex* b,MVertex *c,Hex *hex);
   void add_face(MVertex *a,MVertex* b,MVertex *c,std::multimap<unsigned long long, pair<PETriangle*,int> > &f);
-  
+
+  // All the blossom related stuff is out of date - or not working
+  // Cannot be called. To remove?
   bool find_face_in_blossom_info(MVertex *a, MVertex *b, MVertex *c, MVertex *d);
   void compute_hex_ranks_blossom();
   PETriangle* get_triangle(MVertex*a, MVertex* b, MVertex *c);
@@ -726,7 +725,7 @@ protected:
   linemap::const_iterator  find_the_line(PELine *t, const linemap &list);
   std::multimap<unsigned long long, pair<PETriangle*,int> >::iterator
     find_the_triangle(PETriangle *t, std::multimap<unsigned long long, pair<PETriangle*, int> > &list);
-  std::multimap<unsigned long long, Hex* >::const_iterator  
+  std::multimap<unsigned long long, Hex* >::const_iterator
     find_the_created_potential_hex(Hex *t, const std::multimap<unsigned long long, Hex*>  &list);
 
 
@@ -788,10 +787,12 @@ protected:
     build_hash_tableC(hex);
   }
 
-  // Throw an assertion 
+  // Throw an assertion
   void merge(GRegion*);
 
   // ------- exports --------
+  // ---- seems that it won't export nothing since the
+  // ---- data structures from which info is read seem to never be filled
   void export_tets(set<MElement*> &tetset, Hex* hex, string s);
   void export_single_hex_all(Hex* hex,string s);
   void export_single_hex(Hex* hex,string s);
@@ -810,7 +811,7 @@ public:
   virtual void buildGraphOnly(unsigned int max_nb_cliques, string filename=string());
   virtual void buildGraphOnly(GRegion*, unsigned int max_nb_cliques, string filename=string());
   virtual void execute_blossom(unsigned int max_nb_cliques, string filename=string());
-  // What is this function supposed to do? 
+  // What is this function supposed to do?
   // Right now it throws at the first line. JP
   virtual void execute_blossom(GRegion*, unsigned int max_nb_cliques, string filename=string());
   virtual void createBlossomInfo();
@@ -971,7 +972,7 @@ public:
   void trihedra(GRegion*);
   void split_hexahedra(GRegion*);
   void split_prisms(GRegion*);
-  void split_pyramids(GRegion*);  
+  void split_pyramids(GRegion*);
   int nonConformDiag(MVertex* a,MVertex* b,MVertex* c,MVertex* d,GRegion* gr);
   void pyramids1(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*);
   void pyramids2(MVertex*,MVertex*,MVertex*,MVertex*,GRegion*, bool allowNonConforming);
@@ -984,7 +985,7 @@ public:
 
   //returns the geometrical validity of the pyramid
   bool valid(MPyramid *pyr);
-  
+
   bool four(MElement*);
   bool fourTrih(MElement*);
   bool five(MElement*);

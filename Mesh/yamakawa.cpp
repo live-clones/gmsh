@@ -30,6 +30,7 @@
 
 #include <cassert>
 
+
 #ifdef EXTERNAL_MIN_WEIGHTED_SET_SEARCH
 #include "mwis.hpp"
 #endif
@@ -5211,7 +5212,7 @@ bool PostOp::valid(MPyramid *pyr) {
   return true;
 }
 
-
+// Why template?
 template <class T>
 void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
   int clique_number, string filename)
@@ -5219,16 +5220,13 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
   ofstream out(filename.c_str());
   out << "Graph G {" << endl;
   typename multimap<int, set<T> >::reverse_iterator it_all = cl.allQ.rbegin();
-  //  multimap<int,set<T> >::reverse_iterator it_allen = cl.allQ.rend();
+
   for (int i = 0; i < clique_number; i++) {
     it_all++;
   }
   //  int clique_size = it_all->second.size();
   typename set<T>::iterator ithex = it_all->second.begin();
   typename set<T>::iterator ithexen = it_all->second.end();
-
-  //typedef tr1::unordered_multimap<hash_key, T> graph_data;
-  //typedef tr1::unordered_multimap<hash_key, pair<T, graph_data > > graph;
 
   int counter = 1;
   map<T, int> visited_hex;
@@ -5239,7 +5237,6 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
   typename cliques_compatibility_graph<T>::graph_data::const_iterator itgraphdata;
 
   for (; itgraph != cl.end_graph(); itgraph++) {
-
     T firsthex = itgraph->second.first;
     //    if (!post_check_validation(firsthex)) continue;
 
@@ -5249,9 +5246,9 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
       num1 = counter;
       visited_hex[firsthex] = counter++;
     }
-    else
+    else {
       num1 = itfind->second;
-
+    }
     itgraphdata = itgraph->second.second.begin();
     for (; itgraphdata != itgraph->second.second.end(); itgraphdata++) {
       T secondhex = itgraphdata->second;
@@ -5262,9 +5259,9 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
         num2 = counter;
         visited_hex[secondhex] = counter++;
       }
-      else
+      else {
         num2 = itfind->second;
-
+      }
       // search if num1 - num2 has already been written...
       bool found = false;
       pair<multimap<int, int>::iterator, multimap<int, int>::iterator> range =
@@ -5275,16 +5272,12 @@ void export_the_clique_graphviz_format(cliques_compatibility_graph<T> &cl,
           break;
         }
       }
-
       if (!found) {
         done.insert(make_pair(num1, num2));
         done.insert(make_pair(num2, num1));
         out << num1 << " -- " << num2 << " ;" << endl;
       }
-
     }
-
-
   }
   // export chosen hex with different color
   for (; ithex != ithexen; ithex++) { // brutal post-check: random pickup of hexahedra in clique
@@ -5611,7 +5604,14 @@ void cliques_compatibility_graph<T>::store_clique(int n)
 
 };
 
-
+// Recursive function to find all maximal cliques in the input subgraph.
+// Implements more or less the algorithm proposed in
+//    "The worst-case complexity for generating all maximal cliques and computational experiments"
+//     Tomita et al., 2006. doi 10.1016/j.tcs.2006.06.015
+//
+// Very very very inefficient.
+//
+// What is n? the index of the clique being explored??.
 template<class T>
 void cliques_compatibility_graph<T>::find_cliques(graph_data &subgraph, int n)
 {
@@ -5632,27 +5632,28 @@ void cliques_compatibility_graph<T>::find_cliques(graph_data &subgraph, int n)
   T u = NULL;             // Let's face it, this is a pointer.
   hash_key u_key = 0;
   // Choose the pivot: the node of the subgraph that
-  // has a maximum number of neighbors in the candidate set.
+  // has a maximum number of adjacent nodes in the set of candidates
   // Maximize the number of black nodes.
   choose_u(subgraph, u, u_key);
 
-  // The non-neighbors of u in the subgraph
+  // The non-neighbors of u in the subgraph (but should be candidates)
   graph_data white;
-  // The neighbors of u in the subgraph
+  // The nodes adjacent to u in the subgraph (but should be candidates)
   graph_data black;
   split_set_BW(u, u_key, subgraph, white, black);
 
-  // recursive loop
+  // Explore all candidate and branches from there
   while (white.size() > 0) {
     Q.insert(u);
     if (n == 0) {
-      // WTF is this supposed to do? What is n ???
       total_nodes_number = std::max(total_nodes_number, (unsigned int)white.size());
       position++;
     }
 
     find_cliques(black, n + 1);
-    if (cancel_search) break;
+    if (cancel_search) {
+      break;
+    }
 
     erase_entry(white, u, u_key);
     erase_entry(subgraph, u, u_key);
@@ -5684,11 +5685,9 @@ void cliques_compatibility_graph<T>::erase_entry(graph_data &subgraph, T &u, has
   }
 }
 
-// On veut choisir le sommet u qui maximise la taille de
-// l'intersection entre subgraph et les voisins de u dans le graphe
+// Chooses the node which ahs the maximum number of neighbors in the subgraph.
 // Does not implement exactly what's is the paper [Tomita et al. 2006] where u
-// is chosen to maximize the intersection of its neighbors in the CAND subset. JP.
-// WHY is it not done like that here?
+// is chosen to maximize the intersection of its neighbors in the CAND subset. No idea why. JP.
 template<class T>
 void cliques_compatibility_graph<T>::choose_u(const graph_data &subgraph, T &u, hash_key &u_key)
 {
@@ -5909,7 +5908,6 @@ size_t PEQuadrangle::get_max_nb_vertices()const { return 4; };
 // and add it to the potential hex.
 // TODO -- WE NEED ASSERTIONS in release mode and a command line to print stuff
 // TODO -- Implement clear validity checks - topological validity and geometrical validity
-
 // WARNING this function seems to be a mess -- I expect it to do not work as expected. JP.
 // Stuff are commented, the test to check if a potential exist seems does not work
 // and is bypassed.
@@ -6339,30 +6337,17 @@ void Recombinator_Graph::execute(GRegion* gr) {
 
   create_losses_graph(gr);
 
-  for (unsigned int i = 0; i < gr->tetrahedra.size(); i++) {
-    MTetrahedron *tet = gr->tetrahedra[i];
-    if (tet_to_hex.find(tet) == tet_to_hex.end()) {
-      std::cout << "Cannot recombine: " << tet->getNum() << "\n";
-    }
-  }
-
 #ifndef EXTERNAL_MIN_WEIGHTED_SET_SEARCH
   compute_hex_ranks();
-
 
   // a criteria to stop when the whole domain is exclusively composed of hex
   found_the_ultimate_max_clique = false;
   clique_stop_criteria<Hex*> criteria(hex_to_tet, gr->tetrahedra.size());
-
-
-  cliques_losses_graph<Hex*> cl(incompatibility_graph, hex_ranks, max_nb_cliques, hex_to_tet.size(), &criteria, export_the_clique_graphviz_format);
+  cliques_losses_graph<Hex*> cl(incompatibility_graph, hex_ranks, max_nb_cliques, hex_to_tet.size(),
+    &criteria, export_the_clique_graphviz_format);
   cl.find_cliques();
-  //cl.export_cliques();
-
 
   found_the_ultimate_max_clique = cl.found_the_ultimate_max_clique;
-
-
 
   int clique_number = 0;
   if (graphfilename.empty()) graphfilename.assign("mygraph.dot");
@@ -6500,13 +6485,15 @@ bool Recombinator_Graph::merge_hex(GRegion *gr, Hex *hex) {
   return true;
 }
 
+
+
 // Why derive then ?? this is quite stupid
 void Recombinator_Graph::merge(GRegion* gr) {
   throw;
 }
 
-void Recombinator_Graph::export_tets(set<MElement*> &tetset, Hex* hex, string s)
-{
+
+void Recombinator_Graph::export_tets(set<MElement*> &tetset, Hex* hex, string s) {
   stringstream ss;
   ss << s.c_str();
   ss << "hexptr_";
@@ -7196,6 +7183,7 @@ void Recombinator_Graph::add_face_connectivity(MElement *tet, int i, int j, int 
   delete t;
 }
 
+
 void Recombinator_Graph::compute_hex_ranks_blossom()
 {
   create_faces_connectivity();
@@ -7208,7 +7196,7 @@ void Recombinator_Graph::compute_hex_ranks_blossom()
     }
     map<Hex*, vector<double> >::iterator itfind = hex_ranks.find(hex);
     if (itfind == hex_ranks.end())
-      hex_ranks.insert(make_pair(hex, vector<double>(1)));
+      hex_ranks.insert(make_pair(hex, vector<double>(3)));
     hex_ranks[hex][0] = nb_faces_on_boundary;
     hex_ranks[hex][1] = hex->get_quality();
 
@@ -7219,7 +7207,6 @@ void Recombinator_Graph::compute_hex_ranks_blossom()
         hex->vertex_in_facet(f, 2), hex->vertex_in_facet(f, 3));
       if (face_in_blossom_info) count_blossom++;
     }
-
     hex_ranks[hex][2] = count_blossom;
   }
 }
