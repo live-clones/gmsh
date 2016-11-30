@@ -242,9 +242,9 @@ void drawArray(VertexArray *va, GLint type, bool useColorArray, bool useNormalAr
 {
   if(!va) return;
   glEnable(GL_RESCALE_NORMAL);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
-	glShadeModel(GL_SMOOTH);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glShadeModel(GL_SMOOTH);
   glVertexPointer(3, GL_FLOAT, 0, va->getVertexArray());
   glEnableClientState(GL_VERTEX_ARRAY);
   if(useNormalArray){
@@ -259,8 +259,8 @@ void drawArray(VertexArray *va, GLint type, bool useColorArray, bool useNormalAr
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_NORMAL_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
-	glDisable(GL_BLEND);
-	glDisable(GL_RESCALE_NORMAL);
+  glDisable(GL_BLEND);
+  glDisable(GL_RESCALE_NORMAL);
 }
 
 void drawVector(double x, double y, double z, double dx, double dy, double dz)

@@ -301,7 +301,8 @@
 
 #pragma mark - Split view
 
--(BOOL)splitViewController:(UISplitViewController *)svc shouldHideViewController:(UIViewController *)vc inOrientation:(UIInterfaceOrientation)orientation
+-(BOOL)splitViewController:(UISplitViewController *)svc shouldHideViewController:(UIViewController *)vc
+             inOrientation:(UIInterfaceOrientation)orientation
 {
 	return NO;
 }
@@ -345,12 +346,15 @@ void messageFromCpp (void *self, std::string level, std::string msg)
   [_progressLabel setHidden:!_progressLabel.hidden];
 }
 
-void getBitmap(void *self, const char *text, int textsize, unsigned char **map, int *height, int *width, int *realWidth)
+void getBitmap(void *self, const char *text, int textsize, unsigned char **map,
+               int *height, int *width, int *realWidth)
 {
-  [(__bridge id)self getBitmapFromStringObjC:text withTextSize:textsize inMap:map inHeight:height inWidth:width inRealWidth:realWidth];
+  [(__bridge id)self getBitmapFromStringObjC:text withTextSize:textsize inMap:map
+                                    inHeight:height inWidth:width inRealWidth:realWidth];
 }
 
--(void) getBitmapFromStringObjC:(const char *)text withTextSize:(int)textsize inMap:(unsigned char **)map inHeight:(int *)height inWidth:(int *)width inRealWidth:(int *) realWidth
+-(void) getBitmapFromStringObjC:(const char *)text withTextSize:(int)textsize inMap:(unsigned char **)map
+                       inHeight:(int *)height inWidth:(int *)width inRealWidth:(int *) realWidth
 {
   UILabel *lbl = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 1024, 7*textsize/6)];
   lbl.font = [UIFont systemFontOfSize:textsize];
