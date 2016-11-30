@@ -103,7 +103,7 @@ void createTopologyFromMesh1D ( GModel *gm , int &num) {
     if (it->second.stuff.size() > 1) {
       //      it->second.print();
       num++;
-      discreteVertex *dv = new discreteVertex (  gm , GModel::current()->getGEOInternals()->MaxPointNum++);
+      discreteVertex *dv = new discreteVertex (  gm , ++GModel::current()->getGEOInternals()->MaxPointNum);
       gm->add(dv);
       MVertex *v = it->first;
       MPoint *mp = new MPoint(v);
@@ -135,7 +135,23 @@ void createTopologyFromMesh1D ( GModel *gm , int &num) {
     }
   }
 
+  for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
+    if (!(*it)->getBeginVertex() && !(*it)->getEndVertex()){
+      num++;
+      discreteVertex *dv = new discreteVertex (  gm , ++GModel::current()->getGEOInternals()->MaxPointNum);
+      gm->add(dv);
+      printf("creating vertex %d for periodic edge %d\n",dv->tag(),(*it)->tag());
+      MVertex *v = (*it)->lines[0]->getVertex(0);
+      MPoint *mp = new MPoint(v);
+      dv->points.push_back(mp);
+      dv->addEdge (*it);
+      (*it)->setBeginVertex(dv);
+      (*it)->setEndVertex(dv);      
+      _topology[*it].insert(dv);
+    }
+  }
 
+  
   // NICE :-)
 }
 
@@ -231,7 +247,7 @@ void ensureManifoldFaces ( GModel *gm ) {
   for(unsigned int i=0;i<f.size(); i++)ensureManifoldFace (f[i]);
 }
 
-
+/// FIXME : 2 TIMES THE SAME MLINE IN EACH CONNECTED PART IF PERIODIC
 std::vector<GEdge*> ensureSimplyConnectedEdge ( GEdge *ge ) {
   std::vector<GEdge*> _all;
   std::set<MLine*> _lines;
@@ -381,6 +397,9 @@ void createTopologyFromMesh2D ( GModel *gm , int & num) {
   std::map<GEdge*, std::vector<GEdge*> > _parts;
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
     _parts[*it] = ensureSimplyConnectedEdge (*it);
+    //        for (int i=0;i<(*it)->lines.size();i++)
+    //          printf("%d %d\n",(*it)->lines[i]->getVertex(0)->getNum(),(*it)->lines[i]->getVertex(1)->getNum());
+    //        getchar();
   }
 
   // create Face 2 Edge topology
@@ -648,13 +667,14 @@ void GModel::createTopologyFromMeshNew ( ) {
   getEntities(entities);
   std::set<MVertex*> vs;
   for(unsigned int i = 0; i < entities.size(); i++){
+    //    printf("entity %d of dim %d\n",entities[i]->tag(),entities[i]->dim());
     vs.insert (entities[i]->mesh_vertices.begin(), entities[i]->mesh_vertices.end());
     entities[i]->mesh_vertices.clear();
   }
   std::vector<MVertex*> cc;
   cc.insert(cc.begin(), vs.begin(), vs.end());
   _storeVerticesInEntities(cc);
-
+  
   //  printf("%d vertices\n", getNumVertices());
 
   double t2 = Cpu();

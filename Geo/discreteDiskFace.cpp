@@ -983,7 +983,7 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
     m[0][1] = n.z();
     m[1][0] = t.y();
     m[1][1] = t.z();      
-    if (fabs(det2x2(m)) > 1.e-8){
+    if (fabs(det2x2(m)) > 1.e-12){
       sys2x2(m,rhs,r);
       x0 = SVector3(0,r[0],r[1]);
     }
@@ -992,7 +992,7 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
       m[0][1] = n.z();
       m[1][0] = t.x();
       m[1][1] = t.z();      
-      if (fabs(det2x2(m)) > 1.e-8){
+      if (fabs(det2x2(m)) > 1.e-12){
 	sys2x2(m,rhs,r);	
 	x0 = SVector3(r[0],0,r[1]);
       }
@@ -1005,7 +1005,7 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
 	  x0 = SVector3(r[0],r[1],0);
 	}
 	else{
-	  printf("mauvaise pioche\n");
+	  //	  printf("mauvaise pioche\n");
 	  continue;
 	}
       }

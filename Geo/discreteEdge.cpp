@@ -70,6 +70,7 @@ void discreteEdge::orderMLines()
        it != segments.end(); ++it){
     MVertex *vL = (*it)->getVertex(0);
     MVertex *vR = (*it)->getVertex(1);
+
     std::map<MVertex*,MLine*>::iterator it1 = boundv.find(vL);
     if (it1 == boundv.end()) boundv.insert(std::make_pair(vL,*it));
     else  boundv.erase(it1);
@@ -78,6 +79,7 @@ void discreteEdge::orderMLines()
     else boundv.erase(it2);
   }
   // find the first MLine and erase it from the list segments
+  
   MLine *firstLine;
   if (boundv.size() == 2){   // non periodic
     firstLine = (boundv.begin())->second;
@@ -214,7 +216,7 @@ void discreteEdge::setBoundVertices()
     v1 = bound_vertices[1];
   }
   else if (boundv.size() == 0){
-    //printf("closed loop for discrete Edge =%d \n", this->tag());
+    printf("closed loop for discrete Edge =%d \n", this->tag());
     GVertex* bound_vertex;
     std::vector<MLine*>::const_iterator it = lines.begin();
     MVertex* vE = (*it)->getVertex(0);

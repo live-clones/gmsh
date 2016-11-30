@@ -704,6 +704,7 @@ bool insertVertexB (std::list<edgeXface> &shell,
 		    double *metric,
 		    MTri3 **oneNewTriangle)
 {
+  if (cavity.size() == 1) return false;
   if (shell.size() != cavity.size() + 2) return false;
 
   std::list<MTri3*> new_cavity;
@@ -747,7 +748,7 @@ bool insertVertexB (std::list<edgeXface> &shell,
     // avoid angles that are too obtuse
     double cosv = ((d1*d1+d2*d2-d3*d3)/(2.*d1*d2));
 
-    if ((d1 < LL * .35 || d2 < LL * .35 || cosv < -.9999) && !force) {
+    if ((d1 < LL * .55 || d2 < LL * .55 || cosv < -.9999) && !force) {
       onePointIsTooClose = true;
       //      printf("%12.5E %12.5E %12.5E %12.5E \n",d1,d2,LL,cosv);
     }
@@ -827,7 +828,7 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
   else{
     recurFindCavityAniso(gf, shell, cavity, metric, param, t, data);
   }
-
+  
   return insertVertexB(shell, cavity, force, gf, v, param , t,
 		       allTets,
 		       activeTets,
@@ -1058,7 +1059,7 @@ void bowyerWatson(GFace *gf, int MAXPNT,
   //  if (equivalence)_printTris ("before.pos", AllTris.begin(), AllTris.end(), DATA);
   int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
   // _printTris ("after2.pos", AllTris, Us,Vs);
-  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+  //  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
   if(AllTris.empty()){
     Msg::Error("No triangles in initial mesh");
