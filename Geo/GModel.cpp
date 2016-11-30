@@ -1331,12 +1331,10 @@ static void _associateEntityWithElementVertices(GEntity *ge, std::vector<T*> &el
 
 void GModel::_createGeometryOfDiscreteEntities(bool force)
 {
-  printf("%d vertices\n",getNumVertices());
   if (CTX::instance()->meshDiscrete){
     createTopologyFromMeshNew ();
     exportDiscreteGEOInternals();
   }
-  printf("%d vertices\n",getNumVertices());
 
   if (force || CTX::instance()->meshDiscrete){
     Msg::Info("Creating the geometry of discrete curves");
@@ -1347,7 +1345,6 @@ void GModel::_createGeometryOfDiscreteEntities(bool force)
       }
     }
   }
-  printf("%d vertices\n",getNumVertices());
 
   if (CTX::instance()->meshDiscrete){
     Msg::Info("Creating the geometry of discrete surfaces");
@@ -1358,9 +1355,7 @@ void GModel::_createGeometryOfDiscreteEntities(bool force)
       }
     }
   }
-  printf("%d vertices\n",getNumVertices());
 }
-
 
 void GModel::_associateEntityWithMeshVertices()
 {
@@ -2283,7 +2278,7 @@ void GModel::createTopologyFromMesh(int ignoreHoles)
   makeDiscreteFacesSimplyConnected();
 
   // TEST !!!!!!!!
-  if (0){
+  if (CTX::instance()->meshDiscrete){
     createTopologyFromMeshNew ();
     exportDiscreteGEOInternals();
     double t2 = Cpu();

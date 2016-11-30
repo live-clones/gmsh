@@ -79,7 +79,7 @@ void discreteEdge::orderMLines()
     else boundv.erase(it2);
   }
   // find the first MLine and erase it from the list segments
-  
+
   MLine *firstLine;
   if (boundv.size() == 2){   // non periodic
     firstLine = (boundv.begin())->second;
@@ -143,7 +143,7 @@ void discreteEdge::orderMLines()
 
   //lines is now a list of ordered MLines
   lines = _m;
-  
+
   //mesh_vertices
   mesh_vertices.clear();
   for (unsigned int i = 0; i < lines.size()-1; ++i){
@@ -155,7 +155,7 @@ void discreteEdge::orderMLines()
         mesh_vertices.end()) mesh_vertices.push_back(v2);
   }
 
-  
+
   //special case reverse orientation
   if (lines.size() < 2) return;
   if (_orientation[0] && lines[0]->getVertex(1) != lines[1]->getVertex(1)
@@ -216,7 +216,6 @@ void discreteEdge::setBoundVertices()
     v1 = bound_vertices[1];
   }
   else if (boundv.size() == 0){
-    printf("closed loop for discrete Edge =%d \n", this->tag());
     GVertex* bound_vertex;
     std::vector<MLine*>::const_iterator it = lines.begin();
     MVertex* vE = (*it)->getVertex(0);
@@ -368,7 +367,7 @@ void discreteEdge::parametrize(std::map<MVertex*, MVertex*>& old2new)
       _pars.push_back(i);
     }
   }
-  
+
   std::vector<MVertex* > newVertices;
   std::vector<MLine*> newLines;
 
@@ -396,7 +395,7 @@ void discreteEdge::parametrize(std::map<MVertex*, MVertex*>& old2new)
 
   mesh_vertices = newVertices;
   lines.clear();
-  lines = newLines;  
+  lines = newLines;
 }
 
 
@@ -455,7 +454,7 @@ GPoint discreteEdge::point(double par) const
   int iEdge;
   if(!getLocalParameter(par, iEdge, tLoc)) return GPoint();
 
-  
+
   double x, y, z;
   MVertex *vB = discrete_lines[iEdge]->getVertex(0);
   MVertex *vE = discrete_lines[iEdge]->getVertex(1);
@@ -469,7 +468,7 @@ GPoint discreteEdge::point(double par) const
 
 SVector3 discreteEdge::firstDer(double par) const
 {
-  
+
   double tLoc;
   int iEdge;
   if(!getLocalParameter(par, iEdge, tLoc)) return SVector3();
