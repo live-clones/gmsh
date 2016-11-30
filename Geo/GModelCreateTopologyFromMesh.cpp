@@ -140,7 +140,7 @@ void createTopologyFromMesh1D ( GModel *gm , int &num) {
       num++;
       discreteVertex *dv = new discreteVertex (  gm , ++GModel::current()->getGEOInternals()->MaxPointNum);
       gm->add(dv);
-      printf("creating vertex %d for periodic edge %d\n",dv->tag(),(*it)->tag());
+      //      printf("creating vertex %d for periodic edge %d\n",dv->tag(),(*it)->tag());
       MVertex *v = (*it)->lines[0]->getVertex(0);
       MPoint *mp = new MPoint(v);
       dv->points.push_back(mp);
@@ -255,6 +255,8 @@ std::vector<GEdge*> ensureSimplyConnectedEdge ( GEdge *ge ) {
 
   _all.push_back(ge);
 
+
+  // create vertex to edge connectivity : only 2 neighbors are considered ...
   for (unsigned int i = 0; i < ge->lines.size(); i++){
     _lines.insert(ge->lines[i]);
     for (int j=0;j<2;j++){
@@ -275,7 +277,11 @@ std::vector<GEdge*> ensureSimplyConnectedEdge ( GEdge *ge ) {
       MLine *l = _stack.top();
       _stack.pop();
       _lines.erase (l);
-      _part.push_back(l);
+      // avoid adding twice the last one
+      if (!_part.size()  || _part[_part.size() - 1] != l){
+	//	printf("part %d : %d %d\n",_parts.size(),l->getVertex(0)->getNum(),l->getVertex(1)->getNum());
+	_part.push_back(l);
+      }
       for (int j=0;j<2;j++){
 	std::map<MVertex*, std::pair<MLine*,MLine*> >::iterator it = _conn.find(l->getVertex(j));
 	if (it->second.first == l && it->second.second != NULL && _lines.find (it->second.second) != _lines.end()){
@@ -600,7 +606,7 @@ void createTopologyFromMesh3D ( GModel *gm , int &num ) {
     std::set<std::pair<GRegion*,GRegion*> >::iterator it = _pairs.begin();
     for (; it != _pairs.end(); ++it) {
       if (it->first != it->second) {
-	printf("creating a new discrete face between %p and %p\n",it->first, it->second);
+	//	printf("creating a new discrete face between %p and %p\n",it->first, it->second);
 	discreteFace *df = new discreteFace (  gm , NEWREG());
 	num++;
 	gm->add (df);
