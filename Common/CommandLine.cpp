@@ -368,6 +368,10 @@ void GetOptions(int argc, char *argv[])
         Msg::SetInfoCpu(true);
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "log")) {
+        Msg::SetLogFile("gmsh.log");
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "refine")) {
         CTX::instance()->batch = 5;
         i++;

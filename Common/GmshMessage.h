@@ -58,6 +58,9 @@ class Msg {
 #endif
   // executable name
   static std::string _execName;
+  // log file
+  static std::string _logFileName;
+  static FILE *_logFile;
  public:
   Msg() {}
   static void Init(int argc, char **argv);
@@ -73,6 +76,7 @@ class Msg {
   static int GetMaxThreads();
   static int GetThreadNum();
   static void SetVerbosity(int val);
+  static void SetLogFile(const std::string &name);
   static int GetVerbosity();
   static std::string GetLaunchDate();
   static std::string GetCommandLineArgs();

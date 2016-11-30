@@ -69,8 +69,8 @@ std::string Msg::_execName;
 onelab::client *Msg::_onelabClient = 0;
 onelab::server *onelab::server::_server = 0;
 #endif
-
-
+std::string Msg::_logFileName;
+FILE *Msg::_logFile = 0;
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1310) //NET 2003
 #define vsnprintf _vsnprintf
@@ -198,6 +198,16 @@ int Msg::GetVerbosity()
   return _verbosity;
 }
 
+void Msg::SetLogFile(const std::string &name)
+{
+  _logFileName = name;
+  if(_logFile) fclose(_logFile);
+  if(name.size())
+    _logFile = Fopen(name.c_str(), "w");
+  else
+    _logFile = 0;
+}
+
 std::string Msg::GetLaunchDate()
 {
   return _launchDate;
@@ -286,6 +296,10 @@ void Msg::Exit(int level)
     delete GModel::current();
   // delete the temp file
   if(!_commRank) UnlinkFile(CTX::instance()->homeDir + CTX::instance()->tmpFileName);
+  if(_logFile){
+    fclose(_logFile);
+    _logFile = 0;
+  }
 
   // exit directly on abnormal program termination (level != 0). We
   // used to call abort() to flush open streams, but on modern OSes
@@ -436,6 +450,7 @@ void Msg::Fatal(const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
+  if(_logFile) fprintf(_logFile, "Fatal: %s\n", str);
   if(_callback) (*_callback)("Fatal", str);
   if(_client) _client->Error(str);
 
@@ -484,6 +499,7 @@ void Msg::Error(const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
+  if(_logFile) fprintf(_logFile, "Error: %s\n", str);
   if(_callback) (*_callback)("Error", str);
   if(_client) _client->Error(str);
 
@@ -524,6 +540,7 @@ void Msg::Warning(const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
+  if(_logFile) fprintf(_logFile, "Warning: %s\n", str);
   if(_callback) (*_callback)("Warning", str);
   if(_client) _client->Warning(str);
 
@@ -566,6 +583,7 @@ void Msg::Info(const char *fmt, ...)
     strcat(str, res.c_str());
   }
 
+  if(_logFile) fprintf(_logFile, "Info: %s\n", str);
   if(_callback) (*_callback)("Info", str);
   if(_client) _client->Info(str);
 
@@ -606,6 +624,7 @@ void Msg::Direct(const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
+  if(_logFile) fprintf(_logFile, "Direct: %s\n", str);
   if(_callback) (*_callback)("Direct", str);
   if(_client) _client->Info(str);
 
@@ -651,6 +670,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
     strcat(str, res.c_str());
   }
 
+  if(_logFile) fprintf(_logFile, "Info: %s\n", str);
   if(_callback && log) (*_callback)("Info", str);
   if(_client && log) _client->Info(str);
 
@@ -713,6 +733,7 @@ void Msg::Debug(const char *fmt, ...)
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
 
+  if(_logFile) fprintf(_logFile, "Debug: %s\n", str);
   if(_callback) (*_callback)("Debug", str);
   if(_client) _client->Info(str);
 
@@ -755,6 +776,7 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
     }
 #endif
+    if(_logFile) fprintf(_logFile, "Progress: %s\n", str);
     if(_callback) (*_callback)("Progress", str);
     if(!streamIsFile(stdout) && log && CTX::instance()->terminal){
       fprintf(stdout, "%s                                          \r",
