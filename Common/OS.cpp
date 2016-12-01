@@ -419,7 +419,7 @@ std::string GetExecutableFileName()
 #elif defined(__linux__)
   char path[4096];
   int n = readlink("/proc/self/exe", path, sizeof(path));
-  if(n > 0 && n < sizeof(path)){
+  if(n > 0 && n < (int)sizeof(path)){
     path[n] = '\0';
     name = std::string(path);
   }
