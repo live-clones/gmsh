@@ -43,7 +43,7 @@ Physical Line(1) = {26 ... 37};
 
 // element size imposed by a size field
 Field[1] = MathEval;
-Field[1].F = "2.5";
+Field[1].F = "2.0";
 Background Field = 1;
 
 DefineConstant[
