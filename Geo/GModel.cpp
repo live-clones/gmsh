@@ -2977,8 +2977,8 @@ void GModel::save(std::string fileName)
   GModel::setCurrent(temp);
 }
 
-GEdge* GModel::addCompoundEdge(std::vector<GEdge*> edges, int num){
-
+GEdge* GModel::addCompoundEdge(std::vector<GEdge*> edges, int num)
+{
   if (num ==-1) num =  getMaxElementaryNumber(1) + 1;
   GEdgeCompound *gec = new GEdgeCompound(this, num, edges);
   add(gec);
