@@ -1334,11 +1334,16 @@ endif(NOWARN)
 
 # disable compile optimization on some known problematic files
 check_cxx_compiler_flag("-O0" NOOPT)
-if(NOOPT)
-  file(GLOB_RECURSE NOOPT_SRC Mesh/BDS.cpp Parser/Gmsh.tab.cpp
-       contrib/Tetgen1.5/predicates.cxx)
+if(NOOPT OR ENABLE_BUILD_IOS)
+  if(ENABLE_BUILD_IOS) # optimized iOS 10 64 bits screws somewhere in Geo
+    file(GLOB_RECURSE NOOPT_SRC Geo/*.cpp Mesh/BDS.cpp Parser/Gmsh.tab.cpp
+         contrib/Tetgen1.5/predicates.cxx)
+  else
+    file(GLOB_RECURSE NOOPT_SRC Mesh/BDS.cpp Parser/Gmsh.tab.cpp
+         contrib/Tetgen1.5/predicates.cxx)
+  endif(ENABLE_BUILD_IOS)
   set_compile_flags(NOOPT_SRC "-O0")
-endif(NOOPT)
+endif(NOOPT OR ENABLE_BUILD_IOS)
 
 #enable Revoropt and set compile flags for the corresponding plugin
 if(ENABLE_REVOROPT)
