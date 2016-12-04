@@ -1,6 +1,7 @@
-2.15.0: fixed several regressions (multi-file partitioned grid export, mesh
-subdivision, old compound mesher); improved 2D boundary layer field & removed
-non-functional 3D boundary layer field; faster rendering of large meshes.
+2.15.0 (December 4. 2016): fixed several regressions (multi-file partitioned
+grid export, mesh subdivision, old compound mesher); improved 2D boundary layer
+field & removed non-functional 3D boundary layer field; faster rendering of
+large meshes.
 
 2.14.1 (October 30, 2016): fixed regression in periodic meshes; small bug fixes
 and code cleanups.
