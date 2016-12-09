@@ -185,4 +185,7 @@ void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,
                                    std::vector<SPoint3> &pointsUV,
 				   const SPoint3 &ptCG, const mean_plane &meanPlane);
 
+bool catenary(double x0, double x1, double y0, double y1, double ys, int N,
+              double *yp);
+
 #endif

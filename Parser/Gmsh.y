@@ -128,7 +128,7 @@ struct doubleXstring{
 %token tEND tAFFECT tDOTS tPi tMPI_Rank tMPI_Size tEuclidian tCoordinates tTestLevel
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil tRound
-%token tFmod tModulo tHypot tList
+%token tFmod tModulo tHypot tList tLinSpace tLogSpace tCatenary
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tAbsolutePath tDirName tStrSub tStrLen
 %token tFind tStrFind tStrCmp tStrChoice tUpperCase tLowerCase tLowerCaseIn
@@ -5961,6 +5961,32 @@ FExpr_Multi :
       }
       Free($1);
       List_Delete($4);
+    }
+  | tLinSpace LP FExpr ',' FExpr ',' FExpr RP
+    {
+      $$ = List_Create(20,20,sizeof(double));
+      for(int i = 0; i < (int)$7; i++) {
+	double d = $3 + ($5-$3)*(double)i/($7-1);
+	List_Add($$, &d);
+      }
+    }
+  | tLogSpace LP FExpr ',' FExpr ',' FExpr RP
+    {
+      $$ = List_Create(20,20,sizeof(double));
+      for(int i = 0; i < (int)$7; i++) {
+	double d = pow(10,$3 + ($5-$3)*(double)i/($7-1));
+	List_Add($$, &d);
+      }
+    }
+  | tCatenary LP FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr RP
+    {
+      double x0 = $3, x1 = $5, y0 = $7, y1 = $9, ys = $11;
+      int N = (int)$13;
+      std::vector<double> y(N);
+      if(!catenary(x0, x1, y0, y1, ys, N, &y[0]))
+        Msg::Warning("Catenary did not converge, using linear interpolation");
+      $$ = List_Create(N,10,sizeof(double));
+      for(int i = 0; i < N; i++) List_Add($$, &y[i]);
     }
 ;
 

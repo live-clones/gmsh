@@ -658,7 +658,7 @@ void invert_singular_matrix3x3(double MM[3][3], double II[3][3])
 bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
                fullVector<double> &x, void *data, double relax, double tolx)
 {
-  const int MAXIT = 10;
+  const int MAXIT = 100;
   const double EPS = 1.e-4;
   const int N = x.size();
 
@@ -686,8 +686,6 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
       }
       x(j) -= h;
     }
-
-    //    printf("done\n");
 
     if (N == 1)
       dx(0) = f(0) / J(0, 0);
@@ -1503,5 +1501,52 @@ void transformPointsIntoOrthoBasis(const std::vector<SPoint3> &ptsProj,
     pointsUV[i][0] = dot(pp, tangent);
     pointsUV[i][1] = dot(pp, binormal);
     pointsUV[i][2] = dot(pp, normal);
+  }
+}
+
+static bool catenary_fct(fullVector<double> &x, fullVector<double> &res, void *data)
+{
+  double *param = (double*)data;
+  double x0 = param[0], x1 = param[1], y0 = param[2], y1 = param[3], ys = param[4];
+  res(0) = (ys-1/x(0)) + 1/x(0)*cosh(x(0)*(x0-x(1))) - y0;
+  res(1) = (ys-1/x(0)) + 1/x(0)*cosh(x(0)*(x1-x(1))) - y1;
+  return true;
+}
+
+bool catenary(double x0, double x1, double y0, double y1, double ys, int N,
+              double *yp)
+{
+  // In the z=0 plane, catenary equation is y(x) = a + 1/b cosh(b(x-c))
+  //
+  // Three parameters a, b, c determined by imposing
+  // - left point: y0 = y(x0) = a + 1/b cosh(b(x0-c))
+  // - right point: y1 = y(x1) = a + 1/b cosh(b(x1-c))
+  // - lowest point (sag): ys = y(c) = a + 1/b , i.e. a = ys - 1/b
+  //
+  // Thus solve syst of 2 nl equations with 2 unknowns b and c:
+  //
+  // ys - 1/b + 1/b cosh(b(x0-c)) - y0 = 0
+  // ys - 1/b + 1/b cosh(b(x1-c)) - y1 = 0
+  double param[5] = {x0, x1, y0, y1, ys};
+  fullVector<double> x(2);
+  bool success = false;
+  if(x0 != x1){
+    x(0) = 1./(x1-x0);
+    x(1) = (x0+x1)/2.;
+    success = newton_fd(catenary_fct, x, param, 1., 1e-6*fabs(x1-x0));
+  }
+  if(success){
+    double a = ys-1/x(0);
+    for(int i = 0; i < N; i++){
+      double r = x0 + (i+1) * (x1-x0)/(N+1);
+      yp[i] = a+1/x(0)*cosh(x(0)*(r-x(1)));
+    }
+    return true;
+  }
+  else{
+    for(int i = 0; i < N; i++){
+      yp[i] = y0 + (i+1) * (y1-y0)/(N+1);
+    }
+    return false;
   }
 }

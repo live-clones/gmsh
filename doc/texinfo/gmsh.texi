@@ -1084,10 +1084,12 @@ List of expressions are also widely used, and are defined as:
   @var{expression} |
   @var{expression} : @var{expression} |
   @var{expression} : @var{expression} : @var{expression} |
-  @var{string} [ ] | 
+  @var{string} [ ] |  @var{string} ( ) | 
   List [ @var{string} ] |
   List [ @var{expression-list-item} ] |
   List [ @{ @var{expression-list} @} ] |
+  LinSpace[ @var{expression}, @var{expression}, @var{expression} ] |
+  LogSpace[ @var{expression}, @var{expression}, @var{expression} ] |
   @var{string} [ @{ @var{expression-list} @} ] | 
   Point @{ @var{expression} @} |
   @var{transform} |

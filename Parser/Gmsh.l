@@ -122,6 +122,7 @@ Bezier			return tBezier;
 BSpline			return tBSpline;
 BoundingBox             return tBoundingBox;
 
+Catenary                return tCatenary;
 Ceil                    return tCeil;
 Circle                  return tCircle;
 CopyOptions             return tCopyOptions;
@@ -203,6 +204,8 @@ Knots			return tNurbsKnots;
 Length                  return tLength;
 Line                    return tLine;
 List                    return tList;
+LinSpace                return tLinSpace;
+LogSpace                return tLogSpace;
 Log                     return tLog;
 Log10                   return tLog10;
 Layers                  return tLayers;
