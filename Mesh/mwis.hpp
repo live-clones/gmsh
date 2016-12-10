@@ -1015,6 +1015,7 @@ void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
   // for (vertex v : visitor.best_solution)
   //   *out++ = v;
 
+#ifdef MWIS_MCTS
   auto vs = vertices(graph);
   weight root_bound(bound(vs.second, vs.second, vs.first, vs.second));
 
@@ -1029,20 +1030,21 @@ void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
 
   for (vertex v : state.solution)
     *out++ = v;
+#else
+  mwis::evaluator<Graph, WeightMap> eval(cliques.begin(), cliques.end(), 5);
 
-  // mwis::evaluator<Graph, WeightMap> eval(cliques.begin(), cliques.end(), 5);
+  visitor(state);
+  search::greedy_search(state, successor, eval);
 
-  // visitor(state);
-  // search::greedy_search(state, successor, eval);
+  mwis::lns_state<Graph, WeightMap> l_state(graph, weight_map, state.solution);
+  mwis::lns_fragment<Graph> (*l_selector)(const decltype(l_state)&) =
+    mwis::fragment_selector<Graph, WeightMap>;
+  mwis::lns_search<Graph, WeightMap> l_search(cliques.begin(), cliques.end());
 
-  // mwis::lns_state<Graph, WeightMap> l_state(graph, weight_map, state.solution);
-  // mwis::lns_fragment<Graph> (*l_selector)(const decltype(l_state)&) =
-  //   mwis::fragment_selector<Graph, WeightMap>;
-  // mwis::lns_search<Graph, WeightMap> l_search(cliques.begin(), cliques.end());
+  search::large_neighborhood_search(l_state, l_selector, l_search, 300);
+  std::cout << "\n";
 
-  // search::large_neighborhood_search(l_state, l_selector, l_search, 300);
-  // std::cout << "\n";
-
-  // for (vertex v : l_state.solution)
-  //   *out++ = v;
+  for (vertex v : l_state.solution)
+    *out++ = v;
+#endif
 }
