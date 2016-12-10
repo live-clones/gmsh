@@ -11,6 +11,8 @@
 
 #include "GRegion.h"
 #include "MVertex.h"
+#include "MHexahedron.h"
+#include "qualityMeasuresJacobian.h"
 #include <set>
 #include <map>
 #include <iterator>
@@ -38,13 +40,23 @@ private:
     }
   }
 
+  void compute_quality() {
+    MHexahedron elt(vertices_);
+    quality = jacobianBasedQuality::minScaledJacobian(&elt, false, true);
+  }
+
+  void initialize() {
+    set_hash();
+    compute_quality();
+  }
+
 public:
   Hex() : quality(0.), hash(0.) {}
 
   Hex(const std::vector<MVertex*>& vertices):
     quality(0.), hash(0), vertices_(vertices)
   {
-    set_hash();
+    initialize();
   }
   Hex(MVertex* a2, MVertex* b2, MVertex* c2, MVertex* d2, MVertex* e2, MVertex* f2, MVertex* g2, MVertex* h2) :
     quality(0.)
@@ -57,13 +69,12 @@ public:
     vertices_.push_back(f2);
     vertices_.push_back(g2);
     vertices_.push_back(h2);
-    set_hash();
+    initialize();
   }
 
   ~Hex() {};
 
   double get_quality() const { return quality; }
-  void set_quality(double new_quality) { quality = new_quality; }
 
   MVertex* getVertex(unsigned int i) const {
     if (i < 8) {

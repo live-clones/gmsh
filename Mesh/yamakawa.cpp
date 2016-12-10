@@ -716,8 +716,6 @@ void Recombinator::pattern1() {
               for (std::set<MVertex*>::iterator it4 = bin4.begin(); it4 != bin4.end(); it4++) {
                 MVertex* s = *it4;
                 Hex* hex = new Hex(a, b, q, c, d, p, s, r);
-                double quality = min_scaled_jacobian(*hex);
-                hex->set_quality(quality);
 
                 add_or_free_potential_hex(hex);
               }
@@ -766,13 +764,9 @@ void Recombinator::pattern2() {
         if (r != 0 && q != 0) {
           // 2 possible hexes
           Hex* hex = new Hex(a, s, b, c, d, r, q, p);
-          double quality = min_scaled_jacobian(*hex);
-          hex->set_quality(quality);
           add_or_free_potential_hex(hex);
 
           Hex* hex2 = new Hex(a, c, d, s, b, p, q, r);
-          quality = min_scaled_jacobian(*hex2);
-          hex2->set_quality(quality);
           add_or_free_potential_hex(hex2);
         }
       }
@@ -848,8 +842,6 @@ void Recombinator::pattern3() {
 
           if (c1 && c2 && c3 && c4 && c5 && c6 && c7 && c8 && c9 && c10) {
             Hex* hex = new Hex(p, c, r, b, q, d, s, a);
-            double quality = min_scaled_jacobian(*hex);
-            hex->set_quality(quality);
             add_or_free_potential_hex(hex);
           }
         } // copy paste alert
@@ -889,8 +881,7 @@ void Recombinator::pattern3() {
 
           if (c1 && c2 && c3 && c4 && c5 && c6 && c7 && c8 && c9 && c10) {
             Hex* hex = new Hex(p, b, r, a, q, c, s, d);
-            double quality = min_scaled_jacobian(*hex);
-            hex->set_quality(quality);
+
             add_or_free_potential_hex(hex);
           }
         }
