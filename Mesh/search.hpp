@@ -174,8 +174,11 @@ template<typename State,
          typename Fragment = typename selector_traits<Selector>::fragment_type,
          typename Assigment = typename search_traits<Search>::assignment_type>
 void large_neighborhood_search(State &state, Selector &selector,
-                               Search &search, size_t fragment_count = 100) {
-  for (size_t i = 0; i < fragment_count; i++) {
+                               Search &search,
+                               std::size_t time_limit = 100) {
+  using namespace std::chrono;
+  auto start = steady_clock::now();
+  while (steady_clock::now() - start < time_limit * 1s) {
     Fragment fragment(selector(state));
     Assigment assignment(search(state, fragment));
     assignment(state, fragment);
