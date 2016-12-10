@@ -676,10 +676,7 @@ public:
   weight operator()(state<Graph, WeightMap> &cur) const {
     visit_state<Graph, WeightMap> visitor;
 
-    // max_bound<weight> bound;
-    lagrangian_bound<Graph, WeightMap>
-      bound(cur.graph, cur.weight_map, _cliques.begin(), _cliques.end(),
-            cur.solution.size() + _limit);
+    max_bound<weight> bound;
     successor<Graph, WeightMap, decltype(bound)>
       successor(bound, visitor.best_value, cur.solution.size() + _limit);
 
