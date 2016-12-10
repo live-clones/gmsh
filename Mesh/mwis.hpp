@@ -772,6 +772,9 @@ template<typename Graph, typename WeightMap>
 lns_fragment<Graph> fragment_selector(const lns_state<Graph, WeightMap> &state) {
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex;
 
+  if (boost::num_vertices(state.graph) == 0)
+    return lns_fragment<Graph>(std::set<vertex>());
+
   std::random_device dev;
   std::mt19937 gen(dev());
 
