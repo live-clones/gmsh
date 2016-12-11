@@ -528,6 +528,8 @@ public:
       selected_vertex.push_back(_vertex);
       new_weight += get(state.weight_map, _vertex);
 
+      removed.push_back(_vertex);
+
       std::pair<out_edge_iterator, out_edge_iterator> edges =
         out_edges(_vertex, state.graph);
       for (out_edge_iterator eit = edges.first; eit != edges.second; eit++) {
