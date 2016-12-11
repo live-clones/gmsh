@@ -139,8 +139,7 @@ public:
                    CliqueIterator clique_end,
                    size_t max_size = std::numeric_limits<size_t>::max()):
     _graph(graph), _weight(weight_map), _max_size(max_size) {
-    auto vs = vertices(graph);
-    size_t vertex_count = vs.second - vs.first;
+    size_t vertex_count = num_vertices(graph);
 
     _clique_storage.resize(vertex_count);
     _selected_storage.resize(vertex_count);
@@ -236,8 +235,10 @@ public:
    * (u, v) \in E <=> there is a clique which contains both u and v.
    */
   void check_consistency() {
-    auto es = boost::edges(_graph);
-    for (auto eit = es.first; eit != es.second; eit++) {
+    typedef typename boost::graph_traits<Graph>::edge_iterator edge_iterator;
+
+    std::pair<edge_iterator, edge_iterator> es = boost::edges(_graph);
+    for (edge_iterator eit = es.first; eit != es.second; eit++) {
       bool found = false;
 
       vertex v = boost::source(*eit, _graph);
@@ -468,6 +469,7 @@ struct state {
 template<typename Graph, typename WeightMap>
 class clique_assignment {
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex;
+  typedef typename boost::graph_traits<Graph>::out_edge_iterator out_edge_iterator;
   typedef typename boost::property_traits<WeightMap>::value_type weight;
 
   size_t _id;
@@ -497,8 +499,9 @@ public:
       selected_vertex.push_back(_vertex);
       new_weight += get(state.weight_map, _vertex);
 
-      auto edges = out_edges(_vertex, state.graph);
-      for (auto eit = edges.first; eit != edges.second; eit++) {
+      std::pair<out_edge_iterator, out_edge_iterator> edges =
+        out_edges(_vertex, state.graph);
+      for (out_edge_iterator eit = edges.first; eit != edges.second; eit++) {
         const vertex &other = target(*eit, state.graph);
         if (state.selectable.find(other) != state.selectable.end()) {
           removed.push_back(other);
@@ -897,6 +900,8 @@ public:
 template<typename Graph, typename WeightMap>
 class lns_search {
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex;
+  typedef typename boost::graph_traits<Graph>::vertex_iterator vertex_iterator;
+  typedef typename boost::graph_traits<Graph>::out_edge_iterator out_edge_iterator;
   typedef typename boost::property_traits<WeightMap>::value_type weight;
 
   std::vector<std::vector<vertex>> _cliques;
@@ -929,8 +934,9 @@ public:
 
       new_weight += get(l_state.weight_map, v);
 
-      auto edges = out_edges(v, l_state.graph);
-      for (auto eit = edges.first; eit != edges.second; eit++) {
+      std::pair<out_edge_iterator, out_edge_iterator> edges =
+        out_edges(v, l_state.graph);
+      for (out_edge_iterator eit = edges.first; eit != edges.second; eit++) {
         const vertex &other = target(*eit, l_state.graph);
         removed.insert(other);
       }
@@ -940,8 +946,8 @@ public:
         assigned.insert(clique[i]);
     }
 
-    auto vs = boost::vertices(l_state.graph);
-    for (auto it = vs.first; it != vs.second; it++) {
+    std::pair<vertex_iterator, vertex_iterator> vs = boost::vertices(l_state.graph);
+    for (vertex_iterator it = vs.first; it != vs.second; it++) {
       vertex v = *it;
       if (fragment.vertices.find(v) == fragment.vertices.end())
         removed.insert(v);
@@ -1046,20 +1052,24 @@ public:
 template<typename Graph, typename OutputIterator>
 void find_cliques(const Graph &graph, OutputIterator out) {
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex;
+  typedef typename boost::graph_traits<Graph>::edge_iterator edge_iterator;
+  typedef typename boost::graph_traits<Graph>::out_edge_iterator out_edge_iterator;
 
   std::set<std::pair<vertex, vertex>> visited_edges;
 
-  auto es = edges(graph);
-  for (auto eit = es.first; eit != es.second; eit++) {
-    auto u = source(*eit, graph);
-    auto v = target(*eit, graph);
+  std::pair<edge_iterator, edge_iterator> es = edges(graph);
+  for (edge_iterator eit = es.first; eit != es.second; eit++) {
+    vertex u = source(*eit, graph);
+    vertex v = target(*eit, graph);
 
     if (visited_edges.find(std::make_pair(u, v)) == visited_edges.end()) {
       std::vector<vertex> contents, candidates;
 
-      auto connected_es = out_edges(u, graph);
-      for (auto eit = connected_es.first; eit != connected_es.second; eit++) {
-        auto new_v = target(*eit, graph);
+      std::pair<out_edge_iterator, out_edge_iterator> connected_es =
+        out_edges(u, graph);
+      for (out_edge_iterator eit = connected_es.first;
+           eit != connected_es.second; eit++) {
+        vertex new_v = target(*eit, graph);
         if (new_v != v && visited_edges.find(std::make_pair(u, new_v)) ==
             visited_edges.end()) {
           candidates.push_back(new_v);
@@ -1100,6 +1110,7 @@ template<typename Graph, typename WeightMap, typename OutputIterator>
 void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
                                     OutputIterator out) {
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex;
+  typedef typename boost::graph_traits<Graph>::vertex_iterator vertex_iterator;
   typedef typename boost::property_traits<WeightMap>::value_type weight;
 
   std::vector<std::vector<vertex>> cliques;
@@ -1120,13 +1131,13 @@ void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
     cliques.begin(), cliques.end());
 
 #ifdef MWIS_MCTS
-  auto vs = vertices(graph);
+  std::pair<vertex_iterator, vertex_iterator> vs = vertices(graph);
   weight root_bound(bound(vs.second, vs.second, vs.first, vs.second));
 
   mwis::direct_evaluator<Graph, WeightMap> direct_eval(root_bound);
 
   mwis::max_bound<weight> max_bound;
-  mwis::successor<Graph, WeightMap, decltype(max_bound)>
+  mwis::successor<Graph, WeightMap, mwis::max_bound<weight> >
     max_successor(max_bound, visitor.best_value);
 
   search::monte_carlo_tree_search(state, max_successor, direct_eval);
@@ -1145,7 +1156,7 @@ void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
     mwis::fragment_selector<Graph, WeightMap>;
   mwis::lns_search<Graph, WeightMap> l_search(cliques.begin(), cliques.end());
 
-  search::large_neighborhood_search(l_state, l_selector, l_search, 300);
+  search::large_neighborhood_search(l_state, l_selector, l_search, 10);
   std::cout << "\n";
 
   for (std::size_t i = 0; i < l_state.solution.size(); i++)
