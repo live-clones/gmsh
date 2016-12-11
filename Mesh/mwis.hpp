@@ -881,11 +881,17 @@ public:
   void operator()(edge e, const Graph &g) {
     _set.insert(boost::target(e, g));
   }
+
+  void operator()(vertex v, const Graph &g) {
+    _set.insert(v);
+  }
 };
 
 template<typename Graph, typename WeightMap>
 lns_fragment<Graph> fragment_selector(const lns_state<Graph, WeightMap> &state) {
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex;
+  typedef typename boost::graph_traits<Graph>::vertex_iterator vertex_iterator;
+  typedef typename boost::graph_traits<Graph>::out_edge_iterator out_edge_iterator;
 
   if (boost::num_vertices(state.graph) == 0)
     return lns_fragment<Graph>(std::set<vertex>());
@@ -898,7 +904,7 @@ lns_fragment<Graph> fragment_selector(const lns_state<Graph, WeightMap> &state) 
 
   std::set<vertex> set;
   set.insert(v);
-  set_recorder<Graph, boost::on_black_target> recorder(set);
+  set_recorder<Graph, boost::on_examine_vertex> recorder(set);
 
   limited_queue<vertex> queue(neighborhood_size);
 
