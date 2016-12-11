@@ -6385,7 +6385,7 @@ void Recombinator_Graph::execute(GRegion* gr) {
       Hex *other_hex = data_it->second;
       vertex_id other_vid = vertex_map[hex_to_tet[other_hex]];
 
-      if (!edge(vid, other_vid, graph).second) {
+      if (vid != other_vid && !edge(vid, other_vid, graph).second) {
         add_edge(vid, other_vid, graph);
       }
     }
