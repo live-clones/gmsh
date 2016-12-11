@@ -1,6 +1,6 @@
 #include "search.hpp"
 
-#include <boost/iterator/counting_iterator.hpp>
+#include <boost/heap/fibonacci_heap.hpp>
 
 #include <boost/graph/random.hpp>
 #include <boost/graph/graph_traits.hpp>
@@ -407,23 +407,48 @@ class clique_assignment;
 
 template<typename Graph, typename WeightMap>
 struct state {
+private:
+  class clique_size_comparator {
+    const state &_state;
+  public:
+    typedef std::size_t argument_type;
+    typedef std::size_t first_argument_type;
+    typedef std::size_t second_argument_type;
+    typedef bool result_type;
+
+    clique_size_comparator(state &state): _state(state) {}
+
+    bool operator()(std::size_t a, std::size_t b) const {
+      return _state.clique_sizes[a] > _state.clique_sizes[b];
+    }
+  };
+public:
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex;
   typedef typename boost::property_traits<WeightMap>::value_type weight;
 
   typedef typename boost::property_map<
     Graph, boost::vertex_index_t>::type index_map;
   typedef boost::iterator_property_map<
-    std::vector<std::vector<size_t>>::iterator, index_map> clique_map_type;
+    std::vector< std::vector<size_t> >::iterator, index_map> clique_map_type;
+
+  typedef boost::heap::fibonacci_heap<
+    std::size_t,
+    boost::heap::compare< clique_size_comparator > > clique_queue_type;
+  typedef typename clique_queue_type::handle_type clique_handle_type;
 
   const Graph &graph;
   WeightMap weight_map;
 
-  std::vector<std::vector<vertex>> cliques;
+  std::vector< std::vector<vertex> > cliques;
   std::vector<size_t> clique_sizes;
-   std::set<vertex> selectable;
+
+  clique_queue_type clique_queue;
+  std::vector<clique_handle_type> clique_handles;
+
+  std::set<vertex> selectable;
   std::vector<bool> assigned;
 
-  std::vector<std::vector<size_t>> clique_map_storage;
+  std::vector< std::vector<size_t> > clique_map_storage;
   clique_map_type clique_map;
 
   std::vector<vertex> solution;
@@ -437,6 +462,8 @@ struct state {
     graph(graph), weight_map(weight_map),
     cliques(clique_begin, clique_end),
     clique_sizes(cliques.size()),
+    clique_queue(clique_size_comparator(*this)),
+    clique_handles(cliques.size()),
     selectable(vertices(graph).first, vertices(graph).second),
     assigned(cliques.size(), false),
     solution_value(0)
@@ -446,8 +473,10 @@ struct state {
       clique_map = make_iterator_property_map(
         clique_map_storage.begin(), id_map);
 
-      for (size_t i = 0; i < cliques.size(); i++)
+      for (size_t i = 0; i < cliques.size(); i++) {
         clique_sizes[i] = cliques[i].size();
+        clique_handles[i] = clique_queue.push(i);
+      }
 
       size_t id = 0;
 
@@ -594,6 +623,18 @@ public:
     for (std::map<std::size_t, std::size_t>::const_iterator it = _size_delta.begin();
          it != _size_delta.end(); it++) {
       state.clique_sizes[it->first] -= it->second;
+
+      /*
+       * Priority queues (both std::priority_queue and boost::heap::*) are max
+       * priority queues by default, so even though we are using a min priority
+       * queue, "increasing" the key means moving towards the top of the queue.
+       */
+      state.clique_queue.increase(state.clique_handles[it->first]);
+    }
+
+    while (!state.clique_queue.empty() &&
+           state.assigned[state.clique_queue.top()]) {
+      state.clique_queue.pop();
     }
   }
 
@@ -614,6 +655,19 @@ public:
     for (std::map<std::size_t, std::size_t>::const_iterator it = _size_delta.begin();
          it != _size_delta.end(); it++) {
       state.clique_sizes[it->first] += it->second;
+
+      /*
+       * Priority queues (both std::priority_queue and boost::heap::*) are max
+       * priority queues by default, so even though we are using a min priority
+       * queue, "decreasing" the key means moving towards the bottom of the
+       * queue.
+       */
+      if (state.clique_sizes[it->first] == it->second) {
+        state.clique_handles[it->first] = state.clique_queue.push(it->first);
+      }
+      else {
+        state.clique_queue.decrease(state.clique_handles[it->first]);
+      }
     }
   }
 };
@@ -673,20 +727,12 @@ public:
     if (state.solution.size() == _limit)
       return;
 
-    auto clique_begin = boost::make_counting_iterator<size_t>(0);
-    auto clique_end   = boost::make_counting_iterator<size_t>(
-      state.cliques.size());
-
-    auto clique_it = std::min_element(
-      clique_begin, clique_end, [&](size_t a, size_t b) {
-        return clique_key(state, a) < clique_key(state, b);
-      });
-
-    if (clique_it == clique_end || state.assigned[*clique_it])
+    if (state.clique_queue.empty())
       return;
 
+    std::size_t id = state.clique_queue.top();
+
     std::vector<vertex> vertices;
-    size_t id = *clique_it;
 
     const std::vector<vertex> &clique = state.cliques[id];
     for (std::size_t i = 0; i < clique.size(); i++) {
@@ -713,26 +759,6 @@ public:
     }
 
     *it++ = clique_assignment<Graph, WeightMap>(id);
-  }
-
-  std::tuple<size_t, weight>
-  clique_key(state<Graph, WeightMap> &state,
-             size_t id) {
-    if (state.assigned[id]) {
-      return std::make_tuple(std::numeric_limits<size_t>::max(),
-                             weight(0));
-    }
-    else if (state.clique_sizes[id] == 0) {
-      return std::make_tuple(0, weight(0));
-    }
-    else {
-      vertex v = *std::find_if(
-        state.cliques[id].begin(), state.cliques[id].end(),
-        make_set_membership_test(state.selectable));
-
-      return std::make_tuple(state.clique_sizes[id],
-                             -get(state.weight_map, v));
-    }
   }
 };
 
