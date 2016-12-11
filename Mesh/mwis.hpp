@@ -91,9 +91,10 @@ public:
     size_t i = 0;
     for (CliqueIterator it = clique_begin; it != clique_end; it++, i++) {
       std::vector<vertex> to_add;
-      for (const vertex &v : *it) {
-        to_add.push_back(v);
-        get(_cliques, v).push_back(i);
+      for (typename std::vector<vertex>::const_iterator v_it = it->begin();
+           v_it != it->end(); v_it++) {
+        to_add.push_back(*v_it);
+        get(_cliques, *v_it).push_back(i);
       }
       _clique_contents.push_back(to_add);
     }
@@ -101,7 +102,8 @@ public:
     _lambda.resize(_clique_contents.size());
     _gradient.resize(_clique_contents.size());
 
-    for (weight &v : _lambda) v = weight(0);
+    for (std::size_t i = 0; i < _lambda.size(); i++)
+      _lambda[i] = weight(0);
   }
 
   /**
@@ -179,7 +181,8 @@ public:
       const std::vector<size_t> &cliques_v = get(_cliques, v);
       const std::vector<size_t> &cliques_w = get(_cliques, w);
 
-      for (size_t clique : cliques_v) {
+      for (std::size_t i = 0; i < cliques_v.size(); i++) {
+        std::size_t clique = cliques_v[i];
         if (std::find(cliques_w.begin(), cliques_w.end(), clique) !=
             cliques_w.end()) {
           found = true;
@@ -193,10 +196,13 @@ public:
       }
     }
 
-    for (const std::vector<vertex> &clique : _clique_contents) {
-      for (vertex v : clique) {
-        for (vertex w : clique) {
-          if (v == w) continue;
+    for (std::size_t i = 0; i < _clique_contents.size(); i++) {
+      const std::vector<vertex> &clique = _clique_contents[i];
+
+      for (std::size_t j = 0; j < clique.size(); j++) {
+        vertex v = clique[j];
+        for (std::size_t k = j+1; k < clique.size(); k++) {
+          vertex w = clique[k];
 
           if (!edge(v, w, _graph).second) {
             std::cout << "no edge between " << v << " and " <<
@@ -214,8 +220,10 @@ private:
   void compute_gradient(Iterator cliques_begin, Iterator cliques_end) {
     for (Iterator it = cliques_begin; it != cliques_end; it++) {
       weight sum{1};
-      for (const vertex &v : _clique_contents[*it]) {
-        sum -= weight(get(_selected, v) ? 1 : 0);
+
+      const std::vector<vertex> &clique = _clique_contents[*it];
+      for (std::size_t i = 0; i < clique.size(); i++) {
+        sum -= weight(get(_selected, clique[i]) ? 1 : 0);
       }
 
       _gradient[*it] = sum;
@@ -230,8 +238,10 @@ private:
     for (Iterator it = begin; it != end; it++) {
       weight result(get(_weight, *it));
 
-      for (size_t clique : get(_cliques, *it))
-        result -= _lambda[clique];
+      const std::vector<std::size_t> &vertex_cliques = get(_cliques, *it);
+      for (std::size_t i = 0; i < vertex_cliques.size(); i++) {
+        result -= _lambda[vertex_cliques[i]];
+      }
 
       put(_effective_weight, *it, result);
     }
@@ -284,13 +294,13 @@ private:
       put(_selected, v, false);
     }
 
-    for (vertex v : largest) {
+    for (std::size_t i = 0; i < largest.size(); i++) {
+      vertex v = largest[i];
       if (get(_effective_weight, v) <= weight(0))
         break;
       put(_selected, v, true);
     }
   }
-
 
   /**
    * Calculates the upper bound for the current values of the Lagrange
@@ -375,9 +385,12 @@ struct state {
         clique_sizes[i] = cliques[i].size();
 
       size_t id = 0;
-      for (std::vector<vertex> &clique : cliques) {
-        for (vertex v : clique)
-          get(clique_map, v).push_back(id);
+
+      for (std::size_t i = 0; i < cliques.size(); i++) {
+        std::vector<vertex> &clique = cliques[i];
+
+        for (std::size_t j = 0; j < clique.size(); j++)
+          get(clique_map, clique[j]).push_back(id);
 
         std::sort(clique.begin(), clique.end(), [&](vertex a, vertex b) {
           return get(weight_map, a) > get(weight_map, b);
@@ -428,12 +441,16 @@ public:
         }
       }
 
-      for (size_t i : get(state.clique_map, _vertex)) {
-        if (!state.assigned[i]) assigned.push_back(i);
+      const std::vector<std::size_t> &clique_ids = get(state.clique_map, _vertex);
+      for (std::size_t i = 0; i < clique_ids.size(); i++) {
+        std::size_t c_id = clique_ids[i];
+        if (!state.assigned[c_id]) assigned.push_back(c_id);
       }
     }
     else {
-      for (vertex v : state.cliques[_id]) {
+      const std::vector<vertex> &clique = state.cliques[_id];
+      for (std::size_t i = 0; i < clique.size(); i++) {
+        vertex v = clique[i];
         if (state.selectable.find(v) != state.selectable.end())
           removed.push_back(v);
       }
@@ -442,8 +459,13 @@ public:
     }
 
     std::map<size_t, size_t> size_delta;
-    for (vertex v : removed) {
-      for (size_t clique : get(state.clique_map, v)) {
+    for (std::size_t i = 0; i < removed.size(); i++) {
+      vertex v = removed[i];
+
+      const std::vector<std::size_t> &cliques = get(state.clique_map, v);
+      for (std::size_t j = 0; j < cliques.size(); j++) {
+        std::size_t clique = cliques[j];
+
         size_delta[clique]++;
         if (size_delta[clique] == state.clique_sizes[clique]) {
           if (!state.assigned[clique])
@@ -485,44 +507,47 @@ public:
     {}
 
   void apply(state<Graph, WeightMap> &state) const {
-    for (size_t i : _assigned_id)
-      state.assigned[i] = true;
+    for (size_t i = 0; i < _assigned_id.size(); i++)
+      state.assigned[_assigned_id[i]] = true;
 
     size_t old_size = state.solution.size();
     state.solution.resize(state.solution.size() + _selected.size());
     std::copy(_selected.begin(), _selected.end(),
               state.solution.begin() + old_size);
 
-    for (vertex v : _selected)
-      state.selectable.erase(v);
+    for (std::size_t i = 0; i < _selected.size(); i++)
+      state.selectable.erase(_selected[i]);
 
     state.solution_value = _new_weight;
 
-    for (vertex v : _invalidated) {
-      state.selectable.erase(v);
+    for (std::size_t i = 0; i < _invalidated.size(); i++) {
+      state.selectable.erase(_invalidated[i]);
     }
 
-    for (auto pair : _size_delta)
-      state.clique_sizes[pair.first] -= pair.second;
+    for (std::map<std::size_t, std::size_t>::const_iterator it = _size_delta.begin();
+         it != _size_delta.end(); it++) {
+      state.clique_sizes[it->first] -= it->second;
+    }
   }
 
   void reverse(state<Graph, WeightMap> &state) const {
-    for (size_t i : _assigned_id)
-      state.assigned[i] = false;
+    for (size_t i = 0; i < _assigned_id.size(); i++)
+      state.assigned[_assigned_id[i]] = false;
 
     state.solution.resize(state.solution.size() - _selected.size());
 
-    for (vertex v : _selected)
-      state.selectable.insert(v);
+    for (std::size_t i = 0; i < _selected.size(); i++)
+      state.selectable.insert(_selected[i]);
 
     state.solution_value = _old_weight;
 
-    for (vertex v : _invalidated) {
-      state.selectable.insert(v);
-    }
+    for (std::size_t i = 0; i < _invalidated.size(); i++)
+      state.selectable.insert(_invalidated[i]);
 
-    for (auto pair : _size_delta)
-      state.clique_sizes[pair.first] += pair.second;
+    for (std::map<std::size_t, std::size_t>::const_iterator it = _size_delta.begin();
+         it != _size_delta.end(); it++) {
+      state.clique_sizes[it->first] += it->second;
+    }
   }
 };
 
@@ -595,7 +620,10 @@ public:
 
     std::vector<vertex> vertices;
     size_t id = *clique_it;
-    for (vertex v : state.cliques[id]) {
+
+    const std::vector<vertex> &clique = state.cliques[id];
+    for (std::size_t i = 0; i < clique.size(); i++) {
+      vertex v = clique[i];
       if (state.selectable.find(v) != state.selectable.end()) {
         vertices.push_back(v);
       }
@@ -614,8 +642,10 @@ public:
                 return vertex_regret(state, a) < vertex_regret(state, b);
               });
 
-    for (vertex v : vertices)
-      *it++ = clique_assignment<Graph, WeightMap>(id, v);
+
+    for (std::size_t i = 0; i < vertices.size(); i++) {
+      *it++ = clique_assignment<Graph, WeightMap>(id, vertices[i]);
+    }
 
     *it++ = clique_assignment<Graph, WeightMap>(id);
   }
@@ -845,7 +875,9 @@ public:
 
     weight new_weight(0);
 
-    for (vertex v : l_state.solution) {
+    for (std::size_t i = 0; i < l_state.solution.size(); i++) {
+      vertex v = l_state.solution[i];
+
       if (fragment.vertices.find(v) != fragment.vertices.end())
         continue;
 
@@ -859,8 +891,9 @@ public:
         removed.insert(other);
       }
 
-      for (size_t i : get(search_state.clique_map, v))
-        assigned.insert(i);
+      const std::vector<std::size_t> &clique = get(search_state.clique_map, v);
+      for (size_t i = 0; i < clique.size(); i++)
+        assigned.insert(clique[i]);
     }
 
     auto vs = boost::vertices(l_state.graph);
@@ -871,8 +904,14 @@ public:
     }
 
     std::map<size_t, size_t> size_delta;
-    for (vertex v : removed) {
-      for (size_t clique : get(search_state.clique_map, v)) {
+    for (typename std::set<vertex>::const_iterator it = removed.begin();
+         it != removed.end(); it++) {
+      vertex v = *it;
+
+      const std::vector<vertex> &cliques = get(search_state.clique_map, v);
+      for (std::size_t i = 0; i < cliques.size(); i++) {
+        std::size_t clique = cliques[i];
+
         size_delta[clique]++;
         if (size_delta[clique] == search_state.clique_sizes[clique]) {
           assigned.insert(clique);
@@ -897,8 +936,8 @@ public:
     visit_state<Graph, WeightMap> visitor;
     visitor.best_solution = l_state.solution;
     visitor.best_value = weight(0);
-    for (vertex v : visitor.best_solution)
-      visitor.best_value += get(l_state.weight_map, v);
+    for (std::size_t i = 0; i < visitor.best_solution.size(); i++)
+      visitor.best_value += get(l_state.weight_map, visitor.best_solution[i]);
 
     successor<Graph, WeightMap, decltype(bound)> successor(
       bound, visitor.best_value);
@@ -906,7 +945,8 @@ public:
     search::depth_first_search(search_state, visitor, successor);
 
     std::vector<vertex> newly_selected;
-    for (vertex v : visitor.best_solution) {
+    for (std::size_t i = 0; i < visitor.best_solution.size(); i++) {
+      vertex v = visitor.best_solution[i];
       if (fragment.vertices.find(v) != fragment.vertices.end())
         newly_selected.push_back(v);
     }
@@ -1011,10 +1051,6 @@ void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
     graph, weight_map,
     cliques.begin(), cliques.end());
 
-  // search::depth_first_search(state, visitor, successor);
-  // for (vertex v : visitor.best_solution)
-  //   *out++ = v;
-
 #ifdef MWIS_MCTS
   auto vs = vertices(graph);
   weight root_bound(bound(vs.second, vs.second, vs.first, vs.second));
@@ -1028,8 +1064,8 @@ void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
   search::monte_carlo_tree_search(state, max_successor, direct_eval);
   std::cout << "\n";
 
-  for (vertex v : state.solution)
-    *out++ = v;
+  for (std::size_t i = 0; i < state.solution.size(); i++)
+    *out++ = state.solution[i];
 #else
   mwis::evaluator<Graph, WeightMap> eval(cliques.begin(), cliques.end(), 5);
 
@@ -1044,7 +1080,7 @@ void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
   search::large_neighborhood_search(l_state, l_selector, l_search, 300);
   std::cout << "\n";
 
-  for (vertex v : l_state.solution)
-    *out++ = v;
+  for (std::size_t i = 0; i < l_state.solution.size(); i++)
+    *out++ = l_state.solution[i];
 #endif
 }
