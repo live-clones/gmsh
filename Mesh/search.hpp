@@ -123,7 +123,7 @@ void breadth_first_search(State &init, Visitor &visit, Successor &fn) {
 template<typename State,
          typename Visitor,
          typename Successor,
-         typename Compare = std::less<State>>
+         typename Compare = std::less<State> >
 void best_first_search(State &init, Visitor &visit, Successor &fn,
                        Compare c = Compare()) {
   tree_search(init, visit, fn, std::priority_queue<State, Compare>(c));
