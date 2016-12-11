@@ -1051,29 +1051,27 @@ public:
 };
 
 /**
- * Function object that checks if the edge between a fixed vertex (passed as a
- * parameter to the constructor) and its argument has already been visited by
- * the algorithm.
+ * Function object that checks if there exisits an edge between a fixed vertex
+ * (passed as a parameter to the constructor) and its argument.
  *
  * This is used in find_cliques.
  */
 template<typename Graph>
-class edge_visited_test {
+class has_no_edge_test {
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex;
 
-  const std::set<std::pair<vertex, vertex>> &_visited_edges;
+  const Graph &_graph;
   vertex _v;
 public:
   typedef vertex argument_type;
   typedef bool result_type;
 
-  edge_visited_test(const std::set<std::pair<vertex, vertex>> &visited_edges,
-                    vertex v): _visited_edges(visited_edges), _v(v)
+  has_no_edge_test(const Graph &graph, vertex v):
+    _graph(graph), _v(v)
     {}
 
   bool operator()(vertex w) const {
-    return _visited_edges.find(std::make_pair(_v, w)) ==
-      _visited_edges.end();
+    return !edge(_v, w, _graph).second;
   }
 };
 
@@ -1111,12 +1109,11 @@ void find_cliques(const Graph &graph, OutputIterator out) {
       while (!candidates.empty()) {
         vertex v = candidates.back();
         candidates.pop_back();
-
         contents.push_back(v);
 
         candidates.erase(
           std::remove_if(candidates.begin(), candidates.end(),
-                         edge_visited_test<Graph>(visited_edges, v)),
+                         has_no_edge_test<Graph>(graph, v)),
           candidates.end());
       }
 
