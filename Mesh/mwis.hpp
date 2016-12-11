@@ -756,7 +756,7 @@ public:
     visit_state<Graph, WeightMap> visitor;
 
     max_bound<weight> bound;
-    successor<Graph, WeightMap, decltype(bound)>
+    successor<Graph, WeightMap, max_bound<weight> >
       successor(bound, visitor.best_value, cur.solution.size() + _limit);
 
     visitor(cur);
@@ -989,7 +989,7 @@ public:
     for (std::size_t i = 0; i < visitor.best_solution.size(); i++)
       visitor.best_value += get(l_state.weight_map, visitor.best_solution[i]);
 
-    successor<Graph, WeightMap, decltype(bound)> successor(
+    successor<Graph, WeightMap, lagrangian_bound<Graph, WeightMap> > successor(
       bound, visitor.best_value);
 
     search::depth_first_search(search_state, visitor, successor);
@@ -1123,7 +1123,7 @@ void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
   bound.check_consistency();
 
   mwis::visit_state<Graph, WeightMap> visitor;
-  mwis::successor<Graph, WeightMap, decltype(bound)> successor(
+  mwis::successor<Graph, WeightMap, mwis::lagrangian_bound<Graph, WeightMap> > successor(
     bound, visitor.best_value);
 
   mwis::state<Graph, WeightMap> state(
@@ -1152,11 +1152,12 @@ void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
   search::greedy_search(state, successor, eval);
 
   mwis::lns_state<Graph, WeightMap> l_state(graph, weight_map, state.solution);
-  mwis::lns_fragment<Graph> (*l_selector)(const decltype(l_state)&) =
-    mwis::fragment_selector<Graph, WeightMap>;
   mwis::lns_search<Graph, WeightMap> l_search(cliques.begin(), cliques.end());
 
-  search::large_neighborhood_search(l_state, l_selector, l_search, 10);
+  search::large_neighborhood_search(
+    l_state,
+    mwis::fragment_selector<Graph, WeightMap>,
+    l_search, 10);
   std::cout << "\n";
 
   for (std::size_t i = 0; i < l_state.solution.size(); i++)
