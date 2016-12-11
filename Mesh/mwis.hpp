@@ -913,7 +913,25 @@ lns_fragment<Graph> fragment_selector(const lns_state<Graph, WeightMap> &state) 
     boost::buffer(queue).
     visitor(boost::make_bfs_visitor(recorder)));
 
-  return lns_fragment<Graph>(set);
+  std::set<vertex> selectable_subset;
+  for (typename std::set<vertex>::const_iterator it = set.begin();
+       it != set.end(); it++) {
+    std::pair<out_edge_iterator, out_edge_iterator> connected_es =
+      out_edges(*it, state.graph);
+
+    out_edge_iterator eit;
+    for (eit = connected_es.first; eit != connected_es.second; eit++) {
+      vertex v = target(*eit, state.graph);
+      if (get(state.solution, v) && set.find(v) == set.end())
+        break;
+    }
+
+    if (eit == connected_es.second) {
+      selectable_subset.insert(*it);
+    }
+  }
+
+  return lns_fragment<Graph>(selectable_subset);
 }
 
 template<typename Graph>
@@ -927,17 +945,18 @@ public:
   void operator()(lns_state<Graph, WeightMap> &state,
                   const lns_fragment<Graph> &fragment) const {
     static int i = 0;
-    std::cout << "\rsize: " << state.solution.size() << " " << i++;
+    std::cout << "\rsize: " << i++;
     std::cout.flush();
 
-    state.solution.erase(
-      std::remove_if(
-        state.solution.begin(), state.solution.end(),
-        make_set_membership_test(fragment.vertices)),
-      state.solution.end());
+    for (typename std::set<vertex>::const_iterator it =
+           fragment.vertices.begin();
+         it != fragment.vertices.end(); it++) {
+      put(state.solution, *it, false);
+    }
 
-    std::copy(_vertices.begin(), _vertices.end(),
-              std::back_inserter(state.solution));
+    for (std::size_t i = 0; i < _vertices.size(); i++) {
+      put(state.solution, _vertices[i], true);
+    }
   }
 };
 
@@ -1161,8 +1180,9 @@ void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
     graph, weight_map,
     cliques.begin(), cliques.end());
 
-#ifdef MWIS_MCTS
   std::pair<vertex_iterator, vertex_iterator> vs = vertices(graph);
+
+#ifdef MWIS_MCTS
   weight root_bound(bound(vs.second, vs.second, vs.first, vs.second));
 
   mwis::direct_evaluator<Graph, WeightMap> direct_eval(root_bound);
@@ -1183,7 +1203,7 @@ void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
   search::greedy_search(state, successor, eval);
 
   mwis::lns_state<Graph, WeightMap> l_state(graph, weight_map, state.solution);
-  mwis::lns_search<Graph, WeightMap> l_search(cliques.begin(), cliques.end());
+  mwis::lns_search<Graph, WeightMap> l_search(graph, cliques.begin(), cliques.end());
 
   search::large_neighborhood_search(
     l_state,
@@ -1191,7 +1211,9 @@ void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
     l_search, 10);
   std::cout << "\n";
 
-  for (std::size_t i = 0; i < l_state.solution.size(); i++)
-    *out++ = l_state.solution[i];
+  for (vertex_iterator it = vs.first; it != vs.second; it++) {
+    if (get(l_state.solution, *it))
+      *out++ = *it;
+  }
 #endif
 }
