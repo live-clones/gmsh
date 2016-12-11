@@ -111,7 +111,7 @@ class lagrangian_bound {
   typedef boost::iterator_property_map<
     std::vector<bool>::iterator, index_map> selected_map_type;
   typedef boost::iterator_property_map<
-    std::vector<std::vector<size_t>>::iterator, index_map> clique_map_type;
+    std::vector< std::vector<size_t> >::iterator, index_map> clique_map_type;
   typedef boost::iterator_property_map<
     typename std::vector<weight>::iterator, index_map> weight_map_type;
 
@@ -119,11 +119,11 @@ class lagrangian_bound {
   WeightMap _weight;
   size_t _max_size;
 
-  std::vector<std::vector<vertex>> _clique_contents;
+  std::vector< std::vector<vertex> > _clique_contents;
 
   std::vector<weight> _lambda, _gradient;
 
-  std::vector<std::vector<size_t>> _clique_storage;
+  std::vector< std::vector<size_t> > _clique_storage;
   std::vector<bool> _selected_storage;
   std::vector<weight> _effective_weight_storage;
 
@@ -767,7 +767,7 @@ class evaluator {
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex;
   typedef typename boost::property_traits<WeightMap>::value_type weight;
 
-  std::vector<std::vector<vertex>> _cliques;
+  std::vector< std::vector<vertex> > _cliques;
   size_t _limit;
 public:
   typedef weight result_type;
@@ -795,16 +795,28 @@ public:
 template<typename Graph, typename WeightMap>
 struct lns_state {
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex;
+  typedef typename boost::property_map<
+    Graph, boost::vertex_index_t>::type index_map;
+  typedef boost::iterator_property_map<
+    std::vector<bool>::iterator, index_map> solution_map_type;
 
   const Graph &graph;
   WeightMap weight_map;
 
-  std::vector<vertex> solution;
+  std::vector<bool> solution_storage;
+  solution_map_type solution;
 
   lns_state(const Graph &graph, WeightMap weight_map,
-            const std::vector<vertex> &solution):
-    graph(graph), weight_map(weight_map), solution(solution)
-    {}
+            const std::vector<vertex> &initial_solution):
+    graph(graph), weight_map(weight_map),
+    solution_storage(num_vertices(graph), false) {
+    index_map ids = boost::get(boost::vertex_index, graph);
+    solution = make_iterator_property_map(solution_storage.begin(), ids);
+
+    for (std::size_t i = 0; i < initial_solution.size(); i++) {
+      put(solution, initial_solution[i], true);
+    }
+  }
 };
 
 template<typename Graph>
@@ -855,7 +867,7 @@ public:
  * visited edge into a set.
  */
 template<typename Graph, typename Tag>
-class set_recorder : public boost::base_visitor<set_recorder<Graph, Tag>> {
+class set_recorder : public boost::base_visitor< set_recorder<Graph, Tag> > {
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex;
   typedef typename boost::graph_traits<Graph>::edge_descriptor edge;
 
@@ -930,104 +942,94 @@ class lns_search {
   typedef typename boost::graph_traits<Graph>::out_edge_iterator out_edge_iterator;
   typedef typename boost::property_traits<WeightMap>::value_type weight;
 
-  std::vector<std::vector<vertex>> _cliques;
+  typedef typename boost::property_map<
+    Graph, boost::vertex_index_t>::type index_map;
+  typedef boost::iterator_property_map<
+    std::vector< std::vector<size_t> >::iterator, index_map> clique_map_type;
+
+  const Graph &_graph;
+
+  std::vector< std::vector<vertex> > _clique_contents;
+
+  std::vector< std::vector<std::size_t> > _clique_storage;
+  clique_map_type _cliques;
 public:
   typedef lns_assignment<Graph> result_type;
   typedef lns_state<Graph, WeightMap> first_argument_type;
   typedef lns_fragment<Graph> second_argument_type;
 
   template<typename Iterator>
-  lns_search(Iterator begin, Iterator end): _cliques(begin, end) {}
+  lns_search(const Graph &graph, Iterator begin, Iterator end):
+    _graph(graph), _clique_contents(begin, end) {
+    size_t vertex_count = num_vertices(graph);
+    _clique_storage.resize(vertex_count);
+
+    index_map ids = boost::get(boost::vertex_index, graph);
+    _cliques = make_iterator_property_map(_clique_storage.begin(),ids);
+
+    size_t i = 0;
+    for (Iterator it = begin; it != end; it++, i++) {
+      for (typename std::vector<vertex>::const_iterator v_it = it->begin();
+           v_it != it->end(); v_it++) {
+        get(_cliques, *v_it).push_back(i);
+      }
+    }
+  }
 
   lns_assignment<Graph> operator()(const lns_state<Graph, WeightMap> &l_state,
                                    const lns_fragment<Graph> &fragment) const {
-    state<Graph, WeightMap> search_state(l_state.graph, l_state.weight_map,
-                                         _cliques.begin(), _cliques.end());
 
-    std::vector<vertex> selected_vertex;
-    std::set<vertex> removed;
-    std::set<size_t> assigned;
+    std::set<std::size_t> clique_ids;
 
-    weight new_weight(0);
+    weight best_value(0);
+    std::vector<vertex> best_solution;
 
-    for (std::size_t i = 0; i < l_state.solution.size(); i++) {
-      vertex v = l_state.solution[i];
+    for (typename std::set<vertex>::const_iterator it =
+           fragment.vertices.begin();
+         it != fragment.vertices.end(); it++) {
+      const std::vector<size_t> cs = get(_cliques, *it);
+      std::copy(cs.begin(), cs.end(),
+                std::inserter(clique_ids, clique_ids.begin()));
 
-      if (fragment.vertices.find(v) != fragment.vertices.end())
-        continue;
-
-      selected_vertex.push_back(v);
-
-      new_weight += get(l_state.weight_map, v);
-
-      std::pair<out_edge_iterator, out_edge_iterator> edges =
-        out_edges(v, l_state.graph);
-      for (out_edge_iterator eit = edges.first; eit != edges.second; eit++) {
-        const vertex &other = target(*eit, l_state.graph);
-        removed.insert(other);
-      }
-
-      const std::vector<std::size_t> &clique = get(search_state.clique_map, v);
-      for (size_t i = 0; i < clique.size(); i++)
-        assigned.insert(clique[i]);
-    }
-
-    std::pair<vertex_iterator, vertex_iterator> vs = boost::vertices(l_state.graph);
-    for (vertex_iterator it = vs.first; it != vs.second; it++) {
-      vertex v = *it;
-      if (fragment.vertices.find(v) == fragment.vertices.end())
-        removed.insert(v);
-    }
-
-    std::map<size_t, size_t> size_delta;
-    for (typename std::set<vertex>::const_iterator it = removed.begin();
-         it != removed.end(); it++) {
-      vertex v = *it;
-
-      const std::vector<vertex> &cliques = get(search_state.clique_map, v);
-      for (std::size_t i = 0; i < cliques.size(); i++) {
-        std::size_t clique = cliques[i];
-
-        size_delta[clique]++;
-        if (size_delta[clique] == search_state.clique_sizes[clique]) {
-          assigned.insert(clique);
-        }
+      if (get(l_state.solution, *it)) {
+        best_value += get(l_state.weight_map, *it);
+        best_solution.push_back(*it);
       }
     }
 
-    std::vector<size_t> assigned_v(assigned.begin(), assigned.end());
-    std::vector<vertex> removed_v(removed.begin(), removed.end());
+    std::vector< std::vector<vertex> > selectable_cliques;
+    for (std::set<std::size_t>::const_iterator it = clique_ids.begin();
+         it != clique_ids.end(); it++) {
+      std::vector<vertex> data = _clique_contents[*it];
+      data.erase(
+        std::remove_if(data.begin(), data.end(),
+                       std::not1(make_set_membership_test(fragment.vertices))),
+        data.end());
 
-    state_change<Graph, WeightMap> delta(
-      assigned_v, size_delta,
-      selected_vertex, removed_v,
-      weight(0), new_weight);
+      if (data.size() != 0)
+        selectable_cliques.push_back(data);
+    }
 
-    delta.apply(search_state);
+    state<Graph, WeightMap> search_state(
+      l_state.graph, l_state.weight_map,
+      selectable_cliques.begin(),
+      selectable_cliques.end());
 
     lagrangian_bound<Graph, WeightMap>
       bound(l_state.graph, l_state.weight_map,
-            _cliques.begin(), _cliques.end());
+            selectable_cliques.begin(),
+            selectable_cliques.end());
 
     visit_state<Graph, WeightMap> visitor;
-    visitor.best_solution = l_state.solution;
-    visitor.best_value = weight(0);
-    for (std::size_t i = 0; i < visitor.best_solution.size(); i++)
-      visitor.best_value += get(l_state.weight_map, visitor.best_solution[i]);
+    visitor.best_solution = best_solution;
+    visitor.best_value = best_value;
 
     successor<Graph, WeightMap, lagrangian_bound<Graph, WeightMap> > successor(
       bound, visitor.best_value);
 
     search::depth_first_search(search_state, visitor, successor);
 
-    std::vector<vertex> newly_selected;
-    for (std::size_t i = 0; i < visitor.best_solution.size(); i++) {
-      vertex v = visitor.best_solution[i];
-      if (fragment.vertices.find(v) != fragment.vertices.end())
-        newly_selected.push_back(v);
-    }
-
-    return lns_assignment<Graph>(newly_selected);
+    return lns_assignment<Graph>(visitor.best_solution);
   }
 };
 
@@ -1081,7 +1083,7 @@ void find_cliques(const Graph &graph, OutputIterator out) {
   typedef typename boost::graph_traits<Graph>::edge_iterator edge_iterator;
   typedef typename boost::graph_traits<Graph>::out_edge_iterator out_edge_iterator;
 
-  std::set<std::pair<vertex, vertex>> visited_edges;
+  std::set< std::pair<vertex, vertex> > visited_edges;
 
   std::pair<edge_iterator, edge_iterator> es = edges(graph);
   for (edge_iterator eit = es.first; eit != es.second; eit++) {
@@ -1139,7 +1141,7 @@ void maximum_weight_independent_set(const Graph &graph, WeightMap weight_map,
   typedef typename boost::graph_traits<Graph>::vertex_iterator vertex_iterator;
   typedef typename boost::property_traits<WeightMap>::value_type weight;
 
-  std::vector<std::vector<vertex>> cliques;
+  std::vector< std::vector<vertex> > cliques;
   mwis::find_cliques(graph, std::back_inserter(cliques));
 
   mwis::lagrangian_bound<Graph, WeightMap> bound(
