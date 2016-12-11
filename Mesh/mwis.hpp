@@ -8,7 +8,6 @@
 #include <boost/graph/graph_concepts.hpp>
 #include <boost/graph/adjacency_list.hpp>
 
-#include <random>
 #include <vector>
 #include <functional>
 #include <limits>
@@ -891,12 +890,11 @@ lns_fragment<Graph> fragment_selector(const lns_state<Graph, WeightMap> &state) 
   if (boost::num_vertices(state.graph) == 0)
     return lns_fragment<Graph>(std::set<vertex>());
 
-  std::random_device dev;
-  std::mt19937 gen(dev());
+  std::pair<vertex_iterator, vertex_iterator> vs = vertices(state.graph);
 
-  vertex v = boost::random_vertex(state.graph, gen);
+  vertex v = *(vs.first + (rand() % std::distance(vs.first, vs.second)));
 
-  size_t neighborhood_size = std::uniform_int_distribution<size_t>(50, 80)(gen);
+  size_t neighborhood_size = 30 + rand() % 30;
 
   std::set<vertex> set;
   set.insert(v);
