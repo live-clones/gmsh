@@ -36,17 +36,18 @@ struct search_traits {
 
 template<typename State,
          typename Visitor,
-         typename Successor,
-         typename Action = typename successor_traits<Successor>::action_type,
-         typename Delta = typename action_traits<Action>::delta_type>
+         typename Successor>
 void depth_first_search(State &init, Visitor &visit, Successor &fn) {
+  typedef typename successor_traits<Successor>::action_type action;
+  typedef typename action_traits<action>::delta_type delta;
+
   visit(init);
 
-  std::vector<Action> actions;
+  std::vector<action> actions;
   fn(init, std::back_inserter(actions));
 
-  for (const Action &action : actions) {
-    Delta change(action(init));
+  for (const action &action : actions) {
+    delta change(action(init));
 
     change.apply(init);
     depth_first_search(init, visit, fn);
@@ -56,19 +57,20 @@ void depth_first_search(State &init, Visitor &visit, Successor &fn) {
 
 template<typename State,
          typename Visitor,
-         typename Successor,
-         typename Action = typename successor_traits<Successor>::action_type,
-         typename Delta = typename action_traits<Action>::delta_type>
+         typename Successor>
 void depth_limited_search(State &init, Visitor &visit, Successor &fn,
                           size_t max_depth) {
+  typedef typename successor_traits<Successor>::action_type action;
+  typedef typename action_traits<action>::delta_type delta;
+
   visit(init);
   if (max_depth == 0) return;
 
-  std::vector<Action> actions;
+  std::vector<action> actions;
   fn(init, std::back_inserter(actions));
 
-  for (const Action &action : actions) {
-    Delta change(action(init));
+  for (const action &action : actions) {
+    delta change(action(init));
 
     change.apply(init);
     depth_limited_search(init, visit, fn, max_depth - 1);
@@ -79,10 +81,10 @@ void depth_limited_search(State &init, Visitor &visit, Successor &fn,
 template<typename State,
          typename Visitor,
          typename Successor,
-         typename Queue,
-         typename Action = typename successor_traits<Successor>::action_type,
-         typename Delta = typename action_traits<Action>::delta_type>
+         typename Queue>
 void tree_search(State &init, Visitor &visit, Successor &fn, Queue q) {
+  typedef typename successor_traits<Successor>::action_type action;
+
   q.push(init);
 
   while (!q.empty()) {
@@ -91,10 +93,10 @@ void tree_search(State &init, Visitor &visit, Successor &fn, Queue q) {
 
     visit(s);
 
-    std::vector<Action> actions;
+    std::vector<action> actions;
     fn(s, std::back_inserter(actions));
 
-    for (const Action &action : actions) {
+    for (const action &action : actions) {
       State to_add(s);
       action(s).apply(to_add);
 
@@ -105,9 +107,7 @@ void tree_search(State &init, Visitor &visit, Successor &fn, Queue q) {
 
 template<typename State,
          typename Visitor,
-         typename Successor,
-         typename Action = typename successor_traits<Successor>::action_type,
-         typename Delta = typename action_traits<Action>::delta_type>
+         typename Successor>
 void breadth_first_search(State &init, Visitor &visit, Successor &fn) {
   tree_search(init, visit, fn, std::queue<State>());
 }
@@ -115,9 +115,7 @@ void breadth_first_search(State &init, Visitor &visit, Successor &fn) {
 template<typename State,
          typename Visitor,
          typename Successor,
-         typename Compare = std::less<State>,
-         typename Action = typename successor_traits<Successor>::action_type,
-         typename Delta = typename action_traits<Action>::delta_type>
+         typename Compare = std::less<State>>
 void best_first_search(State &init, Visitor &visit, Successor &fn,
                        Compare c = Compare()) {
   tree_search(init, visit, fn, std::priority_queue<State, Compare>(c));
@@ -129,13 +127,14 @@ void best_first_search(State &init, Visitor &visit, Successor &fn,
  */
 template<typename State,
          typename Successor,
-         typename Evaluator,
-         typename Action = typename successor_traits<Successor>::action_type,
-         typename Delta  = typename action_traits<Action>::delta_type,
-         typename Score  = typename evaluator_traits<Evaluator>::score_type>
+         typename Evaluator>
 void greedy_search(State &state, Successor &fn, Evaluator &eval) {
+  typedef typename successor_traits<Successor>::action_type action;
+  typedef typename action_traits<action>::delta_type delta;
+  typedef typename evaluator_traits<Evaluator>::score_type score;
+
   while (true) {
-    std::vector<Action> actions;
+    std::vector<action> actions;
     fn(state, std::back_inserter(actions));
 
     if (actions.empty()) return;
@@ -145,15 +144,15 @@ void greedy_search(State &state, Successor &fn, Evaluator &eval) {
       continue;
     }
 
-    std::vector<Delta> changes(actions.size());
+    std::vector<delta> changes(actions.size());
     std::transform(actions.begin(), actions.end(),
-                   changes.begin(), [&](const Action &a) {
+                   changes.begin(), [&](const action &a) {
                      return a(state);
                    });
 
-    std::vector<Score> scores(actions.size());
+    std::vector<score> scores(actions.size());
     std::transform(changes.begin(), changes.end(),
-                   scores.begin(), [&](const Delta &delta) {
+                   scores.begin(), [&](const delta &delta) {
                      delta.apply(state);
                      auto result = eval(state);
                      delta.reverse(state);
@@ -170,17 +169,17 @@ void greedy_search(State &state, Successor &fn, Evaluator &eval) {
 
 template<typename State,
          typename Selector,
-         typename Search,
-         typename Fragment = typename selector_traits<Selector>::fragment_type,
-         typename Assigment = typename search_traits<Search>::assignment_type>
+         typename Search>
 void large_neighborhood_search(State &state, Selector &selector,
-                               Search &search,
-                               std::size_t time_limit = 100) {
+                               Search &search, std::size_t time_limit = 100) {
+  typedef typename selector_traits<Selector>::fragment_type fragment;
+  typedef typename search_traits<Search>::assignment_type assignment;
+
   using namespace std::chrono;
   auto start = steady_clock::now();
   while (steady_clock::now() - start < time_limit * 1s) {
-    Fragment fragment(selector(state));
-    Assigment assignment(search(state, fragment));
+    fragment fragment(selector(state));
+    assignment assignment(search(state, fragment));
     assignment(state, fragment);
   }
 }
@@ -241,18 +240,18 @@ struct mcts_node {
 template<typename State,
          typename Successor,
          typename Evaluator,
-         typename Iterator,
-
-         typename Action = typename successor_traits<Successor>::action_type,
-         typename Delta  = typename action_traits<Action>::delta_type,
-         typename Score  = typename evaluator_traits<Evaluator>::score_type>
-void mcts_simulation(mcts_node<Score> *node,
+         typename Iterator>
+void mcts_simulation(mcts_node<typename evaluator_traits<Evaluator>::score_type> *node,
                      State &state, Successor &fn, Evaluator &eval, size_t n,
                      Iterator action_begin, Iterator action_end) {
-  std::vector<Action> actions(action_begin, action_end);
+  typedef typename successor_traits<Successor>::action_type action;
+  typedef typename action_traits<action>::delta_type delta;
+  typedef typename evaluator_traits<Evaluator>::score_type score;
 
-  std::vector<mcts_node<Score>*> ancestors;
-  std::vector<Delta> changes;
+  std::vector<action> actions(action_begin, action_end);
+
+  std::vector<mcts_node<score>*> ancestors;
+  std::vector<delta> changes;
 
   ancestors.push_back(node);
 
@@ -280,7 +279,7 @@ void mcts_simulation(mcts_node<Score> *node,
       i = rand() % actions.size();
     }
 
-    Delta change = actions[i](state);
+    delta change = actions[i](state);
     changes.push_back(change);
 
     change.apply(state);
@@ -289,10 +288,10 @@ void mcts_simulation(mcts_node<Score> *node,
     fn(state, std::back_inserter(actions));
   }
 
-  Score score(eval(state));
+  score result(eval(state));
 
-  for (mcts_node<Score> *node : ancestors)
-    node->update(score);
+  for (mcts_node<score> *node : ancestors)
+    node->update(result);
 
   for (auto it = changes.rbegin(); it != changes.rend(); it++)
     (*it).reverse(state);
@@ -300,13 +299,12 @@ void mcts_simulation(mcts_node<Score> *node,
 
 template<typename State,
          typename Successor,
-         typename Evaluator,
-
-         typename Action = typename successor_traits<Successor>::action_type,
-         typename Delta  = typename action_traits<Action>::delta_type,
-         typename Score  = typename evaluator_traits<Evaluator>::score_type>
+         typename Evaluator>
 void monte_carlo_tree_search(State &state, Successor &fn, Evaluator &eval) {
-  std::vector<Action> actions;
+  typedef typename successor_traits<Successor>::action_type action;
+  typedef typename evaluator_traits<Evaluator>::score_type score;
+
+  std::vector<action> actions;
 
   while (true) {
     actions.clear();
@@ -323,7 +321,7 @@ void monte_carlo_tree_search(State &state, Successor &fn, Evaluator &eval) {
     else {
       using namespace std::chrono;
 
-      mcts_node<Score> node;
+      mcts_node<score> node;
 
       size_t i;
 
