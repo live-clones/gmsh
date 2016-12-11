@@ -6358,16 +6358,18 @@ void Recombinator_Graph::execute(GRegion* gr) {
     boost::undirectedS, vertex> graph_type;
 
   typedef boost::graph_traits<graph_type>::vertex_descriptor vertex_id;
+  typedef std::map<std::set<MElement*>, vertex_id> vertex_map_type;
+  typedef std::map<std::set<MElement*>, vertex_id>::const_iterator
+    vertex_map_iterator;
 
   graph_type graph;
+  vertex_map_type vertex_map;
 
-  std::map<std::set<MElement*>, vertex_id> vertex_map;
-
-  for (auto pair : incompatibility_graph) {
-    Hex *hex = pair.second.first;
+  for (graph::iterator it = incompatibility_graph.begin();
+       it != incompatibility_graph.end(); it++) {
+    Hex *hex = it->second.first;
     const std::set<MElement*> &key = hex_to_tet[hex];
-    auto it = vertex_map.find(key);
-    if (it == vertex_map.end()) {
+    if (vertex_map.find(key) == vertex_map.end()) {
       vertex_id vid = add_vertex(graph);
       graph[vid].hex = hex;
       graph[vid].quality = hex->get_quality();
@@ -6376,11 +6378,14 @@ void Recombinator_Graph::execute(GRegion* gr) {
     }
   }
 
-  for (auto pair : incompatibility_graph) {
-    Hex *hex = pair.second.first;
+  for (graph::iterator it = incompatibility_graph.begin();
+       it != incompatibility_graph.end(); it++) {
+    Hex *hex = it->second.first;
     vertex_id vid = vertex_map[hex_to_tet[hex]];
-    for (auto incompatible_pair : pair.second.second) {
-      Hex *other_hex = incompatible_pair.second;
+
+    for (graph_data::const_iterator data_it = it->second.second.begin();
+         data_it != it->second.second.end(); data_it++) {
+      Hex *other_hex = data_it->second;
       vertex_id other_vid = vertex_map[hex_to_tet[other_hex]];
 
       if (!edge(vid, other_vid, graph).second) {
@@ -6389,7 +6394,8 @@ void Recombinator_Graph::execute(GRegion* gr) {
     }
   }
 
-  auto weight_map = get(&vertex::quality, graph);
+  typename boost::property_map<graph_type, double>::type weight_map =
+    get(&vertex::quality, graph);
 
   std::vector<vertex_id> vertices;
   maximum_weight_independent_set(
@@ -6399,8 +6405,9 @@ void Recombinator_Graph::execute(GRegion* gr) {
   hash_tableB.clear();
   hash_tableC.clear();
 
-  for (vertex_id v : vertices) {
-    Hex *hex = graph[v].hex;
+  for (std::vector<vertex_id>::const_iterator it = vertices.begin();
+       it != vertices.end(); it++) {
+    Hex *hex = graph[*it].hex;
     merge_hex(gr, hex);
   }
 #endif
