@@ -173,7 +173,8 @@ void greedy_search(State &state, Successor &fn, Evaluator &eval) {
       delta.reverse(state);
     }
 
-    auto it = std::max_element(scores.begin(), scores.end());
+    typename std::vector<score>::iterator it =
+      std::max_element(scores.begin(), scores.end());
 
     size_t index = std::distance(scores.begin(), it);
     changes[index].apply(state);
@@ -237,15 +238,16 @@ struct mcts_node {
   };
 
   std::size_t best_child(std::size_t n) const {
-    auto it = std::max_element(children.begin(), children.end(),
-                               compare_by_ucb1(n));
-
+    typename std::vector<mcts_node>::iterator it =
+      std::max_element(children.begin(), children.end(),
+                       compare_by_ucb1(n));
     return std::distance(children.begin(), it);
   }
 
   std::size_t best_move(std::size_t n) const {
-    auto it = std::max_element(children.begin(), children.end(),
-                               compare_by_mean());
+    typename std::vector<mcts_node>::iterator it =
+      std::max_element(children.begin(), children.end(),
+                       compare_by_mean());
     return std::distance(children.begin(), it);
   }
 };
@@ -319,8 +321,10 @@ void mcts_simulation(mcts_node<typename evaluator_traits<Evaluator>::score_type>
     (*it)->update(result);
   }
 
-  for (auto it = changes.rbegin(); it != changes.rend(); it++)
+  for (typename std::vector<delta>::const_iterator it = changes.rbegin();
+       it != changes.rend(); it++) {
     (*it).reverse(state);
+  }
 }
 
 template<typename State,
