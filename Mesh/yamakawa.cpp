@@ -6358,12 +6358,9 @@ void Recombinator_Graph::execute(GRegion* gr) {
     boost::undirectedS, vertex> graph_type;
 
   typedef boost::graph_traits<graph_type>::vertex_descriptor vertex_id;
-  typedef std::map<std::set<MElement*>, vertex_id> vertex_map_type;
-  typedef std::map<std::set<MElement*>, vertex_id>::const_iterator
-    vertex_map_iterator;
 
   graph_type graph;
-  vertex_map_type vertex_map;
+  std::map<std::set<MElement*>, vertex_id> vertex_map;
 
   for (graph::iterator it = incompatibility_graph.begin();
        it != incompatibility_graph.end(); it++) {
