@@ -413,7 +413,7 @@ void linearSystemPETSc<scalar>::printMatlab(const char *filename) const
 
   PetscViewer viewer;
   PetscViewerASCIIOpen(PETSC_COMM_WORLD, filename, &viewer);
-  PetscViewerSetFormat(viewer,PETSC_VIEWER_ASCII_MATLAB);
+  PetscViewerPushFormat(viewer,PETSC_VIEWER_ASCII_MATLAB);
   MatView(_a, viewer);
   PetscViewerDestroy(&viewer);
   return;

@@ -76,6 +76,13 @@ typedef struct _p_KSP* KSP;
 # define KSPSetOperators(_ksp, _a, _b, OPT_PRECON) (KSPSetOperators(_ksp, _a, _b), KSPSetReusePreconditioner(_ksp,PetscBool(OPT_PRECON == SAME_PRECONDITIONER)))
 #endif
 
+// Deprecated method PetscViewerSetFormat starts 3.7 the only instance we use
+// can be replaced by PetscViewerPushFormat as we do not change the format of the same viewer
+// in such a case PetscViewerPopFormat should be used and the following will not work
+#if (PETSC_VERSION_MAJOR < 3  || (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR < 7))
+#define PetscViewerPushFormat(viewer , format) PetscViewerSetFormat(viewer , format)
+#endif
+
 template <class scalar>
 class linearSystemPETSc : public linearSystem<scalar> {
   protected:

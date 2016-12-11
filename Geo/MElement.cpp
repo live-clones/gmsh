@@ -780,9 +780,9 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3]) const
     }
     const nodalBasis *nb = getFunctionSpace();
     fullMatrix<double> refpnts = nb->getReferenceNodes();
-    uvw[0] = refpnts(numNearer, 0);
-    uvw[1] = refpnts(numNearer, 1);
-    uvw[2] = refpnts(numNearer, 2);
+    for (int i=0; i < getDim(); i++){
+      uvw[i] = refpnts(numNearer, i);
+    }
   }
 
   int iter = 1, maxiter = 20;
