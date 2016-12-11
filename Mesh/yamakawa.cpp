@@ -6394,7 +6394,7 @@ void Recombinator_Graph::execute(GRegion* gr) {
     }
   }
 
-  typename boost::property_map<graph_type, double>::type weight_map =
+  typename boost::property_map<graph_type, double vertex::*>::type weight_map =
     get(&vertex::quality, graph);
 
   std::vector<vertex_id> vertices;
