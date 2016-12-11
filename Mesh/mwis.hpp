@@ -19,6 +19,71 @@
 namespace mwis {
 
 /**
+ * A function object which compares two elements by looking up the values
+ * associated to them in a property map, and comparing these using Comparator
+ * (by default, using operator <).
+ */
+template<typename PropertyMap,
+         typename Comparator = std::less<
+           typename boost::property_traits<PropertyMap>::value_type> >
+class compare_by_property {
+  PropertyMap _map;
+  Comparator _comparator;
+public:
+  typedef typename boost::property_traits<PropertyMap>::key_type argument_type;
+  typedef argument_type first_argument_type;
+  typedef argument_type second_argument_type;
+  typedef bool result_type;
+
+  compare_by_property(PropertyMap map,
+                      Comparator comparator = Comparator()):
+    _map(map), _comparator(comparator)  {}
+
+  bool operator()(const argument_type &a, const argument_type &b) const {
+    return _comparator(get(_map, a), get(_map, b));
+  }
+};
+
+/**
+ * Convenience function to create a property map comparator.
+ */
+template<typename PropertyMap,
+         typename Comparator = std::less<
+           typename boost::property_traits<PropertyMap>::value_type> >
+compare_by_property<PropertyMap, Comparator>
+make_property_map_comparator(PropertyMap map,
+                             Comparator comparator = Comparator()) {
+  return compare_by_property<PropertyMap, Comparator>(map, comparator);
+}
+
+/**
+ * Function object that returns true iff an element belongs to a container.
+ *
+ * Elements are searched by ussing the find method on the container.
+ */
+template<typename Container, typename Key>
+class container_membership_test {
+  const Container &_container;
+public:
+  container_membership_test(const Container &container):
+    _container(container)
+    {}
+
+  typedef Key argument_type;
+  typedef bool result_type;
+
+  bool operator()(const Key &arg) const {
+    return _container.find(arg) != _container.end();
+  }
+};
+
+template<typename T>
+container_membership_test<std::set<T>, T> make_set_membership_test(
+  const std::set<T> &container) {
+  return container_membership_test<std::set<T>, T>(container);
+}
+
+/**
  * A functor to calculate an upper bound to the maximum weight independent set
  * in a graph.
  *
@@ -285,9 +350,8 @@ private:
     std::partial_sort_copy(
       begin, end,
       largest.begin(), largest.end(),
-      [&](vertex a ,vertex b) {
-        return get(_effective_weight, a) > get(_effective_weight, b);
-      });
+      make_property_map_comparator(_effective_weight,
+                                   std::greater<weight>()));
 
     for (Iterator it = begin; it != end; it++) {
       vertex v = *it;
@@ -392,9 +456,9 @@ struct state {
         for (std::size_t j = 0; j < clique.size(); j++)
           get(clique_map, clique[j]).push_back(id);
 
-        std::sort(clique.begin(), clique.end(), [&](vertex a, vertex b) {
-          return get(weight_map, a) > get(weight_map, b);
-        });
+        std::sort(clique.begin(), clique.end(),
+                  make_property_map_comparator(weight_map,
+                                               std::greater<weight>()));
 
         id++;
       }
@@ -638,10 +702,8 @@ public:
     }
 
     std::sort(vertices.begin(), vertices.end(),
-              [&](vertex a, vertex b) {
-                return vertex_regret(state, a) < vertex_regret(state, b);
-              });
-
+              make_property_map_comparator(
+                state.weight_map, std::greater<weight>()));
 
     for (std::size_t i = 0; i < vertices.size(); i++) {
       *it++ = clique_assignment<Graph, WeightMap>(id, vertices[i]);
@@ -650,40 +712,24 @@ public:
     *it++ = clique_assignment<Graph, WeightMap>(id);
   }
 
-  std::tuple<int, size_t, weight>
+  std::tuple<size_t, weight>
   clique_key(state<Graph, WeightMap> &state,
              size_t id) {
     if (state.assigned[id]) {
-      return std::make_tuple(1,
-                             std::numeric_limits<size_t>::max(),
+      return std::make_tuple(std::numeric_limits<size_t>::max(),
                              weight(0));
     }
     else if (state.clique_sizes[id] == 0) {
-      return std::make_tuple(0, 0, weight(0));
+      return std::make_tuple(0, weight(0));
     }
     else {
       vertex v = *std::find_if(
-        state.cliques[id].begin(), state.cliques[id].end(), [&](vertex v) {
-          return state.selectable.find(v) != state.selectable.end();
-        });
+        state.cliques[id].begin(), state.cliques[id].end(),
+        make_set_membership_test(state.selectable));
 
-      return std::make_tuple(id < 1361 ? 0 : 1,
-                             state.clique_sizes[id],
+      return std::make_tuple(state.clique_sizes[id],
                              -get(state.weight_map, v));
     }
-  }
-
-  weight vertex_regret(const state<Graph, WeightMap> &state, vertex v) {
-    weight result(-get(state.weight_map, v));
-
-    auto es = out_edges(v, state.graph);
-    for (auto eit = es.first; eit != es.second; eit++) {
-      vertex u = target(*eit, state.graph);
-      if (state.selectable.find(u) == state.selectable.end())
-        result += get(state.weight_map, u);
-    }
-
-    return result;
   }
 };
 
@@ -840,9 +886,7 @@ public:
     state.solution.erase(
       std::remove_if(
         state.solution.begin(), state.solution.end(),
-        [&](vertex v) {
-          return fragment.vertices.find(v) != fragment.vertices.end();
-        }),
+        make_set_membership_test(fragment.vertices)),
       state.solution.end());
 
     std::copy(_vertices.begin(), _vertices.end(),
@@ -972,6 +1016,33 @@ public:
   }
 };
 
+/**
+ * Function object that checks if the edge between a fixed vertex (passed as a
+ * parameter to the constructor) and its argument has already been visited by
+ * the algorithm.
+ *
+ * This is used in find_cliques.
+ */
+template<typename Graph>
+class edge_visited_test {
+  typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex;
+
+  const std::set<std::pair<vertex, vertex>> &_visited_edges;
+  vertex _v;
+public:
+  typedef vertex argument_type;
+  typedef bool result_type;
+
+  edge_visited_test(const std::set<std::pair<vertex, vertex>> &visited_edges,
+                    vertex v): _visited_edges(visited_edges), _v(v)
+    {}
+
+  bool operator()(vertex w) const {
+    return _visited_edges.find(std::make_pair(_v, w)) ==
+      _visited_edges.end();
+  }
+};
+
 template<typename Graph, typename OutputIterator>
 void find_cliques(const Graph &graph, OutputIterator out) {
   typedef typename boost::graph_traits<Graph>::vertex_descriptor vertex;
@@ -1007,10 +1078,7 @@ void find_cliques(const Graph &graph, OutputIterator out) {
 
         candidates.erase(
           std::remove_if(candidates.begin(), candidates.end(),
-                         [&](vertex w) {
-                           return visited_edges.find(std::make_pair(v, w)) ==
-                             visited_edges.end();
-                         }),
+                         edge_visited_test<Graph>(visited_edges, v)),
           candidates.end());
       }
 
