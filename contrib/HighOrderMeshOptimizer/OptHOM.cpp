@@ -75,7 +75,7 @@ static inline double compute_f1(double v, double barrier)
 }
 
 OptHOM::OptHOM(const std::map<MElement*,GEntity*> &element2entity,
-               const std::set<MElement*> &els, std::set<MVertex*> & toFix,
+               const std::set<MElement*, Less_ElementPtr> &els, std::set<MVertex*> & toFix,
                bool fixBndNodes, bool fastJacEval) :
   mesh(element2entity, els, toFix, fixBndNodes, fastJacEval)
 {

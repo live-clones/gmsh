@@ -188,7 +188,7 @@ class compareTet4Ptr
   { 
     if (a->getRadius() > b->getRadius()) return true;
     if (a->getRadius() < b->getRadius()) return false;
-    return a < b;
+    return a->tet()->getNum() < b->tet()->getNum();
   }
 };
 

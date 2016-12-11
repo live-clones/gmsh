@@ -359,9 +359,9 @@ class MTriangleN : public MTriangle {
 };
 
 template <class T>
-void sort3(T *t[3])
+void sort3(T t[3])
 {
-  T *temp;
+  T temp;
   if(t[0] > t[1]){
     temp = t[1];
     t[1] = t[0];
@@ -383,8 +383,8 @@ struct compareMTriangleLexicographic
 {
   bool operator () (MTriangle *t1, MTriangle *t2) const
   {
-    MVertex *_v1[3] = {t1->getVertex(0), t1->getVertex(1), t1->getVertex(2)};
-    MVertex *_v2[3] = {t2->getVertex(0), t2->getVertex(1), t2->getVertex(2)};
+    int _v1[3] = {t1->getVertex(0)->getNum(), t1->getVertex(1)->getNum(), t1->getVertex(2)->getNum()};
+    int _v2[3] = {t2->getVertex(0)->getNum(), t2->getVertex(1)->getNum(), t2->getVertex(2)->getNum()};
     sort3(_v1);
     sort3(_v2);
     if(_v1[0] < _v2[0]) return true;

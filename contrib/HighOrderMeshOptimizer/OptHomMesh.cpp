@@ -39,7 +39,7 @@
 #include "OptHomIntegralBoundaryDist.h"
 
 Mesh::Mesh(const std::map<MElement*,GEntity*> &element2entity,
-           const std::set<MElement*> &els, std::set<MVertex*> &toFix,
+           const std::set<MElement*, Less_ElementPtr> &els, std::set<MVertex*> &toFix,
            bool fixBndNodes, bool fastJacEval) :
   _fastJacEval(fastJacEval)
 {

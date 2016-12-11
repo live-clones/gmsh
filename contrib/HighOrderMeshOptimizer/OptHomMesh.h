@@ -44,7 +44,7 @@ class Mesh
 {
 public:
   Mesh(const std::map<MElement*,GEntity*> &element2entity,
-       const std::set<MElement*> &els, std::set<MVertex*> & toFix, bool fixBndNodes, bool fastJacEval);
+       const std::set<MElement*, Less_ElementPtr> &els, std::set<MVertex*> & toFix, bool fixBndNodes, bool fastJacEval);
 
   inline const int &nPC() { return _nPC; }
   inline int nVert() { return _vert.size(); }

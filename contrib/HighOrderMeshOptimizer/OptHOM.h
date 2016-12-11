@@ -45,7 +45,7 @@ class OptHOM
 public:
   Mesh mesh;
   OptHOM(const std::map<MElement*,GEntity*> &element2entity,
-         const std::set<MElement*> &els, std::set<MVertex*> & toFix,
+         const std::set<MElement*, Less_ElementPtr> &els, std::set<MVertex*> & toFix,
          bool fixBndNodes, bool fastJacEval = false);
   // returns 1 if the mesh has been optimized with success i.e. all jacobians
   // are in the range; returns 0 if the mesh is valid (all jacobians positive,

@@ -672,7 +672,7 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
 {
   GRegion *gr = regions[0];
   std::list<GFace*> faces = gr->faces();
-  std::set<GFace*> allFacesSet;
+  std::set<GFace*, GEntityLessThan> allFacesSet;
   for(unsigned int i = 0; i < regions.size(); i++){
     std::list<GFace*> f = regions[i]->faces();
     allFacesSet.insert(f.begin(), f.end());

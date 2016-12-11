@@ -51,7 +51,7 @@
 
 typedef std::vector<MElement*> elVec;
 typedef elVec::const_iterator elVecConstIter;
-typedef std::set<MElement*> elSet;
+typedef std::set<MElement*, Less_ElementPtr> elSet;
 typedef elSet::iterator elSetIter;
 typedef std::set<MVertex*> vertSet;
 
