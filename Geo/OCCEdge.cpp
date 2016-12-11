@@ -34,6 +34,11 @@
 OCCEdge::OCCEdge(GModel *m, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
   : GEdge(m, num, v1, v2), c(edge), trimmed(0)
 {
+  // force orientation of internal/external edges: otherwise reverse will not
+  // produce the expected result
+  if (c.Orientation() == TopAbs_INTERNAL || c.Orientation() == TopAbs_EXTERNAL){
+    c = TopoDS::Edge(c.Oriented(TopAbs_FORWARD));
+  }
   curve = BRep_Tool::Curve(c, s0, s1);
   // build the reverse curve
   c_rev = c;
