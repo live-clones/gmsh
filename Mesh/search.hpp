@@ -46,7 +46,9 @@ void depth_first_search(State &init, Visitor &visit, Successor &fn) {
   std::vector<action> actions;
   fn(init, std::back_inserter(actions));
 
-  for (const action &action : actions) {
+  for (typename std::vector<action>::const_iterator it = actions.begin();
+       it != actions.end(); it++) {
+    const action &action = *it;
     delta change(action(init));
 
     change.apply(init);
@@ -69,7 +71,9 @@ void depth_limited_search(State &init, Visitor &visit, Successor &fn,
   std::vector<action> actions;
   fn(init, std::back_inserter(actions));
 
-  for (const action &action : actions) {
+  for (typename std::vector<action>::const_iterator it = actions.begin();
+       it != actions.end(); it++) {
+    const action &action = *it;
     delta change(action(init));
 
     change.apply(init);
@@ -96,7 +100,10 @@ void tree_search(State &init, Visitor &visit, Successor &fn, Queue q) {
     std::vector<action> actions;
     fn(s, std::back_inserter(actions));
 
-    for (const action &action : actions) {
+    for (typename std::vector<action>::const_iterator it = actions.begin();
+       it != actions.end(); it++) {
+      const action &action = *it;
+
       State to_add(s);
       action(s).apply(to_add);
 
@@ -290,8 +297,10 @@ void mcts_simulation(mcts_node<typename evaluator_traits<Evaluator>::score_type>
 
   score result(eval(state));
 
-  for (mcts_node<score> *node : ancestors)
-    node->update(result);
+  for (typename std::vector<mcts_node<score>*>::const_iterator it = ancestors.begin();
+       it != ancestors.end(); it++) {
+    (*it)->update(result);
+  }
 
   for (auto it = changes.rbegin(); it != changes.rend(); it++)
     (*it).reverse(state);
