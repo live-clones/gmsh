@@ -622,6 +622,14 @@ class dofManager : public dofManagerBase{
       R.push_back(it->first);
     }
   }
+	virtual void getFixedDof(std::set<Dof>& R)
+	{
+		R.clear();
+		typename std::map<Dof, dataVec>::iterator it;
+		for(it = fixed.begin(); it != fixed.end(); ++it){
+      R.insert(it->first);
+    }
+	}
 
   virtual int getDofNumber(const Dof& key)
   {
