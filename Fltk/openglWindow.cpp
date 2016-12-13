@@ -358,7 +358,7 @@ int openglWindow::handle(int event)
       std::vector<MElement*> elements;
       std::vector<SPoint2> points;
       std::vector<PView*> views;
-      _select(ENT_ALL, false, false, Fl::event_x(), Fl::event_y(), 5, 5,
+      _select(ENT_ALL, false, false, true, Fl::event_x(), Fl::event_y(), 5, 5,
               vertices, edges, faces, regions, elements, points, views);
       if(vertices.size() && CTX::instance()->geom.doubleClickedPointCommand.size()){
         CTX::instance()->geom.doubleClickedEntityTag = vertices[0]->tag();
@@ -651,6 +651,7 @@ int openglWindow::handle(int event)
         std::vector<SPoint2> points;
         std::vector<PView*> views;
         bool res = _select(_selection, false, CTX::instance()->mouseHoverMeshes,
+                           CTX::instance()->mouseHoverMeshes,
                            (int)_curr.win[0], (int)_curr.win[1], 5, 5,
                            vertices, edges, faces, regions, elements, points, views);
         if((_selection == ENT_ALL && res) ||
@@ -730,7 +731,7 @@ int openglWindow::pixel_h()
 #endif
 }
 
-bool openglWindow::_select(int type, bool multiple, bool mesh,
+bool openglWindow::_select(int type, bool multiple, bool mesh, bool post,
                            int x, int y, int w, int h,
                            std::vector<GVertex*> &vertices,
                            std::vector<GEdge*> &edges,
@@ -746,7 +747,7 @@ bool openglWindow::_select(int type, bool multiple, bool mesh,
   if(_lock) return false;
   _lock = true;
   make_current();
-  bool ret = _ctx->select(type, multiple, mesh, x, y, w, h,
+  bool ret = _ctx->select(type, multiple, mesh, post, x, y, w, h,
                           vertices, edges, faces, regions, elements,
                           points, views);
   _lock = false;
@@ -808,7 +809,7 @@ char openglWindow::selectEntity(int type,
         selectionMode = false;
         return 'c';
       }
-      else if(_select(_selection, multi, true, _trySelectionXYWH[0],
+      else if(_select(_selection, multi, true, false, _trySelectionXYWH[0],
                       _trySelectionXYWH[1], _trySelectionXYWH[2],
                       _trySelectionXYWH[3], vertices, edges, faces,
                       regions, elements, points, views)){

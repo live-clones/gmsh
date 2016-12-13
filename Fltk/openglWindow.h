@@ -32,7 +32,7 @@ class openglWindow : public Fl_Gl_Window {
   double _lassoXY[2];
   void _drawScreenMessage();
   void _drawBorder();
-  bool _select(int type, bool multiple, bool mesh, int x, int y, int w, int h,
+  bool _select(int type, bool multiple, bool mesh, bool post, int x, int y, int w, int h,
                std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
                std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
                std::vector<MElement*> &elements, std::vector<SPoint2> &points,

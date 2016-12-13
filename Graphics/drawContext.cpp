@@ -860,7 +860,7 @@ static MElement *getElement(GEntity *e, int va_type, int index)
   return 0;
 }
 
-bool drawContext::select(int type, bool multiple, bool mesh,
+bool drawContext::select(int type, bool multiple, bool mesh, bool post,
                          int x, int y, int w, int h,
                          std::vector<GVertex*> &vertices,
                          std::vector<GEdge*> &edges,
@@ -903,7 +903,7 @@ bool drawContext::select(int type, bool multiple, bool mesh,
   initPosition();
   drawGeom();
   if(mesh) drawMesh();
-  drawPost();
+  if(post) drawPost();
   drawGraph2d(true);
 
   // 2d stuff

@@ -200,7 +200,7 @@ class drawContext {
   void unproject(double winx, double winy, double p[3], double d[3]);
   void viewport2World(double vp[3], double xyz[3]);
   void world2Viewport(double xyz[3], double vp[3]);
-  bool select(int type, bool multiple, bool mesh, int x, int y, int w, int h,
+  bool select(int type, bool multiple, bool mesh, bool post, int x, int y, int w, int h,
               std::vector<GVertex*> &vertices, std::vector<GEdge*> &edges,
               std::vector<GFace*> &faces, std::vector<GRegion*> &regions,
               std::vector<MElement*> &elements, std::vector<SPoint2> &points,

@@ -1389,7 +1389,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[2]->callback(general_options_ok_cb, (void*)"fast_redraw");
 
       general.butt[11] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Enable mouse hover over meshes");
+        (L + 2 * WB, 2 * WB + 6 * BH, BW, BH, "Enable mouse hover over meshes and views");
       general.butt[11]->type(FL_TOGGLE_BUTTON);
       general.butt[11]->callback(general_options_ok_cb);
 
