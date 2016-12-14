@@ -1336,7 +1336,7 @@ endif(NOWARN)
 check_cxx_compiler_flag("-O0" NOOPT)
 if(NOOPT OR ENABLE_BUILD_IOS)
   if(ENABLE_BUILD_IOS) # optimized iOS 10 64 bits screws somewhere in Geo
-    file(GLOB_RECURSE NOOPT_SRC Geo/*.cpp Mesh/BDS.cpp Parser/Gmsh.tab.cpp
+    file(GLOB_RECURSE NOOPT_SRC Geo/G*.cpp Mesh/BDS.cpp Parser/Gmsh.tab.cpp
          contrib/Tetgen1.5/predicates.cxx)
   else(ENABLE_BUILD_IOS)
     file(GLOB_RECURSE NOOPT_SRC Mesh/BDS.cpp Parser/Gmsh.tab.cpp
