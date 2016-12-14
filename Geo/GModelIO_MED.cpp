@@ -130,15 +130,13 @@ int med2mshNodeIndex(med_geometrie_element med, int k)
     return map[k];
   }
   case MED_HEXA20: {
-    static const int map[20] = {0, 3, 2, 1, 4, 7, 6, 5,
-                                9, 13, 11, 8, 17, 19, 18, 16, 10, 15, 14, 12};
+    static const int map[20] = {0,1,3,2,4,5,6,7,8,9,10,11,16,17,18,19,12,13,14,15};
     return map[k];
   }
 #if (MED_MAJOR_NUM == 3)
   case MED_HEXA27: {
-    static const int map[27] = {0, 3, 2, 1, 4, 7, 6, 5,
-                                9, 13, 11, 8, 17, 19, 18, 16, 10, 15, 14, 12,
-                                20, 22, 24, 23, 21, 25, 26};
+    static const int map[27] = {0,1,3,2,4,5,6,7,8,9,10,11,16,17,18,19,12,13,14,15,
+                                20, 22, 21, 23, 24, 25, 26};
     return map[k];
   }
 #endif
