@@ -66,6 +66,7 @@
 #include "MeshSubEntities.h"
 #include "CVTRemesh.h"
 #include "ShowNeighborElements.h"
+#include "GaussPoints.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -266,6 +267,8 @@ void PluginManager::registerDefaultPlugins()
                       ("ShowNeighborElements", GMSH_RegisterShowNeighborElementsPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("MeshSubEntities", GMSH_RegisterMeshSubEntitiesPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("GaussPoints", GMSH_RegisterGaussPointsPlugin()));
 #if defined(HAVE_MESH)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));
