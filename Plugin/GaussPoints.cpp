@@ -56,7 +56,7 @@ PView* GMSH_GaussPointsPlugin::execute(PView *v)
   else{
     m->getEntities(entities, dim);
   }
-  
+
   if(entities.empty()){
     Msg::Error("No entities");
     return v;
@@ -73,7 +73,7 @@ PView* GMSH_GaussPointsPlugin::execute(PView *v)
         double u = gp[i].pt[0];
         double v = gp[i].pt[1];
         double w = gp[i].pt[2];
-        double weight = gp[i].weight;
+        //double weight = gp[i].weight;
         SPoint3 p;
         e->pnt(u, v, w, p);
         data2->SP.push_back(p.x());
@@ -91,4 +91,3 @@ PView* GMSH_GaussPointsPlugin::execute(PView *v)
 
   return v;
 }
-
