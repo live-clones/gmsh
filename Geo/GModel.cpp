@@ -1738,6 +1738,18 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
   std::vector<GEntity*> entities;
   getEntities(entities);
 
+  // re-index all vertices (don't use MVertex::getNum(), as we want to be able
+  // to remove diplicate vertices from "incorrect" meshes, where vertices with
+  // the same number are duplicated)
+  int n = 0;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity* ge = entities[i];
+    for(unsigned int j = 0; j < ge->mesh_vertices.size(); j++){
+      MVertex *v = ge->mesh_vertices[j];
+      v->setIndex(++n);
+    }
+  }
+
   MVertexRTree pos(eps);
   std::map<int, MVertex*> vertices;
   std::map<MVertex*,MVertex*> duplicates;
@@ -1749,7 +1761,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
       if(v2)
         duplicates[v] = v2; // v should be removed
       else
-        vertices[v->getNum()] = v;
+        vertices[v->getIndex()] = v;
     }
   }
 
