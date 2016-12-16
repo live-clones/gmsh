@@ -1,7 +1,7 @@
 Include "param.geo";
 
-Mesh.RemeshParametrization=7;
-Mesh.RemeshAlgorithm=1;
+//Mesh.RemeshParametrization=7;
+//Mesh.RemeshAlgorithm=1;
 Mesh.Algorithm=6;
 
 Mesh.CharacteristicLengthFromPoints = 0;
@@ -33,6 +33,7 @@ EndFor
 
 Mesh 2;
 Save "SurfaceMeshUniform.stl";
+Save Sprintf("SurfaceMeshUniform_%g.msh", lc);
 
 If(TWO_PLANES)
 Plugin(NewView).Run;
