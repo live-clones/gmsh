@@ -110,7 +110,7 @@ set(GMSH_API
     Common/onelab.h Common/GmshSocket.h Common/onelabUtils.h Common/Options.h
   Numeric/Numeric.h Numeric/GaussIntegration.h Numeric/polynomialBasis.h
     Numeric/JacobianBasis.h Numeric/bezierBasis.h Numeric/fullMatrix.h
-    Numeric/FuncSpaceData.h
+    Numeric/FuncSpaceData.h Numeric/pointsGenerators.h
     Numeric/simpleFunction.h Numeric/cartesian.h Numeric/ElementType.h
     Numeric/BasisFactory.h Numeric/CondNumBasis.h
   Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h
@@ -953,7 +953,7 @@ if(HAVE_SOLVER)
     else(PETSC_ARCH)
       set(ENV_PETSC_ARCH $ENV{PETSC_ARCH})
     endif(PETSC_ARCH)
-    set(PETSC_POSSIBLE_CONF_FILES 
+    set(PETSC_POSSIBLE_CONF_FILES
         ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/conf/petscvariables
         ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc-conf/petscvariables
         ${ENV_PETSC_DIR}/${ENV_PETSC_ARCH}/lib/petsc/conf/petscvariables)
@@ -1209,7 +1209,7 @@ endif(ENABLE_ZIPPER)
 if(ENABLE_WRAP_PYTHON)
   find_package(SWIG)
   find_package(PythonLibs)
-  find_package(PythonInterp ${PYTHONLIBS_VERSION_STRING} EXACT)
+  find_package(PythonInterp)# ${PYTHONLIBS_VERSION_STRING} EXACT)
   if(SWIG_FOUND AND PYTHONLIBS_FOUND)
     message(STATUS "Found SWIG version " ${SWIG_VERSION})
     string(SUBSTRING ${SWIG_VERSION} 0 1 SWIG_MAJOR_VERSION)
@@ -1217,6 +1217,7 @@ if(ENABLE_WRAP_PYTHON)
       message(WARNING "Python bindings require SWIG >= 2: disabling Python")
     else(SWIG_MAJOR_VERSION EQUAL 1)
       set_config_option(HAVE_PYTHON "Python")
+      mark_as_advanced(CLEAR PYTHON_LIBRARY PYTHON_INCLUDE_DIR)
     endif(SWIG_MAJOR_VERSION EQUAL 1)
   endif(SWIG_FOUND AND PYTHONLIBS_FOUND)
 endif(ENABLE_WRAP_PYTHON)
