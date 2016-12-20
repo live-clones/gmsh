@@ -528,6 +528,10 @@ void onelabGroup::_addParameter(T &p)
   Fl_Color c;
   if(getFlColor(p.getAttribute("Highlight"), c)) highlight = true;
   Fl_Tree_Item *n = _tree->add(p.getName().c_str());
+  if(!n){
+    Msg::Debug("Could not add item '%s' in tree", p.getName().c_str());
+    return;
+  }
   n->labelsize(FL_NORMAL_SIZE + 4);
   _tree->begin();
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
@@ -549,6 +553,10 @@ void onelabGroup::_addParameter(T &p)
 void onelabGroup::_addMenu(const std::string &path, Fl_Callback *callback, void *data)
 {
   Fl_Tree_Item *n = _tree->add(path.c_str());
+  if(!n){
+    Msg::Debug("Could not add item '%s' in tree", path.c_str());
+    return;
+  }
   _tree->begin();
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
   int hh = n->labelsize() + 4;
@@ -575,6 +583,10 @@ void onelabGroup::_addSolverMenu(int num)
   std::ostringstream path;
   path << "0Modules/Solver/Solver" << num;
   Fl_Tree_Item *n = _tree->add(path.str().c_str());
+  if(!n){
+    Msg::Debug("Could not add item '%s' in tree", path.str().c_str());
+    return;
+  }
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
   int hh = n->labelsize() + 4;
   _tree->begin();
@@ -592,6 +604,10 @@ void onelabGroup::_addViewMenu(int num)
   std::string path = getViewPathName(num);
   if(path.empty()) return;
   Fl_Tree_Item *n = _tree->add(path.c_str());
+  if(!n){
+    Msg::Debug("Could not add item '%s' in tree", path.c_str());
+    return;
+  }
   int ww = (int)(_baseWidth - (n->depth() + 1) * _indent);
   int hh = n->labelsize() + 4;
   _tree->begin();
