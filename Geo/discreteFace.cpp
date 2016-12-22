@@ -190,7 +190,7 @@ void discreteFace::createGeometry()
   std::vector<MElement*> tem(triangles.begin(),triangles.end());
   triangulation* init = new triangulation(-1, tem,this);
   allEdg2Tri = init->ed2tri;
-  /*
+  
   toSplit.push(init);
   if((toSplit.top())->genus()!=0 || (toSplit.top())->aspectRatio() > eta ||
 				       (toSplit.top())->seamPoint){
@@ -235,7 +235,7 @@ void discreteFace::createGeometry()
     df->replaceEdges(toParam[i]->my_GEdges);
     _atlas.push_back(df);
   }
-*/
+
   crossField();
 #endif
 }
