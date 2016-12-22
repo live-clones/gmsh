@@ -2318,7 +2318,7 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.value[0]->align(FL_ALIGN_RIGHT);
       mesh.value[0]->callback(mesh_options_ok_cb);
 
-      mesh.value[2] = new Fl_Value_Input
+      mesh.value[2] = new inputValueFloat
         (L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Element size factor");
       mesh.value[2]->minimum(0.001);
       mesh.value[2]->maximum(1000);
