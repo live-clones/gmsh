@@ -780,11 +780,13 @@ void discreteFace::complex_crossField()
 #ifdef HAVE_PETSC
 #ifdef PETSC_USE_COMPLEX
   lsys = new linearSystemPETSc<std::complex<double> >;
-#esle
-  Msg::Fatal("Petsc complex is required (we do need complex in discreteFace::complex_crossField())");
+#else
+  Msg::Error("Petsc complex is required (we do need complex in discreteFace::complex_crossField())");
+  return;
 #endif
 #else
-  Msg::Fatal("Petsc is required (we do need complex in discreteFace::crossField())");
+  Msg::Error("Petsc is required (we do need complex in discreteFace::crossField())");
+  return;
 #endif
   std::complex<double> i1(0,1);
   dofManager<std::complex<double> > myAssembler(lsys);
