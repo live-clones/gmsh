@@ -1132,20 +1132,20 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   std::vector<onelab::number> numbers;
   onelab::server::instance()->get(numbers);
   for(unsigned int i = 0; i < numbers.size(); i++){
-    if(!numbers[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
-      continue;
     if(numbers[i].getAttribute("Closed") == "1")
       closed.insert(numbers[i].getPath());
+    if(!numbers[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
+      continue;
     _addParameter(numbers[i]);
   }
 
   std::vector<onelab::string> strings;
   onelab::server::instance()->get(strings);
   for(unsigned int i = 0; i < strings.size(); i++){
-    if(!strings[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
-      continue;
     if(strings[i].getAttribute("Closed") == "1")
       closed.insert(strings[i].getPath());
+    if(!strings[i].getVisible() && !CTX::instance()->solver.showInvisibleParameters)
+      continue;
     _addParameter(strings[i]);
   }
 
