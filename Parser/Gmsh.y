@@ -128,7 +128,7 @@ struct doubleXstring{
 %token tEND tAFFECT tDOTS tPi tMPI_Rank tMPI_Size tEuclidian tCoordinates tTestLevel
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil tRound
-%token tFmod tModulo tHypot tList tLinSpace tLogSpace tCatenary
+%token tFmod tModulo tHypot tList tLinSpace tLogSpace tListFromFile tCatenary
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tAbsolutePath tDirName tStrSub tStrLen
 %token tFind tStrFind tStrCmp tStrChoice tUpperCase tLowerCase tLowerCaseIn
@@ -5977,6 +5977,35 @@ FExpr_Multi :
 	double d = pow(10,$3 + ($5-$3)*(double)i/($7-1));
 	List_Add($$, &d);
       }
+    }
+  | tListFromFile LP StringExprVar RP
+    {
+      Msg::Barrier();
+      FILE *File;
+      $$ = List_Create(100, 100, sizeof(double));
+      std::string tmp = FixRelativePath(gmsh_yyname, $3);
+      if(!(File = Fopen(tmp.c_str(), "rb"))){
+        yymsg(0, "Could not open file '%s'", $3);
+      }
+      else{
+	double d;
+	while(!feof(File)){
+          int ret = fscanf(File, "%lf", &d);
+	  if(ret == 1){
+	    List_Add($$, &d);
+          }
+          else if(ret == EOF){
+            break;
+          }
+          else{
+            char dummy[1024];
+            fscanf(File, "%s", dummy);
+            yymsg(0, "Ignoring '%s' in file '%s'", dummy, $3);
+          }
+        }
+	fclose(File);
+      }
+      Free($3);
     }
   | tCatenary LP FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr RP
     {
