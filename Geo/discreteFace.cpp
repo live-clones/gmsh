@@ -773,7 +773,7 @@ void discreteFace::addTriangle(triangulation* trian, MTriangle* t)
 
 void discreteFace::complex_crossField()
 {
-
+#if defined(HAVE_SOLVER)
   // COMPLEX linear system
   linearSystem<std::complex<double> > * lsys;
 
@@ -896,7 +896,7 @@ void discreteFace::complex_crossField()
   }
   fprintf(myfile,"};");
   fclose(myfile);
-
+#endif
 }
 
 
@@ -904,7 +904,7 @@ void discreteFace::complex_crossField()
 
 void discreteFace::crossField()
 {
-
+#if defined(HAVE_SOLVER)
   // linear system
   linearSystem<double> * lsys;
 
@@ -1044,7 +1044,7 @@ void discreteFace::crossField()
   }
   fprintf(myfile,"};");
   fclose(myfile);
-
+#endif
 }
 
 
