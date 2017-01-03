@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -94,7 +94,7 @@ opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 2)
 set(GMSH_MINOR_VERSION 15)
-set(GMSH_PATCH_VERSION 0)
+set(GMSH_PATCH_VERSION 1)
 set(GMSH_EXTRA_VERSION "" CACHE STRING "Gmsh extra version string")
 
 set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")

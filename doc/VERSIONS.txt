@@ -1,4 +1,6 @@
-2.15.0 (December 4. 2016): fixed several regressions (multi-file partitioned
+2.15.1 (January 2, 2017): small improvements and bug fixes.
+
+2.15.0 (December 4, 2016): fixed several regressions (multi-file partitioned
 grid export, mesh subdivision, old compound mesher); improved 2D boundary layer
 field & removed non-functional 3D boundary layer field; faster rendering of
 large meshes.
