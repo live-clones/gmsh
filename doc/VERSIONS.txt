@@ -1,4 +1,4 @@
-2.16.0 (January 2, 2017): small improvements (list functions, second order hexes
+2.16.0 (January 3, 2017): small improvements (list functions, second order hexes
 for MED, GUI) and bug fixes.
 
 2.15.0 (December 4, 2016): fixed several regressions (multi-file partitioned
