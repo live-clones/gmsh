@@ -18,3 +18,4 @@ done
 #   doc/texinfo/gmsh.texi
 #   Common/CommandLine.cpp
 #   Fltk/helpWindow.cpp
+#   doc/gmsh.html
