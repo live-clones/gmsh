@@ -473,6 +473,20 @@ Default value: @code{0}
 Default value: @code{1}
 @end table
 
+@item Plugin(GaussPoints)
+Given an input mesh, Plugin(GaussPoints) creates a view containing the Gauss points for a given polynomial `Order'.@*
+@*
+If `PhysicalGroup' is nonzero, the plugin only creates points for the elements belonging to the group.
+Numeric options:
+@table @code
+@item Order
+Default value: @code{0}
+@item Dimension
+Default value: @code{2}
+@item PhysicalGroup
+Default value: @code{0}
+@end table
+
 @item Plugin(Gradient)
 Plugin(Gradient) computes the gradient of the field in the view `View'.@*
 @*
