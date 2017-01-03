@@ -70,11 +70,11 @@ void drawContext::load(std::string filename)
   // open the file with Gmsh
   GmshOpenProject(filename);
 
-  // reset openGL view
-  eventHandler(10);
-
   // run onelab clients to populate the database
   onelab_cb("check");
+
+  // set openGL view using CTX options
+  eventHandler(8);
 
   // mark all parameters as changed to force complete first run
   onelab::server::instance()->setChanged(3);
@@ -132,6 +132,16 @@ void drawContext::eventHandler(int event, float x, float y)
     break;
   case 7: // Z view
     setQuaternion(0., 0., 0., 1.);
+    break;
+  case 8: // CTX options
+    for(int i = 0; i < 3; i++){
+      _translate[i] = CTX::instance()->tmpTranslation[i];
+      _scale[i] = CTX::instance()->tmpScale[i];
+    }
+    setQuaternion(CTX::instance()->tmpQuaternion[0],
+                  CTX::instance()->tmpQuaternion[1],
+                  CTX::instance()->tmpQuaternion[2],
+                  CTX::instance()->tmpQuaternion[3]);
     break;
   default: // all other reset the position
     setQuaternion(0., 0., 0., 1.);
