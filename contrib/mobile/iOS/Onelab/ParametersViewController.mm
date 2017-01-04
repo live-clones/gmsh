@@ -155,14 +155,14 @@
 {
   [_sections addObject:s];
   [_sectionstitle addObject:t];
-	[self addParameterNumber:p inSection:s];
+  [self addParameterNumber:p inSection:s];
 }
 
 - (void)addSection:(NSMutableArray*)s withTitle:(NSString*)t withParameterString:(onelab::string)p
 {
   [_sections addObject:s];
   [_sectionstitle addObject:t];
-	[self addParameterString:p inSection:s];
+  [self addParameterString:p inSection:s];
 }
 
 NSString *GetSectionTitle(NSString *name)
@@ -186,7 +186,7 @@ NSString *GetSectionTitle(NSString *name)
 
 NSInteger compareParameter(id p1, id p2, void *context)
 {
-	return [[p1 getName] compare:[p2 getName]];
+  return [[p1 getName] compare:[p2 getName]];
 }
 
 - (void)refreshTableView
