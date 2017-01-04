@@ -430,7 +430,7 @@ int GModel::readMSH(const std::string &name)
     }
 
     // $Periodical section
-    else if(!strncmp(&str[1], "Periodical", 10)) {
+    else if(!strncmp(&str[1], "Periodic", 8)) {
       readMSHPeriodicNodes(fp, this);
     }
 
