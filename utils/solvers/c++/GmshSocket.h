@@ -28,6 +28,8 @@
 #ifndef _GMSH_SOCKET_H_
 #define _GMSH_SOCKET_H_
 
+//#include "GmshConfig.h"
+
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,6 +86,8 @@ class GmshSocket{
     GMSH_PARAMETER_UPDATE    = 32,
     GMSH_OPEN_PROJECT        = 33,
     GMSH_CLIENT_CHANGED      = 34,
+    GMSH_PARAMETER_WITHOUT_CHOICES = 35,
+    GMSH_PARAMETER_QUERY_WITHOUT_CHOICES = 36,
     GMSH_OPTION_1            = 100,
     GMSH_OPTION_2            = 101,
     GMSH_OPTION_3            = 102,
@@ -94,6 +98,8 @@ class GmshSocket{
   int _sock;
   // the socket name
   std::string _sockname;
+  // statistics
+  unsigned long int _sent, _received;
   // send some data over the socket
   int _SendData(const void *buffer, int bytes)
   {
@@ -106,6 +112,7 @@ class GmshSocket{
       sofar += len;
       remaining -= len;
     } while(remaining > 0);
+    _sent += bytes;
     return bytes;
   }
   // receive some data over the socket
@@ -121,6 +128,7 @@ class GmshSocket{
       sofar += len;
       remaining -= len;
     } while(remaining > 0);
+    _received += bytes;
     return bytes;
   }
   // utility function to swap bytes in an array
@@ -145,7 +153,7 @@ class GmshSocket{
 #endif
   }
  public:
-  GmshSocket() : _sock(0)
+  GmshSocket() : _sock(0), _sent(0), _received(0)
   {
 #if defined(WIN32) && !defined(__CYGWIN__)
     WSADATA wsaData;
@@ -246,6 +254,8 @@ class GmshSocket{
     shutdown(s, SHUT_RDWR);
 #endif
   }
+  unsigned long int SentBytes(){ return _sent; }
+  unsigned long int ReceivedBytes(){ return _received; }
 };
 
 class GmshClient : public GmshSocket {
