@@ -1412,6 +1412,8 @@ void onelabGroup::addSolver(const std::string &name, const std::string &executab
   opt_solver_name(index, GMSH_SET, name);
   if(needToChooseExe(executable))
     onelab_choose_executable_cb(0, (void *)c);
+  else
+    opt_solver_executable(index, GMSH_SET, executable);
   opt_solver_remote_login(index, GMSH_SET, remoteLogin);
 
   FlGui::instance()->onelab->rebuildSolverList();
