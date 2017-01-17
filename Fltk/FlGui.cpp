@@ -52,13 +52,41 @@
 #endif
 
 // check (now!) if there are any pending events, and process them
-void FlGui::check(){ Fl::check(); }
+void FlGui::check()
+{
+  if(Msg::GetThreadNum() == 0) Fl::check();
+}
 
 // wait (possibly indefinitely) for any events, then process them
-void FlGui::wait(){ Fl::wait(); }
+void FlGui::wait()
+{
+  if(Msg::GetThreadNum() == 0) Fl::wait();
+}
 
 // wait (at most time seconds) for any events, then process them
-void FlGui::wait(double time){ Fl::wait(time); }
+void FlGui::wait(double time)
+{
+  if(Msg::GetThreadNum() == 0) Fl::wait(time);
+}
+
+void FlGui::lock()
+{
+#if defined(_OPENMP)
+  if(Msg::GetThreadNum() > 0){
+    Fl::lock();
+  }
+#endif
+}
+
+void FlGui::unlock()
+{
+#if defined(_OPENMP)
+  if(Msg::GetThreadNum() > 0){
+    Fl::unlock();
+    //Fl::awake();
+  }
+#endif
+}
 
 void FlGui::setOpenedThroughMacFinder(const std::string &name)
 {
@@ -300,6 +328,11 @@ FlGui::FlGui(int argc, char **argv)
   Fl::error = error_handler;
   Fl::fatal = fatal_error_handler;
 
+#if defined(_OPENMP)
+  // tell fltk we're in multi-threaded mode
+  Fl::lock();
+#endif
+
   // set X display
   if(CTX::instance()->display.size())
     Fl::display(CTX::instance()->display.c_str());
@@ -463,7 +496,6 @@ bool FlGui::available()
 {
   return (_instance != 0);
 }
-
 
 FlGui *FlGui::instance(int argc, char **argv)
 {
@@ -1229,8 +1261,9 @@ void window_cb(Fl_Widget *w, void *data)
 
 void FlGui::addMessage(const char *msg)
 {
-  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++){
     FlGui::instance()->graph[i]->addMessage(msg);
+  }
 }
 
 void FlGui::saveMessages(const char *fileName)

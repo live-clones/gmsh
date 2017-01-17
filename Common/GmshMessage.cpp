@@ -230,6 +230,9 @@ std::map<std::string, std::string> &Msg::GetCommandLineStrings()
 
 void Msg::SetProgressMeterStep(int step)
 {
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
   _progressMeterStep = step;
 }
 
@@ -588,15 +591,10 @@ void Msg::Info(const char *fmt, ...)
   if(_client) _client->Info(str);
 
 #if defined(HAVE_FLTK)
-#if defined(_OPENMP)
-  #pragma omp critical
-#endif
-  {
-    if(FlGui::available()){
-      FlGui::instance()->check();
-      std::string tmp = std::string("Info    : ") + str;
-      FlGui::instance()->addMessage(tmp.c_str());
-    }
+  if(FlGui::available()){
+    FlGui::instance()->check();
+    std::string tmp = std::string("Info    : ") + str;
+    FlGui::instance()->addMessage(tmp.c_str());
   }
 #endif
 
@@ -629,16 +627,11 @@ void Msg::Direct(const char *fmt, ...)
   if(_client) _client->Info(str);
 
 #if defined(HAVE_FLTK)
-#if defined(_OPENMP)
-#pragma omp master
-#endif
-  {
-    if(FlGui::available()){
-      FlGui::instance()->check();
-      std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
-        + str;
-      FlGui::instance()->addMessage(tmp.c_str());
-    }
+  if(FlGui::available()){
+    FlGui::instance()->check();
+    std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B136@." : "@C4@.")
+      + str;
+    FlGui::instance()->addMessage(tmp.c_str());
   }
 #endif
 
@@ -675,18 +668,13 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   if(_client && log) _client->Info(str);
 
 #if defined(HAVE_FLTK)
-#if defined(_OPENMP)
-#pragma omp master
-#endif
-  {
-    if(FlGui::available()){
-      if(log) FlGui::instance()->check();
-      if(!log || _verbosity > 4)
-	FlGui::instance()->setStatus(str);
-      if(log){
-	std::string tmp = std::string("Info    : ") + str;
-	FlGui::instance()->addMessage(tmp.c_str());
-      }
+  if(FlGui::available()){
+    if(log) FlGui::instance()->check();
+    if(!log || _verbosity > 4)
+      FlGui::instance()->setStatus(str);
+    if(log){
+      std::string tmp = std::string("Info    : ") + str;
+      FlGui::instance()->addMessage(tmp.c_str());
     }
   }
 #endif
@@ -784,8 +772,13 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
       fflush(stdout);
     }
 
-    while(_progressMeterCurrent < percent)
-      _progressMeterCurrent += _progressMeterStep;
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+    {
+      while(_progressMeterCurrent < percent)
+        _progressMeterCurrent += _progressMeterStep;
+    }
   }
 }
 

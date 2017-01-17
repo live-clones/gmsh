@@ -3508,10 +3508,19 @@ int graphicWindow::getMessageHeight()
 void graphicWindow::addMessage(const char *msg)
 {
   if(!_browser) return;
-  _messages.push_back(msg);
-  _browser->add(msg);
-  if(_autoScrollMessages && _win->shown() && _browser->h() >= FL_NORMAL_SIZE)
-    _browser->bottomline(_browser->size());
+
+  // this routine can be called from multiple threads, e.g. via Msg::Info calls
+  // in meshGFace(). We should use FlGui::lock/unlock, but currently this does
+  // not seem to work (17/02/2017)
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+  {
+    _messages.push_back(msg);
+    _browser->add(msg);
+    if(_autoScrollMessages && _win->shown() && _browser->h() >= FL_NORMAL_SIZE)
+      _browser->bottomline(_browser->size());
+  }
 }
 
 void graphicWindow::clearMessages()
