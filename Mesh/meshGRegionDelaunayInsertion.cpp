@@ -1325,6 +1325,8 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
         FOUND = isCavityCompatibleWithEmbeddedEdges(cavity, shell, allEmbeddedEdges); 
       }
 
+      bool correctedCavityIncompatibleWithEmbeddedEdge = false;
+      
       if(FOUND){
         MVertex *v = new MVertex(center[0], center[1], center[2], worst->onWhat());
         v->setIndex(NUM++);
@@ -1338,62 +1340,44 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 	  else if (k == 0) break;
 	  else if (k == 1) correctCavity = true;
 	}
-	if (correctCavity && starShaped) NB_CORRECTION_OF_CAVITY ++;
+	if (correctCavity && starShaped) {
+	  NB_CORRECTION_OF_CAVITY ++;
+	  if(!isCavityCompatibleWithEmbeddedEdges(cavity, shell, allEmbeddedEdges)){
+	    correctedCavityIncompatibleWithEmbeddedEdge = true;
+	    //	    printf("ARGH\n");
+	  }
+	}
 	//	    printTets ("after.pos", cavity, true);
-	//}
-
-        double lc1 =
-          (1 - uvw[0] - uvw[1] - uvw[2]) * vSizes[worst->tet()->getVertex(0)->getIndex()] +
-          uvw[0] * vSizes[worst->tet()->getVertex(1)->getIndex()] +
-          uvw[1] * vSizes[worst->tet()->getVertex(2)->getIndex()] +
-          uvw[2] * vSizes[worst->tet()->getVertex(3)->getIndex()];
-        double lc = BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]);
-        // double lc = std::min(lc1, BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]));
-        vSizes.push_back(lc1);
-        vSizesBGM.push_back(lc);
-        // compute mesh spacing there
-        if(!starShaped || !insertVertexB(shell,cavity,v, worst, myFactory, allTets, vSizes,vSizesBGM)){
+	// compute mesh spacing there
+	if(correctedCavityIncompatibleWithEmbeddedEdge || !starShaped || !insertVertexB(shell,cavity,v, worst, myFactory, allTets, vSizes,vSizesBGM)){
 	  COUNT_MISS_1++;
-	  //	  printf("coucou 1 %d\n",ITER);
-          myFactory.changeTetRadius(allTets.begin(), 0.);
+	  //	  printf("coucou 1 %d %d\n",correctedCavityIncompatibleWithEmbeddedEdge, starShaped);
+	  myFactory.changeTetRadius(allTets.begin(), 0.);
 	  for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)
 	    (*itc)->setDeleted(false);
-          delete v;
-        }
-        else{
+	  delete v;
+	  NUM--;
+	}
+	else{
+	//}
+	  double lc1 =
+	    (1 - uvw[0] - uvw[1] - uvw[2]) * vSizes[worst->tet()->getVertex(0)->getIndex()] +
+	    uvw[0] * vSizes[worst->tet()->getVertex(1)->getIndex()] +
+	    uvw[1] * vSizes[worst->tet()->getVertex(2)->getIndex()] +
+	    uvw[2] * vSizes[worst->tet()->getVertex(3)->getIndex()];
+	  double lc = BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]);
+	  // double lc = std::min(lc1, BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]));
+	  vSizes.push_back(lc1);
+	  vSizesBGM.push_back(lc);
 	  REALCOUNT++;
-          v->onWhat()->mesh_vertices.push_back(v);
+	  v->onWhat()->mesh_vertices.push_back(v);
 	}
       }
+      
       else{
-	//	printf("%d %d %d %d\n",worst->tet()->getVertex(0)->getNum()
-	//	       ,worst->tet()->getVertex(1)->getNum()
-	//	       ,worst->tet()->getVertex(2)->getNum()
-	//	       ,worst->tet()->getVertex(3)->getNum());
-	/*	printf("coucou 2 % cavity size %d\n",ITER,cavity.size());
-	for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
-	  MTetrahedron *toto = (*itc)->tet();
-	  //	  toto->xyz2uvw(center,uvw);
-	  double mat[3][3], b[3], det;
-	  toto->getMat(mat);
-	  b[0] = center[0] - toto->getVertex(0)->x();
-	  b[1] = center[1] - toto->getVertex(0)->y();
-	  b[2] = center[2] - toto->getVertex(0)->z();
-	  sys3x3(mat, b, uvw, &det);
-	  printf("det = %g\n",det);
-	  printf("%g %g %g -- \n",toto->getVertex(0)->x(),toto->getVertex(0)->y(),toto->getVertex(0)->z());
-	  printf("%g %g %g -- \n",toto->getVertex(1)->x(),toto->getVertex(1)->y(),toto->getVertex(1)->z());
-	  printf("%g %g %g -- \n",toto->getVertex(2)->x(),toto->getVertex(2)->y(),toto->getVertex(2)->z());
-	  printf("%g %g %g -- \n",toto->getVertex(3)->x(),toto->getVertex(3)->y(),toto->getVertex(3)->z());
-	  printf("tet quality %g\n",toto->gammaShapeMeasure());
-	  printf("point %g %g %g outside %12.5E %12.5E %12.5E %12.5E\n",center[0],center[1],center[2],uvw[0], uvw[1], uvw[2],1-uvw[0]-uvw[1]-uvw[2]);
-	}
-	getchar();
-	*/
         myFactory.changeTetRadius(allTets.begin(), 0.0);
 	COUNT_MISS_2++;
 	for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)  (*itc)->setDeleted(false);
-	//	if (cavity.size() > 10)printTets ("cavity.pos", cavity, true);
       }
     }
 
