@@ -36,6 +36,27 @@ template<class Iterator, class Assembler> void Assemble(BilinearTermBase &term, 
   }
 }
 
+template<class Iterator, class Assembler> void Assemble(BilinearTermBase &term, FunctionSpaceBase &space,
+                                                        Iterator itbegin, Iterator itend,
+                                                        QuadratureBase &integrator, Assembler &assembler,
+																												elementFilter& efilter)
+  // symmetric
+{
+  fullMatrix<typename Assembler::dataMat> localMatrix;
+  std::vector<Dof> R;
+  for (Iterator it = itbegin; it != itend; ++it){
+    MElement *e = *it;
+		if (efilter(e)){
+			R.clear();
+			IntPt *GP;
+			int npts = integrator.getIntPoints(e, &GP);
+			term.get(e, npts, GP, localMatrix); //localMatrix.print();
+			space.getKeys(e, R);
+			assembler.assemble(R, localMatrix);
+		}
+  }
+}
+
 template<class Assembler> void Assemble(BilinearTermBase &term, FunctionSpaceBase &space, MElement *e,
                                         QuadratureBase &integrator, Assembler &assembler) // symmetric
 {
@@ -110,6 +131,26 @@ template<class Iterator, class Assembler> void Assemble(LinearTermBase<double> &
   }
 }
 
+template<class Iterator, class Assembler> void Assemble(LinearTermBase<double> &term, FunctionSpaceBase &space,
+                                                        Iterator itbegin, Iterator itend,
+                                                        QuadratureBase &integrator, Assembler &assembler,
+																												elementFilter& efilter)
+{
+  fullVector<typename Assembler::dataMat> localVector;
+  std::vector<Dof> R;
+  for (Iterator it = itbegin; it != itend; ++it){
+    MElement *e = *it;
+		if (efilter(e)){
+			R.clear();
+			IntPt *GP;
+			int npts = integrator.getIntPoints(e, &GP);
+			term.get(e, npts, GP, localVector); //localVector.print();
+			space.getKeys(e, R);
+			assembler.assemble(R, localVector);
+		}
+  }
+}
+
 template<class Assembler> void Assemble(LinearTermBase<double> &term, FunctionSpaceBase &space, MElement *e,
                                         QuadratureBase &integrator, Assembler &assembler)
 {
@@ -133,6 +174,23 @@ template<class Iterator, class dataMat> void Assemble(ScalarTermBase<double> &te
     int npts = integrator.getIntPoints(e, &GP);
     term.get(e, npts, GP, localval);
     val += localval;
+  }
+}
+
+template<class Iterator, class dataMat> void Assemble(ScalarTermBase<double> &term,
+                                                      Iterator itbegin, Iterator itend,
+                                                      QuadratureBase &integrator, dataMat & val,
+																											elementFilter& efilter)
+{
+  dataMat localval;
+  for (Iterator it = itbegin; it != itend; ++it){
+    MElement *e = *it;
+		if (efilter(e)){
+			IntPt *GP;
+			int npts = integrator.getIntPoints(e, &GP);
+			term.get(e, npts, GP, localval);
+			val += localval;
+		}
   }
 }
 
