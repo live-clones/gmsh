@@ -127,7 +127,7 @@ class drawContextFltk : public drawContextGlobal{
       else if(w <= 1440) return 12;
       else if(w <= 1680) return 13;
       else if(w <= 1920) return 14;
-      else               return 15;
+      else return (w-1920)/160 +15;
     }
   }
   void setFont(int fontid, int fontsize)
