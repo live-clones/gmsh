@@ -115,6 +115,11 @@ class GModelFactory {
     Msg::Error("addPipe not implemented yet");
     return 0;
   }
+  virtual GEntity *addThruSections(GModel *gm, std::vector<std::vector<GEdge *> > wire)
+  {
+    Msg::Error("addThruSections not implemented yet");
+    return 0;
+  }
 
   // solid primitives
   virtual GEntity *addSphere(GModel *gm, double cx, double cy, double cz,
@@ -257,6 +262,7 @@ class OCCFactory : public GModelFactory {
   GEntity *extrude(GModel *gm, GEntity*,std::vector<double> p1,
                    std::vector<double> p2);
   GEntity *addPipe(GModel *gm, GEntity *base, std::vector<GEdge *> wire);
+  GEntity *addThruSections(GModel *gm, std::vector<std::vector<GEdge *> > wire);
   GEntity *addSphere(GModel *gm,double cx, double cy, double cz, double radius);
   GEntity *addCylinder(GModel *gm,std::vector<double> p1, std::vector<double> p2,
                        double radius);

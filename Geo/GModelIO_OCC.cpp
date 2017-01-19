@@ -97,7 +97,6 @@ void OCC_Internals::addShapeToLists(TopoDS_Shape _shape)
     TopoDS_Solid solid = TopoDS::Solid(exp0.Current());
     if(somap.FindIndex(solid) < 1){
       somap.Add(solid);
-
       for(exp1.Init(solid, TopAbs_SHELL); exp1.More(); exp1.Next()){
         TopoDS_Shell shell = TopoDS::Shell(exp1.Current());
         if(shmap.FindIndex(shell) < 1){
@@ -946,11 +945,36 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
       break;
     case OCC_Internals::Fuse :
       {
-        BRepAlgoAPI_Fuse BO(tool, shape);
-        if(!BO.IsDone()) {
-          Msg::Error("Fuse operation can not be performed on the given shapes");
+        TopoDS_Solid solid1, solid2;
+        int hack = 0;
+        if(shape.ShapeType() != TopAbs_SOLID && tool.ShapeType() != TopAbs_SOLID){
+          TopExp_Explorer exp0;
+          for(exp0.Init(shape, TopAbs_SOLID); exp0.More(); exp0.Next()){
+            solid1 = TopoDS::Solid(exp0.Current());
+            hack++;
+            break;
+          }
+          for(exp0.Init(tool, TopAbs_SOLID); exp0.More(); exp0.Next()){
+            solid2 = TopoDS::Solid(exp0.Current());
+            hack++;
+            break;
+          }
         }
-        shape = BO.Shape();
+        if(hack == 2){ // FIXME: just a temp hack!
+          Msg::Info("Temporary hack in Fuse :-)");
+          BRepAlgoAPI_Fuse BO(solid1, solid2);
+          if(!BO.IsDone()) {
+            Msg::Error("Fuse operation can not be performed on the given shapes");
+          }
+          shape = BO.Shape();
+        }
+        else{
+          BRepAlgoAPI_Fuse BO(tool, shape);
+          if(!BO.IsDone()) {
+            Msg::Error("Fuse operation can not be performed on the given shapes");
+          }
+          shape = BO.Shape();
+        }
       }
       break;
     case OCC_Internals::Section :

@@ -526,7 +526,8 @@ class GModel
   GEntity *extrude(GEntity *e, std::vector<double> p1, std::vector<double> p2);
   std::vector<GEntity*> extrudeBoundaryLayer(GEntity *e, int nbLayers, double hLayers,
                                              int dir=1, int view=-1);
-  GEntity *addPipe(GEntity *e, std::vector<GEdge *>  edges);
+  GEntity *addPipe(GEntity *e, std::vector<GEdge *> edges);
+  GEntity *addThruSections(std::vector<std::vector<GEdge *> > edges);
 
   std::vector<GFace *> addRuledFaces(std::vector<std::vector<GEdge *> > edges);
   GFace *addFace(std::vector<GEdge *> edges, std::vector< std::vector<double > > points);

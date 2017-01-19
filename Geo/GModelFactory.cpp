@@ -1483,6 +1483,27 @@ GEntity *OCCFactory::addPipe(GModel *gm, GEntity *base, std::vector<GEdge *> wir
   return ret;
 }
 
+GEntity *OCCFactory::addThruSections(GModel *gm, std::vector<std::vector<GEdge *> > wire)
+{
+  BRepOffsetAPI_ThruSections aGenerator(Standard_True); // create solid
+  for (unsigned i = 0; i < wire.size(); i++) {
+    BRepBuilderAPI_MakeWire wire_maker;
+    for (unsigned j = 0; j < wire[i].size(); j++) {
+      GEdge *ge = wire[i][j];
+      OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
+      if (occe){
+        wire_maker.Add(occe->getTopoDS_Edge());
+      }
+    }
+    aGenerator.AddWire(wire_maker.Wire());
+  }
+  aGenerator.CheckCompatibility(Standard_False);
+  aGenerator.Build();
+  TopoDS_Solid result = TopoDS::Solid(aGenerator.Shape());
+  GEntity *ret = gm->_occ_internals->addRegionToModel(gm, result);
+  return ret;
+}
+
 void OCCFactory::healGeometry(GModel *gm, double tolerance)
 {
   if (tolerance < 0.)

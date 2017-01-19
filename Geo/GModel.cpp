@@ -3254,6 +3254,13 @@ GEntity *GModel::addPipe(GEntity *e, std::vector<GEdge *>  edges)
   return 0;
 }
 
+GEntity *GModel::addThruSections(std::vector<std::vector<GEdge *> > edges)
+{
+  if(_factory)
+    return _factory->addThruSections(this,edges);
+  return 0;
+}
+
 GEntity *GModel::addSphere(double cx, double cy, double cz, double radius)
 {
   if(_factory) return _factory->addSphere(this, cx, cy, cz, radius);

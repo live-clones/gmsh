@@ -128,10 +128,12 @@ class drawContextFltk : public drawContextGlobal{
       else if(w <= 1680) return 13;
       else if(w <= 1920) return 14;
       return (w - 1920) / 160 + 15;
+      /*
+      float dpih, dpiv;
+      Fl::screen_dpi(dpih, dpiv);
+      return (int)(dpih / 8.);
+      */
     }
-    //float dpih, dpiv;
-    //Fl::screen_dpi(dpih, dpiv);
-    //return (int)(dpih * CTX::instance()->fontSize / 96.);
   }
   void setFont(int fontid, int fontsize)
   {
