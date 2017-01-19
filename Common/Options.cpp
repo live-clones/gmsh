@@ -2097,8 +2097,9 @@ double opt_general_initial_context(OPT_ARGS_NUM)
 
 double opt_general_fontsize(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
     CTX::instance()->fontSize = (int)val;
+  }
   return CTX::instance()->fontSize;
 }
 
@@ -2794,7 +2795,7 @@ double opt_general_scale2(OPT_ARGS_NUM)
 double opt_general_clip_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
-    // should NEVER be zero (or negative)
+    // should never be zero (or negative)
     if(val < 0.01)
       CTX::instance()->clipFactor = 0.01;
     else
