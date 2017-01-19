@@ -630,14 +630,14 @@ void GetOptions(int argc, char *argv[])
         else
           Msg::Fatal("Missing file name");
       }
-      else if(!strcmp(argv[i] + 1, "nw")) {
+      else if(!strcmp(argv[i] + 1, "windows")) {
         i++;
         if(argv[i])
           CTX::instance()->numWindows = atoi(argv[i++]);
         else
           Msg::Fatal("Missing number");
       }
-      else if(!strcmp(argv[i] + 1, "nt")) {
+      else if(!strcmp(argv[i] + 1, "tiles")) {
         i++;
         if(argv[i])
           CTX::instance()->numTiles = atoi(argv[i++]);
@@ -993,6 +993,13 @@ void GetOptions(int argc, char *argv[])
         i++;
         if(argv[i])
           Msg::SetVerbosity(atoi(argv[i++]));
+        else
+          Msg::Fatal("Missing number");
+      }
+      else if(!strcmp(argv[i] + 1, "nt")) {
+        i++;
+        if(argv[i])
+          Msg::SetNumThreads(atoi(argv[i++]));
         else
           Msg::Fatal("Missing number");
       }

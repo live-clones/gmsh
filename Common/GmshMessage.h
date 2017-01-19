@@ -73,6 +73,7 @@ class Msg {
   static GmshMessage *GetCallback();
   static void Barrier();
   static int GetNumThreads();
+  static void SetNumThreads(int num);
   static int GetMaxThreads();
   static int GetThreadNum();
   static void SetVerbosity(int val);
