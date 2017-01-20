@@ -249,8 +249,9 @@ void End_Curve(Curve *c)
   }
   c->degenerated = false;
 
-  if(c->Typ == MSH_SEGM_CIRC || c->Typ == MSH_SEGM_CIRC_INV ||
-     c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) {
+  if((c->Typ == MSH_SEGM_CIRC || c->Typ == MSH_SEGM_CIRC_INV ||
+      c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) &&
+     (NN == 3 || NN == 4)) {
 
     // v[0] = first point
     // v[1] = center
