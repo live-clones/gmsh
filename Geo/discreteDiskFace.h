@@ -56,40 +56,39 @@ class ANNkd_tree;
 class Octree;
 class GRbf;
 
+// compute dummy attributes of any conformal (linear~straighted-sided) triangulation
 class triangulation {
 
  public:
 
   // attributes
-  int idNum; // number of identification, for hashing purposes
+  int idNum, iter; // number of identification, for hashing purposes
   std::vector<MElement*> tri;// trianglse
   GFace* gf;
 
   double maxD;
-  double area;
   bool seamPoint;
   std::set<MVertex*> vert;// nodes
   // edge to 1 or 2 triangle(s), their num into the vector of MElement*
   std::map<MEdge,std::vector<int>,Less_Edge> ed2tri;
-  std::map<double,std::vector<MVertex*> > bord; //border(s)
-  std::set<MEdge,Less_Edge> borderEdg; // border edges
+  std::map<double,std::vector<MVertex*> > bord; //border(s) #todo |-> std::vector
+  std::set<MEdge,Less_Edge> borderEdg; // border edges #todo |-> std::vector
 
   std::list<GEdge*> my_GEdges;
-  std::set<int> fillingHoles;
+  std::set<int> fillingHoles; // obsolete ? /!\ used within discreteDiskFace class
 
   //---- methods
-  double geodesicDistance ();
+  double geodesicDistance ();// prototype here
 
   double aspectRatio()
   {
     double L = bord.rbegin()->first;
-    if (L == 0.0)return 1.e22;
+    if (L == 0.0)return 1.e22; // #mark shoudn't we throw instead ?
     if (maxD < 0) maxD = geodesicDistance();
-    //    printf("%12.5E %12.5E\n",L,maxD);
     return maxD / L;
   }
 
-  int genus()
+  int genus() // dummy formula for Chi
   {
     return ( ed2tri.size() - vert.size() - tri.size() + 2 - bord.size() )/2;
   }
@@ -106,8 +105,6 @@ class triangulation {
 	std::set<MVertex*>::iterator it = vert.find(tv);
 	if (it == vert.end()) vert.insert (tv);
       }
-      SVector3 N(crossprod(P[1]-P[0],P[2]-P[0]));
-      area += N.norm();
     }
   }
 
@@ -185,7 +182,6 @@ class triangulation {
 
   void assign()
   {
-    area = 0.;
     seamPoint = false;
     assignVert();
     assignEd2tri();
@@ -211,8 +207,7 @@ class triangulation {
 // triangles in the physical space xyz, with their parametric coordinates
 class  discreteDiskFaceTriangle {
  public:
-  std::vector<SPoint3> p; // vertices in (u;v) #improveme std::vector instead
-  //SPoint2 gfp[6]; // CAD model
+  std::vector<SPoint3> p; // vertices in (u;v)
   GFace *gf; // GFace tag
   MElement *tri; // mesh triangle in (x;y;z)
   discreteDiskFaceTriangle() : gf(0), tri(0) {}
@@ -221,8 +216,7 @@ class  discreteDiskFaceTriangle {
 class discreteDiskFace : public GFace {
   GFace *_parent;
   void buildOct(std::vector<GFace*> *CAD = NULL) const;
-  bool parametrize();// const;
-  void checklsys(linearSystemCSR<double>*,dofManager<double>*,int);
+  bool parametrize() const;
   bool checkOrientationUV();
   void optimize();
 
