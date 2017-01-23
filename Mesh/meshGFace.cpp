@@ -556,10 +556,12 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
         BDS_Edge *e = m->recover_edge(pstart->iD, pend->iD, _fatallyFailed, e2r, notRecovered);
         if(e) e->g = g;
         else {
-          if (_fatallyFailed)
-            Msg::Error("Unable to recover an edge %g %g && %g %g (%d/%d)",
-                       vstart->x(), vstart->y(), vend->x(), vend->y(), i,
-                       ge->mesh_vertices.size());
+          if (_fatallyFailed){
+            Msg::Error("Unable to recover the edge %d (%d/%d) on GEdge %d (on GFace %d)",
+                       ge->lines[i]->getNum(),i+1,ge->lines.size(),ge->tag(),ge->faces().back()->tag());
+	    outputScalarField(m->triangles, "wrongmesh.pos", 0);
+	    outputScalarField(m->triangles,"wrongparam.pos",1);
+	  }
           return !_fatallyFailed;
         }
       }
@@ -2389,7 +2391,7 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -1; //-1;
+int debugSurface = -100; //-100;
 
 void meshGFace::operator() (GFace *gf, bool print)
 {

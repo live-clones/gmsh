@@ -19,8 +19,6 @@
 #include "Context.h"
 #include "OS.h"
 #include "ANN/ANN.h"
-#include "laplaceTerm.h"
-#include "convexLaplaceTerm.h"
 #include "convexCombinationTerm.h"
 
 #if defined(HAVE_MESH)
@@ -291,8 +289,8 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
   orderVertices(_totLength, _U0, _coords);
   parametrize();
   buildOct(CAD);
-  printParamMesh();
-  Msg::Info("Parameterization done (GFace %d)",gf->tag());
+  //putOnView(gf->tag(),diskTriangulation->idNum,true,true);
+  //printParamMesh();  
 }
 /*end BUILDER*/
 
@@ -301,7 +299,7 @@ discreteDiskFace::~discreteDiskFace()
   triangles.clear();
   if (_ddft) delete[] _ddft;
   if (oct) Octree_Delete(oct);
-  if(geoTriangulation) delete geoTriangulation;
+  if (geoTriangulation) delete geoTriangulation;
 }
 
 void discreteDiskFace::buildOct(std::vector<GFace*> *CAD) const
@@ -314,10 +312,10 @@ void discreteDiskFace::buildOct(std::vector<GFace*> *CAD) const
   oct = Octree_Create(maxElePerBucket, origin, ssize, discreteDiskFaceBB,
 		      discreteDiskFaceCentroid, discreteDiskFaceInEle);
   
-  _ddft = new discreteDiskFaceTriangle[discrete_triangles.size()/*-geoTriangulation->fillingHoles.size()*/];
+  _ddft = new discreteDiskFaceTriangle[discrete_triangles.size()];
   int c = 0;
   for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
-    //    if(geoTriangulation->fillingHoles.find(i)==geoTriangulation->fillingHoles.end()){
+
     MElement *t = discrete_triangles[i];
     discreteDiskFaceTriangle* my_ddft = &_ddft[c++];
     my_ddft->p.resize(_n);
@@ -328,49 +326,13 @@ void discreteDiskFace::buildOct(std::vector<GFace*> *CAD) const
     my_ddft->tri = t;
 
     Octree_Insert(my_ddft, oct);
-    //    }
+    
   }
   Octree_Arrange(oct);
 }
 
-/*
-void discreteDiskFace::OneToOneParametrization () {
-  v2t_cont adj;
-  buildVertexToTriangle(discrete_triangles, adj);
-  int count=0;
-  {
-    v2t_cont :: iterator it = adj.begin();
-    while (it != adj.end()) {
-      it->first->setIndex(count++);
-      ++it;
-    }
-  }  
-  double *rhs = new double [2*count];
-  double *x   = new double [2*count];
-  {
-    for(size_t i = 0; i < _U0.size(); i++){
-      MVertex *v = _U0[i];
-      const double theta = 2 * M_PI * _coords[i];
-      myAssemblerU.fixVertex(v, 0, 1,cos(theta));
-      myAssemblerV.fixVertex(v, 0, 1,sin(theta));
-    }  
-  }
 
-  {
-    v2t_cont :: iterator it = adj.begin();
-    while (it != adj.end()) {
-      it->first->setIndex(i++);
-      ++it;
-    }
-  }  
-
-  std::vector<int> ij;
-  std::vector<double> val;
-  
-}
-*/
-
-bool discreteDiskFace::parametrize()// const
+bool discreteDiskFace::parametrize() const
 { // #improveme
 
   linearSystem<double> * lsys_u, *lsys_v;
@@ -379,7 +341,7 @@ bool discreteDiskFace::parametrize()// const
 #ifdef HAVE_MUMPS
   lsys_u = new linearSystemMUMPS<double>;
   lsys_v = new linearSystemMUMPS<double>;
-#else
+#else  
   linearSystemCSRGmm<double> * lsys_u1 = new linearSystemCSRGmm<double>;
   linearSystemCSRGmm<double> * lsys_v1 = new linearSystemCSRGmm<double>;
   lsys_u1->setGmres(1);
@@ -393,14 +355,8 @@ bool discreteDiskFace::parametrize()// const
   for(size_t i = 0; i < _U0.size(); i++){
     MVertex *v = _U0[i];
     const double theta = 2 * M_PI * _coords[i];
-    if(i%_order==0){
-      myAssemblerU.fixVertex(v, 0, 1,cos(theta));
-      myAssemblerV.fixVertex(v, 0, 1,sin(theta));
-    }
-    else{//#TEST
-      myAssemblerU.fixVertex(v, 0, 1,1./_order*((_order-(i%_order))*cos(2*M_PI*_coords[i-(i%_order)])+(i%_order)*cos(2*M_PI*_coords[i+(_order-(i%_order))])));
-      myAssemblerV.fixVertex(v, 0, 1,1./_order*((_order-(i%_order))*sin(2*M_PI*_coords[i-(i%_order)])+(i%_order)*sin(2*M_PI*_coords[i+(_order-(i%_order))])));
-    }
+    myAssemblerU.fixVertex(v, 0, 1,cos(theta));
+    myAssemblerV.fixVertex(v, 0, 1,sin(theta));
   }
 
   for(size_t i = 0; i < discrete_triangles.size(); ++i){
@@ -458,9 +414,7 @@ bool discreteDiskFace::parametrize()// const
   return true;
 }
 
-//void discreteDiskFace::checklsys(linearSystemCSR<double>* lsys,dofManager<double>* myAssembler,int U)
-//{
-//}
+
 
 void discreteDiskFace::getTriangleUV(const double u,const double v,
 				     discreteDiskFaceTriangle **mt,
@@ -544,6 +498,7 @@ bool discreteDiskFace::checkOrientationUV()
   }
 }
 
+// for second order parameterization
 void discreteDiskFace::optimize()
 { // #improve . . .
 #if defined(HAVE_OPTHOM)
@@ -952,6 +907,8 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
 						const SVector3 &p, const double &R,
 						double uv[2]) const
 {
+
+  
   SVector3 n = crossprod(n1,n2);
   n.normalize();
   //  printf("n %g %g %g\n",n.x(), n.y(), n.z());
@@ -1064,6 +1021,7 @@ GPoint discreteDiskFace::intersectionWithCircle2(const SVector3 &n1, const SVect
 						const SVector3 &p, const double &d,
 						double uv[2]) const
 {
+
   // n2 is exterior
   SVector3 n = crossprod(n1,n2);
   n.normalize();
@@ -1331,11 +1289,11 @@ double triangulation::geodesicDistance ()
     if (Fixed.size() == v2t.size())break;
   }
 
-  /*
+  
   char name[256];
-  sprintf(name,"geodesicDistance%d.pos",idNum);
+  sprintf(name,"geodesicDistance%d.pos",iter);
   FILE *f = fopen(name,"w");
-  fprintf(f,"View \"\"{\n");
+  fprintf(f,"View \"%d\"{\n",iter);
   for (unsigned int i=0;i<tri.size();i++){
     double d0 = Fixed[tri[i]->getVertex(0)];
     double d1 = Fixed[tri[i]->getVertex(1)];
@@ -1348,7 +1306,7 @@ double triangulation::geodesicDistance ()
   }
   fprintf(f,"};\n");
   fclose(f);
-  */
+  
 
   return CLOSEST;
 }
@@ -1364,9 +1322,9 @@ void discreteDiskFace::printAtlasMesh()
   std::set<MVertex*> meshvertices;
 	
   for(unsigned int i=0; i<initialTriangulation->tri.size(); ++i){
-    MElement* tri = initialTriangulation->tri[i];
-    for(unsigned int j=0; j<3; j++)
-      if (meshvertices.find(tri->getVertex(j))==meshvertices.end()) meshvertices.insert(tri->getVertex(j));
+      MElement* tri = initialTriangulation->tri[i];
+      for(unsigned int j=0; j<3; j++)
+	if (meshvertices.find(tri->getVertex(j))==meshvertices.end()) meshvertices.insert(tri->getVertex(j));
   }
 	
   fprintf(pmesh,"$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n%u\n",(unsigned int)meshvertices.size());
@@ -1376,15 +1334,21 @@ void discreteDiskFace::printAtlasMesh()
     mv2int[*it] = count;
     count++;
   }
-  fprintf(pmesh,"$EndNodes\n$Elements\n%u\n",(unsigned int)initialTriangulation->tri.size());
+  fprintf(pmesh,"$EndNodes\n$Elements\n%u\n",(unsigned int)initialTriangulation->tri.size()-initialTriangulation->fillingHoles.size());
+  unsigned int mycount = 0;//#####
   for(unsigned int i=0; i<initialTriangulation->tri.size(); i++){
-    MElement* tri = initialTriangulation->tri[i];
-    fprintf(pmesh,"%d 2 2 0 0",i+1);
-    for(int j=0; j<3; j++){
-      MVertex* mv = tri->getVertex(j);
-      fprintf(pmesh," %d",mv2int[mv]);
-    }
-    fprintf(pmesh,"\n");
+        std::set<int>::iterator it = initialTriangulation->fillingHoles.find(i);
+	//if (it == initialTriangulation->fillingHoles.end()){
+
+	  MElement* tri = initialTriangulation->tri[i];
+	  fprintf(pmesh,"%d 2 2 0 %d",mycount+1,initialTriangulation->idNum);//#####
+	  for(int j=0; j<3; j++){
+	    MVertex* mv = tri->getVertex(j);
+	    fprintf(pmesh," %d",mv2int[mv]);
+	  }
+	  fprintf(pmesh,"\n");
+	  mycount++;//###
+	  //}
   }
   fprintf(pmesh,"$EndElements\n");
   fclose(pmesh);
