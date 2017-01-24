@@ -192,15 +192,15 @@ void discreteFace::createGeometry()
   triangulation* init = new triangulation(-1, tem,this);
   init->iter = iter++;
   allEdg2Tri = init->ed2tri;
-  
+
   toSplit.push(init);
   if((toSplit.top())->genus()!=0 ||
      (toSplit.top())->aspectRatio() > eta ||
      (toSplit.top())->seamPoint){
-    
+
     while( !toSplit.empty()){
       std::vector<triangulation*> part;
-      triangulation* tosplit = toSplit.top();      
+      triangulation* tosplit = toSplit.top();
       toSplit.pop();
 
       double ts0 = Cpu();
@@ -231,11 +231,11 @@ void discreteFace::createGeometry()
   FILE* debug = Fopen("tralala-init.pos","w");
   fprintf(debug,"View \"discreteEdges\"{\n");
   for(unsigned int j=0; j<toParam.size(); j++){
-    
+
     std::list<GEdge*> ge = toParam[j]->my_GEdges;
     for(std::list<GEdge*>::iterator it = ge.begin(); it!=ge.end(); ++it){
       if((*it)->tag()==112 ){
-	
+
 	std::vector<MLine*> ml = (*it)->lines;
 	printf("___(init) map %d, ge %d___ (%p)\n",j+1,(*it)->tag(),(*it));
 	for(unsigned int i=0; i<ml.size(); i++){
@@ -243,15 +243,15 @@ void discreteFace::createGeometry()
 	  printf("%d[%d;%d]--",ml[i]->getNum(),ml[i]->getVertex(0)->getNum(),ml[i]->getVertex(1)->getNum());
 	}
 	printf("\n");
-	
-      }	
-	
+
+      }
+
     }
   }
   fprintf(debug,"};");
   fclose(debug);
   */
-  
+
   for(unsigned int i=0; i<toParam.size(); i++){
 
     fillHoles(toParam[i]);
@@ -259,7 +259,7 @@ void discreteFace::createGeometry()
     //toParam[i]->print(name, toParam[i]->idNum);
   }
 
-  
+
   for(unsigned int i=0; i<toParam.size(); i++){
     discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));
     df->printAtlasMesh();
@@ -320,10 +320,9 @@ void discreteFace::gatherMeshes()
 
 void discreteFace::mesh(bool verbose)
 {
-
-
+#if defined(HAVE_ANN) && defined(HAVE_SOLVER) && defined(HAVE_MESH)
   for(unsigned int j=0; j<_atlas.size(); j++){
-    
+
     std::list<GEdge*> ge = _atlas[j]->edges();
     for(std::list<GEdge*>::iterator it = ge.begin(); it!=ge.end(); ++it){
 
@@ -339,17 +338,12 @@ void discreteFace::mesh(bool verbose)
 	//printf("%d[%d;%d]--",ml[i]->getNum(),ml[i]->getVertex(0)->getNum(),ml[i]->getVertex(1)->getNum());
       }
       //printf("\n");
-	
+
       fprintf(debug,"};");
       fclose(debug);
     }
   }
-  
-  
 
-
-  
-#if defined(HAVE_ANN) && defined(HAVE_SOLVER) && defined(HAVE_MESH)
   if (!CTX::instance()->meshDiscrete) return;
 
   //Msg::Info("Discrete Face %d is going to be meshed",tag());
@@ -494,7 +488,7 @@ void discreteFace::splitDiscreteEdge(GEdge *de , GVertex *gv, discreteEdge* newE
   newE[0] = new discreteEdge (de->model(),mytag,de->getBeginVertex(),gv);
   mytag++;
   newE[1] = new discreteEdge (de->model(),mytag,gv, de->getEndVertex());
-  
+
   int current = 0;
   std::vector<MLine*> mlines;
   // assumption: the MLine's are sorted
@@ -852,7 +846,7 @@ void discreteFace::complex_crossField()
   Msg::Error("Petsc is required (we do need complex in discreteFace::crossField())");
   return;
 #endif
-  
+
   std::complex<double> i1(0,1);
   dofManager<std::complex<double> > myAssembler(lsys);
 
@@ -869,7 +863,7 @@ void discreteFace::complex_crossField()
 	mini = iTri[0] < iTri[1] ? iTri[0] : iTri[1];
       else
 	myAssembler.fixDof(3*mini+j,0,std::complex<double>(1)); // #tocheck
-      
+
       int num,s;
       triangles[mini]->getEdgeInfo(ed,num,s);
       myAssembler.numberDof(3*mini+num,0);
@@ -922,7 +916,7 @@ void discreteFace::complex_crossField()
     fprintf(myfile,"VT(");
     MTriangle* tri = triangles[i];
     MEdge ed = tri->getEdge(0);
-    
+
     MVertex *v0, *v1, *v2;
 
     v0 = tri->getVertex(0);
@@ -938,7 +932,7 @@ void discreteFace::complex_crossField()
     SVector3 e(v1->x()-v0->x(),v1->y()-v0->y(),v1->z()-v0->z());
     e.normalize();
     SVector3 d = crossprod(n,e); d.normalize();
-   
+
     std::vector<double> U; U.resize(3);
     std::vector<double> V; V.resize(3);
     for(int j=0; j<3; j++){
@@ -948,10 +942,10 @@ void discreteFace::complex_crossField()
       std::complex<double> fstar; // edge basis
       myAssembler.getDofValue(ed2key[ed],0,fstar); // conjugate dof in the local edge basis
       double alpha = getAlpha(tri,j); // triangle basis
-      std::complex<double> F(std::exp(4.*i1*alpha)); 
+      std::complex<double> F(std::exp(4.*i1*alpha));
       F *= std::conj(fstar); // dof of the local tri basis
       U[j] = std::real(F);
-      V[j] = std::imag(F);      
+      V[j] = std::imag(F);
     }
     fprintf(myfile,")");
     std::vector<double> Fu, Fv;
@@ -1113,7 +1107,7 @@ void discreteFace::crossField()
       SVector3 cf(cos(theta)*e.x()+sin(theta)*d.x(),cos(theta)*e.y()+sin(theta)*d.y(),cos(theta)*e.z()+sin(theta)*d.z());
       //cf = cf*sqrt(u*u+v*v);
       fprintf(myfile,"%f,%f,%f",cf.x(),cf.y(),cf.z());//cos(theta)*e.x()-sin(theta)*e.y(),sin(theta)*e.x()+cos(theta)*e.y(),e.z());
-      
+
       if( std::abs(dot(cf,n)) > 1e-12)
 	printf("/!\\ ---> warning orthogonality \t %f \n",dot(cf,n));
       if (j<2) fprintf(myfile,",");
