@@ -2186,6 +2186,165 @@ class AttractorField : public Field
   }
 };
 
+class OctreeField : public Field {
+  // octree field
+  class Cell {
+    void *_data;
+    bool _isleaf;
+    public:
+    double evaluate(double x, double y, double z) const {
+      if (_isleaf)
+        return *(double*)_data;
+      Cell *sub = (Cell*)_data;
+      int i = x > 0.5 ? 1 : 0;
+      int j = y > 0.5 ? 1 : 0;
+      int k = z > 0.5 ? 1 : 0;
+      return sub[i*4+j*2+k].evaluate(2*x-i, 2*y-j, 2*z-k);
+    }
+    Cell(){};
+    void init(double x0, double y0, double z0, double l, Field &field, int level) {
+#if 0
+      double v[8] = {
+        field(x0,y0,z0),field(x0,y0,z0+l),field(x0,y0+l,z0),field(x0,y0+l,z0+l),
+        field(x0+l,y0,z0),field(x0+l,y0,z0+l),field(x0+l,y0+l,z0),field(x0+l,y0+l,z0+l)
+      };
+      double dmax = 0;
+      double vmin = v[0];
+      double vc = field(x0+l/2,y0+l/2,z0+l/2);
+      for (int i = 0; i < 8; ++i){
+        dmax = fmax(dmax, std::abs(vc-v[i])); 
+        vmin = fmin(vmin, v[i]);
+      }
+#else
+      double dmax = 0;
+      double vc = field(x0+l/2,y0+l/2,z0+l/2);
+      double vmin = vc;
+      bool split = level > 0;
+      if (level > -4) {
+#define NSAMPLE 2
+        double dl = l/NSAMPLE;
+        for (int i = 0; i <= NSAMPLE; ++i){
+          for (int j = 0; j <= NSAMPLE; ++j){
+            for (int k = 0; k <= NSAMPLE; ++k){
+              double w = field(x0 + i*dl, y0+j*dl, z0+k*dl);
+              dmax = fmax(dmax, std::abs(vc-w)); 
+              vmin = fmin(vmin, w);
+              split |= (dmax/vmin > 0.2 && vmin < l);
+              if(split)
+                break;
+            }
+          }
+        }
+#endif
+      }
+      if (split) {
+        _isleaf = false;
+        Cell *sub = new Cell[8];
+        double l2 = l/2;
+        sub[0].init(x0, y0, z0, l2, field, level-1);
+        sub[1].init(x0, y0, z0+l2, l2, field, level-1);
+        sub[2].init(x0, y0+l2, z0, l2, field, level-1);
+        sub[3].init(x0, y0+l2, z0+l2, l2, field, level-1);
+        sub[4].init(x0+l2, y0, z0, l2, field, level-1);
+        sub[5].init(x0+l2, y0, z0+l2, l2, field, level-1);
+        sub[6].init(x0+l2, y0+l2, z0, l2, field, level-1);
+        sub[7].init(x0+l2, y0+l2, z0+l2, l2, field, level-1);
+        _data = (void*)sub;
+      }
+      else {
+        _isleaf = true;
+        _data = (void*)new double;
+        *(double*)_data = vc;
+      }
+    }
+    ~Cell() {
+      if (_isleaf) {
+        delete (double*)_data;
+      }
+      else {
+        Cell *sub = (Cell*)_data;
+        delete []sub;
+      }
+    }
+    void print(double x0, double y0, double z0, double l, FILE *f) {
+      if (_isleaf) {
+        fprintf(f, "SP(%g, %g, %g) {%g};\n", x0+l/2, y0+l/2, z0+l/2, *(double*)_data);
+      }
+      else {
+        Cell *sub = (Cell*)_data;
+        double l2 = l/2;
+        sub[0].print(x0, y0, z0, l2, f);
+        sub[1].print(x0, y0, z0+l2, l2, f);
+        sub[2].print(x0, y0+l2, z0, l2, f);
+        sub[3].print(x0, y0+l2, z0+l2, l2, f);
+        sub[4].print(x0+l2, y0, z0, l2, f);
+        sub[5].print(x0+l2, y0, z0+l2, l2, f);
+        sub[6].print(x0+l2, y0+l2, z0, l2, f);
+        sub[7].print(x0+l2, y0+l2, z0+l2, l2, f);
+      }
+    }
+  };
+  Cell *_root;
+  int _inFieldId;
+  Field *_inField;
+  SBoundingBox3d bounds;
+  double _l0;
+ public:
+  OctreeField()
+  {
+    options["InField"] = new FieldOptionInt
+      (_inFieldId, "Id of the field to use as x coordinate.", &update_needed);
+    _root = NULL;
+  }
+  ~OctreeField()
+  {
+    if (_root)
+      delete _root;
+  }
+  const char *getName()
+  {
+    return "Octree";
+  }
+  std::string getDescription()
+  {
+    return "Pre compute another field on an octree to speed-up evalution";
+  }
+  virtual double operator() (double X, double Y, double Z, GEntity *ge=0)
+  {
+    if(update_needed) {
+      update_needed = false;
+      if (_root) {
+        delete _root;
+        _root = NULL;
+      }
+    }
+    if(!_root) {
+      _inField = _inFieldId >= 0 ? (GModel::current()->getFields()->get(_inFieldId)) : NULL;
+      if (!_inField)
+        return 0.;
+      bounds = GModel::current()->bounds();
+      _root = new Cell;
+      SVector3 d = bounds.max() - bounds.min();
+      _l0 = std::max(std::max(d.x(), d.y()), d.z());
+      _root->init(bounds.min().x(), bounds.min().y(), bounds.min().z(), _l0, *_inField, 4);
+
+  
+  /*printf("octree built\n");
+      
+  FILE *f = fopen("test.pos", "w");
+  fprintf(f, "View \"test\" {\n");
+  _root->print(bounds.min().x(), bounds.min().y(), bounds.min().z(), _l0, f);
+  fprintf(f, "};\n");
+  fclose(f);*/
+ 
+  
+    }
+    SPoint3 xmin = bounds.min();
+    SVector3 d = bounds.max() - xmin;
+    return _root->evaluate((X-xmin.x())/_l0,(Y-xmin.y())/_l0,(Z-xmin.z())/_l0);
+  }
+};
+
 const char *BoundaryLayerField::getName()
 {
   return "BoundaryLayer";
@@ -2553,6 +2712,7 @@ FieldManager::FieldManager()
   map_type_name["PostView"] = new FieldFactoryT<PostViewField>();
 #endif
   map_type_name["Gradient"] = new FieldFactoryT<GradientField>();
+  map_type_name["Octree"] = new FieldFactoryT<OctreeField>();
   map_type_name["Restrict"] = new FieldFactoryT<RestrictField>();
   map_type_name["Min"] = new FieldFactoryT<MinField>();
   map_type_name["MinAniso"] = new FieldFactoryT<MinAnisoField>();
@@ -2680,3 +2840,5 @@ void GenericField::setCallbackWithData(ptrfunction fct, void *data){
   user_data.push_back(data);
   cbs.push_back(fct);
 }
+
+
