@@ -719,7 +719,7 @@ int GModel::_readMSH2(const std::string &name)
 
   fclose(fp);
 
-  alignPeriodicBoundaries();
+  if(!CTX::instance()->mesh.ignorePeriodicity) alignPeriodicBoundaries();
 
   return postpro ? 2 : 1;
 }

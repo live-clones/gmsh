@@ -6547,6 +6547,14 @@ double opt_mesh_preserve_numbering_msh2(OPT_ARGS_NUM)
   return CTX::instance()->mesh.preserveNumberingMsh2;
 }
 
+double opt_mesh_ignore_periodicity(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.ignorePeriodicity = (int) val;
+  return CTX::instance()->mesh.ignorePeriodicity;
+}
+
+
 double opt_solver_listen(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

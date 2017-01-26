@@ -60,6 +60,7 @@ struct contextMeshOptions {
   int ignorePartBound;
   int NewtonConvergenceTestXYZ;
   int preserveNumberingMsh2;
+  int ignorePeriodicity;
 };
 
 struct contextGeometryOptions {
