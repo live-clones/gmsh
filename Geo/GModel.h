@@ -93,6 +93,7 @@ class GModel
 
   // OpenCascade model internal data
   OCC_Internals *_occ_internals;
+  void _createOCCInternals();
   void _deleteOCCInternals();
 
   // SGEOM model internal data
@@ -507,6 +508,7 @@ class GModel
 
   // change the entity creation factory
   void setFactory(std::string name);
+  std::string getFactoryName();
 
   // create brep geometry entities using the factory
   GVertex *addVertex(double x, double y, double z, double lc);
@@ -629,6 +631,7 @@ class GModel
   GEdge *getEdgeForOCCShape(const void *shape);
   GFace *getFaceForOCCShape(const void *shape);
   GRegion *getRegionForOCCShape(const void *shape);
+  int importOCCInternals();
 
   // ACIS Model
   int readACISSAT(const std::string &name);

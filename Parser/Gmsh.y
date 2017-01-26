@@ -19,6 +19,7 @@
 #include "Numeric.h"
 #include "Context.h"
 #include "GModel.h"
+#include "GModelIO_OCC.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
 #include "Options.h"
@@ -58,7 +59,7 @@
 #endif
 
 
-  // Global parser variables
+// Global parser variables
 std::string gmsh_yyname;
 int gmsh_yyerrorstate = 0;
 int gmsh_yyviewindex = 0;
@@ -84,6 +85,7 @@ static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static std::string LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
 static std::map<std::string, std::vector<double> > floatOptions;
 static std::map<std::string, std::vector<std::string> > charOptions;
+static std::string factory;
 
 void yyerror(const char *s);
 void yymsg(int level, const char *fmt, ...);
@@ -142,10 +144,11 @@ struct doubleXstring{
 %token tDefineNumber tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
-%token tRelocateMesh
+%token tRelocateMesh tSetFactory tThruSections
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
+%token tBooleanUnion tBooleanIntersection tBooleanSubtraction
 %token tRecombine tSmoother tSplit tDelete tCoherence
 %token tIntersect tMeshAlgorithm tReverse
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
@@ -163,7 +166,7 @@ struct doubleXstring{
 
 %type <d> FExpr FExpr_Single
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
-%type <i> NumericAffectation NumericIncrement
+%type <i> NumericAffectation NumericIncrement BooleanOperator BooleanOption
 %type <i> PhysicalId0 PhysicalId1 PhysicalId2 PhysicalId3
 %type <i> TransfiniteArrangement RecombineAngle
 %type <u> ColorExpr
@@ -174,7 +177,7 @@ struct doubleXstring{
 %type <l> FExpr_Multi ListOfDouble ListOfDoubleOrAll RecursiveListOfDouble
 %type <l> RecursiveListOfListOfDouble Enumeration
 %type <l> ListOfColor RecursiveListOfColor
-%type <l> ListOfShapes Transform Extrude MultipleShape
+%type <l> ListOfShapes Transform Extrude MultipleShape Boolean
 %type <l> TransfiniteCorners InSphereCenter PeriodicTransform
 %type <s> Shape
 
@@ -223,6 +226,7 @@ GeoFormatItem :
   | SetPartition{ return 1; }
   | Visibility  { return 1; }
   | Extrude     { List_Delete($1); return 1; }
+  | Boolean     { List_Delete($1); return 1; }
   | Constraints { return 1; }
   | Coherence   { return 1; }
   | Loop        { return 1; }
@@ -1707,27 +1711,38 @@ CircleOptions :
 
 Shape :
 
+    tSetFactory '(' StringExprVar ')' tEND
+    {
+      factory = $3;
+      Free($3);
+    }
+
   // Points
 
-    tPoint '(' FExpr ')' tAFFECT VExpr tEND
+  | tPoint '(' FExpr ')' tAFFECT VExpr tEND
     {
       int num = (int)$3;
       if(FindPoint(num)){
-	yymsg(0, "Point %d already exists", num);
+        yymsg(0, "Point %d already exists", num);
       }
       else{
-	double x = CTX::instance()->geom.scalingFactor * $6[0];
-	double y = CTX::instance()->geom.scalingFactor * $6[1];
-	double z = CTX::instance()->geom.scalingFactor * $6[2];
-	double lc = CTX::instance()->geom.scalingFactor * $6[3];
-	if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
-	Vertex *v;
-	if(!myGmshSurface)
-	  v = Create_Vertex(num, x, y, z, lc, 1.0);
-	else
-	  v = Create_Vertex(num, x, y, myGmshSurface, lc);
-	Tree_Add(GModel::current()->getGEOInternals()->Points, &v);
-	AddToTemporaryBoundingBox(v->Pos.X, v->Pos.Y, v->Pos.Z);
+        double x = CTX::instance()->geom.scalingFactor * $6[0];
+        double y = CTX::instance()->geom.scalingFactor * $6[1];
+        double z = CTX::instance()->geom.scalingFactor * $6[2];
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          GModel::current()->getOCCInternals()->addVertex(num, x, y, z);
+        }
+        else{
+          double lc = CTX::instance()->geom.scalingFactor * $6[3];
+          if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
+          Vertex *v;
+          if(!myGmshSurface)
+            v = Create_Vertex(num, x, y, z, lc, 1.0);
+          else
+            v = Create_Vertex(num, x, y, myGmshSurface, lc);
+          Tree_Add(GModel::current()->getGEOInternals()->Points, &v);
+          AddToTemporaryBoundingBox(v->Pos.X, v->Pos.Y, v->Pos.Z);
+        }
       }
       $$.Type = MSH_POINT;
       $$.Num = num;
@@ -1862,24 +1877,34 @@ Shape :
 	yymsg(0, "Curve %d already exists", num);
       }
       else{
-	List_T *temp = ListOfDouble2ListOfInt($6);
-	Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 2, temp, NULL,
-				-1, -1, 0., 1.);
-        if($7[0] || $7[1] || $7[2]){
-          c->Circle.n[0] = $7[0];
-          c->Circle.n[1] = $7[1];
-          c->Circle.n[2] = $7[2];
-          End_Curve(c);
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          if(List_Nbr($6) == 3){
+            double d[3];
+            List_Read($6, 0, &d[0]); List_Read($6, 1, &d[1]); List_Read($6, 2, &d[2]);
+            GModel::current()->getOCCInternals()->addCircleArc
+              (num, (int)d[0], (int)d[1], (int)d[2]);
+          }
         }
-	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-	Curve *rc = CreateReversedCurve(c);
-        if($7[0] || $7[1] || $7[2]){
-          rc->Circle.n[0] = $7[0];
-          rc->Circle.n[1] = $7[1];
-          rc->Circle.n[2] = $7[2];
-          End_Curve(rc);
+        else{
+          List_T *temp = ListOfDouble2ListOfInt($6);
+          Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 2, temp, NULL,
+                                  -1, -1, 0., 1.);
+          if($7[0] || $7[1] || $7[2]){
+            c->Circle.n[0] = $7[0];
+            c->Circle.n[1] = $7[1];
+            c->Circle.n[2] = $7[2];
+            End_Curve(c);
+          }
+          Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+          Curve *rc = CreateReversedCurve(c);
+          if($7[0] || $7[1] || $7[2]){
+            rc->Circle.n[0] = $7[0];
+            rc->Circle.n[1] = $7[1];
+            rc->Circle.n[2] = $7[2];
+            End_Curve(rc);
+          }
+          List_Delete(temp);
         }
-	List_Delete(temp);
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_CIRC;
@@ -2145,26 +2170,42 @@ Shape :
   | tSphere '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if (List_Nbr($6) != 2){
-	yymsg(0, "Sphere %d has to be defined using 2 points (center + "
-	      "any point) and not %d", num, List_Nbr($6));
+      if(List_Nbr($6) == 4){ // solid sphere (volume)
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          double x; List_Read($6, 0, &x);
+          double y; List_Read($6, 1, &y);
+          double z; List_Read($6, 2, &z);
+          double r; List_Read($6, 3, &r);
+          GModel::current()->getOCCInternals()->addSphere(num, x, y, z, r);
+        }
+        else{
+          yymsg(0, "Sphere only available in OpenCASCADE factory");
+        }
+        $$.Type = MSH_VOLUME;
       }
       else{
-	double p1,p2;
-	List_Read($6, 0, &p1);
-	List_Read($6, 1, &p2);
-	Vertex *v1 = FindPoint((int)p1);
-	Vertex *v2 = FindPoint((int)p2);
-	if(!v1) yymsg(0, "Sphere %d : unknown point %d", num, (int)p1);
-	if(!v2) yymsg(0, "Sphere %d : unknown point %d", num, (int)p2);
-	if(v1 && v2)
-	  myGmshSurface = gmshSphere::NewSphere
-	    (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
-	     sqrt((v2->Pos.X - v1->Pos.X) * (v2->Pos.X - v1->Pos.X) +
-		  (v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
-		  (v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
+        if (List_Nbr($6) != 2){
+          yymsg(0, "Sphere %d has to be defined using 2 points (center + "
+                "any point) and not %d", num, List_Nbr($6));
+        }
+        else{
+          double p1,p2;
+          List_Read($6, 0, &p1);
+          List_Read($6, 1, &p2);
+          Vertex *v1 = FindPoint((int)p1);
+          Vertex *v2 = FindPoint((int)p2);
+          if(!v1) yymsg(0, "Sphere %d : unknown point %d", num, (int)p1);
+          if(!v2) yymsg(0, "Sphere %d : unknown point %d", num, (int)p2);
+          if(v1 && v2)
+            myGmshSurface = gmshSphere::NewSphere
+              (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
+               sqrt((v2->Pos.X - v1->Pos.X) * (v2->Pos.X - v1->Pos.X) +
+                    (v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
+                    (v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
+        }
+        $$.Type = 0;
       }
-      $$.Type = 0;
+      List_Delete($6);
       $$.Num = num;
     }
   | tPolarSphere '(' FExpr ')' tAFFECT ListOfDouble tEND
@@ -2189,6 +2230,7 @@ Shape :
 		  (v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
 		  (v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
       }
+      List_Delete($6);
       $$.Type = 0;
       $$.Num = num;
     }
@@ -2345,6 +2387,35 @@ Shape :
 	Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
       }
       List_Delete($6);
+      $$.Type = MSH_VOLUME;
+      $$.Num = num;
+    }
+  | tThruSections '(' FExpr ')' tAFFECT '{' RecursiveListOfListOfDouble '}' tEND
+    {
+      int num = (int)$3;
+      if(FindVolume(num)){
+	yymsg(0, "Volume %d already exists", num);
+      }
+      else{
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          std::vector<std::vector<int> > edges;
+          for(int i = 0; i < List_Nbr($7); i++){
+            List_T *l; List_Read($7, i, &l);
+            std::vector<int> v;
+            for(int j = 0; j < List_Nbr(l); j++){
+              double d = 0; List_Read(l, j, &d); v.push_back(d);
+            }
+            edges.push_back(v);
+          }
+          GModel::current()->getOCCInternals()->addThruSections(num, edges);
+        }
+        else{
+          yymsg(0, "ThruSections only available in OpenCASCADE factory");
+        }
+      }
+      for(int i = 0; i < List_Nbr($7); i++)
+        List_Delete(*(List_T**)List_Pointer($7, i));
+      List_Delete($7);
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
@@ -2512,8 +2583,14 @@ ListOfShapes :
 	    TheShape.Type = MSH_POINT_FROM_GMODEL;
 	    List_Add($$, &TheShape);
 	  }
-	  else
-	    yymsg(1, "Unknown point %d", TheShape.Num);
+	  else{
+            if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+              TheShape.Type = MSH_UNKNOWN;
+              List_Add($$, &TheShape);
+            }
+            else
+              yymsg(1, "Unknown point %d", TheShape.Num);
+          }
 	}
       }
     }
@@ -2535,8 +2612,14 @@ ListOfShapes :
 	    TheShape.Type = MSH_SEGM_FROM_GMODEL;
 	    List_Add($$, &TheShape);
 	  }
-	  else
-	    yymsg(1, "Unknown curve %d", TheShape.Num);
+	  else{
+            if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+              TheShape.Type = MSH_UNKNOWN;
+              List_Add($$, &TheShape);
+            }
+            else
+              yymsg(1, "Unknown curve %d", TheShape.Num);
+          }
 	}
       }
     }
@@ -2558,8 +2641,14 @@ ListOfShapes :
 	    TheShape.Type = MSH_SURF_FROM_GMODEL;
 	    List_Add($$, &TheShape);
 	  }
-	  else
-	    yymsg(1, "Unknown surface %d", TheShape.Num);
+	  else{
+            if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+              TheShape.Type = MSH_UNKNOWN;
+              List_Add($$, &TheShape);
+            }
+            else
+              yymsg(1, "Unknown surface %d", TheShape.Num);
+          }
 	}
       }
     }
@@ -2581,8 +2670,14 @@ ListOfShapes :
 	    TheShape.Type = MSH_VOLUME_FROM_GMODEL;
 	    List_Add($$, &TheShape);
 	  }
-	  else
-	    yymsg(1, "Unknown volume %d", TheShape.Num);
+	  else{
+            if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+              TheShape.Type = MSH_UNKNOWN;
+              List_Add($$, &TheShape);
+            }
+            else
+              yymsg(1, "Unknown volume %d", TheShape.Num);
+          }
 	}
       }
     }
@@ -3336,6 +3431,7 @@ Command :
       // the new DB. This will become unnecessary if/when we fill the
       // GModel directly during parsing.
       GModel::current()->importGEOInternals();
+      GModel::current()->importOCCInternals();
     }
    | tNewModel tEND
     {
@@ -4080,6 +4176,39 @@ ExtrudeParameter :
       Free($2);
     }
 ;
+
+//  B O O L E A N
+
+BooleanOperator :
+    tBooleanUnion { $$ = OCC_Internals::Fuse; }
+  | tBooleanIntersection { $$ = OCC_Internals::Intersection; }
+  | tBooleanSubtraction { $$ = OCC_Internals::Cut; }
+;
+
+BooleanOption :
+  { $$ = 0; }
+  | tDelete tEND { $$ = 1; }
+  | tDelete FExpr tEND { $$ = $2; }
+
+Boolean :
+    BooleanOperator '{' ListOfShapes BooleanOption '}' '{' ListOfShapes BooleanOption '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> shape[4], tool[4];
+        for(int i = 0; i < List_Nbr($3); i++){
+          Shape s; List_Read($3, i, &s); shape[3].push_back(s.Num);
+        }
+        for(int i = 0; i < List_Nbr($7); i++){
+          Shape s; List_Read($7, i, &s); tool[3].push_back(s.Num);
+        }
+        GModel::current()->getOCCInternals()->applyBooleanOperator
+          (-1, shape, tool, (OCC_Internals::BooleanOperator)$1, $4, $8);
+        // FIXME add to returned list of shapes
+      }
+      List_Delete($3);
+      List_Delete($7);
+    }
 
 //  M E S H I N G   C O N S T R A I N T S   ( T R A N S F I N I T E ,   . . . )
 
@@ -5864,6 +5993,16 @@ FExpr_Multi :
       List_Delete($1);
     }
   | Extrude
+    {
+      $$ = List_Create(List_Nbr($1), 1, sizeof(double));
+      for(int i = 0; i < List_Nbr($1); i++){
+	Shape *s = (Shape*) List_Pointer($1, i);
+	double d = s->Num;
+	List_Add($$, &d);
+      }
+      List_Delete($1);
+    }
+  | Boolean
     {
       $$ = List_Create(List_Nbr($1), 1, sizeof(double));
       for(int i = 0; i < List_Nbr($1); i++){

@@ -120,6 +120,9 @@ ArcTan2                 return tAtan2;
 Betti                   return tBetti;
 Bezier			return tBezier;
 BSpline			return tBSpline;
+BooleanUnion            return tBooleanUnion;
+BooleanIntersection     return tBooleanIntersection;
+BooleanSubtraction      return tBooleanSubtraction;
 BoundingBox             return tBoundingBox;
 
 Catenary                return tCatenary;
@@ -258,6 +261,7 @@ Reverse                 return tReverse;
 
 ScaleLastLayer          return tScaleLast;
 Smoother                return tSmoother;
+SetFactory              return tSetFactory;
 SetNumber               return tSetNumber;
 SetString               return tSetString;
 SetPartition            return tSetPartition;
@@ -290,6 +294,7 @@ T2                      return tText2D;
 T3                      return tText3D;
 TestLevel               return tTestLevel;
 TextAttributes          return tTextAttributes;
+ThruSections            return tThruSections;
 TIME                    return tTime;
 Transfinite             return tTransfinite;
 Transf[qQ]uad[tT]ri     return tTransfQuadTri;

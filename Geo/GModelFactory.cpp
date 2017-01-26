@@ -712,25 +712,25 @@ GEdge *OCCFactory::addNURBS(GModel *gm, GVertex *start, GVertex *end,
 /* add2Drect: rectangluar face, given lower left point and width/height (in X-Y plane)*/
 GFace *OCCFactory::add2Drect(GModel *gm,double x0, double y0, double dx, double dy)
 {
-	Msg::Info("Default working plane is XY in add2D* functions...");
+  Msg::Info("Default working plane is XY in add2D* functions...");
 
-	if (!gm->_occ_internals)
-		gm->_occ_internals = new OCC_Internals;
+  if (!gm->_occ_internals)
+    gm->_occ_internals = new OCC_Internals;
 
-	TopoDS_Vertex occv1 = BRepBuilderAPI_MakeVertex( gp_Pnt(x0   , y0   , 0.) );
-	TopoDS_Vertex occv2 = BRepBuilderAPI_MakeVertex( gp_Pnt(x0+dx, y0   , 0.) );
-	TopoDS_Vertex occv3 = BRepBuilderAPI_MakeVertex( gp_Pnt(x0+dx, y0+dy, 0.) );
-	TopoDS_Vertex occv4 = BRepBuilderAPI_MakeVertex( gp_Pnt(x0   , y0+dy, 0.) );
+  TopoDS_Vertex occv1 = BRepBuilderAPI_MakeVertex( gp_Pnt(x0   , y0   , 0.) );
+  TopoDS_Vertex occv2 = BRepBuilderAPI_MakeVertex( gp_Pnt(x0+dx, y0   , 0.) );
+  TopoDS_Vertex occv3 = BRepBuilderAPI_MakeVertex( gp_Pnt(x0+dx, y0+dy, 0.) );
+  TopoDS_Vertex occv4 = BRepBuilderAPI_MakeVertex( gp_Pnt(x0   , y0+dy, 0.) );
 
-	TopoDS_Edge occEdge1 = BRepBuilderAPI_MakeEdge(occv1,occv2);
-	TopoDS_Edge occEdge2 = BRepBuilderAPI_MakeEdge(occv2,occv3);
-	TopoDS_Edge occEdge3 = BRepBuilderAPI_MakeEdge(occv3,occv4);
-	TopoDS_Edge occEdge4 = BRepBuilderAPI_MakeEdge(occv4,occv1);
+  TopoDS_Edge occEdge1 = BRepBuilderAPI_MakeEdge(occv1,occv2);
+  TopoDS_Edge occEdge2 = BRepBuilderAPI_MakeEdge(occv2,occv3);
+  TopoDS_Edge occEdge3 = BRepBuilderAPI_MakeEdge(occv3,occv4);
+  TopoDS_Edge occEdge4 = BRepBuilderAPI_MakeEdge(occv4,occv1);
 
-	TopoDS_Wire rectWire = BRepBuilderAPI_MakeWire(occEdge1 , occEdge2 , occEdge3, occEdge4);
-	TopoDS_Face rectFace = BRepBuilderAPI_MakeFace(rectWire);
+  TopoDS_Wire rectWire = BRepBuilderAPI_MakeWire(occEdge1 , occEdge2 , occEdge3, occEdge4);
+  TopoDS_Face rectFace = BRepBuilderAPI_MakeFace(rectWire);
 
-	return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(rectFace));
+  return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(rectFace));
 }
 
 /* add2Dellips: ellips face, given lower left point and width/height (in X-Y plane)*/
@@ -1026,7 +1026,7 @@ GModel *OCCFactory::computeBooleanUnion(GModel* obj, GModel* tool,
     if (createNewModel){
       GModel *temp = new GModel;
       temp->_occ_internals = new OCC_Internals;
-      temp->_occ_internals->addShapeToLists(occ_obj->getShape());
+      temp->_occ_internals->_addShapeToLists(occ_obj->getShape());
       obj = temp;
     }
     obj->_occ_internals->applyBooleanOperator(occ_tool->getShape(),
@@ -1054,7 +1054,7 @@ GModel *OCCFactory::computeBooleanDifference(GModel* obj, GModel* tool,
     if (createNewModel){
       GModel *temp = new GModel;
       temp->_occ_internals = new OCC_Internals;
-      temp->_occ_internals->addShapeToLists(occ_obj->getShape());
+      temp->_occ_internals->_addShapeToLists(occ_obj->getShape());
       obj = temp;
     }
     obj->getOCCInternals()->applyBooleanOperator(occ_tool->getShape(),
@@ -1081,7 +1081,7 @@ GModel *OCCFactory::computeBooleanIntersection(GModel* obj, GModel* tool,
     if (createNewModel){
       GModel *temp = new GModel;
       temp->_occ_internals = new OCC_Internals;
-      temp->_occ_internals->addShapeToLists(occ_obj->getShape());
+      temp->_occ_internals->_addShapeToLists(occ_obj->getShape());
       obj = temp;
     }
     obj->getOCCInternals()->applyBooleanOperator(occ_tool->getShape(),

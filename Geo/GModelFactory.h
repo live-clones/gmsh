@@ -24,12 +24,11 @@ class GModelFactory {
  public:
   GModelFactory(){}
   virtual ~GModelFactory(){}
-
+  virtual std::string getName(){ return ""; }
   // brep primitives
   enum arcCreationMethod {THREE_POINTS=1, CENTER_START_END=2};
   enum splineType {BEZIER=1, BSPLINE=2};
-  virtual GVertex *addVertex(GModel *gm, double x, double y, double z,
-                             double lc) = 0;
+  virtual GVertex *addVertex(GModel *gm, double x, double y, double z, double lc) = 0;
   virtual GEdge *addLine(GModel *, GVertex *v1, GVertex *v2) = 0;
   virtual GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges) = 0;
   virtual GFace *addPlanarFace(GModel *gm, const std::vector<std::vector<GEdgeSigned> > &edges) = 0;
@@ -223,6 +222,7 @@ class GModelFactory {
 class GeoFactory : public GModelFactory {
  public:
   GeoFactory(){}
+  std::string getName(){ return "GEO"; }
   GVertex *addVertex(GModel *gm,double x, double y, double z, double lc);
   GEdge *addLine(GModel *gm,GVertex *v1, GVertex *v2);
   GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges);
@@ -243,6 +243,7 @@ private:
 class OCCFactory : public GModelFactory {
  public:
   OCCFactory(){}
+  std::string getName(){ return "OpenCASCADE"; }
   GVertex *addVertex(GModel *gm,double x, double y, double z, double lc);
   GEdge *addLine(GModel *gm,GVertex *v1, GVertex *v2);
   GEdge *addCircleArc(GModel *gm,const arcCreationMethod &method,

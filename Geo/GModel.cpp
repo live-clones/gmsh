@@ -82,6 +82,8 @@ GModel::GModel(std::string name)
   // at the moment we always create (at least an empty) GEO model
   _createGEOInternals();
 
+  _createOCCInternals();
+
 #if defined(HAVE_OCC) && defined(HAVE_SGEOM)
   setFactory("SGEOM");
 #elif defined(HAVE_OCC)
@@ -177,6 +179,12 @@ void GModel::setFactory(std::string name)
   else{
     _factory = new GeoFactory();
   }
+}
+
+std::string GModel::getFactoryName()
+{
+  if(!_factory) return "";
+  return _factory->getName();
 }
 
 GModel *GModel::findByName(const std::string &name, const std::string &fileName)
@@ -974,7 +982,8 @@ std::vector<MElement*> GModel::getMeshElementsByCoord(SPoint3 &p, int dim, bool 
   return _octree->findAll(p.x(), p.y(), p.z(), dim, strict);
 }
 
-void GModel::deleteOctree() {
+void GModel::deleteOctree()
+{
   if (_octree) {
     delete _octree;
     _octree = NULL;
