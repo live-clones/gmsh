@@ -1558,4 +1558,9 @@ GRegion* GModel::getRegionForOCCShape(const void *shape)
   return 0;
 }
 
+int GModel::importOCCInternals(){
+	Msg::Error("Gmsh must be compiled with Open CASCADE support to query OCC shape");
+  return 0;
+}
+
 #endif

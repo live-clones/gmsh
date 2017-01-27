@@ -103,8 +103,14 @@ public:
   OCC_Internals(){}
   void addVertex(int tag, double x, double y, double z){}
   void addCircleArc(int tag, int tagStart, int tagCenter, int tagEnd){}
+	void addSphere(int tag, double xc, double yc, double zc, double radius){};
   void addThruSections(int tag, std::vector<std::vector<int> > tagEdges){}
   void importOCCInternals(GModel *model){}
+	void applyBooleanOperator(int tag,
+                            std::vector<int> shapeTags[4],
+                            std::vector<int> toolTags[4],
+                            BooleanOperator op,
+                            bool removeShape=true, bool removeTool=true){};
 };
 
 #endif
