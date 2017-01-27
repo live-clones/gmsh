@@ -455,8 +455,15 @@ void GModel::getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]) 
       // physicals can be stored with negative signs when the entity
       // should be "reversed"
       int p = std::abs(entities[i]->physicals[j]);
-      if(std::find(group[p].begin(), group[p].end(), entities[i]) == group[p].end())
-        group[p].push_back(entities[i]);
+      group[p].push_back(entities[i]);
+    }
+  }
+  for (int dim = 0; dim < 4; ++dim ){
+    std::map<int, std::vector<GEntity*> > &group(groups[dim]);
+    for (std::map<int, std::vector<GEntity*> >::iterator it = group.begin(); it != group.end(); ++it){
+      std::vector<GEntity*> &v = it->second;
+      std::sort(v.begin(), v.end());
+      std::unique(v.begin(), v.end());
     }
   }
 }
@@ -470,9 +477,13 @@ void GModel::getPhysicalGroups(int dim, std::map<int, std::vector<GEntity*> > &g
       // physicals can be stored with negative signs when the entity
       // should be "reversed"
       int p = std::abs(entities[i]->physicals[j]);
-      if(std::find(groups[p].begin(), groups[p].end(), entities[i]) == groups[p].end())
-        groups[p].push_back(entities[i]);
+      groups[p].push_back(entities[i]);
     }
+  }
+  for (std::map<int, std::vector<GEntity*> >::iterator it = groups.begin(); it != groups.end(); ++it){
+    std::vector<GEntity*> &v = it->second;
+    std::sort(v.begin(), v.end());
+    std::unique(v.begin(), v.end());
   }
 }
 
