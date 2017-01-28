@@ -2212,8 +2212,8 @@ class OctreeField : public Field {
       double vmin = v[0];
       double vc = field(x0+l/2,y0+l/2,z0+l/2);
       for (int i = 0; i < 8; ++i){
-        dmax = fmax(dmax, std::abs(vc-v[i])); 
-        vmin = fmin(vmin, v[i]);
+        dmax = std::max(dmax, std::abs(vc-v[i]));
+        vmin = std::min(vmin, v[i]);
       }
 #else
       double dmax = 0;
@@ -2227,8 +2227,8 @@ class OctreeField : public Field {
           for (int j = 0; j <= NSAMPLE; ++j){
             for (int k = 0; k <= NSAMPLE; ++k){
               double w = field(x0 + i*dl, y0+j*dl, z0+k*dl);
-              dmax = fmax(dmax, std::abs(vc-w)); 
-              vmin = fmin(vmin, w);
+              dmax = std::max(dmax, std::abs(vc-w));
+              vmin = std::min(vmin, w);
               split |= (dmax/vmin > 0.2 && vmin < l);
               if(split)
                 break;
@@ -2328,16 +2328,16 @@ class OctreeField : public Field {
       _l0 = std::max(std::max(d.x(), d.y()), d.z());
       _root->init(bounds.min().x(), bounds.min().y(), bounds.min().z(), _l0, *_inField, 4);
 
-  
+
   /*printf("octree built\n");
-      
+
   FILE *f = fopen("test.pos", "w");
   fprintf(f, "View \"test\" {\n");
   _root->print(bounds.min().x(), bounds.min().y(), bounds.min().z(), _l0, f);
   fprintf(f, "};\n");
   fclose(f);*/
- 
-  
+
+
     }
     SPoint3 xmin = bounds.min();
     SVector3 d = bounds.max() - xmin;
@@ -2840,5 +2840,3 @@ void GenericField::setCallbackWithData(ptrfunction fct, void *data){
   user_data.push_back(data);
   cbs.push_back(fct);
 }
-
-
