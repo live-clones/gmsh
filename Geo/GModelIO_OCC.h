@@ -38,9 +38,9 @@ class OCC_Internals {
 
   // add shapes only using internal OCC data
   void addVertex(int tag, double x, double y, double z);
-  void addCircleArc(int tag, int tagStart, int tagCenter, int tagEnd);
+  void addCircleArc(int tag, int startTag, int centerTag, int endTag);
   void addSphere(int tag, double xc, double yc, double zc, double radius);
-  void addThruSections(int tag, std::vector<std::vector<int> > tagEdges);
+  void addThruSections(int tag, std::vector<std::vector<int> > edgeTags);
 
   // apply boolean operation
   void applyBooleanOperator(int tag,

@@ -183,6 +183,79 @@ void OCC_Internals::_addShapeToLists(TopoDS_Shape shape, std::vector<int> indice
   }
 }
 
+/*
+void OCC_Internals::_removeShapeFromLists(TopoDS_Shape shape)
+{
+  std::vector<int> toRemove[6];
+  // Solids
+  TopExp_Explorer exp0, exp1, exp2, exp3, exp4, exp5;
+  for(exp0.Init(shape, TopAbs_SOLID); exp0.More(); exp0.Next()){
+    TopoDS_Solid solid = TopoDS::Solid(exp0.Current());
+    int soi = _somap.FindIndex(solid);
+    if(index > 0){
+      toRemove[0].push_back(soi);
+      for(exp1.Init(solid, TopAbs_SHELL); exp1.More(); exp1.Next()){
+        TopoDS_Shell shell = TopoDS::Shell(exp1.Current());
+        int shi = _shmap.FindIndex(shell);
+        if(shi > 0){
+          toRemove[1].push_back(shi);
+          for(exp2.Init(shell, TopAbs_FACE); exp2.More(); exp2.Next()){
+            TopoDS_Face face = TopoDS::Face(exp2.Current());
+            int fi = _fmap.FindIndex(face);
+            if(fi > 0){
+              toRemove[2].push_back(fi);
+              for(exp3.Init(exp2.Current().Oriented(TopAbs_FORWARD), TopAbs_WIRE); exp3.More(); exp3.Next()){
+                TopoDS_Wire wire = TopoDS::Wire(exp3.Current());
+                int wi = _wmap.FindIndex(wire);
+                if(wi > 0){
+                  toRemove[3].push_back(wi);
+                  for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More(); exp4.Next()){
+                    TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
+                    int ei = _emap.FindIndex(edge);
+                    if(ei > 0){
+                      toRemove[4].push_back(ei);
+                      for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
+                        TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
+                        int vi = _vmap.FindIndex(vertex);
+                        if(vi > 0){
+                          toRemove[5].push_back(vi);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // TODO do the same with other shapes
+  TopTools_IndexedMapOfShape somap, shmap, fmap, wmap, emap, vmap;
+  std::map<int, int> rIndexTag, rTagIndex;
+  for(int i = 1; i <= _somap.Extent(); i++){
+    bool remove = false;
+    for(int j = 0; j < toRemove[0].size(); j++){
+      if(i == toRemove[j]){
+        remove = true;
+        break;
+      }
+    }
+    if(remove) continue;
+    int tag = _rIndexTag[i];
+    somap.Add(_somap(i));
+    int index = tmp.Extent();
+    rIndexTag[index] = tag;
+    rTagIndex[tag] = index;
+  }
+  _somap = somap;
+  _rTagIndex = rTagIndex;
+  _rIndexTag = rIndexTag;
+}
+*/
+
 void OCC_Internals::addVertex(int tag, double x, double y, double z)
 {
   if(_vTagIndex.count(tag)){
@@ -209,27 +282,27 @@ void OCC_Internals::addVertex(int tag, double x, double y, double z)
   }
 }
 
-void OCC_Internals::addCircleArc(int tag, int tagStart, int tagCenter, int tagEnd)
+void OCC_Internals::addCircleArc(int tag, int startTag, int centerTag, int endTag)
 {
   if(_eTagIndex.count(tag)){
     Msg::Error("OCC edge with tag %d already exists", tag);
     return;
   }
 
-  std::map<int, int>::iterator itStart = _vTagIndex.find(tagStart);
-  std::map<int, int>::iterator itCenter = _vTagIndex.find(tagCenter);
-  std::map<int, int>::iterator itEnd = _vTagIndex.find(tagEnd);
+  std::map<int, int>::iterator itStart = _vTagIndex.find(startTag);
+  std::map<int, int>::iterator itCenter = _vTagIndex.find(centerTag);
+  std::map<int, int>::iterator itEnd = _vTagIndex.find(endTag);
 
   if(itStart == _vTagIndex.end()){
-    Msg::Error("Unknown OCC vertex with tag %d", tagStart);
+    Msg::Error("Unknown OCC vertex with tag %d", startTag);
     return;
   }
   if(itCenter == _vTagIndex.end()){
-    Msg::Error("Unknown OCC vertex with tag %d", tagCenter);
+    Msg::Error("Unknown OCC vertex with tag %d", centerTag);
     return;
   }
   if(itEnd == _vTagIndex.end()){
-    Msg::Error("Unknown OCC vertex with tag %d", tagEnd);
+    Msg::Error("Unknown OCC vertex with tag %d", endTag);
     return;
   }
 
@@ -289,7 +362,7 @@ void OCC_Internals::addSphere(int tag, double xc, double yc, double zc, double r
   }
 }
 
-void OCC_Internals::addThruSections(int tag, std::vector<std::vector<int> > tagEdges)
+void OCC_Internals::addThruSections(int tag, std::vector<std::vector<int> > edgeTags)
 {
   if(_rTagIndex.count(tag)){
     Msg::Error("OCC region with tag %d already exists", tag);
@@ -299,12 +372,12 @@ void OCC_Internals::addThruSections(int tag, std::vector<std::vector<int> > tagE
   TopoDS_Solid result;
   try{
     BRepOffsetAPI_ThruSections aGenerator(Standard_True); // create solid
-    for (unsigned i = 0; i < tagEdges.size(); i++) {
+    for (unsigned i = 0; i < edgeTags.size(); i++) {
       BRepBuilderAPI_MakeWire wire_maker;
-      for (unsigned j = 0; j < tagEdges[i].size(); j++) {
-        std::map<int, int>::iterator it = _eTagIndex.find(tagEdges[i][j]);
+      for (unsigned j = 0; j < edgeTags[i].size(); j++) {
+        std::map<int, int>::iterator it = _eTagIndex.find(edgeTags[i][j]);
         if(it == _eTagIndex.end()){
-          Msg::Error("Unknown OCC edge with tag %d", tagEdges[i][j]);
+          Msg::Error("Unknown OCC edge with tag %d", edgeTags[i][j]);
           return;
         }
         TopoDS_Edge edge = TopoDS::Edge(_emap(it->second));
@@ -1558,8 +1631,8 @@ GRegion* GModel::getRegionForOCCShape(const void *shape)
   return 0;
 }
 
-int GModel::importOCCInternals(){
-	Msg::Error("Gmsh must be compiled with Open CASCADE support to query OCC shape");
+int GModel::importOCCInternals()
+{
   return 0;
 }
 
