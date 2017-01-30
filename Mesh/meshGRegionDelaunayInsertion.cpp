@@ -316,47 +316,29 @@ int makeCavityStarShaped (std::list<faceXtet> & shell,
   return 1;
 }
 
-void recurFindCavity(std::list<faceXtet> & shell,
-                     std::list<MTet4*> & cavity,
-                     MVertex *v ,
-                     MTet4 *t)
+void findCavity(std::list<faceXtet> & shell,
+                std::list<MTet4*> & cavity,
+                MVertex *v,
+                MTet4 *t)
 {
   t->setDeleted(true);
   cavity.push_back(t);
-  for (int i = 0; i < 4; i++){
-    MTet4 *neigh = t->getNeigh(i) ;
-    faceXtet fxt (t, i);
-    if (!neigh)
-      shell.push_back(fxt);
-    else  if (!neigh->isDeleted()){
-      int circ = neigh->inCircumSphere(v);
-      if (circ && (neigh->onWhat() == t->onWhat()))
-        recurFindCavity(shell, cavity, v, neigh);
-      else{
+  for (std::list<MTet4*>::iterator it = --cavity.end(); it != cavity.end(); ++it) {
+    for (int i = 0; i < 4; i++) {
+      MTet4 *neigh = (*it)->getNeigh(i);
+      faceXtet fxt(*it, i);
+      if (!neigh)
         shell.push_back(fxt);
+      else if (!neigh->isDeleted()) {
+        int circ = neigh->inCircumSphere(v);
+        if (circ && (neigh->onWhat() == (*it)->onWhat())) {
+          neigh->setDeleted(true);
+          cavity.push_back(neigh);
+        }
+        else {
+          shell.push_back(fxt);
+        }
       }
-    }
-  }
-}
-
-void recurFindCavity(std::vector<faceXtet> & shell,
-                     std::vector<MTet4*> & cavity,
-                     MVertex *v ,
-                     MTet4 *t)
-{
-  t->setDeleted(true);
-  cavity.push_back(t);
-  for (int i = 0; i < 4; i++){
-    MTet4 *neigh = t->getNeigh(i) ;
-    faceXtet fxt (t, i);
-    if (!neigh)
-      shell.push_back(fxt);
-    else  if (!neigh->isDeleted()){
-      int circ = neigh->inCircumSphere(v);
-      if (circ && (neigh->onWhat() == t->onWhat()))
-        recurFindCavity(shell, cavity, v, neigh);
-      else
-        shell.push_back(fxt);
     }
   }
 }
@@ -506,10 +488,9 @@ bool insertVertex(MVertex *v,
   std::list<faceXtet> shell;
   std::list<MTet4*> cavity;
 
-  recurFindCavity(shell, cavity, v, t);
+  findCavity(shell, cavity, v, t);
 
   return insertVertexB(shell,cavity,v,t,myFactory,allTets,vSizes,vSizesBGM,activeTets);
-
 }
 
 static void setLcs(MTriangle *t, std::map<MVertex*, double> &vSizes,
@@ -836,9 +817,9 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
 {
   // well, this should not be true !!!
-  // if (gr->hexahedra.size() || 
-  //      gr->prisms.size() || 
-  //      gr->pyramids.size())return; 
+  // if (gr->hexahedra.size() ||
+  //      gr->prisms.size() ||
+  //      gr->pyramids.size())return;
   if (!gr->tetrahedra.size())return;
 
 
@@ -923,7 +904,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
       if (!(*it)->isDeleted()){
         double qq = (*it)->getQuality();
         if (qq < qMin){
-          for (int i = 0; i < 6; i++){	    
+          for (int i = 0; i < 6; i++){
 	    MEdge ed = (*it)->tet()->getEdge(i);
 	    if (allEmbeddedEdges.find(ed) == allEmbeddedEdges.end()){
 	      if (edgeSwap(newTets, *it, i, qm)) {
@@ -963,8 +944,8 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     //    printf("coucou\n");
 
     // relocate vertices
-    if (!gr->hexahedra.size() && 
-        !gr->prisms.size() && 
+    if (!gr->hexahedra.size() &&
+        !gr->prisms.size() &&
         !gr->pyramids.size()){
       for (CONTAINER::iterator it = allTets.begin();it!=allTets.end();++it){
 	if (!(*it)->isDeleted()){
@@ -1116,10 +1097,10 @@ static void memoryCleanup(MTet4Factory &myFactory, std::set<MTet4*, compareTet4P
   //  Msg::Info("cleaning up the memory %d -> %d", n1, allTets.size());
 }
 
-int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity, 
-					std::list<faceXtet> &shell,   
+int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity,
+					std::list<faceXtet> &shell,
 					std::set<MEdge, Less_Edge> &allEmbeddedEdges){
- 
+
   //  printf("coucou\n");
   std::set<MEdge,Less_Edge> ed;
   for (std::list<faceXtet>::iterator it = shell.begin(); it != shell.end();it++){
@@ -1137,7 +1118,7 @@ int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity,
     }
   }
   return 1;
-} 
+}
 
 void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 {
@@ -1172,7 +1153,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
       std::map<MVertex*,double>::iterator itj = vSizesMap.find(vj);
       // smallest tet edge
       if (iti == vSizesMap.end() || iti->second > l) vSizesMap[vi] = l;
-      if (itj == vSizesMap.end() || itj->second > l) vSizesMap[vj] = l;      
+      if (itj == vSizesMap.end() || itj->second > l) vSizesMap[vj] = l;
       ++it;
     }
 
@@ -1229,7 +1210,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 	  Msg::Info("Found void region");
 	  for(std::list<MTet4*>::iterator it2 = theRegion.begin();
 	      it2 != theRegion.end(); ++it2)(*it2)->setDeleted(true);
-	  
+
 	}
       }
     }
@@ -1263,7 +1244,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   int COUNT_MISS_2 = 0;
 
   double t1 = Cpu();
-  // MAIN LOOP IN DELAUNAY INSERTION STARTS HERE 
+  // MAIN LOOP IN DELAUNAY INSERTION STARTS HERE
   while(1){
     if (COUNT_MISS_2 > 100000)break;
     if (ITER >= maxVert)break;
@@ -1306,7 +1287,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
       std::list<faceXtet> shell;
       std::list<MTet4*> cavity;
       MVertex vv (center[0], center[1], center[2], worst->onWhat());
-      recurFindCavity(shell, cavity, &vv, worst);
+      findCavity(shell, cavity, &vv, worst);
 
       bool FOUND = false;
       for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
@@ -1322,11 +1303,11 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
       /// END TETS
 
       if (FOUND && !allEmbeddedEdges.empty()){
-        FOUND = isCavityCompatibleWithEmbeddedEdges(cavity, shell, allEmbeddedEdges); 
+        FOUND = isCavityCompatibleWithEmbeddedEdges(cavity, shell, allEmbeddedEdges);
       }
 
       bool correctedCavityIncompatibleWithEmbeddedEdge = false;
-      
+
       if(FOUND){
         MVertex *v = new MVertex(center[0], center[1], center[2], worst->onWhat());
         v->setIndex(NUM++);
@@ -1373,7 +1354,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 	  v->onWhat()->mesh_vertices.push_back(v);
 	}
       }
-      
+
       else{
         myFactory.changeTetRadius(allTets.begin(), 0.0);
 	COUNT_MISS_2++;
@@ -1653,4 +1634,3 @@ void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &resu
   double t2 = Cpu();
   Msg::Info("Tetrahedrization of %d points in %g seconds",v.size(),t2-t1);
 }
-

@@ -137,4 +137,4 @@ Hackbarth, Peter Wainwright, Jiri Hnidek, Thierry Thomas, Konstantinos Poulios,
 Laurent Van Miegroet, Shahrokh Ghavamian, Geordie McBain, Jose Paulo Moitinho de
 Almeida, Guillaume Demesy, Wendy Merks-Swolfs, Cosmin Stefan Deaconu, Nigel
 Nunn, Serban Georgescu, Julien Troufflard, Michele Mocciola, Matthijs Sypkens
-Smit.
+Smit, Sauli Ruuska.
