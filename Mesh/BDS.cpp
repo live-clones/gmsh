@@ -20,6 +20,10 @@ void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace
 
   if (gf){
     FILE* view_c = Fopen("param_c.pos","w");
+    if(!view_c){
+      Msg::Error("Could not open file 'param_c.pos");
+      return;
+    }
     fprintf(view_c,"View \"paramC\"{\n");
     std::set<MEdge,Less_Edge> all;
     std::list<BDS_Face*>::iterator tit = t.begin();
@@ -37,7 +41,7 @@ void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace
 	    SPoint2 p = p1*(1.-t) + p2*t;
 	    GPoint pa = gf->point(p.x(),p.y());
 	    GPoint pb = gf->point(prev.x(),prev.y());
-	    fprintf(view_c,"SL(%g,%g,%g,%g,%g,%g){1,1,1};\n",pa.x(),pa.y(),pa.z(),pb.x(),pb.y(),pb.z());	    
+	    fprintf(view_c,"SL(%g,%g,%g,%g,%g,%g){1,1,1};\n",pa.x(),pa.y(),pa.z(),pb.x(),pb.y(),pb.z());
 	    prev = p;
 	  }
 	}
