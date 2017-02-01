@@ -49,6 +49,74 @@
 #include "PViewData.h"
 #endif
 
+class TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES {
+public:
+  void operator () (GRegion *gr) {
+    std::list<GEdge*> e = gr->embeddedEdges();
+    std::list<GFace*> f = gr->embeddedFaces();
+    if (e.empty() && f.empty())return;
+    std::map<MEdge,GEdge*,Less_Edge> edges;
+    std::map<MFace,GFace*,Less_Face> faces;
+    std::list<GEdge*>::iterator it = e.begin();
+    std::list<GFace*>::iterator itf = f.begin();
+    for ( ; it != e.end() ; ++it){
+      for (unsigned int i=0;i<(*it)->lines.size(); ++i){
+	if (distance ((*it)->lines[i]->getVertex(0),(*it)->lines[i]->getVertex(1)) > 1.e-12)
+	  edges.insert(std::make_pair(MEdge((*it)->lines[i]->getVertex(0),(*it)->lines[i]->getVertex(1)),*it));
+      }
+    }
+    for ( ; itf != f.end() ; ++itf){
+      for (unsigned int i=0;i<(*itf)->triangles.size(); ++i){
+	faces.insert(std::make_pair(MFace((*itf)->triangles[i]->getVertex(0),(*itf)->triangles[i]->getVertex(1),(*itf)->triangles[i]->getVertex(2)),*itf));
+      }
+    }
+    Msg::Info ("Searching for %d embedded mesh edges and %d embedded mesh faces in region %d", edges.size(),  faces.size(), gr->tag()); 
+    for (unsigned int k=0;k<gr->getNumMeshElements();k++){
+      for (int j=0;j<gr->getMeshElement(k)->getNumEdges();j++){
+	edges.erase (gr->getMeshElement(k)->getEdge(j));
+      }
+      for (int j=0;j<gr->getMeshElement(k)->getNumFaces();j++){
+	faces.erase (gr->getMeshElement(k)->getFace(j));
+      }
+    }
+    if (edges.empty() && faces.empty()) {
+      Msg::Info ("All embedded edges and faces are present in the final mesh"); 
+    }
+    if (edges.size()) {
+      char name[256];
+      sprintf(name,"missingEdgesOnRegion%d.pos",gr->tag());
+      Msg::Error("Region %d : %d mesh edges that should be embedded are missing in the final mesh",gr->tag(), (int)edges.size());
+      Msg::Error("Saving the missing edges in file %s",name);
+      FILE *f = fopen(name,"w");
+      fprintf(f,"View \" \" {\n");
+      for (std::map<MEdge,GEdge*,Less_Edge>::iterator it =  edges.begin() ; it != edges.end(); ++it){
+	MVertex *v1 = it->first.getVertex(0);
+	MVertex *v2 = it->first.getVertex(1);
+	fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",v1->x(),v1->y(),v1->z(),v2->x(),v2->y(),v2->z(), it->second->tag(),it->second->tag());
+      }
+      fprintf(f,"};\n");
+      fclose(f);
+    }
+    if (faces.size()) {
+      char name[256];
+      sprintf(name,"missingFacesOnRegion%d.pos",gr->tag());
+      Msg::Error("Region %d : %d mesh faces that should be embedded are missing in the final mesh",gr->tag(), (int)faces.size());
+      Msg::Error("Saving the missing faces in file %s",name);
+      FILE *f = fopen(name,"w");
+      fprintf(f,"View \" \" {\n");
+      for (std::map<MFace,GFace*,Less_Face>::iterator it =  faces.begin() ; it != faces.end(); ++it){
+	MVertex *v1 = it->first.getVertex(0);
+	MVertex *v2 = it->first.getVertex(1);
+	MVertex *v3 = it->first.getVertex(2);
+	fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",v1->x(),v1->y(),v1->z(),v2->x(),v2->y(),v2->z(),
+		v3->x(),v3->y(),v3->z(),it->second->tag(),it->second->tag(),it->second->tag());
+      }
+      fprintf(f,"};\n");
+      fclose(f);
+    }
+  }
+};
+
 template<class T>
 static void GetQualityMeasure(std::vector<T*> &ele,
                               double &gamma, double &gammaMin, double &gammaMax,
@@ -835,6 +903,10 @@ static void Mesh3D(GModel *m)
   // ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
+  //  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
+  if (Msg::GetVerbosity() > 98) 
+    std::for_each(m->firstRegion(), m->lastRegion(), TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES ());
+  
   CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
@@ -850,6 +922,9 @@ void OptimizeMeshNetgen(GModel *m)
   // Ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
+  if (Msg::GetVerbosity() > 98) 
+    std::for_each(m->firstRegion(), m->lastRegion(), TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES ());
+  
   double t2 = Cpu();
   Msg::StatusBar(true, "Done optimizing 3D mesh with Netgen (%g s)", t2 - t1);
 }
@@ -863,6 +938,9 @@ void OptimizeMesh(GModel *m)
   // Ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
+  if (Msg::GetVerbosity() > 98) 
+    std::for_each(m->firstRegion(), m->lastRegion(), TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES ());
+  
   CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   Msg::StatusBar(true, "Done optimizing 3D mesh (%g s)", t2 - t1);

@@ -43,6 +43,8 @@
 #include "ANN/ANN.h"
 #endif
 
+
+
 // hybrid mesh recovery structure
 class splitQuadRecovery {
   std::multimap<GEntity*, std::pair<MVertex*,MFace> >_data;
@@ -639,9 +641,9 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
 
   // now do insertion of points
   if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_DEL)
-    bowyerWatsonFrontalLayers(gr, false);
+    Msg::Error ("Frontal Layers Algo deprecated");
   else if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX)
-    bowyerWatsonFrontalLayers(gr, true);
+    Msg::Error ("Frontal Layers Algo deprecated");
   else if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D){
     refineMeshMMG(gr);
   }
@@ -652,6 +654,7 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
       insertVerticesInRegion(gr,2000000000,true);
     }
   }
+  
   // crete an initial mesh
   if (sqr.buildPyramids (gr->model())){
     RelocateVertices(regions, 3);

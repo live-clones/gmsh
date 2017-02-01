@@ -665,9 +665,13 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
   fullMatrix<double> J(N, N);
   fullVector<double> f(N), feps(N), dx(N);
 
-  for (int iter = 0; iter < MAXIT; iter++){
-    if(!func(x, f, data)) return false;
-
+  
+  for (int iter = 0; iter < MAXIT; iter++){    
+    if (x.norm() > 1.e6)return false;
+    if(!func(x, f, data)) {
+      return false;
+    }
+      
     bool isZero = false;
     for (int k=0; k<N; k++) {
       if (f(k) == 0. ) isZero = true;
@@ -680,7 +684,9 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
       double h = EPS * fabs(x(j));
       if(h == 0.) h = EPS;
       x(j) += h;
-      if(!func(x, feps, data)) return false;
+      if(!func(x, feps, data)) {
+	return false;
+      }
       for (int i = 0; i < N; i++){
         J(i, j) = (feps(i) - f(i)) / h;
       }
@@ -690,13 +696,16 @@ bool newton_fd(bool (*func)(fullVector<double> &, fullVector<double> &, void *),
     if (N == 1)
       dx(0) = f(0) / J(0, 0);
     else
-      if (!J.luSolve(f, dx))
+      if (!J.luSolve(f, dx)){
         return false;
+      }
 
     for (int i = 0; i < N; i++)
       x(i) -= relax * dx(i);
 
-    if(dx.norm() < tolx) return true;
+    if(dx.norm() < tolx) {
+      return true;
+    }
   }
   return false;
 }

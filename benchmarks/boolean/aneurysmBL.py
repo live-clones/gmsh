@@ -1,4 +1,4 @@
-from dgpy import *
+from gmshpy import *
 
 GmshSetOption('General', 'Verbosity', 99.0) 
 GmshSetOption('Mesh', 'SaveAll', 1.0) 

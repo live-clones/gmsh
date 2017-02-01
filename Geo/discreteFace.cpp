@@ -179,7 +179,7 @@ void discreteFace::createGeometry()
 
   int order = 1;
   int nPart = 2;
-  double eta = 5/(2.*3.14);
+  double eta = .5*5/(2.*3.14);
   if (!_atlas.empty())return;
 
   double dtSplit = 0.0;
@@ -192,8 +192,8 @@ void discreteFace::createGeometry()
   triangulation* init = new triangulation(-1, tem,this);
   init->iter = iter++;
   allEdg2Tri = init->ed2tri;
-
   toSplit.push(init);
+  //  printf("%12.5E\n",(toSplit.top())->aspectRatio() );
   if((toSplit.top())->genus()!=0 ||
      (toSplit.top())->aspectRatio() > eta ||
      (toSplit.top())->seamPoint){

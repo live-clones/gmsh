@@ -1407,8 +1407,9 @@ void bowyerWatsonFrontal(GFace *gf,
                    gf->mesh_vertices.size(), worst->getRadius());
       double newPoint[2], metric[3];
       //optimalPointFrontal (gf,worst,active_edge,Us,Vs,vSizes,vSizesBGM,newPoint,metric);
-      if (optimalPointFrontalB (gf,worst,active_edge,DATA,newPoint,metric))
+      if (optimalPointFrontalB (gf,worst,active_edge,DATA,newPoint,metric)){
 	insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris, &ActiveTris, worst);
+      }
     }
 
     /*   if(ITER % 1== 0){
@@ -1418,7 +1419,6 @@ void bowyerWatsonFrontal(GFace *gf,
      }
     */
   }
-
 
   nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
   /*

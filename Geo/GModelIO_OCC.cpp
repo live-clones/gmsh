@@ -933,13 +933,12 @@ GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region)
   GRegion *gr = getOCCRegionByNativePtr(model, region);
   if(gr) return gr;
 
-  // FIXME THE PREVIOUS IMPLEMENTATION WAS BETTER FOR SOME USERS :-)
+  //   FIXME THE PREVIOUS IMPLEMENTATION WAS BETTER FOR SOME USERS :-)
   buildShapeFromLists(region);
   model->destroy();
   buildLists();
   buildGModel(model);
   return getOCCRegionByNativePtr(model, region);
-
   //  _addShapeToMaps(region);
   //  buildShapeFromLists(region);
   //  buildGModel(model);

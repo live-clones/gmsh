@@ -543,8 +543,14 @@ void meshGEdge::operator() (GEdge *ge)
     return;
   }
 
-  Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
-
+  if (ge->model()->getNumEdges() > 1000){    
+    if (ge->tag() % 1000 == 1){
+      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(), ge->model()->getNumEdges(), ge->getTypeString().c_str());
+      }
+  }
+  else {
+    Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
+  }
   // compute bounds
   Range<double> bounds = ge->parBounds(0);
   double t_begin = bounds.low();
@@ -576,7 +582,7 @@ void meshGEdge::operator() (GEdge *ge)
   int N;
   int filterMinimumN = 1;
   if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.){
-    Msg::Warning("Curve %d has a zero length", ge->tag());
+    Msg::Debug("Curve %d has a zero length", ge->tag());
     a = 0.;
     N = 1;
   }

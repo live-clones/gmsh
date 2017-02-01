@@ -249,7 +249,7 @@ void HilbertSortB::Sort(Vert** vertices, int arraysize, int e, int d,
 
   if (maxDepth > 0) {
     if ((depth + 1) == maxDepth) {
-      printf("ARGH\n");
+      //      printf("ARGH max depth attained\n");
       return;
     }
   }
@@ -544,8 +544,7 @@ static void edgeSwapPass (tetContainer &T)
 */
 
 static void starShapeness (Vert *v, connContainer &bndK,
-			   std::vector<unsigned int> &_negatives,
-			   double threshold)
+			   std::vector<unsigned int> &_negatives)
 {
   _negatives.clear();
   for (unsigned int i=0; i< bndK.size(); i++) {
@@ -554,7 +553,7 @@ static void starShapeness (Vert *v, connContainer &bndK,
 						    (double*)bndK[i].f.V[1],
 						    (double*)bndK[i].f.V[2],
 						    (double*)v);
-    if (val <= threshold ) {
+    if (val <= 0.0 ) {
       _negatives.push_back(i);
     }
   }
@@ -679,17 +678,16 @@ static Tet *tetInsideCavityWithFAce (Face &f, cavityContainer &cavity)
   return NULL;
 }
 
-static bool fixDelaunayCavity (double threshold,
-			       Vert *v,
+static bool fixDelaunayCavity (Vert *v,
 			       cavityContainer &cavity,
 			       connContainer &bndK,
 			       int myThread, int K,
 			       std::vector<unsigned int> & _negatives)
 {
-  starShapeness (v, bndK, _negatives, threshold);
+  starShapeness (v, bndK, _negatives);
 
   if (_negatives.empty())return false;
-
+  //  return true;
   // unset all tets of the cavity
   for (unsigned int i=0; i< cavity.size(); i++)cavity[i]->unset(myThread,K);
   for (unsigned int i=0; i<bndK.size(); i++)if(bndK[i].t)bndK[i].t->unset(myThread,K);
@@ -715,7 +713,7 @@ static bool fixDelaunayCavity (double threshold,
     }
     removeIsolatedTets(containsV, cavity,bndK,myThread,K);
     buildDelaunayBall (cavity,bndK);
-    starShapeness (v, bndK, _negatives, threshold);
+    starShapeness (v, bndK, _negatives);
   }
   return false;
 }
@@ -751,6 +749,7 @@ Tet* walk (Tet *t, Vert *v, int maxx, double &totSearch, int thread)
   while (1){
     totSearch++;
     if (t == NULL) {
+      //      printf("in an embedded edge\n");
       return NULL; // we should NEVER return here
     }
     //    if (t->inSphere(v,thread)) {return t;}
@@ -905,13 +904,39 @@ static Tet* randomTet (int thread,  tetContainer &allocator)
 }
 
 
+int isCavityCompatibleWithEmbeddedEdges(cavityContainer &cavity, 
+					connContainer &bndK,   
+					edgeContainer &allEmbeddedEdges){
+  
+  const unsigned int bSize = bndK.size();
+  std::vector<Edge> ed;
+  for (unsigned int i=0; i<bSize; i++) {
+    for (unsigned int j=0; j<3; j++) {
+      if (bndK[i].f.V[j] > bndK[i].f.V[(j+1)%3]){
+	ed.push_back(Edge(bndK[i].f.V[j], bndK[i].f.V[(j+1)%3]));
+      }
+    }
+  }
+  
+  for (unsigned int i=0; i<cavity.size(); i++){
+    for (int j=0;j<6;j++){
+      Edge e = cavity[i]->getEdge(j);
+      if (std::find(ed.begin(), ed.end(), e) == ed.end() && allEmbeddedEdges.find(e)){
+	return 0;
+      }
+    }
+  }
+  return 1;
+} 
+
+
 //#define _VERBOSE 1
 void delaunayTrgl (const unsigned int numThreads,
 		   const unsigned int NPTS_AT_ONCE,
 		   unsigned int Npts,
 		   std::vector<Vert*> assignTo[],
 		   tetContainer &allocator,
-		   double threshold)
+		   edgeContainer *embeddedEdges)
 {
 #if defined(_VERBOSE)
   double totSearchGlob=0;
@@ -983,6 +1008,7 @@ void delaunayTrgl (const unsigned int numThreads,
     ////////////////////////////////////////////////////////////////////////////////////
 
     for (unsigned int iPGlob=0 ; iPGlob < maxLocSizeK; iPGlob++){
+      //      printf("%d vs %d\n",iPGlob,maxLocSizeK);
 #if defined(_OPENMP)
 #pragma omp barrier
 #endif
@@ -995,9 +1021,11 @@ void delaunayTrgl (const unsigned int numThreads,
 	if(vToAdd[K]){
 	  // In 3D, insertion of a point may lead to deletion of tets !!
 	  if (!Choice[K]->V[0])Choice[K] = randomTet (myThread, allocator);
+	  //	  int nbCoucou=0;
 	  while(1){
 	    t[K] = walk ( Choice[K] , vToAdd[K], Npts, totSearch, myThread);
 	    if (t[K])break;
+	    //	    printf("coucou %d\n",nbCoucou++);
 	    // the domain may not be convex. we then start from a random tet and
 	    // walk from there
 	    Choice[K] = randomTet(rand() % numThreads, allocator);
@@ -1017,7 +1045,11 @@ void delaunayTrgl (const unsigned int numThreads,
 	  cavityK.clear(); bndK.clear();
 	  delaunayCavity2(t[K], NULL, vToAdd[K], cavityK, bndK, myThread, K);
 	  // verify the cavity
-	  if (fixDelaunayCavity (threshold, vToAdd[K],  cavityK, bndK, myThread, K, _negatives)){
+	  if (fixDelaunayCavity (vToAdd[K],  cavityK, bndK, myThread, K, _negatives)){
+	    vToAdd[K] = NULL;
+	    invalidCavities [myThread]++;
+	  }
+	  if (embeddedEdges && !isCavityCompatibleWithEmbeddedEdges(cavityK, bndK, *embeddedEdges)){
 	    vToAdd[K] = NULL;
 	    invalidCavities [myThread]++;
 	  }
@@ -1093,7 +1125,8 @@ void delaunayTrgl (const unsigned int numThreads,
 
   //checkLocalDelaunayness(T,"final");
 
-
+  
+  
   //  printf(" %12.5E %12.5E  %12.5E tot  %12.5E \n",t2,t3,t4,t2+t3+t4);
 
 #if defined(_VERBOSE)

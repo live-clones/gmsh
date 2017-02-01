@@ -89,8 +89,7 @@ class MTet4
     double B[4] = {v1->x(), v1->y(), v1->z()};
     double C[4] = {v2->x(), v2->y(), v2->z()};
     double D[4] = {v3->x(), v3->y(), v3->z()};
-    double x,y,z;
-    tetcircumcenter (A,B,C,D,res,&x,&y,&z);
+    tetcircumcenter (A,B,C,D,res,NULL,NULL,NULL);
   }
 
   void setup(MTetrahedron *t, std::vector<double> &sizes, std::vector<double> &sizesBGM)
@@ -103,6 +102,19 @@ class MTet4
     const double dy = base->getVertex(0)->y() - center[1];
     const double dz = base->getVertex(0)->z() - center[2];
     circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
+    /*
+    if (base->getVertex(0)->getIndex() >= sizes.size() ||
+	base->getVertex(1)->getIndex() >= sizes.size() ||
+	base->getVertex(2)->getIndex() >= sizes.size() ||
+	base->getVertex(3)->getIndex() >= sizes.size()){
+      printf("ERROR %d vs %d %d %d %d\n",sizes.size() ,
+	     base->getVertex(0)->getIndex(),
+	     base->getVertex(1)->getIndex(),
+	     base->getVertex(2)->getIndex(),
+	     base->getVertex(3)->getIndex());
+
+    }
+    */	
     double lc1 = 0.25*(sizes[base->getVertex(0)->getIndex()]+
                       sizes[base->getVertex(1)->getIndex()]+
                        sizes[base->getVertex(2)->getIndex()]+
@@ -115,6 +127,43 @@ class MTet4
     circum_radius /= lc;
     deleted = false;
   } 
+
+  void setup(MTetrahedron *t, std::vector<double> &sizes, std::vector<double> &sizesBGM, double lcA, double lcB)
+  {
+    base = t;
+    neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
+    double center[3];
+    circumcenter(center);
+    const double dx = base->getVertex(0)->x() - center[0];
+    const double dy = base->getVertex(0)->y() - center[1];
+    const double dz = base->getVertex(0)->z() - center[2];
+    circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
+
+    /*
+    if (base->getVertex(0)->getIndex() >= sizes.size() ||
+	base->getVertex(1)->getIndex() >= sizes.size() ||
+	base->getVertex(2)->getIndex() >= sizes.size()){
+      printf("ERROR %d vs %d %d %d %d\n",sizes.size() ,
+	     base->getVertex(0)->getIndex(),
+	     base->getVertex(1)->getIndex(),
+	     base->getVertex(2)->getIndex(),
+	     base->getVertex(3)->getIndex());
+
+    }
+    */	
+    double lc1 = 0.25*(sizes[base->getVertex(0)->getIndex()]+
+                      sizes[base->getVertex(1)->getIndex()]+
+                       sizes[base->getVertex(2)->getIndex()]+
+                       lcA);
+    double lcBGM = 0.25*(sizesBGM[base->getVertex(0)->getIndex()]+
+                         sizesBGM[base->getVertex(1)->getIndex()]+
+                         sizesBGM[base->getVertex(2)->getIndex()]+
+                         lcB);
+    double lc = Extend2dMeshIn3dVolumes() ? std::min(lc1, lcBGM) : lcBGM;
+    circum_radius /= lc;
+    deleted = false;
+  } 
+
   inline GRegion *onWhat() const { return gr; }
   inline void setOnWhat(GRegion *g) { gr = g; }
   inline bool isDeleted() const { return deleted; }
@@ -181,7 +230,7 @@ void bowyerWatsonFrontalLayers(GRegion *gr, bool hex);
 GRegion *getRegionFromBoundingFaces(GModel *model,
                                     std::set<GFace *> &faces_bound);
 
-class compareTet4Ptr
+class compareTet4Ptr 
 {
  public:
   inline bool operator () (const MTet4 *a, const MTet4 *b)  const
@@ -245,6 +294,18 @@ class MTet4Factory
     t4->setup(t, sizes, sizesBGM);
     return t4;
   }
+  MTet4 *Create(MTetrahedron * t, std::vector<double> &sizes, 
+                std::vector<double> &sizesBGM, double lc1, double lc2)
+  {
+#ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
+    MTet4 *t4 = getAnEmptySlot();
+#else
+    MTet4 *t4 = new MTet4;
+#endif
+    t4->setup(t, sizes, sizesBGM, lc1, lc2);
+    return t4;
+  }
+
   void Free(MTet4 *t)
   {
     if (t->tet()) delete t->tet();

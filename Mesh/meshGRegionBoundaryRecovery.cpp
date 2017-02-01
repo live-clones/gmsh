@@ -425,8 +425,11 @@ bool tetgenmesh::reconstructmesh(void *p)
     // Construct a map from points to subfaces.
     makepoint2submap(subfaces, idx2shlist, shperverlist);
 
+    //    printf("coucou1\n");
+    
     // Process the set of PSC edges.
     // Remeber that all segments have default marker '-1'.
+    //    int COUNTER = 0;
     for (std::list<GEdge*>::iterator it = e_list.begin(); it != e_list.end();
 	 ++it) {
       GEdge *ge = *it;
@@ -480,7 +483,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 	  // It is a dangling segment (not belong to any facets).
 	  // Check if segment [p[0],p[1]] already exists.
 	  // TODO: Change the brute-force search. Slow!
-	  point *ppt;
+	  /*	  point *ppt;
 	  subsegs->traversalinit();
 	  segloop.sh = shellfacetraverse(subsegs);
 	  while (segloop.sh != NULL) {
@@ -492,7 +495,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 	      break;
 	    }
 	    segloop.sh = shellfacetraverse(subsegs);
-	  }
+	    }*/
 	  if (newseg.sh == NULL) {
 	    makeshellface(subsegs, &newseg);
 	    setshvertices(newseg, p[0], p[1], NULL);
@@ -522,9 +525,12 @@ bool tetgenmesh::reconstructmesh(void *p)
   // Boundary recovery.
 
   clock_t t;
+  //    printf("coucou2\n");
   recoverboundary(t);
+  //    printf("coucou3\n");
 
   carveholes();
+  //    printf("coucou4\n");
 
   if (subvertstack->objects > 0l) {
     suppresssteinerpoints();

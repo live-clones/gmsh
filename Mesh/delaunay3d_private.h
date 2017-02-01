@@ -126,9 +126,10 @@ inline double orientationTestFast (Vert *va, Vert *vb, Vert *vc, Vert *vd)
   return orientationTestFast ((double*)va,(double*)vb,(double*)vc,(double*)vd);
 }
 
-struct Edge {
+class Edge {
+public :
   Vert *first, *second;
-  Edge (Vert *v1, Vert *v2) : first(v1), second(v2)
+  Edge (Vert *v1, Vert *v2) : first(std::min(v1,v2)), second(std::max(v1,v2))
   {
   }
   bool operator == (const Edge &e) const{
@@ -141,6 +142,37 @@ struct Edge {
     return false;
   }
 };
+
+struct edgeContainer
+{
+  std::vector<std::vector<Edge> > _hash;
+  size_t _size;
+  edgeContainer(unsigned int N = 1000000)
+  {
+    _size = 0;
+    _hash.resize(N);
+  }
+
+  inline bool find (const Edge &e) const {
+    size_t h = ((size_t) e.first >> 8) ;
+    const std::vector<Edge> &v = _hash[h %_hash.size()];
+    for (unsigned int i=0; i< v.size();i++)if (e == v[i]) {return true;}
+    return false;
+  }
+
+  bool empty () const {return _size == 0;}
+  
+  bool addNewEdge (const Edge &e)
+  {
+    size_t h = ((size_t) e.first >> 8) ;
+    std::vector<Edge> &v = _hash[h %_hash.size()];
+    for (unsigned int i=0; i< v.size();i++)if (e == v[i]) {return false;}
+    v.push_back(e);
+    _size++;
+    return true;
+  }
+};
+
 
 struct Face {
   Vert *v[3];
@@ -181,6 +213,7 @@ struct Tet {
     T[0] = T[1] = T[2] = T[3] = NULL;
     setAllDeleted();
   }
+  //  inline bool isFace () const {return V[3]==NULL;}
   int setVerticesNoTest (Vert *v0, Vert *v1, Vert *v2, Vert *v3)
   {
     _modified=true;
@@ -358,7 +391,7 @@ void delaunayTrgl(const unsigned int numThreads,
                   const unsigned int NPTS_AT_ONCE,
                   unsigned int Npts,
                   std::vector<Vert*> assignTo[],
-                  tetContainer &allocator, double threshold = 0.0);
+                  tetContainer &allocator, edgeContainer *embedded = 0);
 bool edgeSwap(Tet *tet, int iLocalEdge,  tetContainer &T, int myThread);
 
 #endif
