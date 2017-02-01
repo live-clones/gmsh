@@ -28,7 +28,7 @@ OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex _v)
 
 OCCVertex::~OCCVertex()
 {
-  model()->getOCCInternals()->unbind(v);
+  model()->getOCCInternals()->unbind(v, tag());
 }
 
 void OCCVertex::setPosition(GPoint &p)

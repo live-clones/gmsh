@@ -56,6 +56,7 @@ using std::iostream;
 #include <BRepTools.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopTools_DataMapOfShapeInteger.hxx>
+#include <TopTools_DataMapOfIntegerShape.hxx>
 #include <TopExp.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeShell.hxx>

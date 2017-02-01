@@ -23,7 +23,7 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num)
 
 OCCRegion::~OCCRegion()
 {
-  model()->getOCCInternals()->unbind(s);
+  model()->getOCCInternals()->unbind(s, tag());
 }
 
 void OCCRegion::setup()

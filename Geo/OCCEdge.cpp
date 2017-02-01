@@ -48,7 +48,7 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
 
 OCCEdge::~OCCEdge()
 {
-  model()->getOCCInternals()->unbind(c);
+  model()->getOCCInternals()->unbind(c, tag());
 }
 
 SBoundingBox3d OCCEdge::bounds() const

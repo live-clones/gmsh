@@ -35,7 +35,7 @@ For x In{-4:4:4}
   Call dendrite;
 EndFor
 
-BooleanUnion{ Volume{1}; Delete; }{ Volume{reg(0)}; Delete; } // creates numr+1
-BooleanUnion{ Volume{numr+1}; Delete; }{ Volume{reg(1)}; Delete; } // creates numr+2
-BooleanUnion{ Volume{numr+2}; Delete; }{ Volume{reg(2)}; Delete; } // creates numr+3
-BooleanUnion{ Volume{numr+3}; Delete; }{ Volume{2}; Delete; }
+BooleanUnion{ Volume{1}; Delete; }{ Volume{reg(0)}; Delete; }
+BooleanUnion{ Volume{numr+1}; Delete; }{ Volume{reg(1)}; Delete; }
+BooleanUnion{ Volume{numr+1}; Delete; }{ Volume{reg(2)}; Delete; }
+BooleanUnion{ Volume{3}; Delete; }{ Volume{2}; Delete; }

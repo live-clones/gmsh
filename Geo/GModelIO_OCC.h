@@ -15,26 +15,31 @@
 
 class OCC_Internals {
  protected :
-  // a temporary shape FIXME will be removed
+  // a temporary shape
+  // FIXME will be removed
   TopoDS_Shape _shape;
 
-  // all the (sub) TopoDS_Shapes
+  // all the (sub)shapes, updated dynamically when shapes need to be imported
+  // into a GModel
   TopTools_IndexedMapOfShape _vmap, _emap, _wmap, _fmap, _shmap, _somap;
+
   // cache mapping TopoDS_Shapes to their corresponding GEntity tags
-  TopTools_DataMapOfShapeInteger _gvNumCache, _geNumCache, _gfNumCache, _grNumCache;
-  // mapping between indices of the (sub) shapes in the maps and the assigned tags
-  std::map<int, int> _vTagIndex, _eTagIndex, _fTagIndex, _rTagIndex;
-  std::map<int, int> _vIndexTag, _eIndexTag, _fIndexTag, _rIndexTag;
+  TopTools_DataMapOfShapeInteger _vertexTag, _edgeTag, _faceTag, _solidTag;
+  TopTools_DataMapOfIntegerShape _tagVertex, _tagEdge, _tagFace, _tagSolid;
+
+  // get maximum tag number for each dimension
+  int _getMaxTag(int dim) const;
+
+  // add a shape and all its subshapes to _vmap, _emap, ..., _somap
+  void _addShapeToMaps(TopoDS_Shape shape);
 
  public:
-  // add shape and all sub-shapes in _maps
-  // FIXME: this should be private, but is currently used in deprectated
-  // GModelFactory
-  void _addShapeToLists(TopoDS_Shape shape, std::vector<int> indices[4]=0);
+  // FIXME: will be removed with GModelFactory
+  void _addShapeToLists(TopoDS_Shape shape){ _addShapeToMaps(shape); }
 
  public:
   enum BooleanOperator { Intersection, Cut, Section, Fuse };
-  OCC_Internals(){}
+  OCC_Internals() {}
 
   // add shapes only using internal OCC data
   void addVertex(int tag, double x, double y, double z);
@@ -77,14 +82,46 @@ class OCC_Internals {
   void writeSTEP(const char *);
   void loadIGES(const char *);
   void loadShape(const TopoDS_Shape *);
-  void bind(TopoDS_Vertex vertex, int num){ _gvNumCache.Bind(vertex, num); }
-  void bind(TopoDS_Edge edge, int num){ _geNumCache.Bind(edge, num); }
-  void bind(TopoDS_Face face, int num){ _gfNumCache.Bind(face, num); }
-  void bind(TopoDS_Solid solid, int num){ _grNumCache.Bind(solid, num); }
-  void unbind(TopoDS_Vertex vertex){ _gvNumCache.UnBind(vertex); }
-  void unbind(TopoDS_Edge edge){ _geNumCache.UnBind(edge); }
-  void unbind(TopoDS_Face face){ _gfNumCache.UnBind(face); }
-  void unbind(TopoDS_Solid solid){ _grNumCache.UnBind(solid); }
+  void bind(TopoDS_Vertex vertex, int tag)
+  {
+    _vertexTag.Bind(vertex, tag);
+    _tagVertex.Bind(tag, vertex);
+  }
+  void bind(TopoDS_Edge edge, int tag)
+  {
+    _edgeTag.Bind(edge, tag);
+    _tagEdge.Bind(tag, edge);
+  }
+  void bind(TopoDS_Face face, int tag)
+  {
+    _faceTag.Bind(face, tag);
+    _tagFace.Bind(tag, face);
+  }
+  void bind(TopoDS_Solid solid, int tag)
+  {
+    _solidTag.Bind(solid, tag);
+    _tagSolid.Bind(tag, solid);
+  }
+  void unbind(TopoDS_Vertex vertex, int tag)
+  {
+    _vertexTag.UnBind(vertex);
+    _tagVertex.UnBind(tag);
+  }
+  void unbind(TopoDS_Edge edge, int tag)
+  {
+    _edgeTag.UnBind(edge);
+    _tagEdge.UnBind(tag);
+  }
+  void unbind(TopoDS_Face face, int tag)
+  {
+    _faceTag.UnBind(face);
+    _tagFace.UnBind(tag);
+  }
+  void unbind(TopoDS_Solid solid, int tag)
+  {
+    _solidTag.UnBind(solid);
+    _tagSolid.UnBind(tag);
+  }
   GVertex *getOCCVertexByNativePtr(GModel *model, TopoDS_Vertex toFind);
   GEdge *getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind);
   GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind);

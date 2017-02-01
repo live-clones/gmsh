@@ -50,8 +50,8 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
 
 OCCFace::~OCCFace()
 {
-  model()->getOCCInternals()->unbind(s);
-  model()->getOCCInternals()->unbind(_replaced);
+  model()->getOCCInternals()->unbind(s, tag());
+  model()->getOCCInternals()->unbind(_replaced, tag());
 }
 
 void OCCFace::setup()
