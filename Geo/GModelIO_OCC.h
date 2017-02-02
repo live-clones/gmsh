@@ -45,43 +45,23 @@ class OCC_Internals {
   void addVertex(int tag, double x, double y, double z);
   void addCircleArc(int tag, int startTag, int centerTag, int endTag);
   void addSphere(int tag, double xc, double yc, double zc, double radius);
+  void addBlock(int tag, double x1, double y1, double z1,
+                double x2, double y2, double z2);
+  void addCylinder(int tag, double x1, double y1, double z1,
+                   double x2, double y2, double z2, double r);
   void addThruSections(int tag, std::vector<std::vector<int> > edgeTags);
 
   // apply boolean operation
-  void applyBooleanOperator(int tag,
-                            std::vector<int> shapeTags[4],
-                            std::vector<int> toolTags[4],
-                            BooleanOperator op,
-                            bool removeShape=true, bool removeTool=true);
+  std::vector<int> applyBooleanOperator(int tag,
+                                        std::vector<int> shapeTags[4],
+                                        std::vector<int> toolTags[4],
+                                        BooleanOperator op,
+                                        bool removeShape=true,
+                                        bool removeTool=true);
 
-
-  // perform boolean operation on _shape, using tool
-  void applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op);
-
-  // import all the OCC shapes into the model
+  // import all the shapes into the model
   void importOCCInternals(GModel *model);
 
-  // manipulate _shape
-  TopoDS_Shape getShape () { return _shape; }
-  void buildLists();
-  void buildShapeFromLists(TopoDS_Shape shape);
-
-  void healGeometry(double tolerance, bool fixdegenerated,
-                    bool fixsmalledges, bool fixspotstripfaces,
-                    bool sewfaces, bool makesolids=false,
-                    int connect=0, double scaling=0.0);
-  void fillet(std::vector<TopoDS_Edge> &shapes, double radius);
-
-
-  // I/O towards GModel
-  void buildShapeFromGModel(GModel*);
-  void buildGModel(GModel *gm);
-  void loadBREP(const char *);
-  void writeBREP(const char *);
-  void loadSTEP(const char *);
-  void writeSTEP(const char *);
-  void loadIGES(const char *);
-  void loadShape(const TopoDS_Shape *);
   void bind(TopoDS_Vertex vertex, int tag)
   {
     _vertexTag.Bind(vertex, tag);
@@ -130,6 +110,33 @@ class OCC_Internals {
   GEdge *addEdgeToModel(GModel *model, TopoDS_Edge e);
   GFace *addFaceToModel(GModel *model, TopoDS_Face f);
   GRegion *addRegionToModel(GModel *model, TopoDS_Solid r);
+
+
+  // FIXME ************* OLD **************
+
+  // perform boolean operation on _shape, using tool
+  void applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op);
+
+  // manipulate _shape
+  TopoDS_Shape getShape () { return _shape; }
+  void buildLists();
+  void buildShapeFromLists(TopoDS_Shape shape);
+
+  void healGeometry(double tolerance, bool fixdegenerated,
+                    bool fixsmalledges, bool fixspotstripfaces,
+                    bool sewfaces, bool makesolids=false,
+                    int connect=0, double scaling=0.0);
+  void fillet(std::vector<TopoDS_Edge> &shapes, double radius);
+
+  // I/O towards GModel
+  void buildShapeFromGModel(GModel*);
+  void buildGModel(GModel *gm);
+  void loadBREP(const char *);
+  void writeBREP(const char *);
+  void loadSTEP(const char *);
+  void writeSTEP(const char *);
+  void loadIGES(const char *);
+  void loadShape(const TopoDS_Shape *);
 };
 
 #else
@@ -140,14 +147,19 @@ public:
   OCC_Internals(){}
   void addVertex(int tag, double x, double y, double z){}
   void addCircleArc(int tag, int tagStart, int tagCenter, int tagEnd){}
-	void addSphere(int tag, double xc, double yc, double zc, double radius){};
+  void addSphere(int tag, double xc, double yc, double zc, double radius){};
+  void addBlock(int tag, double x1, double y1, double z1,
+                double x2, double y2, double z2);
+  void addCylinder(int tag, double x1, double y1, double z1,
+                   double x2, double y2, double z2, double r);
   void addThruSections(int tag, std::vector<std::vector<int> > tagEdges){}
   void importOCCInternals(GModel *model){}
-	void applyBooleanOperator(int tag,
-                            std::vector<int> shapeTags[4],
-                            std::vector<int> toolTags[4],
-                            BooleanOperator op,
-                            bool removeShape=true, bool removeTool=true){};
+  std::vector<int> applyBooleanOperator(int tag,
+                                        std::vector<int> shapeTags[4],
+                                        std::vector<int> toolTags[4],
+                                        BooleanOperator op,
+                                        bool removeShape=true,
+                                        bool removeTool=true);
 };
 
 #endif

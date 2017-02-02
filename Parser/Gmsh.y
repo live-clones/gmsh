@@ -143,6 +143,7 @@ struct doubleXstring{
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tDefineNumber tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
+%token tBlock tCylinder tCone tEllipsoid tQuadric
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tSetFactory tThruSections
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
@@ -227,6 +228,7 @@ GeoFormatItem :
   | Visibility  { return 1; }
   | Extrude     { List_Delete($1); return 1; }
   | Boolean     { List_Delete($1); return 1; }
+  | BooleanShape{ return 1; }
   | Constraints { return 1; }
   | Coherence   { return 1; }
   | Loop        { return 1; }
@@ -1741,8 +1743,8 @@ Shape :
           else
             v = Create_Vertex(num, x, y, myGmshSurface, lc);
           Tree_Add(GModel::current()->getGEOInternals()->Points, &v);
-          AddToTemporaryBoundingBox(v->Pos.X, v->Pos.Y, v->Pos.Z);
         }
+        AddToTemporaryBoundingBox(x, y, z);
       }
       $$.Type = MSH_POINT;
       $$.Num = num;
@@ -2179,7 +2181,7 @@ Shape :
           GModel::current()->getOCCInternals()->addSphere(num, x, y, z, r);
         }
         else{
-          yymsg(0, "Sphere only available in OpenCASCADE factory");
+          yymsg(0, "Sphere only available with OpenCASCADE factory");
         }
         $$.Type = MSH_VOLUME;
       }
@@ -2232,6 +2234,55 @@ Shape :
       }
       List_Delete($6);
       $$.Type = 0;
+      $$.Num = num;
+    }
+  | tBlock '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$3;
+      if(List_Nbr($6) == 6){
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          double x1; List_Read($6, 0, &x1);
+          double y1; List_Read($6, 1, &y1);
+          double z1; List_Read($6, 2, &z1);
+          double x2; List_Read($6, 3, &x2);
+          double y2; List_Read($6, 4, &y2);
+          double z2; List_Read($6, 5, &z2);
+          GModel::current()->getOCCInternals()->addBlock(num, x1, y1, z1, x2, y2, z2);
+        }
+        else{
+          yymsg(0, "Block only available with OpenCASCADE factory");
+        }
+      }
+      else{
+        yymsg(0, "Block has to be defined using 2 points");
+      }
+      List_Delete($6);
+      $$.Type = MSH_VOLUME;
+      $$.Num = num;
+    }
+  | tCylinder '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$3;
+      if(List_Nbr($6) == 7){
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          double x1; List_Read($6, 0, &x1);
+          double y1; List_Read($6, 1, &y1);
+          double z1; List_Read($6, 2, &z1);
+          double x2; List_Read($6, 3, &x2);
+          double y2; List_Read($6, 4, &y2);
+          double z2; List_Read($6, 5, &z2);
+          double r; List_Read($6, 6, &r);
+          GModel::current()->getOCCInternals()->addCylinder(num, x1, y1, z1, x2, y2, z2, r);
+        }
+        else{
+          yymsg(0, "Cylinder only available with OpenCASCADE factory");
+        }
+      }
+      else{
+        yymsg(0, "Cylinder has to be defined using 2 points and a radius");
+      }
+      List_Delete($6);
+      $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
   | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
@@ -2410,7 +2461,7 @@ Shape :
           GModel::current()->getOCCInternals()->addThruSections(num, edges);
         }
         else{
-          yymsg(0, "ThruSections only available in OpenCASCADE factory");
+          yymsg(0, "ThruSections only available with OpenCASCADE factory");
         }
       }
       for(int i = 0; i < List_Nbr($7); i++)
@@ -2705,6 +2756,7 @@ LevelSet :
       }
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
+      List_Delete($7);
 #endif
     }
   | tLevelset tPoint '(' FExpr ')' tAFFECT '{' RecursiveListOfListOfDouble '}' tEND
@@ -2752,6 +2804,7 @@ LevelSet :
       }
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
+      List_Delete($12);
 #endif
     }
   | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' VExpr ','
@@ -2774,6 +2827,7 @@ LevelSet :
       }
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
+      List_Delete($14);
 #endif
     }
   | tLevelset tSphere '(' FExpr ')' tAFFECT '{' VExpr ',' RecursiveListOfDouble '}' tEND
@@ -2794,6 +2848,138 @@ LevelSet :
       }
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
+      List_Delete($10);
+#endif
+    }
+  | tLevelset tCylinder '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
+                                                RecursiveListOfDouble '}' tEND
+    {
+#if defined(HAVE_DINTEGRATION)
+      if(List_Nbr($12) == 1){
+        int t = (int)$4;
+        if(FindLevelSet(t)){
+	  yymsg(0, "Levelset %d already exists", t);
+        }
+        else {
+          double d;
+          List_Read($12, 0, &d);
+          double pt[3] = {$8[0], $8[1], $8[2]};
+          double dir[3] = {$10[0], $10[1], $10[2]};
+          gLevelset *ls = new gLevelsetGenCylinder(pt, dir, d, t);
+          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
+          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
+        }
+      }
+      else if(List_Nbr($12) == 2){
+        int t = (int)$4;
+        if(FindLevelSet(t)){
+	  yymsg(0, "Levelset %d already exists", t);
+        }
+        else {
+          double d[2];
+          for(int i = 0; i < 2; i++)
+            List_Read($12, i, &d[i]);
+          double pt[3] = {$8[0], $8[1], $8[2]};
+          double dir[3] = {$10[0], $10[1], $10[2]};
+          gLevelset *ls = new gLevelsetCylinder(pt, dir, d[0], d[1], t);
+          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
+          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
+        }
+      }
+      else if(List_Nbr($12) == 3){
+        int t = (int)$4;
+        if(FindLevelSet(t)){
+	  yymsg(0, "Levelset %d already exists", t);
+        }
+        else {
+          double d[3];
+          for(int i = 0; i < 3; i++)
+            List_Read($12, i, &d[i]);
+          double pt[3] = {$8[0], $8[1], $8[2]};
+          double dir[3] = {$10[0], $10[1], $10[2]};
+          gLevelset *ls = new gLevelsetCylinder(pt, dir, d[0], d[1], d[2], t);
+          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
+          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
+        }
+      }
+      else
+        yymsg(0, "Wrong levelset definition (%d)", $4);
+      List_Delete($12);
+#endif
+    }
+  | tLevelset tCone '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
+                                                RecursiveListOfDouble '}' tEND
+    {
+#if defined(HAVE_DINTEGRATION)
+      if(List_Nbr($12) == 1){
+        int t = (int)$4;
+        if(FindLevelSet(t)){
+	  yymsg(0, "Levelset %d already exists", t);
+        }
+        else {
+          double d;
+          List_Read($12, 0, &d);
+          double pt[3] = {$8[0], $8[1], $8[2]};
+          double dir[3] = {$10[0], $10[1], $10[2]};
+          gLevelset *ls = new gLevelsetCone(pt, dir, d, t);
+          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
+          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
+        }
+      }
+      else
+        yymsg(0, "Wrong levelset definition (%d)", $4);
+      List_Delete($12);
+#endif
+    }
+  | tLevelset tEllipsoid '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
+                                                RecursiveListOfDouble '}' tEND
+    {
+#if defined(HAVE_DINTEGRATION)
+      if(List_Nbr($12) == 3){
+        int t = (int)$4;
+        if(FindLevelSet(t)){
+	  yymsg(0, "Levelset %d already exists", t);
+        }
+        else {
+          double d[3];
+          for(int i = 0; i < 3; i++)
+            List_Read($12, i, &d[i]);
+          double pt[3] = {$8[0], $8[1], $8[2]};
+          double dir[3] = {$10[0], $10[1], $10[2]};
+          gLevelset *ls = new gLevelsetEllipsoid(pt, dir, d[0], d[1], d[2], t);
+          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
+          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
+        }
+      }
+      else
+        yymsg(0, "Wrong levelset definition (%d)", $4);
+      List_Delete($12);
+#endif
+    }
+  | tLevelset tQuadric '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
+                                                RecursiveListOfDouble '}' tEND
+    {
+#if defined(HAVE_DINTEGRATION)
+      if(List_Nbr($12) == 5){
+        int t = (int)$4;
+        if(FindLevelSet(t)){
+	  yymsg(0, "Levelset %d already exists", t);
+        }
+        else {
+          double d[5];
+          for(int i = 0; i < 5; i++)
+            List_Read($12, i, &d[i]);
+          double pt[3] = {$8[0], $8[1], $8[2]};
+          double dir[3] = {$10[0], $10[1], $10[2]};
+          gLevelset *ls = new gLevelsetGeneralQuadric(pt, dir, d[0], d[1],
+                                                      d[2], d[3], d[4], t);
+          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
+          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
+        }
+      }
+      else
+        yymsg(0, "Wrong levelset definition (%d)", $4);
+      List_Delete($12);
 #endif
     }
   | tLevelset tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
@@ -2906,6 +3092,7 @@ LevelSet :
       else
         yymsg(0, "Wrong levelset definition (%d)", $4);
       Free($2);
+      List_Delete($7);
 #endif
     }
   | tLevelset tSTRING '(' FExpr ')' tAFFECT tBIGSTR tEND
@@ -2962,110 +3149,6 @@ LevelSet :
       }
       else
         yymsg(0, "Wrong levelset definition");
-      Free($2);
-#endif
-    }
-  | tLevelset tSTRING '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
-                                                RecursiveListOfDouble '}' tEND
-    {
-#if defined(HAVE_DINTEGRATION)
-      if(!strcmp($2, "Cylinder") && List_Nbr($12) == 1){
-        int t = (int)$4;
-        if(FindLevelSet(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d;
-          List_Read($12, 0, &d);
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double dir[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetGenCylinder(pt, dir, d, t);
-          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
-          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
-        }
-      }
-      else if(!strcmp($2, "Cone") && List_Nbr($12) == 1){
-        int t = (int)$4;
-        if(FindLevelSet(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d;
-          List_Read($12, 0, &d);
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double dir[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetCone(pt, dir, d, t);
-          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
-          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
-        }
-      }
-      else if(!strcmp($2, "Cylinder") && List_Nbr($12) == 2){
-        int t = (int)$4;
-        if(FindLevelSet(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d[2];
-          for(int i = 0; i < 2; i++)
-            List_Read($12, i, &d[i]);
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double dir[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetCylinder(pt, dir, d[0], d[1], t);
-          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
-          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
-        }
-      }
-      else if(!strcmp($2, "Cylinder") && List_Nbr($12) == 3){
-        int t = (int)$4;
-        if(FindLevelSet(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d[3];
-          for(int i = 0; i < 3; i++)
-            List_Read($12, i, &d[i]);
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double dir[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetCylinder(pt, dir, d[0], d[1], d[2], t);
-          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
-          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
-        }
-      }
-      else if(!strcmp($2, "Ellipsoid") && List_Nbr($12) == 3){
-        int t = (int)$4;
-        if(FindLevelSet(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d[3];
-          for(int i = 0; i < 3; i++)
-            List_Read($12, i, &d[i]);
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double dir[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetEllipsoid(pt, dir, d[0], d[1], d[2], t);
-          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
-          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
-        }
-      }
-      else if(!strcmp($2, "Quadric") && List_Nbr($12) == 5){
-        int t = (int)$4;
-        if(FindLevelSet(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double d[5];
-          for(int i = 0; i < 5; i++)
-            List_Read($12, i, &d[i]);
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double dir[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetGeneralQuadric(pt, dir, d[0], d[1],
-                                                      d[2], d[3], d[4], t);
-          LevelSet *l = Create_LevelSet(ls->getTag(), ls);
-          Tree_Add(GModel::current()->getGEOInternals()->LevelSets, &l);
-        }
-      }
-      else
-        yymsg(0, "Wrong levelset definition (%d)", $4);
       Free($2);
 #endif
     }
@@ -4208,6 +4291,25 @@ Boolean :
       }
       List_Delete($3);
       List_Delete($7);
+    }
+;
+
+BooleanShape :
+    BooleanOperator '(' FExpr ')' tAFFECT '{' ListOfShapes BooleanOption '}' '{' ListOfShapes BooleanOption '}' tEND
+    {
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> shape[4], tool[4];
+        for(int i = 0; i < List_Nbr($7); i++){
+          Shape s; List_Read($7, i, &s); shape[3].push_back(s.Num);
+        }
+        for(int i = 0; i < List_Nbr($11); i++){
+          Shape s; List_Read($11, i, &s); tool[3].push_back(s.Num);
+        }
+        GModel::current()->getOCCInternals()->applyBooleanOperator
+          ((int)$3, shape, tool, (OCC_Internals::BooleanOperator)$1, $8, $12);
+      }
+      List_Delete($7);
+      List_Delete($11);
     }
 
 //  M E S H I N G   C O N S T R A I N T S   ( T R A N S F I N I T E ,   . . . )

@@ -23,7 +23,6 @@ template <class scalar> class simpleFunction;
 class FM_Internals;
 class GEO_Internals;
 class OCC_Internals;
-class SGEOM_Internals;
 class ACIS_Internals;
 class smooth_normals;
 class FieldManager;
@@ -39,7 +38,6 @@ class GModel
 {
  private:
   friend class OCCFactory;
-  friend class SGEOMFactory;
   std::multimap<std::pair<std::vector<int>, std::vector<int> >,
                 std::pair<std::string, std::vector<int> > > _homologyRequests;
   std::set<GRegion*, GEntityLessThan> _chainRegions;
@@ -95,10 +93,6 @@ class GModel
   OCC_Internals *_occ_internals;
   void _createOCCInternals();
   void _deleteOCCInternals();
-
-  // SGEOM model internal data
-  SGEOM_Internals *_sgeom_internals;
-  void _deleteSGEOMInternals();
 
   // ACIS model internal data
   ACIS_Internals *_acis_internals;
@@ -216,7 +210,6 @@ class GModel
   // access internal CAD representations
   GEO_Internals *getGEOInternals(){ return _geo_internals; }
   OCC_Internals *getOCCInternals(){ return _occ_internals; }
-  SGEOM_Internals *getSGEOMInternals(){ return _sgeom_internals; }
   FM_Internals *getFMInternals() { return _fm_internals; }
   ACIS_Internals *getACISInternals(){ return _acis_internals; }
 

@@ -34,6 +34,275 @@
 #include <Geom_Circle.hxx>
 #include <Geom_TrimmedCurve.hxx>
 
+int OCC_Internals::_getMaxTag(int dim) const
+{
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
+  int ret = 0;
+  switch(dim){
+  case 0: exp.Initialize(_tagVertex); break;
+  case 1: exp.Initialize(_tagEdge); break;
+  case 2: exp.Initialize(_tagFace); break;
+  default: exp.Initialize(_tagSolid); break;
+  }
+  for(; exp.More(); exp.Next())
+    ret = std::max(ret, exp.Key());
+  return ret;
+}
+
+void OCC_Internals::addVertex(int tag, double x, double y, double z)
+{
+  if(tag > 0 && _tagVertex.IsBound(tag)){
+    Msg::Error("OCC vertex with tag %d already exists", tag);
+    return;
+  }
+  TopoDS_Vertex result;
+  try{
+    gp_Pnt aPnt;
+    aPnt = gp_Pnt(x, y, z);
+    BRepBuilderAPI_MakeVertex mkVertex(aPnt);
+    result = mkVertex.Vertex();
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OCC %s", err.GetMessageString());
+    return;
+  }
+  if(tag <= 0) tag = _getMaxTag(0) + 1;
+  bind(result, tag);
+}
+
+void OCC_Internals::addCircleArc(int tag, int startTag, int centerTag, int endTag)
+{
+  if(tag > 0 && _tagEdge.IsBound(tag)){
+    Msg::Error("OCC edge with tag %d already exists", tag);
+    return;
+  }
+  if(!_tagVertex.IsBound(startTag)){
+    Msg::Error("Unknown OCC vertex with tag %d", startTag);
+    return;
+  }
+  if(!_tagVertex.IsBound(centerTag)){
+    Msg::Error("Unknown OCC vertex with tag %d", centerTag);
+    return;
+  }
+  if(!_tagVertex.IsBound(endTag)){
+    Msg::Error("Unknown OCC vertex with tag %d", endTag);
+    return;
+  }
+
+  TopoDS_Edge result;
+  try{
+    TopoDS_Vertex start = TopoDS::Vertex(_tagVertex.Find(startTag));
+    TopoDS_Vertex center = TopoDS::Vertex(_tagVertex.Find(centerTag));
+    TopoDS_Vertex end = TopoDS::Vertex(_tagVertex.Find(endTag));
+    gp_Pnt aP1 = BRep_Tool::Pnt(start);
+    gp_Pnt aP2 = BRep_Tool::Pnt(center);
+    gp_Pnt aP3 = BRep_Tool::Pnt(end);
+    Standard_Real Radius = aP1.Distance(aP2);
+    gce_MakeCirc MC(aP2, gce_MakePln(aP1, aP2, aP3).Value(), Radius);
+    const gp_Circ &Circ = MC.Value();
+    Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
+    Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
+    Handle(Geom_Circle) C = new Geom_Circle(Circ);
+    Handle(Geom_TrimmedCurve) arc = new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
+    result = BRepBuilderAPI_MakeEdge(arc, start, end).Edge();
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OCC %s", err.GetMessageString());
+    return;
+  }
+  if(tag <= 0) tag = _getMaxTag(1) + 1;
+  bind(result, tag);
+}
+
+void OCC_Internals::addSphere(int tag, double xc, double yc, double zc, double radius)
+{
+  if(tag > 0 && _tagSolid.IsBound(tag)){
+    Msg::Error("OCC region with tag %d already exists", tag);
+    return;
+  }
+
+  TopoDS_Solid result;
+  try{
+    gp_Pnt aP(xc, yc, zc);
+    result = TopoDS::Solid(BRepPrimAPI_MakeSphere(aP, radius).Shape());
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OCC %s", err.GetMessageString());
+    return;
+  }
+  if(tag <= 0) tag = _getMaxTag(3) + 1;
+  bind(result, tag);
+}
+
+void OCC_Internals::addBlock(int tag, double x1, double y1, double z1,
+                             double x2, double y2, double z2)
+{
+  if(tag > 0 && _tagSolid.IsBound(tag)){
+    Msg::Error("OCC region with tag %d already exists", tag);
+    return;
+  }
+
+  TopoDS_Solid result;
+  try{
+    gp_Pnt P1(x1, y1, z1);
+    gp_Pnt P2(x2, y2, z2);
+    result = TopoDS::Solid(BRepPrimAPI_MakeBox(P1, P2).Shape());
+    //BRepPrimAPI_MakeBox(P1, dx, dy, dz);
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OCC %s", err.GetMessageString());
+    return;
+  }
+  if(tag <= 0) tag = _getMaxTag(3) + 1;
+  bind(result, tag);
+}
+
+void OCC_Internals::addCylinder(int tag, double x1, double y1, double z1,
+                                double x2, double y2, double z2, double r)
+{
+  if(tag > 0 && _tagSolid.IsBound(tag)){
+    Msg::Error("OCC region with tag %d already exists", tag);
+    return;
+  }
+
+  const double H = sqrt((x2 - x1) * (x2 - x1) +
+                        (y2 - y1) * (y2 - y1) +
+                        (z2 - z1) * (z2 - z1));
+  TopoDS_Solid result;
+  try{
+    gp_Pnt aP(x1, y1, z1);
+    gp_Vec aV((x2 - x1) / H, (y2 - y1) / H, (z2 - z1) / H);
+    gp_Ax2 anAxes(aP, aV);
+    result = TopoDS::Solid(BRepPrimAPI_MakeCylinder(anAxes, r, H).Shape());
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OCC %s", err.GetMessageString());
+    return;
+  }
+  if(tag <= 0) tag = _getMaxTag(3) + 1;
+  bind(result, tag);
+}
+
+void OCC_Internals::addThruSections(int tag, std::vector<std::vector<int> > edgeTags)
+{
+  if(tag > 0 && _tagSolid.IsBound(tag)){
+    Msg::Error("OCC region with tag %d already exists", tag);
+    return;
+  }
+
+  TopoDS_Solid result;
+  try{
+    BRepOffsetAPI_ThruSections aGenerator(Standard_True); // create solid
+    for (unsigned i = 0; i < edgeTags.size(); i++) {
+      BRepBuilderAPI_MakeWire wire_maker;
+      for (unsigned j = 0; j < edgeTags[i].size(); j++) {
+        if(!_tagEdge.IsBound(edgeTags[i][j])){
+          Msg::Error("Unknown OCC edge with tag %d", edgeTags[i][j]);
+          return;
+        }
+        TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(edgeTags[i][j]));
+        wire_maker.Add(edge);
+      }
+      aGenerator.AddWire(wire_maker.Wire());
+    }
+    aGenerator.CheckCompatibility(Standard_False);
+    aGenerator.Build();
+    result = TopoDS::Solid(aGenerator.Shape());
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OCC %s", err.GetMessageString());
+    return;
+  }
+  if(tag <= 0) tag = _getMaxTag(3) + 1;
+  bind(result, tag);
+}
+
+std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
+                                                     std::vector<int> shapeTags[4],
+                                                     std::vector<int> toolTags[4],
+                                                     BooleanOperator op,
+                                                     bool removeShape, bool removeTool)
+{
+  std::vector<int> out;
+
+  if(tag > 0 && _tagSolid.IsBound(tag)){
+    Msg::Error("OCC region with tag %d already exists", tag);
+    return out;
+  }
+
+  if(shapeTags[3].size() == 1 && toolTags[3].size() == 1){
+    TopoDS_Shape result;
+    if(!_tagSolid.IsBound(shapeTags[3][0])){
+      Msg::Error("Unknown OCC region with tag %d", shapeTags[3][0]);
+      return out;
+    }
+    if(!_tagSolid.IsBound(toolTags[3][0])){
+      Msg::Error("Unknown OCC region with tag %d", toolTags[3][0]);
+      return out;
+    }
+    try{
+      TopoDS_Solid shape = TopoDS::Solid(_tagSolid.Find(shapeTags[3][0]));
+      TopoDS_Solid tool = TopoDS::Solid(_tagSolid.Find(toolTags[3][0]));
+      switch(op){
+      case OCC_Internals::Fuse :
+        {
+          BRepAlgoAPI_Fuse BO(shape, tool);
+          if(!BO.IsDone()) {
+            Msg::Error("Fuse operation cannot be performed");
+          }
+          result = BO.Shape();
+        }
+        break;
+      case OCC_Internals::Intersection :
+        {
+          BRepAlgoAPI_Common BO(shape, tool);
+          if(!BO.IsDone()) {
+            Msg::Error("Intersection operation cannot be performed");
+
+          }
+          result = BO.Shape();
+        }
+        break;
+      case OCC_Internals::Cut :
+      default:
+        {
+          BRepAlgoAPI_Cut BO(shape, tool);
+          if(!BO.IsDone()) {
+            Msg::Error("Cut operation cannot be performed");
+          }
+          result = BO.Shape();
+        }
+        break;
+      }
+      if(removeShape) unbind(shape, shapeTags[3][0]);
+      if(removeTool) unbind(tool, toolTags[3][0]);
+    }
+    catch(Standard_Failure &err){
+      Msg::Error("OCC %s", err.GetMessageString());
+      return out;
+    }
+    TopExp_Explorer exp0;
+    bool first = true;
+    for(exp0.Init(result, TopAbs_SOLID); exp0.More(); exp0.Next()){
+      if(tag <= 0){
+        int t = _getMaxTag(3) + 1;
+        bind(TopoDS::Solid(exp0.Current()), t);
+        out.push_back(t);
+      }
+      else if(first){
+        bind(TopoDS::Solid(exp0.Current()), tag);
+        out.push_back(tag);
+      }
+      else
+        Msg::Error("Cannot bind multiple regions to single tag %d", tag);
+    }
+  }
+  else{
+    Msg::Error("General boolean operation not implemented yet");
+  }
+  return out;
+}
+
 void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
 {
   // Solids
@@ -185,190 +454,131 @@ void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
   }
 }
 
-void OCC_Internals::addVertex(int tag, double x, double y, double z)
+void OCC_Internals::importOCCInternals(GModel *model)
 {
-  if(_tagVertex.IsBound(tag)){
-    Msg::Error("OCC vertex with tag %d already exists", tag);
-    return;
-  }
-  TopoDS_Vertex result;
-  try{
-    gp_Pnt aPnt;
-    aPnt = gp_Pnt(x, y, z);
-    BRepBuilderAPI_MakeVertex mkVertex(aPnt);
-    result = mkVertex.Vertex();
-  }
-  catch(Standard_Failure &err){
-    Msg::Error("OCC %s", err.GetMessageString());
-    return;
-  }
-  bind(result, tag);
-}
+  int vTagMax = std::max(model->getMaxElementaryNumber(0), _getMaxTag(0));
+  int eTagMax = std::max(model->getMaxElementaryNumber(1), _getMaxTag(1));
+  int fTagMax = std::max(model->getMaxElementaryNumber(2), _getMaxTag(2));
+  int rTagMax = std::max(model->getMaxElementaryNumber(3), _getMaxTag(3));
 
-void OCC_Internals::addCircleArc(int tag, int startTag, int centerTag, int endTag)
-{
-  if(_tagEdge.IsBound(tag)){
-    Msg::Error("OCC edge with tag %d already exists", tag);
-    return;
-  }
-  if(!_tagVertex.IsBound(startTag)){
-    Msg::Error("Unknown OCC vertex with tag %d", startTag);
-    return;
-  }
-  if(!_tagVertex.IsBound(centerTag)){
-    Msg::Error("Unknown OCC vertex with tag %d", centerTag);
-    return;
-  }
-  if(!_tagVertex.IsBound(endTag)){
-    Msg::Error("Unknown OCC vertex with tag %d", endTag);
-    return;
-  }
+  _somap.Clear();
+  _shmap.Clear();
+  _fmap.Clear();
+  _wmap.Clear();
+  _emap.Clear();
+  _vmap.Clear();
 
-  TopoDS_Edge result;
-  try{
-    TopoDS_Vertex start = TopoDS::Vertex(_tagVertex.Find(startTag));
-    TopoDS_Vertex center = TopoDS::Vertex(_tagVertex.Find(centerTag));
-    TopoDS_Vertex end = TopoDS::Vertex(_tagVertex.Find(endTag));
-    gp_Pnt aP1 = BRep_Tool::Pnt(start);
-    gp_Pnt aP2 = BRep_Tool::Pnt(center);
-    gp_Pnt aP3 = BRep_Tool::Pnt(end);
-    Standard_Real Radius = aP1.Distance(aP2);
-    gce_MakeCirc MC(aP2, gce_MakePln(aP1, aP2, aP3).Value(), Radius);
-    const gp_Circ &Circ = MC.Value();
-    Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
-    Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
-    Handle(Geom_Circle) C = new Geom_Circle(Circ);
-    Handle(Geom_TrimmedCurve) arc = new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
-    result = BRepBuilderAPI_MakeEdge(arc, start, end).Edge();
-  }
-  catch(Standard_Failure &err){
-    Msg::Error("OCC %s", err.GetMessageString());
-    return;
-  }
-  bind(result, tag);
-}
+  // iterate over all shapes with tags, and import them into the (sub)shape _maps
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
+  for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp1(_tagEdge);
+  for(; exp1.More(); exp1.Next()) _addShapeToMaps(exp1.Value());
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp2(_tagFace);
+  for(; exp2.More(); exp2.Next()) _addShapeToMaps(exp2.Value());
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp3(_tagSolid);
+  for(; exp3.More(); exp3.Next()) _addShapeToMaps(exp3.Value());
 
-void OCC_Internals::addSphere(int tag, double xc, double yc, double zc, double radius)
-{
-  if(_tagSolid.IsBound(tag)){
-    Msg::Error("OCC region with tag %d already exists", tag);
-    return;
-  }
+  // import all shapes in _maps into the GModel, preserving all explicit tags
 
-  TopoDS_Solid result;
-  try{
-    gp_Pnt aP(xc, yc, zc);
-    result = TopoDS::Solid(BRepPrimAPI_MakeSphere(aP, radius).Shape());
-  }
-  catch(Standard_Failure &err){
-    Msg::Error("OCC %s", err.GetMessageString());
-    return;
-  }
-  bind(result, tag);
-}
-
-void OCC_Internals::addThruSections(int tag, std::vector<std::vector<int> > edgeTags)
-{
-  if(_tagSolid.IsBound(tag)){
-    Msg::Error("OCC region with tag %d already exists", tag);
-    return;
-  }
-
-  TopoDS_Solid result;
-  try{
-    BRepOffsetAPI_ThruSections aGenerator(Standard_True); // create solid
-    for (unsigned i = 0; i < edgeTags.size(); i++) {
-      BRepBuilderAPI_MakeWire wire_maker;
-      for (unsigned j = 0; j < edgeTags[i].size(); j++) {
-        if(!_tagEdge.IsBound(edgeTags[i][j])){
-          Msg::Error("Unknown OCC edge with tag %d", edgeTags[i][j]);
-          return;
-        }
-        TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(edgeTags[i][j]));
-        wire_maker.Add(edge);
+  for(int i = 1; i <= _vmap.Extent(); i++){
+    TopoDS_Vertex vertex = TopoDS::Vertex(_vmap(i));
+    if(!getOCCVertexByNativePtr(model, vertex)){
+      int tag;
+      if(_vertexTag.IsBound(vertex)){
+        tag = _vertexTag.Find(vertex);
       }
-      aGenerator.AddWire(wire_maker.Wire());
-    }
-    aGenerator.CheckCompatibility(Standard_False);
-    aGenerator.Build();
-    result = TopoDS::Solid(aGenerator.Shape());
-  }
-  catch(Standard_Failure &err){
-    Msg::Error("OCC %s", err.GetMessageString());
-    return;
-  }
-  bind(result, tag);
-}
-
-int OCC_Internals::_getMaxTag(int dim) const
-{
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
-  int ret = 0;
-  switch(dim){
-  case 0: exp.Initialize(_tagVertex); break;
-  case 1: exp.Initialize(_tagEdge); break;
-  case 2: exp.Initialize(_tagFace); break;
-  default: exp.Initialize(_tagSolid); break;
-  }
-  for(; exp.More(); exp.Next())
-    ret = std::max(ret, exp.Key());
-  return ret;
-}
-
-void OCC_Internals::applyBooleanOperator(int tag,
-                                         std::vector<int> shapeTags[4],
-                                         std::vector<int> toolTags[4],
-                                         BooleanOperator op,
-                                         bool removeShape, bool removeTool)
-{
-  if(tag > 0 && _tagSolid.IsBound(tag)){
-    Msg::Error("OCC region with tag %d already exists", tag);
-    return;
-  }
-
-  if(shapeTags[3].size() == 1 && toolTags[3].size() == 1){
-    TopoDS_Shape result;
-    if(!_tagSolid.IsBound(shapeTags[3][0])){
-      Msg::Error("Unknown OCC region with tag %d", shapeTags[3][0]);
-      return;
-    }
-    if(!_tagSolid.IsBound(toolTags[3][0])){
-      Msg::Error("Unknown OCC region with tag %d", toolTags[3][0]);
-      return;
-    }
-    try{
-      TopoDS_Solid shape = TopoDS::Solid(_tagSolid.Find(shapeTags[3][0]));
-      TopoDS_Solid tool = TopoDS::Solid(_tagSolid.Find(toolTags[3][0]));
-      BRepAlgoAPI_Fuse BO(shape, tool);
-      if(!BO.IsDone()) {
-        Msg::Error("Fuse operation can not be performed on the given shapes");
+      else{
+        tag = vTagMax + 1;
+        vTagMax++;
       }
-      result = BO.Shape();
-      if(removeShape) unbind(shape, shapeTags[3][0]);
-      if(removeTool) unbind(tool, toolTags[3][0]);
-    }
-    catch(Standard_Failure &err){
-      Msg::Error("OCC %s", err.GetMessageString());
-      return;
-    }
-    TopExp_Explorer exp0;
-    bool first = true;
-    for(exp0.Init(result, TopAbs_SOLID); exp0.More(); exp0.Next()){
-      if(tag < 0)
-        bind(TopoDS::Solid(exp0.Current()), _getMaxTag(3) + 1);
-      else if(first)
-        bind(TopoDS::Solid(exp0.Current()), tag);
-      else
-        Msg::Error("Cannot bind multiple regions to single tag %d", tag);
+      model->add(new OCCVertex(model, tag, vertex));
     }
   }
-  else{
-    Msg::Error("General boolean operation not implemented yet!");
+
+  // building geom edges
+  for(int i = 1; i <= _emap.Extent(); i++){
+    TopoDS_Edge edge = TopoDS::Edge(_emap(i));
+    if(!getOCCEdgeByNativePtr(model, edge)){
+      GVertex *v1 = getOCCVertexByNativePtr(model, TopExp::FirstVertex(edge));
+      GVertex *v2 = getOCCVertexByNativePtr(model, TopExp::LastVertex(edge));
+      int tag;
+      if(_edgeTag.IsBound(edge)){
+        tag = _edgeTag.Find(edge);
+      }
+      else{
+        tag = eTagMax + 1;
+        eTagMax++;
+      }
+      model->add(new OCCEdge(model, edge, tag, v1, v2));
+    }
+  }
+
+  // building geom faces
+  for(int i = 1; i <= _fmap.Extent(); i++){
+    TopoDS_Face face = TopoDS::Face(_fmap(i));
+    if(!getOCCFaceByNativePtr(model, face)){
+      int tag;
+      if(_faceTag.IsBound(face)){
+        tag = _faceTag.Find(face);
+      }
+      else{
+        tag = fTagMax + 1;
+        fTagMax++;
+      }
+      model->add(new OCCFace(model, face, tag));
+    }
+  }
+
+  // building geom regions
+  for(int i = 1; i <= _somap.Extent(); i++){
+    TopoDS_Solid region = TopoDS::Solid(_somap(i));
+    if(!getOCCRegionByNativePtr(model, region)){
+      int tag;
+      if(_solidTag.IsBound(region)){
+        tag = _solidTag(region);
+      }
+      else{
+        tag = rTagMax + 1;
+        rTagMax++;
+      }
+      model->add(new OCCRegion(model, region, tag));
+    }
   }
 }
 
+int GModel::importOCCInternals()
+{
+  _occ_internals->importOCCInternals(this);
+  return 1;
+}
 
-void addSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList);
+
+// FIXME ***************** old ************************
+
+void addSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList)
+{
+  if(theShape.ShapeType() != TopAbs_COMPOUND &&
+     theShape.ShapeType() != TopAbs_COMPSOLID) {
+    theList.Append(theShape);
+    return;
+  }
+
+  TopTools_MapOfShape mapShape;
+  TopoDS_Iterator It(theShape, Standard_True, Standard_True);
+
+  for(; It.More(); It.Next()) {
+    TopoDS_Shape aShape_i = It.Value();
+    if(mapShape.Add(aShape_i)) {
+      if(aShape_i.ShapeType() == TopAbs_COMPOUND ||
+         aShape_i.ShapeType() == TopAbs_COMPSOLID) {
+        addSimpleShapes(aShape_i, theList);
+      }
+      else {
+        theList.Append(aShape_i);
+      }
+    }
+  }
+}
 
 void OCC_Internals::buildLists()
 {
@@ -989,128 +1199,6 @@ void OCC_Internals::buildGModel(GModel *model)
   }
 }
 
-int GModel::importOCCInternals()
-{
-  _occ_internals->importOCCInternals(this);
-  return 1;
-}
-
-void OCC_Internals::importOCCInternals(GModel *model)
-{
-  int vTagMax = std::max(model->getMaxElementaryNumber(0), _getMaxTag(0));
-  int eTagMax = std::max(model->getMaxElementaryNumber(1), _getMaxTag(1));
-  int fTagMax = std::max(model->getMaxElementaryNumber(2), _getMaxTag(2));
-  int rTagMax = std::max(model->getMaxElementaryNumber(3), _getMaxTag(3));
-
-  _somap.Clear();
-  _shmap.Clear();
-  _fmap.Clear();
-  _wmap.Clear();
-  _emap.Clear();
-  _vmap.Clear();
-
-  // iterate over all shapes with tags, and import them into the (sub)shape _maps
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
-  for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp1(_tagEdge);
-  for(; exp1.More(); exp1.Next()) _addShapeToMaps(exp1.Value());
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp2(_tagFace);
-  for(; exp2.More(); exp2.Next()) _addShapeToMaps(exp2.Value());
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp3(_tagSolid);
-  for(; exp3.More(); exp3.Next()) _addShapeToMaps(exp3.Value());
-
-  // import all shapes in _maps into the GModel, preserving all explicit tags
-
-  for(int i = 1; i <= _vmap.Extent(); i++){
-    TopoDS_Vertex vertex = TopoDS::Vertex(_vmap(i));
-    if(!getOCCVertexByNativePtr(model, vertex)){
-      int tag;
-      if(_vertexTag.IsBound(vertex)){
-        tag = _vertexTag.Find(vertex);
-      }
-      else{
-        tag = vTagMax + 1;
-        vTagMax++;
-      }
-      model->add(new OCCVertex(model, tag, vertex));
-    }
-  }
-
-  // building geom edges
-  for(int i = 1; i <= _emap.Extent(); i++){
-    TopoDS_Edge edge = TopoDS::Edge(_emap(i));
-    if(!getOCCEdgeByNativePtr(model, edge)){
-      GVertex *v1 = getOCCVertexByNativePtr(model, TopExp::FirstVertex(edge));
-      GVertex *v2 = getOCCVertexByNativePtr(model, TopExp::LastVertex(edge));
-      int tag;
-      if(_edgeTag.IsBound(edge)){
-        tag = _edgeTag.Find(edge);
-      }
-      else{
-        tag = eTagMax + 1;
-        eTagMax++;
-      }
-      model->add(new OCCEdge(model, edge, tag, v1, v2));
-    }
-  }
-
-  // building geom faces
-  for(int i = 1; i <= _fmap.Extent(); i++){
-    TopoDS_Face face = TopoDS::Face(_fmap(i));
-    if(!getOCCFaceByNativePtr(model, face)){
-      int tag;
-      if(_faceTag.IsBound(face)){
-        tag = _faceTag.Find(face);
-      }
-      else{
-        tag = fTagMax + 1;
-        fTagMax++;
-      }
-      model->add(new OCCFace(model, face, tag));
-    }
-  }
-
-  // building geom regions
-  for(int i = 1; i <= _somap.Extent(); i++){
-    TopoDS_Solid region = TopoDS::Solid(_somap(i));
-    if(!getOCCRegionByNativePtr(model, region)){
-      int tag;
-      if(_solidTag.IsBound(region)){
-        tag = _solidTag(region);
-      }
-      else{
-        tag = rTagMax + 1;
-        rTagMax++;
-      }
-      model->add(new OCCRegion(model, region, tag));
-    }
-  }
-}
-
-void addSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList)
-{
-  if(theShape.ShapeType() != TopAbs_COMPOUND &&
-     theShape.ShapeType() != TopAbs_COMPSOLID) {
-    theList.Append(theShape);
-    return;
-  }
-
-  TopTools_MapOfShape mapShape;
-  TopoDS_Iterator It(theShape, Standard_True, Standard_True);
-
-  for(; It.More(); It.Next()) {
-    TopoDS_Shape aShape_i = It.Value();
-    if(mapShape.Add(aShape_i)) {
-      if(aShape_i.ShapeType() == TopAbs_COMPOUND ||
-         aShape_i.ShapeType() == TopAbs_COMPSOLID) {
-        addSimpleShapes(aShape_i, theList);
-      }
-      else {
-        theList.Append(aShape_i);
-      }
-    }
-  }
-}
 
 void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op)
 {

@@ -299,20 +299,4 @@ class OCCFactory : public GModelFactory {
 
 #endif
 
-#if defined(HAVE_SGEOM) && defined(HAVE_OCC)
-
-class SGEOMFactory : public GModelFactory {
- public:
-  SGEOMFactory(){}
-  GVertex *addVertex(GModel *gm,double x, double y, double z, double lc);
-  GEdge *addLine(GModel *gm,GVertex *v1, GVertex *v2);
-  GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges);
-  GFace *addPlanarFace(GModel *gm, const std::vector<std::vector<GEdgeSigned> > &edges);
-  GRegion *addVolume(GModel *gm, std::vector<std::vector<GFace *> > faces);
-  void healGeometry(GModel *gm, double tolerance = -1.);
-};
-
-#endif
-
-
 #endif

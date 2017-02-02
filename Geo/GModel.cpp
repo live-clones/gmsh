@@ -66,8 +66,8 @@ GModel::GModel(std::string name)
   : _maxVertexNum(0), _maxElementNum(0),
     _checkPointedMaxVertexNum(0), _checkPointedMaxElementNum(0),
     _name(name), _visible(1), _octree(0), _geo_internals(0),
-    _occ_internals(0), _sgeom_internals(0), _acis_internals(0),
-    _fm_internals(0), _factory(0), _fields(0), _currentMeshEntity(0),
+    _occ_internals(0), _acis_internals(0), _fm_internals(0),
+    _factory(0), _fields(0), _currentMeshEntity(0),
     normals(0)
 {
   partitionSize[0] = 0; partitionSize[1] = 0;
@@ -84,9 +84,7 @@ GModel::GModel(std::string name)
 
   _createOCCInternals();
 
-#if defined(HAVE_OCC) && defined(HAVE_SGEOM)
-  setFactory("SGEOM");
-#elif defined(HAVE_OCC)
+#if defined(HAVE_OCC)
   setFactory("OpenCASCADE");
 #else
   setFactory("Gmsh");
@@ -160,15 +158,7 @@ int GModel::setCurrent(GModel *m)
 void GModel::setFactory(std::string name)
 {
   if(_factory) delete _factory;
-  if(name == "SGEOM"){
-#if defined(HAVE_OCC) && defined(HAVE_SGEOM)
-    _factory = new SGEOMFactory();
-#else
-    Msg::Error("Missing OpenCASCADE or SGEOM support: using Gmsh GEO factory instead");
-    _factory = new GeoFactory();
-#endif
-  }
-  else if(name == "OpenCASCADE"){
+  if(name == "OpenCASCADE"){
 #if defined(HAVE_OCC)
     _factory = new OCCFactory();
 #else

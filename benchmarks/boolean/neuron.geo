@@ -27,7 +27,6 @@ Macro dendrite
 Return
 
 Sphere(1) = {0, 0, 0, 8};
-Sphere(2) = {0, 0, 32, 8};
 
 reg() = {};
 nump = 0; numc = 0; numr = 2;
@@ -35,7 +34,25 @@ For x In{-4:4:4}
   Call dendrite;
 EndFor
 
-BooleanUnion{ Volume{1}; Delete; }{ Volume{reg(0)}; Delete; }
-BooleanUnion{ Volume{numr+1}; Delete; }{ Volume{reg(1)}; Delete; }
-BooleanUnion{ Volume{numr+1}; Delete; }{ Volume{reg(2)}; Delete; }
-BooleanUnion{ Volume{3}; Delete; }{ Volume{2}; Delete; }
+DefineConstant[
+  op = {0, Choices{0="None", 1="Union", 2="Intersection", 3="Subtraction"},
+    Name "Boolean operation" }
+];
+
+// boolean operations can explicitly create an entity with the form
+// "op(tag)={}{};", or let Gmsh decide with the form "op{}{}". The first form
+// can only be used if the result of the boolean operation is a single
+// shape. Only the second form returns the list of created entities.
+If(op == 1)
+  BooleanUnion(100) = { Volume{1}; Delete; }{ Volume{reg(0)}; Delete; };
+  BooleanUnion(101) = { Volume{100}; Delete; }{ Volume{reg(1)}; Delete; };
+  BooleanUnion(102) = { Volume{101}; Delete; }{ Volume{reg(2)}; Delete; };
+ElseIf(op == 2)
+  BooleanIntersection(100) = { Volume{1}; }{ Volume{reg(0)}; Delete; };
+  BooleanIntersection(101) = { Volume{1}; }{ Volume{reg(1)}; Delete; };
+  BooleanIntersection(102) = { Volume{1}; Delete; }{ Volume{reg(2)}; Delete; };
+ElseIf(op == 3)
+  BooleanSubtraction(100) = { Volume{1}; Delete; }{ Volume{reg(0)}; Delete; };
+  BooleanSubtraction(101) = { Volume{100}; Delete; }{ Volume{reg(1)}; Delete; };
+  BooleanSubtraction(102) = { Volume{101}; Delete; }{ Volume{reg(2)}; Delete; };
+EndIf

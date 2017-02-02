@@ -119,6 +119,7 @@ ArcTan2                 return tAtan2;
 
 Betti                   return tBetti;
 Bezier			return tBezier;
+Block                   return tBlock;
 BSpline			return tBSpline;
 BooleanUnion            return tBooleanUnion;
 BooleanIntersection     return tBooleanIntersection;
@@ -132,6 +133,7 @@ CopyOptions             return tCopyOptions;
 Coherence               return tCoherence;
 Cohomology              return tCohomology;
 Combine                 return tCombine;
+Cone                    return tCone;
 Cosh                    return tCosh;
 Cos                     return tCos;
 Characteristic          return tCharacteristic;
@@ -147,6 +149,7 @@ CreateTopologyNoHoles   return tCreateTopologyNoHoles;
 Cpu                     return tCpu;
 CurrentDirectory        return tCurrentDirectory;
 CurrentDir              return tCurrentDirectory;
+Cylinder                return tCylinder;
 
 DefineConstant          return tDefineConstant;
 DefineNumber            return tDefineNumber;
@@ -161,6 +164,7 @@ SetChanged              return tSetChanged;
 Exp                     return tExp;
 Ellipsis                return tEllipse;
 Ellipse                 return tEllipse;
+Ellipsoid               return tEllipsoid;
 Else                    return tElse;
 ElseIf                  return tElseIf;
 Extrude                 return tExtrude;
@@ -241,9 +245,9 @@ PolarSphere             return tPolarSphere;
 Printf                  return tPrintf;
 Plugin                  return tPlugin;
 
+Quadric                 return tQuadric;
 Quad[tT]ri[aA]dd[vV]erts        return tQuadTriAddVerts;
 Quad[tT]ri[nN]o[nN]ew[vV]erts   return tQuadTriNoNewVerts;
-
 Quad[tT]ri[dD]bl        return tQuadTriDbl;
 Quad[tT]ri[sS]ngl       return tQuadTriSngl;
 
