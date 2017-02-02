@@ -543,7 +543,7 @@ void meshGEdge::operator() (GEdge *ge)
     return;
   }
 
-  if (ge->model()->getNumEdges() > 1000){    
+  if (ge->model()->getNumEdges() > 1000){
     if (ge->tag() % 1000 == 1){
       Msg::Info("Meshing curve %d/%d (%s)", ge->tag(), ge->model()->getNumEdges(), ge->getTypeString().c_str());
       }
@@ -640,7 +640,6 @@ void meshGEdge::operator() (GEdge *ge)
     }
   }
 
-
   //printFandPrimitive(ge->tag(),Points);
 
   // if the curve is periodic and if the begin vertex is identical to
@@ -649,7 +648,11 @@ void meshGEdge::operator() (GEdge *ge)
   // curve. So, the mesh vertex and its associated geom vertex are not
   // necessary at the same location
   GPoint beg_p, end_p;
-  if(ge->getBeginVertex() == ge->getEndVertex() &&
+  if(!ge->getBeginVertex() && !ge->getEndVertex()){
+    Msg::Warning("Skipping curve with no begin nor end vertex");
+    return;
+  }
+  else if(ge->getBeginVertex() == ge->getEndVertex() &&
      ge->getBeginVertex()->edges().size() == 1){
     end_p = beg_p = ge->point(t_begin);
     Msg::Debug("Meshing periodic closed curve");

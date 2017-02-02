@@ -70,6 +70,35 @@ void OCC_Internals::addVertex(int tag, double x, double y, double z)
   bind(result, tag);
 }
 
+void OCC_Internals::addLine(int tag, int startTag, int endTag)
+{
+  if(tag > 0 && _tagEdge.IsBound(tag)){
+    Msg::Error("OCC edge with tag %d already exists", tag);
+    return;
+  }
+  if(!_tagVertex.IsBound(startTag)){
+    Msg::Error("Unknown OCC vertex with tag %d", startTag);
+    return;
+  }
+  if(!_tagVertex.IsBound(endTag)){
+    Msg::Error("Unknown OCC vertex with tag %d", endTag);
+    return;
+  }
+
+  TopoDS_Edge result;
+  try{
+    TopoDS_Vertex start = TopoDS::Vertex(_tagVertex.Find(startTag));
+    TopoDS_Vertex end = TopoDS::Vertex(_tagVertex.Find(endTag));
+    result = BRepBuilderAPI_MakeEdge(start, end).Edge();
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OCC %s", err.GetMessageString());
+    return;
+  }
+  if(tag <= 0) tag = _getMaxTag(1) + 1;
+  bind(result, tag);
+}
+
 void OCC_Internals::addCircleArc(int tag, int startTag, int centerTag, int endTag)
 {
   if(tag > 0 && _tagEdge.IsBound(tag)){

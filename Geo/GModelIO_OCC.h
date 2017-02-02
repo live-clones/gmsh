@@ -43,6 +43,7 @@ class OCC_Internals {
 
   // add shapes only using internal OCC data
   void addVertex(int tag, double x, double y, double z);
+  void addLine(int tag, int startTag, int endTag);
   void addCircleArc(int tag, int startTag, int centerTag, int endTag);
   void addSphere(int tag, double xc, double yc, double zc, double radius);
   void addBlock(int tag, double x1, double y1, double z1,
@@ -146,6 +147,7 @@ public:
   enum BooleanOperator { Intersection, Cut, Section, Fuse };
   OCC_Internals(){}
   void addVertex(int tag, double x, double y, double z){}
+  void addLine(int tag, int startTag, int endTag){}
   void addCircleArc(int tag, int tagStart, int tagCenter, int tagEnd){}
   void addSphere(int tag, double xc, double yc, double zc, double radius){};
   void addBlock(int tag, double x1, double y1, double z1,

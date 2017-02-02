@@ -378,29 +378,35 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
     //    printf("MSH_SEGM_LINE\n");
 #endif
     N = List_Nbr(c->Control_Points);
-    i = (int)((double)(N - 1) * u);
-    while(i >= N - 1)
-      i--;
-    while(i < 0)
-      i++;
-    t1 = (double)(i) / (double)(N - 1);
-    t2 = (double)(i + 1) / (double)(N - 1);
-    t = (u - t1) / (t2 - t1);
-    List_Read(c->Control_Points, i, &v[1]);
-    List_Read(c->Control_Points, i + 1, &v[2]);
-    if(!c->geometry){
-      V.Pos.X = v[1]->Pos.X + t * (v[2]->Pos.X - v[1]->Pos.X);
-      V.Pos.Y = v[1]->Pos.Y + t * (v[2]->Pos.Y - v[1]->Pos.Y);
-      V.Pos.Z = v[1]->Pos.Z + t * (v[2]->Pos.Z - v[1]->Pos.Z);
-      V.w = (1. - t) * v[1]->w + t * v[2]->w;
-      V.lc = (1. - t) * v[1]->lc + t * v[2]->lc;
+    if(N < 2){
+      Msg::Error("Line with less than 2 control points");
+      V.Pos.X = V.Pos.Y = V.Pos.Z = 0;
     }
     else{
-      SPoint2 p = v[1]->pntOnGeometry +  (v[2]->pntOnGeometry - v[1]->pntOnGeometry) * t;
-      SPoint3 pp = c->geometry->point(p);
-      V.Pos.X = pp.x();
-      V.Pos.Y = pp.y();
-      V.Pos.Z = pp.z();
+      i = (int)((double)(N - 1) * u);
+      while(i >= N - 1)
+        i--;
+      while(i < 0)
+        i++;
+      t1 = (double)(i) / (double)(N - 1);
+      t2 = (double)(i + 1) / (double)(N - 1);
+      t = (u - t1) / (t2 - t1);
+      List_Read(c->Control_Points, i, &v[1]);
+      List_Read(c->Control_Points, i + 1, &v[2]);
+      if(!c->geometry){
+        V.Pos.X = v[1]->Pos.X + t * (v[2]->Pos.X - v[1]->Pos.X);
+        V.Pos.Y = v[1]->Pos.Y + t * (v[2]->Pos.Y - v[1]->Pos.Y);
+        V.Pos.Z = v[1]->Pos.Z + t * (v[2]->Pos.Z - v[1]->Pos.Z);
+        V.w = (1. - t) * v[1]->w + t * v[2]->w;
+        V.lc = (1. - t) * v[1]->lc + t * v[2]->lc;
+      }
+      else{
+        SPoint2 p = v[1]->pntOnGeometry +  (v[2]->pntOnGeometry - v[1]->pntOnGeometry) * t;
+        SPoint3 pp = c->geometry->point(p);
+        V.Pos.X = pp.x();
+        V.Pos.Y = pp.y();
+        V.Pos.Z = pp.z();
+      }
     }
     break;
 
@@ -408,26 +414,33 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
   case MSH_SEGM_CIRC_INV:
   case MSH_SEGM_ELLI:
   case MSH_SEGM_ELLI_INV:
-    if(c->Typ == MSH_SEGM_CIRC_INV || c->Typ == MSH_SEGM_ELLI_INV) {
-      V.u = 1. - u;
-      u = V.u;
+    N = List_Nbr(c->Control_Points);
+    if(N < 2){
+      Msg::Error("Circle or ellipse with less than 2 control points");
+      V.Pos.X = V.Pos.Y = V.Pos.Z = 0;
     }
-    theta = c->Circle.t1 - (c->Circle.t1 - c->Circle.t2) * u;
-    theta -= c->Circle.incl; // for ellipses
-    V.Pos.X =
-      c->Circle.f1 * cos(theta) * cos(c->Circle.incl) -
-      c->Circle.f2 * sin(theta) * sin(c->Circle.incl);
-    V.Pos.Y =
-      c->Circle.f1 * cos(theta) * sin(c->Circle.incl) +
-      c->Circle.f2 * sin(theta) * cos(c->Circle.incl);
-    V.Pos.Z = 0.0;
-    Projette(&V, c->Circle.invmat);
-    List_Read(c->Control_Points, 1, &v[0]);
-    V.Pos.X += v[0]->Pos.X;
-    V.Pos.Y += v[0]->Pos.Y;
-    V.Pos.Z += v[0]->Pos.Z;
-    V.w = (1. - u) * c->beg->w + u * c->end->w;
-    V.lc = (1. - u) * c->beg->lc + u * c->end->lc;
+    else{
+      if(c->Typ == MSH_SEGM_CIRC_INV || c->Typ == MSH_SEGM_ELLI_INV) {
+        V.u = 1. - u;
+        u = V.u;
+      }
+      theta = c->Circle.t1 - (c->Circle.t1 - c->Circle.t2) * u;
+      theta -= c->Circle.incl; // for ellipses
+      V.Pos.X =
+        c->Circle.f1 * cos(theta) * cos(c->Circle.incl) -
+        c->Circle.f2 * sin(theta) * sin(c->Circle.incl);
+      V.Pos.Y =
+        c->Circle.f1 * cos(theta) * sin(c->Circle.incl) +
+        c->Circle.f2 * sin(theta) * cos(c->Circle.incl);
+      V.Pos.Z = 0.0;
+      Projette(&V, c->Circle.invmat);
+      List_Read(c->Control_Points, 1, &v[0]);
+      V.Pos.X += v[0]->Pos.X;
+      V.Pos.Y += v[0]->Pos.Y;
+      V.Pos.Z += v[0]->Pos.Z;
+      V.w = (1. - u) * c->beg->w + u * c->end->w;
+      V.lc = (1. - u) * c->beg->lc + u * c->end->lc;
+    }
     break;
 
   case MSH_SEGM_BSPLN:
@@ -443,56 +456,63 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
 
   case MSH_SEGM_SPLN:
     N = List_Nbr(c->Control_Points);
-    i = (int)((double)(N - 1) * u);
-    if(i < 0)
-      i = 0;
-    if(i >= N - 1)
-      i = N - 2;
-    t1 = (double)(i) / (double)(N - 1);
-    t2 = (double)(i + 1) / (double)(N - 1);
-    t = (u - t1) / (t2 - t1);
-    List_Read(c->Control_Points, i, &v[1]);
-    List_Read(c->Control_Points, i + 1, &v[2]);
-    if(!i) {
-      if(c->beg == c->end){
-        List_Read(c->Control_Points, N - 2, &v[0]);
+    if(N < 2){
+      Msg::Error("Spline with less than 2 control points");
+      V.Pos.X = V.Pos.Y = V.Pos.Z = 0;
+    }
+    else{
+      i = (int)((double)(N - 1) * u);
+      if(i < 0)
+        i = 0;
+      if(i >= N - 1)
+        i = N - 2;
+      t1 = (double)(i) / (double)(N - 1);
+      t2 = (double)(i + 1) / (double)(N - 1);
+      t = (u - t1) / (t2 - t1);
+      List_Read(c->Control_Points, i, &v[1]);
+      List_Read(c->Control_Points, i + 1, &v[2]);
+      if(!i) {
+        if(c->beg == c->end){
+          List_Read(c->Control_Points, N - 2, &v[0]);
+        }
+        else{
+          v[0] = &temp1;
+          v[0]->Pos.X = 2. * v[1]->Pos.X - v[2]->Pos.X;
+          v[0]->Pos.Y = 2. * v[1]->Pos.Y - v[2]->Pos.Y;
+          v[0]->Pos.Z = 2. * v[1]->Pos.Z - v[2]->Pos.Z;
+          v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
+        }
+      }
+      else {
+        List_Read(c->Control_Points, i - 1, &v[0]);
+      }
+      if(i == N - 2) {
+        if(c->beg == c->end){
+          List_Read(c->Control_Points, 1, &v[3]);
+        }
+        else{
+          v[3] = &temp2;
+          v[3]->Pos.X = 2. * v[2]->Pos.X - v[1]->Pos.X;
+          v[3]->Pos.Y = 2. * v[2]->Pos.Y - v[1]->Pos.Y;
+          v[3]->Pos.Z = 2. * v[2]->Pos.Z - v[1]->Pos.Z;
+          v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
+        }
+      }
+      else {
+        List_Read(c->Control_Points, i + 2, &v[3]);
+      }
+      if(c->geometry){
+        SPoint2 pp = InterpolateCubicSpline(v, t, c->mat, t1, t2,c->geometry,0);
+        SPoint3 pt = c->geometry->point(pp);
+        V.Pos.X = pt.x();
+        V.Pos.Y = pt.y();
+        V.Pos.Z = pt.z();
       }
       else{
-        v[0] = &temp1;
-        v[0]->Pos.X = 2. * v[1]->Pos.X - v[2]->Pos.X;
-        v[0]->Pos.Y = 2. * v[1]->Pos.Y - v[2]->Pos.Y;
-        v[0]->Pos.Z = 2. * v[1]->Pos.Z - v[2]->Pos.Z;
-        v[0]->pntOnGeometry = v[1]->pntOnGeometry * 2. - v[2]->pntOnGeometry;
+        InterpolateCatmullRom(v, t, V);
+        // V = InterpolateCubicSpline(v, t, c->mat, 0, t1, t2);
       }
     }
-    else {
-      List_Read(c->Control_Points, i - 1, &v[0]);
-    }
-    if(i == N - 2) {
-      if(c->beg == c->end){
-        List_Read(c->Control_Points, 1, &v[3]);
-      }
-      else{
-        v[3] = &temp2;
-        v[3]->Pos.X = 2. * v[2]->Pos.X - v[1]->Pos.X;
-        v[3]->Pos.Y = 2. * v[2]->Pos.Y - v[1]->Pos.Y;
-        v[3]->Pos.Z = 2. * v[2]->Pos.Z - v[1]->Pos.Z;
-        v[3]->pntOnGeometry = v[2]->pntOnGeometry * 2. - v[1]->pntOnGeometry;
-      }
-    }
-    else {
-      List_Read(c->Control_Points, i + 2, &v[3]);
-    }
-    if(c->geometry){
-      SPoint2 pp = InterpolateCubicSpline(v, t, c->mat, t1, t2,c->geometry,0);
-      SPoint3 pt = c->geometry->point(pp);
-      V.Pos.X = pt.x();
-      V.Pos.Y = pt.y();
-      V.Pos.Z = pt.z();
-    }
-    else
-      InterpolateCatmullRom(v, t, V);
-	//      V = InterpolateCubicSpline(v, t, c->mat, 0, t1, t2);
     break;
 
   case MSH_SEGM_BND_LAYER:

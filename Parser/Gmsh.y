@@ -1822,12 +1822,23 @@ Shape :
 	yymsg(0, "Curve %d already exists", num);
       }
       else{
-	List_T *temp = ListOfDouble2ListOfInt($6);
-	Curve *c = Create_Curve(num, MSH_SEGM_LINE, 1, temp, NULL,
-				-1, -1, 0., 1.);
-	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-	CreateReversedCurve(c);
-	List_Delete(temp);
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          if(List_Nbr($6) == 2){
+            double d[3];
+            List_Read($6, 0, &d[0]); List_Read($6, 1, &d[1]);
+            GModel::current()->getOCCInternals()->addLine(num, (int)d[0], (int)d[1]);
+          }
+          else
+            yymsg(0, "OpenCASCADE line only takes 2 points");
+        }
+        else{
+          List_T *temp = ListOfDouble2ListOfInt($6);
+          Curve *c = Create_Curve(num, MSH_SEGM_LINE, 1, temp, NULL,
+                                  -1, -1, 0., 1.);
+          Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+          CreateReversedCurve(c);
+          List_Delete(temp);
+        }
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_LINE;
@@ -4274,7 +4285,8 @@ BooleanOption :
   | tDelete FExpr tEND { $$ = $2; }
 
 Boolean :
-    BooleanOperator '{' ListOfShapes BooleanOption '}' '{' ListOfShapes BooleanOption '}'
+    BooleanOperator '{' ListOfShapes BooleanOption '}'
+                    '{' ListOfShapes BooleanOption '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
@@ -4285,9 +4297,13 @@ Boolean :
         for(int i = 0; i < List_Nbr($7); i++){
           Shape s; List_Read($7, i, &s); tool[3].push_back(s.Num);
         }
-        GModel::current()->getOCCInternals()->applyBooleanOperator
+        std::vector<int> ret =
+          GModel::current()->getOCCInternals()->applyBooleanOperator
           (-1, shape, tool, (OCC_Internals::BooleanOperator)$1, $4, $8);
-        // FIXME add to returned list of shapes
+        for(unsigned int i = 0; i < ret.size(); i++){
+          double d = ret[i];
+          List_Add($$, &d);
+        }
       }
       List_Delete($3);
       List_Delete($7);
@@ -4295,7 +4311,8 @@ Boolean :
 ;
 
 BooleanShape :
-    BooleanOperator '(' FExpr ')' tAFFECT '{' ListOfShapes BooleanOption '}' '{' ListOfShapes BooleanOption '}' tEND
+    BooleanOperator '(' FExpr ')' tAFFECT '{' ListOfShapes BooleanOption '}'
+                                          '{' ListOfShapes BooleanOption '}' tEND
     {
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<int> shape[4], tool[4];

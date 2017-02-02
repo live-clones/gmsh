@@ -122,8 +122,10 @@ Bezier			return tBezier;
 Block                   return tBlock;
 BSpline			return tBSpline;
 BooleanUnion            return tBooleanUnion;
+BooleanFuse             return tBooleanUnion;
 BooleanIntersection     return tBooleanIntersection;
 BooleanSubtraction      return tBooleanSubtraction;
+BooleanDifference       return tBooleanSubtraction;
 BoundingBox             return tBoundingBox;
 
 Catenary                return tCatenary;

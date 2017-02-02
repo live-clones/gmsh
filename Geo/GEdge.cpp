@@ -33,7 +33,7 @@ GEdge::~GEdge()
 {
   if(v0) v0->delEdge(this);
   if(v1 && v1 != v0) v1->delEdge(this);
-  if (_cp)delete _cp;
+  if(_cp) delete _cp;
   deleteMesh();
 }
 
@@ -97,9 +97,9 @@ void GEdge::setMeshMaster(GEdge* ge,const std::vector<double>& tfo)
   SVector3 d11 = locXYZ1 - tfoXYZ1;
 
   double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
-  
+
   bool fwd = (d00.norm()*d11.norm() < d01.norm()*d10.norm());
-  
+
   if ((d00.norm() < tol) && (d11.norm() < tol)) {
     GEntity::setMeshMaster(ge,tfo);
     masterOrientation = 1;
@@ -109,7 +109,7 @@ void GEdge::setMeshMaster(GEdge* ge,const std::vector<double>& tfo)
     getEndVertex()  ->setMeshMaster(ge->getEndVertex()  ,tfo);
     return;
   }
-    
+
   if ((d01.norm() < tol) && (d10.norm() < tol)) {
     GEntity::setMeshMaster(ge,tfo);
     masterOrientation = -1;
@@ -119,7 +119,7 @@ void GEdge::setMeshMaster(GEdge* ge,const std::vector<double>& tfo)
     getEndVertex()  ->setMeshMaster(ge->getBeginVertex(),tfo);
     return;
   }
-  
+
   Msg::Info("Error in transformation from edge %d (%d-%d) to %d (%d-%d)"
             "(minimal transformed node distances %g %g, tolerance %g)",
             ge->tag(),ge->getBeginVertex()->tag(),ge->getEndVertex()->tag(),

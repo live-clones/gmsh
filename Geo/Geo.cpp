@@ -627,7 +627,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
         pC->end = v;
       }
       else {
-        Msg::Error("Unknown control point %d in Curve %d  (c)", p2, pC->Num);
+        Msg::Error("Unknown control point %d in Curve %d (c)", p2, pC->Num);
       }
     }
     End_Curve(pC);
