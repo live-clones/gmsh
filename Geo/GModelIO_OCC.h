@@ -149,9 +149,9 @@ public:
   void addCircleArc(int tag, int tagStart, int tagCenter, int tagEnd){}
   void addSphere(int tag, double xc, double yc, double zc, double radius){};
   void addBlock(int tag, double x1, double y1, double z1,
-                double x2, double y2, double z2);
+                double x2, double y2, double z2){}
   void addCylinder(int tag, double x1, double y1, double z1,
-                   double x2, double y2, double z2, double r);
+                   double x2, double y2, double z2, double r){}
   void addThruSections(int tag, std::vector<std::vector<int> > tagEdges){}
   void importOCCInternals(GModel *model){}
   std::vector<int> applyBooleanOperator(int tag,
@@ -159,7 +159,7 @@ public:
                                         std::vector<int> toolTags[4],
                                         BooleanOperator op,
                                         bool removeShape=true,
-                                        bool removeTool=true);
+                                        bool removeTool=true){}
 };
 
 #endif
