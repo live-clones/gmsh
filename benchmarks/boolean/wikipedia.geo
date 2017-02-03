@@ -18,8 +18,5 @@ Cylinder(4) = {-2*R,0,0, 2*R,0,0, R*s};
 Cylinder(5) = {0,-2*R,0, 0,2*R,0, R*s};
 Cylinder(6) = {0,0,-2*R, 0,0,2*R, R*s};
 
-BooleanUnion(7) = { Volume{4}; Delete; }{ Volume{5}; Delete; };
-BooleanUnion(8) = { Volume{6}; Delete; }{ Volume{7}; Delete; };
-BooleanSubtraction(9) = { Volume{3}; Delete; }{ Volume{8}; Delete; };
-
-
+BooleanUnion(7) = { Volume{4}; Delete; }{ Volume{5,6}; Delete; };
+BooleanDifference(8) = { Volume{3}; Delete; }{ Volume{7}; Delete; };

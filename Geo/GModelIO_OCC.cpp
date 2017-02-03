@@ -28,6 +28,7 @@
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepOffsetAPI_ThruSections.hxx>
+#include <BRepBuilderAPI_Copy.hxx>
 #include <gce_MakeCirc.hxx>
 #include <gce_MakePln.hxx>
 #include <ElCLib.hxx>
@@ -247,11 +248,14 @@ void OCC_Internals::addThruSections(int tag, std::vector<std::vector<int> > edge
 }
 
 std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
-                                                     std::vector<int> shapeTags[4],
+                                                     std::vector<int> objectTags[4],
                                                      std::vector<int> toolTags[4],
                                                      BooleanOperator op,
-                                                     bool removeShape, bool removeTool)
+                                                     bool removeObject, bool removeTool)
 {
+  double tolerance = 0.0; // FIXME make this a parameter
+  bool parallel = false; // FIXME try with multithreaded OCC!
+
   std::vector<int> out;
 
   if(tag > 0 && _tagSolid.IsBound(tag)){
@@ -259,75 +263,212 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
     return out;
   }
 
-  if(shapeTags[3].size() == 1 && toolTags[3].size() == 1){
-    TopoDS_Shape result;
-    if(!_tagSolid.IsBound(shapeTags[3][0])){
-      Msg::Error("Unknown OCC region with tag %d", shapeTags[3][0]);
-      return out;
-    }
-    if(!_tagSolid.IsBound(toolTags[3][0])){
-      Msg::Error("Unknown OCC region with tag %d", toolTags[3][0]);
-      return out;
-    }
-    try{
-      TopoDS_Solid shape = TopoDS::Solid(_tagSolid.Find(shapeTags[3][0]));
-      TopoDS_Solid tool = TopoDS::Solid(_tagSolid.Find(toolTags[3][0]));
-      switch(op){
-      case OCC_Internals::Fuse :
-        {
-          BRepAlgoAPI_Fuse BO(shape, tool);
-          if(!BO.IsDone()) {
-            Msg::Error("Fuse operation cannot be performed");
-          }
-          result = BO.Shape();
-        }
-        break;
-      case OCC_Internals::Intersection :
-        {
-          BRepAlgoAPI_Common BO(shape, tool);
-          if(!BO.IsDone()) {
-            Msg::Error("Intersection operation cannot be performed");
+  if(objectTags[0].size() || objectTags[1].size() || objectTags[2].size() ||
+     toolTags[0].size() || toolTags[1].size() || toolTags[2].size()){
+    Msg::Error("OCC boolean operations only available on solids for now");
+    return out;
+  }
 
-          }
-          result = BO.Shape();
-        }
-        break;
-      case OCC_Internals::Cut :
-      default:
-        {
-          BRepAlgoAPI_Cut BO(shape, tool);
-          if(!BO.IsDone()) {
-            Msg::Error("Cut operation cannot be performed");
-          }
-          result = BO.Shape();
-        }
-        break;
-      }
-      if(removeShape) unbind(shape, shapeTags[3][0]);
-      if(removeTool) unbind(tool, toolTags[3][0]);
-    }
-    catch(Standard_Failure &err){
-      Msg::Error("OCC %s", err.GetMessageString());
+  std::vector<TopoDS_Solid> objects, tools;
+  for(unsigned int i = 0; i < objectTags[3].size(); i++){
+    if(!_tagSolid.IsBound(objectTags[3][i])){
+      Msg::Error("Unknown OCC region with tag %d", objectTags[3][i]);
       return out;
     }
-    TopExp_Explorer exp0;
-    bool first = true;
-    for(exp0.Init(result, TopAbs_SOLID); exp0.More(); exp0.Next()){
-      if(tag <= 0){
-        int t = _getMaxTag(3) + 1;
-        bind(TopoDS::Solid(exp0.Current()), t);
-        out.push_back(t);
-      }
-      else if(first){
-        bind(TopoDS::Solid(exp0.Current()), tag);
-        out.push_back(tag);
-      }
-      else
-        Msg::Error("Cannot bind multiple regions to single tag %d", tag);
+    else{
+      TopoDS_Solid object = TopoDS::Solid(_tagSolid.Find(objectTags[3][i]));
+      objects.push_back(object);
+      if(removeObject) unbind(object, objectTags[3][i]);
     }
   }
-  else{
-    Msg::Error("General boolean operation not implemented yet");
+  for(unsigned int i = 0; i < toolTags[3].size(); i++){
+    if(!_tagSolid.IsBound(toolTags[3][i])){
+      Msg::Error("Unknown OCC region with tag %d", toolTags[3][i]);
+      return out;
+    }
+    else{
+      TopoDS_Solid tool = TopoDS::Solid(_tagSolid.Find(toolTags[3][i]));
+      tools.push_back(TopoDS::Solid(tool));
+      if(removeTool) unbind(tool, toolTags[3][i]);
+    }
+  }
+
+  if(objects.size() < 1 || tools.size() < 1){
+    Msg::Error("No object or tool in boolean operation");
+    return out;
+  }
+
+  if(objects.size() > 1 && op != OCC_Internals::Union && op != OCC_Internals::Fragments){
+    Msg::Error("Only a single object is support for this boolean operation");
+    return out;
+  }
+
+  TopoDS_Shape result;
+
+#if OCC_VERSION_HEX >= 0x060900
+  TopTools_ListOfShape objectShapes, toolShapes;
+  for(unsigned int i = 0; i < objects.size(); i++){
+    if(tolerance > 0.)
+      objectShapes.Append(BRepBuilderAPI_Copy(objects[i]).Shape());
+    else
+      objectShapes.Append(objects[i]);
+  }
+  for(unsigned int i = 0; i < tools.size(); i++){
+    if(tolerance > 0.)
+      toolShapes.Append(BRepBuilderAPI_Copy(tools[i]).Shape());
+    else
+      toolShapes.Append(tools[i]);
+  }
+#endif
+
+  try{
+    switch(op){
+    case OCC_Internals::Union :
+      {
+#if OCC_VERSION_HEX < 0x060900
+        result = objects[0];
+        for(int i = 1; i < objects.size(); i++){
+          BRepAlgoAPI_Fuse fuse(result, objects[i]);
+          if(!fuse.IsDone()) {
+            Msg::Error("Fuse operation cannot be performed");
+            return out;
+          }
+          else{
+            result = fuse.Shape();
+          }
+        }
+        for(int i = 0; i < tools.size(); i++){
+          BRepAlgoAPI_Fuse fuse(result, tools[i]);
+          if(!fuse.IsDone()) {
+            Msg::Error("Fuse operation cannot be performed");
+            return out;
+          }
+          else{
+            result = fuse.Shape();
+          }
+        }
+#else
+        BRepAlgoAPI_Fuse fuse;
+        fuse.SetRunParallel(parallel);
+        fuse.SetArguments(objectShapes);
+        fuse.SetTools(toolShapes);
+        if(tolerance > 0.0)
+          fuse.SetFuzzyValue(tolerance);
+        fuse.Build();
+        if(!fuse.IsDone()){
+          Msg::Error("Fuse operation cannot be performed");
+          return out;
+        }
+        result = fuse.Shape();
+#endif
+      }
+      break;
+    case OCC_Internals::Intersection :
+      {
+#if OCC_VERSION_HEX < 0x060900
+        if(objects.size() != 1 || tools.size() != 1){
+          Msg::Error("Multi-intersection requires OCC >= 6.9");
+          return out;
+        }
+        else{
+          BRepAlgoAPI_Common common(objects[0], tools[0]);
+          if(!common.IsDone()) {
+            Msg::Error("Intersection operation cannot be performed");
+          }
+          result = common.Shape();
+        }
+#else
+        BRepAlgoAPI_Common common;
+        common.SetRunParallel(parallel);
+        common.SetArguments(objectShapes);
+        common.SetTools(toolShapes);
+        if(tolerance > 0.0)
+          common.SetFuzzyValue(tolerance);
+        common.Build();
+        if(!common.IsDone()){
+          Msg::Error("Intersection operation cannot be performed");
+          return out;
+        }
+        result = common.Shape();
+#endif
+      }
+      break;
+
+    case OCC_Internals::Difference :
+    default:
+      {
+#if OCC_VERSION_HEX < 0x060900
+        if(objects.size() != 1 || tools.size() != 1){
+          Msg::Error("Multi-difference requires OCC >= 6.9");
+          return out;
+        }
+        else{
+          BRepAlgoAPI_Cut cut(objects[0], tools[0]);
+          if(!cut.IsDone()) {
+            Msg::Error("Cut operation cannot be performed");
+          }
+          result = cut.Shape();
+        }
+#else
+        BRepAlgoAPI_Cut cut;
+        cut.SetRunParallel(parallel);
+        cut.SetArguments(objectShapes);
+        cut.SetTools(toolShapes);
+        if(tolerance > 0.0)
+          cut.SetFuzzyValue(tolerance);
+        cut.Build();
+        if(!cut.IsDone()){
+          Msg::Error("Intersection operation cannot be performed");
+          return out;
+        }
+        result = cut.Shape();
+#endif
+      }
+      break;
+
+    case OCC_Internals::Fragments :
+      {
+#if OCC_VERSION_HEX < 0x060900
+        Msg::Error("Boolean fragments only available with OCC >= 6.9");
+        return out;
+#else
+        BRepAlgoAPI_BuilderAlgo generalFuse;
+        generalFuse.SetRunParallel(parallel);
+        objectShapes.Append(toolShapes);
+        generalFuse.SetArguments(objectShapes);
+        if (tolerance > 0.0)
+          generalFuse.SetFuzzyValue(tolerance);
+        generalFuse.Build();
+        if (!generalFuse.IsDone()){
+          Msg::Error("Boolean fragments failed");
+          return out;
+        }
+        result = generalFuse.Shape();
+#endif
+      }
+      break;
+    }
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OCC %s", err.GetMessageString());
+    return out;
+  }
+
+  TopExp_Explorer exp0;
+  bool first = true;
+  for(exp0.Init(result, TopAbs_SOLID); exp0.More(); exp0.Next()){
+    if(tag <= 0){
+      int t = _getMaxTag(3) + 1;
+      bind(TopoDS::Solid(exp0.Current()), t);
+      out.push_back(t);
+    }
+    else if(first){
+      bind(TopoDS::Solid(exp0.Current()), tag);
+      out.push_back(tag);
+      first = false;
+    }
+    else
+      Msg::Error("Cannot bind multiple regions to single tag %d", tag);
   }
   return out;
 }
@@ -1293,7 +1434,7 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
       _shape = theNewShape;
     }
     break;
-  case OCC_Internals::Cut :
+  case OCC_Internals::Difference :
     {
       TopoDS_Shape theNewShape;
       BRep_Builder B;
@@ -1352,7 +1493,7 @@ void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperato
       _shape = theNewShape;
     }
     break;
-  case OCC_Internals::Fuse :
+  case OCC_Internals::Union :
     {
       TopoDS_Solid solid1, solid2;
       int hack = 0;

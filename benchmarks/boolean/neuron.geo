@@ -35,24 +35,22 @@ For x In{-4:4:4}
 EndFor
 
 DefineConstant[
-  op = {0, Choices{0="None", 1="Union", 2="Intersection", 3="Subtraction"},
+  op = {0, Choices{0="None", 1="Union", 2="Intersection", 3="Difference", 4="Fragments"},
     Name "Boolean operation" }
 ];
 
-// boolean operations can explicitly create an entity with the form
+// boolean operations can explicitly create an entity tag with the form
 // "op(tag)={}{};", or let Gmsh decide with the form "op{}{}". The first form
 // can only be used if the result of the boolean operation is a single
-// shape. Only the second form returns the list of created entities.
+// entity. Only the second form returns the list of created entities.
+
 If(op == 1)
-  BooleanUnion(100) = { Volume{1}; Delete; }{ Volume{reg(0)}; Delete; };
-  BooleanUnion(101) = { Volume{100}; Delete; }{ Volume{reg(1)}; Delete; };
-  BooleanUnion(102) = { Volume{101}; Delete; }{ Volume{reg(2)}; Delete; };
+  BooleanUnion(100) = { Volume{1}; Delete; }{ Volume{reg()}; Delete; };
 ElseIf(op == 2)
-  BooleanIntersection(100) = { Volume{1}; }{ Volume{reg(0)}; Delete; };
-  BooleanIntersection(101) = { Volume{1}; }{ Volume{reg(1)}; Delete; };
-  BooleanIntersection(102) = { Volume{1}; Delete; }{ Volume{reg(2)}; Delete; };
+  aa() = BooleanIntersection { Volume{1}; Delete; }{ Volume{reg()}; Delete; };
+  Printf("intersection created volumes ", aa());
 ElseIf(op == 3)
-  BooleanSubtraction(100) = { Volume{1}; Delete; }{ Volume{reg(0)}; Delete; };
-  BooleanSubtraction(101) = { Volume{100}; Delete; }{ Volume{reg(1)}; Delete; };
-  BooleanSubtraction(102) = { Volume{101}; Delete; }{ Volume{reg(2)}; Delete; };
+  BooleanDifference(100) = { Volume{1}; Delete; }{ Volume{reg()}; Delete; };
+ElseIf(op == 4)
+  BooleanFragments { Volume{1}; Delete; }{ Volume{reg()}; Delete; }
 EndIf

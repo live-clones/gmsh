@@ -58,6 +58,20 @@
 
 #define MSH_UNKNOWN            999
 
+class Shape{
+ public:
+  int Type;
+  int Num;
+};
+
+class gLevelset;
+
+class LevelSet {
+ public:
+  int Num;
+  gLevelset *ls;
+};
+
 struct Coord{
   double X, Y, Z;
 };
@@ -321,30 +335,19 @@ class GEO_Internals{
 
   std::map<int, MasterFace> periodicFaces;
 
+ public:
   GEO_Internals(){ alloc_all(); }
   ~GEO_Internals(){ free_all(); }
   void destroy(){ free_all(); alloc_all(); }
   void reset_physicals();
-  void addCompoundMesh ( int dim, List_T *_list){
+  void addCompoundMesh(int dim, List_T *_list)
+  {
     std::vector<int> compound;
     for(int i = 0; i < List_Nbr(_list); i++)
       compound.push_back((int)*(double*)List_Pointer(_list, i));
     meshCompounds.insert(std::make_pair(dim,compound));
   }
 
-};
-
-class Shape{
- public:
-  int Type;
-  int Num;
-};
-
-class gLevelset;
-class LevelSet {
- public:
-  int Num;
-  gLevelset *ls;
 };
 
 int compareVertex(const void *a, const void *b);

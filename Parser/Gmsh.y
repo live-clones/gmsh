@@ -149,7 +149,8 @@ struct doubleXstring{
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
-%token tBooleanUnion tBooleanIntersection tBooleanSubtraction
+%token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
+%token tBooleanFragments
 %token tRecombine tSmoother tSplit tDelete tCoherence
 %token tIntersect tMeshAlgorithm tReverse
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
@@ -4274,9 +4275,11 @@ ExtrudeParameter :
 //  B O O L E A N
 
 BooleanOperator :
-    tBooleanUnion { $$ = OCC_Internals::Fuse; }
+    tBooleanUnion { $$ = OCC_Internals::Union; }
   | tBooleanIntersection { $$ = OCC_Internals::Intersection; }
-  | tBooleanSubtraction { $$ = OCC_Internals::Cut; }
+  | tBooleanDifference { $$ = OCC_Internals::Difference; }
+  | tBooleanSection { $$ = OCC_Internals::Section; }
+  | tBooleanFragments { $$ = OCC_Internals::Fragments; }
 ;
 
 BooleanOption :
@@ -4301,8 +4304,10 @@ Boolean :
           GModel::current()->getOCCInternals()->applyBooleanOperator
           (-1, shape, tool, (OCC_Internals::BooleanOperator)$1, $4, $8);
         for(unsigned int i = 0; i < ret.size(); i++){
-          double d = ret[i];
-          List_Add($$, &d);
+          Shape s;
+          s.Num = ret[i];
+          s.Type = MSH_VOLUME;
+          List_Add($$, &s);
         }
       }
       List_Delete($3);

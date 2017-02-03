@@ -14,6 +14,8 @@
 #include <vector>
 
 class OCC_Internals {
+ public:
+  enum BooleanOperator { Union, Intersection, Difference, Section, Fragments };
  protected :
   // a temporary shape
   // FIXME will be removed
@@ -38,7 +40,6 @@ class OCC_Internals {
   void _addShapeToLists(TopoDS_Shape shape){ _addShapeToMaps(shape); }
 
  public:
-  enum BooleanOperator { Intersection, Cut, Section, Fuse };
   OCC_Internals() {}
 
   // add shapes only using internal OCC data
@@ -144,7 +145,7 @@ class OCC_Internals {
 
 class OCC_Internals {
 public:
-  enum BooleanOperator { Intersection, Cut, Section, Fuse };
+  enum BooleanOperator { Union, Intersection, Difference, Section, Fragments };
   OCC_Internals(){}
   void addVertex(int tag, double x, double y, double z){}
   void addLine(int tag, int startTag, int endTag){}

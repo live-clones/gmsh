@@ -1030,7 +1030,7 @@ GModel *OCCFactory::computeBooleanUnion(GModel* obj, GModel* tool,
       obj = temp;
     }
     obj->_occ_internals->applyBooleanOperator(occ_tool->getShape(),
-                                              OCC_Internals::Fuse);
+                                              OCC_Internals::Union);
     obj->destroy();
     obj->_occ_internals->buildLists();
     obj->_occ_internals->buildGModel(obj);
@@ -1058,7 +1058,7 @@ GModel *OCCFactory::computeBooleanDifference(GModel* obj, GModel* tool,
       obj = temp;
     }
     obj->getOCCInternals()->applyBooleanOperator(occ_tool->getShape(),
-                                                 OCC_Internals::Cut);
+                                                 OCC_Internals::Difference);
     obj->destroy();
     obj->_occ_internals->buildLists();
     obj->_occ_internals->buildGModel(obj);
