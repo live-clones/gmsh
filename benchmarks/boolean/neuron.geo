@@ -37,6 +37,8 @@ EndFor
 DefineConstant[
   op = {0, Choices{0="None", 1="Union", 2="Intersection", 3="Difference", 4="Fragments"},
     Name "Boolean operation" }
+  sph = {0, Choices{0,1}, Visible op == 4,
+         Name "Fuse sphere fragments?" }
 ];
 
 // boolean operations can explicitly create an entity tag with the form
@@ -53,4 +55,7 @@ ElseIf(op == 3)
   BooleanDifference(100) = { Volume{1}; Delete; }{ Volume{reg()}; Delete; };
 ElseIf(op == 4)
   BooleanFragments { Volume{1}; Delete; }{ Volume{reg()}; Delete; }
+  If(sph)
+    BooleanUnion{ Volume{1}; Delete; }{ Volume{2,3,4}; Delete;}
+  EndIf
 EndIf

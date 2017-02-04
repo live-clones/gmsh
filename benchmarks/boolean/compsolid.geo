@@ -1,6 +1,6 @@
 SetFactory("OpenCASCADE");
 
-Mesh.Algorithm = 6;
+//Mesh.Algorithm = 6;
 Mesh.CharacteristicLengthMin = 0.1;
 Mesh.CharacteristicLengthMax = 0.1;
 
