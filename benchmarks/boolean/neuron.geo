@@ -7,12 +7,12 @@ Mesh.CharacteristicLengthMax = 1;
 Macro dendrite
   For i In {1:5}
     z = -2+7*i;
-    r = 1 + 0.6*Sin(2*Pi*i/5.);
-    Point(nump+1) = {x,0,z};
-    Point(nump+2) = {x+r,0,z};
-    Point(nump+3) = {x,r,z};
-    Point(nump+4) = {x-r,0,z};
-    Point(nump+5) = {x,-r,z};
+    r = 0.4 + 0.2*Sin(2*Pi*i/5.);
+    Point(nump+1) = {x,y,z};
+    Point(nump+2) = {x+r,y,z};
+    Point(nump+3) = {x,y+r,z};
+    Point(nump+4) = {x-r,y,z};
+    Point(nump+5) = {x,y-r,z};
     Circle(numc+1) = {nump+2,nump+1,nump+3};
     Circle(numc+2) = {nump+3,nump+1,nump+4};
     Circle(numc+3) = {nump+4,nump+1,nump+5};
@@ -26,12 +26,14 @@ Macro dendrite
   reg() += numr;
 Return
 
-Sphere(1) = {0, 0, 0, 8};
+Sphere(1) = {0, 0, 0, 7};
 
 reg() = {};
-nump = 0; numc = 0; numr = 2;
-For x In{-4:4:4}
-  Call dendrite;
+nump = 0; numc = 0; numr = 100;
+For x In{-2:2:2}
+  For y In{-2:2:2}
+    Call dendrite;
+  EndFor
 EndFor
 
 DefineConstant[
@@ -56,6 +58,6 @@ ElseIf(op == 3)
 ElseIf(op == 4)
   BooleanFragments { Volume{1}; Delete; }{ Volume{reg()}; Delete; }
   If(sph)
-    BooleanUnion{ Volume{1}; Delete; }{ Volume{2,3,4}; Delete;}
+    BooleanUnion{ Volume{1}; Delete; }{ Volume{2:#reg()+1}; Delete;}
   EndIf
 EndIf
