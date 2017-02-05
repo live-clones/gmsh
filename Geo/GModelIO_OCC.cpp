@@ -35,10 +35,11 @@
 #include <Geom_Circle.hxx>
 #include <Geom_TrimmedCurve.hxx>
 
-int OCC_Internals::_getMaxTag(int dim) const
+int OCC_Internals::getMaxTag(int dim) const
 {
+  if(dim < 0 || dim > 3) return 0;
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
-  int ret = 0;
+  int ret = _maxTagConstraints[dim];
   switch(dim){
   case 0: exp.Initialize(_tagVertex); break;
   case 1: exp.Initialize(_tagEdge); break;
@@ -67,7 +68,7 @@ void OCC_Internals::addVertex(int tag, double x, double y, double z)
     Msg::Error("OCC %s", err.GetMessageString());
     return;
   }
-  if(tag <= 0) tag = _getMaxTag(0) + 1;
+  if(tag <= 0) tag = getMaxTag(0) + 1;
   bind(result, tag);
 }
 
@@ -96,7 +97,7 @@ void OCC_Internals::addLine(int tag, int startTag, int endTag)
     Msg::Error("OCC %s", err.GetMessageString());
     return;
   }
-  if(tag <= 0) tag = _getMaxTag(1) + 1;
+  if(tag <= 0) tag = getMaxTag(1) + 1;
   bind(result, tag);
 }
 
@@ -140,7 +141,7 @@ void OCC_Internals::addCircleArc(int tag, int startTag, int centerTag, int endTa
     Msg::Error("OCC %s", err.GetMessageString());
     return;
   }
-  if(tag <= 0) tag = _getMaxTag(1) + 1;
+  if(tag <= 0) tag = getMaxTag(1) + 1;
   bind(result, tag);
 }
 
@@ -160,7 +161,7 @@ void OCC_Internals::addSphere(int tag, double xc, double yc, double zc, double r
     Msg::Error("OCC %s", err.GetMessageString());
     return;
   }
-  if(tag <= 0) tag = _getMaxTag(3) + 1;
+  if(tag <= 0) tag = getMaxTag(3) + 1;
   bind(result, tag);
 }
 
@@ -183,7 +184,7 @@ void OCC_Internals::addBlock(int tag, double x1, double y1, double z1,
     Msg::Error("OCC %s", err.GetMessageString());
     return;
   }
-  if(tag <= 0) tag = _getMaxTag(3) + 1;
+  if(tag <= 0) tag = getMaxTag(3) + 1;
   bind(result, tag);
 }
 
@@ -209,7 +210,7 @@ void OCC_Internals::addCylinder(int tag, double x1, double y1, double z1,
     Msg::Error("OCC %s", err.GetMessageString());
     return;
   }
-  if(tag <= 0) tag = _getMaxTag(3) + 1;
+  if(tag <= 0) tag = getMaxTag(3) + 1;
   bind(result, tag);
 }
 
@@ -243,7 +244,7 @@ void OCC_Internals::addThruSections(int tag, std::vector<std::vector<int> > edge
     Msg::Error("OCC %s", err.GetMessageString());
     return;
   }
-  if(tag <= 0) tag = _getMaxTag(3) + 1;
+  if(tag <= 0) tag = getMaxTag(3) + 1;
   bind(result, tag);
 }
 
@@ -458,7 +459,7 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
   bool first = true;
   for(exp0.Init(result, TopAbs_SOLID); exp0.More(); exp0.Next()){
     if(tag <= 0){
-      int t = _getMaxTag(3) + 1;
+      int t = getMaxTag(3) + 1;
       bind(TopoDS::Solid(exp0.Current()), t);
       out.push_back(t);
     }
@@ -491,17 +492,20 @@ void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
             if(_fmap.FindIndex(face) < 1){
               _fmap.Add(face);
 
-              for(exp3.Init(exp2.Current().Oriented(TopAbs_FORWARD), TopAbs_WIRE); exp3.More(); exp3.Next()){
+              for(exp3.Init(exp2.Current().Oriented(TopAbs_FORWARD), TopAbs_WIRE);
+                  exp3.More(); exp3.Next()){
                 TopoDS_Wire wire = TopoDS::Wire(exp3.Current());
                 if(_wmap.FindIndex(wire) < 1){
                   _wmap.Add(wire);
 
-                  for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More(); exp4.Next()){
+                  for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More();
+                      exp4.Next()){
                     TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
                     if(_emap.FindIndex(edge) < 1){
                       _emap.Add(edge);
 
-                      for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
+                      for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More();
+                          exp5.Next()){
                         TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
                         if(_vmap.FindIndex(vertex) < 1)
                           _vmap.Add(vertex);
@@ -538,7 +542,8 @@ void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
                 if(_emap.FindIndex(edge) < 1){
                   _emap.Add(edge);
 
-                  for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
+                  for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More();
+                      exp5.Next()){
                     TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
                     if(_vmap.FindIndex(vertex) < 1)
                       _vmap.Add(vertex);
@@ -626,10 +631,10 @@ void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
 
 void OCC_Internals::importOCCInternals(GModel *model)
 {
-  int vTagMax = std::max(model->getMaxElementaryNumber(0), _getMaxTag(0));
-  int eTagMax = std::max(model->getMaxElementaryNumber(1), _getMaxTag(1));
-  int fTagMax = std::max(model->getMaxElementaryNumber(2), _getMaxTag(2));
-  int rTagMax = std::max(model->getMaxElementaryNumber(3), _getMaxTag(3));
+  int vTagMax = std::max(model->getMaxElementaryNumber(0), getMaxTag(0));
+  int eTagMax = std::max(model->getMaxElementaryNumber(1), getMaxTag(1));
+  int fTagMax = std::max(model->getMaxElementaryNumber(2), getMaxTag(2));
+  int rTagMax = std::max(model->getMaxElementaryNumber(3), getMaxTag(3));
 
   _somap.Clear();
   _shmap.Clear();

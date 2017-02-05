@@ -16,31 +16,45 @@
 class OCC_Internals {
  public:
   enum BooleanOperator { Union, Intersection, Difference, Section, Fragments };
- protected :
-  // a temporary shape
-  // FIXME will be removed
-  TopoDS_Shape _shape;
 
+ private :
+  // tag contraints coming from outside OCC_Internals (when using multiple CAD
+  // kernels)
+  int _maxTagConstraints[4];
+
+ protected :
   // all the (sub)shapes, updated dynamically when shapes need to be imported
   // into a GModel
   TopTools_IndexedMapOfShape _vmap, _emap, _wmap, _fmap, _shmap, _somap;
 
-  // cache mapping TopoDS_Shapes to their corresponding GEntity tags
+  // cache mapping TopoDS_Shapes to their corresponding (future) GEntity tags
   TopTools_DataMapOfShapeInteger _vertexTag, _edgeTag, _faceTag, _solidTag;
   TopTools_DataMapOfIntegerShape _tagVertex, _tagEdge, _tagFace, _tagSolid;
-
-  // get maximum tag number for each dimension
-  int _getMaxTag(int dim) const;
 
   // add a shape and all its subshapes to _vmap, _emap, ..., _somap
   void _addShapeToMaps(TopoDS_Shape shape);
 
+ protected :
+  // FIXME will be removed
+  TopoDS_Shape _shape;
  public:
   // FIXME: will be removed with GModelFactory
   void _addShapeToLists(TopoDS_Shape shape){ _addShapeToMaps(shape); }
 
  public:
-  OCC_Internals() {}
+  OCC_Internals()
+  {
+    for(int i = 0; i < 4; i++) _maxTagConstraints[i] = 0;
+  }
+
+  // set constraints on tags
+  void setTagConstraints(int maxTags[4])
+  {
+    for(int i = 0; i < 4; i++) _maxTagConstraints[i] = maxTags[i];
+  }
+
+  // get maximum tag number for each dimension
+  int getMaxTag(int dim) const;
 
   // add shapes only using internal OCC data
   void addVertex(int tag, double x, double y, double z);
@@ -147,6 +161,8 @@ class OCC_Internals {
 public:
   enum BooleanOperator { Union, Intersection, Difference, Section, Fragments };
   OCC_Internals(){}
+  void setTagConstraints(int maxTags[4]){}
+  int getMaxTag(int dim) const { return 0; }
   void addVertex(int tag, double x, double y, double z){}
   void addLine(int tag, int startTag, int endTag){}
   void addCircleArc(int tag, int tagStart, int tagCenter, int tagEnd){}

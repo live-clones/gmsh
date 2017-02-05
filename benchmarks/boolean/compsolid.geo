@@ -5,18 +5,27 @@ Mesh.CharacteristicLengthMin = 0.1;
 Mesh.CharacteristicLengthMax = 0.1;
 
 DefineConstant[
-  sph = {0, Choices{0,1}, Name "Make sphere a single volume"}
-  xx = {2.2, Min -1, Max 5, Step 0.01, Name "Sphere position"}
-  rr = {0.5, Min 0.1, Max 3, Step 0.01, Name "Sphere radius"}
+  x = {0, Min 0.1, Max 3, Step 0.01, Name "Bloc 1/0x"}
+  y = {0, Min 0.1, Max 3, Step 0.01, Name "Bloc 1/0y"}
+  z = {0, Min 0.1, Max 3, Step 0.01, Name "Bloc 1/0z"}
+  dx = {2, Min 0.1, Max 3, Step 0.01, Name "Bloc 1/dx"}
+  dy = {2, Min 0.1, Max 3, Step 0.01, Name "Bloc 1/dy"}
+  dz = {2, Min 0.1, Max 3, Step 0.01, Name "Bloc 1/dz"}
+  x2 = {x+dx, Min 0.1, Max 3, Step 0.01, Name "Bloc 2/0x"}
+  y2 = {0, Min 0.1, Max 3, Step 0.01, Name "Bloc 2/0y"}
+  z2 = {0, Min 0.1, Max 3, Step 0.01, Name "Bloc 2/0z"}
+  dx2 = {1, Min 0.1, Max 3, Step 0.01, Name "Bloc 2/dx"}
+  dy2 = {1, Min 0.1, Max 3, Step 0.01, Name "Bloc 2/dy"}
+  dz2 = {3, Min 0.1, Max 3, Step 0.01, Name "Bloc 2/dz"}
 ];
 
+Block(1) = {x,y,z, x+dx,y+dy,z+dz};
+Block(2) = {x2,y2,z2, x2+dx2,y2+dy2,z2+dz2};
 
-Block(1) = {0,0,0, 2,2,2};
-Sphere(2) = {xx, 1, 1, rr};
-Block(3) = {2,0,0, 4,2,2};
+f() = BooleanFragments { Volume{1}; Delete; }{ Volume{2}; Delete; };
 
-f() = BooleanFragments { Volume{1}; Delete; }{ Volume{2,3}; Delete; };
-
-If(sph)
-  BooleanUnion { Volume{f[1]}; Delete; }{ Volume{f[{2:#f()-2}]}; Delete; }
-EndIf
+// FIXME: we might want to make physical definitions work without explicit
+// sync with GModel
+//SyncModel;
+Physical Volume(1) = {1};
+Physical Volume(2) = {2};

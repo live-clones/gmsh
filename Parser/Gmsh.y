@@ -1716,6 +1716,8 @@ Shape :
 
     tSetFactory '(' StringExprVar ')' tEND
     {
+      // FIXME: when changing to OpenCASCADE, get maxTag for all dimensions
+      // and add that info in OCC_Internals - same in the other direction
       factory = $3;
       Free($3);
     }
@@ -2552,27 +2554,52 @@ Shape :
 Transform :
     tTranslate VExpr '{' MultipleShape '}'
     {
-      TranslateShapes($2[0], $2[1], $2[2], $4);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        Msg::Error("TODO OCC Translate");
+      }
+      else{
+        TranslateShapes($2[0], $2[1], $2[2], $4);
+      }
       $$ = $4;
     }
   | tRotate '{' VExpr ',' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
-      RotateShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7, $10);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        Msg::Error("TODO OCC Rotate");
+      }
+      else{
+        RotateShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7, $10);
+      }
       $$ = $10;
     }
   | tSymmetry  VExpr '{' MultipleShape '}'
     {
-      SymmetryShapes($2[0], $2[1], $2[2], $2[3], $4);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        Msg::Error("TODO OCC Symmetry");
+      }
+      else{
+        SymmetryShapes($2[0], $2[1], $2[2], $2[3], $4);
+      }
       $$ = $4;
     }
   | tDilate '{' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
-      DilatShapes($3[0], $3[1], $3[2], $5, $5, $5, $8);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        Msg::Error("TODO OCC Dilate");
+      }
+      else{
+        DilatShapes($3[0], $3[1], $3[2], $5, $5, $5, $8);
+      }
       $$ = $8;
     }
   | tDilate '{' VExpr ',' VExpr '}' '{' MultipleShape '}'
     {
-      DilatShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $8);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        Msg::Error("TODO OCC Dilate");
+      }
+      else{
+        DilatShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $8);
+      }
       $$ = $8;
     }
   | tSTRING '{' MultipleShape '}'
@@ -2582,15 +2609,30 @@ Transform :
         for(int i = 0; i < List_Nbr($3); i++){
           Shape TheShape;
           List_Read($3, i, &TheShape);
-          CopyShape(TheShape.Type, TheShape.Num, &TheShape.Num);
+          if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+            Msg::Error("TODO OCC Copy");
+          }
+          else{
+            CopyShape(TheShape.Type, TheShape.Num, &TheShape.Num);
+          }
           List_Add($$, &TheShape);
         }
       }
       else if(!strcmp($1, "Boundary")){
-        BoundaryShapes($3, $$, false);
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          Msg::Error("TODO OCC Boundary");
+        }
+        else{
+          BoundaryShapes($3, $$, false);
+        }
       }
       else if(!strcmp($1, "CombinedBoundary")){
-        BoundaryShapes($3, $$, true);
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          Msg::Error("TODO OCC Combined Boundary");
+        }
+        else{
+          BoundaryShapes($3, $$, true);
+        }
       }
       else{
         yymsg(0, "Unknown command on multiple shapes: '%s'", $1);
@@ -2601,16 +2643,26 @@ Transform :
   | tIntersect tLine '{' RecursiveListOfDouble '}' tSurface '{' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      IntersectCurvesWithSurface($4, (int)$8, $$);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Intersect Line not available with OpenCASCADE");
+      }
+      else{
+        IntersectCurvesWithSurface($4, (int)$8, $$);
+      }
       List_Delete($4);
     }
   | tSplit tLine '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
     {
       $$ = List_Create(2, 1, sizeof(Shape*));
-      List_T *tmp = ListOfDouble2ListOfInt($7);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Split Line not available with OpenCASCADE");
+      }
+      else{
+        List_T *tmp = ListOfDouble2ListOfInt($7);
+        SplitCurve((int)$4, tmp, $$);
+        List_Delete(tmp);
+      }
       List_Delete($7);
-      SplitCurve((int)$4, tmp, $$);
-      List_Delete(tmp);
     }
 ;
 
