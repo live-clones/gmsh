@@ -68,12 +68,17 @@ class OCC_Internals {
   void addThruSections(int tag, std::vector<std::vector<int> > edgeTags);
 
   // apply boolean operation
-  std::vector<int> applyBooleanOperator(int tag,
-                                        std::vector<int> shapeTags[4],
-                                        std::vector<int> toolTags[4],
-                                        BooleanOperator op,
-                                        bool removeShape=true,
-                                        bool removeTool=true);
+  void applyBooleanOperator(int tag, BooleanOperator op,
+                            std::vector<int> shapeTags[4],
+                            std::vector<int> toolTags[4],
+                            std::vector<int> outTags[4],
+                            bool removeShape=true,
+                            bool removeTool=true);
+
+  // get boundary of shapes of dimension dim (this will create tag for the
+  // boundary parts)
+  void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
+                   bool combined=false);
 
   // import all the shapes into the model
   void importOCCInternals(GModel *model);
@@ -171,14 +176,16 @@ public:
                 double x2, double y2, double z2){}
   void addCylinder(int tag, double x1, double y1, double z1,
                    double x2, double y2, double z2, double r){}
-  void addThruSections(int tag, std::vector<std::vector<int> > tagEdges){}
+  void addThruSections(int tag, std::vector<std::vector<int> > edgeTags){}
   void importOCCInternals(GModel *model){}
-  std::vector<int> applyBooleanOperator(int tag,
-                                        std::vector<int> shapeTags[4],
-                                        std::vector<int> toolTags[4],
-                                        BooleanOperator op,
-                                        bool removeShape=true,
-                                        bool removeTool=true){}
+  void applyBooleanOperator(int tag, BooleanOperator op,
+                            std::vector<int> shapeTags[4],
+                            std::vector<int> toolTags[4],
+                            std::vector<int> outTags[4],
+                            bool removeShape=true,
+                            bool removeTool=true){}
+  void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
+                   bool combined=false){}
 };
 
 #endif

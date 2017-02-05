@@ -17,6 +17,7 @@
 #include "ExtrudeParams.h"
 #include "findLinks.h"
 
+// type/100 gives (dimension+1)
 #define MSH_POINT              100
 #define MSH_POINT_BND_LAYER    101
 #define MSH_POINT_DISCRETE     102

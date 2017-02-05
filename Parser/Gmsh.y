@@ -2618,20 +2618,29 @@ Transform :
           List_Add($$, &TheShape);
         }
       }
-      else if(!strcmp($1, "Boundary")){
+      else if(!strcmp($1, "Boundary") || !strcmp($1, "CombinedBoundary")){
         if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          Msg::Error("TODO OCC Boundary");
+          std::vector<int> in[4], out[4];
+          Shape TheShape;
+          for(int i = 0; i < List_Nbr($3); i++){
+            List_Read($3, i, &TheShape);
+            int dim = TheShape.Type / 100 - 1;
+            if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
+          }
+          GModel::current()->getOCCInternals()->getBoundary
+            (in, out, !strcmp($1, "CombinedBoundary") ? true : false);
+          for(int dim = 0; dim < 4; dim++){
+            TheShape.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
+              (dim == 2) ? MSH_SURF_FROM_GMODEL :
+              (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
+            for(unsigned int i = 0; i < out[dim].size(); i++){
+              TheShape.Num = out[dim][i];
+              List_Add($$, &TheShape);
+            }
+          }
         }
         else{
-          BoundaryShapes($3, $$, false);
-        }
-      }
-      else if(!strcmp($1, "CombinedBoundary")){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          Msg::Error("TODO OCC Combined Boundary");
-        }
-        else{
-          BoundaryShapes($3, $$, true);
+          BoundaryShapes($3, $$, !strcmp($1, "CombinedBoundary") ? true : false);
         }
       }
       else{
@@ -2700,7 +2709,7 @@ ListOfShapes :
 	  }
 	  else{
             if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-              TheShape.Type = MSH_UNKNOWN;
+              TheShape.Type = MSH_POINT_FROM_GMODEL;
               List_Add($$, &TheShape);
             }
             else
@@ -2729,7 +2738,7 @@ ListOfShapes :
 	  }
 	  else{
             if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-              TheShape.Type = MSH_UNKNOWN;
+              TheShape.Type = MSH_SEGM_FROM_GMODEL;
               List_Add($$, &TheShape);
             }
             else
@@ -2758,7 +2767,7 @@ ListOfShapes :
 	  }
 	  else{
             if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-              TheShape.Type = MSH_UNKNOWN;
+              TheShape.Type = MSH_SURF_FROM_GMODEL;
               List_Add($$, &TheShape);
             }
             else
@@ -2787,7 +2796,7 @@ ListOfShapes :
 	  }
 	  else{
             if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-              TheShape.Type = MSH_UNKNOWN;
+              TheShape.Type = MSH_VOLUME_FROM_GMODEL;
               List_Add($$, &TheShape);
             }
             else
@@ -3226,7 +3235,12 @@ Delete :
       for(int i = 0; i < List_Nbr($3); i++){
 	Shape TheShape;
 	List_Read($3, i, &TheShape);
-	DeleteShape(TheShape.Type, TheShape.Num);
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          Msg::Error("TODO OCC Delete");
+        }
+        else{
+          DeleteShape(TheShape.Type, TheShape.Num);
+        }
       }
       List_Delete($3);
     }
@@ -4352,12 +4366,12 @@ Boolean :
         for(int i = 0; i < List_Nbr($7); i++){
           Shape s; List_Read($7, i, &s); tool[3].push_back(s.Num);
         }
-        std::vector<int> ret =
-          GModel::current()->getOCCInternals()->applyBooleanOperator
-          (-1, shape, tool, (OCC_Internals::BooleanOperator)$1, $4, $8);
-        for(unsigned int i = 0; i < ret.size(); i++){
+        std::vector<int> out[4];
+        GModel::current()->getOCCInternals()->applyBooleanOperator
+          (-1, (OCC_Internals::BooleanOperator)$1, shape, tool, out, $4, $8);
+        for(unsigned int i = 0; i < out[3].size(); i++){
           Shape s;
-          s.Num = ret[i];
+          s.Num = out[3][i];
           s.Type = MSH_VOLUME;
           List_Add($$, &s);
         }
@@ -4379,8 +4393,9 @@ BooleanShape :
         for(int i = 0; i < List_Nbr($11); i++){
           Shape s; List_Read($11, i, &s); tool[3].push_back(s.Num);
         }
+        std::vector<int> out[4];
         GModel::current()->getOCCInternals()->applyBooleanOperator
-          ((int)$3, shape, tool, (OCC_Internals::BooleanOperator)$1, $8, $12);
+          ((int)$3, (OCC_Internals::BooleanOperator)$1, shape, tool, out, $8, $12);
       }
       List_Delete($7);
       List_Delete($11);

@@ -248,33 +248,31 @@ void OCC_Internals::addThruSections(int tag, std::vector<std::vector<int> > edge
   bind(result, tag);
 }
 
-std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
-                                                     std::vector<int> objectTags[4],
-                                                     std::vector<int> toolTags[4],
-                                                     BooleanOperator op,
-                                                     bool removeObject, bool removeTool)
+void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
+                                         std::vector<int> objectTags[4],
+                                         std::vector<int> toolTags[4],
+                                         std::vector<int> outTags[4],
+                                         bool removeObject, bool removeTool)
 {
   double tolerance = 0.0; // FIXME make this a parameter
   bool parallel = false; // FIXME try with multithreaded OCC!
 
-  std::vector<int> out;
-
   if(tag > 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OCC region with tag %d already exists", tag);
-    return out;
+    return;
   }
 
   if(objectTags[0].size() || objectTags[1].size() || objectTags[2].size() ||
      toolTags[0].size() || toolTags[1].size() || toolTags[2].size()){
     Msg::Error("OCC boolean operations only available on solids for now");
-    return out;
+    return;
   }
 
   std::vector<TopoDS_Solid> objects, tools;
   for(unsigned int i = 0; i < objectTags[3].size(); i++){
     if(!_tagSolid.IsBound(objectTags[3][i])){
       Msg::Error("Unknown OCC region with tag %d", objectTags[3][i]);
-      return out;
+      return;
     }
     else{
       TopoDS_Solid object = TopoDS::Solid(_tagSolid.Find(objectTags[3][i]));
@@ -285,7 +283,7 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
   for(unsigned int i = 0; i < toolTags[3].size(); i++){
     if(!_tagSolid.IsBound(toolTags[3][i])){
       Msg::Error("Unknown OCC region with tag %d", toolTags[3][i]);
-      return out;
+      return;
     }
     else{
       TopoDS_Solid tool = TopoDS::Solid(_tagSolid.Find(toolTags[3][i]));
@@ -296,12 +294,12 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
 
   if(objects.size() < 1 || tools.size() < 1){
     Msg::Error("No object or tool in boolean operation");
-    return out;
+    return;
   }
 
   if(objects.size() > 1 && op != OCC_Internals::Union && op != OCC_Internals::Fragments){
     Msg::Error("Only a single object is support for this boolean operation");
-    return out;
+    return;
   }
 
   TopoDS_Shape result;
@@ -332,7 +330,7 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
           BRepAlgoAPI_Fuse fuse(result, objects[i]);
           if(!fuse.IsDone()) {
             Msg::Error("Fuse operation cannot be performed");
-            return out;
+            return;
           }
           else{
             result = fuse.Shape();
@@ -342,7 +340,7 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
           BRepAlgoAPI_Fuse fuse(result, tools[i]);
           if(!fuse.IsDone()) {
             Msg::Error("Fuse operation cannot be performed");
-            return out;
+            return;
           }
           else{
             result = fuse.Shape();
@@ -358,7 +356,7 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
         fuse.Build();
         if(!fuse.IsDone()){
           Msg::Error("Fuse operation cannot be performed");
-          return out;
+          return;
         }
         result = fuse.Shape();
 #endif
@@ -369,7 +367,7 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
 #if OCC_VERSION_HEX < 0x060900
         if(objects.size() != 1 || tools.size() != 1){
           Msg::Error("Multi-intersection requires OCC >= 6.9");
-          return out;
+          return;
         }
         else{
           BRepAlgoAPI_Common common(objects[0], tools[0]);
@@ -388,7 +386,7 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
         common.Build();
         if(!common.IsDone()){
           Msg::Error("Intersection operation cannot be performed");
-          return out;
+          return;
         }
         result = common.Shape();
 #endif
@@ -401,7 +399,7 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
 #if OCC_VERSION_HEX < 0x060900
         if(objects.size() != 1 || tools.size() != 1){
           Msg::Error("Multi-difference requires OCC >= 6.9");
-          return out;
+          return;
         }
         else{
           BRepAlgoAPI_Cut cut(objects[0], tools[0]);
@@ -420,7 +418,7 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
         cut.Build();
         if(!cut.IsDone()){
           Msg::Error("Intersection operation cannot be performed");
-          return out;
+          return;
         }
         result = cut.Shape();
 #endif
@@ -431,7 +429,7 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
       {
 #if OCC_VERSION_HEX < 0x060900
         Msg::Error("Boolean fragments only available with OCC >= 6.9");
-        return out;
+        return;
 #else
         BRepAlgoAPI_BuilderAlgo generalFuse;
         generalFuse.SetRunParallel(parallel);
@@ -442,7 +440,7 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
         generalFuse.Build();
         if (!generalFuse.IsDone()){
           Msg::Error("Boolean fragments failed");
-          return out;
+          return;
         }
         result = generalFuse.Shape();
 #endif
@@ -452,7 +450,7 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
   }
   catch(Standard_Failure &err){
     Msg::Error("OCC %s", err.GetMessageString());
-    return out;
+    return;
   }
 
   TopExp_Explorer exp0;
@@ -461,17 +459,54 @@ std::vector<int> OCC_Internals::applyBooleanOperator(int tag,
     if(tag <= 0){
       int t = getMaxTag(3) + 1;
       bind(TopoDS::Solid(exp0.Current()), t);
-      out.push_back(t);
+      outTags[3].push_back(t);
     }
     else if(first){
       bind(TopoDS::Solid(exp0.Current()), tag);
-      out.push_back(tag);
+      outTags[3].push_back(tag);
       first = false;
     }
     else
       Msg::Error("Cannot bind multiple regions to single tag %d", tag);
   }
-  return out;
+}
+
+void OCC_Internals::getBoundary(std::vector<int> inTags[4],
+                                std::vector<int> outTags[4],
+                                bool combined)
+{
+  for(unsigned int i = 0; i < inTags[3].size(); i++){
+    TopExp_Explorer exp0, exp1;
+    if(!_tagSolid.IsBound(inTags[3][i])){
+      Msg::Error("Unknown OCC region with tag %d", inTags[3][i]);
+      return;
+    }
+    TopoDS_Solid solid = TopoDS::Solid(_tagSolid.Find(inTags[3][i]));
+    for(exp0.Init(solid, TopAbs_SHELL); exp0.More(); exp0.Next()){
+      TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
+      for(exp1.Init(shell, TopAbs_FACE); exp1.More(); exp1.Next()){
+        TopoDS_Face face = TopoDS::Face(exp1.Current());
+        int tag;
+        if(_faceTag.IsBound(face)){
+          tag = _faceTag.Find(face);
+        }
+        else{
+          // bind with new tag
+          tag = getMaxTag(2) + 1;
+          bind(face, tag);
+        }
+        outTags[2].push_back(tag);
+      }
+    }
+  }
+
+  if(combined){
+    // TODO
+  }
+
+  if(inTags[2].size() || inTags[1].size()){
+    Msg::Error("OCC TODO boundary of faces and edges");
+  }
 }
 
 void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)

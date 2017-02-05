@@ -26,10 +26,10 @@ f() = BooleanFragments { Volume{1}; Delete; }{ Volume{2}; Delete; };
 
 Printf("Resulting elementary entities:");
 For i In {0:#f()-1}
-  Printf("- region %g", f(i));
-  b() = {};// TODO Boundary{ Volume{f(i)}; };
+  Printf("- volume %g", f(i));
+  b() = Boundary{ Volume{f(i)}; };
   For j In {0:#b()-1}
-    Printf("  * surface %g", b(i));
+    Printf("  * surface %g", b(j));
   EndFor
 EndFor
 
