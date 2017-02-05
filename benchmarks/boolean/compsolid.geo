@@ -28,9 +28,7 @@ Printf("Resulting elementary entities:");
 For i In {0:#f()-1}
   Printf("- volume %g", f(i));
   b() = Boundary{ Volume{f(i)}; };
-  For j In {0:#b()-1}
-    Printf("  * surface %g", b(j));
-  EndFor
+  Printf("    surfaces", b());
 EndFor
 
 // FIXME: we might want to make physical definitions work without explicit
