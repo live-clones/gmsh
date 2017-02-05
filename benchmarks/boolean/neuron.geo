@@ -6,8 +6,8 @@ Mesh.CharacteristicLengthMax = 1;
 
 Macro dendrite
   For i In {1:5}
-    z = -2+7*i;
-    r = 0.4 + 0.2*Sin(2*Pi*i/5.);
+    z = -2 + 5*i;
+    r = 0.35 + 0.25*Sin(2*Pi*i/5.);
     Point(nump+1) = {x,y,z};
     Point(nump+2) = {x+r,y,z};
     Point(nump+3) = {x,y+r,z};
@@ -26,22 +26,26 @@ Macro dendrite
   reg() += numr;
 Return
 
-Sphere(1) = {0, 0, 0, 7};
+Sphere(1) = {0, 0, 0, 8};
+
+DefineConstant[
+  N = {2, Min 0, Max 10, Step 1,
+    Name "Parameters/Number of dendrites long x and y"}
+  op = {0, Choices{0="None", 1="Union", 2="Intersection", 3="Difference", 4="Fragments"},
+    Name "Parameters/Boolean operation" }
+  sph = {0, Choices{0,1}, Visible op == 4,
+    Name "Fuse sphere fragments?" }
+];
 
 reg() = {};
 nump = 0; numc = 0; numr = 100;
-For x In{-2:2:2}
-  For y In{-2:2:2}
+For ii In{0:N-1}
+  x = -(N-1)/2*1.5 + ii*1.5;
+  For jj In{0:N-1}
+    y = -(N-1)/2*1.5 + jj*1.5;
     Call dendrite;
   EndFor
 EndFor
-
-DefineConstant[
-  op = {0, Choices{0="None", 1="Union", 2="Intersection", 3="Difference", 4="Fragments"},
-    Name "Boolean operation" }
-  sph = {0, Choices{0,1}, Visible op == 4,
-         Name "Fuse sphere fragments?" }
-];
 
 // boolean operations can explicitly create an entity tag with the form
 // "op(tag)={}{};", or let Gmsh decide with the form "op{}{}". The first form
