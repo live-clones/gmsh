@@ -74,7 +74,7 @@ struct contextGeometryOptions {
   int autoCoherence, highlightOrphans, clip, useTransform;
   double tolerance, snap[3], transform[3][3], offset[3];
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
-  int occSewFaces, occConnectFaces;
+  int occSewFaces, occConnectFaces, occParallel;
   double occScaling;
   int copyMeshingMethod, copyDisplayAttributes, exactExtrusion;
   int matchGeomAndMesh;

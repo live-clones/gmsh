@@ -2022,15 +2022,25 @@ Shape :
   | tLine tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindEdgeLoop(num)){
-	yymsg(0, "Line loop %d already exists", num);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> edges;
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d; List_Read($7, i, &d);
+          edges.push_back((int)std::abs(d));
+        }
+        GModel::current()->getOCCInternals()->addLineLoop(num, edges);
       }
       else{
-	List_T *temp = ListOfDouble2ListOfInt($7);
-	sortEdgesInLoop(num, temp);
-	EdgeLoop *l = Create_EdgeLoop(num, temp);
-	Tree_Add(GModel::current()->getGEOInternals()->EdgeLoops, &l);
-	List_Delete(temp);
+        if(FindEdgeLoop(num)){
+          yymsg(0, "Line loop %d already exists", num);
+        }
+        else{
+          List_T *temp = ListOfDouble2ListOfInt($7);
+          sortEdgesInLoop(num, temp);
+          EdgeLoop *l = Create_EdgeLoop(num, temp);
+          Tree_Add(GModel::current()->getGEOInternals()->EdgeLoops, &l);
+          List_Delete(temp);
+        }
       }
       List_Delete($7);
       Free($2);
@@ -2455,38 +2465,27 @@ Shape :
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
-  | tThruSections '(' FExpr ')' tAFFECT '{' RecursiveListOfListOfDouble '}' tEND
+  | tThruSections '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(FindVolume(num)){
-	yymsg(0, "Volume %d already exists", num);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> wires;
+        for(int i = 0; i < List_Nbr($6); i++){
+          double d; List_Read($6, i, &d);
+          wires.push_back((int)std::abs(d));
+        }
+        GModel::current()->getOCCInternals()->addThruSections(num, wires);
       }
       else{
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          std::vector<std::vector<int> > edges;
-          for(int i = 0; i < List_Nbr($7); i++){
-            List_T *l; List_Read($7, i, &l);
-            std::vector<int> v;
-            for(int j = 0; j < List_Nbr(l); j++){
-              double d = 0; List_Read(l, j, &d); v.push_back(d);
-            }
-            edges.push_back(v);
-          }
-          GModel::current()->getOCCInternals()->addThruSections(num, edges);
-        }
-        else{
-          yymsg(0, "ThruSections only available with OpenCASCADE factory");
-        }
+        yymsg(0, "ThruSections only available with OpenCASCADE factory");
       }
-      for(int i = 0; i < List_Nbr($7); i++)
-        List_Delete(*(List_T**)List_Pointer($7, i));
-      List_Delete($7);
+      List_Delete($6);
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
   | tCompound tVolume ListOfDouble tEND
     {
-      GModel::current()->getGEOInternals()->addCompoundMesh ( 3 , $3 );
+      GModel::current()->getGEOInternals()->addCompoundMesh(3, $3);
     }
   | tCompound tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {

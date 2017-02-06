@@ -384,6 +384,7 @@ double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_faces(OPT_ARGS_NUM);
 double opt_geometry_occ_sew_faces(OPT_ARGS_NUM);
 double opt_geometry_occ_connect_faces(OPT_ARGS_NUM);
+double opt_geometry_occ_parallel(OPT_ARGS_NUM);
 double opt_geometry_occ_scaling(OPT_ARGS_NUM);
 double opt_geometry_old_circle(OPT_ARGS_NUM);
 double opt_geometry_old_newreg(OPT_ARGS_NUM);

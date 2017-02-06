@@ -4726,6 +4726,13 @@ double opt_geometry_occ_connect_faces(OPT_ARGS_NUM)
   return CTX::instance()->geom.occConnectFaces;
 }
 
+double opt_geometry_occ_parallel(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occParallel = (int)val;
+  return CTX::instance()->geom.occParallel;
+}
+
 double opt_geometry_occ_scaling(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

@@ -31,6 +31,11 @@ class OCC_Internals {
   TopTools_DataMapOfShapeInteger _vertexTag, _edgeTag, _faceTag, _solidTag;
   TopTools_DataMapOfIntegerShape _tagVertex, _tagEdge, _tagFace, _tagSolid;
 
+  // cache mapping TopoDS_Shapes to tags for internal use during geometry
+  // construction
+  TopTools_DataMapOfShapeInteger _wireTag, _shellTag;
+  TopTools_DataMapOfIntegerShape _tagWire, _tagShell;
+
   // add a shape and all its subshapes to _vmap, _emap, ..., _somap
   void _addShapeToMaps(TopoDS_Shape shape);
 
@@ -60,12 +65,14 @@ class OCC_Internals {
   void addVertex(int tag, double x, double y, double z);
   void addLine(int tag, int startTag, int endTag);
   void addCircleArc(int tag, int startTag, int centerTag, int endTag);
+  void addLineLoop(int tag, std::vector<int> edgeTags);
+  void addSurfaceLoop(int tag, std::vector<int> faceTags);
   void addSphere(int tag, double xc, double yc, double zc, double radius);
   void addBlock(int tag, double x1, double y1, double z1,
                 double x2, double y2, double z2);
   void addCylinder(int tag, double x1, double y1, double z1,
                    double x2, double y2, double z2, double r);
-  void addThruSections(int tag, std::vector<std::vector<int> > edgeTags);
+  void addThruSections(int tag, std::vector<int> wireTags);
 
   // apply boolean operation
   void applyBooleanOperator(int tag, BooleanOperator op,
@@ -93,10 +100,20 @@ class OCC_Internals {
     _edgeTag.Bind(edge, tag);
     _tagEdge.Bind(tag, edge);
   }
+  void bind(TopoDS_Wire wire, int tag)
+  {
+    _wireTag.Bind(wire, tag);
+    _tagWire.Bind(tag, wire);
+  }
   void bind(TopoDS_Face face, int tag)
   {
     _faceTag.Bind(face, tag);
     _tagFace.Bind(tag, face);
+  }
+  void bind(TopoDS_Shell shell, int tag)
+  {
+    _shellTag.Bind(shell, tag);
+    _tagShell.Bind(tag, shell);
   }
   void bind(TopoDS_Solid solid, int tag)
   {
@@ -113,10 +130,20 @@ class OCC_Internals {
     _edgeTag.UnBind(edge);
     _tagEdge.UnBind(tag);
   }
+  void unbind(TopoDS_Wire wire, int tag)
+  {
+    _wireTag.UnBind(wire);
+    _tagWire.UnBind(tag);
+  }
   void unbind(TopoDS_Face face, int tag)
   {
     _faceTag.UnBind(face);
     _tagFace.UnBind(tag);
+  }
+  void unbind(TopoDS_Shell shell, int tag)
+  {
+    _shellTag.UnBind(shell);
+    _tagShell.UnBind(tag);
   }
   void unbind(TopoDS_Solid solid, int tag)
   {
@@ -170,13 +197,15 @@ public:
   int getMaxTag(int dim) const { return 0; }
   void addVertex(int tag, double x, double y, double z){}
   void addLine(int tag, int startTag, int endTag){}
-  void addCircleArc(int tag, int tagStart, int tagCenter, int tagEnd){}
+  void addCircleArc(int tag, int startTag, int centerTag, int endTag){}
+  void addLineLoop(int tag, std::vector<int> edgeTags){}
+  void addSurfaceLoop(int tag, std::vector<int> faceTags){}
   void addSphere(int tag, double xc, double yc, double zc, double radius){};
   void addBlock(int tag, double x1, double y1, double z1,
                 double x2, double y2, double z2){}
   void addCylinder(int tag, double x1, double y1, double z1,
                    double x2, double y2, double z2, double r){}
-  void addThruSections(int tag, std::vector<std::vector<int> > edgeTags){}
+  void addThruSections(int tag, std::vector<int> wireTags){}
   void importOCCInternals(GModel *model){}
   void applyBooleanOperator(int tag, BooleanOperator op,
                             std::vector<int> shapeTags[4],

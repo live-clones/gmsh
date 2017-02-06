@@ -17,12 +17,13 @@ Macro dendrite
     Circle(numc+2) = {nump+3,nump+1,nump+4};
     Circle(numc+3) = {nump+4,nump+1,nump+5};
     Circle(numc+4) = {nump+5,nump+1,nump+2};
-    edges~{i}() = {numc+1:numc+4};
+    Line Loop(numw+1) = {numc+1:numc+4};
     nump += 5;
     numc += 4;
+    numw += 1;
   EndFor
   numr += 1;
-  ThruSections(numr) = {edges~{1}(),edges~{2}(),edges~{3}(),edges~{4}(),edges~{5}()};
+  ThruSections(numr) = {numw-4:numw};
   reg() += numr;
 Return
 
@@ -30,7 +31,7 @@ Sphere(1) = {0, 0, 0, 8};
 
 DefineConstant[
   N = {2, Min 0, Max 10, Step 1,
-    Name "Parameters/Number of dendrites long x and y"}
+    Name "Parameters/Sqrt(dendrites)"}
   op = {0, Choices{0="None", 1="Union", 2="Intersection", 3="Difference", 4="Fragments"},
     Name "Parameters/Boolean operation" }
   sph = {0, Choices{0,1}, Visible op == 4,
@@ -38,7 +39,7 @@ DefineConstant[
 ];
 
 reg() = {};
-nump = 0; numc = 0; numr = 100;
+nump = 0; numc = 0; numw = 0; numr = 100;
 For ii In{0:N-1}
   x = -(N-1)/2*1.5 + ii*1.5;
   For jj In{0:N-1}
