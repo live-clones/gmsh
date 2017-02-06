@@ -27,8 +27,8 @@
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
-#include <BRepOffsetAPI_ThruSections.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
+#include <BRepOffsetAPI_ThruSections.hxx>
 #include <gce_MakeCirc.hxx>
 #include <gce_MakePln.hxx>
 #include <ElCLib.hxx>
@@ -61,8 +61,13 @@ void OCC_Internals::addVertex(int tag, double x, double y, double z)
   try{
     gp_Pnt aPnt;
     aPnt = gp_Pnt(x, y, z);
-    BRepBuilderAPI_MakeVertex mkVertex(aPnt);
-    result = mkVertex.Vertex();
+    BRepBuilderAPI_MakeVertex v(aPnt);
+    v.Build();
+    if(!v.IsDone()){
+      Msg::Error("Could not create vertex");
+      return;
+    }
+    result = v.Vertex();
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -91,7 +96,13 @@ void OCC_Internals::addLine(int tag, int startTag, int endTag)
   try{
     TopoDS_Vertex start = TopoDS::Vertex(_tagVertex.Find(startTag));
     TopoDS_Vertex end = TopoDS::Vertex(_tagVertex.Find(endTag));
-    result = BRepBuilderAPI_MakeEdge(start, end).Edge();
+    BRepBuilderAPI_MakeEdge e(start, end);
+    e.Build();
+    if(!e.IsDone()){
+      Msg::Error("Could not create edge");
+      return;
+    }
+    result = e.Edge();
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -135,7 +146,13 @@ void OCC_Internals::addCircleArc(int tag, int startTag, int centerTag, int endTa
     Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
     Handle(Geom_Circle) C = new Geom_Circle(Circ);
     Handle(Geom_TrimmedCurve) arc = new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
-    result = BRepBuilderAPI_MakeEdge(arc, start, end).Edge();
+    BRepBuilderAPI_MakeEdge e(arc, start, end);
+    e.Build();
+    if(!e.IsDone()){
+      Msg::Error("Could not create circle arc");
+      return;
+    }
+    result = e.Edge();
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -186,8 +203,14 @@ void OCC_Internals::addSphere(int tag, double xc, double yc, double zc, double r
 
   TopoDS_Solid result;
   try{
-    gp_Pnt aP(xc, yc, zc);
-    result = TopoDS::Solid(BRepPrimAPI_MakeSphere(aP, radius).Shape());
+    gp_Pnt p(xc, yc, zc);
+    BRepPrimAPI_MakeSphere s(p, radius);
+    s.Build();
+    if(!s.IsDone()){
+      Msg::Error("Could not create sphere");
+      return;
+    }
+    result = TopoDS::Solid(s.Shape());
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -209,8 +232,13 @@ void OCC_Internals::addBlock(int tag, double x1, double y1, double z1,
   try{
     gp_Pnt P1(x1, y1, z1);
     gp_Pnt P2(x2, y2, z2);
-    result = TopoDS::Solid(BRepPrimAPI_MakeBox(P1, P2).Shape());
-    //BRepPrimAPI_MakeBox(P1, dx, dy, dz);
+    BRepPrimAPI_MakeBox b(P1, P2);
+    b.Build();
+    if(!b.IsDone()){
+      Msg::Error("Could not create block");
+      return;
+    }
+    result = TopoDS::Solid(b.Shape());
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -236,7 +264,13 @@ void OCC_Internals::addCylinder(int tag, double x1, double y1, double z1,
     gp_Pnt aP(x1, y1, z1);
     gp_Vec aV((x2 - x1) / H, (y2 - y1) / H, (z2 - z1) / H);
     gp_Ax2 anAxes(aP, aV);
-    result = TopoDS::Solid(BRepPrimAPI_MakeCylinder(anAxes, r, H).Shape());
+    BRepPrimAPI_MakeCylinder c(anAxes, r, H);
+    c.Build();
+    if(!c.IsDone()){
+      Msg::Error("Could not create cylinder");
+      return;
+    }
+    result = TopoDS::Solid(c.Shape());
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -255,18 +289,22 @@ void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags)
 
   TopoDS_Solid result;
   try{
-    BRepOffsetAPI_ThruSections aGenerator(Standard_True); // create solid
+    BRepOffsetAPI_ThruSections ts(Standard_True); // create solid
     for (unsigned i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])){
         Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTags[i]);
         return;
       }
       TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTags[i]));
-      aGenerator.AddWire(wire);
+      ts.AddWire(wire);
     }
-    aGenerator.CheckCompatibility(Standard_False);
-    aGenerator.Build();
-    result = TopoDS::Solid(aGenerator.Shape());
+    ts.CheckCompatibility(Standard_False);
+    ts.Build();
+    if(!ts.IsDone()){
+      Msg::Error("Could not create ThruSection");
+      return;
+    }
+    result = TopoDS::Solid(ts.Shape());
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -356,6 +394,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
         result = objects[0];
         for(int i = 1; i < objects.size(); i++){
           BRepAlgoAPI_Fuse fuse(result, objects[i]);
+          fuse.Build();
           if(!fuse.IsDone()) {
             Msg::Error("Fuse operation cannot be performed");
             return;
@@ -366,6 +405,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
         }
         for(int i = 0; i < tools.size(); i++){
           BRepAlgoAPI_Fuse fuse(result, tools[i]);
+          fuse.Build();
           if(!fuse.IsDone()) {
             Msg::Error("Fuse operation cannot be performed");
             return;
@@ -399,6 +439,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
         }
         else{
           BRepAlgoAPI_Common common(objects[0], tools[0]);
+          common.Build();
           if(!common.IsDone()) {
             Msg::Error("Intersection operation cannot be performed");
           }
@@ -431,6 +472,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
         }
         else{
           BRepAlgoAPI_Cut cut(objects[0], tools[0]);
+          cut.Build();
           if(!cut.IsDone()) {
             Msg::Error("Cut operation cannot be performed");
           }
