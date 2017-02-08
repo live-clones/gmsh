@@ -14,6 +14,7 @@
 #include "MElement.h"
 #include "MLine.h"
 #include "OpenFile.h"
+#include "StringUtils.h"
 #include "OCC_Connect.h"
 
 #if defined(HAVE_OCC)
@@ -314,6 +315,45 @@ void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags)
   bind(result, tag);
 }
 
+void OCC_Internals::importShape(const std::string &fileName,
+                                std::vector<int> outTags[4])
+{
+  std::vector<std::string> split = SplitFileName(fileName);
+  TopoDS_Shape result;
+  try{
+    if(split[2] == ".brep" || split[2] == ".BREP"){
+      BRep_Builder aBuilder;
+      BRepTools::Read(result, fileName.c_str(), aBuilder);
+    }
+    else if(split[2] == ".step" || split[2] == ".stp" ||
+            split[2] == ".STEP" || split[2] == ".STP"){
+      STEPControl_Reader reader;
+      reader.ReadFile(fileName.c_str());
+      reader.NbRootsForTransfer();
+      reader.TransferRoots();
+      result = reader.OneShape();
+    }
+    else{
+      Msg::Error("Unknown file type '%s'", fileName.c_str());
+      return;
+    }
+    BRepTools::Clean(result);
+    // FIXME: apply healing routine on result?
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+
+  TopExp_Explorer exp0;
+  for(exp0.Init(result, TopAbs_SOLID); exp0.More(); exp0.Next()){
+    int t = getMaxTag(3) + 1;
+    bind(TopoDS::Solid(exp0.Current()), t);
+    outTags[3].push_back(t);
+  }
+  // FIXME: if no solids, return faces, etc.
+}
+
 void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
                                          std::vector<int> objectTags[4],
                                          std::vector<int> toolTags[4],
@@ -578,6 +618,18 @@ void OCC_Internals::getBoundary(std::vector<int> inTags[4],
     Msg::Error("OCC TODO boundary of faces and edges");
   }
 }
+
+/*
+void OCC_Internals::translate(std::std::vector<double> dx, int addToTheModel)
+{
+  gp_Trsf transformation;
+  transformation.SetTranslation(gp_Pnt(0,0,0), gp_Pnt(dx[0],dx[1],dx[2]));
+  BRepBuilderAPI_Transform aTransformation(gm->_occ_internals->getShape(),
+                                           transformation, Standard_False);
+  TopoDS_Shape temp = aTransformation.Shape();
+
+}
+*/
 
 void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
 {

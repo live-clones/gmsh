@@ -74,6 +74,9 @@ class OCC_Internals {
                    double x2, double y2, double z2, double r);
   void addThruSections(int tag, std::vector<int> wireTags);
 
+  // import shape from file
+  void importShape(const std::string &fileName, std::vector<int> outTags[4]);
+
   // apply boolean operation
   void applyBooleanOperator(int tag, BooleanOperator op,
                             std::vector<int> shapeTags[4],
@@ -206,7 +209,7 @@ public:
   void addCylinder(int tag, double x1, double y1, double z1,
                    double x2, double y2, double z2, double r){}
   void addThruSections(int tag, std::vector<int> wireTags){}
-  void importOCCInternals(GModel *model){}
+  void importShape(const std::string &fileName, std::vector<int> outTags[4]){}
   void applyBooleanOperator(int tag, BooleanOperator op,
                             std::vector<int> shapeTags[4],
                             std::vector<int> toolTags[4],
@@ -215,6 +218,7 @@ public:
                             bool removeTool=true){}
   void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
                    bool combined=false){}
+  void importOCCInternals(GModel *model){}
 };
 
 #endif

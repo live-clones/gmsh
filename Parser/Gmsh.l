@@ -267,6 +267,7 @@ Reverse                 return tReverse;
 
 ScaleLastLayer          return tScaleLast;
 Smoother                return tSmoother;
+ShapeFromFile           return tShapeFromFile;
 SetFactory              return tSetFactory;
 SetNumber               return tSetNumber;
 SetString               return tSetString;

@@ -127,8 +127,8 @@ static colorhash_table ppm_computecolorhash(pixel ** const pixels,
 static int ppm_addtocolorhash(colorhash_table cht, const pixel * const colorP,
                               const int value)
 {
-  register int hash;
-  register colorhist_list chl;
+  int hash;
+  colorhist_list chl;
 
   chl = (colorhist_list) Malloc(sizeof(struct colorhist_list_item));
   hash = ppm_hashpixel(*colorP);
@@ -343,7 +343,7 @@ static colorhist_vector mediancut(colorhist_vector chv, int colors,
 {
   colorhist_vector colormap;
   box_vector bv;
-  register int bi, i;
+  int bi, i;
   int boxes;
 
   bv = (box_vector) malloc(sizeof(struct box) * newcolors);
@@ -366,9 +366,9 @@ static colorhist_vector mediancut(colorhist_vector chv, int colors,
    * Main loop: split boxes until we have enough.
    */
   while(boxes < newcolors) {
-    register int indx, clrs;
+    int indx, clrs;
     int sm;
-    register int minr, maxr, ming, maxg, minb, maxb, v;
+    int minr, maxr, ming, maxg, minb, maxb, v;
     int halfsum, lowersum;
 
     /*
@@ -487,9 +487,9 @@ static colorhist_vector mediancut(colorhist_vector chv, int colors,
   for(bi = 0; bi < boxes; ++bi) {
 
 #ifdef REP_CENTER_BOX
-    register int indx = bv[bi].ind;
-    register int clrs = bv[bi].colors;
-    register int minr, maxr, ming, maxg, minb, maxb, v;
+    int indx = bv[bi].ind;
+    int clrs = bv[bi].colors;
+    int minr, maxr, ming, maxg, minb, maxb, v;
 
     minr = maxr = PPM_GETR(chv[indx].color);
     ming = maxg = PPM_GETG(chv[indx].color);
@@ -510,9 +510,9 @@ static colorhist_vector mediancut(colorhist_vector chv, int colors,
 #endif
 
 #ifdef REP_AVERAGE_COLORS
-    register int indx = bv[bi].ind;
-    register int clrs = bv[bi].colors;
-    register long r = 0, g = 0, b = 0;
+    int indx = bv[bi].ind;
+    int clrs = bv[bi].colors;
+    long r = 0, g = 0, b = 0;
 
     for(i = 0; i < clrs; ++i) {
       r += PPM_GETR(chv[indx + i].color);
@@ -526,9 +526,9 @@ static colorhist_vector mediancut(colorhist_vector chv, int colors,
 #endif
 
 #ifdef REP_AVERAGE_PIXELS
-    register int indx = bv[bi].ind;
-    register int clrs = bv[bi].colors;
-    register long r = 0, g = 0, b = 0, sum = 0;
+    int indx = bv[bi].ind;
+    int clrs = bv[bi].colors;
+    long r = 0, g = 0, b = 0, sum = 0;
 
     for(i = 0; i < clrs; ++i) {
       r += PPM_GETR(chv[indx + i].color) * chv[indx + i].value;
@@ -835,12 +835,12 @@ static void output(code_int code)
  * questions about this implementation to ames!jaw.
  */
 
-static void cl_hash(register count_int hsize)
+static void cl_hash(count_int hsize)
 {       /* reset code table */
-  register count_int *htab_p = htab + hsize;
+  count_int *htab_p = htab + hsize;
 
-  register long i;
-  register long m1 = -1;
+  long i;
+  long m1 = -1;
 
   i = hsize - 16;
   do {  /* might use Sys V memset(3) here */
@@ -883,13 +883,13 @@ static void cl_block()
 
 static void compress(int init_bits, FILE * outfile, ifunptr ReadValue)
 {
-  register long fcode;
-  register code_int i /* = 0 */ ;
-  register int c;
-  register code_int ent;
-  register code_int disp;
-  register code_int hsize_reg;
-  register int hshift;
+  long fcode;
+  code_int i /* = 0 */ ;
+  int c;
+  code_int ent;
+  code_int disp;
+  code_int hsize_reg;
+  int hshift;
 
   /*
    * Set up the globals:  g_init_bits - initial number of bits
@@ -1157,12 +1157,12 @@ void create_gif(FILE * outfile, PixelBuffer *buffer,
   int BitsPerPixel, usehash;
   pixval maxval = MAXCOL2, newmaxval;
   colorhash_table cht;
-  register pixel *pP;
-  register int col, row, limitcol, ind;
+  pixel *pP;
+  int col, row, limitcol, ind;
   int newcolors = 256;
   long *thisrerr = NULL, *nextrerr = NULL, *thisgerr = NULL, *nextgerr = NULL;
   long *thisberr = NULL, *nextberr = NULL, *temperr = NULL;
-  register long sr = 0, sg = 0, sb = 0, err = 0;
+  long sr = 0, sg = 0, sb = 0, err = 0;
   int fs_direction = 0;
 
   int width = buffer->getWidth();
@@ -1290,8 +1290,8 @@ void create_gif(FILE * outfile, PixelBuffer *buffer,
         /* Check hash table to see if we have already matched this color. */
         ind = ppm_lookupcolor(cht, pP);
         if(ind == -1) { /* No; search colormap for closest match. */
-          register int i, r1, g1, b1, r2, g2, b2;
-          register long dist, newdist;
+          int i, r1, g1, b1, r2, g2, b2;
+          long dist, newdist;
           r1 = PPM_GETR(*pP);
           g1 = PPM_GETG(*pP);
           b1 = PPM_GETB(*pP);

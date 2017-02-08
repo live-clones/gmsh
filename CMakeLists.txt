@@ -235,6 +235,9 @@ if(ENABLE_OPENMP)
   endif(OPENMP_FOUND)
 endif(ENABLE_OPENMP)
 
+# in more recent cmake, we could do e.g. set(CMAKE_CXX_STANDARD 11)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
 macro(append_gmsh_src DIRNAME FILES)
   foreach(FILE ${FILES})
     list(APPEND LIST ${DIRNAME}/${FILE})

@@ -143,7 +143,7 @@ struct doubleXstring{
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tDefineNumber tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
-%token tBlock tCylinder tCone tEllipsoid tQuadric
+%token tBlock tCylinder tCone tEllipsoid tQuadric tShapeFromFile
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tSetFactory tThruSections
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
@@ -4377,6 +4377,28 @@ Boolean :
       }
       List_Delete($3);
       List_Delete($7);
+    }
+  | tShapeFromFile '(' StringExprVar ')'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> out[4];
+        GModel::current()->getOCCInternals()->importShape($3, out);
+        Shape s;
+        for(int dim = 0; dim < 4; dim++){
+          s.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
+            (dim == 2) ? MSH_SURF_FROM_GMODEL :
+            (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
+          for(unsigned int i = 0; i < out[dim].size(); i++){
+            s.Num = out[dim][i];
+            List_Add($$, &s);
+          }
+        }
+      }
+      else{
+        yymsg(0, "ShapeFromFile only available with OpenCASCADE factory");
+      }
+      Free($3);
     }
 ;
 

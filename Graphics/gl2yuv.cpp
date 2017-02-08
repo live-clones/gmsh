@@ -8,7 +8,7 @@
  * Software Encoder (Version 1.5; February 1, 1995), by Lawrence
  * A. Rowe, Kevin Gong, Eugene Hung, Ketan Patel, Steve Smoot and Dan
  * Wallach Computer Science Division-EECS, Univ. of Calif. at Berkeley
- * 
+ *
  * Copyright (c) 1995 The Regents of the University of California.
  * All rights reserved.
  *
@@ -39,11 +39,11 @@ void create_yuv(FILE * outfile, PixelBuffer *buffer)
     return;
   }
 
-  register int x, y;
-  register unsigned char *dy0, *dy1;
-  register unsigned char *dcr, *dcb;
-  register unsigned char *src0, *src1;
-  register int cdivisor;
+  int x, y;
+  unsigned char *dy0, *dy1;
+  unsigned char *dcr, *dcb;
+  unsigned char *src0, *src1;
+  int cdivisor;
 
   static int first = 1;
   static float mult299[1024], mult587[1024], mult114[1024];
@@ -53,8 +53,8 @@ void create_yuv(FILE * outfile, PixelBuffer *buffer)
   unsigned char **orig_y, **orig_cr, **orig_cb;
 
   if(first) {
-    register int index;
-    register int maxValue;
+    int index;
+    int maxValue;
 
     maxValue = 255;
 
@@ -75,7 +75,7 @@ void create_yuv(FILE * outfile, PixelBuffer *buffer)
   int width = buffer->getWidth();
   int height = buffer->getHeight();
   unsigned char *pixels = (unsigned char *)buffer->getPixels();
-  
+
   // yuv format assumes even number of rows and columns
   height -= height % 2;
   width -= width % 2;
