@@ -44,11 +44,11 @@ class OCC_Internals {
                   bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
                   bool makesolids=false, double scaling=0.0);
 
- protected :
+
   // *** FIXME will be removed ***
+ protected :
   TopoDS_Shape _shape;
  public:
-  // *** FIXME: will be removed with GModelFactory ***
   void _addShapeToLists(TopoDS_Shape shape){ _addShapeToMaps(shape); }
   void _healGeometry(double tolerance, bool fixdegenerated,
                      bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
@@ -67,20 +67,34 @@ class OCC_Internals {
   void loadBREP(const char *);
   void loadSTEP(const char *);
   void loadIGES(const char *);
-  void loadShape(const TopoDS_Shape *);
-  // *** end of stuff that will be removed ***
+  void loadShape(const TopoDS_Shape *s)
+  {
+    std::vector<int> tags[4]; importShapes(s, tags);
+  }
+  // *** FIXME end of stuff that will be removed ***
 
  public:
-  OCC_Internals()
-  {
-    for(int i = 0; i < 4; i++) _maxTagConstraints[i] = 0;
-  }
+  OCC_Internals();
+
+  // bind and unbind OpenCASCADE shapes to tags
+  void bind(TopoDS_Vertex vertex, int tag);
+  void bind(TopoDS_Edge edge, int tag);
+  void bind(TopoDS_Wire wire, int tag);
+  void bind(TopoDS_Face face, int tag);
+  void bind(TopoDS_Shell shell, int tag);
+  void bind(TopoDS_Solid solid, int tag);
+  void unbind(TopoDS_Vertex vertex, int tag);
+  void unbind(TopoDS_Edge edge, int tag);
+  void unbind(TopoDS_Wire wire, int tag);
+  void unbind(TopoDS_Face face, int tag);
+  void unbind(TopoDS_Shell shell, int tag);
+  void unbind(TopoDS_Solid solid, int tag);
+
+  // bind highest-dimensional entities in shape to tags
+  void bindHighest(TopoDS_Shape shape, std::vector<int> tags[4]);
 
   // set constraints on tags
-  void setTagConstraints(int maxTags[4])
-  {
-    for(int i = 0; i < 4; i++) _maxTagConstraints[i] = maxTags[i];
-  }
+  void setTagConstraints(int maxTags[4]);
 
   // get maximum tag number for each dimension
   int getMaxTag(int dim) const;
@@ -114,73 +128,15 @@ class OCC_Internals {
   // import shapes from file
   void importShapes(const std::string &fileName, std::vector<int> outTags[4]);
 
+  // import shapes from TopoDS_Shape
+  void importShapes(const TopoDS_Shape *shape, std::vector<int> outTags[4]);
+
   // export all tagged shapes to file
   void exportShapes(const std::string &fileName);
 
   // synchronize all shapes in maps with the given GModel
   void synchronize(GModel *model);
 
-  // bind and unbind OpenCASCADE shapes to tags
-  void bind(TopoDS_Vertex vertex, int tag)
-  {
-    _vertexTag.Bind(vertex, tag);
-    _tagVertex.Bind(tag, vertex);
-  }
-  void bind(TopoDS_Edge edge, int tag)
-  {
-    _edgeTag.Bind(edge, tag);
-    _tagEdge.Bind(tag, edge);
-  }
-  void bind(TopoDS_Wire wire, int tag)
-  {
-    _wireTag.Bind(wire, tag);
-    _tagWire.Bind(tag, wire);
-  }
-  void bind(TopoDS_Face face, int tag)
-  {
-    _faceTag.Bind(face, tag);
-    _tagFace.Bind(tag, face);
-  }
-  void bind(TopoDS_Shell shell, int tag)
-  {
-    _shellTag.Bind(shell, tag);
-    _tagShell.Bind(tag, shell);
-  }
-  void bind(TopoDS_Solid solid, int tag)
-  {
-    _solidTag.Bind(solid, tag);
-    _tagSolid.Bind(tag, solid);
-  }
-  void unbind(TopoDS_Vertex vertex, int tag)
-  {
-    _vertexTag.UnBind(vertex);
-    _tagVertex.UnBind(tag);
-  }
-  void unbind(TopoDS_Edge edge, int tag)
-  {
-    _edgeTag.UnBind(edge);
-    _tagEdge.UnBind(tag);
-  }
-  void unbind(TopoDS_Wire wire, int tag)
-  {
-    _wireTag.UnBind(wire);
-    _tagWire.UnBind(tag);
-  }
-  void unbind(TopoDS_Face face, int tag)
-  {
-    _faceTag.UnBind(face);
-    _tagFace.UnBind(tag);
-  }
-  void unbind(TopoDS_Shell shell, int tag)
-  {
-    _shellTag.UnBind(shell);
-    _tagShell.UnBind(tag);
-  }
-  void unbind(TopoDS_Solid solid, int tag)
-  {
-    _solidTag.UnBind(solid);
-    _tagSolid.UnBind(tag);
-  }
   GVertex *getOCCVertexByNativePtr(GModel *model, TopoDS_Vertex toFind);
   GEdge *getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind);
   GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind);
