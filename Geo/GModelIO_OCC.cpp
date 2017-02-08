@@ -328,8 +328,10 @@ void OCC_Internals::importShape(const std::string &fileName,
     else if(split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP"){
       STEPControl_Reader reader;
-      reader.ReadFile(fileName.c_str());
-      reader.NbRootsForTransfer();
+      if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone){
+        Msg::Error("Could not read file '%s'", fileName.c_str());
+        return;
+      }
       reader.TransferRoots();
       result = reader.OneShape();
     }
@@ -337,7 +339,6 @@ void OCC_Internals::importShape(const std::string &fileName,
       Msg::Error("Unknown file type '%s'", fileName.c_str());
       return;
     }
-    BRepTools::Clean(result);
     // FIXME: apply healing routine on result?
   }
   catch(Standard_Failure &err){
@@ -354,13 +355,28 @@ void OCC_Internals::importShape(const std::string &fileName,
   // FIXME: if no solids, return faces, etc.
 }
 
+/*
+void OCC_Internals::export(const std::string &fileName)
+{
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
+  for(int i = 1; i <= _vmap.Extent(); i++) b.Add(c, _vmap(i));
+  for(int i = 1; i <= _emap.Extent(); i++) b.Add(c, _emap(i));
+  for(int i = 1; i <= _wmap.Extent(); i++) b.Add(c, _wmap(i));
+  for(int i = 1; i <= _fmap.Extent(); i++) b.Add(c, _fmap(i));
+  for(int i = 1; i <= _shmap.Extent(); i++) b.Add(c, _shmap(i));
+  for(int i = 1; i <= _somap.Extent(); i++) b.Add(c, _somap(i));
+}
+*/
+
 void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
                                          std::vector<int> objectTags[4],
                                          std::vector<int> toolTags[4],
                                          std::vector<int> outTags[4],
                                          bool removeObject, bool removeTool)
 {
-  double tolerance = 0.0; // FIXME make this a parameter
+  double tolerance = CTX::instance()->geom.toleranceBoolean;
   bool parallel = CTX::instance()->geom.occParallel;
 
   if(tag > 0 && _tagSolid.IsBound(tag)){

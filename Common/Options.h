@@ -359,6 +359,7 @@ double opt_geometry_hide_compounds(OPT_ARGS_NUM);
 double opt_geometry_oriented_physicals(OPT_ARGS_NUM);
 double opt_geometry_highlight_orphans(OPT_ARGS_NUM);
 double opt_geometry_tolerance(OPT_ARGS_NUM);
+double opt_geometry_tolerance_boolean(OPT_ARGS_NUM);
 double opt_geometry_normals(OPT_ARGS_NUM);
 double opt_geometry_tangents(OPT_ARGS_NUM);
 double opt_geometry_points(OPT_ARGS_NUM);
