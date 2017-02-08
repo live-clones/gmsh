@@ -71,6 +71,10 @@ class OCC_Internals {
   {
     std::vector<int> tags[4]; importShapes(s, tags);
   }
+  GVertex *addVertexToModel(GModel *model, TopoDS_Vertex v);
+  GEdge *addEdgeToModel(GModel *model, TopoDS_Edge e);
+  GFace *addFaceToModel(GModel *model, TopoDS_Face f);
+  GRegion *addRegionToModel(GModel *model, TopoDS_Solid r);
   // *** FIXME end of stuff that will be removed ***
 
  public:
@@ -125,6 +129,10 @@ class OCC_Internals {
   void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
                    bool combined=false);
 
+  // apply transformations
+  void translate(std::vector<int> inTags[4], double dx, double dy, double dz);
+  void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]);
+
   // import shapes from file
   void importShapes(const std::string &fileName, std::vector<int> outTags[4]);
 
@@ -134,17 +142,14 @@ class OCC_Internals {
   // export all tagged shapes to file
   void exportShapes(const std::string &fileName);
 
-  // synchronize all shapes in maps with the given GModel
+  // synchronize internal CAD data with the given GModel
   void synchronize(GModel *model);
 
+  // get the GEntity corresponding to an OCC shape
   GVertex *getOCCVertexByNativePtr(GModel *model, TopoDS_Vertex toFind);
   GEdge *getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind);
   GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind);
   GRegion *getOCCRegionByNativePtr(GModel *model, TopoDS_Solid toFind);
-  GVertex *addVertexToModel(GModel *model, TopoDS_Vertex v);
-  GEdge *addEdgeToModel(GModel *model, TopoDS_Edge e);
-  GFace *addFaceToModel(GModel *model, TopoDS_Face f);
-  GRegion *addRegionToModel(GModel *model, TopoDS_Solid r);
 };
 
 #else
@@ -174,6 +179,8 @@ public:
                             bool removeTool=true){}
   void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
                    bool combined=false){}
+  void translate(std::vector<int> inTags[4], double dx, double dy, double dz){}
+  void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]){}
   void importShapes(const std::string &fileName, std::vector<int> outTags[4]){}
   void exportShapes(const std::string &fileName){}
   void synchronize(GModel *model){}

@@ -2554,7 +2554,14 @@ Transform :
     tTranslate VExpr '{' MultipleShape '}'
     {
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        Msg::Error("TODO OCC Translate");
+        std::vector<int> in[4];
+        Shape TheShape;
+        for(int i = 0; i < List_Nbr($4); i++){
+          List_Read($4, i, &TheShape);
+          int dim = TheShape.Type / 100 - 1;
+          if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
+        }
+        GModel::current()->getOCCInternals()->translate(in, $2[0], $2[1], $2[2]);
       }
       else{
         TranslateShapes($2[0], $2[1], $2[2], $4);

@@ -654,12 +654,12 @@ void OCC_Internals::getBoundary(std::vector<int> inTags[4],
                                 bool combined)
 {
   for(unsigned int i = 0; i < inTags[3].size(); i++){
-    TopExp_Explorer exp0, exp1;
     if(!_tagSolid.IsBound(inTags[3][i])){
       Msg::Error("Unknown OpenCASCADE region with tag %d", inTags[3][i]);
       return;
     }
     TopoDS_Solid solid = TopoDS::Solid(_tagSolid.Find(inTags[3][i]));
+    TopExp_Explorer exp0, exp1;
     for(exp0.Init(solid, TopAbs_SHELL); exp0.More(); exp0.Next()){
       TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
       for(exp1.Init(shell, TopAbs_FACE); exp1.More(); exp1.Next()){
@@ -687,17 +687,38 @@ void OCC_Internals::getBoundary(std::vector<int> inTags[4],
   }
 }
 
-/*
-void OCC_Internals::translate(std::std::vector<double> dx, int addToTheModel)
+void OCC_Internals::translate(std::vector<int> inTags[4],
+                              double dx, double dy, double dz)
 {
-  gp_Trsf transformation;
-  transformation.SetTranslation(gp_Pnt(0,0,0), gp_Pnt(dx[0],dx[1],dx[2]));
-  BRepBuilderAPI_Transform aTransformation(gm->_occ_internals->getShape(),
-                                           transformation, Standard_False);
-  TopoDS_Shape temp = aTransformation.Shape();
+  gp_Trsf t;
+  t.SetTranslation(gp_Pnt(0, 0, 0), gp_Pnt(dx, dy, dz));
+  BRepBuilderAPI_Transform tfo(t);
+
+  for(unsigned int i = 0; i < inTags[3].size(); i++){
+    if(!_tagSolid.IsBound(inTags[3][i])){
+      Msg::Error("Unknown OpenCASCADE region with tag %d", inTags[3][i]);
+      return;
+    }
+    TopoDS_Solid solid = TopoDS::Solid(_tagSolid.Find(inTags[3][i]));
+    tfo.Perform(solid, Standard_False);
+    if(!tfo.IsDone()){
+      Msg::Error("Could not apply translation");
+      return;
+    }
+    TopoDS_Solid result = TopoDS::Solid(tfo.Shape());
+    bind(result, inTags[3][i]);
+  }
+
+  if(inTags[2].size() || inTags[1].size() || inTags[0].size()){
+    Msg::Error("OCC TODO translation of surfaces, curves and vertices");
+  }
 
 }
-*/
+
+void OCC_Internals::copy(std::vector<int> inTags[4], std::vector<int> outTags[4])
+{
+
+}
 
 void OCC_Internals::importShapes(const std::string &fileName,
                                  std::vector<int> outTags[4])
