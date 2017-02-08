@@ -1813,31 +1813,48 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
     for(unsigned int i = 0; i < edgeLoop.size(); i++){
       MVertex *here = edgeLoop[i];
       GEntity *ge = here->onWhat();
-      double U, V;
-      SPoint2 param = coords[i];
-      U = param.x() / m->scalingU ;
-      V = param.y() / m->scalingV;
-      BDS_Point *pp = m->add_point(count + countTot, U, V, gf);
-      if(ge->dim() == 0){
-        pp->lcBGM() = BGM_MeshSize(ge, 0, 0, here->x(), here->y(), here->z());
-      }
-      else if(ge->dim() == 1){
-        double u;
-        here->getParameter(0, u);
-        pp->lcBGM() = BGM_MeshSize(ge, u, 0,here->x(), here->y(), here->z());
-      }
-      else
-        pp->lcBGM() = MAX_LC;
 
-      pp->lc() = pp->lcBGM();
-      m->add_geom (ge->tag(), ge->dim());
-      BDS_GeomEntity *g = m->get_geom(ge->tag(), ge->dim());
-      pp->g = g;
-      if(MYDEBUG)
-        printf("point %3d (%8.5f %8.5f : %8.5f %8.5f) (%2d,%2d)\n",
-               count, pp->u, pp->v, param.x(), param.y(), pp->g->classif_tag,
-               pp->g->classif_degree);
-      bbox += SPoint3(U, V, 0);
+      BDS_Point *pp = nullptr;
+      if (ge->dim() == 0){
+        // Point might already be part of other loop
+        for (std::map<BDS_Point*, MVertex*, PointLessThan>::iterator it = recoverMap.begin();
+          it != recoverMap.end(); ++it){
+          if (it->second == here)
+          {
+            pp = it->first;
+            break;
+          }
+        }
+      }
+
+      if (pp == nullptr)
+      {
+        double U, V;
+        SPoint2 param = coords[i];
+        U = param.x() / m->scalingU;
+        V = param.y() / m->scalingV;
+        pp = m->add_point(count + countTot, U, V, gf);
+        if (ge->dim() == 0){
+          pp->lcBGM() = BGM_MeshSize(ge, 0, 0, here->x(), here->y(), here->z());
+        }
+        else if (ge->dim() == 1){
+          double u;
+          here->getParameter(0, u);
+          pp->lcBGM() = BGM_MeshSize(ge, u, 0, here->x(), here->y(), here->z());
+        }
+        else
+          pp->lcBGM() = MAX_LC;
+
+        pp->lc() = pp->lcBGM();
+        m->add_geom(ge->tag(), ge->dim());
+        BDS_GeomEntity *g = m->get_geom(ge->tag(), ge->dim());
+        pp->g = g;
+        if (MYDEBUG)
+          printf("point %3d (%8.5f %8.5f : %8.5f %8.5f) (%2d,%2d)\n",
+          count, pp->u, pp->v, param.x(), param.y(), pp->g->classif_tag,
+          pp->g->classif_degree);
+        bbox += SPoint3(U, V, 0);
+      }
       edgeLoop_BDS.push_back(pp);
       recoverMapLocal[pp] = here;
       count++;
