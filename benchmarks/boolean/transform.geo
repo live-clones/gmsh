@@ -27,3 +27,5 @@ Rotate { {1,0,0}, {0,0,0}, Pi/3 } { Volume{1}; }
 Rotate { {0,1,0}, {0,0,0}, Pi/3 } { Volume{1}; }
 
 f() = BooleanFragments { Volume{1}; Delete; }{ Volume{2}; Delete; };
+
+Translate{5,0.2,0.2}{ Duplicata{ Volume{1}; } }

@@ -2620,16 +2620,32 @@ Transform :
     {
       $$ = List_Create(3, 3, sizeof(Shape));
       if(!strcmp($1, "Duplicata")){
-        for(int i = 0; i < List_Nbr($3); i++){
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          std::vector<int> in[4], out[4];
           Shape TheShape;
-          List_Read($3, i, &TheShape);
-          if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-            Msg::Error("TODO OCC Copy");
+          for(int i = 0; i < List_Nbr($3); i++){
+            List_Read($3, i, &TheShape);
+            int dim = TheShape.Type / 100 - 1;
+            if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
           }
-          else{
+          GModel::current()->getOCCInternals()->copy(in, out);
+          for(int dim = 0; dim < 4; dim++){
+            TheShape.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
+              (dim == 2) ? MSH_SURF_FROM_GMODEL :
+              (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
+            for(unsigned int i = 0; i < out[dim].size(); i++){
+              TheShape.Num = out[dim][i];
+              List_Add($$, &TheShape);
+            }
+          }
+        }
+        else{
+          for(int i = 0; i < List_Nbr($3); i++){
+            Shape TheShape;
+            List_Read($3, i, &TheShape);
             CopyShape(TheShape.Type, TheShape.Num, &TheShape.Num);
+            List_Add($$, &TheShape);
           }
-          List_Add($$, &TheShape);
         }
       }
       else if(!strcmp($1, "Boundary") || !strcmp($1, "CombinedBoundary")){
