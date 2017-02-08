@@ -117,6 +117,7 @@ class OCC_Internals {
   void addCircleArc(int tag, int startTag, int centerTag, int endTag);
   void addLineLoop(int tag, std::vector<int> edgeTags);
   void addSurfaceLoop(int tag, std::vector<int> faceTags);
+  void addVolume(int tag, std::vector<int> shellTags);
   void addSphere(int tag, double xc, double yc, double zc, double radius);
   void addBlock(int tag, double x1, double y1, double z1,
                 double x2, double y2, double z2);
@@ -175,6 +176,7 @@ public:
   void addCircleArc(int tag, int startTag, int centerTag, int endTag){}
   void addLineLoop(int tag, std::vector<int> edgeTags){}
   void addSurfaceLoop(int tag, std::vector<int> faceTags){}
+  void addVolume(int tag, std::vector<int> shellTags){}
   void addSphere(int tag, double xc, double yc, double zc, double radius){};
   void addBlock(int tag, double x1, double y1, double z1,
                 double x2, double y2, double z2){}

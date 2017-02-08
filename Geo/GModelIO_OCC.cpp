@@ -320,7 +320,12 @@ void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
 
 void OCC_Internals::addSurfaceLoop(int tag, std::vector<int> faceTags)
 {
-  Msg::Error("OCC TODO create shell!");
+  Msg::Error("OCC TODO create shell");
+}
+
+void OCC_Internals::addVolume(int tag, std::vector<int> shellTags)
+{
+  Msg::Error("OCC TODO create volume");
 }
 
 void OCC_Internals::addSphere(int tag, double xc, double yc, double zc, double radius)
