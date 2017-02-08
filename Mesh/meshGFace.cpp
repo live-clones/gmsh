@@ -818,8 +818,8 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
 static bool inside_domain(MElementOctree* octree,double x,double y)
 {
   MElement* element;
-  element = (MElement*)octree->find(x,y,0.0,2,true);
-  if(element!=NULL) return 1;
+  element = (MElement*)octree->find(x, y, 0.0, 2, true);
+  if(element != NULL) return 1;
   else return 0;
 }
 
@@ -1814,21 +1814,18 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
       MVertex *here = edgeLoop[i];
       GEntity *ge = here->onWhat();
 
-      BDS_Point *pp = nullptr;
-      if (ge->dim() == 0){
+      BDS_Point *pp = 0;
+      if(ge->dim() == 0){
         // Point might already be part of other loop
         for (std::map<BDS_Point*, MVertex*, PointLessThan>::iterator it = recoverMap.begin();
-          it != recoverMap.end(); ++it){
-          if (it->second == here)
-          {
+             it != recoverMap.end(); ++it){
+          if (it->second == here){
             pp = it->first;
             break;
           }
         }
       }
-
-      if (pp == nullptr)
-      {
+      if(pp == 0){
         double U, V;
         SPoint2 param = coords[i];
         U = param.x() / m->scalingU;
@@ -1851,8 +1848,8 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
         pp->g = g;
         if (MYDEBUG)
           printf("point %3d (%8.5f %8.5f : %8.5f %8.5f) (%2d,%2d)\n",
-          count, pp->u, pp->v, param.x(), param.y(), pp->g->classif_tag,
-          pp->g->classif_degree);
+                 count, pp->u, pp->v, param.x(), param.y(), pp->g->classif_tag,
+                 pp->g->classif_degree);
         bbox += SPoint3(U, V, 0);
       }
       edgeLoop_BDS.push_back(pp);
