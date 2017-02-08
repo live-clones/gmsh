@@ -74,9 +74,6 @@ class OCC_Internals {
                    double x2, double y2, double z2, double r);
   void addThruSections(int tag, std::vector<int> wireTags);
 
-  // import shape from file
-  void importShape(const std::string &fileName, std::vector<int> outTags[4]);
-
   // apply boolean operation
   void applyBooleanOperator(int tag, BooleanOperator op,
                             std::vector<int> shapeTags[4],
@@ -90,8 +87,14 @@ class OCC_Internals {
   void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
                    bool combined=false);
 
-  // import all the shapes into the model
-  void importOCCInternals(GModel *model);
+  // import shapes from file
+  void importShapes(const std::string &fileName, std::vector<int> outTags[4]);
+
+  // export all tagged shapes to file
+  void exportShapes(const std::string &fileName);
+
+  // synchronize all shapes in maps with the given GModel
+  void synchronize(GModel *model);
 
   void bind(TopoDS_Vertex vertex, int tag)
   {
@@ -176,16 +179,14 @@ class OCC_Internals {
   void healGeometry(double tolerance, bool fixdegenerated,
                     bool fixsmalledges, bool fixspotstripfaces,
                     bool sewfaces, bool makesolids=false,
-                    int connect=0, double scaling=0.0);
+                    double scaling=0.0);
   void fillet(std::vector<TopoDS_Edge> &shapes, double radius);
 
   // I/O towards GModel
   void buildShapeFromGModel(GModel*);
   void buildGModel(GModel *gm);
   void loadBREP(const char *);
-  void writeBREP(const char *);
   void loadSTEP(const char *);
-  void writeSTEP(const char *);
   void loadIGES(const char *);
   void loadShape(const TopoDS_Shape *);
 };
@@ -209,7 +210,6 @@ public:
   void addCylinder(int tag, double x1, double y1, double z1,
                    double x2, double y2, double z2, double r){}
   void addThruSections(int tag, std::vector<int> wireTags){}
-  void importShape(const std::string &fileName, std::vector<int> outTags[4]){}
   void applyBooleanOperator(int tag, BooleanOperator op,
                             std::vector<int> shapeTags[4],
                             std::vector<int> toolTags[4],
@@ -218,7 +218,9 @@ public:
                             bool removeTool=true){}
   void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
                    bool combined=false){}
-  void importOCCInternals(GModel *model){}
+  void importShapes(const std::string &fileName, std::vector<int> outTags[4]){}
+  void exportShapes(const std::string &fileName){}
+  void synchronize(GModel *model){}
 };
 
 #endif

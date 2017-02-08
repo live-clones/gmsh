@@ -10813,7 +10813,7 @@ yyreduce:
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<int> out[4];
         std::string tmp = FixRelativePath(gmsh_yyname, (yyvsp[(3) - (4)].c));
-        GModel::current()->getOCCInternals()->importShape(tmp, out);
+        GModel::current()->getOCCInternals()->importShapes(tmp, out);
         Shape s;
         for(int dim = 0; dim < 4; dim++){
           s.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :

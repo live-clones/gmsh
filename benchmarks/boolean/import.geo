@@ -19,3 +19,5 @@ If(sph)
 EndIf
 
 BooleanFragments{ Volume{a(0)}; Delete; }{ Volume{b()}; Delete; }
+
+Save "merged.brep";

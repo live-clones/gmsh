@@ -519,10 +519,6 @@ GFace *GeoFactory::_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdg
 #include <TopoDS_Compound.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <GeomAPI_PointsToBSpline.hxx>
-#include "OCC_Connect.h"
-#if defined(HAVE_SALOME)
-#include "Partition_Spliter.hxx"
-#endif
 
 GVertex *OCCFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
 {
@@ -1099,43 +1095,13 @@ GModel *OCCFactory::computeBooleanIntersection(GModel* obj, GModel* tool,
 /* same as checkbox GUI - works a bit better than occconnect... */
 void OCCFactory::salomeconnect(GModel *gm)
 {
-#if defined(HAVE_SALOME)
-  Msg::Info("- cutting and connecting faces with Salome's Partition_Spliter");
-  TopExp_Explorer e2;
-  Partition_Spliter ps;
-  TopoDS_Shape shape = gm->_occ_internals->getShape();
-  for (e2.Init(shape, TopAbs_SOLID); e2.More(); e2.Next())
-    ps.AddShape(e2.Current());
-  try{
-    ps.Compute();
-    shape = ps.Shape();
-    gm->destroy();
-    gm->_occ_internals->loadShape(&shape);
-    gm->_occ_internals->buildLists();
-    gm->_occ_internals->buildGModel(gm);
-  }
-  catch(Standard_Failure &err){
-    Msg::Error("%s", err.GetMessageString());
-  }
-#else
-  Msg::Info("You need to recompile with Salome support to use Salome's Partition_Spliter");
-#endif
+  Msg::Error("Salome's Partition_Spliter has been removed");
 }
 
 /* same as checkbox GUI - does not work at all, though!*/
 void OCCFactory::occconnect(GModel *gm)
 {
-  Msg::Info("- cutting and connecting faces with OCC_Connect");
-  OCC_Connect connect(1);
-  TopoDS_Shape shape = gm->_occ_internals->getShape();
-  for(TopExp_Explorer p(shape, TopAbs_SOLID); p.More(); p.Next())
-    connect.Add(p.Current());
-  connect.Connect();
-  shape = connect;
-  gm->destroy();
-  gm->_occ_internals->loadShape(&shape);
-  gm->_occ_internals->buildLists();
-  gm->_occ_internals->buildGModel(gm);
+  Msg::Error("OCC_Connect has been removed");
 }
 
 /* IsEqualG : a tolerance function for setPeriodicAllFaces */

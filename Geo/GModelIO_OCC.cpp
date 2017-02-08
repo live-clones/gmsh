@@ -15,13 +15,8 @@
 #include "MLine.h"
 #include "OpenFile.h"
 #include "StringUtils.h"
-#include "OCC_Connect.h"
 
 #if defined(HAVE_OCC)
-
-#if defined(HAVE_SALOME)
-#include "Partition_Spliter.hxx"
-#endif
 
 #include <TopTools_DataMapIteratorOfDataMapOfShapeInteger.hxx>
 #include <TopTools_DataMapIteratorOfDataMapOfIntegerShape.hxx>
@@ -315,61 +310,6 @@ void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags)
   bind(result, tag);
 }
 
-void OCC_Internals::importShape(const std::string &fileName,
-                                std::vector<int> outTags[4])
-{
-  std::vector<std::string> split = SplitFileName(fileName);
-  TopoDS_Shape result;
-  try{
-    if(split[2] == ".brep" || split[2] == ".BREP"){
-      BRep_Builder aBuilder;
-      BRepTools::Read(result, fileName.c_str(), aBuilder);
-    }
-    else if(split[2] == ".step" || split[2] == ".stp" ||
-            split[2] == ".STEP" || split[2] == ".STP"){
-      STEPControl_Reader reader;
-      if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone){
-        Msg::Error("Could not read file '%s'", fileName.c_str());
-        return;
-      }
-      reader.TransferRoots();
-      result = reader.OneShape();
-    }
-    else{
-      Msg::Error("Unknown file type '%s'", fileName.c_str());
-      return;
-    }
-    // FIXME: apply healing routine on result?
-  }
-  catch(Standard_Failure &err){
-    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
-    return;
-  }
-
-  TopExp_Explorer exp0;
-  for(exp0.Init(result, TopAbs_SOLID); exp0.More(); exp0.Next()){
-    int t = getMaxTag(3) + 1;
-    bind(TopoDS::Solid(exp0.Current()), t);
-    outTags[3].push_back(t);
-  }
-  // FIXME: if no solids, return faces, etc.
-}
-
-/*
-void OCC_Internals::export(const std::string &fileName)
-{
-  BRep_Builder b;
-  TopoDS_Compound c;
-  b.MakeCompound(c);
-  for(int i = 1; i <= _vmap.Extent(); i++) b.Add(c, _vmap(i));
-  for(int i = 1; i <= _emap.Extent(); i++) b.Add(c, _emap(i));
-  for(int i = 1; i <= _wmap.Extent(); i++) b.Add(c, _wmap(i));
-  for(int i = 1; i <= _fmap.Extent(); i++) b.Add(c, _fmap(i));
-  for(int i = 1; i <= _shmap.Extent(); i++) b.Add(c, _shmap(i));
-  for(int i = 1; i <= _somap.Extent(); i++) b.Add(c, _somap(i));
-}
-*/
-
 void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
                                          std::vector<int> objectTags[4],
                                          std::vector<int> toolTags[4],
@@ -635,6 +575,7 @@ void OCC_Internals::getBoundary(std::vector<int> inTags[4],
   }
 }
 
+
 /*
 void OCC_Internals::translate(std::std::vector<double> dx, int addToTheModel)
 {
@@ -646,6 +587,99 @@ void OCC_Internals::translate(std::std::vector<double> dx, int addToTheModel)
 
 }
 */
+
+void OCC_Internals::importShapes(const std::string &fileName,
+                                 std::vector<int> outTags[4])
+{
+  std::vector<std::string> split = SplitFileName(fileName);
+  TopoDS_Shape result;
+  try{
+    if(split[2] == ".brep" || split[2] == ".BREP"){
+      BRep_Builder aBuilder;
+      BRepTools::Read(result, fileName.c_str(), aBuilder);
+    }
+    else if(split[2] == ".step" || split[2] == ".stp" ||
+            split[2] == ".STEP" || split[2] == ".STP"){
+      STEPControl_Reader reader;
+      if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone){
+        Msg::Error("Could not read file '%s'", fileName.c_str());
+        return;
+      }
+      reader.TransferRoots();
+      result = reader.OneShape();
+    }
+    else{
+      Msg::Error("Unknown file type '%s'", fileName.c_str());
+      return;
+    }
+    // FIXME: apply healing routine on result?
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+
+  TopExp_Explorer exp0;
+  for(exp0.Init(result, TopAbs_SOLID); exp0.More(); exp0.Next()){
+    int t = getMaxTag(3) + 1;
+    bind(TopoDS::Solid(exp0.Current()), t);
+    outTags[3].push_back(t);
+  }
+  if(outTags[3].empty()){
+    for(exp0.Init(result, TopAbs_FACE); exp0.More(); exp0.Next()){
+      int t = getMaxTag(2) + 1;
+      bind(TopoDS::Face(exp0.Current()), t);
+      outTags[2].push_back(t);
+    }
+  }
+}
+
+void OCC_Internals::exportShapes(const std::string &fileName)
+{
+  // iterate over all shapes with tags, and import them into the (sub)shape _maps
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
+  for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp1(_tagEdge);
+  for(; exp1.More(); exp1.Next()) _addShapeToMaps(exp1.Value());
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp2(_tagFace);
+  for(; exp2.More(); exp2.Next()) _addShapeToMaps(exp2.Value());
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp3(_tagSolid);
+  for(; exp3.More(); exp3.Next()) _addShapeToMaps(exp3.Value());
+
+  // build a single compound shape
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
+  for(int i = 1; i <= _vmap.Extent(); i++) b.Add(c, _vmap(i));
+  for(int i = 1; i <= _emap.Extent(); i++) b.Add(c, _emap(i));
+  for(int i = 1; i <= _wmap.Extent(); i++) b.Add(c, _wmap(i));
+  for(int i = 1; i <= _fmap.Extent(); i++) b.Add(c, _fmap(i));
+  for(int i = 1; i <= _shmap.Extent(); i++) b.Add(c, _shmap(i));
+  for(int i = 1; i <= _somap.Extent(); i++) b.Add(c, _somap(i));
+
+  std::vector<std::string> split = SplitFileName(fileName);
+
+  try {
+    if(split[2] == ".brep" || split[2] == ".BREP"){
+      BRepTools::Write(c, fileName.c_str());
+    }
+    else if(split[2] == ".step" || split[2] == ".stp" ||
+            split[2] == ".STEP" || split[2] == ".STP"){
+      STEPControl_Writer writer;
+      if(writer.Transfer(c, STEPControl_ManifoldSolidBrep) == IFSelect_RetDone){
+        if(writer.Write(fileName.c_str()) != IFSelect_RetDone){
+          Msg::Error("Could not create file '%s'", fileName.c_str());
+        }
+      }
+      else{
+        Msg::Error("Could not create STEP data");
+      }
+    }
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OCC exception %s", err.GetMessageString());
+  }
+}
 
 void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
 {
@@ -802,7 +836,7 @@ void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
   }
 }
 
-void OCC_Internals::importOCCInternals(GModel *model)
+void OCC_Internals::synchronize(GModel *model)
 {
   int vTagMax = std::max(model->getMaxElementaryNumber(0), getMaxTag(0));
   int eTagMax = std::max(model->getMaxElementaryNumber(1), getMaxTag(1));
@@ -896,7 +930,7 @@ void OCC_Internals::importOCCInternals(GModel *model)
 
 int GModel::importOCCInternals()
 {
-  _occ_internals->importOCCInternals(this);
+  _occ_internals->synchronize(this);
   return 1;
 }
 
@@ -993,7 +1027,7 @@ void OCC_Internals::buildShapeFromLists(TopoDS_Shape shape)
 
 void OCC_Internals::healGeometry(double tolerance, bool fixdegenerated,
                                  bool fixsmalledges, bool fixspotstripfaces,
-                                 bool sewfaces, bool makesolids, int connect,
+                                 bool sewfaces, bool makesolids,
                                  double scaling)
 {
   if(scaling != 1.0){
@@ -1005,7 +1039,7 @@ void OCC_Internals::healGeometry(double tolerance, bool fixdegenerated,
   }
 
   if(!fixdegenerated && !fixsmalledges && !fixspotstripfaces &&
-     !sewfaces && !makesolids && !connect) return;
+     !sewfaces && !makesolids) return;
 
   Msg::Info("Starting geometry healing procedure (tolerance: %g)", tolerance);
 
@@ -1289,32 +1323,6 @@ void OCC_Internals::healGeometry(double tolerance, bool fixdegenerated,
     }
   }
 
-#if defined(HAVE_SALOME)
-  if(connect == 2){
-    Msg::Info("- cutting and connecting faces with Salome's Partition_Spliter");
-    TopExp_Explorer e2;
-    Partition_Spliter ps;
-    for(e2.Init(_shape, TopAbs_SOLID); e2.More(); e2.Next())
-      ps.AddShape(e2.Current());
-    try{
-      ps.Compute();
-      _shape = ps.Shape();
-    }
-    catch(Standard_Failure &err){
-      Msg::Error("OCC %s", err.GetMessageString());
-    }
-  }
-  else
-#endif
-  if(connect){
-    Msg::Info("- cutting and connecting faces with OCC_Connect");
-    OCC_Connect connect(1);
-    for(TopExp_Explorer p(_shape, TopAbs_SOLID); p.More(); p.Next())
-      connect.Add(p.Current());
-    connect.Connect();
-    _shape = connect;
-  }
-
   double newsurfacecont = 0;
   for(exp0.Init(_shape, TopAbs_FACE); exp0.More(); exp0.Next()){
     TopoDS_Face face = TopoDS::Face(exp0.Current());
@@ -1354,23 +1362,9 @@ void OCC_Internals::loadBREP(const char *fn)
                CTX::instance()->geom.occFixSmallFaces,
                CTX::instance()->geom.occSewFaces,
                false,
-               CTX::instance()->geom.occConnectFaces,
                CTX::instance()->geom.occScaling);
   BRepTools::Clean(_shape);
   buildLists();
-}
-
-void OCC_Internals::writeBREP(const char *fn)
-{
-  std::ofstream myFile;
-  myFile.open(fn);
-  try {
-    BRepTools::Write(_shape, myFile);
-  }
-  catch(Standard_Failure &err){
-    Msg::Error("OCC %s", err.GetMessageString());
-  }
-  myFile.close();
 }
 
 void OCC_Internals::loadSTEP(const char *fn)
@@ -1387,18 +1381,9 @@ void OCC_Internals::loadSTEP(const char *fn)
                CTX::instance()->geom.occFixSmallFaces,
                CTX::instance()->geom.occSewFaces,
                false,
-               CTX::instance()->geom.occConnectFaces,
                CTX::instance()->geom.occScaling);
   BRepTools::Clean(_shape);
   buildLists();
-}
-
-void OCC_Internals::writeSTEP(const char *fn)
-{
-  STEPControl_Writer writer;
-  IFSelect_ReturnStatus status = writer.Transfer(_shape, STEPControl_ManifoldSolidBrep);
-  if(status == IFSelect_RetDone)
-    status = writer.Write((char*)fn);
 }
 
 void OCC_Internals::loadIGES(const char *fn)
@@ -1415,7 +1400,6 @@ void OCC_Internals::loadIGES(const char *fn)
                CTX::instance()->geom.occFixSmallFaces,
                CTX::instance()->geom.occSewFaces,
                false,
-               CTX::instance()->geom.occConnectFaces,
                CTX::instance()->geom.occScaling);
   BRepTools::Clean(_shape);
   buildLists();
@@ -1828,10 +1812,7 @@ int GModel::writeOCCBREP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  else{
-    _occ_internals->buildShapeFromGModel(this);
-    _occ_internals->writeBREP(fn.c_str());
-  }
+  _occ_internals->exportShapes(fn);
   return 1;
 }
 
@@ -1841,16 +1822,14 @@ int GModel::writeOCCSTEP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  else{
-    _occ_internals->buildShapeFromGModel(this);
-    _occ_internals->writeSTEP(fn.c_str());
-  }
+  _occ_internals->exportShapes(fn);
   return 1;
 }
 
 int GModel::importOCCShape(const void *shape)
 {
-  _occ_internals = new OCC_Internals;
+  if(!_occ_internals)
+    _occ_internals = new OCC_Internals;
   _occ_internals->loadShape((TopoDS_Shape*)shape);
   _occ_internals->buildGModel(this);
   snapVertices();

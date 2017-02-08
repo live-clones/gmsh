@@ -25,7 +25,7 @@ set(SRC
     GModelVertexArrays.cpp
     GModelFactory.cpp
     GModelIO_GEO.cpp GModelIO_ACIS.cpp GModelIO_OCC.cpp GModelIO_TOCHNOG.cpp
-      GModelIO_Fourier.cpp OCC_Connect.cpp
+      GModelIO_Fourier.cpp 
     GModelIO_MSH.cpp GModelIO_MSH2.cpp GModelIO_VTK.cpp GModelIO_POS.cpp 
       GModelIO_CGNS.cpp GModelIO_MED.cpp GModelIO_MESH.cpp GModelIO_STL.cpp 
       GModelIO_PLY.cpp GModelIO_VRML.cpp GModelIO_UNV.cpp GModelIO_BDF.cpp 
