@@ -44,6 +44,8 @@ class OCC_Internals {
                   bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
                   bool makesolids=false, double scaling=0.0);
 
+  // apply a geometrical transformation
+  void _transform(std::vector<int> inTags[4], BRepBuilderAPI_Transform &tfo);
 
   // *** FIXME will be removed ***
  protected :
@@ -97,6 +99,12 @@ class OCC_Internals {
   // bind highest-dimensional entities in shape to tags
   void bindHighest(TopoDS_Shape shape, std::vector<int> tags[4]);
 
+  // is the entity of a given dimension/tag bound
+  bool isBound(int dim, int tag);
+
+  // get the entity of a given dimension/tag
+  TopoDS_Shape find(int dim, int tag);
+
   // set constraints on tags
   void setTagConstraints(int maxTags[4]);
 
@@ -131,6 +139,8 @@ class OCC_Internals {
 
   // apply transformations
   void translate(std::vector<int> inTags[4], double dx, double dy, double dz);
+  void rotate(std::vector<int> inTags[4], double x, double y, double z,
+              double dx, double dy, double dz, double angle);
   void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]);
 
   // import shapes from file
@@ -180,6 +190,8 @@ public:
   void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
                    bool combined=false){}
   void translate(std::vector<int> inTags[4], double dx, double dy, double dz){}
+  void rotate(std::vector<int> inTags[4], double x, double y, double z,
+              double dx, double dy, double dz, double angle){}
   void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]){}
   void importShapes(const std::string &fileName, std::vector<int> outTags[4]){}
   void exportShapes(const std::string &fileName){}

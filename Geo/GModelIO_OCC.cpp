@@ -20,7 +20,6 @@
 
 #include <TopTools_DataMapIteratorOfDataMapOfShapeInteger.hxx>
 #include <TopTools_DataMapIteratorOfDataMapOfIntegerShape.hxx>
-#include <BRepBuilderAPI_Transform.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
@@ -134,6 +133,28 @@ void OCC_Internals::bindHighest(TopoDS_Shape shape, std::vector<int> tags[4])
     int t = getMaxTag(0) + 1;
     bind(TopoDS::Edge(exp0.Current()), t);
     tags[0].push_back(t);
+  }
+}
+
+bool OCC_Internals::isBound(int dim, int tag)
+{
+  switch(dim){
+  case 0 : return _tagVertex.IsBound(tag);
+  case 1 : return _tagEdge.IsBound(tag);
+  case 2 : return _tagFace.IsBound(tag);
+  case 3 : return _tagSolid.IsBound(tag);
+  default: return false;
+  }
+}
+
+TopoDS_Shape OCC_Internals::find(int dim, int tag)
+{
+  switch(dim){
+  case 0: return _tagVertex.Find(tag);
+  case 1: return _tagEdge.Find(tag);
+  case 2: return _tagFace.Find(tag);
+  case 3: return _tagSolid.Find(tag);
+  default: return TopoDS_Shape();
   }
 }
 
@@ -687,32 +708,50 @@ void OCC_Internals::getBoundary(std::vector<int> inTags[4],
   }
 }
 
+void OCC_Internals::_transform(std::vector<int> inTags[4],
+                               BRepBuilderAPI_Transform &tfo)
+{
+  for(unsigned int dim = 0; dim < 4; dim++){
+    for(unsigned int i = 0; i < inTags[dim].size(); i++){
+      int tag = inTags[dim][i];
+      if(!isBound(dim, tag)){
+        Msg::Error("Unknown OpenCASCADE entity with tag %d", tag);
+        return;
+      }
+      tfo.Perform(find(dim, tag), Standard_False);
+      if(!tfo.IsDone()){
+        Msg::Error("Could not apply transformation");
+        return;
+      }
+      switch(dim){
+      case 0: bind(TopoDS::Vertex(tfo.Shape()), tag); break;
+      case 1: bind(TopoDS::Edge(tfo.Shape()), tag); break;
+      case 2: bind(TopoDS::Face(tfo.Shape()), tag); break;
+      case 3: bind(TopoDS::Solid(tfo.Shape()), tag); break;
+      }
+    }
+  }
+}
+
 void OCC_Internals::translate(std::vector<int> inTags[4],
                               double dx, double dy, double dz)
 {
   gp_Trsf t;
   t.SetTranslation(gp_Pnt(0, 0, 0), gp_Pnt(dx, dy, dz));
   BRepBuilderAPI_Transform tfo(t);
+  _transform(inTags, tfo);
+}
 
-  for(unsigned int i = 0; i < inTags[3].size(); i++){
-    if(!_tagSolid.IsBound(inTags[3][i])){
-      Msg::Error("Unknown OpenCASCADE region with tag %d", inTags[3][i]);
-      return;
-    }
-    TopoDS_Solid solid = TopoDS::Solid(_tagSolid.Find(inTags[3][i]));
-    tfo.Perform(solid, Standard_False);
-    if(!tfo.IsDone()){
-      Msg::Error("Could not apply translation");
-      return;
-    }
-    TopoDS_Solid result = TopoDS::Solid(tfo.Shape());
-    bind(result, inTags[3][i]);
-  }
-
-  if(inTags[2].size() || inTags[1].size() || inTags[0].size()){
-    Msg::Error("OCC TODO translation of surfaces, curves and vertices");
-  }
-
+void OCC_Internals::rotate(std::vector<int> inTags[4],
+                           double x, double y, double z,
+                           double dx, double dy, double dz,
+                           double angle)
+{
+  gp_Trsf t;
+  gp_Ax1 axisOfRevolution(gp_Pnt(x, y, z), gp_Dir(dx, dy, dz));
+  t.SetRotation(axisOfRevolution, angle);
+  BRepBuilderAPI_Transform tfo(t);
+  _transform(inTags, tfo);
 }
 
 void OCC_Internals::copy(std::vector<int> inTags[4], std::vector<int> outTags[4])

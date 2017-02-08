@@ -2571,7 +2571,15 @@ Transform :
   | tRotate '{' VExpr ',' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        Msg::Error("TODO OCC Rotate");
+        std::vector<int> in[4];
+        Shape TheShape;
+        for(int i = 0; i < List_Nbr($10); i++){
+          List_Read($10, i, &TheShape);
+          int dim = TheShape.Type / 100 - 1;
+          if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
+        }
+        GModel::current()->getOCCInternals()->rotate(in, $5[0], $5[1], $5[2],
+                                                     $3[0], $3[1], $3[2], $7);
       }
       else{
         RotateShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7, $10);

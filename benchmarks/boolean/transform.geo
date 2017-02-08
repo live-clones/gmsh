@@ -22,6 +22,8 @@ DefineConstant[
 Block(1) = {x,y,z, x+dx,y+dy,z+dz};
 Block(2) = {x2,y2,z2, x2+dx2,y2+dy2,z2+dz2};
 
-// f() = BooleanFragments { Volume{1}; Delete; }{ Volume{2}; Delete; };
-
 Translate{0.2,0.2,0.2}{ Volume{1}; }
+Rotate { {1,0,0}, {0,0,0}, Pi/3 } { Volume{1}; }
+Rotate { {0,1,0}, {0,0,0}, Pi/3 } { Volume{1}; }
+
+f() = BooleanFragments { Volume{1}; Delete; }{ Volume{2}; Delete; };
