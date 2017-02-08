@@ -39,12 +39,36 @@ class OCC_Internals {
   // add a shape and all its subshapes to _vmap, _emap, ..., _somap
   void _addShapeToMaps(TopoDS_Shape shape);
 
+  // apply various healing algorithms to try to fix the shape
+  void _healShape(TopoDS_Shape &myshape, double tolerance, bool fixdegenerated,
+                  bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
+                  bool makesolids=false, double scaling=0.0);
+
  protected :
-  // FIXME will be removed
+  // *** FIXME will be removed ***
   TopoDS_Shape _shape;
  public:
-  // FIXME: will be removed with GModelFactory
+  // *** FIXME: will be removed with GModelFactory ***
   void _addShapeToLists(TopoDS_Shape shape){ _addShapeToMaps(shape); }
+  void _healGeometry(double tolerance, bool fixdegenerated,
+                     bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
+                     bool makesolids=false, double scaling=0.0)
+  {
+    _healShape(_shape, tolerance, fixdegenerated, fixsmalledges,
+               fixspotstripfaces, sewfaces, makesolids, scaling);
+  }
+  void applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op);
+  TopoDS_Shape getShape () { return _shape; }
+  void buildLists();
+  void buildShapeFromLists(TopoDS_Shape shape);
+  void fillet(std::vector<TopoDS_Edge> &shapes, double radius);
+  void buildShapeFromGModel(GModel*);
+  void buildGModel(GModel *gm);
+  void loadBREP(const char *);
+  void loadSTEP(const char *);
+  void loadIGES(const char *);
+  void loadShape(const TopoDS_Shape *);
+  // *** end of stuff that will be removed ***
 
  public:
   OCC_Internals()
@@ -74,7 +98,7 @@ class OCC_Internals {
                    double x2, double y2, double z2, double r);
   void addThruSections(int tag, std::vector<int> wireTags);
 
-  // apply boolean operation
+  // apply boolean operator
   void applyBooleanOperator(int tag, BooleanOperator op,
                             std::vector<int> shapeTags[4],
                             std::vector<int> toolTags[4],
@@ -96,6 +120,7 @@ class OCC_Internals {
   // synchronize all shapes in maps with the given GModel
   void synchronize(GModel *model);
 
+  // bind and unbind OpenCASCADE shapes to tags
   void bind(TopoDS_Vertex vertex, int tag)
   {
     _vertexTag.Bind(vertex, tag);
@@ -164,31 +189,6 @@ class OCC_Internals {
   GEdge *addEdgeToModel(GModel *model, TopoDS_Edge e);
   GFace *addFaceToModel(GModel *model, TopoDS_Face f);
   GRegion *addRegionToModel(GModel *model, TopoDS_Solid r);
-
-
-  // FIXME ************* OLD **************
-
-  // perform boolean operation on _shape, using tool
-  void applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op);
-
-  // manipulate _shape
-  TopoDS_Shape getShape () { return _shape; }
-  void buildLists();
-  void buildShapeFromLists(TopoDS_Shape shape);
-
-  void healGeometry(double tolerance, bool fixdegenerated,
-                    bool fixsmalledges, bool fixspotstripfaces,
-                    bool sewfaces, bool makesolids=false,
-                    double scaling=0.0);
-  void fillet(std::vector<TopoDS_Edge> &shapes, double radius);
-
-  // I/O towards GModel
-  void buildShapeFromGModel(GModel*);
-  void buildGModel(GModel *gm);
-  void loadBREP(const char *);
-  void loadSTEP(const char *);
-  void loadIGES(const char *);
-  void loadShape(const TopoDS_Shape *);
 };
 
 #else

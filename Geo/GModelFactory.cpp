@@ -1476,8 +1476,7 @@ void OCCFactory::healGeometry(GModel *gm, double tolerance)
     tolerance = CTX::instance()->geom.tolerance;
   if (!gm || !gm->_occ_internals)
     return;
-  //gm->_occ_internals->healGeometry(tolerance, false, false, false, true, false, false);
-  gm->_occ_internals->healGeometry(tolerance, true, true, true, true, true, true);
+  gm->_occ_internals->_healGeometry(tolerance, true, true, true, true, true, true);
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
 }
