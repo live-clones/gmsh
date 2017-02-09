@@ -22,7 +22,6 @@ class OCC_Internals {
   // kernels)
   int _maxTagConstraints[4];
 
- protected :
   // all the (sub)shapes, updated dynamically when shapes need to be imported
   // into a GModel
   TopTools_IndexedMapOfShape _vmap, _emap, _wmap, _fmap, _shmap, _somap;
@@ -152,7 +151,7 @@ class OCC_Internals {
 
 
   // *** FIXME what follows will be removed ***
- protected :
+ private:
   TopoDS_Shape _shape;
  public:
   void _addShapeToLists(TopoDS_Shape shape){ _addShapeToMaps(shape); }
