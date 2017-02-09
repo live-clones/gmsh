@@ -9,14 +9,14 @@ Point(2) = {1,0,0};
 Point(3) = {1,1,0};
 Point(4) = {0,1,0};
 Point(5) = {0.5,0.5,1};
-Line(1) = {1,2};
-Line(2) = {2,3};
-Line(3) = {3,4};
-Line(4) = {4,1};
-Line(5) = {1,5};
-Line(6) = {2,5};
-Line(7) = {3,5};
-Line(8) = {4,5};
+Line(1) = {2,1}; // FIXME set {1,2} and the orientation will be screwed
+Line(2) = {3,2};
+Line(3) = {4,3};
+Line(4) = {1,4};
+Line(5) = {5,1};
+Line(6) = {5,2};
+Line(7) = {5,3};
+Line(8) = {5,4};
 Line Loop(1) = {1,2,3,4};
 Line Loop(2) = {1,5,6};
 Line Loop(3) = {2,6,7};
@@ -33,5 +33,5 @@ Volume(1) = {1};
 Cylinder(2) = {0.5,0.5,-0.5, 0.5,0.5,1.5, 0.2};
 BooleanFragments{ Volume{1}; Delete; }{ Volume{2}; Delete; }
 
-// FIXME: need to delete surfaces 1:4, as they were bound to tags before the
-// boolean operation
+// delete this, as they were bound to tags before the boolean operation
+Delete{ Surface{1:5}; Line{1:8}; Point{1:5}; }

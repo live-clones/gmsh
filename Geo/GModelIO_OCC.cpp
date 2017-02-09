@@ -535,6 +535,9 @@ void OCC_Internals::addSurfaceLoop(int tag, std::vector<int> faceTags)
   TopExp_Explorer exp0;
   for(exp0.Init(result, TopAbs_SHELL); exp0.More(); exp0.Next()){
     TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
+    //ShapeFix_Shell fix;
+    //fix.FixFaceOrientation(shell);
+    //shell = fix.Shell();
     int t = tag;
     if(first){
       first = false;
@@ -1017,6 +1020,21 @@ void OCC_Internals::copy(std::vector<int> inTags[4], std::vector<int> outTags[4]
   }
 }
 
+void OCC_Internals::remove(std::vector<int> inTags[4])
+{
+  for(unsigned int dim = 0; dim < 4; dim++){
+    for(unsigned int i = 0; i < inTags[dim].size(); i++){
+      int tag = inTags[dim][i];
+      if(!isBound(dim, tag)){
+        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+                   dim, tag);
+        return;
+      }
+      unbind(find(dim, tag), dim, tag);
+    }
+  }
+}
+
 void OCC_Internals::importShapes(const std::string &fileName,
                                  std::vector<int> outTags[4],
                                  const std::string &format)
@@ -1238,19 +1256,19 @@ void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
             if(_fmap.FindIndex(face) < 1){
               _fmap.Add(face);
 
-              for(exp3.Init(exp2.Current().Oriented(TopAbs_FORWARD), TopAbs_WIRE);
-                  exp3.More(); exp3.Next()){
+              for(exp3.Init(face.Oriented(TopAbs_FORWARD), TopAbs_WIRE); exp3.More(); exp3.Next()){
+              //for(exp3.Init(face, TopAbs_WIRE); exp3.More(); exp3.Next()){
                 TopoDS_Wire wire = TopoDS::Wire(exp3.Current());
                 if(_wmap.FindIndex(wire) < 1){
                   _wmap.Add(wire);
 
-                  for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More();
+                  for(exp4.Init(wire, TopAbs_EDGE); exp4.More();
                       exp4.Next()){
                     TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
                     if(_emap.FindIndex(edge) < 1){
                       _emap.Add(edge);
 
-                      for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More();
+                      for(exp5.Init(edge, TopAbs_VERTEX); exp5.More();
                           exp5.Next()){
                         TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
                         if(_vmap.FindIndex(vertex) < 1)
@@ -1278,18 +1296,17 @@ void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
         if(_fmap.FindIndex(face) < 1){
           _fmap.Add(face);
 
-          for(exp3.Init(exp2.Current(), TopAbs_WIRE); exp3.More(); exp3.Next()){
+          for(exp3.Init(face, TopAbs_WIRE); exp3.More(); exp3.Next()){
             TopoDS_Wire wire = TopoDS::Wire(exp3.Current());
             if(_wmap.FindIndex(wire) < 1){
               _wmap.Add(wire);
 
-              for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More(); exp4.Next()){
+              for(exp4.Init(wire, TopAbs_EDGE); exp4.More(); exp4.Next()){
                 TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
                 if(_emap.FindIndex(edge) < 1){
                   _emap.Add(edge);
 
-                  for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More();
-                      exp5.Next()){
+                  for(exp5.Init(edge, TopAbs_VERTEX); exp5.More(); exp5.Next()){
                     TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
                     if(_vmap.FindIndex(vertex) < 1)
                       _vmap.Add(vertex);
@@ -1309,17 +1326,17 @@ void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
     if(_fmap.FindIndex(face) < 1){
       _fmap.Add(face);
 
-      for(exp3.Init(exp2.Current(), TopAbs_WIRE); exp3.More(); exp3.Next()){
+      for(exp3.Init(face, TopAbs_WIRE); exp3.More(); exp3.Next()){
         TopoDS_Wire wire = TopoDS::Wire(exp3.Current());
         if(_wmap.FindIndex(wire) < 1){
           _wmap.Add(wire);
 
-          for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More(); exp4.Next()){
+          for(exp4.Init(wire, TopAbs_EDGE); exp4.More(); exp4.Next()){
             TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
             if(_emap.FindIndex(edge) < 1){
               _emap.Add(edge);
 
-              for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
+              for(exp5.Init(edge, TopAbs_VERTEX); exp5.More(); exp5.Next()){
                 TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
                 if(_vmap.FindIndex(vertex) < 1)
                   _vmap.Add(vertex);
@@ -1337,12 +1354,12 @@ void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
     if(_wmap.FindIndex(wire) < 1){
       _wmap.Add(wire);
 
-      for(exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More(); exp4.Next()){
+      for(exp4.Init(wire, TopAbs_EDGE); exp4.More(); exp4.Next()){
         TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
         if(_emap.FindIndex(edge) < 1){
           _emap.Add(edge);
 
-          for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
+          for(exp5.Init(edge, TopAbs_VERTEX); exp5.More(); exp5.Next()){
             TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
             if(_vmap.FindIndex(vertex) < 1)
               _vmap.Add(vertex);
@@ -1358,7 +1375,7 @@ void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
     if(_emap.FindIndex(edge) < 1){
       _emap.Add(edge);
 
-      for(exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next()){
+      for(exp5.Init(edge, TopAbs_VERTEX); exp5.More(); exp5.Next()){
         TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
         if(_vmap.FindIndex(vertex) < 1)
           _vmap.Add(vertex);

@@ -47,35 +47,6 @@ class OCC_Internals {
   // apply a geometrical transformation
   void _transform(std::vector<int> inTags[4], BRepBuilderAPI_Transform &tfo);
 
-  // *** FIXME will be removed ***
- protected :
-  TopoDS_Shape _shape;
- public:
-  void _addShapeToLists(TopoDS_Shape shape){ _addShapeToMaps(shape); }
-  void _healGeometry(double tolerance, bool fixdegenerated,
-                     bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
-                     bool makesolids=false, double scaling=0.0)
-  {
-    _healShape(_shape, tolerance, fixdegenerated, fixsmalledges,
-               fixspotstripfaces, sewfaces, makesolids, scaling);
-  }
-  void applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op);
-  TopoDS_Shape getShape () { return _shape; }
-  void buildLists();
-  void buildShapeFromLists(TopoDS_Shape shape);
-  void fillet(std::vector<TopoDS_Edge> &shapes, double radius);
-  void buildShapeFromGModel(GModel*);
-  void buildGModel(GModel *gm);
-  void loadShape(const TopoDS_Shape *s)
-  {
-    std::vector<int> tags[4]; importShapes(s, tags);
-  }
-  GVertex *addVertexToModel(GModel *model, TopoDS_Vertex v);
-  GEdge *addEdgeToModel(GModel *model, TopoDS_Edge e);
-  GFace *addFaceToModel(GModel *model, TopoDS_Face f);
-  GRegion *addRegionToModel(GModel *model, TopoDS_Solid r);
-  // *** FIXME end of stuff that will be removed ***
-
  public:
   OCC_Internals();
 
@@ -157,6 +128,7 @@ class OCC_Internals {
   void rotate(std::vector<int> inTags[4], double x, double y, double z,
               double dx, double dy, double dz, double angle);
   void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]);
+  void remove(std::vector<int> inTags[4]);
 
   // import shapes from file
   void importShapes(const std::string &fileName, std::vector<int> outTags[4],
@@ -176,6 +148,37 @@ class OCC_Internals {
   GEdge *getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind);
   GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind);
   GRegion *getOCCRegionByNativePtr(GModel *model, TopoDS_Solid toFind);
+
+
+
+  // *** FIXME what follows will be removed ***
+ protected :
+  TopoDS_Shape _shape;
+ public:
+  void _addShapeToLists(TopoDS_Shape shape){ _addShapeToMaps(shape); }
+  void _healGeometry(double tolerance, bool fixdegenerated,
+                     bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
+                     bool makesolids=false, double scaling=0.0)
+  {
+    _healShape(_shape, tolerance, fixdegenerated, fixsmalledges,
+               fixspotstripfaces, sewfaces, makesolids, scaling);
+  }
+  void applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op);
+  TopoDS_Shape getShape () { return _shape; }
+  void buildLists();
+  void buildShapeFromLists(TopoDS_Shape shape);
+  void fillet(std::vector<TopoDS_Edge> &shapes, double radius);
+  void buildShapeFromGModel(GModel*);
+  void buildGModel(GModel *gm);
+  void loadShape(const TopoDS_Shape *s)
+  {
+    std::vector<int> tags[4]; importShapes(s, tags);
+  }
+  GVertex *addVertexToModel(GModel *model, TopoDS_Vertex v);
+  GEdge *addEdgeToModel(GModel *model, TopoDS_Edge e);
+  GFace *addFaceToModel(GModel *model, TopoDS_Face f);
+  GRegion *addRegionToModel(GModel *model, TopoDS_Solid r);
+  // *** FIXME end of stuff that will be removed ***
 };
 
 #else
@@ -223,6 +226,7 @@ public:
   void rotate(std::vector<int> inTags[4], double x, double y, double z,
               double dx, double dy, double dz, double angle){}
   void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]){}
+  void remove(std::vector<int> inTags[4]);
   void importShapes(const std::string &fileName, std::vector<int> outTags[4],
                     const std::string &format=""){}
   void exportShapes(const std::string &fileName, const std::string &format=""){}

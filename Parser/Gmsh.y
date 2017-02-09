@@ -3347,13 +3347,20 @@ LevelSet :
 Delete :
     tDelete '{' ListOfShapes '}'
     {
-      for(int i = 0; i < List_Nbr($3); i++){
-	Shape TheShape;
-	List_Read($3, i, &TheShape);
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          Msg::Error("TODO OCC Delete");
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> in[4];
+        Shape TheShape;
+        for(int i = 0; i < List_Nbr($3); i++){
+          List_Read($3, i, &TheShape);
+          int dim = TheShape.Type / 100 - 1;
+          if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
         }
-        else{
+        GModel::current()->getOCCInternals()->remove(in);
+      }
+      else{
+        for(int i = 0; i < List_Nbr($3); i++){
+          Shape TheShape;
+          List_Read($3, i, &TheShape);
           DeleteShape(TheShape.Type, TheShape.Num);
         }
       }
