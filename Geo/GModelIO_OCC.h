@@ -66,9 +66,6 @@ class OCC_Internals {
   void fillet(std::vector<TopoDS_Edge> &shapes, double radius);
   void buildShapeFromGModel(GModel*);
   void buildGModel(GModel *gm);
-  void loadBREP(const char *);
-  void loadSTEP(const char *);
-  void loadIGES(const char *);
   void loadShape(const TopoDS_Shape *s)
   {
     std::vector<int> tags[4]; importShapes(s, tags);
@@ -89,20 +86,24 @@ class OCC_Internals {
   void bind(TopoDS_Face face, int tag);
   void bind(TopoDS_Shell shell, int tag);
   void bind(TopoDS_Solid solid, int tag);
+  void bind(TopoDS_Shape shape, int dim, int tag);
   void unbind(TopoDS_Vertex vertex, int tag);
   void unbind(TopoDS_Edge edge, int tag);
   void unbind(TopoDS_Wire wire, int tag);
   void unbind(TopoDS_Face face, int tag);
   void unbind(TopoDS_Shell shell, int tag);
   void unbind(TopoDS_Solid solid, int tag);
+  void unbind(TopoDS_Shape shape, int dim, int tag);
 
-  // bind highest-dimensional entities in shape to tags
-  void bindHighest(TopoDS_Shape shape, std::vector<int> tags[4]);
+  // bind highest-dimensional entities in shape (if tag > 0 and a single entity
+  // if found, use it; otherwise assign new tags); assigned tags are returned in
+  // tags
+  void bindHighest(TopoDS_Shape shape, std::vector<int> tags[4], int tag=-1);
 
-  // is the entity of a given dimension/tag bound
+  // is the entity of a given dimension and tag bound?
   bool isBound(int dim, int tag);
 
-  // get the entity of a given dimension/tag
+  // get the entity of a given dimension and tag
   TopoDS_Shape find(int dim, int tag);
 
   // set constraints on tags
@@ -111,11 +112,24 @@ class OCC_Internals {
   // get maximum tag number for each dimension
   int getMaxTag(int dim) const;
 
-  // add shapes only using internal OCC data
+  // add shapes
   void addVertex(int tag, double x, double y, double z);
   void addLine(int tag, int startTag, int endTag);
   void addCircleArc(int tag, int startTag, int centerTag, int endTag);
+  void addBezier(int tag, int startTag, int endTag,
+                 std::vector<std::vector<double> > points);
+  void addBSpline(int tag, int startTag, int endTag,
+                  std::vector<std::vector<double> > points);
+  void addNURBS(int tag, int startTag, int endTag,
+                std::vector<std::vector<double> > points,
+                std::vector<double> knots,
+                std::vector<double> weights,
+                std::vector<int> mult);
   void addLineLoop(int tag, std::vector<int> edgeTags);
+  void addRectangle(int tag, double x1, double y1, double x2, double y2);
+  void addDisk(int tag, double xc, double yc, double rx, double ry);
+  void addPlanarFace(int tag, std::vector<int> wireTags);
+  void addRuledFace(int tag, std::vector<int> wireTags);
   void addSurfaceLoop(int tag, std::vector<int> faceTags);
   void addVolume(int tag, std::vector<int> shellTags);
   void addSphere(int tag, double xc, double yc, double zc, double radius);
@@ -133,8 +147,8 @@ class OCC_Internals {
                             bool removeShape=true,
                             bool removeTool=true);
 
-  // get boundary of shapes of dimension dim (this will create tag for the
-  // boundary parts)
+  // get boundary of shapes of dimension dim (this will bind the boundary parts
+  // to new tags, returned in outTags)
   void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
                    bool combined=false);
 
@@ -145,13 +159,14 @@ class OCC_Internals {
   void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]);
 
   // import shapes from file
-  void importShapes(const std::string &fileName, std::vector<int> outTags[4]);
+  void importShapes(const std::string &fileName, std::vector<int> outTags[4],
+                    const std::string &format="");
 
   // import shapes from TopoDS_Shape
   void importShapes(const TopoDS_Shape *shape, std::vector<int> outTags[4]);
 
-  // export all tagged shapes to file
-  void exportShapes(const std::string &fileName);
+  // export all bound shapes to file
+  void exportShapes(const std::string &fileName, const std::string &format="");
 
   // synchronize internal CAD data with the given GModel
   void synchronize(GModel *model);
@@ -174,7 +189,20 @@ public:
   void addVertex(int tag, double x, double y, double z){}
   void addLine(int tag, int startTag, int endTag){}
   void addCircleArc(int tag, int startTag, int centerTag, int endTag){}
+  void addBezier(int tag, int startTag, int endTag,
+                 std::vector<std::vector<double> > points){}
+  void addBSpline(int tag, int startTag, int endTag,
+                  std::vector<std::vector<double> > points){}
+  void addNURBS(int tag, int startTag, int endTag,
+                std::vector<std::vector<double> > points,
+                std::vector<double> knots,
+                std::vector<double> weights,
+                std::vector<int> mult){}
   void addLineLoop(int tag, std::vector<int> edgeTags){}
+  void addRectangle(int tag, double x1, double y1, double x2, double y2){}
+  void addDisk(int tag, double xc, double yc, double rx, double ry){}
+  void addPlanarFace(int tag, std::vector<int> wireTags){}
+  void addRuledFace(int tag, std::vector<int> wireTags){}
   void addSurfaceLoop(int tag, std::vector<int> faceTags){}
   void addVolume(int tag, std::vector<int> shellTags){}
   void addSphere(int tag, double xc, double yc, double zc, double radius){};
@@ -195,8 +223,9 @@ public:
   void rotate(std::vector<int> inTags[4], double x, double y, double z,
               double dx, double dy, double dz, double angle){}
   void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]){}
-  void importShapes(const std::string &fileName, std::vector<int> outTags[4]){}
-  void exportShapes(const std::string &fileName){}
+  void importShapes(const std::string &fileName, std::vector<int> outTags[4],
+                    const std::string &format=""){}
+  void exportShapes(const std::string &fileName, const std::string &format=""){}
   void synchronize(GModel *model){}
 };
 

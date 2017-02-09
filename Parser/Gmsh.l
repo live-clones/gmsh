@@ -160,6 +160,7 @@ Delete                  return tDelete;
 Degenerated             return tDegenerated;
 Dilate                  return tDilate;
 DirName                 return tDirName;
+Disk                    return tDisk;
 Draw                    return tDraw;
 SetChanged              return tSetChanged;
 
@@ -253,6 +254,7 @@ Quad[tT]ri[nN]o[nN]ew[vV]erts   return tQuadTriNoNewVerts;
 Quad[tT]ri[dD]bl        return tQuadTriDbl;
 Quad[tT]ri[sS]ngl       return tQuadTriSngl;
 
+Rectangle               return tRectangle;
 Recombine               return tRecombine;
 Recomb[lL]aterals       return tRecombLaterals;
 Recursive               return tRecursive;

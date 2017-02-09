@@ -22,6 +22,7 @@
 #include <TopTools_DataMapIteratorOfDataMapOfIntegerShape.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepOffsetAPI_ThruSections.hxx>
 #include <gce_MakeCirc.hxx>
@@ -72,6 +73,19 @@ void OCC_Internals::bind(TopoDS_Solid solid, int tag)
   _tagSolid.Bind(tag, solid);
 }
 
+void OCC_Internals::bind(TopoDS_Shape shape, int dim, int tag)
+{
+  switch(dim){
+  case 0: bind(TopoDS::Vertex(shape), tag); break;
+  case 1: bind(TopoDS::Edge(shape), tag); break;
+  case 2: bind(TopoDS::Face(shape), tag); break;
+  case 3: bind(TopoDS::Solid(shape), tag); break;
+  case -1: bind(TopoDS::Wire(shape), tag); break;
+  case -2: bind(TopoDS::Shell(shape), tag); break;
+  default: break;
+  }
+}
+
 void OCC_Internals::unbind(TopoDS_Vertex vertex, int tag)
 {
   _vertexTag.UnBind(vertex);
@@ -108,29 +122,55 @@ void OCC_Internals::unbind(TopoDS_Solid solid, int tag)
   _tagSolid.UnBind(tag);
 }
 
-void OCC_Internals::bindHighest(TopoDS_Shape shape, std::vector<int> tags[4])
+void OCC_Internals::unbind(TopoDS_Shape shape, int dim, int tag)
+{
+  switch(dim){
+  case 0: unbind(TopoDS::Vertex(shape), tag); break;
+  case 1: unbind(TopoDS::Edge(shape), tag); break;
+  case 2: unbind(TopoDS::Face(shape), tag); break;
+  case 3: unbind(TopoDS::Solid(shape), tag); break;
+  case -1: unbind(TopoDS::Wire(shape), tag); break;
+  case -2: unbind(TopoDS::Shell(shape), tag); break;
+  default: break;
+  }
+}
+
+void OCC_Internals::bindHighest(TopoDS_Shape shape, std::vector<int> tags[4], int tag)
 {
   TopExp_Explorer exp0;
+  bool first = true;
   for(exp0.Init(shape, TopAbs_SOLID); exp0.More(); exp0.Next()){
-    int t = getMaxTag(3) + 1;
+    int t = tag;
+    if(t <= 0){ t = getMaxTag(3) + 1; }
+    else if(first){ first = false; }
+    else{ Msg::Error("Cannot bind multiple regions to single tag %d", t); return; }
     bind(TopoDS::Solid(exp0.Current()), t);
     tags[3].push_back(t);
   }
   if(tags[3].size()) return;
   for(exp0.Init(shape, TopAbs_FACE); exp0.More(); exp0.Next()){
-    int t = getMaxTag(2) + 1;
+    int t = tag;
+    if(t <= 0){ t = getMaxTag(2) + 1; }
+    else if(first){ first = false; }
+    else{ Msg::Error("Cannot bind multiple faces to single tag %d", t); return; }
     bind(TopoDS::Face(exp0.Current()), t);
     tags[2].push_back(t);
   }
   if(tags[2].size()) return;
   for(exp0.Init(shape, TopAbs_EDGE); exp0.More(); exp0.Next()){
-    int t = getMaxTag(1) + 1;
+    int t = tag;
+    if(t <= 0){ t = getMaxTag(1) + 1; }
+    else if(first){ first = false; }
+    else{ Msg::Error("Cannot bind multiple edges to single tag %d", t); return; }
     bind(TopoDS::Edge(exp0.Current()), t);
     tags[1].push_back(t);
   }
   if(tags[1].size()) return;
   for(exp0.Init(shape, TopAbs_VERTEX); exp0.More(); exp0.Next()){
-    int t = getMaxTag(0) + 1;
+    int t = tag;
+    if(t <= 0){ t = getMaxTag(0) + 1; }
+    else if(first){ first = false; }
+    else{ Msg::Error("Cannot bind multiple vertices to single tag %d", t); return; }
     bind(TopoDS::Edge(exp0.Current()), t);
     tags[0].push_back(t);
   }
@@ -143,6 +183,8 @@ bool OCC_Internals::isBound(int dim, int tag)
   case 1 : return _tagEdge.IsBound(tag);
   case 2 : return _tagFace.IsBound(tag);
   case 3 : return _tagSolid.IsBound(tag);
+  case -1 : return _tagWire.IsBound(tag);
+  case -2 : return _tagShell.IsBound(tag);
   default: return false;
   }
 }
@@ -154,6 +196,8 @@ TopoDS_Shape OCC_Internals::find(int dim, int tag)
   case 1: return _tagEdge.Find(tag);
   case 2: return _tagFace.Find(tag);
   case 3: return _tagSolid.Find(tag);
+  case -1: return _tagWire.Find(tag);
+  case -2: return _tagShell.Find(tag);
   default: return TopoDS_Shape();
   }
 }
@@ -166,14 +210,16 @@ void OCC_Internals::setTagConstraints(int maxTags[4])
 
 int OCC_Internals::getMaxTag(int dim) const
 {
-  if(dim < 0 || dim > 3) return 0;
+  if(dim < -2 || dim > 3) return 0;
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
   int ret = _maxTagConstraints[dim];
   switch(dim){
   case 0: exp.Initialize(_tagVertex); break;
   case 1: exp.Initialize(_tagEdge); break;
   case 2: exp.Initialize(_tagFace); break;
-  default: exp.Initialize(_tagSolid); break;
+  case 3: exp.Initialize(_tagSolid); break;
+  case -1: exp.Initialize(_tagWire); break;
+  case -2: exp.Initialize(_tagShell); break;
   }
   for(; exp.More(); exp.Next())
     ret = std::max(ret, exp.Key());
@@ -188,8 +234,7 @@ void OCC_Internals::addVertex(int tag, double x, double y, double z)
   }
   TopoDS_Vertex result;
   try{
-    gp_Pnt aPnt;
-    aPnt = gp_Pnt(x, y, z);
+    gp_Pnt aPnt(x, y, z);
     BRepBuilderAPI_MakeVertex v(aPnt);
     v.Build();
     if(!v.IsDone()){
@@ -291,6 +336,27 @@ void OCC_Internals::addCircleArc(int tag, int startTag, int centerTag, int endTa
   bind(result, tag);
 }
 
+void OCC_Internals::addBezier(int tag, int startTag, int endTag,
+                              std::vector<std::vector<double> > points)
+{
+  Msg::Error("OCC TODO Bezier");
+}
+
+void OCC_Internals::addBSpline(int tag, int startTag, int endTag,
+                               std::vector<std::vector<double> > points)
+{
+  Msg::Error("OCC TODO BSpline");
+}
+
+void OCC_Internals::addNURBS(int tag, int startTag, int endTag,
+                             std::vector<std::vector<double> > points,
+                             std::vector<double> knots,
+                             std::vector<double> weights,
+                             std::vector<int> mult)
+{
+  Msg::Error("OCC TODO NURBS");
+}
+
 void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
 {
   if(_tagWire.IsBound(tag)){
@@ -300,16 +366,16 @@ void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
 
   TopoDS_Wire result;
   try{
-    BRepBuilderAPI_MakeWire wire_maker;
+    BRepBuilderAPI_MakeWire w;
     for (unsigned i = 0; i < edgeTags.size(); i++) {
       if(!_tagEdge.IsBound(edgeTags[i])){
         Msg::Error("Unknown OpenCASCADE edge with tag %d", edgeTags[i]);
         return;
       }
       TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(edgeTags[i]));
-      wire_maker.Add(edge);
+      w.Add(edge);
     }
-    result = wire_maker.Wire();
+    result = w.Wire();
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -318,14 +384,194 @@ void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
   bind(result, tag);
 }
 
+void OCC_Internals::addRectangle(int tag, double x1, double y1, double x2, double y2)
+{
+  if(_tagFace.IsBound(tag)){
+    Msg::Error("OpenCASCADE face with tag %d already exists", tag);
+    return;
+  }
+
+  TopoDS_Face result;
+  try{
+    TopoDS_Vertex v1 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y1, 0.));
+    TopoDS_Vertex v2 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y1, 0.));
+    TopoDS_Vertex v3 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y1, 0.));
+    TopoDS_Vertex v4 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y2, 0.));
+    TopoDS_Edge e1 = BRepBuilderAPI_MakeEdge(v1, v2);
+    TopoDS_Edge e2 = BRepBuilderAPI_MakeEdge(v2, v3);
+    TopoDS_Edge e3 = BRepBuilderAPI_MakeEdge(v3, v4);
+    TopoDS_Edge e4 = BRepBuilderAPI_MakeEdge(v4, v1);
+    TopoDS_Wire wire = BRepBuilderAPI_MakeWire(e1, e2, e3, e4);
+    result = BRepBuilderAPI_MakeFace(wire);
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+  bind(result, tag);
+}
+
+void OCC_Internals::addDisk(int tag, double xc, double yc, double rx, double ry)
+{
+  if(_tagFace.IsBound(tag)){
+    Msg::Error("OpenCASCADE face with tag %d already exists", tag);
+    return;
+  }
+
+  TopoDS_Face result;
+  try{
+    gp_Dir N_dir(0., 0., 1.);
+    gp_Dir x_dir(1., 0., 0.);
+    gp_Pnt center(xc, yc, 0.);
+    gp_Ax2 axis(center, N_dir, x_dir);
+    gp_Elips ellipse = gp_Elips(axis, rx, ry);
+    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(ellipse);
+    TopoDS_Wire wire = BRepBuilderAPI_MakeWire(edge);
+    result = BRepBuilderAPI_MakeFace(wire);
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+  bind(result, tag);
+}
+
+void OCC_Internals::addPlanarFace(int tag, std::vector<int> wireTags)
+{
+  if(_tagFace.IsBound(tag)){
+    Msg::Error("OpenCASCADE face with tag %d already exists", tag);
+    return;
+  }
+
+  std::vector<TopoDS_Wire> wires;
+  for (unsigned i = 0; i < wireTags.size(); i++) {
+    if(!_tagWire.IsBound(wireTags[i])){
+      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTags[i]);
+      return;
+    }
+    TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTags[i]));
+    wires.push_back(wire);
+  }
+
+  TopoDS_Face result;
+  if(wires.size() == 0){
+    Msg::Error("Planar face requires at least one line loop");
+    return;
+  }
+  else if(wires.size() == 1){
+    result = BRepBuilderAPI_MakeFace(wires[0]);
+  }
+  else{
+    // compute mean plane
+    TopTools_IndexedMapOfShape vmap;
+    for(unsigned int i = 0; i < wires.size(); i++){
+      TopExp_Explorer exp0;
+      for(exp0.Init(wires[i], TopAbs_VERTEX); exp0.More(); exp0.Next()){
+        TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
+        if(vmap.FindIndex(vertex) < 1)
+          vmap.Add(vertex);
+      }
+    }
+    std::vector<SPoint3> points;
+    for(int i = 1; i <= vmap.Extent(); i++){
+      gp_Pnt pnt = BRep_Tool::Pnt(TopoDS::Vertex(vmap(i)));
+      points.push_back(SPoint3(pnt.X(), pnt.Y(), pnt.Z()));
+    }
+    // FIXME: should check that points are not colinear; if so, add more
+    mean_plane meanPlane;
+    computeMeanPlaneSimple(points, meanPlane);
+    try{
+      gp_Pln aPlane(meanPlane.a, meanPlane.b, meanPlane.c, -meanPlane.d);
+      BRepBuilderAPI_MakeFace f(aPlane);
+      for(unsigned int i = 0; i < wires.size(); i++)
+        f.Add(wires[i]);
+      f.Build();
+      if(!f.IsDone()){
+        Msg::Error("Could not create planar face");
+        return;
+      }
+      result = f.Face();
+    }
+    catch(Standard_Failure &err){
+      Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+      return;
+    }
+  }
+  bind(result, tag);
+}
+
+void OCC_Internals::addRuledFace(int tag, std::vector<int> wireTags)
+{
+  Msg::Error("OCC TODO Ruled face");
+}
+
 void OCC_Internals::addSurfaceLoop(int tag, std::vector<int> faceTags)
 {
-  Msg::Error("OCC TODO create shell");
+  if(_tagShell.IsBound(tag)){
+    Msg::Error("OpenCASCADE surface loop with tag %d already exists", tag);
+    return;
+  }
+
+  TopoDS_Shape result;
+  try{
+    BRepBuilderAPI_Sewing s;
+    for (unsigned i = 0; i < faceTags.size(); i++) {
+      if(!_tagFace.IsBound(faceTags[i])){
+        Msg::Error("Unknown OpenCASCADE face with tag %d", faceTags[i]);
+        return;
+      }
+      TopoDS_Face face = TopoDS::Face(_tagFace.Find(faceTags[i]));
+      s.Add(face);
+    }
+    s.Perform();
+    result = s.SewedShape();
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+
+  bool first = true;
+  TopExp_Explorer exp0;
+  for(exp0.Init(result, TopAbs_SHELL); exp0.More(); exp0.Next()){
+    TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
+    int t = tag;
+    if(first){
+      first = false;
+    }
+    else{
+      t = getMaxTag(-2) + 1;
+      Msg::Warning("Creating additional surface loop %d", t);
+    }
+    bind(shell, t);
+  }
 }
 
 void OCC_Internals::addVolume(int tag, std::vector<int> shellTags)
 {
-  Msg::Error("OCC TODO create volume");
+  if(_tagSolid.IsBound(tag)){
+    Msg::Error("OpenCASCADE region with tag %d already exists", tag);
+    return;
+  }
+
+  TopoDS_Solid result;
+  try{
+    BRepBuilderAPI_MakeSolid s;
+    for (unsigned i = 0; i < shellTags.size(); i++) {
+      if(!_tagShell.IsBound(shellTags[i])){
+        Msg::Error("Unknown OpenCASCADE surface loop with tag %d", shellTags[i]);
+        return;
+      }
+      TopoDS_Shell shell = TopoDS::Shell(_tagShell.Find(shellTags[i]));
+      s.Add(shell);
+    }
+    result = s.Solid();
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+  bind(result, tag);
 }
 
 void OCC_Internals::addSphere(int tag, double xc, double yc, double zc, double radius)
@@ -457,66 +703,60 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
   double tolerance = CTX::instance()->geom.toleranceBoolean;
   bool parallel = CTX::instance()->geom.occParallel;
 
-  if(tag > 0 && _tagSolid.IsBound(tag)){
-    Msg::Error("OpenCASCADE region with tag %d already exists", tag);
-    return;
-  }
-
-  if(objectTags[0].size() || objectTags[1].size() || objectTags[2].size() ||
-     toolTags[0].size() || toolTags[1].size() || toolTags[2].size()){
-    Msg::Error("OpenCASCADE boolean operations only available on solids for now");
-    return;
-  }
-
-  std::vector<TopoDS_Solid> objects, tools;
-  for(unsigned int i = 0; i < objectTags[3].size(); i++){
-    if(!_tagSolid.IsBound(objectTags[3][i])){
-      Msg::Error("Unknown OpenCASCADE region with tag %d", objectTags[3][i]);
-      return;
-    }
-    else{
-      TopoDS_Solid object = TopoDS::Solid(_tagSolid.Find(objectTags[3][i]));
-      objects.push_back(object);
-      if(removeObject) unbind(object, objectTags[3][i]);
-    }
-  }
-  for(unsigned int i = 0; i < toolTags[3].size(); i++){
-    if(!_tagSolid.IsBound(toolTags[3][i])){
-      Msg::Error("Unknown OpenCASCADE region with tag %d", toolTags[3][i]);
-      return;
-    }
-    else{
-      TopoDS_Solid tool = TopoDS::Solid(_tagSolid.Find(toolTags[3][i]));
-      tools.push_back(TopoDS::Solid(tool));
-      if(removeTool) unbind(tool, toolTags[3][i]);
+  if(tag > 0){
+    for(int dim = 0; dim < 4; dim++){
+      if(objectTags[dim].size() && isBound(dim, tag)){
+        Msg::Error("OpenCASCADE entity with tag %d already exists", tag);
+        return;
+      }
     }
   }
 
-  if(objects.size() < 1 || tools.size() < 1){
-    Msg::Error("No object or tool in boolean operation");
-    return;
-  }
-
-  if(objects.size() > 1 && op != OCC_Internals::Union && op != OCC_Internals::Fragments){
-    Msg::Error("Only a single object is support for this boolean operation");
-    return;
+  std::vector<TopoDS_Shape> objects[4], tools[4];
+  for(unsigned int dim = 0; dim < 4; dim++){
+    for(unsigned int i = 0; i < objectTags[dim].size(); i++){
+      if(!isBound(dim, objectTags[dim][i])){
+        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+                   dim, objectTags[dim][i]);
+        return;
+      }
+      else{
+        TopoDS_Shape object = find(dim, objectTags[dim][i]);
+        objects[dim].push_back(object);
+        if(removeObject) unbind(object, dim, objectTags[dim][i]);
+      }
+    }
+    for(unsigned int i = 0; i < toolTags[dim].size(); i++){
+      if(!isBound(dim, toolTags[dim][i])){
+        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+                   dim, toolTags[dim][i]);
+        return;
+      }
+      else{
+        TopoDS_Shape tool = find(dim, toolTags[dim][i]);
+        tools[dim].push_back(tool);
+        if(removeTool) unbind(tool, dim, toolTags[dim][i]);
+      }
+    }
   }
 
   TopoDS_Shape result;
 
 #if OCC_VERSION_HEX >= 0x060900
   TopTools_ListOfShape objectShapes, toolShapes;
-  for(unsigned int i = 0; i < objects.size(); i++){
-    if(tolerance > 0.)
-      objectShapes.Append(BRepBuilderAPI_Copy(objects[i]).Shape());
-    else
-      objectShapes.Append(objects[i]);
-  }
-  for(unsigned int i = 0; i < tools.size(); i++){
-    if(tolerance > 0.)
-      toolShapes.Append(BRepBuilderAPI_Copy(tools[i]).Shape());
-    else
-      toolShapes.Append(tools[i]);
+  for(int dim = 0; dim < 4; dim++){
+    for(unsigned int i = 0; i < objects[dim].size(); i++){
+      if(tolerance > 0.)
+        objectShapes.Append(BRepBuilderAPI_Copy(objects[dim][i]).Shape());
+      else
+        objectShapes.Append(objects[dim][i]);
+    }
+    for(unsigned int i = 0; i < tools[dim].size(); i++){
+      if(tolerance > 0.)
+        toolShapes.Append(BRepBuilderAPI_Copy(tools[dim][i]).Shape());
+      else
+        toolShapes.Append(tools[dim][i]);
+    }
   }
 #endif
 
@@ -525,27 +765,30 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
     case OCC_Internals::Union :
       {
 #if OCC_VERSION_HEX < 0x060900
-        result = objects[0];
-        for(int i = 1; i < objects.size(); i++){
-          BRepAlgoAPI_Fuse fuse(result, objects[i]);
-          fuse.Build();
-          if(!fuse.IsDone()) {
-            Msg::Error("Fuse operation cannot be performed");
-            return;
+        for(int dim = 0; dim < 4; dim++){
+          if(object[dim].empty() || tools[dim].empty()) continue;
+          result = objects[dim][0];
+          for(int i = 1; i < objects.size(); i++){
+            BRepAlgoAPI_Fuse fuse(result, objects[i]);
+            fuse.Build();
+            if(!fuse.IsDone()) {
+              Msg::Error("Fuse operation cannot be performed");
+              return;
+            }
+            else{
+              result = fuse.Shape();
+            }
           }
-          else{
-            result = fuse.Shape();
-          }
-        }
-        for(int i = 0; i < tools.size(); i++){
-          BRepAlgoAPI_Fuse fuse(result, tools[i]);
-          fuse.Build();
-          if(!fuse.IsDone()) {
-            Msg::Error("Fuse operation cannot be performed");
-            return;
-          }
-          else{
-            result = fuse.Shape();
+          for(int i = 0; i < tools.size(); i++){
+            BRepAlgoAPI_Fuse fuse(result, tools[i]);
+            fuse.Build();
+            if(!fuse.IsDone()) {
+              Msg::Error("Fuse operation cannot be performed");
+              return;
+            }
+            else{
+              result = fuse.Shape();
+            }
           }
         }
 #else
@@ -567,17 +810,20 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
     case OCC_Internals::Intersection :
       {
 #if OCC_VERSION_HEX < 0x060900
-        if(objects.size() != 1 || tools.size() != 1){
-          Msg::Error("Multi-intersection requires OCC >= 6.9");
-          return;
-        }
-        else{
-          BRepAlgoAPI_Common common(objects[0], tools[0]);
-          common.Build();
-          if(!common.IsDone()) {
-            Msg::Error("Intersection operation cannot be performed");
+        for(int dim = 0; dim < 4; dim++){
+          if(object[dim].empty() || tools[dim].empty()) continue;
+          if(objects[dim].size() != 1 || tools[dim].size() != 1){
+            Msg::Error("Multi-intersection requires OCC >= 6.9");
+            return;
           }
-          result = common.Shape();
+          else{
+            BRepAlgoAPI_Common common(objects[dim][0], tools[dim][0]);
+            common.Build();
+            if(!common.IsDone()) {
+              Msg::Error("Intersection operation cannot be performed");
+            }
+            result = common.Shape();
+          }
         }
 #else
         BRepAlgoAPI_Common common;
@@ -600,17 +846,20 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
     default:
       {
 #if OCC_VERSION_HEX < 0x060900
-        if(objects.size() != 1 || tools.size() != 1){
-          Msg::Error("Multi-difference requires OpenCASCADE >= 6.9");
-          return;
-        }
-        else{
-          BRepAlgoAPI_Cut cut(objects[0], tools[0]);
-          cut.Build();
-          if(!cut.IsDone()) {
-            Msg::Error("Cut operation cannot be performed");
+        for(int dim = 0; dim < 4; dim++){
+          if(object[dim].empty() || tools[dim].empty()) continue;
+          if(objects[dim].size() != 1 || tools[dim].size() != 1){
+            Msg::Error("Multi-difference requires OCC >= 6.9");
+            return;
           }
-          result = cut.Shape();
+          else{
+            BRepAlgoAPI_Cut cut(objects[0], tools[0]);
+            cut.Build();
+            if(!cut.IsDone()) {
+              Msg::Error("Cut operation cannot be performed");
+            }
+            result = cut.Shape();
+          }
         }
 #else
         BRepAlgoAPI_Cut cut;
@@ -657,22 +906,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
     return;
   }
 
-  TopExp_Explorer exp0;
-  bool first = true;
-  for(exp0.Init(result, TopAbs_SOLID); exp0.More(); exp0.Next()){
-    if(tag <= 0){
-      int t = getMaxTag(3) + 1;
-      bind(TopoDS::Solid(exp0.Current()), t);
-      outTags[3].push_back(t);
-    }
-    else if(first){
-      bind(TopoDS::Solid(exp0.Current()), tag);
-      outTags[3].push_back(tag);
-      first = false;
-    }
-    else
-      Msg::Error("Cannot bind multiple regions to single tag %d", tag);
-  }
+  bindHighest(result, outTags, tag);
 }
 
 void OCC_Internals::getBoundary(std::vector<int> inTags[4],
@@ -720,7 +954,8 @@ void OCC_Internals::_transform(std::vector<int> inTags[4],
     for(unsigned int i = 0; i < inTags[dim].size(); i++){
       int tag = inTags[dim][i];
       if(!isBound(dim, tag)){
-        Msg::Error("Unknown OpenCASCADE entity with tag %d", tag);
+        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+                   dim, tag);
         return;
       }
       tfo.Perform(find(dim, tag), Standard_False);
@@ -765,7 +1000,8 @@ void OCC_Internals::copy(std::vector<int> inTags[4], std::vector<int> outTags[4]
     for(unsigned int i = 0; i < inTags[dim].size(); i++){
       int tag = inTags[dim][i];
       if(!isBound(dim, tag)){
-        Msg::Error("Unknown OpenCASCADE entity with tag %d", tag);
+        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+                   dim, tag);
         return;
       }
       TopoDS_Shape result = BRepBuilderAPI_Copy(find(dim, tag)).Shape();
@@ -782,22 +1018,38 @@ void OCC_Internals::copy(std::vector<int> inTags[4], std::vector<int> outTags[4]
 }
 
 void OCC_Internals::importShapes(const std::string &fileName,
-                                 std::vector<int> outTags[4])
+                                 std::vector<int> outTags[4],
+                                 const std::string &format)
 {
   std::vector<std::string> split = SplitFileName(fileName);
   TopoDS_Shape result;
   try{
-    if(split[2] == ".brep" || split[2] == ".BREP"){
+    if(format == "brep" ||
+       split[2] == ".brep" || split[2] == ".BREP"){
       BRep_Builder aBuilder;
       BRepTools::Read(result, fileName.c_str(), aBuilder);
     }
-    else if(split[2] == ".step" || split[2] == ".stp" ||
+    else if(format == "step" ||
+            split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP"){
       STEPControl_Reader reader;
       if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone){
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return;
       }
+      reader.NbRootsForTransfer();
+      reader.TransferRoots();
+      result = reader.OneShape();
+    }
+    else if(format == "iges" ||
+            split[2] == ".iges" || split[2] == ".igs" ||
+            split[2] == ".IGES" || split[2] == ".IGS"){
+      IGESControl_Reader reader;
+      if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone){
+        Msg::Error("Could not read file '%s'", fileName.c_str());
+        return;
+      }
+      reader.NbRootsForTransfer();
       reader.TransferRoots();
       result = reader.OneShape();
     }
@@ -805,13 +1057,19 @@ void OCC_Internals::importShapes(const std::string &fileName,
       Msg::Error("Unknown file type '%s'", fileName.c_str());
       return;
     }
-    // FIXME: apply healing routine on result?
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return;
   }
 
+  BRepTools::Clean(result);
+  _healShape(result, CTX::instance()->geom.tolerance,
+             CTX::instance()->geom.occFixDegenerated,
+             CTX::instance()->geom.occFixSmallEdges,
+             CTX::instance()->geom.occFixSmallFaces,
+             CTX::instance()->geom.occSewFaces,
+             false, CTX::instance()->geom.occScaling);
   bindHighest(result, outTags);
 }
 
@@ -820,7 +1078,8 @@ void OCC_Internals::importShapes(const TopoDS_Shape *shape, std::vector<int> out
   bindHighest(*shape, outTags);
 }
 
-void OCC_Internals::exportShapes(const std::string &fileName)
+void OCC_Internals::exportShapes(const std::string &fileName,
+                                 const std::string &format)
 {
   // iterate over all shapes with tags, and import them into the (sub)shape _maps
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
@@ -846,10 +1105,12 @@ void OCC_Internals::exportShapes(const std::string &fileName)
   std::vector<std::string> split = SplitFileName(fileName);
 
   try {
-    if(split[2] == ".brep" || split[2] == ".BREP"){
+    if(format == "brep" ||
+       split[2] == ".brep" || split[2] == ".BREP"){
       BRepTools::Write(c, fileName.c_str());
     }
-    else if(split[2] == ".step" || split[2] == ".stp" ||
+    else if(format == "step" ||
+            split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP"){
       STEPControl_Writer writer;
       if(writer.Transfer(c, STEPControl_ManifoldSolidBrep) == IFSelect_RetDone){
@@ -863,7 +1124,7 @@ void OCC_Internals::exportShapes(const std::string &fileName)
     }
   }
   catch(Standard_Failure &err){
-    Msg::Error("OCC exception %s", err.GetMessageString());
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
   }
 }
 
@@ -1470,7 +1731,7 @@ GRegion *OCC_Internals::getOCCRegionByNativePtr(GModel *model, TopoDS_Solid toFi
 
 
 
-// FIXME ***************** old ************************
+// FIXME ***************** BEGIN WILL BE REMOVED ************************
 
 void addSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList)
 {
@@ -1558,60 +1819,6 @@ void OCC_Internals::buildShapeFromLists(TopoDS_Shape shape)
   for(int i = 1; i <= _shmap.Extent(); i++) B.Add(C, _shmap(i));
   for(int i = 1; i <= _somap.Extent(); i++) B.Add(C, _somap(i));
   _shape = C;
-}
-
-void OCC_Internals::loadBREP(const char *fn)
-{
-  BRep_Builder aBuilder;
-  BRepTools::Read(_shape, (char*)fn, aBuilder);
-  BRepTools::Clean(_shape);
-  _healShape(_shape, CTX::instance()->geom.tolerance,
-             CTX::instance()->geom.occFixDegenerated,
-             CTX::instance()->geom.occFixSmallEdges,
-             CTX::instance()->geom.occFixSmallFaces,
-             CTX::instance()->geom.occSewFaces,
-             false,
-             CTX::instance()->geom.occScaling);
-  BRepTools::Clean(_shape);
-  buildLists();
-}
-
-void OCC_Internals::loadSTEP(const char *fn)
-{
-  STEPControl_Reader reader;
-  reader.ReadFile((char*)fn);
-  reader.NbRootsForTransfer();
-  reader.TransferRoots();
-  _shape = reader.OneShape();
-  BRepTools::Clean(_shape);
-  _healShape(_shape, CTX::instance()->geom.tolerance,
-             CTX::instance()->geom.occFixDegenerated,
-             CTX::instance()->geom.occFixSmallEdges,
-             CTX::instance()->geom.occFixSmallFaces,
-             CTX::instance()->geom.occSewFaces,
-             false,
-             CTX::instance()->geom.occScaling);
-  BRepTools::Clean(_shape);
-  buildLists();
-}
-
-void OCC_Internals::loadIGES(const char *fn)
-{
-  IGESControl_Reader reader;
-  reader.ReadFile((char*)fn);
-  reader.NbRootsForTransfer();
-  reader.TransferRoots();
-  _shape = reader.OneShape();
-  BRepTools::Clean(_shape);
-  _healShape(_shape, CTX::instance()->geom.tolerance,
-             CTX::instance()->geom.occFixDegenerated,
-             CTX::instance()->geom.occFixSmallEdges,
-             CTX::instance()->geom.occFixSmallFaces,
-             CTX::instance()->geom.occSewFaces,
-             false,
-             CTX::instance()->geom.occScaling);
-  BRepTools::Clean(_shape);
-  buildLists();
 }
 
 GVertex *OCC_Internals::addVertexToModel(GModel *model, TopoDS_Vertex vertex)
@@ -1941,6 +2148,9 @@ void OCC_Internals::fillet(std::vector<TopoDS_Edge> &edgesToFillet,
   }
 }
 
+// FIXME ***************** END OF WILL BE REMOVED ************************
+
+
 void GModel::_createOCCInternals()
 {
   if(_occ_internals) delete _occ_internals;
@@ -1955,33 +2165,39 @@ void GModel::_deleteOCCInternals()
 
 int GModel::importOCCInternals()
 {
+  if(!_occ_internals) return 0;
   _occ_internals->synchronize(this);
   return 1;
 }
 
 int GModel::readOCCBREP(const std::string &fn)
 {
-  _occ_internals = new OCC_Internals;
-  _occ_internals->loadBREP(fn.c_str());
-  _occ_internals->buildGModel(this);
+  if(!_occ_internals)
+    _occ_internals = new OCC_Internals;
+  std::vector<int> tags[4];
+  _occ_internals->importShapes(fn, tags, "brep");
+  _occ_internals->synchronize(this);
   snapVertices();
   return 1;
 }
 
 int GModel::readOCCSTEP(const std::string &fn)
 {
-  _occ_internals = new OCC_Internals;
-  _occ_internals->loadSTEP(fn.c_str());
-  _occ_internals->buildGModel(this);
-  //snapVertices();
+  if(!_occ_internals)
+    _occ_internals = new OCC_Internals;
+  std::vector<int> tags[4];
+  _occ_internals->importShapes(fn, tags, "step");
+  _occ_internals->synchronize(this);
   return 1;
 }
 
 int GModel::readOCCIGES(const std::string &fn)
 {
-  _occ_internals = new OCC_Internals;
-  _occ_internals->loadIGES(fn.c_str());
-  _occ_internals->buildGModel(this);
+  if(!_occ_internals)
+    _occ_internals = new OCC_Internals;
+  std::vector<int> tags[4];
+  _occ_internals->importShapes(fn, tags, "iges");
+  _occ_internals->synchronize(this);
   return 1;
 }
 
@@ -1991,7 +2207,7 @@ int GModel::writeOCCBREP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  _occ_internals->exportShapes(fn);
+  _occ_internals->exportShapes(fn, "brep");
   return 1;
 }
 
@@ -2001,7 +2217,7 @@ int GModel::writeOCCSTEP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  _occ_internals->exportShapes(fn);
+  _occ_internals->exportShapes(fn, "step");
   return 1;
 }
 

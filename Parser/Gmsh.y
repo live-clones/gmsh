@@ -144,6 +144,7 @@ struct doubleXstring{
 %token tDefineNumber tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tBlock tCylinder tCone tEllipsoid tQuadric tShapeFromFile
+%token tRectangle tDisk
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tSetFactory tThruSections
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
@@ -2120,16 +2121,26 @@ Shape :
   | tPlane tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindSurface(num)){
-	yymsg(0, "Surface %d already exists", num);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> wires;
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d; List_Read($7, i, &d);
+          wires.push_back((int)std::abs(d));
+        }
+        GModel::current()->getOCCInternals()->addPlanarFace(num, wires);
       }
       else{
-	Surface *s = Create_Surface(num, MSH_SURF_PLAN);
-	List_T *temp = ListOfDouble2ListOfInt($7);
-	setSurfaceGeneratrices(s, temp);
-	List_Delete(temp);
-	End_Surface(s);
-	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
+        if(FindSurface(num)){
+          yymsg(0, "Surface %d already exists", num);
+        }
+        else{
+          Surface *s = Create_Surface(num, MSH_SURF_PLAN);
+          List_T *temp = ListOfDouble2ListOfInt($7);
+          setSurfaceGeneratrices(s, temp);
+          List_Delete(temp);
+          End_Surface(s);
+          Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
+        }
       }
       List_Delete($7);
       $$.Type = MSH_SURF_PLAN;
@@ -2138,37 +2149,47 @@ Shape :
   | tRuled tSurface '(' FExpr ')' tAFFECT ListOfDouble InSphereCenter tEND
     {
       int num = (int)$4, type = 0;
-      if(FindSurface(num)){
-	yymsg(0, "Surface %d already exists", num);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> wires;
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d; List_Read($7, i, &d);
+          wires.push_back((int)std::abs(d));
+        }
+        GModel::current()->getOCCInternals()->addRuledFace(num, wires);
       }
       else{
-	double d;
-	List_Read($7, 0, &d);
-	EdgeLoop *el = FindEdgeLoop((int)fabs(d));
-	if(!el){
-	  yymsg(0, "Unknown line loop %d", (int)d);
-	}
-	else{
-	  int j = List_Nbr(el->Curves);
-	  if(j == 4){
-	    type = MSH_SURF_REGL;
-	  }
-	  else if(j == 3){
-	    type = MSH_SURF_TRIC;
-	  }
-	  else{
-	    yymsg(0, "Wrong definition of Ruled Surface %d: "
-		  "%d borders instead of 3 or 4", num, j);
-	    type = MSH_SURF_PLAN;
-	  }
-	  Surface *s = Create_Surface(num, type);
-	  List_T *temp = ListOfDouble2ListOfInt($7);
-	  setSurfaceGeneratrices(s, temp);
-	  List_Delete(temp);
-	  End_Surface(s);
-	  s->InSphereCenter = $8;
-	  Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
-	}
+        if(FindSurface(num)){
+          yymsg(0, "Surface %d already exists", num);
+        }
+        else{
+          double d;
+          List_Read($7, 0, &d);
+          EdgeLoop *el = FindEdgeLoop((int)fabs(d));
+          if(!el){
+            yymsg(0, "Unknown line loop %d", (int)d);
+          }
+          else{
+            int j = List_Nbr(el->Curves);
+            if(j == 4){
+              type = MSH_SURF_REGL;
+            }
+            else if(j == 3){
+              type = MSH_SURF_TRIC;
+            }
+            else{
+              yymsg(0, "Wrong definition of Ruled Surface %d: "
+                    "%d borders instead of 3 or 4", num, j);
+              type = MSH_SURF_PLAN;
+            }
+            Surface *s = Create_Surface(num, type);
+            List_T *temp = ListOfDouble2ListOfInt($7);
+            setSurfaceGeneratrices(s, temp);
+            List_Delete(temp);
+            End_Surface(s);
+            s->InSphereCenter = $8;
+            Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
+          }
+        }
       }
       List_Delete($7);
       $$.Type = type;
@@ -2284,6 +2305,50 @@ Shape :
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
+  | tRectangle '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$3;
+      if(List_Nbr($6) == 4){
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          double x1; List_Read($6, 0, &x1);
+          double y1; List_Read($6, 1, &y1);
+          double x2; List_Read($6, 2, &x2);
+          double y2; List_Read($6, 3, &y2);
+          GModel::current()->getOCCInternals()->addRectangle(num, x1, y1, x2, y2);
+        }
+        else{
+          yymsg(0, "Rectangle only available with OpenCASCADE factory");
+        }
+      }
+      else{
+        yymsg(0, "Rectangle has to be defined using {x1,y1,x2,y2}");
+      }
+      List_Delete($6);
+      $$.Type = MSH_SURF_PLAN;
+      $$.Num = num;
+    }
+  | tDisk '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$3;
+      if(List_Nbr($6) == 3 || List_Nbr($6) == 4){
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          double xc; List_Read($6, 0, &xc);
+          double yc; List_Read($6, 1, &yc);
+          double rx; List_Read($6, 2, &rx);
+          double ry = rx; if(List_Nbr($6) == 4) List_Read($6, 3, &ry);
+          GModel::current()->getOCCInternals()->addDisk(num, xc, yc, rx, ry);
+        }
+        else{
+          yymsg(0, "Disk only available with OpenCASCADE factory");
+        }
+      }
+      else{
+        yymsg(0, "Disk has to be defined using {xc,yc,r} or {xc,yc,rx,ry}");
+      }
+      List_Delete($6);
+      $$.Type = MSH_SURF_PLAN;
+      $$.Num = num;
+    }
   | tCylinder '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
@@ -2312,14 +2377,24 @@ Shape :
   | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindSurfaceLoop(num)){
-	yymsg(0, "Surface loop %d already exists", num);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> faces;
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d; List_Read($7, i, &d);
+          faces.push_back((int)std::abs(d));
+        }
+        GModel::current()->getOCCInternals()->addSurfaceLoop(num, faces);
       }
       else{
-	List_T *temp = ListOfDouble2ListOfInt($7);
-	SurfaceLoop *l = Create_SurfaceLoop(num, temp);
-	Tree_Add(GModel::current()->getGEOInternals()->SurfaceLoops, &l);
-	List_Delete(temp);
+        if(FindSurfaceLoop(num)){
+          yymsg(0, "Surface loop %d already exists", num);
+        }
+        else{
+          List_T *temp = ListOfDouble2ListOfInt($7);
+          SurfaceLoop *l = Create_SurfaceLoop(num, temp);
+          Tree_Add(GModel::current()->getGEOInternals()->SurfaceLoops, &l);
+          List_Delete(temp);
+        }
       }
       List_Delete($7);
       Free($2);
@@ -2451,15 +2526,25 @@ Shape :
   | tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(FindVolume(num)){
-	yymsg(0, "Volume %d already exists", num);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> shells;
+        for(int i = 0; i < List_Nbr($6); i++){
+          double d; List_Read($6, i, &d);
+          shells.push_back((int)std::abs(d));
+        }
+        GModel::current()->getOCCInternals()->addVolume(num, shells);
       }
       else{
-	Volume *v = Create_Volume(num, MSH_VOLUME);
-	List_T *temp = ListOfDouble2ListOfInt($6);
-	setVolumeSurfaces(v, temp);
-	List_Delete(temp);
-	Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
+        if(FindVolume(num)){
+          yymsg(0, "Volume %d already exists", num);
+        }
+        else{
+          Volume *v = Create_Volume(num, MSH_VOLUME);
+          List_T *temp = ListOfDouble2ListOfInt($6);
+          setVolumeSurfaces(v, temp);
+          List_Delete(temp);
+          Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
+        }
       }
       List_Delete($6);
       $$.Type = MSH_VOLUME;
@@ -4391,20 +4476,29 @@ Boolean :
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<int> shape[4], tool[4];
         for(int i = 0; i < List_Nbr($3); i++){
-          Shape s; List_Read($3, i, &s); shape[3].push_back(s.Num);
+          Shape s; List_Read($3, i, &s); int dim = s.Type / 100 - 1;
+          if(dim >= 0 && dim <= 3) shape[dim].push_back(s.Num);
         }
         for(int i = 0; i < List_Nbr($7); i++){
-          Shape s; List_Read($7, i, &s); tool[3].push_back(s.Num);
+          Shape s; List_Read($7, i, &s);int dim = s.Type / 100 - 1;
+          if(dim >= 0 && dim <= 3) tool[dim].push_back(s.Num);
         }
         std::vector<int> out[4];
         GModel::current()->getOCCInternals()->applyBooleanOperator
           (-1, (OCC_Internals::BooleanOperator)$1, shape, tool, out, $4, $8);
-        for(unsigned int i = 0; i < out[3].size(); i++){
-          Shape s;
-          s.Num = out[3][i];
-          s.Type = MSH_VOLUME;
-          List_Add($$, &s);
+        for(int dim = 0; dim < 4; dim++){
+          for(unsigned int i = 0; i < out[dim].size(); i++){
+            Shape s;
+            s.Num = out[dim][i];
+            s.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
+              (dim == 2) ? MSH_SURF_FROM_GMODEL :
+              (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
+            List_Add($$, &s);
+          }
         }
+      }
+      else{
+        yymsg(0, "Boolean operators only available with OpenCASCADE factory");
       }
       List_Delete($3);
       List_Delete($7);
@@ -4441,10 +4535,12 @@ BooleanShape :
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<int> shape[4], tool[4];
         for(int i = 0; i < List_Nbr($7); i++){
-          Shape s; List_Read($7, i, &s); shape[3].push_back(s.Num);
+          Shape s; List_Read($7, i, &s); int dim = s.Type / 100 - 1;
+          if(dim >= 0 && dim <= 3) shape[dim].push_back(s.Num);
         }
         for(int i = 0; i < List_Nbr($11); i++){
-          Shape s; List_Read($11, i, &s); tool[3].push_back(s.Num);
+          Shape s; List_Read($11, i, &s);int dim = s.Type / 100 - 1;
+          if(dim >= 0 && dim <= 3) tool[dim].push_back(s.Num);
         }
         std::vector<int> out[4];
         GModel::current()->getOCCInternals()->applyBooleanOperator

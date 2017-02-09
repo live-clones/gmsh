@@ -867,8 +867,6 @@ StringXNumber GeometryOptions_Number[] = {
     "Fix small faces in STEP, IGES and BRep models" },
   { F|O, "OCCSewFaces" , opt_geometry_occ_sew_faces , 0. ,
     "Sew faces in STEP, IGES and BRep models" },
-  { F|O, "OCCConnectFaces" , opt_geometry_occ_connect_faces , 0. ,
-    "Cut and connect faces in STEP, IGES and BRep models (0=no, 1=internal, 2=Salome)" },
   { F|O, "OCCParallel" , opt_geometry_occ_parallel , 0. ,
     "Use multi-threaded OCC boolean operators" },
   { F|O, "OCCScaling" , opt_geometry_occ_scaling , 1. ,
