@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@geuz.org>.
 
-#include <queue> 
+#include <queue>
 #include <stdlib.h>
 #include "GmshConfig.h"
 
@@ -15,7 +15,7 @@
 #include "discreteEdge.h"
 #include "MTriangle.h"
 #include "MEdge.h"
-#include "Geo.h"
+#include "GModelIO_GEO.h"
 #include "Context.h"
 #include "OS.h"
 #include "ANN/ANN.h"
@@ -290,7 +290,7 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
   parametrize();
   buildOct(CAD);
   //putOnView(gf->tag(),diskTriangulation->idNum,true,true);
-  //printParamMesh();  
+  //printParamMesh();
 }
 /*end BUILDER*/
 
@@ -311,7 +311,7 @@ void discreteDiskFace::buildOct(std::vector<GFace*> *CAD) const
   const int maxElePerBucket = 15;
   oct = Octree_Create(maxElePerBucket, origin, ssize, discreteDiskFaceBB,
 		      discreteDiskFaceCentroid, discreteDiskFaceInEle);
-  
+
   _ddft = new discreteDiskFaceTriangle[discrete_triangles.size()];
   int c = 0;
   for(unsigned int i = 0; i < discrete_triangles.size(); ++i){
@@ -326,7 +326,7 @@ void discreteDiskFace::buildOct(std::vector<GFace*> *CAD) const
     my_ddft->tri = t;
 
     Octree_Insert(my_ddft, oct);
-    
+
   }
   Octree_Arrange(oct);
 }
@@ -336,12 +336,12 @@ bool discreteDiskFace::parametrize() const
 { // #improveme
 
   linearSystem<double> * lsys_u, *lsys_v;
-  
+
 
 #ifdef HAVE_MUMPS
   lsys_u = new linearSystemMUMPS<double>;
   lsys_v = new linearSystemMUMPS<double>;
-#else  
+#else
   linearSystemCSRGmm<double> * lsys_u1 = new linearSystemCSRGmm<double>;
   linearSystemCSRGmm<double> * lsys_v1 = new linearSystemCSRGmm<double>;
   lsys_u1->setGmres(1);
@@ -351,7 +351,7 @@ bool discreteDiskFace::parametrize() const
 #endif
   dofManager<double> myAssemblerU(lsys_u);   // hashing
   dofManager<double> myAssemblerV(lsys_v);
-  
+
   for(size_t i = 0; i < _U0.size(); i++){
     MVertex *v = _U0[i];
     const double theta = 2 * M_PI * _coords[i];
@@ -568,18 +568,18 @@ void discreteDiskFace::optimize()
   lines.push_back(new MLine(sp2mv[coordinates[_U0[_U0.size()-1]]],sp2mv[coordinates[_U0[0]]]));
   de->setTopo(lines);
   de->createGeometry();// !!!! setTopo ... MLine's
- 
-  
-  
+
+
+
   // optimization
   if(_order >1)
     HighOrderMeshOptimizer(paramDisk, optParams);
   else
     MeshQualityOptimizer(paramDisk,opt);
 
- 
-  
-  
+
+
+
   // update the parametrization
   paramTriangles = e2e[0];
   for(unsigned int i=0; i< paramTriangles.size(); i++){
@@ -602,10 +602,10 @@ void discreteDiskFace::optimize()
   }
   dgf->mesh_vertices.clear();
   dgf->mesh_vertices = newMV;
-  
+
   // cleaning
   delete paramDisk;
-  
+
 #endif
 }
 
@@ -908,7 +908,7 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
 						double uv[2]) const
 {
 
-  
+
   SVector3 n = crossprod(n1,n2);
   n.normalize();
   //  printf("n %g %g %g\n",n.x(), n.y(), n.z());
@@ -939,7 +939,7 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
     m[0][0] = n.y();
     m[0][1] = n.z();
     m[1][0] = t.y();
-    m[1][1] = t.z();      
+    m[1][1] = t.z();
     if (fabs(det2x2(m)) > 1.e-12){
       sys2x2(m,rhs,r);
       x0 = SVector3(0,r[0],r[1]);
@@ -948,17 +948,17 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
       m[0][0] = n.x();
       m[0][1] = n.z();
       m[1][0] = t.x();
-      m[1][1] = t.z();      
+      m[1][1] = t.z();
       if (fabs(det2x2(m)) > 1.e-12){
-	sys2x2(m,rhs,r);	
+	sys2x2(m,rhs,r);
 	x0 = SVector3(r[0],0,r[1]);
       }
       else {
 	m[0][0] = n.x();
 	m[0][1] = n.y();
 	m[1][0] = t.x();
-	m[1][1] = t.y();      
-	if (sys2x2(m,rhs,r))	{	  
+	m[1][1] = t.y();
+	if (sys2x2(m,rhs,r))	{
 	  x0 = SVector3(r[0],r[1],0);
 	}
 	else{
@@ -966,8 +966,8 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
 	  continue;
 	}
       }
-    }    
-    
+    }
+
     const double a = 1.0;
     const double b = -2*dot(d,p-x0);
     const double c = dot(p-x0,p-x0) - R*R;
@@ -1004,7 +1004,7 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
   //  printf("Point(1) = {%g,%g,%g};\n",p.x(),p.y(),p.z());
   //  printf("Point(2) = {%g,%g,%g};\n",p.x()+d*n1.x(),p.y()+d*n1.y(),p.z()+d*n1.z());
   //  printf("Point(3) = {%g,%g,%g};\n",p.x()+d*n2.x(),p.y()+d*n2.y(),p.z()+d*n2.z());
-  
+
   //  //  printf("Circle(4) = {2,1,3};\n");
   //  printf("{%g,%g,%g};\n",n1.x(),n1.y(),n1.z());
   //  printf("{%g,%g,%g};\n",n2.x(),n2.y(),n2.z());
@@ -1084,7 +1084,7 @@ GPoint discreteDiskFace::intersectionWithCircle2(const SVector3 &n1, const SVect
       const double ta = (-b + sign*sqrt(delta)) / (2.*a);
       const double tb = (-b - sign*sqrt(delta)) / (2.*a);
       SVector3 s[2] =  {q + m * ta, q + m * tb};
-      for (int IT=0;IT<2;IT++){	
+      for (int IT=0;IT<2;IT++){
 	double mat[2][2], b[2],uv[2];
 	mat[0][0] = dot(t1,t1);
 	mat[1][1] = dot(t2,t2);
@@ -1111,7 +1111,7 @@ GPoint discreteDiskFace::intersectionWithCircle2(const SVector3 &n1, const SVect
   //  printf("Point(1) = {%g,%g,%g};\n",p.x(),p.y(),p.z());
   //  printf("Point(2) = {%g,%g,%g};\n",p.x()+d*n1.x(),p.y()+d*n1.y(),p.z()+d*n1.z());
   //  printf("Point(3) = {%g,%g,%g};\n",p.x()+d*n2.x(),p.y()+d*n2.y(),p.z()+d*n2.z());
-  
+
   //  //  printf("Circle(4) = {2,1,3};\n");
   //  printf("{%g,%g,%g};\n",n1.x(),n1.y(),n1.z());
   //  printf("{%g,%g,%g};\n",n2.x(),n2.y(),n2.z());
@@ -1163,7 +1163,7 @@ static double computeDistanceLinePoint (MVertex *v1, MVertex *v2, MVertex *v){
 }
 */
 inline double computeDistance (MVertex *v1, double d1, MVertex *v2, double d2, MVertex *v){
-  
+
   //       o------------a
   //
   //
@@ -1289,7 +1289,7 @@ double triangulation::geodesicDistance ()
     if (Fixed.size() == v2t.size())break;
   }
 
-  
+
   char name[256];
   sprintf(name,"geodesicDistance%d.pos",iter);
   FILE *f = fopen(name,"w");
@@ -1306,7 +1306,7 @@ double triangulation::geodesicDistance ()
   }
   fprintf(f,"};\n");
   fclose(f);
-  
+
 
   return CLOSEST;
 }
@@ -1318,15 +1318,15 @@ void discreteDiskFace::printAtlasMesh()
   char buffer[256];
   sprintf(buffer,"atlas_mesh%d.msh",initialTriangulation->idNum);
   FILE* pmesh = Fopen(buffer,"w");
-	
+
   std::set<MVertex*> meshvertices;
-	
+
   for(unsigned int i=0; i<initialTriangulation->tri.size(); ++i){
       MElement* tri = initialTriangulation->tri[i];
       for(unsigned int j=0; j<3; j++)
 	if (meshvertices.find(tri->getVertex(j))==meshvertices.end()) meshvertices.insert(tri->getVertex(j));
   }
-	
+
   fprintf(pmesh,"$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n%u\n",(unsigned int)meshvertices.size());
   int count = 1;
   for(std::set<MVertex*>::iterator it = meshvertices.begin(); it!=meshvertices.end(); ++it){

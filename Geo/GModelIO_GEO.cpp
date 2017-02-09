@@ -8,8 +8,8 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "GModelIO_GEO.h"
 #include "OS.h"
-#include "Geo.h"
 #include "OpenFile.h"
 #include "Numeric.h"
 #include "ListUtils.h"
@@ -26,6 +26,62 @@
 #if defined(HAVE_PARSER)
 #include "Parser.h"
 #endif
+
+// GEO_Internals routines
+
+int compareVertex(const void *a, const void *b);
+int compareSurfaceLoop(const void *a, const void *b);
+int compareEdgeLoop(const void *a, const void *b);
+int compareCurve(const void *a, const void *b);
+int compareSurface(const void *a, const void *b);
+int compareVolume(const void *a, const void *b);
+int compareLevelSet(const void *a, const void *b);
+int comparePhysicalGroup(const void *a, const void *b);
+
+void Free_Vertex(void *a, void *b);
+void Free_PhysicalGroup(void *a, void *b);
+void Free_EdgeLoop(void *a, void *b);
+void Free_SurfaceLoop(void *a, void *b);
+void Free_Curve(void *a, void *b);
+void Free_Surface(void *a, void *b);
+void Free_Volume(void *a, void *b);
+void Free_LevelSet(void *a, void *b);
+
+void GEO_Internals::alloc_all()
+{
+  MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
+  MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
+  Points = Tree_Create(sizeof(Vertex *), compareVertex);
+  Curves = Tree_Create(sizeof(Curve *), compareCurve);
+  EdgeLoops = Tree_Create(sizeof(EdgeLoop *), compareEdgeLoop);
+  Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
+  SurfaceLoops = Tree_Create(sizeof(SurfaceLoop *), compareSurfaceLoop);
+  Volumes = Tree_Create(sizeof(Volume *), compareVolume);
+  LevelSets = Tree_Create(sizeof(LevelSet *), compareLevelSet);
+  PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
+}
+
+void GEO_Internals::free_all()
+{
+  MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
+  MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
+  Tree_Action(Points, Free_Vertex); Tree_Delete(Points);
+  Tree_Action(Curves, Free_Curve); Tree_Delete(Curves);
+  Tree_Action(EdgeLoops, Free_EdgeLoop); Tree_Delete(EdgeLoops);
+  Tree_Action(Surfaces, Free_Surface); Tree_Delete(Surfaces);
+  Tree_Action(SurfaceLoops, Free_SurfaceLoop); Tree_Delete(SurfaceLoops);
+  Tree_Action(Volumes, Free_Volume); Tree_Delete(Volumes);
+  Tree_Action(LevelSets, Free_LevelSet); Tree_Delete(LevelSets);
+  List_Action(PhysicalGroups, Free_PhysicalGroup); List_Delete(PhysicalGroups);
+}
+
+void GEO_Internals::reset_physicals()
+{
+  List_Action(PhysicalGroups, Free_PhysicalGroup);
+  List_Reset(PhysicalGroups);
+}
+
+// GModel interface
 
 void GModel::_createGEOInternals()
 {
@@ -400,9 +456,10 @@ int GModel::importGEOInternals()
         case MSH_PHYSICAL_SURFACE: ge = getFaceByTag(tag); break;
         case MSH_PHYSICAL_VOLUME:  ge = getRegionByTag(tag); break;
       }
-      int pnum = CTX::instance()->geom.orientedPhysicals ? (gmsh_sign(num) * p->Num) : p->Num;
+      int pnum = CTX::instance()->geom.orientedPhysicals ?
+        (gmsh_sign(num) * p->Num) : p->Num;
       if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
-          ge->physicals.end())
+         ge->physicals.end())
         ge->physicals.push_back(pnum);
     }
   }
@@ -451,7 +508,9 @@ int GModel::importGEOInternals()
     }
   }
 
-  for (std::multimap<int,std::vector<int> >::iterator it = _geo_internals->meshCompounds.begin() ; it != _geo_internals->meshCompounds.end() ; ++it){
+  for (std::multimap<int, std::vector<int> >::iterator it =
+         _geo_internals->meshCompounds.begin();
+       it != _geo_internals->meshCompounds.end(); ++it){
     int dim = it->first;
     std::vector<int> compound = it->second;
     std::vector<GEntity*> ents;
@@ -464,14 +523,12 @@ int GModel::importGEOInternals()
       case 3: ent = getRegionByTag(tag); break;
       default : Msg::Error("compound mesh with dimension %d",dim);
       }
-      if(ent)ents.push_back(ent);
+      if(ent) ents.push_back(ent);
     }
     for (unsigned int i=0;i<ents.size();i++){
       ents[i]->_compound = ents;
     }
-
   }
-
 
   Msg::Debug("Gmsh model (GModel) imported:");
   Msg::Debug("%d Vertices", vertices.size());
@@ -482,17 +539,21 @@ int GModel::importGEOInternals()
 }
 
 class writeFieldOptionGEO {
-  private :
-    FILE *geo;
-    Field *field;
-  public :
-    writeFieldOptionGEO(FILE *fp,Field *_field) { geo = fp ? fp : stdout; field=_field; }
-    void operator() (std::pair<std::string, FieldOption *> it)
-    {
-      std::string v;
-      it.second->getTextRepresentation(v);
-      fprintf(geo, "Field[%i].%s = %s;\n", field->id, it.first.c_str(), v.c_str());
-    }
+ private :
+  FILE *geo;
+  Field *field;
+ public :
+  writeFieldOptionGEO(FILE *fp, Field *_field)
+  {
+    geo = fp ? fp : stdout;
+    field = _field;
+  }
+  void operator() (std::pair<std::string, FieldOption *> it)
+  {
+    std::string v;
+    it.second->getTextRepresentation(v);
+    fprintf(geo, "Field[%i].%s = %s;\n", field->id, it.first.c_str(), v.c_str());
+  }
 };
 
 class writeFieldGEO {

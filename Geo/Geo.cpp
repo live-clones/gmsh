@@ -7,8 +7,8 @@
 #include <string.h>
 #include "GmshMessage.h"
 #include "Numeric.h"
-#include "Geo.h"
 #include "GModel.h"
+#include "GModelIO_GEO.h"
 #include "GeoInterpolation.h"
 #include "Context.h"
 #include "MVertexRTree.h"
@@ -45,49 +45,49 @@ static int comparePosition(const void *a, const void *b)
   return 0;
 }
 
-static int compareSurfaceLoop(const void *a, const void *b)
+int compareSurfaceLoop(const void *a, const void *b)
 {
   SurfaceLoop *q = *(SurfaceLoop **)a;
   SurfaceLoop *w = *(SurfaceLoop **)b;
   return q->Num - w->Num;
 }
 
-static int compareEdgeLoop(const void *a, const void *b)
+int compareEdgeLoop(const void *a, const void *b)
 {
   EdgeLoop *q = *(EdgeLoop **)a;
   EdgeLoop *w = *(EdgeLoop **)b;
   return q->Num - w->Num;
 }
 
-static int compareCurve(const void *a, const void *b)
+int compareCurve(const void *a, const void *b)
 {
   Curve *q = *(Curve **)a;
   Curve *w = *(Curve **)b;
   return q->Num - w->Num;
 }
 
-static int compareSurface(const void *a, const void *b)
+int compareSurface(const void *a, const void *b)
 {
   Surface *q = *(Surface **)a;
   Surface *w = *(Surface **)b;
   return q->Num - w->Num;
 }
 
-static int compareVolume(const void *a, const void *b)
+int compareVolume(const void *a, const void *b)
 {
   Volume *q = *(Volume **)a;
   Volume *w = *(Volume **)b;
   return q->Num - w->Num;
 }
 
-static int compareLevelSet(const void *a, const void *b)
+int compareLevelSet(const void *a, const void *b)
 {
   LevelSet *q = *(LevelSet **)a;
   LevelSet *w = *(LevelSet **)b;
   return q->Num - w->Num;
 }
 
-static int comparePhysicalGroup(const void *a, const void *b)
+int comparePhysicalGroup(const void *a, const void *b)
 {
   PhysicalGroup *q = *(PhysicalGroup **)a;
   PhysicalGroup *w = *(PhysicalGroup **)b;
@@ -137,7 +137,7 @@ Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *surf, double lc)
   return pV;
 }
 
-static void Free_Vertex(void *a, void *b)
+void Free_Vertex(void *a, void *b)
 {
   Vertex *v = *(Vertex **)a;
   if(v) {
@@ -163,7 +163,7 @@ PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist)
   return p;
 }
 
-static void Free_PhysicalGroup(void *a, void *b)
+void Free_PhysicalGroup(void *a, void *b)
 {
   PhysicalGroup *p = *(PhysicalGroup **)a;
   if(p) {
@@ -188,7 +188,7 @@ EdgeLoop *Create_EdgeLoop(int Num, List_T *intlist)
   return l;
 }
 
-static void Free_EdgeLoop(void *a, void *b)
+void Free_EdgeLoop(void *a, void *b)
 {
   EdgeLoop *l = *(EdgeLoop **)a;
   if(l) {
@@ -213,7 +213,7 @@ SurfaceLoop *Create_SurfaceLoop(int Num, List_T *intlist)
   return l;
 }
 
-static void Free_SurfaceLoop(void *a, void *b)
+void Free_SurfaceLoop(void *a, void *b)
 {
   SurfaceLoop *l = *(SurfaceLoop **)a;
   if(l) {
@@ -636,7 +636,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
   return pC;
 }
 
-static void Free_Curve(void *a, void *b)
+void Free_Curve(void *a, void *b)
 {
   Curve *pC = *(Curve **)a;
   if(pC) {
@@ -675,7 +675,7 @@ Surface *Create_Surface(int Num, int Typ)
   return (pS);
 }
 
-static void Free_Surface(void *a, void *b)
+void Free_Surface(void *a, void *b)
 {
   Surface *pS = *(Surface **)a;
   if(pS) {
@@ -712,7 +712,7 @@ Volume *Create_Volume(int Num, int Typ)
   return pV;
 }
 
-static void Free_Volume(void *a, void *b)
+void Free_Volume(void *a, void *b)
 {
   Volume *pV = *(Volume **)a;
   if(pV) {
@@ -736,7 +736,7 @@ LevelSet *Create_LevelSet(int Num, gLevelset *l)
   return pL;
 }
 
-static void Free_LevelSet(void *a, void *b)
+void Free_LevelSet(void *a, void *b)
 {
   LevelSet *pL = *(LevelSet **)a;
   if(pL) {
@@ -4863,42 +4863,6 @@ void setVolumeSurfaces(Volume *v, List_T *loops)
       }
     }
   }
-}
-
-// GEO_Internals routines
-
-void GEO_Internals::alloc_all()
-{
-  MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
-  MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
-  Points = Tree_Create(sizeof(Vertex *), compareVertex);
-  Curves = Tree_Create(sizeof(Curve *), compareCurve);
-  EdgeLoops = Tree_Create(sizeof(EdgeLoop *), compareEdgeLoop);
-  Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
-  SurfaceLoops = Tree_Create(sizeof(SurfaceLoop *), compareSurfaceLoop);
-  Volumes = Tree_Create(sizeof(Volume *), compareVolume);
-  LevelSets = Tree_Create(sizeof(LevelSet *), compareLevelSet);
-  PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
-}
-
-void GEO_Internals::free_all()
-{
-  MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
-  MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
-  Tree_Action(Points, Free_Vertex); Tree_Delete(Points);
-  Tree_Action(Curves, Free_Curve); Tree_Delete(Curves);
-  Tree_Action(EdgeLoops, Free_EdgeLoop); Tree_Delete(EdgeLoops);
-  Tree_Action(Surfaces, Free_Surface); Tree_Delete(Surfaces);
-  Tree_Action(SurfaceLoops, Free_SurfaceLoop); Tree_Delete(SurfaceLoops);
-  Tree_Action(Volumes, Free_Volume); Tree_Delete(Volumes);
-  Tree_Action(LevelSets, Free_LevelSet); Tree_Delete(LevelSets);
-  List_Action(PhysicalGroups, Free_PhysicalGroup); List_Delete(PhysicalGroups);
-}
-
-void GEO_Internals::reset_physicals()
-{
-  List_Action(PhysicalGroups, Free_PhysicalGroup);
-  List_Reset(PhysicalGroups);
 }
 
 int select_contour(int type, int num, List_T * List)

@@ -9,7 +9,7 @@
 #include "OS.h"
 #include "GModelCreateTopologyFromMesh.h"
 #include "GModel.h"
-#include "Geo.h"
+#include "GModelIO_GEO.h"
 #include "discreteFace.h"
 #include "discreteEdge.h"
 #include "MPoint.h"
@@ -146,12 +146,12 @@ void createTopologyFromMesh1D ( GModel *gm , int &num) {
       dv->points.push_back(mp);
       dv->addEdge (*it);
       (*it)->setBeginVertex(dv);
-      (*it)->setEndVertex(dv);      
+      (*it)->setEndVertex(dv);
       _topology[*it].insert(dv);
     }
   }
 
-  
+
   // NICE :-)
 }
 
@@ -680,7 +680,7 @@ void GModel::createTopologyFromMeshNew ( ) {
   std::vector<MVertex*> cc;
   cc.insert(cc.begin(), vs.begin(), vs.end());
   _storeVerticesInEntities(cc);
-  
+
   //  printf("%d vertices\n", getNumVertices());
 
   double t2 = Cpu();

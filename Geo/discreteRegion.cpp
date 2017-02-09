@@ -6,7 +6,7 @@
 #include "GmshConfig.h"
 #include "discreteRegion.h"
 #include "MVertex.h"
-#include "Geo.h"
+#include "GModelIO_GEO.h"
 #include "Context.h"
 
 #if defined(HAVE_MESH)

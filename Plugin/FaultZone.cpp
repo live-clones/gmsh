@@ -10,9 +10,8 @@
 #include "Context.h"
 #include "GmshMessage.h"
 #include "FaultZone.h"
-
-#include "Geo.h"
 #include "GModel.h"
+#include "GModelIO_GEO.h"
 #include "SVector3.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -803,4 +802,3 @@ void GMSH_FaultZoneMesher::ModifyJointNodePosition(double eps){
     mVert->z() += vect.z();
   }
 }
-

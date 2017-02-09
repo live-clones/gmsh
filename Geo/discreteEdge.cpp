@@ -17,7 +17,7 @@
 #include "MTetrahedron.h"
 #include "MHexahedron.h"
 #include "MPyramid.h"
-#include "Geo.h"
+#include "GModelIO_GEO.h"
 #include "OS.h"
 #include "Curvature.h"
 #include "GEdgeCompound.h"

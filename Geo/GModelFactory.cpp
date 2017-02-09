@@ -17,7 +17,7 @@
 #include "GModel.h"
 #include "Numeric.h"
 #include "ExtrudeParams.h"
-#include "Geo.h"
+#include "GModelIO_GEO.h"
 #include "GmshDefines.h"
 
 GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double lc)

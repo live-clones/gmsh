@@ -7,7 +7,7 @@
 #include "GmshMessage.h"
 #include "discreteFace.h"
 #include "discreteDiskFace.h"
-#include "Geo.h"
+#include "GModelIO_GEO.h"
 #include "GFaceCompound.h"
 #include "Context.h"
 #include "OS.h"
@@ -20,7 +20,6 @@
 #include "linearSystemPETSc.h"
 #endif
 
-
 #include "MPoint.h"
 
 #if defined(HAVE_METIS)
@@ -29,9 +28,8 @@ extern "C" {
 }
 #endif
 
-
-static inline double getAlpha(MTriangle* tri, int edj){
-
+static inline double getAlpha(MTriangle* tri, int edj)
+{
   double alpha;
   if (edj==0)
     alpha = 0.;

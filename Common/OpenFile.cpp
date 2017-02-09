@@ -13,8 +13,8 @@ typedef unsigned long intptr_t;
 #endif
 #include "GmshMessage.h"
 #include "GmshIO.h"
+#include "GModelIO_GEO.h"
 #include "Options.h"
-#include "Geo.h"
 #include "GModel.h"
 #include "Numeric.h"
 #include "Context.h"
@@ -520,7 +520,7 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
       status = GModel::readGEO(fileName);
     }
   }
-  
+
   ComputeMaxEntityNum();
   if(setBoundingBox) SetBoundingBox();
   CTX::instance()->geom.draw = 1;
