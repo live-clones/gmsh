@@ -491,6 +491,9 @@ void OCC_Internals::addPlanarFace(int tag, std::vector<int> wireTags)
         return;
       }
       result = f.Face();
+      //ShapeFix_Face fix(face);
+      //fix.Perform();
+      //result = fix.Face();
     }
     catch(Standard_Failure &err){
       Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -535,8 +538,8 @@ void OCC_Internals::addSurfaceLoop(int tag, std::vector<int> faceTags)
   TopExp_Explorer exp0;
   for(exp0.Init(result, TopAbs_SHELL); exp0.More(); exp0.Next()){
     TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
-    //ShapeFix_Shell fix;
-    //fix.FixFaceOrientation(shell);
+    //ShapeFix_Shell fix(shell);
+    //fix.Perform();
     //shell = fix.Shell();
     int t = tag;
     if(first){
@@ -574,6 +577,10 @@ void OCC_Internals::addVolume(int tag, std::vector<int> shellTags)
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return;
   }
+  // make sure the volume is finite
+  ShapeFix_Solid fix(result);
+  fix.Perform();
+  result = TopoDS::Solid(fix.Solid());
   bind(result, tag);
 }
 
