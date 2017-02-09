@@ -10,9 +10,10 @@
 #include <math.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
-#include "Geo.h"
+#include "GModelIO_GEO.h"
 #include "Gmsh.tab.hpp"
 #include "GmshIO.h"
+
 
 void   parsestring(char endchar);
 char  *strsave(char *ptr);
