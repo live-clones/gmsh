@@ -1277,7 +1277,8 @@ void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
             if(_fmap.FindIndex(face) < 1){
               _fmap.Add(face);
 
-              for(exp3.Init(face.Oriented(TopAbs_FORWARD), TopAbs_WIRE); exp3.More(); exp3.Next()){
+              for(exp3.Init(face.Oriented(TopAbs_FORWARD), TopAbs_WIRE);
+                  exp3.More(); exp3.Next()){
               //for(exp3.Init(face, TopAbs_WIRE); exp3.More(); exp3.Next()){
                 TopoDS_Wire wire = TopoDS::Wire(exp3.Current());
                 if(_wmap.FindIndex(wire) < 1){
