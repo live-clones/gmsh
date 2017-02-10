@@ -313,6 +313,7 @@ Tanh                    return tTanh;
 Tan                     return tTan;
 Today                   return tToday;
 TotalMemory             return tTotalMemory;
+Torus                   return tTorus;
 
 UndefineConstant        return tUndefineConstant;
 UpperCase               return tUpperCase;

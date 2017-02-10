@@ -683,7 +683,8 @@ void OCC_Internals::addVolume(int tag, std::vector<int> shellTags)
   bind(result, tag);
 }
 
-void OCC_Internals::addSphere(int tag, double xc, double yc, double zc, double radius)
+void OCC_Internals::addSphere(int tag, double xc, double yc, double zc,
+                              double radius, double alpha)
 {
   if(tag > 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
@@ -693,7 +694,7 @@ void OCC_Internals::addSphere(int tag, double xc, double yc, double zc, double r
   TopoDS_Solid result;
   try{
     gp_Pnt p(xc, yc, zc);
-    BRepPrimAPI_MakeSphere s(p, radius);
+    BRepPrimAPI_MakeSphere s(p, radius, alpha);
     s.Build();
     if(!s.IsDone()){
       Msg::Error("Could not create sphere");
@@ -748,6 +749,10 @@ void OCC_Internals::addCylinder(int tag, double x1, double y1, double z1,
   const double H = sqrt((x2 - x1) * (x2 - x1) +
                         (y2 - y1) * (y2 - y1) +
                         (z2 - z1) * (z2 - z1));
+  if(!H){
+    Msg::Error("Cannot build cylinder of zero height");
+    return;
+  }
   TopoDS_Solid result;
   try{
     gp_Pnt aP(x1, y1, z1);
@@ -760,6 +765,34 @@ void OCC_Internals::addCylinder(int tag, double x1, double y1, double z1,
       return;
     }
     result = TopoDS::Solid(c.Shape());
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+  if(tag <= 0) tag = getMaxTag(3) + 1;
+  bind(result, tag);
+}
+
+void OCC_Internals::addTorus(int tag, double x, double y, double z,
+                             double r1, double r2, double alpha)
+{
+  if(tag > 0 && _tagSolid.IsBound(tag)){
+    Msg::Error("OpenCASCADE region with tag %d already exists", tag);
+    return;
+  }
+  TopoDS_Solid result;
+  try{
+    gp_Pnt aP(x, y, z);
+    gp_Vec aV(0, 0, 1);
+    gp_Ax2 anAxes(aP, aV);
+    BRepPrimAPI_MakeTorus t(anAxes, r1, r2, alpha);
+    t.Build();
+    if (!t.IsDone()) {
+      Msg::Error("Could not create torus");
+      return;
+    }
+    result = TopoDS::Solid(t.Shape());
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());

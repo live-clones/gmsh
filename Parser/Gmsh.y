@@ -143,7 +143,7 @@ struct doubleXstring{
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tDefineNumber tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
-%token tBlock tCylinder tCone tEllipsoid tQuadric tShapeFromFile
+%token tBlock tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tSetFactory tThruSections
@@ -2225,13 +2225,14 @@ Shape :
   | tSphere '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) == 4){ // solid sphere (volume)
+      if(List_Nbr($6) == 4 || List_Nbr($6) == 5){
         if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
           double x; List_Read($6, 0, &x);
           double y; List_Read($6, 1, &y);
           double z; List_Read($6, 2, &z);
           double r; List_Read($6, 3, &r);
-          GModel::current()->getOCCInternals()->addSphere(num, x, y, z, r);
+          double alpha = 2.*M_PI; if(List_Nbr($6) == 5) List_Read($6, 4, &alpha);
+          GModel::current()->getOCCInternals()->addSphere(num, x, y, z, r, alpha);
         }
         else{
           yymsg(0, "Sphere only available with OpenCASCADE factory");
@@ -2308,6 +2309,30 @@ Shape :
       }
       else{
         yymsg(0, "Block has to be defined using 2 points");
+      }
+      List_Delete($6);
+      $$.Type = MSH_VOLUME;
+      $$.Num = num;
+    }
+  | tTorus '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$3;
+      if(List_Nbr($6) == 5 || List_Nbr($6) == 6){
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          double x; List_Read($6, 0, &x);
+          double y; List_Read($6, 1, &y);
+          double z; List_Read($6, 2, &z);
+          double r1; List_Read($6, 3, &r1);
+          double r2; List_Read($6, 4, &r2);
+          double alpha = 2*M_PI; if(List_Nbr($6) == 6) List_Read($6, 5, &alpha);
+          GModel::current()->getOCCInternals()->addTorus(num, x, y, z, r1, r2, alpha);
+        }
+        else{
+          yymsg(0, "Torus only available with OpenCASCADE factory");
+        }
+      }
+      else{
+        yymsg(0, "Torus has to be defined using {x,y,z,r1,r2} or {x,y,z,r1,r2,alpha}");
       }
       List_Delete($6);
       $$.Type = MSH_VOLUME;
