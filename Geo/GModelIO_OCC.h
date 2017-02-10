@@ -108,6 +108,11 @@ class OCC_Internals {
                    double x2, double y2, double z2, double r);
   void addThruSections(int tag, std::vector<int> wireTags);
 
+  // extrusion
+  void extrude(int tag, std::vector<int> inTags[4],
+               double dx, double dy, double dz,
+               std::vector<int> outTags[4]);
+
   // apply boolean operator
   void applyBooleanOperator(int tag, BooleanOperator op,
                             std::vector<int> shapeTags[4],
@@ -207,6 +212,9 @@ public:
   void addCylinder(int tag, double x1, double y1, double z1,
                    double x2, double y2, double z2, double r){}
   void addThruSections(int tag, std::vector<int> wireTags){}
+  void extrude(int tag, std::vector<int> inTags[4],
+               double dx, double dy, double dz,
+               std::vector<int> outTags[4]){}
   void applyBooleanOperator(int tag, BooleanOperator op,
                             std::vector<int> shapeTags[4],
                             std::vector<int> toolTags[4],

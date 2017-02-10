@@ -24,6 +24,7 @@
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
+#include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepOffsetAPI_ThruSections.hxx>
 #include <gce_MakeCirc.hxx>
 #include <gce_MakePln.hxx>
@@ -801,6 +802,38 @@ void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags)
   }
   if(tag <= 0) tag = getMaxTag(3) + 1;
   bind(result, tag);
+}
+
+void OCC_Internals::extrude(int tag, std::vector<int> inTags[4],
+                            double dx, double dy, double dz,
+                            std::vector<int> outTags[4])
+{
+  for(int dim = 0; dim < 3; dim++){
+    if(tag > 0 && inTags[dim].size() && isBound(tag, dim + 1)){
+      Msg::Error("OpenCASCADE region of dimension %d with tag %d already exists",
+                 dim + 1, tag);
+      return;
+    }
+  }
+
+  for(int dim = 0; dim < 4; dim++){
+    for(unsigned int i = 0; i < inTags[dim].size(); i++){
+      if(!isBound(dim, inTags[dim][i])){
+        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+                   dim, inTags[dim][i]);
+        return;
+      }
+      TopoDS_Shape shape = find(dim, inTags[dim][i]);
+      BRepPrimAPI_MakePrism p(shape, gp_Vec(dx, dy, dz), Standard_False);
+      p.Build();
+      if(!p.IsDone()){
+        Msg::Error("Could not extrude");
+        return;
+      }
+      TopoDS_Shape result = p.Shape();
+      bind(result, true, tag, outTags);
+    }
+  }
 }
 
 void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
