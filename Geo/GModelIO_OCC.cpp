@@ -138,7 +138,8 @@ void OCC_Internals::unbind(TopoDS_Shape shape, int dim, int tag)
   }
 }
 
-void OCC_Internals::bindHighest(TopoDS_Shape shape, std::vector<int> tags[4], int tag)
+void OCC_Internals::bind(TopoDS_Shape shape, bool highestDimOnly, int tag,
+                         std::vector<int> outTags[4])
 {
   TopExp_Explorer exp0;
   bool first = true;
@@ -148,34 +149,34 @@ void OCC_Internals::bindHighest(TopoDS_Shape shape, std::vector<int> tags[4], in
     else if(first){ first = false; }
     else{ Msg::Error("Cannot bind multiple regions to single tag %d", t); return; }
     bind(TopoDS::Solid(exp0.Current()), t);
-    tags[3].push_back(t);
+    outTags[3].push_back(t);
   }
-  if(tags[3].size()) return;
+  if(highestDimOnly && outTags[3].size()) return;
   for(exp0.Init(shape, TopAbs_FACE); exp0.More(); exp0.Next()){
     int t = tag;
     if(t <= 0){ t = getMaxTag(2) + 1; }
     else if(first){ first = false; }
     else{ Msg::Error("Cannot bind multiple faces to single tag %d", t); return; }
     bind(TopoDS::Face(exp0.Current()), t);
-    tags[2].push_back(t);
+    outTags[2].push_back(t);
   }
-  if(tags[2].size()) return;
+  if(highestDimOnly && outTags[2].size()) return;
   for(exp0.Init(shape, TopAbs_EDGE); exp0.More(); exp0.Next()){
     int t = tag;
     if(t <= 0){ t = getMaxTag(1) + 1; }
     else if(first){ first = false; }
     else{ Msg::Error("Cannot bind multiple edges to single tag %d", t); return; }
     bind(TopoDS::Edge(exp0.Current()), t);
-    tags[1].push_back(t);
+    outTags[1].push_back(t);
   }
-  if(tags[1].size()) return;
+  if(highestDimOnly && outTags[1].size()) return;
   for(exp0.Init(shape, TopAbs_VERTEX); exp0.More(); exp0.Next()){
     int t = tag;
     if(t <= 0){ t = getMaxTag(0) + 1; }
     else if(first){ first = false; }
     else{ Msg::Error("Cannot bind multiple vertices to single tag %d", t); return; }
-    bind(TopoDS::Edge(exp0.Current()), t);
-    tags[0].push_back(t);
+    bind(TopoDS::Vertex(exp0.Current()), t);
+    outTags[0].push_back(t);
   }
 }
 
@@ -557,9 +558,42 @@ void OCC_Internals::addPlanarFace(int tag, std::vector<int> wireTags)
   bind(result, tag);
 }
 
-void OCC_Internals::addRuledFace(int tag, std::vector<int> wireTags)
+void OCC_Internals::addRuledFaces(int tag, std::vector<int> wireTags,
+                                  std::vector<int> outTags)
 {
-  Msg::Error("OCC TODO Ruled face");
+  if(tag > 0 && _tagFace.IsBound(tag)){
+    Msg::Error("OpenCASCADE face with tag %d already exists", tag);
+    return;
+  }
+
+  TopoDS_Shape result;
+  try{
+    Standard_Boolean isSolid = Standard_False;
+    Standard_Boolean isRuled = Standard_True;
+    BRepOffsetAPI_ThruSections ts(isSolid, isRuled);
+    for (unsigned i = 0; i < wireTags.size(); i++) {
+      if(!_tagWire.IsBound(wireTags[i])){
+        Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTags[i]);
+        return;
+      }
+      TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTags[i]));
+      ts.AddWire(wire);
+    }
+    ts.CheckCompatibility(Standard_False);
+    ts.Build();
+    if(!ts.IsDone()){
+      Msg::Error("Could not create ThruSection");
+      return;
+    }
+    result = ts.Shape();
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+  std::vector<int> out[4];
+  bind(result, true, tag, out);
+  outTags = out[2];
 }
 
 void OCC_Internals::addSurfaceLoop(int tag, std::vector<int> faceTags)
@@ -742,7 +776,9 @@ void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags)
 
   TopoDS_Solid result;
   try{
-    BRepOffsetAPI_ThruSections ts(Standard_True); // create solid
+    Standard_Boolean isSolid = Standard_True;
+    Standard_Boolean isRuled = Standard_False;
+    BRepOffsetAPI_ThruSections ts(isSolid, isRuled);
     for (unsigned i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])){
         Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTags[i]);
@@ -979,7 +1015,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
     return;
   }
 
-  bindHighest(result, outTags, tag);
+  bind(result, true, tag, outTags);
 }
 
 void OCC_Internals::getBoundary(std::vector<int> inTags[4],
@@ -1105,9 +1141,8 @@ void OCC_Internals::remove(std::vector<int> inTags[4])
   }
 }
 
-void OCC_Internals::importShapes(const std::string &fileName,
-                                 std::vector<int> outTags[4],
-                                 const std::string &format)
+void OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnly,
+                                 std::vector<int> outTags[4], const std::string &format)
 {
   std::vector<std::string> split = SplitFileName(fileName);
   TopoDS_Shape result;
@@ -1158,12 +1193,13 @@ void OCC_Internals::importShapes(const std::string &fileName,
              CTX::instance()->geom.occFixSmallFaces,
              CTX::instance()->geom.occSewFaces,
              false, CTX::instance()->geom.occScaling);
-  bindHighest(result, outTags);
+  bind(result, highestDimOnly, -1, outTags);
 }
 
-void OCC_Internals::importShapes(const TopoDS_Shape *shape, std::vector<int> outTags[4])
+void OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
+                                 std::vector<int> outTags[4])
 {
-  bindHighest(*shape, outTags);
+  bind(*shape, highestDimOnly, -1, outTags);
 }
 
 void OCC_Internals::exportShapes(const std::string &fileName,
@@ -2263,7 +2299,7 @@ int GModel::readOCCBREP(const std::string &fn)
   if(!_occ_internals)
     _occ_internals = new OCC_Internals;
   std::vector<int> tags[4];
-  _occ_internals->importShapes(fn, tags, "brep");
+  _occ_internals->importShapes(fn, false, tags, "brep");
   _occ_internals->synchronize(this);
   snapVertices();
   return 1;
@@ -2274,7 +2310,7 @@ int GModel::readOCCSTEP(const std::string &fn)
   if(!_occ_internals)
     _occ_internals = new OCC_Internals;
   std::vector<int> tags[4];
-  _occ_internals->importShapes(fn, tags, "step");
+  _occ_internals->importShapes(fn, false, tags, "step");
   _occ_internals->synchronize(this);
   return 1;
 }
@@ -2284,7 +2320,7 @@ int GModel::readOCCIGES(const std::string &fn)
   if(!_occ_internals)
     _occ_internals = new OCC_Internals;
   std::vector<int> tags[4];
-  _occ_internals->importShapes(fn, tags, "iges");
+  _occ_internals->importShapes(fn, false, tags, "iges");
   _occ_internals->synchronize(this);
   return 1;
 }
@@ -2314,7 +2350,7 @@ int GModel::importOCCShape(const void *shape)
   if(!_occ_internals)
     _occ_internals = new OCC_Internals;
   std::vector<int> tags[4];
-  _occ_internals->importShapes((TopoDS_Shape*)shape, tags);
+  _occ_internals->importShapes((TopoDS_Shape*)shape, false, tags);
   _occ_internals->synchronize(this);
   snapVertices();
   SetBoundingBox();

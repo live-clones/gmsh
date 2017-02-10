@@ -2171,42 +2171,32 @@ Shape :
         yymsg(0, "Surface %d already exists", num);
       }
       else{
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          std::vector<int> wires;
-          for(int i = 0; i < List_Nbr($7); i++){
-            double d; List_Read($7, i, &d);
-            wires.push_back((int)std::abs(d));
-          }
-          GModel::current()->getOCCInternals()->addRuledFace(num, wires);
+        double d;
+        List_Read($7, 0, &d);
+        EdgeLoop *el = FindEdgeLoop((int)fabs(d));
+        if(!el){
+          yymsg(0, "Unknown line loop %d", (int)d);
         }
         else{
-          double d;
-          List_Read($7, 0, &d);
-          EdgeLoop *el = FindEdgeLoop((int)fabs(d));
-          if(!el){
-            yymsg(0, "Unknown line loop %d", (int)d);
+          int j = List_Nbr(el->Curves);
+          if(j == 4){
+            type = MSH_SURF_REGL;
+          }
+          else if(j == 3){
+            type = MSH_SURF_TRIC;
           }
           else{
-            int j = List_Nbr(el->Curves);
-            if(j == 4){
-              type = MSH_SURF_REGL;
-            }
-            else if(j == 3){
-              type = MSH_SURF_TRIC;
-            }
-            else{
-              yymsg(0, "Wrong definition of Ruled Surface %d: "
-                    "%d borders instead of 3 or 4", num, j);
-              type = MSH_SURF_PLAN;
-            }
-            Surface *s = Create_Surface(num, type);
-            List_T *temp = ListOfDouble2ListOfInt($7);
-            setSurfaceGeneratrices(s, temp);
-            List_Delete(temp);
-            End_Surface(s);
-            s->InSphereCenter = $8;
-            Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
+            yymsg(0, "Wrong definition of Ruled Surface %d: "
+                  "%d borders instead of 3 or 4", num, j);
+            type = MSH_SURF_PLAN;
           }
+          Surface *s = Create_Surface(num, type);
+          List_T *temp = ListOfDouble2ListOfInt($7);
+          setSurfaceGeneratrices(s, temp);
+          List_Delete(temp);
+          End_Surface(s);
+          s->InSphereCenter = $8;
+          Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
         }
       }
       List_Delete($7);
@@ -4538,7 +4528,7 @@ Boolean :
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<int> out[4];
         std::string tmp = FixRelativePath(gmsh_yyname, $3);
-        GModel::current()->getOCCInternals()->importShapes(tmp, out);
+        GModel::current()->getOCCInternals()->importShapes(tmp, true, out);
         Shape s;
         for(int dim = 0; dim < 4; dim++){
           s.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :

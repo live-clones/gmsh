@@ -68,10 +68,12 @@ class OCC_Internals {
   void unbind(TopoDS_Solid solid, int tag);
   void unbind(TopoDS_Shape shape, int dim, int tag);
 
-  // bind highest-dimensional entities in shape (if tag > 0 and a single entity
-  // if found, use it; otherwise assign new tags); assigned tags are returned in
-  // tags
-  void bindHighest(TopoDS_Shape shape, std::vector<int> tags[4], int tag=-1);
+  // bind (potentially) mutliple entities in shape and return the tags in
+  // outTags. If tag > 0 and a single entity if found, use that; if
+  // highestDimOnly is true, only bind the entities of the highest
+  // dimension
+  void bind(TopoDS_Shape shape, bool highestDimOnly, int tag,
+            std::vector<int> outTags[4]);
 
   // is the entity of a given dimension and tag bound?
   bool isBound(int dim, int tag);
@@ -96,7 +98,7 @@ class OCC_Internals {
                     double x2, double y2, double z2);
   void addDisk(int tag, double xc, double yc, double zc, double rx, double ry);
   void addPlanarFace(int tag, std::vector<int> wireTags);
-  void addRuledFace(int tag, std::vector<int> wireTags);
+  void addRuledFaces(int tag, std::vector<int> wireTags, std::vector<int> outTags);
   void addSurfaceLoop(int tag, std::vector<int> faceTags);
   void addVolume(int tag, std::vector<int> shellTags);
   void addSphere(int tag, double xc, double yc, double zc, double radius);
@@ -127,11 +129,12 @@ class OCC_Internals {
   void remove(std::vector<int> inTags[4]);
 
   // import shapes from file
-  void importShapes(const std::string &fileName, std::vector<int> outTags[4],
-                    const std::string &format="");
+  void importShapes(const std::string &fileName, bool highestDimOnly,
+                    std::vector<int> outTags[4], const std::string &format="");
 
   // import shapes from TopoDS_Shape
-  void importShapes(const TopoDS_Shape *shape, std::vector<int> outTags[4]);
+  void importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
+                    std::vector<int> outTags[4]);
 
   // export all bound shapes to file
   void exportShapes(const std::string &fileName, const std::string &format="");
@@ -168,7 +171,7 @@ class OCC_Internals {
   void buildGModel(GModel *gm);
   void loadShape(const TopoDS_Shape *s)
   {
-    std::vector<int> tags[4]; importShapes(s, tags);
+    std::vector<int> tags[4]; importShapes(s, false, tags);
   }
   GVertex *addVertexToModel(GModel *model, TopoDS_Vertex v);
   GEdge *addEdgeToModel(GModel *model, TopoDS_Edge e);
@@ -195,7 +198,7 @@ public:
                     double x2, double y2, double z2){}
   void addDisk(int tag, double xc, double yc, double zc, double rx, double ry){}
   void addPlanarFace(int tag, std::vector<int> wireTags){}
-  void addRuledFace(int tag, std::vector<int> wireTags){}
+  void addRuledFaces(int tag, std::vector<int> wireTags, std::vector<int> outTags){}
   void addSurfaceLoop(int tag, std::vector<int> faceTags){}
   void addVolume(int tag, std::vector<int> shellTags){}
   void addSphere(int tag, double xc, double yc, double zc, double radius){};
@@ -217,8 +220,8 @@ public:
               double dx, double dy, double dz, double angle){}
   void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]){}
   void remove(std::vector<int> inTags[4]){}
-  void importShapes(const std::string &fileName, std::vector<int> outTags[4],
-                    const std::string &format=""){}
+  void importShapes(const std::string &fileName, bool highestDimOnly,
+                    std::vector<int> outTags[4], const std::string &format=""){}
   void exportShapes(const std::string &fileName, const std::string &format=""){}
   void synchronize(GModel *model){}
 };
