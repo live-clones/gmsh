@@ -232,6 +232,10 @@ public:
   void extrude(int tag, std::vector<int> inTags[4],
                double dx, double dy, double dz,
                std::vector<int> outTags[4]){}
+  void revolve(int tag, std::vector<int> inTags[4],
+               double x, double y, double z, double dx, double dy, double dz,
+               double angle, std::vector<int> outTags[4]){};
+
   void applyBooleanOperator(int tag, BooleanOperator op,
                             std::vector<int> shapeTags[4],
                             std::vector<int> toolTags[4],
