@@ -891,10 +891,12 @@ void OCC_Internals::addCone(int tag, double x1, double y1, double z1,
   bind(result, tag);
 }
 
+/*
 void OCC_Internals::addPipe(int tag, int dim, int inTag, std::vector<int> edgeTags)
 {
 
 }
+*/
 
 void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags)
 {
@@ -1054,7 +1056,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
 
   TopoDS_Shape result;
 
-#if OCC_VERSION_HEX >= 0x060900
+#if 1//OCC_VERSION_HEX >= 0x060900
   TopTools_ListOfShape objectShapes, toolShapes;
   for(int dim = 0; dim < 4; dim++){
     for(unsigned int i = 0; i < objects[dim].size(); i++){
@@ -1076,12 +1078,12 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
     switch(op){
     case OCC_Internals::Union :
       {
-#if OCC_VERSION_HEX < 0x060900
+#if 1//OCC_VERSION_HEX < 0x060900
         for(int dim = 0; dim < 4; dim++){
           if(objects[dim].empty() || tools[dim].empty()) continue;
           result = objects[dim][0];
-          for(int i = 1; i < objects.size(); i++){
-            BRepAlgoAPI_Fuse fuse(result, objects[i]);
+          for(int i = 1; i < objects[dim].size(); i++){
+            BRepAlgoAPI_Fuse fuse(result, objects[dim][i]);
             fuse.Build();
             if(!fuse.IsDone()) {
               Msg::Error("Fuse operation cannot be performed");
@@ -1091,8 +1093,8 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
               result = fuse.Shape();
             }
           }
-          for(int i = 0; i < tools.size(); i++){
-            BRepAlgoAPI_Fuse fuse(result, tools[i]);
+          for(int i = 0; i < tools[dim].size(); i++){
+            BRepAlgoAPI_Fuse fuse(result, tools[dim][i]);
             fuse.Build();
             if(!fuse.IsDone()) {
               Msg::Error("Fuse operation cannot be performed");
@@ -1121,7 +1123,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
       break;
     case OCC_Internals::Intersection :
       {
-#if OCC_VERSION_HEX < 0x060900
+#if 1//OCC_VERSION_HEX < 0x060900
         for(int dim = 0; dim < 4; dim++){
           if(objects[dim].empty() || tools[dim].empty()) continue;
           if(objects[dim].size() != 1 || tools[dim].size() != 1){
@@ -1157,7 +1159,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
     case OCC_Internals::Difference :
     default:
       {
-#if OCC_VERSION_HEX < 0x060900
+#if 1//OCC_VERSION_HEX < 0x060900
         for(int dim = 0; dim < 4; dim++){
           if(objects[dim].empty() || tools[dim].empty()) continue;
           if(objects[dim].size() != 1 || tools[dim].size() != 1){
@@ -1165,7 +1167,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
             return;
           }
           else{
-            BRepAlgoAPI_Cut cut(objects[0], tools[0]);
+            BRepAlgoAPI_Cut cut(objects[dim][0], tools[dim][0]);
             cut.Build();
             if(!cut.IsDone()) {
               Msg::Error("Cut operation cannot be performed");
@@ -1192,7 +1194,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
 
     case OCC_Internals::Fragments :
       {
-#if OCC_VERSION_HEX < 0x060900
+#if 1//OCC_VERSION_HEX < 0x060900
         Msg::Error("Boolean fragments only available with OpenCASCADE >= 6.9");
         return;
 #else
