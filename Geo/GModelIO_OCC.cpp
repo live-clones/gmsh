@@ -1056,7 +1056,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
 
   TopoDS_Shape result;
 
-#if 1//OCC_VERSION_HEX >= 0x060900
+#if OCC_VERSION_HEX >= 0x060900
   TopTools_ListOfShape objectShapes, toolShapes;
   for(int dim = 0; dim < 4; dim++){
     for(unsigned int i = 0; i < objects[dim].size(); i++){
@@ -1078,7 +1078,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
     switch(op){
     case OCC_Internals::Union :
       {
-#if 1//OCC_VERSION_HEX < 0x060900
+#if OCC_VERSION_HEX < 0x060900
         for(int dim = 0; dim < 4; dim++){
           if(objects[dim].empty() || tools[dim].empty()) continue;
           result = objects[dim][0];
@@ -1123,7 +1123,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
       break;
     case OCC_Internals::Intersection :
       {
-#if 1//OCC_VERSION_HEX < 0x060900
+#if OCC_VERSION_HEX < 0x060900
         for(int dim = 0; dim < 4; dim++){
           if(objects[dim].empty() || tools[dim].empty()) continue;
           if(objects[dim].size() != 1 || tools[dim].size() != 1){
@@ -1159,7 +1159,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
     case OCC_Internals::Difference :
     default:
       {
-#if 1//OCC_VERSION_HEX < 0x060900
+#if OCC_VERSION_HEX < 0x060900
         for(int dim = 0; dim < 4; dim++){
           if(objects[dim].empty() || tools[dim].empty()) continue;
           if(objects[dim].size() != 1 || tools[dim].size() != 1){
@@ -1194,7 +1194,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
 
     case OCC_Internals::Fragments :
       {
-#if 1//OCC_VERSION_HEX < 0x060900
+#if OCC_VERSION_HEX < 0x060900
         Msg::Error("Boolean fragments only available with OpenCASCADE >= 6.9");
         return;
 #else
