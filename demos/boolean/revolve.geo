@@ -29,14 +29,10 @@ Plane Surface(2) = {2};
 Disk(3) = {0.6, 0.6, 0, 0.5, 0.3};
 
 DefineConstant[
-  after = {1, Choices{0,1}, Name "Parameters/Extrude after boolean"}
+  angle = {90, Min 0, Max 360, Step 1,
+    Name "Parameters/Angle"}
 ];
+BooleanFragments{ Surface{1}; Delete; }{ Surface{2:3}; Delete; }
+a() = Extrude{ {0,1,0}, {0,0,0}, angle*2*Pi/360 }{ Surface{1:5}; };
 
-If(after)
-  BooleanFragments{ Surface{1}; Delete; }{ Surface{2:3}; Delete; }
-  Extrude{0,0,0.3}{ Surface{1:5}; }
-Else
-  Extrude{0,0,0.3}{ Surface{1:3}; }
-  BooleanFragments{ Volume{1}; Delete; }{ Volume{2:3}; Delete; }
-  Delete{ Surface{1:3}; }
-EndIf
+

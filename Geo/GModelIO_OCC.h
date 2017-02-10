@@ -49,6 +49,12 @@ class OCC_Internals {
   // add bezier or bspline
   void _addSpline(int tag, std::vector<int> vertexTags, int mode);
 
+  // extrude or revolve
+  void _extrudeRevolve(int tag, bool revolve, std::vector<int> inTags[4],
+                       double x, double y, double z,
+                       double dx, double dy, double dz, double angle,
+                       std::vector<int> outTags[4]);
+
  public:
   OCC_Internals();
 
@@ -108,10 +114,13 @@ class OCC_Internals {
                    double x2, double y2, double z2, double r);
   void addThruSections(int tag, std::vector<int> wireTags);
 
-  // extrusion
+  // extrusion and revolution
   void extrude(int tag, std::vector<int> inTags[4],
                double dx, double dy, double dz,
                std::vector<int> outTags[4]);
+  void revolve(int tag, std::vector<int> inTags[4],
+               double x, double y, double z, double dx, double dy, double dz,
+               double angle, std::vector<int> outTags[4]);
 
   // apply boolean operator
   void applyBooleanOperator(int tag, BooleanOperator op,

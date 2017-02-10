@@ -25,6 +25,7 @@
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
+#include <BRepPrimAPI_MakeRevol.hxx>
 #include <BRepOffsetAPI_ThruSections.hxx>
 #include <gce_MakeCirc.hxx>
 #include <gce_MakePln.hxx>
@@ -804,9 +805,10 @@ void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags)
   bind(result, tag);
 }
 
-void OCC_Internals::extrude(int tag, std::vector<int> inTags[4],
-                            double dx, double dy, double dz,
-                            std::vector<int> outTags[4])
+void OCC_Internals::_extrudeRevolve(int tag, bool revolve, std::vector<int> inTags[4],
+                                    double x, double y, double z,
+                                    double dx, double dy, double dz, double angle,
+                                    std::vector<int> outTags[4])
 {
   for(int dim = 0; dim < 3; dim++){
     if(tag > 0 && inTags[dim].size() && isBound(tag, dim + 1)){
@@ -816,6 +818,11 @@ void OCC_Internals::extrude(int tag, std::vector<int> inTags[4],
     }
   }
 
+  // build a single compound shape, so that we won't duplicate internal
+  // boundaries
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
   for(int dim = 0; dim < 4; dim++){
     for(unsigned int i = 0; i < inTags[dim].size(); i++){
       if(!isBound(dim, inTags[dim][i])){
@@ -824,16 +831,52 @@ void OCC_Internals::extrude(int tag, std::vector<int> inTags[4],
         return;
       }
       TopoDS_Shape shape = find(dim, inTags[dim][i]);
-      BRepPrimAPI_MakePrism p(shape, gp_Vec(dx, dy, dz), Standard_False);
+      b.Add(c, shape);
+    }
+  }
+  TopoDS_Shape result;
+  try{
+    if(revolve){
+      gp_Ax1 axisOfRevolution(gp_Pnt(x, y, z), gp_Dir(dx, dy, dz));
+      BRepPrimAPI_MakeRevol r(c, axisOfRevolution, angle, Standard_False);
+      r.Build();
+      if(!r.IsDone()){
+        Msg::Error("Could not revolve");
+        return;
+      }
+      result = r.Shape();
+    }
+    else{
+      BRepPrimAPI_MakePrism p(c, gp_Vec(dx, dy, dz), Standard_False);
       p.Build();
       if(!p.IsDone()){
         Msg::Error("Could not extrude");
         return;
       }
-      TopoDS_Shape result = p.Shape();
-      bind(result, true, tag, outTags);
+      result = p.Shape();
     }
   }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+
+  bind(result, true, tag, outTags);
+}
+
+void OCC_Internals::extrude(int tag, std::vector<int> inTags[4],
+                            double dx, double dy, double dz,
+                            std::vector<int> outTags[4])
+{
+  _extrudeRevolve(tag, false, inTags, 0, 0, 0, dx, dy, dz, 0, outTags);
+}
+
+void OCC_Internals::revolve(int tag, std::vector<int> inTags[4],
+                            double x, double y, double z,
+                            double dx, double dy, double dz, double angle,
+                            std::vector<int> outTags[4])
+{
+  _extrudeRevolve(tag, true, inTags, x, y, z, dx, dy, dz, angle, outTags);
 }
 
 void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,

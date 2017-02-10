@@ -4099,9 +4099,32 @@ Extrude :
   | tExtrude '{' VExpr ',' VExpr ',' FExpr '}' '{' ListOfShapes '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShapes(ROTATE, $10,
-		    0., 0., 0., $3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7,
-		    NULL, $$);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> in[4], out[4];
+        Shape TheShape;
+        for(int i = 0; i < List_Nbr($10); i++){
+          List_Read($10, i, &TheShape);
+          int dim = TheShape.Type / 100 - 1;
+          if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
+        }
+        GModel::current()->getOCCInternals()->revolve(-1, in, $5[0], $5[1], $5[2],
+                                                      $3[0], $3[1], $3[2], $7, out);
+        for(int dim = 0; dim < 4; dim++){
+          for(unsigned int i = 0; i < out[dim].size(); i++){
+            Shape s;
+            s.Num = out[dim][i];
+            s.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
+              (dim == 2) ? MSH_SURF_FROM_GMODEL :
+              (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
+            List_Add($$, &s);
+          }
+        }
+      }
+      else{
+        ExtrudeShapes(ROTATE, $10,
+                      0., 0., 0., $3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7,
+                      NULL, $$);
+      }
       List_Delete($10);
     }
   | tExtrude '{' VExpr ',' VExpr ',' VExpr ',' FExpr '}' '{' ListOfShapes '}'
