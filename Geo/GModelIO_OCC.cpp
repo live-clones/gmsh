@@ -26,6 +26,7 @@
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepPrimAPI_MakeRevol.hxx>
+#include <BRepOffsetAPI_MakeFilling.hxx>
 #include <BRepOffsetAPI_ThruSections.hxx>
 #include <gce_MakeCirc.hxx>
 #include <gce_MakePln.hxx>
@@ -390,6 +391,7 @@ void OCC_Internals::_addSpline(int tag, std::vector<int> vertexTags, int mode)
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return;
   }
+  if(tag <= 0) tag = getMaxTag(1) + 1;
   bind(result, tag);
 }
 
@@ -405,7 +407,7 @@ void OCC_Internals::addBSpline(int tag, std::vector<int> vertexTags)
 
 void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
 {
-  if(_tagWire.IsBound(tag)){
+  if(tag > 0 && _tagWire.IsBound(tag)){
     Msg::Error("OpenCASCADE line loop with tag %d already exists", tag);
     return;
   }
@@ -427,6 +429,7 @@ void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return;
   }
+  if(tag <= 0) tag = getMaxTag(-1) + 1;
   bind(result, tag);
 }
 
@@ -492,7 +495,7 @@ void OCC_Internals::addPlanarFace(int tag, std::vector<int> wireTags)
 {
   const bool autoFix = true;
 
-  if(_tagFace.IsBound(tag)){
+  if(tag > 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
     return;
   }
@@ -557,6 +560,52 @@ void OCC_Internals::addPlanarFace(int tag, std::vector<int> wireTags)
       return;
     }
   }
+  if(tag <= 0) tag = getMaxTag(2) + 1;
+  bind(result, tag);
+}
+
+void OCC_Internals::addFaceFilling(int tag, std::vector<int> wireTags,
+                                   std::vector<std::vector<double> > points)
+{
+  if(tag > 0 && _tagFace.IsBound(tag)){
+    Msg::Error("OpenCASCADE face with tag %d already exists", tag);
+    return;
+  }
+
+  TopoDS_Face result;
+  try{
+    BRepOffsetAPI_MakeFilling f;
+    // add edge constraints
+    for (unsigned i = 0; i < wireTags.size(); i++) {
+      if(!_tagWire.IsBound(wireTags[i])){
+        Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTags[i]);
+        return;
+      }
+      TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTags[i]));
+      TopExp_Explorer exp0;
+      for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()){
+        f.Add(TopoDS::Edge(exp0.Current()), GeomAbs_C0);
+      }
+    }
+    // add point constraints
+    for(unsigned i = 0; i < points.size(); i++){
+      if(points[i].size() == 3)
+        f.Add(gp_Pnt(points[i][0], points[i][1], points[i][2]));
+    }
+
+    f.Build();
+    if(!f.IsDone()){
+      Msg::Error("Could not build face filling");
+      return;
+    }
+    result = TopoDS::Face(f.Shape());
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+
+  if(tag <= 0) tag = getMaxTag(2) + 1;
   bind(result, tag);
 }
 
@@ -602,7 +651,7 @@ void OCC_Internals::addSurfaceLoop(int tag, std::vector<int> faceTags)
 {
   const bool autoFix = true;
 
-  if(_tagShell.IsBound(tag)){
+  if(tag > 0 && _tagShell.IsBound(tag)){
     Msg::Error("OpenCASCADE surface loop with tag %d already exists", tag);
     return;
   }
@@ -652,7 +701,7 @@ void OCC_Internals::addVolume(int tag, std::vector<int> shellTags)
 {
   const bool autoFix = true;
 
-  if(_tagSolid.IsBound(tag)){
+  if(tag > 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return;
   }
@@ -680,6 +729,7 @@ void OCC_Internals::addVolume(int tag, std::vector<int> shellTags)
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return;
   }
+  if(tag <= 0) tag = getMaxTag(3) + 1;
   bind(result, tag);
 }
 
@@ -793,6 +843,42 @@ void OCC_Internals::addTorus(int tag, double x, double y, double z,
       return;
     }
     result = TopoDS::Solid(t.Shape());
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+  if(tag <= 0) tag = getMaxTag(3) + 1;
+  bind(result, tag);
+}
+
+void OCC_Internals::addCone(int tag, double x1, double y1, double z1,
+                            double x2, double y2, double z2, double r1,
+                            double r2, double alpha)
+{
+  if(tag > 0 && _tagSolid.IsBound(tag)){
+    Msg::Error("OpenCASCADE region with tag %d already exists", tag);
+    return;
+  }
+
+  const double H = sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) +
+                        (z2 - z1) * (z2 - z1));
+  if(!H){
+    Msg::Error("Cannot build cone of zero height");
+    return;
+  }
+  TopoDS_Solid result;
+  try{
+    gp_Pnt aP(x1, y1, z1);
+    gp_Vec aV((x2 - x1) / H, (y2 - y1) / H, (z2 - z1) / H);
+    gp_Ax2 anAxes(aP, aV);
+    BRepPrimAPI_MakeCone c(anAxes, r1, r2, H, alpha);
+    c.Build();
+    if(!c.IsDone()){
+      Msg::Error("Could not create cone");
+      return;
+    }
+    result = TopoDS::Solid(c.Shape());
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());

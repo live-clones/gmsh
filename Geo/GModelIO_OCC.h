@@ -104,6 +104,8 @@ class OCC_Internals {
                     double x2, double y2, double z2);
   void addDisk(int tag, double xc, double yc, double zc, double rx, double ry);
   void addPlanarFace(int tag, std::vector<int> wireTags);
+  void addFaceFilling(int tag, std::vector<int> wireTags,
+                      std::vector<std::vector<double> > points);
   void addRuledFaces(int tag, std::vector<int> wireTags, std::vector<int> outTags);
   void addSurfaceLoop(int tag, std::vector<int> faceTags);
   void addVolume(int tag, std::vector<int> shellTags);
@@ -113,6 +115,8 @@ class OCC_Internals {
                 double x2, double y2, double z2);
   void addCylinder(int tag, double x1, double y1, double z1,
                    double x2, double y2, double z2, double r);
+  void addCone(int tag, double x1, double y1, double z1, double x2, double y2,
+               double z2, double r1, double r2, double alpha);
   void addTorus(int tag, double x, double y, double z, double r1, double r2,
                 double alpha);
   void addThruSections(int tag, std::vector<int> wireTags);
@@ -217,6 +221,8 @@ public:
                     double x2, double y2, double z2){}
   void addDisk(int tag, double xc, double yc, double zc, double rx, double ry){}
   void addPlanarFace(int tag, std::vector<int> wireTags){}
+  void addFaceFilling(int tag, std::vector<int> wireTags,
+                      std::vector<std::vector<double> > points){}
   void addRuledFaces(int tag, std::vector<int> wireTags, std::vector<int> outTags){}
   void addSurfaceLoop(int tag, std::vector<int> faceTags){}
   void addVolume(int tag, std::vector<int> shellTags){}
@@ -226,6 +232,8 @@ public:
                 double x2, double y2, double z2){}
   void addCylinder(int tag, double x1, double y1, double z1,
                    double x2, double y2, double z2, double r){}
+  void addCone(int tag, double x1, double y1, double z1, double x2, double y2,
+               double z2, double r1, double r2, double alpha){}
   void addTorus(int tag, double x, double y, double z, double r1, double r2,
                 double alpha){}
   void addThruSections(int tag, std::vector<int> wireTags){}

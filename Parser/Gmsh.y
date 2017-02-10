@@ -2171,32 +2171,43 @@ Shape :
         yymsg(0, "Surface %d already exists", num);
       }
       else{
-        double d;
-        List_Read($7, 0, &d);
-        EdgeLoop *el = FindEdgeLoop((int)fabs(d));
-        if(!el){
-          yymsg(0, "Unknown line loop %d", (int)d);
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          std::vector<int> wires;
+          for(int i = 0; i < List_Nbr($7); i++){
+            double d; List_Read($7, i, &d);
+            wires.push_back((int)std::abs(d));
+          }
+          std::vector<std::vector<double> > points;
+          GModel::current()->getOCCInternals()->addFaceFilling(num, wires, points);
         }
         else{
-          int j = List_Nbr(el->Curves);
-          if(j == 4){
-            type = MSH_SURF_REGL;
-          }
-          else if(j == 3){
-            type = MSH_SURF_TRIC;
+          double d;
+          List_Read($7, 0, &d);
+          EdgeLoop *el = FindEdgeLoop((int)fabs(d));
+          if(!el){
+            yymsg(0, "Unknown line loop %d", (int)d);
           }
           else{
-            yymsg(0, "Wrong definition of Ruled Surface %d: "
-                  "%d borders instead of 3 or 4", num, j);
-            type = MSH_SURF_PLAN;
+            int j = List_Nbr(el->Curves);
+            if(j == 4){
+              type = MSH_SURF_REGL;
+            }
+            else if(j == 3){
+              type = MSH_SURF_TRIC;
+            }
+            else{
+              yymsg(0, "Wrong definition of Ruled Surface %d: "
+                    "%d borders instead of 3 or 4", num, j);
+              type = MSH_SURF_PLAN;
+            }
+            Surface *s = Create_Surface(num, type);
+            List_T *temp = ListOfDouble2ListOfInt($7);
+            setSurfaceGeneratrices(s, temp);
+            List_Delete(temp);
+            End_Surface(s);
+            s->InSphereCenter = $8;
+            Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
           }
-          Surface *s = Create_Surface(num, type);
-          List_T *temp = ListOfDouble2ListOfInt($7);
-          setSurfaceGeneratrices(s, temp);
-          List_Delete(temp);
-          End_Surface(s);
-          s->InSphereCenter = $8;
-          Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
         }
       }
       List_Delete($7);
@@ -2406,6 +2417,34 @@ Shape :
       }
       else{
         yymsg(0, "Cylinder has to be defined using 2 points and a radius");
+      }
+      List_Delete($6);
+      $$.Type = MSH_VOLUME;
+      $$.Num = num;
+    }
+  | tCone '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$3;
+      if(List_Nbr($6) == 8 || List_Nbr($6) == 9){
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          double x1; List_Read($6, 0, &x1);
+          double y1; List_Read($6, 1, &y1);
+          double z1; List_Read($6, 2, &z1);
+          double x2; List_Read($6, 3, &x2);
+          double y2; List_Read($6, 4, &y2);
+          double z2; List_Read($6, 5, &z2);
+          double r1; List_Read($6, 6, &r1);
+          double r2; List_Read($6, 7, &r2);
+          double alpha=2*M_PI; if(List_Nbr($6) == 9) List_Read($6, 8, &alpha);
+          GModel::current()->getOCCInternals()->addCone(num, x1, y1, z1, x2, y2, z2,
+                                                        r1, r2, alpha);
+        }
+        else{
+          yymsg(0, "Cone only available with OpenCASCADE factory");
+        }
+      }
+      else{
+        yymsg(0, "Cone has to be defined using 2 points and 2 radii");
       }
       List_Delete($6);
       $$.Type = MSH_VOLUME;
