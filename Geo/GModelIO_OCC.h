@@ -225,7 +225,7 @@ public:
   void rotate(std::vector<int> inTags[4], double x, double y, double z,
               double dx, double dy, double dz, double angle){}
   void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]){}
-  void remove(std::vector<int> inTags[4]);
+  void remove(std::vector<int> inTags[4]){}
   void importShapes(const std::string &fileName, std::vector<int> outTags[4],
                     const std::string &format=""){}
   void exportShapes(const std::string &fileName, const std::string &format=""){}
