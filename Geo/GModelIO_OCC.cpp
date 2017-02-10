@@ -438,6 +438,8 @@ void OCC_Internals::addDisk(int tag, double xc, double yc, double rx, double ry)
 
 void OCC_Internals::addPlanarFace(int tag, std::vector<int> wireTags)
 {
+  const bool autoFix = true;
+
   if(_tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
     return;
@@ -491,9 +493,12 @@ void OCC_Internals::addPlanarFace(int tag, std::vector<int> wireTags)
         return;
       }
       result = f.Face();
-      //ShapeFix_Face fix(face);
-      //fix.Perform();
-      //result = fix.Face();
+      if(autoFix){
+        // make sure wires are oriented correctly
+        ShapeFix_Face fix(result);
+        fix.Perform();
+        result = fix.Face();
+      }
     }
     catch(Standard_Failure &err){
       Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -510,6 +515,8 @@ void OCC_Internals::addRuledFace(int tag, std::vector<int> wireTags)
 
 void OCC_Internals::addSurfaceLoop(int tag, std::vector<int> faceTags)
 {
+  const bool autoFix = true;
+
   if(_tagShell.IsBound(tag)){
     Msg::Error("OpenCASCADE surface loop with tag %d already exists", tag);
     return;
@@ -538,9 +545,12 @@ void OCC_Internals::addSurfaceLoop(int tag, std::vector<int> faceTags)
   TopExp_Explorer exp0;
   for(exp0.Init(result, TopAbs_SHELL); exp0.More(); exp0.Next()){
     TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
-    //ShapeFix_Shell fix(shell);
-    //fix.Perform();
-    //shell = fix.Shell();
+    if(autoFix){
+      // make sure faces in shell are oriented correctly
+      ShapeFix_Shell fix(shell);
+      fix.Perform();
+      shell = fix.Shell();
+    }
     int t = tag;
     if(first){
       first = false;
@@ -555,6 +565,8 @@ void OCC_Internals::addSurfaceLoop(int tag, std::vector<int> faceTags)
 
 void OCC_Internals::addVolume(int tag, std::vector<int> shellTags)
 {
+  const bool autoFix = true;
+
   if(_tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return;
@@ -572,15 +584,17 @@ void OCC_Internals::addVolume(int tag, std::vector<int> shellTags)
       s.Add(shell);
     }
     result = s.Solid();
+    if(autoFix){
+      // make sure the volume is finite
+      ShapeFix_Solid fix(result);
+      fix.Perform();
+      result = TopoDS::Solid(fix.Solid());
+    }
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return;
   }
-  // make sure the volume is finite
-  ShapeFix_Solid fix(result);
-  fix.Perform();
-  result = TopoDS::Solid(fix.Solid());
   bind(result, tag);
 }
 
