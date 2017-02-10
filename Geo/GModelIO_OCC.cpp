@@ -30,6 +30,9 @@
 #include <ElCLib.hxx>
 #include <Geom_Circle.hxx>
 #include <Geom_TrimmedCurve.hxx>
+#include <Geom_BezierCurve.hxx>
+#include <Geom_BSplineCurve.hxx>
+#include <GeomAPI_PointsToBSpline.hxx>
 
 OCC_Internals::OCC_Internals()
 {
@@ -336,25 +339,65 @@ void OCC_Internals::addCircleArc(int tag, int startTag, int centerTag, int endTa
   bind(result, tag);
 }
 
-void OCC_Internals::addBezier(int tag, int startTag, int endTag,
-                              std::vector<std::vector<double> > points)
+void OCC_Internals::_addSpline(int tag, std::vector<int> vertexTags, int mode)
 {
-  Msg::Error("OCC TODO Bezier");
+  if(tag > 0 && _tagEdge.IsBound(tag)){
+    Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
+    return;
+  }
+  if(vertexTags.size() < 2 || vertexTags.size() > 20){
+    Msg::Error("Number of control points should be in [2,20]");
+    return;
+  }
+
+  TopoDS_Edge result;
+  try{
+    TColgp_Array1OfPnt ctrlPoints(1, vertexTags.size());
+    TopoDS_Vertex start, end;
+    for(unsigned int i = 0; i < vertexTags.size(); i++){
+      if(!_tagVertex.IsBound(vertexTags[i])){
+        Msg::Error("Unknown OpenCASCADE vertex with tag %d", vertexTags[i]);
+        return;
+      }
+      TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(vertexTags[i]));
+      ctrlPoints.SetValue(i + 1, BRep_Tool::Pnt(vertex));
+      if(i == 0) start = vertex;
+      if(i == vertexTags.size() - 1) end = vertex;
+    }
+    if(mode == 0){
+      Handle(Geom_BezierCurve) curve = new Geom_BezierCurve(ctrlPoints);
+      BRepBuilderAPI_MakeEdge e(curve, start, end);
+      if(!e.IsDone()){
+        Msg::Error("Could not create Bezier curve");
+        return;
+      }
+      result = e.Edge();
+    }
+    else{
+      Handle(Geom_BSplineCurve) curve = GeomAPI_PointsToBSpline(ctrlPoints).Curve();
+      BRepBuilderAPI_MakeEdge e(curve, start, end);
+      if(!e.IsDone()){
+        Msg::Error("Could not create BSpline curve");
+        return;
+      }
+      result = e.Edge();
+    }
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+  bind(result, tag);
 }
 
-void OCC_Internals::addBSpline(int tag, int startTag, int endTag,
-                               std::vector<std::vector<double> > points)
+void OCC_Internals::addBezier(int tag, std::vector<int> vertexTags)
 {
-  Msg::Error("OCC TODO BSpline");
+  _addSpline(tag, vertexTags, 0);
 }
 
-void OCC_Internals::addNURBS(int tag, int startTag, int endTag,
-                             std::vector<std::vector<double> > points,
-                             std::vector<double> knots,
-                             std::vector<double> weights,
-                             std::vector<int> mult)
+void OCC_Internals::addBSpline(int tag, std::vector<int> vertexTags)
 {
-  Msg::Error("OCC TODO NURBS");
+  _addSpline(tag, vertexTags, 1);
 }
 
 void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
@@ -384,19 +427,24 @@ void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
   bind(result, tag);
 }
 
-void OCC_Internals::addRectangle(int tag, double x1, double y1, double x2, double y2)
+void OCC_Internals::addRectangle(int tag, double x1, double y1, double z1,
+                                 double x2, double y2, double z2)
 {
   if(_tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
     return;
   }
+  if(z1 != z2){
+    Msg::Error("Rectangle currently requires z1=z2");
+    return;
+  }
 
   TopoDS_Face result;
   try{
-    TopoDS_Vertex v1 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y1, 0.));
-    TopoDS_Vertex v2 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y1, 0.));
-    TopoDS_Vertex v3 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y1, 0.));
-    TopoDS_Vertex v4 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y2, 0.));
+    TopoDS_Vertex v1 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y1, z1));
+    TopoDS_Vertex v2 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y1, z1));
+    TopoDS_Vertex v3 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y1, z1));
+    TopoDS_Vertex v4 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y2, z1));
     TopoDS_Edge e1 = BRepBuilderAPI_MakeEdge(v1, v2);
     TopoDS_Edge e2 = BRepBuilderAPI_MakeEdge(v2, v3);
     TopoDS_Edge e3 = BRepBuilderAPI_MakeEdge(v3, v4);
@@ -411,7 +459,8 @@ void OCC_Internals::addRectangle(int tag, double x1, double y1, double x2, doubl
   bind(result, tag);
 }
 
-void OCC_Internals::addDisk(int tag, double xc, double yc, double rx, double ry)
+void OCC_Internals::addDisk(int tag, double xc, double yc, double zc,
+                            double rx, double ry)
 {
   if(_tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
@@ -422,7 +471,7 @@ void OCC_Internals::addDisk(int tag, double xc, double yc, double rx, double ry)
   try{
     gp_Dir N_dir(0., 0., 1.);
     gp_Dir x_dir(1., 0., 0.);
-    gp_Pnt center(xc, yc, 0.);
+    gp_Pnt center(xc, yc, zc);
     gp_Ax2 axis(center, N_dir, x_dir);
     gp_Elips ellipse = gp_Elips(axis, rx, ry);
     TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(ellipse);

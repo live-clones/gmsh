@@ -46,6 +46,9 @@ class OCC_Internals {
   // apply a geometrical transformation
   void _transform(std::vector<int> inTags[4], BRepBuilderAPI_Transform &tfo);
 
+  // add bezier or bspline
+  void _addSpline(int tag, std::vector<int> vertexTags, int mode);
+
  public:
   OCC_Internals();
 
@@ -86,18 +89,12 @@ class OCC_Internals {
   void addVertex(int tag, double x, double y, double z);
   void addLine(int tag, int startTag, int endTag);
   void addCircleArc(int tag, int startTag, int centerTag, int endTag);
-  void addBezier(int tag, int startTag, int endTag,
-                 std::vector<std::vector<double> > points);
-  void addBSpline(int tag, int startTag, int endTag,
-                  std::vector<std::vector<double> > points);
-  void addNURBS(int tag, int startTag, int endTag,
-                std::vector<std::vector<double> > points,
-                std::vector<double> knots,
-                std::vector<double> weights,
-                std::vector<int> mult);
+  void addBezier(int tag, std::vector<int> vertexTags);
+  void addBSpline(int tag, std::vector<int> vertexTags);
   void addLineLoop(int tag, std::vector<int> edgeTags);
-  void addRectangle(int tag, double x1, double y1, double x2, double y2);
-  void addDisk(int tag, double xc, double yc, double rx, double ry);
+  void addRectangle(int tag, double x1, double y1, double z1,
+                    double x2, double y2, double z2);
+  void addDisk(int tag, double xc, double yc, double zc, double rx, double ry);
   void addPlanarFace(int tag, std::vector<int> wireTags);
   void addRuledFace(int tag, std::vector<int> wireTags);
   void addSurfaceLoop(int tag, std::vector<int> faceTags);
@@ -191,18 +188,12 @@ public:
   void addVertex(int tag, double x, double y, double z){}
   void addLine(int tag, int startTag, int endTag){}
   void addCircleArc(int tag, int startTag, int centerTag, int endTag){}
-  void addBezier(int tag, int startTag, int endTag,
-                 std::vector<std::vector<double> > points){}
-  void addBSpline(int tag, int startTag, int endTag,
-                  std::vector<std::vector<double> > points){}
-  void addNURBS(int tag, int startTag, int endTag,
-                std::vector<std::vector<double> > points,
-                std::vector<double> knots,
-                std::vector<double> weights,
-                std::vector<int> mult){}
+  void addBezier(int tag, std::vector<int> vertexTags);
+  void addBSpline(int tag, std::vector<int> vertexTags);
   void addLineLoop(int tag, std::vector<int> edgeTags){}
-  void addRectangle(int tag, double x1, double y1, double x2, double y2){}
-  void addDisk(int tag, double xc, double yc, double rx, double ry){}
+  void addRectangle(int tag, double x1, double y1, double z1,
+                    double x2, double y2, double z2){}
+  void addDisk(int tag, double xc, double yc, double zc, double rx, double ry){}
   void addPlanarFace(int tag, std::vector<int> wireTags){}
   void addRuledFace(int tag, std::vector<int> wireTags){}
   void addSurfaceLoop(int tag, std::vector<int> faceTags){}

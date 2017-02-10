@@ -1964,12 +1964,21 @@ Shape :
 	yymsg(0, "Curve %d already exists", num);
       }
       else{
-	List_T *temp = ListOfDouble2ListOfInt($6);
-	Curve *c = Create_Curve(num, MSH_SEGM_BSPLN, 2, temp, NULL,
-				-1, -1, 0., 1.);
-	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-	CreateReversedCurve(c);
-	List_Delete(temp);
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          std::vector<int> tags;
+          for(int i = 0; i < List_Nbr($6); i++){
+            double d; List_Read($6, i, &d); tags.push_back((int)d);
+          }
+          GModel::current()->getOCCInternals()->addBSpline(num, tags);
+        }
+        else{
+          List_T *temp = ListOfDouble2ListOfInt($6);
+          Curve *c = Create_Curve(num, MSH_SEGM_BSPLN, 2, temp, NULL,
+                                  -1, -1, 0., 1.);
+          Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+          CreateReversedCurve(c);
+          List_Delete(temp);
+        }
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_BSPLN;
@@ -1982,12 +1991,21 @@ Shape :
 	yymsg(0, "Curve %d already exists", num);
       }
       else{
-	List_T *temp = ListOfDouble2ListOfInt($6);
-	Curve *c = Create_Curve(num, MSH_SEGM_BEZIER, 2, temp, NULL,
-				-1, -1, 0., 1.);
-	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-	CreateReversedCurve(c);
-	List_Delete(temp);
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          std::vector<int> tags;
+          for(int i = 0; i < List_Nbr($6); i++){
+            double d; List_Read($6, i, &d); tags.push_back((int)d);
+          }
+          GModel::current()->getOCCInternals()->addBezier(num, tags);
+        }
+        else{
+          List_T *temp = ListOfDouble2ListOfInt($6);
+          Curve *c = Create_Curve(num, MSH_SEGM_BEZIER, 2, temp, NULL,
+                                  -1, -1, 0., 1.);
+          Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+          CreateReversedCurve(c);
+          List_Delete(temp);
+        }
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_BEZIER;
@@ -2121,17 +2139,17 @@ Shape :
   | tPlane tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> wires;
-        for(int i = 0; i < List_Nbr($7); i++){
-          double d; List_Read($7, i, &d);
-          wires.push_back((int)std::abs(d));
-        }
-        GModel::current()->getOCCInternals()->addPlanarFace(num, wires);
+      if(FindSurface(num)){
+        yymsg(0, "Surface %d already exists", num);
       }
       else{
-        if(FindSurface(num)){
-          yymsg(0, "Surface %d already exists", num);
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          std::vector<int> wires;
+          for(int i = 0; i < List_Nbr($7); i++){
+            double d; List_Read($7, i, &d);
+            wires.push_back((int)std::abs(d));
+          }
+          GModel::current()->getOCCInternals()->addPlanarFace(num, wires);
         }
         else{
           Surface *s = Create_Surface(num, MSH_SURF_PLAN);
@@ -2149,17 +2167,17 @@ Shape :
   | tRuled tSurface '(' FExpr ')' tAFFECT ListOfDouble InSphereCenter tEND
     {
       int num = (int)$4, type = 0;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> wires;
-        for(int i = 0; i < List_Nbr($7); i++){
-          double d; List_Read($7, i, &d);
-          wires.push_back((int)std::abs(d));
-        }
-        GModel::current()->getOCCInternals()->addRuledFace(num, wires);
+      if(FindSurface(num)){
+        yymsg(0, "Surface %d already exists", num);
       }
       else{
-        if(FindSurface(num)){
-          yymsg(0, "Surface %d already exists", num);
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          std::vector<int> wires;
+          for(int i = 0; i < List_Nbr($7); i++){
+            double d; List_Read($7, i, &d);
+            wires.push_back((int)std::abs(d));
+          }
+          GModel::current()->getOCCInternals()->addRuledFace(num, wires);
         }
         else{
           double d;
@@ -2308,20 +2326,23 @@ Shape :
   | tRectangle '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) == 4){
+      if(List_Nbr($6) == 6){
         if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
           double x1; List_Read($6, 0, &x1);
           double y1; List_Read($6, 1, &y1);
-          double x2; List_Read($6, 2, &x2);
-          double y2; List_Read($6, 3, &y2);
-          GModel::current()->getOCCInternals()->addRectangle(num, x1, y1, x2, y2);
+          double z1; List_Read($6, 2, &z1);
+          double x2; List_Read($6, 3, &x2);
+          double y2; List_Read($6, 4, &y2);
+          double z2; List_Read($6, 5, &z2);
+          GModel::current()->getOCCInternals()->addRectangle(num, x1, y1, z1,
+                                                             x2, y2, z2);
         }
         else{
           yymsg(0, "Rectangle only available with OpenCASCADE factory");
         }
       }
       else{
-        yymsg(0, "Rectangle has to be defined using {x1,y1,x2,y2}");
+        yymsg(0, "Rectangle has to be defined using {x1,y1,z1,x2,y2,z2}");
       }
       List_Delete($6);
       $$.Type = MSH_SURF_PLAN;
@@ -2330,20 +2351,21 @@ Shape :
   | tDisk '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) == 3 || List_Nbr($6) == 4){
+      if(List_Nbr($6) == 4 || List_Nbr($6) == 5){
         if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
           double xc; List_Read($6, 0, &xc);
           double yc; List_Read($6, 1, &yc);
-          double rx; List_Read($6, 2, &rx);
-          double ry = rx; if(List_Nbr($6) == 4) List_Read($6, 3, &ry);
-          GModel::current()->getOCCInternals()->addDisk(num, xc, yc, rx, ry);
+          double zc; List_Read($6, 2, &zc);
+          double rx; List_Read($6, 3, &rx);
+          double ry = rx; if(List_Nbr($6) == 5) List_Read($6, 4, &ry);
+          GModel::current()->getOCCInternals()->addDisk(num, xc, yc, zc, rx, ry);
         }
         else{
           yymsg(0, "Disk only available with OpenCASCADE factory");
         }
       }
       else{
-        yymsg(0, "Disk has to be defined using {xc,yc,r} or {xc,yc,rx,ry}");
+        yymsg(0, "Disk has to be defined using {x,y,z,r} or {x,y,z,rx,ry}");
       }
       List_Delete($6);
       $$.Type = MSH_SURF_PLAN;
@@ -2526,17 +2548,17 @@ Shape :
   | tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> shells;
-        for(int i = 0; i < List_Nbr($6); i++){
-          double d; List_Read($6, i, &d);
-          shells.push_back((int)std::abs(d));
-        }
-        GModel::current()->getOCCInternals()->addVolume(num, shells);
+      if(FindVolume(num)){
+        yymsg(0, "Volume %d already exists", num);
       }
       else{
-        if(FindVolume(num)){
-          yymsg(0, "Volume %d already exists", num);
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          std::vector<int> shells;
+          for(int i = 0; i < List_Nbr($6); i++){
+            double d; List_Read($6, i, &d);
+            shells.push_back((int)std::abs(d));
+          }
+          GModel::current()->getOCCInternals()->addVolume(num, shells);
         }
         else{
           Volume *v = Create_Volume(num, MSH_VOLUME);
