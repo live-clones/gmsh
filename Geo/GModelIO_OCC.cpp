@@ -612,6 +612,9 @@ void OCC_Internals::addFaceFilling(int tag, std::vector<int> wireTags,
 void OCC_Internals::addRuledFaces(int tag, std::vector<int> wireTags,
                                   std::vector<int> outTags)
 {
+  // the wires can be open, so we should probably just give edges, or add the
+  // "Wire" keywork in the parser
+
   if(tag > 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
     return;
@@ -888,6 +891,11 @@ void OCC_Internals::addCone(int tag, double x1, double y1, double z1,
   bind(result, tag);
 }
 
+void OCC_Internals::addPipe(int tag, int dim, int inTag, std::vector<int> edgeTags)
+{
+
+}
+
 void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags)
 {
   if(tag > 0 && _tagSolid.IsBound(tag)){
@@ -1070,7 +1078,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
       {
 #if OCC_VERSION_HEX < 0x060900
         for(int dim = 0; dim < 4; dim++){
-          if(object[dim].empty() || tools[dim].empty()) continue;
+          if(objects[dim].empty() || tools[dim].empty()) continue;
           result = objects[dim][0];
           for(int i = 1; i < objects.size(); i++){
             BRepAlgoAPI_Fuse fuse(result, objects[i]);
@@ -1115,7 +1123,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
       {
 #if OCC_VERSION_HEX < 0x060900
         for(int dim = 0; dim < 4; dim++){
-          if(object[dim].empty() || tools[dim].empty()) continue;
+          if(objects[dim].empty() || tools[dim].empty()) continue;
           if(objects[dim].size() != 1 || tools[dim].size() != 1){
             Msg::Error("Multi-intersection requires OCC >= 6.9");
             return;
@@ -1151,7 +1159,7 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
       {
 #if OCC_VERSION_HEX < 0x060900
         for(int dim = 0; dim < 4; dim++){
-          if(object[dim].empty() || tools[dim].empty()) continue;
+          if(objects[dim].empty() || tools[dim].empty()) continue;
           if(objects[dim].size() != 1 || tools[dim].size() != 1){
             Msg::Error("Multi-difference requires OCC >= 6.9");
             return;
