@@ -188,8 +188,8 @@ public:
   void addVertex(int tag, double x, double y, double z){}
   void addLine(int tag, int startTag, int endTag){}
   void addCircleArc(int tag, int startTag, int centerTag, int endTag){}
-  void addBezier(int tag, std::vector<int> vertexTags);
-  void addBSpline(int tag, std::vector<int> vertexTags);
+  void addBezier(int tag, std::vector<int> vertexTags){};
+  void addBSpline(int tag, std::vector<int> vertexTags){};
   void addLineLoop(int tag, std::vector<int> edgeTags){}
   void addRectangle(int tag, double x1, double y1, double z1,
                     double x2, double y2, double z2){}
