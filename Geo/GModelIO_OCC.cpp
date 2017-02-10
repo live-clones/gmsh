@@ -1148,12 +1148,7 @@ void OCC_Internals::_transform(std::vector<int> inTags[4],
         Msg::Error("Could not apply transformation");
         return;
       }
-      switch(dim){
-      case 0: bind(TopoDS::Vertex(tfo.Shape()), tag); break;
-      case 1: bind(TopoDS::Edge(tfo.Shape()), tag); break;
-      case 2: bind(TopoDS::Face(tfo.Shape()), tag); break;
-      case 3: bind(TopoDS::Solid(tfo.Shape()), tag); break;
-      }
+      bind(tfo.Shape(), dim, tag);
     }
   }
 }
@@ -1191,12 +1186,7 @@ void OCC_Internals::copy(std::vector<int> inTags[4], std::vector<int> outTags[4]
       }
       TopoDS_Shape result = BRepBuilderAPI_Copy(find(dim, tag)).Shape();
       int newtag = getMaxTag(dim) + 1;
-      switch(dim){
-      case 0: bind(TopoDS::Vertex(result), newtag); break;
-      case 1: bind(TopoDS::Edge(result), newtag); break;
-      case 2: bind(TopoDS::Face(result), newtag); break;
-      case 3: bind(TopoDS::Solid(result), newtag); break;
-      }
+      bind(result, dim, newtag);
       outTags[dim].push_back(newtag);
     }
   }
