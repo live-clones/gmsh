@@ -147,7 +147,7 @@
      tRelocateMesh = 363,
      tSetFactory = 364,
      tThruSections = 365,
-     tPipe = 366,
+     tWedge = 366,
      tPlane = 367,
      tRuled = 368,
      tTransfinite = 369,
@@ -360,7 +360,7 @@
 #define tRelocateMesh 363
 #define tSetFactory 364
 #define tThruSections 365
-#define tPipe 366
+#define tWedge 366
 #define tPlane 367
 #define tRuled 368
 #define tTransfinite 369

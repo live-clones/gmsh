@@ -24,6 +24,12 @@
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
+#include <BRepPrimAPI_MakeSphere.hxx>
+#include <BRepPrimAPI_MakeBox.hxx>
+#include <BRepPrimAPI_MakeCylinder.hxx>
+#include <BRepPrimAPI_MakeCone.hxx>
+#include <BRepPrimAPI_MakeTorus.hxx>
+#include <BRepPrimAPI_MakeWedge.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepPrimAPI_MakeRevol.hxx>
 #include <BRepOffsetAPI_MakeFilling.hxx>
@@ -450,7 +456,7 @@ void OCC_Internals::addRectangle(int tag, double x1, double y1, double z1,
   try{
     TopoDS_Vertex v1 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y1, z1));
     TopoDS_Vertex v2 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y1, z1));
-    TopoDS_Vertex v3 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y1, z1));
+    TopoDS_Vertex v3 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y2, z1));
     TopoDS_Vertex v4 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y2, z1));
     TopoDS_Edge e1 = BRepBuilderAPI_MakeEdge(v1, v2);
     TopoDS_Edge e2 = BRepBuilderAPI_MakeEdge(v2, v3);
@@ -738,7 +744,7 @@ void OCC_Internals::addVolume(int tag, std::vector<int> shellTags)
 }
 
 void OCC_Internals::addSphere(int tag, double xc, double yc, double zc,
-                              double radius, double alpha)
+                              double radius, double angle)
 {
   if(tag > 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
@@ -748,7 +754,7 @@ void OCC_Internals::addSphere(int tag, double xc, double yc, double zc,
   TopoDS_Solid result;
   try{
     gp_Pnt p(xc, yc, zc);
-    BRepPrimAPI_MakeSphere s(p, radius, alpha);
+    BRepPrimAPI_MakeSphere s(p, radius, angle);
     s.Build();
     if(!s.IsDone()){
       Msg::Error("Could not create sphere");
@@ -793,7 +799,8 @@ void OCC_Internals::addBlock(int tag, double x1, double y1, double z1,
 }
 
 void OCC_Internals::addCylinder(int tag, double x1, double y1, double z1,
-                                double x2, double y2, double z2, double r)
+                                double x2, double y2, double z2, double r,
+                                double angle)
 {
   if(tag > 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
@@ -812,7 +819,7 @@ void OCC_Internals::addCylinder(int tag, double x1, double y1, double z1,
     gp_Pnt aP(x1, y1, z1);
     gp_Vec aV((x2 - x1) / H, (y2 - y1) / H, (z2 - z1) / H);
     gp_Ax2 anAxes(aP, aV);
-    BRepPrimAPI_MakeCylinder c(anAxes, r, H);
+    BRepPrimAPI_MakeCylinder c(anAxes, r, H, angle);
     c.Build();
     if(!c.IsDone()){
       Msg::Error("Could not create cylinder");
@@ -829,7 +836,7 @@ void OCC_Internals::addCylinder(int tag, double x1, double y1, double z1,
 }
 
 void OCC_Internals::addTorus(int tag, double x, double y, double z,
-                             double r1, double r2, double alpha)
+                             double r1, double r2, double angle)
 {
   if(tag > 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
@@ -840,7 +847,7 @@ void OCC_Internals::addTorus(int tag, double x, double y, double z,
     gp_Pnt aP(x, y, z);
     gp_Vec aV(0, 0, 1);
     gp_Ax2 anAxes(aP, aV);
-    BRepPrimAPI_MakeTorus t(anAxes, r1, r2, alpha);
+    BRepPrimAPI_MakeTorus t(anAxes, r1, r2, angle);
     t.Build();
     if (!t.IsDone()) {
       Msg::Error("Could not create torus");
@@ -858,7 +865,7 @@ void OCC_Internals::addTorus(int tag, double x, double y, double z,
 
 void OCC_Internals::addCone(int tag, double x1, double y1, double z1,
                             double x2, double y2, double z2, double r1,
-                            double r2, double alpha)
+                            double r2, double angle)
 {
   if(tag > 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
@@ -876,13 +883,42 @@ void OCC_Internals::addCone(int tag, double x1, double y1, double z1,
     gp_Pnt aP(x1, y1, z1);
     gp_Vec aV((x2 - x1) / H, (y2 - y1) / H, (z2 - z1) / H);
     gp_Ax2 anAxes(aP, aV);
-    BRepPrimAPI_MakeCone c(anAxes, r1, r2, H, alpha);
+    BRepPrimAPI_MakeCone c(anAxes, r1, r2, H, angle);
     c.Build();
     if(!c.IsDone()){
       Msg::Error("Could not create cone");
       return;
     }
     result = TopoDS::Solid(c.Shape());
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+  if(tag <= 0) tag = getMaxTag(3) + 1;
+  bind(result, tag);
+}
+
+void OCC_Internals::addWedge(int tag, double x, double y, double z, double dx, double dy,
+                             double dz, double ltx)
+{
+  if(tag > 0 && _tagSolid.IsBound(tag)){
+    Msg::Error("OpenCASCADE region with tag %d already exists", tag);
+    return;
+  }
+
+  TopoDS_Solid result;
+  try{
+    gp_Pnt aP(x, y, z);
+    gp_Vec aV(0, 0, 1);
+    gp_Ax2 anAxes(aP, aV);
+    BRepPrimAPI_MakeWedge w(anAxes, dx, dy, dz, ltx);
+    w.Build();
+    if(!w.IsDone()){
+      Msg::Error("Could not create wedge");
+      return;
+    }
+    result = TopoDS::Solid(w.Shape());
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());

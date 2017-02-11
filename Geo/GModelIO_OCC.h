@@ -110,15 +110,17 @@ class OCC_Internals {
   void addSurfaceLoop(int tag, std::vector<int> faceTags);
   void addVolume(int tag, std::vector<int> shellTags);
   void addSphere(int tag, double xc, double yc, double zc, double radius,
-                 double alpha);
+                 double angle);
   void addBlock(int tag, double x1, double y1, double z1,
                 double x2, double y2, double z2);
-  void addCylinder(int tag, double x1, double y1, double z1,
-                   double x2, double y2, double z2, double r);
+  void addCylinder(int tag, double x1, double y1, double z1, double x2, double y2,
+                   double z2, double r, double angle);
   void addCone(int tag, double x1, double y1, double z1, double x2, double y2,
-               double z2, double r1, double r2, double alpha);
+               double z2, double r1, double r2, double angle);
+  void addWedge(int tag, double x, double y, double z, double dx, double dy,
+                double dz, double ltx);
   void addTorus(int tag, double x, double y, double z, double r1, double r2,
-                double alpha);
+                double angle);
   void addThruSections(int tag, std::vector<int> wireTags);
 
   // extrude and revolve
@@ -229,15 +231,17 @@ public:
   void addSurfaceLoop(int tag, std::vector<int> faceTags){}
   void addVolume(int tag, std::vector<int> shellTags){}
   void addSphere(int tag, double xc, double yc, double zc, double radius,
-                 double alpha){};
+                 double angle){};
   void addBlock(int tag, double x1, double y1, double z1,
                 double x2, double y2, double z2){}
-  void addCylinder(int tag, double x1, double y1, double z1,
-                   double x2, double y2, double z2, double r){}
+  void addCylinder(int tag, double x1, double y1, double z1, double x2, double y2,
+                   double z2, double r, double angle){}
   void addCone(int tag, double x1, double y1, double z1, double x2, double y2,
-               double z2, double r1, double r2, double alpha){}
+               double z2, double r1, double r2, double angle){}
+  void addWedge(int tag, double x, double y, double z, double dx, double dy,
+                double dz, double ltx){}
   void addTorus(int tag, double x, double y, double z, double r1, double r2,
-                double alpha){}
+                double angle){}
   void addThruSections(int tag, std::vector<int> wireTags){}
   void extrude(int tag, std::vector<int> inTags[4],
                double dx, double dy, double dz,

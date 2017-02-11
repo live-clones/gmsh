@@ -146,7 +146,7 @@ struct doubleXstring{
 %token tBlock tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
-%token tRelocateMesh tSetFactory tThruSections tPipe
+%token tRelocateMesh tSetFactory tThruSections tWedge
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
@@ -2400,7 +2400,7 @@ Shape :
   | tCylinder '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) == 7){
+      if(List_Nbr($6) == 7 || List_Nbr($6) == 8){
         if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
           double x1; List_Read($6, 0, &x1);
           double y1; List_Read($6, 1, &y1);
@@ -2409,7 +2409,9 @@ Shape :
           double y2; List_Read($6, 4, &y2);
           double z2; List_Read($6, 5, &z2);
           double r; List_Read($6, 6, &r);
-          GModel::current()->getOCCInternals()->addCylinder(num, x1, y1, z1, x2, y2, z2, r);
+          double angle = 2*M_PI; if(List_Nbr($6) == 8) List_Read($6, 7, &angle);
+          GModel::current()->getOCCInternals()->addCylinder(num, x1, y1, z1,
+                                                            x2, y2, z2, r, angle);
         }
         else{
           yymsg(0, "Cylinder only available with OpenCASCADE factory");
@@ -2445,6 +2447,31 @@ Shape :
       }
       else{
         yymsg(0, "Cone has to be defined using 2 points and 2 radii");
+      }
+      List_Delete($6);
+      $$.Type = MSH_VOLUME;
+      $$.Num = num;
+    }
+  | tWedge '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$3;
+      if(List_Nbr($6) == 7){
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          double x; List_Read($6, 0, &x);
+          double y; List_Read($6, 1, &y);
+          double z; List_Read($6, 2, &z);
+          double dx; List_Read($6, 3, &dx);
+          double dy; List_Read($6, 4, &dy);
+          double dz; List_Read($6, 5, &dz);
+          double ltx; List_Read($6, 6, &ltx);
+          GModel::current()->getOCCInternals()->addWedge(num, x, y, z, dx, dy, dz, ltx);
+        }
+        else{
+          yymsg(0, "Wedge only available with OpenCASCADE factory");
+        }
+      }
+      else{
+        yymsg(0, "Wedge requires 7 arguments");
       }
       List_Delete($6);
       $$.Type = MSH_VOLUME;

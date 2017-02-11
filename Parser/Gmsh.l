@@ -242,7 +242,6 @@ Order			return tNurbsOrder;
 Periodic                return tPeriodic;
 Physical                return tPhysical;
 Pi                      return tPi;
-Pipe                    return tPipe;
 Plane                   return tPlane;
 Point                   return tPoint;
 Parametric		return tParametric;
@@ -323,6 +322,8 @@ LowerCaseIn             return tLowerCaseIn;
 Using                   return tUsing;
 
 Volume                  return tVolume;
+
+Wedge                   return tWedge;
 
 {digit}+ |
 {digit}+"."{digit}*({exp})? |
