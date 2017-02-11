@@ -13,7 +13,7 @@ View.ColorTable = {Red,Green,Blue};
 
 For i In {1:4}
 
-  Merge Sprintf("../tutorial/view%g.pos",i);
+  Merge Sprintf("../../tutorial/view%g.pos",i);
   Draw;
   Print Sprintf("out%g.png",i);
   Delete View[0];
