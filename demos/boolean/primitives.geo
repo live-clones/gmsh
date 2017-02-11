@@ -4,8 +4,8 @@ SetFactory("OpenCASCADE");
 Mesh.CharacteristicLengthMin = 0.1;
 Mesh.CharacteristicLengthMax = 0.1;
 
-Sphere(1) = {0,0,0, 0.5};
-Sphere(2) = {1,0,0, 0.5, Pi/3};
+Sphere(1) = {0,0,0, 0.3};
+Sphere(2) = {1,0,0, 0.3, Pi/3};
 Cylinder(3) = {2,0,0, 2.5,0,0, 0.5};
 Cylinder(4) = {3,0,0, 3.5,0,0, 0.5, Pi/3};
 Block(5) = {4,0,0, 4.5,0.5,0.5};
