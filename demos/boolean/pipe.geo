@@ -35,5 +35,5 @@ For i In {0:5}
 EndFor
 BSpline(100) = {100:105};
 
-a() = Pipe{100}{ Surface{1:5}; };
+a() = Extrude { Surface{1:5}; } Using Line{100};
 Delete{ Surface{1:5}; }

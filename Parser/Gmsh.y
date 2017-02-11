@@ -4254,19 +4254,19 @@ Extrude :
 		    &extr, $$);
       List_Delete($3);
     }
-  | tPipe '{' ListOfDouble '}' '{' ListOfShapes '}'
+  | tExtrude '{' ListOfShapes '}' tUsing tLine '{' ListOfDouble '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<int> edges;
         std::vector<int> in[4], out[4];
-        for(int i = 0; i < List_Nbr($3); i++){
-          double d; List_Read($3, i, &d);
+        for(int i = 0; i < List_Nbr($8); i++){
+          double d; List_Read($8, i, &d);
           edges.push_back((int)d);
         }
         Shape TheShape;
-        for(int i = 0; i < List_Nbr($6); i++){
-          List_Read($6, i, &TheShape);
+        for(int i = 0; i < List_Nbr($3); i++){
+          List_Read($3, i, &TheShape);
           int dim = TheShape.Type / 100 - 1;
           if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
         }
@@ -4285,7 +4285,7 @@ Extrude :
         yymsg(0, "Pipe only available with OpenCASCADE factory");
       }
       List_Delete($3);
-      List_Delete($6);
+      List_Delete($8);
     }
   // Deprecated extrude commands (for backward compatibility)
   | tExtrude tPoint '{' FExpr ',' VExpr '}' tEND
