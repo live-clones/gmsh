@@ -49,11 +49,11 @@ class OCC_Internals {
   // add bezier or bspline
   void _addSpline(int tag, std::vector<int> vertexTags, int mode);
 
-  // extrude or revolve
-  void _extrudeRevolve(int tag, bool revolve, std::vector<int> inTags[4],
-                       double x, double y, double z,
-                       double dx, double dy, double dz, double angle,
-                       std::vector<int> outTags[4]);
+  // apply extrusion-like operations
+  void _extrude(int tag, int mode, std::vector<int> inTags[4],
+                double x, double y, double z,
+                double dx, double dy, double dz, double angle,
+                std::vector<int> edgeTags, std::vector<int> outTags[4]);
 
  public:
   OCC_Internals();
@@ -128,6 +128,8 @@ class OCC_Internals {
   void revolve(int tag, std::vector<int> inTags[4],
                double x, double y, double z, double dx, double dy, double dz,
                double angle, std::vector<int> outTags[4]);
+  void addPipe(int tag, std::vector<int> inTags[4], std::vector<int> edgeTags,
+               std::vector<int> outTags[4]);
 
   // apply boolean operator
   void applyBooleanOperator(int tag, BooleanOperator op,
@@ -243,7 +245,8 @@ public:
   void revolve(int tag, std::vector<int> inTags[4],
                double x, double y, double z, double dx, double dy, double dz,
                double angle, std::vector<int> outTags[4]){};
-
+  void addPipe(int tag, std::vector<int> inTags[4], std::vector<int> edgeTags,
+               std::vector<int> outTags[4]){}
   void applyBooleanOperator(int tag, BooleanOperator op,
                             std::vector<int> shapeTags[4],
                             std::vector<int> toolTags[4],

@@ -242,6 +242,7 @@ Order			return tNurbsOrder;
 Periodic                return tPeriodic;
 Physical                return tPhysical;
 Pi                      return tPi;
+Pipe                    return tPipe;
 Plane                   return tPlane;
 Point                   return tPoint;
 Parametric		return tParametric;

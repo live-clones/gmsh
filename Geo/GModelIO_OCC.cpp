@@ -27,6 +27,7 @@
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepPrimAPI_MakeRevol.hxx>
 #include <BRepOffsetAPI_MakeFilling.hxx>
+#include <BRepOffsetAPI_MakePipe.hxx>
 #include <BRepOffsetAPI_ThruSections.hxx>
 #include <gce_MakeCirc.hxx>
 #include <gce_MakePln.hxx>
@@ -891,13 +892,6 @@ void OCC_Internals::addCone(int tag, double x1, double y1, double z1,
   bind(result, tag);
 }
 
-/*
-void OCC_Internals::addPipe(int tag, int dim, int inTag, std::vector<int> edgeTags)
-{
-
-}
-*/
-
 void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags)
 {
   if(tag > 0 && _tagSolid.IsBound(tag)){
@@ -934,10 +928,10 @@ void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags)
   bind(result, tag);
 }
 
-void OCC_Internals::_extrudeRevolve(int tag, bool revolve, std::vector<int> inTags[4],
-                                    double x, double y, double z,
-                                    double dx, double dy, double dz, double angle,
-                                    std::vector<int> outTags[4])
+void OCC_Internals::_extrude(int tag, int mode, std::vector<int> inTags[4],
+                             double x, double y, double z,
+                             double dx, double dy, double dz, double angle,
+                             std::vector<int> edgeTags, std::vector<int> outTags[4])
 {
   for(int dim = 0; dim < 3; dim++){
     if(tag > 0 && inTags[dim].size() && isBound(tag, dim + 1)){
@@ -965,7 +959,16 @@ void OCC_Internals::_extrudeRevolve(int tag, bool revolve, std::vector<int> inTa
   }
   TopoDS_Shape result;
   try{
-    if(revolve){
+    if(mode == 0){ // extrude
+      BRepPrimAPI_MakePrism p(c, gp_Vec(dx, dy, dz), Standard_False);
+      p.Build();
+      if(!p.IsDone()){
+        Msg::Error("Could not extrude");
+        return;
+      }
+      result = p.Shape();
+    }
+    else if(mode == 1){ // revolve
       gp_Ax1 axisOfRevolution(gp_Pnt(x, y, z), gp_Dir(dx, dy, dz));
       BRepPrimAPI_MakeRevol r(c, axisOfRevolution, angle, Standard_False);
       r.Build();
@@ -975,11 +978,22 @@ void OCC_Internals::_extrudeRevolve(int tag, bool revolve, std::vector<int> inTa
       }
       result = r.Shape();
     }
-    else{
-      BRepPrimAPI_MakePrism p(c, gp_Vec(dx, dy, dz), Standard_False);
+    else if(mode == 2){ // pipe
+      TopoDS_Wire wire;
+      BRepBuilderAPI_MakeWire w;
+      for (unsigned i = 0; i < edgeTags.size(); i++) {
+        if(!_tagEdge.IsBound(edgeTags[i])){
+          Msg::Error("Unknown OpenCASCADE edge with tag %d", edgeTags[i]);
+          return;
+        }
+        TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(edgeTags[i]));
+        w.Add(edge);
+      }
+      wire = w.Wire();
+      BRepOffsetAPI_MakePipe p(wire, c);
       p.Build();
       if(!p.IsDone()){
-        Msg::Error("Could not extrude");
+        Msg::Error("Could not create pipe");
         return;
       }
       result = p.Shape();
@@ -997,7 +1011,7 @@ void OCC_Internals::extrude(int tag, std::vector<int> inTags[4],
                             double dx, double dy, double dz,
                             std::vector<int> outTags[4])
 {
-  _extrudeRevolve(tag, false, inTags, 0, 0, 0, dx, dy, dz, 0, outTags);
+  _extrude(tag, 0, inTags, 0, 0, 0, dx, dy, dz, 0, std::vector<int>(), outTags);
 }
 
 void OCC_Internals::revolve(int tag, std::vector<int> inTags[4],
@@ -1005,7 +1019,13 @@ void OCC_Internals::revolve(int tag, std::vector<int> inTags[4],
                             double dx, double dy, double dz, double angle,
                             std::vector<int> outTags[4])
 {
-  _extrudeRevolve(tag, true, inTags, x, y, z, dx, dy, dz, angle, outTags);
+  _extrude(tag, 1, inTags, x, y, z, dx, dy, dz, angle, std::vector<int>(), outTags);
+}
+
+void OCC_Internals::addPipe(int tag, std::vector<int> inTags[4],
+                            std::vector<int> edgeTags, std::vector<int> outTags[4])
+{
+  _extrude(tag, 2, inTags, 0, 0, 0, 0, 0, 0, 0, edgeTags, outTags);
 }
 
 void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,

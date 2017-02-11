@@ -146,7 +146,7 @@ struct doubleXstring{
 %token tBlock tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
-%token tRelocateMesh tSetFactory tThruSections
+%token tRelocateMesh tSetFactory tThruSections tPipe
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
@@ -4253,6 +4253,39 @@ Extrude :
       ExtrudeShapes(BOUNDARY_LAYER, $3, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
 		    &extr, $$);
       List_Delete($3);
+    }
+  | tPipe '{' ListOfDouble '}' '{' ListOfShapes '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> edges;
+        std::vector<int> in[4], out[4];
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d; List_Read($3, i, &d);
+          edges.push_back((int)d);
+        }
+        Shape TheShape;
+        for(int i = 0; i < List_Nbr($6); i++){
+          List_Read($6, i, &TheShape);
+          int dim = TheShape.Type / 100 - 1;
+          if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
+        }
+        GModel::current()->getOCCInternals()->addPipe(-1, in, edges, out);
+        for(int dim = 0; dim < 4; dim++){
+          TheShape.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
+            (dim == 2) ? MSH_SURF_FROM_GMODEL :
+            (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
+          for(unsigned int i = 0; i < out[dim].size(); i++){
+            TheShape.Num = out[dim][i];
+            List_Add($$, &TheShape);
+          }
+        }
+      }
+      else{
+        yymsg(0, "Pipe only available with OpenCASCADE factory");
+      }
+      List_Delete($3);
+      List_Delete($6);
     }
   // Deprecated extrude commands (for backward compatibility)
   | tExtrude tPoint '{' FExpr ',' VExpr '}' tEND
