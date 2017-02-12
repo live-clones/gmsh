@@ -310,6 +310,7 @@ Tan                     return tTan;
 Tanh                    return tTanh;
 TestLevel               return tTestLevel;
 TextAttributes          return tTextAttributes;
+ThickSolid              return tThickSolid;
 ThruSections            return tThruSections;
 Today                   return tToday;
 Torus                   return tTorus;

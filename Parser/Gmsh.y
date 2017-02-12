@@ -151,7 +151,7 @@ struct doubleXstring{
 %token tUsing tNotUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
-%token tBooleanFragments
+%token tBooleanFragments tThickSolid
 %token tRecombine tSmoother tSplit tDelete tCoherence
 %token tIntersect tMeshAlgorithm tReverse
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
@@ -2477,6 +2477,29 @@ Shape :
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
+  | tThickSolid '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$3;
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(List_Nbr($6) >= 2){
+          double in; List_Read($6, 0, &in);
+          double offset; List_Read($6, 1, &offset);
+          std::vector<int> exclude;
+          for(int i = 2; i < List_Nbr($6); i++){
+            double d; List_Read($6, i, &d); exclude.push_back((int)d);
+          }
+          GModel::current()->getOCCInternals()->addThickSolid(num, (int)in, exclude,
+                                                              offset);
+        }
+        else{
+          yymsg(0, "ThickSolid requires at least 2 arguments");
+        }
+      }
+      else{
+        yymsg(0, "ThickSolid only available with OpenCASCADE factory");
+      }
+      List_Delete($6);
+    }
   | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
@@ -4333,11 +4356,6 @@ Extrude :
       }
       List_Delete($3);
       List_Delete($8);
-    }
-  | tExtrude '{' FExpr '}' '{' ListOfShapes '}'
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      List_Delete($6);
     }
   | tExtrude '{' FExpr '}' '{' ListOfShapes '}' tNotUsing tSurface '{' ListOfDouble '}'
     {

@@ -35,6 +35,7 @@
 #include <BRepOffsetAPI_MakeFilling.hxx>
 #include <BRepOffsetAPI_MakePipe.hxx>
 #include <BRepOffsetAPI_ThruSections.hxx>
+#include <BRepOffsetAPI_MakeThickSolid.hxx>
 #include <gce_MakeCirc.hxx>
 #include <gce_MakePln.hxx>
 #include <ElCLib.hxx>
@@ -443,7 +444,7 @@ void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
 void OCC_Internals::addRectangle(int tag, double x1, double y1, double z1,
                                  double x2, double y2, double z2)
 {
-  if(_tagFace.IsBound(tag)){
+  if(tag > 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
     return;
   }
@@ -469,13 +470,14 @@ void OCC_Internals::addRectangle(int tag, double x1, double y1, double z1,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return;
   }
+  if(tag <= 0) tag = getMaxTag(2) + 1;
   bind(result, tag);
 }
 
 void OCC_Internals::addDisk(int tag, double xc, double yc, double zc,
                             double rx, double ry)
 {
-  if(_tagFace.IsBound(tag)){
+  if(tag > 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
     return;
   }
@@ -495,6 +497,7 @@ void OCC_Internals::addDisk(int tag, double xc, double yc, double zc,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return;
   }
+  if(tag <= 0) tag = getMaxTag(2) + 1;
   bind(result, tag);
 }
 
@@ -1031,6 +1034,47 @@ void OCC_Internals::addPipe(int tag, std::vector<int> inTags[4],
                             std::vector<int> edgeTags, std::vector<int> outTags[4])
 {
   _extrude(tag, 2, inTags, 0, 0, 0, 0, 0, 0, 0, edgeTags, outTags);
+}
+
+void OCC_Internals::addThickSolid(int tag, int solidTag,
+                                  std::vector<int> excludeFaceTags, double offset)
+{
+  if(tag > 0 && isBound(3, tag)){
+    Msg::Error("OpenCASCADE region with tag %d already exists", tag);
+    return;
+  }
+
+  if(!isBound(3, solidTag)){
+    Msg::Error("Unknown OpenCASCADE region with tag %d", solidTag);
+    return;
+  }
+  TopoDS_Shape result;
+  try{
+    TopoDS_Shape shape = find(3, solidTag);
+    TopTools_ListOfShape exclude;
+    for(unsigned int i = 0; i < excludeFaceTags.size(); i++){
+      if(!_tagFace.IsBound(excludeFaceTags[i])){
+        Msg::Error("Unknown OpenCASCADE face with tag %d", excludeFaceTags[i]);
+        return;
+      }
+      exclude.Append(_tagFace.Find(excludeFaceTags[i]));
+    }
+    BRepOffsetAPI_MakeThickSolid ts(shape, exclude, offset,
+                                    CTX::instance()->geom.tolerance);
+    ts.Build();
+    if(!ts.IsDone()){
+      Msg::Error("Could not build thick solid");
+      return;
+    }
+    result = ts.Shape();
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+
+  std::vector<int> out[4];
+  bind(result, true, tag, out);
 }
 
 void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,

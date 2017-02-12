@@ -123,6 +123,8 @@ class OCC_Internals {
   void addThruSections(int tag, std::vector<int> wireTags,
                        std::vector<int> outTags[4],
                        bool makeSolid, bool makeRuled);
+  void addThickSolid(int tag, int solidTag, std::vector<int> excludeFaceTags,
+                     double offset);
 
   // extrude and revolve
   void extrude(int tag, std::vector<int> inTags[4],
@@ -245,6 +247,8 @@ public:
   void addThruSections(int tag, std::vector<int> wireTags,
                        std::vector<int> outTags[4],
                        bool makeSolid, bool makeRuled){}
+  void addThickSolid(int tag, int solidTag, std::vector<int> excludeFaceTags,
+                     double offset){}
   void extrude(int tag, std::vector<int> inTags[4],
                double dx, double dy, double dz,
                std::vector<int> outTags[4]){}
