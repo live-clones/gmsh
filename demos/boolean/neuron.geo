@@ -24,6 +24,7 @@ Macro dendrite
   EndFor
   numr += 1;
   ThruSections(numr) = {numw-4:numw};
+  //Ruled ThruSections(numr) = {numw-4:numw};
   reg() += numr;
 Return
 

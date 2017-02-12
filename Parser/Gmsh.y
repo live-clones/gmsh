@@ -148,7 +148,7 @@ struct doubleXstring{
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tSetFactory tThruSections tWedge
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
-%token tUsing tPlugin tDegenerated tRecursive
+%token tUsing tNotUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments
@@ -2657,17 +2657,37 @@ Shape :
     {
       int num = (int)$3;
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> wires;
+        std::vector<int> wires, out[4];
         for(int i = 0; i < List_Nbr($6); i++){
           double d; List_Read($6, i, &d);
           wires.push_back((int)std::abs(d));
         }
-        GModel::current()->getOCCInternals()->addThruSections(num, wires);
+        GModel::current()->getOCCInternals()->addThruSections(num, wires,
+                                                              out, true, false);
       }
       else{
         yymsg(0, "ThruSections only available with OpenCASCADE factory");
       }
       List_Delete($6);
+      $$.Type = MSH_VOLUME;
+      $$.Num = num;
+    }
+  | tRuled tThruSections '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$4;
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> wires, out[4];
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d; List_Read($7, i, &d);
+          wires.push_back((int)std::abs(d));
+        }
+        GModel::current()->getOCCInternals()->addThruSections(num, wires,
+                                                              out, true, true);
+      }
+      else{
+        yymsg(0, "ThruSections only available with OpenCASCADE factory");
+      }
+      List_Delete($7);
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
@@ -4313,6 +4333,63 @@ Extrude :
       }
       List_Delete($3);
       List_Delete($8);
+    }
+  | tExtrude '{' FExpr '}' '{' ListOfShapes '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      List_Delete($6);
+    }
+  | tExtrude '{' FExpr '}' '{' ListOfShapes '}' tNotUsing tSurface '{' ListOfDouble '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      List_Delete($6);
+      List_Delete($11);
+    }
+  | tThruSections ListOfDouble
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> wires, out[4];
+        for(int i = 0; i < List_Nbr($2); i++){
+          double d; List_Read($2, i, &d);
+          wires.push_back((int)std::abs(d));
+        }
+        GModel::current()->getOCCInternals()->addThruSections(-1, wires, out,
+                                                              false, false);
+        for(unsigned int i = 0; i < out[2].size(); i++){
+          Shape s;
+          s.Type = MSH_SURF_FROM_GMODEL;
+          s.Num = out[2][i];
+          List_Add($$, &s);
+        }
+      }
+      else{
+        yymsg(0, "ThruSections only available with OpenCASCADE factory");
+      }
+      List_Delete($2);
+    }
+  | tRuled tThruSections ListOfDouble
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> wires, out[4];
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d; List_Read($3, i, &d);
+          wires.push_back((int)std::abs(d));
+        }
+        GModel::current()->getOCCInternals()->addThruSections(-1, wires, out,
+                                                              false, true);
+        for(unsigned int i = 0; i < out[2].size(); i++){
+          Shape s;
+          s.Type = MSH_SURF_REGL;
+          s.Num = out[2][i];
+          List_Add($$, &s);
+        }
+      }
+      else{
+        yymsg(0, "ThruSections only available with OpenCASCADE factory");
+      }
+      List_Delete($3);
     }
   // Deprecated extrude commands (for backward compatibility)
   | tExtrude tPoint '{' FExpr ',' VExpr '}' tEND

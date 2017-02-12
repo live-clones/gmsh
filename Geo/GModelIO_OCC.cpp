@@ -616,47 +616,6 @@ void OCC_Internals::addFaceFilling(int tag, std::vector<int> wireTags,
   bind(result, tag);
 }
 
-void OCC_Internals::addRuledFaces(int tag, std::vector<int> wireTags,
-                                  std::vector<int> outTags)
-{
-  // the wires can be open, so we should probably just give edges, or add the
-  // "Wire" keywork in the parser
-
-  if(tag > 0 && _tagFace.IsBound(tag)){
-    Msg::Error("OpenCASCADE face with tag %d already exists", tag);
-    return;
-  }
-
-  TopoDS_Shape result;
-  try{
-    Standard_Boolean isSolid = Standard_False;
-    Standard_Boolean isRuled = Standard_True;
-    BRepOffsetAPI_ThruSections ts(isSolid, isRuled);
-    for (unsigned i = 0; i < wireTags.size(); i++) {
-      if(!_tagWire.IsBound(wireTags[i])){
-        Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTags[i]);
-        return;
-      }
-      TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTags[i]));
-      ts.AddWire(wire);
-    }
-    ts.CheckCompatibility(Standard_False);
-    ts.Build();
-    if(!ts.IsDone()){
-      Msg::Error("Could not create ThruSection");
-      return;
-    }
-    result = ts.Shape();
-  }
-  catch(Standard_Failure &err){
-    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
-    return;
-  }
-  std::vector<int> out[4];
-  bind(result, true, tag, out);
-  outTags = out[2];
-}
-
 void OCC_Internals::addSurfaceLoop(int tag, std::vector<int> faceTags)
 {
   const bool autoFix = true;
@@ -928,24 +887,34 @@ void OCC_Internals::addWedge(int tag, double x, double y, double z, double dx, d
   bind(result, tag);
 }
 
-void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags)
+void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags,
+                                    std::vector<int> outTags[4],
+                                    bool makeSolid, bool makeRuled)
 {
-  if(tag > 0 && _tagSolid.IsBound(tag)){
-    Msg::Error("OpenCASCADE region with tag %d already exists", tag);
+  int dim = makeSolid ? 3 : 2;
+  if(tag > 0 && isBound(dim, tag)){
+    Msg::Error("OpenCASCADE entity of dimension %d with tag %d already exists",
+               dim, tag);
+    return;
+  }
+  if(wireTags.size() < 2){
+    Msg::Error("ThruSections require at least 2 wires");
     return;
   }
 
-  TopoDS_Solid result;
+  TopoDS_Shape result;
   try{
-    Standard_Boolean isSolid = Standard_True;
-    Standard_Boolean isRuled = Standard_False;
-    BRepOffsetAPI_ThruSections ts(isSolid, isRuled);
+    BRepOffsetAPI_ThruSections ts(makeSolid, makeRuled);
     for (unsigned i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])){
         Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTags[i]);
         return;
       }
       TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTags[i]));
+      if(makeSolid && !wire.Closed()){
+        Msg::Error("Making solid requires closed wires");
+        return;
+      }
       ts.AddWire(wire);
     }
     ts.CheckCompatibility(Standard_False);
@@ -954,14 +923,14 @@ void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags)
       Msg::Error("Could not create ThruSection");
       return;
     }
-    result = TopoDS::Solid(ts.Shape());
+    result = ts.Shape();
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return;
   }
-  if(tag <= 0) tag = getMaxTag(3) + 1;
-  bind(result, tag);
+
+  bind(result, true, tag, outTags);
 }
 
 void OCC_Internals::_extrude(int tag, int mode, std::vector<int> inTags[4],
@@ -1283,37 +1252,73 @@ void OCC_Internals::getBoundary(std::vector<int> inTags[4],
                                 std::vector<int> outTags[4],
                                 bool combined)
 {
-  for(unsigned int i = 0; i < inTags[3].size(); i++){
-    if(!_tagSolid.IsBound(inTags[3][i])){
-      Msg::Error("Unknown OpenCASCADE region with tag %d", inTags[3][i]);
-      return;
-    }
-    TopoDS_Solid solid = TopoDS::Solid(_tagSolid.Find(inTags[3][i]));
-    TopExp_Explorer exp0, exp1;
-    for(exp0.Init(solid, TopAbs_SHELL); exp0.More(); exp0.Next()){
-      TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
-      for(exp1.Init(shell, TopAbs_FACE); exp1.More(); exp1.Next()){
-        TopoDS_Face face = TopoDS::Face(exp1.Current());
-        int tag;
-        if(_faceTag.IsBound(face)){
-          tag = _faceTag.Find(face);
+  for(int dim = 0; dim < 4; dim++){
+    for(unsigned int i = 0; i < inTags[dim].size(); i++){
+      if(!isBound(dim, inTags[dim][i])){
+        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+                   dim, inTags[dim][i]);
+        return;
+      }
+      TopoDS_Shape shape = find(dim, inTags[dim][i]);
+      TopExp_Explorer exp0, exp1;
+      switch(dim){
+      case 3:
+        for(exp0.Init(shape, TopAbs_SHELL); exp0.More(); exp0.Next()){
+          TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
+          for(exp1.Init(shell, TopAbs_FACE); exp1.More(); exp1.Next()){
+            TopoDS_Face face = TopoDS::Face(exp1.Current());
+            int tag;
+            if(_faceTag.IsBound(face)){
+              tag = _faceTag.Find(face);
+            }
+            else{
+              // bind with new tag
+              tag = getMaxTag(2) + 1;
+              bind(face, tag);
+            }
+            outTags[2].push_back(tag);
+          }
         }
-        else{
-          // bind with new tag
-          tag = getMaxTag(2) + 1;
-          bind(face, tag);
+        break;
+      case 2:
+        for(exp0.Init(shape, TopAbs_WIRE); exp0.More(); exp0.Next()){
+          TopoDS_Wire wire = TopoDS::Wire(exp0.Current());
+          for(exp1.Init(wire, TopAbs_EDGE); exp1.More(); exp1.Next()){
+            TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
+            int tag;
+            if(_edgeTag.IsBound(edge)){
+              tag = _edgeTag.Find(edge);
+            }
+            else{
+              // bind with new tag
+              tag = getMaxTag(1) + 1;
+              bind(edge, tag);
+            }
+            outTags[1].push_back(tag);
+          }
         }
-        outTags[2].push_back(tag);
+        break;
+      case 1:
+        for(exp0.Init(shape, TopAbs_VERTEX); exp0.More(); exp0.Next()){
+          TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
+          int tag;
+          if(_vertexTag.IsBound(vertex)){
+            tag = _vertexTag.Find(vertex);
+          }
+          else{
+            // bind with new tag
+            tag = getMaxTag(0) + 1;
+            bind(vertex, tag);
+          }
+          outTags[0].push_back(tag);
+        }
+        break;
       }
     }
   }
 
   if(combined){
     Msg::Error("OCC TODO CombinedBoundary");
-  }
-
-  if(inTags[2].size() || inTags[1].size()){
-    Msg::Error("OCC TODO boundary of faces and edges");
   }
 }
 

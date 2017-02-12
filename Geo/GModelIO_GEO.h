@@ -13,6 +13,9 @@ class GEO_Internals{
   void alloc_all();
   void free_all();
  public:
+  // FIXME: all this must (will) become private ; and all the direct calls in
+  // Gmsh.y should (will) go through an integer-based API similar to the one in
+  // OCC_Internals
   Tree_T *Points;
   Tree_T *Curves;
   Tree_T *Surfaces;

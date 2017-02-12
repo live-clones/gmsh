@@ -106,7 +106,6 @@ class OCC_Internals {
   void addPlanarFace(int tag, std::vector<int> wireTags);
   void addFaceFilling(int tag, std::vector<int> wireTags,
                       std::vector<std::vector<double> > points);
-  void addRuledFaces(int tag, std::vector<int> wireTags, std::vector<int> outTags);
   void addSurfaceLoop(int tag, std::vector<int> faceTags);
   void addVolume(int tag, std::vector<int> shellTags);
   void addSphere(int tag, double xc, double yc, double zc, double radius,
@@ -121,7 +120,9 @@ class OCC_Internals {
                 double dz, double ltx);
   void addTorus(int tag, double x, double y, double z, double r1, double r2,
                 double angle);
-  void addThruSections(int tag, std::vector<int> wireTags);
+  void addThruSections(int tag, std::vector<int> wireTags,
+                       std::vector<int> outTags[4],
+                       bool makeSolid, bool makeRuled);
 
   // extrude and revolve
   void extrude(int tag, std::vector<int> inTags[4],
@@ -227,7 +228,6 @@ public:
   void addPlanarFace(int tag, std::vector<int> wireTags){}
   void addFaceFilling(int tag, std::vector<int> wireTags,
                       std::vector<std::vector<double> > points){}
-  void addRuledFaces(int tag, std::vector<int> wireTags, std::vector<int> outTags){}
   void addSurfaceLoop(int tag, std::vector<int> faceTags){}
   void addVolume(int tag, std::vector<int> shellTags){}
   void addSphere(int tag, double xc, double yc, double zc, double radius,
@@ -242,7 +242,9 @@ public:
                 double dz, double ltx){}
   void addTorus(int tag, double x, double y, double z, double r1, double r2,
                 double angle){}
-  void addThruSections(int tag, std::vector<int> wireTags){}
+  void addThruSections(int tag, std::vector<int> wireTags,
+                       std::vector<int> outTags[4],
+                       bool makeSolid, bool makeRuled){}
   void extrude(int tag, std::vector<int> inTags[4],
                double dx, double dy, double dz,
                std::vector<int> outTags[4]){}
