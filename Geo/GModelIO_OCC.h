@@ -46,6 +46,9 @@ class OCC_Internals {
   // apply a geometrical transformation
   void _transform(std::vector<int> inTags[4], BRepBuilderAPI_Transform &tfo);
 
+  // add circle or ellipse arc
+  void _addArc(int tag, int startTag, int centerTag, int endTag, int mode);
+
   // add bezier or bspline
   void _addSpline(int tag, std::vector<int> vertexTags, int mode);
 
@@ -97,6 +100,7 @@ class OCC_Internals {
   void addVertex(int tag, double x, double y, double z);
   void addLine(int tag, int startTag, int endTag);
   void addCircleArc(int tag, int startTag, int centerTag, int endTag);
+  void addEllipseArc(int tag, int startTag, int centerTag, int endTag);
   void addBezier(int tag, std::vector<int> vertexTags);
   void addBSpline(int tag, std::vector<int> vertexTags);
   void addLineLoop(int tag, std::vector<int> edgeTags);
@@ -221,6 +225,7 @@ public:
   void addVertex(int tag, double x, double y, double z){}
   void addLine(int tag, int startTag, int endTag){}
   void addCircleArc(int tag, int startTag, int centerTag, int endTag){}
+  void addEllipseArc(int tag, int startTag, int centerTag, int endTag){}
   void addBezier(int tag, std::vector<int> vertexTags){};
   void addBSpline(int tag, std::vector<int> vertexTags){};
   void addLineLoop(int tag, std::vector<int> edgeTags){}

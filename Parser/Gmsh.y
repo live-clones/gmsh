@@ -1934,24 +1934,38 @@ Shape :
 	yymsg(0, "Curve %d already exists", num);
       }
       else{
-	List_T *temp = ListOfDouble2ListOfInt($6);
-	Curve *c = Create_Curve(num, MSH_SEGM_ELLI, 2, temp, NULL,
-				-1, -1, 0., 1.);
-        if($7[0] || $7[1] || $7[2]){
-          c->Circle.n[0] = $7[0];
-          c->Circle.n[1] = $7[1];
-          c->Circle.n[2] = $7[2];
-          End_Curve(c);
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          if(List_Nbr($6) == 3 || List_Nbr($6) == 4){
+            double start, center, end;
+            List_Read($6, 0, &start); List_Read($6, 1, &center);
+            if(List_Nbr($6) == 3)
+              List_Read($6, 2, &end);
+            else
+              List_Read($6, 3, &end);
+            GModel::current()->getOCCInternals()->addEllipseArc
+              (num, (int)start, (int)center, (int)end);
+          }
         }
-	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-	Curve *rc = CreateReversedCurve(c);
-        if($7[0] || $7[1] || $7[2]){
-          rc->Circle.n[0] = $7[0];
-          rc->Circle.n[1] = $7[1];
-          rc->Circle.n[2] = $7[2];
-          End_Curve(rc);
+        else{
+          List_T *temp = ListOfDouble2ListOfInt($6);
+          Curve *c = Create_Curve(num, MSH_SEGM_ELLI, 2, temp, NULL,
+                                  -1, -1, 0., 1.);
+          if($7[0] || $7[1] || $7[2]){
+            c->Circle.n[0] = $7[0];
+            c->Circle.n[1] = $7[1];
+            c->Circle.n[2] = $7[2];
+            End_Curve(c);
+          }
+          Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
+          Curve *rc = CreateReversedCurve(c);
+          if($7[0] || $7[1] || $7[2]){
+            rc->Circle.n[0] = $7[0];
+            rc->Circle.n[1] = $7[1];
+            rc->Circle.n[2] = $7[2];
+            End_Curve(rc);
+          }
+          List_Delete(temp);
         }
-	List_Delete(temp);
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_ELLI;

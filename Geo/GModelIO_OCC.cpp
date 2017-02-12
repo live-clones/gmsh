@@ -37,9 +37,11 @@
 #include <BRepOffsetAPI_ThruSections.hxx>
 #include <BRepOffsetAPI_MakeThickSolid.hxx>
 #include <gce_MakeCirc.hxx>
+#include <gce_MakeElips.hxx>
 #include <gce_MakePln.hxx>
 #include <ElCLib.hxx>
 #include <Geom_Circle.hxx>
+#include <Geom_Ellipse.hxx>
 #include <Geom_TrimmedCurve.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_BSplineCurve.hxx>
@@ -301,7 +303,8 @@ void OCC_Internals::addLine(int tag, int startTag, int endTag)
   bind(result, tag);
 }
 
-void OCC_Internals::addCircleArc(int tag, int startTag, int centerTag, int endTag)
+void OCC_Internals::_addArc(int tag, int startTag, int centerTag, int endTag,
+                            int mode)
 {
   if(tag > 0 && _tagEdge.IsBound(tag)){
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
@@ -328,17 +331,36 @@ void OCC_Internals::addCircleArc(int tag, int startTag, int centerTag, int endTa
     gp_Pnt aP1 = BRep_Tool::Pnt(start);
     gp_Pnt aP2 = BRep_Tool::Pnt(center);
     gp_Pnt aP3 = BRep_Tool::Pnt(end);
-    Standard_Real Radius = aP1.Distance(aP2);
-    gce_MakeCirc MC(aP2, gce_MakePln(aP1, aP2, aP3).Value(), Radius);
-    const gp_Circ &Circ = MC.Value();
-    Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
-    Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
-    Handle(Geom_Circle) C = new Geom_Circle(Circ);
-    Handle(Geom_TrimmedCurve) arc = new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
+    Handle(Geom_TrimmedCurve) arc;
+    if(mode == 0){ // circle
+      Standard_Real Radius = aP1.Distance(aP2);
+      gce_MakeCirc MC(aP2, gce_MakePln(aP1, aP2, aP3).Value(), Radius);
+      if(!MC.IsDone()){
+        Msg::Error("Could not build circle");
+        return;
+      }
+      const gp_Circ &Circ = MC.Value();
+      Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
+      Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
+      Handle(Geom_Circle) C = new Geom_Circle(Circ);
+      arc = new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
+    }
+    else{
+      gce_MakeElips ME(aP1, aP3, aP2);
+      if(!ME.IsDone()){
+        Msg::Error("Could not build ellipse");
+        return;
+      }
+      const gp_Elips &Elips = ME.Value();
+      Standard_Real Alpha1 = ElCLib::Parameter(Elips, aP1);
+      Standard_Real Alpha2 = ElCLib::Parameter(Elips, aP3);
+      Handle(Geom_Ellipse) E = new Geom_Ellipse(Elips);
+      arc = new Geom_TrimmedCurve(E, Alpha1, Alpha2, true);
+    }
     BRepBuilderAPI_MakeEdge e(arc, start, end);
     e.Build();
     if(!e.IsDone()){
-      Msg::Error("Could not create circle arc");
+      Msg::Error("Could not create %s arc", mode ? "ellipse" : "circle");
       return;
     }
     result = e.Edge();
@@ -349,6 +371,16 @@ void OCC_Internals::addCircleArc(int tag, int startTag, int centerTag, int endTa
   }
   if(tag <= 0) tag = getMaxTag(1) + 1;
   bind(result, tag);
+}
+
+void OCC_Internals::addCircleArc(int tag, int startTag, int centerTag, int endTag)
+{
+  _addArc(tag, startTag, centerTag, endTag, 0);
+}
+
+void OCC_Internals::addEllipseArc(int tag, int startTag, int centerTag, int endTag)
+{
+  _addArc(tag, startTag, centerTag, endTag, 1);
 }
 
 void OCC_Internals::_addSpline(int tag, std::vector<int> vertexTags, int mode)
