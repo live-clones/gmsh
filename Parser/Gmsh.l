@@ -133,6 +133,7 @@ Call                    return tCall;
 Catenary                return tCatenary;
 CatmullRom		return tSpline;
 Ceil                    return tCeil;
+Chamfer                 return tChamfer;
 Characteristic          return tCharacteristic;
 Circle                  return tCircle;
 Coherence               return tCoherence;
@@ -182,6 +183,7 @@ Extrude                 return tExtrude;
 Fabs                    return tFabs;
 Field                   return tField;
 FileExists              return tFileExists;
+Fillet                  return tFillet;
 Find                    return tFind;
 FixRelativePath         return tFixRelativePath;
 Floor                   return tFloor;
@@ -234,7 +236,6 @@ Modulo                  return tModulo;
 N2S                     return tNameToString;
 NameToString            return tNameToString;
 NewModel                return tNewModel;
-NotUsing                return tNotUsing;
 Nurbs			return tNurbs;
 
 OnelabAction            return tOnelabAction;
@@ -320,6 +321,7 @@ Transfinite             return tTransfinite;
 Translate               return tTranslate;
 
 UndefineConstant        return tUndefineConstant;
+Unique                  return tUnique;
 UpperCase               return tUpperCase;
 Using                   return tUsing;
 

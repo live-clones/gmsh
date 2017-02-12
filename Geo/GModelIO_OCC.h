@@ -140,6 +140,10 @@ class OCC_Internals {
   void addPipe(int tag, std::vector<int> inTags[4], std::vector<int> edgeTags,
                std::vector<int> outTags[4]);
 
+  // fillet
+  void fillet(std::vector<int> regionTags, std::vector<int> edgeTags,
+              double radius, std::vector<int> outTags[4]);
+
   // apply boolean operator
   void applyBooleanOperator(int tag, BooleanOperator op,
                             std::vector<int> shapeTags[4],
@@ -262,6 +266,8 @@ public:
                double angle, std::vector<int> outTags[4]){};
   void addPipe(int tag, std::vector<int> inTags[4], std::vector<int> edgeTags,
                std::vector<int> outTags[4]){}
+  void fillet(std::vector<int> regionTags, std::vector<int> edgeTags,
+              double radius, std::vector<int> outTags[4]){}
   void applyBooleanOperator(int tag, BooleanOperator op,
                             std::vector<int> shapeTags[4],
                             std::vector<int> toolTags[4],

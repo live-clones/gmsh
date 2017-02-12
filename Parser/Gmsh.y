@@ -146,9 +146,9 @@ struct doubleXstring{
 %token tBlock tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
-%token tRelocateMesh tSetFactory tThruSections tWedge
+%token tRelocateMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
-%token tUsing tNotUsing tPlugin tDegenerated tRecursive
+%token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
@@ -161,7 +161,7 @@ struct doubleXstring{
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tElseIf tElse tEndIf tExit tAbort
 %token tField tReturn tCall tSlide tMacro tShow tHide tGetValue tGetStringValue tGetEnv
-%token tGetString tGetNumber
+%token tGetString tGetNumber tUnique
 %token tHomology tCohomology tBetti tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName tSetPartition
@@ -4371,12 +4371,6 @@ Extrude :
       List_Delete($3);
       List_Delete($8);
     }
-  | tExtrude '{' FExpr '}' '{' ListOfShapes '}' tNotUsing tSurface '{' ListOfDouble '}'
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      List_Delete($6);
-      List_Delete($11);
-    }
   | tThruSections ListOfDouble
     {
       $$ = List_Create(2, 1, sizeof(Shape));
@@ -4422,6 +4416,36 @@ Extrude :
         yymsg(0, "ThruSections only available with OpenCASCADE factory");
       }
       List_Delete($3);
+    }
+  | tFillet '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}' '{' FExpr '}'
+    {
+      $$ = List_Create(2, 1, sizeof(Shape));
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        double radius = $9;
+        std::vector<int> regions, edges, out[4];
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d; List_Read($3, i, &d); regions.push_back((int)d);
+        }
+        for(int i = 0; i < List_Nbr($6); i++){
+          double d; List_Read($6, i, &d); edges.push_back((int)d);
+        }
+        GModel::current()->getOCCInternals()->fillet(regions, edges, radius, out);
+        Shape TheShape;
+        for(int dim = 0; dim < 4; dim++){
+          TheShape.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
+            (dim == 2) ? MSH_SURF_FROM_GMODEL :
+            (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
+          for(unsigned int i = 0; i < out[dim].size(); i++){
+            TheShape.Num = out[dim][i];
+            List_Add($$, &TheShape);
+          }
+        }
+      }
+      else{
+        yymsg(0, "Fillet only available with OpenCASCADE factory");
+      }
+      List_Delete($3);
+      List_Delete($6);
     }
   // Deprecated extrude commands (for backward compatibility)
   | tExtrude tPoint '{' FExpr ',' VExpr '}' tEND
@@ -6792,6 +6816,22 @@ FExpr_Multi :
         Msg::Warning("Catenary did not converge, using linear interpolation");
       $$ = List_Create(N,10,sizeof(double));
       for(int i = 0; i < N; i++) List_Add($$, &y[i]);
+    }
+  | tUnique LP FExpr_Multi RP
+    {
+      std::vector<double> tmp;
+      for(int i = 0; i < List_Nbr($3); i++){
+        double d; List_Read($3, i, &d);
+        tmp.push_back(d);
+      }
+      std::sort(tmp.begin(), tmp.end());
+      std::vector<double>::iterator last = std::unique(tmp.begin(), tmp.end());
+      tmp.erase(last, tmp.end());
+      $$ = $3;
+      List_Reset($$);
+      for(unsigned int i = 0; i < tmp.size(); i++){
+        List_Add($$, &tmp[i]);
+      }
     }
 ;
 

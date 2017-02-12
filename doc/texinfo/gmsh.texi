@@ -1088,6 +1088,7 @@ List of expressions are also widely used, and are defined as:
   List [ @var{string} ] |
   List [ @var{expression-list-item} ] |
   List [ @{ @var{expression-list} @} ] |
+  Unique [ @var{expression-list-item} ] |
   ListFromFile [ @var{expression-char} ] |
   LinSpace[ @var{expression}, @var{expression}, @var{expression} ] |
   LogSpace[ @var{expression}, @var{expression}, @var{expression} ] |
@@ -1109,7 +1110,8 @@ also permits to create a list containing the range of numbers comprised
 between two @w{@var{expression}s}, but with a positive or negative
 incrementation step equal to the third @var{expression}. The fourth,
 fifth and sixth cases permit to reference an expression list
-(parentheses can also be used instead of brackets). @code{ListFromFile}
+(parentheses can also be used instead of brackets).  @code{Unique} sorts
+the entries in the list and removes all duplicates.  @code{ListFromFile}
 reads a list of numbers from a file. @code{LinSpace} and @code{LogSpace}
 construct lists using linear or logarithmic spacing. The next two cases
 permit to reference an expression sublist (whose elements are those
