@@ -8,6 +8,6 @@ a() = ShapeFromFile("component8.step");
 f() = Boundary{ Volume{a()}; };
 e() = Unique( Boundary{ Surface{f()}; } );
 
-Fillet{a()}{e()}{0.5}
+Fillet{a()}{e()}{1.5}
 
 Delete{ Volume{a()}; Surface{f()}; Line{e()}; }

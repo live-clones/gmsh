@@ -383,6 +383,80 @@ void OCC_Internals::addEllipseArc(int tag, int startTag, int centerTag, int endT
   _addArc(tag, startTag, centerTag, endTag, 1);
 }
 
+void OCC_Internals::addCircle(int tag, double x, double y, double z, double r,
+                              double angle1, double angle2)
+{
+  if(tag > 0 && _tagEdge.IsBound(tag)){
+    Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
+    return;
+  }
+
+  TopoDS_Edge result;
+  try{
+    gp_Dir N_dir(0., 0., 1.);
+    gp_Dir x_dir(1., 0., 0.);
+    gp_Pnt center(x, y, z);
+    gp_Ax2 axis(center, N_dir, x_dir);
+    gp_Circ circ(axis, r);
+    if(angle1 == 0. && angle2 == 2 * M_PI){
+      result = BRepBuilderAPI_MakeEdge(circ);
+    }
+    else{
+      Handle(Geom_Circle) C = new Geom_Circle(circ);
+      Handle(Geom_TrimmedCurve) arc = new Geom_TrimmedCurve(C, angle1, angle2, false);
+      BRepBuilderAPI_MakeEdge e(arc);
+      if(!e.IsDone()){
+        Msg::Error("Could not create circle arc");
+        return;
+      }
+      result = e.Edge();
+    }
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+  if(tag <= 0) tag = getMaxTag(1) + 1;
+  bind(result, tag);
+}
+
+void OCC_Internals::addEllipse(int tag, double x, double y, double z, double r1,
+                               double r2, double angle1, double angle2)
+{
+  if(tag > 0 && _tagEdge.IsBound(tag)){
+    Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
+    return;
+  }
+
+  TopoDS_Edge result;
+  try{
+    gp_Dir N_dir(0., 0., 1.);
+    gp_Dir x_dir(1., 0., 0.);
+    gp_Pnt center(x, y, z);
+    gp_Ax2 axis(center, N_dir, x_dir);
+    gp_Elips elips(axis, r1, r2);
+    if(angle1 == 0 && angle2 == 2 * M_PI){
+      result = BRepBuilderAPI_MakeEdge(elips);
+    }
+    else{
+      Handle(Geom_Ellipse) E = new Geom_Ellipse(elips);
+      Handle(Geom_TrimmedCurve) arc = new Geom_TrimmedCurve(E, angle1, angle2, true);
+      BRepBuilderAPI_MakeEdge e(arc);
+      if(!e.IsDone()){
+        Msg::Error("Could not create ellipse arc");
+        return;
+      }
+      result = e.Edge();
+    }
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return;
+  }
+  if(tag <= 0) tag = getMaxTag(1) + 1;
+  bind(result, tag);
+}
+
 void OCC_Internals::_addSpline(int tag, std::vector<int> vertexTags, int mode)
 {
   if(tag > 0 && _tagEdge.IsBound(tag)){

@@ -1895,11 +1895,28 @@ Shape :
       }
       else{
         if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          if(List_Nbr($6) == 3){
+          if(List_Nbr($6) >= 3 && List_Nbr($6) <= 6){
             double d[3];
             List_Read($6, 0, &d[0]); List_Read($6, 1, &d[1]); List_Read($6, 2, &d[2]);
-            GModel::current()->getOCCInternals()->addCircleArc
-              (num, (int)d[0], (int)d[1], (int)d[2]);
+            if(List_Nbr($6) == 3){
+              GModel::current()->getOCCInternals()->addCircleArc
+                (num, (int)d[0], (int)d[1], (int)d[2]);
+            }
+            else{
+              double r; List_Read($6, 3, &r);
+              double a1 = 0., a2 = 2.*M_PI;
+              if(List_Nbr($6) == 5){
+                List_Read($6, 4, &a2);
+              }
+              else if(List_Nbr($6) == 6){
+                List_Read($6, 4, &a1); List_Read($6, 5, &a2);
+              }
+              GModel::current()->getOCCInternals()->addCircle(num, d[0], d[1], d[2],
+                                                              r, a1, a2);
+            }
+          }
+          else{
+            yymsg(0, "Circle definition requires 3 to 5 parameters");
           }
         }
         else{
@@ -1935,15 +1952,36 @@ Shape :
       }
       else{
         if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          if(List_Nbr($6) == 3 || List_Nbr($6) == 4){
-            double start, center, end;
-            List_Read($6, 0, &start); List_Read($6, 1, &center);
-            if(List_Nbr($6) == 3)
-              List_Read($6, 2, &end);
-            else
-              List_Read($6, 3, &end);
-            GModel::current()->getOCCInternals()->addEllipseArc
-              (num, (int)start, (int)center, (int)end);
+          if(List_Nbr($6) >= 3 || List_Nbr($6) <= 7){
+            if(List_Nbr($6) == 3 || List_Nbr($6) == 4){
+              double start, center, end;
+              List_Read($6, 0, &start); List_Read($6, 1, &center);
+              if(List_Nbr($6) == 3)
+                List_Read($6, 2, &end);
+              else
+                List_Read($6, 3, &end);
+              GModel::current()->getOCCInternals()->addEllipseArc
+                (num, (int)start, (int)center, (int)end);
+            }
+            else{
+              double x; List_Read($6, 0, &x);
+              double y; List_Read($6, 1, &y);
+              double z; List_Read($6, 2, &z);
+              double r1; List_Read($6, 3, &r1);
+              double r2; List_Read($6, 4, &r2);
+              double a1 = 0., a2 = 2.*M_PI;
+              if(List_Nbr($6) == 6){
+                List_Read($6, 5, &a2);
+              }
+              else if(List_Nbr($6) == 7){
+                List_Read($6, 5, &a1); List_Read($6, 6, &a2);
+              }
+              GModel::current()->getOCCInternals()->addEllipse(num, x, y, z,
+                                                               r1, r2, a1, a2);
+            }
+          }
+          else{
+            yymsg(0, "Ellipse definition requires 3 to 7 parameters");
           }
         }
         else{

@@ -100,7 +100,11 @@ class OCC_Internals {
   void addVertex(int tag, double x, double y, double z);
   void addLine(int tag, int startTag, int endTag);
   void addCircleArc(int tag, int startTag, int centerTag, int endTag);
+  void addCircle(int tag, double x, double y, double z, double r, double angle1,
+                 double angle2);
   void addEllipseArc(int tag, int startTag, int centerTag, int endTag);
+  void addEllipse(int tag, double x, double y, double z, double r1, double r2,
+                  double angle1, double angle2);
   void addBezier(int tag, std::vector<int> vertexTags);
   void addBSpline(int tag, std::vector<int> vertexTags);
   void addLineLoop(int tag, std::vector<int> edgeTags);
@@ -229,7 +233,11 @@ public:
   void addVertex(int tag, double x, double y, double z){}
   void addLine(int tag, int startTag, int endTag){}
   void addCircleArc(int tag, int startTag, int centerTag, int endTag){}
+  void addCircle(int tag, double x, double y, double z, double r, double angle1,
+                 double angle2){}
   void addEllipseArc(int tag, int startTag, int centerTag, int endTag){}
+  void addEllipse(int tag, double x, double y, double z, double r1, double r2,
+                  double angle1, double angle2){}
   void addBezier(int tag, std::vector<int> vertexTags){};
   void addBSpline(int tag, std::vector<int> vertexTags){};
   void addLineLoop(int tag, std::vector<int> edgeTags){}

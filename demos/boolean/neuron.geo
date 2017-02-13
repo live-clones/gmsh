@@ -1,6 +1,6 @@
 SetFactory("OpenCASCADE");
 
-Mesh.Algorithm = 6;
+//Mesh.Algorithm = 6;
 Mesh.CharacteristicLengthMin = 1;
 Mesh.CharacteristicLengthMax = 1;
 
@@ -8,16 +8,22 @@ Macro dendrite
   For i In {1:5}
     z = -2 + 5*i;
     r = 0.35 + 0.25*Sin(2*Pi*i/5.);
-    Point(nump+1) = {x,y,z};
-    Point(nump+2) = {x+r,y,z};
-    Point(nump+3) = {x,y+r,z};
-    Point(nump+4) = {x-r,y,z};
-    Point(nump+5) = {x,y-r,z};
-    Circle(numc+1) = {nump+2,nump+1,nump+3};
-    Circle(numc+2) = {nump+3,nump+1,nump+4};
-    Circle(numc+3) = {nump+4,nump+1,nump+5};
-    Circle(numc+4) = {nump+5,nump+1,nump+2};
-    Line Loop(numw+1) = {numc+1:numc+4};
+    If(1) // make several surfaces to ease the meshing
+      Point(nump+1) = {x,y,z};
+      Point(nump+2) = {x+r,y,z};
+      Point(nump+3) = {x,y+r,z};
+      Point(nump+4) = {x-r,y,z};
+      Point(nump+5) = {x,y-r,z};
+      Circle(numc+1) = {nump+2,nump+1,nump+3};
+      Circle(numc+2) = {nump+3,nump+1,nump+4};
+      Circle(numc+3) = {nump+4,nump+1,nump+5};
+      Circle(numc+4) = {nump+5,nump+1,nump+2};
+      Line Loop(numw+1) = {numc+1:numc+4};
+    Else // single periodic surface
+      Disk(numw+1) = {x,y,z, r};
+      Line Loop(numw+1) = Boundary{ Surface{numw+1}; };
+      Delete { Surface{numw+1}; }
+    EndIf
     nump += 5;
     numc += 4;
     numw += 1;
