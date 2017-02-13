@@ -29,14 +29,15 @@ Plane Surface(2) = {2};
 Disk(3) = {0.6, 0.6, 0, 0.5, 0.3};
 
 DefineConstant[
-  after = {1, Choices{0,1}, Name "Parameters/Extrude after boolean"}
+  order = {1, Choices{0="Extrude before boolean",1="Boolean before extrude"},
+    Name "Parameters/Operation order"}
 ];
 
-If(after)
-  BooleanFragments{ Surface{1}; Delete; }{ Surface{2:3}; Delete; }
-  Extrude{0,0,0.3}{ Surface{1:5}; }
-Else
+If(order == 0)
   Extrude{0,0,0.3}{ Surface{1:3}; }
   BooleanFragments{ Volume{1}; Delete; }{ Volume{2:3}; Delete; }
   Delete{ Surface{1:3}; }
+Else
+  BooleanFragments{ Surface{1}; Delete; }{ Surface{2:3}; Delete; }
+  Extrude{0,0,0.3}{ Surface{1:5}; }
 EndIf

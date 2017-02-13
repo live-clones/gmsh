@@ -29,10 +29,8 @@ Plane Surface(2) = {2};
 Disk(3) = {0.6, 0.6, 0, 0.5, 0.3};
 
 DefineConstant[
-  angle = {90, Min 0, Max 360, Step 1,
+  angle = {90, Min 1, Max 360, Step 1,
     Name "Parameters/Angle"}
 ];
 BooleanFragments{ Surface{1}; Delete; }{ Surface{2:3}; Delete; }
 a() = Extrude{ {0,1,0}, {0,0,0}, angle*2*Pi/360 }{ Surface{1:5}; };
-
-
