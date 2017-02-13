@@ -1717,8 +1717,8 @@ Shape :
 
     tSetFactory '(' StringExprVar ')' tEND
     {
-      // FIXME: when changing to OpenCASCADE, get maxTag for all dimensions
-      // and add that info in OCC_Internals - same in the other direction
+      // FIXME: when changing to OpenCASCADE, get maxTags from GEO_Internals and
+      // add that info in OCC_Internals - same in the other direction
       factory = $3;
       Free($3);
     }

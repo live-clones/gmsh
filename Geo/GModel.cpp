@@ -79,16 +79,16 @@ GModel::GModel(std::string name)
   // push new one into the list
   list.push_back(this);
 
-  // at the moment we always create (at least an empty) GEO model
+  // at the moment we always create (at least empty) internal GEO and OCC
+  // CAD models
   _createGEOInternals();
-
   _createOCCInternals();
 
-#if defined(HAVE_OCC)
-  setFactory("OpenCASCADE");
-#else
+  // FIXME: GModelFactory will be deprecated at some point, replaced by
+  // interfaces to internal CAD data (currently only OCC_Internals, soon
+  // GEO_Internals; and maybe an abstract "CAD_Internals", from which those
+  // would derive, with an "integer" API, easily wrapped in C or scripts)
   setFactory("Gmsh");
-#endif
 
 #if defined(HAVE_MESH)
   _fields = new FieldManager();
@@ -169,12 +169,6 @@ void GModel::setFactory(std::string name)
   else{
     _factory = new GeoFactory();
   }
-}
-
-std::string GModel::getFactoryName()
-{
-  if(!_factory) return "";
-  return _factory->getName();
 }
 
 GModel *GModel::findByName(const std::string &name, const std::string &fileName)

@@ -501,7 +501,6 @@ class GModel
 
   // change the entity creation factory
   void setFactory(std::string name);
-  std::string getFactoryName();
 
   // create brep geometry entities using the factory
   GVertex *addVertex(double x, double y, double z, double lc);
