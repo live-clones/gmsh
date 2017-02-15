@@ -9,7 +9,6 @@
 #include "OS.h"
 #include "GModelCreateTopologyFromMesh.h"
 #include "GModel.h"
-#include "GModelIO_GEO.h"
 #include "discreteFace.h"
 #include "discreteEdge.h"
 #include "MPoint.h"
@@ -21,11 +20,7 @@
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
 
-/*
-  Assumptions :
-      --> The input mesh is potentially (partially) coloured
-      -->
-*/
+// Assumption: The input mesh is potentially (partially) coloured
 
 template <class T>
 class myBundle {
@@ -52,35 +47,30 @@ public :
   }
 };
 
-
-bool topoExists (GModel *gm) {
+bool topoExists(GModel *gm)
+{
   std::vector<GEntity*> entities;
   gm->getEntities(entities);
   std::set<MVertex*> vs;
   for(unsigned int i = 0; i < entities.size(); i++){
     if (entities[i]->vertices().empty()) return false;
   }
-
   return true;
 }
 
-void createTopologyFromMesh1D ( GModel *gm , int &num) {
-
+void createTopologyFromMesh1D(GModel *gm, int &num)
+{
   std::map<MVertex*, myBundle<GEdge*> > _temp;
   std::set<myBundle<GEdge*> > _bundles;
   std::map<MVertex*, GVertex*> _existingVertices;
   std::map<GEdge*, std::set<GVertex*> > _topology;
 
   // create an inverse dictionnary for existing edges
-  //  printf("zakkkk\n");
 
   for(GModel::viter it = gm->firstVertex(); it != gm->lastVertex(); it++) {
     if ((*it)->mesh_vertices.size())
       _existingVertices[(*it)->mesh_vertices[0]] = *it;
   }
-
-  //  printf("%d mesh vertices are already classified\n",_existingVertices.size());
-
 
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
     for (unsigned int i=0;i<(*it)->lines.size();i++){
@@ -96,19 +86,18 @@ void createTopologyFromMesh1D ( GModel *gm , int &num) {
     }
   }
 
-  //  printf("%d new mesh vertices \n",_temp.size());
-
   // create unique instances
-  for (std::map<MVertex*, myBundle<GEdge*> >::iterator it = _temp.begin(); it != _temp.end() ; it++){
+  for(std::map<MVertex*, myBundle<GEdge*> >::iterator it = _temp.begin();
+      it != _temp.end() ; it++){
     if (it->second.stuff.size() > 1) {
-      //      it->second.print();
       num++;
-      discreteVertex *dv = new discreteVertex (  gm , ++GModel::current()->getGEOInternals()->MaxPointNum);
+      discreteVertex *dv = new discreteVertex(gm, gm->getMaxElementaryNumber(0) + 1);
       gm->add(dv);
       MVertex *v = it->first;
       MPoint *mp = new MPoint(v);
       dv->points.push_back(mp);
-      for (std::set<GEdge*>::iterator it2 = it->second.stuff.begin(); it2 != it->second.stuff.end() ; ++it2){
+      for (std::set<GEdge*>::iterator it2 = it->second.stuff.begin();
+           it2 != it->second.stuff.end() ; ++it2){
 	_topology[*it2].insert(dv);
       }
     }
@@ -128,19 +117,20 @@ void createTopologyFromMesh1D ( GModel *gm , int &num) {
 	it->first->setEndVertex(*it2);
       }
       else {
-	Msg::Error ("FIXME : create simply connected edges in CreateTopology (%d vertices bounding one GEdge)", l.size());
+	Msg::Error("FIXME: create simply connected edges in CreateTopology "
+                   "(%d vertices bounding one GEdge)", l.size());
       }
 
-      for (std::list<GVertex*>::iterator it2 =  l.begin() ; it2 != l.end() ; ++it2)(*it2)->addEdge(it->first);
+      for (std::list<GVertex*>::iterator it2 =  l.begin(); it2 != l.end(); ++it2)
+        (*it2)->addEdge(it->first);
     }
   }
 
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
     if (!(*it)->getBeginVertex() && !(*it)->getEndVertex()){
       num++;
-      discreteVertex *dv = new discreteVertex (  gm , ++GModel::current()->getGEOInternals()->MaxPointNum);
+      discreteVertex *dv = new discreteVertex(gm, gm->getMaxElementaryNumber(0) + 1);
       gm->add(dv);
-      //      printf("creating vertex %d for periodic edge %d\n",dv->tag(),(*it)->tag());
       MVertex *v = (*it)->lines[0]->getVertex(0);
       MPoint *mp = new MPoint(v);
       dv->points.push_back(mp);
@@ -150,34 +140,29 @@ void createTopologyFromMesh1D ( GModel *gm , int &num) {
       _topology[*it].insert(dv);
     }
   }
-
-
-  // NICE :-)
 }
 
-void assignFace (GFace *gf, std::set<MElement*> &_f) {
-
+void assignFace (GFace *gf, std::set<MElement*> &_f)
+{
   gf->triangles.clear();
   gf->quadrangles.clear();
   for (std::set<MElement*> :: iterator it = _f.begin() ; it != _f.end() ; ++it) {
     if ((*it)->getNumVertices () == 3) gf->triangles.push_back ((MTriangle*) *it);
     else if ((*it)->getNumVertices () == 4) gf->quadrangles.push_back ((MQuadrangle*) *it);
   }
-
 }
 
-
-void ensureManifoldFace ( GFace *gf) {
-
+void ensureManifoldFace(GFace *gf)
+{
   std::map<MEdge, std::pair<MElement*,MElement*>, Less_Edge > _pairs;
   std::set<MEdge,Less_Edge> _nonManifold;
 
   std::set<MElement*> _allFaces;
 
-  for (unsigned int i=0;i<gf->getNumMeshElements();i++){
+  for (unsigned int i = 0; i < gf->getNumMeshElements(); i++){
     MElement *e = gf->getMeshElement(i);
     _allFaces.insert(e);
-    for (int j=0;j<e->getNumEdges();j++){
+    for (int j = 0; j < e->getNumEdges(); j++){
       MEdge ed = e->getEdge(j);
       if (_nonManifold.find (ed) == _nonManifold.end() ){
 	std::map<MEdge, std::pair<MElement*,MElement*>, Less_Edge >::iterator it =
@@ -199,9 +184,6 @@ void ensureManifoldFace ( GFace *gf) {
   }
   if (_nonManifold.empty())return;
 
-
-  //  printf("%d non man %d internal\n",_nonManifold.size(), _pairs.size());
-
   std::vector<std::set<MElement *> > _sub;
   while (!_allFaces.empty()) {
     std::stack <MElement*> _stack;
@@ -218,7 +200,8 @@ void ensureManifoldFace ( GFace *gf) {
 	  std::map<MEdge, std::pair<MElement*,MElement*>, Less_Edge >::iterator it =
 	    _pairs.find (ed);
 	  if (it->second.second != NULL){
-	    MElement *other  = it->second.second == e ? it->second.first : it->second.second;
+	    MElement *other = it->second.second == e ?
+              it->second.first : it->second.second;
 	    if (_f.find (other) == _f.end())_stack.push(other);
 	  }
 	}
@@ -227,40 +210,44 @@ void ensureManifoldFace ( GFace *gf) {
     _sub.push_back (_f);
   }
 
-  Msg::Info ("Face %d is non-manifold: splitting it in %d parts",gf->tag(),_sub.size() );
-  //  printf("%d sub parts\n", _sub.size());
+  Msg::Info ("Face %d is non-manifold: splitting it in %d parts",
+             gf->tag(), _sub.size());
 
   for (unsigned int i=0 ; i<_sub.size() ; i++){
     if (i == 0) assignFace (gf, _sub[i]);
     else {
-      discreteFace *newF = new discreteFace (gf->model(), NEWREG());
+      discreteFace *newF = new discreteFace
+        (gf->model(), gf->model()->getMaxElementaryNumber(2) + 1);
       gf->model()->add (newF);
       assignFace (newF, _sub[i]);
     }
   }
 }
 
-void ensureManifoldFaces ( GModel *gm ) {
-  //  printf ("%d faces\n", gm->getNumFaces());
+void ensureManifoldFaces(GModel *gm)
+{
   std::vector<GFace*> f;
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++)f.push_back(*it);
-  for(unsigned int i=0;i<f.size(); i++)ensureManifoldFace (f[i]);
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++)
+    f.push_back(*it);
+  for(unsigned int i = 0; i < f.size(); i++)
+    ensureManifoldFace (f[i]);
 }
 
-/// FIXME : 2 TIMES THE SAME MLINE IN EACH CONNECTED PART IF PERIODIC
-std::vector<GEdge*> ensureSimplyConnectedEdge ( GEdge *ge ) {
+// FIXME : 2 TIMES THE SAME MLINE IN EACH CONNECTED PART IF PERIODIC
+std::vector<GEdge*> ensureSimplyConnectedEdge(GEdge *ge)
+{
   std::vector<GEdge*> _all;
   std::set<MLine*> _lines;
   std::map<MVertex*, std::pair<MLine*,MLine*> > _conn;
 
   _all.push_back(ge);
 
-
   // create vertex to edge connectivity : only 2 neighbors are considered ...
   for (unsigned int i = 0; i < ge->lines.size(); i++){
     _lines.insert(ge->lines[i]);
     for (int j=0;j<2;j++){
-      std::map<MVertex*, std::pair<MLine*,MLine*> >::iterator it = _conn.find(ge->lines[i]->getVertex(j));
+      std::map<MVertex*, std::pair<MLine*,MLine*> >::iterator it =
+        _conn.find(ge->lines[i]->getVertex(j));
       if (it == _conn.end())
 	_conn[ge->lines[i]->getVertex(j)]= std::make_pair (ge->lines[i], (MLine*)NULL);
       else
@@ -279,15 +266,17 @@ std::vector<GEdge*> ensureSimplyConnectedEdge ( GEdge *ge ) {
       _lines.erase (l);
       // avoid adding twice the last one
       if (!_part.size()  || _part[_part.size() - 1] != l){
-	//	printf("part %d : %d %d\n",_parts.size(),l->getVertex(0)->getNum(),l->getVertex(1)->getNum());
 	_part.push_back(l);
       }
       for (int j=0;j<2;j++){
-	std::map<MVertex*, std::pair<MLine*,MLine*> >::iterator it = _conn.find(l->getVertex(j));
-	if (it->second.first == l && it->second.second != NULL && _lines.find (it->second.second) != _lines.end()){
+	std::map<MVertex*, std::pair<MLine*,MLine*> >::iterator it =
+          _conn.find(l->getVertex(j));
+	if (it->second.first == l && it->second.second != NULL &&
+            _lines.find (it->second.second) != _lines.end()){
 	  _stack.push (it->second.second);
 	}
-	else if (it->second.second == l && _lines.find (it->second.first) != _lines.end()){
+	else if (it->second.second == l &&
+                 _lines.find (it->second.first) != _lines.end()){
 	  _stack.push (it->second.first);
 	}
       }
@@ -295,14 +284,16 @@ std::vector<GEdge*> ensureSimplyConnectedEdge ( GEdge *ge ) {
     _parts.push_back(_part);
   }
 
-  if (_parts.size() == 1)return _all;
+  if (_parts.size() == 1) return _all;
 
-  Msg::Info ("Edge %d is not simply connected: splitting it in %d parts",ge->tag(),_parts.size());
+  Msg::Info ("Edge %d is not simply connected: splitting it in %d parts",
+             ge->tag(),_parts.size());
 
   for (size_t i = 0; i < _parts.size() ; i++){
     if (i == 0)ge->lines = _parts[i];
     else {
-      discreteEdge *newE = new discreteEdge (ge->model(), NEWREG(), NULL, NULL);
+      discreteEdge *newE = new discreteEdge
+        (ge->model(), ge->model()->getMaxElementaryNumber(1) + 1, NULL, NULL);
       ge->model()->add (newE);
       newE->lines = _parts[i];
       _all.push_back(newE);
@@ -311,9 +302,8 @@ std::vector<GEdge*> ensureSimplyConnectedEdge ( GEdge *ge ) {
   return _all;
 }
 
-void createTopologyFromMesh2D ( GModel *gm , int & num) {
-
-
+void createTopologyFromMesh2D(GModel *gm, int &num)
+{
   std::map<MEdge, myBundle<GFace*>, Less_Edge > _temp;
   std::set<myBundle<GFace*> > _bundles;
   std::map<MEdge, GEdge*, Less_Edge> _existingEdges;
@@ -321,10 +311,9 @@ void createTopologyFromMesh2D ( GModel *gm , int & num) {
 
   // create an inverse dictionnary for existing edges
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
-    for (unsigned int i = 0; i < (*it)->lines.size(); i++)_existingEdges[(*it)->lines[i]->getEdge(0)] = *it;
+    for (unsigned int i = 0; i < (*it)->lines.size(); i++)
+      _existingEdges[(*it)->lines[i]->getEdge(0)] = *it;
   }
-
-  //  printf("%d mesh edges are already classified\n",_existingEdges.size());
 
   std::map<MEdge,int,Less_Edge> _bnd;
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
@@ -358,10 +347,9 @@ void createTopologyFromMesh2D ( GModel *gm , int & num) {
     }
   }
 
-  //  printf("%d internal edges\n",_temp.size());
-
   // create unique instances
-  for (std::map<MEdge, myBundle<GFace*>, Less_Edge >::iterator it = _temp.begin(); it != _temp.end() ; it++){
+  for (std::map<MEdge, myBundle<GFace*>, Less_Edge >::iterator it = _temp.begin();
+       it != _temp.end() ; it++){
     _bundles.insert (it->second);
   }
 
@@ -370,16 +358,14 @@ void createTopologyFromMesh2D ( GModel *gm , int & num) {
   {
     std::set<myBundle<GFace*> >::iterator it = _bundles.begin();
     for (; it != _bundles.end(); ++it) {
-      ///      it->print();
       if (it->stuff.size() > 1){
-	//	printf("creation of a new discrete edge (%d neighbors)!\n",it->stuff.size());
-	discreteEdge *de = new discreteEdge (  gm , NEWREG(), NULL, NULL);
+	discreteEdge *de = new discreteEdge
+          (gm, gm->getMaxElementaryNumber(1) + 1, NULL, NULL);
 	num++;
 	_f2e [*it] = de;
 	gm->add (de);
 	for (std::set<GFace*>::iterator it2 = it->stuff.begin(); it2 != it->stuff.end();++it2){
 	  if ((*it2) != OUT)_topology[*it2].insert(de);
-	  //	  else printf("on the boundary\n");
 	}
       }
     }
@@ -403,9 +389,6 @@ void createTopologyFromMesh2D ( GModel *gm , int & num) {
   std::map<GEdge*, std::vector<GEdge*> > _parts;
   for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); it++) {
     _parts[*it] = ensureSimplyConnectedEdge (*it);
-    //        for (int i=0;i<(*it)->lines.size();i++)
-    //          printf("%d %d\n",(*it)->lines[i]->getVertex(0)->getNum(),(*it)->lines[i]->getVertex(1)->getNum());
-    //        getchar();
   }
 
   // create Face 2 Edge topology
@@ -414,16 +397,15 @@ void createTopologyFromMesh2D ( GModel *gm , int & num) {
     for ( ; it != _topology.end() ; ++it){
       if (it->first){
 	std::list<GEdge*> l ;
-	for (std::set<GEdge*>::iterator it2 = it->second.begin() ; it2 != it->second.end() ; ++it2)
+	for (std::set<GEdge*>::iterator it2 = it->second.begin();
+             it2 != it->second.end() ; ++it2)
 	  l.insert (l.begin(), _parts[*it2].begin(),  _parts[*it2].end());
 	it->first->set(l);
-	//	printf("Face %d has %d edges\n",it->first->tag(), l.size());
-	for (std::list<GEdge*>::iterator it2 =  l.begin() ; it2 != l.end() ; ++it2)(*it2)->addFace(it->first);
+	for (std::list<GEdge*>::iterator it2 =  l.begin() ; it2 != l.end(); ++it2)
+          (*it2)->addFace(it->first);
       }
     }
   }
-
-  // NICE :-)
 }
 
 class topoFace {
@@ -432,13 +414,15 @@ public:
   MVertex *getVertex (int i) const {return v[i];}
   MVertex *getSortedVertex (int i) const {return v[i];}
   int getNumVertices() const {return v[3]? 4:3;}
-  inline bool operator == (const topoFace &f) const {
+  inline bool operator == (const topoFace &f) const
+  {
     if (v[0] != f.v[0])return false;
     if (v[1] != f.v[1])return false;
     if (v[2] != f.v[2])return false;
     return true;
   }
-  inline bool operator < (const topoFace &f) const {
+  inline bool operator < (const topoFace &f) const
+  {
     if (v[0] < f.v[0])return true;
     if (v[0] > f.v[0])return false;
     if (v[1] < f.v[1])return true;
@@ -446,7 +430,8 @@ public:
     if (v[2] < f.v[2])return true;
     return false;
   }
-  inline void sortVerts3 () {
+  inline void sortVerts3 ()
+  {
     MVertex *tmp;
     if(v[0]>v[1]){
       tmp = v[0];
@@ -465,7 +450,8 @@ public:
     }
     return;
   }
-  topoFace (MVertex *v1, MVertex *v2, MVertex *v3) {
+  topoFace (MVertex *v1, MVertex *v2, MVertex *v3)
+  {
     v[0]=v1; v[1]=v2; v[2]=v3;v[3] = NULL;
     sortVerts3();
   }
@@ -487,16 +473,24 @@ public:
 
   size_t N() const {return _data.size();}
 
-  typename std::vector<std::pair<MYFACE, T> >::iterator begin(int i) {return _data[i].begin();}
-  typename std::vector<std::pair<MYFACE, T> >::iterator end  (int i) {return _data[i].end();}
+  typename std::vector<std::pair<MYFACE, T> >::iterator begin(int i)
+  {
+    return _data[i].begin();
+  }
+  typename std::vector<std::pair<MYFACE, T> >::iterator end  (int i)
+  {
+    return _data[i].end();
+  }
 
-  void addNoTest (const MYFACE &t, const T& toAdd)  {
+  void addNoTest (const MYFACE &t, const T& toAdd)
+  {
     size_t h = ((size_t) t.getSortedVertex(0) >> 8) ;
     size_t POS = h % _data.size();
     _data[POS].push_back(std::make_pair(t,toAdd));
   }
 
-  T & find (const MYFACE &t, bool &found) {
+  T & find (const MYFACE &t, bool &found)
+  {
     size_t h = ((size_t) t.getSortedVertex(0) >> 8) ;
     size_t POS = h % _data.size();
     std::vector<std::pair<MYFACE, T> > &v = _data[POS];
@@ -510,11 +504,10 @@ public:
     // bad design of this routine
     return v[0].second;
   }
-
 };
 
-
-inline MYFACE builder (MElement *e, int num){
+inline MYFACE builder (MElement *e, int num)
+{
 #ifdef _USE_MFACE__
   return e->getFace(num);
 #else
@@ -535,42 +528,31 @@ inline MYFACE builder (MElement *e, int num){
 #endif
 }
 
-/// ----------------------------------------------------------------
-/// ---------------   3D         -----------------------------------
-/// ----------------------------------------------------------------
-
-void createTopologyFromMesh3D ( GModel *gm , int &num ) {
-
-
+void createTopologyFromMesh3D(GModel *gm, int &num)
+{
   std::set<std::pair<GRegion*,GRegion*> > _pairs;
-  hashMapTopoFace<GFace*>   _existingFaces (gm->getNumMeshVertices()/10);
-  hashMapTopoFace< std::pair<GRegion*,GRegion*> >   _temp (gm->getNumMeshVertices()/3);
+  hashMapTopoFace<GFace*> _existingFaces(gm->getNumMeshVertices()/10);
+  hashMapTopoFace< std::pair<GRegion*,GRegion*> > _temp(gm->getNumMeshVertices()/3);
   std::map<GRegion*, std::set<GFace*> > _topology;
 
   // create an inverse dictionnary for existing faces
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
     for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
-      //      _existingFaces[builder((*it)->triangles[i], 0)] = *it;
       _existingFaces.addNoTest (builder((*it)->triangles[i], 0), *it);
     }
     for (unsigned int i = 0; i < (*it)->quadrangles.size(); i++){
-      //      _existingFaces[builder((*it)->quadrangles[i], 0)] = *it;
       _existingFaces.addNoTest (builder((*it)->quadrangles[i], 0), *it);
     }
   }
 
-  //  printf("%d mesh faces aere already classified\n",_existingFaces.size());
-  // --------------------------------------------------------------------------------------------------
   // create inverse dictionary for all other faces
   // This is the most time consuming part !
-  // --------------------------------------------------------------------------------------------------
 
   for(GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); it++) {
     for (unsigned int i=0;i<(*it)->getNumMeshElements();i++){
       MElement *e = (*it)->getMeshElement(i);
       for (int j=0;j<e->getNumFaces();j++){
 	MYFACE f = builder(e,j);
-	//	GFace *gf = _existingFaces[f];
 	bool found;
 	GFace *gf = _existingFaces.find (f,found);
 	if (found){
@@ -578,7 +560,6 @@ void createTopologyFromMesh3D ( GModel *gm , int &num ) {
 	}
 	else  {
 	  std::pair<GRegion*,GRegion*> &myPair = _temp.find (f,found);
-	  //	  std::map<topoFace, std::pair<GRegion*,GRegion*> >::iterator itf = _temp.find(f);
 	  if (!found){
 	    _temp.addNoTest (f, std::make_pair ( (GRegion*)NULL, *it) );
 	  }
@@ -589,25 +570,23 @@ void createTopologyFromMesh3D ( GModel *gm , int &num ) {
       }
     }
   }
-  // --------------------------------------------------------------------------------------------------
 
   // create unique instances
   for (size_t K=0;K<_temp.N();K++){
-    for (std::vector<std::pair<MYFACE, std::pair<GRegion*,GRegion*> > >::iterator it = _temp.begin(K); it != _temp.end(K) ; it++){
+    for (std::vector<std::pair<MYFACE, std::pair<GRegion*,GRegion*> > >::iterator it =
+           _temp.begin(K); it != _temp.end(K) ; it++){
       _pairs.insert (std::make_pair (std::min (it->second.first, it->second.second),
 				     std::max (it->second.first, it->second.second)));
     }
   }
 
   // create discrete faces
-
   std::map <std::pair<GRegion*,GRegion*> , GFace *> _r2f;
   {
     std::set<std::pair<GRegion*,GRegion*> >::iterator it = _pairs.begin();
     for (; it != _pairs.end(); ++it) {
       if (it->first != it->second) {
-	//	printf("creating a new discrete face between %p and %p\n",it->first, it->second);
-	discreteFace *df = new discreteFace (  gm , NEWREG());
+	discreteFace *df = new discreteFace(gm, gm->getMaxElementaryNumber(2) + 1);
 	num++;
 	gm->add (df);
 	_r2f [*it] = df;
@@ -619,7 +598,8 @@ void createTopologyFromMesh3D ( GModel *gm , int &num ) {
 
   //  add mesh faces in newly created GFaces
   for (size_t K=0;K<_temp.N();K++){
-    std::vector<std::pair< MYFACE, std::pair<GRegion*,GRegion*> > > :: iterator it = _temp.begin(K);
+    std::vector<std::pair< MYFACE, std::pair<GRegion*,GRegion*> > > :: iterator it =
+      _temp.begin(K);
     for (; it != _temp.end(K); ++it) {
       if (it->second.first != it->second.second){
 	MYFACE f = it->first;
@@ -629,7 +609,8 @@ void createTopologyFromMesh3D ( GModel *gm , int &num ) {
 	  gf->triangles.push_back(t);
 	}
 	else if (f.getNumVertices () == 4){
-	  MQuadrangle *q = new MQuadrangle (f.getVertex(0),f.getVertex(1),f.getVertex(2),f.getVertex(3));
+	  MQuadrangle *q = new MQuadrangle (f.getVertex(0),f.getVertex(1),
+                                            f.getVertex(2),f.getVertex(3));
 	  gf->quadrangles.push_back(q);
 	}
       }
@@ -642,15 +623,14 @@ void createTopologyFromMesh3D ( GModel *gm , int &num ) {
     for ( ; it != _topology.end() ; ++it){
       std::list<GFace*> l ; l.insert (l.begin(), it->second.begin(), it->second.end());
       it->first->set(l);
-      //      printf("Region %d has %d adjacent faces\n",it->first->tag(), l.size());
-      for (std::list<GFace*>::iterator it2 =  l.begin() ; it2 != l.end() ; ++it2)(*it2)->addRegion(it->first);
+      for (std::list<GFace*>::iterator it2 =  l.begin() ; it2 != l.end() ; ++it2)
+        (*it2)->addRegion(it->first);
     }
   }
-
-  // NICE :-)
 }
 
-void GModel::createTopologyFromMeshNew ( ) {
+void GModel::createTopologyFromMeshNew()
+{
   const int dim = getDim ();
 
   double t1 = Cpu();
@@ -659,7 +639,6 @@ void GModel::createTopologyFromMeshNew ( ) {
     return;
   }
 
-  //  printf("%d vertices\n", getNumVertices());
   Msg::Info("createTopologyFromMeshNew --> creating a topology from the mesh");
   int numF=0,numE=0,numV=0;
   if (dim >= 3) createTopologyFromMesh3D (this, numF);
@@ -673,15 +652,12 @@ void GModel::createTopologyFromMeshNew ( ) {
   getEntities(entities);
   std::set<MVertex*> vs;
   for(unsigned int i = 0; i < entities.size(); i++){
-    //    printf("entity %d of dim %d\n",entities[i]->tag(),entities[i]->dim());
     vs.insert (entities[i]->mesh_vertices.begin(), entities[i]->mesh_vertices.end());
     entities[i]->mesh_vertices.clear();
   }
   std::vector<MVertex*> cc;
   cc.insert(cc.begin(), vs.begin(), vs.end());
   _storeVerticesInEntities(cc);
-
-  //  printf("%d vertices\n", getNumVertices());
 
   double t2 = Cpu();
   Msg::Info("createTopologyFromMeshNew done in %3.f sec.)",t2-t1);

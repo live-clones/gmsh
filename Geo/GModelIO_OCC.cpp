@@ -557,7 +557,8 @@ void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
 }
 
 void OCC_Internals::addRectangle(int tag, double x1, double y1, double z1,
-                                 double x2, double y2, double z2)
+                                 double x2, double y2, double z2,
+                                 double roundedRadius)
 {
   if(tag > 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
@@ -570,15 +571,58 @@ void OCC_Internals::addRectangle(int tag, double x1, double y1, double z1,
 
   TopoDS_Face result;
   try{
-    TopoDS_Vertex v1 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y1, z1));
-    TopoDS_Vertex v2 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y1, z1));
-    TopoDS_Vertex v3 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y2, z1));
-    TopoDS_Vertex v4 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y2, z1));
-    TopoDS_Edge e1 = BRepBuilderAPI_MakeEdge(v1, v2);
-    TopoDS_Edge e2 = BRepBuilderAPI_MakeEdge(v2, v3);
-    TopoDS_Edge e3 = BRepBuilderAPI_MakeEdge(v3, v4);
-    TopoDS_Edge e4 = BRepBuilderAPI_MakeEdge(v4, v1);
-    TopoDS_Wire wire = BRepBuilderAPI_MakeWire(e1, e2, e3, e4);
+    TopoDS_Wire wire;
+    if(roundedRadius <= 0.){
+      TopoDS_Vertex v1 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y1, z1));
+      TopoDS_Vertex v2 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y1, z1));
+      TopoDS_Vertex v3 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y2, z1));
+      TopoDS_Vertex v4 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y2, z1));
+      TopoDS_Edge e1 = BRepBuilderAPI_MakeEdge(v1, v2);
+      TopoDS_Edge e2 = BRepBuilderAPI_MakeEdge(v2, v3);
+      TopoDS_Edge e3 = BRepBuilderAPI_MakeEdge(v3, v4);
+      TopoDS_Edge e4 = BRepBuilderAPI_MakeEdge(v4, v1);
+      wire = BRepBuilderAPI_MakeWire(e1, e2, e3, e4);
+    }
+    else{
+      double r = roundedRadius;
+      TopoDS_Vertex v1 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1 + r, y1, z1));
+      TopoDS_Vertex v2 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2 - r, y1, z1));
+      TopoDS_Vertex v3 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y1 + r, z1));
+      TopoDS_Vertex v4 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y2 - r, z1));
+      TopoDS_Vertex v5 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2 - r, y2, z1));
+      TopoDS_Vertex v6 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1 + r, y2, z1));
+      TopoDS_Vertex v7 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y2 - r, z1));
+      TopoDS_Vertex v8 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y1 + r, z1));
+      TopoDS_Edge e1 = BRepBuilderAPI_MakeEdge(v1, v2);
+      TopoDS_Edge e2 = BRepBuilderAPI_MakeEdge(v3, v4);
+      TopoDS_Edge e3 = BRepBuilderAPI_MakeEdge(v5, v6);
+      TopoDS_Edge e4 = BRepBuilderAPI_MakeEdge(v7, v8);
+      gp_Pnt c1(x1 + r, y1 + r, z1);
+      gp_Pnt c2(x2 - r, y1 + r, z1);
+      gp_Pnt c3(x2 - r, y2 - r, z1);
+      gp_Pnt c4(x1 + r, y2 - r, z1);
+      gp_Pln plane = gce_MakePln(c1, c2, c3).Value();
+      gp_Circ circ1 = gce_MakeCirc(c1, plane, r).Value();
+      gp_Circ circ2 = gce_MakeCirc(c2, plane, r).Value();
+      gp_Circ circ3 = gce_MakeCirc(c3, plane, r).Value();
+      gp_Circ circ4 = gce_MakeCirc(c4, plane, r).Value();
+      Handle(Geom_Circle) circle1 = new Geom_Circle(circ1);
+      Handle(Geom_Circle) circle2 = new Geom_Circle(circ2);
+      Handle(Geom_Circle) circle3 = new Geom_Circle(circ3);
+      Handle(Geom_Circle) circle4 = new Geom_Circle(circ4);
+      Handle(Geom_TrimmedCurve) arc1 = new Geom_TrimmedCurve(circle1, -M_PI, -M_PI/2., true);
+      Handle(Geom_TrimmedCurve) arc2 = new Geom_TrimmedCurve(circle2, -M_PI/2, 0, true);
+      Handle(Geom_TrimmedCurve) arc3 = new Geom_TrimmedCurve(circle3, 0, M_PI/2, true);
+      Handle(Geom_TrimmedCurve) arc4 = new Geom_TrimmedCurve(circle4, M_PI/2, M_PI, true);
+      TopoDS_Edge ce1 = BRepBuilderAPI_MakeEdge(arc1, v8, v1);
+      TopoDS_Edge ce2 = BRepBuilderAPI_MakeEdge(arc2, v2, v3);
+      TopoDS_Edge ce3 = BRepBuilderAPI_MakeEdge(arc3, v4, v5);
+      TopoDS_Edge ce4 = BRepBuilderAPI_MakeEdge(arc4, v6, v7);
+      BRepBuilderAPI_MakeWire w;
+      w.Add(e1); w.Add(ce2); w.Add(e2); w.Add(ce3);
+      w.Add(e3); w.Add(ce4); w.Add(e4); w.Add(ce1);
+      wire = w.Wire();
+    }
     result = BRepBuilderAPI_MakeFace(wire);
   }
   catch(Standard_Failure &err){

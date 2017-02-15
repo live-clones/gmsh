@@ -302,6 +302,9 @@ class PhysicalGroup{
   List_T *Entities;
 };
 
+int NEWFIELD(void);
+int NEWPHYSICAL(void);
+
 int compareVertex(const void *a, const void *b);
 int compareCurve(const void *a, const void *b);
 
@@ -321,16 +324,6 @@ LevelSet *Create_LevelSet(int Num, gLevelset *l);
 
 void End_Curve(Curve *c);
 void End_Surface(Surface *s);
-
-int NEWPOINT(void);
-int NEWLINE(void);
-int NEWLINELOOP(void);
-int NEWSURFACE(void);
-int NEWSURFACELOOP(void);
-int NEWVOLUME(void);
-int NEWFIELD(void);
-int NEWPHYSICAL(void);
-int NEWREG(void);
 
 Vertex *FindPoint(int inum);
 Curve *FindCurve(int inum);

@@ -119,7 +119,7 @@ class OCC_Internals {
   void addWire(int tag, std::vector<int> edgeTags, bool checkClosed);
   void addLineLoop(int tag, std::vector<int> edgeTags);
   void addRectangle(int tag, double x1, double y1, double z1,
-                    double x2, double y2, double z2);
+                    double x2, double y2, double z2, double roundedRadius=0.);
   void addDisk(int tag, double xc, double yc, double zc, double rx, double ry);
   void addPlanarFace(int tag, std::vector<int> wireTags);
   void addFaceFilling(int tag, std::vector<int> wireTags,
@@ -253,7 +253,7 @@ public:
   void addWire(int tag, std::vector<int> edgeTags, bool closed){}
   void addLineLoop(int tag, std::vector<int> edgeTags){}
   void addRectangle(int tag, double x1, double y1, double z1,
-                    double x2, double y2, double z2){}
+                    double x2, double y2, double z2, double roundedRadius=0.){}
   void addDisk(int tag, double xc, double yc, double zc, double rx, double ry){}
   void addPlanarFace(int tag, std::vector<int> wireTags){}
   void addFaceFilling(int tag, std::vector<int> wireTags,

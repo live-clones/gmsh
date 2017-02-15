@@ -32,8 +32,8 @@
 #include "MPrism.h"
 #include "MHexahedron.h"
 
-// Recursive function to generate all combinations of 4 indices between start 
-// and end indices included 
+// Recursive function to generate all combinations of 4 indices between start
+// and end indices included
 // Jeanne - HEXTREME
 void combination_of_4( int combination[4], int start, int end, int index,
   const std::vector<MVertex*>& vertices, std::vector<MTetrahedron*>& tets)
@@ -55,7 +55,7 @@ void combination_of_4( int combination[4], int start, int end, int index,
 }
 
 // Fill a region with all possible tets genereated from the
-// combination of points assigned to it 
+// combination of points assigned to it
 // Jeanne - HEXTREME
 void create_all_possible_tets(GRegion* region, const std::vector<MVertex*>& vertices) {
   unsigned int nb_points = vertices.size();
@@ -76,8 +76,8 @@ void create_all_possible_tets(GRegion* region, const std::vector<MVertex*>& vert
 GRegion * createDiscreteRegionFromRawData(GModel *gm, fullMatrix<double> &pts,
                                           fullMatrix<int> &triangles, bool all_tets)
 {
-  GRegion *gr = new discreteRegion(gm, NEWREG());
-  GFace *gf = new discreteFace(gm, NEWREG());
+  GRegion *gr = new discreteRegion(gm, gm->getMaxElementaryNumber(3) + 1);
+  GFace *gf = new discreteFace(gm, gm->getMaxElementaryNumber(2) + 1);
   gm->add(gr);
   gm->add(gf);
   std::list<GFace*> faces; faces.push_back(gf); gr->set(faces);

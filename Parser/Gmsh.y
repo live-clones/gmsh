@@ -2474,7 +2474,7 @@ Shape :
   | tRectangle '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) == 6){
+      if(List_Nbr($6) == 6 || List_Nbr($6) == 7){
         if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
           double x1; List_Read($6, 0, &x1);
           double y1; List_Read($6, 1, &y1);
@@ -2482,8 +2482,9 @@ Shape :
           double x2; List_Read($6, 3, &x2);
           double y2; List_Read($6, 4, &y2);
           double z2; List_Read($6, 5, &z2);
+          double r = 0.; if(List_Nbr($6) == 7) List_Read($6, 6, &r);
           GModel::current()->getOCCInternals()->addRectangle(num, x1, y1, z1,
-                                                             x2, y2, z2);
+                                                             x2, y2, z2, r);
         }
         else{
           yymsg(0, "Rectangle only available with OpenCASCADE factory");
@@ -7775,4 +7776,60 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
 
   for (int i = 0; i < 4; i++) tfo[12+i] = 0;
   tfo[15] = 1;
+}
+
+int NEWPOINT(void)
+{
+  return (GModel::current()->getGEOInternals()->MaxPointNum + 1);
+}
+
+int NEWLINE(void)
+{
+  if(CTX::instance()->geom.oldNewreg)
+    return NEWREG();
+  else
+    return (GModel::current()->getGEOInternals()->MaxLineNum + 1);
+}
+
+int NEWLINELOOP(void)
+{
+  if(CTX::instance()->geom.oldNewreg)
+    return NEWREG();
+  else
+    return (GModel::current()->getGEOInternals()->MaxLineLoopNum + 1);
+}
+
+int NEWSURFACE(void)
+{
+  if(CTX::instance()->geom.oldNewreg)
+    return NEWREG();
+  else
+    return (GModel::current()->getGEOInternals()->MaxSurfaceNum + 1);
+}
+
+int NEWSURFACELOOP(void)
+{
+  if(CTX::instance()->geom.oldNewreg)
+    return NEWREG();
+  else
+    return (GModel::current()->getGEOInternals()->MaxSurfaceLoopNum + 1);
+}
+
+int NEWVOLUME(void)
+{
+  if(CTX::instance()->geom.oldNewreg)
+    return NEWREG();
+  else
+    return (GModel::current()->getGEOInternals()->MaxVolumeNum + 1);
+}
+
+int NEWREG(void)
+{
+  return (std::max(GModel::current()->getGEOInternals()->MaxLineNum,
+            std::max(GModel::current()->getGEOInternals()->MaxLineLoopNum,
+              std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum,
+                std::max(GModel::current()->getGEOInternals()->MaxSurfaceLoopNum,
+                  std::max(GModel::current()->getGEOInternals()->MaxVolumeNum,
+                           GModel::current()->getGEOInternals()->MaxPhysicalNum)))))
+          + 1);
 }

@@ -12,12 +12,30 @@
 #include "GeoInterpolation.h"
 #include "Context.h"
 #include "MVertexRTree.h"
+#include "Parser.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
 #endif
 
 static List_T *ListOfTransformedPoints = NULL;
+
+int NEWFIELD(void)
+{
+#if defined(HAVE_MESH)
+  return (GModel::current()->getFields()->maxId() + 1);
+#else
+  return 0;
+#endif
+}
+
+int NEWPHYSICAL(void)
+{
+  if(CTX::instance()->geom.oldNewreg)
+    return NEWREG();
+  else
+    return (GModel::current()->getGEOInternals()->MaxPhysicalNum + 1);
+}
 
 // Comparison routines
 
@@ -743,79 +761,6 @@ void Free_LevelSet(void *a, void *b)
     delete pL;
     pL = NULL;
   }
-}
-
-int NEWPOINT(void)
-{
-  return (GModel::current()->getGEOInternals()->MaxPointNum + 1);
-}
-
-int NEWLINE(void)
-{
-  if(CTX::instance()->geom.oldNewreg)
-    return NEWREG();
-  else
-    return (GModel::current()->getGEOInternals()->MaxLineNum + 1);
-}
-
-int NEWLINELOOP(void)
-{
-  if(CTX::instance()->geom.oldNewreg)
-    return NEWREG();
-  else
-    return (GModel::current()->getGEOInternals()->MaxLineLoopNum + 1);
-}
-
-int NEWSURFACE(void)
-{
-  if(CTX::instance()->geom.oldNewreg)
-    return NEWREG();
-  else
-    return (GModel::current()->getGEOInternals()->MaxSurfaceNum + 1);
-}
-
-int NEWSURFACELOOP(void)
-{
-  if(CTX::instance()->geom.oldNewreg)
-    return NEWREG();
-  else
-    return (GModel::current()->getGEOInternals()->MaxSurfaceLoopNum + 1);
-}
-
-int NEWVOLUME(void)
-{
-  if(CTX::instance()->geom.oldNewreg)
-    return NEWREG();
-  else
-    return (GModel::current()->getGEOInternals()->MaxVolumeNum + 1);
-}
-
-int NEWFIELD(void)
-{
-#if defined(HAVE_MESH)
-  return (GModel::current()->getFields()->maxId() + 1);
-#else
-  return 0;
-#endif
-}
-
-int NEWPHYSICAL(void)
-{
-  if(CTX::instance()->geom.oldNewreg)
-    return NEWREG();
-  else
-    return (GModel::current()->getGEOInternals()->MaxPhysicalNum + 1);
-}
-
-int NEWREG(void)
-{
-  return (std::max(GModel::current()->getGEOInternals()->MaxLineNum,
-            std::max(GModel::current()->getGEOInternals()->MaxLineLoopNum,
-              std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum,
-                std::max(GModel::current()->getGEOInternals()->MaxSurfaceLoopNum,
-                  std::max(GModel::current()->getGEOInternals()->MaxVolumeNum,
-                           GModel::current()->getGEOInternals()->MaxPhysicalNum)))))
-          + 1);
 }
 
 static int compare2Lists(List_T *List1, List_T *List2,

@@ -13,7 +13,7 @@
 #include "GModelIO_GEO.h"
 #include "Gmsh.tab.hpp"
 #include "GmshIO.h"
-
+#include "Parser.h"
 
 void   parsestring(char endchar);
 char  *strsave(char *ptr);
