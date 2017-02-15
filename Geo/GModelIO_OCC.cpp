@@ -519,7 +519,7 @@ void OCC_Internals::addBSpline(int tag, std::vector<int> vertexTags)
   _addSpline(tag, vertexTags, 1);
 }
 
-void OCC_Internals::addWire(int tag, std::vector<int> edgeTags, bool closed)
+void OCC_Internals::addWire(int tag, std::vector<int> edgeTags, bool checkClosed)
 {
   if(tag > 0 && _tagWire.IsBound(tag)){
     Msg::Error("OpenCASCADE wire or line loop with tag %d already exists", tag);
@@ -538,7 +538,7 @@ void OCC_Internals::addWire(int tag, std::vector<int> edgeTags, bool closed)
       w.Add(edge);
     }
     result = w.Wire();
-    if(closed && !result.Closed()){
+    if(checkClosed && !result.Closed()){
       Msg::Error("Line Loop is not closed");
       return;
     }

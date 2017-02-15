@@ -116,7 +116,7 @@ class OCC_Internals {
                   double angle1, double angle2);
   void addBezier(int tag, std::vector<int> vertexTags);
   void addBSpline(int tag, std::vector<int> vertexTags);
-  void addWire(int tag, std::vector<int> edgeTags, bool closed);
+  void addWire(int tag, std::vector<int> edgeTags, bool checkClosed);
   void addLineLoop(int tag, std::vector<int> edgeTags);
   void addRectangle(int tag, double x1, double y1, double z1,
                     double x2, double y2, double z2);
