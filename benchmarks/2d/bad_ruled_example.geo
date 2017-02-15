@@ -62,7 +62,7 @@ Transfinite Line {botline1, botline2} = 8;
 Line Loop (newll) = {ellip1, botline1, -ellip2};
 Line Loop (newll) = {ellip2, botline2, -ellip3};
 loops[] += {newll-2, newll-1};
-Ruled Surface (news) = loops[0];
-Ruled Surface (news) = loops[1];
+Surface (news) = loops[0];
+Surface (news) = loops[1];
 
 

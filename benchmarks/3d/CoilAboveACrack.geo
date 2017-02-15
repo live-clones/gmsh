@@ -163,9 +163,9 @@ Plane Surface(419) = {418};
 Line Loop(420) = {-53,-9,54,26};
 Plane Surface(421) = {420};
 Line Loop(422) = {33,-61,-31,5};
-Ruled Surface(423) = {422};
+Surface(423) = {422};
 Line Loop(424) = {34,9,-32,61};
-Ruled Surface(425) = {424};
+Surface(425) = {424};
 
 Line Loop(426) = {11,-72,-66,71};
 Plane Surface(427) = {426};
@@ -173,16 +173,16 @@ Line Loop(428) = {13,-73,-68,74};
 Plane Surface(429) = {428};
 
 Line Loop(430) = {13,-7,-11,12};
-Ruled Surface(431) = {430};
+Surface(431) = {430};
 Line Loop(432) = {65,-68,-67,66};
-Ruled Surface(433) = {432};
+Surface(433) = {432};
 Line Loop(434) = {7,-73,-65,72};
-Ruled Surface(435) = {434};
+Surface(435) = {434};
 Line Loop(436) = {12,-74,-67,71};
-Ruled Surface(437) = {436};
+Surface(437) = {436};
 
 Line Loop(438) = {43,26,-41,25};
-Ruled Surface(439) = {438,430};
+Surface(439) = {438,430};
 
 Line Loop(440) = {2,3,4,1};
 Plane Surface(441) = {440};

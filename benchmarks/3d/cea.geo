@@ -157,13 +157,13 @@ Line (67) = {33, 37};
 Line (68) = {41, 45};
 
 Line Loop(69) = {3,35,-17,-34};
-Ruled Surface(70) = {69};
+Surface(70) = {69};
 Line Loop(71) = {8,40,-22,-39};
-Ruled Surface(72) = {71};
+Surface(72) = {71};
 Line Loop(73) = {35,18,-36,-4};
-Ruled Surface(74) = {73};
+Surface(74) = {73};
 Line Loop(75) = {40,23,-41,-9};
-Ruled Surface(76) = {75};
+Surface(76) = {75};
 Line Loop(77) = {34,-16,-33,2};
 Plane Surface(78) = {77};
 Line Loop(79) = {19,-37,-5,36};

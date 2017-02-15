@@ -964,15 +964,15 @@ PS103753=news; Plane Surface(PS103753) = {LL103703};
 PS103754=news; Plane Surface(PS103754) = {LL103704};
 //
 // BASE of guide pipe
-PSpipe103601=news; Ruled Surface(PSpipe103601) = {LL103601};
-PSpipe103602=news; Ruled Surface(PSpipe103602) = {LL103602};
-PSpipe103603=news; Ruled Surface(PSpipe103603) = {LL103603};
-PSpipe103604=news; Ruled Surface(PSpipe103604) = {LL103604};
+PSpipe103601=news; Surface(PSpipe103601) = {LL103601};
+PSpipe103602=news; Surface(PSpipe103602) = {LL103602};
+PSpipe103603=news; Surface(PSpipe103603) = {LL103603};
+PSpipe103604=news; Surface(PSpipe103604) = {LL103604};
 // end of guide pipe
-PSpipe103661=news; Ruled Surface(PSpipe103661) = {LL103661};
-PSpipe103662=news; Ruled Surface(PSpipe103662) = {LL103662};
-PSpipe103663=news; Ruled Surface(PSpipe103663) = {LL103663};
-PSpipe103664=news; Ruled Surface(PSpipe103664) = {LL103664};
+PSpipe103661=news; Surface(PSpipe103661) = {LL103661};
+PSpipe103662=news; Surface(PSpipe103662) = {LL103662};
+PSpipe103663=news; Surface(PSpipe103663) = {LL103663};
+PSpipe103664=news; Surface(PSpipe103664) = {LL103664};
 //
 //
 // __________
@@ -1127,16 +1127,16 @@ PS103953=news; Plane Surface(PS103953) = {LL103903};
 PS103954=news; Plane Surface(PS103954) = {LL103904};
 //
 // BASE of guide pipe
-PSpipe103801=news; Ruled Surface(PSpipe103801) = {LL103801};
-PSpipe103802=news; Ruled Surface(PSpipe103802) = {LL103802};
-PSpipe103803=news; Ruled Surface(PSpipe103803) = {LL103803};
-PSpipe103804=news; Ruled Surface(PSpipe103804) = {LL103804};
+PSpipe103801=news; Surface(PSpipe103801) = {LL103801};
+PSpipe103802=news; Surface(PSpipe103802) = {LL103802};
+PSpipe103803=news; Surface(PSpipe103803) = {LL103803};
+PSpipe103804=news; Surface(PSpipe103804) = {LL103804};
 //
 // end of guide pipe
-PSpipe103861=news; Ruled Surface(PSpipe103861) = {LL103861};
-PSpipe103862=news; Ruled Surface(PSpipe103862) = {LL103862};
-PSpipe103863=news; Ruled Surface(PSpipe103863) = {LL103863};
-PSpipe103864=news; Ruled Surface(PSpipe103864) = {LL103864};
+PSpipe103861=news; Surface(PSpipe103861) = {LL103861};
+PSpipe103862=news; Surface(PSpipe103862) = {LL103862};
+PSpipe103863=news; Surface(PSpipe103863) = {LL103863};
+PSpipe103864=news; Surface(PSpipe103864) = {LL103864};
 //
 //
 // __________

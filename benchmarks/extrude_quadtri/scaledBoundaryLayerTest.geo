@@ -36,8 +36,8 @@ Transfinite Line { 4, 5, 6, 7 } = 10;
 Line Loop (newll) = {1, 3,4,7};
 Line Loop (newll) = {2, 6, 5,-3};
 
-Ruled Surface (news) = { 8 };
-Ruled Surface (news) = { 9 };
+Surface (news) = { 8 };
+Surface (news) = { 9 };
 Recombine Surface {news-2, news-1};
 
 Extrude { Surface { 10}; Layers{{1,1},{0.05,1.2}}; Recombine; Using Index[0]; ScaleLastLayer; QuadTriAddVerts;}
@@ -56,6 +56,6 @@ Line (newl) = { newp-2, newp-1};
 Line (newl) = { newp-1, newp-4};
 
 Line Loop (newll) = {newl-4, newl-3, newl-2, newl-1};
-Ruled Surface (news) = newll-1;
+Surface (news) = newll-1;
 
 Extrude { Surface { news-1}; Layers{{1},{.5}}; Recombine; Using Index[0];QuadTriNoNewVerts RecombLaterals;}

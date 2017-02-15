@@ -32,12 +32,12 @@ l3 = newll; Line Loop(l3) = {c1,c10,-c5,-c9};
 l4 = newll; Line Loop(l4) = {c2,c11,-c6,-c10}; 
 l5 = newll; Line Loop(l5) = {c3,c12,-c7,-c11};
 l6 = newll; Line Loop(l6) = {c4,c9,-c8,-c12};
-s1 = news; Ruled Surface(s1) = {l1};
-s2 = news; Ruled Surface(s2) = {l2};
-s3 = news; Ruled Surface(s3) = {l3};
-s4 = news; Ruled Surface(s4) = {l4};
-s5 = news; Ruled Surface(s5) = {l5};
-s6 = news; Ruled Surface(s6) = {l6};
+s1 = news; Surface(s1) = {l1};
+s2 = news; Surface(s2) = {l2};
+s3 = news; Surface(s3) = {l3};
+s4 = news; Surface(s4) = {l4};
+s5 = news; Surface(s5) = {l5};
+s6 = news; Surface(s6) = {l6};
 Transfinite Line{c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12} = n_patch;
 Return
 

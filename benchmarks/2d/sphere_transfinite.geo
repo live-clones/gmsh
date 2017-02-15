@@ -35,14 +35,14 @@
  l7 = newreg; Line Loop(l7) = {-c2,-c7,-c12};
  l8 = newreg; Line Loop(l8) = {-c6,-c9,c2};
 
- s1 = newreg; Ruled Surface(newreg) = {-l1};
- s2 = newreg; Ruled Surface(newreg) = {-l2};
- s3 = newreg; Ruled Surface(newreg) = {-l3};
- s4 = newreg; Ruled Surface(newreg) = {-l4};
- s5 = newreg; Ruled Surface(newreg) = {-l5};
- s6 = newreg; Ruled Surface(newreg) = {-l6};
- s7 = newreg; Ruled Surface(newreg) = {-l7};
- s8 = newreg; Ruled Surface(newreg) = {-l8};
+ s1 = newreg; Surface(newreg) = {-l1};
+ s2 = newreg; Surface(newreg) = {-l2};
+ s3 = newreg; Surface(newreg) = {-l3};
+ s4 = newreg; Surface(newreg) = {-l4};
+ s5 = newreg; Surface(newreg) = {-l5};
+ s6 = newreg; Surface(newreg) = {-l6};
+ s7 = newreg; Surface(newreg) = {-l7};
+ s8 = newreg; Surface(newreg) = {-l8};
 
  Transfinite Line {c5,c10,c4} = aufl Using Progression 1.0;
  Transfinite Line {c9,-c5,c1} = aufl Using Progression 1.0;

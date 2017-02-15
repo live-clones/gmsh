@@ -35,6 +35,15 @@ class OCC_Internals {
   TopTools_DataMapOfShapeInteger _wireTag, _shellTag;
   TopTools_DataMapOfIntegerShape _tagWire, _tagShell;
 
+  // internal mesh attributes, linked to tags
+  class meshAttributes {
+  public:
+    meshAttributes() : size(0.), extrude(0) {}
+    double size;
+    ExtrudeParams *extrude;
+  };
+  std::map<int, meshAttributes> meshAttibutes[4];
+
   // add a shape and all its subshapes to _vmap, _emap, ..., _somap
   void _addShapeToMaps(TopoDS_Shape shape);
 

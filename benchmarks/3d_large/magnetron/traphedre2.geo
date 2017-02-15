@@ -95,7 +95,7 @@
   l5 = newreg; Line Loop(l5) = {c3,c14,-c9,-c13}; Plane Surface(l5+1) = {l5};
   l6 = newreg; Line Loop(l6) = {c4,c5,c15,-c10,-c14}; Plane Surface(l6+1) = {l6};
   l7 = newreg; Line Loop(l7) = {c6,c12,-c11,-c15}; Plane Surface(l7+1) = {l7};
-  l8 = newreg; Line Loop(l8) = {c16,c18,-c17,-c7}; Ruled Surface(l8+1) = {l8};
+  l8 = newreg; Line Loop(l8) = {c16,c18,-c17,-c7}; Surface(l8+1) = {l8};
 
   Boxes_LineLoop1[iBox] = l1 ;Boxes_PlanSurf1[iBox] = l1+1;
   Boxes_LineLoop2[iBox] = l2 ;Boxes_PlanSurf2[iBox] = l2+1;

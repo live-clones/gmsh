@@ -44,13 +44,13 @@ list_lines_outer[] = {newl-4, newl-3, newl-2, newl-1};
 Transfinite Line { list_lines_sq[], list_lines_outer[]} = 10;
 
 Line Loop (newll) = {list_lines_sq[]};
-Ruled Surface (news) = newll-1;
+Surface (news) = newll-1;
 Transfinite Surface {news-1} = {1, 2, 4, 3};
 Recombine Surface {news-1};
 surf1 = news-1;
 
 Line Loop (newll) = {list_lines_outer[]};
-Ruled Surface (news) = {newll-1,-(newll-3)};
+Surface (news) = {newll-1,-(newll-3)};
 //Transfinite Surface {news-1} = {1, 2, 4, 3};
 Recombine Surface {news-1};
 surf2 = news-1;
@@ -94,7 +94,7 @@ unstr_source_lines[] = { newl-4, newl-3, newl-2, newl-1};
 
 Line Loop (newll) = {unstr_source_lines[]};
 
-Ruled Surface (news) = {newll-1};
+Surface (news) = {newll-1};
 unstr_source = news-1;
 
 unstr_extr[] = Extrude {0.0, 0.0, big} { Surface{unstr_source}; };

@@ -34,7 +34,7 @@ Transfinite Line {source_lines[]} = transf1;
 Line Loop (newll) = {source_lines[]};
 source_loop = newll-1;
 
-Ruled Surface (news) = {source_loop};
+Surface (news) = {source_loop};
 source_surf = news-1;
 Transfinite Surface {source_surf};
 Recombine Surface {source_surf};
@@ -140,7 +140,7 @@ Transfinite Line {outer_source_lines[]} = transf_outer;
 
 Line Loop (newll) = {outer_source_lines[]};
 
-Ruled Surface (news) = {newll-1};
+Surface (news) = {newll-1};
 outer_source = news-1;
 
 outer_vol[] = Extrude { 0.0, 0.0, outer_length } { Surface { outer_source }; };

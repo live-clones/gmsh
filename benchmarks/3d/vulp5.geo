@@ -174,14 +174,14 @@ Line Loop(101) = {102,103,104,101};   Plane Surface(121) = {101};
 Line Loop(102) = {107,108,105,106};   Plane Surface(122) = {102};
 Line Loop(103) = {116,113,114,115};   Plane Surface(123) = {103};
 Line Loop(104) = {120,117,118,119};   Plane Surface(124) = {104};
-Line Loop(105) = {108,-109,-104,112}; Ruled Surface(125) = {105};
-Line Loop(106) = {112,-107,-111,103}; Ruled Surface(126) = {106};
-Line Loop(107) = {-111,-102,110,106}; Ruled Surface(127) = {107};
-Line Loop(108) = {-110,-101,109,105}; Ruled Surface(128) = {108};
-Line Loop(109) = {121,-120,-124,116}; Ruled Surface(129) = {109};
-Line Loop(110) = {-124,-115,123,119}; Ruled Surface(130) = {110};
-Line Loop(111) = {123,-118,-122,114}; Ruled Surface(131) = {111};
-Line Loop(112) = {122,-117,-121,113}; Ruled Surface(132) = {112};
+Line Loop(105) = {108,-109,-104,112}; Surface(125) = {105};
+Line Loop(106) = {112,-107,-111,103}; Surface(126) = {106};
+Line Loop(107) = {-111,-102,110,106}; Surface(127) = {107};
+Line Loop(108) = {-110,-101,109,105}; Surface(128) = {108};
+Line Loop(109) = {121,-120,-124,116}; Surface(129) = {109};
+Line Loop(110) = {-124,-115,123,119}; Surface(130) = {110};
+Line Loop(111) = {123,-118,-122,114}; Surface(131) = {111};
+Line Loop(112) = {122,-117,-121,113}; Surface(132) = {112};
 
 /* barreau 2 et 2' */
 
@@ -210,14 +210,14 @@ Line Loop(201) = {202,203,204,201};   Plane Surface(221) = {201};
 Line Loop(202) = {207,208,205,206};   Plane Surface(222) = {202};
 Line Loop(203) = {216,213,214,215};   Plane Surface(223) = {203};
 Line Loop(204) = {220,217,218,219};   Plane Surface(224) = {204};
-Line Loop(205) = {208,-209,-204,212}; Ruled Surface(225) = {205};
-Line Loop(206) = {212,-207,-211,203}; Ruled Surface(226) = {206};
-Line Loop(207) = {-211,-202,210,206}; Ruled Surface(227) = {207};
-Line Loop(208) = {-210,-201,209,205}; Ruled Surface(228) = {208};
-Line Loop(209) = {221,-220,-224,216}; Ruled Surface(229) = {209};
-Line Loop(210) = {-224,-215,223,219}; Ruled Surface(230) = {210};
-Line Loop(211) = {223,-218,-222,214}; Ruled Surface(231) = {211};
-Line Loop(212) = {222,-217,-221,213}; Ruled Surface(232) = {212};
+Line Loop(205) = {208,-209,-204,212}; Surface(225) = {205};
+Line Loop(206) = {212,-207,-211,203}; Surface(226) = {206};
+Line Loop(207) = {-211,-202,210,206}; Surface(227) = {207};
+Line Loop(208) = {-210,-201,209,205}; Surface(228) = {208};
+Line Loop(209) = {221,-220,-224,216}; Surface(229) = {209};
+Line Loop(210) = {-224,-215,223,219}; Surface(230) = {210};
+Line Loop(211) = {223,-218,-222,214}; Surface(231) = {211};
+Line Loop(212) = {222,-217,-221,213}; Surface(232) = {212};
 
 /* barreau 3 et 3' */
 
@@ -246,14 +246,14 @@ Line Loop(301) = {302,303,304,301};   Plane Surface(321) = {301};
 Line Loop(302) = {307,308,305,306};   Plane Surface(322) = {302};
 Line Loop(303) = {316,313,314,315};   Plane Surface(323) = {303};
 Line Loop(304) = {320,317,318,319};   Plane Surface(324) = {304};
-Line Loop(305) = {308,-309,-304,312}; Ruled Surface(325) = {305};
-Line Loop(306) = {312,-307,-311,303}; Ruled Surface(326) = {306};
-Line Loop(307) = {-311,-302,310,306}; Ruled Surface(327) = {307};
-Line Loop(308) = {-310,-301,309,305}; Ruled Surface(328) = {308};
-Line Loop(309) = {321,-320,-324,316}; Ruled Surface(329) = {309};
-Line Loop(310) = {-324,-315,323,319}; Ruled Surface(330) = {310};
-Line Loop(311) = {323,-318,-322,314}; Ruled Surface(331) = {311};
-Line Loop(312) = {322,-317,-321,313}; Ruled Surface(332) = {312};
+Line Loop(305) = {308,-309,-304,312}; Surface(325) = {305};
+Line Loop(306) = {312,-307,-311,303}; Surface(326) = {306};
+Line Loop(307) = {-311,-302,310,306}; Surface(327) = {307};
+Line Loop(308) = {-310,-301,309,305}; Surface(328) = {308};
+Line Loop(309) = {321,-320,-324,316}; Surface(329) = {309};
+Line Loop(310) = {-324,-315,323,319}; Surface(330) = {310};
+Line Loop(311) = {323,-318,-322,314}; Surface(331) = {311};
+Line Loop(312) = {322,-317,-321,313}; Surface(332) = {312};
 
 /* barreau 4 et 4' */
 
@@ -282,14 +282,14 @@ Line Loop(401) = {402,403,404,401};   Plane Surface(421) = {401};
 Line Loop(402) = {407,408,405,406};   Plane Surface(422) = {402};
 Line Loop(403) = {416,413,414,415};   Plane Surface(423) = {403};
 Line Loop(404) = {420,417,418,419};   Plane Surface(424) = {404};
-Line Loop(405) = {408,-409,-404,412}; Ruled Surface(425) = {405};
-Line Loop(406) = {412,-407,-411,403}; Ruled Surface(426) = {406};
-Line Loop(407) = {-411,-402,410,406}; Ruled Surface(427) = {407};
-Line Loop(408) = {-410,-401,409,405}; Ruled Surface(428) = {408};
-Line Loop(409) = {421,-420,-424,416}; Ruled Surface(429) = {409};
-Line Loop(410) = {-424,-415,423,419}; Ruled Surface(430) = {410};
-Line Loop(411) = {423,-418,-422,414}; Ruled Surface(431) = {411};
-Line Loop(412) = {422,-417,-421,413}; Ruled Surface(432) = {412};
+Line Loop(405) = {408,-409,-404,412}; Surface(425) = {405};
+Line Loop(406) = {412,-407,-411,403}; Surface(426) = {406};
+Line Loop(407) = {-411,-402,410,406}; Surface(427) = {407};
+Line Loop(408) = {-410,-401,409,405}; Surface(428) = {408};
+Line Loop(409) = {421,-420,-424,416}; Surface(429) = {409};
+Line Loop(410) = {-424,-415,423,419}; Surface(430) = {410};
+Line Loop(411) = {423,-418,-422,414}; Surface(431) = {411};
+Line Loop(412) = {422,-417,-421,413}; Surface(432) = {412};
 
 /* barreau 5 et 5' */
 
@@ -318,14 +318,14 @@ Line Loop(501) = {502,503,504,501};   Plane Surface(521) = {501};
 Line Loop(502) = {507,508,505,506};   Plane Surface(522) = {502};
 Line Loop(503) = {516,513,514,515};   Plane Surface(523) = {503};
 Line Loop(504) = {520,517,518,519};   Plane Surface(524) = {504};
-Line Loop(505) = {508,-509,-504,512}; Ruled Surface(525) = {505};
-Line Loop(506) = {512,-507,-511,503}; Ruled Surface(526) = {506};
-Line Loop(507) = {-511,-502,510,506}; Ruled Surface(527) = {507};
-Line Loop(508) = {-510,-501,509,505}; Ruled Surface(528) = {508};
-Line Loop(509) = {521,-520,-524,516}; Ruled Surface(529) = {509};
-Line Loop(510) = {-524,-515,523,519}; Ruled Surface(530) = {510};
-Line Loop(511) = {523,-518,-522,514}; Ruled Surface(531) = {511};
-Line Loop(512) = {522,-517,-521,513}; Ruled Surface(532) = {512};
+Line Loop(505) = {508,-509,-504,512}; Surface(525) = {505};
+Line Loop(506) = {512,-507,-511,503}; Surface(526) = {506};
+Line Loop(507) = {-511,-502,510,506}; Surface(527) = {507};
+Line Loop(508) = {-510,-501,509,505}; Surface(528) = {508};
+Line Loop(509) = {521,-520,-524,516}; Surface(529) = {509};
+Line Loop(510) = {-524,-515,523,519}; Surface(530) = {510};
+Line Loop(511) = {523,-518,-522,514}; Surface(531) = {511};
+Line Loop(512) = {522,-517,-521,513}; Surface(532) = {512};
 
 /* barreau 6 et 6' */
 
@@ -354,14 +354,14 @@ Line Loop(601) = {602,603,604,601};   Plane Surface(621) = {601};
 Line Loop(602) = {607,608,605,606};   Plane Surface(622) = {602};
 Line Loop(603) = {616,613,614,615};   Plane Surface(623) = {603};
 Line Loop(604) = {620,617,618,619};   Plane Surface(624) = {604};
-Line Loop(605) = {608,-609,-604,612}; Ruled Surface(625) = {605};
-Line Loop(606) = {612,-607,-611,603}; Ruled Surface(626) = {606};
-Line Loop(607) = {-611,-602,610,606}; Ruled Surface(627) = {607};
-Line Loop(608) = {-610,-601,609,605}; Ruled Surface(628) = {608};
-Line Loop(609) = {621,-620,-624,616}; Ruled Surface(629) = {609};
-Line Loop(610) = {-624,-615,623,619}; Ruled Surface(630) = {610};
-Line Loop(611) = {623,-618,-622,614}; Ruled Surface(631) = {611};
-Line Loop(612) = {622,-617,-621,613}; Ruled Surface(632) = {612};
+Line Loop(605) = {608,-609,-604,612}; Surface(625) = {605};
+Line Loop(606) = {612,-607,-611,603}; Surface(626) = {606};
+Line Loop(607) = {-611,-602,610,606}; Surface(627) = {607};
+Line Loop(608) = {-610,-601,609,605}; Surface(628) = {608};
+Line Loop(609) = {621,-620,-624,616}; Surface(629) = {609};
+Line Loop(610) = {-624,-615,623,619}; Surface(630) = {610};
+Line Loop(611) = {623,-618,-622,614}; Surface(631) = {611};
+Line Loop(612) = {622,-617,-621,613}; Surface(632) = {612};
 
 /* barreau 7 et 7' */
 
@@ -390,14 +390,14 @@ Line Loop(701) = {702,703,704,701};   Plane Surface(721) = {701};
 Line Loop(702) = {707,708,705,706};   Plane Surface(722) = {702};
 Line Loop(703) = {716,713,714,715};   Plane Surface(723) = {703};
 Line Loop(704) = {720,717,718,719};   Plane Surface(724) = {704};
-Line Loop(705) = {708,-709,-704,712}; Ruled Surface(725) = {705};
-Line Loop(706) = {712,-707,-711,703}; Ruled Surface(726) = {706};
-Line Loop(707) = {-711,-702,710,706}; Ruled Surface(727) = {707};
-Line Loop(708) = {-710,-701,709,705}; Ruled Surface(728) = {708};
-Line Loop(709) = {721,-720,-724,716}; Ruled Surface(729) = {709};
-Line Loop(710) = {-724,-715,723,719}; Ruled Surface(730) = {710};
-Line Loop(711) = {723,-718,-722,714}; Ruled Surface(731) = {711};
-Line Loop(712) = {722,-717,-721,713}; Ruled Surface(732) = {712};
+Line Loop(705) = {708,-709,-704,712}; Surface(725) = {705};
+Line Loop(706) = {712,-707,-711,703}; Surface(726) = {706};
+Line Loop(707) = {-711,-702,710,706}; Surface(727) = {707};
+Line Loop(708) = {-710,-701,709,705}; Surface(728) = {708};
+Line Loop(709) = {721,-720,-724,716}; Surface(729) = {709};
+Line Loop(710) = {-724,-715,723,719}; Surface(730) = {710};
+Line Loop(711) = {723,-718,-722,714}; Surface(731) = {711};
+Line Loop(712) = {722,-717,-721,713}; Surface(732) = {712};
 
 /* barreau 8 et 8' */
 
@@ -426,14 +426,14 @@ Line Loop(801) = {802,803,804,801};   Plane Surface(821) = {801};
 Line Loop(802) = {807,808,805,806};   Plane Surface(822) = {802};
 Line Loop(803) = {816,813,814,815};   Plane Surface(823) = {803};
 Line Loop(804) = {820,817,818,819};   Plane Surface(824) = {804};
-Line Loop(805) = {808,-809,-804,812}; Ruled Surface(825) = {805};
-Line Loop(806) = {812,-807,-811,803}; Ruled Surface(826) = {806};
-Line Loop(807) = {-811,-802,810,806}; Ruled Surface(827) = {807};
-Line Loop(808) = {-810,-801,809,805}; Ruled Surface(828) = {808};
-Line Loop(809) = {821,-820,-824,816}; Ruled Surface(829) = {809};
-Line Loop(810) = {-824,-815,823,819}; Ruled Surface(830) = {810};
-Line Loop(811) = {823,-818,-822,814}; Ruled Surface(831) = {811};
-Line Loop(812) = {822,-817,-821,813}; Ruled Surface(832) = {812};
+Line Loop(805) = {808,-809,-804,812}; Surface(825) = {805};
+Line Loop(806) = {812,-807,-811,803}; Surface(826) = {806};
+Line Loop(807) = {-811,-802,810,806}; Surface(827) = {807};
+Line Loop(808) = {-810,-801,809,805}; Surface(828) = {808};
+Line Loop(809) = {821,-820,-824,816}; Surface(829) = {809};
+Line Loop(810) = {-824,-815,823,819}; Surface(830) = {810};
+Line Loop(811) = {823,-818,-822,814}; Surface(831) = {811};
+Line Loop(812) = {822,-817,-821,813}; Surface(832) = {812};
 
 /* barreau 9 et 9' */
 
@@ -462,14 +462,14 @@ Line Loop(901) = {902,903,904,901};   Plane Surface(921) = {901};
 Line Loop(902) = {907,908,905,906};   Plane Surface(922) = {902};
 Line Loop(903) = {916,913,914,915};   Plane Surface(923) = {903};
 Line Loop(904) = {920,917,918,919};   Plane Surface(924) = {904};
-Line Loop(905) = {908,-909,-904,912}; Ruled Surface(925) = {905};
-Line Loop(906) = {912,-907,-911,903}; Ruled Surface(926) = {906};
-Line Loop(907) = {-911,-902,910,906}; Ruled Surface(927) = {907};
-Line Loop(908) = {-910,-901,909,905}; Ruled Surface(928) = {908};
-Line Loop(909) = {921,-920,-924,916}; Ruled Surface(929) = {909};
-Line Loop(910) = {-924,-915,923,919}; Ruled Surface(930) = {910};
-Line Loop(911) = {923,-918,-922,914}; Ruled Surface(931) = {911};
-Line Loop(912) = {922,-917,-921,913}; Ruled Surface(932) = {912};
+Line Loop(905) = {908,-909,-904,912}; Surface(925) = {905};
+Line Loop(906) = {912,-907,-911,903}; Surface(926) = {906};
+Line Loop(907) = {-911,-902,910,906}; Surface(927) = {907};
+Line Loop(908) = {-910,-901,909,905}; Surface(928) = {908};
+Line Loop(909) = {921,-920,-924,916}; Surface(929) = {909};
+Line Loop(910) = {-924,-915,923,919}; Surface(930) = {910};
+Line Loop(911) = {923,-918,-922,914}; Surface(931) = {911};
+Line Loop(912) = {922,-917,-921,913}; Surface(932) = {912};
 
 /* barreau 10 et 10' */
 
@@ -498,14 +498,14 @@ Line Loop(1001) = {1002,1003,1004,1001};   Plane Surface(1021) = {1001};
 Line Loop(1002) = {1007,1008,1005,1006};   Plane Surface(1022) = {1002};
 Line Loop(1003) = {1016,1013,1014,1015};   Plane Surface(1023) = {1003};
 Line Loop(1004) = {1020,1017,1018,1019};   Plane Surface(1024) = {1004};
-Line Loop(1005) = {1008,-1009,-1004,1012}; Ruled Surface(1025) = {1005};
-Line Loop(1006) = {1012,-1007,-1011,1003}; Ruled Surface(1026) = {1006};
-Line Loop(1007) = {-1011,-1002,1010,1006}; Ruled Surface(1027) = {1007};
-Line Loop(1008) = {-1010,-1001,1009,1005}; Ruled Surface(1028) = {1008};
-Line Loop(1009) = {1021,-1020,-1024,1016}; Ruled Surface(1029) = {1009};
-Line Loop(1010) = {-1024,-1015,1023,1019}; Ruled Surface(1030) = {1010};
-Line Loop(1011) = {1023,-1018,-1022,1014}; Ruled Surface(1031) = {1011};
-Line Loop(1012) = {1022,-1017,-1021,1013}; Ruled Surface(1032) = {1012};
+Line Loop(1005) = {1008,-1009,-1004,1012}; Surface(1025) = {1005};
+Line Loop(1006) = {1012,-1007,-1011,1003}; Surface(1026) = {1006};
+Line Loop(1007) = {-1011,-1002,1010,1006}; Surface(1027) = {1007};
+Line Loop(1008) = {-1010,-1001,1009,1005}; Surface(1028) = {1008};
+Line Loop(1009) = {1021,-1020,-1024,1016}; Surface(1029) = {1009};
+Line Loop(1010) = {-1024,-1015,1023,1019}; Surface(1030) = {1010};
+Line Loop(1011) = {1023,-1018,-1022,1014}; Surface(1031) = {1011};
+Line Loop(1012) = {1022,-1017,-1021,1013}; Surface(1032) = {1012};
 
 /* barreau 11 et 11' */
 
@@ -534,14 +534,14 @@ Line Loop(1101) = {1102,1103,1104,1101};   Plane Surface(1121) = {1101};
 Line Loop(1102) = {1107,1108,1105,1106};   Plane Surface(1122) = {1102};
 Line Loop(1103) = {1116,1113,1114,1115};   Plane Surface(1123) = {1103};
 Line Loop(1104) = {1120,1117,1118,1119};   Plane Surface(1124) = {1104};
-Line Loop(1105) = {1108,-1109,-1104,1112}; Ruled Surface(1125) = {1105};
-Line Loop(1106) = {1112,-1107,-1111,1103}; Ruled Surface(1126) = {1106};
-Line Loop(1107) = {-1111,-1102,1110,1106}; Ruled Surface(1127) = {1107};
-Line Loop(1108) = {-1110,-1101,1109,1105}; Ruled Surface(1128) = {1108};
-Line Loop(1109) = {1121,-1120,-1124,1116}; Ruled Surface(1129) = {1109};
-Line Loop(1110) = {-1124,-1115,1123,1119}; Ruled Surface(1130) = {1110};
-Line Loop(1111) = {1123,-1118,-1122,1114}; Ruled Surface(1131) = {1111};
-Line Loop(1112) = {1122,-1117,-1121,1113}; Ruled Surface(1132) = {1112};
+Line Loop(1105) = {1108,-1109,-1104,1112}; Surface(1125) = {1105};
+Line Loop(1106) = {1112,-1107,-1111,1103}; Surface(1126) = {1106};
+Line Loop(1107) = {-1111,-1102,1110,1106}; Surface(1127) = {1107};
+Line Loop(1108) = {-1110,-1101,1109,1105}; Surface(1128) = {1108};
+Line Loop(1109) = {1121,-1120,-1124,1116}; Surface(1129) = {1109};
+Line Loop(1110) = {-1124,-1115,1123,1119}; Surface(1130) = {1110};
+Line Loop(1111) = {1123,-1118,-1122,1114}; Surface(1131) = {1111};
+Line Loop(1112) = {1122,-1117,-1121,1113}; Surface(1132) = {1112};
 
 /* barreau 12 et 12' */
 
@@ -570,14 +570,14 @@ Line Loop(1201) = {1202,1203,1204,1201};   Plane Surface(1221) = {1201};
 Line Loop(1202) = {1207,1208,1205,1206};   Plane Surface(1222) = {1202};
 Line Loop(1203) = {1216,1213,1214,1215};   Plane Surface(1223) = {1203};
 Line Loop(1204) = {1220,1217,1218,1219};   Plane Surface(1224) = {1204};
-Line Loop(1205) = {1208,-1209,-1204,1212}; Ruled Surface(1225) = {1205};
-Line Loop(1206) = {1212,-1207,-1211,1203}; Ruled Surface(1226) = {1206};
-Line Loop(1207) = {-1211,-1202,1210,1206}; Ruled Surface(1227) = {1207};
-Line Loop(1208) = {-1210,-1201,1209,1205}; Ruled Surface(1228) = {1208};
-Line Loop(1209) = {1221,-1220,-1224,1216}; Ruled Surface(1229) = {1209};
-Line Loop(1210) = {-1224,-1215,1223,1219}; Ruled Surface(1230) = {1210};
-Line Loop(1211) = {1223,-1218,-1222,1214}; Ruled Surface(1231) = {1211};
-Line Loop(1212) = {1222,-1217,-1221,1213}; Ruled Surface(1232) = {1212};
+Line Loop(1205) = {1208,-1209,-1204,1212}; Surface(1225) = {1205};
+Line Loop(1206) = {1212,-1207,-1211,1203}; Surface(1226) = {1206};
+Line Loop(1207) = {-1211,-1202,1210,1206}; Surface(1227) = {1207};
+Line Loop(1208) = {-1210,-1201,1209,1205}; Surface(1228) = {1208};
+Line Loop(1209) = {1221,-1220,-1224,1216}; Surface(1229) = {1209};
+Line Loop(1210) = {-1224,-1215,1223,1219}; Surface(1230) = {1210};
+Line Loop(1211) = {1223,-1218,-1222,1214}; Surface(1231) = {1211};
+Line Loop(1212) = {1222,-1217,-1221,1213}; Surface(1232) = {1212};
 
 /* barreau 13 et 13' */
 
@@ -606,14 +606,14 @@ Line Loop(1301) = {1302,1303,1304,1301};   Plane Surface(1321) = {1301};
 Line Loop(1302) = {1307,1308,1305,1306};   Plane Surface(1322) = {1302};
 Line Loop(1303) = {1316,1313,1314,1315};   Plane Surface(1323) = {1303};
 Line Loop(1304) = {1320,1317,1318,1319};   Plane Surface(1324) = {1304};
-Line Loop(1305) = {1308,-1309,-1304,1312}; Ruled Surface(1325) = {1305};
-Line Loop(1306) = {1312,-1307,-1311,1303}; Ruled Surface(1326) = {1306};
-Line Loop(1307) = {-1311,-1302,1310,1306}; Ruled Surface(1327) = {1307};
-Line Loop(1308) = {-1310,-1301,1309,1305}; Ruled Surface(1328) = {1308};
-Line Loop(1309) = {1321,-1320,-1324,1316}; Ruled Surface(1329) = {1309};
-Line Loop(1310) = {-1324,-1315,1323,1319}; Ruled Surface(1330) = {1310};
-Line Loop(1311) = {1323,-1318,-1322,1314}; Ruled Surface(1331) = {1311};
-Line Loop(1312) = {1322,-1317,-1321,1313}; Ruled Surface(1332) = {1312};
+Line Loop(1305) = {1308,-1309,-1304,1312}; Surface(1325) = {1305};
+Line Loop(1306) = {1312,-1307,-1311,1303}; Surface(1326) = {1306};
+Line Loop(1307) = {-1311,-1302,1310,1306}; Surface(1327) = {1307};
+Line Loop(1308) = {-1310,-1301,1309,1305}; Surface(1328) = {1308};
+Line Loop(1309) = {1321,-1320,-1324,1316}; Surface(1329) = {1309};
+Line Loop(1310) = {-1324,-1315,1323,1319}; Surface(1330) = {1310};
+Line Loop(1311) = {1323,-1318,-1322,1314}; Surface(1331) = {1311};
+Line Loop(1312) = {1322,-1317,-1321,1313}; Surface(1332) = {1312};
 
 /* barreau 14 et 14' */
 
@@ -642,14 +642,14 @@ Line Loop(1401) = {1402,1403,1404,1401};   Plane Surface(1421) = {1401};
 Line Loop(1402) = {1407,1408,1405,1406};   Plane Surface(1422) = {1402};
 Line Loop(1403) = {1416,1413,1414,1415};   Plane Surface(1423) = {1403};
 Line Loop(1404) = {1420,1417,1418,1419};   Plane Surface(1424) = {1404};
-Line Loop(1405) = {1408,-1409,-1404,1412}; Ruled Surface(1425) = {1405};
-Line Loop(1406) = {1412,-1407,-1411,1403}; Ruled Surface(1426) = {1406};
-Line Loop(1407) = {-1411,-1402,1410,1406}; Ruled Surface(1427) = {1407};
-Line Loop(1408) = {-1410,-1401,1409,1405}; Ruled Surface(1428) = {1408};
-Line Loop(1409) = {1421,-1420,-1424,1416}; Ruled Surface(1429) = {1409};
-Line Loop(1410) = {-1424,-1415,1423,1419}; Ruled Surface(1430) = {1410};
-Line Loop(1411) = {1423,-1418,-1422,1414}; Ruled Surface(1431) = {1411};
-Line Loop(1412) = {1422,-1417,-1421,1413}; Ruled Surface(1432) = {1412};
+Line Loop(1405) = {1408,-1409,-1404,1412}; Surface(1425) = {1405};
+Line Loop(1406) = {1412,-1407,-1411,1403}; Surface(1426) = {1406};
+Line Loop(1407) = {-1411,-1402,1410,1406}; Surface(1427) = {1407};
+Line Loop(1408) = {-1410,-1401,1409,1405}; Surface(1428) = {1408};
+Line Loop(1409) = {1421,-1420,-1424,1416}; Surface(1429) = {1409};
+Line Loop(1410) = {-1424,-1415,1423,1419}; Surface(1430) = {1410};
+Line Loop(1411) = {1423,-1418,-1422,1414}; Surface(1431) = {1411};
+Line Loop(1412) = {1422,-1417,-1421,1413}; Surface(1432) = {1412};
 
 /* barreau 15 et 15' */
 
@@ -678,14 +678,14 @@ Line Loop(1501) = {1502,1503,1504,1501};   Plane Surface(1521) = {1501};
 Line Loop(1502) = {1507,1508,1505,1506};   Plane Surface(1522) = {1502};
 Line Loop(1503) = {1516,1513,1514,1515};   Plane Surface(1523) = {1503};
 Line Loop(1504) = {1520,1517,1518,1519};   Plane Surface(1524) = {1504};
-Line Loop(1505) = {1508,-1509,-1504,1512}; Ruled Surface(1525) = {1505};
-Line Loop(1506) = {1512,-1507,-1511,1503}; Ruled Surface(1526) = {1506};
-Line Loop(1507) = {-1511,-1502,1510,1506}; Ruled Surface(1527) = {1507};
-Line Loop(1508) = {-1510,-1501,1509,1505}; Ruled Surface(1528) = {1508};
-Line Loop(1509) = {1521,-1520,-1524,1516}; Ruled Surface(1529) = {1509};
-Line Loop(1510) = {-1524,-1515,1523,1519}; Ruled Surface(1530) = {1510};
-Line Loop(1511) = {1523,-1518,-1522,1514}; Ruled Surface(1531) = {1511};
-Line Loop(1512) = {1522,-1517,-1521,1513}; Ruled Surface(1532) = {1512};
+Line Loop(1505) = {1508,-1509,-1504,1512}; Surface(1525) = {1505};
+Line Loop(1506) = {1512,-1507,-1511,1503}; Surface(1526) = {1506};
+Line Loop(1507) = {-1511,-1502,1510,1506}; Surface(1527) = {1507};
+Line Loop(1508) = {-1510,-1501,1509,1505}; Surface(1528) = {1508};
+Line Loop(1509) = {1521,-1520,-1524,1516}; Surface(1529) = {1509};
+Line Loop(1510) = {-1524,-1515,1523,1519}; Surface(1530) = {1510};
+Line Loop(1511) = {1523,-1518,-1522,1514}; Surface(1531) = {1511};
+Line Loop(1512) = {1522,-1517,-1521,1513}; Surface(1532) = {1512};
 
 /* barreau 16 et 16' */
 
@@ -714,14 +714,14 @@ Line Loop(1601) = {1602,1603,1604,1601};   Plane Surface(1621) = {1601};
 Line Loop(1602) = {1607,1608,1605,1606};   Plane Surface(1622) = {1602};
 Line Loop(1603) = {1616,1613,1614,1615};   Plane Surface(1623) = {1603};
 Line Loop(1604) = {1620,1617,1618,1619};   Plane Surface(1624) = {1604};
-Line Loop(1605) = {1608,-1609,-1604,1612}; Ruled Surface(1625) = {1605};
-Line Loop(1606) = {1612,-1607,-1611,1603}; Ruled Surface(1626) = {1606};
-Line Loop(1607) = {-1611,-1602,1610,1606}; Ruled Surface(1627) = {1607};
-Line Loop(1608) = {-1610,-1601,1609,1605}; Ruled Surface(1628) = {1608};
-Line Loop(1609) = {1621,-1620,-1624,1616}; Ruled Surface(1629) = {1609};
-Line Loop(1610) = {-1624,-1615,1623,1619}; Ruled Surface(1630) = {1610};
-Line Loop(1611) = {1623,-1618,-1622,1614}; Ruled Surface(1631) = {1611};
-Line Loop(1612) = {1622,-1617,-1621,1613}; Ruled Surface(1632) = {1612};
+Line Loop(1605) = {1608,-1609,-1604,1612}; Surface(1625) = {1605};
+Line Loop(1606) = {1612,-1607,-1611,1603}; Surface(1626) = {1606};
+Line Loop(1607) = {-1611,-1602,1610,1606}; Surface(1627) = {1607};
+Line Loop(1608) = {-1610,-1601,1609,1605}; Surface(1628) = {1608};
+Line Loop(1609) = {1621,-1620,-1624,1616}; Surface(1629) = {1609};
+Line Loop(1610) = {-1624,-1615,1623,1619}; Surface(1630) = {1610};
+Line Loop(1611) = {1623,-1618,-1622,1614}; Surface(1631) = {1611};
+Line Loop(1612) = {1622,-1617,-1621,1613}; Surface(1632) = {1612};
 
 /* barreau 17 et 17' */
 
@@ -750,14 +750,14 @@ Line Loop(1701) = {1702,1703,1704,1701};   Plane Surface(1721) = {1701};
 Line Loop(1702) = {1707,1708,1705,1706};   Plane Surface(1722) = {1702};
 Line Loop(1703) = {1716,1713,1714,1715};   Plane Surface(1723) = {1703};
 Line Loop(1704) = {1720,1717,1718,1719};   Plane Surface(1724) = {1704};
-Line Loop(1705) = {1708,-1709,-1704,1712}; Ruled Surface(1725) = {1705};
-Line Loop(1706) = {1712,-1707,-1711,1703}; Ruled Surface(1726) = {1706};
-Line Loop(1707) = {-1711,-1702,1710,1706}; Ruled Surface(1727) = {1707};
-Line Loop(1708) = {-1710,-1701,1709,1705}; Ruled Surface(1728) = {1708};
-Line Loop(1709) = {1721,-1720,-1724,1716}; Ruled Surface(1729) = {1709};
-Line Loop(1710) = {-1724,-1715,1723,1719}; Ruled Surface(1730) = {1710};
-Line Loop(1711) = {1723,-1718,-1722,1714}; Ruled Surface(1731) = {1711};
-Line Loop(1712) = {1722,-1717,-1721,1713}; Ruled Surface(1732) = {1712};
+Line Loop(1705) = {1708,-1709,-1704,1712}; Surface(1725) = {1705};
+Line Loop(1706) = {1712,-1707,-1711,1703}; Surface(1726) = {1706};
+Line Loop(1707) = {-1711,-1702,1710,1706}; Surface(1727) = {1707};
+Line Loop(1708) = {-1710,-1701,1709,1705}; Surface(1728) = {1708};
+Line Loop(1709) = {1721,-1720,-1724,1716}; Surface(1729) = {1709};
+Line Loop(1710) = {-1724,-1715,1723,1719}; Surface(1730) = {1710};
+Line Loop(1711) = {1723,-1718,-1722,1714}; Surface(1731) = {1711};
+Line Loop(1712) = {1722,-1717,-1721,1713}; Surface(1732) = {1712};
 
 /* barreau 18 et 18' */
 
@@ -786,14 +786,14 @@ Line Loop(1801) = {1802,1803,1804,1801};   Plane Surface(1821) = {1801};
 Line Loop(1802) = {1807,1808,1805,1806};   Plane Surface(1822) = {1802};
 Line Loop(1803) = {1816,1813,1814,1815};   Plane Surface(1823) = {1803};
 Line Loop(1804) = {1820,1817,1818,1819};   Plane Surface(1824) = {1804};
-Line Loop(1805) = {1808,-1809,-1804,1812}; Ruled Surface(1825) = {1805};
-Line Loop(1806) = {1812,-1807,-1811,1803}; Ruled Surface(1826) = {1806};
-Line Loop(1807) = {-1811,-1802,1810,1806}; Ruled Surface(1827) = {1807};
-Line Loop(1808) = {-1810,-1801,1809,1805}; Ruled Surface(1828) = {1808};
-Line Loop(1809) = {1821,-1820,-1824,1816}; Ruled Surface(1829) = {1809};
-Line Loop(1810) = {-1824,-1815,1823,1819}; Ruled Surface(1830) = {1810};
-Line Loop(1811) = {1823,-1818,-1822,1814}; Ruled Surface(1831) = {1811};
-Line Loop(1812) = {1822,-1817,-1821,1813}; Ruled Surface(1832) = {1812};
+Line Loop(1805) = {1808,-1809,-1804,1812}; Surface(1825) = {1805};
+Line Loop(1806) = {1812,-1807,-1811,1803}; Surface(1826) = {1806};
+Line Loop(1807) = {-1811,-1802,1810,1806}; Surface(1827) = {1807};
+Line Loop(1808) = {-1810,-1801,1809,1805}; Surface(1828) = {1808};
+Line Loop(1809) = {1821,-1820,-1824,1816}; Surface(1829) = {1809};
+Line Loop(1810) = {-1824,-1815,1823,1819}; Surface(1830) = {1810};
+Line Loop(1811) = {1823,-1818,-1822,1814}; Surface(1831) = {1811};
+Line Loop(1812) = {1822,-1817,-1821,1813}; Surface(1832) = {1812};
 
 /* barreau 19 et 19' */
 
@@ -822,14 +822,14 @@ Line Loop(1901) = {1902,1903,1904,1901};   Plane Surface(1921) = {1901};
 Line Loop(1902) = {1907,1908,1905,1906};   Plane Surface(1922) = {1902};
 Line Loop(1903) = {1916,1913,1914,1915};   Plane Surface(1923) = {1903};
 Line Loop(1904) = {1920,1917,1918,1919};   Plane Surface(1924) = {1904};
-Line Loop(1905) = {1908,-1909,-1904,1912}; Ruled Surface(1925) = {1905};
-Line Loop(1906) = {1912,-1907,-1911,1903}; Ruled Surface(1926) = {1906};
-Line Loop(1907) = {-1911,-1902,1910,1906}; Ruled Surface(1927) = {1907};
-Line Loop(1908) = {-1910,-1901,1909,1905}; Ruled Surface(1928) = {1908};
-Line Loop(1909) = {1921,-1920,-1924,1916}; Ruled Surface(1929) = {1909};
-Line Loop(1910) = {-1924,-1915,1923,1919}; Ruled Surface(1930) = {1910};
-Line Loop(1911) = {1923,-1918,-1922,1914}; Ruled Surface(1931) = {1911};
-Line Loop(1912) = {1922,-1917,-1921,1913}; Ruled Surface(1932) = {1912};
+Line Loop(1905) = {1908,-1909,-1904,1912}; Surface(1925) = {1905};
+Line Loop(1906) = {1912,-1907,-1911,1903}; Surface(1926) = {1906};
+Line Loop(1907) = {-1911,-1902,1910,1906}; Surface(1927) = {1907};
+Line Loop(1908) = {-1910,-1901,1909,1905}; Surface(1928) = {1908};
+Line Loop(1909) = {1921,-1920,-1924,1916}; Surface(1929) = {1909};
+Line Loop(1910) = {-1924,-1915,1923,1919}; Surface(1930) = {1910};
+Line Loop(1911) = {1923,-1918,-1922,1914}; Surface(1931) = {1911};
+Line Loop(1912) = {1922,-1917,-1921,1913}; Surface(1932) = {1912};
 
 /* barreau 20 et 20' */
 
@@ -858,14 +858,14 @@ Line Loop(2001) = {2002,2003,2004,2001};   Plane Surface(2021) = {2001};
 Line Loop(2002) = {2007,2008,2005,2006};   Plane Surface(2022) = {2002};
 Line Loop(2003) = {2016,2013,2014,2015};   Plane Surface(2023) = {2003};
 Line Loop(2004) = {2020,2017,2018,2019};   Plane Surface(2024) = {2004};
-Line Loop(2005) = {2008,-2009,-2004,2012}; Ruled Surface(2025) = {2005};
-Line Loop(2006) = {2012,-2007,-2011,2003}; Ruled Surface(2026) = {2006};
-Line Loop(2007) = {-2011,-2002,2010,2006}; Ruled Surface(2027) = {2007};
-Line Loop(2008) = {-2010,-2001,2009,2005}; Ruled Surface(2028) = {2008};
-Line Loop(2009) = {2021,-2020,-2024,2016}; Ruled Surface(2029) = {2009};
-Line Loop(2010) = {-2024,-2015,2023,2019}; Ruled Surface(2030) = {2010};
-Line Loop(2011) = {2023,-2018,-2022,2014}; Ruled Surface(2031) = {2011};
-Line Loop(2012) = {2022,-2017,-2021,2013}; Ruled Surface(2032) = {2012};
+Line Loop(2005) = {2008,-2009,-2004,2012}; Surface(2025) = {2005};
+Line Loop(2006) = {2012,-2007,-2011,2003}; Surface(2026) = {2006};
+Line Loop(2007) = {-2011,-2002,2010,2006}; Surface(2027) = {2007};
+Line Loop(2008) = {-2010,-2001,2009,2005}; Surface(2028) = {2008};
+Line Loop(2009) = {2021,-2020,-2024,2016}; Surface(2029) = {2009};
+Line Loop(2010) = {-2024,-2015,2023,2019}; Surface(2030) = {2010};
+Line Loop(2011) = {2023,-2018,-2022,2014}; Surface(2031) = {2011};
+Line Loop(2012) = {2022,-2017,-2021,2013}; Surface(2032) = {2012};
 
 /* barreau 21 et 21' */
 
@@ -894,14 +894,14 @@ Line Loop(2101) = {2102,2103,2104,2101};   Plane Surface(2121) = {2101};
 Line Loop(2102) = {2107,2108,2105,2106};   Plane Surface(2122) = {2102};
 Line Loop(2103) = {2116,2113,2114,2115};   Plane Surface(2123) = {2103};
 Line Loop(2104) = {2120,2117,2118,2119};   Plane Surface(2124) = {2104};
-Line Loop(2105) = {2108,-2109,-2104,2112}; Ruled Surface(2125) = {2105};
-Line Loop(2106) = {2112,-2107,-2111,2103}; Ruled Surface(2126) = {2106};
-Line Loop(2107) = {-2111,-2102,2110,2106}; Ruled Surface(2127) = {2107};
-Line Loop(2108) = {-2110,-2101,2109,2105}; Ruled Surface(2128) = {2108};
-Line Loop(2109) = {2121,-2120,-2124,2116}; Ruled Surface(2129) = {2109};
-Line Loop(2110) = {-2124,-2115,2123,2119}; Ruled Surface(2130) = {2110};
-Line Loop(2111) = {2123,-2118,-2122,2114}; Ruled Surface(2131) = {2111};
-Line Loop(2112) = {2122,-2117,-2121,2113}; Ruled Surface(2132) = {2112};
+Line Loop(2105) = {2108,-2109,-2104,2112}; Surface(2125) = {2105};
+Line Loop(2106) = {2112,-2107,-2111,2103}; Surface(2126) = {2106};
+Line Loop(2107) = {-2111,-2102,2110,2106}; Surface(2127) = {2107};
+Line Loop(2108) = {-2110,-2101,2109,2105}; Surface(2128) = {2108};
+Line Loop(2109) = {2121,-2120,-2124,2116}; Surface(2129) = {2109};
+Line Loop(2110) = {-2124,-2115,2123,2119}; Surface(2130) = {2110};
+Line Loop(2111) = {2123,-2118,-2122,2114}; Surface(2131) = {2111};
+Line Loop(2112) = {2122,-2117,-2121,2113}; Surface(2132) = {2112};
 
 /* barreau 22 et 22' */
 
@@ -930,14 +930,14 @@ Line Loop(2201) = {2202,2203,2204,2201};   Plane Surface(2221) = {2201};
 Line Loop(2202) = {2207,2208,2205,2206};   Plane Surface(2222) = {2202};
 Line Loop(2203) = {2216,2213,2214,2215};   Plane Surface(2223) = {2203};
 Line Loop(2204) = {2220,2217,2218,2219};   Plane Surface(2224) = {2204};
-Line Loop(2205) = {2208,-2209,-2204,2212}; Ruled Surface(2225) = {2205};
-Line Loop(2206) = {2212,-2207,-2211,2203}; Ruled Surface(2226) = {2206};
-Line Loop(2207) = {-2211,-2202,2210,2206}; Ruled Surface(2227) = {2207};
-Line Loop(2208) = {-2210,-2201,2209,2205}; Ruled Surface(2228) = {2208};
-Line Loop(2209) = {2221,-2220,-2224,2216}; Ruled Surface(2229) = {2209};
-Line Loop(2210) = {-2224,-2215,2223,2219}; Ruled Surface(2230) = {2210};
-Line Loop(2211) = {2223,-2218,-2222,2214}; Ruled Surface(2231) = {2211};
-Line Loop(2212) = {2222,-2217,-2221,2213}; Ruled Surface(2232) = {2212};
+Line Loop(2205) = {2208,-2209,-2204,2212}; Surface(2225) = {2205};
+Line Loop(2206) = {2212,-2207,-2211,2203}; Surface(2226) = {2206};
+Line Loop(2207) = {-2211,-2202,2210,2206}; Surface(2227) = {2207};
+Line Loop(2208) = {-2210,-2201,2209,2205}; Surface(2228) = {2208};
+Line Loop(2209) = {2221,-2220,-2224,2216}; Surface(2229) = {2209};
+Line Loop(2210) = {-2224,-2215,2223,2219}; Surface(2230) = {2210};
+Line Loop(2211) = {2223,-2218,-2222,2214}; Surface(2231) = {2211};
+Line Loop(2212) = {2222,-2217,-2221,2213}; Surface(2232) = {2212};
 
 /* barreau x et x' */
 /*
@@ -966,14 +966,14 @@ Line Loop(x01) = {x02,x03,x04,x01};   Plane Surface(x21) = {x01};
 Line Loop(x02) = {x07,x08,x05,x06};   Plane Surface(x22) = {x02};
 Line Loop(x03) = {x16,x13,x14,x15};   Plane Surface(x23) = {x03};
 Line Loop(x04) = {x20,x17,x18,x19};   Plane Surface(x24) = {x04};
-Line Loop(x05) = {x08,-x09,-x04,x12}; Ruled Surface(x25) = {x05};
-Line Loop(x06) = {x12,-x07,-x11,x03}; Ruled Surface(x26) = {x06};
-Line Loop(x07) = {-x11,-x02,x10,x06}; Ruled Surface(x27) = {x07};
-Line Loop(x08) = {-x10,-x01,x09,x05}; Ruled Surface(x28) = {x08};
-Line Loop(x09) = {x21,-x20,-x24,x16}; Ruled Surface(x29) = {x09};
-Line Loop(x10) = {-x24,-x15,x23,x19}; Ruled Surface(x30) = {x10};
-Line Loop(x11) = {x23,-x18,-x22,x14}; Ruled Surface(x31) = {x11};
-Line Loop(x12) = {x22,-x17,-x21,x13}; Ruled Surface(x32) = {x12};
+Line Loop(x05) = {x08,-x09,-x04,x12}; Surface(x25) = {x05};
+Line Loop(x06) = {x12,-x07,-x11,x03}; Surface(x26) = {x06};
+Line Loop(x07) = {-x11,-x02,x10,x06}; Surface(x27) = {x07};
+Line Loop(x08) = {-x10,-x01,x09,x05}; Surface(x28) = {x08};
+Line Loop(x09) = {x21,-x20,-x24,x16}; Surface(x29) = {x09};
+Line Loop(x10) = {-x24,-x15,x23,x19}; Surface(x30) = {x10};
+Line Loop(x11) = {x23,-x18,-x22,x14}; Surface(x31) = {x11};
+Line Loop(x12) = {x22,-x17,-x21,x13}; Surface(x32) = {x12};
 */
 
 /* surface longerons */

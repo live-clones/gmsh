@@ -29,7 +29,7 @@ Spline(12) = {1009,1008,1007,1006};
 Spline(13) = {1006,1005,1004,1000};
 Spline(14) = {1000,1001,1002,1003};
 Line Loop(15) = {11,12,13,14};
-Ruled Surface(16) = {15};
+Surface(16) = {15};
 
 pp[] = Intersect Line {1:N} Surface {16};
 
@@ -39,4 +39,4 @@ Delete { Surface{16}; }
 Hide { Line{1:N}; Point{1:2*N}; }
 
 Line Loop(16) = {1000};
-Ruled Surface(16) = {15, 16};
+Surface(16) = {15, 16};

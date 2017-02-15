@@ -61,15 +61,15 @@ Line(22) = { 9, 16};
 Line(23) = {11, 16};
 Line(24) = {12, 13};
 
-Line Loop(25) = {  1,  17, -24,  12}; Ruled Surface(26) = {25};
-Line Loop(27) = {  2,  18, -13, -17}; Ruled Surface(28) = {27};
-Line Loop(29) = {  3,   4,  19, -18}; Ruled Surface(30) = {29};
-Line Loop(31) = {  5,  20, -14, -19}; Ruled Surface(32) = {31};
-Line Loop(33) = {  6,   7,  21, -20}; Ruled Surface(34) = {33};
-Line Loop(35) = {  8,  22, -15, -21}; Ruled Surface(36) = {35};
-Line Loop(37) = {  9,  10,  23, -22}; Ruled Surface(38) = {37};
-Line Loop(39) = { 11,  24, -16, -23}; Ruled Surface(40) = {39};
-Line Loop(41) = { 13,  14,  15,  16}; Ruled Surface(42) = {41};
+Line Loop(25) = {  1,  17, -24,  12}; Surface(26) = {25};
+Line Loop(27) = {  2,  18, -13, -17}; Surface(28) = {27};
+Line Loop(29) = {  3,   4,  19, -18}; Surface(30) = {29};
+Line Loop(31) = {  5,  20, -14, -19}; Surface(32) = {31};
+Line Loop(33) = {  6,   7,  21, -20}; Surface(34) = {33};
+Line Loop(35) = {  8,  22, -15, -21}; Surface(36) = {35};
+Line Loop(37) = {  9,  10,  23, -22}; Surface(38) = {37};
+Line Loop(39) = { 11,  24, -16, -23}; Surface(40) = {39};
+Line Loop(41) = { 13,  14,  15,  16}; Surface(42) = {41};
 
 // number of points on lines
 NPint = 4; // number of points on interior lines

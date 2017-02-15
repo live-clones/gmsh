@@ -115,13 +115,13 @@ Plane Surface(66) = {65};
 Line Loop(67) = {33,-31,-21,30};
 Plane Surface(68) = {67};
 Line Loop(69) = {-28,-30,22};
-Ruled Surface(70) = {69};
+Surface(70) = {69};
 Line Loop(71) = {-29,-31,23};
-Ruled Surface(72) = {71};
+Surface(72) = {71};
 Line Loop(73) = {-24,22,26};
-Ruled Surface(74) = {73};
+Surface(74) = {73};
 Line Loop(75) = {-25,23,27};
-Ruled Surface(76) = {75};
+Surface(76) = {75};
 
 Surface Loop(77) = {48,-46,-38,-40,-44,42,-36};
 Volume(78) = {77};

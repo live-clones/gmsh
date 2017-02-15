@@ -563,7 +563,7 @@ static void getFaceVerticesOnGeo(GFace *gf, MElement *incomplete, const MElement
       GPoint gp = gf->point(SPoint2(GUESS[0], GUESS[1]));
       // closest point is not necessary (slow and for high quality HO
       // meshes it should be optimized anyway afterwards + closest point
-      // is still buggy (e.g. BFGS for a plane Ruled Surface)
+      // is still buggy (e.g. BFGS for a plane "Ruled Surface")
       // GPoint gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
       if (gp.g()){
         v = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());

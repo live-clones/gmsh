@@ -552,10 +552,10 @@ Line Loop(3) = { 1, 2, 3, 4 };		Plane Surface(4) = {3,1};
 
 // obal Vzduchov. valca
 
-Line Loop(5) = { -1, 129, 125, -130 };	Ruled Surface(6) = {5};
-Line Loop(7) = { -2, 130, 126, -131 };	Ruled Surface(8) = {7};
-Line Loop(9) = { -3, 131, 127, -132 };	Ruled Surface(10) = {9};
-Line Loop(11) = { -4, 132, 128, -129 };	Ruled Surface(12) = {11};
+Line Loop(5) = { -1, 129, 125, -130 };	Surface(6) = {5};
+Line Loop(7) = { -2, 130, 126, -131 };	Surface(8) = {7};
+Line Loop(9) = { -3, 131, 127, -132 };	Surface(10) = {9};
+Line Loop(11) = { -4, 132, 128, -129 };	Surface(12) = {11};
 
 // Dolna podstava ( + dolna podstava lana mimo sondy )
 
@@ -564,17 +564,17 @@ Line Loop(15) = { -128, -127, -126, -125 };		Plane Surface(16) = {15,13};
 
 // Lano mimo sondy (hore)
 
-Line Loop(17) = { -5, 189, 17, -192 };	Ruled Surface(18) = {17};
-Line Loop(19) = { -6, 192, 18, -195 };	Ruled Surface(20) = {19};
-Line Loop(21) = { -7, 195, 19, -198 };	Ruled Surface(22) = {21};
-Line Loop(23) = { -8, 198, 20, -189 };	Ruled Surface(24) = {23};
+Line Loop(17) = { -5, 189, 17, -192 };	Surface(18) = {17};
+Line Loop(19) = { -6, 192, 18, -195 };	Surface(20) = {19};
+Line Loop(21) = { -7, 195, 19, -198 };	Surface(22) = {21};
+Line Loop(23) = { -8, 198, 20, -189 };	Surface(24) = {23};
 
 // Lano mimo sondy (dole)
 
-Line Loop(25) = { -109, 191, 121, -194 };	Ruled Surface(26) = {25};
-Line Loop(27) = { -110, 194, 122, -197 };	Ruled Surface(28) = {27};
-Line Loop(29) = { -111, 197, 123, -200 };	Ruled Surface(30) = {29};
-Line Loop(31) = { -112, 200, 124, -191 };	Ruled Surface(32) = {31};
+Line Loop(25) = { -109, 191, 121, -194 };	Surface(26) = {25};
+Line Loop(27) = { -110, 194, 122, -197 };	Surface(28) = {27};
+Line Loop(29) = { -111, 197, 123, -200 };	Surface(30) = {29};
+Line Loop(31) = { -112, 200, 124, -191 };	Surface(32) = {31};
 
 // Kovovy kryt - sluzi na odtienenie feromagnetickych okolitych vplyvov
 
@@ -588,24 +588,24 @@ Line Loop(37) = { 9, 10, 11, 12 };	Plane Surface(38) = {37,35};
 
 // Horna podstava krytu - valcovy (vonkajsi) plast hornej podstavy
 
-Line Loop(39) = { -9, 133, 21, -134 };	Ruled Surface(40) = {39};
-Line Loop(41) = { -10, 134, 22, -135 };	Ruled Surface(42) = {41};
-Line Loop(43) = { -11, 135, 23, -136 };	Ruled Surface(44) = {43};
-Line Loop(45) = { -12, 136, 24, -133 };	Ruled Surface(46) = {45};
+Line Loop(39) = { -9, 133, 21, -134 };	Surface(40) = {39};
+Line Loop(41) = { -10, 134, 22, -135 };	Surface(42) = {41};
+Line Loop(43) = { -11, 135, 23, -136 };	Surface(44) = {43};
+Line Loop(45) = { -12, 136, 24, -133 };	Surface(46) = {45};
 
 // Valcovy plast vonkajsku tela krytu ( rozhranie so vzduchovym obalom )
 
-Line Loop(47) = { -21, 149, 101, -150 }; 	Ruled Surface(48) = {47};
-Line Loop(49) = { -22, 150, 102, -151 }; 	Ruled Surface(50) = {49};
-Line Loop(51) = { -23, 151, 103, -152 };	Ruled Surface(52) = {51};
-Line Loop(53) = { -24, 152, 104, -149 }; 	Ruled Surface(54) = {53};
+Line Loop(47) = { -21, 149, 101, -150 }; 	Surface(48) = {47};
+Line Loop(49) = { -22, 150, 102, -151 }; 	Surface(50) = {49};
+Line Loop(51) = { -23, 151, 103, -152 };	Surface(52) = {51};
+Line Loop(53) = { -24, 152, 104, -149 }; 	Surface(54) = {53};
 
 // Dolna podstava krytu - valcovy (vonkajsi) plast dolnej podstavy
 
-Line Loop(55) = { -101, 141, 117, -142 };	Ruled Surface(56) = {55};
-Line Loop(57) = { -102, 142, 118, -143 };	Ruled Surface(58) = {57};
-Line Loop(59) = { -103, 143, 119, -144 };	Ruled Surface(60) = {59};
-Line Loop(61) = { -104, 144, 120, -141 };	Ruled Surface(62) = {61};
+Line Loop(55) = { -101, 141, 117, -142 };	Surface(56) = {55};
+Line Loop(57) = { -102, 142, 118, -143 };	Surface(58) = {57};
+Line Loop(59) = { -103, 143, 119, -144 };	Surface(60) = {59};
+Line Loop(61) = { -104, 144, 120, -141 };	Surface(62) = {61};
 
 // Dolna podstava krytu - dolna (vonkajsia) plocha ( rozhranie so vzduchovym obalom )
 
@@ -617,10 +617,10 @@ Line Loop(67) = { -120, -119, -118, -117 };	Plane Surface(68) = {67,65};
 
 // Lano v sonde - plast valca
 
-Line Loop(69) = { -193, -17, 190, 109 };	Ruled Surface(70) = {69};
-Line Loop(71) = { -196, -18, 193, 110 };	Ruled Surface(72) = {71};
-Line Loop(73) = { -199, -19, 196, 111 };	Ruled Surface(74) = {73};
-Line Loop(75) = { -190, -20, 199, 112 };	Ruled Surface(76) = {75};
+Line Loop(69) = { -193, -17, 190, 109 };	Surface(70) = {69};
+Line Loop(71) = { -196, -18, 193, 110 };	Surface(72) = {71};
+Line Loop(73) = { -199, -19, 196, 111 };	Surface(74) = {73};
+Line Loop(75) = { -190, -20, 199, 112 };	Surface(76) = {75};
 
 // Cievka 1
 
@@ -633,17 +633,17 @@ Line Loop(79) = { 33, 34, 35, 36 };	Plane Surface(80) = {79,77};
 
 // vnutorny
 
-Line Loop(81) = { -158, -37, 157, 45 };	Ruled Surface(82) = {81};
-Line Loop(83) = { -159, -38, 158, 46 };	Ruled Surface(84) = {83};
-Line Loop(85) = { -160, -39, 159, 47 };	Ruled Surface(86) = {85};
-Line Loop(87) = { -157, -40, 160, 48 };	Ruled Surface(88) = {87};
+Line Loop(81) = { -158, -37, 157, 45 };	Surface(82) = {81};
+Line Loop(83) = { -159, -38, 158, 46 };	Surface(84) = {83};
+Line Loop(85) = { -160, -39, 159, 47 };	Surface(86) = {85};
+Line Loop(87) = { -157, -40, 160, 48 };	Surface(88) = {87};
 
 // vonkajsi
 
-Line Loop(89) = { -161, -33, 164, 41 };	Ruled Surface(90) = {89};
-Line Loop(91) = { -162, -34, 161, 42 };	Ruled Surface(92) = {91};
-Line Loop(93) = { -163, -35, 162, 43 };	Ruled Surface(94) = {93};
-Line Loop(95) = { -164, -36, 163, 44 };	Ruled Surface(96) = {95};
+Line Loop(89) = { -161, -33, 164, 41 };	Surface(90) = {89};
+Line Loop(91) = { -162, -34, 161, 42 };	Surface(92) = {91};
+Line Loop(93) = { -163, -35, 162, 43 };	Surface(94) = {93};
+Line Loop(95) = { -164, -36, 163, 44 };	Surface(96) = {95};
 
 // Dolna plocha - cievky
 
@@ -661,17 +661,17 @@ Line Loop(103) = { 49, 50, 51, 52 };	Plane Surface(104) = {103,101};
 
 // vnutorny
 
-Line Loop(105) = { -166, -53, 165, 61 };	Ruled Surface(106) = {105};
-Line Loop(107) = { -167, -54, 166, 62 };	Ruled Surface(108) = {107};
-Line Loop(109) = { -168, -55, 167, 63 };	Ruled Surface(110) = {109};
-Line Loop(111) = { -165, -56, 168, 64 };	Ruled Surface(112) = {111};
+Line Loop(105) = { -166, -53, 165, 61 };	Surface(106) = {105};
+Line Loop(107) = { -167, -54, 166, 62 };	Surface(108) = {107};
+Line Loop(109) = { -168, -55, 167, 63 };	Surface(110) = {109};
+Line Loop(111) = { -165, -56, 168, 64 };	Surface(112) = {111};
 
 // vonkajsi
 
-Line Loop(113) = { -170, -49, 169, 57 };	Ruled Surface(114) = {113};
-Line Loop(115) = { -171, -50, 170, 58 };	Ruled Surface(116) = {115};
-Line Loop(117) = { -172, -51, 171, 59 };	Ruled Surface(118) = {117};
-Line Loop(119) = { -169, -52, 172, 60 };	Ruled Surface(120) = {119};
+Line Loop(113) = { -170, -49, 169, 57 };	Surface(114) = {113};
+Line Loop(115) = { -171, -50, 170, 58 };	Surface(116) = {115};
+Line Loop(117) = { -172, -51, 171, 59 };	Surface(118) = {117};
+Line Loop(119) = { -169, -52, 172, 60 };	Surface(120) = {119};
 
 // Dolna plocha - cievky
 
@@ -689,17 +689,17 @@ Line Loop(127) = { 65, 66, 67, 68 };	Plane Surface(128) = {127,125};
 
 // vnutorny
 
-Line Loop(129) = { -174, -69, 173, 77 };	Ruled Surface(130) = {129};
-Line Loop(131) = { -175, -70, 174, 78 };	Ruled Surface(132) = {131};
-Line Loop(133) = { -176, -71, 175, 79 };	Ruled Surface(134) = {133};
-Line Loop(135) = { -173, -72, 176, 80 };	Ruled Surface(136) = {135};
+Line Loop(129) = { -174, -69, 173, 77 };	Surface(130) = {129};
+Line Loop(131) = { -175, -70, 174, 78 };	Surface(132) = {131};
+Line Loop(133) = { -176, -71, 175, 79 };	Surface(134) = {133};
+Line Loop(135) = { -173, -72, 176, 80 };	Surface(136) = {135};
 
 // vonkajsi
 
-Line Loop(137) = { -178, -65, 177, 73 };	Ruled Surface(138) = {137};
-Line Loop(139) = { -179, -66, 178, 74 };	Ruled Surface(140) = {139};
-Line Loop(141) = { -180, -67, 179, 75 };	Ruled Surface(142) = {141};
-Line Loop(143) = { -177, -68, 180, 76 };	Ruled Surface(144) = {143};
+Line Loop(137) = { -178, -65, 177, 73 };	Surface(138) = {137};
+Line Loop(139) = { -179, -66, 178, 74 };	Surface(140) = {139};
+Line Loop(141) = { -180, -67, 179, 75 };	Surface(142) = {141};
+Line Loop(143) = { -177, -68, 180, 76 };	Surface(144) = {143};
 
 // Dolna plocha - cievky
 
@@ -717,17 +717,17 @@ Line Loop(151) = { 81, 82, 83, 84 };	Plane Surface(152) = {151,149};
 
 // vnutorny
 
-Line Loop(153) = { -182, -85, 181, 93 };	Ruled Surface(154) = {153};
-Line Loop(155) = { -183, -86, 182, 94 };	Ruled Surface(156) = {155};
-Line Loop(157) = { -184, -87, 183, 95 };	Ruled Surface(158) = {157};
-Line Loop(159) = { -181, -88, 184, 96 };	Ruled Surface(160) = {159};
+Line Loop(153) = { -182, -85, 181, 93 };	Surface(154) = {153};
+Line Loop(155) = { -183, -86, 182, 94 };	Surface(156) = {155};
+Line Loop(157) = { -184, -87, 183, 95 };	Surface(158) = {157};
+Line Loop(159) = { -181, -88, 184, 96 };	Surface(160) = {159};
 
 // vonkajsi
 
-Line Loop(161) = { -186, -81, 185, 89 };	Ruled Surface(162) = {161};
-Line Loop(163) = { -187, -82, 186, 90 };	Ruled Surface(164) = {163};
-Line Loop(165) = { -188, -83, 187, 91 };	Ruled Surface(166) = {165};
-Line Loop(167) = { -185, -84, 188, 92 };	Ruled Surface(168) = {167};
+Line Loop(161) = { -186, -81, 185, 89 };	Surface(162) = {161};
+Line Loop(163) = { -187, -82, 186, 90 };	Surface(164) = {163};
+Line Loop(165) = { -188, -83, 187, 91 };	Surface(166) = {165};
+Line Loop(167) = { -185, -84, 188, 92 };	Surface(168) = {167};
 
 // Dolna plocha - cievky
 
@@ -738,10 +738,10 @@ Line Loop(171) = { -89, -90, -91, -92 };	Plane Surface(172) = {171,169};
 
 // Plochy v otvore krytu na hornej podstave
 
-Line Loop(173) = { 137, -13, -138, 29 };	Ruled Surface(174) = {173};
-Line Loop(175) = { 138, -14, -139, 30 };	Ruled Surface(176) = {175};
-Line Loop(177) = { 139, -15, -140, 31 };	Ruled Surface(178) = {177};
-Line Loop(179) = { 140, -16, -137, 32 };	Ruled Surface(180) = {179};
+Line Loop(173) = { 137, -13, -138, 29 };	Surface(174) = {173};
+Line Loop(175) = { 138, -14, -139, 30 };	Surface(176) = {175};
+Line Loop(177) = { 139, -15, -140, 31 };	Surface(178) = {177};
+Line Loop(179) = { 140, -16, -137, 32 };	Surface(180) = {179};
 
 // Horna vnutorna podstava krytu
 
@@ -750,10 +750,10 @@ Line Loop(183) = { 25, 26, 27, 28 };	Plane Surface(184) = {183,181};
 
 // Vnutorny plast krytu
 
-Line Loop(185) = { 154, -25, -153, 105 };	Ruled Surface(186) = {185};
-Line Loop(187) = { 155, -26, -154, 106 };	Ruled Surface(188) = {187};
-Line Loop(189) = { 156, -27, -155, 107 };	Ruled Surface(190) = {189};
-Line Loop(191) = { 153, -28, -156, 108 };	Ruled Surface(192) = {191};
+Line Loop(185) = { 154, -25, -153, 105 };	Surface(186) = {185};
+Line Loop(187) = { 155, -26, -154, 106 };	Surface(188) = {187};
+Line Loop(189) = { 156, -27, -155, 107 };	Surface(190) = {189};
+Line Loop(191) = { 153, -28, -156, 108 };	Surface(192) = {191};
 
 // Dolna vnutorna podstava krytu
 
@@ -762,10 +762,10 @@ Line Loop(195) = { -105, -106, -107, -108 };	Plane Surface(196) = {195,193};
 
 // Plochy v otvore krytu na dolnej podstave
 
-Line Loop(197) = { -145, 97, 146, -113 };	Ruled Surface(198) = {197};
-Line Loop(199) = { -146, 98, 147, -114 };	Ruled Surface(200) = {199};
-Line Loop(201) = { -147, 99, 148, -115 };	Ruled Surface(202) = {201};
-Line Loop(203) = { -148, 100, 145, -116 };	Ruled Surface(204) = {203};
+Line Loop(197) = { -145, 97, 146, -113 };	Surface(198) = {197};
+Line Loop(199) = { -146, 98, 147, -114 };	Surface(200) = {199};
+Line Loop(201) = { -147, 99, 148, -115 };	Surface(202) = {201};
+Line Loop(203) = { -148, 100, 145, -116 };	Surface(204) = {203};
 
 
 /* Definicia objemov jednotlivych priestorov */

@@ -14,7 +14,7 @@ l2b=newl; Circle(l2b)= {p2, p02, p2b};
 s1=newll;
 s1=news;
 Line Loop(s1)= {l1, l2b, -l1b, -l2};
-Ruled Surface(s1)= {s1};
+Surface(s1)= {s1};
 
 l0=newl; Line(l0) = {p01, p02};
 
@@ -27,16 +27,16 @@ l022b=newl; Line(l022b) = {p02, p2b};
 s2=newll;
 s2=news;
 Line Loop(s2)= {l0, l022, -l1, -l011};
-Ruled Surface(s2)= {s2};
+Surface(s2)= {s2};
 //Plane Surface(s2)= {s2};
 
 s2b=newll;
 s2b=news;
 Line Loop(s2b)= {l0, l022b, -l1b, -l011b};
-Ruled Surface(s2b)= {s2b};
+Surface(s2b)= {s2b};
 //Plane Surface(s2b)= {s2b};
 
 //Periodic Line {l1b, l011b, l022b} = {l1, l011, l022};
 
-// Periodic Surface seems to work properly only with Ruled Surfaces (meshing problem with Plane Surface)
+// Periodic Surface seems to work properly only with Surfaces (meshing problem with Plane Surface)
 Periodic Surface s2b {Boundary{Surface{s2b};}} = s2 {Boundary{Surface{s2};}};

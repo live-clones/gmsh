@@ -1057,7 +1057,7 @@ static void add_new_surface_volume(int mode)
             switch (mode) {
             case 0: add_surf("Plane Surface", List2,
                              GModel::current()->getFileName()); break;
-            case 1: add_surf("Ruled Surface", List2,
+            case 1: add_surf("Surface", List2,
                              GModel::current()->getFileName()); break;
             case 2: add_vol(List2, GModel::current()->getFileName()); break;
             }
@@ -1099,7 +1099,7 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
     add_new_ellipse();
   else if(str == "Plane Surface")
     add_new_surface_volume(0);
-  else if(str == "Ruled Surface")
+  else if(str == "Surface")
     add_new_surface_volume(1);
   else if(str == "Volume")
     add_new_surface_volume(2);
@@ -3671,7 +3671,7 @@ static menuItem static_modules[] = {
   {"0Modules/Geometry/Elementary entities/Add/Plane surface",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Plane Surface"} ,
   {"0Modules/Geometry/Elementary entities/Add/Ruled surface",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Ruled Surface"} ,
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Surface"} ,
   {"0Modules/Geometry/Elementary entities/Add/Volume",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Volume"} ,
   {"0Modules/Geometry/Elementary entities/Translate/Point",

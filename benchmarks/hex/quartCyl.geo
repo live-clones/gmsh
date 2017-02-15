@@ -37,9 +37,9 @@ Plane Surface(18) = {17};
 Line Loop(19) = {12, 9, -11, 10};
 Plane Surface(20) = {19};
 Line Loop(21) = {1, -7, -2, 12};
-Ruled Surface(22) = {21};
+Surface(22) = {21};
 Line Loop(23) = {8, -4, 11, 3};
-Ruled Surface(24) = {23};
+Surface(24) = {23};
 
 Surface Loop(25) = {14, 16, 22, 20, 18, 24};
 Volume(26) = {25};

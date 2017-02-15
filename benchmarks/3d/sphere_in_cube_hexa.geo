@@ -30,7 +30,7 @@ Circle(30) = {102,1,105};
 Circle(31) = {105,1,104};
 Circle(32) = {104,1,103};
 Line Loop(33) = {29,30,31,32};
-Ruled Surface(34) = {33};
+Surface(34) = {33};
 Rotate { {1,0,0},{0,0,0}, Pi/2 } { Duplicata{ Surface{34}; } }
 Rotate { {1,0,0},{0,0,0}, Pi } { Duplicata{ Surface{34}; } }
 Rotate { {1,0,0},{0,0,0}, 3*Pi/2 } { Duplicata{ Surface{34}; } }

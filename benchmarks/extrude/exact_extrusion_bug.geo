@@ -10,7 +10,7 @@ Line(2) = {3,2};
 Line(3) = {2,1};
 Line(4) = {1,4};
 Line Loop(5) = {2,3,4,1};
-Ruled Surface(6) = {5};
+Surface(6) = {5};
 
 // This is OK
 /*
@@ -18,7 +18,7 @@ Line(7) = {6,4};
 Line(8) = {1,5};
 Line(9) = {5,6};
 Line Loop(10) = {7,-4,8,9};
-Ruled Surface(11) = {10};
+Surface(11) = {10};
 Rotate {{0,1,0}, {0,0,0}, Pi/4} { Surface{6,11}; }
 */
 

@@ -147,13 +147,13 @@ Circle(120) = {100, centre,102};
 Circle(121) = {101, centre,103};
 
 Line Loop(122) = {-112,120,114};
-Ruled Surface(123) = {122};
+Surface(123) = {122};
 Line Loop(124) = {-113,121,115};
-Ruled Surface(125) = {124};
+Surface(125) = {124};
 Line Loop(126) = {118,-116,120};
-Ruled Surface(127) = {126};
+Surface(127) = {126};
 Line Loop(128) = {-119,-121,117};
-Ruled Surface(129) = {128};
+Surface(129) = {128};
 
 Line Loop(130) = {-112,116,-108,9,18,43,64,-37,110};
 Plane Surface(131) = {130};

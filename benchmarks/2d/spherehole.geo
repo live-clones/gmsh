@@ -10,7 +10,7 @@ Circle(7) = {5,1,7};
 Circle(10) = {7,1,4};
 
 Line Loop(15) = {10,3,7};
-Ruled Surface(16) = {15} In Sphere{1};
+Surface(16) = {15} In Sphere{1};
 
  
 N=50;
@@ -37,6 +37,6 @@ Delete { Surface{16}; }
 
 Line Loop(16001) = {-1000};
 
-//Ruled Surface(20000) = {15};
-Ruled Surface(20000) = {15,16001} In Sphere{1};
+//Surface(20000) = {15};
+Surface(20000) = {15,16001} In Sphere{1};
 

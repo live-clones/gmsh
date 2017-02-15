@@ -64,10 +64,10 @@ lineloop1=newll-1;
 Line Loop (newll) = {cross_line1+1, outer_line1+1, -(cross_line1+2), -(inner_line1+1)};
 Line Loop (newll) = {cross_line1+2, outer_line1+2, -(cross_line1+3), -(inner_line1+2)};
 Line Loop (newll) = {cross_line1+3, outer_line1+3, -cross_line1, -(inner_line1+3)};
-Ruled Surface (news) = lineloop1;
-Ruled Surface (news) = lineloop1+1;
-Ruled Surface (news) = lineloop1+2;
-Ruled Surface (news) = lineloop1+3;
+Surface (news) = lineloop1;
+Surface (news) = lineloop1+1;
+Surface (news) = lineloop1+2;
+Surface (news) = lineloop1+3;
 ind_surfaces = {news-3, news-4, news-2, news-1};
 Compound Surface (news) = {ind_surfaces[]};
 //Hide {Surface{ind_surfaces[]};}

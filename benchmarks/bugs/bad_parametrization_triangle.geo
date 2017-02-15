@@ -10,8 +10,8 @@ Circle(5) = {2,1,4};
 
 // good parametrization
 Line Loop(6) = {-1,-4,3};
-Ruled Surface(7) = {6};
+Surface(7) = {6};
 
 // bad parametrization
 Line Loop(8) = {1,-2,-5};
-Ruled Surface(9) = {8};
+Surface(9) = {8};

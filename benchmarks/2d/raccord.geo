@@ -19,16 +19,16 @@ Circle(3) = {7,5,6};
 Line(4) = {4,7};
 Line(5) = {2,6};
 Line Loop(6) = {2,4,3,-5};
-Ruled Surface(7) = {6};
+Surface(7) = {6};
 Circle(8) = {10,8,9};
 Circle(9) = {9,8,11};
 Line(10) = {10,3};
 Line(11) = {9,2};
 Line(12) = {11,4};
 Line Loop(13) = {-2,-11,9,12};
-Ruled Surface(14) = {13};
+Surface(14) = {13};
 Line Loop(15) = {-1,-10,8,11};
-Ruled Surface(16) = {15};
+Surface(16) = {15};
 //Recombine Surface{7,14,16};
 Symmetry { 0,1,0,0 } {
   Duplicata { Surface{14}; }

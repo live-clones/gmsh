@@ -28,15 +28,15 @@ Line(13) = {8,7};
 Line(14) = {8,9};
 
 Line Loop(15) = {14,-7,-4,12};
-Ruled Surface(16) = {15};
+Surface(16) = {15};
 Line Loop(17) = {7,8,9,1};
-Ruled Surface(18) = {17};
+Surface(18) = {17};
 Line Loop(19) = {-10,-8,-14,13};
-Ruled Surface(20) = {19};
+Surface(20) = {19};
 Line Loop(21) = {-11,-13,-12,2};
-Ruled Surface(22) = {21};
+Surface(22) = {21};
 Line Loop(23) = {-9,10,11,3};
-Ruled Surface(24) = {23};
+Surface(24) = {23};
 
 Surface Loop(25) = {16,20,24,18,6,22};
 Volume(26) = {25};

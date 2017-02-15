@@ -8,4 +8,4 @@ Spline(1) = {1,4,3};
 Spline(2) = {3,5,2};
 Spline(3) = {2,6,1};
 Line Loop(4) = {2,3,1};
-Ruled Surface(5) = {4};
+Surface(5) = {4};

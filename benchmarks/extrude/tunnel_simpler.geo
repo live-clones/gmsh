@@ -160,13 +160,13 @@ kl1=newc; Circle(kl1)={k1,o1,l1};
 lm1=newc; Circle(lm1)={l1,o1,m1};
 
 // surfaces (excel assistance)
-bade1_loop=newll; Line Loop(bade1_loop)={-ab1,ad1,de1,-be1}; bade1=news; Ruled Surface(bade1)={bade1_loop};
-edgh1_loop=newll; Line Loop(edgh1_loop)={-de1,dg1,gh1,-eh1}; edgh1=news; Ruled Surface(edgh1)={edgh1_loop};
-cbkj1_loop=newll; Line Loop(cbkj1_loop)={-bc1,-kb1,-jk1,-cj1}; cbkj1=news; Ruled Surface(cbkj1)={cbkj1_loop};
-kbel1_loop=newll; Line Loop(kbel1_loop)={kb1,be1,-le1,-kl1}; kbel1=news; Ruled Surface(kbel1)={kbel1_loop};
-lefm1_loop=newll; Line Loop(lefm1_loop)={le1,ef1,-mf1,-lm1}; lefm1=news; Ruled Surface(lefm1)={lefm1_loop};
-jklm1_loop=newll; Line Loop(jklm1_loop)={jk1,kl1,lm1,mj1}; jklm1=news; Ruled Surface(jklm1)={jklm1_loop};
-fehi1_loop=newll; Line Loop(fehi1_loop)={-ef1,eh1,hi1,-fi1}; fehi1=news; Ruled Surface(fehi1)={fehi1_loop};
+bade1_loop=newll; Line Loop(bade1_loop)={-ab1,ad1,de1,-be1}; bade1=news; Surface(bade1)={bade1_loop};
+edgh1_loop=newll; Line Loop(edgh1_loop)={-de1,dg1,gh1,-eh1}; edgh1=news; Surface(edgh1)={edgh1_loop};
+cbkj1_loop=newll; Line Loop(cbkj1_loop)={-bc1,-kb1,-jk1,-cj1}; cbkj1=news; Surface(cbkj1)={cbkj1_loop};
+kbel1_loop=newll; Line Loop(kbel1_loop)={kb1,be1,-le1,-kl1}; kbel1=news; Surface(kbel1)={kbel1_loop};
+lefm1_loop=newll; Line Loop(lefm1_loop)={le1,ef1,-mf1,-lm1}; lefm1=news; Surface(lefm1)={lefm1_loop};
+jklm1_loop=newll; Line Loop(jklm1_loop)={jk1,kl1,lm1,mj1}; jklm1=news; Surface(jklm1)={jklm1_loop};
+fehi1_loop=newll; Line Loop(fehi1_loop)={-ef1,eh1,hi1,-fi1}; fehi1=news; Surface(fehi1)={fehi1_loop};
 
 // lines in cross section 1 (manually)
 Transfinite Line{jk1,kl1,lm1,   bc1,ef1,hi1,be1,ad1} = np_tunnelsector;

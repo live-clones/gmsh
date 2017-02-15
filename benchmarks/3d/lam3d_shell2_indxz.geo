@@ -410,11 +410,11 @@ Plane Surface(surfgh0_inf) = {surfgh0_inf};
 
 surfinf_in = news ;
 Line Loop(surfinf_in) = {cs3,-cs2,-cs1};
-Ruled Surface(surfinf_in) = {surfinf_in};
+Surface(surfinf_in) = {surfinf_in};
 
 surfinf_out = news;
 Line Loop(surfinf_out) = {cs1_,cs2_,-cs3_};
-Ruled Surface(surfinf_out) = {surfinf_out};
+Surface(surfinf_out) = {surfinf_out};
 
 
 If(!HOMO)

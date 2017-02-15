@@ -49,25 +49,25 @@ Transfinite Line { list_lines_sq[], list_lines_outer[]} = 10;
 Transfinite Line { cross_lines[] } = 4;
 
 Line Loop (newll) = { list_lines_sq[] };
-Ruled Surface (news) = newll-1;
+Surface (news) = newll-1;
 surf0 = news-1;
 Transfinite Surface {news-1};
 Recombine Surface {news-1};
 
 Line Loop (newll) = {list_lines_sq[0], cross_lines[1], -list_lines_outer[0], -cross_lines[0]};
-Ruled Surface (news) = newll-1;
+Surface (news) = newll-1;
 surf1 = news-1;
 
 Line Loop (newll) = {list_lines_sq[1], cross_lines[2], -list_lines_outer[1], -cross_lines[1]};
-Ruled Surface (news) = newll-1;
+Surface (news) = newll-1;
 surf2 = news-1;
 
 Line Loop (newll) = {list_lines_sq[2], cross_lines[3], -list_lines_outer[2], -cross_lines[2]};
-Ruled Surface (news) = newll-1;
+Surface (news) = newll-1;
 surf3 = news-1;
 
 Line Loop (newll) = {list_lines_sq[3], cross_lines[0], -list_lines_outer[3], -cross_lines[3]};
-Ruled Surface (news) = newll-1;
+Surface (news) = newll-1;
 surf4 = news-1;
 
 

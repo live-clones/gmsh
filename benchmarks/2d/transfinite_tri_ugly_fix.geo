@@ -7,7 +7,7 @@ Line(1) = {2,3};
 Line(2) = {2,1};
 Line(3) = {1,3};
 Line Loop(4) = {1,-3,-2};
-Ruled Surface(5) = {4};
+Surface(5) = {4};
 
 Transfinite Line{1,2,3} = 20;
 //Transfinite Surface{5} = {3,1,2};
@@ -25,7 +25,7 @@ Line(7) = {13,11};
 Line(8) = {11,10};
 Line(9) = {10,12};
 Line Loop(10) = {7,8,9,-6};
-Ruled Surface(11) = {10};
+Surface(11) = {10};
 
 Transfinite Line{6,7,8,9} = 20;
 Transfinite Surface{11} = {11,10,12,13};

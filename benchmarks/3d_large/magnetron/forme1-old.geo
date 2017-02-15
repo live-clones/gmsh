@@ -96,10 +96,10 @@
   Fomes_Linep3p12[iFom] = c19 ;
   Fomes_Linep8p13[iFom] = c20 ; 
 
-  l1 = newreg; Line Loop(l1) = {c2,c11,-c6,-c10};Ruled Surface(l1+1) = {l1};
+  l1 = newreg; Line Loop(l1) = {c2,c11,-c6,-c10};Surface(l1+1) = {l1};
   l2 = newreg; Line Loop(l2) = {c3,c12,-c7,-c11};Plane Surface(l2+1) = {l2};
   l3 = newreg; Line Loop(l3) = {c1,c10,-c5,-c9};Plane Surface(l3+1) = {l3};
-  l4 = newreg; Line Loop(l4) = {c4,c9,-c8,-c12};Ruled Surface(l4+1) = {l4};
+  l4 = newreg; Line Loop(l4) = {c4,c9,-c8,-c12};Surface(l4+1) = {l4};
   l5 = newreg; Line Loop(l5) = {c13,c14,c15,c16};Plane Surface(l5+1) = {l5};
   l6 = newreg; Line Loop(l6) = {c16,-c17,c9,c18};Plane Surface(l6+1) = {l6};  
   l7 = newreg; Line Loop(l7) = {c14,-c20,-c10,c19}; Plane Surface(l7+1) = {l7};

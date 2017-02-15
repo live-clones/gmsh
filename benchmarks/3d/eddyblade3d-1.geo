@@ -598,9 +598,9 @@ Plane Surface (1000134) = {2000134};
 Line Loop (2000136) = {-12, 2, -19, 1};
 Plane Surface (1000136) = {2000136};
 Line Loop (2000138) = {7, -2, -8, 4};
-Ruled Surface (1000138) = {2000138};
+Surface (1000138) = {2000138};
 Line Loop (2000140) = {-6, -3, 5, 1};
-Ruled Surface (1000140) = {2000140};
+Surface (1000140) = {2000140};
 Line Loop (2000141) = {-12, -8, 16, 6};
 Plane Surface (1000141) = {2000141};
 Line Loop (2000143) = {19, -7, -20, 5};
@@ -634,13 +634,13 @@ Plane Surface (3000207) = {4000207};
 //  plane surface for the inner shell of the solenoid
 //
 Line Loop (5000209) = {41, -2000145, -33, 2000144};
-Ruled Surface (4000209) = {5000209};
+Surface (4000209) = {5000209};
 Line Loop (5000211) = {42, -2000146, -34, 2000145};
-Ruled Surface (4000211) = {5000211};
+Surface (4000211) = {5000211};
 Line Loop (5000213) = {-43, -2000146, 35, 2000147};
-Ruled Surface (4000213) = {5000213};
+Surface (4000213) = {5000213};
 Line Loop (5000215) = {44, -2000144, -36, 2000147};
-Ruled Surface (4000215) = {5000215};
+Surface (4000215) = {5000215};
 
 
 //
@@ -671,13 +671,13 @@ Plane Surface (6000231) = {7000231};
 //  plane surface for the outer shell of the solenoid
 //
 Line Loop (8000233) = {45, -2000149, -37, 2000148};
-Ruled Surface (7000233) = {8000233};
+Surface (7000233) = {8000233};
 Line Loop (8000235) = {46, -2000150, -38, 2000149};
-Ruled Surface (7000235) = {8000235};
+Surface (7000235) = {8000235};
 Line Loop (8000237) = {47, -2000151, -39, 2000150};
-Ruled Surface (7000237) = {8000237};
+Surface (7000237) = {8000237};
 Line Loop (8000239) = {48, -2000148, -40, 2000151};
-Ruled Surface (7000239) = {8000239};
+Surface (7000239) = {8000239};
 
 //
 //  plane surface for top disk on left magnet
@@ -707,13 +707,13 @@ Plane Surface (9000255) = {10000255};
 //  plane surface for the shell of the left magnet
 //
 Line Loop (11000257) = {53, -2000153, -49, 2000152};
-Ruled Surface (10000257) = {11000257};
+Surface (10000257) = {11000257};
 Line Loop (11000259) = {54, -2000154, -50, 2000153};
-Ruled Surface (10000259) = {11000259};
+Surface (10000259) = {11000259};
 Line Loop (11000261) = {-55, -2000154, 51, 2000155};
-Ruled Surface (10000261) = {11000261};
+Surface (10000261) = {11000261};
 Line Loop (11000263) = {56, -2000152, -52, 2000155};
-Ruled Surface (10000263) = {11000263};
+Surface (10000263) = {11000263};
 
 //
 //  plane surface for the top disk of the right magnet
@@ -743,13 +743,13 @@ Plane Surface (12000279) = {13000279};
 //  plane surface for the shell of the right magnet
 //
 Line Loop (14000281) = {61, -2000157, -57, 2000156};
-Ruled Surface (13000281) = {14000281};
+Surface (13000281) = {14000281};
 Line Loop (14000283) = {62, -2000158, -58, 2000157};
-Ruled Surface (13000283) = {14000283};
+Surface (13000283) = {14000283};
 Line Loop (14000285) = {63, -2000159, -59, 2000158};
-Ruled Surface (13000285) = {14000285};
+Surface (13000285) = {14000285};
 Line Loop (14000287) = {64, -2000156, -60, 2000159};
-Ruled Surface (13000287) = {14000287};
+Surface (13000287) = {14000287};
 
 //
 //  plane surfaces for the shield plate

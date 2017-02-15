@@ -383,7 +383,7 @@ description of the four modules is given hereafter.
 Gmsh uses a boundary representation (``BRep'') to describe geometries.
 Models are created in a bottom-up flow by successively defining points,
 oriented lines (line segments, circles, ellipses, splines, @dots{}),
-oriented surfaces (plane surfaces, ruled surfaces, triangulated
+oriented surfaces (plane surfaces, surfaces, triangulated
 surfaces, @dots{}) and volumes. Groups of geometrical entities (called
 ``physical groups'') can also be defined, based on these elementary
 geometric entities. Gmsh's scripting language allows all geometrical
@@ -1916,9 +1916,8 @@ representation (``BRep'') approach: you need to first define points
 (using the @code{Point} command: see below), then lines (using
 @code{Line}, @code{Circle}, @code{Spline}, @dots{}, commands or by
 extruding points), then surfaces (using for example the @code{Plane
-Surface} or @code{Ruled Surface} commands, or by extruding lines), and
-finally volumes (using the @code{Volume} command or by extruding
-surfaces).
+Surface} or @code{Surface} commands, or by extruding lines), and finally
+volumes (using the @code{Volume} command or by extruding surfaces).
 
 These geometrical entities are called ``elementary'' in Gmsh's jargon,
 and are assigned identification numbers (stricly positive) when they are
@@ -2149,10 +2148,9 @@ should be defined separately). Likewise, a line loop defining a hole should
 not have any lines in common with another line loop defining a hole in the
 same surface (in which case the two line loops should be combined).
 
-@item Ruled Surface ( @var{expression} ) = @{ @var{expression-list} @} < In Sphere @{ @var{expression} @} >;
-Creates a ruled surface, i.e., a surface that can be interpolated using
-transfinite interpolation. The @var{expression} inside the parentheses
-is the ruled surface's identification number; the first
+@item Surface ( @var{expression} ) = @{ @var{expression-list} @} < In Sphere @{ @var{expression} @} >;
+Creates a surface filling. The @var{expression} inside the parentheses
+is the surface's identification number; the first
 @var{expression-list} on the right hand side should contain the
 identification number of a line loop composed of either three or four
 elementary lines. The optional @code{In Sphere} argument forces the

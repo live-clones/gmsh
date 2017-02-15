@@ -84,9 +84,9 @@ Line (140) = {122, 114}; //
 // definition des surfaces
 Line Loop (108) = {-120,-119,-118,-117,-116};                  Plane Surface (108)={108};
 Line Loop (109) = {126,127,128,129,130};                  Plane Surface (109) = {109};
-Line Loop (111) = {116,-136,-126,132};                  Ruled Surface (111) = {111};
+Line Loop (111) = {116,-136,-126,132};                  Surface (111) = {111};
 Line Loop (113) = {117,-140,-127,136};                  Plane Surface (113) = {113};
-Line Loop (115) = {120,-132,-130,134};                  Ruled Surface (115) = {115};
+Line Loop (115) = {120,-132,-130,134};                  Surface (115) = {115};
 Line Loop (117) = {119,-134,-129,138};                  Plane Surface (117) = {117};
 Line Loop (119) = {118,-138,-128,140};                  Plane Surface (119) = {119};
 

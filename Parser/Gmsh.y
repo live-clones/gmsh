@@ -2216,8 +2216,60 @@ Shape :
       $$.Type = MSH_SURF_PLAN;
       $$.Num = num;
     }
+  | tSurface '(' FExpr ')' tAFFECT ListOfDouble InSphereCenter tEND
+    {
+      int num = (int)$3, type = 0;
+      if(FindSurface(num)){
+        yymsg(0, "Surface %d already exists", num);
+      }
+      else{
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          std::vector<int> wires;
+          for(int i = 0; i < List_Nbr($6); i++){
+            double d; List_Read($6, i, &d);
+            wires.push_back((int)std::abs(d));
+          }
+          std::vector<std::vector<double> > points;
+          GModel::current()->getOCCInternals()->addFaceFilling(num, wires, points);
+        }
+        else{
+          double d;
+          List_Read($6, 0, &d);
+          EdgeLoop *el = FindEdgeLoop((int)fabs(d));
+          if(!el){
+            yymsg(0, "Unknown line loop %d", (int)d);
+          }
+          else{
+            int j = List_Nbr(el->Curves);
+            if(j == 4){
+              type = MSH_SURF_REGL;
+            }
+            else if(j == 3){
+              type = MSH_SURF_TRIC;
+            }
+            else{
+              yymsg(0, "Wrong definition of Surface %d: "
+                    "%d borders instead of 3 or 4", num, j);
+              type = MSH_SURF_PLAN;
+            }
+            Surface *s = Create_Surface(num, type);
+            List_T *temp = ListOfDouble2ListOfInt($6);
+            setSurfaceGeneratrices(s, temp);
+            List_Delete(temp);
+            End_Surface(s);
+            s->InSphereCenter = $7;
+            Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
+          }
+        }
+      }
+      List_Delete($6);
+      $$.Type = type;
+      $$.Num = num;
+    }
+  // Surface is deprecated: it makes no sense, as the surfaces are usually not ruled
   | tRuled tSurface '(' FExpr ')' tAFFECT ListOfDouble InSphereCenter tEND
     {
+      yymsg(1, "'Ruled Surface' command is deprecated: use 'Surface' instead");
       int num = (int)$4, type = 0;
       if(FindSurface(num)){
         yymsg(0, "Surface %d already exists", num);
@@ -2248,7 +2300,7 @@ Shape :
               type = MSH_SURF_TRIC;
             }
             else{
-              yymsg(0, "Wrong definition of Ruled Surface %d: "
+              yymsg(0, "Wrong definition of Surface %d: "
                     "%d borders instead of 3 or 4", num, j);
               type = MSH_SURF_PLAN;
             }
@@ -2685,7 +2737,7 @@ Shape :
   // for backward compatibility:
   | tComplex tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      yymsg(0, "'Complex Volume' command is deprecated: use 'Volume' instead");
+      yymsg(1, "'Complex Volume' command is deprecated: use 'Volume' instead");
       int num = (int)$4;
       if(FindVolume(num)){
 	yymsg(0, "Volume %d already exists", num);
@@ -4713,7 +4765,7 @@ ExtrudeParameter :
     }
   | tLayers '{' ListOfDouble ',' ListOfDouble ',' ListOfDouble '}' tEND
     {
-      yymsg(0, "Explicit region numbers in layers are deprecated");
+      yymsg(1, "Explicit region numbers in layers are deprecated");
       extr.mesh.ExtrudeMesh = true;
       extr.mesh.NbLayer = List_Nbr($3);
       if(List_Nbr($3) == List_Nbr($5) && List_Nbr($3) == List_Nbr($7)){

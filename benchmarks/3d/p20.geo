@@ -140,7 +140,7 @@ Line(v3) = {s1,c8};
 e2 = newreg;
 Line Loop (newreg) = {q1,q2,q3,q4};
 f2 = newreg;
-Ruled Surface (f2) = {e2};
+Surface (f2) = {e2};
 Extrude Surface { f2, {D6,0.00000E+00, 0.00000E+00} };
 
 DxInducteur = .005;

@@ -374,7 +374,7 @@ void GFace::writeGEO(FILE *fp)
       fprintf(fp, "Plane Surface(%d) = {%d};\n", tag(), tag());
     }
     else if(edg.size() == 3 || edg.size() == 4){
-      fprintf(fp, "Ruled Surface(%d) = {%d};\n", tag(), tag());
+      fprintf(fp, "Surface(%d) = {%d};\n", tag(), tag());
     }
     else{
       Msg::Error("Skipping surface %d in export", tag());

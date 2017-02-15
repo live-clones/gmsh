@@ -19,14 +19,14 @@ Circle(9) = {2,1,7};
 Circle(10) = {7,1,4};
 Circle(11) = {4,1,6};
 Circle(12) = {6,1,2};
-Line Loop(13) = {-2,-8,10}; Ruled Surface(14) = {13};
-Line Loop(15) = {10,3,7}; Ruled Surface(16) = {15};
-Line Loop(17) = {-8,-9,1}; Ruled Surface(18) = {17};
-Line Loop(19) = {-11,-2,5}; Ruled Surface(20) = {19};
-Line Loop(21) = {5,12,1}; Ruled Surface(22) = {21};
-Line Loop(23) = {-3,11,6}; Ruled Surface(24) = {23};
-Line Loop(25) = {-7,4,9}; Ruled Surface(26) = {25};
-Line Loop(27) = {4,-12,6}; Ruled Surface(28) = {27};
+Line Loop(13) = {-2,-8,10}; Surface(14) = {13};
+Line Loop(15) = {10,3,7}; Surface(16) = {15};
+Line Loop(17) = {-8,-9,1}; Surface(18) = {17};
+Line Loop(19) = {-11,-2,5}; Surface(20) = {19};
+Line Loop(21) = {5,12,1}; Surface(22) = {21};
+Line Loop(23) = {-3,11,6}; Surface(24) = {23};
+Line Loop(25) = {-7,4,9}; Surface(26) = {25};
+Line Loop(27) = {4,-12,6}; Surface(28) = {27};
 Surface Loop(29) = {-28,26,16,-14,20,24,-22,18};
 
 // a structured box around it, with its mesh carved out

@@ -182,7 +182,7 @@ For ih In {1:nbrHoles/2}
 EndFor
 
 Delete { Surface{sPSin[0]}; }
-Ruled Surface(sPSin[0]) = {loopin, loopshin[]};
+Surface(sPSin[0]) = {loopin, loopshin[]};
 
 
 //Boundary layers
@@ -220,7 +220,7 @@ lacir2 = newl ; Circle(lacir2) = {pa0,p0,pa3};
 lacir3 = newl ; Circle(lacir3) = {pa3,p0,pa1};
 
 Line Loop(newl)={-lacir1,lacir2,lacir3};
-surair= newl ; Ruled Surface(surair) = {newl-1};
+surair= newl ; Surface(surair) = {newl-1};
 
 pa0_ = newp ; Point(pa0_) = { rfar2, 0, 0, p_air2};
 pa1_ = newp ; Point(pa1_) = { 0, 0, rfar2, p_air2};
@@ -232,7 +232,7 @@ lacir2_ = newl ; Circle(lacir2_) = {pa0_,p0,pa3_};
 lacir3_ = newl ; Circle(lacir3_) = {pa3_,p0,pa1_};
 
 Line Loop(newl)={-lacir1_,lacir2_,lacir3_};
-surairinf= newl ; Ruled Surface(surairinf) = {newl-1};
+surairinf= newl ; Surface(surairinf) = {newl-1};
 
 la1 = newl ; Line(la1) = {p1,pe[0]};
 la2 = newl ; Line(la2) = {pe[1],ps1};

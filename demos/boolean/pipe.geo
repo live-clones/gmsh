@@ -35,5 +35,8 @@ For i In {0:5}
 EndFor
 BSpline(100) = {100:105};
 
+// TOOD: add synonym for Line Loop: Wire and allow Extrude using Wire keyword
+// (instead of several lines, which build a wire automatically)
+
 a() = Extrude { Surface{1:5}; } Using Line{100};
 Delete{ Surface{1:5}; }

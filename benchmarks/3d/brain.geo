@@ -20,12 +20,12 @@ Spline(1) = {6,7,8,9,10,2};
 Circle(2) = {6,1,4};
 Circle(3) = {2,1,1,4};
 Line Loop(4) = {3,-2,1};
-Ruled Surface(5) = {4};
+Surface(5) = {4};
 
 Spline(6) = {5,11,12,13,14,2};
 Circle(7) = {5,1,4};
 Line Loop(8) = {3,-7,6};
-Ruled Surface(9) = {8};
+Surface(9) = {8};
 Line(10) = {6,5};
 Line Loop(11) = {7,-2,10};
 Plane Surface(12) = {11};
