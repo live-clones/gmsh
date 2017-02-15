@@ -151,11 +151,10 @@ int main(int argc, char **argv)
                                       - g*sin(phi)) );
     phi_dot_dot /= ( (m1+m2)*l2 - m2*l2*(cdelta*cdelta) );
 
-    double theta_dot = theta_dot + theta_dot_dot*dt;
-    double phi_dot = phi_dot + phi_dot_dot*dt;
-
-    theta = theta + theta_dot*dt;
-    phi = phi + phi_dot*dt;
+    theta_dot += theta_dot_dot*dt;
+    phi_dot += phi_dot_dot*dt;
+    theta += theta_dot*dt;
+    phi += phi_dot*dt;
 
     double x1 =  l1*sin(theta);
     double y1 = -l1*cos(theta);
