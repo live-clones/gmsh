@@ -144,7 +144,7 @@ struct doubleXstring{
 %token tDefineNumber tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tBlock tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
-%token tRectangle tDisk
+%token tRectangle tDisk tWire
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
@@ -2115,6 +2115,24 @@ Shape :
       }
       List_Delete($7);
       Free($2);
+      $$.Type = MSH_SEGM_LOOP;
+      $$.Num = num;
+    }
+  | tWire '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$3;
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> edges;
+        for(int i = 0; i < List_Nbr($6); i++){
+          double d; List_Read($6, i, &d);
+          edges.push_back((int)std::abs(d));
+        }
+        GModel::current()->getOCCInternals()->addWire(num, edges, false);
+      }
+      else{
+        yymsg(0, "Wire only available using OpenCASCADE factory");
+      }
+      List_Delete($6);
       $$.Type = MSH_SEGM_LOOP;
       $$.Num = num;
     }
@@ -4428,23 +4446,18 @@ Extrude :
 		    &extr, $$);
       List_Delete($3);
     }
-  | tExtrude '{' ListOfShapes '}' tUsing tLine '{' ListOfDouble '}'
+  | tExtrude '{' ListOfShapes '}' tUsing tWire '{' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> edges;
         std::vector<int> in[4], out[4];
-        for(int i = 0; i < List_Nbr($8); i++){
-          double d; List_Read($8, i, &d);
-          edges.push_back((int)d);
-        }
         Shape TheShape;
         for(int i = 0; i < List_Nbr($3); i++){
           List_Read($3, i, &TheShape);
           int dim = TheShape.Type / 100 - 1;
           if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
         }
-        GModel::current()->getOCCInternals()->addPipe(-1, in, edges, out);
+        GModel::current()->getOCCInternals()->addPipe(-1, in, (int)$8, out);
         for(int dim = 0; dim < 4; dim++){
           TheShape.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
             (dim == 2) ? MSH_SURF_FROM_GMODEL :
@@ -4459,7 +4472,6 @@ Extrude :
         yymsg(0, "Pipe only available with OpenCASCADE factory");
       }
       List_Delete($3);
-      List_Delete($8);
     }
   | tThruSections ListOfDouble
     {

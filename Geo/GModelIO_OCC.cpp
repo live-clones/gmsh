@@ -519,10 +519,10 @@ void OCC_Internals::addBSpline(int tag, std::vector<int> vertexTags)
   _addSpline(tag, vertexTags, 1);
 }
 
-void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
+void OCC_Internals::addWire(int tag, std::vector<int> edgeTags, bool closed)
 {
   if(tag > 0 && _tagWire.IsBound(tag)){
-    Msg::Error("OpenCASCADE line loop with tag %d already exists", tag);
+    Msg::Error("OpenCASCADE wire or line loop with tag %d already exists", tag);
     return;
   }
 
@@ -538,6 +538,10 @@ void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
       w.Add(edge);
     }
     result = w.Wire();
+    if(closed && !result.Closed()){
+      Msg::Error("Line Loop is not closed");
+      return;
+    }
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -545,6 +549,11 @@ void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
   }
   if(tag <= 0) tag = getMaxTag(-1) + 1;
   bind(result, tag);
+}
+
+void OCC_Internals::addLineLoop(int tag, std::vector<int> edgeTags)
+{
+  addWire(tag, edgeTags, true);
 }
 
 void OCC_Internals::addRectangle(int tag, double x1, double y1, double z1,
@@ -1016,7 +1025,7 @@ void OCC_Internals::addThruSections(int tag, std::vector<int> wireTags,
     BRepOffsetAPI_ThruSections ts(makeSolid, makeRuled);
     for (unsigned int i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])){
-        Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTags[i]);
+        Msg::Error("Unknown OpenCASCADE wire or line loop with tag %d", wireTags[i]);
         return;
       }
       TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTags[i]));
@@ -1086,7 +1095,7 @@ void OCC_Internals::addThickSolid(int tag, int solidTag,
 void OCC_Internals::_extrude(int tag, int mode, std::vector<int> inTags[4],
                              double x, double y, double z,
                              double dx, double dy, double dz, double angle,
-                             std::vector<int> edgeTags, std::vector<int> outTags[4])
+                             int wireTag, std::vector<int> outTags[4])
 {
   for(int dim = 0; dim < 3; dim++){
     if(tag > 0 && inTags[dim].size() && isBound(tag, dim + 1)){
@@ -1134,17 +1143,11 @@ void OCC_Internals::_extrude(int tag, int mode, std::vector<int> inTags[4],
       result = r.Shape();
     }
     else if(mode == 2){ // pipe
-      TopoDS_Wire wire;
-      BRepBuilderAPI_MakeWire w;
-      for (unsigned int i = 0; i < edgeTags.size(); i++) {
-        if(!_tagEdge.IsBound(edgeTags[i])){
-          Msg::Error("Unknown OpenCASCADE edge with tag %d", edgeTags[i]);
-          return;
-        }
-        TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(edgeTags[i]));
-        w.Add(edge);
+      if(!_tagWire.IsBound(wireTag)){
+        Msg::Error("Unknown OpenCASCADE wire with tag %d", wireTag);
+        return;
       }
-      wire = w.Wire();
+      TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
       BRepOffsetAPI_MakePipe p(wire, c);
       p.Build();
       if(!p.IsDone()){
@@ -1166,7 +1169,7 @@ void OCC_Internals::extrude(int tag, std::vector<int> inTags[4],
                             double dx, double dy, double dz,
                             std::vector<int> outTags[4])
 {
-  _extrude(tag, 0, inTags, 0, 0, 0, dx, dy, dz, 0, std::vector<int>(), outTags);
+  _extrude(tag, 0, inTags, 0, 0, 0, dx, dy, dz, 0, 0, outTags);
 }
 
 void OCC_Internals::revolve(int tag, std::vector<int> inTags[4],
@@ -1174,13 +1177,13 @@ void OCC_Internals::revolve(int tag, std::vector<int> inTags[4],
                             double dx, double dy, double dz, double angle,
                             std::vector<int> outTags[4])
 {
-  _extrude(tag, 1, inTags, x, y, z, dx, dy, dz, angle, std::vector<int>(), outTags);
+  _extrude(tag, 1, inTags, x, y, z, dx, dy, dz, angle, 0, outTags);
 }
 
 void OCC_Internals::addPipe(int tag, std::vector<int> inTags[4],
-                            std::vector<int> edgeTags, std::vector<int> outTags[4])
+                            int wireTag, std::vector<int> outTags[4])
 {
-  _extrude(tag, 2, inTags, 0, 0, 0, 0, 0, 0, 0, edgeTags, outTags);
+  _extrude(tag, 2, inTags, 0, 0, 0, 0, 0, 0, 0, wireTag, outTags);
 }
 
 void OCC_Internals::fillet(std::vector<int> regionTags, std::vector<int> edgeTags,

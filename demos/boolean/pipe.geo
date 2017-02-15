@@ -33,10 +33,12 @@ BooleanFragments{ Surface{1}; Delete; }{ Surface{2:3}; Delete; }
 For i In {0:5}
   Point(100+i) = {-0.1, Sin(i/9*2*Pi), i};
 EndFor
+Point(106) = {-0.1, -2, 6};
+
 BSpline(100) = {100:105};
+Line(101) = {105:106};
 
-// TOOD: add synonym for Line Loop: Wire and allow Extrude using Wire keyword
-// (instead of several lines, which build a wire automatically)
+Wire(100) = {100,101};
 
-a() = Extrude { Surface{1:5}; } Using Line{100};
+a() = Extrude { Surface{1:5}; } Using Wire {100};
 Delete{ Surface{1:5}; }

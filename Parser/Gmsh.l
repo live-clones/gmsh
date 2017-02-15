@@ -328,6 +328,7 @@ Using                   return tUsing;
 Volume                  return tVolume;
 
 Wedge                   return tWedge;
+Wire                    return tWire;
 
 {digit}+ |
 {digit}+"."{digit}*({exp})? |

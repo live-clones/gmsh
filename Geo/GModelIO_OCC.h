@@ -65,7 +65,7 @@ class OCC_Internals {
   void _extrude(int tag, int mode, std::vector<int> inTags[4],
                 double x, double y, double z,
                 double dx, double dy, double dz, double angle,
-                std::vector<int> edgeTags, std::vector<int> outTags[4]);
+                int wireTag, std::vector<int> outTags[4]);
 
  public:
   OCC_Internals();
@@ -116,6 +116,7 @@ class OCC_Internals {
                   double angle1, double angle2);
   void addBezier(int tag, std::vector<int> vertexTags);
   void addBSpline(int tag, std::vector<int> vertexTags);
+  void addWire(int tag, std::vector<int> edgeTags, bool closed);
   void addLineLoop(int tag, std::vector<int> edgeTags);
   void addRectangle(int tag, double x1, double y1, double z1,
                     double x2, double y2, double z2);
@@ -150,7 +151,7 @@ class OCC_Internals {
   void revolve(int tag, std::vector<int> inTags[4],
                double x, double y, double z, double dx, double dy, double dz,
                double angle, std::vector<int> outTags[4]);
-  void addPipe(int tag, std::vector<int> inTags[4], std::vector<int> edgeTags,
+  void addPipe(int tag, std::vector<int> inTags[4], int wireTag,
                std::vector<int> outTags[4]);
 
   // fillet
@@ -249,6 +250,7 @@ public:
                   double angle1, double angle2){}
   void addBezier(int tag, std::vector<int> vertexTags){};
   void addBSpline(int tag, std::vector<int> vertexTags){};
+  void addWire(int tag, std::vector<int> edgeTags, bool closed){}
   void addLineLoop(int tag, std::vector<int> edgeTags){}
   void addRectangle(int tag, double x1, double y1, double z1,
                     double x2, double y2, double z2){}
@@ -281,7 +283,7 @@ public:
   void revolve(int tag, std::vector<int> inTags[4],
                double x, double y, double z, double dx, double dy, double dz,
                double angle, std::vector<int> outTags[4]){};
-  void addPipe(int tag, std::vector<int> inTags[4], std::vector<int> edgeTags,
+  void addPipe(int tag, std::vector<int> inTags[4], int wireTag,
                std::vector<int> outTags[4]){}
   void fillet(std::vector<int> regionTags, std::vector<int> edgeTags,
               double radius, std::vector<int> outTags[4]){}
