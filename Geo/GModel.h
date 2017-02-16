@@ -93,6 +93,7 @@ class GModel
   OCC_Internals *_occ_internals;
   void _createOCCInternals();
   void _deleteOCCInternals();
+  void _resetOCCInternals();
 
   // ACIS model internal data
   ACIS_Internals *_acis_internals;

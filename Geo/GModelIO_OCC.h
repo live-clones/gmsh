@@ -20,7 +20,7 @@ class OCC_Internals {
  private :
   // tag contraints coming from outside OCC_Internals (when using multiple CAD
   // kernels)
-  int _maxTagConstraints[4];
+  int _maxTagConstraints[6];
 
   // all the (sub)shapes, updated dynamically when shapes need to be imported
   // into a GModel
@@ -70,6 +70,19 @@ class OCC_Internals {
  public:
   OCC_Internals();
 
+  // reset all maps
+  void reset()
+  {
+    for(int i = 0; i < 6; i++) _maxTagConstraints[i] = 0;
+    for(int i = 0; i < 4; i++) meshAttibutes[i].clear();
+    _somap.Clear(); _shmap.Clear(); _fmap.Clear(); _wmap.Clear(); _emap.Clear();
+    _vmap.Clear();
+    _vertexTag.Clear(); _edgeTag.Clear(); _faceTag.Clear(); _solidTag.Clear();
+    _tagVertex.Clear(); _tagEdge.Clear(); _tagFace.Clear(); _tagSolid.Clear();
+    _wireTag.Clear(); _shellTag.Clear();
+    _tagWire.Clear(); _tagShell.Clear();
+  }
+
   // bind and unbind OpenCASCADE shapes to tags
   void bind(TopoDS_Vertex vertex, int tag);
   void bind(TopoDS_Edge edge, int tag);
@@ -100,7 +113,7 @@ class OCC_Internals {
   TopoDS_Shape find(int dim, int tag);
 
   // set constraints on tags
-  void setTagConstraints(int maxTags[4]);
+  void setTagConstraints(int dim, int val);
 
   // get maximum tag number for each dimension
   int getMaxTag(int dim) const;
@@ -122,8 +135,7 @@ class OCC_Internals {
                     double x2, double y2, double z2, double roundedRadius=0.);
   void addDisk(int tag, double xc, double yc, double zc, double rx, double ry);
   void addPlanarFace(int tag, std::vector<int> wireTags);
-  void addFaceFilling(int tag, std::vector<int> wireTags,
-                      std::vector<std::vector<double> > points);
+  void addFaceFilling(int tag, int wireTag, std::vector<std::vector<double> > points);
   void addSurfaceLoop(int tag, std::vector<int> faceTags);
   void addVolume(int tag, std::vector<int> shellTags);
   void addSphere(int tag, double xc, double yc, double zc, double radius,
@@ -238,7 +250,8 @@ class OCC_Internals {
 public:
   enum BooleanOperator { Union, Intersection, Difference, Section, Fragments };
   OCC_Internals(){}
-  void setTagConstraints(int maxTags[4]){}
+  void reset(){}
+  void setTagConstraints(int dim, int val){}
   int getMaxTag(int dim) const { return 0; }
   void addVertex(int tag, double x, double y, double z){}
   void addLine(int tag, int startTag, int endTag){}
@@ -256,8 +269,7 @@ public:
                     double x2, double y2, double z2, double roundedRadius=0.){}
   void addDisk(int tag, double xc, double yc, double zc, double rx, double ry){}
   void addPlanarFace(int tag, std::vector<int> wireTags){}
-  void addFaceFilling(int tag, std::vector<int> wireTags,
-                      std::vector<std::vector<double> > points){}
+  void addFaceFilling(int tag, int wireTag, std::vector<std::vector<double> > points){}
   void addSurfaceLoop(int tag, std::vector<int> faceTags){}
   void addVolume(int tag, std::vector<int> shellTags){}
   void addSphere(int tag, double xc, double yc, double zc, double radius,

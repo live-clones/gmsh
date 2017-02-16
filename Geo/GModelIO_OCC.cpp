@@ -219,17 +219,17 @@ TopoDS_Shape OCC_Internals::find(int dim, int tag)
   }
 }
 
-void OCC_Internals::setTagConstraints(int maxTags[4])
+void OCC_Internals::setTagConstraints(int dim, int val)
 {
-  for(int i = 0; i < 4; i++)
-    _maxTagConstraints[i] = maxTags[i];
+  if(dim < -2 || dim > 3) return;
+  _maxTagConstraints[dim + 2] = val;
 }
 
 int OCC_Internals::getMaxTag(int dim) const
 {
   if(dim < -2 || dim > 3) return 0;
+  int ret = _maxTagConstraints[dim + 2];
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
-  int ret = _maxTagConstraints[dim];
   switch(dim){
   case 0: exp.Initialize(_tagVertex); break;
   case 1: exp.Initialize(_tagEdge); break;
@@ -733,7 +733,7 @@ void OCC_Internals::addPlanarFace(int tag, std::vector<int> wireTags)
   bind(result, tag);
 }
 
-void OCC_Internals::addFaceFilling(int tag, std::vector<int> wireTags,
+void OCC_Internals::addFaceFilling(int tag, int wireTag,
                                    std::vector<std::vector<double> > points)
 {
   if(tag > 0 && _tagFace.IsBound(tag)){
@@ -745,16 +745,14 @@ void OCC_Internals::addFaceFilling(int tag, std::vector<int> wireTags,
   try{
     BRepOffsetAPI_MakeFilling f;
     // add edge constraints
-    for (unsigned int i = 0; i < wireTags.size(); i++) {
-      if(!_tagWire.IsBound(wireTags[i])){
-        Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTags[i]);
-        return;
-      }
-      TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTags[i]));
-      TopExp_Explorer exp0;
-      for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()){
-        f.Add(TopoDS::Edge(exp0.Current()), GeomAbs_C0);
-      }
+    if(!_tagWire.IsBound(wireTag)){
+      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      return;
+    }
+    TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
+    TopExp_Explorer exp0;
+    for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()){
+      f.Add(TopoDS::Edge(exp0.Current()), GeomAbs_C0);
     }
     // add point constraints
     for(unsigned int i = 0; i < points.size(); i++){
@@ -2786,6 +2784,12 @@ void GModel::_deleteOCCInternals()
 {
   if(_occ_internals) delete _occ_internals;
   _occ_internals = 0;
+}
+
+void GModel::_resetOCCInternals()
+{
+  if(!_occ_internals) return;
+  _occ_internals->reset();
 }
 
 int GModel::importOCCInternals()

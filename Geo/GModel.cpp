@@ -218,6 +218,8 @@ void GModel::destroy(bool keepName)
 
   destroyMeshCaches();
 
+  _resetOCCInternals();
+
   if(normals) delete normals;
   normals = 0;
 

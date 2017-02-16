@@ -4,62 +4,74 @@ SetFactory("OpenCASCADE");
 Mesh.CharacteristicLengthMin = 0.1;
 Mesh.CharacteristicLengthMax = 0.1;
 
-Sphere(1) = {0,0,0, 0.3};
-Sphere(2) = {1,0,0, 0.3, Pi/3};
-Cylinder(3) = {2,0,0, 2.5,0,0, 0.5};
-Cylinder(4) = {3,0,0, 3.5,0,0, 0.5, Pi/3};
-Block(5) = {4,0,0, 4.5,0.5,0.5};
-Torus(6) = {5,0,0, 0.3, 0.1};
-Torus(7) = {6,0,0, 0.3, 0.1, Pi/3};
-Cone(8) = {7,0,0, 7.5,0,0, 0.5,0};
-Cone(9) = {8,0,0, 8.5,0,0, 0.5,0, Pi/3};
-Cone(10) = {9,0,0, 9.5,0,0, 0.5,0.2, Pi/3};
-Wedge(11) = {10,0,0, 0.5,0.5,0.5, 0};
-Wedge(12) = {11,0,0, 0.5,0.5,0.5, 0.8};
+// 3D
+x = 0; y = 0;
+Sphere(newv) = {x++,y,0, 0.3};
+Sphere(newv) = {x++,y,0, 0.3, Pi/3};
+Cylinder(newv) = {x++,y,0, x-0.5,y,0, 0.5};
+Cylinder(newv) = {x++,y,0, x-0.5,y,0, 0.5, Pi/3};
+Block(newv) = {x++,y,0, x-0.5,y+0.5,0.5};
+Torus(newv) = {x++,y,0, 0.3, 0.1};
+Torus(newv) = {x++,y,0, 0.3, 0.1, Pi/3};
+Cone(newv) = {x++,y,0, x-0.5,y,0, 0.5,0};
+Cone(newv) = {x++,y,0, x-0.5,y,0, 0.5,0, Pi/3};
+Cone(newv) = {x++,y,0, x-0.5,y,0, 0.5,0.2, Pi/3};
+Wedge(newv) = {x++,y,0, 0.5,0.5,0.5, 0};
+Wedge(newv) = {x++,y,0, 0.5,0.5,0.5, 0.8};
 
-Rectangle(1) = {0,-1,0, 0.5,-0.5,0};
-Disk(2) = {1,-1,0, 0.3};
-Disk(3) = {2,-1,0, 0.3,0.1};
-Rectangle(200) = {3,-1,0, 3.5,-0.5,0, 0.1};
+// 2D
+x = 0; y = -1.5;
+Rectangle(news) = {x++,y,0, x-0.5,y+0.5,0};
+Rectangle(news) = {x++,y,0, x-0.5,y+0.5,0, 0.1};
+Disk(news) = {x++,y,0, 0.3};
+Disk(news) = {x++,y,0, 0.4,0.2};
 
-Point(1) = {0,-2,0};
+p = newp;
+  Point(p) = {x++,y,0}; Point(p+1) = {x-0.7,y+0.5,0}; Point(p+2) = {x-0.3,y+0.5,0};
+  Point(p+3) = {x-0.1,y,0}; Point(p+4) = {x-0.9,y-0.2,0};
+l = newl;
+  Bezier(l) = {p,p+4,p+3,p+2}; Line(l+1) = {p+2,p+1}; Line(l+2) = {p+1,p};
+ll = newll;
+  Line Loop(ll) = {l:l+2};
+Plane Surface(news) = {ll};
 
-Point(2) = {1,-2,0}; Point(3) = {1.5,-2,0};
-Line(4) = {2,3};
+l = newl; Circle(l) = {x++,y,0, 0.3}; Circle(l+1) = {x-1,y-0.1,0, 0.1};
+ll = newll; Line Loop(ll) = l; Line Loop(ll+1) = l+1;
+Plane Surface(news) = {ll, ll+1};
 
-Point(4) = {2,-2,0}; Point(5) = {2.5,-2,0}; Point(6) = {2,-1.5,0};
-Circle(5) = {5,4,6};
+p = newp;
+  Point(p) = {x++,y,0.3}; Point(p+1) = {x-0.7,y+0.5,0}; Point(p+2) = {x-0.3,y+0.5,0};
+  Point(p+3) = {x-0.1,y,0}; Point(p+4) = {x-0.9,y-0.2,0};
+l = newl;
+  Bezier(l) = {p,p+4,p+3,p+2}; Line(l+1) = {p+2,p+1}; Line(l+2) = {p+1,p};
+ll = newll;
+  Line Loop(ll) = {l:l+2};
+Surface(news) = {ll};
 
-Point(7) = {3,-2,0}; Point(8) = {3.8,-2,0}; Point(9) = {3,-1.5,0};
-Ellipse(6) = {8,7,9};
+// 1D
+x = 0; y = -3;
+p = newp; Point(p) = {x++,y,0}; Point(p+1) = {x-0.5,y,0};
+Line(newl) = {p,p+1};
 
-Point(100) = {4,-2,0};     Point(101) = {4.1,-1.9,0}; Point(102) = {4.2,-1.7,0};
-Point(103) = {4.3,-1.8,0}; Point(104) = {4.4,-2,0};   Point(105) = {4.5,-2.1,0};
-BSpline(7) = {100:105};
+p = newp; Point(p) = {x++,y,0}; Point(p+1) = {x-0.5,y,0}; Point(p+2) = {x-1,y+0.5,0};
+Circle(newl) = {p+1,p,p+2};
 
-Point(106) = {5,-2,0};     Point(107) = {5.1,-1.9,0};Point(108) = {5.2,-1.7,0};
-Point(109) = {5.3,-1.8,0}; Point(110) = {5.4,-2,0};  Point(111) = {5.5,-2.1,0};
-Bezier(8) = {106:111};
+Circle(newl) = {x++,y,0, 0.3};
+Circle(newl) = {x++,y,0, 0.3, Pi/3};
+Circle(newl) = {x++,y,0, 0.3, -Pi/3, Pi/3};
 
-Circle(100) = {6,-2,0, 0.3};
-Circle(101) = {7,-2,0, 0.3, Pi/3};
-Circle(102) = {8,-2,0, 0.3, -Pi/3, Pi/3};
-Ellipse(200) = {9,-2,0, 0.4,0.1};
-Ellipse(201) = {10,-2,0, 0.4,0.1, Pi/3};
-Ellipse(202) = {11,-2,0, 0.4,0.1, -Pi/3, Pi/3};
+p = newp; Point(p) = {x++,y,0}; Point(p+1) = {x-0.5,y,0}; Point(p+2) = {x-1,y+0.2,0};
+Ellipse(newl) = {p+1,p,p+2};
+Ellipse(newl) = {x++,y,0, 0.4,0.1};
+Ellipse(newl) = {x++,y,0, 0.4,0.1, Pi/3};
+Ellipse(newl) = {x++,y,0, 0.4,0.1, -Pi/3, Pi/3};
 
-Point(112) = {0,-2.7,0};  Point(113) = {0.2,-2.5,0}; Point(114) = {0.5,-2.5,0};
-Point(115) = {0.1,-3,0};  Point(116) = {0.5,-3,0};
-Line(9) = {112,113};
-Line(10) = {113,114};
-Bezier(11) = {114,116,115,112};
-Line Loop(1) = {9:11};
-Plane Surface(4) = {1};
+p = newp; Point(p) = {x++,y,0}; Point(p+1) = {x-0.5,y+0.3,0}; Point(p+2) = {x-0.2,y,0};
+BSpline(newl) = {p:p+2};
 
-Point(117) = {1,-2.7,0};  Point(118) = {1.2,-2.5,0.2}; Point(119) = {1.5,-2.5,0};
-Point(120) = {1.1,-3,0};  Point(121) = {1.5,-3,0.5};
-Line(12) = {117,118};
-Line(13) = {118,119};
-Bezier(14) = {119,121,120,117};
-Line Loop(2) = {12,13,14};
-Surface(5) = {2};
+p = newp; Point(p) = {x++,y,0}; Point(p+1) = {x-0.5,y+0.3,0}; Point(p+2) = {x-0.2,y,0};
+Bezier(newl) = {p:p+2};
+
+// 0D
+x = 0; y = -4.5;
+Point(newp) = {x,y,0};

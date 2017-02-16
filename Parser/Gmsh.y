@@ -2242,41 +2242,48 @@ Shape :
       }
       else{
         if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          std::vector<int> wires;
-          for(int i = 0; i < List_Nbr($6); i++){
-            double d; List_Read($6, i, &d);
-            wires.push_back((int)std::abs(d));
-          }
-          std::vector<std::vector<double> > points;
-          GModel::current()->getOCCInternals()->addFaceFilling(num, wires, points);
-        }
-        else{
-          double d;
-          List_Read($6, 0, &d);
-          EdgeLoop *el = FindEdgeLoop((int)fabs(d));
-          if(!el){
-            yymsg(0, "Unknown line loop %d", (int)d);
+          if(List_Nbr($6) != 1){
+            yymsg(0, "Surface requires a single line loop");
           }
           else{
-            int j = List_Nbr(el->Curves);
-            if(j == 4){
-              type = MSH_SURF_REGL;
-            }
-            else if(j == 3){
-              type = MSH_SURF_TRIC;
+            double d; List_Read($6, 0, &d);
+            int wire = (int)std::abs(d);
+            std::vector<std::vector<double> > points;
+            GModel::current()->getOCCInternals()->addFaceFilling(num, wire, points);
+          }
+        }
+        else{
+          if(List_Nbr($6) < 1){
+            yymsg(0, "Surface requires at least one line loop");
+          }
+          else{
+            double d;
+            List_Read($6, 0, &d);
+            EdgeLoop *el = FindEdgeLoop((int)fabs(d));
+            if(!el){
+              yymsg(0, "Unknown line loop %d", (int)d);
             }
             else{
-              yymsg(0, "Wrong definition of Surface %d: "
-                    "%d borders instead of 3 or 4", num, j);
-              type = MSH_SURF_PLAN;
+              int j = List_Nbr(el->Curves);
+              if(j == 4){
+                type = MSH_SURF_REGL;
+              }
+              else if(j == 3){
+                type = MSH_SURF_TRIC;
+              }
+              else{
+                yymsg(0, "Wrong definition of Surface %d: "
+                      "%d borders instead of 3 or 4", num, j);
+                type = MSH_SURF_PLAN;
+              }
+              Surface *s = Create_Surface(num, type);
+              List_T *temp = ListOfDouble2ListOfInt($6);
+              setSurfaceGeneratrices(s, temp);
+              List_Delete(temp);
+              End_Surface(s);
+              s->InSphereCenter = $7;
+              Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
             }
-            Surface *s = Create_Surface(num, type);
-            List_T *temp = ListOfDouble2ListOfInt($6);
-            setSurfaceGeneratrices(s, temp);
-            List_Delete(temp);
-            End_Surface(s);
-            s->InSphereCenter = $7;
-            Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
           }
         }
       }
@@ -2293,14 +2300,8 @@ Shape :
         yymsg(0, "Surface %d already exists", num);
       }
       else{
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          std::vector<int> wires;
-          for(int i = 0; i < List_Nbr($7); i++){
-            double d; List_Read($7, i, &d);
-            wires.push_back((int)std::abs(d));
-          }
-          std::vector<std::vector<double> > points;
-          GModel::current()->getOCCInternals()->addFaceFilling(num, wires, points);
+        if(List_Nbr($7) < 1){
+          yymsg(0, "Surface requires at least one line loop");
         }
         else{
           double d;
@@ -7780,56 +7781,99 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
 
 int NEWPOINT(void)
 {
-  return (GModel::current()->getGEOInternals()->MaxPointNum + 1);
+  int tag = 0;
+  if(GModel::current()->getGEOInternals())
+    tag = GModel::current()->getGEOInternals()->MaxPointNum + 1;
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(0) + 1);
+  return tag;
 }
 
 int NEWLINE(void)
 {
-  if(CTX::instance()->geom.oldNewreg)
-    return NEWREG();
-  else
-    return (GModel::current()->getGEOInternals()->MaxLineNum + 1);
+  int tag = 0;
+  if(GModel::current()->getGEOInternals()){
+    if(CTX::instance()->geom.oldNewreg)
+      tag = NEWREG();
+    else
+      tag = GModel::current()->getGEOInternals()->MaxLineNum + 1;
+  }
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(1) + 1);
+  return tag;
 }
 
 int NEWLINELOOP(void)
 {
-  if(CTX::instance()->geom.oldNewreg)
-    return NEWREG();
-  else
-    return (GModel::current()->getGEOInternals()->MaxLineLoopNum + 1);
+  int tag = 0;
+  if(GModel::current()->getGEOInternals()){
+    if(CTX::instance()->geom.oldNewreg)
+      tag = NEWREG();
+    else
+      tag = GModel::current()->getGEOInternals()->MaxLineLoopNum + 1;
+  }
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
+  return tag;
 }
 
 int NEWSURFACE(void)
 {
-  if(CTX::instance()->geom.oldNewreg)
-    return NEWREG();
-  else
-    return (GModel::current()->getGEOInternals()->MaxSurfaceNum + 1);
+  int tag = 0;
+  if(GModel::current()->getGEOInternals()){
+    if(CTX::instance()->geom.oldNewreg)
+      tag = NEWREG();
+    else
+      tag = GModel::current()->getGEOInternals()->MaxSurfaceNum + 1;
+  }
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(2) + 1);
+  return tag;
 }
 
 int NEWSURFACELOOP(void)
 {
-  if(CTX::instance()->geom.oldNewreg)
-    return NEWREG();
-  else
-    return (GModel::current()->getGEOInternals()->MaxSurfaceLoopNum + 1);
+  int tag = 0;
+  if(GModel::current()->getGEOInternals()){
+    if(CTX::instance()->geom.oldNewreg)
+      tag = NEWREG();
+    else
+      tag = GModel::current()->getGEOInternals()->MaxSurfaceLoopNum + 1;
+  }
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-2) + 1);
+  return tag;
 }
 
 int NEWVOLUME(void)
 {
-  if(CTX::instance()->geom.oldNewreg)
-    return NEWREG();
-  else
-    return (GModel::current()->getGEOInternals()->MaxVolumeNum + 1);
+  int tag = 0;
+  if(GModel::current()->getGEOInternals()){
+    if(CTX::instance()->geom.oldNewreg)
+      tag = NEWREG();
+    else
+      tag = GModel::current()->getGEOInternals()->MaxVolumeNum + 1;
+  }
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(3) + 1);
+  return tag;
 }
 
 int NEWREG(void)
 {
-  return (std::max(GModel::current()->getGEOInternals()->MaxLineNum,
-            std::max(GModel::current()->getGEOInternals()->MaxLineLoopNum,
-              std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum,
-                std::max(GModel::current()->getGEOInternals()->MaxSurfaceLoopNum,
-                  std::max(GModel::current()->getGEOInternals()->MaxVolumeNum,
-                           GModel::current()->getGEOInternals()->MaxPhysicalNum)))))
-          + 1);
+  int tag = 0;
+  if(GModel::current()->getGEOInternals()){
+    tag = GModel::current()->getGEOInternals()->MaxLineNum;
+    tag = std::max(tag, GModel::current()->getGEOInternals()->MaxLineLoopNum);
+    tag = std::max(tag, GModel::current()->getGEOInternals()->MaxSurfaceNum);
+    tag = std::max(tag, GModel::current()->getGEOInternals()->MaxSurfaceLoopNum);
+    tag = std::max(tag, GModel::current()->getGEOInternals()->MaxVolumeNum);
+    tag = std::max(tag, GModel::current()->getGEOInternals()->MaxPhysicalNum);
+    tag += 1;
+  }
+  if(GModel::current()->getOCCInternals()){
+    for(int i = -2; i < 4; i++)
+      tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(i) + 1);
+  }
+  return tag;
 }
