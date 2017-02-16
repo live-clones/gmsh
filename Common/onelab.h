@@ -330,7 +330,7 @@ namespace onelab{
               << ", \"name\":\"" << sanitize(getName()) << "\""
               << ", \"label\":\"" << sanitize(getLabel()) << "\""
               << ", \"help\":\"" << sanitize(getHelp()) << "\""
-              << ", \"changedValue\":" << getChangedValue() << "\""
+              << ", \"changedValue\":" << getChangedValue()
               << ", \"visible\":" << (getVisible() ? "true" : "false")
               << ", \"readOnly\":" << (getReadOnly() ? "true" : "false")
               << ", \"attributes\":{ ";
@@ -858,11 +858,13 @@ namespace onelab{
       for(std::set<parameter*, parameterLessThan>::const_iterator it = ps.begin();
           it != ps.end(); it++){
         if(client.empty() || (*it)->hasClient(client)){
-	  if((*it)->getAttribute("NotInDb") != "True")
+	  if((*it)->getAttribute("NotInDb") != "True"){
+            if(it != ps.begin()) json += ", ";
 	    json += "    " + (*it)->toJSON() + "\n";
+          }
 	}
       }
-      json += "] }\n";
+      json += "] }\n}\n";
     }
   };
 
