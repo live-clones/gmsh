@@ -49,7 +49,7 @@
 
 OCC_Internals::OCC_Internals()
 {
-  for(int i = 0; i < 4; i++)
+  for(int i = 0; i < 6; i++)
     _maxTagConstraints[i] = 0;
 }
 
