@@ -15,20 +15,20 @@
 
 #include "GModelIO_OCC.h"
 
-OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex _v)
-  : GVertex(m, num), v(_v)
+OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex v, double lc)
+  : GVertex(m, num, lc), _v(v)
 {
   max_curvature = -1;
-  gp_Pnt pnt = BRep_Tool::Pnt(v);
+  gp_Pnt pnt = BRep_Tool::Pnt(_v);
   _x = pnt.X();
   _y = pnt.Y();
   _z = pnt.Z();
-  model()->getOCCInternals()->bind(v, num);
+  model()->getOCCInternals()->bind(_v, num);
 }
 
 OCCVertex::~OCCVertex()
 {
-  model()->getOCCInternals()->unbind(v, tag());
+  model()->getOCCInternals()->unbind(_v, tag());
 }
 
 void OCCVertex::setPosition(GPoint &p)

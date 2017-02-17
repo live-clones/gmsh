@@ -8063,11 +8063,11 @@ yyreduce:
         double x = CTX::instance()->geom.scalingFactor * (yyvsp[(6) - (7)].v)[0];
         double y = CTX::instance()->geom.scalingFactor * (yyvsp[(6) - (7)].v)[1];
         double z = CTX::instance()->geom.scalingFactor * (yyvsp[(6) - (7)].v)[2];
+        double lc = CTX::instance()->geom.scalingFactor * (yyvsp[(6) - (7)].v)[3];
         if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          GModel::current()->getOCCInternals()->addVertex(num, x, y, z);
+          GModel::current()->getOCCInternals()->addVertex(num, x, y, z, lc);
         }
         else{
-          double lc = CTX::instance()->geom.scalingFactor * (yyvsp[(6) - (7)].v)[3];
           if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
           Vertex *v;
           if(!myGmshSurface)

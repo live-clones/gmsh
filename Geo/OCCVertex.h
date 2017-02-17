@@ -15,12 +15,12 @@
 
 class OCCVertex : public GVertex {
  protected:
-  TopoDS_Vertex v;
+  TopoDS_Vertex _v;
   double _x, _y, _z;
   mutable double max_curvature;
   double max_curvature_of_surfaces() const;
  public:
-  OCCVertex(GModel *m, int num, TopoDS_Vertex _v);
+  OCCVertex(GModel *m, int num, TopoDS_Vertex v, double lc=MAX_LC);
   virtual ~OCCVertex();
   virtual GPoint point() const { return GPoint(x(), y(), z()); }
   virtual double x() const { return _x; }
@@ -28,9 +28,9 @@ class OCCVertex : public GVertex {
   virtual double z() const { return _z; }
   virtual void setPosition(GPoint &p);
   ModelType getNativeType() const { return OpenCascadeModel; }
-  void * getNativePtr() const { return (void*)&v; }
+  void *getNativePtr() const { return (void*)&_v; }
   virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
-  TopoDS_Vertex getShape() { return v; }
+  TopoDS_Vertex getShape() { return _v; }
 };
 
 #endif

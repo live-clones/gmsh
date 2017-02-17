@@ -1,13 +1,10 @@
 SetFactory("OpenCASCADE");
 
-Mesh.Algorithm = 6;
-Mesh.CharacteristicLengthMin = 0.1;
-Mesh.CharacteristicLengthMax = 0.1;
-
-Point(1) = {0,0,0};
-Point(2) = {1,0,0};
-Point(3) = {1,1,0};
-Point(4) = {0,1,0};
+lc = 0.1;
+Point(1) = {0,0,0, lc};
+Point(2) = {1,0,0, lc};
+Point(3) = {1,1,0, lc};
+Point(4) = {0,1,0, lc/10};
 Line(1) = {1,2};
 Line(2) = {2,3};
 Line(3) = {3,4};

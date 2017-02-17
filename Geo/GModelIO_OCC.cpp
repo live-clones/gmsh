@@ -243,7 +243,8 @@ int OCC_Internals::getMaxTag(int dim) const
   return ret;
 }
 
-void OCC_Internals::addVertex(int tag, double x, double y, double z)
+void OCC_Internals::addVertex(int tag, double x, double y, double z,
+                              double meshSize)
 {
   if(tag > 0 && _tagVertex.IsBound(tag)){
     Msg::Error("OpenCASCADE vertex with tag %d already exists", tag);
@@ -266,6 +267,8 @@ void OCC_Internals::addVertex(int tag, double x, double y, double z)
   }
   if(tag <= 0) tag = getMaxTag(0) + 1;
   bind(result, tag);
+  if(meshSize > 0 && meshSize < MAX_LC)
+    meshAttributes[0][tag].size = meshSize;
 }
 
 void OCC_Internals::addLine(int tag, int startTag, int endTag)
@@ -1788,7 +1791,10 @@ void OCC_Internals::synchronize(GModel *model)
         tag = vTagMax + 1;
         vTagMax++;
       }
-      model->add(new OCCVertex(model, tag, vertex));
+      std::map<int, meshAttribute>::iterator it =
+        meshAttributes[0].find(tag);
+      double lc = (it == meshAttributes[0].end()) ? MAX_LC : it->second.size;
+      model->add(new OCCVertex(model, tag, vertex, lc));
     }
   }
 

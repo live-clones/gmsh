@@ -37,13 +37,13 @@ class OCC_Internals {
   TopTools_DataMapOfIntegerShape _tagWire, _tagShell;
 
   // internal mesh attributes, linked to tags
-  class meshAttributes {
+  class meshAttribute {
   public:
-    meshAttributes() : size(0.), extrude(0) {}
+    meshAttribute() : size(MAX_LC), extrude(0) {}
     double size;
     ExtrudeParams *extrude;
   };
-  std::map<int, meshAttributes> meshAttibutes[4];
+  std::map<int, meshAttribute> meshAttributes[4];
 
   // add a shape and all its subshapes to _vmap, _emap, ..., _somap
   void _addShapeToMaps(TopoDS_Shape shape);
@@ -75,7 +75,7 @@ class OCC_Internals {
   void reset()
   {
     for(int i = 0; i < 6; i++) _maxTagConstraints[i] = 0;
-    for(int i = 0; i < 4; i++) meshAttibutes[i].clear();
+    for(int i = 0; i < 4; i++) meshAttributes[i].clear();
     _somap.Clear(); _shmap.Clear(); _fmap.Clear(); _wmap.Clear(); _emap.Clear();
     _vmap.Clear();
     _vertexTag.Clear(); _edgeTag.Clear(); _faceTag.Clear(); _solidTag.Clear();
@@ -120,7 +120,7 @@ class OCC_Internals {
   int getMaxTag(int dim) const;
 
   // add shapes
-  void addVertex(int tag, double x, double y, double z);
+  void addVertex(int tag, double x, double y, double z, double meshSize=MAX_LC);
   void addLine(int tag, int startTag, int endTag);
   void addCircleArc(int tag, int startTag, int centerTag, int endTag);
   void addCircle(int tag, double x, double y, double z, double r, double angle1,
@@ -254,7 +254,7 @@ public:
   void reset(){}
   void setTagConstraints(int dim, int val){}
   int getMaxTag(int dim) const { return 0; }
-  void addVertex(int tag, double x, double y, double z){}
+  void addVertex(int tag, double x, double y, double z, double meshSize=MAX_LC){}
   void addLine(int tag, int startTag, int endTag){}
   void addCircleArc(int tag, int startTag, int centerTag, int endTag){}
   void addCircle(int tag, double x, double y, double z, double r, double angle1,
