@@ -13,7 +13,6 @@
 
 GVertex::GVertex(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms)
 {
-  resetMeshAttributes();
 }
 
 GVertex::~GVertex()
