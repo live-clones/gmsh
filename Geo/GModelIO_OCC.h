@@ -7,6 +7,7 @@
 #define _GMODELIO_OCC_H_
 
 #include "GmshConfig.h"
+#include "GmshMessage.h"
 #include "GModel.h"
 #include "OCCIncludes.h"
 
@@ -313,8 +314,14 @@ public:
   void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]){}
   void remove(std::vector<int> inTags[4]){}
   void importShapes(const std::string &fileName, bool highestDimOnly,
-                    std::vector<int> outTags[4], const std::string &format=""){}
-  void exportShapes(const std::string &fileName, const std::string &format=""){}
+                    std::vector<int> outTags[4], const std::string &format="")
+  {
+    Msg::Error("Gmsh requires OpenCASCADE to import '%s'", fileName.c_str());
+  }
+  void exportShapes(const std::string &fileName, const std::string &format="")
+  {
+    Msg::Error("Gmsh requires OpenCASCADE to export '%s'", fileName.c_str());
+  }
   void synchronize(GModel *model){}
 };
 
