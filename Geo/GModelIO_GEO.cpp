@@ -63,6 +63,10 @@ void GEO_Internals::resetPhysicalGroups()
 
 void GEO_Internals::addVertex(int num, double x, double y, double z, double lc)
 {
+  if(FindPoint(num)){
+    Msg::Error("GEO vertex with tag %d already exists", num);
+    return;
+  }
   Vertex *v = Create_Vertex(num, x, y, z, lc, 1.0);
   Tree_Add(Points, &v);
 }
@@ -70,6 +74,10 @@ void GEO_Internals::addVertex(int num, double x, double y, double z, double lc)
 void GEO_Internals::addVertex(int num, double x, double y, gmshSurface *surface,
                               double lc)
 {
+  if(FindPoint(num)){
+    Msg::Error("GEO vertex with tag %d already exists", num);
+    return;
+  }
   Vertex *v = Create_Vertex(num, x, y, surface, lc);
   Tree_Add(Points, &v);
 }

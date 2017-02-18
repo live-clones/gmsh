@@ -100,12 +100,13 @@ void incrementVariable(const std::string &name, int index, double value);
 int PrintListOfDouble(char *format, List_T *list, char *buffer);
 void PrintParserSymbols(std::vector<std::string> &vec);
 fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
+void ListOfDouble2Vector(List_T *list, std::vector<int> &v);
 
 void addPeriodicEdge(int, int, const std::vector<double>&);
 void addPeriodicFace(int, int, const std::map<int,int>&);
 void addPeriodicFace(int, int, const std::vector<double>&);
 void computeAffineTransformation(SPoint3&, SPoint3&, double, SPoint3&, std::vector<double>&);
-char  *strsave(char *ptr);
+char *strsave(char *ptr);
 
 struct doubleXstring{
   double d;
@@ -1728,26 +1729,21 @@ Shape :
   | tPoint '(' FExpr ')' tAFFECT VExpr tEND
     {
       int num = (int)$3;
-      if(FindPoint(num)){
-        yymsg(0, "Point %d already exists", num);
+      double x = CTX::instance()->geom.scalingFactor * $6[0];
+      double y = CTX::instance()->geom.scalingFactor * $6[1];
+      double z = CTX::instance()->geom.scalingFactor * $6[2];
+      double lc = CTX::instance()->geom.scalingFactor * $6[3];
+      if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
+      if(factory == "OpenCASCADE"){
+        GModel::current()->getOCCInternals()->addVertex(num, x, y, z, lc);
       }
       else{
-        double x = CTX::instance()->geom.scalingFactor * $6[0];
-        double y = CTX::instance()->geom.scalingFactor * $6[1];
-        double z = CTX::instance()->geom.scalingFactor * $6[2];
-        double lc = CTX::instance()->geom.scalingFactor * $6[3];
-        if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          GModel::current()->getOCCInternals()->addVertex(num, x, y, z, lc);
-        }
-        else{
-          if(!myGmshSurface)
-            GModel::current()->getGEOInternals()->addVertex(num, x, y, z, lc);
-          else
-            GModel::current()->getGEOInternals()->addVertex(num, x, y, myGmshSurface, lc);
-        }
-        AddToTemporaryBoundingBox(x, y, z);
+        if(!myGmshSurface)
+          GModel::current()->getGEOInternals()->addVertex(num, x, y, z, lc);
+        else
+          GModel::current()->getGEOInternals()->addVertex(num, x, y, myGmshSurface, lc);
       }
+      AddToTemporaryBoundingBox(x, y, z);
       $$.Type = MSH_POINT;
       $$.Num = num;
     }
@@ -1824,14 +1820,13 @@ Shape :
 	yymsg(0, "Curve %d already exists", num);
       }
       else{
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          if(List_Nbr($6) == 2){
-            double d[3];
-            List_Read($6, 0, &d[0]); List_Read($6, 1, &d[1]);
-            GModel::current()->getOCCInternals()->addLine(num, (int)d[0], (int)d[1]);
+        if(factory == "OpenCASCADE"){
+          std::vector<int> points; ListOfDouble2Vector($6, points);
+          if(points.size() == 2){
+            GModel::current()->getOCCInternals()->addLine(num, points[0], points[1]);
           }
           else
-            yymsg(0, "OpenCASCADE line only takes 2 points");
+            yymsg(0, "OpenCASCADE line is defined by 2 points");
         }
         else{
           List_T *temp = ListOfDouble2ListOfInt($6);
@@ -1892,7 +1887,7 @@ Shape :
 	yymsg(0, "Curve %d already exists", num);
       }
       else{
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(factory == "OpenCASCADE"){
           if(List_Nbr($6) >= 3 && List_Nbr($6) <= 6){
             double d[3];
             List_Read($6, 0, &d[0]); List_Read($6, 1, &d[1]); List_Read($6, 2, &d[2]);
@@ -1949,7 +1944,7 @@ Shape :
 	yymsg(0, "Curve %d already exists", num);
       }
       else{
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(factory == "OpenCASCADE"){
           if(List_Nbr($6) >= 3 || List_Nbr($6) <= 7){
             if(List_Nbr($6) == 3 || List_Nbr($6) == 4){
               double start, center, end;
@@ -2014,11 +2009,8 @@ Shape :
 	yymsg(0, "Curve %d already exists", num);
       }
       else{
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          std::vector<int> tags;
-          for(int i = 0; i < List_Nbr($6); i++){
-            double d; List_Read($6, i, &d); tags.push_back((int)d);
-          }
+        if(factory == "OpenCASCADE"){
+          std::vector<int> tags; ListOfDouble2Vector($6, tags);
           GModel::current()->getOCCInternals()->addBSpline(num, tags);
         }
         else{
@@ -2041,11 +2033,8 @@ Shape :
 	yymsg(0, "Curve %d already exists", num);
       }
       else{
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          std::vector<int> tags;
-          for(int i = 0; i < List_Nbr($6); i++){
-            double d; List_Read($6, i, &d); tags.push_back((int)d);
-          }
+        if(factory == "OpenCASCADE"){
+          std::vector<int> tags; ListOfDouble2Vector($6, tags);
           GModel::current()->getOCCInternals()->addBezier(num, tags);
         }
         else{
@@ -2091,12 +2080,8 @@ Shape :
   | tLine tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> edges;
-        for(int i = 0; i < List_Nbr($7); i++){
-          double d; List_Read($7, i, &d);
-          edges.push_back((int)std::abs(d));
-        }
+      if(factory == "OpenCASCADE"){
+        std::vector<int> edges; ListOfDouble2Vector($7, edges);
         GModel::current()->getOCCInternals()->addLineLoop(num, edges);
       }
       else{
@@ -2119,12 +2104,8 @@ Shape :
   | tWire '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> edges;
-        for(int i = 0; i < List_Nbr($6); i++){
-          double d; List_Read($6, i, &d);
-          edges.push_back((int)std::abs(d));
-        }
+      if(factory == "OpenCASCADE"){
+        std::vector<int> edges; ListOfDouble2Vector($6, edges);
         GModel::current()->getOCCInternals()->addWire(num, edges, false);
       }
       else{
@@ -2211,12 +2192,8 @@ Shape :
         yymsg(0, "Surface %d already exists", num);
       }
       else{
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          std::vector<int> wires;
-          for(int i = 0; i < List_Nbr($7); i++){
-            double d; List_Read($7, i, &d);
-            wires.push_back((int)std::abs(d));
-          }
+        if(factory == "OpenCASCADE"){
+          std::vector<int> wires; ListOfDouble2Vector($7, wires);
           GModel::current()->getOCCInternals()->addPlanarFace(num, wires);
         }
         else{
@@ -2239,15 +2216,14 @@ Shape :
         yymsg(0, "Surface %d already exists", num);
       }
       else{
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          if(List_Nbr($6) != 1){
+        if(factory == "OpenCASCADE"){
+          std::vector<int> wires; ListOfDouble2Vector($6, wires);
+          if(wires.size() != 1){
             yymsg(0, "Surface requires a single line loop");
           }
           else{
-            double d; List_Read($6, 0, &d);
-            int wire = (int)std::abs(d);
             std::vector<std::vector<double> > points;
-            GModel::current()->getOCCInternals()->addFaceFilling(num, wire, points);
+            GModel::current()->getOCCInternals()->addFaceFilling(num, wires[0], points);
           }
         }
         else{
@@ -2358,7 +2334,7 @@ Shape :
     {
       int num = (int)$3;
       if(List_Nbr($6) == 4 || List_Nbr($6) == 5){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(factory == "OpenCASCADE"){
           double x; List_Read($6, 0, &x);
           double y; List_Read($6, 1, &y);
           double z; List_Read($6, 2, &z);
@@ -2426,7 +2402,7 @@ Shape :
     {
       int num = (int)$3;
       if(List_Nbr($6) == 6){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(factory == "OpenCASCADE"){
           double x1; List_Read($6, 0, &x1);
           double y1; List_Read($6, 1, &y1);
           double z1; List_Read($6, 2, &z1);
@@ -2450,7 +2426,7 @@ Shape :
     {
       int num = (int)$3;
       if(List_Nbr($6) == 5 || List_Nbr($6) == 6){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(factory == "OpenCASCADE"){
           double x; List_Read($6, 0, &x);
           double y; List_Read($6, 1, &y);
           double z; List_Read($6, 2, &z);
@@ -2474,7 +2450,7 @@ Shape :
     {
       int num = (int)$3;
       if(List_Nbr($6) == 6 || List_Nbr($6) == 7){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(factory == "OpenCASCADE"){
           double x1; List_Read($6, 0, &x1);
           double y1; List_Read($6, 1, &y1);
           double z1; List_Read($6, 2, &z1);
@@ -2500,7 +2476,7 @@ Shape :
     {
       int num = (int)$3;
       if(List_Nbr($6) == 4 || List_Nbr($6) == 5){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(factory == "OpenCASCADE"){
           double xc; List_Read($6, 0, &xc);
           double yc; List_Read($6, 1, &yc);
           double zc; List_Read($6, 2, &zc);
@@ -2523,7 +2499,7 @@ Shape :
     {
       int num = (int)$3;
       if(List_Nbr($6) == 7 || List_Nbr($6) == 8){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(factory == "OpenCASCADE"){
           double x1; List_Read($6, 0, &x1);
           double y1; List_Read($6, 1, &y1);
           double z1; List_Read($6, 2, &z1);
@@ -2550,7 +2526,7 @@ Shape :
     {
       int num = (int)$3;
       if(List_Nbr($6) == 8 || List_Nbr($6) == 9){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(factory == "OpenCASCADE"){
           double x1; List_Read($6, 0, &x1);
           double y1; List_Read($6, 1, &y1);
           double z1; List_Read($6, 2, &z1);
@@ -2578,7 +2554,7 @@ Shape :
     {
       int num = (int)$3;
       if(List_Nbr($6) == 7){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(factory == "OpenCASCADE"){
           double x; List_Read($6, 0, &x);
           double y; List_Read($6, 1, &y);
           double z; List_Read($6, 2, &z);
@@ -2602,14 +2578,11 @@ Shape :
   | tThickSolid '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         if(List_Nbr($6) >= 2){
           double in; List_Read($6, 0, &in);
           double offset; List_Read($6, 1, &offset);
-          std::vector<int> exclude;
-          for(int i = 2; i < List_Nbr($6); i++){
-            double d; List_Read($6, i, &d); exclude.push_back((int)d);
-          }
+          std::vector<int> exclude; ListOfDouble2Vector($6, exclude);
           GModel::current()->getOCCInternals()->addThickSolid(num, (int)in, exclude,
                                                               offset);
         }
@@ -2625,12 +2598,8 @@ Shape :
   | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> faces;
-        for(int i = 0; i < List_Nbr($7); i++){
-          double d; List_Read($7, i, &d);
-          faces.push_back((int)std::abs(d));
-        }
+      if(factory == "OpenCASCADE"){
+        std::vector<int> faces; ListOfDouble2Vector($7, faces);
         GModel::current()->getOCCInternals()->addSurfaceLoop(num, faces);
       }
       else{
@@ -2778,12 +2747,8 @@ Shape :
         yymsg(0, "Volume %d already exists", num);
       }
       else{
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          std::vector<int> shells;
-          for(int i = 0; i < List_Nbr($6); i++){
-            double d; List_Read($6, i, &d);
-            shells.push_back((int)std::abs(d));
-          }
+        if(factory == "OpenCASCADE"){
+          std::vector<int> shells; ListOfDouble2Vector($6, shells);
           GModel::current()->getOCCInternals()->addVolume(num, shells);
         }
         else{
@@ -2801,12 +2766,8 @@ Shape :
   | tThruSections '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> wires, out[4];
-        for(int i = 0; i < List_Nbr($6); i++){
-          double d; List_Read($6, i, &d);
-          wires.push_back((int)std::abs(d));
-        }
+      if(factory == "OpenCASCADE"){
+        std::vector<int> wires, out[4]; ListOfDouble2Vector($6, wires);
         GModel::current()->getOCCInternals()->addThruSections(num, wires,
                                                               out, true, false);
       }
@@ -2820,12 +2781,8 @@ Shape :
   | tRuled tThruSections '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> wires, out[4];
-        for(int i = 0; i < List_Nbr($7); i++){
-          double d; List_Read($7, i, &d);
-          wires.push_back((int)std::abs(d));
-        }
+      if(factory == "OpenCASCADE"){
+        std::vector<int> wires, out[4]; ListOfDouble2Vector($7, wires);
         GModel::current()->getOCCInternals()->addThruSections(num, wires,
                                                               out, true, true);
       }
@@ -2906,7 +2863,7 @@ Shape :
 Transform :
     tTranslate VExpr '{' MultipleShape '}'
     {
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         std::vector<int> in[4];
         Shape TheShape;
         for(int i = 0; i < List_Nbr($4); i++){
@@ -2923,7 +2880,7 @@ Transform :
     }
   | tRotate '{' VExpr ',' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         std::vector<int> in[4];
         Shape TheShape;
         for(int i = 0; i < List_Nbr($10); i++){
@@ -2941,7 +2898,7 @@ Transform :
     }
   | tSymmetry  VExpr '{' MultipleShape '}'
     {
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         Msg::Error("TODO OCC Symmetry");
       }
       else{
@@ -2951,7 +2908,7 @@ Transform :
     }
   | tDilate '{' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         Msg::Error("TODO OCC Dilate");
       }
       else{
@@ -2961,7 +2918,7 @@ Transform :
     }
   | tDilate '{' VExpr ',' VExpr '}' '{' MultipleShape '}'
     {
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         Msg::Error("TODO OCC Dilate");
       }
       else{
@@ -2973,7 +2930,7 @@ Transform :
     {
       $$ = List_Create(3, 3, sizeof(Shape));
       if(!strcmp($1, "Duplicata")){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(factory == "OpenCASCADE"){
           std::vector<int> in[4], out[4];
           Shape TheShape;
           for(int i = 0; i < List_Nbr($3); i++){
@@ -3002,7 +2959,7 @@ Transform :
         }
       }
       else if(!strcmp($1, "Boundary") || !strcmp($1, "CombinedBoundary")){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(factory == "OpenCASCADE"){
           std::vector<int> in[4], out[4];
           Shape TheShape;
           for(int i = 0; i < List_Nbr($3); i++){
@@ -3035,7 +2992,7 @@ Transform :
   | tIntersect tLine '{' RecursiveListOfDouble '}' tSurface '{' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         yymsg(0, "Intersect Line not available with OpenCASCADE");
       }
       else{
@@ -3046,7 +3003,7 @@ Transform :
   | tSplit tLine '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
     {
       $$ = List_Create(2, 1, sizeof(Shape*));
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         yymsg(0, "Split Line not available with OpenCASCADE");
       }
       else{
@@ -3091,7 +3048,7 @@ ListOfShapes :
 	    List_Add($$, &TheShape);
 	  }
 	  else{
-            if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+            if(factory == "OpenCASCADE"){
               TheShape.Type = MSH_POINT_FROM_GMODEL;
               List_Add($$, &TheShape);
             }
@@ -3120,7 +3077,7 @@ ListOfShapes :
 	    List_Add($$, &TheShape);
 	  }
 	  else{
-            if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+            if(factory == "OpenCASCADE"){
               TheShape.Type = MSH_SEGM_FROM_GMODEL;
               List_Add($$, &TheShape);
             }
@@ -3149,7 +3106,7 @@ ListOfShapes :
 	    List_Add($$, &TheShape);
 	  }
 	  else{
-            if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+            if(factory == "OpenCASCADE"){
               TheShape.Type = MSH_SURF_FROM_GMODEL;
               List_Add($$, &TheShape);
             }
@@ -3178,7 +3135,7 @@ ListOfShapes :
 	    List_Add($$, &TheShape);
 	  }
 	  else{
-            if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+            if(factory == "OpenCASCADE"){
               TheShape.Type = MSH_VOLUME_FROM_GMODEL;
               List_Add($$, &TheShape);
             }
@@ -3615,7 +3572,7 @@ LevelSet :
 Delete :
     tDelete '{' ListOfShapes '}'
     {
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         std::vector<int> in[4];
         Shape TheShape;
         for(int i = 0; i < List_Nbr($3); i++){
@@ -4325,7 +4282,7 @@ Extrude :
     tExtrude VExpr '{' ListOfShapes '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         std::vector<int> in[4], out[4];
         Shape TheShape;
         for(int i = 0; i < List_Nbr($4); i++){
@@ -4355,7 +4312,7 @@ Extrude :
   | tExtrude '{' VExpr ',' VExpr ',' FExpr '}' '{' ListOfShapes '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         std::vector<int> in[4], out[4];
         Shape TheShape;
         for(int i = 0; i < List_Nbr($10); i++){
@@ -4449,7 +4406,7 @@ Extrude :
   | tExtrude '{' ListOfShapes '}' tUsing tWire '{' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         std::vector<int> in[4], out[4];
         Shape TheShape;
         for(int i = 0; i < List_Nbr($3); i++){
@@ -4476,12 +4433,8 @@ Extrude :
   | tThruSections ListOfDouble
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> wires, out[4];
-        for(int i = 0; i < List_Nbr($2); i++){
-          double d; List_Read($2, i, &d);
-          wires.push_back((int)std::abs(d));
-        }
+      if(factory == "OpenCASCADE"){
+        std::vector<int> wires, out[4]; ListOfDouble2Vector($2, wires);
         GModel::current()->getOCCInternals()->addThruSections(-1, wires, out,
                                                               false, false);
         for(unsigned int i = 0; i < out[2].size(); i++){
@@ -4499,12 +4452,8 @@ Extrude :
   | tRuled tThruSections ListOfDouble
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> wires, out[4];
-        for(int i = 0; i < List_Nbr($3); i++){
-          double d; List_Read($3, i, &d);
-          wires.push_back((int)std::abs(d));
-        }
+      if(factory == "OpenCASCADE"){
+        std::vector<int> wires, out[4]; ListOfDouble2Vector($3, wires);
         GModel::current()->getOCCInternals()->addThruSections(-1, wires, out,
                                                               false, true);
         for(unsigned int i = 0; i < out[2].size(); i++){
@@ -4522,15 +4471,10 @@ Extrude :
   | tFillet '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}' '{' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         double radius = $9;
         std::vector<int> regions, edges, out[4];
-        for(int i = 0; i < List_Nbr($3); i++){
-          double d; List_Read($3, i, &d); regions.push_back((int)d);
-        }
-        for(int i = 0; i < List_Nbr($6); i++){
-          double d; List_Read($6, i, &d); edges.push_back((int)d);
-        }
+        ListOfDouble2Vector($3, regions); ListOfDouble2Vector($6, edges);
         GModel::current()->getOCCInternals()->fillet(regions, edges, radius, out);
         Shape TheShape;
         for(int dim = 0; dim < 4; dim++){
@@ -4896,7 +4840,7 @@ Boolean :
                     '{' ListOfShapes BooleanOption '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         std::vector<int> shape[4], tool[4];
         for(int i = 0; i < List_Nbr($3); i++){
           Shape s; List_Read($3, i, &s); int dim = s.Type / 100 - 1;
@@ -4929,7 +4873,7 @@ Boolean :
   | tShapeFromFile '(' StringExprVar ')'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         std::vector<int> out[4];
         std::string tmp = FixRelativePath(gmsh_yyname, $3);
         GModel::current()->getOCCInternals()->importShapes(tmp, true, out);
@@ -4955,7 +4899,7 @@ BooleanShape :
     BooleanOperator '(' FExpr ')' tAFFECT '{' ListOfShapes BooleanOption '}'
                                           '{' ListOfShapes BooleanOption '}' tEND
     {
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(factory == "OpenCASCADE"){
         std::vector<int> shape[4], tool[4];
         for(int i = 0; i < List_Nbr($7); i++){
           Shape s; List_Read($7, i, &s); int dim = s.Type / 100 - 1;
@@ -7616,6 +7560,7 @@ void PrintParserSymbols(bool help, std::vector<std::string> &vec)
 
 fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list)
 {
+  // Warning: this returns a fullMatrix copy, and deletes the input list
   int M = List_Nbr(list);
   int N = 0;
   for(int i = 0; i < M; i++){
@@ -7635,6 +7580,17 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list)
     List_Delete(*(List_T**)List_Pointer(list, i));
   List_Delete(list);
   return mat;
+}
+
+void ListOfDouble2Vector(List_T *list, std::vector<int> &v)
+{
+  v.clear();
+  v.reserve(List_Nbr(list));
+  for(int i = 0; i < List_Nbr(list); i++){
+    double d;
+    List_Read(list, i, &d);
+    v.push_back((int)d);
+  }
 }
 
 void yyerror(const char *s)
