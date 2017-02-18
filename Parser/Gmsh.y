@@ -1816,26 +1816,12 @@ Shape :
   | tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(FindCurve(num)){
-	yymsg(0, "Curve %d already exists", num);
+      std::vector<int> points; ListOfDouble2Vector($6, points);
+      if(factory == "OpenCASCADE"){
+        GModel::current()->getOCCInternals()->addLine(num, points);
       }
       else{
-        if(factory == "OpenCASCADE"){
-          std::vector<int> points; ListOfDouble2Vector($6, points);
-          if(points.size() == 2){
-            GModel::current()->getOCCInternals()->addLine(num, points[0], points[1]);
-          }
-          else
-            yymsg(0, "OpenCASCADE line is defined by 2 points");
-        }
-        else{
-          List_T *temp = ListOfDouble2ListOfInt($6);
-          Curve *c = Create_Curve(num, MSH_SEGM_LINE, 1, temp, NULL,
-                                  -1, -1, 0., 1.);
-          Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-          CreateReversedCurve(c);
-          List_Delete(temp);
-        }
+        GModel::current()->getGEOInternals()->addLine(num, points);
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_LINE;

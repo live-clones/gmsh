@@ -82,6 +82,356 @@ void GEO_Internals::addVertex(int num, double x, double y, gmshSurface *surface,
   Tree_Add(Points, &v);
 }
 
+void GEO_Internals::addLine(int num, int startTag, int endTag)
+{
+  std::vector<int> points;
+  points.push_back(startTag);
+  points.push_back(endTag);
+  addLine(num, points);
+}
+
+void GEO_Internals::addLine(int num, std::vector<int> vertexTags)
+{
+  if(FindCurve(num)){
+    Msg::Error("GEO edge with tag %d already exists", num);
+    return;
+  }
+  List_T *temp = List_Create(2, 2, sizeof(int));
+  for(unsigned int i = 0; i < vertexTags.size(); i++)
+    List_Add(temp, &vertexTags[i]);
+  Curve *c = Create_Curve(num, MSH_SEGM_LINE, 1, temp, NULL, -1, -1, 0., 1.);
+  Tree_Add(Curves, &c);
+  CreateReversedCurve(c);
+  List_Delete(temp);
+}
+
+void GEO_Internals::synchronize(GModel *model)
+{
+  if(Tree_Nbr(Points)) {
+    List_T *points = Tree2List(Points);
+    for(int i = 0; i < List_Nbr(points); i++){
+      Vertex *p;
+      List_Read(points, i, &p);
+      GVertex *v = model->getVertexByTag(p->Num);
+      if(!v){
+        v = new gmshVertex(model, p);
+        model->add(v);
+      }
+      else{
+        v->resetMeshAttributes();
+      }
+      if(!p->Visible) v->setVisibility(0);
+    }
+    List_Delete(points);
+  }
+  if(Tree_Nbr(Curves)) {
+    List_T *curves = Tree2List(Curves);
+
+    // generate all curves except compounds
+
+    for(int i = 0; i < List_Nbr(curves); i++){
+      Curve *c;
+      List_Read(curves, i, &c);
+      if(c->Num >= 0){
+        GEdge *e = model->getEdgeByTag(c->Num);
+        if(!e && c->Typ == MSH_SEGM_COMPOUND){
+          Msg::Debug("Postpone creation of compound edge %d until all others "
+                     "have been created", c->Num);
+        }
+        else if(!e && c->beg && c->end){
+          e = new gmshEdge(model, c,
+                           model->getVertexByTag(c->beg->Num),
+                           model->getVertexByTag(c->end->Num));
+          model->add(e);
+        }
+        else if(!e){
+          e = new gmshEdge(model, c, 0, 0);
+          model->add(e);
+        }
+        else{
+          e->resetMeshAttributes();
+        }
+
+        if(!c->Visible) e->setVisibility(0);
+        if(c->Color.type) e->setColor(c->Color.mesh);
+        if(c->degenerated) {
+          e->setTooSmall(true);
+        }
+      }
+    }
+
+    // now generate the compound curves
+
+    for(int i = 0; i < List_Nbr(curves); i++){
+      Curve *c;
+      List_Read(curves, i, &c);
+      if(c->Num >= 0){
+        GEdge *e = model->getEdgeByTag(c->Num);
+        if(!e && c->Typ == MSH_SEGM_COMPOUND){
+          std::vector<GEdge*> comp;
+          for(unsigned int j = 0; j < c->compound.size(); j++){
+            GEdge *ge = model->getEdgeByTag(c->compound[j]);
+            if(ge) comp.push_back(ge);
+          }
+          e = new GEdgeCompound(model, c->Num, comp);
+          e->meshAttributes.method = c->Method;
+          e->meshAttributes.nbPointsTransfinite = c->nbPointsTransfinite;
+          e->meshAttributes.typeTransfinite = c->typeTransfinite;
+          e->meshAttributes.coeffTransfinite = c->coeffTransfinite;
+          e->meshAttributes.extrude = c->Extrude;
+          e->meshAttributes.reverseMesh = c->ReverseMesh;
+          model->add(e);
+        }
+        if(!c->Visible) e->setVisibility(0);
+        if(c->Color.type) e->setColor(c->Color.mesh);
+        if(c->degenerated) {
+          e->setTooSmall(true);
+        }
+      }
+    }
+    List_Delete(curves);
+  }
+  if(Tree_Nbr(Surfaces)) {
+    List_T *surfaces = Tree2List(Surfaces);
+    for(int i = 0; i < List_Nbr(surfaces); i++){
+      Surface *s;
+      List_Read(surfaces, i, &s);
+      GFace *f = model->getFaceByTag(s->Num);
+      if(!f && s->Typ == MSH_SURF_COMPOUND){
+        std::list<GFace*> comp;
+        for(unsigned int j = 0; j < s->compound.size(); j++){
+          GFace *gf = model->getFaceByTag(s->compound[j]);
+          if(gf)
+            comp.push_back(gf);
+        }
+        std::list<GEdge*> b[4];
+        for(int j = 0; j < 4; j++){
+          for(unsigned int k = 0; k < s->compoundBoundary[j].size(); k++){
+            GEdge *ge = model->getEdgeByTag(s->compoundBoundary[j][k]);
+            if(ge) b[j].push_back(ge);
+          }
+        }
+        int param = CTX::instance()->mesh.remeshParam;
+        GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_CIRCLE;
+        if (param == 1) typ =  GFaceCompound::CONFORMAL_SPECTRAL;
+        if (param == 2) typ =  GFaceCompound::RADIAL_BASIS;
+        if (param == 3) typ =  GFaceCompound::HARMONIC_PLANE;
+        if (param == 4) typ =  GFaceCompound::CONVEX_CIRCLE;
+        if (param == 5) typ =  GFaceCompound::CONVEX_PLANE;
+        if (param == 6) typ =  GFaceCompound::HARMONIC_SQUARE;
+        if (param == 7) typ =  GFaceCompound::CONFORMAL_FE;
+        int algo = CTX::instance()->mesh.remeshAlgo;
+        f = new GFaceCompound(model, s->Num, comp, b[0], b[1], b[2], b[3], typ, algo);
+        f->meshAttributes.recombine = s->Recombine;
+        f->meshAttributes.recombineAngle = s->RecombineAngle;
+        f->meshAttributes.method = s->Method;
+        f->meshAttributes.extrude = s->Extrude;
+        // transfinite import Added by Trevor Strickler.  This helps when
+        // experimenting to create compounds from transfinite surfs. Not having
+        // it does not break anything Gmsh *officially* does right now, but
+        // maybe it was left out by mistake? and could cause problems later?
+        f->meshAttributes.transfiniteArrangement = s->Recombine_Dir;
+        f->meshAttributes.corners.clear();
+        for(int i = 0; i < List_Nbr(s->TrsfPoints); i++){
+          Vertex *corn;
+          List_Read(s->TrsfPoints, i, &corn);
+          GVertex *gv = f->model()->getVertexByTag(corn->Num);
+          if(gv)
+            f->meshAttributes.corners.push_back(gv);
+          else
+            Msg::Error("Unknown vertex %d in transfinite attributes", corn->Num);
+        }
+        model->add(f);
+        if(s->EmbeddedCurves){
+          for(int i = 0; i < List_Nbr(s->EmbeddedCurves); i++){
+            Curve *c;
+            List_Read(s->EmbeddedCurves, i, &c);
+            GEdge *e = model->getEdgeByTag(abs(c->Num));
+            if(e)
+              f->addEmbeddedEdge(e);
+            else
+              Msg::Error("Unknown curve %d", c->Num);
+          }
+        }
+        if(s->EmbeddedPoints){
+          for(int i = 0; i < List_Nbr(s->EmbeddedPoints); i++){
+            Vertex *v;
+            List_Read(s->EmbeddedPoints, i, &v);
+            GVertex *gv = model->getVertexByTag(v->Num);
+            if(gv)
+              f->addEmbeddedVertex(gv);
+            else
+              Msg::Error("Unknown point %d", v->Num);
+          }
+        }
+      }
+      else if(!f){
+        f = new gmshFace(model, s);
+        model->add(f);
+      }
+      else{
+        if(s->Typ == MSH_SURF_PLAN)
+          f->computeMeanPlane(); // recompute in case geom has changed
+        f->resetMeshAttributes();
+      }
+      if(!s->Visible) f->setVisibility(0);
+      if(s->Color.type) f->setColor(s->Color.mesh);
+    }
+    List_Delete(surfaces);
+  }
+  if(Tree_Nbr(Volumes)) {
+    List_T *volumes = Tree2List(Volumes);
+    for(int i = 0; i < List_Nbr(volumes); i++){
+      Volume *v;
+      List_Read(volumes, i, &v);
+      GRegion *r = model->getRegionByTag(v->Num);
+      if(!r && v->Typ == MSH_VOLUME_COMPOUND){
+        std::vector<GRegion*> comp;
+        for(unsigned int j = 0; j < v->compound.size(); j++){
+          GRegion *gr = model->getRegionByTag(v->compound[j]);
+          if(gr) comp.push_back(gr);
+        }
+        r = new GRegionCompound(model, v->Num, comp);
+	model->add(r);
+      }
+      else if(!r){
+        r = new gmshRegion(model, v);
+        model->add(r);
+      }
+      else{
+        r->resetMeshAttributes();
+      }
+
+      if(v->EmbeddedSurfaces){
+	for(int i = 0; i < List_Nbr(v->EmbeddedSurfaces); i++){
+	  Surface *s;
+	  List_Read(v->EmbeddedSurfaces, i, &s);
+	  GFace *gf = model->getFaceByTag(abs(s->Num));
+	  if(gf)
+	    r->addEmbeddedFace(gf);
+	  else
+	    Msg::Error("Unknown surface %d", s->Num);
+	}
+      }
+      if(v->EmbeddedCurves){
+	for(int i = 0; i < List_Nbr(v->EmbeddedCurves); i++){
+	  Curve *c;
+	  List_Read(v->EmbeddedCurves, i, &c);
+	  GEdge *ge = model->getEdgeByTag(abs(c->Num));
+	  if(ge)
+	    r->addEmbeddedEdge(ge);
+	  else
+	    Msg::Error("Unknown curve %d", c->Num);
+	}
+      }
+      if(v->EmbeddedPoints){
+        for(int i = 0; i < List_Nbr(v->EmbeddedPoints); i++){
+          Vertex *c;
+          List_Read(v->EmbeddedPoints, i, &c);
+          GVertex *gv = model->getVertexByTag(c->Num);
+          if(gv)
+            r->addEmbeddedVertex(gv);
+          else
+            Msg::Error("Unknown point %d", c->Num);
+        }
+      }
+      if(!v->Visible) r->setVisibility(0);
+      if(v->Color.type) r->setColor(v->Color.mesh);
+    }
+    List_Delete(volumes);
+  }
+  for(int i = 0; i < List_Nbr(PhysicalGroups); i++){
+    PhysicalGroup *p;
+    List_Read(PhysicalGroups, i, &p);
+    for(int j = 0; j < List_Nbr(p->Entities); j++){
+      int num;
+      List_Read(p->Entities, j, &num);
+      GEntity *ge = 0;
+      int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
+      switch(p->Typ){
+        case MSH_PHYSICAL_POINT:   ge = model->getVertexByTag(tag); break;
+        case MSH_PHYSICAL_LINE:    ge = model->getEdgeByTag(tag); break;
+        case MSH_PHYSICAL_SURFACE: ge = model->getFaceByTag(tag); break;
+        case MSH_PHYSICAL_VOLUME:  ge = model->getRegionByTag(tag); break;
+      }
+      int pnum = CTX::instance()->geom.orientedPhysicals ?
+        (gmsh_sign(num) * p->Num) : p->Num;
+      if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
+         ge->physicals.end())
+        ge->physicals.push_back(pnum);
+    }
+  }
+
+  std::map<int, GEO_Internals::MasterEdge>::iterator peIter = periodicEdges.begin();
+  for (; peIter != periodicEdges.end(); ++peIter) {
+    int iTarget = peIter->first;
+    GEO_Internals::MasterEdge& me = peIter->second;
+    int iSource = me.tag;
+    GEdge* target = model->getEdgeByTag(abs(iTarget));
+    GEdge* source = model->getEdgeByTag(abs(iSource));
+    if(!target)
+      Msg::Error("Unknown target line for periodic connection from %d to %d",
+                 iTarget, iSource);
+    if(!source)
+      Msg::Error("Unknown source line for periodic connection from %d to %d",
+                 iTarget, iSource);
+    if(target && source){
+      if(me.affineTransform.size() == 16)
+        target->setMeshMaster(source, me.affineTransform);
+      else
+        target->setMeshMaster(source, me.tag > 0 ? 1 : -1);
+    }
+  }
+
+  std::map<int, GEO_Internals::MasterFace>::iterator pfIter = periodicFaces.begin();
+  for (; pfIter != periodicFaces.end(); ++pfIter) {
+    int iTarget = pfIter->first;
+    GEO_Internals::MasterFace& mf = pfIter->second;
+    int iSource = mf.tag;
+    GFace* target = model->getFaceByTag(iTarget);
+    GFace* source = model->getFaceByTag(iSource);
+    if(!target)
+      Msg::Error("Unknown target surface for periodic connection from %d to %d",
+                 iTarget, iSource);
+    if(!source)
+      Msg::Error("Unknown source surface for periodic connection from %d to %d",
+                 iTarget, iSource);
+    if(target && source){
+      if(mf.affineTransform.size() == 16)
+        target->setMeshMaster(source,mf.affineTransform);
+      else
+        target->setMeshMaster(source,mf.edgeCounterparts);
+    }
+  }
+
+  for (std::multimap<int, std::vector<int> >::iterator it = meshCompounds.begin();
+       it != meshCompounds.end(); ++it){
+    int dim = it->first;
+    std::vector<int> compound = it->second;
+    std::vector<GEntity*> ents;
+    for (unsigned int i=0;i<compound.size();i++){
+      int tag = compound[i];
+      GEntity *ent = NULL;
+      switch(dim) {
+      case 1: ent = model->getEdgeByTag(tag); break;
+      case 2: ent = model->getFaceByTag(tag); break;
+      case 3: ent = model->getRegionByTag(tag); break;
+      default : Msg::Error("compound mesh with dimension %d",dim);
+      }
+      if(ent) ents.push_back(ent);
+    }
+    for (unsigned int i=0;i<ents.size();i++){
+      ents[i]->_compound = ents;
+    }
+  }
+
+  Msg::Debug("Gmsh model (GModel) imported:");
+  Msg::Debug("%d Vertices", model->getNumVertices());
+  Msg::Debug("%d Edges", model->getNumEdges());
+  Msg::Debug("%d Faces", model->getNumFaces());
+  Msg::Debug("%d Regions", model->getNumRegions());
+}
+
 // GModel interface
 
 void GModel::_createGEOInternals()
@@ -183,359 +533,8 @@ int GModel::exportDiscreteGEOInternals()
 
 int GModel::importGEOInternals()
 {
-  if(Tree_Nbr(_geo_internals->Points)) {
-    List_T *points = Tree2List(_geo_internals->Points);
-    for(int i = 0; i < List_Nbr(points); i++){
-      Vertex *p;
-      List_Read(points, i, &p);
-      GVertex *v = getVertexByTag(p->Num);
-      if(!v){
-        v = new gmshVertex(this, p);
-        add(v);
-      }
-      else{
-        v->resetMeshAttributes();
-      }
-      if(!p->Visible) v->setVisibility(0);
-    }
-    List_Delete(points);
-  }
-  if(Tree_Nbr(_geo_internals->Curves)) {
-    List_T *curves = Tree2List(_geo_internals->Curves);
-
-    // generate all curves except compounds
-
-    for(int i = 0; i < List_Nbr(curves); i++){
-      Curve *c;
-      List_Read(curves, i, &c);
-      if(c->Num >= 0){
-        GEdge *e = getEdgeByTag(c->Num);
-        if(!e && c->Typ == MSH_SEGM_COMPOUND){
-          Msg::Debug("Postpone creation of compound edge %d"
-                     "until all others have been created", c->Num);
-          // std::vector<GEdge*> comp;
-          // for(unsigned int j = 0; j < c->compound.size(); j++){
-          //   GEdge *ge = getEdgeByTag(c->compound[j]);
-          //   if(ge) comp.push_back(ge);
-          // }
-          // e = new GEdgeCompound(this, c->Num, comp);
-          // e->meshAttributes.method = c->Method;
-          // e->meshAttributes.nbPointsTransfinite = c->nbPointsTransfinite;
-          // e->meshAttributes.typeTransfinite = c->typeTransfinite;
-          // e->meshAttributes.coeffTransfinite = c->coeffTransfinite;
-          // e->meshAttributes.extrude = c->Extrude;
-          // e->meshAttributes.reverseMesh = c->ReverseMesh;
-          // add(e);
-        }
-        else if(!e && c->beg && c->end){
-          e = new gmshEdge(this, c,
-              getVertexByTag(c->beg->Num),
-              getVertexByTag(c->end->Num));
-          add(e);
-        }
-        else if(!e){
-          e = new gmshEdge(this, c, 0, 0);
-          add(e);
-        }
-        else{
-          e->resetMeshAttributes();
-        }
-
-        if(!c->Visible) e->setVisibility(0);
-        if(c->Color.type) e->setColor(c->Color.mesh);
-        if(c->degenerated) {
-          e->setTooSmall(true);
-        }
-      }
-    }
-
-    // now generate the compound curves
-
-    for(int i = 0; i < List_Nbr(curves); i++){
-      Curve *c;
-      List_Read(curves, i, &c);
-      if(c->Num >= 0){
-        GEdge *e = getEdgeByTag(c->Num);
-        if(!e && c->Typ == MSH_SEGM_COMPOUND){
-          std::vector<GEdge*> comp;
-          for(unsigned int j = 0; j < c->compound.size(); j++){
-            GEdge *ge = getEdgeByTag(c->compound[j]);
-            if(ge) comp.push_back(ge);
-          }
-          e = new GEdgeCompound(this, c->Num, comp);
-          e->meshAttributes.method = c->Method;
-          e->meshAttributes.nbPointsTransfinite = c->nbPointsTransfinite;
-          e->meshAttributes.typeTransfinite = c->typeTransfinite;
-          e->meshAttributes.coeffTransfinite = c->coeffTransfinite;
-          e->meshAttributes.extrude = c->Extrude;
-          e->meshAttributes.reverseMesh = c->ReverseMesh;
-          add(e);
-        }
-        // else if(!e && c->beg && c->end){
-        //   e = new gmshEdge(this, c,
-        //       getVertexByTag(c->beg->Num),
-        //       getVertexByTag(c->end->Num));
-        //   add(e);
-        // }
-        // else if(!e){
-        //   e = new gmshEdge(this, c, 0, 0);
-        //   add(e);
-        // }
-        // else{
-        //   e->resetMeshAttributes();
-        // }
-
-        if(!c->Visible) e->setVisibility(0);
-        if(c->Color.type) e->setColor(c->Color.mesh);
-        if(c->degenerated) {
-          e->setTooSmall(true);
-        }
-      }
-    }
-    List_Delete(curves);
-  }
-  if(Tree_Nbr(_geo_internals->Surfaces)) {
-    List_T *surfaces = Tree2List(_geo_internals->Surfaces);
-    for(int i = 0; i < List_Nbr(surfaces); i++){
-      Surface *s;
-      List_Read(surfaces, i, &s);
-      GFace *f = getFaceByTag(s->Num);
-      if(!f && s->Typ == MSH_SURF_COMPOUND){
-        std::list<GFace*> comp;
-        for(unsigned int j = 0; j < s->compound.size(); j++){
-          GFace *gf = getFaceByTag(s->compound[j]);
-          if(gf)
-            comp.push_back(gf);
-        }
-        std::list<GEdge*> b[4];
-        for(int j = 0; j < 4; j++){
-          for(unsigned int k = 0; k < s->compoundBoundary[j].size(); k++){
-            GEdge *ge = getEdgeByTag(s->compoundBoundary[j][k]);
-            if(ge) b[j].push_back(ge);
-          }
-        }
-        int param = CTX::instance()->mesh.remeshParam;
-        GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_CIRCLE;
-        if (param == 1) typ =  GFaceCompound::CONFORMAL_SPECTRAL;
-        if (param == 2) typ =  GFaceCompound::RADIAL_BASIS;
-        if (param == 3) typ =  GFaceCompound::HARMONIC_PLANE;
-        if (param == 4) typ =  GFaceCompound::CONVEX_CIRCLE;
-        if (param == 5) typ =  GFaceCompound::CONVEX_PLANE;
-        if (param == 6) typ =  GFaceCompound::HARMONIC_SQUARE;
-        if (param == 7) typ =  GFaceCompound::CONFORMAL_FE;
-        int algo = CTX::instance()->mesh.remeshAlgo;
-        f = new GFaceCompound(this, s->Num, comp, b[0], b[1], b[2], b[3], typ, algo);
-        f->meshAttributes.recombine = s->Recombine;
-        f->meshAttributes.recombineAngle = s->RecombineAngle;
-        f->meshAttributes.method = s->Method;
-        f->meshAttributes.extrude = s->Extrude;
-        // transfinite import Added by Trevor Strickler.  This helps when
-        // experimenting to create compounds from transfinite surfs. Not having
-        // it does not break anything Gmsh *officially* does right now, but
-        // maybe it was left out by mistake??? and could cause problems later?
-        f->meshAttributes.transfiniteArrangement = s->Recombine_Dir;
-        f->meshAttributes.corners.clear();
-        for(int i = 0; i < List_Nbr(s->TrsfPoints); i++){
-          Vertex *corn;
-          List_Read(s->TrsfPoints, i, &corn);
-          GVertex *gv = f->model()->getVertexByTag(corn->Num);
-          if(gv)
-            f->meshAttributes.corners.push_back(gv);
-          else
-            Msg::Error("Unknown vertex %d in transfinite attributes", corn->Num);
-        }
-        add(f);
-        if(s->EmbeddedCurves){
-          for(int i = 0; i < List_Nbr(s->EmbeddedCurves); i++){
-            Curve *c;
-            List_Read(s->EmbeddedCurves, i, &c);
-            GEdge *e = getEdgeByTag(abs(c->Num));
-            if(e)
-              f->addEmbeddedEdge(e);
-            else
-              Msg::Error("Unknown curve %d", c->Num);
-          }
-        }
-        if(s->EmbeddedPoints){
-          for(int i = 0; i < List_Nbr(s->EmbeddedPoints); i++){
-            Vertex *v;
-            List_Read(s->EmbeddedPoints, i, &v);
-            GVertex *gv = getVertexByTag(v->Num);
-            if(gv)
-              f->addEmbeddedVertex(gv);
-            else
-              Msg::Error("Unknown point %d", v->Num);
-          }
-        }
-      }
-      else if(!f){
-        f = new gmshFace(this, s);
-        add(f);
-      }
-      else{
-        if(s->Typ == MSH_SURF_PLAN)
-          f->computeMeanPlane(); // recompute in case geom has changed
-        f->resetMeshAttributes();
-      }
-      if(!s->Visible) f->setVisibility(0);
-      if(s->Color.type) f->setColor(s->Color.mesh);
-    }
-    List_Delete(surfaces);
-  }
-  if(Tree_Nbr(_geo_internals->Volumes)) {
-    List_T *volumes = Tree2List(_geo_internals->Volumes);
-    for(int i = 0; i < List_Nbr(volumes); i++){
-      Volume *v;
-      List_Read(volumes, i, &v);
-      GRegion *r = getRegionByTag(v->Num);
-      if(!r && v->Typ == MSH_VOLUME_COMPOUND){
-        std::vector<GRegion*> comp;
-        for(unsigned int j = 0; j < v->compound.size(); j++){
-          GRegion *gr = getRegionByTag(v->compound[j]);
-          if(gr) comp.push_back(gr);
-        }
-        r = new GRegionCompound(this, v->Num, comp);
-	add(r);
-      }
-      else if(!r){
-        r = new gmshRegion(this, v);
-        add(r);
-      }
-      else{
-        r->resetMeshAttributes();
-      }
-
-      if(v->EmbeddedSurfaces){
-	for(int i = 0; i < List_Nbr(v->EmbeddedSurfaces); i++){
-	  Surface *s;
-	  List_Read(v->EmbeddedSurfaces, i, &s);
-	  GFace *gf = getFaceByTag(abs(s->Num));
-	  if(gf)
-	    r->addEmbeddedFace(gf);
-	  else
-	    Msg::Error("Unknown surface %d", s->Num);
-	}
-      }
-      if(v->EmbeddedCurves){
-	for(int i = 0; i < List_Nbr(v->EmbeddedCurves); i++){
-	  Curve *c;
-	  List_Read(v->EmbeddedCurves, i, &c);
-	  GEdge *ge = getEdgeByTag(abs(c->Num));
-	  if(ge)
-	    r->addEmbeddedEdge(ge);
-	  else
-	    Msg::Error("Unknown curve %d", c->Num);
-	}
-      }
-      if(v->EmbeddedPoints){
-        for(int i = 0; i < List_Nbr(v->EmbeddedPoints); i++){
-          Vertex *c;
-          List_Read(v->EmbeddedPoints, i, &c);
-          GVertex *gv = getVertexByTag(c->Num);
-          if(gv)
-            r->addEmbeddedVertex(gv);
-          else
-            Msg::Error("Unknown point %d", c->Num);
-        }
-      }
-      if(!v->Visible) r->setVisibility(0);
-      if(v->Color.type) r->setColor(v->Color.mesh);
-    }
-    List_Delete(volumes);
-  }
-  for(int i = 0; i < List_Nbr(_geo_internals->PhysicalGroups); i++){
-    PhysicalGroup *p;
-    List_Read(_geo_internals->PhysicalGroups, i, &p);
-    for(int j = 0; j < List_Nbr(p->Entities); j++){
-      int num;
-      List_Read(p->Entities, j, &num);
-      GEntity *ge = 0;
-      int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
-      switch(p->Typ){
-        case MSH_PHYSICAL_POINT:   ge = getVertexByTag(tag); break;
-        case MSH_PHYSICAL_LINE:    ge = getEdgeByTag(tag); break;
-        case MSH_PHYSICAL_SURFACE: ge = getFaceByTag(tag); break;
-        case MSH_PHYSICAL_VOLUME:  ge = getRegionByTag(tag); break;
-      }
-      int pnum = CTX::instance()->geom.orientedPhysicals ?
-        (gmsh_sign(num) * p->Num) : p->Num;
-      if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
-         ge->physicals.end())
-        ge->physicals.push_back(pnum);
-    }
-  }
-
-  std::map<int,GEO_Internals::MasterEdge>::iterator peIter =
-    _geo_internals->periodicEdges.begin();
-  for (;peIter!=_geo_internals->periodicEdges.end();++peIter) {
-    int iTarget = peIter->first;
-    GEO_Internals::MasterEdge& me = peIter->second;
-    int iSource = me.tag;
-    GEdge* target = getEdgeByTag(abs(iTarget));
-    GEdge* source = getEdgeByTag(abs(iSource));
-    if(!target)
-      Msg::Error("Unknown target line for periodic connection from %d to %d",
-                 iTarget, iSource);
-    if(!source)
-      Msg::Error("Unknown source line for periodic connection from %d to %d",
-                 iTarget, iSource);
-    if(target && source){
-      if(me.affineTransform.size() == 16)
-        target->setMeshMaster(source, me.affineTransform);
-      else
-        target->setMeshMaster(source, me.tag > 0 ? 1 : -1);
-    }
-  }
-
-  std::map<int,GEO_Internals::MasterFace>::iterator pfIter =
-    _geo_internals->periodicFaces.begin();
-  for (; pfIter != _geo_internals->periodicFaces.end(); ++pfIter) {
-    int iTarget = pfIter->first;
-    GEO_Internals::MasterFace& mf = pfIter->second;
-    int iSource = mf.tag;
-    GFace* target = getFaceByTag(iTarget);
-    GFace* source = getFaceByTag(iSource);
-    if(!target)
-      Msg::Error("Unknown target surface for periodic connection from %d to %d",
-                 iTarget, iSource);
-    if(!source)
-      Msg::Error("Unknown source surface for periodic connection from %d to %d",
-                 iTarget, iSource);
-    if(target && source){
-      if(mf.affineTransform.size() == 16)
-        target->setMeshMaster(source,mf.affineTransform);
-      else
-        target->setMeshMaster(source,mf.edgeCounterparts);
-    }
-  }
-
-  for (std::multimap<int, std::vector<int> >::iterator it =
-         _geo_internals->meshCompounds.begin();
-       it != _geo_internals->meshCompounds.end(); ++it){
-    int dim = it->first;
-    std::vector<int> compound = it->second;
-    std::vector<GEntity*> ents;
-    for (unsigned int i=0;i<compound.size();i++){
-      int tag = compound[i];
-      GEntity *ent = NULL;
-      switch(dim) {
-      case 1: ent = getEdgeByTag(tag); break;
-      case 2: ent = getFaceByTag(tag); break;
-      case 3: ent = getRegionByTag(tag); break;
-      default : Msg::Error("compound mesh with dimension %d",dim);
-      }
-      if(ent) ents.push_back(ent);
-    }
-    for (unsigned int i=0;i<ents.size();i++){
-      ents[i]->_compound = ents;
-    }
-  }
-
-  Msg::Debug("Gmsh model (GModel) imported:");
-  Msg::Debug("%d Vertices", vertices.size());
-  Msg::Debug("%d Edges", edges.size());
-  Msg::Debug("%d Faces", faces.size());
-  Msg::Debug("%d Regions", regions.size());
+  if(!_geo_internals) return 0;
+  _geo_internals->synchronize(this);
   return 1;
 }
 

@@ -32,7 +32,6 @@ class GEO_Internals{
     int tag; // signed
     std::vector<double> affineTransform;
   };
-
   std::map<int, MasterEdge> periodicEdges;
 
   struct MasterFace {
@@ -41,7 +40,6 @@ class GEO_Internals{
     std::map<int, int> edgeCounterparts;
     std::vector<double> affineTransform;
   };
-
   std::map<int, MasterFace> periodicFaces;
 
  public:
@@ -56,8 +54,29 @@ class GEO_Internals{
       compound.push_back((int)*(double*)List_Pointer(_list, i));
     meshCompounds.insert(std::make_pair(dim, compound));
   }
+
+  // get maximum tag number for each dimension
+  int getMaxTag(int dim) const
+  {
+    switch(dim){
+    case 0: return MaxPointNum;
+    case 1: return MaxLineNum;
+    case -1: return MaxLineLoopNum;
+    case 2: return MaxSurfaceNum;
+    case -2: return MaxSurfaceLoopNum;
+    case 3: return MaxVolumeNum;
+    default: return 0;
+    }
+  }
+
+  // add shapes
   void addVertex(int num, double x, double y, double z, double lc);
   void addVertex(int num, double x, double y, gmshSurface *s, double lc);
+  void addLine(int num, int startTag, int endTag);
+  void addLine(int num, std::vector<int> vertexTags);
+
+  // synchronize internal CAD data with the given GModel
+  void synchronize(GModel *model);
 };
 
 #endif

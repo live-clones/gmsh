@@ -122,6 +122,7 @@ class OCC_Internals {
   // add shapes
   void addVertex(int tag, double x, double y, double z, double meshSize=MAX_LC);
   void addLine(int tag, int startTag, int endTag);
+  void addLine(int tag, std::vector<int> vertexTags);
   void addCircleArc(int tag, int startTag, int centerTag, int endTag);
   void addCircle(int tag, double x, double y, double z, double r, double angle1,
                  double angle2);
@@ -256,6 +257,7 @@ public:
   int getMaxTag(int dim) const { return 0; }
   void addVertex(int tag, double x, double y, double z, double meshSize=MAX_LC){}
   void addLine(int tag, int startTag, int endTag){}
+  void addLine(int tag, std::vector<int> vertexTags){}
   void addCircleArc(int tag, int startTag, int centerTag, int endTag){}
   void addCircle(int tag, double x, double y, double z, double r, double angle1,
                  double angle2){}

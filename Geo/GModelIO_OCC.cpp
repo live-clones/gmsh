@@ -306,6 +306,15 @@ void OCC_Internals::addLine(int tag, int startTag, int endTag)
   bind(result, tag);
 }
 
+void OCC_Internals::addLine(int tag, std::vector<int> vertexTags)
+{
+  if(vertexTags.size() == 2)
+    addLine(tag, vertexTags[0], vertexTags[1]);
+  else
+    Msg::Error("OpenCASCADE polyline currently not supported");
+  // FIXME: if tag < 0 we could create multiple lines
+}
+
 void OCC_Internals::_addArc(int tag, int startTag, int centerTag, int endTag,
                             int mode)
 {
