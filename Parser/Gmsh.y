@@ -1736,17 +1736,15 @@ Shape :
         double y = CTX::instance()->geom.scalingFactor * $6[1];
         double z = CTX::instance()->geom.scalingFactor * $6[2];
         double lc = CTX::instance()->geom.scalingFactor * $6[3];
+        if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
         if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
           GModel::current()->getOCCInternals()->addVertex(num, x, y, z, lc);
         }
         else{
-          if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
-          Vertex *v;
           if(!myGmshSurface)
-            v = Create_Vertex(num, x, y, z, lc, 1.0);
+            GModel::current()->getGEOInternals()->addVertex(num, x, y, z, lc);
           else
-            v = Create_Vertex(num, x, y, myGmshSurface, lc);
-          Tree_Add(GModel::current()->getGEOInternals()->Points, &v);
+            GModel::current()->getGEOInternals()->addVertex(num, x, y, myGmshSurface, lc);
         }
         AddToTemporaryBoundingBox(x, y, z);
       }
@@ -3667,7 +3665,7 @@ Delete :
 	GModel::current()->getGEOInternals()->destroy();
       }
       else if(!strcmp($2, "Physicals")){
-	GModel::current()->getGEOInternals()->reset_physicals();
+	GModel::current()->getGEOInternals()->resetPhysicalGroups();
 	GModel::current()->deletePhysicalGroups();
       }
       else if(!strcmp($2, "Variables")){

@@ -10,8 +10,8 @@
 
 class GEO_Internals{
  private:
-  void alloc_all();
-  void free_all();
+  void _allocateAll();
+  void _freeAll();
  public:
   // FIXME: all this must (will) become private ; and all the direct calls in
   // Gmsh.y should (will) go through an integer-based API similar to the one in
@@ -45,18 +45,19 @@ class GEO_Internals{
   std::map<int, MasterFace> periodicFaces;
 
  public:
-  GEO_Internals(){ alloc_all(); }
-  ~GEO_Internals(){ free_all(); }
-  void destroy(){ free_all(); alloc_all(); }
-  void reset_physicals();
+  GEO_Internals(){ _allocateAll(); }
+  ~GEO_Internals(){ _freeAll(); }
+  void destroy(){ _freeAll(); _allocateAll(); }
+  void resetPhysicalGroups();
   void addCompoundMesh(int dim, List_T *_list)
   {
     std::vector<int> compound;
     for(int i = 0; i < List_Nbr(_list); i++)
       compound.push_back((int)*(double*)List_Pointer(_list, i));
-    meshCompounds.insert(std::make_pair(dim,compound));
+    meshCompounds.insert(std::make_pair(dim, compound));
   }
-
+  void addVertex(int num, double x, double y, double z, double lc);
+  void addVertex(int num, double x, double y, gmshSurface *s, double lc);
 };
 
 #endif

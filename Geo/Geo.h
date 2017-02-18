@@ -306,7 +306,22 @@ int NEWFIELD(void);
 int NEWPHYSICAL(void);
 
 int compareVertex(const void *a, const void *b);
+int compareSurfaceLoop(const void *a, const void *b);
+int compareEdgeLoop(const void *a, const void *b);
 int compareCurve(const void *a, const void *b);
+int compareSurface(const void *a, const void *b);
+int compareVolume(const void *a, const void *b);
+int compareLevelSet(const void *a, const void *b);
+int comparePhysicalGroup(const void *a, const void *b);
+
+void Free_Vertex(void *a, void *b);
+void Free_PhysicalGroup(void *a, void *b);
+void Free_EdgeLoop(void *a, void *b);
+void Free_SurfaceLoop(void *a, void *b);
+void Free_Curve(void *a, void *b);
+void Free_Surface(void *a, void *b);
+void Free_Volume(void *a, void *b);
+void Free_LevelSet(void *a, void *b);
 
 void Projette(Vertex *v, double mat[3][3]);
 

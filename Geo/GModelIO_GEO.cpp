@@ -27,27 +27,7 @@
 #include "Parser.h"
 #endif
 
-// GEO_Internals routines
-
-int compareVertex(const void *a, const void *b);
-int compareSurfaceLoop(const void *a, const void *b);
-int compareEdgeLoop(const void *a, const void *b);
-int compareCurve(const void *a, const void *b);
-int compareSurface(const void *a, const void *b);
-int compareVolume(const void *a, const void *b);
-int compareLevelSet(const void *a, const void *b);
-int comparePhysicalGroup(const void *a, const void *b);
-
-void Free_Vertex(void *a, void *b);
-void Free_PhysicalGroup(void *a, void *b);
-void Free_EdgeLoop(void *a, void *b);
-void Free_SurfaceLoop(void *a, void *b);
-void Free_Curve(void *a, void *b);
-void Free_Surface(void *a, void *b);
-void Free_Volume(void *a, void *b);
-void Free_LevelSet(void *a, void *b);
-
-void GEO_Internals::alloc_all()
+void GEO_Internals::_allocateAll()
 {
   MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
   MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
@@ -61,7 +41,7 @@ void GEO_Internals::alloc_all()
   PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
 }
 
-void GEO_Internals::free_all()
+void GEO_Internals::_freeAll()
 {
   MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
   MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
@@ -75,10 +55,23 @@ void GEO_Internals::free_all()
   List_Action(PhysicalGroups, Free_PhysicalGroup); List_Delete(PhysicalGroups);
 }
 
-void GEO_Internals::reset_physicals()
+void GEO_Internals::resetPhysicalGroups()
 {
   List_Action(PhysicalGroups, Free_PhysicalGroup);
   List_Reset(PhysicalGroups);
+}
+
+void GEO_Internals::addVertex(int num, double x, double y, double z, double lc)
+{
+  Vertex *v = Create_Vertex(num, x, y, z, lc, 1.0);
+  Tree_Add(Points, &v);
+}
+
+void GEO_Internals::addVertex(int num, double x, double y, gmshSurface *surface,
+                              double lc)
+{
+  Vertex *v = Create_Vertex(num, x, y, surface, lc);
+  Tree_Add(Points, &v);
 }
 
 // GModel interface
