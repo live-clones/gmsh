@@ -2022,7 +2022,14 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
 
   Msg::Info("Starting shape healing (tolerance: %g)", tolerance);
 
-  buildLists();
+  _somap.Clear();
+  _shmap.Clear();
+  _fmap.Clear();
+  _wmap.Clear();
+  _emap.Clear();
+  _vmap.Clear();
+  _addShapeToMaps(myshape);
+
   TopExp_Explorer exp0, exp1;
   int nrc = 0, nrcs = 0;
   int nrso = _somap.Extent(), nrsh = _shmap.Extent(), nrf = _fmap.Extent();
@@ -2051,7 +2058,13 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
       }
       myshape = rebuild->Apply(myshape);
     }
-    buildLists();
+    _somap.Clear();
+    _shmap.Clear();
+    _fmap.Clear();
+    _wmap.Clear();
+    _emap.Clear();
+    _vmap.Clear();
+    _addShapeToMaps(myshape);
 
     {
       Handle(ShapeFix_Face) sff;
@@ -2155,9 +2168,15 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     }
 
     myshape = rebuild->Apply(myshape);
+    _somap.Clear();
+    _shmap.Clear();
+    _fmap.Clear();
+    _wmap.Clear();
+    _emap.Clear();
+    _vmap.Clear();
+    _addShapeToMaps(myshape);
 
     {
-      buildLists();
       Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
       rebuild->Apply(myshape);
 
@@ -2310,7 +2329,13 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     newsurfacecont += system.Mass();
   }
 
-  buildLists();
+  _somap.Clear();
+  _shmap.Clear();
+  _fmap.Clear();
+  _wmap.Clear();
+  _emap.Clear();
+  _vmap.Clear();
+  _addShapeToMaps(myshape);
   int nnrc = 0, nnrcs = 0;
   int nnrso = _somap.Extent(), nnrsh = _shmap.Extent(), nnrf = _fmap.Extent();
   int nnrw = _wmap.Extent(), nnre = _emap.Extent(), nnrv = _vmap.Extent();
