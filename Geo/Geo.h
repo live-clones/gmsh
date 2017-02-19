@@ -202,7 +202,7 @@ class Surface{
   List_T *EmbeddedCurves;
   List_T *EmbeddedPoints;
   List_T *TrsfPoints;
-  List_T *InSphereCenter;
+  Vertex *InSphereCenter;
   ExtrudeParams *Extrude;
   DrawingColor Color;
   // A surface is defined topologically by its Generatrices

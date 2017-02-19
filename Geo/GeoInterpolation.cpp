@@ -662,9 +662,9 @@ bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius)
   for(int i = 0; i < std::min(List_Nbr(s->Generatrices), 4); i++)
     List_Read(s->Generatrices, i, &C[i]);
 
-  if(List_Nbr(s->InSphereCenter)) {
+  if(s->InSphereCenter) {
     // it's on a sphere: get the center
-    List_Read(s->InSphereCenter, 0, &O);
+    O = s->InSphereCenter;
   }
   else{
     // try to be intelligent (hum)
@@ -715,9 +715,9 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
 
   // Ugly hack: "fix" transfinite interpolation if we have a sphere
   // patch
-  if(List_Nbr(s->InSphereCenter)) {
+  if(s->InSphereCenter) {
     // it's on a sphere: get the center
-    List_Read(s->InSphereCenter, 0, &O);
+    O = s->InSphereCenter;
   }
   else{
     // try to be intelligent (hum)

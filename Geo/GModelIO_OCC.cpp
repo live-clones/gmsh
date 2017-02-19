@@ -672,7 +672,7 @@ void OCC_Internals::addDisk(int tag, double xc, double yc, double zc,
   bind(result, tag);
 }
 
-void OCC_Internals::addPlanarFace(int tag, std::vector<int> wireTags)
+void OCC_Internals::addPlaneSurface(int tag, std::vector<int> wireTags)
 {
   const bool autoFix = true;
 
@@ -693,7 +693,7 @@ void OCC_Internals::addPlanarFace(int tag, std::vector<int> wireTags)
 
   TopoDS_Face result;
   if(wires.size() == 0){
-    Msg::Error("Planar face requires at least one line loop");
+    Msg::Error("Plane surface requires at least one line loop");
     return;
   }
   else if(wires.size() == 1){
@@ -725,7 +725,7 @@ void OCC_Internals::addPlanarFace(int tag, std::vector<int> wireTags)
         f.Add(wires[i]);
       f.Build();
       if(!f.IsDone()){
-        Msg::Error("Could not create planar face");
+        Msg::Error("Could not create face");
         return;
       }
       result = f.Face();
@@ -745,8 +745,7 @@ void OCC_Internals::addPlanarFace(int tag, std::vector<int> wireTags)
   bind(result, tag);
 }
 
-void OCC_Internals::addFaceFilling(int tag, int wireTag,
-                                   std::vector<std::vector<double> > points)
+void OCC_Internals::addSurfaceFilling(int tag, int wireTag)
 {
   if(tag > 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
@@ -766,15 +765,12 @@ void OCC_Internals::addFaceFilling(int tag, int wireTag,
     for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()){
       f.Add(TopoDS::Edge(exp0.Current()), GeomAbs_C0);
     }
-    // add point constraints
-    for(unsigned int i = 0; i < points.size(); i++){
-      if(points[i].size() == 3)
-        f.Add(gp_Pnt(points[i][0], points[i][1], points[i][2]));
-    }
+    // TODO: add optional point constraints using
+    // f.Add(gp_Pnt(x, y, z);
 
     f.Build();
     if(!f.IsDone()){
-      Msg::Error("Could not build face filling");
+      Msg::Error("Could not build surface filling");
       return;
     }
     result = TopoDS::Face(f.Shape());

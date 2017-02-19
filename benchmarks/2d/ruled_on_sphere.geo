@@ -276,6 +276,6 @@ Circle(219) = {2034,0,805};
 //
 
 Line Loop(220) = {4,1,2,3};
-Ruled Surface(221) = {220} In Sphere{0};
+Surface(221) = {220} In Sphere{0};
 Line Loop(222) = {213,210,206,-211};
-Ruled Surface(223) = {222,220} In Sphere{0};
+Surface(223) = {222,220} In Sphere{0};

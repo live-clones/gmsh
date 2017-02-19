@@ -136,8 +136,8 @@ class OCC_Internals {
   void addRectangle(int tag, double x1, double y1, double z1,
                     double x2, double y2, double z2, double roundedRadius=0.);
   void addDisk(int tag, double xc, double yc, double zc, double rx, double ry);
-  void addPlanarFace(int tag, std::vector<int> wireTags);
-  void addFaceFilling(int tag, int wireTag, std::vector<std::vector<double> > points);
+  void addPlaneSurface(int tag, std::vector<int> wireTags);
+  void addSurfaceFilling(int tag, int wireTag);
   void addSurfaceLoop(int tag, std::vector<int> faceTags);
   void addVolume(int tag, std::vector<int> shellTags);
   void addSphere(int tag, double xc, double yc, double zc, double radius,
@@ -271,8 +271,8 @@ public:
   void addRectangle(int tag, double x1, double y1, double z1,
                     double x2, double y2, double z2, double roundedRadius=0.){}
   void addDisk(int tag, double xc, double yc, double zc, double rx, double ry){}
-  void addPlanarFace(int tag, std::vector<int> wireTags){}
-  void addFaceFilling(int tag, int wireTag, std::vector<std::vector<double> > points){}
+  void addPlaneSurface(int tag, std::vector<int> wireTags){}
+  void addSurfaceFilling(int tag, int wireTag){}
   void addSurfaceLoop(int tag, std::vector<int> faceTags){}
   void addVolume(int tag, std::vector<int> shellTags){}
   void addSphere(int tag, double xc, double yc, double zc, double radius,

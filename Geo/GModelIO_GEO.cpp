@@ -258,9 +258,128 @@ void GEO_Internals::addLineLoop(int num, std::vector<int> edgeTags)
   List_Delete(temp);
 }
 
+void GEO_Internals::addPlaneSurface(int num, std::vector<int> wireTags)
+{
+  if(FindSurface(num)){
+    Msg::Error("GEO face with tag %d already exists", num);
+    return;
+  }
+  if(wireTags.empty()){
+    Msg::Error("Plane surface requires at least one line loop");
+    return;
+  }
+  List_T *temp = List_Create(2, 2, sizeof(int));
+  for(unsigned int i = 0; i < wireTags.size(); i++)
+    List_Add(temp, &wireTags[i]);
+  Surface *s = Create_Surface(num, MSH_SURF_PLAN);
+  setSurfaceGeneratrices(s, temp);
+  List_Delete(temp);
+  End_Surface(s);
+  Tree_Add(Surfaces, &s);
+}
 
+void GEO_Internals::addSurfaceFilling(int num, std::vector<int> wireTags,
+                                      int sphereCenterTag)
+{
+  if(FindSurface(num)){
+    Msg::Error("GEO face with tag %d already exists", num);
+    return;
+  }
+  if(wireTags.empty()){
+    Msg::Error("Face requires at least one line loop");
+    return;
+  }
+  int ll = (int)std::abs(wireTags[0]);
+  EdgeLoop *el = FindEdgeLoop(ll);
+  if(!el){
+    Msg::Error("Unknown line loop %d", ll);
+    return;
+  }
+  int j = List_Nbr(el->Curves), type = MSH_SURF_PLAN;
+  if(j == 4)
+    type = MSH_SURF_REGL;
+  else if(j == 3)
+    type = MSH_SURF_TRIC;
+  else
+    Msg::Error("Wrong definition of face %d: %d borders instead of 3 or 4",
+               num, j);
+  List_T *temp = List_Create(2, 2, sizeof(int));
+  for(unsigned int i = 0; i < wireTags.size(); i++)
+    List_Add(temp, &wireTags[i]);
+  Surface *s = Create_Surface(num, type);
+  setSurfaceGeneratrices(s, temp);
+  List_Delete(temp);
+  End_Surface(s);
+  if(sphereCenterTag >= 0){
+    s->InSphereCenter = FindPoint(sphereCenterTag);
+    if(!s->InSphereCenter)
+      Msg::Error("Unknown sphere center vertex %d", sphereCenterTag);
+  }
+  Tree_Add(Surfaces, &s);
+}
 
-void GEO_Internals::addCompoundMesh(int dim, std::vector<int> tags)
+void GEO_Internals::addCompoundSurface(int num, std::vector<int> faceTags,
+                                       std::vector<int> edgeTags[4])
+{
+  if(FindSurface(num)){
+    Msg::Error("GEO face with tag %d already exists", num);
+    return;
+  }
+
+  Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
+  s->compound = faceTags;
+  if(edgeTags){
+    for(int i = 0; i < 4; i++)
+      s->compoundBoundary[i] = edgeTags[i];
+  }
+  setSurfaceGeneratrices(s, 0);
+  Tree_Add(Surfaces, &s);
+}
+
+void GEO_Internals::addSurfaceLoop(int num, std::vector<int> faceTags)
+{
+  if(FindSurfaceLoop(num)){
+    Msg::Error("GEO surface loop with tag %d already exists", num);
+    return;
+  }
+
+  List_T *temp = List_Create(2, 2, sizeof(int));
+  for(unsigned int i = 0; i < faceTags.size(); i++)
+    List_Add(temp, &faceTags[i]);
+  SurfaceLoop *l = Create_SurfaceLoop(num, temp);
+  Tree_Add(SurfaceLoops, &l);
+  List_Delete(temp);
+}
+
+void GEO_Internals::addVolume(int num, std::vector<int> shellTags)
+{
+  if(FindVolume(num)){
+    Msg::Error("GEO region with tag %d already exists", num);
+    return;
+  }
+
+  List_T *temp = List_Create(2, 2, sizeof(int));
+  for(unsigned int i = 0; i < shellTags.size(); i++)
+    List_Add(temp, &shellTags[i]);
+  Volume *v = Create_Volume(num, MSH_VOLUME);
+  setVolumeSurfaces(v, temp);
+  List_Delete(temp);
+  Tree_Add(Volumes, &v);
+}
+
+void GEO_Internals::addCompoundVolume(int num, std::vector<int> regionTags)
+{
+  if(FindVolume(num)){
+    Msg::Error("GEO region with tag %d already exists", num);
+    return;
+  }
+
+  Volume *v = Create_Volume(num, MSH_VOLUME_COMPOUND);
+  v->compound = regionTags;
+  Tree_Add(Volumes, &v);
+}
+
+void GEO_Internals::setCompoundMesh(int dim, std::vector<int> tags)
 {
   meshCompounds.insert(std::make_pair(dim, tags));
 }
@@ -586,6 +705,44 @@ void GEO_Internals::synchronize(GModel *model)
   Msg::Debug("%d Edges", model->getNumEdges());
   Msg::Debug("%d Faces", model->getNumFaces());
   Msg::Debug("%d Regions", model->getNumRegions());
+}
+
+gmshSurface *GEO_Internals::newGeometrySphere(int num, int centerTag, int pointTag)
+{
+  Vertex *v1 = FindPoint(centerTag);
+  if(!v1){
+    Msg::Error("Unknown sphere center vertex %d", centerTag);
+    return 0;
+  }
+  Vertex *v2 = FindPoint(pointTag);
+  if(!v2){
+    Msg::Error("Unknown sphere vertex %d", pointTag);
+    return 0;
+  }
+  return gmshSphere::NewSphere
+    (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
+     sqrt((v2->Pos.X - v1->Pos.X) * (v2->Pos.X - v1->Pos.X) +
+          (v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
+          (v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
+}
+
+gmshSurface *GEO_Internals::newGeometryPolarSphere(int num, int centerTag, int pointTag)
+{
+  Vertex *v1 = FindPoint(centerTag);
+  if(!v1){
+    Msg::Error("Unknown polar sphere center vertex %d", centerTag);
+    return 0;
+  }
+  Vertex *v2 = FindPoint(pointTag);
+  if(!v2){
+    Msg::Error("Unknown polar sphere vertex %d", pointTag);
+    return 0;
+  }
+  return gmshPolarSphere::NewPolarSphere
+    (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
+     sqrt((v2->Pos.X - v1->Pos.X) * (v2->Pos.X - v1->Pos.X) +
+          (v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
+          (v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
 }
 
 // GModel interface

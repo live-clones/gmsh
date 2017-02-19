@@ -42,6 +42,9 @@ class GEO_Internals{
   };
   std::map<int, MasterFace> periodicFaces;
 
+  gmshSurface *newGeometrySphere(int num, int centerTag, int pointTag);
+  gmshSurface *newGeometryPolarSphere(int num, int centerTag, int pointTag);
+
  public:
   GEO_Internals(){ _allocateAll(); }
   ~GEO_Internals(){ _freeAll(); }
@@ -77,9 +80,16 @@ class GEO_Internals{
   void addNurbs(int num, std::vector<int> vertexTags, std::vector<double> knots);
   void addCompoundLine(int num, std::vector<int> edgeTags);
   void addLineLoop(int num, std::vector<int> edgeTags);
+  void addPlaneSurface(int num, std::vector<int> wireTags);
+  void addSurfaceFilling(int num, std::vector<int> wireTags, int sphereCenterTag=-1);
+  void addSurfaceLoop(int num, std::vector<int> faceTags);
+  void addCompoundSurface(int num, std::vector<int> faceTags,
+                          std::vector<int> edgeTags[4]=0);
+  void addVolume(int num, std::vector<int> shellTags);
+  void addCompoundVolume(int num, std::vector<int> regionTags);
 
-
-  void addCompoundMesh(int dim, std::vector<int> tags);
+  // set meshing constraints
+  void setCompoundMesh(int dim, std::vector<int> tags);
 
   // synchronize internal CAD data with the given GModel
   void synchronize(GModel *model);

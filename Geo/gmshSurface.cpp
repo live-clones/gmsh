@@ -37,11 +37,11 @@ double gmshSurface::getMetricEigenvalue(const SPoint2 &)
 gmshSurface *gmshSphere::NewSphere(int iSphere, double x, double y, double z, double r)
 {
   gmshSphere *sph = new gmshSphere(x, y, z, r);
-  
+
   if(allGmshSurfaces.find(iSphere) != allGmshSurfaces.end()){
     Msg::Error("gmshSurface %d already exists",iSphere);
   }
-  
+
   allGmshSurfaces[iSphere] = sph;
   return sph;
 }
@@ -61,7 +61,7 @@ SPoint3 gmshSphere::point(double par1, double par2) const
   par2 += M_PI*.5;
   const double x = xc + r * sin(par2) * cos(par1);
   const double y = yc + r * sin(par2) * sin(par1);
-  const double z = zc - r * cos(par2); 
+  const double z = zc - r * cos(par2);
   return SPoint3(x, y, z);
 }
 
@@ -69,7 +69,7 @@ gmshSurface *gmshPolarSphere::NewPolarSphere(int iSphere, double x, double y, do
                                              double r)
 {
   gmshPolarSphere *sph = new gmshPolarSphere(x, y, z, r);
-  
+
   if(allGmshSurfaces.find(iSphere) != allGmshSurfaces.end()){
     Msg::Error("gmshSurface %d already exists", iSphere);
   }
@@ -78,12 +78,14 @@ gmshSurface *gmshPolarSphere::NewPolarSphere(int iSphere, double x, double y, do
   return sph;
 }
 
-gmshPolarSphere::gmshPolarSphere(double x, double y, double z, double _r) : r(_r), o(x,y,z) {
+gmshPolarSphere::gmshPolarSphere(double x, double y, double z, double _r) : r(_r), o(x,y,z)
+{
 }
+
 SPoint3 gmshPolarSphere::point(double u, double v) const
 {
   //stereographic projection from the south pole, origin of the axis
-  //at the center of the sphere 
+  //at the center of the sphere
   //u=-x/(r+z) v=-y/(r+z)
   double rp2 = u*u+v*v;
   SPoint3 p(-2*r*u/(1+rp2),-2*r*v/(1+rp2),r*(1-rp2)/(1+rp2));
@@ -95,7 +97,7 @@ gmshSurface *gmshParametricSurface::NewParametricSurface(int iSurf, char *valX,
                                                          char *valY, char *valZ)
 {
   gmshParametricSurface *sph = new gmshParametricSurface(valX, valY, valZ);
-  
+
   if(allGmshSurfaces.find(iSurf) != allGmshSurfaces.end()){
     Msg::Error("gmshSurface %d already exists",iSurf);
   }
@@ -131,7 +133,7 @@ SPoint3 gmshParametricSurface::point(double par1, double par2) const
     values[1] = par2;
     if(_f->eval(values, res)) return SPoint3(res[0], res[1], res[2]);
   }
-  return SPoint3(0., 0., 0.); 
+  return SPoint3(0., 0., 0.);
 }
 
 Range<double> gmshParametricSurface::parBounds(int i) const

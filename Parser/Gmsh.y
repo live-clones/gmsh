@@ -173,7 +173,7 @@ struct doubleXstring{
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
 %type <i> NumericAffectation NumericIncrement BooleanOperator BooleanOption
 %type <i> PhysicalId0 PhysicalId1 PhysicalId2 PhysicalId3
-%type <i> TransfiniteArrangement RecombineAngle
+%type <i> TransfiniteArrangement RecombineAngle InSphereCenter
 %type <u> ColorExpr
 %type <c> StringExpr StringExprVar SendToFile HomologyCommand
 %type <c> LP RP
@@ -183,7 +183,7 @@ struct doubleXstring{
 %type <l> RecursiveListOfListOfDouble Enumeration
 %type <l> ListOfColor RecursiveListOfColor
 %type <l> ListOfShapes Transform Extrude MultipleShape Boolean
-%type <l> TransfiniteCorners InSphereCenter PeriodicTransform
+%type <l> TransfiniteCorners PeriodicTransform
 %type <s> Shape
 
 // Operators (with ascending priority): cf. C language
@@ -1698,17 +1698,11 @@ PhysicalId3 :
 InSphereCenter :
     // nothing
     {
-      $$ = 0;
+      $$ = -1;
     }
   | tIn tSphere '{' FExpr '}'
     {
-      $$ = List_Create(1, 1, sizeof(Vertex*));
-      Vertex *v = FindPoint((int)$4);
-      if(!v)
-	yymsg(0, "Unknown point %d", (int)$4);
-      else{
-	List_Add($$, &v);
-      }
+      $$ = (int)$4;
     }
 ;
 
@@ -1953,22 +1947,12 @@ Shape :
   | tPlane tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindSurface(num)){
-        yymsg(0, "Surface %d already exists", num);
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      if(factory == "OpenCASCADE"){
+        GModel::current()->getOCCInternals()->addPlaneSurface(num, tags);
       }
       else{
-        if(factory == "OpenCASCADE"){
-          std::vector<int> wires; ListOfDouble2Vector($7, wires);
-          GModel::current()->getOCCInternals()->addPlanarFace(num, wires);
-        }
-        else{
-          Surface *s = Create_Surface(num, MSH_SURF_PLAN);
-          List_T *temp = ListOfDouble2ListOfInt($7);
-          setSurfaceGeneratrices(s, temp);
-          List_Delete(temp);
-          End_Surface(s);
-          Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
-        }
+        GModel::current()->getGEOInternals()->addPlaneSurface(num, tags);
       }
       List_Delete($7);
       $$.Type = MSH_SURF_PLAN;
@@ -1976,104 +1960,31 @@ Shape :
     }
   | tSurface '(' FExpr ')' tAFFECT ListOfDouble InSphereCenter tEND
     {
-      int num = (int)$3, type = 0;
-      if(FindSurface(num)){
-        yymsg(0, "Surface %d already exists", num);
-      }
-      else{
-        if(factory == "OpenCASCADE"){
-          std::vector<int> wires; ListOfDouble2Vector($6, wires);
-          if(wires.size() != 1){
-            yymsg(0, "Surface requires a single line loop");
-          }
-          else{
-            std::vector<std::vector<double> > tags;
-            GModel::current()->getOCCInternals()->addFaceFilling(num, wires[0], tags);
-          }
+      int num = (int)$3;
+      std::vector<int> wires; ListOfDouble2Vector($6, wires);
+      if(factory == "OpenCASCADE"){
+        if(wires.size() != 1){
+          yymsg(0, "OpenCASCADE face filling requires a single line loop");
         }
         else{
-          if(List_Nbr($6) < 1){
-            yymsg(0, "Surface requires at least one line loop");
-          }
-          else{
-            double d;
-            List_Read($6, 0, &d);
-            EdgeLoop *el = FindEdgeLoop((int)fabs(d));
-            if(!el){
-              yymsg(0, "Unknown line loop %d", (int)d);
-            }
-            else{
-              int j = List_Nbr(el->Curves);
-              if(j == 4){
-                type = MSH_SURF_REGL;
-              }
-              else if(j == 3){
-                type = MSH_SURF_TRIC;
-              }
-              else{
-                yymsg(0, "Wrong definition of Surface %d: "
-                      "%d borders instead of 3 or 4", num, j);
-                type = MSH_SURF_PLAN;
-              }
-              Surface *s = Create_Surface(num, type);
-              List_T *temp = ListOfDouble2ListOfInt($6);
-              setSurfaceGeneratrices(s, temp);
-              List_Delete(temp);
-              End_Surface(s);
-              s->InSphereCenter = $7;
-              Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
-            }
-          }
+          GModel::current()->getOCCInternals()->addSurfaceFilling(num, wires[0]);
         }
       }
+      else{
+        GModel::current()->getGEOInternals()->addSurfaceFilling(num, wires, $7);
+      }
       List_Delete($6);
-      $$.Type = type;
+      $$.Type = MSH_SURF_REGL;
       $$.Num = num;
     }
-  // Surface is deprecated: it makes no sense, as the surfaces are usually not ruled
   | tRuled tSurface '(' FExpr ')' tAFFECT ListOfDouble InSphereCenter tEND
     {
       yymsg(1, "'Ruled Surface' command is deprecated: use 'Surface' instead");
-      int num = (int)$4, type = 0;
-      if(FindSurface(num)){
-        yymsg(0, "Surface %d already exists", num);
-      }
-      else{
-        if(List_Nbr($7) < 1){
-          yymsg(0, "Surface requires at least one line loop");
-        }
-        else{
-          double d;
-          List_Read($7, 0, &d);
-          EdgeLoop *el = FindEdgeLoop((int)fabs(d));
-          if(!el){
-            yymsg(0, "Unknown line loop %d", (int)d);
-          }
-          else{
-            int j = List_Nbr(el->Curves);
-            if(j == 4){
-              type = MSH_SURF_REGL;
-            }
-            else if(j == 3){
-              type = MSH_SURF_TRIC;
-            }
-            else{
-              yymsg(0, "Wrong definition of Surface %d: "
-                    "%d borders instead of 3 or 4", num, j);
-              type = MSH_SURF_PLAN;
-            }
-            Surface *s = Create_Surface(num, type);
-            List_T *temp = ListOfDouble2ListOfInt($7);
-            setSurfaceGeneratrices(s, temp);
-            List_Delete(temp);
-            End_Surface(s);
-            s->InSphereCenter = $8;
-            Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
-          }
-        }
-      }
+      int num = (int)$4;
+      std::vector<int> wires; ListOfDouble2Vector($7, wires);
+      GModel::current()->getGEOInternals()->addSurfaceFilling(num, wires, $8);
       List_Delete($7);
-      $$.Type = type;
+      $$.Type =  MSH_SURF_REGL;
       $$.Num = num;
     }
   | tEuclidian tCoordinates tEND
@@ -2098,41 +2009,26 @@ Shape :
   | tSphere '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) == 4 || List_Nbr($6) == 5){
+      std::vector<int> tags; ListOfDouble2Vector($6, tags);
+      std::vector<double> param; ListOfDouble2Vector($6, param);
+      $$.Type = 0;
+      if(param.size() == 4 || param.size() == 5){
         if(factory == "OpenCASCADE"){
-          double x; List_Read($6, 0, &x);
-          double y; List_Read($6, 1, &y);
-          double z; List_Read($6, 2, &z);
-          double r; List_Read($6, 3, &r);
-          double alpha = 2.*M_PI; if(List_Nbr($6) == 5) List_Read($6, 4, &alpha);
-          GModel::current()->getOCCInternals()->addSphere(num, x, y, z, r, alpha);
+          double alpha = (param.size() == 5) ? param[4] : 2.*M_PI;
+          GModel::current()->getOCCInternals()->addSphere
+            (num, param[0], param[1], param[2], param[3], alpha);
         }
         else{
           yymsg(0, "Sphere only available with OpenCASCADE factory");
         }
         $$.Type = MSH_VOLUME;
       }
+      else if(tags.size() == 2){
+        myGmshSurface = GModel::current()->getGEOInternals()->newGeometrySphere
+          (num, tags[0], tags[1]);
+      }
       else{
-        if (List_Nbr($6) != 2){
-          yymsg(0, "Sphere %d has to be defined using 2 points (center + "
-                "any point) and not %d", num, List_Nbr($6));
-        }
-        else{
-          double p1,p2;
-          List_Read($6, 0, &p1);
-          List_Read($6, 1, &p2);
-          Vertex *v1 = FindPoint((int)p1);
-          Vertex *v2 = FindPoint((int)p2);
-          if(!v1) yymsg(0, "Sphere %d : unknown point %d", num, (int)p1);
-          if(!v2) yymsg(0, "Sphere %d : unknown point %d", num, (int)p2);
-          if(v1 && v2)
-            myGmshSurface = gmshSphere::NewSphere
-              (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
-               sqrt((v2->Pos.X - v1->Pos.X) * (v2->Pos.X - v1->Pos.X) +
-                    (v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
-                    (v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
-        }
-        $$.Type = 0;
+        yymsg(0, "Sphere requires 2 points or 4 or 5 parameters");
       }
       List_Delete($6);
       $$.Num = num;
@@ -2140,24 +2036,13 @@ Shape :
   | tPolarSphere '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if (List_Nbr($6) != 2){
-	yymsg(0, "PolarSphere %d has to be defined using 2 points (center + "
-	      "any point) and not %d", num, List_Nbr($6));
+      std::vector<int> tags; ListOfDouble2Vector($6, tags);
+      if(tags.size() == 2){
+        myGmshSurface = GModel::current()->getGEOInternals()->newGeometryPolarSphere
+          (num, tags[0], tags[1]);
       }
       else{
-	double p1,p2;
-	List_Read($6, 0, &p1);
-	List_Read($6, 1, &p2);
-	Vertex *v1 = FindPoint((int)p1);
-	Vertex *v2 = FindPoint((int)p2);
-	if(!v1) yymsg(0, "PolarSphere %d : unknown point %d", num, (int)p1);
-	if(!v2) yymsg(0, "PolarSphere %d : unknown point %d", num, (int)p2);
-	if(v1 && v2)
-	  myGmshSurface = gmshPolarSphere::NewPolarSphere
-	    (num, v1->Pos.X, v1->Pos.Y, v1->Pos.Z,
-	     sqrt((v2->Pos.X - v1->Pos.X) * (v2->Pos.X - v1->Pos.X) +
-		  (v2->Pos.Y - v1->Pos.Y) * (v2->Pos.Y - v1->Pos.Y) +
-		  (v2->Pos.Z - v1->Pos.Z) * (v2->Pos.Z - v1->Pos.Z)));
+        yymsg(0, "PolarSphere requires 2 points");
       }
       List_Delete($6);
       $$.Type = 0;
@@ -2166,22 +2051,18 @@ Shape :
   | tBlock '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) == 6){
-        if(factory == "OpenCASCADE"){
-          double x1; List_Read($6, 0, &x1);
-          double y1; List_Read($6, 1, &y1);
-          double z1; List_Read($6, 2, &z1);
-          double x2; List_Read($6, 3, &x2);
-          double y2; List_Read($6, 4, &y2);
-          double z2; List_Read($6, 5, &z2);
-          GModel::current()->getOCCInternals()->addBlock(num, x1, y1, z1, x2, y2, z2);
+      std::vector<double> param; ListOfDouble2Vector($6, param);
+      if(factory == "OpenCASCADE"){
+        if(param.size() == 6){
+          GModel::current()->getOCCInternals()->addBlock
+            (num, param[0], param[1], param[2], param[3], param[4], param[5]);
         }
         else{
-          yymsg(0, "Block only available with OpenCASCADE factory");
+          yymsg(0, "Block requires 6 parameters");
         }
       }
       else{
-        yymsg(0, "Block has to be defined using 2 points");
+        yymsg(0, "Block only available with OpenCASCADE factory");
       }
       List_Delete($6);
       $$.Type = MSH_VOLUME;
@@ -2190,22 +2071,19 @@ Shape :
   | tTorus '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) == 5 || List_Nbr($6) == 6){
-        if(factory == "OpenCASCADE"){
-          double x; List_Read($6, 0, &x);
-          double y; List_Read($6, 1, &y);
-          double z; List_Read($6, 2, &z);
-          double r1; List_Read($6, 3, &r1);
-          double r2; List_Read($6, 4, &r2);
-          double alpha = 2*M_PI; if(List_Nbr($6) == 6) List_Read($6, 5, &alpha);
-          GModel::current()->getOCCInternals()->addTorus(num, x, y, z, r1, r2, alpha);
+      std::vector<double> param; ListOfDouble2Vector($6, param);
+      if(factory == "OpenCASCADE"){
+        if(param.size() == 5 || param.size() == 6){
+          double alpha = (param.size() == 6) ? param[5] : 2*M_PI;
+          GModel::current()->getOCCInternals()->addTorus
+            (num, param[0], param[1], param[2], param[3], param[4], alpha);
         }
         else{
-          yymsg(0, "Torus only available with OpenCASCADE factory");
+          yymsg(0, "Torus requires 5 ou 6 parameters");
         }
       }
       else{
-        yymsg(0, "Torus has to be defined using {x,y,z,r1,r2} or {x,y,z,r1,r2,alpha}");
+        yymsg(0, "Torus only available with OpenCASCADE factory");
       }
       List_Delete($6);
       $$.Type = MSH_VOLUME;
@@ -2214,24 +2092,19 @@ Shape :
   | tRectangle '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) == 6 || List_Nbr($6) == 7){
-        if(factory == "OpenCASCADE"){
-          double x1; List_Read($6, 0, &x1);
-          double y1; List_Read($6, 1, &y1);
-          double z1; List_Read($6, 2, &z1);
-          double x2; List_Read($6, 3, &x2);
-          double y2; List_Read($6, 4, &y2);
-          double z2; List_Read($6, 5, &z2);
-          double r = 0.; if(List_Nbr($6) == 7) List_Read($6, 6, &r);
-          GModel::current()->getOCCInternals()->addRectangle(num, x1, y1, z1,
-                                                             x2, y2, z2, r);
+      std::vector<double> param; ListOfDouble2Vector($6, param);
+      if(factory == "OpenCASCADE"){
+        if(param.size() == 6 || param.size() == 7){
+          double r = (param.size() == 7) ? param[6] : 0.;
+          GModel::current()->getOCCInternals()->addRectangle
+            (num, param[0], param[1], param[2], param[3], param[4], param[5], r);
         }
         else{
-          yymsg(0, "Rectangle only available with OpenCASCADE factory");
+          yymsg(0, "Rectangle requires 6 ou 7 parameters");
         }
       }
       else{
-        yymsg(0, "Rectangle has to be defined using {x1,y1,z1,x2,y2,z2}");
+        yymsg(0, "Rectangle only available with OpenCASCADE factory");
       }
       List_Delete($6);
       $$.Type = MSH_SURF_PLAN;
@@ -2240,21 +2113,19 @@ Shape :
   | tDisk '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) == 4 || List_Nbr($6) == 5){
-        if(factory == "OpenCASCADE"){
-          double xc; List_Read($6, 0, &xc);
-          double yc; List_Read($6, 1, &yc);
-          double zc; List_Read($6, 2, &zc);
-          double rx; List_Read($6, 3, &rx);
-          double ry = rx; if(List_Nbr($6) == 5) List_Read($6, 4, &ry);
-          GModel::current()->getOCCInternals()->addDisk(num, xc, yc, zc, rx, ry);
+      std::vector<double> param; ListOfDouble2Vector($6, param);
+      if(factory == "OpenCASCADE"){
+        if(param.size() == 4 || param.size() == 5){
+          double ry = (param.size() == 5) ? param[4] : param[3];
+          GModel::current()->getOCCInternals()->addDisk
+            (num, param[0], param[1], param[2], param[3], ry);
         }
         else{
-          yymsg(0, "Disk only available with OpenCASCADE factory");
+          yymsg(0, "Disk requires 4 or 5 parameters");
         }
       }
       else{
-        yymsg(0, "Disk has to be defined using {x,y,z,r} or {x,y,z,rx,ry}");
+        yymsg(0, "Disk only available with OpenCASCADE factory");
       }
       List_Delete($6);
       $$.Type = MSH_SURF_PLAN;
@@ -2263,25 +2134,20 @@ Shape :
   | tCylinder '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) == 7 || List_Nbr($6) == 8){
-        if(factory == "OpenCASCADE"){
-          double x1; List_Read($6, 0, &x1);
-          double y1; List_Read($6, 1, &y1);
-          double z1; List_Read($6, 2, &z1);
-          double x2; List_Read($6, 3, &x2);
-          double y2; List_Read($6, 4, &y2);
-          double z2; List_Read($6, 5, &z2);
-          double r; List_Read($6, 6, &r);
-          double angle = 2*M_PI; if(List_Nbr($6) == 8) List_Read($6, 7, &angle);
-          GModel::current()->getOCCInternals()->addCylinder(num, x1, y1, z1,
-                                                            x2, y2, z2, r, angle);
+      std::vector<double> param; ListOfDouble2Vector($6, param);
+      if(factory == "OpenCASCADE"){
+        if(param.size() == 7 || param.size() == 8){
+          double angle = (param.size() == 8) ? param[7] : 2*M_PI;
+          GModel::current()->getOCCInternals()->addCylinder
+            (num, param[0], param[1], param[2], param[3], param[4], param[5],
+             param[6], angle);
         }
         else{
-          yymsg(0, "Cylinder only available with OpenCASCADE factory");
+          yymsg(0, "Cylinder requires 7 or 8 parameters");
         }
       }
       else{
-        yymsg(0, "Cylinder has to be defined using 2 points and a radius");
+        yymsg(0, "Cylinder only available with OpenCASCADE factory");
       }
       List_Delete($6);
       $$.Type = MSH_VOLUME;
@@ -2290,26 +2156,20 @@ Shape :
   | tCone '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) == 8 || List_Nbr($6) == 9){
-        if(factory == "OpenCASCADE"){
-          double x1; List_Read($6, 0, &x1);
-          double y1; List_Read($6, 1, &y1);
-          double z1; List_Read($6, 2, &z1);
-          double x2; List_Read($6, 3, &x2);
-          double y2; List_Read($6, 4, &y2);
-          double z2; List_Read($6, 5, &z2);
-          double r1; List_Read($6, 6, &r1);
-          double r2; List_Read($6, 7, &r2);
-          double alpha=2*M_PI; if(List_Nbr($6) == 9) List_Read($6, 8, &alpha);
-          GModel::current()->getOCCInternals()->addCone(num, x1, y1, z1, x2, y2, z2,
-                                                        r1, r2, alpha);
+      std::vector<double> param; ListOfDouble2Vector($6, param);
+      if(factory == "OpenCASCADE"){
+        if(param.size() == 8 || param.size() == 9){
+          double alpha = (param.size() == 9) ? param[8] : 2*M_PI;
+          GModel::current()->getOCCInternals()->addCone
+            (num, param[0], param[1], param[2], param[3], param[4], param[5],
+             param[6], param[7], alpha);
         }
         else{
-          yymsg(0, "Cone only available with OpenCASCADE factory");
+          yymsg(0, "Cone requires 8 or 9 parameters");
         }
       }
       else{
-        yymsg(0, "Cone has to be defined using 2 points and 2 radii");
+        yymsg(0, "Cone only available with OpenCASCADE factory");
       }
       List_Delete($6);
       $$.Type = MSH_VOLUME;
@@ -2318,23 +2178,19 @@ Shape :
   | tWedge '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) == 7){
-        if(factory == "OpenCASCADE"){
-          double x; List_Read($6, 0, &x);
-          double y; List_Read($6, 1, &y);
-          double z; List_Read($6, 2, &z);
-          double dx; List_Read($6, 3, &dx);
-          double dy; List_Read($6, 4, &dy);
-          double dz; List_Read($6, 5, &dz);
-          double ltx; List_Read($6, 6, &ltx);
-          GModel::current()->getOCCInternals()->addWedge(num, x, y, z, dx, dy, dz, ltx);
+      std::vector<double> param; ListOfDouble2Vector($6, param);
+      if(factory == "OpenCASCADE"){
+        if(param.size() == 7){
+          GModel::current()->getOCCInternals()->addWedge
+            (num, param[0], param[1], param[2], param[3], param[4], param[5],
+             param[6]);
         }
         else{
-          yymsg(0, "Wedge only available with OpenCASCADE factory");
+          yymsg(0, "Wedge requires 7 parameters");
         }
       }
       else{
-        yymsg(0, "Wedge requires 7 arguments");
+        yymsg(0, "Wedge only available with OpenCASCADE factory");
       }
       List_Delete($6);
       $$.Type = MSH_VOLUME;
@@ -2343,16 +2199,19 @@ Shape :
   | tThickSolid '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
+      std::vector<double> param; ListOfDouble2Vector($6, param);
       if(factory == "OpenCASCADE"){
-        if(List_Nbr($6) >= 2){
-          double in; List_Read($6, 0, &in);
-          double offset; List_Read($6, 1, &offset);
-          std::vector<int> exclude; ListOfDouble2Vector($6, exclude);
-          GModel::current()->getOCCInternals()->addThickSolid(num, (int)in, exclude,
-                                                              offset);
+        if(param.size() >= 2){
+          int in = (int)param[0];
+          double offset = param[1];
+          std::vector<int> exclude;
+          for(unsigned int i = 2; i < param.size(); i++)
+            exclude.push_back(param[i]);
+          GModel::current()->getOCCInternals()->addThickSolid
+            (num, in, exclude, offset);
         }
         else{
-          yymsg(0, "ThickSolid requires at least 2 arguments");
+          yymsg(0, "ThickSolid requires at least 2 parameters");
         }
       }
       else{
@@ -2360,44 +2219,11 @@ Shape :
       }
       List_Delete($6);
     }
-  | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
-    {
-      int num = (int)$4;
-      if(factory == "OpenCASCADE"){
-        std::vector<int> faces; ListOfDouble2Vector($7, faces);
-        GModel::current()->getOCCInternals()->addSurfaceLoop(num, faces);
-      }
-      else{
-        if(FindSurfaceLoop(num)){
-          yymsg(0, "Surface loop %d already exists", num);
-        }
-        else{
-          List_T *temp = ListOfDouble2ListOfInt($7);
-          SurfaceLoop *l = Create_SurfaceLoop(num, temp);
-          Tree_Add(GModel::current()->getGEOInternals()->SurfaceLoops, &l);
-          List_Delete(temp);
-        }
-      }
-      List_Delete($7);
-      Free($2);
-      $$.Type = MSH_SURF_LOOP;
-      $$.Num = num;
-    }
   | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindSurface(num)){
-	yymsg(0, "Surface %d already exists", num);
-      }
-      else{
-	Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
-        for(int i = 0; i < List_Nbr($7); i++){
-          s->compound.push_back((int)*(double*)List_Pointer($7, i));
-	}
-        // Added by Trevor Strickler
-	setSurfaceGeneratrices(s, (List_T*) 0);
-	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
-      }
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      GModel::current()->getGEOInternals()->addCompoundSurface(num, tags);
       List_Delete($7);
       $$.Type = MSH_SURF_COMPOUND;
       $$.Num = num;
@@ -2406,84 +2232,74 @@ Shape :
       '{' RecursiveListOfListOfDouble '}' tEND
     {
       int num = (int)$4;
-      if(FindSurface(num)){
-	yymsg(0, "Surface %d already exists", num);
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      std::vector<int> bndTags[4];
+      for(int i = 0; i < List_Nbr($10); i++){
+        if(i < 4)
+          ListOfDouble2Vector(*(List_T**)List_Pointer($10, i), bndTags[i]);
+        else
+          break;
       }
-      else{
-        Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
-        for(int i = 0; i < List_Nbr($7); i++)
-          s->compound.push_back((int)*(double*)List_Pointer($7, i));
-	for (int i = 0; i < List_Nbr($10); i++){
-          if(i > 3){
-            yymsg(0, "Too many boundary specifiers in compound surface");
-            break;
-          }
-	  List_T *l = *(List_T**)List_Pointer($10, i);
-          for (int j = 0; j < List_Nbr(l); j++){
-            s->compoundBoundary[i].push_back((int)*(double*)List_Pointer(l, j));
-	  }
-	}
-        // Added by Trevor Strickler
-        setSurfaceGeneratrices(s, (List_T*) 0 );
-
-	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
-      }
+      GModel::current()->getGEOInternals()->addCompoundSurface(num, tags, bndTags);
       List_Delete($7);
+      Free($8);
       for (int i = 0; i < List_Nbr($10); i++)
         List_Delete(*(List_T**)List_Pointer($10, i));
       List_Delete($10);
-      Free($8);
       $$.Type = MSH_SURF_COMPOUND;
+      $$.Num = num;
+    }
+  | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$4;
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      if(factory == "OpenCASCADE"){
+        GModel::current()->getOCCInternals()->addSurfaceLoop(num, tags);
+      }
+      else{
+        GModel::current()->getGEOInternals()->addSurfaceLoop(num, tags);
+      }
+      List_Delete($7);
+      Free($2);
+      $$.Type = MSH_SURF_LOOP;
+      $$.Num = num;
+    }
+  | tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
+    {
+      int num = (int)$3;
+      std::vector<int> tags; ListOfDouble2Vector($6, tags);
+      if(factory == "OpenCASCADE"){
+        GModel::current()->getOCCInternals()->addVolume(num, tags);
+      }
+      else{
+        GModel::current()->getGEOInternals()->addVolume(num, tags);
+      }
+      List_Delete($6);
+      $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
   | tComplex tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       yymsg(1, "'Complex Volume' command is deprecated: use 'Volume' instead");
       int num = (int)$4;
-      if(FindVolume(num)){
-	yymsg(0, "Volume %d already exists", num);
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      if(factory == "OpenCASCADE"){
+        GModel::current()->getOCCInternals()->addVolume(num, tags);
       }
       else{
-	Volume *v = Create_Volume(num, MSH_VOLUME);
-	List_T *temp = ListOfDouble2ListOfInt($7);
-	setVolumeSurfaces(v, temp);
-	List_Delete(temp);
-	Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
+        GModel::current()->getGEOInternals()->addVolume(num, tags);
       }
       List_Delete($7);
-      $$.Type = MSH_VOLUME;
-      $$.Num = num;
-    }
-  | tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
-    {
-      int num = (int)$3;
-      if(FindVolume(num)){
-        yymsg(0, "Volume %d already exists", num);
-      }
-      else{
-        if(factory == "OpenCASCADE"){
-          std::vector<int> shells; ListOfDouble2Vector($6, shells);
-          GModel::current()->getOCCInternals()->addVolume(num, shells);
-        }
-        else{
-          Volume *v = Create_Volume(num, MSH_VOLUME);
-          List_T *temp = ListOfDouble2ListOfInt($6);
-          setVolumeSurfaces(v, temp);
-          List_Delete(temp);
-          Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
-        }
-      }
-      List_Delete($6);
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
   | tThruSections '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
+      std::vector<int> wires, out[4]; ListOfDouble2Vector($6, wires);
       if(factory == "OpenCASCADE"){
-        std::vector<int> wires, out[4]; ListOfDouble2Vector($6, wires);
-        GModel::current()->getOCCInternals()->addThruSections(num, wires,
-                                                              out, true, false);
+        GModel::current()->getOCCInternals()->addThruSections
+          (num, wires, out, true, false);
       }
       else{
         yymsg(0, "ThruSections only available with OpenCASCADE factory");
@@ -2495,10 +2311,10 @@ Shape :
   | tRuled tThruSections '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
+      std::vector<int> wires, out[4]; ListOfDouble2Vector($7, wires);
       if(factory == "OpenCASCADE"){
-        std::vector<int> wires, out[4]; ListOfDouble2Vector($7, wires);
-        GModel::current()->getOCCInternals()->addThruSections(num, wires,
-                                                              out, true, true);
+        GModel::current()->getOCCInternals()->addThruSections
+          (num, wires, out, true, true);
       }
       else{
         yymsg(0, "ThruSections only available with OpenCASCADE factory");
@@ -2510,15 +2326,8 @@ Shape :
   | tCompound tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindVolume(num)){
-	yymsg(0, "Volume %d already exists", num);
-      }
-      else{
-	Volume *v = Create_Volume(num, MSH_VOLUME_COMPOUND);
-        for(int i = 0; i < List_Nbr($7); i++)
-          v->compound.push_back((int)*(double*)List_Pointer($7, i));
-	Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
-      }
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      GModel::current()->getGEOInternals()->addCompoundVolume(num, tags);
       List_Delete($7);
       $$.Type = MSH_VOLUME_COMPOUND;
       $$.Num = num;
@@ -5657,19 +5466,19 @@ Constraints :
   | tCompound tLine ListOfDouble tEND
     {
       std::vector<int> tags; ListOfDouble2Vector($3, tags);
-      GModel::current()->getGEOInternals()->addCompoundMesh(1, tags);
+      GModel::current()->getGEOInternals()->setCompoundMesh(1, tags);
       List_Delete($3);
     }
   | tCompound tSurface ListOfDouble tEND
     {
       std::vector<int> tags; ListOfDouble2Vector($3, tags);
-      GModel::current()->getGEOInternals()->addCompoundMesh(2, tags);
+      GModel::current()->getGEOInternals()->setCompoundMesh(2, tags);
       List_Delete($3);
     }
   | tCompound tVolume ListOfDouble tEND
     {
       std::vector<int> tags; ListOfDouble2Vector($3, tags);
-      GModel::current()->getGEOInternals()->addCompoundMesh(3, tags);
+      GModel::current()->getGEOInternals()->setCompoundMesh(3, tags);
       List_Delete($3);
     }
 ;
