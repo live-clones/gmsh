@@ -101,6 +101,7 @@ int PrintListOfDouble(char *format, List_T *list, char *buffer);
 void PrintParserSymbols(std::vector<std::string> &vec);
 fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 void ListOfDouble2Vector(List_T *list, std::vector<int> &v);
+void ListOfDouble2Vector(List_T *list, std::vector<double> &v);
 
 void addPeriodicEdge(int, int, const std::vector<double>&);
 void addPeriodicFace(int, int, const std::map<int,int>&);
@@ -1851,16 +1852,12 @@ Shape :
   | tSpline '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(FindCurve(num)){
-	yymsg(0, "Curve %d already exists", num);
+      std::vector<int> points; ListOfDouble2Vector($6, points);
+      if(factory == "OpenCASCADE"){
+        yymsg(0, "Spline not available with OpenCASCADE factory");
       }
       else{
-	List_T *temp = ListOfDouble2ListOfInt($6);
-	Curve *c = Create_Curve(num, MSH_SEGM_SPLN, 3, temp, NULL,
-				-1, -1, 0., 1.);
-	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-	CreateReversedCurve(c);
-	List_Delete(temp);
+        GModel::current()->getGEOInternals()->addSpline(num, points);
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_SPLN;
@@ -1869,54 +1866,31 @@ Shape :
   | tCircle '(' FExpr ')' tAFFECT ListOfDouble CircleOptions tEND
     {
       int num = (int)$3;
-      if(FindCurve(num)){
-	yymsg(0, "Curve %d already exists", num);
-      }
-      else{
-        if(factory == "OpenCASCADE"){
-          if(List_Nbr($6) >= 3 && List_Nbr($6) <= 6){
-            double d[3];
-            List_Read($6, 0, &d[0]); List_Read($6, 1, &d[1]); List_Read($6, 2, &d[2]);
-            if(List_Nbr($6) == 3){
-              GModel::current()->getOCCInternals()->addCircleArc
-                (num, (int)d[0], (int)d[1], (int)d[2]);
-            }
-            else{
-              double r; List_Read($6, 3, &r);
-              double a1 = 0., a2 = 2.*M_PI;
-              if(List_Nbr($6) == 5){
-                List_Read($6, 4, &a2);
-              }
-              else if(List_Nbr($6) == 6){
-                List_Read($6, 4, &a1); List_Read($6, 5, &a2);
-              }
-              GModel::current()->getOCCInternals()->addCircle(num, d[0], d[1], d[2],
-                                                              r, a1, a2);
-            }
-          }
-          else{
-            yymsg(0, "Circle definition requires 3 to 5 parameters");
-          }
+      std::vector<int> points; ListOfDouble2Vector($6, points);
+      std::vector<double> param; ListOfDouble2Vector($6, param);
+      if(factory == "OpenCASCADE"){
+        if(points.size() == 3){
+          GModel::current()->getOCCInternals()->addCircleArc
+            (num, points[0], points[1], points[2]);
+        }
+        else if(param.size() >= 4 && param.size() <= 6){
+          double r = param[3];
+          double a1 = (param.size() >= 5) ? param[4] : 0.;
+          double a2 = (param.size() >= 6) ? param[5] : 2.*M_PI;
+          GModel::current()->getOCCInternals()->addCircle
+            (num, param[0], param[1], param[2], r, a1, a2);
         }
         else{
-          List_T *temp = ListOfDouble2ListOfInt($6);
-          Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 2, temp, NULL,
-                                  -1, -1, 0., 1.);
-          if($7[0] || $7[1] || $7[2]){
-            c->Circle.n[0] = $7[0];
-            c->Circle.n[1] = $7[1];
-            c->Circle.n[2] = $7[2];
-            End_Curve(c);
-          }
-          Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-          Curve *rc = CreateReversedCurve(c);
-          if($7[0] || $7[1] || $7[2]){
-            rc->Circle.n[0] = $7[0];
-            rc->Circle.n[1] = $7[1];
-            rc->Circle.n[2] = $7[2];
-            End_Curve(rc);
-          }
-          List_Delete(temp);
+          yymsg(0, "Circle requires 3 points or 4 to 6 parameters");
+        }
+      }
+      else{
+        if(points.size() == 3){
+          GModel::current()->getGEOInternals()->addCircleArc
+            (num, points[0], points[1], points[2], $7[0], $7[1], $7[2]);
+        }
+        else{
+          yymsg(0, "Circle requires 3 points");
         }
       }
       List_Delete($6);
@@ -1926,62 +1900,34 @@ Shape :
   | tEllipse '(' FExpr ')' tAFFECT ListOfDouble CircleOptions tEND
     {
       int num = (int)$3;
-      if(FindCurve(num)){
-	yymsg(0, "Curve %d already exists", num);
-      }
-      else{
-        if(factory == "OpenCASCADE"){
-          if(List_Nbr($6) >= 3 || List_Nbr($6) <= 7){
-            if(List_Nbr($6) == 3 || List_Nbr($6) == 4){
-              double start, center, end;
-              List_Read($6, 0, &start); List_Read($6, 1, &center);
-              if(List_Nbr($6) == 3)
-                List_Read($6, 2, &end);
-              else
-                List_Read($6, 3, &end);
-              GModel::current()->getOCCInternals()->addEllipseArc
-                (num, (int)start, (int)center, (int)end);
-            }
-            else{
-              double x; List_Read($6, 0, &x);
-              double y; List_Read($6, 1, &y);
-              double z; List_Read($6, 2, &z);
-              double r1; List_Read($6, 3, &r1);
-              double r2; List_Read($6, 4, &r2);
-              double a1 = 0., a2 = 2.*M_PI;
-              if(List_Nbr($6) == 6){
-                List_Read($6, 5, &a2);
-              }
-              else if(List_Nbr($6) == 7){
-                List_Read($6, 5, &a1); List_Read($6, 6, &a2);
-              }
-              GModel::current()->getOCCInternals()->addEllipse(num, x, y, z,
-                                                               r1, r2, a1, a2);
-            }
-          }
-          else{
-            yymsg(0, "Ellipse definition requires 3 to 7 parameters");
-          }
+      std::vector<int> points; ListOfDouble2Vector($6, points);
+      std::vector<double> param; ListOfDouble2Vector($6, param);
+      if(factory == "OpenCASCADE"){
+        if(points.size() == 3){
+          GModel::current()->getOCCInternals()->addEllipseArc
+            (num, points[0], points[1], points[2]);
+        }
+        else if(points.size() == 4){
+          GModel::current()->getOCCInternals()->addEllipseArc
+            (num, points[0], points[1], points[3]);
+        }
+        else if(param.size() >= 5 && param.size() <= 7){
+          double a1 = (param.size() >= 6) ? param[5] : 0.;
+          double a2 = (param.size() >= 7) ? param[6] : 2.*M_PI;
+          GModel::current()->getOCCInternals()->addEllipse
+            (num, param[0], param[1], param[2], param[3], param[4], a1, a2);
         }
         else{
-          List_T *temp = ListOfDouble2ListOfInt($6);
-          Curve *c = Create_Curve(num, MSH_SEGM_ELLI, 2, temp, NULL,
-                                  -1, -1, 0., 1.);
-          if($7[0] || $7[1] || $7[2]){
-            c->Circle.n[0] = $7[0];
-            c->Circle.n[1] = $7[1];
-            c->Circle.n[2] = $7[2];
-            End_Curve(c);
-          }
-          Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-          Curve *rc = CreateReversedCurve(c);
-          if($7[0] || $7[1] || $7[2]){
-            rc->Circle.n[0] = $7[0];
-            rc->Circle.n[1] = $7[1];
-            rc->Circle.n[2] = $7[2];
-            End_Curve(rc);
-          }
-          List_Delete(temp);
+          yymsg(0, "Ellipse requires 3 or 4 points, or 5 to 7 parameters");
+        }
+      }
+      else{
+        if(points.size() == 4){
+          GModel::current()->getGEOInternals()->addEllipseArc
+            (num, points[0], points[1], points[2], points[3], $7[0], $7[1], $7[2]);
+        }
+        else{
+          yymsg(0, "Ellipse requires 4 points");
         }
       }
       List_Delete($6);
@@ -2101,13 +2047,11 @@ Shape :
       $$.Type = MSH_SEGM_LOOP;
       $$.Num = num;
     }
-
-   | tCompound tLine ListOfDouble tEND
-   {
-     GModel::current()->getGEOInternals()->addCompoundMesh ( 1 , $3 );
-   }
-
-   | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tCompound tLine ListOfDouble tEND
+    {
+      GModel::current()->getGEOInternals()->addCompoundMesh(1, $3);
+    }
+  | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       if(FindCurve(num)){
@@ -7576,6 +7520,17 @@ void ListOfDouble2Vector(List_T *list, std::vector<int> &v)
     double d;
     List_Read(list, i, &d);
     v.push_back((int)d);
+  }
+}
+
+void ListOfDouble2Vector(List_T *list, std::vector<double> &v)
+{
+  v.clear();
+  v.reserve(List_Nbr(list));
+  for(int i = 0; i < List_Nbr(list); i++){
+    double d;
+    List_Read(list, i, &d);
+    v.push_back(d);
   }
 }
 

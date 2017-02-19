@@ -74,6 +74,11 @@ class GEO_Internals{
   void addVertex(int num, double x, double y, gmshSurface *s, double lc);
   void addLine(int num, int startTag, int endTag);
   void addLine(int num, std::vector<int> vertexTags);
+  void addSpline(int num, std::vector<int> vertexTags);
+  void addCircleArc(int num, int startTag, int centerTag, int EndTag,
+                    double nx=0., double ny=0., double nz=0.);
+  void addEllipseArc(int num, int startTag, int centerTag, int majorTag,
+                     int endTag, double nx=0., double ny=0., double nz=0.);
 
   // synchronize internal CAD data with the given GModel
   void synchronize(GModel *model);

@@ -105,6 +105,80 @@ void GEO_Internals::addLine(int num, std::vector<int> vertexTags)
   List_Delete(temp);
 }
 
+void GEO_Internals::addSpline(int num, std::vector<int> vertexTags)
+{
+  if(FindCurve(num)){
+    Msg::Error("GEO edge with tag %d already exists", num);
+    return;
+  }
+  List_T *temp = List_Create(2, 2, sizeof(int));
+  for(unsigned int i = 0; i < vertexTags.size(); i++)
+    List_Add(temp, &vertexTags[i]);
+  Curve *c = Create_Curve(num, MSH_SEGM_SPLN, 3, temp, NULL, -1, -1, 0., 1.);
+  Tree_Add(Curves, &c);
+  CreateReversedCurve(c);
+  List_Delete(temp);
+}
+
+void GEO_Internals::addCircleArc(int num, int startTag, int centerTag, int endTag,
+                                 double nx, double ny, double nz)
+{
+  if(FindCurve(num)){
+    Msg::Error("GEO edge with tag %d already exists", num);
+    return;
+  }
+  List_T *temp = List_Create(3, 2, sizeof(int));
+  List_Add(temp, &startTag);
+  List_Add(temp, &centerTag);
+  List_Add(temp, &endTag);
+  Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 2, temp, NULL, -1, -1, 0., 1.);
+  if(nx || ny || nz){
+    c->Circle.n[0] = nx;
+    c->Circle.n[1] = ny;
+    c->Circle.n[2] = nz;
+    End_Curve(c);
+  }
+  Tree_Add(Curves, &c);
+  Curve *rc = CreateReversedCurve(c);
+  if(nx || ny || nz){
+    rc->Circle.n[0] = nx;
+    rc->Circle.n[1] = ny;
+    rc->Circle.n[2] = nz;
+    End_Curve(rc);
+  }
+  List_Delete(temp);
+}
+
+void GEO_Internals::addEllipseArc(int num, int startTag, int centerTag, int majorTag,
+                                  int endTag, double nx, double ny, double nz)
+{
+  if(FindCurve(num)){
+    Msg::Error("GEO edge with tag %d already exists", num);
+    return;
+  }
+  List_T *temp = List_Create(3, 2, sizeof(int));
+  List_Add(temp, &startTag);
+  List_Add(temp, &centerTag);
+  List_Add(temp, &majorTag);
+  List_Add(temp, &endTag);
+  Curve *c = Create_Curve(num, MSH_SEGM_ELLI, 2, temp, NULL, -1, -1, 0., 1.);
+  if(nx || ny || nz){
+    c->Circle.n[0] = nx;
+    c->Circle.n[1] = ny;
+    c->Circle.n[2] = nz;
+    End_Curve(c);
+  }
+  Tree_Add(Curves, &c);
+  Curve *rc = CreateReversedCurve(c);
+  if(nx || ny || nz){
+    rc->Circle.n[0] = nx;
+    rc->Circle.n[1] = ny;
+    rc->Circle.n[2] = nz;
+    End_Curve(rc);
+  }
+  List_Delete(temp);
+}
+
 void GEO_Internals::synchronize(GModel *model)
 {
   if(Tree_Nbr(Points)) {
@@ -126,9 +200,7 @@ void GEO_Internals::synchronize(GModel *model)
   }
   if(Tree_Nbr(Curves)) {
     List_T *curves = Tree2List(Curves);
-
     // generate all curves except compounds
-
     for(int i = 0; i < List_Nbr(curves); i++){
       Curve *c;
       List_Read(curves, i, &c);
@@ -159,9 +231,7 @@ void GEO_Internals::synchronize(GModel *model)
         }
       }
     }
-
     // now generate the compound curves
-
     for(int i = 0; i < List_Nbr(curves); i++){
       Curve *c;
       List_Read(curves, i, &c);
@@ -445,6 +515,13 @@ void GModel::_deleteGEOInternals()
   _geo_internals = 0;
 }
 
+int GModel::importGEOInternals()
+{
+  if(!_geo_internals) return 0;
+  _geo_internals->synchronize(this);
+  return 1;
+}
+
 int GModel::readGEO(const std::string &name)
 {
   ParseFile(name, true);
@@ -528,13 +605,6 @@ int GModel::exportDiscreteGEOInternals()
   Msg::Debug("%d Edges", Tree_Nbr(_geo_internals->Curves));
   Msg::Debug("%d Faces", Tree_Nbr(_geo_internals->Surfaces));
 
-  return 1;
-}
-
-int GModel::importGEOInternals()
-{
-  if(!_geo_internals) return 0;
-  _geo_internals->synchronize(this);
   return 1;
 }
 
