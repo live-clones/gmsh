@@ -18,7 +18,7 @@ Point(newp) = {.9,0,.38,.1};  /* Point 14 */
 
 Spline(1) = {6,7,8,9,10,2};
 Circle(2) = {6,1,4};
-Circle(3) = {2,1,1,4};
+Ellipse(3) = {2,1,1,4};
 Line Loop(4) = {3,-2,1};
 Surface(5) = {4};
 
