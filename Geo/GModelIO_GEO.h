@@ -88,6 +88,8 @@ class GEO_Internals{
   void addVolume(int num, std::vector<int> shellTags);
   void addCompoundVolume(int num, std::vector<int> regionTags);
 
+  // add physical groups
+
   // set meshing constraints
   void setCompoundMesh(int dim, std::vector<int> tags);
 

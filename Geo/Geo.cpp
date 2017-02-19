@@ -1391,14 +1391,19 @@ void DeletePhysicalVolume(int num)
                   comparePhysicalGroup);
     Free_PhysicalGroup(&p, NULL);
   }
-  GModel::current()->deletePhysicalGroup(30, num);
+  GModel::current()->deletePhysicalGroup(3, num);
 }
 
 void DeleteShape(int Type, int Num)
 {
   switch (Type) {
   case MSH_POINT:
-    DeletePoint(Num);
+  case MSH_POINT_FROM_GMODEL:
+    {
+      DeletePoint(Num);
+      GVertex *gv = GModel::current()->getVertexByTag(Num);
+      if(gv) GModel::current()->remove(gv);
+    }
     break;
   case MSH_SEGM_LINE:
   case MSH_SEGM_SPLN:
@@ -1410,39 +1415,30 @@ void DeleteShape(int Type, int Num)
   case MSH_SEGM_ELLI_INV:
   case MSH_SEGM_NURBS:
   case MSH_SEGM_COMPOUND:
-    DeleteCurve(Num);
-    DeleteCurve(-Num);
+  case MSH_SEGM_FROM_GMODEL:
+    {
+      DeleteCurve(Num);
+      DeleteCurve(-Num);
+      GEdge *ge = GModel::current()->getEdgeByTag(Num);
+      if(ge) GModel::current()->remove(ge);
+    }
     break;
   case MSH_SURF_TRIC:
   case MSH_SURF_REGL:
   case MSH_SURF_PLAN:
   case MSH_SURF_COMPOUND:
-    DeleteSurface(Num);
-    break;
-  case MSH_VOLUME:
-  case MSH_VOLUME_COMPOUND:
-    DeleteVolume(Num);
-    break;
-  case MSH_POINT_FROM_GMODEL:
-    {
-      GVertex *gv = GModel::current()->getVertexByTag(Num);
-      if(gv) GModel::current()->remove(gv);
-    }
-    break;
-  case MSH_SEGM_FROM_GMODEL:
-    {
-      GEdge *ge = GModel::current()->getEdgeByTag(Num);
-      if(ge) GModel::current()->remove(ge);
-    }
-    break;
   case MSH_SURF_FROM_GMODEL:
     {
+      DeleteSurface(Num);
       GFace *gf = GModel::current()->getFaceByTag(Num);
       if(gf) GModel::current()->remove(gf);
     }
     break;
+  case MSH_VOLUME:
+  case MSH_VOLUME_COMPOUND:
   case MSH_VOLUME_FROM_GMODEL:
     {
+      DeleteVolume(Num);
       GRegion *gr = GModel::current()->getRegionByTag(Num);
       if(gr) GModel::current()->remove(gr);
     }
@@ -2190,6 +2186,7 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
     case MSH_SEGM_BEZIER:
     case MSH_SEGM_BND_LAYER:
     case MSH_SEGM_DISCRETE:
+    case MSH_SEGM_FROM_GMODEL:
       {
         Curve *c = FindCurve(O.Num);
         if(c){
@@ -2206,29 +2203,25 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
             List_Add(shapesBoundary, &sh);
           }
         }
-        else
-          Msg::Error("Unknown curve %d", O.Num);
-      }
-      break;
-    case MSH_SEGM_FROM_GMODEL:
-      {
-        GEdge *ge = GModel::current()->getEdgeByTag(O.Num);
-        if(ge){
-          if(ge->getBeginVertex()){
-            Shape sh;
-            sh.Type = MSH_POINT_FROM_GMODEL;
-            sh.Num = ge->getBeginVertex()->tag();
-            List_Add(shapesBoundary, &sh);
+        else{
+          GEdge *ge = GModel::current()->getEdgeByTag(O.Num);
+          if(ge){
+            if(ge->getBeginVertex()){
+              Shape sh;
+              sh.Type = MSH_POINT_FROM_GMODEL;
+              sh.Num = ge->getBeginVertex()->tag();
+              List_Add(shapesBoundary, &sh);
+            }
+            if(ge->getEndVertex()){
+              Shape sh;
+              sh.Type = MSH_POINT_FROM_GMODEL;
+              sh.Num = ge->getEndVertex()->tag();
+              List_Add(shapesBoundary, &sh);
+            }
           }
-          if(ge->getEndVertex()){
-            Shape sh;
-            sh.Type = MSH_POINT_FROM_GMODEL;
-            sh.Num = ge->getEndVertex()->tag();
-            List_Add(shapesBoundary, &sh);
-          }
+          else
+            Msg::Error("Unknown curve %d", O.Num);
         }
-        else
-          Msg::Error("Unknown curve %d", O.Num);
       }
       break;
     case MSH_SURF_PLAN:
@@ -2236,6 +2229,7 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
     case MSH_SURF_TRIC:
     case MSH_SURF_BND_LAYER:
     case MSH_SURF_DISCRETE:
+    case MSH_SURF_FROM_GMODEL:
       {
         Surface *s = FindSurface(O.Num);
         if(s){
@@ -2248,28 +2242,25 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
             List_Add(shapesBoundary, &sh);
           }
         }
-        else
-          Msg::Error("Unknown surface %d", O.Num);
-      }
-      break;
-    case MSH_SURF_FROM_GMODEL:
-      {
-        GFace *gf = GModel::current()->getFaceByTag(O.Num);
-        if(gf){
-          std::list<GEdge*> edges(gf->edges());
-          for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
-            Shape sh;
-            sh.Type = MSH_SEGM_FROM_GMODEL;
-            sh.Num = (*it)->tag();
-            List_Add(shapesBoundary, &sh);
+        else{
+          GFace *gf = GModel::current()->getFaceByTag(O.Num);
+          if(gf){
+            std::list<GEdge*> edges(gf->edges());
+            for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+              Shape sh;
+              sh.Type = MSH_SEGM_FROM_GMODEL;
+              sh.Num = (*it)->tag();
+              List_Add(shapesBoundary, &sh);
+            }
           }
+          else
+            Msg::Error("Unknown surface %d", O.Num);
         }
-        else
-          Msg::Error("Unknown surface %d", O.Num);
       }
       break;
     case MSH_VOLUME:
     case MSH_VOLUME_DISCRETE:
+    case MSH_VOLUME_FROM_GMODEL:
       {
         Volume *v = FindVolume(O.Num);
         if(v){
@@ -2282,24 +2273,20 @@ void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
             List_Add(shapesBoundary, &sh);
           }
         }
-        else
-          Msg::Error("Unknown volume %d", O.Num);
-      }
-      break;
-    case MSH_VOLUME_FROM_GMODEL:
-      {
-        GRegion *gr = GModel::current()->getRegionByTag(O.Num);
-        if(gr){
-          std::list<GFace*> faces(gr->faces());
-          for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
-            Shape sh;
-            sh.Type = MSH_SURF_FROM_GMODEL;
-            sh.Num = (*it)->tag();
-            List_Add(shapesBoundary, &sh);
+        else{
+          GRegion *gr = GModel::current()->getRegionByTag(O.Num);
+          if(gr){
+            std::list<GFace*> faces(gr->faces());
+            for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+              Shape sh;
+              sh.Type = MSH_SURF_FROM_GMODEL;
+              sh.Num = (*it)->tag();
+              List_Add(shapesBoundary, &sh);
+            }
           }
+          else
+            Msg::Error("Unknown volume %d", O.Num);
         }
-        else
-          Msg::Error("Unknown volume %d", O.Num);
       }
       break;
     default:
@@ -4479,12 +4466,10 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
 
     for(int j = 0; j < List_Nbr(s->EmbeddedCurves) + List_Nbr(s->Generatrices); j++) {
       Curve *cDejaInSurf;
-      //      Msg::Info("hopla1 %d %d %d",j,List_Nbr(s->EmbeddedCurves), List_Nbr(s->Generatrices));
       if (j < s->EmbeddedCurves->n)
         List_Read(s->EmbeddedCurves, j, &cDejaInSurf);
       else
         List_Read(s->Generatrices, j-s->EmbeddedCurves->n, &cDejaInSurf);
-      //      Msg::Info("hopla2 %d",j);
       if (cDejaInSurf->Typ != MSH_SEGM_LINE)
         // compute intersections only avalaible for straight lines
         continue;
@@ -4528,12 +4513,6 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
 
           double x[2];
           int inters = intersection_segments(p3, p4, q3, q4, x);
-	  /*
-	   printf("%d %d vs %d %d\n",w1->Num,w2->Num,v1->Num,v2->Num);
-	  printf("%22.15E %22.15E %22.15E -- %22.15E %22.15E %22.15E\n",p3.x(),p3.y(),p3.z(),p4.x(),p4.y(),p4.z());
-	  printf("%22.15E %22.15E %22.15E -- %22.15E %22.15E %22.15E\n",q3.x(),q3.y(),q3.z(),q4.x(),q4.y(),q4.z());
-	  printf("%22.15E %22.15E\n",x[0],x[1]);
-	  */
           if (inters && x[0] != 0. && x[1] != 0. && x[0] != 1. && x[1] != 1.){
             SPoint3 p = SPoint3( (1.-x[0])*p3.x() + x[0]*p4.x(),
                                  (1.-x[0])*p3.y() + x[0]*p4.y(),
@@ -4647,7 +4626,6 @@ void setSurfaceEmbeddedCurves(Surface *s, List_T *curves)
     }
     List_Add(s->EmbeddedCurves, &cToAddInSurf);
   }
-  //  Msg::Info("coucou2");
 }
 
 void setVolumeEmbeddedSurfaces(Volume *v, List_T *surfaces)
@@ -4787,9 +4765,8 @@ void setVolumeSurfaces(Volume *v, List_T *loops)
         List_Read(sl->Surfaces, j, &is);
         Surface *s = FindSurface(abs(is));
         if(s) {
-          // contrary to curves in edge loops, we don't actually
-          // create "negative" surfaces. So we just store the signs in
-          // another list
+          // contrary to curves in edge loops, we don't actually create
+          // "negative" surfaces. So we just store the signs in another list
           List_Add(v->Surfaces, &s);
           int tmp = gmsh_sign(is) * gmsh_sign(il);
           if(i > 0) tmp *= -1; // this is a hole
