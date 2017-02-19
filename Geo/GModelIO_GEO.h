@@ -47,13 +47,6 @@ class GEO_Internals{
   ~GEO_Internals(){ _freeAll(); }
   void destroy(){ _freeAll(); _allocateAll(); }
   void resetPhysicalGroups();
-  void addCompoundMesh(int dim, List_T *_list)
-  {
-    std::vector<int> compound;
-    for(int i = 0; i < List_Nbr(_list); i++)
-      compound.push_back((int)*(double*)List_Pointer(_list, i));
-    meshCompounds.insert(std::make_pair(dim, compound));
-  }
 
   // get maximum tag number for each dimension
   int getMaxTag(int dim) const
@@ -74,11 +67,19 @@ class GEO_Internals{
   void addVertex(int num, double x, double y, gmshSurface *s, double lc);
   void addLine(int num, int startTag, int endTag);
   void addLine(int num, std::vector<int> vertexTags);
-  void addSpline(int num, std::vector<int> vertexTags);
   void addCircleArc(int num, int startTag, int centerTag, int EndTag,
                     double nx=0., double ny=0., double nz=0.);
   void addEllipseArc(int num, int startTag, int centerTag, int majorTag,
                      int endTag, double nx=0., double ny=0., double nz=0.);
+  void addSpline(int num, std::vector<int> vertexTags);
+  void addBSpline(int num, std::vector<int> vertexTags);
+  void addBezier(int num, std::vector<int> vertexTags);
+  void addNurbs(int num, std::vector<int> vertexTags, std::vector<double> knots);
+  void addCompoundLine(int num, std::vector<int> edgeTags);
+  void addLineLoop(int num, std::vector<int> edgeTags);
+
+
+  void addCompoundMesh(int dim, std::vector<int> tags);
 
   // synchronize internal CAD data with the given GModel
   void synchronize(GModel *model);

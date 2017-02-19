@@ -221,9 +221,16 @@ GeoFormatItems :
 ;
 
 GeoFormatItem :
-    View        { return 1; }
-  | Printf      { return 1; }
+    Printf      { return 1; }
+  | View        { return 1; }
   | Affectation { return 1; }
+  | tSetFactory '(' StringExprVar ')' tEND
+    {
+      // FIXME: when changing to OpenCASCADE, get maxTags from GEO_Internals and
+      // add that info in OCC_Internals - same in the other direction
+      factory = $3;
+      Free($3);
+    }
   | Shape       { return 1; }
   | Transform   { List_Delete($1); return 1; }
   | Delete      { return 1; }
@@ -1716,18 +1723,7 @@ CircleOptions :
 ;
 
 Shape :
-
-    tSetFactory '(' StringExprVar ')' tEND
-    {
-      // FIXME: when changing to OpenCASCADE, get maxTags from GEO_Internals and
-      // add that info in OCC_Internals - same in the other direction
-      factory = $3;
-      Free($3);
-    }
-
-  // Points
-
-  | tPoint '(' FExpr ')' tAFFECT VExpr tEND
+    tPoint '(' FExpr ')' tAFFECT VExpr tEND
     {
       int num = (int)$3;
       double x = CTX::instance()->geom.scalingFactor * $6[0];
@@ -1748,81 +1744,15 @@ Shape :
       $$.Type = MSH_POINT;
       $$.Num = num;
     }
-  | tPhysical tPoint '(' PhysicalId0 ')' NumericAffectation ListOfDouble tEND
-    {
-      int num = (int)$4;
-      int op = $6;
-      PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_POINT);
-      if(p && op == 0){
-	yymsg(0, "Physical point %d already exists", num);
-      }
-      else if(!p && op > 0){
-	yymsg(0, "Physical point %d does not exist", num);
-      }
-      else if(op == 0){
-	List_T *temp = ListOfDouble2ListOfInt($7);
-	p = Create_PhysicalGroup(num, MSH_PHYSICAL_POINT, temp);
-	List_Delete(temp);
-	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
-      }
-      else if(op == 1){
-        for(int i = 0; i < List_Nbr($7); i++){
-          double d;
-          List_Read($7, i, &d);
-          int j = (int)d;
-          List_Add(p->Entities, &j);
-        }
-      }
-      else if(op == 2){
-        for(int i = 0; i < List_Nbr($7); i++){
-          double d;
-          List_Read($7, i, &d);
-          int j = (int)d;
-          List_Suppress(p->Entities, &j, fcmp_int);
-        }
-        if(!List_Nbr(p->Entities)){
-          DeletePhysicalPoint(num);
-        }
-      }
-      else{
-	yymsg(0, "Unsupported operation on physical point %d", num);
-      }
-      List_Delete($7);
-      $$.Type = MSH_PHYSICAL_POINT;
-      $$.Num = num;
-    }
-  | tCharacteristic tLength ListOfDouble tAFFECT FExpr tEND
-    {
-      for(int i = 0; i < List_Nbr($3); i++){
-	double d;
-	List_Read($3, i, &d);
-	Vertex *v = FindPoint((int)d);
-	if(v){
-	  v->lc = $5;
-        }
-	else{
-	  GVertex *gv = GModel::current()->getVertexByTag((int)d);
-	  if(gv)
-	    gv->setPrescribedMeshSizeAtVertex($5);
-	}
-      }
-      List_Delete($3);
-      // dummy values
-      $$.Type = 0;
-      $$.Num = 0;
-    }
-
-  // Lines
-
   | tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      std::vector<int> points; ListOfDouble2Vector($6, points);
+      std::vector<int> tags; ListOfDouble2Vector($6, tags);
       if(factory == "OpenCASCADE"){
-        GModel::current()->getOCCInternals()->addLine(num, points);
+        GModel::current()->getOCCInternals()->addLine(num, tags);
       }
       else{
-        GModel::current()->getGEOInternals()->addLine(num, points);
+        GModel::current()->getGEOInternals()->addLine(num, tags);
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_LINE;
@@ -1852,12 +1782,12 @@ Shape :
   | tSpline '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      std::vector<int> points; ListOfDouble2Vector($6, points);
+      std::vector<int> tags; ListOfDouble2Vector($6, tags);
       if(factory == "OpenCASCADE"){
         yymsg(0, "Spline not available with OpenCASCADE factory");
       }
       else{
-        GModel::current()->getGEOInternals()->addSpline(num, points);
+        GModel::current()->getGEOInternals()->addSpline(num, tags);
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_SPLN;
@@ -1866,12 +1796,12 @@ Shape :
   | tCircle '(' FExpr ')' tAFFECT ListOfDouble CircleOptions tEND
     {
       int num = (int)$3;
-      std::vector<int> points; ListOfDouble2Vector($6, points);
+      std::vector<int> tags; ListOfDouble2Vector($6, tags);
       std::vector<double> param; ListOfDouble2Vector($6, param);
       if(factory == "OpenCASCADE"){
-        if(points.size() == 3){
+        if(tags.size() == 3){
           GModel::current()->getOCCInternals()->addCircleArc
-            (num, points[0], points[1], points[2]);
+            (num, tags[0], tags[1], tags[2]);
         }
         else if(param.size() >= 4 && param.size() <= 6){
           double r = param[3];
@@ -1885,9 +1815,9 @@ Shape :
         }
       }
       else{
-        if(points.size() == 3){
+        if(tags.size() == 3){
           GModel::current()->getGEOInternals()->addCircleArc
-            (num, points[0], points[1], points[2], $7[0], $7[1], $7[2]);
+            (num, tags[0], tags[1], tags[2], $7[0], $7[1], $7[2]);
         }
         else{
           yymsg(0, "Circle requires 3 points");
@@ -1900,16 +1830,16 @@ Shape :
   | tEllipse '(' FExpr ')' tAFFECT ListOfDouble CircleOptions tEND
     {
       int num = (int)$3;
-      std::vector<int> points; ListOfDouble2Vector($6, points);
+      std::vector<int> tags; ListOfDouble2Vector($6, tags);
       std::vector<double> param; ListOfDouble2Vector($6, param);
       if(factory == "OpenCASCADE"){
-        if(points.size() == 3){
+        if(tags.size() == 3){
           GModel::current()->getOCCInternals()->addEllipseArc
-            (num, points[0], points[1], points[2]);
+            (num, tags[0], tags[1], tags[2]);
         }
-        else if(points.size() == 4){
+        else if(tags.size() == 4){
           GModel::current()->getOCCInternals()->addEllipseArc
-            (num, points[0], points[1], points[3]);
+            (num, tags[0], tags[1], tags[3]);
         }
         else if(param.size() >= 5 && param.size() <= 7){
           double a1 = (param.size() >= 6) ? param[5] : 0.;
@@ -1922,9 +1852,9 @@ Shape :
         }
       }
       else{
-        if(points.size() == 4){
+        if(tags.size() == 4){
           GModel::current()->getGEOInternals()->addEllipseArc
-            (num, points[0], points[1], points[2], points[3], $7[0], $7[1], $7[2]);
+            (num, tags[0], tags[1], tags[2], tags[3], $7[0], $7[1], $7[2]);
         }
         else{
           yymsg(0, "Ellipse requires 4 points");
@@ -1937,22 +1867,12 @@ Shape :
   | tBSpline '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(FindCurve(num)){
-	yymsg(0, "Curve %d already exists", num);
+      std::vector<int> tags; ListOfDouble2Vector($6, tags);
+      if(factory == "OpenCASCADE"){
+        GModel::current()->getOCCInternals()->addBSpline(num, tags);
       }
       else{
-        if(factory == "OpenCASCADE"){
-          std::vector<int> tags; ListOfDouble2Vector($6, tags);
-          GModel::current()->getOCCInternals()->addBSpline(num, tags);
-        }
-        else{
-          List_T *temp = ListOfDouble2ListOfInt($6);
-          Curve *c = Create_Curve(num, MSH_SEGM_BSPLN, 2, temp, NULL,
-                                  -1, -1, 0., 1.);
-          Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-          CreateReversedCurve(c);
-          List_Delete(temp);
-        }
+        GModel::current()->getGEOInternals()->addBSpline(num, tags);
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_BSPLN;
@@ -1961,22 +1881,12 @@ Shape :
   | tBezier '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      if(FindCurve(num)){
-	yymsg(0, "Curve %d already exists", num);
+      std::vector<int> tags; ListOfDouble2Vector($6, tags);
+      if(factory == "OpenCASCADE"){
+        GModel::current()->getOCCInternals()->addBezier(num, tags);
       }
       else{
-        if(factory == "OpenCASCADE"){
-          std::vector<int> tags; ListOfDouble2Vector($6, tags);
-          GModel::current()->getOCCInternals()->addBezier(num, tags);
-        }
-        else{
-          List_T *temp = ListOfDouble2ListOfInt($6);
-          Curve *c = Create_Curve(num, MSH_SEGM_BEZIER, 2, temp, NULL,
-                                  -1, -1, 0., 1.);
-          Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-          CreateReversedCurve(c);
-          List_Delete(temp);
-        }
+        GModel::current()->getGEOInternals()->addBezier(num, tags);
       }
       List_Delete($6);
       $$.Type = MSH_SEGM_BEZIER;
@@ -1986,59 +1896,37 @@ Shape :
       tNurbsOrder FExpr tEND
     {
       int num = (int)$3;
-      if(List_Nbr($6) + (int)$10 + 1 != List_Nbr($8)){
-	yymsg(0, "Wrong definition of Nurbs Curve %d: "
-	      "got %d knots, need N + D + 1 = %d + %d + 1 = %d",
-	      (int)$3, List_Nbr($8), List_Nbr($6), (int)$10, List_Nbr($6) + (int)$10 + 1);
+      std::vector<int> tags; ListOfDouble2Vector($6, tags);
+      std::vector<double> knots; ListOfDouble2Vector($8, knots);
+      if(factory == "OpenCASCADE"){
+        yymsg(0, "Nurbs not available yet with OpenCASCADE factory");
       }
       else{
-	if(FindCurve(num)){
-	  yymsg(0, "Curve %d already exists", num);
-	}
-	else{
-	  List_T *temp = ListOfDouble2ListOfInt($6);
-	  Curve *c = Create_Curve(num, MSH_SEGM_NURBS, (int)$10, temp, $8,
-				  -1, -1, 0., 1.);
-	  Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-	  CreateReversedCurve(c);
-	  List_Delete(temp);
-	}
+        int order = knots.size() - tags.size() - 1;
+        if(order != (int)$10)
+          yymsg(1, "Incompatible Nurbs order: using %d", order);
+        GModel::current()->getGEOInternals()->addNurbs(num, tags, knots);
       }
       List_Delete($6);
       List_Delete($8);
       $$.Type = MSH_SEGM_NURBS;
       $$.Num = num;
     }
-  | tLine tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(factory == "OpenCASCADE"){
-        std::vector<int> edges; ListOfDouble2Vector($7, edges);
-        GModel::current()->getOCCInternals()->addLineLoop(num, edges);
-      }
-      else{
-        if(FindEdgeLoop(num)){
-          yymsg(0, "Line loop %d already exists", num);
-        }
-        else{
-          List_T *temp = ListOfDouble2ListOfInt($7);
-          sortEdgesInLoop(num, temp);
-          EdgeLoop *l = Create_EdgeLoop(num, temp);
-          Tree_Add(GModel::current()->getGEOInternals()->EdgeLoops, &l);
-          List_Delete(temp);
-        }
-      }
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      GModel::current()->getGEOInternals()->addCompoundLine(num, tags);
       List_Delete($7);
-      Free($2);
-      $$.Type = MSH_SEGM_LOOP;
+      $$.Type = MSH_SEGM_COMPOUND;
       $$.Num = num;
     }
   | tWire '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
+      std::vector<int> tags; ListOfDouble2Vector($6, tags);
       if(factory == "OpenCASCADE"){
-        std::vector<int> edges; ListOfDouble2Vector($6, edges);
-        GModel::current()->getOCCInternals()->addWire(num, edges, false);
+        GModel::current()->getOCCInternals()->addWire(num, tags, false);
       }
       else{
         yymsg(0, "Wire only available using OpenCASCADE factory");
@@ -2047,74 +1935,21 @@ Shape :
       $$.Type = MSH_SEGM_LOOP;
       $$.Num = num;
     }
-  | tCompound tLine ListOfDouble tEND
-    {
-      GModel::current()->getGEOInternals()->addCompoundMesh(1, $3);
-    }
-  | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tLine tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      if(FindCurve(num)){
-	yymsg(0, "Curve %d already exists", num);
+      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      if(factory == "OpenCASCADE"){
+        GModel::current()->getOCCInternals()->addLineLoop(num, tags);
       }
       else{
-        Curve *c = Create_Curve(num, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
-        for(int i = 0; i < List_Nbr($7); i++)
-          c->compound.push_back((int)*(double*)List_Pointer($7, i));
-	End_Curve(c);
-	Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
-	CreateReversedCurve(c);
+        GModel::current()->getGEOInternals()->addLineLoop(num, tags);
       }
       List_Delete($7);
-      $$.Type = MSH_SEGM_COMPOUND;
+      Free($2);
+      $$.Type = MSH_SEGM_LOOP;
       $$.Num = num;
     }
-  | tPhysical tLine '(' PhysicalId1 ')' NumericAffectation ListOfDouble tEND
-    {
-      int num = (int)$4;
-      int op = $6;
-      PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_LINE);
-      if(p && op == 0){
-	yymsg(0, "Physical line %d already exists", num);
-      }
-      else if(!p && op > 0){
-	yymsg(0, "Physical line %d does not exist", num);
-      }
-      else if(op == 0){
-	List_T *temp = ListOfDouble2ListOfInt($7);
-	p = Create_PhysicalGroup(num, MSH_PHYSICAL_LINE, temp);
-	List_Delete(temp);
-	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
-      }
-      else if(op == 1){
-        for(int i = 0; i < List_Nbr($7); i++){
-          double d;
-          List_Read($7, i, &d);
-          int j = (int)d;
-          List_Add(p->Entities, &j);
-        }
-      }
-      else if(op == 2){
-        for(int i = 0; i < List_Nbr($7); i++){
-          double d;
-          List_Read($7, i, &d);
-          int j = (int)d;
-          List_Suppress(p->Entities, &j, fcmp_int);
-        }
-        if(!List_Nbr(p->Entities)){
-          DeletePhysicalLine(num);
-        }
-      }
-      else{
-	yymsg(0, "Unsupported operation on physical line %d", num);
-      }
-      List_Delete($7);
-      $$.Type = MSH_PHYSICAL_LINE;
-      $$.Num = num;
-    }
-
-  // Surfaces
-
   | tPlane tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
@@ -2152,8 +1987,8 @@ Shape :
             yymsg(0, "Surface requires a single line loop");
           }
           else{
-            std::vector<std::vector<double> > points;
-            GModel::current()->getOCCInternals()->addFaceFilling(num, wires[0], points);
+            std::vector<std::vector<double> > tags;
+            GModel::current()->getOCCInternals()->addFaceFilling(num, wires[0], tags);
           }
         }
         else{
@@ -2548,10 +2383,6 @@ Shape :
       $$.Type = MSH_SURF_LOOP;
       $$.Num = num;
     }
-  | tCompound tSurface ListOfDouble tEND
-    {
-      GModel::current()->getGEOInternals()->addCompoundMesh ( 2 , $3 );
-    }
   | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
@@ -2605,53 +2436,6 @@ Shape :
       $$.Type = MSH_SURF_COMPOUND;
       $$.Num = num;
     }
-  | tPhysical tSurface '(' PhysicalId2 ')' NumericAffectation ListOfDouble tEND
-    {
-      int num = (int)$4;
-      int op = $6;
-      PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE);
-      if(p && op == 0){
-	yymsg(0, "Physical surface %d already exists", num);
-      }
-      else if(!p && op > 0){
-	yymsg(0, "Physical surface %d does not exist", num);
-      }
-      else if(op == 0){
-	List_T *temp = ListOfDouble2ListOfInt($7);
-	p = Create_PhysicalGroup(num, MSH_PHYSICAL_SURFACE, temp);
-	List_Delete(temp);
-	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
-      }
-      else if(op == 1){
-        for(int i = 0; i < List_Nbr($7); i++){
-          double d;
-          List_Read($7, i, &d);
-          int j = (int)d;
-          List_Add(p->Entities, &j);
-        }
-      }
-      else if(op == 2){
-        for(int i = 0; i < List_Nbr($7); i++){
-          double d;
-          List_Read($7, i, &d);
-          int j = (int)d;
-          List_Suppress(p->Entities, &j, fcmp_int);
-        }
-        if(!List_Nbr(p->Entities)){
-          DeletePhysicalSurface(num);
-        }
-      }
-      else{
-	yymsg(0, "Unsupported operation on physical surface %d", num);
-      }
-      List_Delete($7);
-      $$.Type = MSH_PHYSICAL_SURFACE;
-      $$.Num = num;
-    }
-
-  // Volumes
-
-  // for backward compatibility:
   | tComplex tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       yymsg(1, "'Complex Volume' command is deprecated: use 'Volume' instead");
@@ -2723,10 +2507,6 @@ Shape :
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
-  | tCompound tVolume ListOfDouble tEND
-    {
-      GModel::current()->getGEOInternals()->addCompoundMesh(3, $3);
-    }
   | tCompound tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
@@ -2741,6 +2521,135 @@ Shape :
       }
       List_Delete($7);
       $$.Type = MSH_VOLUME_COMPOUND;
+      $$.Num = num;
+    }
+  | tPhysical tPoint '(' PhysicalId0 ')' NumericAffectation ListOfDouble tEND
+    {
+      int num = (int)$4;
+      int op = $6;
+      PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_POINT);
+      if(p && op == 0){
+	yymsg(0, "Physical point %d already exists", num);
+      }
+      else if(!p && op > 0){
+	yymsg(0, "Physical point %d does not exist", num);
+      }
+      else if(op == 0){
+	List_T *temp = ListOfDouble2ListOfInt($7);
+	p = Create_PhysicalGroup(num, MSH_PHYSICAL_POINT, temp);
+	List_Delete(temp);
+	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
+      }
+      else if(op == 1){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Add(p->Entities, &j);
+        }
+      }
+      else if(op == 2){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Suppress(p->Entities, &j, fcmp_int);
+        }
+        if(!List_Nbr(p->Entities)){
+          DeletePhysicalPoint(num);
+        }
+      }
+      else{
+	yymsg(0, "Unsupported operation on physical point %d", num);
+      }
+      List_Delete($7);
+      $$.Type = MSH_PHYSICAL_POINT;
+      $$.Num = num;
+    }
+  | tPhysical tLine '(' PhysicalId1 ')' NumericAffectation ListOfDouble tEND
+    {
+      int num = (int)$4;
+      int op = $6;
+      PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_LINE);
+      if(p && op == 0){
+	yymsg(0, "Physical line %d already exists", num);
+      }
+      else if(!p && op > 0){
+	yymsg(0, "Physical line %d does not exist", num);
+      }
+      else if(op == 0){
+	List_T *temp = ListOfDouble2ListOfInt($7);
+	p = Create_PhysicalGroup(num, MSH_PHYSICAL_LINE, temp);
+	List_Delete(temp);
+	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
+      }
+      else if(op == 1){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Add(p->Entities, &j);
+        }
+      }
+      else if(op == 2){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Suppress(p->Entities, &j, fcmp_int);
+        }
+        if(!List_Nbr(p->Entities)){
+          DeletePhysicalLine(num);
+        }
+      }
+      else{
+	yymsg(0, "Unsupported operation on physical line %d", num);
+      }
+      List_Delete($7);
+      $$.Type = MSH_PHYSICAL_LINE;
+      $$.Num = num;
+    }
+  | tPhysical tSurface '(' PhysicalId2 ')' NumericAffectation ListOfDouble tEND
+    {
+      int num = (int)$4;
+      int op = $6;
+      PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE);
+      if(p && op == 0){
+	yymsg(0, "Physical surface %d already exists", num);
+      }
+      else if(!p && op > 0){
+	yymsg(0, "Physical surface %d does not exist", num);
+      }
+      else if(op == 0){
+	List_T *temp = ListOfDouble2ListOfInt($7);
+	p = Create_PhysicalGroup(num, MSH_PHYSICAL_SURFACE, temp);
+	List_Delete(temp);
+	List_Add(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
+      }
+      else if(op == 1){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Add(p->Entities, &j);
+        }
+      }
+      else if(op == 2){
+        for(int i = 0; i < List_Nbr($7); i++){
+          double d;
+          List_Read($7, i, &d);
+          int j = (int)d;
+          List_Suppress(p->Entities, &j, fcmp_int);
+        }
+        if(!List_Nbr(p->Entities)){
+          DeletePhysicalSurface(num);
+        }
+      }
+      else{
+	yymsg(0, "Unsupported operation on physical surface %d", num);
+      }
+      List_Delete($7);
+      $$.Type = MSH_PHYSICAL_SURFACE;
       $$.Num = num;
     }
   | tPhysical tVolume '(' PhysicalId3 ')' NumericAffectation ListOfDouble tEND
@@ -4918,7 +4827,24 @@ PeriodicTransform :
 ;
 
 Constraints :
-    tTransfinite tLine ListOfDoubleOrAll tAFFECT FExpr TransfiniteType tEND
+    tCharacteristic tLength ListOfDouble tAFFECT FExpr tEND
+    {
+      for(int i = 0; i < List_Nbr($3); i++){
+	double d;
+	List_Read($3, i, &d);
+	Vertex *v = FindPoint((int)d);
+	if(v){
+	  v->lc = $5;
+        }
+	else{
+	  GVertex *gv = GModel::current()->getVertexByTag((int)d);
+	  if(gv)
+	    gv->setPrescribedMeshSizeAtVertex($5);
+	}
+      }
+      List_Delete($3);
+    }
+  | tTransfinite tLine ListOfDoubleOrAll tAFFECT FExpr TransfiniteType tEND
     {
       int type = (int)$6[0];
       double coef = fabs($6[1]);
@@ -5727,6 +5653,24 @@ Constraints :
         }
         List_Delete($3);
       }
+    }
+  | tCompound tLine ListOfDouble tEND
+    {
+      std::vector<int> tags; ListOfDouble2Vector($3, tags);
+      GModel::current()->getGEOInternals()->addCompoundMesh(1, tags);
+      List_Delete($3);
+    }
+  | tCompound tSurface ListOfDouble tEND
+    {
+      std::vector<int> tags; ListOfDouble2Vector($3, tags);
+      GModel::current()->getGEOInternals()->addCompoundMesh(2, tags);
+      List_Delete($3);
+    }
+  | tCompound tVolume ListOfDouble tEND
+    {
+      std::vector<int> tags; ListOfDouble2Vector($3, tags);
+      GModel::current()->getGEOInternals()->addCompoundMesh(3, tags);
+      List_Delete($3);
     }
 ;
 

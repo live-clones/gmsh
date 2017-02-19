@@ -105,21 +105,6 @@ void GEO_Internals::addLine(int num, std::vector<int> vertexTags)
   List_Delete(temp);
 }
 
-void GEO_Internals::addSpline(int num, std::vector<int> vertexTags)
-{
-  if(FindCurve(num)){
-    Msg::Error("GEO edge with tag %d already exists", num);
-    return;
-  }
-  List_T *temp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < vertexTags.size(); i++)
-    List_Add(temp, &vertexTags[i]);
-  Curve *c = Create_Curve(num, MSH_SEGM_SPLN, 3, temp, NULL, -1, -1, 0., 1.);
-  Tree_Add(Curves, &c);
-  CreateReversedCurve(c);
-  List_Delete(temp);
-}
-
 void GEO_Internals::addCircleArc(int num, int startTag, int centerTag, int endTag,
                                  double nx, double ny, double nz)
 {
@@ -177,6 +162,107 @@ void GEO_Internals::addEllipseArc(int num, int startTag, int centerTag, int majo
     End_Curve(rc);
   }
   List_Delete(temp);
+}
+
+void GEO_Internals::addSpline(int num, std::vector<int> vertexTags)
+{
+  if(FindCurve(num)){
+    Msg::Error("GEO edge with tag %d already exists", num);
+    return;
+  }
+  List_T *temp = List_Create(2, 2, sizeof(int));
+  for(unsigned int i = 0; i < vertexTags.size(); i++)
+    List_Add(temp, &vertexTags[i]);
+  Curve *c = Create_Curve(num, MSH_SEGM_SPLN, 3, temp, NULL, -1, -1, 0., 1.);
+  Tree_Add(Curves, &c);
+  CreateReversedCurve(c);
+  List_Delete(temp);
+}
+
+void GEO_Internals::addBSpline(int num, std::vector<int> vertexTags)
+{
+  if(FindCurve(num)){
+    Msg::Error("GEO edge with tag %d already exists", num);
+    return;
+  }
+  List_T *temp = List_Create(2, 2, sizeof(int));
+  for(unsigned int i = 0; i < vertexTags.size(); i++)
+    List_Add(temp, &vertexTags[i]);
+  Curve *c = Create_Curve(num, MSH_SEGM_BSPLN, 2, temp, NULL, -1, -1, 0., 1.);
+  Tree_Add(Curves, &c);
+  CreateReversedCurve(c);
+  List_Delete(temp);
+}
+
+void GEO_Internals::addBezier(int num, std::vector<int> vertexTags)
+{
+  if(FindCurve(num)){
+    Msg::Error("GEO edge with tag %d already exists", num);
+    return;
+  }
+  List_T *temp = List_Create(2, 2, sizeof(int));
+  for(unsigned int i = 0; i < vertexTags.size(); i++)
+    List_Add(temp, &vertexTags[i]);
+  Curve *c = Create_Curve(num, MSH_SEGM_BEZIER, 2, temp, NULL, -1, -1, 0., 1.);
+  Tree_Add(Curves, &c);
+  CreateReversedCurve(c);
+  List_Delete(temp);
+}
+
+void GEO_Internals::addNurbs(int num, std::vector<int> vertexTags,
+                             std::vector<double> knots)
+{
+  if(FindCurve(num)){
+    Msg::Error("GEO edge with tag %d already exists", num);
+    return;
+  }
+  int order = knots.size() - vertexTags.size() - 1;
+  List_T *temp = List_Create(2, 2, sizeof(int));
+  for(unsigned int i = 0; i < vertexTags.size(); i++)
+    List_Add(temp, &vertexTags[i]);
+  List_T *knotsList = List_Create(2, 2, sizeof(double));
+  for(unsigned int i = 0; i < knots.size(); i++)
+    List_Add(knotsList, &knots[i]);
+  Curve *c = Create_Curve(num, MSH_SEGM_NURBS, order, temp, knotsList, -1, -1, 0., 1.);
+  Tree_Add(Curves, &c);
+  CreateReversedCurve(c);
+  List_Delete(temp);
+}
+
+void GEO_Internals::addCompoundLine(int num, std::vector<int> edgeTags)
+{
+  if(FindCurve(num)){
+    Msg::Error("GEO edge with tag %d already exists", num);
+    return;
+  }
+
+  Curve *c = Create_Curve(num, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
+  c->compound = edgeTags;
+  End_Curve(c);
+  Tree_Add(Curves, &c);
+  CreateReversedCurve(c);
+}
+
+void GEO_Internals::addLineLoop(int num, std::vector<int> edgeTags)
+{
+  if(FindEdgeLoop(num)){
+    Msg::Error("GEO line loop with tag %d already exists", num);
+    return;
+  }
+  List_T *temp = List_Create(2, 2, sizeof(int));
+  for(unsigned int i = 0; i < edgeTags.size(); i++)
+    List_Add(temp, &edgeTags[i]);
+  sortEdgesInLoop(num, temp);
+  EdgeLoop *l = Create_EdgeLoop(num, temp);
+  Tree_Add(EdgeLoops, &l);
+  List_Delete(temp);
+}
+
+
+
+void GEO_Internals::addCompoundMesh(int dim, std::vector<int> tags)
+{
+  meshCompounds.insert(std::make_pair(dim, tags));
 }
 
 void GEO_Internals::synchronize(GModel *model)

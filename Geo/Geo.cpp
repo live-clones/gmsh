@@ -597,7 +597,7 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
   pC->ubeg = u1;
   pC->uend = u2;
 
-  if(Knots) {
+  if(Knots && List_Nbr(Knots)) {
     pC->k = new float[List_Nbr(Knots)];
     double kmin = .0, kmax = 1.;
     List_Read(Knots, 0, &kmin);
