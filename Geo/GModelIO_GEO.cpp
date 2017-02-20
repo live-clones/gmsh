@@ -55,10 +55,17 @@ void GEO_Internals::_freeAll()
   List_Action(PhysicalGroups, Free_PhysicalGroup); List_Delete(PhysicalGroups);
 }
 
-void GEO_Internals::resetPhysicalGroups()
+int GEO_Internals::getMaxTag(int dim) const
 {
-  List_Action(PhysicalGroups, Free_PhysicalGroup);
-  List_Reset(PhysicalGroups);
+  switch(dim){
+  case 0: return MaxPointNum;
+  case 1: return MaxLineNum;
+  case -1: return MaxLineLoopNum;
+  case 2: return MaxSurfaceNum;
+  case -2: return MaxSurfaceLoopNum;
+  case 3: return MaxVolumeNum;
+  default: return 0;
+  }
 }
 
 void GEO_Internals::addVertex(int num, double x, double y, double z, double lc)
@@ -377,6 +384,12 @@ void GEO_Internals::addCompoundVolume(int num, std::vector<int> regionTags)
   Volume *v = Create_Volume(num, MSH_VOLUME_COMPOUND);
   v->compound = regionTags;
   Tree_Add(Volumes, &v);
+}
+
+void GEO_Internals::resetPhysicalGroups()
+{
+  List_Action(PhysicalGroups, Free_PhysicalGroup);
+  List_Reset(PhysicalGroups);
 }
 
 void GEO_Internals::setCompoundMesh(int dim, std::vector<int> tags)
