@@ -278,7 +278,7 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e,
                 list_out);
 
   //create GEntities
-  gm->importGEOInternals();
+  gm->getGEOInternals()->synchronize(gm);
 
   //return the new created entity
   int nbout = List_Nbr(list_out);
@@ -357,7 +357,7 @@ void GeoFactory::healGeometry(GModel *gm, double tolerance)
   GModel::setCurrent(gm);
   ReplaceAllDuplicatesNew(tolerance);
   gm->destroy();
-  gm->importGEOInternals();
+  gm->getGEOInternals()->synchronize(gm);
   GModel::setCurrent(current);
 }
 
@@ -1229,19 +1229,12 @@ void OCCFactory::setPeriodicPairOfFaces(GModel *gm, int numFaceMaster,
       edgeCounterparts[*siter] = *miter;
     }
 
-    Surface *s_slave = FindSurface(abs(numFaceSlave));
-    if(s_slave){
-      s_slave->master = numFaceMaster;
-      s_slave->edgeCounterparts = edgeCounterparts;
+    GFace *gf = GModel::current()->getFaceByTag(abs(numFaceSlave));
+    if (gf) {
+      GFace *master = GModel::current()->getFaceByTag(abs(numFaceMaster));
+      gf->setMeshMaster(master,edgeCounterparts);
     }
-    else{
-      GFace *gf = GModel::current()->getFaceByTag(abs(numFaceSlave));
-      if (gf) {
-        GFace *master = GModel::current()->getFaceByTag(abs(numFaceMaster));
-        gf->setMeshMaster(master,edgeCounterparts);
-      }
-      else Msg::Error("Slave surface %d not found", numFaceSlave);
-    }
+    else Msg::Error("Slave surface %d not found", numFaceSlave);
   }
 }
 

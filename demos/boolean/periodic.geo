@@ -8,5 +8,4 @@ pts() = Unique(Boundary{Boundary{Boundary{Volume{1};}}});
 
 Characteristic Length{pts(0)} = 0.01;
 
-SyncModel;
 Periodic Surface{2} = {1} Translate{R,0,0};

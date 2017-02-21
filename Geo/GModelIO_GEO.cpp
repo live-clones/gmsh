@@ -39,6 +39,7 @@ void GEO_Internals::_allocateAll()
   Volumes = Tree_Create(sizeof(Volume *), compareVolume);
   LevelSets = Tree_Create(sizeof(LevelSet *), compareLevelSet);
   PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
+  _changed = true;
 }
 
 void GEO_Internals::_freeAll()
@@ -53,6 +54,7 @@ void GEO_Internals::_freeAll()
   Tree_Action(Volumes, Free_Volume); Tree_Delete(Volumes);
   Tree_Action(LevelSets, Free_LevelSet); Tree_Delete(LevelSets);
   List_Action(PhysicalGroups, Free_PhysicalGroup); List_Delete(PhysicalGroups);
+  _changed = true;
 }
 
 int GEO_Internals::getMaxTag(int dim) const
@@ -76,6 +78,7 @@ void GEO_Internals::addVertex(int num, double x, double y, double z, double lc)
   }
   Vertex *v = Create_Vertex(num, x, y, z, lc, 1.0);
   Tree_Add(Points, &v);
+  _changed = true;
 }
 
 void GEO_Internals::addVertex(int num, double x, double y, gmshSurface *surface,
@@ -87,6 +90,7 @@ void GEO_Internals::addVertex(int num, double x, double y, gmshSurface *surface,
   }
   Vertex *v = Create_Vertex(num, x, y, surface, lc);
   Tree_Add(Points, &v);
+  _changed = true;
 }
 
 void GEO_Internals::addLine(int num, int startTag, int endTag)
@@ -95,6 +99,7 @@ void GEO_Internals::addLine(int num, int startTag, int endTag)
   points.push_back(startTag);
   points.push_back(endTag);
   addLine(num, points);
+  _changed = true;
 }
 
 void GEO_Internals::addLine(int num, std::vector<int> vertexTags)
@@ -110,6 +115,7 @@ void GEO_Internals::addLine(int num, std::vector<int> vertexTags)
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(temp);
+  _changed = true;
 }
 
 void GEO_Internals::addCircleArc(int num, int startTag, int centerTag, int endTag,
@@ -139,6 +145,7 @@ void GEO_Internals::addCircleArc(int num, int startTag, int centerTag, int endTa
     End_Curve(rc);
   }
   List_Delete(temp);
+  _changed = true;
 }
 
 void GEO_Internals::addEllipseArc(int num, int startTag, int centerTag, int majorTag,
@@ -169,6 +176,7 @@ void GEO_Internals::addEllipseArc(int num, int startTag, int centerTag, int majo
     End_Curve(rc);
   }
   List_Delete(temp);
+  _changed = true;
 }
 
 void GEO_Internals::addSpline(int num, std::vector<int> vertexTags)
@@ -184,6 +192,7 @@ void GEO_Internals::addSpline(int num, std::vector<int> vertexTags)
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(temp);
+  _changed = true;
 }
 
 void GEO_Internals::addBSpline(int num, std::vector<int> vertexTags)
@@ -199,6 +208,7 @@ void GEO_Internals::addBSpline(int num, std::vector<int> vertexTags)
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(temp);
+  _changed = true;
 }
 
 void GEO_Internals::addBezier(int num, std::vector<int> vertexTags)
@@ -214,6 +224,7 @@ void GEO_Internals::addBezier(int num, std::vector<int> vertexTags)
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(temp);
+  _changed = true;
 }
 
 void GEO_Internals::addNurbs(int num, std::vector<int> vertexTags,
@@ -234,6 +245,7 @@ void GEO_Internals::addNurbs(int num, std::vector<int> vertexTags,
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(temp);
+  _changed = true;
 }
 
 void GEO_Internals::addCompoundLine(int num, std::vector<int> edgeTags)
@@ -248,6 +260,7 @@ void GEO_Internals::addCompoundLine(int num, std::vector<int> edgeTags)
   End_Curve(c);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
+  _changed = true;
 }
 
 void GEO_Internals::addLineLoop(int num, std::vector<int> edgeTags)
@@ -263,6 +276,7 @@ void GEO_Internals::addLineLoop(int num, std::vector<int> edgeTags)
   EdgeLoop *l = Create_EdgeLoop(num, temp);
   Tree_Add(EdgeLoops, &l);
   List_Delete(temp);
+  _changed = true;
 }
 
 void GEO_Internals::addPlaneSurface(int num, std::vector<int> wireTags)
@@ -283,6 +297,7 @@ void GEO_Internals::addPlaneSurface(int num, std::vector<int> wireTags)
   List_Delete(temp);
   End_Surface(s);
   Tree_Add(Surfaces, &s);
+  _changed = true;
 }
 
 void GEO_Internals::addSurfaceFilling(int num, std::vector<int> wireTags,
@@ -323,6 +338,7 @@ void GEO_Internals::addSurfaceFilling(int num, std::vector<int> wireTags,
       Msg::Error("Unknown sphere center vertex %d", sphereCenterTag);
   }
   Tree_Add(Surfaces, &s);
+  _changed = true;
 }
 
 void GEO_Internals::addCompoundSurface(int num, std::vector<int> faceTags,
@@ -341,6 +357,7 @@ void GEO_Internals::addCompoundSurface(int num, std::vector<int> faceTags,
   }
   setSurfaceGeneratrices(s, 0);
   Tree_Add(Surfaces, &s);
+  _changed = true;
 }
 
 void GEO_Internals::addSurfaceLoop(int num, std::vector<int> faceTags)
@@ -356,6 +373,7 @@ void GEO_Internals::addSurfaceLoop(int num, std::vector<int> faceTags)
   SurfaceLoop *l = Create_SurfaceLoop(num, temp);
   Tree_Add(SurfaceLoops, &l);
   List_Delete(temp);
+  _changed = true;
 }
 
 void GEO_Internals::addVolume(int num, std::vector<int> shellTags)
@@ -372,6 +390,7 @@ void GEO_Internals::addVolume(int num, std::vector<int> shellTags)
   setVolumeSurfaces(v, temp);
   List_Delete(temp);
   Tree_Add(Volumes, &v);
+  _changed = true;
 }
 
 void GEO_Internals::addCompoundVolume(int num, std::vector<int> regionTags)
@@ -384,17 +403,53 @@ void GEO_Internals::addCompoundVolume(int num, std::vector<int> regionTags)
   Volume *v = Create_Volume(num, MSH_VOLUME_COMPOUND);
   v->compound = regionTags;
   Tree_Add(Volumes, &v);
+  _changed = true;
 }
 
 void GEO_Internals::resetPhysicalGroups()
 {
   List_Action(PhysicalGroups, Free_PhysicalGroup);
   List_Reset(PhysicalGroups);
+  _changed = true;
+}
+
+void GEO_Internals::removeAllDuplicates()
+{
+  ReplaceAllDuplicates();
+  _changed = true;
+}
+
+void GEO_Internals::mergeVertices(std::vector<int> tags)
+{
+  if(tags.size() < 2) return;
+  Vertex *target = FindPoint(tags[0]);
+  if(!target){
+    Msg::Error("Could not find GEO vertex with tag %d", tags[0]);
+    return;
+  }
+
+  double x = target->Pos.X, y = target->Pos.Y, z = target->Pos.Z;
+  for(unsigned int i = 1; i < tags.size(); i++){
+    Vertex *source = FindPoint(tags[i]);
+    if(!source){
+      Msg::Error("Could not find GEO vertex with tag %d", tags[i]);
+      return;
+    }
+    source->Typ = target->Typ;
+    source->Pos.X = x;
+    source->Pos.Y = y;
+    source->Pos.Z = z;
+    source->boundaryLayerIndex = target->boundaryLayerIndex;
+  }
+  ExtrudeParams::normalsCoherence.push_back(SPoint3(x, y, z));
+  ReplaceAllDuplicates();
+  _changed = true;
 }
 
 void GEO_Internals::setCompoundMesh(int dim, std::vector<int> tags)
 {
   meshCompounds.insert(std::make_pair(dim, tags));
+  _changed = true;
 }
 
 void GEO_Internals::setMeshSize(int dim, int tag, double size)
@@ -405,6 +460,7 @@ void GEO_Internals::setMeshSize(int dim, int tag, double size)
   }
   Vertex *v = FindPoint(tag);
   if(v) v->lc = size;
+  _changed = true;
 }
 
 void GEO_Internals::setDegenerated(int dim, int tag)
@@ -412,10 +468,13 @@ void GEO_Internals::setDegenerated(int dim, int tag)
   if(dim != 1) return;
   Curve *c = FindCurve(tag);
   if(c) c->degenerated = true;
+  _changed = true;
 }
 
 void GEO_Internals::synchronize(GModel *model)
 {
+  Msg::Debug("Syncing GEO_Internals with GModel");
+
   if(Tree_Nbr(Points)) {
     List_T *points = Tree2List(Points);
     for(int i = 0; i < List_Nbr(points); i++){
@@ -606,40 +665,6 @@ void GEO_Internals::synchronize(GModel *model)
       else{
         r->resetMeshAttributes();
       }
-
-      if(v->EmbeddedSurfaces){
-	for(int i = 0; i < List_Nbr(v->EmbeddedSurfaces); i++){
-	  Surface *s;
-	  List_Read(v->EmbeddedSurfaces, i, &s);
-	  GFace *gf = model->getFaceByTag(abs(s->Num));
-	  if(gf)
-	    r->addEmbeddedFace(gf);
-	  else
-	    Msg::Error("Unknown surface %d", s->Num);
-	}
-      }
-      if(v->EmbeddedCurves){
-	for(int i = 0; i < List_Nbr(v->EmbeddedCurves); i++){
-	  Curve *c;
-	  List_Read(v->EmbeddedCurves, i, &c);
-	  GEdge *ge = model->getEdgeByTag(abs(c->Num));
-	  if(ge)
-	    r->addEmbeddedEdge(ge);
-	  else
-	    Msg::Error("Unknown curve %d", c->Num);
-	}
-      }
-      if(v->EmbeddedPoints){
-        for(int i = 0; i < List_Nbr(v->EmbeddedPoints); i++){
-          Vertex *c;
-          List_Read(v->EmbeddedPoints, i, &c);
-          GVertex *gv = model->getVertexByTag(c->Num);
-          if(gv)
-            r->addEmbeddedVertex(gv);
-          else
-            Msg::Error("Unknown point %d", c->Num);
-        }
-      }
       if(!v->Visible) r->setVisibility(0);
       if(v->Color.type) r->setColor(v->Color.mesh);
     }
@@ -667,54 +692,13 @@ void GEO_Internals::synchronize(GModel *model)
     }
   }
 
-  std::map<int, GEO_Internals::MasterEdge>::iterator peIter = periodicEdges.begin();
-  for (; peIter != periodicEdges.end(); ++peIter) {
-    int iTarget = peIter->first;
-    GEO_Internals::MasterEdge& me = peIter->second;
-    int iSource = me.tag;
-    GEdge* target = model->getEdgeByTag(abs(iTarget));
-    GEdge* source = model->getEdgeByTag(abs(iSource));
-    if(!target)
-      Msg::Error("Unknown target line for periodic connection from %d to %d",
-                 iTarget, iSource);
-    if(!source)
-      Msg::Error("Unknown source line for periodic connection from %d to %d",
-                 iTarget, iSource);
-    if(target && source){
-      if(me.affineTransform.size() == 16)
-        target->setMeshMaster(source, me.affineTransform);
-      else
-        target->setMeshMaster(source, me.tag > 0 ? 1 : -1);
-    }
-  }
-
-  std::map<int, GEO_Internals::MasterFace>::iterator pfIter = periodicFaces.begin();
-  for (; pfIter != periodicFaces.end(); ++pfIter) {
-    int iTarget = pfIter->first;
-    GEO_Internals::MasterFace& mf = pfIter->second;
-    int iSource = mf.tag;
-    GFace* target = model->getFaceByTag(iTarget);
-    GFace* source = model->getFaceByTag(iSource);
-    if(!target)
-      Msg::Error("Unknown target surface for periodic connection from %d to %d",
-                 iTarget, iSource);
-    if(!source)
-      Msg::Error("Unknown source surface for periodic connection from %d to %d",
-                 iTarget, iSource);
-    if(target && source){
-      if(mf.affineTransform.size() == 16)
-        target->setMeshMaster(source,mf.affineTransform);
-      else
-        target->setMeshMaster(source,mf.edgeCounterparts);
-    }
-  }
-
-  for (std::multimap<int, std::vector<int> >::iterator it = meshCompounds.begin();
-       it != meshCompounds.end(); ++it){
+  // this should not be stored in GEO_internals, but directly set in GModel
+  for(std::multimap<int, std::vector<int> >::iterator it = meshCompounds.begin();
+      it != meshCompounds.end(); ++it){
     int dim = it->first;
     std::vector<int> compound = it->second;
     std::vector<GEntity*> ents;
-    for (unsigned int i=0;i<compound.size();i++){
+    for (unsigned int i = 0; i < compound.size(); i++){
       int tag = compound[i];
       GEntity *ent = NULL;
       switch(dim) {
@@ -735,6 +719,8 @@ void GEO_Internals::synchronize(GModel *model)
   Msg::Debug("%d Edges", model->getNumEdges());
   Msg::Debug("%d Faces", model->getNumFaces());
   Msg::Debug("%d Regions", model->getNumRegions());
+
+  _changed = false;
 }
 
 bool GEO_Internals::getVertex(int tag, double &x, double &y, double &z)
@@ -747,37 +733,6 @@ bool GEO_Internals::getVertex(int tag, double &x, double &y, double &z)
     return true;
   }
   return false;
-}
-
-void GEO_Internals::removeAllDuplicates()
-{
-  ReplaceAllDuplicates();
-}
-
-void GEO_Internals::mergeVertices(std::vector<int> tags)
-{
-  if(tags.size() < 2) return;
-  Vertex *target = FindPoint(tags[0]);
-  if(!target){
-    Msg::Error("Could not find GEO vertex with tag %d", tags[0]);
-    return;
-  }
-
-  double x = target->Pos.X, y = target->Pos.Y, z = target->Pos.Z;
-  for(unsigned int i = 1; i < tags.size(); i++){
-    Vertex *source = FindPoint(tags[i]);
-    if(!source){
-      Msg::Error("Could not find GEO vertex with tag %d", tags[i]);
-      return;
-    }
-    source->Typ = target->Typ;
-    source->Pos.X = x;
-    source->Pos.Y = y;
-    source->Pos.Z = z;
-    source->boundaryLayerIndex = target->boundaryLayerIndex;
-  }
-  ExtrudeParams::normalsCoherence.push_back(SPoint3(x, y, z));
-  ReplaceAllDuplicates();
 }
 
 gmshSurface *GEO_Internals::newGeometrySphere(int num, int centerTag, int pointTag)
@@ -829,99 +784,6 @@ void GModel::_deleteGEOInternals()
 {
   if(_geo_internals) delete _geo_internals;
   _geo_internals = 0;
-}
-
-int GModel::importGEOInternals()
-{
-  if(!_geo_internals) return 0;
-  _geo_internals->synchronize(this);
-  return 1;
-}
-
-int GModel::readGEO(const std::string &name)
-{
-  ParseFile(name, true);
-  int imported = GModel::current()->importGEOInternals();
-
-  // FIXME: temp
-  GModel::current()->importOCCInternals();
-  return imported;
-}
-
-int GModel::exportDiscreteGEOInternals()
-{
-  int maxv = 1; // FIXME: temporary - see TODO below
-
-  if(_geo_internals){
-    maxv = _geo_internals->MaxVolumeNum;
-    delete _geo_internals;
-  }
-  _geo_internals = new GEO_Internals;
-
-  for(viter it = firstVertex(); it != lastVertex(); it++){
-    Vertex *v = Create_Vertex((*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z(),
-        (*it)->prescribedMeshSizeAtVertex(), 1.0);
-    Tree_Add(_geo_internals->Points, &v);
-  }
-
-  for(eiter it = firstEdge(); it != lastEdge(); it++){
-    if((*it)->geomType() == GEntity::DiscreteCurve){
-      Curve *c = Create_Curve((*it)->tag(), MSH_SEGM_DISCRETE, 1,
-          NULL, NULL, -1, -1, 0., 1.);
-      List_T *points = Tree2List(_geo_internals->Points);
-      GVertex *gvb = (*it)->getBeginVertex();
-      GVertex *gve = (*it)->getEndVertex();
-      int nb = 2 ;
-      c->Control_Points = List_Create(nb, 1, sizeof(Vertex *));
-      for(int i = 0; i < List_Nbr(points); i++) {
-        Vertex *v;
-        List_Read(points, i, &v);
-        if (v->Num == gvb->tag()) {
-          List_Add(c->Control_Points, &v);
-          c->beg = v;
-        }
-        if (v->Num == gve->tag()) {
-          List_Add(c->Control_Points, &v);
-          c->end = v;
-        }
-      }
-      End_Curve(c);
-      Tree_Add(_geo_internals->Curves, &c);
-      CreateReversedCurve(c);
-      List_Delete(points);
-    }
-  }
-
-  for(fiter it = firstFace(); it != lastFace(); it++){
-    if((*it)->geomType() == GEntity::DiscreteSurface){
-      Surface *s = Create_Surface((*it)->tag(), MSH_SURF_DISCRETE);
-      std::list<GEdge*> edges = (*it)->edges();
-      s->Generatrices = List_Create(edges.size(), 1, sizeof(Curve *));
-      List_T *curves = Tree2List(_geo_internals->Curves);
-      Curve *c;
-      for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
-        for(int i = 0; i < List_Nbr(curves); i++) {
-          List_Read(curves, i, &c);
-          if (c->Num == (*ite)->tag()) {
-            List_Add(s->Generatrices, &c);
-          }
-        }
-      }
-      Tree_Add(_geo_internals->Surfaces, &s);
-      List_Delete(curves);
-    }
-  }
-
-  // TODO: create Volumes from discreteRegions ; meanwhile, keep track of
-  // maximum volume num so that we don't break later operations:
-  _geo_internals->MaxVolumeNum = maxv;
-
-  Msg::Debug("Geo internal model has:");
-  Msg::Debug("%d Vertices", Tree_Nbr(_geo_internals->Points));
-  Msg::Debug("%d Edges", Tree_Nbr(_geo_internals->Curves));
-  Msg::Debug("%d Faces", Tree_Nbr(_geo_internals->Surfaces));
-
-  return 1;
 }
 
 class writeFieldOptionGEO {
@@ -1098,5 +960,81 @@ int GModel::writeGEO(const std::string &name, bool printLabels, bool onlyPhysica
     fprintf(fp, "Background Field = %i;\n", getFields()->getBackgroundField());
 
   fclose(fp);
+  return 1;
+}
+
+int GModel::exportDiscreteGEOInternals()
+{
+  int maxv = 1; // FIXME: temporary - see TODO below
+
+  if(_geo_internals){
+    maxv = _geo_internals->MaxVolumeNum;
+    delete _geo_internals;
+  }
+  _geo_internals = new GEO_Internals;
+
+  for(viter it = firstVertex(); it != lastVertex(); it++){
+    Vertex *v = Create_Vertex((*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z(),
+        (*it)->prescribedMeshSizeAtVertex(), 1.0);
+    Tree_Add(_geo_internals->Points, &v);
+  }
+
+  for(eiter it = firstEdge(); it != lastEdge(); it++){
+    if((*it)->geomType() == GEntity::DiscreteCurve){
+      Curve *c = Create_Curve((*it)->tag(), MSH_SEGM_DISCRETE, 1,
+          NULL, NULL, -1, -1, 0., 1.);
+      List_T *points = Tree2List(_geo_internals->Points);
+      GVertex *gvb = (*it)->getBeginVertex();
+      GVertex *gve = (*it)->getEndVertex();
+      int nb = 2 ;
+      c->Control_Points = List_Create(nb, 1, sizeof(Vertex *));
+      for(int i = 0; i < List_Nbr(points); i++) {
+        Vertex *v;
+        List_Read(points, i, &v);
+        if (v->Num == gvb->tag()) {
+          List_Add(c->Control_Points, &v);
+          c->beg = v;
+        }
+        if (v->Num == gve->tag()) {
+          List_Add(c->Control_Points, &v);
+          c->end = v;
+        }
+      }
+      End_Curve(c);
+      Tree_Add(_geo_internals->Curves, &c);
+      CreateReversedCurve(c);
+      List_Delete(points);
+    }
+  }
+
+  for(fiter it = firstFace(); it != lastFace(); it++){
+    if((*it)->geomType() == GEntity::DiscreteSurface){
+      Surface *s = Create_Surface((*it)->tag(), MSH_SURF_DISCRETE);
+      std::list<GEdge*> edges = (*it)->edges();
+      s->Generatrices = List_Create(edges.size(), 1, sizeof(Curve *));
+      List_T *curves = Tree2List(_geo_internals->Curves);
+      Curve *c;
+      for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
+        for(int i = 0; i < List_Nbr(curves); i++) {
+          List_Read(curves, i, &c);
+          if (c->Num == (*ite)->tag()) {
+            List_Add(s->Generatrices, &c);
+          }
+        }
+      }
+      Tree_Add(_geo_internals->Surfaces, &s);
+      List_Delete(curves);
+    }
+  }
+
+  // TODO: create Volumes from discreteRegions ; meanwhile, keep track of
+  // maximum volume num so that we don't break later operations:
+  _geo_internals->MaxVolumeNum = maxv;
+
+  Msg::Debug("Geo internal model has:");
+  Msg::Debug("%d Vertices", Tree_Nbr(_geo_internals->Points));
+  Msg::Debug("%d Edges", Tree_Nbr(_geo_internals->Curves));
+  Msg::Debug("%d Faces", Tree_Nbr(_geo_internals->Surfaces));
+
   return 1;
 }

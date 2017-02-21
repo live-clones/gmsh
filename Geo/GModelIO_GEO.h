@@ -12,10 +12,14 @@ class GEO_Internals{
  private:
   void _allocateAll();
   void _freeAll();
+  bool _changed;
  public:
   GEO_Internals(){ _allocateAll(); }
   ~GEO_Internals(){ _freeAll(); }
   void destroy(){ _freeAll(); _allocateAll(); }
+
+  // have the internals changed since the last synchronisation
+  bool getChanged() const { return _changed; }
 
   // get maximum tag number for each dimension
   int getMaxTag(int dim) const;
@@ -46,6 +50,10 @@ class GEO_Internals{
   // manipulate physical groups (this will eventually move directly to GModel)
   void resetPhysicalGroups();
 
+  // coherence
+  void removeAllDuplicates();
+  void mergeVertices(std::vector<int> tags);
+
   // set meshing constraints
   void setCompoundMesh(int dim, std::vector<int> tags);
   void setMeshSize(int dim, int tag, double size);
@@ -56,10 +64,6 @@ class GEO_Internals{
 
   // queries
   bool getVertex(int tag, double &x, double &y, double &z);
-
-  // coherence
-  void removeAllDuplicates();
-  void mergeVertices(std::vector<int> tags);
 
   // create coordinate systems
   gmshSurface *newGeometrySphere(int num, int centerTag, int pointTag);
@@ -73,19 +77,9 @@ class GEO_Internals{
   List_T *PhysicalGroups;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
+
+  // FIXME this should not be stored in GEO_internals, but directly set in GModel
   std::multimap<int, std::vector<int> > meshCompounds;
-  struct MasterEdge {
-    int tag; // signed
-    std::vector<double> affineTransform;
-  };
-  std::map<int, MasterEdge> periodicEdges;
-  struct MasterFace {
-    int tag;
-    // map from slave to master edges
-    std::map<int, int> edgeCounterparts;
-    std::vector<double> affineTransform;
-  };
-  std::map<int, MasterFace> periodicFaces;
 };
 
 #endif

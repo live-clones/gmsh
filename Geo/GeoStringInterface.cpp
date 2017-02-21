@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "GModelIO_GEO.h"
 #include "Numeric.h"
 #include "StringUtils.h"
 #include "Geo.h"
@@ -100,7 +101,7 @@ void add_infile(const std::string &text, const std::string &fileName, bool force
     // could have deleted some entities)
     GModel::current()->destroy();
   }
-  GModel::current()->importGEOInternals();
+  GModel::current()->getGEOInternals()->synchronize(GModel::current());
   GModel::current()->setName(split[1]);
   CTX::instance()->mesh.changed = ENT_ALL;
 

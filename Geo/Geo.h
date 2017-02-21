@@ -211,12 +211,6 @@ class Surface{
   // should be the only one in gmsh, so parameter "Type" should
   // disappear from the class Surface.
   gmshSurface *geometry;
-  //
-  int master;
-  // the mesh master surface
-  std::map<int,int> edgeCounterparts;
-  // prescribed affine transform for periodic meshing
-  std::vector<double> affineTransform;
   std::vector<int> compound, compoundBoundary[4];
   int ReverseMesh;
   void SetVisible(int value, bool recursive)

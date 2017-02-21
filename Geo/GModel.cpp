@@ -11,6 +11,7 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "GModelIO_GEO.h"
+#include "GModelIO_OCC.h"
 #include "GModelFactory.h"
 #include "GFaceCompound.h"
 #include "GEdgeCompound.h"
@@ -79,8 +80,7 @@ GModel::GModel(std::string name)
   // push new one into the list
   list.push_back(this);
 
-  // at the moment we always create (at least empty) internal GEO and OCC
-  // CAD models
+  // we always create (possibly empty) internal GEO and OCC CAD models
   _createGEOInternals();
   _createOCCInternals();
 
@@ -723,8 +723,42 @@ int GModel::adaptMesh(std::vector<int> technique,
                       std::vector<std::vector<double> > parameters,
                       int niter, bool meshAll)
 {
-#if defined(HAVE_MESH)
+  // For all algorithms:
+  //
+  // parameters[1] = lcmin (default : in global gmsh options
+  //           CTX::instance()->mesh.lcMin)
+  // parameters[2] = lcmax (default : in global gmsh options
+  //   CTX::instance()->mesh.lcMax) niter is the maximum number of iterations
 
+  // Available algorithms:
+  //
+  //    1) Assume that the function is a levelset -> adapt using Coupez
+  //    technique (technique = 1)
+  //           parameters[0] = thickness of the interface (mandatory)
+  //    2) Assume that the function is a physical quantity -> adapt using the
+  //    Hessian (technique = 2)
+  //           parameters[0] = N, the final number of elements
+  //    3) A variant of 1) by P. Frey (= Coupez + takes curvature function into account)
+  //           parameters[0] = thickness of the interface (mandatory)
+  //           parameters[3] = the required minimum number of elements to
+  //             represent a circle - used for curvature-based metric (default: =
+  //             15)
+  //    4) A variant (3), direct implementation in the metric eigendirections,
+  //    assuming a level set (ls):
+  //        - hmin is imposed in the ls gradient,
+  //        - hmax is imposed in the two eigendirections of the ls hessian that are
+  //          (almost ?) tangent to the iso-zero plane
+  //          + the latter eigenvalues (1/hmax^2) are modified if necessary to capture
+  //          the iso-zero curvature
+  //      parameters[0] = thickness of the interface in the positive ls direction (mandatory)
+  //      parameters[4] = thickness of the interface in the negative ls direction
+  //         (=parameters[0] if not specified)
+  //      parameters[3] = the required minimum number of elements to represent a circle
+  //         - used for curvature-based metric (default: = 15)
+  //    5) Same as 4, except that the transition in band E uses linear interpolation
+  //       of h, instead of linear interpolation of metric
+
+#if defined(HAVE_MESH)
   // copy context (in order to allow multiple calls)
   CTX _backup = *(CTX::instance());
 
@@ -737,10 +771,8 @@ int GModel::adaptMesh(std::vector<int> technique,
 
   int ITER = 0;
   if (meshAll){
-
     while(1){
       Msg::Info("-- adaptMesh (allDim) ITER =%d ", ITER);
-
       fields->reset();
       meshMetric *metric = new meshMetric(this);
       for (unsigned int imetric = 0; imetric < technique.size(); imetric++){
@@ -771,9 +803,7 @@ int GModel::adaptMesh(std::vector<int> technique,
       nbElemsOld = nbElems;
     }
   }
-  //adapt only upper most dimension
-  else{
-
+  else{ //adapt only upper most dimension
     while(1) {
       Msg::Info("-- adaptMesh ITER =%d ", ITER);
       std::vector<MElement*> elements;
@@ -837,7 +867,6 @@ int GModel::adaptMesh(std::vector<int> technique,
   fields->reset();
   // copy context (in order to allow multiple calls)
   *(CTX::instance()) = _backup ;
-
 
   return 0;
 #else
@@ -2995,9 +3024,20 @@ void GModel::save(std::string fileName)
   GModel::setCurrent(temp);
 }
 
+int GModel::readGEO(const std::string &name)
+{
+  // readGEO is static, because it can create several models
+  ParseFile(name, true);
+  // sync OCC first, as GEO_Internals currently contains attributes (physicals)
+  // that should also be applied to entities from OCC_Internals
+  GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  return true;
+}
+
 GEdge* GModel::addCompoundEdge(std::vector<GEdge*> edges, int num)
 {
-  if (num ==-1) num =  getMaxElementaryNumber(1) + 1;
+  if (num ==-1) num = getMaxElementaryNumber(1) + 1;
   GEdgeCompound *gec = new GEdgeCompound(this, num, edges);
   add(gec);
 

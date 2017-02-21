@@ -19,6 +19,9 @@ class OCC_Internals {
   enum BooleanOperator { Union, Intersection, Difference, Section, Fragments };
 
  private :
+  // have the internals changed since the last synchronisation
+  bool _changed;
+
   // tag contraints coming from outside OCC_Internals (when using multiple CAD
   // kernels)
   int _maxTagConstraints[6];
@@ -71,6 +74,8 @@ class OCC_Internals {
  public:
   OCC_Internals();
 
+  bool getChanged() const { return _changed; }
+
   // reset all maps
   void reset()
   {
@@ -82,6 +87,7 @@ class OCC_Internals {
     _tagVertex.Clear(); _tagEdge.Clear(); _tagFace.Clear(); _tagSolid.Clear();
     _wireTag.Clear(); _shellTag.Clear();
     _tagWire.Clear(); _tagShell.Clear();
+    _changed = true;
   }
 
   // bind and unbind OpenCASCADE shapes to tags

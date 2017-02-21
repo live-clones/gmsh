@@ -51,42 +51,49 @@ OCC_Internals::OCC_Internals()
 {
   for(int i = 0; i < 6; i++)
     _maxTagConstraints[i] = 0;
+  _changed = true;
 }
 
 void OCC_Internals::bind(TopoDS_Vertex vertex, int tag)
 {
   _vertexTag.Bind(vertex, tag);
   _tagVertex.Bind(tag, vertex);
+  _changed = true;
 }
 
 void OCC_Internals::bind(TopoDS_Edge edge, int tag)
 {
   _edgeTag.Bind(edge, tag);
   _tagEdge.Bind(tag, edge);
+  _changed = true;
 }
 
 void OCC_Internals::bind(TopoDS_Wire wire, int tag)
 {
   _wireTag.Bind(wire, tag);
   _tagWire.Bind(tag, wire);
+  _changed = true;
 }
 
 void OCC_Internals::bind(TopoDS_Face face, int tag)
 {
   _faceTag.Bind(face, tag);
   _tagFace.Bind(tag, face);
+  _changed = true;
 }
 
 void OCC_Internals::bind(TopoDS_Shell shell, int tag)
 {
   _shellTag.Bind(shell, tag);
   _tagShell.Bind(tag, shell);
+  _changed = true;
 }
 
 void OCC_Internals::bind(TopoDS_Solid solid, int tag)
 {
   _solidTag.Bind(solid, tag);
   _tagSolid.Bind(tag, solid);
+  _changed = true;
 }
 
 void OCC_Internals::bind(TopoDS_Shape shape, int dim, int tag)
@@ -106,36 +113,42 @@ void OCC_Internals::unbind(TopoDS_Vertex vertex, int tag)
 {
   _vertexTag.UnBind(vertex);
   _tagVertex.UnBind(tag);
+  _changed = true;
 }
 
 void OCC_Internals::unbind(TopoDS_Edge edge, int tag)
 {
   _edgeTag.UnBind(edge);
   _tagEdge.UnBind(tag);
+  _changed = true;
 }
 
 void OCC_Internals::unbind(TopoDS_Wire wire, int tag)
 {
   _wireTag.UnBind(wire);
   _tagWire.UnBind(tag);
+  _changed = true;
 }
 
 void OCC_Internals::unbind(TopoDS_Face face, int tag)
 {
   _faceTag.UnBind(face);
   _tagFace.UnBind(tag);
+  _changed = true;
 }
 
 void OCC_Internals::unbind(TopoDS_Shell shell, int tag)
 {
   _shellTag.UnBind(shell);
   _tagShell.UnBind(tag);
+  _changed = true;
 }
 
 void OCC_Internals::unbind(TopoDS_Solid solid, int tag)
 {
   _solidTag.UnBind(solid);
   _tagSolid.UnBind(tag);
+  _changed = true;
 }
 
 void OCC_Internals::unbind(TopoDS_Shape shape, int dim, int tag)
@@ -1858,6 +1871,8 @@ void OCC_Internals::synchronize(GModel *model)
       model->add(new OCCRegion(model, region, tag));
     }
   }
+
+  _changed = false;
 }
 
 bool OCC_Internals::getVertex(int tag, double &x, double &y, double &z)
@@ -2845,13 +2860,6 @@ void GModel::_resetOCCInternals()
 {
   if(!_occ_internals) return;
   _occ_internals->reset();
-}
-
-int GModel::importOCCInternals()
-{
-  if(!_occ_internals) return 0;
-  _occ_internals->synchronize(this);
-  return 1;
 }
 
 int GModel::readOCCBREP(const std::string &fn)

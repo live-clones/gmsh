@@ -3320,23 +3320,31 @@ Command :
 	Msg::StatusBar(true, "Done reading '%s'", tmp.c_str());
       }
       else if(!strcmp($1, "Print")){
-	// make sure we have the latest data from GEO_Internals in GModel
-	// (fixes bug where we would have no geometry in the picture if
-	// the print command is in the same file as the geometry)
-	GModel::current()->importGEOInternals();
+	// make sure we have the latest data from CAD internals in GModel (fixes
+	// bug where we would have no geometry in the picture if the print
+	// command is in the same file as the geometry)
+        if(GModel::current()->getOCCInternals()->getChanged())
+          GModel::current()->getOCCInternals()->synchronize(GModel::current());
+        if(GModel::current()->getGEOInternals()->getChanged())
+          GModel::current()->getGEOInternals()->synchronize(GModel::current());
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
 	CreateOutputFile(tmp, CTX::instance()->print.fileFormat);
       }
       else if(!strcmp($1, "Save")){
-	GModel::current()->importGEOInternals();
+        if(GModel::current()->getOCCInternals()->getChanged())
+          GModel::current()->getOCCInternals()->synchronize(GModel::current());
+        if(GModel::current()->getGEOInternals()->getChanged())
+          GModel::current()->getGEOInternals()->synchronize(GModel::current());
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
 	CreateOutputFile(tmp, CTX::instance()->mesh.fileFormat);
       }
       else if(!strcmp($1, "Merge") || !strcmp($1, "MergeWithBoundingBox")){
-	// MergeWithBoundingBox is deprecated
-        // sync model with new DB here, so that if we e.g. import a STEP file,
-        // we have the correct entity tags and the numberings don't clash
-	GModel::current()->importGEOInternals();
+	// sync CAD internals here, so that if we e.g. import a STEP file, we
+        // have the correct entity tags and the numberings don't clash
+        if(GModel::current()->getOCCInternals()->getChanged())
+          GModel::current()->getOCCInternals()->synchronize(GModel::current());
+        if(GModel::current()->getGEOInternals()->getChanged())
+          GModel::current()->getGEOInternals()->synchronize(GModel::current());
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
 	MergeFile(tmp, true);
       }
@@ -3425,7 +3433,10 @@ Command :
       else if(!strcmp($1, "Mesh")){
 	int lock = CTX::instance()->lock;
 	CTX::instance()->lock = 0;
-	GModel::current()->importGEOInternals();
+        if(GModel::current()->getOCCInternals()->getChanged())
+          GModel::current()->getOCCInternals()->synchronize(GModel::current());
+        if(GModel::current()->getGEOInternals()->getChanged())
+          GModel::current()->getGEOInternals()->synchronize(GModel::current());
 	GModel::current()->mesh((int)$2);
 	CTX::instance()->lock = lock;
       }
@@ -3490,11 +3501,9 @@ Command :
     }
    | tSyncModel tEND
     {
-      // FIXME: this is a hack to force a transfer from the old DB to
-      // the new DB. This will become unnecessary if/when we fill the
-      // GModel directly during parsing.
-      GModel::current()->importGEOInternals();
-      GModel::current()->importOCCInternals();
+      // force sync
+      GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      GModel::current()->getGEOInternals()->synchronize(GModel::current());
     }
    | tNewModel tEND
     {
@@ -3504,7 +3513,10 @@ Command :
    | tBoundingBox tEND
     {
       CTX::instance()->forcedBBox = 0;
-      GModel::current()->importGEOInternals();
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
       SetBoundingBox();
     }
    | tBoundingBox '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}' tEND
@@ -3536,7 +3548,10 @@ Command :
     }
    | tRefineMesh tEND
     {
-      GModel::current()->importGEOInternals();
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
       GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
     }
   | tAdaptMesh '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}'
@@ -3582,7 +3597,10 @@ Command :
             }
             int niter = (int)$12;
             bool meshAll = ($14 == 0) ? false : true;
-            GModel::current()->importGEOInternals();
+            if(GModel::current()->getOCCInternals()->getChanged())
+              GModel::current()->getOCCInternals()->synchronize(GModel::current());
+            if(GModel::current()->getGEOInternals()->getChanged())
+              GModel::current()->getGEOInternals()->synchronize(GModel::current());
             GModel::current()->adaptMesh(technique, f, parameters, niter, meshAll);
           }
         }
@@ -5100,7 +5118,8 @@ Constraints :
             int iPoint = (int)d;
             GVertex *gv = GModel::current()->getVertexByTag(iPoint);
             if(!gv){ // sync model in case the embedded point is a .geo point
-              GModel::current()->importGEOInternals();
+              if(GModel::current()->getGEOInternals()->getChanged())
+                GModel::current()->getGEOInternals()->synchronize(GModel::current());
               gv = GModel::current()->getVertexByTag(iPoint);
             }
             if(gv)
@@ -5128,7 +5147,8 @@ Constraints :
             int iCurve = (int)d;
             GEdge *ge = GModel::current()->getEdgeByTag(iCurve);
             if(!ge){ // sync model in case the embedded line is a .geo line
-              GModel::current()->importGEOInternals();
+              if(GModel::current()->getGEOInternals()->getChanged())
+                GModel::current()->getGEOInternals()->synchronize(GModel::current());
               ge = GModel::current()->getEdgeByTag(iCurve);
             }
             if(ge)
@@ -5156,7 +5176,8 @@ Constraints :
             int iPoint = (int)d;
             GVertex *gv = GModel::current()->getVertexByTag(iPoint);
             if(!gv){ // sync model in case the embedded face is a .geo face
-              GModel::current()->importGEOInternals();
+              if(GModel::current()->getGEOInternals()->getChanged())
+                GModel::current()->getGEOInternals()->synchronize(GModel::current());
               gv = GModel::current()->getVertexByTag(iPoint);
             }
             if(gv)
@@ -5184,7 +5205,8 @@ Constraints :
             int iLine = (int)d;
             GEdge *ge = GModel::current()->getEdgeByTag(iLine);
             if(!ge){ // sync model in case the embedded face is a .geo face
-              GModel::current()->importGEOInternals();
+              if(GModel::current()->getGEOInternals()->getChanged())
+                GModel::current()->getGEOInternals()->synchronize(GModel::current());
               ge = GModel::current()->getEdgeByTag(iLine);
             }
             if(ge)
@@ -5212,7 +5234,8 @@ Constraints :
             int iSurface = (int)d;
             GFace *gf = GModel::current()->getFaceByTag(iSurface);
             if(!gf){ // sync model in case the embedded face is a .geo face
-              GModel::current()->importGEOInternals();
+              if(GModel::current()->getGEOInternals()->getChanged())
+                GModel::current()->getGEOInternals()->synchronize(GModel::current());
               gf = GModel::current()->getFaceByTag(iSurface);
             }
             if(gf)
@@ -6078,6 +6101,8 @@ FExpr_Multi :
     }
   | tPhysical tPoint '{' RecursiveListOfDouble '}'
     {
+      // FIXME: physical groups should not be stored in GEO_Internals, but
+      // directly in GModel
       $$ = List_Create(10, 1, sizeof(double));
       for(int i = 0; i < List_Nbr($4); i++){
         double num;
@@ -6107,6 +6132,8 @@ FExpr_Multi :
     }
   | tPhysical tLine '{' RecursiveListOfDouble '}'
     {
+      // FIXME: physical groups should not be stored in GEO_Internals, but
+      // directly in GModel
       $$ = List_Create(10, 1, sizeof(double));
       for(int i = 0; i < List_Nbr($4); i++){
         double num;
@@ -6136,6 +6163,8 @@ FExpr_Multi :
     }
   | tPhysical tSurface '{' RecursiveListOfDouble '}'
     {
+      // FIXME: physical groups should not be stored in GEO_Internals, but
+      // directly in GModel
       $$ = List_Create(10, 1, sizeof(double));
       for(int i = 0; i < List_Nbr($4); i++){
         double num;
@@ -6165,6 +6194,8 @@ FExpr_Multi :
     }
   | tPhysical tVolume '{' RecursiveListOfDouble '}'
     {
+      // FIXME: physical groups should not be stored in GEO_Internals, but
+      // directly in GModel
       $$ = List_Create(10, 1, sizeof(double));
       for(int i = 0; i < List_Nbr($4); i++){
         double num;
@@ -6195,8 +6226,11 @@ FExpr_Multi :
   | tPoint tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
       $$ = List_Create(10, 1, sizeof(double));
-      GModel::current()->importGEOInternals();
       SBoundingBox3d box($5, $7, $9, $11, $13, $15);
       std::vector<GEntity*> entities;
       GModel::current()->getEntitiesInBox(entities, box, 0);
@@ -6208,8 +6242,11 @@ FExpr_Multi :
   | tLine tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
       $$ = List_Create(10, 1, sizeof(double));
-      GModel::current()->importGEOInternals();
       SBoundingBox3d box($5, $7, $9, $11, $13, $15);
       std::vector<GEntity*> entities;
       GModel::current()->getEntitiesInBox(entities, box, 1);
@@ -6221,8 +6258,11 @@ FExpr_Multi :
   | tSurface tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
       $$ = List_Create(10, 1, sizeof(double));
-      GModel::current()->importGEOInternals();
       SBoundingBox3d box($5, $7, $9, $11, $13, $15);
       std::vector<GEntity*> entities;
       GModel::current()->getEntitiesInBox(entities, box, 2);
@@ -6234,8 +6274,11 @@ FExpr_Multi :
   | tVolume tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
       $$ = List_Create(10, 1, sizeof(double));
-      GModel::current()->importGEOInternals();
       SBoundingBox3d box($5, $7, $9, $11, $13, $15);
       std::vector<GEntity*> entities;
       GModel::current()->getEntitiesInBox(entities, box, 3);
@@ -7187,30 +7230,27 @@ void yymsg(int level, const char *fmt, ...)
 void addPeriodicFace(int iTarget, int iSource,
                      const std::vector<double>& affineTransform)
 {
-  Surface *target = FindSurface(abs(iTarget));
+  if(GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
-  if (target) {
-    GEO_Internals::MasterFace& mf =
-      GModel::current()->getGEOInternals()->periodicFaces[iTarget];
-    mf.tag = iSource;
-    mf.edgeCounterparts.clear();
-    mf.affineTransform = affineTransform;
+  GFace *target = GModel::current()->getFaceByTag(abs(iTarget));
+  GFace *source = GModel::current()->getFaceByTag(abs(iSource));
+  if (!target || !source) {
+    Msg::Error("Could not find edge slave %d or master %d for periodic copy",
+               iTarget, iSource);
   }
-  else{
-    GFace *target = GModel::current()->getFaceByTag(abs(iTarget));
-    GFace *source = GModel::current()->getFaceByTag(abs(iSource));
-    if (!target || !source) {
-      Msg::Error("Could not find edge slave %d or master %d for periodic copy",
-                 iTarget, iSource);
-    }
-    else target->setMeshMaster(source, affineTransform);
-  }
+  else target->setMeshMaster(source, affineTransform);
 }
 
 void addPeriodicFace(int iTarget, int iSource,
                      const std::map<int,int>& edgeCounterparts)
 {
-  Surface *target = FindSurface(abs(iTarget));
+  if(GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
   Msg::Info("Encoding periodic connection between %d and %d", iTarget, iSource);
   std::map<int,int>::const_iterator sIter = edgeCounterparts.begin();
@@ -7218,46 +7258,33 @@ void addPeriodicFace(int iTarget, int iSource,
     Msg::Info("%d - %d", sIter->first, sIter->second);
   }
 
-  if (target) {
-    GEO_Internals::MasterFace& mf =
-      GModel::current()->getGEOInternals()->periodicFaces[iTarget];
-    mf.tag = iSource;
-    mf.edgeCounterparts = edgeCounterparts;
-    mf.affineTransform.clear();
+  GFace *target = GModel::current()->getFaceByTag(abs(iTarget));
+  GFace *source = GModel::current()->getFaceByTag(abs(iSource));
+  if (!target || !source) {
+    Msg::Error("Could not find surface slave %d or master %d for periodic copy",
+               iTarget,iSource);
   }
-  else{
-    GFace *target = GModel::current()->getFaceByTag(abs(iTarget));
-    GFace *source = GModel::current()->getFaceByTag(abs(iSource));
-    if (!target || !source) {
-      Msg::Error("Could not find surface slave %d or master %d for periodic copy",
-                 iTarget,iSource);
-    }
-    else target->setMeshMaster(source, edgeCounterparts);
-  }
+  else target->setMeshMaster(source, edgeCounterparts);
 }
 
 void addPeriodicEdge(int iTarget,int iSource,
                      const std::vector<double>& affineTransform)
 {
-  Curve *target = FindCurve(abs(iTarget));
-  if (target) {
-    GEO_Internals::MasterEdge& me =
-      GModel::current()->getGEOInternals()->periodicEdges[iTarget];
-    me.tag = iSource;
-    me.affineTransform = affineTransform;
+  if(GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  GEdge *target = GModel::current()->getEdgeByTag(abs(iTarget));
+  GEdge *source = GModel::current()->getEdgeByTag(abs(iSource));
+  if (!target || !source)
+    Msg::Error("Could not find surface %d or %d for periodic copy",
+               iTarget,iSource);
+  if (affineTransform.size() >= 12) {
+    target->setMeshMaster(source, affineTransform);
   }
-  else{
-    GEdge *target = GModel::current()->getEdgeByTag(abs(iTarget));
-    GEdge *source = GModel::current()->getEdgeByTag(abs(iSource));
-    if (!target || !source)
-      Msg::Error("Could not find surface %d or %d for periodic copy",
-                 iTarget,iSource);
-    if (affineTransform.size() >= 12) {
-      target->setMeshMaster(source, affineTransform);
-    }
-    else {
-      target->setMeshMaster(source, iSource * iTarget < 0 ? -1 : 1);
-    }
+  else {
+    target->setMeshMaster(source, iSource * iTarget < 0 ? -1 : 1);
   }
 }
 
@@ -7301,25 +7328,19 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
 
 int NEWPOINT(void)
 {
-  int tag = 0;
-  if(GModel::current()->getGEOInternals())
-    tag = GModel::current()->getGEOInternals()->MaxPointNum + 1;
-  if(GModel::current()->getOCCInternals())
-    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(0) + 1);
+  int tag = GModel::current()->getGEOInternals()->getMaxTag(0) + 1;
+  tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(0) + 1);
   return tag;
 }
 
 int NEWLINE(void)
 {
   int tag = 0;
-  if(GModel::current()->getGEOInternals()){
-    if(CTX::instance()->geom.oldNewreg)
-      tag = NEWREG();
-    else
-      tag = GModel::current()->getGEOInternals()->MaxLineNum + 1;
-  }
-  if(GModel::current()->getOCCInternals())
-    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(1) + 1);
+  if(CTX::instance()->geom.oldNewreg)
+    tag = NEWREG();
+  else
+    tag = GModel::current()->getGEOInternals()->getMaxTag(1) + 1;
+  tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(1) + 1);
   return tag;
 }
 
@@ -7397,3 +7418,61 @@ int NEWREG(void)
   }
   return tag;
 }
+
+/*
+int NEWLINELOOP(void)
+{
+  int tag = 0;
+  if(CTX::instance()->geom.oldNewreg)
+    tag = NEWREG();
+  else
+    tag = GModel::current()->getGEOInternals()->getMaxTag(-1) + 1;
+  tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
+  return tag;
+}
+
+int NEWSURFACE(void)
+{
+  int tag = 0;
+  if(CTX::instance()->geom.oldNewreg)
+    tag = NEWREG();
+  else
+    tag = GModel::current()->getGEOInternals()->getMaxTag(2) + 1;
+  tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(2) + 1);
+  return tag;
+}
+
+int NEWSURFACELOOP(void)
+{
+  int tag = 0;
+  if(CTX::instance()->geom.oldNewreg)
+    tag = NEWREG();
+  else
+    tag = GModel::current()->getGEOInternals()->getMaxTag(-2) + 1;
+  tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-2) + 1);
+  return tag;
+}
+
+int NEWVOLUME(void)
+{
+  int tag = 0;
+  if(CTX::instance()->geom.oldNewreg)
+    tag = NEWREG();
+  else
+    tag = GModel::current()->getGEOInternals()->getMaxTag(3) + 1;
+  tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(3) + 1);
+  return tag;
+}
+
+int NEWREG(void)
+{
+  int tag = 0;
+  for(int i = -2; i < 4; i++)
+    tag = std::max(tag, GModel::current()->getGEOInternals()->getMaxTag(i));
+  tag = std::max(tag, GModel::current()->getGEOInternals()->MaxPhysicalNum);
+  tag += 1;
+  for(int i = -2; i < 4; i++)
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(i) + 1);
+  return tag;
+}
+*/

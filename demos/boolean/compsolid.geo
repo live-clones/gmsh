@@ -31,8 +31,5 @@ For i In {0:#f()-1}
   Printf("    surfaces", b());
 EndFor
 
-// FIXME: we might want to make physical definitions work without explicit
-// sync with GModel
-SyncModel;
 Physical Volume(1) = {1};
 Physical Volume(2) = {2};
