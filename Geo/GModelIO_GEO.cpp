@@ -397,6 +397,23 @@ void GEO_Internals::setCompoundMesh(int dim, std::vector<int> tags)
   meshCompounds.insert(std::make_pair(dim, tags));
 }
 
+void GEO_Internals::setMeshSize(int dim, int tag, double size)
+{
+  if(dim != 0){
+    Msg::Error("Setting mesh size only available on GEO vertices");
+    return;
+  }
+  Vertex *v = FindPoint(tag);
+  if(v) v->lc = size;
+}
+
+void GEO_Internals::setDegenerated(int dim, int tag)
+{
+  if(dim != 1) return;
+  Curve *c = FindCurve(tag);
+  if(c) c->degenerated = true;
+}
+
 void GEO_Internals::synchronize(GModel *model)
 {
   if(Tree_Nbr(Points)) {
@@ -718,6 +735,49 @@ void GEO_Internals::synchronize(GModel *model)
   Msg::Debug("%d Edges", model->getNumEdges());
   Msg::Debug("%d Faces", model->getNumFaces());
   Msg::Debug("%d Regions", model->getNumRegions());
+}
+
+bool GEO_Internals::getVertex(int tag, double &x, double &y, double &z)
+{
+  Vertex *v = FindPoint(tag);
+  if(v){
+    x = v->Pos.X;
+    y = v->Pos.Y;
+    z = v->Pos.Z;
+    return true;
+  }
+  return false;
+}
+
+void GEO_Internals::removeAllDuplicates()
+{
+  ReplaceAllDuplicates();
+}
+
+void GEO_Internals::mergeVertices(std::vector<int> tags)
+{
+  if(tags.size() < 2) return;
+  Vertex *target = FindPoint(tags[0]);
+  if(!target){
+    Msg::Error("Could not find GEO vertex with tag %d", tags[0]);
+    return;
+  }
+
+  double x = target->Pos.X, y = target->Pos.Y, z = target->Pos.Z;
+  for(unsigned int i = 1; i < tags.size(); i++){
+    Vertex *source = FindPoint(tags[i]);
+    if(!source){
+      Msg::Error("Could not find GEO vertex with tag %d", tags[i]);
+      return;
+    }
+    source->Typ = target->Typ;
+    source->Pos.X = x;
+    source->Pos.Y = y;
+    source->Pos.Z = z;
+    source->boundaryLayerIndex = target->boundaryLayerIndex;
+  }
+  ExtrudeParams::normalsCoherence.push_back(SPoint3(x, y, z));
+  ReplaceAllDuplicates();
 }
 
 gmshSurface *GEO_Internals::newGeometrySphere(int num, int centerTag, int pointTag)

@@ -569,7 +569,7 @@ void meshGEdge::operator() (GEdge *ge)
       (ge->position(0.5) - ge->getBeginVertex()->xyz()).norm() < CTX::instance()->geom.tolerance)
     length = 0.; // special case t avoid infinite loop in integration
   else
-    length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-8 * CTX::instance()->lc);
+    length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-12 * CTX::instance()->lc);
   ge->setLength(length);
   Points.clear();
 

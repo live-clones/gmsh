@@ -205,16 +205,19 @@ class OCC_Internals {
   // export all bound shapes to file
   void exportShapes(const std::string &fileName, const std::string &format="");
 
+  // set meshing constraints
+  void setMeshSize(int dim, int tag, double size);
+
   // synchronize internal CAD data with the given GModel
   void synchronize(GModel *model);
 
-  // get the GEntity corresponding to an OCC shape
+  // queries
+  bool getVertex(int tag, double &x, double &y, double &z);
+
   GVertex *getOCCVertexByNativePtr(GModel *model, TopoDS_Vertex toFind);
   GEdge *getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind);
   GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind);
   GRegion *getOCCRegionByNativePtr(GModel *model, TopoDS_Solid toFind);
-
-
 
   // *** FIXME what follows will be removed ***
  private:

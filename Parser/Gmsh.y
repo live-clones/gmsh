@@ -1752,27 +1752,6 @@ Shape :
       $$.Type = MSH_SEGM_LINE;
       $$.Num = num;
     }
-  | tDegenerated tLine ListOfDouble tEND
-    {
-      for (int i = 0; i < List_Nbr($3); i++){
-	double dnum;
-	List_Read($3, i, &dnum);
-	int num = (int) fabs(dnum);
-	Curve *c = FindCurve(num);
-	if (c){
-	  c->degenerated = true;
-	}
-	else{
-	  GEdge *ge = GModel::current()->getEdgeByTag(num);
-	  if (!ge){
-	    yymsg(0, "Curve %d does not exist", num);
-	  }
-	  else{
-	    ge->setTooSmall(true);
-	  }
-	}
-      }
-    }
   | tSpline '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
@@ -2682,28 +2661,10 @@ ListOfShapes :
       for(int i = 0; i < List_Nbr($4); i++){
 	double d;
 	List_Read($4, i, &d);
-	Shape TheShape;
-	TheShape.Num = (int)d;
-	Vertex *v = FindPoint(std::abs(TheShape.Num));
-	if(v){
-	  TheShape.Type = MSH_POINT;
-	  List_Add($$, &TheShape);
-	}
-	else{
-	  GVertex *gv = GModel::current()->getVertexByTag(std::abs(TheShape.Num));
-	  if(gv){
-	    TheShape.Type = MSH_POINT_FROM_GMODEL;
-	    List_Add($$, &TheShape);
-	  }
-	  else{
-            if(factory == "OpenCASCADE"){
-              TheShape.Type = MSH_POINT_FROM_GMODEL;
-              List_Add($$, &TheShape);
-            }
-            else
-              yymsg(1, "Unknown point %d", TheShape.Num);
-          }
-	}
+	Shape s;
+	s.Num = (int)d;
+        s.Type = MSH_POINT;
+        List_Add($$, &s);
       }
     }
   | ListOfShapes tLine '{' RecursiveListOfDouble '}' tEND
@@ -2711,28 +2672,10 @@ ListOfShapes :
       for(int i = 0; i < List_Nbr($4); i++){
 	double d;
 	List_Read($4, i, &d);
-	Shape TheShape;
-	TheShape.Num = (int)d;
-	Curve *c = FindCurve(std::abs(TheShape.Num));
-	if(c){
-	  TheShape.Type = c->Typ;
-	  List_Add($$, &TheShape);
-	}
-	else{
-	  GEdge *ge = GModel::current()->getEdgeByTag(std::abs(TheShape.Num));
-	  if(ge){
-	    TheShape.Type = MSH_SEGM_FROM_GMODEL;
-	    List_Add($$, &TheShape);
-	  }
-	  else{
-            if(factory == "OpenCASCADE"){
-              TheShape.Type = MSH_SEGM_FROM_GMODEL;
-              List_Add($$, &TheShape);
-            }
-            else
-              yymsg(1, "Unknown curve %d", TheShape.Num);
-          }
-	}
+	Shape s;
+	s.Num = (int)d;
+        s.Type = MSH_SEGM_LINE;
+        List_Add($$, &s);
       }
     }
   | ListOfShapes tSurface '{' RecursiveListOfDouble '}' tEND
@@ -2740,28 +2683,10 @@ ListOfShapes :
       for(int i = 0; i < List_Nbr($4); i++){
 	double d;
 	List_Read($4, i, &d);
-	Shape TheShape;
-	TheShape.Num = (int)d;
-	Surface *s = FindSurface(std::abs(TheShape.Num));
-	if(s){
-	  TheShape.Type = s->Typ;
-	  List_Add($$, &TheShape);
-	}
-	else{
-	  GFace *gf = GModel::current()->getFaceByTag(std::abs(TheShape.Num));
-	  if(gf){
-	    TheShape.Type = MSH_SURF_FROM_GMODEL;
-	    List_Add($$, &TheShape);
-	  }
-	  else{
-            if(factory == "OpenCASCADE"){
-              TheShape.Type = MSH_SURF_FROM_GMODEL;
-              List_Add($$, &TheShape);
-            }
-            else
-              yymsg(1, "Unknown surface %d", TheShape.Num);
-          }
-	}
+	Shape s;
+	s.Num = (int)d;
+        s.Type = MSH_SURF_PLAN; // we don't care about the actual type
+        List_Add($$, &s);
       }
     }
   | ListOfShapes tVolume '{' RecursiveListOfDouble '}' tEND
@@ -2769,28 +2694,10 @@ ListOfShapes :
       for(int i = 0; i < List_Nbr($4); i++){
 	double d;
 	List_Read($4, i, &d);
-	Shape TheShape;
-	TheShape.Num = (int)d;
-	Volume *v = FindVolume(std::abs(TheShape.Num));
-	if(v){
-	  TheShape.Type = v->Typ;
-	  List_Add($$, &TheShape);
-	}
-	else{
-	  GRegion *gr = GModel::current()->getRegionByTag(std::abs(TheShape.Num));
-	  if(gr){
-	    TheShape.Type = MSH_VOLUME_FROM_GMODEL;
-	    List_Add($$, &TheShape);
-	  }
-	  else{
-            if(factory == "OpenCASCADE"){
-              TheShape.Type = MSH_VOLUME_FROM_GMODEL;
-              List_Add($$, &TheShape);
-            }
-            else
-              yymsg(1, "Unknown volume %d", TheShape.Num);
-          }
-	}
+	Shape s;
+	s.Num = (int)d;
+        s.Type = MSH_VOLUME;
+        List_Add($$, &s);
       }
     }
 ;
@@ -4641,15 +4548,11 @@ Constraints :
       for(int i = 0; i < List_Nbr($3); i++){
 	double d;
 	List_Read($3, i, &d);
-	Vertex *v = FindPoint((int)d);
-	if(v){
-	  v->lc = $5;
-        }
-	else{
-	  GVertex *gv = GModel::current()->getVertexByTag((int)d);
-	  if(gv)
-	    gv->setPrescribedMeshSizeAtVertex($5);
-	}
+        int tag = (int)d;
+        GModel::current()->getGEOInternals()->setMeshSize(0, tag, $5);
+        GModel::current()->getOCCInternals()->setMeshSize(0, tag, $5);
+        GVertex *gv = GModel::current()->getVertexByTag(tag);
+        if(gv) gv->setPrescribedMeshSizeAtVertex($5);
       }
       List_Delete($3);
     }
@@ -5412,11 +5315,7 @@ Constraints :
           double d;
           List_Read($3, i, &d);
           GVertex *gv = GModel::current()->getVertexByTag((int)d);
-          if(gv){
-            gv->relocateMeshVertices();
-          }
-          else
-            yymsg(1, "Unknown point %d", (int)d);
+          if(gv) gv->relocateMeshVertices();
         }
         List_Delete($3);
       }
@@ -5433,11 +5332,7 @@ Constraints :
           double d;
           List_Read($3, i, &d);
           GEdge *ge = GModel::current()->getEdgeByTag((int)d);
-          if(ge){
-            ge->relocateMeshVertices();
-          }
-          else
-            yymsg(1, "Unknown line %d", (int)d);
+          if(ge) ge->relocateMeshVertices();
         }
         List_Delete($3);
       }
@@ -5454,14 +5349,22 @@ Constraints :
           double d;
           List_Read($3, i, &d);
           GFace *gf = GModel::current()->getFaceByTag((int)d);
-          if(gf){
-            gf->relocateMeshVertices();
-          }
-          else
-            yymsg(1, "Unknown surface %d", (int)d);
+          if(gf) gf->relocateMeshVertices();
         }
         List_Delete($3);
       }
+    }
+  | tDegenerated tLine ListOfDouble tEND
+    {
+      for(int i = 0; i < List_Nbr($3); i++){
+	double dnum;
+	List_Read($3, i, &dnum);
+	int num = (int)fabs(dnum);
+        GModel::current()->getGEOInternals()->setDegenerated(1, num);
+        GEdge *ge = GModel::current()->getEdgeByTag(num);
+        if(ge) ge->setTooSmall(true);
+      }
+      List_Delete($3);
     }
   | tCompound tLine ListOfDouble tEND
     {
@@ -5489,12 +5392,12 @@ Constraints :
 Coherence :
     tCoherence tEND
     {
-      ReplaceAllDuplicates();
+      GModel::current()->getGEOInternals()->removeAllDuplicates();
     }
   | tCoherence tSTRING tEND
     {
       if(!strcmp($2, "Geometry"))
-        ReplaceAllDuplicates();
+        GModel::current()->getGEOInternals()->removeAllDuplicates();
       else if(!strcmp($2, "Mesh"))
         GModel::current()->removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
       else
@@ -5503,32 +5406,8 @@ Coherence :
     }
   | tCoherence tPoint '{' RecursiveListOfDouble '}' tEND
     {
-      if(List_Nbr($4) >= 2){
-        double d;
-        List_Read($4, 0, &d);
-        Vertex *target = FindPoint((int)d);
-        if(!target)
-          yymsg(0, "Could not find Point %d", (int)d);
-        else{
-          double x = target->Pos.X, y = target->Pos.Y, z = target->Pos.Z;
-          for(int i = 1; i < List_Nbr($4); i++){
-            List_Read($4, i, &d);
-            Vertex *source = FindPoint((int)d);
-            if(!source) yymsg(0, "Could not find Point %d", (int)d);
-            if(target && source){
-              source->Typ = target->Typ;
-              source->Pos.X = x;
-              source->Pos.Y = y;
-              source->Pos.Z = z;
-              source->boundaryLayerIndex = target->boundaryLayerIndex;
-            }
-          }
-          ExtrudeParams::normalsCoherence.push_back(SPoint3(x, y, z));
-        }
-      }
-      else
-        yymsg(0, "Need at least two points to merge");
-      ReplaceAllDuplicates();
+      std::vector<int> tags; ListOfDouble2Vector($4, tags);
+      GModel::current()->getGEOInternals()->mergeVertices(tags);
       List_Delete($4);
     }
 ;
@@ -6145,32 +6024,25 @@ FExpr_Multi :
    }
   | tPoint '{' FExpr '}'
     {
-      // Returns the coordinates of a point and fills a list with it.
-      // This allows to ensure e.g. that relative point positions are
-      // always conserved
-      Vertex *v = FindPoint((int)$3);
       $$ = List_Create(3, 1, sizeof(double));
-      if(!v) {
-        GVertex *gv = GModel::current()->getVertexByTag((int)$3);
-        if(gv){
-          double x = gv->x(), y = gv->y(), z = gv->z();
-          List_Add($$, &x);
-          List_Add($$, &y);
-          List_Add($$, &z);
-        }
-        else{
-          yymsg(0, "Unknown point '%d'", (int)$3);
-          double d = 0.0;
-          List_Add($$, &d);
-          List_Add($$, &d);
-          List_Add($$, &d);
+      int tag = (int)$3;
+      double x = 0., y = 0., z = 0.;
+      if(!GModel::current()->getGEOInternals()->getVertex(tag, x, y, z)){
+        if(!GModel::current()->getOCCInternals()->getVertex(tag, x, y, z)){
+          GVertex *gv = GModel::current()->getVertexByTag(tag);
+          if(gv){
+            x = gv->x();
+            y = gv->y();
+            z = gv->z();
+          }
+          else{
+            yymsg(0, "Unknown vertex %d", tag);
+          }
         }
       }
-      else{
-	List_Add($$, &v->Pos.X);
-	List_Add($$, &v->Pos.Y);
-	List_Add($$, &v->Pos.Z);
-      }
+      List_Add($$, &x);
+      List_Add($$, &y);
+      List_Add($$, &z);
     }
   | tPoint tBIGSTR
     {
@@ -7359,8 +7231,8 @@ void addPeriodicFace(int iTarget, int iSource,
     if (!target || !source) {
       Msg::Error("Could not find surface slave %d or master %d for periodic copy",
                  iTarget,iSource);
-		}
-		else target->setMeshMaster(source, edgeCounterparts);
+    }
+    else target->setMeshMaster(source, edgeCounterparts);
   }
 }
 

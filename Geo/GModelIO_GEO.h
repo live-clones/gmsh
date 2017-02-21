@@ -48,9 +48,18 @@ class GEO_Internals{
 
   // set meshing constraints
   void setCompoundMesh(int dim, std::vector<int> tags);
+  void setMeshSize(int dim, int tag, double size);
+  void setDegenerated(int dim, int tag);
 
   // synchronize internal CAD data with the given GModel
   void synchronize(GModel *model);
+
+  // queries
+  bool getVertex(int tag, double &x, double &y, double &z);
+
+  // coherence
+  void removeAllDuplicates();
+  void mergeVertices(std::vector<int> tags);
 
   // create coordinate systems
   gmshSurface *newGeometrySphere(int num, int centerTag, int pointTag);

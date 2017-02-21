@@ -1759,6 +1759,12 @@ void OCC_Internals::exportShapes(const std::string &fileName,
   }
 }
 
+void OCC_Internals::setMeshSize(int dim, int tag, double size)
+{
+  if(dim < 0 || dim > 3) return;
+  meshAttributes[dim][tag].size = size;
+}
+
 void OCC_Internals::synchronize(GModel *model)
 {
   int vTagMax = std::max(model->getMaxElementaryNumber(0), getMaxTag(0));
@@ -1852,6 +1858,18 @@ void OCC_Internals::synchronize(GModel *model)
       model->add(new OCCRegion(model, region, tag));
     }
   }
+}
+
+bool OCC_Internals::getVertex(int tag, double &x, double &y, double &z)
+{
+  if(_tagVertex.IsBound(tag)){
+    gp_Pnt pnt = BRep_Tool::Pnt(TopoDS::Vertex(_tagVertex.Find(tag)));
+    x = pnt.X();
+    y = pnt.Y();
+    z = pnt.Z();
+    return true;
+  }
+  return false;
 }
 
 void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
