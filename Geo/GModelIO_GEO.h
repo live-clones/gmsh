@@ -6,7 +6,11 @@
 #ifndef _GMODELIO_GEO_H_
 #define _GMODELIO_GEO_H_
 
-#include "Geo.h"
+#include "ListUtils.h"
+#include "TreeUtils.h"
+
+class gmshSurface;
+class GModel;
 
 class GEO_Internals{
  private:

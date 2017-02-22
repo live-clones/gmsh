@@ -22,6 +22,12 @@ class gmsh_yysymbol{
   gmsh_yysymbol() : list(false) {}
 };
 
+class Shape{
+ public:
+  int Type;
+  int Num;
+};
+
 // global parser variables that need to be exported
 extern gmshFILE gmsh_yyin;
 extern int gmsh_yylineno;
@@ -41,5 +47,7 @@ int NEWSURFACE(void);
 int NEWSURFACELOOP(void);
 int NEWVOLUME(void);
 int NEWREG(void);
+int NEWFIELD(void);
+int NEWPHYSICAL(void);
 
 #endif

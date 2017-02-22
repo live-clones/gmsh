@@ -38,39 +38,6 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
     else
       Msg::Error("Unknown surface %d", is);
   }
-  if(v->EmbeddedSurfaces){
-    for(int i = 0; i < List_Nbr(v->EmbeddedSurfaces); i++){
-      Surface *s;
-      List_Read(v->EmbeddedSurfaces, i, &s);
-      GFace *gf = m->getFaceByTag(abs(s->Num));
-      if(gf)
-        addEmbeddedFace(gf);
-      else
-        Msg::Error("Unknown surface %d", s->Num);
-    }
-  }
-  if(v->EmbeddedCurves){
-    for(int i = 0; i < List_Nbr(v->EmbeddedCurves); i++){
-      Curve *c;
-      List_Read(v->EmbeddedCurves, i, &c);
-      GEdge *ge = m->getEdgeByTag(abs(c->Num));
-      if(ge)
-        addEmbeddedEdge(ge);
-      else
-        Msg::Error("Unknown curve %d", c->Num);
-    }
-  }
-  if(v->EmbeddedPoints){
-    for(int i = 0; i < List_Nbr(v->EmbeddedPoints); i++){
-      Vertex *c;
-      List_Read(v->EmbeddedPoints, i, &c);
-      GVertex *gv = m->getVertexByTag(c->Num);
-      if(gv)
-        addEmbeddedVertex(gv);
-      else
-        Msg::Error("Unknown point %d", c->Num);
-    }
-  }
   resetMeshAttributes();
 }
 

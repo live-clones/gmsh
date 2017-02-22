@@ -9,6 +9,7 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "GModelIO_GEO.h"
+#include "Geo.h"
 #include "OS.h"
 #include "OpenFile.h"
 #include "Numeric.h"
@@ -606,28 +607,6 @@ void GEO_Internals::synchronize(GModel *model)
             Msg::Error("Unknown vertex %d in transfinite attributes", corn->Num);
         }
         model->add(f);
-        if(s->EmbeddedCurves){
-          for(int i = 0; i < List_Nbr(s->EmbeddedCurves); i++){
-            Curve *c;
-            List_Read(s->EmbeddedCurves, i, &c);
-            GEdge *e = model->getEdgeByTag(abs(c->Num));
-            if(e)
-              f->addEmbeddedEdge(e);
-            else
-              Msg::Error("Unknown curve %d", c->Num);
-          }
-        }
-        if(s->EmbeddedPoints){
-          for(int i = 0; i < List_Nbr(s->EmbeddedPoints); i++){
-            Vertex *v;
-            List_Read(s->EmbeddedPoints, i, &v);
-            GVertex *gv = model->getVertexByTag(v->Num);
-            if(gv)
-              f->addEmbeddedVertex(gv);
-            else
-              Msg::Error("Unknown point %d", v->Num);
-          }
-        }
       }
       else if(!f){
         f = new gmshFace(model, s);

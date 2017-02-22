@@ -80,28 +80,6 @@ gmshFace::gmshFace(GModel *m, Surface *face)
   // the bounding vertices)
   if(s->Typ == MSH_SURF_PLAN) computeMeanPlane();
 
-  if(s->EmbeddedCurves){
-    for(int i = 0; i < List_Nbr(s->EmbeddedCurves); i++){
-      Curve *c;
-      List_Read(s->EmbeddedCurves, i, &c);
-      GEdge *e = m->getEdgeByTag(abs(c->Num));
-      if(e)
-        addEmbeddedEdge(e);
-      else
-        Msg::Error("Unknown curve %d", c->Num);
-    }
-  }
-  if(s->EmbeddedPoints){
-    for(int i = 0; i < List_Nbr(s->EmbeddedPoints); i++){
-      Vertex *v;
-      List_Read(s->EmbeddedPoints, i, &v);
-      GVertex *gv = m->getVertexByTag(v->Num);
-      if(gv)
-        embedded_vertices.push_back(gv);
-      else
-        Msg::Error("Unknown point %d", v->Num);
-    }
-  }
   isSphere = iSRuledSurfaceASphere(s, center, radius);
 }
 

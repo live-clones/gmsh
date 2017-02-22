@@ -59,12 +59,6 @@
 
 #define MSH_UNKNOWN            999
 
-class Shape{
- public:
-  int Type;
-  int Num;
-};
-
 class gLevelset;
 
 class LevelSet {
@@ -199,8 +193,6 @@ class Surface{
   int TransfiniteSmoothing;
   List_T *Generatrices;
   List_T *GeneratricesByTag;
-  List_T *EmbeddedCurves;
-  List_T *EmbeddedPoints;
   List_T *TrsfPoints;
   Vertex *InSphereCenter;
   ExtrudeParams *Extrude;
@@ -258,9 +250,6 @@ class Volume {
   List_T *Surfaces;
   List_T *SurfacesOrientations;
   List_T *SurfacesByTag;
-  List_T *EmbeddedSurfaces;
-  List_T *EmbeddedCurves;
-  List_T *EmbeddedPoints;
   DrawingColor Color;
   std::vector<int> compound;
   void SetVisible(int value, bool recursive)
@@ -410,11 +399,6 @@ int recognize_surfloop(List_T *liste, int *loop);
 void sortEdgesInLoop(int num, List_T *edges, bool orient=false);
 void setSurfaceGeneratrices(Surface *s, List_T *loops);
 void setVolumeSurfaces(Volume *v, List_T *loops);
-void setSurfaceEmbeddedPoints(Surface *s, List_T *points);
-void setSurfaceEmbeddedCurves(Surface *s, List_T *curves);
-void setVolumeEmbeddedSurfaces(Volume *v, List_T *surfaces);
-void setVolumeEmbeddedCurves(Volume *v, List_T *curves);
-void setVolumeEmbeddedPoints(Volume *v, List_T *points);
 int select_contour(int type, int num, List_T * List);
 
 #endif

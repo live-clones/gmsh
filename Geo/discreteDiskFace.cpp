@@ -16,6 +16,7 @@
 #include "MTriangle.h"
 #include "MEdge.h"
 #include "GModelIO_GEO.h"
+#include "Geo.h"
 #include "Context.h"
 #include "OS.h"
 #include "ANN/ANN.h"

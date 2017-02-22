@@ -58,7 +58,6 @@
 #include "gmshPopplerWrapper.h"
 #endif
 
-
 // Global parser variables
 std::string gmsh_yyname;
 int gmsh_yyerrorstate = 0;
@@ -107,6 +106,8 @@ void addPeriodicEdge(int, int, const std::vector<double>&);
 void addPeriodicFace(int, int, const std::map<int,int>&);
 void addPeriodicFace(int, int, const std::vector<double>&);
 void computeAffineTransformation(SPoint3&, SPoint3&, double, SPoint3&, std::vector<double>&);
+void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2);
+
 char *strsave(char *ptr);
 
 struct doubleXstring{
@@ -5105,148 +5106,33 @@ Constraints :
     }
   | tPoint '{' RecursiveListOfDouble '}' tIn tSurface '{' FExpr '}' tEND
     {
-      Surface *s = FindSurface((int)$8);
-      if(s){
-	setSurfaceEmbeddedPoints(s, $3);
-      }
-      else{
-        GFace *gf = GModel::current()->getFaceByTag((int)$8);
-        if(gf){
-          for(int i = 0; i < List_Nbr($3); i++){
-            double d;
-            List_Read($3, i, &d);
-            int iPoint = (int)d;
-            GVertex *gv = GModel::current()->getVertexByTag(iPoint);
-            if(!gv){ // sync model in case the embedded point is a .geo point
-              if(GModel::current()->getGEOInternals()->getChanged())
-                GModel::current()->getGEOInternals()->synchronize(GModel::current());
-              gv = GModel::current()->getVertexByTag(iPoint);
-            }
-            if(gv)
-              gf->addEmbeddedVertex(gv);
-            else
-              yymsg(0, "Unknown point %d", iPoint);
-          }
-        }
-        else
-          yymsg(0, "Unknown surface %d", (int)$8);
-      }
+      std::vector<int> tags; ListOfDouble2Vector($3, tags);
+      addEmbedded(0, tags, 2, (int)$8);
+      List_Delete($3);
     }
   | tLine '{' RecursiveListOfDouble '}' tIn tSurface '{' FExpr '}' tEND
     {
-      Surface *s = FindSurface((int)$8);
-      if(s){
-	setSurfaceEmbeddedCurves(s, $3);
-      }
-      else{
-        GFace *gf = GModel::current()->getFaceByTag((int)$8);
-        if(gf){
-          for(int i = 0; i < List_Nbr($3); i++){
-            double d;
-            List_Read($3, i, &d);
-            int iCurve = (int)d;
-            GEdge *ge = GModel::current()->getEdgeByTag(iCurve);
-            if(!ge){ // sync model in case the embedded line is a .geo line
-              if(GModel::current()->getGEOInternals()->getChanged())
-                GModel::current()->getGEOInternals()->synchronize(GModel::current());
-              ge = GModel::current()->getEdgeByTag(iCurve);
-            }
-            if(ge)
-              gf->addEmbeddedEdge(ge);
-            else
-              yymsg(0, "Unknown line %d", iCurve);
-          }
-        }
-        else
-          yymsg(0, "Unknown surface %d", (int)$8);
-      }
+      std::vector<int> tags; ListOfDouble2Vector($3, tags);
+      addEmbedded(1, tags, 2, (int)$8);
+      List_Delete($3);
     }
   | tPoint '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {
-      Volume *v = FindVolume((int)$8);
-      if(v){
-	setVolumeEmbeddedPoints(v, $3);
-      }
-      else{
-        GRegion *gr = GModel::current()->getRegionByTag((int)$8);
-        if(gr){
-          for(int i = 0; i < List_Nbr($3); i++){
-            double d;
-            List_Read($3, i, &d);
-            int iPoint = (int)d;
-            GVertex *gv = GModel::current()->getVertexByTag(iPoint);
-            if(!gv){ // sync model in case the embedded face is a .geo face
-              if(GModel::current()->getGEOInternals()->getChanged())
-                GModel::current()->getGEOInternals()->synchronize(GModel::current());
-              gv = GModel::current()->getVertexByTag(iPoint);
-            }
-            if(gv)
-              gr->addEmbeddedVertex(gv);
-            else
-              yymsg(0, "Unknown Point %d", iPoint);
-          }
-        }
-        else
-          yymsg(0, "Unknown volume %d", (int)$8);
-      }
+      std::vector<int> tags; ListOfDouble2Vector($3, tags);
+      addEmbedded(0, tags, 3, (int)$8);
+      List_Delete($3);
     }
   | tLine '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {
-      Volume *v = FindVolume((int)$8);
-      if(v){
-	setVolumeEmbeddedCurves(v, $3);
-      }
-      else{
-        GRegion *gr = GModel::current()->getRegionByTag((int)$8);
-        if(gr){
-          for(int i = 0; i < List_Nbr($3); i++){
-            double d;
-            List_Read($3, i, &d);
-            int iLine = (int)d;
-            GEdge *ge = GModel::current()->getEdgeByTag(iLine);
-            if(!ge){ // sync model in case the embedded face is a .geo face
-              if(GModel::current()->getGEOInternals()->getChanged())
-                GModel::current()->getGEOInternals()->synchronize(GModel::current());
-              ge = GModel::current()->getEdgeByTag(iLine);
-            }
-            if(ge)
-              gr->addEmbeddedEdge(ge);
-            else
-              yymsg(0, "Unknown Curve %d", iLine);
-          }
-        }
-        else
-          yymsg(0, "Unknown volume %d", (int)$8);
-      }
+      std::vector<int> tags; ListOfDouble2Vector($3, tags);
+      addEmbedded(1, tags, 3, (int)$8);
+      List_Delete($3);
     }
   | tSurface '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
     {
-      Volume *v = FindVolume((int)$8);
-      if(v){
-	setVolumeEmbeddedSurfaces(v, $3);
-      }
-      else{
-        GRegion *gr = GModel::current()->getRegionByTag((int)$8);
-        if(gr){
-          for(int i = 0; i < List_Nbr($3); i++){
-            double d;
-            List_Read($3, i, &d);
-            int iSurface = (int)d;
-            GFace *gf = GModel::current()->getFaceByTag(iSurface);
-            if(!gf){ // sync model in case the embedded face is a .geo face
-              if(GModel::current()->getGEOInternals()->getChanged())
-                GModel::current()->getGEOInternals()->synchronize(GModel::current());
-              gf = GModel::current()->getFaceByTag(iSurface);
-            }
-            if(gf)
-              gr->addEmbeddedFace(gf);
-            else
-              yymsg(0, "Unknown surface %d", iSurface);
-          }
-        }
-        else
-          yymsg(0, "Unknown volume %d", (int)$8);
-      }
+      std::vector<int> tags; ListOfDouble2Vector($3, tags);
+      addEmbedded(2, tags, 3, (int)$8);
+      List_Delete($3);
     }
   | tReverse tSurface ListOfDoubleOrAll tEND
     {
@@ -7326,6 +7212,68 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
   tfo[15] = 1;
 }
 
+void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
+{
+  if(GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  if(dim2 == 2){
+    GFace *gf = GModel::current()->getFaceByTag(tag2);
+    if(!gf){
+      yymsg(0, "Unknown model face with tag %d", tag2);
+      return;
+    }
+    for(unsigned int i = 0; i < tags.size(); i++){
+      if(dim == 0){
+        GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
+        if(gv)
+          gf->addEmbeddedVertex(gv);
+        else
+          yymsg(0, "Unknown model vertex %d", tags[i]);
+      }
+      else if(dim == 1){
+        GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
+        if(ge)
+          gf->addEmbeddedEdge(ge);
+        else
+          yymsg(0, "Unknown model edge %d", tags[i]);
+      }
+    }
+  }
+  else if(dim2 == 3){
+    GRegion *gr = GModel::current()->getRegionByTag(tag2);
+    if(!gr){
+      yymsg(0, "Unknown model region with tag %d", tag2);
+      return;
+    }
+    for(unsigned int i = 0; i < tags.size(); i++){
+      if(dim == 0){
+        GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
+        if(gv)
+          gr->addEmbeddedVertex(gv);
+        else
+          yymsg(0, "Unknown model vertex %d", tags[i]);
+      }
+      else if(dim == 1){
+        GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
+        if(ge)
+          gr->addEmbeddedEdge(ge);
+        else
+          yymsg(0, "Unknown model edge %d", tags[i]);
+      }
+      else if(dim == 2){
+        GFace *gf = GModel::current()->getFaceByTag(tags[i]);
+        if(gf)
+          gr->addEmbeddedFace(gf);
+        else
+          yymsg(0, "Unknown model face %d", tags[i]);
+      }
+    }
+  }
+}
+
 int NEWPOINT(void)
 {
   int tag = GModel::current()->getGEOInternals()->getMaxTag(0) + 1;
@@ -7347,86 +7295,10 @@ int NEWLINE(void)
 int NEWLINELOOP(void)
 {
   int tag = 0;
-  if(GModel::current()->getGEOInternals()){
-    if(CTX::instance()->geom.oldNewreg)
-      tag = NEWREG();
-    else
-      tag = GModel::current()->getGEOInternals()->MaxLineLoopNum + 1;
-  }
-  if(GModel::current()->getOCCInternals())
-    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
-  return tag;
-}
-
-int NEWSURFACE(void)
-{
-  int tag = 0;
-  if(GModel::current()->getGEOInternals()){
-    if(CTX::instance()->geom.oldNewreg)
-      tag = NEWREG();
-    else
-      tag = GModel::current()->getGEOInternals()->MaxSurfaceNum + 1;
-  }
-  if(GModel::current()->getOCCInternals())
-    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(2) + 1);
-  return tag;
-}
-
-int NEWSURFACELOOP(void)
-{
-  int tag = 0;
-  if(GModel::current()->getGEOInternals()){
-    if(CTX::instance()->geom.oldNewreg)
-      tag = NEWREG();
-    else
-      tag = GModel::current()->getGEOInternals()->MaxSurfaceLoopNum + 1;
-  }
-  if(GModel::current()->getOCCInternals())
-    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-2) + 1);
-  return tag;
-}
-
-int NEWVOLUME(void)
-{
-  int tag = 0;
-  if(GModel::current()->getGEOInternals()){
-    if(CTX::instance()->geom.oldNewreg)
-      tag = NEWREG();
-    else
-      tag = GModel::current()->getGEOInternals()->MaxVolumeNum + 1;
-  }
-  if(GModel::current()->getOCCInternals())
-    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(3) + 1);
-  return tag;
-}
-
-int NEWREG(void)
-{
-  int tag = 0;
-  if(GModel::current()->getGEOInternals()){
-    tag = GModel::current()->getGEOInternals()->MaxLineNum;
-    tag = std::max(tag, GModel::current()->getGEOInternals()->MaxLineLoopNum);
-    tag = std::max(tag, GModel::current()->getGEOInternals()->MaxSurfaceNum);
-    tag = std::max(tag, GModel::current()->getGEOInternals()->MaxSurfaceLoopNum);
-    tag = std::max(tag, GModel::current()->getGEOInternals()->MaxVolumeNum);
-    tag = std::max(tag, GModel::current()->getGEOInternals()->MaxPhysicalNum);
-    tag += 1;
-  }
-  if(GModel::current()->getOCCInternals()){
-    for(int i = -2; i < 4; i++)
-      tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(i) + 1);
-  }
-  return tag;
-}
-
-/*
-int NEWLINELOOP(void)
-{
-  int tag = 0;
   if(CTX::instance()->geom.oldNewreg)
     tag = NEWREG();
   else
-    tag = GModel::current()->getGEOInternals()->getMaxTag(-1) + 1;
+    tag = GModel::current()->getGEOInternals()->MaxLineLoopNum + 1;
   tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
   return tag;
 }
@@ -7437,7 +7309,7 @@ int NEWSURFACE(void)
   if(CTX::instance()->geom.oldNewreg)
     tag = NEWREG();
   else
-    tag = GModel::current()->getGEOInternals()->getMaxTag(2) + 1;
+    tag = GModel::current()->getGEOInternals()->MaxSurfaceNum + 1;
   tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(2) + 1);
   return tag;
 }
@@ -7448,7 +7320,7 @@ int NEWSURFACELOOP(void)
   if(CTX::instance()->geom.oldNewreg)
     tag = NEWREG();
   else
-    tag = GModel::current()->getGEOInternals()->getMaxTag(-2) + 1;
+    tag = GModel::current()->getGEOInternals()->MaxSurfaceLoopNum + 1;
   tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-2) + 1);
   return tag;
 }
@@ -7459,7 +7331,7 @@ int NEWVOLUME(void)
   if(CTX::instance()->geom.oldNewreg)
     tag = NEWREG();
   else
-    tag = GModel::current()->getGEOInternals()->getMaxTag(3) + 1;
+    tag = GModel::current()->getGEOInternals()->MaxVolumeNum + 1;
   tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(3) + 1);
   return tag;
 }
@@ -7467,12 +7339,31 @@ int NEWVOLUME(void)
 int NEWREG(void)
 {
   int tag = 0;
-  for(int i = -2; i < 4; i++)
-    tag = std::max(tag, GModel::current()->getGEOInternals()->getMaxTag(i));
+  tag = GModel::current()->getGEOInternals()->MaxLineNum;
+  tag = std::max(tag, GModel::current()->getGEOInternals()->MaxLineLoopNum);
+  tag = std::max(tag, GModel::current()->getGEOInternals()->MaxSurfaceNum);
+  tag = std::max(tag, GModel::current()->getGEOInternals()->MaxSurfaceLoopNum);
+  tag = std::max(tag, GModel::current()->getGEOInternals()->MaxVolumeNum);
   tag = std::max(tag, GModel::current()->getGEOInternals()->MaxPhysicalNum);
   tag += 1;
   for(int i = -2; i < 4; i++)
     tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(i) + 1);
   return tag;
 }
-*/
+
+int NEWFIELD(void)
+{
+#if defined(HAVE_MESH)
+  return (GModel::current()->getFields()->maxId() + 1);
+#else
+  return 0;
+#endif
+}
+
+int NEWPHYSICAL(void)
+{
+  if(CTX::instance()->geom.oldNewreg)
+    return NEWREG();
+  else
+    return (GModel::current()->getGEOInternals()->MaxPhysicalNum + 1);
+}

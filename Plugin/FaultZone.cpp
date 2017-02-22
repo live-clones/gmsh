@@ -12,6 +12,7 @@
 #include "FaultZone.h"
 #include "GModel.h"
 #include "GModelIO_GEO.h"
+#include "Geo.h"
 #include "SVector3.h"
 #include "GEdge.h"
 #include "GFace.h"

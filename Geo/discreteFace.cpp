@@ -8,13 +8,13 @@
 #include "discreteFace.h"
 #include "discreteDiskFace.h"
 #include "GModelIO_GEO.h"
+#include "Geo.h"
 #include "GFaceCompound.h"
 #include "Context.h"
 #include "OS.h"
 #include <stack>
 #include <queue>
 #include <complex>
-// #include <cmath>
 
 #if defined(HAVE_PETSC)
 #include "linearSystemPETSc.h"

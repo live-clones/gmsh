@@ -12,6 +12,7 @@
 #include "GModel.h"
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
+#include "Geo.h"
 #include "GModelFactory.h"
 #include "GFaceCompound.h"
 #include "GEdgeCompound.h"
