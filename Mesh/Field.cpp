@@ -19,6 +19,7 @@
 #include "GmshConfig.h"
 #include "Context.h"
 #include "Field.h"
+#include "Geo.h"
 #include "GeoInterpolation.h"
 #include "GModel.h"
 #include "GmshMessage.h"

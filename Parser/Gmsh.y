@@ -21,6 +21,7 @@
 #include "GModel.h"
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
+#include "Geo.h"
 #include "GeoInterpolation.h"
 #include "Options.h"
 #include "Parser.h"

@@ -9,6 +9,7 @@
 #include "Numeric.h"
 #include "GModel.h"
 #include "GModelIO_GEO.h"
+#include "Geo.h"
 #include "GeoInterpolation.h"
 #include "Context.h"
 #include "MVertexRTree.h"

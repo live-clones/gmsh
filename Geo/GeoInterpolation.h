@@ -6,7 +6,12 @@
 #ifndef _GEO_INTERPOLATION_H_
 #define _GEO_INTERPOLATION_H_
 
-#include "Geo.h"
+#include "SPoint3.h"
+
+class Surface;
+class Curve;
+class Vertex;
+class gmshSurface;
 
 bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius);
 Vertex InterpolateCurve(Curve *Curve, double u, int derivee);

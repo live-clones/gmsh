@@ -38,12 +38,11 @@
 #include "Levy3D.h"
 #include "discreteFace.h"
 #include "filterElements.h"
+#include "ExtrudeParams.h"
 
 #if defined(HAVE_ANN)
 #include "ANN/ANN.h"
 #endif
-
-
 
 // hybrid mesh recovery structure
 class splitQuadRecovery {
@@ -654,7 +653,7 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
       insertVerticesInRegion(gr,2000000000,true);
     }
   }
-  
+
   // crete an initial mesh
   if (sqr.buildPyramids (gr->model())){
     RelocateVertices(regions, 3);

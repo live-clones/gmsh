@@ -37,7 +37,6 @@ GNU General Public License for more details.
 
 #include <stdlib.h>
 #include "ExtrudeParams.h"
-#include "Geo.h"
 #include "GEntity.h"
 #include "GFace.h"
 #include "GRegion.h"

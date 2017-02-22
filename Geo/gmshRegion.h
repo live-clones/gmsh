@@ -6,8 +6,9 @@
 #ifndef _GMSH_REGION_H_
 #define _GMSH_REGION_H_
 
-#include "Geo.h"
 #include "GRegion.h"
+
+class Volume;
 
 class gmshRegion : public GRegion {
  protected:

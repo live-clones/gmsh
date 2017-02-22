@@ -23,6 +23,26 @@ void gmshVertex::resetMeshAttributes()
   meshSize = v->lc;
 }
 
+GPoint gmshVertex::point() const
+{
+  return GPoint(v->Pos.X, v->Pos.Y, v->Pos.Z, this);
+}
+
+double gmshVertex::x() const
+{
+  return v->Pos.X;
+}
+
+double gmshVertex::y() const
+{
+  return v->Pos.Y;
+}
+
+double gmshVertex::z() const
+{
+  return v->Pos.Z;
+}
+
 void gmshVertex::setPosition(GPoint &p)
 {
   v->Pos.X = p.x();
@@ -43,9 +63,14 @@ GEntity::GeomType gmshVertex::geomType() const
     return Point;
 }
 
+void gmshVertex::setPrescribedMeshSizeAtVertex(double l)
+{
+  meshSize = l;
+  v->lc = meshSize;
+}
+
 SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
 {
-
   Surface *s = (Surface*)face->getNativePtr();
 
   if(s->geometry){

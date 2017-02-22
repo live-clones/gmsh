@@ -6,8 +6,9 @@
 #ifndef _GMSH_VERTEX_H_
 #define _GMSH_VERTEX_H_
 
-#include "Geo.h"
 #include "GVertex.h"
+
+class Vertex;
 
 class gmshVertex : public GVertex {
  protected:
@@ -17,22 +18,15 @@ class gmshVertex : public GVertex {
   gmshVertex(GModel *m, Vertex *_v);
   virtual ~gmshVertex() {}
   virtual void resetMeshAttributes();
-  virtual GPoint point() const
-  {
-    return GPoint(v->Pos.X, v->Pos.Y, v->Pos.Z, this);
-  }
-  virtual double x() const { return v->Pos.X; }
-  virtual double y() const { return v->Pos.Y; }
-  virtual double z() const { return v->Pos.Z; }
+  virtual GPoint point() const;
+  virtual double x() const;
+  virtual double y() const;
+  virtual double z() const;
   virtual void setPosition(GPoint &p);
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return GmshModel; }
   void *getNativePtr() const { return v; }
-  virtual void setPrescribedMeshSizeAtVertex(double l)
-  {
-    meshSize = l;
-    v->lc = meshSize;
-  }
+  virtual void setPrescribedMeshSizeAtVertex(double l);
   virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
   virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter="");
 };

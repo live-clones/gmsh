@@ -6,12 +6,13 @@
 #ifndef _GMSH_EDGE_H_
 #define _GMSH_EDGE_H_
 
-#include "Geo.h"
 #include "GEdge.h"
+
+class Curve;
 
 class gmshEdge : public GEdge {
  protected:
-  Curve *c; 
+  Curve *c;
 
  public:
   gmshEdge(GModel *model, Curve *edge, GVertex *v1, GVertex *v2);

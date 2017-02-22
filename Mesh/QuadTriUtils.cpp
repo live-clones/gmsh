@@ -33,8 +33,8 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 ********************************************************************************/
 #include <stdlib.h>
+#include "Geo.h"
 #include "QuadTriUtils.h"
-
 
 // By Geuzaine, Remacle...
 static void addTriangle(MVertex* v1, MVertex* v2, MVertex* v3,

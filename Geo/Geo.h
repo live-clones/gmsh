@@ -57,8 +57,6 @@
 #define MSH_PHYSICAL_SURFACE   502
 #define MSH_PHYSICAL_VOLUME    503
 
-#define MSH_UNKNOWN            999
-
 class gLevelset;
 
 class LevelSet {
@@ -284,9 +282,6 @@ class PhysicalGroup{
   char Visible;
   List_T *Entities;
 };
-
-int NEWFIELD(void);
-int NEWPHYSICAL(void);
 
 int compareVertex(const void *a, const void *b);
 int compareSurfaceLoop(const void *a, const void *b);

@@ -10,7 +10,7 @@
 #include "contextWindow.h"
 #include "paletteWindow.h"
 #include "GModel.h"
-#include "Geo.h"
+#include "Parser.h"
 #include "GeoStringInterface.h"
 #include "OpenFile.h"
 #include "Context.h"

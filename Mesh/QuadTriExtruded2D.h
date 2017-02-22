@@ -35,7 +35,6 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #if !defined(_QTEXTR2D_H_)
 #define _QTEXTR2D_H_
 
-#include "Geo.h"
 #include "GEntity.h"
 #include "GFace.h"
 #include "GEdge.h"

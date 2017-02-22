@@ -33,6 +33,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 ********************************************************************************/
 
+#include "Geo.h"
 #include "QuadTriExtruded3D.h"
 
 // By Geuzaine, Remacle...
