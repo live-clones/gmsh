@@ -1780,8 +1780,9 @@ Shape :
         }
         else if(param.size() >= 4 && param.size() <= 6){
           double r = param[3];
-          double a1 = (param.size() >= 5) ? param[4] : 0.;
-          double a2 = (param.size() >= 6) ? param[5] : 2.*M_PI;
+          double a1 = (param.size() == 6) ? param[4] : 0.;
+          double a2 = (param.size() == 6) ? param[5] :
+            (param.size() == 5) ? param[4] : 2.*M_PI;
           GModel::current()->getOCCInternals()->addCircle
             (num, param[0], param[1], param[2], r, a1, a2);
         }
@@ -1817,8 +1818,9 @@ Shape :
             (num, tags[0], tags[1], tags[3]);
         }
         else if(param.size() >= 5 && param.size() <= 7){
-          double a1 = (param.size() >= 6) ? param[5] : 0.;
-          double a2 = (param.size() >= 7) ? param[6] : 2.*M_PI;
+          double a1 = (param.size() == 7) ? param[5] : 0.;
+          double a2 = (param.size() == 7) ? param[6] :
+            (param.size() == 6) ? param[5] : 2.*M_PI;
           GModel::current()->getOCCInternals()->addEllipse
             (num, param[0], param[1], param[2], param[3], param[4], a1, a2);
         }
@@ -7299,7 +7301,7 @@ int NEWLINELOOP(void)
   if(CTX::instance()->geom.oldNewreg)
     tag = NEWREG();
   else
-    tag = GModel::current()->getGEOInternals()->MaxLineLoopNum + 1;
+    tag = GModel::current()->getGEOInternals()->getMaxTag(-1) + 1;
   tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
   return tag;
 }
