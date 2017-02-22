@@ -261,6 +261,7 @@ class OCC_Internals {
 public:
   enum BooleanOperator { Union, Intersection, Difference, Section, Fragments };
   OCC_Internals(){}
+  bool getChanged() const { return false; }
   void reset(){}
   void setTagConstraints(int dim, int val){}
   int getMaxTag(int dim) const { return 0; }
@@ -333,7 +334,9 @@ public:
   {
     Msg::Error("Gmsh requires OpenCASCADE to export '%s'", fileName.c_str());
   }
+  void setMeshSize(int dim, int tag, double size){}
   void synchronize(GModel *model){}
+  bool getVertex(int tag, double &x, double &y, double &z){ return false; }
 };
 
 #endif

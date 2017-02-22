@@ -2917,8 +2917,8 @@ int GModel::importOCCShape(const void *shape)
 {
   if(!_occ_internals)
     _occ_internals = new OCC_Internals;
-  std::vector<int> tags[4];
 #if defined(HAVE_OCC)
+  std::vector<int> tags[4];
   _occ_internals->importShapes((TopoDS_Shape*)shape, false, tags);
 #else
   Msg::Error("Gmsh requires OpenCASCADE to import TopoDS_Shape");
