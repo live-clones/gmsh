@@ -7277,14 +7277,14 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
   }
 }
 
-int NEWPOINT(void)
+int NEWPOINT()
 {
   int tag = GModel::current()->getGEOInternals()->getMaxTag(0) + 1;
   tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(0) + 1);
   return tag;
 }
 
-int NEWLINE(void)
+int NEWLINE()
 {
   int tag = 0;
   if(CTX::instance()->geom.oldNewreg)
@@ -7295,7 +7295,7 @@ int NEWLINE(void)
   return tag;
 }
 
-int NEWLINELOOP(void)
+int NEWLINELOOP()
 {
   int tag = 0;
   if(CTX::instance()->geom.oldNewreg)
@@ -7306,29 +7306,29 @@ int NEWLINELOOP(void)
   return tag;
 }
 
-int NEWSURFACE(void)
+int NEWSURFACE()
 {
   int tag = 0;
   if(CTX::instance()->geom.oldNewreg)
     tag = NEWREG();
   else
-    tag = GModel::current()->getGEOInternals()->MaxSurfaceNum + 1;
+    tag = GModel::current()->getGEOInternals()->getMaxTag(2) + 1;
   tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(2) + 1);
   return tag;
 }
 
-int NEWSURFACELOOP(void)
+int NEWSURFACELOOP()
 {
   int tag = 0;
   if(CTX::instance()->geom.oldNewreg)
     tag = NEWREG();
   else
-    tag = GModel::current()->getGEOInternals()->MaxSurfaceLoopNum + 1;
+    tag = GModel::current()->getGEOInternals()->getMaxTag(-2) + 1;
   tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-2) + 1);
   return tag;
 }
 
-int NEWVOLUME(void)
+int NEWVOLUME()
 {
   int tag = 0;
   if(CTX::instance()->geom.oldNewreg)
@@ -7339,7 +7339,7 @@ int NEWVOLUME(void)
   return tag;
 }
 
-int NEWREG(void)
+int NEWREG()
 {
   int tag = 0;
   tag = GModel::current()->getGEOInternals()->MaxLineNum;
@@ -7354,7 +7354,7 @@ int NEWREG(void)
   return tag;
 }
 
-int NEWFIELD(void)
+int NEWFIELD()
 {
 #if defined(HAVE_MESH)
   return (GModel::current()->getFields()->maxId() + 1);
@@ -7363,7 +7363,7 @@ int NEWFIELD(void)
 #endif
 }
 
-int NEWPHYSICAL(void)
+int NEWPHYSICAL()
 {
   if(CTX::instance()->geom.oldNewreg)
     return NEWREG();

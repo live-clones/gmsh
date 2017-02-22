@@ -40,14 +40,14 @@ extern std::map<std::string, std::vector<std::string> > gmsh_yystringsymbols;
 
 void PrintParserSymbols(bool help, std::vector<std::string> &vec);
 
-int NEWPOINT(void);
-int NEWLINE(void);
-int NEWLINELOOP(void);
-int NEWSURFACE(void);
-int NEWSURFACELOOP(void);
-int NEWVOLUME(void);
-int NEWREG(void);
-int NEWFIELD(void);
-int NEWPHYSICAL(void);
+int NEWPOINT();
+int NEWLINE();
+int NEWLINELOOP();
+int NEWSURFACE();
+int NEWSURFACELOOP();
+int NEWVOLUME();
+int NEWREG();
+int NEWFIELD();
+int NEWPHYSICAL();
 
 #endif

@@ -14993,7 +14993,7 @@ int NEWSURFACE(void)
   if(CTX::instance()->geom.oldNewreg)
     tag = NEWREG();
   else
-    tag = GModel::current()->getGEOInternals()->MaxSurfaceNum + 1;
+    tag = GModel::current()->getGEOInternals()->getMaxTag(2) + 1;
   tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(2) + 1);
   return tag;
 }
@@ -15004,7 +15004,7 @@ int NEWSURFACELOOP(void)
   if(CTX::instance()->geom.oldNewreg)
     tag = NEWREG();
   else
-    tag = GModel::current()->getGEOInternals()->MaxSurfaceLoopNum + 1;
+    tag = GModel::current()->getGEOInternals()->getMaxTag(-2) + 1;
   tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-2) + 1);
   return tag;
 }
