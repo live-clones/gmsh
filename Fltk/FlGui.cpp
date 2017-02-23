@@ -368,6 +368,8 @@ FlGui::FlGui(int argc, char **argv)
   // use retina resolution if available
 #if (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION == 3) && (FL_PATCH_VERSION >= 4)
   Fl::use_high_res_GL(CTX::instance()->highResolutionGraphics);
+#elif (FL_MAJOR_VERSION == 1) && (FL_MINOR_VERSION >= 4)
+  Fl::use_high_res_GL(CTX::instance()->highResolutionGraphics);
 #endif
 
   // register image formats not in core fltk library (jpeg/png)
