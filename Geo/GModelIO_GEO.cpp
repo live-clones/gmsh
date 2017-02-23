@@ -472,6 +472,97 @@ void GEO_Internals::setDegenerated(int dim, int tag)
   _changed = true;
 }
 
+void GEO_Internals::setTransfiniteLine(int tag, int nPoints, int type, double coef)
+{
+  if(!tag){
+    List_T *tmp = Tree2List(Curves);
+    for(int i = 0; i < List_Nbr(tmp); i++){
+      Curve *c;
+      List_Read(tmp, i, &c);
+      c->Method = MESH_TRANSFINITE;
+      c->nbPointsTransfinite = (nPoints > 2) ? nPoints : 2;
+      c->typeTransfinite = type;
+      c->coeffTransfinite = coef;
+    }
+    List_Delete(tmp);
+  }
+  else{
+    Curve *c = FindCurve(tag);
+    if(c){
+      c->Method = MESH_TRANSFINITE;
+      c->nbPointsTransfinite = (nPoints > 2) ? nPoints : 2;
+      c->typeTransfinite = type;
+      c->coeffTransfinite = coef;
+    }
+  }
+}
+
+void GEO_Internals::setTransfiniteSurface(int tag, int arrangement,
+                                          std::vector<int> cornerTags)
+{
+  if(!tag){
+    List_T *tmp = Tree2List(Surfaces);
+    for(int i = 0; i < List_Nbr(tmp); i++){
+      Surface *s;
+      List_Read(tmp, i, &s);
+      s->Method = MESH_TRANSFINITE;
+      s->Recombine_Dir = arrangement;
+      List_Reset(s->TrsfPoints);
+    }
+    List_Delete(tmp);
+  }
+  else{
+    Surface *s = FindSurface(tag);
+    if(s){
+      s->Method = MESH_TRANSFINITE;
+      s->Recombine_Dir = arrangement;
+      List_Reset(s->TrsfPoints);
+      if(cornerTags.empty() || cornerTags.size() == 3 || cornerTags.size() == 4){
+        for(unsigned int j = 0; j < cornerTags.size(); j++){
+          Vertex *v = FindPoint(std::abs(cornerTags[j]));
+          if(v)
+            List_Add(s->TrsfPoints, &v);
+          else
+            Msg::Error(0, "Unknown GEO vertex with tag %d", cornerTags[j]);
+        }
+      }
+      else{
+        Msg::Error("Transfinite surface requires 3 or 4 corner vertices");
+      }
+    }
+  }
+}
+
+void GEO_Internals::setTransfiniteVolume(int tag, std::vector<int> cornerTags)
+{
+  if(!tag){
+    List_T *tmp = Tree2List(Volumes);
+    for(int i = 0; i < List_Nbr(tmp); i++){
+      Volume *v;
+      List_Read(tmp, i, &v);
+      v->Method = MESH_TRANSFINITE;
+      List_Reset(v->TrsfPoints);
+    }
+    List_Delete(tmp);
+  }
+  else{
+    Volume *v = FindVolume(tag);
+    if(v){
+      v->Method = MESH_TRANSFINITE;
+      List_Reset(v->TrsfPoints);
+      if(cornerTags.empty() || cornerTags.size() == 6 || cornerTags.size() == 8){
+        for(unsigned int i = 0; i < cornerTags.size(); i++){
+          Vertex *vert = FindPoint(std::abs(cornerTags[i]));
+          if(vert)
+            List_Add(v->TrsfPoints, &vert);
+          else
+            Msg::Error(0, "Unknown GEO vertex with tag %d", cornerTags[i]);
+        }
+      }
+    }
+  }
+}
+
 void GEO_Internals::synchronize(GModel *model)
 {
   Msg::Debug("Syncing GEO_Internals with GModel");

@@ -191,69 +191,67 @@
      tCopyOptions = 407,
      tQuadTriAddVerts = 408,
      tQuadTriNoNewVerts = 409,
-     tQuadTriSngl = 410,
-     tQuadTriDbl = 411,
-     tRecombLaterals = 412,
-     tTransfQuadTri = 413,
-     tText2D = 414,
-     tText3D = 415,
-     tInterpolationScheme = 416,
-     tTime = 417,
-     tCombine = 418,
-     tBSpline = 419,
-     tBezier = 420,
-     tNurbs = 421,
-     tNurbsOrder = 422,
-     tNurbsKnots = 423,
-     tColor = 424,
-     tColorTable = 425,
-     tFor = 426,
-     tIn = 427,
-     tEndFor = 428,
-     tIf = 429,
-     tElseIf = 430,
-     tElse = 431,
-     tEndIf = 432,
-     tExit = 433,
-     tAbort = 434,
-     tField = 435,
-     tReturn = 436,
-     tCall = 437,
-     tSlide = 438,
-     tMacro = 439,
-     tShow = 440,
-     tHide = 441,
-     tGetValue = 442,
-     tGetStringValue = 443,
-     tGetEnv = 444,
-     tGetString = 445,
-     tGetNumber = 446,
-     tUnique = 447,
-     tHomology = 448,
-     tCohomology = 449,
-     tBetti = 450,
-     tExists = 451,
-     tFileExists = 452,
-     tGMSH_MAJOR_VERSION = 453,
-     tGMSH_MINOR_VERSION = 454,
-     tGMSH_PATCH_VERSION = 455,
-     tGmshExecutableName = 456,
-     tSetPartition = 457,
-     tNameToString = 458,
-     tStringToName = 459,
-     tAFFECTDIVIDE = 460,
-     tAFFECTTIMES = 461,
-     tAFFECTMINUS = 462,
-     tAFFECTPLUS = 463,
-     tOR = 464,
-     tAND = 465,
-     tNOTEQUAL = 466,
-     tEQUAL = 467,
-     tGREATEROREQUAL = 468,
-     tLESSOREQUAL = 469,
-     UNARYPREC = 470,
-     tMINUSMINUS = 471,
-     tPLUSPLUS = 472
+     tRecombLaterals = 410,
+     tTransfQuadTri = 411,
+     tText2D = 412,
+     tText3D = 413,
+     tInterpolationScheme = 414,
+     tTime = 415,
+     tCombine = 416,
+     tBSpline = 417,
+     tBezier = 418,
+     tNurbs = 419,
+     tNurbsOrder = 420,
+     tNurbsKnots = 421,
+     tColor = 422,
+     tColorTable = 423,
+     tFor = 424,
+     tIn = 425,
+     tEndFor = 426,
+     tIf = 427,
+     tElseIf = 428,
+     tElse = 429,
+     tEndIf = 430,
+     tExit = 431,
+     tAbort = 432,
+     tField = 433,
+     tReturn = 434,
+     tCall = 435,
+     tSlide = 436,
+     tMacro = 437,
+     tShow = 438,
+     tHide = 439,
+     tGetValue = 440,
+     tGetStringValue = 441,
+     tGetEnv = 442,
+     tGetString = 443,
+     tGetNumber = 444,
+     tUnique = 445,
+     tHomology = 446,
+     tCohomology = 447,
+     tBetti = 448,
+     tExists = 449,
+     tFileExists = 450,
+     tGMSH_MAJOR_VERSION = 451,
+     tGMSH_MINOR_VERSION = 452,
+     tGMSH_PATCH_VERSION = 453,
+     tGmshExecutableName = 454,
+     tSetPartition = 455,
+     tNameToString = 456,
+     tStringToName = 457,
+     tAFFECTDIVIDE = 458,
+     tAFFECTTIMES = 459,
+     tAFFECTMINUS = 460,
+     tAFFECTPLUS = 461,
+     tOR = 462,
+     tAND = 463,
+     tNOTEQUAL = 464,
+     tEQUAL = 465,
+     tGREATEROREQUAL = 466,
+     tLESSOREQUAL = 467,
+     UNARYPREC = 468,
+     tMINUSMINUS = 469,
+     tPLUSPLUS = 470
    };
 #endif
 /* Tokens.  */
@@ -409,69 +407,67 @@
 #define tCopyOptions 407
 #define tQuadTriAddVerts 408
 #define tQuadTriNoNewVerts 409
-#define tQuadTriSngl 410
-#define tQuadTriDbl 411
-#define tRecombLaterals 412
-#define tTransfQuadTri 413
-#define tText2D 414
-#define tText3D 415
-#define tInterpolationScheme 416
-#define tTime 417
-#define tCombine 418
-#define tBSpline 419
-#define tBezier 420
-#define tNurbs 421
-#define tNurbsOrder 422
-#define tNurbsKnots 423
-#define tColor 424
-#define tColorTable 425
-#define tFor 426
-#define tIn 427
-#define tEndFor 428
-#define tIf 429
-#define tElseIf 430
-#define tElse 431
-#define tEndIf 432
-#define tExit 433
-#define tAbort 434
-#define tField 435
-#define tReturn 436
-#define tCall 437
-#define tSlide 438
-#define tMacro 439
-#define tShow 440
-#define tHide 441
-#define tGetValue 442
-#define tGetStringValue 443
-#define tGetEnv 444
-#define tGetString 445
-#define tGetNumber 446
-#define tUnique 447
-#define tHomology 448
-#define tCohomology 449
-#define tBetti 450
-#define tExists 451
-#define tFileExists 452
-#define tGMSH_MAJOR_VERSION 453
-#define tGMSH_MINOR_VERSION 454
-#define tGMSH_PATCH_VERSION 455
-#define tGmshExecutableName 456
-#define tSetPartition 457
-#define tNameToString 458
-#define tStringToName 459
-#define tAFFECTDIVIDE 460
-#define tAFFECTTIMES 461
-#define tAFFECTMINUS 462
-#define tAFFECTPLUS 463
-#define tOR 464
-#define tAND 465
-#define tNOTEQUAL 466
-#define tEQUAL 467
-#define tGREATEROREQUAL 468
-#define tLESSOREQUAL 469
-#define UNARYPREC 470
-#define tMINUSMINUS 471
-#define tPLUSPLUS 472
+#define tRecombLaterals 410
+#define tTransfQuadTri 411
+#define tText2D 412
+#define tText3D 413
+#define tInterpolationScheme 414
+#define tTime 415
+#define tCombine 416
+#define tBSpline 417
+#define tBezier 418
+#define tNurbs 419
+#define tNurbsOrder 420
+#define tNurbsKnots 421
+#define tColor 422
+#define tColorTable 423
+#define tFor 424
+#define tIn 425
+#define tEndFor 426
+#define tIf 427
+#define tElseIf 428
+#define tElse 429
+#define tEndIf 430
+#define tExit 431
+#define tAbort 432
+#define tField 433
+#define tReturn 434
+#define tCall 435
+#define tSlide 436
+#define tMacro 437
+#define tShow 438
+#define tHide 439
+#define tGetValue 440
+#define tGetStringValue 441
+#define tGetEnv 442
+#define tGetString 443
+#define tGetNumber 444
+#define tUnique 445
+#define tHomology 446
+#define tCohomology 447
+#define tBetti 448
+#define tExists 449
+#define tFileExists 450
+#define tGMSH_MAJOR_VERSION 451
+#define tGMSH_MINOR_VERSION 452
+#define tGMSH_PATCH_VERSION 453
+#define tGmshExecutableName 454
+#define tSetPartition 455
+#define tNameToString 456
+#define tStringToName 457
+#define tAFFECTDIVIDE 458
+#define tAFFECTTIMES 459
+#define tAFFECTMINUS 460
+#define tAFFECTPLUS 461
+#define tOR 462
+#define tAND 463
+#define tNOTEQUAL 464
+#define tEQUAL 465
+#define tGREATEROREQUAL 466
+#define tLESSOREQUAL 467
+#define UNARYPREC 468
+#define tMINUSMINUS 469
+#define tPLUSPLUS 470
 
 
 
@@ -489,7 +485,7 @@ typedef union YYSTYPE
   List_T *l;
 }
 /* Line 1529 of yacc.c.  */
-#line 493 "Gmsh.tab.hpp"
+#line 489 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

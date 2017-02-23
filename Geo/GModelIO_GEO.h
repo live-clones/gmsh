@@ -62,6 +62,9 @@ class GEO_Internals{
   void setCompoundMesh(int dim, std::vector<int> tags);
   void setMeshSize(int dim, int tag, double size);
   void setDegenerated(int dim, int tag);
+  void setTransfiniteLine(int tag, int nPoints, int type, double coef);
+  void setTransfiniteSurface(int tag, int arrangement, std::vector<int> cornerTags);
+  void setTransfiniteVolume(int tag, std::vector<int> cornerTags);
 
   // synchronize internal CAD data with the given GModel
   void synchronize(GModel *model);

@@ -159,7 +159,7 @@ struct doubleXstring{
 %token tRecombine tSmoother tSplit tDelete tCoherence
 %token tIntersect tMeshAlgorithm tReverse
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
-%token tQuadTriAddVerts tQuadTriNoNewVerts tQuadTriSngl tQuadTriDbl
+%token tQuadTriAddVerts tQuadTriNoNewVerts
 %token tRecombLaterals tTransfQuadTri
 %token tText2D tText3D tInterpolationScheme tTime tCombine
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
@@ -2530,7 +2530,7 @@ Transform :
   | tSymmetry  VExpr '{' MultipleShape '}'
     {
       if(factory == "OpenCASCADE"){
-        Msg::Error("TODO OCC Symmetry");
+        Msg::Error("Symmetry not implemented yet with OpenCASCADE factory");
       }
       else{
         SymmetryShapes($2[0], $2[1], $2[2], $2[3], $4);
@@ -2540,7 +2540,7 @@ Transform :
   | tDilate '{' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
       if(factory == "OpenCASCADE"){
-        Msg::Error("TODO OCC Dilate");
+        Msg::Error("Dilate not implemented yet with OpenCASCADE factory");
       }
       else{
         DilatShapes($3[0], $3[1], $3[2], $5, $5, $5, $8);
@@ -2550,7 +2550,7 @@ Transform :
   | tDilate '{' VExpr ',' VExpr '}' '{' MultipleShape '}'
     {
       if(factory == "OpenCASCADE"){
-        Msg::Error("TODO OCC Dilate");
+        Msg::Error("Dilate not implemented yet with OpenCASCADE factory");
       }
       else{
         DilatShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $8);
@@ -3141,12 +3141,10 @@ Delete :
         }
         GModel::current()->getOCCInternals()->remove(in);
       }
-      else{
-        for(int i = 0; i < List_Nbr($3); i++){
-          Shape TheShape;
-          List_Read($3, i, &TheShape);
-          DeleteShape(TheShape.Type, TheShape.Num);
-        }
+      for(int i = 0; i < List_Nbr($3); i++){
+        Shape TheShape;
+        List_Read($3, i, &TheShape);
+        DeleteShape(TheShape.Type, TheShape.Num);
       }
       List_Delete($3);
     }
@@ -4251,7 +4249,7 @@ Extrude :
 		   $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
 		   &extr, $$);
     }
-  // End of deprecated Extrude commands
+   // End of deprecated extrude commands
 ;
 
 ExtrudeParameters :
@@ -4319,7 +4317,6 @@ ExtrudeParameter :
       List_Delete($5);
       List_Delete($7);
     }
-  //Added by Trevor Strickler 07/07/2013
   | tScaleLast tEND
     {
       extr.mesh.ScaleLast = true;
@@ -4331,26 +4328,6 @@ ExtrudeParameter :
   | tRecombine FExpr tEND
     {
       extr.mesh.Recombine = $2 ? true : false;
-    }
-  | tQuadTriSngl tEND
-    {
-      yymsg(0, "Keyword 'QuadTriSngl' deprecated. Use 'QuadTriNoNewVerts' instead.");
-    }
-  | tQuadTriSngl tRecombLaterals tEND
-    {
-      yymsg(0, "Keyword 'QuadTriSngl' deprecated. Use 'QuadTriNoNewVerts' instead.");
-    }
-  | tQuadTriDbl tEND
-    {
-      yymsg(0, "Method 'QuadTriDbl' deprecated. Use 'QuadTriAddVerts' instead, "
-            "which has no requirement for the number of extrusion layers and meshes "
-            "with body-centered vertices.");
-    }
-  | tQuadTriDbl tRecombLaterals tEND
-    {
-      yymsg(0, "Method 'QuadTriDbl' deprecated. Use 'QuadTriAddVerts' instead, "
-            "which has no requirement for the number of extrusion layers and meshes "
-            "with body-centered vertices.");
     }
   | tQuadTriAddVerts tEND
     {
@@ -4567,6 +4544,9 @@ PeriodicTransform :
 Constraints :
     tCharacteristic tLength ListOfDouble tAFFECT FExpr tEND
     {
+      // mesh sizes at vertices are stored in internal CAD data, as they can be
+      // specified during vertex creation and copied around during CAD
+      // operations
       for(int i = 0; i < List_Nbr($3); i++){
 	double d;
 	List_Read($3, i, &d);
@@ -4580,30 +4560,23 @@ Constraints :
     }
   | tTransfinite tLine ListOfDoubleOrAll tAFFECT FExpr TransfiniteType tEND
     {
+      // transfinite constraints are also stored in GEO internals, as they can
+      // be copied around during GEO operations
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
       int type = (int)$6[0];
       double coef = fabs($6[1]);
+      int npoints = ((int)$5 < 2) ? 2 : (int)$5;
       if(!$3){
-        List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Curves);
-        if(List_Nbr(tmp)){
-          for(int i = 0; i < List_Nbr(tmp); i++){
-            Curve *c;
-            List_Read(tmp, i, &c);
-            c->Method = MESH_TRANSFINITE;
-            c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
-            c->typeTransfinite = type;
-            c->coeffTransfinite = coef;
-          }
+        GModel::current()->getGEOInternals()->setTransfiniteLine
+          (0, npoints, type, coef);
+        for(GModel::eiter it = GModel::current()->firstEdge();
+            it != GModel::current()->lastEdge(); it++){
+          (*it)->meshAttributes.method = MESH_TRANSFINITE;
+          (*it)->meshAttributes.nbPointsTransfinite = npoints;
+          (*it)->meshAttributes.typeTransfinite = type;
+          (*it)->meshAttributes.coeffTransfinite = coef;
         }
-        else{
-          for(GModel::eiter it = GModel::current()->firstEdge();
-              it != GModel::current()->lastEdge(); it++){
-            (*it)->meshAttributes.method = MESH_TRANSFINITE;
-            (*it)->meshAttributes.nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
-            (*it)->meshAttributes.typeTransfinite = type;
-            (*it)->meshAttributes.coeffTransfinite = coef;
-          }
-        }
-        List_Delete(tmp);
       }
       else{
         for(int i = 0; i < List_Nbr($3); i++){
@@ -4611,23 +4584,14 @@ Constraints :
           List_Read($3, i, &d);
           int j = (int)fabs(d);
           for(int sig = -1; sig <= 1; sig += 2){
-            Curve *c = FindCurve(sig * j);
-            if(c){
-              c->Method = MESH_TRANSFINITE;
-              c->nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
-              c->typeTransfinite = type * gmsh_sign(d);
-              c->coeffTransfinite = coef;
-            }
-            else{
-              GEdge *ge = GModel::current()->getEdgeByTag(sig * j);
-              if(ge){
-                ge->meshAttributes.method = MESH_TRANSFINITE;
-                ge->meshAttributes.nbPointsTransfinite = ($5 > 2) ? (int)$5 : 2;
-                ge->meshAttributes.typeTransfinite = type * gmsh_sign(d);
-                ge->meshAttributes.coeffTransfinite = coef;
-              }
-              else if(sig > 0)
-                yymsg(0, "Unknown line %d", j);
+            GModel::current()->getGEOInternals()->setTransfiniteLine
+              (sig * j, npoints, type * gmsh_sign(d), coef);
+            GEdge *ge = GModel::current()->getEdgeByTag(sig * j);
+            if(ge){
+              ge->meshAttributes.method = MESH_TRANSFINITE;
+              ge->meshAttributes.nbPointsTransfinite = npoints;
+              ge->meshAttributes.typeTransfinite = type * gmsh_sign(d);
+              ge->meshAttributes.coeffTransfinite = coef;
             }
           }
         }
@@ -4636,71 +4600,44 @@ Constraints :
     }
   | tTransfinite tSurface ListOfDoubleOrAll TransfiniteCorners TransfiniteArrangement tEND
     {
-      int k = List_Nbr($4);
-      if(k != 0 && k != 3 && k != 4){
-        yymsg(0, "Wrong definition of Transfinite Surface: 0, 3 or 4 points needed");
+      // transfinite constraints are also stored in GEO internals, as they can
+      // be copied around during GEO operations
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      std::vector<int> corners; ListOfDouble2Vector($4, corners);
+      if(!$3){
+        GModel::current()->getGEOInternals()->setTransfiniteSurface(0, $5, corners);
+        for(GModel::fiter it = GModel::current()->firstFace();
+            it != GModel::current()->lastFace(); it++){
+          (*it)->meshAttributes.method = MESH_TRANSFINITE;
+          (*it)->meshAttributes.transfiniteArrangement = $5;
+        }
       }
       else{
-        if(!$3){
-          List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
-          if(List_Nbr(tmp)){
-            for(int i = 0; i < List_Nbr(tmp); i++){
-              Surface *s;
-              List_Read(tmp, i, &s);
-              s->Method = MESH_TRANSFINITE;
-              s->Recombine_Dir = $5;
-              List_Reset(s->TrsfPoints);
-            }
-          }
-          else{
-            for(GModel::fiter it = GModel::current()->firstFace();
-                it != GModel::current()->lastFace(); it++){
-              (*it)->meshAttributes.method = MESH_TRANSFINITE;
-              (*it)->meshAttributes.transfiniteArrangement = $5;
-            }
-          }
-          List_Delete(tmp);
-        }
-        else{
-          for(int i = 0; i < List_Nbr($3); i++){
-            double d;
-            List_Read($3, i, &d);
-            Surface *s = FindSurface((int)d);
-            if(s){
-              s->Method = MESH_TRANSFINITE;
-              s->Recombine_Dir = $5;
-              List_Reset(s->TrsfPoints);
-              for(int j = 0; j < k; j++){
-                double p;
-                List_Read($4, j, &p);
-                Vertex *v = FindPoint((int)fabs(p));
-                if(v)
-                  List_Add(s->TrsfPoints, &v);
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d;
+          List_Read($3, i, &d);
+          int tag = (int)d;
+          GModel::current()->getGEOInternals()->setTransfiniteSurface(tag, $5, corners);
+          GFace *gf = GModel::current()->getFaceByTag(tag);
+          if(gf){
+            gf->meshAttributes.method = MESH_TRANSFINITE;
+            gf->meshAttributes.transfiniteArrangement = $5;
+            if(corners.empty() || corners.size() == 3 || corners.size() == 4){
+              for(unsigned int j = 0; j < corners.size(); j++){
+                GVertex *gv = GModel::current()->getVertexByTag(std::abs(corners[j]));
+                if(gv)
+                  gf->meshAttributes.corners.push_back(gv);
                 else
-                  yymsg(0, "Unknown point %d", (int)fabs(p));
+                  yymsg(0, "Unknown model vertex with tag %d", corners[j]);
               }
             }
             else{
-              GFace *gf = GModel::current()->getFaceByTag((int)d);
-              if(gf){
-                gf->meshAttributes.method = MESH_TRANSFINITE;
-                gf->meshAttributes.transfiniteArrangement = $5;
-                for(int j = 0; j < k; j++){
-                  double p;
-                  List_Read($4, j, &p);
-                  GVertex *gv = GModel::current()->getVertexByTag((int)fabs(p));
-                  if(gv)
-                    gf->meshAttributes.corners.push_back(gv);
-                  else
-                    yymsg(0, "Unknown point %d", (int)fabs(p));
-                }
-              }
-              else
-                yymsg(0, "Unknown surface %d", (int)d);
+              yymsg(0, "Transfinite surface requires 3 or 4 corners vertices");
             }
           }
-          List_Delete($3);
         }
+        List_Delete($3);
       }
       List_Delete($4);
     }
@@ -4711,68 +4648,39 @@ Constraints :
     }
   | tTransfinite tVolume ListOfDoubleOrAll TransfiniteCorners tEND
     {
-      int k = List_Nbr($4);
-      if(k != 0 && k != 6 && k != 8){
-        yymsg(0, "Wrong definition of Transfinite Volume: "
-              "%d points instead of 6 or 8", k);
+      // transfinite constraints are also stored in GEO internals, as they can
+      // be copied around during GEO operations
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      std::vector<int> corners; ListOfDouble2Vector($4, corners);
+      if(!$3){
+        GModel::current()->getGEOInternals()->setTransfiniteVolume(0, corners);
+        for(GModel::riter it = GModel::current()->firstRegion();
+            it != GModel::current()->lastRegion(); it++){
+          (*it)->meshAttributes.method = MESH_TRANSFINITE;
+        }
       }
       else{
-        if(!$3){
-          List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Volumes);
-          if(List_Nbr(tmp)){
-            for(int i = 0; i < List_Nbr(tmp); i++){
-              Volume *v;
-              List_Read(tmp, i, &v);
-              v->Method = MESH_TRANSFINITE;
-              List_Reset(v->TrsfPoints);
-            }
-          }
-          else{
-            for(GModel::riter it = GModel::current()->firstRegion();
-                it != GModel::current()->lastRegion(); it++){
-              (*it)->meshAttributes.method = MESH_TRANSFINITE;
-            }
-          }
-          List_Delete(tmp);
-        }
-        else{
-          for(int i = 0; i < List_Nbr($3); i++){
-            double d;
-            List_Read($3, i, &d);
-            Volume *v = FindVolume((int)d);
-            if(v){
-              v->Method = MESH_TRANSFINITE;
-              List_Reset(v->TrsfPoints);
-              for(int i = 0; i < k; i++){
-                double p;
-                List_Read($4, i, &p);
-                Vertex *vert = FindPoint((int)fabs(p));
-                if(vert)
-                  List_Add(v->TrsfPoints, &vert);
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d;
+          List_Read($3, i, &d);
+          int tag = (int)d;
+          GModel::current()->getGEOInternals()->setTransfiniteVolume(tag, corners);
+          GRegion *gr = GModel::current()->getRegionByTag(tag);
+          if(gr){
+            gr->meshAttributes.method = MESH_TRANSFINITE;
+            if(corners.empty() || corners.size() == 6 || corners.size() == 8){
+              for(unsigned int i = 0; i < corners.size(); i++){
+                GVertex *gv = GModel::current()->getVertexByTag(std::abs(corners[i]));
+                if(gv)
+                  gr->meshAttributes.corners.push_back(gv);
                 else
-                  yymsg(0, "Unknown point %d", (int)fabs(p));
+                  yymsg(0, "Unknown model vertex with tag %d", corners[i]);
               }
-            }
-            else{
-              GRegion *gr = GModel::current()->getRegionByTag((int)d);
-              if(gr){
-                gr->meshAttributes.method = MESH_TRANSFINITE;
-                for(int i = 0; i < k; i++){
-                  double p;
-                  List_Read($4, i, &p);
-                  GVertex *gv = GModel::current()->getVertexByTag((int)fabs(p));
-                  if(gv)
-                    gr->meshAttributes.corners.push_back(gv);
-                  else
-                    yymsg(0, "Unknown point %d", (int)fabs(p));
-                }
-              }
-              else
-                yymsg(0, "Unknown volume %d", (int)d);
             }
           }
-          List_Delete($3);
         }
+        List_Delete($3);
       }
       List_Delete($4);
     }
@@ -4806,7 +4714,7 @@ Constraints :
             if(gr)
               gr->meshAttributes.QuadTri = TRANSFINITE_QUADTRI_1;
             else
-              yymsg(1, "Unknown volume %d", (int)d);
+              yymsg(1, "Unknown model region with tag %d", (int)d);
           }
         }
         List_Delete($2);
@@ -4819,9 +4727,12 @@ Constraints :
 	List_Read($4, i, &d);
 	CTX::instance()->mesh.algo2d_per_face[(int)d] = (int)$7;
       }
+      List_Delete($4);
     }
   | tRecombine tSurface ListOfDoubleOrAll RecombineAngle tEND
     {
+      // recombine constraints are also stored in GEO internals, as they can be
+      // copied around during GEO operations
       if(!$3){
 	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
         if(List_Nbr(tmp)){
@@ -4857,7 +4768,7 @@ Constraints :
               gf->meshAttributes.recombineAngle = $4;
             }
             else
-              yymsg(1, "Unknown surface %d", (int)d);
+              yymsg(1, "Unknown model face with tag %d", (int)d);
           }
         }
         List_Delete($3);
@@ -4865,6 +4776,8 @@ Constraints :
     }
   | tRecombine tVolume ListOfDoubleOrAll  tEND
     {
+      // recombine constraints are also stored in GEO internals, as they can be
+      // copied around during GEO operations
       if(!$3){
 	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Volumes);
         if(List_Nbr(tmp)){
@@ -4896,7 +4809,7 @@ Constraints :
               gr->meshAttributes.recombine3D = 1;
             }
             else
-              yymsg(1, "Unknown volume %d", (int)d);
+              yymsg(1, "Unknown model region with tag %d", (int)d);
           }
         }
         List_Delete($3);
@@ -4904,6 +4817,8 @@ Constraints :
     }
   | tSmoother tSurface ListOfDouble tAFFECT FExpr tEND
     {
+      // smoothing constraints are also stored in GEO internals, as they can be
+      // copied around during GEO operations
       for(int i = 0; i < List_Nbr($3); i++){
         double d;
         List_Read($3, i, &d);
@@ -4917,7 +4832,7 @@ Constraints :
           if(gf)
             gf->meshAttributes.transfiniteSmoothing = (int)$5;
           else
-            yymsg(1, "Unknown surface %d", (int)$5);
+            yymsg(1, "Unknown model face with tag %d", (int)$5);
         }
       }
       List_Delete($3);
@@ -5139,6 +5054,8 @@ Constraints :
     }
   | tReverse tSurface ListOfDoubleOrAll tEND
     {
+      // reverse mesh constraints are also stored in GEO internals, as they can
+      // be copied around during GEO operations
       if(!$3){
 	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
         if(List_Nbr(tmp)){
@@ -5170,7 +5087,7 @@ Constraints :
               gf->meshAttributes.reverseMesh = 1;
             }
             else
-              yymsg(1, "Unknown surface %d", (int)d);
+              yymsg(1, "Unknown model face with tag %d", (int)d);
           }
         }
         List_Delete($3);
@@ -5178,6 +5095,8 @@ Constraints :
     }
   | tReverse tLine ListOfDoubleOrAll tEND
     {
+      // reverse mesh constraints are also stored in GEO internals, as they can
+      // be copied around during GEO operations
       if(!$3){
 	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Curves);
         if(List_Nbr(tmp)){
@@ -5209,7 +5128,7 @@ Constraints :
               ge->meshAttributes.reverseMesh = 1;
             }
             else
-              yymsg(1, "Unknown line %d", (int)d);
+              yymsg(1, "Unknown model edge with tag %d", (int)d);
           }
         }
         List_Delete($3);
@@ -5948,7 +5867,7 @@ FExpr_Multi :
             z = gv->z();
           }
           else{
-            yymsg(0, "Unknown vertex %d", tag);
+            yymsg(0, "Unknown model vertex with tag %d", tag);
           }
         }
       }
@@ -7257,21 +7176,21 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
         if(gv)
           gr->addEmbeddedVertex(gv);
         else
-          yymsg(0, "Unknown model vertex %d", tags[i]);
+          yymsg(0, "Unknown model vertex with tag %d", tags[i]);
       }
       else if(dim == 1){
         GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
         if(ge)
           gr->addEmbeddedEdge(ge);
         else
-          yymsg(0, "Unknown model edge %d", tags[i]);
+          yymsg(0, "Unknown model edge with tag %d", tags[i]);
       }
       else if(dim == 2){
         GFace *gf = GModel::current()->getFaceByTag(tags[i]);
         if(gf)
           gr->addEmbeddedFace(gf);
         else
-          yymsg(0, "Unknown model face %d", tags[i]);
+          yymsg(0, "Unknown model face with tag %d", tags[i]);
       }
     }
   }

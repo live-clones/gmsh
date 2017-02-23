@@ -255,8 +255,6 @@ Printf                  return tPrintf;
 Quadric                 return tQuadric;
 Quad[tT]ri[aA]dd[vV]erts        return tQuadTriAddVerts;
 Quad[tT]ri[nN]o[nN]ew[vV]erts   return tQuadTriNoNewVerts;
-Quad[tT]ri[dD]bl        return tQuadTriDbl;
-Quad[tT]ri[sS]ngl       return tQuadTriSngl;
 
 Rand                    return tRand;
 Recomb[lL]aterals       return tRecombLaterals;
