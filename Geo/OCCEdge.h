@@ -9,12 +9,16 @@
 #include "GmshConfig.h"
 #include "GEdge.h"
 #include "GModel.h"
-#include "OCCVertex.h"
 #include "Range.h"
 
 class OCCFace;
 
 #if defined(HAVE_OCC)
+
+#include <TopoDS_Edge.hxx>
+#include <Geom_Curve.hxx>
+#include <Geom2d_Curve.hxx>
+#include <BRep_Tool.hxx>
 
 class OCCEdge : public GEdge {
  protected:

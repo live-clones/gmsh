@@ -7,13 +7,15 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "GModelIO_OCC.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "Context.h"
 
 #if defined(HAVE_OCC)
-#include "GModelIO_OCC.h"
+
 #include <Standard_Version.hxx>
+#include <TopoDS.hxx>
 #include <Geom2dLProp_CLProps2d.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_OffsetCurve.hxx>
@@ -25,6 +27,13 @@
 #include <Geom_Line.hxx>
 #include <Geom_Conic.hxx>
 #include <Geom_BSplineCurve.hxx>
+#include <GeomAPI_ProjectPointOnCurve.hxx>
+#include <Bnd_Box.hxx>
+#include <BRepLProp_CLProps.hxx>
+#include <BRepBndLib.hxx>
+#include <BRepAdaptor_Curve.hxx>
+#include <BRepAdaptor_Surface.hxx>
+#include <BRep_Builder.hxx>
 #if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 6)
 #include <BOPTools_Tools.hxx>
 #else

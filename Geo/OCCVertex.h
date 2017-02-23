@@ -9,9 +9,10 @@
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "GVertex.h"
-#include "OCCIncludes.h"
 
 #if defined(HAVE_OCC)
+
+#include <TopoDS_Vertex.hxx>
 
 class OCCVertex : public GVertex {
  protected:

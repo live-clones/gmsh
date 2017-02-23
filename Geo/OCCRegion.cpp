@@ -6,13 +6,20 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
+#include "GModelIO_OCC.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"
 #include "OCCFace.h"
 #include "OCCRegion.h"
 
 #if defined(HAVE_OCC)
-#include "GModelIO_OCC.h"
+
+#include <Bnd_Box.hxx>
+#include <TopoDS.hxx>
+#include <TopoDS_Compound.hxx>
+#include <TopExp_Explorer.hxx>
+#include <BRep_Builder.hxx>
+#include <BRepBndLib.hxx>
 
 OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num)
   : GRegion(m, num), s(_s)

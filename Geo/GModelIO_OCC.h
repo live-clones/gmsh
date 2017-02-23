@@ -6,13 +6,25 @@
 #ifndef _GMODELIO_OCC_H_
 #define _GMODELIO_OCC_H_
 
+#include <vector>
+#include <map>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
-#include "OCCIncludes.h"
 
 #if defined(HAVE_OCC)
-#include <vector>
+
+#include <TopoDS_Shape.hxx>
+#include <TopoDS_Vertex.hxx>
+#include <TopoDS_Edge.hxx>
+#include <TopoDS_Wire.hxx>
+#include <TopoDS_Face.hxx>
+#include <TopoDS_Shell.hxx>
+#include <TopoDS_Solid.hxx>
+#include <TopTools_IndexedMapOfShape.hxx>
+#include <TopTools_DataMapOfShapeInteger.hxx>
+#include <TopTools_DataMapOfIntegerShape.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
 
 class OCC_Internals {
  public:
@@ -77,18 +89,7 @@ class OCC_Internals {
   bool getChanged() const { return _changed; }
 
   // reset all maps
-  void reset()
-  {
-    for(int i = 0; i < 6; i++) _maxTagConstraints[i] = 0;
-    for(int i = 0; i < 4; i++) meshAttributes[i].clear();
-    _somap.Clear(); _shmap.Clear(); _fmap.Clear(); _wmap.Clear(); _emap.Clear();
-    _vmap.Clear();
-    _vertexTag.Clear(); _edgeTag.Clear(); _faceTag.Clear(); _solidTag.Clear();
-    _tagVertex.Clear(); _tagEdge.Clear(); _tagFace.Clear(); _tagSolid.Clear();
-    _wireTag.Clear(); _shellTag.Clear();
-    _tagWire.Clear(); _tagShell.Clear();
-    _changed = true;
-  }
+  void reset();
 
   // bind and unbind OpenCASCADE shapes to tags
   void bind(TopoDS_Vertex vertex, int tag);

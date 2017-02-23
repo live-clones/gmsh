@@ -11,6 +11,8 @@
 
 #if defined(HAVE_OCC)
 
+#include <TopoDS_Solid.hxx>
+
 class OCCRegion : public GRegion {
  protected:
   TopoDS_Solid s;

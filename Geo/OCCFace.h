@@ -9,11 +9,11 @@
 #include "GmshConfig.h"
 #include "GFace.h"
 #include "GModel.h"
-#include "OCCVertex.h"
-#include "OCCEdge.h"
 #include "Range.h"
 
 #if defined(HAVE_OCC)
+
+#include <TopoDS_Face.hxx>
 
 class OCCFace : public GFace {
  protected:

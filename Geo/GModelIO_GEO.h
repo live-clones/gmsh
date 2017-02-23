@@ -89,8 +89,6 @@ class GEO_Internals{
   List_T *PhysicalGroups;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
-
-  // FIXME this should not be stored in GEO_internals, but directly set in GModel
   std::multimap<int, std::vector<int> > meshCompounds;
 };
 
