@@ -44,6 +44,7 @@ class GEO_Internals{
   void addCompoundLine(int num, std::vector<int> edgeTags);
   void addLineLoop(int num, std::vector<int> edgeTags);
   void addPlaneSurface(int num, std::vector<int> wireTags);
+  void addDiscreteSurface(int num);
   void addSurfaceFilling(int num, std::vector<int> wireTags, int sphereCenterTag=-1);
   void addSurfaceLoop(int num, std::vector<int> faceTags);
   void addCompoundSurface(int num, std::vector<int> faceTags,
@@ -65,6 +66,10 @@ class GEO_Internals{
   void setTransfiniteLine(int tag, int nPoints, int type, double coef);
   void setTransfiniteSurface(int tag, int arrangement, std::vector<int> cornerTags);
   void setTransfiniteVolume(int tag, std::vector<int> cornerTags);
+  void setTransfiniteVolumeQuadTri(int tag);
+  void setRecombine(int dim, int tag, double angle);
+  void setSmoothing(int tag, int val);
+  void setReverseMesh(int dim, int tag);
 
   // synchronize internal CAD data with the given GModel
   void synchronize(GModel *model);

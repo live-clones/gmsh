@@ -4347,21 +4347,11 @@ ExtrudeParameter :
     }
   | tHole '(' FExpr ')' tAFFECT ListOfDouble tUsing FExpr tEND
     {
+      std::vector<int> tags; ListOfDouble2Vector($6, tags);
       int num = (int)$3;
-      if(FindSurface(num)){
-	yymsg(0, "Surface %d already exists", num);
-      }
-      else{
-	Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
-	Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
-	extr.mesh.Holes[num].first = $8;
-	extr.mesh.Holes[num].second.clear();
-	for(int i = 0; i < List_Nbr($6); i++){
-	  double d;
-	  List_Read($6, i, &d);
-	  extr.mesh.Holes[num].second.push_back((int)d);
-	}
-      }
+      GModel::current()->getGEOInternals()->addDiscreteSurface(num);
+      extr.mesh.Holes[num].first = $8;
+      extr.mesh.Holes[num].second = tags;
       List_Delete($6);
     }
   | tUsing tSTRING '[' FExpr ']' tEND
@@ -4686,36 +4676,24 @@ Constraints :
     }
   | tTransfQuadTri ListOfDoubleOrAll tEND
     {
+      // transfinite constraints are also stored in GEO internals, as they can
+      // be copied around during GEO operations
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(!$2){
-  	  List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Volumes);
-        if(List_Nbr(tmp)){
-          for(int i = 0; i < List_Nbr(tmp); i++){
-            Volume *v;
-            List_Read(tmp, i, &v);
-            v->QuadTri = TRANSFINITE_QUADTRI_1;
-          }
-        }
-        else{
-          for(GModel::riter it = GModel::current()->firstRegion();
-              it != GModel::current()->lastRegion(); it++)
-            (*it)->meshAttributes.QuadTri = TRANSFINITE_QUADTRI_1;
-        }
-        List_Delete(tmp);
+        GModel::current()->getGEOInternals()->setTransfiniteVolumeQuadTri(0);
+        for(GModel::riter it = GModel::current()->firstRegion();
+            it != GModel::current()->lastRegion(); it++)
+          (*it)->meshAttributes.QuadTri = TRANSFINITE_QUADTRI_1;
       }
       else{
         for(int i = 0; i < List_Nbr($2); i++){
           double d;
           List_Read($2, i, &d);
-          Volume *v = FindVolume((int)d);
-          if(v)
-            v->QuadTri = TRANSFINITE_QUADTRI_1;
-          else{
-            GRegion *gr = GModel::current()->getRegionByTag((int)d);
-            if(gr)
-              gr->meshAttributes.QuadTri = TRANSFINITE_QUADTRI_1;
-            else
-              yymsg(1, "Unknown model region with tag %d", (int)d);
-          }
+          int tag = (int)d;
+          GModel::current()->getGEOInternals()->setTransfiniteVolumeQuadTri(tag);
+          GRegion *gr = GModel::current()->getRegionByTag(tag);
+          if(gr) gr->meshAttributes.QuadTri = TRANSFINITE_QUADTRI_1;
         }
         List_Delete($2);
       }
@@ -4733,109 +4711,80 @@ Constraints :
     {
       // recombine constraints are also stored in GEO internals, as they can be
       // copied around during GEO operations
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(!$3){
-	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
-        if(List_Nbr(tmp)){
-          for(int i = 0; i < List_Nbr(tmp); i++){
-            Surface *s;
-            List_Read(tmp, i, &s);
-            s->Recombine = 1;
-            s->RecombineAngle = $4;
-          }
+        GModel::current()->getGEOInternals()->setRecombine(2, 0, $4);
+        for(GModel::fiter it = GModel::current()->firstFace();
+            it != GModel::current()->lastFace(); it++){
+          (*it)->meshAttributes.recombine = 1;
+          (*it)->meshAttributes.recombineAngle = $4;
         }
-        else{
-          for(GModel::fiter it = GModel::current()->firstFace();
-              it != GModel::current()->lastFace(); it++){
-            (*it)->meshAttributes.recombine = 1;
-            (*it)->meshAttributes.recombineAngle = $4;
-          }
-        }
-        List_Delete(tmp);
       }
       else{
         for(int i = 0; i < List_Nbr($3); i++){
           double d;
           List_Read($3, i, &d);
-          Surface *s = FindSurface((int)d);
-          if(s){
-            s->Recombine = 1;
-            s->RecombineAngle = $4;
-          }
-          else{
-            GFace *gf = GModel::current()->getFaceByTag((int)d);
-            if(gf){
-              gf->meshAttributes.recombine = 1;
-              gf->meshAttributes.recombineAngle = $4;
-            }
-            else
-              yymsg(1, "Unknown model face with tag %d", (int)d);
+          int tag = (int)d;
+          GModel::current()->getGEOInternals()->setRecombine(2, tag, $4);
+          GFace *gf = GModel::current()->getFaceByTag(tag);
+          if(gf){
+            gf->meshAttributes.recombine = 1;
+            gf->meshAttributes.recombineAngle = $4;
           }
         }
         List_Delete($3);
       }
     }
-  | tRecombine tVolume ListOfDoubleOrAll  tEND
+  | tRecombine tVolume ListOfDoubleOrAll tEND
     {
       // recombine constraints are also stored in GEO internals, as they can be
       // copied around during GEO operations
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(!$3){
-	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Volumes);
-        if(List_Nbr(tmp)){
-          for(int i = 0; i < List_Nbr(tmp); i++){
-            Volume *v;
-            List_Read(tmp, i, &v);
-            v->Recombine3D = 1;
-          }
+        GModel::current()->getGEOInternals()->setRecombine(3, 0, 0.);
+        for(GModel::riter it = GModel::current()->firstRegion();
+            it != GModel::current()->lastRegion(); it++){
+          (*it)->meshAttributes.recombine3D = 1;
         }
-        else{
-          for(GModel::riter it = GModel::current()->firstRegion();
-              it != GModel::current()->lastRegion(); it++){
-            (*it)->meshAttributes.recombine3D = 1;
-          }
-        }
-        List_Delete(tmp);
       }
       else{
         for(int i = 0; i < List_Nbr($3); i++){
           double d;
           List_Read($3, i, &d);
-          Volume *v = FindVolume((int)d);
-          if(v){
-            v->Recombine3D = 1;
-          }
-          else{
-            GRegion *gr = GModel::current()->getRegionByTag((int)d);
-            if(gr){
-              gr->meshAttributes.recombine3D = 1;
-            }
-            else
-              yymsg(1, "Unknown model region with tag %d", (int)d);
-          }
+          int tag = (int)d;
+          GModel::current()->getGEOInternals()->setRecombine(3, tag, 0.);
+          GRegion *gr = GModel::current()->getRegionByTag(tag);
+          if(gr) gr->meshAttributes.recombine3D = 1;
         }
         List_Delete($3);
       }
     }
-  | tSmoother tSurface ListOfDouble tAFFECT FExpr tEND
+  | tSmoother tSurface ListOfDoubleOrAll tAFFECT FExpr tEND
     {
       // smoothing constraints are also stored in GEO internals, as they can be
       // copied around during GEO operations
-      for(int i = 0; i < List_Nbr($3); i++){
-        double d;
-        List_Read($3, i, &d);
-        int j = (int)d;
-        Surface *s = FindSurface(j);
-        if(s){
-          s->TransfiniteSmoothing = (int)$5;
-        }
-        else{
-          GFace *gf = GModel::current()->getFaceByTag(j);
-          if(gf)
-            gf->meshAttributes.transfiniteSmoothing = (int)$5;
-          else
-            yymsg(1, "Unknown model face with tag %d", (int)$5);
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(!$3){
+        GModel::current()->getGEOInternals()->setSmoothing(0, (int)$5);
+        for(GModel::fiter it = GModel::current()->firstFace();
+            it != GModel::current()->lastFace(); it++){
+          (*it)->meshAttributes.transfiniteSmoothing = (int)$5;
         }
       }
-      List_Delete($3);
+      else{
+        for(int i = 0; i < List_Nbr($3); i++){
+          double d;
+          List_Read($3, i, &d);
+          int tag = (int)d;
+          GModel::current()->getGEOInternals()->setSmoothing(tag, (int)$5);
+          GFace *gf = GModel::current()->getFaceByTag(tag);
+          if(gf) gf->meshAttributes.transfiniteSmoothing = (int)$5;
+        }
+        List_Delete($3);
+      }
     }
   | tPeriodic tLine '{' RecursiveListOfDouble '}' tAFFECT
     '{' RecursiveListOfDouble '}' PeriodicTransform tEND
@@ -5056,39 +5005,23 @@ Constraints :
     {
       // reverse mesh constraints are also stored in GEO internals, as they can
       // be copied around during GEO operations
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(!$3){
-	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
-        if(List_Nbr(tmp)){
-          for(int i = 0; i < List_Nbr(tmp); i++){
-            Surface *s;
-            List_Read(tmp, i, &s);
-            s->ReverseMesh = 1;
-          }
+        GModel::current()->getGEOInternals()->setReverseMesh(2, 0);
+        for(GModel::fiter it = GModel::current()->firstFace();
+            it != GModel::current()->lastFace(); it++){
+          (*it)->meshAttributes.reverseMesh = 1;
         }
-        else{
-          for(GModel::fiter it = GModel::current()->firstFace();
-              it != GModel::current()->lastFace(); it++){
-            (*it)->meshAttributes.reverseMesh = 1;
-          }
-        }
-        List_Delete(tmp);
       }
       else{
         for(int i = 0; i < List_Nbr($3); i++){
           double d;
           List_Read($3, i, &d);
-          Surface *s = FindSurface((int)d);
-          if(s){
-            s->ReverseMesh = 1;
-          }
-          else{
-            GFace *gf = GModel::current()->getFaceByTag((int)d);
-            if(gf){
-              gf->meshAttributes.reverseMesh = 1;
-            }
-            else
-              yymsg(1, "Unknown model face with tag %d", (int)d);
-          }
+          int num = (int)d;
+          GModel::current()->getGEOInternals()->setReverseMesh(2, num);
+          GFace *gf = GModel::current()->getFaceByTag(num);
+          if(gf) gf->meshAttributes.reverseMesh = 1;
         }
         List_Delete($3);
       }
@@ -5097,39 +5030,23 @@ Constraints :
     {
       // reverse mesh constraints are also stored in GEO internals, as they can
       // be copied around during GEO operations
+      if(GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(!$3){
-	List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Curves);
-        if(List_Nbr(tmp)){
-          for(int i = 0; i < List_Nbr(tmp); i++){
-            Curve *c;
-            List_Read(tmp, i, &c);
-            c->ReverseMesh = 1;
-          }
+        GModel::current()->getGEOInternals()->setReverseMesh(1, 0);
+        for(GModel::eiter it = GModel::current()->firstEdge();
+            it != GModel::current()->lastEdge(); it++){
+          (*it)->meshAttributes.reverseMesh = 1;
         }
-        else{
-          for(GModel::eiter it = GModel::current()->firstEdge();
-              it != GModel::current()->lastEdge(); it++){
-            (*it)->meshAttributes.reverseMesh = 1;
-          }
-        }
-        List_Delete(tmp);
       }
       else{
         for(int i = 0; i < List_Nbr($3); i++){
           double d;
           List_Read($3, i, &d);
-          Curve *c = FindCurve((int)d);
-          if(c){
-            c->ReverseMesh = 1;
-          }
-          else{
-            GEdge *ge = GModel::current()->getEdgeByTag((int)d);
-            if(ge){
-              ge->meshAttributes.reverseMesh = 1;
-            }
-            else
-              yymsg(1, "Unknown model edge with tag %d", (int)d);
-          }
+          int num = (int)d;
+          GModel::current()->getGEOInternals()->setReverseMesh(1, num);
+          GEdge *ge = GModel::current()->getEdgeByTag(num);
+          if(ge) ge->meshAttributes.reverseMesh = 1;
         }
         List_Delete($3);
       }
@@ -6991,6 +6908,7 @@ fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list)
 void ListOfDouble2Vector(List_T *list, std::vector<int> &v)
 {
   v.clear();
+  if(!list) return;
   v.reserve(List_Nbr(list));
   for(int i = 0; i < List_Nbr(list); i++){
     double d;
@@ -7002,6 +6920,7 @@ void ListOfDouble2Vector(List_T *list, std::vector<int> &v)
 void ListOfDouble2Vector(List_T *list, std::vector<double> &v)
 {
   v.clear();
+  if(!list) return;
   v.reserve(List_Nbr(list));
   for(int i = 0; i < List_Nbr(list); i++){
     double d;

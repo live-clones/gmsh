@@ -301,6 +301,17 @@ void GEO_Internals::addPlaneSurface(int num, std::vector<int> wireTags)
   _changed = true;
 }
 
+void GEO_Internals::addDiscreteSurface(int num)
+{
+  if(FindSurface(num)){
+    Msg::Error("GEO face with tag %d already exists", num);
+    return;
+  }
+  Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
+  Tree_Add(Surfaces, &s);
+  _changed = true;
+}
+
 void GEO_Internals::addSurfaceFilling(int num, std::vector<int> wireTags,
                                       int sphereCenterTag)
 {
@@ -563,6 +574,115 @@ void GEO_Internals::setTransfiniteVolume(int tag, std::vector<int> cornerTags)
   }
 }
 
+void GEO_Internals::setTransfiniteVolumeQuadTri(int tag)
+{
+  if(!tag){
+    List_T *tmp = Tree2List(Volumes);
+    for(int i = 0; i < List_Nbr(tmp); i++){
+      Volume *v;
+      List_Read(tmp, i, &v);
+      v->QuadTri = TRANSFINITE_QUADTRI_1;
+    }
+    List_Delete(tmp);
+  }
+  else{
+    Volume *v = FindVolume(tag);
+    if(v)
+      v->QuadTri = TRANSFINITE_QUADTRI_1;
+  }
+}
+
+void GEO_Internals::setRecombine(int dim, int tag, double angle)
+{
+  if(dim == 2){
+    if(!tag){
+      List_T *tmp = Tree2List(Surfaces);
+      for(int i = 0; i < List_Nbr(tmp); i++){
+        Surface *s;
+        List_Read(tmp, i, &s);
+        s->Recombine = 1;
+        s->RecombineAngle = angle;
+      }
+      List_Delete(tmp);
+    }
+    else{
+      Surface *s = FindSurface(tag);
+      if(s){
+        s->Recombine = 1;
+        s->RecombineAngle = angle;
+      }
+    }
+  }
+  else if(dim == 3){
+    if(!tag){
+      List_T *tmp = Tree2List(Volumes);
+      for(int i = 0; i < List_Nbr(tmp); i++){
+        Volume *v;
+        List_Read(tmp, i, &v);
+        v->Recombine3D = 1;
+      }
+      List_Delete(tmp);
+    }
+    else{
+      Volume *v = FindVolume(tag);
+      if(v){
+        v->Recombine3D = 1;
+      }
+    }
+  }
+}
+
+void GEO_Internals::setSmoothing(int tag, int val)
+{
+  if(!tag){
+    List_T *tmp = Tree2List(Surfaces);
+    for(int i = 0; i < List_Nbr(tmp); i++){
+      Surface *s;
+      List_Read(tmp, i, &s);
+      s->TransfiniteSmoothing = val;
+    }
+    List_Delete(tmp);
+  }
+  else{
+    Surface *s = FindSurface(tag);
+    if(s) s->TransfiniteSmoothing = val;
+  }
+}
+
+void GEO_Internals::setReverseMesh(int dim, int tag)
+{
+  if(dim == 1){
+    if(!tag){
+      List_T *tmp = Tree2List(Curves);
+      for(int i = 0; i < List_Nbr(tmp); i++){
+        Curve *c;
+        List_Read(tmp, i, &c);
+        c->ReverseMesh = 1;
+      }
+      List_Delete(tmp);
+    }
+    else{
+      Curve *c = FindCurve(tag);
+      if(c) c->ReverseMesh = 1;
+    }
+  }
+  else if(dim == 2){
+    if(!tag){
+      List_T *tmp = Tree2List(Surfaces);
+      for(int i = 0; i < List_Nbr(tmp); i++){
+        Surface *s;
+        List_Read(tmp, i, &s);
+        s->ReverseMesh = 1;
+      }
+      List_Delete(tmp);
+    }
+    else{
+      Surface *s = FindSurface(tag);
+      if(s) s->ReverseMesh = 1;
+    }
+  }
+}
+
 void GEO_Internals::synchronize(GModel *model)
 {
   Msg::Debug("Syncing GEO_Internals with GModel");
@@ -740,6 +860,9 @@ void GEO_Internals::synchronize(GModel *model)
     }
     List_Delete(volumes);
   }
+
+  // we might want to store physical groups directly in GModel; but this is OK
+  // for efficiency
   for(int i = 0; i < List_Nbr(PhysicalGroups); i++){
     PhysicalGroup *p;
     List_Read(PhysicalGroups, i, &p);
@@ -762,7 +885,8 @@ void GEO_Internals::synchronize(GModel *model)
     }
   }
 
-  // this should not be stored in GEO_internals, but directly set in GModel
+  // we might want to store mesh compounds directly in GModel; but this is OK
+  // for efficiency
   for(std::multimap<int, std::vector<int> >::iterator it = meshCompounds.begin();
       it != meshCompounds.end(); ++it){
     int dim = it->first;
