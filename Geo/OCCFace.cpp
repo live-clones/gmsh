@@ -16,22 +16,28 @@
 
 #if defined(HAVE_OCC)
 
-#include <Standard_Version.hxx>
-#include <gp_Pln.hxx>
-#include <Bnd_Box.hxx>
-#include <Geom_CylindricalSurface.hxx>
-#include <Geom_ConicalSurface.hxx>
-#include <Geom_BSplineSurface.hxx>
-#include <Geom_SphericalSurface.hxx>
-#include <Geom_ToroidalSurface.hxx>
-#include <Geom_SurfaceOfRevolution.hxx>
-#include <Geom_BezierSurface.hxx>
-#include <Geom_Plane.hxx>
-#include <GeomAPI_ProjectPointOnSurf.hxx>
-#include <BRepMesh_FastDiscret.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepLProp_SLProps.hxx>
+#include <BRepMesh_FastDiscret.hxx>
 #include <BRep_Builder.hxx>
+#include <Bnd_Box.hxx>
+#include <GeomAPI_ProjectPointOnSurf.hxx>
+#include <Geom_BSplineSurface.hxx>
+#include <Geom_BezierSurface.hxx>
+#include <Geom_ConicalSurface.hxx>
+#include <Geom_CylindricalSurface.hxx>
+#include <Geom_Plane.hxx>
+#include <Geom_SphericalSurface.hxx>
+#include <Geom_SurfaceOfRevolution.hxx>
+#include <Geom_ToroidalSurface.hxx>
+#include <Poly_Triangulation.hxx>
+#include <Poly_Triangle.hxx>
+#include <ShapeAnalysis.hxx>
+#include <Standard_Version.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
+#include <gp_Pln.hxx>
+
 #if ((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)) || (OCC_VERSION_MAJOR >= 7)
 #if ((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 8))
 #include <BOPInt_Context.hxx>
@@ -41,13 +47,10 @@
 #include <BOPTools_AlgoTools2D.hxx>
 #include <BOPTools_AlgoTools.hxx>
 #else
-#include <IntTools_Context.hxx>
 #include <BOPTools_Tools2D.hxx>
 #include <BOPTools_Tools3D.hxx>
+#include <IntTools_Context.hxx>
 #endif
-#include <TopoDS.hxx>
-#include <TopExp_Explorer.hxx>
-#include <ShapeAnalysis.hxx>
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   : GFace(m, num), s(_s)

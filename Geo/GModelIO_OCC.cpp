@@ -66,10 +66,12 @@
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_Wireframe.hxx>
 #include <Standard_Version.hxx>
+#include <TColgp_Array1OfPnt.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_DataMapIteratorOfDataMapOfIntegerShape.hxx>
 #include <TopTools_DataMapIteratorOfDataMapOfShapeInteger.hxx>
+#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopoDS.hxx>
 #include <gce_MakeCirc.hxx>
 #include <gce_MakeElips.hxx>
