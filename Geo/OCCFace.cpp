@@ -34,6 +34,7 @@
 #include <Poly_Triangle.hxx>
 #include <ShapeAnalysis.hxx>
 #include <Standard_Version.hxx>
+#include <TColgp_Array1OfPnt2d.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <gp_Pln.hxx>
