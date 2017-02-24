@@ -596,28 +596,28 @@ Point(391) = {-5.17,8,23.00,mc};
 Point(392) = {-0.31,8,21.90,mc};
 
 Rotate{{0.0,1.0,0.0},{0.0,0.0,0.0},-3.14159/2} {
-  Duplicata { 
-    Point{381}; Point{382}; Point{383}; Point{384}; Point{385}; 
-    Point{386}; Point{387}; Point{388}; Point{389}; Point{390}; 
-    Point{391}; Point{392}; 
+  Duplicata {
+    Point{381}; Point{382}; Point{383}; Point{384}; Point{385};
+    Point{386}; Point{387}; Point{388}; Point{389}; Point{390};
+    Point{391}; Point{392};
   }
 }
 Coherence;
 
 Rotate{{0.0,1.0,0.0},{0.0,0.0,0.0},-3.14159/2} {
-  Duplicata { 
-    Point{393}; Point{394}; Point{395}; Point{396}; Point{397}; 
-    Point{398}; Point{399}; Point{400}; Point{401}; Point{402}; 
-    Point{403}; Point{404}; 
+  Duplicata {
+    Point{393}; Point{394}; Point{395}; Point{396}; Point{397};
+    Point{398}; Point{399}; Point{400}; Point{401}; Point{402};
+    Point{403}; Point{404};
   }
 }
 Coherence;
 
 Rotate{{0.0,1.0,0.0},{0.0,0.0,0.0},-3.14159/2} {
-  Duplicata { 
-    Point{405}; Point{406}; Point{407}; Point{408}; Point{409}; 
-    Point{410}; Point{411}; Point{412}; Point{413}; Point{414}; 
-    Point{415}; Point{416};  
+  Duplicata {
+    Point{405}; Point{406}; Point{407}; Point{408}; Point{409};
+    Point{410}; Point{411}; Point{412}; Point{413}; Point{414};
+    Point{415}; Point{416};
   }
 }
 Coherence;
@@ -649,14 +649,14 @@ Plane Surface(716) = {714,715};
 
 /* Extrude fixed contact*/
 
-Extrude Surface {716,{0,-8.0,0}} ;
+Extrude {0,-8.0,0}{ Surface {716}; }
 
 /********** Moving Contact ************/
 
 Translate{0.0,-20.0,0.} {
   Duplicata { Surface{716}; }
 }
-Extrude Surface { 819,{0,-8.0,0}} ;
+Extrude {0,-8.0,0}{ Surface {819}; }
 
 /********************************************** FLOATING SHIELD ****************************************/
 
@@ -811,7 +811,7 @@ Circle(1077) = {1037,1040,1038} ;
 Circle(1078) = {1038,1040,1039} ;
 Circle(1079) = {1039,1040,1036} ;
 
-Line(1080) = {1036,1031}; 
+Line(1080) = {1036,1031};
 Line(1081) = {1037,1032};
 Line(1082) = {1038,1033};
 Line(1083) = {1039,1034};
@@ -838,7 +838,7 @@ Circle(1093) = {1042,1045,1043} ;
 Circle(1094) = {1043,1045,1044} ;
 Circle(1095) = {1044,1045,1041} ;
 
-Line(1096) = {1036,1041}; 
+Line(1096) = {1036,1041};
 Line(1097) = {1037,1042};
 Line(1098) = {1038,1043};
 Line(1099) = {1039,1044};
@@ -1066,4 +1066,3 @@ Surface(1320) = {1319};
 
 Line Loop(1321) = {1305,1306,1307,1308};
 Plane Surface(1322) = {1321,240};
-

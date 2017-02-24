@@ -36,26 +36,26 @@ turns = 1/3;
 zz = 0.01;
 cc = 0.1;
 
-Extrude Surface {news-1, {0,0,2*zz}, {0,0,1} , {cc,cc,0} , 0}
-                { Layers {2}; Recombine; };
+Extrude { {0,0,2*zz}, {0,0,1} , {cc,cc,0} , 0}
+{ Surface {news-1}; Layers {2}; Recombine; }
 
 For j In {1:3}
-  Extrude Surface {news-1, {0,0,zz}, {0,0,1} , {cc,cc,0} , Pi/(40*(4-j))}
-                  { Layers {1}; Recombine; };
+  Extrude { {0,0,zz}, {0,0,1} , {cc,cc,0} , Pi/(40*(4-j))}
+  { Surface {news-1}; Layers {1}; Recombine; }
 EndFor
 
 For j In {1:turns*8}
-  Extrude Surface {news-1, {0,0,10*zz}, {0,0,1} , {cc,cc,0} , Pi/4}
-                  { Layers {10}; Recombine; };
+  Extrude { {0,0,10*zz}, {0,0,1} , {cc,cc,0} , Pi/4}
+  { Surface {news-1}; Layers {10}; Recombine; }
 EndFor
 
 For j In {1:3}
-  Extrude Surface {news-1, {0,0,zz}, {0,0,1} , {cc,cc,0} , Pi/(40*j)}
-                  { Layers {1}; Recombine; };
+  Extrude { {0,0,zz}, {0,0,1} , {cc,cc,0} , Pi/(40*j)}
+  { Surface {news-1}; Layers {1}; Recombine; }
 EndFor
 
-Extrude Surface {news-1, {0,0,2*zz}, {0,0,1} , {cc,cc,0} , 0}
-                { Layers {2}; Recombine; };
+Extrude { {0,0,2*zz}, {0,0,1} , {cc,cc,0} , 0}
+{ Surface {news-1}; Layers {2}; Recombine; }
 
 p = newp;
 
@@ -77,8 +77,8 @@ turns = 2;
 zz = 0.01/4;
 
 For j In {1:8*turns}
-  Extrude Surface {news-1, {0,0,10*zz}, {0,0,1} , {cc,cc,0} , Pi/4}
-                  { Layers {10}; Recombine; };
+  Extrude { {0,0,10*zz}, {0,0,1} , {cc,cc,0} , Pi/4}
+  { Surface {news-1}; Layers {10}; Recombine; }
 EndFor
 
 Point(p+4000)={0.1, -0.02 + 0.24, 0, lc};
@@ -95,6 +95,6 @@ Line Loop(4639) = {4635,4636,4637,4638};
 Plane Surface(4640) = {4639};
 
 For j In {1:8*turns}
-  Extrude Surface {news-1, {0,0,10*zz}, {0,0,1} , {cc,cc,0} , Pi/4}
-                  { Layers {10}; Recombine; };
+  Extrude { {0,0,10*zz}, {0,0,1} , {cc,cc,0} , Pi/4}
+  { Surface {news-1}; Layers {10}; Recombine; }
 EndFor

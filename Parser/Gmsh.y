@@ -157,7 +157,7 @@ struct doubleXstring{
 %token tRectangle tDisk tWire
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tSetFactory tThruSections tWedge tFillet tChamfer
-%token tPlane tRuled tTransfinite tComplex tPhysical tCompound tPeriodic
+%token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
@@ -2276,21 +2276,6 @@ Shape :
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
-  | tComplex tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
-    {
-      yymsg(1, "'Complex Volume' command is deprecated: use 'Volume' instead");
-      int num = (int)$4;
-      std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        GModel::current()->getOCCInternals()->addVolume(num, tags);
-      }
-      else{
-        GModel::current()->getGEOInternals()->addVolume(num, tags);
-      }
-      List_Delete($7);
-      $$.Type = MSH_VOLUME;
-      $$.Num = num;
-    }
   | tThruSections '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
@@ -3852,188 +3837,6 @@ Extrude :
       List_Delete($3);
       List_Delete($6);
     }
-  // Deprecated extrude commands (for backward compatibility)
-  | tExtrude tPoint '{' FExpr ',' VExpr '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(TRANSLATE, MSH_POINT, (int)$4,
-		   $6[0], $6[1], $6[2], 0., 0., 0., 0., 0., 0., 0.,
-		   NULL, $$);
-    }
-  | tExtrude tLine '{' FExpr ',' VExpr '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(TRANSLATE, MSH_SEGM_LINE, (int)$4,
-		   $6[0], $6[1], $6[2], 0., 0., 0., 0., 0., 0., 0.,
-		   NULL, $$);
-    }
-  | tExtrude tSurface '{' FExpr ',' VExpr '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(TRANSLATE, MSH_SURF_PLAN, (int)$4,
-		   $6[0], $6[1], $6[2], 0., 0., 0., 0., 0., 0., 0.,
-		   NULL, $$);
-    }
-  | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'  tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(ROTATE, MSH_POINT, (int)$4,
-		   0., 0., 0., $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10,
-		   NULL, $$);
-    }
-  | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(ROTATE, MSH_SEGM_LINE, (int)$4,
-		   0., 0., 0., $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10,
-		   NULL, $$);
-    }
-  | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(ROTATE, MSH_SURF_PLAN, (int)$4,
-		   0., 0., 0., $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10,
-		   NULL, $$);
-    }
-  | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}'  tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(TRANSLATE_ROTATE, MSH_POINT, (int)$4,
-		   $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
-		   NULL, $$);
-    }
-  | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(TRANSLATE_ROTATE, MSH_SEGM_LINE, (int)$4,
-		   $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
-		   NULL, $$);
-    }
-  | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(TRANSLATE_ROTATE, MSH_SURF_PLAN, (int)$4,
-		   $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
-		   NULL, $$);
-    }
-  | tExtrude tPoint '{' FExpr ',' VExpr '}'
-    {
-      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
-      extr.mesh.QuadToTri = NO_QUADTRI;
-      extr.mesh.ScaleLast = false;
-    }
-                    '{' ExtrudeParameters '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(TRANSLATE, MSH_POINT, (int)$4,
-		   $6[0], $6[1], $6[2], 0., 0., 0., 0., 0., 0., 0.,
-		   &extr, $$);
-    }
-  | tExtrude tLine '{' FExpr ',' VExpr '}'
-    {
-      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
-      extr.mesh.QuadToTri = NO_QUADTRI;
-      extr.mesh.ScaleLast = false;
-    }
-                   '{' ExtrudeParameters '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(TRANSLATE, MSH_SEGM_LINE, (int)$4,
-		   $6[0], $6[1], $6[2], 0., 0., 0., 0., 0., 0., 0.,
-		   &extr, $$);
-    }
-  | tExtrude tSurface '{' FExpr ',' VExpr '}'
-    {
-      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
-      extr.mesh.QuadToTri = NO_QUADTRI;
-      extr.mesh.ScaleLast = false;
-    }
-                      '{' ExtrudeParameters '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(TRANSLATE, MSH_SURF_PLAN, (int)$4,
-		   $6[0], $6[1], $6[2], 0., 0., 0., 0., 0., 0., 0.,
-		   &extr, $$);
-    }
-  | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
-    {
-      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
-      extr.mesh.QuadToTri = NO_QUADTRI;
-      extr.mesh.ScaleLast = false;
-    }
-                    '{' ExtrudeParameters '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(ROTATE, MSH_POINT, (int)$4,
-		   0., 0., 0., $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10,
-		   &extr, $$);
-    }
-  | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
-    {
-      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
-      extr.mesh.QuadToTri = NO_QUADTRI;
-      extr.mesh.ScaleLast = false;
-    }
-                   '{' ExtrudeParameters '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(ROTATE, MSH_SEGM_LINE, (int)$4,
-		   0., 0., 0., $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10,
-		   &extr, $$);
-    }
-  | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' FExpr '}'
-    {
-      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
-      extr.mesh.QuadToTri = NO_QUADTRI;
-      extr.mesh.ScaleLast = false;
-    }
-                      '{' ExtrudeParameters '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(ROTATE, MSH_SURF_PLAN, (int)$4,
-		   0., 0., 0., $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10,
-		   &extr, $$);
-    }
-  | tExtrude tPoint '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr'}'
-    {
-      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
-      extr.mesh.QuadToTri = NO_QUADTRI;
-      extr.mesh.ScaleLast = false;
-    }
-                    '{' ExtrudeParameters '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(TRANSLATE_ROTATE, MSH_POINT, (int)$4,
-		   $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
-		   &extr, $$);
-    }
-  | tExtrude tLine '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}'
-    {
-      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
-      extr.mesh.QuadToTri = NO_QUADTRI;
-      extr.mesh.ScaleLast = false;
-    }
-                   '{' ExtrudeParameters '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(TRANSLATE_ROTATE, MSH_SEGM_LINE, (int)$4,
-		   $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
-		   &extr, $$);
-    }
-  | tExtrude tSurface '{' FExpr ',' VExpr ',' VExpr ',' VExpr ',' FExpr '}'
-    {
-      extr.mesh.ExtrudeMesh = extr.mesh.Recombine = false;
-      extr.mesh.QuadToTri = NO_QUADTRI;
-      extr.mesh.ScaleLast = false;
-    }
-                      '{' ExtrudeParameters '}' tEND
-    {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShape(TRANSLATE_ROTATE, MSH_SURF_PLAN, (int)$4,
-		   $6[0], $6[1], $6[2], $8[0], $8[1], $8[2], $10[0], $10[1], $10[2], $12,
-		   &extr, $$);
-    }
-   // End of deprecated extrude commands
 ;
 
 ExtrudeParameters :
@@ -4077,29 +3880,6 @@ ExtrudeParameter :
 	yymsg(0, "Wrong layer definition {%d, %d}", List_Nbr($3), List_Nbr($5));
       List_Delete($3);
       List_Delete($5);
-    }
-  | tLayers '{' ListOfDouble ',' ListOfDouble ',' ListOfDouble '}' tEND
-    {
-      yymsg(1, "Explicit region numbers in layers are deprecated");
-      extr.mesh.ExtrudeMesh = true;
-      extr.mesh.NbLayer = List_Nbr($3);
-      if(List_Nbr($3) == List_Nbr($5) && List_Nbr($3) == List_Nbr($7)){
-	extr.mesh.NbElmLayer.clear();
-	extr.mesh.hLayer.clear();
-	for(int i = 0; i < List_Nbr($3); i++){
-	  double d;
-	  List_Read($3, i, &d);
-	  extr.mesh.NbElmLayer.push_back((d > 0) ? (int)d : 1);
-	  List_Read($7, i, &d);
-	  extr.mesh.hLayer.push_back(d);
-	}
-      }
-      else
-	yymsg(0, "Wrong layer definition {%d, %d, %d}", List_Nbr($3),
-	      List_Nbr($5), List_Nbr($7));
-      List_Delete($3);
-      List_Delete($5);
-      List_Delete($7);
     }
   | tScaleLast tEND
     {
@@ -4385,11 +4165,6 @@ Constraints :
         List_Delete($3);
       }
       List_Delete($4);
-    }
-  | tElliptic tSurface '{' FExpr '}' tAFFECT ListOfDouble tEND
-    {
-      yymsg(1, "Elliptic Surface is deprecated: use Transfinite instead (with smoothing)");
-      List_Delete($7);
     }
   | tTransfinite tVolume ListOfDoubleOrAll TransfiniteCorners tEND
     {

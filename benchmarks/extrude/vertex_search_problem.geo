@@ -15,7 +15,7 @@ diam_spire	= 310*mm ;
 Largeur_ind 	= 35*mm ;
 Hauteur_ind	= 40*mm ;
 s = 5;
-lc_ind12 	= (Largeur_ind/5)*s/3 ;  
+lc_ind12 	= (Largeur_ind/5)*s/3 ;
 
 //Geometry.OldNewReg = 1;
 //Geometry.AutoCoherence = 1;
@@ -35,16 +35,15 @@ llIdev1 = newreg ; Line Loop (llIdev1) = {lIdev_int1,lIdev_cotint1,lIdev_ext1,lI
 psIdev1 = newreg ; Plane Surface(psIdev1) = {llIdev1};
 
 
-TRANS = 1; 
+TRANS = 1;
 ns = 4 ;
 If(TRANS)
 Transfinite Line {lIdev_int1,lIdev_cotint1,lIdev_ext1, lIdev_cotext1}  = ns ;
 Transfinite Surface {psIdev1} = {pIdev_int2,pIdev_int1,pIdev_ext1,pIdev_ext2};
 EndIf
 
-Recombine Surface{newreg-1} ;  
+Recombine Surface{newreg-1} ;
 
-vol[]=Extrude Surface { newreg-1, {1,0,0} , {0,0,0} , Pi/4 }
-{ Layers { 2, 1 } ; Recombine; };;
+vol[]=Extrude { {1,0,0} , {0,0,0} , Pi/4 }
+{ Surface { newreg-1}; Layers { 2, 1 } ; Recombine; };
 vIdev1[0] = vol[1];
-

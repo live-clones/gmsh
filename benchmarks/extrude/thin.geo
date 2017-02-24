@@ -9,4 +9,4 @@ Ellipse(3) = {1,5,2,4};
 Ellipse(4) = {2,5,1,4};
 Line Loop(5) = {-2,1,-4,3};
 Plane Surface(6) = {5};
-Extrude Surface {6, {0.0,0.0,0.008}}{Layers{1,1};};
+Extrude {0.0,0.0,0.008}{ Surface {6}; Layers{1,1};}

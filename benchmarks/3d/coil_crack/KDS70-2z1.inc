@@ -106,78 +106,78 @@ Plane Surface(sblin) = {sblin,lair};
 
 dx = -dist ; dy = 0.; dz = 0.;
 
-vol[]=Extrude Surface{surfcore1, {dx,dy,dz}} {Layers {{ncore1},{1}};};;
+vol[]=Extrude {dx,dy,dz} { Surface{surfcore1}; Layers {{ncore1},{1}};};
 vCore10 = vol[1];
-vol[]=Extrude Surface{surfcore2, {dx,dy,dz}} {Layers {{ncore1},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{surfcore2}; Layers {{ncore1},{1}};};
 vCore20 = vol[1];
 
 dx = hc ;  
-vol[]=Extrude Surface{surfcore1, {dx,dy,dz}} {Layers {{ncore2},{1}};};; 
+vol[]=Extrude  {dx,dy,dz} { Surface{surfcore1}; Layers {{ncore2},{1}};};
 vCore11 = vol[1];
 surfcore11 = news-1;
-vol[]=Extrude Surface{surfcore2, {dx,dy,dz}} {Layers {{ncore2},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{surfcore2}; Layers {{ncore2},{1}};};
 vCore21 = vol[1];
 
 dx = dist ;  
 surfcore21 = news-1;
-vol[]=Extrude Surface{surfcore11, {dx,dy,dz}} {Layers {{ncore1},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{surfcore11}; Layers {{ncore1},{1}};};
 vCore12 = vol[1];
-vol[]=Extrude Surface{surfcore21, {dx,dy,dz}} {Layers {{ncore1},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{surfcore21}; Layers {{ncore1},{1}};};
 vCore22 = vol[1];
 
 
 //Coils_in
 dx = hc ;
-vol[]=Extrude Surface{surfcoil1, {dx,dy,dz}} {Layers {{ncore2},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{surfcoil1}; Layers {{ncore2},{1}};};
 vCoilIn1 = vol[1]; surfcoil1up = news-1;
-vol[]=Extrude Surface{surfcoil2, {dx,dy,dz}} {Layers {{ncore2},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{surfcoil2}; Layers {{ncore2},{1}};};
 vCoilIn2 = vol[1]; surfcoil2up = news-1;
 
 dx = -dist;
-vol[]=Extrude Surface{surfcoil1, {dx,dy,dz}} {Layers {{ncore1},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{surfcoil1}; Layers {{ncore1},{1}};};
 vAir0CoilIn1 = vol[1];
-vol[]=Extrude Surface{surfcoil2, {dx,dy,dz}} {Layers {{ncore1},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{surfcoil2}; Layers {{ncore1},{1}};};
 vAir0CoilIn2 = vol[1];
 
 dx = dist;
-vol[]=Extrude Surface{surfcoil1up, {dx,dy,dz}} {Layers {{ncore1},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{surfcoil1up}; Layers {{ncore1},{1}};};
 vAir1CoilIn1 = vol[1];
-vol[]=Extrude Surface{surfcoil2up, {dx,dy,dz}} {Layers {{ncore1},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{surfcoil2up}; Layers {{ncore1},{1}};};
 vAir1CoilIn2 = vol[1];
 
 //Coil_out
 dx = -dist ; 
-vol[]=Extrude Surface{scoilout, {dx,dy,dz}} {Layers {{ncore1},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{scoilout}; Layers {{ncore1},{1}};};
 vAir0CoilOut0 = vol[1];
 dx = hc ;
-vol[]=Extrude Surface{scoilout, {dx,dy,dz}} {Layers {{ncore2},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{scoilout}; Layers {{ncore2},{1}};};
 vCoilOut = vol[1];
 dx=dist;
-vol[]=Extrude Surface{news-1, {dx,dy,dz}} {Layers {{ncore1},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{news-1}; Layers {{ncore1},{1}};};
 vAir1CoilOut0 = vol[1];
 
 //Air in
 dx = -dist;
-vol[]=Extrude Surface{sair,{dx,dy,dz} } {Layers {{ncore1},{1}};};;
+vol[]=Extrude {dx,dy,dz} { Surface{sair}; Layers {{ncore1},{1}};};
 vAirIn0 = vol[1];
 dx=hc;
-vol[]=Extrude Surface{sair, {dx,dy,dz}} {Layers {{ncore2},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{sair}; Layers {{ncore2},{1}};};
 vAirIn = vol[1];
 dx=dist;
-vol[]=Extrude Surface{news-1, {dx,dy,dz}} {Layers {{ncore1},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{news-1}; Layers {{ncore1},{1}};};
 vAirIn1 = vol[1];
 
 //Blindage
 dx = -dist;
-vol[]=Extrude Surface{sblin, {dx,dy,dz}} {Layers {{ncore1},{1}};};;
+vol[]=Extrude {dx,dy,dz} { Surface{sblin}; Layers {{ncore1},{1}};};
 vBlin0 = vol[1];
 dx=hc;
-vol[]=Extrude Surface{sblin, {dx,dy,dz}} {Layers {{ncore2},{1}};};; 
+vol[]=Extrude {dx,dy,dz} { Surface{sblin}; Layers {{ncore2},{1}};};
 vBlin1 = vol[1];
 
 sblin1 = news-1;
 dx=dist;
-vol[]=Extrude Surface{sblin1, {dx,dy,dz}} {Layers {{ncore1},{1}};};; 
+vol[]=Extrude  {dx,dy,dz} { Surface{sblin1}; Layers {{ncore1},{1}};};
 vBlin2 = vol[1];
 
 

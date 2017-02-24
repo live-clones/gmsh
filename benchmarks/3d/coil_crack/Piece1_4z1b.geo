@@ -127,28 +127,24 @@ Line Loop(sDefect) = {cd[2],-cd[1],-cd[0]};
 Plane Surface(sDefect) = {sDefect};
 
 If (LAYERS)
-vol[]=Extrude Surface{sDefect, {0,length,0}}
-//;;
-{Layers {{nDefect},{1}};};;
+  vol[]=Extrude {0,length,0}{ Surface{sDefect}; Layers {{nDefect},{1}};};
 vDefect = vol[1];
 
-vol[] = Extrude Surface {sRight, {0.0,1.0,0.0}, {0.0,0.0,0.0},AngRot-aa/2}// ;;
-  {Layers {{nAngle},{1}};}; ;
+vol[] = Extrude { {0.0,1.0,0.0}, {0.0,0.0,0.0},AngRot-aa/2}{ Surface {sRight}; Layers {{nAngle},{1}}; };
 vPieceR=vol[1];
 
-vol[] = Extrude Surface {sLeft, {0.0,1.0,0.0}, {0.0,0.0,0.0},-(AngRot-aa/2)}// ;;
-  {Layers {{nAngle},{1}};}; ;
+vol[] = Extrude { {0.0,1.0,0.0}, {0.0,0.0,0.0},-(AngRot-aa/2)}{ Surface {sLeft}; Layers {{nAngle},{1}};};
 vPieceL=vol[1];
 EndIf
 
 If (!LAYERS)
-vol[]=Extrude Surface{sDefect, {0,length,0}} ;;
+  vol[]=Extrude {0,length,0}{ Surface{sDefect}; };
 vDefect = vol[1];
 
-vol[] = Extrude Surface {sRight, {0.0,1.0,0.0}, {0.0,0.0,0.0},AngRot-aa/2} ;;
+vol[] = Extrude { {0.0,1.0,0.0}, {0.0,0.0,0.0},AngRot-aa/2}{ Surface {sRight};} ;
 vPieceR=vol[1];
 
-vol[] = Extrude Surface {sLeft, {0.0,1.0,0.0}, {0.0,0.0,0.0},-(AngRot-aa/2)};;
+vol[] = Extrude { {0.0,1.0,0.0}, {0.0,0.0,0.0},-(AngRot-aa/2)}{ Surface {sLeft}; };
 vPieceL=vol[1];
 EndIf
 
@@ -242,5 +238,3 @@ Physical Surface(SKINPIECEWCRACK) =
 
 Physical Volume(AIR) = {vAir};
 Physical Surface(SURFACEGH0) = {sbox[0],-sbox1,-sbox2,-sbox3,-sbox4,-sbox[1]};
-
-

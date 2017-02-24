@@ -141,7 +141,6 @@ Cohomology              return tCohomology;
 Color                   return tColor;
 ColorTable              return tColorTable;
 Combine                 return tCombine;
-Complex                 return tComplex;
 Compound                return tCompound;
 Cone                    return tCone;
 Coordinates             return tCoordinates;

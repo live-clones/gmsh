@@ -19,4 +19,4 @@ Line(3) = {3,4} ;
 Line(4) = {4,1} ;
 Line Loop(23) = {3,4,1,2} ;
 Plane Surface(24)={23} ;
-Extrude Surface{24, {0,0,zmax-zmin}} {Layers{3,1};};
+Extrude {0,0,zmax-zmin} { Surface{24}; Layers{3,1}; }

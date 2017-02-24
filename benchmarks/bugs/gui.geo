@@ -11,7 +11,7 @@ Point(10) = {5,0.5,0,lc};
 Point(12) = {3.5,9,0,lc};
 Point(13) = {6.5,9,0,lc};
 Circle(1) = {8,10,9};
-Translate {0.0,1.5,0} { 
+Translate {0.0,1.5,0} {
 // neat: we can transform the point AFTER the curve has been created
   Point{10};
 }
@@ -34,4 +34,4 @@ Ellipse(12) = {17,14,14,18};
 Line Loop(13) = {8,-7,-6,-3,-1,-2,-4,5};
 Line Loop(14) = {9,10,11,12};
 Plane Surface(15) = {13,14};
-Extrude Surface {15, {0.0,0.0,2.5}};
+Extrude {0.0,0.0,2.5}{ Surface {15}; }
