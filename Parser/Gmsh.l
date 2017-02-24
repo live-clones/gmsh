@@ -158,6 +158,7 @@ Cylinder                return tCylinder;
 DefineConstant          return tDefineConstant;
 DefineNumber            return tDefineNumber;
 DefineString            return tDefineString;
+DefineStruct            return tDefineStruct;
 Degenerated             return tDegenerated;
 Delete                  return tDelete;
 Dilate                  return tDilate;
@@ -234,6 +235,7 @@ MeshAlgorithm           return tMeshAlgorithm;
 Modulo                  return tModulo;
 
 N2S                     return tNameToString;
+NameStruct              return tNameStruct;
 NameToString            return tNameToString;
 NewModel                return tNewModel;
 Nurbs			return tNurbs;

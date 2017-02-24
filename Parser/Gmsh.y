@@ -86,6 +86,9 @@ static std::string LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
 static std::map<std::string, std::vector<double> > floatOptions;
 static std::map<std::string, std::vector<std::string> > charOptions;
 static std::string factory;
+static std::map<std::string, Struct> StructTable_M;
+static char *Struct_Name = 0, *Struct_NameSpace = 0;
+static int flag_tSTRING_alloc = 0;
 
 void yyerror(const char *s);
 void yymsg(int level, const char *fmt, ...);
@@ -145,7 +148,8 @@ struct doubleXstring{
 %token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
-%token tDefineNumber tDefineString tSetNumber tSetString
+%token tDefineNumber tDefineStruct tNameStruct
+%token tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tBlock tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire
@@ -171,13 +175,13 @@ struct doubleXstring{
 %token tGmshExecutableName tSetPartition
 %token tNameToString tStringToName
 
-%type <d> FExpr FExpr_Single
+%type <d> FExpr FExpr_Single DefineStruct NameStruct_Arg
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
 %type <i> NumericAffectation NumericIncrement BooleanOperator BooleanOption
 %type <i> PhysicalId0 PhysicalId1 PhysicalId2 PhysicalId3
 %type <i> TransfiniteArrangement RecombineAngle InSphereCenter
 %type <u> ColorExpr
-%type <c> StringExpr StringExprVar SendToFile HomologyCommand
+%type <c> StringExpr StringExprVar SendToFile tSTRING_Member_Float HomologyCommand
 %type <c> LP RP
 %type <c> StringIndex String__Index
 %type <l> RecursiveListOfStringExprVar
@@ -696,6 +700,7 @@ Affectation :
 
     tDefineConstant '[' DefineConstants ']' tEND
   | tUndefineConstant '[' UndefineConstants ']' tEND
+  | DefineStruct tEND
   | tSetNumber LP StringExpr ',' FExpr RP tEND
     {
       Msg::SetOnelabNumber($3, $5);
@@ -1117,6 +1122,7 @@ Affectation :
       StringOption(GMSH_SET|GMSH_GUI, $1, 0, $3, tmp);
       Free($1); Free($3); Free($5);
     }
+
   | tSTRING '[' FExpr ']' '.' tSTRING tAFFECT StringExpr tEND
     {
       std::string tmp($8);
@@ -1144,6 +1150,7 @@ Affectation :
       }
       Free($1); Free($3);
     }
+
   | tSTRING '[' FExpr ']' '.' tSTRING NumericAffectation FExpr tEND
     {
       double d = 0.;
@@ -1162,6 +1169,7 @@ Affectation :
       }
       Free($1); Free($6);
     }
+
   | tSTRING '.' tSTRING NumericIncrement tEND
     {
       double d = 0.;
@@ -1171,6 +1179,7 @@ Affectation :
       }
       Free($1); Free($3);
     }
+
   | tSTRING '[' FExpr ']' '.' tSTRING NumericIncrement tEND
     {
       double d = 0.;
@@ -1188,6 +1197,7 @@ Affectation :
       ColorOption(GMSH_SET|GMSH_GUI, $1, 0, $5, $7);
       Free($1); Free($5);
     }
+
   | tSTRING '[' FExpr ']' '.' tColor '.' tSTRING tAFFECT ColorExpr tEND
     {
       ColorOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $8, $10);
@@ -1216,6 +1226,7 @@ Affectation :
       Free($1);
       List_Delete($5);
     }
+
   | tSTRING '[' FExpr ']' '.' tColorTable tAFFECT ListOfColor tEND
     {
       GmshColorTable *ct = GetColorTable((int)$3);
@@ -5179,6 +5190,8 @@ FExpr_Single :
       Msg::ExchangeOnelabParameter("", val, floatOptions, charOptions);
       $$ = val[0];
     }
+  | DefineStruct
+    { $$ = $1; }
   | tGetNumber LP StringExprVar RP
     {
       $$ = Msg::GetOnelabNumber($3);
@@ -5191,11 +5204,7 @@ FExpr_Single :
     }
   | String__Index
     {
-      if(!gmsh_yysymbols.count($1)){
-	yymsg(0, "Unknown variable '%s'", $1);
-	$$ = 0.;
-      }
-      else{
+      if(gmsh_yysymbols.count($1)){
         gmsh_yysymbol &s(gmsh_yysymbols[$1]);
         if(s.value.empty()){
           yymsg(0, "Uninitialized variable '%s'", $1);
@@ -5203,6 +5212,16 @@ FExpr_Single :
         }
         else
           $$ = s.value[0];
+      }
+      else{
+        std::string key($1);
+        if(StructTable_M.count(key)) {
+          $$ = (double)StructTable_M[key]._value;
+        }
+        else {
+          yymsg(0, "Unknown variable '%s'", $1);
+          $$ = 0.;
+        }
       }
       Free($1);
     }
@@ -5405,18 +5424,38 @@ FExpr_Single :
     }
 
   // Option Strings
-
+/*
   | tSTRING '.' tSTRING
     {
       NumberOption(GMSH_GET, $1, 0, $3, $$);
       Free($1); Free($3);
+    }
+*/
+    //+++extention to structures
+  | String__Index '.' tSTRING_Member_Float
+    {
+      std::string key($1);
+      if(StructTable_M.count(key)) {
+        std::string key2($3);
+        if(StructTable_M[key]._fopt.count(key2)) {
+	  $$ = StructTable_M[key]._fopt[key2][0];
+        }
+        else {
+	  yymsg(0, "Unknown member '%s' of Struct %s", $3, $1);  $$ = 0.;
+	}
+      }
+      else  {
+        NumberOption(GMSH_GET, $1, 0, $3, $$);
+      }
+      Free($1);
+      if (flag_tSTRING_alloc) Free($3);
     }
   | tSTRING '[' FExpr ']' '.' tSTRING
     {
       NumberOption(GMSH_GET, $1, (int)$3, $6, $$);
       Free($1); Free($6);
     }
-  | tSTRING '.' tSTRING NumericIncrement
+  | String__Index '.' tSTRING_Member_Float NumericIncrement
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, 0, $3, d)){
@@ -5494,6 +5533,47 @@ FExpr_Single :
       }
       List_Delete($3);
       $$ = (double)((align<<16)|(font<<8)|(fontsize));
+    }
+;
+
+//+++
+DefineStruct :
+    tDefineStruct Struct_FullName
+    { floatOptions.clear(); charOptions.clear(); }
+    Option_SaveStructNameInConstant
+    '[' FExpr FloatParameterOptions ']'
+    {
+      std::string key(Struct_Name);
+      StructTable_M[key] = Struct((int)$6, 1, floatOptions, charOptions);
+      $$ = $6;
+      Free(Struct_Name);
+    }
+;
+
+Struct_FullName :
+    String__Index
+    { Struct_NameSpace = NULL; Struct_Name = $1; }
+  | String__Index tDOTS tDOTS String__Index
+    { Struct_NameSpace = $1; Struct_Name = $4; }
+;
+
+tSTRING_Member_Float :
+    tSTRING
+    { $$ = $1; flag_tSTRING_alloc = 1; }
+/*
+  | tType
+    { $$ = (char*)"Type"; flag_tSTRING_alloc = 0; }
+*/
+;
+
+
+Option_SaveStructNameInConstant :
+    // None
+ | '{' String__Index '}'
+    {
+      std::string key($2), val(Struct_Name);
+      gmsh_yystringsymbols[key] = std::vector<std::string>(1, val);
+      Free($2);
     }
 ;
 
@@ -6237,14 +6317,29 @@ StringExprVar :
       strcpy($$, val.c_str());
       Free($1);
     }
-  | tSTRING '.' tSTRING
+
+  | String__Index '.' tSTRING_Member_Float
     {
       std::string out;
-      StringOption(GMSH_GET, $1, 0, $3, out);
+      std::string key($1);
+      if(StructTable_M.count(key)) {
+        std::string key2($3);
+        if(StructTable_M[key]._copt.count(key2)) {
+          out = StructTable_M[key]._copt[key2][0];
+        }
+        else {
+	  yymsg(0, "Unknown member '%s' of Struct %s", $3, $1);
+	}
+      }
+      else  {
+        StringOption(GMSH_GET, $1, 0, $3, out);
+      }
       $$ = (char*)Malloc((out.size() + 1) * sizeof(char));
       strcpy($$, out.c_str());
-      Free($1); Free($3);
+      Free($1);
+      if (flag_tSTRING_alloc) Free($3);
     }
+
   | tSTRING '[' FExpr ']' '.' tSTRING
     {
       std::string out;
@@ -6501,7 +6596,27 @@ StringExpr :
       strcpy($$, val.c_str());
       Free($3);
     }
+
+  | tNameStruct LP NameStruct_Arg RP
+    {
+      std::string out;
+      int val = (int)$3;
+      std::map<std::string, Struct>::iterator it;
+      for (it = StructTable_M.begin(); it != StructTable_M.end(); ++it )
+        if (it->second._value == val) out = it->first;
+      $$ = (char*)Malloc((out.size() + 1) * sizeof(char));
+      strcpy($$, out.c_str());
+    }
 ;
+
+
+NameStruct_Arg :
+    '#' FExpr
+    { Struct_NameSpace = NULL; $$ = $2; }
+  | String__Index tDOTS tDOTS '#' FExpr
+    { Struct_NameSpace = $1; $$ = $5; }
+;
+
 
 RecursiveListOfStringExprVar :
     StringExprVar

@@ -6,6 +6,7 @@ Mesh.CharacteristicLengthMax = 0.1;
 
 // 3D
 x = 0; y = 0;
+xxx=0; Printf("xxx++ = %g, %g", xxx++, xxx);
 Sphere(newv) = {x++,y,0, 0.3};
 Sphere(newv) = {x++,y,0, 0.3, Pi/3};
 Cylinder(newv) = {x++,y,0, x-0.5,y,0, 0.5};
