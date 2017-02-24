@@ -109,13 +109,13 @@ void GEO_Internals::addLine(int num, std::vector<int> vertexTags)
     Msg::Error("GEO edge with tag %d already exists", num);
     return;
   }
-  List_T *temp = List_Create(2, 2, sizeof(int));
+  List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++)
-    List_Add(temp, &vertexTags[i]);
-  Curve *c = Create_Curve(num, MSH_SEGM_LINE, 1, temp, NULL, -1, -1, 0., 1.);
+    List_Add(tmp, &vertexTags[i]);
+  Curve *c = Create_Curve(num, MSH_SEGM_LINE, 1, tmp, NULL, -1, -1, 0., 1.);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
-  List_Delete(temp);
+  List_Delete(tmp);
   _changed = true;
 }
 
@@ -126,11 +126,11 @@ void GEO_Internals::addCircleArc(int num, int startTag, int centerTag, int endTa
     Msg::Error("GEO edge with tag %d already exists", num);
     return;
   }
-  List_T *temp = List_Create(3, 2, sizeof(int));
-  List_Add(temp, &startTag);
-  List_Add(temp, &centerTag);
-  List_Add(temp, &endTag);
-  Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 2, temp, NULL, -1, -1, 0., 1.);
+  List_T *tmp = List_Create(3, 2, sizeof(int));
+  List_Add(tmp, &startTag);
+  List_Add(tmp, &centerTag);
+  List_Add(tmp, &endTag);
+  Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 2, tmp, NULL, -1, -1, 0., 1.);
   if(nx || ny || nz){
     c->Circle.n[0] = nx;
     c->Circle.n[1] = ny;
@@ -145,7 +145,7 @@ void GEO_Internals::addCircleArc(int num, int startTag, int centerTag, int endTa
     rc->Circle.n[2] = nz;
     End_Curve(rc);
   }
-  List_Delete(temp);
+  List_Delete(tmp);
   _changed = true;
 }
 
@@ -156,12 +156,12 @@ void GEO_Internals::addEllipseArc(int num, int startTag, int centerTag, int majo
     Msg::Error("GEO edge with tag %d already exists", num);
     return;
   }
-  List_T *temp = List_Create(3, 2, sizeof(int));
-  List_Add(temp, &startTag);
-  List_Add(temp, &centerTag);
-  List_Add(temp, &majorTag);
-  List_Add(temp, &endTag);
-  Curve *c = Create_Curve(num, MSH_SEGM_ELLI, 2, temp, NULL, -1, -1, 0., 1.);
+  List_T *tmp = List_Create(3, 2, sizeof(int));
+  List_Add(tmp, &startTag);
+  List_Add(tmp, &centerTag);
+  List_Add(tmp, &majorTag);
+  List_Add(tmp, &endTag);
+  Curve *c = Create_Curve(num, MSH_SEGM_ELLI, 2, tmp, NULL, -1, -1, 0., 1.);
   if(nx || ny || nz){
     c->Circle.n[0] = nx;
     c->Circle.n[1] = ny;
@@ -176,7 +176,7 @@ void GEO_Internals::addEllipseArc(int num, int startTag, int centerTag, int majo
     rc->Circle.n[2] = nz;
     End_Curve(rc);
   }
-  List_Delete(temp);
+  List_Delete(tmp);
   _changed = true;
 }
 
@@ -186,13 +186,13 @@ void GEO_Internals::addSpline(int num, std::vector<int> vertexTags)
     Msg::Error("GEO edge with tag %d already exists", num);
     return;
   }
-  List_T *temp = List_Create(2, 2, sizeof(int));
+  List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++)
-    List_Add(temp, &vertexTags[i]);
-  Curve *c = Create_Curve(num, MSH_SEGM_SPLN, 3, temp, NULL, -1, -1, 0., 1.);
+    List_Add(tmp, &vertexTags[i]);
+  Curve *c = Create_Curve(num, MSH_SEGM_SPLN, 3, tmp, NULL, -1, -1, 0., 1.);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
-  List_Delete(temp);
+  List_Delete(tmp);
   _changed = true;
 }
 
@@ -202,13 +202,13 @@ void GEO_Internals::addBSpline(int num, std::vector<int> vertexTags)
     Msg::Error("GEO edge with tag %d already exists", num);
     return;
   }
-  List_T *temp = List_Create(2, 2, sizeof(int));
+  List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++)
-    List_Add(temp, &vertexTags[i]);
-  Curve *c = Create_Curve(num, MSH_SEGM_BSPLN, 2, temp, NULL, -1, -1, 0., 1.);
+    List_Add(tmp, &vertexTags[i]);
+  Curve *c = Create_Curve(num, MSH_SEGM_BSPLN, 2, tmp, NULL, -1, -1, 0., 1.);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
-  List_Delete(temp);
+  List_Delete(tmp);
   _changed = true;
 }
 
@@ -218,13 +218,13 @@ void GEO_Internals::addBezier(int num, std::vector<int> vertexTags)
     Msg::Error("GEO edge with tag %d already exists", num);
     return;
   }
-  List_T *temp = List_Create(2, 2, sizeof(int));
+  List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++)
-    List_Add(temp, &vertexTags[i]);
-  Curve *c = Create_Curve(num, MSH_SEGM_BEZIER, 2, temp, NULL, -1, -1, 0., 1.);
+    List_Add(tmp, &vertexTags[i]);
+  Curve *c = Create_Curve(num, MSH_SEGM_BEZIER, 2, tmp, NULL, -1, -1, 0., 1.);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
-  List_Delete(temp);
+  List_Delete(tmp);
   _changed = true;
 }
 
@@ -236,16 +236,16 @@ void GEO_Internals::addNurbs(int num, std::vector<int> vertexTags,
     return;
   }
   int order = knots.size() - vertexTags.size() - 1;
-  List_T *temp = List_Create(2, 2, sizeof(int));
+  List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++)
-    List_Add(temp, &vertexTags[i]);
+    List_Add(tmp, &vertexTags[i]);
   List_T *knotsList = List_Create(2, 2, sizeof(double));
   for(unsigned int i = 0; i < knots.size(); i++)
     List_Add(knotsList, &knots[i]);
-  Curve *c = Create_Curve(num, MSH_SEGM_NURBS, order, temp, knotsList, -1, -1, 0., 1.);
+  Curve *c = Create_Curve(num, MSH_SEGM_NURBS, order, tmp, knotsList, -1, -1, 0., 1.);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
-  List_Delete(temp);
+  List_Delete(tmp);
   _changed = true;
 }
 
@@ -270,13 +270,13 @@ void GEO_Internals::addLineLoop(int num, std::vector<int> edgeTags)
     Msg::Error("GEO line loop with tag %d already exists", num);
     return;
   }
-  List_T *temp = List_Create(2, 2, sizeof(int));
+  List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < edgeTags.size(); i++)
-    List_Add(temp, &edgeTags[i]);
-  sortEdgesInLoop(num, temp);
-  EdgeLoop *l = Create_EdgeLoop(num, temp);
+    List_Add(tmp, &edgeTags[i]);
+  sortEdgesInLoop(num, tmp);
+  EdgeLoop *l = Create_EdgeLoop(num, tmp);
   Tree_Add(EdgeLoops, &l);
-  List_Delete(temp);
+  List_Delete(tmp);
   _changed = true;
 }
 
@@ -290,12 +290,12 @@ void GEO_Internals::addPlaneSurface(int num, std::vector<int> wireTags)
     Msg::Error("Plane surface requires at least one line loop");
     return;
   }
-  List_T *temp = List_Create(2, 2, sizeof(int));
+  List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < wireTags.size(); i++)
-    List_Add(temp, &wireTags[i]);
+    List_Add(tmp, &wireTags[i]);
   Surface *s = Create_Surface(num, MSH_SURF_PLAN);
-  setSurfaceGeneratrices(s, temp);
-  List_Delete(temp);
+  setSurfaceGeneratrices(s, tmp);
+  List_Delete(tmp);
   End_Surface(s);
   Tree_Add(Surfaces, &s);
   _changed = true;
@@ -337,12 +337,12 @@ void GEO_Internals::addSurfaceFilling(int num, std::vector<int> wireTags,
   else
     Msg::Error("Wrong definition of face %d: %d borders instead of 3 or 4",
                num, j);
-  List_T *temp = List_Create(2, 2, sizeof(int));
+  List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < wireTags.size(); i++)
-    List_Add(temp, &wireTags[i]);
+    List_Add(tmp, &wireTags[i]);
   Surface *s = Create_Surface(num, type);
-  setSurfaceGeneratrices(s, temp);
-  List_Delete(temp);
+  setSurfaceGeneratrices(s, tmp);
+  List_Delete(tmp);
   End_Surface(s);
   if(sphereCenterTag >= 0){
     s->InSphereCenter = FindPoint(sphereCenterTag);
@@ -379,12 +379,12 @@ void GEO_Internals::addSurfaceLoop(int num, std::vector<int> faceTags)
     return;
   }
 
-  List_T *temp = List_Create(2, 2, sizeof(int));
+  List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < faceTags.size(); i++)
-    List_Add(temp, &faceTags[i]);
-  SurfaceLoop *l = Create_SurfaceLoop(num, temp);
+    List_Add(tmp, &faceTags[i]);
+  SurfaceLoop *l = Create_SurfaceLoop(num, tmp);
   Tree_Add(SurfaceLoops, &l);
-  List_Delete(temp);
+  List_Delete(tmp);
   _changed = true;
 }
 
@@ -395,12 +395,12 @@ void GEO_Internals::addVolume(int num, std::vector<int> shellTags)
     return;
   }
 
-  List_T *temp = List_Create(2, 2, sizeof(int));
+  List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < shellTags.size(); i++)
-    List_Add(temp, &shellTags[i]);
+    List_Add(tmp, &shellTags[i]);
   Volume *v = Create_Volume(num, MSH_VOLUME);
-  setVolumeSurfaces(v, temp);
-  List_Delete(temp);
+  setVolumeSurfaces(v, tmp);
+  List_Delete(tmp);
   Tree_Add(Volumes, &v);
   _changed = true;
 }
@@ -423,6 +423,55 @@ void GEO_Internals::resetPhysicalGroups()
   List_Action(PhysicalGroups, Free_PhysicalGroup);
   List_Reset(PhysicalGroups);
   _changed = true;
+}
+
+void GEO_Internals::modifyPhysicalGroup(int dim, int num, int op, std::vector<int> tags)
+{
+  int type;
+  std::string str;
+  switch(dim){
+  case 0: type = MSH_PHYSICAL_POINT; str = "point"; break;
+  case 1: type = MSH_PHYSICAL_LINE; str = "line"; break;
+  case 2: type = MSH_PHYSICAL_SURFACE; str = "surface"; break;
+  case 3: type = MSH_PHYSICAL_VOLUME; str = "volume"; break;
+  }
+
+  PhysicalGroup *p = FindPhysicalGroup(num, type);
+  if(p && op == 0){
+    Msg::Error("Physical %s %d already exists", str.c_str(), num);
+  }
+  else if(!p && op > 0){
+    Msg::Error("Physical %s %d does not exist", str.c_str(), num);
+  }
+  else if(op == 0){
+    List_T *tmp = List_Create(10, 10, sizeof(int));
+    for(unsigned int i = 0; i < tags.size(); i++)
+      List_Add(tmp, &tags[i]);
+    p = Create_PhysicalGroup(num, type, tmp);
+    List_Delete(tmp);
+    List_Add(PhysicalGroups, &p);
+  }
+  else if(op == 1){
+    for(unsigned int i = 0; i < tags.size(); i++){
+      List_Add(p->Entities, &tags[i]);
+    }
+  }
+  else if(op == 2){
+    for(unsigned int i = 0; i < tags.size(); i++){
+      List_Suppress(p->Entities, &tags[i], fcmp_int);
+    }
+    if(!List_Nbr(p->Entities)){
+      switch(dim){
+      case 0: DeletePhysicalPoint(num); break;
+      case 1: DeletePhysicalLine(num); break;
+      case 2: DeletePhysicalSurface(num); break;
+      case 3: DeletePhysicalVolume(num); break;
+      }
+    }
+  }
+  else{
+    Msg::Error("Unsupported operation on physical %s %d", str.c_str(), num);
+  }
 }
 
 void GEO_Internals::removeAllDuplicates()
@@ -1159,7 +1208,7 @@ int GModel::writeGEO(const std::string &name, bool printLabels, bool onlyPhysica
 
 int GModel::exportDiscreteGEOInternals()
 {
-  int maxv = 1; // FIXME: temporary - see TODO below
+  int maxv = 1; // FIXME: temorary - see TODO below
 
   if(_geo_internals){
     maxv = _geo_internals->MaxVolumeNum;

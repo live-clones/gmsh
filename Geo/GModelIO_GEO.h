@@ -52,8 +52,9 @@ class GEO_Internals{
   void addVolume(int num, std::vector<int> shellTags);
   void addCompoundVolume(int num, std::vector<int> regionTags);
 
-  // manipulate physical groups (this will eventually move directly to GModel)
+  // manipulate physical groups
   void resetPhysicalGroups();
+  void modifyPhysicalGroup(int dim, int num, int op, std::vector<int> tags);
 
   // coherence
   void removeAllDuplicates();
