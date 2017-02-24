@@ -5415,137 +5415,141 @@ FExpr_Multi :
     {
       $$ = GetAllElementaryEntityNumbers(3);
     }
-  | tPhysical tPoint tBIGSTR
+  | tPhysical tPoint ListOfDoubleOrAll
     {
-      $$ = GetAllPhysicalEntityNumbers(0);
-    }
-  | tPhysical tLine tBIGSTR
-    {
-      $$ = GetAllPhysicalEntityNumbers(1);
-    }
-  | tPhysical tSurface tBIGSTR
-    {
-      $$ = GetAllPhysicalEntityNumbers(2);
-    }
-  | tPhysical tVolume tBIGSTR
-    {
-      $$ = GetAllPhysicalEntityNumbers(3);
-    }
-  | tPhysical tPoint '{' RecursiveListOfDouble '}'
-    {
-      $$ = List_Create(10, 1, sizeof(double));
-      for(int i = 0; i < List_Nbr($4); i++){
-        double num;
-        List_Read($4, i, &num);
-        PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_POINT);
-        if(p){
-          for(int j = 0; j < List_Nbr(p->Entities); j++){
-            int nume;
-            List_Read(p->Entities, j, &nume);
-            double d = nume;
-            List_Add($$, &d);
-          }
-        }
-        else{
-          std::map<int, std::vector<GEntity*> > groups;
-          GModel::current()->getPhysicalGroups(0, groups);
-          std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
-          if(it != groups.end()){
-            for(unsigned j = 0; j < it->second.size(); j++){
-              double d = it->second[j]->tag();
+      if(!$3){
+        $$ = GetAllPhysicalEntityNumbers(0);
+      }
+      else{
+        $$ = List_Create(10, 1, sizeof(double));
+        for(int i = 0; i < List_Nbr($3); i++){
+          double num;
+          List_Read($3, i, &num);
+          PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_POINT);
+          if(p){
+            for(int j = 0; j < List_Nbr(p->Entities); j++){
+              int nume;
+              List_Read(p->Entities, j, &nume);
+              double d = nume;
               List_Add($$, &d);
             }
           }
-        }
-      }
-      List_Delete($4);
-    }
-  | tPhysical tLine '{' RecursiveListOfDouble '}'
-    {
-      $$ = List_Create(10, 1, sizeof(double));
-      for(int i = 0; i < List_Nbr($4); i++){
-        double num;
-        List_Read($4, i, &num);
-        PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_LINE);
-        if(p){
-          for(int j = 0; j < List_Nbr(p->Entities); j++){
-            int nume;
-            List_Read(p->Entities, j, &nume);
-            double d = nume;
-            List_Add($$, &d);
-          }
-        }
-        else{
-          std::map<int, std::vector<GEntity*> > groups;
-          GModel::current()->getPhysicalGroups(1, groups);
-          std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
-          if(it != groups.end()){
-            for(unsigned j = 0; j < it->second.size(); j++){
-              double d = it->second[j]->tag();
-              List_Add($$, &d);
+          else{
+            std::map<int, std::vector<GEntity*> > groups;
+            GModel::current()->getPhysicalGroups(0, groups);
+            std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
+            if(it != groups.end()){
+              for(unsigned j = 0; j < it->second.size(); j++){
+                double d = it->second[j]->tag();
+                List_Add($$, &d);
+              }
             }
           }
         }
+        List_Delete($3);
       }
-      List_Delete($4);
     }
-  | tPhysical tSurface '{' RecursiveListOfDouble '}'
+  | tPhysical tLine ListOfDoubleOrAll
     {
-      $$ = List_Create(10, 1, sizeof(double));
-      for(int i = 0; i < List_Nbr($4); i++){
-        double num;
-        List_Read($4, i, &num);
-        PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_SURFACE);
-        if(p){
-          for(int j = 0; j < List_Nbr(p->Entities); j++){
-            int nume;
-            List_Read(p->Entities, j, &nume);
-            double d = nume;
-            List_Add($$, &d);
-          }
-        }
-        else{
-          std::map<int, std::vector<GEntity*> > groups;
-          GModel::current()->getPhysicalGroups(2, groups);
-          std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
-          if(it != groups.end()){
-            for(unsigned j = 0; j < it->second.size(); j++){
-              double d = it->second[j]->tag();
+      if(!$3){
+        $$ = GetAllPhysicalEntityNumbers(1);
+      }
+      else{
+        $$ = List_Create(10, 1, sizeof(double));
+        for(int i = 0; i < List_Nbr($3); i++){
+          double num;
+          List_Read($3, i, &num);
+          PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_LINE);
+          if(p){
+            for(int j = 0; j < List_Nbr(p->Entities); j++){
+              int nume;
+              List_Read(p->Entities, j, &nume);
+              double d = nume;
               List_Add($$, &d);
             }
           }
-        }
-      }
-      List_Delete($4);
-    }
-  | tPhysical tVolume '{' RecursiveListOfDouble '}'
-    {
-      $$ = List_Create(10, 1, sizeof(double));
-      for(int i = 0; i < List_Nbr($4); i++){
-        double num;
-        List_Read($4, i, &num);
-        PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_VOLUME);
-        if(p){
-          for(int j = 0; j < List_Nbr(p->Entities); j++){
-            int nume;
-            List_Read(p->Entities, j, &nume);
-            double d = nume;
-            List_Add($$, &d);
-          }
-        }
-        else{
-          std::map<int, std::vector<GEntity*> > groups;
-          GModel::current()->getPhysicalGroups(3, groups);
-          std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
-          if(it != groups.end()){
-            for(unsigned j = 0; j < it->second.size(); j++){
-              double d = it->second[j]->tag();
-              List_Add($$, &d);
+          else{
+            std::map<int, std::vector<GEntity*> > groups;
+            GModel::current()->getPhysicalGroups(1, groups);
+            std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
+            if(it != groups.end()){
+              for(unsigned j = 0; j < it->second.size(); j++){
+                double d = it->second[j]->tag();
+                List_Add($$, &d);
+              }
             }
           }
         }
+        List_Delete($3);
       }
-      List_Delete($4);
+    }
+  | tPhysical tSurface ListOfDoubleOrAll
+    {
+      if(!$3){
+        $$ = GetAllPhysicalEntityNumbers(2);
+      }
+      else{
+        $$ = List_Create(10, 1, sizeof(double));
+        for(int i = 0; i < List_Nbr($3); i++){
+          double num;
+          List_Read($3, i, &num);
+          PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_SURFACE);
+          if(p){
+            for(int j = 0; j < List_Nbr(p->Entities); j++){
+              int nume;
+              List_Read(p->Entities, j, &nume);
+              double d = nume;
+              List_Add($$, &d);
+            }
+          }
+          else{
+            std::map<int, std::vector<GEntity*> > groups;
+            GModel::current()->getPhysicalGroups(2, groups);
+            std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
+            if(it != groups.end()){
+              for(unsigned j = 0; j < it->second.size(); j++){
+                double d = it->second[j]->tag();
+                List_Add($$, &d);
+              }
+            }
+          }
+        }
+        List_Delete($3);
+      }
+    }
+  | tPhysical tVolume ListOfDoubleOrAll
+    {
+      if(!$3){
+        $$ = GetAllPhysicalEntityNumbers(3);
+      }
+      else{
+        $$ = List_Create(10, 1, sizeof(double));
+        for(int i = 0; i < List_Nbr($3); i++){
+          double num;
+          List_Read($3, i, &num);
+          PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_VOLUME);
+          if(p){
+            for(int j = 0; j < List_Nbr(p->Entities); j++){
+              int nume;
+              List_Read(p->Entities, j, &nume);
+              double d = nume;
+              List_Add($$, &d);
+            }
+          }
+          else{
+            std::map<int, std::vector<GEntity*> > groups;
+            GModel::current()->getPhysicalGroups(3, groups);
+            std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
+            if(it != groups.end()){
+              for(unsigned j = 0; j < it->second.size(); j++){
+                double d = it->second[j]->tag();
+                List_Add($$, &d);
+              }
+            }
+          }
+        }
+        List_Delete($3);
+      }
     }
   | tPoint tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
@@ -5980,7 +5984,6 @@ StringExprVar :
       strcpy($$, val.c_str());
       Free($1);
     }
-
   | String__Index '.' tSTRING_Member_Float
     {
       std::string out;
@@ -6002,7 +6005,6 @@ StringExprVar :
       Free($1);
       if (flag_tSTRING_alloc) Free($3);
     }
-
   | tSTRING '[' FExpr ']' '.' tSTRING
     {
       std::string out;
@@ -6010,6 +6012,30 @@ StringExprVar :
       $$ = (char*)Malloc((out.size() + 1) * sizeof(char));
       strcpy($$, out.c_str());
       Free($1); Free($6);
+    }
+  | tPhysical tPoint '{' FExpr '}'
+    {
+      std::string name = GModel::current()->getPhysicalName(0, (int)$4);
+      $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
+      strcpy($$, name.c_str());
+    }
+  | tPhysical tLine '{' FExpr '}'
+    {
+      std::string name = GModel::current()->getPhysicalName(1, (int)$4);
+      $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
+      strcpy($$, name.c_str());
+    }
+  | tPhysical tSurface '{' FExpr '}'
+    {
+      std::string name = GModel::current()->getPhysicalName(2, (int)$4);
+      $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
+      strcpy($$, name.c_str());
+    }
+  | tPhysical tVolume '{' FExpr '}'
+    {
+      std::string name = GModel::current()->getPhysicalName(3, (int)$4);
+      $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
+      strcpy($$, name.c_str());
     }
 ;
 
@@ -6259,7 +6285,6 @@ StringExpr :
       strcpy($$, val.c_str());
       Free($3);
     }
-
   | tNameStruct LP NameStruct_Arg RP
     {
       std::string out;
@@ -6280,7 +6305,6 @@ NameStruct_Arg :
     { Struct_NameSpace = $1; $$ = $5; }
 ;
 
-
 RecursiveListOfStringExprVar :
     StringExprVar
     {
@@ -6288,7 +6312,9 @@ RecursiveListOfStringExprVar :
       List_Add($$, &($1));
     }
   | RecursiveListOfStringExprVar ',' StringExprVar
-    { List_Add($$, &($3)); }
+    {
+      List_Add($$, &($3));
+    }
  ;
 
 StringIndex :
