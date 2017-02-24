@@ -81,14 +81,13 @@ GModel::GModel(std::string name)
   // push new one into the list
   list.push_back(this);
 
-  // we always create (possibly empty) internal GEO and OCC CAD models
+  // we always create an internal GEO model; other CAD internals are created
+  // on-demand
   _createGEOInternals();
-  _createOCCInternals();
 
-  // FIXME: GModelFactory will be deprecated at some point, replaced by
-  // interfaces to internal CAD data (currently only OCC_Internals, soon
-  // GEO_Internals; and maybe an abstract "CAD_Internals", from which those
-  // would derive, with an "integer" API, easily wrapped in C or scripts)
+  // FIXME: GModelFactory will be deprecated, replaced by direct interfaces to
+  // internal CAD data, with "integer-based" API, easily wrapped in C, Python or
+  // any other scripting language
   setFactory("Gmsh");
 
 #if defined(HAVE_MESH)
@@ -3031,7 +3030,8 @@ int GModel::readGEO(const std::string &name)
   ParseFile(name, true);
   // sync OCC first, as GEO_Internals currently contains attributes (physicals)
   // that should also be applied to entities from OCC_Internals
-  GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getOCCInternals())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
   GModel::current()->getGEOInternals()->synchronize(GModel::current());
   return true;
 }
@@ -3371,16 +3371,6 @@ GModel *GModel::computeBooleanDifference(GModel *tool, int createNewModel)
   if(_factory)
     return _factory->computeBooleanDifference(this, tool, createNewModel);
   return 0;
-}
-
-void GModel::salomeconnect()
-{
-  if(_factory) _factory->salomeconnect(this);
-}
-
-void GModel::occconnect()
-{
-  if(_factory) _factory->occconnect(this);
 }
 
 void GModel::setPeriodicAllFaces(std::vector<double> FaceTranslationVector)

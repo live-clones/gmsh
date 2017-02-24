@@ -52,12 +52,14 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
   // build the reverse curve
   c_rev = c;
   c_rev.Reverse();
-  model()->getOCCInternals()->bind(c, num);
+  if(model()->getOCCInternals())
+    model()->getOCCInternals()->bind(c, num);
 }
 
 OCCEdge::~OCCEdge()
 {
-  model()->getOCCInternals()->unbind(c, tag());
+  if(model()->getOCCInternals())
+    model()->getOCCInternals()->unbind(c, tag());
 }
 
 SBoundingBox3d OCCEdge::bounds() const

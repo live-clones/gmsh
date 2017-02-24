@@ -23,12 +23,14 @@ OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex v, double lc)
   _x = pnt.X();
   _y = pnt.Y();
   _z = pnt.Z();
-  model()->getOCCInternals()->bind(_v, num);
+  if(model()->getOCCInternals())
+    model()->getOCCInternals()->bind(_v, num);
 }
 
 OCCVertex::~OCCVertex()
 {
-  model()->getOCCInternals()->unbind(_v, tag());
+  if(model()->getOCCInternals())
+    model()->getOCCInternals()->unbind(_v, tag());
 }
 
 void OCCVertex::setPosition(GPoint &p)

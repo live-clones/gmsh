@@ -91,7 +91,6 @@ class GModel
 
   // OpenCascade model internal data
   OCC_Internals *_occ_internals;
-  void _createOCCInternals();
   void _deleteOCCInternals();
   void _resetOCCInternals();
 
@@ -210,6 +209,7 @@ class GModel
 
   // access internal CAD representations
   GEO_Internals *getGEOInternals(){ return _geo_internals; }
+  void createOCCInternals();
   OCC_Internals *getOCCInternals(){ return _occ_internals; }
   FM_Internals *getFMInternals() { return _fm_internals; }
   ACIS_Internals *getACISInternals(){ return _acis_internals; }
@@ -529,8 +529,6 @@ class GModel
   GModel *computeBooleanUnion(GModel *tool, int createNewModel=0);
   GModel *computeBooleanIntersection(GModel *tool, int createNewModel=0);
   GModel *computeBooleanDifference(GModel *tool, int createNewModel=0);
-  void    salomeconnect();
-  void    occconnect();
 
   void setPeriodicAllFaces(std::vector<double> FaceTranslationVector);
   void setPeriodicPairOfFaces(int numFaceMaster, std::vector<int> EdgeListMaster,

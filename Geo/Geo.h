@@ -342,8 +342,8 @@ void DeletePhysicalPoint(int Num);
 void DeletePhysicalLine(int Num);
 void DeletePhysicalSurface(int Num);
 void DeletePhysicalVolume(int Num);
-void ColorShape(int Type, int Num, unsigned int Color, bool Recursive);
 void SetPartition(int Type, int Num, int Partition);
+void ColorShape(int Type, int Num, unsigned int Color, bool Recursive);
 void VisibilityShape(int Type, int Num, int Mode, bool Recursive);
 void VisibilityShape(char *str, int Type, int Mode, bool Recursive);
 void ExtrudeShape(int extrude_type, int shape_type, int shape_num,

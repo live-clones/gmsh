@@ -811,38 +811,6 @@ GFace *OCCFactory::add2Dellips(GModel *gm, double xc, double yc, double rx, doub
   return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(ellipsFace));
 }
 
-/*
-GEdge *OCCFactory::addBezierSurface(GModel *gm,
-				    std::vector<GEdge *> & wires, // four edges indeed
-				    std::vector<std::vector<double> > points)
-{
-
-  TColgp_Array2OfPnt ctrlPoints(1, nbControlPoints + 2);
-  int index = 1;
-  ctrlPoints.SetValue(index++, gp_Pnt(start->x(), start->y(), start->z()));
-  for (int i = 0; i < nbControlPoints; i++) {
-    gp_Pnt aP(points[i][0],points[i][1],points[i][2]);
-    ctrlPoints.SetValue(index++, aP);
-  }
-
-
-  BRepBuilderAPI_MakeFace aGenerator (aBezierSurface);
-  BRepBuilderAPI_MakeWire wire_maker;
-  for (unsigned j = 0; j < wires.size(); j++) {
-    GEdge *ge = wires[j];
-    OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
-    if (occe){
-      wire_maker.Add(occe->getTopoDS_Edge());
-    }
-  }
-  TopoDS_Wire myWire = wire_maker.Wire();
-  aGenerator.Add (myWire);
-  aGenerator.Build();
-  TopoDS_Shape aResult = aGenerator.Shape();
-  return gm->_occ_internals->addFaceToModel(gm, TopoDS::Face(aResult));
-}
-*/
-
 GEntity *OCCFactory::revolve(GModel *gm, GEntity* base,
                              std::vector<double> p1,
                              std::vector<double> p2, double angle)
@@ -1151,18 +1119,6 @@ GModel *OCCFactory::computeBooleanIntersection(GModel* obj, GModel* tool,
   return obj;
 }
 
-/* same as checkbox GUI - works a bit better than occconnect... */
-void OCCFactory::salomeconnect(GModel *gm)
-{
-  Msg::Error("Salome's Partition_Spliter has been removed");
-}
-
-/* same as checkbox GUI - does not work at all, though!*/
-void OCCFactory::occconnect(GModel *gm)
-{
-  Msg::Error("OCC_Connect has been removed");
-}
-
 /* IsEqualG : a tolerance function for setPeriodicAllFaces */
 bool IsEqualG(double x, double y)
 {
@@ -1174,6 +1130,9 @@ bool IsEqualG(double x, double y)
    setPeriodicPairOfFaces to make them all periodic */
 void OCCFactory::setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTranslationVector)
 {
+  if (!gm->_occ_internals)
+    gm->_occ_internals = new OCC_Internals;
+
   Msg::Info("Experimental: search for 'translated' faces and calls setPeriodicPairOfFaces automatically");
   TopoDS_Shape shape = gm->_occ_internals->getShape();
   gp_Trsf theTransformation;
@@ -1275,6 +1234,9 @@ void OCCFactory::setPeriodicPairOfFaces(GModel *gm, int numFaceMaster,
                                         int numFaceSlave,
                                         std::vector<int> EdgeListSlave)
 {
+  if (!gm->_occ_internals)
+    gm->_occ_internals = new OCC_Internals;
+
   if (EdgeListMaster.size() != EdgeListSlave.size()){
     Msg::Error("Slave/Master faces don't have the same number of edges!");
   }
@@ -1299,6 +1261,9 @@ void OCCFactory::setPeriodicPairOfFaces(GModel *gm, int numFaceMaster,
 
 void OCCFactory::fillet(GModel *gm, std::vector<int> edges, double radius)
 {
+  if (!gm->_occ_internals)
+    gm->_occ_internals = new OCC_Internals;
+
   try{
     std::vector<TopoDS_Edge> edgesToFillet;
     for (unsigned i = 0; i < edges.size(); i++){
@@ -1320,6 +1285,9 @@ void OCCFactory::fillet(GModel *gm, std::vector<int> edges, double radius)
 
 void OCCFactory::translate(GModel *gm, std::vector<double> dx, int addToTheModel)
 {
+  if (!gm->_occ_internals)
+    gm->_occ_internals = new OCC_Internals;
+
   gp_Trsf transformation;
   transformation.SetTranslation(gp_Pnt (0,0,0),gp_Pnt (dx[0],dx[1],dx[2]));
   BRepBuilderAPI_Transform aTransformation(gm->_occ_internals->getShape(),
@@ -1335,15 +1303,15 @@ void OCCFactory::translate(GModel *gm, std::vector<double> dx, int addToTheModel
 void OCCFactory::rotate(GModel *gm, std::vector<double> p1, std::vector<double> p2,
                         double angle, int addToTheModel)
 {
+  if (!gm->_occ_internals)
+    gm->_occ_internals = new OCC_Internals;
+
   const double x1 = p1[0];
   const double y1 = p1[1];
   const double z1 = p1[2];
   const double x2 = p2[0];
   const double y2 = p2[1];
   const double z2 = p2[2];
-
-  if (!gm->_occ_internals)
-    gm->_occ_internals = new OCC_Internals;
 
   gp_Trsf transformation;
 
@@ -1363,6 +1331,9 @@ void OCCFactory::rotate(GModel *gm, std::vector<double> p1, std::vector<double> 
 std::vector<GFace *> OCCFactory::addRuledFaces(GModel *gm,
                                                std::vector< std::vector<GEdge *> > wires)
 {
+  if (!gm->_occ_internals)
+    gm->_occ_internals = new OCC_Internals;
+
   std::vector<GFace*> faces;
   Standard_Boolean anIsSolid = Standard_False;
   Standard_Boolean anIsRuled = Standard_True;
@@ -1398,6 +1369,9 @@ std::vector<GFace *> OCCFactory::addRuledFaces(GModel *gm,
 GFace *OCCFactory::addFace(GModel *gm, std::vector<GEdge *> edges,
                            std::vector< std::vector<double > > points)
 {
+  if (!gm->_occ_internals)
+    gm->_occ_internals = new OCC_Internals;
+
   BRepOffsetAPI_MakeFilling aGenerator;
 
   for (unsigned i = 0; i < edges.size(); i++) {
@@ -1420,6 +1394,8 @@ GFace *OCCFactory::addFace(GModel *gm, std::vector<GEdge *> edges,
 
 GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> > wires)
 {
+  if (!gm->_occ_internals)
+    gm->_occ_internals = new OCC_Internals;
 
   std::set<GVertex*> verts;
   for (unsigned i = 0; i < wires.size(); i++) {
@@ -1469,6 +1445,9 @@ GFace *OCCFactory::addPlanarFace(GModel *gm, const std::vector<std::vector<GEdge
 
 GEntity *OCCFactory::addPipe(GModel *gm, GEntity *base, std::vector<GEdge *> wire)
 {
+  if (!gm->_occ_internals)
+    gm->_occ_internals = new OCC_Internals;
+
   BRepBuilderAPI_MakeWire wire_maker;
   for (unsigned j = 0; j < wire.size(); j++) {
     GEdge *ge = wire[j];
@@ -1503,6 +1482,9 @@ GEntity *OCCFactory::addPipe(GModel *gm, GEntity *base, std::vector<GEdge *> wir
 
 GEntity *OCCFactory::addThruSections(GModel *gm, std::vector<std::vector<GEdge *> > wire)
 {
+  if (!gm->_occ_internals)
+    gm->_occ_internals = new OCC_Internals;
+
   BRepOffsetAPI_ThruSections aGenerator(Standard_True); // create solid
   for (unsigned i = 0; i < wire.size(); i++) {
     BRepBuilderAPI_MakeWire wire_maker;
@@ -1524,6 +1506,9 @@ GEntity *OCCFactory::addThruSections(GModel *gm, std::vector<std::vector<GEdge *
 
 void OCCFactory::healGeometry(GModel *gm, double tolerance)
 {
+  if (!gm->_occ_internals)
+    gm->_occ_internals = new OCC_Internals;
+
   if (tolerance < 0.)
     tolerance = CTX::instance()->geom.tolerance;
   if (!gm || !gm->_occ_internals)

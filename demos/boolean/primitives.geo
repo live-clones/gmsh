@@ -6,7 +6,6 @@ Mesh.CharacteristicLengthMax = 0.1;
 
 // 3D
 x = 0; y = 0;
-xxx=0; Printf("xxx++ = %g, %g", xxx++, xxx);
 Sphere(newv) = {x++,y,0, 0.3};
 Sphere(newv) = {x++,y,0, 0.3, Pi/3};
 Cylinder(newv) = {x++,y,0, x-0.5,y,0, 0.5};
@@ -75,4 +74,4 @@ Bezier(newl) = {p:p+2};
 
 // 0D
 x = 0; y = -4.5;
-Point(newp) = {x,y,0};
+Point(newp) = {x++,y,0};

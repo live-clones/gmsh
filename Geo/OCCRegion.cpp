@@ -25,12 +25,14 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num)
   : GRegion(m, num), s(_s)
 {
   setup();
-  model()->getOCCInternals()->bind(s, num);
+  if(model()->getOCCInternals())
+    model()->getOCCInternals()->bind(s, num);
 }
 
 OCCRegion::~OCCRegion()
 {
-  model()->getOCCInternals()->unbind(s, tag());
+  if(model()->getOCCInternals())
+    model()->getOCCInternals()->unbind(s, tag());
 }
 
 void OCCRegion::setup()
@@ -42,7 +44,9 @@ void OCCRegion::setup()
     Msg::Debug("OCC Region %d - New Shell",tag());
     for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()){
       TopoDS_Face face = TopoDS::Face(exp3.Current());
-      GFace *f = model()->getOCCInternals()->getOCCFaceByNativePtr(model(),face);
+      GFace *f = 0;
+      if(model()->getOCCInternals())
+        f = model()->getOCCInternals()->getOCCFaceByNativePtr(model(), face);
       if(!f){
         Msg::Error("Unknown face in region %d", tag());
       }
@@ -59,8 +63,10 @@ void OCCRegion::setup()
 
   for (exp3.Init(s, TopAbs_EDGE); exp3.More(); exp3.Next()){
     TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-    GEdge *e = model()->getOCCInternals()->getOCCEdgeByNativePtr(model(), edge);
-    if (!e){
+    GEdge *e = 0;
+    if(model()->getOCCInternals())
+      e = model()->getOCCInternals()->getOCCEdgeByNativePtr(model(), edge);
+    if(!e){
       Msg::Error("Unknown edge in region %d", tag());
     }
     else if (edge.Orientation() == TopAbs_INTERNAL){
@@ -73,7 +79,9 @@ void OCCRegion::setup()
 
   for (exp3.Init(s, TopAbs_VERTEX); exp3.More(); exp3.Next()){
     TopoDS_Vertex vertex = TopoDS::Vertex(exp3.Current());
-    GVertex *v = model()->getOCCInternals()->getOCCVertexByNativePtr(model(), vertex);
+    GVertex *v = 0;
+    if(model()->getOCCInternals())
+      v = model()->getOCCInternals()->getOCCVertexByNativePtr(model(), vertex);
     if (!v){
       Msg::Error("Unknown vertex in region %d", tag());
     }

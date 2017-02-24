@@ -2887,7 +2887,7 @@ void OCC_Internals::fillet(std::vector<TopoDS_Edge> &edgesToFillet,
 
 #endif
 
-void GModel::_createOCCInternals()
+void GModel::createOCCInternals()
 {
   if(_occ_internals) delete _occ_internals;
   _occ_internals = new OCC_Internals;

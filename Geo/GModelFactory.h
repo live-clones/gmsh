@@ -197,14 +197,6 @@ class GModelFactory {
     return 0;
   }
 
-	virtual void salomeconnect(GModel *gm)
-  {
-    Msg::Error("salomeconnect not implemented yet");
-  }
-  virtual void occconnect(GModel *gm)
-  {
-    Msg::Error("occconnect not implemented yet");
-  }
   virtual void setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTranslationVector)
   {
     Msg::Error("findperiodic not implemented yet");
@@ -287,8 +279,6 @@ class OCCFactory : public GModelFactory {
   GModel *computeBooleanUnion(GModel *obj, GModel *tool, int createNewModel);
   GModel *computeBooleanIntersection(GModel *obj, GModel *tool, int createNewModel);
   GModel *computeBooleanDifference(GModel *obj, GModel *tool, int createNewModel);
-  void    salomeconnect(GModel *gm);
-  void    occconnect(GModel *gm);
 
   void setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTranslationVector);
   void setPeriodicPairOfFaces(GModel *gm, int numFaceMaster, std::vector<int> EdgeListMaster,

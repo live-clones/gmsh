@@ -57,13 +57,16 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   : GFace(m, num), s(_s)
 {
   setup();
-  model()->getOCCInternals()->bind(s, num);
+  if(model()->getOCCInternals())
+    model()->getOCCInternals()->bind(s, num);
 }
 
 OCCFace::~OCCFace()
 {
-  model()->getOCCInternals()->unbind(s, tag());
-  model()->getOCCInternals()->unbind(_replaced, tag());
+  if(model()->getOCCInternals()){
+    model()->getOCCInternals()->unbind(s, tag());
+    model()->getOCCInternals()->unbind(_replaced, tag());
+  }
 }
 
 void OCCFace::setup()
@@ -78,7 +81,9 @@ void OCCFace::setup()
     std::list<GEdge*> l_wire;
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-      GEdge *e = model()->getOCCInternals()->getOCCEdgeByNativePtr(model(), edge);
+      GEdge *e = 0;
+      if(model()->getOCCInternals())
+        e = model()->getOCCInternals()->getOCCEdgeByNativePtr(model(), edge);
       if(!e){
 	Msg::Error("Unknown edge in face %d", tag());
       }
@@ -135,16 +140,11 @@ void OCCFace::setup()
   vmax += fabs(dv) / 100.0;
   occface = BRep_Tool::Surface(s);
 
-  // std::list<GEdge*>::const_iterator it = l_edges.begin();
-  // for (; it != l_edges.end(); ++it){
-  //   printf("edge %d : %d %d iseam %d \n", (*it)->tag(),
-  //          (*it)->getBeginVertex()->tag(), (*it)->getEndVertex()->tag(),
-  //          (*it)->isSeam(this));
-  // }
-
   for(exp2.Init(s, TopAbs_VERTEX); exp2.More(); exp2.Next()){
     TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
-    GVertex *v = model()->getOCCInternals()->getOCCVertexByNativePtr(model(), vertex);
+    GVertex *v = 0;
+    if(model()->getOCCInternals())
+      v = model()->getOCCInternals()->getOCCVertexByNativePtr(model(), vertex);
     if(!v){
       Msg::Error("Unknown vertex in face %d", tag());
     }
@@ -621,7 +621,8 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
   s = newFace;
 
   setup();
-  model()->getOCCInternals()->bind(_replaced, tag());
+  if(model()->getOCCInternals())
+    model()->getOCCInternals()->bind(_replaced, tag());
 }
 
 bool OCCFace::isSphere (double &radius, SPoint3 &center) const

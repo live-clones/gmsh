@@ -105,6 +105,8 @@ void PrintParserSymbols(std::vector<std::string> &vec);
 fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 void ListOfDouble2Vector(List_T *list, std::vector<int> &v);
 void ListOfDouble2Vector(List_T *list, std::vector<double> &v);
+void ListOfShapes2Vectors(List_T *list, std::vector<int> v[4]);
+void Vectors2ListOfShapes(std::vector<int> tags[4], List_T *list);
 
 void addPeriodicEdge(int, int, const std::vector<double>&);
 void addPeriodicFace(int, int, const std::map<int,int>&);
@@ -235,6 +237,8 @@ GeoFormatItem :
       // FIXME: when changing to OpenCASCADE, get maxTags from GEO_Internals and
       // add that info in OCC_Internals - same in the other direction
       factory = $3;
+      if(factory == "OpenCASCADE" && !GModel::current()->getOCCInternals())
+        GModel::current()->createOCCInternals();
       Free($3);
     }
   | Shape       { return 1; }
@@ -1738,7 +1742,7 @@ Shape :
       double z = CTX::instance()->geom.scalingFactor * $6[2];
       double lc = CTX::instance()->geom.scalingFactor * $6[3];
       if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->addVertex(num, x, y, z, lc);
       }
       else{
@@ -1755,7 +1759,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->addLine(num, tags);
       }
       else{
@@ -1784,7 +1788,7 @@ Shape :
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       std::vector<double> param; ListOfDouble2Vector($6, param);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(tags.size() == 3){
           GModel::current()->getOCCInternals()->addCircleArc
             (num, tags[0], tags[1], tags[2]);
@@ -1819,7 +1823,7 @@ Shape :
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       std::vector<double> param; ListOfDouble2Vector($6, param);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(tags.size() == 3){
           GModel::current()->getOCCInternals()->addEllipseArc
             (num, tags[0], tags[1], tags[2]);
@@ -1856,7 +1860,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->addBSpline(num, tags);
       }
       else{
@@ -1870,7 +1874,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->addBezier(num, tags);
       }
       else{
@@ -1913,7 +1917,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->addWire(num, tags, false);
       }
       else{
@@ -1927,7 +1931,7 @@ Shape :
     {
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->addLineLoop(num, tags);
       }
       else{
@@ -1942,7 +1946,7 @@ Shape :
     {
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->addPlaneSurface(num, tags);
       }
       else{
@@ -1956,7 +1960,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<int> wires; ListOfDouble2Vector($6, wires);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(wires.size() != 1){
           yymsg(0, "OpenCASCADE face filling requires a single line loop");
         }
@@ -2007,7 +2011,7 @@ Shape :
       std::vector<double> param; ListOfDouble2Vector($6, param);
       $$.Type = 0;
       if(param.size() == 4 || param.size() == 5){
-        if(factory == "OpenCASCADE"){
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
           double alpha = (param.size() == 5) ? param[4] : 2.*M_PI;
           GModel::current()->getOCCInternals()->addSphere
             (num, param[0], param[1], param[2], param[3], alpha);
@@ -2046,7 +2050,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 6){
           GModel::current()->getOCCInternals()->addBlock
             (num, param[0], param[1], param[2], param[3], param[4], param[5]);
@@ -2066,7 +2070,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 5 || param.size() == 6){
           double alpha = (param.size() == 6) ? param[5] : 2*M_PI;
           GModel::current()->getOCCInternals()->addTorus
@@ -2087,7 +2091,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 6 || param.size() == 7){
           double r = (param.size() == 7) ? param[6] : 0.;
           GModel::current()->getOCCInternals()->addRectangle
@@ -2108,7 +2112,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 4 || param.size() == 5){
           double ry = (param.size() == 5) ? param[4] : param[3];
           GModel::current()->getOCCInternals()->addDisk
@@ -2129,7 +2133,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 7 || param.size() == 8){
           double angle = (param.size() == 8) ? param[7] : 2*M_PI;
           GModel::current()->getOCCInternals()->addCylinder
@@ -2151,7 +2155,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 8 || param.size() == 9){
           double alpha = (param.size() == 9) ? param[8] : 2*M_PI;
           GModel::current()->getOCCInternals()->addCone
@@ -2173,7 +2177,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 7){
           GModel::current()->getOCCInternals()->addWedge
             (num, param[0], param[1], param[2], param[3], param[4], param[5],
@@ -2194,7 +2198,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() >= 2){
           int in = (int)param[0];
           double offset = param[1];
@@ -2247,7 +2251,7 @@ Shape :
     {
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->addSurfaceLoop(num, tags);
       }
       else{
@@ -2262,7 +2266,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->addVolume(num, tags);
       }
       else{
@@ -2277,7 +2281,7 @@ Shape :
       yymsg(1, "'Complex Volume' command is deprecated: use 'Volume' instead");
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->addVolume(num, tags);
       }
       else{
@@ -2291,7 +2295,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<int> wires, out[4]; ListOfDouble2Vector($6, wires);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->addThruSections
           (num, wires, out, true, false);
       }
@@ -2306,7 +2310,7 @@ Shape :
     {
       int num = (int)$4;
       std::vector<int> wires, out[4]; ListOfDouble2Vector($7, wires);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->addThruSections
           (num, wires, out, true, true);
       }
@@ -2373,15 +2377,9 @@ Shape :
 Transform :
     tTranslate VExpr '{' MultipleShape '}'
     {
-      if(factory == "OpenCASCADE"){
-        std::vector<int> in[4];
-        Shape TheShape;
-        for(int i = 0; i < List_Nbr($4); i++){
-          List_Read($4, i, &TheShape);
-          int dim = TheShape.Type / 100 - 1;
-          if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
-        }
-        GModel::current()->getOCCInternals()->translate(in, $2[0], $2[1], $2[2]);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
+        GModel::current()->getOCCInternals()->translate(tags, $2[0], $2[1], $2[2]);
       }
       else{
         TranslateShapes($2[0], $2[1], $2[2], $4);
@@ -2390,15 +2388,9 @@ Transform :
     }
   | tRotate '{' VExpr ',' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
-      if(factory == "OpenCASCADE"){
-        std::vector<int> in[4];
-        Shape TheShape;
-        for(int i = 0; i < List_Nbr($10); i++){
-          List_Read($10, i, &TheShape);
-          int dim = TheShape.Type / 100 - 1;
-          if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
-        }
-        GModel::current()->getOCCInternals()->rotate(in, $5[0], $5[1], $5[2],
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> tags[4]; ListOfShapes2Vectors($10, tags);
+        GModel::current()->getOCCInternals()->rotate(tags, $5[0], $5[1], $5[2],
                                                      $3[0], $3[1], $3[2], $7);
       }
       else{
@@ -2440,24 +2432,10 @@ Transform :
     {
       $$ = List_Create(3, 3, sizeof(Shape));
       if(!strcmp($1, "Duplicata")){
-        if(factory == "OpenCASCADE"){
-          std::vector<int> in[4], out[4];
-          Shape TheShape;
-          for(int i = 0; i < List_Nbr($3); i++){
-            List_Read($3, i, &TheShape);
-            int dim = TheShape.Type / 100 - 1;
-            if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
-          }
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          std::vector<int> in[4], out[4]; ListOfShapes2Vectors($3, in);
           GModel::current()->getOCCInternals()->copy(in, out);
-          for(int dim = 0; dim < 4; dim++){
-            TheShape.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
-              (dim == 2) ? MSH_SURF_FROM_GMODEL :
-              (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
-            for(unsigned int i = 0; i < out[dim].size(); i++){
-              TheShape.Num = out[dim][i];
-              List_Add($$, &TheShape);
-            }
-          }
+          Vectors2ListOfShapes(out, $$);
         }
         else{
           for(int i = 0; i < List_Nbr($3); i++){
@@ -2469,25 +2447,11 @@ Transform :
         }
       }
       else if(!strcmp($1, "Boundary") || !strcmp($1, "CombinedBoundary")){
-        if(factory == "OpenCASCADE"){
-          std::vector<int> in[4], out[4];
-          Shape TheShape;
-          for(int i = 0; i < List_Nbr($3); i++){
-            List_Read($3, i, &TheShape);
-            int dim = TheShape.Type / 100 - 1;
-            if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
-          }
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          std::vector<int> in[4], out[4]; ListOfShapes2Vectors($3, in);
           GModel::current()->getOCCInternals()->getBoundary
             (in, out, !strcmp($1, "CombinedBoundary") ? true : false);
-          for(int dim = 0; dim < 4; dim++){
-            TheShape.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
-              (dim == 2) ? MSH_SURF_FROM_GMODEL :
-              (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
-            for(unsigned int i = 0; i < out[dim].size(); i++){
-              TheShape.Num = out[dim][i];
-              List_Add($$, &TheShape);
-            }
-          }
+          Vectors2ListOfShapes(out, $$);
         }
         else{
           BoundaryShapes($3, $$, !strcmp($1, "CombinedBoundary") ? true : false);
@@ -3010,16 +2974,11 @@ LevelSet :
 Delete :
     tDelete '{' ListOfShapes '}'
     {
-      if(factory == "OpenCASCADE"){
-        std::vector<int> in[4];
-        Shape TheShape;
-        for(int i = 0; i < List_Nbr($3); i++){
-          List_Read($3, i, &TheShape);
-          int dim = TheShape.Type / 100 - 1;
-          if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
-        }
-        GModel::current()->getOCCInternals()->remove(in);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> tags[4]; ListOfShapes2Vectors($3, tags);
+        GModel::current()->getOCCInternals()->remove(tags);
       }
+      // FIXME use GEOInternals + int api
       for(int i = 0; i < List_Nbr($3); i++){
         Shape TheShape;
         List_Read($3, i, &TheShape);
@@ -3204,7 +3163,8 @@ Command :
 	// make sure we have the latest data from CAD internals in GModel (fixes
 	// bug where we would have no geometry in the picture if the print
 	// command is in the same file as the geometry)
-        if(GModel::current()->getOCCInternals()->getChanged())
+        if(GModel::current()->getOCCInternals() &&
+           GModel::current()->getOCCInternals()->getChanged())
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -3212,7 +3172,8 @@ Command :
 	CreateOutputFile(tmp, CTX::instance()->print.fileFormat);
       }
       else if(!strcmp($1, "Save")){
-        if(GModel::current()->getOCCInternals()->getChanged())
+        if(GModel::current()->getOCCInternals() &&
+           GModel::current()->getOCCInternals()->getChanged())
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -3222,7 +3183,8 @@ Command :
       else if(!strcmp($1, "Merge") || !strcmp($1, "MergeWithBoundingBox")){
 	// sync CAD internals here, so that if we e.g. import a STEP file, we
         // have the correct entity tags and the numberings don't clash
-        if(GModel::current()->getOCCInternals()->getChanged())
+        if(GModel::current()->getOCCInternals() &&
+           GModel::current()->getOCCInternals()->getChanged())
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -3314,7 +3276,8 @@ Command :
       else if(!strcmp($1, "Mesh")){
 	int lock = CTX::instance()->lock;
 	CTX::instance()->lock = 0;
-        if(GModel::current()->getOCCInternals()->getChanged())
+        if(GModel::current()->getOCCInternals() &&
+           GModel::current()->getOCCInternals()->getChanged())
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -3383,7 +3346,8 @@ Command :
    | tSyncModel tEND
     {
       // force sync
-      GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getOCCInternals())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
       GModel::current()->getGEOInternals()->synchronize(GModel::current());
     }
    | tNewModel tEND
@@ -3394,7 +3358,8 @@ Command :
    | tBoundingBox tEND
     {
       CTX::instance()->forcedBBox = 0;
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -3429,7 +3394,8 @@ Command :
     }
    | tRefineMesh tEND
     {
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -3478,7 +3444,8 @@ Command :
             }
             int niter = (int)$12;
             bool meshAll = ($14 == 0) ? false : true;
-            if(GModel::current()->getOCCInternals()->getChanged())
+            if(GModel::current()->getOCCInternals() &&
+               GModel::current()->getOCCInternals()->getChanged())
               GModel::current()->getOCCInternals()->synchronize(GModel::current());
             if(GModel::current()->getGEOInternals()->getChanged())
               GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -3736,27 +3703,13 @@ Extrude :
     tExtrude VExpr '{' ListOfShapes '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE"){
-        std::vector<int> in[4], out[4];
-        Shape TheShape;
-        for(int i = 0; i < List_Nbr($4); i++){
-          List_Read($4, i, &TheShape);
-          int dim = TheShape.Type / 100 - 1;
-          if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
-        }
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> in[4], out[4]; ListOfShapes2Vectors($4, in);
         GModel::current()->getOCCInternals()->extrude(-1, in, $2[0], $2[1], $2[2], out);
-        for(int dim = 0; dim < 4; dim++){
-          for(unsigned int i = 0; i < out[dim].size(); i++){
-            Shape s;
-            s.Num = out[dim][i];
-            s.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
-              (dim == 2) ? MSH_SURF_FROM_GMODEL :
-              (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
-            List_Add($$, &s);
-          }
-        }
+        Vectors2ListOfShapes(out, $$);
       }
       else{
+        // FIXME use GEOInternals + int api -- SAME FOR ALL BELOW!
         ExtrudeShapes(TRANSLATE, $4,
                       $2[0], $2[1], $2[2], 0., 0., 0., 0., 0., 0., 0.,
                       NULL, $$);
@@ -3766,26 +3719,11 @@ Extrude :
   | tExtrude '{' VExpr ',' VExpr ',' FExpr '}' '{' ListOfShapes '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE"){
-        std::vector<int> in[4], out[4];
-        Shape TheShape;
-        for(int i = 0; i < List_Nbr($10); i++){
-          List_Read($10, i, &TheShape);
-          int dim = TheShape.Type / 100 - 1;
-          if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
-        }
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> in[4], out[4]; ListOfShapes2Vectors($10, in);
         GModel::current()->getOCCInternals()->revolve(-1, in, $5[0], $5[1], $5[2],
                                                       $3[0], $3[1], $3[2], $7, out);
-        for(int dim = 0; dim < 4; dim++){
-          for(unsigned int i = 0; i < out[dim].size(); i++){
-            Shape s;
-            s.Num = out[dim][i];
-            s.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
-              (dim == 2) ? MSH_SURF_FROM_GMODEL :
-              (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
-            List_Add($$, &s);
-          }
-        }
+        Vectors2ListOfShapes(out, $$);
       }
       else{
         ExtrudeShapes(ROTATE, $10,
@@ -3860,24 +3798,10 @@ Extrude :
   | tExtrude '{' ListOfShapes '}' tUsing tWire '{' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE"){
-        std::vector<int> in[4], out[4];
-        Shape TheShape;
-        for(int i = 0; i < List_Nbr($3); i++){
-          List_Read($3, i, &TheShape);
-          int dim = TheShape.Type / 100 - 1;
-          if(dim >= 0 && dim <= 3) in[dim].push_back(TheShape.Num);
-        }
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> in[4], out[4]; ListOfShapes2Vectors($3, in);
         GModel::current()->getOCCInternals()->addPipe(-1, in, (int)$8, out);
-        for(int dim = 0; dim < 4; dim++){
-          TheShape.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
-            (dim == 2) ? MSH_SURF_FROM_GMODEL :
-            (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
-          for(unsigned int i = 0; i < out[dim].size(); i++){
-            TheShape.Num = out[dim][i];
-            List_Add($$, &TheShape);
-          }
-        }
+        Vectors2ListOfShapes(out, $$);
       }
       else{
         yymsg(0, "Pipe only available with OpenCASCADE factory");
@@ -3887,16 +3811,11 @@ Extrude :
   | tThruSections ListOfDouble
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<int> wires, out[4]; ListOfDouble2Vector($2, wires);
         GModel::current()->getOCCInternals()->addThruSections(-1, wires, out,
                                                               false, false);
-        for(unsigned int i = 0; i < out[2].size(); i++){
-          Shape s;
-          s.Type = MSH_SURF_FROM_GMODEL;
-          s.Num = out[2][i];
-          List_Add($$, &s);
-        }
+        Vectors2ListOfShapes(out, $$);
       }
       else{
         yymsg(0, "ThruSections only available with OpenCASCADE factory");
@@ -3906,16 +3825,11 @@ Extrude :
   | tRuled tThruSections ListOfDouble
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<int> wires, out[4]; ListOfDouble2Vector($3, wires);
         GModel::current()->getOCCInternals()->addThruSections(-1, wires, out,
                                                               false, true);
-        for(unsigned int i = 0; i < out[2].size(); i++){
-          Shape s;
-          s.Type = MSH_SURF_REGL;
-          s.Num = out[2][i];
-          List_Add($$, &s);
-        }
+        Vectors2ListOfShapes(out, $$);
       }
       else{
         yymsg(0, "ThruSections only available with OpenCASCADE factory");
@@ -3925,21 +3839,12 @@ Extrude :
   | tFillet '{' RecursiveListOfDouble '}' '{' RecursiveListOfDouble '}' '{' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         double radius = $9;
         std::vector<int> regions, edges, out[4];
         ListOfDouble2Vector($3, regions); ListOfDouble2Vector($6, edges);
         GModel::current()->getOCCInternals()->fillet(regions, edges, radius, out);
-        Shape TheShape;
-        for(int dim = 0; dim < 4; dim++){
-          TheShape.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
-            (dim == 2) ? MSH_SURF_FROM_GMODEL :
-            (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
-          for(unsigned int i = 0; i < out[dim].size(); i++){
-            TheShape.Num = out[dim][i];
-            List_Add($$, &TheShape);
-          }
-        }
+        Vectors2ListOfShapes(out, $$);
       }
       else{
         yymsg(0, "Fillet only available with OpenCASCADE factory");
@@ -4263,29 +4168,13 @@ Boolean :
                     '{' ListOfShapes BooleanOption '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE"){
-        std::vector<int> shape[4], tool[4];
-        for(int i = 0; i < List_Nbr($3); i++){
-          Shape s; List_Read($3, i, &s); int dim = s.Type / 100 - 1;
-          if(dim >= 0 && dim <= 3) shape[dim].push_back(s.Num);
-        }
-        for(int i = 0; i < List_Nbr($7); i++){
-          Shape s; List_Read($7, i, &s);int dim = s.Type / 100 - 1;
-          if(dim >= 0 && dim <= 3) tool[dim].push_back(s.Num);
-        }
-        std::vector<int> out[4];
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> shape[4], tool[4], out[4];
+        ListOfShapes2Vectors($3, shape);
+        ListOfShapes2Vectors($7, tool);
         GModel::current()->getOCCInternals()->applyBooleanOperator
           (-1, (OCC_Internals::BooleanOperator)$1, shape, tool, out, $4, $8);
-        for(int dim = 0; dim < 4; dim++){
-          for(unsigned int i = 0; i < out[dim].size(); i++){
-            Shape s;
-            s.Num = out[dim][i];
-            s.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
-              (dim == 2) ? MSH_SURF_FROM_GMODEL :
-              (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
-            List_Add($$, &s);
-          }
-        }
+        Vectors2ListOfShapes(out, $$);
       }
       else{
         yymsg(0, "Boolean operators only available with OpenCASCADE factory");
@@ -4296,20 +4185,11 @@ Boolean :
   | tShapeFromFile '(' StringExprVar ')'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<int> out[4];
         std::string tmp = FixRelativePath(gmsh_yyname, $3);
         GModel::current()->getOCCInternals()->importShapes(tmp, true, out);
-        Shape s;
-        for(int dim = 0; dim < 4; dim++){
-          s.Type = (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
-            (dim == 2) ? MSH_SURF_FROM_GMODEL :
-            (dim == 1) ? MSH_SEGM_FROM_GMODEL : MSH_POINT_FROM_GMODEL;
-          for(unsigned int i = 0; i < out[dim].size(); i++){
-            s.Num = out[dim][i];
-            List_Add($$, &s);
-          }
-        }
+        Vectors2ListOfShapes(out, $$);
       }
       else{
         yymsg(0, "ShapeFromFile only available with OpenCASCADE factory");
@@ -4322,17 +4202,10 @@ BooleanShape :
     BooleanOperator '(' FExpr ')' tAFFECT '{' ListOfShapes BooleanOption '}'
                                           '{' ListOfShapes BooleanOption '}' tEND
     {
-      if(factory == "OpenCASCADE"){
-        std::vector<int> shape[4], tool[4];
-        for(int i = 0; i < List_Nbr($7); i++){
-          Shape s; List_Read($7, i, &s); int dim = s.Type / 100 - 1;
-          if(dim >= 0 && dim <= 3) shape[dim].push_back(s.Num);
-        }
-        for(int i = 0; i < List_Nbr($11); i++){
-          Shape s; List_Read($11, i, &s);int dim = s.Type / 100 - 1;
-          if(dim >= 0 && dim <= 3) tool[dim].push_back(s.Num);
-        }
-        std::vector<int> out[4];
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<int> shape[4], tool[4], out[4];
+        ListOfShapes2Vectors($7, shape);
+        ListOfShapes2Vectors($11, tool);
         GModel::current()->getOCCInternals()->applyBooleanOperator
           ((int)$3, (OCC_Internals::BooleanOperator)$1, shape, tool, out, $8, $12);
       }
@@ -4420,8 +4293,9 @@ Constraints :
 	double d;
 	List_Read($3, i, &d);
         int tag = (int)d;
+        if(GModel::current()->getOCCInternals())
+          GModel::current()->getOCCInternals()->setMeshSize(0, tag, $5);
         GModel::current()->getGEOInternals()->setMeshSize(0, tag, $5);
-        GModel::current()->getOCCInternals()->setMeshSize(0, tag, $5);
         GVertex *gv = GModel::current()->getVertexByTag(tag);
         if(gv) gv->setPrescribedMeshSizeAtVertex($5);
       }
@@ -4431,7 +4305,8 @@ Constraints :
     {
       // transfinite constraints are also stored in GEO internals, as they can
       // be copied around during GEO operations
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       int type = (int)$6[0];
       double coef = fabs($6[1]);
@@ -4471,7 +4346,8 @@ Constraints :
     {
       // transfinite constraints are also stored in GEO internals, as they can
       // be copied around during GEO operations
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       std::vector<int> corners; ListOfDouble2Vector($4, corners);
       if(!$3){
@@ -4519,7 +4395,8 @@ Constraints :
     {
       // transfinite constraints are also stored in GEO internals, as they can
       // be copied around during GEO operations
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       std::vector<int> corners; ListOfDouble2Vector($4, corners);
       if(!$3){
@@ -4557,7 +4434,8 @@ Constraints :
     {
       // transfinite constraints are also stored in GEO internals, as they can
       // be copied around during GEO operations
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(!$2){
         GModel::current()->getGEOInternals()->setTransfiniteVolumeQuadTri(0);
@@ -4590,7 +4468,8 @@ Constraints :
     {
       // recombine constraints are also stored in GEO internals, as they can be
       // copied around during GEO operations
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(!$3){
         GModel::current()->getGEOInternals()->setRecombine(2, 0, $4);
@@ -4619,7 +4498,8 @@ Constraints :
     {
       // recombine constraints are also stored in GEO internals, as they can be
       // copied around during GEO operations
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(!$3){
         GModel::current()->getGEOInternals()->setRecombine(3, 0, 0.);
@@ -4644,7 +4524,8 @@ Constraints :
     {
       // smoothing constraints are also stored in GEO internals, as they can be
       // copied around during GEO operations
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(!$3){
         GModel::current()->getGEOInternals()->setSmoothing(0, (int)$5);
@@ -4884,7 +4765,8 @@ Constraints :
     {
       // reverse mesh constraints are also stored in GEO internals, as they can
       // be copied around during GEO operations
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(!$3){
         GModel::current()->getGEOInternals()->setReverseMesh(2, 0);
@@ -4909,7 +4791,8 @@ Constraints :
     {
       // reverse mesh constraints are also stored in GEO internals, as they can
       // be copied around during GEO operations
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(!$3){
         GModel::current()->getGEOInternals()->setReverseMesh(1, 0);
@@ -5723,17 +5606,18 @@ FExpr_Multi :
       $$ = List_Create(3, 1, sizeof(double));
       int tag = (int)$3;
       double x = 0., y = 0., z = 0.;
-      if(!GModel::current()->getGEOInternals()->getVertex(tag, x, y, z)){
-        if(!GModel::current()->getOCCInternals()->getVertex(tag, x, y, z)){
-          GVertex *gv = GModel::current()->getVertexByTag(tag);
-          if(gv){
-            x = gv->x();
-            y = gv->y();
-            z = gv->z();
-          }
-          else{
-            yymsg(0, "Unknown model vertex with tag %d", tag);
-          }
+      bool found = GModel::current()->getGEOInternals()->getVertex(tag, x, y, z);
+      if(!found && GModel::current()->getOCCInternals())
+        found = GModel::current()->getOCCInternals()->getVertex(tag, x, y, z);
+      if(!found){
+        GVertex *gv = GModel::current()->getVertexByTag(tag);
+        if(gv){
+          x = gv->x();
+          y = gv->y();
+          z = gv->z();
+        }
+        else{
+          yymsg(0, "Unknown model vertex with tag %d", tag);
         }
       }
       List_Add($$, &x);
@@ -5891,7 +5775,8 @@ FExpr_Multi :
   | tPoint tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -5907,7 +5792,8 @@ FExpr_Multi :
   | tLine tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -5923,7 +5809,8 @@ FExpr_Multi :
   | tSurface tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -5939,7 +5826,8 @@ FExpr_Multi :
   | tVolume tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
-      if(GModel::current()->getOCCInternals()->getChanged())
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(GModel::current()->getGEOInternals()->getChanged())
         GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -6904,6 +6792,32 @@ void ListOfDouble2Vector(List_T *list, std::vector<double> &v)
   }
 }
 
+void ListOfShapes2Vectors(List_T *list, std::vector<int> v[4])
+{
+  Shape s;
+  for(int i = 0; i < List_Nbr(list); i++){
+    List_Read(list, i, &s);
+    int dim = s.Type / 100 - 1;
+    if(dim >= 0 && dim <= 3) v[dim].push_back(s.Num);
+  }
+}
+
+void Vectors2ListOfShapes(std::vector<int> tags[4], List_T *list)
+{
+  for(int dim = 0; dim < 4; dim++){
+    Shape s;
+    s.Type =
+      (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
+      (dim == 2) ? MSH_SURF_FROM_GMODEL :
+      (dim == 1) ? MSH_SEGM_FROM_GMODEL :
+      MSH_POINT_FROM_GMODEL;
+    for(unsigned int i = 0; i < tags[dim].size(); i++){
+      s.Num = tags[dim][i];
+      List_Add(list, &s);
+    }
+  }
+}
+
 void yyerror(const char *s)
 {
   Msg::Error("'%s', line %d : %s (%s)", gmsh_yyname.c_str(), gmsh_yylineno - 1,
@@ -6932,7 +6846,8 @@ void yymsg(int level, const char *fmt, ...)
 void addPeriodicFace(int iTarget, int iSource,
                      const std::vector<double>& affineTransform)
 {
-  if(GModel::current()->getOCCInternals()->getChanged())
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -6949,7 +6864,8 @@ void addPeriodicFace(int iTarget, int iSource,
 void addPeriodicFace(int iTarget, int iSource,
                      const std::map<int,int>& edgeCounterparts)
 {
-  if(GModel::current()->getOCCInternals()->getChanged())
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -6972,7 +6888,8 @@ void addPeriodicFace(int iTarget, int iSource,
 void addPeriodicEdge(int iTarget,int iSource,
                      const std::vector<double>& affineTransform)
 {
-  if(GModel::current()->getOCCInternals()->getChanged())
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -7030,7 +6947,8 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
 
 void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
 {
-  if(GModel::current()->getOCCInternals()->getChanged())
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -7093,7 +7011,8 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
 int NEWPOINT()
 {
   int tag = GModel::current()->getGEOInternals()->getMaxTag(0) + 1;
-  tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(0) + 1);
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(0) + 1);
   return tag;
 }
 
@@ -7104,7 +7023,8 @@ int NEWLINE()
     tag = NEWREG();
   else
     tag = GModel::current()->getGEOInternals()->getMaxTag(1) + 1;
-  tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(1) + 1);
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(1) + 1);
   return tag;
 }
 
@@ -7115,7 +7035,8 @@ int NEWLINELOOP()
     tag = NEWREG();
   else
     tag = GModel::current()->getGEOInternals()->getMaxTag(-1) + 1;
-  tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
   return tag;
 }
 
@@ -7126,7 +7047,8 @@ int NEWSURFACE()
     tag = NEWREG();
   else
     tag = GModel::current()->getGEOInternals()->getMaxTag(2) + 1;
-  tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(2) + 1);
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(2) + 1);
   return tag;
 }
 
@@ -7137,7 +7059,8 @@ int NEWSURFACELOOP()
     tag = NEWREG();
   else
     tag = GModel::current()->getGEOInternals()->getMaxTag(-2) + 1;
-  tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-2) + 1);
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-2) + 1);
   return tag;
 }
 
@@ -7148,7 +7071,8 @@ int NEWVOLUME()
     tag = NEWREG();
   else
     tag = GModel::current()->getGEOInternals()->MaxVolumeNum + 1;
-  tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(3) + 1);
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(3) + 1);
   return tag;
 }
 
@@ -7162,8 +7086,10 @@ int NEWREG()
   tag = std::max(tag, GModel::current()->getGEOInternals()->MaxVolumeNum);
   tag = std::max(tag, GModel::current()->getGEOInternals()->MaxPhysicalNum);
   tag += 1;
-  for(int i = -2; i < 4; i++)
-    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(i) + 1);
+  if(GModel::current()->getOCCInternals()){
+    for(int i = -2; i < 4; i++)
+      tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(i) + 1);
+  }
   return tag;
 }
 
