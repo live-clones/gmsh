@@ -132,62 +132,55 @@ Line(308) = {304,305};
 // Now begin creating the model
 
 For i In {2:9}
-
-Extrude Line {i, {0,face,0}} {
-  Layers {face/size_pend};
-  Recombine;
-};
-
-Extrude Line {i, {0,-face,0}} {
-  Layers {face/size_pend};
-  Recombine;
-};
-
+  Extrude {0,face,0} {
+    Line {i};
+    Layers {face/size_pend};
+    Recombine;
+  }
+  Extrude {0,-face,0} {
+    Line {i};
+    Layers {face/size_pend};
+    Recombine;
+  }
 EndFor
 
 For i In {102:109}
-
-Extrude Line {i, {0,0,1}, {-102+tx,203+ty,0+tz},
--Pi/2} {
-  Layers {arch/size_pend};
-  Recombine;
-};
-
-Extrude Line {i, {-depth,0,0}} {
-  Layers {depth/size_pend};
-  Recombine;
-};
-
+  Extrude {{0,0,1}, {-102+tx,203+ty,0+tz}, -Pi/2} {
+    Line {i};
+    Layers {arch/size_pend};
+    Recombine;
+  }
+  Extrude {-depth,0,0} {
+    Line {i};
+    Layers {depth/size_pend};
+    Recombine;
+  }
 EndFor
 
 For i In {202:209}
-
-Extrude Line {i, {0,0,1}, {-102+tx,-203+ty,0+tz},
-Pi/2} {
-  Layers {arch/size_pend};
-  Recombine;
-};
-
-Extrude Line {i, {-depth,0,0}} {
-  Layers {depth/size_pend};
-  Recombine;
-};
-
+  Extrude {{0,0,1}, {-102+tx,-203+ty,0+tz}, Pi/2} {
+    Line {i};
+    Layers {arch/size_pend};
+    Recombine;
+  }
+  Extrude {-depth,0,0} {
+    Line {i};
+    Layers {depth/size_pend};
+    Recombine;
+  }
 EndFor
 
 // Build beam
 
 For i In {301:308}
-
-Extrude Line {i, {0,0,1}, {cx+btx,bty,btz}, angle} {
-  Layers {barch/size_beam};
-  Recombine;
-};
-
-Extrude Line {i, {0,0,1}, {cx+btx,bty,btz}, -angle} {
-  Layers {barch/size_beam};
-  Recombine;
-};
-
+  Extrude {{0,0,1}, {cx+btx,bty,btz}, angle} {
+    Line {i};
+    Layers {barch/size_beam};
+    Recombine;
+  }
+  Extrude {{0,0,1}, {cx+btx,bty,btz}, -angle} {
+    Line {i};
+    Layers {barch/size_beam};
+    Recombine;
+  }
 EndFor
-

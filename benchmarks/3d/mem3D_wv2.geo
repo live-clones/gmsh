@@ -12,7 +12,7 @@ Lb = 205 * u ;
 Ls = 625 * u ;
 
 da = 80 * u ;
-t = 150 * u ; 
+t = 150 * u ;
 bc = 275 * u ;
 bb = 20 * u ;
 
@@ -35,8 +35,8 @@ gap = 3*u ;// 3*u
 // Shell for FEM
 lcs1 = 70 * u ;
 lcs2 = 90 * u ;
-R1 = 600 * u ; 
-R2 = 900 * u ; 
+R1 = 600 * u ;
+R2 = 900 * u ;
 
 Point(1) = { bc/2, Lc/2, 0, p0};
 Point(2) = { bc/2,-Lc/2, 0, p0};
@@ -45,7 +45,7 @@ Point(4) = {-bc/2, Lc/2, 0, p0};
 
 k = newp ;
 i = 0;kl = 1 ;
-For(1:4) 
+For(1:4)
 Point(k)   = { bc/2, Lc/2-3*w-i*(da+bb), 0, p1};
 Point(k+1) = { bc/2, Lc/2-3*w-bb-i*(da+bb), 0, p1};
 Point(k+2) = { -bc/2, Lc/2-3*w-i*(da+bb), 0, p1};
@@ -91,8 +91,8 @@ nl = 2 ;
 
 Transfinite Line {1:4, 9:12, 17:20, 25:28 } = p_beams;
 Transfinite Line {5:8,13:16, 21:24, 29:32 } = p_wbeams;
-Transfinite Line {34:38,40:44} = p_between ; 
-Transfinite Line {33,39} = p_width ; 
+Transfinite Line {34:38,40:44} = p_between ;
+Transfinite Line {33,39} = p_width ;
 
 Line Loop(45) = {4,-8,-3,7};
 Plane Surface(46) = {45};
@@ -131,7 +131,7 @@ Line(66) = {24,22};
 Line(67) = {31,29};
 Line(68) = {32,30};
 
-Transfinite Line {61:68} = p_width ; 
+Transfinite Line {61:68} = p_width ;
 
 Line Loop(69) = {44,-33,34,61};
 Plane Surface(70) = {69};
@@ -168,11 +168,11 @@ Color Turquoise {Surface{70:86:2};}
 volPlateINT[] = {} ;
 
 For i In {0:7}
-vol[] = Extrude Surface { 46+i*2, {0,0,d}} { Layers { {nl},  {1}} ; };;
+vol[] = Extrude {0,0,d} {Surface { 46+i*2}; Layers { {nl},  {1}} ; };
 volPlateINT[] += vol[1];
 EndFor
 For i In {0:8}
-vol[] = Extrude Surface { 70+i*2, {0,0,d}} { Layers { {nl},  {1}} ; };;
+vol[] = Extrude {0,0,d} {Surface { 70+i*2}; Layers { {nl},  {1}} ; };
 volPlateINT[] += vol[1];
 EndFor
 
@@ -188,15 +188,15 @@ Physical Surface(Sur_PlateINT) = {261,-60,84,82,403,239,-58,80,78,359,217,-56,76
 
 Physical Volume(PlateINT) = {volPlateINT[]};
 
-Sur_Beam1i = 101 ; 
-Sur_Beam2i = 102 ; 
-Sur_Beam3i = 103 ; 
-Sur_Beam4i = 104 ; 
+Sur_Beam1i = 101 ;
+Sur_Beam2i = 102 ;
+Sur_Beam3i = 103 ;
+Sur_Beam4i = 104 ;
 
 Pto_Beam1i1 = 111 ;
-Pto_Beam1i2 = 112 ; 
-Pto_Beam1i3 = 113 ; 
-Pto_Beam1i4 = 114 ; 
+Pto_Beam1i2 = 112 ;
+Pto_Beam1i3 = 113 ;
+Pto_Beam1i4 = 114 ;
 
 Pto_Beam2i1 = 121 ;
 Pto_Beam2i2 = 122 ;
@@ -238,15 +238,15 @@ Physical Point(Pto_Beam4i2)= {36} ;
 Physical Point(Pto_Beam4i3)= {68} ;
 Physical Point(Pto_Beam4i4)= {72} ;
 
-Sur_Beam1d = 201 ; 
-Sur_Beam2d = 202 ; 
-Sur_Beam3d = 203 ; 
-Sur_Beam4d = 204 ; 
+Sur_Beam1d = 201 ;
+Sur_Beam2d = 202 ;
+Sur_Beam3d = 203 ;
+Sur_Beam4d = 204 ;
 
 Pto_Beam1d1 = 211 ;
-Pto_Beam1d2 = 212 ; 
-Pto_Beam1d3 = 213 ; 
-Pto_Beam1d4 = 214 ; 
+Pto_Beam1d2 = 212 ;
+Pto_Beam1d3 = 213 ;
+Pto_Beam1d4 = 214 ;
 
 Pto_Beam2d1 = 221 ;
 Pto_Beam2d2 = 222 ;
@@ -319,7 +319,7 @@ Plane Surface(462) = {461};
 Transfinite Surface {462} = {204,201,202,203} ;
 
 nl2 = 1 ;
-vol[] = Extrude Surface { 462, {0,0,-td}} { Layers { {nl2}, {1}} ; };;
+vol[] = Extrude {0,0,-td} {Surface { 462}; Layers { {nl2}, {1}} ; };
 volDiel = vol[1];
 
 Diel = 2000 ;
@@ -332,7 +332,7 @@ Physical Surface (Sur_Diel) = {-1128,-462,-1120,-1124,-1132};
 //Color Coral {Surface{1128,462,1120,1124,1132}; }
 
 
-vol[] = Extrude Surface {1133, {0,0,-tin}} { Layers { {nl2}, {1}} ; };;
+vol[] = Extrude {0,0,-tin} {Surface {1133}; Layers { {nl2}, {1}} ; };
 volPlateIN = vol[1];
 
 PlateIN = 2200 ;
@@ -493,4 +493,3 @@ Air = 1000 ;
 Physical Volume (Air) = {2283};
 
 EndIf
-

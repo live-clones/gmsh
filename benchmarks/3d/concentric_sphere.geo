@@ -40,15 +40,14 @@ Plane Surface(12) = {9};
 Plane Surface(13) = {10};
 
 // extrude inner semi-circle to get inner sphere
-v1[] = Extrude Surface {12, {0.0,0.0,1.0}, {0.0,0.0,0.0},2*Pi/3};;
-v2[] = Extrude Surface {v1[0], {0.0,0.0,1.0}, {0.0,0.0,0.0},2*Pi/3};;
-v3[] = Extrude Surface {v2[0], {0.0,0.0,1.0}, {0.0,0.0,0.0},2*Pi/3};;
+v1[] = Extrude { {0.0,0.0,1.0}, {0.0,0.0,0.0},2*Pi/3}{ Surface{12}; };
+v2[] = Extrude { {0.0,0.0,1.0}, {0.0,0.0,0.0},2*Pi/3}{ Surface{v1[0]}; };
+v3[] = Extrude { {0.0,0.0,1.0}, {0.0,0.0,0.0},2*Pi/3}{ Surface{v2[0]}; };
 
 // extrude outer slice to get outer spherical layer
-v4[] = Extrude Surface {13, {0.0,0.0,1.0}, {0.0,0.0,0.0},2*Pi/3};;
-v5[] = Extrude Surface {v4[0], {0.0,0.0,1.0}, {0.0,0.0,0.0},2*Pi/3};;
-v6[] = Extrude Surface {v5[0], {0.0,0.0,1.0}, {0.0,0.0,0.0},2*Pi/3};;
-
+v4[] = Extrude { {0.0,0.0,1.0}, {0.0,0.0,0.0},2*Pi/3}{ Surface{13}; };
+v5[] = Extrude { {0.0,0.0,1.0}, {0.0,0.0,0.0},2*Pi/3}{ Surface{v4[0]}; };
+v6[] = Extrude { {0.0,0.0,1.0}, {0.0,0.0,0.0},2*Pi/3}{ Surface{v5[0]}; };
 
 //assign volume number 1 to outer layer
 Physical Volume(1) = {v4[1],v5[1],v6[1]};

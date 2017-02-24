@@ -27,6 +27,6 @@ Transfinite Line{9,11} = 30 Using Progression 1.;
 Transfinite Surface{7} = {6,10,14,5};
 Recombine Surface{7};
 
-Extrude Surface {7, {0.0,0.0,0.1}}{Layers{10};Recombine;};
+Extrude {0.0,0.0,0.1}{ Surface {7}; Layers{10};Recombine; }
 
 Mesh.Smoothing  = 30;

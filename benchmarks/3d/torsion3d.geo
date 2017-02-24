@@ -96,7 +96,7 @@ Plane Surface(15) = {14};
 
 //Extruding geometry
 //----------------------------
-e[] = Extrude Surface {15, {1,0,0}, {x0,y0,z0}, Pi/2}; ;
-e[] = Extrude Surface {e[0], {1,0,0}, {x0,y0,z0}, Pi/2}; ;
-e[] = Extrude Surface {e[0], {1,0,0}, {x0,y0,z0}, Pi/2}; ;
-e[] = Extrude Surface {e[0], {1,0,0}, {x0,y0,z0}, Pi/2}; ;
+e[] = Extrude {{1,0,0}, {x0,y0,z0}, Pi/2}{Surface{15};} ;
+e[] = Extrude {{1,0,0}, {x0,y0,z0}, Pi/2}{Surface{e[0]};} ;
+e[] = Extrude {{1,0,0}, {x0,y0,z0}, Pi/2}{Surface{e[0]};} ;
+e[] = Extrude {{1,0,0}, {x0,y0,z0}, Pi/2}{Surface{e[0]};} ;

@@ -17,7 +17,7 @@ lambda = 0.9 ;//90%-98%
 e = d*(1-lambda)/lambda ;//thickness isolation
 
 W2 = 50*u/4 ; //Half thickness of stack
-D2 = 1. * u ; //Half gap 
+D2 = 1. * u ; //Half gap
 
 T = nlam*(d+e) ;
 
@@ -38,7 +38,7 @@ xBox = dd*1.4 ;
 Rint = xBox ;
 Rext = xBox*1.2 ;
 
-x0 = 0 ; y0 = 0 ; z0 = 0; 
+x0 = 0 ; y0 = 0 ; z0 = 0;
 z1 = (nlam-1)*(d+e)+d/2 ;
 
 AXISY = 100;
@@ -62,7 +62,7 @@ AIRINF = 3001;
 
 SURFACEGINF  = 4000;
 SURFACEGE0 = 4001;//Side
-SURFACEGH0 = 4002;//Symmetry 
+SURFACEGH0 = 4002;//Symmetry
 SURFACEAIR = 4003;
 
 SURFBACK = 4010;
@@ -103,7 +103,7 @@ s = 1.5 ;
 
 lc     = s * W2/16;//W2/20;
 lcind  = s * wind/5;
-lcind2 = lcind ; 
+lcind2 = lcind ;
 
 lcbox    = lc*2;
 lcboxi    = lcind ;
@@ -139,7 +139,7 @@ vector_size_ = #vector[];
 Printf("Vector: size: %g", vector_size_);
 For i In {0:vector_size_-1}
   Printf(" %g", vector[i]);
-EndFor 
+EndFor
 Return
 /* use e.g.:
 vector[]=yourlist[]; Call PrintVector;
@@ -148,7 +148,7 @@ vector[]=yourlist[]; Call PrintVector;
 
 //---------------------------------------------------------------------
 
-x0 = 0 ; y0 = 0 ; z0 = 0; 
+x0 = 0 ; y0 = 0 ; z0 = 0;
 
 p0 = newp ; Point(p0)={x0,y0,z0,lc};
 p1 = newp ; Point(p1)={x0+W2,y0,z0,lc};
@@ -156,10 +156,10 @@ p1 = newp ; Point(p1)={x0+W2,y0,z0,lc};
 p2 = newp ; Point(p2)={x0+W2,y0+W2,z0,lc};
 p3 = newp ; Point(p3)={x0,y0+W2,z0,lc};
 
-l0 = newl ; Line(l0) = {p0,p1};  
-l1 = newl ; Line(l1) = {p1,p2};  
-l2 = newl ; Line(l2) = {p2,p3};  
-l3 = newl ; Line(l3) = {p3,p0};  
+l0 = newl ; Line(l0) = {p0,p1};
+l1 = newl ; Line(l1) = {p1,p2};
+l2 = newl ; Line(l2) = {p2,p3};
+l3 = newl ; Line(l3) = {p3,p0};
 
 surflam0 = news;
 Line Loop (surflam0) = {l0,l1,l2,l3};
@@ -182,7 +182,7 @@ lvector[] = {}; lvector1[] = {};
 alpha = 1.5 ; cte  = 0.;
 
 For i In{0:ndivlam/2-1}
-cte += alpha^i; 
+cte += alpha^i;
 EndFor
 
 a = T/2/cte;
@@ -204,7 +204,7 @@ EndFor
 bumpvector[]={bumpvector1[]};//Complete lamination
 For i In {0:ndivlam/2-1}
 If(i<ndivlam/2-1)
-bumpvector[ndivlam/2+i] = 
+bumpvector[ndivlam/2+i] =
 bumpvector[ndivlam/2+i-1]+ bumpvector[ndivlam/2-1-i]-bumpvector[ndivlam/2-2-i] ;
 EndIf
 
@@ -215,7 +215,7 @@ EndFor
 lvector[] ={lvector1[],lvector1[]};
 
 ldwn[]+= surflam0;//Watch Out: this is half a lamination
-vol[]= Extrude Surface { surflam0, {0,0,d/2}} {Layers {ndivlam/2,1} ; };;
+vol[]= Extrude  {0,0,d/2} { Surface { surflam0}; Layers {ndivlam/2,1} ; };
 vollam[] += vol[1];
 lup[] += news-1;
 lfront[]  += news-5 ;
@@ -224,7 +224,7 @@ lback[] += news-3 ;
 lleft[] += news-2 ;
 
 For i In {1:nlam-1}
-vol[] = Extrude Surface {news-1, {0,0,e}} {Layers {{ndive},{1}} ; };;
+vol[] = Extrude {0,0,e} {Surface {news-1}; Layers {{ndive},{1}} ; };
 voliso[]  += vol[1];
 lupi[]    += news-1 ;
 lfronti[] += news-5 ;
@@ -233,7 +233,7 @@ lbacki[]  += news-3 ;
 llefti[]  += news-2 ;
 
 ldwn[]+= news-1 ;
-vol[] = Extrude Surface { news-1, {0,0,d}} {Layers {lvector[],bumpvector[]} ; };;
+vol[] = Extrude {0,0,d} { Surface { news-1}; Layers {lvector[],bumpvector[]} ; };
 vollam[] += vol[1];
 lup[]    += news-1 ;
 lfront[] += news-5 ;
@@ -242,7 +242,7 @@ lback[]  += news-3 ;
 lleft[]  += news-2 ;
 EndFor
 
-vol[]=Extrude Surface { news-1, {0,0,e/2}} {Layers {{ndive},{1}} ; };;
+vol[]=Extrude {0,0,e/2} { Surface { news-1}; Layers {{ndive},{1}} ; };
 voliso[] += vol[1];
 lupi[]    += news-1 ;
 lfronti[]  += news-5 ;
@@ -264,7 +264,7 @@ EndIf
 
 If(HOMO)
 ldwn[]+= surflam0;//Watch Out: this is half a lamination
-vol[]= Extrude Surface { surflam0, {0,0,d/2+e}} {Layers {ndivlam_half,1} ; };;
+vol[]= Extrude {0,0,d/2+e} { Surface { surflam0}; Layers {ndivlam_half,1} ; };
 vollam[] += vol[1];
 lup[] += news-1;
 lfront[]  += news-5 ;
@@ -277,7 +277,7 @@ bumpvector[] = {1};
 
 For i In {1:nlam-2}
 ldwn[]+= news-1 ;
-vol[] = Extrude Surface { news-1, {0,0,d+e}} {Layers {lvector[],bumpvector[]} ; };;
+vol[] = Extrude {0,0,d+e} { Surface { news-1}; Layers {lvector[],bumpvector[]} ; };
 vollam[] += vol[1];
 lup[]    += news-1 ;
 lfront[] += news-5 ;
@@ -287,7 +287,7 @@ lleft[]  += news-2 ;
 EndFor
 
 ldwn[]+= news-1 ;
-vol[]=Extrude Surface { news-1, {0,0,d+e/2}} {Layers {{lvector[]},{bumpvector[]}} ; };;
+vol[]=Extrude {0,0,d+e/2} { Surface { news-1}; Layers {{lvector[]},{bumpvector[]}} ; };
 vollam[] += vol[1];
 lup[]    += news-1 ;
 lfront[] += news-5 ;
@@ -376,7 +376,7 @@ lairinf2 = newl ; Line(lairinf2) = {pb1,pb1_};
 lairinf3 = newl ; Line(lairinf3) = {pb2,pb2_};
 
 surfge0_1 = news ;
-Line Loop(surfge0_1) = 
+Line Loop(surfge0_1) =
 {lcutr1,-li4,-li3,-li2,lcutr2,cs3,-lcutl,-l2,-l1};
 Plane Surface(surfge0_1) = {surfge0_1};
 
@@ -385,7 +385,7 @@ Line Loop(surfge0_inf1) = {lairinf1,cs3_,-lairinf3,-cs3};
 Plane Surface(surfge0_inf1) = {surfge0_inf1};
 
 surfge0_2 = news ;
-Line Loop(surfge0_2) = 
+Line Loop(surfge0_2) =
 {laxe0,-(li4+4),-(li3+4),-(li2+4),laxe1,cs2,-lcutl,
 borderLeft[],(borderLeft[#borderLeft[]-1]-9)};
 Plane Surface(surfge0_2) = {surfge0_2};
@@ -396,7 +396,7 @@ Plane Surface(surfge0_inf2) = {surfge0_inf2};
 
 
 surfgh0_1 = news ;
-Line Loop(surfgh0_1) = 
+Line Loop(surfgh0_1) =
 {borderRight[],-(borderRight[#borderRight[]-1]-6),laxe0,-(li4+6),-lcutr1};
 Plane Surface(surfgh0_1) = {surfgh0_1};
 
@@ -418,14 +418,14 @@ Surface(surfinf_out) = {surfinf_out};
 
 
 If(!HOMO)
-Surface Loop(newsl) = 
+Surface Loop(newsl) =
 {skinind3,-surfge0_2,surfgh0_1,surfge0_1,
  lright[],lrighti[],lback[],lbacki[],lupi[#voliso[]-1],
 -surfinf_in,surfgh0_2,skinind1,skinind2};
 EndIf
 
 If(HOMO)
-Surface Loop(newsl) = 
+Surface Loop(newsl) =
 {skinind3,-surfge0_2,surfgh0_1,surfge0_1,
  lright[],lback[],lup[#vollam[]-1],
 -surfinf_in,surfgh0_2,skinind1,skinind2};
@@ -454,7 +454,7 @@ For i In {0:#vollam[]-1}
 EndFor
 Physical Volume(ISOLATION)  = {voliso[]};
 
-Physical Surface(SURFACEGE0) = 
+Physical Surface(SURFACEGE0) =
 {surfge0_1,surfge0_2,surfge0_inf1,surfge0_inf2, surflam0, lleft[],llefti[],surfind_,surfind};
 Physical Surface(CUTIND) = {lfront[],lfronti[],surfgh0_1};
 Physical Surface(SURFACEGH0) = {lfront[],lfronti[],symind,surfgh0_1,surfgh0_2,surfgh0_inf};
@@ -463,7 +463,7 @@ EndIf
 If(HOMO)
   Physical Volume (LAMINATION) = {vollam[]};
   Physical Surface(SKINLAM)    = {lup[#vollam[]-1],lright[],lback[]};
-  Physical Surface(SURFACEGE0) = 
+  Physical Surface(SURFACEGE0) =
 {surfge0_1,surfge0_2,surfge0_inf1,surfge0_inf2,surflam0,lleft[],surfind_,surfind};
 Physical Surface(CUTIND) = {lfront[],surfgh0_1};
 Physical Surface(SURFACEGH0) = {lfront[],symind,surfgh0_1,surfgh0_2,surfgh0_inf};
@@ -475,7 +475,7 @@ Physical Volume(AIRINF)  = {volairinf};
 Physical Volume(IND) = {volind};
 Physical Surface(SKININD) = {skinind1,skinind2,skinind3};
 Physical Surface(ELEC0) = {surfind};
- 
+
 Physical Surface(SURFACEGINF) = {surfinf_out};
 
 

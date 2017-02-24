@@ -18,49 +18,49 @@ Point(1) = {0,-wstrip/2,0,mastrip};
 Point(2) = {0,wstrip/2,0,mastrip};
 Point(3) = {R+r,0,0,mafil};
 
-Extrude Point {1, {lsubstrat,0,0}};
-Extrude Point {2, {lsubstrat,0,0}};
+Extrude {lsubstrat,0,0}{ Point {1}; }
+Extrude {lsubstrat,0,0}{ Point {2}; }
 
 Line(3) = {1,2};
 Line(4) = {5,4};
 
-Extrude Point {3, {0,0,1}, {R,0,0}, Pi/4};
-Extrude Point {6, {0,0,1}, {R,0,0}, Pi/4};
-Extrude Point {8, {0,0,1}, {R,0,0}, Pi/4};
-Extrude Point {9, {0,0,1}, {R,0,0}, Pi/4};
-Extrude Point {10, {0,0,1}, {R,0,0}, Pi/4};
-Extrude Point {11, {0,0,1}, {R,0,0}, Pi/4};
-Extrude Point {12, {0,0,1}, {R,0,0}, Pi/4};
-Extrude Point {13, {0,0,1}, {R,0,0}, Pi/4};
+Extrude {{0,0,1}, {R,0,0}, Pi/4}{ Point {3}; }
+Extrude {{0,0,1}, {R,0,0}, Pi/4}{ Point {6}; }
+Extrude {{0,0,1}, {R,0,0}, Pi/4}{ Point {8}; }
+Extrude {{0,0,1}, {R,0,0}, Pi/4}{ Point {9}; }
+Extrude {{0,0,1}, {R,0,0}, Pi/4}{ Point {10}; }
+Extrude {{0,0,1}, {R,0,0}, Pi/4}{ Point {11}; }
+Extrude {{0,0,1}, {R,0,0}, Pi/4}{ Point {12}; }
+Extrude {{0,0,1}, {R,0,0}, Pi/4}{ Point {13}; }
 
 Line Loop(13) = {-4,-2,-3,1};
 Line Loop(14) = {5,6,7,8,9,10,11,12};
 Plane Surface(15) = {13,14};
 
-Extrude Line {8, {0,-1,0}, {0,0,0}, Pi/2}{
+Extrude { {0,-1,0}, {0,0,0}, Pi/2}{ Line {8};
   Layers {{R*Pi/2/mafil},{1.0}};
-};
-Extrude Line {9, {0,-1,0}, {0,0,0}, Pi/2}{
+}
+Extrude { {0,-1,0}, {0,0,0}, Pi/2}{ Line {9};
   Layers {{R*Pi/2/mafil},{1.0}};
-};
-Extrude Line {10, {0,-1,0}, {0,0,0}, Pi/2}{
+}
+Extrude { {0,-1,0}, {0,0,0}, Pi/2}{ Line {10};
   Layers {{R*Pi/2/mafil},{1.0}};
-};
-Extrude Line {7, {0,-1,0}, {0,0,0}, Pi/2}{
+}
+Extrude { {0,-1,0}, {0,0,0}, Pi/2}{ Line {7};
   Layers {{R*Pi/2/mafil},{1.0}};
-};
-Extrude Line {6, {0,-1,0}, {0,0,0}, Pi/2}{
+}
+Extrude { {0,-1,0}, {0,0,0}, Pi/2}{ Line {6};
   Layers {{R*Pi/2/mafil},{1.0}};
-};
-Extrude Line {5, {0,-1,0}, {0,0,0}, Pi/2}{
+}
+Extrude { {0,-1,0}, {0,0,0}, Pi/2}{ Line {5};
   Layers {{R*Pi/2/mafil},{1.0}};
-};
-Extrude Line {12, {0,-1,0}, {0,0,0}, Pi/2}{
+}
+Extrude { {0,-1,0}, {0,0,0}, Pi/2}{ Line {12};
   Layers {{R*Pi/2/mafil},{1.0}};
-};
-Extrude Line {11, {0,-1,0}, {0,0,0}, Pi/2}{
+}
+Extrude { {0,-1,0}, {0,0,0}, Pi/2}{ Line {11};
   Layers {{R*Pi/2/mafil},{1.0}};
-};
+}
 
 Point(51) = {0,-wsubstrat/2,0,maboite};
 Point(52) = {0,-wsubstrat/2,-hsubstrat,maboite};
@@ -78,11 +78,11 @@ Line(54) = {55,56};
 Line(55) = {56,2};
 Line Loop(56) = {-53,-52,-51,-50,-49,48,54,55};
 Plane Surface(57) = {56};
-aa[] = Extrude Surface {57, {lsubstrat,0,0}};  ;
+aa[] = Extrude {lsubstrat,0,0} { Surface {57}; } ;
 Delete { Volume { aa[1] }; }
 
-Extrude Line {81, {0,0,hboite}};
-Extrude Line {69, {0,0,hboite}};
+Extrude {0,0,hboite}{ Line {81}; }
+Extrude {0,0,hboite}{ Line {69}; }
 Line(108) = {83,85};
 Line(109) = {86,84};
 Line Loop(110) = {108,-105,53,-3,49,101};

@@ -14,12 +14,12 @@ Circle(2) = {4,5,1};
 Circle(3) = {6,7,8};
 Ellipse(4) = {2,5,6,6};
 Ellipse(5) = {4,5,6,6};
-Extrude Line {1, {0,0,1}, {-R,0,0}, Pi/2};
-Extrude Line {2, {0,0,1}, {-R,0,0}, Pi/2};
-Extrude Line {6, {0,0,1}, {-R,R,0}, -Pi/2};
-Extrude Line {10, {0,0,1}, {-R,R,0}, -Pi/2};
-Extrude Line {14, {0,0,1}, {-R,R,0}, -Pi/2};
-Extrude Line {17, {0,0,1}, {-R,R,0}, -Pi/2};
+Extrude {{0,0,1}, {-R,0,0}, Pi/2}{ Line {1} ;}
+Extrude {{0,0,1}, {-R,0,0}, Pi/2}{ Line {2} ;}
+Extrude {{0,0,1}, {-R,R,0}, -Pi/2}{ Line {6} ;}
+Extrude {{0,0,1}, {-R,R,0}, -Pi/2}{ Line {10};}
+Extrude {{0,0,1}, {-R,R,0}, -Pi/2}{ Line {14};}
+Extrude {{0,0,1}, {-R,R,0}, -Pi/2}{ Line {17};}
 Line Loop(1) = {3,4,-8,20};
 Line Loop(2) = {-3,23,11,-5};
 Surface(1) = {1};

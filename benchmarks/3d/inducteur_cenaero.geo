@@ -23,14 +23,14 @@ Circle(7) = {12,1,13};
 Circle(8) = {13,1,11};
 Line Loop(9) = {1,2,3,4};
 Line Loop(10) = {5,6,7,8};
-Extrude Line {2, {0.0,0.0,10}};
-Extrude Line {3, {0.0,0.0,10}};
-Extrude Line {4, {0.0,0.0,10}};
-Extrude Line {1, {0.0,0.0,10}};
-Extrude Line {5, {0.0,0.0,10}};
-Extrude Line {6, {0.0,0.0,10}};
-Extrude Line {7, {0.0,0.0,10}};
-Extrude Line {8, {0.0,0.0,10}};
+Extrude{0.0,0.0,10}{ Line{2}; }
+Extrude{0.0,0.0,10}{ Line{3}; }
+Extrude{0.0,0.0,10}{ Line{4}; }
+Extrude{0.0,0.0,10}{ Line{1}; }
+Extrude{0.0,0.0,10}{ Line{5}; }
+Extrude{0.0,0.0,10}{ Line{6}; }
+Extrude{0.0,0.0,10}{ Line{7}; }
+Extrude{0.0,0.0,10}{ Line{8}; }
 Line Loop(43) = {31,35,39,27};
 Line Loop(44) = {11,15,19,23};
 Plane Surface(45) = {43,44};
@@ -45,10 +45,10 @@ Circle(100001) = {3,100,2};
 Circle(100002) = {2,100,4};
 Circle(100003) = {4,100,5};
 Circle(100004) = {5,100,3};
-Extrude Line {100003, {0.0,0.0,15}};
-Extrude Line {100004, {0.0,0.0,15}};
-Extrude Line {100001, {0.0,0.0,15}};
-Extrude Line {100002, {0.0,0.0,15}};
+Extrude {0.0,0.0,15}{Line {100003};}
+Extrude {0.0,0.0,15}{Line {100004};}
+Extrude {0.0,0.0,15}{Line {100001};}
+Extrude {0.0,0.0,15}{Line {100002};}
 Line Loop(100021) = {100013,100017,100005,100009};
 Plane Surface(100022) = {100021};
 Line Loop(100023) = {100004,100001,100002,100003};

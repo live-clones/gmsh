@@ -143,15 +143,15 @@ Plane Surface(302) = {301};
 
 
 
-volCORE[] = Extrude Surface {302, {0,0,zCoil-zCore}};;
-volCORE0_1[] = Extrude Surface {324, {0,0,dzCoil}};;
-volCORE0_2[] = Extrude Surface {346, {0,0,dzCore-dzCoil-(zCoil-zCore)}};;
+volCORE[] = Extrude {0,0,zCoil-zCore}{ Surface {302}; };
+volCORE0_1[] = Extrude {0,0,dzCoil}{ Surface {324}; };
+volCORE0_2[] = Extrude {0,0,dzCore-dzCoil-(zCoil-zCore)}{ Surface {346}; };
 
 Line Loop(369) = {18,19,20,21};
 Line Loop(370) = {306,307,304,305};
 Plane Surface(371) = {369,370};
 
-volCOIL[] = Extrude Surface {371, {0,0,dzCoil}};;
+volCOIL[] = Extrude {0,0,dzCoil}{ Surface {371}; };
 
 
 Line Loop(414) = {43,-54,-34,-33,52};
@@ -187,14 +187,10 @@ Surface(439) = {438,430};
 Line Loop(440) = {2,3,4,1};
 Plane Surface(441) = {440};
 
-volAIR[] = Extrude Surface {441, {0,0,zBox1}};;
+volAIR[] = Extrude {0,0,zBox1}{ Surface {441}; };
 Delete { Volume{volAIR[1]}; }
 
 Characteristic Length {101, 108, 103, 113} = pCore*1;
-/*
-Surface Loop(466) = {337,371,384,388,392,396,413,341,345,333};
-Volume(467) = {466}; // Coil
-*/
 Surface Loop(468) = {427,439,415,421,417,425,423,419,429,435,433,437};
 Volume(469) = {468}; // Plate
 
@@ -205,34 +201,18 @@ Surface Loop(472) = {441,450,454,458,462,463};
 Surface Loop(473) = {431,439,415,421,417,425,423,419};
 Surface Loop(474) = {323,302,311,315,319,371,384,388,392,396,413,363,367,355,359,368};
 Volume(475) = {472,473,474};
-/*
-Surface Loop(464) = {324,333,337,341,345,367,355,359,363,368};
-Volume(465) = {464}; // Core0
-Surface Loop(476) = {324,311,302,315,319,323};
-Volume(477) = {476}; // Core
-*/
 
 // Physical regions
 
 Physical Volume(CORE0) = {volCORE0_1[1], volCORE0_2[1]};
-
 Physical Volume(CORE) = {volCORE[1]};
-
 Physical Volume(COIL) = {volCOIL[1]};
-
 Physical Volume(PLATE) = {469};
-
 Physical Volume(CRACK) = {471};
-
 Physical Volume(AIR) = {475};
-
 Physical Surface(SKINCORE) = {359,337,315,302,311,333,355,368,363,341,319,323,345,367};
-
 Physical Surface(SKINCOIL) = {337,371,384,388,392,396,413,341,345,333};
 Physical Surface(SKINCOIL2) = {333, 337, 341, 345};
-
 Physical Surface(CUTCOIL) = {324};
-
 Physical Surface(SKINPLATE) = {427,439,415,421,417,425,423,419,429,435,433,437};
-
 Physical Surface(SURFACEGH0) = {441,450,454,458,462,463};

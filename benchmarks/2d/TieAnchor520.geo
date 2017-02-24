@@ -1,8 +1,8 @@
-/********************************************************************* 
+/*********************************************************************
  *
  *  Blennerhassett Arch Bridge
  *  gmsh input file for Tie Cable Anchorage Local Model.
- *  
+ *
  *
  *  UNITS: INCHES
  *
@@ -32,7 +32,7 @@ lcXFine = 1 ;
 //
 // ______________________
 // GEOMETRICAL PARAMETERS
-xinit = 0 ;						// ORIGIN: Located at bot. flange of tie at intersection of 
+xinit = 0 ;						// ORIGIN: Located at bot. flange of tie at intersection of
 zinit = 0 ;						// tie web west with line of action of lower lateral bracing
 yinit = 0 ;						// and CL Floorbeam
 Dtie = 85.625 ;						// depth of tie
@@ -59,8 +59,8 @@ wAnchPlate = 22 ;					// width of Anchor End-Plate (and hole in webs)
 hAnchPlate = 23 ;					// height of Anchor End-Plate (and hole in webs)
 xCableN = xinit-22.125 ;				// x-position CL North cable anchorage at anchor-point
 xCableS = xinit+22.125 ;				// x-position CL South cable anchorage at anchor-point
-yCableN = yFlBot+63.5625 ;				// y-position North cable anchor point at bot of anchorage webs 
-yCableS = yCableN ;					// y-position South cable anchor point at bot of anchorage webs 
+yCableN = yFlBot+63.5625 ;				// y-position North cable anchor point at bot of anchorage webs
+yCableS = yCableN ;					// y-position South cable anchor point at bot of anchorage webs
 holeWidth = DiaCable+ClearanceCable;  			// width of minor axis of hole in bot. flange
 holeLength = holeWidth/(Cos(thetaN*Pi/180));		// length of major axis of hole in bot. flange
 //
@@ -68,7 +68,7 @@ dLLB=24.375 ;						// depth of Lower Lateral Bracing
 //
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  STANDARD FUNCTIONS
  *
@@ -116,8 +116,8 @@ Return
 // WARNING: function will crash if lines are parallel or vertical (slope = infinity)
 // input x1,y1 input x2,y2 input u1,v1 input u2,v2
 // output xi,yi
-// if (x1-xi)*(xi-x2)>=0 AND (u1-xi)*(xi-u2)>=0 
-//    AND (y1-yi)*(yi-y2)>=0 AND (v1-yi)*(yi-v2)>=0 
+// if (x1-xi)*(xi-x2)>=0 AND (u1-xi)*(xi-u2)>=0
+//    AND (y1-yi)*(yi-y2)>=0 AND (v1-yi)*(yi-v2)>=0
 //
 Function IsectLines2d
 FCTb1 = (FCTy2-FCTy1)/(FCTx2-FCTx1) ;
@@ -145,7 +145,7 @@ Return
 //
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  GENERATE MESH
  *
@@ -155,7 +155,7 @@ Return
 //
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  TIE WEB EAST
  *
@@ -168,7 +168,7 @@ lc101000VFine = lcVFine;
 // ______
 // POINTS
 //
-// Interface Bot. Flange 
+// Interface Bot. Flange
 p101100=newp;	Point(p101100) = {xinit-1.3*Dtie,	yinit,			zWebEast,	lc101000};	c101100[]={Point{p101100}};
 p101108=newp;	Point(p101108) = {xinit-8.375,		c101100[1],		c101100[2],	lc101000Fine};	c101108[]={Point{p101108}};
 p101110=newp;	Point(p101110) = {xinit,		c101100[1],		c101100[2],	lc101000Fine};	c101110[]={Point{p101110}};
@@ -281,7 +281,7 @@ L222220=newl;	Line(L222220) = {p122220, p122320};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL101001=newl;	Line Loop(LL101001) =	{L101100,L201108,-L101500,-L201100};
 LL101002=newl;	Line Loop(LL101002) =	{L101108,L201110,L201210,L201410,-L101508,-L201108};
 LL101003=newl;	Line Loop(LL101003) =	{L101110,L201112,-L101510,-L201410,-L201210,-L201110};
@@ -324,7 +324,7 @@ PS122004=news;	Plane Surface(PS122004) =	{LL122004};
 PS122005=news;	Plane Surface(PS122005) =	{LL122005};
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  TIE WEB WEST
  *
@@ -338,7 +338,7 @@ lc102000XFine = lcXFine;
 // ______
 // POINTS
 //
-// Interface Bot. Flange 
+// Interface Bot. Flange
 p102100=newp;	Point(p102100) = {c101100[0],		c101100[1],		zWebWest,	lc102000};	c102100[]={Point{p102100}};
 p102105=newp;	Point(p102105) = {c101110[0]-16,	c102100[1],		c102100[2],	lc102000Fine};	c102105[]={Point{p102105}};
 p102108=newp;	Point(p102108) = {c101110[0]-8.375,	c102100[1],		c102100[2],	lc102000Fine};	c102108[]={Point{p102108}};
@@ -530,7 +530,7 @@ L236378=newl;	Line(L236378) = {p102378, p136320};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL102001=newl;	Line Loop(LL102001) =	{L102100,L102105,L202108,-L102505,-L102500,-L202100};
 LL102002=newl;	Line Loop(LL102002) =	{L102108,L202110,L202210,L202410,-L102508,-L202108};
 LL102003=newl;	Line Loop(LL102003) =	{L102110,L202112,L202352,L202312,L202372,-L102510,-L202410,-L202210,-L202110};
@@ -603,7 +603,7 @@ PS136014=news;	Plane Surface(PS136014) =	{LL136014};
 //
 
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  TIE FLANGE TOP
  *
@@ -616,7 +616,7 @@ lc103000VFine = lcVFine;
 // ______
 // POINTS
 //
-// Interface East Web 
+// Interface East Web
 p103100=p101500;	c103100[]={Point{p103100}};
 p103108=p101508;	c103108[]={Point{p103108}};
 p103110=p101510;	c103110[]={Point{p103110}};
@@ -637,7 +637,7 @@ p103310=newp;	Point(p103310) = {c102510[0],		c103100[1],		c103300[2],		lc103000F
 //p103315=newp;	Point(p103315) = {c102515[0],		c103100[1],		c103300[2],		lc103000Med};	c103315[]={Point{p103315}};
 p103315=newp;	Point(p103315) = {c103310[0]+17.125,	c103100[1],		c103300[2],		lc103000Med};	c103315[]={Point{p103315}};
 p103325=newp;	Point(p103325) = {c102525[0],		c103100[1],		c103300[2],		lc103000};	c103325[]={Point{p103325}};
-// Interface West Web 
+// Interface West Web
 p103400=p102500;	c103400[]={Point{p103400}};
 p103405=p102505;	c103405[]={Point{p103405}};
 p103408=p102508;	c103408[]={Point{p103408}};
@@ -751,7 +751,7 @@ L103914=newl;	Line(L103914) = {p103804, p103904};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL103001=newl;	Line Loop(LL103001) =	{L103100,L103108,L203110,-L103205,-L103200,-L203100};
 LL103002=newl;	Line Loop(LL103002) =	{L103110,L103112,L203125,-L103215,-L103210,-L203110};
 //
@@ -810,7 +810,7 @@ PS103905=news;	Plane Surface(PS103905) =	{LL103905};
 //
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  TIE FLANGE TOP, GUIDE PIPE NORTH
  *
@@ -846,15 +846,15 @@ c103764[] = Translate {-6*Sin(thetaN*Pi/180),6*Cos(thetaN*Pi/180),0} {Duplicata 
 If (thetaN < 0)
 	c103780[] = Translate	{-36*Sin(thetaN*Pi/180),
 				36*Cos(thetaN*Pi/180),
-				0} 
+				0}
 				{Duplicata { Point {p103600}; } } ; p103780 = c103780[0];
 	c103781[] = Translate	{-30*Sin(thetaN*Pi/180),
 				30*Cos(thetaN*Pi/180),
-				0} 
+				0}
 				{Duplicata { Point {p103761}; } } ; p103781 = c103781[0];
 	c103782[] = Translate	{-30*Sin(thetaN*Pi/180) + DiaCable/2*Sin(thetaN*Pi/180)*Tan(thetaN*Pi/180),
 				30*Cos(thetaN*Pi/180) - DiaCable/2*Cos(thetaN*Pi/180)*Tan(thetaN*Pi/180),
-				0} 
+				0}
 				{Duplicata { Point {p103762}; } } ; p103782 = c103782[0];
 	c103783[] = Translate	{-30*Sin(thetaN*Pi/180),
 				30*Cos(thetaN*Pi/180),
@@ -867,11 +867,11 @@ EndIf
 If (thetaN > 0)
 	c103780[] = Translate	{-36*Sin(thetaN*Pi/180),
 				36*Cos(thetaN*Pi/180),
-				0} 
+				0}
 				{Duplicata { Point {p103600}; } } ; p103780 = c103780[0];
 	c103781[] = Translate	{-30*Sin(thetaN*Pi/180),
 				30*Cos(thetaN*Pi/180),
-				0} 
+				0}
 				{Duplicata { Point {p103761}; } } ; p103781 = c103781[0];
 	c103782[] = Translate	{-30*Sin(thetaN*Pi/180) - DiaCable/2*Sin(thetaN*Pi/180)*Tan(thetaN*Pi/180),
 				30*Cos(thetaN*Pi/180) + DiaCable/2*Cos(thetaN*Pi/180)*Tan(thetaN*Pi/180),
@@ -887,7 +887,7 @@ EndIf
 //
 // _____
 // LINES
-// 
+//
 L103751=newl; Line(L103751) = {p103701, p103751};
 L103752=newl; Line(L103752) = {p103702, p103752};
 L103753=newl; Line(L103753) = {p103703, p103753};
@@ -912,7 +912,7 @@ L103791=newl; Ellipse(L103791) = {p103781,p103780,p103782,p103782};
 L103792=newl; Ellipse(L103792) = {p103782,p103780,p103782,p103783};
 L103793=newl; Ellipse(L103793) = {p103783,p103780,p103784,p103784};
 L103794=newl; Ellipse(L103794) = {p103784,p103780,p103784,p103781};
-// 
+//
 // connect ellipses with lines along axis of pipe
 L103795=newl; Line(L103795) = {p103761,p103781};
 L103796=newl; Line(L103796) = {p103762,p103782};
@@ -975,23 +975,10 @@ PSpipe103663=news; Surface(PSpipe103663) = {LL103663};
 PSpipe103664=news; Surface(PSpipe103664) = {LL103664};
 //
 //
-// __________
-// EXTRUSIONS
-//Extrude Line { L103651, {-30*Sin(thetaN*Pi/180),30*Cos(thetaN*Pi/180),0} } {Recombine;}; PSpipe103651 = news-1;
-//Extrude Line { L103652, {-30*Sin(thetaN*Pi/180),30*Cos(thetaN*Pi/180),0} } {Recombine;}; PSpipe103652 = news-1;
-//Extrude Line { L103653, {-30*Sin(thetaN*Pi/180),30*Cos(thetaN*Pi/180),0} } {Recombine;}; PSpipe103653 = news-1;
-//Extrude Line { L103654, {-30*Sin(thetaN*Pi/180),30*Cos(thetaN*Pi/180),0} } {Recombine;}; PSpipe103654 = news-1;
-//
-//Extrude Line { L103601, {-6*Sin(thetaN*Pi/180),6*Cos(thetaN*Pi/180),0} } {Recombine;}; PSpipe103601 = news-1;
-//Extrude Line { L103602, {-6*Sin(thetaN*Pi/180),6*Cos(thetaN*Pi/180),0} } {Recombine;}; PSpipe103602 = news-1;
-//Extrude Line { L103603, {-6*Sin(thetaN*Pi/180),6*Cos(thetaN*Pi/180),0} } {Recombine;}; PSpipe103603 = news-1;
-//Extrude Line { L103604, {-6*Sin(thetaN*Pi/180),6*Cos(thetaN*Pi/180),0} } {Recombine;}; PSpipe103604 = news-1;
 //
 //
 //
-//
-//
-/********************************************************************* 
+/*********************************************************************
  *
  *  TIE FLANGE TOP, GUIDE PIPE SOUTH
  *
@@ -1019,15 +1006,15 @@ c103964[] = Translate {-6*Sin(thetaS*Pi/180),6*Cos(thetaS*Pi/180),0} {Duplicata 
 If (thetaS < 0)
 	c103980[] = Translate	{-36*Sin(thetaS*Pi/180),
 				36*Cos(thetaS*Pi/180),
-				0} 
+				0}
 				{Duplicata { Point {p103800}; } } ; p103980 = c103980[0];
 	c103981[] = Translate	{-30*Sin(thetaS*Pi/180),
 				30*Cos(thetaS*Pi/180),
-				0} 
+				0}
 				{Duplicata { Point {p103961}; } } ; p103981 = c103981[0];
 	c103982[] = Translate	{-30*Sin(thetaS*Pi/180) + DiaCable/2*Sin(thetaS*Pi/180)*Tan(thetaS*Pi/180),
 				30*Cos(thetaS*Pi/180) - DiaCable/2*Cos(thetaS*Pi/180)*Tan(thetaS*Pi/180),
-				0} 
+				0}
 				{Duplicata { Point {p103962}; } } ; p103982 = c103982[0];
 	c103983[] = Translate	{-30*Sin(thetaS*Pi/180),
 				30*Cos(thetaS*Pi/180),
@@ -1040,11 +1027,11 @@ EndIf
 If (thetaS > 0)
 	c103980[] = Translate	{-36*Sin(thetaS*Pi/180),
 				36*Cos(thetaS*Pi/180),
-				0} 
+				0}
 				{Duplicata { Point {p103800}; } } ; p103980 = c103980[0];
 	c103981[] = Translate	{-30*Sin(thetaS*Pi/180),
 				30*Cos(thetaS*Pi/180),
-				0} 
+				0}
 				{Duplicata { Point {p103961}; } } ; p103981 = c103981[0];
 	c103982[] = Translate	{-30*Sin(thetaS*Pi/180) - DiaCable/2*Sin(thetaS*Pi/180)*Tan(thetaS*Pi/180),
 				30*Cos(thetaS*Pi/180) + DiaCable/2*Cos(thetaS*Pi/180)*Tan(thetaS*Pi/180),
@@ -1060,7 +1047,7 @@ EndIf
 //
 // _____
 // LINES
-// 
+//
 L103951=newl; Line(L103951) = {p103901, p103951};
 L103952=newl; Line(L103952) = {p103902, p103952};
 L103953=newl; Line(L103953) = {p103903, p103953};
@@ -1085,7 +1072,7 @@ L103991=newl; Ellipse(L103991) = {p103981,p103980,p103982,p103982};
 L103992=newl; Ellipse(L103992) = {p103982,p103980,p103982,p103983};
 L103993=newl; Ellipse(L103993) = {p103983,p103980,p103984,p103984};
 L103994=newl; Ellipse(L103994) = {p103984,p103980,p103984,p103981};
-// 
+//
 // connect ellipses with lines along axis of pipe
 L103995=newl; Line(L103995) = {p103961,p103981};
 L103996=newl; Line(L103996) = {p103962,p103982};
@@ -1139,18 +1126,10 @@ PSpipe103863=news; Surface(PSpipe103863) = {LL103863};
 PSpipe103864=news; Surface(PSpipe103864) = {LL103864};
 //
 //
-// __________
-// EXTRUSIONS
-//
-//Extrude Line { L103801, {-6*Sin(thetaS*Pi/180),6*Cos(thetaS*Pi/180),0} } {Recombine;}; PSpipe103801 = news-1;
-//Extrude Line { L103802, {-6*Sin(thetaS*Pi/180),6*Cos(thetaS*Pi/180),0} } {Recombine;}; PSpipe103802 = news-1;
-//Extrude Line { L103803, {-6*Sin(thetaS*Pi/180),6*Cos(thetaS*Pi/180),0} } {Recombine;}; PSpipe103803 = news-1;
-//Extrude Line { L103804, {-6*Sin(thetaS*Pi/180),6*Cos(thetaS*Pi/180),0} } {Recombine;}; PSpipe103804 = news-1;
 //
 //
 //
-//
-/********************************************************************* 
+/*********************************************************************
  *
  *  TIE FLANGE BOT
  *
@@ -1162,7 +1141,7 @@ lc104000Fine = lcFine;
 // ______
 // POINTS
 //
-// Interface East Web 
+// Interface East Web
 p104100=p101100;	c104100[]={Point{p104100}};
 p104108=p101108;	c104108[]={Point{p104108}};
 p104110=p101110;	c104110[]={Point{p104110}};
@@ -1180,7 +1159,7 @@ p104305=newp;	Point(p104305) = {c102505[0],		c104100[1],		c103300[2],	lc103000Me
 p104310=newp;	Point(p104310) = {c102510[0],		c104100[1],		c103300[2],	lc103000Fine};	c104310[]={Point{p104310}};
 p104320=newp;	Point(p104320) = {c104215[0],		c104100[1],		c103300[2],	lc103000Med};	c104320[]={Point{p104320}};
 p104325=newp;	Point(p104325) = {c102525[0],		c104100[1],		c103300[2],	lc103000};	c104325[]={Point{p104325}};
-// Interface West Web 
+// Interface West Web
 p104400=p102100;	c104400[]={Point{p104400}};
 p104405=p102105;	c104405[]={Point{p104405}};
 p104408=p102108;	c104408[]={Point{p104408}};
@@ -1238,7 +1217,7 @@ L204325=newl;	Line(L204325) = {p104325, p104425};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL104001=newl;	Line Loop(LL104001) =	{L104100,L104108,L204110,-L104205,-L104200,-L204100};
 LL104002=newl;	Line Loop(LL104002) =	{L104110,L104112,L204125,-L104215,-L104210,-L204110};
 //
@@ -1265,7 +1244,7 @@ PS104008=news;	Plane Surface(PS104008) =	{LL104008};
 PS104009=news;	Plane Surface(PS104009) =	{LL104009};
 PS104010=news;	Plane Surface(PS104010) =	{LL104010};
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  FLOORBEAM TOP FLANGE
  *
@@ -1277,7 +1256,7 @@ lc106000Fine = lcFine;
 // ______
 // POINTS
 //
-// Interface East Web 
+// Interface East Web
 p106100=p103405;	c106100[]={Point{p106100}};
 p106118=p103408;	c106118[]={Point{p106118}};
 p106120=p103410;	c106120[]={Point{p106120}};
@@ -1401,7 +1380,7 @@ L206425=newl;	Line(L206425) = {p106425, p106453};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL106001=newl;	Line Loop(LL106001) =	{L106100,L106118,L206120,L206151,-L106200,-L206100};
 LL106002=newl;	Line Loop(LL106002) =	{L106120,L106122,L206140,-L206151,-L106220,-L206120};
 LL106003=newl;	Line Loop(LL106003) =	{L106200,L206220,-L106251,L206251,-L106310,-L106300,-L206200};
@@ -1442,7 +1421,7 @@ PS106022=news;	Plane Surface(PS106022) =	{LL106022};
 PS106023=news;	Plane Surface(PS106023) =	{LL106023};
 PS106024=news;	Plane Surface(PS106024) =	{LL106024};
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  FLOORBEAM BOT FLANGE
  *
@@ -1454,7 +1433,7 @@ lc107000Fine = lcFine;
 // ______
 // POINTS
 //
-// Interface East Web 
+// Interface East Web
 p107100=p104405;	c107100[]={Point{p107100}};
 p107118=p104408;	c107118[]={Point{p107118}};
 p107120=p104410;	c107120[]={Point{p107120}};
@@ -1526,7 +1505,7 @@ L207440=newl;	Line(L207440) = {p107440, p107540};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL107001=newl;	Line Loop(LL107001) =	{L107100,L107118,L207120,L207151,-L107200,-L207100};
 LL107002=newl;	Line Loop(LL107002) =	{L107120,L107122,L207140,-L207151,-L107220,-L207120};
 LL107003=newl;	Line Loop(LL107003) =	{L107200,L207220,-L107310,-L107300,-L207200};
@@ -1547,7 +1526,7 @@ PS107006=news;	Plane Surface(PS107006) =	{LL107006};
 PS107007=news;	Plane Surface(PS107007) =	{LL107007};
 PS107008=news;	Plane Surface(PS107008) =	{LL107008};
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  FLOORBEAM WEB
  *
@@ -1636,7 +1615,7 @@ L303000=newl;	Line(L303000) = {p203000, p105550};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL105001=newl;	Line Loop(LL105001) =	{L205110,L205210,L205410,L105510,-L205415,-L205315,-L205215,-L205115,-L105110};
 LL105002=newl;	Line Loop(LL105002) =	{L205115,L105215,L205220,L205320,-L105415,L205415,L105515,L105520,L105525,-L205130,-L105120,-L105115};
 LL105003=newl;	Line Loop(LL105003) =	{L205130,L105530,L105532,L105538,-L205140,-L105130};
@@ -1653,7 +1632,7 @@ PS105004=news;	Plane Surface(PS105004) =	{LL105004};
 PS105005=news;	Plane Surface(PS105005) =	{LL105005};
 PS105006=news;	Plane Surface(PS105006) =	{LL105006};
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  FLOORBEAM STIFFENERS
  *
@@ -1665,7 +1644,7 @@ lc111000Fine = lcFine;
 // ______
 // POINTS
 //
-// 
+//
 p111100=p107320;	c111100[]={Point{p111100}};
 p111110=p107330;	c111110[]={Point{p111110}};
 p111500=p106320;	c111500[]={Point{p111500}};
@@ -1688,7 +1667,7 @@ p114510=p106410;	c114510[]={Point{p114510}};
 //
 // _____
 // LINES
-// 
+//
 L111100=L107320;
 L111500=L106320;
 L111550=L106325;
@@ -1717,7 +1696,7 @@ L214110=newl;	Line(L214110) = {p114110, p114510};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL111100=newl;	Line Loop(LL111100) =	{L111100,L211110,-L111550,-L111500,-L211100};
 LL112100=newl;	Line Loop(LL112100) =	{L112100,L212100,-L112550,-L112500,-L212110};
 LL113100=newl;	Line Loop(LL113100) =	{L113100,L213110,-L113550,-L113500,-L213100};
@@ -1730,7 +1709,7 @@ PS112100=news;	Plane Surface(PS112100) =	{LL112100};
 PS113100=news;	Plane Surface(PS113100) =	{LL113100};
 PS114100=news;	Plane Surface(PS114100) =	{LL114100};
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  LOWER LATERAL BRACING BOT FLANGE
  *
@@ -1742,7 +1721,7 @@ lc117000Fine = lcFine;
 // ______
 // POINTS
 //
-// 
+//
 p117100=newp;	Point(p117100) = {c102510[0]+37.25,	c102320[1]+17.5625*.02,	c102320[2]+17.5625,	lc117000};	c117100[]={Point{p117100}};
 p117110=newp;	Point(p117110) = {c102510[0]+74.375,	c102320[1]+48*.02,	c102320[2]+48,		lc117000};	c117110[]={Point{p117110}};
 p117200=newp;	Point(p117200) = {c102510[0]+23.9375,	c102320[1]+33.8125*.02,	c102320[2]+33.8125,	lc117000};	c117200[]={Point{p117200}};
@@ -1750,7 +1729,7 @@ p117210=newp;	Point(p117210) = {c102510[0]+61.125,	c102320[1]+64.25*.02,	c102320
 //
 // _____
 // LINES
-// 
+//
 L117100=newl;	Line(L117100) = {p117100, p117200};
 L117110=newl;	Line(L117110) = {p117110, p117210};
 L217100=newl;	Line(L217100) = {p117100, p117110};
@@ -1760,14 +1739,14 @@ L217200=newl;	Line(L217200) = {p117200, p117210};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL117100=newl;	Line Loop(LL117100) =	{L117100,L217200,-L117110,-L217100};
 //
 // ________
 // SURFACES
 PS117100=news;	Plane Surface(PS117100) =	{LL117100};
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  LOWER LATERAL BRACING TOP FLANGE
  *
@@ -1779,7 +1758,7 @@ lc118000Fine = lcFine;
 // ______
 // POINTS
 //
-// 
+//
 p118100=newp;	Point(p118100) = {c117100[0],		c117100[1]+dLLB,	c117100[2],		lc118000};	c118100[]={Point{p118100}};
 p118110=newp;	Point(p118110) = {c117110[0],		c117110[1]+dLLB,	c117110[2],		lc118000};	c118110[]={Point{p118110}};
 p118200=newp;	Point(p118200) = {c117200[0],		c117200[1]+dLLB,	c117200[2],		lc118000};	c118200[]={Point{p118200}};
@@ -1787,7 +1766,7 @@ p118210=newp;	Point(p118210) = {c117210[0],		c117210[1]+dLLB,	c117210[2],		lc118
 //
 // _____
 // LINES
-// 
+//
 L118100=newl;	Line(L118100) = {p118100, p118200};
 L118110=newl;	Line(L118110) = {p118110, p118210};
 L218100=newl;	Line(L218100) = {p118100, p118110};
@@ -1797,14 +1776,14 @@ L218200=newl;	Line(L218200) = {p118200, p118210};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL118100=newl;	Line Loop(LL118100) =	{L118100,L218200,-L118110,-L218100};
 //
 // ________
 // SURFACES
 PS118100=news;	Plane Surface(PS118100) =	{LL118100};
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  LOWER LATERAL BRACING EAST WEB
  *
@@ -1816,7 +1795,7 @@ lc115000Fine = lcFine;
 // ______
 // POINTS
 //
-// 
+//
 p115100=p118100;	c115100[]={Point{p115100}};
 p115110=p118110;	c115110[]={Point{p115110}};
 p115200=p117100;	c115200[]={Point{p115200}};
@@ -1824,7 +1803,7 @@ p115210=p117110;	c115210[]={Point{p115210}};
 //
 // _____
 // LINES
-// 
+//
 L115100=L218100;
 L115200=L217100;
 L215100=newl;	Line(L215100) = {p115100, p115200};
@@ -1834,7 +1813,7 @@ L215110=newl;	Line(L215110) = {p115110, p115210};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL115100=newl;	Line Loop(LL115100) =	{L115100,L215110,-L115200,-L215100};
 //
 // ________
@@ -1842,7 +1821,7 @@ LL115100=newl;	Line Loop(LL115100) =	{L115100,L215110,-L115200,-L215100};
 PS115100=news;	Plane Surface(PS115100) =	{LL115100};
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  LOWER LATERAL BRACING WEST WEB
  *
@@ -1854,7 +1833,7 @@ lc116000Fine = lcFine;
 // ______
 // POINTS
 //
-// 
+//
 p116100=p118200;	c116100[]={Point{p116100}};
 p116110=p118210;	c116110[]={Point{p116110}};
 p116200=p117200;	c116200[]={Point{p116200}};
@@ -1862,7 +1841,7 @@ p116210=p117210;	c116210[]={Point{p116210}};
 //
 // _____
 // LINES
-// 
+//
 L116100=L218200;
 L116200=L217200;
 L216100=newl;	Line(L216100) = {p116100, p116200};
@@ -1872,14 +1851,14 @@ L216110=newl;	Line(L216110) = {p116110, p116210};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL116100=newl;	Line Loop(LL116100) =	{L116100,L216110,-L116200,-L216100};
 //
 // ________
 // SURFACES
 PS116100=news;	Plane Surface(PS116100) =	{LL116100};
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  GUSSET BOT
  *
@@ -1891,7 +1870,7 @@ lc108000Fine = lcFine;
 // ______
 // POINTS
 //
-// 
+//
 p108101=p105315;	c108101[]={Point{p108101}};
 p108102=p105320;	c108102[]={Point{p108102}};
 p108103=newp;	Point(p108103) = {c105110[0]+22.6875,	c108102[1],		c108102[2],		lc118000};	c108103[]={Point{p108103}};
@@ -1907,7 +1886,7 @@ p108112=p102312;	c108112[]={Point{p108112}};
 //
 // _____
 // LINES
-// 
+//
 L108101=L105315;
 L108102=newl;	Line(L108102) = {p108102, p108103};
 L108103=newl;	Line(L108103) = {p108103, p108104};
@@ -1925,14 +1904,14 @@ L108112=newl;	Line(L108112) = {p108112, p108101};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL108100=newl;	Line Loop(LL108100) =	{L108101,L108102,L108103,L108104,L108105,L108106,L108107,L108108,L108109,L108110,L108111,L108112};
 //
 // ________
 // SURFACES
 PS108100=news;	Plane Surface(PS108100) =	{LL108100};
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  GUSSET TOP
  *
@@ -1944,7 +1923,7 @@ lc109000Fine = lcFine;
 // ______
 // POINTS
 //
-// 
+//
 p109101=p106140;	c109101[]={Point{p109101}};
 p109102=p106240;	c109102[]={Point{p109102}};
 p109103=newp;	Point(p109103) = {c108103[0],		c108103[1]+dLLB,	c108103[2],		lc118000};	c109103[]={Point{p109103}};
@@ -1958,7 +1937,7 @@ p109200=p103990; // center of circular transition curve
 //
 // _____
 // LINES
-// 
+//
 L109101=L206140;
 L109102=newl;	Line(L109102) = {p109102, p109103};
 L109103=newl;	Line(L109103) = {p109103, p109104};
@@ -1972,7 +1951,7 @@ L109108=-L102515;
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL109100=newl;	Line Loop(LL109100) =	{L109101,L109102,L109103,L109104,L109105,L109106,L109107,L109108};
 //
 // ________
@@ -1980,7 +1959,7 @@ LL109100=newl;	Line Loop(LL109100) =	{L109101,L109102,L109103,L109104,L109105,L1
 PS109100=news;	Plane Surface(PS109100) =	{LL109100};
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  TIE DIAPHRAGM
  *
@@ -1992,7 +1971,7 @@ lc110000Fine = lcFine;
 // ______
 // POINTS
 //
-// 
+//
 p110210=p104210;	c110210[]={Point{p110210}};
 p110310=p104310;	c110310[]={Point{p110310}};
 p110120=p101210;	c110120[]={Point{p110120}};
@@ -2018,7 +1997,7 @@ p110612=newp;	Point(p110612) = {c110210[0],		c110210[1]+15.875-10,	c110420[2]-6.
 //
 // _____
 // LINES
-// 
+//
 L110101=-L204210;
 L110102=newl;	Line(L110102) = {p110210, p110120};
 L110103=L201210;
@@ -2043,7 +2022,7 @@ L110608=newl;	Circle(L110608) = {p110610,p110611,p110612};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL110101=newl;	Line Loop(LL110101) =	{L110101,L110102,L110103,L110104,L110105,L110106,L110108,L110109};
 LL110102=newl;	Line Loop(LL110102) =	{L110601,L110602,L110603,L110604,L110605,L110606,L110607,L110608};
 //
@@ -2052,7 +2031,7 @@ LL110102=newl;	Line Loop(LL110102) =	{L110601,L110602,L110603,L110604,L110605,L1
 PS110101=news;	Plane Surface(PS110101) =	{LL110101,LL110102};
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  NORTH ANCHORAGE WEBS
  *
@@ -2087,7 +2066,7 @@ p119315=newp;	Point(p119315) = {c119000[0],		c119300[1],		c119215[2],		lc101000V
 p119325=newp;	Point(p119325) = {c119000[0],		c119300[1],		c119225[2],		lc101000VFine};	c119325[]={Point{p119325}};
 p119339=newp;	Point(p119339) = {c119000[0],		c119300[1],		c135305[2]-.5,		lc101000VFine};	c119339[]={Point{p119339}};
 p119340=p135305;	c119340[]={Point{p119340}};
-// 
+//
 // North Anchorage South Web
 p120000=p121015;	c120000[]={Point{p120000}};
 p120005=newp;	Point(p120005) = {c120000[0],		c120000[1],		c120000[2]+5.5,		lc101000VFine};	c120005[]={Point{p120005}};
@@ -2114,7 +2093,7 @@ p120315=newp;	Point(p120315) = {c120000[0],		c120300[1],		c120215[2],		lc101000V
 p120325=newp;	Point(p120325) = {c120000[0],		c120300[1],		c120225[2],		lc101000VFine};	c120325[]={Point{p120325}};
 p120339=newp;	Point(p120339) = {c120000[0],		c120300[1],		c135315[2]-.5,		lc101000VFine};	c120339[]={Point{p120339}};
 p120340=p135315;	c120340[]={Point{p120340}};
-// 
+//
 // Anchorage end-plates East
 Rotate{{0.0,0.0,1}, {xCableN,yCableN,zCableN}, thetaN*Pi/180} {
   Point{p121000}; Point{p121005}; Point{p121015}; Point{p121020};
@@ -2131,21 +2110,21 @@ Rotate{{0.0,0.0,1}, {xCableN,yCableN,zCableN}, thetaN*Pi/180} {
 //
 // North Anchorage Webs
 Rotate{{0.0,0.0,1}, {xCableN,yCableN,zCableN}, thetaN*Pi/180} {
-  Point{p119005}; Point{p119035}; 
+  Point{p119005}; Point{p119035};
   Point{p119105}; Point{p119110}; Point{p119130}; Point{p119135};
-  Point{p119210}; Point{p119213}; Point{p119215}; Point{p119227}; Point{p119225}; Point{p119230}; 
-  Point{p119301}; Point{p119315}; Point{p119325}; Point{p119339}; 
+  Point{p119210}; Point{p119213}; Point{p119215}; Point{p119227}; Point{p119225}; Point{p119230};
+  Point{p119301}; Point{p119315}; Point{p119325}; Point{p119339};
   }
 Rotate{{0.0,0.0,1}, {xCableN,yCableN,zCableN}, thetaN*Pi/180} {
-  Point{p120005}; Point{p120035}; 
+  Point{p120005}; Point{p120035};
   Point{p120105}; Point{p120110}; Point{p120130}; Point{p120135};
-  Point{p120210}; Point{p120213}; Point{p120215}; Point{p120225}; Point{p120227}; Point{p120230}; 
-  Point{p120301}; Point{p120315}; Point{p120325}; Point{p120339}; 
+  Point{p120210}; Point{p120213}; Point{p120215}; Point{p120225}; Point{p120227}; Point{p120230};
+  Point{p120301}; Point{p120315}; Point{p120325}; Point{p120339};
   }
 //
 // _____
 // LINES
-// 
+//
 // North Web
 L119000=newl;	Line(L119000) = {p119000, p119005};
 L119035=newl;	Line(L119035) = {p119035, p119040};
@@ -2204,14 +2183,14 @@ L220240=L235215;
 // __________
 // LINE LOOPS
 //
-// North Web 
+// North Web
 LL119101=newl;	Line Loop(LL119101) =	{L119000,L219005,L119105,-L119200,-L219000};
 LL119102=newl;	Line Loop(LL119102) =	{L119035,L219040,-L119230,L119135,-L219035};
 LL119103=newl;	Line Loop(LL119103) =	{L119200,L119210,L119213,L219215,-L119301,-L119300,-L219200};
 LL119104=newl;	Line Loop(LL119104) =	{L119215,L219225,-L119315,-L219215};
 LL119105=newl;	Line Loop(LL119105) =	{L119225,L119227,L119230,L219240,-L119339,-L119325,-L219225};
 //
-// South Web 
+// South Web
 LL120101=newl;	Line Loop(LL120101) =	{L120000,L220005,L120105,-L120200,-L220000};
 LL120102=newl;	Line Loop(LL120102) =	{L120035,L220040,-L120230,L120135,-L220035};
 LL120103=newl;	Line Loop(LL120103) =	{L120200,L120210,L120213,L220215,-L120301,-L120300,-L220200};
@@ -2236,7 +2215,7 @@ PS120104=news;	Plane Surface(PS120104) =	{LL120104};
 PS120105=news;	Plane Surface(PS120105) =	{LL120105};
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  SOUTH ANCHORAGE WEBS
  *
@@ -2275,7 +2254,7 @@ p133315=newp;	Point(p133315) = {c133000[0],		c133300[1],		c133215[2],		lc101000V
 p133325=newp;	Point(p133325) = {c133000[0],		c133300[1],		c133225[2],		lc101000VFine};	c133325[]={Point{p133325}};
 p133339=newp;	Point(p133339) = {c133000[0],		c133300[1],		c136305[2]-.5,		lc101000VFine};	c133339[]={Point{p133339}};
 p133340=p136305;	c133340[]={Point{p133340}};
-// 
+//
 // South Anchorage South Web
 p134000=p122015;	c134000[]={Point{p134000}};
 p134005=newp;	Point(p134005) = {c134000[0],		c134000[1],		c134000[2]+5.5,		lc101000VFine};	c134005[]={Point{p134005}};
@@ -2319,21 +2298,21 @@ Rotate{{0.0,0.0,1}, {xCableS,yCableS,zCableS}, thetaS*Pi/180} {
 //
 // South Anchorage Webs
 Rotate{{0.0,0.0,1}, {xCableS,yCableS,zCableS}, thetaS*Pi/180} {
-  Point{p133005}; Point{p133035}; 
+  Point{p133005}; Point{p133035};
   Point{p133105}; Point{p133110}; Point{p133130}; Point{p133135};
-  Point{p133210}; Point{p133213}; Point{p133215}; Point{p133225}; Point{p133227}; Point{p133230}; 
-  Point{p133301}; Point{p133315}; Point{p133325}; Point{p133339}; 
+  Point{p133210}; Point{p133213}; Point{p133215}; Point{p133225}; Point{p133227}; Point{p133230};
+  Point{p133301}; Point{p133315}; Point{p133325}; Point{p133339};
   }
 Rotate{{0.0,0.0,1}, {xCableS,yCableS,zCableS}, thetaS*Pi/180} {
-  Point{p134005}; Point{p134035}; 
+  Point{p134005}; Point{p134035};
   Point{p134105}; Point{p134110}; Point{p134130}; Point{p134135};
-  Point{p134210}; Point{p134213}; Point{p134215}; Point{p134225}; Point{p134227}; Point{p134230}; 
-  Point{p134301}; Point{p134315}; Point{p134325}; Point{p134339}; 
+  Point{p134210}; Point{p134213}; Point{p134215}; Point{p134225}; Point{p134227}; Point{p134230};
+  Point{p134301}; Point{p134315}; Point{p134325}; Point{p134339};
   }
 //
 // _____
 // LINES
-// 
+//
 // North Web
 L133000=newl;	Line(L133000) = {p133000, p133005};
 L133035=newl;	Line(L133035) = {p133035, p133040};
@@ -2397,14 +2376,14 @@ L234260=L236377;
 // __________
 // LINE LOOPS
 //
-// North Web 
+// North Web
 LL133101=newl;	Line Loop(LL133101) =	{L133000,L233005,L133105,-L133200,-L233000};
 LL133102=newl;	Line Loop(LL133102) =	{L133035,L233040,L233140,-L133230,L133135,-L233035};
 LL133103=newl;	Line Loop(LL133103) =	{L133200,L133210,L133213,L233215,-L133301,-L133300,-L233200};
 LL133104=newl;	Line Loop(LL133104) =	{L133215,L233225,-L133315,-L233215};
 LL133105=newl;	Line Loop(LL133105) =	{L133225,L133227,L133230,L233240,L233250,-L133339,-L133325,-L233225};
 //
-// South Web 
+// South Web
 LL134101=newl;	Line Loop(LL134101) =	{L134000,L234005,L134105,-L134200,-L234000};
 LL134102=newl;	Line Loop(LL134102) =	{L134035,L234040,L234140,-L134230,L134135,-L234035};
 LL134103=newl;	Line Loop(LL134103) =	{L134200,L134210,L134213,L234215,-L134301,-L134300,-L234200};
@@ -2429,7 +2408,7 @@ PS134104=news;	Plane Surface(PS134104) =	{LL134104};
 PS134105=news;	Plane Surface(PS134105) =	{LL134105};
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  NORTH ANCHORAGE FLANGES
  *
@@ -2498,7 +2477,7 @@ Rotate{{0.0,0.0,1}, {xCableN,yCableN,zCableN}, thetaN*Pi/180} {
 //
 // _____
 // LINES
-// 
+//
 // North Anchorage North Top Flange
 L123000=L119301;
 L123015=L119315;
@@ -2511,7 +2490,7 @@ L223000=newl;	Line(L223000) = {p123000, p123100};
 L223015=newl;	Line(L223015) = {p123015, p123115};
 L223025=newl;	Line(L223025) = {p123025, p123125};
 L223040=newl;	Line(L223040) = {p123040, p123140};
-// 
+//
 // North Anchorage North Bot Flange
 L124000=L119200;
 L124010=L119210;
@@ -2532,7 +2511,7 @@ L224015=newl;	Line(L224015) = {p124015, p124115};
 L224025=newl;	Line(L224025) = {p124025, p124125};
 L224027=newl;	Line(L224027) = {p124027, p124127};
 L224040=L135200;
-// 
+//
 // North Anchorage South Top Flange
 L125000=L120301;
 L125015=L120315;
@@ -2545,7 +2524,7 @@ L225000=newl;	Line(L225000) = {p125000, p125100};
 L225015=newl;	Line(L225015) = {p125015, p125115};
 L225025=newl;	Line(L225025) = {p125025, p125125};
 L225040=newl;	Line(L225040) = {p125040, p125140};
-// 
+//
 // North Anchorage South Bot Flange
 L126000=L120200;
 L126010=L120210;
@@ -2624,7 +2603,7 @@ PS126105=news;	Plane Surface(PS126105) =	{LL126105};
 //
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  SOUTH ANCHORAGE FLANGES
  *
@@ -2693,7 +2672,7 @@ Rotate{{0.0,0.0,1}, {xCableS,yCableS,zCableS}, thetaS*Pi/180} {
 //
 // _____
 // LINES
-// 
+//
 // South Anchorage North Top Flange
 L137000=L133301;
 L137015=L133315;
@@ -2706,7 +2685,7 @@ L237000=newl;	Line(L237000) = {p137000, p137100};
 L237015=newl;	Line(L237015) = {p137015, p137115};
 L237025=newl;	Line(L237025) = {p137025, p137125};
 L237040=newl;	Line(L237040) = {p137040, p137140};
-// 
+//
 // South Anchorage North Bot Flange
 L138000=L133200;
 L138010=L133210;
@@ -2728,7 +2707,7 @@ L238025=newl;	Line(L238025) = {p138025, p138125};
 L238027=newl;	Line(L238027) = {p138027, p138127};
 L238040=L136200;
 L238045=L136375;
-// 
+//
 // South Anchorage South Top Flange
 L139000=L134301;
 L139015=L134315;
@@ -2741,7 +2720,7 @@ L239000=newl;	Line(L239000) = {p139000, p139100};
 L239015=newl;	Line(L239015) = {p139015, p139115};
 L239025=newl;	Line(L239025) = {p139025, p139125};
 L239040=newl;	Line(L239040) = {p139040, p139140};
-// 
+//
 // South Anchorage South Bot Flange
 L140000=L134200;
 L140010=L134210;
@@ -2818,7 +2797,7 @@ PS140104=news;	Plane Surface(PS140104) =	{LL140104};
 PS140105=news;	Plane Surface(PS140105) =	{LL140105};
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  NORTH ANCHORAGE STIFFENERS
  *
@@ -2853,25 +2832,25 @@ p130425=p126125;	c130425[]={Point{p130425}};
 //
 // _____
 // LINES
-// 
+//
 // North Anchorage North-East Stiffener
 L127315=L223015;
 L127415=L224015;
 L227415=L219215;
 L227425=newl;	Line(L227425) = {p127425, p127325};
-// 
+//
 // North Anchorage North-West Stiffener
 L128315=L223025;
 L128415=L224025;
 L228415=L219225;
 L228425=newl;	Line(L228425) = {p128425, p128325};
-// 
+//
 // North Anchorage South-East Stiffener
 L129315=L225015;
 L129415=L226015;
 L229415=L220215;
 L229425=newl;	Line(L229425) = {p129425, p129325};
-// 
+//
 // North Anchorage South-West Stiffener
 L130315=L225025;
 L130415=L226025;
@@ -2882,7 +2861,7 @@ L230425=newl;	Line(L230425) = {p130425, p130325};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL127101=newl;	Line Loop(LL127101) =	{L127415,L227425,-L127315,-L227415};
 LL128101=newl;	Line Loop(LL128101) =	{L128415,L228425,-L128315,-L228415};
 LL129101=newl;	Line Loop(LL129101) =	{L129415,L229425,-L129315,-L229415};
@@ -2891,7 +2870,7 @@ LL130101=newl;	Line Loop(LL130101) =	{L130415,L230425,-L130315,-L230415};
 // ________
 // SURFACES
 //
-// 
+//
 PS127101=news;	Plane Surface(PS127101) =	{LL127101};
 PS128101=news;	Plane Surface(PS128101) =	{LL128101};
 PS129101=news;	Plane Surface(PS129101) =	{LL129101};
@@ -2899,7 +2878,7 @@ PS130101=news;	Plane Surface(PS130101) =	{LL130101};
 //
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  SOUTH ANCHORAGE STIFFENERS
  *
@@ -2934,25 +2913,25 @@ p144425=p140125;	c144425[]={Point{p144425}};
 //
 // _____
 // LINES
-// 
+//
 // South Anchorage North-East Stiffener
 L141315=L237015;
 L141415=L238015;
 L241415=L233215;
 L241425=newl;	Line(L241425) = {p141425, p141325};
-// 
+//
 // South Anchorage North-West Stiffener
 L142315=L237025;
 L142415=L238025;
 L242415=L233225;
 L242425=newl;	Line(L242425) = {p142425, p142325};
-// 
+//
 // South Anchorage South-East Stiffener
 L143315=L239015;
 L143415=L240015;
 L243415=L234215;
 L243425=newl;	Line(L243425) = {p143425, p143325};
-// 
+//
 // South Anchorage South-West Stiffener
 L144315=L239025;
 L144415=L240025;
@@ -2963,7 +2942,7 @@ L244425=newl;	Line(L244425) = {p144425, p144325};
 // __________
 // LINE LOOPS
 //
-// 
+//
 LL141101=newl;	Line Loop(LL141101) =	{L141415,L241425,-L141315,-L241415};
 LL142101=newl;	Line Loop(LL142101) =	{L142415,L242425,-L142315,-L242415};
 LL143101=newl;	Line Loop(LL143101) =	{L143415,L243425,-L143315,-L243415};
@@ -2972,14 +2951,14 @@ LL144101=newl;	Line Loop(LL144101) =	{L144415,L244425,-L144315,-L244415};
 // ________
 // SURFACES
 //
-// 
+//
 PS141101=news;	Plane Surface(PS141101) =	{LL141101};
 PS142101=news;	Plane Surface(PS142101) =	{LL142101};
 PS143101=news;	Plane Surface(PS143101) =	{LL143101};
 PS144101=news;	Plane Surface(PS144101) =	{LL144101};
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  PHYSICAL ENTITIES (ALSO MORE P.E.'S AT END)
  *
@@ -2988,125 +2967,125 @@ PS144101=news;	Plane Surface(PS144101) =	{LL144101};
 //
 // ____________
 // TIE WEB EAST
-TieWebE=500101;		Physical Surface(TieWebE) =	{ PS101001,PS101004 }; 
-TieWebEL=500102;	Physical Surface(TieWebEL) =	{ PS101002,PS101003 }; 
+TieWebE=500101;		Physical Surface(TieWebE) =	{ PS101001,PS101004 };
+TieWebEL=500102;	Physical Surface(TieWebEL) =	{ PS101002,PS101003 };
 AnchNepE=500103;	Physical Surface(AnchNepE) =	{ PS121001,PS121002,PS121003,PS121004,PS121005 };
 AnchSepE=500104;	Physical Surface(AnchSepE) =	{ PS122001,PS122002,PS122003,PS122004,PS122005 };
 //
 // ____________
 // TIE WEB WEST
-TieWebW=500105;		Physical Surface(TieWebW) =	{ PS102001,PS102004 }; 
-TieWebWL=500106;	Physical Surface(TieWebWL) =	{ PS102002,PS102003 }; 
+TieWebW=500105;		Physical Surface(TieWebW) =	{ PS102001,PS102004 };
+TieWebWL=500106;	Physical Surface(TieWebWL) =	{ PS102002,PS102003 };
 TieWebWG=500107;	Physical Surface(TieWebWG) =	{ PS102011,PS102012,PS102013,PS102014 };
 AnchNepW=500108;	Physical Surface(AnchNepW) =	{ PS135001,PS135002,PS135003,PS135004,PS135005 };
 AnchSepW=500109;	Physical Surface(AnchSepW) =	{ PS136004,PS136005,PS136011,PS136012,PS136013,PS136014 };
 AnchSepWG=500110;	Physical Surface(AnchSepWG) =	{ PS136001,PS136002,PS136003,PS136006,PS136008,PS136009,PS136010 };
 // ______________
 // TIE FLANGE TOP
-TieFlT=500111;		Physical Surface(TieFlT) =	{ PS103003,PS103006 }; 
-TieFlTL=500112;		Physical Surface(TieFlTL) =	{ PS103001,PS103002,PS103007,PS103010 }; 
-TieFlTR=500113;		Physical Surface(TieFlTR) =	{ PS103702,PS103703,PS103704,PS103705,PS103902,PS103903,PS103904,PS103905 }; 
-TieFlTLG=500114;	Physical Surface(TieFlTLG) =	{ PS103008,PS103009 }; 
-TieFlTG=500115;		Physical Surface(TieFlTG) =	{ PS103004,PS103005 }; 
+TieFlT=500111;		Physical Surface(TieFlT) =	{ PS103003,PS103006 };
+TieFlTL=500112;		Physical Surface(TieFlTL) =	{ PS103001,PS103002,PS103007,PS103010 };
+TieFlTR=500113;		Physical Surface(TieFlTR) =	{ PS103702,PS103703,PS103704,PS103705,PS103902,PS103903,PS103904,PS103905 };
+TieFlTLG=500114;	Physical Surface(TieFlTLG) =	{ PS103008,PS103009 };
+TieFlTG=500115;		Physical Surface(TieFlTG) =	{ PS103004,PS103005 };
 //
 // ______________
 // TIE FLANGE BOT
-TieFlB=500116;		Physical Surface(TieFlB) =	{ PS104003,PS104006 }; 
-TieFlBL=500117;		Physical Surface(TieFlBL) =	{ PS104001,PS104002,PS104007,PS104010 }; 
-TieFlBLG=500118;	Physical Surface(TieFlBLG) =	{ PS104008,PS104009 }; 
-TieFlBG=500119;		Physical Surface(TieFlBG) =	{ PS104004,PS104005 }; 
+TieFlB=500116;		Physical Surface(TieFlB) =	{ PS104003,PS104006 };
+TieFlBL=500117;		Physical Surface(TieFlBL) =	{ PS104001,PS104002,PS104007,PS104010 };
+TieFlBLG=500118;	Physical Surface(TieFlBLG) =	{ PS104008,PS104009 };
+TieFlBG=500119;		Physical Surface(TieFlBG) =	{ PS104004,PS104005 };
 //
 // ____________________
 // FLOORBEAM TOP FLANGE
-FbFlT=500201;		Physical Surface(FbFlT) =	{ PS106003,PS106004,PS106005,PS106006,PS106007,PS106008 }; 
-FbFlTG=500202;		Physical Surface(FbFlTG) =	{ PS106001,PS106002 }; 
-brg1=500203;		Physical Surface(brg1) =	{ PS106011,PS106012,PS106013,PS106014 }; 
-brg2=500204;		Physical Surface(brg2) =	{ PS106021,PS106022,PS106023,PS106024 }; 
+FbFlT=500201;		Physical Surface(FbFlT) =	{ PS106003,PS106004,PS106005,PS106006,PS106007,PS106008 };
+FbFlTG=500202;		Physical Surface(FbFlTG) =	{ PS106001,PS106002 };
+brg1=500203;		Physical Surface(brg1) =	{ PS106011,PS106012,PS106013,PS106014 };
+brg2=500204;		Physical Surface(brg2) =	{ PS106021,PS106022,PS106023,PS106024 };
 //
 // ____________________
 // FLOORBEAM BOT FLANGE
-FbFlB=500205;		Physical Surface(FbFlB) =	{ PS107003,PS107004,PS107005,PS107006,PS107007,PS107008 }; 
-FbFlBG=500206;		Physical Surface(FbFlBG) =	{ PS107001,PS107002 }; 
+FbFlB=500205;		Physical Surface(FbFlB) =	{ PS107003,PS107004,PS107005,PS107006,PS107007,PS107008 };
+FbFlBG=500206;		Physical Surface(FbFlBG) =	{ PS107001,PS107002 };
 //
 // _____________
 // FLOORBEAM WEB
-FbWeb=500207;		Physical Surface(FbWeb) =	{ PS105002,PS105003,PS105004 }; 
-FbWebL=500208;		Physical Surface(FbWebL) =	{ PS105001 }; 
-FbWebG=500209;		Physical Surface(FbWebG) =	{ PS105005,PS105006 }; 
+FbWeb=500207;		Physical Surface(FbWeb) =	{ PS105002,PS105003,PS105004 };
+FbWebL=500208;		Physical Surface(FbWebL) =	{ PS105001 };
+FbWebG=500209;		Physical Surface(FbWebG) =	{ PS105005,PS105006 };
 //
 // ____________________
 // FLOORBEAM STIFFENERS
-FbStif=500210;		Physical Surface(FbStif) =	{ PS111100,PS112100,PS113100,PS114100 }; 
+FbStif=500210;		Physical Surface(FbStif) =	{ PS111100,PS112100,PS113100,PS114100 };
 //
 // ________________________________
 // LOWER LATERAL BRACING BOT FLANGE
-LatFlT=500301;		Physical Surface(LatFlT) =	{ PS117100 }; 
+LatFlT=500301;		Physical Surface(LatFlT) =	{ PS117100 };
 //
 // ________________________________
 // LOWER LATERAL BRACING TOP FLANGE
-LatFlB=500302;		Physical Surface(LatFlB) =	{ PS118100 }; 
+LatFlB=500302;		Physical Surface(LatFlB) =	{ PS118100 };
 //
 // ______________________________
 // LOWER LATERAL BRACING EAST WEB
-LatWebE=500303;		Physical Surface(LatWebE) =	{ PS115100 }; 
+LatWebE=500303;		Physical Surface(LatWebE) =	{ PS115100 };
 //
 // ______________________________
 // LOWER LATERAL BRACING WEST WEB
-LatWebW=500304;		Physical Surface(LatWebW) =	{ PS116100 }; 
+LatWebW=500304;		Physical Surface(LatWebW) =	{ PS116100 };
 //
 // __________
 // GUSSET TOP
-GussT=500401;		Physical Surface(GussT) =	{ PS108100 }; 
+GussT=500401;		Physical Surface(GussT) =	{ PS108100 };
 //
 // __________
 // GUSSET BOT
-GussB=500402;		Physical Surface(GussB) =	{ PS109100 }; 
+GussB=500402;		Physical Surface(GussB) =	{ PS109100 };
 //
 // _____________
 // TIE DIAPHRAGM
-TieDiaph=500501;	Physical Surface(TieDiaph) =	{ PS110101 }; 
+TieDiaph=500501;	Physical Surface(TieDiaph) =	{ PS110101 };
 //
 // ____________________
 // NORTH ANCHORAGE WEBS
-AncNWebN=500601;	Physical Surface(AncNWebN) =	{ PS119101,PS119102,PS119103,PS119104,PS119105 }; 
-AncNWebS=500602;	Physical Surface(AncNWebS) =	{ PS120101,PS120102,PS120103,PS120104,PS120105 }; 
+AncNWebN=500601;	Physical Surface(AncNWebN) =	{ PS119101,PS119102,PS119103,PS119104,PS119105 };
+AncNWebS=500602;	Physical Surface(AncNWebS) =	{ PS120101,PS120102,PS120103,PS120104,PS120105 };
 //
 // ____________________
 // SOUTH ANCHORAGE WEBS
-AncSWebN=500603;	Physical Surface(AncSWebN) =	{ PS133101,PS133102,PS133103,PS133104,PS133105 }; 
-AncSWebS=500604;	Physical Surface(AncSWebS) =	{ PS134101,PS134102,PS134103,PS134104,PS134105 }; 
+AncSWebN=500603;	Physical Surface(AncSWebN) =	{ PS133101,PS133102,PS133103,PS133104,PS133105 };
+AncSWebS=500604;	Physical Surface(AncSWebS) =	{ PS134101,PS134102,PS134103,PS134104,PS134105 };
 //
 // _______________________
 // NORTH ANCHORAGE FLANGES
-AncNFlTN=500605;	Physical Surface(AncNFlTN) =	{ PS123101,PS123102,PS123103 }; 
-AncNFlBN=500606;	Physical Surface(AncNFlBN) =	{ PS124101,PS124105 }; 
-AncNFlTS=500607;	Physical Surface(AncNFlTS) =	{ PS125101,PS125102,PS125103 }; 
-AncNFlBS=500608;	Physical Surface(AncNFlBS) =	{ PS126101,PS126105 }; 
+AncNFlTN=500605;	Physical Surface(AncNFlTN) =	{ PS123101,PS123102,PS123103 };
+AncNFlBN=500606;	Physical Surface(AncNFlBN) =	{ PS124101,PS124105 };
+AncNFlTS=500607;	Physical Surface(AncNFlTS) =	{ PS125101,PS125102,PS125103 };
+AncNFlBS=500608;	Physical Surface(AncNFlBS) =	{ PS126101,PS126105 };
 //
 // _______________________
 // SOUTH ANCHORAGE FLANGES
-AncSFlTN=500609;	Physical Surface(AncSFlTN) =	{ PS137101,PS137102,PS137103 }; 
-AncSFlBN=500610;	Physical Surface(AncSFlBN) =	{ PS138101,PS138105 }; 
-AncSFlTS=500611;	Physical Surface(AncSFlTS) =	{ PS139101,PS139102,PS139103 }; 
-AncSFlBS=500612;	Physical Surface(AncSFlBS) =	{ PS140101,PS140105 }; 
+AncSFlTN=500609;	Physical Surface(AncSFlTN) =	{ PS137101,PS137102,PS137103 };
+AncSFlBN=500610;	Physical Surface(AncSFlBN) =	{ PS138101,PS138105 };
+AncSFlTS=500611;	Physical Surface(AncSFlTS) =	{ PS139101,PS139102,PS139103 };
+AncSFlBS=500612;	Physical Surface(AncSFlBS) =	{ PS140101,PS140105 };
 //
 // __________________________
 // NORTH ANCHORAGE STIFFENERS
-AncNStNE=500613;	Physical Surface(AncNStNE) =	{ PS127101 }; 
-AncNStNW=500614;	Physical Surface(AncNStNW) =	{ PS128101 }; 
-AncNStSE=500615;	Physical Surface(AncNStSE) =	{ PS129101 }; 
-AncNStSW=500616;	Physical Surface(AncNStSW) =	{ PS130101 }; 
+AncNStNE=500613;	Physical Surface(AncNStNE) =	{ PS127101 };
+AncNStNW=500614;	Physical Surface(AncNStNW) =	{ PS128101 };
+AncNStSE=500615;	Physical Surface(AncNStSE) =	{ PS129101 };
+AncNStSW=500616;	Physical Surface(AncNStSW) =	{ PS130101 };
 //
 // __________________________
 // SOUTH ANCHORAGE STIFFENERS
-AncSStNE=500617;	Physical Surface(AncSStNE) =	{ PS141101 }; 
-AncSStNW=500618;	Physical Surface(AncSStNW) =	{ PS142101 }; 
-AncSStSE=500619;	Physical Surface(AncSStSE) =	{ PS143101 }; 
-AncSStSW=500620;	Physical Surface(AncSStSW) =	{ PS144101 }; 
+AncSStNE=500617;	Physical Surface(AncSStNE) =	{ PS141101 };
+AncSStNW=500618;	Physical Surface(AncSStNW) =	{ PS142101 };
+AncSStSE=500619;	Physical Surface(AncSStSE) =	{ PS143101 };
+AncSStSW=500620;	Physical Surface(AncSStSW) =	{ PS144101 };
 //
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  STRUDL MODEL ATTACHMENTS
  *
@@ -3166,26 +3145,26 @@ RigLLBS=501102;	Physical Line(RigLLBS) = {	L117110,L118110,L215110,L216110 };
 //
 // ______________
 // SUPPORT POINTS
-PtSpTN=501201;		Physical Point(PtSpTN) =	{ p201001 }; 
-PtSpTS=501202;		Physical Point(PtSpTS) =	{ p202001 }; 
-PtSpFBW=501203;		Physical Point(PtSpFBW) =	{ p203001 }; 
-PtSpLLBS=501204;	Physical Point(PtSpLLBS) =	{ p205001 }; 
+PtSpTN=501201;		Physical Point(PtSpTN) =	{ p201001 };
+PtSpTS=501202;		Physical Point(PtSpTS) =	{ p202001 };
+PtSpFBW=501203;		Physical Point(PtSpFBW) =	{ p203001 };
+PtSpLLBS=501204;	Physical Point(PtSpLLBS) =	{ p205001 };
 //
-PtMTN=501301;		Physical Point(PtMTN) =		{ p201000 }; 
-PtMTS=501302;		Physical Point(PtMTS) =		{ p202000 }; 
-PtMFBW=501303;		Physical Point(PtMFBW) =	{ p203000 }; 
-PtMLLBS=501304;		Physical Point(PtMLLBS) =	{ p205000 }; 
+PtMTN=501301;		Physical Point(PtMTN) =		{ p201000 };
+PtMTS=501302;		Physical Point(PtMTS) =		{ p202000 };
+PtMFBW=501303;		Physical Point(PtMFBW) =	{ p203000 };
+PtMLLBS=501304;		Physical Point(PtMLLBS) =	{ p205000 };
 //
 // ________
 // Bearings
-RigBrg1=501401;		Physical Line(RigBrg1) =		{ L106251,L106252,L206253,L206325,-L106352,-L106351,-L206315,-L206251 }; 
-PtBrg1=501402;		Physical Point(PtBrg1) =		{ p106320 }; 
-RigBrg2=501403;		Physical Line(RigBrg2) =		{ L106361,L106362,L206363,L206425,-L106452,-L106451,-L206415,-L206361 }; 
-PtBrg2=501404;		Physical Point(PtBrg2) =		{ p106420 }; 
+RigBrg1=501401;		Physical Line(RigBrg1) =		{ L106251,L106252,L206253,L206325,-L106352,-L106351,-L206315,-L206251 };
+PtBrg1=501402;		Physical Point(PtBrg1) =		{ p106320 };
+RigBrg2=501403;		Physical Line(RigBrg2) =		{ L106361,L106362,L206363,L206425,-L106452,-L106451,-L206415,-L206361 };
+PtBrg2=501404;		Physical Point(PtBrg2) =		{ p106420 };
 //
 //
 //
-/********************************************************************* 
+/*********************************************************************
  *
  *  MORE PHYSICAL ENTITIES
  *
@@ -3195,24 +3174,24 @@ PtBrg2=501404;		Physical Point(PtBrg2) =		{ p106420 };
 // _________________
 // GUIDE PIPES NORTH
 GuidePipeN=501501;		Physical Surface(GuidePipeN) =		{ PSpipe103601,PSpipe103602,PSpipe103603,PSpipe103604,
-									  PSpipe103661,PSpipe103662,PSpipe103663,PSpipe103664 }; 
-RigidGuidePipeN=501502;		Physical Line(RigidGuidePipeN) =	{ L103791,L103792,L103793,L103794 }; 
-PtLoadGuidePipeN=501503;	Physical Point(PtLoadGuidePipeN) =	{ p103790 }; 
-PtMstrGuidePipeN=501504;	Physical Point(PtMstrGuidePipeN) =	{ p103780 }; 
-MbGuidePipeN=501505;		Physical Line(MbGuidePipeN) =		{ L103671 }; 
-GuidePipeFinsN=501506;		Physical Surface(GuidePipeFinsN) =	{ PS103751,PS103752,PS103753,PS103754 }; 
+									  PSpipe103661,PSpipe103662,PSpipe103663,PSpipe103664 };
+RigidGuidePipeN=501502;		Physical Line(RigidGuidePipeN) =	{ L103791,L103792,L103793,L103794 };
+PtLoadGuidePipeN=501503;	Physical Point(PtLoadGuidePipeN) =	{ p103790 };
+PtMstrGuidePipeN=501504;	Physical Point(PtMstrGuidePipeN) =	{ p103780 };
+MbGuidePipeN=501505;		Physical Line(MbGuidePipeN) =		{ L103671 };
+GuidePipeFinsN=501506;		Physical Surface(GuidePipeFinsN) =	{ PS103751,PS103752,PS103753,PS103754 };
 //
 // _________________
 // GUIDE PIPES SOUTH
 GuidePipeS=501601;		Physical Surface(GuidePipeS) =		{ PSpipe103801,PSpipe103802,PSpipe103803,PSpipe103804,
-									  PSpipe103861,PSpipe103862,PSpipe103863,PSpipe103864 }; 
-RigidGuidePipeS=501602;		Physical Line(RigidGuidePipeS) =	{ L103991,L103992,L103993,L103994 }; 
-PtLoadGuidePipeS=501603;	Physical Point(PtLoadGuidePipeS) =	{ p103990 }; 
-PtMstrGuidePipeS=501604;	Physical Point(PtMstrGuidePipeS) =	{ p103980 }; 
-MbGuidePipeS=501605;		Physical Line(MbGuidePipeS) =		{ L103871 }; 
-GuidePipeFinsS=501606;		Physical Surface(GuidePipeFinsS) =	{ PS103951,PS103952,PS103953,PS103954 }; 
+									  PSpipe103861,PSpipe103862,PSpipe103863,PSpipe103864 };
+RigidGuidePipeS=501602;		Physical Line(RigidGuidePipeS) =	{ L103991,L103992,L103993,L103994 };
+PtLoadGuidePipeS=501603;	Physical Point(PtLoadGuidePipeS) =	{ p103990 };
+PtMstrGuidePipeS=501604;	Physical Point(PtMstrGuidePipeS) =	{ p103980 };
+MbGuidePipeS=501605;		Physical Line(MbGuidePipeS) =		{ L103871 };
+GuidePipeFinsS=501606;		Physical Surface(GuidePipeFinsS) =	{ PS103951,PS103952,PS103953,PS103954 };
 //
 // _____________________
 // ANCHOR BEARING PLATES
-RigidAnchorN=501701;		Physical Surface(RigidAnchorN) =	{ PS124102,PS124103,PS124104,PS126102,PS126103,PS126104 }; 
-RigidAnchorS=501801;		Physical Surface(RigidAnchorS) =	{ PS138102,PS138103,PS138104,PS140102,PS140103,PS140104 }; 
+RigidAnchorN=501701;		Physical Surface(RigidAnchorN) =	{ PS124102,PS124103,PS124104,PS126102,PS126103,PS126104 };
+RigidAnchorS=501801;		Physical Surface(RigidAnchorS) =	{ PS138102,PS138103,PS138104,PS140102,PS140103,PS140104 };

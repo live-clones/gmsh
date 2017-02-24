@@ -91,18 +91,17 @@ Plane Surface(29) = {28};
 Line Loop(30) = {11,12,25,24,23,22};
 Plane Surface(31) = {30};
 
-Extrude Surface{27, {0,0,hg} };
+Extrude {0,0,hg}{ Surface{27}; }
 Coherence;
 
-Extrude Surface{29, {0,0,hg} };
+Extrude {0,0,hg}{ Surface{29}; }
 Coherence;
 
-Extrude Surface{31, {0,0,hg} };
+Extrude {0,0,hg}{ Surface{31}; }
 Coherence;
 
-Extrude Surface {105, {0,0,hcav-hg} };
+Extrude {0,0,hcav-hg}{ Surface {105}; }
 Coherence;
 
-Extrude Surface {126, {0,0,hcav-hg} };
+Extrude {0,0,hcav-hg}{ Surface {126}; }
 Coherence;
-

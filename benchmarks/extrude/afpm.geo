@@ -20,15 +20,15 @@ EndFor
 
 For i In {0:6}
   For j In {0:9}
-    Extrude Line {num[i], {0,0,1}, {0,0,0}, t[j]*deg2rad}{Layers{1};Recombine;};
+    Extrude { {0,0,1}, {0,0,0}, t[j]*deg2rad}{ Line {num[i]}; Layers{1};Recombine;}
     num[i] = newreg-(i?3:2);
   EndFor
 EndFor
 
 For i In {1:70}
-  Extrude Surface {i, {0,0,0.005}}{Layers{1};Recombine;};
+  Extrude {0,0,0.005}{ Surface {i}; Layers{1};Recombine;}
   For j In {1:5}
-     Extrude Surface {news-1, {0,0,0.005}}{Layers{1};Recombine;};
+    Extrude {0,0,0.005}{ Surface {news-1}; Layers{1};Recombine;}
   EndFor
 EndFor
 

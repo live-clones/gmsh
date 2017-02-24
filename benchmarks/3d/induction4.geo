@@ -182,6 +182,5 @@ Recombine Surface{ss[]};
 
 
 For i In {0:#ss[]-1}
-Extrude Surface { ss[i],  {0,0,h5} }{ 
-  Layers{{1,1,1,1},{h2/h5,h3/h5,h4/h5,1}}; Recombine; };
+  Extrude  {0,0,h5} { Surface {ss[i]}; Layers{{1,1,1,1},{h2/h5,h3/h5,h4/h5,1}}; Recombine; }
 EndFor

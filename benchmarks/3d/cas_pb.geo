@@ -9,7 +9,7 @@ Line(3) = {2,3};
 Line(4) = {3,1};
 Line Loop(5) = {4,1,2,3};
 Plane Surface(6) = {5};
-Extrude Surface { 6, {0,0,1} };
+Extrude {0,0,1}{ Surface{6}; }
 Coherence;
 
 Point(111) = {5,5,-.1,.2};
@@ -23,11 +23,10 @@ Circle(31) = {18,111,17};
 Circle(32) = {17,111,15};
 Line Loop(33) = {30,31,32,29};
 Plane Surface(34) = {33};
-Extrude Surface { 34, {0,0,-1} };
+Extrude {0,0,-1} { Surface {34}; }
 Coherence;
 Surface Loop(57) = {56,43,34,47,51,55};
 Volume(58) = {57};
 
 Surface Loop(58) = {28,15,6,19,23,27};
 Volume(59) = {58};
-

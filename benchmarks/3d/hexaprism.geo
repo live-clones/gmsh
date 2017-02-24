@@ -10,10 +10,10 @@ Line Loop(5) = {2,3,4,1};
 Plane Surface(6) = {5};
 Transfinite Surface{6} = {1,2,3,4};
 Recombine Surface{6};
-Extrude Surface {6, {0.0,0.0,1.0}}{Layers{1};Recombine;};
+Extrude {0.0,0.0,1.0}{ Surface {6}; Layers{1};Recombine;}
 Point(15) = {2,0.0,0.0,1.0};
 Line(29) = {15,2};
 Line(30) = {3,15};
 Line Loop(31) = {30,29,2};
 Plane Surface(32) = {31};
-Extrude Surface {32, {0.0,0.0,1.0}}{Layers{1};Recombine;};
+Extrude {0.0,0.0,1.0}{ Surface {32}; Layers{1};Recombine; }

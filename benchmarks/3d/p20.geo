@@ -4,7 +4,7 @@
          |                 c4  |
          |   +-------------+   |
          |   | c3          +---+
-         +---+             c5  c6   
+         +---+             c5  c6
          c1  c2
 
 */
@@ -68,7 +68,7 @@ e1 = newreg;
 Line Loop (newreg) = {d1,d2,d3,d4,d5,d6,d7,d8};
 f1 = newreg;
 Plane Surface (f1) = {e1};
-Extrude Surface { f1, {D5,0.00000E+00, 0.00000E+00} };
+Extrude {D5,0.00000E+00, 0.00000E+00}{ Surface { f1}; }
 
 box1 = newp;
 Point(box1) = {Dx,Dy,Dz,lbox};
@@ -141,7 +141,7 @@ e2 = newreg;
 Line Loop (newreg) = {q1,q2,q3,q4};
 f2 = newreg;
 Surface (f2) = {e2};
-Extrude Surface { f2, {D6,0.00000E+00, 0.00000E+00} };
+Extrude {D6,0.00000E+00, 0.00000E+00}{ Surface { f2}; }
 
 DxInducteur = .005;
 DyInducteur = .01;
@@ -192,4 +192,4 @@ BFondDeLInducteur = newreg;
 Line Loop(BFondDeLInducteur) = {ll1,ll2,ll3,ll4,ll5,ll6,-ll7,ll8};
 FondDeLInducteur = newreg;
 Plane Surface(FondDeLInducteur) = {BFondDeLInducteur};
-Extrude Surface { FondDeLInducteur, {0,0,DzInducteur} };
+Extrude {0,0,DzInducteur}{ Surface { FondDeLInducteur}; }

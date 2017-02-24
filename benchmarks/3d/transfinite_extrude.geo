@@ -14,4 +14,4 @@ Transfinite Line{1:4} = n;
 Line Loop(5) = {4,1,2,3};
 Plane Surface(6) = {5};
 Transfinite Surface{6} = {2,3,4,5} Alternate;
-Extrude Surface {6, {0.0,0.0,r1/10}} { Layers{1,1};  }  ;
+Extrude {0.0,0.0,r1/10} { Surface {6}; Layers{1,1};  }

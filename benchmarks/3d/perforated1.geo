@@ -116,7 +116,7 @@ EndIf
 nl_ec = 10 ;
 
 For n In {0:0}
-  vol[]=Extrude Surface { news-1, {0,0,1} , {0,0,0} , Phi } { Layers { nl_ec, 1 } ; };;
+vol[]=Extrude { {0,0,1} , {0,0,0} , Phi } { Surface { news-1}; Layers { nl_ec, 1 } ; };
   vEC[n]=vol[1];
 EndFor
 
@@ -140,7 +140,7 @@ ps1 = newp ; Point(ps1) = { x_ps, 0., 0, p_ps};
 ps2 = newp ; Point(ps2) = { x_ps, 0., h_ps/2, p_ps};
 lps  = newl; Line(lps)  = {ps1,ps2};
 
-sur[] = Extrude Line { lps, {0,0,1} , {0,0,0}, Phi };;
+sur[] = Extrude { {0,0,1} , {0,0,0}, Phi }{ Line { lps}; } ;
 sPSin[0] = sur[1];
 lps_ = sur[0];
 loopin = newl ; Line Loop(loopin) = {lps,sur[2],-sur[0],sur[3]};
@@ -253,17 +253,17 @@ la4 = newl ; Line(la4) = {p3,pa1};
 la5 = newl ; Line(la5) = {pa0,pa0_};
 la6 = newl ; Line(la6) = {pa1,pa1_};
 
-sur[] = Extrude Line { la1, {0,0,1} , {0,0,0}, Phi };;
+sur[] = Extrude { {0,0,1} , {0,0,0}, Phi }{ Line {la1}; };
 z0air0=sur[1];
 la1_=sur[0];
-sur[] = Extrude Line { la2, {0,0,1} , {0,0,0}, Phi };;
+sur[] = Extrude { {0,0,1} , {0,0,0}, Phi }{ Line {la2}; };
 z0air1=sur[1];
 la2_=sur[0];
 
 Line Loop(newl)={lblayer0,la3,lacir2,-la3_ };
 z0air2=news; Plane Surface(z0air2) = {newl-1};
 
-sur[] = Extrude Line { la5, {0,0,1} , {0,0,0}, Phi };;
+sur[] = Extrude { {0,0,1} , {0,0,0}, Phi }{ Line {la5}; };
 z0airinf=sur[1];
 la5_=sur[0];
 
