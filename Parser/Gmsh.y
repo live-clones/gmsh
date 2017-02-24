@@ -5826,8 +5826,6 @@ FExpr_Multi :
     }
   | tPhysical tPoint '{' RecursiveListOfDouble '}'
     {
-      // FIXME: physical groups should not be stored in GEO_Internals, but
-      // directly in GModel
       $$ = List_Create(10, 1, sizeof(double));
       for(int i = 0; i < List_Nbr($4); i++){
         double num;
@@ -5857,8 +5855,6 @@ FExpr_Multi :
     }
   | tPhysical tLine '{' RecursiveListOfDouble '}'
     {
-      // FIXME: physical groups should not be stored in GEO_Internals, but
-      // directly in GModel
       $$ = List_Create(10, 1, sizeof(double));
       for(int i = 0; i < List_Nbr($4); i++){
         double num;
@@ -5888,8 +5884,6 @@ FExpr_Multi :
     }
   | tPhysical tSurface '{' RecursiveListOfDouble '}'
     {
-      // FIXME: physical groups should not be stored in GEO_Internals, but
-      // directly in GModel
       $$ = List_Create(10, 1, sizeof(double));
       for(int i = 0; i < List_Nbr($4); i++){
         double num;
@@ -5919,8 +5913,6 @@ FExpr_Multi :
     }
   | tPhysical tVolume '{' RecursiveListOfDouble '}'
     {
-      // FIXME: physical groups should not be stored in GEO_Internals, but
-      // directly in GModel
       $$ = List_Create(10, 1, sizeof(double));
       for(int i = 0; i < List_Nbr($4); i++){
         double num;

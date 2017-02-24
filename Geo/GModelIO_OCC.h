@@ -259,6 +259,11 @@ class OCC_Internals {
 #else
 
 class OCC_Internals {
+private:
+  void _error(std::string what)
+  {
+    Msg::Error("Gmsh requires OpenCASCADE to %s", what.c_str());
+  }
 public:
   enum BooleanOperator { Union, Intersection, Difference, Section, Fragments };
   OCC_Internals(){}
@@ -266,75 +271,79 @@ public:
   void reset(){}
   void setTagConstraints(int dim, int val){}
   int getMaxTag(int dim) const { return 0; }
-  void addVertex(int tag, double x, double y, double z, double meshSize=MAX_LC){}
-  void addLine(int tag, int startTag, int endTag){}
-  void addLine(int tag, std::vector<int> vertexTags){}
-  void addCircleArc(int tag, int startTag, int centerTag, int endTag){}
+  void addVertex(int tag, double x, double y, double z, double meshSize=MAX_LC)
+  { _error("add vertex"); }
+  void addLine(int tag, int startTag, int endTag){ _error("add line"); }
+  void addLine(int tag, std::vector<int> vertexTags){ _error("add line"); }
+  void addCircleArc(int tag, int startTag, int centerTag, int endTag)
+  { _error("add circle arc"); }
   void addCircle(int tag, double x, double y, double z, double r, double angle1,
-                 double angle2){}
-  void addEllipseArc(int tag, int startTag, int centerTag, int endTag){}
+                 double angle2){ _error("add circle"); }
+  void addEllipseArc(int tag, int startTag, int centerTag, int endTag)
+  { _error("add ellipse arc"); }
   void addEllipse(int tag, double x, double y, double z, double r1, double r2,
-                  double angle1, double angle2){}
-  void addBezier(int tag, std::vector<int> vertexTags){};
-  void addBSpline(int tag, std::vector<int> vertexTags){};
-  void addWire(int tag, std::vector<int> edgeTags, bool closed){}
-  void addLineLoop(int tag, std::vector<int> edgeTags){}
+                  double angle1, double angle2){ _error("add ellipse"); }
+  void addBezier(int tag, std::vector<int> vertexTags){ _error("add Bezier"); }
+  void addBSpline(int tag, std::vector<int> vertexTags){ _error("add BSpline"); }
+  void addWire(int tag, std::vector<int> edgeTags, bool closed){ _error("add wire"); }
+  void addLineLoop(int tag, std::vector<int> edgeTags){ _error("add line loop"); }
   void addRectangle(int tag, double x1, double y1, double z1,
-                    double x2, double y2, double z2, double roundedRadius=0.){}
-  void addDisk(int tag, double xc, double yc, double zc, double rx, double ry){}
-  void addPlaneSurface(int tag, std::vector<int> wireTags){}
-  void addSurfaceFilling(int tag, int wireTag){}
-  void addSurfaceLoop(int tag, std::vector<int> faceTags){}
-  void addVolume(int tag, std::vector<int> shellTags){}
+                    double x2, double y2, double z2, double roundedRadius=0.)
+  { _error("add rectangle"); }
+  void addDisk(int tag, double xc, double yc, double zc, double rx, double ry)
+  { _error("add disk"); }
+  void addPlaneSurface(int tag, std::vector<int> wireTags)
+  { _error("add plane surface"); }
+  void addSurfaceFilling(int tag, int wireTag){ _error("add surface filling"); }
+  void addSurfaceLoop(int tag, std::vector<int> faceTags){ _error("add surface loop"); }
+  void addVolume(int tag, std::vector<int> shellTags){ _error("add volume"); }
   void addSphere(int tag, double xc, double yc, double zc, double radius,
-                 double angle){};
+                 double angle){ _error("add sphere"); }
   void addBlock(int tag, double x1, double y1, double z1,
-                double x2, double y2, double z2){}
+                double x2, double y2, double z2){ _error("add block"); }
   void addCylinder(int tag, double x1, double y1, double z1, double x2, double y2,
-                   double z2, double r, double angle){}
+                   double z2, double r, double angle){ _error("add cylinder"); }
   void addCone(int tag, double x1, double y1, double z1, double x2, double y2,
-               double z2, double r1, double r2, double angle){}
+               double z2, double r1, double r2, double angle){ _error("add cone"); }
   void addWedge(int tag, double x, double y, double z, double dx, double dy,
-                double dz, double ltx){}
+                double dz, double ltx){ _error("add wedge"); }
   void addTorus(int tag, double x, double y, double z, double r1, double r2,
-                double angle){}
+                double angle){ _error("add torus"); }
   void addThruSections(int tag, std::vector<int> wireTags,
                        std::vector<int> outTags[4],
-                       bool makeSolid, bool makeRuled){}
+                       bool makeSolid, bool makeRuled){ _error("add thrusection"); }
   void addThickSolid(int tag, int solidTag, std::vector<int> excludeFaceTags,
-                     double offset){}
+                     double offset){ _error("add thick solid"); }
   void extrude(int tag, std::vector<int> inTags[4],
                double dx, double dy, double dz,
-               std::vector<int> outTags[4]){}
+               std::vector<int> outTags[4]){ _error("create extrusion"); }
   void revolve(int tag, std::vector<int> inTags[4],
                double x, double y, double z, double dx, double dy, double dz,
-               double angle, std::vector<int> outTags[4]){};
+               double angle, std::vector<int> outTags[4]){}
   void addPipe(int tag, std::vector<int> inTags[4], int wireTag,
-               std::vector<int> outTags[4]){}
+               std::vector<int> outTags[4]){ _error("add pipe"); }
   void fillet(std::vector<int> regionTags, std::vector<int> edgeTags,
-              double radius, std::vector<int> outTags[4]){}
+              double radius, std::vector<int> outTags[4]){ _error("create fillet"); }
   void applyBooleanOperator(int tag, BooleanOperator op,
                             std::vector<int> shapeTags[4],
                             std::vector<int> toolTags[4],
                             std::vector<int> outTags[4],
                             bool removeShape=true,
-                            bool removeTool=true){}
+                            bool removeTool=true){ _error("apply boolean operator"); }
   void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
-                   bool combined=false){}
-  void translate(std::vector<int> inTags[4], double dx, double dy, double dz){}
+                   bool combined=false){ _error("extract boundary"); }
+  void translate(std::vector<int> inTags[4], double dx, double dy, double dz)
+  { _error("apply translation"); }
   void rotate(std::vector<int> inTags[4], double x, double y, double z,
-              double dx, double dy, double dz, double angle){}
-  void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]){}
+              double dx, double dy, double dz, double angle){ _error("apply rotation"); }
+  void copy(std::vector<int> inTags[4], std::vector<int> outTags[4])
+  { _error("copy shape"); }
   void remove(std::vector<int> inTags[4]){}
   void importShapes(const std::string &fileName, bool highestDimOnly,
                     std::vector<int> outTags[4], const std::string &format="")
-  {
-    Msg::Error("Gmsh requires OpenCASCADE to import '%s'", fileName.c_str());
-  }
+  { _error("import shape"); }
   void exportShapes(const std::string &fileName, const std::string &format="")
-  {
-    Msg::Error("Gmsh requires OpenCASCADE to export '%s'", fileName.c_str());
-  }
+  { _error("export shape"); }
   void setMeshSize(int dim, int tag, double size){}
   void synchronize(GModel *model){}
   bool getVertex(int tag, double &x, double &y, double &z){ return false; }

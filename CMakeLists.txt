@@ -1145,11 +1145,6 @@ if(ENABLE_OCC)
       elseif(MSVC)
         add_definitions(-DWNT)
       endif(CYGWIN)
-      find_path(OCC_CONFIG_H "config.h" PATHS ${OCC_INC} ${OCC_CONFIG_H_PATH}
-                NO_DEFAULT_PATH)
-      if(NOT OCC_CONFIG_H)
-        add_definitions(-DHAVE_NO_OCC_CONFIG_H)
-      endif(NOT OCC_CONFIG_H)
     endif(OCC_INC)
   endif(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
 endif(ENABLE_OCC)
@@ -1848,7 +1843,9 @@ if(NOT DISABLE_GMSH_TESTS)
     # use relative path for cygwin/mingw (the pure win exe built with the mingw
     # compilers does not understand a full cygwin-style path)
     FILE(RELATIVE_PATH TEST ${CMAKE_CURRENT_BINARY_DIR} ${TESTFILE})
-    add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
+    if(HAVE_OCC OR NOT ${TEST} MATCHES "boolean")
+      add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
+    endif(HAVE_OCC OR NOT ${TEST} MATCHES "boolean")
   endforeach()
   # if(HAVE_PYTHON)
   #   file(GLOB_RECURSE TESTFILES tutorial/*.py)
@@ -1874,7 +1871,7 @@ message(STATUS "")
 mark_as_advanced(GMSH_EXTRA_VERSION
                  ACIS_LIB ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
                  GMP_INC GMP_LIB MMG3D_INC MMG3D_LIB HDF5_LIB
-                 MED_LIB OCC_INC OCC_CONFIG_H SZ_LIB
+                 MED_LIB OCC_INC SZ_LIB
                  PETSC_LIBS SLEPC_INC SLEPC_INC2 SLEPC_LIB
                  BISON FLEX MAKEINFO TEXI2PDF FLTK_CONFIG_SCRIPT
                  GMSH_EXTERNAL_INCLUDE_DIRS GMSH_EXTERNAL_LIBRARIES)
