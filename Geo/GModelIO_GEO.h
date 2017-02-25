@@ -17,11 +17,11 @@ class GEO_Internals{
   // FIXME: all of this will become private once the refactoring of the old code
   // is complete
   Tree_T *Points, *Curves, *EdgeLoops, *Surfaces, *SurfaceLoops, *Volumes;
-  Tree_T *LevelSets;
   List_T *PhysicalGroups;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
   std::multimap<int, std::vector<int> > meshCompounds;
+  Tree_T *DelPoints, *DelCurves, *DelSurfaces, *DelVolumes;
  private:
   void _allocateAll();
   void _freeAll();
@@ -108,6 +108,9 @@ class GEO_Internals{
   // create coordinate systems
   gmshSurface *newGeometrySphere(int num, int centerTag, int pointTag);
   gmshSurface *newGeometryPolarSphere(int num, int centerTag, int pointTag);
+
+  // FIXME: move this
+  Tree_T *LevelSets;
 };
 
 #endif

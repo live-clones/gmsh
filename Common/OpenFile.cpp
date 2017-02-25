@@ -158,22 +158,6 @@ void AddToTemporaryBoundingBox(double x, double y, double z)
   for(int i = 0; i < 3; i++) CTX::instance()->cg[i] = temp_bb.center()[i];
 }
 
-static void ComputeMaxEntityNum()
-{
-  GModel::current()->getGEOInternals()->MaxPointNum =
-    std::max(GModel::current()->getGEOInternals()->MaxPointNum,
-             GModel::current()->getMaxElementaryNumber(0));
-  GModel::current()->getGEOInternals()->MaxLineNum =
-    std::max(GModel::current()->getGEOInternals()->MaxLineNum,
-             GModel::current()->getMaxElementaryNumber(1));
-  GModel::current()->getGEOInternals()->MaxSurfaceNum =
-    std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum,
-             GModel::current()->getMaxElementaryNumber(2));
-  GModel::current()->getGEOInternals()->MaxVolumeNum =
-    std::max(GModel::current()->getGEOInternals()->MaxVolumeNum,
-             GModel::current()->getMaxElementaryNumber(3));
-}
-
 static std::vector<gmshFILE> openedFiles;
 
 int ParseFile(const std::string &fileName, bool close, bool warnIfMissing)
@@ -521,7 +505,19 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
     }
   }
 
-  ComputeMaxEntityNum();
+  GModel::current()->getGEOInternals()->setMaxTag
+    (0, std::max(GModel::current()->getGEOInternals()->getMaxTag(0),
+                 GModel::current()->getMaxElementaryNumber(0)));
+  GModel::current()->getGEOInternals()->setMaxTag
+    (1, std::max(GModel::current()->getGEOInternals()->getMaxTag(1),
+                 GModel::current()->getMaxElementaryNumber(1)));
+  GModel::current()->getGEOInternals()->setMaxTag
+    (2, std::max(GModel::current()->getGEOInternals()->getMaxTag(2),
+                 GModel::current()->getMaxElementaryNumber(2)));
+  GModel::current()->getGEOInternals()->setMaxTag
+    (3, std::max(GModel::current()->getGEOInternals()->getMaxTag(3),
+                 GModel::current()->getMaxElementaryNumber(3)));
+
   if(setBoundingBox) SetBoundingBox();
   CTX::instance()->geom.draw = 1;
   CTX::instance()->mesh.changed = ENT_ALL;

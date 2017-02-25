@@ -32,14 +32,23 @@ void GEO_Internals::_allocateAll()
 {
   MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
   MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
+
   Points = Tree_Create(sizeof(Vertex *), compareVertex);
   Curves = Tree_Create(sizeof(Curve *), compareCurve);
   EdgeLoops = Tree_Create(sizeof(EdgeLoop *), compareEdgeLoop);
   Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
   SurfaceLoops = Tree_Create(sizeof(SurfaceLoop *), compareSurfaceLoop);
   Volumes = Tree_Create(sizeof(Volume *), compareVolume);
-  LevelSets = Tree_Create(sizeof(LevelSet *), compareLevelSet);
+
   PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
+
+  DelPoints = Tree_Create(sizeof(Vertex *), compareVertex);
+  DelCurves = Tree_Create(sizeof(Curve *), compareCurve);
+  DelSurfaces = Tree_Create(sizeof(Surface *), compareSurface);
+  DelVolumes = Tree_Create(sizeof(Volume *), compareVolume);
+
+  LevelSets = Tree_Create(sizeof(LevelSet *), compareLevelSet);
+
   _changed = true;
 }
 
@@ -47,14 +56,23 @@ void GEO_Internals::_freeAll()
 {
   MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
   MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
+
   Tree_Action(Points, Free_Vertex); Tree_Delete(Points);
   Tree_Action(Curves, Free_Curve); Tree_Delete(Curves);
   Tree_Action(EdgeLoops, Free_EdgeLoop); Tree_Delete(EdgeLoops);
   Tree_Action(Surfaces, Free_Surface); Tree_Delete(Surfaces);
   Tree_Action(SurfaceLoops, Free_SurfaceLoop); Tree_Delete(SurfaceLoops);
   Tree_Action(Volumes, Free_Volume); Tree_Delete(Volumes);
-  Tree_Action(LevelSets, Free_LevelSet); Tree_Delete(LevelSets);
+
+  Tree_Action(DelPoints, Free_Vertex); Tree_Delete(DelPoints);
+  Tree_Action(DelCurves, Free_Curve); Tree_Delete(DelCurves);
+  Tree_Action(DelSurfaces, Free_Surface); Tree_Delete(DelSurfaces);
+  Tree_Action(DelVolumes, Free_Volume); Tree_Delete(DelVolumes);
+
   List_Action(PhysicalGroups, Free_PhysicalGroup); List_Delete(PhysicalGroups);
+
+  Tree_Action(LevelSets, Free_LevelSet); Tree_Delete(LevelSets);
+
   _changed = true;
 }
 

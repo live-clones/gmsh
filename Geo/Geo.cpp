@@ -176,8 +176,8 @@ EdgeLoop *Create_EdgeLoop(int Num, List_T *intlist)
   EdgeLoop *l = new EdgeLoop;
   l->Curves = List_Create(List_Nbr(intlist), 1, sizeof(int));
   l->Num = Num;
-  GModel::current()->getGEOInternals()->MaxLineLoopNum =
-    std::max(GModel::current()->getGEOInternals()->MaxLineLoopNum, Num);
+  GModel::current()->getGEOInternals()->setMaxTag
+    (-1, std::max(GModel::current()->getGEOInternals()->getMaxTag(-1), Num));
   for(int i = 0; i < List_Nbr(intlist); i++) {
     int j;
     List_Read(intlist, i, &j);
@@ -201,8 +201,8 @@ SurfaceLoop *Create_SurfaceLoop(int Num, List_T *intlist)
   SurfaceLoop *l = new SurfaceLoop;
   l->Surfaces = List_Create(List_Nbr(intlist), 1, sizeof(int));
   l->Num = Num;
-  GModel::current()->getGEOInternals()->MaxSurfaceLoopNum =
-    std::max(GModel::current()->getGEOInternals()->MaxSurfaceLoopNum, Num);
+  GModel::current()->getGEOInternals()->setMaxTag
+    (-2, std::max(GModel::current()->getGEOInternals()->getMaxTag(-2), Num));
   for(int i = 0; i < List_Nbr(intlist); i++) {
     int j;
     List_Read(intlist, i, &j);
@@ -541,8 +541,8 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
   pC->Extrude = NULL;
   pC->Typ = Typ;
   pC->Num = Num;
-  GModel::current()->getGEOInternals()->MaxLineNum =
-    std::max(GModel::current()->getGEOInternals()->MaxLineNum, Num);
+  GModel::current()->getGEOInternals()->setMaxTag
+    (1, std::max(GModel::current()->getGEOInternals()->getMaxTag(1), Num));
   pC->Method = MESH_UNSTRUCTURED;
   pC->degre = Order;
   pC->Circle.n[0] = 0.0;
@@ -655,8 +655,8 @@ Surface *Create_Surface(int Num, int Typ)
   pS->geometry = 0;
   pS->InSphereCenter = 0;
 
-  GModel::current()->getGEOInternals()->MaxSurfaceNum =
-    std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum, Num);
+  GModel::current()->getGEOInternals()->setMaxTag
+    (2, std::max(GModel::current()->getGEOInternals()->getMaxTag(2), Num));
   pS->Typ = Typ;
   pS->Method = MESH_UNSTRUCTURED;
   pS->Recombine = 0;
@@ -692,8 +692,8 @@ Volume *Create_Volume(int Num, int Typ)
   pV->Visible = 1;
   pV->Recombine3D = 0;
   pV->Num = Num;
-  GModel::current()->getGEOInternals()->MaxVolumeNum =
-    std::max(GModel::current()->getGEOInternals()->MaxVolumeNum, Num);
+  GModel::current()->getGEOInternals()->setMaxTag
+    (3, std::max(GModel::current()->getGEOInternals()->getMaxTag(3), Num));
   pV->Typ = Typ;
   pV->Method = MESH_UNSTRUCTURED;
   pV->QuadTri = NO_QUADTRI;
@@ -1039,10 +1039,11 @@ void DeletePoint(int ip)
   }
   List_Delete(Curves);
 
-  if(v->Num == GModel::current()->getGEOInternals()->MaxPointNum)
-    GModel::current()->getGEOInternals()->MaxPointNum--;
+  int tmax = GModel::current()->getGEOInternals()->getMaxTag(0);
+  if(v->Num == tmax)
+    GModel::current()->getGEOInternals()->setMaxTag(0, tmax - 1);
   Tree_Suppress(GModel::current()->getGEOInternals()->Points, &v);
-  Free_Vertex(&v, NULL);
+  Tree_Add(GModel::current()->getGEOInternals()->DelPoints, &v);
 }
 
 void DeleteCurve(int ip)
@@ -1064,10 +1065,11 @@ void DeleteCurve(int ip)
   }
   List_Delete(Surfs);
 
-  if(c->Num == GModel::current()->getGEOInternals()->MaxLineNum)
-    GModel::current()->getGEOInternals()->MaxLineNum--;
+  int tmax = GModel::current()->getGEOInternals()->getMaxTag(1);
+  if(c->Num == tmax)
+    GModel::current()->getGEOInternals()->setMaxTag(1, tmax - 1);
   Tree_Suppress(GModel::current()->getGEOInternals()->Curves, &c);
-  Free_Curve(&c, NULL);
+  Tree_Add(GModel::current()->getGEOInternals()->DelCurves, &c);
 }
 
 void DeleteSurface(int is)
@@ -1088,10 +1090,12 @@ void DeleteSurface(int is)
     }
   }
   List_Delete(Vols);
-  if(s->Num == GModel::current()->getGEOInternals()->MaxSurfaceNum)
-    GModel::current()->getGEOInternals()->MaxSurfaceNum--;
+
+  int tmax = GModel::current()->getGEOInternals()->getMaxTag(2);
+  if(s->Num == tmax)
+    GModel::current()->getGEOInternals()->setMaxTag(2, tmax - 1);
   Tree_Suppress(GModel::current()->getGEOInternals()->Surfaces, &s);
-  Free_Surface(&s, NULL);
+  Tree_Add(GModel::current()->getGEOInternals()->DelSurfaces, &s);
 }
 
 void DeleteVolume(int iv)
@@ -1099,10 +1103,12 @@ void DeleteVolume(int iv)
   Volume *v = FindVolume(iv);
   if(!v)
     return;
-  if(v->Num == GModel::current()->getGEOInternals()->MaxVolumeNum)
-    GModel::current()->getGEOInternals()->MaxVolumeNum--;
+
+  int tmax = GModel::current()->getGEOInternals()->getMaxTag(3);
+  if(v->Num == tmax)
+    GModel::current()->getGEOInternals()->setMaxTag(3, tmax - 1);
   Tree_Suppress(GModel::current()->getGEOInternals()->Volumes, &v);
-  Free_Volume(&v, NULL);
+  Tree_Add(GModel::current()->getGEOInternals()->DelVolumes, &v);
 }
 
 void DeletePhysicalPoint(int num)
@@ -2083,22 +2089,22 @@ static int compareTwoSurfaces(const void *a, const void *b)
 static void MaxNumPoint(void *a, void *b)
 {
   Vertex *v = *(Vertex **)a;
-  GModel::current()->getGEOInternals()->MaxPointNum =
-    std::max(GModel::current()->getGEOInternals()->MaxPointNum, v->Num);
+  GModel::current()->getGEOInternals()->setMaxTag
+    (0, std::max(GModel::current()->getGEOInternals()->getMaxTag(0), v->Num));
 }
 
 static void MaxNumCurve(void *a, void *b)
 {
   Curve *c = *(Curve **)a;
-  GModel::current()->getGEOInternals()->MaxLineNum =
-    std::max(GModel::current()->getGEOInternals()->MaxLineNum, c->Num);
+  GModel::current()->getGEOInternals()->setMaxTag
+    (1, std::max(GModel::current()->getGEOInternals()->getMaxTag(1), c->Num));
 }
 
 static void MaxNumSurface(void *a, void *b)
 {
   Surface *s = *(Surface **)a;
-  GModel::current()->getGEOInternals()->MaxSurfaceNum =
-    std::max(GModel::current()->getGEOInternals()->MaxSurfaceNum, s->Num);
+  GModel::current()->getGEOInternals()->setMaxTag
+    (2, std::max(GModel::current()->getGEOInternals()->getMaxTag(2), s->Num));
 }
 
 static void ReplaceDuplicatePointsNew(double tol = -1.)
@@ -2260,7 +2266,7 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
   Msg::Debug("Removed %d duplicate points", start - end);
 
   if(CTX::instance()->geom.oldNewreg) {
-    GModel::current()->getGEOInternals()->MaxPointNum = 0;
+    GModel::current()->getGEOInternals()->setMaxTag(0, 0);
     Tree_Action(GModel::current()->getGEOInternals()->Points, MaxNumPoint);
   }
 
@@ -2447,7 +2453,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
   Msg::Debug("Removed %d duplicate curves", start - end);
 
   if(CTX::instance()->geom.oldNewreg) {
-    GModel::current()->getGEOInternals()->MaxLineNum = 0;
+    GModel::current()->getGEOInternals()->setMaxTag(1, 0);
     Tree_Action(GModel::current()->getGEOInternals()->Curves, MaxNumCurve);
   }
 
@@ -2725,7 +2731,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
   Msg::Debug("Removed %d duplicate surfaces", start - end);
 
   if(CTX::instance()->geom.oldNewreg) {
-    GModel::current()->getGEOInternals()->MaxSurfaceNum = 0;
+    GModel::current()->getGEOInternals()->setMaxTag(2, 0);
     Tree_Action(GModel::current()->getGEOInternals()->Surfaces, MaxNumSurface);
   }
 
@@ -3410,7 +3416,7 @@ int Extrude_ProtudeSurface(int type, int is,
 
   chapeau->Num = NEWSURFACE();
 
-  GModel::current()->getGEOInternals()->MaxSurfaceNum = chapeau->Num;
+  GModel::current()->getGEOInternals()->setMaxTag(2, chapeau->Num);
   Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &chapeau);
 
   Tree_Add(GModel::current()->getGEOInternals()->Volumes, &v);
