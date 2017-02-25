@@ -5,26 +5,18 @@
 
 #include <stdlib.h>
 #include <vector>
-// general
-#include "OS.h"
-#include "Geo.h"
-#include "Context.h"
-#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "fullMatrix.h"
-// mesh
 #include "meshGFaceOptimize.h"
 #include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "meshGRegionRelocateVertex.h"
 #include "delaunay3d.h"
-// model
 #include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
 #include "discreteFace.h"
 #include "discreteRegion.h"
-// elements
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MTetrahedron.h"
@@ -57,13 +49,15 @@ void combination_of_4( int combination[4], int start, int end, int index,
 // Fill a region with all possible tets genereated from the
 // combination of points assigned to it
 // Jeanne - HEXTREME
-void create_all_possible_tets(GRegion* region, const std::vector<MVertex*>& vertices) {
+void create_all_possible_tets(GRegion* region, const std::vector<MVertex*>& vertices)
+{
   unsigned int nb_points = vertices.size();
 
   int combinaison[4];
   std::vector<MTetrahedron*> tets;
   combination_of_4(combinaison, 0, nb_points - 1, 0, vertices, tets);
-  std::cout << " Number of tets created - all possible combinations - " << tets.size() << std::endl;
+  std::cout << " Number of tets created - all possible combinations - "
+            << tets.size() << std::endl;
 
   for (int i = 0; i < tets.size(); ++i) {
     region->addTetrahedron(tets[i]);
@@ -113,7 +107,8 @@ GRegion * createDiscreteRegionFromRawData(GModel *gm, fullMatrix<double> &pts,
     gf->triangles.push_back(t);
   }
 
-//  delaunayTriangulation(1, 1, vs, gr->tetrahedra); // tetrahedralization is done when recovering the boundary
+  // delaunayTriangulation(1, 1, vs, gr->tetrahedra);
+  // tetrahedralization is done when recovering the boundary
 
   // create all tets
   if (all_tets) {

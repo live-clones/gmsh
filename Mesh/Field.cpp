@@ -26,7 +26,6 @@
 #include "Numeric.h"
 #include "mathEvaluator.h"
 #include "BackgroundMeshTools.h"
-#include "CenterlineField.h"
 #include "STensor3.h"
 #include "meshMetric.h"
 #if defined(HAVE_POST)
@@ -2702,7 +2701,6 @@ FieldManager::FieldManager()
   map_type_name["Threshold"] = new FieldFactoryT<ThresholdField>();
 #if defined(HAVE_ANN)
   map_type_name["BoundaryLayer"] = new FieldFactoryT<BoundaryLayerField>();
-  map_type_name["Centerline"] = new FieldFactoryT<Centerline>();
 #endif
   map_type_name["Box"] = new FieldFactoryT<BoxField>();
   map_type_name["Cylinder"] = new FieldFactoryT<CylinderField>();

@@ -6,22 +6,21 @@
 // Contributor(s):
 //   Tristan Carrier François Henrotte
 
-
+#include <queue>
+#include <fstream>
+#include <algorithm>
+#include <iostream>
+#include <string>
 #include "simple3D.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "MElementOctree.h"
 #include "meshGRegion.h"
-#include <queue>
-#include <fstream>
-#include "CenterlineField.h"
-#include <algorithm>
 #include "directions3D.h"
 #include "ThinLayer.h"
 #include "Context.h"
-#include <iostream>
-#include <string>
 #include "rtree.h"
+#include "Field.h"
 
 #define k1 0.7 //k1*h is the minimal distance between two nodes
 #define k2 0.5 //k2*h is the minimal distance to the boundary

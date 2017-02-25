@@ -11,7 +11,6 @@ set(SRC
     meshGEdge.cpp 
       meshGEdgeExtruded.cpp
     meshGFace.cpp 
-    meshGFaceElliptic.cpp
       meshGFaceTransfinite.cpp meshGFaceExtruded.cpp 
       meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunayInsertion.cpp 
       meshGFaceLloyd.cpp meshGFaceOptimize.cpp 
@@ -21,7 +20,7 @@ set(SRC
       meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp 
       meshGRegionExtruded.cpp  meshGRegionCarveHole.cpp 
       meshGRegionLocalMeshMod.cpp meshGRegionMMG3D.cpp
-meshGRegionRelocateVertex.cpp
+      meshGRegionRelocateVertex.cpp
     meshMetric.cpp
     BackgroundMeshTools.cpp 
     BackgroundMesh.cpp 
@@ -49,7 +48,6 @@ meshGRegionRelocateVertex.cpp
     filterElements.cpp
     yamakawa.cpp
     Field.cpp
-    CenterlineField.cpp
     surfaceFiller.cpp
 )
 

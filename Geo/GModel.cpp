@@ -12,7 +12,6 @@
 #include "GModel.h"
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
-#include "Geo.h"
 #include "GModelFactory.h"
 #include "GFaceCompound.h"
 #include "GEdgeCompound.h"
@@ -3105,60 +3104,18 @@ int GModel::readGEO(const std::string &name)
 
 GEdge* GModel::addCompoundEdge(std::vector<GEdge*> edges, int num)
 {
-  if (num ==-1) num = getMaxElementaryNumber(1) + 1;
+  if (num < 0) num = getMaxElementaryNumber(1) + 1;
   GEdgeCompound *gec = new GEdgeCompound(this, num, edges);
   add(gec);
-
-  //create old geo format for the compound edge; necessary for boundary layers
-  if(FindCurve(num)){
-    Msg::Error("Curve %d already exists", num);
-  }
-  else{
-    Curve *c = Create_Curve(num, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
-    for(unsigned int i= 0; i < edges.size(); i++)
-      c->compound.push_back(edges[i]->tag());
-    List_T *points = Tree2List(getGEOInternals()->Points);
-    GVertex *gvb = gec->getBeginVertex();
-    GVertex *gve = gec->getEndVertex();
-    int nb = 2 ;
-    c->Control_Points = List_Create(nb, 1, sizeof(Vertex *));
-    for(int i = 0; i < List_Nbr(points); i++) {
-      Vertex *v;
-      List_Read(points, i, &v);
-      if (v->Num == gvb->tag()) {
-        List_Add(c->Control_Points, &v);
-        c->beg = v;
-      }
-      if (v->Num == gve->tag()) {
-        List_Add(c->Control_Points, &v);
-        c->end = v;
-      }
-    }
-
-    End_Curve(c);
-    Tree_Add(getGEOInternals()->Curves, &c);
-    CreateReversedCurve(c);
-
-    // c->Method  =  gec->meshAttributes.method;
-    // c->nbPointsTransfinite = gec->meshAttributes.nbPointsTransfinite;
-    // c->typeTransfinite =  gec->meshAttributes.typeTransfinite ;
-    // c->coeffTransfinite =  gec->meshAttributes.coeffTransfinite ;
-    // c->Extrude =   gec->meshAttributes.extrude ;
-    // c->ReverseMesh =  gec->meshAttributes.reverseMesh ;
-
-  }
-
   return gec;
 }
 
 GFace* GModel::addCompoundFace(std::vector<GFace*> faces, int param, int split, int num)
 {
 #if defined(HAVE_SOLVER)
-  if (num ==-1) num = getMaxElementaryNumber(2) + 1;
-
+  if (num < 0) num = getMaxElementaryNumber(2) + 1;
   std::list<GFace*> faces_comp(faces.begin(), faces.end());
   std::list<GEdge*> U0;
-
   GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_CIRCLE;
   if (param == 1) typ =  GFaceCompound::CONFORMAL_SPECTRAL;
   if (param == 2) typ =  GFaceCompound::RADIAL_BASIS;
@@ -3167,51 +3124,7 @@ GFace* GModel::addCompoundFace(std::vector<GFace*> faces, int param, int split, 
   if (param == 5) typ =  GFaceCompound::CONVEX_PLANE;
   if (param == 6) typ =  GFaceCompound::HARMONIC_SQUARE;
   if (param == 7) typ =  GFaceCompound::CONFORMAL_FE;
-
   GFaceCompound *gfc = new GFaceCompound(this, num, faces_comp, U0, typ, split);
-
-  //create old geo format for the compound face
-  //necessary for boundary layers
-  if(FindSurface(num)){
-    Msg::Error("Surface %d already exists", num);
-  }
-  else{
-    Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
-    for(unsigned int i= 0; i < faces.size(); i++)
-      s->compound.push_back(faces[i]->tag());
-
-     std::list<GEdge*> edges = gfc->edges();
-
-     //Replace edges by their compounds
-     std::set<GEdge*> mySet;
-     std::list<GEdge*>::iterator it = edges.begin();
-     while(it != edges.end()){
-       if((*it)->getCompound()){
-         mySet.insert((*it)->getCompound());
-       }
-       else{
-         mySet.insert(*it);
-       }
-       ++it;
-     }
-     edges.clear();
-     edges.insert(edges.begin(), mySet.begin(), mySet.end());
-
-     s->Generatrices = List_Create(edges.size(), 1, sizeof(Curve *));
-     List_T *curves = Tree2List(_geo_internals->Curves);
-     Curve *c;
-     for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
-       for(int i = 0; i < List_Nbr(curves); i++) {
-         List_Read(curves, i, &c);
-         if (c->Num == (*ite)->tag()) {
-           List_Add(s->Generatrices, &c);
-         }
-       }
-     }
-
-    Tree_Add(_geo_internals->Surfaces, &s);
-  }
-
   add(gfc);
   return gfc;
 #else

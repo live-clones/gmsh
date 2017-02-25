@@ -29,14 +29,12 @@
 #include "HighOrder.h"
 #include "Generator.h"
 #include "meshGFaceLloyd.h"
-#include "CenterlineField.h"
 #include "GFaceCompound.h"
 #include "Field.h"
 #include "Options.h"
 #include "simple3D.h"
 #include "yamakawa.h"
 #include "meshGRegionRelocateVertex.h"
-
 #include "pointInsertion.h"
 
 #if defined(HAVE_OPTHOM)
@@ -70,7 +68,7 @@ public:
 	faces.insert(std::make_pair(MFace((*itf)->triangles[i]->getVertex(0),(*itf)->triangles[i]->getVertex(1),(*itf)->triangles[i]->getVertex(2)),*itf));
       }
     }
-    Msg::Info ("Searching for %d embedded mesh edges and %d embedded mesh faces in region %d", edges.size(),  faces.size(), gr->tag()); 
+    Msg::Info ("Searching for %d embedded mesh edges and %d embedded mesh faces in region %d", edges.size(),  faces.size(), gr->tag());
     for (unsigned int k=0;k<gr->getNumMeshElements();k++){
       for (int j=0;j<gr->getMeshElement(k)->getNumEdges();j++){
 	edges.erase (gr->getMeshElement(k)->getEdge(j));
@@ -80,7 +78,7 @@ public:
       }
     }
     if (edges.empty() && faces.empty()) {
-      Msg::Info ("All embedded edges and faces are present in the final mesh"); 
+      Msg::Info ("All embedded edges and faces are present in the final mesh");
     }
     if (edges.size()) {
       char name[256];
@@ -904,9 +902,9 @@ static void Mesh3D(GModel *m)
   m->setAllVolumesPositive();
 
   //  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
-  if (Msg::GetVerbosity() > 98) 
+  if (Msg::GetVerbosity() > 98)
     std::for_each(m->firstRegion(), m->lastRegion(), TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES ());
-  
+
   CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
@@ -922,9 +920,9 @@ void OptimizeMeshNetgen(GModel *m)
   // Ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
-  if (Msg::GetVerbosity() > 98) 
+  if (Msg::GetVerbosity() > 98)
     std::for_each(m->firstRegion(), m->lastRegion(), TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES ());
-  
+
   double t2 = Cpu();
   Msg::StatusBar(true, "Done optimizing 3D mesh with Netgen (%g s)", t2 - t1);
 }
@@ -938,9 +936,9 @@ void OptimizeMesh(GModel *m)
   // Ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
-  if (Msg::GetVerbosity() > 98) 
+  if (Msg::GetVerbosity() > 98)
     std::for_each(m->firstRegion(), m->lastRegion(), TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES ());
-  
+
   CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   Msg::StatusBar(true, "Done optimizing 3D mesh (%g s)", t2 - t1);

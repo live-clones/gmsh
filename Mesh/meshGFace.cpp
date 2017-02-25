@@ -26,8 +26,6 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MElementCut.h"
-#include "CenterlineField.h"
-#include "meshGFaceElliptic.h"
 #include "Context.h"
 #include "GPoint.h"
 #include "GmshMessage.h"
@@ -1868,32 +1866,6 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
   return true;
 }
 
-static bool meshGeneratorElliptic(GFace *gf, bool debug = true)
-{
-#if defined(HAVE_ANN)
-  Centerline *center = 0;
-  FieldManager *fields = GModel::current()->getFields();
-  if (fields->getBackgroundField() > 0 ){
-    Field *myField = fields->get(fields->getBackgroundField());
-    center = dynamic_cast<Centerline*> (myField);
-  }
-
-  bool recombine =  (CTX::instance()->mesh.recombineAll) ;
-  int nbBoundaries = gf->edges().size();
-
-  if (center && recombine && nbBoundaries == 2) {
-    printf("--> regular periodic grid generator (elliptic smooth) \n");
-    //bool success  = createRegularTwoCircleGrid(center, gf);
-    bool success  = createRegularTwoCircleGridPeriodic(center, gf);
-    return success;
-  }
-  else return false;
-
-#else
-  return false;
-#endif
-}
-
 static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 {
   std::map<BDS_Point*, MVertex*, PointLessThan> recoverMap;
@@ -2474,11 +2446,6 @@ void meshGFace::operator() (GFace *gf, bool print)
   Msg::Debug("Computing edge loops");
 
   Msg::Debug("Generating the mesh");
-
-  if(meshGeneratorElliptic(gf)){
-    gf->meshStatistics.status = GFace::DONE;
-    return;
-  }
 
   quadMeshRemoveHalfOfOneDMesh halfmesh (gf);
 
