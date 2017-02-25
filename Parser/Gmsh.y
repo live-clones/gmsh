@@ -2431,6 +2431,7 @@ Transform :
           Vectors2ListOfShapes(out, $$);
         }
         else{
+          // FIXME use INT API HERE
           for(int i = 0; i < List_Nbr($3); i++){
             Shape TheShape;
             List_Read($3, i, &TheShape);
@@ -2967,15 +2968,15 @@ LevelSet :
 Delete :
     tDelete '{' ListOfShapes '}'
     {
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> tags[4]; ListOfShapes2Vectors($3, tags);
-        GModel::current()->getOCCInternals()->remove(tags);
-      }
-      // FIXME use GEOInternals + int api
-      for(int i = 0; i < List_Nbr($3); i++){
-        Shape TheShape;
-        List_Read($3, i, &TheShape);
-        DeleteShape(TheShape.Type, TheShape.Num);
+      std::vector<int> tags[4]; ListOfShapes2Vectors($3, tags);
+      for(int dim = 0; dim < 4; dim++){
+        for(unsigned int i = 0; i < tags[dim].size(); i++){
+          if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+            GModel::current()->getOCCInternals()->remove(dim, tags[dim][i]);
+          }
+          GModel::current()->getGEOInternals()->remove(dim, tags[dim][i]);
+          GModel::current()->remove(dim, tags[dim][i]);
+        }
       }
       List_Delete($3);
     }

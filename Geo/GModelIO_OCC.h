@@ -198,8 +198,10 @@ class OCC_Internals {
               double dx, double dy, double dz, double angle);
 
   // copy and remove
+  int copy(int dim, int tag);
   void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]);
-  void remove(std::vector<int> inTags[4]);
+  void remove(int dim, int tag);
+  void remove(std::vector<int> tags[4]);
 
   // import shapes from file
   void importShapes(const std::string &fileName, bool highestDimOnly,
@@ -336,9 +338,11 @@ public:
   { _error("apply translation"); }
   void rotate(std::vector<int> inTags[4], double x, double y, double z,
               double dx, double dy, double dz, double angle){ _error("apply rotation"); }
+  int copy(int dim, int tag){ _error("copy shape"); }
   void copy(std::vector<int> inTags[4], std::vector<int> outTags[4])
-  { _error("copy shape"); }
-  void remove(std::vector<int> inTags[4]){}
+  { _error("copy shapes"); }
+  void remove(int dim, int tag){}
+  void remove(std::vector<int> tags[4]){}
   void importShapes(const std::string &fileName, bool highestDimOnly,
                     std::vector<int> outTags[4], const std::string &format="")
   { _error("import shape"); }

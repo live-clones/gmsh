@@ -267,7 +267,6 @@ class GModel
   GFace *getFaceByTag(int n) const;
   GEdge *getEdgeByTag(int n) const;
   GVertex *getVertexByTag(int n) const;
-  std::vector<int> getEdgesByStringTag(const std::string tag);
 
   // add/remove an entity in the model
   void add(GRegion *r) { regions.insert(r); }
@@ -278,6 +277,7 @@ class GModel
   void remove(GFace *f);
   void remove(GEdge *e);
   void remove(GVertex *v);
+  void remove(int dim, int tag);
 
   // snap vertices on model edges by using geometry tolerance
   void snapVertices();
@@ -331,6 +331,15 @@ class GModel
   // get the number of a given physical group of dimension
   // "dim" and name "name". return -1 if not found
   int getPhysicalNumber(const int &dim, const std::string & name);
+
+  // get all tags of elementary entities associated with a given physical group
+  // name
+  std::vector<int> getTagsForPhysicalName(int dim, const std::string name);
+  // deprecated
+  std::vector<int> getEdgesByStringTag(const std::string name)
+  {
+    return getTagsForPhysicalName(1, name);
+  }
 
   // set physical tags to entities in a given bounding box
   void setPhysicalNumToEntitiesInBox(int EntityDimension, int PhysicalNumber,

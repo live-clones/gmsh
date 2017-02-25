@@ -337,7 +337,10 @@ void RotateShapes(double Ax,double Ay,double Az,
 void SymmetryShapes(double A,double B,double C, double D, List_T *shapes);
 void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined);
 void CopyShape(int Type, int Num, int *New);
-void DeleteShape(int Type, int Num);
+void DeletePoint(int Num);
+void DeleteCurve(int Num);
+void DeleteSurface(int Num);
+void DeleteVolume(int Num);
 void DeletePhysicalPoint(int Num);
 void DeletePhysicalLine(int Num);
 void DeletePhysicalSurface(int Num);

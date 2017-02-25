@@ -54,6 +54,20 @@ class GEO_Internals{
   void addVolume(int num, std::vector<int> shellTags);
   void addCompoundVolume(int num, std::vector<int> regionTags);
 
+  // get boundary of shapes of dimension dim (this will bind the boundary parts
+  // to new tags, returned in outTags)
+  void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
+                   bool combined=false);
+
+  // apply transformations
+  void translate(std::vector<int> inTags[4], double dx, double dy, double dz);
+  void rotate(std::vector<int> inTags[4], double x, double y, double z,
+              double dx, double dy, double dz, double angle);
+
+  // copy and remove
+  void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]);
+  void remove(int dim, int tag);
+
   // manipulate physical groups
   void resetPhysicalGroups();
   void modifyPhysicalGroup(int dim, int num, int op, std::vector<int> tags);

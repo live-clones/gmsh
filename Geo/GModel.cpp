@@ -298,17 +298,17 @@ GVertex *GModel::getVertexByTag(int n) const
     return 0;
 }
 
-std::vector<int> GModel::getEdgesByStringTag(const std::string tag)
+std::vector<int> GModel::getTagsForPhysicalName(int dim, const std::string tag)
 {
-  std::vector<int> nums;
+  std::vector<int> tags;
   std::map<int, std::vector<GEntity*> > physicalGroups;
-  getPhysicalGroups(1, physicalGroups);
-  std::vector<GEntity*> allEdges = physicalGroups[this->getPhysicalNumber(1, tag)];
-  for (std::vector<GEntity*>::iterator it = allEdges.begin(); it != allEdges.end(); it++){
+  getPhysicalGroups(dim, physicalGroups);
+  std::vector<GEntity*> entities = physicalGroups[getPhysicalNumber(dim, tag)];
+  for (std::vector<GEntity*>::iterator it = entities.begin(); it != entities.end(); it++){
     GEntity *ge = *it;
-    nums.push_back(ge->tag());
+    tags.push_back(ge->tag());
   }
-  return nums;
+  return tags;
 }
 
 void GModel::remove(GRegion *r)
@@ -333,6 +333,16 @@ void GModel::remove(GVertex *v)
 {
   viter it = std::find(firstVertex(), lastVertex(), v);
   if(it != vertices.end()) vertices.erase(it);
+}
+
+void GModel::remove(int dim, int tag)
+{
+  switch(dim){
+  case 0: remove(getVertexByTag(tag)); break;
+  case 1: remove(getEdgeByTag(tag)); break;
+  case 2: remove(getFaceByTag(tag)); break;
+  case 3: remove(getRegionByTag(tag)); break;
+  }
 }
 
 void GModel::snapVertices()

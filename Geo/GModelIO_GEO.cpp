@@ -430,6 +430,41 @@ void GEO_Internals::addCompoundVolume(int num, std::vector<int> regionTags)
   _changed = true;
 }
 
+void GEO_Internals::getBoundary(std::vector<int> inTags[4],
+                                std::vector<int> outTags[4],
+                                bool combined)
+{
+
+}
+
+void GEO_Internals::translate(std::vector<int> inTags[4],
+                              double dx, double dy, double dz)
+{
+
+}
+
+void GEO_Internals::rotate(std::vector<int> inTags[4],
+                           double x, double y, double z,
+                           double dx, double dy, double dz, double angle)
+{
+
+}
+
+void GEO_Internals::copy(std::vector<int> inTags[4], std::vector<int> outTags[4])
+{
+
+}
+
+void GEO_Internals::remove(int dim, int tag)
+{
+  switch(dim){
+  case 0: DeletePoint(tag); break;
+  case 1: DeleteCurve(tag); DeleteCurve(-tag); break;
+  case 2: DeleteSurface(tag); break;
+  case 3: DeleteVolume(tag); break;
+  }
+}
+
 void GEO_Internals::resetPhysicalGroups()
 {
   List_Action(PhysicalGroups, Free_PhysicalGroup);

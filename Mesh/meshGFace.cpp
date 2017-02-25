@@ -635,7 +635,8 @@ void BDS2GMSH(BDS_Mesh *m, GFace *gf,
   }
 }
 
-static void addOrRemove(MVertex *v1, MVertex *v2, std::set<MEdge,Less_Edge> & bedges, std::set<MEdge,Less_Edge> &removed)
+static void addOrRemove(MVertex *v1, MVertex *v2, std::set<MEdge,Less_Edge> & bedges,
+                        std::set<MEdge,Less_Edge> &removed)
 {
   MEdge e(v1,v2);
   if (removed.find(e) != removed.end())return;

@@ -15,10 +15,6 @@
 #include "MVertexRTree.h"
 #include "Parser.h"
 
-#if defined(HAVE_MESH)
-#include "Field.h"
-#endif
-
 static List_T *ListOfTransformedPoints = NULL;
 
 // Comparison routines
@@ -234,8 +230,8 @@ static void direction(Vertex *v1, Vertex *v2, double d[3])
 
 void End_Curve(Curve *c)
 {
-  // if all control points of a curve are on the same geometry, then
-  // the curve is also on the geometry
+  // if all control points of a curve are on the same geometry, then the curve
+  // is also on the geometry
   int NN = List_Nbr(c->Control_Points);
   if(NN){
     Vertex *pV;
@@ -1183,7 +1179,7 @@ void CopyShape(int Type, int Num, int *New)
   }
 }
 
-static void DeletePoint(int ip)
+void DeletePoint(int ip)
 {
   Vertex *v = FindPoint(ip);
   if(!v)
@@ -1208,7 +1204,7 @@ static void DeletePoint(int ip)
   Free_Vertex(&v, NULL);
 }
 
-static void DeleteCurve(int ip)
+void DeleteCurve(int ip)
 {
   Curve *c = FindCurve(ip);
   if(!c)
@@ -1233,7 +1229,7 @@ static void DeleteCurve(int ip)
   Free_Curve(&c, NULL);
 }
 
-static void DeleteSurface(int is)
+void DeleteSurface(int is)
 {
   Surface *s = FindSurface(is);
   if(!s)
@@ -1257,7 +1253,7 @@ static void DeleteSurface(int is)
   Free_Surface(&s, NULL);
 }
 
-static void DeleteVolume(int iv)
+void DeleteVolume(int iv)
 {
   Volume *v = FindVolume(iv);
   if(!v)
@@ -1310,61 +1306,6 @@ void DeletePhysicalVolume(int num)
     Free_PhysicalGroup(&p, NULL);
   }
   GModel::current()->deletePhysicalGroup(3, num);
-}
-
-void DeleteShape(int Type, int Num)
-{
-  switch (Type) {
-  case MSH_POINT:
-  case MSH_POINT_FROM_GMODEL:
-    {
-      DeletePoint(Num);
-      GVertex *gv = GModel::current()->getVertexByTag(Num);
-      if(gv) GModel::current()->remove(gv);
-    }
-    break;
-  case MSH_SEGM_LINE:
-  case MSH_SEGM_SPLN:
-  case MSH_SEGM_BSPLN:
-  case MSH_SEGM_BEZIER:
-  case MSH_SEGM_CIRC:
-  case MSH_SEGM_CIRC_INV:
-  case MSH_SEGM_ELLI:
-  case MSH_SEGM_ELLI_INV:
-  case MSH_SEGM_NURBS:
-  case MSH_SEGM_COMPOUND:
-  case MSH_SEGM_FROM_GMODEL:
-    {
-      DeleteCurve(Num);
-      DeleteCurve(-Num);
-      GEdge *ge = GModel::current()->getEdgeByTag(Num);
-      if(ge) GModel::current()->remove(ge);
-    }
-    break;
-  case MSH_SURF_TRIC:
-  case MSH_SURF_REGL:
-  case MSH_SURF_PLAN:
-  case MSH_SURF_COMPOUND:
-  case MSH_SURF_FROM_GMODEL:
-    {
-      DeleteSurface(Num);
-      GFace *gf = GModel::current()->getFaceByTag(Num);
-      if(gf) GModel::current()->remove(gf);
-    }
-    break;
-  case MSH_VOLUME:
-  case MSH_VOLUME_COMPOUND:
-  case MSH_VOLUME_FROM_GMODEL:
-    {
-      DeleteVolume(Num);
-      GRegion *gr = GModel::current()->getRegionByTag(Num);
-      if(gr) GModel::current()->remove(gr);
-    }
-    break;
-  default:
-    Msg::Error("Impossible to delete entity %d (of type %d)", Num, Type);
-    break;
-  }
 }
 
 void ColorShape(int Type, int Num, unsigned int Color, bool Recursive)
@@ -4183,7 +4124,8 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
     }
   }
 
-  DeleteShape(c->Typ, c->Num);
+  DeleteCurve(c->Num);
+  DeleteCurve(-c->Num);
   List_Delete(new_list);
   List_Delete(rshapes);
   List_Delete(num_shapes);
