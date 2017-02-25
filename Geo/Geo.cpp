@@ -640,6 +640,7 @@ void Free_Curve(void *a, void *b)
   if(pC) {
     delete [] pC->k;
     List_Delete(pC->Control_Points);
+    if(pC->Extrude) delete pC->Extrude;
     delete pC;
     pC = NULL;
   }
@@ -678,6 +679,7 @@ void Free_Surface(void *a, void *b)
     List_Delete(pS->TrsfPoints);
     List_Delete(pS->Generatrices);
     List_Delete(pS->GeneratricesByTag);
+    if(pS->Extrude) delete pS->Extrude;
     delete pS;
     pS = NULL;
   }
@@ -711,6 +713,7 @@ void Free_Volume(void *a, void *b)
     List_Delete(pV->Surfaces);
     List_Delete(pV->SurfacesOrientations);
     List_Delete(pV->SurfacesByTag);
+    if(pV->Extrude) delete pV->Extrude;
     delete pV;
     pV = NULL;
   }
@@ -869,112 +872,6 @@ PhysicalGroup *FindPhysicalGroup(int num, int type)
     return *ppp;
   }
   return NULL;
-}
-
-static void GetAllElementaryEntityNumbers(int dim, std::set<int> &nums)
-{
-  GModel *m = GModel::current();
-  switch(dim){
-  case 0:
-    {
-      List_T *l = Tree2List(m->getGEOInternals()->Points);
-      Vertex *p;
-      for(int i = 0; i < List_Nbr(l); i++){
-        List_Read(l, i, &p);
-        nums.insert(p->Num);
-      }
-      List_Delete(l);
-      for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); it++)
-        nums.insert((*it)->tag());
-    }
-    break;
-  case 1:
-    {
-      List_T *l = Tree2List(m->getGEOInternals()->Curves);
-      Curve *p;
-      for(int i = 0; i < List_Nbr(l); i++){
-        List_Read(l, i, &p);
-        if(p->Num >= 0)
-          nums.insert(p->Num);
-      }
-      List_Delete(l);
-      for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); it++){
-        if((*it)->tag() >= 0)
-          nums.insert((*it)->tag());
-      }
-    }
-    break;
-  case 2:
-    {
-      List_T *l = Tree2List(m->getGEOInternals()->Surfaces);
-      Surface *p;
-      for(int i = 0; i < List_Nbr(l); i++){
-        List_Read(l, i, &p);
-        nums.insert(p->Num);
-      }
-      List_Delete(l);
-      for(GModel::fiter it = m->firstFace(); it != m->lastFace(); it++)
-        nums.insert((*it)->tag());
-    }
-    break;
-  case 3:
-    {
-      List_T *l = Tree2List(m->getGEOInternals()->Volumes);
-      Volume *p;
-      for(int i = 0; i < List_Nbr(l); i++){
-        List_Read(l, i, &p);
-        nums.insert(p->Num);
-      }
-      List_Delete(l);
-      for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); it++)
-        nums.insert((*it)->tag());
-    }
-    break;
-  }
-}
-
-List_T *GetAllElementaryEntityNumbers(int dim)
-{
-  std::set<int> nums;
-  GetAllElementaryEntityNumbers(dim, nums);
-  List_T *l = List_Create(nums.size(), 1, sizeof(double));
-  for(std::set<int>::iterator it = nums.begin(); it != nums.end(); it++){
-    double a = *it;
-    List_Add(l, &a);
-  }
-  return l;
-}
-
-static void GetAllPhysicalEntityNumbers(int dim, std::set<int> &nums)
-{
-  for(int i = 0; i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++){
-    PhysicalGroup *p;
-    List_Read(GModel::current()->getGEOInternals()->PhysicalGroups, i, &p);
-    if((dim == 0 && p->Typ == MSH_PHYSICAL_POINT) ||
-       (dim == 1 && p->Typ == MSH_PHYSICAL_LINE) ||
-       (dim == 2 && p->Typ == MSH_PHYSICAL_SURFACE) ||
-       (dim == 3 && p->Typ == MSH_PHYSICAL_VOLUME)){
-      nums.insert(p->Num);
-    }
-  }
-
-  std::map<int, std::vector<GEntity*> > groups;
-  GModel::current()->getPhysicalGroups(dim, groups);
-  for(std::map<int, std::vector<GEntity*> >::iterator it = groups.begin();
-      it != groups.end(); it++)
-    nums.insert(it->first);
-}
-
-List_T *GetAllPhysicalEntityNumbers(int dim)
-{
-  std::set<int> nums;
-  GetAllPhysicalEntityNumbers(dim, nums);
-  List_T *l = List_Create(nums.size(), 1, sizeof(double));
-  for(std::set<int>::iterator it = nums.begin(); it != nums.end(); it++){
-    double a = *it;
-    List_Add(l, &a);
-  }
-  return l;
 }
 
 static void CopyVertex(Vertex *v, Vertex *vv)
@@ -1515,26 +1412,7 @@ Curve *CreateReversedCurve(Curve *c)
   }
 }
 
-int recognize_seg(int typ, List_T *liste, int *seg)
-{
-  List_T *temp = Tree2List(GModel::current()->getGEOInternals()->Curves);
-  int beg, end;
-  List_Read(liste, 0, &beg);
-  List_Read(liste, List_Nbr(liste) - 1, &end);
-  for(int i = 0; i < List_Nbr(temp); i++) {
-    Curve *pc;
-    List_Read(temp, i, &pc);
-    if(pc->Typ == typ && pc->beg->Num == beg && pc->end->Num == end) {
-      List_Delete(temp);
-      *seg = pc->Num;
-      return 1;
-    }
-  }
-  List_Delete(temp);
-  return 0;
-}
-
-int recognize_loop(List_T *liste, int *loop)
+int RecognizeLineLoop(List_T *liste, int *loop)
 {
   int res = 0;
   *loop = 0;
@@ -1552,7 +1430,7 @@ int recognize_loop(List_T *liste, int *loop)
   return res;
 }
 
-int recognize_surfloop(List_T *liste, int *loop)
+int RecognizeSurfaceLoop(List_T *liste, int *loop)
 {
   int res = 0;
   *loop = 0;
@@ -2099,7 +1977,7 @@ static List_T* GetOrderedUniqueEdges(Surface *s)
     List_Add(gen_nums, &(ctemp->Num));
   }
 
-  sortEdgesInLoop(0, gen_nums, 1);
+  SortEdgesInLoop(0, gen_nums, 1);
 
   // put sorted list of curve pointers back into compnd_gen and generatrices
   List_Reset(unique);
@@ -3979,7 +3857,7 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
 
 // Bunch of utility routines
 
-void sortEdgesInLoop(int num, List_T *edges, bool orient)
+void SortEdgesInLoop(int num, List_T *edges, bool orient)
 {
   // This function sorts the edges in an EdgeLoop and detects any
   // subloops. Warning: the input edges are supposed to be *oriented* (Without
@@ -4046,7 +3924,7 @@ void sortEdgesInLoop(int num, List_T *edges, bool orient)
   List_Delete(temp);
 }
 
-void setSurfaceGeneratrices(Surface *s, List_T *loops)
+void SetSurfaceGeneratrices(Surface *s, List_T *loops)
 {
   int nbLoop = List_Nbr(loops);
   List_Delete(s->Generatrices);
@@ -4115,7 +3993,7 @@ void setSurfaceGeneratrices(Surface *s, List_T *loops)
   }
 }
 
-void setVolumeSurfaces(Volume *v, List_T *loops)
+void SetVolumeSurfaces(Volume *v, List_T *loops)
 {
   List_Reset(v->Surfaces);
   List_Reset(v->SurfacesOrientations);
@@ -4154,32 +4032,4 @@ void setVolumeSurfaces(Volume *v, List_T *loops)
       }
     }
   }
-}
-
-int select_contour(int type, int num, List_T * List)
-{
-  int k = 0;
-
-  switch (type) {
-  case ENT_LINE:
-    k = allEdgesLinked(num, List);
-    for(int i = 0; i < List_Nbr(List); i++) {
-      int ip;
-      List_Read(List, i, &ip);
-      GEdge *ge = GModel::current()->getEdgeByTag(abs(ip));
-      if(ge) ge->setSelection(1);
-    }
-    break;
-  case ENT_SURFACE:
-    k = allFacesLinked(num, List);
-    for(int i = 0; i < List_Nbr(List); i++) {
-      int ip;
-      List_Read(List, i, &ip);
-      GFace *gf = GModel::current()->getFaceByTag(abs(ip));
-      if(gf) gf->setSelection(1);
-    }
-    break;
-  }
-
-  return k;
 }

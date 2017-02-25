@@ -57,14 +57,6 @@
 #define MSH_PHYSICAL_SURFACE   502
 #define MSH_PHYSICAL_VOLUME    503
 
-class gLevelset;
-
-class LevelSet {
- public:
-  int Num;
-  gLevelset *ls;
-};
-
 struct Coord{
   double X, Y, Z;
 };
@@ -290,7 +282,6 @@ int compareEdgeLoop(const void *a, const void *b);
 int compareCurve(const void *a, const void *b);
 int compareSurface(const void *a, const void *b);
 int compareVolume(const void *a, const void *b);
-int compareLevelSet(const void *a, const void *b);
 int comparePhysicalGroup(const void *a, const void *b);
 
 void Free_Vertex(void *a, void *b);
@@ -300,7 +291,6 @@ void Free_SurfaceLoop(void *a, void *b);
 void Free_Curve(void *a, void *b);
 void Free_Surface(void *a, void *b);
 void Free_Volume(void *a, void *b);
-void Free_LevelSet(void *a, void *b);
 
 void Projette(Vertex *v, double mat[3][3]);
 
@@ -314,7 +304,6 @@ Volume *Create_Volume(int Num, int Typ);
 EdgeLoop *Create_EdgeLoop(int Num, List_T *intlist);
 SurfaceLoop *Create_SurfaceLoop(int Num, List_T *intlist);
 PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist);
-LevelSet *Create_LevelSet(int Num, gLevelset *l);
 
 void End_Curve(Curve *c);
 void End_Surface(Surface *s);
@@ -325,11 +314,7 @@ EdgeLoop *FindEdgeLoop(int inum);
 Surface *FindSurface(int inum);
 SurfaceLoop *FindSurfaceLoop(int inum);
 Volume *FindVolume(int inum);
-LevelSet *FindLevelSet(int inum);
 PhysicalGroup *FindPhysicalGroup(int inum, int type);
-
-List_T *GetAllElementaryEntityNumbers(int dim);
-List_T *GetAllPhysicalEntityNumbers(int dim);
 
 void TranslateShapes(double X,double Y,double Z, List_T *shapes);
 void DilatShapes(double X,double Y,double Z, double A, double B, double C,
@@ -398,13 +383,23 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2]);
 bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shapes);
 bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes);
 
-int recognize_seg(int typ, List_T *liste, int *seg);
-int recognize_loop(List_T *liste, int *loop);
-int recognize_surfloop(List_T *liste, int *loop);
+int RecognizeLineLoop(List_T *liste, int *loop);
+int RecognizeSurfaceLoop(List_T *liste, int *loop);
 
-void sortEdgesInLoop(int num, List_T *edges, bool orient=false);
-void setSurfaceGeneratrices(Surface *s, List_T *loops);
-void setVolumeSurfaces(Volume *v, List_T *loops);
-int select_contour(int type, int num, List_T * List);
+void SortEdgesInLoop(int num, List_T *edges, bool orient=false);
+void SetSurfaceGeneratrices(Surface *s, List_T *loops);
+void SetVolumeSurfaces(Volume *v, List_T *loops);
+
+// FIXME: move this
+class gLevelset;
+class LevelSet {
+ public:
+  int Num;
+  gLevelset *ls;
+};
+int compareLevelSet(const void *a, const void *b);
+void Free_LevelSet(void *a, void *b);
+LevelSet *Create_LevelSet(int Num, gLevelset *l);
+LevelSet *FindLevelSet(int inum);
 
 #endif

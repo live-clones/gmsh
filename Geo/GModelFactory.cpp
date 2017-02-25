@@ -120,7 +120,7 @@ GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > f
     int numl = vecLoops[i]->Num;
     List_Add(temp, &numl);
   }
-  setVolumeSurfaces(v, temp);
+  SetVolumeSurfaces(v, temp);
   List_Delete(temp);
   Tree_Add(gm->getGEOInternals()->Volumes, &v);
   v->Typ = MSH_VOLUME;
@@ -177,15 +177,11 @@ std::vector<GFace *> GeoFactory::addRuledFaces(GModel *gm,
       int numEdge = edges[i][j]->tag();
       List_Add(temp, &numEdge);
     }
-    int type=ENT_LINE;
-    if(select_contour(type, edges[i][0]->tag(), temp))
-    {
-        sortEdgesInLoop(numl, temp);
-        EdgeLoop *l = Create_EdgeLoop(numl, temp);
-        vecLoops.push_back(l);
-        Tree_Add(gm->getGEOInternals()->EdgeLoops, &l);
-        l->Num = numl;
-    }
+    SortEdgesInLoop(numl, temp);
+    EdgeLoop *l = Create_EdgeLoop(numl, temp);
+    vecLoops.push_back(l);
+    Tree_Add(gm->getGEOInternals()->EdgeLoops, &l);
+    l->Num = numl;
     List_Delete(temp);
   }
 
@@ -197,7 +193,7 @@ std::vector<GFace *> GeoFactory::addRuledFaces(GModel *gm,
     int numl = vecLoops[i]->Num;
     List_Add(iList, &numl);
   }
-  setSurfaceGeneratrices(s, iList);
+  SetSurfaceGeneratrices(s, iList);
   End_Surface(s);
   Tree_Add(gm->getGEOInternals()->Surfaces, &s);
   s->Typ= MSH_SURF_TRIC;
@@ -433,7 +429,7 @@ GFace *GeoFactory::_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdg
       numl++;
       if (!FindEdgeLoop(numl)) break;
     }
-    sortEdgesInLoop(numl, temp, orientEdges);
+    SortEdgesInLoop(numl, temp, orientEdges);
     EdgeLoop *l = Create_EdgeLoop(numl, temp);
     vecLoops.push_back(l);
     Tree_Add(gm->getGEOInternals()->EdgeLoops, &l);
@@ -450,7 +446,7 @@ GFace *GeoFactory::_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdg
     List_Add(temp, &numl);
   }
 
-  setSurfaceGeneratrices(s, temp);
+  SetSurfaceGeneratrices(s, temp);
   List_Delete(temp);
   End_Surface(s);
   Tree_Add(gm->getGEOInternals()->Surfaces, &s);

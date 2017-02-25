@@ -285,7 +285,7 @@ void GEO_Internals::addLineLoop(int num, std::vector<int> edgeTags)
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < edgeTags.size(); i++)
     List_Add(tmp, &edgeTags[i]);
-  sortEdgesInLoop(num, tmp);
+  SortEdgesInLoop(num, tmp);
   EdgeLoop *l = Create_EdgeLoop(num, tmp);
   Tree_Add(EdgeLoops, &l);
   List_Delete(tmp);
@@ -306,7 +306,7 @@ void GEO_Internals::addPlaneSurface(int num, std::vector<int> wireTags)
   for(unsigned int i = 0; i < wireTags.size(); i++)
     List_Add(tmp, &wireTags[i]);
   Surface *s = Create_Surface(num, MSH_SURF_PLAN);
-  setSurfaceGeneratrices(s, tmp);
+  SetSurfaceGeneratrices(s, tmp);
   List_Delete(tmp);
   End_Surface(s);
   Tree_Add(Surfaces, &s);
@@ -353,7 +353,7 @@ void GEO_Internals::addSurfaceFilling(int num, std::vector<int> wireTags,
   for(unsigned int i = 0; i < wireTags.size(); i++)
     List_Add(tmp, &wireTags[i]);
   Surface *s = Create_Surface(num, type);
-  setSurfaceGeneratrices(s, tmp);
+  SetSurfaceGeneratrices(s, tmp);
   List_Delete(tmp);
   End_Surface(s);
   if(sphereCenterTag >= 0){
@@ -379,7 +379,7 @@ void GEO_Internals::addCompoundSurface(int num, std::vector<int> faceTags,
     for(int i = 0; i < 4; i++)
       s->compoundBoundary[i] = edgeTags[i];
   }
-  setSurfaceGeneratrices(s, 0);
+  SetSurfaceGeneratrices(s, 0);
   Tree_Add(Surfaces, &s);
   _changed = true;
 }
@@ -411,7 +411,7 @@ void GEO_Internals::addVolume(int num, std::vector<int> shellTags)
   for(unsigned int i = 0; i < shellTags.size(); i++)
     List_Add(tmp, &shellTags[i]);
   Volume *v = Create_Volume(num, MSH_VOLUME);
-  setVolumeSurfaces(v, tmp);
+  SetVolumeSurfaces(v, tmp);
   List_Delete(tmp);
   Tree_Add(Volumes, &v);
   _changed = true;

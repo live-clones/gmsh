@@ -888,7 +888,7 @@ static void add_new_ellipse()
   Msg::StatusGl("");
 }
 
-static int select_contour(int type, int num, List_T * List)
+static int selectContour(int type, int num, List_T * List)
 {
   int k = 0;
 
@@ -986,7 +986,7 @@ static void add_new_surface_volume(int mode)
         int num = (type == ENT_LINE) ?
           FlGui::instance()->selectedEdges[0]->tag() :
           FlGui::instance()->selectedFaces[0]->tag();
-        if(select_contour(type, num, List1)) {
+        if(selectContour(type, num, List1)) {
           if(type == ENT_LINE)
             add_lineloop(List1, GModel::current()->getFileName(), &num);
           else
@@ -1037,7 +1037,7 @@ static void add_new_surface_volume(int mode)
                 int num = (type == ENT_LINE) ?
                   FlGui::instance()->selectedEdges[i]->tag() :
                   FlGui::instance()->selectedFaces[i]->tag();
-                if(select_contour(type, num, List1)) {
+                if(selectContour(type, num, List1)) {
                   if(type == ENT_LINE)
                     add_lineloop(List1, GModel::current()->getFileName(), &num);
                   else
@@ -1066,7 +1066,7 @@ static void add_new_surface_volume(int mode)
             drawContext::global()->draw();
             break;
           }
-        } // if select_contour
+        } // if selectContour
       }
     }
   }

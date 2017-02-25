@@ -59,6 +59,9 @@
 #include "gmshPopplerWrapper.h"
 #endif
 
+#define MAX_RECUR_TESTS 100
+#define MAX_RECUR_LOOPS 100
+
 // Global parser variables
 std::string gmsh_yyname;
 int gmsh_yyerrorstate = 0;
@@ -68,16 +71,14 @@ std::map<std::string, std::vector<std::string> > gmsh_yystringsymbols;
 
 // Static parser variables (accessible only in this file)
 #if defined(HAVE_POST)
-static PViewDataList *ViewData;
+static PViewDataList *ViewData = 0;
 #endif
 static std::vector<double> ViewCoord;
 static std::vector<double> *ViewValueList = 0;
 static int *ViewNumList = 0;
 static ExtrudeParams extr;
 static gmshSurface *myGmshSurface = 0;
-#define MAX_RECUR_TESTS 100
 static int statusImbricatedTests[MAX_RECUR_TESTS];
-#define MAX_RECUR_LOOPS 100
 static int ImbricatedLoop = 0, ImbricatedTest = 0;
 static gmshfpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
@@ -92,29 +93,31 @@ static int flag_tSTRING_alloc = 0;
 
 void yyerror(const char *s);
 void yymsg(int level, const char *fmt, ...);
-void skip_until(const char *skip, const char *until);
-void skip_until_test(const char *skip, const char *until,
-                     const char *until2, int l_until2_sub, int *type_until2);
+char *strsave(char *ptr);
+void skip(const char *skip, const char *until);
+void skipTest(const char *skip, const char *until,
+              const char *until2, int l_until2_sub, int *type_until2);
 void assignVariable(const std::string &name, int index, int assignType,
                     double value);
 void assignVariables(const std::string &name, List_T *indices, int assignType,
                      List_T *values);
 void incrementVariable(const std::string &name, int index, double value);
-int PrintListOfDouble(char *format, List_T *list, char *buffer);
-void PrintParserSymbols(std::vector<std::string> &vec);
+int printListOfDouble(char *format, List_T *list, char *buffer);
 fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 void ListOfDouble2Vector(List_T *list, std::vector<int> &v);
 void ListOfDouble2Vector(List_T *list, std::vector<double> &v);
 void ListOfShapes2Vectors(List_T *list, std::vector<int> v[4]);
 void Vectors2ListOfShapes(std::vector<int> tags[4], List_T *list);
-
 void addPeriodicEdge(int, int, const std::vector<double>&);
 void addPeriodicFace(int, int, const std::map<int,int>&);
 void addPeriodicFace(int, int, const std::vector<double>&);
 void computeAffineTransformation(SPoint3&, SPoint3&, double, SPoint3&, std::vector<double>&);
 void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2);
-
-char *strsave(char *ptr);
+void getAllElementaryTags(int dim, List_T *in);
+void getAllPhysicalTags(int dim, List_T *in);
+void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out);
+void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
+                                    double x2, double y2, double z2, List_T *out);
 
 struct doubleXstring{
   double d;
@@ -306,7 +309,7 @@ Printf :
   | tPrintf '(' StringExprVar ',' RecursiveListOfDouble ')' tEND
     {
       char tmpstring[5000];
-      int i = PrintListOfDouble($3, $5, tmpstring);
+      int i = printListOfDouble($3, $5, tmpstring);
       if(i < 0)
 	yymsg(0, "Too few arguments in Printf");
       else if(i > 0)
@@ -319,7 +322,7 @@ Printf :
   | tError '(' StringExprVar ',' RecursiveListOfDouble ')' tEND
     {
       char tmpstring[5000];
-      int i = PrintListOfDouble($3, $5, tmpstring);
+      int i = printListOfDouble($3, $5, tmpstring);
       if(i < 0)
 	yymsg(0, "Too few arguments in Error");
       else if(i > 0)
@@ -332,7 +335,7 @@ Printf :
   | tPrintf '(' StringExprVar ',' RecursiveListOfDouble ')' SendToFile StringExprVar tEND
     {
       char tmpstring[5000];
-      int i = PrintListOfDouble($3, $5, tmpstring);
+      int i = printListOfDouble($3, $5, tmpstring);
       if(i < 0)
 	yymsg(0, "Too few arguments in Printf");
       else if(i > 0)
@@ -3492,7 +3495,7 @@ Loop :
       gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if($3 > $5)
-	skip_until("For", "EndFor");
+	skip("For", "EndFor");
       else
 	ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS - 1){
@@ -3509,7 +3512,7 @@ Loop :
       gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if(($7 > 0. && $3 > $5) || ($7 < 0. && $3 < $5))
-	skip_until("For", "EndFor");
+	skip("For", "EndFor");
       else
 	ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS - 1){
@@ -3530,7 +3533,7 @@ Loop :
       gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if($5 > $7)
-	skip_until("For", "EndFor");
+	skip("For", "EndFor");
       else
 	ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS - 1){
@@ -3552,7 +3555,7 @@ Loop :
       gmshgetpos(gmsh_yyin, &yyposImbricatedLoopsTab[ImbricatedLoop]);
       yylinenoImbricatedLoopsTab[ImbricatedLoop] = gmsh_yylineno;
       if(($9 > 0. && $5 > $7) || ($9 < 0. && $5 < $7))
-	skip_until("For", "EndFor");
+	skip("For", "EndFor");
       else
 	ImbricatedLoop++;
       if(ImbricatedLoop > MAX_RECUR_LOOPS - 1){
@@ -3601,7 +3604,7 @@ Loop :
       if(!FunctionManager::Instance()->createFunction
          (std::string($2), gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Redefinition of function %s", $2);
-      skip_until(NULL, "Return");
+      skip(NULL, "Return");
       Free($2);
     }
   | tMacro StringExpr
@@ -3609,7 +3612,7 @@ Loop :
       if(!FunctionManager::Instance()->createFunction
          (std::string($2), gmsh_yyin, gmsh_yyname, gmsh_yylineno))
 	yymsg(0, "Redefinition of function %s", $2);
-      skip_until(NULL, "Return");
+      skip(NULL, "Return");
       Free($2);
     }
   | tReturn
@@ -3648,7 +3651,7 @@ Loop :
         statusImbricatedTests[ImbricatedTest] = 0;
         // Go after the next ElseIf or Else or EndIf
         int type_until2 = 0;
-        skip_until_test("If", "EndIf", "ElseIf", 4, &type_until2);
+        skipTest("If", "EndIf", "ElseIf", 4, &type_until2);
         if(!type_until2) ImbricatedTest--; // EndIf reached
       }
     }
@@ -3657,7 +3660,7 @@ Loop :
       if(ImbricatedTest > 0){
         if (statusImbricatedTests[ImbricatedTest]){
           // Last test (If or ElseIf) was true, thus go after EndIf (out of If EndIf)
-          skip_until("If", "EndIf");
+          skip("If", "EndIf");
           ImbricatedTest--;
         }
         else{
@@ -3669,7 +3672,7 @@ Loop :
             // Current test still not true: statusImbricatedTests[ImbricatedTest] = 0;
             // Go after the next ElseIf or Else or EndIf
             int type_until2 = 0;
-            skip_until_test("If", "EndIf", "ElseIf", 4, &type_until2);
+            skipTest("If", "EndIf", "ElseIf", 4, &type_until2);
             if(!type_until2) ImbricatedTest--;
           }
         }
@@ -3682,7 +3685,7 @@ Loop :
     {
       if(ImbricatedTest > 0){
         if(statusImbricatedTests[ImbricatedTest]){
-          skip_until("If", "EndIf");
+          skip("If", "EndIf");
           ImbricatedTest--;
         }
       }
@@ -5418,223 +5421,95 @@ FExpr_Multi :
     }
   | tPoint tBIGSTR
     {
-      $$ = GetAllElementaryEntityNumbers(0);
+      $$ = List_Create(10, 10, sizeof(double));
+      getAllElementaryTags(0, $$);
+      Free($2);
     }
   | tLine tBIGSTR
     {
-      $$ = GetAllElementaryEntityNumbers(1);
+      $$ = List_Create(10, 10, sizeof(double));
+      getAllElementaryTags(1, $$);
+      Free($2);
     }
   | tSurface tBIGSTR
     {
-      $$ = GetAllElementaryEntityNumbers(2);
+      $$ = List_Create(10, 10, sizeof(double));
+      getAllElementaryTags(2, $$);
+      Free($2);
     }
   | tVolume tBIGSTR
     {
-      $$ = GetAllElementaryEntityNumbers(3);
+      $$ = List_Create(10, 10, sizeof(double));
+      getAllElementaryTags(3, $$);
+      Free($2);
     }
   | tPhysical tPoint ListOfDoubleOrAll
     {
+      $$ = List_Create(10, 10, sizeof(double));
       if(!$3){
-        $$ = GetAllPhysicalEntityNumbers(0);
+        getAllPhysicalTags(0, $$);
       }
       else{
-        $$ = List_Create(10, 1, sizeof(double));
-        for(int i = 0; i < List_Nbr($3); i++){
-          double num;
-          List_Read($3, i, &num);
-          PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_POINT);
-          if(p){
-            for(int j = 0; j < List_Nbr(p->Entities); j++){
-              int nume;
-              List_Read(p->Entities, j, &nume);
-              double d = nume;
-              List_Add($$, &d);
-            }
-          }
-          else{
-            std::map<int, std::vector<GEntity*> > groups;
-            GModel::current()->getPhysicalGroups(0, groups);
-            std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
-            if(it != groups.end()){
-              for(unsigned j = 0; j < it->second.size(); j++){
-                double d = it->second[j]->tag();
-                List_Add($$, &d);
-              }
-            }
-          }
-        }
+        getElementaryTagsForPhysicalGroups(0, $3, $$);
         List_Delete($3);
       }
     }
   | tPhysical tLine ListOfDoubleOrAll
     {
+      $$ = List_Create(10, 10, sizeof(double));
       if(!$3){
-        $$ = GetAllPhysicalEntityNumbers(1);
+        getAllPhysicalTags(1, $$);
       }
       else{
-        $$ = List_Create(10, 1, sizeof(double));
-        for(int i = 0; i < List_Nbr($3); i++){
-          double num;
-          List_Read($3, i, &num);
-          PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_LINE);
-          if(p){
-            for(int j = 0; j < List_Nbr(p->Entities); j++){
-              int nume;
-              List_Read(p->Entities, j, &nume);
-              double d = nume;
-              List_Add($$, &d);
-            }
-          }
-          else{
-            std::map<int, std::vector<GEntity*> > groups;
-            GModel::current()->getPhysicalGroups(1, groups);
-            std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
-            if(it != groups.end()){
-              for(unsigned j = 0; j < it->second.size(); j++){
-                double d = it->second[j]->tag();
-                List_Add($$, &d);
-              }
-            }
-          }
-        }
+        getElementaryTagsForPhysicalGroups(1, $3, $$);
         List_Delete($3);
       }
     }
   | tPhysical tSurface ListOfDoubleOrAll
     {
+      $$ = List_Create(10, 10, sizeof(double));
       if(!$3){
-        $$ = GetAllPhysicalEntityNumbers(2);
+        getAllPhysicalTags(2, $$);
       }
       else{
-        $$ = List_Create(10, 1, sizeof(double));
-        for(int i = 0; i < List_Nbr($3); i++){
-          double num;
-          List_Read($3, i, &num);
-          PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_SURFACE);
-          if(p){
-            for(int j = 0; j < List_Nbr(p->Entities); j++){
-              int nume;
-              List_Read(p->Entities, j, &nume);
-              double d = nume;
-              List_Add($$, &d);
-            }
-          }
-          else{
-            std::map<int, std::vector<GEntity*> > groups;
-            GModel::current()->getPhysicalGroups(2, groups);
-            std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
-            if(it != groups.end()){
-              for(unsigned j = 0; j < it->second.size(); j++){
-                double d = it->second[j]->tag();
-                List_Add($$, &d);
-              }
-            }
-          }
-        }
+        getElementaryTagsForPhysicalGroups(2, $3, $$);
         List_Delete($3);
       }
     }
   | tPhysical tVolume ListOfDoubleOrAll
     {
+      $$ = List_Create(10, 10, sizeof(double));
       if(!$3){
-        $$ = GetAllPhysicalEntityNumbers(3);
+        getAllPhysicalTags(3, $$);
       }
       else{
-        $$ = List_Create(10, 1, sizeof(double));
-        for(int i = 0; i < List_Nbr($3); i++){
-          double num;
-          List_Read($3, i, &num);
-          PhysicalGroup *p = FindPhysicalGroup((int)num, MSH_PHYSICAL_VOLUME);
-          if(p){
-            for(int j = 0; j < List_Nbr(p->Entities); j++){
-              int nume;
-              List_Read(p->Entities, j, &nume);
-              double d = nume;
-              List_Add($$, &d);
-            }
-          }
-          else{
-            std::map<int, std::vector<GEntity*> > groups;
-            GModel::current()->getPhysicalGroups(3, groups);
-            std::map<int, std::vector<GEntity*> >::iterator it = groups.find((int)num);
-            if(it != groups.end()){
-              for(unsigned j = 0; j < it->second.size(); j++){
-                double d = it->second[j]->tag();
-                List_Add($$, &d);
-              }
-            }
-          }
-        }
+        getElementaryTagsForPhysicalGroups(3, $3, $$);
         List_Delete($3);
       }
     }
   | tPoint tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
-      $$ = List_Create(10, 1, sizeof(double));
-      SBoundingBox3d box($5, $7, $9, $11, $13, $15);
-      std::vector<GEntity*> entities;
-      GModel::current()->getEntitiesInBox(entities, box, 0);
-      for(unsigned int i = 0; i < entities.size(); i++){
-        double d = entities[i]->tag();
-	List_Add($$, &d);
-      }
+      $$ = List_Create(10, 10, sizeof(double));
+      getElementaryTagsInBoundingBox(0, $5, $7, $9, $11, $13, $15, $$);
     }
   | tLine tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
-      $$ = List_Create(10, 1, sizeof(double));
-      SBoundingBox3d box($5, $7, $9, $11, $13, $15);
-      std::vector<GEntity*> entities;
-      GModel::current()->getEntitiesInBox(entities, box, 1);
-      for(unsigned int i = 0; i < entities.size(); i++){
-        double d = entities[i]->tag();
-	List_Add($$, &d);
-      }
+      $$ = List_Create(10, 10, sizeof(double));
+      getElementaryTagsInBoundingBox(1, $5, $7, $9, $11, $13, $15, $$);
     }
   | tSurface tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
-      $$ = List_Create(10, 1, sizeof(double));
-      SBoundingBox3d box($5, $7, $9, $11, $13, $15);
-      std::vector<GEntity*> entities;
-      GModel::current()->getEntitiesInBox(entities, box, 2);
-      for(unsigned int i = 0; i < entities.size(); i++){
-        double d = entities[i]->tag();
-	List_Add($$, &d);
-      }
+      $$ = List_Create(10, 10, sizeof(double));
+      getElementaryTagsInBoundingBox(2, $5, $7, $9, $11, $13, $15, $$);
     }
   | tVolume tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
-      if(GModel::current()->getGEOInternals()->getChanged())
-        GModel::current()->getGEOInternals()->synchronize(GModel::current());
-      $$ = List_Create(10, 1, sizeof(double));
-      SBoundingBox3d box($5, $7, $9, $11, $13, $15);
-      std::vector<GEntity*> entities;
-      GModel::current()->getEntitiesInBox(entities, box, 3);
-      for(unsigned int i = 0; i < entities.size(); i++){
-        double d = entities[i]->tag();
-	List_Add($$, &d);
-      }
+      $$ = List_Create(10, 10, sizeof(double));
+      getElementaryTagsInBoundingBox(3, $5, $7, $9, $11, $13, $15, $$);
     }
   | Transform
     {
@@ -6249,7 +6124,7 @@ StringExpr :
   | tSprintf LP StringExprVar ',' RecursiveListOfDouble RP
     {
       char tmpstring[5000];
-      int i = PrintListOfDouble($3, $5, tmpstring);
+      int i = printListOfDouble($3, $5, tmpstring);
       if(i < 0){
 	yymsg(0, "Too few arguments in Sprintf");
 	$$ = $3;
@@ -6465,7 +6340,7 @@ void incrementVariable(const std::string &name, int index, double value)
   }
 }
 
-int PrintListOfDouble(char *format, List_T *list, char *buffer)
+int printListOfDouble(char *format, List_T *list, char *buffer)
 {
   // if format does not contain formatting characters, dump the list (useful for
   // quick debugging of lists)
@@ -6826,6 +6701,74 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
           yymsg(0, "Unknown model face with tag %d", tags[i]);
       }
     }
+  }
+}
+
+void getAllElementaryTags(int dim, List_T *out)
+{
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  std::vector<GEntity*> entities;
+  GModel::current()->getEntities(entities, dim);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    double tag = entities[i]->tag();
+    List_Add(out, &tag);
+  }
+}
+
+void getAllPhysicalTags(int dim, List_T *out)
+{
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  std::map<int, std::vector<GEntity*> > groups;
+  GModel::current()->getPhysicalGroups(dim, groups);
+  for(std::map<int, std::vector<GEntity*> >::iterator it = groups.begin();
+      it != groups.end(); it++){
+    double d = it->first;
+    List_Add(out, &d);
+  }
+}
+
+void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out)
+{
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  std::map<int, std::vector<GEntity*> > groups;
+  GModel::current()->getPhysicalGroups(dim, groups);
+  for(int i = 0; i < List_Nbr(in); i++){
+    double num;
+    List_Read(in, i, &num);
+    std::map<int, std::vector<GEntity*> >::iterator it = groups.find(num);
+    if(it != groups.end()){
+      for(unsigned j = 0; j < it->second.size(); j++){
+        double d = it->second[j]->tag();
+        List_Add(out, &d);
+      }
+    }
+  }
+}
+
+void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
+                                    double x2, double y2, double z2, List_T *out)
+{
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  SBoundingBox3d box(x1, y1, z1, x2, y2, z2);
+  std::vector<GEntity*> entities;
+  GModel::current()->getEntitiesInBox(entities, box, dim);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    double d = entities[i]->tag();
+    List_Add(out, &d);
   }
 }
 

@@ -405,7 +405,7 @@ static bool is_alpha(const int c)
   return (c>='a' && c<='z') || (c>='A' && c<='Z') || c=='_';
 }
 
-void skip_until(const char *skip, const char *until)
+void skip(const char *skip, const char *until)
 {
   int i, nb_skip = 0;
   int l_skip, l_until, l_max, l;
@@ -417,7 +417,7 @@ void skip_until(const char *skip, const char *until)
 
   l_max = std::max(l_skip,l_until);
   if(l_max >= (int)sizeof(chars)){
-    Msg::Error("Search pattern too long in skip_until");
+    Msg::Error("Search pattern too long in skip");
     return;
   }
 
@@ -482,8 +482,8 @@ void skip_until(const char *skip, const char *until)
   }
 }
 
-void skip_until_test(const char *skip, const char *until,
-                     const char *until2, int l_until2_sub, int *type_until2)
+void skipTest(const char *skip, const char *until,
+              const char *until2, int l_until2_sub, int *type_until2)
 {
   int i, nb_skip = 0;
   int l_skip, l_until, l_until2, l_max, l;
@@ -497,7 +497,7 @@ void skip_until_test(const char *skip, const char *until,
   l_max = std::max(l_skip,l_until);
   l_max = std::max(l_max,l_until2);
   if(l_max >= (int)sizeof(chars)){
-    Msg::Error("Search pattern too long in skip_until_test");
+    Msg::Error("Search pattern too long in skipTest");
     return;
   }
 

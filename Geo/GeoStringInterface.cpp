@@ -345,7 +345,7 @@ void add_ell(int p1, int p2, int p3, int p4, const std::string &fileName)
 
 void add_lineloop(List_T *list, const std::string &fileName, int *numloop)
 {
-  if(recognize_loop(list, numloop)) return;
+  if(RecognizeLineLoop(list, numloop)) return;
   *numloop = NEWLINELOOP();
   std::ostringstream sstream;
   sstream << "Line Loop(" << *numloop << ") = {" << list2string(list) << "};";
@@ -361,7 +361,7 @@ void add_surf(const std::string &type, List_T *list, const std::string &fileName
 
 void add_surfloop(List_T *list, const std::string &fileName, int *numloop)
 {
-  if(recognize_surfloop(list, numloop)) return;
+  if(RecognizeSurfaceLoop(list, numloop)) return;
   *numloop = NEWSURFACELOOP();
   std::ostringstream sstream;
   sstream << "Surface Loop(" << *numloop << ") = {" << list2string(list) << "};";
