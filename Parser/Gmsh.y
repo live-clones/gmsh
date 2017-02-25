@@ -234,11 +234,19 @@ GeoFormatItem :
   | Affectation { return 1; }
   | tSetFactory '(' StringExprVar ')' tEND
     {
-      // FIXME: when changing to OpenCASCADE, get maxTags from GEO_Internals and
-      // add that info in OCC_Internals - same in the other direction
       factory = $3;
-      if(factory == "OpenCASCADE" && !GModel::current()->getOCCInternals())
-        GModel::current()->createOCCInternals();
+      if(factory == "OpenCASCADE"){
+        if(!GModel::current()->getOCCInternals())
+          GModel::current()->createOCCInternals();
+        for(int dim = -2; dim <= 3; dim++)
+          GModel::current()->getOCCInternals()->setMaxTag
+            (dim, GModel::current()->getGEOInternals()->getMaxTag(dim));
+      }
+      else if(GModel::current()->getOCCInternals()){
+        for(int dim = -2; dim <= 3; dim++)
+          GModel::current()->getGEOInternals()->setMaxTag
+            (dim, GModel::current()->getOCCInternals()->getMaxTag(dim));
+      }
       Free($3);
     }
   | Shape       { return 1; }
@@ -6871,7 +6879,7 @@ int NEWVOLUME()
   if(CTX::instance()->geom.oldNewreg)
     tag = NEWREG();
   else
-    tag = GModel::current()->getGEOInternals()->MaxVolumeNum + 1;
+    tag = GModel::current()->getGEOInternals()->getMaxTag(3) + 1;
   if(GModel::current()->getOCCInternals())
     tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(3) + 1);
   return tag;
@@ -6880,16 +6888,16 @@ int NEWVOLUME()
 int NEWREG()
 {
   int tag = 0;
-  tag = GModel::current()->getGEOInternals()->MaxLineNum;
-  tag = std::max(tag, GModel::current()->getGEOInternals()->MaxLineLoopNum);
-  tag = std::max(tag, GModel::current()->getGEOInternals()->MaxSurfaceNum);
-  tag = std::max(tag, GModel::current()->getGEOInternals()->MaxSurfaceLoopNum);
-  tag = std::max(tag, GModel::current()->getGEOInternals()->MaxVolumeNum);
-  tag = std::max(tag, GModel::current()->getGEOInternals()->MaxPhysicalNum);
-  tag += 1;
+  for(int dim = -2; dim <= 3; dim++){
+    if(dim)
+      tag = std::max(tag, GModel::current()->getGEOInternals()->getMaxTag(dim) + 1);
+  }
+  tag = std::max(tag, GModel::current()->getGEOInternals()->MaxPhysicalNum + 1);
   if(GModel::current()->getOCCInternals()){
-    for(int i = -2; i < 4; i++)
-      tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(i) + 1);
+    for(int dim = -2; dim <= 3; dim++){
+      if(dim)
+        tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(dim) + 1);
+    }
   }
   return tag;
 }

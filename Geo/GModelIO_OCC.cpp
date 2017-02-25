@@ -275,7 +275,7 @@ TopoDS_Shape OCC_Internals::find(int dim, int tag)
   }
 }
 
-void OCC_Internals::setTagConstraints(int dim, int val)
+void OCC_Internals::setMaxTag(int dim, int val)
 {
   if(dim < -2 || dim > 3) return;
   _maxTagConstraints[dim + 2] = val;
@@ -1823,6 +1823,8 @@ void OCC_Internals::setMeshSize(int dim, int tag, double size)
 
 void OCC_Internals::synchronize(GModel *model)
 {
+  Msg::Debug("Syncing OCC_Internals with GModel");
+
   int vTagMax = std::max(model->getMaxElementaryNumber(0), getMaxTag(0));
   int eTagMax = std::max(model->getMaxElementaryNumber(1), getMaxTag(1));
   int fTagMax = std::max(model->getMaxElementaryNumber(2), getMaxTag(2));
@@ -1914,6 +1916,12 @@ void OCC_Internals::synchronize(GModel *model)
       model->add(new OCCRegion(model, region, tag));
     }
   }
+
+  Msg::Debug("GModel imported:");
+  Msg::Debug("%d vertices", model->getNumVertices());
+  Msg::Debug("%d edges", model->getNumEdges());
+  Msg::Debug("%d faces", model->getNumFaces());
+  Msg::Debug("%d regions", model->getNumRegions());
 
   _changed = false;
 }

@@ -58,6 +58,18 @@ void GEO_Internals::_freeAll()
   _changed = true;
 }
 
+void GEO_Internals::setMaxTag(int dim, int val)
+{
+  switch(dim){
+  case 0: MaxPointNum = val; break;
+  case 1: MaxLineNum = val; break;
+  case -1: MaxLineLoopNum = val; break;
+  case 2: MaxSurfaceNum = val; break;
+  case -2: MaxSurfaceLoopNum = val; break;
+  case 3: MaxVolumeNum = val; break;
+  }
+}
+
 int GEO_Internals::getMaxTag(int dim) const
 {
   switch(dim){
@@ -753,6 +765,7 @@ void GEO_Internals::synchronize(GModel *model)
     }
     List_Delete(points);
   }
+
   if(Tree_Nbr(Curves)) {
     List_T *curves = Tree2List(Curves);
     // generate all curves except compounds
@@ -816,6 +829,7 @@ void GEO_Internals::synchronize(GModel *model)
     }
     List_Delete(curves);
   }
+
   if(Tree_Nbr(Surfaces)) {
     List_T *surfaces = Tree2List(Surfaces);
     for(int i = 0; i < List_Nbr(surfaces); i++){
@@ -851,10 +865,6 @@ void GEO_Internals::synchronize(GModel *model)
         f->meshAttributes.recombineAngle = s->RecombineAngle;
         f->meshAttributes.method = s->Method;
         f->meshAttributes.extrude = s->Extrude;
-        // transfinite import Added by Trevor Strickler.  This helps when
-        // experimenting to create compounds from transfinite surfs. Not having
-        // it does not break anything Gmsh *officially* does right now, but
-        // maybe it was left out by mistake? and could cause problems later?
         f->meshAttributes.transfiniteArrangement = s->Recombine_Dir;
         f->meshAttributes.corners.clear();
         for(int i = 0; i < List_Nbr(s->TrsfPoints); i++){
@@ -882,6 +892,7 @@ void GEO_Internals::synchronize(GModel *model)
     }
     List_Delete(surfaces);
   }
+
   if(Tree_Nbr(Volumes)) {
     List_T *volumes = Tree2List(Volumes);
     for(int i = 0; i < List_Nbr(volumes); i++){
@@ -957,11 +968,11 @@ void GEO_Internals::synchronize(GModel *model)
     }
   }
 
-  Msg::Debug("Gmsh model (GModel) imported:");
-  Msg::Debug("%d Vertices", model->getNumVertices());
-  Msg::Debug("%d Edges", model->getNumEdges());
-  Msg::Debug("%d Faces", model->getNumFaces());
-  Msg::Debug("%d Regions", model->getNumRegions());
+  Msg::Debug("GModel imported:");
+  Msg::Debug("%d vertices", model->getNumVertices());
+  Msg::Debug("%d edges", model->getNumEdges());
+  Msg::Debug("%d faces", model->getNumFaces());
+  Msg::Debug("%d regions", model->getNumRegions());
 
   _changed = false;
 }

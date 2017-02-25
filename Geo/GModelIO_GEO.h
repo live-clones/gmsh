@@ -22,10 +22,12 @@ class GEO_Internals{
   ~GEO_Internals(){ _freeAll(); }
   void destroy(){ _freeAll(); _allocateAll(); }
 
-  // have the internals changed since the last synchronisation
+  // have the internals changed since the last synchronisation?
   bool getChanged() const { return _changed; }
 
-  // get maximum tag number for each dimension
+  // set/get max tag of entity for each dimension (0, 1, 2, 3), as well as
+  // -2 for shells and -1 for wires
+  void setMaxTag(int dim, int val);
   int getMaxTag(int dim) const;
 
   // add shapes

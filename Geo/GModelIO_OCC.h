@@ -86,6 +86,7 @@ class OCC_Internals {
  public:
   OCC_Internals();
 
+  // have the internals changed since the last synchronisation?
   bool getChanged() const { return _changed; }
 
   // reset all maps
@@ -120,10 +121,9 @@ class OCC_Internals {
   // get the entity of a given dimension and tag
   TopoDS_Shape find(int dim, int tag);
 
-  // set constraints on tags
-  void setTagConstraints(int dim, int val);
-
-  // get maximum tag number for each dimension
+  // set/get max tag of entity for each dimension (0, 1, 2, 3), as well as
+  // -2 for shells and -1 for wires
+  void setMaxTag(int dim, int val);
   int getMaxTag(int dim) const;
 
   // add shapes
