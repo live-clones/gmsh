@@ -1985,7 +1985,7 @@ Shape :
     }
   | tRuled tSurface '(' FExpr ')' tAFFECT ListOfDouble InSphereCenter tEND
     {
-      yymsg(1, "'Ruled Surface' command is deprecated: use 'Surface' instead");
+      yymsg(2, "'Ruled Surface' command is deprecated: use 'Surface' instead");
       int num = (int)$4;
       std::vector<int> wires; ListOfDouble2Vector($7, wires);
       GModel::current()->getGEOInternals()->addSurfaceFilling(num, wires, $8);
@@ -2370,54 +2370,61 @@ Shape :
 Transform :
     tTranslate VExpr '{' MultipleShape '}'
     {
+      std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
         GModel::current()->getOCCInternals()->translate(tags, $2[0], $2[1], $2[2]);
       }
       else{
-        TranslateShapes($2[0], $2[1], $2[2], $4);
+        GModel::current()->getGEOInternals()->translate(tags, $2[0], $2[1], $2[2]);
       }
       $$ = $4;
     }
   | tRotate '{' VExpr ',' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
+      std::vector<int> tags[4]; ListOfShapes2Vectors($10, tags);
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> tags[4]; ListOfShapes2Vectors($10, tags);
-        GModel::current()->getOCCInternals()->rotate(tags, $5[0], $5[1], $5[2],
-                                                     $3[0], $3[1], $3[2], $7);
+        GModel::current()->getOCCInternals()->rotate
+          (tags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7);
       }
       else{
-        RotateShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7, $10);
+        GModel::current()->getGEOInternals()->rotate
+          (tags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7);
       }
       $$ = $10;
     }
   | tSymmetry  VExpr '{' MultipleShape '}'
     {
+      std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
       if(factory == "OpenCASCADE"){
         Msg::Error("Symmetry not implemented yet with OpenCASCADE factory");
       }
       else{
-        SymmetryShapes($2[0], $2[1], $2[2], $2[3], $4);
+        GModel::current()->getGEOInternals()->symmetry
+          (tags, $2[0], $2[1], $2[2], $2[3]);
       }
       $$ = $4;
     }
   | tDilate '{' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
+      std::vector<int> tags[4]; ListOfShapes2Vectors($8, tags);
       if(factory == "OpenCASCADE"){
         yymsg(0, "Dilate not implemented yet with OpenCASCADE factory");
       }
       else{
-        DilatShapes($3[0], $3[1], $3[2], $5, $5, $5, $8);
+        GModel::current()->getGEOInternals()->dilate
+          (tags, $3[0], $3[1], $3[2], $5, $5, $5);
       }
       $$ = $8;
     }
   | tDilate '{' VExpr ',' VExpr '}' '{' MultipleShape '}'
     {
+      std::vector<int> tags[4]; ListOfShapes2Vectors($8, tags);
       if(factory == "OpenCASCADE"){
         yymsg(0, "Dilate not implemented yet with OpenCASCADE factory");
       }
       else{
-        DilatShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $8);
+        GModel::current()->getGEOInternals()->dilate
+          (tags, $3[0], $3[1], $3[2], $5[0], $5[1], $5[2]);
       }
       $$ = $8;
     }
@@ -6649,8 +6656,11 @@ void yymsg(int level, const char *fmt, ...)
     Msg::Error("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
     gmsh_yyerrorstate++;
   }
-  else{
+  else if(level == 1){
     Msg::Warning("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
+  }
+  else{
+    Msg::Info("'%s', line %d : %s", gmsh_yyname.c_str(), gmsh_yylineno - 1, tmp);
   }
 }
 

@@ -113,8 +113,8 @@ Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u
   Vertex *pV = new Vertex(X, Y, Z, lc);
   pV->w = 1.0;
   pV->Num = Num;
-  GModel::current()->getGEOInternals()->MaxPointNum =
-    std::max(GModel::current()->getGEOInternals()->MaxPointNum, Num);
+  GModel::current()->getGEOInternals()->setMaxTag
+    (0, std::max(GModel::current()->getGEOInternals()->getMaxTag(0), Num));
   pV->u = u;
   pV->geometry = 0;
   return pV;
@@ -126,8 +126,8 @@ Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *surf, double lc)
   Vertex *pV = new Vertex(p.x(), p.y(), p.z(), lc);
   pV->w = 1.0;
   pV->Num = Num;
-  GModel::current()->getGEOInternals()->MaxPointNum =
-    std::max(GModel::current()->getGEOInternals()->MaxPointNum, Num);
+  GModel::current()->getGEOInternals()->setMaxTag
+    (0, std::max(GModel::current()->getGEOInternals()->getMaxTag(0), Num));
   pV->u = u;
   pV->geometry = surf;
   pV->pntOnGeometry = SPoint2(u, v);

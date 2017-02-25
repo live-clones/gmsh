@@ -13,10 +13,23 @@ class gmshSurface;
 class GModel;
 
 class GEO_Internals{
+ public:
+  // FIXME: all of this will become private once the refactoring of the old code
+  // is complete
+  Tree_T *Points, *Curves, *EdgeLoops, *Surfaces, *SurfaceLoops, *Volumes;
+  Tree_T *LevelSets;
+  List_T *PhysicalGroups;
+  int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
+  int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
+  std::multimap<int, std::vector<int> > meshCompounds;
  private:
   void _allocateAll();
   void _freeAll();
   bool _changed;
+  void _transform(std::vector<int> tags[4], int mode,
+                  double x, double y, double z,
+                  double dx, double dy, double dz,
+                  double a, double b, double c, double d);
  public:
   GEO_Internals(){ _allocateAll(); }
   ~GEO_Internals(){ _freeAll(); }
@@ -54,15 +67,13 @@ class GEO_Internals{
   void addVolume(int num, std::vector<int> shellTags);
   void addCompoundVolume(int num, std::vector<int> regionTags);
 
-  // get boundary of shapes of dimension dim (this will bind the boundary parts
-  // to new tags, returned in outTags)
-  void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
-                   bool combined=false);
-
   // apply transformations
-  void translate(std::vector<int> inTags[4], double dx, double dy, double dz);
-  void rotate(std::vector<int> inTags[4], double x, double y, double z,
+  void translate(std::vector<int> tags[4], double dx, double dy, double dz);
+  void rotate(std::vector<int> tags[4], double x, double y, double z,
               double dx, double dy, double dz, double angle);
+  void dilate(std::vector<int> tags[4], double x, double y, double z,
+              double a, double b, double c);
+  void symmetry(std::vector<int> tags[4], double a, double b, double c, double d);
 
   // copy and remove
   int copy(int dim, int tag);
@@ -97,16 +108,6 @@ class GEO_Internals{
   // create coordinate systems
   gmshSurface *newGeometrySphere(int num, int centerTag, int pointTag);
   gmshSurface *newGeometryPolarSphere(int num, int centerTag, int pointTag);
-
- public:
-  // FIXME: all of this will become private once the refactoring of the old code
-  // is complete
-  Tree_T *Points, *Curves, *EdgeLoops, *Surfaces, *SurfaceLoops, *Volumes;
-  Tree_T *LevelSets;
-  List_T *PhysicalGroups;
-  int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
-  int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
-  std::multimap<int, std::vector<int> > meshCompounds;
 };
 
 #endif

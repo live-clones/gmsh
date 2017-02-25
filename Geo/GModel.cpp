@@ -3109,8 +3109,7 @@ GEdge* GModel::addCompoundEdge(std::vector<GEdge*> edges, int num)
   GEdgeCompound *gec = new GEdgeCompound(this, num, edges);
   add(gec);
 
-  //create old geo format for the compound edge
-  //necessary for boundary layers
+  //create old geo format for the compound edge; necessary for boundary layers
   if(FindCurve(num)){
     Msg::Error("Curve %d already exists", num);
   }

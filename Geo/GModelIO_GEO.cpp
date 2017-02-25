@@ -430,17 +430,56 @@ void GEO_Internals::addCompoundVolume(int num, std::vector<int> regionTags)
   _changed = true;
 }
 
-void GEO_Internals::translate(std::vector<int> inTags[4],
-                              double dx, double dy, double dz)
+void GEO_Internals::_transform(std::vector<int> tags[4], int mode,
+                               double x, double y, double z,
+                               double dx, double dy, double dz,
+                               double a, double b, double c, double d)
 {
-
+  List_T *list = List_Create(10, 10, sizeof(Shape));
+  for(int dim = 0; dim < 4; dim++){
+    Shape s;
+    s.Type =
+      (dim == 3) ? MSH_VOLUME :
+      (dim == 2) ? MSH_SURF_PLAN :
+      (dim == 1) ? MSH_SEGM_LINE :
+      MSH_POINT;
+    for(unsigned int i = 0; i < tags[dim].size(); i++){
+      s.Num = tags[dim][i];
+      List_Add(list, &s);
+    }
+  }
+  switch(mode){
+  case 0: TranslateShapes(dx, dy, dz, list); break;
+  case 1: RotateShapes(dx, dy, dz, x, y, z, a, list); break;
+  case 2: DilatShapes(x, y, z, a, b, c, list); break;
+  case 3: SymmetryShapes(a, b, c, d, list); break;
+  }
 }
 
-void GEO_Internals::rotate(std::vector<int> inTags[4],
+void GEO_Internals::translate(std::vector<int> tags[4],
+                              double dx, double dy, double dz)
+{
+  _transform(tags, 0, 0, 0, 0, dx, dy, dz, 0, 0, 0, 0);
+}
+
+void GEO_Internals::rotate(std::vector<int> tags[4],
                            double x, double y, double z,
                            double dx, double dy, double dz, double angle)
 {
+  _transform(tags, 1, x, y, z, dx, dy, dz, angle, 0, 0, 0);
+}
 
+void GEO_Internals::dilate(std::vector<int> tags[4],
+                           double x, double y, double z,
+                           double a, double b, double c)
+{
+  _transform(tags, 2, x, y, z, 0, 0, 0, a, b, c, 0);
+}
+
+void GEO_Internals::symmetry(std::vector<int> tags[4],
+                             double a, double b, double c, double d)
+{
+  _transform(tags, 3, 0, 0, 0, 0, 0, 0, a, b, c, d);
 }
 
 int GEO_Internals::copy(int dim, int tag)
@@ -1281,7 +1320,7 @@ int GModel::exportDiscreteGEOInternals()
   int maxv = 1; // FIXME: temorary - see TODO below
 
   if(_geo_internals){
-    maxv = _geo_internals->MaxVolumeNum;
+    maxv = _geo_internals->getMaxTag(3);
     delete _geo_internals;
   }
   _geo_internals = new GEO_Internals;
@@ -1342,7 +1381,7 @@ int GModel::exportDiscreteGEOInternals()
 
   // TODO: create Volumes from discreteRegions ; meanwhile, keep track of
   // maximum volume num so that we don't break later operations:
-  _geo_internals->MaxVolumeNum = maxv;
+  _geo_internals->setMaxTag(3, maxv);
 
   Msg::Debug("Geo internal model has:");
   Msg::Debug("%d Vertices", Tree_Nbr(_geo_internals->Points));
