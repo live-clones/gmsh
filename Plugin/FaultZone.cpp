@@ -104,7 +104,7 @@ PView *GMSH_FaultZonePlugin::execute(PView *view)
     return view;
   }
 
-  std::list< GEdge* > embeddedEdges = gFace->embeddedEdges();
+  std::list<GEdge*> embeddedEdges = gFace->embeddedEdges();
   std::list<GEdge*>::const_iterator itl;
   for(itl = embeddedEdges.begin();itl != embeddedEdges.end(); ++itl)
     if ((*itl)->length() != 0) break;

@@ -19,15 +19,16 @@
 #include "GmshConfig.h"
 #include "Context.h"
 #include "Field.h"
-#include "Geo.h"
-#include "GeoInterpolation.h"
 #include "GModel.h"
+#include "GModelIO_GEO.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
 #include "mathEvaluator.h"
 #include "BackgroundMeshTools.h"
 #include "STensor3.h"
 #include "meshMetric.h"
+#include "ExtrudeParams.h"
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "OctreePost.h"
@@ -1858,6 +1859,8 @@ class AttractorAnisoCurveField : public Field {
       (lMinNormal, "Minimum mesh size in the direction normal to the closest curve.");
     options["lMaxNormal"] = new FieldOptionDouble
       (lMaxNormal, "Maximum mesh size in the direction normal to the closest curve.");
+    // make sure all internal GEO CAD data has been synced with GModel
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
   }
   virtual bool isotropic () const {return false;}
   ~AttractorAnisoCurveField()
@@ -1893,36 +1896,20 @@ class AttractorAnisoCurveField : public Field {
     int k = 0;
     for(std::list<int>::iterator it = edges_id.begin();
         it != edges_id.end(); ++it) {
-      Curve *c = FindCurve(*it);
-      if(c) {
+      GEdge *e = GModel::current()->getEdgeByTag(*it);
+      if(e) {
         for(int i = 1; i < n_nodes_by_edge - 1; i++) {
           double u = (double)i / (n_nodes_by_edge - 1);
-          Vertex V = InterpolateCurve(c, u, 0);
-          zeronodes[k][0] = V.Pos.X;
-          zeronodes[k][1] = V.Pos.Y;
-          zeronodes[k][2] = V.Pos.Z;
-          Vertex V2 = InterpolateCurve(c, u, 1);
-          tg[k] = SVector3(V2.Pos.X, V2.Pos.Y, V2.Pos.Z);
+          Range<double> b = e->parBounds(0);
+          double t = b.low() + u * (b.high() - b.low());
+          GPoint gp = e->point(t);
+          SVector3 d = e->firstDer(t);
+          zeronodes[k][0] = gp.x();
+          zeronodes[k][1] = gp.y();
+          zeronodes[k][2] = gp.z();
+          tg[k] = d;
           tg[k].normalize();
           k++;
-        }
-      }
-      else {
-        GEdge *e = GModel::current()->getEdgeByTag(*it);
-        if(e) {
-          for(int i = 1; i < n_nodes_by_edge - 1; i++) {
-            double u = (double)i / (n_nodes_by_edge - 1);
-            Range<double> b = e->parBounds(0);
-            double t = b.low() + u * (b.high() - b.low());
-            GPoint gp = e->point(t);
-            SVector3 d = e->firstDer(t);
-            zeronodes[k][0] = gp.x();
-            zeronodes[k][1] = gp.y();
-            zeronodes[k][2] = gp.z();
-            tg[k] = d;
-            tg[k].normalize();
-            k++;
-          }
         }
       }
     }
