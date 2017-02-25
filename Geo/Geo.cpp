@@ -989,7 +989,7 @@ static void CopyVertex(Vertex *v, Vertex *vv)
   }
 }
 
-static Vertex *DuplicateVertex(Vertex *v)
+Vertex *DuplicateVertex(Vertex *v)
 {
   if(!v) return NULL;
   Vertex *pv = Create_Vertex(NEWPOINT(), 0, 0, 0, 0, 0);
@@ -1032,7 +1032,7 @@ static void CopyCurve(Curve *c, Curve *cc)
   End_Curve(cc);
 }
 
-static Curve *DuplicateCurve(Curve *c)
+Curve *DuplicateCurve(Curve *c)
 {
   Curve *pc = Create_Curve(NEWLINE(), 0, 1, NULL, NULL, -1, -1, 0., 1.);
   CopyCurve(c, pc);
@@ -1076,7 +1076,7 @@ static void CopySurface(Surface *s, Surface *ss)
   End_Surface(ss);
 }
 
-static Surface *DuplicateSurface(Surface *s)
+Surface *DuplicateSurface(Surface *s)
 {
   Surface *ps = Create_Surface(NEWSURFACE(), 0);
   CopySurface(s, ps);
@@ -1109,7 +1109,7 @@ static void CopyVolume(Volume *v, Volume *vv)
   List_Copy(v->SurfacesByTag, vv->SurfacesByTag);
 }
 
-static Volume *DuplicateVolume(Volume *v)
+Volume *DuplicateVolume(Volume *v)
 {
   Volume *pv = Create_Volume(NEWVOLUME(), 0);
   CopyVolume(v, pv);
@@ -1121,62 +1121,6 @@ static Volume *DuplicateVolume(Volume *v)
     List_Write(pv->Surfaces, i, &news);
   }
   return pv;
-}
-
-void CopyShape(int Type, int Num, int *New)
-{
-  Surface *s, *news;
-  Curve *c, *newc;
-  Vertex *v, *newv;
-  Volume *vol, *newvol;
-
-  switch (Type) {
-  case MSH_POINT:
-    if(!(v = FindPoint(Num))) {
-      Msg::Error("Unknown vertex %d", Num);
-      return;
-    }
-    newv = DuplicateVertex(v);
-    *New = newv->Num;
-    break;
-  case MSH_SEGM_LINE:
-  case MSH_SEGM_SPLN:
-  case MSH_SEGM_BSPLN:
-  case MSH_SEGM_BEZIER:
-  case MSH_SEGM_CIRC:
-  case MSH_SEGM_CIRC_INV:
-  case MSH_SEGM_ELLI:
-  case MSH_SEGM_ELLI_INV:
-  case MSH_SEGM_NURBS:
-    if(!(c = FindCurve(Num))) {
-      Msg::Error("Unknown curve %d", Num);
-      return;
-    }
-    newc = DuplicateCurve(c);
-    *New = newc->Num;
-    break;
-  case MSH_SURF_TRIC:
-  case MSH_SURF_REGL:
-  case MSH_SURF_PLAN:
-    if(!(s = FindSurface(Num))) {
-      Msg::Error("Unknown surface %d", Num);
-      return;
-    }
-    news = DuplicateSurface(s);
-    *New = news->Num;
-    break;
-  case MSH_VOLUME:
-    if(!(vol = FindVolume(Num))) {
-      Msg::Error("Unknown volume %d", Num);
-      return;
-    }
-    newvol = DuplicateVolume(vol);
-    *New = newvol->Num;
-    break;
-  default:
-    Msg::Error("Impossible to copy entity %d (of type %d)", Num, Type);
-    break;
-  }
 }
 
 void DeletePoint(int ip)
@@ -2022,159 +1966,6 @@ class ShapeLessThan{
     return false;
   }
 };
-
-void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined)
-{
-  for(int i = 0; i < List_Nbr(shapes); i++) {
-    Shape O;
-    List_Read(shapes, i, &O);
-    switch (O.Type) {
-    case MSH_POINT:
-    case MSH_POINT_BND_LAYER:
-    case MSH_POINT_FROM_GMODEL:
-      return;
-      break;
-    case MSH_SEGM_LINE:
-    case MSH_SEGM_SPLN:
-    case MSH_SEGM_CIRC:
-    case MSH_SEGM_CIRC_INV:
-    case MSH_SEGM_ELLI:
-    case MSH_SEGM_ELLI_INV:
-    case MSH_SEGM_BSPLN:
-    case MSH_SEGM_NURBS:
-    case MSH_SEGM_BEZIER:
-    case MSH_SEGM_BND_LAYER:
-    case MSH_SEGM_DISCRETE:
-    case MSH_SEGM_FROM_GMODEL:
-      {
-        Curve *c = FindCurve(O.Num);
-        if(c){
-          if(c->beg){
-            Shape sh;
-            sh.Type = MSH_POINT;
-            sh.Num = c->beg->Num;
-            List_Add(shapesBoundary, &sh);
-          }
-          if(c->end){
-            Shape sh;
-            sh.Type = MSH_POINT;
-            sh.Num = c->end->Num;
-            List_Add(shapesBoundary, &sh);
-          }
-        }
-        else{
-          GEdge *ge = GModel::current()->getEdgeByTag(O.Num);
-          if(ge){
-            if(ge->getBeginVertex()){
-              Shape sh;
-              sh.Type = MSH_POINT_FROM_GMODEL;
-              sh.Num = ge->getBeginVertex()->tag();
-              List_Add(shapesBoundary, &sh);
-            }
-            if(ge->getEndVertex()){
-              Shape sh;
-              sh.Type = MSH_POINT_FROM_GMODEL;
-              sh.Num = ge->getEndVertex()->tag();
-              List_Add(shapesBoundary, &sh);
-            }
-          }
-          else
-            Msg::Error("Unknown curve %d", O.Num);
-        }
-      }
-      break;
-    case MSH_SURF_PLAN:
-    case MSH_SURF_REGL:
-    case MSH_SURF_TRIC:
-    case MSH_SURF_BND_LAYER:
-    case MSH_SURF_DISCRETE:
-    case MSH_SURF_FROM_GMODEL:
-      {
-        Surface *s = FindSurface(O.Num);
-        if(s){
-          for(int j = 0; j < List_Nbr(s->Generatrices); j++){
-            Curve *c;
-            List_Read(s->Generatrices, j, &c);
-            Shape sh;
-            sh.Type = c->Typ;
-            sh.Num = c->Num;
-            List_Add(shapesBoundary, &sh);
-          }
-        }
-        else{
-          GFace *gf = GModel::current()->getFaceByTag(O.Num);
-          if(gf){
-            std::list<GEdge*> edges(gf->edges());
-            for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
-              Shape sh;
-              sh.Type = MSH_SEGM_FROM_GMODEL;
-              sh.Num = (*it)->tag();
-              List_Add(shapesBoundary, &sh);
-            }
-          }
-          else
-            Msg::Error("Unknown surface %d", O.Num);
-        }
-      }
-      break;
-    case MSH_VOLUME:
-    case MSH_VOLUME_DISCRETE:
-    case MSH_VOLUME_FROM_GMODEL:
-      {
-        Volume *v = FindVolume(O.Num);
-        if(v){
-          for(int j = 0; j < List_Nbr(v->Surfaces); j++){
-            Surface *s;
-            List_Read(v->Surfaces, j, &s);
-            Shape sh;
-            sh.Type = s->Typ;
-            sh.Num = s->Num;
-            List_Add(shapesBoundary, &sh);
-          }
-        }
-        else{
-          GRegion *gr = GModel::current()->getRegionByTag(O.Num);
-          if(gr){
-            std::list<GFace*> faces(gr->faces());
-            for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
-              Shape sh;
-              sh.Type = MSH_SURF_FROM_GMODEL;
-              sh.Num = (*it)->tag();
-              List_Add(shapesBoundary, &sh);
-            }
-          }
-          else
-            Msg::Error("Unknown volume %d", O.Num);
-        }
-      }
-      break;
-    default:
-      Msg::Error("Impossible to take boundary of entity %d (of type %d)", O.Num,
-                 O.Type);
-      break;
-    }
-  }
-
-  if(combined){
-    // compute boundary of the combined shapes
-    std::set<Shape*, ShapeLessThan> combined;
-    for(int i = 0; i < List_Nbr(shapesBoundary); i++){
-      Shape *s = (Shape*)List_Pointer(shapesBoundary, i);
-      std::set<Shape*, ShapeLessThan>::iterator it = combined.find(s);
-      if(it == combined.end())
-        combined.insert(s);
-      else
-        combined.erase(it);
-    }
-    List_T *tmp = List_Create(combined.size(), 10, sizeof(Shape));
-    for(std::set<Shape*, ShapeLessThan>::iterator it = combined.begin();
-        it != combined.end(); it++)
-      List_Add(tmp, *it);
-    List_Reset(shapesBoundary);
-    List_Copy(tmp, shapesBoundary);
-    List_Delete(tmp);
-  }
-}
 
 // Added by Trevor Strickler for extruding unique compound surface edges
 static List_T *GetCompoundUniqueEdges(Surface *ps)

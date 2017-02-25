@@ -2404,7 +2404,7 @@ Transform :
   | tDilate '{' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
       if(factory == "OpenCASCADE"){
-        Msg::Error("Dilate not implemented yet with OpenCASCADE factory");
+        yymsg(0, "Dilate not implemented yet with OpenCASCADE factory");
       }
       else{
         DilatShapes($3[0], $3[1], $3[2], $5, $5, $5, $8);
@@ -2414,7 +2414,7 @@ Transform :
   | tDilate '{' VExpr ',' VExpr '}' '{' MultipleShape '}'
     {
       if(factory == "OpenCASCADE"){
-        Msg::Error("Dilate not implemented yet with OpenCASCADE factory");
+        yymsg(0, "Dilate not implemented yet with OpenCASCADE factory");
       }
       else{
         DilatShapes($3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $8);
@@ -2424,35 +2424,36 @@ Transform :
   | tSTRING '{' MultipleShape '}'
     {
       $$ = List_Create(3, 3, sizeof(Shape));
-      if(!strcmp($1, "Duplicata")){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          std::vector<int> in[4], out[4]; ListOfShapes2Vectors($3, in);
-          GModel::current()->getOCCInternals()->copy(in, out);
-          Vectors2ListOfShapes(out, $$);
-        }
-        else{
-          // FIXME use INT API HERE
-          for(int i = 0; i < List_Nbr($3); i++){
-            Shape TheShape;
-            List_Read($3, i, &TheShape);
-            CopyShape(TheShape.Type, TheShape.Num, &TheShape.Num);
-            List_Add($$, &TheShape);
+      std::string action($1);
+      if(action == "Duplicata"){
+        // don't use per-dimension vectors here, in order to respect the input
+        // ordering (points can e.g. be given after surfaces) in the output
+        for(int i = 0; i < List_Nbr($3); i++){
+          Shape s; List_Read($3, i, &s); int dim = s.Type / 100 - 1;
+          if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+            s.Num = GModel::current()->getOCCInternals()->copy(dim, s.Num);
           }
+          else{
+            s.Num = GModel::current()->getGEOInternals()->copy(dim, s.Num);
+          }
+          List_Add($$, &s);
         }
       }
-      else if(!strcmp($1, "Boundary") || !strcmp($1, "CombinedBoundary")){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          std::vector<int> in[4], out[4]; ListOfShapes2Vectors($3, in);
-          GModel::current()->getOCCInternals()->getBoundary
-            (in, out, !strcmp($1, "CombinedBoundary") ? true : false);
-          Vectors2ListOfShapes(out, $$);
-        }
-        else{
-          BoundaryShapes($3, $$, !strcmp($1, "CombinedBoundary") ? true : false);
-        }
+      else if(action == "Boundary" || action == "CombinedBoundary"){
+        // boundary operations are performed directly on GModel, which enables
+        // to compute the boundary of hybrid CAD models; this also automatically
+        // binds all boundary entities for OCC models
+        if(GModel::current()->getOCCInternals() &&
+           GModel::current()->getOCCInternals()->getChanged())
+          GModel::current()->getOCCInternals()->synchronize(GModel::current());
+        if(GModel::current()->getGEOInternals()->getChanged())
+          GModel::current()->getGEOInternals()->synchronize(GModel::current());
+        std::vector<int> in[4], out[4]; ListOfShapes2Vectors($3, in);
+        GModel::current()->getBoundaryTags(in, out, action == "CombinedBoundary");
+        Vectors2ListOfShapes(out, $$);
       }
       else{
-        yymsg(0, "Unknown command on multiple shapes: '%s'", $1);
+        yymsg(0, "Unknown action on multiple shapes: %s", $1);
       }
       Free($1);
       List_Delete($3);
@@ -4092,8 +4093,8 @@ Constraints :
     }
   | tTransfinite tLine ListOfDoubleOrAll tAFFECT FExpr TransfiniteType tEND
     {
-      // transfinite constraints are also stored in GEO internals, as they can
-      // be copied around during GEO operations
+      // transfinite constraints are stored in GEO internals in addition to
+      // GModel, as they can be copied around during GEO operations
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
@@ -4133,8 +4134,8 @@ Constraints :
     }
   | tTransfinite tSurface ListOfDoubleOrAll TransfiniteCorners TransfiniteArrangement tEND
     {
-      // transfinite constraints are also stored in GEO internals, as they can
-      // be copied around during GEO operations
+      // transfinite constraints are stored in GEO internals in addition to
+      // GModel, as they can be copied around during GEO operations
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
@@ -4177,8 +4178,8 @@ Constraints :
     }
   | tTransfinite tVolume ListOfDoubleOrAll TransfiniteCorners tEND
     {
-      // transfinite constraints are also stored in GEO internals, as they can
-      // be copied around during GEO operations
+      // transfinite constraints are stored in GEO internals in addition to
+      // GModel, as they can be copied around during GEO operations
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
@@ -4216,8 +4217,8 @@ Constraints :
     }
   | tTransfQuadTri ListOfDoubleOrAll tEND
     {
-      // transfinite constraints are also stored in GEO internals, as they can
-      // be copied around during GEO operations
+      // transfinite constraints are stored in GEO internals in addition to
+      // GModel, as they can be copied around during GEO operations
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
@@ -4250,8 +4251,8 @@ Constraints :
     }
   | tRecombine tSurface ListOfDoubleOrAll RecombineAngle tEND
     {
-      // recombine constraints are also stored in GEO internals, as they can be
-      // copied around during GEO operations
+      // recombine constraints are stored in GEO internals in addition to
+      // GModel, as they can be copied around during GEO operations
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
@@ -4280,8 +4281,8 @@ Constraints :
     }
   | tRecombine tVolume ListOfDoubleOrAll tEND
     {
-      // recombine constraints are also stored in GEO internals, as they can be
-      // copied around during GEO operations
+      // recombine constraints are stored in GEO internals in addition to
+      // GModel, as they can be copied around during GEO operations
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
@@ -4306,8 +4307,8 @@ Constraints :
     }
   | tSmoother tSurface ListOfDoubleOrAll tAFFECT FExpr tEND
     {
-      // smoothing constraints are also stored in GEO internals, as they can be
-      // copied around during GEO operations
+      // smoothing constraints are stored in GEO internals in addition to
+      // GModel, as they can be copied around during GEO operations
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
@@ -4547,8 +4548,8 @@ Constraints :
     }
   | tReverse tSurface ListOfDoubleOrAll tEND
     {
-      // reverse mesh constraints are also stored in GEO internals, as they can
-      // be copied around during GEO operations
+      // reverse mesh constraints are stored in GEO internals in addition to
+      // GModel, as they can be copied around during GEO operations
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
@@ -4573,8 +4574,8 @@ Constraints :
     }
   | tReverse tLine ListOfDoubleOrAll tEND
     {
-      // reverse mesh constraints are also stored in GEO internals, as they can
-      // be copied around during GEO operations
+      // reverse mesh constraints are stored in GEO internals in addition to
+      // GModel, as they can be copied around during GEO operations
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
@@ -6617,10 +6618,10 @@ void Vectors2ListOfShapes(std::vector<int> tags[4], List_T *list)
   for(int dim = 0; dim < 4; dim++){
     Shape s;
     s.Type =
-      (dim == 3) ? MSH_VOLUME_FROM_GMODEL :
-      (dim == 2) ? MSH_SURF_FROM_GMODEL :
-      (dim == 1) ? MSH_SEGM_FROM_GMODEL :
-      MSH_POINT_FROM_GMODEL;
+      (dim == 3) ? MSH_VOLUME :
+      (dim == 2) ? MSH_SURF_PLAN :
+      (dim == 1) ? MSH_SEGM_LINE :
+      MSH_POINT;
     for(unsigned int i = 0; i < tags[dim].size(); i++){
       s.Num = tags[dim][i];
       List_Add(list, &s);

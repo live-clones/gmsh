@@ -18,6 +18,9 @@ If(sph)
   b() += 3;
 EndIf
 
-BooleanFragments{ Volume{a(0)}; Delete; }{ Volume{b()}; Delete; }
+r() = BooleanFragments{ Volume{a(0)}; Delete; }{ Volume{b()}; Delete; };
 
 Save "merged.brep";
+
+Physical Volume("Combined volume", 1) = {r()};
+Physical Surface("Combined boundary", 2) = CombinedBoundary{ Volume{r()}; };

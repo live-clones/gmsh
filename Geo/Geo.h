@@ -167,8 +167,9 @@ class Curve{
     Color.type = 1;
     Color.geom = Color.mesh = value;
   }
-  bool degenerate() const{
-    if (beg == end && Typ ==  MSH_SEGM_LINE)return true;
+  bool degenerate() const
+  {
+    if (beg == end && Typ ==  MSH_SEGM_LINE) return true;
     return false;
   }
 };
@@ -326,6 +327,7 @@ SurfaceLoop *FindSurfaceLoop(int inum);
 Volume *FindVolume(int inum);
 LevelSet *FindLevelSet(int inum);
 PhysicalGroup *FindPhysicalGroup(int inum, int type);
+
 List_T *GetAllElementaryEntityNumbers(int dim);
 List_T *GetAllPhysicalEntityNumbers(int dim);
 
@@ -335,8 +337,12 @@ void DilatShapes(double X,double Y,double Z, double A, double B, double C,
 void RotateShapes(double Ax,double Ay,double Az,
                   double Px,double Py, double Pz, double alpha, List_T *shapes);
 void SymmetryShapes(double A,double B,double C, double D, List_T *shapes);
-void BoundaryShapes(List_T *shapes, List_T *shapesBoundary, bool combined);
-void CopyShape(int Type, int Num, int *New);
+
+Vertex *DuplicateVertex(Vertex *v);
+Curve *DuplicateCurve(Curve *c);
+Surface *DuplicateSurface(Surface *s);
+Volume *DuplicateVolume(Volume *s);
+
 void DeletePoint(int Num);
 void DeleteCurve(int Num);
 void DeleteSurface(int Num);
@@ -345,10 +351,14 @@ void DeletePhysicalPoint(int Num);
 void DeletePhysicalLine(int Num);
 void DeletePhysicalSurface(int Num);
 void DeletePhysicalVolume(int Num);
+
 void SetPartition(int Type, int Num, int Partition);
+
 void ColorShape(int Type, int Num, unsigned int Color, bool Recursive);
+
 void VisibilityShape(int Type, int Num, int Mode, bool Recursive);
 void VisibilityShape(char *str, int Type, int Mode, bool Recursive);
+
 void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
                   double T0, double T1, double T2,
                   double A0, double A1, double A2,
@@ -379,14 +389,12 @@ int Extrude_ProtudeSurface(int type, int is,
 			   double A0, double A1, double A2,
 			   double X0, double X1, double X2, double alpha,
 			   Volume **pv, ExtrudeParams *e);
-
 void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e);
 
 void ReplaceAllDuplicates();
 void ReplaceAllDuplicatesNew(double tol = -1.);
 
 bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2]);
-
 bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shapes);
 bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes);
 

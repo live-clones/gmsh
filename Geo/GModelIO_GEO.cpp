@@ -430,13 +430,6 @@ void GEO_Internals::addCompoundVolume(int num, std::vector<int> regionTags)
   _changed = true;
 }
 
-void GEO_Internals::getBoundary(std::vector<int> inTags[4],
-                                std::vector<int> outTags[4],
-                                bool combined)
-{
-
-}
-
 void GEO_Internals::translate(std::vector<int> inTags[4],
                               double dx, double dy, double dz)
 {
@@ -450,9 +443,44 @@ void GEO_Internals::rotate(std::vector<int> inTags[4],
 
 }
 
-void GEO_Internals::copy(std::vector<int> inTags[4], std::vector<int> outTags[4])
+int GEO_Internals::copy(int dim, int tag)
 {
-
+  if(dim == 0){
+    Vertex *v = FindPoint(tag);
+    if(!v){
+      Msg::Error("Unknown GEO vertex with tag %d", tag);
+      return tag;
+    }
+    Vertex *newv = DuplicateVertex(v);
+    return newv->Num;
+  }
+  else if(dim == 1){
+    Curve *c = FindCurve(tag);
+    if(!c){
+      Msg::Error("Unknown GEO curve with tag %d", tag);
+      return tag;
+    }
+    Curve *newc = DuplicateCurve(c);
+    return newc->Num;
+  }
+  else if(dim == 2){
+    Surface *s = FindSurface(tag);
+    if(!s){
+      Msg::Error("Unknown GEO surface with tag %d", tag);
+      return tag;
+    }
+    Surface *news = DuplicateSurface(s);
+    return news->Num;
+  }
+  else{
+    Volume *v = FindVolume(tag);
+    if(!v){
+      Msg::Error("Unknown GEO region with tag %d", tag);
+      return tag;
+    }
+    Volume *newv = DuplicateVolume(v);
+    return newv->Num;
+  }
 }
 
 void GEO_Internals::remove(int dim, int tag)
@@ -829,9 +857,7 @@ void GEO_Internals::synchronize(GModel *model)
 
         if(!c->Visible) e->setVisibility(0);
         if(c->Color.type) e->setColor(c->Color.mesh);
-        if(c->degenerated) {
-          e->setTooSmall(true);
-        }
+        if(c->degenerated) e->setTooSmall(true);
       }
     }
     // now generate the compound curves
@@ -857,9 +883,7 @@ void GEO_Internals::synchronize(GModel *model)
         }
         if(!c->Visible) e->setVisibility(0);
         if(c->Color.type) e->setColor(c->Color.mesh);
-        if(c->degenerated) {
-          e->setTooSmall(true);
-        }
+        if(c->degenerated) e->setTooSmall(true);
       }
     }
     List_Delete(curves);

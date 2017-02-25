@@ -187,11 +187,6 @@ class OCC_Internals {
                             bool removeShape=true,
                             bool removeTool=true);
 
-  // get boundary of shapes of dimension dim (this will bind the boundary parts
-  // to new tags, returned in outTags)
-  void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
-                   bool combined=false);
-
   // apply transformations
   void translate(std::vector<int> inTags[4], double dx, double dy, double dz);
   void rotate(std::vector<int> inTags[4], double x, double y, double z,
@@ -199,9 +194,7 @@ class OCC_Internals {
 
   // copy and remove
   int copy(int dim, int tag);
-  void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]);
   void remove(int dim, int tag);
-  void remove(std::vector<int> tags[4]);
 
   // import shapes from file
   void importShapes(const std::string &fileName, bool highestDimOnly,
@@ -332,17 +325,12 @@ public:
                             std::vector<int> outTags[4],
                             bool removeShape=true,
                             bool removeTool=true){ _error("apply boolean operator"); }
-  void getBoundary(std::vector<int> inTags[4], std::vector<int> outTags[4],
-                   bool combined=false){ _error("extract boundary"); }
   void translate(std::vector<int> inTags[4], double dx, double dy, double dz)
   { _error("apply translation"); }
   void rotate(std::vector<int> inTags[4], double x, double y, double z,
               double dx, double dy, double dz, double angle){ _error("apply rotation"); }
   int copy(int dim, int tag){ _error("copy shape"); }
-  void copy(std::vector<int> inTags[4], std::vector<int> outTags[4])
-  { _error("copy shapes"); }
   void remove(int dim, int tag){}
-  void remove(std::vector<int> tags[4]){}
   void importShapes(const std::string &fileName, bool highestDimOnly,
                     std::vector<int> outTags[4], const std::string &format="")
   { _error("import shape"); }

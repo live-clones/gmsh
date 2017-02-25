@@ -289,6 +289,10 @@ class GModel
   void getEntitiesInBox(std::vector<GEntity*> &entities, SBoundingBox3d box,
                         int dim=-1) const;
 
+  // get tags of entities of the boundary of the given input entities
+  void getBoundaryTags(std::vector<int> inTags[4], std::vector<int> outTags[4],
+                       bool combined);
+
   // return the highest number associated with an elementary entity of
   // a given dimension (or the highest overall if dim < 0)
   int getMaxElementaryNumber(int dim);

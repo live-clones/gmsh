@@ -421,6 +421,61 @@ void GModel::getEntitiesInBox(std::vector<GEntity*> &entities, SBoundingBox3d bo
   }
 }
 
+void GModel::getBoundaryTags(std::vector<int> inTags[4], std::vector<int> outTags[4],
+                             bool combined)
+{
+  for(int dim = 1; dim < 4; dim++){
+    for(unsigned int i = 0; i < inTags[dim].size(); i++){
+      if(dim == 3){
+        GRegion *gr = getRegionByTag(inTags[3][i]);
+        if(gr){
+          std::list<GFace*> faces(gr->faces());
+          for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
+            outTags[2].push_back((*it)->tag());
+        }
+        else
+          Msg::Error("Unknown model region with tag %d", inTags[3][i]);
+      }
+      else if(dim == 2){
+        GFace *gf = getFaceByTag(inTags[2][i]);
+        if(gf){
+          std::list<GEdge*> edges(gf->edges());
+          for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++)
+            outTags[1].push_back((*it)->tag());
+        }
+        else
+          Msg::Error("Unknown model face with tag %d", inTags[2][i]);
+      }
+      else if(dim == 1){
+        GEdge *ge = getEdgeByTag(inTags[1][i]);
+        if(ge){
+          if(ge->getBeginVertex())
+            outTags[0].push_back(ge->getBeginVertex()->tag());
+          if(ge->getEndVertex())
+            outTags[0].push_back(ge->getEndVertex()->tag());
+        }
+        else
+          Msg::Error("Unknown model edge with tag %d", inTags[1][i]);
+      }
+    }
+
+    if(combined){
+      // compute boundary of the combined shapes
+      std::set<int> comb;
+      for(unsigned int i = 0; i < outTags[dim-1].size(); i++){
+        std::set<int>::iterator it = comb.find(outTags[dim-1][i]);
+        if(it == comb.end())
+          comb.insert(outTags[dim-1][i]);
+        else
+          comb.erase(it);
+      }
+      outTags[dim-1].clear();
+      for(std::set<int>::iterator it = comb.begin(); it != comb.end(); it++)
+        outTags[dim-1].push_back(*it);
+    }
+  }
+}
+
 int GModel::getMaxElementaryNumber(int dim)
 {
   std::vector<GEntity*> entities;
@@ -454,9 +509,10 @@ void GModel::getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]) 
       group[p].push_back(entities[i]);
     }
   }
-  for (int dim = 0; dim < 4; ++dim ){
+  for (int dim = 0; dim < 4; ++dim){
     std::map<int, std::vector<GEntity*> > &group(groups[dim]);
-    for (std::map<int, std::vector<GEntity*> >::iterator it = group.begin(); it != group.end(); ++it){
+    for (std::map<int, std::vector<GEntity*> >::iterator it = group.begin();
+         it != group.end(); ++it){
       std::vector<GEntity*> &v = it->second;
       std::sort(v.begin(), v.end());
       std::unique(v.begin(), v.end());
@@ -476,7 +532,8 @@ void GModel::getPhysicalGroups(int dim, std::map<int, std::vector<GEntity*> > &g
       groups[p].push_back(entities[i]);
     }
   }
-  for (std::map<int, std::vector<GEntity*> >::iterator it = groups.begin(); it != groups.end(); ++it){
+  for (std::map<int, std::vector<GEntity*> >::iterator it = groups.begin();
+       it != groups.end(); ++it){
     std::vector<GEntity*> &v = it->second;
     std::sort(v.begin(), v.end());
     std::unique(v.begin(), v.end());

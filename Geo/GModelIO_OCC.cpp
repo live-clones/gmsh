@@ -1555,80 +1555,6 @@ void OCC_Internals::applyBooleanOperator(int tag, BooleanOperator op,
   bind(result, true, tag, outTags);
 }
 
-void OCC_Internals::getBoundary(std::vector<int> inTags[4],
-                                std::vector<int> outTags[4],
-                                bool combined)
-{
-  for(int dim = 0; dim < 4; dim++){
-    for(unsigned int i = 0; i < inTags[dim].size(); i++){
-      if(!isBound(dim, inTags[dim][i])){
-        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
-                   dim, inTags[dim][i]);
-        return;
-      }
-      TopoDS_Shape shape = find(dim, inTags[dim][i]);
-      TopExp_Explorer exp0, exp1;
-      switch(dim){
-      case 3:
-        for(exp0.Init(shape, TopAbs_SHELL); exp0.More(); exp0.Next()){
-          TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
-          for(exp1.Init(shell, TopAbs_FACE); exp1.More(); exp1.Next()){
-            TopoDS_Face face = TopoDS::Face(exp1.Current());
-            int tag;
-            if(_faceTag.IsBound(face)){
-              tag = _faceTag.Find(face);
-            }
-            else{
-              // bind with new tag
-              tag = getMaxTag(2) + 1;
-              bind(face, tag);
-            }
-            outTags[2].push_back(tag);
-          }
-        }
-        break;
-      case 2:
-        for(exp0.Init(shape, TopAbs_WIRE); exp0.More(); exp0.Next()){
-          TopoDS_Wire wire = TopoDS::Wire(exp0.Current());
-          for(exp1.Init(wire, TopAbs_EDGE); exp1.More(); exp1.Next()){
-            TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
-            int tag;
-            if(_edgeTag.IsBound(edge)){
-              tag = _edgeTag.Find(edge);
-            }
-            else{
-              // bind with new tag
-              tag = getMaxTag(1) + 1;
-              bind(edge, tag);
-            }
-            outTags[1].push_back(tag);
-          }
-        }
-        break;
-      case 1:
-        for(exp0.Init(shape, TopAbs_VERTEX); exp0.More(); exp0.Next()){
-          TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
-          int tag;
-          if(_vertexTag.IsBound(vertex)){
-            tag = _vertexTag.Find(vertex);
-          }
-          else{
-            // bind with new tag
-            tag = getMaxTag(0) + 1;
-            bind(vertex, tag);
-          }
-          outTags[0].push_back(tag);
-        }
-        break;
-      }
-    }
-  }
-
-  if(combined){
-    Msg::Error("OCC TODO CombinedBoundary");
-  }
-}
-
 void OCC_Internals::_transform(std::vector<int> inTags[4],
                                BRepBuilderAPI_Transform &tfo)
 {
@@ -1684,13 +1610,6 @@ int OCC_Internals::copy(int dim, int tag)
   return newtag;
 }
 
-void OCC_Internals::copy(std::vector<int> inTags[4], std::vector<int> outTags[4])
-{
-  for(int dim = 0; dim < 4; dim++)
-    for(unsigned int i = 0; i < inTags[dim].size(); i++)
-      outTags[dim].push_back(copy(dim, inTags[dim][i]));
-}
-
 void OCC_Internals::remove(int dim, int tag)
 {
   if(!isBound(dim, tag)){
@@ -1699,13 +1618,6 @@ void OCC_Internals::remove(int dim, int tag)
     return;
   }
   unbind(find(dim, tag), dim, tag);
-}
-
-void OCC_Internals::remove(std::vector<int> tags[4])
-{
-  for(int dim = 0; dim < 4; dim++)
-    for(unsigned int i = 0; i < tags[dim].size(); i++)
-      remove(dim, tags[dim][i]);
 }
 
 void OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnly,

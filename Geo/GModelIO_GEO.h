@@ -65,7 +65,7 @@ class GEO_Internals{
               double dx, double dy, double dz, double angle);
 
   // copy and remove
-  void copy(std::vector<int> inTags[4], std::vector<int> outTags[4]);
+  int copy(int dim, int tag);
   void remove(int dim, int tag);
 
   // manipulate physical groups
