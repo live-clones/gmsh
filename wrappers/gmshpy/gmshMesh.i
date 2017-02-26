@@ -28,9 +28,6 @@
   #include "Field.h"
   #include "FieldPython.h"
   #include "meshMetric.h"
-#if defined(HAVE_ANN)
-  #include "CenterlineField.h"
-#endif
   #include "simple3D.h"
   #include "Voronoi3D.h"
   #include "Levy3D.h"
@@ -85,9 +82,6 @@ namespace std {
   }
 }
 %include "meshMetric.h"
-#if defined(HAVE_ANN)
-%include "CenterlineField.h"
-#endif
 %include "simple3D.h"
 %include "Voronoi3D.h"
 %include "Levy3D.h"
