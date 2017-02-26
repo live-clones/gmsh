@@ -267,6 +267,7 @@ class GModel
   GFace *getFaceByTag(int n) const;
   GEdge *getEdgeByTag(int n) const;
   GVertex *getVertexByTag(int n) const;
+  GEntity *getEntityByTag(int dim, int n) const;
 
   // add/remove an entity in the model
   void add(GRegion *r) { regions.insert(r); }

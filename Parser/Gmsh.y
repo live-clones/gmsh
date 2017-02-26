@@ -22,7 +22,7 @@
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
 #include "GeoDefines.h"
-#include "Geo.h" // FIXME: remove once Extrusion, Color and Visibility have been refactored
+#include "Geo.h" // FIXME: remove once Extrusion has been refactored
 #include "ExtrudeParams.h"
 #include "Options.h"
 #include "Parser.h"
@@ -119,6 +119,9 @@ void getAllPhysicalTags(int dim, List_T *in);
 void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out);
 void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
                                     double x2, double y2, double z2, List_T *out);
+void setVisibility(int dim, int visible, bool recursive);
+void setVisibility(std::vector<int> tags[4], int visible, bool recursive);
+void setColor(std::vector<int> tags[4], unsigned int val, bool recursive);
 
 struct doubleXstring{
   double d;
@@ -3005,20 +3008,14 @@ Delete :
 Colorify :
     tColor ColorExpr '{' ListOfShapes '}'
     {
-      for(int i = 0; i < List_Nbr($4); i++){
-	Shape TheShape;
-	List_Read($4, i, &TheShape);
-	ColorShape(TheShape.Type, TheShape.Num, $2, false);
-      }
+      std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
+      setColor(tags, $2, false);
       List_Delete($4);
     }
   | tRecursive tColor ColorExpr '{' ListOfShapes '}'
     {
-      for(int i = 0; i < List_Nbr($5); i++){
-	Shape TheShape;
-	List_Read($5, i, &TheShape);
-	ColorShape(TheShape.Type, TheShape.Num, $3, true);
-      }
+      std::vector<int> tags[4]; ListOfShapes2Vectors($5, tags);
+      setColor(tags, $3, true);
       List_Delete($5);
     }
 ;
@@ -3042,50 +3039,38 @@ SetPartition :
 Visibility :
     tShow tBIGSTR tEND
     {
-      for(int i = 0; i < 4; i++)
-	VisibilityShape($2, i, 1, false);
+      std::string what = $2;
+      setVisibility(-1, 1, false);
       Free($2);
     }
   | tHide tBIGSTR tEND
     {
-      for(int i = 0; i < 4; i++)
-	VisibilityShape($2, i, 0, false);
+      std::string what = $2;
+      setVisibility(-1, 0, false);
       Free($2);
     }
   | tShow '{' ListOfShapes '}'
     {
-      for(int i = 0; i < List_Nbr($3); i++){
-	Shape TheShape;
-	List_Read($3, i, &TheShape);
-	VisibilityShape(TheShape.Type, TheShape.Num, 1, false);
-      }
+      std::vector<int> tags[4]; ListOfShapes2Vectors($3, tags);
+      setVisibility(tags, 1, false);
       List_Delete($3);
     }
   | tRecursive tShow '{' ListOfShapes '}'
     {
-      for(int i = 0; i < List_Nbr($4); i++){
-	Shape TheShape;
-	List_Read($4, i, &TheShape);
-	VisibilityShape(TheShape.Type, TheShape.Num, 1, true);
-      }
+      std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
+      setVisibility(tags, 1, true);
       List_Delete($4);
     }
   | tHide '{' ListOfShapes '}'
     {
-      for(int i = 0; i < List_Nbr($3); i++){
-	Shape TheShape;
-	List_Read($3, i, &TheShape);
-	VisibilityShape(TheShape.Type, TheShape.Num, 0, false);
-      }
+      std::vector<int> tags[4]; ListOfShapes2Vectors($3, tags);
+      setVisibility(tags, 0, false);
       List_Delete($3);
     }
   | tRecursive tHide '{' ListOfShapes '}'
     {
-      for(int i = 0; i < List_Nbr($4); i++){
-	Shape TheShape;
-	List_Read($4, i, &TheShape);
-	VisibilityShape(TheShape.Type, TheShape.Num, 0, true);
-      }
+      std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
+      setVisibility(tags, 0, true);
       List_Delete($4);
     }
 ;
@@ -6715,6 +6700,53 @@ void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
   for(unsigned int i = 0; i < entities.size(); i++){
     double d = entities[i]->tag();
     List_Add(out, &d);
+  }
+}
+
+void setVisibility(int dim, int visible, bool recursive)
+{
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  std::vector<GEntity*> entities;
+  GModel::current()->getEntities(entities, dim);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    entities[i]->setVisibility(visible);
+  }
+}
+
+void setVisibility(std::vector<int> tags[4], int visible, bool recursive)
+{
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  for(int dim = 0; dim < 4; dim++){
+    for(unsigned int i = 0; i < tags[dim].size(); i++){
+      GEntity *ge = GModel::current()->getEntityByTag(dim, std::abs(tags[dim][i]));
+      if(ge) ge->setVisibility(visible, recursive);
+    }
+  }
+}
+
+void setColor(std::vector<int> tags[4], unsigned int val, bool recursive)
+{
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+
+  for(int dim = 0; dim < 4; dim++){
+    for(unsigned int i = 0; i < tags[dim].size(); i++){
+      GEntity *ge = GModel::current()->getEntityByTag(dim, std::abs(tags[dim][i]));
+      if(ge) ge->setColor(val, recursive);
+    }
   }
 }
 

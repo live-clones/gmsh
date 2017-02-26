@@ -45,7 +45,7 @@ class GEntity {
   char _allElementsVisible;
 
   // the color of the entity (ignored if set to transparent blue)
-  unsigned int _color;  
+  unsigned int _color;
 
  protected:
   SOrientedBoundingBox *_obb;
@@ -184,7 +184,7 @@ class GEntity {
 
   // mesh generation of the entity
   virtual void mesh(bool verbose) {}
-  
+
   // delete the mesh data
   virtual void deleteMesh(){}
 
@@ -296,7 +296,7 @@ class GEntity {
 
   // get/set the color
   virtual unsigned int getColor(){ return _color; }
-  virtual void setColor(unsigned color){ _color = color; }
+  virtual void setColor(unsigned color, bool recursive=false){ _color = color; }
 
   // return true if we should use this color to represent the entity
   virtual bool useColor();
@@ -349,12 +349,12 @@ class GEntity {
   GFace   *cast2Face();
   GRegion *cast2Region();
 
-  // update all vertex lists, including periodic connections 
+  // update all vertex lists, including periodic connections
   void updateVertices(const std::map<MVertex*,MVertex*>&);
-  
+
   // transformation from master
   std::vector<double> affineTransform;
-  
+
   // corresponding principal vertices
   std::map<MVertex*,MVertex*> correspondingVertices;
 

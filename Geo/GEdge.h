@@ -74,6 +74,9 @@ class GEdge : public GEntity{
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
 
+  // set color
+  virtual void setColor(unsigned int val, bool recursive=false);
+
   // true if the edge is a seam for the given face.
   virtual bool isSeam(const GFace *face) const { return false; }
 

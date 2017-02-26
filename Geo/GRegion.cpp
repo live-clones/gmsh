@@ -221,6 +221,18 @@ void GRegion::setVisibility(char val, bool recursive)
   }
 }
 
+void GRegion::setColor(unsigned int val, bool recursive)
+{
+  GEntity::setColor(val);
+  if(recursive){
+    std::list<GFace*>::iterator it = l_faces.begin();
+    while(it != l_faces.end()){
+      (*it)->setColor(val, recursive);
+      ++it;
+    }
+  }
+}
+
 std::string GRegion::getAdditionalInfoString()
 {
   std::ostringstream sstream;

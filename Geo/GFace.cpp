@@ -323,6 +323,15 @@ void GFace::setVisibility(char val, bool recursive)
   }
 }
 
+void GFace::setColor(unsigned int val, bool recursive)
+{
+  GEntity::setColor(val);
+  if(recursive){
+    for (std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
+      (*it)->setColor(val, recursive);
+  }
+}
+
 std::string GFace::getAdditionalInfoString()
 {
   std::ostringstream sstream;

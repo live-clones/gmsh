@@ -26,7 +26,6 @@ class Vertex {
  public :
   int Num;
   int Typ;
-  char Visible;
   double lc, u, w;
   Coord Pos;
   // a model vertex is usually defined in the euclidian coordinates
@@ -37,7 +36,7 @@ class Vertex {
   SPoint2  pntOnGeometry;
   int boundaryLayerIndex;
   Vertex(double X=0., double Y=0., double Z=0., double l=1., double W=1.)
-    : Num(0), Visible(1), lc(l), u(0.), w(W), geometry(0), boundaryLayerIndex(0)
+    : Num(0), lc(l), u(0.), w(W), geometry(0), boundaryLayerIndex(0)
   {
     Typ = MSH_POINT;
     Pos.X = X;
@@ -58,16 +57,6 @@ class Vertex {
                   -(Pos.X * autre.Pos.Z - Pos.Z * autre.Pos.X),
                   Pos.X * autre.Pos.Y - Pos.Y * autre.Pos.X, lc, w);
   }
-  void SetVisible(int value, bool recursive)
-  {
-    Visible = value;
-  }
-};
-
-class DrawingColor{
- public:
-  int type;
-  unsigned int geom, mesh;
 };
 
 class CircParam{
@@ -82,7 +71,6 @@ class Curve{
   int Num;
   int Typ;
   bool degenerated;
-  char Visible;
   int Method;
   int nbPointsTransfinite;
   int typeTransfinite;
@@ -96,30 +84,11 @@ class Curve{
   float *k;
   int degre;
   CircParam Circle;
-  DrawingColor Color;
   gmshSurface *geometry;
   std::vector<int> compound;
   int ReverseMesh;
   int master;
   std::list<double> affineTransformation;
-  void SetVisible(int value, bool recursive)
-  {
-    Visible = value;
-    if(recursive){
-      if(beg) beg->SetVisible(value, recursive);
-      if(end) end->SetVisible(value, recursive);
-      for(int i = 0; i < List_Nbr(Control_Points); i++){
-        Vertex *pV;
-        List_Read(Control_Points, i, &pV);
-        pV->SetVisible(value, recursive);
-      }
-    }
-  }
-  void SetColor(unsigned int value, bool recursive)
-  {
-    Color.type = 1;
-    Color.geom = Color.mesh = value;
-  }
   bool degenerate() const
   {
     if (beg == end && Typ ==  MSH_SEGM_LINE) return true;
@@ -137,7 +106,6 @@ class Surface{
  public:
   int Num;
   int Typ;
-  char Visible;
   int Method;
   int Recombine;
   int Recombine_Dir; // -1 is left, +1 is right, -2/2 is alternated left/right
@@ -148,7 +116,6 @@ class Surface{
   List_T *TrsfPoints;
   Vertex *InSphereCenter;
   ExtrudeParams *Extrude;
-  DrawingColor Color;
   // A surface is defined topologically by its Generatrices
   // i.e. curves that are the closure of it.  The geometry of the
   // surface is defined hereafter.  Note that this representation
@@ -157,29 +124,6 @@ class Surface{
   gmshSurface *geometry;
   std::vector<int> compound, compoundBoundary[4];
   int ReverseMesh;
-  void SetVisible(int value, bool recursive)
-  {
-    Visible = value;
-    if(recursive){
-      for(int i = 0; i < List_Nbr(Generatrices); i++){
-        Curve *pC;
-        List_Read(Generatrices, i, &pC);
-        pC->SetVisible(value, recursive);
-      }
-    }
-  }
-  void SetColor(unsigned int value, bool recursive)
-  {
-    Color.type = 1;
-    Color.geom = Color.mesh = value;
-    if(recursive){
-      for(int i = 0; i < List_Nbr(Generatrices); i++){
-        Curve *pC;
-        List_Read(Generatrices, i, &pC);
-        pC->SetColor(value, recursive);
-      }
-    }
-  }
   bool degenerate() const;
 };
 
@@ -193,7 +137,6 @@ class Volume {
  public:
   int Num;
   int Typ;
-  char Visible;
   int Method;
   int Recombine3D;
   int QuadTri;
@@ -202,38 +145,13 @@ class Volume {
   List_T *Surfaces;
   List_T *SurfacesOrientations;
   List_T *SurfacesByTag;
-  DrawingColor Color;
   std::vector<int> compound;
-  void SetVisible(int value, bool recursive)
-  {
-    Visible = value;
-    if(recursive){
-      for(int i = 0; i < List_Nbr(Surfaces); i++){
-        Surface *pS;
-        List_Read(Surfaces, i, &pS);
-        pS->SetVisible(value, recursive);
-      }
-    }
-  }
-  void SetColor(unsigned int value, bool recursive)
-  {
-    Color.type = 1;
-    Color.geom = Color.mesh = value;
-    if(recursive){
-      for(int i = 0; i < List_Nbr(Surfaces); i++){
-        Surface *pS;
-        List_Read(Surfaces, i, &pS);
-        pS->SetColor(value, recursive);
-      }
-    }
-  }
 };
 
 class PhysicalGroup{
  public:
   int Num;
   int Typ;
-  char Visible;
   List_T *Entities;
 };
 
@@ -299,11 +217,6 @@ void DeletePhysicalSurface(int Num);
 void DeletePhysicalVolume(int Num);
 
 void SetPartition(int Type, int Num, int Partition);
-
-void ColorShape(int Type, int Num, unsigned int Color, bool Recursive);
-
-void VisibilityShape(int Type, int Num, int Mode, bool Recursive);
-void VisibilityShape(char *str, int Type, int Mode, bool Recursive);
 
 void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
                   double T0, double T1, double T2,

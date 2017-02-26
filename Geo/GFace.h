@@ -138,6 +138,9 @@ class GFace : public GEntity{
   // set visibility flag
   virtual void setVisibility(char val, bool recursive=false);
 
+  // set color
+  virtual void setColor(unsigned int val, bool recursive=false);
+
   // compute the parameters UV from a point XYZ
   void XYZtoUV(double X, double Y, double Z, double &U, double &V,
                double relax, bool onSurface=true) const;

@@ -76,7 +76,7 @@ struct contextGeometryOptions {
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occParallel;
   double occScaling;
-  int copyMeshingMethod, copyDisplayAttributes, exactExtrusion;
+  int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;
   int hideCompounds, orientedPhysicals, doubleClickedEntityTag;
   std::string doubleClickedPointCommand, doubleClickedLineCommand;

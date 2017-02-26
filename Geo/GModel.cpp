@@ -297,6 +297,17 @@ GVertex *GModel::getVertexByTag(int n) const
     return 0;
 }
 
+GEntity *GModel::getEntityByTag(int dim, int n) const
+{
+  switch(dim){
+  case 0: return getVertexByTag(n);
+  case 1: return getEdgeByTag(n);
+  case 2: return getFaceByTag(n);
+  case 3: return getRegionByTag(n);
+  }
+  return 0;
+}
+
 std::vector<int> GModel::getTagsForPhysicalName(int dim, const std::string tag)
 {
   std::vector<int> tags;

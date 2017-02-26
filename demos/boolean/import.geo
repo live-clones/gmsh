@@ -20,6 +20,8 @@ EndIf
 
 r() = BooleanFragments{ Volume{a(0)}; Delete; }{ Volume{b()}; Delete; };
 
+Recursive Color SteelBlue { Volume{r()}; }
+
 Save "merged.brep";
 
 Physical Volume("Combined volume", 1) = {r()};

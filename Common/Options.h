@@ -398,7 +398,6 @@ double opt_geometry_snap1(OPT_ARGS_NUM);
 double opt_geometry_snap2(OPT_ARGS_NUM);
 double opt_geometry_clip(OPT_ARGS_NUM);
 double opt_geometry_copy_meshing_method(OPT_ARGS_NUM);
-double opt_geometry_copy_display_attributes(OPT_ARGS_NUM);
 double opt_geometry_double_clicked_entity_tag(OPT_ARGS_NUM);
 double opt_geometry_exact_extrusion(OPT_ARGS_NUM);
 double opt_geometry_match_geom_and_mesh(OPT_ARGS_NUM);

@@ -145,7 +145,6 @@ PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist)
   GModel::current()->getGEOInternals()->MaxPhysicalNum =
     std::max(GModel::current()->getGEOInternals()->MaxPhysicalNum, Num);
   p->Typ = typ;
-  p->Visible = 1;
   for(int i = 0; i < List_Nbr(intlist); i++) {
     int j;
     List_Read(intlist, i, &j);
@@ -529,8 +528,6 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
                           { 1, 0, 0, 0} };
 
   Curve *pC = new Curve;
-  pC->Color.type = 0;
-  pC->Visible = 1;
   pC->Extrude = NULL;
   pC->Typ = Typ;
   pC->Num = Num;
@@ -642,8 +639,6 @@ void Free_Curve(void *a, void *b)
 Surface *Create_Surface(int Num, int Typ)
 {
   Surface *pS = new Surface;
-  pS->Color.type = 0;
-  pS->Visible = 1;
   pS->Num = Num;
   pS->geometry = 0;
   pS->InSphereCenter = 0;
@@ -681,8 +676,6 @@ void Free_Surface(void *a, void *b)
 Volume *Create_Volume(int Num, int Typ)
 {
   Volume *pV = new Volume;
-  pV->Color.type = 0;
-  pV->Visible = 1;
   pV->Recombine3D = 0;
   pV->Num = Num;
   GModel::current()->getGEOInternals()->setMaxTag
@@ -846,9 +839,6 @@ static void CopyVertex(Vertex *v, Vertex *vv)
   vv->Pos.X = v->Pos.X;
   vv->Pos.Y = v->Pos.Y;
   vv->Pos.Z = v->Pos.Z;
-  if(CTX::instance()->geom.copyDisplayAttributes){
-    vv->Visible = v->Visible;
-  }
 }
 
 Vertex *DuplicateVertex(Vertex *v)
@@ -876,10 +866,6 @@ static void CopyCurve(Curve *c, Curve *cc)
     cc->typeTransfinite = c->typeTransfinite;
     cc->coeffTransfinite = c->coeffTransfinite;
     cc->ReverseMesh = c->ReverseMesh;
-  }
-  if(CTX::instance()->geom.copyDisplayAttributes){
-    cc->Visible = c->Visible;
-    cc->Color = c->Color;
   }
   cc->l = c->l;
   for(int i = 0; i < 4; i++)
@@ -926,10 +912,6 @@ static void CopySurface(Surface *s, Surface *ss)
     if(List_Nbr(s->TrsfPoints))
       Msg::Warning("Only automatic transfinite surface specifications can be copied");
   }
-  if(CTX::instance()->geom.copyDisplayAttributes){
-    ss->Visible = s->Visible;
-    ss->Color = s->Color;
-  }
   ss->Generatrices = List_Create(List_Nbr(s->Generatrices) + 1, 1, sizeof(Curve *));
   ss->GeneratricesByTag = List_Create(List_Nbr(s->GeneratricesByTag) + 1, 1, sizeof(int));
   ss->InSphereCenter = s->InSphereCenter; // FIXME: hack...
@@ -961,10 +943,6 @@ static void CopyVolume(Volume *v, Volume *vv)
     vv->Recombine3D = v->Recombine3D;
     if(List_Nbr(v->TrsfPoints))
       Msg::Warning("Only automatic transfinite volume specifications can be copied");
-  }
-  if(CTX::instance()->geom.copyDisplayAttributes){
-    vv->Visible = v->Visible;
-    vv->Color = v->Color;
   }
   List_Copy(v->Surfaces, vv->Surfaces);
   List_Copy(v->SurfacesOrientations, vv->SurfacesOrientations);
@@ -1118,146 +1096,6 @@ void DeletePhysicalVolume(int num)
     Free_PhysicalGroup(&p, NULL);
   }
   GModel::current()->deletePhysicalGroup(3, num);
-}
-
-void ColorShape(int Type, int Num, unsigned int Color, bool Recursive)
-{
-  Curve *c;
-  Surface *s;
-  Volume *V;
-
-  switch (Type) {
-  case MSH_POINT:
-    break;
-  case MSH_SEGM_LINE:
-  case MSH_SEGM_SPLN:
-  case MSH_SEGM_BSPLN:
-  case MSH_SEGM_BEZIER:
-  case MSH_SEGM_CIRC:
-  case MSH_SEGM_CIRC_INV:
-  case MSH_SEGM_ELLI:
-  case MSH_SEGM_ELLI_INV:
-  case MSH_SEGM_NURBS:
-  case MSH_SEGM_DISCRETE:
-    if((c = FindCurve(abs(Num)))) c->SetColor(Color, Recursive);
-    break;
-  case MSH_SURF_TRIC:
-  case MSH_SURF_REGL:
-  case MSH_SURF_PLAN:
-  case MSH_SURF_DISCRETE:
-    if((s = FindSurface(abs(Num)))) s->SetColor(Color, Recursive);
-    break;
-  case MSH_VOLUME:
-  case MSH_VOLUME_DISCRETE:
-    if((V = FindVolume(abs(Num)))) V->SetColor(Color, Recursive);
-    break;
-  default:
-    break;
-  }
-}
-
-void VisibilityShape(int Type, int Num, int Mode, bool Recursive)
-{
-  Vertex *v;
-  Curve *c;
-  Surface *s;
-  Volume *V;
-
-  switch (Type) {
-  case MSH_POINT:
-  case MSH_POINT_FROM_GMODEL:
-    {
-      if((v = FindPoint(abs(Num)))) v->SetVisible(Mode, Recursive);
-      GVertex *gv = GModel::current()->getVertexByTag(abs(Num));
-      if(gv) gv->setVisibility(Mode, Recursive);
-    }
-    break;
-  case MSH_SEGM_LINE:
-  case MSH_SEGM_SPLN:
-  case MSH_SEGM_BSPLN:
-  case MSH_SEGM_BEZIER:
-  case MSH_SEGM_CIRC:
-  case MSH_SEGM_CIRC_INV:
-  case MSH_SEGM_ELLI:
-  case MSH_SEGM_ELLI_INV:
-  case MSH_SEGM_NURBS:
-  case MSH_SEGM_DISCRETE:
-  case MSH_SEGM_COMPOUND:
-  case MSH_SEGM_FROM_GMODEL:
-    {
-      if((c = FindCurve(abs(Num)))) c->SetVisible(Mode, Recursive);
-      GEdge *ge = GModel::current()->getEdgeByTag(abs(Num));
-      if(ge) ge->setVisibility(Mode, Recursive);
-    }
-    break;
-  case MSH_SURF_TRIC:
-  case MSH_SURF_REGL:
-  case MSH_SURF_PLAN:
-  case MSH_SURF_DISCRETE:
-  case MSH_SURF_COMPOUND:
-  case MSH_SURF_FROM_GMODEL:
-    {
-      if((s = FindSurface(abs(Num)))) s->SetVisible(Mode, Recursive);
-      GFace *gf = GModel::current()->getFaceByTag(abs(Num));
-      if(gf) gf->setVisibility(Mode, Recursive);
-    }
-    break;
-  case MSH_VOLUME:
-  case MSH_VOLUME_DISCRETE:
-  case MSH_VOLUME_COMPOUND:
-  case MSH_VOLUME_FROM_GMODEL:
-    {
-      if((V = FindVolume(abs(Num)))) V->SetVisible(Mode, Recursive);
-      GRegion *gr = GModel::current()->getRegionByTag(abs(Num));
-      if(gr) gr->setVisibility(Mode, Recursive);
-    }
-    break;
-  default:
-    break;
-  }
-}
-
-static int vmode;
-static void vis_nod(void *a, void *b){ (*(Vertex **)a)->Visible = vmode; }
-static void vis_cur(void *a, void *b){ (*(Curve **)a)->Visible = vmode; }
-static void vis_sur(void *a, void *b){ (*(Surface **)a)->Visible = vmode; }
-static void vis_vol(void *a, void *b){ (*(Volume **)a)->Visible = vmode; }
-
-void VisibilityShape(char *str, int Type, int Mode, bool Recursive)
-{
-  vmode = Mode;
-
-  if(!strcmp(str, "all") || !strcmp(str, "*")) {
-    switch (Type) {
-    case 0:
-      Tree_Action(GModel::current()->getGEOInternals()->Points, vis_nod);
-      for(GModel::viter it = GModel::current()->firstVertex();
-          it != GModel::current()->lastVertex(); it++)
-        (*it)->setVisibility(Mode);
-      break;
-    case 1:
-      Tree_Action(GModel::current()->getGEOInternals()->Curves, vis_cur);
-      for(GModel::eiter it = GModel::current()->firstEdge();
-          it != GModel::current()->lastEdge(); it++)
-        (*it)->setVisibility(Mode);
-      break;
-    case 2:
-      Tree_Action(GModel::current()->getGEOInternals()->Surfaces, vis_sur);
-      for(GModel::fiter it = GModel::current()->firstFace();
-          it != GModel::current()->lastFace(); it++)
-        (*it)->setVisibility(Mode);
-      break;
-    case 3:
-      Tree_Action(GModel::current()->getGEOInternals()->Volumes, vis_vol);
-      for(GModel::riter it = GModel::current()->firstRegion();
-          it != GModel::current()->lastRegion(); it++)
-        (*it)->setVisibility(Mode);
-      break;
-    }
-  }
-  else {
-    VisibilityShape(Type, atoi(str), Mode, Recursive);
-  }
 }
 
 void SetPartition(int Type, int Num, int Partition)
@@ -2645,7 +2483,7 @@ bool Surface::degenerate() const
   for(int i = 0; i < N; i++) {
     Curve *c;
     List_Read(Generatrices, i, &c);
-    if(!c->degenerate())Nd++;
+    if(!c->degenerate()) Nd++;
   }
   return Nd == 0;
 }

@@ -52,6 +52,9 @@ class GRegion : public GEntity {
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
 
+  // set color
+  virtual void setColor(unsigned int val, bool recursive=false);
+
   // add embedded vertices/edges/faces
   void addEmbeddedVertex(GVertex *v){ embedded_vertices.push_back(v); }
   void addEmbeddedEdge(GEdge *e){ embedded_edges.push_back(e); }

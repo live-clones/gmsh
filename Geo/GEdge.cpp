@@ -259,6 +259,15 @@ void GEdge::setVisibility(char val, bool recursive)
   }
 }
 
+void GEdge::setColor(unsigned int val, bool recursive)
+{
+  GEntity::setColor(val);
+  if(recursive){
+    if(v0) v0->setColor(val);
+    if(v1) v1->setColor(val);
+  }
+}
+
 std::string GEdge::getAdditionalInfoString()
 {
   std::ostringstream sstream;

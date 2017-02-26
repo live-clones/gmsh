@@ -877,7 +877,6 @@ void GEO_Internals::synchronize(GModel *model)
       else{
         v->resetMeshAttributes();
       }
-      if(!p->Visible) v->setVisibility(0);
     }
     List_Delete(points);
   }
@@ -907,9 +906,6 @@ void GEO_Internals::synchronize(GModel *model)
         else{
           e->resetMeshAttributes();
         }
-
-        if(!c->Visible) e->setVisibility(0);
-        if(c->Color.type) e->setColor(c->Color.mesh);
         if(c->degenerated) e->setTooSmall(true);
       }
     }
@@ -934,8 +930,6 @@ void GEO_Internals::synchronize(GModel *model)
           e->meshAttributes.reverseMesh = c->ReverseMesh;
           model->add(e);
         }
-        if(!c->Visible) e->setVisibility(0);
-        if(c->Color.type) e->setColor(c->Color.mesh);
         if(c->degenerated) e->setTooSmall(true);
       }
     }
@@ -999,8 +993,6 @@ void GEO_Internals::synchronize(GModel *model)
           f->computeMeanPlane(); // recompute in case geom has changed
         f->resetMeshAttributes();
       }
-      if(!s->Visible) f->setVisibility(0);
-      if(s->Color.type) f->setColor(s->Color.mesh);
     }
     List_Delete(surfaces);
   }
@@ -1027,8 +1019,6 @@ void GEO_Internals::synchronize(GModel *model)
       else{
         r->resetMeshAttributes();
       }
-      if(!v->Visible) r->setVisibility(0);
-      if(v->Color.type) r->setColor(v->Color.mesh);
     }
     List_Delete(volumes);
   }
