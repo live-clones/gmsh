@@ -1783,7 +1783,6 @@ void OCC_Internals::synchronize(GModel *model)
     }
   }
 
-  // building geom edges
   for(int i = 1; i <= _emap.Extent(); i++){
     TopoDS_Edge edge = TopoDS::Edge(_emap(i));
     if(!getOCCEdgeByNativePtr(model, edge)){
@@ -1801,7 +1800,6 @@ void OCC_Internals::synchronize(GModel *model)
     }
   }
 
-  // building geom faces
   for(int i = 1; i <= _fmap.Extent(); i++){
     TopoDS_Face face = TopoDS::Face(_fmap(i));
     if(!getOCCFaceByNativePtr(model, face)){
@@ -1817,7 +1815,6 @@ void OCC_Internals::synchronize(GModel *model)
     }
   }
 
-  // building geom regions
   for(int i = 1; i <= _somap.Extent(); i++){
     TopoDS_Solid region = TopoDS::Solid(_somap(i));
     if(!getOCCRegionByNativePtr(model, region)){
