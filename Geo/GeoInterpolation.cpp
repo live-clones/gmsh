@@ -528,7 +528,7 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
     break;
 
   default:
-    Msg::Error("Unknown curve type in interpolation");
+    Msg::Error("Unknown curve type %d in interpolation", c->Typ);
     break;
   }
   V.u = u;

@@ -929,8 +929,8 @@ void GEO_Internals::synchronize(GModel *model)
           e->meshAttributes.extrude = c->Extrude;
           e->meshAttributes.reverseMesh = c->ReverseMesh;
           model->add(e);
+          if(c->degenerated) e->setTooSmall(true);
         }
-        if(c->degenerated) e->setTooSmall(true);
       }
     }
     List_Delete(curves);
@@ -973,9 +973,9 @@ void GEO_Internals::synchronize(GModel *model)
         f->meshAttributes.extrude = s->Extrude;
         f->meshAttributes.transfiniteArrangement = s->Recombine_Dir;
         f->meshAttributes.corners.clear();
-        for(int i = 0; i < List_Nbr(s->TrsfPoints); i++){
+        for(int j = 0; j < List_Nbr(s->TrsfPoints); j++){
           Vertex *corn;
-          List_Read(s->TrsfPoints, i, &corn);
+          List_Read(s->TrsfPoints, j, &corn);
           GVertex *gv = f->model()->getVertexByTag(corn->Num);
           if(gv)
             f->meshAttributes.corners.push_back(gv);
@@ -989,8 +989,8 @@ void GEO_Internals::synchronize(GModel *model)
         model->add(f);
       }
       else{
-        if(s->Typ == MSH_SURF_PLAN)
-          f->computeMeanPlane(); // recompute in case geom has changed
+        // recompute in case geom has changed
+        if(s->Typ == MSH_SURF_PLAN) f->computeMeanPlane();
         f->resetMeshAttributes();
       }
     }
@@ -1034,10 +1034,10 @@ void GEO_Internals::synchronize(GModel *model)
       GEntity *ge = 0;
       int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
       switch(p->Typ){
-        case MSH_PHYSICAL_POINT:   ge = model->getVertexByTag(tag); break;
-        case MSH_PHYSICAL_LINE:    ge = model->getEdgeByTag(tag); break;
-        case MSH_PHYSICAL_SURFACE: ge = model->getFaceByTag(tag); break;
-        case MSH_PHYSICAL_VOLUME:  ge = model->getRegionByTag(tag); break;
+      case MSH_PHYSICAL_POINT:   ge = model->getVertexByTag(tag); break;
+      case MSH_PHYSICAL_LINE:    ge = model->getEdgeByTag(tag); break;
+      case MSH_PHYSICAL_SURFACE: ge = model->getFaceByTag(tag); break;
+      case MSH_PHYSICAL_VOLUME:  ge = model->getRegionByTag(tag); break;
       }
       int pnum = CTX::instance()->geom.orientedPhysicals ?
         (gmsh_sign(num) * p->Num) : p->Num;
