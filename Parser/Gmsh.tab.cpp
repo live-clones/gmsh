@@ -535,7 +535,7 @@
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
 #include "GeoDefines.h"
-#include "Geo.h" // FIXME: remove once Extrusion, Color and Visibility have been refactored
+#include "Geo.h" // FIXME: remove once Extrusion has been refactored
 #include "ExtrudeParams.h"
 #include "Options.h"
 #include "Parser.h"
