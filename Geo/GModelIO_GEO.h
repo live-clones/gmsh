@@ -108,9 +108,6 @@ class GEO_Internals{
   // create coordinate systems
   gmshSurface *newGeometrySphere(int num, int centerTag, int pointTag);
   gmshSurface *newGeometryPolarSphere(int num, int centerTag, int pointTag);
-
-  // FIXME: move this
-  Tree_T *LevelSets;
 };
 
 #endif

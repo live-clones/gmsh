@@ -78,13 +78,6 @@ int compareVolume(const void *a, const void *b)
   return q->Num - w->Num;
 }
 
-int compareLevelSet(const void *a, const void *b)
-{
-  LevelSet *q = *(LevelSet **)a;
-  LevelSet *w = *(LevelSet **)b;
-  return q->Num - w->Num;
-}
-
 int comparePhysicalGroup(const void *a, const void *b)
 {
   PhysicalGroup *q = *(PhysicalGroup **)a;
@@ -719,23 +712,6 @@ void Free_Volume(void *a, void *b)
   }
 }
 
-LevelSet *Create_LevelSet(int Num, gLevelset *l)
-{
-  LevelSet *pL = new LevelSet;
-  pL->Num = Num;
-  pL->ls = l;
-  return pL;
-}
-
-void Free_LevelSet(void *a, void *b)
-{
-  LevelSet *pL = *(LevelSet **)a;
-  if(pL) {
-    delete pL;
-    pL = NULL;
-  }
-}
-
 static int compare2Lists(List_T *List1, List_T *List2,
                          int (*fcmp) (const void *a, const void *b))
 {
@@ -823,17 +799,6 @@ Volume *FindVolume(int inum)
   pv->Num = inum;
   if(Tree_Query(GModel::current()->getGEOInternals()->Volumes, &pv)) {
     return pv;
-  }
-  return NULL;
-}
-
-LevelSet *FindLevelSet(int inum)
-{
-  LevelSet L, *pl;
-  pl = &L;
-  pl->Num = inum;
-  if(Tree_Query(GModel::current()->getGEOInternals()->LevelSets, &pl)) {
-    return pl;
   }
   return NULL;
 }

@@ -47,8 +47,6 @@ void GEO_Internals::_allocateAll()
   DelSurfaces = Tree_Create(sizeof(Surface *), compareSurface);
   DelVolumes = Tree_Create(sizeof(Volume *), compareVolume);
 
-  LevelSets = Tree_Create(sizeof(LevelSet *), compareLevelSet);
-
   _changed = true;
 }
 
@@ -70,8 +68,6 @@ void GEO_Internals::_freeAll()
   Tree_Action(DelVolumes, Free_Volume); Tree_Delete(DelVolumes);
 
   List_Action(PhysicalGroups, Free_PhysicalGroup); List_Delete(PhysicalGroups);
-
-  Tree_Action(LevelSets, Free_LevelSet); Tree_Delete(LevelSets);
 
   _changed = true;
 }

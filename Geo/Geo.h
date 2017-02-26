@@ -390,16 +390,4 @@ void SortEdgesInLoop(int num, List_T *edges, bool orient=false);
 void SetSurfaceGeneratrices(Surface *s, List_T *loops);
 void SetVolumeSurfaces(Volume *v, List_T *loops);
 
-// FIXME: move this
-class gLevelset;
-class LevelSet {
- public:
-  int Num;
-  gLevelset *ls;
-};
-int compareLevelSet(const void *a, const void *b);
-void Free_LevelSet(void *a, void *b);
-LevelSet *Create_LevelSet(int Num, gLevelset *l);
-LevelSet *FindLevelSet(int inum);
-
 #endif

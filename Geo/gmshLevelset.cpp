@@ -22,6 +22,22 @@
 #include "ANN/ANN.h"
 #endif
 
+std::set<gLevelset*, gLevelsetLessThan> gLevelset::all_;
+int gLevelset::maxTag_ = 0;
+
+gLevelset *gLevelset::find(int tag)
+{
+  gLevelset l(tag);
+  std::set<gLevelset*, gLevelsetLessThan>::iterator it = all_.find(&l);
+  if(it == all_.end()) return 0;
+  return *it;
+}
+
+void gLevelset::add(gLevelset *l)
+{
+  all_.insert(l);
+}
+
 void insertActiveCells(double x, double y, double z, double rmax,
                        cartesianBox<double> &box)
 {
