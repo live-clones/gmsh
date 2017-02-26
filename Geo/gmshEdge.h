@@ -23,7 +23,7 @@ class gmshEdge : public GEdge {
   virtual SVector3 firstDer(double par) const;
   virtual SVector3 secondDer(double par) const;
   ModelType getNativeType() const { return GmshModel; }
-  void * getNativePtr() const { return c; }
+  void *getNativePtr() const { return c; }
   virtual std::string getAdditionalInfoString();
   virtual int minimumMeshSegments() const;
   virtual int minimumDrawSegments() const;
@@ -32,6 +32,7 @@ class gmshEdge : public GEdge {
   virtual void writeGEO(FILE *fp);
   void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
   virtual bool degenerate(int dim) const;
+  void resetNativePtr(Curve *edge, GVertex *v1, GVertex *v2);
 };
 
 #endif

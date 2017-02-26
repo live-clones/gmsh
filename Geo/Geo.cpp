@@ -1060,7 +1060,7 @@ void DeletePhysicalPoint(int num)
   if(p){
     List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
                   ComparePhysicalGroup);
-    FreePhysicalGroup(&p, NULL);
+    List_Add(GModel::current()->getGEOInternals()->DelPhysicalGroups, &p);
   }
   GModel::current()->deletePhysicalGroup(0, num);
 }
@@ -1071,7 +1071,7 @@ void DeletePhysicalLine(int num)
   if(p){
     List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
                   ComparePhysicalGroup);
-    FreePhysicalGroup(&p, NULL);
+    List_Add(GModel::current()->getGEOInternals()->DelPhysicalGroups, &p);
   }
   GModel::current()->deletePhysicalGroup(1, num);
 }
@@ -1082,7 +1082,7 @@ void DeletePhysicalSurface(int num)
   if(p){
     List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
                   ComparePhysicalGroup);
-    FreePhysicalGroup(&p, NULL);
+    List_Add(GModel::current()->getGEOInternals()->DelPhysicalGroups, &p);
   }
   GModel::current()->deletePhysicalGroup(2, num);
 }
@@ -1093,7 +1093,7 @@ void DeletePhysicalVolume(int num)
   if(p){
     List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
                   ComparePhysicalGroup);
-    FreePhysicalGroup(&p, NULL);
+    List_Add(GModel::current()->getGEOInternals()->DelPhysicalGroups, &p);
   }
   GModel::current()->deletePhysicalGroup(3, num);
 }
@@ -2007,7 +2007,7 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
   for(unsigned int i = 0; i < unused.size(); i++){
     Vertex *V = v2V[unused[i]];
     Tree_Suppress(GModel::current()->getGEOInternals()->Points, &V);
-    FreeVertex(&V, NULL);
+    Tree_Add(GModel::current()->getGEOInternals()->DelPoints, &V);
     delete unused[i];
   }
   for(unsigned int i = 0; i < used.size(); i++){
@@ -2182,7 +2182,10 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
     }
   }
 
-  Tree_Action(points2delete, FreeVertex);
+  List_T *tmp = Tree2List(points2delete);
+  for(int i = 0; i < List_Nbr(tmp); i++)
+    Tree_Add(GModel::current()->getGEOInternals()->DelPoints, List_Pointer(tmp, i));
+  List_Delete(tmp);
   Tree_Delete(points2delete);
   Tree_Delete(allNonDuplicatedPoints);
 
@@ -2208,7 +2211,11 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
         if(!(c2 = FindCurve(-c->Num))) {
           Msg::Error("Unknown curve %d", -c->Num);
           List_Delete(All);
-          Tree_Action(curves2delete, FreeCurve);
+          List_T *tmp = Tree2List(curves2delete);
+          for(int i = 0; i < List_Nbr(tmp); i++)
+            Tree_Add(GModel::current()->getGEOInternals()->DelCurves,
+                     List_Pointer(tmp, i));
+          List_Delete(tmp);
           Tree_Delete(curves2delete);
           Tree_Delete(allNonDuplicatedCurves);
           return;
@@ -2247,7 +2254,11 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
   int end = Tree_Nbr(GModel::current()->getGEOInternals()->Curves);
 
   if(start == end) {
-    Tree_Action(curves2delete, FreeCurve);
+    List_T *tmp = Tree2List(curves2delete);
+    for(int i = 0; i < List_Nbr(tmp); i++)
+      Tree_Add(GModel::current()->getGEOInternals()->DelCurves,
+               List_Pointer(tmp, i));
+    List_Delete(tmp);
     Tree_Delete(curves2delete);
     Tree_Delete(allNonDuplicatedCurves);
     return;
@@ -2324,7 +2335,11 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
     }
   }
 
-  Tree_Action(curves2delete, FreeCurve);
+  List_T *tmp = Tree2List(curves2delete);
+  for(int i = 0; i < List_Nbr(tmp); i++)
+    Tree_Add(GModel::current()->getGEOInternals()->DelCurves,
+             List_Pointer(tmp, i));
+  List_Delete(tmp);
   Tree_Delete(curves2delete);
   Tree_Delete(allNonDuplicatedCurves);
 }
@@ -2525,7 +2540,11 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
   int end = Tree_Nbr(GModel::current()->getGEOInternals()->Surfaces);
 
   if(start == end) {
-    Tree_Action(surfaces2delete, FreeSurface);
+    List_T *tmp = Tree2List(surfaces2delete);
+    for(int i = 0; i < List_Nbr(tmp); i++)
+      Tree_Add(GModel::current()->getGEOInternals()->DelSurfaces,
+               List_Pointer(tmp, i));
+    List_Delete(tmp);
     Tree_Delete(surfaces2delete);
     Tree_Delete(allNonDuplicatedSurfaces);
     return;
@@ -2599,7 +2618,11 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
     }
   }
 
-  Tree_Action(surfaces2delete, FreeSurface);
+  List_T *tmp = Tree2List(surfaces2delete);
+  for(int i = 0; i < List_Nbr(tmp); i++)
+    Tree_Add(GModel::current()->getGEOInternals()->DelSurfaces,
+             List_Pointer(tmp, i));
+  List_Delete(tmp);
   Tree_Delete(surfaces2delete);
   Tree_Delete(allNonDuplicatedSurfaces);
 }
@@ -3091,14 +3114,13 @@ int ExtrudeSurface(int type, int is,
       c->Extrude->mesh = e->mesh;
   }
 
-  // FIXME: this is a really ugly hack for backward compatibility, so
-  // that we don't screw up the old .geo files too much. (Before
-  // version 1.54, we didn't always create new volumes during "Extrude
-  // Surface". Now we do, but with "CTX::instance()->geom.oldNewreg==1", this
-  // bumps the NEWREG() counter, and thus changes the whole automatic
-  // numbering sequence.) So we locally force oldNewreg to 0: in most
-  // cases, since we define points, curves, etc., before defining
-  // volumes, the NEWVOLUME() call below will return a fairly low
+  // FIXME: this is a really ugly hack for backward compatibility, so that we
+  // don't screw up the old .geo files too much. (Before version 1.54, we didn't
+  // always create new volumes during "Extrude Surface". Now we do, but with
+  // "CTX::instance()->geom.oldNewreg==1", this bumps the NEWREG() counter, and
+  // thus changes the whole automatic numbering sequence.) So we locally force
+  // oldNewreg to 0: in most cases, since we define points, curves, etc., before
+  // defining volumes, the NEWVOLUME() call below will return a fairly low
   // number, that will not interfere with the other numbers...
   int tmp = CTX::instance()->geom.oldNewreg;
   CTX::instance()->geom.oldNewreg = 0;

@@ -18,7 +18,7 @@ class GEO_Internals{
   // is complete
   Tree_T *Points, *Curves, *EdgeLoops, *Surfaces, *SurfaceLoops, *Volumes;
   Tree_T *DelPoints, *DelCurves, *DelSurfaces, *DelVolumes;
-  List_T *PhysicalGroups;
+  List_T *PhysicalGroups, *DelPhysicalGroups;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
   std::multimap<int, std::vector<int> > meshCompounds;

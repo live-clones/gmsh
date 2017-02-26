@@ -21,19 +21,23 @@
 #endif
 
 gmshFace::gmshFace(GModel *m, Surface *face)
-  : GFace(m, face->Num), s(face), isSphere(false), radius(0.)
+  : GFace(m, face->Num), isSphere(false), radius(0.)
 {
+  resetNativePtr(face);
   resetMeshAttributes();
+}
 
-  // edgeCounterparts = s->edgeCounterparts;
-  // affineTransform = s->affineTransform;
-
+void gmshFace::resetNativePtr(Surface *face)
+{
+  s = face;
+  l_edges.clear();
+  l_dirs.clear();
   std::vector<GEdge*> eds;
   std::vector<int> nums;
   for(int i = 0; i < List_Nbr(s->Generatrices); i++){
     Curve *c;
     List_Read(s->Generatrices, i, &c);
-    GEdge *e = m->getEdgeByTag(abs(c->Num));
+    GEdge *e = model()->getEdgeByTag(abs(c->Num));
     if(e){
       eds.push_back(e);
       nums.push_back(c->Num);
@@ -44,7 +48,7 @@ gmshFace::gmshFace(GModel *m, Surface *face)
   for(int i = 0; i < List_Nbr(s->GeneratricesByTag); i++){
     int j;
     List_Read(s->GeneratricesByTag, i, &j);
-    GEdge *e = m->getEdgeByTag(abs(j));
+    GEdge *e = model()->getEdgeByTag(abs(j));
     if(e){
       eds.push_back(e);
       nums.push_back(j);

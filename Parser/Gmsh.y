@@ -6739,12 +6739,8 @@ void setColor(std::vector<int> tags[4], unsigned int val, bool recursive)
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
-
-  // FIXME: sync in the middle of some geo files leads to crashes: disabling
-  // until I figure it out
-
-  //if(GModel::current()->getGEOInternals()->getChanged())
-  //    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  if(GModel::current()->getGEOInternals()->getChanged())
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
   for(int dim = 0; dim < 4; dim++){
     for(unsigned int i = 0; i < tags[dim].size(); i++){

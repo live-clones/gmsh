@@ -18,8 +18,9 @@ class gmshRegion : public GRegion {
   virtual ~gmshRegion() {}
   virtual GeomType geomType() const;
   ModelType getNativeType() const { return GmshModel; }
-  void * getNativePtr() const { return v; }
+  void *getNativePtr() const { return v; }
   virtual void resetMeshAttributes();
+  void resetNativePtr(::Volume *_v);
 };
 
 #endif

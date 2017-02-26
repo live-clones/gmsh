@@ -10,14 +10,21 @@
 #include "GmshMessage.h"
 
 gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
-  : GRegion(m, volume->Num), v(volume)
+  : GRegion(m, volume->Num)
 {
+  resetNativePtr(volume);
+  resetMeshAttributes();
+}
+
+void gmshRegion::resetNativePtr(::Volume *volume)
+{
+  v = volume;
   for(int i = 0; i < List_Nbr(v->Surfaces); i++){
     Surface *s;
     List_Read(v->Surfaces, i, &s);
     int ori;
     List_Read(v->SurfacesOrientations, i, &ori);
-    GFace *f = m->getFaceByTag(abs(s->Num));
+    GFace *f = model()->getFaceByTag(abs(s->Num));
     if(f){
       l_faces.push_back(f);
       l_dirs.push_back(ori);
@@ -29,7 +36,7 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
   for(int i = 0; i < List_Nbr(v->SurfacesByTag); i++){
     int is;
     List_Read(v->SurfacesByTag, i, &is);
-    GFace *f = m->getFaceByTag(abs(is));
+    GFace *f = model()->getFaceByTag(abs(is));
     if(f){
       l_faces.push_back(f);
       l_dirs.push_back(gmsh_sign(is));
@@ -38,7 +45,6 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
     else
       Msg::Error("Unknown surface %d", is);
   }
-  resetMeshAttributes();
 }
 
 void gmshRegion::resetMeshAttributes()

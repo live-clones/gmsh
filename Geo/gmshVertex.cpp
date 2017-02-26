@@ -18,6 +18,11 @@ gmshVertex::gmshVertex(GModel *m, Vertex *_v)
   resetMeshAttributes();
 }
 
+void gmshVertex::resetNativePtr(Vertex *_v)
+{
+  v = _v;
+}
+
 void gmshVertex::resetMeshAttributes()
 {
   meshSize = v->lc;

@@ -20,6 +20,14 @@ gmshEdge::gmshEdge(GModel *m, Curve *edge, GVertex *v1, GVertex *v2)
   resetMeshAttributes();
 }
 
+void gmshEdge::resetNativePtr(Curve *edge, GVertex *_v1, GVertex *_v2)
+{
+  c = edge;
+  v0 = _v1; v1 = _v2;
+  if(v0) v0->addEdge(this);
+  if(v1 && v1 != v0) v1->addEdge(this);
+}
+
 bool gmshEdge::degenerate(int dim) const
 {
   if (c->beg == c->end &&

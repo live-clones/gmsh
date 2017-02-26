@@ -41,6 +41,7 @@ void GEO_Internals::_allocateAll()
   Volumes = Tree_Create(sizeof(Volume *), CompareVolume);
 
   PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
+  DelPhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
 
   DelPoints = Tree_Create(sizeof(Vertex *), CompareVertex);
   DelCurves = Tree_Create(sizeof(Curve *), CompareCurve);
@@ -68,6 +69,7 @@ void GEO_Internals::_freeAll()
   Tree_Action(DelVolumes, FreeVolume); Tree_Delete(DelVolumes);
 
   List_Action(PhysicalGroups, FreePhysicalGroup); List_Delete(PhysicalGroups);
+  List_Action(DelPhysicalGroups, FreePhysicalGroup); List_Delete(DelPhysicalGroups);
 
   _changed = true;
 }
@@ -468,6 +470,7 @@ void GEO_Internals::_transform(std::vector<int> tags[4], int mode,
   case 2: DilatShapes(x, y, z, a, b, c, list); break;
   case 3: SymmetryShapes(a, b, c, d, list); break;
   }
+  _changed = true;
 }
 
 void GEO_Internals::translate(std::vector<int> tags[4],
@@ -498,6 +501,7 @@ void GEO_Internals::symmetry(std::vector<int> tags[4],
 
 int GEO_Internals::copy(int dim, int tag)
 {
+  _changed = true;
   if(dim == 0){
     Vertex *v = FindPoint(tag);
     if(!v){
@@ -549,6 +553,7 @@ void GEO_Internals::remove(int dim, int tag)
 void GEO_Internals::resetPhysicalGroups()
 {
   List_Action(PhysicalGroups, FreePhysicalGroup);
+  List_Action(DelPhysicalGroups, FreePhysicalGroup);
   List_Reset(PhysicalGroups);
   _changed = true;
 }
@@ -600,6 +605,7 @@ void GEO_Internals::modifyPhysicalGroup(int dim, int num, int op, std::vector<in
   else{
     Msg::Error("Unsupported operation on physical %s %d", str.c_str(), num);
   }
+  _changed = true;
 }
 
 void GEO_Internals::removeAllDuplicates()
@@ -683,6 +689,7 @@ void GEO_Internals::setTransfiniteLine(int tag, int nPoints, int type, double co
       c->coeffTransfinite = coef;
     }
   }
+  _changed = true;
 }
 
 void GEO_Internals::setTransfiniteSurface(int tag, int arrangement,
@@ -719,6 +726,7 @@ void GEO_Internals::setTransfiniteSurface(int tag, int arrangement,
       }
     }
   }
+  _changed = true;
 }
 
 void GEO_Internals::setTransfiniteVolume(int tag, std::vector<int> cornerTags)
@@ -749,6 +757,7 @@ void GEO_Internals::setTransfiniteVolume(int tag, std::vector<int> cornerTags)
       }
     }
   }
+  _changed = true;
 }
 
 void GEO_Internals::setTransfiniteVolumeQuadTri(int tag)
@@ -767,6 +776,7 @@ void GEO_Internals::setTransfiniteVolumeQuadTri(int tag)
     if(v)
       v->QuadTri = TRANSFINITE_QUADTRI_1;
   }
+  _changed = true;
 }
 
 void GEO_Internals::setRecombine(int dim, int tag, double angle)
@@ -807,6 +817,7 @@ void GEO_Internals::setRecombine(int dim, int tag, double angle)
       }
     }
   }
+  _changed = true;
 }
 
 void GEO_Internals::setSmoothing(int tag, int val)
@@ -824,6 +835,7 @@ void GEO_Internals::setSmoothing(int tag, int val)
     Surface *s = FindSurface(tag);
     if(s) s->TransfiniteSmoothing = val;
   }
+  _changed = true;
 }
 
 void GEO_Internals::setReverseMesh(int dim, int tag)
@@ -858,11 +870,17 @@ void GEO_Internals::setReverseMesh(int dim, int tag)
       if(s) s->ReverseMesh = 1;
     }
   }
+  _changed = true;
 }
 
 void GEO_Internals::synchronize(GModel *model)
 {
   Msg::Debug("Syncing GEO_Internals with GModel");
+
+  // if the entities do not exist, we create them; if they exist, we update the
+  // pointer (and the underlying dependencies, e.g. surface boundaries): this is
+  // necessary because a GEO entity can change (while keeping the same tag!!),
+  // due e.g. to ReplaceDuplicates.
 
   if(Tree_Nbr(Points)) {
     List_T *points = Tree2List(Points);
@@ -875,6 +893,8 @@ void GEO_Internals::synchronize(GModel *model)
         model->add(v);
       }
       else{
+        if(v->getNativeType() == GEntity::GmshModel)
+          ((gmshVertex*)v)->resetNativePtr(p);
         v->resetMeshAttributes();
       }
     }
@@ -894,8 +914,7 @@ void GEO_Internals::synchronize(GModel *model)
                      "have been created", c->Num);
         }
         else if(!e && c->beg && c->end){
-          e = new gmshEdge(model, c,
-                           model->getVertexByTag(c->beg->Num),
+          e = new gmshEdge(model, c, model->getVertexByTag(c->beg->Num),
                            model->getVertexByTag(c->end->Num));
           model->add(e);
         }
@@ -904,6 +923,10 @@ void GEO_Internals::synchronize(GModel *model)
           model->add(e);
         }
         else{
+          if(e->getNativeType() == GEntity::GmshModel &&
+             c->Typ != MSH_SEGM_COMPOUND)
+            ((gmshEdge*)e)->resetNativePtr(c, model->getVertexByTag(c->beg->Num),
+                                           model->getVertexByTag(c->end->Num));
           e->resetMeshAttributes();
         }
         if(c->degenerated) e->setTooSmall(true);
@@ -958,13 +981,13 @@ void GEO_Internals::synchronize(GModel *model)
         }
         int param = CTX::instance()->mesh.remeshParam;
         GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_CIRCLE;
-        if (param == 1) typ =  GFaceCompound::CONFORMAL_SPECTRAL;
-        if (param == 2) typ =  GFaceCompound::RADIAL_BASIS;
-        if (param == 3) typ =  GFaceCompound::HARMONIC_PLANE;
-        if (param == 4) typ =  GFaceCompound::CONVEX_CIRCLE;
-        if (param == 5) typ =  GFaceCompound::CONVEX_PLANE;
-        if (param == 6) typ =  GFaceCompound::HARMONIC_SQUARE;
-        if (param == 7) typ =  GFaceCompound::CONFORMAL_FE;
+        if (param == 1) typ = GFaceCompound::CONFORMAL_SPECTRAL;
+        if (param == 2) typ = GFaceCompound::RADIAL_BASIS;
+        if (param == 3) typ = GFaceCompound::HARMONIC_PLANE;
+        if (param == 4) typ = GFaceCompound::CONVEX_CIRCLE;
+        if (param == 5) typ = GFaceCompound::CONVEX_PLANE;
+        if (param == 6) typ = GFaceCompound::HARMONIC_SQUARE;
+        if (param == 7) typ = GFaceCompound::CONFORMAL_FE;
         int algo = CTX::instance()->mesh.remeshAlgo;
         f = new GFaceCompound(model, s->Num, comp, b[0], b[1], b[2], b[3], typ, algo);
         f->meshAttributes.recombine = s->Recombine;
@@ -989,8 +1012,9 @@ void GEO_Internals::synchronize(GModel *model)
         model->add(f);
       }
       else{
-        // recompute in case geom has changed
-        if(s->Typ == MSH_SURF_PLAN) f->computeMeanPlane();
+        if(f->getNativeType() == GEntity::GmshModel &&
+           s->Typ != MSH_SURF_COMPOUND)
+          ((gmshFace*)f)->resetNativePtr(s);
         f->resetMeshAttributes();
       }
     }
@@ -1017,6 +1041,9 @@ void GEO_Internals::synchronize(GModel *model)
         model->add(r);
       }
       else{
+        if(r->getNativeType() == GEntity::GmshModel &&
+           v->Typ != MSH_VOLUME_COMPOUND)
+          ((gmshRegion*)r)->resetNativePtr(v);
         r->resetMeshAttributes();
       }
     }
