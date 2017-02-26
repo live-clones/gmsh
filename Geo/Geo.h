@@ -224,12 +224,6 @@ void ExtrudeShapes(int extrude_type, List_T *in,
                    double X0, double X1, double X2, double alpha,
                    ExtrudeParams *e,
                    List_T *out);
-void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
-                  double T0, double T1, double T2,
-                  double A0, double A1, double A2,
-                  double X0, double X1, double X2, double alpha,
-                  ExtrudeParams *e,
-                  List_T *out);
 int ExtrudePoint(int type, int ip,
                  double T0, double T1, double T2,
                  double A0, double A1, double A2,

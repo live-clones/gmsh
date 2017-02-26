@@ -3244,27 +3244,6 @@ int ExtrudeSurface(int type, int is,
   return chap_num;
 }
 
-void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
-                  double T0, double T1, double T2,
-                  double A0, double A1, double A2,
-                  double X0, double X1, double X2, double alpha,
-                  ExtrudeParams *e,
-                  List_T *list_out)
-{
-  Shape shape;
-  shape.Type = shape_type;
-  shape.Num = shape_num;
-  List_T *tmp = List_Create(1, 1, sizeof(Shape));
-  List_Add(tmp, &shape);
-  ExtrudeShapes(extrude_type, tmp,
-                T0, T1, T2,
-                A0, A1, A2,
-                X0, X1, X2, alpha,
-                e,
-                list_out);
-  List_Delete(tmp);
-}
-
 void ExtrudeShapes(int type, List_T *list_in,
                    double T0, double T1, double T2,
                    double A0, double A1, double A2,
