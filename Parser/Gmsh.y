@@ -2889,30 +2889,27 @@ LevelSet :
     {
       if(!strcmp($2, "CutMesh")){
         int t = (int)$4;
-        GModel *GM = GModel::current();
         if(gLevelset::find(t)){
-          GM->buildCutGModel(gLevelset::find(t), true, false);
-          GM->setVisibility(0);
+          GModel::current()->buildCutGModel(gLevelset::find(t), true, false);
+          GModel::current()->setVisibility(0);
         }
         else
           yymsg(0, "Unknown levelset %d", t);
       }
       else if(!strcmp($2, "CutMeshTri")){
         int t = (int)$4;
-        GModel *GM = GModel::current();
         if(gLevelset::find(t)){
-          GM->buildCutGModel(gLevelset::find(t), true, true);
-          GM->setVisibility(0);
+          GModel::current()->buildCutGModel(gLevelset::find(t), true, true);
+          GModel::current()->setVisibility(0);
         }
         else
           yymsg(0, "Unknown levelset %d", t);
       }
       else if(!strcmp($2, "SplitMesh")){
         int t = (int)$4;
-        GModel *GM = GModel::current();
         if(gLevelset::find(t)){
-          GM->buildCutGModel(gLevelset::find(t), false, true);
-          GM->setVisibility(0);
+          GModel::current()->buildCutGModel(gLevelset::find(t), false, true);
+          GModel::current()->setVisibility(0);
         }
         else
           yymsg(0, "Unknown levelset %d", t);
