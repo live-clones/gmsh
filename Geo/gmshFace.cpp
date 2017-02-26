@@ -84,7 +84,7 @@ void gmshFace::resetNativePtr(Surface *face)
   // the bounding vertices)
   if(s->Typ == MSH_SURF_PLAN) computeMeanPlane();
 
-  isSphere = iSRuledSurfaceASphere(s, center, radius);
+  isSphere = IsRuledSurfaceASphere(s, center, radius);
 }
 
 double gmshFace::getMetricEigenvalue(const SPoint2 &pt)

@@ -3450,7 +3450,7 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
 
 // Split line
 
-static Curve *_create_splitted_curve(Curve *c,List_T *nodes)
+static Curve *_create_splitted_curve(Curve *c, List_T *nodes)
 {
   int  beg, end;
   List_Read(nodes, 0, &beg);

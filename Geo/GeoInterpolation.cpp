@@ -651,7 +651,7 @@ static void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
   T->Pos.Z = center.Pos.Z + r * dirz;
 }
 
-bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius)
+bool IsRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius)
 {
   if(s->Typ != MSH_SURF_REGL && s->Typ != MSH_SURF_TRIC) return false;
   if(!List_Nbr(s->Generatrices)) return false;
