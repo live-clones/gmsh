@@ -126,7 +126,7 @@ set(GMSH_API
     Geo/GenericVertex.h Geo/GenericEdge.h Geo/GenericFace.h Geo/GenericRegion.h
     Geo/partitionEdge.h Geo/CGNSOptions.h Geo/gmshLevelset.h Geo/boundaryLayersData.h
   Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h
-    Mesh/meshGFaceElliptic.h Mesh/meshPartition.h Mesh/meshGFaceDelaunayInsertion.h
+    Mesh/meshPartition.h Mesh/meshGFaceDelaunayInsertion.h
     Mesh/simple3D.h Mesh/meshPartitionOptions.h Mesh/directions3D.h Mesh/yamakawa.h
     Mesh/Voronoi3D.h Mesh/Levy3D.h Mesh/periodical.h Mesh/meshMetric.h Mesh/ThinLayer.h
   Numeric/mathEvaluator.h
