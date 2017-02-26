@@ -682,7 +682,7 @@ bool iSRuledSurfaceASphere(Surface *s, SPoint3 &center, double &radius)
         else{
           Vertex *tmp;
           List_Read(C[i]->Control_Points, 1, &tmp);
-          if(compareVertex(&O, &tmp))
+          if(CompareVertex(&O, &tmp))
             isSphere = false;
         }
       }
@@ -732,7 +732,7 @@ static Vertex InterpolateRuledSurface(Surface *s, double u, double v)
         else{
           Vertex *tmp;
           List_Read(C[i]->Control_Points, 1, &tmp);
-          if(compareVertex(&O, &tmp))
+          if(CompareVertex(&O, &tmp))
             isSphere = false;
         }
       }

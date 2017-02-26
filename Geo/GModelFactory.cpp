@@ -32,7 +32,7 @@ GVertex *GeoFactory::addVertex(GModel *gm, double x, double y, double z, double 
   lc *= CTX::instance()->geom.scalingFactor;
   if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
   Vertex *p;
-  p = Create_Vertex(num, x, y, z, lc, 1.0);
+  p = CreateVertex(num, x, y, z, lc, 1.0);
   Tree_Add(gm->getGEOInternals()->Points, &p);
   p->Typ = MSH_POINT;
   p->Num = num;
@@ -52,7 +52,7 @@ GEdge *GeoFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
   List_Add(iList, &tagBeg);
   List_Add(iList, &tagEnd);
 
-  Curve *c = Create_Curve(num, MSH_SEGM_LINE, 1, iList, NULL,
+  Curve *c = CreateCurve(num, MSH_SEGM_LINE, 1, iList, NULL,
 			  -1, -1, 0., 1.);
   Tree_Add(gm->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
@@ -106,7 +106,7 @@ GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > f
       numfl++;
       if (!FindSurfaceLoop(numfl)) break;
     }
-    SurfaceLoop *l = Create_SurfaceLoop(numfl, temp);
+    SurfaceLoop *l = CreateSurfaceLoop(numfl, temp);
     vecLoops.push_back(l);
     Tree_Add(gm->getGEOInternals()->SurfaceLoops, &l);
     List_Delete(temp);
@@ -114,7 +114,7 @@ GRegion* GeoFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > f
 
   //create volume
   int numv = gm->getMaxElementaryNumber(3) + 1;
-  Volume *v = Create_Volume(numv, MSH_VOLUME);
+  Volume *v = CreateVolume(numv, MSH_VOLUME);
   List_T *temp = List_Create(nLoops, nLoops, sizeof(int));
   for (unsigned int i = 0; i < vecLoops.size(); i++){
     int numl = vecLoops[i]->Num;
@@ -145,7 +145,7 @@ GEdge* GeoFactory::addCircleArc(GModel *gm,GVertex *begin, GVertex *center, GVer
   List_Add(iList, &tagMiddle);
   List_Add(iList, &tagEnd);
 
-  Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 1, iList, NULL,
+  Curve *c = CreateCurve(num, MSH_SEGM_CIRC, 1, iList, NULL,
 			  -1, -1, 0., 1.);
   Tree_Add(gm->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
@@ -178,7 +178,7 @@ std::vector<GFace *> GeoFactory::addRuledFaces(GModel *gm,
       List_Add(temp, &numEdge);
     }
     SortEdgesInLoop(numl, temp);
-    EdgeLoop *l = Create_EdgeLoop(numl, temp);
+    EdgeLoop *l = CreateEdgeLoop(numl, temp);
     vecLoops.push_back(l);
     Tree_Add(gm->getGEOInternals()->EdgeLoops, &l);
     l->Num = numl;
@@ -187,14 +187,14 @@ std::vector<GFace *> GeoFactory::addRuledFaces(GModel *gm,
 
   //create plane surfaces
   int numf = gm->getMaxElementaryNumber(2) + 1;
-  Surface *s = Create_Surface(numf, MSH_SURF_TRIC);
+  Surface *s = CreateSurface(numf, MSH_SURF_TRIC);
   List_T *iList = List_Create(nLoops, nLoops, sizeof(int));
   for (unsigned int i=0; i< vecLoops.size(); i++){
     int numl = vecLoops[i]->Num;
     List_Add(iList, &numl);
   }
   SetSurfaceGeneratrices(s, iList);
-  End_Surface(s);
+  EndSurface(s);
   Tree_Add(gm->getGEOInternals()->Surfaces, &s);
   s->Typ= MSH_SURF_TRIC;
   s->Num = numf;
@@ -380,14 +380,14 @@ GFace *GeoFactory::_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdg
 	Vertex *vertb = FindPoint(abs(gvb->tag()));
 	Vertex *verte = FindPoint(abs(gve->tag()));
 	if (!vertb){
-	  vertb = Create_Vertex(gvb->tag(), gvb->x(), gvb->y(), gvb->z(),
+	  vertb = CreateVertex(gvb->tag(), gvb->x(), gvb->y(), gvb->z(),
 				gvb->prescribedMeshSizeAtVertex(), 1.0);
 	  Tree_Add(gm->getGEOInternals()->Points, &vertb);
 	  vertb->Typ = MSH_POINT;
 	  vertb->Num = gvb->tag();
 	 }
 	if (!verte){
-	  verte = Create_Vertex(gve->tag(), gve->x(), gve->y(), gve->z(),
+	  verte = CreateVertex(gve->tag(), gve->x(), gve->y(), gve->z(),
 				gve->prescribedMeshSizeAtVertex(), 1.0);
 	  Tree_Add(gm->getGEOInternals()->Points, &verte);
 	  verte->Typ = MSH_POINT;
@@ -395,19 +395,19 @@ GFace *GeoFactory::_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdg
 	}
 
 	if (ge->geomType() == GEntity::Line){
-	  c = Create_Curve(numEdge, MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
+	  c = CreateCurve(numEdge, MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
 	}
 	else if (ge->geomType() == GEntity::DiscreteCurve){
-	  c = Create_Curve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
+	  c = CreateCurve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
 	}
 	else if(ge->geomType() == GEntity::CompoundCurve){
-	  c = Create_Curve(numEdge, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
+	  c = CreateCurve(numEdge, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
 	  std::vector<GEdge*> gec = ((GEdgeCompound*)ge)->getCompounds();
 	  for(unsigned int i = 0; i < gec.size(); i++)
 	    c->compound.push_back(gec[i]->tag());
 	}
 	else{
-	  c = Create_Curve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
+	  c = CreateCurve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
 	}
 
 	c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
@@ -415,7 +415,7 @@ GFace *GeoFactory::_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdg
 	List_Add(c->Control_Points, &verte);
 	c->beg = vertb;
 	c->end = verte;
-	End_Curve(c);
+	EndCurve(c);
 
 	Tree_Add(gm->getGEOInternals()->Curves, &c);
 	CreateReversedCurve(c);
@@ -430,7 +430,7 @@ GFace *GeoFactory::_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdg
       if (!FindEdgeLoop(numl)) break;
     }
     SortEdgesInLoop(numl, temp, orientEdges);
-    EdgeLoop *l = Create_EdgeLoop(numl, temp);
+    EdgeLoop *l = CreateEdgeLoop(numl, temp);
     vecLoops.push_back(l);
     Tree_Add(gm->getGEOInternals()->EdgeLoops, &l);
     l->Num = numl;
@@ -439,7 +439,7 @@ GFace *GeoFactory::_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdg
 
   //create surface
   int numf  = gm->getMaxElementaryNumber(2)+1;
-  Surface *s = Create_Surface(numf, MSH_SURF_PLAN);
+  Surface *s = CreateSurface(numf, MSH_SURF_PLAN);
   List_T *temp = List_Create(nLoops, nLoops, sizeof(int));
   for (int i = 0; i < nLoops; i++){
     int numl = vecLoops[i]->Num;
@@ -448,7 +448,7 @@ GFace *GeoFactory::_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdg
 
   SetSurfaceGeneratrices(s, temp);
   List_Delete(temp);
-  End_Surface(s);
+  EndSurface(s);
   Tree_Add(gm->getGEOInternals()->Surfaces, &s);
 
   //gmsh surface

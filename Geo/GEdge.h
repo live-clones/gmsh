@@ -25,7 +25,7 @@ class GEdgeCompound;
 class closestPointFinder;
 
 // A model edge.
-class GEdge : public GEntity{
+class GEdge : public GEntity {
  private:
   double _length;
   bool _tooSmall;

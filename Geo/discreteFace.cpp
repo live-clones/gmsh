@@ -80,7 +80,7 @@ static inline void crouzeixRaviart(const std::vector<double> &U,std::vector<doub
 
 discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 {
-  Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
+  Surface *s = CreateSurface(num, MSH_SURF_DISCRETE);
   Tree_Add(model->getGEOInternals()->Surfaces, &s);
   meshStatistics.status = GFace::DONE;
 }

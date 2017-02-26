@@ -33,19 +33,19 @@ void GEO_Internals::_allocateAll()
   MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
   MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
 
-  Points = Tree_Create(sizeof(Vertex *), compareVertex);
-  Curves = Tree_Create(sizeof(Curve *), compareCurve);
-  EdgeLoops = Tree_Create(sizeof(EdgeLoop *), compareEdgeLoop);
-  Surfaces = Tree_Create(sizeof(Surface *), compareSurface);
-  SurfaceLoops = Tree_Create(sizeof(SurfaceLoop *), compareSurfaceLoop);
-  Volumes = Tree_Create(sizeof(Volume *), compareVolume);
+  Points = Tree_Create(sizeof(Vertex *), CompareVertex);
+  Curves = Tree_Create(sizeof(Curve *), CompareCurve);
+  EdgeLoops = Tree_Create(sizeof(EdgeLoop *), CompareEdgeLoop);
+  Surfaces = Tree_Create(sizeof(Surface *), CompareSurface);
+  SurfaceLoops = Tree_Create(sizeof(SurfaceLoop *), CompareSurfaceLoop);
+  Volumes = Tree_Create(sizeof(Volume *), CompareVolume);
 
   PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
 
-  DelPoints = Tree_Create(sizeof(Vertex *), compareVertex);
-  DelCurves = Tree_Create(sizeof(Curve *), compareCurve);
-  DelSurfaces = Tree_Create(sizeof(Surface *), compareSurface);
-  DelVolumes = Tree_Create(sizeof(Volume *), compareVolume);
+  DelPoints = Tree_Create(sizeof(Vertex *), CompareVertex);
+  DelCurves = Tree_Create(sizeof(Curve *), CompareCurve);
+  DelSurfaces = Tree_Create(sizeof(Surface *), CompareSurface);
+  DelVolumes = Tree_Create(sizeof(Volume *), CompareVolume);
 
   _changed = true;
 }
@@ -55,19 +55,19 @@ void GEO_Internals::_freeAll()
   MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
   MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
 
-  Tree_Action(Points, Free_Vertex); Tree_Delete(Points);
-  Tree_Action(Curves, Free_Curve); Tree_Delete(Curves);
-  Tree_Action(EdgeLoops, Free_EdgeLoop); Tree_Delete(EdgeLoops);
-  Tree_Action(Surfaces, Free_Surface); Tree_Delete(Surfaces);
-  Tree_Action(SurfaceLoops, Free_SurfaceLoop); Tree_Delete(SurfaceLoops);
-  Tree_Action(Volumes, Free_Volume); Tree_Delete(Volumes);
+  Tree_Action(Points, FreeVertex); Tree_Delete(Points);
+  Tree_Action(Curves, FreeCurve); Tree_Delete(Curves);
+  Tree_Action(EdgeLoops, FreeEdgeLoop); Tree_Delete(EdgeLoops);
+  Tree_Action(Surfaces, FreeSurface); Tree_Delete(Surfaces);
+  Tree_Action(SurfaceLoops, FreeSurfaceLoop); Tree_Delete(SurfaceLoops);
+  Tree_Action(Volumes, FreeVolume); Tree_Delete(Volumes);
 
-  Tree_Action(DelPoints, Free_Vertex); Tree_Delete(DelPoints);
-  Tree_Action(DelCurves, Free_Curve); Tree_Delete(DelCurves);
-  Tree_Action(DelSurfaces, Free_Surface); Tree_Delete(DelSurfaces);
-  Tree_Action(DelVolumes, Free_Volume); Tree_Delete(DelVolumes);
+  Tree_Action(DelPoints, FreeVertex); Tree_Delete(DelPoints);
+  Tree_Action(DelCurves, FreeCurve); Tree_Delete(DelCurves);
+  Tree_Action(DelSurfaces, FreeSurface); Tree_Delete(DelSurfaces);
+  Tree_Action(DelVolumes, FreeVolume); Tree_Delete(DelVolumes);
 
-  List_Action(PhysicalGroups, Free_PhysicalGroup); List_Delete(PhysicalGroups);
+  List_Action(PhysicalGroups, FreePhysicalGroup); List_Delete(PhysicalGroups);
 
   _changed = true;
 }
@@ -103,7 +103,7 @@ void GEO_Internals::addVertex(int num, double x, double y, double z, double lc)
     Msg::Error("GEO vertex with tag %d already exists", num);
     return;
   }
-  Vertex *v = Create_Vertex(num, x, y, z, lc, 1.0);
+  Vertex *v = CreateVertex(num, x, y, z, lc, 1.0);
   Tree_Add(Points, &v);
   _changed = true;
 }
@@ -115,7 +115,7 @@ void GEO_Internals::addVertex(int num, double x, double y, gmshSurface *surface,
     Msg::Error("GEO vertex with tag %d already exists", num);
     return;
   }
-  Vertex *v = Create_Vertex(num, x, y, surface, lc);
+  Vertex *v = CreateVertex(num, x, y, surface, lc);
   Tree_Add(Points, &v);
   _changed = true;
 }
@@ -138,7 +138,7 @@ void GEO_Internals::addLine(int num, std::vector<int> vertexTags)
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++)
     List_Add(tmp, &vertexTags[i]);
-  Curve *c = Create_Curve(num, MSH_SEGM_LINE, 1, tmp, NULL, -1, -1, 0., 1.);
+  Curve *c = CreateCurve(num, MSH_SEGM_LINE, 1, tmp, NULL, -1, -1, 0., 1.);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(tmp);
@@ -156,12 +156,12 @@ void GEO_Internals::addCircleArc(int num, int startTag, int centerTag, int endTa
   List_Add(tmp, &startTag);
   List_Add(tmp, &centerTag);
   List_Add(tmp, &endTag);
-  Curve *c = Create_Curve(num, MSH_SEGM_CIRC, 2, tmp, NULL, -1, -1, 0., 1.);
+  Curve *c = CreateCurve(num, MSH_SEGM_CIRC, 2, tmp, NULL, -1, -1, 0., 1.);
   if(nx || ny || nz){
     c->Circle.n[0] = nx;
     c->Circle.n[1] = ny;
     c->Circle.n[2] = nz;
-    End_Curve(c);
+    EndCurve(c);
   }
   Tree_Add(Curves, &c);
   Curve *rc = CreateReversedCurve(c);
@@ -169,7 +169,7 @@ void GEO_Internals::addCircleArc(int num, int startTag, int centerTag, int endTa
     rc->Circle.n[0] = nx;
     rc->Circle.n[1] = ny;
     rc->Circle.n[2] = nz;
-    End_Curve(rc);
+    EndCurve(rc);
   }
   List_Delete(tmp);
   _changed = true;
@@ -187,12 +187,12 @@ void GEO_Internals::addEllipseArc(int num, int startTag, int centerTag, int majo
   List_Add(tmp, &centerTag);
   List_Add(tmp, &majorTag);
   List_Add(tmp, &endTag);
-  Curve *c = Create_Curve(num, MSH_SEGM_ELLI, 2, tmp, NULL, -1, -1, 0., 1.);
+  Curve *c = CreateCurve(num, MSH_SEGM_ELLI, 2, tmp, NULL, -1, -1, 0., 1.);
   if(nx || ny || nz){
     c->Circle.n[0] = nx;
     c->Circle.n[1] = ny;
     c->Circle.n[2] = nz;
-    End_Curve(c);
+    EndCurve(c);
   }
   Tree_Add(Curves, &c);
   Curve *rc = CreateReversedCurve(c);
@@ -200,7 +200,7 @@ void GEO_Internals::addEllipseArc(int num, int startTag, int centerTag, int majo
     rc->Circle.n[0] = nx;
     rc->Circle.n[1] = ny;
     rc->Circle.n[2] = nz;
-    End_Curve(rc);
+    EndCurve(rc);
   }
   List_Delete(tmp);
   _changed = true;
@@ -215,7 +215,7 @@ void GEO_Internals::addSpline(int num, std::vector<int> vertexTags)
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++)
     List_Add(tmp, &vertexTags[i]);
-  Curve *c = Create_Curve(num, MSH_SEGM_SPLN, 3, tmp, NULL, -1, -1, 0., 1.);
+  Curve *c = CreateCurve(num, MSH_SEGM_SPLN, 3, tmp, NULL, -1, -1, 0., 1.);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(tmp);
@@ -231,7 +231,7 @@ void GEO_Internals::addBSpline(int num, std::vector<int> vertexTags)
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++)
     List_Add(tmp, &vertexTags[i]);
-  Curve *c = Create_Curve(num, MSH_SEGM_BSPLN, 2, tmp, NULL, -1, -1, 0., 1.);
+  Curve *c = CreateCurve(num, MSH_SEGM_BSPLN, 2, tmp, NULL, -1, -1, 0., 1.);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(tmp);
@@ -247,7 +247,7 @@ void GEO_Internals::addBezier(int num, std::vector<int> vertexTags)
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++)
     List_Add(tmp, &vertexTags[i]);
-  Curve *c = Create_Curve(num, MSH_SEGM_BEZIER, 2, tmp, NULL, -1, -1, 0., 1.);
+  Curve *c = CreateCurve(num, MSH_SEGM_BEZIER, 2, tmp, NULL, -1, -1, 0., 1.);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(tmp);
@@ -268,7 +268,7 @@ void GEO_Internals::addNurbs(int num, std::vector<int> vertexTags,
   List_T *knotsList = List_Create(2, 2, sizeof(double));
   for(unsigned int i = 0; i < knots.size(); i++)
     List_Add(knotsList, &knots[i]);
-  Curve *c = Create_Curve(num, MSH_SEGM_NURBS, order, tmp, knotsList, -1, -1, 0., 1.);
+  Curve *c = CreateCurve(num, MSH_SEGM_NURBS, order, tmp, knotsList, -1, -1, 0., 1.);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(tmp);
@@ -282,9 +282,9 @@ void GEO_Internals::addCompoundLine(int num, std::vector<int> edgeTags)
     return;
   }
 
-  Curve *c = Create_Curve(num, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
+  Curve *c = CreateCurve(num, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
   c->compound = edgeTags;
-  End_Curve(c);
+  EndCurve(c);
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   _changed = true;
@@ -300,7 +300,7 @@ void GEO_Internals::addLineLoop(int num, std::vector<int> edgeTags)
   for(unsigned int i = 0; i < edgeTags.size(); i++)
     List_Add(tmp, &edgeTags[i]);
   SortEdgesInLoop(num, tmp);
-  EdgeLoop *l = Create_EdgeLoop(num, tmp);
+  EdgeLoop *l = CreateEdgeLoop(num, tmp);
   Tree_Add(EdgeLoops, &l);
   List_Delete(tmp);
   _changed = true;
@@ -319,10 +319,10 @@ void GEO_Internals::addPlaneSurface(int num, std::vector<int> wireTags)
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < wireTags.size(); i++)
     List_Add(tmp, &wireTags[i]);
-  Surface *s = Create_Surface(num, MSH_SURF_PLAN);
+  Surface *s = CreateSurface(num, MSH_SURF_PLAN);
   SetSurfaceGeneratrices(s, tmp);
   List_Delete(tmp);
-  End_Surface(s);
+  EndSurface(s);
   Tree_Add(Surfaces, &s);
   _changed = true;
 }
@@ -333,7 +333,7 @@ void GEO_Internals::addDiscreteSurface(int num)
     Msg::Error("GEO face with tag %d already exists", num);
     return;
   }
-  Surface *s = Create_Surface(num, MSH_SURF_DISCRETE);
+  Surface *s = CreateSurface(num, MSH_SURF_DISCRETE);
   Tree_Add(Surfaces, &s);
   _changed = true;
 }
@@ -366,10 +366,10 @@ void GEO_Internals::addSurfaceFilling(int num, std::vector<int> wireTags,
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < wireTags.size(); i++)
     List_Add(tmp, &wireTags[i]);
-  Surface *s = Create_Surface(num, type);
+  Surface *s = CreateSurface(num, type);
   SetSurfaceGeneratrices(s, tmp);
   List_Delete(tmp);
-  End_Surface(s);
+  EndSurface(s);
   if(sphereCenterTag >= 0){
     s->InSphereCenter = FindPoint(sphereCenterTag);
     if(!s->InSphereCenter)
@@ -387,7 +387,7 @@ void GEO_Internals::addCompoundSurface(int num, std::vector<int> faceTags,
     return;
   }
 
-  Surface *s = Create_Surface(num, MSH_SURF_COMPOUND);
+  Surface *s = CreateSurface(num, MSH_SURF_COMPOUND);
   s->compound = faceTags;
   if(edgeTags){
     for(int i = 0; i < 4; i++)
@@ -408,7 +408,7 @@ void GEO_Internals::addSurfaceLoop(int num, std::vector<int> faceTags)
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < faceTags.size(); i++)
     List_Add(tmp, &faceTags[i]);
-  SurfaceLoop *l = Create_SurfaceLoop(num, tmp);
+  SurfaceLoop *l = CreateSurfaceLoop(num, tmp);
   Tree_Add(SurfaceLoops, &l);
   List_Delete(tmp);
   _changed = true;
@@ -424,7 +424,7 @@ void GEO_Internals::addVolume(int num, std::vector<int> shellTags)
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < shellTags.size(); i++)
     List_Add(tmp, &shellTags[i]);
-  Volume *v = Create_Volume(num, MSH_VOLUME);
+  Volume *v = CreateVolume(num, MSH_VOLUME);
   SetVolumeSurfaces(v, tmp);
   List_Delete(tmp);
   Tree_Add(Volumes, &v);
@@ -438,7 +438,7 @@ void GEO_Internals::addCompoundVolume(int num, std::vector<int> regionTags)
     return;
   }
 
-  Volume *v = Create_Volume(num, MSH_VOLUME_COMPOUND);
+  Volume *v = CreateVolume(num, MSH_VOLUME_COMPOUND);
   v->compound = regionTags;
   Tree_Add(Volumes, &v);
   _changed = true;
@@ -548,7 +548,7 @@ void GEO_Internals::remove(int dim, int tag)
 
 void GEO_Internals::resetPhysicalGroups()
 {
-  List_Action(PhysicalGroups, Free_PhysicalGroup);
+  List_Action(PhysicalGroups, FreePhysicalGroup);
   List_Reset(PhysicalGroups);
   _changed = true;
 }
@@ -575,7 +575,7 @@ void GEO_Internals::modifyPhysicalGroup(int dim, int num, int op, std::vector<in
     List_T *tmp = List_Create(10, 10, sizeof(int));
     for(unsigned int i = 0; i < tags.size(); i++)
       List_Add(tmp, &tags[i]);
-    p = Create_PhysicalGroup(num, type, tmp);
+    p = CreatePhysicalGroup(num, type, tmp);
     List_Delete(tmp);
     List_Add(PhysicalGroups, &p);
   }
@@ -1330,14 +1330,14 @@ int GModel::exportDiscreteGEOInternals()
   _geo_internals = new GEO_Internals;
 
   for(viter it = firstVertex(); it != lastVertex(); it++){
-    Vertex *v = Create_Vertex((*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z(),
+    Vertex *v = CreateVertex((*it)->tag(), (*it)->x(), (*it)->y(), (*it)->z(),
         (*it)->prescribedMeshSizeAtVertex(), 1.0);
     Tree_Add(_geo_internals->Points, &v);
   }
 
   for(eiter it = firstEdge(); it != lastEdge(); it++){
     if((*it)->geomType() == GEntity::DiscreteCurve){
-      Curve *c = Create_Curve((*it)->tag(), MSH_SEGM_DISCRETE, 1,
+      Curve *c = CreateCurve((*it)->tag(), MSH_SEGM_DISCRETE, 1,
           NULL, NULL, -1, -1, 0., 1.);
       List_T *points = Tree2List(_geo_internals->Points);
       GVertex *gvb = (*it)->getBeginVertex();
@@ -1356,7 +1356,7 @@ int GModel::exportDiscreteGEOInternals()
           c->end = v;
         }
       }
-      End_Curve(c);
+      EndCurve(c);
       Tree_Add(_geo_internals->Curves, &c);
       CreateReversedCurve(c);
       List_Delete(points);
@@ -1365,7 +1365,7 @@ int GModel::exportDiscreteGEOInternals()
 
   for(fiter it = firstFace(); it != lastFace(); it++){
     if((*it)->geomType() == GEntity::DiscreteSurface){
-      Surface *s = Create_Surface((*it)->tag(), MSH_SURF_DISCRETE);
+      Surface *s = CreateSurface((*it)->tag(), MSH_SURF_DISCRETE);
       std::list<GEdge*> edges = (*it)->edges();
       s->Generatrices = List_Create(edges.size(), 1, sizeof(Curve *));
       List_T *curves = Tree2List(_geo_internals->Curves);

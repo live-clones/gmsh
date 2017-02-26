@@ -34,7 +34,7 @@ struct surface_params
 class GRegion;
 
 // A model face.
-class GFace : public GEntity{
+class GFace : public GEntity {
  protected:
   // edge loops might replace what follows (list of all the edges of
   // the face + directions)

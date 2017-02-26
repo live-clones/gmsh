@@ -18,7 +18,7 @@
 #include "ExtrudeParams.h"
 #include "findLinks.h"
 
-struct Coord{
+struct Coord {
   double X, Y, Z;
 };
 
@@ -59,14 +59,14 @@ class Vertex {
   }
 };
 
-class CircParam{
+class CircParam {
  public:
   double t1, t2, f1, f2, incl;
   double invmat[3][3];
   double n[3];
 };
 
-class Curve{
+class Curve {
  public:
   int Num;
   int Typ;
@@ -96,13 +96,13 @@ class Curve{
   }
 };
 
-class EdgeLoop{
+class EdgeLoop {
  public:
   int Num;
   List_T *Curves;
 };
 
-class Surface{
+class Surface {
  public:
   int Num;
   int Typ;
@@ -127,7 +127,7 @@ class Surface{
   bool degenerate() const;
 };
 
-class SurfaceLoop{
+class SurfaceLoop {
  public:
   int Num;
   List_T *Surfaces;
@@ -148,44 +148,44 @@ class Volume {
   std::vector<int> compound;
 };
 
-class PhysicalGroup{
+class PhysicalGroup {
  public:
   int Num;
   int Typ;
   List_T *Entities;
 };
 
-int compareVertex(const void *a, const void *b);
-int compareSurfaceLoop(const void *a, const void *b);
-int compareEdgeLoop(const void *a, const void *b);
-int compareCurve(const void *a, const void *b);
-int compareSurface(const void *a, const void *b);
-int compareVolume(const void *a, const void *b);
-int comparePhysicalGroup(const void *a, const void *b);
+int CompareVertex(const void *a, const void *b);
+int CompareSurfaceLoop(const void *a, const void *b);
+int CompareEdgeLoop(const void *a, const void *b);
+int CompareCurve(const void *a, const void *b);
+int CompareSurface(const void *a, const void *b);
+int CompareVolume(const void *a, const void *b);
+int ComparePhysicalGroup(const void *a, const void *b);
 
-void Free_Vertex(void *a, void *b);
-void Free_PhysicalGroup(void *a, void *b);
-void Free_EdgeLoop(void *a, void *b);
-void Free_SurfaceLoop(void *a, void *b);
-void Free_Curve(void *a, void *b);
-void Free_Surface(void *a, void *b);
-void Free_Volume(void *a, void *b);
+void FreeVertex(void *a, void *b);
+void FreePhysicalGroup(void *a, void *b);
+void FreeEdgeLoop(void *a, void *b);
+void FreeSurfaceLoop(void *a, void *b);
+void FreeCurve(void *a, void *b);
+void FreeSurface(void *a, void *b);
+void FreeVolume(void *a, void *b);
 
 void Projette(Vertex *v, double mat[3][3]);
 
-Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u);
-Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *s, double lc);
-Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
+Vertex *CreateVertex(int Num, double X, double Y, double Z, double lc, double u);
+Vertex *CreateVertex(int Num, double u, double v, gmshSurface *s, double lc);
+Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste,
                     List_T *Knots, int p1, int p2, double u1, double u2);
 Curve *CreateReversedCurve(Curve *c);
-Surface *Create_Surface(int Num, int Typ);
-Volume *Create_Volume(int Num, int Typ);
-EdgeLoop *Create_EdgeLoop(int Num, List_T *intlist);
-SurfaceLoop *Create_SurfaceLoop(int Num, List_T *intlist);
-PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist);
+Surface *CreateSurface(int Num, int Typ);
+Volume *CreateVolume(int Num, int Typ);
+EdgeLoop *CreateEdgeLoop(int Num, List_T *intlist);
+SurfaceLoop *CreateSurfaceLoop(int Num, List_T *intlist);
+PhysicalGroup *CreatePhysicalGroup(int Num, int typ, List_T *intlist);
 
-void End_Curve(Curve *c);
-void End_Surface(Surface *s);
+void EndCurve(Curve *c);
+void EndSurface(Surface *s);
 
 Vertex *FindPoint(int inum);
 Curve *FindCurve(int inum);
@@ -218,36 +218,35 @@ void DeletePhysicalVolume(int Num);
 
 void SetPartition(int Type, int Num, int Partition);
 
-void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
-                  double T0, double T1, double T2,
-                  double A0, double A1, double A2,
-                  double X0, double X1, double X2, double alpha,
-                  ExtrudeParams *e,
-                  List_T *out);
 void ExtrudeShapes(int extrude_type, List_T *in,
                    double T0, double T1, double T2,
                    double A0, double A1, double A2,
                    double X0, double X1, double X2, double alpha,
                    ExtrudeParams *e,
                    List_T *out);
-
-int Extrude_ProtudePoint(int type, int ip,
-			 double T0, double T1, double T2,
-			 double A0, double A1, double A2,
-			 double X0, double X1, double X2, double alpha,
-			 Curve **pc, Curve **prc, int final,
-			 ExtrudeParams *e);
-int Extrude_ProtudeCurve(int type, int ic,
-			 double T0, double T1, double T2,
-			 double A0, double A1, double A2,
-			 double X0, double X1, double X2, double alpha,
-			 Surface **ps, int final,
-			 ExtrudeParams *e);
-int Extrude_ProtudeSurface(int type, int is,
-			   double T0, double T1, double T2,
-			   double A0, double A1, double A2,
-			   double X0, double X1, double X2, double alpha,
-			   Volume **pv, ExtrudeParams *e);
+void ExtrudeShape(int extrude_type, int shape_type, int shape_num,
+                  double T0, double T1, double T2,
+                  double A0, double A1, double A2,
+                  double X0, double X1, double X2, double alpha,
+                  ExtrudeParams *e,
+                  List_T *out);
+int ExtrudePoint(int type, int ip,
+                 double T0, double T1, double T2,
+                 double A0, double A1, double A2,
+                 double X0, double X1, double X2, double alpha,
+                 Curve **pc, Curve **prc, int final,
+                 ExtrudeParams *e);
+int ExtrudeCurve(int type, int ic,
+                 double T0, double T1, double T2,
+                 double A0, double A1, double A2,
+                 double X0, double X1, double X2, double alpha,
+                 Surface **ps, int final,
+                 ExtrudeParams *e);
+int ExtrudeSurface(int type, int is,
+                   double T0, double T1, double T2,
+                   double A0, double A1, double A2,
+                   double X0, double X1, double X2, double alpha,
+                   Volume **pv, ExtrudeParams *e);
 void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e);
 
 void ReplaceAllDuplicates();

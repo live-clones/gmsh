@@ -19,14 +19,14 @@ static List_T *ListOfTransformedPoints = NULL;
 
 // Comparison routines
 
-int compareVertex(const void *a, const void *b)
+int CompareVertex(const void *a, const void *b)
 {
   Vertex *q = *(Vertex **)a;
   Vertex *w = *(Vertex **)b;
   return abs(q->Num) - abs(w->Num);
 }
 
-static int comparePosition(const void *a, const void *b)
+static int ComparePosition(const void *a, const void *b)
 {
   Vertex *q = *(Vertex **)a;
   Vertex *w = *(Vertex **)b;
@@ -43,42 +43,42 @@ static int comparePosition(const void *a, const void *b)
   return 0;
 }
 
-int compareSurfaceLoop(const void *a, const void *b)
+int CompareSurfaceLoop(const void *a, const void *b)
 {
   SurfaceLoop *q = *(SurfaceLoop **)a;
   SurfaceLoop *w = *(SurfaceLoop **)b;
   return q->Num - w->Num;
 }
 
-int compareEdgeLoop(const void *a, const void *b)
+int CompareEdgeLoop(const void *a, const void *b)
 {
   EdgeLoop *q = *(EdgeLoop **)a;
   EdgeLoop *w = *(EdgeLoop **)b;
   return q->Num - w->Num;
 }
 
-int compareCurve(const void *a, const void *b)
+int CompareCurve(const void *a, const void *b)
 {
   Curve *q = *(Curve **)a;
   Curve *w = *(Curve **)b;
   return q->Num - w->Num;
 }
 
-int compareSurface(const void *a, const void *b)
+int CompareSurface(const void *a, const void *b)
 {
   Surface *q = *(Surface **)a;
   Surface *w = *(Surface **)b;
   return q->Num - w->Num;
 }
 
-int compareVolume(const void *a, const void *b)
+int CompareVolume(const void *a, const void *b)
 {
   Volume *q = *(Volume **)a;
   Volume *w = *(Volume **)b;
   return q->Num - w->Num;
 }
 
-int comparePhysicalGroup(const void *a, const void *b)
+int ComparePhysicalGroup(const void *a, const void *b)
 {
   PhysicalGroup *q = *(PhysicalGroup **)a;
   PhysicalGroup *w = *(PhysicalGroup **)b;
@@ -101,7 +101,7 @@ void Projette(Vertex *v, double mat[3][3])
 
 // Basic entity creation/deletion functions
 
-Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u)
+Vertex *CreateVertex(int Num, double X, double Y, double Z, double lc, double u)
 {
   Vertex *pV = new Vertex(X, Y, Z, lc);
   pV->w = 1.0;
@@ -113,7 +113,7 @@ Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u
   return pV;
 }
 
-Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *surf, double lc)
+Vertex *CreateVertex(int Num, double u, double v, gmshSurface *surf, double lc)
 {
   SPoint3 p = surf->point(u, v);
   Vertex *pV = new Vertex(p.x(), p.y(), p.z(), lc);
@@ -128,7 +128,7 @@ Vertex *Create_Vertex(int Num, double u, double v, gmshSurface *surf, double lc)
   return pV;
 }
 
-void Free_Vertex(void *a, void *b)
+void FreeVertex(void *a, void *b)
 {
   Vertex *v = *(Vertex **)a;
   if(v) {
@@ -137,7 +137,7 @@ void Free_Vertex(void *a, void *b)
   }
 }
 
-PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist)
+PhysicalGroup *CreatePhysicalGroup(int Num, int typ, List_T *intlist)
 {
   PhysicalGroup *p = new PhysicalGroup;
   p->Entities = List_Create(List_Nbr(intlist), 1, sizeof(int));
@@ -153,7 +153,7 @@ PhysicalGroup *Create_PhysicalGroup(int Num, int typ, List_T *intlist)
   return p;
 }
 
-void Free_PhysicalGroup(void *a, void *b)
+void FreePhysicalGroup(void *a, void *b)
 {
   PhysicalGroup *p = *(PhysicalGroup **)a;
   if(p) {
@@ -163,7 +163,7 @@ void Free_PhysicalGroup(void *a, void *b)
   }
 }
 
-EdgeLoop *Create_EdgeLoop(int Num, List_T *intlist)
+EdgeLoop *CreateEdgeLoop(int Num, List_T *intlist)
 {
   EdgeLoop *l = new EdgeLoop;
   l->Curves = List_Create(List_Nbr(intlist), 1, sizeof(int));
@@ -178,7 +178,7 @@ EdgeLoop *Create_EdgeLoop(int Num, List_T *intlist)
   return l;
 }
 
-void Free_EdgeLoop(void *a, void *b)
+void FreeEdgeLoop(void *a, void *b)
 {
   EdgeLoop *l = *(EdgeLoop **)a;
   if(l) {
@@ -188,7 +188,7 @@ void Free_EdgeLoop(void *a, void *b)
   }
 }
 
-SurfaceLoop *Create_SurfaceLoop(int Num, List_T *intlist)
+SurfaceLoop *CreateSurfaceLoop(int Num, List_T *intlist)
 {
   SurfaceLoop *l = new SurfaceLoop;
   l->Surfaces = List_Create(List_Nbr(intlist), 1, sizeof(int));
@@ -203,7 +203,7 @@ SurfaceLoop *Create_SurfaceLoop(int Num, List_T *intlist)
   return l;
 }
 
-void Free_SurfaceLoop(void *a, void *b)
+void FreeSurfaceLoop(void *a, void *b)
 {
   SurfaceLoop *l = *(SurfaceLoop **)a;
   if(l) {
@@ -220,7 +220,7 @@ static void direction(Vertex *v1, Vertex *v2, double d[3])
   d[2] = v2->Pos.Z - v1->Pos.Z;
 }
 
-void End_Curve(Curve *c)
+void EndCurve(Curve *c)
 {
   // if all control points of a curve are on the same geometry, then the curve
   // is also on the geometry
@@ -492,7 +492,7 @@ void End_Curve(Curve *c)
   }
 }
 
-void End_Surface(Surface *s)
+void EndSurface(Surface *s)
 {
   // if all generatrices of a surface are on the same geometry, then
   // the surface is also on the geometry
@@ -511,7 +511,7 @@ void End_Surface(Surface *s)
   }
 }
 
-Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
+Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste,
                     List_T *Knots, int p1, int p2, double u1, double u2)
 {
   double matcr[4][4] = { {-0.5, 1.5, -1.5, 0.5},
@@ -618,13 +618,13 @@ Curve *Create_Curve(int Num, int Typ, int Order, List_T *Liste,
         Msg::Error("Unknown control point %d in Curve %d (c)", p2, pC->Num);
       }
     }
-    End_Curve(pC);
+    EndCurve(pC);
   }
 
   return pC;
 }
 
-void Free_Curve(void *a, void *b)
+void FreeCurve(void *a, void *b)
 {
   Curve *pC = *(Curve **)a;
   if(pC) {
@@ -636,7 +636,7 @@ void Free_Curve(void *a, void *b)
   }
 }
 
-Surface *Create_Surface(int Num, int Typ)
+Surface *CreateSurface(int Num, int Typ)
 {
   Surface *pS = new Surface;
   pS->Num = Num;
@@ -660,7 +660,7 @@ Surface *Create_Surface(int Num, int Typ)
   return (pS);
 }
 
-void Free_Surface(void *a, void *b)
+void FreeSurface(void *a, void *b)
 {
   Surface *pS = *(Surface **)a;
   if(pS) {
@@ -673,7 +673,7 @@ void Free_Surface(void *a, void *b)
   }
 }
 
-Volume *Create_Volume(int Num, int Typ)
+Volume *CreateVolume(int Num, int Typ)
 {
   Volume *pV = new Volume;
   pV->Recombine3D = 0;
@@ -691,7 +691,7 @@ Volume *Create_Volume(int Num, int Typ)
   return pV;
 }
 
-void Free_Volume(void *a, void *b)
+void FreeVolume(void *a, void *b)
 {
   Volume *pV = *(Volume **)a;
   if(pV) {
@@ -705,7 +705,7 @@ void Free_Volume(void *a, void *b)
   }
 }
 
-static int compare2Lists(List_T *List1, List_T *List2,
+static int Compare2Lists(List_T *List1, List_T *List2,
                          int (*fcmp) (const void *a, const void *b))
 {
   int i, found;
@@ -826,7 +826,7 @@ PhysicalGroup *FindPhysicalGroup(int num, int type)
   pp->Typ = type;
   if((ppp = (PhysicalGroup **)
       List_PQuery(GModel::current()->getGEOInternals()->PhysicalGroups, &pp,
-                  comparePhysicalGroup))) {
+                  ComparePhysicalGroup))) {
     return *ppp;
   }
   return NULL;
@@ -844,13 +844,13 @@ static void CopyVertex(Vertex *v, Vertex *vv)
 Vertex *DuplicateVertex(Vertex *v)
 {
   if(!v) return NULL;
-  Vertex *pv = Create_Vertex(NEWPOINT(), 0, 0, 0, 0, 0);
+  Vertex *pv = CreateVertex(NEWPOINT(), 0, 0, 0, 0, 0);
   CopyVertex(v, pv);
   Tree_Insert(GModel::current()->getGEOInternals()->Points, &pv);
   return pv;
 }
 
-static int compareAbsCurve(const void *a, const void *b)
+static int CompareAbsCurve(const void *a, const void *b)
 {
   Curve *q = *(Curve **)a;
   Curve *w = *(Curve **)b;
@@ -877,12 +877,12 @@ static void CopyCurve(Curve *c, Curve *cc)
   cc->uend = c->uend;
   cc->Control_Points = List_Create(List_Nbr(c->Control_Points), 1, sizeof(Vertex *));
   List_Copy(c->Control_Points, cc->Control_Points);
-  End_Curve(cc);
+  EndCurve(cc);
 }
 
 Curve *DuplicateCurve(Curve *c)
 {
-  Curve *pc = Create_Curve(NEWLINE(), 0, 1, NULL, NULL, -1, -1, 0., 1.);
+  Curve *pc = CreateCurve(NEWLINE(), 0, 1, NULL, NULL, -1, -1, 0., 1.);
   CopyCurve(c, pc);
   Tree_Insert(GModel::current()->getGEOInternals()->Curves, &pc);
   for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
@@ -917,12 +917,12 @@ static void CopySurface(Surface *s, Surface *ss)
   ss->InSphereCenter = s->InSphereCenter; // FIXME: hack...
   List_Copy(s->Generatrices, ss->Generatrices);
   List_Copy(s->GeneratricesByTag, ss->GeneratricesByTag);
-  End_Surface(ss);
+  EndSurface(ss);
 }
 
 Surface *DuplicateSurface(Surface *s)
 {
-  Surface *ps = Create_Surface(NEWSURFACE(), 0);
+  Surface *ps = CreateSurface(NEWSURFACE(), 0);
   CopySurface(s, ps);
   Tree_Insert(GModel::current()->getGEOInternals()->Surfaces, &ps);
   for(int i = 0; i < List_Nbr(ps->Generatrices); i++) {
@@ -951,7 +951,7 @@ static void CopyVolume(Volume *v, Volume *vv)
 
 Volume *DuplicateVolume(Volume *v)
 {
-  Volume *pv = Create_Volume(NEWVOLUME(), 0);
+  Volume *pv = CreateVolume(NEWVOLUME(), 0);
   CopyVolume(v, pv);
   Tree_Insert(GModel::current()->getGEOInternals()->Volumes, &pv);
   for(int i = 0; i < List_Nbr(pv->Surfaces); i++) {
@@ -973,7 +973,7 @@ void DeletePoint(int ip)
     Curve *c;
     List_Read(Curves, i, &c);
     for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
-      if(!compareVertex(List_Pointer(c->Control_Points, j), &v)){
+      if(!CompareVertex(List_Pointer(c->Control_Points, j), &v)){
         List_Delete(Curves);
         // cannot delete: it's a control point of a curve
         return;
@@ -999,7 +999,7 @@ void DeleteCurve(int ip)
     Surface *s;
     List_Read(Surfs, i, &s);
     for(int j = 0; j < List_Nbr(s->Generatrices); j++) {
-      if(!compareAbsCurve(List_Pointer(s->Generatrices, j), &c)){
+      if(!CompareAbsCurve(List_Pointer(s->Generatrices, j), &c)){
         List_Delete(Surfs);
         // cannot delete: it's on the boundary of a surface
         return;
@@ -1025,7 +1025,7 @@ void DeleteSurface(int is)
     Volume *v;
     List_Read(Vols, i, &v);
     for(int j = 0; j < List_Nbr(v->Surfaces); j++) {
-      if(!compareSurface(List_Pointer(v->Surfaces, j), &s)){
+      if(!CompareSurface(List_Pointer(v->Surfaces, j), &s)){
         List_Delete(Vols);
         // cannot delete: it's on the boundary of a volume
         return;
@@ -1059,8 +1059,8 @@ void DeletePhysicalPoint(int num)
   PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_POINT);
   if(p){
     List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
-                  comparePhysicalGroup);
-    Free_PhysicalGroup(&p, NULL);
+                  ComparePhysicalGroup);
+    FreePhysicalGroup(&p, NULL);
   }
   GModel::current()->deletePhysicalGroup(0, num);
 }
@@ -1070,8 +1070,8 @@ void DeletePhysicalLine(int num)
   PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_LINE);
   if(p){
     List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
-                  comparePhysicalGroup);
-    Free_PhysicalGroup(&p, NULL);
+                  ComparePhysicalGroup);
+    FreePhysicalGroup(&p, NULL);
   }
   GModel::current()->deletePhysicalGroup(1, num);
 }
@@ -1081,8 +1081,8 @@ void DeletePhysicalSurface(int num)
   PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE);
   if(p){
     List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
-                  comparePhysicalGroup);
-    Free_PhysicalGroup(&p, NULL);
+                  ComparePhysicalGroup);
+    FreePhysicalGroup(&p, NULL);
   }
   GModel::current()->deletePhysicalGroup(2, num);
 }
@@ -1092,8 +1092,8 @@ void DeletePhysicalVolume(int num)
   PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_VOLUME);
   if(p){
     List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
-                  comparePhysicalGroup);
-    Free_PhysicalGroup(&p, NULL);
+                  ComparePhysicalGroup);
+    FreePhysicalGroup(&p, NULL);
   }
   GModel::current()->deletePhysicalGroup(3, num);
 }
@@ -1159,7 +1159,7 @@ void SetPartition(int Type, int Num, int Partition)
 
 Curve *CreateReversedCurve(Curve *c)
 {
-  Curve *newc = Create_Curve(-c->Num, c->Typ, 1, NULL, NULL, -1, -1, 0., 1.);
+  Curve *newc = CreateCurve(-c->Num, c->Typ, 1, NULL, NULL, -1, -1, 0., 1.);
 
   if(List_Nbr(c->Control_Points)){
     newc->Control_Points =
@@ -1208,11 +1208,11 @@ Curve *CreateReversedCurve(Curve *c)
   newc->degre = c->degre;
   newc->ubeg = 1. - c->uend;
   newc->uend = 1. - c->ubeg;
-  End_Curve(newc);
+  EndCurve(newc);
 
   Curve **pc;
   if((pc = (Curve **)Tree_PQuery(GModel::current()->getGEOInternals()->Curves, &newc))) {
-    Free_Curve(&newc, NULL);
+    FreeCurve(&newc, NULL);
     return *pc;
   }
   else{
@@ -1229,7 +1229,7 @@ int RecognizeLineLoop(List_T *liste, int *loop)
   for(int i = 0; i < List_Nbr(temp); i++) {
     EdgeLoop *pe;
     List_Read(temp, i, &pe);
-    if(!compare2Lists(pe->Curves, liste, fcmp_absint)) {
+    if(!Compare2Lists(pe->Curves, liste, fcmp_absint)) {
       res = 1;
       *loop = pe->Num;
       break;
@@ -1247,7 +1247,7 @@ int RecognizeSurfaceLoop(List_T *liste, int *loop)
   for(int i = 0; i < List_Nbr(temp); i++) {
     EdgeLoop *pe;
     List_Read(temp, i, &pe);
-    if(!compare2Lists(pe->Curves, liste, fcmp_absint)) {
+    if(!Compare2Lists(pe->Curves, liste, fcmp_absint)) {
       res = 1;
       *loop = pe->Num;
       break;
@@ -1469,7 +1469,7 @@ static void ApplyTransformationToPoint(double matrix[4][4], Vertex *v,
       for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
         Vertex *pv = *(Vertex **)List_Pointer(c->Control_Points, j);
         if(pv->Num == v->Num){
-          End_Curve(c);
+          EndCurve(c);
           break;
         }
       }
@@ -1493,7 +1493,7 @@ static void ApplyTransformationToCurve(double matrix[4][4], Curve *c)
     List_Read(c->Control_Points, i, &v);
     ApplyTransformationToPoint(matrix, v);
   }
-  End_Curve(c);
+  EndCurve(c);
 }
 
 static void ApplyTransformationToSurface(double matrix[4][4], Surface *s)
@@ -1504,7 +1504,7 @@ static void ApplyTransformationToSurface(double matrix[4][4], Surface *s)
     Curve *cc = FindCurve(abs(c->Num));
     ApplyTransformationToCurve(matrix, cc);
   }
-  End_Surface(s);
+  EndSurface(s);
 }
 
 static void ApplyTransformationToVolume(double matrix[4][4], Volume *v)
@@ -1725,8 +1725,8 @@ static List_T *GetCompoundUniqueEdges(Surface *ps)
             Curve *c_tmp2 = FindCurve( -itmap2->first );
 
             if( itmap != itmap2 &&
-                ( !compareTwoCurves( &c_tmp1, &c ) ||
-                  !compareTwoCurves( &c_tmp2, &c ) ) ){
+                ( !CompareTwoCurves( &c_tmp1, &c ) ||
+                  !CompareTwoCurves( &c_tmp2, &c ) ) ){
               unique_flag = false;
               break;
             }
@@ -1809,7 +1809,7 @@ static List_T* GetOrderedUniqueEdges(Surface *s)
 
 // Duplicate removal
 
-static int compareTwoPoints(const void *a, const void *b)
+static int CompareTwoPoints(const void *a, const void *b)
 {
   Vertex *q = *(Vertex **)a;
   Vertex *w = *(Vertex **)b;
@@ -1820,10 +1820,10 @@ static int compareTwoPoints(const void *a, const void *b)
   if(q->boundaryLayerIndex != w->boundaryLayerIndex)
     return q->boundaryLayerIndex - w->boundaryLayerIndex;
 
-  return comparePosition(a, b);
+  return ComparePosition(a, b);
 }
 
-static int compareTwoCurves(const void *a, const void *b)
+static int CompareTwoCurves(const void *a, const void *b)
 {
   Curve *c1 = *(Curve **)a;
   Curve *c2 = *(Curve **)b;
@@ -1846,12 +1846,12 @@ static int compareTwoCurves(const void *a, const void *b)
   if(!List_Nbr(c1->Control_Points)){
     if(!c1->beg || !c2->beg)
       return 1;
-    comp = compareVertex(&c1->beg, &c2->beg);
+    comp = CompareVertex(&c1->beg, &c2->beg);
     if(comp)
       return comp;
     if(!c1->end || !c2->end)
       return 1;
-    comp = compareVertex(&c1->end, &c2->end);
+    comp = CompareVertex(&c1->end, &c2->end);
     if(comp)
       return comp;
   }
@@ -1860,7 +1860,7 @@ static int compareTwoCurves(const void *a, const void *b)
       Vertex *v1, *v2;
       List_Read(c1->Control_Points, i, &v1);
       List_Read(c2->Control_Points, i, &v2);
-      comp = compareVertex(&v1, &v2);
+      comp = CompareVertex(&v1, &v2);
       if(comp)
         return comp;
     }
@@ -1868,12 +1868,12 @@ static int compareTwoCurves(const void *a, const void *b)
   return 0;
 }
 
-static int compareTwoSurfaces(const void *a, const void *b)
+static int CompareTwoSurfaces(const void *a, const void *b)
 {
   Surface *s1 = *(Surface **)a;
   Surface *s2 = *(Surface **)b;
 
-  // checking types is the "right thing" to do (see e.g. compareTwoCurves)
+  // checking types is the "right thing" to do (see e.g. CompareTwoCurves)
   // but it would break backward compatibility (see e.g. tutorial/t2.geo),
   // so let's just do it for boundary layer surfaces for now:
   if(s1->Typ == MSH_SURF_BND_LAYER || s2->Typ == MSH_SURF_BND_LAYER ||
@@ -1886,7 +1886,7 @@ static int compareTwoSurfaces(const void *a, const void *b)
   if(!List_Nbr(s1->Generatrices) && !List_Nbr(s2->Generatrices))
     return 1;
 
-  return compare2Lists(s1->Generatrices, s2->Generatrices, compareAbsCurve);
+  return Compare2Lists(s1->Generatrices, s2->Generatrices, CompareAbsCurve);
 }
 
 static void MaxNumPoint(void *a, void *b)
@@ -2007,7 +2007,7 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
   for(unsigned int i = 0; i < unused.size(); i++){
     Vertex *V = v2V[unused[i]];
     Tree_Suppress(GModel::current()->getGEOInternals()->Points, &V);
-    Free_Vertex(&V, NULL);
+    FreeVertex(&V, NULL);
     delete unused[i];
   }
   for(unsigned int i = 0; i < used.size(); i++){
@@ -2019,7 +2019,7 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
 
 static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
 {
-  // This routine is logically wrong: the compareTwoPoints() function used in
+  // This routine is logically wrong: the CompareTwoPoints() function used in
   // the avl tree is not an appropriate comparison function. Fixing the routine
   // is easy (we need to a multi-dimensional tree), but it would break backward
   // compatibility with old .geo files (the point ids after "Coherence" would
@@ -2032,8 +2032,8 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
   Curve *c;
   Surface *s;
   Volume *vol;
-  Tree_T *points2delete = Tree_Create(sizeof(Vertex *), compareVertex);
-  Tree_T *allNonDuplicatedPoints = Tree_Create(sizeof(Vertex *), compareTwoPoints);
+  Tree_T *points2delete = Tree_Create(sizeof(Vertex *), CompareVertex);
+  Tree_T *allNonDuplicatedPoints = Tree_Create(sizeof(Vertex *), CompareTwoPoints);
 
   // Create unique points
   int start = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
@@ -2182,7 +2182,7 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
     }
   }
 
-  Tree_Action(points2delete, Free_Vertex);
+  Tree_Action(points2delete, FreeVertex);
   Tree_Delete(points2delete);
   Tree_Delete(allNonDuplicatedPoints);
 
@@ -2193,8 +2193,8 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
 {
   Curve *c, *c2, **pc, **pc2;
   Surface *s;
-  Tree_T *curves2delete = Tree_Create(sizeof(Curve *), compareCurve);
-  Tree_T *allNonDuplicatedCurves = Tree_Create(sizeof(Curve *), compareTwoCurves);
+  Tree_T *curves2delete = Tree_Create(sizeof(Curve *), CompareCurve);
+  Tree_T *allNonDuplicatedCurves = Tree_Create(sizeof(Curve *), CompareTwoCurves);
 
   // Create unique curves
   int start = Tree_Nbr(GModel::current()->getGEOInternals()->Curves);
@@ -2208,7 +2208,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
         if(!(c2 = FindCurve(-c->Num))) {
           Msg::Error("Unknown curve %d", -c->Num);
           List_Delete(All);
-          Tree_Action(curves2delete, Free_Curve);
+          Tree_Action(curves2delete, FreeCurve);
           Tree_Delete(curves2delete);
           Tree_Delete(allNonDuplicatedCurves);
           return;
@@ -2247,7 +2247,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
   int end = Tree_Nbr(GModel::current()->getGEOInternals()->Curves);
 
   if(start == end) {
-    Tree_Action(curves2delete, Free_Curve);
+    Tree_Action(curves2delete, FreeCurve);
     Tree_Delete(curves2delete);
     Tree_Delete(allNonDuplicatedCurves);
     return;
@@ -2288,8 +2288,8 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
         Msg::Error("Could not replace curve %d in Coherence", (*pc)->Num);
       else {
         List_Write(s->Generatrices, j, pc2);
-        // arghhh: check compareTwoCurves!
-        End_Curve(*pc2);
+        // arghhh: check CompareTwoCurves!
+        EndCurve(*pc2);
       }
     }
     // replace extrusion sources
@@ -2324,7 +2324,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
     }
   }
 
-  Tree_Action(curves2delete, Free_Curve);
+  Tree_Action(curves2delete, FreeCurve);
   Tree_Delete(curves2delete);
   Tree_Delete(allNonDuplicatedCurves);
 }
@@ -2463,7 +2463,7 @@ static void RemoveDegenerateSurfaces()
 	v->Surfaces = List_Create(1, 2, sizeof(Surface *));
 	v->SurfacesOrientations = List_Create(1, 2, sizeof(int));
 	for(int j = 0; j < List_Nbr(ll); j++) {
-	  if(compareSurface(List_Pointer(ll, j), &s)){
+	  if(CompareSurface(List_Pointer(ll, j), &s)){
 	    List_Add(v->Surfaces, List_Pointer(ll, j));
 	    List_Add(v->SurfacesOrientations, List_Pointer(ll2, j));
 	  }
@@ -2492,8 +2492,8 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
 {
   Surface *s, *s2, **ps, **ps2;
   Volume *vol;
-  Tree_T *surfaces2delete = Tree_Create(sizeof(Surface *), compareSurface);
-  Tree_T *allNonDuplicatedSurfaces = Tree_Create(sizeof(Surface *), compareTwoSurfaces);
+  Tree_T *surfaces2delete = Tree_Create(sizeof(Surface *), CompareSurface);
+  Tree_T *allNonDuplicatedSurfaces = Tree_Create(sizeof(Surface *), CompareTwoSurfaces);
 
   // Create unique surfaces
   int start = Tree_Nbr(GModel::current()->getGEOInternals()->Surfaces);
@@ -2525,7 +2525,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
   int end = Tree_Nbr(GModel::current()->getGEOInternals()->Surfaces);
 
   if(start == end) {
-    Tree_Action(surfaces2delete, Free_Surface);
+    Tree_Action(surfaces2delete, FreeSurface);
     Tree_Delete(surfaces2delete);
     Tree_Delete(allNonDuplicatedSurfaces);
     return;
@@ -2599,7 +2599,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
     }
   }
 
-  Tree_Action(surfaces2delete, Free_Surface);
+  Tree_Action(surfaces2delete, FreeSurface);
   Tree_Delete(surfaces2delete);
   Tree_Delete(allNonDuplicatedSurfaces);
 }
@@ -2676,12 +2676,12 @@ void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e)
   List_Reset(ListOfTransformedPoints);
 }
 
-int Extrude_ProtudePoint(int type, int ip,
-			 double T0, double T1, double T2,
-			 double A0, double A1, double A2,
-			 double X0, double X1, double X2, double alpha,
-			 Curve **pc, Curve **prc, int final,
-			 ExtrudeParams *e)
+int ExtrudePoint(int type, int ip,
+                 double T0, double T1, double T2,
+                 double A0, double A1, double A2,
+                 double X0, double X1, double X2, double alpha,
+                 Curve **pc, Curve **prc, int final,
+                 ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3], d;
   Vertex V, *pv, *newp, *chapeau;
@@ -2706,9 +2706,9 @@ int Extrude_ProtudePoint(int type, int ip,
     SetTranslationMatrix(matrix, T);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
-    if(!comparePosition(&pv, &chapeau))
+    if(!ComparePosition(&pv, &chapeau))
       return pv->Num;
-    c = Create_Curve(NEWLINE(), MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
+    c = CreateCurve(NEWLINE(), MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2722,7 +2722,7 @@ int Extrude_ProtudePoint(int type, int ip,
   case BOUNDARY_LAYER:
     chapeau->Typ = MSH_POINT_BND_LAYER;
     if(e) chapeau->boundaryLayerIndex = e->mesh.BoundaryLayerIndex;
-    c = Create_Curve(NEWLINE(), MSH_SEGM_BND_LAYER, 1, NULL, NULL, -1, -1, 0., 1.);
+    c = CreateCurve(NEWLINE(), MSH_SEGM_BND_LAYER, 1, NULL, NULL, -1, -1, 0., 1.);
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2751,9 +2751,9 @@ int Extrude_ProtudePoint(int type, int ip,
     SetTranslationMatrix(matrix, T);
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
-    if(!comparePosition(&pv, &chapeau))
+    if(!ComparePosition(&pv, &chapeau))
       return pv->Num;
-    c = Create_Curve(NEWLINE(), MSH_SEGM_CIRC, 1, NULL, NULL, -1, -1, 0., 1.);
+    c = CreateCurve(NEWLINE(), MSH_SEGM_CIRC, 1, NULL, NULL, -1, -1, 0., 1.);
     c->Control_Points = List_Create(3, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
@@ -2781,7 +2781,7 @@ int Extrude_ProtudePoint(int type, int ip,
   case TRANSLATE_ROTATE:
     d = CTX::instance()->geom.extrudeSplinePoints;
     d = d ? d : 1;
-    c = Create_Curve(NEWLINE(), MSH_SEGM_SPLN, 1, NULL, NULL, -1, -1, 0., 1.);
+    c = CreateCurve(NEWLINE(), MSH_SEGM_SPLN, 1, NULL, NULL, -1, -1, 0., 1.);
     c->Control_Points =
       List_Create(CTX::instance()->geom.extrudeSplinePoints + 1, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
@@ -2826,7 +2826,7 @@ int Extrude_ProtudePoint(int type, int ip,
     return pv->Num;
   }
 
-  End_Curve(c);
+  EndCurve(c);
   Tree_Add(GModel::current()->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
   *pc = c;
@@ -2853,12 +2853,12 @@ int Extrude_ProtudePoint(int type, int ip,
   return chap_num;
 }
 
-int Extrude_ProtudeCurve(int type, int ic,
-			 double T0, double T1, double T2,
-			 double A0, double A1, double A2,
-			 double X0, double X1, double X2, double alpha,
-			 Surface **ps, int final,
-			 ExtrudeParams *e)
+int ExtrudeCurve(int type, int ic,
+                 double T0, double T1, double T2,
+                 double A0, double A1, double A2,
+                 double X0, double X1, double X2, double alpha,
+                 Surface **ps, int final,
+                 ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3];
   Curve *CurveBeg, *CurveEnd;
@@ -2967,12 +2967,12 @@ int Extrude_ProtudeCurve(int type, int ic,
     return pc->Num;
   }
 
-  Extrude_ProtudePoint(type, pc->beg->Num, T0, T1, T2,
-                       A0, A1, A2, X0, X1, X2, alpha,
-                       &CurveBeg, &ReverseBeg, 0, e);
-  Extrude_ProtudePoint(type, pc->end->Num, T0, T1, T2,
-                       A0, A1, A2, X0, X1, X2, alpha,
-                       &CurveEnd, &ReverseEnd, 0, e);
+  ExtrudePoint(type, pc->beg->Num, T0, T1, T2,
+               A0, A1, A2, X0, X1, X2, alpha,
+               &CurveBeg, &ReverseBeg, 0, e);
+  ExtrudePoint(type, pc->end->Num, T0, T1, T2,
+               A0, A1, A2, X0, X1, X2, alpha,
+               &CurveEnd, &ReverseEnd, 0, e);
 
   if(!CurveBeg && !CurveEnd){
     return pc->Num;
@@ -2984,11 +2984,11 @@ int Extrude_ProtudeCurve(int type, int ic,
   // handle this case.
 
   if(type == BOUNDARY_LAYER)
-    s = Create_Surface(NEWSURFACE(), MSH_SURF_BND_LAYER);
+    s = CreateSurface(NEWSURFACE(), MSH_SURF_BND_LAYER);
   else if(!CurveBeg || !CurveEnd)
-    s = Create_Surface(NEWSURFACE(), MSH_SURF_TRIC);
+    s = CreateSurface(NEWSURFACE(), MSH_SURF_TRIC);
   else
-    s = Create_Surface(NEWSURFACE(), MSH_SURF_REGL);
+    s = CreateSurface(NEWSURFACE(), MSH_SURF_REGL);
 
   s->Generatrices = List_Create(4, 1, sizeof(Curve *));
   s->Extrude = new ExtrudeParams;
@@ -3016,7 +3016,7 @@ int Extrude_ProtudeCurve(int type, int ic,
     List_Add(s->Generatrices, &ReverseBeg);
   }
 
-  End_Surface(s);
+  EndSurface(s);
   Tree_Add(GModel::current()->getGEOInternals()->Surfaces, &s);
 
   List_Reset(ListOfTransformedPoints);
@@ -3044,11 +3044,11 @@ int Extrude_ProtudeCurve(int type, int ic,
 }
 
 
-int Extrude_ProtudeSurface(int type, int is,
-			   double T0, double T1, double T2,
-			   double A0, double A1, double A2,
-			   double X0, double X1, double X2, double alpha,
-			   Volume **pv, ExtrudeParams *e)
+int ExtrudeSurface(int type, int is,
+                   double T0, double T1, double T2,
+                   double A0, double A1, double A2,
+                   double X0, double X1, double X2, double alpha,
+                   Volume **pv, ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3];
   Curve *c, *c2;
@@ -3102,7 +3102,7 @@ int Extrude_ProtudeSurface(int type, int is,
   // number, that will not interfere with the other numbers...
   int tmp = CTX::instance()->geom.oldNewreg;
   CTX::instance()->geom.oldNewreg = 0;
-  Volume *v = Create_Volume(NEWVOLUME(), MSH_VOLUME);
+  Volume *v = CreateVolume(NEWVOLUME(), MSH_VOLUME);
   CTX::instance()->geom.oldNewreg = tmp;
 
   v->Extrude = new ExtrudeParams;
@@ -3119,8 +3119,8 @@ int Extrude_ProtudeSurface(int type, int is,
 
   for(i = 0; i < List_Nbr(ps->Generatrices); i++) {
     List_Read(ps->Generatrices, i, &c);
-    Extrude_ProtudeCurve(type, c->Num, T0, T1, T2, A0, A1, A2, X0, X1, X2,
-                         alpha, &s, 0, e);
+    ExtrudeCurve(type, c->Num, T0, T1, T2, A0, A1, A2, X0, X1, X2,
+                 alpha, &s, 0, e);
     if(s){
       if(c->Num < 0)
         ori = -1;
@@ -3281,9 +3281,9 @@ void ExtrudeShapes(int type, List_T *list_in,
       {
         Curve *pc = 0, *prc = 0;
         Shape top;
-        top.Num = Extrude_ProtudePoint(type, shape.Num, T0, T1, T2,
-                                       A0, A1, A2, X0, X1, X2, alpha,
-                                       &pc, &prc, 1, e);
+        top.Num = ExtrudePoint(type, shape.Num, T0, T1, T2,
+                               A0, A1, A2, X0, X1, X2, alpha,
+                               &pc, &prc, 1, e);
         top.Type = MSH_POINT;
         List_Add(list_out, &top);
         if(pc){
@@ -3306,7 +3306,7 @@ void ExtrudeShapes(int type, List_T *list_in,
       {
         Surface *ps = 0;
         Shape top;
-        top.Num = Extrude_ProtudeCurve(type, shape.Num, T0, T1, T2,
+        top.Num = ExtrudeCurve(type, shape.Num, T0, T1, T2,
                                        A0, A1, A2, X0, X1, X2, alpha,
                                        &ps, 1, e);
         Curve *pc = FindCurve(top.Num);
@@ -3348,9 +3348,9 @@ void ExtrudeShapes(int type, List_T *list_in,
 
         Volume *pv = 0;
         Shape top;
-        top.Num = Extrude_ProtudeSurface(type, shape.Num, T0, T1, T2,
-                                         A0, A1, A2, X0, X1, X2, alpha,
-                                         &pv, e);
+        top.Num = ExtrudeSurface(type, shape.Num, T0, T1, T2,
+                                 A0, A1, A2, X0, X1, X2, alpha,
+                                 &pv, e);
         Surface *ps = FindSurface(top.Num);
         top.Type = ps ? ps->Typ : 0;
 
@@ -3484,13 +3484,13 @@ static Curve *_create_splitted_curve(Curve *c,List_T *nodes)
   Curve *cnew = NULL;
   switch(c->Typ){
   case MSH_SEGM_LINE:
-    cnew = Create_Curve(id, c->Typ, 1, nodes, NULL, -1, -1, 0., 1.);
+    cnew = CreateCurve(id, c->Typ, 1, nodes, NULL, -1, -1, 0., 1.);
     break;
   case MSH_SEGM_SPLN:
-    cnew = Create_Curve(id, c->Typ, 3, nodes, NULL, -1, -1, 0., 1.);
+    cnew = CreateCurve(id, c->Typ, 3, nodes, NULL, -1, -1, 0., 1.);
     break;
   case MSH_SEGM_BSPLN:
-    cnew = Create_Curve(id, c->Typ, 2, nodes, NULL, -1, -1, 0., 1.);
+    cnew = CreateCurve(id, c->Typ, 2, nodes, NULL, -1, -1, 0., 1.);
     break;
   default : //should never reach this point...
     Msg::Error("Cannot split a curve with type %i", c->Typ);
@@ -3648,7 +3648,7 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
       uvt(2) = 0.5;
       if(newton_fd(intersectCS, uvt, &cs)){
         Vertex p = InterpolateCurve(c, uvt(2), 0);
-        Vertex *v = Create_Vertex(NEWPOINT(), p.Pos.X, p.Pos.Y, p.Pos.Z, p.lc, p.u);
+        Vertex *v = CreateVertex(NEWPOINT(), p.Pos.X, p.Pos.Y, p.Pos.Z, p.lc, p.u);
         Tree_Insert(GModel::current()->getGEOInternals()->Points, &v);
         Shape sh;
         sh.Type = MSH_POINT;

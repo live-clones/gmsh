@@ -17,7 +17,7 @@
 
 discreteRegion::discreteRegion(GModel *model, int num) : GRegion(model, num)
 {
-  ::Volume *v = Create_Volume(num, MSH_VOLUME_DISCRETE);
+  ::Volume *v = CreateVolume(num, MSH_VOLUME_DISCRETE);
   Tree_Add(model->getGEOInternals()->Volumes, &v);
 }
 

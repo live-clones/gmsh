@@ -34,8 +34,7 @@ class MElementOctree;
 class GModelFactory;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
-class GModel
-{
+class GModel {
  private:
   friend class OCCFactory;
   std::multimap<std::pair<std::vector<int>, std::vector<int> >,
