@@ -924,9 +924,13 @@ void GEO_Internals::synchronize(GModel *model)
         }
         else{
           if(e->getNativeType() == GEntity::GmshModel &&
-             c->Typ != MSH_SEGM_COMPOUND)
-            ((gmshEdge*)e)->resetNativePtr(c, model->getVertexByTag(c->beg->Num),
-                                           model->getVertexByTag(c->end->Num));
+             c->Typ != MSH_SEGM_COMPOUND){
+            if(c->beg && c->end)
+              ((gmshEdge*)e)->resetNativePtr(c, model->getVertexByTag(c->beg->Num),
+                                             model->getVertexByTag(c->end->Num));
+            else
+              ((gmshEdge*)e)->resetNativePtr(c, 0, 0);
+          }
           e->resetMeshAttributes();
         }
         if(c->degenerated) e->setTooSmall(true);
