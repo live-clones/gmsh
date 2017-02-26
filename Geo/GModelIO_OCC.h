@@ -264,7 +264,7 @@ public:
   OCC_Internals(){}
   bool getChanged() const { return false; }
   void reset(){}
-  void setMaxTag(int dim, int val);
+  void setMaxTag(int dim, int val){}
   int getMaxTag(int dim) const { return 0; }
   void addVertex(int tag, double x, double y, double z, double meshSize=MAX_LC)
   { _error("add vertex"); }

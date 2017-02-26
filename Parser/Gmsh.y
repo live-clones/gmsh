@@ -21,8 +21,9 @@
 #include "GModel.h"
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
-#include "Geo.h"
-#include "GeoInterpolation.h"
+#include "GeoDefines.h"
+#include "Geo.h" // FIXME: remove once Extrusion, Color and Visibility have been refactored
+#include "ExtrudeParams.h"
 #include "Options.h"
 #include "Parser.h"
 #include "OpenFile.h"
@@ -2554,12 +2555,11 @@ ListOfShapes :
     }
 ;
 
-//  L E V E L S E T
+//  L E V E L S E T S
 
 LevelSet :
     tLevelset tPlane '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-#if defined(HAVE_DINTEGRATION)
       if(List_Nbr($7) == 4){
         int t = (int)$4;
         if(gLevelset::find(t)){
@@ -2574,24 +2574,20 @@ LevelSet :
         }
       }
       else
-        yymsg(0, "Wrong levelset definition (%d)", $4);
+        yymsg(0, "Wrong number of arguments for levelset definition");
       List_Delete($7);
-#endif
     }
   | tLevelset tPoint '(' FExpr ')' tAFFECT '{' RecursiveListOfListOfDouble '}' tEND
     {
-#if defined(HAVE_DINTEGRATION)
       int t = (int)$4;
       if(gLevelset::find(t)){
 	yymsg(0, "Levelset %d already exists", t);
       }
       else {
-	//Msg::Info("nb = %d \n",List_Nbr($8) );
 	fullMatrix<double> centers(List_Nbr($8),3);
 	for (int i = 0; i < List_Nbr($8); i++){
 	  List_T *l = *(List_T**)List_Pointer($8, i);
 	  for (int j = 0; j < List_Nbr(l); j++){
-	    //Msg::Info("nb j = %d \n",List_Nbr(l) );
 	    centers(i,j) = (double)(*(double*)List_Pointer(l, j));
 	  }
 	}
@@ -2601,54 +2597,40 @@ LevelSet :
       for(int i = 0; i < List_Nbr($8); i++)
         List_Delete(*(List_T**)List_Pointer($8, i));
       List_Delete($8);
-#endif
     }
   | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
                                                RecursiveListOfDouble '}' tEND
     {
-#if defined(HAVE_DINTEGRATION)
-      if(List_Nbr($12) == 0){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double pt[3] = {$8[0], $8[1], $8[2]};
-          double n[3] = {$10[0], $10[1], $10[2]};
-          gLevelset *ls = new gLevelsetPlane(pt, n, t);
-          gLevelset::add(ls);
-        }
+      int t = (int)$4;
+      if(gLevelset::find(t)){
+        yymsg(0, "Levelset %d already exists", t);
       }
-      else
-        yymsg(0, "Wrong levelset definition (%d)", $4);
+      else {
+        double pt[3] = {$8[0], $8[1], $8[2]};
+        double n[3] = {$10[0], $10[1], $10[2]};
+        gLevelset *ls = new gLevelsetPlane(pt, n, t);
+        gLevelset::add(ls);
+      }
       List_Delete($12);
-#endif
     }
   | tLevelset tPlane '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ',' VExpr ','
                                                RecursiveListOfDouble '}' tEND
     {
-#if defined(HAVE_DINTEGRATION)
-      if(List_Nbr($14) == 0){
-        int t = (int)$4;
-        if(gLevelset::find(t)){
-	  yymsg(0, "Levelset %d already exists", t);
-        }
-        else {
-          double pt1[3] = {$8[0], $8[1], $8[2]};
-          double pt2[3] = {$10[0], $10[1], $10[2]};
-          double pt3[3] = {$12[0], $12[1], $12[2]};
-          gLevelset *ls = new gLevelsetPlane(pt1, pt2, pt3, t);
-          gLevelset::add(ls);
-        }
+      int t = (int)$4;
+      if(gLevelset::find(t)){
+        yymsg(0, "Levelset %d already exists", t);
       }
-      else
-        yymsg(0, "Wrong levelset definition (%d)", $4);
+      else {
+        double pt1[3] = {$8[0], $8[1], $8[2]};
+        double pt2[3] = {$10[0], $10[1], $10[2]};
+        double pt3[3] = {$12[0], $12[1], $12[2]};
+        gLevelset *ls = new gLevelsetPlane(pt1, pt2, pt3, t);
+        gLevelset::add(ls);
+      }
       List_Delete($14);
-#endif
     }
   | tLevelset tSphere '(' FExpr ')' tAFFECT '{' VExpr ',' RecursiveListOfDouble '}' tEND
     {
-#if defined(HAVE_DINTEGRATION)
       if(List_Nbr($10) == 1){
         int t = (int)$4;
         if(gLevelset::find(t)){
@@ -2662,14 +2644,12 @@ LevelSet :
         }
       }
       else
-        yymsg(0, "Wrong levelset definition (%d)", $4);
+        yymsg(0, "Wrong number of arguments for levelset definition");
       List_Delete($10);
-#endif
     }
   | tLevelset tCylinder '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
                                                 RecursiveListOfDouble '}' tEND
     {
-#if defined(HAVE_DINTEGRATION)
       if(List_Nbr($12) == 1){
         int t = (int)$4;
         if(gLevelset::find(t)){
@@ -2715,14 +2695,12 @@ LevelSet :
         }
       }
       else
-        yymsg(0, "Wrong levelset definition (%d)", $4);
+        yymsg(0, "Wrong number of arguments for levelset definition");
       List_Delete($12);
-#endif
     }
   | tLevelset tCone '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
                                                 RecursiveListOfDouble '}' tEND
     {
-#if defined(HAVE_DINTEGRATION)
       if(List_Nbr($12) == 1){
         int t = (int)$4;
         if(gLevelset::find(t)){
@@ -2738,14 +2716,12 @@ LevelSet :
         }
       }
       else
-        yymsg(0, "Wrong levelset definition (%d)", $4);
+        yymsg(0, "Wrong number of arguments for levelset definition");
       List_Delete($12);
-#endif
     }
   | tLevelset tEllipsoid '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
                                                 RecursiveListOfDouble '}' tEND
     {
-#if defined(HAVE_DINTEGRATION)
       if(List_Nbr($12) == 3){
         int t = (int)$4;
         if(gLevelset::find(t)){
@@ -2762,14 +2738,12 @@ LevelSet :
         }
       }
       else
-        yymsg(0, "Wrong levelset definition (%d)", $4);
+        yymsg(0, "Wrong number of arguments for levelset definition");
       List_Delete($12);
-#endif
     }
   | tLevelset tQuadric '(' FExpr ')' tAFFECT '{' VExpr ',' VExpr ','
                                                 RecursiveListOfDouble '}' tEND
     {
-#if defined(HAVE_DINTEGRATION)
       if(List_Nbr($12) == 5){
         int t = (int)$4;
         if(gLevelset::find(t)){
@@ -2787,13 +2761,11 @@ LevelSet :
         }
       }
       else
-        yymsg(0, "Wrong levelset definition (%d)", $4);
+        yymsg(0, "Wrong number of arguments for levelset definition");
       List_Delete($12);
-#endif
     }
   | tLevelset tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-#if defined(HAVE_DINTEGRATION)
       if(!strcmp($2, "Union")){
         int t = (int)$4;
         if(gLevelset::find(t)){
@@ -2804,7 +2776,7 @@ LevelSet :
           for(int i = 0; i < List_Nbr($7); i++) {
             double d; List_Read($7, i, &d);
             gLevelset *pl = gLevelset::find((int)d);
-	    if(!pl) yymsg(0, "Levelset Union %d : unknown levelset %d", t, (int)d);
+	    if(!pl) yymsg(0, "Unknown levelset %d", (int)d);
             else vl.push_back(pl);
           }
           gLevelset *ls = new gLevelsetUnion(vl, true, t);
@@ -2821,7 +2793,7 @@ LevelSet :
           for(int i = 0; i < List_Nbr($7); i++) {
             double d; List_Read($7, i, &d);
             gLevelset *pl = gLevelset::find((int)d);
-	    if(!pl) yymsg(0, "Levelset Intersection %d : unknown levelset %d", t, (int)d);
+	    if(!pl) yymsg(0, "Unknown levelset %d", (int)d);
             else vl.push_back(pl);
           }
           gLevelset *ls = new gLevelsetIntersection(vl, true, t);
@@ -2838,7 +2810,7 @@ LevelSet :
           for(int i = 0; i < List_Nbr($7); i++) {
             double d; List_Read($7, i, &d);
             gLevelset *pl = gLevelset::find((int)d);
-	    if(!pl) yymsg(0, "Levelset Cut %d : unknown levelset %d", t, (int)d);
+	    if(!pl) yymsg(0, "Unknown levelset %d", (int)d);
             else vl.push_back(pl);
           }
           gLevelset *ls = new gLevelsetCut(vl, true, t);
@@ -2855,7 +2827,7 @@ LevelSet :
           for(int i = 0; i < List_Nbr($7); i++) {
             double d; List_Read($7, i, &d);
             gLevelset *pl = gLevelset::find((int)d);
-	    if(!pl) yymsg(0, "Levelset Crack %d : unknown levelset %d", t, (int)d);
+	    if(!pl) yymsg(0, "Unknown levelset %d", (int)d);
             else vl.push_back(pl);
           }
           gLevelset *ls = new gLevelsetCrack(vl, false, t);
@@ -2872,7 +2844,7 @@ LevelSet :
           List_Read($7, 0, &d);
           gLevelset *pl = gLevelset::find((int)d);
           gLevelset *ls = NULL;
-          if(!pl) yymsg(0, "Levelset Reverse %d : unknown levelset %d", t, (int)d);
+          if(!pl) yymsg(0, "Unknown levelset %d", (int)d);
           else ls = new gLevelsetReverse(pl, t);
           if(ls) gLevelset::add(ls);
         }
@@ -2893,14 +2865,12 @@ LevelSet :
       }
 #endif
       else
-        yymsg(0, "Wrong levelset definition (%d)", $4);
+        yymsg(0, "Wrong number of arguments for levelset definition");
       Free($2);
       List_Delete($7);
-#endif
     }
   | tLevelset tSTRING '(' FExpr ')' tAFFECT tBIGSTR tEND
     {
-#if defined(HAVE_DINTEGRATION)
       if(!strcmp($2, "MathEval")){
         int t = (int)$4;
         if(gLevelset::find(t)){
@@ -2912,13 +2882,11 @@ LevelSet :
         }
       }
       else
-        yymsg(0, "Wrong levelset definition");
+        yymsg(0, "Unknown levelset '%s'", $2);
       Free($2); Free($7);
-#endif
     }
   | tLevelset tSTRING '{' FExpr '}' tEND
     {
-#if defined(HAVE_DINTEGRATION)
       if(!strcmp($2, "CutMesh")){
         int t = (int)$4;
         GModel *GM = GModel::current();
@@ -2927,7 +2895,7 @@ LevelSet :
           GM->setVisibility(0);
         }
         else
-          yymsg(0, "Unknown levelset (%d)", t);
+          yymsg(0, "Unknown levelset %d", t);
       }
       else if(!strcmp($2, "CutMeshTri")){
         int t = (int)$4;
@@ -2937,7 +2905,7 @@ LevelSet :
           GM->setVisibility(0);
         }
         else
-          yymsg(0, "Unknown levelset (%d)", t);
+          yymsg(0, "Unknown levelset %d", t);
       }
       else if(!strcmp($2, "SplitMesh")){
         int t = (int)$4;
@@ -2947,12 +2915,11 @@ LevelSet :
           GM->setVisibility(0);
         }
         else
-          yymsg(0, "Unknown levelset (%d)", t);
+          yymsg(0, "Unknown levelset %d", t);
       }
       else
-        yymsg(0, "Wrong levelset definition");
+        yymsg(0, "Unknown levelset '%s'", $2);
       Free($2);
-#endif
     }
   ;
 
