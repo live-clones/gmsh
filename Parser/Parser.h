@@ -73,6 +73,7 @@ public:
   inline T & operator[] (K key) { return _map[key]; }
   inline std::map<K, T> & get() { return _map; }
   inline int count (std::string key) { return _map.count(key); }
+  inline int size () { return _map.size(); }
 
 public:
   std::map<K, T> _map;

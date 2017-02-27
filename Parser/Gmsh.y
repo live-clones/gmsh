@@ -2216,7 +2216,7 @@ Transform :
       }
       $$ = $8;
     }
-  | String__Index '{' MultipleShape '}'
+  | tSTRING '{' MultipleShape '}'
     {
       $$ = List_Create(3, 3, sizeof(Shape));
       std::string action($1);
@@ -4676,6 +4676,19 @@ FExpr_Single :
       }
       Free($2);
     }
+
+  | '#' String__Index tSCOPE
+    {
+      std::string struct_namespace($2);
+      $$ = (double)nameSpaces[struct_namespace].size();
+      Free($2);
+    }
+  | '#' tSCOPE
+    {
+      std::string struct_namespace(std::string(""));
+      $$ = (double)nameSpaces[struct_namespace].size();
+    }
+
   | String__Index NumericIncrement
     {
       if(!gmsh_yysymbols.count($1)){
@@ -4748,7 +4761,7 @@ FExpr_Single :
 
 //+++ ... extention to structures
 // PD: TO FIX (to avoid shift/reduce conflict)
-//  | Struct_FullName '.' tSTRING//_Member_Float
+//  | Struct_FullName '.' tSTRING_Member_Float
   | String__Index '.' tSTRING_Member_Float
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3);
@@ -4877,7 +4890,7 @@ DefineStruct :
         if (!nameSpaces[struct_namespace].count(struct_name)) {
           int index = (int)$6;
           if (index < 0)
-            index = nameSpaces[struct_namespace].get().size()+1;
+            index = nameSpaces[struct_namespace].size()+1;
           nameSpaces[struct_namespace][struct_name] =
             Struct(index, floatOptions, charOptions);
           $$ = (double)index;
