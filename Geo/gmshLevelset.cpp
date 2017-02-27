@@ -22,8 +22,13 @@
 #include "ANN/ANN.h"
 #endif
 
-static std::set<gLevelset*, gLevelsetLessThan> all_;
+std::set<gLevelset*, gLevelsetLessThan> gLevelset::all_;
 int gLevelset::maxTag_ = 0;
+
+bool gLevelsetLessThan::operator()(const gLevelset *l1, const gLevelset *l2) const
+{
+  return l1->getTag() < l2->getTag();
+}
 
 gLevelset *gLevelset::find(int tag)
 {

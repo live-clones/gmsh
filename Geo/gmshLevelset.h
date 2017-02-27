@@ -52,6 +52,13 @@ class ANNkd_tree;
 #define CRACK     15
 #define DISK     16
 
+class gLevelset;
+
+class gLevelsetLessThan {
+ public:
+  bool operator()(const gLevelset *l1, const gLevelset *l2) const;
+};
+
 class gLevelset : public simpleFunction<double>
 {
  protected:
@@ -61,6 +68,8 @@ class gLevelset : public simpleFunction<double>
   int tag_;
   // max tag in all levelsets
   static int maxTag_;
+  // all levelsets
+  static std::set<gLevelset*, gLevelsetLessThan> all_;
 public:
   gLevelset(int tag = 0)
   {
@@ -122,14 +131,6 @@ public:
     case LSPOINTS:     printf("LSPOINTS"); break;
     }
     printf(" Tag=%d\n", getTag());
-  }
-};
-
-class gLevelsetLessThan{
- public:
-  bool operator()(const gLevelset *l1, const gLevelset *l2) const
-  {
-    return l1->getTag() < l2->getTag();
   }
 };
 

@@ -88,8 +88,8 @@ static std::string LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
 static std::map<std::string, std::vector<double> > floatOptions;
 static std::map<std::string, std::vector<std::string> > charOptions;
 static std::string factory;
-static NameSpaces nameSpaces;
-static std::string struct_name, struct_namespace;
+static std::map<std::string, Struct> StructTable_M;
+static char *Struct_Name = 0, *Struct_NameSpace = 0;
 static int flag_tSTRING_alloc = 0;
 
 void yyerror(const char *s);
@@ -123,9 +123,6 @@ void setVisibility(int dim, int visible, bool recursive);
 void setVisibility(std::vector<int> tags[4], int visible, bool recursive);
 void setColor(std::vector<int> tags[4], unsigned int val, bool recursive);
 
-double treat_Struct_FullName_dot_tSTRING_Float(char* c1, char* c2, char* c3);
-char* treat_Struct_FullName_dot_tSTRING_String(char* c1, char* c2, char* c3);
-
 struct doubleXstring{
   double d;
   char *s;
@@ -141,13 +138,12 @@ struct doubleXstring{
   double v[5];
   Shape s;
   List_T *l;
-  struct TwoChar c2;
 }
 
 %token <d> tDOUBLE
 %token <c> tSTRING tBIGSTR
 
-%token tEND tAFFECT tDOTS tSCOPE tPi tMPI_Rank tMPI_Size tEuclidian tCoordinates tTestLevel
+%token tEND tAFFECT tDOTS tPi tMPI_Rank tMPI_Size tEuclidian tCoordinates tTestLevel
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil tRound
 %token tFmod tModulo tHypot tList tLinSpace tLogSpace tListFromFile tCatenary
@@ -161,7 +157,7 @@ struct doubleXstring{
 %token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
-%token tDefineNumber tDefineStruct tNameStruct tAppend
+%token tDefineNumber tDefineStruct tNameStruct
 %token tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tBlock tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
@@ -193,7 +189,6 @@ struct doubleXstring{
 %type <i> NumericAffectation NumericIncrement BooleanOperator BooleanOption
 %type <i> PhysicalId0 PhysicalId1 PhysicalId2 PhysicalId3
 %type <i> TransfiniteArrangement RecombineAngle InSphereCenter
-%type <i> Append AppendOrNot
 %type <u> ColorExpr
 %type <c> StringExpr StringExprVar SendToFile tSTRING_Member_Float HomologyCommand
 %type <c> LP RP
@@ -205,7 +200,6 @@ struct doubleXstring{
 %type <l> ListOfShapes Transform Extrude MultipleShape Boolean
 %type <l> TransfiniteCorners PeriodicTransform
 %type <s> Shape
-%type <c2> Struct_FullName
 
 // Operators (with ascending priority): cf. C language
 //
@@ -223,9 +217,7 @@ struct doubleXstring{
 %left    '*' '/' '%'
 %right   '!' tPLUSPLUS tMINUSMINUS UNARYPREC
 %right   '^'
-%left    '(' ')' '[' ']' '{' '}' '.' '#'
-%left    '~'
-%left    tSCOPE
+%left    '(' ')' '[' ']' '.' '#'
 
 %start All
 
@@ -372,7 +364,7 @@ Printf :
 // V I E W
 
 View :
-    String__Index StringExprVar '{' Views '}' tEND
+    tSTRING StringExprVar '{' Views '}' tEND
     {
 #if defined(HAVE_POST)
       if(!strcmp($1, "View") && ViewData->finalize()){
@@ -818,7 +810,7 @@ Affectation :
     }
 
   // lists of numbers with bracket notation
-  | String__Index '[' ']' NumericAffectation ListOfDouble tEND
+  | tSTRING '[' ']' NumericAffectation ListOfDouble tEND
     {
       gmsh_yysymbol &s(gmsh_yysymbols[$1]);
       s.list = true;
@@ -847,17 +839,63 @@ Affectation :
       Free($1);
       List_Delete($5);
     }
-  | String__Index '[' FExpr ']' NumericAffectation FExpr tEND
+  | StringIndex '[' ']' NumericAffectation ListOfDouble tEND
+    {
+      gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+      s.list = true;
+      double d;
+      switch($4){
+      case 0: // affect
+        s.value.clear(); // fall-through
+      case 1: // append
+        for(int i = 0; i < List_Nbr($5); i++){
+          List_Read($5, i, &d);
+          s.value.push_back(d);
+        }
+        break;
+      case 2: // remove
+        for(int i = 0; i < List_Nbr($5); i++){
+          List_Read($5, i, &d);
+          std::vector<double>::iterator it = std::find(s.value.begin(),
+                                                       s.value.end(), d);
+          if(it != s.value.end()) s.value.erase(it);
+        }
+        break;
+      default:
+        yymsg(0, "Operators *= and /= not available for lists");
+        break;
+      }
+      Free($1);
+      List_Delete($5);
+    }
+  | tSTRING '[' FExpr ']' NumericAffectation FExpr tEND
     {
       assignVariable($1, (int)$3, $5, $6);
       Free($1);
     }
-  | String__Index '[' FExpr ']' NumericIncrement tEND
+  | StringIndex '[' FExpr ']' NumericAffectation FExpr tEND
+    {
+      assignVariable($1, (int)$3, $5, $6);
+      Free($1);
+    }
+  | tSTRING '[' FExpr ']' NumericIncrement tEND
     {
       incrementVariable($1, $3, $5);
       Free($1);
     }
-  | String__Index LP '{' RecursiveListOfDouble '}' RP NumericAffectation ListOfDouble tEND
+  | StringIndex '[' FExpr ']' NumericIncrement tEND
+    {
+      incrementVariable($1, $3, $5);
+      Free($1);
+    }
+  | tSTRING LP '{' RecursiveListOfDouble '}' RP NumericAffectation ListOfDouble tEND
+    {
+      assignVariables($1, $4, $7, $8);
+      Free($1);
+      List_Delete($4);
+      List_Delete($8);
+    }
+  | StringIndex LP '{' RecursiveListOfDouble '}' RP NumericAffectation ListOfDouble tEND
     {
       assignVariables($1, $4, $7, $8);
       Free($1);
@@ -866,7 +904,8 @@ Affectation :
     }
 
   // lists of numbers with parentheses notation
-  | String__Index '(' ')' NumericAffectation ListOfDouble tEND
+
+  | tSTRING '(' ')' NumericAffectation ListOfDouble tEND
     {
       gmsh_yysymbol &s(gmsh_yysymbols[$1]);
       s.list = true;
@@ -895,12 +934,51 @@ Affectation :
       Free($1);
       List_Delete($5);
     }
-  | String__Index '(' FExpr ')' NumericAffectation FExpr tEND
+  | StringIndex '(' ')' NumericAffectation ListOfDouble tEND
+    {
+      gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+      s.list = true;
+      double d;
+      switch($4){
+      case 0: // affect
+        s.value.clear(); // fall-through
+      case 1: // append
+        for(int i = 0; i < List_Nbr($5); i++){
+          List_Read($5, i, &d);
+          s.value.push_back(d);
+        }
+        break;
+      case 2: // remove
+        for(int i = 0; i < List_Nbr($5); i++){
+          List_Read($5, i, &d);
+          std::vector<double>::iterator it = std::find(s.value.begin(),
+                                                       s.value.end(), d);
+          if(it != s.value.end()) s.value.erase(it);
+        }
+        break;
+      default:
+        yymsg(0, "Operators *= and /= not available for lists");
+        break;
+      }
+      Free($1);
+      List_Delete($5);
+    }
+  | tSTRING '(' FExpr ')' NumericAffectation FExpr tEND
     {
       assignVariable($1, (int)$3, $5, $6);
       Free($1);
     }
-  | String__Index '(' FExpr ')' NumericIncrement tEND
+  | StringIndex '(' FExpr ')' NumericAffectation FExpr tEND
+    {
+      assignVariable($1, (int)$3, $5, $6);
+      Free($1);
+    }
+  | tSTRING '(' FExpr ')' NumericIncrement tEND
+    {
+      incrementVariable($1, $3, $5);
+      Free($1);
+    }
+  | StringIndex '(' FExpr ')' NumericIncrement tEND
     {
       incrementVariable($1, $3, $5);
       Free($1);
@@ -916,13 +994,20 @@ Affectation :
     }
 
   // lists of strings with bracket notation
-  // lists of strings with parentheses notation
-  | String__Index LP RP tAFFECT tStr LP RP tEND
+
+  | tSTRING '[' ']' tAFFECT tStr LP RP tEND
     {
       gmsh_yystringsymbols[$1] = std::vector<std::string>();
       Free($1);
     }
-  | String__Index '[' ']' tAFFECT tStr LP RecursiveListOfStringExprVar RP tEND
+
+  | StringIndex '[' ']' tAFFECT tStr LP RP tEND
+    {
+      gmsh_yystringsymbols[$1] = std::vector<std::string>();
+      Free($1);
+    }
+
+  | tSTRING '[' ']' tAFFECT tStr LP RecursiveListOfStringExprVar RP tEND
     {
       std::vector<std::string> s;
       for(int i = 0; i < List_Nbr($7); i++){
@@ -934,7 +1019,106 @@ Affectation :
       Free($1);
       List_Delete($7);
     }
-  | String__Index '[' ']' tAFFECTPLUS tStr LP RecursiveListOfStringExprVar RP tEND
+
+  | StringIndex '[' ']' tAFFECT tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      std::vector<std::string> s;
+      for(int i = 0; i < List_Nbr($7); i++){
+        char **c = (char**)List_Pointer($7, i);
+        s.push_back(*c);
+        Free(*c);
+      }
+      gmsh_yystringsymbols[$1] = s;
+      Free($1);
+      List_Delete($7);
+    }
+
+  | tSTRING '[' ']' tAFFECTPLUS tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      if(gmsh_yystringsymbols.count($1)){
+        for(int i = 0; i < List_Nbr($7); i++){
+          char **c = (char**)List_Pointer($7, i);
+          gmsh_yystringsymbols[$1].push_back(*c);
+          Free(*c);
+        }
+      }
+      else
+        yymsg(0, "Uninitialized variable '%s'", $1);
+      Free($1);
+      List_Delete($7);
+    }
+
+  | StringIndex '[' ']' tAFFECTPLUS tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      if(gmsh_yystringsymbols.count($1)){
+        for(int i = 0; i < List_Nbr($7); i++){
+          char **c = (char**)List_Pointer($7, i);
+          gmsh_yystringsymbols[$1].push_back(*c);
+          Free(*c);
+        }
+      }
+      else
+        yymsg(0, "Uninitialized variable '%s'", $1);
+      Free($1);
+      List_Delete($7);
+    }
+
+  // lists of strings with parentheses notation
+
+  | tSTRING '(' ')' tAFFECT tStr LP RP tEND
+    {
+      gmsh_yystringsymbols[$1] = std::vector<std::string>();
+      Free($1);
+    }
+
+  | StringIndex '(' ')' tAFFECT tStr LP RP tEND
+    {
+      gmsh_yystringsymbols[$1] = std::vector<std::string>();
+      Free($1);
+    }
+
+  | tSTRING '(' ')' tAFFECT tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      std::vector<std::string> s;
+      for(int i = 0; i < List_Nbr($7); i++){
+        char **c = (char**)List_Pointer($7, i);
+        s.push_back(*c);
+        Free(*c);
+      }
+      gmsh_yystringsymbols[$1] = s;
+      Free($1);
+      List_Delete($7);
+    }
+
+  | StringIndex '(' ')' tAFFECT tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      std::vector<std::string> s;
+      for(int i = 0; i < List_Nbr($7); i++){
+        char **c = (char**)List_Pointer($7, i);
+        s.push_back(*c);
+        Free(*c);
+      }
+      gmsh_yystringsymbols[$1] = s;
+      Free($1);
+      List_Delete($7);
+    }
+
+  | tSTRING '(' ')' tAFFECTPLUS tStr LP RecursiveListOfStringExprVar RP tEND
+    {
+      if(gmsh_yystringsymbols.count($1)){
+        for(int i = 0; i < List_Nbr($7); i++){
+          char **c = (char**)List_Pointer($7, i);
+          gmsh_yystringsymbols[$1].push_back(*c);
+          Free(*c);
+        }
+      }
+      else
+        yymsg(0, "Uninitialized variable '%s'", $1);
+      Free($1);
+      List_Delete($7);
+    }
+
+  | StringIndex '(' ')' tAFFECTPLUS tStr LP RecursiveListOfStringExprVar RP tEND
     {
       if(gmsh_yystringsymbols.count($1)){
         for(int i = 0; i < List_Nbr($7); i++){
@@ -951,14 +1135,14 @@ Affectation :
 
   // Option Strings
 
-  | String__Index '.' tSTRING tAFFECT StringExpr tEND
+  | tSTRING '.' tSTRING tAFFECT StringExpr tEND
     {
       std::string tmp($5);
       StringOption(GMSH_SET|GMSH_GUI, $1, 0, $3, tmp);
       Free($1); Free($3); Free($5);
     }
 
-  | String__Index '[' FExpr ']' '.' tSTRING tAFFECT StringExpr tEND
+  | tSTRING '[' FExpr ']' '.' tSTRING tAFFECT StringExpr tEND
     {
       std::string tmp($8);
       StringOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $6, tmp);
@@ -967,7 +1151,7 @@ Affectation :
 
   // Option Numbers
 
-  | String__Index '.' tSTRING NumericAffectation FExpr tEND
+  | tSTRING '.' tSTRING NumericAffectation FExpr tEND
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, 0, $3, d)){
@@ -986,7 +1170,7 @@ Affectation :
       Free($1); Free($3);
     }
 
-  | String__Index '[' FExpr ']' '.' tSTRING NumericAffectation FExpr tEND
+  | tSTRING '[' FExpr ']' '.' tSTRING NumericAffectation FExpr tEND
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, (int)$3, $6, d)){
@@ -1005,7 +1189,7 @@ Affectation :
       Free($1); Free($6);
     }
 
-  | String__Index '.' tSTRING NumericIncrement tEND
+  | tSTRING '.' tSTRING NumericIncrement tEND
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, 0, $3, d)){
@@ -1015,7 +1199,7 @@ Affectation :
       Free($1); Free($3);
     }
 
-  | String__Index '[' FExpr ']' '.' tSTRING NumericIncrement tEND
+  | tSTRING '[' FExpr ']' '.' tSTRING NumericIncrement tEND
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, (int)$3, $6, d)){
@@ -1027,13 +1211,13 @@ Affectation :
 
   // Option Colors
 
-  | String__Index '.' tColor '.' tSTRING tAFFECT ColorExpr tEND
+  | tSTRING '.' tColor '.' tSTRING tAFFECT ColorExpr tEND
     {
       ColorOption(GMSH_SET|GMSH_GUI, $1, 0, $5, $7);
       Free($1); Free($5);
     }
 
-  | String__Index '[' FExpr ']' '.' tColor '.' tSTRING tAFFECT ColorExpr tEND
+  | tSTRING '[' FExpr ']' '.' tColor '.' tSTRING tAFFECT ColorExpr tEND
     {
       ColorOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $8, $10);
       Free($1); Free($8);
@@ -1041,7 +1225,7 @@ Affectation :
 
   // ColorTable
 
-  | String__Index '.' tColorTable tAFFECT ListOfColor tEND
+  | tSTRING '.' tColorTable tAFFECT ListOfColor tEND
     {
       GmshColorTable *ct = GetColorTable(0);
       if(!ct)
@@ -1062,7 +1246,7 @@ Affectation :
       List_Delete($5);
     }
 
-  | String__Index '[' FExpr ']' '.' tColorTable tAFFECT ListOfColor tEND
+  | tSTRING '[' FExpr ']' '.' tColorTable tAFFECT ListOfColor tEND
     {
       GmshColorTable *ct = GetColorTable((int)$3);
       if(!ct)
@@ -1085,7 +1269,7 @@ Affectation :
 
   // Fields
 
-  | String__Index tField tAFFECT FExpr tEND
+  | tSTRING tField tAFFECT FExpr tEND
     {
 #if defined(HAVE_MESH)
       if(!strcmp($1,"Background"))
@@ -2253,7 +2437,7 @@ Transform :
       }
       $$ = $8;
     }
-  | String__Index '{' MultipleShape '}'
+  | tSTRING '{' MultipleShape '}'
     {
       $$ = List_Create(3, 3, sizeof(Shape));
       std::string action($1);
@@ -2893,7 +3077,7 @@ Visibility :
 //  C O M M A N D
 
 Command :
-    String__Index StringExpr tEND
+    tSTRING StringExpr tEND
     {
       if(!strcmp($1, "Include")){
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
@@ -2984,7 +3168,7 @@ Command :
       }
       List_Delete($3);
     }
-  | String__Index String__Index '[' FExpr ']' StringExprVar tEND
+  | tSTRING tSTRING '[' FExpr ']' StringExprVar tEND
     {
 #if defined(HAVE_POST)
       if(!strcmp($1, "Save") && !strcmp($2, "View")){
@@ -3001,7 +3185,7 @@ Command :
 #endif
       Free($1); Free($2); Free($6);
     }
-  | String__Index String__Index String__Index '[' FExpr ']' tEND
+  | tSTRING tSTRING tSTRING '[' FExpr ']' tEND
     {
 #if defined(HAVE_POST) && defined(HAVE_MESH)
       if(!strcmp($1, "Background") && !strcmp($2, "Mesh")  && !strcmp($3, "View")){
@@ -3016,7 +3200,7 @@ Command :
 #endif
       Free($1); Free($2); Free($3);
     }
-  | String__Index FExpr tEND
+  | tSTRING FExpr tEND
     {
       if(!strcmp($1, "Sleep")){
 	SleepInSeconds($2);
@@ -4626,32 +4810,30 @@ FExpr_Single :
       $$ = Msg::GetOnelabNumber($3, $5);
       Free($3);
     }
-//+++
-  | Struct_FullName
+  | String__Index
     {
-      if(gmsh_yysymbols.count($1.char2)){
-        gmsh_yysymbol &s(gmsh_yysymbols[$1.char2]);
+      if(gmsh_yysymbols.count($1)){
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
         if(s.value.empty()){
-          yymsg(0, "Uninitialized variable '%s'", $1.char2);
+          yymsg(0, "Uninitialized variable '%s'", $1);
           $$ = 0.;
         }
         else
           $$ = s.value[0];
       }
       else{
-        std::string struct_namespace($1.char1? $1.char1 : std::string("")),
-          struct_name($1.char2);
-        if(nameSpaces.count(struct_namespace) &&
-           nameSpaces[struct_namespace].count(struct_name)) {
-          $$ = (double)nameSpaces[struct_namespace][struct_name]._index;
+        std::string key($1);
+        if(StructTable_M.count(key)) {
+          $$ = (double)StructTable_M[key]._value;
         }
         else {
-          yymsg(0, "Unknown variable: %s", struct_name.c_str());  $$ = 0.;
+          yymsg(0, "Unknown variable '%s'", $1);
+          $$ = 0.;
         }
       }
-      Free($1.char1); Free($1.char2);
+      Free($1);
     }
-  | String__Index '[' FExpr ']'
+  | tSTRING '[' FExpr ']'
     {
       int index = (int)$3;
       if(!gmsh_yysymbols.count($1)){
@@ -4669,7 +4851,43 @@ FExpr_Single :
       }
       Free($1);
     }
-  | String__Index '(' FExpr ')'
+  | tSTRING '(' FExpr ')'
+    {
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else
+          $$ = s.value[index];
+      }
+      Free($1);
+    }
+  | StringIndex '[' FExpr ']'
+    {
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else
+          $$ = s.value[index];
+      }
+      Free($1);
+    }
+  | StringIndex '(' FExpr ')'
     {
       int index = (int)$3;
       if(!gmsh_yysymbols.count($1)){
@@ -4732,7 +4950,7 @@ FExpr_Single :
       }
       Free($1);
     }
-  | String__Index '[' FExpr ']' NumericIncrement
+  | tSTRING '[' FExpr ']' NumericIncrement
     {
       int index = (int)$3;
       if(!gmsh_yysymbols.count($1)){
@@ -4752,8 +4970,47 @@ FExpr_Single :
       }
       Free($1);
     }
-
-  | String__Index '(' FExpr ')' NumericIncrement
+  | tSTRING '(' FExpr ')' NumericIncrement
+    {
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else{
+          $$ = s.value[index];
+          s.value[index] += $5;
+        }
+      }
+      Free($1);
+    }
+  | StringIndex '[' FExpr ']' NumericIncrement
+    {
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else{
+          $$ = s.value[index];
+          s.value[index] += $5;
+        }
+      }
+      Free($1);
+    }
+  | StringIndex '(' FExpr ')' NumericIncrement
     {
       int index = (int)$3;
       if(!gmsh_yysymbols.count($1)){
@@ -4775,51 +5032,38 @@ FExpr_Single :
     }
 
   // Option Strings
-/* not any more ...
+/*
   | tSTRING '.' tSTRING
     {
       NumberOption(GMSH_GET, $1, 0, $3, $$);
       Free($1); Free($3);
     }
 */
-
-//+++ ... extention to structures
-// PD: TO FIX (to avoid shift/reduce conflict)
-//  | Struct_FullName '.' tSTRING//_Member_Float
+    //+++extention to structures
   | String__Index '.' tSTRING_Member_Float
     {
-      $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3);
-      /*
-      std::string struct_namespace($1.char1? $1.char1 : std::string("")),
-        struct_name($1.char2);
-      if (nameSpaces.count(struct_namespace) &&
-          nameSpaces[struct_namespace].count(struct_name)) {
+      std::string key($1);
+      if(StructTable_M.count(key)) {
         std::string key2($3);
-        if (nameSpaces[struct_namespace][struct_name]._fopt.count(key2)) {
-	  $$ = nameSpaces[struct_namespace][struct_name]._fopt[key2][0];
+        if(StructTable_M[key]._fopt.count(key2)) {
+	  $$ = StructTable_M[key]._fopt[key2][0];
         }
         else {
-	  yymsg(0, "Unknown member '%s' of Struct %s", $3, struct_name.c_str());
-          $$ = 0.;
+	  yymsg(0, "Unknown member '%s' of Struct %s", $3, $1);  $$ = 0.;
 	}
       }
       else  {
-        NumberOption(GMSH_GET, $1.char2, 0, $3, $$);
+        NumberOption(GMSH_GET, $1, 0, $3, $$);
       }
-      Free($1.char1); Free($1.char2);
+      Free($1);
       if (flag_tSTRING_alloc) Free($3);
-      */
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float
-    { $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5); }
-
-  | String__Index '[' FExpr ']' '.' tSTRING
+  | tSTRING '[' FExpr ']' '.' tSTRING
     {
       NumberOption(GMSH_GET, $1, (int)$3, $6, $$);
       Free($1); Free($6);
     }
-
-  | String__Index '.' tSTRING NumericIncrement
+  | String__Index '.' tSTRING_Member_Float NumericIncrement
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, 0, $3, d)){
@@ -4829,8 +5073,7 @@ FExpr_Single :
       }
       Free($1); Free($3);
     }
-
-  | String__Index '[' FExpr ']' '.' tSTRING NumericIncrement
+  | tSTRING '[' FExpr ']' '.' tSTRING NumericIncrement
     {
       double d = 0.;
       if(NumberOption(GMSH_GET, $1, (int)$3, $6, d)){
@@ -4901,42 +5144,25 @@ FExpr_Single :
     }
 ;
 
-
+//+++
 DefineStruct :
-    tDefineStruct Struct_FullName AppendOrNot
+    tDefineStruct Struct_FullName
     { floatOptions.clear(); charOptions.clear(); }
+    Option_SaveStructNameInConstant
     '[' FExpr FloatParameterOptions ']'
     {
-      std::string struct_namespace($2.char1? $2.char1 : std::string("")),
-        struct_name($2.char2);
-      Free($2.char1); Free($2.char2);
-      if (!$3)
-        if (!nameSpaces[struct_namespace].count(struct_name)) {
-          int index = (int)$6;
-          if (index < 0)
-            index = nameSpaces[struct_namespace].get().size()+1;
-          nameSpaces[struct_namespace][struct_name] =
-            Struct(index, floatOptions, charOptions);
-          $$ = (double)index;
-        }
-        else {
-          yymsg(0, "Redefinition of Struct '%s::%s'",
-                struct_namespace.c_str(), struct_name.c_str());
-          $$ = $6;
-        }
-      else {
-        nameSpaces[struct_namespace][struct_name].
-          append(floatOptions, charOptions);
-        $$ = (double)nameSpaces[struct_namespace][struct_name]._index;
-      }
+      std::string key(Struct_Name);
+      StructTable_M[key] = Struct((int)$6, 1, floatOptions, charOptions);
+      $$ = $6;
+      Free(Struct_Name);
     }
 ;
 
 Struct_FullName :
     String__Index
-    { $$.char1 = NULL; $$.char2 = $1; }
-  | String__Index tSCOPE String__Index
-    { $$.char1 = $1; $$.char2 = $3; }
+    { Struct_NameSpace = NULL; Struct_Name = $1; }
+  | String__Index tDOTS tDOTS String__Index
+    { Struct_NameSpace = $1; Struct_Name = $4; }
 ;
 
 tSTRING_Member_Float :
@@ -4948,20 +5174,16 @@ tSTRING_Member_Float :
 */
 ;
 
-Append :
-    tAppend
-    { $$ = 99; } // Default: max level
-  | tAppend FExpr
-    { $$ = (int)$2; }
-  ;
 
-AppendOrNot :
-    /* none */
-    { $$ = 0; }
-  | '(' Append ')'
-    { $$ = $2; }
-  ;
-
+Option_SaveStructNameInConstant :
+    // None
+ | '{' String__Index '}'
+    {
+      std::string key($2), val(Struct_Name);
+      gmsh_yystringsymbols[key] = std::vector<std::string>(1, val);
+      Free($2);
+    }
+;
 
 VExpr :
     VExpr_Single
@@ -5249,7 +5471,19 @@ FExpr_Multi :
       }
       List_Delete($1);
     }
-  | String__Index LP RP
+  | tSTRING LP RP
+    {
+      $$ = List_Create(2, 1, sizeof(double));
+      if(!gmsh_yysymbols.count($1))
+	yymsg(0, "Unknown variable '%s'", $1);
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+	for(unsigned int i = 0; i < s.value.size(); i++)
+	  List_Add($$, &s.value[i]);
+      }
+      Free($1);
+    }
+  | StringIndex LP RP
     {
       $$ = List_Create(2, 1, sizeof(double));
       if(!gmsh_yysymbols.count($1))
@@ -5282,11 +5516,33 @@ FExpr_Multi :
     {
       $$ = $3;
     }
-  | tList LP '{' RecursiveListOfDouble '}' RP
+  | tList '[' '{' RecursiveListOfDouble '}' ']'
     {
       $$ = $4;
     }
-  | String__Index LP '{' RecursiveListOfDouble '}' RP
+  | tList '(' '{' RecursiveListOfDouble '}' ')'
+    {
+      $$ = $4;
+    }
+  | tSTRING LP '{' RecursiveListOfDouble '}' RP
+    {
+      $$ = List_Create(2, 1, sizeof(double));
+      if(!gmsh_yysymbols.count($1))
+	yymsg(0, "Unknown variable '%s'", $1);
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+	for(int i = 0; i < List_Nbr($4); i++){
+	  int index = (int)(*(double*)List_Pointer_Fast($4, i));
+	  if((int)s.value.size() < index + 1)
+	    yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+	  else
+	    List_Add($$, &s.value[index]);
+	}
+      }
+      Free($1);
+      List_Delete($4);
+    }
+  | StringIndex LP '{' RecursiveListOfDouble '}' RP
     {
       $$ = List_Create(2, 1, sizeof(double));
       if(!gmsh_yysymbols.count($1))
@@ -5450,7 +5706,7 @@ ListOfColor :
     {
       $$ = $2;
     }
-  | String__Index '[' FExpr ']' '.' tColorTable
+  | tSTRING '[' FExpr ']' '.' tColorTable
     {
       $$ = List_Create(256, 10, sizeof(unsigned int));
       GmshColorTable *ct = GetColorTable((int)$3);
@@ -5477,7 +5733,6 @@ RecursiveListOfColor :
 ;
 
 StringExprVar :
-
     StringExpr
     {
       $$ = $1;
@@ -5495,7 +5750,7 @@ StringExprVar :
       strcpy($$, val.c_str());
       Free($1);
     }
-  | String__Index '[' FExpr ']'
+  | tSTRING '[' FExpr ']'
     {
       std::string val;
       int j = (int)$3;
@@ -5509,7 +5764,7 @@ StringExprVar :
       strcpy($$, val.c_str());
       Free($1);
     }
-  | String__Index '(' FExpr ')'
+  | StringIndex '[' FExpr ']'
     {
       std::string val;
       int j = (int)$3;
@@ -5523,24 +5778,45 @@ StringExprVar :
       strcpy($$, val.c_str());
       Free($1);
     }
-
-// PD: TO FIX (to avoid shift/reduce conflict)
-//  | Struct_FullName '.' String__Index //tSTRING//_Member_Float
+  | tSTRING '(' FExpr ')'
+    {
+      std::string val;
+      int j = (int)$3;
+      if(!gmsh_yystringsymbols.count($1))
+        yymsg(0, "Unknown string variable '%s'", $1);
+      else if(j >= 0 && j < (int)gmsh_yystringsymbols[$1].size())
+        val = gmsh_yystringsymbols[$1][j];
+      else
+        yymsg(0, "Index %d out of range", j);
+      $$ = (char *)Malloc((val.size() + 1) * sizeof(char));
+      strcpy($$, val.c_str());
+      Free($1);
+    }
+  | StringIndex '(' FExpr ')'
+    {
+      std::string val;
+      int j = (int)$3;
+      if(!gmsh_yystringsymbols.count($1))
+        yymsg(0, "Unknown string variable '%s'", $1);
+      else if(j >= 0 && j < (int)gmsh_yystringsymbols[$1].size())
+        val = gmsh_yystringsymbols[$1][j];
+      else
+        yymsg(0, "Index %d out of range", j);
+      $$ = (char *)Malloc((val.size() + 1) * sizeof(char));
+      strcpy($$, val.c_str());
+      Free($1);
+    }
   | String__Index '.' tSTRING_Member_Float
     {
-      $$ = treat_Struct_FullName_dot_tSTRING_String(NULL, $1, $3);
-      /*
       std::string out;
-      std::string struct_namespace($1.char1? $1.char1 : std::string("")),
-        struct_name($1.char2);
-      if(nameSpaces.count(struct_namespace) &&
-         nameSpaces[struct_namespace].count(struct_name)) {
+      std::string key($1);
+      if(StructTable_M.count(key)) {
         std::string key2($3);
-        if(nameSpaces[struct_namespace][struct_name]._copt.count(key2)) {
-	  out = nameSpaces[struct_namespace][struct_name]._copt[key2][0];
+        if(StructTable_M[key]._copt.count(key2)) {
+          out = StructTable_M[key]._copt[key2][0];
         }
         else {
-	  yymsg(0, "Unknown member '%s' of Struct %s", $3, struct_name.c_str());
+	  yymsg(0, "Unknown member '%s' of Struct %s", $3, $1);
 	}
       }
       else  {
@@ -5548,15 +5824,10 @@ StringExprVar :
       }
       $$ = (char*)Malloc((out.size() + 1) * sizeof(char));
       strcpy($$, out.c_str());
-      Free($1.char1); Free($1.char2);
+      Free($1);
       if (flag_tSTRING_alloc) Free($3);
-      */
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float
-    { $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5); }
-
-
-  | String__Index '[' FExpr ']' '.' tSTRING
+  | tSTRING '[' FExpr ']' '.' tSTRING
     {
       std::string out;
       StringOption(GMSH_GET, $1, (int)$3, $6, out);
@@ -5839,33 +6110,22 @@ StringExpr :
   | tNameStruct LP NameStruct_Arg RP
     {
       std::string out;
-      const std::string * key_struct = NULL;
-      switch (nameSpaces.get_key_struct_from_index((int)$3, key_struct,
-                                                   struct_namespace)) {
-      case 0:
-        out = *key_struct;
-        break;
-      case 1:
-        yymsg(1, "Unknown NameSpace '%s' of Struct", struct_namespace.c_str());
-        break;
-      case 2:
-        yymsg(1, "Unknown Struct of index %d", (int)$3);
-        break;
-      default:
-        break;
-      }
+      int val = (int)$3;
+      std::map<std::string, Struct>::iterator it;
+      for (it = StructTable_M.begin(); it != StructTable_M.end(); ++it )
+        if (it->second._value == val) out = it->first;
       $$ = (char*)Malloc((out.size() + 1) * sizeof(char));
       strcpy($$, out.c_str());
     }
 ;
 
+
 NameStruct_Arg :
     '#' FExpr
-    { struct_namespace = std::string(""); $$ = $2; }
-  | String__Index tSCOPE '#' FExpr
-    { struct_namespace = $1; Free($1); $$ = $4; }
+    { Struct_NameSpace = NULL; $$ = $2; }
+  | String__Index tDOTS tDOTS '#' FExpr
+    { Struct_NameSpace = $1; $$ = $5; }
 ;
-
 
 RecursiveListOfStringExprVar :
     StringExprVar
@@ -6589,61 +6849,4 @@ int NEWPHYSICAL()
     return NEWREG();
   else
     return (GModel::current()->getGEOInternals()->MaxPhysicalNum + 1);
-}
-
-
-double treat_Struct_FullName_dot_tSTRING_Float(char* c1, char* c2, char* c3) {
-  double out;
-  std::string struct_namespace(c1? c1 : std::string("")),
-    struct_name(c2);
-  /*
-  std::string struct_namespace($1.char1? $1.char1 : std::string("")),
-    struct_name($1.char2);
-  */
-  if(nameSpaces.count(struct_namespace) &&
-     nameSpaces[struct_namespace].count(struct_name)) {
-    std::string key2(c3);
-    if(nameSpaces[struct_namespace][struct_name]._fopt.count(key2)) {
-      out = nameSpaces[struct_namespace][struct_name]._fopt[key2][0];
-    }
-    else {
-      yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
-      out = 0.;
-    }
-  }
-  else  {
-    NumberOption(GMSH_GET, c2, 0, c3, out);
-  }
-  Free(c1); Free(c2);
-  if (flag_tSTRING_alloc) Free(c3);
-  return out;
-}
-
-
-char* treat_Struct_FullName_dot_tSTRING_String(char* c1, char* c2, char* c3) {
-  std::string out;
-  std::string struct_namespace(c1? c1 : std::string("")),
-    struct_name(c2);
-  /*
-  std::string struct_namespace($1.char1? $1.char1 : std::string("")),
-    struct_name($1.char2);
-  */
-  if(nameSpaces.count(struct_namespace) &&
-     nameSpaces[struct_namespace].count(struct_name)) {
-    std::string key2(c3);
-    if(nameSpaces[struct_namespace][struct_name]._copt.count(key2)) {
-      out = nameSpaces[struct_namespace][struct_name]._copt[key2][0];
-    }
-    else {
-      yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
-    }
-  }
-  else  {
-    StringOption(GMSH_GET, c2, 0, c3, out);
-  }
-  char* out_c = (char*)Malloc((out.size() + 1) * sizeof(char));
-  strcpy(out_c, out.c_str());
-  Free(c1); Free(c2);
-  if (flag_tSTRING_alloc) Free(c3);
-  return out_c;
 }
