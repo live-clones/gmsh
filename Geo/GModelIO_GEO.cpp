@@ -30,8 +30,8 @@
 
 void GEO_Internals::_allocateAll()
 {
-  MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
-  MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
+  _maxPointNum = _maxLineNum = _maxLineLoopNum = _maxSurfaceNum = 0;
+  _maxSurfaceLoopNum = _maxVolumeNum = _maxPhysicalNum = 0;
 
   Points = Tree_Create(sizeof(Vertex *), CompareVertex);
   Curves = Tree_Create(sizeof(Curve *), CompareCurve);
@@ -53,8 +53,8 @@ void GEO_Internals::_allocateAll()
 
 void GEO_Internals::_freeAll()
 {
-  MaxPointNum = MaxLineNum = MaxLineLoopNum = MaxSurfaceNum = 0;
-  MaxSurfaceLoopNum = MaxVolumeNum = MaxPhysicalNum = 0;
+  _maxPointNum = _maxLineNum = _maxLineLoopNum = _maxSurfaceNum = 0;
+  _maxSurfaceLoopNum = _maxVolumeNum = _maxPhysicalNum = 0;
 
   Tree_Action(Points, FreeVertex); Tree_Delete(Points);
   Tree_Action(Curves, FreeCurve); Tree_Delete(Curves);
@@ -77,24 +77,24 @@ void GEO_Internals::_freeAll()
 void GEO_Internals::setMaxTag(int dim, int val)
 {
   switch(dim){
-  case 0: MaxPointNum = val; break;
-  case 1: MaxLineNum = val; break;
-  case -1: MaxLineLoopNum = val; break;
-  case 2: MaxSurfaceNum = val; break;
-  case -2: MaxSurfaceLoopNum = val; break;
-  case 3: MaxVolumeNum = val; break;
+  case 0: _maxPointNum = val; break;
+  case 1: _maxLineNum = val; break;
+  case -1: _maxLineLoopNum = val; break;
+  case 2: _maxSurfaceNum = val; break;
+  case -2: _maxSurfaceLoopNum = val; break;
+  case 3: _maxVolumeNum = val; break;
   }
 }
 
 int GEO_Internals::getMaxTag(int dim) const
 {
   switch(dim){
-  case 0: return MaxPointNum;
-  case 1: return MaxLineNum;
-  case -1: return MaxLineLoopNum;
-  case 2: return MaxSurfaceNum;
-  case -2: return MaxSurfaceLoopNum;
-  case 3: return MaxVolumeNum;
+  case 0: return _maxPointNum;
+  case 1: return _maxLineNum;
+  case -1: return _maxLineLoopNum;
+  case 2: return _maxSurfaceNum;
+  case -2: return _maxSurfaceLoopNum;
+  case 3: return _maxVolumeNum;
   default: return 0;
   }
 }

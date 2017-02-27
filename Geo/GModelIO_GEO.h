@@ -19,8 +19,8 @@ class GEO_Internals{
   List_T *PhysicalGroups, *DelPhysicalGroups;
  private:
   std::multimap<int, std::vector<int> > _meshCompounds;
-  int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
-  int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
+  int _maxPointNum, _maxLineNum, _maxLineLoopNum, _maxSurfaceNum;
+  int _maxSurfaceLoopNum, _maxVolumeNum, _maxPhysicalNum;
   void _allocateAll();
   void _freeAll();
   bool _changed;
@@ -80,8 +80,8 @@ class GEO_Internals{
   // manipulate physical groups
   void resetPhysicalGroups();
   void modifyPhysicalGroup(int dim, int num, int op, std::vector<int> tags);
-  int getMaxPhysicalTag() const { return MaxPhysicalNum; }
-  void setMaxPhysicalTag(int val) { MaxPhysicalNum = val; }
+  int getMaxPhysicalTag() const { return _maxPhysicalNum; }
+  void setMaxPhysicalTag(int val) { _maxPhysicalNum = val; }
 
   // coherence
   void removeAllDuplicates();
