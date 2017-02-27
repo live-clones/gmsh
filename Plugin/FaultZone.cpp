@@ -653,8 +653,9 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace,
       if (List_Nbr(faceEntities) > 0){
         std::stringstream sufix;
         sufix << p->Num;
-        int num = gModel->setPhysicalName
-          (prefix+sufix.str(), 2, ++GModel::current()->getGEOInternals()->MaxPhysicalNum);
+        int t = GModel::current()->getGEOInternals()->getMaxPhysicalTag();
+        GModel::current()->getGEOInternals()->setMaxPhysicalTag(t + 1);
+        int num = gModel->setPhysicalName(prefix+sufix.str(), 2, t + 1);
         PhysicalGroup *pnew = CreatePhysicalGroup(num, MSH_PHYSICAL_SURFACE, faceEntities);
         List_Add(gModel->getGEOInternals()->PhysicalGroups, &pnew);
         for(int j = 0; j < List_Nbr(faceEntities); j++){

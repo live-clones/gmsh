@@ -643,7 +643,7 @@ void GEO_Internals::mergeVertices(std::vector<int> tags)
 
 void GEO_Internals::setCompoundMesh(int dim, std::vector<int> tags)
 {
-  meshCompounds.insert(std::make_pair(dim, tags));
+  _meshCompounds.insert(std::make_pair(dim, tags));
   _changed = true;
 }
 
@@ -1080,8 +1080,8 @@ void GEO_Internals::synchronize(GModel *model)
 
   // we might want to store mesh compounds directly in GModel; but this is OK
   // for efficiency
-  for(std::multimap<int, std::vector<int> >::iterator it = meshCompounds.begin();
-      it != meshCompounds.end(); ++it){
+  for(std::multimap<int, std::vector<int> >::iterator it = _meshCompounds.begin();
+      it != _meshCompounds.end(); ++it){
     int dim = it->first;
     std::vector<int> compound = it->second;
     std::vector<GEntity*> ents;

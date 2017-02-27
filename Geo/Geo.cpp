@@ -142,8 +142,8 @@ PhysicalGroup *CreatePhysicalGroup(int Num, int typ, List_T *intlist)
   PhysicalGroup *p = new PhysicalGroup;
   p->Entities = List_Create(List_Nbr(intlist), 1, sizeof(int));
   p->Num = Num;
-  GModel::current()->getGEOInternals()->MaxPhysicalNum =
-    std::max(GModel::current()->getGEOInternals()->MaxPhysicalNum, Num);
+  GModel::current()->getGEOInternals()->setMaxPhysicalTag
+    (std::max(GModel::current()->getGEOInternals()->getMaxPhysicalTag(), Num));
   p->Typ = typ;
   for(int i = 0; i < List_Nbr(intlist); i++) {
     int j;

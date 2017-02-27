@@ -14,15 +14,13 @@ class GModel;
 
 class GEO_Internals{
  public:
-  // FIXME: all of this will become private once the refactoring of the old code
-  // is complete
   Tree_T *Points, *Curves, *EdgeLoops, *Surfaces, *SurfaceLoops, *Volumes;
   Tree_T *DelPoints, *DelCurves, *DelSurfaces, *DelVolumes;
   List_T *PhysicalGroups, *DelPhysicalGroups;
+ private:
+  std::multimap<int, std::vector<int> > _meshCompounds;
   int MaxPointNum, MaxLineNum, MaxLineLoopNum, MaxSurfaceNum;
   int MaxSurfaceLoopNum, MaxVolumeNum, MaxPhysicalNum;
-  std::multimap<int, std::vector<int> > meshCompounds;
- private:
   void _allocateAll();
   void _freeAll();
   bool _changed;
@@ -82,6 +80,8 @@ class GEO_Internals{
   // manipulate physical groups
   void resetPhysicalGroups();
   void modifyPhysicalGroup(int dim, int num, int op, std::vector<int> tags);
+  int getMaxPhysicalTag() const { return MaxPhysicalNum; }
+  void setMaxPhysicalTag(int val) { MaxPhysicalNum = val; }
 
   // coherence
   void removeAllDuplicates();

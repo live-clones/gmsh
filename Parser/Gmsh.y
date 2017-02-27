@@ -63,14 +63,14 @@
 #define MAX_RECUR_TESTS 100
 #define MAX_RECUR_LOOPS 100
 
-// Global parser variables
+// global parser variables
 std::string gmsh_yyname;
 int gmsh_yyerrorstate = 0;
 int gmsh_yyviewindex = 0;
 std::map<std::string, gmsh_yysymbol> gmsh_yysymbols;
 std::map<std::string, std::vector<std::string> > gmsh_yystringsymbols;
 
-// Static parser variables (accessible only in this file)
+// static parser variables (accessible only in this file)
 #if defined(HAVE_POST)
 static PViewDataList *ViewData = 0;
 #endif
@@ -92,6 +92,7 @@ static std::map<std::string, Struct> StructTable_M;
 static char *Struct_Name = 0, *Struct_NameSpace = 0;
 static int flag_tSTRING_alloc = 0;
 
+// parser functions defined at the end of this file
 void yyerror(const char *s);
 void yymsg(int level, const char *fmt, ...);
 char *strsave(char *ptr);
@@ -110,9 +111,10 @@ void ListOfDouble2Vector(List_T *list, std::vector<double> &v);
 void ListOfShapes2Vectors(List_T *list, std::vector<int> v[4]);
 void Vectors2ListOfShapes(std::vector<int> tags[4], List_T *list);
 void addPeriodicEdge(int, int, const std::vector<double>&);
-void addPeriodicFace(int, int, const std::map<int,int>&);
+void addPeriodicFace(int, int, const std::map<int, int>&);
 void addPeriodicFace(int, int, const std::vector<double>&);
-void computeAffineTransformation(SPoint3&, SPoint3&, double, SPoint3&, std::vector<double>&);
+void computeAffineTransformation(SPoint3&, SPoint3&, double, SPoint3&,
+                                 std::vector<double>&);
 void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2);
 void getAllElementaryTags(int dim, List_T *in);
 void getAllPhysicalTags(int dim, List_T *in);
@@ -1662,8 +1664,9 @@ PhysicalId0 :
     }
   | StringExpr
     {
-      $$ = GModel::current()->setPhysicalName
-        (std::string($1), 0, ++GModel::current()->getGEOInternals()->MaxPhysicalNum);
+      int t = GModel::current()->getGEOInternals()->getMaxPhysicalTag();
+      GModel::current()->getGEOInternals()->setMaxPhysicalTag(t + 1);
+      $$ = GModel::current()->setPhysicalName(std::string($1), 0, t + 1);
       Free($1);
     }
   | StringExpr ',' FExpr
@@ -1680,8 +1683,9 @@ PhysicalId1 :
     }
   | StringExpr
     {
-      $$ = GModel::current()->setPhysicalName
-        (std::string($1), 1, ++GModel::current()->getGEOInternals()->MaxPhysicalNum);
+      int t = GModel::current()->getGEOInternals()->getMaxPhysicalTag();
+      GModel::current()->getGEOInternals()->setMaxPhysicalTag(t + 1);
+      $$ = GModel::current()->setPhysicalName(std::string($1), 1, t + 1);
       Free($1);
     }
   | StringExpr ',' FExpr
@@ -1698,8 +1702,9 @@ PhysicalId2 :
     }
   | StringExpr
     {
-      $$ = GModel::current()->setPhysicalName
-        (std::string($1), 2, ++GModel::current()->getGEOInternals()->MaxPhysicalNum);
+      int t = GModel::current()->getGEOInternals()->getMaxPhysicalTag();
+      GModel::current()->getGEOInternals()->setMaxPhysicalTag(t + 1);
+      $$ = GModel::current()->setPhysicalName(std::string($1), 2, t + 1);
       Free($1);
     }
   | StringExpr ',' FExpr
@@ -1716,8 +1721,9 @@ PhysicalId3 :
     }
   | StringExpr
     {
-      $$ = GModel::current()->setPhysicalName
-        (std::string($1), 3, ++GModel::current()->getGEOInternals()->MaxPhysicalNum);
+      int t = GModel::current()->getGEOInternals()->getMaxPhysicalTag();
+      GModel::current()->getGEOInternals()->setMaxPhysicalTag(t + 1);
+      $$ = GModel::current()->setPhysicalName(std::string($1), 3, t + 1);
       Free($1);
     }
   | StringExpr ',' FExpr
@@ -6824,7 +6830,7 @@ int NEWREG()
     if(dim)
       tag = std::max(tag, GModel::current()->getGEOInternals()->getMaxTag(dim) + 1);
   }
-  tag = std::max(tag, GModel::current()->getGEOInternals()->MaxPhysicalNum + 1);
+  tag = std::max(tag, GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1);
   if(GModel::current()->getOCCInternals()){
     for(int dim = -2; dim <= 3; dim++){
       if(dim)
@@ -6848,5 +6854,5 @@ int NEWPHYSICAL()
   if(CTX::instance()->geom.oldNewreg)
     return NEWREG();
   else
-    return (GModel::current()->getGEOInternals()->MaxPhysicalNum + 1);
+    return (GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1);
 }
