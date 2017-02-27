@@ -22,7 +22,7 @@
 #include "ANN/ANN.h"
 #endif
 
-std::set<gLevelset*, gLevelsetLessThan> gLevelset::all_;
+static std::set<gLevelset*, gLevelsetLessThan> all_;
 int gLevelset::maxTag_ = 0;
 
 gLevelset *gLevelset::find(int tag)

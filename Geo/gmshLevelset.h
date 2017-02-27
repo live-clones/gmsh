@@ -52,8 +52,6 @@ class ANNkd_tree;
 #define CRACK     15
 #define DISK     16
 
-class gLevelsetLessThan;
-
 class gLevelset : public simpleFunction<double>
 {
  protected:
@@ -61,8 +59,6 @@ class gLevelset : public simpleFunction<double>
   static const short insideDomain = -1;
   // unique levelset id, must be greater than 0
   int tag_;
-  // all levelsets
-  static std::set<gLevelset*, gLevelsetLessThan> all_;
   // max tag in all levelsets
   static int maxTag_;
 public:

@@ -2894,7 +2894,6 @@ LevelSet :
         int t = (int)$4;
         if(gLevelset::find(t)){
           GModel::current()->buildCutGModel(gLevelset::find(t), true, false);
-          GModel::current()->setVisibility(0);
         }
         else
           yymsg(0, "Unknown levelset %d", t);
@@ -2903,7 +2902,6 @@ LevelSet :
         int t = (int)$4;
         if(gLevelset::find(t)){
           GModel::current()->buildCutGModel(gLevelset::find(t), true, true);
-          GModel::current()->setVisibility(0);
         }
         else
           yymsg(0, "Unknown levelset %d", t);
@@ -2912,7 +2910,6 @@ LevelSet :
         int t = (int)$4;
         if(gLevelset::find(t)){
           GModel::current()->buildCutGModel(gLevelset::find(t), false, true);
-          GModel::current()->setVisibility(0);
         }
         else
           yymsg(0, "Unknown levelset %d", t);
