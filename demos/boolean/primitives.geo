@@ -7,7 +7,10 @@ Mesh.CharacteristicLengthMax = 0.1;
 // 3D
 x = 0; y = 0;
 Sphere(newv) = {x++,y,0, 0.3};
-Sphere(newv) = {x++,y,0, 0.3, Pi/3};
+Sphere(newv) = {x++,y,0, 0.3, Pi/4};
+Sphere(newv) = {x++,y,0, 0.3, -Pi/4, Pi/4};
+Sphere(newv) = {x++,y,0, 0.3, -Pi/4, Pi/4, Pi/2};
+Sphere(newv) = {x++,y,0, 0.3, -Pi/2, Pi/2, Pi/4};
 Cylinder(newv) = {x++,y,0, x-0.5,y,0, 0.5};
 Cylinder(newv) = {x++,y,0, x-0.5,y,0, 0.5, Pi/3};
 Block(newv) = {x++,y,0, x-0.5,y+0.5,0.5};
@@ -55,7 +58,6 @@ Line(newl) = {p,p+1};
 
 p = newp; Point(p) = {x++,y,0}; Point(p+1) = {x-0.5,y,0}; Point(p+2) = {x-1,y+0.5,0};
 Circle(newl) = {p+1,p,p+2};
-
 Circle(newl) = {x++,y,0, 0.3};
 Circle(newl) = {x++,y,0, 0.3, Pi/3};
 Circle(newl) = {x++,y,0, 0.3, -Pi/3, Pi/3};

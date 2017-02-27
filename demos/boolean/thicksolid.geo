@@ -4,10 +4,7 @@ Mesh.CharacteristicLengthMin = 0.1;
 Mesh.CharacteristicLengthMax = 0.1;
 
 Block(1) = {0,0,0,1,1,1};
-ThickSolid(11) = {1, 0.05};
+Boundary{ Volume{1}; }
+ThickSolid(100) = {1, 0.05, 6};
 
-Block(2) = {2,0,0,3,1,1};
-Boundary{ Volume{2}; }
-ThickSolid(12) = {2, 0.05, 1, 2};
-
-Delete{Volume{1,2};}
+Delete{ Surface{6}; Volume{1}; }

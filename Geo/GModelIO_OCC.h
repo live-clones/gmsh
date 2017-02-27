@@ -148,7 +148,7 @@ class OCC_Internals {
   void addSurfaceLoop(int tag, std::vector<int> faceTags);
   void addVolume(int tag, std::vector<int> shellTags);
   void addSphere(int tag, double xc, double yc, double zc, double radius,
-                 double angle);
+                 double angle1, double angle2, double angle3);
   void addBlock(int tag, double x1, double y1, double z1,
                 double x2, double y2, double z2);
   void addCylinder(int tag, double x1, double y1, double z1, double x2, double y2,
@@ -293,7 +293,7 @@ public:
   void addSurfaceLoop(int tag, std::vector<int> faceTags){ _error("add surface loop"); }
   void addVolume(int tag, std::vector<int> shellTags){ _error("add volume"); }
   void addSphere(int tag, double xc, double yc, double zc, double radius,
-                 double angle){ _error("add sphere"); }
+                 double angle1, double angle2, double angle3){ _error("add sphere"); }
   void addBlock(int tag, double x1, double y1, double z1,
                 double x2, double y2, double z2){ _error("add block"); }
   void addCylinder(int tag, double x1, double y1, double z1, double x2, double y2,

@@ -2025,11 +2025,13 @@ Shape :
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       std::vector<double> param; ListOfDouble2Vector($6, param);
       $$.Type = 0;
-      if(param.size() == 4 || param.size() == 5){
+      if(param.size() >= 4 && param.size() <= 7){
         if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          double alpha = (param.size() == 5) ? param[4] : 2.*M_PI;
+          double a1 = (param.size() >= 5) ? param[4] : -M_PI/2;
+          double a2 = (param.size() >= 6) ? param[5] : M_PI/2;
+          double a3 = (param.size() >= 7) ? param[6] : 2.*M_PI;
           GModel::current()->getOCCInternals()->addSphere
-            (num, param[0], param[1], param[2], param[3], alpha);
+            (num, param[0], param[1], param[2], param[3], a1, a2, a3);
         }
         else{
           yymsg(0, "Sphere only available with OpenCASCADE factory");
@@ -2041,7 +2043,7 @@ Shape :
           (num, tags[0], tags[1]);
       }
       else{
-        yymsg(0, "Sphere requires 2 points or 4 or 5 parameters");
+        yymsg(0, "Sphere requires 2 points or from 4 to 7 parameters");
       }
       List_Delete($6);
       $$.Num = num;

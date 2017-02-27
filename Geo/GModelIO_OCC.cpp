@@ -927,7 +927,8 @@ void OCC_Internals::addVolume(int tag, std::vector<int> shellTags)
 }
 
 void OCC_Internals::addSphere(int tag, double xc, double yc, double zc,
-                              double radius, double angle)
+                              double radius, double angle1, double angle2,
+                              double angle3)
 {
   if(tag > 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
@@ -937,7 +938,7 @@ void OCC_Internals::addSphere(int tag, double xc, double yc, double zc,
   TopoDS_Solid result;
   try{
     gp_Pnt p(xc, yc, zc);
-    BRepPrimAPI_MakeSphere s(p, radius, angle);
+    BRepPrimAPI_MakeSphere s(p, radius, angle1, angle2, angle3);
     s.Build();
     if(!s.IsDone()){
       Msg::Error("Could not create sphere");
