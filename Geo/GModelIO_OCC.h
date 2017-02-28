@@ -329,7 +329,7 @@ public:
   { _error("apply translation"); }
   void rotate(std::vector<int> inTags[4], double x, double y, double z,
               double dx, double dy, double dz, double angle){ _error("apply rotation"); }
-  int copy(int dim, int tag){ _error("copy shape"); }
+  int copy(int dim, int tag){ _error("copy shape"); return 0; }
   void remove(int dim, int tag){}
   void importShapes(const std::string &fileName, bool highestDimOnly,
                     std::vector<int> outTags[4], const std::string &format="")
