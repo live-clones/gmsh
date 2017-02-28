@@ -163,7 +163,7 @@ extern "C" {
   {
     ((drawContext *)jptr)->eventHandler(jevent, jx, jy);
   }
-  JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setStringOption
+  JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setStringOption
   (JNIEnv *env, jobject obj, jstring c, jstring n, jstring v, jint idx)
   {
     const char* tmp;
@@ -178,7 +178,7 @@ extern "C" {
     env->ReleaseStringUTFChars(c, tmp);
     GmshSetStringOption(category, name, value, (int)idx);
   }
-  JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setDoubleOption
+  JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setDoubleOption
   (JNIEnv *env, jobject obj, jstring c, jstring n, jdouble v, jint idx)
   {
     const char* tmp;
@@ -190,7 +190,7 @@ extern "C" {
     env->ReleaseStringUTFChars(c, tmp);
     GmshSetNumberOption(category, name, (double)v, (int)idx);
   }
-  JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setIntegerOption
+  JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setIntegerOption
   (JNIEnv *env, jobject obj, jstring c, jstring n, jint v, jint idx)
   {
     const char* tmp;
@@ -256,13 +256,12 @@ extern "C" {
     }
     return params;
   }
-  JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setParam
+  JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setParam
   (JNIEnv *env, jobject obj, jstring jtype, jstring jname, jstring jvalue)
   {
     const char *type = env->GetStringUTFChars(jtype, NULL);
     const char *name = env->GetStringUTFChars(jname, NULL);
     const char *value = env->GetStringUTFChars(jvalue, NULL);
-    // Get the original param and then change the value
     if(strcmp(type, "ParameterNumber") == 0){
       std::vector<onelab::number> s;
       if(onelab::server::instance()->get(s,  name)){

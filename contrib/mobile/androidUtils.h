@@ -21,11 +21,11 @@ JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_drawView
   (JNIEnv *, jobject, jlong);
 JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_eventHandler
   (JNIEnv *, jobject, jlong, jint, jfloat, jfloat);
-JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setStringOption
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setStringOption
   (JNIEnv *, jobject, jstring, jstring, jstring, jint);
-JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setDoubleOption
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setDoubleOption
   (JNIEnv *, jobject, jstring, jstring, jdouble, jint);
-JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setIntegerOption
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setIntegerOption
   (JNIEnv *, jobject, jstring, jstring, jint, jint);
 JNIEXPORT jstring JNICALL Java_org_geuz_onelab_Gmsh_getStringOption
   (JNIEnv *, jobject, jstring, jstring, jint);
@@ -35,7 +35,7 @@ JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_getIntegerOption
 (JNIEnv *, jobject, jstring, jstring, jint);
 JNIEXPORT jobjectArray JNICALL Java_org_geuz_onelab_Gmsh_getParams
   (JNIEnv *, jobject);
-JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_setParam
+JNIEXPORT void JNICALL Java_org_geuz_onelab_Gmsh_setParam
   (JNIEnv *, jobject, jstring, jstring, jstring);
 JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_onelabCB
   (JNIEnv *, jobject, jstring);
