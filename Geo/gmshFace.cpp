@@ -32,6 +32,8 @@ void gmshFace::resetNativePtr(Surface *face)
   s = face;
   l_edges.clear();
   l_dirs.clear();
+  edgeLoops.clear();
+
   std::vector<GEdge*> eds;
   std::vector<int> nums;
   for(int i = 0; i < List_Nbr(s->Generatrices); i++){
