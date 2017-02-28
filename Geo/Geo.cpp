@@ -17,8 +17,6 @@
 
 static List_T *ListOfTransformedPoints = NULL;
 
-// Comparison routines
-
 int CompareVertex(const void *a, const void *b)
 {
   Vertex *q = *(Vertex **)a;
@@ -31,7 +29,7 @@ static int ComparePosition(const void *a, const void *b)
   Vertex *q = *(Vertex **)a;
   Vertex *w = *(Vertex **)b;
 
-  // Warning: tolerance! (before 1.61, it was set to 1.e-10 * CTX::instance()->lc)
+  // Warning: tolerance (before 1.61, it was set to 1.e-10 * CTX::instance()->lc)
   double eps = CTX::instance()->geom.tolerance * CTX::instance()->lc;
 
   if(q->Pos.X - w->Pos.X > eps) return 1;
@@ -98,8 +96,6 @@ void Projette(Vertex *v, double mat[3][3])
   v->Pos.Y = Y;
   v->Pos.Z = Z;
 }
-
-// Basic entity creation/deletion functions
 
 Vertex *CreateVertex(int Num, double X, double Y, double Z, double lc, double u)
 {
@@ -242,7 +238,6 @@ void EndCurve(Curve *c)
   if((c->Typ == MSH_SEGM_CIRC || c->Typ == MSH_SEGM_CIRC_INV ||
       c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) &&
      (NN == 3 || NN == 4)) {
-
     // v[0] = first point
     // v[1] = center
     // v[2] = last point
@@ -252,7 +247,6 @@ void EndCurve(Curve *c)
       List_Read(c->Control_Points, 2, &v[3]);
     else
       v[3] = NULL;
-
     if(c->Typ == MSH_SEGM_CIRC_INV || c->Typ == MSH_SEGM_ELLI_INV) {
       List_Read(c->Control_Points, 0, &v[2]);
       List_Read(c->Control_Points, 1, &v[1]);
@@ -269,13 +263,11 @@ void EndCurve(Curve *c)
       else
         List_Read(c->Control_Points, 3, &v[2]);
     }
-
     double dir12[3], dir32[3], dir42[3] = {0., 0. , 0.};
     direction(v[1], v[0], dir12);
     direction(v[1], v[2], dir32);
     if(v[3])
       direction(v[1], v[3], dir42);
-
     // v0 = vector center->first pt
     // v2 = vector center->last pt
     // v3 = vector center->major axis pt
@@ -295,7 +287,6 @@ void EndCurve(Curve *c)
     norme(dir32);
     double n[3];
     prodve(dir12, dir32, n);
-
     bool isValid = true;
     if (norm3(n) < 1.e-15) {
       isValid = false;
@@ -306,7 +297,6 @@ void EndCurve(Curve *c)
         isValid = false;
       }
     }
-
     // use provided plane if unable to compute it from input points...
     if(!isValid) {
       n[0] = c->Circle.n[0];
@@ -317,7 +307,6 @@ void EndCurve(Curve *c)
     double m[3];
     prodve(n, dir12, m);
     norme(m);
-
     double mat[3][3];
     mat[2][0] = c->Circle.invmat[0][2] = n[0];
     mat[2][1] = c->Circle.invmat[1][2] = n[1];
@@ -328,7 +317,6 @@ void EndCurve(Curve *c)
     mat[0][0] = c->Circle.invmat[0][0] = dir12[0];
     mat[0][1] = c->Circle.invmat[1][0] = dir12[1];
     mat[0][2] = c->Circle.invmat[2][0] = dir12[2];
-
     // assume circle in z=0 plane
     if(CTX::instance()->geom.oldCircle) {
       if(n[0] == 0.0 && n[1] == 0.0) {
@@ -343,15 +331,12 @@ void EndCurve(Curve *c)
         mat[0][2] = c->Circle.invmat[2][0] = 0;
       }
     }
-
     Projette(&v0, mat);
     Projette(&v2, mat);
     if(v[3])
       Projette(&v3, mat);
-
     double R = sqrt(v0.Pos.X * v0.Pos.X + v0.Pos.Y * v0.Pos.Y);
     double R2 = sqrt(v2.Pos.X * v2.Pos.X + v2.Pos.Y * v2.Pos.Y);
-
     if(!R || !R2){
       // check radius
       Msg::Error("Zero radius in circle or ellipse with tag %d", c->Num);
@@ -361,7 +346,6 @@ void EndCurve(Curve *c)
       Msg::Error("Control points of circle with tag %d are not cocircular (%g, %g)",
                  c->Num, R, R2);
     }
-
     // A1 = angle first pt
     // A3 = angle last pt
     // A4 = angle major axis
@@ -409,29 +393,24 @@ void EndCurve(Curve *c)
       A4 = 0.;
       f1 = f2 = R;
     }
-
     A1 = angle_02pi(A1);
     A3 = angle_02pi(A3);
     if(A1 >= A3)
       A3 += 2 * M_PI;
-
     c->Circle.t1 = A1;
     c->Circle.t2 = A3;
     c->Circle.incl = A4;
     c->Circle.f1 = f1;
     c->Circle.f2 = f2;
-
     if(!CTX::instance()->expertMode && c->Num > 0 && A3 - A1 > 1.01 * M_PI){
       Msg::Error("Circle or ellipse arc %d greater than Pi (angle=%g)", c->Num, A3-A1);
       Msg::Error("(If you understand what this implies, you can disable this error");
       Msg::Error("message by selecting `Enable expert mode' in the option dialog.");
       Msg::Error("Otherwise, please subdivide the arc in smaller pieces.)");
     }
-
   }
 
   if (c->Typ == MSH_SEGM_COMPOUND) {
-
     std::list<Curve*> tmp;
     for (std::vector<int>::const_iterator cIter=c->compound.begin();
          cIter!=c->compound.end();++cIter) {
@@ -443,15 +422,11 @@ void EndCurve(Curve *c)
       }
       tmp.push_back(comp);
     }
-
     std::list<int> ordered;
-
     Curve* c0 = *(tmp.begin());
     tmp.pop_front();
-
     ordered.push_back(c0->Num);
     std::pair<Vertex*,Vertex*> vtcs(c0->beg,c0->end);
-
     while (tmp.size() != 0) {
       unsigned nbCurrent = tmp.size();
       for (std::list<Curve*>::iterator tIter=tmp.begin();tIter!=tmp.end();tIter++) {
@@ -640,11 +615,10 @@ Surface *CreateSurface(int Num, int Typ)
 {
   Surface *pS = new Surface;
   pS->Num = Num;
-  pS->geometry = 0;
-  pS->InSphereCenter = 0;
-
   GModel::current()->getGEOInternals()->setMaxTag
     (2, std::max(GModel::current()->getGEOInternals()->getMaxTag(2), Num));
+  pS->geometry = 0;
+  pS->InSphereCenter = 0;
   pS->Typ = Typ;
   pS->Method = MESH_UNSTRUCTURED;
   pS->Recombine = 0;
@@ -1198,8 +1172,6 @@ int RecognizeSurfaceLoop(List_T *liste, int *loop)
   return res;
 }
 
-// Linear applications
-
 static void SetTranslationMatrix(double matrix[4][4], double T[3])
 {
   for(int i = 0; i < 4; i++) {
@@ -1634,7 +1606,6 @@ static List_T *GetCompoundUniqueEdges(Surface *ps)
 	  // should not try to find them
           /*bool unique_flag = true;
           std::map<int, unsigned int>::iterator itmap2 = count_map.begin();
-
           for( ; itmap2 != count_map.end(); itmap2++ ){
             Curve *c_tmp1 = FindCurve( itmap2->first );
             Curve *c_tmp2 = FindCurve( -itmap2->first );
@@ -1721,8 +1692,6 @@ static List_T* GetOrderedUniqueEdges(Surface *s)
   List_Delete(gen_nums);
   return unique;
 }
-
-// Duplicate removal
 
 static int CompareTwoPoints(const void *a, const void *b)
 {
@@ -1995,13 +1964,13 @@ static void ReplaceDuplicatePoints(std::map<int, int> * v_report = 0)
   for(int i = 0; i < List_Nbr(All); i++) {
     List_Read(All, i, &c);
     // replace begin/end points
-    if(!Tree_Query(allNonDuplicatedPoints, &c->beg)){
+    if(c->beg && !Tree_Query(allNonDuplicatedPoints, &c->beg)){
       Msg::Debug("Could not replace point %d in old Coherence", c->beg->Num);
       Tree_Insert(GModel::current()->getGEOInternals()->Points, &c->beg);
       Tree_Suppress(points2delete, &c->beg);
       success = false;
     }
-    if(!Tree_Query(allNonDuplicatedPoints, &c->end)){
+    if(c->end && !Tree_Query(allNonDuplicatedPoints, &c->end)){
       Msg::Debug("Could not replace point %d in old Coherence", c->end->Num);
       Tree_Insert(GModel::current()->getGEOInternals()->Points, &c->end);
       Tree_Suppress(points2delete, &c->end);
@@ -2581,8 +2550,6 @@ void ReplaceAllDuplicatesNew(double tol)
   ReplaceDuplicateSurfaces(NULL);
 }
 
-// Extrusion routines
-
 void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e)
 {
   double matrix[4][4];
@@ -2980,7 +2947,6 @@ int ExtrudeCurve(int type, int ic,
 
   return chap_num;
 }
-
 
 int ExtrudeSurface(int type, int is,
                    double T0, double T1, double T2,
@@ -3389,8 +3355,6 @@ bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2])
   return false;
 }
 
-// Split line
-
 static Curve *_create_splitted_curve(Curve *c, List_T *nodes)
 {
   int  beg, end;
@@ -3526,8 +3490,6 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
   return true;
 }
 
-// Intersect a curve with a surface
-
 struct CurveSurface{
   Curve *c;
   Surface *s;
@@ -3579,8 +3541,6 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
   }
   return true;
 }
-
-// Bunch of utility routines
 
 void SortEdgesInLoop(int num, List_T *edges, bool orient)
 {
