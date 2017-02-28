@@ -2706,15 +2706,16 @@ LevelSet :
 Delete :
     tDelete '{' ListOfShapes '}'
     {
-      std::vector<int> tags[4]; ListOfShapes2Vectors($3, tags);
-      for(int dim = 0; dim < 4; dim++){
-        for(unsigned int i = 0; i < tags[dim].size(); i++){
-          if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-            GModel::current()->getOCCInternals()->remove(dim, tags[dim][i]);
-          }
-          GModel::current()->getGEOInternals()->remove(dim, tags[dim][i]);
-          GModel::current()->remove(dim, tags[dim][i]);
+      // don't use per-dimension vectors here, in order to respect the input
+      // ordering when deleting (important in GEO for dependencies, e.g. cannot
+      // delete boundary before the bounded entity)
+      for(int i = 0; i < List_Nbr($3); i++){
+        Shape s; List_Read($3, i, &s); int dim = s.Type / 100 - 1;
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          GModel::current()->getOCCInternals()->remove(dim, s.Num);
         }
+        GModel::current()->getGEOInternals()->remove(dim, s.Num);
+        GModel::current()->remove(dim, s.Num);
       }
       List_Delete($3);
     }
