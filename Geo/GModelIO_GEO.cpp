@@ -718,7 +718,7 @@ void GEO_Internals::setTransfiniteSurface(int tag, int arrangement,
           if(v)
             List_Add(s->TrsfPoints, &v);
           else
-            Msg::Error(0, "Unknown GEO vertex with tag %d", cornerTags[j]);
+            Msg::Error("Unknown GEO vertex with tag %d", cornerTags[j]);
         }
       }
       else{
@@ -752,7 +752,7 @@ void GEO_Internals::setTransfiniteVolume(int tag, std::vector<int> cornerTags)
           if(vert)
             List_Add(v->TrsfPoints, &vert);
           else
-            Msg::Error(0, "Unknown GEO vertex with tag %d", cornerTags[i]);
+            Msg::Error("Unknown GEO vertex with tag %d", cornerTags[i]);
         }
       }
     }
