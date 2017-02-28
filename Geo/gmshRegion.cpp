@@ -19,6 +19,8 @@ gmshRegion::gmshRegion(GModel *m, ::Volume *volume)
 void gmshRegion::resetNativePtr(::Volume *volume)
 {
   v = volume;
+  l_faces.clear();
+  l_dirs.clear();
   for(int i = 0; i < List_Nbr(v->Surfaces); i++){
     Surface *s;
     List_Read(v->Surfaces, i, &s);
