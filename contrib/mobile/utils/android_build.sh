@@ -19,10 +19,10 @@ fi
 
 petsc_lib="$frameworks_dir/petsc"
 slepc_lib="$frameworks_dir/slepc"
-android_ndk="${HOME}/android-ndk-r8b/" 
-android_sdk="${HOME}/android-sdk/"
+android_ndk="${HOME}/Library/Android/sdk/ndk-bundle/" 
+android_sdk="${HOME}/Library/Android/sdk/"
 
-cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=$gmsh_svn/contrib/mobile/utils/Android.cmake -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release"
+cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release"
 cmake_thread=6
 
 function check {
@@ -33,8 +33,6 @@ function check {
   fi
 }
 
-export ANDROID_NDK=$android_ndk 
-
 # Gmsh
 cd $gmsh_svn
 svn up
@@ -42,7 +40,7 @@ if [ ! -d "$gmsh_svn/build_android" ] || [ ! -f "$gmsh_svn/build_android/CMakeCa
   mkdir $gmsh_svn/build_android
 fi
 cd $gmsh_svn/build_android
-cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_TETGEN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 -DBLAS_LIB="$petsc_lib/libf2cblas.so" -DLAPACK_LIB="$petsc_lib/libf2clapack.so" ..
+cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_TETGEN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" ..
 check
 make androidGmsh -j$cmake_thread
 check
@@ -117,13 +115,13 @@ ant release
 check
 
 # to install on the device:
-# ~/android-sdk/platform-tools/adb install -r build_android_Onelab/Onelab/bin/Onelab-release.apk
+# ~/Library/Android/sdk/platform-tools/adb install -r build_android_Onelab/Onelab/bin/Onelab-release.apk
 
 # to launch the app on the device:
-# ~/android-sdk/platform-tools/adb shell am start -n org.geuz.onelab/org.geuz.onelab.SplashScreen
+# ~/Library/Android/sdk/platform-tools/adb shell am start -n org.geuz.onelab/org.geuz.onelab.SplashScreen
 
 # to debug and check the log:
-# ~/android-sdk/tools/ddms
+# ~/Library/Android/sdk/tools/monitor
 
 # to see stack traces after crashes:
-# ~/android-sdk/platform-tools/adb logcat | ~/android-ndk-r8b/ndk-stack -sym build_android_Onelab/
+# ~/Library/Android/sdk/platform-tools/adb logcat | ~/Library/Android/ndk-bundle/ndk-stack -sym build_android_Onelab/
