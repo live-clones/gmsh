@@ -563,11 +563,12 @@ void meshGEdge::operator() (GEdge *ge)
   // first compute the length of the curve by integrating one
   double length;
   std::vector<IntPoint> Points;
-  if(ge->geomType() == GEntity::Line &&
-      ge->getBeginVertex() == ge->getEndVertex() &&
-      //do not consider closed lines as degenerated
-      (ge->position(0.5) - ge->getBeginVertex()->xyz()).norm() < CTX::instance()->geom.tolerance)
-    length = 0.; // special case t avoid infinite loop in integration
+  if(ge->geomType() == GEntity::Line && ge->getBeginVertex() &&
+     ge->getBeginVertex() == ge->getEndVertex() &&
+     // do not consider closed lines as degenerated
+     (ge->position(0.5) - ge->getBeginVertex()->xyz()).norm() <
+     CTX::instance()->geom.tolerance)
+    length = 0.; // special case to avoid infinite loop in integration
   else
     length = Integration(ge, t_begin, t_end, F_One, Points, 1.e-12 * CTX::instance()->lc);
   ge->setLength(length);
