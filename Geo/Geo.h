@@ -116,11 +116,10 @@ class Surface {
   List_T *TrsfPoints;
   Vertex *InSphereCenter;
   ExtrudeParams *Extrude;
-  // A surface is defined topologically by its Generatrices
-  // i.e. curves that are the closure of it.  The geometry of the
-  // surface is defined hereafter.  Note that this representation
-  // should be the only one in gmsh, so parameter "Type" should
-  // disappear from the class Surface.
+  // A surface is defined topologically by its Generatrices i.e. curves that are
+  // the closure of it.  The geometry of the surface is defined hereafter.  Note
+  // that this representation should be the only one in gmsh, so parameter
+  // "Type" should disappear from the class Surface.
   gmshSurface *geometry;
   std::vector<int> compound, compoundBoundary[4];
   int ReverseMesh;
@@ -215,8 +214,6 @@ void DeletePhysicalPoint(int Num);
 void DeletePhysicalLine(int Num);
 void DeletePhysicalSurface(int Num);
 void DeletePhysicalVolume(int Num);
-
-void SetPartition(int Type, int Num, int Partition);
 
 void ExtrudeShapes(int extrude_type, List_T *in,
                    double T0, double T1, double T2,

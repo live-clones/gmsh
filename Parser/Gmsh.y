@@ -2803,10 +2803,15 @@ Colorify :
 SetPartition :
     tSetPartition FExpr '{' ListOfShapes '}'
     {
-      for(int i = 0; i < List_Nbr($4); i++){
-	Shape TheShape;
-	List_Read($4, i, &TheShape);
-	SetPartition(TheShape.Type, TheShape.Num, $2);
+      std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
+      for(int dim = 0; dim < 4; dim++){
+        for(unsigned int i = 0; i < tags[dim].size(); i++){
+          GEntity *ge = GModel::current()->getEntityByTag(dim, tags[dim][i]);
+          if(ge){
+            for(unsigned int j = 0; j < ge->getNumMeshElements(); j++)
+              ge->getMeshElement(j)->setPartition((int)$2);
+          }
+        }
       }
       List_Delete($4);
     }
@@ -6566,8 +6571,8 @@ int NEWPHYSICAL()
     return (GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1);
 }
 
-
-double treat_Struct_FullName_dot_tSTRING_Float(char* c1, char* c2, char* c3) {
+double treat_Struct_FullName_dot_tSTRING_Float(char* c1, char* c2, char* c3)
+{
   double out;
   std::string struct_namespace(c1? c1 : std::string("")),
     struct_name(c2);
@@ -6594,8 +6599,8 @@ double treat_Struct_FullName_dot_tSTRING_Float(char* c1, char* c2, char* c3) {
   return out;
 }
 
-
-char* treat_Struct_FullName_dot_tSTRING_String(char* c1, char* c2, char* c3) {
+char* treat_Struct_FullName_dot_tSTRING_String(char* c1, char* c2, char* c3)
+{
   std::string out;
   std::string struct_namespace(c1? c1 : std::string("")),
     struct_name(c2);
