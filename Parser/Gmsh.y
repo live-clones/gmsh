@@ -2234,7 +2234,10 @@ Transform :
           List_Add($$, &s);
         }
       }
-      else if(action == "Boundary" || action == "CombinedBoundary"){
+      else if(action == "Boundary" ||
+              action == "CombinedBoundary" ||
+              action == "OrientedBoundary" ||
+              action == "CombinedOrientedBoundary"){
         // boundary operations are performed directly on GModel, which enables
         // to compute the boundary of hybrid CAD models; this also automatically
         // binds all boundary entities for OCC models
@@ -2244,7 +2247,9 @@ Transform :
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
         std::vector<int> in[4], out[4]; ListOfShapes2Vectors($3, in);
-        GModel::current()->getBoundaryTags(in, out, action == "CombinedBoundary");
+        GModel::current()->getBoundaryTags
+          (in, out, action.find("Combined") != std::string::npos,
+           action.find("Oriented") != std::string::npos);
         Vectors2ListOfShapes(out, $$);
       }
       else{

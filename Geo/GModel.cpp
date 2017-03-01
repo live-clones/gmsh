@@ -432,7 +432,7 @@ void GModel::getEntitiesInBox(std::vector<GEntity*> &entities, SBoundingBox3d bo
 }
 
 void GModel::getBoundaryTags(std::vector<int> inTags[4], std::vector<int> outTags[4],
-                             bool combined)
+                             bool combined, bool oriented)
 {
   for(int dim = 1; dim < 4; dim++){
     for(unsigned int i = 0; i < inTags[dim].size(); i++){
@@ -440,8 +440,16 @@ void GModel::getBoundaryTags(std::vector<int> inTags[4], std::vector<int> outTag
         GRegion *gr = getRegionByTag(inTags[3][i]);
         if(gr){
           std::list<GFace*> faces(gr->faces());
-          for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
-            outTags[2].push_back((*it)->tag());
+          std::list<int> orientations(gr->faceOrientations());
+          std::list<int>::iterator ito = orientations.begin();
+          for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+            int tag = (*it)->tag();
+            if(oriented && ito != orientations.end()){
+              tag *= *ito;
+              ito++;
+            }
+            outTags[2].push_back(tag);
+          }
         }
         else
           Msg::Error("Unknown model region with tag %d", inTags[3][i]);
@@ -450,8 +458,16 @@ void GModel::getBoundaryTags(std::vector<int> inTags[4], std::vector<int> outTag
         GFace *gf = getFaceByTag(inTags[2][i]);
         if(gf){
           std::list<GEdge*> edges(gf->edges());
-          for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++)
-            outTags[1].push_back((*it)->tag());
+          std::list<int> orientations(gf->edgeOrientations());
+          std::list<int>::iterator ito = orientations.begin();
+          for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+            int tag = (*it)->tag();
+            if(oriented && ito != orientations.end()){
+              tag *= *ito;
+              ito++;
+            }
+            outTags[1].push_back(tag);
+          }
         }
         else
           Msg::Error("Unknown model face with tag %d", inTags[2][i]);
