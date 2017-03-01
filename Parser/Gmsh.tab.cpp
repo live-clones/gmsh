@@ -10151,7 +10151,7 @@ yyreduce:
             gf->meshAttributes.transfiniteArrangement = (yyvsp[(5) - (6)].i);
             if(corners.empty() || corners.size() == 3 || corners.size() == 4){
               for(unsigned int j = 0; j < corners.size(); j++){
-                GVertex *gv = GModel::current()->getVertexByTag(std::abs(corners[j]));
+                GVertex *gv = GModel::current()->getVertexByTag(corners[j]);
                 if(gv)
                   gf->meshAttributes.corners.push_back(gv);
                 else
@@ -10196,7 +10196,7 @@ yyreduce:
             gr->meshAttributes.method = MESH_TRANSFINITE;
             if(corners.empty() || corners.size() == 6 || corners.size() == 8){
               for(unsigned int i = 0; i < corners.size(); i++){
-                GVertex *gv = GModel::current()->getVertexByTag(std::abs(corners[i]));
+                GVertex *gv = GModel::current()->getVertexByTag(corners[i]);
                 if(gv)
                   gr->meshAttributes.corners.push_back(gv);
                 else
@@ -10710,7 +10710,7 @@ yyreduce:
       for(int i = 0; i < List_Nbr((yyvsp[(3) - (4)].l)); i++){
 	double dnum;
 	List_Read((yyvsp[(3) - (4)].l), i, &dnum);
-	int num = (int)fabs(dnum);
+	int num = (int)dnum;
         GModel::current()->getGEOInternals()->setDegenerated(1, num);
         GEdge *ge = GModel::current()->getEdgeByTag(num);
         if(ge) ge->setTooSmall(true);
@@ -13296,8 +13296,8 @@ void addPeriodicFace(int iTarget, int iSource,
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
-  GFace *target = GModel::current()->getFaceByTag(abs(iTarget));
-  GFace *source = GModel::current()->getFaceByTag(abs(iSource));
+  GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
+  GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
   if (!target || !source) {
     Msg::Error("Could not find edge slave %d or master %d for periodic copy",
                iTarget, iSource);
@@ -13320,8 +13320,8 @@ void addPeriodicFace(int iTarget, int iSource,
     Msg::Info("%d - %d", sIter->first, sIter->second);
   }
 
-  GFace *target = GModel::current()->getFaceByTag(abs(iTarget));
-  GFace *source = GModel::current()->getFaceByTag(abs(iSource));
+  GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
+  GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
   if (!target || !source) {
     Msg::Error("Could not find surface slave %d or master %d for periodic copy",
                iTarget,iSource);
@@ -13338,8 +13338,8 @@ void addPeriodicEdge(int iTarget,int iSource,
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
-  GEdge *target = GModel::current()->getEdgeByTag(abs(iTarget));
-  GEdge *source = GModel::current()->getEdgeByTag(abs(iSource));
+  GEdge *target = GModel::current()->getEdgeByTag(std::abs(iTarget));
+  GEdge *source = GModel::current()->getEdgeByTag(std::abs(iSource));
   if (!target || !source)
     Msg::Error("Could not find surface %d or %d for periodic copy",
                iTarget,iSource);

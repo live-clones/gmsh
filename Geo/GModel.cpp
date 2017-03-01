@@ -529,8 +529,8 @@ void GModel::getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]) 
   for(unsigned int i = 0; i < entities.size(); i++){
     std::map<int, std::vector<GEntity*> > &group(groups[entities[i]->dim()]);
     for(unsigned int j = 0; j < entities[i]->physicals.size(); j++){
-      // physicals can be stored with negative signs when the entity
-      // should be "reversed"
+      // physicals can be stored with negative signs when the entity should be
+      // "reversed"
       int p = std::abs(entities[i]->physicals[j]);
       group[p].push_back(entities[i]);
     }
@@ -552,8 +552,8 @@ void GModel::getPhysicalGroups(int dim, std::map<int, std::vector<GEntity*> > &g
   getEntities(entities, dim);
   for(unsigned int i = 0; i < entities.size(); i++){
     for(unsigned int j = 0; j < entities[i]->physicals.size(); j++){
-      // physicals can be stored with negative signs when the entity
-      // should be "reversed"
+      // physicals can be stored with negative signs when the entity should be
+      // "reversed"
       int p = std::abs(entities[i]->physicals[j]);
       groups[p].push_back(entities[i]);
     }
