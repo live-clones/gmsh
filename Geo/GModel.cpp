@@ -85,8 +85,8 @@ GModel::GModel(std::string name)
   _createGEOInternals();
 
   // FIXME: GModelFactory will be deprecated, replaced by direct interfaces to
-  // internal CAD data, with "integer-based" API, easily wrapped in C, Python or
-  // any other scripting language
+  // internal CAD data, with an "integer-based" API, easily wrapped in C, Python
+  // or any other scripting language
   setFactory("Gmsh");
 
 #if defined(HAVE_MESH)

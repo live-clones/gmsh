@@ -879,8 +879,8 @@ void GEO_Internals::synchronize(GModel *model)
 
   // if the entities do not exist, we create them; if they exist, we update the
   // pointer (and the underlying dependencies, e.g. surface boundaries): this is
-  // necessary because a GEO entity can change (while keeping the same tag!!),
-  // due e.g. to ReplaceDuplicates.
+  // necessary because a GEO entity can change (while keeping the same tag), due
+  // e.g. to ReplaceDuplicates.
 
   if(Tree_Nbr(Points)) {
     List_T *points = Tree2List(Points);
