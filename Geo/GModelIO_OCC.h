@@ -412,10 +412,10 @@ public:
     _error("create fillet");
   }
   void applyBooleanOperator(int tag, BooleanOperator op,
-                            const std::vector<std::pair<int, int> > &objectDimTags
-                            const std::vector<std::pair<int, int> > &toolDimTags
+                            const std::vector<std::pair<int, int> > &objectDimTags,
+                            const std::vector<std::pair<int, int> > &toolDimTags,
                             std::vector<std::pair<int, int> > &outDimTags,
-                             bool removeObject, bool removeTool)
+                            bool removeObject, bool removeTool)
   {
     _error("apply boolean operator");
   }
@@ -438,7 +438,7 @@ public:
   void remove(int dim, int tag){}
   void importShapes(const std::string &fileName, bool highestDimOnly,
                     std::vector<std::pair<int, int> > &outDimTags,
-                    sconst std::string &format="")
+                    const std::string &format="")
   {
     _error("import shape");
   }
