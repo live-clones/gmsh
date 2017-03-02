@@ -106,6 +106,7 @@ string	{alpha}({alpha}|{digit})*
 ">="                    return tGREATEROREQUAL;
 
 Abort                   return tAbort;
+Abs                     return tAbs;
 AbsolutePath            return tAbsolutePath;
 Acos                    return tAcos;
 AdaptMesh               return tAdaptMesh;
@@ -324,6 +325,7 @@ Translate               return tTranslate;
 
 UndefineConstant        return tUndefineConstant;
 Unique                  return tUnique;
+Unique2                 return tUnique2;
 UpperCase               return tUpperCase;
 Using                   return tUsing;
 

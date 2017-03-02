@@ -151,7 +151,7 @@ struct doubleXstring{
 
 %token tEND tAFFECT tDOTS tSCOPE tPi tMPI_Rank tMPI_Size tEuclidian tCoordinates tTestLevel
 %token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
-%token tAtan tAtan2 tSinh tCosh tTanh tFabs tFloor tCeil tRound
+%token tAtan tAtan2 tSinh tCosh tTanh tFabs tAbs tFloor tCeil tRound
 %token tFmod tModulo tHypot tList tLinSpace tLogSpace tListFromFile tCatenary
 %token tPrintf tError tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
 %token tAbsolutePath tDirName tStrSub tStrLen
@@ -184,7 +184,7 @@ struct doubleXstring{
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tElseIf tElse tEndIf tExit tAbort
 %token tField tReturn tCall tSlide tMacro tShow tHide tGetValue tGetStringValue tGetEnv
-%token tGetString tGetNumber tUnique
+%token tGetString tGetNumber tUnique tUnique2
 %token tHomology tCohomology tBetti tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName tSetPartition
@@ -4551,6 +4551,7 @@ FExpr :
   | tCosh   LP FExpr RP            { $$ = cosh($3);     }
   | tTanh   LP FExpr RP            { $$ = tanh($3);     }
   | tFabs   LP FExpr RP            { $$ = fabs($3);     }
+  | tAbs    LP FExpr RP            { $$ = std::abs($3); }
   | tFloor  LP FExpr RP            { $$ = floor($3);    }
   | tCeil   LP FExpr RP            { $$ = ceil($3);     }
   | tRound  LP FExpr RP            { $$ = floor($3 + 0.5); }
@@ -5361,6 +5362,32 @@ FExpr_Multi :
       for(unsigned int i = 0; i < tmp.size(); i++){
         List_Add($$, &tmp[i]);
       }
+    }
+  | tUnique2 LP FExpr_Multi RP
+    {
+      std::set<double> c;
+      for(int i = 0; i < List_Nbr($3); i++){
+        double d; List_Read($3, i, &d);
+        std::set<double>::iterator it = c.find(d);
+        if(it == c.end())
+          c.insert(d);
+        else
+          c.erase(it);
+      }
+      $$ = $3;
+      List_Reset($$);
+      for(std::set<double>::iterator it = c.begin(); it != c.end(); it++){
+        double d = *it;
+        List_Add($$, &d);
+      }
+    }
+  | tAbs LP FExpr_Multi RP
+    {
+      for(int i = 0; i < List_Nbr($3); i++){
+        double *d = (double*)List_Pointer($3, i);
+        *d = std::abs(*d);
+      }
+      $$ = $3;
     }
 ;
 

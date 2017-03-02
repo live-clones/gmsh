@@ -1089,6 +1089,8 @@ List of expressions are also widely used, and are defined as:
   List [ @var{expression-list-item} ] |
   List [ @{ @var{expression-list} @} ] |
   Unique [ @var{expression-list-item} ] |
+  Unique2 [ @var{expression-list-item} ] |
+  Abs [ @var{expression-list-item} ] |
   ListFromFile [ @var{expression-char} ] |
   LinSpace[ @var{expression}, @var{expression}, @var{expression} ] |
   LogSpace[ @var{expression}, @var{expression}, @var{expression} ] |
@@ -1111,18 +1113,20 @@ between two @w{@var{expression}s}, but with a positive or negative
 incrementation step equal to the third @var{expression}. The fourth,
 fifth and sixth cases permit to reference an expression list
 (parentheses can also be used instead of brackets).  @code{Unique} sorts
-the entries in the list and removes all duplicates.  @code{ListFromFile}
-reads a list of numbers from a file. @code{LinSpace} and @code{LogSpace}
-construct lists using linear or logarithmic spacing. The next two cases
-permit to reference an expression sublist (whose elements are those
-corresponding to the indices provided by the @var{expression-list}).
-The next two cases permit to retrieve the indices of entities created
-through geometrical transformations and extrusions (see
-@ref{Transformations}, and @ref{Extrusions}). The last three cases
-permit to retrieve the coordinates of a given geometry point
-(@pxref{Points}), to retrieve the id numbers of all points, lines,
-surfaces or volumes in the model, or to retrieve the elementary entities
-making up physical groups.
+the entries in the list and removes all duplicates. @code{Unique2} sorts
+the entries in the list and keeps only entries that do not appear
+twice. @code{Abs} takes the absolute value of all entries in the
+list. @code{ListFromFile} reads a list of numbers from a
+file. @code{LinSpace} and @code{LogSpace} construct lists using linear
+or logarithmic spacing. The next two cases permit to reference an
+expression sublist (whose elements are those corresponding to the
+indices provided by the @var{expression-list}).  The next two cases
+permit to retrieve the indices of entities created through geometrical
+transformations and extrusions (see @ref{Transformations}, and
+@ref{Extrusions}). The last three cases permit to retrieve the
+coordinates of a given geometry point (@pxref{Points}), to retrieve the
+id numbers of all points, lines, surfaces or volumes in the model, or to
+retrieve the elementary entities making up physical groups.
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
