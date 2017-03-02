@@ -391,13 +391,15 @@ public:
   }
   void extrude(const std::vector<std::pair<int, int> > &inDimTags,
                double dx, double dy, double dz,
-               std::vector<std::pair<int, int> > &outDimTags)
+               std::vector<std::pair<int, int> > &outDimTags,
+               ExtrudeParams *e=0)
   {
     _error("extrude");
   }
   void revolve(const std::vector<std::pair<int, int> > &inDimTags,
                double x, double y, double z, double ax, double ay, double az,
-               double angle, std::vector<std::pair<int, int> > &outDimTags)
+               double angle, std::vector<std::pair<int, int> > &outDimTags,
+               ExtrudeParams *e=0)
   {
     _error("revolve");
   }
@@ -436,6 +438,7 @@ public:
     _error("copy shape");
   }
   void remove(int dim, int tag){}
+  void remove(const std::vector<std::pair<int, int> > &dimTags){}
   void importShapes(const std::string &fileName, bool highestDimOnly,
                     std::vector<std::pair<int, int> > &outDimTags,
                     const std::string &format="")
