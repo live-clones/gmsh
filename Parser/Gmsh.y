@@ -819,7 +819,6 @@ Affectation :
       }
       Free($1);
     }
-
   | String__Index LP RP NumericAffectation ListOfDouble tEND
     {
       gmsh_yysymbol &s(gmsh_yysymbols[$1]);
@@ -849,7 +848,6 @@ Affectation :
       Free($1);
       List_Delete($5);
     }
-
   | String__Index LP '{' RecursiveListOfDouble '}' RP NumericAffectation ListOfDouble tEND
     {
       assignVariables($1, $4, $7, $8);
@@ -893,8 +891,8 @@ Affectation :
       Free($3);
     }
 
-  // lists of strings with bracket notation
-  // lists of strings with parentheses notation
+  // lists of strings
+
   | String__Index LP RP tAFFECT tStr LP RP tEND
     {
       gmsh_yystringsymbols[$1] = std::vector<std::string>();
@@ -935,7 +933,6 @@ Affectation :
       StringOption(GMSH_SET|GMSH_GUI, $1, 0, $3, tmp);
       Free($1); Free($3); Free($5);
     }
-
   | String__Index '[' FExpr ']' '.' tSTRING tAFFECT StringExpr tEND
     {
       std::string tmp($8);
@@ -963,7 +960,6 @@ Affectation :
       }
       Free($1); Free($3);
     }
-
   | String__Index '[' FExpr ']' '.' tSTRING NumericAffectation FExpr tEND
     {
       double d = 0.;
@@ -982,7 +978,6 @@ Affectation :
       }
       Free($1); Free($6);
     }
-
   | String__Index '.' tSTRING NumericIncrement tEND
     {
       double d = 0.;
@@ -992,7 +987,6 @@ Affectation :
       }
       Free($1); Free($3);
     }
-
   | String__Index '[' FExpr ']' '.' tSTRING NumericIncrement tEND
     {
       double d = 0.;
@@ -1010,7 +1004,6 @@ Affectation :
       ColorOption(GMSH_SET|GMSH_GUI, $1, 0, $5, $7);
       Free($1); Free($5);
     }
-
   | String__Index '[' FExpr ']' '.' tColor '.' tSTRING tAFFECT ColorExpr tEND
     {
       ColorOption(GMSH_SET|GMSH_GUI, $1, (int)$3, $8, $10);
@@ -1039,7 +1032,6 @@ Affectation :
       Free($1);
       List_Delete($5);
     }
-
   | String__Index '[' FExpr ']' '.' tColorTable tAFFECT ListOfColor tEND
     {
       GmshColorTable *ct = GetColorTable((int)$3);
@@ -4866,14 +4858,14 @@ FExpr_Single :
       */
     }
   | String__Index tSCOPE String__Index '.' tSTRING_Member_Float
-    { $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5); }
-
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5);
+    }
   | String__Index '[' FExpr ']' '.' tSTRING
     {
       NumberOption(GMSH_GET, $1, (int)$3, $6, $$);
       Free($1); Free($6);
     }
-
   | String__Index '.' tSTRING NumericIncrement
     {
       double d = 0.;
@@ -4884,7 +4876,6 @@ FExpr_Single :
       }
       Free($1); Free($3);
     }
-
   | String__Index '[' FExpr ']' '.' tSTRING NumericIncrement
     {
       double d = 0.;

@@ -52,25 +52,27 @@ class GEO_Internals{
   void addVertex(int num, double x, double y, double z, double lc);
   void addVertex(int num, double x, double y, gmshSurface *s, double lc);
   void addLine(int num, int startTag, int endTag);
-  void addLine(int num, std::vector<int> vertexTags);
+  void addLine(int num, const std::vector<int> &vertexTags);
   void addCircleArc(int num, int startTag, int centerTag, int EndTag,
                     double nx=0., double ny=0., double nz=0.);
   void addEllipseArc(int num, int startTag, int centerTag, int majorTag,
                      int endTag, double nx=0., double ny=0., double nz=0.);
-  void addSpline(int num, std::vector<int> vertexTags);
-  void addBSpline(int num, std::vector<int> vertexTags);
-  void addBezier(int num, std::vector<int> vertexTags);
-  void addNurbs(int num, std::vector<int> vertexTags, std::vector<double> knots);
-  void addCompoundLine(int num, std::vector<int> edgeTags);
-  void addLineLoop(int num, std::vector<int> edgeTags);
-  void addPlaneSurface(int num, std::vector<int> wireTags);
+  void addSpline(int num, const std::vector<int> &vertexTags);
+  void addBSpline(int num, const std::vector<int> &vertexTags);
+  void addBezier(int num, const std::vector<int> &vertexTags);
+  void addNurbs(int num, const std::vector<int> &vertexTags,
+                const std::vector<double> &knots);
+  void addCompoundLine(int num, const std::vector<int> &edgeTags);
+  void addLineLoop(int num, const std::vector<int> &edgeTags);
+  void addPlaneSurface(int num, const std::vector<int> &wireTags);
   void addDiscreteSurface(int num);
-  void addSurfaceFilling(int num, std::vector<int> wireTags, int sphereCenterTag=-1);
-  void addSurfaceLoop(int num, std::vector<int> faceTags);
-  void addCompoundSurface(int num, std::vector<int> faceTags,
+  void addSurfaceFilling(int num, const std::vector<int> &wireTags,
+                         int sphereCenterTag=-1);
+  void addSurfaceLoop(int num, const std::vector<int> &faceTags);
+  void addCompoundSurface(int num, const std::vector<int> &faceTags,
                           std::vector<int> edgeTags[4]=0);
-  void addVolume(int num, std::vector<int> shellTags);
-  void addCompoundVolume(int num, std::vector<int> regionTags);
+  void addVolume(int num, const std::vector<int> &shellTags);
+  void addCompoundVolume(int num, const std::vector<int> &regionTags);
 
   // extrude and revolve
   void extrude(const std::vector<std::pair<int, int> > &inDimTags,
@@ -117,21 +119,22 @@ class GEO_Internals{
 
   // manipulate physical groups
   void resetPhysicalGroups();
-  void modifyPhysicalGroup(int dim, int num, int op, std::vector<int> tags);
+  void modifyPhysicalGroup(int dim, int num, int op, const std::vector<int> &tags);
   int getMaxPhysicalTag() const { return _maxPhysicalNum; }
   void setMaxPhysicalTag(int val) { _maxPhysicalNum = val; }
 
   // coherence
   void removeAllDuplicates();
-  void mergeVertices(std::vector<int> tags);
+  void mergeVertices(const std::vector<int> &tags);
 
   // set meshing constraints
-  void setCompoundMesh(int dim, std::vector<int> tags);
+  void setCompoundMesh(int dim, const std::vector<int> &tags);
   void setMeshSize(int dim, int tag, double size);
   void setDegenerated(int dim, int tag);
   void setTransfiniteLine(int tag, int nPoints, int type, double coef);
-  void setTransfiniteSurface(int tag, int arrangement, std::vector<int> cornerTags);
-  void setTransfiniteVolume(int tag, std::vector<int> cornerTags);
+  void setTransfiniteSurface(int tag, int arrangement,
+                             const std::vector<int> &cornerTags);
+  void setTransfiniteVolume(int tag, const std::vector<int> &cornerTags);
   void setTransfiniteVolumeQuadTri(int tag);
   void setRecombine(int dim, int tag, double angle);
   void setSmoothing(int tag, int val);
