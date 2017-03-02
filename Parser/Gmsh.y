@@ -22,7 +22,6 @@
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
 #include "GeoDefines.h"
-#include "Geo.h" // FIXME: remove once Extrusion has been refactored
 #include "ExtrudeParams.h"
 #include "Options.h"
 #include "Parser.h"
@@ -108,8 +107,8 @@ int printListOfDouble(char *format, List_T *list, char *buffer);
 fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 void ListOfDouble2Vector(List_T *list, std::vector<int> &v);
 void ListOfDouble2Vector(List_T *list, std::vector<double> &v);
-void ListOfShapes2Vectors(List_T *list, std::vector<int> v[4]);
-void Vectors2ListOfShapes(std::vector<int> tags[4], List_T *list);
+void ListOfShapes2VectorOfPairs(List_T *list, std::vector<std::pair<int, int> > &v);
+void VectorOfPairs2ListOfShapes(const std::vector<std::pair<int, int> > &v, List_T *list);
 void addPeriodicEdge(int, int, const std::vector<double>&);
 void addPeriodicFace(int, int, const std::map<int, int>&);
 void addPeriodicFace(int, int, const std::vector<double>&);
@@ -122,8 +121,10 @@ void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out);
 void getElementaryTagsInBoundingBox(int dim, double x1, double y1, double z1,
                                     double x2, double y2, double z2, List_T *out);
 void setVisibility(int dim, int visible, bool recursive);
-void setVisibility(std::vector<int> tags[4], int visible, bool recursive);
-void setColor(std::vector<int> tags[4], unsigned int val, bool recursive);
+void setVisibility(const std::vector<std::pair<int, int> > &dimTags, int visible,
+                   bool recursive);
+void setColor(const std::vector<std::pair<int, int> > &dimTags, unsigned int val,
+              bool recursive);
 
 double treat_Struct_FullName_dot_tSTRING_Float(char* c1, char* c2, char* c3);
 char* treat_Struct_FullName_dot_tSTRING_String(char* c1, char* c2, char* c3);
@@ -2075,10 +2076,11 @@ Shape :
   | tThruSections '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
-      std::vector<int> wires, out[4]; ListOfDouble2Vector($6, wires);
+      std::vector<int> wires; ListOfDouble2Vector($6, wires);
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<std::pair<int, int> > outDimTags;
         GModel::current()->getOCCInternals()->addThruSections
-          (num, wires, out, true, false);
+          (num, wires, outDimTags, true, false);
       }
       else{
         yymsg(0, "ThruSections only available with OpenCASCADE factory");
@@ -2090,10 +2092,11 @@ Shape :
   | tRuled tThruSections '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
-      std::vector<int> wires, out[4]; ListOfDouble2Vector($7, wires);
+      std::vector<int> wires; ListOfDouble2Vector($7, wires);
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        std::vector<std::pair<int, int> > outDimTags;
         GModel::current()->getOCCInternals()->addThruSections
-          (num, wires, out, true, true);
+          (num, wires, outDimTags, true, true);
       }
       else{
         yymsg(0, "ThruSections only available with OpenCASCADE factory");
@@ -2158,80 +2161,82 @@ Shape :
 Transform :
     tTranslate VExpr '{' MultipleShape '}'
     {
-      std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($4, dimTags);
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        GModel::current()->getOCCInternals()->translate(tags, $2[0], $2[1], $2[2]);
+        GModel::current()->getOCCInternals()->translate(dimTags, $2[0], $2[1], $2[2]);
       }
       else{
-        GModel::current()->getGEOInternals()->translate(tags, $2[0], $2[1], $2[2]);
+        GModel::current()->getGEOInternals()->translate(dimTags, $2[0], $2[1], $2[2]);
       }
       $$ = $4;
     }
   | tRotate '{' VExpr ',' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
-      std::vector<int> tags[4]; ListOfShapes2Vectors($10, tags);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($10, dimTags);
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->rotate
-          (tags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7);
+          (dimTags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7);
       }
       else{
         GModel::current()->getGEOInternals()->rotate
-          (tags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7);
+          (dimTags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7);
       }
       $$ = $10;
     }
   | tSymmetry  VExpr '{' MultipleShape '}'
     {
-      std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($4, dimTags);
       if(factory == "OpenCASCADE"){
         Msg::Error("Symmetry not implemented yet with OpenCASCADE factory");
       }
       else{
         GModel::current()->getGEOInternals()->symmetry
-          (tags, $2[0], $2[1], $2[2], $2[3]);
+          (dimTags, $2[0], $2[1], $2[2], $2[3]);
       }
       $$ = $4;
     }
   | tDilate '{' VExpr ',' FExpr '}' '{' MultipleShape '}'
     {
-      std::vector<int> tags[4]; ListOfShapes2Vectors($8, tags);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($8, dimTags);
       if(factory == "OpenCASCADE"){
         yymsg(0, "Dilate not implemented yet with OpenCASCADE factory");
       }
       else{
         GModel::current()->getGEOInternals()->dilate
-          (tags, $3[0], $3[1], $3[2], $5, $5, $5);
+          (dimTags, $3[0], $3[1], $3[2], $5, $5, $5);
       }
       $$ = $8;
     }
   | tDilate '{' VExpr ',' VExpr '}' '{' MultipleShape '}'
     {
-      std::vector<int> tags[4]; ListOfShapes2Vectors($8, tags);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($8, dimTags);
       if(factory == "OpenCASCADE"){
         yymsg(0, "Dilate not implemented yet with OpenCASCADE factory");
       }
       else{
         GModel::current()->getGEOInternals()->dilate
-          (tags, $3[0], $3[1], $3[2], $5[0], $5[1], $5[2]);
+          (dimTags, $3[0], $3[1], $3[2], $5[0], $5[1], $5[2]);
       }
       $$ = $8;
     }
   | tSTRING '{' MultipleShape '}'
     {
-      $$ = List_Create(3, 3, sizeof(Shape));
+      std::vector<std::pair<int, int> > inDimTags, outDimTags;
+      ListOfShapes2VectorOfPairs($3, inDimTags);
+      $$ = $3;
+      List_Reset($$);
       std::string action($1);
       if(action == "Duplicata"){
-        // don't use per-dimension vectors here, in order to respect the input
-        // ordering (points can e.g. be given after surfaces) in the output
-        for(int i = 0; i < List_Nbr($3); i++){
-          Shape s; List_Read($3, i, &s); int dim = s.Type / 100 - 1;
-          if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-            s.Num = GModel::current()->getOCCInternals()->copy(dim, s.Num);
-          }
-          else{
-            s.Num = GModel::current()->getGEOInternals()->copy(dim, s.Num);
-          }
-          List_Add($$, &s);
+        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+          GModel::current()->getOCCInternals()->copy(inDimTags, outDimTags);
+        }
+        else{
+          GModel::current()->getGEOInternals()->copy(inDimTags, outDimTags);
         }
       }
       else if(action == "Boundary" ||
@@ -2246,39 +2251,52 @@ Transform :
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
-        std::vector<int> in[4], out[4]; ListOfShapes2Vectors($3, in);
         GModel::current()->getBoundaryTags
-          (in, out, action.find("Combined") != std::string::npos,
+          (inDimTags, outDimTags, action.find("Combined") != std::string::npos,
            action.find("Oriented") != std::string::npos);
-        Vectors2ListOfShapes(out, $$);
       }
       else{
         yymsg(0, "Unknown action on multiple shapes: %s", $1);
       }
+      VectorOfPairs2ListOfShapes(outDimTags, $$);
       Free($1);
-      List_Delete($3);
     }
   | tIntersect tLine '{' RecursiveListOfDouble '}' tSurface '{' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       if(factory == "OpenCASCADE"){
-        yymsg(0, "Intersect Line not available with OpenCASCADE");
+        yymsg(0, "Intersect line not available with OpenCASCADE");
       }
       else{
-        IntersectCurvesWithSurface($4, (int)$8, $$);
+        std::vector<int> in, out; ListOfDouble2Vector($4, in);
+        GModel::current()->getGEOInternals()->intersectCurvesWithSurface
+          (in, (int)$8, out);
+        for(unsigned int i = 0; i < out.size(); i++){
+          Shape s;
+          s.Type = MSH_POINT;
+          s.Num = out[i];
+          List_Add($$, &s);
+        }
       }
       List_Delete($4);
     }
+  // syntax is wrong: should use {} around FExpr
   | tSplit tLine '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
     {
-      $$ = List_Create(2, 1, sizeof(Shape*));
+      $$ = List_Create(2, 1, sizeof(Shape));
       if(factory == "OpenCASCADE"){
         yymsg(0, "Split Line not available with OpenCASCADE");
       }
       else{
-        List_T *tmp = ListOfDouble2ListOfInt($7);
-        SplitCurve((int)$4, tmp, $$);
-        List_Delete(tmp);
+        std::vector<int> vertices, curves; ListOfDouble2Vector($7, vertices);
+        GModel::current()->getGEOInternals()->splitCurve
+          ((int)$4, vertices, curves);
+        for(unsigned int i = 0; i < curves.size(); i++){
+          Shape s;
+          s.Type = MSH_SEGM_LINE;
+          s.Num = curves[i];
+          List_Add($$, &s);
+        }
       }
       List_Delete($7);
     }
@@ -2711,17 +2729,13 @@ LevelSet :
 Delete :
     tDelete '{' ListOfShapes '}'
     {
-      // don't use per-dimension vectors here, in order to respect the input
-      // ordering when deleting (important in GEO for dependencies, e.g. cannot
-      // delete boundary before the bounded entity)
-      for(int i = 0; i < List_Nbr($3); i++){
-        Shape s; List_Read($3, i, &s); int dim = s.Type / 100 - 1;
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-          GModel::current()->getOCCInternals()->remove(dim, s.Num);
-        }
-        GModel::current()->getGEOInternals()->remove(dim, s.Num);
-        GModel::current()->remove(dim, s.Num);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($3, dimTags);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        GModel::current()->getOCCInternals()->remove(dimTags);
       }
+      GModel::current()->getGEOInternals()->remove(dimTags);
+      GModel::current()->remove(dimTags);
       List_Delete($3);
     }
   | tDelete tField '[' FExpr ']' tEND
@@ -2792,14 +2806,16 @@ Delete :
 Colorify :
     tColor ColorExpr '{' ListOfShapes '}'
     {
-      std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
-      setColor(tags, $2, false);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($4, dimTags);
+      setColor(dimTags, $2, false);
       List_Delete($4);
     }
   | tRecursive tColor ColorExpr '{' ListOfShapes '}'
     {
-      std::vector<int> tags[4]; ListOfShapes2Vectors($5, tags);
-      setColor(tags, $3, true);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($5, dimTags);
+      setColor(dimTags, $3, true);
       List_Delete($5);
     }
 ;
@@ -2809,14 +2825,14 @@ Colorify :
 SetPartition :
     tSetPartition FExpr '{' ListOfShapes '}'
     {
-      std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
-      for(int dim = 0; dim < 4; dim++){
-        for(unsigned int i = 0; i < tags[dim].size(); i++){
-          GEntity *ge = GModel::current()->getEntityByTag(dim, tags[dim][i]);
-          if(ge){
-            for(unsigned int j = 0; j < ge->getNumMeshElements(); j++)
-              ge->getMeshElement(j)->setPartition((int)$2);
-          }
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($4, dimTags);
+      for(unsigned int i = 0; i < dimTags.size(); i++){
+        GEntity *ge = GModel::current()->getEntityByTag
+          (dimTags[i].first, dimTags[i].second);
+        if(ge){
+          for(unsigned int j = 0; j < ge->getNumMeshElements(); j++)
+            ge->getMeshElement(j)->setPartition((int)$2);
         }
       }
       List_Delete($4);
@@ -2840,26 +2856,30 @@ Visibility :
     }
   | tShow '{' ListOfShapes '}'
     {
-      std::vector<int> tags[4]; ListOfShapes2Vectors($3, tags);
-      setVisibility(tags, 1, false);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($3, dimTags);
+      setVisibility(dimTags, 1, false);
       List_Delete($3);
     }
   | tRecursive tShow '{' ListOfShapes '}'
     {
-      std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
-      setVisibility(tags, 1, true);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($4, dimTags);
+      setVisibility(dimTags, 1, true);
       List_Delete($4);
     }
   | tHide '{' ListOfShapes '}'
     {
-      std::vector<int> tags[4]; ListOfShapes2Vectors($3, tags);
-      setVisibility(tags, 0, false);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($3, dimTags);
+      setVisibility(dimTags, 0, false);
       List_Delete($3);
     }
   | tRecursive tHide '{' ListOfShapes '}'
     {
-      std::vector<int> tags[4]; ListOfShapes2Vectors($4, tags);
-      setVisibility(tags, 0, true);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($4, dimTags);
+      setVisibility(dimTags, 0, true);
       List_Delete($4);
     }
 ;
@@ -3427,43 +3447,51 @@ Loop :
 Extrude :
     tExtrude VExpr '{' ListOfShapes '}'
     {
-      $$ = List_Create(2, 1, sizeof(Shape));
+      std::vector<std::pair<int, int> > inDimTags, outDimTags;
+      ListOfShapes2VectorOfPairs($4, inDimTags);
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> in[4], out[4]; ListOfShapes2Vectors($4, in);
-        GModel::current()->getOCCInternals()->extrude(-1, in, $2[0], $2[1], $2[2], out);
-        Vectors2ListOfShapes(out, $$);
+        GModel::current()->getOCCInternals()->extrude
+          (inDimTags, $2[0], $2[1], $2[2], outDimTags);
       }
       else{
-        // FIXME use GEOInternals + int api -- SAME FOR ALL BELOW!
-        ExtrudeShapes(TRANSLATE, $4,
-                      $2[0], $2[1], $2[2], 0., 0., 0., 0., 0., 0., 0.,
-                      NULL, $$);
+        GModel::current()->getGEOInternals()->extrude
+          (inDimTags, $2[0], $2[1], $2[2], outDimTags);
       }
-      List_Delete($4);
+      $$ = $4;
+      List_Reset($$);
+      VectorOfPairs2ListOfShapes(outDimTags, $$);
     }
   | tExtrude '{' VExpr ',' VExpr ',' FExpr '}' '{' ListOfShapes '}'
     {
-      $$ = List_Create(2, 1, sizeof(Shape));
+      std::vector<std::pair<int, int> > inDimTags, outDimTags;
+      ListOfShapes2VectorOfPairs($10, inDimTags);
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> in[4], out[4]; ListOfShapes2Vectors($10, in);
-        GModel::current()->getOCCInternals()->revolve(-1, in, $5[0], $5[1], $5[2],
-                                                      $3[0], $3[1], $3[2], $7, out);
-        Vectors2ListOfShapes(out, $$);
+        GModel::current()->getOCCInternals()->revolve
+          (inDimTags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7, outDimTags);
       }
       else{
-        ExtrudeShapes(ROTATE, $10,
-                      0., 0., 0., $3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7,
-                      NULL, $$);
+        GModel::current()->getGEOInternals()->revolve
+          (inDimTags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7, outDimTags);
       }
-      List_Delete($10);
+      $$ = $10;
+      List_Reset($$);
+      VectorOfPairs2ListOfShapes(outDimTags, $$);
     }
   | tExtrude '{' VExpr ',' VExpr ',' VExpr ',' FExpr '}' '{' ListOfShapes '}'
     {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShapes(TRANSLATE_ROTATE, $12,
-		    $3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7[0], $7[1], $7[2], $9,
-		    NULL, $$);
-      List_Delete($12);
+      std::vector<std::pair<int, int> > inDimTags, outDimTags;
+      ListOfShapes2VectorOfPairs($12, inDimTags);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Twisting extrude not available with OpenCASCADE factory");
+      }
+      else{
+        GModel::current()->getGEOInternals()->twist
+          (inDimTags, $7[0], $7[1], $7[2], $3[0], $3[1], $3[2], $5[0], $5[1], $5[2],
+           $9,  outDimTags);
+      }
+      $$ = $12;
+      List_Reset($$);
+      VectorOfPairs2ListOfShapes(outDimTags, $$);
     }
   | tExtrude VExpr '{' ListOfShapes
     {
@@ -3473,11 +3501,19 @@ Extrude :
     }
                        ExtrudeParameters '}'
     {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShapes(TRANSLATE, $4,
-		    $2[0], $2[1], $2[2], 0., 0., 0., 0., 0., 0., 0.,
-		    &extr, $$);
-      List_Delete($4);
+      std::vector<std::pair<int, int> > inDimTags, outDimTags;
+      ListOfShapes2VectorOfPairs($4, inDimTags);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        GModel::current()->getOCCInternals()->extrude
+          (inDimTags, $2[0], $2[1], $2[2], outDimTags, &extr);
+      }
+      else{
+        GModel::current()->getGEOInternals()->extrude
+          (inDimTags, $2[0], $2[1], $2[2], outDimTags, &extr);
+      }
+      $$ = $4;
+      List_Reset($$);
+      VectorOfPairs2ListOfShapes(outDimTags, $$);
     }
   | tExtrude '{' VExpr ',' VExpr ',' FExpr '}' '{' ListOfShapes
     {
@@ -3487,11 +3523,21 @@ Extrude :
     }
                                                    ExtrudeParameters '}'
     {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShapes(ROTATE, $10,
-		    0., 0., 0., $3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7,
-		    &extr, $$);
-      List_Delete($10);
+      std::vector<std::pair<int, int> > inDimTags, outDimTags;
+      ListOfShapes2VectorOfPairs($10, inDimTags);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        GModel::current()->getOCCInternals()->revolve
+          (inDimTags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7, outDimTags,
+           &extr);
+      }
+      else{
+        GModel::current()->getGEOInternals()->revolve
+          (inDimTags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7, outDimTags,
+           &extr);
+      }
+      $$ = $10;
+      List_Reset($$);
+      VectorOfPairs2ListOfShapes(outDimTags, $$);
     }
   | tExtrude '{' VExpr ',' VExpr ',' VExpr ',' FExpr '}' '{' ListOfShapes
     {
@@ -3501,11 +3547,19 @@ Extrude :
     }
                                                              ExtrudeParameters '}'
     {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShapes(TRANSLATE_ROTATE, $12,
-		    $3[0], $3[1], $3[2], $5[0], $5[1], $5[2], $7[0], $7[1], $7[2], $9,
-		    &extr, $$);
-      List_Delete($12);
+      std::vector<std::pair<int, int> > inDimTags, outDimTags;
+      ListOfShapes2VectorOfPairs($12, inDimTags);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Twisting extrude not available with OpenCASCADE factory");
+      }
+      else{
+        GModel::current()->getGEOInternals()->twist
+          (inDimTags, $7[0], $7[1], $7[2], $3[0], $3[1], $3[2], $5[0], $5[1], $5[2],
+           $9,  outDimTags, &extr);
+      }
+      $$ = $12;
+      List_Reset($$);
+      VectorOfPairs2ListOfShapes(outDimTags, $$);
     }
   | tExtrude '{' ListOfShapes
     {
@@ -3515,32 +3569,42 @@ Extrude :
     }
                        ExtrudeParameters '}'
     {
-      $$ = List_Create(2, 1, sizeof(Shape));
-      ExtrudeShapes(BOUNDARY_LAYER, $3, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-		    &extr, $$);
-      List_Delete($3);
+      std::vector<std::pair<int, int> > inDimTags, outDimTags;
+      ListOfShapes2VectorOfPairs($3, inDimTags);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Boundary layer extrusion not available with OpenCASCADE factory");
+      }
+      else{
+        GModel::current()->getGEOInternals()->boundaryLayer
+          (inDimTags, outDimTags, &extr);
+      }
+      $$ = $3;
+      List_Reset($$);
+      VectorOfPairs2ListOfShapes(outDimTags, $$);
     }
   | tExtrude '{' ListOfShapes '}' tUsing tWire '{' FExpr '}'
     {
-      $$ = List_Create(2, 1, sizeof(Shape));
+      std::vector<std::pair<int, int> > inDimTags, outDimTags;
+      ListOfShapes2VectorOfPairs($3, inDimTags);
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> in[4], out[4]; ListOfShapes2Vectors($3, in);
-        GModel::current()->getOCCInternals()->addPipe(-1, in, (int)$8, out);
-        Vectors2ListOfShapes(out, $$);
+        GModel::current()->getOCCInternals()->addPipe(inDimTags, (int)$8, outDimTags);
       }
       else{
         yymsg(0, "Pipe only available with OpenCASCADE factory");
       }
-      List_Delete($3);
+      $$ = $3;
+      List_Reset($$);
+      VectorOfPairs2ListOfShapes(outDimTags, $$);
     }
   | tThruSections ListOfDouble
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> wires, out[4]; ListOfDouble2Vector($2, wires);
-        GModel::current()->getOCCInternals()->addThruSections(-1, wires, out,
-                                                              false, false);
-        Vectors2ListOfShapes(out, $$);
+        std::vector<int> wires; ListOfDouble2Vector($2, wires);
+        std::vector<std::pair<int, int> > outDimTags;
+        GModel::current()->getOCCInternals()->addThruSections
+          (-1, wires, outDimTags, false, false);
+        VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
       else{
         yymsg(0, "ThruSections only available with OpenCASCADE factory");
@@ -3551,10 +3615,11 @@ Extrude :
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> wires, out[4]; ListOfDouble2Vector($3, wires);
-        GModel::current()->getOCCInternals()->addThruSections(-1, wires, out,
-                                                              false, true);
-        Vectors2ListOfShapes(out, $$);
+        std::vector<int> wires; ListOfDouble2Vector($3, wires);
+        std::vector<std::pair<int, int> > outDimTags;
+        GModel::current()->getOCCInternals()->addThruSections
+          (-1, wires, outDimTags, false, true);
+        VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
       else{
         yymsg(0, "ThruSections only available with OpenCASCADE factory");
@@ -3566,10 +3631,12 @@ Extrude :
       $$ = List_Create(2, 1, sizeof(Shape));
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         double radius = $9;
-        std::vector<int> regions, edges, out[4];
+        std::vector<int> regions, edges;
         ListOfDouble2Vector($3, regions); ListOfDouble2Vector($6, edges);
-        GModel::current()->getOCCInternals()->fillet(regions, edges, radius, out);
-        Vectors2ListOfShapes(out, $$);
+        std::vector<std::pair<int, int> > outDimTags;
+        GModel::current()->getOCCInternals()->fillet
+          (regions, edges, radius, outDimTags);
+        VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
       else{
         yymsg(0, "Fillet only available with OpenCASCADE factory");
@@ -3689,12 +3756,12 @@ Boolean :
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> shape[4], tool[4], out[4];
-        ListOfShapes2Vectors($3, shape);
-        ListOfShapes2Vectors($7, tool);
+        std::vector<std::pair<int, int > > object, tool, out;
+        ListOfShapes2VectorOfPairs($3, object);
+        ListOfShapes2VectorOfPairs($7, tool);
         GModel::current()->getOCCInternals()->applyBooleanOperator
-          (-1, (OCC_Internals::BooleanOperator)$1, shape, tool, out, $4, $8);
-        Vectors2ListOfShapes(out, $$);
+          (-1, (OCC_Internals::BooleanOperator)$1, object, tool, out, $4, $8);
+        VectorOfPairs2ListOfShapes(out, $$);
       }
       else{
         yymsg(0, "Boolean operators only available with OpenCASCADE factory");
@@ -3706,10 +3773,10 @@ Boolean :
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> out[4];
+        std::vector<std::pair<int, int> > out;
         std::string tmp = FixRelativePath(gmsh_yyname, $3);
         GModel::current()->getOCCInternals()->importShapes(tmp, true, out);
-        Vectors2ListOfShapes(out, $$);
+        VectorOfPairs2ListOfShapes(out, $$);
       }
       else{
         yymsg(0, "ShapeFromFile only available with OpenCASCADE factory");
@@ -3723,11 +3790,11 @@ BooleanShape :
                                           '{' ListOfShapes BooleanOption '}' tEND
     {
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        std::vector<int> shape[4], tool[4], out[4];
-        ListOfShapes2Vectors($7, shape);
-        ListOfShapes2Vectors($11, tool);
+        std::vector<std::pair<int, int> > object, tool, out;
+        ListOfShapes2VectorOfPairs($7, object);
+        ListOfShapes2VectorOfPairs($11, tool);
         GModel::current()->getOCCInternals()->applyBooleanOperator
-          ((int)$3, (OCC_Internals::BooleanOperator)$1, shape, tool, out, $8, $12);
+          ((int)$3, (OCC_Internals::BooleanOperator)$1, object, tool, out, $8, $12);
       }
       List_Delete($7);
       List_Delete($11);
@@ -6168,29 +6235,26 @@ void ListOfDouble2Vector(List_T *list, std::vector<double> &v)
   }
 }
 
-void ListOfShapes2Vectors(List_T *list, std::vector<int> v[4])
+void ListOfShapes2VectorOfPairs(List_T *list, std::vector<std::pair<int, int> > &v)
 {
-  Shape s;
   for(int i = 0; i < List_Nbr(list); i++){
+    Shape s;
     List_Read(list, i, &s);
     int dim = s.Type / 100 - 1;
-    if(dim >= 0 && dim <= 3) v[dim].push_back(s.Num);
+    if(dim >= 0 && dim <= 3) v.push_back(std::pair<int, int>(dim, s.Num));
   }
 }
 
-void Vectors2ListOfShapes(std::vector<int> tags[4], List_T *list)
+void VectorOfPairs2ListOfShapes(const std::vector<std::pair<int, int> > &v, List_T *list)
 {
-  for(int dim = 0; dim < 4; dim++){
+  for(unsigned int i = 0; i < v.size(); i++){
+    int dim = v[i].first;
+    int tag = v[i].second;
     Shape s;
-    s.Type =
-      (dim == 3) ? MSH_VOLUME :
-      (dim == 2) ? MSH_SURF_PLAN :
-      (dim == 1) ? MSH_SEGM_LINE :
-      MSH_POINT;
-    for(unsigned int i = 0; i < tags[dim].size(); i++){
-      s.Num = tags[dim][i];
-      List_Add(list, &s);
-    }
+    s.Type = (dim == 3) ? MSH_VOLUME : (dim == 2) ? MSH_SURF_PLAN :
+      (dim == 1) ? MSH_SEGM_LINE : MSH_POINT;
+    s.Num = tag;
+    List_Add(list, &s);
   }
 }
 
@@ -6470,7 +6534,8 @@ void setVisibility(int dim, int visible, bool recursive)
   }
 }
 
-void setVisibility(std::vector<int> tags[4], int visible, bool recursive)
+void setVisibility(const std::vector<std::pair<int, int> > &dimTags,
+                   int visible, bool recursive)
 {
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
@@ -6478,15 +6543,15 @@ void setVisibility(std::vector<int> tags[4], int visible, bool recursive)
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
-  for(int dim = 0; dim < 4; dim++){
-    for(unsigned int i = 0; i < tags[dim].size(); i++){
-      GEntity *ge = GModel::current()->getEntityByTag(dim, std::abs(tags[dim][i]));
-      if(ge) ge->setVisibility(visible, recursive);
-    }
+  for(unsigned int i = 0; i < dimTags.size(); i++){
+    GEntity *ge = GModel::current()->getEntityByTag
+      (dimTags[i].first, dimTags[i].second);
+    if(ge) ge->setVisibility(visible, recursive);
   }
 }
 
-void setColor(std::vector<int> tags[4], unsigned int val, bool recursive)
+void setColor(const std::vector<std::pair<int, int> > &dimTags,
+              unsigned int val, bool recursive)
 {
   if(GModel::current()->getOCCInternals() &&
      GModel::current()->getOCCInternals()->getChanged())
@@ -6494,11 +6559,10 @@ void setColor(std::vector<int> tags[4], unsigned int val, bool recursive)
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
-  for(int dim = 0; dim < 4; dim++){
-    for(unsigned int i = 0; i < tags[dim].size(); i++){
-      GEntity *ge = GModel::current()->getEntityByTag(dim, std::abs(tags[dim][i]));
-      if(ge) ge->setColor(val, recursive);
-    }
+  for(unsigned int i = 0; i < dimTags.size(); i++){
+    GEntity *ge = GModel::current()->getEntityByTag
+      (dimTags[i].first, dimTags[i].second);
+    if(ge) ge->setColor(val, recursive);
   }
 }
 

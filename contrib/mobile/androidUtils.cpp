@@ -113,7 +113,7 @@ void getBitmapFromString(const char *text, int textsize, unsigned char **map,
                                          "(Ljava/lang/String;I)I");
   *height = env->CallStaticIntMethod(jClass, mid, jtext, textsize);
   mid = env->GetStaticMethodID(jClass, "getWidthFromString", "(Ljava/lang/String;I)I");
-  *width =env->CallStaticIntMethod(jClass, mid, jtext, textsize);
+  *width = env->CallStaticIntMethod(jClass, mid, jtext, textsize);
   if(realWidth != NULL){
     mid = env->GetStaticMethodID(jClass, "getRealWidthFromString", "(Ljava/lang/String;I)I");
     *realWidth = env->CallStaticIntMethod(jClass, mid, jtext, textsize);

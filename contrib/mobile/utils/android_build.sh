@@ -125,3 +125,6 @@ check
 
 # to see stack traces after crashes:
 # ~/Library/Android/sdk/platform-tools/adb logcat | ~/Library/Android/ndk-bundle/ndk-stack -sym build_android_Onelab/
+
+# to run the emulator (this one uses a real ARM image - slower but allows to test the actual build!)
+# ~/Library/Android/sdk/tools/emulator -netdelay none -netspeed full -avd Nexus_6P_API_25

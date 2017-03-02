@@ -9,8 +9,9 @@
 #include "ListUtils.h"
 #include "TreeUtils.h"
 
-class gmshSurface;
 class GModel;
+class ExtrudeParams;
+class gmshSurface;
 
 class GEO_Internals{
  public:
@@ -24,10 +25,16 @@ class GEO_Internals{
   void _allocateAll();
   void _freeAll();
   bool _changed;
-  void _transform(std::vector<int> tags[4], int mode,
+  void _transform(int mode, const std::vector<std::pair<int, int> > &dimTags,
                   double x, double y, double z,
                   double dx, double dy, double dz,
                   double a, double b, double c, double d);
+  void _extrude(int mode, const std::vector<std::pair<int, int> > &inDimTags,
+                double x, double y, double z,
+                double dx, double dy, double dz,
+                double ax, double ay, double az, double angle,
+                std::vector<std::pair<int, int> > &outDimTags,
+                ExtrudeParams *e=0);
  public:
   GEO_Internals(){ _allocateAll(); }
   ~GEO_Internals(){ _freeAll(); }
@@ -65,17 +72,48 @@ class GEO_Internals{
   void addVolume(int num, std::vector<int> shellTags);
   void addCompoundVolume(int num, std::vector<int> regionTags);
 
+  // extrude and revolve
+  void extrude(const std::vector<std::pair<int, int> > &inDimTags,
+               double dx, double dy, double dz,
+               std::vector<std::pair<int, int> > &outDimTags,
+               ExtrudeParams *e=0);
+  void revolve(const std::vector<std::pair<int, int> > &inDimTags,
+               double x, double y, double z,
+               double ax, double ay, double az, double angle,
+               std::vector<std::pair<int, int> > &outDimTags,
+               ExtrudeParams *e=0);
+  void twist(const std::vector<std::pair<int, int> > &inDimTags,
+             double x, double y, double z,
+             double dx, double dy, double dz,
+             double ax, double ay, double az, double angle,
+             std::vector<std::pair<int, int> > &outDimTags,
+             ExtrudeParams *e=0);
+  void boundaryLayer(const std::vector<std::pair<int, int> > &inDimTags,
+                     std::vector<std::pair<int, int> > &outDimTags,
+                     ExtrudeParams *e=0);
+
   // apply transformations
-  void translate(std::vector<int> tags[4], double dx, double dy, double dz);
-  void rotate(std::vector<int> tags[4], double x, double y, double z,
-              double dx, double dy, double dz, double angle);
-  void dilate(std::vector<int> tags[4], double x, double y, double z,
-              double a, double b, double c);
-  void symmetry(std::vector<int> tags[4], double a, double b, double c, double d);
+  void translate(const std::vector<std::pair<int, int> > &dimTags,
+                 double dx, double dy, double dz);
+  void rotate(const std::vector<std::pair<int, int> > &dimTags,
+              double x, double y, double z, double ax, double ay, double az,
+              double angle);
+  void dilate(const std::vector<std::pair<int, int> > &dimTags,
+              double x, double y, double z, double a, double b, double c);
+  void symmetry(const std::vector<std::pair<int, int> > &dimTags,
+                double a, double b, double c, double d);
+
+  // split entities
+  void splitCurve(int tag, const std::vector<int> &vertexTags,
+                  std::vector<int> &edgeTags);
+  void intersectCurvesWithSurface(const std::vector<int> &edgeTags,
+                                  int faceTag, std::vector<int> &vertexTags);
 
   // copy and remove
-  int copy(int dim, int tag);
+  void copy(const std::vector<std::pair<int, int> > &inDimTags,
+            std::vector<std::pair<int, int> > &outDimTags);
   void remove(int dim, int tag);
+  void remove(const std::vector<std::pair<int, int> > &dimTags);
 
   // manipulate physical groups
   void resetPhysicalGroups();

@@ -3381,7 +3381,7 @@ static Curve *_create_splitted_curve(Curve *c, List_T *nodes)
   return cnew;
 }
 
-bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
+bool SplitCurve(int line_id, List_T *vertices_id, List_T *curves)
 {
   Curve *c = FindCurve(line_id);
   if(!c){
@@ -3415,9 +3415,9 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
     if(v_break.find(pv->Num) != v_break.end() && List_Nbr(new_list) > 1){
       if(last_periodic)
         break;
-      if(!(is_periodic&&first_periodic)){
+      if(!(is_periodic && first_periodic)){
         Curve *cnew = _create_splitted_curve(c, new_list);
-        List_Add(shapes, &cnew);
+        List_Add(curves, &cnew);
         List_Add(num_shapes, &cnew->Num);
       }
       first_periodic = false;
@@ -3431,18 +3431,18 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
   }
   if(List_Nbr(new_list) > 1){
     Curve *cnew = _create_splitted_curve(c, new_list);
-    List_Add(shapes, &cnew);
+    List_Add(curves, &cnew);
     List_Add(num_shapes, &cnew->Num);
   }
   // replace original curve by the new curves in all surfaces (and for
   // the opposite curve)
-  List_T *rshapes = List_Create(2, 1, sizeof(Shape));
-  int N = List_Nbr(shapes);
-  for(int i = 0; i < List_Nbr(shapes); i++){
+  List_T *rcurves = List_Create(2, 1, sizeof(Curve *));
+  int N = List_Nbr(curves);
+  for(int i = 0; i < List_Nbr(curves); i++){
     Curve *cc, *rcc;
-    List_Read(shapes, N - i - 1, &cc);
+    List_Read(curves, N - i - 1, &cc);
     rcc=FindCurve(-cc->Num);
-    List_Add(rshapes, &rcc);
+    List_Add(rcurves, &rcc);
   }
   List_T *Surfs = Tree2List(GModel::current()->getGEOInternals()->Surfaces);
   for(int i = 0; i < List_Nbr(Surfs); i++) {
@@ -3453,13 +3453,13 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
       List_Read(s->Generatrices, j, &surface_curve);
       if(surface_curve->Num == c->Num){
         List_Remove(s->Generatrices, j);
-        List_Insert_In_List(shapes, j, s->Generatrices);
-        j += List_Nbr(shapes) - 1;
+        List_Insert_In_List(curves, j, s->Generatrices);
+        j += List_Nbr(curves) - 1;
       }
       else if(surface_curve->Num == -c->Num){
         List_Remove(s->Generatrices, j);
-        List_Insert_In_List(rshapes, j, s->Generatrices);
-        j += List_Nbr(shapes) - 1;
+        List_Insert_In_List(rcurves, j, s->Generatrices);
+        j += List_Nbr(curves) - 1;
       }
     }
   }
@@ -3485,7 +3485,7 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes)
   DeleteCurve(c->Num);
   DeleteCurve(-c->Num);
   List_Delete(new_list);
-  List_Delete(rshapes);
+  List_Delete(rcurves);
   List_Delete(num_shapes);
   return true;
 }
@@ -3505,7 +3505,6 @@ static bool intersectCS(fullVector<double> &uvt, fullVector<double> &res, void *
   res(2) = vs.Pos.Z - vc.Pos.Z;
   return true;
 }
-
 
 bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shapes)
 {

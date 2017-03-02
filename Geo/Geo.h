@@ -221,23 +221,6 @@ void ExtrudeShapes(int extrude_type, List_T *in,
                    double X0, double X1, double X2, double alpha,
                    ExtrudeParams *e,
                    List_T *out);
-int ExtrudePoint(int type, int ip,
-                 double T0, double T1, double T2,
-                 double A0, double A1, double A2,
-                 double X0, double X1, double X2, double alpha,
-                 Curve **pc, Curve **prc, int final,
-                 ExtrudeParams *e);
-int ExtrudeCurve(int type, int ic,
-                 double T0, double T1, double T2,
-                 double A0, double A1, double A2,
-                 double X0, double X1, double X2, double alpha,
-                 Surface **ps, int final,
-                 ExtrudeParams *e);
-int ExtrudeSurface(int type, int is,
-                   double T0, double T1, double T2,
-                   double A0, double A1, double A2,
-                   double X0, double X1, double X2, double alpha,
-                   Volume **pv, ExtrudeParams *e);
 void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e);
 
 void ReplaceAllDuplicates();
@@ -245,7 +228,7 @@ void ReplaceAllDuplicatesNew(double tol = -1.);
 
 bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2]);
 bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shapes);
-bool SplitCurve(int line_id, List_T *vertices_id, List_T *shapes);
+bool SplitCurve(int line_id, List_T *vertices_id, List_T *curves);
 
 int RecognizeLineLoop(List_T *liste, int *loop);
 int RecognizeSurfaceLoop(List_T *liste, int *loop);

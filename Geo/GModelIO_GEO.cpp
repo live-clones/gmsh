@@ -446,23 +446,97 @@ void GEO_Internals::addCompoundVolume(int num, std::vector<int> regionTags)
   _changed = true;
 }
 
-void GEO_Internals::_transform(std::vector<int> tags[4], int mode,
+void GEO_Internals::_extrude(int mode,
+                             const std::vector<std::pair<int, int> > &inDimTags,
+                             double x, double y, double z,
+                             double dx, double dy, double dz,
+                             double ax, double ay, double az, double angle,
+                             std::vector<std::pair<int, int> > &outDimTags,
+                             ExtrudeParams *e)
+{
+  List_T *in = List_Create(inDimTags.size() + 1, 10, sizeof(Shape));
+  List_T *out = List_Create(3 * inDimTags.size() + 1, 10, sizeof(Shape));
+
+  for(unsigned int i = 0; i < inDimTags.size(); i++){
+    int dim = inDimTags[i].first;
+    int tag = inDimTags[i].second;
+    Shape s;
+    s.Type = (dim == 3) ? MSH_VOLUME : (dim == 2) ? MSH_SURF_PLAN :
+      (dim == 1) ? MSH_SEGM_LINE : MSH_POINT;
+    s.Num = tag;
+    List_Add(in, &s);
+  }
+
+  if(mode == 0){ // extrude
+    ExtrudeShapes(TRANSLATE, in, dx, dy, dz, 0., 0., 0., 0., 0., 0., 0., e, out);
+  }
+  else if(mode == 1){ // revolve
+    ExtrudeShapes(ROTATE, in, 0., 0., 0., ax, ay, az, x, y, z, angle, e, out);
+  }
+  else if(mode == 2){ // extrude+revolve
+    ExtrudeShapes(TRANSLATE_ROTATE, in, dx, dy, dz, ax, ay, az, x, y, z, angle, e, out);
+  }
+  else if(mode == 3){ // boundary layer
+    ExtrudeShapes(BOUNDARY_LAYER, in, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., e, out);
+  }
+
+  for(int i = 0; i < List_Nbr(out); i++){
+    Shape s;
+    List_Read(out, i, &s);
+    int dim = s.Type / 100 - 1;
+    if(dim >= 0 && dim <= 3) outDimTags.push_back(std::pair<int, int>(dim, s.Num));
+  }
+}
+
+void GEO_Internals::extrude(const std::vector<std::pair<int, int> > &inDimTags,
+                            double dx, double dy, double dz,
+                            std::vector<std::pair<int, int> > &outDimTags,
+                            ExtrudeParams *e)
+{
+  _extrude(0, inDimTags, 0., 0., 0., dx, dy, dz, 0., 0., 0., 0., outDimTags, e);
+}
+
+void GEO_Internals::revolve(const std::vector<std::pair<int, int> > &inDimTags,
+                            double x, double y, double z,
+                            double ax, double ay, double az, double angle,
+                            std::vector<std::pair<int, int> > &outDimTags,
+                            ExtrudeParams *e)
+{
+  _extrude(1, inDimTags, x, y, z, 0., 0., 0., ax, ay, az, angle, outDimTags, e);
+}
+
+void GEO_Internals::twist(const std::vector<std::pair<int, int> > &inDimTags,
+                          double x, double y, double z,
+                          double dx, double dy, double dz,
+                          double ax, double ay, double az, double angle,
+                          std::vector<std::pair<int, int> > &outDimTags,
+                          ExtrudeParams *e)
+{
+  _extrude(2, inDimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags, e);
+}
+
+void GEO_Internals::boundaryLayer(const std::vector<std::pair<int, int> > &inDimTags,
+                                  std::vector<std::pair<int, int> > &outDimTags,
+                                  ExtrudeParams *e)
+{
+  _extrude(3, inDimTags, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., outDimTags, e);
+}
+
+void GEO_Internals::_transform(int mode,
+                               const std::vector<std::pair<int, int> > &dimTags,
                                double x, double y, double z,
                                double dx, double dy, double dz,
                                double a, double b, double c, double d)
 {
-  List_T *list = List_Create(10, 10, sizeof(Shape));
-  for(int dim = 0; dim < 4; dim++){
+  List_T *list = List_Create(dimTags.size() + 1, 10, sizeof(Shape));
+  for(unsigned int i = 0; i < dimTags.size(); i++){
+    int dim = dimTags[i].first;
+    int tag = dimTags[i].second;
     Shape s;
-    s.Type =
-      (dim == 3) ? MSH_VOLUME :
-      (dim == 2) ? MSH_SURF_PLAN :
-      (dim == 1) ? MSH_SEGM_LINE :
-      MSH_POINT;
-    for(unsigned int i = 0; i < tags[dim].size(); i++){
-      s.Num = tags[dim][i];
-      List_Add(list, &s);
-    }
+    s.Type = (dim == 3) ? MSH_VOLUME : (dim == 2) ? MSH_SURF_PLAN :
+      (dim == 1) ? MSH_SEGM_LINE : MSH_POINT;
+    s.Num = tag;
+    List_Add(list, &s);
   }
   switch(mode){
   case 0: TranslateShapes(dx, dy, dz, list); break;
@@ -473,71 +547,122 @@ void GEO_Internals::_transform(std::vector<int> tags[4], int mode,
   _changed = true;
 }
 
-void GEO_Internals::translate(std::vector<int> tags[4],
+void GEO_Internals::translate(const std::vector<std::pair<int, int> > &dimTags,
                               double dx, double dy, double dz)
 {
-  _transform(tags, 0, 0, 0, 0, dx, dy, dz, 0, 0, 0, 0);
+  _transform(0, dimTags, 0, 0, 0, dx, dy, dz, 0, 0, 0, 0);
 }
 
-void GEO_Internals::rotate(std::vector<int> tags[4],
+void GEO_Internals::rotate(const std::vector<std::pair<int, int> > &dimTags,
                            double x, double y, double z,
-                           double dx, double dy, double dz, double angle)
+                           double ax, double ay, double az, double angle)
 {
-  _transform(tags, 1, x, y, z, dx, dy, dz, angle, 0, 0, 0);
+  _transform(1, dimTags, x, y, z, ax, ay, az, angle, 0, 0, 0);
 }
 
-void GEO_Internals::dilate(std::vector<int> tags[4],
+void GEO_Internals::dilate(const std::vector<std::pair<int, int> > &dimTags,
                            double x, double y, double z,
                            double a, double b, double c)
 {
-  _transform(tags, 2, x, y, z, 0, 0, 0, a, b, c, 0);
+  _transform(2, dimTags, x, y, z, 0, 0, 0, a, b, c, 0);
 }
 
-void GEO_Internals::symmetry(std::vector<int> tags[4],
+void GEO_Internals::symmetry(const std::vector<std::pair<int, int> > &dimTags,
                              double a, double b, double c, double d)
 {
-  _transform(tags, 3, 0, 0, 0, 0, 0, 0, a, b, c, d);
+  _transform(3, dimTags, 0, 0, 0, 0, 0, 0, a, b, c, d);
 }
 
-int GEO_Internals::copy(int dim, int tag)
+void GEO_Internals::splitCurve(int tag, const std::vector<int> &vertexTags,
+                               std::vector<int> &edgeTags)
 {
+  List_T *tmp = List_Create(10, 10, sizeof(int));
+  for(unsigned int i = 0; i < vertexTags.size(); i++){
+    int t = vertexTags[i];
+    List_Add(tmp, &t);
+  }
+  List_T *curves = List_Create(10, 10, sizeof(Curve *));
+  SplitCurve(tag, tmp, curves);
+  for(int i = 0; i < List_Nbr(curves); i++){
+    Curve *c;
+    List_Read(curves, i, &c);
+    edgeTags.push_back(c->Num);
+  }
+  List_Delete(tmp);
+  List_Delete(curves);
+}
+
+void GEO_Internals::intersectCurvesWithSurface(const std::vector<int> &edgeTags,
+                                               int faceTag,
+                                               std::vector<int> &vertexTags)
+{
+  List_T *curves = List_Create(10, 10, sizeof(double));
+  List_T *shapes = List_Create(10, 10, sizeof(Shape));
+  for(unsigned int i = 0; i < edgeTags.size(); i++){
+    double d = edgeTags[i];
+    List_Add(curves, &d);
+  }
+  IntersectCurvesWithSurface(curves, faceTag, shapes);
+  for(int i = 0; i < List_Nbr(shapes); i++){
+    Shape s;
+    List_Read(shapes, i, &s);
+    if(s.Type == MSH_POINT){
+      vertexTags.push_back(s.Num);
+    }
+    else{
+      Msg::Error("Degenrated curve surface intersection not implemented");
+    }
+  }
+}
+
+void GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
+                         std::vector<std::pair<int, int> > &outDimTags)
+{
+  for(unsigned int i = 0; i < inDimTags.size(); i++){
+    int dim = inDimTags[i].first;
+    int tag = inDimTags[i].second;
+    if(dim == 0){
+      Vertex *v = FindPoint(tag);
+      if(!v){
+        Msg::Error("Unknown GEO vertex with tag %d", tag);
+      }
+      else{
+        Vertex *newv = DuplicateVertex(v);
+        outDimTags.push_back(std::pair<int, int>(0, newv->Num));
+      }
+    }
+    else if(dim == 1){
+      Curve *c = FindCurve(tag);
+      if(!c){
+        Msg::Error("Unknown GEO curve with tag %d", tag);
+      }
+      else{
+        Curve *newc = DuplicateCurve(c);
+        outDimTags.push_back(std::pair<int, int>(1, newc->Num));
+      }
+    }
+    else if(dim == 2){
+      Surface *s = FindSurface(tag);
+      if(!s){
+        Msg::Error("Unknown GEO surface with tag %d", tag);
+      }
+      else{
+        Surface *news = DuplicateSurface(s);
+        outDimTags.push_back(std::pair<int, int>(2, news->Num));
+      }
+    }
+    else if(dim == 3){
+      Volume *v = FindVolume(tag);
+      if(!v){
+        Msg::Error("Unknown GEO region with tag %d", tag);
+      }
+      else{
+        Volume *newv = DuplicateVolume(v);
+        outDimTags.push_back(std::pair<int, int>(3, newv->Num));
+      }
+    }
+  }
   _changed = true;
-  if(dim == 0){
-    Vertex *v = FindPoint(tag);
-    if(!v){
-      Msg::Error("Unknown GEO vertex with tag %d", tag);
-      return tag;
-    }
-    Vertex *newv = DuplicateVertex(v);
-    return newv->Num;
-  }
-  else if(dim == 1){
-    Curve *c = FindCurve(tag);
-    if(!c){
-      Msg::Error("Unknown GEO curve with tag %d", tag);
-      return tag;
-    }
-    Curve *newc = DuplicateCurve(c);
-    return newc->Num;
-  }
-  else if(dim == 2){
-    Surface *s = FindSurface(tag);
-    if(!s){
-      Msg::Error("Unknown GEO surface with tag %d", tag);
-      return tag;
-    }
-    Surface *news = DuplicateSurface(s);
-    return news->Num;
-  }
-  else{
-    Volume *v = FindVolume(tag);
-    if(!v){
-      Msg::Error("Unknown GEO region with tag %d", tag);
-      return tag;
-    }
-    Volume *newv = DuplicateVolume(v);
-    return newv->Num;
-  }
 }
 
 void GEO_Internals::remove(int dim, int tag)
@@ -548,6 +673,12 @@ void GEO_Internals::remove(int dim, int tag)
   case 2: DeleteSurface(tag); break;
   case 3: DeleteVolume(tag); break;
   }
+}
+
+void GEO_Internals::remove(const std::vector<std::pair<int, int> > &dimTags)
+{
+  for(unsigned int i = 0; i < dimTags.size(); i++)
+    remove(dimTags[i].first, dimTags[i].second);
 }
 
 void GEO_Internals::resetPhysicalGroups()

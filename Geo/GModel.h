@@ -278,6 +278,7 @@ class GModel {
   void remove(GEdge *e);
   void remove(GVertex *v);
   void remove(int dim, int tag);
+  void remove(const std::vector<std::pair<int, int> > &dimTags);
 
   // snap vertices on model edges by using geometry tolerance
   void snapVertices();
@@ -290,7 +291,8 @@ class GModel {
                         int dim=-1) const;
 
   // get tags of entities of the boundary of the given input entities
-  void getBoundaryTags(std::vector<int> inTags[4], std::vector<int> outTags[4],
+  void getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
+                       std::vector<std::pair<int, int> > &outDimTags,
                        bool combined, bool oriented);
 
   // return the highest number associated with an elementary entity of

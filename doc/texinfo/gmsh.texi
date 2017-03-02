@@ -2369,11 +2369,20 @@ the X, Y and Z components of the translation vector.
 
 @item Boundary @{ @var{transform-list} @}
 (Not a transformation per-se.) Returns the boundary of the elementary
-entities in @var{transform-list}.
+entities in @var{transform-list}. 
 
 @item CombinedBoundary @{ @var{transform-list} @}
 (Not a transformation per-se.) Returns the boundary of the elementary
 entities, combined as if a single entity, in
+@var{transform-list}. Useful to compute the boundary of a complex part.
+
+@item OrientedBoundary @{ @var{transform-list} @}
+(Not a transformation per-se.) Returns the boundary of the elementary
+entities in @var{transform-list}, with signs indicating their orientation.
+
+@item CombinedOrientedBoundary @{ @var{transform-list} @}
+(Not a transformation per-se.) Returns the (oriented) boundary of the
+elementary entities, combined as if a single entity, in
 @var{transform-list}. Useful to compute the boundary of a complex part.
 
 @c @item Intersect Line @{ @var{expression-list} @} Surface @{ @var{expression} @}

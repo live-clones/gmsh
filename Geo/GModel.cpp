@@ -355,6 +355,12 @@ void GModel::remove(int dim, int tag)
   }
 }
 
+void GModel::remove(const std::vector<std::pair<int, int> > &dimTags)
+{
+  for(unsigned int i = 0; i < dimTags.size(); i++)
+    remove(dimTags[i].first, dimTags[i].second);
+}
+
 void GModel::snapVertices()
 {
   viter vit = firstVertex();
@@ -431,73 +437,83 @@ void GModel::getEntitiesInBox(std::vector<GEntity*> &entities, SBoundingBox3d bo
   }
 }
 
-void GModel::getBoundaryTags(std::vector<int> inTags[4], std::vector<int> outTags[4],
+void GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
+                             std::vector<std::pair<int, int> > &outDimTags,
                              bool combined, bool oriented)
 {
-  for(int dim = 1; dim < 4; dim++){
-    for(unsigned int i = 0; i < inTags[dim].size(); i++){
-      if(dim == 3){
-        GRegion *gr = getRegionByTag(inTags[3][i]);
-        if(gr){
-          std::list<GFace*> faces(gr->faces());
-          std::list<int> orientations(gr->faceOrientations());
-          std::list<int>::iterator ito = orientations.begin();
-          for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
-            int tag = (*it)->tag();
-            if(oriented && ito != orientations.end()){
-              tag *= *ito;
-              ito++;
-            }
-            outTags[2].push_back(tag);
+  for(unsigned int i = 0; i < inDimTags.size(); i++){
+    int dim = inDimTags[i].first;
+    int tag = inDimTags[i].second;
+    if(dim == 3){
+      GRegion *gr = getRegionByTag(tag);
+      if(gr){
+        std::list<GFace*> faces(gr->faces());
+        std::list<int> orientations(gr->faceOrientations());
+        std::list<int>::iterator ito = orientations.begin();
+        for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+          int t = (*it)->tag();
+          if(oriented && ito != orientations.end()){
+            t *= *ito;
+            ito++;
           }
+          outDimTags.push_back(std::pair<int, int>(2, t));
         }
-        else
-          Msg::Error("Unknown model region with tag %d", inTags[3][i]);
       }
-      else if(dim == 2){
-        GFace *gf = getFaceByTag(inTags[2][i]);
-        if(gf){
-          std::list<GEdge*> edges(gf->edges());
-          std::list<int> orientations(gf->edgeOrientations());
-          std::list<int>::iterator ito = orientations.begin();
-          for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
-            int tag = (*it)->tag();
-            if(oriented && ito != orientations.end()){
-              tag *= *ito;
-              ito++;
-            }
-            outTags[1].push_back(tag);
+      else
+        Msg::Error("Unknown model region with tag %d", tag);
+    }
+    else if(dim == 2){
+      GFace *gf = getFaceByTag(tag);
+      if(gf){
+        std::list<GEdge*> edges(gf->edges());
+        std::list<int> orientations(gf->edgeOrientations());
+        std::list<int>::iterator ito = orientations.begin();
+        for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+          int t = (*it)->tag();
+          if(oriented && ito != orientations.end()){
+            t *= *ito;
+            ito++;
           }
+          outDimTags.push_back(std::pair<int, int>(1, t));
         }
-        else
-          Msg::Error("Unknown model face with tag %d", inTags[2][i]);
       }
-      else if(dim == 1){
-        GEdge *ge = getEdgeByTag(inTags[1][i]);
-        if(ge){
-          if(ge->getBeginVertex())
-            outTags[0].push_back(ge->getBeginVertex()->tag());
-          if(ge->getEndVertex())
-            outTags[0].push_back(ge->getEndVertex()->tag());
+      else
+        Msg::Error("Unknown model face with tag %d", tag);
+    }
+    else if(dim == 1){
+      GEdge *ge = getEdgeByTag(tag);
+      if(ge){
+        if(ge->getBeginVertex())
+          outDimTags.push_back(std::pair<int, int>(0, ge->getBeginVertex()->tag()));
+        if(ge->getEndVertex())
+          outDimTags.push_back(std::pair<int, int>(0, ge->getEndVertex()->tag()));
+      }
+      else
+        Msg::Error("Unknown model edge with tag %d", tag);
+    }
+  }
+
+  if(combined){
+    // compute boundary of the combined shapes
+    std::set<int> c[3];
+    for(unsigned int i = 0; i < outDimTags.size(); i++){
+      int dim = outDimTags[i].first;
+      int tag = outDimTags[i].second;
+      if(dim >= 0 && dim < 3){
+        std::set<int>::iterator it = c[dim].find(tag);
+        std::set<int>::iterator itr = (oriented ? c[dim].find(-tag) : c[dim].end());
+        if(it == c[dim].end() && itr == c[dim].end())
+          c[dim].insert(tag);
+        else{
+          if(it != c[dim].end()) c[dim].erase(it);
+          if(oriented && itr != c[dim].end()) c[dim].erase(itr);
         }
-        else
-          Msg::Error("Unknown model edge with tag %d", inTags[1][i]);
       }
     }
-
-    if(combined){
-      // compute boundary of the combined shapes
-      std::set<int> comb;
-      for(unsigned int i = 0; i < outTags[dim-1].size(); i++){
-        std::set<int>::iterator it = comb.find(outTags[dim-1][i]);
-        if(it == comb.end())
-          comb.insert(outTags[dim-1][i]);
-        else
-          comb.erase(it);
-      }
-      outTags[dim-1].clear();
-      for(std::set<int>::iterator it = comb.begin(); it != comb.end(); it++)
-        outTags[dim-1].push_back(*it);
+    outDimTags.clear();
+    for(int dim = 0; dim < 3; dim++){
+      for(std::set<int>::iterator it = c[dim].begin(); it != c[dim].end(); it++)
+        outDimTags.push_back(std::pair<int, int>(dim, *it));
     }
   }
 }
