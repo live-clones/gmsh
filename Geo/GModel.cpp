@@ -437,6 +437,15 @@ void GModel::getEntitiesInBox(std::vector<GEntity*> &entities, SBoundingBox3d bo
   }
 }
 
+class AbsIntLessThan{
+ public:
+  bool operator()(const int &i1, const int &i2) const
+  {
+    if(std::abs(i1) < std::abs(i2)) return true;
+    return false;
+  }
+};
+
 void GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
                              std::vector<std::pair<int, int> > &outDimTags,
                              bool combined, bool oriented)
@@ -495,18 +504,16 @@ void GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
 
   if(combined){
     // compute boundary of the combined shapes
-    std::set<int> c[3];
+    std::set<int, AbsIntLessThan> c[3];
     for(unsigned int i = 0; i < outDimTags.size(); i++){
       int dim = outDimTags[i].first;
       int tag = outDimTags[i].second;
       if(dim >= 0 && dim < 3){
         std::set<int>::iterator it = c[dim].find(tag);
-        std::set<int>::iterator itr = (oriented ? c[dim].find(-tag) : c[dim].end());
-        if(it == c[dim].end() && itr == c[dim].end())
+        if(it == c[dim].end())
           c[dim].insert(tag);
         else{
-          if(it != c[dim].end()) c[dim].erase(it);
-          if(oriented && itr != c[dim].end()) c[dim].erase(itr);
+          c[dim].erase(it);
         }
       }
     }
