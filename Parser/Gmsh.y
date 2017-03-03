@@ -4671,12 +4671,8 @@ FExpr_Single :
       else{
         std::string struct_namespace($1.char1? $1.char1 : std::string("")),
           struct_name($1.char2);
-        if(nameSpaces.count(struct_namespace) &&
-           nameSpaces[struct_namespace].count(struct_name)) {
-          $$ = (double)nameSpaces[struct_namespace][struct_name]._index;
-        }
-        else {
-          yymsg(0, "Unknown variable: %s", struct_name.c_str());  $$ = 0.;
+        if(nameSpaces.getTag(struct_namespace, struct_name, $$)) {
+          yymsg(0, "Unknown Constant: %s", struct_name.c_str());
         }
       }
       Free($1.char1); Free($1.char2);
@@ -4835,19 +4831,17 @@ FExpr_Single :
       /*
       std::string struct_namespace($1.char1? $1.char1 : std::string("")),
         struct_name($1.char2);
-      if (nameSpaces.count(struct_namespace) &&
-          nameSpaces[struct_namespace].count(struct_name)) {
-        std::string key2($3);
-        if (nameSpaces[struct_namespace][struct_name]._fopt.count(key2)) {
-	  $$ = nameSpaces[struct_namespace][struct_name]._fopt[key2][0];
-        }
-        else {
-	  yymsg(0, "Unknown member '%s' of Struct %s", $3, struct_name.c_str());
-          $$ = 0.;
-	}
-      }
-      else  {
+      std::string key_member($3);
+      switch (nameSpaces.getMember
+              (struct_namespace, struct_name, key_member, $$)) {
+      case 0:
+        break;
+      case 1:
         NumberOption(GMSH_GET, $1.char2, 0, $3, $$);
+        break;
+      case 2:
+        yymsg(0, "Unknown member '%s' of Struct %s", $3, struct_name.c_str());
+        break;
       }
       Free($1.char1); Free($1.char2);
       if (flag_tSTRING_alloc) Free($3);
@@ -4857,6 +4851,7 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5);
     }
+
   | String__Index '[' FExpr ']' '.' tSTRING
     {
       NumberOption(GMSH_GET, $1, (int)$3, $6, $$);
@@ -4952,25 +4947,12 @@ DefineStruct :
       std::string struct_namespace($2.char1? $2.char1 : std::string("")),
         struct_name($2.char2);
       Free($2.char1); Free($2.char2);
-      if (!$3)
-        if (!nameSpaces[struct_namespace].count(struct_name)) {
-          int index = (int)$6;
-          if (index < 0)
-            index = nameSpaces[struct_namespace].size()+1;
-          nameSpaces[struct_namespace][struct_name] =
-            Struct(index, floatOptions, charOptions);
-          $$ = (double)index;
-        }
-        else {
-          yymsg(0, "Redefinition of Struct '%s::%s'",
-                struct_namespace.c_str(), struct_name.c_str());
-          $$ = $6;
-        }
-      else {
-        nameSpaces[struct_namespace][struct_name].
-          append(floatOptions, charOptions);
-        $$ = (double)nameSpaces[struct_namespace][struct_name]._index;
-      }
+      int tag_out;
+      if (nameSpaces.defStruct(struct_namespace, struct_name,
+                               floatOptions, charOptions, tag_out, $3))
+        yymsg(0, "Redefinition of Struct '%s::%s'",
+              struct_namespace.c_str(), struct_name.c_str());
+      $$ = (double)tag_out;
     }
 ;
 
@@ -5582,23 +5564,23 @@ StringExprVar :
       std::string out;
       std::string struct_namespace($1.char1? $1.char1 : std::string("")),
         struct_name($1.char2);
-      if(nameSpaces.count(struct_namespace) &&
-         nameSpaces[struct_namespace].count(struct_name)) {
-        std::string key2($3);
-        if(nameSpaces[struct_namespace][struct_name]._copt.count(key2)) {
-	  out = nameSpaces[struct_namespace][struct_name]._copt[key2][0];
-        }
-        else {
-	  yymsg(0, "Unknown member '%s' of Struct %s", $3, struct_name.c_str());
-	}
-      }
-      else  {
+
+      std::string key_member($3);
+      switch (nameSpaces.getMember
+              (struct_namespace, struct_name, key_member, out)) {
+      case 0:
+        break;
+      case 1:
         StringOption(GMSH_GET, $1, 0, $3, out);
+        break;
+      case 2:
+        yymsg(0, "Unknown member '%s' of Struct %s", $3, struct_name.c_str());
+        break;
       }
-      $$ = (char*)Malloc((out.size() + 1) * sizeof(char));
-      strcpy($$, out.c_str());
+      char* out_c = (char*)Malloc((out.size() + 1) * sizeof(char));
+      strcpy(out_c, out.c_str());
       Free($1.char1); Free($1.char2);
-      if (flag_tSTRING_alloc) Free($3);
+      if (flag_tSTRING_alloc) Free(c3);
       */
     }
   | String__Index tSCOPE String__Index '.' tSTRING_Member_Float
@@ -5889,8 +5871,8 @@ StringExpr :
     {
       std::string out;
       const std::string * key_struct = NULL;
-      switch (nameSpaces.get_key_struct_from_index((int)$3, key_struct,
-                                                   struct_namespace)) {
+      switch (nameSpaces.get_key_struct_from_tag(struct_namespace,
+                                                 (int)$3, key_struct)) {
       case 0:
         out = *key_struct;
         break;
@@ -6643,22 +6625,20 @@ double treat_Struct_FullName_dot_tSTRING_Float(char* c1, char* c2, char* c3)
   std::string struct_namespace(c1? c1 : std::string("")),
     struct_name(c2);
   /*
-  std::string struct_namespace($1.char1? $1.char1 : std::string("")),
-    struct_name($1.char2);
+    std::string struct_namespace($1.char1? $1.char1 : std::string("")),
+      struct_name($1.char2);
   */
-  if(nameSpaces.count(struct_namespace) &&
-     nameSpaces[struct_namespace].count(struct_name)) {
-    std::string key2(c3);
-    if(nameSpaces[struct_namespace][struct_name]._fopt.count(key2)) {
-      out = nameSpaces[struct_namespace][struct_name]._fopt[key2][0];
-    }
-    else {
-      yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
-      out = 0.;
-    }
-  }
-  else  {
+  std::string key_member(c3);
+  switch (nameSpaces.getMember
+          (struct_namespace, struct_name, key_member, out)) {
+  case 0:
+    break;
+  case 1:
     NumberOption(GMSH_GET, c2, 0, c3, out);
+    break;
+  case 2:
+    yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
+    break;
   }
   Free(c1); Free(c2);
   if (flag_tSTRING_alloc) Free(c3);
@@ -6674,19 +6654,19 @@ char* treat_Struct_FullName_dot_tSTRING_String(char* c1, char* c2, char* c3)
   std::string struct_namespace($1.char1? $1.char1 : std::string("")),
     struct_name($1.char2);
   */
-  if(nameSpaces.count(struct_namespace) &&
-     nameSpaces[struct_namespace].count(struct_name)) {
-    std::string key2(c3);
-    if(nameSpaces[struct_namespace][struct_name]._copt.count(key2)) {
-      out = nameSpaces[struct_namespace][struct_name]._copt[key2][0];
-    }
-    else {
-      yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
-    }
-  }
-  else  {
+  std::string key_member(c3);
+  switch (nameSpaces.getMember
+          (struct_namespace, struct_name, key_member, out)) {
+  case 0:
+    break;
+  case 1:
     StringOption(GMSH_GET, c2, 0, c3, out);
+    break;
+  case 2:
+    yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
+    break;
   }
+
   char* out_c = (char*)Malloc((out.size() + 1) * sizeof(char));
   strcpy(out_c, out.c_str());
   Free(c1); Free(c2);
