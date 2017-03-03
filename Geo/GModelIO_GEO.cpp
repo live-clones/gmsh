@@ -508,6 +508,7 @@ void GEO_Internals::_extrude(int mode,
     int dim = s.Type / 100 - 1;
     if(dim >= 0 && dim <= 3) outDimTags.push_back(std::pair<int, int>(dim, s.Num));
   }
+  _changed = true;
 }
 
 void GEO_Internals::extrude(const std::vector<std::pair<int, int> > &inDimTags,
@@ -612,6 +613,7 @@ void GEO_Internals::splitCurve(int tag, const std::vector<int> &vertexTags,
   }
   List_Delete(tmp);
   List_Delete(curves);
+  _changed = true;
 }
 
 void GEO_Internals::intersectCurvesWithSurface(const std::vector<int> &edgeTags,
@@ -632,9 +634,10 @@ void GEO_Internals::intersectCurvesWithSurface(const std::vector<int> &edgeTags,
       vertexTags.push_back(s.Num);
     }
     else{
-      Msg::Error("Degenrated curve surface intersection not implemented");
+      Msg::Error("Degenerated curve-surface intersection not implemented");
     }
   }
+  _changed = true;
 }
 
 void GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
@@ -695,6 +698,7 @@ void GEO_Internals::remove(int dim, int tag)
   case 2: DeleteSurface(tag); break;
   case 3: DeleteVolume(tag); break;
   }
+  _changed = true;
 }
 
 void GEO_Internals::remove(const std::vector<std::pair<int, int> > &dimTags)

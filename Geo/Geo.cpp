@@ -3572,6 +3572,8 @@ void SortEdgesInLoop(int num, List_T *edges, bool orient)
   }
   List_Reset(edges);
 
+  if(!List_Nbr(temp)) return;
+
   int j = 0, k = 0;
   c0 = c1 = *(Curve **)List_Pointer(temp, 0);
   List_Add(edges, &c1->Num);
