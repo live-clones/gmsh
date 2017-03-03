@@ -185,7 +185,7 @@ struct doubleXstring{
 %token tBSpline tBezier tNurbs tNurbsOrder tNurbsKnots
 %token tColor tColorTable tFor tIn tEndFor tIf tElseIf tElse tEndIf tExit tAbort
 %token tField tReturn tCall tSlide tMacro tShow tHide tGetValue tGetStringValue tGetEnv
-%token tGetString tGetNumber tUnique tUnique2
+%token tGetString tGetNumber tUnique
 %token tHomology tCohomology tBetti tExists tFileExists
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName tSetPartition
@@ -2231,10 +2231,7 @@ Transform :
           GModel::current()->getGEOInternals()->copy(inDimTags, outDimTags);
         }
       }
-      else if(action == "Boundary" ||
-              action == "CombinedBoundary" ||
-              action == "OrientedBoundary" ||
-              action == "CombinedOrientedBoundary"){
+      else if(action == "Boundary" || action == "CombinedBoundary"){
         // boundary operations are performed directly on GModel, which enables
         // to compute the boundary of hybrid CAD models; this also automatically
         // binds all boundary entities for OCC models
@@ -2244,8 +2241,7 @@ Transform :
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
         GModel::current()->getBoundaryTags
-          (inDimTags, outDimTags, action.find("Combined") != std::string::npos,
-           action.find("Oriented") != std::string::npos);
+          (inDimTags, outDimTags, action == "CombinedBoundary");
       }
       else{
         yymsg(0, "Unknown action on multiple shapes: %s", $1);
@@ -5421,24 +5417,6 @@ FExpr_Multi :
         List_Add($$, &tmp[i]);
       }
     }
-  | tUnique2 LP FExpr_Multi RP
-    {
-      std::set<double> c;
-      for(int i = 0; i < List_Nbr($3); i++){
-        double d; List_Read($3, i, &d);
-        std::set<double>::iterator it = c.find(d);
-        if(it == c.end())
-          c.insert(d);
-        else
-          c.erase(it);
-      }
-      $$ = $3;
-      List_Reset($$);
-      for(std::set<double>::iterator it = c.begin(); it != c.end(); it++){
-        double d = *it;
-        List_Add($$, &d);
-      }
-    }
   | tAbs LP FExpr_Multi RP
     {
       for(int i = 0; i < List_Nbr($3); i++){
@@ -6536,7 +6514,7 @@ void setVisibility(const std::vector<std::pair<int, int> > &dimTags,
 
   for(unsigned int i = 0; i < dimTags.size(); i++){
     GEntity *ge = GModel::current()->getEntityByTag
-      (dimTags[i].first, dimTags[i].second);
+      (dimTags[i].first, std::abs(dimTags[i].second));
     if(ge) ge->setVisibility(visible, recursive);
   }
 }
@@ -6552,7 +6530,7 @@ void setColor(const std::vector<std::pair<int, int> > &dimTags,
 
   for(unsigned int i = 0; i < dimTags.size(); i++){
     GEntity *ge = GModel::current()->getEntityByTag
-      (dimTags[i].first, dimTags[i].second);
+      (dimTags[i].first, std::abs(dimTags[i].second));
     if(ge) ge->setColor(val, recursive);
   }
 }

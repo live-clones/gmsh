@@ -293,7 +293,7 @@ class GModel {
   // get tags of entities of the boundary of the given input entities
   void getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
                        std::vector<std::pair<int, int> > &outDimTags,
-                       bool combined, bool oriented);
+                       bool combined, bool oriented=true);
 
   // return the highest number associated with an elementary entity of
   // a given dimension (or the highest overall if dim < 0)

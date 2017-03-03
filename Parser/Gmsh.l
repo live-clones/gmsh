@@ -325,7 +325,6 @@ Translate               return tTranslate;
 
 UndefineConstant        return tUndefineConstant;
 Unique                  return tUnique;
-Unique2                 return tUnique2;
 UpperCase               return tUpperCase;
 Using                   return tUsing;
 

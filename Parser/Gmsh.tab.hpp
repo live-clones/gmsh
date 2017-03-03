@@ -231,32 +231,31 @@
      tGetString = 447,
      tGetNumber = 448,
      tUnique = 449,
-     tUnique2 = 450,
-     tHomology = 451,
-     tCohomology = 452,
-     tBetti = 453,
-     tExists = 454,
-     tFileExists = 455,
-     tGMSH_MAJOR_VERSION = 456,
-     tGMSH_MINOR_VERSION = 457,
-     tGMSH_PATCH_VERSION = 458,
-     tGmshExecutableName = 459,
-     tSetPartition = 460,
-     tNameToString = 461,
-     tStringToName = 462,
-     tAFFECTDIVIDE = 463,
-     tAFFECTTIMES = 464,
-     tAFFECTMINUS = 465,
-     tAFFECTPLUS = 466,
-     tOR = 467,
-     tAND = 468,
-     tNOTEQUAL = 469,
-     tEQUAL = 470,
-     tGREATEROREQUAL = 471,
-     tLESSOREQUAL = 472,
-     UNARYPREC = 473,
-     tMINUSMINUS = 474,
-     tPLUSPLUS = 475
+     tHomology = 450,
+     tCohomology = 451,
+     tBetti = 452,
+     tExists = 453,
+     tFileExists = 454,
+     tGMSH_MAJOR_VERSION = 455,
+     tGMSH_MINOR_VERSION = 456,
+     tGMSH_PATCH_VERSION = 457,
+     tGmshExecutableName = 458,
+     tSetPartition = 459,
+     tNameToString = 460,
+     tStringToName = 461,
+     tAFFECTDIVIDE = 462,
+     tAFFECTTIMES = 463,
+     tAFFECTMINUS = 464,
+     tAFFECTPLUS = 465,
+     tOR = 466,
+     tAND = 467,
+     tNOTEQUAL = 468,
+     tEQUAL = 469,
+     tGREATEROREQUAL = 470,
+     tLESSOREQUAL = 471,
+     UNARYPREC = 472,
+     tMINUSMINUS = 473,
+     tPLUSPLUS = 474
    };
 #endif
 /* Tokens.  */
@@ -452,32 +451,31 @@
 #define tGetString 447
 #define tGetNumber 448
 #define tUnique 449
-#define tUnique2 450
-#define tHomology 451
-#define tCohomology 452
-#define tBetti 453
-#define tExists 454
-#define tFileExists 455
-#define tGMSH_MAJOR_VERSION 456
-#define tGMSH_MINOR_VERSION 457
-#define tGMSH_PATCH_VERSION 458
-#define tGmshExecutableName 459
-#define tSetPartition 460
-#define tNameToString 461
-#define tStringToName 462
-#define tAFFECTDIVIDE 463
-#define tAFFECTTIMES 464
-#define tAFFECTMINUS 465
-#define tAFFECTPLUS 466
-#define tOR 467
-#define tAND 468
-#define tNOTEQUAL 469
-#define tEQUAL 470
-#define tGREATEROREQUAL 471
-#define tLESSOREQUAL 472
-#define UNARYPREC 473
-#define tMINUSMINUS 474
-#define tPLUSPLUS 475
+#define tHomology 450
+#define tCohomology 451
+#define tBetti 452
+#define tExists 453
+#define tFileExists 454
+#define tGMSH_MAJOR_VERSION 455
+#define tGMSH_MINOR_VERSION 456
+#define tGMSH_PATCH_VERSION 457
+#define tGmshExecutableName 458
+#define tSetPartition 459
+#define tNameToString 460
+#define tStringToName 461
+#define tAFFECTDIVIDE 462
+#define tAFFECTTIMES 463
+#define tAFFECTMINUS 464
+#define tAFFECTPLUS 465
+#define tOR 466
+#define tAND 467
+#define tNOTEQUAL 468
+#define tEQUAL 469
+#define tGREATEROREQUAL 470
+#define tLESSOREQUAL 471
+#define UNARYPREC 472
+#define tMINUSMINUS 473
+#define tPLUSPLUS 474
 
 
 
@@ -496,7 +494,7 @@ typedef union YYSTYPE
   struct TwoChar c2;
 }
 /* Line 1529 of yacc.c.  */
-#line 500 "Gmsh.tab.hpp"
+#line 498 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

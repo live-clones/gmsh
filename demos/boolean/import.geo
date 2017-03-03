@@ -25,4 +25,4 @@ Recursive Color SteelBlue { Volume{r()}; }
 Save "merged.brep";
 
 Physical Volume("Combined volume", 1) = {r()};
-Physical Surface("Combined boundary", 2) = Unique2(Boundary{ Volume{r()}; });
+Physical Surface("Combined boundary", 2) = CombinedBoundary{ Volume{r()}; };
