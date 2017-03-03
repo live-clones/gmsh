@@ -1,4 +1,3 @@
-Geometry.OldNewReg = 0;
 l = 1;
 r1 = 2;
 r2 = 0.5;
