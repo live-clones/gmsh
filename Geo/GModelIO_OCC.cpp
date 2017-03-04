@@ -1269,6 +1269,9 @@ void OCC_Internals::_extrude(int mode,
                              std::vector<std::pair<int, int> > &outDimTags,
                              ExtrudeParams *e)
 {
+  if(e)
+    Msg::Warning("Structured meshes not yet available with OpenCASCADE extrusion");
+
   // build a single compound shape, so that we won't duplicate internal
   // boundaries
   BRep_Builder b;
