@@ -1323,33 +1323,36 @@ void discreteDiskFace::printAtlasMesh()
   std::set<MVertex*> meshvertices;
 
   for(unsigned int i=0; i<initialTriangulation->tri.size(); ++i){
-      MElement* tri = initialTriangulation->tri[i];
-      for(unsigned int j=0; j<3; j++)
-	if (meshvertices.find(tri->getVertex(j))==meshvertices.end()) meshvertices.insert(tri->getVertex(j));
+    MElement* tri = initialTriangulation->tri[i];
+    for(unsigned int j=0; j<3; j++)
+      if (meshvertices.find(tri->getVertex(j))==meshvertices.end())
+        meshvertices.insert(tri->getVertex(j));
   }
 
-  fprintf(pmesh,"$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n%u\n",(unsigned int)meshvertices.size());
+  fprintf(pmesh,"$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n%d\n",
+          (int)meshvertices.size());
   int count = 1;
-  for(std::set<MVertex*>::iterator it = meshvertices.begin(); it!=meshvertices.end(); ++it){
+  for(std::set<MVertex*>::iterator it = meshvertices.begin();
+      it!=meshvertices.end(); ++it){
     fprintf(pmesh,"%d %f %f %f\n",count,(*it)->x(),(*it)->y(),(*it)->z());
     mv2int[*it] = count;
     count++;
   }
-  fprintf(pmesh,"$EndNodes\n$Elements\n%u\n",(unsigned int)initialTriangulation->tri.size()-initialTriangulation->fillingHoles.size());
+  fprintf(pmesh,"$EndNodes\n$Elements\n%d\n", (int)initialTriangulation->tri.size() -
+          initialTriangulation->fillingHoles.size());
   unsigned int mycount = 0;//#####
   for(unsigned int i=0; i<initialTriangulation->tri.size(); i++){
-        std::set<int>::iterator it = initialTriangulation->fillingHoles.find(i);
-	//if (it == initialTriangulation->fillingHoles.end()){
-
-	  MElement* tri = initialTriangulation->tri[i];
-	  fprintf(pmesh,"%d 2 2 0 %d",mycount+1,initialTriangulation->idNum);//#####
-	  for(int j=0; j<3; j++){
-	    MVertex* mv = tri->getVertex(j);
-	    fprintf(pmesh," %d",mv2int[mv]);
-	  }
-	  fprintf(pmesh,"\n");
-	  mycount++;//###
-	  //}
+    std::set<int>::iterator it = initialTriangulation->fillingHoles.find(i);
+    //if (it == initialTriangulation->fillingHoles.end()){
+    MElement* tri = initialTriangulation->tri[i];
+    fprintf(pmesh,"%d 2 2 0 %d",mycount+1,initialTriangulation->idNum);//#####
+    for(int j=0; j<3; j++){
+      MVertex* mv = tri->getVertex(j);
+      fprintf(pmesh," %d",mv2int[mv]);
+    }
+    fprintf(pmesh,"\n");
+    mycount++;//###
+    //}
   }
   fprintf(pmesh,"$EndElements\n");
   fclose(pmesh);

@@ -725,6 +725,7 @@ void GEO_Internals::modifyPhysicalGroup(int dim, int num, int op,
   case 1: type = MSH_PHYSICAL_LINE; str = "line"; break;
   case 2: type = MSH_PHYSICAL_SURFACE; str = "surface"; break;
   case 3: type = MSH_PHYSICAL_VOLUME; str = "volume"; break;
+  default: return;
   }
 
   PhysicalGroup *p = FindPhysicalGroup(num, type);

@@ -59,7 +59,7 @@ void create_all_possible_tets(GRegion* region, const std::vector<MVertex*>& vert
   std::cout << " Number of tets created - all possible combinations - "
             << tets.size() << std::endl;
 
-  for (int i = 0; i < tets.size(); ++i) {
+  for (unsigned int i = 0; i < tets.size(); ++i) {
     region->addTetrahedron(tets[i]);
   }
 }

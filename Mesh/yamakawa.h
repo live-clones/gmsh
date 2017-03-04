@@ -22,43 +22,40 @@
 
 using namespace std;
 
-
 extern void export_gregion_mesh(GRegion *gr, string filename);
 
-
 class Hex {
-private:
+ private:
   double quality;
   unsigned long long hash;
   std::vector<MVertex*> vertices_;
-
-private:
-  void set_hash(){
+ private:
+  void set_hash()
+  {
     hash = 0.;
     for (int i = 0; i < 8; ++i) {
       hash += vertices_[i]->getNum();
     }
   }
-
-  void compute_quality() {
+  void compute_quality()
+  {
     MHexahedron elt(vertices_);
     quality = jacobianBasedQuality::minScaledJacobian(&elt, false, true);
   }
-
-  void initialize() {
+  void initialize()
+  {
     set_hash();
     compute_quality();
   }
-
-public:
+ public:
   Hex() : quality(0.), hash(0.) {}
-
   Hex(const std::vector<MVertex*>& vertices):
     quality(0.), hash(0), vertices_(vertices)
   {
     initialize();
   }
-  Hex(MVertex* a2, MVertex* b2, MVertex* c2, MVertex* d2, MVertex* e2, MVertex* f2, MVertex* g2, MVertex* h2) :
+  Hex(MVertex* a2, MVertex* b2, MVertex* c2, MVertex* d2, MVertex* e2,
+      MVertex* f2, MVertex* g2, MVertex* h2) :
     quality(0.)
   {
     vertices_.push_back(a2);
@@ -71,12 +68,10 @@ public:
     vertices_.push_back(h2);
     initialize();
   }
-
   ~Hex() {};
-
   double get_quality() const { return quality; }
-
-  MVertex* getVertex(unsigned int i) const {
+  MVertex* getVertex(unsigned int i) const
+  {
     if (i < 8) {
       return vertices_[i];
     }
@@ -86,13 +81,10 @@ public:
       return NULL;
     }
   }
-  const std::vector<MVertex*>& vertices() const {
-    return vertices_;
-  }
-
+  const std::vector<MVertex*>& vertices() const { return vertices_; }
   MVertex* vertex_in_facet(unsigned int facet, unsigned int v_in_facet) const;
-
-  bool hasVertex(MVertex *v) const {
+  bool hasVertex(MVertex *v) const
+  {
     for (int i = 0; i < 8; i++) {
       if (getVertex(i) == v) {
         return true;
@@ -100,8 +92,8 @@ public:
     }
     return false;
   }
-
-  bool same_vertices(Hex *h) const {
+  bool same_vertices(Hex *h) const
+  {
     for (int i = 0; i < 8; i++) {
       if (!(h->hasVertex(getVertex(i)))) {
         return false;
@@ -109,8 +101,8 @@ public:
     }
     return true;
   }
-
-  int vertex_index(MVertex* v) const {
+  int vertex_index(MVertex* v) const
+  {
     for (unsigned int i = 0; i < 8; ++i) {
       if (vertices_[i] == v) {
         return i;
@@ -118,35 +110,38 @@ public:
     }
     return -1;
   }
-
-  bool contains(MVertex* v) const {
+  bool contains(MVertex* v) const
+  {
     return vertex_index(v) != -1;
   }
-
-  unsigned long long get_hash() {
+  unsigned long long get_hash()
+  {
     if (hash == 0. && vertices_[0]!=NULL) {
       set_hash();
     }
     return hash;
   }
-  bool operator<(const Hex& hex) const {
+  bool operator<(const Hex& hex) const
+  {
     return quality > hex.get_quality(); // Why > ??? Shouldn't it be < ?? Jeanne.
   }
 };
 
 class Facet {
-private:
+ private:
   MVertex *a, *b, *c;
   int num[3];
   unsigned long long hash;
-public:
-  Facet() : a(NULL), b(NULL), c(NULL), hash(0.){
+ public:
+  Facet() : a(NULL), b(NULL), c(NULL), hash(0.)
+  {
     num[0] = -1;
     num[1] = -1;
     num[2] = -1;
   }
   Facet(MVertex* a2, MVertex* b2, MVertex* c2) :
-    a(a2), b(b2), c(c2), hash(0.){
+    a(a2), b(b2), c(c2), hash(0.)
+  {
     num[0] = -1;
     num[1] = -1;
     num[2] = -1;
@@ -156,19 +151,22 @@ public:
   MVertex* get_a() const { return a; }
   MVertex* get_b() const { return b; }
   MVertex* get_c() const { return c; }
-  void set_vertices(MVertex*a2, MVertex*b2, MVertex*c2) {
+  void set_vertices(MVertex*a2, MVertex*b2, MVertex*c2)
+  {
     a = a2;
     b = b2;
     c = c2;
     compute_hash();
   }
-  bool same_vertices(const Facet& facet) const {
+  bool same_vertices(const Facet& facet) const
+  {
     bool c1 = (a == facet.get_a()) || (a == facet.get_b()) || (a == facet.get_c());
     bool c2 = (b == facet.get_a()) || (b == facet.get_b()) || (b == facet.get_c());
     bool c3 = (c == facet.get_a()) || (c == facet.get_b()) || (c == facet.get_c());
     return c1 && c2 && c3;
   }
-  void compute_hash() {
+  void compute_hash()
+  {
     num[0] = a->getNum();
     num[1] = b->getNum();
     num[2] = c->getNum();
@@ -182,47 +180,40 @@ public:
 };
 
 class Diagonal{
-private:
+ private:
   MVertex *a,*b;
   unsigned long long hash;
-private:
-  void compute_hash() {
-    hash = a->getNum() + b->getNum();
-  }
-
-public:
+ private:
+  void compute_hash() { hash = a->getNum() + b->getNum(); }
+ public:
   Diagonal() :a(NULL), b(NULL), hash() {};
-  Diagonal(MVertex*a2, MVertex*b2) :a(a2), b(b2){
-    compute_hash();
-  }
+  Diagonal(MVertex*a2, MVertex*b2) :a(a2), b(b2){ compute_hash(); }
   ~Diagonal() {};
   MVertex* get_a() const {return a;}
   MVertex* get_b() const {return b;}
-  void set_vertices(MVertex*a2, MVertex*b2) {
+  void set_vertices(MVertex*a2, MVertex*b2)
+  {
     a = a2;
     b = b2;
     compute_hash();
   }
-  bool same_vertices(Diagonal diagonal) const {
+  bool same_vertices(Diagonal diagonal) const
+  {
     bool c1 = (a == diagonal.get_a()) || (a == diagonal.get_b());
     bool c2 = (b == diagonal.get_a()) || (b == diagonal.get_b());
     return c1 && c2;
   }
-  unsigned long long get_hash() const {
-    return hash;
-  }
-  bool operator<(const Diagonal& rhs) const {
-    return hash<rhs.get_hash();
-  }
+  unsigned long long get_hash() const { return hash; }
+  bool operator<(const Diagonal& rhs) const { return hash<rhs.get_hash(); }
 };
 
 class Tuple{
-private:
+ private:
   MVertex *v1,*v2,*v3;
-  MElement* element;
-  GFace* gf;
+  MElement *element;
+  GFace *gf;
   unsigned long long hash;
-public:
+ public:
   Tuple() : v1(NULL), v2(NULL), v3(NULL), element(NULL), gf(NULL), hash(0.) {}
   Tuple(MVertex* a, MVertex* b, MVertex* c, MElement* element2, GFace* gf2)
   {
@@ -251,7 +242,8 @@ public:
   MVertex* get_v3() const {return v3;}
   MElement* get_element() const { return element; }
   GFace* get_gf() const { return gf; }
-  bool same_vertices(const Tuple& rhs) const {
+  bool same_vertices(const Tuple& rhs) const
+  {
     if (v1 == rhs.get_v1() && v2 == rhs.get_v2() && v3 == rhs.get_v3()) {
       return true;
     } else {
@@ -259,68 +251,65 @@ public:
     }
   }
   unsigned long long get_hash() const { return hash; }
-  bool operator<(const Tuple& rhs) const {
-    return hash< rhs.get_hash();
-  }
+  bool operator<(const Tuple& rhs) const { return hash< rhs.get_hash(); }
 };
 
-
-// Class in charge of answering connectivity requests on
-// the input tetraedral mesh
+// Class in charge of answering connectivity requests on the input tetraedral
+// mesh
 class TetMeshConnectivity {
 public:
   typedef std::set<MVertex*> VertexSet;
   typedef std::set<MElement*> TetSet;
-
   TetMeshConnectivity() {};
   ~TetMeshConnectivity() {};
-
-  void initialize(GRegion* region) {
+  void initialize(GRegion* region)
+  {
     Msg::Info("Initialize Connectivity Information...");
     clear();
     initialize_vertex_to_vertices(region);
     initialize_vertex_to_elements(region);
   }
-
-  void clear() {
+  void clear()
+  {
     vertex_to_vertices_.clear();
     vertex_to_elements_.clear();
   }
-
-  VertexSet& vertices_around_vertex(MVertex* v) {
+  VertexSet& vertices_around_vertex(MVertex* v)
+  {
     return vertex_to_vertices_[v];
   }
-  TetSet& tets_around_vertex(MVertex* v) {
+  TetSet& tets_around_vertex(MVertex* v)
+  {
     return vertex_to_elements_[v];
   }
-
-  bool are_vertex_neighbors(MVertex* v0, MVertex* v1) {
+  bool are_vertex_neighbors(MVertex* v0, MVertex* v1)
+  {
     return vertices_around_vertex(v0).count(v1) > 0;
   }
-
-  void vertices_around_vertices(MVertex* v0, MVertex* v1, VertexSet& result) {
+  void vertices_around_vertices(MVertex* v0, MVertex* v1, VertexSet& result)
+  {
     const VertexSet& neighbors0 = vertices_around_vertex(v0);
     const VertexSet& neighbors1 = vertices_around_vertex(v1);
     std::set_intersection(neighbors0.begin(), neighbors0.end(),
       neighbors1.begin(), neighbors1.end(), std::inserter(result, result.end()));
-
   }
-  void vertices_around_vertices(MVertex* v0, MVertex* v1, MVertex* v2, VertexSet& result) {
+  void vertices_around_vertices(MVertex* v0, MVertex* v1, MVertex* v2, VertexSet& result)
+  {
     VertexSet tmp;
     vertices_around_vertices(v0, v1, tmp);
     const VertexSet& neighbors2 = vertices_around_vertex(v2);
     std::set_intersection(neighbors2.begin(), neighbors2.end(),
       tmp.begin(), tmp.end(), std::inserter(result, result.end()));
   }
-
-  void tets_around_vertices(MVertex* v0, MVertex* v1, TetSet& result) {
+  void tets_around_vertices(MVertex* v0, MVertex* v1, TetSet& result)
+  {
     const TetSet& elements0 = tets_around_vertex(v0);
     const TetSet& elements1 = tets_around_vertex(v1);
     std::set_intersection(elements0.begin(), elements0.end(),
       elements1.begin(), elements1.end(), std::inserter(result, result.end()));
   }
-
-  void tets_around_vertices(MVertex* v0, MVertex* v1, MVertex* v2, TetSet& result) {
+  void tets_around_vertices(MVertex* v0, MVertex* v1, MVertex* v2, TetSet& result)
+  {
     TetSet tmp;
     tets_around_vertices(v0, v1, tmp);
     const TetSet& elements2 = tets_around_vertex(v2);
@@ -328,20 +317,20 @@ public:
       elements2.begin(), elements2.end(), std::inserter(result, result.end()));
   }
 
-private:
+ private:
   // TODO Change this costly  implementation
   // Replace maps by vectors and store adjacent vertices whose
   // index is bigger
-  void initialize_vertex_to_vertices(GRegion* region) {
+  void initialize_vertex_to_vertices(GRegion* region)
+  {
     int nbtets = region->getNumMeshElements();
-    for (unsigned int i = 0; i < nbtets; i++) {
+    for (int i = 0; i < nbtets; i++) {
       MElement* tet = region->getMeshElement(i);
       for (int j = 0; j < 4; j++) {
         MVertex* a = tet->getVertex(j);
         MVertex* b = tet->getVertex((j + 1) % 4);
         MVertex* c = tet->getVertex((j + 2) % 4);
         MVertex* d = tet->getVertex((j + 3) % 4);
-
         std::map<MVertex*, std::set<MVertex*> >::iterator it = vertex_to_vertices_.find(a);
         if (it != vertex_to_vertices_.end()) {
           it->second.insert(b);
@@ -358,14 +347,14 @@ private:
       }
     }
   }
-  void initialize_vertex_to_elements(GRegion* region) {
+  void initialize_vertex_to_elements(GRegion* region)
+  {
     int nbtets = region->getNumMeshElements();
 
-    for (unsigned int i = 0; i < nbtets; i++) {
+    for (int i = 0; i < nbtets; i++) {
       MElement* tet = region->getMeshElement(i);
       for (unsigned int j = 0; j < 4; j++) {
         MVertex* getVertex = tet->getVertex(j);
-
         std::map<MVertex*, std::set<MElement*> >::iterator it = vertex_to_elements_.find(getVertex);
         if (it != vertex_to_elements_.end()) {
           it->second.insert(tet);
@@ -378,16 +367,13 @@ private:
       }
     }
   }
-
-private:
+ private:
   std::map<MVertex*, std::set<MVertex*> > vertex_to_vertices_;
   std::map<MVertex*, std::set<MElement*> > vertex_to_elements_;
 };
 
-
-
 class Recombinator{
-public:
+ public:
   typedef std::set<MVertex*>::iterator vertex_set_itr;
   typedef std::set<MElement*>::iterator element_set_itr;
 
@@ -400,7 +386,7 @@ public:
   virtual void execute();
   virtual void execute(GRegion*);
 
-protected:
+ protected:
   // ---- Initialization of the structures
   virtual void initialize_structures(GRegion* region) {
     set_current_region(region);
@@ -411,12 +397,12 @@ protected:
   }
   void init_markings();
   void build_tuples();
-  void set_current_region(GRegion* region) {
-    current_region = region;
-  }
+  void set_current_region(GRegion* region) { current_region = region; }
 
   // ---- Create the final mesh -------
   virtual void merge();
+  virtual void merge(GRegion*){}
+
   void delete_marked_tets_in_region() const;
   // Check if the hex is valid and compatible with the
   // previously built hexes and add it to the region
@@ -481,7 +467,7 @@ protected:
   double min_scaled_jacobian(Hex&);
   void print_statistics();
 
-protected:
+ protected:
   // Object in charge of answering connectivity request
   // in the initial region tetrahedral mesh
   TetMeshConnectivity tet_mesh;
@@ -501,7 +487,6 @@ protected:
   std::multiset<Tuple> tuples;
   std::set<MElement*> triangles;
 };
-
 
 class PEEntity {
 protected:
