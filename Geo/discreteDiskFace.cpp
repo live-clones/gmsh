@@ -1338,11 +1338,12 @@ void discreteDiskFace::printAtlasMesh()
     mv2int[*it] = count;
     count++;
   }
-  fprintf(pmesh,"$EndNodes\n$Elements\n%d\n", (int)initialTriangulation->tri.size() -
-          initialTriangulation->fillingHoles.size());
+  fprintf(pmesh,"$EndNodes\n$Elements\n%d\n",
+          (int)(initialTriangulation->tri.size() -
+                initialTriangulation->fillingHoles.size()));
   unsigned int mycount = 0;//#####
   for(unsigned int i=0; i<initialTriangulation->tri.size(); i++){
-    std::set<int>::iterator it = initialTriangulation->fillingHoles.find(i);
+    //std::set<int>::iterator it = initialTriangulation->fillingHoles.find(i);
     //if (it == initialTriangulation->fillingHoles.end()){
     MElement* tri = initialTriangulation->tri[i];
     fprintf(pmesh,"%d 2 2 0 %d",mycount+1,initialTriangulation->idNum);//#####
