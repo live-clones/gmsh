@@ -84,12 +84,20 @@ static gmshfpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static std::string LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
-static std::map<std::string, std::vector<double> > floatOptions;
-static std::map<std::string, std::vector<std::string> > charOptions;
 static std::string factory;
 static NameSpaces nameSpaces;
 static std::string struct_name, struct_namespace;
 static int flag_tSTRING_alloc = 0;
+
+static std::map<std::string, std::vector<double> > floatOptions;
+static std::map<std::string, std::vector<std::string> > charOptions;
+static int flag_Enum, member_ValMax;
+
+void init_Options(int member_ValMax_ = 0)
+{
+  floatOptions.clear(); charOptions.clear();
+  flag_Enum = 0; member_ValMax = member_ValMax_;
+}
 
 // parser functions defined at the end of this file
 void yyerror(const char *s);
@@ -1227,7 +1235,7 @@ DefineConstants :
       Free($3);
     }
   | DefineConstants Comma String__Index tAFFECT '{' ListOfDouble
-    { floatOptions.clear(); charOptions.clear(); }
+    { init_Options(); }
     FloatParameterOptionsOrNone '}'
     {
       if(List_Nbr($6) != 1)
@@ -1247,7 +1255,7 @@ DefineConstants :
       Free($6);
     }
   | DefineConstants Comma String__Index LP RP tAFFECT '{' ListOfDouble
-    { floatOptions.clear(); charOptions.clear(); }
+    { init_Options(); }
     FloatParameterOptionsOrNone '}'
     {
       std::string key($3);
@@ -1274,7 +1282,7 @@ DefineConstants :
       Free($5);
     }
   | DefineConstants Comma String__Index tAFFECT '{' StringExpr
-    { floatOptions.clear(); charOptions.clear(); }
+    { init_Options(); }
       CharParameterOptionsOrNone '}'
     {
       std::string key($3), val($6);
@@ -1357,6 +1365,7 @@ FloatParameterOption :
         double v;
         List_Read($2, i, &v);
         floatOptions[key].push_back(v);
+        if (flag_Enum && !i) { member_ValMax = (int)v; }
       }
       Free($1);
       List_Delete($2);
@@ -1364,7 +1373,14 @@ FloatParameterOption :
   | tSTRING
     {
       std::string key($1);
-      floatOptions[key].push_back(1.);
+      double v;
+      if (!flag_Enum) {
+        v = 1.;
+        if (key == "Enum") flag_Enum = 1;
+      }
+      else
+        v = (double)++member_ValMax;
+      floatOptions[key].push_back(v);
       Free($1);
     }
   | tSTRING '{' Enumeration '}'
@@ -4660,7 +4676,7 @@ FExpr_Single :
   // Variables
 
   | tDefineNumber LP FExpr
-    { floatOptions.clear(); charOptions.clear(); }
+    { init_Options(); }
     FloatParameterOptionsOrNone RP
     {
       std::vector<double> val(1, $3);
@@ -4964,7 +4980,12 @@ FExpr_Single :
 
 DefineStruct :
     tDefineStruct Struct_FullName AppendOrNot
-    { floatOptions.clear(); charOptions.clear(); }
+    {
+      std::string struct_namespace($2.char1? $2.char1 : std::string("")),
+        struct_name($2.char2);
+      init_Options
+        (nameSpaces.getMember_ValMax(struct_namespace, struct_name));
+    }
     '[' FloatParameterOptionsOrNone_NoComma ']'
     {
       std::string struct_namespace($2.char1? $2.char1 : std::string("")),
@@ -4972,7 +4993,8 @@ DefineStruct :
       Free($2.char1); Free($2.char2);
       int tag_out;
       if (nameSpaces.defStruct(struct_namespace, struct_name,
-                               floatOptions, charOptions, tag_out, $3))
+                               floatOptions, charOptions,
+                               tag_out, member_ValMax, $3))
         yymsg(0, "Redefinition of Struct '%s::%s'",
               struct_namespace.c_str(), struct_name.c_str());
       $$ = (double)tag_out;
@@ -5883,7 +5905,7 @@ StringExpr :
       Free($3);
     }
   | tDefineString LP StringExpr
-    { floatOptions.clear(); charOptions.clear(); }
+    { init_Options(); }
     CharParameterOptionsOrNone RP
     {
       std::string val($3);
