@@ -1228,7 +1228,7 @@ DefineConstants :
     }
   | DefineConstants Comma String__Index tAFFECT '{' ListOfDouble
     { floatOptions.clear(); charOptions.clear(); }
-    FloatParameterOptions '}'
+    FloatParameterOptionsOrNone '}'
     {
       if(List_Nbr($6) != 1)
 	yymsg(1, "List notation should be used to define list '%s[]'", $3);
@@ -1248,7 +1248,7 @@ DefineConstants :
     }
   | DefineConstants Comma String__Index LP RP tAFFECT '{' ListOfDouble
     { floatOptions.clear(); charOptions.clear(); }
-    FloatParameterOptions '}'
+    FloatParameterOptionsOrNone '}'
     {
       std::string key($3);
       std::vector<double> val;
@@ -1275,7 +1275,7 @@ DefineConstants :
     }
   | DefineConstants Comma String__Index tAFFECT '{' StringExpr
     { floatOptions.clear(); charOptions.clear(); }
-      CharParameterOptions '}'
+      CharParameterOptionsOrNone '}'
     {
       std::string key($3), val($6);
       if(!gmsh_yysymbols.count(key)){
@@ -1334,90 +1334,113 @@ Enumeration :
     }
   ;
 
+FloatParameterOptionsOrNone :
+    // none
+  | ',' FloatParameterOptions
+ ;
+
+FloatParameterOptionsOrNone_NoComma :
+    // none
+  | FloatParameterOptions
+ ;
+
 FloatParameterOptions :
-  | FloatParameterOptions FloatParameterOption
+    FloatParameterOption
+  | FloatParameterOptions ',' FloatParameterOption
  ;
 
 FloatParameterOption :
-    ',' tSTRING ListOfDouble
+    tSTRING ListOfDouble
     {
-      std::string key($2);
-      for(int i = 0; i < List_Nbr($3); i++){
+      std::string key($1);
+      for(int i = 0; i < List_Nbr($2); i++){
         double v;
-        List_Read($3, i, &v);
+        List_Read($2, i, &v);
         floatOptions[key].push_back(v);
       }
-      Free($2);
-      List_Delete($3);
+      Free($1);
+      List_Delete($2);
     }
-  | ',' tSTRING '{' Enumeration '}'
+  | tSTRING
     {
-      std::string key($2);
-      for(int i = 0; i < List_Nbr($4); i++){
+      std::string key($1);
+      floatOptions[key].push_back(1.);
+      Free($1);
+    }
+  | tSTRING '{' Enumeration '}'
+    {
+      std::string key($1);
+      for(int i = 0; i < List_Nbr($3); i++){
         doubleXstring v;
-        List_Read($4, i, &v);
+        List_Read($3, i, &v);
         floatOptions[key].push_back(v.d);
         charOptions[key].push_back(v.s);
       }
-      Free($2);
-      for(int i = 0; i < List_Nbr($4); i++)
-        Free(((doubleXstring*)List_Pointer($4, i))->s);
-      List_Delete($4);
+      Free($1);
+      for(int i = 0; i < List_Nbr($3); i++)
+        Free(((doubleXstring*)List_Pointer($3, i))->s);
+      List_Delete($3);
     }
 
-  | ',' tSTRING StringExpr
+  | tSTRING StringExpr
     {
-      std::string key($2);
-      std::string val($3);
+      std::string key($1);
+      std::string val($2);
       charOptions[key].push_back(val);
+      Free($1);
       Free($2);
-      Free($3);
     }
  ;
 
+CharParameterOptionsOrNone :
+    // none
+  | ',' CharParameterOptions
+ ;
+
 CharParameterOptions :
-  | CharParameterOptions CharParameterOption
+    CharParameterOption
+  | CharParameterOptions ',' CharParameterOption
  ;
 
 CharParameterOption :
 
-    ',' tSTRING FExpr
+    tSTRING FExpr
     {
-      std::string key($2);
-      double val = $3;
+      std::string key($1);
+      double val = $2;
       floatOptions[key].push_back(val);
-      Free($2);
+      Free($1);
     }
 
-  | ',' tSTRING StringExpr
+  | tSTRING StringExpr
     {
-      std::string key($2);
-      std::string val($3);
+      std::string key($1);
+      std::string val($2);
       charOptions[key].push_back(val);
+      Free($1);
       Free($2);
-      Free($3);
     }
 
-  | ',' tMacro StringExpr // Macro is already a reserved keyword
+  | tMacro StringExpr // Macro is already a reserved keyword
     {
       std::string key("Macro");
-      std::string val($3);
+      std::string val($2);
       charOptions[key].push_back(val);
-      Free($3);
+      Free($2);
     }
 
-  | ',' tSTRING '{' RecursiveListOfStringExprVar '}'
+  | tSTRING '{' RecursiveListOfStringExprVar '}'
     {
-      std::string key($2);
-      for(int i = 0; i < List_Nbr($4); i++){
+      std::string key($1);
+      for(int i = 0; i < List_Nbr($3); i++){
         char *s;
-        List_Read($4, i, &s);
+        List_Read($3, i, &s);
         std::string val(s);
         Free(s);
         charOptions[key].push_back(val);
       }
-      Free($2);
-      List_Delete($4);
+      Free($1);
+      List_Delete($3);
     }
  ;
 
@@ -4638,7 +4661,7 @@ FExpr_Single :
 
   | tDefineNumber LP FExpr
     { floatOptions.clear(); charOptions.clear(); }
-    FloatParameterOptions RP
+    FloatParameterOptionsOrNone RP
     {
       std::vector<double> val(1, $3);
       Msg::ExchangeOnelabParameter("", val, floatOptions, charOptions);
@@ -4942,7 +4965,7 @@ FExpr_Single :
 DefineStruct :
     tDefineStruct Struct_FullName AppendOrNot
     { floatOptions.clear(); charOptions.clear(); }
-    '[' FExpr FloatParameterOptions ']'
+    '[' FloatParameterOptionsOrNone_NoComma ']'
     {
       std::string struct_namespace($2.char1? $2.char1 : std::string("")),
         struct_name($2.char2);
@@ -5564,21 +5587,23 @@ StringExprVar :
       std::string out;
       std::string struct_namespace($1.char1? $1.char1 : std::string("")),
         struct_name($1.char2);
-
       std::string key_member($3);
+      const std::string * out = NULL;
+      std::string out_tmp; // PD: we should avoid that -> StringOption() to be changed
       switch (nameSpaces.getMember
               (struct_namespace, struct_name, key_member, out)) {
       case 0:
         break;
       case 1:
-        StringOption(GMSH_GET, $1, 0, $3, out);
+        StringOption(GMSH_GET, $1, 0, $3, out_tmp);
+        out = &out_tmp;
         break;
       case 2:
         yymsg(0, "Unknown member '%s' of Struct %s", $3, struct_name.c_str());
         break;
       }
-      char* out_c = (char*)Malloc((out.size() + 1) * sizeof(char));
-      strcpy(out_c, out.c_str());
+      char* out_c = (char*)Malloc((out->size() + 1) * sizeof(char));
+      strcpy(out_c, out->c_str());
       Free($1.char1); Free($1.char2);
       if (flag_tSTRING_alloc) Free(c3);
       */
@@ -5859,7 +5884,7 @@ StringExpr :
     }
   | tDefineString LP StringExpr
     { floatOptions.clear(); charOptions.clear(); }
-    CharParameterOptions RP
+    CharParameterOptionsOrNone RP
     {
       std::string val($3);
       Msg::ExchangeOnelabParameter("", val, floatOptions, charOptions);
@@ -6647,7 +6672,6 @@ double treat_Struct_FullName_dot_tSTRING_Float(char* c1, char* c2, char* c3)
 
 char* treat_Struct_FullName_dot_tSTRING_String(char* c1, char* c2, char* c3)
 {
-  std::string out;
   std::string struct_namespace(c1? c1 : std::string("")),
     struct_name(c2);
   /*
@@ -6655,20 +6679,23 @@ char* treat_Struct_FullName_dot_tSTRING_String(char* c1, char* c2, char* c3)
     struct_name($1.char2);
   */
   std::string key_member(c3);
+  const std::string * out = NULL;
+  std::string out_tmp; // PD: we should avoid that -> StringOption() to be changed
   switch (nameSpaces.getMember
           (struct_namespace, struct_name, key_member, out)) {
   case 0:
     break;
   case 1:
-    StringOption(GMSH_GET, c2, 0, c3, out);
+    StringOption(GMSH_GET, c2, 0, c3, out_tmp);
+    out = &out_tmp;
     break;
   case 2:
     yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
     break;
   }
 
-  char* out_c = (char*)Malloc((out.size() + 1) * sizeof(char));
-  strcpy(out_c, out.c_str());
+  char* out_c = (char*)Malloc((out->size() + 1) * sizeof(char));
+  strcpy(out_c, out->c_str());
   Free(c1); Free(c2);
   if (flag_tSTRING_alloc) Free(c3);
   return out_c;

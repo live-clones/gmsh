@@ -43,16 +43,17 @@ public:
   int append(int tag,
              std::map<std::string, std::vector<double> > & fopt,
              std::map<std::string, std::vector<std::string> > & copt) {
-    this->_fopt.insert(fopt.begin(), fopt.end());
-    this->_copt.insert(copt.begin(), copt.end());
+    _fopt.insert(fopt.begin(), fopt.end());
+    _copt.insert(copt.begin(), copt.end());
     if (tag >= 0) _tag = tag;
     return _tag;
   }
 
-  inline int getTag() { return _tag; }
+  inline int getTag() const { return _tag; }
 
-  int getMember(std::string & key_member, double &out) {
-    std::map<std::string, std::vector<double> >::iterator it = _fopt.find(key_member);
+  int getMember (std::string & key_member, double & out) const {
+    std::map<std::string, std::vector<double> >::const_iterator
+      it = _fopt.find(key_member);
     if (it != _fopt.end()) {
       out = it->second[0]; return 0;
     }
@@ -61,20 +62,41 @@ public:
     }
   }
 
-  int getMember(std::string & key_member, std::string & out) {
-    std::map<std::string, std::vector<std::string> >::iterator
+  int getMember (std::string & key_member, const std::string * & out) const {
+    std::map<std::string, std::vector<std::string> >::const_iterator
       it = _copt.find(key_member);
     if (it != _copt.end()) {
-      out = it->second[0]; return 0;
+      out = &it->second[0]; return 0;
     }
     else {
-      out = std::string(""); return 1; // Error: Unknown member of Struct
+      out = NULL; return 1; // Error: Unknown member of Struct
     }
   }
 
-  void print(const std::string & struct_name, const std::string & struct_namespace)
+  void sprint(std::string & str,
+              const std::string & struct_name, const std::string & struct_namespace)
+    const
   {
-    //...
+    str += "Struct ";
+    if (struct_namespace.size()) str += struct_namespace + "::";
+    str += struct_name + " [ ";
+    bool flag_comma = false;
+    for (std::map<std::string, std::vector<double> >::const_iterator
+           it_attrib = _fopt.begin();
+         it_attrib != _fopt.end(); ++it_attrib ) {
+      if (!flag_comma && it_attrib != _fopt.begin()) flag_comma = true;
+      if (flag_comma) str += ", ";
+      str += it_attrib->first + " ";
+      char tmp[32]; sprintf(tmp, "%g", it_attrib->second[0]); str += tmp;
+    }
+    for (std::map<std::string, std::vector<std::string> >::const_iterator
+           it_attrib = _copt.begin();
+         it_attrib != _copt.end(); ++it_attrib ) {
+      if (!flag_comma && it_attrib != _copt.begin()) flag_comma = true;
+      if (flag_comma) str += ", ";
+      str += it_attrib->first + " \"" + it_attrib->second[0] + "\"";
+    }
+    str += " ];\n";
   }
 
 private:
@@ -96,10 +118,17 @@ public:
     else return NULL;
   }
 
+  const T * Find(K key) const {
+    typename std::map<K, T>::const_iterator it;
+    if ( (it = _map.find(key)) != _map.end() ) return &it->second;
+    else return NULL;
+  }
+
   inline T & operator[] (K key) { return _map[key]; }
   inline std::map<K, T> & get() { return _map; }
-  inline int count (std::string key) { return _map.count(key); }
-  inline int size () { return _map.size(); }
+  inline const std::map<K, T> & get() const { return _map; }
+  inline int count (const std::string key) const { return _map.count(key); }
+  inline int size () const { return _map.size(); }
 
 public:
   std::map<K, T> _map;
@@ -118,13 +147,15 @@ public:
                 std::map<std::string, std::vector<std::string> > & copt,
                 bool append = false) {
     int tag;
-    std::map<std::string, std::vector<double> >::iterator it = fopt.find("Tag");
+    std::map<std::string, std::vector<double> >::const_iterator it = fopt.find("Tag");
     if (it != fopt.end()) {
-      tag = it->second[0]; // Tag forced
+      tag = (int)it->second[0]; // Tag forced
       _max_tag = std::max(_max_tag, tag);
     }
-    else
+    else {
       tag = (!append)? ++_max_tag : -1; // Tag auto
+      if (!append) fopt["Tag"].push_back((double)tag);
+    }
     if (!append)
       (*this)[struct_name] = Struct(tag, fopt, copt);
     else
@@ -132,21 +163,19 @@ public:
     return tag;
   }
 
-  int get_key_struct_from_tag(int tag, const std::string * & key_struct) {
-    Map_string_Struct::iterator it_st;
+  int get_key_struct_from_tag(int tag, const std::string * & key_struct) const {
+    Map_string_Struct::const_iterator it_st;
     for (it_st = this->get().begin(); it_st != this->get().end(); ++it_st )
       if (it_st->second.getTag() == tag) break;
-    if (it_st != this->get().end()) {
-      key_struct = &it_st->first;
-      return 0;
-    }
-    else return 2;
+    if (it_st == this->get().end()) return 2; // 2: Error: Unknown Struct
+    key_struct = &it_st->first;
+    return 0; // 0: no error
   }
 
-  void print(const std::string & struct_namespace) {
-    for (Map_string_Struct::iterator it_st = this->get().begin();
+  void sprint(std::string & str, const std::string & struct_namespace) const {
+    for (Map_string_Struct::const_iterator it_st = this->get().begin();
          it_st != this->get().end(); ++it_st )
-      it_st->second.print(it_st->first, struct_namespace);
+      it_st->second.sprint(str, it_st->first, struct_namespace);
   }
 
 private:
@@ -168,69 +197,69 @@ public:
     Structs * structs_P = &(*this)[key_namespace];
     if (!append && structs_P->count(key_name)) {
       tag_out = (*structs_P)[key_name].getTag();
-      return 1; // Error: Redefinition of Struct
+      return 1; // 1: Error: Redefinition of Struct
     }
     tag_out = structs_P->defStruct(key_name, fopt, copt, append);
-    return 0;
+    return 0; // 0: no error
   }
 
   int getTag(std::string & key_namespace, std::string & key_name,
-             double & out) {
-
-    Structs * structs_P = this->Find(key_namespace);
-    Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
+             double & out) const {
+    const Structs * structs_P = this->Find(key_namespace);
+    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
     if (structs_P && struct_P) {
       out = (double)struct_P->getTag();
     }
     else  {
-      out = 0.; return 1; // Error: Unknown Struct
+      out = 0.; return 1; // 1: Error: Unknown Struct
     }
-    return 0;
+    return 0; // 0: no error
   }
 
   int getMember(std::string & key_namespace, std::string & key_name,
-                std::string & key_member, double & out) {
+                std::string & key_member, double & out) const {
 
-    Structs * structs_P = this->Find(key_namespace);
-    Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
+    const Structs * structs_P = this->Find(key_namespace);
+    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
     if (structs_P && struct_P) {
       if (struct_P->getMember(key_member, out)) {
-        out = 0.; return 2; // Error: Unknown member of Struct
+        out = 0.; return 2; // 2: Error: Unknown member of Struct
       }
     }
     else  {
-      out = 0.; return 1; // Error: Unknown Struct
+      out = 0.; return 1; // 1: Error: Unknown Struct
     }
-    return 0;
+    return 0; // 0: no error
   }
 
   int getMember(std::string & key_namespace, std::string & key_name,
-                std::string & key_member, std::string & out) {
+                std::string & key_member, const std::string * & out) const {
 
-    Structs * structs_P = this->Find(key_namespace);
-    Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
+    const Structs * structs_P = this->Find(key_namespace);
+    const Struct * struct_P = (structs_P)? structs_P->Find(key_name) : NULL;
     if (structs_P && struct_P) {
       if (struct_P->getMember(key_member, out)) {
-        out = std::string(""); return 2; // Error: Unknown member of Struct
+        out = NULL; return 2; // 2: Error: Unknown member of Struct
       }
     }
     else  {
-      out = std::string(""); return 1; // Error: Unknown Struct
+      out = NULL; return 1; // 1: Error: Unknown Struct
     }
-    return 0;
+    return 0; // 0: no error
   }
 
   int get_key_struct_from_tag(std::string & key_namespace,
-                              int tag, const std::string * & key_struct) {
-    if (this->count(key_namespace))
-      return (*this)[key_namespace].get_key_struct_from_tag(tag, key_struct);
-    else return 1;
+                              int tag, const std::string * & key_struct) const {
+    const Structs * structs_P = this->Find(key_namespace);
+    if (structs_P != NULL)
+      return structs_P->get_key_struct_from_tag(tag, key_struct);
+    else return 1; // 1: Error: Unknown NameSpace
   }
 
-  void print() {
-    for (Map_string_Structs::iterator it_ns = this->get().begin();
+  void sprint(std::string & str) const {
+    for (Map_string_Structs::const_iterator it_ns = this->get().begin();
          it_ns != this->get().end(); ++it_ns )
-      it_ns->second.print(it_ns->first);
+      it_ns->second.sprint(str, it_ns->first);
   }
 };
 
