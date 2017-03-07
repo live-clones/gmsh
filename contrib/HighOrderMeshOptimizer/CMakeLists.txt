@@ -10,7 +10,7 @@ set(SRC
   OptHomIntegralBoundaryDist.cpp
   OptHomCADDist.cpp
   ParamCoord.cpp 
-  SuperEl.cpp 
+  MetaEl.cpp 
   OptHomElastic.cpp
   OptHomFastCurving.cpp
   OptHomPeriodicity.cpp

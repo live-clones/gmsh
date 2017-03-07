@@ -27,41 +27,43 @@
 //
 // Contributor: Thomas Toulorge
 
-#ifndef _SUPEREL_H_
-#define _SUPEREL_H_
+#ifndef _METAEL_H_
+#define _METAEL_H_
 
 #include <string>
 #include "MElement.h"
 
-class SuperEl
+class MetaEl
 {
  public:
-  SuperEl(int type, int order, const std::vector<MVertex*> &baseVert,
+  MetaEl(int type, int order, const std::vector<MVertex*> &baseVert,
           const std::vector<MVertex*> &topPrimVert);
-  ~SuperEl();
-  bool isOK() const { return _superEl; }
+  ~MetaEl();
+  bool isOK() const { return _metaEl; }
   bool isPointIn(const SPoint3 p) const;
   bool straightToCurved(double *xyzS, double *xyzC) const;
   std::string printPOS();
   void printCoord()
   {
     std::cout << "DBGTT: superEl -> ";
-    for(int i = 0; i < _superVert.size(); i++){
-      std::cout << "v" << i << " = (" << _superVert[i]->x() << ","
-                <<  _superVert[i]->y() << "," <<  _superVert[i]->z() << ")";
-      if (i == _superVert.size()-1) std::cout << "\n"; else std::cout << ", ";
+    for(int i = 0; i < _metaVert.size(); i++){
+      std::cout << "v" << i << " = (" << _metaVert[i]->x() << ","
+                <<  _metaVert[i]->y() << "," <<  _metaVert[i]->z() << ")";
+      if (i == _metaVert.size()-1) std::cout << "\n"; else std::cout << ", ";
     }
   }
+  MElement *getMElement() { return _metaEl; }
+
  private:
-  struct superInfoType {
-    int nV;
+  struct metaInfoType {
+    int nbVert;
     fullMatrix<double> points;
-    std::vector<int> baseInd, topInd, otherInd;
-    superInfoType(int type, int order);
+    std::vector<int> baseInd, topInd, edgeInd, otherInd;
+    metaInfoType(int type, int order);
   };
-  static std::map<int,superInfoType> _superInfo;
-  std::vector<MVertex*> _superVert;
-  MElement *_superEl, *_superEl0;
+  static std::map<int, metaInfoType> _metaInfo;
+  std::vector<MVertex*> _metaVert;
+  MElement *_metaEl, *_metaEl0;
 };
 
-#endif
+#endif  // _METAEL_H_

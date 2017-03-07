@@ -44,10 +44,10 @@
 #include "MLine.h"
 #include "OS.h"
 #include <stack>
-#include "SuperEl.h"
 #include "SVector3.h"
 #include "BasisFactory.h"
 #include "Field.h"
+#include "MetaEl.h"
 
 
 
@@ -300,31 +300,23 @@ bool getBaseVertices(const MFace &baseFace, MElement *firstEl, std::vector<MVert
 template<class bndType>
 bool getTopPrimVertices(std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
                         const std::map<MVertex*, SVector3> &normVert,
-                        const BoundaryLayerColumns *blc, const bndType &baseBnd,
-                        int maxNumLayers, const std::vector<MVertex*> &baseVert,
+                        const bndType &baseBnd, int maxNumLayers,
+                        const std::vector<MVertex*> &baseVert,
                         std::vector<MVertex*> &topPrimVert)
 {
   int nbVert = baseBnd.getNumVertices();
   topPrimVert = std::vector<MVertex*>(nbVert);
   for(int i = 0; i < nbVert; i++) {
-    if (blc && (blc->size() > 1)) {                                                             // Is there BL data?
-      return false;
-      //      const BoundaryLayerData &c = blc->getColumn(baseVert[i], baseBnd);
-      //      if (c._column.size() == 0) return false;                                                  // Give up element if column not found
-      //      topPrimVert[i] = *(c._column.end()-2);
+    std::map<MVertex*, SVector3>::const_iterator itNorm = normVert.find(baseVert[i]);
+    if (itNorm == normVert.end()) {
+      Msg::Error("Normal to vertex not found in getTopPrimVertices");
+      itNorm = normVert.begin();
     }
-    else {                                                                                      // No BL data, look for columns of vertices
-      std::map<MVertex*, SVector3>::const_iterator itNorm = normVert.find(baseVert[i]);
-      if (itNorm == normVert.end()) {
-        Msg::Error("Normal to vertex not found in getTopPrimVertices");
-        itNorm = normVert.begin();
-      }
-      std::vector<MVertex*> col;
-      bool colFound = findColumn(vertex2elements, baseVert[i], itNorm->second,
-                                 baseBnd, col, maxNumLayers);
-      if (!colFound) return false;                                                              // Give up element if column not found
-      topPrimVert[i] = *(col.end()-2);
-    }
+    std::vector<MVertex*> col;
+    bool colFound = findColumn(vertex2elements, baseVert[i], itNorm->second,
+                               baseBnd, col, maxNumLayers);
+    if (!colFound) return false;                                                              // Give up element if column not found
+    topPrimVert[i] = *(col.end()-2);
   }
 
   return true;
@@ -335,7 +327,7 @@ bool getTopPrimVertices(std::map<MVertex*, std::vector<MElement *> > &vertex2ele
 // Get blob of elements encompassed by a given meta-element
 // FIXME: Implement 3D
 void get2DBLBlob(const std::map<MVertex*, std::vector<MElement*> > &vertex2elements,
-                 MElement *firstEl, const SuperEl *supEl, std::set<MElement*> &blob)
+                 MElement *firstEl, const MetaEl *supEl, std::set<MElement*> &blob)
 {
   static const int maxDepth = 100;
   typedef std::list<MElement*> elLType;
@@ -420,10 +412,52 @@ inline void insertIfCurved(MElement *el, std::list<MElement*> &bndEl)
 }
 
 
+class DbgOutput {
+public:
+  void addMetaEl(MetaEl &mEl) {
+    MElement *elt = mEl.getMElement();
+    elType_.push_back(elt->getTypeForMSH());
+    nbVertEl_.push_back(elt->getNumVertices());
+    for (int iV = 0; iV < elt->getNumVertices(); iV++)
+      point_.push_back(elt->getVertex(iV)->point());
+  }
+  void write(std::string fNameBase, int tag) {
+    std::ostringstream oss;
+    oss << fNameBase << "_" << tag << ".msh";
+    std::string fName = oss.str();
+    FILE *fp = fopen(fName.c_str(), "w");
+    fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
+    fprintf(fp, "$Nodes\n");
+    fprintf(fp, "%d\n", point_.size());
+    for (int iV = 0; iV < point_.size(); iV++)
+      fprintf(fp, "%i %g %g %g\n", iV+1, point_[iV].x(),
+              point_[iV].y(), point_[iV].z());
+    fprintf(fp, "$EndNodes\n");
+    fprintf(fp, "$Elements\n");
+    fprintf(fp, "%d\n", elType_.size());
+    int iV = 0;
+    for (int iEl = 0; iEl < elType_.size(); iEl++) {
+      fprintf(fp, "%i %i 2 0 0 ", iEl+1, elType_[iEl]);
+      for (int iVEl = 1; iVEl <= nbVertEl_[iEl]; iVEl++)
+        fprintf(fp, " %i", iV+iVEl);
+      fprintf(fp, "\n");
+      iV += nbVertEl_[iEl];
+    }
+    fprintf(fp, "$EndElements\n");
+    fclose(fp);
+  }
+
+private:
+  std::vector<int> elType_;
+  std::vector<int> nbVertEl_;
+  std::vector<SPoint3> point_;
+};
+
+
 
 // Curve elements adjacent to a boundary model entity
 void curveMeshFromBnd(std::map<MVertex*, std::vector<MElement *> > &vertex2elements,
-                      const std::map<MVertex*, SVector3> &normVert, BoundaryLayerColumns *blc,
+                      const std::map<MVertex*, SVector3> &normVert,
                       GEntity *bndEnt, FastCurvingParameters &p)
 {
   // Build list of bnd. elements to consider
@@ -443,28 +477,25 @@ void curveMeshFromBnd(std::map<MVertex*, std::vector<MElement *> > &vertex2eleme
   else
     Msg::Error("Cannot treat model entity %i of dim %i", bndEnt->tag(), bndEnt->dim());
 
-  std::ostringstream oss;
-  oss << "meta-elements_" << bndEnt->tag() << ".pos";
-  std::ofstream of(oss.str().c_str());
-  of << "View \" \"{\n";
+  DbgOutput dbgOut;
 
   std::set<MVertex*> movedVert;
   for(std::list<MElement*>::iterator itBE = bndEl.begin();
       itBE != bndEl.end(); itBE++) {   // Loop over bnd. elements
     const int bndType = (*itBE)->getType();
-    int seType;
+    int metaElType;
     bool foundVert;
     MElement *firstEl = 0;
     std::vector<MVertex*> baseVert, topPrimVert;
     if (bndType == TYPE_LIN) {                                                               // 1D boundary?
       MVertex *vb0 = (*itBE)->getVertex(0);
       MVertex *vb1 = (*itBE)->getVertex(1);
-      seType = TYPE_QUA;
+      metaElType = TYPE_QUA;
       MEdge baseEd(vb0, vb1);
       firstEl = getFirstEl(vertex2elements, baseEd);
       foundVert = getBaseVertices(baseEd, firstEl, baseVert);
       if (!foundVert) continue;                                                             // Skip bnd. el. if base vertices not found
-      foundVert = getTopPrimVertices(vertex2elements, normVert, blc, baseEd,
+      foundVert = getTopPrimVertices(vertex2elements, normVert, baseEd,
                                      p.maxNumLayers, baseVert, topPrimVert);
     }
     else {                                                                                  // 2D boundary
@@ -474,11 +505,11 @@ void curveMeshFromBnd(std::map<MVertex*, std::vector<MElement *> > &vertex2eleme
       MVertex *vb3;
       if (bndType == TYPE_QUA) {
         vb3 = (*itBE)->getVertex(3);
-        seType = TYPE_HEX;
+        metaElType = TYPE_HEX;
       }
       else {
         vb3 = 0;
-        seType = TYPE_PRI;
+        metaElType = TYPE_PRI;
       }
       MFace baseFace(vb0, vb1, vb2, vb3);
       firstEl = getFirstEl(vertex2elements, baseFace);
@@ -489,23 +520,23 @@ void curveMeshFromBnd(std::map<MVertex*, std::vector<MElement *> > &vertex2eleme
       }
       foundVert = getBaseVertices(baseFace, firstEl, baseVert);
       if (!foundVert) continue;                                                             // Skip bnd. el. if base vertices not found
-      foundVert = getTopPrimVertices(vertex2elements, normVert, blc,
+      foundVert = getTopPrimVertices(vertex2elements, normVert,
                                      baseFace, p.maxNumLayers,
                                      baseVert, topPrimVert);
     }
     if (!foundVert) continue;                                                               // Skip bnd. el. if top vertices not found
     int order = firstEl->getPolynomialOrder();
-    SuperEl se(seType, order, baseVert, topPrimVert);
-    of << se.printPOS();
+    MetaEl metaEl(metaElType, order, baseVert, topPrimVert);
+    dbgOut.addMetaEl(metaEl);
     std::set<MElement*> blob;
-    get2DBLBlob(vertex2elements, firstEl, &se, blob); // TODO: Implement for 3D
+    get2DBLBlob(vertex2elements, firstEl, &metaEl, blob); // TODO: Implement for 3D
     for (std::set<MElement*>::iterator itE = blob.begin(); itE != blob.end(); ++itE) {
       makeStraight(*itE, movedVert);
       for (int i = (*itE)->getNumPrimaryVertices(); i < (*itE)->getNumVertices(); ++i) {    // Loop over HO vert. of each el. in blob
         MVertex* vert = (*itE)->getVertex(i);
         if (movedVert.find(vert) == movedVert.end()) {                                      // Try to move vert. not already moved
           double xyzS[3] = {vert->x(), vert->y(), vert->z()}, xyzC[3];
-          if (se.straightToCurved(xyzS,xyzC)) {
+          if (metaEl.straightToCurved(xyzS,xyzC)) {
             vert->setXYZ(xyzC[0], xyzC[1], xyzC[2]);
             movedVert.insert(vert);
           }
@@ -514,8 +545,7 @@ void curveMeshFromBnd(std::map<MVertex*, std::vector<MElement *> > &vertex2eleme
     }
   }
 
-  of << "};\n";
-  of.close();
+  dbgOut.write("meta-elements", bndEnt->tag());
 }
 
 
@@ -539,64 +569,26 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p)
   for (int iEnt = 0; iEnt < allEntities.size(); ++iEnt)
     calcVertex2Elements(p.dim, allEntities[iEnt], vertex2elements);
 
-  // Get BL field (if any)
-  BoundaryLayerField *blf = getBLField(gm);
-
   // Build multimap of each geometric entity to its boundaries
   std::multimap<GEntity*,GEntity*> entities;
-  if (blf) {                                                                                    // BF field?
-    for (int iEnt = 0; iEnt < allEntities.size(); ++iEnt) {
-      GEntity* &entity = allEntities[iEnt];
-      if (entity->dim() == p.dim && (!p.onlyVisible || entity->getVisibility()))                // Consider only "domain" entities
-        if (p.dim == 2) {                                                                       // "Domain" face?
-          std::list<GEdge*> edges = entity->edges();
-          for (std::list<GEdge*>::iterator itEd = edges.begin(); itEd != edges.end(); itEd++)   // Loop over model boundary edges
-            if (blf->isEdgeBL((*itEd)->tag()))                                                  // Already skip model edge if no BL there
-              entities.insert(std::pair<GEntity*,GEntity*>(entity, *itEd));
-        }
-      //        else if (p.dim == 3) {                                                                  // "Domain" region?
-      //          std::list<GFace*> faces = entity->faces();
-      //          for (std::list<GFace*>::iterator itF = faces.begin(); itF != faces.end(); itF++)      // Loop over model boundary faces
-      //            if (blf->isFaceBL((*itF)->tag()))                                                   // Already skip model face if no BL there
-      //              entities.insert(std::pair<GEntity*,GEntity*>(entity, *itF));
-      //        }
-    }
-  }
-  else {                                                                                        // No BL field
-    for (int iEnt = 0; iEnt < allEntities.size(); ++iEnt) {
-      GEntity *dummy = 0;
-      GEntity* &entity = allEntities[iEnt];
-      if (entity->dim() == p.dim-1 && (!p.onlyVisible || entity->getVisibility()))              // Consider boundary entities
-        entities.insert(std::pair<GEntity*,GEntity*>(dummy, entity));
-    }
+  for (int iEnt = 0; iEnt < allEntities.size(); ++iEnt) {
+    GEntity *dummy = 0;
+    GEntity* &entity = allEntities[iEnt];
+    if (entity->dim() == p.dim-1 && (!p.onlyVisible || entity->getVisibility()))              // Consider boundary entities
+      entities.insert(std::pair<GEntity*,GEntity*>(dummy, entity));
   }
 
-  // Build normals if necessary
+  // Build normals to base vertices
   std::map<GEntity*, std::map<MVertex*, SVector3> > normVertEnt;                                // Normal to each vertex for each geom. entity
-  if (!blf) {
-    Msg::Warning("Boundary layer data not found, trying to detect columns");
-    buildNormals(vertex2elements, entities, p, normVertEnt);
-  }
+  buildNormals(vertex2elements, entities, p, normVertEnt);
 
   // Loop over geometric entities
   for (std::multimap<GEntity*,GEntity*>::iterator itBE = entities.begin();
        itBE != entities.end(); itBE++) {
     GEntity *domEnt = itBE->first, *bndEnt = itBE->second;
-    BoundaryLayerColumns *blc = 0;
-    if (blf) {
-      Msg::Info("Curving elements for entity %d bounding entity %d...",
-                bndEnt->tag(), domEnt->tag());
-      if (p.dim == 2)
-        blc = domEnt->cast2Face()->getColumns();
-      else if (p.dim == 3)
-        blc = domEnt->cast2Region()->getColumns();
-      else
-        Msg::Error("Fast curving implemented only in dim. 2 and 3");
-    }
-    else
-      Msg::Info("Curving elements for boundary entity %d...", bndEnt->tag());
+    Msg::Info("Curving elements for boundary entity %d...", bndEnt->tag());
     std::map<MVertex*, SVector3> &normVert = normVertEnt[bndEnt];
-    curveMeshFromBnd(vertex2elements, normVert, blc, bndEnt, p);
+    curveMeshFromBnd(vertex2elements, normVert, bndEnt, p);
   }
 
   double t2 = Cpu();
