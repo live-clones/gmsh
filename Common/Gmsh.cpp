@@ -347,6 +347,17 @@ int GmshBatch()
   return 1;
 }
 
+int GmshBatch(int argc, char **argv)
+{
+  new GModel();
+  GmshInitialize(argc, argv);
+  if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
+  CTX::instance()->noPopup = 1;
+  GmshBatch();
+  GmshFinalize();
+  return 1;
+}
+
 int GmshFLTK(int argc, char **argv)
 {
 #if defined(HAVE_FLTK) && defined(HAVE_POST)

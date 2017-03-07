@@ -47,6 +47,7 @@ int GmshMergePostProcessingFile(const std::string &fileName);
 int GmshWriteFile(const std::string &fileName);
 int GmshFinalize();
 int GmshBatch();
+int GmshBatch(int argc, char **argv);
 int GmshFLTK(int argc=0, char **argv=0);
 
 #endif
