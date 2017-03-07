@@ -77,7 +77,7 @@ Field[1].FanNodesList = {14};
 //+
 Characteristic Length {17, 16, 5, 4, 6, 7, 3, 1, 11, 2, 10, 12, 13, 14, 8, 9, 15, 18} = 0.1;
 //+
-Field[1].Quads = 1;
+//Field[1].Quads = 1;
 //+
 //Field[1].thickness = 1;
 //+
