@@ -260,29 +260,54 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
   // parameter space (it would be nicer to change the actual algorithm
   // to ensure that we create correctly-oriented triangles in the
   // first place)
+
+  // if BL triangles are considered, then all that is WRONG !
+ 
+  
   if(gf->triangles.size() > 1){
+
+    bool BL = !gf->getColumns()->_toFirst.empty();
+  
     double n1[3], n2[3];
     MTriangle *t = gf->triangles[0];
     MVertex *v0 = t->getVertex(0), *v1 = t->getVertex(1), *v2 = t->getVertex(2);
-    int index0 = data.getIndex (v0);
-    int index1 = data.getIndex (v1);
-    int index2 = data.getIndex (v2);
-    normal3points(data.Us[index0], data.Vs[index0], 0.,
-                  data.Us[index1], data.Vs[index1], 0.,
-                  data.Us[index2], data.Vs[index2], 0., n1);
+
+    if (!BL){
+      int index0 = data.getIndex (v0);
+      int index1 = data.getIndex (v1);
+      int index2 = data.getIndex (v2);
+      normal3points(data.Us[index0], data.Vs[index0], 0.,
+		    data.Us[index1], data.Vs[index1], 0.,
+		    data.Us[index2], data.Vs[index2], 0., n1);
+    }
+    else {
+      // BL --> PLANAR FACES !!!
+      normal3points(v0->x(),v0->y(),v0->z(),
+		    v1->x(),v1->y(),v1->z(),
+		    v2->x(),v2->y(),v2->z(), n1);
+    }
     for(unsigned int j = 1; j < gf->triangles.size(); j++){
       t = gf->triangles[j];
       v0 = t->getVertex(0); v1 = t->getVertex(1); v2 = t->getVertex(2);
-      index0 = data.getIndex (v0);
-      index1 = data.getIndex (v1);
-      index2 = data.getIndex (v2);
-      normal3points(data.Us[index0], data.Vs[index0], 0.,
-                    data.Us[index1], data.Vs[index1], 0.,
-                    data.Us[index2], data.Vs[index2], 0., n2);
+      if (!BL){
+	int index0 = data.getIndex (v0);
+	int index1 = data.getIndex (v1);
+	int index2 = data.getIndex (v2);
+	normal3points(data.Us[index0], data.Vs[index0], 0.,
+		      data.Us[index1], data.Vs[index1], 0.,
+		      data.Us[index2], data.Vs[index2], 0., n2);
+      }
+      else {
+	// BL --> PLANAR FACES !!!
+	normal3points(v0->x(),v0->y(),v0->z(),
+		      v1->x(),v1->y(),v1->z(),
+		      v2->x(),v2->y(),v2->z(), n2);
+      }
       double pp; prosca(n1, n2, &pp);
+      // orient the bignou
       if(pp < 0) t->reverse();
     }
-  }
+}
   splitEquivalentTriangles(gf, data);
   computeEquivalences(gf, data);
 }
