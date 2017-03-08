@@ -1599,7 +1599,7 @@ Shape :
     {
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Spline not available with OpenCASCADE factory");
       }
       else{
@@ -1716,7 +1716,7 @@ Shape :
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       std::vector<double> knots; ListOfDouble2Vector($8, knots);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Nurbs not available yet with OpenCASCADE factory");
       }
       else{
@@ -2220,7 +2220,7 @@ Transform :
     {
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($4, dimTags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         Msg::Error("Symmetry not implemented yet with OpenCASCADE factory");
       }
       else{
@@ -2233,7 +2233,7 @@ Transform :
     {
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($8, dimTags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Dilate not implemented yet with OpenCASCADE factory");
       }
       else{
@@ -2246,7 +2246,7 @@ Transform :
     {
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($8, dimTags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Dilate not implemented yet with OpenCASCADE factory");
       }
       else{
@@ -2291,7 +2291,7 @@ Transform :
   | tIntersect tLine '{' RecursiveListOfDouble '}' tSurface '{' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Intersect line not available with OpenCASCADE");
       }
       else{
@@ -2311,7 +2311,7 @@ Transform :
   | tSplit tLine '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
     {
       $$ = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Split Line not available with OpenCASCADE");
       }
       else{

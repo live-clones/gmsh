@@ -7495,7 +7495,7 @@ yyreduce:
     {
       int num = (int)(yyvsp[(3) - (7)].d);
       std::vector<int> tags; ListOfDouble2Vector((yyvsp[(6) - (7)].l), tags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Spline not available with OpenCASCADE factory");
       }
       else{
@@ -7626,7 +7626,7 @@ yyreduce:
       int num = (int)(yyvsp[(3) - (11)].d);
       std::vector<int> tags; ListOfDouble2Vector((yyvsp[(6) - (11)].l), tags);
       std::vector<double> knots; ListOfDouble2Vector((yyvsp[(8) - (11)].l), knots);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Nurbs not available yet with OpenCASCADE factory");
       }
       else{
@@ -8223,7 +8223,7 @@ yyreduce:
     {
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs((yyvsp[(4) - (5)].l), dimTags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         Msg::Error("Symmetry not implemented yet with OpenCASCADE factory");
       }
       else{
@@ -8239,7 +8239,7 @@ yyreduce:
     {
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs((yyvsp[(8) - (9)].l), dimTags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Dilate not implemented yet with OpenCASCADE factory");
       }
       else{
@@ -8255,7 +8255,7 @@ yyreduce:
     {
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs((yyvsp[(8) - (9)].l), dimTags);
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Dilate not implemented yet with OpenCASCADE factory");
       }
       else{
@@ -8306,7 +8306,7 @@ yyreduce:
 #line 2292 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Intersect line not available with OpenCASCADE");
       }
       else{
@@ -8328,7 +8328,7 @@ yyreduce:
 #line 2312 "Gmsh.y"
     {
       (yyval.l) = List_Create(2, 1, sizeof(Shape));
-      if(factory == "OpenCASCADE"){
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Split Line not available with OpenCASCADE");
       }
       else{
