@@ -1051,7 +1051,6 @@ void GEO_Internals::synchronize(GModel *model)
   for(GModel::viter it = model->firstVertex(); it != model->lastVertex(); ++it){
     GVertex *gv = *it;
     if(gv->getNativeType() == GEntity::GmshModel){
-      Vertex *v = (Vertex*)gv->getNativePtr();
       if(!FindPoint(gv->tag()))
         toRemove.push_back(std::pair<int, int>(0, gv->tag()));
     }
