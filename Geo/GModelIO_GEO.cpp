@@ -1040,10 +1040,45 @@ void GEO_Internals::synchronize(GModel *model)
 {
   Msg::Debug("Syncing GEO_Internals with GModel");
 
-  // if the entities do not exist, we create them; if they exist, we update the
-  // pointer (and the underlying dependencies, e.g. surface boundaries): this is
-  // necessary because a GEO entity can change (while keeping the same tag), due
-  // e.g. to ReplaceDuplicates.
+  // if the entities do not exist in GModel, we create them; if they exist as
+  // GEO entities in GModel but don't exist (anymore) in the internal CAD data,
+  // we remove them. And if they exist in both the internal CAD data and in the
+  // GModel, we update the pointer and the underlying dependencies (e.g. surface
+  // boundaries): this is necessary because a GEO entity can change (while
+  // keeping the same tag), due e.g. to ReplaceDuplicates.
+
+  std::vector<std::pair<int, int> > toRemove;
+  for(GModel::viter it = model->firstVertex(); it != model->lastVertex(); ++it){
+    GVertex *gv = *it;
+    if(gv->getNativeType() == GEntity::GmshModel){
+      Vertex *v = (Vertex*)gv->getNativePtr();
+      if(!FindPoint(gv->tag()))
+        toRemove.push_back(std::pair<int, int>(0, gv->tag()));
+    }
+  }
+  for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
+    GEdge *ge = *it;
+    if(ge->getNativeType() == GEntity::GmshModel){
+      if(!FindCurve(ge->tag()))
+        toRemove.push_back(std::pair<int, int>(1, ge->tag()));
+    }
+  }
+  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
+    GFace *gf = *it;
+    if(gf->getNativeType() == GEntity::GmshModel){
+      if(!FindSurface(gf->tag()))
+        toRemove.push_back(std::pair<int, int>(2, gf->tag()));
+    }
+  }
+  for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it){
+    GRegion *gr = *it;
+    if(gr->getNativeType() == GEntity::GmshModel){
+      if(!FindVolume(gr->tag()))
+        toRemove.push_back(std::pair<int, int>(3, gr->tag()));
+    }
+  }
+  Msg::Debug("Sync is removing %d model entities", toRemove.size());
+  model->remove(toRemove);
 
   if(Tree_Nbr(Points)) {
     List_T *points = Tree2List(Points);
@@ -1218,7 +1253,9 @@ void GEO_Internals::synchronize(GModel *model)
   }
 
   // we might want to store physical groups directly in GModel; but this is OK
-  // for efficiency
+  // for now. We always start from scratch in GModel, as physical groups are
+  // only stored in GEO internals anyway
+  model->deletePhysicalGroups();
   for(int i = 0; i < List_Nbr(PhysicalGroups); i++){
     PhysicalGroup *p;
     List_Read(PhysicalGroups, i, &p);
@@ -1242,7 +1279,7 @@ void GEO_Internals::synchronize(GModel *model)
   }
 
   // we might want to store mesh compounds directly in GModel; but this is OK
-  // for efficiency
+  // for now.
   for(std::multimap<int, std::vector<int> >::iterator it = _meshCompounds.begin();
       it != _meshCompounds.end(); ++it){
     int dim = it->first;

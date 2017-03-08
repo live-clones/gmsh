@@ -1813,19 +1813,13 @@ void OCC_Internals::synchronize(GModel *model)
 {
   Msg::Debug("Syncing OCC_Internals with GModel");
 
-  int vTagMax = std::max(model->getMaxElementaryNumber(0), getMaxTag(0));
-  int eTagMax = std::max(model->getMaxElementaryNumber(1), getMaxTag(1));
-  int fTagMax = std::max(model->getMaxElementaryNumber(2), getMaxTag(2));
-  int rTagMax = std::max(model->getMaxElementaryNumber(3), getMaxTag(3));
-
+  // iterate over all shapes with tags, and import them into the (sub)shape _maps
   _somap.Clear();
   _shmap.Clear();
   _fmap.Clear();
   _wmap.Clear();
   _emap.Clear();
   _vmap.Clear();
-
-  // iterate over all shapes with tags, and import them into the (sub)shape _maps
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
   for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp1(_tagEdge);
@@ -1877,6 +1871,10 @@ void OCC_Internals::synchronize(GModel *model)
   model->remove(toRemove);
 
   // import all shapes in _maps into the GModel, preserving all explicit tags
+  int vTagMax = std::max(model->getMaxElementaryNumber(0), getMaxTag(0));
+  int eTagMax = std::max(model->getMaxElementaryNumber(1), getMaxTag(1));
+  int fTagMax = std::max(model->getMaxElementaryNumber(2), getMaxTag(2));
+  int rTagMax = std::max(model->getMaxElementaryNumber(3), getMaxTag(3));
   for(int i = 1; i <= _vmap.Extent(); i++){
     TopoDS_Vertex vertex = TopoDS::Vertex(_vmap(i));
     if(!getOCCVertexByNativePtr(model, vertex)){
