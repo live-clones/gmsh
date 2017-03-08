@@ -323,7 +323,9 @@ CondNumBasis::CondNumBasis(int tag, int cnOrder) :
   }
   const bool serendip = false;
 
-  FuncSpaceData data = ( ElementType::ParentTypeFromTag(tag) == TYPE_PYR )? FuncSpaceData(true, tag, true, _condNumOrder+1, _condNumOrder, &serendip) : FuncSpaceData(true, tag, _condNumOrder, &serendip);
+  FuncSpaceData data = (ElementType::ParentTypeFromTag(tag) == TYPE_PYR) ?
+      FuncSpaceData(true, tag, true, 1, _condNumOrder-1, &serendip) :
+      FuncSpaceData(true, tag, _condNumOrder, &serendip);
 
   fullMatrix<double> lagPoints;                                  // Sampling points
   gmshGeneratePoints(data, lagPoints);
@@ -386,7 +388,7 @@ int CondNumBasis::condNumOrder(int parentType, int order)
     case TYPE_TET : return (order == 1) ? 0 : order;
     case TYPE_PRI : return order;
     case TYPE_HEX : return order;
-    case TYPE_PYR : return (order == 1) ? 0 : order;
+    case TYPE_PYR : return order;
     case TYPE_TRIH : return 0;
     default :
       Msg::Error("Unknown element type %d, return order 0", parentType);
