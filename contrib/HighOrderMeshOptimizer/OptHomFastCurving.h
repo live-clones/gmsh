@@ -33,12 +33,15 @@
 class GModel;
 
 struct FastCurvingParameters {
-  int dim ;           // Which dimension to curve
-  bool onlyVisible ;  // Apply curving to visible entities ONLY
-  int maxNumLayers;   // Maximum number of element layers to consider when trying to detect BL
+  int dim ;                       // Spatial dimension of the mesh to curve
+  bool onlyVisible ;              // Apply curving to visible entities ONLY?
+  int maxNumLayers;               // Maximum number of layers of elements to curve in BL
+  double maxRho;                  // Maximum ratio min/max edge/face size for elements to curve in BL
+  double maxAngle;                // Maximum angle between layers of elements to curve in BL
 
-  FastCurvingParameters ()
-    : dim(3) , onlyVisible(true), maxNumLayers(6)
+  FastCurvingParameters () :
+    dim(3) , onlyVisible(true), maxNumLayers(100), maxRho(0.5),
+    maxAngle(3.1415926535897932*10./180.)
   {
   }
 };

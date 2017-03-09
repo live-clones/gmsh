@@ -27,27 +27,28 @@
 //
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
-#include <stdio.h>
+#include <cstdio>
 #include <sstream>
 #include <fstream>
-#include <iterator>
-#include <string.h>
-#include "GmshConfig.h"
+#include <string>
+#include <cmath>
 #include "OptHomFastCurving.h"
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "Gmsh.h"
+#include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
 #include "MHexahedron.h"
 #include "MPrism.h"
-#include "MLine.h"
+#include "MEdge.h"
+#include "MFace.h"
 #include "OS.h"
-#include <stack>
 #include "SVector3.h"
 #include "BasisFactory.h"
-#include "Field.h"
 #include "MetaEl.h"
+#include "qualityMeasuresJacobian.h"
 
 
 
@@ -205,15 +206,72 @@ void getOppositeEdge(MElement *el, const MEdge &elBaseEd, MEdge &elTopEd,
 }
 
 
+void getColumnQuad(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
+                   MEdge &elBaseEd,  std::vector<MElement*> &blob)
+{
+  const double maxDP = std::cos(p.maxAngle);
 
-bool getColumn2D(MEdgeVecMEltMap &ed2el,
-                 int maxNumLayers, const MEdge &baseEd,
-                 std::vector<MVertex*> &baseVert,
+  MElement *el = 0;
+
+  for (int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
+    std::vector<MElement*> newElts = ed2el[elBaseEd];
+    el = (newElts[0] == el) ? newElts[1] : newElts[0];
+    if (el->getType() != TYPE_QUA) break;
+    MEdge elTopEd;
+    double edLenMin, edLenMax;
+    getOppositeEdge(el, elBaseEd, elTopEd, edLenMin, edLenMax);
+
+    if (edLenMin > edLenMax*p.maxRho) break;
+    const double dp = dot(elBaseEd.normal(), elTopEd.normal());
+    if (std::abs(dp) < maxDP) break;
+
+    blob.push_back(el);
+    elBaseEd = elTopEd;
+  }
+}
+
+
+void getColumnTri(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
+                   MEdge &elBaseEd, std::vector<MElement*> &blob)
+{
+  const double maxDP = std::cos(p.maxAngle);
+
+  MElement *el0 = 0, *el1 = 0;
+
+  for (int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
+    std::vector<MElement*> newElts0 = ed2el[elBaseEd];
+    el0 = (newElts0[0] == el1) ? newElts0[1] : newElts0[0];
+    if (el0->getType() != TYPE_TRI) break;
+    MEdge elMidEd;
+    double edLenMin0, edLenMax0;
+    getOppositeEdge(el0, elBaseEd, elMidEd, edLenMin0, edLenMax0);
+
+    std::vector<MElement*> newElts1 = ed2el[elMidEd];
+    el1 = (newElts1[0] == el0) ? newElts1[1] : newElts1[0];
+    if (el1->getType() != TYPE_TRI) break;
+    MEdge elTopEd;
+    double edLenMin1, edLenMax1;
+    getOppositeEdge(el1, elMidEd, elTopEd, edLenMin1, edLenMax1);
+
+    const double edLenMin = std::min(edLenMin0, edLenMin1);
+    const double edLenMax = std::max(edLenMax0, edLenMax1);
+    if (edLenMin > edLenMax*p.maxRho) break;
+    const double dp = dot(elBaseEd.normal(), elTopEd.normal());
+    if (std::abs(dp) < maxDP) break;
+
+    blob.push_back(el0);
+    blob.push_back(el1);
+    elBaseEd = elTopEd;
+  }
+}
+
+
+
+bool getColumn2D(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
+                 const MEdge &baseEd, std::vector<MVertex*> &baseVert,
                  std::vector<MVertex*> &topPrimVert,
                  std::vector<MElement*> &blob)
 {
-  static const double tol = 2.;
-
   // Get first element and base vertices
   std::vector<MElement*> firstElts = ed2el[baseEd];
   if (firstElts.size() != 1) {
@@ -225,18 +283,10 @@ bool getColumn2D(MEdgeVecMEltMap &ed2el,
   const int iFirstElEd = getElementEdge(baseEd, el);
   el->getEdgeVertices(iFirstElEd, baseVert);
   MEdge elBaseEd(baseVert[0], baseVert[1]);
-  MEdge elTopEd;
 
   // Sweep column upwards by choosing largest edges in each element
-  for (int iLayer = 0; iLayer < maxNumLayers; iLayer++) {
-    double edLenMin, edLenMax;
-    getOppositeEdge(el, elBaseEd, elTopEd, edLenMin, edLenMax);
-    if (edLenMax < edLenMin*tol) break;
-    blob.push_back(el);
-    std::vector<MElement*> newElts = ed2el[elTopEd];
-    el = (newElts[0] == el) ? newElts[1] : newElts[0];
-    elBaseEd = elTopEd;
-  }
+  if (el->getType() == TYPE_TRI) getColumnTri(ed2el, p, elBaseEd, blob);
+  else getColumnQuad(ed2el, p, elBaseEd, blob);
 
   // TODO: improve by taking all vertices?
   topPrimVert.resize(2);
@@ -248,9 +298,8 @@ bool getColumn2D(MEdgeVecMEltMap &ed2el,
 
 
 // TODO: Implement 3D
-bool getColumn3D(MFaceVecMEltMap &face2el,
-                 int maxNumLayers, const MFace &baseFace,
-                 std::vector<MVertex*> &baseVert,
+bool getColumn3D(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
+                 const MFace &baseFace, std::vector<MVertex*> &baseVert,
                  std::vector<MVertex*> &topPrimVert,
                  std::vector<MElement*> &blob)
 {
@@ -303,7 +352,7 @@ private:
 
 
 void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
-                      GEntity *bndEnt, FastCurvingParameters &p)
+                      GEntity *bndEnt, const FastCurvingParameters &p)
 {
   // Build list of bnd. elements to consider
   std::list<MElement*> bndEl;
@@ -338,8 +387,7 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
       MVertex *vb1 = (*itBE)->getVertex(1);
       metaElType = TYPE_QUA;
       MEdge baseEd(vb0, vb1);
-      foundCol = getColumn2D(ed2el, p.maxNumLayers, baseEd, baseVert,
-                             topPrimVert, blob);
+      foundCol = getColumn2D(ed2el, p, baseEd, baseVert, topPrimVert, blob);
     }
     else {                                                                                  // 2D boundary
       MVertex *vb0 = (*itBE)->getVertex(0);
@@ -355,8 +403,7 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
         metaElType = TYPE_PRI;
       }
       MFace baseFace(vb0, vb1, vb2, vb3);
-      foundCol = getColumn3D(face2el, p.maxNumLayers, baseFace, baseVert,
-                             topPrimVert, blob);
+      foundCol = getColumn3D(face2el, p, baseFace, baseVert, topPrimVert, blob);
     }
     if (!foundCol) continue;                                                               // Skip bnd. el. if top vertices not found
     int order = blob[0]->getPolynomialOrder();

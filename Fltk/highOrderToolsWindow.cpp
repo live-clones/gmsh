@@ -124,7 +124,7 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
     o->choice[0]->deactivate();
     o->choice[3]->deactivate();
     o->value[1]->deactivate();
-    o->value[2]->activate();
+    o->value[2]->deactivate();
     o->value[3]->deactivate();
     o->value[4]->deactivate();
     o->value[5]->deactivate();
@@ -197,7 +197,6 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     FastCurvingParameters p;
     p.onlyVisible = onlyVisible;
     p.dim = dim;
-    p.maxNumLayers = (int) o->value[2]->value();
     HighOrderMeshFastCurving(GModel::current(), p);
     break;
   }
