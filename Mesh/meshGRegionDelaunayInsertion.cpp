@@ -31,14 +31,14 @@ struct edgeContainerB
   {
     _size = 0;
     _hash.resize(N);
-    _size_obj = sizeof(MEdge); 
+    _size_obj = sizeof(MEdge);
   }
 
   inline size_t H (const MEdge &e) const {
     const size_t h = ((size_t)e.getSortedVertex(0)) ;
-    return (h/_size_obj) %_hash.size();  
+    return (h/_size_obj) %_hash.size();
   }
-  
+
   inline bool find (const MEdge &e) const {
     const std::vector<MEdge> &v = _hash[H(e)];
     for (unsigned int i=0; i< v.size();i++)if (e == v[i]) {return true;}
@@ -46,7 +46,7 @@ struct edgeContainerB
   }
 
   bool empty () const {return _size == 0;}
-  
+
   bool addNewEdge (const MEdge &e)
   {
     std::vector<MEdge> &v = _hash[H(e)];
@@ -143,7 +143,7 @@ struct faceXtet{
       if (v0->getNum() < v2->getNum()){
 	v[1] = v0;
 	v[2] = v2;
-      }      
+      }
       else {
 	v[1] = v2;
 	v[2] = v0;
@@ -154,7 +154,7 @@ struct faceXtet{
       if (v0->getNum() < v1->getNum()){
 	v[1] = v0;
 	v[2] = v1;
-      }      
+      }
       else {
 	v[1] = v1;
 	v[2] = v0;
@@ -220,7 +220,7 @@ void connectTets_vector2(std::vector<MTet4*> &t, std::vector<faceXtet> &conn)
       ++i;
     }
   }
-  //  printf("COUCOU4\n");  
+  //  printf("COUCOU4\n");
 }
 
 
@@ -431,7 +431,7 @@ bool insertVertexB(std::list<faceXtet> &shell,
     double d1 = distance (it->v[0],v);
     double d2 = distance (it->v[1],v);
     double d3 = distance (it->v[2],v);
-    
+
     double lc = Extend2dMeshIn3dVolumes() ? std::min(lc1, lc2) : lc2;
     if (d1 < lc * .05 || d2 < lc * .05 || d3 < lc * .05) onePointIsTooClose = true;
 
@@ -817,7 +817,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     std::vector<faceXtet> conn;
     connectTets_vector2(allTets, conn);
   }
-  
+
   double t1 = Cpu();
   std::vector<MTet4*> illegals;
   const int nbRanges = 10;
@@ -859,7 +859,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   int nbESwap = 0, nbFSwap = 0, nbReloc = 0;
 
   double worstA = 0.0;
-  
+
   while (1){
     //    printf("coucou\n");
     std::vector<MTet4*> newTets;
@@ -1083,9 +1083,9 @@ static void memoryCleanup(MTet4Factory &myFactory, std::set<MTet4*, compareTet4P
 
 
 int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity,
-					std::list<faceXtet> &shell,   
+					std::list<faceXtet> &shell,
 					edgeContainerB &allEmbeddedEdges){
-  
+
 
   std::vector<MEdge> ed;
   for (std::list<faceXtet>::iterator it = shell.begin(); it != shell.end();it++){
@@ -1093,7 +1093,7 @@ int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity,
     ed.push_back(MEdge(it->v[1],it->v[2]));
     ed.push_back(MEdge(it->v[2],it->v[0]));
   }
-  
+
   for (std::list<MTet4*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc){
     for (int j=0;j<6;j++){
       MEdge e = (*itc)->tet()->getEdge(j);
@@ -1103,7 +1103,7 @@ int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity,
     }
   }
   return 1;
-} 
+}
 
 
 int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity,
@@ -1162,9 +1162,8 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 	if (iti == vSizesMap.end() || iti->second > l) vSizesMap[vi] = l;
 	if (itj == vSizesMap.end() || itj->second > l) vSizesMap[vj] = l;
       }
-      ++it;
     }
-  
+
     for(GModel::fiter it = gr->model()->firstFace(); it != gr->model()->lastFace(); ++it){
       GFace *gf = *it;
       for(unsigned int i = 0; i < gf->triangles.size(); i++){
@@ -1294,8 +1293,8 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 		      base->getVertex(3)->z()};
 
       tetcircumcenter(pa,pb,pc,pd, center, NULL, NULL, NULL);
-      
-      
+
+
       //// A TEST !!!
       std::list<faceXtet> shell;
       std::list<MTet4*> cavity;
@@ -1348,7 +1347,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 	  uvw[2] * vSizes[worst->tet()->getVertex(3)->getIndex()];
 	double lc2 = BGM_MeshSize(gr, 0, 0, center[0], center[1], center[2]);
 
-	
+
 	if(correctedCavityIncompatibleWithEmbeddedEdge || !starShaped || !insertVertexB(shell,cavity,v, lc1, lc2, vSizes, vSizesBGM, worst, myFactory, allTets)){
 	  COUNT_MISS_1++;
 	  myFactory.changeTetRadius(allTets.begin(), 0.);
