@@ -1,6 +1,7 @@
 2.xx: new interface to CAD entity creation, constructive solid geometry features
 and boolean operations using SetFactory("OpenCASCADE"); replaced "Ruled Surface"
-with "Surface"; new "Unique" operator.
+with "Surface"; new "Unique" operator; faster 3D tetrahedral mesh optimization
+enabled by default.
 
 2.16.0 (January 3, 2017): small improvements (list functions, second order hexes
 for MED, GUI) and bug fixes.
