@@ -79,14 +79,13 @@
 
 OCC_Internals::OCC_Internals()
 {
-  for(int i = 0; i < 6; i++)
-    _maxTagConstraints[i] = 0;
+  for(int i = 0; i < 6; i++) _maxTag[i] = 0;
   _changed = true;
 }
 
 void OCC_Internals::reset()
 {
-  for(int i = 0; i < 6; i++) _maxTagConstraints[i] = 0;
+  for(int i = 0; i < 6; i++) _maxTag[i] = 0;
   for(int i = 0; i < 4; i++) _meshAttributes[i].clear();
   _somap.Clear(); _shmap.Clear(); _fmap.Clear(); _wmap.Clear(); _emap.Clear();
   _vmap.Clear();
@@ -97,6 +96,35 @@ void OCC_Internals::reset()
   _changed = true;
 }
 
+void OCC_Internals::setMaxTag(int dim, int val)
+{
+  if(dim < -2 || dim > 3) return;
+  _maxTag[dim + 2] = val;
+}
+
+int OCC_Internals::getMaxTag(int dim) const
+{
+  if(dim < -2 || dim > 3) return 0;
+  return _maxTag[dim + 2];
+}
+
+void OCC_Internals::_recomputeMaxTag(int dim)
+{
+  if(dim < -2 || dim > 3) return;
+  _maxTag[dim + 2] = 0;
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
+  switch(dim){
+  case 0: exp.Initialize(_tagVertex); break;
+  case 1: exp.Initialize(_tagEdge); break;
+  case 2: exp.Initialize(_tagFace); break;
+  case 3: exp.Initialize(_tagSolid); break;
+  case -1: exp.Initialize(_tagWire); break;
+  case -2: exp.Initialize(_tagShell); break;
+  }
+  for(; exp.More(); exp.Next())
+    _maxTag[dim + 2] = std::max(_maxTag[dim + 2], exp.Key());
+}
+
 void OCC_Internals::bind(TopoDS_Vertex vertex, int tag)
 {
   if(_vertexTag.IsBound(vertex) && _vertexTag.Find(vertex) != tag){
@@ -105,6 +133,7 @@ void OCC_Internals::bind(TopoDS_Vertex vertex, int tag)
   }
   _vertexTag.Bind(vertex, tag);
   _tagVertex.Bind(tag, vertex);
+  setMaxTag(0, tag);
   _changed = true;
 }
 
@@ -116,6 +145,7 @@ void OCC_Internals::bind(TopoDS_Edge edge, int tag)
   }
   _edgeTag.Bind(edge, tag);
   _tagEdge.Bind(tag, edge);
+  setMaxTag(1, tag);
   _changed = true;
 }
 
@@ -127,6 +157,7 @@ void OCC_Internals::bind(TopoDS_Wire wire, int tag)
   }
   _wireTag.Bind(wire, tag);
   _tagWire.Bind(tag, wire);
+  setMaxTag(-1, tag);
   _changed = true;
 }
 
@@ -138,6 +169,7 @@ void OCC_Internals::bind(TopoDS_Face face, int tag)
   }
   _faceTag.Bind(face, tag);
   _tagFace.Bind(tag, face);
+  setMaxTag(2, tag);
   _changed = true;
 }
 
@@ -149,6 +181,7 @@ void OCC_Internals::bind(TopoDS_Shell shell, int tag)
   }
   _shellTag.Bind(shell, tag);
   _tagShell.Bind(tag, shell);
+  setMaxTag(-2, tag);
   _changed = true;
 }
 
@@ -160,6 +193,7 @@ void OCC_Internals::bind(TopoDS_Solid solid, int tag)
   }
   _solidTag.Bind(solid, tag);
   _tagSolid.Bind(tag, solid);
+  setMaxTag(3, tag);
   _changed = true;
 }
 
@@ -180,6 +214,7 @@ void OCC_Internals::unbind(TopoDS_Vertex vertex, int tag)
 {
   _vertexTag.UnBind(vertex);
   _tagVertex.UnBind(tag);
+  _recomputeMaxTag(0);
   _changed = true;
 }
 
@@ -187,6 +222,7 @@ void OCC_Internals::unbind(TopoDS_Edge edge, int tag)
 {
   _edgeTag.UnBind(edge);
   _tagEdge.UnBind(tag);
+  _recomputeMaxTag(1);
   _changed = true;
 }
 
@@ -194,6 +230,7 @@ void OCC_Internals::unbind(TopoDS_Wire wire, int tag)
 {
   _wireTag.UnBind(wire);
   _tagWire.UnBind(tag);
+  _recomputeMaxTag(-1);
   _changed = true;
 }
 
@@ -201,6 +238,7 @@ void OCC_Internals::unbind(TopoDS_Face face, int tag)
 {
   _faceTag.UnBind(face);
   _tagFace.UnBind(tag);
+  _recomputeMaxTag(2);
   _changed = true;
 }
 
@@ -208,6 +246,7 @@ void OCC_Internals::unbind(TopoDS_Shell shell, int tag)
 {
   _shellTag.UnBind(shell);
   _tagShell.UnBind(tag);
+  _recomputeMaxTag(-2);
   _changed = true;
 }
 
@@ -215,6 +254,7 @@ void OCC_Internals::unbind(TopoDS_Solid solid, int tag)
 {
   _solidTag.UnBind(solid);
   _tagSolid.UnBind(tag);
+  _recomputeMaxTag(3);
   _changed = true;
 }
 
@@ -332,30 +372,6 @@ TopoDS_Shape OCC_Internals::find(int dim, int tag)
   case -2: return _tagShell.Find(tag);
   default: return TopoDS_Shape();
   }
-}
-
-void OCC_Internals::setMaxTag(int dim, int val)
-{
-  if(dim < -2 || dim > 3) return;
-  _maxTagConstraints[dim + 2] = val;
-}
-
-int OCC_Internals::getMaxTag(int dim) const
-{
-  if(dim < -2 || dim > 3) return 0;
-  int ret = _maxTagConstraints[dim + 2];
-  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
-  switch(dim){
-  case 0: exp.Initialize(_tagVertex); break;
-  case 1: exp.Initialize(_tagEdge); break;
-  case 2: exp.Initialize(_tagFace); break;
-  case 3: exp.Initialize(_tagSolid); break;
-  case -1: exp.Initialize(_tagWire); break;
-  case -2: exp.Initialize(_tagShell); break;
-  }
-  for(; exp.More(); exp.Next())
-    ret = std::max(ret, exp.Key());
-  return ret;
 }
 
 void OCC_Internals::addVertex(int tag, double x, double y, double z,

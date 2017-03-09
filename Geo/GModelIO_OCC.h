@@ -36,9 +36,8 @@ class OCC_Internals {
   // have the internals changed since the last synchronisation
   bool _changed;
 
-  // tag contraints coming from outside OCC_Internals (when using multiple CAD
-  // kernels)
-  int _maxTagConstraints[6];
+  // maximum tags for each bound entity (shell, wire, vertex, edge, face, solid)
+  int _maxTag[6];
 
   // all the (sub)shapes, updated dynamically when shapes need to be imported
   // into a GModel
@@ -61,6 +60,9 @@ class OCC_Internals {
     ExtrudeParams *extrude;
   };
   std::map<int, meshAttribute> _meshAttributes[4];
+
+  // iterate on all bound entities and recompute the maximum tag
+  void _recomputeMaxTag(int dim);
 
   // add a shape and all its subshapes to _vmap, _emap, ..., _somap
   void _addShapeToMaps(TopoDS_Shape shape);

@@ -266,12 +266,14 @@ GeoFormatItem :
           GModel::current()->createOCCInternals();
         for(int dim = -2; dim <= 3; dim++)
           GModel::current()->getOCCInternals()->setMaxTag
-            (dim, GModel::current()->getGEOInternals()->getMaxTag(dim));
+            (dim, std::max(GModel::current()->getOCCInternals()->getMaxTag(dim),
+                           GModel::current()->getGEOInternals()->getMaxTag(dim)));
       }
       else if(GModel::current()->getOCCInternals()){
         for(int dim = -2; dim <= 3; dim++)
           GModel::current()->getGEOInternals()->setMaxTag
-            (dim, GModel::current()->getOCCInternals()->getMaxTag(dim));
+            (dim, std::max(GModel::current()->getGEOInternals()->getMaxTag(dim),
+                           GModel::current()->getOCCInternals()->getMaxTag(dim)));
       }
       Free($3);
     }
