@@ -481,10 +481,11 @@ void GetOptions(int argc, char *argv[])
         i++;
       }
       else if(!strcmp(argv[i] + 1, "optimize")) {
-	Msg::Warning("The optimize option is now obsolete");
-	Msg::Warning("Gmsh optimizes tetrahedral meshes by default");
-	Msg::Warning("Use the \"-optimize_threshold threshold \" to control which elements are optimized");
-	Msg::Warning("Option \"-optimize_threshold 0 \" leads to no optimization");
+	Msg::Warning("The '-optimize' option is now obsolete: "
+                     "Gmsh optimizes tetrahedral meshes by default");
+	Msg::Warning("Use '-optimize_threshold threshold' to "
+                     "control which elements are optimized");
+	Msg::Warning("Option '-optimize_threshold 0' leads to no optimization");
         CTX::instance()->mesh.optimize = 1;
         i++;
       }
