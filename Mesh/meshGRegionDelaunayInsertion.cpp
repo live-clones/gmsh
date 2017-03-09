@@ -416,7 +416,6 @@ bool insertVertexB(std::list<faceXtet> &shell,
   std::vector<faceXtet> conn;
   std::vector<MTet4*> new_cavity;
 
-
   MTet4** newTets = new MTet4*[shell.size()];
   int k = 0;
 
@@ -424,7 +423,8 @@ bool insertVertexB(std::list<faceXtet> &shell,
 
   bool onePointIsTooClose = false;
   while (it != shell.end()){
-    MTetrahedron *tr = new MTetrahedron(it->getVertex(0), it->getVertex(1), it->getVertex(2), v);
+    MTetrahedron *tr = new MTetrahedron(it->getVertex(0), it->getVertex(1),
+                                        it->getVertex(2), v);
     MTet4 *t4 = myFactory.Create(tr, vSizes, vSizesBGM, lc1, lc2);
     t4->setOnWhat(t->onWhat());
 
@@ -459,7 +459,6 @@ bool insertVertexB(std::list<faceXtet> &shell,
       (*ittet)->setDeleted(false);
       ++ittet;
     }
-    delete [] newTets;
     return false;
   }
 }
@@ -791,7 +790,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   double qMin = CTX::instance()->mesh.optimizeThreshold;
 
   if (qMin <= 0.0) return;
-  
+
    // well, this should not be true !!!
   // if (gr->hexahedra.size() ||
   //      gr->prisms.size() ||
