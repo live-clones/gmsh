@@ -142,7 +142,7 @@ void saturateEdge(Edge &e, std::vector<Vert*> &S, std::stack<IPT> &temp)
     bgm = fields->get(fields->getBackgroundField());
   }  
 
-  if (1){
+  if (0){
     const double length = p1.distance(p2);
     const double lc_avg = (e.first->lc() + e.second->lc())*.5;
     const double l_adim_approx =   length / lc_avg;
@@ -221,7 +221,7 @@ void saturateEdges(edgeContainer &ec,
   const int N = T.size(0);
   for (int i=0;i<N;i++){
     Tet *t = T(0,i);
-   if (t->V[0] && t->_modified){
+    if (t->V[0] && t->_modified){
       t->_modified = false;
       for (int iEdge=0;iEdge<6;iEdge++){
 	Edge ed = t->getEdge(iEdge);

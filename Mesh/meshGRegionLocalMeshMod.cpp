@@ -106,7 +106,7 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
     }
     // FIXME when hybrid mesh, this loops for ever
     if (cavity.size() > 1000) {
-      printf("cavity size gets laaaarge\n");
+      //      printf("cavity size gets laaaarge\n");
       return false;
     }
     //    printf("%d %d\n",ITER++, cavity.size());
@@ -210,8 +210,7 @@ bool edgeSwap(std::vector<MTet4 *> &newTets,
   //static int edges[6][2] =    {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
   int permut[6] = {0,3,1,2,5,4};
   iLocalEdge = permut[iLocalEdge];
-  
-  
+ 
   std::vector<MTet4*> cavity;
   std::vector<MTet4*> outside;
   std::vector<MVertex*> ring;

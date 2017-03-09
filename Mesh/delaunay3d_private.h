@@ -146,16 +146,22 @@ public :
 struct edgeContainer
 {
   std::vector<std::vector<Edge> > _hash;
-  size_t _size;
+  size_t _size, _size_obj;
   edgeContainer(unsigned int N = 1000000)
   {
     _size = 0;
     _hash.resize(N);
+    _size_obj = sizeof(Edge); 
   }
 
+  inline size_t H (const Edge &e) const {
+    const size_t h = ((size_t)e.first) ;
+    //    printf("%lu %lu %lu %lu\n",h,(h/2)%_hash.size(),h/64,h>>6);
+    return (h/_size_obj) %_hash.size();  
+  }
+  
   inline bool find (const Edge &e) const {
-    size_t h = ((size_t) e.first >> 8) ;
-    const std::vector<Edge> &v = _hash[h %_hash.size()];
+    const std::vector<Edge> &v = _hash[H(e)];
     for (unsigned int i=0; i< v.size();i++)if (e == v[i]) {return true;}
     return false;
   }
@@ -164,8 +170,7 @@ struct edgeContainer
   
   bool addNewEdge (const Edge &e)
   {
-    size_t h = ((size_t) e.first >> 8) ;
-    std::vector<Edge> &v = _hash[h %_hash.size()];
+    std::vector<Edge> &v = _hash[H(e)];
     for (unsigned int i=0; i< v.size();i++)if (e == v[i]) {return false;}
     v.push_back(e);
     _size++;

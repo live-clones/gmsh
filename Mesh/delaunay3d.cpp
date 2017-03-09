@@ -687,6 +687,7 @@ static bool fixDelaunayCavity (Vert *v,
   starShapeness (v, bndK, _negatives);
 
   if (_negatives.empty())return false;
+  
   //  return true;
   // unset all tets of the cavity
   for (unsigned int i=0; i< cavity.size(); i++)cavity[i]->unset(myThread,K);

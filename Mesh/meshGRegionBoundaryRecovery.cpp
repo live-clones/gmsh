@@ -227,7 +227,9 @@ bool tetgenmesh::reconstructmesh(void *p)
       ver2tetarray[i] = NULL;
     }
 
+    
     // Create the tetrahedra and connect those that share a common face.
+    printf("DOING for %d tets\n",tets.size());
     for (unsigned int i = 0; i < tets.size(); i++) {
       // Get the four vertices.
       for (int j = 0; j < 4; j++) {
@@ -756,6 +758,7 @@ bool tetgenmesh::reconstructmesh(void *p)
           }
         }
         assert(ge != NULL);
+	Msg::Info("Steiner points exist on GEdge %d", ge->tag());
         // Delete the old triangles.
         for(unsigned int i = 0; i < ge->lines.size(); i++)
           delete ge->lines[i];

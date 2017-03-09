@@ -422,7 +422,7 @@ int MeshTransfiniteSurface(GFace *gf)
         MVertex *v4 = tab[i][j + 1];
         if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)
           gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
-        else if(gf->meshAttributes.transfiniteArrangement == 1 ||
+	else if(gf->meshAttributes.transfiniteArrangement == 1 ||
                 (gf->meshAttributes.transfiniteArrangement == 2 &&
                  ((i % 2 == 0 && j % 2 == 1) ||
                   (i % 2 == 1 && j % 2 == 0))) ||
@@ -430,9 +430,10 @@ int MeshTransfiniteSurface(GFace *gf)
                  ((i % 2 == 0 && j % 2 == 0) ||
                   (i % 2 == 1 && j % 2 == 1)))
 		){
-          gf->triangles.push_back(new MTriangle(v1, v2, v3));
-          gf->triangles.push_back(new MTriangle(v3, v4, v1));
-        }
+	  //        else if(rand() % 2 == 0){
+	  gf->triangles.push_back(new MTriangle(v1, v2, v3));
+	  gf->triangles.push_back(new MTriangle(v3, v4, v1));
+	}
         else{
           gf->triangles.push_back(new MTriangle(v1, v2, v4));
           gf->triangles.push_back(new MTriangle(v4, v2, v3));

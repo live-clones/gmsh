@@ -484,6 +484,9 @@ void backgroundMesh::propagateCrossField(GFace *_gf, simpleFunction<double> *ONE
   propagateValuesOnFace(_gf,_cosines4,ONE,false);
   propagateValuesOnFace(_gf,_sines4,ONE,false);
 
+  //    print("cos4.pos",0,_cosines4,0);
+  //    print("sin4.pos",0,_sines4,0);
+  
   std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
     MVertex *v_2D = itv2->first;
