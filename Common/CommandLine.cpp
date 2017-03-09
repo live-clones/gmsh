@@ -91,6 +91,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-smooth int",        "Set number of mesh smoothing steps"));
   s.push_back(mp("-order int",         "Set mesh order (1, ..., 5)"));
   s.push_back(mp("-optimize[_netgen]", "Optimize quality of tetrahedral elements"));
+  s.push_back(mp("-optimize_threshold", "Optimize tetrahedral elements that have a qulaity less than a threshold"));
   s.push_back(mp("-optimize_ho",       "Optimize high order meshes"));
   s.push_back(mp("-ho_[min,max,nlayers]", "High-order optimization parameters"));
   s.push_back(mp("-optimize_lloyd",    "Optimize 2D meshes using Lloyd algorithm"));
@@ -480,7 +481,17 @@ void GetOptions(int argc, char *argv[])
         i++;
       }
       else if(!strcmp(argv[i] + 1, "optimize")) {
+	Msg::Warning("The optimize option is now obsolete");
+	Msg::Warning("Gmsh optimizes tetrahedral meshes by default");
+	Msg::Warning("Use the \"-optimize_threshold threshold \" to control which elements are optimized");
+	Msg::Warning("Option \"-optimize_threshold 0 \" leads to no optimization");
         CTX::instance()->mesh.optimize = 1;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "optimize_threshold")) {
+        i++;
+        if(argv[i])
+          opt_mesh_optimize_threshold(0, GMSH_SET, atof(argv[i++]));
         i++;
       }
       else if(!strcmp(argv[i] + 1, "optimize_netgen")) {

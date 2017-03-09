@@ -788,7 +788,11 @@ void adaptMeshGRegion::operator () (GRegion *gr)
 
 void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
 {
-  // well, this should not be true !!!
+  double qMin = CTX::instance()->mesh.optimizeThreshold;
+
+  if (qMin <= 0.0) return;
+  
+   // well, this should not be true !!!
   // if (gr->hexahedra.size() ||
   //      gr->prisms.size() ||
   //      gr->pyramids.size())return;
@@ -853,7 +857,6 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     }
   }
 
-  double qMin = 0.3;
   double sliverLimit = 0.04;
 
   int nbESwap = 0, nbFSwap = 0, nbReloc = 0;
@@ -1146,7 +1149,6 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   { // leave this in a block so the map gets deallocated directly
     std::map<MVertex*, double,MVertexLessThanNum> vSizesMap;
     std::set<MVertex*,MVertexLessThanNum> bndVertices;
-
     std::list<GEdge*> e = gr->embeddedEdges();
     for (std::list<GEdge*>::iterator it = e.begin() ; it != e.end(); ++it){
       for (unsigned int i = 0; i < (*it)->lines.size(); i++){

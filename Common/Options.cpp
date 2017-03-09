@@ -4888,6 +4888,17 @@ double opt_mesh_optimize(OPT_ARGS_NUM)
   return CTX::instance()->mesh.optimize;
 }
 
+double opt_mesh_optimize_threshold(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.optimizeThreshold)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.optimizeThreshold = val;
+  }
+  return CTX::instance()->mesh.optimizeThreshold;
+}
+
+
 double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){

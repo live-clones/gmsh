@@ -24,8 +24,8 @@ struct contextMeshOptions {
   int pyramids, trihedra;
   int surfacesEdges, surfacesFaces, volumesEdges, volumesFaces, numSubEdges;
   int pointsNum, linesNum, surfacesNum, volumesNum, qualityType, labelType;
-  int optimize, optimizeNetgen, optimizeLloyd, smoothCrossField, refineSteps;
-  double normals, tangents, explode, angleSmoothNormals, allowSwapEdgeAngle;
+  int optimize,  optimizeNetgen, optimizeLloyd, smoothCrossField, refineSteps;
+  double optimizeThreshold,normals, tangents, explode, angleSmoothNormals, allowSwapEdgeAngle;
   double mshFileVersion, mshFilePartitioned, pointSize, lineWidth;
   double qualityInf, qualitySup, radiusInf, radiusSup;
   double scalingFactor, lcFactor, randFactor, lcIntegrationPrecision;
