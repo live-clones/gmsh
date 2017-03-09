@@ -145,7 +145,7 @@ set(GMSH_API
   contrib/DiscreteIntegration/Integration3D.h
   contrib/HighOrderMeshOptimizer/OptHOM.h contrib/HighOrderMeshOptimizer/OptHomMesh.h
   contrib/HighOrderMeshOptimizer/OptHomRun.h contrib/HighOrderMeshOptimizer/ParamCoord.h
-  contrib/HighOrderMeshOptimizer/OptHomFastCurving.h contrib/HighOrderMeshOptimizer/SuperEl.h
+  contrib/HighOrderMeshOptimizer/OptHomFastCurving.h 
   contrib/HighOrderMeshOptimizer/OptHomIntegralBoundaryDist.h
   contrib/HighOrderMeshOptimizer/CADDistances.h
   contrib/HighOrderMeshOptimizer/OptHomObjContribScaledJac.h
