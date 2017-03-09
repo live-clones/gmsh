@@ -69,14 +69,22 @@ class FieldOption {
     default: return "unknown";
     }
   }
-  virtual void numericalValue(double val) { throw(1); }
-  virtual double numericalValue() const { throw(1); }
-  virtual const std::list<int> &list() const { printf("coucou4\n");throw(1); }
-  virtual const std::list<double> &listdouble() const { printf("coucou3\n");throw(1); }
-  virtual void list(std::list<int> value) { printf("coucou1\n");throw(1); }
-  virtual void listdouble(std::list<double> value) { printf("coucou2\n");throw(1); }
-  virtual std::string string() const { throw(1); }
-  virtual void string(const std::string value) { throw(1); }
+  virtual void numericalValue(double val) {}
+  virtual double numericalValue() const { return 0.; }
+  virtual const std::list<int> &list() const
+  {
+    static std::list<int> l;
+    return l;
+  }
+  virtual const std::list<double> &listdouble() const
+  {
+    static std::list<double> l;
+    return l;
+  }
+  virtual void list(std::list<int> value) { }
+  virtual void listdouble(std::list<double> value) { }
+  virtual std::string string() const { return ""; }
+  virtual void string(const std::string value) { }
 };
 
 class Field {
