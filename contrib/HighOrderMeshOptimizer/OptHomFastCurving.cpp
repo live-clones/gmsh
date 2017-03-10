@@ -238,33 +238,42 @@ void getColumnTri(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
                    MEdge &elBaseEd, std::vector<MElement*> &blob)
 {
   const double maxDP = std::cos(p.maxAngle);
+  const double maxDPIn = std::cos(p.maxAngleInner);
 
   MElement *el0 = 0, *el1 = 0;
 
   for (int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
+    // Get first element in layer
     std::vector<MElement*> newElts0 = ed2el[elBaseEd];
     el0 = (newElts0[0] == el1) ? newElts0[1] : newElts0[0];
     if (el0->getType() != TYPE_TRI) break;
-    MEdge elMidEd;
+    MEdge elTopEd0;
     double edLenMin0, edLenMax0;
-    getOppositeEdge(el0, elBaseEd, elMidEd, edLenMin0, edLenMax0);
+    getOppositeEdge(el0, elBaseEd, elTopEd0, edLenMin0, edLenMax0);
+    const SVector3 normBase = elBaseEd.normal();
+    const SVector3 normTop0 = elTopEd0.normal();
+    if (std::abs(dot(normBase, normTop0)) < maxDPIn) break;
 
-    std::vector<MElement*> newElts1 = ed2el[elMidEd];
+    // Get second element in layer
+    std::vector<MElement*> newElts1 = ed2el[elTopEd0];
     el1 = (newElts1[0] == el0) ? newElts1[1] : newElts1[0];
     if (el1->getType() != TYPE_TRI) break;
-    MEdge elTopEd;
+    MEdge elTopEd1;
     double edLenMin1, edLenMax1;
-    getOppositeEdge(el1, elMidEd, elTopEd, edLenMin1, edLenMax1);
+    getOppositeEdge(el1, elTopEd0, elTopEd1, edLenMin1, edLenMax1);
+    const SVector3 normTop1 = elTopEd1.normal();
+    if (std::abs(dot(normTop0, normTop1)) < maxDPIn) break;
 
+    // Check stop criteria
     const double edLenMin = std::min(edLenMin0, edLenMin1);
     const double edLenMax = std::max(edLenMax0, edLenMax1);
     if (edLenMin > edLenMax*p.maxRho) break;
-    const double dp = dot(elBaseEd.normal(), elTopEd.normal());
-    if (std::abs(dp) < maxDP) break;
+    if (std::abs(dot(normBase, normTop1)) < maxDP) break;
 
+    // Add elements to blob and pass top edge to next layer
     blob.push_back(el0);
     blob.push_back(el1);
-    elBaseEd = elTopEd;
+    elBaseEd = elTopEd1;
   }
 }
 
@@ -303,10 +312,10 @@ void getOppositeFacePrism(MElement *el, const MFace &elBaseFace,
   el->getFaceInfo(elBaseFace, iElBaseFace, iDum, iDum);
 
   // Check side edges to find opposite vertices
-  int edCheck[3] = {2, 4, 5};
+  const int sideEd[3] = {2, 4, 5};
   std::vector<MVertex*> topVert(3);
   for (int iEd = 0; iEd < 3; iEd++) {
-    MEdge ed = el->getEdge(edCheck[iEd]);
+    MEdge ed = el->getEdge(sideEd[iEd]);
     for (int iV = 0; iV < 3; iV++) {
       if (elBaseFace.getVertex(iV) == ed.getVertex(0))
         topVert[iV] = ed.getVertex(1);
@@ -402,26 +411,95 @@ void getOppositeFaceTet(MElement *el, const MFace &elBaseFace, MFace &elTopFace,
   }
 
   // Build top face from max face (with right correspondance)
-  MVertex *const &v0 = elMaxFace.getVertex(0);
-  MVertex *const &v1 = elMaxFace.getVertex(1);
-  MVertex *const &v2 = elMaxFace.getVertex(2);
-  std::vector<MVertex*> topVert(3);
-  if (elBaseFace.getVertex(0) == v0) {
-    topVert[0] = v0;
-    if (elBaseFace.getVertex(1) == v1) { topVert[1] = v1; topVert[2] = v2; }
-    else { topVert[1] = v2; topVert[2] = v1; }
-  }
-  else if (elBaseFace.getVertex(0) == v1) {
-    topVert[0] = v1;
-    if (elBaseFace.getVertex(1) == v0) { topVert[1] = v0; topVert[2] = v2; }
-    else { topVert[1] = v2; topVert[2] = v0; }
-  }
-  else {
-    topVert[0] = v2;
-    if (elBaseFace.getVertex(1) == v0) { topVert[1] = v0; topVert[2] = v1; }
-    else { topVert[1] = v1; topVert[2] = v0; }
-  }
+  MVertex *maxVert[3] = {elMaxFace.getVertex(0),
+                         elMaxFace.getVertex(1), elMaxFace.getVertex(2)};
+  std::vector<MVertex*> topVert(3, static_cast<MVertex*>(0));
+  for (int iBaseV = 0; iBaseV < 3; iBaseV++)                                // Two vertices of elTopFace are those of elMaxFace coinciding with elBaseFace
+    for (int iMaxV = 0; iMaxV < 3; iMaxV++)
+      if (elBaseFace.getVertex(iBaseV) == maxVert[iMaxV]) {
+        topVert[iBaseV] = maxVert[iMaxV];
+        maxVert[iMaxV] = 0;
+      }
+  MVertex *thirdMaxVert = (maxVert[0] != 0) ? maxVert[0] :                  // Set last vertex of elTopFace as remaining vertex in elMaxFace
+                          (maxVert[1] != 0) ? maxVert[1] : maxVert[2];
+  if (topVert[0] == 0) topVert[0] = thirdMaxVert;
+  else if (topVert[1] == 0) topVert[1] = thirdMaxVert;
+  else topVert[2] = thirdMaxVert;
   elTopFace = MFace(topVert);
+}
+
+
+
+//bool getTetInLayer(MFaceVecMEltMap &face2el, const MElement *lowerEl,
+//                   MElement *&el, const MFace &bottomFace, MFace &topFace,
+//                   double &faceSurfMin, double &faceSurfMax)
+//{
+//  std::vector<MElement*> newElts = face2el[bottomFace];
+//  el = (newElts[0] == lowerEl) ? newElts[1] : newElts[0];
+//  if (el->getType() != TYPE_TET) return false;
+//  MFace elMidFace0;
+//  getOppositeFaceTet(el, bottomFace, topFace, faceSurfMin, faceSurfMax);
+//  return true;
+//}
+
+
+
+// Column of tets: assume tets obtained from subdivision of prism
+void getColumnTet(MFaceVecMEltMap &face2el,
+                  const FastCurvingParameters &p, MFace &elBaseFace,
+                  std::vector<MElement*> &blob)
+{
+  const double maxDP = std::cos(p.maxAngle);
+  const double maxDPIn = std::cos(p.maxAngleInner);
+
+  MElement *el0 = 0, *el1 = 0, *el2 = 0;
+
+  for (int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
+    // Get first element in layer
+    std::vector<MElement*> newElts0 = face2el[elBaseFace];
+    el0 = (newElts0[0] == el2) ? newElts0[1] : newElts0[0];
+    if (el0->getType() != TYPE_TET) break;
+    MFace elTopFace0;
+    double faceSurfMin0, faceSurfMax0;
+    getOppositeFaceTet(el0, elBaseFace, elTopFace0, faceSurfMin0, faceSurfMax0);
+    const SVector3 normBase = elBaseFace.normal();
+    const SVector3 normTop0 = elTopFace0.normal();
+    if (std::abs(dot(normBase, normTop0)) < maxDPIn) break;
+
+    // Get second element in layer
+    std::vector<MElement*> newElts1 = face2el[elTopFace0];
+    el1 = (newElts1[0] == el0) ? newElts1[1] : newElts1[0];
+    if (el1->getType() != TYPE_TET) break;
+    MFace elTopFace1;
+    double faceSurfMin1, faceSurfMax1;
+    getOppositeFaceTet(el1, elTopFace0, elTopFace1, faceSurfMin1, faceSurfMax1);
+    const SVector3 normTop1 = elTopFace1.normal();
+    if (std::abs(dot(normTop0, normTop1)) < maxDPIn) break;
+
+    // Get third element in layer
+    std::vector<MElement*> newElts2 = face2el[elTopFace1];
+    el2 = (newElts2[0] == el1) ? newElts2[1] : newElts2[0];
+    if (el2->getType() != TYPE_TET) break;
+    MFace elTopFace2;
+    double faceSurfMin2, faceSurfMax2;
+    getOppositeFaceTet(el2, elTopFace1, elTopFace2, faceSurfMin2, faceSurfMax2);
+    const SVector3 normTop2 = elTopFace2.normal();
+    if (std::abs(dot(normTop1, normTop2)) < maxDPIn) break;
+
+    // Check stop criteria
+    const double faceSurfMin = std::min(faceSurfMin0,
+                                        std::min(faceSurfMin1, faceSurfMin2));
+    const double faceSurfMax = std::max(faceSurfMax0,
+                                        std::min(faceSurfMax1, faceSurfMax2));
+    if (faceSurfMin > faceSurfMax*p.maxRho) break;
+    if (std::abs(dot(normBase, normTop2)) < maxDP) break;
+
+    // Add elements to blob and pass top face to next layer
+    blob.push_back(el0);
+    blob.push_back(el1);
+    blob.push_back(el2);
+    elBaseFace = elTopFace2;
+  }
 }
 
 
@@ -445,8 +523,6 @@ void getColumnPrismHex(int elType, MFaceVecMEltMap &face2el,
       getOppositeFacePrism(el, elBaseFace, elTopFace, faceSurfMin, faceSurfMax);
     else if (el->getType() == TYPE_HEX)
       getOppositeFaceHex(el, elBaseFace, elTopFace, faceSurfMin, faceSurfMax);
-//    else if (el->getType() == TYPE_TET)
-//      getOppositeFaceTet(el, elBaseFace, elTopFace, faceSurfMin, faceSurfMax);
 
     if (faceSurfMin > faceSurfMax*p.maxRho) break;
     const double dp = dot(elBaseFace.normal(), elTopFace.normal());
@@ -477,8 +553,8 @@ bool getColumn3D(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
   if (nbBaseFaceVert == 3) {
     if (el->getType() == TYPE_PRI)                                              // Get BL column of prisms
       getColumnPrismHex(TYPE_PRI, face2el, p, elBaseFace, blob);
-//    else if (el->getType() == TYPE_TET)                                       // TODO: finish implementing BL with tets
-//      getColumnTet(baseFace, p, elBaseEd, blob);
+    else if (el->getType() == TYPE_TET)                                       // TODO: finish implementing BL with tets
+      getColumnTet(face2el, p, elBaseFace, blob);
   }
   else if ((nbBaseFaceVert == 4) && (el->getType() == TYPE_HEX))                // Get BL column of hexas
     getColumnPrismHex(TYPE_HEX, face2el, p, elBaseFace, blob);
@@ -496,7 +572,7 @@ bool getColumn3D(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
 
 
 
-class DbgOutput {
+class DbgOutputMeta {
 public:
   void addMetaEl(MetaEl &mEl) {
     MElement *elt = mEl.getMElement();
@@ -539,6 +615,50 @@ private:
 
 
 
+class DbgOutputCol {
+public:
+  void addBlob(const std::vector<MElement*> &blob) {
+    for (int iEl = 0; iEl < blob.size(); iEl++) addElement(blob[iEl]);
+  }
+  void addElement(MElement* elt) {
+    elt_.push_back(elt);
+    for (int iV = 0; iV < elt->getNumVertices(); iV++)
+      vert_.insert(elt->getVertex(iV));
+  }
+  void write(std::string fNameBase, int tag) {
+    std::ostringstream oss;
+    oss << fNameBase << "_" << tag << ".msh";
+    std::string fName = oss.str();
+    FILE *fp = fopen(fName.c_str(), "w");
+    fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
+    fprintf(fp, "$Nodes\n");
+    fprintf(fp, "%d\n", vert_.size());
+    for (std::set<MVertex*>::iterator itV = vert_.begin();
+         itV != vert_.end(); ++itV) {
+      SPoint3 p = (*itV)->point();
+      fprintf(fp, "%i %g %g %g\n", (*itV)->getNum(), p.x(), p.y(), p.z());
+    }
+    fprintf(fp, "$EndNodes\n");
+    fprintf(fp, "$Elements\n");
+    fprintf(fp, "%d\n", elt_.size());
+    int iV = 0;
+    for (int iEl = 0; iEl < elt_.size(); iEl++) {
+      fprintf(fp, "%i %i 2 0 0 ", elt_[iEl]->getNum(), elt_[iEl]->getTypeForMSH());
+      for (int iVEl = 0; iVEl < elt_[iEl]->getNumVertices(); iVEl++)
+        fprintf(fp, " %i", elt_[iEl]->getVertex(iVEl)->getNum());
+      fprintf(fp, "\n");
+    }
+    fprintf(fp, "$EndElements\n");
+    fclose(fp);
+  }
+
+private:
+  std::set<MVertex*> vert_;
+  std::vector<MElement*> elt_;
+};
+
+
+
 void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
                       GEntity *bndEnt, const FastCurvingParameters &p)
 {
@@ -560,7 +680,7 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
     Msg::Error("Cannot treat model entity %i of dim %i", bndEnt->tag(),
                                                          bndEnt->dim());
 
-  DbgOutput dbgOut;
+  DbgOutputMeta dbgOut;
 
   std::set<MVertex*> movedVert;
   for(std::list<MElement*>::iterator itBE = bndEl.begin();
@@ -594,6 +714,9 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
       foundCol = getColumn3D(face2el, p, baseFace, baseVert, topPrimVert, blob);
     }
     if (!foundCol) continue;                                                    // Skip bnd. el. if top vertices not found
+    DbgOutputCol dbgOutCol;
+    dbgOutCol.addBlob(blob);
+    dbgOutCol.write("col_KO", (*itBE)->getNum());
     int order = blob[0]->getPolynomialOrder();
     MetaEl metaEl(metaElType, order, baseVert, topPrimVert);
     dbgOut.addMetaEl(metaEl);
@@ -612,6 +735,7 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
         }
       }
     }
+    dbgOutCol.write("col_OK", (*itBE)->getNum());
   }
 
   dbgOut.write("meta-elements", bndEnt->tag());

@@ -38,10 +38,11 @@ struct FastCurvingParameters {
   int maxNumLayers;               // Maximum number of layers of elements to curve in BL
   double maxRho;                  // Maximum ratio min/max edge/face size for elements to curve in BL
   double maxAngle;                // Maximum angle between layers of elements to curve in BL
+  double maxAngleInner;           // Maximum angle between edges/faces within layers of triangles/tets to curve in BL
 
   FastCurvingParameters () :
     dim(3) , onlyVisible(true), maxNumLayers(100), maxRho(0.5),
-    maxAngle(3.1415926535897932*10./180.)
+    maxAngle(3.1415927*10./180.), maxAngleInner(3.1415927*30./180.)
   {
   }
 };
