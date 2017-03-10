@@ -8,7 +8,7 @@ set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 
 set(WEB_BIN "geuzaine@onelab.info:/home/www/gmsh.info/bin/Windows")
 
-set(WITH_TEST TRUE)      # run the tests?
+set(WITH_TEST FALSE)     # run the tests? - disable this for now: slow on virtual machine
 set(WITH_COVERAGE FALSE) # check code coverage?
 set(WITH_MEMCHECK FALSE) # check memory with valgrind?
 
