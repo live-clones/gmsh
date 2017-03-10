@@ -227,9 +227,7 @@ bool tetgenmesh::reconstructmesh(void *p)
       ver2tetarray[i] = NULL;
     }
 
-    
     // Create the tetrahedra and connect those that share a common face.
-    printf("DOING for %d tets\n",tets.size());
     for (unsigned int i = 0; i < tets.size(); i++) {
       // Get the four vertices.
       for (int j = 0; j < 4; j++) {
@@ -428,7 +426,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     makepoint2submap(subfaces, idx2shlist, shperverlist);
 
     //    printf("coucou1\n");
-    
+
     // Process the set of PSC edges.
     // Remeber that all segments have default marker '-1'.
     //    int COUNTER = 0;
