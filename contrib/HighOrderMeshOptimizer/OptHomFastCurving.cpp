@@ -317,13 +317,13 @@ void getOppositeFacePrism(MElement *el, const MFace &elBaseFace,
   elTopFace = MFace(topVert);
 
   // Compute min. (side faces) and max. (top face) face areas
-  faceSurfMax = elTopFace.area();
+  faceSurfMax = elTopFace.approximateArea();
   MFace sideFace0 = el->getFace(2);
-  faceSurfMin = sideFace0.area();
+  faceSurfMin = sideFace0.approximateArea();
   MFace sideFace1 = el->getFace(3);
-  faceSurfMin = std::min(faceSurfMin, sideFace1.area());
+  faceSurfMin = std::min(faceSurfMin, sideFace1.approximateArea());
   MFace sideFace2 = el->getFace(4);
-  faceSurfMin = std::min(faceSurfMin, sideFace2.area());
+  faceSurfMin = std::min(faceSurfMin, sideFace2.approximateArea());
 }
 
 
@@ -364,15 +364,15 @@ void getOppositeFaceHex(MElement *el, const MFace &elBaseFace, MFace &elTopFace,
   elTopFace = MFace(topVert);
 
   // Compute min. (side faces) and max. (top face) face areas
-  faceSurfMax = elTopFace.area();
+  faceSurfMax = elTopFace.approximateArea();
   MFace sideFace0 = el->getFace(sideFace[0]);
-  faceSurfMin = sideFace0.area();
+  faceSurfMin = sideFace0.approximateArea();
   MFace sideFace1 = el->getFace(sideFace[1]);
-  faceSurfMin = std::min(faceSurfMin, sideFace1.area());
+  faceSurfMin = std::min(faceSurfMin, sideFace1.approximateArea());
   MFace sideFace2 = el->getFace(sideFace[2]);
-  faceSurfMin = std::min(faceSurfMin, sideFace2.area());
+  faceSurfMin = std::min(faceSurfMin, sideFace2.approximateArea());
   MFace sideFace3 = el->getFace(sideFace[3]);
-  faceSurfMin = std::min(faceSurfMin, sideFace3.area());
+  faceSurfMin = std::min(faceSurfMin, sideFace3.approximateArea());
 }
 
 
@@ -392,7 +392,7 @@ void getOppositeFaceTet(MElement *el, const MFace &elBaseFace, MFace &elTopFace,
   for (int iElFace = 0; iElFace < el->getNumFaces(); iElFace++) {
     if (iElFace != iElBaseFace) {
       MFace faceTest = el->getFace(iElFace);
-      const double faceSurfTest = faceTest.area();
+      const double faceSurfTest = faceTest.approximateArea();
       if (faceSurfTest < faceSurfMin) faceSurfMin = faceSurfTest;
       if (faceSurfTest > faceSurfMax) {
         faceSurfMax = faceSurfTest;

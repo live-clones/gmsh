@@ -57,6 +57,15 @@ MFace::MFace(std::vector<MVertex*> v)
   sortVertices(_v,_si);
 }
 
+double MFace::approximateArea() const
+{
+  SPoint3 p0 = _v[0]->point(), p1 = _v[1]->point(), p2 = _v[2]->point();
+  double a = triangle_area(p0, p1, p2);
+  if (_v.size() == 3) return a;
+  a += triangle_area(p0, p2, _v[3]->point());
+  return a;
+}
+
 SVector3 MFace::normal() const
 {
   double n[3];

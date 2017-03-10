@@ -43,6 +43,7 @@ class MFace {
     for(int i = 0; i < getNumVertices(); i++)
       verts[i] = getSortedVertex(i);
   }
+  double approximateArea() const;
   SVector3 normal() const;
   SVector3 tangent(int num) const
   {
