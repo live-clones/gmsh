@@ -271,6 +271,46 @@ void OCC_Internals::unbind(TopoDS_Shape shape, int dim, int tag)
   }
 }
 
+void OCC_Internals::unbindRecursive(TopoDS_Shape shape, int dim, int tag)
+{
+  if(dim == 3){
+    unbind(shape, 3, tag);
+    TopExp_Explorer exp0;
+    for(exp0.Init(shape, TopAbs_FACE); exp0.More(); exp0.Next()){
+      TopoDS_Face face = TopoDS::Face(exp0.Current());
+      if(_faceTag.IsBound(face)){
+        int t = _faceTag.Find(face);
+        unbindRecursive(face, 2, t);
+      }
+    }
+  }
+  else if(dim == 2){
+    unbind(shape, 2, tag);
+    TopExp_Explorer exp0;
+    for(exp0.Init(shape, TopAbs_EDGE); exp0.More(); exp0.Next()){
+      TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+      if(_edgeTag.IsBound(edge)){
+        int t = _edgeTag.Find(edge);
+        unbindRecursive(edge, 1, t);
+      }
+    }
+  }
+  else if(dim == 1){
+    unbind(shape, 1, tag);
+    TopExp_Explorer exp0;
+    for(exp0.Init(shape, TopAbs_VERTEX); exp0.More(); exp0.Next()){
+      TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
+      if(_vertexTag.IsBound(vertex)){
+        int t = _vertexTag.Find(vertex);
+        unbindRecursive(vertex, 0, t);
+      }
+    }
+  }
+  else if(dim == 0){
+    unbind(shape, 0, tag);
+  }
+}
+
 void OCC_Internals::bind(TopoDS_Shape shape, bool highestDimOnly, int tag,
                          std::vector<std::pair<int, int> > &outDimTags)
 {
@@ -1448,7 +1488,7 @@ void OCC_Internals::applyBooleanOperator
     else{
       TopoDS_Shape object = find(dim, t);
       objects[dim].push_back(object);
-      if(removeObject) unbind(object, dim, t);
+      if(removeObject) unbindRecursive(object, dim, t);
     }
   }
   for(unsigned int i = 0; i < toolDimTags.size(); i++){
@@ -1461,7 +1501,7 @@ void OCC_Internals::applyBooleanOperator
     else{
       TopoDS_Shape tool = find(dim, t);
       tools[dim].push_back(tool);
-      if(removeTool) unbind(tool, dim, t);
+      if(removeTool) unbindRecursive(tool, dim, t);
     }
   }
 
@@ -1830,6 +1870,47 @@ void OCC_Internals::synchronize(GModel *model)
 {
   Msg::Debug("Syncing OCC_Internals with GModel");
 
+  // remove all OCC entities in the model that are not bound to tags (because
+  // they have been deleted in OCC_Internals after being previously added to
+  // GModel). This can currently only happen when doing boolean operations when
+  // we remove the object and/or tool; all other removals are explicit and done
+  // both in the internal CAD data and the GModel
+  std::vector<std::pair<int, int> > toRemove;
+  for(GModel::viter it = model->firstVertex(); it != model->lastVertex(); ++it){
+    if((*it)->getNativeType() == GEntity::OpenCascadeModel){
+      OCCVertex *occ = (OCCVertex*)(*it);
+      TopoDS_Vertex v = *(TopoDS_Vertex*)occ->getNativePtr();
+      if(!_vertexTag.IsBound(v))
+        toRemove.push_back(std::pair<int, int>(0, occ->tag()));
+    }
+  }
+  for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
+    if((*it)->getNativeType() == GEntity::OpenCascadeModel){
+      OCCEdge *occ = (OCCEdge*)(*it);
+      TopoDS_Edge v = *(TopoDS_Edge*)occ->getNativePtr();
+      if(!_edgeTag.IsBound(v))
+        toRemove.push_back(std::pair<int, int>(1, occ->tag()));
+    }
+  }
+  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
+    if((*it)->getNativeType() == GEntity::OpenCascadeModel){
+      OCCFace *occ = (OCCFace*)(*it);
+      TopoDS_Face v = *(TopoDS_Face*)occ->getNativePtr();
+      if(!_faceTag.IsBound(v))
+        toRemove.push_back(std::pair<int, int>(2, occ->tag()));
+    }
+  }
+  for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it){
+    if((*it)->getNativeType() == GEntity::OpenCascadeModel){
+      OCCRegion *occ = (OCCRegion*)(*it);
+      TopoDS_Solid v = *(TopoDS_Solid*)occ->getNativePtr();
+      if(!_solidTag.IsBound(v))
+        toRemove.push_back(std::pair<int, int>(3, occ->tag()));
+    }
+  }
+  Msg::Debug("Sync is removing %d model entities", toRemove.size());
+  model->remove(toRemove);
+
   // iterate over all shapes with tags, and import them into the (sub)shape _maps
   _somap.Clear();
   _shmap.Clear();
@@ -1846,47 +1927,6 @@ void OCC_Internals::synchronize(GModel *model)
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp3(_tagSolid);
   for(; exp3.More(); exp3.Next()) _addShapeToMaps(exp3.Value());
 
-  // remove all OCC entities in the model that are not in the maps (because they
-  // have been deleted in OCC_Internals after being previously added to
-  // GModel). This can currently only happen when doing boolean operations when
-  // we remove the object and/or tool; all other removals are explicit and done
-  // both in the internal CAD data and the GModel
-  std::vector<std::pair<int, int> > toRemove;
-  for(GModel::viter it = model->firstVertex(); it != model->lastVertex(); ++it){
-    if((*it)->getNativeType() == GEntity::OpenCascadeModel){
-      OCCVertex *occ = (OCCVertex*)(*it);
-      TopoDS_Vertex v = *(TopoDS_Vertex*)occ->getNativePtr();
-      if(_vmap.FindIndex(v) < 1)
-        toRemove.push_back(std::pair<int, int>(0, occ->tag()));
-    }
-  }
-  for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
-    if((*it)->getNativeType() == GEntity::OpenCascadeModel){
-      OCCEdge *occ = (OCCEdge*)(*it);
-      TopoDS_Edge v = *(TopoDS_Edge*)occ->getNativePtr();
-      if(_emap.FindIndex(v) < 1)
-        toRemove.push_back(std::pair<int, int>(1, occ->tag()));
-    }
-  }
-  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
-    if((*it)->getNativeType() == GEntity::OpenCascadeModel){
-      OCCFace *occ = (OCCFace*)(*it);
-      TopoDS_Face v = *(TopoDS_Face*)occ->getNativePtr();
-      if(_fmap.FindIndex(v) < 1)
-        toRemove.push_back(std::pair<int, int>(2, occ->tag()));
-    }
-  }
-  for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-    if((*it)->getNativeType() == GEntity::OpenCascadeModel){
-      OCCRegion *occ = (OCCRegion*)(*it);
-      TopoDS_Solid v = *(TopoDS_Solid*)occ->getNativePtr();
-      if(_somap.FindIndex(v) < 1)
-        toRemove.push_back(std::pair<int, int>(3, occ->tag()));
-    }
-  }
-  Msg::Debug("Sync is removing %d model entities", toRemove.size());
-  model->remove(toRemove);
-
   // import all shapes in _maps into the GModel, preserving all explicit tags
   int vTagMax = std::max(model->getMaxElementaryNumber(0), getMaxTag(0));
   int eTagMax = std::max(model->getMaxElementaryNumber(1), getMaxTag(1));
@@ -1896,13 +1936,10 @@ void OCC_Internals::synchronize(GModel *model)
     TopoDS_Vertex vertex = TopoDS::Vertex(_vmap(i));
     if(!getOCCVertexByNativePtr(model, vertex)){
       int tag;
-      if(_vertexTag.IsBound(vertex)){
+      if(_vertexTag.IsBound(vertex))
         tag = _vertexTag.Find(vertex);
-      }
-      else{
-        tag = vTagMax + 1;
-        vTagMax++;
-      }
+      else
+        tag = ++vTagMax;
       std::map<int, meshAttribute>::iterator it =
         _meshAttributes[0].find(tag);
       double lc = (it == _meshAttributes[0].end()) ? MAX_LC : it->second.size;
@@ -1915,13 +1952,10 @@ void OCC_Internals::synchronize(GModel *model)
       GVertex *v1 = getOCCVertexByNativePtr(model, TopExp::FirstVertex(edge));
       GVertex *v2 = getOCCVertexByNativePtr(model, TopExp::LastVertex(edge));
       int tag;
-      if(_edgeTag.IsBound(edge)){
+      if(_edgeTag.IsBound(edge))
         tag = _edgeTag.Find(edge);
-      }
-      else{
-        tag = eTagMax + 1;
-        eTagMax++;
-      }
+      else
+        tag = ++eTagMax;
       model->add(new OCCEdge(model, edge, tag, v1, v2));
     }
   }
@@ -1929,13 +1963,10 @@ void OCC_Internals::synchronize(GModel *model)
     TopoDS_Face face = TopoDS::Face(_fmap(i));
     if(!getOCCFaceByNativePtr(model, face)){
       int tag;
-      if(_faceTag.IsBound(face)){
+      if(_faceTag.IsBound(face))
         tag = _faceTag.Find(face);
-      }
-      else{
-        tag = fTagMax + 1;
-        fTagMax++;
-      }
+      else
+        tag = ++fTagMax;
       model->add(new OCCFace(model, face, tag));
     }
   }
@@ -1943,13 +1974,10 @@ void OCC_Internals::synchronize(GModel *model)
     TopoDS_Solid region = TopoDS::Solid(_somap(i));
     if(!getOCCRegionByNativePtr(model, region)){
       int tag;
-      if(_solidTag.IsBound(region)){
+      if(_solidTag.IsBound(region))
         tag = _solidTag(region);
-      }
-      else{
-        tag = rTagMax + 1;
-        rTagMax++;
-      }
+      else
+        tag = ++rTagMax;
       model->add(new OCCRegion(model, region, tag));
     }
   }

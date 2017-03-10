@@ -113,6 +113,7 @@ class OCC_Internals {
   void unbind(TopoDS_Shell shell, int tag);
   void unbind(TopoDS_Solid solid, int tag);
   void unbind(TopoDS_Shape shape, int dim, int tag);
+  void unbindRecursive(TopoDS_Shape shape, int dim, int tag);
 
   // bind (potentially) mutliple entities in shape and return the tags in
   // outTags. If tag > 0 and a single entity if found, use that; if

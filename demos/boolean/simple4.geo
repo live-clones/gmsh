@@ -32,6 +32,3 @@ Volume(1) = {1};
 
 Cylinder(2) = {0.5,0.5,-0.5, 0.5,0.5,1.5, 0.2};
 BooleanFragments{ Volume{1}; Delete; }{ Volume{2}; Delete; }
-
-// delete this, as they were bound to tags before the boolean operation
-Delete{ Surface{1:5}; Line{1:8}; Point{1:5}; }
