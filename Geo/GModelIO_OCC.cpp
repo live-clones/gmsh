@@ -852,9 +852,10 @@ void OCC_Internals::addPlaneSurface(int tag, const std::vector<int> &wireTags)
     computeMeanPlaneSimple(points, meanPlane);
     try{
       gp_Pln aPlane(meanPlane.a, meanPlane.b, meanPlane.c, -meanPlane.d);
-      BRepBuilderAPI_MakeFace f(aPlane);
-      for(unsigned int i = 0; i < wires.size(); i++)
+      BRepBuilderAPI_MakeFace f(aPlane, wires[0]);
+      for(unsigned int i = 1; i < wires.size(); i++){
         f.Add(wires[i]);
+      }
       f.Build();
       if(!f.IsDone()){
         Msg::Error("Could not create face");
