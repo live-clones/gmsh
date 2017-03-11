@@ -10,4 +10,4 @@ e() = Unique(Abs(Boundary{ Surface{f()}; }));
 
 Fillet{a()}{e()}{1}
 
-Delete{ Volume{a()}; Surface{f()}; Line{e()}; }
+Recursive Delete{ Volume{a()}; }
