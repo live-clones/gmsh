@@ -88,26 +88,6 @@ void calcFace2Elements(GEntity *entity, MFaceVecMEltMap &face2el)
 
 
 
-// Get the face index of an element given a MFace
-inline int getElementFace(const MFace &face, MElement *el)
-{
-  for (int iFace = 0; iFace < el->getNumFaces(); iFace++)
-    if (el->getFace(iFace) == face) return iFace;
-  return -1;
-}
-
-
-
-// Get the edge index of an element given a MEdge
-inline int getElementEdge(const MEdge &edge, MElement *el)
-{
-  for (int iEdge = 0; iEdge < el->getNumEdges(); iEdge++)
-    if (el->getEdge(iEdge) == edge) return iEdge;
-  return -1;
-}
-
-
-
 void makeStraight(MElement *el, const std::set<MVertex*> &movedVert)
 {
   const nodalBasis *nb = el->getFunctionSpace();
@@ -115,7 +95,8 @@ void makeStraight(MElement *el, const std::set<MVertex*> &movedVert)
 
   SPoint3 p;
 
-  for(int iPt = el->getNumPrimaryVertices(); iPt < el->getNumVertices(); ++iPt) {
+  for (int iPt = el->getNumPrimaryVertices();
+       iPt < el->getNumVertices(); iPt++) {
     MVertex *vert = el->getVertex(iPt);
     if (movedVert.find(vert) == movedVert.end()) {
       el->primaryPnt(pts(iPt,0),pts(iPt,1),pts(iPt,2),p);
@@ -128,9 +109,9 @@ void makeStraight(MElement *el, const std::set<MVertex*> &movedVert)
 
 inline void insertIfCurved(MElement *el, std::list<MElement*> &bndEl)
 {
-  static const double curvedTol = 1.e-3;                                              // Tolerance to consider element as curved
+  static const double curvedTol = 1.e-3;                                        // Tolerance to consider element as curved
 
-  const double normalDispCurved = curvedTol*el->getInnerRadius();                     // Threshold in normal displacement to consider element as curved
+  const double normalDispCurved = curvedTol*el->getInnerRadius();               // Threshold in normal displacement to consider element as curved
   const int dim = el->getDim();
 
   // Compute unit normal to straight edge/face
@@ -149,13 +130,13 @@ inline void insertIfCurved(MElement *el, std::list<MElement*> &bndEl)
   for (int iV = 0; iV < nV1; ++iV) xyz1[iV] = el->getVertex(iV)->point();
 
   // Check normal displacement at each HO vertex
-  for (int iV = nV1; iV < nV; ++iV) {                                                 // Loop over HO nodes
+  for (int iV = nV1; iV < nV; ++iV) {                                           // Loop over HO nodes
     double f[256];
     lagBasis1->f(uvw(iV, 0), (dim > 1) ? uvw(iV, 1) : 0., 0., f);
     SPoint3 xyzS(0.,0.,0.);
-    for (int iSF = 0; iSF < nV1; ++iSF) xyzS += xyz1[iSF]*f[iSF];                     // Compute location of node in straight element
+    for (int iSF = 0; iSF < nV1; ++iSF) xyzS += xyz1[iSF]*f[iSF];               // Compute location of node in straight element
     const SVector3 vec(xyzS, el->getVertex(iV)->point());
-    const double normalDisp = fabs(dot(vec, normal));                                 // Normal component of displacement
+    const double normalDisp = fabs(dot(vec, normal));                           // Normal component of displacement
     if (normalDisp > normalDispCurved) {
       bndEl.push_back(el);
       break;
@@ -165,13 +146,43 @@ inline void insertIfCurved(MElement *el, std::list<MElement*> &bndEl)
 
 
 
-void getOppositeEdge(MElement *el, const MEdge &elBaseEd, MEdge &elTopEd,
-                     double &edLenMin, double &edLenMax)
+void getOppositeEdgeQuad(MElement *el, const MEdge &elBaseEd, MEdge &elTopEd,
+                         double &edLenMin, double &edLenMax)
+{
+  // Find base face
+  int iElBaseEd, elBaseEdOrient;
+  el->getEdgeInfo(elBaseEd, iElBaseEd, elBaseEdOrient);
+
+  // Determine opposite and side edges
+  int iOppEd, iSideEd0, iSideEd1;
+  if (iElBaseEd == 0) { iOppEd = 2; iSideEd0 = 1; iSideEd1 = 3;}
+  else if (iElBaseEd == 1) { iOppEd = 3; iSideEd0 = 0; iSideEd1 = 2;}
+  else if (iElBaseEd == 2) { iOppEd = 0; iSideEd0 = 1; iSideEd1 = 3;}
+  else { iOppEd = 1; iSideEd0 = 0; iSideEd1 = 2;}
+  const MEdge elOppEd = el->getEdge(iOppEd);
+
+  // Create top edge
+  if (elBaseEdOrient > 0)
+    elTopEd = MEdge(elOppEd.getVertex(1), elOppEd.getVertex(0));
+  else
+    elTopEd = elOppEd;
+
+  // Compute max. and min. edge lengths
+  edLenMax = elTopEd.length();
+  edLenMin = std::min(el->getEdge(iSideEd0).length(),
+                      el->getEdge(iSideEd1).length());
+}
+
+
+
+void getOppositeEdgeTri(MElement *el, const MEdge &elBaseEd, MEdge &elTopEd,
+                        double &edLenMin, double &edLenMax)
 {
   static const double BIG = 1e300;
 
   // Find base face
-  const int iElBaseEd = getElementEdge(elBaseEd, el);
+  int iElBaseEd, iDum;
+  el->getEdgeInfo(elBaseEd, iElBaseEd, iDum);
   edLenMin = BIG;
   edLenMax = -BIG;
   MEdge elMaxEd;
@@ -190,19 +201,7 @@ void getOppositeEdge(MElement *el, const MEdge &elBaseEd, MEdge &elTopEd,
   }
 
   // Build top edge from max edge (with right orientation)
-  bool sameOrient = false;
-  if (el->getType() == TYPE_TRI) {                                    // Triangle: look for common vertex
-    sameOrient = (elBaseEd.getVertex(0) == elMaxEd.getVertex(0));
-  }
-  else {                                                              // Quad: look for edge between base and top vert.
-    MEdge sideEdTest(elBaseEd.getVertex(0), elMaxEd.getVertex(0));
-    for (int iElEd = 0; iElEd < el->getNumEdges(); iElEd++)
-      if (el->getEdge(iElEd) == sideEdTest) {
-        sameOrient = true;
-        break;
-      }
-  }
-  if (sameOrient) elTopEd = elMaxEd;
+  if (elBaseEd.getVertex(0) == elMaxEd.getVertex(0)) elTopEd = elMaxEd;
   else elTopEd = MEdge(elMaxEd.getVertex(1), elMaxEd.getVertex(0));
 }
 
@@ -221,7 +220,7 @@ void getColumnQuad(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
     if (el->getType() != TYPE_QUA) break;
     MEdge elTopEd;
     double edLenMin, edLenMax;
-    getOppositeEdge(el, elBaseEd, elTopEd, edLenMin, edLenMax);
+    getOppositeEdgeQuad(el, elBaseEd, elTopEd, edLenMin, edLenMax);
 
     if (edLenMin > edLenMax*p.maxRho) break;
     const double dp = dot(elBaseEd.normal(), elTopEd.normal());
@@ -249,7 +248,7 @@ void getColumnTri(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
     if (el0->getType() != TYPE_TRI) break;
     MEdge elTopEd0;
     double edLenMin0, edLenMax0;
-    getOppositeEdge(el0, elBaseEd, elTopEd0, edLenMin0, edLenMax0);
+    getOppositeEdgeTri(el0, elBaseEd, elTopEd0, edLenMin0, edLenMax0);
     const SVector3 normBase = elBaseEd.normal();
     const SVector3 normTop0 = elTopEd0.normal();
     if (std::abs(dot(normBase, normTop0)) < maxDPIn) break;
@@ -260,7 +259,7 @@ void getColumnTri(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
     if (el1->getType() != TYPE_TRI) break;
     MEdge elTopEd1;
     double edLenMin1, edLenMax1;
-    getOppositeEdge(el1, elTopEd0, elTopEd1, edLenMin1, edLenMax1);
+    getOppositeEdgeTri(el1, elTopEd0, elTopEd1, edLenMin1, edLenMax1);
     const SVector3 normTop1 = elTopEd1.normal();
     if (std::abs(dot(normTop0, normTop1)) < maxDPIn) break;
 
@@ -287,7 +286,8 @@ bool getColumn2D(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
   // Get first element and base vertices
   std::vector<MElement*> firstElts = ed2el[baseEd];
   MElement *el = firstElts[0];
-  const int iFirstElEd = getElementEdge(baseEd, el);
+  int iFirstElEd, iDum;
+  el->getEdgeInfo(baseEd, iFirstElEd, iDum);
   el->getEdgeVertices(iFirstElEd, baseVert);
   MEdge elBaseEd(baseVert[0], baseVert[1]);
 
@@ -414,33 +414,19 @@ void getOppositeFaceTet(MElement *el, const MFace &elBaseFace, MFace &elTopFace,
   MVertex *maxVert[3] = {elMaxFace.getVertex(0),
                          elMaxFace.getVertex(1), elMaxFace.getVertex(2)};
   std::vector<MVertex*> topVert(3, static_cast<MVertex*>(0));
-  for (int iBaseV = 0; iBaseV < 3; iBaseV++)                                // Two vertices of elTopFace are those of elMaxFace coinciding with elBaseFace
+  for (int iBaseV = 0; iBaseV < 3; iBaseV++)                                    // Two vertices of elTopFace are those of elMaxFace coinciding with elBaseFace
     for (int iMaxV = 0; iMaxV < 3; iMaxV++)
       if (elBaseFace.getVertex(iBaseV) == maxVert[iMaxV]) {
         topVert[iBaseV] = maxVert[iMaxV];
         maxVert[iMaxV] = 0;
       }
-  MVertex *thirdMaxVert = (maxVert[0] != 0) ? maxVert[0] :                  // Set last vertex of elTopFace as remaining vertex in elMaxFace
+  MVertex *thirdMaxVert = (maxVert[0] != 0) ? maxVert[0] :                      // Set last vertex of elTopFace as remaining vertex in elMaxFace
                           (maxVert[1] != 0) ? maxVert[1] : maxVert[2];
   if (topVert[0] == 0) topVert[0] = thirdMaxVert;
   else if (topVert[1] == 0) topVert[1] = thirdMaxVert;
   else topVert[2] = thirdMaxVert;
   elTopFace = MFace(topVert);
 }
-
-
-
-//bool getTetInLayer(MFaceVecMEltMap &face2el, const MElement *lowerEl,
-//                   MElement *&el, const MFace &bottomFace, MFace &topFace,
-//                   double &faceSurfMin, double &faceSurfMax)
-//{
-//  std::vector<MElement*> newElts = face2el[bottomFace];
-//  el = (newElts[0] == lowerEl) ? newElts[1] : newElts[0];
-//  if (el->getType() != TYPE_TET) return false;
-//  MFace elMidFace0;
-//  getOppositeFaceTet(el, bottomFace, topFace, faceSurfMin, faceSurfMax);
-//  return true;
-//}
 
 
 
@@ -544,7 +530,8 @@ bool getColumn3D(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
   const int nbBaseFaceVert = baseFace.getNumVertices();
   std::vector<MElement*> firstElts = face2el[baseFace];
   MElement *el = firstElts[0];
-  const int iFirstElFace = getElementFace(baseFace, el);
+  int iFirstElFace = -1, iDum;
+  el->getFaceInfo(baseFace, iFirstElFace, iDum, iDum);
   el->getFaceVertices(iFirstElFace, baseVert);
   MFace elBaseFace(baseVert[0], baseVert[1], baseVert[2],
                    (nbBaseFaceVert == 3) ? 0 : baseVert[3]);
@@ -553,7 +540,7 @@ bool getColumn3D(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
   if (nbBaseFaceVert == 3) {
     if (el->getType() == TYPE_PRI)                                              // Get BL column of prisms
       getColumnPrismHex(TYPE_PRI, face2el, p, elBaseFace, blob);
-    else if (el->getType() == TYPE_TET)                                       // TODO: finish implementing BL with tets
+    else if (el->getType() == TYPE_TET)
       getColumnTet(face2el, p, elBaseFace, blob);
   }
   else if ((nbBaseFaceVert == 4) && (el->getType() == TYPE_HEX))                // Get BL column of hexas
@@ -643,7 +630,8 @@ public:
     fprintf(fp, "%d\n", elt_.size());
     int iV = 0;
     for (int iEl = 0; iEl < elt_.size(); iEl++) {
-      fprintf(fp, "%i %i 2 0 0 ", elt_[iEl]->getNum(), elt_[iEl]->getTypeForMSH());
+      fprintf(fp, "%i %i 2 0 0 ", elt_[iEl]->getNum(),
+                                  elt_[iEl]->getTypeForMSH());
       for (int iVEl = 0; iVEl < elt_[iEl]->getNumVertices(); iVEl++)
         fprintf(fp, " %i", elt_[iEl]->getVertex(iVEl)->getNum());
       fprintf(fp, "\n");
@@ -690,7 +678,7 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
     bool foundCol;
     std::vector<MVertex*> baseVert, topPrimVert;
     std::vector<MElement*> blob;
-    if (bndType == TYPE_LIN) {                                                               // 1D boundary?
+    if (bndType == TYPE_LIN) {                                                  // 1D boundary
       MVertex *vb0 = (*itBE)->getVertex(0);
       MVertex *vb1 = (*itBE)->getVertex(1);
       metaElType = TYPE_QUA;
