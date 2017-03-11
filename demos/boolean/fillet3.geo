@@ -1,6 +1,6 @@
 SetFactory("OpenCASCADE");
 
-w = DefineNumber[0.2, Min 0.01, Max 0.35, Name "width"];
+w = DefineNumber[0.2, Min 0.01, Max 0.35, Step 0.01, Name "width"];
 dx_out = 1.; dy_out = 0.3; dz_out = 1.;
 dx_in = dx_out-2*w; dy_in = dy_out; dz_in = dz_out-2*w;
 r_in = 0.1; r_out = r_in+w;
