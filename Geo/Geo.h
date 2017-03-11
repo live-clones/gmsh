@@ -206,10 +206,10 @@ Curve *DuplicateCurve(Curve *c);
 Surface *DuplicateSurface(Surface *s);
 Volume *DuplicateVolume(Volume *s);
 
-void DeletePoint(int Num);
-void DeleteCurve(int Num);
-void DeleteSurface(int Num);
-void DeleteVolume(int Num);
+void DeletePoint(int Num, bool recursive=false);
+void DeleteCurve(int Num, bool recursive=false);
+void DeleteSurface(int Num, bool recursive=false);
+void DeleteVolume(int Num, bool recursive=false);
 void DeletePhysicalPoint(int Num);
 void DeletePhysicalLine(int Num);
 void DeletePhysicalSurface(int Num);
@@ -224,7 +224,7 @@ void ExtrudeShapes(int extrude_type, List_T *in,
 void ProtudeXYZ(double &x, double &y, double &z, ExtrudeParams *e);
 
 void ReplaceAllDuplicates();
-void ReplaceAllDuplicatesNew(double tol = -1.);
+void ReplaceAllDuplicatesNew(double tol=-1.);
 
 bool ProjectPointOnSurface(Surface *s, Vertex &p, double uv[2]);
 bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shapes);

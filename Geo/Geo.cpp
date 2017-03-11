@@ -937,7 +937,7 @@ Volume *DuplicateVolume(Volume *v)
   return pv;
 }
 
-void DeletePoint(int ip)
+void DeletePoint(int ip, bool recursive)
 {
   Vertex *v = FindPoint(ip);
   if(!v)
@@ -963,7 +963,7 @@ void DeletePoint(int ip)
   Tree_Add(GModel::current()->getGEOInternals()->DelPoints, &v);
 }
 
-void DeleteCurve(int ip)
+void DeleteCurve(int ip, bool recursive)
 {
   Curve *c = FindCurve(ip);
   if(!c)
@@ -987,9 +987,21 @@ void DeleteCurve(int ip)
     GModel::current()->getGEOInternals()->setMaxTag(1, tmax - 1);
   Tree_Suppress(GModel::current()->getGEOInternals()->Curves, &c);
   Tree_Add(GModel::current()->getGEOInternals()->DelCurves, &c);
+
+  if(recursive){
+    std::set<int> vv;
+    for(int k = 0; k < List_Nbr(c->Control_Points); k++){
+      Vertex *v; List_Read(c->Control_Points, k, &v);
+      vv.insert(v->Num);
+    }
+    if(c->beg) vv.insert(c->beg->Num);
+    if(c->end) vv.insert(c->end->Num);
+    for(std::set<int>::iterator it = vv.begin(); it != vv.end(); it++)
+      DeletePoint(*it);
+  }
 }
 
-void DeleteSurface(int is)
+void DeleteSurface(int is, bool recursive)
 {
   Surface *s = FindSurface(is);
   if(!s)
@@ -1013,9 +1025,27 @@ void DeleteSurface(int is)
     GModel::current()->getGEOInternals()->setMaxTag(2, tmax - 1);
   Tree_Suppress(GModel::current()->getGEOInternals()->Surfaces, &s);
   Tree_Add(GModel::current()->getGEOInternals()->DelSurfaces, &s);
+
+  if(recursive){
+    std::set<int> cc, vv;
+    for(int j = 0; j < List_Nbr(s->Generatrices); j++){
+      Curve *c; List_Read(s->Generatrices, j, &c);
+      cc.insert(c->Num);
+      for(int k = 0; k < List_Nbr(c->Control_Points); k++){
+        Vertex *v; List_Read(c->Control_Points, k, &v);
+        vv.insert(v->Num);
+      }
+      if(c->beg) vv.insert(c->beg->Num);
+      if(c->end) vv.insert(c->end->Num);
+    }
+    for(std::set<int>::iterator it = cc.begin(); it != cc.end(); it++)
+      DeleteCurve(*it);
+    for(std::set<int>::iterator it = vv.begin(); it != vv.end(); it++)
+      DeletePoint(*it);
+  }
 }
 
-void DeleteVolume(int iv)
+void DeleteVolume(int iv, bool recursive)
 {
   Volume *v = FindVolume(iv);
   if(!v)
@@ -1026,6 +1056,30 @@ void DeleteVolume(int iv)
     GModel::current()->getGEOInternals()->setMaxTag(3, tmax - 1);
   Tree_Suppress(GModel::current()->getGEOInternals()->Volumes, &v);
   Tree_Add(GModel::current()->getGEOInternals()->DelVolumes, &v);
+
+  if(recursive){
+    std::set<int> ss, cc, vv;
+    for(int i = 0; i < List_Nbr(v->Surfaces); i++){
+      Surface *s; List_Read(v->Surfaces, i, &s);
+      ss.insert(s->Num);
+      for(int j = 0; j < List_Nbr(s->Generatrices); j++){
+        Curve *c; List_Read(s->Generatrices, j, &c);
+        cc.insert(c->Num);
+        for(int k = 0; k < List_Nbr(c->Control_Points); k++){
+          Vertex *v; List_Read(c->Control_Points, k, &v);
+          vv.insert(v->Num);
+        }
+        if(c->beg) vv.insert(c->beg->Num);
+        if(c->end) vv.insert(c->end->Num);
+      }
+    }
+    for(std::set<int>::iterator it = ss.begin(); it != ss.end(); it++)
+      DeleteSurface(*it);
+    for(std::set<int>::iterator it = cc.begin(); it != cc.end(); it++)
+      DeleteCurve(*it);
+    for(std::set<int>::iterator it = vv.begin(); it != vv.end(); it++)
+      DeletePoint(*it);
+  }
 }
 
 void DeletePhysicalPoint(int num)

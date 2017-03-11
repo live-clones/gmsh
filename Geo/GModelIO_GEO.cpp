@@ -690,21 +690,22 @@ void GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
   _changed = true;
 }
 
-void GEO_Internals::remove(int dim, int tag)
+void GEO_Internals::remove(int dim, int tag, bool recursive)
 {
   switch(dim){
-  case 0: DeletePoint(tag); break;
-  case 1: DeleteCurve(tag); DeleteCurve(-tag); break;
-  case 2: DeleteSurface(tag); break;
-  case 3: DeleteVolume(tag); break;
+  case 0: DeletePoint(tag, recursive); break;
+  case 1: DeleteCurve(tag, recursive); DeleteCurve(-tag, recursive); break;
+  case 2: DeleteSurface(tag, recursive); break;
+  case 3: DeleteVolume(tag, recursive); break;
   }
   _changed = true;
 }
 
-void GEO_Internals::remove(const std::vector<std::pair<int, int> > &dimTags)
+void GEO_Internals::remove(const std::vector<std::pair<int, int> > &dimTags,
+                           bool recursive)
 {
   for(unsigned int i = 0; i < dimTags.size(); i++)
-    remove(dimTags[i].first, dimTags[i].second);
+    remove(dimTags[i].first, dimTags[i].second, recursive);
 }
 
 void GEO_Internals::resetPhysicalGroups()

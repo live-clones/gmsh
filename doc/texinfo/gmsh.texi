@@ -2408,12 +2408,13 @@ having identical coordinates). Note that Gmsh executes the
 transformation, unless @code{Geometry.AutoCoherence} is set to zero
 (@pxref{Geometry options list}).
 
-@item Delete @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+@item < Recursive > Delete @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Deletes all elementary entities whose identification numbers are given
 in @var{expression-list}. If an entity is linked to another entity (for
 example, if a point is used as a control point of a curve),
 @code{Delete} has no effect (the line will have to be deleted before the
-point can).
+point can). The @code{Recursive} variant deletes the entities as well as
+all its sub-entities of lower dimension.
 
 @item < Recursive > Hide @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Hide the entities listed in @var{expression-list}, if

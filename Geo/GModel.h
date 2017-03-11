@@ -277,8 +277,8 @@ class GModel {
   void remove(GFace *f);
   void remove(GEdge *e);
   void remove(GVertex *v);
-  void remove(int dim, int tag);
-  void remove(const std::vector<std::pair<int, int> > &dimTags);
+  void remove(int dim, int tag, bool recursive=false);
+  void remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false);
 
   // snap vertices on model edges by using geometry tolerance
   void snapVertices();

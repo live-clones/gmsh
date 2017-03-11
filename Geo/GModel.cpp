@@ -345,20 +345,54 @@ void GModel::remove(GVertex *v)
   if(it != vertices.end()) vertices.erase(it);
 }
 
-void GModel::remove(int dim, int tag)
+void GModel::remove(int dim, int tag, bool recursive)
 {
-  switch(dim){
-  case 0: remove(getVertexByTag(tag)); break;
-  case 1: remove(getEdgeByTag(tag)); break;
-  case 2: remove(getFaceByTag(tag)); break;
-  case 3: remove(getRegionByTag(tag)); break;
+  // we don't check dependencies when removing entities (we just erase them from
+  // the set), so we can go ahead with a brute force recursion
+  if(dim == 3){
+    GRegion *gr = getRegionByTag(tag);
+    if(gr){
+      remove(gr);
+      if(recursive){
+        std::list<GFace*> f = gr->faces();
+        for(std::list<GFace*>::iterator it = f.begin(); it != f.end(); it++)
+          remove(2, (*it)->tag(), recursive);
+      }
+    }
+  }
+  else if(dim == 2){
+    GFace *gf = getFaceByTag(tag);
+    if(gf){
+      remove(gf);
+      if(recursive){
+        std::list<GEdge*> e = gf->edges();
+        for(std::list<GEdge*>::iterator it = e.begin(); it != e.end(); it++)
+          remove(1, (*it)->tag(), recursive);
+      }
+    }
+  }
+  else if(dim == 1){
+    GEdge *ge = getEdgeByTag(tag);
+    if(ge){
+      remove(ge);
+      if(recursive){
+        if(ge->getBeginVertex()) remove(ge->getBeginVertex());
+        if(ge->getEndVertex()) remove(ge->getEndVertex());
+      }
+    }
+  }
+  else if(dim == 0){
+    GVertex *gv = getVertexByTag(tag);
+    if(gv){
+      remove(gv);
+    }
   }
 }
 
-void GModel::remove(const std::vector<std::pair<int, int> > &dimTags)
+void GModel::remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive)
 {
   for(unsigned int i = 0; i < dimTags.size(); i++)
-    remove(dimTags[i].first, dimTags[i].second);
+    remove(dimTags[i].first, dimTags[i].second, recursive);
 }
 
 void GModel::snapVertices()

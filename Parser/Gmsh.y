@@ -2767,6 +2767,17 @@ Delete :
       GModel::current()->remove(dimTags);
       List_Delete($3);
     }
+  | tRecursive tDelete '{' ListOfShapes '}'
+    {
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($4, dimTags);
+      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        GModel::current()->getOCCInternals()->remove(dimTags, true);
+      }
+      GModel::current()->getGEOInternals()->remove(dimTags, true);
+      GModel::current()->remove(dimTags, true);
+      List_Delete($4);
+    }
   | tDelete tField '[' FExpr ']' tEND
     {
 #if defined(HAVE_MESH)
@@ -3777,7 +3788,9 @@ BooleanOperator :
 BooleanOption :
   { $$ = 0; }
   | tDelete tEND { $$ = 1; }
-  | tDelete FExpr tEND { $$ = $2; }
+  | tRecursive tDelete tEND { $$ = 2; }
+  | tDelete FExpr tEND { $$ = $2 ? 1 : 0; }
+  | tRecursive tDelete FExpr tEND { $$ = $3 ? 2 : 0; }
 
 Boolean :
     BooleanOperator '{' ListOfShapes BooleanOption '}'
@@ -3788,6 +3801,9 @@ Boolean :
         std::vector<std::pair<int, int > > object, tool, out;
         ListOfShapes2VectorOfPairs($3, object);
         ListOfShapes2VectorOfPairs($7, tool);
+        // currently we don't distinguish between Delete and Recursive Delete:
+        // we always delete recursively. Let us know if you have examples where
+        // having the choice would be interesting
         GModel::current()->getOCCInternals()->applyBooleanOperator
           (-1, (OCC_Internals::BooleanOperator)$1, object, tool, out, $4, $8);
         VectorOfPairs2ListOfShapes(out, $$);
@@ -3822,6 +3838,9 @@ BooleanShape :
         std::vector<std::pair<int, int> > object, tool, out;
         ListOfShapes2VectorOfPairs($7, object);
         ListOfShapes2VectorOfPairs($11, tool);
+        // currently we don't distinguish between Delete and Recursive Delete:
+        // we always delete recursively. Let us know if you have examples where
+        // having the choice would be interesting
         GModel::current()->getOCCInternals()->applyBooleanOperator
           ((int)$3, (OCC_Internals::BooleanOperator)$1, object, tool, out, $8, $12);
       }

@@ -106,14 +106,13 @@ class OCC_Internals {
   void bind(TopoDS_Shell shell, int tag);
   void bind(TopoDS_Solid solid, int tag);
   void bind(TopoDS_Shape shape, int dim, int tag);
-  void unbind(TopoDS_Vertex vertex, int tag);
-  void unbind(TopoDS_Edge edge, int tag);
-  void unbind(TopoDS_Wire wire, int tag);
-  void unbind(TopoDS_Face face, int tag);
-  void unbind(TopoDS_Shell shell, int tag);
-  void unbind(TopoDS_Solid solid, int tag);
-  void unbind(TopoDS_Shape shape, int dim, int tag);
-  void unbindRecursive(TopoDS_Shape shape, int dim, int tag);
+  void unbind(TopoDS_Vertex vertex, int tag, bool recursive=false);
+  void unbind(TopoDS_Edge edge, int tag, bool recursive=false);
+  void unbind(TopoDS_Wire wire, int tag, bool recursive=false);
+  void unbind(TopoDS_Face face, int tag, bool recursive=false);
+  void unbind(TopoDS_Shell shell, int tag, bool recursive=false);
+  void unbind(TopoDS_Solid solid, int tag, bool recursive=false);
+  void unbind(TopoDS_Shape shape, int dim, int tag, bool recursive=false);
 
   // bind (potentially) mutliple entities in shape and return the tags in
   // outTags. If tag > 0 and a single entity if found, use that; if
@@ -205,8 +204,8 @@ class OCC_Internals {
   // copy and remove
   void copy(const std::vector<std::pair<int, int> > &inDimTags,
             std::vector<std::pair<int, int> > &outDimTags);
-  void remove(int dim, int tag);
-  void remove(const std::vector<std::pair<int, int> > &dimTags);
+  void remove(int dim, int tag, bool recursive=false);
+  void remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false);
 
   // import shapes from file
   void importShapes(const std::string &fileName, bool highestDimOnly,

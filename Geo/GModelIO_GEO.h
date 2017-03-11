@@ -114,8 +114,8 @@ class GEO_Internals{
   // copy and remove
   void copy(const std::vector<std::pair<int, int> > &inDimTags,
             std::vector<std::pair<int, int> > &outDimTags);
-  void remove(int dim, int tag);
-  void remove(const std::vector<std::pair<int, int> > &dimTags);
+  void remove(int dim, int tag, bool recursive=false);
+  void remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false);
 
   // manipulate physical groups
   void resetPhysicalGroups();
