@@ -18,8 +18,11 @@ static void extrudeMesh(GVertex *from, GEdge *to)
     for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
       double x = v->x(), y = v->y(), z = v->z();
       ep->Extrude(j, k + 1, x, y, z);
-      if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1)
-        to->mesh_vertices.push_back(new MEdgeVertex(x, y, z, to, ep->u(j, k + 1)));
+      if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1){
+        Range<double> r = to->parBounds(0);
+        double t = r.low() + ep->u(j, k + 1) * (r.high() - r.low());
+        to->mesh_vertices.push_back(new MEdgeVertex(x, y, z, to, t));
+      }
     }
   }
 }
@@ -38,7 +41,7 @@ static void copyMesh(GEdge *from, GEdge *to)
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
     MVertex *v = from->mesh_vertices[index];
     double x = v->x(), y = v->y(), z = v->z();
-    ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], 
+    ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
                 x, y, z);
     double u;
     v->getParameter(0, u);
@@ -77,9 +80,9 @@ int MeshExtrudedCurve(GEdge *ge)
 
   // create elements
   for(unsigned int i = 0; i < ge->mesh_vertices.size() + 1; i++){
-    MVertex *v0 = (i == 0) ? 
+    MVertex *v0 = (i == 0) ?
       ge->getBeginVertex()->mesh_vertices[0] : ge->mesh_vertices[i - 1];
-    MVertex *v1 = (i == ge->mesh_vertices.size()) ? 
+    MVertex *v1 = (i == ge->mesh_vertices.size()) ?
       ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
     MLine* newElem = new MLine(v0, v1);
     ge->lines.push_back(newElem);
