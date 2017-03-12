@@ -15,6 +15,7 @@
 #include "MLine.h"
 #include "OpenFile.h"
 #include "StringUtils.h"
+#include "ExtrudeParams.h"
 
 #if defined(HAVE_OCC)
 
@@ -42,7 +43,6 @@
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeCone.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
-#include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepPrimAPI_MakeRevol.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
 #include <BRepPrimAPI_MakeTorus.hxx>
@@ -86,7 +86,7 @@ OCC_Internals::OCC_Internals()
 void OCC_Internals::reset()
 {
   for(int i = 0; i < 6; i++) _maxTag[i] = 0;
-  for(int i = 0; i < 4; i++) _meshAttributes[i].clear();
+  _meshAttr.Clear();
   _somap.Clear(); _shmap.Clear(); _fmap.Clear(); _wmap.Clear(); _emap.Clear();
   _vmap.Clear();
   _vertexTag.Clear(); _edgeTag.Clear(); _faceTag.Clear(); _solidTag.Clear();
@@ -460,10 +460,10 @@ void OCC_Internals::addVertex(int tag, double x, double y, double z,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return;
   }
+  if(meshSize > 0 && meshSize < MAX_LC)
+    _meshAttr.Bind(result, meshAttr(meshSize));
   if(tag <= 0) tag = getMaxTag(0) + 1;
   bind(result, tag);
-  if(meshSize > 0 && meshSize < MAX_LC)
-    _meshAttributes[0][tag].size = meshSize;
 }
 
 void OCC_Internals::addLine(int tag, int startTag, int endTag)
@@ -1341,6 +1341,144 @@ void OCC_Internals::addThickSolid(int tag, int solidTag,
   bind(result, true, tag, out);
 }
 
+void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c, BRepPrimAPI_MakePrism &p,
+                                 ExtrudeParams *e, double dx, double dy, double dz)
+{
+  const bool debug = false;
+
+  BRepSweep_Prism prism = p.Prism();
+  TopExp_Explorer exp0;
+
+  int i = 0;
+  for(exp0.Init(c, TopAbs_FACE); exp0.More(); exp0.Next()){
+    TopoDS_Face face = TopoDS::Face(exp0.Current());
+    TopoDS_Shape bot = p.FirstShape(face);
+    TopoDS_Shape top = p.LastShape(face);
+    {
+      ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
+      ee->fill(TRANSLATE, dx, dy, dz, 0., 0., 0., 0., 0., 0., 0.);
+      ee->mesh = e->mesh;
+      meshAttr m(ee);
+      m.source = bot;
+      _meshAttr.Bind(top, m);
+    }
+    TopoDS_Shape vol = prism.Shape(face);
+    {
+      ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
+      ee->fill(TRANSLATE, dx, dy, dz, 0., 0., 0., 0., 0., 0., 0.);
+      ee->mesh = e->mesh;
+      meshAttr m(ee);
+      m.source = bot;
+      _meshAttr.Bind(vol, m);
+    }
+    if(debug){
+      char s[256];
+      sprintf(s, "extrude_bot_face_%d.brep", i);  BRepTools::Write(bot, s);
+      sprintf(s, "extrude_top_face_%d.brep", i);  BRepTools::Write(top, s);
+      sprintf(s, "extrude_vol_%d.brep", i); BRepTools::Write(vol, s);
+    }
+    i++;
+  }
+
+  i = 0;
+  for(exp0.Init(c, TopAbs_EDGE); exp0.More(); exp0.Next()){
+    TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+    TopoDS_Shape bot = p.FirstShape(edge);
+    TopoDS_Shape top = p.LastShape(edge);
+    {
+      ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
+      ee->fill(TRANSLATE, dx, dy, dz, 0., 0., 0., 0., 0., 0., 0.);
+      ee->mesh = e->mesh;
+      meshAttr m(ee);
+      m.source = bot;
+      _meshAttr.Bind(top, m);
+    }
+    TopoDS_Shape sur = prism.Shape(edge);
+    {
+      ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
+      ee->fill(TRANSLATE, dx, dy, dz, 0., 0., 0., 0., 0., 0., 0.);
+      ee->mesh = e->mesh;
+      meshAttr m(ee);
+      m.source = bot;
+      _meshAttr.Bind(sur, m);
+    }
+    if(debug){
+      char s[256];
+      sprintf(s, "extrude_bot_edge_%d.brep", i);  BRepTools::Write(bot, s);
+      sprintf(s, "extrude_top_edge_%d.brep", i);  BRepTools::Write(top, s);
+      sprintf(s, "extrude_lat_face_%d.brep", i); BRepTools::Write(sur, s);
+    }
+    i++;
+  }
+
+  i = 0;
+  for(exp0.Init(c, TopAbs_VERTEX); exp0.More(); exp0.Next()){
+    TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
+    TopoDS_Shape bot = p.FirstShape(vertex);
+    TopoDS_Shape top = p.LastShape(vertex);
+    TopoDS_Shape lin = prism.Shape(vertex);
+    {
+      ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
+      ee->fill(TRANSLATE, dx, dy, dz, 0., 0., 0., 0., 0., 0., 0.);
+      ee->mesh = e->mesh;
+      meshAttr m(ee);
+      m.source = bot;
+      _meshAttr.Bind(lin, m);
+    }
+    if(debug){
+      char s[256];
+      sprintf(s, "extrude_bot_vertex_%d.brep", i);  BRepTools::Write(bot, s);
+      sprintf(s, "extrude_top_vertex_%d.brep", i);  BRepTools::Write(top, s);
+      sprintf(s, "extrude_lat_edge_%d.brep", i); BRepTools::Write(lin, s);
+    }
+    i++;
+  }
+}
+
+void OCC_Internals::_copyMeshAttr(TopoDS_Edge edge, GEdge *ge)
+{
+  if(!_meshAttr.IsBound(edge)) return;
+  meshAttr m = _meshAttr.Find(edge);
+  if(!m.extrude) return;
+  ge->meshAttributes.extrude = m.extrude;
+  if(ge->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY){
+    if(_vertexTag.IsBound(m.source))
+      ge->meshAttributes.extrude->geo.Source = _vertexTag.Find(m.source);
+  }
+  else if(ge->meshAttributes.extrude->geo.Mode == COPIED_ENTITY){
+    if(_edgeTag.IsBound(m.source))
+      ge->meshAttributes.extrude->geo.Source = _edgeTag.Find(m.source);
+  }
+}
+
+void OCC_Internals::_copyMeshAttr(TopoDS_Face face, GFace *gf)
+{
+  if(!_meshAttr.IsBound(face)) return;
+  meshAttr m = _meshAttr.Find(face);
+  if(!m.extrude) return;
+  gf->meshAttributes.extrude = m.extrude;
+  if(gf->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY){
+    if(_edgeTag.IsBound(m.source))
+      gf->meshAttributes.extrude->geo.Source = _edgeTag.Find(m.source);
+  }
+  else if(gf->meshAttributes.extrude->geo.Mode == COPIED_ENTITY){
+    if(_faceTag.IsBound(m.source))
+      gf->meshAttributes.extrude->geo.Source = _faceTag.Find(m.source);
+  }
+}
+
+void OCC_Internals::_copyMeshAttr(TopoDS_Solid solid, GRegion *gr)
+{
+  if(!_meshAttr.IsBound(solid)) return;
+  meshAttr m = _meshAttr.Find(solid);
+  if(!m.extrude) return;
+  gr->meshAttributes.extrude = m.extrude;
+  if(gr->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY){
+    if(_faceTag.IsBound(m.source))
+      gr->meshAttributes.extrude->geo.Source = _faceTag.Find(m.source);
+  }
+}
+
 void OCC_Internals::_extrude(int mode,
                              const std::vector<std::pair<int, int> > &inDimTags,
                              double x, double y, double z,
@@ -1350,9 +1488,6 @@ void OCC_Internals::_extrude(int mode,
                              std::vector<std::pair<int, int> > &outDimTags,
                              ExtrudeParams *e)
 {
-  if(e)
-    Msg::Warning("Structured meshes not yet available with OpenCASCADE extrusion");
-
   // build a single compound shape, so that we won't duplicate internal
   // boundaries
   BRep_Builder b;
@@ -1378,6 +1513,7 @@ void OCC_Internals::_extrude(int mode,
         return;
       }
       result = p.Shape();
+      if(e) _setMeshAttr(c, p, e, dx, dy, dz);
     }
     else if(mode == 1){ // revolve
       gp_Ax1 axisOfRevolution(gp_Pnt(x, y, z), gp_Dir(ax, ay, az));
@@ -1388,6 +1524,8 @@ void OCC_Internals::_extrude(int mode,
         return;
       }
       result = r.Shape();
+      if(e)
+        Msg::Warning("Structured meshes not yet available with OpenCASCADE revolution");
     }
     else if(mode == 2){ // pipe
       if(!_tagWire.IsBound(wireTag)){
@@ -1402,6 +1540,8 @@ void OCC_Internals::_extrude(int mode,
         return;
       }
       result = p.Shape();
+      if(e)
+        Msg::Warning("Structured meshes not yet available with OpenCASCADE pipe");
     }
   }
   catch(Standard_Failure &err){
@@ -1887,8 +2027,10 @@ void OCC_Internals::exportShapes(const std::string &fileName,
 
 void OCC_Internals::setMeshSize(int dim, int tag, double size)
 {
-  if(dim < 0 || dim > 3) return;
-  _meshAttributes[dim][tag].size = size;
+  if(dim != 0) return;
+  if(_tagVertex.IsBound(tag)){
+    _meshAttr.Bind(_tagVertex.Find(tag), meshAttr(size));
+  }
 }
 
 void OCC_Internals::synchronize(GModel *model)
@@ -1965,10 +2107,13 @@ void OCC_Internals::synchronize(GModel *model)
         tag = _vertexTag.Find(vertex);
       else
         tag = ++vTagMax;
-      std::map<int, meshAttribute>::iterator it =
-        _meshAttributes[0].find(tag);
-      double lc = (it == _meshAttributes[0].end()) ? MAX_LC : it->second.size;
-      model->add(new OCCVertex(model, tag, vertex, lc));
+      double lc = MAX_LC;
+      if(_meshAttr.IsBound(vertex)){
+        meshAttr m = _meshAttr.Find(vertex);
+        lc = m.size;
+      }
+      OCCVertex *occv = new OCCVertex(model, tag, vertex, lc);
+      model->add(occv);
     }
   }
   for(int i = 1; i <= _emap.Extent(); i++){
@@ -1981,7 +2126,9 @@ void OCC_Internals::synchronize(GModel *model)
         tag = _edgeTag.Find(edge);
       else
         tag = ++eTagMax;
-      model->add(new OCCEdge(model, edge, tag, v1, v2));
+      OCCEdge *occe = new OCCEdge(model, edge, tag, v1, v2);
+      model->add(occe);
+      _copyMeshAttr(edge, occe);
     }
   }
   for(int i = 1; i <= _fmap.Extent(); i++){
@@ -1992,7 +2139,9 @@ void OCC_Internals::synchronize(GModel *model)
         tag = _faceTag.Find(face);
       else
         tag = ++fTagMax;
-      model->add(new OCCFace(model, face, tag));
+      OCCFace *occf = new OCCFace(model, face, tag);
+      model->add(occf);
+      _copyMeshAttr(face, occf);
     }
   }
   for(int i = 1; i <= _somap.Extent(); i++){
@@ -2003,7 +2152,9 @@ void OCC_Internals::synchronize(GModel *model)
         tag = _solidTag(region);
       else
         tag = ++rTagMax;
-      model->add(new OCCRegion(model, region, tag));
+      OCCRegion *occr = new OCCRegion(model, region, tag);
+      model->add(occr);
+      _copyMeshAttr(region, occr);
     }
   }
 

@@ -23,10 +23,14 @@ class ExtrudeParams;
 #include <TopoDS_Face.hxx>
 #include <TopoDS_Shell.hxx>
 #include <TopoDS_Solid.hxx>
+#include <TopoDS_Compound.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopTools_DataMapOfShapeInteger.hxx>
 #include <TopTools_DataMapOfIntegerShape.hxx>
+#include <TopTools_ShapeMapHasher.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
+#include <BRepPrimAPI_MakePrism.hxx>
+#include <NCollection_DataMap.hxx>
 
 class OCC_Internals {
  public:
@@ -52,14 +56,17 @@ class OCC_Internals {
   TopTools_DataMapOfShapeInteger _wireTag, _shellTag;
   TopTools_DataMapOfIntegerShape _tagWire, _tagShell;
 
-  // internal mesh attributes, linked to tags
-  class meshAttribute {
+  // internal mesh attributes
+  class meshAttr {
   public:
-    meshAttribute() : size(MAX_LC), extrude(0) {}
+    meshAttr() : size(MAX_LC), extrude(0) {}
+    meshAttr(double s) : size(s), extrude(0) {}
+    meshAttr(ExtrudeParams *e) : size(MAX_LC), extrude(e) {}
     double size;
     ExtrudeParams *extrude;
+    TopoDS_Shape source;
   };
-  std::map<int, meshAttribute> _meshAttributes[4];
+  NCollection_DataMap<TopoDS_Shape, meshAttr, TopTools_ShapeMapHasher> _meshAttr;
 
   // iterate on all bound entities and recompute the maximum tag
   void _recomputeMaxTag(int dim);
@@ -88,6 +95,13 @@ class OCC_Internals {
                 double ax, double ay, double az, double angle, int wireTag,
                 std::vector<std::pair<int, int> > &outDimTags,
                 ExtrudeParams *e=0);
+
+  // set mesh attributes for extruded meshes
+  void _setMeshAttr(const TopoDS_Compound &c, BRepPrimAPI_MakePrism &p,
+                    ExtrudeParams *e, double dx, double dy, double dz);
+  void _copyMeshAttr(TopoDS_Edge edge, GEdge *ge);
+  void _copyMeshAttr(TopoDS_Face face, GFace *gf);
+  void _copyMeshAttr(TopoDS_Solid solid, GRegion *gr);
 
  public:
   OCC_Internals();
