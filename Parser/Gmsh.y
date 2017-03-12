@@ -2839,6 +2839,10 @@ Delete :
 #endif
       Free($2); Free($3);
     }
+  | tDelete tDefineStruct tEND
+    {
+      nameSpaces.clear();
+    }
 ;
 
 //  C O L O R I F Y
@@ -6224,6 +6228,16 @@ void PrintParserSymbols(bool help, std::vector<std::string> &vec)
       s += ");";
       vec.push_back(s);
     }
+  }
+  if (nameSpaces.size()){
+    if(help){
+      vec.push_back("//");
+      vec.push_back("// Structures");
+      vec.push_back("//");
+    }
+    std::string s;
+    nameSpaces.sprint(s);
+    vec.push_back(s);
   }
 }
 

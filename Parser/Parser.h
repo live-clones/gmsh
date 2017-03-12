@@ -139,6 +139,7 @@ public:
   inline const std::map<K, T> & get() const { return _map; }
   inline int count (const std::string key) const { return _map.count(key); }
   inline int size () const { return _map.size(); }
+  void clear() { _map.clear(); }
 
 public:
   std::map<K, T> _map;
