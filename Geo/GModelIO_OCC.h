@@ -439,8 +439,8 @@ public:
   {
     _error("copy shape");
   }
-  void remove(int dim, int tag){}
-  void remove(const std::vector<std::pair<int, int> > &dimTags){}
+  void remove(int dim, int tag, bool recursive=false){}
+  void remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false){}
   void importShapes(const std::string &fileName, bool highestDimOnly,
                     std::vector<std::pair<int, int> > &outDimTags,
                     const std::string &format="")
