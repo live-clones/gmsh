@@ -168,7 +168,7 @@ struct doubleXstring{
 %token tTextAttributes
 %token tBoundingBox tDraw tSetChanged tToday tFixRelativePath tCurrentDirectory
 %token tSyncModel tNewModel
-%token tOnelabAction tOnelabRun
+%token tOnelabAction tOnelabRun tCodeName
 %token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
@@ -5734,6 +5734,10 @@ StringExpr :
       std::string action = Msg::GetOnelabAction();
       $$ = (char *)Malloc(action.size() + 1);
       strcpy($$, action.c_str());
+    }
+  | tCodeName
+    {
+      $$ = strsave((char*)"Gmsh");
     }
   | tGetEnv '(' StringExprVar ')'
     {

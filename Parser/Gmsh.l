@@ -140,6 +140,7 @@ Ceil                    return tCeil;
 Chamfer                 return tChamfer;
 Characteristic          return tCharacteristic;
 Circle                  return tCircle;
+CodeName                return tCodeName;
 Coherence               return tCoherence;
 Cohomology              return tCohomology;
 Color                   return tColor;
