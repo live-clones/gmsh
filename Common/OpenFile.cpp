@@ -639,6 +639,7 @@ void ClearProject()
 #if defined(HAVE_PARSER)
   gmsh_yysymbols.clear();
   gmsh_yystringsymbols.clear();
+  nameSpaces.clear();
 #endif
   for(int i = GModel::list.size() - 1; i >= 0; i--)
     delete GModel::list[i];

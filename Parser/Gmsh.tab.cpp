@@ -589,6 +589,7 @@ int gmsh_yyerrorstate = 0;
 int gmsh_yyviewindex = 0;
 std::map<std::string, gmsh_yysymbol> gmsh_yysymbols;
 std::map<std::string, std::vector<std::string> > gmsh_yystringsymbols;
+NameSpaces nameSpaces;
 
 // static parser variables (accessible only in this file)
 #if defined(HAVE_POST)
@@ -606,7 +607,6 @@ static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static std::string LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
 static std::string factory;
-static NameSpaces nameSpaces;
 static std::string struct_name, struct_namespace;
 static int flag_tSTRING_alloc = 0;
 
@@ -13455,9 +13455,9 @@ void PrintParserSymbols(bool help, std::vector<std::string> &vec)
       vec.push_back("// Structures");
       vec.push_back("//");
     }
-    std::string s;
-    nameSpaces.sprint(s);
-    vec.push_back(s);
+    std::vector<std::string> strs;
+    nameSpaces.sprint(strs);
+    vec.insert(vec.end(), strs.begin(), strs.end());
   }
 }
 
