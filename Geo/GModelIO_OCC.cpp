@@ -1344,8 +1344,8 @@ void OCC_Internals::addThickSolid(int tag, int solidTag,
 }
 
 void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
-                                 BRepPrimAPI_MakePrism *p,
-                                 BRepPrimAPI_MakeRevol *r,
+                                 BRepSweep_Prism *p,
+                                 BRepSweep_Revol *r,
                                  ExtrudeParams *e,
                                  double x, double y, double z,
                                  double dx, double dy, double dz,
@@ -1373,15 +1373,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
       m.source = bot;
       _meshAttr.Bind(top, m);
     }
-    TopoDS_Shape vol;
-    if(p){
-      BRepSweep_Prism prism = p->Prism();
-      vol = prism.Shape(face);
-    }
-    else{
-      BRepSweep_Revol revol = r->Revol();
-      vol = revol.Shape(face);
-    }
+    TopoDS_Shape vol = p ? p->Shape(face) : r->Shape(face);
     {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, ax, x, y, z, angle);
@@ -1406,15 +1398,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
       m.source = bot;
       _meshAttr.Bind(top, m);
     }
-    TopoDS_Shape sur;
-    if(p){
-      BRepSweep_Prism prism = p->Prism();
-      sur = prism.Shape(edge);
-    }
-    else{
-      BRepSweep_Revol revol = r->Revol();
-      sur = revol.Shape(edge);
-    }
+    TopoDS_Shape sur = p ? p->Shape(edge) : r->Shape(edge);
     {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, ax, x, y, z, angle);
@@ -1431,15 +1415,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
     TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
     TopoDS_Shape bot = p ? p->FirstShape(vertex) : r->FirstShape(vertex);
     TopoDS_Shape top = p ? p->LastShape(vertex) : r->LastShape(vertex);
-    TopoDS_Shape lin;
-    if(p){
-      BRepSweep_Prism prism = p->Prism();
-      lin = prism.Shape(vertex);
-    }
-    else{
-      BRepSweep_Revol revol = r->Revol();
-      lin = revol.Shape(vertex);
-    }
+    TopoDS_Shape lin = p ? p->Shape(vertex) : r->Shape(vertex);
     {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, ax, x, y, z, angle);
@@ -1540,7 +1516,11 @@ void OCC_Internals::_extrude(int mode,
         return;
       }
       result = p.Shape();
-      if(e) _setMeshAttr(c, &p, 0, e, 0., 0., 0., dx, dy, dz, 0., 0., 0., 0.);
+      if(e){
+        const BRepSweep_Prism &prism(p.Prism());
+        _setMeshAttr(c, (BRepSweep_Prism*)&prism, 0, e,
+                     0., 0., 0., dx, dy, dz, 0., 0., 0., 0.);
+      }
     }
     else if(mode == 1){ // revolve
       gp_Ax1 axisOfRevolution(gp_Pnt(x, y, z), gp_Dir(ax, ay, az));
@@ -1551,8 +1531,11 @@ void OCC_Internals::_extrude(int mode,
         return;
       }
       result = r.Shape();
-      if(e)
-        _setMeshAttr(c, 0, &r, e, x, y, z, 0., 0., 0., ax, ay, az, angle);
+      if(e){
+        const BRepSweep_Revol &revol(r.Revol());
+        _setMeshAttr(c, 0, (BRepSweep_Revol*)&revol, e,
+                     x, y, z, 0., 0., 0., ax, ay, az, angle);
+      }
     }
     else if(mode == 2){ // pipe
       if(!_tagWire.IsBound(wireTag)){

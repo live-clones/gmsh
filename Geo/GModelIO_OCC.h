@@ -30,8 +30,8 @@ class ExtrudeParams;
 #include <TopTools_ShapeMapHasher.hxx>
 #include <NCollection_DataMap.hxx>
 
-class BRepPrimAPI_MakePrism;
-class BRepPrimAPI_MakeRevol;
+class BRepSweep_Prism;
+class BRepSweep_Revol;
 class BRepBuilderAPI_Transform;
 
 class OCC_Internals {
@@ -99,8 +99,8 @@ class OCC_Internals {
                 ExtrudeParams *e=0);
 
   // set mesh attributes for extruded meshes
-  void _setMeshAttr(const TopoDS_Compound &c, BRepPrimAPI_MakePrism *p,
-                    BRepPrimAPI_MakeRevol *r, ExtrudeParams *e,
+  void _setMeshAttr(const TopoDS_Compound &c, BRepSweep_Prism *p,
+                    BRepSweep_Revol *r, ExtrudeParams *e,
                     double x, double y, double z,
                     double dx, double dy, double dz,
                     double ax, double ay, double az, double angle);
