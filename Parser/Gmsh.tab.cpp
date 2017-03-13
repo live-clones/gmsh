@@ -614,7 +614,7 @@ static std::map<std::string, std::vector<double> > floatOptions;
 static std::map<std::string, std::vector<std::string> > charOptions;
 static int flag_Enum, member_ValMax;
 
-void init_Options(int member_ValMax_ = 0)
+void init_options(int member_ValMax_ = 0)
 {
   floatOptions.clear(); charOptions.clear();
   flag_Enum = 0; member_ValMax = member_ValMax_;
@@ -7151,7 +7151,7 @@ yyreduce:
 
   case 114:
 #line 1240 "Gmsh.y"
-    { init_Options(); ;}
+    { init_options(); ;}
     break;
 
   case 115:
@@ -7177,7 +7177,7 @@ yyreduce:
 
   case 116:
 #line 1260 "Gmsh.y"
-    { init_Options(); ;}
+    { init_options(); ;}
     break;
 
   case 117:
@@ -7213,7 +7213,7 @@ yyreduce:
 
   case 119:
 #line 1287 "Gmsh.y"
-    { init_Options(); ;}
+    { init_options(); ;}
     break;
 
   case 120:
@@ -11370,7 +11370,7 @@ yyreduce:
 
   case 421:
 #line 4704 "Gmsh.y"
-    { init_Options(); ;}
+    { init_options(); ;}
     break;
 
   case 422:
@@ -11756,7 +11756,7 @@ yyreduce:
     {
       std::string struct_namespace((yyvsp[(2) - (3)].c2).char1? (yyvsp[(2) - (3)].c2).char1 : std::string("")),
         struct_name((yyvsp[(2) - (3)].c2).char2);
-      init_Options
+      init_options
         (nameSpaces.getMember_ValMax(struct_namespace, struct_name));
     ;}
     break;
@@ -12941,7 +12941,7 @@ yyreduce:
 
   case 559:
 #line 5954 "Gmsh.y"
-    { init_Options(); ;}
+    { init_options(); ;}
     break;
 
   case 560:

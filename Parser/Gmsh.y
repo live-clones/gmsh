@@ -93,7 +93,7 @@ static std::map<std::string, std::vector<double> > floatOptions;
 static std::map<std::string, std::vector<std::string> > charOptions;
 static int flag_Enum, member_ValMax;
 
-void init_Options(int member_ValMax_ = 0)
+void init_options(int member_ValMax_ = 0)
 {
   floatOptions.clear(); charOptions.clear();
   flag_Enum = 0; member_ValMax = member_ValMax_;
@@ -1237,7 +1237,7 @@ DefineConstants :
       Free($3);
     }
   | DefineConstants Comma String__Index tAFFECT '{' ListOfDouble
-    { init_Options(); }
+    { init_options(); }
     FloatParameterOptionsOrNone '}'
     {
       if(List_Nbr($6) != 1)
@@ -1257,7 +1257,7 @@ DefineConstants :
       Free($6);
     }
   | DefineConstants Comma String__Index LP RP tAFFECT '{' ListOfDouble
-    { init_Options(); }
+    { init_options(); }
     FloatParameterOptionsOrNone '}'
     {
       std::string key($3);
@@ -1284,7 +1284,7 @@ DefineConstants :
       Free($5);
     }
   | DefineConstants Comma String__Index tAFFECT '{' StringExpr
-    { init_Options(); }
+    { init_options(); }
       CharParameterOptionsOrNone '}'
     {
       std::string key($3), val($6);
@@ -4701,7 +4701,7 @@ FExpr_Single :
   // Variables
 
   | tDefineNumber LP FExpr
-    { init_Options(); }
+    { init_options(); }
     FloatParameterOptionsOrNone RP
     {
       std::vector<double> val(1, $3);
@@ -5025,7 +5025,7 @@ DefineStruct :
     {
       std::string struct_namespace($2.char1? $2.char1 : std::string("")),
         struct_name($2.char2);
-      init_Options
+      init_options
         (nameSpaces.getMember_ValMax(struct_namespace, struct_name));
     }
     '[' FloatParameterOptionsOrNone_NoComma ']'
@@ -5951,7 +5951,7 @@ StringExpr :
       Free($3);
     }
   | tDefineString LP StringExpr
-    { init_Options(); }
+    { init_options(); }
     CharParameterOptionsOrNone RP
     {
       std::string val($3);
