@@ -1921,6 +1921,9 @@ class AttractorAnisoCurveField : public Field {
     if(update_needed)
       update();
     double xyz[3] = { x, y, z };
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
     kdtree->annkSearch(xyz, 1, index, dist);
     double d = sqrt(dist[0]);
     double lTg = d < dMin ? lMinTangent : d > dMax ? lMaxTangent :
@@ -1938,6 +1941,9 @@ class AttractorAnisoCurveField : public Field {
     if(update_needed)
       update();
     double xyz[3] = { X, Y, Z };
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
     kdtree->annkSearch(xyz, 1, index, dist);
     double d = sqrt(dist[0]);
     return std::max(d, 0.05);
@@ -2168,6 +2174,9 @@ class AttractorField : public Field
 
     double xyz[3];
     getCoord(X, Y, Z, xyz[0], xyz[1], xyz[2], ge);
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
     kdtree->annkSearch(xyz, 1, index, dist);
     return sqrt(dist[0]);
   }
