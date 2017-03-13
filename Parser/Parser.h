@@ -85,7 +85,7 @@ public:
               const std::string & struct_name, const std::string & struct_namespace)
     const
   {
-    str += "Struct ";
+    str = "Struct ";
     if (struct_namespace.size()) str += struct_namespace + "::";
     str += struct_name + " [ ";
     bool flag_comma = false;
@@ -185,18 +185,11 @@ public:
     return 0; // 0: no error
   }
 
-  void sprint(std::string & str, const std::string & struct_namespace) const
-  {
-    for (Map_string_Struct::const_iterator it_st = this->get().begin();
-         it_st != this->get().end(); ++it_st )
-      it_st->second.sprint(str, it_st->first, struct_namespace);
-  }
   void sprint(std::vector<std::string> & strs_out, const std::string & struct_namespace) const
   {
     std::string str;
     for (Map_string_Struct::const_iterator it_st = this->get().begin();
          it_st != this->get().end(); ++it_st ) {
-      str.clear();
       it_st->second.sprint(str, it_st->first, struct_namespace);
       strs_out.insert(strs_out.end(), str);
     }
@@ -291,17 +284,12 @@ public:
     return (structs_P && struct_P)? struct_P->getMember_ValMax() : -1;
   }
 
-  void sprint(std::string & str) const
-  {
-    for (Map_string_Structs::const_iterator it_ns = this->get().begin();
-         it_ns != this->get().end(); ++it_ns )
-      it_ns->second.sprint(str, it_ns->first);
-  }
   void sprint(std::vector<std::string> & strs_out) const
   {
     std::vector<std::string> strs;
     for (Map_string_Structs::const_iterator it_ns = this->get().begin();
          it_ns != this->get().end(); ++it_ns ) {
+      strs.clear();
       it_ns->second.sprint(strs, it_ns->first);
       strs_out.insert(strs_out.end(), strs.begin(), strs.end());
     }
