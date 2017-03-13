@@ -31,6 +31,7 @@
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepGProp.hxx>
@@ -43,6 +44,8 @@
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeCone.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
+#include <BRepPrimAPI_MakePrism.hxx>
+#include <BRepPrimAPI_MakeRevol.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
 #include <BRepPrimAPI_MakeTorus.hxx>
 #include <BRepPrimAPI_MakeWedge.hxx>
@@ -1863,7 +1866,7 @@ void OCC_Internals::applyBooleanOperator
 }
 
 void OCC_Internals::_transform(const std::vector<std::pair<int, int> > &inDimTags,
-                               BRepBuilderAPI_Transform &tfo)
+                               BRepBuilderAPI_Transform *tfo)
 {
   for(unsigned int i = 0; i < inDimTags.size(); i++){
     int dim = inDimTags[i].first;
@@ -1873,12 +1876,12 @@ void OCC_Internals::_transform(const std::vector<std::pair<int, int> > &inDimTag
                  dim, tag);
       return;
     }
-    tfo.Perform(find(dim, tag), Standard_False);
-    if(!tfo.IsDone()){
+    tfo->Perform(find(dim, tag), Standard_False);
+    if(!tfo->IsDone()){
       Msg::Error("Could not apply transformation");
       return;
     }
-    bind(tfo.Shape(), dim, tag);
+    bind(tfo->Shape(), dim, tag);
   }
 }
 
@@ -1888,7 +1891,7 @@ void OCC_Internals::translate(const std::vector<std::pair<int, int> > &inDimTags
   gp_Trsf t;
   t.SetTranslation(gp_Pnt(0, 0, 0), gp_Pnt(dx, dy, dz));
   BRepBuilderAPI_Transform tfo(t);
-  _transform(inDimTags, tfo);
+  _transform(inDimTags, &tfo);
 }
 
 void OCC_Internals::rotate(const std::vector<std::pair<int, int> > &inDimTags,
@@ -1899,7 +1902,7 @@ void OCC_Internals::rotate(const std::vector<std::pair<int, int> > &inDimTags,
   gp_Ax1 axisOfRevolution(gp_Pnt(x, y, z), gp_Dir(ax, ay, az));
   t.SetRotation(axisOfRevolution, angle);
   BRepBuilderAPI_Transform tfo(t);
-  _transform(inDimTags, tfo);
+  _transform(inDimTags, &tfo);
 }
 
 void OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,

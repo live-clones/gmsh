@@ -28,10 +28,11 @@ class ExtrudeParams;
 #include <TopTools_DataMapOfShapeInteger.hxx>
 #include <TopTools_DataMapOfIntegerShape.hxx>
 #include <TopTools_ShapeMapHasher.hxx>
-#include <BRepBuilderAPI_Transform.hxx>
-#include <BRepPrimAPI_MakePrism.hxx>
-#include <BRepPrimAPI_MakeRevol.hxx>
 #include <NCollection_DataMap.hxx>
+
+class BRepPrimAPI_MakePrism;
+class BRepPrimAPI_MakeRevol;
+class BRepBuilderAPI_Transform;
 
 class OCC_Internals {
  public:
@@ -82,7 +83,7 @@ class OCC_Internals {
 
   // apply a geometrical transformation
   void _transform(const std::vector<std::pair<int, int> > &inDimTags,
-                  BRepBuilderAPI_Transform &tfo);
+                  BRepBuilderAPI_Transform *tfo);
 
   // add circle or ellipse arc
   void _addArc(int tag, int startTag, int centerTag, int endTag, int mode);
