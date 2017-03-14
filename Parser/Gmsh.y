@@ -3531,7 +3531,7 @@ Extrude :
       else{
         GModel::current()->getGEOInternals()->twist
           (inDimTags, $7[0], $7[1], $7[2], $3[0], $3[1], $3[2], $5[0], $5[1], $5[2],
-           $9,  outDimTags);
+           $9, outDimTags);
       }
       $$ = $12;
       List_Reset($$);

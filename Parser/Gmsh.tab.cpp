@@ -9776,7 +9776,7 @@ yyreduce:
       else{
         GModel::current()->getGEOInternals()->twist
           (inDimTags, (yyvsp[(7) - (13)].v)[0], (yyvsp[(7) - (13)].v)[1], (yyvsp[(7) - (13)].v)[2], (yyvsp[(3) - (13)].v)[0], (yyvsp[(3) - (13)].v)[1], (yyvsp[(3) - (13)].v)[2], (yyvsp[(5) - (13)].v)[0], (yyvsp[(5) - (13)].v)[1], (yyvsp[(5) - (13)].v)[2],
-           (yyvsp[(9) - (13)].d),  outDimTags);
+           (yyvsp[(9) - (13)].d), outDimTags);
       }
       (yyval.l) = (yyvsp[(12) - (13)].l);
       List_Reset((yyval.l));
