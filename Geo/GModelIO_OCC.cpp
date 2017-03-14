@@ -1360,7 +1360,6 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
 
   TopExp_Explorer exp0;
 
-  int i = 0;
   for(exp0.Init(c, TopAbs_FACE); exp0.More(); exp0.Next()){
     TopoDS_Face face = TopoDS::Face(exp0.Current());
     TopoDS_Shape bot = p ? p->FirstShape(face) : r->FirstShape(face);
@@ -1382,10 +1381,8 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
       m.source = bot;
       _meshAttr.Bind(vol, m);
     }
-    i++;
   }
 
-  i = 0;
   for(exp0.Init(c, TopAbs_EDGE); exp0.More(); exp0.Next()){
     TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
     TopoDS_Shape bot = p ? p->FirstShape(edge) : r->FirstShape(edge);
@@ -1407,10 +1404,8 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
       m.source = bot;
       _meshAttr.Bind(sur, m);
     }
-    i++;
   }
 
-  i = 0;
   for(exp0.Init(c, TopAbs_VERTEX); exp0.More(); exp0.Next()){
     TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
     TopoDS_Shape bot = p ? p->FirstShape(vertex) : r->FirstShape(vertex);
@@ -1424,7 +1419,6 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
       m.source = bot;
       _meshAttr.Bind(lin, m);
     }
-    i++;
   }
 }
 
@@ -1543,7 +1537,11 @@ void OCC_Internals::_extrude(int mode,
         return;
       }
       TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
-      BRepOffsetAPI_MakePipe p(wire, c);
+      BRepOffsetAPI_MakePipe p(wire, c, GeomFill_IsCorrectedFrenet);
+      /* GeomFill_IsCorrectedFrenet, GeomFill_IsFixed, GeomFill_IsFrenet,
+         GeomFill_IsConstantNormal, GeomFill_IsDarboux, GeomFill_IsGuideAC,
+         GeomFill_IsGuidePlan, GeomFill_IsGuideACWithContact,
+         GeomFill_IsGuidePlanWithContact, GeomFill_IsDiscreteTrihedron */
       p.Build();
       if(!p.IsDone()){
         Msg::Error("Could not create pipe");
