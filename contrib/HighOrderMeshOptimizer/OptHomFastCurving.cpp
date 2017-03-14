@@ -208,7 +208,8 @@ void getOppositeEdgeTri(MElement *el, const MEdge &elBaseEd, MEdge &elTopEd,
 
 
 void getColumnQuad(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
-                   MEdge &elBaseEd,  std::vector<MElement*> &blob)
+                   MEdge &elBaseEd,  std::vector<MElement*> &blob,
+                   MElement* &aboveElt)
 {
   const double maxDP = std::cos(p.maxAngle);
 
@@ -217,6 +218,7 @@ void getColumnQuad(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
   for (int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
     std::vector<MElement*> newElts = ed2el[elBaseEd];
     el = (newElts[0] == el) ? newElts[1] : newElts[0];
+    aboveElt = el;
     if (el->getType() != TYPE_QUA) break;
     MEdge elTopEd;
     double edLenMin, edLenMax;
@@ -234,7 +236,8 @@ void getColumnQuad(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
 
 
 void getColumnTri(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
-                   MEdge &elBaseEd, std::vector<MElement*> &blob)
+                  MEdge &elBaseEd, std::vector<MElement*> &blob,
+                  MElement* &aboveElt)
 {
   const double maxDP = std::cos(p.maxAngle);
   const double maxDPIn = std::cos(p.maxAngleInner);
@@ -245,6 +248,7 @@ void getColumnTri(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
     // Get first element in layer
     std::vector<MElement*> newElts0 = ed2el[elBaseEd];
     el0 = (newElts0[0] == el1) ? newElts0[1] : newElts0[0];
+    aboveElt = el0;
     if (el0->getType() != TYPE_TRI) break;
     MEdge elTopEd0;
     double edLenMin0, edLenMax0;
@@ -281,7 +285,7 @@ void getColumnTri(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
 bool getColumn2D(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
                  const MEdge &baseEd, std::vector<MVertex*> &baseVert,
                  std::vector<MVertex*> &topPrimVert,
-                 std::vector<MElement*> &blob)
+                 std::vector<MElement*> &blob, MElement* &aboveElt)
 {
   // Get first element and base vertices
   std::vector<MElement*> firstElts = ed2el[baseEd];
@@ -292,8 +296,9 @@ bool getColumn2D(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
   MEdge elBaseEd(baseVert[0], baseVert[1]);
 
   // Sweep column upwards by choosing largest edges in each element
-  if (el->getType() == TYPE_TRI) getColumnTri(ed2el, p, elBaseEd, blob);
-  else getColumnQuad(ed2el, p, elBaseEd, blob);
+  if (el->getType() == TYPE_TRI)
+    getColumnTri(ed2el, p, elBaseEd, blob, aboveElt);
+  else getColumnQuad(ed2el, p, elBaseEd, blob, aboveElt);
 
   topPrimVert.resize(2);
   topPrimVert[0] = elBaseEd.getVertex(0);
@@ -433,7 +438,7 @@ void getOppositeFaceTet(MElement *el, const MFace &elBaseFace, MFace &elTopFace,
 // Column of tets: assume tets obtained from subdivision of prism
 void getColumnTet(MFaceVecMEltMap &face2el,
                   const FastCurvingParameters &p, MFace &elBaseFace,
-                  std::vector<MElement*> &blob)
+                  std::vector<MElement*> &blob, MElement* &aboveElt)
 {
   const double maxDP = std::cos(p.maxAngle);
   const double maxDPIn = std::cos(p.maxAngleInner);
@@ -444,6 +449,7 @@ void getColumnTet(MFaceVecMEltMap &face2el,
     // Get first element in layer
     std::vector<MElement*> newElts0 = face2el[elBaseFace];
     el0 = (newElts0[0] == el2) ? newElts0[1] : newElts0[0];
+    aboveElt = el0;
     if (el0->getType() != TYPE_TET) break;
     MFace elTopFace0;
     double faceSurfMin0, faceSurfMax0;
@@ -492,7 +498,7 @@ void getColumnTet(MFaceVecMEltMap &face2el,
 
 void getColumnPrismHex(int elType, MFaceVecMEltMap &face2el,
                        const FastCurvingParameters &p, MFace &elBaseFace,
-                       std::vector<MElement*> &blob)
+                       std::vector<MElement*> &blob, MElement* &aboveElt)
 {
   const double maxDP = std::cos(p.maxAngle);
 
@@ -501,6 +507,7 @@ void getColumnPrismHex(int elType, MFaceVecMEltMap &face2el,
   for (int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
     std::vector<MElement*> newElts = face2el[elBaseFace];
     el = (newElts[0] == el) ? newElts[1] : newElts[0];
+    aboveElt = el;
     if (el->getType() != elType) break;
 
     MFace elTopFace;
@@ -524,7 +531,7 @@ void getColumnPrismHex(int elType, MFaceVecMEltMap &face2el,
 bool getColumn3D(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
                  const MFace &baseFace, std::vector<MVertex*> &baseVert,
                  std::vector<MVertex*> &topPrimVert,
-                 std::vector<MElement*> &blob)
+                 std::vector<MElement*> &blob, MElement* &aboveElt)
 {
   // Get first element and base vertices
   const int nbBaseFaceVert = baseFace.getNumVertices();
@@ -539,12 +546,12 @@ bool getColumn3D(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
   // Sweep column upwards by choosing largest faces in each element
   if (nbBaseFaceVert == 3) {
     if (el->getType() == TYPE_PRI)                                              // Get BL column of prisms
-      getColumnPrismHex(TYPE_PRI, face2el, p, elBaseFace, blob);
+      getColumnPrismHex(TYPE_PRI, face2el, p, elBaseFace, blob, aboveElt);
     else if (el->getType() == TYPE_TET)
-      getColumnTet(face2el, p, elBaseFace, blob);
+      getColumnTet(face2el, p, elBaseFace, blob, aboveElt);
   }
   else if ((nbBaseFaceVert == 4) && (el->getType() == TYPE_HEX))                // Get BL column of hexas
-    getColumnPrismHex(TYPE_HEX, face2el, p, elBaseFace, blob);
+    getColumnPrismHex(TYPE_HEX, face2el, p, elBaseFace, blob, aboveElt);
   else return false;                                                            // Not a BL
   if (blob.size() == 0) return false;                                           // Could not find column (may not be a BL)
 
@@ -647,6 +654,81 @@ private:
 
 
 
+void curveElement(const MetaEl &metaElt, std::set<MVertex*> &movedVert,
+                  MElement *elt)
+{
+    makeStraight(elt, movedVert);
+    for (int iV = elt->getNumPrimaryVertices();
+         iV < elt->getNumVertices(); iV++) {                                  // Loop over HO vert. of each el. in blob
+      MVertex* vert = elt->getVertex(iV);
+      if (movedVert.find(vert) == movedVert.end()) {                          // Try to move vert. not already moved
+        double xyzS[3] = {vert->x(), vert->y(), vert->z()}, xyzC[3];
+        if (metaElt.straightToCurved(xyzS, xyzC)) {
+          vert->setXYZ(xyzC[0], xyzC[1], xyzC[2]);
+          movedVert.insert(vert);
+        }
+      }
+    }
+}
+
+
+
+double curveAndMeasureAboveEl(MetaEl &metaElt, MElement *lastElt,
+                              MElement *aboveElt, double deformFact)
+{
+  double minJacDet, maxJacDet;
+  metaElt.curveTop(deformFact);
+  std::set<MVertex*> movedVertDum;
+  curveElement(metaElt, movedVertDum, lastElt);
+  jacobianBasedQuality::minMaxJacobianDeterminant(aboveElt, minJacDet, maxJacDet);
+  return minJacDet/maxJacDet;
+}
+
+
+
+void curveColumn(int metaElType, const std::vector<MVertex*> &baseVert,
+                 const std::vector<MVertex*> &topPrimVert, MElement *aboveElt,
+                 std::vector<MElement*> &blob, std::set<MVertex*> &movedVert,
+                 DbgOutputMeta &dbgOut)
+{
+  static const double MINQUAL = 0.1, TOL = 0.01, MAXITER = 10;
+
+  // Create meta-element
+  int order = blob[0]->getPolynomialOrder();
+  MetaEl metaElt(metaElType, order, baseVert, topPrimVert);
+  
+  // Curve top face of meta-element while avoiding breaking the element above
+  MElement* &lastElt = blob.back();
+  // std::cout << "DBGTT: lastElt = " << lastElt->getNum() << ", aboveElt " << aboveElt->getNum() << " min. SJ: " << aboveElt->minScaledJacobian();
+  double minJacDet, maxJacDet;
+  double deformMin = 0., qualDeformMin = 1.;
+  double deformMax = 1.;
+  double qualDeformMax = curveAndMeasureAboveEl(metaElt, lastElt, aboveElt,
+                                                deformMax);
+  if (qualDeformMax < MINQUAL) {                                                // Max deformation makes element above invalid
+    for (int iter = 0; iter < MAXITER; iter++) {                                // Bisection to find max. deformation that makes element above valid
+      const double deformMid = 0.5 * (deformMin + deformMax);
+      const double qualDeformMid = curveAndMeasureAboveEl(metaElt, lastElt,
+                                                          aboveElt, deformMid);
+      if (std::abs(deformMax-deformMin) < TOL) break;
+      const bool signDeformMax = (qualDeformMax < MINQUAL);
+      const bool signDeformMid = (qualDeformMid < MINQUAL);
+      if (signDeformMid == signDeformMax) deformMax = deformMid;
+      else deformMin = deformMid;
+    }
+  }
+  for (int iV = 0; iV < lastElt->getNumVertices(); iV++)
+    movedVert.insert(lastElt->getVertex(iV));
+  // std::cout << " -> " << aboveElt->minScaledJacobian() << "\n";
+
+  dbgOut.addMetaEl(metaElt);
+
+  for (int iEl = 0; iEl < blob.size()-1; iEl++)
+    curveElement(metaElt, movedVert, blob[iEl]);
+}
+
+
+
 void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
                       GEntity *bndEnt, const FastCurvingParameters &p)
 {
@@ -678,12 +760,14 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
     bool foundCol;
     std::vector<MVertex*> baseVert, topPrimVert;
     std::vector<MElement*> blob;
+    MElement *aboveElt = 0;
     if (bndType == TYPE_LIN) {                                                  // 1D boundary
       MVertex *vb0 = (*itBE)->getVertex(0);
       MVertex *vb1 = (*itBE)->getVertex(1);
       metaElType = TYPE_QUA;
       MEdge baseEd(vb0, vb1);
-      foundCol = getColumn2D(ed2el, p, baseEd, baseVert, topPrimVert, blob);
+      foundCol = getColumn2D(ed2el, p, baseEd, baseVert,
+                             topPrimVert, blob, aboveElt);
     }
     else {                                                                      // 2D boundary
       MVertex *vb0 = (*itBE)->getVertex(0);
@@ -699,30 +783,15 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
         metaElType = TYPE_PRI;
       }
       MFace baseFace(vb0, vb1, vb2, vb3);
-      foundCol = getColumn3D(face2el, p, baseFace, baseVert, topPrimVert, blob);
+      foundCol = getColumn3D(face2el, p, baseFace, baseVert, topPrimVert,
+                             blob, aboveElt);
     }
     if (!foundCol) continue;                                                    // Skip bnd. el. if top vertices not found
     DbgOutputCol dbgOutCol;
     dbgOutCol.addBlob(blob);
     dbgOutCol.write("col_KO", (*itBE)->getNum());
-    int order = blob[0]->getPolynomialOrder();
-    MetaEl metaEl(metaElType, order, baseVert, topPrimVert);
-    dbgOut.addMetaEl(metaEl);
-    for (int iEl = 0; iEl < blob.size(); iEl++) {
-      MElement *&elt = blob[iEl];
-      makeStraight(elt, movedVert);
-      for (int iV = elt->getNumPrimaryVertices();
-           iV < elt->getNumVertices(); iV++) {                                  // Loop over HO vert. of each el. in blob
-        MVertex* vert = elt->getVertex(iV);
-        if (movedVert.find(vert) == movedVert.end()) {                          // Try to move vert. not already moved
-          double xyzS[3] = {vert->x(), vert->y(), vert->z()}, xyzC[3];
-          if (metaEl.straightToCurved(xyzS,xyzC)) {
-            vert->setXYZ(xyzC[0], xyzC[1], xyzC[2]);
-            movedVert.insert(vert);
-          }
-        }
-      }
-    }
+    curveColumn(metaElType, baseVert, topPrimVert, aboveElt, blob, movedVert,
+                dbgOut);
     dbgOutCol.write("col_OK", (*itBE)->getNum());
   }
 

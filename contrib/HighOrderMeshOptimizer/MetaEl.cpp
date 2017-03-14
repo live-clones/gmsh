@@ -109,28 +109,31 @@ MetaEl::metaInfoType::metaInfoType(int type, int order)
 }
 
 
-MetaEl::MetaEl(int type, int order, const std::vector<MVertex*> &baseVert,
-                 const std::vector<MVertex*> &topPrimVert) : _metaEl(0), _metaEl0(0)
+
+const MetaEl::metaInfoType &MetaEl::getMetaInfo(int elType, int order)
 {
-
-  // Get useful info on meta-element type if not already there
-  std::map<int, MetaEl::metaInfoType>::iterator itSInfo = _metaInfo.find(type);
-  if (itSInfo == _metaInfo.end()) {
-    const metaInfoType mInfo(type, order);
-    itSInfo = _metaInfo.insert(std::pair<int,metaInfoType>(type, mInfo)).first;
+  std::map<int, MetaEl::metaInfoType>::iterator itMInfo = _metaInfo.find(elType);
+  if (itMInfo == _metaInfo.end()) {
+    const metaInfoType mInfo(elType, order);
+    itMInfo = _metaInfo.insert(std::pair<int, metaInfoType>(elType, mInfo)).first;
   }
-  MetaEl::metaInfoType &sInfo = itSInfo->second;
+  return itMInfo->second;
+}
 
-  // Exit if unknown type
-  if (sInfo.nbVert == 0) return;
 
-  // References for easier writing
-  const int &nbVert = sInfo.nbVert;
-  const fullMatrix<double> &points = sInfo.points;
-  const std::vector<int> &baseInd = sInfo.baseInd;
-  const std::vector<int> &topInd = sInfo.topInd;
-  const std::vector<int> &edgeInd = sInfo.edgeInd;
-  const std::vector<int> &otherInd = sInfo.otherInd;
+
+MetaEl::MetaEl(int type, int order, const std::vector<MVertex*> &baseVert,
+               const std::vector<MVertex*> &topPrimVert) :
+    _mInfo(getMetaInfo(type, order)), _metaEl(0), _metaEl0(0)
+{
+  // Get info on meta-element type
+  if (_mInfo.nbVert == 0) return;
+  const int &nbVert = _mInfo.nbVert;
+  const fullMatrix<double> &points = _mInfo.points;
+  const std::vector<int> &baseInd = _mInfo.baseInd;
+  const std::vector<int> &topInd = _mInfo.topInd;
+  const std::vector<int> &edgeInd = _mInfo.edgeInd;
+  const std::vector<int> &otherInd = _mInfo.otherInd;
 
   // Add copies of vertices in base & top faces (only first-order vertices for top face)
   _metaVert.resize(nbVert);
@@ -240,6 +243,32 @@ MetaEl::~MetaEl()
   if (_metaEl) delete _metaEl;
   if (_metaEl0) delete _metaEl0;
 }
+
+
+
+void MetaEl::curveTop(double factor)
+{
+  // Get info on meta-element type
+  // const int &nbVert = _mInfo.nbVert;
+  const fullMatrix<double> &points = _mInfo.points;
+  const std::vector<int> &baseInd = _mInfo.baseInd;
+  const std::vector<int> &topInd = _mInfo.topInd;
+  // const std::vector<int> &edgeInd = _mInfo.edgeInd;
+  // const std::vector<int> &otherInd = _mInfo.otherInd;
+
+  // Compute displacement of HO vertices in base face  
+  for (int iV = 0; iV < baseInd.size(); iV++) {
+    SPoint3 p0B, p0T;
+    const int indB = baseInd[iV], indT = topInd[iV];
+    _metaEl0->pnt(points(indB, 0), points(indB, 1), points(indB, 2), p0B);
+    _metaEl0->pnt(points(indT, 0), points(indT, 1), points(indT, 2), p0T);
+    SPoint3 pB = _metaVert[indB]->point();
+    _metaVert[indT]->x() = p0T.x() + factor * (pB.x()-p0B.x());
+    _metaVert[indT]->y() = p0T.y() + factor * (pB.y()-p0B.y());
+    _metaVert[indT]->z() = p0T.z() + factor * (pB.z()-p0B.z());
+  }
+}
+
 
 
 bool MetaEl::isPointIn(const SPoint3 p) const

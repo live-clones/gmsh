@@ -35,17 +35,18 @@
 
 class MetaEl
 {
- public:
+public:
   MetaEl(int type, int order, const std::vector<MVertex*> &baseVert,
           const std::vector<MVertex*> &topPrimVert);
   ~MetaEl();
+  void curveTop(double factor);
   bool isOK() const { return _metaEl; }
   bool isPointIn(const SPoint3 p) const;
   bool straightToCurved(double *xyzS, double *xyzC) const;
   std::string printPOS();
   void printCoord()
   {
-    std::cout << "DBGTT: superEl -> ";
+    std::cout << "DBGTT: metaEl -> ";
     for(int i = 0; i < _metaVert.size(); i++){
       std::cout << "v" << i << " = (" << _metaVert[i]->x() << ","
                 <<  _metaVert[i]->y() << "," <<  _metaVert[i]->z() << ")";
@@ -54,7 +55,7 @@ class MetaEl
   }
   MElement *getMElement() { return _metaEl; }
 
- private:
+private:
   struct metaInfoType {
     int nbVert;
     fullMatrix<double> points;
@@ -62,8 +63,12 @@ class MetaEl
     metaInfoType(int type, int order);
   };
   static std::map<int, metaInfoType> _metaInfo;
+  
+  const metaInfoType &_mInfo;
   std::vector<MVertex*> _metaVert;
   MElement *_metaEl, *_metaEl0;
+
+  const metaInfoType &getMetaInfo(int elType, int order);
 };
 
 #endif  // _METAEL_H_
