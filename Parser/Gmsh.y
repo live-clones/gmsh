@@ -4779,7 +4779,7 @@ FExpr_Single :
     }
   | tExists '(' Struct_FullName ')'
     {
-      if(gmsh_yysymbols.count($3.char2)){
+      if(gmsh_yysymbols.count($3.char2) || gmsh_yystringsymbols.count($3.char2)){
         $$ = 1;
       }
       else{
@@ -4797,6 +4797,11 @@ FExpr_Single :
       std::string key_member($5);
       $$ = (nameSpaces.getMember
             (struct_namespace, struct_name, key_member, $$))? 0 : 1;
+      if (!$$) {
+        const std::string * out_dummy = NULL;
+        $$ = (nameSpaces.getMember
+              (struct_namespace, struct_name, key_member, out_dummy))? 0 : 1;
+      }
       if (flag_tSTRING_alloc) Free($5);
     }
   | tFileExists '(' StringExpr ')'
