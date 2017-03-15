@@ -104,6 +104,8 @@ string	{alpha}({alpha}|{digit})*
 "!="                    return tNOTEQUAL;
 "<="                    return tLESSOREQUAL;
 ">="                    return tGREATEROREQUAL;
+">>"                    return tGREATERGREATER;
+"<<"                    return tLESSLESS;
 
 Abort                   return tAbort;
 Abs                     return tAbs;

@@ -235,9 +235,10 @@ struct doubleXstring{
 %left    tOR
 %left    tAND
 %left    tEQUAL tNOTEQUAL
-%left    '<' tLESSOREQUAL  '>' tGREATEROREQUAL
+%left    '<' tLESSOREQUAL  '>' tGREATEROREQUAL tLESSLESS tGREATERGREATER
 %left    '+' '-'
 %left    '*' '/' '%'
+%left    '|' '&'
 %right   '!' tPLUSPLUS tMINUSMINUS UNARYPREC
 %right   '^'
 %left    '(' ')' '[' ']' '{' '}' '.' '#'
@@ -4650,7 +4651,9 @@ FExpr :
       else
 	$$ = $1 / $3;
     }
-  | FExpr '%' FExpr                { $$ = (int)$1 % (int)$3;  }
+  | FExpr '|' FExpr                { $$ = (int)$1 | (int)$3; }
+  | FExpr '&' FExpr                { $$ = (int)$1 & (int)$3; }
+  | FExpr '%' FExpr                { $$ = (int)$1 % (int)$3; }
   | FExpr '^' FExpr                { $$ = pow($1, $3);  }
   | FExpr '<' FExpr                { $$ = $1 < $3;      }
   | FExpr '>' FExpr                { $$ = $1 > $3;      }
@@ -4660,6 +4663,8 @@ FExpr :
   | FExpr tNOTEQUAL FExpr          { $$ = $1 != $3;     }
   | FExpr tAND FExpr               { $$ = $1 && $3;     }
   | FExpr tOR FExpr                { $$ = $1 || $3;     }
+  | FExpr tGREATERGREATER FExpr    { $$ = ((int)$1 >> (int)$3); }
+  | FExpr tLESSLESS FExpr          { $$ = ((int)$1 << (int)$3); }
   | FExpr '?' FExpr tDOTS FExpr    { $$ = $1 ? $3 : $5; }
   | tExp    LP FExpr RP            { $$ = exp($3);      }
   | tLog    LP FExpr RP            { $$ = log($3);      }

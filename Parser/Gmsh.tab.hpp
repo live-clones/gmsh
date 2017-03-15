@@ -254,11 +254,13 @@
      tAND = 470,
      tNOTEQUAL = 471,
      tEQUAL = 472,
-     tGREATEROREQUAL = 473,
-     tLESSOREQUAL = 474,
-     UNARYPREC = 475,
-     tMINUSMINUS = 476,
-     tPLUSPLUS = 477
+     tGREATERGREATER = 473,
+     tLESSLESS = 474,
+     tGREATEROREQUAL = 475,
+     tLESSOREQUAL = 476,
+     UNARYPREC = 477,
+     tMINUSMINUS = 478,
+     tPLUSPLUS = 479
    };
 #endif
 /* Tokens.  */
@@ -477,11 +479,13 @@
 #define tAND 470
 #define tNOTEQUAL 471
 #define tEQUAL 472
-#define tGREATEROREQUAL 473
-#define tLESSOREQUAL 474
-#define UNARYPREC 475
-#define tMINUSMINUS 476
-#define tPLUSPLUS 477
+#define tGREATERGREATER 473
+#define tLESSLESS 474
+#define tGREATEROREQUAL 475
+#define tLESSOREQUAL 476
+#define UNARYPREC 477
+#define tMINUSMINUS 478
+#define tPLUSPLUS 479
 
 
 
@@ -500,7 +504,7 @@ typedef union YYSTYPE
   struct TwoChar c2;
 }
 /* Line 1529 of yacc.c.  */
-#line 504 "Gmsh.tab.hpp"
+#line 508 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
