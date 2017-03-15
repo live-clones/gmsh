@@ -237,26 +237,28 @@
      tBetti = 453,
      tExists = 454,
      tFileExists = 455,
-     tGMSH_MAJOR_VERSION = 456,
-     tGMSH_MINOR_VERSION = 457,
-     tGMSH_PATCH_VERSION = 458,
-     tGmshExecutableName = 459,
-     tSetPartition = 460,
-     tNameToString = 461,
-     tStringToName = 462,
-     tAFFECTDIVIDE = 463,
-     tAFFECTTIMES = 464,
-     tAFFECTMINUS = 465,
-     tAFFECTPLUS = 466,
-     tOR = 467,
-     tAND = 468,
-     tNOTEQUAL = 469,
-     tEQUAL = 470,
-     tGREATEROREQUAL = 471,
-     tLESSOREQUAL = 472,
-     UNARYPREC = 473,
-     tMINUSMINUS = 474,
-     tPLUSPLUS = 475
+     tGetForced = 456,
+     tGetForcedStr = 457,
+     tGMSH_MAJOR_VERSION = 458,
+     tGMSH_MINOR_VERSION = 459,
+     tGMSH_PATCH_VERSION = 460,
+     tGmshExecutableName = 461,
+     tSetPartition = 462,
+     tNameToString = 463,
+     tStringToName = 464,
+     tAFFECTDIVIDE = 465,
+     tAFFECTTIMES = 466,
+     tAFFECTMINUS = 467,
+     tAFFECTPLUS = 468,
+     tOR = 469,
+     tAND = 470,
+     tNOTEQUAL = 471,
+     tEQUAL = 472,
+     tGREATEROREQUAL = 473,
+     tLESSOREQUAL = 474,
+     UNARYPREC = 475,
+     tMINUSMINUS = 476,
+     tPLUSPLUS = 477
    };
 #endif
 /* Tokens.  */
@@ -458,33 +460,35 @@
 #define tBetti 453
 #define tExists 454
 #define tFileExists 455
-#define tGMSH_MAJOR_VERSION 456
-#define tGMSH_MINOR_VERSION 457
-#define tGMSH_PATCH_VERSION 458
-#define tGmshExecutableName 459
-#define tSetPartition 460
-#define tNameToString 461
-#define tStringToName 462
-#define tAFFECTDIVIDE 463
-#define tAFFECTTIMES 464
-#define tAFFECTMINUS 465
-#define tAFFECTPLUS 466
-#define tOR 467
-#define tAND 468
-#define tNOTEQUAL 469
-#define tEQUAL 470
-#define tGREATEROREQUAL 471
-#define tLESSOREQUAL 472
-#define UNARYPREC 473
-#define tMINUSMINUS 474
-#define tPLUSPLUS 475
+#define tGetForced 456
+#define tGetForcedStr 457
+#define tGMSH_MAJOR_VERSION 458
+#define tGMSH_MINOR_VERSION 459
+#define tGMSH_PATCH_VERSION 460
+#define tGmshExecutableName 461
+#define tSetPartition 462
+#define tNameToString 463
+#define tStringToName 464
+#define tAFFECTDIVIDE 465
+#define tAFFECTTIMES 466
+#define tAFFECTMINUS 467
+#define tAFFECTPLUS 468
+#define tOR 469
+#define tAND 470
+#define tNOTEQUAL 471
+#define tEQUAL 472
+#define tGREATEROREQUAL 473
+#define tLESSOREQUAL 474
+#define UNARYPREC 475
+#define tMINUSMINUS 476
+#define tPLUSPLUS 477
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 147 "Gmsh.y"
+#line 153 "Gmsh.y"
 {
   char *c;
   int i;
@@ -496,7 +500,7 @@ typedef union YYSTYPE
   struct TwoChar c2;
 }
 /* Line 1529 of yacc.c.  */
-#line 500 "Gmsh.tab.hpp"
+#line 504 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

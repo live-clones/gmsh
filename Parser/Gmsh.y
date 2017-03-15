@@ -134,8 +134,14 @@ void setVisibility(const std::vector<std::pair<int, int> > &dimTags, int visible
 void setColor(const std::vector<std::pair<int, int> > &dimTags, unsigned int val,
               bool recursive);
 
-double treat_Struct_FullName_dot_tSTRING_Float(char* c1, char* c2, char* c3);
-char* treat_Struct_FullName_dot_tSTRING_String(char* c1, char* c2, char* c3);
+double treat_Struct_FullName_Float
+  (char* c1, char* c2, double val_default = 0., int type_treat = 0);
+double treat_Struct_FullName_dot_tSTRING_Float
+  (char* c1, char* c2, char* c3, double val_default = 0., int type_treat = 0);
+char* treat_Struct_FullName_String
+  (char* c1, char* c2, char* val_default = NULL, int type_treat = 0);
+char* treat_Struct_FullName_dot_tSTRING_String
+  (char* c1, char* c2, char* c3, char* val_default = NULL, int type_treat = 0);
 
 struct doubleXstring{
   double d;
@@ -194,12 +200,12 @@ struct doubleXstring{
 %token tColor tColorTable tFor tIn tEndFor tIf tElseIf tElse tEndIf tExit tAbort
 %token tField tReturn tCall tSlide tMacro tShow tHide tGetValue tGetStringValue tGetEnv
 %token tGetString tGetNumber tUnique
-%token tHomology tCohomology tBetti tExists tFileExists
+%token tHomology tCohomology tBetti tExists tFileExists tGetForced tGetForcedStr
 %token tGMSH_MAJOR_VERSION tGMSH_MINOR_VERSION tGMSH_PATCH_VERSION
 %token tGmshExecutableName tSetPartition
 %token tNameToString tStringToName
 
-%type <d> FExpr FExpr_Single DefineStruct NameStruct_Arg
+%type <d> FExpr FExpr_Single DefineStruct NameStruct_Arg GetForced_Default
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
 %type <i> NumericAffectation NumericIncrement BooleanOperator BooleanOption
 %type <i> PhysicalId0 PhysicalId1 PhysicalId2 PhysicalId3
@@ -207,7 +213,7 @@ struct doubleXstring{
 %type <i> Append AppendOrNot
 %type <u> ColorExpr
 %type <c> StringExpr StringExprVar SendToFile tSTRING_Member_Float HomologyCommand
-%type <c> LP RP
+%type <c> LP RP GetForcedStr_Default
 %type <c> StringIndex String__Index
 %type <l> RecursiveListOfStringExprVar
 %type <l> FExpr_Multi ListOfDouble ListOfDoubleOrAll RecursiveListOfDouble
@@ -4720,26 +4726,9 @@ FExpr_Single :
       $$ = Msg::GetOnelabNumber($3, $5);
       Free($3);
     }
-//+++
   | Struct_FullName
     {
-      if(gmsh_yysymbols.count($1.char2)){
-        gmsh_yysymbol &s(gmsh_yysymbols[$1.char2]);
-        if(s.value.empty()){
-          yymsg(0, "Uninitialized variable '%s'", $1.char2);
-          $$ = 0.;
-        }
-        else
-          $$ = s.value[0];
-      }
-      else{
-        std::string struct_namespace($1.char1? $1.char1 : std::string("")),
-          struct_name($1.char2);
-        if(nameSpaces.getTag(struct_namespace, struct_name, $$)) {
-          yymsg(0, "Unknown Constant: %s", struct_name.c_str());
-        }
-      }
-      Free($1.char1); Free($1.char2);
+      $$ = treat_Struct_FullName_Float($1.char1, $1.char2);
     }
   | String__Index '[' FExpr ']'
     {
@@ -4779,30 +4768,19 @@ FExpr_Single :
     }
   | tExists '(' Struct_FullName ')'
     {
-      if(gmsh_yysymbols.count($3.char2) || gmsh_yystringsymbols.count($3.char2)){
-        $$ = 1;
-      }
-      else{
-        std::string struct_namespace($3.char1? $3.char1 : std::string("")),
-          struct_name($3.char2);
-        $$ = (nameSpaces.getTag(struct_namespace, struct_name, $$))? 0 : 1;
-      }
-      Free($3.char1); Free($3.char2);
+      $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 0., 1);
     }
   | tExists '(' Struct_FullName '.' tSTRING_Member_Float ')'
     {
-      std::string struct_namespace($3.char1? $3.char1 : std::string("")),
-        struct_name($3.char2);
-      Free($3.char1); Free($3.char2);
-      std::string key_member($5);
-      $$ = (nameSpaces.getMember
-            (struct_namespace, struct_name, key_member, $$))? 0 : 1;
-      if (!$$) {
-        const std::string * out_dummy = NULL;
-        $$ = (nameSpaces.getMember
-              (struct_namespace, struct_name, key_member, out_dummy))? 0 : 1;
-      }
-      if (flag_tSTRING_alloc) Free($5);
+      $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, 0., 1);
+    }
+  | tGetForced '(' Struct_FullName GetForced_Default ')'
+    {
+      $$ = treat_Struct_FullName_Float($3.char1, $3.char2, $4, 2);
+    }
+  | tGetForced '(' Struct_FullName '.' tSTRING_Member_Float GetForced_Default ')'
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, $6, 2);
     }
   | tFileExists '(' StringExpr ')'
     {
@@ -4914,24 +4892,6 @@ FExpr_Single :
   | String__Index '.' tSTRING_Member_Float
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3);
-      /*
-      std::string struct_namespace($1.char1? $1.char1 : std::string("")),
-        struct_name($1.char2);
-      std::string key_member($3);
-      switch (nameSpaces.getMember
-              (struct_namespace, struct_name, key_member, $$)) {
-      case 0:
-        break;
-      case 1:
-        NumberOption(GMSH_GET, $1.char2, 0, $3, $$);
-        break;
-      case 2:
-        yymsg(0, "Unknown member '%s' of Struct %s", $3, struct_name.c_str());
-        break;
-      }
-      Free($1.char1); Free($1.char2);
-      if (flag_tSTRING_alloc) Free($3);
-      */
     }
   | String__Index tSCOPE String__Index '.' tSTRING_Member_Float
     {
@@ -5024,6 +4984,19 @@ FExpr_Single :
     }
 ;
 
+GetForced_Default :
+    // none
+    { $$ = 0.; }
+  | ',' FExpr
+    { $$ = $2;}
+;
+
+GetForcedStr_Default :
+    // none
+    { $$ = NULL; }
+  | ',' StringExprVar
+    { $$ = $2;}
+;
 
 DefineStruct :
     tDefineStruct Struct_FullName AppendOrNot
@@ -5607,16 +5580,8 @@ StringExprVar :
     }
   | String__Index
     {
-      std::string val;
-      if(!gmsh_yystringsymbols.count($1))
-        yymsg(0, "Unknown string variable '%s'", $1);
-      else if(gmsh_yystringsymbols[$1].size() == 1)
-        val = gmsh_yystringsymbols[$1][0];
-      else
-        yymsg(0, "Expected single valued string variable '%s'", $1);
-      $$ = (char *)Malloc((val.size() + 1) * sizeof(char));
-      strcpy($$, val.c_str());
-      Free($1);
+      // No need to extend to Struct_FullName (a Tag is not a String)
+      $$ = treat_Struct_FullName_String(NULL, $1);
     }
   | String__Index '[' FExpr ']'
     {
@@ -5652,34 +5617,11 @@ StringExprVar :
   | String__Index '.' tSTRING_Member_Float
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String(NULL, $1, $3);
-      /*
-      std::string out;
-      std::string struct_namespace($1.char1? $1.char1 : std::string("")),
-        struct_name($1.char2);
-      std::string key_member($3);
-      const std::string * out = NULL;
-      std::string out_tmp; // PD: we should avoid that -> StringOption() to be changed
-      switch (nameSpaces.getMember
-              (struct_namespace, struct_name, key_member, out)) {
-      case 0:
-        break;
-      case 1:
-        StringOption(GMSH_GET, $1, 0, $3, out_tmp);
-        out = &out_tmp;
-        break;
-      case 2:
-        yymsg(0, "Unknown member '%s' of Struct %s", $3, struct_name.c_str());
-        break;
-      }
-      char* out_c = (char*)Malloc((out->size() + 1) * sizeof(char));
-      strcpy(out_c, out->c_str());
-      Free($1.char1); Free($1.char2);
-      if (flag_tSTRING_alloc) Free(c3);
-      */
     }
   | String__Index tSCOPE String__Index '.' tSTRING_Member_Float
-    { $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5); }
-
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5);
+    }
 
   | String__Index '[' FExpr ']' '.' tSTRING
     {
@@ -5779,6 +5721,18 @@ StringExpr :
       Free($3);
       Free($5);
     }
+
+    //+++ No need to extend to Struct_FullName (a Tag is not a String), but...
+  | tGetForcedStr '(' Struct_FullName GetForcedStr_Default ')'
+    {
+      $$ = treat_Struct_FullName_String(NULL, $3.char2, $4, 2);
+    }
+
+  | tGetForcedStr '(' Struct_FullName '.' tSTRING_Member_Float GetForcedStr_Default ')'
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_String($3.char1, $3.char2, $5, $6, 2);
+    }
+
   | tStrCat LP RecursiveListOfStringExprVar RP
     {
       int size = 1;
@@ -6028,6 +5982,14 @@ StringIndex :
       Free($1);
     }
 
+  | tStringToName '[' StringExprVar ']' '~' '{' FExpr '}'
+    {
+      char tmpstr[256];
+      sprintf(tmpstr, "_%d", (int)$7);
+      $$ = (char *)Malloc((strlen($3)+strlen(tmpstr)+1)*sizeof(char));
+      strcpy($$, $3); strcat($$, tmpstr);
+      Free($3);
+    }
  ;
 
 String__Index :
@@ -6727,25 +6689,64 @@ int NEWPHYSICAL()
     return (GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1);
 }
 
-double treat_Struct_FullName_dot_tSTRING_Float(char* c1, char* c2, char* c3)
+
+double treat_Struct_FullName_Float
+(char* c1, char* c2, double val_default, int type_treat)
 {
   double out;
-  std::string struct_namespace(c1? c1 : std::string("")),
-    struct_name(c2);
-  /*
-    std::string struct_namespace($1.char1? $1.char1 : std::string("")),
-      struct_name($1.char2);
-  */
+  if(!c1 && gmsh_yysymbols.count(c2)){
+    if (type_treat == 1) out = 1.; // Exists (type_treat == 1)
+    else { // Get (0) or GetForced (2)
+      gmsh_yysymbol &s(gmsh_yysymbols[c2]);
+      if(s.value.empty()){
+        out = val_default;
+        if (type_treat == 0) yymsg(0, "Uninitialized variable '%s'", c2);
+      }
+      else
+        out = s.value[0];
+    }
+  }
+  else if(!c1 && type_treat == 1 && gmsh_yystringsymbols.count(c2)) {
+    out = 1.;
+  }
+  else{
+    std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
+    if(nameSpaces.getTag(struct_namespace, struct_name, out)) {
+      out = val_default;
+      if (type_treat == 0) yymsg(0, "Unknown Constant: %s", struct_name.c_str());
+    }
+  }
+  Free(c1); Free(c2);
+  return out;
+}
+
+double treat_Struct_FullName_dot_tSTRING_Float
+(char* c1, char* c2, char* c3, double val_default, int type_treat)
+{
+  double out;
+  std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);
   switch (nameSpaces.getMember
           (struct_namespace, struct_name, key_member, out)) {
   case 0:
+    if (type_treat == 1) out = 1.; // Exists (type_treat == 1)
     break;
   case 1:
-    NumberOption(GMSH_GET, c2, 0, c3, out);
+    if (!NumberOption(GMSH_GET, c2, 0, c3, out, type_treat==0))
+      out = val_default;
     break;
   case 2:
-    yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
+    if (type_treat != 0) {
+      const std::string * out_dummy = NULL;
+      out = (nameSpaces.getMember
+             (struct_namespace, struct_name, key_member, out_dummy))?
+        val_default : 1.;
+    }
+    else {
+      out = val_default;
+      if (type_treat == 0)
+        yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
+    }
     break;
   }
   Free(c1); Free(c2);
@@ -6753,30 +6754,58 @@ double treat_Struct_FullName_dot_tSTRING_Float(char* c1, char* c2, char* c3)
   return out;
 }
 
-char* treat_Struct_FullName_dot_tSTRING_String(char* c1, char* c2, char* c3)
+char * treat_Struct_FullName_String
+(char* c1, char* c2, char * val_default, int type_treat)
 {
-  std::string struct_namespace(c1? c1 : std::string("")),
-    struct_name(c2);
-  /*
-  std::string struct_namespace($1.char1? $1.char1 : std::string("")),
-    struct_name($1.char2);
-  */
-  std::string key_member(c3);
+  std::string string_default(val_default? val_default : std::string(""));
+  const std::string * out = NULL;
+  std::string out_tmp;
+  if(!c1 && gmsh_yystringsymbols.count(c2)){
+    // Get (0) or GetForced (2)
+    if(gmsh_yystringsymbols[c2].size() != 1){
+      out = &string_default;
+      if (type_treat == 0)
+        yymsg(0, "Expected single valued string variable '%s'", c2);
+    }
+    else {
+      out_tmp = gmsh_yystringsymbols[c2][0];
+      out = &out_tmp;
+    }
+  }
+  else{
+    out = &string_default;
+    if (type_treat == 0) yymsg(0, "Unknown string variable '%s'", c2);
+  }
+  char* out_c = (char*)Malloc((out->size() + 1) * sizeof(char));
+  strcpy(out_c, out->c_str());
+  Free(c1); Free(c2);
+  return out_c;
+}
+
+char* treat_Struct_FullName_dot_tSTRING_String
+(char* c1, char* c2, char* c3, char * val_default, int type_treat)
+{
+  std::string string_default(val_default? val_default : std::string(""));
   const std::string * out = NULL;
   std::string out_tmp; // PD: we should avoid that -> StringOption() to be changed
+  std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
+  std::string key_member(c3);
   switch (nameSpaces.getMember
           (struct_namespace, struct_name, key_member, out)) {
   case 0:
     break;
   case 1:
-    StringOption(GMSH_GET, c2, 0, c3, out_tmp);
-    out = &out_tmp;
+    if (StringOption(GMSH_GET, c2, 0, c3, out_tmp, type_treat==0))
+      out = &out_tmp;
+    else
+      out = &string_default;
     break;
   case 2:
-    yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
+    out = &string_default;
+    if (type_treat == 0)
+      yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
     break;
   }
-
   char* out_c = (char*)Malloc((out->size() + 1) * sizeof(char));
   strcpy(out_c, out->c_str());
   Free(c1); Free(c2);
