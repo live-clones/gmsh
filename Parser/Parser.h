@@ -46,10 +46,10 @@ public:
              std::map<std::string, std::vector<std::string> > & copt,
              int member_ValMax)
   {
+    if (tag >= 0) _tag = tag;
+    _member_ValMax = member_ValMax;
     _fopt.insert(fopt.begin(), fopt.end());
     _copt.insert(copt.begin(), copt.end());
-    _member_ValMax = member_ValMax;
-    if (tag >= 0) _tag = tag;
     return _tag;
   }
 
@@ -213,10 +213,13 @@ public:
                 int & tag_out, int member_ValMax, bool append = false)
   {
     Structs * structs_P = &(*this)[key_namespace];
-    if (!append && structs_P->count(key_name)) {
-      tag_out = (*structs_P)[key_name].getTag();
-      return 1; // 1: Error: Redefinition of Struct
+    if (structs_P->count(key_name)) {
+      if (!append) {
+        tag_out = (*structs_P)[key_name].getTag();
+        return 1; // 1: Error: Redefinition of Struct
+      }
     }
+    else if (append) append = false; // non-existing Struct
     tag_out = structs_P->defStruct(key_name, fopt, copt, member_ValMax, append);
     return 0; // 0: no error
   }
