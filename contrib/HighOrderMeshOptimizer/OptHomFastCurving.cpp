@@ -49,6 +49,7 @@
 #include "BasisFactory.h"
 #include "MetaEl.h"
 #include "qualityMeasuresJacobian.h"
+#include "CADDistances.h"
 
 
 
@@ -673,11 +674,197 @@ void curveElement(const MetaEl &metaElt, std::set<MVertex*> &movedVert,
 
 
 
+double calcCADDistSq2D(GEntity *geomEnt, MElement *bndElt)
+{
+  const int nbVert = bndElt->getNumVertices();
+  const int nbPrimVert = bndElt->getNumPrimaryVertices();
+  const GradientBasis *gb = BasisFactory::getGradientBasis(FuncSpaceData(bndElt));
+
+  // Coordinates of nodes
+  fullMatrix<double> nodesXYZ(nbVert, 3);
+  for (int iV = 0; iV < nbVert; iV++) {
+    MVertex *vert = bndElt->getVertex(iV);
+    nodesXYZ(iV, 0) = vert->x();
+    nodesXYZ(iV, 1) = vert->y();
+    nodesXYZ(iV, 2) = vert->z();
+  }
+
+  // Compute distance
+  const GEdge *ge = geomEnt->cast2Edge();
+  const Range<double> parBounds = ge->parBounds(0);
+  std::vector<SVector3> tanCAD(nbVert);
+  for (int iV = 0; iV < nbVert; iV++) {
+    MVertex *vert = bndElt->getVertex(iV);
+    double tCAD;
+    if (vert->onWhat() == geomEnt)                                                       // If HO vertex, ...
+      vert->getParameter(0, tCAD);                                                       // ... get stored param. coord. (can be only line).
+    else {                                                                               // Otherwise, get param. coord. from CAD.
+      if (ge->getBeginVertex() &&
+          (ge->getBeginVertex()->mesh_vertices[0] == vert))
+        tCAD = parBounds.low();
+      else if (ge->getEndVertex() &&
+               (ge->getEndVertex()->mesh_vertices[0] == vert))
+        tCAD = parBounds.high();
+      else
+        tCAD = ge->parFromPoint(vert->point());
+    }
+    tanCAD[iV] = ge->firstDer(tCAD);                                                     // Compute tangent at vertex
+    tanCAD[iV].normalize();                                                              // Normalize tangent
+  }
+  return taylorDistanceSq1D(gb, nodesXYZ, tanCAD);
+}
+
+
+
+void optimizeCADDist2DP2(GEntity *geomEnt, std::vector<MVertex*> &baseVert)
+{
+  static const int NPTS = 1000;
+  MLine3 bndMetaElt(baseVert);
+  MVertex* &vert = baseVert[2];
+  const double xS = vert->x(), yS = vert->y();
+  const GEdge *ge = geomEnt->cast2Edge();
+  const Range<double> parBounds = ge->parBounds(0);
+  const double du = (parBounds.high()-parBounds.low())/double(NPTS-1);
+  double uMin = 0., distSqMin = 1e300;
+  double uDbg;
+  vert->getParameter(0, uDbg);
+  for (double u = parBounds.low(); u < parBounds.high(); u += du) {
+    vert->setParameter(0, u);
+    GPoint gp = ge->point(u);
+    vert->setXYZ(gp.x(), gp.y(), gp.z());
+    const double distSq = calcCADDistSq2D(geomEnt, &bndMetaElt);
+    if (distSq < distSqMin) { uMin = u; distSqMin = distSq; }
+  }
+  vert->setParameter(0, uMin);
+  GPoint gp = ge->point(uMin);
+  vert->setXYZ(gp.x(), gp.y(), gp.z());
+}
+
+
+
+// void calcCADDistSqAndGradients(int dim, GEntity *geomEnt, MElement *bndElt,
+//                                double &dist, std::vector<double> &gradDist)
+// {
+//   const int nbVert = bndElt->getNumVertices();
+//   const int nbPrimVert = bndElt->getNumPrimaryVertices();
+//   const GradientBasis *gb = BasisFactory::getGradientBasis(FuncSpaceData(bndElt));
+
+//   // Coordinates of nodes
+//   fullMatrix<double> nodesXYZ(nbVert, 3);
+//   for (int iV = 0; iV < nbVert; iV++) {
+//     MVertex *vert = bndElt->getVertex(iV);
+//     nodesXYZ(iV, 0) = vert->x();
+//     nodesXYZ(iV, 1) = vert->y();
+//     nodesXYZ(iV, 2) = vert->z();
+//   }
+
+//   // Compute distance and gradients
+//   if (dim == 2) {                                                                        // 2D
+//     const GEdge *ge = geomEnt->cast2Edge();
+//     const Range<double> parBounds = ge->parBounds(0);
+//     const double eps = 1.e-6 * (parBounds.high()-parBounds.low());
+//     std::vector<SVector3> tanCAD(nbVert);
+//     for (int iV = 0; iV < nbVert; iV++) {
+//       MVertex *vert = bndElt->getVertex(iV);
+//       double tCAD;
+//       if (iV >= nbPrimVert)                                                                // If HO vertex, ...
+//         vert->getParameter(0, tCAD);                                                       // ... get stored param. coord. (can be only line).
+//       else {                                                                               // Otherwise, get param. coord. from CAD.
+//         if (ge->getBeginVertex() &&
+//             (ge->getBeginVertex()->mesh_vertices[0] == vert))
+//           tCAD = parBounds.low();
+//         else if (ge->getEndVertex() &&
+//                  (ge->getEndVertex()->mesh_vertices[0] == vert))
+//           tCAD = parBounds.high();
+//         else
+//           tCAD = ge->parFromPoint(vert->point());
+//       }
+//       tanCAD[iV] = ge->firstDer(tCAD);                                                     // Compute tangent at vertex
+//       tanCAD[iV].normalize();                                                              // Normalize tangent
+//     }
+//     dist = taylorDistanceSq1D(gb, nodesXYZ, tanCAD);
+//     for (int iV = nbPrimVert; iV < nbVert; iV++) {
+//       const double xS = nodesXYZ(iV, 0), yS = nodesXYZ(iV, 1),
+//                    zS = nodesXYZ(iV, 2);                                                  // Save coord. of perturbed node for FD
+//       const SVector3 tanCADS = tanCAD[iV];                                                // Save tangent to CAD at perturbed node
+//       double tCAD;
+//       bndElt->getVertex(iV)->getParameter(0, tCAD);
+//       tCAD += eps;                                                                        // New param. coord. of perturbed node
+//       GPoint gp = ge->point(tCAD);                                                        // New coord. of perturbed node
+//       nodesXYZ(iV, 0) = gp.x();
+//       nodesXYZ(iV, 1) = gp.y();
+//       nodesXYZ(iV, 2) = gp.z();
+//       tanCAD[iV] = ge->firstDer(tCAD);                                                    // New tangent to CAD at perturbed node
+//       tanCAD[iV].normalize();                                                             // Normalize new tangent
+//       const double sDistDiff = taylorDistanceSq1D(gb, nodesXYZ, tanCAD);                  // Compute distance with perturbed node
+//       gradDist[iV-nbPrimVert] = (sDistDiff-dist) / eps;                       // Compute gradient
+//       nodesXYZ(iV, 0) = xS; nodesXYZ(iV, 1) = yS; nodesXYZ(iV, 2) = zS;                   // Restore coord. of perturbed node
+//       tanCAD[iV] = tanCADS;                                                               // Restore tan. to CAD at perturbed node
+//     }
+//   }
+//   else {                                                                                  // 3D
+//     const GFace *gf = geomEnt->cast2Face();
+//     const Range<double> parBounds0 = gf->parBounds(0), parBounds1 = gf->parBounds(1);
+//     const double eps0 = 1.e-6 * (parBounds0.high()-parBounds0.low());
+//     const double eps1 = 1.e-6 * (parBounds1.high()-parBounds1.low());
+//     std::vector<SVector3> normCAD(nbVert);
+//     for (int iV = 0; iV < nbVert; iV++) {
+//       MVertex *vert = bndElt->getVertex(iV);
+//       SPoint2 pCAD;
+//       if (iV >= nbPrimVert) {                                                               // If HO vertex, get parameters
+//         vert->getParameter(0, pCAD[0]);
+//         vert->getParameter(1, pCAD[1]);
+//       }
+//       else
+//         reparamMeshVertexOnFace(vert, gf, pCAD);                                          // If not free vertex, reparametrize on surface
+//       normCAD[iV] = gf->normal(pCAD);                                                     // Compute normal at vertex
+//       normCAD[iV].normalize();                                                            // Normalize normal
+//     }
+//     dist = taylorDistanceSq2D(gb, nodesXYZ, normCAD);
+//     for (int iV = nbPrimVert; iV < nbVert; iV++) {
+//       MVertex *vert = bndElt->getVertex(iV);
+//       const double xS = nodesXYZ(iV, 0), yS = nodesXYZ(iV, 1),
+//                    zS = nodesXYZ(iV, 2);                                                  // Save coord. of perturbed node for FD
+//       const SVector3 normCADS = normCAD[iV];                                              // Save normal to CAD at perturbed node
+//       SPoint2 pCAD0;                                                                      // New param. coord. of perturbed node in 1st dir.
+//       vert->getParameter(0, pCAD0[0]);
+//       pCAD0 += eps0;
+//       vert->getParameter(1, pCAD0[1]);
+//       GPoint gp0 = gf->point(pCAD0);                                                    // New coord. of perturbed node in 1st dir.
+//       nodesXYZ(iV, 0) = gp0.x();
+//       nodesXYZ(iV, 1) = gp0.y();
+//       nodesXYZ(iV, 2) = gp0.z();
+//       normCAD[iV] = gf->normal(pCAD0);                                                  // New normal to CAD at perturbed node in 1st dir.
+//       normCAD[iV].normalize();                                                          // Normalize new normal
+//       const double sDistDiff0 = taylorDistanceSq2D(gb, nodesXYZ, normCAD);              // Compute distance with perturbed node in 1st dir.
+//       gradDist[2*(iV-nbPrimVert)] = (sDistDiff0-dist) / eps0;                           // Compute gradient in 1st dir.
+//       SPoint2 pCAD1;                                                                    // New param. coord. of perturbed node in 2nd dir.
+//       vert->getParameter(0, pCAD1[0]);
+//       vert->getParameter(1, pCAD1[1]);
+//       pCAD1 += eps1;
+//       GPoint gp1 = gf->point(pCAD1);                                                    // New coord. of perturbed node in 2nd dir.
+//       nodesXYZ(iV, 0) = gp1.x();
+//       nodesXYZ(iV, 1) = gp1.y();
+//       nodesXYZ(iV, 2) = gp1.z();
+//       normCAD[iV] = gf->normal(pCAD1);                                                   // New normal to CAD at perturbed node in 2nd dir.
+//       normCAD[iV].normalize();                                                           // Normalize new normal
+//       double sDistDiff1 = taylorDistanceSq2D(gb, nodesXYZ, normCAD);                     // Compute distance with perturbed node in 2nd dir.
+//       gradDist[2*(iV-nbPrimVert)+1] = (sDistDiff1-dist) / eps1;                          // Compute gradient in 2nd dir.
+//       nodesXYZ(iV, 0) = xS;                                                              // Restore coord. of perturbed node
+//       nodesXYZ(iV, 1) = yS;
+//       nodesXYZ(iV, 2) = zS;
+//       normCAD[iV] = normCADS;                                                            // Restore tan. to CAD at perturbed node
+//     }
+//   }
+// }
+
+
+
 double curveAndMeasureAboveEl(MetaEl &metaElt, MElement *lastElt,
                               MElement *aboveElt, double deformFact)
 {
   double minJacDet, maxJacDet;
-  metaElt.curveTop(deformFact);
+  metaElt.setCurvedTop(deformFact);
   std::set<MVertex*> movedVertDum;
   curveElement(metaElt, movedVertDum, lastElt);
   jacobianBasedQuality::minMaxJacobianDeterminant(aboveElt, minJacDet, maxJacDet);
@@ -686,44 +873,53 @@ double curveAndMeasureAboveEl(MetaEl &metaElt, MElement *lastElt,
 
 
 
-void curveColumn(int metaElType, const std::vector<MVertex*> &baseVert,
+void curveColumn(GEntity *geomEnt, int metaElType,
+                 std::vector<MVertex*> &baseVert,
                  const std::vector<MVertex*> &topPrimVert, MElement *aboveElt,
                  std::vector<MElement*> &blob, std::set<MVertex*> &movedVert,
                  DbgOutputMeta &dbgOut)
 {
-  static const double MINQUAL = 0.1, TOL = 0.01, MAXITER = 10;
+  static const double MINQUAL = 0.01, TOL = 0.01, MAXITER = 10;
+
+  // Order
+  const int order = blob[0]->getPolynomialOrder();
+
+  // If 2D P2, modify base vertices to minimize distance between wall edge and CAD
+  if ((metaElType == TYPE_QUA) &&
+      (blob[0]->getPolynomialOrder() == 2)) {
+    optimizeCADDist2DP2(geomEnt, baseVert);
+  }
 
   // Create meta-element
-  int order = blob[0]->getPolynomialOrder();
   MetaEl metaElt(metaElType, order, baseVert, topPrimVert);
   
   // Curve top face of meta-element while avoiding breaking the element above
-  MElement* &lastElt = blob.back();
-  // std::cout << "DBGTT: lastElt = " << lastElt->getNum() << ", aboveElt " << aboveElt->getNum() << " min. SJ: " << aboveElt->minScaledJacobian();
-  double minJacDet, maxJacDet;
-  double deformMin = 0., qualDeformMin = 1.;
-  double deformMax = 1.;
-  double qualDeformMax = curveAndMeasureAboveEl(metaElt, lastElt, aboveElt,
-                                                deformMax);
-  if (qualDeformMax < MINQUAL) {                                                // Max deformation makes element above invalid
-    for (int iter = 0; iter < MAXITER; iter++) {                                // Bisection to find max. deformation that makes element above valid
-      const double deformMid = 0.5 * (deformMin + deformMax);
-      const double qualDeformMid = curveAndMeasureAboveEl(metaElt, lastElt,
-                                                          aboveElt, deformMid);
-      if (std::abs(deformMax-deformMin) < TOL) break;
-      const bool signDeformMax = (qualDeformMax < MINQUAL);
-      const bool signDeformMid = (qualDeformMid < MINQUAL);
-      if (signDeformMid == signDeformMax) deformMax = deformMid;
-      else deformMin = deformMid;
-    }
-  }
-  for (int iV = 0; iV < lastElt->getNumVertices(); iV++)
-    movedVert.insert(lastElt->getVertex(iV));
-  // std::cout << " -> " << aboveElt->minScaledJacobian() << "\n";
+  // MElement* &lastElt = blob.back();
+  // double minJacDet, maxJacDet;
+  // double deformMin = 0., qualDeformMin = 1.;
+  // double deformMax = 1.;
+  // double qualDeformMax = curveAndMeasureAboveEl(metaElt, lastElt, aboveElt,
+  //                                               deformMax);
+  // if (qualDeformMax < MINQUAL) {                                                // Max deformation makes element above invalid
+  //   for (int iter = 0; iter < MAXITER; iter++) {                                // Bisection to find max. deformation that makes element above valid
+  //     const double deformMid = 0.5 * (deformMin + deformMax);
+  //     const double qualDeformMid = curveAndMeasureAboveEl(metaElt, lastElt,
+  //                                                         aboveElt, deformMid);
+  //     if (std::abs(deformMax-deformMin) < TOL) break;
+  //     const bool signDeformMax = (qualDeformMax < MINQUAL);
+  //     const bool signDeformMid = (qualDeformMid < MINQUAL);
+  //     if (signDeformMid == signDeformMax) deformMax = deformMid;
+  //     else deformMin = deformMid;
+  //   }
+  //   metaElt.setFlatTop();
+  // }
+  // for (int iV = 0; iV < lastElt->getNumVertices(); iV++)
+  //   movedVert.insert(lastElt->getVertex(iV));
 
   dbgOut.addMetaEl(metaElt);
 
-  for (int iEl = 0; iEl < blob.size()-1; iEl++)
+  for (int iEl = 0; iEl < blob.size(); iEl++)
+  // for (int iEl = 0; iEl < blob.size()-1; iEl++)
     curveElement(metaElt, movedVert, blob[iEl]);
 }
 
@@ -754,7 +950,7 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
 
   std::set<MVertex*> movedVert;
   for(std::list<MElement*>::iterator itBE = bndEl.begin();
-      itBE != bndEl.end(); itBE++) {   // Loop over bnd. elements
+      itBE != bndEl.end(); itBE++) {                                            // Loop over bnd. elements
     const int bndType = (*itBE)->getType();
     int metaElType;
     bool foundCol;
@@ -790,8 +986,8 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
     DbgOutputCol dbgOutCol;
     dbgOutCol.addBlob(blob);
     dbgOutCol.write("col_KO", (*itBE)->getNum());
-    curveColumn(metaElType, baseVert, topPrimVert, aboveElt, blob, movedVert,
-                dbgOut);
+    curveColumn(bndEnt, metaElType, baseVert, topPrimVert, aboveElt, blob,
+                movedVert, dbgOut);
     dbgOutCol.write("col_OK", (*itBE)->getNum());
   }
 

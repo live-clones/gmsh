@@ -37,9 +37,11 @@ class MetaEl
 {
 public:
   MetaEl(int type, int order, const std::vector<MVertex*> &baseVert,
-          const std::vector<MVertex*> &topPrimVert);
+         const std::vector<MVertex*> &topPrimVert);
   ~MetaEl();
-  void curveTop(double factor);
+  void placeOtherNodes();
+  void setCurvedTop(double factor);
+  void setFlatTop();
   bool isOK() const { return _metaEl; }
   bool isPointIn(const SPoint3 p) const;
   bool straightToCurved(double *xyzS, double *xyzC) const;
@@ -57,9 +59,12 @@ public:
 
 private:
   struct metaInfoType {
-    int nbVert;
+    int dim, nbVert;
     fullMatrix<double> points;
-    std::vector<int> baseInd, topInd, edgeInd, otherInd;
+    fullMatrix<double> baseLinShapeFuncVal, baseGradShapeFuncVal;
+    const nodalBasis *baseFaceBasis, *linBaseFaceBasis;
+    std::vector<int> baseInd, topInd, freeTopInd, edgeInd, otherInd;
+    std::vector<int> freeTop2Base, other2Base, other2Top;
     metaInfoType(int type, int order);
   };
   static std::map<int, metaInfoType> _metaInfo;
@@ -67,8 +72,13 @@ private:
   const metaInfoType &_mInfo;
   std::vector<MVertex*> _metaVert;
   MElement *_metaEl, *_metaEl0;
+  std::vector<SVector3> _baseNorm;
 
   const metaInfoType &getMetaInfo(int elType, int order);
+  void computeBaseNorm(const SVector3 &metaNorm,
+                       const std::vector<MVertex*> &baseVert,
+                       const std::vector<MVertex*> &topPrimVert,
+                       std::vector<SVector3> &baseNorm);
 };
 
 #endif  // _METAEL_H_
