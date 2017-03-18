@@ -269,6 +269,18 @@ void GRegion::writeGEO(FILE *fp)
     fprintf(fp, "Volume(%d) = {%d};\n", tag(), tag());
   }
 
+  for(std::list<GFace*>::iterator it = embedded_faces.begin();
+      it != embedded_faces.end(); it++)
+    fprintf(fp, "Surface {%d} In Volume {%d};\n", (*it)->tag(), tag());
+
+  for(std::list<GEdge*>::iterator it = embedded_edges.begin();
+      it != embedded_edges.end(); it++)
+    fprintf(fp, "Line {%d} In Volume {%d};\n", (*it)->tag(), tag());
+
+  for(std::list<GVertex*>::iterator it = embedded_vertices.begin();
+      it != embedded_vertices.end(); it++)
+    fprintf(fp, "Point {%d} In Volume {%d};\n", (*it)->tag(), tag());
+
   if(meshAttributes.method == MESH_TRANSFINITE){
     fprintf(fp, "Transfinite Volume {%d}", tag());
     if(meshAttributes.corners.size()){
