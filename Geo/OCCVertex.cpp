@@ -14,6 +14,7 @@
 #if defined(HAVE_OCC)
 
 #include "GModelIO_OCC.h"
+#include "gp_Pnt.hxx"
 
 OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex v, double lc)
   : GVertex(m, num, lc), _v(v)
