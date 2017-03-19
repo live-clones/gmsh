@@ -22,6 +22,7 @@
 #include "fullMatrix.h"
 #include "BasisFactory.h"
 #include "MVertexRTree.h"
+#include "OptHomFastCurving.h"
 
 #include <sstream>
 
@@ -1634,6 +1635,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
     Msg::ProgressMeter(++counter, nTot, false, msg);
     if (onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, linear, incomplete, nPts);
+    if ((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();                    // Clear obsolete element data from BL data structures
   }
 
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
@@ -1641,6 +1643,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
     Msg::ProgressMeter(++counter, nTot, false, msg);
     if (onlyVisible && !(*it)->getVisibility())continue;
     setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, linear, incomplete, nPts);
+    if ((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();                    // Clear obsolete element data from BL data structures
   }
 
   // Update all high order vertices
@@ -1650,6 +1653,18 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
     updateHighOrderVertices(*it, newHOVert[*it], onlyVisible);
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     updateHighOrderVertices(*it, newHOVert[*it], onlyVisible);
+
+  // Determine mesh dimension and curve BL elements
+  FastCurvingParameters p;
+  p.useBLData = true;
+  p.dim = 0;
+  for (GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
+    if ((*it)->getNumMeshElements() > 0) { p.dim = 3; break; }
+  if (p.dim == 0)
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
+        if ((*it)->getNumMeshElements() > 0) { p.dim = 2; break; }
+  if (p.dim > 0)
+    HighOrderMeshFastCurving(GModel::current(), p);
 
   updatePeriodicEdgesAndFaces(m);
 

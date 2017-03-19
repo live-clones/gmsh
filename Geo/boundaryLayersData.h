@@ -72,6 +72,10 @@ public:
     _elemColumns.clear();
     _fans.clear();
   }
+  void clearElementData () {
+    _toFirst.clear();
+    _elemColumns.clear();
+  }
 
   iter begin() { return _data.begin(); }
   iter end() { return _data.end(); }
