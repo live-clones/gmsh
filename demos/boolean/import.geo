@@ -18,7 +18,7 @@ If(sph)
   b() += 3;
 EndIf
 
-r() = BooleanFragments{ Volume{a(0)}; Delete; }{ Volume{b()}; Delete; };
+r() = BooleanFragments{ Volume{a()}; Delete; }{ Volume{b()}; Delete; };
 
 Recursive Color SteelBlue { Volume{r()}; }
 

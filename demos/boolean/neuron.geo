@@ -20,9 +20,8 @@ Macro dendrite
       Circle(numc+4) = {nump+5,nump+1,nump+2};
       Line Loop(numw+1) = {numc+1:numc+4};
     Else // single periodic surface
-      Disk(numw+1) = {x,y,z, r};
-      Line Loop(numw+1) = Boundary{ Surface{numw+1}; };
-      Delete { Surface{numw+1}; }
+      Circle(numw+1) = {x,y,z, r};
+      Line Loop(numw+1) = numw+1;
     EndIf
     nump += 5;
     numc += 4;
