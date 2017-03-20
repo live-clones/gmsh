@@ -522,6 +522,8 @@ void GFace::computeMeanPlane(const std::vector<MVertex*> &points)
 
 void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
 {
+  if(points.empty()) return;
+
   // The concept of a mean plane computed in the sense of least
   // squares is fine for plane surfaces(!), but not really the best
   // one for non-plane surfaces. Indeed, imagine a quarter of a circle
