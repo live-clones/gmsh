@@ -588,6 +588,7 @@ public:
     oss << fNameBase << "_" << tag << ".msh";
     std::string fName = oss.str();
     FILE *fp = fopen(fName.c_str(), "w");
+    if(!fp) return;
     fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
     fprintf(fp, "$Nodes\n");
     fprintf(fp, "%d\n", point_.size());
@@ -632,6 +633,7 @@ public:
     oss << fNameBase << "_" << tag << ".msh";
     std::string fName = oss.str();
     FILE *fp = fopen(fName.c_str(), "w");
+    if(!fp) return;
     fprintf(fp, "$MeshFormat\n2.2 0 8\n$EndMeshFormat\n");
     fprintf(fp, "$Nodes\n");
     fprintf(fp, "%d\n", vert_.size());
