@@ -480,10 +480,11 @@ class AbsIntLessThan{
   }
 };
 
-void GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
+bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
                              std::vector<std::pair<int, int> > &outDimTags,
                              bool combined, bool oriented)
 {
+  bool ret = true;
   for(unsigned int i = 0; i < inDimTags.size(); i++){
     int dim = inDimTags[i].first;
     int tag = std::abs(inDimTags[i].second); // abs for backward compatibility
@@ -503,8 +504,10 @@ void GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
           outDimTags.push_back(std::pair<int, int>(2, t));
         }
       }
-      else
+      else{
         Msg::Error("Unknown model region with tag %d", tag);
+        ret = false;
+      }
     }
     else if(dim == 2){
       GFace *gf = getFaceByTag(tag);
@@ -521,8 +524,10 @@ void GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
           outDimTags.push_back(std::pair<int, int>(1, t));
         }
       }
-      else
+      else{
         Msg::Error("Unknown model face with tag %d", tag);
+        ret = false;
+      }
     }
     else if(dim == 1){
       GEdge *ge = getEdgeByTag(tag);
@@ -540,8 +545,10 @@ void GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
             outDimTags.push_back(std::pair<int, int>(0, ge->getEndVertex()->tag()));
         }
       }
-      else
+      else{
         Msg::Error("Unknown model edge with tag %d", tag);
+        ret = false;
+      }
     }
   }
 
@@ -566,6 +573,7 @@ void GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
         outDimTags.push_back(std::pair<int, int>(dim, *it));
     }
   }
+  return ret;
 }
 
 int GModel::getMaxElementaryNumber(int dim)

@@ -99,43 +99,44 @@ int GEO_Internals::getMaxTag(int dim) const
   }
 }
 
-void GEO_Internals::addVertex(int num, double x, double y, double z, double lc)
+bool GEO_Internals::addVertex(int num, double x, double y, double z, double lc)
 {
   if(FindPoint(num)){
     Msg::Error("GEO vertex with tag %d already exists", num);
-    return;
+    return false;
   }
   Vertex *v = CreateVertex(num, x, y, z, lc, 1.0);
   Tree_Add(Points, &v);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addVertex(int num, double x, double y, gmshSurface *surface,
+bool GEO_Internals::addVertex(int num, double x, double y, gmshSurface *surface,
                               double lc)
 {
   if(FindPoint(num)){
     Msg::Error("GEO vertex with tag %d already exists", num);
-    return;
+    return false;
   }
   Vertex *v = CreateVertex(num, x, y, surface, lc);
   Tree_Add(Points, &v);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addLine(int num, int startTag, int endTag)
+bool GEO_Internals::addLine(int num, int startTag, int endTag)
 {
   std::vector<int> points;
   points.push_back(startTag);
   points.push_back(endTag);
-  addLine(num, points);
-  _changed = true;
+  return addLine(num, points);
 }
 
-void GEO_Internals::addLine(int num, const std::vector<int> &vertexTags)
+bool GEO_Internals::addLine(int num, const std::vector<int> &vertexTags)
 {
   if(FindCurve(num)){
     Msg::Error("GEO edge with tag %d already exists", num);
-    return;
+    return false;
   }
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++){
@@ -147,14 +148,15 @@ void GEO_Internals::addLine(int num, const std::vector<int> &vertexTags)
   CreateReversedCurve(c);
   List_Delete(tmp);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addCircleArc(int num, int startTag, int centerTag, int endTag,
+bool GEO_Internals::addCircleArc(int num, int startTag, int centerTag, int endTag,
                                  double nx, double ny, double nz)
 {
   if(FindCurve(num)){
     Msg::Error("GEO edge with tag %d already exists", num);
-    return;
+    return false;
   }
   List_T *tmp = List_Create(3, 2, sizeof(int));
   List_Add(tmp, &startTag);
@@ -177,14 +179,15 @@ void GEO_Internals::addCircleArc(int num, int startTag, int centerTag, int endTa
   }
   List_Delete(tmp);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addEllipseArc(int num, int startTag, int centerTag, int majorTag,
+bool GEO_Internals::addEllipseArc(int num, int startTag, int centerTag, int majorTag,
                                   int endTag, double nx, double ny, double nz)
 {
   if(FindCurve(num)){
     Msg::Error("GEO edge with tag %d already exists", num);
-    return;
+    return false;
   }
   List_T *tmp = List_Create(3, 2, sizeof(int));
   List_Add(tmp, &startTag);
@@ -208,13 +211,14 @@ void GEO_Internals::addEllipseArc(int num, int startTag, int centerTag, int majo
   }
   List_Delete(tmp);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addSpline(int num, const std::vector<int> &vertexTags)
+bool GEO_Internals::addSpline(int num, const std::vector<int> &vertexTags)
 {
   if(FindCurve(num)){
     Msg::Error("GEO edge with tag %d already exists", num);
-    return;
+    return false;
   }
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++){
@@ -226,13 +230,14 @@ void GEO_Internals::addSpline(int num, const std::vector<int> &vertexTags)
   CreateReversedCurve(c);
   List_Delete(tmp);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addBSpline(int num, const std::vector<int> &vertexTags)
+bool GEO_Internals::addBSpline(int num, const std::vector<int> &vertexTags)
 {
   if(FindCurve(num)){
     Msg::Error("GEO edge with tag %d already exists", num);
-    return;
+    return false;
   }
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++){
@@ -244,13 +249,14 @@ void GEO_Internals::addBSpline(int num, const std::vector<int> &vertexTags)
   CreateReversedCurve(c);
   List_Delete(tmp);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addBezier(int num, const std::vector<int> &vertexTags)
+bool GEO_Internals::addBezier(int num, const std::vector<int> &vertexTags)
 {
   if(FindCurve(num)){
     Msg::Error("GEO edge with tag %d already exists", num);
-    return;
+    return false;
   }
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++){
@@ -262,14 +268,15 @@ void GEO_Internals::addBezier(int num, const std::vector<int> &vertexTags)
   CreateReversedCurve(c);
   List_Delete(tmp);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addNurbs(int num, const std::vector<int> &vertexTags,
+bool GEO_Internals::addNurbs(int num, const std::vector<int> &vertexTags,
                              const std::vector<double> &knots)
 {
   if(FindCurve(num)){
     Msg::Error("GEO edge with tag %d already exists", num);
-    return;
+    return false;
   }
   int order = knots.size() - vertexTags.size() - 1;
   List_T *tmp = List_Create(2, 2, sizeof(int));
@@ -287,13 +294,14 @@ void GEO_Internals::addNurbs(int num, const std::vector<int> &vertexTags,
   CreateReversedCurve(c);
   List_Delete(tmp);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addCompoundLine(int num, const std::vector<int> &edgeTags)
+bool GEO_Internals::addCompoundLine(int num, const std::vector<int> &edgeTags)
 {
   if(FindCurve(num)){
     Msg::Error("GEO edge with tag %d already exists", num);
-    return;
+    return false;
   }
 
   Curve *c = CreateCurve(num, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
@@ -302,13 +310,14 @@ void GEO_Internals::addCompoundLine(int num, const std::vector<int> &edgeTags)
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addLineLoop(int num, const std::vector<int> &edgeTags)
+bool GEO_Internals::addLineLoop(int num, const std::vector<int> &edgeTags)
 {
   if(FindEdgeLoop(num)){
     Msg::Error("GEO line loop with tag %d already exists", num);
-    return;
+    return false;
   }
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < edgeTags.size(); i++){
@@ -320,17 +329,18 @@ void GEO_Internals::addLineLoop(int num, const std::vector<int> &edgeTags)
   Tree_Add(EdgeLoops, &l);
   List_Delete(tmp);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addPlaneSurface(int num, const std::vector<int> &wireTags)
+bool GEO_Internals::addPlaneSurface(int num, const std::vector<int> &wireTags)
 {
   if(FindSurface(num)){
     Msg::Error("GEO face with tag %d already exists", num);
-    return;
+    return false;
   }
   if(wireTags.empty()){
     Msg::Error("Plane surface requires at least one line loop");
-    return;
+    return false;
   }
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < wireTags.size(); i++){
@@ -343,44 +353,48 @@ void GEO_Internals::addPlaneSurface(int num, const std::vector<int> &wireTags)
   EndSurface(s);
   Tree_Add(Surfaces, &s);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addDiscreteSurface(int num)
+bool GEO_Internals::addDiscreteSurface(int num)
 {
   if(FindSurface(num)){
     Msg::Error("GEO face with tag %d already exists", num);
-    return;
+    return false;
   }
   Surface *s = CreateSurface(num, MSH_SURF_DISCRETE);
   Tree_Add(Surfaces, &s);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addSurfaceFilling(int num, const std::vector<int> &wireTags,
+bool GEO_Internals::addSurfaceFilling(int num, const std::vector<int> &wireTags,
                                       int sphereCenterTag)
 {
   if(FindSurface(num)){
     Msg::Error("GEO face with tag %d already exists", num);
-    return;
+    return false;
   }
   if(wireTags.empty()){
     Msg::Error("Face requires at least one line loop");
-    return;
+    return false;
   }
   int ll = (int)std::abs(wireTags[0]);
   EdgeLoop *el = FindEdgeLoop(ll);
   if(!el){
     Msg::Error("Unknown line loop %d", ll);
-    return;
+    return false;
   }
   int j = List_Nbr(el->Curves), type = MSH_SURF_PLAN;
   if(j == 4)
     type = MSH_SURF_REGL;
   else if(j == 3)
     type = MSH_SURF_TRIC;
-  else
+  else{
     Msg::Error("Wrong definition of face %d: %d borders instead of 3 or 4",
                num, j);
+    return false;
+  }
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < wireTags.size(); i++){
     int t = wireTags[i];
@@ -392,19 +406,21 @@ void GEO_Internals::addSurfaceFilling(int num, const std::vector<int> &wireTags,
   EndSurface(s);
   if(sphereCenterTag >= 0){
     s->InSphereCenter = FindPoint(sphereCenterTag);
-    if(!s->InSphereCenter)
+    if(!s->InSphereCenter){
       Msg::Error("Unknown sphere center vertex %d", sphereCenterTag);
+    }
   }
   Tree_Add(Surfaces, &s);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addCompoundSurface(int num, const std::vector<int> &faceTags,
+bool GEO_Internals::addCompoundSurface(int num, const std::vector<int> &faceTags,
                                        std::vector<int> edgeTags[4])
 {
   if(FindSurface(num)){
     Msg::Error("GEO face with tag %d already exists", num);
-    return;
+    return false;
   }
 
   Surface *s = CreateSurface(num, MSH_SURF_COMPOUND);
@@ -416,13 +432,14 @@ void GEO_Internals::addCompoundSurface(int num, const std::vector<int> &faceTags
   SetSurfaceGeneratrices(s, 0);
   Tree_Add(Surfaces, &s);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addSurfaceLoop(int num, const std::vector<int> &faceTags)
+bool GEO_Internals::addSurfaceLoop(int num, const std::vector<int> &faceTags)
 {
   if(FindSurfaceLoop(num)){
     Msg::Error("GEO surface loop with tag %d already exists", num);
-    return;
+    return false;
   }
 
   List_T *tmp = List_Create(2, 2, sizeof(int));
@@ -434,13 +451,14 @@ void GEO_Internals::addSurfaceLoop(int num, const std::vector<int> &faceTags)
   Tree_Add(SurfaceLoops, &l);
   List_Delete(tmp);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addVolume(int num, const std::vector<int> &shellTags)
+bool GEO_Internals::addVolume(int num, const std::vector<int> &shellTags)
 {
   if(FindVolume(num)){
     Msg::Error("GEO region with tag %d already exists", num);
-    return;
+    return false;
   }
 
   List_T *tmp = List_Create(2, 2, sizeof(int));
@@ -453,22 +471,24 @@ void GEO_Internals::addVolume(int num, const std::vector<int> &shellTags)
   List_Delete(tmp);
   Tree_Add(Volumes, &v);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::addCompoundVolume(int num, const std::vector<int> &regionTags)
+bool GEO_Internals::addCompoundVolume(int num, const std::vector<int> &regionTags)
 {
   if(FindVolume(num)){
     Msg::Error("GEO region with tag %d already exists", num);
-    return;
+    return false;
   }
 
   Volume *v = CreateVolume(num, MSH_VOLUME_COMPOUND);
   v->compound = regionTags;
   Tree_Add(Volumes, &v);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::_extrude(int mode,
+bool GEO_Internals::_extrude(int mode,
                              const std::vector<std::pair<int, int> > &inDimTags,
                              double x, double y, double z,
                              double dx, double dy, double dz,
@@ -509,43 +529,48 @@ void GEO_Internals::_extrude(int mode,
     if(dim >= 0 && dim <= 3) outDimTags.push_back(std::pair<int, int>(dim, s.Num));
   }
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::extrude(const std::vector<std::pair<int, int> > &inDimTags,
+bool GEO_Internals::extrude(const std::vector<std::pair<int, int> > &inDimTags,
                             double dx, double dy, double dz,
                             std::vector<std::pair<int, int> > &outDimTags,
                             ExtrudeParams *e)
 {
-  _extrude(0, inDimTags, 0., 0., 0., dx, dy, dz, 0., 0., 0., 0., outDimTags, e);
+  return _extrude(0, inDimTags, 0., 0., 0., dx, dy, dz, 0., 0., 0., 0.,
+                  outDimTags, e);
 }
 
-void GEO_Internals::revolve(const std::vector<std::pair<int, int> > &inDimTags,
+bool GEO_Internals::revolve(const std::vector<std::pair<int, int> > &inDimTags,
                             double x, double y, double z,
                             double ax, double ay, double az, double angle,
                             std::vector<std::pair<int, int> > &outDimTags,
                             ExtrudeParams *e)
 {
-  _extrude(1, inDimTags, x, y, z, 0., 0., 0., ax, ay, az, angle, outDimTags, e);
+  return _extrude(1, inDimTags, x, y, z, 0., 0., 0., ax, ay, az, angle,
+                  outDimTags, e);
 }
 
-void GEO_Internals::twist(const std::vector<std::pair<int, int> > &inDimTags,
+bool GEO_Internals::twist(const std::vector<std::pair<int, int> > &inDimTags,
                           double x, double y, double z,
                           double dx, double dy, double dz,
                           double ax, double ay, double az, double angle,
                           std::vector<std::pair<int, int> > &outDimTags,
                           ExtrudeParams *e)
 {
-  _extrude(2, inDimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags, e);
+  return _extrude(2, inDimTags, x, y, z, dx, dy, dz, ax, ay, az, angle,
+                  outDimTags, e);
 }
 
-void GEO_Internals::boundaryLayer(const std::vector<std::pair<int, int> > &inDimTags,
+bool GEO_Internals::boundaryLayer(const std::vector<std::pair<int, int> > &inDimTags,
                                   std::vector<std::pair<int, int> > &outDimTags,
                                   ExtrudeParams *e)
 {
-  _extrude(3, inDimTags, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., outDimTags, e);
+  return _extrude(3, inDimTags, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+                  outDimTags, e);
 }
 
-void GEO_Internals::_transform(int mode,
+bool GEO_Internals::_transform(int mode,
                                const std::vector<std::pair<int, int> > &dimTags,
                                double x, double y, double z,
                                double dx, double dy, double dz,
@@ -568,35 +593,36 @@ void GEO_Internals::_transform(int mode,
   case 3: SymmetryShapes(a, b, c, d, list); break;
   }
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::translate(const std::vector<std::pair<int, int> > &dimTags,
+bool GEO_Internals::translate(const std::vector<std::pair<int, int> > &dimTags,
                               double dx, double dy, double dz)
 {
-  _transform(0, dimTags, 0, 0, 0, dx, dy, dz, 0, 0, 0, 0);
+  return _transform(0, dimTags, 0, 0, 0, dx, dy, dz, 0, 0, 0, 0);
 }
 
-void GEO_Internals::rotate(const std::vector<std::pair<int, int> > &dimTags,
+bool GEO_Internals::rotate(const std::vector<std::pair<int, int> > &dimTags,
                            double x, double y, double z,
                            double ax, double ay, double az, double angle)
 {
-  _transform(1, dimTags, x, y, z, ax, ay, az, angle, 0, 0, 0);
+  return _transform(1, dimTags, x, y, z, ax, ay, az, angle, 0, 0, 0);
 }
 
-void GEO_Internals::dilate(const std::vector<std::pair<int, int> > &dimTags,
+bool GEO_Internals::dilate(const std::vector<std::pair<int, int> > &dimTags,
                            double x, double y, double z,
                            double a, double b, double c)
 {
-  _transform(2, dimTags, x, y, z, 0, 0, 0, a, b, c, 0);
+  return _transform(2, dimTags, x, y, z, 0, 0, 0, a, b, c, 0);
 }
 
-void GEO_Internals::symmetry(const std::vector<std::pair<int, int> > &dimTags,
+bool GEO_Internals::symmetry(const std::vector<std::pair<int, int> > &dimTags,
                              double a, double b, double c, double d)
 {
-  _transform(3, dimTags, 0, 0, 0, 0, 0, 0, a, b, c, d);
+  return _transform(3, dimTags, 0, 0, 0, 0, 0, 0, a, b, c, d);
 }
 
-void GEO_Internals::splitCurve(int tag, const std::vector<int> &vertexTags,
+bool GEO_Internals::splitCurve(int tag, const std::vector<int> &vertexTags,
                                std::vector<int> &edgeTags)
 {
   List_T *tmp = List_Create(10, 10, sizeof(int));
@@ -614,9 +640,10 @@ void GEO_Internals::splitCurve(int tag, const std::vector<int> &vertexTags,
   List_Delete(tmp);
   List_Delete(curves);
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::intersectCurvesWithSurface(const std::vector<int> &edgeTags,
+bool GEO_Internals::intersectCurvesWithSurface(const std::vector<int> &edgeTags,
                                                int faceTag,
                                                std::vector<int> &vertexTags)
 {
@@ -635,14 +662,17 @@ void GEO_Internals::intersectCurvesWithSurface(const std::vector<int> &edgeTags,
     }
     else{
       Msg::Error("Degenerated curve-surface intersection not implemented");
+      return false;
     }
   }
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
+bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
                          std::vector<std::pair<int, int> > &outDimTags)
 {
+  bool ret = true;
   for(unsigned int i = 0; i < inDimTags.size(); i++){
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
@@ -650,6 +680,7 @@ void GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
       Vertex *v = FindPoint(tag);
       if(!v){
         Msg::Error("Unknown GEO vertex with tag %d", tag);
+        ret = false;
       }
       else{
         Vertex *newv = DuplicateVertex(v);
@@ -660,6 +691,7 @@ void GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
       Curve *c = FindCurve(tag);
       if(!c){
         Msg::Error("Unknown GEO curve with tag %d", tag);
+        ret = false;
       }
       else{
         Curve *newc = DuplicateCurve(c);
@@ -670,6 +702,7 @@ void GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
       Surface *s = FindSurface(tag);
       if(!s){
         Msg::Error("Unknown GEO surface with tag %d", tag);
+        ret = false;
       }
       else{
         Surface *news = DuplicateSurface(s);
@@ -680,6 +713,7 @@ void GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
       Volume *v = FindVolume(tag);
       if(!v){
         Msg::Error("Unknown GEO region with tag %d", tag);
+        ret = false;
       }
       else{
         Volume *newv = DuplicateVolume(v);
@@ -688,9 +722,10 @@ void GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
     }
   }
   _changed = true;
+  return ret;
 }
 
-void GEO_Internals::remove(int dim, int tag, bool recursive)
+bool GEO_Internals::remove(int dim, int tag, bool recursive)
 {
   switch(dim){
   case 0: DeletePoint(tag, recursive); break;
@@ -699,13 +734,15 @@ void GEO_Internals::remove(int dim, int tag, bool recursive)
   case 3: DeleteVolume(tag, recursive); break;
   }
   _changed = true;
+  return true;
 }
 
-void GEO_Internals::remove(const std::vector<std::pair<int, int> > &dimTags,
+bool GEO_Internals::remove(const std::vector<std::pair<int, int> > &dimTags,
                            bool recursive)
 {
   for(unsigned int i = 0; i < dimTags.size(); i++)
     remove(dimTags[i].first, dimTags[i].second, recursive);
+  return true;
 }
 
 void GEO_Internals::resetPhysicalGroups()
@@ -716,7 +753,7 @@ void GEO_Internals::resetPhysicalGroups()
   _changed = true;
 }
 
-void GEO_Internals::modifyPhysicalGroup(int dim, int num, int op,
+bool GEO_Internals::modifyPhysicalGroup(int dim, int num, int op,
                                         const std::vector<int> &tags)
 {
   int type;
@@ -726,15 +763,17 @@ void GEO_Internals::modifyPhysicalGroup(int dim, int num, int op,
   case 1: type = MSH_PHYSICAL_LINE; str = "line"; break;
   case 2: type = MSH_PHYSICAL_SURFACE; str = "surface"; break;
   case 3: type = MSH_PHYSICAL_VOLUME; str = "volume"; break;
-  default: return;
+  default: return false;
   }
 
   PhysicalGroup *p = FindPhysicalGroup(num, type);
   if(p && op == 0){
     Msg::Error("Physical %s %d already exists", str.c_str(), num);
+    return false;
   }
   else if(!p && op > 0){
     Msg::Error("Physical %s %d does not exist", str.c_str(), num);
+    return false;
   }
   else if(op == 0){
     List_T *tmp = List_Create(10, 10, sizeof(int));
@@ -768,8 +807,10 @@ void GEO_Internals::modifyPhysicalGroup(int dim, int num, int op,
   }
   else{
     Msg::Error("Unsupported operation on physical %s %d", str.c_str(), num);
+    return false;
   }
   _changed = true;
+  return true;
 }
 
 void GEO_Internals::removeAllDuplicates()
@@ -778,13 +819,13 @@ void GEO_Internals::removeAllDuplicates()
   _changed = true;
 }
 
-void GEO_Internals::mergeVertices(const std::vector<int> &tags)
+bool GEO_Internals::mergeVertices(const std::vector<int> &tags)
 {
-  if(tags.size() < 2) return;
+  if(tags.size() < 2) return true;
   Vertex *target = FindPoint(tags[0]);
   if(!target){
     Msg::Error("Could not find GEO vertex with tag %d", tags[0]);
-    return;
+    return false;
   }
 
   double x = target->Pos.X, y = target->Pos.Y, z = target->Pos.Z;
@@ -792,7 +833,7 @@ void GEO_Internals::mergeVertices(const std::vector<int> &tags)
     Vertex *source = FindPoint(tags[i]);
     if(!source){
       Msg::Error("Could not find GEO vertex with tag %d", tags[i]);
-      return;
+      return false;
     }
     source->Typ = target->Typ;
     source->Pos.X = x;
@@ -803,6 +844,7 @@ void GEO_Internals::mergeVertices(const std::vector<int> &tags)
   ExtrudeParams::normalsCoherence.push_back(SPoint3(x, y, z));
   ReplaceAllDuplicates();
   _changed = true;
+  return true;
 }
 
 void GEO_Internals::setCompoundMesh(int dim, const std::vector<int> &tags)

@@ -3687,7 +3687,7 @@ void SetSurfaceGeneratrices(Surface *s, List_T *loops)
     EdgeLoop *el;
     std::vector<int> fromModel;
     if(!(el = FindEdgeLoop(abs(iLoop)))) {
-      Msg::Error("Unknown line loop %d", iLoop);
+      Msg::Error("Unknown line loop %d in GEO face %d", iLoop, s->Num);
       List_Delete(s->Generatrices);
       s->Generatrices = NULL;
       return;

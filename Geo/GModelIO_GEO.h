@@ -25,11 +25,11 @@ class GEO_Internals{
   void _allocateAll();
   void _freeAll();
   bool _changed;
-  void _transform(int mode, const std::vector<std::pair<int, int> > &dimTags,
+  bool _transform(int mode, const std::vector<std::pair<int, int> > &dimTags,
                   double x, double y, double z,
                   double dx, double dy, double dz,
                   double a, double b, double c, double d);
-  void _extrude(int mode, const std::vector<std::pair<int, int> > &inDimTags,
+  bool _extrude(int mode, const std::vector<std::pair<int, int> > &inDimTags,
                 double x, double y, double z,
                 double dx, double dy, double dz,
                 double ax, double ay, double az, double angle,
@@ -49,83 +49,83 @@ class GEO_Internals{
   int getMaxTag(int dim) const;
 
   // add shapes
-  void addVertex(int num, double x, double y, double z, double lc);
-  void addVertex(int num, double x, double y, gmshSurface *s, double lc);
-  void addLine(int num, int startTag, int endTag);
-  void addLine(int num, const std::vector<int> &vertexTags);
-  void addCircleArc(int num, int startTag, int centerTag, int EndTag,
+  bool addVertex(int num, double x, double y, double z, double lc);
+  bool addVertex(int num, double x, double y, gmshSurface *s, double lc);
+  bool addLine(int num, int startTag, int endTag);
+  bool addLine(int num, const std::vector<int> &vertexTags);
+  bool addCircleArc(int num, int startTag, int centerTag, int EndTag,
                     double nx=0., double ny=0., double nz=0.);
-  void addEllipseArc(int num, int startTag, int centerTag, int majorTag,
+  bool addEllipseArc(int num, int startTag, int centerTag, int majorTag,
                      int endTag, double nx=0., double ny=0., double nz=0.);
-  void addSpline(int num, const std::vector<int> &vertexTags);
-  void addBSpline(int num, const std::vector<int> &vertexTags);
-  void addBezier(int num, const std::vector<int> &vertexTags);
-  void addNurbs(int num, const std::vector<int> &vertexTags,
+  bool addSpline(int num, const std::vector<int> &vertexTags);
+  bool addBSpline(int num, const std::vector<int> &vertexTags);
+  bool addBezier(int num, const std::vector<int> &vertexTags);
+  bool addNurbs(int num, const std::vector<int> &vertexTags,
                 const std::vector<double> &knots);
-  void addCompoundLine(int num, const std::vector<int> &edgeTags);
-  void addLineLoop(int num, const std::vector<int> &edgeTags);
-  void addPlaneSurface(int num, const std::vector<int> &wireTags);
-  void addDiscreteSurface(int num);
-  void addSurfaceFilling(int num, const std::vector<int> &wireTags,
+  bool addCompoundLine(int num, const std::vector<int> &edgeTags);
+  bool addLineLoop(int num, const std::vector<int> &edgeTags);
+  bool addPlaneSurface(int num, const std::vector<int> &wireTags);
+  bool addDiscreteSurface(int num);
+  bool addSurfaceFilling(int num, const std::vector<int> &wireTags,
                          int sphereCenterTag=-1);
-  void addSurfaceLoop(int num, const std::vector<int> &faceTags);
-  void addCompoundSurface(int num, const std::vector<int> &faceTags,
+  bool addSurfaceLoop(int num, const std::vector<int> &faceTags);
+  bool addCompoundSurface(int num, const std::vector<int> &faceTags,
                           std::vector<int> edgeTags[4]=0);
-  void addVolume(int num, const std::vector<int> &shellTags);
-  void addCompoundVolume(int num, const std::vector<int> &regionTags);
+  bool addVolume(int num, const std::vector<int> &shellTags);
+  bool addCompoundVolume(int num, const std::vector<int> &regionTags);
 
   // extrude and revolve
-  void extrude(const std::vector<std::pair<int, int> > &inDimTags,
+  bool extrude(const std::vector<std::pair<int, int> > &inDimTags,
                double dx, double dy, double dz,
                std::vector<std::pair<int, int> > &outDimTags,
                ExtrudeParams *e=0);
-  void revolve(const std::vector<std::pair<int, int> > &inDimTags,
+  bool revolve(const std::vector<std::pair<int, int> > &inDimTags,
                double x, double y, double z,
                double ax, double ay, double az, double angle,
                std::vector<std::pair<int, int> > &outDimTags,
                ExtrudeParams *e=0);
-  void twist(const std::vector<std::pair<int, int> > &inDimTags,
+  bool twist(const std::vector<std::pair<int, int> > &inDimTags,
              double x, double y, double z,
              double dx, double dy, double dz,
              double ax, double ay, double az, double angle,
              std::vector<std::pair<int, int> > &outDimTags,
              ExtrudeParams *e=0);
-  void boundaryLayer(const std::vector<std::pair<int, int> > &inDimTags,
+  bool boundaryLayer(const std::vector<std::pair<int, int> > &inDimTags,
                      std::vector<std::pair<int, int> > &outDimTags,
                      ExtrudeParams *e=0);
 
   // apply transformations
-  void translate(const std::vector<std::pair<int, int> > &dimTags,
+  bool translate(const std::vector<std::pair<int, int> > &dimTags,
                  double dx, double dy, double dz);
-  void rotate(const std::vector<std::pair<int, int> > &dimTags,
+  bool rotate(const std::vector<std::pair<int, int> > &dimTags,
               double x, double y, double z, double ax, double ay, double az,
               double angle);
-  void dilate(const std::vector<std::pair<int, int> > &dimTags,
+  bool dilate(const std::vector<std::pair<int, int> > &dimTags,
               double x, double y, double z, double a, double b, double c);
-  void symmetry(const std::vector<std::pair<int, int> > &dimTags,
+  bool symmetry(const std::vector<std::pair<int, int> > &dimTags,
                 double a, double b, double c, double d);
 
   // split entities
-  void splitCurve(int tag, const std::vector<int> &vertexTags,
+  bool splitCurve(int tag, const std::vector<int> &vertexTags,
                   std::vector<int> &edgeTags);
-  void intersectCurvesWithSurface(const std::vector<int> &edgeTags,
+  bool intersectCurvesWithSurface(const std::vector<int> &edgeTags,
                                   int faceTag, std::vector<int> &vertexTags);
 
   // copy and remove
-  void copy(const std::vector<std::pair<int, int> > &inDimTags,
+  bool copy(const std::vector<std::pair<int, int> > &inDimTags,
             std::vector<std::pair<int, int> > &outDimTags);
-  void remove(int dim, int tag, bool recursive=false);
-  void remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false);
+  bool remove(int dim, int tag, bool recursive=false);
+  bool remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false);
 
   // manipulate physical groups
   void resetPhysicalGroups();
-  void modifyPhysicalGroup(int dim, int num, int op, const std::vector<int> &tags);
+  bool modifyPhysicalGroup(int dim, int num, int op, const std::vector<int> &tags);
   int getMaxPhysicalTag() const { return _maxPhysicalNum; }
   void setMaxPhysicalTag(int val) { _maxPhysicalNum = val; }
 
   // coherence
   void removeAllDuplicates();
-  void mergeVertices(const std::vector<int> &tags);
+  bool mergeVertices(const std::vector<int> &tags);
 
   // set meshing constraints
   void setCompoundMesh(int dim, const std::vector<int> &tags);

@@ -291,7 +291,7 @@ class GModel {
                         int dim=-1) const;
 
   // get tags of entities of the boundary of the given input entities
-  void getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
+  bool getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
                        std::vector<std::pair<int, int> > &outDimTags,
                        bool combined, bool oriented=true);
 

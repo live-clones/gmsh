@@ -82,17 +82,17 @@ class OCC_Internals {
                   bool makesolids=false, double scaling=0.0);
 
   // apply a geometrical transformation
-  void _transform(const std::vector<std::pair<int, int> > &inDimTags,
+  bool _transform(const std::vector<std::pair<int, int> > &inDimTags,
                   BRepBuilderAPI_Transform *tfo);
 
   // add circle or ellipse arc
-  void _addArc(int tag, int startTag, int centerTag, int endTag, int mode);
+  bool _addArc(int tag, int startTag, int centerTag, int endTag, int mode);
 
   // add bezier or bspline
-  void _addSpline(int tag, const std::vector<int> &vertexTags, int mode);
+  bool _addSpline(int tag, const std::vector<int> &vertexTags, int mode);
 
   // apply extrusion-like operations
-  void _extrude(int mode, const std::vector<std::pair<int, int> > &inDimTags,
+  bool _extrude(int mode, const std::vector<std::pair<int, int> > &inDimTags,
                 double x, double y, double z, double dx, double dy, double dz,
                 double ax, double ay, double az, double angle, int wireTag,
                 std::vector<std::pair<int, int> > &outDimTags,
@@ -152,91 +152,91 @@ class OCC_Internals {
   int getMaxTag(int dim) const;
 
   // add shapes
-  void addVertex(int tag, double x, double y, double z, double meshSize=MAX_LC);
-  void addLine(int tag, int startTag, int endTag);
-  void addLine(int tag, const std::vector<int> &vertexTags);
-  void addCircleArc(int tag, int startTag, int centerTag, int endTag);
-  void addCircle(int tag, double x, double y, double z, double r, double angle1,
+  bool addVertex(int tag, double x, double y, double z, double meshSize=MAX_LC);
+  bool addLine(int tag, int startTag, int endTag);
+  bool addLine(int tag, const std::vector<int> &vertexTags);
+  bool addCircleArc(int tag, int startTag, int centerTag, int endTag);
+  bool addCircle(int tag, double x, double y, double z, double r, double angle1,
                  double angle2);
-  void addEllipseArc(int tag, int startTag, int centerTag, int endTag);
-  void addEllipse(int tag, double x, double y, double z, double r1, double r2,
+  bool addEllipseArc(int tag, int startTag, int centerTag, int endTag);
+  bool addEllipse(int tag, double x, double y, double z, double r1, double r2,
                   double angle1, double angle2);
-  void addBezier(int tag, const std::vector<int> &vertexTags);
-  void addBSpline(int tag, const std::vector<int> &vertexTags);
-  void addWire(int tag, const std::vector<int> &edgeTags, bool checkClosed);
-  void addLineLoop(int tag, const std::vector<int> &edgeTags);
-  void addRectangle(int tag, double x1, double y1, double z1,
+  bool addBezier(int tag, const std::vector<int> &vertexTags);
+  bool addBSpline(int tag, const std::vector<int> &vertexTags);
+  bool addWire(int tag, const std::vector<int> &edgeTags, bool checkClosed);
+  bool addLineLoop(int tag, const std::vector<int> &edgeTags);
+  bool addRectangle(int tag, double x1, double y1, double z1,
                     double x2, double y2, double z2, double roundedRadius=0.);
-  void addDisk(int tag, double xc, double yc, double zc, double rx, double ry);
-  void addPlaneSurface(int tag, const std::vector<int> &wireTags);
-  void addSurfaceFilling(int tag, int wireTag);
-  void addSurfaceLoop(int tag, const std::vector<int> &faceTags);
-  void addVolume(int tag, const std::vector<int> &shellTags);
-  void addSphere(int tag, double xc, double yc, double zc, double radius,
+  bool addDisk(int tag, double xc, double yc, double zc, double rx, double ry);
+  bool addPlaneSurface(int tag, const std::vector<int> &wireTags);
+  bool addSurfaceFilling(int tag, int wireTag);
+  bool addSurfaceLoop(int tag, const std::vector<int> &faceTags);
+  bool addVolume(int tag, const std::vector<int> &shellTags);
+  bool addSphere(int tag, double xc, double yc, double zc, double radius,
                  double angle1, double angle2, double angle3);
-  void addBlock(int tag, double x1, double y1, double z1,
+  bool addBlock(int tag, double x1, double y1, double z1,
                 double x2, double y2, double z2);
-  void addCylinder(int tag, double x1, double y1, double z1, double x2, double y2,
+  bool addCylinder(int tag, double x1, double y1, double z1, double x2, double y2,
                    double z2, double r, double angle);
-  void addCone(int tag, double x1, double y1, double z1, double x2, double y2,
+  bool addCone(int tag, double x1, double y1, double z1, double x2, double y2,
                double z2, double r1, double r2, double angle);
-  void addWedge(int tag, double x, double y, double z, double dx, double dy,
+  bool addWedge(int tag, double x, double y, double z, double dx, double dy,
                 double dz, double ltx);
-  void addTorus(int tag, double x, double y, double z, double r1, double r2,
+  bool addTorus(int tag, double x, double y, double z, double r1, double r2,
                 double angle);
-  void addThruSections(int tag, const std::vector<int> &wireTags,
+  bool addThruSections(int tag, const std::vector<int> &wireTags,
                        std::vector<std::pair<int, int> > &outDimTags,
                        bool makeSolid, bool makeRuled);
-  void addThickSolid(int tag, int solidTag, const std::vector<int> &excludeFaceTags,
+  bool addThickSolid(int tag, int solidTag, const std::vector<int> &excludeFaceTags,
                      double offset);
 
   // extrude and revolve
-  void extrude(const std::vector<std::pair<int, int> > &inDimTags,
+  bool extrude(const std::vector<std::pair<int, int> > &inDimTags,
                double dx, double dy, double dz,
                std::vector<std::pair<int, int> > &outDimTags,
                ExtrudeParams *e=0);
-  void revolve(const std::vector<std::pair<int, int> > &inDimTags,
+  bool revolve(const std::vector<std::pair<int, int> > &inDimTags,
                double x, double y, double z, double ax, double ay, double az,
                double angle, std::vector<std::pair<int, int> > &outDimTags,
                ExtrudeParams *e=0);
-  void addPipe(const std::vector<std::pair<int, int> > &inDimTags, int wireTag,
+  bool addPipe(const std::vector<std::pair<int, int> > &inDimTags, int wireTag,
                std::vector<std::pair<int, int> > &outDimTags);
 
   // fillet
-  void fillet(const std::vector<int> &regionTags, const std::vector<int> &edgeTags,
+  bool fillet(const std::vector<int> &regionTags, const std::vector<int> &edgeTags,
               double radius, std::vector<std::pair<int, int> > &ouDimTags);
 
   // apply boolean operator
-  void applyBooleanOperator(int tag, BooleanOperator op,
+  bool applyBooleanOperator(int tag, BooleanOperator op,
                             const std::vector<std::pair<int, int> > &objectDimTags,
                             const std::vector<std::pair<int, int> > &toolDimTags,
                             std::vector<std::pair<int, int> > &outDimTags,
                             bool removeObject, bool removeTool);
 
   // apply transformations
-  void translate(const std::vector<std::pair<int, int> > &inDimTags,
+  bool translate(const std::vector<std::pair<int, int> > &inDimTags,
                  double dx, double dy, double dz);
-  void rotate(const std::vector<std::pair<int, int> > &inDimTags,
+  bool rotate(const std::vector<std::pair<int, int> > &inDimTags,
               double x, double y, double z, double ax, double ay, double az,
               double angle);
 
   // copy and remove
-  void copy(const std::vector<std::pair<int, int> > &inDimTags,
+  bool copy(const std::vector<std::pair<int, int> > &inDimTags,
             std::vector<std::pair<int, int> > &outDimTags);
-  void remove(int dim, int tag, bool recursive=false);
-  void remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false);
+  bool remove(int dim, int tag, bool recursive=false);
+  bool remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false);
 
   // import shapes from file
-  void importShapes(const std::string &fileName, bool highestDimOnly,
+  bool importShapes(const std::string &fileName, bool highestDimOnly,
                     std::vector<std::pair<int, int> > &outDimTags,
                     const std::string &format="");
 
   // import shapes from TopoDS_Shape
-  void importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
+  bool importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
                     std::vector<std::pair<int, int> > &outDimTags);
 
   // export all bound shapes to file
-  void exportShapes(const std::string &fileName, const std::string &format="");
+  bool exportShapes(const std::string &fileName, const std::string &format="");
 
   // set meshing constraints
   void setMeshSize(int dim, int tag, double size);
