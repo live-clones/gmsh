@@ -218,6 +218,7 @@ void getColumnQuad(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
 
   for (int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
     std::vector<MElement*> newElts = ed2el[elBaseEd];
+    if ((iLayer > 0) && (newElts.size() < 2)) { aboveElt = 0; break; }
     el = (newElts[0] == el) ? newElts[1] : newElts[0];
     aboveElt = el;
     if (el->getType() != TYPE_QUA) break;
@@ -248,6 +249,7 @@ void getColumnTri(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
   for (int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
     // Get first element in layer
     std::vector<MElement*> newElts0 = ed2el[elBaseEd];
+    if ((iLayer > 0) && (newElts0.size() < 2)) { aboveElt = 0; break; }
     el0 = (newElts0[0] == el1) ? newElts0[1] : newElts0[0];
     aboveElt = el0;
     if (el0->getType() != TYPE_TRI) break;
@@ -260,6 +262,7 @@ void getColumnTri(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
 
     // Get second element in layer
     std::vector<MElement*> newElts1 = ed2el[elTopEd0];
+    if (newElts1.size() < 2) { aboveElt = 0; break; }
     el1 = (newElts1[0] == el0) ? newElts1[1] : newElts1[0];
     if (el1->getType() != TYPE_TRI) break;
     MEdge elTopEd1;
@@ -449,6 +452,7 @@ void getColumnTet(MFaceVecMEltMap &face2el,
   for (int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
     // Get first element in layer
     std::vector<MElement*> newElts0 = face2el[elBaseFace];
+    if ((iLayer > 0) && (newElts0.size() < 2)) { aboveElt = 0; break; }
     el0 = (newElts0[0] == el2) ? newElts0[1] : newElts0[0];
     aboveElt = el0;
     if (el0->getType() != TYPE_TET) break;
@@ -461,6 +465,7 @@ void getColumnTet(MFaceVecMEltMap &face2el,
 
     // Get second element in layer
     std::vector<MElement*> newElts1 = face2el[elTopFace0];
+    if (newElts1.size() < 2) { aboveElt = 0; break; }
     el1 = (newElts1[0] == el0) ? newElts1[1] : newElts1[0];
     if (el1->getType() != TYPE_TET) break;
     MFace elTopFace1;
@@ -471,6 +476,7 @@ void getColumnTet(MFaceVecMEltMap &face2el,
 
     // Get third element in layer
     std::vector<MElement*> newElts2 = face2el[elTopFace1];
+    if (newElts2.size() < 2) { aboveElt = 0; break; }
     el2 = (newElts2[0] == el1) ? newElts2[1] : newElts2[0];
     if (el2->getType() != TYPE_TET) break;
     MFace elTopFace2;
@@ -507,6 +513,7 @@ void getColumnPrismHex(int elType, MFaceVecMEltMap &face2el,
 
   for (int iLayer = 0; iLayer < p.maxNumLayers; iLayer++) {
     std::vector<MElement*> newElts = face2el[elBaseFace];
+    if ((iLayer > 0) && (newElts.size() < 2)) { aboveElt = 0; break; }
     el = (newElts[0] == el) ? newElts[1] : newElts[0];
     aboveElt = el;
     if (el->getType() != elType) break;
@@ -863,10 +870,11 @@ void optimizeCADDist2DP2(GEntity *geomEnt, std::vector<MVertex*> &baseVert)
 double curveAndMeasureAboveEl(MetaEl &metaElt, MElement *lastElt,
                               MElement *aboveElt, double deformFact)
 {
-  double minJacDet, maxJacDet;
   metaElt.setCurvedTop(deformFact);
   std::set<MVertex*> movedVertDum;
   curveElement(metaElt, movedVertDum, lastElt);
+  if (aboveElt == 0) return 1.;
+  double minJacDet, maxJacDet;
   jacobianBasedQuality::minMaxJacobianDeterminant(aboveElt, minJacDet, maxJacDet);
   return minJacDet/maxJacDet;
 }
@@ -965,6 +973,7 @@ void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
   DbgOutputCol dbgOutCol;
   dbgOutCol.addBlob(blob);
   dbgOutCol.write("col_KO", bndElt->getNum());
+  if (aboveElt == 0) std::cout << "DBGTT: aboveElt = 0 for bnd. elt. " << bndElt->getNum() << std::endl;
   curveColumn(p, bndEnt, metaElType, baseVert, topPrimVert, aboveElt, blob,
               movedVert, dbgOut);
   dbgOutCol.write("col_OK", bndElt->getNum());
