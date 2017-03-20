@@ -898,7 +898,7 @@ void curveColumn(const FastCurvingParameters &p, GEntity *geomEnt,
 
   // Create meta-element
   MetaEl metaElt(metaElType, order, baseVert, topPrimVert);
-  
+
   // If allowed, curve top face of meta-element while avoiding breaking the element above
   if (p.curveOuterBL) {
     MElement* &lastElt = blob.back();
@@ -944,7 +944,7 @@ void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
   std::vector<MVertex*> baseVert, topPrimVert;
   std::vector<MElement*> blob;
   MElement *aboveElt = 0;
-  if (bndType == TYPE_LIN) {                                                    // 1D boundary
+  if (bndType == TYPE_LIN) { // 1D boundary
     MVertex *vb0 = bndElt->getVertex(0);
     MVertex *vb1 = bndElt->getVertex(1);
     metaElType = TYPE_QUA;
@@ -952,7 +952,7 @@ void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
     foundCol = getColumn2D(ed2el, p, baseEd, baseVert,
                            topPrimVert, blob, aboveElt);
   }
-  else {                                                                        // 2D boundary
+  else { // 2D boundary
     MVertex *vb0 = bndElt->getVertex(0);
     MVertex *vb1 = bndElt->getVertex(1);
     MVertex *vb2 = bndElt->getVertex(2);
@@ -969,7 +969,7 @@ void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
     foundCol = getColumn3D(face2el, p, baseFace, baseVert, topPrimVert,
                            blob, aboveElt);
   }
-  if (!foundCol) return;                                                        // Skip bnd. el. if top vertices not found
+  if (!foundCol || blob.empty()) return; // Skip bnd. el. if top vertices not found
   DbgOutputCol dbgOutCol;
   dbgOutCol.addBlob(blob);
   dbgOutCol.write("col_KO", bndElt->getNum());
@@ -1006,7 +1006,7 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
   DbgOutputMeta dbgOut;
   std::set<MVertex*> movedVert;
   for(std::list<MElement*>::iterator itBE = bndEl.begin();
-      itBE != bndEl.end(); itBE++)                                              // Loop over bnd. elements
+      itBE != bndEl.end(); itBE++) // Loop over bnd. elements
     curveMeshFromBndElt(ed2el, face2el, bndEnt, *itBE, movedVert, p, dbgOut);
   dbgOut.write("meta-elements", bndEnt->tag());
 }
@@ -1039,7 +1039,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p)
     MFaceVecMEltMap face2el;
     if (p.dim == 2) calcEdge2Elements(allGEnt[iEnt], ed2el);
     else calcFace2Elements(allGEnt[iEnt], face2el);
-    
+
     // Retrieve boundary entities
     std::vector<GEntity*> bndEnts;
     if (p.dim == 2) {
@@ -1055,7 +1055,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p)
     for (int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
       GEntity* &bndEnt = bndEnts[iBndEnt];
       if (p.onlyVisible && !bndEnt->getVisibility()) continue;
-      const GEntity::GeomType bndType = bndEnt->geomType(); 
+      const GEntity::GeomType bndType = bndEnt->geomType();
       if ((bndType == GEntity::Line) || (bndType == GEntity::Plane)) continue;
       Msg::Info("Curving elements in entity %d for boundary entity %d...",
                 gEnt->tag(), bndEnt->tag());
