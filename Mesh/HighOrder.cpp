@@ -1635,7 +1635,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
     Msg::ProgressMeter(++counter, nTot, false, msg);
     if (onlyVisible && !(*it)->getVisibility()) continue;
     setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, linear, incomplete, nPts);
-    if ((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();                    // Clear obsolete element data from BL data structures
+    if ((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();
   }
 
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
@@ -1643,7 +1643,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
     Msg::ProgressMeter(++counter, nTot, false, msg);
     if (onlyVisible && !(*it)->getVisibility())continue;
     setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, linear, incomplete, nPts);
-    if ((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();                    // Clear obsolete element data from BL data structures
+    if ((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();
   }
 
   // Update all high order vertices
