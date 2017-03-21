@@ -105,7 +105,7 @@ set(GMSH_API
   ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h
   Common/Gmsh.h Common/Context.h Common/GmshDefines.h Common/GmshMessage.h
     Common/VertexArray.h Common/Octree.h Common/OctreeInternals.h
-    Common/OS.h Common/StringUtils.h Common/OpenFile.h
+    Common/OS.h Common/StringUtils.h Common/OpenFile.h Common/Hash.h
     Common/onelab.h Common/GmshSocket.h Common/onelabUtils.h Common/Options.h
   Numeric/Numeric.h Numeric/GaussIntegration.h Numeric/polynomialBasis.h
     Numeric/JacobianBasis.h Numeric/bezierBasis.h Numeric/fullMatrix.h
@@ -115,8 +115,9 @@ set(GMSH_API
   Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h
     Geo/GFace.h Geo/GRegion.h Geo/GEdgeLoop.h Geo/GEdgeCompound.h
     Geo/GFaceCompound.h Geo/GRegionCompound.h Geo/GRbf.h Geo/MVertex.h
-    Geo/MVertexBoundaryLayerData.h Geo/MEdge.h
-    Geo/MFace.h Geo/MElement.h Geo/MElementOctree.h Geo/MPoint.h Geo/MLine.h
+    Geo/MVertexBoundaryLayerData.h Geo/MEdge.h Geo/MFace.h
+    Geo/MEdgeHash.h Geo/MFaceHash.h
+    Geo/MElement.h Geo/MElementOctree.h Geo/MPoint.h Geo/MLine.h
     Geo/MTriangle.h Geo/MQuadrangle.h Geo/MTetrahedron.h Geo/MHexahedron.h
     Geo/MPrism.h Geo/MPyramid.h Geo/MTrihedron.h Geo/MElementCut.h Geo/MElementOctree.h
     Geo/discreteVertex.h Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h
@@ -124,7 +125,8 @@ set(GMSH_API
     Geo/Pair.h Geo/Range.h Geo/SOrientedBoundingBox.h
     Geo/CellComplex.h Geo/ChainComplex.h Geo/Cell.h Geo/Homology.h Geo/Chain.h
     Geo/GenericVertex.h Geo/GenericEdge.h Geo/GenericFace.h Geo/GenericRegion.h
-    Geo/partitionEdge.h Geo/CGNSOptions.h Geo/gmshLevelset.h Geo/boundaryLayersData.h
+    Geo/partitionVertex.h Geo/partitionEdge.h Geo/partitionFace.h Geo/CGNSOptions.h
+    Geo/gmshLevelset.h Geo/boundaryLayersData.h
   Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h
     Mesh/meshPartition.h Mesh/meshGFaceDelaunayInsertion.h
     Mesh/simple3D.h Mesh/meshPartitionOptions.h Mesh/directions3D.h Mesh/yamakawa.h
