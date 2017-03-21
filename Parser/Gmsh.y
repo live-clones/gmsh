@@ -307,7 +307,7 @@ SendToFile :
     {
       $$ = (char*)"w";
     }
-  | '>' '>'
+  | tGREATERGREATER
     {
       $$ = (char*)"a";
     }
