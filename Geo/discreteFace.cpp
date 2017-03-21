@@ -3,6 +3,10 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
+#include <stack>
+#include <queue>
+#include <complex>
+#include <stdlib.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "discreteFace.h"
@@ -12,15 +16,14 @@
 #include "GFaceCompound.h"
 #include "Context.h"
 #include "OS.h"
-#include <stack>
-#include <queue>
-#include <complex>
+#include "meshPartitionObjects.h"
+#include "meshPartitionOptions.h"
+#include "meshPartition.h"
+#include "MPoint.h"
 
 #if defined(HAVE_PETSC)
 #include "linearSystemPETSc.h"
 #endif
-
-#include "MPoint.h"
 
 #if defined(HAVE_METIS)
 extern "C" {

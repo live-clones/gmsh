@@ -10,23 +10,16 @@
 #include "GFace.h"
 #include "discreteEdge.h"
 #include "MEdge.h"
-#include "meshPartitionObjects.h"
-#include "meshPartitionOptions.h"
-#include "meshPartition.h"
 #include "MTriangle.h"
 #include "MEdge.h"
 #include "MLine.h"
-#include <stdlib.h>
 
 class discreteDiskFace;
 class triangulation;
 
-
 class discreteFace : public GFace {
-  // FIXME we should at the end use a
-  // mesh() function that is specific to
-  // discreteFace
-  // we should also SAVE those data's
+  // FIXME we should at the end use a mesh() function that is specific to
+  // discreteFace; we should also SAVE those data's
  public:
   discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}
