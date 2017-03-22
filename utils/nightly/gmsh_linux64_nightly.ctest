@@ -5,12 +5,12 @@
 
 set(CTEST_NIGHTLY_START_TIME "22:00:00 UTC")
 set(CDASH_MODEL "Nightly")
-set(EXTRA_VERSION "-svn")
+set(EXTRA_VERSION "-git")
 include(gmsh_linux64.ctest)
 
-set(EXTRA_VERSION "-dynamic-svn")
+set(EXTRA_VERSION "-dynamic-git")
 set(BUILD_DYNAMIC true)
 include(gmsh_linux64.ctest)
 
-set(EXTRA_VERSION "-coverage-svn")
+set(EXTRA_VERSION "-coverage-git")
 include(gmsh_linux64_coverage.ctest)

@@ -12,7 +12,7 @@ set(CUSTOM_DROP_SITE "onelab.info")
 set(CUSTOM_DROP_LOCATION "/CDash/submit.php?project=Gmsh")
 set(CUSTOM_DROP_PROJECT "Gmsh")
 
-find_program(CTEST_SVN_COMMAND NAMES svn)
+find_program(CTEST_GIT_COMMAND NAMES git)
 find_program(CTEST_COVERAGE_COMMAND NAMES gcov)
 find_program(CTEST_MEMORYCHECK_COMMAND NAMES valgrind)
 
@@ -23,13 +23,13 @@ else(WITH_COVERAGE AND CTEST_COVERAGE_COMMAND)
 endif(WITH_COVERAGE AND CTEST_COVERAGE_COMMAND)
 
 set(CTEST_SOURCE_DIRECTORY "$ENV{HOME}/src/gmsh")
-set(CTEST_SVN_REPOS https://onelab.info/svn/gmsh/trunk)
+set(CTEST_GIT_REPOS http://gitlab.onelab.info/gmsh/gmsh.git)
 
 if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
   set(CTEST_CHECKOUT_COMMAND 
-      "${CTEST_SVN_COMMAND} co ${CTEST_SVN_REPOS} ${CTEST_SOURCE_DIRECTORY}")
+      "${CTEST_GIT_COMMAND} pull ${CTEST_GIT_REPOS} ${CTEST_SOURCE_DIRECTORY}")
 endif(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
-set(CTEST_UPDATE_COMMAND "${CTEST_SVN_COMMAND}")
+set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 
 set(CTEST_CONFIGURE_COMMAND 
     "${CTEST_CMAKE_COMMAND} -DCMAKE_BUILD_TYPE:STRING=${CTEST_BUILD_CONFIGURATION}")
@@ -61,7 +61,7 @@ endif(NOT CDASH_MODEL)
 
 ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
 ctest_start(${CDASH_MODEL})
-# update from SVN only for nightly builds
+# update from GIT only for nightly builds
 if(CDASH_MODEL MATCHES "Nightly")
   ctest_update()
 endif(CDASH_MODEL MATCHES "Nightly")
@@ -101,14 +101,14 @@ macro(upload_package WEB ARCH EXTRA EXT1 EXT2)
         message("Done re-signing MacOS build on ace36")
       endif(APPLE)
       message("Build succeeded: uploading package ${BASENAME} to web site")
-      if(${FILE} MATCHES "-svn")
-        execute_process(COMMAND scp -C ${FILE} ${WEB}/gmsh-svn-${ARCH}${EXTRA}${EXT2}
+      if(${FILE} MATCHES "-git")
+        execute_process(COMMAND scp -C ${FILE} ${WEB}/gmsh-git-${ARCH}${EXTRA}${EXT2}
                         TIMEOUT 60)
-      else(${FILE} MATCHES "-svn")
+      else(${FILE} MATCHES "-git")
         string(REPLACE ${EXT1} "" BASE ${BASENAME})
         execute_process(COMMAND scp -C ${FILE} ${WEB}/${BASE}${EXTRA}${EXT2}
                         TIMEOUT 60)
-      endif(${FILE} MATCHES "-svn")
+      endif(${FILE} MATCHES "-git")
       message("Done uploading package to web site")
     endif(FILE)
   endif($ENV{GMSH_BUILD_ERRORS} GREATER 0)
