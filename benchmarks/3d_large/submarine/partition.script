@@ -1,9 +1,0 @@
-Merge "submarine_simple.msh";
-
-Plugin(SimplePartition).NumSlices = 16;
-Plugin(SimplePartition).Run;
-
-Mesh.Binary=1;
-Mesh.MshFilePartitioned = 2; // hack to save a physical for each partition
-
-Save "part.msh";
