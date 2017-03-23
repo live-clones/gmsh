@@ -455,7 +455,8 @@ computations and process the results directly from within Gmsh's
 post-processing module. The default solver interfaced with Gmsh is GetDP
 (@uref{http://getdp.info}). Examples on how to interface other solvers
 are available in the source distribution (in the
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers,utils/solvers}.
+@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers,utils/solvers}
+directory).
 
 @c -------------------------------------------------------------------------
 @c Post-processing: scalar, vector and tensor field visualization
