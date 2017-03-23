@@ -596,15 +596,16 @@ developers}) to remedy the aforementioned (and all other) shortcomings!
 
 If you think you have found a bug in Gmsh, you can report it by email to
 the public Gmsh mailing list at @email{gmsh@@onelab.info}, or file it
-directly into our bug tracking database at
-@url{http://gitlab.onelab.info/gmsh/gmsh/issues}. Please send as precise
-a description of the problem as you can, including sample input files
-that produce the bug. Don't forget to mention both the version of Gmsh
-and the version of your operation system (@pxref{Command-line options}
-to see how to get this information).
+directly into the @url{http://gitlab.onelab.info/gmsh/gmsh/issues,bug
+tracking database}. Please send as precise a description of the problem
+as you can, including sample input files that produce the bug. Don't
+forget to mention both the version of Gmsh and the version of your
+operation system (@pxref{Command-line options} to see how to get this
+information).
 
-See @ref{Frequently asked questions}, and the bug tracking system to see
-which problems we already know about.
+See @ref{Frequently asked questions}, and the
+@url{http://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking system} to
+see which problems we already know about.
 
 @c =========================================================================
 @c How to read this manual?
@@ -5191,8 +5192,9 @@ In English people tend to pronounce `Gmsh' as ``gee-mesh''.
 
 @url{http://gmsh.info} is the primary location to obtain information
 about Gmsh. There you will for example find the complete reference
-manual, a bug tracking database and a searchable archive of the Gmsh
-mailing list (@email{gmsh@@onelab.info}).
+manual, a @url{http://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking
+database} and a searchable archive of the Gmsh mailing list
+(@email{gmsh@@onelab.info}).
 @end enumerate
 
 @c -------------------------------------------------------------------------
