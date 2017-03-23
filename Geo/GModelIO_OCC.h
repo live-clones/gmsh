@@ -227,6 +227,7 @@ class OCC_Internals {
 
   // apply gtransformations
   bool dilate(const std::vector<std::pair<int, int> > &inDimTags,
+              double x, double y, double z,
               double a, double b, double c);
 
   // copy and remove

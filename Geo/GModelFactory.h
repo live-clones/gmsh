@@ -276,7 +276,8 @@ class OCCFactory : public GModelFactory {
   void translate(GModel *gm, std::vector<double> dx, int addToTheModel);
   void rotate(GModel *gm, std::vector<double> p1,std::vector<double> p2,
               double angle, int addToTheModel);
-  void dilate(GModel *gm, std::vector<double> s, int addToTheModel);
+  void dilate(GModel *gm, std::vector<double> p, std::vector<double> s, 
+              int addToTheModel);
   GModel *computeBooleanUnion(GModel *obj, GModel *tool, int createNewModel);
   GModel *computeBooleanIntersection(GModel *obj, GModel *tool, int createNewModel);
   GModel *computeBooleanDifference(GModel *obj, GModel *tool, int createNewModel);

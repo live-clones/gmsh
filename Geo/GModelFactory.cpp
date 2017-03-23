@@ -1326,10 +1326,15 @@ void OCCFactory::rotate(GModel *gm, std::vector<double> p1, std::vector<double> 
   gm->_occ_internals->buildGModel(gm);
 }
 
-void OCCFactory::dilate(GModel *gm, std::vector<double> s, int addToTheModel)
+void OCCFactory::dilate(GModel *gm, std::vector<double> p, std::vector<double> s, 
+                        int addToTheModel)
 {
   if (!gm->_occ_internals)
     gm->_occ_internals = new OCC_Internals;
+
+  const double x = p[0];
+  const double y = p[1];
+  const double z = p[2];
 
   const double a = s[0];
   const double b = s[1];
@@ -1337,6 +1342,7 @@ void OCCFactory::dilate(GModel *gm, std::vector<double> s, int addToTheModel)
 
   gp_GTrsf transformation;  
   transformation.SetVectorialPart(gp_Mat(a, 0, 0, 0, b, 0, 0, 0, c));
+  transformation.SetTranslationPart(gp_XYZ(x,y,z));
   BRepBuilderAPI_GTransform aTransformation(gm->_occ_internals->getShape(),
                                            transformation, Standard_False);
   TopoDS_Shape temp = aTransformation.Shape();

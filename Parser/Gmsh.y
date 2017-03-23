@@ -2317,7 +2317,9 @@ Transform :
       ListOfShapes2VectorOfPairs($8, dimTags);
       bool r = true;
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Dilate not implemented yet with OpenCASCADE factory");
+        yymsg(1, "Warning Dilate OCC: Dilatation (second argument) + Translation (first argument) ");
+        r = GModel::current()->getOCCInternals()->dilate
+                  (dimTags, $3[0], $3[1], $3[2], $5, $5, $5);
       }
       else{
         r = GModel::current()->getGEOInternals()->dilate
@@ -2332,7 +2334,9 @@ Transform :
       ListOfShapes2VectorOfPairs($8, dimTags);
       bool r = true;
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Dilate not implemented yet with OpenCASCADE factory");
+        yymsg(1, "Warning Dilate OCC: Dilatation (second argument) + Translation (first argument) ");
+        r = GModel::current()->getOCCInternals()->dilate
+                  (dimTags, $3[0], $3[1], $3[2], $5[0], $5[1], $5[2]);
       }
       else{
         r = GModel::current()->getGEOInternals()->dilate

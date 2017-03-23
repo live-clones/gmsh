@@ -1940,9 +1940,11 @@ bool OCC_Internals::rotate(const std::vector<std::pair<int, int> > &inDimTags,
 }
 
 bool OCC_Internals::dilate(const std::vector<std::pair<int, int> > &inDimTags,
+                           double x, double y, double z,
                            double a, double b, double c)
 {
   gp_GTrsf t;
+  t.SetTranslationPart(gp_XYZ(x,y,z));
   t.SetVectorialPart(gp_Mat(a, 0, 0, 0, b, 0, 0, 0, c));
   BRepBuilderAPI_GTransform gtfo(t);
   return _gtransform(inDimTags, &gtfo);
