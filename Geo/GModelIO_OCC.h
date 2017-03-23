@@ -82,12 +82,9 @@ class OCC_Internals {
                   bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
                   bool makesolids=false, double scaling=0.0);
 
-  // apply a geometrical transformation (does not modify Shape)
+  // apply a geometrical transformation
   bool _transform(const std::vector<std::pair<int, int> > &inDimTags,
-                  BRepBuilderAPI_Transform *tfo);
-
-  // apply a G geometrical transformation (modifies Shape : affinity...)
-  bool _gtransform(const std::vector<std::pair<int, int> > &inDimTags,
+                  BRepBuilderAPI_Transform *tfo,
                   BRepBuilderAPI_GTransform *gtfo);
 
   // add circle or ellipse arc

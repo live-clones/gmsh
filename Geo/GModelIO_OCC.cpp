@@ -1878,27 +1878,7 @@ bool OCC_Internals::applyBooleanOperator
 }
 
 bool OCC_Internals::_transform(const std::vector<std::pair<int, int> > &inDimTags,
-                               BRepBuilderAPI_Transform *tfo)
-{
-  for(unsigned int i = 0; i < inDimTags.size(); i++){
-    int dim = inDimTags[i].first;
-    int tag = inDimTags[i].second;
-    if(!isBound(dim, tag)){
-      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
-                 dim, tag);
-      return false;
-    }
-    tfo->Perform(find(dim, tag), Standard_False);
-    if(!tfo->IsDone()){
-      Msg::Error("Could not apply transformation");
-      return false;
-    }
-    bind(tfo->Shape(), dim, tag);
-  }
-  return true;
-}
-
-bool OCC_Internals::_gtransform(const std::vector<std::pair<int, int> > &inDimTags,
+                               BRepBuilderAPI_Transform *tfo,
                                BRepBuilderAPI_GTransform *gtfo)
 {
   for(unsigned int i = 0; i < inDimTags.size(); i++){
@@ -1909,12 +1889,24 @@ bool OCC_Internals::_gtransform(const std::vector<std::pair<int, int> > &inDimTa
                  dim, tag);
       return false;
     }
-    gtfo->Perform(find(dim, tag), Standard_False);
-    if(!gtfo->IsDone()){
-      Msg::Error("Could not apply transformation");
-      return false;
+    TopoDS_Shape result;
+    if(tfo){
+      tfo->Perform(find(dim, tag), Standard_False);
+      if(!tfo->IsDone()){
+        Msg::Error("Could not apply transformation");
+        return false;
+      }
+      result = tfo->Shape();
     }
-    bind(gtfo->Shape(), dim, tag);
+    else if(gtfo){
+      gtfo->Perform(find(dim, tag), Standard_False);
+      if(!gtfo->IsDone()){
+        Msg::Error("Could not apply transformation");
+        return false;
+      }
+      result = gtfo->Shape();
+    }
+    bind(result, dim, tag);
   }
   return true;
 }
@@ -1925,7 +1917,7 @@ bool OCC_Internals::translate(const std::vector<std::pair<int, int> > &inDimTags
   gp_Trsf t;
   t.SetTranslation(gp_Pnt(0, 0, 0), gp_Pnt(dx, dy, dz));
   BRepBuilderAPI_Transform tfo(t);
-  return _transform(inDimTags, &tfo);
+  return _transform(inDimTags, &tfo, 0);
 }
 
 bool OCC_Internals::rotate(const std::vector<std::pair<int, int> > &inDimTags,
@@ -1936,7 +1928,7 @@ bool OCC_Internals::rotate(const std::vector<std::pair<int, int> > &inDimTags,
   gp_Ax1 axisOfRevolution(gp_Pnt(x, y, z), gp_Dir(ax, ay, az));
   t.SetRotation(axisOfRevolution, angle);
   BRepBuilderAPI_Transform tfo(t);
-  return _transform(inDimTags, &tfo);
+  return _transform(inDimTags, &tfo, 0);
 }
 
 bool OCC_Internals::dilate(const std::vector<std::pair<int, int> > &inDimTags,
@@ -1947,7 +1939,7 @@ bool OCC_Internals::dilate(const std::vector<std::pair<int, int> > &inDimTags,
   t.SetTranslationPart(gp_XYZ(x,y,z));
   t.SetVectorialPart(gp_Mat(a, 0, 0, 0, b, 0, 0, 0, c));
   BRepBuilderAPI_GTransform gtfo(t);
-  return _gtransform(inDimTags, &gtfo);
+  return _transform(inDimTags, 0, &gtfo);
 }
 
 bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,

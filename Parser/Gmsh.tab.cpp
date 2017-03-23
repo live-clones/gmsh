@@ -8661,7 +8661,7 @@ yyreduce:
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(1, "Warning Dilate OCC: Dilatation (second argument) + Translation (first argument) ");
         r = GModel::current()->getOCCInternals()->dilate
-                  (dimTags, (yyvsp[(3) - (9)].v)[0], (yyvsp[(3) - (9)].v)[1], (yyvsp[(3) - (9)].v)[2], (yyvsp[(5) - (9)].d), (yyvsp[(5) - (9)].d), (yyvsp[(5) - (9)].d));
+          (dimTags, (yyvsp[(3) - (9)].v)[0], (yyvsp[(3) - (9)].v)[1], (yyvsp[(3) - (9)].v)[2], (yyvsp[(5) - (9)].d), (yyvsp[(5) - (9)].d), (yyvsp[(5) - (9)].d));
       }
       else{
         r = GModel::current()->getGEOInternals()->dilate
@@ -8681,7 +8681,7 @@ yyreduce:
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(1, "Warning Dilate OCC: Dilatation (second argument) + Translation (first argument) ");
         r = GModel::current()->getOCCInternals()->dilate
-                  (dimTags, (yyvsp[(3) - (9)].v)[0], (yyvsp[(3) - (9)].v)[1], (yyvsp[(3) - (9)].v)[2], (yyvsp[(5) - (9)].v)[0], (yyvsp[(5) - (9)].v)[1], (yyvsp[(5) - (9)].v)[2]);
+          (dimTags, (yyvsp[(3) - (9)].v)[0], (yyvsp[(3) - (9)].v)[1], (yyvsp[(3) - (9)].v)[2], (yyvsp[(5) - (9)].v)[0], (yyvsp[(5) - (9)].v)[1], (yyvsp[(5) - (9)].v)[2]);
       }
       else{
         r = GModel::current()->getGEOInternals()->dilate

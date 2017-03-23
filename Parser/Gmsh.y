@@ -2319,7 +2319,7 @@ Transform :
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(1, "Warning Dilate OCC: Dilatation (second argument) + Translation (first argument) ");
         r = GModel::current()->getOCCInternals()->dilate
-                  (dimTags, $3[0], $3[1], $3[2], $5, $5, $5);
+          (dimTags, $3[0], $3[1], $3[2], $5, $5, $5);
       }
       else{
         r = GModel::current()->getGEOInternals()->dilate
@@ -2336,7 +2336,7 @@ Transform :
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(1, "Warning Dilate OCC: Dilatation (second argument) + Translation (first argument) ");
         r = GModel::current()->getOCCInternals()->dilate
-                  (dimTags, $3[0], $3[1], $3[2], $5[0], $5[1], $5[2]);
+          (dimTags, $3[0], $3[1], $3[2], $5[0], $5[1], $5[2]);
       }
       else{
         r = GModel::current()->getGEOInternals()->dilate
