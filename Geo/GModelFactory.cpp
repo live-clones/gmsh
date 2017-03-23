@@ -1335,7 +1335,7 @@ void OCCFactory::dilate(GModel *gm, std::vector<double> s, int addToTheModel)
   const double b = s[1];
   const double c = s[2];
 
-  gp_GTrsf transformation;  
+  gp_GTrsf transformation;
   transformation.SetVectorialPart(gp_Mat(a, 0, 0, 0, b, 0, 0, 0, c));
   BRepBuilderAPI_GTransform aTransformation(gm->_occ_internals->getShape(),
                                            transformation, Standard_False);
