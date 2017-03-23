@@ -53,7 +53,7 @@ GEdge *GeoFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
   List_Add(iList, &tagEnd);
 
   Curve *c = CreateCurve(num, MSH_SEGM_LINE, 1, iList, NULL,
-			  -1, -1, 0., 1.);
+        -1, -1, 0., 1.);
   Tree_Add(gm->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
   List_Delete(iList);
@@ -146,7 +146,7 @@ GEdge* GeoFactory::addCircleArc(GModel *gm,GVertex *begin, GVertex *center, GVer
   List_Add(iList, &tagEnd);
 
   Curve *c = CreateCurve(num, MSH_SEGM_CIRC, 1, iList, NULL,
-			  -1, -1, 0., 1.);
+        -1, -1, 0., 1.);
   Tree_Add(gm->getGEOInternals()->Curves, &c);
   CreateReversedCurve(c);
   List_Delete(iList);
@@ -327,8 +327,8 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e,
   //      ge->geomType() == GEntity::BoundaryLayerCurve){
   //     ExtrudeParams *ep = ge->meshAttributes.extrude;
   //     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY &&
-  // 	std::abs(ep->geo.Source) ==e->tag() )
-  // 	  newEnt = ge;
+  //  std::abs(ep->geo.Source) ==e->tag() )
+  //    newEnt = ge;
   //     }
   //   }
   // }
@@ -336,11 +336,11 @@ std::vector<GEntity*> GeoFactory::extrudeBoundaryLayer(GModel *gm, GEntity *e,
   //   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++){
   //     GFace *gf = *it;
   //     if(gf->getNativeType() == GEntity::GmshModel &&
-  // 	 gf->geomType() == GEntity::BoundaryLayerSurface){
-  // 	ExtrudeParams *ep = gf->meshAttributes.extrude;
-  // 	if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY
-  // 	   && std::abs(ep->geo.Source) == e->tag())
-  // 	  newEnt = gf;
+  //   gf->geomType() == GEntity::BoundaryLayerSurface){
+  //  ExtrudeParams *ep = gf->meshAttributes.extrude;
+  //  if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY
+  //     && std::abs(ep->geo.Source) == e->tag())
+  //    newEnt = gf;
   //     }
   //   }
   // }
@@ -375,50 +375,50 @@ GFace *GeoFactory::_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdg
       //create curve if it does not exist
       Curve *c = FindCurve(numEdge);
       if(!c){
-	GVertex *gvb = ge->getBeginVertex();
-	GVertex *gve = ge->getEndVertex();
-	Vertex *vertb = FindPoint(abs(gvb->tag()));
-	Vertex *verte = FindPoint(abs(gve->tag()));
-	if (!vertb){
-	  vertb = CreateVertex(gvb->tag(), gvb->x(), gvb->y(), gvb->z(),
-				gvb->prescribedMeshSizeAtVertex(), 1.0);
-	  Tree_Add(gm->getGEOInternals()->Points, &vertb);
-	  vertb->Typ = MSH_POINT;
-	  vertb->Num = gvb->tag();
-	 }
-	if (!verte){
-	  verte = CreateVertex(gve->tag(), gve->x(), gve->y(), gve->z(),
-				gve->prescribedMeshSizeAtVertex(), 1.0);
-	  Tree_Add(gm->getGEOInternals()->Points, &verte);
-	  verte->Typ = MSH_POINT;
-	  verte->Num = gve->tag();
-	}
+  GVertex *gvb = ge->getBeginVertex();
+  GVertex *gve = ge->getEndVertex();
+  Vertex *vertb = FindPoint(abs(gvb->tag()));
+  Vertex *verte = FindPoint(abs(gve->tag()));
+  if (!vertb){
+    vertb = CreateVertex(gvb->tag(), gvb->x(), gvb->y(), gvb->z(),
+        gvb->prescribedMeshSizeAtVertex(), 1.0);
+    Tree_Add(gm->getGEOInternals()->Points, &vertb);
+    vertb->Typ = MSH_POINT;
+    vertb->Num = gvb->tag();
+   }
+  if (!verte){
+    verte = CreateVertex(gve->tag(), gve->x(), gve->y(), gve->z(),
+        gve->prescribedMeshSizeAtVertex(), 1.0);
+    Tree_Add(gm->getGEOInternals()->Points, &verte);
+    verte->Typ = MSH_POINT;
+    verte->Num = gve->tag();
+  }
 
-	if (ge->geomType() == GEntity::Line){
-	  c = CreateCurve(numEdge, MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
-	}
-	else if (ge->geomType() == GEntity::DiscreteCurve){
-	  c = CreateCurve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
-	}
-	else if(ge->geomType() == GEntity::CompoundCurve){
-	  c = CreateCurve(numEdge, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
-	  std::vector<GEdge*> gec = ((GEdgeCompound*)ge)->getCompounds();
-	  for(unsigned int i = 0; i < gec.size(); i++)
-	    c->compound.push_back(gec[i]->tag());
-	}
-	else{
-	  c = CreateCurve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
-	}
+  if (ge->geomType() == GEntity::Line){
+    c = CreateCurve(numEdge, MSH_SEGM_LINE, 1, NULL, NULL, -1, -1, 0., 1.);
+  }
+  else if (ge->geomType() == GEntity::DiscreteCurve){
+    c = CreateCurve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
+  }
+  else if(ge->geomType() == GEntity::CompoundCurve){
+    c = CreateCurve(numEdge, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
+    std::vector<GEdge*> gec = ((GEdgeCompound*)ge)->getCompounds();
+    for(unsigned int i = 0; i < gec.size(); i++)
+      c->compound.push_back(gec[i]->tag());
+  }
+  else{
+    c = CreateCurve(numEdge, MSH_SEGM_DISCRETE, 1, NULL, NULL, -1, -1, 0., 1.);
+  }
 
-	c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
-	List_Add(c->Control_Points, &vertb);
-	List_Add(c->Control_Points, &verte);
-	c->beg = vertb;
-	c->end = verte;
-	EndCurve(c);
+  c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
+  List_Add(c->Control_Points, &vertb);
+  List_Add(c->Control_Points, &verte);
+  c->beg = vertb;
+  c->end = verte;
+  EndCurve(c);
 
-	Tree_Add(gm->getGEOInternals()->Curves, &c);
-	CreateReversedCurve(c);
+  Tree_Add(gm->getGEOInternals()->Curves, &c);
+  CreateReversedCurve(c);
       }
       int signedNumEdge = numEdge*signedEdge.getSign();
       List_Add(temp, &signedNumEdge);
@@ -479,6 +479,7 @@ GFace *GeoFactory::_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdg
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
+#include <BRepBuilderAPI_GTransform.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepGProp.hxx>
@@ -573,6 +574,7 @@ GFace *GeoFactory::_addPlanarFace(GModel *gm, const std::vector<std::vector<GEdg
 #include <gp_Pnt.hxx>
 #include <gp_Pnt2d.hxx>
 #include <gp_Trsf.hxx>
+#include <gp_GTrsf.hxx>
 #include <gp_Vec.hxx>
 
 GVertex *OCCFactory::addVertex(GModel *gm, double x, double y, double z, double lc)
@@ -604,7 +606,7 @@ GEdge *OCCFactory::addLine(GModel *gm, GVertex *start, GVertex *end)
   TopoDS_Edge occEdge;
   if (occv1 && occv2){
      occEdge = BRepBuilderAPI_MakeEdge(occv1->getShape(),
-				       occv2->getShape()).Edge();
+               occv2->getShape()).Edge();
   }
   else{
     gp_Pnt p1(start->x(),start->y(),start->z());
@@ -656,7 +658,7 @@ GEdge *OCCFactory::addCircleArc(GModel *gm, const arcCreationMethod &method,
 
 GEdge *OCCFactory::addSpline(GModel *gm, const splineType &type,
                              GVertex *start, GVertex *end,
-			     std::vector<std::vector<double> > points)
+           std::vector<std::vector<double> > points)
 {
   if (!gm->_occ_internals)
     gm->_occ_internals = new OCC_Internals;
@@ -702,10 +704,10 @@ GEdge *OCCFactory::addSpline(GModel *gm, const splineType &type,
 
 
 GEdge *OCCFactory::addNURBS(GModel *gm, GVertex *start, GVertex *end,
-			    std::vector<std::vector<double> > points,
-			    std::vector<double> knots,
-			    std::vector<double> weights,
-			    std::vector<int> mult)
+          std::vector<std::vector<double> > points,
+          std::vector<double> knots,
+          std::vector<double> weights,
+          std::vector<int> mult)
 {
   try{
   if (!gm->_occ_internals)
@@ -735,7 +737,7 @@ GEdge *OCCFactory::addNURBS(GModel *gm, GVertex *start, GVertex *end,
 
   const int degree = totKnots - nbControlPoints - 1;
   Msg::Debug("creation of a nurbs of degree %d with %d control points",
-	     degree,nbControlPoints);
+       degree,nbControlPoints);
 
   int index = 1;
   ctrlPoints.SetValue(index++, gp_Pnt(start->x(), start->y(), start->z()));
@@ -1265,8 +1267,8 @@ void OCCFactory::fillet(GModel *gm, std::vector<int> edges, double radius)
     for (unsigned i = 0; i < edges.size(); i++){
       GEdge *ed = gm->getEdgeByTag(edges[i]);
       if (ed){
-	OCCEdge *occed = dynamic_cast<OCCEdge*>(ed);
-	if (occed)edgesToFillet.push_back(occed->getTopoDS_Edge());
+  OCCEdge *occed = dynamic_cast<OCCEdge*>(ed);
+  if (occed)edgesToFillet.push_back(occed->getTopoDS_Edge());
       }
     }
     gm->_occ_internals->fillet(edgesToFillet, radius);
@@ -1324,6 +1326,27 @@ void OCCFactory::rotate(GModel *gm, std::vector<double> p1, std::vector<double> 
   gm->_occ_internals->buildGModel(gm);
 }
 
+void OCCFactory::dilate(GModel *gm, std::vector<double> s, int addToTheModel)
+{
+  if (!gm->_occ_internals)
+    gm->_occ_internals = new OCC_Internals;
+
+  const double a = s[0];
+  const double b = s[1];
+  const double c = s[2];
+
+  gp_GTrsf transformation;  
+  transformation.SetVectorialPart(gp_Mat(a, 0, 0, 0, b, 0, 0, 0, c));
+  BRepBuilderAPI_GTransform aTransformation(gm->_occ_internals->getShape(),
+                                           transformation, Standard_False);
+  TopoDS_Shape temp = aTransformation.Shape();
+  if (!addToTheModel) gm->_occ_internals->loadShape(&temp);
+  else gm->_occ_internals->buildShapeFromLists(temp);
+  gm->destroy();
+  gm->_occ_internals->buildLists();
+  gm->_occ_internals->buildGModel(gm);
+}
+
 std::vector<GFace *> OCCFactory::addRuledFaces(GModel *gm,
                                                std::vector< std::vector<GEdge *> > wires)
 {
@@ -1341,7 +1364,7 @@ std::vector<GFace *> OCCFactory::addRuledFaces(GModel *gm,
       GEdge *ge = wires[i][j];
       OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
       if (occe){
-	wire_maker.Add(occe->getTopoDS_Edge());
+  wire_maker.Add(occe->getTopoDS_Edge());
       }
     }
     aGenerator.AddWire (wire_maker.Wire());
@@ -1419,7 +1442,7 @@ GFace *OCCFactory::addPlanarFace(GModel *gm, std::vector< std::vector<GEdge *> >
       GEdge *ge = wires[i][j];
       OCCEdge *occe = dynamic_cast<OCCEdge*>(ge);
       if (occe){
-	wire_maker.Add(occe->getTopoDS_Edge());
+  wire_maker.Add(occe->getTopoDS_Edge());
       }
     }
     TopoDS_Wire myWire = wire_maker.Wire();

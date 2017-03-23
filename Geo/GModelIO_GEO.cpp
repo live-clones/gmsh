@@ -1278,7 +1278,7 @@ void GEO_Internals::synchronize(GModel *model)
           if(gr) comp.push_back(gr);
         }
         r = new GRegionCompound(model, v->Num, comp);
-	model->add(r);
+  model->add(r);
       }
       else if(!r){
         r = new gmshRegion(model, v);

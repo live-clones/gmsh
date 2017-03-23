@@ -101,7 +101,8 @@ class GEO_Internals{
               double x, double y, double z, double ax, double ay, double az,
               double angle);
   bool dilate(const std::vector<std::pair<int, int> > &dimTags,
-              double x, double y, double z, double a, double b, double c);
+              double x, double y, double z,
+              double a, double b, double c);
   bool symmetry(const std::vector<std::pair<int, int> > &dimTags,
                 double a, double b, double c, double d);
 

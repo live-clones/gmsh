@@ -54,10 +54,10 @@ class GModelFactory {
     return 0;
   }
   virtual GEdge *addNURBS(GModel *gm, GVertex *start, GVertex *end,
-			  std::vector<std::vector<double> > controlPoints,
-			  std::vector<double> knots,
-			  std::vector<double> weights,
-			  std::vector<int> multiplicity)
+        std::vector<std::vector<double> > controlPoints,
+        std::vector<double> knots,
+        std::vector<double> weights,
+        std::vector<int> multiplicity)
   {
     Msg::Error("addNURBS not implemented yet");
     return 0;
@@ -66,7 +66,7 @@ class GModelFactory {
   // faces. If boundaries are co-planar, then it's a plane, otherwise,
   // we tru ruled, sweep or other kind of surfaces
   virtual std::vector<GFace *> addRuledFaces(GModel *gm,
-					     std::vector<std::vector<GEdge *> > edges)
+               std::vector<std::vector<GEdge *> > edges)
   {
     Msg::Error("addRuledFaces not implemented yet");
     return std::vector<GFace*>();
@@ -245,11 +245,11 @@ class OCCFactory : public GModelFactory {
                    GVertex *start, GVertex *end,
                    std::vector<std::vector<double> > controlPoints);
   GEdge *addNURBS(GModel *gm,
-		  GVertex *start, GVertex *end,
-		  std::vector<std::vector<double> > controlPoints,
-		  std::vector<double> knots,
-		  std::vector<double> weights,
-		  std::vector<int> multiplicity);
+      GVertex *start, GVertex *end,
+      std::vector<std::vector<double> > controlPoints,
+      std::vector<double> knots,
+      std::vector<double> weights,
+      std::vector<int> multiplicity);
   GEntity *revolve(GModel *gm, GEntity*,std::vector<double> p1,
                    std::vector<double> p2, double angle);
   GEntity *extrude(GModel *gm, GEntity*,std::vector<double> p1,
@@ -276,6 +276,7 @@ class OCCFactory : public GModelFactory {
   void translate(GModel *gm, std::vector<double> dx, int addToTheModel);
   void rotate(GModel *gm, std::vector<double> p1,std::vector<double> p2,
               double angle, int addToTheModel);
+  void dilate(GModel *gm, std::vector<double> s, int addToTheModel);
   GModel *computeBooleanUnion(GModel *obj, GModel *tool, int createNewModel);
   GModel *computeBooleanIntersection(GModel *obj, GModel *tool, int createNewModel);
   GModel *computeBooleanDifference(GModel *obj, GModel *tool, int createNewModel);

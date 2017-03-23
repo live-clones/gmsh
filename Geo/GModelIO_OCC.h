@@ -33,6 +33,7 @@ class ExtrudeParams;
 class BRepSweep_Prism;
 class BRepSweep_Revol;
 class BRepBuilderAPI_Transform;
+class BRepBuilderAPI_GTransform;
 
 class OCC_Internals {
  public:
@@ -81,9 +82,13 @@ class OCC_Internals {
                   bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
                   bool makesolids=false, double scaling=0.0);
 
-  // apply a geometrical transformation
+  // apply a geometrical transformation (does not modify Shape)
   bool _transform(const std::vector<std::pair<int, int> > &inDimTags,
                   BRepBuilderAPI_Transform *tfo);
+
+  // apply a G geometrical transformation (modifies Shape : affinity...)
+  bool _gtransform(const std::vector<std::pair<int, int> > &inDimTags,
+                  BRepBuilderAPI_GTransform *gtfo);
 
   // add circle or ellipse arc
   bool _addArc(int tag, int startTag, int centerTag, int endTag, int mode);
@@ -219,6 +224,10 @@ class OCC_Internals {
   bool rotate(const std::vector<std::pair<int, int> > &inDimTags,
               double x, double y, double z, double ax, double ay, double az,
               double angle);
+
+  // apply gtransformations
+  bool dilate(const std::vector<std::pair<int, int> > &inDimTags,
+              double a, double b, double c);
 
   // copy and remove
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,

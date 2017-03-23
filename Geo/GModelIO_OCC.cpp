@@ -32,6 +32,7 @@
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
+#include <BRepBuilderAPI_GTransform.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepGProp.hxx>
@@ -1897,6 +1898,27 @@ bool OCC_Internals::_transform(const std::vector<std::pair<int, int> > &inDimTag
   return true;
 }
 
+bool OCC_Internals::_gtransform(const std::vector<std::pair<int, int> > &inDimTags,
+                               BRepBuilderAPI_GTransform *gtfo)
+{
+  for(unsigned int i = 0; i < inDimTags.size(); i++){
+    int dim = inDimTags[i].first;
+    int tag = inDimTags[i].second;
+    if(!isBound(dim, tag)){
+      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+                 dim, tag);
+      return false;
+    }
+    gtfo->Perform(find(dim, tag), Standard_False);
+    if(!gtfo->IsDone()){
+      Msg::Error("Could not apply transformation");
+      return false;
+    }
+    bind(gtfo->Shape(), dim, tag);
+  }
+  return true;
+}
+
 bool OCC_Internals::translate(const std::vector<std::pair<int, int> > &inDimTags,
                               double dx, double dy, double dz)
 {
@@ -1915,6 +1937,15 @@ bool OCC_Internals::rotate(const std::vector<std::pair<int, int> > &inDimTags,
   t.SetRotation(axisOfRevolution, angle);
   BRepBuilderAPI_Transform tfo(t);
   return _transform(inDimTags, &tfo);
+}
+
+bool OCC_Internals::dilate(const std::vector<std::pair<int, int> > &inDimTags,
+                           double a, double b, double c)
+{
+  gp_GTrsf t;
+  t.SetVectorialPart(gp_Mat(a, 0, 0, 0, b, 0, 0, 0, c));
+  BRepBuilderAPI_GTransform gtfo(t);
+  return _gtransform(inDimTags, &gtfo);
 }
 
 bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
