@@ -221,8 +221,6 @@ class OCC_Internals {
   bool rotate(const std::vector<std::pair<int, int> > &inDimTags,
               double x, double y, double z, double ax, double ay, double az,
               double angle);
-
-  // apply gtransformations
   bool dilate(const std::vector<std::pair<int, int> > &inDimTags,
               double x, double y, double z,
               double a, double b, double c);
@@ -460,6 +458,12 @@ public:
               double angle)
   {
     return _error("apply rotation");
+  }
+  bool dilate(const std::vector<std::pair<int, int> > &inDimTags,
+              double x, double y, double z,
+              double a, double b, double c)
+  {
+    return _error("apply dilatation");
   }
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,
             std::vector<std::pair<int, int> > &outDimTags)
