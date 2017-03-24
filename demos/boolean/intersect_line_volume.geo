@@ -26,5 +26,5 @@ Block(newv) = {x_min_, y_min_, z_min_,  dx/2, dy/2, dz/2};
 
 
 l_wire[] = BooleanIntersection { Line{l_wire[]}; Delete; }{ Volume{v_box}; };
-SyncModel;
+
 Printf("after intersection: new l_wire[] = ", l_wire[]);
