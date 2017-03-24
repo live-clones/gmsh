@@ -1710,17 +1710,20 @@ bool OCC_Internals::applyBooleanOperator
   TopoDS_Shape result;
 
 #if OCC_VERSION_HEX >= 0x060900
+  // if we remove the tool or object, we should act on copies, so that syncing
+  // with GModel is not confused if the boolean operation does not modify some
+  // of the shapes that would already have been imported before
   TopTools_ListOfShape objectShapes, toolShapes;
   for(int dim = 0; dim < 4; dim++){
     for(unsigned int i = 0; i < objects[dim].size(); i++){
-      if(tolerance > 0.)
-        objectShapes.Append(BRepBuilderAPI_Copy(objects[dim][i]).Shape());
+      if(removeTool || tolerance > 0.)
+        objectShapes.Append(BRepBuilderAPI_Copy(objects[dim][i], false).Shape());
       else
         objectShapes.Append(objects[dim][i]);
     }
     for(unsigned int i = 0; i < tools[dim].size(); i++){
-      if(tolerance > 0.)
-        toolShapes.Append(BRepBuilderAPI_Copy(tools[dim][i]).Shape());
+      if(removeObject || tolerance > 0.)
+        toolShapes.Append(BRepBuilderAPI_Copy(tools[dim][i], false).Shape());
       else
         toolShapes.Append(tools[dim][i]);
     }
