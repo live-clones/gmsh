@@ -1716,13 +1716,13 @@ bool OCC_Internals::applyBooleanOperator
   TopTools_ListOfShape objectShapes, toolShapes;
   for(int dim = 0; dim < 4; dim++){
     for(unsigned int i = 0; i < objects[dim].size(); i++){
-      if(removeTool || tolerance > 0.)
+      if(removeObject || tolerance > 0.)
         objectShapes.Append(BRepBuilderAPI_Copy(objects[dim][i], false).Shape());
       else
         objectShapes.Append(objects[dim][i]);
     }
     for(unsigned int i = 0; i < tools[dim].size(); i++){
-      if(removeObject || tolerance > 0.)
+      if(removeTool || tolerance > 0.)
         toolShapes.Append(BRepBuilderAPI_Copy(tools[dim][i], false).Shape());
       else
         toolShapes.Append(tools[dim][i]);
