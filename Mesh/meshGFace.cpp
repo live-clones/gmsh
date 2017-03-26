@@ -2507,7 +2507,7 @@ bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
 
 void partitionAndRemesh(GFaceCompound *gf)
 {
-#if defined(HAVE_SOLVER) && (defined(HAVE_CHACO) || defined(HAVE_METIS))
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN) && (defined(HAVE_CHACO) || defined(HAVE_METIS))
 
   // Partition the mesh and createTopology for new faces
   double tbegin = Cpu();

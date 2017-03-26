@@ -2707,7 +2707,9 @@ FieldManager::FieldManager()
   map_type_name["PostView"] = new FieldFactoryT<PostViewField>();
 #endif
   map_type_name["Gradient"] = new FieldFactoryT<GradientField>();
+#if defined(HAVE_ANN)
   map_type_name["Octree"] = new FieldFactoryT<OctreeField>();
+#endif
   map_type_name["Restrict"] = new FieldFactoryT<RestrictField>();
   map_type_name["Min"] = new FieldFactoryT<MinField>();
   map_type_name["MinAniso"] = new FieldFactoryT<MinAnisoField>();

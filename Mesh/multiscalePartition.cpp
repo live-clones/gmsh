@@ -344,7 +344,7 @@ void multiscalePartition::setNumberOfPartitions(int &nbParts)
 void multiscalePartition::partition(partitionLevel & level, int nbParts,
                                     typeOfPartition method)
 {
-#if defined(HAVE_SOLVER) && (defined(HAVE_METIS) || defined(HAVE_CHACO))
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN) && (defined(HAVE_METIS) || defined(HAVE_CHACO))
 
   if (method == LAPLACIAN){
     std::map<MVertex*, SPoint3> coordinates;
