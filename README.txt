@@ -4,7 +4,7 @@ built-in pre- and post-processing facilities.
 Gmsh is copyright (C) 1997-2017 C. Geuzaine and J.-F. Remacle, and is
 distributed under the terms of the GNU General Public License, Version 2 or
 later, with an exception to allow for easier linking with external
-libraries. See doc/LICENSE.txt and doc/CREDITS.txt for more information.
+libraries. See LICENSE.txt and CREDITS.txt for more information.
 
 See the doc/ and tutorial/ directories for documentation. The reference manual
 is located in doc/texinfo/. See the demos/ directory and the web site
