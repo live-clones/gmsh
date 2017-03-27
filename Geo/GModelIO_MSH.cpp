@@ -136,11 +136,11 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm)
       for(int i = 0; i < 16; i++){
         if(fscanf(fp, "%lf", &tfo[i]) != 1) return;
       }
-      if (completePer) s->setMeshMaster(m, tfo);
+      if(completePer) s->setMeshMaster(m, tfo);
     }
     else {
       fsetpos(fp, &pos);
-      s->setMeshMaster(m);
+      if(completePer) s->setMeshMaster(m);
     }
     int numv;
     if(fscanf(fp, "%d", &numv) != 1) numv = 0;
@@ -149,7 +149,7 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm)
       if(fscanf(fp, "%d %d", &v1, &v2) != 2) continue;
       MVertex *mv1 = gm->getMeshVertexByTag(v1);
       MVertex *mv2 = gm->getMeshVertexByTag(v2);
-      if (completePer) s->correspondingVertices[mv1] = mv2;
+      if(completePer) s->correspondingVertices[mv1] = mv2;
     }
     if (!completePer) {
       if (!s)
