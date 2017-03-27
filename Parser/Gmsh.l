@@ -167,6 +167,7 @@ DefineString            return tDefineString;
 Degenerated             return tDegenerated;
 Delete                  return tDelete;
 Dilate                  return tDilate;
+DimNameSpace            return tDimNameSpace;
 DirName                 return tDirName;
 Disk                    return tDisk;
 Draw                    return tDraw;

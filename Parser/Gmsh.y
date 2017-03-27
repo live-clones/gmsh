@@ -178,7 +178,7 @@ struct doubleXstring{
 %token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
-%token tDefineNumber tDefineStruct tNameStruct tAppend
+%token tDefineNumber tDefineStruct tNameStruct tDimNameSpace tAppend
 %token tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tBlock tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
@@ -4924,13 +4924,13 @@ FExpr_Single :
       Free($2);
     }
 
-  | '#' String__Index tSCOPE
+  | tDimNameSpace LP String__Index RP
     {
-      std::string struct_namespace($2);
+      std::string struct_namespace($3);
       $$ = (double)nameSpaces[struct_namespace].size();
-      Free($2);
+      Free($3);
     }
-  | '#' tSCOPE
+  | tDimNameSpace LP RP
     {
       std::string struct_namespace(std::string(""));
       $$ = (double)nameSpaces[struct_namespace].size();
