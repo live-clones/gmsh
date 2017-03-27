@@ -9,7 +9,7 @@ fi
 if [ $# -lt 2 ] || [ $2 == "gmsh" ]; then
   echo "========= Building Gmsh =========="
   cd ${HOME}/src/gmsh
-  svn update
+  git pull
   cd utils/nightly
   ctest -VV -S ./gmsh_$1.ctest
 fi
@@ -17,7 +17,7 @@ fi
 if [ $# -lt 2 ] || [ $2 == "getdp" ]; then
   echo "========= Building GetDP =========="
   cd ${HOME}/src/getdp
-  svn update
+  git pull
   cd utils/nightly
   ctest -VV -S ./getdp_$1.ctest
 fi
