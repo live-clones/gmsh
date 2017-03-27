@@ -61,7 +61,7 @@ endif(NOT CDASH_MODEL)
 
 ctest_empty_binary_directory(${CTEST_BINARY_DIRECTORY})
 ctest_start(${CDASH_MODEL})
-# update from GIT only for nightly builds
+# update from Git only for nightly builds
 if(CDASH_MODEL MATCHES "Nightly")
   ctest_update()
 endif(CDASH_MODEL MATCHES "Nightly")
