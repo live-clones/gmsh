@@ -40,7 +40,8 @@ Struct NS1::St3 [ Type 3 ];
 val_Type_of_Struct_St2 = St2.Type;
 val_Type_of_Struct_St2_in_NS1 = NS1::St2.Type;
 
-an_element_from_a_list = struct_identifier.struct_member_list_of_real_1(1);
+one_element_from_a_list_member = struct_identifier.struct_member_list_of_real_1(1);
+full_list_from_a_list_member() = struct_identifier.struct_member_list_of_real_1();
 
 // The function DimNameSpace(.) returns the number of structures in a given namespace:
 
