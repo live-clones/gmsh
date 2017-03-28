@@ -1391,7 +1391,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
     TopoDS_Shape top = p ? p->LastShape(face) : r->LastShape(face);
     {
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
-      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, ax, x, y, z, angle);
+      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       meshAttr m(ee);
       m.source = bot;
@@ -1400,7 +1400,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
     TopoDS_Shape vol = p ? p->Shape(face) : r->Shape(face);
     {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
-      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, ax, x, y, z, angle);
+      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       meshAttr m(ee);
       m.source = bot;
@@ -1414,7 +1414,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
     TopoDS_Shape top = p ? p->LastShape(edge) : r->LastShape(edge);
     {
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
-      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, ax, x, y, z, angle);
+      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       meshAttr m(ee);
       m.source = bot;
@@ -1423,7 +1423,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
     TopoDS_Shape sur = p ? p->Shape(edge) : r->Shape(edge);
     {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
-      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, ax, x, y, z, angle);
+      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       meshAttr m(ee);
       m.source = bot;
@@ -1438,7 +1438,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
     TopoDS_Shape lin = p ? p->Shape(vertex) : r->Shape(vertex);
     {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
-      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, ax, x, y, z, angle);
+      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       meshAttr m(ee);
       m.source = bot;
