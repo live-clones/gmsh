@@ -4856,15 +4856,49 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_Float($1.char1, $1.char2);
     }
-  | String__Index '[' FExpr ']'
-    //  | Struct_FullName '[' FExpr ']'
+//  | String__Index '[' FExpr ']'
+  | Struct_FullName '[' FExpr ']'
     {
-      $$ = treat_Struct_FullName_Float(NULL, $1, 2, (int)$3);
+      $$ = treat_Struct_FullName_Float($1.char1, $1.char2, 2, (int)$3);
+      /*
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else
+          $$ = s.value[index];
+      }
+      Free($1);
+      */
     }
-  | String__Index '(' FExpr ')'
-    //  | Struct_FullName '(' FExpr ')'
+//  | String__Index '(' FExpr ')'
+  | Struct_FullName '(' FExpr ')'
     {
-      $$ = treat_Struct_FullName_Float(NULL, $1, 2, (int)$3);
+      $$ = treat_Struct_FullName_Float($1.char1, $1.char2, 2, (int)$3);
+      /*
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else
+          $$ = s.value[index];
+      }
+      Free($1);
+      */
     }
   | tExists '(' Struct_FullName ')'
     {
@@ -6836,7 +6870,7 @@ double treat_Struct_FullName_Float
           if (type_treat == 0) yymsg(0, "Uninitialized variable '%s[%d]'", c2, index);
         }
         else
-          out = s.value[index];
+          out = s.value[0];
       }
       else {
         out = val_default;
@@ -6847,16 +6881,10 @@ double treat_Struct_FullName_Float
     out = 1.;
   }
   else{
-    if (type_var == 1) {
-      std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
-      if(nameSpaces.getTag(struct_namespace, struct_name, out)) {
-        out = val_default;
-        if (type_treat == 0) yymsg(0, "Unknown variable '%s'", struct_name.c_str());
-      }
-    }
-    else {
+    std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
+    if(nameSpaces.getTag(struct_namespace, struct_name, out)) {
       out = val_default;
-      if (type_treat == 0) yymsg(0, "Unknown variable '%s(.)'", c2);
+      if (type_treat == 0) yymsg(0, "Unknown variable '%s'", struct_name.c_str());
     }
   }
   Free(c1); Free(c2);
