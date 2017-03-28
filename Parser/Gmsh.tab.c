@@ -58,14 +58,6 @@
 /* Using locations.  */
 #define YYLSP_NEEDED 0
 
-/* Substitute the variable and function names.  */
-#define yyparse gmsh_yyparse
-#define yylex   gmsh_yylex
-#define yyerror gmsh_yyerror
-#define yylval  gmsh_yylval
-#define yychar  gmsh_yychar
-#define yydebug gmsh_yydebug
-#define yynerrs gmsh_yynerrs
 
 
 /* Tokens.  */
@@ -721,7 +713,7 @@ typedef union YYSTYPE
   struct TwoChar c2;
 }
 /* Line 193 of yacc.c.  */
-#line 725 "Gmsh.tab.cpp"
+#line 717 "Gmsh.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -734,7 +726,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 738 "Gmsh.tab.cpp"
+#line 730 "Gmsh.tab.c"
 
 #ifdef short
 # undef short
@@ -13606,7 +13598,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 13610 "Gmsh.tab.cpp"
+#line 13602 "Gmsh.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);

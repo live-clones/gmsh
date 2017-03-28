@@ -140,8 +140,6 @@ double treat_Struct_FullName_Float
 double treat_Struct_FullName_dot_tSTRING_Float
   (char* c1, char* c2, char* c3, int index = 0,
    double val_default = 0., int type_treat = 0);
-List_T * treat_Struct_FullName_dot_tSTRING_ListOfFloat
-  (char* c1, char* c2, char* c3);
 int treat_Struct_FullName_dot_tSTRING_Float_getDim
   (char* c1, char* c2, char* c3);
 char* treat_Struct_FullName_String
@@ -4858,15 +4856,49 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_Float($1.char1, $1.char2);
     }
-  | String__Index '[' FExpr ']'
-    //  | Struct_FullName '[' FExpr ']'
+//  | String__Index '[' FExpr ']'
+  | Struct_FullName '[' FExpr ']'
     {
-      $$ = treat_Struct_FullName_Float(NULL, $1, 2, (int)$3);
+      $$ = treat_Struct_FullName_Float($1.char1, $1.char2, 2, (int)$3);
+      /*
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else
+          $$ = s.value[index];
+      }
+      Free($1);
+      */
     }
-  | String__Index '(' FExpr ')'
-    //  | Struct_FullName '(' FExpr ')'
+//  | String__Index '(' FExpr ')'
+  | Struct_FullName '(' FExpr ')'
     {
-      $$ = treat_Struct_FullName_Float(NULL, $1, 2, (int)$3);
+      $$ = treat_Struct_FullName_Float($1.char1, $1.char2, 2, (int)$3);
+      /*
+      int index = (int)$3;
+      if(!gmsh_yysymbols.count($1)){
+	yymsg(0, "Unknown variable '%s'", $1);
+	$$ = 0.;
+      }
+      else{
+        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
+        if((int)s.value.size() < index + 1){
+          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
+          $$ = 0.;
+        }
+        else
+          $$ = s.value[index];
+      }
+      Free($1);
+      */
     }
   | tExists '(' Struct_FullName ')'
     {
@@ -4906,7 +4938,7 @@ FExpr_Single :
       Free($2);
     }
 
-  | '#' Struct_FullName '.' tSTRING_Member_Float LP RP
+  | '#' Struct_FullName '.' tSTRING_Member_Float '(' ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float_getDim($2.char1, $2.char2, $4);
     }
@@ -5010,14 +5042,6 @@ FExpr_Single :
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
     }
   | String__Index tSCOPE String__Index '.' tSTRING_Member_Float '(' FExpr ')'
-    {
-      $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5, (int)$7);
-    }
-  | String__Index '.' tSTRING_Member_Float '[' FExpr ']'
-    {
-      $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
-    }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float '[' FExpr ']'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5, (int)$7);
     }
@@ -5474,16 +5498,6 @@ FExpr_Multi :
       }
       Free($1);
     }
-
-  | String__Index '.' tSTRING_Member_Float LP RP
-    {
-      $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat(NULL, $1, $3);
-    }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float LP RP
-    {
-      $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat($1, $3, $5);
-    }
-
    // for compatibility with GetDP
   | tList '[' String__Index ']'
     {
@@ -6856,7 +6870,7 @@ double treat_Struct_FullName_Float
           if (type_treat == 0) yymsg(0, "Uninitialized variable '%s[%d]'", c2, index);
         }
         else
-          out = s.value[index];
+          out = s.value[0];
       }
       else {
         out = val_default;
@@ -6867,16 +6881,10 @@ double treat_Struct_FullName_Float
     out = 1.;
   }
   else{
-    if (type_var == 1) {
-      std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
-      if(nameSpaces.getTag(struct_namespace, struct_name, out)) {
-        out = val_default;
-        if (type_treat == 0) yymsg(0, "Unknown variable '%s'", struct_name.c_str());
-      }
-    }
-    else {
+    std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
+    if(nameSpaces.getTag(struct_namespace, struct_name, out)) {
       out = val_default;
-      if (type_treat == 0) yymsg(0, "Unknown variable '%s(.)'", c2);
+      if (type_treat == 0) yymsg(0, "Unknown variable '%s'", struct_name.c_str());
     }
   }
   Free(c1); Free(c2);
@@ -6915,36 +6923,6 @@ double treat_Struct_FullName_dot_tSTRING_Float
     out = val_default;
     if (type_treat == 0)
       yymsg(0, "Index %d out of range", index);
-    break;
-  }
-  Free(c1); Free(c2);
-  if (flag_tSTRING_alloc) Free(c3);
-  return out;
-}
-
-List_T * treat_Struct_FullName_dot_tSTRING_ListOfFloat
-(char* c1, char* c2, char* c3)
-{
-  List_T * out, * val_default = NULL;
-  const std::vector<double> * out_vector; double val_;
-  std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
-  std::string key_member(c3);
-  switch (nameSpaces.getMember_Vector
-          (struct_namespace, struct_name, key_member, out_vector)) {
-  case 0:
-    out = List_Create(out_vector->size(), 1, sizeof(double));
-    for(int i = 0; i < out_vector->size(); i++) {
-      val_ = out_vector->at(i);
-      List_Add(out, &val_);
-    }
-    break;
-  case 1:
-    yymsg(0, "Unknown Struct: %s", struct_name.c_str());
-    out = val_default;
-    break;
-  case 2:
-    out = val_default;
-    yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
     break;
   }
   Free(c1); Free(c2);

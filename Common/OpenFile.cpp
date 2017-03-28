@@ -701,6 +701,7 @@ void OpenProject(const std::string &fileName)
   for(std::map<std::string, std::string>::iterator it = cls.begin();
       it != cls.end(); it++)
     gmsh_yystringsymbols[it->first] = std::vector<std::string>(1, it->second);
+  nameSpaces.clear();
   FunctionManager::Instance()->clear();
 #endif
 
