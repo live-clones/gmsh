@@ -188,10 +188,10 @@ int MTetrahedron10::getNumFacesRep(bool curved)
 }
 
 static void _myGetFaceRep(MTetrahedron *tet, int num, double *x, double *y, double *z,
-                          SVector3 *n, int numSubEdges)
+                          SVector3 *n , int numSubEdges)
 {
   static double pp[4][3] = {{0,0,0},{1,0,0},{0,1,0},{0,0,1}};
-  static int fak [4][3] = {{0,1,2},{0,1,3},{0,2,3},{1,2,3}};
+  static int fak [4][3] = {{0,2,1},{0,1,3},{0,3,2},{1,2,3}};
   int iFace    = num / (numSubEdges * numSubEdges);
   int iSubFace = num % (numSubEdges * numSubEdges);
 
