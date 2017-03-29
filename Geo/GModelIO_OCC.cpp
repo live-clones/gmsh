@@ -128,7 +128,7 @@ void OCC_Internals::_recomputeMaxTag(int dim)
     _maxTag[dim + 2] = std::max(_maxTag[dim + 2], exp.Key());
 }
 
-void OCC_Internals::bind(TopoDS_Vertex vertex, int tag)
+void OCC_Internals::bind(TopoDS_Vertex vertex, int tag, bool recursive)
 {
   if(_vertexTag.IsBound(vertex) && _vertexTag.Find(vertex) != tag){
     Msg::Debug("OpenCASCADE vertex %d is already bound to another tag", tag);
@@ -140,7 +140,7 @@ void OCC_Internals::bind(TopoDS_Vertex vertex, int tag)
   _changed = true;
 }
 
-void OCC_Internals::bind(TopoDS_Edge edge, int tag)
+void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
 {
   if(_edgeTag.IsBound(edge) && _edgeTag.Find(edge) != tag){
     Msg::Debug("OpenCASCADE edge %d is already bound to another tag", tag);
@@ -149,10 +149,21 @@ void OCC_Internals::bind(TopoDS_Edge edge, int tag)
   _edgeTag.Bind(edge, tag);
   _tagEdge.Bind(tag, edge);
   setMaxTag(1, tag);
+  if(recursive){
+    TopExp_Explorer exp0;
+    for(exp0.Init(edge, TopAbs_VERTEX); exp0.More(); exp0.Next()){
+      TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
+      if(!_vertexTag.IsBound(vertex)){
+        int t = getMaxTag(0) + 1;
+        bind(vertex, t, recursive);
+      }
+    }
+  }
+
   _changed = true;
 }
 
-void OCC_Internals::bind(TopoDS_Wire wire, int tag)
+void OCC_Internals::bind(TopoDS_Wire wire, int tag, bool recursive)
 {
   if(_wireTag.IsBound(wire) && _wireTag.Find(wire) != tag){
     Msg::Debug("OpenCASCADE wire %d is already bound to anthor tag", tag);
@@ -161,10 +172,20 @@ void OCC_Internals::bind(TopoDS_Wire wire, int tag)
   _wireTag.Bind(wire, tag);
   _tagWire.Bind(tag, wire);
   setMaxTag(-1, tag);
+  if(recursive){
+    TopExp_Explorer exp0;
+    for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()){
+      TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+      if(!_edgeTag.IsBound(edge)){
+        int t = getMaxTag(1) + 1;
+        bind(edge, t, recursive);
+      }
+    }
+  }
   _changed = true;
 }
 
-void OCC_Internals::bind(TopoDS_Face face, int tag)
+void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
 {
   if(_faceTag.IsBound(face) && _faceTag.Find(face) != tag){
     Msg::Debug("OpenCASCADE face %d is already bound to another tag", tag);
@@ -173,10 +194,27 @@ void OCC_Internals::bind(TopoDS_Face face, int tag)
   _faceTag.Bind(face, tag);
   _tagFace.Bind(tag, face);
   setMaxTag(2, tag);
+  if(recursive){
+    TopExp_Explorer exp0;
+    for(exp0.Init(face, TopAbs_WIRE); exp0.More(); exp0.Next()){
+      TopoDS_Wire wire = TopoDS::Wire(exp0.Current());
+      if(!_wireTag.IsBound(wire)){
+        int t = getMaxTag(-1) + 1;
+        bind(wire, t, recursive);
+      }
+    }
+    for(exp0.Init(face, TopAbs_EDGE); exp0.More(); exp0.Next()){
+      TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+      if(!_edgeTag.IsBound(edge)){
+        int t = getMaxTag(1) + 1;
+        bind(edge, t, recursive);
+      }
+    }
+  }
   _changed = true;
 }
 
-void OCC_Internals::bind(TopoDS_Shell shell, int tag)
+void OCC_Internals::bind(TopoDS_Shell shell, int tag, bool recursive)
 {
   if(_shellTag.IsBound(shell) && _shellTag.Find(shell) != tag){
     Msg::Debug("OpenCASCADE shell %d is already bound to another tag", tag);
@@ -185,10 +223,20 @@ void OCC_Internals::bind(TopoDS_Shell shell, int tag)
   _shellTag.Bind(shell, tag);
   _tagShell.Bind(tag, shell);
   setMaxTag(-2, tag);
+  if(recursive){
+    TopExp_Explorer exp0;
+    for(exp0.Init(shell, TopAbs_FACE); exp0.More(); exp0.Next()){
+      TopoDS_Face face = TopoDS::Face(exp0.Current());
+      if(!_faceTag.IsBound(face)){
+        int t = getMaxTag(2) + 1;
+        bind(face, t, recursive);
+      }
+    }
+  }
   _changed = true;
 }
 
-void OCC_Internals::bind(TopoDS_Solid solid, int tag)
+void OCC_Internals::bind(TopoDS_Solid solid, int tag, bool recursive)
 {
   if(_solidTag.IsBound(solid) && _solidTag.Find(solid) != tag){
     Msg::Debug("OpenCASCADE solid %d is already bound to another tag", tag);
@@ -197,24 +245,49 @@ void OCC_Internals::bind(TopoDS_Solid solid, int tag)
   _solidTag.Bind(solid, tag);
   _tagSolid.Bind(tag, solid);
   setMaxTag(3, tag);
+  if(recursive){
+    TopExp_Explorer exp0;
+    for(exp0.Init(solid, TopAbs_SHELL); exp0.More(); exp0.Next()){
+      TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
+      if(!_shellTag.IsBound(shell)){
+        int t = getMaxTag(-2) + 1;
+        bind(shell, t, recursive);
+      }
+    }
+    for(exp0.Init(solid, TopAbs_FACE); exp0.More(); exp0.Next()){
+      TopoDS_Face face = TopoDS::Face(exp0.Current());
+      if(!_faceTag.IsBound(face)){
+        int t = getMaxTag(3) + 1;
+        bind(face, t, recursive);
+      }
+    }
+  }
   _changed = true;
 }
 
-void OCC_Internals::bind(TopoDS_Shape shape, int dim, int tag)
+void OCC_Internals::bind(TopoDS_Shape shape, int dim, int tag, bool recursive)
 {
   switch(dim){
-  case 0: bind(TopoDS::Vertex(shape), tag); break;
-  case 1: bind(TopoDS::Edge(shape), tag); break;
-  case 2: bind(TopoDS::Face(shape), tag); break;
-  case 3: bind(TopoDS::Solid(shape), tag); break;
-  case -1: bind(TopoDS::Wire(shape), tag); break;
-  case -2: bind(TopoDS::Shell(shape), tag); break;
+  case 0: bind(TopoDS::Vertex(shape), tag, recursive); break;
+  case 1: bind(TopoDS::Edge(shape), tag, recursive); break;
+  case 2: bind(TopoDS::Face(shape), tag, recursive); break;
+  case 3: bind(TopoDS::Solid(shape), tag, recursive); break;
+  case -1: bind(TopoDS::Wire(shape), tag, recursive); break;
+  case -2: bind(TopoDS::Shell(shape), tag, recursive); break;
   default: break;
   }
 }
 
 void OCC_Internals::unbind(TopoDS_Vertex vertex, int tag, bool recursive)
 {
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagEdge);
+  for(; exp0.More(); exp0.Next()){
+    TopoDS_Edge edge = TopoDS::Edge(exp0.Value());
+    TopExp_Explorer exp1;
+    for(exp1.Init(edge, TopAbs_VERTEX); exp1.More(); exp1.Next()){
+      if(exp1.Current().IsSame(vertex)) return;
+    }
+  }
   _vertexTag.UnBind(vertex);
   _tagVertex.UnBind(tag);
   _recomputeMaxTag(0);
@@ -223,6 +296,22 @@ void OCC_Internals::unbind(TopoDS_Vertex vertex, int tag, bool recursive)
 
 void OCC_Internals::unbind(TopoDS_Edge edge, int tag, bool recursive)
 {
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagWire);
+  for(; exp0.More(); exp0.Next()){
+    TopoDS_Wire wire = TopoDS::Wire(exp0.Value());
+    TopExp_Explorer exp1;
+    for(exp1.Init(wire, TopAbs_EDGE); exp1.More(); exp1.Next()){
+      if(exp1.Current().IsSame(edge)) return;
+    }
+  }
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp2(_tagFace);
+  for(; exp2.More(); exp2.Next()){
+    TopoDS_Face face = TopoDS::Face(exp2.Value());
+    TopExp_Explorer exp1;
+    for(exp1.Init(face, TopAbs_EDGE); exp1.More(); exp1.Next()){
+      if(exp1.Current().IsSame(edge)) return;
+    }
+  }
   _edgeTag.UnBind(edge);
   _tagEdge.UnBind(tag);
   _recomputeMaxTag(1);
@@ -241,6 +330,14 @@ void OCC_Internals::unbind(TopoDS_Edge edge, int tag, bool recursive)
 
 void OCC_Internals::unbind(TopoDS_Wire wire, int tag, bool recursive)
 {
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagFace);
+  for(; exp0.More(); exp0.Next()){
+    TopoDS_Face face = TopoDS::Face(exp0.Value());
+    TopExp_Explorer exp1;
+    for(exp1.Init(face, TopAbs_WIRE); exp1.More(); exp1.Next()){
+      if(exp1.Current().IsSame(wire)) return;
+    }
+  }
   _wireTag.UnBind(wire);
   _tagWire.UnBind(tag);
   _recomputeMaxTag(-1);
@@ -259,6 +356,22 @@ void OCC_Internals::unbind(TopoDS_Wire wire, int tag, bool recursive)
 
 void OCC_Internals::unbind(TopoDS_Face face, int tag, bool recursive)
 {
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagShell);
+  for(; exp0.More(); exp0.Next()){
+    TopoDS_Shell shell = TopoDS::Shell(exp0.Value());
+    TopExp_Explorer exp1;
+    for(exp1.Init(shell, TopAbs_FACE); exp1.More(); exp1.Next()){
+      if(exp1.Current().IsSame(face)) return;
+    }
+  }
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp2(_tagSolid);
+  for(; exp0.More(); exp0.Next()){
+    TopoDS_Solid solid = TopoDS::Solid(exp0.Value());
+    TopExp_Explorer exp1;
+    for(exp1.Init(solid, TopAbs_FACE); exp1.More(); exp1.Next()){
+      if(exp1.Current().IsSame(face)) return;
+    }
+  }
   _faceTag.UnBind(face);
   _tagFace.UnBind(tag);
   _recomputeMaxTag(2);
@@ -284,6 +397,14 @@ void OCC_Internals::unbind(TopoDS_Face face, int tag, bool recursive)
 
 void OCC_Internals::unbind(TopoDS_Shell shell, int tag, bool recursive)
 {
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagSolid);
+  for(; exp0.More(); exp0.Next()){
+    TopoDS_Solid solid = TopoDS::Solid(exp0.Value());
+    TopExp_Explorer exp1;
+    for(exp1.Init(solid, TopAbs_SHELL); exp1.More(); exp1.Next()){
+      if(exp1.Current().IsSame(shell)) return;
+    }
+  }
   _shellTag.UnBind(shell);
   _tagShell.UnBind(tag);
   _recomputeMaxTag(-2);
@@ -338,8 +459,9 @@ void OCC_Internals::unbind(TopoDS_Shape shape, int dim, int tag, bool recursive)
   }
 }
 
-void OCC_Internals::bind(TopoDS_Shape shape, bool highestDimOnly, int tag,
-                         std::vector<std::pair<int, int> > &outDimTags)
+void OCC_Internals::bind(TopoDS_Shape shape, int tag,
+                         std::vector<std::pair<int, int> > &outDimTags,
+                         bool highestDimOnly, bool recursive)
 {
   TopExp_Explorer exp0;
   bool first = true;
@@ -357,7 +479,7 @@ void OCC_Internals::bind(TopoDS_Shape shape, bool highestDimOnly, int tag,
     }
     else if(first){ first = false; }
     else{ Msg::Error("Cannot bind multiple regions to single tag %d", t); return; }
-    if(!exists) bind(solid, t);
+    if(!exists) bind(solid, t, recursive);
     outDimTags.push_back(std::pair<int, int>(3, t));
   }
   if(highestDimOnly && outDimTags.size()) return;
@@ -375,7 +497,7 @@ void OCC_Internals::bind(TopoDS_Shape shape, bool highestDimOnly, int tag,
     }
     else if(first){ first = false; }
     else{ Msg::Error("Cannot bind multiple faces to single tag %d", t); return; }
-    if(!exists) bind(face, t);
+    if(!exists) bind(face, t, recursive);
     outDimTags.push_back(std::pair<int, int>(2, t));
   }
   if(highestDimOnly && outDimTags.size()) return;
@@ -393,7 +515,7 @@ void OCC_Internals::bind(TopoDS_Shape shape, bool highestDimOnly, int tag,
     }
     else if(first){ first = false; }
     else{ Msg::Error("Cannot bind multiple edges to single tag %d", t); return; }
-    if(!exists) bind(edge, t);
+    if(!exists) bind(edge, t, recursive);
     outDimTags.push_back(std::pair<int, int>(1, t));
   }
   if(highestDimOnly && outDimTags.size()) return;
@@ -410,7 +532,7 @@ void OCC_Internals::bind(TopoDS_Shape shape, bool highestDimOnly, int tag,
     }
     else if(first){ first = false; }
     else{ Msg::Error("Cannot bind multiple vertices to single tag %d", t); return; }
-    if(!exists) bind(vertex, t);
+    if(!exists) bind(vertex, t, recursive);
     outDimTags.push_back(std::pair<int, int>(0, t));
   }
 }
@@ -466,7 +588,7 @@ bool OCC_Internals::addVertex(int tag, double x, double y, double z,
   if(meshSize > 0 && meshSize < MAX_LC)
     _meshAttr.Bind(result, meshAttr(meshSize));
   if(tag <= 0) tag = getMaxTag(0) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -502,7 +624,7 @@ bool OCC_Internals::addLine(int tag, int startTag, int endTag)
     return false;
   }
   if(tag <= 0) tag = getMaxTag(1) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -583,7 +705,7 @@ bool OCC_Internals::_addArc(int tag, int startTag, int centerTag, int endTag,
     return false;
   }
   if(tag <= 0) tag = getMaxTag(1) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -631,7 +753,7 @@ bool OCC_Internals::addCircle(int tag, double x, double y, double z, double r,
     return false;
   }
   if(tag <= 0) tag = getMaxTag(1) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -669,7 +791,7 @@ bool OCC_Internals::addEllipse(int tag, double x, double y, double z, double r1,
     return false;
   }
   if(tag <= 0) tag = getMaxTag(1) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -722,7 +844,7 @@ bool OCC_Internals::_addSpline(int tag, const std::vector<int> &vertexTags, int 
     return false;
   }
   if(tag <= 0) tag = getMaxTag(1) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -766,7 +888,7 @@ bool OCC_Internals::addWire(int tag, const std::vector<int> &edgeTags,
     return false;
   }
   if(tag <= 0) tag = getMaxTag(-1) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -849,7 +971,7 @@ bool OCC_Internals::addRectangle(int tag, double x1, double y1, double z1,
     return false;
   }
   if(tag <= 0) tag = getMaxTag(2) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -877,7 +999,7 @@ bool OCC_Internals::addDisk(int tag, double xc, double yc, double zc,
     return false;
   }
   if(tag <= 0) tag = getMaxTag(2) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -952,7 +1074,7 @@ bool OCC_Internals::addPlaneSurface(int tag, const std::vector<int> &wireTags)
     }
   }
   if(tag <= 0) tag = getMaxTag(2) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -992,7 +1114,7 @@ bool OCC_Internals::addSurfaceFilling(int tag, int wireTag)
   }
 
   if(tag <= 0) tag = getMaxTag(2) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -1042,7 +1164,7 @@ bool OCC_Internals::addSurfaceLoop(int tag, const std::vector<int> &faceTags)
       t = getMaxTag(-2) + 1;
       Msg::Warning("Creating additional surface loop %d", t);
     }
-    bind(shell, t);
+    bind(shell, t, true);
   }
   return true;
 }
@@ -1080,7 +1202,7 @@ bool OCC_Internals::addVolume(int tag, const std::vector<int> &shellTags)
     return false;
   }
   if(tag <= 0) tag = getMaxTag(3) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -1109,7 +1231,7 @@ bool OCC_Internals::addSphere(int tag, double xc, double yc, double zc,
     return false;
   }
   if(tag <= 0) tag = getMaxTag(3) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -1138,7 +1260,7 @@ bool OCC_Internals::addBlock(int tag, double x1, double y1, double z1,
     return false;
   }
   if(tag <= 0) tag = getMaxTag(3) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -1176,7 +1298,7 @@ bool OCC_Internals::addCylinder(int tag, double x1, double y1, double z1,
     return false;
   }
   if(tag <= 0) tag = getMaxTag(3) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -1205,7 +1327,7 @@ bool OCC_Internals::addTorus(int tag, double x, double y, double z,
     return false;
   }
   if(tag <= 0) tag = getMaxTag(3) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -1242,7 +1364,7 @@ bool OCC_Internals::addCone(int tag, double x1, double y1, double z1,
     return false;
   }
   if(tag <= 0) tag = getMaxTag(3) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -1272,7 +1394,7 @@ bool OCC_Internals::addWedge(int tag, double x, double y, double z, double dx, d
     return false;
   }
   if(tag <= 0) tag = getMaxTag(3) + 1;
-  bind(result, tag);
+  bind(result, tag, true);
   return true;
 }
 
@@ -1319,7 +1441,7 @@ bool OCC_Internals::addThruSections(int tag, const std::vector<int> &wireTags,
     return false;
   }
 
-  bind(result, true, tag, outDimTags);
+  bind(result, tag, outDimTags, true, true);
   return true;
 }
 
@@ -1362,7 +1484,7 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
   }
 
   std::vector<std::pair<int, int> > out;
-  bind(result, true, tag, out);
+  bind(result, tag, out, true, true);
   return true;
 }
 
@@ -1582,7 +1704,7 @@ bool OCC_Internals::_extrude(int mode,
     return false;
   }
 
-  bind(result, true, -1, outDimTags);
+  bind(result, -1, outDimTags, true, true);
   return true;
 }
 
@@ -1658,7 +1780,7 @@ bool OCC_Internals::fillet(const std::vector<int> &regionTags,
     Msg::Error("Fillet produces empty shape");
     return false;
   }
-  bind(result, true, -1, outDimTags);
+  bind(result, -1, outDimTags, true, true);
   return true;
 }
 
@@ -1876,7 +1998,7 @@ bool OCC_Internals::applyBooleanOperator
     return false;
   }
 
-  bind(result, true, tag, outDimTags);
+  bind(result, tag, outDimTags, true, true);
   return true;
 }
 
@@ -1909,7 +2031,7 @@ bool OCC_Internals::_transform(const std::vector<std::pair<int, int> > &inDimTag
       }
       result = gtfo->Shape();
     }
-    bind(result, dim, tag);
+    bind(result, dim, tag, true);
   }
   return true;
 }
@@ -1960,7 +2082,7 @@ bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
     }
     TopoDS_Shape result = BRepBuilderAPI_Copy(find(dim, tag)).Shape();
     int newtag = getMaxTag(dim) + 1;
-    bind(result, dim, newtag);
+    bind(result, dim, newtag, true);
     outDimTags.push_back(std::pair<int, int>(dim, newtag));
   }
   return ret;
@@ -2041,14 +2163,14 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
              CTX::instance()->geom.occFixSmallFaces,
              CTX::instance()->geom.occSewFaces,
              false, CTX::instance()->geom.occScaling);
-  bind(result, highestDimOnly, -1, outDimTags);
+  bind(result, -1, outDimTags, highestDimOnly, true);
   return true;
 }
 
 bool OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
                                  std::vector<std::pair<int, int> > &outDimTags)
 {
-  bind(*shape, highestDimOnly, -1, outDimTags);
+  bind(*shape, -1, outDimTags, highestDimOnly, true);
   return true;
 }
 
@@ -2186,8 +2308,10 @@ void OCC_Internals::synchronize(GModel *model)
       int tag;
       if(_vertexTag.IsBound(vertex))
         tag = _vertexTag.Find(vertex);
-      else
+      else{
         tag = ++vTagMax;
+        Msg::Info("Binding unbound OpenCASCADE vertex to tag %d", tag);
+      }
       double lc = MAX_LC;
       if(_meshAttr.IsBound(vertex)){
         meshAttr m = _meshAttr.Find(vertex);
@@ -2205,8 +2329,10 @@ void OCC_Internals::synchronize(GModel *model)
       int tag;
       if(_edgeTag.IsBound(edge))
         tag = _edgeTag.Find(edge);
-      else
+      else{
         tag = ++eTagMax;
+        Msg::Info("Binding unbound OpenCASCADE edge to tag %d", tag);
+      }
       OCCEdge *occe = new OCCEdge(model, edge, tag, v1, v2);
       model->add(occe);
       _copyMeshAttr(edge, occe);
@@ -2218,8 +2344,10 @@ void OCC_Internals::synchronize(GModel *model)
       int tag;
       if(_faceTag.IsBound(face))
         tag = _faceTag.Find(face);
-      else
+      else{
         tag = ++fTagMax;
+        Msg::Info("Binding unbound OpenCASCADE face to tag %d", tag);
+      }
       OCCFace *occf = new OCCFace(model, face, tag);
       model->add(occf);
       _copyMeshAttr(face, occf);
@@ -2231,8 +2359,10 @@ void OCC_Internals::synchronize(GModel *model)
       int tag;
       if(_solidTag.IsBound(region))
         tag = _solidTag(region);
-      else
+      else{
         tag = ++rTagMax;
+        Msg::Info("Binding unbound OpenCASCADE solid to tag %d", tag);
+      }
       OCCRegion *occr = new OCCRegion(model, region, tag);
       model->add(occr);
       _copyMeshAttr(region, occr);

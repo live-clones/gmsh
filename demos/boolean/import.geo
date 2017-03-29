@@ -9,6 +9,7 @@ DefineConstant[
 ];
 
 a() = ShapeFromFile("component8.step");
+
 b() = 2;
 Block(b(0)) = {0,156,z, 10,170,z+10};
 
@@ -16,6 +17,7 @@ If(sph)
   b() += 3;
   Sphere(b(1)) = {0,150,0, 20};
 EndIf
+
 
 r() = BooleanFragments{ Volume{a()}; Delete; }{ Volume{b()}; Delete; };
 

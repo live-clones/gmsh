@@ -5,31 +5,30 @@ Mesh.CharacteristicLengthMin = 1;
 Mesh.CharacteristicLengthMax = 1;
 
 Macro dendrite
+  ll() = {};
   For i In {1:5}
     z = -2 + 5*i;
     r = 0.35 + 0.25*Sin(2*Pi*i/5.);
+    nump = newp; numc = newl; numw = newll; numr = newv;
     If(1) // make several surfaces to ease the meshing
-      Point(nump+1) = {x,y,z};
-      Point(nump+2) = {x+r,y,z};
-      Point(nump+3) = {x,y+r,z};
-      Point(nump+4) = {x-r,y,z};
-      Point(nump+5) = {x,y-r,z};
-      Circle(numc+1) = {nump+2,nump+1,nump+3};
-      Circle(numc+2) = {nump+3,nump+1,nump+4};
-      Circle(numc+3) = {nump+4,nump+1,nump+5};
-      Circle(numc+4) = {nump+5,nump+1,nump+2};
-      Line Loop(numw+1) = {numc+1:numc+4};
+      Point(nump) = {x,y,z};
+      Point(nump+1) = {x+r,y,z};
+      Point(nump+2) = {x,y+r,z};
+      Point(nump+3) = {x-r,y,z};
+      Point(nump+4) = {x,y-r,z};
+      Circle(numc) = {nump+1,nump,nump+2};
+      Circle(numc+1) = {nump+2,nump,nump+3};
+      Circle(numc+2) = {nump+3,nump,nump+4};
+      Circle(numc+3) = {nump+4,nump,nump+1};
+      Line Loop(numw) = {numc:numc+3};
     Else // single periodic surface
-      Circle(numw+1) = {x,y,z, r};
-      Line Loop(numw+1) = numw+1;
+      Circle(numw) = {x,y,z, r};
+      Line Loop(numw) = numw;
     EndIf
-    nump += 5;
-    numc += 4;
-    numw += 1;
+    ll() += numw;
   EndFor
-  numr += 1;
-  ThruSections(numr) = {numw-4:numw};
-  //Ruled ThruSections(numr) = {numw-4:numw};
+  ThruSections(numr) = ll();
+  //Ruled ThruSections(numr) = ll();
   reg() += numr;
 Return
 
@@ -45,7 +44,7 @@ DefineConstant[
 ];
 
 reg() = {};
-nump = 0; numc = 0; numw = 0; numr = 100;
+
 For ii In{0:N-1}
   x = -(N-1)/2*1.5 + ii*1.5;
   For jj In{0:N-1}

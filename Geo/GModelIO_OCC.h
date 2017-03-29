@@ -120,13 +120,13 @@ class OCC_Internals {
   void reset();
 
   // bind and unbind OpenCASCADE shapes to tags
-  void bind(TopoDS_Vertex vertex, int tag);
-  void bind(TopoDS_Edge edge, int tag);
-  void bind(TopoDS_Wire wire, int tag);
-  void bind(TopoDS_Face face, int tag);
-  void bind(TopoDS_Shell shell, int tag);
-  void bind(TopoDS_Solid solid, int tag);
-  void bind(TopoDS_Shape shape, int dim, int tag);
+  void bind(TopoDS_Vertex vertex, int tag, bool recursive=false);
+  void bind(TopoDS_Edge edge, int tag, bool recursive=false);
+  void bind(TopoDS_Wire wire, int tag, bool recursive=false);
+  void bind(TopoDS_Face face, int tag, bool recursive=false);
+  void bind(TopoDS_Shell shell, int tag, bool recursive=false);
+  void bind(TopoDS_Solid solid, int tag, bool recursive=false);
+  void bind(TopoDS_Shape shape, int dim, int tag, bool recursive=false);
   void unbind(TopoDS_Vertex vertex, int tag, bool recursive=false);
   void unbind(TopoDS_Edge edge, int tag, bool recursive=false);
   void unbind(TopoDS_Wire wire, int tag, bool recursive=false);
@@ -137,10 +137,10 @@ class OCC_Internals {
 
   // bind (potentially) mutliple entities in shape and return the tags in
   // outTags. If tag > 0 and a single entity if found, use that; if
-  // highestDimOnly is true, only bind the entities of the highest
-  // dimension
-  void bind(TopoDS_Shape shape, bool highestDimOnly, int tag,
-            std::vector<std::pair<int, int> > &outDimTags);
+  // highestDimOnly is true, only return the entities of the highest dimension
+  void bind(TopoDS_Shape shape, int tag,
+            std::vector<std::pair<int, int> > &outDimTags,
+            bool highestDimOnly, bool recursive=false);
 
   // is the entity of a given dimension and tag bound?
   bool isBound(int dim, int tag);
