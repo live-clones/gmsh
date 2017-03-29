@@ -12,7 +12,8 @@ Struct struct_identifier [
   struct_member_real_2 22.,
   struct_member_string_1 "string1",
   struct_member_string_2 "string2",
-  struct_member_list_of_real_1 { 111., 222., 333. }
+  struct_member_list_of_real_1 { 111., 222., 333. },
+  struct_member_list_of_string_1 Str[ {"string_l_1", "string_l_2"} ]
 ];
 
 // Look at the Current Workspace for checking the structure content.
@@ -40,8 +41,14 @@ Struct NS1::St3 [ Type 3 ];
 val_Type_of_Struct_St2 = St2.Type;
 val_Type_of_Struct_St2_in_NS1 = NS1::St2.Type;
 
+// Access to list members
 one_element_from_a_list_member = struct_identifier.struct_member_list_of_real_1(1);
 full_list_from_a_list_member() = struct_identifier.struct_member_list_of_real_1();
+dim_list_member = #struct_identifier.struct_member_list_of_real_1();
+
+one_string_from_a_list_member = Str[struct_identifier.struct_member_list_of_string_1(1)];
+full_string_list_from_a_list_member() = Str[struct_identifier.struct_member_list_of_string_1()];
+dim_string_list_member = #struct_identifier.struct_member_list_of_string_1();
 
 // The function DimNameSpace(.) returns the number of structures in a given namespace:
 
