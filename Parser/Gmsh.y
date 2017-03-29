@@ -150,6 +150,8 @@ char* treat_Struct_FullName_String
 char* treat_Struct_FullName_dot_tSTRING_String
   (char* c1, char* c2, char* c3, int index = 0,
    char* val_default = NULL, int type_treat = 0);
+List_T * treat_Struct_FullName_dot_tSTRING_ListOfString
+  (char* c1, char* c2, char* c3);
 
 struct doubleXstring{
   double d;
@@ -220,10 +222,12 @@ struct doubleXstring{
 %type <i> TransfiniteArrangement RecombineAngle InSphereCenter
 %type <i> Append AppendOrNot
 %type <u> ColorExpr
-%type <c> StringExpr StringExprVar SendToFile tSTRING_Member_Float HomologyCommand
+%type <c> StringExpr StringExprVar SendToFile tSTRING_Member HomologyCommand
 %type <c> LP RP GetForcedStr_Default
 %type <c> StringIndex String__Index
-%type <l> RecursiveListOfStringExprVar
+%type <l> MultiStringExprVar
+%type <l> RecursiveListOfStringExprVar Str_BracedRecursiveListOfStringExprVar
+%type <l> BracedOrNotRecursiveListOfStringExprVar BracedRecursiveListOfStringExprVar
 %type <l> FExpr_Multi ListOfDouble ListOfDoubleOrAll RecursiveListOfDouble
 %type <l> RecursiveListOfListOfDouble Enumeration
 %type <l> ListOfColor RecursiveListOfColor
@@ -923,7 +927,7 @@ Affectation :
       gmsh_yystringsymbols[$1] = std::vector<std::string>();
       Free($1);
     }
-  | String__Index LP RP tAFFECT tStr LP RecursiveListOfStringExprVar RP tEND
+  | String__Index LP RP tAFFECT tStr LP BracedOrNotRecursiveListOfStringExprVar RP tEND
     {
       std::vector<std::string> s;
       for(int i = 0; i < List_Nbr($7); i++){
@@ -935,7 +939,7 @@ Affectation :
       Free($1);
       List_Delete($7);
     }
-  | String__Index LP RP tAFFECTPLUS tStr LP RecursiveListOfStringExprVar RP tEND
+  | String__Index LP RP tAFFECTPLUS tStr LP BracedOrNotRecursiveListOfStringExprVar RP tEND
     {
       if(gmsh_yystringsymbols.count($1)){
         for(int i = 0; i < List_Nbr($7); i++){
@@ -1423,6 +1427,18 @@ FloatParameterOption :
       Free($1);
       Free($2);
     }
+
+  | tSTRING Str_BracedRecursiveListOfStringExprVar
+    {
+      std::string key($1);
+      for(int i = 0; i < List_Nbr($2); i++){
+        char *v;
+        List_Read($2, i, &v);
+        charOptions[key].push_back(v);
+      }
+      Free($1);
+      List_Delete($2);
+    }
  ;
 
 CharParameterOptionsOrNone :
@@ -1462,18 +1478,32 @@ CharParameterOption :
       Free($2);
     }
 
-  | tSTRING '{' RecursiveListOfStringExprVar '}'
+  | tSTRING BracedRecursiveListOfStringExprVar
     {
       std::string key($1);
-      for(int i = 0; i < List_Nbr($3); i++){
+      for(int i = 0; i < List_Nbr($2); i++){
         char *s;
-        List_Read($3, i, &s);
+        List_Read($2, i, &s);
         std::string val(s);
         Free(s);
         charOptions[key].push_back(val);
       }
       Free($1);
-      List_Delete($3);
+      List_Delete($2);
+    }
+
+  | tSTRING Str_BracedRecursiveListOfStringExprVar
+    {
+      std::string key($1);
+      for(int i = 0; i < List_Nbr($2); i++){
+        char *s;
+        List_Read($2, i, &s);
+        std::string val(s);
+        Free(s);
+        charOptions[key].push_back(val);
+      }
+      Free($1);
+      List_Delete($2);
     }
  ;
 
@@ -4872,7 +4902,7 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 1, 0, 0., 1);
     }
-  | tExists '(' Struct_FullName '.' tSTRING_Member_Float ')'
+  | tExists '(' Struct_FullName '.' tSTRING_Member ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, 0, 0., 1);
     }
@@ -4880,7 +4910,7 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 1, 0, $4, 2);
     }
-  | tGetForced '(' Struct_FullName '.' tSTRING_Member_Float GetForced_Default ')'
+  | tGetForced '(' Struct_FullName '.' tSTRING_Member GetForced_Default ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, 0, $6, 2);
     }
@@ -4906,7 +4936,7 @@ FExpr_Single :
       Free($2);
     }
 
-  | '#' Struct_FullName '.' tSTRING_Member_Float LP RP
+  | '#' Struct_FullName '.' tSTRING_Member LP RP
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float_getDim($2.char1, $2.char2, $4);
     }
@@ -4995,29 +5025,29 @@ FExpr_Single :
 
 //+++ ... extention to structures
 // PD: TO FIX (to avoid shift/reduce conflict)
-//  | Struct_FullName '.' tSTRING_Member_Float
-  | String__Index '.' tSTRING_Member_Float
+//  | Struct_FullName '.' tSTRING_Member
+  | String__Index '.' tSTRING_Member
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float
+  | String__Index tSCOPE String__Index '.' tSTRING_Member
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5);
     }
 
-  | String__Index '.' tSTRING_Member_Float '(' FExpr ')'
+  | String__Index '.' tSTRING_Member '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float '(' FExpr ')'
+  | String__Index tSCOPE String__Index '.' tSTRING_Member '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5, (int)$7);
     }
-  | String__Index '.' tSTRING_Member_Float '[' FExpr ']'
+  | String__Index '.' tSTRING_Member '[' FExpr ']'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float '[' FExpr ']'
+  | String__Index tSCOPE String__Index '.' tSTRING_Member '[' FExpr ']'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5, (int)$7);
     }
@@ -5152,7 +5182,7 @@ Struct_FullName :
     { $$.char1 = $1; $$.char2 = $3; }
 ;
 
-tSTRING_Member_Float :
+tSTRING_Member :
     tSTRING
     { $$ = $1; flag_tSTRING_alloc = 1; }
 /*
@@ -5464,7 +5494,7 @@ FExpr_Multi :
     }
   | String__Index LP RP
     {
-      $$ = List_Create(2, 1, sizeof(double));
+      $$ = List_Create(20, 20, sizeof(double));
       if(!gmsh_yysymbols.count($1))
 	yymsg(0, "Unknown variable '%s'", $1);
       else{
@@ -5475,11 +5505,11 @@ FExpr_Multi :
       Free($1);
     }
 
-  | String__Index '.' tSTRING_Member_Float LP RP
+  | String__Index '.' tSTRING_Member LP RP
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat(NULL, $1, $3);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float LP RP
+  | String__Index tSCOPE String__Index '.' tSTRING_Member LP RP
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat($1, $3, $5);
     }
@@ -5748,20 +5778,20 @@ StringExprVar :
 
 // PD: TO FIX (to avoid shift/reduce conflict)
 //  | Struct_FullName '.' String__Index //tSTRING//_Member_Float
-  | String__Index '.' tSTRING_Member_Float
+  | String__Index '.' tSTRING_Member
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String(NULL, $1, $3);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float
+  | String__Index tSCOPE String__Index '.' tSTRING_Member
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5);
     }
 
-  | String__Index '.' tSTRING_Member_Float '(' FExpr ')'
+  | String__Index '.' tSTRING_Member '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String(NULL, $1, $3, (int)$5);
     }
-  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float '(' FExpr ')'
+  | String__Index tSCOPE String__Index '.' tSTRING_Member '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5, (int)$7);
     }
@@ -5871,7 +5901,7 @@ StringExpr :
       $$ = treat_Struct_FullName_String(NULL, $3.char2, 1, 0, $4, 2);
     }
 
-  | tGetForcedStr '(' Struct_FullName '.' tSTRING_Member_Float GetForcedStr_Default ')'
+  | tGetForcedStr '(' Struct_FullName '.' tSTRING_Member GetForcedStr_Default ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($3.char1, $3.char2, $5, 0, $6, 2);
     }
@@ -6093,17 +6123,73 @@ NameStruct_Arg :
 ;
 
 
+Str_BracedRecursiveListOfStringExprVar :
+    tStr LP BracedRecursiveListOfStringExprVar RP
+    { $$ = $3; }
+ ;
+
+BracedOrNotRecursiveListOfStringExprVar :
+    RecursiveListOfStringExprVar
+    { $$ = $1; }
+  | BracedRecursiveListOfStringExprVar
+    { $$ = $1; }
+ ;
+
+BracedRecursiveListOfStringExprVar :
+    '{' RecursiveListOfStringExprVar '}'
+    { $$ = $2; }
+ ;
+
 RecursiveListOfStringExprVar :
     StringExprVar
     {
       $$ = List_Create(20,20,sizeof(char*));
       List_Add($$, &($1));
     }
+  | MultiStringExprVar
+    { $$ = $1; }
   | RecursiveListOfStringExprVar ',' StringExprVar
     {
       List_Add($$, &($3));
     }
+  | RecursiveListOfStringExprVar ',' MultiStringExprVar
+    {
+      for(int i = 0; i < List_Nbr($3); i++){
+	char* c;
+	List_Read($3, i, &c);
+	List_Add($$, &c);
+      }
+      List_Delete($3);
+    }
  ;
+
+MultiStringExprVar :
+    String__Index '(' ')'
+    {
+      $$ = List_Create(20, 20, sizeof(char *));
+      if(!gmsh_yystringsymbols.count($1))
+	yymsg(0, "Unknown string variable '%s'", $1);
+      else{
+        std::vector<std::string> &s(gmsh_yystringsymbols[$1]);
+	for(unsigned int i = 0; i < s.size(); i++) {
+          char * val_ = strsave((char*)s.at(i).c_str());
+	  List_Add($$, &val_);
+        }
+      }
+      Free($1);
+    }
+
+  | String__Index '.' tSTRING_Member '(' ')'
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_ListOfString(NULL, $1, $3);
+    }
+
+  | String__Index tSCOPE String__Index '.' tSTRING_Member '(' ')'
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_ListOfString($1, $3, $5);
+    }
+;
+
 
 StringIndex :
 
@@ -6330,12 +6416,12 @@ void PrintParserSymbols(bool help, std::vector<std::string> &vec)
     if(it->second.size() == 1)
       vec.push_back(it->first + " = \"" + it->second[0] + "\";");
     else{
-      std::string s = it->first + "[] = Str(";
+      std::string s = it->first + "[] = Str({";
       for(unsigned int i = 0; i < it->second.size(); i++){
         if(i) s += ", ";
         s += std::string("\"") + it->second[i] + "\"";
       }
-      s += ");";
+      s += "});";
       vec.push_back(s);
     }
   }
@@ -7037,4 +7123,34 @@ char* treat_Struct_FullName_dot_tSTRING_String
   Free(c1); Free(c2);
   if (flag_tSTRING_alloc) Free(c3);
   return out_c;
+}
+
+List_T * treat_Struct_FullName_dot_tSTRING_ListOfString
+(char* c1, char* c2, char* c3)
+{
+  List_T * out, * val_default = NULL;
+  const std::vector<std::string> * out_vector; char * val_;
+  std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
+  std::string key_member(c3);
+  switch (nameSpaces.getMember_Vector
+          (struct_namespace, struct_name, key_member, out_vector)) {
+  case 0:
+    out = List_Create(out_vector->size(), 1, sizeof(char *));
+    for(int i = 0; i < out_vector->size(); i++) {
+      val_ = strsave((char*)out_vector->at(i).c_str());
+      List_Add(out, &val_);
+    }
+    break;
+  case 1:
+    yymsg(0, "Unknown Struct: %s", struct_name.c_str());
+    out = val_default;
+    break;
+  case 2:
+    out = val_default;
+    yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
+    break;
+  }
+  Free(c1); Free(c2);
+  if (flag_tSTRING_alloc) Free(c3);
+  return out;
 }
