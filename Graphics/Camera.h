@@ -11,8 +11,8 @@
 class Quaternion;
 
 class XYZ {
-public: 
-  XYZ(){};
+public:
+  XYZ() : x(0.), y(0.), z(0.){};
   ~XYZ(){};
   XYZ(double _x,double _y,double _z);
   double x, y, z;
@@ -22,7 +22,7 @@ public:
 
 double length(XYZ &p);
 void normalize(XYZ &p);
-void rotate(Quaternion omega,XYZ axe) ; 
+void rotate(Quaternion omega,XYZ axe) ;
 XYZ operator* (const double &a,const XYZ &T);
 XYZ operator+ (const XYZ &L,const XYZ &R);
 XYZ operator- (const XYZ &L,const XYZ &R);
@@ -31,9 +31,9 @@ XYZ operator- (const XYZ &R);
 class Quaternion{
 public:
   double x,y,z,w;
-  Quaternion(); 
+  Quaternion();
   Quaternion(const XYZ &R);
-  Quaternion(const XYZ &R, const double &A); 
+  Quaternion(const XYZ &R, const double &A);
   ~Quaternion();
 };
 
@@ -54,7 +54,7 @@ class Camera {
   XYZ right;              /* View right direction    */
   XYZ target;             /* center of rotation and screen   */
   double focallength;     /* Focal Length along vd   */
-  double focallength_ratio;      
+  double focallength_ratio;
   double aperture;        /* Camera aperture         */
   double eyesep;          /* Eye separation          */
   int screenwidth,screenheight;
@@ -85,7 +85,7 @@ class Camera {
   void upZ();
   void tiltHeadLeft();
   void tiltHeadRight();
-};  
+};
 
 class mouseAndKeyboard {
  public:
