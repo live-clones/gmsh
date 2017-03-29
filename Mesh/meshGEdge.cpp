@@ -447,79 +447,69 @@ static void filterPoints(GEdge*ge, int nMinimumPoints)
   }
 }
 
-static void createPoints ( GVertex *gv, GEdge *ge, BoundaryLayerField *blf ,
-			   std::vector<MVertex*>& v, const SVector3 &dir){
+static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
+                         std::vector<MVertex*>& v, const SVector3 &dir)
+{
+#if defined(HAVE_ANN)
   double L = blf->hwall_n;
-
   double LEdge = distance (ge->getBeginVertex()->mesh_vertices[0],
 			   ge->getEndVertex()->mesh_vertices[0]);
-
   while (1){
     if (L > blf->thickness || L > LEdge * .4) break;
     SPoint3 p (gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
-    v.push_back(new MEdgeVertex (p.x(), p.y(), p.z(), ge,  ge->parFromPoint(p), blf->hfar));
+    v.push_back(new MEdgeVertex(p.x(), p.y(), p.z(), ge,  ge->parFromPoint(p), blf->hfar));
     int ith = v.size() ;
-    L+= blf->hwall_n * pow (blf->ratio, ith);
-    //    printf("parameter %g length %g\n",ge->parFromPoint(p),L);
+    L += blf->hwall_n * pow (blf->ratio, ith);
   }
+#endif
 }
 
-void addBoundaryLayerPoints (GEdge *ge,
-			     double &t_begin, // may change the left  parameter of the interval
-			     double &t_end,   // may change the right parameter of the interval
-			     std::vector<MVertex*> &_addBegin, // additional points @ left
-			     std::vector<MVertex*> &_addEnd)   // additional points @ right
+static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
+                                   std::vector<MVertex*> &_addBegin,
+                                   std::vector<MVertex*> &_addEnd)
 {
-  BoundaryLayerField *blf = 0;
 #if defined(HAVE_ANN)
+  // t_begin/t_end may change the left/right parameter of the interval
+  // _addBegin/_addEnd : additional points @ left/right
+  BoundaryLayerField *blf = 0;
   FieldManager *fields = ge->model()->getFields();
   Field *bl_field = fields->get(fields->getBoundaryLayerField());
   blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-  if (blf) blf->setupFor1d(ge->tag());
-#endif
-  if (!blf) return;
-  if (blf->isEdgeBL(ge->tag()))return;
-  SVector3 dir ( ge->getEndVertex()->x() - ge->getBeginVertex()->x(),
-		 ge->getEndVertex()->y() - ge->getBeginVertex()->y(),
-		 ge->getEndVertex()->z() - ge->getBeginVertex()->z());
+  if(blf) blf->setupFor1d(ge->tag());
+  if(!blf) return;
+  if(blf->isEdgeBL(ge->tag())) return;
+  SVector3 dir(ge->getEndVertex()->x() - ge->getBeginVertex()->x(),
+               ge->getEndVertex()->y() - ge->getBeginVertex()->y(),
+               ge->getEndVertex()->z() - ge->getBeginVertex()->z());
   dir.normalize();
   GVertex *gvb = ge->getBeginVertex();
   GVertex *gve = ge->getEndVertex();
-  if (blf->isEndNode(gvb->tag())){
-    if (ge->geomType() != GEntity::Line){
-      Msg::Error ("Boundary layer end point %d should lie on a straight line", gvb->tag());
+  if(blf->isEndNode(gvb->tag())){
+    if(ge->geomType() != GEntity::Line){
+      Msg::Error("Boundary layer end point %d should lie on a straight line",
+                 gvb->tag());
       return;
     }
-    createPoints (gvb, ge, blf, _addBegin, dir);
-    if (!_addBegin.empty())_addBegin[_addBegin.size()-1]->getParameter(0,t_begin);
+    createPoints(gvb, ge, blf, _addBegin, dir);
+    if(!_addBegin.empty()) _addBegin[_addBegin.size()-1]->getParameter(0, t_begin);
   }
   if (blf->isEndNode(gve->tag())){
     if (ge->geomType() != GEntity::Line){
-      Msg::Error ("Boundary layer end point %d should lie on a straight line", gve->tag());
+      Msg::Error("Boundary layer end point %d should lie on a straight line",
+                 gve->tag());
       return;
     }
-    createPoints (gve, ge, blf, _addEnd, dir * -1.0);
-    if (!_addEnd.empty())_addEnd[_addEnd.size()-1]->getParameter(0,t_end);
+    createPoints(gve, ge, blf, _addEnd, dir * -1.0);
+    if(!_addEnd.empty()) _addEnd[_addEnd.size()-1]->getParameter(0, t_end);
   }
-
-  //  printf("Edge %d § %d %d points added (%g %g)-\n", ge->tag(), _addBegin.size(),_addEnd.size(),t_begin,t_end);
+#endif
 }
 
 void meshGEdge::operator() (GEdge *ge)
 {
-  /*
-  BoundaryLayerField *blf = 0;
-#if defined(HAVE_ANN)
-  FieldManager *fields = ge->model()->getFields();
-  Field *bl_field = fields->get(fields->getBoundaryLayerField());
-  blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-  if (blf) blf->setupFor1d(ge->tag());
-#endif
-  */
-
   ge->model()->setCurrentMeshEntity(ge);
 
-  //  if(ge->geomType() == GEntity::DiscreteCurve) return;
+  // if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
   if(ge->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
@@ -533,7 +523,7 @@ void meshGEdge::operator() (GEdge *ge)
 
   if(MeshExtrudedCurve(ge)) return;
 
-  if (ge->meshMaster() != ge){
+  if(ge->meshMaster() != ge){
     GEdge *gef = dynamic_cast<GEdge*> (ge->meshMaster());
     if (gef->meshStatistics.status == GEdge::PENDING) return;
     Msg::Info("Meshing curve %d (%s) as a copy of %d", ge->tag(),
@@ -543,14 +533,16 @@ void meshGEdge::operator() (GEdge *ge)
     return;
   }
 
-  if (ge->model()->getNumEdges() > 1000){
+  if(ge->model()->getNumEdges() > 1000){
     if (ge->tag() % 1000 == 1){
-      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(), ge->model()->getNumEdges(), ge->getTypeString().c_str());
-      }
+      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(), ge->model()->getNumEdges(),
+                ge->getTypeString().c_str());
+    }
   }
-  else {
+  else{
     Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
   }
+
   // compute bounds
   Range<double> bounds = ge->parBounds(0);
   double t_begin = bounds.low();
@@ -558,7 +550,7 @@ void meshGEdge::operator() (GEdge *ge)
 
   // if a BL is ending at one of the ends, then create specific points
   std::vector<MVertex*> _addBegin, _addEnd;
-  addBoundaryLayerPoints (ge, t_begin, t_end, _addBegin, _addEnd);
+  addBoundaryLayerPoints(ge, t_begin, t_end, _addBegin, _addEnd);
 
   // first compute the length of the curve by integrating one
   double length;
@@ -707,10 +699,8 @@ void meshGEdge::operator() (GEdge *ge)
     mesh_vertices = vv;
   }
 
-  //  printf("%ld ----> ", ge->mesh_vertices.size());
   if (_addBegin.empty() && _addEnd.empty())
-    filterPoints (ge, filterMinimumN - 2);
-  //  printf("%ld \n", ge->mesh_vertices.size());
+    filterPoints(ge, filterMinimumN - 2);
 
   for(unsigned int i = 0; i < mesh_vertices.size() + 1; i++){
     MVertex *v0 = (i == 0) ?

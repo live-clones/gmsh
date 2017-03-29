@@ -1391,7 +1391,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
     TopoDS_Shape top = p ? p->LastShape(face) : r->LastShape(face);
     {
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
-      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, ax, x, y, z, angle);
+      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       meshAttr m(ee);
       m.source = bot;
@@ -1400,7 +1400,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
     TopoDS_Shape vol = p ? p->Shape(face) : r->Shape(face);
     {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
-      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, ax, x, y, z, angle);
+      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       meshAttr m(ee);
       m.source = bot;
@@ -1414,7 +1414,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
     TopoDS_Shape top = p ? p->LastShape(edge) : r->LastShape(edge);
     {
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
-      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, ax, x, y, z, angle);
+      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       meshAttr m(ee);
       m.source = bot;
@@ -1423,7 +1423,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
     TopoDS_Shape sur = p ? p->Shape(edge) : r->Shape(edge);
     {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
-      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, ax, x, y, z, angle);
+      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       meshAttr m(ee);
       m.source = bot;
@@ -1438,7 +1438,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
     TopoDS_Shape lin = p ? p->Shape(vertex) : r->Shape(vertex);
     {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
-      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, ax, x, y, z, angle);
+      ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       meshAttr m(ee);
       m.source = bot;
@@ -1710,17 +1710,20 @@ bool OCC_Internals::applyBooleanOperator
   TopoDS_Shape result;
 
 #if OCC_VERSION_HEX >= 0x060900
+  // if we remove the tool or object, we should act on copies, so that syncing
+  // with GModel is not confused if the boolean operation does not modify some
+  // of the shapes that would already have been imported before
   TopTools_ListOfShape objectShapes, toolShapes;
   for(int dim = 0; dim < 4; dim++){
     for(unsigned int i = 0; i < objects[dim].size(); i++){
-      if(tolerance > 0.)
-        objectShapes.Append(BRepBuilderAPI_Copy(objects[dim][i]).Shape());
+      if(removeObject || tolerance > 0.)
+        objectShapes.Append(BRepBuilderAPI_Copy(objects[dim][i], false).Shape());
       else
         objectShapes.Append(objects[dim][i]);
     }
     for(unsigned int i = 0; i < tools[dim].size(); i++){
-      if(tolerance > 0.)
-        toolShapes.Append(BRepBuilderAPI_Copy(tools[dim][i]).Shape());
+      if(removeTool || tolerance > 0.)
+        toolShapes.Append(BRepBuilderAPI_Copy(tools[dim][i], false).Shape());
       else
         toolShapes.Append(tools[dim][i]);
     }

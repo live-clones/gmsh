@@ -135,13 +135,21 @@ void setColor(const std::vector<std::pair<int, int> > &dimTags, unsigned int val
               bool recursive);
 
 double treat_Struct_FullName_Float
-  (char* c1, char* c2, double val_default = 0., int type_treat = 0);
+  (char* c1, char* c2, int type_var = 1, int index = 0,
+   double val_default = 0., int type_treat = 0);
 double treat_Struct_FullName_dot_tSTRING_Float
-  (char* c1, char* c2, char* c3, double val_default = 0., int type_treat = 0);
+  (char* c1, char* c2, char* c3, int index = 0,
+   double val_default = 0., int type_treat = 0);
+List_T * treat_Struct_FullName_dot_tSTRING_ListOfFloat
+  (char* c1, char* c2, char* c3);
+int treat_Struct_FullName_dot_tSTRING_Float_getDim
+  (char* c1, char* c2, char* c3);
 char* treat_Struct_FullName_String
-  (char* c1, char* c2, char* val_default = NULL, int type_treat = 0);
+  (char* c1, char* c2, int type_var = 1, int index = 0,
+   char* val_default = NULL, int type_treat = 0);
 char* treat_Struct_FullName_dot_tSTRING_String
-  (char* c1, char* c2, char* c3, char* val_default = NULL, int type_treat = 0);
+  (char* c1, char* c2, char* c3, int index = 0,
+   char* val_default = NULL, int type_treat = 0);
 
 struct doubleXstring{
   double d;
@@ -178,7 +186,7 @@ struct doubleXstring{
 %token tCpu tMemory tTotalMemory
 %token tCreateTopology tCreateTopologyNoHoles
 %token tDistanceFunction tDefineConstant tUndefineConstant
-%token tDefineNumber tDefineStruct tNameStruct tAppend
+%token tDefineNumber tDefineStruct tNameStruct tDimNameSpace tAppend
 %token tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tBlock tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
@@ -4851,56 +4859,30 @@ FExpr_Single :
       $$ = treat_Struct_FullName_Float($1.char1, $1.char2);
     }
   | String__Index '[' FExpr ']'
+    //  | Struct_FullName '[' FExpr ']'
     {
-      int index = (int)$3;
-      if(!gmsh_yysymbols.count($1)){
-	yymsg(0, "Unknown variable '%s'", $1);
-	$$ = 0.;
-      }
-      else{
-        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-        if((int)s.value.size() < index + 1){
-          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
-          $$ = 0.;
-        }
-        else
-          $$ = s.value[index];
-      }
-      Free($1);
+      $$ = treat_Struct_FullName_Float(NULL, $1, 2, (int)$3);
     }
   | String__Index '(' FExpr ')'
+    //  | Struct_FullName '(' FExpr ')'
     {
-      int index = (int)$3;
-      if(!gmsh_yysymbols.count($1)){
-	yymsg(0, "Unknown variable '%s'", $1);
-	$$ = 0.;
-      }
-      else{
-        gmsh_yysymbol &s(gmsh_yysymbols[$1]);
-        if((int)s.value.size() < index + 1){
-          yymsg(0, "Uninitialized variable '%s[%d]'", $1, index);
-          $$ = 0.;
-        }
-        else
-          $$ = s.value[index];
-      }
-      Free($1);
+      $$ = treat_Struct_FullName_Float(NULL, $1, 2, (int)$3);
     }
   | tExists '(' Struct_FullName ')'
     {
-      $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 0., 1);
+      $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 1, 0, 0., 1);
     }
   | tExists '(' Struct_FullName '.' tSTRING_Member_Float ')'
     {
-      $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, 0., 1);
+      $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, 0, 0., 1);
     }
   | tGetForced '(' Struct_FullName GetForced_Default ')'
     {
-      $$ = treat_Struct_FullName_Float($3.char1, $3.char2, $4, 2);
+      $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 1, 0, $4, 2);
     }
   | tGetForced '(' Struct_FullName '.' tSTRING_Member_Float GetForced_Default ')'
     {
-      $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, $6, 2);
+      $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, 0, $6, 2);
     }
   | tFileExists '(' StringExpr ')'
     {
@@ -4924,13 +4906,18 @@ FExpr_Single :
       Free($2);
     }
 
-  | '#' String__Index tSCOPE
+  | '#' Struct_FullName '.' tSTRING_Member_Float LP RP
     {
-      std::string struct_namespace($2);
-      $$ = (double)nameSpaces[struct_namespace].size();
-      Free($2);
+      $$ = treat_Struct_FullName_dot_tSTRING_Float_getDim($2.char1, $2.char2, $4);
     }
-  | '#' tSCOPE
+
+  | tDimNameSpace LP String__Index RP
+    {
+      std::string struct_namespace($3);
+      $$ = (double)nameSpaces[struct_namespace].size();
+      Free($3);
+    }
+  | tDimNameSpace LP RP
     {
       std::string struct_namespace(std::string(""));
       $$ = (double)nameSpaces[struct_namespace].size();
@@ -5016,6 +5003,23 @@ FExpr_Single :
   | String__Index tSCOPE String__Index '.' tSTRING_Member_Float
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5);
+    }
+
+  | String__Index '.' tSTRING_Member_Float '(' FExpr ')'
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
+    }
+  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float '(' FExpr ')'
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5, (int)$7);
+    }
+  | String__Index '.' tSTRING_Member_Float '[' FExpr ']'
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_Float(NULL, $1, $3, (int)$5);
+    }
+  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float '[' FExpr ']'
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_Float($1, $3, $5, (int)$7);
     }
 
   | String__Index '[' FExpr ']' '.' tSTRING
@@ -5470,6 +5474,16 @@ FExpr_Multi :
       }
       Free($1);
     }
+
+  | String__Index '.' tSTRING_Member_Float LP RP
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat(NULL, $1, $3);
+    }
+  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float LP RP
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat($1, $3, $5);
+    }
+
    // for compatibility with GetDP
   | tList '[' String__Index ']'
     {
@@ -5743,6 +5757,15 @@ StringExprVar :
       $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5);
     }
 
+  | String__Index '.' tSTRING_Member_Float '(' FExpr ')'
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_String(NULL, $1, $3, (int)$5);
+    }
+  | String__Index tSCOPE String__Index '.' tSTRING_Member_Float '(' FExpr ')'
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5, (int)$7);
+    }
+
   | String__Index '[' FExpr ']' '.' tSTRING
     {
       std::string out;
@@ -5845,12 +5868,12 @@ StringExpr :
     //+++ No need to extend to Struct_FullName (a Tag is not a String), but...
   | tGetForcedStr '(' Struct_FullName GetForcedStr_Default ')'
     {
-      $$ = treat_Struct_FullName_String(NULL, $3.char2, $4, 2);
+      $$ = treat_Struct_FullName_String(NULL, $3.char2, 1, 0, $4, 2);
     }
 
   | tGetForcedStr '(' Struct_FullName '.' tSTRING_Member_Float GetForcedStr_Default ')'
     {
-      $$ = treat_Struct_FullName_dot_tSTRING_String($3.char1, $3.char2, $5, $6, 2);
+      $$ = treat_Struct_FullName_dot_tSTRING_String($3.char1, $3.char2, $5, 0, $6, 2);
     }
 
   | tStrCat LP RecursiveListOfStringExprVar RP
@@ -6811,29 +6834,49 @@ int NEWPHYSICAL()
 
 
 double treat_Struct_FullName_Float
-(char* c1, char* c2, double val_default, int type_treat)
+(char* c1, char* c2, int type_var, int index, double val_default, int type_treat)
 {
   double out;
   if(!c1 && gmsh_yysymbols.count(c2)){
     if (type_treat == 1) out = 1.; // Exists (type_treat == 1)
     else { // Get (0) or GetForced (2)
-      gmsh_yysymbol &s(gmsh_yysymbols[c2]);
-      if(s.value.empty()){
-        out = val_default;
-        if (type_treat == 0) yymsg(0, "Uninitialized variable '%s'", c2);
+      if (type_var == 1) {
+        gmsh_yysymbol &s(gmsh_yysymbols[c2]);
+        if(s.value.empty()){
+          out = val_default;
+          if (type_treat == 0) yymsg(0, "Uninitialized variable '%s'", c2);
+        }
+        else
+          out = s.value[0];
       }
-      else
-        out = s.value[0];
+      else if (type_var == 2) {
+        gmsh_yysymbol &s(gmsh_yysymbols[c2]);
+        if((int)s.value.size() < index + 1){
+          out = val_default;
+          if (type_treat == 0) yymsg(0, "Uninitialized variable '%s[%d]'", c2, index);
+        }
+        else
+          out = s.value[index];
+      }
+      else {
+        out = val_default;
+      }
     }
   }
   else if(!c1 && type_treat == 1 && gmsh_yystringsymbols.count(c2)) {
     out = 1.;
   }
   else{
-    std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
-    if(nameSpaces.getTag(struct_namespace, struct_name, out)) {
+    if (type_var == 1) {
+      std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
+      if(nameSpaces.getTag(struct_namespace, struct_name, out)) {
+        out = val_default;
+        if (type_treat == 0) yymsg(0, "Unknown variable '%s'", struct_name.c_str());
+      }
+    }
+    else {
       out = val_default;
-      if (type_treat == 0) yymsg(0, "Unknown variable '%s'", struct_name.c_str());
+      if (type_treat == 0) yymsg(0, "Unknown variable '%s(.)'", c2);
     }
   }
   Free(c1); Free(c2);
@@ -6841,13 +6884,13 @@ double treat_Struct_FullName_Float
 }
 
 double treat_Struct_FullName_dot_tSTRING_Float
-(char* c1, char* c2, char* c3, double val_default, int type_treat)
+(char* c1, char* c2, char* c3, int index, double val_default, int type_treat)
 {
   double out;
   std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);
   switch (nameSpaces.getMember
-          (struct_namespace, struct_name, key_member, out)) {
+          (struct_namespace, struct_name, key_member, out, index)) {
   case 0:
     if (type_treat == 1) out = 1.; // Exists (type_treat == 1)
     break;
@@ -6868,6 +6911,64 @@ double treat_Struct_FullName_dot_tSTRING_Float
         yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
     }
     break;
+  case 3:
+    out = val_default;
+    if (type_treat == 0)
+      yymsg(0, "Index %d out of range", index);
+    break;
+  }
+  Free(c1); Free(c2);
+  if (flag_tSTRING_alloc) Free(c3);
+  return out;
+}
+
+List_T * treat_Struct_FullName_dot_tSTRING_ListOfFloat
+(char* c1, char* c2, char* c3)
+{
+  List_T * out, * val_default = NULL;
+  const std::vector<double> * out_vector; double val_;
+  std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
+  std::string key_member(c3);
+  switch (nameSpaces.getMember_Vector
+          (struct_namespace, struct_name, key_member, out_vector)) {
+  case 0:
+    out = List_Create(out_vector->size(), 1, sizeof(double));
+    for(int i = 0; i < out_vector->size(); i++) {
+      val_ = out_vector->at(i);
+      List_Add(out, &val_);
+    }
+    break;
+  case 1:
+    yymsg(0, "Unknown Struct: %s", struct_name.c_str());
+    out = val_default;
+    break;
+  case 2:
+    out = val_default;
+    yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
+    break;
+  }
+  Free(c1); Free(c2);
+  if (flag_tSTRING_alloc) Free(c3);
+  return out;
+}
+
+int treat_Struct_FullName_dot_tSTRING_Float_getDim
+(char* c1, char* c2, char* c3)
+{
+  int out;
+  std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
+  std::string key_member(c3);
+  switch (nameSpaces.getMember_Dim
+          (struct_namespace, struct_name, key_member, out)) {
+  case 0:
+    break;
+  case 1:
+    out = 0;
+    break;
+  case 2:
+    out = 0;
+    yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
+    break;
   }
   Free(c1); Free(c2);
   if (flag_tSTRING_alloc) Free(c3);
@@ -6875,7 +6976,7 @@ double treat_Struct_FullName_dot_tSTRING_Float
 }
 
 char * treat_Struct_FullName_String
-(char* c1, char* c2, char * val_default, int type_treat)
+(char* c1, char* c2, int type_var, int index, char * val_default, int type_treat)
 {
   std::string string_default(val_default? val_default : std::string(""));
   const std::string * out = NULL;
@@ -6903,7 +7004,7 @@ char * treat_Struct_FullName_String
 }
 
 char* treat_Struct_FullName_dot_tSTRING_String
-(char* c1, char* c2, char* c3, char * val_default, int type_treat)
+(char* c1, char* c2, char* c3, int index, char * val_default, int type_treat)
 {
   std::string string_default(val_default? val_default : std::string(""));
   const std::string * out = NULL;
@@ -6911,7 +7012,7 @@ char* treat_Struct_FullName_dot_tSTRING_String
   std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);
   switch (nameSpaces.getMember
-          (struct_namespace, struct_name, key_member, out)) {
+          (struct_namespace, struct_name, key_member, out, index)) {
   case 0:
     break;
   case 1:
@@ -6924,6 +7025,11 @@ char* treat_Struct_FullName_dot_tSTRING_String
     out = &string_default;
     if (type_treat == 0)
       yymsg(0, "Unknown member '%s' of Struct %s", c3, struct_name.c_str());
+    break;
+  case 3:
+    out = &string_default;
+    if (type_treat == 0)
+      yymsg(0, "Index %d out of range", index);
     break;
   }
   char* out_c = (char*)Malloc((out->size() + 1) * sizeof(char));

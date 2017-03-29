@@ -1544,8 +1544,9 @@ if(UNIX)
 endif(UNIX)
 
 set(WELCOME_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/WELCOME.txt)
-set(LICENSE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/LICENSE.txt)
-set(CREDITS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/CREDITS.txt)
+set(LICENSE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt)
+set(CREDITS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CREDITS.txt)
+set(CHANGELOG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CHANGELOG.txt)
 set(ONELAB_PY ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab/python/onelab.py)
 file(GLOB TUTORIAL_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/?*.*)
 file(GLOB DEMOS ${CMAKE_CURRENT_SOURCE_DIR}/demos/*)
@@ -1595,6 +1596,7 @@ if(WIN32 OR CYGWIN)
     unix2dos(WELCOME_FILE)
     unix2dos(LICENSE_FILE)
     unix2dos(CREDITS_FILE)
+    unix2dos(CHANGELOG_FILE)
     unix2dos(TUTORIAL_FILES)
     foreach(DIR ${DEMOS_DIRS})
       file(GLOB DEMO_FILES ${DIR}/?*.*)
@@ -1668,6 +1670,7 @@ endif(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 install(FILES ${WELCOME_FILE} DESTINATION ${GMSH_DOC} RENAME README.txt)
 install(FILES ${LICENSE_FILE} DESTINATION ${GMSH_DOC})
 install(FILES ${CREDITS_FILE} DESTINATION ${GMSH_DOC})
+install(FILES ${CHANGELOG_FILE} DESTINATION ${GMSH_DOC})
 install(FILES ${TUTORIAL_FILES} DESTINATION ${GMSH_DOC}/tutorial)
 foreach(DIR ${DEMOS_DIRS})
   get_filename_component(DEMOS_DIR_NAME ${DIR} NAME)
@@ -1723,7 +1726,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${OPT_TEXI}"
 if(MAKEINFO AND TEXI2PDF)
   add_custom_target(doc COMMAND ${CMAKE_COMMAND} -E tar zcf
                     ${CMAKE_CURRENT_BINARY_DIR}/gmsh-${GMSH_VERSION}-doc.tgz
-                    doc/CREDITS.txt doc/LICENSE.txt doc/VERSIONS.txt
+                    CREDITS.txt LICENSE.txt CHANGELOG.txt
                     doc/gmsh.1 doc/texinfo/gmsh.html doc/texinfo/gmsh.info
                     doc/texinfo/gmsh.pdf doc/texinfo/gmsh.txt
                     COMMAND ${CMAKE_COMMAND} -E remove ${TEX_OBJ}

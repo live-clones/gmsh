@@ -9,18 +9,17 @@ DefineConstant[
 ];
 
 a() = ShapeFromFile("component8.step");
-
-Block(2) = {0,156,z, 10,170,z+10};
 b() = 2;
+Block(b(0)) = {0,156,z, 10,170,z+10};
 
 If(sph)
-  Sphere(3) = {0,150,0, 20};
   b() += 3;
+  Sphere(b(1)) = {0,150,0, 20};
 EndIf
 
 r() = BooleanFragments{ Volume{a()}; Delete; }{ Volume{b()}; Delete; };
 
-Recursive Color SteelBlue { Volume{r()}; }
+//Recursive Color SteelBlue { Volume{r()}; }
 
 Save "merged.brep";
 

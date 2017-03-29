@@ -5660,7 +5660,7 @@ If your dataset is constant per element make sure you don't use the
 @cindex History, versions
 @cindex Changelog
 
-@verbatiminclude ../VERSIONS.txt
+@verbatiminclude ../../CHANGELOG.txt
 
 @c =========================================================================
 @c Copyright and credits
@@ -5674,7 +5674,7 @@ If your dataset is constant per element make sure you don't use the
 @cindex Contributors, list
 @cindex Credits 
 
-@verbatiminclude ../CREDITS.txt
+@verbatiminclude ../../CREDITS.txt
 
 @c =========================================================================
 @c License
@@ -5685,7 +5685,7 @@ If your dataset is constant per element make sure you don't use the
 
 @cindex License
 
-@verbatiminclude ../LICENSE.txt
+@verbatiminclude ../../LICENSE.txt
 
 @c =========================================================================
 @c Concept Index (cindex)
