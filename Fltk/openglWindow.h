@@ -45,7 +45,8 @@ class openglWindow : public Fl_Gl_Window {
   int pixel_h();
   time_t rawtime,  prev_rawtime;
   double response_frequency;
-  bool addPointMode, lassoMode, selectionMode;
+  int addPointMode;
+  bool lassoMode, selectionMode;
   int endSelection, undoSelection, invertSelection, quitSelection;
   std::string screenMessage[2];
   openglWindow(int x, int y, int w, int h);

@@ -5,7 +5,7 @@ Mesh.CharacteristicLengthMin = 1;
 Mesh.CharacteristicLengthMax = 1;
 
 Block(1) = {0,0,0, 1,1,1};
-Cylinder(2) = {0.5,0,0, 0.5,1,0, 0.7};
+Cylinder(2) = {0.5,0,0, 0,1,0, 0.7};
 BooleanDifference(3) = { Volume{1}; Delete; }{ Volume{2}; Delete; };
 
 s() = Abs(Boundary{ Volume{3}; });

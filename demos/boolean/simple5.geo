@@ -10,6 +10,6 @@ For i In {1:5}
   Translate {0,0,i/5} { Surface{i}; }
 EndFor
 
-Cylinder(1) = {0,0,-0.5, 0,0,1.5, 0.5};
+Cylinder(1) = {0,0,-0.5, 0,0,2, 0.5};
 
 BooleanFragments{ Volume{1}; Delete; }{ Surface{1:5}; Delete; }

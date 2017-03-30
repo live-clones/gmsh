@@ -31,8 +31,8 @@ void add_point(const std::string &fileName, const std::string &x,
                const std::string &y, const std::string &z, const std::string &lc);
 void add_multline(const std::string &type, std::vector<int> &p,
                   const std::string &fileName);
-void add_circ(int p1, int p2, int p3, const std::string &fileName);
-void add_ell(int p1, int p2, int p3, int p4, const std::string &fileName);
+void add_circle_arc(int p1, int p2, int p3, const std::string &fileName);
+void add_ellipse_arc(int p1, int p2, int p3, int p4, const std::string &fileName);
 void add_field_option(int field_id, const std::string &option_name,
                       const std::string &option_value, const std::string &fileName);
 void add_field(int field_id, const std::string &type_name,
@@ -47,6 +47,21 @@ void add_physical(const std::string &type, List_T *list, const std::string &file
                   const std::string &name, int forceTag, bool append,
                   const std::string &mode);
 void add_compound(const std::string &type, List_T *list, const std::string &fileName);
+void add_circle(const std::string &fileName, const std::string &x,
+                const std::string &y, const std::string &z, const std::string &r,
+                const std::string &alpha1, const std::string &alpha2);
+void add_ellipse(const std::string &fileName, const std::string &x, const std::string &y,
+                 const std::string &z, const std::string &rx, const std::string &ry,
+                 const std::string &alpha1, const std::string &alpha2);
+void add_disk(const std::string &fileName, const std::string &x, const std::string &y,
+              const std::string &z, const std::string &rx, const std::string &ry);
+void add_rectangle(const std::string &fileName, const std::string &x, const std::string &y,
+                   const std::string &z, const std::string &dx, const std::string &dy,
+                   const std::string &roundedRadius);
+void add_sphere(const std::string &fileName, const std::string &x,
+                const std::string &y, const std::string &z, const std::string &r,
+                const std::string &alpha1, const std::string &alpha2,
+                const std::string &alpha3);
 void translate(int add, List_T *list, const std::string &fileName,
                const std::string &what, const std::string &tx, const std::string &ty,
                const std::string &tz);

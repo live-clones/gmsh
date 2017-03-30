@@ -478,6 +478,7 @@ FlGui::FlGui(int argc, char **argv)
   clipping = new clippingWindow(CTX::instance()->deltaFontSize);
   manip = new manipWindow(CTX::instance()->deltaFontSize);
   elementaryContext = new elementaryContextWindow(CTX::instance()->deltaFontSize);
+  transformContext = new transformContextWindow(CTX::instance()->deltaFontSize);
   physicalContext = new physicalContextWindow(CTX::instance()->deltaFontSize);
   meshContext = new meshContextWindow(CTX::instance()->deltaFontSize);
   help = new helpWindow();
@@ -1244,6 +1245,8 @@ void window_cb(Fl_Widget *w, void *data)
       FlGui::instance()->fields->win->show();
     if(FlGui::instance()->elementaryContext->win->shown())
       FlGui::instance()->elementaryContext->win->show();
+    if(FlGui::instance()->transformContext->win->shown())
+      FlGui::instance()->transformContext->win->show();
     if(FlGui::instance()->physicalContext->win->shown())
       FlGui::instance()->physicalContext->win->show();
     if(FlGui::instance()->meshContext->win->shown())

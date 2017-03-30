@@ -8555,13 +8555,13 @@ yyreduce:
       std::vector<double> param; ListOfDouble2Vector((yyvsp[(6) - (7)].l), param);
       bool r = true;
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        if(param.size() == 6 || param.size() == 7){
-          double r = (param.size() == 7) ? param[6] : 0.;
+        if(param.size() == 5 || param.size() == 6){
+          double r = (param.size() == 6) ? param[5] : 0.;
           r = GModel::current()->getOCCInternals()->addRectangle
-            (num, param[0], param[1], param[2], param[3], param[4], param[5], r);
+            (num, param[0], param[1], param[2], param[3], param[4], r);
         }
         else{
-          yymsg(0, "Rectangle requires 6 ou 7 parameters");
+          yymsg(0, "Rectangle requires 5 ou 6 parameters");
         }
       }
       else{

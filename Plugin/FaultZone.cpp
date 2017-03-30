@@ -636,6 +636,8 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace,
   }
 
   // replace physical edges by physical surfaces
+
+#if 1 // FIXME this is wrong !?!
   for(int i = 0; i < List_Nbr(gModel->getGEOInternals()->PhysicalGroups); i++){
     PhysicalGroup *p = *(PhysicalGroup**)List_Pointer
       (GModel::current()->getGEOInternals()->PhysicalGroups, i);
@@ -671,6 +673,8 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace,
       List_Delete(faceEntities);
     }
   }
+#endif
+
 }
 
 //================================================================================

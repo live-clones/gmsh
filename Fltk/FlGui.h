@@ -31,6 +31,7 @@ class highOrderToolsWindow;
 class clippingWindow;
 class manipWindow;
 class elementaryContextWindow;
+class transformContextWindow;
 class physicalContextWindow;
 class meshContextWindow;
 class helpWindow;
@@ -69,6 +70,7 @@ class FlGui{
   clippingWindow *clipping;
   manipWindow *manip;
   elementaryContextWindow *elementaryContext;
+  transformContextWindow *transformContext;
   physicalContextWindow *physicalContext;
   meshContextWindow *meshContext;
   helpWindow *help;
