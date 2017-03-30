@@ -1331,9 +1331,8 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
 
     char ib = FlGui::instance()->selectEntity(type);
     if(ib == 'l') {
-      // we don't use List_Insert in order to keep the original
-      // ordering (this is slower, but this way undo works as
-      // expected)
+      // we don't use List_Insert in order to keep the original ordering (this
+      // is slower, but this way undo works as expected)
       int tag;
       switch (type) {
       case ENT_POINT:
@@ -1372,9 +1371,8 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
       drawContext::global()->draw();
     }
     if(ib == 'r') {
-      // we don't use List_Suppress in order to keep the original
-      // ordering (this is slower, but this way undo works as
-      // expected)
+      // we don't use List_Suppress in order to keep the original ordering (this
+      // is slower, but this way undo works as expected)
       int index, tag;
       switch (type) {
       case ENT_POINT:
@@ -1644,8 +1642,9 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
       for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
         if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
           FlGui::instance()->selectedEdges[i]->setSelection(1);
-          if(selectObject)
+          if(selectObject){
             object.push_back(FlGui::instance()->selectedEdges[i]);
+          }
           else
             tool.push_back(FlGui::instance()->selectedEdges[i]);
         }
@@ -1670,12 +1669,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'r') {
-      for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++)
-        FlGui::instance()->selectedEdges[i]->setSelection(0);
-      for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++)
-        FlGui::instance()->selectedFaces[i]->setSelection(0);
-      for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++)
-        FlGui::instance()->selectedRegions[i]->setSelection(0);
+      Msg::Warning("Entity de-selection not implemented yet in boolean operations");
     }
     if(ib == 'u') {
       if(selectObject && object.size()){

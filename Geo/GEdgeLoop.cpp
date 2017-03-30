@@ -141,24 +141,22 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
   GEdge *degeneratedToInsert = 0;
   for (std::list<GEdge*>::const_iterator it = cwire.begin(); it != cwire.end(); ++it){
     GEdge *ed = *it;
-    if (ed->degenerate(0))degenerated.push_back(ed);
+    if (ed->degenerate(0)) degenerated.push_back(ed);
     else wire.push_back(ed);
   }
 
-  if (degenerated.size() == 1){
+  if(degenerated.size() == 1){
     wire.push_front(degenerated[0]);
   }
-  else if (degenerated.size() == 2){
+  else if(degenerated.size() == 2){
     degeneratedToInsert = degenerated[1];
     wire.push_front(degenerated[0]);
   }
   else if (degenerated.size() > 2){
-    Msg::Error("More than two degenerated edges in one model face of an OCC model");
+    Msg::Warning("More than two degenerated edges in one model face of an OCC model");
   }
 
-  while (!wire.empty()){
-    //    printf("wire.size = %d\n",wire.size());
-    loopTheLoop(wire,loop,&degeneratedToInsert);
-    //    break;
+  while(!wire.empty()){
+    loopTheLoop(wire, loop, &degeneratedToInsert);
   }
 }

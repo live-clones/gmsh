@@ -263,9 +263,8 @@ int OCCEdge::minimumMeshSegments() const
   else
     np = CTX::instance()->mesh.minCurvPoints - 1;
 
-  // if the edge is closed, ensure that at least 3 points are
-  // generated in the 1D mesh (4 segments, one of which is
-  // degenerated)
+  // if the edge is closed, ensure that at least 3 points are generated in the
+  // 1D mesh (4 segments, one of which is degenerated)
   if (getBeginVertex() == getEndVertex()) np = std::max(4, np);
 
   return std::max(np, meshAttributes.minimumMeshSegments);
