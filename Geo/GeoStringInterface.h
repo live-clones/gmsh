@@ -70,6 +70,16 @@ void add_cylinder(const std::string &fileName, const std::string &x, const std::
 void add_block(const std::string &fileName, const std::string &x, const std::string &y,
                const std::string &z, const std::string &dx, const std::string &dy,
                const std::string &dz);
+void add_torus(const std::string &fileName, const std::string &x, const std::string &y,
+               const std::string &z, const std::string &r1, const std::string &r2,
+               const std::string &alpha);
+void add_cone(const std::string &fileName, const std::string &x, const std::string &y,
+              const std::string &z, const std::string &dx, const std::string &dy,
+              const std::string &dz, const std::string &r1, const std::string &r2,
+              const std::string &alpha);
+void add_wedge(const std::string &fileName, const std::string &x, const std::string &y,
+               const std::string &z, const std::string &dx, const std::string &dy,
+               const std::string &dz, const std::string &ltx);
 void translate(int add, List_T *list, const std::string &fileName,
                const std::string &what, const std::string &tx, const std::string &ty,
                const std::string &tz);

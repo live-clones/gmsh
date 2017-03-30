@@ -148,6 +148,55 @@ static void elementary_add_block_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void elementary_add_torus_cb(Fl_Widget *w, void *data)
+{
+  add_torus(GModel::current()->getFileName(),
+            FlGui::instance()->elementaryContext->input[53]->value(),
+            FlGui::instance()->elementaryContext->input[54]->value(),
+            FlGui::instance()->elementaryContext->input[55]->value(),
+            FlGui::instance()->elementaryContext->input[56]->value(),
+            FlGui::instance()->elementaryContext->input[57]->value(),
+            FlGui::instance()->elementaryContext->input[58]->value());
+  FlGui::instance()->resetVisibility();
+  GModel::current()->setSelection(0);
+  SetBoundingBox();
+  drawContext::global()->draw();
+}
+
+static void elementary_add_cone_cb(Fl_Widget *w, void *data)
+{
+  add_cone(GModel::current()->getFileName(),
+           FlGui::instance()->elementaryContext->input[59]->value(),
+           FlGui::instance()->elementaryContext->input[60]->value(),
+           FlGui::instance()->elementaryContext->input[61]->value(),
+           FlGui::instance()->elementaryContext->input[62]->value(),
+           FlGui::instance()->elementaryContext->input[63]->value(),
+           FlGui::instance()->elementaryContext->input[64]->value(),
+           FlGui::instance()->elementaryContext->input[65]->value(),
+           FlGui::instance()->elementaryContext->input[66]->value(),
+           FlGui::instance()->elementaryContext->input[67]->value());
+  FlGui::instance()->resetVisibility();
+  GModel::current()->setSelection(0);
+  SetBoundingBox();
+  drawContext::global()->draw();
+}
+
+static void elementary_add_wedge_cb(Fl_Widget *w, void *data)
+{
+  add_wedge(GModel::current()->getFileName(),
+            FlGui::instance()->elementaryContext->input[68]->value(),
+            FlGui::instance()->elementaryContext->input[69]->value(),
+            FlGui::instance()->elementaryContext->input[70]->value(),
+            FlGui::instance()->elementaryContext->input[71]->value(),
+            FlGui::instance()->elementaryContext->input[72]->value(),
+            FlGui::instance()->elementaryContext->input[73]->value(),
+            FlGui::instance()->elementaryContext->input[74]->value());
+  FlGui::instance()->resetVisibility();
+  GModel::current()->setSelection(0);
+  SetBoundingBox();
+  drawContext::global()->draw();
+}
+
 static void elementary_switch_tabs_cb(Fl_Widget *w, void *data)
 {
   if(FlGui::instance()->elementaryContext->tab1->visible()){
@@ -172,7 +221,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 31 * FL_NORMAL_SIZE;
-  int height = 4 * WB + 9 * BH;
+  int height = 4 * WB + 10 * BH;
 
   win = new paletteWindow(width, height, CTX::instance()->nonModalWindows ? true : false,
                           "Elementary Entity Context");
@@ -194,7 +243,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       for(int i = 0; i < 4; i++)   input[i]->align(FL_ALIGN_RIGHT);
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
         o->callback(elementary_add_parameter_cb);
       }
       group[0]->end();
@@ -229,7 +278,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       }
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
         o->callback(elementary_add_point_cb);
       }
       group[1]->end();
@@ -254,7 +303,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
         input[i]->align(FL_ALIGN_RIGHT);
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
         o->callback(elementary_add_circle_cb);
       }
       group[2]->end();
@@ -281,7 +330,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
         input[i]->align(FL_ALIGN_RIGHT);
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
         o->callback(elementary_add_ellipse_cb);
       }
       group[3]->end();
@@ -304,7 +353,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
         input[i]->align(FL_ALIGN_RIGHT);
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
         o->callback(elementary_add_disk_cb);
       }
       group[4]->end();
@@ -329,7 +378,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
         input[i]->align(FL_ALIGN_RIGHT);
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
         o->callback(elementary_add_rectangle_cb);
       }
       group[5]->end();
@@ -360,7 +409,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
         input[i]->align(FL_ALIGN_RIGHT);
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
         o->callback(elementary_add_sphere_cb);
       }
       group[6]->end();
@@ -389,7 +438,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
         input[i]->align(FL_ALIGN_RIGHT);
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
         o->callback(elementary_add_cylinder_cb);
       }
       group[7]->end();
@@ -414,32 +463,96 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
         input[i]->align(FL_ALIGN_RIGHT);
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
         o->callback(elementary_add_block_cb);
       }
       group[8]->end();
     }
 
-    /* FIXME: TODO
     // 9: Torus
     {
       group[9] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Torus");
+      input[53] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
+      input[53]->value("0");
+      input[54] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
+      input[54]->value("0");
+      input[55] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
+      input[55]->value("0");
+      input[56] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "r1");
+      input[56]->value("1");
+      input[57] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "r2");
+      input[57]->value("0.3");
+      input[58] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Angle");
+      input[58]->value("");
+      for(int i = 53; i < 59; i++)
+        input[i]->align(FL_ALIGN_RIGHT);
+      {
+        Fl_Return_Button *o = new Fl_Return_Button
+          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+        o->callback(elementary_add_torus_cb);
+      }
       group[9]->end();
     }
+
     // 10: Cone
     {
       group[10] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Cone");
+      input[59] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
+      input[59]->value("0");
+      input[60] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
+      input[60]->value("0");
+      input[61] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
+      input[61]->value("0");
+      input[62] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "DX");
+      input[62]->value("0.5");
+      input[63] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "DY");
+      input[63]->value("0");
+      input[64] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "DZ");
+      input[64]->value("0");
+      input[65] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "r1");
+      input[65]->value("0.5");
+      input[66] = new Fl_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "r2");
+      input[66]->value("0.1");
+      input[67] = new Fl_Input(2 * WB, 2 * WB + 9 * BH, IW, BH, "Angle");
+      input[67]->value("");
+      for(int i = 59; i < 68; i++)
+        input[i]->align(FL_ALIGN_RIGHT);
+      {
+        Fl_Return_Button *o = new Fl_Return_Button
+          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+        o->callback(elementary_add_cone_cb);
+      }
       group[10]->end();
     }
     // 11: Wedge
     {
       group[11] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Wedge");
+      input[68] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
+      input[68]->value("0");
+      input[69] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
+      input[69]->value("0");
+      input[70] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
+      input[70]->value("0");
+      input[71] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "DX");
+      input[71]->value("0.5");
+      input[72] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "DY");
+      input[72]->value("0.5");
+      input[73] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "DZ");
+      input[73]->value("0.5");
+      input[74] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Ltx");
+      input[74]->value("0");
+      for(int i = 68; i < 75; i++)
+        input[i]->align(FL_ALIGN_RIGHT);
+      {
+        Fl_Return_Button *o = new Fl_Return_Button
+          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+        o->callback(elementary_add_wedge_cb);
+      }
       group[11]->end();
     }
-    */
     tab2->end();
   }
 
@@ -478,6 +591,9 @@ void elementaryContextWindow::updatePoint(double pt[3], int which)
         input[32 + i]->value(str);
         input[39 + i]->value(str);
         input[47 + i]->value(str);
+        input[53 + i]->value(str);
+        input[59 + i]->value(str);
+        input[68 + i]->value(str);
       }
     }
   }
@@ -485,11 +601,9 @@ void elementaryContextWindow::updatePoint(double pt[3], int which)
 
 void elementaryContextWindow::show(int pane)
 {
-  // FIXME: TODO
+  if(pane < 0 || pane > 11) return;
 
-  if(pane < 0 || pane > 8) return;
-
-  for(int i = 0; i < 9; i++)
+  for(int i = 0; i < 12; i++)
     group[i]->hide();
 
   if(pane < 6){

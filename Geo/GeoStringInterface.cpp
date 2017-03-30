@@ -425,7 +425,8 @@ void add_circle(const std::string &fileName, const std::string &x, const std::st
                 const std::string &alpha2)
 {
   std::ostringstream sstream;
-  sstream << "Circle(" << NEWLINE() << ") = {" << x << "," << y << "," << z << "," << r;
+  sstream << "Circle(" << NEWLINE() << ") = {" << x << ", " << y << ", " << z
+          << ", " << r;
   if(alpha1.size())
     sstream << ", " << alpha1;
   if(alpha1.size() && alpha2.size())
@@ -439,8 +440,8 @@ void add_ellipse(const std::string &fileName, const std::string &x, const std::s
                  const std::string &alpha1, const std::string &alpha2)
 {
   std::ostringstream sstream;
-  sstream << "Ellipse(" << NEWLINE() << ") = {" << x << "," << y << "," << z << ","
-          << rx << ", " << ry;
+  sstream << "Ellipse(" << NEWLINE() << ") = {" << x << ", " << y << ", " << z
+          << ", " << rx << ", " << ry;
   if(alpha1.size())
     sstream << ", " << alpha1;
   if(alpha1.size() && alpha2.size())
@@ -453,8 +454,8 @@ void add_disk(const std::string &fileName, const std::string &x, const std::stri
                 const std::string &z, const std::string &rx, const std::string &ry)
 {
   std::ostringstream sstream;
-  sstream << "Disk(" << NEWSURFACE() << ") = {" << x << "," << y << "," << z << ","
-          << rx << ", " << ry << "};";
+  sstream << "Disk(" << NEWSURFACE() << ") = {" << x << ", " << y << ", " << z
+          << ", " << rx << ", " << ry << "};";
   add_infile(sstream.str(), fileName);
 }
 
@@ -463,8 +464,8 @@ void add_rectangle(const std::string &fileName, const std::string &x, const std:
                    const std::string &roundedRadius)
 {
   std::ostringstream sstream;
-  sstream << "Rectangle(" << NEWSURFACE() << ") = {" << x << "," << y << "," << z << ","
-          << dx << ", " << dy;
+  sstream << "Rectangle(" << NEWSURFACE() << ") = {" << x << ", " << y << ", " << z
+          << ", " << dx << ", " << dy;
   if(roundedRadius.size())
     sstream << ", " << roundedRadius;
   sstream << "};";
@@ -476,7 +477,8 @@ void add_sphere(const std::string &fileName, const std::string &x, const std::st
                 const std::string &alpha2, const std::string &alpha3)
 {
   std::ostringstream sstream;
-  sstream << "Sphere(" << NEWVOLUME() << ") = {" << x << "," << y << "," << z << "," << r;
+  sstream << "Sphere(" << NEWVOLUME() << ") = {" << x << ", " << y << ", " << z
+          << ", " << r;
   if(alpha1.size())
     sstream << ", " << alpha1;
   if(alpha1.size() && alpha2.size())
@@ -492,8 +494,8 @@ void add_cylinder(const std::string &fileName, const std::string &x, const std::
                   const std::string &dz, const std::string &r, const std::string &alpha)
 {
   std::ostringstream sstream;
-  sstream << "Cylinder(" << NEWVOLUME() << ") = {" << x << "," << y << "," << z << ","
-          << dx << "," << dy << "," << dz << "," << r;
+  sstream << "Cylinder(" << NEWVOLUME() << ") = {" << x << ", " << y << ", " << z
+          << ", " << dx << ", " << dy << ", " << dz << ", " << r;
   if(alpha.size())
     sstream << ", " << alpha;
   sstream << "};";
@@ -505,8 +507,45 @@ void add_block(const std::string &fileName, const std::string &x, const std::str
                const std::string &dz)
 {
   std::ostringstream sstream;
-  sstream << "Block(" << NEWVOLUME() << ") = {" << x << "," << y << "," << z << ","
-          << dx << "," << dy << "," << dz << "};";
+  sstream << "Block(" << NEWVOLUME() << ") = {" << x << ", " << y << ", " << z
+          << ", " << dx << ", " << dy << ", " << dz << "};";
+  add_infile(sstream.str(), fileName);
+}
+
+void add_torus(const std::string &fileName, const std::string &x, const std::string &y,
+               const std::string &z, const std::string &r1, const std::string &r2,
+               const std::string &alpha)
+{
+  std::ostringstream sstream;
+  sstream << "Torus(" << NEWVOLUME() << ") = {" << x << ", " << y << ", " << z
+          << ", " << r1 << ", " << r2;
+  if(alpha.size())
+    sstream << ", " << alpha;
+  sstream << "};";
+  add_infile(sstream.str(), fileName);
+}
+
+void add_cone(const std::string &fileName, const std::string &x, const std::string &y,
+              const std::string &z, const std::string &dx, const std::string &dy,
+              const std::string &dz, const std::string &r1, const std::string &r2,
+              const std::string &alpha)
+{
+  std::ostringstream sstream;
+  sstream << "Cone(" << NEWVOLUME() << ") = {" << x << ", " << y << ", " << z
+          << ", " << dx << ", " << dy << ", " << dz << ", " << r1 << ", " << r2;
+  if(alpha.size())
+    sstream << ", " << alpha;
+  sstream << "};";
+  add_infile(sstream.str(), fileName);
+}
+
+void add_wedge(const std::string &fileName, const std::string &x, const std::string &y,
+               const std::string &z, const std::string &dx, const std::string &dy,
+               const std::string &dz, const std::string &ltx)
+{
+  std::ostringstream sstream;
+  sstream << "Wedge(" << NEWVOLUME() << ") = {" << x << ", " << y << ", " << z
+          << ", " << dx << ", " << dy << ", " << dz << ", " << ltx << "};";
   add_infile(sstream.str(), fileName);
 }
 

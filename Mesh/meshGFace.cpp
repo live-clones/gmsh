@@ -1796,7 +1796,7 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
     if(found._sign == 1){
       if(found.ge->getBeginVertex()){
         edgeLoop.push_back(found.ge->getBeginVertex()->mesh_vertices[0]);
-        for(unsigned int i = 0; i <found.ge->mesh_vertices.size(); i++)
+        for(unsigned int i = 0; i < found.ge->mesh_vertices.size(); i++)
           edgeLoop.push_back(found.ge->mesh_vertices[i]);
       }
     }

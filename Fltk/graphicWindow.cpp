@@ -737,6 +737,37 @@ static void add_new_point_based_entity(const std::string &what, int pane)
                   FlGui::instance()->elementaryContext->input[51]->value(),
                   FlGui::instance()->elementaryContext->input[52]->value());
         break;
+      case 9:
+        add_torus(GModel::current()->getFileName(),
+                  FlGui::instance()->elementaryContext->input[53]->value(),
+                  FlGui::instance()->elementaryContext->input[54]->value(),
+                  FlGui::instance()->elementaryContext->input[55]->value(),
+                  FlGui::instance()->elementaryContext->input[56]->value(),
+                  FlGui::instance()->elementaryContext->input[57]->value(),
+                  FlGui::instance()->elementaryContext->input[58]->value());
+        break;
+      case 10:
+        add_cone(GModel::current()->getFileName(),
+                 FlGui::instance()->elementaryContext->input[59]->value(),
+                 FlGui::instance()->elementaryContext->input[60]->value(),
+                 FlGui::instance()->elementaryContext->input[61]->value(),
+                 FlGui::instance()->elementaryContext->input[62]->value(),
+                 FlGui::instance()->elementaryContext->input[63]->value(),
+                 FlGui::instance()->elementaryContext->input[64]->value(),
+                 FlGui::instance()->elementaryContext->input[65]->value(),
+                 FlGui::instance()->elementaryContext->input[66]->value(),
+                 FlGui::instance()->elementaryContext->input[67]->value());
+        break;
+      case 11:
+        add_wedge(GModel::current()->getFileName(),
+                  FlGui::instance()->elementaryContext->input[68]->value(),
+                  FlGui::instance()->elementaryContext->input[69]->value(),
+                  FlGui::instance()->elementaryContext->input[70]->value(),
+                  FlGui::instance()->elementaryContext->input[71]->value(),
+                  FlGui::instance()->elementaryContext->input[72]->value(),
+                  FlGui::instance()->elementaryContext->input[73]->value(),
+                  FlGui::instance()->elementaryContext->input[74]->value());
+        break;
       }
       FlGui::instance()->resetVisibility();
       drawContext::global()->draw();
@@ -3896,14 +3927,12 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Cylinder"} ,
   {"0Modules/Geometry/Elementary entities/Add/Block",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Block"} ,
-  /* FIXME: TODO
   {"0Modules/Geometry/Elementary entities/Add/Torus",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Torus"} ,
   {"0Modules/Geometry/Elementary entities/Add/Cone",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Cone"} ,
   {"0Modules/Geometry/Elementary entities/Add/Wedge",
   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Wedge"} ,
-  */
   {"0Modules/Geometry/Elementary entities/Add/Volume",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Volume"} ,
   {"0Modules/Geometry/Elementary entities/Translate/Point",
