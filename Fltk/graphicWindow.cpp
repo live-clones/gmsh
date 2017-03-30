@@ -718,6 +718,24 @@ static void add_new_point_based_entity(const std::string &what, int pane)
                    FlGui::instance()->elementaryContext->input[38]->value());
         break;
       case 7:
+        add_cylinder(GModel::current()->getFileName(),
+                     FlGui::instance()->elementaryContext->input[39]->value(),
+                     FlGui::instance()->elementaryContext->input[40]->value(),
+                     FlGui::instance()->elementaryContext->input[41]->value(),
+                     FlGui::instance()->elementaryContext->input[42]->value(),
+                     FlGui::instance()->elementaryContext->input[43]->value(),
+                     FlGui::instance()->elementaryContext->input[44]->value(),
+                     FlGui::instance()->elementaryContext->input[45]->value(),
+                     FlGui::instance()->elementaryContext->input[46]->value());
+        break;
+      case 8:
+        add_block(GModel::current()->getFileName(),
+                  FlGui::instance()->elementaryContext->input[47]->value(),
+                  FlGui::instance()->elementaryContext->input[48]->value(),
+                  FlGui::instance()->elementaryContext->input[49]->value(),
+                  FlGui::instance()->elementaryContext->input[50]->value(),
+                  FlGui::instance()->elementaryContext->input[51]->value(),
+                  FlGui::instance()->elementaryContext->input[52]->value());
         break;
       }
       FlGui::instance()->resetVisibility();
@@ -1169,20 +1187,20 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
     add_new_point_based_entity(str, 5);
   else if(str == "Sphere")
     add_new_point_based_entity(str, 6);
-  else if(str == "Block")
+  else if(str == "Cylinder")
     add_new_point_based_entity(str, 7);
-  else if(str == "Torus")
+  else if(str == "Block")
     add_new_point_based_entity(str, 8);
-  else if(str == "Cone")
+  else if(str == "Torus")
     add_new_point_based_entity(str, 9);
-  else if(str == "Wedge")
+  else if(str == "Cone")
     add_new_point_based_entity(str, 10);
+  else if(str == "Wedge")
+    add_new_point_based_entity(str, 11);
   else if(str == "Plane Surface")
     add_new_surface_volume(0);
   else if(str == "Surface")
     add_new_surface_volume(1);
-  else if(str == "Sphere")
-    add_new_point_based_entity(str, 11);
   else if(str == "Volume")
     add_new_surface_volume(2);
   else

@@ -116,6 +116,38 @@ static void elementary_add_sphere_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void elementary_add_cylinder_cb(Fl_Widget *w, void *data)
+{
+  add_cylinder(GModel::current()->getFileName(),
+               FlGui::instance()->elementaryContext->input[39]->value(),
+               FlGui::instance()->elementaryContext->input[40]->value(),
+               FlGui::instance()->elementaryContext->input[41]->value(),
+               FlGui::instance()->elementaryContext->input[42]->value(),
+               FlGui::instance()->elementaryContext->input[43]->value(),
+               FlGui::instance()->elementaryContext->input[44]->value(),
+               FlGui::instance()->elementaryContext->input[45]->value(),
+               FlGui::instance()->elementaryContext->input[46]->value());
+  FlGui::instance()->resetVisibility();
+  GModel::current()->setSelection(0);
+  SetBoundingBox();
+  drawContext::global()->draw();
+}
+
+static void elementary_add_block_cb(Fl_Widget *w, void *data)
+{
+  add_block(GModel::current()->getFileName(),
+            FlGui::instance()->elementaryContext->input[47]->value(),
+            FlGui::instance()->elementaryContext->input[48]->value(),
+            FlGui::instance()->elementaryContext->input[49]->value(),
+            FlGui::instance()->elementaryContext->input[50]->value(),
+            FlGui::instance()->elementaryContext->input[51]->value(),
+            FlGui::instance()->elementaryContext->input[52]->value());
+  FlGui::instance()->resetVisibility();
+  GModel::current()->setSelection(0);
+  SetBoundingBox();
+  drawContext::global()->draw();
+}
+
 static void elementary_switch_tabs_cb(Fl_Widget *w, void *data)
 {
   if(FlGui::instance()->elementaryContext->tab1->visible()){
@@ -336,13 +368,55 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     // 7: Cylinder
     {
       group[7] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Wedge");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Cylinder");
+      input[39] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
+      input[39]->value("0");
+      input[40] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
+      input[40]->value("0");
+      input[41] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
+      input[41]->value("0");
+      input[42] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "DX");
+      input[42]->value("1");
+      input[43] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "DY");
+      input[43]->value("0");
+      input[44] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "DZ");
+      input[44]->value("0");
+      input[45] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Radius");
+      input[45]->value("1");
+      input[46] = new Fl_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Angle");
+      input[46]->value("");
+      for(int i = 39; i < 47; i++)
+        input[i]->align(FL_ALIGN_RIGHT);
+      {
+        Fl_Return_Button *o = new Fl_Return_Button
+          (width - BB - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Add");
+        o->callback(elementary_add_cylinder_cb);
+      }
       group[7]->end();
     }
     // 8: Block
     {
       group[8] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Block");
+      input[47] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
+      input[47]->value("0");
+      input[48] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
+      input[48]->value("0");
+      input[49] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
+      input[49]->value("0");
+      input[50] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "DX");
+      input[50]->value("1");
+      input[51] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "DY");
+      input[51]->value("1");
+      input[52] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "DZ");
+      input[52]->value("1");
+      for(int i = 47; i < 53; i++)
+        input[i]->align(FL_ALIGN_RIGHT);
+      {
+        Fl_Return_Button *o = new Fl_Return_Button
+          (width - BB - 2 * WB, 2 * WB + 8 * BH, BB, BH, "Add");
+        o->callback(elementary_add_block_cb);
+      }
       group[8]->end();
     }
     // 9: Torus
@@ -399,6 +473,8 @@ void elementaryContextWindow::updatePoint(double pt[3], int which)
         input[21 + i]->value(str);
         input[26 + i]->value(str);
         input[32 + i]->value(str);
+        input[39 + i]->value(str);
+        input[47 + i]->value(str);
       }
     }
   }

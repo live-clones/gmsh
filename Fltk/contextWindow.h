@@ -19,7 +19,7 @@ class elementaryContextWindow{
  public:
   Fl_Window *win;
   Fl_Tabs *tab1, *tab2;
-  Fl_Input *input[50];
+  Fl_Input *input[70];
   Fl_Value_Input *value[10];
   Fl_Group *group[20];
   Fl_Check_Button *_butt[3];

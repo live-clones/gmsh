@@ -487,6 +487,29 @@ void add_sphere(const std::string &fileName, const std::string &x, const std::st
   add_infile(sstream.str(), fileName);
 }
 
+void add_cylinder(const std::string &fileName, const std::string &x, const std::string &y,
+                  const std::string &z, const std::string &dx, const std::string &dy,
+                  const std::string &dz, const std::string &r, const std::string &alpha)
+{
+  std::ostringstream sstream;
+  sstream << "Cylinder(" << NEWVOLUME() << ") = {" << x << "," << y << "," << z << ","
+          << dx << "," << dy << "," << dz << "," << r;
+  if(alpha.size())
+    sstream << ", " << alpha;
+  sstream << "};";
+  add_infile(sstream.str(), fileName);
+}
+
+void add_block(const std::string &fileName, const std::string &x, const std::string &y,
+               const std::string &z, const std::string &dx, const std::string &dy,
+               const std::string &dz)
+{
+  std::ostringstream sstream;
+  sstream << "Block(" << NEWVOLUME() << ") = {" << x << "," << y << "," << z << ","
+          << dx << "," << dy << "," << dz << "};";
+  add_infile(sstream.str(), fileName);
+}
+
 void translate(int add, List_T *list, const std::string &fileName,
                const std::string &what, const std::string &tx,
                const std::string &ty, const std::string &tz)

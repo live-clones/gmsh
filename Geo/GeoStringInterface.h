@@ -62,6 +62,12 @@ void add_sphere(const std::string &fileName, const std::string &x,
                 const std::string &y, const std::string &z, const std::string &r,
                 const std::string &alpha1, const std::string &alpha2,
                 const std::string &alpha3);
+void add_cylinder(const std::string &fileName, const std::string &x, const std::string &y,
+                  const std::string &z, const std::string &dx, const std::string &dy,
+                  const std::string &dz, const std::string &r, const std::string &alpha);
+void add_block(const std::string &fileName, const std::string &x, const std::string &y,
+               const std::string &z, const std::string &dx, const std::string &dy,
+               const std::string &dz);
 void translate(int add, List_T *list, const std::string &fileName,
                const std::string &what, const std::string &tx, const std::string &ty,
                const std::string &tz);
