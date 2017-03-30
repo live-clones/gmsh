@@ -591,3 +591,28 @@ void split_edge(int edge_id, List_T *vertices, const std::string &fileName)
   sstream << "Split Line(" << edge_id << ") {" << list2string(vertices) << "};";
   add_infile(sstream.str(), fileName, true);
 }
+
+void apply_boolean(const std::string &fileName, const std::string &op,
+                   const std::vector<GEntity*> &object,
+                   const std::vector<GEntity*> &tool)
+{
+  std::ostringstream sstream;
+  sstream << op << "{ ";
+  for(unsigned int i = 0; i < object.size(); i++){
+    switch(object[i]->dim()){
+    case 3: sstream << "Volume{" << object[i]->tag() << "}; "; break;
+    case 2: sstream << "Surface{" << object[i]->tag() << "}; "; break;
+    case 1: sstream << "Line{" << object[i]->tag() << "}; "; break;
+    }
+  }
+  sstream << "Delete; }{ ";
+  for(unsigned int i = 0; i < tool.size(); i++){
+    switch(tool[i]->dim()){
+    case 3: sstream << "Volume{" << tool[i]->tag() << "}; "; break;
+    case 2: sstream << "Surface{" << tool[i]->tag() << "}; "; break;
+    case 1: sstream << "Line{" << tool[i]->tag() << "}; "; break;
+    }
+  }
+  sstream << "Delete; }";
+  add_infile(sstream.str(), fileName);
+}

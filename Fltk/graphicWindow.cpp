@@ -1580,6 +1580,110 @@ static void geometry_elementary_delete_cb(Fl_Widget *w, void *data)
   action_point_line_surface_volume(6, 0, (const char*)data);
 }
 
+static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string mode((const char*)data);
+  bool selectObject = true;
+  std::vector<GEntity*> object, tool;
+
+  if(GModel::current()->getDim() == 3)
+    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
+  else if(GModel::current()->getDim() == 2)
+    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+
+  while(1) {
+    if(object.empty())
+      Msg::StatusGl("Select object\n"
+                    "[Press 'e' to end selection or 'q' to abort]");
+    else if(selectObject)
+      Msg::StatusGl("Select object\n"
+                    "[Press 'e' to end selection, 'u' to undo last selection or "
+                    "'q' to abort]");
+    else if(tool.empty())
+      Msg::StatusGl("Select tool\n"
+                    "[Press 'e' to end selection or 'q' to abort]");
+    else
+      Msg::StatusGl("Select tool\n"
+                    "[Press 'e' to end selection, 'u' to undo last selection or "
+                    "'q' to abort]");
+
+    char ib = FlGui::instance()->selectEntity(ENT_ALL);
+    if(ib == 'l') {
+      for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+        if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
+          FlGui::instance()->selectedEdges[i]->setSelection(1);
+          if(selectObject)
+            object.push_back(FlGui::instance()->selectedEdges[i]);
+          else
+            tool.push_back(FlGui::instance()->selectedEdges[i]);
+        }
+      }
+      for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+        if(FlGui::instance()->selectedFaces[i]->getSelection() != 1){
+          FlGui::instance()->selectedFaces[i]->setSelection(1);
+          if(selectObject)
+            object.push_back(FlGui::instance()->selectedFaces[i]);
+          else
+            tool.push_back(FlGui::instance()->selectedFaces[i]);
+        }
+      }
+      for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
+        if(FlGui::instance()->selectedRegions[i]->getSelection() != 1){
+          FlGui::instance()->selectedRegions[i]->setSelection(1);
+          if(selectObject)
+            object.push_back(FlGui::instance()->selectedRegions[i]);
+          else
+            tool.push_back(FlGui::instance()->selectedRegions[i]);
+        }
+      }
+    }
+    if(ib == 'r') {
+      for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++)
+        FlGui::instance()->selectedEdges[i]->setSelection(0);
+      for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++)
+        FlGui::instance()->selectedFaces[i]->setSelection(0);
+      for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++)
+        FlGui::instance()->selectedRegions[i]->setSelection(0);
+    }
+    if(ib == 'u') {
+      if(selectObject && object.size()){
+        object[object.size() - 1]->setSelection(0);
+        object.pop_back();
+      }
+      else if(tool.size()){
+        tool[tool.size() - 1]->setSelection(0);
+        tool.pop_back();
+      }
+    }
+    if(ib == 'e') {
+      if(selectObject){
+        if(object.empty())
+          Msg::Error("At least one object must be selected");
+        else
+          selectObject = false;
+      }
+      else if(tool.empty()){
+        Msg::Error("At least one tool must be selected");
+      }
+      else{
+        apply_boolean(GModel::current()->getFileName(), mode, object, tool);
+        GModel::current()->setSelection(0);
+        selectObject = true;
+        object.clear();
+        tool.clear();
+      }
+    }
+    if(ib == 'q') {
+      GModel::current()->setSelection(0);
+      break;
+    }
+  }
+
+  drawContext::global()->draw();
+  Msg::StatusGl("");
+}
+
 static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -3792,12 +3896,14 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Cylinder"} ,
   {"0Modules/Geometry/Elementary entities/Add/Block",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Block"} ,
+  /* FIXME: TODO
   {"0Modules/Geometry/Elementary entities/Add/Torus",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Torus"} ,
   {"0Modules/Geometry/Elementary entities/Add/Cone",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Cone"} ,
   {"0Modules/Geometry/Elementary entities/Add/Wedge",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Wedge"} ,
+  (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Wedge"} ,
+  */
   {"0Modules/Geometry/Elementary entities/Add/Volume",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Volume"} ,
   {"0Modules/Geometry/Elementary entities/Translate/Point",
@@ -3876,6 +3982,14 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Surface"} ,
   {"0Modules/Geometry/Elementary entities/Symmetry/Duplicate volume",
    (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Volume"} ,
+  {"0Modules/Geometry/Elementary entities/Boolean/Intersection",
+   (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanIntersection"} ,
+  {"0Modules/Geometry/Elementary entities/Boolean/Union",
+   (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanUnion"} ,
+  {"0Modules/Geometry/Elementary entities/Boolean/Difference",
+   (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanDifference"} ,
+  {"0Modules/Geometry/Elementary entities/Boolean/Fragments",
+   (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanFragments"} ,
   {"0Modules/Geometry/Elementary entities/Delete/Point",
    (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Point"} ,
   {"0Modules/Geometry/Elementary entities/Delete/Line",

@@ -419,6 +419,8 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       }
       group[8]->end();
     }
+
+    /* FIXME: TODO
     // 9: Torus
     {
       group[9] = new Fl_Group
@@ -437,6 +439,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Wedge");
       group[11]->end();
     }
+    */
     tab2->end();
   }
 
@@ -482,9 +485,11 @@ void elementaryContextWindow::updatePoint(double pt[3], int which)
 
 void elementaryContextWindow::show(int pane)
 {
-  if(pane < 0 || pane > 10) return;
+  // FIXME: TODO
 
-  for(int i = 0; i < 11; i++)
+  if(pane < 0 || pane > 8) return;
+
+  for(int i = 0; i < 9; i++)
     group[i]->hide();
 
   if(pane < 6){

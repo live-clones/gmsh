@@ -10,6 +10,8 @@
 #include <vector>
 #include "ListUtils.h"
 
+class GEntity;
+
 void coherence(const std::string &fileName);
 void delet(List_T *list, const std::string &fileName, const std::string &what);
 void add_infile(const std::string &text, const std::string &fileName,
@@ -90,5 +92,8 @@ void protude(List_T *list, const std::string &fileName, const std::string &what,
              const std::string &px, const std::string &py, const std::string &pz,
              const std::string &angle);
 void split_edge(int edge_id, List_T *vertices, const std::string &fileName);
+void apply_boolean(const std::string &fileName, const std::string &op,
+                   const std::vector<GEntity*> &object,
+                   const std::vector<GEntity*> &tool);
 
 #endif
