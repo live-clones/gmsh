@@ -26,7 +26,7 @@
 #include "onelab.h"
 #endif
 
-void add_infile(const std::string &text, const std::string &fileName, bool forceDestroy)
+void add_infile(const std::string &text, const std::string &fileName)
 {
   Msg::Debug("Adding `%s' to file `%s'", text.c_str(), fileName.c_str());
   std::vector<std::string> split = SplitFileName(fileName);
@@ -97,11 +97,6 @@ void add_infile(const std::string &text, const std::string &fileName, bool force
   gmshclose(gmsh_yyin);
   gmsh_yyin = gmsh_yyin_old;
 
-  if(forceDestroy){
-    // we need to start from scratch (e.g. if the command just parsed
-    // could have deleted some entities)
-    GModel::current()->destroy();
-  }
   GModel::current()->getGEOInternals()->synchronize(GModel::current());
   if(GModel::current()->getOCCInternals())
     GModel::current()->getOCCInternals()->synchronize(GModel::current());
@@ -159,11 +154,6 @@ void add_infile(const std::string &text, const std::string &fileName, bool force
   }
 }
 
-void coherence(const std::string &fileName)
-{
-  add_infile("Coherence;", fileName, true);
-}
-
 static std::string list2string(List_T *list)
 {
   std::ostringstream sstream;
@@ -174,13 +164,6 @@ static std::string list2string(List_T *list)
     sstream << num;
   }
   return sstream.str();
-}
-
-void delet(List_T *list, const std::string &fileName, const std::string &what)
-{
-  std::ostringstream sstream;
-  sstream << "Delete {\n  " << what << "{" << list2string(list) << "};\n}";
-  add_infile(sstream.str(), fileName, true);
 }
 
 void add_charlength(List_T *list, const std::string &fileName, const std::string &lc)
@@ -254,7 +237,7 @@ void add_embedded(const std::string &what, std::vector<int> &l,
     sstream << l[i];
   }
   sstream << "} In Surface{" << l[0] << "};";
-  add_infile(sstream.str(), fileName, true);
+  add_infile(sstream.str(), fileName);
 }
 
 void add_param(const std::string &par, const std::string &value,
@@ -628,7 +611,7 @@ void split_edge(int edge_id, List_T *vertices, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Split Line(" << edge_id << ") {" << list2string(vertices) << "};";
-  add_infile(sstream.str(), fileName, true);
+  add_infile(sstream.str(), fileName);
 }
 
 void apply_boolean(const std::string &fileName, const std::string &op,
@@ -653,5 +636,17 @@ void apply_boolean(const std::string &fileName, const std::string &op,
     }
   }
   sstream << "Delete; }";
+  add_infile(sstream.str(), fileName);
+}
+
+void coherence(const std::string &fileName)
+{
+  add_infile("Coherence;", fileName);
+}
+
+void delet(List_T *list, const std::string &fileName, const std::string &what)
+{
+  std::ostringstream sstream;
+  sstream << "Delete {\n  " << what << "{" << list2string(list) << "};\n}";
   add_infile(sstream.str(), fileName);
 }

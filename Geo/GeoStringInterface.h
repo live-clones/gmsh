@@ -12,10 +12,7 @@
 
 class GEntity;
 
-void coherence(const std::string &fileName);
-void delet(List_T *list, const std::string &fileName, const std::string &what);
-void add_infile(const std::string &text, const std::string &fileName,
-                bool deleted_something=false);
+void add_infile(const std::string &text, const std::string &fileName);
 void add_charlength(List_T *list, const std::string &fileName, const std::string &lc);
 void add_recosurf(List_T *list, const std::string &fileName);
 void add_trsfline(std::vector<int> &l, const std::string &fileName,
@@ -105,5 +102,7 @@ void split_edge(int edge_id, List_T *vertices, const std::string &fileName);
 void apply_boolean(const std::string &fileName, const std::string &op,
                    const std::vector<GEntity*> &object,
                    const std::vector<GEntity*> &tool);
+void coherence(const std::string &fileName);
+void delet(List_T *list, const std::string &fileName, const std::string &what);
 
 #endif
