@@ -50,9 +50,14 @@ void add_compound(const std::string &type, List_T *list, const std::string &file
 void add_circle(const std::string &fileName, const std::string &x,
                 const std::string &y, const std::string &z, const std::string &r,
                 const std::string &alpha1, const std::string &alpha2);
-void add_disk(const std::string &fileName, const std::string &x,
-              const std::string &y, const std::string &z, const std::string &r,
-              const std::string &alpha1, const std::string &alpha2);
+void add_ellipse(const std::string &fileName, const std::string &x, const std::string &y,
+                 const std::string &z, const std::string &rx, const std::string &ry,
+                 const std::string &alpha1, const std::string &alpha2);
+void add_disk(const std::string &fileName, const std::string &x, const std::string &y,
+              const std::string &z, const std::string &rx, const std::string &ry);
+void add_rectangle(const std::string &fileName, const std::string &x, const std::string &y,
+                   const std::string &z, const std::string &dx, const std::string &dy,
+                   const std::string &roundedRadius);
 void add_sphere(const std::string &fileName, const std::string &x,
                 const std::string &y, const std::string &z, const std::string &r,
                 const std::string &alpha1, const std::string &alpha2,

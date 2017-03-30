@@ -170,18 +170,60 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     {
       group[3] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Ellipse");
+      input[14] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Center X coordinate");
+      input[14]->value("0");
+      input[15] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Center Y coordinate");
+      input[15]->value("0");
+      input[16] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Center Z coordinate");
+      input[16]->value("0");
+      input[17] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "X radius");
+      input[17]->value("1");
+      input[18] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Y radius");
+      input[18]->value("0.5");
+      input[19] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Angle 1");
+      input[19]->value("");
+      input[20] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Angle 2");
+      input[20]->value("");
+      for(int i = 14; i < 21; i++)
+        input[i]->align(FL_ALIGN_RIGHT);
       group[3]->end();
     }
     // 4: Disk
     {
       group[4] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Disk");
+      input[21] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Center X coordinate");
+      input[21]->value("0");
+      input[22] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Center Y coordinate");
+      input[22]->value("0");
+      input[23] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Center Z coordinate");
+      input[23]->value("0");
+      input[24] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "X radius");
+      input[24]->value("1");
+      input[25] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Y radius");
+      input[25]->value("0.5");
+      for(int i = 21; i < 26; i++)
+        input[i]->align(FL_ALIGN_RIGHT);
       group[4]->end();
     }
     // 5: Rectangle
     {
       group[5] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Rectangle");
+      input[26] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Bottom left X coordinate");
+      input[26]->value("0");
+      input[27] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Bottom left Y coordinate");
+      input[27]->value("0");
+      input[28] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Bottom left Z coordinate");
+      input[28]->value("0");
+      input[29] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Width");
+      input[29]->value("1");
+      input[30] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Height");
+      input[30]->value("0.5");
+      input[31] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Rounded radius");
+      input[31]->value("");
+      for(int i = 26; i < 32; i++)
+        input[i]->align(FL_ALIGN_RIGHT);
       group[5]->end();
     }
     tab1->end();

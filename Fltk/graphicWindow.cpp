@@ -646,18 +646,10 @@ void geometry_remove_last_command_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void add_new_point_based_entity(int which)
+static void add_new_point_based_entity(const std::string &what, int pane)
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
-
-  std::string name;
-  int pane;
-  switch(which){
-  case 0: name = "point"; pane = 1; break;
-  case 1: name = "circle"; pane = 2; break;
-  case 2: name = "sphere"; pane = 6; break;
-  }
 
   FlGui::instance()->elementaryContext->show(pane);
 
@@ -666,20 +658,20 @@ static void add_new_point_based_entity(int which)
       for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
         FlGui::instance()->graph[i]->gl[j]->addPointMode = 1;
     std::string msg = std::string("Move mouse and/or enter coordinates\n") +
-      "[Press 'Shift' to hold position, 'e' to add " + name +
+      "[Press 'Shift' to hold position, 'e' to add " + what +
       " or 'q' to abort]";
     Msg::StatusGl(msg.c_str());
     char ib = FlGui::instance()->selectEntity(ENT_NONE);
     if(ib == 'e'){
-      switch(which){
-      case 0:
+      switch(pane){
+      case 1:
         add_point(GModel::current()->getFileName(),
                   FlGui::instance()->elementaryContext->input[4]->value(),
                   FlGui::instance()->elementaryContext->input[5]->value(),
                   FlGui::instance()->elementaryContext->input[6]->value(),
                   FlGui::instance()->elementaryContext->input[7]->value());
         break;
-      case 1:
+      case 2:
         add_circle(GModel::current()->getFileName(),
                    FlGui::instance()->elementaryContext->input[8]->value(),
                    FlGui::instance()->elementaryContext->input[9]->value(),
@@ -688,7 +680,34 @@ static void add_new_point_based_entity(int which)
                    FlGui::instance()->elementaryContext->input[12]->value(),
                    FlGui::instance()->elementaryContext->input[13]->value());
         break;
-      case 2:
+      case 3:
+        add_ellipse(GModel::current()->getFileName(),
+                    FlGui::instance()->elementaryContext->input[14]->value(),
+                    FlGui::instance()->elementaryContext->input[15]->value(),
+                    FlGui::instance()->elementaryContext->input[16]->value(),
+                    FlGui::instance()->elementaryContext->input[17]->value(),
+                    FlGui::instance()->elementaryContext->input[18]->value(),
+                    FlGui::instance()->elementaryContext->input[19]->value(),
+                    FlGui::instance()->elementaryContext->input[20]->value());
+        break;
+      case 4:
+        add_disk(GModel::current()->getFileName(),
+                 FlGui::instance()->elementaryContext->input[21]->value(),
+                 FlGui::instance()->elementaryContext->input[22]->value(),
+                 FlGui::instance()->elementaryContext->input[23]->value(),
+                 FlGui::instance()->elementaryContext->input[24]->value(),
+                 FlGui::instance()->elementaryContext->input[25]->value());
+        break;
+      case 5:
+        add_rectangle(GModel::current()->getFileName(),
+                      FlGui::instance()->elementaryContext->input[26]->value(),
+                      FlGui::instance()->elementaryContext->input[27]->value(),
+                      FlGui::instance()->elementaryContext->input[28]->value(),
+                      FlGui::instance()->elementaryContext->input[29]->value(),
+                      FlGui::instance()->elementaryContext->input[30]->value(),
+                      FlGui::instance()->elementaryContext->input[31]->value());
+        break;
+      case 6:
         add_sphere(GModel::current()->getFileName(),
                    FlGui::instance()->elementaryContext->input[4]->value(),
                    FlGui::instance()->elementaryContext->input[5]->value(),
@@ -1125,7 +1144,7 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
   if(str == "Parameter")
     FlGui::instance()->elementaryContext->show(0);
   else if(str == "Point")
-    add_new_point_based_entity(0);
+    add_new_point_based_entity(str, 1);
   else if(str == "Line")
     add_new_line();
   else if(str == "Spline")
@@ -1135,17 +1154,33 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
   else if(str == "Circle arc")
     add_new_circle_arc();
   else if(str == "Circle")
-    add_new_point_based_entity(1);
+    add_new_point_based_entity(str, 2);
   else if(str == "Ellipse arc")
     add_new_ellipse_arc();
+  else if(str == "Ellipse")
+    add_new_point_based_entity(str, 3);
+  else if(str == "Disk")
+    add_new_point_based_entity(str, 4);
+  else if(str == "Rectangle")
+    add_new_point_based_entity(str, 5);
+  else if(str == "Sphere")
+    add_new_point_based_entity(str, 6);
+  else if(str == "Block")
+    add_new_point_based_entity(str, 7);
+  else if(str == "Torus")
+    add_new_point_based_entity(str, 8);
+  else if(str == "Cone")
+    add_new_point_based_entity(str, 9);
+  else if(str == "Wedge")
+    add_new_point_based_entity(str, 10);
   else if(str == "Plane Surface")
     add_new_surface_volume(0);
   else if(str == "Surface")
     add_new_surface_volume(1);
+  else if(str == "Sphere")
+    add_new_point_based_entity(str, 11);
   else if(str == "Volume")
     add_new_surface_volume(2);
-  else if(str == "Sphere")
-    add_new_point_based_entity(2);
   else
     Msg::Error("Unknown entity to create: %s", str.c_str());
 }

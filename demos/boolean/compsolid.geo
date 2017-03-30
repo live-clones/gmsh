@@ -19,8 +19,8 @@ DefineConstant[
   dz2 = {3, Min 0.1, Max 5, Step 0.1, Name "Bloc 2/dz"}
 ];
 
-Block(1) = {x,y,z, x+dx,y+dy,z+dz};
-Block(2) = {x2,y2,z2, x2+dx2,y2+dy2,z2+dz2};
+Block(1) = {x,y,z, dx,dy,dz};
+Block(2) = {x2,y2,z2, dx2,dy2,dz2};
 
 f() = BooleanFragments { Volume{1}; Delete; }{ Volume{2}; Delete; };
 

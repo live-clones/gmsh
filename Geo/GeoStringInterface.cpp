@@ -434,16 +434,39 @@ void add_circle(const std::string &fileName, const std::string &x, const std::st
   add_infile(sstream.str(), fileName);
 }
 
-void add_disk(const std::string &fileName, const std::string &x, const std::string &y,
-                const std::string &z, const std::string &r, const std::string &alpha1,
-                const std::string &alpha2)
+void add_ellipse(const std::string &fileName, const std::string &x, const std::string &y,
+                 const std::string &z, const std::string &rx, const std::string &ry,
+                 const std::string &alpha1, const std::string &alpha2)
 {
   std::ostringstream sstream;
-  sstream << "Disk(" << NEWSURFACE() << ") = {" << x << "," << y << "," << z << "," << r;
+  sstream << "Ellipse(" << NEWLINE() << ") = {" << x << "," << y << "," << z << ","
+          << rx << ", " << ry;
   if(alpha1.size())
     sstream << ", " << alpha1;
   if(alpha1.size() && alpha2.size())
     sstream << ", " << alpha2;
+  sstream << "};";
+  add_infile(sstream.str(), fileName);
+}
+
+void add_disk(const std::string &fileName, const std::string &x, const std::string &y,
+                const std::string &z, const std::string &rx, const std::string &ry)
+{
+  std::ostringstream sstream;
+  sstream << "Disk(" << NEWSURFACE() << ") = {" << x << "," << y << "," << z << ","
+          << rx << ", " << ry << "};";
+  add_infile(sstream.str(), fileName);
+}
+
+void add_rectangle(const std::string &fileName, const std::string &x, const std::string &y,
+                   const std::string &z, const std::string &dx, const std::string &dy,
+                   const std::string &roundedRadius)
+{
+  std::ostringstream sstream;
+  sstream << "Rectangle(" << NEWSURFACE() << ") = {" << x << "," << y << "," << z << ","
+          << dx << ", " << dy;
+  if(roundedRadius.size())
+    sstream << ", " << roundedRadius;
   sstream << "};";
   add_infile(sstream.str(), fileName);
 }

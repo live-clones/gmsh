@@ -13,7 +13,7 @@ DefineConstant[
 
 Block(1) = {0,0,0, 2,2,2};
 Sphere(2) = {xx, 1, 1, rr};
-Block(3) = {2,0,0, 4,2,2};
+Block(3) = {2,0,0, 2,2,2};
 
 f() = BooleanFragments { Volume{1}; Delete; }{ Volume{2,3}; Delete; };
 

@@ -8,7 +8,7 @@ r_in = 0.1; r_out = r_in+w;
 v_out = newv;
 Block(v_out) = {
   -dx_out/2,-dy_out/2,-dz_out/2,
-   dx_out/2, dy_out/2, dz_out/2
+   dx_out, dy_out, dz_out
 };
 v_ = v_out;
 f_[] = Abs(Boundary{ Volume{v_}; });
@@ -19,7 +19,7 @@ Recursive Delete{ Volume{v_}; }
 v_in = newv;
 Block(v_in) = {
   -dx_in/2,-dy_in/2,-dz_in/2,
-   dx_in/2, dy_in/2, dz_in/2
+   dx_in, dy_in, dz_in
 };
 v_ = v_in;
 f_[] = Abs(Boundary{ Volume{v_}; });

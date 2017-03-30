@@ -167,8 +167,8 @@ class OCC_Internals {
   bool addBSpline(int tag, const std::vector<int> &vertexTags);
   bool addWire(int tag, const std::vector<int> &edgeTags, bool checkClosed);
   bool addLineLoop(int tag, const std::vector<int> &edgeTags);
-  bool addRectangle(int tag, double x1, double y1, double z1,
-                    double x2, double y2, double z2, double roundedRadius=0.);
+  bool addRectangle(int tag, double x, double y, double z,
+                    double dx, double dy, double roundedRadius=0.);
   bool addDisk(int tag, double xc, double yc, double zc, double rx, double ry);
   bool addPlaneSurface(int tag, const std::vector<int> &wireTags);
   bool addSurfaceFilling(int tag, int wireTag);
@@ -176,12 +176,12 @@ class OCC_Internals {
   bool addVolume(int tag, const std::vector<int> &shellTags);
   bool addSphere(int tag, double xc, double yc, double zc, double radius,
                  double angle1, double angle2, double angle3);
-  bool addBlock(int tag, double x1, double y1, double z1,
-                double x2, double y2, double z2);
-  bool addCylinder(int tag, double x1, double y1, double z1, double x2, double y2,
-                   double z2, double r, double angle);
-  bool addCone(int tag, double x1, double y1, double z1, double x2, double y2,
-               double z2, double r1, double r2, double angle);
+  bool addBlock(int tag, double x, double y, double z,
+                double dx, double dy, double dz);
+  bool addCylinder(int tag, double x, double y, double z,
+                   double dx, double dy, double dz, double r, double angle);
+  bool addCone(int tag, double x, double y, double z,
+               double dx, double dy, double dz, double r1, double r2, double angle);
   bool addWedge(int tag, double x, double y, double z, double dx, double dy,
                 double dz, double ltx);
   bool addTorus(int tag, double x, double y, double z, double r1, double r2,
@@ -350,8 +350,8 @@ public:
   {
     return _error("add line loop");
   }
-  bool addRectangle(int tag, double x1, double y1, double z1,
-                    double x2, double y2, double z2, double roundedRadius=0.)
+  bool addRectangle(int tag, double x, double y, double z,
+                    double dx, double dy, double roundedRadius=0.)
   {
     return _error("add rectangle");
   }
@@ -380,18 +380,18 @@ public:
   {
     return _error("add sphere");
   }
-  bool addBlock(int tag, double x1, double y1, double z1,
-                double x2, double y2, double z2)
+  bool addBlock(int tag, double x, double y, double z,
+                double dx, double dy, double dz)
   {
     return _error("add block");
   }
-  bool addCylinder(int tag, double x1, double y1, double z1, double x2, double y2,
-                   double z2, double r, double angle)
+  bool addCylinder(int tag, double x, double y, double z,
+                   double dx, double dy, double dz, double r, double angle)
   {
     return _error("add cylinder");
   }
-  bool addCone(int tag, double x1, double y1, double z1, double x2, double y2,
-               double z2, double r1, double r2, double angle)
+  bool addCone(int tag, double x, double y, double z,
+               double dx, double dy, double dz, double r1, double r2, double angle)
   {
     return _error("add cone");
   }
