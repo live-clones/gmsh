@@ -646,34 +646,64 @@ void geometry_remove_last_command_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void add_new_point()
+static void add_new_point_based_entity(int which)
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
 
-  FlGui::instance()->elementaryContext->show(1);
+  std::string name;
+  int pane;
+  switch(which){
+  case 0: name = "point"; pane = 1; break;
+  case 1: name = "circle"; pane = 2; break;
+  case 2: name = "sphere"; pane = 6; break;
+  }
+
+  FlGui::instance()->elementaryContext->show(pane);
 
   while(1) {
     for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
       for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-        FlGui::instance()->graph[i]->gl[j]->addPointMode = true;
-    Msg::StatusGl("Move mouse and/or enter coordinates\n"
-                  "[Press 'Shift' to hold position, 'e' to add point "
-                  "or 'q' to abort]");
+        FlGui::instance()->graph[i]->gl[j]->addPointMode = 1;
+    std::string msg = std::string("Move mouse and/or enter coordinates\n") +
+      "[Press 'Shift' to hold position, 'e' to add " + name +
+      " or 'q' to abort]";
+    Msg::StatusGl(msg.c_str());
     char ib = FlGui::instance()->selectEntity(ENT_NONE);
     if(ib == 'e'){
-      add_point(GModel::current()->getFileName(),
-                FlGui::instance()->elementaryContext->input[2]->value(),
-                FlGui::instance()->elementaryContext->input[3]->value(),
-                FlGui::instance()->elementaryContext->input[4]->value(),
-                FlGui::instance()->elementaryContext->input[5]->value());
+      switch(which){
+      case 0:
+        add_point(GModel::current()->getFileName(),
+                  FlGui::instance()->elementaryContext->input[4]->value(),
+                  FlGui::instance()->elementaryContext->input[5]->value(),
+                  FlGui::instance()->elementaryContext->input[6]->value(),
+                  FlGui::instance()->elementaryContext->input[7]->value());
+        break;
+      case 1:
+        add_circle(GModel::current()->getFileName(),
+                   FlGui::instance()->elementaryContext->input[8]->value(),
+                   FlGui::instance()->elementaryContext->input[9]->value(),
+                   FlGui::instance()->elementaryContext->input[10]->value(),
+                   FlGui::instance()->elementaryContext->input[11]->value(),
+                   FlGui::instance()->elementaryContext->input[12]->value(),
+                   FlGui::instance()->elementaryContext->input[13]->value());
+        break;
+      case 2:
+        add_sphere(GModel::current()->getFileName(),
+                   FlGui::instance()->elementaryContext->input[4]->value(),
+                   FlGui::instance()->elementaryContext->input[5]->value(),
+                   FlGui::instance()->elementaryContext->input[6]->value(),
+                   FlGui::instance()->elementaryContext->input[7]->value(),
+                   "", "", "");
+        break;
+      }
       FlGui::instance()->resetVisibility();
       drawContext::global()->draw();
     }
     if(ib == 'q'){
       for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
         for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
-          FlGui::instance()->graph[i]->gl[j]->addPointMode = false;
+          FlGui::instance()->graph[i]->gl[j]->addPointMode = 0;
       break;
     }
   }
@@ -783,7 +813,7 @@ static void add_new_line()
   Msg::StatusGl("");
 }
 
-static void add_new_circle()
+static void add_new_circle_arc()
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
@@ -823,7 +853,7 @@ static void add_new_circle()
       break;
     }
     if(p.size() == 3) {
-      add_circ(p[0], p[1], p[2], GModel::current()->getFileName()); // begin, center, end
+      add_circle_arc(p[0], p[1], p[2], GModel::current()->getFileName()); // begin, center, end
       FlGui::instance()->resetVisibility();
       GModel::current()->setSelection(0);
       drawContext::global()->draw();
@@ -834,7 +864,7 @@ static void add_new_circle()
   Msg::StatusGl("");
 }
 
-static void add_new_ellipse()
+static void add_new_ellipse_arc()
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
@@ -877,7 +907,7 @@ static void add_new_ellipse()
       break;
     }
     if(p.size() == 4) {
-      add_ell(p[0], p[1], p[2], p[3], GModel::current()->getFileName());
+      add_ellipse_arc(p[0], p[1], p[2], p[3], GModel::current()->getFileName());
       FlGui::instance()->resetVisibility();
       GModel::current()->setSelection(0);
       drawContext::global()->draw();
@@ -1078,6 +1108,15 @@ static void add_new_surface_volume(int mode)
   Msg::StatusGl("");
 }
 
+static void geometry_elementary_set_factory_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string str((const char*)data);
+  add_infile("SetFactory(\"" + str + "\");", GModel::current()->getFileName());
+  if(FlGui::available())
+    Msg::StatusBar(false, "Setting %s factory", str.c_str());
+}
+
 static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -1086,23 +1125,27 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
   if(str == "Parameter")
     FlGui::instance()->elementaryContext->show(0);
   else if(str == "Point")
-    add_new_point();
+    add_new_point_based_entity(0);
   else if(str == "Line")
     add_new_line();
   else if(str == "Spline")
     add_new_multiline(str);
   else if(str == "BSpline")
     add_new_multiline(str);
+  else if(str == "Circle arc")
+    add_new_circle_arc();
   else if(str == "Circle")
-    add_new_circle();
-  else if(str == "Ellipse")
-    add_new_ellipse();
+    add_new_point_based_entity(1);
+  else if(str == "Ellipse arc")
+    add_new_ellipse_arc();
   else if(str == "Plane Surface")
     add_new_surface_volume(0);
   else if(str == "Surface")
     add_new_surface_volume(1);
   else if(str == "Volume")
     add_new_surface_volume(2);
+  else if(str == "Sphere")
+    add_new_point_based_entity(2);
   else
     Msg::Error("Unknown entity to create: %s", str.c_str());
 }
@@ -1313,49 +1356,49 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
         switch (action) {
         case 0:
           translate(mode, List1, GModel::current()->getFileName(), what,
-                    FlGui::instance()->elementaryContext->input[6]->value(),
-                    FlGui::instance()->elementaryContext->input[7]->value(),
-                    FlGui::instance()->elementaryContext->input[8]->value());
+                    FlGui::instance()->transformContext->input[0]->value(),
+                    FlGui::instance()->transformContext->input[1]->value(),
+                    FlGui::instance()->transformContext->input[2]->value());
           break;
         case 1:
           rotate(mode, List1, GModel::current()->getFileName(), what,
-                 FlGui::instance()->elementaryContext->input[12]->value(),
-                 FlGui::instance()->elementaryContext->input[13]->value(),
-                 FlGui::instance()->elementaryContext->input[14]->value(),
-                 FlGui::instance()->elementaryContext->input[9]->value(),
-                 FlGui::instance()->elementaryContext->input[10]->value(),
-                 FlGui::instance()->elementaryContext->input[11]->value(),
-                 FlGui::instance()->elementaryContext->input[15]->value());
+                 FlGui::instance()->transformContext->input[6]->value(),
+                 FlGui::instance()->transformContext->input[7]->value(),
+                 FlGui::instance()->transformContext->input[8]->value(),
+                 FlGui::instance()->transformContext->input[3]->value(),
+                 FlGui::instance()->transformContext->input[4]->value(),
+                 FlGui::instance()->transformContext->input[5]->value(),
+                 FlGui::instance()->transformContext->input[9]->value());
           break;
         case 2:
           dilate(mode, List1, GModel::current()->getFileName(), what,
-                 FlGui::instance()->elementaryContext->input[16]->value(),
-                 FlGui::instance()->elementaryContext->input[17]->value(),
-                 FlGui::instance()->elementaryContext->input[18]->value(),
-                 FlGui::instance()->elementaryContext->input[19]->value());
+                 FlGui::instance()->transformContext->input[10]->value(),
+                 FlGui::instance()->transformContext->input[11]->value(),
+                 FlGui::instance()->transformContext->input[12]->value(),
+                 FlGui::instance()->transformContext->input[13]->value());
           break;
         case 3:
           symmetry(mode, List1, GModel::current()->getFileName(), what,
-                   FlGui::instance()->elementaryContext->input[20]->value(),
-                   FlGui::instance()->elementaryContext->input[21]->value(),
-                   FlGui::instance()->elementaryContext->input[22]->value(),
-                   FlGui::instance()->elementaryContext->input[23]->value());
+                   FlGui::instance()->transformContext->input[14]->value(),
+                   FlGui::instance()->transformContext->input[15]->value(),
+                   FlGui::instance()->transformContext->input[16]->value(),
+                   FlGui::instance()->transformContext->input[17]->value());
           break;
         case 4:
           extrude(List1, GModel::current()->getFileName(), what,
-                  FlGui::instance()->elementaryContext->input[6]->value(),
-                  FlGui::instance()->elementaryContext->input[7]->value(),
-                  FlGui::instance()->elementaryContext->input[8]->value());
+                  FlGui::instance()->transformContext->input[0]->value(),
+                  FlGui::instance()->transformContext->input[1]->value(),
+                  FlGui::instance()->transformContext->input[2]->value());
           break;
         case 5:
           protude(List1, GModel::current()->getFileName(), what,
-                  FlGui::instance()->elementaryContext->input[12]->value(),
-                  FlGui::instance()->elementaryContext->input[13]->value(),
-                  FlGui::instance()->elementaryContext->input[14]->value(),
-                  FlGui::instance()->elementaryContext->input[9]->value(),
-                  FlGui::instance()->elementaryContext->input[10]->value(),
-                  FlGui::instance()->elementaryContext->input[11]->value(),
-                  FlGui::instance()->elementaryContext->input[15]->value());
+                  FlGui::instance()->transformContext->input[6]->value(),
+                  FlGui::instance()->transformContext->input[7]->value(),
+                  FlGui::instance()->transformContext->input[8]->value(),
+                  FlGui::instance()->transformContext->input[3]->value(),
+                  FlGui::instance()->transformContext->input[4]->value(),
+                  FlGui::instance()->transformContext->input[5]->value(),
+                  FlGui::instance()->transformContext->input[9]->value());
           break;
         case 6:
           delet(List1, GModel::current()->getFileName(), what);
@@ -1407,70 +1450,70 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
 static void geometry_elementary_add_translate_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->elementaryContext->show(2);
+  FlGui::instance()->transformContext->show(0);
   action_point_line_surface_volume(0, 1, (const char*)data);
 }
 
 static void geometry_elementary_add_rotate_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->elementaryContext->show(3);
+  FlGui::instance()->transformContext->show(1);
   action_point_line_surface_volume(1, 1, (const char*)data);
 }
 
 static void geometry_elementary_add_scale_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->elementaryContext->show(4);
+  FlGui::instance()->transformContext->show(2);
   action_point_line_surface_volume(2, 1, (const char*)data);
 }
 
 static void geometry_elementary_add_symmetry_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->elementaryContext->show(5);
+  FlGui::instance()->transformContext->show(3);
   action_point_line_surface_volume(3, 1, (const char*)data);
 }
 
 static void geometry_elementary_translate_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->elementaryContext->show(2);
+  FlGui::instance()->transformContext->show(0);
   action_point_line_surface_volume(0, 0, (const char*)data);
 }
 
 static void geometry_elementary_rotate_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->elementaryContext->show(3);
+  FlGui::instance()->transformContext->show(1);
   action_point_line_surface_volume(1, 0, (const char*)data);
 }
 
 static void geometry_elementary_scale_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->elementaryContext->show(4);
+  FlGui::instance()->transformContext->show(2);
   action_point_line_surface_volume(2, 0, (const char*)data);
 }
 
 static void geometry_elementary_symmetry_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->elementaryContext->show(5);
+  FlGui::instance()->transformContext->show(3);
   action_point_line_surface_volume(3, 0, (const char*)data);
 }
 
 static void geometry_elementary_extrude_translate_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->elementaryContext->show(2);
+  FlGui::instance()->transformContext->show(0);
   action_point_line_surface_volume(4, 0, (const char*)data);
 }
 
 static void geometry_elementary_extrude_rotate_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  FlGui::instance()->elementaryContext->show(3);
+  FlGui::instance()->transformContext->show(1);
   action_point_line_surface_volume(5, 0, (const char*)data);
 }
 
@@ -3654,6 +3697,10 @@ typedef struct{
 } menuItem;
 
 static menuItem static_modules[] = {
+  {"0Modules/Geometry/Elementary entities/Set factory/Gmsh",
+   (Fl_Callback *)geometry_elementary_set_factory_cb, (void*)"Gmsh"} ,
+  {"0Modules/Geometry/Elementary entities/Set factory/OpenCASCADE",
+   (Fl_Callback *)geometry_elementary_set_factory_cb, (void*)"OpenCASCADE"} ,
   {"0Modules/Geometry/Elementary entities/Add/Parameter",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Parameter"} ,
   {"0Modules/Geometry/Elementary entities/Add/Point",
@@ -3664,14 +3711,36 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Spline"} ,
   {"0Modules/Geometry/Elementary entities/Add/B-Spline",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"BSpline"} ,
-  {"0Modules/Geometry/Elementary entities/Add/Circle arc",
+  {"0Modules/Geometry/Elementary entities/Add/Bezier",
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Bezier"} ,
+  {"0Modules/Geometry/Elementary entities/Add/Circle",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Circle"} ,
-  {"0Modules/Geometry/Elementary entities/Add/Ellipse arc",
+  {"0Modules/Geometry/Elementary entities/Add/Circle arc",
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Circle arc"} ,
+  {"0Modules/Geometry/Elementary entities/Add/Ellipse",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Ellipse"} ,
+  {"0Modules/Geometry/Elementary entities/Add/Ellipse arc",
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Ellipse arc"} ,
+  {"0Modules/Geometry/Elementary entities/Add/Rectangle",
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Rectangle"} ,
+  {"0Modules/Geometry/Elementary entities/Add/Disk",
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Disk"} ,
   {"0Modules/Geometry/Elementary entities/Add/Plane surface",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Plane Surface"} ,
-  {"0Modules/Geometry/Elementary entities/Add/Ruled surface",
+  {"0Modules/Geometry/Elementary entities/Add/Surface filling",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Surface"} ,
+  {"0Modules/Geometry/Elementary entities/Add/Sphere",
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Sphere"} ,
+  {"0Modules/Geometry/Elementary entities/Add/Cylinder",
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Cylinder"} ,
+  {"0Modules/Geometry/Elementary entities/Add/Block",
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Block"} ,
+  {"0Modules/Geometry/Elementary entities/Add/Torus",
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Torus"} ,
+  {"0Modules/Geometry/Elementary entities/Add/Cone",
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Cone"} ,
+  {"0Modules/Geometry/Elementary entities/Add/Wedge",
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Wedge"} ,
   {"0Modules/Geometry/Elementary entities/Add/Volume",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Volume"} ,
   {"0Modules/Geometry/Elementary entities/Translate/Point",
@@ -3750,8 +3819,6 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Surface"} ,
   {"0Modules/Geometry/Elementary entities/Symmetry/Duplicate volume",
    (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Volume"} ,
-  {"0Modules/Geometry/Elementary entities/Split/Line",
-   (Fl_Callback *)geometry_elementary_split_cb,(void*)"Line"},
   {"0Modules/Geometry/Elementary entities/Delete/Point",
    (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Point"} ,
   {"0Modules/Geometry/Elementary entities/Delete/Line",
@@ -3760,6 +3827,8 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Surface"} ,
   {"0Modules/Geometry/Elementary entities/Delete/Volume",
    (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Volume"} ,
+  {"0Modules/Geometry/Elementary entities/Split line",
+   (Fl_Callback *)geometry_elementary_split_cb,(void*)"Line"},
   {"0Modules/Geometry/Elementary entities/Coherence",
    (Fl_Callback *)geometry_elementary_coherence_cb} ,
   {"0Modules/Geometry/Physical groups/Add/Point",

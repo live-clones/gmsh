@@ -9,6 +9,7 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "GModelIO_GEO.h"
+#include "GModelIO_OCC.h"
 #include "Numeric.h"
 #include "StringUtils.h"
 #include "Geo.h"
@@ -102,6 +103,8 @@ void add_infile(const std::string &text, const std::string &fileName, bool force
     GModel::current()->destroy();
   }
   GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  if(GModel::current()->getOCCInternals())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
   GModel::current()->setName(split[1]);
   CTX::instance()->mesh.changed = ENT_ALL;
 
@@ -327,7 +330,7 @@ void add_multline(const std::string &type, std::vector<int> &p,
   add_infile(sstream.str(), fileName);
 }
 
-void add_circ(int p1, int p2, int p3, const std::string &fileName)
+void add_circle_arc(int p1, int p2, int p3, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Circle(" << NEWLINE() << ") = {" << p1 << ", " << p2 << ", "
@@ -335,7 +338,7 @@ void add_circ(int p1, int p2, int p3, const std::string &fileName)
   add_infile(sstream.str(), fileName);
 }
 
-void add_ell(int p1, int p2, int p3, int p4, const std::string &fileName)
+void add_ellipse_arc(int p1, int p2, int p3, int p4, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Ellipse(" << NEWLINE() << ") = {" << p1 << ", " << p2 << ", "
@@ -414,6 +417,50 @@ void add_compound(const std::string &type, List_T *list, const std::string &file
     sstream << "Compound " << type << "(" << NEWREG() << ") = {"
 	    << list2string(list) << "};";
   }
+  add_infile(sstream.str(), fileName);
+}
+
+void add_circle(const std::string &fileName, const std::string &x, const std::string &y,
+                const std::string &z, const std::string &r, const std::string &alpha1,
+                const std::string &alpha2)
+{
+  std::ostringstream sstream;
+  sstream << "Circle(" << NEWLINE() << ") = {" << x << "," << y << "," << z << "," << r;
+  if(alpha1.size())
+    sstream << ", " << alpha1;
+  if(alpha1.size() && alpha2.size())
+    sstream << ", " << alpha2;
+  sstream << "};";
+  add_infile(sstream.str(), fileName);
+}
+
+void add_disk(const std::string &fileName, const std::string &x, const std::string &y,
+                const std::string &z, const std::string &r, const std::string &alpha1,
+                const std::string &alpha2)
+{
+  std::ostringstream sstream;
+  sstream << "Disk(" << NEWSURFACE() << ") = {" << x << "," << y << "," << z << "," << r;
+  if(alpha1.size())
+    sstream << ", " << alpha1;
+  if(alpha1.size() && alpha2.size())
+    sstream << ", " << alpha2;
+  sstream << "};";
+  add_infile(sstream.str(), fileName);
+}
+
+void add_sphere(const std::string &fileName, const std::string &x, const std::string &y,
+                const std::string &z, const std::string &r, const std::string &alpha1,
+                const std::string &alpha2, const std::string &alpha3)
+{
+  std::ostringstream sstream;
+  sstream << "Sphere(" << NEWVOLUME() << ") = {" << x << "," << y << "," << z << "," << r;
+  if(alpha1.size())
+    sstream << ", " << alpha1;
+  if(alpha1.size() && alpha2.size())
+    sstream << ", " << alpha2;
+  if(alpha1.size() && alpha2.size() && alpha3.size())
+    sstream << ", " << alpha3;
+  sstream << "};";
   add_infile(sstream.str(), fileName);
 }
 

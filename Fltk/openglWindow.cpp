@@ -73,7 +73,8 @@ openglWindow::openglWindow(int x, int y, int w, int h)
   for(int i = 0; i < 4; i++) _trySelectionXYWH[i] = 0;
   _lassoXY[0] = _lassoXY[1] = 0;
 
-  addPointMode = lassoMode = selectionMode = false;
+  addPointMode = 0;
+  lassoMode = selectionMode = false;
   endSelection = undoSelection = invertSelection = quitSelection = 0;
 
   if(CTX::instance()->gamepad) Fl::add_timeout(.5, navigator_handler, (void*)this);
@@ -638,7 +639,7 @@ int openglWindow::handle(int event)
           }
         }
       }
-      FlGui::instance()->elementaryContext->updatePoint(_point);
+      FlGui::instance()->elementaryContext->updatePoint(_point, addPointMode);
       redraw();
     }
     else{ // hover mode
@@ -788,7 +789,7 @@ char openglWindow::selectEntity(int type,
       _selection = ENT_NONE;
       selectionMode = false;
       lassoMode = false;
-      addPointMode = false;
+      addPointMode = 0;
       cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
       return 'q';
     }
