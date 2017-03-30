@@ -709,11 +709,15 @@ static void add_new_point_based_entity(const std::string &what, int pane)
         break;
       case 6:
         add_sphere(GModel::current()->getFileName(),
-                   FlGui::instance()->elementaryContext->input[4]->value(),
-                   FlGui::instance()->elementaryContext->input[5]->value(),
-                   FlGui::instance()->elementaryContext->input[6]->value(),
-                   FlGui::instance()->elementaryContext->input[7]->value(),
-                   "", "", "");
+                   FlGui::instance()->elementaryContext->input[32]->value(),
+                   FlGui::instance()->elementaryContext->input[33]->value(),
+                   FlGui::instance()->elementaryContext->input[34]->value(),
+                   FlGui::instance()->elementaryContext->input[35]->value(),
+                   FlGui::instance()->elementaryContext->input[36]->value(),
+                   FlGui::instance()->elementaryContext->input[37]->value(),
+                   FlGui::instance()->elementaryContext->input[38]->value());
+        break;
+      case 7:
         break;
       }
       FlGui::instance()->resetVisibility();
