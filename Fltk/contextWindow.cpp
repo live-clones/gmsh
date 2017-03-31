@@ -663,7 +663,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 31 * FL_NORMAL_SIZE;
-  int height = 5 * WB + 9 * BH;
+  int height = 5 * WB + 10 * BH;
 
   win = new paletteWindow(width, height, CTX::instance()->nonModalWindows ? true : false,
                           "Elementary Operation Context");
@@ -683,6 +683,9 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       for(int i = 0; i < 3; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
       }
+      butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, IW, BH,
+                                    "Apply operation on copy");
+      butt[0]->value(0);
       group[0]->end();
     }
     // 1: Rotate
@@ -713,6 +716,9 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       for(int i = 3; i < 10; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
       }
+      butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 8 * BH, IW, BH,
+                                    "Apply operation on copy");
+      butt[1]->value(0);
       group[1]->end();
     }
     // 2: Scale
@@ -734,6 +740,9 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       for(int i = 10; i < 14; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
       }
+      butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, IW, BH,
+                                    "Apply operation on copy");
+      butt[2]->value(0);
       group[2]->end();
     }
     // 3: Symmetry
@@ -751,33 +760,36 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       for(int i = 14; i < 18; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
       }
+      butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, IW, BH,
+                                    "Apply operation on copy");
+      butt[3]->value(0);
       group[3]->end();
     }
     // 4: Boolean
     {
       group[4] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Boolean");
-      butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, IW, BH, "Delete object");
-      butt[0]->value(1);
-      butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, IW, BH, "Delete tool");
-      butt[1]->value(1);
+      butt[4] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, IW, BH, "Delete object");
+      butt[4]->value(1);
+      butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, IW, BH, "Delete tool");
+      butt[5]->value(1);
       group[4]->end();
     }
     // 5: Delete
     {
       group[5] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Delete");
-      butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, IW, BH, "Recursive");
-      butt[2]->value(1);
+      butt[6] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, IW, BH, "Recursive");
+      butt[6]->value(1);
       group[5]->end();
     }
     o->end();
   }
 
-  Fl_Choice *o = new Fl_Choice(WB, height - WB - BH, IW, BH, "Selection mode");
-  o->menu(menu_selection_mode);
-  o->align(FL_ALIGN_RIGHT);
-  o->callback(selection_mode_cb);
+  choice = new Fl_Choice(WB, height - WB - BH, IW, BH, "Selection mode");
+  choice->menu(menu_selection_mode);
+  choice->align(FL_ALIGN_RIGHT);
+  choice->callback(selection_mode_cb);
 
   win->position(CTX::instance()->ctxPosition[0], CTX::instance()->ctxPosition[1]);
   win->end();
@@ -785,11 +797,15 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE += deltaFontSize;
 }
 
-void transformContextWindow::show(int pane)
+void transformContextWindow::show(int pane, bool extrude)
 {
   if(pane < 0 || pane > 5) return;
   for(int i = 0; i < 6; i++)
     group[i]->hide();
+  for(int i = 0; i < 4; i++){
+    if(extrude) butt[i]->deactivate();
+    else butt[i]->activate();
+  }
   group[pane]->show();
   win->show();
 }

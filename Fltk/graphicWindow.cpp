@@ -1258,7 +1258,13 @@ static void action_point_line_surface_volume(int action, const std::string &what
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else{
-    type = ENT_ALL;
+    switch(FlGui::instance()->transformContext->choice->value()){
+    case 1: type = ENT_POINT; break;
+    case 2: type = ENT_LINE; break;
+    case 3: type = ENT_SURFACE; break;
+    case 4: type = ENT_VOLUME; break;
+    default: type = ENT_ALL;
+    }
   }
 
   if(action == 8){
@@ -1267,9 +1273,10 @@ static void action_point_line_surface_volume(int action, const std::string &what
 
   drawContext::global()->draw();
 
-  List_T *List1 = List_Create(5, 5, sizeof(int));
+  std::vector<std::pair<int, int> > dimTags;
+  std::vector<std::pair<int, int> >::iterator it;
   while(1) {
-    if(!List_Nbr(List1))
+    if(dimTags.empty())
       Msg::StatusGl("Select entity\n"
                     "[Press 'e' to end selection or 'q' to abort]");
     else
@@ -1279,154 +1286,117 @@ static void action_point_line_surface_volume(int action, const std::string &what
 
     char ib = FlGui::instance()->selectEntity(type);
     if(ib == 'l') {
-      // we don't use List_Insert in order to keep the original ordering (this
-      // is slower, but this way undo works as expected)
-      int tag;
-      switch (type) {
-      case ENT_POINT:
-        for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
-          FlGui::instance()->selectedVertices[i]->setSelection(1);
-          tag = FlGui::instance()->selectedVertices[i]->tag();
-          if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
-            List_Add(List1, &tag);
-        }
-        break;
-      case ENT_LINE:
-        for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
-          FlGui::instance()->selectedEdges[i]->setSelection(1);
-          tag = FlGui::instance()->selectedEdges[i]->tag();
-          if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
-            List_Add(List1, &tag);
-        }
-        break;
-      case ENT_SURFACE:
-        for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
-          FlGui::instance()->selectedFaces[i]->setSelection(1);
-          tag = FlGui::instance()->selectedFaces[i]->tag();
-          if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
-            List_Add(List1, &tag);
-        }
-        break;
-      case ENT_VOLUME:
-        for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
-          FlGui::instance()->selectedRegions[i]->setSelection(1);
-          tag = FlGui::instance()->selectedRegions[i]->tag();
-          if(List_ISearchSeq(List1, &tag, fcmp_int) < 0)
-            List_Add(List1, &tag);
-        }
-        break;
+      for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+        FlGui::instance()->selectedVertices[i]->setSelection(1);
+        std::pair<int, int> t(0, FlGui::instance()->selectedVertices[i]->tag());
+        if(std::find(dimTags.begin(), dimTags.end(), t) == dimTags.end())
+          dimTags.push_back(t);
+      }
+      for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+        FlGui::instance()->selectedEdges[i]->setSelection(1);
+        std::pair<int, int> t(1, FlGui::instance()->selectedEdges[i]->tag());
+        if(std::find(dimTags.begin(), dimTags.end(), t) == dimTags.end())
+          dimTags.push_back(t);
+      }
+      for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+        FlGui::instance()->selectedFaces[i]->setSelection(1);
+        std::pair<int, int> t(2, FlGui::instance()->selectedFaces[i]->tag());
+        if(std::find(dimTags.begin(), dimTags.end(), t) == dimTags.end())
+          dimTags.push_back(t);
+      }
+      for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
+        FlGui::instance()->selectedRegions[i]->setSelection(1);
+        std::pair<int, int> t(3, FlGui::instance()->selectedRegions[i]->tag());
+        if(std::find(dimTags.begin(), dimTags.end(), t) == dimTags.end())
+          dimTags.push_back(t);
       }
       drawContext::global()->draw();
     }
     if(ib == 'r') {
-      // we don't use List_Suppress in order to keep the original ordering (this
-      // is slower, but this way undo works as expected)
-      int index, tag;
-      switch (type) {
-      case ENT_POINT:
-        for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
-          tag = FlGui::instance()->selectedVertices[i]->tag();
-          index = List_ISearchSeq(List1, &tag, fcmp_int);
-          if(index >= 0) List_PSuppress(List1, index);
-          FlGui::instance()->selectedVertices[i]->setSelection(0);
-        }
-        break;
-      case ENT_LINE:
-        for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
-          tag = FlGui::instance()->selectedEdges[i]->tag();
-          index = List_ISearchSeq(List1, &tag, fcmp_int);
-          if(index >= 0) List_PSuppress(List1, index);
-          FlGui::instance()->selectedEdges[i]->setSelection(0);
-        }
-        break;
-      case ENT_SURFACE:
-        for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
-          tag = FlGui::instance()->selectedFaces[i]->tag();
-          index = List_ISearchSeq(List1, &tag, fcmp_int);
-          if(index >= 0) List_PSuppress(List1, index);
-          FlGui::instance()->selectedFaces[i]->setSelection(0);
-        }
-        break;
-      case ENT_VOLUME:
-        for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
-          tag = FlGui::instance()->selectedRegions[i]->tag();
-          index = List_ISearchSeq(List1, &tag, fcmp_int);
-          if(index >= 0) List_PSuppress(List1, index);
-          FlGui::instance()->selectedRegions[i]->setSelection(0);
-        }
-        break;
+      // FIXME: TODO
+      for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+        //tag = FlGui::instance()->selectedVertices[i]->tag();
+        //index = List_ISearchSeq(List1, &tag, fcmp_int);
+        //if(index >= 0) List_PSuppress(List1, index);
+        //FlGui::instance()->selectedVertices[i]->setSelection(0);
+      }
+      for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+        //tag = FlGui::instance()->selectedEdges[i]->tag();
+        //index = List_ISearchSeq(List1, &tag, fcmp_int);
+        //if(index >= 0) List_PSuppress(List1, index);
+        //FlGui::instance()->selectedEdges[i]->setSelection(0);
+      }
+      for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+        //tag = FlGui::instance()->selectedFaces[i]->tag();
+        //index = List_ISearchSeq(List1, &tag, fcmp_int);
+        //if(index >= 0) List_PSuppress(List1, index);
+        //FlGui::instance()->selectedFaces[i]->setSelection(0);
+      }
+      for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
+        //tag = FlGui::instance()->selectedRegions[i]->tag();
+        //index = List_ISearchSeq(List1, &tag, fcmp_int);
+        //if(index >= 0) List_PSuppress(List1, index);
+        //FlGui::instance()->selectedRegions[i]->setSelection(0);
       }
       drawContext::global()->draw();
     }
     if(ib == 'u') {
-      if(List_Nbr(List1)) {
-        int num;
-        List_Read(List1, List_Nbr(List1) - 1, &num);
-        if(type == ENT_POINT){
-          GVertex *gv = GModel::current()->getVertexByTag(num);
-          if(gv) gv->setSelection(0);
-        }
-        else if(type == ENT_LINE){
-          GEdge *ge = GModel::current()->getEdgeByTag(num);
-          if(ge) ge->setSelection(0);
-        }
-        else if(type == ENT_SURFACE){
-          GFace *gf = GModel::current()->getFaceByTag(num);
-          if(gf) gf->setSelection(0);
-        }
-        else if(type == ENT_VOLUME){
-          GRegion *gr = GModel::current()->getRegionByTag(num);
-          if(gr) gr->setSelection(0);
-        }
+      if(dimTags.size()) {
+        std::pair<int, int> t = dimTags.back();
+        GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
+        if(ge) ge->setSelection(0);
+        dimTags.pop_back();
         drawContext::global()->draw();
-        List_Pop(List1);
       }
     }
     if(ib == 'i') {
       Msg::Error("Inverting selection!");
     }
     if(ib == 'e') {
-      if(List_Nbr(List1)){
-        int mode = 0; // FIXME
+      if(dimTags.size()){
         switch (action) {
         case 0:
-          translate(mode, List1, GModel::current()->getFileName(), what,
+          translate(GModel::current()->getFileName(), dimTags,
                     FlGui::instance()->transformContext->input[0]->value(),
                     FlGui::instance()->transformContext->input[1]->value(),
-                    FlGui::instance()->transformContext->input[2]->value());
+                    FlGui::instance()->transformContext->input[2]->value(),
+                    FlGui::instance()->transformContext->butt[0]->value());
           break;
         case 1:
-          rotate(mode, List1, GModel::current()->getFileName(), what,
+          rotate(GModel::current()->getFileName(), dimTags,
                  FlGui::instance()->transformContext->input[6]->value(),
                  FlGui::instance()->transformContext->input[7]->value(),
                  FlGui::instance()->transformContext->input[8]->value(),
                  FlGui::instance()->transformContext->input[3]->value(),
                  FlGui::instance()->transformContext->input[4]->value(),
                  FlGui::instance()->transformContext->input[5]->value(),
-                 FlGui::instance()->transformContext->input[9]->value());
+                 FlGui::instance()->transformContext->input[9]->value(),
+                 FlGui::instance()->transformContext->butt[1]->value());
           break;
         case 2:
-          dilate(mode, List1, GModel::current()->getFileName(), what,
+          dilate(GModel::current()->getFileName(), dimTags,
                  FlGui::instance()->transformContext->input[10]->value(),
                  FlGui::instance()->transformContext->input[11]->value(),
                  FlGui::instance()->transformContext->input[12]->value(),
-                 FlGui::instance()->transformContext->input[13]->value());
+                 FlGui::instance()->transformContext->input[13]->value(),
+                 FlGui::instance()->transformContext->butt[2]->value());
           break;
         case 3:
-          symmetry(mode, List1, GModel::current()->getFileName(), what,
+          symmetry(GModel::current()->getFileName(), dimTags,
                    FlGui::instance()->transformContext->input[14]->value(),
                    FlGui::instance()->transformContext->input[15]->value(),
                    FlGui::instance()->transformContext->input[16]->value(),
-                   FlGui::instance()->transformContext->input[17]->value());
+                   FlGui::instance()->transformContext->input[17]->value(),
+                   FlGui::instance()->transformContext->butt[3]->value());
           break;
         case 4:
-          extrude(List1, GModel::current()->getFileName(), what,
+          extrude(GModel::current()->getFileName(), dimTags,
                   FlGui::instance()->transformContext->input[0]->value(),
                   FlGui::instance()->transformContext->input[1]->value(),
                   FlGui::instance()->transformContext->input[2]->value());
           break;
         case 5:
-          protude(List1, GModel::current()->getFileName(), what,
+          protude(GModel::current()->getFileName(), dimTags,
                   FlGui::instance()->transformContext->input[6]->value(),
                   FlGui::instance()->transformContext->input[7]->value(),
                   FlGui::instance()->transformContext->input[8]->value(),
@@ -1436,35 +1406,69 @@ static void action_point_line_surface_volume(int action, const std::string &what
                   FlGui::instance()->transformContext->input[9]->value());
           break;
         case 6:
-          delet(List1, GModel::current()->getFileName(), what);
+          delete_entities(GModel::current()->getFileName(), dimTags);
           break;
         case 7:
         case 11:
-          add_physical(what, List1, GModel::current()->getFileName(),
-                       FlGui::instance()->physicalContext->input[0]->value(),
-                       FlGui::instance()->physicalContext->butt[0]->value() ? 0 :
-                       FlGui::instance()->physicalContext->value[0]->value(),
-                       FlGui::instance()->physicalContext->append,
-                       FlGui::instance()->physicalContext->mode);
+          {
+            std::vector<int> tags;
+            for(unsigned int i = 0; i < dimTags.size(); i++){
+              if((dimTags[i].first == 0 && what == "Point") ||
+                 (dimTags[i].first == 1 && what == "Line") ||
+                 (dimTags[i].first == 2 && what == "Surface") ||
+                 (dimTags[i].first == 3 && what == "Volume"))
+                tags.push_back(dimTags[i].second);
+            }
+            add_remove_physical(GModel::current()->getFileName(), what, tags,
+                                FlGui::instance()->physicalContext->input[0]->value(),
+                                FlGui::instance()->physicalContext->butt[0]->value() ? 0 :
+                                FlGui::instance()->physicalContext->value[0]->value(),
+                                FlGui::instance()->physicalContext->append,
+                                FlGui::instance()->physicalContext->mode);
+          }
           FlGui::instance()->physicalContext->show(action == 7 ? false : true);
           // ask clients to update the tree using the new physical definition
           onelab_cb(0, (void*)"check");
           break;
         case 8:
-          add_charlength(List1, GModel::current()->getFileName(),
-                         FlGui::instance()->meshContext->input[0]->value());
+          {
+            std::vector<int> tags;
+            for(unsigned int i = 0; i < dimTags.size(); i++){
+              if(dimTags[i].first == 0 && what == "Point")
+                tags.push_back(dimTags[i].second);
+            }
+            if(tags.size())
+              add_charlength(GModel::current()->getFileName(), tags,
+                             FlGui::instance()->meshContext->input[0]->value());
+          }
           break;
         case 9:
-          add_recosurf(List1, GModel::current()->getFileName());
+          {
+            std::vector<int> tags;
+            for(unsigned int i = 0; i < dimTags.size(); i++){
+              if(dimTags[i].first == 2 && what == "Surface")
+                tags.push_back(dimTags[i].second);
+            }
+            add_recosurf(GModel::current()->getFileName(), tags);
+          }
           break;
         case 10:
-          add_compound(what, List1, GModel::current()->getFileName());
+          {
+            std::vector<int> tags;
+            for(unsigned int i = 0; i < dimTags.size(); i++){
+              if((dimTags[i].first == 1 && what == "Line") ||
+                 (dimTags[i].first == 2 && what == "Surface") ||
+                 (dimTags[i].first == 3 && what == "Volume"))
+                tags.push_back(dimTags[i].second);
+            }
+            add_compound(GModel::current()->getFileName(), what, tags);
+          }
           break;
         default:
           Msg::Error("Unknown action on selected entities");
           break;
         }
-        List_Reset(List1);
+        dimTags.clear();
         FlGui::instance()->resetVisibility();
         GModel::current()->setSelection(0);
         if(action <= 6) SetBoundingBox();
@@ -1477,7 +1481,6 @@ static void action_point_line_surface_volume(int action, const std::string &what
       break;
     }
   }
-  List_Delete(List1);
 
   Msg::StatusGl("");
 }
@@ -1508,13 +1511,13 @@ static void geometry_elementary_symmetry_cb(Fl_Widget *w, void *data)
 
 static void geometry_elementary_extrude_translate_cb(Fl_Widget *w, void *data)
 {
-  FlGui::instance()->transformContext->show(0);
+  FlGui::instance()->transformContext->show(0, true);
   action_point_line_surface_volume(4);
 }
 
 static void geometry_elementary_extrude_rotate_cb(Fl_Widget *w, void *data)
 {
-  FlGui::instance()->transformContext->show(1);
+  FlGui::instance()->transformContext->show(1, true);
   action_point_line_surface_volume(5);
 }
 
@@ -1531,12 +1534,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
 
   std::string mode((const char*)data);
   bool selectObject = true;
-  std::vector<GEntity*> object, tool;
-
-  if(GModel::current()->getDim() == 3)
-    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
-  else if(GModel::current()->getDim() == 2)
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+  std::vector<std::pair<int, int> > object, tool;
 
   while(1) {
     if(object.empty())
@@ -1559,29 +1557,31 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
       for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
         if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
           FlGui::instance()->selectedEdges[i]->setSelection(1);
-          if(selectObject){
-            object.push_back(FlGui::instance()->selectedEdges[i]);
-          }
+          std::pair<int, int> t(1, FlGui::instance()->selectedEdges[i]->tag());
+          if(selectObject)
+            object.push_back(t);
           else
-            tool.push_back(FlGui::instance()->selectedEdges[i]);
+            tool.push_back(t);
         }
       }
       for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
         if(FlGui::instance()->selectedFaces[i]->getSelection() != 1){
           FlGui::instance()->selectedFaces[i]->setSelection(1);
+          std::pair<int, int> t(2, FlGui::instance()->selectedFaces[i]->tag());
           if(selectObject)
-            object.push_back(FlGui::instance()->selectedFaces[i]);
+            object.push_back(t);
           else
-            tool.push_back(FlGui::instance()->selectedFaces[i]);
+            tool.push_back(t);
         }
       }
       for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
         if(FlGui::instance()->selectedRegions[i]->getSelection() != 1){
           FlGui::instance()->selectedRegions[i]->setSelection(1);
+          std::pair<int, int> t(3, FlGui::instance()->selectedRegions[i]->tag());
           if(selectObject)
-            object.push_back(FlGui::instance()->selectedRegions[i]);
+            object.push_back(t);
           else
-            tool.push_back(FlGui::instance()->selectedRegions[i]);
+            tool.push_back(t);
         }
       }
     }
@@ -1590,11 +1590,15 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'u') {
       if(selectObject && object.size()){
-        object[object.size() - 1]->setSelection(0);
+        std::pair<int, int> t = object.back();
+        GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
+        if(ge) ge->setSelection(0);
         object.pop_back();
       }
       else if(tool.size()){
-        tool[tool.size() - 1]->setSelection(0);
+        std::pair<int, int> t = tool.back();
+        GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
+        if(ge) ge->setSelection(0);
         tool.pop_back();
       }
     }
@@ -1610,8 +1614,8 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
       }
       else{
         apply_boolean(GModel::current()->getFileName(), mode, object, tool,
-                      FlGui::instance()->transformContext->butt[0]->value(),
-                      FlGui::instance()->transformContext->butt[1]->value());
+                      FlGui::instance()->transformContext->butt[4]->value(),
+                      FlGui::instance()->transformContext->butt[5]->value());
         GModel::current()->setSelection(0);
         selectObject = true;
         object.clear();

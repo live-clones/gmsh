@@ -151,7 +151,7 @@ void add_infile(const std::string &text, const std::string &fileName)
   }
 }
 
-static std::string list2string(List_T *list)
+static std::string list2String(List_T *list)
 {
   std::ostringstream sstream;
   for(int i = 0; i < List_Nbr(list); i++){
@@ -163,17 +163,42 @@ static std::string list2string(List_T *list)
   return sstream.str();
 }
 
-void add_charlength(List_T *list, const std::string &fileName, const std::string &lc)
+static std::string vector2String(const std::vector<int> &v)
 {
   std::ostringstream sstream;
-  sstream << "Characteristic Length {" << list2string(list) << "} = " << lc << ";";
+  for(unsigned int i = 0; i < v.size(); i++){
+    if(i) sstream << ", ";
+    sstream << v[i];
+  }
+  return sstream.str();
+}
+
+static std::string dimTags2String(const std::vector<std::pair<int, int> > &l)
+{
+  std::ostringstream sstream;
+  for(unsigned int i = 0; i < l.size(); i++){
+    switch(l[i].first){
+    case 0: sstream << "Point{" << l[i].second << "}; "; break;
+    case 1: sstream << "Line{" << l[i].second << "}; "; break;
+    case 2: sstream << "Surface{" << l[i].second << "}; "; break;
+    case 3: sstream << "Volume{" << l[i].second << "}; "; break;
+    }
+  }
+  return sstream.str();
+}
+
+void add_charlength(const std::string &fileName, const std::vector<int> &l,
+                    const std::string &lc)
+{
+  std::ostringstream sstream;
+  sstream << "Characteristic Length {" << vector2String(l) << "} = " << lc << ";";
   add_infile(sstream.str(), fileName);
 }
 
-void add_recosurf(List_T *list, const std::string &fileName)
+void add_recosurf(const std::string &fileName, const std::vector<int> &l)
 {
   std::ostringstream sstream;
-  sstream << "Recombine Surface {" << list2string(list) << "};";
+  sstream << "Recombine Surface {" << vector2String(l) << "};";
   add_infile(sstream.str(), fileName);
 }
 
@@ -336,7 +361,7 @@ void add_lineloop(List_T *list, const std::string &fileName, int *numloop)
     *numloop = std::max
       (*numloop, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
   std::ostringstream sstream;
-  sstream << "Line Loop(" << *numloop << ") = {" << list2string(list) << "};";
+  sstream << "Line Loop(" << *numloop << ") = {" << list2String(list) << "};";
   add_infile(sstream.str(), fileName);
 }
 
@@ -344,7 +369,7 @@ void add_surf(const std::string &type, List_T *list, const std::string &fileName
 {
   std::ostringstream sstream;
   sstream << type << "(" << GModel::current()->getMaxElementaryNumber(2) + 1
-          << ") = {" << list2string(list) << "};";
+          << ") = {" << list2String(list) << "};";
   add_infile(sstream.str(), fileName);
 }
 
@@ -356,7 +381,7 @@ void add_surfloop(List_T *list, const std::string &fileName, int *numloop)
     *numloop = std::max
       (*numloop, GModel::current()->getOCCInternals()->getMaxTag(-2) + 1);
   std::ostringstream sstream;
-  sstream << "Surface Loop(" << *numloop << ") = {" << list2string(list) << "};";
+  sstream << "Surface Loop(" << *numloop << ") = {" << list2String(list) << "};";
   add_infile(sstream.str(), fileName);
 }
 
@@ -364,16 +389,16 @@ void add_vol(List_T *list, const std::string &fileName)
 {
   std::ostringstream sstream;
   sstream << "Volume(" << GModel::current()->getMaxElementaryNumber(3) + 1
-          << ") = {" << list2string(list) << "};";
+          << ") = {" << list2String(list) << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_physical(const std::string &type, List_T *list, const std::string &fileName,
-                  const std::string &name, int forceTag, bool append,
-                  const std::string &mode)
+void add_remove_physical(const std::string &fileName, const std::string &what,
+                         const std::vector<int> &l, const std::string &name,
+                         int forceTag, bool append, const std::string &mode)
 {
   std::ostringstream sstream;
-  sstream << "Physical " << type << "(";
+  sstream << "Physical " << what << "(";
   if(name.size()){
     sstream << "\"" << name << "\"";
     if(forceTag)
@@ -388,28 +413,29 @@ void add_physical(const std::string &type, List_T *list, const std::string &file
     sstream << "-";
   else if(append)
     sstream << "+";
-  sstream << "= {" << list2string(list) << "};";
+  sstream << "= {" << vector2String(l) << "};";
   add_infile(sstream.str(), fileName);
 }
 
-void add_compound(const std::string &type, List_T *list, const std::string &fileName)
+void add_compound(const std::string &fileName, const std::string &type,
+                  const std::vector<int> &l)
 {
   std::ostringstream sstream;
   if(SplitFileName(fileName)[2] != ".geo") sstream << "CreateTopology;\n";
   if (type == "Surface"){
     sstream << "Compound " << type << "("
             << GModel::current()->getMaxElementaryNumber(2) + 1 << ") = {"
-	    << list2string(list) << "};";
+	    << vector2String(l) << "};";
   }
   else if (type == "Line"){
     sstream << "Compound " << type << "("
             << GModel::current()->getMaxElementaryNumber(1) + 1 << ") = {"
-	    << list2string(list) << "};";
+	    << vector2String(l) << "};";
   }
   else{
     sstream << "Compound " << type << "("
             << GModel::current()->getMaxElementaryNumber(3) + 1 << ") = {"
-	    << list2string(list) << "};";
+	    << vector2String(l) << "};";
   }
   add_infile(sstream.str(), fileName);
 }
@@ -547,70 +573,70 @@ void add_wedge(const std::string &fileName, const std::string &x, const std::str
   add_infile(sstream.str(), fileName);
 }
 
-void translate(int add, List_T *list, const std::string &fileName,
-               const std::string &what, const std::string &tx,
-               const std::string &ty, const std::string &tz)
+void translate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
+               const std::string &tx, const std::string &ty, const std::string &tz,
+               bool duplicata)
 {
   std::ostringstream sstream;
   sstream << "Translate {" << tx << ", " << ty << ", " << tz << "} {\n  ";
-  if(add) sstream << "Duplicata { ";
-  sstream << what << "{" << list2string(list) << "};";
-  if(add) sstream << " }";
+  if(duplicata) sstream << "Duplicata { ";
+  sstream << dimTags2String(l);
+  if(duplicata) sstream << "}";
   sstream << "\n}";
   add_infile(sstream.str(), fileName);
 }
 
-void rotate(int add, List_T *list, const std::string &fileName,
-            const std::string &what, const std::string &ax, const std::string &ay,
-            const std::string &az, const std::string &px, const std::string &py,
-            const std::string &pz, const std::string &angle)
+void rotate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
+            const std::string &ax, const std::string &ay, const std::string &az,
+            const std::string &px, const std::string &py, const std::string &pz,
+            const std::string &angle, bool duplicata)
 {
   std::ostringstream sstream;
   sstream << "Rotate {{" << ax << ", " << ay << ", " << az << "}, {"
           << px << ", " << py << ", " << pz << "}, " << angle << "} {\n  ";
-  if(add) sstream << "Duplicata { ";
-  sstream << what << "{" << list2string(list) << "};";
-  if(add) sstream << " }";
+  if(duplicata) sstream << "Duplicata { ";
+  sstream << dimTags2String(l);
+  if(duplicata) sstream << "}";
   sstream << "\n}";
   add_infile(sstream.str(), fileName);
 }
 
-void dilate(int add, List_T *list, const std::string &fileName,
-            const std::string &what, const std::string &dx, const std::string &dy,
-            const std::string &dz, const std::string &df)
+void dilate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
+            const std::string &dx, const std::string &dy, const std::string &dz,
+            const std::string &df, bool duplicata)
 {
   std::ostringstream sstream;
   sstream << "Dilate {{" << dx << ", " << dy << ", " << dz << "}, " << df << "} {\n  ";
-  if(add) sstream << "Duplicata { ";
-  sstream << what << "{" << list2string(list) << "};";
-  if(add) sstream << " }";
+  if(duplicata) sstream << "Duplicata { ";
+  sstream << dimTags2String(l);
+  if(duplicata) sstream << "}";
   sstream << "\n}";
   add_infile(sstream.str(), fileName);
 }
 
-void symmetry(int add, List_T *list, const std::string &fileName,
-              const std::string &what, const std::string &sa, const std::string &sb,
-              const std::string &sc, const std::string &sd)
+void symmetry(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
+              const std::string &sa, const std::string &sb, const std::string &sc,
+              const std::string &sd, bool duplicata)
 {
   std::ostringstream sstream;
   sstream << "Symmetry {" << sa << ", " << sb << ", " << sc << ", " << sd << "} {\n  ";
-  if(add) sstream << "Duplicata { ";
-  sstream << what << "{" << list2string(list) << "};";
-  if(add) sstream << " }";
+  if(duplicata) sstream << "Duplicata { ";
+  sstream << dimTags2String(l);
+  if(duplicata) sstream << "}";
   sstream << "\n}";
   add_infile(sstream.str(), fileName);
 }
 
-void extrude(List_T *list, const std::string &fileName, const std::string &what,
+void extrude(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
              const std::string &tx, const std::string &ty, const std::string &tz)
 {
   std::ostringstream sstream;
-  sstream << "Extrude {" << tx << ", " << ty << ", " << tz << "} {\n  " << what
-          << "{" << list2string(list) << "};\n}";
+  sstream << "Extrude {" << tx << ", " << ty << ", " << tz << "} {\n  "
+          << dimTags2String(l) << "\n}";
   add_infile(sstream.str(), fileName);
 }
 
-void protude(List_T *list, const std::string &fileName, const std::string &what,
+void protude(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
              const std::string &ax, const std::string &ay, const std::string &az,
              const std::string &px, const std::string &py, const std::string &pz,
              const std::string &angle)
@@ -618,40 +644,26 @@ void protude(List_T *list, const std::string &fileName, const std::string &what,
   std::ostringstream sstream;
   sstream << "Extrude {{" << ax << ", " << ay << ", " << az << "}, {"
           << px << ", " << py << ", " << pz << "}, " << angle << "} {\n  "
-          << what << "{" << list2string(list) << "};\n}";
+          << dimTags2String(l) << "\n}";
   add_infile(sstream.str(), fileName);
 }
 
 void split_edge(int edge_id, List_T *vertices, const std::string &fileName)
 {
   std::ostringstream sstream;
-  sstream << "Split Line(" << edge_id << ") {" << list2string(vertices) << "};";
+  sstream << "Split Line(" << edge_id << ") {" << list2String(vertices) << "};";
   add_infile(sstream.str(), fileName);
 }
 
 void apply_boolean(const std::string &fileName, const std::string &op,
-                   const std::vector<GEntity*> &object,
-                   const std::vector<GEntity*> &tool,
+                   const std::vector<std::pair<int, int> > &object,
+                   const std::vector<std::pair<int, int> > &tool,
                    int deleteObject, int deleteTool)
 {
   std::ostringstream sstream;
-  sstream << op << "{ ";
-  for(unsigned int i = 0; i < object.size(); i++){
-    switch(object[i]->dim()){
-    case 3: sstream << "Volume{" << object[i]->tag() << "}; "; break;
-    case 2: sstream << "Surface{" << object[i]->tag() << "}; "; break;
-    case 1: sstream << "Line{" << object[i]->tag() << "}; "; break;
-    }
-  }
+  sstream << op << "{ " << dimTags2String(object);
   if(deleteObject) sstream << "Delete; ";
-  sstream << "}{ ";
-  for(unsigned int i = 0; i < tool.size(); i++){
-    switch(tool[i]->dim()){
-    case 3: sstream << "Volume{" << tool[i]->tag() << "}; "; break;
-    case 2: sstream << "Surface{" << tool[i]->tag() << "}; "; break;
-    case 1: sstream << "Line{" << tool[i]->tag() << "}; "; break;
-    }
-  }
+  sstream << "}{ " << dimTags2String(tool);
   if(deleteTool) sstream << "Delete; ";
   sstream << "}";
   add_infile(sstream.str(), fileName);
@@ -662,9 +674,10 @@ void coherence(const std::string &fileName)
   add_infile("Coherence;", fileName);
 }
 
-void delet(List_T *list, const std::string &fileName, const std::string &what)
+void delete_entities(const std::string &fileName,
+                     const std::vector<std::pair<int, int> > &l)
 {
   std::ostringstream sstream;
-  sstream << "Delete {\n  " << what << "{" << list2string(list) << "};\n}";
+  sstream << "Delete {\n  " << dimTags2String(l) << "\n}";
   add_infile(sstream.str(), fileName);
 }

@@ -36,10 +36,11 @@ class transformContextWindow{
   Fl_Input *input[30];
   Fl_Value_Input *value[10];
   Fl_Group *group[10];
-  Fl_Check_Button *butt[3];
+  Fl_Check_Button *butt[10];
+  Fl_Choice *choice;
  public:
   transformContextWindow(int deltaFontSize=0);
-  void show(int pane);
+  void show(int pane, bool extrude=false);
 };
 
 class physicalContextWindow{

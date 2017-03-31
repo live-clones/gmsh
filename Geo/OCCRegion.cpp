@@ -51,7 +51,7 @@ void OCCRegion::setup()
         Msg::Error("Unknown face in region %d", tag());
       }
       else if (face.Orientation() == TopAbs_INTERNAL){
-        Msg::Info("Adding embedded face %d", f->tag());
+        Msg::Info("Adding embedded face %d in region %d", f->tag(), tag());
         embedded_faces.push_back(f);
       }
       else{
@@ -70,7 +70,7 @@ void OCCRegion::setup()
       Msg::Error("Unknown edge in region %d", tag());
     }
     else if (edge.Orientation() == TopAbs_INTERNAL){
-      Msg::Info("Adding embedded edge %d", e->tag());
+      Msg::Info("Adding embedded edge %d in region %d", e->tag(), tag());
       embedded_edges.push_back(e);
       //OCCEdge *occe = (OCCEdge*)e;
       //occe->setTrimmed(this);
@@ -86,7 +86,7 @@ void OCCRegion::setup()
       Msg::Error("Unknown vertex in region %d", tag());
     }
     else if (vertex.Orientation() == TopAbs_INTERNAL){
-      Msg::Info("Adding embedded vertex %d", v->tag());
+      Msg::Info("Adding embedded vertex %d in region %d", v->tag(), tag());
       embedded_vertices.push_back(v);
     }
   }

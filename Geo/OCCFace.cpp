@@ -88,7 +88,7 @@ void OCCFace::setup()
 	Msg::Error("Unknown edge in face %d", tag());
       }
       else if(edge.Orientation() == TopAbs_INTERNAL){
-        Msg::Info("Adding embedded edge %d", e->tag());
+        Msg::Info("Adding embedded edge %d in face %d", e->tag(), tag());
         embedded_edges.push_back(e);
         OCCEdge *occe = (OCCEdge*)e;
         occe->setTrimmed(this);
@@ -149,7 +149,7 @@ void OCCFace::setup()
       Msg::Error("Unknown vertex in face %d", tag());
     }
     else if(vertex.Orientation() == TopAbs_INTERNAL){
-      Msg::Info("Adding embedded vertex %d", v->tag());
+      Msg::Info("Adding embedded vertex %d in face %d", v->tag(), tag());
       embedded_vertices.push_back(v);
     }
   }

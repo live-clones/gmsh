@@ -10,11 +10,10 @@
 #include <vector>
 #include "ListUtils.h"
 
-class GEntity;
-
 void add_infile(const std::string &text, const std::string &fileName);
-void add_charlength(List_T *list, const std::string &fileName, const std::string &lc);
-void add_recosurf(List_T *list, const std::string &fileName);
+void add_charlength(const std::string &fileName, const std::vector<int> &l,
+                    const std::string &lc);
+void add_recosurf(const std::string &fileName, const std::vector<int> &l);
 void add_trsfline(std::vector<int> &l, const std::string &fileName,
                   const std::string &type, const std::string &typearg,
                   const std::string &pts);
@@ -42,10 +41,11 @@ void add_lineloop(List_T *list, const std::string &fileName, int *numloop);
 void add_surf(const std::string &type, List_T *list, const std::string &fileName);
 void add_surfloop(List_T *list, const std::string &fileName, int *numvol);
 void add_vol(List_T *list, const std::string &fileName);
-void add_physical(const std::string &type, List_T *list, const std::string &fileName,
-                  const std::string &name, int forceTag, bool append,
-                  const std::string &mode);
-void add_compound(const std::string &type, List_T *list, const std::string &fileName);
+void add_remove_physical(const std::string &fileName, const std::string &what,
+                         const std::vector<int> &l, const std::string &name,
+                         int forceTag, bool append, const std::string &mode);
+void add_compound(const std::string &fileName, const std::string &type,
+                  const std::vector<int> &l);
 void add_circle(const std::string &fileName, const std::string &x,
                 const std::string &y, const std::string &z, const std::string &r,
                 const std::string &alpha1, const std::string &alpha2);
@@ -77,33 +77,32 @@ void add_cone(const std::string &fileName, const std::string &x, const std::stri
 void add_wedge(const std::string &fileName, const std::string &x, const std::string &y,
                const std::string &z, const std::string &dx, const std::string &dy,
                const std::string &dz, const std::string &ltx);
-void translate(int add, List_T *list, const std::string &fileName,
-               const std::string &what, const std::string &tx, const std::string &ty,
-               const std::string &tz);
-void rotate(int add, List_T *list, const std::string &fileName,
-            const std::string &what, const std::string &ax, const std::string &ay,
-            const std::string &az, const std::string &px, const std::string &py,
-            const std::string &pz,
-            const std::string &angle);
-void dilate(int add, List_T *list, const std::string &fileName,
-            const std::string &what, const std::string &dx, const std::string &dy,
-            const std::string &dz, const std::string &df);
-void symmetry(int add, List_T *list, const std::string &fileName,
-              const std::string &what, const std::string &sa, const std::string &sb,
-              const std::string &sc, const std::string &sd);
-void extrude(List_T *list, const std::string &fileName, const std::string &what,
-             const std::string &tx,
-             const std::string &ty, const std::string &tz);
-void protude(List_T *list, const std::string &fileName, const std::string &what,
+void translate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
+               const std::string &tx, const std::string &ty, const std::string &tz,
+               bool duplicata);
+void rotate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
+            const std::string &ax, const std::string &ay, const std::string &az,
+            const std::string &px, const std::string &py, const std::string &pz,
+            const std::string &angle, bool duplicata);
+void dilate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
+            const std::string &dx, const std::string &dy, const std::string &dz,
+            const std::string &df, bool duplicata);
+void symmetry(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
+              const std::string &sa, const std::string &sb, const std::string &sc,
+              const std::string &sd, bool duplicata);
+void extrude(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
+             const std::string &tx, const std::string &ty, const std::string &tz);
+void protude(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
              const std::string &ax, const std::string &ay, const std::string &az,
              const std::string &px, const std::string &py, const std::string &pz,
              const std::string &angle);
 void split_edge(int edge_id, List_T *vertices, const std::string &fileName);
 void apply_boolean(const std::string &fileName, const std::string &op,
-                   const std::vector<GEntity*> &object,
-                   const std::vector<GEntity*> &tool,
+                   const std::vector<std::pair<int, int> > &object,
+                   const std::vector<std::pair<int, int> > &tool,
                    int deleteObject, int deleteTool);
 void coherence(const std::string &fileName);
-void delet(List_T *list, const std::string &fileName, const std::string &what);
+void delete_entities(const std::string &fileName,
+                     const std::vector<std::pair<int, int> > &l);
 
 #endif
