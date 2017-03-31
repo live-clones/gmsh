@@ -1565,7 +1565,15 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
                     "[Press 'e' to end selection, 'u' to undo last selection or "
                     "'q' to abort]");
 
-    char ib = FlGui::instance()->selectEntity(ENT_ALL);
+    int type = ENT_ALL;
+    switch(FlGui::instance()->transformContext->choice->value()){
+    case 1: type = ENT_POINT; break;
+    case 2: type = ENT_LINE; break;
+    case 3: type = ENT_SURFACE; break;
+    case 4: type = ENT_VOLUME; break;
+    }
+
+    char ib = FlGui::instance()->selectEntity(type);
     if(ib == 'l') {
       for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
         if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){

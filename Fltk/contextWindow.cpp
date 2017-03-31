@@ -656,6 +656,7 @@ static void selection_mode_cb(Fl_Widget *w, void *data)
   for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
     for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
       FlGui::instance()->graph[i]->gl[j]->changeSelection = mode;
+  drawContext::global()->draw();
 }
 
 transformContextWindow::transformContextWindow(int deltaFontSize)
