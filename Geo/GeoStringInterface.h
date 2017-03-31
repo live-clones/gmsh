@@ -103,6 +103,7 @@ void apply_boolean(const std::string &fileName, const std::string &op,
                    int deleteObject, int deleteTool);
 void coherence(const std::string &fileName);
 void delete_entities(const std::string &fileName,
-                     const std::vector<std::pair<int, int> > &l);
+                     const std::vector<std::pair<int, int> > &l,
+                     bool recursive);
 
 #endif

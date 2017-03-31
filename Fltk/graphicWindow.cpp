@@ -1313,30 +1313,42 @@ static void action_point_line_surface_volume(int action, const std::string &what
       drawContext::global()->draw();
     }
     if(ib == 'r') {
-      // FIXME: TODO
+      std::vector<std::pair<int, int> >::iterator it;
       for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
-        //tag = FlGui::instance()->selectedVertices[i]->tag();
-        //index = List_ISearchSeq(List1, &tag, fcmp_int);
-        //if(index >= 0) List_PSuppress(List1, index);
-        //FlGui::instance()->selectedVertices[i]->setSelection(0);
+        std::pair<int, int> t(0, FlGui::instance()->selectedVertices[i]->tag());
+        it = std::find(dimTags.begin(), dimTags.end(), t);
+        if(it != dimTags.end()){
+          dimTags.erase(it);
+          GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
+          if(ge) ge->setSelection(0);
+        }
       }
       for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
-        //tag = FlGui::instance()->selectedEdges[i]->tag();
-        //index = List_ISearchSeq(List1, &tag, fcmp_int);
-        //if(index >= 0) List_PSuppress(List1, index);
-        //FlGui::instance()->selectedEdges[i]->setSelection(0);
+        std::pair<int, int> t(1, FlGui::instance()->selectedEdges[i]->tag());
+        it = std::find(dimTags.begin(), dimTags.end(), t);
+        if(it != dimTags.end()){
+          dimTags.erase(it);
+          GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
+          if(ge) ge->setSelection(0);
+        }
       }
       for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
-        //tag = FlGui::instance()->selectedFaces[i]->tag();
-        //index = List_ISearchSeq(List1, &tag, fcmp_int);
-        //if(index >= 0) List_PSuppress(List1, index);
-        //FlGui::instance()->selectedFaces[i]->setSelection(0);
+        std::pair<int, int> t(2, FlGui::instance()->selectedFaces[i]->tag());
+        it = std::find(dimTags.begin(), dimTags.end(), t);
+        if(it != dimTags.end()){
+          dimTags.erase(it);
+          GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
+          if(ge) ge->setSelection(0);
+        }
       }
       for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
-        //tag = FlGui::instance()->selectedRegions[i]->tag();
-        //index = List_ISearchSeq(List1, &tag, fcmp_int);
-        //if(index >= 0) List_PSuppress(List1, index);
-        //FlGui::instance()->selectedRegions[i]->setSelection(0);
+        std::pair<int, int> t(3, FlGui::instance()->selectedRegions[i]->tag());
+        it = std::find(dimTags.begin(), dimTags.end(), t);
+        if(it != dimTags.end()){
+          dimTags.erase(it);
+          GEntity *ge = GModel::current()->getEntityByTag(t.first, t.second);
+          if(ge) ge->setSelection(0);
+        }
       }
       drawContext::global()->draw();
     }
@@ -1406,7 +1418,8 @@ static void action_point_line_surface_volume(int action, const std::string &what
                   FlGui::instance()->transformContext->input[9]->value());
           break;
         case 6:
-          delete_entities(GModel::current()->getFileName(), dimTags);
+          delete_entities(GModel::current()->getFileName(), dimTags,
+                          FlGui::instance()->transformContext->butt[6]->value());
           break;
         case 7:
         case 11:
@@ -1586,7 +1599,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
       }
     }
     if(ib == 'r') {
-      Msg::Warning("Entity de-selection not implemented yet in boolean operations");
+      Msg::Warning("Entity de-selection not supported yet during boolean operation");
     }
     if(ib == 'u') {
       if(selectObject && object.size()){

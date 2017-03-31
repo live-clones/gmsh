@@ -675,9 +675,10 @@ void coherence(const std::string &fileName)
 }
 
 void delete_entities(const std::string &fileName,
-                     const std::vector<std::pair<int, int> > &l)
+                     const std::vector<std::pair<int, int> > &l, bool recursive)
 {
   std::ostringstream sstream;
+  if(recursive) sstream << "Recursive ";
   sstream << "Delete {\n  " << dimTags2String(l) << "\n}";
   add_infile(sstream.str(), fileName);
 }
