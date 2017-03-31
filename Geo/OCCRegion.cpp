@@ -106,7 +106,7 @@ SBoundingBox3d OCCRegion::bounds() const
 
 GEntity::GeomType OCCRegion::geomType() const
 {
-  return Unknown;
+  return Volume;
 }
 
 bool FaceHaveDifferentOrientations(const TopoDS_Face& aFR,

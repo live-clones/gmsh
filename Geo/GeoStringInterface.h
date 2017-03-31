@@ -101,7 +101,8 @@ void protude(List_T *list, const std::string &fileName, const std::string &what,
 void split_edge(int edge_id, List_T *vertices, const std::string &fileName);
 void apply_boolean(const std::string &fileName, const std::string &op,
                    const std::vector<GEntity*> &object,
-                   const std::vector<GEntity*> &tool);
+                   const std::vector<GEntity*> &tool,
+                   int deleteObject, int deleteTool);
 void coherence(const std::string &fileName);
 void delet(List_T *list, const std::string &fileName, const std::string &what);
 

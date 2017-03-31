@@ -9,11 +9,14 @@
 #include "drawContext.h"
 #include "contextWindow.h"
 #include "paletteWindow.h"
+#include "graphicWindow.h"
+#include "openglWindow.h"
 #include "GModel.h"
 #include "Parser.h"
 #include "GeoStringInterface.h"
 #include "OpenFile.h"
 #include "Context.h"
+#include "Options.h"
 #include "MallocUtils.h"
 
 static void elementary_add_parameter_cb(Fl_Widget *w, void *data)
@@ -265,7 +268,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
         input[i]->align(FL_ALIGN_RIGHT);
 
       for(int i = 0; i < 3; i++)
-        _butt[i] = new Fl_Check_Button
+        butt[i] = new Fl_Check_Button
           (width - 2 * WB - IW, 2 * WB + (i+1) * BH, IW, BH, "Freeze");
 
       value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW/3, BH);
@@ -573,7 +576,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
 bool elementaryContextWindow::frozenPointCoord(int coord)
 {
   if(coord < 0 || coord > 2) return false;
-  return _butt[coord]->value() ? true : false;
+  return butt[coord]->value() ? true : false;
 }
 
 void elementaryContextWindow::updatePoint(double pt[3], int which)
@@ -619,22 +622,58 @@ void elementaryContextWindow::show(int pane)
   win->show();
 }
 
+static Fl_Menu_Item menu_selection_mode[] = {
+  {"All entities", 0, 0, 0},
+  {"Points", 0, 0, 0},
+  {"Lines", 0, 0, 0},
+  {"Surfaces", 0, 0, 0},
+  {"Volumes", 0, 0, 0},
+  {0}
+};
+
+static void selection_mode_cb(Fl_Widget *w, void *data)
+{
+  Fl_Choice *c = (Fl_Choice*)w;
+  int mode = ENT_ALL;
+  switch(c->value()){
+  case 1:
+    mode = ENT_POINT;
+    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+    break;
+  case 2:
+    mode = ENT_LINE;
+    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+    break;
+  case 3:
+    mode = ENT_SURFACE;
+    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+    break;
+  case 4:
+    mode = ENT_VOLUME;
+    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
+    break;
+  }
+  for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
+    for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
+      FlGui::instance()->graph[i]->gl[j]->changeSelection = mode;
+}
+
 transformContextWindow::transformContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 31 * FL_NORMAL_SIZE;
-  int height = 4 * WB + 8 * BH;
+  int height = 5 * WB + 9 * BH;
 
   win = new paletteWindow(width, height, CTX::instance()->nonModalWindows ? true : false,
-                          "Transformation Context");
+                          "Elementary Operation Context");
   win->box(GMSH_WINDOW_BOX);
   {
-    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
-    // 0: Translation
+    Fl_Tabs *o = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
+    // 0: Translate
     {
       group[0] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Translation");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Translate");
       input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X component");
       input[0]->value("0");
       input[1] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y component");
@@ -646,10 +685,10 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       }
       group[0]->end();
     }
-    // 1: Rotation
+    // 1: Rotate
     {
       group[1] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Rotation");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Rotate");
       input[3] = new Fl_Input
         (2 * WB, 2 * WB + 1 * BH, IW, BH, "X coordinate of an axis point");
       input[3]->value("0");
@@ -714,8 +753,31 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       }
       group[3]->end();
     }
+    // 4: Boolean
+    {
+      group[4] = new Fl_Group
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Boolean");
+      butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, IW, BH, "Delete object");
+      butt[0]->value(1);
+      butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, IW, BH, "Delete tool");
+      butt[1]->value(1);
+      group[4]->end();
+    }
+    // 5: Delete
+    {
+      group[5] = new Fl_Group
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Delete");
+      butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, IW, BH, "Recursive");
+      butt[2]->value(1);
+      group[5]->end();
+    }
     o->end();
   }
+
+  Fl_Choice *o = new Fl_Choice(WB, height - WB - BH, IW, BH, "Selection mode");
+  o->menu(menu_selection_mode);
+  o->align(FL_ALIGN_RIGHT);
+  o->callback(selection_mode_cb);
 
   win->position(CTX::instance()->ctxPosition[0], CTX::instance()->ctxPosition[1]);
   win->end();
@@ -725,8 +787,8 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
 
 void transformContextWindow::show(int pane)
 {
-  if(pane < 0 || pane > 3) return;
-  for(int i = 0; i < 4; i++)
+  if(pane < 0 || pane > 5) return;
+  for(int i = 0; i < 6; i++)
     group[i]->hide();
   group[pane]->show();
   win->show();

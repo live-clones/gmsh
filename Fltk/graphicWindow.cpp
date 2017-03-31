@@ -1238,79 +1238,27 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
     Msg::Error("Unknown entity to create: %s", str.c_str());
 }
 
-static void split_selection()
-{
-  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
-  drawContext::global()->draw();
-  Msg::StatusGl("Select a line to split\n"
-                "[Press 'q' to abort]");
-  GEdge* edge_to_split = 0;
-  while(1){
-    char ib = FlGui::instance()->selectEntity(ENT_LINE);
-    if(ib == 'q')
-      break;
-    if(!FlGui::instance()->selectedEdges.empty()){
-      edge_to_split = FlGui::instance()->selectedEdges[0];
-      edge_to_split->setSelection(1);
-      break;
-    }
-  }
-  Msg::StatusGl("");
-  if(FlGui::instance()->selectedEdges.empty()) return;
-  List_T *List1 = List_Create(5, 5, sizeof(int));
-  Msg::StatusGl("Select break points\n"
-                "[Press 'e' to end selection or 'q' to abort]");
-  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  drawContext::global()->draw();
-  while(1){
-    char ib = FlGui::instance()->selectEntity(ENT_POINT);
-    if(ib == 'q')
-      break;
-    if(ib == 'e'){
-      split_edge(edge_to_split->tag(), List1, GModel::current()->getFileName());
-      break;
-    }
-    for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
-      int tag = FlGui::instance()->selectedVertices[i]->tag();
-      int index = List_ISearchSeq(List1, &tag, fcmp_int);
-      if(index < 0) List_Add(List1, &tag);
-      FlGui::instance()->selectedVertices[i]->setSelection(1);
-    }
-  }
-  Msg::StatusGl("");
-  FlGui::instance()->resetVisibility();
-  GModel::current()->setSelection(0);
-  drawContext::global()->draw();
-}
-
-static void action_point_line_surface_volume(int action, int mode, const char *what)
+static void action_point_line_surface_volume(int action, const std::string &what="")
 {
   int type;
-  const char *str;
-
-  if(!strcmp(what, "Point")) {
+  if(what == "Point"){
     type = ENT_POINT;
-    str = "points";
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(!strcmp(what, "Line")) {
+  else if(what == "Line"){
     type = ENT_LINE;
-    str = "lines";
     opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(!strcmp(what, "Surface")) {
+  else if(what == "Surface"){
     type = ENT_SURFACE;
-    str = "surfaces";
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(!strcmp(what, "Volume")) {
+  else if(what == "Volume"){
     type = ENT_VOLUME;
-    str = "volumes";
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else{
-    Msg::Error("Unknown entity to select");
-    return;
+    type = ENT_ALL;
   }
 
   if(action == 8){
@@ -1322,12 +1270,12 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
   List_T *List1 = List_Create(5, 5, sizeof(int));
   while(1) {
     if(!List_Nbr(List1))
-      Msg::StatusGl("Select %s\n"
-                    "[Press 'e' to end selection or 'q' to abort]", str);
+      Msg::StatusGl("Select entity\n"
+                    "[Press 'e' to end selection or 'q' to abort]");
     else
-      Msg::StatusGl("Select %s\n"
+      Msg::StatusGl("Select entity\n"
                     "[Press 'e' to end selection, 'u' to undo last selection "
-                    "or 'q' to abort]", str);
+                    "or 'q' to abort]");
 
     char ib = FlGui::instance()->selectEntity(type);
     if(ib == 'l') {
@@ -1439,6 +1387,7 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
     }
     if(ib == 'e') {
       if(List_Nbr(List1)){
+        int mode = 0; // FIXME
         switch (action) {
         case 0:
           translate(mode, List1, GModel::current()->getFileName(), what,
@@ -1533,85 +1482,53 @@ static void action_point_line_surface_volume(int action, int mode, const char *w
   Msg::StatusGl("");
 }
 
-static void geometry_elementary_add_translate_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  FlGui::instance()->transformContext->show(0);
-  action_point_line_surface_volume(0, 1, (const char*)data);
-}
-
-static void geometry_elementary_add_rotate_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  FlGui::instance()->transformContext->show(1);
-  action_point_line_surface_volume(1, 1, (const char*)data);
-}
-
-static void geometry_elementary_add_scale_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  FlGui::instance()->transformContext->show(2);
-  action_point_line_surface_volume(2, 1, (const char*)data);
-}
-
-static void geometry_elementary_add_symmetry_cb(Fl_Widget *w, void *data)
-{
-  if(!data) return;
-  FlGui::instance()->transformContext->show(3);
-  action_point_line_surface_volume(3, 1, (const char*)data);
-}
-
 static void geometry_elementary_translate_cb(Fl_Widget *w, void *data)
 {
-  if(!data) return;
   FlGui::instance()->transformContext->show(0);
-  action_point_line_surface_volume(0, 0, (const char*)data);
+  action_point_line_surface_volume(0);
 }
 
 static void geometry_elementary_rotate_cb(Fl_Widget *w, void *data)
 {
-  if(!data) return;
   FlGui::instance()->transformContext->show(1);
-  action_point_line_surface_volume(1, 0, (const char*)data);
+  action_point_line_surface_volume(1);
 }
 
 static void geometry_elementary_scale_cb(Fl_Widget *w, void *data)
 {
-  if(!data) return;
   FlGui::instance()->transformContext->show(2);
-  action_point_line_surface_volume(2, 0, (const char*)data);
+  action_point_line_surface_volume(2);
 }
 
 static void geometry_elementary_symmetry_cb(Fl_Widget *w, void *data)
 {
-  if(!data) return;
   FlGui::instance()->transformContext->show(3);
-  action_point_line_surface_volume(3, 0, (const char*)data);
+  action_point_line_surface_volume(3);
 }
 
 static void geometry_elementary_extrude_translate_cb(Fl_Widget *w, void *data)
 {
-  if(!data) return;
   FlGui::instance()->transformContext->show(0);
-  action_point_line_surface_volume(4, 0, (const char*)data);
+  action_point_line_surface_volume(4);
 }
 
 static void geometry_elementary_extrude_rotate_cb(Fl_Widget *w, void *data)
 {
-  if(!data) return;
   FlGui::instance()->transformContext->show(1);
-  action_point_line_surface_volume(5, 0, (const char*)data);
+  action_point_line_surface_volume(5);
 }
 
 static void geometry_elementary_delete_cb(Fl_Widget *w, void *data)
 {
-  if(!data) return;
-  action_point_line_surface_volume(6, 0, (const char*)data);
+  FlGui::instance()->transformContext->show(5);
+  action_point_line_surface_volume(6);
 }
 
 static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
+  FlGui::instance()->transformContext->show(4);
+
   std::string mode((const char*)data);
   bool selectObject = true;
   std::vector<GEntity*> object, tool;
@@ -1692,7 +1609,9 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
         Msg::Error("At least one tool must be selected");
       }
       else{
-        apply_boolean(GModel::current()->getFileName(), mode, object, tool);
+        apply_boolean(GModel::current()->getFileName(), mode, object, tool,
+                      FlGui::instance()->transformContext->butt[0]->value(),
+                      FlGui::instance()->transformContext->butt[1]->value());
         GModel::current()->setSelection(0);
         selectObject = true;
         object.clear();
@@ -1712,7 +1631,47 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
 static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  split_selection();
+  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  drawContext::global()->draw();
+  Msg::StatusGl("Select a line to split\n"
+                "[Press 'q' to abort]");
+  GEdge* edge_to_split = 0;
+  while(1){
+    char ib = FlGui::instance()->selectEntity(ENT_LINE);
+    if(ib == 'q')
+      break;
+    if(!FlGui::instance()->selectedEdges.empty()){
+      edge_to_split = FlGui::instance()->selectedEdges[0];
+      edge_to_split->setSelection(1);
+      break;
+    }
+  }
+  Msg::StatusGl("");
+  if(FlGui::instance()->selectedEdges.empty()) return;
+  List_T *List1 = List_Create(5, 5, sizeof(int));
+  Msg::StatusGl("Select break points\n"
+                "[Press 'e' to end selection or 'q' to abort]");
+  opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  drawContext::global()->draw();
+  while(1){
+    char ib = FlGui::instance()->selectEntity(ENT_POINT);
+    if(ib == 'q')
+      break;
+    if(ib == 'e'){
+      split_edge(edge_to_split->tag(), List1, GModel::current()->getFileName());
+      break;
+    }
+    for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+      int tag = FlGui::instance()->selectedVertices[i]->tag();
+      int index = List_ISearchSeq(List1, &tag, fcmp_int);
+      if(index < 0) List_Add(List1, &tag);
+      FlGui::instance()->selectedVertices[i]->setSelection(1);
+    }
+  }
+  Msg::StatusGl("");
+  FlGui::instance()->resetVisibility();
+  GModel::current()->setSelection(0);
+  drawContext::global()->draw();
 }
 
 static void geometry_elementary_coherence_cb(Fl_Widget *w, void *data)
@@ -1729,7 +1688,7 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
   else if(str == "Line")
     FlGui::instance()->callForSolverPlugin(1);
   FlGui::instance()->physicalContext->show(false);
-  action_point_line_surface_volume(7, 0, str.c_str());
+  action_point_line_surface_volume(7, str);
 }
 
 static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
@@ -1737,7 +1696,7 @@ static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
   if(!data) return;
   std::string str((const char*)data);
   FlGui::instance()->physicalContext->show(true);
-  action_point_line_surface_volume(11, 0, str.c_str());
+  action_point_line_surface_volume(11, str);
 }
 
 void mesh_save_cb(Fl_Widget *w, void *data)
@@ -2065,12 +2024,12 @@ static void mesh_partition_cb(Fl_Widget *w, void *data)
 
 static void mesh_define_length_cb(Fl_Widget *w, void *data)
 {
-  action_point_line_surface_volume(8, 0, "Point");
+  action_point_line_surface_volume(8, "Point");
 }
 
 static void mesh_define_recombine_cb(Fl_Widget *w, void *data)
 {
-  action_point_line_surface_volume(9, 0, "Surface");
+  action_point_line_surface_volume(9, "Surface");
 }
 
 static void add_transfinite_embedded(int dim, bool embed)
@@ -2256,7 +2215,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
 
 static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
 {
-  action_point_line_surface_volume(10, 0, (const char *)data);
+  action_point_line_surface_volume(10, (const char *)data);
 }
 
 // The static menus (we cannot use the 'g', 'm' 's' and 'p' mnemonics since they
@@ -3929,82 +3888,20 @@ static menuItem static_modules[] = {
   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Wedge"} ,
   {"0Modules/Geometry/Elementary entities/Add/Volume",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Volume"} ,
-  {"0Modules/Geometry/Elementary entities/Translate/Point",
-   (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Point"} ,
-  {"0Modules/Geometry/Elementary entities/Translate/Line",
-   (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Line"} ,
-  {"0Modules/Geometry/Elementary entities/Translate/Surface",
-   (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Surface"} ,
-  {"0Modules/Geometry/Elementary entities/Translate/Volume",
-   (Fl_Callback *)geometry_elementary_translate_cb, (void*)"Volume"} ,
-  {"0Modules/Geometry/Elementary entities/Translate/Duplicate point",
-   (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Point"} ,
-  {"0Modules/Geometry/Elementary entities/Translate/Duplicate line",
-   (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Line"} ,
-  {"0Modules/Geometry/Elementary entities/Translate/Duplicate surface",
-   (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Surface"} ,
-  {"0Modules/Geometry/Elementary entities/Translate/Duplicate volume",
-   (Fl_Callback *)geometry_elementary_add_translate_cb, (void*)"Volume"} ,
-  {"0Modules/Geometry/Elementary entities/Translate/Extrude point",
-   (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)"Point"} ,
-  {"0Modules/Geometry/Elementary entities/Translate/Extrude line",
-   (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)"Line"} ,
-  {"0Modules/Geometry/Elementary entities/Translate/Extrude surface",
-   (Fl_Callback *)geometry_elementary_extrude_translate_cb, (void*)"Surface"} ,
-  {"0Modules/Geometry/Elementary entities/Rotate/Point",
-   (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Point"} ,
-  {"0Modules/Geometry/Elementary entities/Rotate/Line",
-   (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Line"} ,
-  {"0Modules/Geometry/Elementary entities/Rotate/Surface",
-   (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Surface"} ,
-  {"0Modules/Geometry/Elementary entities/Rotate/Volume",
-   (Fl_Callback *)geometry_elementary_rotate_cb, (void*)"Volume"} ,
-  {"0Modules/Geometry/Elementary entities/Rotate/Duplicate point",
-   (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Point"} ,
-  {"0Modules/Geometry/Elementary entities/Rotate/Duplicate line",
-   (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Line"} ,
-  {"0Modules/Geometry/Elementary entities/Rotate/Duplicate surface",
-   (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Surface"} ,
-  {"0Modules/Geometry/Elementary entities/Rotate/Duplicate volume",
-   (Fl_Callback *)geometry_elementary_add_rotate_cb, (void*)"Volume"} ,
-  {"0Modules/Geometry/Elementary entities/Rotate/Extrude point",
-   (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)"Point"} ,
-  {"0Modules/Geometry/Elementary entities/Rotate/Extrude line",
-   (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)"Line"} ,
-  {"0Modules/Geometry/Elementary entities/Rotate/Extrude surface",
-   (Fl_Callback *)geometry_elementary_extrude_rotate_cb, (void*)"Surface"} ,
-  {"0Modules/Geometry/Elementary entities/Scale/Point",
-   (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Point"} ,
-  {"0Modules/Geometry/Elementary entities/Scale/Line",
-   (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Line"} ,
-  {"0Modules/Geometry/Elementary entities/Scale/Surface",
-   (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Surface"} ,
-  {"0Modules/Geometry/Elementary entities/Scale/Volume",
-   (Fl_Callback *)geometry_elementary_scale_cb, (void*)"Volume"} ,
-  {"0Modules/Geometry/Elementary entities/Scale/Duplicate point",
-   (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Point"} ,
-  {"0Modules/Geometry/Elementary entities/Scale/Duplicate line",
-   (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Line"} ,
-  {"0Modules/Geometry/Elementary entities/Scale/Duplicate surface",
-   (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Surface"} ,
-  {"0Modules/Geometry/Elementary entities/Scale/Duplicate volume",
-   (Fl_Callback *)geometry_elementary_add_scale_cb, (void*)"Volume"} ,
-  {"0Modules/Geometry/Elementary entities/Symmetry/Point",
-   (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Point"} ,
-  {"0Modules/Geometry/Elementary entities/Symmetry/Line",
-   (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Line"} ,
-  {"0Modules/Geometry/Elementary entities/Symmetry/Surface",
-   (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Surface"} ,
-  {"0Modules/Geometry/Elementary entities/Symmetry/Volume",
-   (Fl_Callback *)geometry_elementary_symmetry_cb, (void*)"Volume"} ,
-  {"0Modules/Geometry/Elementary entities/Symmetry/Duplicate point",
-   (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Point"} ,
-  {"0Modules/Geometry/Elementary entities/Symmetry/Duplicate line",
-   (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Line"} ,
-  {"0Modules/Geometry/Elementary entities/Symmetry/Duplicate surface",
-   (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Surface"} ,
-  {"0Modules/Geometry/Elementary entities/Symmetry/Duplicate volume",
-   (Fl_Callback *)geometry_elementary_add_symmetry_cb, (void*)"Volume"} ,
+  {"0Modules/Geometry/Elementary entities/Transform/Translate",
+   (Fl_Callback *)geometry_elementary_translate_cb} ,
+  {"0Modules/Geometry/Elementary entities/Transform/Rotate",
+   (Fl_Callback *)geometry_elementary_rotate_cb} ,
+  {"0Modules/Geometry/Elementary entities/Transform/Scale",
+   (Fl_Callback *)geometry_elementary_scale_cb} ,
+  {"0Modules/Geometry/Elementary entities/Transform/Symmetry",
+   (Fl_Callback *)geometry_elementary_symmetry_cb} ,
+  {"0Modules/Geometry/Elementary entities/Transform/Split line",
+   (Fl_Callback *)geometry_elementary_split_cb,(void*)"Line"},
+  {"0Modules/Geometry/Elementary entities/Extrude/Translate",
+   (Fl_Callback *)geometry_elementary_extrude_translate_cb} ,
+  {"0Modules/Geometry/Elementary entities/Extrude/Rotate",
+   (Fl_Callback *)geometry_elementary_extrude_rotate_cb} ,
   {"0Modules/Geometry/Elementary entities/Boolean/Intersection",
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanIntersection"} ,
   {"0Modules/Geometry/Elementary entities/Boolean/Union",
@@ -4013,16 +3910,8 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanDifference"} ,
   {"0Modules/Geometry/Elementary entities/Boolean/Fragments",
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanFragments"} ,
-  {"0Modules/Geometry/Elementary entities/Delete/Point",
-   (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Point"} ,
-  {"0Modules/Geometry/Elementary entities/Delete/Line",
-   (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Line"} ,
-  {"0Modules/Geometry/Elementary entities/Delete/Surface",
-   (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Surface"} ,
-  {"0Modules/Geometry/Elementary entities/Delete/Volume",
-   (Fl_Callback *)geometry_elementary_delete_cb, (void*)"Volume"} ,
-  {"0Modules/Geometry/Elementary entities/Split line",
-   (Fl_Callback *)geometry_elementary_split_cb,(void*)"Line"},
+  {"0Modules/Geometry/Elementary entities/Delete",
+   (Fl_Callback *)geometry_elementary_delete_cb} ,
   {"0Modules/Geometry/Elementary entities/Coherence",
    (Fl_Callback *)geometry_elementary_coherence_cb} ,
   {"0Modules/Geometry/Physical groups/Add/Point",

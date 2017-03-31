@@ -631,7 +631,8 @@ void split_edge(int edge_id, List_T *vertices, const std::string &fileName)
 
 void apply_boolean(const std::string &fileName, const std::string &op,
                    const std::vector<GEntity*> &object,
-                   const std::vector<GEntity*> &tool)
+                   const std::vector<GEntity*> &tool,
+                   int deleteObject, int deleteTool)
 {
   std::ostringstream sstream;
   sstream << op << "{ ";
@@ -642,7 +643,8 @@ void apply_boolean(const std::string &fileName, const std::string &op,
     case 1: sstream << "Line{" << object[i]->tag() << "}; "; break;
     }
   }
-  sstream << "Delete; }{ ";
+  if(deleteObject) sstream << "Delete; ";
+  sstream << "}{ ";
   for(unsigned int i = 0; i < tool.size(); i++){
     switch(tool[i]->dim()){
     case 3: sstream << "Volume{" << tool[i]->tag() << "}; "; break;
@@ -650,7 +652,8 @@ void apply_boolean(const std::string &fileName, const std::string &op,
     case 1: sstream << "Line{" << tool[i]->tag() << "}; "; break;
     }
   }
-  sstream << "Delete; }";
+  if(deleteTool) sstream << "Delete; ";
+  sstream << "}";
   add_infile(sstream.str(), fileName);
 }
 
