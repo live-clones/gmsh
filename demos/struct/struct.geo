@@ -41,6 +41,15 @@ Struct NS1::St3 [ Type 3 ];
 val_Type_of_Struct_St2 = St2.Type;
 val_Type_of_Struct_St2_in_NS1 = NS1::St2.Type;
 
+// To access a 'Tag': via the Tag member or directly with the single structure name
+// (with possible namespace)
+
+tag_of_struct_St1 = St1.Tag;
+tag_of_struct_NS1_St1 = NS1::St1.Tag;
+
+direct_tag_of_struct_St1 = St1;
+direct_tag_of_struct_NS1_St1 = NS1::St1;
+
 // To access real list members:
 one_element_from_a_list_member = struct_identifier.struct_member_list_of_real_1(1);
 full_list_from_a_list_member() = struct_identifier.struct_member_list_of_real_1();
