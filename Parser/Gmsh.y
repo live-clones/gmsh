@@ -6917,7 +6917,7 @@ int NEWPHYSICAL()
   if(CTX::instance()->geom.oldNewreg)
     return NEWREG();
   else
-    return (GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1);
+    return GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1;
 }
 
 
