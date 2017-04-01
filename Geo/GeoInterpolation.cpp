@@ -12,8 +12,6 @@
 
 #define SQU(a)      ((a)*(a))
 
-// Cubic spline :
-
 /*
 static void InterpolateBezier(Vertex *v[4], double t, Vertex &V)
 {
@@ -181,6 +179,11 @@ SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
 static Vertex InterpolateBezier(Curve *Curve, double u, int derivee)
 {
   int NbCurves = (List_Nbr(Curve->Control_Points) - 1) / 3;
+  if(NbCurves <= 0){
+    Msg::Error("Bezier curve requires at least 4 control points");
+    Vertex V;
+    return V;
+  }
   int iCurve = (int)floor(u * (double)NbCurves);
   if(iCurve >= NbCurves) iCurve = NbCurves - 1; // u = 1
   if(iCurve <= 0) iCurve = 0;
@@ -240,7 +243,7 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
     return V;
   }
   else
-    //    return InterpolateCubicSpline(v, t, Curve->mat, derivee, t1, t2);
+    // return InterpolateCubicSpline(v, t, Curve->mat, derivee, t1, t2);
     return InterpolateCubicSpline(v, t);
 }
 
@@ -557,7 +560,7 @@ static Vertex TransfiniteQua(Vertex c1, Vertex c2, Vertex c3, Vertex c4,
                      s1.Pos.Y, s2.Pos.Y, s3.Pos.Y, s4.Pos.Y, u, v);
   V.Pos.Z = TRAN_QUA(c1.Pos.Z, c2.Pos.Z, c3.Pos.Z, c4.Pos.Z,
                      s1.Pos.Z, s2.Pos.Z, s3.Pos.Z, s4.Pos.Z, u, v);
-  return (V);
+  return V;
 }
 
 // Transfinite interpolation on a triangle :

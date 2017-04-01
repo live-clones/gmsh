@@ -258,6 +258,10 @@ bool GEO_Internals::addBezier(int num, const std::vector<int> &vertexTags)
     Msg::Error("GEO edge with tag %d already exists", num);
     return false;
   }
+  if(vertexTags.size() < 4){
+    Msg::Error("Bezier curve requires at least 4 control points");
+    return false;
+  }
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++){
     int t = vertexTags[i];
