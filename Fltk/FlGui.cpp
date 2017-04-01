@@ -11,6 +11,7 @@
 #include <FL/Fl_Shared_Image.H>
 #include <FL/Fl_File_Icon.H>
 #include <FL/fl_draw.H>
+#include <FL/fl_ask.H>
 #include "FlGui.h"
 #include "drawContextFltk.h"
 #include "drawContextFltkCairo.h"
@@ -397,6 +398,9 @@ FlGui::FlGui(int argc, char **argv)
   fl_open_callback(OpenProjectMacFinder);
   fl_mac_set_about(help_about_cb, 0);
 #endif
+
+  // don't move input dialogs to follow mouse
+  fl_message_hotspot(0);
 
   // create main graphic window (note that we create all the windows even if
   // some are not displayed, since the shortcuts should be valid even for hidden

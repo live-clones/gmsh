@@ -69,6 +69,13 @@ static void file_new_cb(Fl_Widget *w, void *data)
  test:
   if(fileChooser(FILE_CHOOSER_CREATE, "New", "")) {
     std::string name = fileChooserGetName(1);
+    std::vector<std::string> split = SplitFileName(name);
+    if(split[2] != ".geo"){
+      if(fl_choice("File '%s' does not have the '.geo' extension.\n\n"
+                   "Do you want to continue as-is?",
+                   "Continue as-is", "Use '.geo' extension", 0, name.c_str()))
+        name = split[0] + split[1] + ".geo";
+    }
     if(!StatFile(name)){
       if(fl_choice("File '%s' already exists.\n\nDo you want to delete it?",
                    "Cancel", "Delete", 0, name.c_str()))
@@ -81,9 +88,12 @@ static void file_new_cb(Fl_Widget *w, void *data)
       Msg::Error("Unable to open file '%s'", name.c_str());
       return;
     }
+    int factory = fl_choice("Which geometry kernel do you want to use?",
+                            "Built-in", "OpenCASCADE", 0);
     time_t now;
     time(&now);
     fprintf(fp, "// Gmsh project created on %s", ctime(&now));
+    if(factory) fprintf(fp, "SetFactory(\"OpenCASCADE\");\n");
     fclose(fp);
     OpenProject(name);
     drawContext::global()->draw();
@@ -3952,9 +3962,9 @@ typedef struct{
 } menuItem;
 
 static menuItem static_modules[] = {
-  {"0Modules/Geometry/Elementary entities/Set factory/Gmsh",
-   (Fl_Callback *)geometry_elementary_set_factory_cb, (void*)"Gmsh"} ,
-  {"0Modules/Geometry/Elementary entities/Set factory/OpenCASCADE",
+  {"0Modules/Geometry/Elementary entities/Set geometry kernel/Built-in",
+   (Fl_Callback *)geometry_elementary_set_factory_cb, (void*)"Built-in"} ,
+  {"0Modules/Geometry/Elementary entities/Set geometry kernel/OpenCASCADE",
    (Fl_Callback *)geometry_elementary_set_factory_cb, (void*)"OpenCASCADE"} ,
   {"0Modules/Geometry/Elementary entities/Add/Parameter",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Parameter"} ,
