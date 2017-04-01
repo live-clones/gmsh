@@ -130,6 +130,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * Syntax index::                Index of reserved keywords in the Gmsh language
 
 @ifnothtml
+
 @detailmenu
  --- The Detailed Node Listing ---
 
@@ -184,6 +185,7 @@ Geometry commands
 * Surfaces::
 * Volumes::
 * Extrusions::
+* Boolean operations::
 * Transformations::
 * Miscellaneous geometry commands::
 
@@ -496,7 +498,9 @@ commands});
 @item
 parametrize these geometries. Gmsh's scripting language enables all
 commands and command arguments to depend on previous calculations (see
-@ref{Expressions}, and @ref{Geometry commands});
+@ref{Expressions}, and @ref{Geometry commands}). Using the OpenCASCADE
+geometry kernel, Gmsh gives access to all usual constructive solid
+geometry operations;
 @item
 generate 1D, 2D and 3D simplicial (i.e., using line segments, triangles
 and tetrahedra) finite element meshes for CAD models in their native
@@ -545,22 +549,9 @@ small but powerful GUI.
 @node and what Gmsh is not so good at, Bug reports, What Gmsh is pretty good at, Overview
 @section @dots{} and what Gmsh is not so good at
 
-As of version 2.8, here are some known weaknesses of Gmsh:
+As of version 3.0, here are some known weaknesses of Gmsh:
 
 @itemize @bullet
-@item
-the BRep approach for describing geometries can become
-inconvenient/inefficient for large models. For complex models, or if you
-want to use a solid-modeler approach, you should link Gmsh with an
-external CAD kernel and import native files directly. (The binary
-versions available on @uref{http://gmsh.info} are linked with the
-free CAD kernel OpenCASCADE, which enables native BREP import as well as
-STEP and IGES import.)
-@item
-Gmsh's internal CAD engine is fairly limited: it only handles simple
-primitives and does not perform any complex geometrical operations
-(e.g. no calculation of intersections). For such features you should
-link Gmsh with an external CAD kernel (see above).
 @item
 Gmsh is not a multi-bloc mesh generator: all meshes produced by Gmsh are
 conforming in the sense of finite element meshes;
@@ -569,11 +560,10 @@ Gmsh's user interface is only exposing a limited number of the available
 features, and many aspects of the interface could be enhanced
 (especially manipulators).
 @item
-Gmsh's scripting language is fairly limited, providing only very crude
-loop controls and user-defined macros, with no local variables.
-@item
-there is no global ``undo'' capability. You will often need to edit a
-text file to correct mistakes.
+Gmsh's scripting language is quite limited, providing only very crude
+loop controls and user-defined macros, with no local variables. We will
+at some point create a C API so that you can access Gmsh features with
+your language of choice.
 @end itemize
 
 If you have the skills and some free time, feel free to join the
@@ -1802,6 +1792,11 @@ the `File->Merge' menu in the GUI. If the path in @var{char-expression}
 is not absolute, @var{char-expression} is appended to the path of the
 current file.
 
+@item ShapeFromFile( @var{char-expression} );
+Merges a BREP or STEP file and returns the identification numbers of the
+highest-dimensional entities. Only available with the OpenCASCADE
+geometry kernel.
+
 @item Draw;
 Redraws the scene.
 
@@ -1975,6 +1970,7 @@ previously defined entity, it is enclosed between braces.''
 * Surfaces::
 * Volumes::
 * Extrusions::
+* Boolean operations::
 * Transformations::
 * Miscellaneous geometry commands::
 @end menu
@@ -2147,13 +2143,13 @@ built-in kernel, the optional @code{In Sphere} argument forces the
 surface to be a spherical patch (the extra parameter gives the
 identification number of the center of the sphere).
 
-@Disk ( @var{expression} ) = @{ @var{expression-list} @};
+@item Disk ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a disk. When four expressions are provided on the right hand
 side (3 coordinates of the center and the radius), the disk is circular.
 A fifth expression defines the radius along Y, leading to an ellipse.
 Disk is only available with the OpenCASCADE kernel.
 
-@Rectangle ( @var{expression} ) = @{ @var{expression-list} @};
+@item Rectangle ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a rectangle. The 3 first expressions define the lower-left
 corner; the next 2 define the width and height. If a 6th expression is
 provided, it defines a radius to round the rectangle corners. Rectangle
@@ -2296,7 +2292,7 @@ unique identification number is automatically created).
 @c Extrusions
 @c .........................................................................
 
-@node Extrusions, Transformations, Volumes, Geometry commands
+@node Extrusions, Boolean operations, Volumes, Geometry commands
 @subsection Extrusions
 
 @cindex Extrusion, geometry
@@ -2335,6 +2331,18 @@ the X, Y and Z direction of the rotation axis; the third
 @var{expression-list} should contain three @w{@var{expression}s} giving
 the X, Y and Z components of any point on this axis; the last
 @var{expression} should contain the rotation angle (in radians).
+
+@item ThruSections @{ @var{expression-list} @}
+Creates surfaces through the given line loops or wires. ThruSection are
+only available with the OpenCASCADE kernel.
+
+@item Ruled ThruSections @{ @var{expression-list} @}
+Creates ruled surfaces through the given line loops or
+wires. ThruSections are only available with the OpenCASCADE kernel.
+
+@item Fillet @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression} @}
+Fillets volumes (first list) on some edges (second list), using the
+provided radius.  Fillet is only available with the OpenCASCADE kernel.
 @end ftable
 
 @noindent with
@@ -2365,10 +2373,27 @@ This behaviour can be changed with the
 options list}).
 
 @c .........................................................................
+@c Boolean operations
+@c .........................................................................
+
+@node Boolean operations, Transformations, Extrusions, Geometry commands
+@subsection Boolean operations
+
+@cindex Boolean operations, geometry
+@cindex Geometry, boolean operations
+@cindex Geometry, intersection
+@cindex Geometry, difference
+@cindex Geometry, union
+@cindex Geometry, fragments
+
+
+aaaa
+
+@c .........................................................................
 @c Transformations
 @c .........................................................................
 
-@node Transformations, Miscellaneous geometry commands, Extrusions, Geometry commands
+@node Transformations, Miscellaneous geometry commands, Boolean operations, Geometry commands
 @subsection Transformations
 
 @cindex Transformations, geometry
