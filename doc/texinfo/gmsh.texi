@@ -21,7 +21,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename gmsh.info
-@set GMSH-VERSION 2.16
+@set GMSH-VERSION 3.0
 @set COPYRIGHT @copyright{} 1997-2017 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
@@ -2049,17 +2049,26 @@ the built-in geometry kernel this constructs a Catmull-Rom spline. With
 the OpenCASCADE kernel, this constructs a BSpline passing through the
 points with a given tolerance.
 
-@item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} @};
+@item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
 Creates a circle arc. The three @var{expression}s on the right-hand-side
 define the start point, the center and the end point of the arc. With
 the built-in geometry kernel the arc should be strictly smaller than Pi.
+With the OpenCASCADE kernel additional @var{expression}s can be provided
+to define a full circle (4th expression is the radius) or a circle arc
+between two angles (next 2 expressions).
 @c todo: document < Plane @{ @var{expression}, @var{expression}, @var{expression} @}; >
 
-@item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
+@item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} @};
+Creates a circle. 
+
+@item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} <, ...> @};
 Creates an ellipse arc. The four @var{expression}s on the
 right-hand-side define the start point, the center point, a major axis
 point and the end point of the ellipse. The third point can be omitted
-with the OpenCASCADE kernel.
+with the OpenCASCADE kernel. With the OpenCASCADE kernel additional
+@var{expression}s can be provided to define a full ellipse (4th and 5th
+expressions define the radii along X and Y) or en ellipse arc (next 2
+expressions).
 
 @item Line Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates an oriented line loop. The @var{expression} inside the parentheses
