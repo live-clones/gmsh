@@ -606,8 +606,10 @@ void elementaryContextWindow::show(int pane)
 {
   if(pane < 0 || pane > 11) return;
 
-  for(int i = 0; i < 12; i++)
+  for(int i = 0; i < 12; i++){
     group[i]->hide();
+    group[i]->deactivate();
+  }
 
   if(pane < 6){
     tab1->show();
@@ -619,6 +621,7 @@ void elementaryContextWindow::show(int pane)
   }
 
   group[pane]->show();
+  group[pane]->activate();
   win->show();
 }
 
@@ -1040,8 +1043,11 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
 
 void meshContextWindow::show(int pane)
 {
-  for(int i = 0; i < 3; i++)
+  for(int i = 0; i < 3; i++){
     group[i]->hide();
+    group[i]->deactivate();
+  }
   group[pane]->show();
+  group[pane]->activate();
   win->show();
 }

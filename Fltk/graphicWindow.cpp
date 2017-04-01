@@ -670,10 +670,9 @@ static void add_new_point_based_entity(const std::string &what, int pane)
         FlGui::instance()->graph[i]->gl[j]->addPointMode = 1;
     std::string name = what;
     std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-    std::string msg = std::string("Move mouse and/or enter coordinates\n") +
-      "[Press 'Shift' to hold position, 'e' to add " + name +
-      " or 'q' to abort]";
-    Msg::StatusGl(msg.c_str());
+    Msg::StatusGl("Move mouse and/or enter coordinates\n"
+                  "[Press 'Shift' to hold position, 'e' to add %s or 'q' to abort]",
+                  name.c_str());
     char ib = FlGui::instance()->selectEntity(ENT_NONE);
     if(ib == 'e'){
       switch(pane){
@@ -792,6 +791,8 @@ static void add_new_point_based_entity(const std::string &what, int pane)
       break;
     }
   }
+
+  FlGui::instance()->elementaryContext->hide();
 
   // at the end, not during creation to avoid having things jumping around
   SetBoundingBox();
@@ -1217,6 +1218,8 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
     add_new_multiline(str);
   else if(str == "BSpline")
     add_new_multiline(str);
+  else if(str == "Bezier")
+    add_new_multiline(str);
   else if(str == "Circle arc")
     add_new_circle_arc();
   else if(str == "Circle")
@@ -1254,34 +1257,35 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
 static void action_point_line_surface_volume(int action, const std::string &what="")
 {
   int type;
+  std::string str;
   if(what == "Point"){
+    str = "points";
     type = ENT_POINT;
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(what == "Line"){
+    str = "lines";
     type = ENT_LINE;
     opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(what == "Surface"){
+    str = "surfaces";
     type = ENT_SURFACE;
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(what == "Volume"){
+    str = "volumes";
     type = ENT_VOLUME;
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else{
     switch(FlGui::instance()->transformContext->choice->value()){
-    case 1: type = ENT_POINT; break;
-    case 2: type = ENT_LINE; break;
-    case 3: type = ENT_SURFACE; break;
-    case 4: type = ENT_VOLUME; break;
-    default: type = ENT_ALL;
+    case 1: str = "points"; type = ENT_POINT; break;
+    case 2: str = "lines"; type = ENT_LINE; break;
+    case 3: str = "surfaces"; type = ENT_SURFACE; break;
+    case 4: str = "volumes"; type = ENT_VOLUME; break;
+    default: str = "entities"; type = ENT_ALL; break;
     }
-  }
-
-  if(action == 8){
-    FlGui::instance()->meshContext->show(0);
   }
 
   drawContext::global()->draw();
@@ -1290,12 +1294,12 @@ static void action_point_line_surface_volume(int action, const std::string &what
   std::vector<std::pair<int, int> >::iterator it;
   while(1) {
     if(dimTags.empty())
-      Msg::StatusGl("Select entity\n"
-                    "[Press 'e' to end selection or 'q' to abort]");
+      Msg::StatusGl("Select %s\n"
+                    "[Press 'e' to end selection or 'q' to abort]", str.c_str());
     else
-      Msg::StatusGl("Select entity\n"
+      Msg::StatusGl("Select %s\n"
                     "[Press 'e' to end selection, 'u' to undo last selection "
-                    "or 'q' to abort]");
+                    "or 'q' to abort]", str.c_str());
 
     char ib = FlGui::instance()->selectEntity(type);
     if(ib == 'l') {
@@ -1515,42 +1519,49 @@ static void geometry_elementary_translate_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(0);
   action_point_line_surface_volume(0);
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_rotate_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(1);
   action_point_line_surface_volume(1);
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_scale_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(2);
   action_point_line_surface_volume(2);
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_symmetry_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(3);
   action_point_line_surface_volume(3);
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_extrude_translate_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(0, true);
   action_point_line_surface_volume(4);
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_extrude_rotate_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(1, true);
   action_point_line_surface_volume(5);
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_delete_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(6);
   action_point_line_surface_volume(6);
+  FlGui::instance()->transformContext->hide();
 }
 
 static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
@@ -1662,6 +1673,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
     }
   }
 
+  FlGui::instance()->transformContext->hide();
   drawContext::global()->draw();
   Msg::StatusGl("");
 }
@@ -1747,6 +1759,7 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
     }
   }
 
+  FlGui::instance()->transformContext->hide();
   drawContext::global()->draw();
   Msg::StatusGl("");
 }
@@ -1756,7 +1769,7 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
   if(!data) return;
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
-  Msg::StatusGl("Select a line to split\n"
+  Msg::StatusGl("Select line to split\n"
                 "[Press 'q' to abort]");
   GEdge* edge_to_split = 0;
   while(1){
@@ -1812,6 +1825,7 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
     FlGui::instance()->callForSolverPlugin(1);
   FlGui::instance()->physicalContext->show(false);
   action_point_line_surface_volume(7, str);
+  FlGui::instance()->physicalContext->hide();
 }
 
 static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
@@ -1820,6 +1834,7 @@ static void geometry_physical_remove_cb(Fl_Widget *w, void *data)
   std::string str((const char*)data);
   FlGui::instance()->physicalContext->show(true);
   action_point_line_surface_volume(11, str);
+  FlGui::instance()->physicalContext->hide();
 }
 
 void mesh_save_cb(Fl_Widget *w, void *data)
@@ -2147,7 +2162,9 @@ static void mesh_partition_cb(Fl_Widget *w, void *data)
 
 static void mesh_define_length_cb(Fl_Widget *w, void *data)
 {
+  FlGui::instance()->meshContext->show(0);
   action_point_line_surface_volume(8, "Point");
+  FlGui::instance()->meshContext->hide();
 }
 
 static void mesh_define_recombine_cb(Fl_Widget *w, void *data)
@@ -2318,12 +2335,14 @@ static void mesh_define_transfinite_line_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->meshContext->show(1);
   add_transfinite_embedded(1, false);
+  FlGui::instance()->meshContext->hide();
 }
 
 static void mesh_define_transfinite_surface_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->meshContext->show(2);
   add_transfinite_embedded(2, false);
+  FlGui::instance()->meshContext->hide();
 }
 
 static void mesh_define_transfinite_volume_cb(Fl_Widget *w, void *data)
@@ -4061,14 +4080,16 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_remove_last_command_cb} ,
   {"0Modules/Geometry/Edit script",
    (Fl_Callback *)geometry_edit_cb} ,
+  {"0Modules/Mesh/Define/Size at points",
+   (Fl_Callback *)mesh_define_length_cb  } ,
   {"0Modules/Mesh/Define/Size fields",
    (Fl_Callback *)field_cb},
-  {"0Modules/Mesh/Define/Element size at points",
-   (Fl_Callback *)mesh_define_length_cb  } ,
-  {"0Modules/Mesh/Define/Embedded points",
-   (Fl_Callback *)mesh_define_embedded_cb, (void*)"point" } ,
-  {"0Modules/Mesh/Define/Recombine",
-   (Fl_Callback *)mesh_define_recombine_cb  } ,
+  {"0Modules/Mesh/Define/Embedded/Point",
+   (Fl_Callback *)mesh_define_embedded_cb, (void*)"Point" } ,
+  {"0Modules/Mesh/Define/Embedded/Line",
+   (Fl_Callback *)mesh_define_embedded_cb, (void*)"Line" } ,
+  {"0Modules/Mesh/Define/Embedded/Surface",
+   (Fl_Callback *)mesh_define_embedded_cb, (void*)"Surface" } ,
   {"0Modules/Mesh/Define/Transfinite/Line",
    (Fl_Callback *)mesh_define_transfinite_line_cb} ,
   {"0Modules/Mesh/Define/Transfinite/Surface",
@@ -4081,6 +4102,8 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Surface"} ,
   {"0Modules/Mesh/Define/Compound/Volume",
    (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Volume"} ,
+  {"0Modules/Mesh/Define/Recombine",
+   (Fl_Callback *)mesh_define_recombine_cb  } ,
   {"0Modules/Mesh/1D",
    (Fl_Callback *)mesh_1d_cb} ,
   {"0Modules/Mesh/2D",

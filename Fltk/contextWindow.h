@@ -26,6 +26,7 @@ class elementaryContextWindow{
  public:
   elementaryContextWindow(int deltaFontSize=0);
   void show(int pane);
+  void hide(){ win->hide(); }
   void updatePoint(double pt[3], int which);
   bool frozenPointCoord(int coord);
 };
@@ -41,6 +42,7 @@ class transformContextWindow{
  public:
   transformContextWindow(int deltaFontSize=0);
   void show(int pane, bool extrude=false, bool selection=true);
+  void hide(){ win->hide(); }
 };
 
 class physicalContextWindow{
@@ -55,6 +57,7 @@ class physicalContextWindow{
 public:
   physicalContextWindow(int deltaFontSize=0);
   void show(bool remove);
+  void hide(){ win->hide(); }
 };
 
 class meshContextWindow{
@@ -66,6 +69,7 @@ class meshContextWindow{
  public:
   meshContextWindow(int deltaFontSize=0);
   void show(int pane);
+  void hide(){ win->hide(); }
 };
 
 #endif
