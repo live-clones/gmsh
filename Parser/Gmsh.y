@@ -2097,10 +2097,11 @@ Shape :
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        if(param.size() == 7){
+        if(param.size() == 6 || param.size() == 7){
+          double ltx = (param.size() == 7) ? param[6] : 0.;
           r = GModel::current()->getOCCInternals()->addWedge
             (num, param[0], param[1], param[2], param[3], param[4], param[5],
-             param[6]);
+             ltx);
         }
         else{
           yymsg(0, "Wedge requires 7 parameters");
