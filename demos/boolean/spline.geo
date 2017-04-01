@@ -9,4 +9,4 @@ For i In {1:10}
 EndFor
 Line(1) = {1,10};
 Bezier(2) = {1:10};
-BSpline(3) = {1:10};
+Spline(3) = {1:10};

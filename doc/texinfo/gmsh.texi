@@ -2028,43 +2028,6 @@ automatically created).
 @cindex Lines, physical
 
 @ftable @code
-@c @item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
-@c Creates a Bezier curve. The @var{expression} inside the parentheses is the
-@c Bezier curve's identification number; the @var{expression-list} on the right
-@c hand side should contain the identification numbers of all the curve's
-@c control points.
-
-@item BSpline ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a B-spline curve. The @var{expression} inside the parentheses is the
-B-spline curve's identification number; the @var{expression-list} on the
-right hand side should contain the identification numbers of all the
-B-spline's control points. Repeating control points has the expected effect.
-
-@item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} @};
-Creates a circle arc (strictly) smaller than Pi. The @var{expression} inside
-the parentheses is the circle arc's identification number; the first
-@var{expression} inside the braces on the right hand side gives the
-identification number of the start point of the arc; the second
-@var{expression} gives the identification number of the center of the
-circle; the last @var{expression} gives the identification number of the end
-point of the arc.
-
-@c todo:
-@c @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} @} Plane @{ @var{expression}, @var{expression}, @var{expression} @};
-
-@item CatmullRom ( @var{expression} ) = @{ @var{expression-list} @};
-@code{CatmullRom} is a synonym for @code{Spline}.
-
-@item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
-Creates an ellipse arc. The @var{expression} inside the parentheses is the
-ellipse arc's identification number; the first @var{expression} inside the
-braces on the right hand side gives the identification number of the start
-point of the arc; the second @var{expression} gives the identification
-number of the center of the ellipse; the third @var{expression} gives the
-identification number of any point located on the major axis of the ellipse;
-the last @var{expression} gives the identification number of the end point
-of the arc.
-
 @item Line ( @var{expression} ) = @{ @var{expression}, @var{expression} @};
 Creates a straight line segment. The @var{expression} inside the parentheses
 is the line segment's identification number; the two @w{@var{expression}s}
@@ -2072,17 +2035,31 @@ inside the braces on the right hand side give identification numbers of the
 start and end points of the segment.
 @c todo: multi-lines not authorized yet
 
-@c todo:
-@c @item Nurbs ( @var{expression} ) = @{ @var{expression-list} @};
+@item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a Bezier curve. The @var{expression-list} contains the
+identification numbers of the control points.
 
-@c todo:
-@c @item Parametric ( @var{expression} ) = @{ @var{expression}, @var{expression}, "@var{string}", "@var{string}", "@var{string}" @};
+@item BSpline ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a BSpline. The @var{expression-list} contains the identification
+numbers of the control points.
 
 @item Spline ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a spline curve. The @var{expression} inside the parentheses is the
-spline's identification number; the @var{expression-list} on the right hand
-side should contain the identification numbers of all the spline's control
-points.
+Creates a spline going through the points in @var{expression-list}. With
+the built-in geometry kernel this constructs a Catmull-Rom spline. With
+the OpenCASCADE kernel, this constructs a BSpline passing through the
+points with a given tolerance.
+
+@item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} @};
+Creates a circle arc. The three @var{expression}s on the right-hand-side
+define the start point, the center and the end point of the arc. With
+the built-in geometry kernel the arc should be strictly smaller than Pi.
+@c todo: document < Plane @{ @var{expression}, @var{expression}, @var{expression} @}; >
+
+@item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
+Creates an ellipse arc. The four @var{expression}s on the
+right-hand-side define the start point, the center point, a major axis
+point and the end point of the ellipse. The third point can be omitted
+with the OpenCASCADE kernel.
 
 @item Line Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates an oriented line loop. The @var{expression} inside the parentheses
@@ -2096,6 +2073,11 @@ reorder the list internally to create a consistent loop. Although Gmsh
 supports it, it is not recommended to specify multiple line loops (or
 subloops) in a single @code{Line Loop} command. (Line loops are used to
 create surfaces: see @ref{Surfaces}.)
+
+@item Wire ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a path made of lines. Wires are only available with the
+OpenCASCADE kernel. They are used to create @code{ThruSections} and
+extrusions along paths.
 
 @item Compound Line ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a compound line from several elementary lines.  When meshed, a

@@ -8151,7 +8151,7 @@ yyreduce:
       std::vector<int> tags; ListOfDouble2Vector((yyvsp[(6) - (7)].l), tags);
       bool r = true;
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Spline not available with OpenCASCADE factory");
+        r = GModel::current()->getOCCInternals()->addSpline(num, tags);
       }
       else{
         r = GModel::current()->getGEOInternals()->addSpline(num, tags);
@@ -8253,7 +8253,7 @@ yyreduce:
       std::vector<int> tags; ListOfDouble2Vector((yyvsp[(6) - (7)].l), tags);
       bool r = true;
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        r = GModel::current()->getOCCInternals()->addBSpline(num, tags);
+        yymsg(0, "BSpline not yet available with OpenCASCADE factory");
       }
       else{
         r = GModel::current()->getGEOInternals()->addBSpline(num, tags);

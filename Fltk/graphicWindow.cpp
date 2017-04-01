@@ -2042,8 +2042,8 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
     std::ostringstream sstream;
     sstream.precision(12);
     sstream << " Quality: "
-        << "gamma = " << ele->gammaShapeMeasure() << " "
-        << "rho = " << ele->rhoShapeMeasure();
+            << "gamma = " << ele->gammaShapeMeasure() << " "
+            << "rho = " << ele->rhoShapeMeasure();
     info.push_back(sstream.str());
   }
   {
@@ -2172,7 +2172,7 @@ static void mesh_define_recombine_cb(Fl_Widget *w, void *data)
   action_point_line_surface_volume(9, "Surface");
 }
 
-static void add_transfinite_embedded(int dim, bool embed)
+static void mesh_define_transfinite(int dim)
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   switch (dim) {
@@ -2263,20 +2263,18 @@ static void add_transfinite_embedded(int dim, bool embed)
         }
         while(1) {
           if(p.size() == 1)
-            Msg::StatusGl("Select %s points\n"
-                          "[Press 'e' to end selection or 'q' to abort]",
-                          embed ? "embedded" : "(ordered) boundary");
+            Msg::StatusGl("Select (ordered) boundary points\n"
+                          "[Press 'e' to end selection or 'q' to abort]");
           else
-            Msg::StatusGl("Select %s points\n"
+            Msg::StatusGl("Select (ordered) boundary points\n"
                           "[Press 'e' to end selection, 'u' to undo last selection "
-                          "or 'q' to abort]",
-                          embed ? "embedded" : "(ordered) boundary");
+                          "or 'q' to abort]");
           ib = FlGui::instance()->selectEntity(ENT_POINT);
           if(ib == 'l') {
             for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
               FlGui::instance()->selectedVertices[i]->setSelection(1);
               p.push_back(FlGui::instance()->selectedVertices[i]->tag());
-              if(!embed) break;
+              break;
             }
             drawContext::global()->draw();
           }
@@ -2295,10 +2293,7 @@ static void add_transfinite_embedded(int dim, bool embed)
           if(ib == 'e') {
             switch (dim) {
             case 2:
-              if(embed && p.size())
-                add_embedded("Point", p, GModel::current()->getFileName());
-              else if(!embed &&
-                      (p.size() == 0 + 1 || p.size() == 3 + 1 || p.size() == 4 + 1))
+              if((p.size() == 0 + 1 || p.size() == 3 + 1 || p.size() == 4 + 1))
                 add_trsfsurf(p, GModel::current()->getFileName(),
                              FlGui::instance()->meshContext->choice[1]->text());
               else
@@ -2334,25 +2329,25 @@ static void add_transfinite_embedded(int dim, bool embed)
 static void mesh_define_transfinite_line_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->meshContext->show(1);
-  add_transfinite_embedded(1, false);
+  mesh_define_transfinite(1);
   FlGui::instance()->meshContext->hide();
 }
 
 static void mesh_define_transfinite_surface_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->meshContext->show(2);
-  add_transfinite_embedded(2, false);
+  mesh_define_transfinite(2);
   FlGui::instance()->meshContext->hide();
 }
 
 static void mesh_define_transfinite_volume_cb(Fl_Widget *w, void *data)
 {
-  add_transfinite_embedded(3, false);
+  mesh_define_transfinite(3);
 }
 
 static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
 {
-  add_transfinite_embedded(2, true);
+  // TODO
 }
 
 static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
@@ -4084,12 +4079,14 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_define_length_cb  } ,
   {"0Modules/Mesh/Define/Size fields",
    (Fl_Callback *)field_cb},
+  /* TODO:
   {"0Modules/Mesh/Define/Embedded/Point",
    (Fl_Callback *)mesh_define_embedded_cb, (void*)"Point" } ,
   {"0Modules/Mesh/Define/Embedded/Line",
    (Fl_Callback *)mesh_define_embedded_cb, (void*)"Line" } ,
   {"0Modules/Mesh/Define/Embedded/Surface",
    (Fl_Callback *)mesh_define_embedded_cb, (void*)"Surface" } ,
+  */
   {"0Modules/Mesh/Define/Transfinite/Line",
    (Fl_Callback *)mesh_define_transfinite_line_cb} ,
   {"0Modules/Mesh/Define/Transfinite/Surface",

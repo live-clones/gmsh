@@ -1653,7 +1653,7 @@ Shape :
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       bool r = true;
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Spline not available with OpenCASCADE factory");
+        r = GModel::current()->getOCCInternals()->addSpline(num, tags);
       }
       else{
         r = GModel::current()->getGEOInternals()->addSpline(num, tags);
@@ -1746,7 +1746,7 @@ Shape :
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       bool r = true;
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        r = GModel::current()->getOCCInternals()->addBSpline(num, tags);
+        yymsg(0, "BSpline not yet available with OpenCASCADE factory");
       }
       else{
         r = GModel::current()->getGEOInternals()->addBSpline(num, tags);

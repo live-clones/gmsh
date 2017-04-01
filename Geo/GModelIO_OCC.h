@@ -163,6 +163,7 @@ class OCC_Internals {
   bool addEllipseArc(int tag, int startTag, int centerTag, int endTag);
   bool addEllipse(int tag, double x, double y, double z, double r1, double r2,
                   double angle1, double angle2);
+  bool addSpline(int tag, const std::vector<int> &vertexTags);
   bool addBezier(int tag, const std::vector<int> &vertexTags);
   bool addBSpline(int tag, const std::vector<int> &vertexTags);
   bool addWire(int tag, const std::vector<int> &edgeTags, bool checkClosed);
@@ -334,6 +335,10 @@ public:
                   double angle1, double angle2)
   {
     return _error("add ellipse");
+  }
+  bool addSpline(int tag, const std::vector<int> &vertexTags)
+  {
+    return _error("add spline");
   }
   bool addBezier(int tag, const std::vector<int> &vertexTags)
   {

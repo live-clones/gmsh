@@ -804,7 +804,16 @@ bool OCC_Internals::_addSpline(int tag, const std::vector<int> &vertexTags, int 
       if(i == 0) start = vertex;
       if(i == vertexTags.size() - 1) end = vertex;
     }
-    if(mode == 0){
+    if(mode == 0){ // BSpline through points (called "Spline" in Gmsh)
+      Handle(Geom_BSplineCurve) curve = GeomAPI_PointsToBSpline(ctrlPoints).Curve();
+      BRepBuilderAPI_MakeEdge e(curve, start, end);
+      if(!e.IsDone()){
+        Msg::Error("Could not create spline");
+        return false;
+      }
+      result = e.Edge();
+    }
+    else if(mode == 1){
       Handle(Geom_BezierCurve) curve = new Geom_BezierCurve(ctrlPoints);
       BRepBuilderAPI_MakeEdge e(curve, start, end);
       if(!e.IsDone()){
@@ -813,14 +822,12 @@ bool OCC_Internals::_addSpline(int tag, const std::vector<int> &vertexTags, int 
       }
       result = e.Edge();
     }
-    else{
-      Handle(Geom_BSplineCurve) curve = GeomAPI_PointsToBSpline(ctrlPoints).Curve();
-      BRepBuilderAPI_MakeEdge e(curve, start, end);
-      if(!e.IsDone()){
-        Msg::Error("Could not create BSpline curve");
-        return false;
-      }
-      result = e.Edge();
+    else if(mode == 2){
+      // TODO: BSpline treat periodic case, allow to set order, etc.
+      // Handle(Geom_BSplineCurve) curve = new Geom_BSplineCurve(ctrlPoints, ...);
+      // ...
+      Msg::Error("OpenCASCADE BSpline not implemented yet");
+      return false;
     }
   }
   catch(Standard_Failure &err){
@@ -832,14 +839,19 @@ bool OCC_Internals::_addSpline(int tag, const std::vector<int> &vertexTags, int 
   return true;
 }
 
-bool OCC_Internals::addBezier(int tag, const std::vector<int> &vertexTags)
+bool OCC_Internals::addSpline(int tag, const std::vector<int> &vertexTags)
 {
   return _addSpline(tag, vertexTags, 0);
 }
 
-bool OCC_Internals::addBSpline(int tag, const std::vector<int> &vertexTags)
+bool OCC_Internals::addBezier(int tag, const std::vector<int> &vertexTags)
 {
   return _addSpline(tag, vertexTags, 1);
+}
+
+bool OCC_Internals::addBSpline(int tag, const std::vector<int> &vertexTags)
+{
+  return _addSpline(tag, vertexTags, 2);
 }
 
 bool OCC_Internals::addWire(int tag, const std::vector<int> &edgeTags,
