@@ -40,7 +40,7 @@ class transformContextWindow{
   Fl_Choice *choice;
  public:
   transformContextWindow(int deltaFontSize=0);
-  void show(int pane, bool extrude=false);
+  void show(int pane, bool extrude=false, bool selection=true);
 };
 
 class physicalContextWindow{

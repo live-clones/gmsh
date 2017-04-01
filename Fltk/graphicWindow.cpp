@@ -16,6 +16,7 @@ typedef unsigned long intptr_t;
 #include <time.h>
 #include <fstream>
 #include <string>
+#include <algorithm>
 #include <FL/Fl_Box.H>
 #include <FL/fl_ask.H>
 #include <FL/filename.H>
@@ -667,8 +668,10 @@ static void add_new_point_based_entity(const std::string &what, int pane)
     for(unsigned int i = 0; i < FlGui::instance()->graph.size(); i++)
       for(unsigned int j = 0; j < FlGui::instance()->graph[i]->gl.size(); j++)
         FlGui::instance()->graph[i]->gl[j]->addPointMode = 1;
+    std::string name = what;
+    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
     std::string msg = std::string("Move mouse and/or enter coordinates\n") +
-      "[Press 'Shift' to hold position, 'e' to add " + what +
+      "[Press 'Shift' to hold position, 'e' to add " + name +
       " or 'q' to abort]";
     Msg::StatusGl(msg.c_str());
     char ib = FlGui::instance()->selectEntity(ENT_NONE);
@@ -1668,7 +1671,7 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
   opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
 
-  FlGui::instance()->transformContext->show(5);
+  FlGui::instance()->transformContext->show(5, false, false);
 
   bool selectRegions = true;
   std::vector<int> regions, edges;

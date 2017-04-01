@@ -807,16 +807,21 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
   FL_NORMAL_SIZE += deltaFontSize;
 }
 
-void transformContextWindow::show(int pane, bool extrude)
+void transformContextWindow::show(int pane, bool extrude, bool selection)
 {
   if(pane < 0 || pane > 6) return;
-  for(int i = 0; i < 7; i++)
+  for(int i = 0; i < 7; i++){
     group[i]->hide();
+    group[i]->deactivate();
+  }
   for(int i = 0; i < 4; i++){
     if(extrude) butt[i]->deactivate();
     else butt[i]->activate();
   }
+  if(selection) choice->activate();
+  else choice->deactivate();
   group[pane]->show();
+  group[pane]->activate();
   win->show();
 }
 
