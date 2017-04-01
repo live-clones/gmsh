@@ -1711,8 +1711,18 @@ bool OCC_Internals::addPipe(const std::vector<std::pair<int, int> > &inDimTags,
 
 bool OCC_Internals::fillet(const std::vector<int> &regionTags,
                            const std::vector<int> &edgeTags, double radius,
-                           std::vector<std::pair<int, int> > &outDimTags)
+                           std::vector<std::pair<int, int> > &outDimTags,
+                           bool removeRegion)
 {
+  std::vector<TopoDS_Edge> edges;
+  for(unsigned int i = 0; i < edgeTags.size(); i++){
+    if(!_tagEdge.IsBound(edgeTags[i])){
+      Msg::Error("Unknown OpenCASCADE edge with tag %d", edgeTags[i]);
+      return false;
+    }
+    edges.push_back(TopoDS::Edge(_tagEdge.Find(edgeTags[i])));
+  }
+
   // build a single compound shape
   BRep_Builder b;
   TopoDS_Compound c;
@@ -1724,21 +1734,15 @@ bool OCC_Internals::fillet(const std::vector<int> &regionTags,
     }
     TopoDS_Shape shape = find(3, regionTags[i]);
     b.Add(c, shape);
+    if(removeRegion) unbind(shape, 3, regionTags[i], true); // recursive
   }
   TopoDS_Shape result;
   try{
     BRepFilletAPI_MakeFillet f(c);
-    for(unsigned int i = 0; i < edgeTags.size(); i++){
-      if(!_tagEdge.IsBound(edgeTags[i])){
-        Msg::Error("Unknown OpenCASCADE edge with tag %d", edgeTags[i]);
-        return false;
-      }
-      TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(edgeTags[i]));
-      f.Add(edge);
-    }
-    for(int i = 1; i <= f.NbContours(); i++){
+    for(unsigned int i = 0; i < edges.size(); i++)
+      f.Add(edges[i]);
+    for(int i = 1; i <= f.NbContours(); i++)
       f.SetRadius(radius, i, 1);
-    }
     f.Build();
     if(!f.IsDone()) {
       Msg::Error("Could not compute fillet");

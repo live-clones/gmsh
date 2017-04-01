@@ -101,6 +101,8 @@ void apply_boolean(const std::string &fileName, const std::string &op,
                    const std::vector<std::pair<int, int> > &object,
                    const std::vector<std::pair<int, int> > &tool,
                    int deleteObject, int deleteTool);
+void apply_fillet(const std::string &fileName, const std::vector<int> &regions,
+                  const std::vector<int> &edges, const std::string &radius);
 void coherence(const std::string &fileName);
 void delete_entities(const std::string &fileName,
                      const std::vector<std::pair<int, int> > &l,

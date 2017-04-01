@@ -1536,7 +1536,7 @@ static void geometry_elementary_extrude_rotate_cb(Fl_Widget *w, void *data)
 
 static void geometry_elementary_delete_cb(Fl_Widget *w, void *data)
 {
-  FlGui::instance()->transformContext->show(5);
+  FlGui::instance()->transformContext->show(6);
   action_point_line_surface_volume(6);
 }
 
@@ -1641,6 +1641,91 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
         selectObject = true;
         object.clear();
         tool.clear();
+      }
+    }
+    if(ib == 'q') {
+      GModel::current()->setSelection(0);
+      break;
+    }
+  }
+
+  drawContext::global()->draw();
+  Msg::StatusGl("");
+}
+
+static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
+{
+  opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
+  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+
+  FlGui::instance()->transformContext->show(5);
+
+  bool selectRegions = true;
+  std::vector<int> regions, edges;
+
+  while(1) {
+    if(regions.empty())
+      Msg::StatusGl("Select volume\n"
+                    "[Press 'e' to end selection or 'q' to abort]");
+    else if(selectRegions)
+      Msg::StatusGl("Select volume\n"
+                    "[Press 'e' to end selection, 'u' to undo last selection or "
+                    "'q' to abort]");
+    else if(edges.empty())
+      Msg::StatusGl("Select line\n"
+                    "[Press 'e' to end selection or 'q' to abort]");
+    else
+      Msg::StatusGl("Select line\n"
+                    "[Press 'e' to end selection, 'u' to undo last selection or "
+                    "'q' to abort]");
+
+    char ib = FlGui::instance()->selectEntity(selectRegions ? ENT_VOLUME : ENT_LINE);
+    if(ib == 'l') {
+      for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+        if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
+          FlGui::instance()->selectedEdges[i]->setSelection(1);
+          edges.push_back(FlGui::instance()->selectedEdges[i]->tag());
+        }
+      }
+      for(unsigned int i = 0; i < FlGui::instance()->selectedRegions.size(); i++){
+        if(FlGui::instance()->selectedRegions[i]->getSelection() != 1){
+          FlGui::instance()->selectedRegions[i]->setSelection(1);
+          regions.push_back(FlGui::instance()->selectedRegions[i]->tag());
+        }
+      }
+    }
+    if(ib == 'r') {
+      Msg::Warning("Entity de-selection not supported yet during boolean operation");
+    }
+    if(ib == 'u') {
+      if(selectRegions && regions.size()){
+        GRegion *ge = GModel::current()->getRegionByTag(regions.back());
+        if(ge) ge->setSelection(0);
+        regions.pop_back();
+      }
+      else if(edges.size()){
+        GEdge *ge = GModel::current()->getEdgeByTag(edges.back());
+        if(ge) ge->setSelection(0);
+        edges.pop_back();
+      }
+    }
+    if(ib == 'e') {
+      if(selectRegions){
+        if(regions.empty())
+          Msg::Error("At least one volume must be selected");
+        else
+          selectRegions = false;
+      }
+      else if(edges.empty()){
+        Msg::Error("At least one line must be selected");
+      }
+      else{
+        apply_fillet(GModel::current()->getFileName(), regions, edges,
+                     FlGui::instance()->transformContext->input[18]->value());
+        GModel::current()->setSelection(0);
+        selectRegions = true;
+        regions.clear();
+        edges.clear();
       }
     }
     if(ib == 'q') {
@@ -3921,8 +4006,6 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_scale_cb} ,
   {"0Modules/Geometry/Elementary entities/Transform/Symmetry",
    (Fl_Callback *)geometry_elementary_symmetry_cb} ,
-  {"0Modules/Geometry/Elementary entities/Transform/Split line",
-   (Fl_Callback *)geometry_elementary_split_cb,(void*)"Line"},
   {"0Modules/Geometry/Elementary entities/Extrude/Translate",
    (Fl_Callback *)geometry_elementary_extrude_translate_cb} ,
   {"0Modules/Geometry/Elementary entities/Extrude/Rotate",
@@ -3935,6 +4018,10 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanDifference"} ,
   {"0Modules/Geometry/Elementary entities/Boolean/Fragments",
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanFragments"} ,
+  {"0Modules/Geometry/Elementary entities/Fillet",
+   (Fl_Callback *)geometry_elementary_fillet_cb},
+  {"0Modules/Geometry/Elementary entities/Split line",
+   (Fl_Callback *)geometry_elementary_split_cb, (void*)"Line"},
   {"0Modules/Geometry/Elementary entities/Delete",
    (Fl_Callback *)geometry_elementary_delete_cb} ,
   {"0Modules/Geometry/Elementary entities/Coherence",

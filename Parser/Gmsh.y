@@ -3834,7 +3834,7 @@ Extrude :
         ListOfDouble2Vector($3, regions); ListOfDouble2Vector($6, edges);
         std::vector<std::pair<int, int> > outDimTags;
         r = GModel::current()->getOCCInternals()->fillet
-          (regions, edges, radius, outDimTags);
+          (regions, edges, radius, outDimTags, true);
         VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
       else{

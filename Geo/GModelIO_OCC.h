@@ -206,7 +206,8 @@ class OCC_Internals {
 
   // fillet
   bool fillet(const std::vector<int> &regionTags, const std::vector<int> &edgeTags,
-              double radius, std::vector<std::pair<int, int> > &ouDimTags);
+              double radius, std::vector<std::pair<int, int> > &ouDimTags,
+              bool removeRegion);
 
   // apply boolean operator
   bool applyBooleanOperator(int tag, BooleanOperator op,

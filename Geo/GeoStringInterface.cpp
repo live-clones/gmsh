@@ -669,6 +669,15 @@ void apply_boolean(const std::string &fileName, const std::string &op,
   add_infile(sstream.str(), fileName);
 }
 
+void apply_fillet(const std::string &fileName, const std::vector<int> &regions,
+                  const std::vector<int> &edges, const std::string &radius)
+{
+  std::ostringstream sstream;
+  sstream << "Fillet{" << vector2String(regions) << "}{"
+          << vector2String(edges) << "}{" << radius << "}";
+  add_infile(sstream.str(), fileName);
+}
+
 void coherence(const std::string &fileName)
 {
   add_infile("Coherence;", fileName);

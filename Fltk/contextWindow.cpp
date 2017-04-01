@@ -663,7 +663,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 31 * FL_NORMAL_SIZE;
+  int width = 34 * FL_NORMAL_SIZE;
   int height = 5 * WB + 10 * BH;
 
   win = new paletteWindow(width, height, CTX::instance()->nonModalWindows ? true : false,
@@ -776,13 +776,22 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       butt[5]->value(1);
       group[4]->end();
     }
-    // 5: Delete
+    // 5: Fillet
     {
       group[5] = new Fl_Group
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Fillet");
+      input[18] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Radius");
+      input[18]->value("0.1");
+      input[18]->align(FL_ALIGN_RIGHT);
+      group[5]->end();
+    }
+    // 6: Delete
+    {
+      group[6] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Delete");
       butt[6] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, IW, BH, "Recursive");
       butt[6]->value(1);
-      group[5]->end();
+      group[6]->end();
     }
     o->end();
   }
@@ -800,8 +809,8 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
 
 void transformContextWindow::show(int pane, bool extrude)
 {
-  if(pane < 0 || pane > 5) return;
-  for(int i = 0; i < 6; i++)
+  if(pane < 0 || pane > 6) return;
+  for(int i = 0; i < 7; i++)
     group[i]->hide();
   for(int i = 0; i < 4; i++){
     if(extrude) butt[i]->deactivate();

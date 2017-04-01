@@ -10652,7 +10652,7 @@ yyreduce:
         ListOfDouble2Vector((yyvsp[(3) - (10)].l), regions); ListOfDouble2Vector((yyvsp[(6) - (10)].l), edges);
         std::vector<std::pair<int, int> > outDimTags;
         r = GModel::current()->getOCCInternals()->fillet
-          (regions, edges, radius, outDimTags);
+          (regions, edges, radius, outDimTags, true);
         VectorOfPairs2ListOfShapes(outDimTags, (yyval.l));
       }
       else{
@@ -14742,7 +14742,7 @@ int NEWPHYSICAL()
   if(CTX::instance()->geom.oldNewreg)
     return NEWREG();
   else
-    return (GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1);
+    return GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1;
 }
 
 
