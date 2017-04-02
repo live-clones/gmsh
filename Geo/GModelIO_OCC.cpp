@@ -547,7 +547,7 @@ TopoDS_Shape OCC_Internals::find(int dim, int tag)
   }
 }
 
-bool OCC_Internals::addVertex(int tag, double x, double y, double z,
+bool OCC_Internals::addVertex(int &tag, double x, double y, double z,
                               double meshSize)
 {
   if(tag > 0 && _tagVertex.IsBound(tag)){
@@ -576,7 +576,7 @@ bool OCC_Internals::addVertex(int tag, double x, double y, double z,
   return true;
 }
 
-bool OCC_Internals::addLine(int tag, int startTag, int endTag)
+bool OCC_Internals::addLine(int &tag, int startTag, int endTag)
 {
   if(tag > 0 && _tagEdge.IsBound(tag)){
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
@@ -612,7 +612,7 @@ bool OCC_Internals::addLine(int tag, int startTag, int endTag)
   return true;
 }
 
-bool OCC_Internals::addLine(int tag, const std::vector<int> &vertexTags)
+bool OCC_Internals::addLine(int &tag, const std::vector<int> &vertexTags)
 {
   if(vertexTags.size() == 2)
     return addLine(tag, vertexTags[0], vertexTags[1]);
@@ -622,7 +622,7 @@ bool OCC_Internals::addLine(int tag, const std::vector<int> &vertexTags)
   return false;
 }
 
-bool OCC_Internals::_addArc(int tag, int startTag, int centerTag, int endTag,
+bool OCC_Internals::_addArc(int &tag, int startTag, int centerTag, int endTag,
                             int mode)
 {
   if(tag > 0 && _tagEdge.IsBound(tag)){
@@ -693,17 +693,17 @@ bool OCC_Internals::_addArc(int tag, int startTag, int centerTag, int endTag,
   return true;
 }
 
-bool OCC_Internals::addCircleArc(int tag, int startTag, int centerTag, int endTag)
+bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag, int endTag)
 {
   return _addArc(tag, startTag, centerTag, endTag, 0);
 }
 
-bool OCC_Internals::addEllipseArc(int tag, int startTag, int centerTag, int endTag)
+bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag, int endTag)
 {
   return _addArc(tag, startTag, centerTag, endTag, 1);
 }
 
-bool OCC_Internals::addCircle(int tag, double x, double y, double z, double r,
+bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
                               double angle1, double angle2)
 {
   if(tag > 0 && _tagEdge.IsBound(tag)){
@@ -741,7 +741,7 @@ bool OCC_Internals::addCircle(int tag, double x, double y, double z, double r,
   return true;
 }
 
-bool OCC_Internals::addEllipse(int tag, double x, double y, double z, double r1,
+bool OCC_Internals::addEllipse(int &tag, double x, double y, double z, double r1,
                                double r2, double angle1, double angle2)
 {
   if(tag > 0 && _tagEdge.IsBound(tag)){
@@ -779,7 +779,7 @@ bool OCC_Internals::addEllipse(int tag, double x, double y, double z, double r1,
   return true;
 }
 
-bool OCC_Internals::_addSpline(int tag, const std::vector<int> &vertexTags, int mode)
+bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int mode)
 {
   if(tag > 0 && _tagEdge.IsBound(tag)){
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
@@ -839,22 +839,22 @@ bool OCC_Internals::_addSpline(int tag, const std::vector<int> &vertexTags, int 
   return true;
 }
 
-bool OCC_Internals::addSpline(int tag, const std::vector<int> &vertexTags)
+bool OCC_Internals::addSpline(int &tag, const std::vector<int> &vertexTags)
 {
   return _addSpline(tag, vertexTags, 0);
 }
 
-bool OCC_Internals::addBezier(int tag, const std::vector<int> &vertexTags)
+bool OCC_Internals::addBezier(int &tag, const std::vector<int> &vertexTags)
 {
   return _addSpline(tag, vertexTags, 1);
 }
 
-bool OCC_Internals::addBSpline(int tag, const std::vector<int> &vertexTags)
+bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags)
 {
   return _addSpline(tag, vertexTags, 2);
 }
 
-bool OCC_Internals::addWire(int tag, const std::vector<int> &edgeTags,
+bool OCC_Internals::addWire(int &tag, const std::vector<int> &edgeTags,
                             bool checkClosed)
 {
   if(tag > 0 && _tagWire.IsBound(tag)){
@@ -888,12 +888,12 @@ bool OCC_Internals::addWire(int tag, const std::vector<int> &edgeTags,
   return true;
 }
 
-bool OCC_Internals::addLineLoop(int tag, const std::vector<int> &edgeTags)
+bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &edgeTags)
 {
   return addWire(tag, edgeTags, true);
 }
 
-bool OCC_Internals::addRectangle(int tag, double x, double y, double z,
+bool OCC_Internals::addRectangle(int &tag, double x, double y, double z,
                                  double dx, double dy,  double roundedRadius)
 {
   if(tag > 0 && _tagFace.IsBound(tag)){
@@ -966,7 +966,7 @@ bool OCC_Internals::addRectangle(int tag, double x, double y, double z,
   return true;
 }
 
-bool OCC_Internals::addDisk(int tag, double xc, double yc, double zc,
+bool OCC_Internals::addDisk(int &tag, double xc, double yc, double zc,
                             double rx, double ry)
 {
   if(tag > 0 && _tagFace.IsBound(tag)){
@@ -994,7 +994,7 @@ bool OCC_Internals::addDisk(int tag, double xc, double yc, double zc,
   return true;
 }
 
-bool OCC_Internals::addPlaneSurface(int tag, const std::vector<int> &wireTags)
+bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 {
   const bool autoFix = true;
 
@@ -1069,7 +1069,7 @@ bool OCC_Internals::addPlaneSurface(int tag, const std::vector<int> &wireTags)
   return true;
 }
 
-bool OCC_Internals::addSurfaceFilling(int tag, int wireTag)
+bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
 {
   if(tag > 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
@@ -1109,7 +1109,7 @@ bool OCC_Internals::addSurfaceFilling(int tag, int wireTag)
   return true;
 }
 
-bool OCC_Internals::addSurfaceLoop(int tag, const std::vector<int> &faceTags)
+bool OCC_Internals::addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
 {
   const bool autoFix = true;
 
@@ -1160,7 +1160,7 @@ bool OCC_Internals::addSurfaceLoop(int tag, const std::vector<int> &faceTags)
   return true;
 }
 
-bool OCC_Internals::addVolume(int tag, const std::vector<int> &shellTags)
+bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
 {
   const bool autoFix = true;
 
@@ -1197,7 +1197,7 @@ bool OCC_Internals::addVolume(int tag, const std::vector<int> &shellTags)
   return true;
 }
 
-bool OCC_Internals::addSphere(int tag, double xc, double yc, double zc,
+bool OCC_Internals::addSphere(int &tag, double xc, double yc, double zc,
                               double radius, double angle1, double angle2,
                               double angle3)
 {
@@ -1226,7 +1226,7 @@ bool OCC_Internals::addSphere(int tag, double xc, double yc, double zc,
   return true;
 }
 
-bool OCC_Internals::addBlock(int tag, double x, double y, double z,
+bool OCC_Internals::addBlock(int &tag, double x, double y, double z,
                              double dx, double dy, double dz)
 {
   if(tag > 0 && _tagSolid.IsBound(tag)){
@@ -1255,7 +1255,7 @@ bool OCC_Internals::addBlock(int tag, double x, double y, double z,
   return true;
 }
 
-bool OCC_Internals::addCylinder(int tag, double x, double y, double z,
+bool OCC_Internals::addCylinder(int &tag, double x, double y, double z,
                                 double dx, double dy, double dz, double r,
                                 double angle)
 {
@@ -1290,7 +1290,7 @@ bool OCC_Internals::addCylinder(int tag, double x, double y, double z,
   return true;
 }
 
-bool OCC_Internals::addTorus(int tag, double x, double y, double z,
+bool OCC_Internals::addTorus(int &tag, double x, double y, double z,
                              double r1, double r2, double angle)
 {
   if(tag > 0 && _tagSolid.IsBound(tag)){
@@ -1319,7 +1319,7 @@ bool OCC_Internals::addTorus(int tag, double x, double y, double z,
   return true;
 }
 
-bool OCC_Internals::addCone(int tag, double x, double y, double z,
+bool OCC_Internals::addCone(int &tag, double x, double y, double z,
                             double dx, double dy, double dz, double r1,
                             double r2, double angle)
 {
@@ -1355,7 +1355,7 @@ bool OCC_Internals::addCone(int tag, double x, double y, double z,
   return true;
 }
 
-bool OCC_Internals::addWedge(int tag, double x, double y, double z,
+bool OCC_Internals::addWedge(int &tag, double x, double y, double z,
                              double dx, double dy, double dz, double ltx)
 {
   if(tag > 0 && _tagSolid.IsBound(tag)){
@@ -1386,8 +1386,8 @@ bool OCC_Internals::addWedge(int tag, double x, double y, double z,
 }
 
 bool OCC_Internals::addThruSections(int tag, const std::vector<int> &wireTags,
-                                    std::vector<std::pair<int, int> > &outDimTags,
-                                    bool makeSolid, bool makeRuled)
+                                    bool makeSolid, bool makeRuled,
+                                    std::vector<std::pair<int, int> > &outDimTags)
 {
   int dim = makeSolid ? 3 : 2;
   if(tag > 0 && isBound(dim, tag)){
@@ -1434,7 +1434,8 @@ bool OCC_Internals::addThruSections(int tag, const std::vector<int> &wireTags,
 
 bool OCC_Internals::addThickSolid(int tag, int solidTag,
                                   const std::vector<int> &excludeFaceTags,
-                                  double offset)
+                                  double offset,
+                                  std::vector<std::pair<int, int> > &outDimTags)
 {
   if(tag > 0 && isBound(3, tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
@@ -1470,8 +1471,7 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
     return false;
   }
 
-  std::vector<std::pair<int, int> > out;
-  bind(result, tag, out, true, true);
+  bind(result, tag, outDimTags, true, true);
   return true;
 }
 

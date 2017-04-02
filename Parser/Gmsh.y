@@ -2127,8 +2127,9 @@ Shape :
           std::vector<int> exclude;
           for(unsigned int i = 2; i < param.size(); i++)
             exclude.push_back(param[i]);
+          std::vector<std::pair<int, int> > outDimTags;
           r = GModel::current()->getOCCInternals()->addThickSolid
-            (num, in, exclude, offset);
+            (num, in, exclude, offset, outDimTags);
         }
         else{
           yymsg(0, "ThickSolid requires at least 2 parameters");
@@ -2214,7 +2215,7 @@ Shape :
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<std::pair<int, int> > outDimTags;
         r = GModel::current()->getOCCInternals()->addThruSections
-          (num, wires, outDimTags, true, false);
+          (num, wires, true, false, outDimTags);
       }
       else{
         yymsg(0, "ThruSections only available with OpenCASCADE factory");
@@ -2232,7 +2233,7 @@ Shape :
       if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<std::pair<int, int> > outDimTags;
         r = GModel::current()->getOCCInternals()->addThruSections
-          (num, wires, outDimTags, true, true);
+          (num, wires, true, true, outDimTags);
       }
       else{
         yymsg(0, "ThruSections only available with OpenCASCADE factory");
@@ -3799,7 +3800,7 @@ Extrude :
         std::vector<int> wires; ListOfDouble2Vector($2, wires);
         std::vector<std::pair<int, int> > outDimTags;
         r = GModel::current()->getOCCInternals()->addThruSections
-          (-1, wires, outDimTags, false, false);
+          (-1, wires, false, false, outDimTags);
         VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
       else{
@@ -3816,7 +3817,7 @@ Extrude :
         std::vector<int> wires; ListOfDouble2Vector($3, wires);
         std::vector<std::pair<int, int> > outDimTags;
         r = GModel::current()->getOCCInternals()->addThruSections
-          (-1, wires, outDimTags, false, true);
+          (-1, wires, false, true, outDimTags);
         VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
       else{
