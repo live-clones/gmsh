@@ -48,31 +48,31 @@ class GEO_Internals{
   void setMaxTag(int dim, int val);
   int getMaxTag(int dim) const;
 
-  // add shapes
-  bool addVertex(int num, double x, double y, double z, double lc);
-  bool addVertex(int num, double x, double y, gmshSurface *s, double lc);
-  bool addLine(int num, int startTag, int endTag);
-  bool addLine(int num, const std::vector<int> &vertexTags);
-  bool addCircleArc(int num, int startTag, int centerTag, int EndTag,
+  // add shapes (if tag is < 0, a new tag is automatically created and returned)
+  bool addVertex(int &tag, double x, double y, double z, double lc);
+  bool addVertex(int &tag, double x, double y, gmshSurface *s, double lc);
+  bool addLine(int &tag, int startTag, int endTag);
+  bool addLine(int &tag, const std::vector<int> &vertexTags);
+  bool addCircleArc(int &tag, int startTag, int centerTag, int EndTag,
                     double nx=0., double ny=0., double nz=0.);
-  bool addEllipseArc(int num, int startTag, int centerTag, int majorTag,
+  bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
                      int endTag, double nx=0., double ny=0., double nz=0.);
-  bool addSpline(int num, const std::vector<int> &vertexTags);
-  bool addBSpline(int num, const std::vector<int> &vertexTags);
-  bool addBezier(int num, const std::vector<int> &vertexTags);
-  bool addNurbs(int num, const std::vector<int> &vertexTags,
+  bool addSpline(int &tag, const std::vector<int> &vertexTags);
+  bool addBSpline(int &tag, const std::vector<int> &vertexTags);
+  bool addBezier(int &tag, const std::vector<int> &vertexTags);
+  bool addNurbs(int &tag, const std::vector<int> &vertexTags,
                 const std::vector<double> &knots);
-  bool addCompoundLine(int num, const std::vector<int> &edgeTags);
-  bool addLineLoop(int num, const std::vector<int> &edgeTags);
-  bool addPlaneSurface(int num, const std::vector<int> &wireTags);
-  bool addDiscreteSurface(int num);
-  bool addSurfaceFilling(int num, const std::vector<int> &wireTags,
+  bool addCompoundLine(int &tag, const std::vector<int> &edgeTags);
+  bool addLineLoop(int &tag, const std::vector<int> &edgeTags);
+  bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
+  bool addDiscreteSurface(int &tag);
+  bool addSurfaceFilling(int &tag, const std::vector<int> &wireTags,
                          int sphereCenterTag=-1);
-  bool addSurfaceLoop(int num, const std::vector<int> &faceTags);
-  bool addCompoundSurface(int num, const std::vector<int> &faceTags,
+  bool addSurfaceLoop(int &tag, const std::vector<int> &faceTags);
+  bool addCompoundSurface(int &tag, const std::vector<int> &faceTags,
                           std::vector<int> edgeTags[4]=0);
-  bool addVolume(int num, const std::vector<int> &shellTags);
-  bool addCompoundVolume(int num, const std::vector<int> &regionTags);
+  bool addVolume(int &tag, const std::vector<int> &shellTags);
+  bool addCompoundVolume(int &tag, const std::vector<int> &regionTags);
 
   // extrude and revolve
   bool extrude(const std::vector<std::pair<int, int> > &inDimTags,
@@ -120,7 +120,7 @@ class GEO_Internals{
 
   // manipulate physical groups
   void resetPhysicalGroups();
-  bool modifyPhysicalGroup(int dim, int num, int op, const std::vector<int> &tags);
+  bool modifyPhysicalGroup(int dim, int tag, int op, const std::vector<int> &tags);
   int getMaxPhysicalTag() const { return _maxPhysicalNum; }
   void setMaxPhysicalTag(int val) { _maxPhysicalNum = val; }
 
@@ -148,8 +148,8 @@ class GEO_Internals{
   bool getVertex(int tag, double &x, double &y, double &z);
 
   // create coordinate systems
-  gmshSurface *newGeometrySphere(int num, int centerTag, int pointTag);
-  gmshSurface *newGeometryPolarSphere(int num, int centerTag, int pointTag);
+  gmshSurface *newGeometrySphere(int tag, int centerTag, int pointTag);
+  gmshSurface *newGeometryPolarSphere(int tag, int centerTag, int pointTag);
 };
 
 #endif

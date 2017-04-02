@@ -550,7 +550,7 @@ TopoDS_Shape OCC_Internals::find(int dim, int tag)
 bool OCC_Internals::addVertex(int &tag, double x, double y, double z,
                               double meshSize)
 {
-  if(tag > 0 && _tagVertex.IsBound(tag)){
+  if(tag >= 0 && _tagVertex.IsBound(tag)){
     Msg::Error("OpenCASCADE vertex with tag %d already exists", tag);
     return false;
   }
@@ -571,14 +571,14 @@ bool OCC_Internals::addVertex(int &tag, double x, double y, double z,
   }
   if(meshSize > 0 && meshSize < MAX_LC)
     _meshAttr.Bind(result, meshAttr(meshSize));
-  if(tag <= 0) tag = getMaxTag(0) + 1;
+  if(tag < 0) tag = getMaxTag(0) + 1;
   bind(result, tag, true);
   return true;
 }
 
 bool OCC_Internals::addLine(int &tag, int startTag, int endTag)
 {
-  if(tag > 0 && _tagEdge.IsBound(tag)){
+  if(tag >= 0 && _tagEdge.IsBound(tag)){
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
     return false;
   }
@@ -607,7 +607,7 @@ bool OCC_Internals::addLine(int &tag, int startTag, int endTag)
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(1) + 1;
+  if(tag < 0) tag = getMaxTag(1) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -625,7 +625,7 @@ bool OCC_Internals::addLine(int &tag, const std::vector<int> &vertexTags)
 bool OCC_Internals::_addArc(int &tag, int startTag, int centerTag, int endTag,
                             int mode)
 {
-  if(tag > 0 && _tagEdge.IsBound(tag)){
+  if(tag >= 0 && _tagEdge.IsBound(tag)){
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
     return false;
   }
@@ -688,7 +688,7 @@ bool OCC_Internals::_addArc(int &tag, int startTag, int centerTag, int endTag,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(1) + 1;
+  if(tag < 0) tag = getMaxTag(1) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -706,7 +706,7 @@ bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag, int end
 bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
                               double angle1, double angle2)
 {
-  if(tag > 0 && _tagEdge.IsBound(tag)){
+  if(tag >= 0 && _tagEdge.IsBound(tag)){
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
     return false;
   }
@@ -736,7 +736,7 @@ bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(1) + 1;
+  if(tag < 0) tag = getMaxTag(1) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -744,7 +744,7 @@ bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
 bool OCC_Internals::addEllipse(int &tag, double x, double y, double z, double r1,
                                double r2, double angle1, double angle2)
 {
-  if(tag > 0 && _tagEdge.IsBound(tag)){
+  if(tag >= 0 && _tagEdge.IsBound(tag)){
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
     return false;
   }
@@ -774,14 +774,14 @@ bool OCC_Internals::addEllipse(int &tag, double x, double y, double z, double r1
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(1) + 1;
+  if(tag < 0) tag = getMaxTag(1) + 1;
   bind(result, tag, true);
   return true;
 }
 
 bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int mode)
 {
-  if(tag > 0 && _tagEdge.IsBound(tag)){
+  if(tag >= 0 && _tagEdge.IsBound(tag)){
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
     return false;
   }
@@ -834,7 +834,7 @@ bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(1) + 1;
+  if(tag < 0) tag = getMaxTag(1) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -857,7 +857,7 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags)
 bool OCC_Internals::addWire(int &tag, const std::vector<int> &edgeTags,
                             bool checkClosed)
 {
-  if(tag > 0 && _tagWire.IsBound(tag)){
+  if(tag >= 0 && _tagWire.IsBound(tag)){
     Msg::Error("OpenCASCADE wire or line loop with tag %d already exists", tag);
     return false;
   }
@@ -883,7 +883,7 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &edgeTags,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(-1) + 1;
+  if(tag < 0) tag = getMaxTag(-1) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -896,7 +896,7 @@ bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &edgeTags)
 bool OCC_Internals::addRectangle(int &tag, double x, double y, double z,
                                  double dx, double dy,  double roundedRadius)
 {
-  if(tag > 0 && _tagFace.IsBound(tag)){
+  if(tag >= 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
     return false;
   }
@@ -961,7 +961,7 @@ bool OCC_Internals::addRectangle(int &tag, double x, double y, double z,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(2) + 1;
+  if(tag < 0) tag = getMaxTag(2) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -969,7 +969,7 @@ bool OCC_Internals::addRectangle(int &tag, double x, double y, double z,
 bool OCC_Internals::addDisk(int &tag, double xc, double yc, double zc,
                             double rx, double ry)
 {
-  if(tag > 0 && _tagFace.IsBound(tag)){
+  if(tag >= 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
     return false;
   }
@@ -989,7 +989,7 @@ bool OCC_Internals::addDisk(int &tag, double xc, double yc, double zc,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(2) + 1;
+  if(tag < 0) tag = getMaxTag(2) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -998,7 +998,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 {
   const bool autoFix = true;
 
-  if(tag > 0 && _tagFace.IsBound(tag)){
+  if(tag >= 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
     return false;
   }
@@ -1064,14 +1064,14 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
       return false;
     }
   }
-  if(tag <= 0) tag = getMaxTag(2) + 1;
+  if(tag < 0) tag = getMaxTag(2) + 1;
   bind(result, tag, true);
   return true;
 }
 
 bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
 {
-  if(tag > 0 && _tagFace.IsBound(tag)){
+  if(tag >= 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
     return false;
   }
@@ -1104,7 +1104,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
     return false;
   }
 
-  if(tag <= 0) tag = getMaxTag(2) + 1;
+  if(tag < 0) tag = getMaxTag(2) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -1113,7 +1113,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
 {
   const bool autoFix = true;
 
-  if(tag > 0 && _tagShell.IsBound(tag)){
+  if(tag >= 0 && _tagShell.IsBound(tag)){
     Msg::Error("OpenCASCADE surface loop with tag %d already exists", tag);
     return false;
   }
@@ -1164,7 +1164,7 @@ bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
 {
   const bool autoFix = true;
 
-  if(tag > 0 && _tagSolid.IsBound(tag)){
+  if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
@@ -1192,7 +1192,7 @@ bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(3) + 1;
+  if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -1201,7 +1201,7 @@ bool OCC_Internals::addSphere(int &tag, double xc, double yc, double zc,
                               double radius, double angle1, double angle2,
                               double angle3)
 {
-  if(tag > 0 && _tagSolid.IsBound(tag)){
+  if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
@@ -1221,7 +1221,7 @@ bool OCC_Internals::addSphere(int &tag, double xc, double yc, double zc,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(3) + 1;
+  if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -1229,7 +1229,7 @@ bool OCC_Internals::addSphere(int &tag, double xc, double yc, double zc,
 bool OCC_Internals::addBlock(int &tag, double x, double y, double z,
                              double dx, double dy, double dz)
 {
-  if(tag > 0 && _tagSolid.IsBound(tag)){
+  if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
@@ -1250,7 +1250,7 @@ bool OCC_Internals::addBlock(int &tag, double x, double y, double z,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(3) + 1;
+  if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -1259,7 +1259,7 @@ bool OCC_Internals::addCylinder(int &tag, double x, double y, double z,
                                 double dx, double dy, double dz, double r,
                                 double angle)
 {
-  if(tag > 0 && _tagSolid.IsBound(tag)){
+  if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
@@ -1285,7 +1285,7 @@ bool OCC_Internals::addCylinder(int &tag, double x, double y, double z,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(3) + 1;
+  if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -1293,7 +1293,7 @@ bool OCC_Internals::addCylinder(int &tag, double x, double y, double z,
 bool OCC_Internals::addTorus(int &tag, double x, double y, double z,
                              double r1, double r2, double angle)
 {
-  if(tag > 0 && _tagSolid.IsBound(tag)){
+  if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
@@ -1314,7 +1314,7 @@ bool OCC_Internals::addTorus(int &tag, double x, double y, double z,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(3) + 1;
+  if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -1323,7 +1323,7 @@ bool OCC_Internals::addCone(int &tag, double x, double y, double z,
                             double dx, double dy, double dz, double r1,
                             double r2, double angle)
 {
-  if(tag > 0 && _tagSolid.IsBound(tag)){
+  if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
@@ -1350,7 +1350,7 @@ bool OCC_Internals::addCone(int &tag, double x, double y, double z,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(3) + 1;
+  if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -1358,7 +1358,7 @@ bool OCC_Internals::addCone(int &tag, double x, double y, double z,
 bool OCC_Internals::addWedge(int &tag, double x, double y, double z,
                              double dx, double dy, double dz, double ltx)
 {
-  if(tag > 0 && _tagSolid.IsBound(tag)){
+  if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
@@ -1380,7 +1380,7 @@ bool OCC_Internals::addWedge(int &tag, double x, double y, double z,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag <= 0) tag = getMaxTag(3) + 1;
+  if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
@@ -1390,7 +1390,7 @@ bool OCC_Internals::addThruSections(int tag, const std::vector<int> &wireTags,
                                     std::vector<std::pair<int, int> > &outDimTags)
 {
   int dim = makeSolid ? 3 : 2;
-  if(tag > 0 && isBound(dim, tag)){
+  if(tag >= 0 && isBound(dim, tag)){
     Msg::Error("OpenCASCADE entity of dimension %d with tag %d already exists",
                dim, tag);
     return false;
@@ -1437,7 +1437,7 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
                                   double offset,
                                   std::vector<std::pair<int, int> > &outDimTags)
 {
-  if(tag > 0 && isBound(3, tag)){
+  if(tag >= 0 && isBound(3, tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
@@ -1787,7 +1787,7 @@ bool OCC_Internals::applyBooleanOperator
 
   if(objectDimTags.empty()) return true;
 
-  if(tag > 0 && isBound(objectDimTags[0].first, tag)){
+  if(tag >= 0 && isBound(objectDimTags[0].first, tag)){
     Msg::Error("OpenCASCADE entity with tag %d already exists", tag);
     return false;
   }
