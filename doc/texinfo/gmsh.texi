@@ -1085,7 +1085,8 @@ List of expressions are also widely used, and are defined as:
   @var{string} [ @{ @var{expression-list} @} ] | 
   Point @{ @var{expression} @} |
   @var{transform} |
-  @var{extrude}
+  @var{extrude} |
+  @var{boolean} |
   Point @{ @var{expression} @} |
   <Physical> Point|Line|Surface|Volume "*" |
   Point|Line|Surface|Volume In BoundingBox @{ @var{expression-list} @} |
@@ -2385,7 +2386,66 @@ options list}).
 @cindex Geometry, difference
 @cindex Geometry, union
 @cindex Geometry, fragments
+@findex @var{boolean}
 
+Boolean operations can be applied on lines, surfaces and volumes. All
+boolean operation act on two lists of elementary entities. The first
+list represents the object; the second represents the tool. The general
+syntax for boolean operations is as follows:
+
+@var{boolean}:
+@ftable @code
+@item BooleanIntersection @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Computes the intersection of the object and the tool.
+@item BooleanUnion @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Computes the union of the object and the tool.
+@item BooleanDifference @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Subtract the tool from the object.
+@item BooleanFramgments @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Computes all the fragments resulting from the intersection of the object
+and the tool.
+@end ftable
+
+with
+
+@example
+@var{boolean-list}: 
+  Line | Surface | Volume @{ @var{expression-list} @}; @dots{} |
+  Delete ;
+@end example
+
+If @code{Delete} is specified in the @var{boolean-list}, the tool and/or
+the object is deleted.  
+
+As explained in @ref{Floating point expressions}, @var{boolean} can be
+used in an expression, in which case it returns the list of
+identification numbers of the highest dimensional entities created by
+the boolean operation.  See
+@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/,demos/boolean}
+for examples.
+
+An alternative syntax exists for boolean operations, which can be used
+when it is known beforehand that the operation will result in a single
+(highest-dimensional) entity:
+
+@var{boolean-explicit}:
+@ftable @code
+@item BooleanIntersection ( @var{expression} ) = @{ @var{boolean-list} @} @{ @var{boolean-list} @};
+Computes the intersection of the object and the tool and assign the
+result the identification number @var{expression}.
+@item BooleanUnion @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Computes the union of the object and the tool and assign the result
+the identification number @var{expression}.
+@item BooleanDifference @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Subtract the tool from the object and assign the result the
+identification number @var{expression}.
+@end ftable
+
+Again, see
+@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/,demos/boolean}
+for examples.
+
+Boolean operations are only available with the OpenCASCADE geometry kernel.
 
 @c .........................................................................
 @c Transformations
