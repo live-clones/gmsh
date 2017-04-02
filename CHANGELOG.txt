@@ -1,7 +1,6 @@
-2.xx: new interface to CAD entity creation, constructive solid geometry features
-and boolean operations using SetFactory("OpenCASCADE"); replaced "Ruled Surface"
-with "Surface"; new "Unique" operator; faster 3D tetrahedral mesh optimization
-enabled by default.
+3.0.0 (?): new constructive solid geometry features and boolean operations using
+SetFactory("OpenCASCADE"); replaced "Ruled Surface" with "Surface"; new "Unique"
+operator; faster 3D tetrahedral mesh optimization enabled by default.
 
 2.16.0 (January 3, 2017): small improvements (list functions, second order hexes
 for MED, GUI) and bug fixes.
@@ -200,7 +199,7 @@ trimmed NURBS from a STEP file into a GEO file will fail); "lateral" entities
 are now added at the end of the list returned by extrusion commands; fixed
 various bugs.
 
-2.0 (Feb 5, 2007): new geometry and mesh databases, with support for STEP and
+2.0.0 (Feb 5, 2007): new geometry and mesh databases, with support for STEP and
 IGES import via Open CASCADE; complete rewrite of geometry and mesh drawing
 code; complete rewrite of mesh I/O layer (with new native binary MSH format and
 support for import/export of I-deas UNV, Nastran BDF, STL, Medit MESH and VRML

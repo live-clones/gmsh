@@ -91,8 +91,8 @@ opt(WRAP_JAVA "Enable generation of Java wrappers (experimental)" OFF)
 opt(WRAP_PYTHON "Enable generation of Python wrappers" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
-set(GMSH_MAJOR_VERSION 2)
-set(GMSH_MINOR_VERSION 16)
+set(GMSH_MAJOR_VERSION 3)
+set(GMSH_MINOR_VERSION 0)
 set(GMSH_PATCH_VERSION 0)
 set(GMSH_EXTRA_VERSION "" CACHE STRING "Gmsh extra version string")
 
