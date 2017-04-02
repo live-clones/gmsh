@@ -60,7 +60,7 @@ public:
     std::map<std::string, std::vector<double> >::const_iterator
       it = _fopt.find(key_member);
     if (it != _fopt.end()) {
-      if (index < it->second.size()) {
+      if (index < (int)it->second.size()) {
         out = it->second[index]; return 0;
       }
       else {
@@ -77,7 +77,7 @@ public:
     std::map<std::string, std::vector<std::string> >::const_iterator
       it = _copt.find(key_member);
     if (it != _copt.end()) {
-      if (index < it->second.size()) {
+      if (index < (int)it->second.size()) {
         out = &it->second[index]; return 0;
       }
       else {
@@ -150,7 +150,7 @@ public:
       str += it_attrib->first + " ";
       char tmp[32];
       if (it_attrib->second.size() > 1) str += "{ ";
-      for (int i = 0; i < it_attrib->second.size(); i++) {
+      for (unsigned int i = 0; i < it_attrib->second.size(); i++) {
         if (i) str += ", ";
         sprintf(tmp, "%g", it_attrib->second[i]); str += tmp;
       }
@@ -163,7 +163,7 @@ public:
       if (flag_comma) str += ", ";
       str += it_attrib->first + " ";
       if (it_attrib->second.size() > 1) str += "Str[{ ";
-      for (int i = 0; i < it_attrib->second.size(); i++) {
+      for (unsigned int i = 0; i < it_attrib->second.size(); i++) {
         if (i) str += ", ";
         str += "\"" + it_attrib->second[i] + "\"";
       }
