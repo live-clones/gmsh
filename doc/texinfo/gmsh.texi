@@ -128,147 +128,6 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * License::                     Complete copy of the license
 * Concept index::               Index of concepts
 * Syntax index::                Index of reserved keywords in the Gmsh language
-
-@ifnothtml
-
-@detailmenu
- --- The Detailed Node Listing ---
-
-Overview
-
-* Geometry::
-* Mesh::
-* Solver::
-* Post-processing::
-* What Gmsh is pretty good at::
-* and what Gmsh is not so good at::
-* Bug reports::
-
-How to read this reference manual?
-
-* Syntactic rules::
-
-Running Gmsh on your system
-
-* Interactive mode::
-* Non-interactive mode::
-* Command-line options::
-* Mouse actions::
-* Keyboard shortcuts::
-
-General tools
-
-* Comments::
-* Expressions::
-* Operators::
-* Built-in functions::
-* User-defined macros::
-* Loops and conditionals::
-* General commands::
-* General options::
-
-Expressions 
-
-* Floating point expressions::
-* Character expressions::
-* Color expressions::
-
-Geometry module
-
-* Geometry commands::
-* Geometry options::
-
-Geometry commands
-
-* Points::
-* Lines::
-* Surfaces::
-* Volumes::
-* Extrusions::
-* Boolean operations::
-* Transformations::
-* Miscellaneous geometry commands::
-
-Mesh module
-
-* Choosing the right unstructured algorithm::
-* Elementary vs physical entities::
-* Mesh commands::
-* Mesh options::
-
-Mesh commands
-
-* Specifying mesh element sizes::
-* Structured grids::
-* Miscellaneous mesh commands::
-
-Solver module
-
-* Solver options::
-
-Post-processing module
-
-* Post-processing commands::
-* Post-processing plugins::
-* Post-processing options::
-
-File formats
-
-* MSH ASCII file format::
-* MSH binary file format::
-* Node ordering::
-* Legacy formats::
-
-Legacy formats
-
-* MSH file format version 1.0::
-* POS ASCII file format::
-* POS binary file format::
-
-Tutorial
-
-* t1.geo::
-* t2.geo::
-* t3.geo::
-* t4.geo::
-* t5.geo::
-* t6.geo::
-* t7.geo::
-* t8.geo::
-* t9.geo::
-* t10.geo::
-* t11.geo::
-* t12.geo::
-* t13.geo::
-* t14.geo::
-* t15.geo::
-
-Options
-
-* General options list::
-* Geometry options list::
-* Mesh options list::
-* Solver options list::
-* Post-processing options list::
-
-Information for developers
-
-* Source code structure::
-* Coding style::
-* Adding a new option::
-
-Frequently asked questions
-
-* The basics::
-* Installation problems::
-* General questions::
-* Geometry module questions::
-* Mesh module questions::
-* Solver module questions::
-* Post-processing module questions::
-
-@end detailmenu
-@end ifnothtml
 @end menu
 
 @c =========================================================================
@@ -1865,6 +1724,10 @@ arguement is the command line).
 
 @item SetName @var{char-expression};
 Changes the name of the current model.
+
+@item SetFactory(@var{char-expression});
+Changes the current geometry kernel. Currently available kernels:
+@code{"Built-in"} and @code{"OpenCASCADE"}.
 
 @item SyncModel;
 Forces an immediate transfer from the old geometrical database into the
@@ -4741,6 +4604,7 @@ system}. Screencasts that show how to use the GUI are available on
 * t13.geo::
 * t14.geo::
 * t15.geo::
+* t16.geo::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4873,10 +4737,19 @@ system}. Screencasts that show how to use the GUI are available on
 @c t15.geo
 @c -------------------------------------------------------------------------
 
-@node t15.geo,  , t14.geo, Tutorial
+@node t15.geo, t16.geo, t14.geo, Tutorial
 @section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t15.geo,t15.geo}
 
 @verbatiminclude ../../tutorial/t15.geo
+
+@c -------------------------------------------------------------------------
+@c t16.geo
+@c -------------------------------------------------------------------------
+
+@node t16.geo,  , t15.geo, Tutorial
+@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t16.geo,t16.geo}
+
+@verbatiminclude ../../tutorial/t16.geo
 
 @c =========================================================================
 @c Options
