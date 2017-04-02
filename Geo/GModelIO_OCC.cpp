@@ -2228,6 +2228,18 @@ void OCC_Internals::setMeshSize(int dim, int tag, double size)
   }
 }
 
+bool OCC_Internals::getVertex(int tag, double &x, double &y, double &z)
+{
+  if(_tagVertex.IsBound(tag)){
+    gp_Pnt pnt = BRep_Tool::Pnt(TopoDS::Vertex(_tagVertex.Find(tag)));
+    x = pnt.X();
+    y = pnt.Y();
+    z = pnt.Z();
+    return true;
+  }
+  return false;
+}
+
 void OCC_Internals::synchronize(GModel *model)
 {
   Msg::Debug("Syncing OCC_Internals with GModel");
@@ -2296,7 +2308,7 @@ void OCC_Internals::synchronize(GModel *model)
   int rTagMax = std::max(model->getMaxElementaryNumber(3), getMaxTag(3));
   for(int i = 1; i <= _vmap.Extent(); i++){
     TopoDS_Vertex vertex = TopoDS::Vertex(_vmap(i));
-    if(!getOCCVertexByNativePtr(model, vertex)){
+    if(!getVertexForOCCShape(model, vertex)){
       int tag;
       if(_vertexTag.IsBound(vertex))
         tag = _vertexTag.Find(vertex);
@@ -2315,9 +2327,9 @@ void OCC_Internals::synchronize(GModel *model)
   }
   for(int i = 1; i <= _emap.Extent(); i++){
     TopoDS_Edge edge = TopoDS::Edge(_emap(i));
-    if(!getOCCEdgeByNativePtr(model, edge)){
-      GVertex *v1 = getOCCVertexByNativePtr(model, TopExp::FirstVertex(edge));
-      GVertex *v2 = getOCCVertexByNativePtr(model, TopExp::LastVertex(edge));
+    if(!getEdgeForOCCShape(model, edge)){
+      GVertex *v1 = getVertexForOCCShape(model, TopExp::FirstVertex(edge));
+      GVertex *v2 = getVertexForOCCShape(model, TopExp::LastVertex(edge));
       int tag;
       if(_edgeTag.IsBound(edge))
         tag = _edgeTag.Find(edge);
@@ -2332,7 +2344,7 @@ void OCC_Internals::synchronize(GModel *model)
   }
   for(int i = 1; i <= _fmap.Extent(); i++){
     TopoDS_Face face = TopoDS::Face(_fmap(i));
-    if(!getOCCFaceByNativePtr(model, face)){
+    if(!getFaceForOCCShape(model, face)){
       int tag;
       if(_faceTag.IsBound(face))
         tag = _faceTag.Find(face);
@@ -2347,7 +2359,7 @@ void OCC_Internals::synchronize(GModel *model)
   }
   for(int i = 1; i <= _somap.Extent(); i++){
     TopoDS_Solid region = TopoDS::Solid(_somap(i));
-    if(!getOCCRegionByNativePtr(model, region)){
+    if(!getRegionForOCCShape(model, region)){
       int tag;
       if(_solidTag.IsBound(region))
         tag = _solidTag(region);
@@ -2370,16 +2382,32 @@ void OCC_Internals::synchronize(GModel *model)
   _changed = false;
 }
 
-bool OCC_Internals::getVertex(int tag, double &x, double &y, double &z)
+GVertex *OCC_Internals::getVertexForOCCShape(GModel *model, TopoDS_Vertex toFind)
 {
-  if(_tagVertex.IsBound(tag)){
-    gp_Pnt pnt = BRep_Tool::Pnt(TopoDS::Vertex(_tagVertex.Find(tag)));
-    x = pnt.X();
-    y = pnt.Y();
-    z = pnt.Z();
-    return true;
-  }
-  return false;
+  if(_vertexTag.IsBound(toFind))
+    return model->getVertexByTag(_vertexTag.Find(toFind));
+  return 0;
+}
+
+GEdge *OCC_Internals::getEdgeForOCCShape(GModel *model, TopoDS_Edge toFind)
+{
+  if(_edgeTag.IsBound(toFind))
+    return model->getEdgeByTag(_edgeTag.Find(toFind));
+  return 0;
+}
+
+GFace *OCC_Internals::getFaceForOCCShape(GModel *model, TopoDS_Face toFind)
+{
+  if(_faceTag.IsBound(toFind))
+    return model->getFaceByTag(_faceTag.Find(toFind));
+  return 0;
+}
+
+GRegion *OCC_Internals::getRegionForOCCShape(GModel *model, TopoDS_Solid toFind)
+{
+  if(_solidTag.IsBound(toFind))
+    return model->getRegionByTag(_solidTag.Find(toFind));
+  return 0;
 }
 
 void OCC_Internals::_addShapeToMaps(TopoDS_Shape shape)
@@ -2888,36 +2916,6 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   Msg::Info("-----------------------------------");
 }
 
-GVertex *OCC_Internals::getOCCVertexByNativePtr(GModel *model, TopoDS_Vertex toFind)
-{
-  if(_vertexTag.IsBound(toFind))
-    return model->getVertexByTag(_vertexTag.Find(toFind));
-  return 0;
-}
-
-GEdge *OCC_Internals::getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind)
-{
-  if(_edgeTag.IsBound(toFind))
-    return model->getEdgeByTag(_edgeTag.Find(toFind));
-  return 0;
-}
-
-GFace *OCC_Internals::getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind)
-{
-  if(_faceTag.IsBound(toFind))
-    return model->getFaceByTag(_faceTag.Find(toFind));
-  return 0;
-}
-
-GRegion *OCC_Internals::getOCCRegionByNativePtr(GModel *model, TopoDS_Solid toFind)
-{
-  if(_solidTag.IsBound(toFind))
-    return model->getRegionByTag(_solidTag.Find(toFind));
-  return 0;
-}
-
-
-
 // FIXME ***************** BEGIN WILL BE REMOVED ************************
 
 void addSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList)
@@ -3010,37 +3008,37 @@ void OCC_Internals::buildShapeFromLists(TopoDS_Shape shape)
 
 GVertex *OCC_Internals::addVertexToModel(GModel *model, TopoDS_Vertex vertex)
 {
-  GVertex *gv = getOCCVertexByNativePtr(model, vertex);
+  GVertex *gv = getVertexForOCCShape(model, vertex);
   if(gv) return gv;
   _addShapeToMaps(vertex);
   buildShapeFromLists(vertex);
   buildGModel(model);
-  return getOCCVertexByNativePtr(model, vertex);
+  return getVertexForOCCShape(model, vertex);
 }
 
 GEdge *OCC_Internals::addEdgeToModel(GModel *model, TopoDS_Edge edge)
 {
-  GEdge *ge = getOCCEdgeByNativePtr(model, edge);
+  GEdge *ge = getEdgeForOCCShape(model, edge);
   if(ge) return ge;
   _addShapeToMaps(edge);
   buildShapeFromLists(edge);
   buildGModel(model);
-  return getOCCEdgeByNativePtr(model, edge);
+  return getEdgeForOCCShape(model, edge);
 }
 
 GFace* OCC_Internals::addFaceToModel(GModel *model, TopoDS_Face face)
 {
-  GFace *gf = getOCCFaceByNativePtr(model, face);
+  GFace *gf = getFaceForOCCShape(model, face);
   if(gf) return gf;
   _addShapeToMaps(face);
   buildShapeFromLists(face);
   buildGModel(model);
-  return getOCCFaceByNativePtr(model, face);
+  return getFaceForOCCShape(model, face);
 }
 
 GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region)
 {
-  GRegion *gr = getOCCRegionByNativePtr(model, region);
+  GRegion *gr = getRegionForOCCShape(model, region);
   if(gr) return gr;
 
   //   FIXME THE PREVIOUS IMPLEMENTATION WAS BETTER FOR SOME USERS :-)
@@ -3048,11 +3046,11 @@ GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region)
   model->destroy();
   buildLists();
   buildGModel(model);
-  return getOCCRegionByNativePtr(model, region);
+  return getRegionForOCCShape(model, region);
   //  _addShapeToMaps(region);
   //  buildShapeFromLists(region);
   //  buildGModel(model);
-  //  return getOCCRegionByNativePtr(model, region);
+  //  return getRegionForOCCShape(model, region);
 }
 
 void OCC_Internals::buildGModel(GModel *model)
@@ -3061,7 +3059,7 @@ void OCC_Internals::buildGModel(GModel *model)
   int numv = model->getMaxElementaryNumber(0) + 1;
   for(int i = 1; i <= _vmap.Extent(); i++){
     TopoDS_Vertex vertex = TopoDS::Vertex(_vmap(i));
-    if(!getOCCVertexByNativePtr(model, vertex)){
+    if(!getVertexForOCCShape(model, vertex)){
       model->add(new OCCVertex(model, numv, vertex));
       numv++;
     }
@@ -3072,9 +3070,9 @@ void OCC_Internals::buildGModel(GModel *model)
   for(int i = 1; i <= _emap.Extent(); i++){
     int i1 = _vmap.FindIndex(TopExp::FirstVertex(TopoDS::Edge(_emap(i))));
     int i2 = _vmap.FindIndex(TopExp::LastVertex(TopoDS::Edge(_emap(i))));
-    if(!getOCCEdgeByNativePtr(model, TopoDS::Edge(_emap(i)))){
-      GVertex *v1 = getOCCVertexByNativePtr(model, TopoDS::Vertex(_vmap(i1)));
-      GVertex *v2 = getOCCVertexByNativePtr(model, TopoDS::Vertex(_vmap(i2)));
+    if(!getEdgeForOCCShape(model, TopoDS::Edge(_emap(i)))){
+      GVertex *v1 = getVertexForOCCShape(model, TopoDS::Vertex(_vmap(i1)));
+      GVertex *v2 = getVertexForOCCShape(model, TopoDS::Vertex(_vmap(i2)));
       model->add(new OCCEdge(model, TopoDS::Edge(_emap(i)), nume, v1, v2));
       nume++;
     }
@@ -3083,7 +3081,7 @@ void OCC_Internals::buildGModel(GModel *model)
   // building geom faces
   int numf = model->getMaxElementaryNumber(2) + 1;
   for(int i = 1; i <= _fmap.Extent(); i++){
-    if(!getOCCFaceByNativePtr(model, TopoDS::Face(_fmap(i)))){
+    if(!getFaceForOCCShape(model, TopoDS::Face(_fmap(i)))){
       model->add(new OCCFace(model, TopoDS::Face(_fmap(i)), numf));
       numf++;
     }
@@ -3092,7 +3090,7 @@ void OCC_Internals::buildGModel(GModel *model)
   // building geom regions
   int numr = model->getMaxElementaryNumber(3) + 1;
   for(int i = 1; i <= _somap.Extent(); i++){
-    if(!getOCCRegionByNativePtr(model, TopoDS::Solid(_somap(i)))){
+    if(!getRegionForOCCShape(model, TopoDS::Solid(_somap(i)))){
       model->add(new OCCRegion(model, TopoDS::Solid(_somap(i)), numr));
       numr++;
     }
@@ -3428,7 +3426,7 @@ GVertex* GModel::getVertexForOCCShape(const void *shape)
 {
   if(!_occ_internals) return 0;
 #if defined(HAVE_OCC)
-  return _occ_internals->getOCCVertexByNativePtr(this, *(TopoDS_Vertex*)shape);
+  return _occ_internals->getVertexForOCCShape(this, *(TopoDS_Vertex*)shape);
 #else
   return 0;
 #endif
@@ -3438,7 +3436,7 @@ GEdge* GModel::getEdgeForOCCShape(const void *shape)
 {
   if(!_occ_internals) return 0;
 #if defined(HAVE_OCC)
-  return _occ_internals->getOCCEdgeByNativePtr(this, *(TopoDS_Edge*)shape);
+  return _occ_internals->getEdgeForOCCShape(this, *(TopoDS_Edge*)shape);
 #else
   return 0;
 #endif
@@ -3448,7 +3446,7 @@ GFace* GModel::getFaceForOCCShape(const void *shape)
 {
   if(!_occ_internals) return 0;
 #if defined(HAVE_OCC)
-  return _occ_internals->getOCCFaceByNativePtr(this, *(TopoDS_Face*)shape);
+  return _occ_internals->getFaceForOCCShape(this, *(TopoDS_Face*)shape);
 #else
   return 0;
 #endif
@@ -3458,7 +3456,7 @@ GRegion* GModel::getRegionForOCCShape(const void *shape)
 {
   if(!_occ_internals) return 0;
 #if defined(HAVE_OCC)
-  return _occ_internals->getOCCRegionByNativePtr(this, *(TopoDS_Solid*)shape);
+  return _occ_internals->getRegionForOCCShape(this, *(TopoDS_Solid*)shape);
 #else
   return 0;
 #endif

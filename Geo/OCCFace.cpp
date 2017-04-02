@@ -83,7 +83,7 @@ void OCCFace::setup()
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
       GEdge *e = 0;
       if(model()->getOCCInternals())
-        e = model()->getOCCInternals()->getOCCEdgeByNativePtr(model(), edge);
+        e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
       if(!e){
 	Msg::Error("Unknown edge in face %d", tag());
       }
@@ -144,7 +144,7 @@ void OCCFace::setup()
     TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
     GVertex *v = 0;
     if(model()->getOCCInternals())
-      v = model()->getOCCInternals()->getOCCVertexByNativePtr(model(), vertex);
+      v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
     if(!v){
       Msg::Error("Unknown vertex in face %d", tag());
     }
