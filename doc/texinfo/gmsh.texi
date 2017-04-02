@@ -2196,6 +2196,14 @@ the X, Y and Z direction of the rotation axis; the third
 the X, Y and Z components of any point on this axis; the last
 @var{expression} should contain the rotation angle (in radians).
 
+@item Extrude @{ @var{extrude-list} @}
+Extrudes entities in @var{extrude-list} using a translation along their
+normal. Only available with the built-in geometry kernel.
+
+@item Extrude @{ @var{extrude-list} @} Using Wire { @var{expression-list} }
+Extrudes entities in @var{extrude-list} along the give wire. Only
+available with the OpenCASCADE geometry kernel.
+
 @item ThruSections @{ @var{expression-list} @}
 Creates surfaces through the given line loops or wires. ThruSection are
 only available with the OpenCASCADE kernel.
