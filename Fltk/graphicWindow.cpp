@@ -1256,43 +1256,48 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
 
 static void action_point_line_surface_volume(int action, const std::string &what="")
 {
-  int type;
-  std::string str;
-  if(what == "Point"){
-    str = "points";
-    type = ENT_POINT;
-    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(what == "Line"){
-    str = "lines";
-    type = ENT_LINE;
-    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(what == "Surface"){
-    str = "surfaces";
-    type = ENT_SURFACE;
-    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else if(what == "Volume"){
-    str = "volumes";
-    type = ENT_VOLUME;
-    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
-  }
-  else{
-    switch(FlGui::instance()->transformContext->choice->value()){
-    case 1: str = "points"; type = ENT_POINT; break;
-    case 2: str = "lines"; type = ENT_LINE; break;
-    case 3: str = "surfaces"; type = ENT_SURFACE; break;
-    case 4: str = "volumes"; type = ENT_VOLUME; break;
-    default: str = "entities"; type = ENT_ALL; break;
-    }
-  }
-
   drawContext::global()->draw();
+
+  if(what == "Point")
+    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  else if(what == "Line")
+    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  else if(what == "Surface")
+    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+  else if(what == "Volume")
+    opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
 
   std::vector<std::pair<int, int> > dimTags;
   std::vector<std::pair<int, int> >::iterator it;
   while(1) {
+    std::string str;
+    int type;
+    if(what == "Point"){
+      str = "points";
+      type = ENT_POINT;
+    }
+    else if(what == "Line"){
+      str = "lines";
+      type = ENT_LINE;
+    }
+    else if(what == "Surface"){
+      str = "surfaces";
+      type = ENT_SURFACE;
+    }
+    else if(what == "Volume"){
+      str = "volumes";
+      type = ENT_VOLUME;
+    }
+    else{
+      switch(FlGui::instance()->transformContext->choice->value()){
+      case 1: str = "points"; type = ENT_POINT; break;
+      case 2: str = "lines"; type = ENT_LINE; break;
+      case 3: str = "surfaces"; type = ENT_SURFACE; break;
+      case 4: str = "volumes"; type = ENT_VOLUME; break;
+      default: str = "entities"; type = ENT_ALL; break;
+      }
+    }
+
     if(dimTags.empty())
       Msg::StatusGl("Select %s\n"
                     "[Press 'e' to end selection or 'q' to abort]", str.c_str());
