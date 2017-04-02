@@ -476,11 +476,11 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     {
       group[9] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Torus");
-      input[53] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
+      input[53] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Center X");
       input[53]->value("0");
-      input[54] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
+      input[54] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Center Y");
       input[54]->value("0");
-      input[55] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
+      input[55] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Center Z");
       input[55]->value("0");
       input[56] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Radius 1");
       input[56]->value("1");
@@ -502,11 +502,11 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     {
       group[10] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Cone");
-      input[59] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
+      input[59] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Center base X");
       input[59]->value("0");
-      input[60] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
+      input[60] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Center base Y");
       input[60]->value("0");
-      input[61] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
+      input[61] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Center base Z");
       input[61]->value("0");
       input[62] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Axis DX");
       input[62]->value("0.5");
