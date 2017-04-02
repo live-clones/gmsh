@@ -641,7 +641,7 @@ post-processor for your own software, you will also want to learn about
 the non-scripting input/output files that Gmsh can read/write. In
 addition to Gmsh's native ``MSH'' file format (@pxref{File formats}),
 Gmsh can read/write many standard mesh files, depending on how it was
-built: check the `File->Save As' menu for a list of available formats.
+built: check the `File->Export' menu for a list of available formats.
 
 Finally, to use Gmsh at the third level (i.e., to link the Gmsh library
 with your own code), you will need to learn the internal Gmsh
@@ -748,7 +748,7 @@ lines; `2D' will mesh all the surfaces---as well as all the lines if
 `1D' was not called before; `3D' will mesh all the volumes---and all the
 surfaces if `2D' was not called before). To save the resulting mesh in
 the current mesh format click on `Save', or select the appropriate
-format and file name with the `File->Save As' menu. The default mesh
+format and file name with the `File->Export' menu. The default mesh
 file name is based on the name of the current active model, with an
 appended extension depending on the mesh format@footnote{Nearly all the
 interactive commands have keyboard shortcuts: see @ref{Keyboard
@@ -799,7 +799,7 @@ model, the associated options will be automatically loaded, too.  To
 save the current options as your default preferences for all future Gmsh
 sessions, use the `File->Save Options As Default' menu instead. Finally,
 you can also save the current options in an arbitrary file by choosing
-the `Gmsh options' format in `File->Save As'.
+the `Gmsh options' format in `File->Export'.
 
 For more information about available options (and how to reset them to
 their default values), see @ref{Options}. A full list of options with
@@ -4835,7 +4835,7 @@ the `File->Save Options->As Default' menu) in a per-user ``option'' file
 (cf. ``Saved in: @code{General.OptionsFileName}'' in the lists below),
 automatically loaded by Gmsh every time it starts up. Finally, other
 options are only saved to disk manually, either by explicitely saving an
-option file with `File->Save As', or when saving per-model options with
+option file with `File->Export', or when saving per-model options with
 `File->Save Options->For Current File' (cf. ``Saved in: @code{-}'' in
 the lists below).
 
@@ -5341,7 +5341,7 @@ ghost triangulation in the printed output (on paper).
 
 @item How can I save GIF, JPEG, ..., images?
 
-Just choose the appropriate format in `File->Save As'. By default Gmsh
+Just choose the appropriate format in `File->Export'. By default Gmsh
 guesses the format from the file extension, so you can just type
 @file{myfile.jpg} in the dialog and Gmsh will automatically create a JPEG
 image file.
@@ -5349,7 +5349,7 @@ image file.
 @item How can I save MPEG, AVI, ..., animations?
 
 You can create simple MPEG animations by choosing MPEG as the format in
-`File->Save As': this allows you to loop over time steps or
+`File->Export': this allows you to loop over time steps or
 post-processing data sets, or to change parameters according to
 @code{Print.Parameter}. To create fully customized animations or to use
 different output formats (AVI, MP4, etc.) you should write a
@@ -5659,7 +5659,7 @@ Evaluate plugin.
 
 @item Is there a way to save animations?
 
-You can save simple MPEG animations directly from the `File->Save As'
+You can save simple MPEG animations directly from the `File->Export'
 menu. For other formats you should write a script. Have a look at
 @ref{t8.geo} or
 @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/anim.script,demos/anim.script}

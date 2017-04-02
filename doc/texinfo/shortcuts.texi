@@ -52,6 +52,8 @@ Show post-processing view options
 Enable full mouse selection
 @item Ctrl+d
 Attach/detach menu
+@item Ctrl+e
+Export project
 @item Ctrl+f
 Enter full screen
 @item Ctrl+i
@@ -71,7 +73,7 @@ Quit
 @item Ctrl+r
 Rename project file
 @item Ctrl+s
-Save file as
+Save mesh in default format
 @item Shift+Ctrl+c
 Show clipping plane window
 @item Shift+Ctrl+h
@@ -84,8 +86,6 @@ Show manipulator window
 Show option window
 @item Shift+Ctrl+o
 Merge file(s)
-@item Shift+Ctrl+s
-Save mesh in default format
 @item Shift+Ctrl+u
 Show plugin window
 @item Shift+Ctrl+v

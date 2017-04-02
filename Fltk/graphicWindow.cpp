@@ -401,7 +401,7 @@ typedef struct{
   int (*func) (const char *name);
 } patXfunc;
 
-static void file_save_as_cb(Fl_Widget *w, void *data)
+static void file_export_cb(Fl_Widget *w, void *data)
 {
   static patXfunc formats[] = {
     {"Guess From Extension" TT "*.*", _save_auto},
@@ -472,7 +472,7 @@ static void file_save_as_cb(Fl_Widget *w, void *data)
   }
 
  test:
-  if(fileChooser(FILE_CHOOSER_CREATE, "Save As", pat)) {
+  if(fileChooser(FILE_CHOOSER_CREATE, "Export", pat)) {
     std::string name = fileChooserGetName(1);
     if(CTX::instance()->confirmOverwrite) {
       if(!StatFile(name))
@@ -2373,21 +2373,21 @@ static Fl_Menu_Item bar_table[] = {
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {0},
-  {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
-    {"Watch Pattern...",    0, (Fl_Callback *)file_watch_cb, 0},
-    {"&Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
+    {"M&erge...",   FL_CTRL+FL_SHIFT+'o', (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
+    {"Watch Pattern...",    0, (Fl_Callback *)file_watch_cb, 0, FL_MENU_DIVIDER},
+    {"&Clear",      0, (Fl_Callback *)file_clear_cb, 0},
+    {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0},
+    {"Delete",      0, (Fl_Callback *)file_delete_cb, 0, FL_MENU_DIVIDER},
     {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
       {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
       {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
       {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
       {0},
-    {"&Rename...",  FL_CTRL+'r', (Fl_Callback *)file_rename_cb, 0},
-    {"Save &As...", FL_CTRL+'s', (Fl_Callback *)file_save_as_cb, 0},
     {"Sa&ve Mesh",  FL_CTRL+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
     {"Save Model Options", FL_CTRL+'j', (Fl_Callback *)file_options_save_cb, (void*)"file"},
     {"Save Options As Default", FL_CTRL+FL_SHIFT+'j', (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
-    {"Delete",      0, (Fl_Callback *)file_delete_cb, 0, FL_MENU_DIVIDER},
+    {"&Export...",  FL_CTRL+'e', (Fl_Callback *)file_export_cb, 0, FL_MENU_DIVIDER},
     {"&Quit",       FL_CTRL+'q', (Fl_Callback *)file_quit_cb, 0},
     {0},
   {"&Tools", 0, 0, 0, FL_SUBMENU},
@@ -2448,20 +2448,20 @@ static Fl_Menu_Item sysbar_table[] = {
       {"", 0, (Fl_Callback *)file_open_recent_cb, 0},
       {0},
     {"Merge...",   FL_META+FL_SHIFT+'o', (Fl_Callback *)file_open_merge_cb, (void*)"merge"},
-    {"Watch Pattern...",   0, (Fl_Callback *)file_watch_cb, 0},
-    {"Clear",      0, (Fl_Callback *)file_clear_cb, 0, FL_MENU_DIVIDER},
+    {"Watch Pattern...",   0, (Fl_Callback *)file_watch_cb, 0, FL_MENU_DIVIDER},
+    {"Clear",      0, (Fl_Callback *)file_clear_cb, 0},
+    {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, 0},
+    {"Delete",     0, (Fl_Callback *)file_delete_cb, 0, FL_MENU_DIVIDER},
     {"Remote", 0, 0, 0, FL_MENU_DIVIDER | FL_SUBMENU},
       {"Start...",  0, (Fl_Callback *)file_remote_cb, (void*)"start"},
       {"Merge...",  0, (Fl_Callback *)file_remote_cb, (void*)"merge"},
       {"Clear",     0, (Fl_Callback *)file_remote_cb, (void*)"clear"},
       {"Stop",      0, (Fl_Callback *)file_remote_cb, (void*)"stop"},
       {0},
-    {"Rename...",  FL_META+'r', (Fl_Callback *)file_rename_cb, 0},
-    {"Save As...", FL_META+'s', (Fl_Callback *)file_save_as_cb, 0},
-    {"Save Mesh",  FL_META+FL_SHIFT+'s', (Fl_Callback *)mesh_save_cb, 0},
+    {"Save Mesh",  FL_META+'s', (Fl_Callback *)mesh_save_cb, 0},
     {"Save Model Options", FL_META+'j', (Fl_Callback *)file_options_save_cb, (void*)"file"},
     {"Save Options As Default", FL_META+FL_SHIFT+'j', (Fl_Callback *)file_options_save_cb, (void*)"default", FL_MENU_DIVIDER},
-    {"Delete",     0, (Fl_Callback *)file_delete_cb, 0},
+    {"Export...",  FL_META+'e', (Fl_Callback *)file_export_cb, 0},
     {0},
   {"Tools", 0, 0, 0, FL_SUBMENU},
     {"Options",         FL_META+FL_SHIFT+'n', (Fl_Callback *)options_cb, 0},

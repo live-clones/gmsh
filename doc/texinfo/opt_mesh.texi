@@ -431,7 +431,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Optimize
 Optimize the mesh to improve the quality of tetrahedral elements@*
-Default value: @code{0}@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.OptimizeThreshold
+Optimize tetrahedra that have a quality below ... @*
+Default value: @code{0.3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizeNetgen

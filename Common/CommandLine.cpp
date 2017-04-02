@@ -191,6 +191,7 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("Shift+w",        "Show post-processing view options"));
   s.push_back(mp("Shift+Escape",   "Enable full mouse selection"));
   s.push_back(mp(cc + "d",         "Attach/detach menu"));
+  s.push_back(mp(cc + "e",         "Export project"));
   s.push_back(mp(cc + "f",         "Enter full screen"));
   s.push_back(mp(cc + "i",         "Show statistics window"));
   s.push_back(mp(cc + "j",         "Save model options"));
@@ -202,14 +203,13 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp(cc + "o",         "Open project file"));
   s.push_back(mp(cc + "q",         "Quit"));
   s.push_back(mp(cc + "r",         "Rename project file"));
-  s.push_back(mp(cc + "s",         "Save file as"));
+  s.push_back(mp(cc + "s",         "Save mesh in default format"));
   s.push_back(mp("Shift+" + cc + "c", "Show clipping plane window"));
   s.push_back(mp("Shift+" + cc + "h", "Show current options and workspace window"));
   s.push_back(mp("Shift+" + cc + "j", "Save options as default"));
   s.push_back(mp("Shift+" + cc + "m", "Show manipulator window"));
   s.push_back(mp("Shift+" + cc + "n", "Show option window"));
   s.push_back(mp("Shift+" + cc + "o", "Merge file(s)"));
-  s.push_back(mp("Shift+" + cc + "s", "Save mesh in default format"));
   s.push_back(mp("Shift+" + cc + "u", "Show plugin window"));
   s.push_back(mp("Shift+" + cc + "v", "Show visibility window"));
   s.push_back(mp("Alt+a",          "Loop through axes modes"));

@@ -42,6 +42,8 @@ Set number of mesh smoothing steps
 Set mesh order (1, ..., 5)
 @item -optimize[_netgen]
 Optimize quality of tetrahedral elements
+@item -optimize_threshold
+Optimize tetrahedral elements that have a qulaity less than a threshold
 @item -optimize_ho
 Optimize high order meshes
 @item -ho_[min,max,nlayers]
