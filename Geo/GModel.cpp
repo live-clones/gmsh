@@ -84,9 +84,8 @@ GModel::GModel(std::string name)
   // on-demand
   _createGEOInternals();
 
-  // FIXME: GModelFactory will be deprecated, replaced by direct interfaces to
-  // internal CAD data, with an "integer-based" API, easily wrapped in C, Python
-  // or any other scripting language
+  // FIXME: GModelFactory is deprecated and will be removed in Gmsh 3.1. You
+  // should use GEO_Internals or OCC_Internals instead.
   setFactory("Gmsh");
 
 #if defined(HAVE_MESH)
@@ -3239,14 +3238,26 @@ GFace* GModel::addCompoundFace(std::vector<GFace*> faces, int param, int split, 
 #endif
 }
 
+// FIXME: what follows will be removed in Gmsh 3.1
+static void factoryWarning()
+{
+  static bool warn = true;
+  if(warn){
+    Msg::Warning("GModelFactory is deprecated and will be removed in Gmsh 3.1");
+    warn = false;
+  }
+}
+
 GVertex *GModel::addVertex(double x, double y, double z, double lc)
 {
+  factoryWarning();
   if(_factory) return _factory->addVertex(this, x, y, z, lc);
   return 0;
 }
 
 GEdge *GModel::addLine(GVertex *v1, GVertex *v2)
 {
+  factoryWarning();
   if(_factory) return _factory->addLine(this, v1, v2);
   return 0;
 }
@@ -3254,6 +3265,7 @@ GEdge *GModel::addLine(GVertex *v1, GVertex *v2)
 GEdge *GModel::addCircleArcCenter(double x, double y, double z, GVertex *start,
                                   GVertex *end)
 {
+  factoryWarning();
   if(_factory)
     return _factory->addCircleArc(this, GModelFactory::CENTER_START_END,
                                   start, end, SPoint3(x, y, z));
@@ -3262,6 +3274,7 @@ GEdge *GModel::addCircleArcCenter(double x, double y, double z, GVertex *start,
 
 GEdge *GModel::addCircleArcCenter(GVertex *start, GVertex *center, GVertex *end)
 {
+  factoryWarning();
   if(_factory)
     return _factory->addCircleArc(this, start, center, end);
   return 0;
@@ -3270,6 +3283,7 @@ GEdge *GModel::addCircleArcCenter(GVertex *start, GVertex *center, GVertex *end)
 GEdge *GModel::addCircleArc3Points(double x, double y, double z, GVertex *start,
                                    GVertex *end)
 {
+  factoryWarning();
   if(_factory)
     return _factory->addCircleArc(this, GModelFactory::THREE_POINTS,
                                   start, end, SPoint3(x, y, z));
@@ -3279,6 +3293,7 @@ GEdge *GModel::addCircleArc3Points(double x, double y, double z, GVertex *start,
 GEdge *GModel::addBezier(GVertex *start, GVertex *end,
                          std::vector<std::vector<double> > points)
 {
+  factoryWarning();
   if(_factory)
     return _factory->addSpline(this, GModelFactory::BEZIER, start, end,
                                points);
@@ -3288,6 +3303,7 @@ GEdge *GModel::addBezier(GVertex *start, GVertex *end,
 GEdge *GModel::addBSpline(GVertex *start, GVertex *end,
 			  std::vector<std::vector<double> > points)
 {
+  factoryWarning();
   if(_factory)
     return _factory->addSpline(this, GModelFactory::BSPLINE, start, end,
                                points);
@@ -3300,6 +3316,7 @@ GEdge *GModel::addNURBS(GVertex *start, GVertex *end,
                         std::vector<double> weights,
                         std::vector<int> mult)
 {
+  factoryWarning();
   if(_factory)
     return _factory->addNURBS(this, start,end,points,knots,weights, mult);
   return 0;
@@ -3307,6 +3324,7 @@ GEdge *GModel::addNURBS(GVertex *start, GVertex *end,
 
 std::vector<GFace *> GModel::addRuledFaces (std::vector<std::vector<GEdge *> > edges)
 {
+  factoryWarning();
   std::vector<GFace *> faces;
   if(_factory)
     faces = _factory->addRuledFaces(this, edges);
@@ -3316,6 +3334,7 @@ std::vector<GFace *> GModel::addRuledFaces (std::vector<std::vector<GEdge *> > e
 GFace* GModel::addFace (std::vector<GEdge *> edges,
                         std::vector< std::vector<double > > points)
 {
+  factoryWarning();
   if(_factory)
     return _factory->addFace(this, edges, points);
   return 0;
@@ -3323,6 +3342,7 @@ GFace* GModel::addFace (std::vector<GEdge *> edges,
 
 GFace* GModel::addPlanarFace (std::vector<std::vector<GEdge *> > edges)
 {
+  factoryWarning();
   if(_factory)
     return _factory->addPlanarFace(this, edges);
   return 0;
@@ -3330,6 +3350,7 @@ GFace* GModel::addPlanarFace (std::vector<std::vector<GEdge *> > edges)
 
 GFace* GModel::addPlanarFace (std::vector<std::vector<GEdgeSigned> > edges)
 {
+  factoryWarning();
   if(_factory)
     return _factory->addPlanarFace(this, edges);
   return 0;
@@ -3337,6 +3358,7 @@ GFace* GModel::addPlanarFace (std::vector<std::vector<GEdgeSigned> > edges)
 
 GRegion* GModel::addVolume (std::vector<std::vector<GFace *> > faces)
 {
+  factoryWarning();
   if(_factory)
     return _factory->addVolume(this, faces);
   return 0;
@@ -3344,6 +3366,7 @@ GRegion* GModel::addVolume (std::vector<std::vector<GFace *> > faces)
 
 GFace *GModel::add2Drect(double x0, double y0, double dx, double dy)
 {
+  factoryWarning();
   if(_factory)
     return _factory->add2Drect(this, x0, y0, dx, dy);
   return 0;
@@ -3351,6 +3374,7 @@ GFace *GModel::add2Drect(double x0, double y0, double dx, double dy)
 
 GFace *GModel::add2Dellips(double xc, double yc, double rx, double ry)
 {
+  factoryWarning();
   if(_factory)
     return _factory->add2Dellips(this, xc, yc, rx, ry);
   return 0;
@@ -3359,6 +3383,7 @@ GFace *GModel::add2Dellips(double xc, double yc, double rx, double ry)
 GEntity *GModel::revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2,
                          double angle)
 {
+  factoryWarning();
   if(_factory)
     return _factory->revolve(this, e, p1, p2, angle);
   return 0;
@@ -3366,6 +3391,7 @@ GEntity *GModel::revolve(GEntity *e, std::vector<double> p1, std::vector<double>
 
 GEntity *GModel::extrude(GEntity *e, std::vector<double> p1, std::vector<double> p2)
 {
+  factoryWarning();
   if(_factory)
     return _factory->extrude(this, e, p1, p2);
   return 0;
@@ -3374,6 +3400,7 @@ GEntity *GModel::extrude(GEntity *e, std::vector<double> p1, std::vector<double>
 std::vector<GEntity*> GModel::extrudeBoundaryLayer(GEntity *e, int nbLayers,
                                                    double hLayers, int dir, int view)
 {
+  factoryWarning();
   if(_factory)
     return _factory->extrudeBoundaryLayer(this, e, nbLayers,hLayers, dir, view);
   std::vector<GEntity*> empty;
@@ -3382,6 +3409,7 @@ std::vector<GEntity*> GModel::extrudeBoundaryLayer(GEntity *e, int nbLayers,
 
 GEntity *GModel::addPipe(GEntity *e, std::vector<GEdge *>  edges)
 {
+  factoryWarning();
   if(_factory)
     return _factory->addPipe(this,e,edges);
   return 0;
@@ -3389,6 +3417,7 @@ GEntity *GModel::addPipe(GEntity *e, std::vector<GEdge *>  edges)
 
 GEntity *GModel::addThruSections(std::vector<std::vector<GEdge *> > edges)
 {
+  factoryWarning();
   if(_factory)
     return _factory->addThruSections(this,edges);
   return 0;
@@ -3396,6 +3425,7 @@ GEntity *GModel::addThruSections(std::vector<std::vector<GEdge *> > edges)
 
 GEntity *GModel::addSphere(double cx, double cy, double cz, double radius)
 {
+  factoryWarning();
   if(_factory) return _factory->addSphere(this, cx, cy, cz, radius);
   return 0;
 }
@@ -3403,6 +3433,7 @@ GEntity *GModel::addSphere(double cx, double cy, double cz, double radius)
 GEntity *GModel::addCylinder(std::vector<double> p1, std::vector<double> p2,
                              double radius)
 {
+  factoryWarning();
   if(_factory) return _factory->addCylinder(this, p1, p2, radius);
   return 0;
 }
@@ -3410,18 +3441,21 @@ GEntity *GModel::addCylinder(std::vector<double> p1, std::vector<double> p2,
 GEntity *GModel::addTorus(std::vector<double> p1, std::vector<double> p2,
                           double radius1, double radius2)
 {
+  factoryWarning();
   if(_factory) return _factory->addTorus(this, p1, p2, radius1, radius2);
   return 0;
 }
 
 GEntity *GModel::addBlock(std::vector<double> p1, std::vector<double> p2)
 {
+  factoryWarning();
   if(_factory) return _factory->addBlock(this, p1, p2);
   return 0;
 }
 
 GEntity *GModel::add3DBlock(std::vector<double> p1, double dx, double dy, double dz )
 {
+  factoryWarning();
   if(_factory) return _factory->add3DBlock(this, p1, dx, dy, dz);
   return 0;
 }
@@ -3429,17 +3463,20 @@ GEntity *GModel::add3DBlock(std::vector<double> p1, double dx, double dy, double
 GEntity *GModel::addCone(std::vector<double> p1, std::vector<double> p2,
                          double radius1, double radius2)
 {
+  factoryWarning();
   if(_factory) return _factory->addCone(this, p1, p2,radius1, radius2);
   return 0;
 }
 
 void GModel::healGeometry(double tolerance)
 {
+  factoryWarning();
   if(_factory) _factory->healGeometry(this, tolerance);
 }
 
 GModel *GModel::computeBooleanUnion(GModel *tool, int createNewModel)
 {
+  factoryWarning();
   if(_factory)
     return _factory->computeBooleanUnion(this, tool, createNewModel);
   return 0;
@@ -3447,6 +3484,7 @@ GModel *GModel::computeBooleanUnion(GModel *tool, int createNewModel)
 
 GModel *GModel::computeBooleanIntersection(GModel *tool, int createNewModel)
 {
+  factoryWarning();
   if(_factory)
     return _factory->computeBooleanIntersection(this, tool, createNewModel);
   return 0;
@@ -3454,6 +3492,7 @@ GModel *GModel::computeBooleanIntersection(GModel *tool, int createNewModel)
 
 GModel *GModel::computeBooleanDifference(GModel *tool, int createNewModel)
 {
+  factoryWarning();
   if(_factory)
     return _factory->computeBooleanDifference(this, tool, createNewModel);
   return 0;
@@ -3461,12 +3500,14 @@ GModel *GModel::computeBooleanDifference(GModel *tool, int createNewModel)
 
 void GModel::setPeriodicAllFaces(std::vector<double> FaceTranslationVector)
 {
+  factoryWarning();
   if(_factory) _factory->setPeriodicAllFaces(this, FaceTranslationVector);
 }
 
 void GModel::setPeriodicPairOfFaces(int numFaceMaster, std::vector<int> EdgeListMaster,
                                     int numFaceSlave, std::vector<int> EdgeListSlave)
 {
+  factoryWarning();
   if(_factory)
     _factory->setPeriodicPairOfFaces(this, numFaceMaster, EdgeListMaster,
                                      numFaceSlave, EdgeListSlave);
